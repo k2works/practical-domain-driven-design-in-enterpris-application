@@ -15,7 +15,7 @@
     "vault:rekey": "gulp vault:rekey",
     "okf:check": "gulp okf:check",
     "okf:viz": "gulp okf:viz",
-    "claude:yolo": "claude --dangerously-skip-permissions",
+    "claude:yolo": "claude --enable-auto-mode",
     "copilot:yolo": "copilot --allow-all-tools",
     "codex:yolo": "codex --yolo",
     "gemini:yolo": "gemini --yolo"
