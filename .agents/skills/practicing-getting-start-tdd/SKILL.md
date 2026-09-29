@@ -9,7 +9,7 @@ FizzBuzz 問題を題材に、TDD（テスト駆動開発）の手法を実践�
 
 ## 教材
 
-`docs/article/getting-start-tdd/` に 14 言語 x 12 章の完全な教材がある。チュートリアル進行時は該当する言語・章の教材を参照し、内容に沿って進行する。
+公開サイト <https://k2works.github.io/getting-started-tdd/> に 14 言語 x 12 章の完全な教材がある。教材は継続的に更新されるためローカルには置かない。チュートリアル進行時は WebFetch でサイトから該当する言語・章の教材を取得し、内容に沿って進行する。
 
 ## チュートリアルの進め方
 
@@ -176,11 +176,7 @@ scoop install php composer
 
 #### 教材ファイルの特定
 
-言語ごとにファイル名パターンが異なる。
-
-- 多くの言語: `docs/article/getting-start-tdd/{lang}/01-todo-list-and-first-test.md` 等
-- C#: `docs/article/getting-start-tdd/csharp/chapter01.md` 等
-- F#: `docs/article/getting-start-tdd/fsharp/chapter01.md` 等
+公開サイトのトップページ <https://k2works.github.io/getting-started-tdd/> を WebFetch で取得し、目次から該当する言語・章のページを辿る。言語ごとにページ名のパターンが異なるため、URL を推測せずサイトのリンクに従う。
 
 #### 進行ルール
 
@@ -255,7 +251,7 @@ Problem で挙がった項目は、Try で具体的なアクションに変換�
 
 ## 応用: 複数言語での比較
 
-ユーザーが複数言語に興味がある場合、`docs/article/getting-start-tdd/integration/` の多言語統合解説を参照し、言語間の比較視点を提供する。
+ユーザーが複数言語に興味がある場合、公開サイト <https://k2works.github.io/getting-started-tdd/> の多言語統合解説を参照し、言語間の比較視点を提供する。
 
 ## 注意事項
 
