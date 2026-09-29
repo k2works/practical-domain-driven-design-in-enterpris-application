@@ -70,6 +70,11 @@ nav:
   - Home: index.md
   - 戦略:
       - 概要: strategy/index.md
+      - 企業事例: strategy/business_case.md
+      - 経営戦略: strategy/business_strategy.md
+      - ビジネスアーキテクチャ: strategy/business_architecture.md
+      - インセプションデッキ: strategy/inception-deck.md
+      - ビジネスモデルキャンバス: strategy/BMC.svg
   - 要件:
       - 概要: requirements/index.md
   - 設計:
@@ -80,6 +85,7 @@ nav:
       - 概要: operation/index.md
   - レビュー:
       - 概要: review/index.md
+      - 戦略成果物レビュー（2026-09-29）: review/戦略成果物_review_20260929.md
   - ADR:
       - 概要: adr/index.md
   - 記事:
