@@ -1,5 +1,5 @@
 {
-  description = "Development environments managed with Nix for claude-code-booster assets";
+  description = "Development environments managed with Nix for practical-domain-driven-design-in-enterpris-application assets";
 
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";

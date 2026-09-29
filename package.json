@@ -1,5 +1,6 @@
 {
-  "name": "",
+  "name": "practical-domain-driven-design-in-enterpris-application",
+  "description": "実践ドメイン駆動設計 in エンタープライズアプリケーション",
   "version": "0.0.0",
   "main": "index.js",
   "scripts": {
@@ -22,19 +23,19 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/k2works/{project_name}.git"
+    "url": "git+https://github.com/k2works/practical-domain-driven-design-in-enterpris-application.git"
   },
   "keywords": [
     "ai",
     "programming",
     "learning"
   ],
-  "author": "",
+  "author": "k2works",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/k2works/{project_name}/issues"
+    "url": "https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues"
   },
-  "homepage": "https://github.com/k2works/{project_name}#readme",
+  "homepage": "https://github.com/k2works/practical-domain-driven-design-in-enterpris-application#readme",
   "type": "module",
   "dependencies": {
     "dotenv": "^17.2.3",

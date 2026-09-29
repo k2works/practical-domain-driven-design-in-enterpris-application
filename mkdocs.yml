@@ -1,8 +1,8 @@
-site_name: Site Name
-site_description: Site Description
-site_author: Project Team
-repo_url: https://github.com/k2works/claude-code-booster
-repo_name: claude-code-booster
+site_name: 実践ドメイン駆動設計 in エンタープライズアプリケーション
+site_description: ドメイン駆動設計をエンタープライズアプリケーション開発で実践するプロジェクト
+site_author: k2works
+repo_url: https://github.com/k2works/practical-domain-driven-design-in-enterpris-application
+repo_name: practical-domain-driven-design-in-enterpris-application
 
 theme:
   name: material
@@ -58,7 +58,7 @@ extra:
   social:
     - icon: fontawesome/brands/github
       link: https://github.com/k2works
-      name: GitHub Repository/claude-code-booster
+      name: GitHub Repository/practical-domain-driven-design-in-enterpris-application
 
 plugins:
   - search

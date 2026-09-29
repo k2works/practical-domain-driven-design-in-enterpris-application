@@ -1,4 +1,4 @@
-# {project-name}
+# 実践ドメイン駆動設計 in エンタープライズアプリケーション
 
 ## 概要
 
@@ -189,13 +189,13 @@ GHCR からイメージを取得して実行するには：
 
 ```bash
 # イメージをプル
-docker pull ghcr.io/k2works/{project_name}:latest
+docker pull ghcr.io/k2works/practical-domain-driven-design-in-enterpris-application:latest
 
 # または特定バージョン
-docker pull ghcr.io/k2works/{project_name}:0.0.1
+docker pull ghcr.io/k2works/practical-domain-driven-design-in-enterpris-application:0.0.1
 
 # コンテナを実行
-docker run -it -v $(pwd):/srv ghcr.io/k2works/{project_name}:latest
+docker run -it -v $(pwd):/srv ghcr.io/k2works/practical-domain-driven-design-in-enterpris-application:latest
 ```
 
 または、docker-compose を使用してローカルでビルド・実行することもできます：
