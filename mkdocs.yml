@@ -20,6 +20,8 @@ extra_css:
   - assets/css/extra.css
 
 markdown_extensions:
+  - pymdownx.arithmatex:
+      generic: true
   - pymdownx.highlight
   - pymdownx.superfences:
       custom_fences:
@@ -45,8 +47,11 @@ markdown_extensions:
   - attr_list
 
 extra_javascript:
-  - https://cdn.jsdelivr.net/npm/mermaid@10.6.1/dist/mermaid.min.js
+  - https://cdn.jsdelivr.net/npm/mermaid@11.17.2/dist/mermaid.min.js
   - assets/js/extra.js
+  # 数式（MathJax 3）。設定を先に読み込んでから MathJax 本体を読み込む
+  - assets/js/mathjax.js
+  - https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js
 
 extra:
   plantuml_url: http://www.plantuml.com/plantuml
@@ -79,21 +84,25 @@ nav:
       - 概要: adr/index.md
   - 記事:
       - 概要: article/index.md
-      - テスト駆動開発から始めるプログラミング入門: article/getting-start-tdd/index.md
-      - Grokking Functional Programming: article/grokkingfp/index.md
-      - Grokking Concurrency: article/grokking-concurrency/index.md
-      - 関数型デザイン - 原則、パターン、実践: article/functional-desgin-ppp/index.md
-      - 実践データベース設計：基幹業務システム編: article/practical-database-design/index.md
-      - Docker/Kubernetes 実践コンテナ解説: article/getting-start-docker-kubernetes/index.md
   - リファレンス:
       - 概要: reference/index.md
       - よいソフトウェアとは: reference/よいソフトウェアとは.md
       - ロジカルシンキング: reference/ロジカルシンキング.md
       - 開発ガイド: reference/開発ガイド.md
+      - 開発ガイド（AI-DLC 版）: reference/開発ガイド_AI-DLC版.md
+      - AI-DLC 導入ガイド: reference/AI-DLC導入ガイド.md
+      - AI-DLC 用語集: reference/AI-DLC用語集.md
+      - ドキュメント構成ガイド: reference/ドキュメント構成ガイド.md
+      - Living Documentation 導入ガイド: reference/LivingDocumentation導入ガイド.md
+      - アノテーション導入ガイド: reference/アノテーション導入ガイド.md
+      - ダイナミックキュレーション導入ガイド: reference/ダイナミックキュレーション導入ガイド.md
+      - ガイドツアー・サイトシーイング導入ガイド: reference/ガイドツアー・サイトシーイング導入ガイド.md
+      - OKF 導入ガイド（Open Knowledge Format v0.2）: reference/OKF導入ガイド_V0.2.md
       - 経営戦略分析ガイド: reference/経営戦略分析ガイド.md
       - ビジネスアーキテクチャ分析ガイド: reference/ビジネスアーキテクチャ分析ガイド.md
       - 要件定義ガイド: reference/要件定義ガイド.md
       - ユースケース作成ガイド: reference/ユースケース作成ガイド.md
+      - ユースケース作成ガイド（AI-DLC 版）: reference/ユースケース作成ガイド_AI-DLC版.md
       - アーキテクチャ設計ガイド: reference/アーキテクチャ設計ガイド.md
       - データモデル設計ガイド: reference/データモデル設計ガイド.md
       - ドメインモデル設計ガイド: reference/ドメインモデル設計ガイド.md
@@ -103,9 +112,12 @@ nav:
       - 運用要件定義ガイド: reference/運用要件定義ガイド.md
       - インフラ設計ガイド: reference/インフラ設計ガイド.md
       - コーディングとテストガイド: reference/コーディングとテストガイド.md
+      - コーディングとテストガイド（AI-DLC 版）: reference/コーディングとテストガイド_AI-DLC版.md
+      - BDD 導入ガイド: reference/BDD導入ガイド.md
       - エクストリームプログラミング: reference/エクストリームプログラミング.md
       - リリースガイド: reference/リリースガイド.md
       - リリース・イテレーション計画ガイド: reference/リリース・イテレーション計画ガイド.md
+      - リリース・イテレーション計画ガイド（AI-DLC 版）: reference/リリース・イテレーション計画ガイド_AI-DLC版.md
       - 環境変数管理ガイド: reference/環境変数管理ガイド.md
       - 言語別開発ガイド: reference/言語別開発ガイド.md
       - Java アプリケーション環境構築ガイド: reference/Javaアプリケーション環境構築ガイド.md
