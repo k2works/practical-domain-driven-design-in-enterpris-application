@@ -26,8 +26,8 @@ okf_version: "0.2"
 | [運用](./operation/index.md) | 環境構築、デプロイ、運用手順の整理                   | `index.md` を整備済み |
 | [レビュー](./review/index.md) | 分析・開発レビュー結果の記録                      | `index.md` を整備済み |
 | [ADR](./adr/index.md) | Architecture Decision Records の管理   | `index.md` を整備済み |
-| [記事](./article/index.md) | 学習用の記事シリーズ一覧                        | `index.md` を整備済み |
-| [リファレンス](./reference/index.md) | 開発ガイドラインやベストプラクティス                  | 38 件のドキュメントを配置 |
+| [記事](./article/index.md) | 学習用の記事シリーズ一覧                        | 公開サイトへのリンク集 |
+| [リファレンス](./reference/index.md) | 開発ガイドラインやベストプラクティス                  | 39 件のドキュメントを配置 |
 | [テンプレート](./template/index.md) | 各種ドキュメントの作成テンプレート                   | 18 件のテンプレートを配置 |
 
 ## 補足
