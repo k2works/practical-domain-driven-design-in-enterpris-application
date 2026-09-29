@@ -1,5 +1,8 @@
 # Docs Update Log
 
+## 2026-09-26
+* **Creation**: [BDD導入ガイド](/reference/BDD導入ガイド.md) を作成（claude-code/claude-opus-5）
+
 ## 2026-09-12
 * **Verification**: [AI-DLC用語集](/reference/AI-DLC用語集.md) を human:kakimomokuri が検証
 * **Verification**: [コーディングとテストガイド_AI-DLC版](/reference/コーディングとテストガイド_AI-DLC版.md) を human:kakimomokuri が検証
