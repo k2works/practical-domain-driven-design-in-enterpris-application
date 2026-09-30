@@ -1,5 +1,11 @@
 # Docs Update Log
 
+## 2026-09-30
+* **Verification**: [requirements_definition](/requirements/cargo-tracker/requirements_definition.md) を human:kakimomokuri が検証
+* **Update**: ビジネスコンテキスト図で荷主と荷受人を顧客のサブタイプに変更
+* **Update**: ビジネスコンテキスト図の PlantUML 構文を修正
+* **Creation**: RDRA 2.0 に基づく cargo-tracker の要件定義書を作成
+
 ## 2026-09-29
 * **Creation**: A 社の戦略成果物一式をプロダクト、アーキテクチャ、UX、テスト、利用者の 5 視点でレビューし、条件付き承認と改善方針を記録。
 * **Creation**: A 社のビジネスアーキテクチャを基に、プロジェクトの方向性を 10 の問いで整理したインセプションデッキを作成。

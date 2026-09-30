@@ -8,3 +8,4 @@
 | :--- | :--- | :--- |
 
 ADR の作成には `creating-adr` スキルを使用してください。
+- [cargo-tracker](./cargo-tracker/index.md)
