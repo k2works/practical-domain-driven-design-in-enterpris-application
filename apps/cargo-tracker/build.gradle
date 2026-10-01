@@ -89,7 +89,8 @@ tasks.named('bootRun') {
 spotless {
 	java {
 		target 'src/**/*.java'
-		palantirJavaFormat()
+		// 版を固定する。Spotless の更新で書式だけの差分が混ざらないように（上げるときは書式だけのコミットに分ける）
+		palantirJavaFormat('2.98.0')
 		removeUnusedImports()
 		trimTrailingWhitespace()
 		endWithNewline()
@@ -105,7 +106,8 @@ checkstyle {
 
 spotbugs {
 	toolVersion = '4.10.4'
-	effort = com.github.spotbugs.snom.Effort.valueOf('MAX')
+	effort = com.github.spotbugs.snom.Effort.MAX
+	// Confidence の定数は本体を持つ enum のため、Groovy で直接書くとクラスとして解釈される。valueOf で指定する
 	reportLevel = com.github.spotbugs.snom.Confidence.valueOf('MEDIUM')
 	excludeFilter = file('config/spotbugs/exclude.xml')
 }
@@ -123,7 +125,9 @@ tasks.named('spotbugsTest') {
 
 // AT-06: 本番の実行クラスパスに H2・Hibernate ORM・JPA を含めない（ADR-007、テスト戦略）。
 // bootJar が使う productionRuntimeClasspath を検査する（runtimeClasspath は bootRun 用に developmentOnly を含む）
-def forbiddenInProduction = ['com.h2database:h2', 'org.hibernate.orm:hibernate-core', 'jakarta.persistence:jakarta.persistence-api']
+// 座標の完全一致ではなくグループの接頭辞で照合し、旧グループや別名をすり抜けさせない。Bean Validation の実装（org.hibernate.validator）は許す
+def forbiddenGroupPrefixes = ['com.h2database', 'org.hibernate', 'jakarta.persistence', 'javax.persistence']
+def allowedGroupPrefixes = ['org.hibernate.validator']
 tasks.register('verifyProductionClasspath') {
 	group = 'verification'
 	description = 'AT-06: 本番の実行クラスパスに H2・Hibernate ORM・JPA が含まれないことを確かめる'
@@ -145,8 +149,16 @@ tasks.register('verifyProductionClasspath') {
 		modules
 	}
 	inputs.property('runtimeModules', runtimeModules)
+	inputs.property('forbiddenGroupPrefixes', forbiddenGroupPrefixes)
+	inputs.property('allowedGroupPrefixes', allowedGroupPrefixes)
 	doLast {
-		def found = runtimeModules.get().findAll { forbiddenInProduction.contains(it) }
+		def forbidden = inputs.properties.forbiddenGroupPrefixes
+		def allowed = inputs.properties.allowedGroupPrefixes
+		def found = runtimeModules.get().findAll { module ->
+			def group = module.substring(0, module.indexOf(':'))
+			def matches = { prefix -> group == prefix || group.startsWith(prefix + '.') }
+			forbidden.any(matches) && !allowed.any(matches)
+		}
 		if (!found.isEmpty()) {
 			throw new GradleException("本番の実行クラスパスに含めてはいけない依存があります: ${found}")
 		}
@@ -187,7 +199,14 @@ def layerVerifications = coverageThresholds.collect { layer, threshold ->
 		dependsOn 'test'
 		executionData.from(tasks.named('test').map { it.extensions.getByType(JacocoTaskExtension).destinationFile })
 		sourceDirectories.from(sourceSets.main.allJava.srcDirs)
-		classDirectories.from(sourceSets.main.output.classesDirs.asFileTree.matching { include pattern })
+		def layerClasses = sourceSets.main.output.classesDirs.asFileTree.matching { include pattern }
+		classDirectories.from(layerClasses)
+		// JaCoCo の閾値は対象が 0 件（分母 0）のとき黙って通る。パッケージ名の変更などで何も拾わなくなったら失敗させる
+		doFirst {
+			if (layerClasses.isEmpty()) {
+				throw new GradleException("カバレッジの検証（${layer}）の対象クラスがありません: ${pattern}")
+			}
+		}
 		violationRules {
 			rule {
 				limit {
@@ -210,9 +229,5 @@ tasks.named('check') {
 	dependsOn layerVerifications
 }
 
-// SonarQube（ローカルの品質ゲート。operating-qt）。接続先とトークンは ops/scripts/sonar_local.js が渡す
-sonar {
-	properties {
-		property 'sonar.coverage.jacoco.xmlReportPaths', layout.buildDirectory.file('reports/jacoco/test/jacocoTestReport.xml').get().asFile.path
-	}
-}
+// SonarQube（ローカルの品質ゲート。operating-qt）。接続先とトークンは ops/scripts/sonar_local.js が渡す。
+// JaCoCo の XML は jacoco プラグインから自動で連携されるため、ここでは設定しない
