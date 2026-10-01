@@ -11,6 +11,7 @@ cargo-tracker プロジェクトの設計ドキュメントです。
 - [cargo-tracker UI 設計](./ui_design.md) — 画面のオブジェクト、画面一覧、画面遷移、主要画面のイメージ、共通部品、エラー時を含むインタラクション。
 - [cargo-tracker テスト戦略](./test_strategy.md) — テスト形状、テストレベル、BDD のシナリオ階層とタグ規約、不変条件・ストーリーとテストの対応、カバレッジ、CI。
 - [cargo-tracker 非機能要件](./non_functional.md) — 性能・可用性・復旧・鮮度・セキュリティ・プライバシー・保持・監視の目標値、根拠、決定者、検証方法。
+- [cargo-tracker 運用要件](./operation.md) — 運用体制、定常運用、監視と通知、バックアップと復旧、ランブック、変更管理、DB 権限の初期化、運用タスク。
 - [cargo-tracker 技術スタック](./tech_stack.md) — バックエンド・画面・DB・テスト・ビルド・インフラの技術、バージョン、サポート期限、アップグレード計画。
 - [cargo-tracker インフラストラクチャアーキテクチャ](./architecture_infrastructure.md) — デプロイ形態、環境構成、データ保護、可観測性、CI/CD。
 
