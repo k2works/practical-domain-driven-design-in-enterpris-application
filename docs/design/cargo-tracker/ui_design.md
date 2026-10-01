@@ -4,7 +4,7 @@ title: "cargo-tracker UI 設計"
 description: "cargo-tracker の顧客 Web と社内業務 Web の画面オブジェクト、システムメタファー、画面一覧、画面遷移、主要画面のイメージ、共通部品（WCAG 2.2 AA）、エラー時を含むインタラクション。"
 tags: [design, ui]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-01T08:53:08Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-01T12:14:33Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T07:57:45Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:01:39Z }
@@ -131,6 +131,16 @@ verified:
 | S-22 | KPI の照会 | KPI-01・KPI-02 の週次の値と基準値を見る | 照会、基準値の登録 | 監査担当者 | US-21 |
 
 画面は共通 7、顧客 Web 17、社内業務 Web 24 の計 48 である。
+
+### URL の決まり
+
+画面ごとの URL は、領域（`/customer/**`・`/staff/**`）の下に、扱う資源を英語の複数形で置く。作成は `/new`、提出後の画面は資源の ID の下に置く（PRG のリダイレクト先）。実装した画面から順に、次の表に足す。
+
+| 画面 | URL | 備考 |
+| :--- | :--- | :--- |
+| C-03 見積依頼の作成・編集 | `GET /customer/transport-requests/new`、`POST /customer/transport-requests` | Bolt 1 は出発地・目的地だけの最小形 |
+| C-03 の提出の完了 | `GET /customer/transport-requests/{id}/submitted` | 輸送要求 ID と状態を示す。C-04 見積依頼の詳細ができたらそちらへ統合する |
+| S-22 KPI の照会（前身の仮の画面） | `GET /staff/kpi-observations` | Bolt 1 は輸送要求ごとの提出時刻の一覧だけ。週次の値と基準値は US-21 の Bolt で作る |
 
 ## ナビゲーションとレイアウト
 

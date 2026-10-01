@@ -4,7 +4,7 @@ title: "cargo-tracker バックエンドアーキテクチャ"
 description: "cargo-tracker の境界づけられたコンテキスト、コンテキストごとのドメインロジックパターン、パッケージ構成、サガとドメインイベントによる連携（ARCH-HO-01〜03）、受信サービスの方針。"
 tags: [design, architecture, backend]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-01T08:48:16Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-01T12:14:33Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T07:11:12Z }
   - { by: human:kakimomokuri, at: 2026-10-01T07:41:04Z }
@@ -250,6 +250,12 @@ package "<context>" {
 - `domain` はフレームワークに依存しない（第 3 章）。
 - コンテキストは他コンテキストの `domain`・`infrastructure` を参照しない。参照してよいのは公開 API とドメインイベントだけ。
 - 依存は `interfaces` → `application` → `domain` ← `infrastructure` の向きに限る。
+
+Bolt 1 の実装で次を決めた。
+
+- 各コンテキストの `domain.events` は、Spring Modulith の名前付きインターフェース（`@NamedInterface("events")`）として公開する。他のコンテキストはこのパッケージのイベントの型だけを参照できる。イベントは他のコンテキストのドメインの型を持たず、UUID と共有カーネルの型だけで表す
+- MyBatis の型ハンドラーなど、コンテキストに属さない技術的な部品は基盤（`platform`）モジュールに置き、設定（`mybatis.type-handlers-package`）を通してだけ使う。コンテキストのコードから `platform` を参照しない
+- アプリケーションサービスは各コンテキストの `infrastructure.config` で Bean として組み立てる（`@Service` を付けない）
 
 横断の取り決めは次のとおり。
 

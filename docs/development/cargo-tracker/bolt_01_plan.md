@@ -4,7 +4,7 @@ title: "Bolt 1 計画 - ウォーキングスケルトン"
 description: "最初の Bolt（ウォーキングスケルトン）の計画。輸送要求の提出が DE-01 で KPI 計測に届き画面に表示される縦割りを、Bolt ゴール・仮説・10 のステップ・確認ポイントで定義する。"
 tags: [development,bolt-plan]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-01T10:25:22Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-01T12:14:33Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T10:25:23Z }
 ---
@@ -252,45 +252,45 @@ S22 : 輸送要求 ID・提出時刻の一覧
 
 状態の記号: `[ ]` 未着手、`[-]` 進行中、`[?]` 承認待ち、`[R]` 修正中、`[x]` 完了、`[S]` スキップ。**【要確認】** の付いたステップは、実行の前に人の確認を取る。
 
-- [ ] **1. プロジェクトを作る（設計・準備）** 【要確認: `apps/cargo-tracker/` への新規ファイルの作成】
+- [x] **1. プロジェクトを作る（設計・準備）** 【要確認: `apps/cargo-tracker/` への新規ファイルの作成】
   - `apps/cargo-tracker/` に Gradle（Groovy DSL）のプロジェクトを、Spring Initializr で Gradle Wrapper ごと生成する（2026-10-01 に人が決定）。
   - 依存は技術スタックのとおり（Spring Boot 4.1.x、Spring Modulith 2.1.x、MyBatis 4.1.0、`spring-boot-flyway`、H2 は `developmentOnly`、Testcontainers、Cucumber 8.0.x、ArchUnit 1.5.x、Thymeleaf）。Spring Security は入れない。
   - 基底パッケージは `com.example.cargotracker`（2026-10-01 に人が決定。第 3 章と同じ）。
   - Spring Initializr の MyBatis は Spring Boot 4.0 系までしか選べないため、MyBatis 4.1.0 は生成後に `build.gradle` へ足す。
   - 完了の判定: `./gradlew build` が通る（テストなし）。
-- [ ] **2. アーキテクチャテストを書く（Red → Green）**
+- [x] **2. アーキテクチャテストを書く（Red → Green）**
   - `ApplicationModules.of(...).verify()`（AT-03）と、`domain` がフレームワークに依存しない ArchUnit のルール（AT-01）を書き、空の `quotation`・`identity` モジュールで通す。
   - 完了の判定: アーキテクチャテストが通る。わざと `domain` から Spring を参照すると失敗することを一度確かめる。
-- [ ] **3. 受入シナリオを書く（Red）**
+- [x] **3. 受入シナリオを書く（Red）**
   - `src/test/resources/features/quotation/walking_skeleton.feature`（`# language: ja`、Feature のタグ `@walking-skeleton @US-01 @US-21 @must`）に 1 シナリオを書く: 「荷主が出発地 JPTYO・目的地 NLRTM の輸送要求を提出すると、KPI 計測記録に提出時刻が記録される」。
   - シナリオには `@US-nn-ACm` を付けない。受入条件を部分的にしか満たさない骨格のシナリオを、受入条件の達成として数えないためである。US-01 の AC1 などのシナリオは W1 の後続の Bolt で書き、受入条件の数との照合（テスト戦略）は `@walking-skeleton` を除外して行う。
   - ステップ定義は見積りの入力ポートだけを呼び、リポジトリはメモリ上の実装、Clock は固定、イベントはテスト用の同期の配信で届ける（テスト戦略）。
   - 完了の判定: シナリオが「未実装」で失敗する。
-- [ ] **4. 共有カーネルとドメインを作る（TDD）**
+- [x] **4. 共有カーネルとドメインを作る（TDD）**
   - `shared`: UTC 時点（`UtcInstant`）、場所（`Location`。UN/LOCODE の 5 文字の形式の検証）。ユニットテストを先に書く。
   - `shared.annotation.ddd`: この Bolt で使う語彙の注釈 `@AggregateRoot`・`@ValueObject`・`@DomainEvent` を定義し、作るクラスに付ける（開発戦略の Living Documentation、序盤の重点）。
   - `quotation.domain`: 輸送要求（`TransportRequest`）の最小形。輸送条件（`ShipmentTerms`）は出発地・目的地だけを持ち、「提出する」で版 1 の輸送要求版（`TransportRequestVersion`、提出者・提出時刻）を作り、状態を審査中にして DE-01「輸送要求を提出した」（輸送要求 ID、版番号、荷主企業、提出時刻）を生成する。
   - `identity.domain`: KPI 計測記録（`KpiObservation`）の最小形（輸送要求 ID、荷主企業、提出時刻を記録する）。
   - 完了の判定: ユニットテストが通る（場所の形式の誤り、提出時の DE-01 の内容、状態が審査中になることを含む）。
-- [ ] **5. アプリケーション層でつなぐ（Green）**
+- [x] **5. アプリケーション層でつなぐ（Green）**
   - 見積りの入力ポート「輸送要求を提出する」と、アクセス・監査の DE-01 の購読（`@ApplicationModuleListener`）を作る。
   - 完了の判定: ステップ 3 の受入シナリオが通る。
-- [ ] **6. 永続化を作る（Red → Green）** 【要確認: DB スキーマの作成】
+- [x] **6. 永続化を作る（Red → Green）** 【要確認: DB スキーマの作成】
   - Flyway: `db/migration/common/` に `quotation.transport_request`・`quotation.transport_request_version` と `identity.kpi_observation` を、`db/migration/{vendor}/` に Spring Modulith のイベント発行記録の表を作る。版番号は作成日時（ADR-007）。
   - 列はデータモデルの名前と型のまま、この Bolt で使うものだけを作る（`transport_request`: `id`・`shipper_company_id`・`status`・`current_version_no`・`version`、`transport_request_version`: `transport_request_id`・`version_no`・`origin_unlocode`・`destination_unlocode`・`submitted_by`・`submitted_at`、`kpi_observation`: `transport_request_id`・`shipper_company_id`・`submitted_at`・`excluded`）。残りの列は使う Bolt のマイグレーションで足す。`status` の CHECK 制約はデータモデルの値の一覧のとおりに作る。
   - MyBatis のマッパーとリポジトリの実装。
   - 統合テスト（Testcontainers の PostgreSQL 18）: 輸送要求の保存と読み出し、KPI 計測記録の保存。
   - 完了の判定: 統合テストが通り、`bootRun`（H2）で起動してマイグレーションが通る（仮説 H2）。
-- [ ] **7. イベント配信を統合テストで確かめる**
+- [x] **7. イベント配信を統合テストで確かめる**
   - PostgreSQL 上で、提出と同じトランザクションでイベント発行記録が残り、購読が完了すると KPI 計測記録ができることを、Spring Modulith のテスト（Scenario）で確かめる。
   - 完了の判定: 統合テストが通る（仮説 H3）。
-- [ ] **8. 画面をつなぐ** 【要確認: 画面を目視で確かめる】
+- [x] **8. 画面をつなぐ** 【要確認: 画面を目視で確かめる】
   - 顧客向けの提出画面（C-03 見積依頼の作成・編集の最小形、`/customer/transport-requests/new`）と、社内向けの KPI 計測記録の一覧（S-22 KPI の照会の前身となる仮の画面、`/staff/kpi-observations`）を Thymeleaf で作る。提出は PRG（POST の後に一覧または完了の画面へリダイレクト）にする。MockMvc のテストを先に書く。
   - 完了の判定: MockMvc のテストが通り、H2 で起動して画面から提出すると一覧に提出時刻が表示される。
-- [ ] **9. 検証する**
+- [x] **9. 検証する**
   - `./gradlew check`（ユニット・アーキテクチャ・受入シナリオ・統合テスト）がすべて通る。
   - 実行時間と、各ステップの承認ゲートの通過数・変更依頼の数を記録する。
-- [ ] **10. Bolt 終了報告とゲート密度の判断** 【要確認: 以降の進め方の選択】
+- [?] **10. Bolt 終了報告とゲート密度の判断** 【要確認: 以降の進め方の選択】
   - `bolt_01_report.md` に Bolt 終了報告（成果・指標・仮説の結論・判断と学び）を書く。
   - ウォーキングスケルトンの結果から、次の Bolt 以降を「各ステップでゲート」と「自律実行」のどちらで進めるかを、人が 1 回だけ選ぶ（AI-DLC 版ガイド 2.3）。
 
@@ -355,7 +355,7 @@ S22 : 輸送要求 ID・提出時刻の一覧
 | :--- | :--- | :--- |
 | 1 | H2 で起動し、`/customer/transport-requests/new` から JPTYO → NLRTM を提出する | 提出が受け付けられ、輸送要求 ID が表示される |
 | 2 | `/staff/kpi-observations` を開く | デモ 1 の輸送要求の提出時刻（UTC）が一覧に出る |
-| 3 | 出発地に `TOKYO` など形式の誤りを入れて提出する | 誤りが示され、提出されない |
+| 3 | 出発地に `TYO` など形式の誤りを入れて提出する（`TOKYO` は形式に合うため使わない） | 誤りが示され、提出されない |
 | 4 | `./gradlew check` を実行する | すべて通る（受入シナリオ `@walking-skeleton`、統合テスト、アーキテクチャテスト） |
 
 ## 更新履歴
@@ -366,6 +366,7 @@ S22 : 輸送要求 ID・提出時刻の一覧
 | 2026-10-01 | 開始準備の検証を反映: 対象ストーリー、開発戦略との対応、設計 4 図、リスク、完了条件を追加。表をデータモデルの `transport_request_version` に合わせ、受入シナリオのタグと注釈の語彙を開発戦略・テスト戦略に合わせた | anthropic/claude-opus-5-5 | human:kakimomokuri |
 | 2026-10-01 | 開発戦略に合わせ、入力に開発ガイドラインの第 1 章と第 3 章の節を挙げた | anthropic/claude-opus-5-5 | human:kakimomokuri |
 | 2026-10-01 | 生成の方法（Spring Initializr）と基底パッケージ（`com.example.cargotracker`）の決定を反映し、計画を承認 | anthropic/claude-opus-5-5 | human:kakimomokuri |
+| 2026-10-01 | ステップ 1〜9 を完了とし、ステップ 10 を人の判断待ちにした。デモ 3 の誤りの例を `TYO` に直した。結果は [Bolt 1 終了報告](bolt_01_report.md) | anthropic/claude-opus-5-5 | 承認待ち |
 
 ## 関連ドキュメント
 

@@ -106,6 +106,7 @@ nav:
           - リリース計画: development/cargo-tracker/release_plan.md
           - 開発戦略: development/cargo-tracker/development_strategy.md
           - Bolt 1 計画: development/cargo-tracker/bolt_01_plan.md
+          - Bolt 1 終了報告: development/cargo-tracker/bolt_01_report.md
   - 運用:
       - 概要: operation/index.md
   - レビュー:
