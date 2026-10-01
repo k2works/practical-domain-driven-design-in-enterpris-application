@@ -4,9 +4,10 @@ title: "cargo-tracker ドメインモデル"
 description: "cargo-tracker の業務領域の分類、ユビキタス言語、6 つの境界づけられたコンテキストの集約・エンティティ・値オブジェクト・ドメインルール、コマンド・クエリ・イベント、予約サガ。"
 tags: [design, domain-model, ddd]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-01T07:33:01Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-01T07:44:42Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T07:41:04Z }
+  - { by: human:kakimomokuri, at: 2026-10-01T07:48:17Z }
 ---
 
 # cargo-tracker ドメインモデル
@@ -72,7 +73,7 @@ quadrantChart
 | :--- | :--- | :--- | :--- |
 | 輸送要求 | TransportRequest | 荷主が見積りを依頼する輸送条件のまとまり。本予約までの版を持つ | 見積り |
 | 輸送要求版 | TransportRequestVersion | 輸送要求のある時点の条件。提出後は不変で、変更は新しい版になる | 見積り |
-| 輸送条件 | ShipmentTerms | 出発地、目的地、希望到着期限、貨物、必要書類の組 | 見積り（共有の写しは予約・経路設計） |
+| 輸送条件 | ShipmentTerms | 荷受人、出発地、目的地、希望到着期限、貨物、必要書類の組 | 見積り（共有の写しは予約・経路設計） |
 | 貨物種別 | CargoCategory | 一般、危険物、冷凍、その他特殊。MVP は一般だけを受け付ける（BR-03） | 見積り |
 | 審査 | Review | 営業担当者が提出条件と書類の充足を判断すること | 見積り |
 | 見積り | Quotation | 審査済みの輸送要求版に対する料金根拠と有効期限の提示 | 見積り |
@@ -190,6 +191,7 @@ package "輸送要求集約" {
     提出時刻 : UtcInstant
   }
   class "輸送条件\n(ShipmentTerms)" as Terms <<値オブジェクト>> {
+    荷受人企業 ID : CompanyId
     出発地 : Location
     目的地 : Location
     希望到着期限 : UtcInstant
@@ -289,7 +291,7 @@ title 見積りの状態遷移（要件定義の見積り状態モデルと同�
 
 | ID | 不変条件・ルール | 根拠 |
 | :--- | :--- | :--- |
-| Q-INV-01 | 提出には必須条件（出発地、目的地、希望到着期限、貨物、必要書類）がそろっていること。不足していれば下書きのまま不足項目を返す | US-01 |
+| Q-INV-01 | 提出には必須条件（荷受人、出発地、目的地、希望到着期限、貨物、必要書類）がそろっていること。不足していれば下書きのまま不足項目を返す | US-01 |
 | Q-INV-02 | 貨物種別が一般以外の輸送要求は提出できない。手動窓口を案内する | BR-03、US-01 |
 | Q-INV-03 | 提出された輸送要求版は変更できない。変更は新しい版を作る | BR-04、US-05 |
 | Q-INV-04 | 審査の確定は最新版に対してだけ行える。古い版の審査確定は拒否する | US-02 |
@@ -471,7 +473,7 @@ class "予約版\n(BookingVersion)" as BV <<エンティティ>> {
   予約版番号
   見積り ID
   経路版（案件 ID・版番号）
-  貨物の写し
+  貨物・荷受人の写し
   荷主承認者
   確定者
   commit 時刻

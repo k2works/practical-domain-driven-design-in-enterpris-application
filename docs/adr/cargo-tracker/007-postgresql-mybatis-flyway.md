@@ -4,9 +4,10 @@ title: "ADR-007: 開発環境は H2、本番は PostgreSQL 18 を使い、永続
 description: "開発体験を優先してローカルのアプリ起動は H2、ステージング・本番と SQL を検証するテストは PostgreSQL 18 を使い、永続化に MyBatis、マイグレーションに Flyway を使う決定。"
 tags: [adr, tech-stack]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-01T07:27:33Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-01T07:48:16Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T07:29:05Z }
+  - { by: human:kakimomokuri, at: 2026-10-01T07:48:17Z }
 ---
 
 # ADR-007: 開発環境は H2、本番は PostgreSQL 18 を使い、永続化は MyBatis、スキーマは Flyway で管理する
@@ -21,7 +22,7 @@ verified:
 
 ## コンテキスト
 
-- ADR-001 で、DB は 1 つにし、コンテキストごとにスキーマと DB 利用者を分けると決めた。
+- ADR-001 で、DB は 1 つにし、コンテキストごとにスキーマを分けると決めた。
 - ADR-002 で、集約は状態保存とし、版の不変性と追跡の主要実績の追記専用を守ると決めた。
 - BR-10 は、時刻を UTC の時点として保存することを求める。
 - 開発ガイドライン第 3 章は、MyBatis（JPA は不採用）と Flyway を使い、H2 はローカルでのアプリ起動だけに使う（`developmentOnly`）としている。
@@ -71,7 +72,7 @@ verified:
 - 本番の実行クラスパスに H2・Hibernate ORM・JPA が含まれないことをビルドで検証する。
 - リポジトリのテストは Testcontainers の PostgreSQL 18 で実行し、H2 でリポジトリのテストを書かない。
 - CI で、H2 でアプリが起動しマイグレーションが通ることをスモークテストで確認する。
-- 各コンテキストの DB 利用者が、自スキーマ以外に権限を持たないことを PostgreSQL の統合テストで確認する。
+- 追記専用の表について、アプリケーションの DB 利用者が UPDATE・DELETE できないことを PostgreSQL の統合テストで確認する。
 
 ## 備考
 

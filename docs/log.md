@@ -1,6 +1,18 @@
 # Docs Update Log
 
 ## 2026-10-01
+* **Verification**: [data_model](/design/cargo-tracker/data_model.md) を human:kakimomokuri が検証
+* **Verification**: [domain_model](/design/cargo-tracker/domain_model.md) を human:kakimomokuri が検証
+* **Verification**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を human:kakimomokuri が検証
+* **Verification**: [architecture_infrastructure](/design/cargo-tracker/architecture_infrastructure.md) を human:kakimomokuri が検証
+* **Verification**: [007-postgresql-mybatis-flyway](/adr/cargo-tracker/007-postgresql-mybatis-flyway.md) を human:kakimomokuri が検証
+* **Verification**: [001-modular-monolith](/adr/cargo-tracker/001-modular-monolith.md) を human:kakimomokuri が検証
+* **Update**: DB 利用者を 1 つにしスキーマ境界を SQL の静的検査で守る方式へ改訂（human:kakimomokuri の決定）
+* **Update**: DB 利用者を 1 つにしスキーマ境界を SQL の静的検査で守る方式へ改訂（human:kakimomokuri の決定）
+* **Update**: DB 利用者を 1 つにしスキーマ境界を SQL の静的検査で守る方式へ改訂（human:kakimomokuri の決定）
+* **Update**: DB 利用者を 1 つにしスキーマ境界を SQL の静的検査で守る方式へ改訂（human:kakimomokuri の決定）
+* **Update**: 輸送条件に荷受人を追加（データモデル設計で判明）
+* **Creation**: [data_model](/design/cargo-tracker/data_model.md) を草案として作成
 * **Verification**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を human:kakimomokuri が検証
 * **Verification**: [domain_model](/design/cargo-tracker/domain_model.md) を human:kakimomokuri が検証
 * **Update**: ドメインモデル設計で判明したイベントによる逆向きの連携 2 件をコンテキストマップに追加
