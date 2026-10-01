@@ -7,7 +7,8 @@ cargo-tracker プロジェクトの開発ドキュメントです。
 - [リリース計画 - cargo-tracker](./release_plan.md) — MVP を 3 段階（最初の縦の流れ、パイロット準備完了、本格展開前）で届ける計画。1 人 + AI、時間単位の Bolt（= イテレーション）と週次の見直し、Unit のエントロピー評価、SP、パイロット開始の条件、引継ぎ ID の台帳。
 - [開発戦略 - cargo-tracker](./development_strategy.md) — W1〜W14 を序盤（アウトサイドイン）・中盤（インサイドアウト）・終盤（アウトサイドイン）に分け、週ごとのデモ項目を受入シナリオにし、Living Documentation でドキュメントをコードと同期させる戦略。
 - [Bolt 1 計画 - ウォーキングスケルトン](./bolt_01_plan.md) — 輸送要求の提出が DE-01 で KPI 計測に届き画面に表示される縦割りを作る最初の Bolt の計画（完了）。
-- [Bolt 2 計画 - CI と品質の安全網](./bolt_02_plan.md) — GitHub Actions の CI、静的解析、カバレッジの閾値、AT-02・AT-06、SonarQube の品質ゲートを入れる Bolt の計画（状態: 計画済み、承認済み）。
+- [Bolt 2 計画 - CI と品質の安全網](./bolt_02_plan.md) — GitHub Actions の CI、静的解析、カバレッジの閾値、AT-02・AT-06、SonarQube の品質ゲートを入れる Bolt の計画（完了）。
+- [Bolt 2 終了報告](./bolt_02_report.md) — CI（約 2 分で緑）、静的解析、カバレッジの閾値、AT-02・AT-06、SonarQube の品質ゲート PASS の結果と、仮説 H1〜H4 の結論（状態: 人の承認待ち）。
 - [Bolt 1 終了報告](./bolt_01_report.md) — ウォーキングスケルトンの成果、デモ項目の結果、品質ゲート、仮説 H1〜H4 の結論、ふりかえり（KPT）、持ち越した負債、以降のゲート密度の提案（状態: クローズ済み、承認済み）。
 
 ## 補足
