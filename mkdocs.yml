@@ -80,6 +80,11 @@ nav:
       - cargo-tracker:
           - 概要: requirements/cargo-tracker/index.md
           - 要件定義: requirements/cargo-tracker/requirements_definition.md
+          - ビジネスユースケース: requirements/cargo-tracker/business_usecase.md
+          - システムユースケース: requirements/cargo-tracker/system_usecase.md
+          - ユーザーストーリー: requirements/cargo-tracker/user_story.md
+          - Unit 定義: requirements/cargo-tracker/units.md
+          - ユースケース作成計画: requirements/cargo-tracker/usecase_plan.md
   - 設計:
       - 概要: design/index.md
   - 開発:
@@ -89,6 +94,7 @@ nav:
   - レビュー:
       - 概要: review/index.md
       - 戦略成果物レビュー（2026-09-29）: review/戦略成果物_review_20260929.md
+      - cargo-tracker ユースケースレビュー（2026-09-30）: review/cargo-tracker/usecases_review_20260930.md
   - ADR:
       - 概要: adr/index.md
   - 記事:

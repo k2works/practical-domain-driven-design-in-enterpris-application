@@ -1,6 +1,61 @@
 # Docs Update Log
 
+## 2026-10-01
+* **Update**: MkDocs ビルド成功を確認しユースケース作成計画の仕上げを完了
+* **Update**: 仕上げ状態、Gate 4 承認記録、検証結果を実態に同期
+* **Verification**: [usecases_review_20260930](/review/cargo-tracker/usecases_review_20260930.md) を human:kakimomokuri が検証
+* **Verification**: [usecase_plan](/requirements/cargo-tracker/usecase_plan.md) を human:kakimomokuri が検証
+* **Verification**: [units](/requirements/cargo-tracker/units.md) を human:kakimomokuri が検証
+* **Verification**: [user_story](/requirements/cargo-tracker/user_story.md) を human:kakimomokuri が検証
+* **Verification**: [system_usecase](/requirements/cargo-tracker/system_usecase.md) を human:kakimomokuri が検証
+* **Verification**: [business_usecase](/requirements/cargo-tracker/business_usecase.md) を human:kakimomokuri が検証
+* **Verification**: [requirements_definition](/requirements/cargo-tracker/requirements_definition.md) を human:kakimomokuri が検証
+* **Update**: Gate 4 の人による契約再承認を記録
+* **Update**: H-01〜H-13 の修正後に 5 視点で差分再レビューを実施
+* **Update**: パイロット初期情報源・KPI 改善幅・完了予約の定義を確定
+* **Update**: 横断 UI 契約の適用範囲と支援技術への状態通知を明確化
+* **Update**: パイロット例外の有人代替・評価母集団・二段階完了条件を確定
+* **Update**: 見積り・経路・予約・追跡の禁止状態遷移と回復規則を確定
+* **Update**: パイロット認証・固定役割・職務分離・実績訂正承認を確定
+* **Update**: Unit 間整合性と横断 NFR を後続分析への必須引継ぎとして ID 化
+* **Update**: WCAG 2.2 AA・エラー回復・重要操作確認を横断 UI 契約として確定
+* **Update**: パイロットの母集団・観測期間・継続延長中止条件を確定
+* **Update**: 初期パイロットの価値・リスク・代替可否でストーリー優先度を再分類
+* **Update**: レビュー H-08 の前方・後方トレース不整合を修正
+* **Update**: 外部原本の冪等性キー・衝突隔離・復旧完了条件を確定
+* **Update**: 経路の到着期限・接続時間境界と再設計判定を確定
+* **Update**: 見積有効期限の日時境界とタイムゾーン規約を確定
+* **Update**: MVP の有人引継ぎを受付から回答・終結まで閉ループ化
+
 ## 2026-09-30
+* **Update**: 荷受人の予約単位参照許可と開示範囲を確定
+* **Update**: MVP の予約確定を荷主担当者 1 名の承認と営業担当者確認に確定
+* **Update**: OQ-04 の変更・取消し可能段階と営業承認規則を確定
+* **Update**: OQ-03 の MVP 境界を一般貨物に限定し特殊貨物を後続へ移動
+* **Update**: レビュー H-01 の対応とゲート 4 再判定条件を記録
+* **Update**: U6 予約管理を分離して Unit 依存 DAG の循環を解消
+* **Update**: US-04・US-05 を U6 予約管理へ分離し業務順序を統一
+* **Update**: UC-04 の前提を承認済み経路版へ統一し U6 へ分離
+* **Update**: BUC-01→BUC-03→BUC-02 の順序と U6 予約管理を反映
+* **Update**: 予約前に詳細経路を確定する業務順序へ統一
+* **Update**: 入力範囲を UC-18 まで拡張
+* **Update**: U4 の責務と依存契約へ利用者認証を追加
+* **Update**: U4 に利用者認証 US-18 と受入条件を追加
+* **Update**: U4 に利用者認証 UC-18 と認証例外を追加
+* **Update**: U4 に利用者認証のアクター目的 AG-18 を追加
+* **Update**: U4 の認証ユースケース UC-18 を追加
+* **Update**: 5 つの XP 視点によるユースケース成果物レビューを追加
+* **Update**: ゲート 3 の承認とゲート 4 の実行結果を反映
+* **Update**: ゲート 4 として U1〜U5、依存 DAG、対応表、ストーリーマップを作成
+* **Update**: ゲート 4 として 17 件のユーザーストーリーと Given / When / Then 受入条件を作成
+* **Update**: ゲート 2 の承認とゲート 3 の実行結果を反映
+* **Update**: ゲート 3 として業務例外、外部障害、変更・取消し、訂正、段階境界を追加
+* **Update**: ゲート 1 の承認とゲート 2 の実行結果を反映
+* **Update**: ゲート 2 として MVP システムユースケースの主成功シナリオを作成
+* **Update**: ゲート 2 として BUC-01〜BUC-07 の主成功シナリオを追加
+* **Update**: ユースケース作成計画のゲート 1 実績を更新
+* **Creation**: cargo-tracker のビジネスユースケース精度レベル 1 を作成
+* **Creation**: cargo-tracker のユースケース作成計画を追加
 * **Verification**: [requirements_definition](/requirements/cargo-tracker/requirements_definition.md) を human:kakimomokuri が検証
 * **Update**: ビジネスコンテキスト図で荷主と荷受人を顧客のサブタイプに変更
 * **Update**: ビジネスコンテキスト図の PlantUML 構文を修正
