@@ -93,6 +93,7 @@ nav:
           - フロントエンドアーキテクチャ: design/cargo-tracker/architecture_frontend.md
           - インフラストラクチャアーキテクチャ: design/cargo-tracker/architecture_infrastructure.md
           - 技術スタック: design/cargo-tracker/tech_stack.md
+          - ドメインモデル: design/cargo-tracker/domain_model.md
   - 開発:
       - 概要: development/index.md
   - 運用:

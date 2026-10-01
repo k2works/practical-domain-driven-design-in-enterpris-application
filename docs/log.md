@@ -1,6 +1,10 @@
 # Docs Update Log
 
 ## 2026-10-01
+* **Verification**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を human:kakimomokuri が検証
+* **Verification**: [domain_model](/design/cargo-tracker/domain_model.md) を human:kakimomokuri が検証
+* **Update**: ドメインモデル設計で判明したイベントによる逆向きの連携 2 件をコンテキストマップに追加
+* **Creation**: [domain_model](/design/cargo-tracker/domain_model.md) を草案として作成
 * **Verification**: [009-bdd-cucumber](/adr/cargo-tracker/009-bdd-cucumber.md) を human:kakimomokuri が検証
 * **Verification**: [008-aws-container-platform](/adr/cargo-tracker/008-aws-container-platform.md) を human:kakimomokuri が検証
 * **Verification**: [007-postgresql-mybatis-flyway](/adr/cargo-tracker/007-postgresql-mybatis-flyway.md) を human:kakimomokuri が検証

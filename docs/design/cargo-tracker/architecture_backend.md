@@ -4,9 +4,10 @@ title: "cargo-tracker バックエンドアーキテクチャ"
 description: "cargo-tracker の境界づけられたコンテキスト、コンテキストごとのドメインロジックパターン、パッケージ構成、サガとドメインイベントによる連携（ARCH-HO-01〜03）、受信サービスの方針。"
 tags: [design, architecture, backend]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-01T06:54:45Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-01T07:33:01Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T07:11:12Z }
+  - { by: human:kakimomokuri, at: 2026-10-01T07:41:04Z }
 ---
 
 # cargo-tracker バックエンドアーキテクチャ
@@ -124,6 +125,8 @@ end note
 | 外部 → 外部データ | EXT → X | 腐敗防止層 | 提供元の形式を経路規則へ直接漏らさない |
 | アクセス・監査 → 全体 | IA → 全体 | 公開ホスト | 認証方式・監査方式を業務規則へ埋め込まない |
 | 共有カーネル | 全業務コンテキスト | 共有カーネル（第 3 章） | 業務の意味を持たない基本型だけに限る |
+| 追跡 → 予約（イベントのみ） | T → B | 公表された言語（ドメインイベント） | 集荷実績の採用と引渡しの確認だけを通知する。予約は追跡の公開 API・内部に依存しない（[ドメインモデル](domain_model.md) DE-09、DE-10。第 2 章で Booking が Cargo Handled を購読するのと同じ） |
+| 予約 → 見積り（イベントのみ） | B → Q | 公表された言語（ドメインイベント） | 本予約の確定だけを通知し、輸送要求を予約確定済みにする（[ドメインモデル](domain_model.md) DE-07） |
 
 下流のコンテキストは、上流の公開 API を自分の application 層の ACL（腐敗防止層）越しに呼ぶ（第 3 章 `application.internal.outboundservices.acl`）。上流のドメインオブジェクトを自分のドメイン層に持ち込まない。
 
