@@ -4,7 +4,7 @@ title: "AI-DLC 導入ガイド"
 description: "AWS が提唱する AI-DLC（AI-Driven Development Lifecycle）を、Method Definition Paper・AWS 公式ブログ・参照実装 awslabs/aidlc-workflows の一次情報に基づいて整理した導入ガイド。10 の基本原則、成果物（Intent・Unit・Bolt）、3 フェーズと儀式、グリーンフィールド／ブラウンフィールドの実践例、プロンプトパターン、参照実装の 5 フェーズ 33 ステージ、本プロジェクトの XP・Skills 体系への組み込み方をまとめる。"
 tags: [reference]
 status: stable
-generated: { by: claude-code/claude-fable-5-1, at: 2026-09-12T03:55:00Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-01T09:38:25Z }
 sources:
   - id: aidlc-paper
     resource: https://prod.d13rzhkk8cj2z0.amplifyapp.com/aidlc.pdf
@@ -24,6 +24,7 @@ sources:
     author: human:koyakimu
 verified:
   - { by: human:kakimomokuri, at: 2026-09-12T06:25:42Z }
+  - { by: human:kakimomokuri, at: 2026-10-01T09:38:26Z }
 ---
 
 # AI-DLC 導入ガイド
@@ -656,7 +657,7 @@ aidlc config --harness claude
 | XP | AI-DLC | 備考 |
 | :--- | :--- | :--- |
 | 計画ゲーム | Inception（Mob Elaboration） | AI が Intent を Unit とストーリーに分解し、人が優先順位と受入条件を決める |
-| イテレーション | Bolt | 時間・日単位の短いサイクル。イテレーション内で複数の Bolt を回す |
+| イテレーション | Bolt | Bolt がイテレーションに当たる（用語集「AI-DLC における最小のイテレーション」）。時間・日単位の短いサイクルで、1 つの Unit を複数の Bolt で作る |
 | ユーザーストーリー | User Story（Unit の構成要素） | 原則 6 のとおり AI-DLC でもそのまま残る。人と AI の契約 |
 | ペアプログラミング | Mob Construction | AI が選択肢を提示し、人が技術判断とレビューを行う |
 | テスト駆動開発 | 設計技法の中核統合（原則 3） | 論文は DDD フレーバーを扱うが、TDD フレーバーの存在を明記している。TDD の規律は変えない |

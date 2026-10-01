@@ -4,7 +4,7 @@ title: "開発ガイド（AI-DLC 版）"
 description: "開発ガイド（XP 版）の開発ライフサイクル（分析・開発・運用・構築・配置）を AI-DLC の 3 フェーズ（Inception・Construction・Operation）で読み替えた入口ドキュメント。各活動で AI が何を生成し人が何を検証するかを示し、AI-DLC 版の各ガイド（リリース・イテレーション計画、ユースケース作成、コーディングとテスト）と XP 版のガイドへの参照をまとめる。"
 tags: [reference]
 status: stable
-generated: { by: claude-code/claude-fable-5-1, at: 2026-09-12T06:20:00Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-01T09:38:26Z }
 sources:
   - id: dev-guide
     resource: ./開発ガイド.md
@@ -20,6 +20,7 @@ sources:
     author: human:raja-sp
 verified:
   - { by: human:kakimomokuri, at: 2026-09-12T06:25:42Z }
+  - { by: human:kakimomokuri, at: 2026-10-01T09:38:26Z }
 ---
 
 # 開発ガイド（AI-DLC 版）
@@ -100,7 +101,7 @@ AI-DLC は XP を置き換えるものではなく、XP の規律を AI が実�
 | XP | AI-DLC | 備考 |
 | :--- | :--- | :--- |
 | 計画ゲーム | Inception（Mob Elaboration） | AI が Intent を Unit とストーリーに分解し、人が優先順位と受入条件を決める |
-| イテレーション | Bolt | 時間・日単位。イテレーション内で複数の Bolt を回す |
+| イテレーション | Bolt | Bolt がイテレーションに当たる。時間・日単位で、1 つの Unit を複数の Bolt で作る |
 | ユーザーストーリー | User Story（Unit の構成要素） | 人と AI の契約としてそのまま残る |
 | ペアプログラミング | Mob Construction | AI が選択肢を提示し、人が技術判断とレビューを行う |
 | テスト駆動開発 | TDD フレーバーの AI-DLC | 三原則は変えない。AI が回し、人がゲートで検証する |

@@ -1,6 +1,12 @@
 # Docs Update Log
 
 ## 2026-10-01
+* **Verification**: [開発ガイド_AI-DLC版](/reference/開発ガイド_AI-DLC版.md) を human:kakimomokuri が検証
+* **Verification**: [AI-DLC導入ガイド](/reference/AI-DLC導入ガイド.md) を human:kakimomokuri が検証
+* **Verification**: [release_plan](/development/cargo-tracker/release_plan.md) を human:kakimomokuri が検証
+* **Update**: XP との対応表の Bolt とイテレーションの関係を定義に合わせて修正
+* **Update**: XP との対応表の Bolt とイテレーションの関係を定義に合わせて修正
+* **Update**: Bolt をイテレーションとし週を見直しの区切りに改めた（human:kakimomokuri の指示）
 * **Verification**: [release_plan](/development/cargo-tracker/release_plan.md) を human:kakimomokuri が検証
 * **Update**: Bolt を時間単位に改めた（human:kakimomokuri の指示）
 * **Creation**: [release_plan](/development/cargo-tracker/release_plan.md) を作成（anthropic/claude-opus-5-5）
