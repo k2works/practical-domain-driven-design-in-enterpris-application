@@ -22,7 +22,7 @@ okf_version: "0.2"
 | [戦略](./strategy/index.md) | 企業分析、経営戦略、ビジネスアーキテクチャ、インセプションデッキの整理 | `index.md` を整備済み |
 | [要件](./requirements/index.md) | RDRA 2.0 とユースケース整理の入口               | cargo-tracker の要件定義書を作成済み |
 | [設計](./design/index.md) | アーキテクチャ、モデル、テスト、非機能の整理              | cargo-tracker のアーキテクチャ設計・技術スタック・ドメインモデル・データモデル・UI 設計・テスト戦略・非機能要件・運用要件を作成済み |
-| [開発](./development/index.md) | リリース計画、イテレーション計画、進捗管理               | `index.md` を整備済み |
+| [開発](./development/index.md) | リリース計画、イテレーション計画、進捗管理               | cargo-tracker のリリース計画を作成済み |
 | [運用](./operation/index.md) | 環境構築、デプロイ、運用手順の整理                   | `index.md` を整備済み |
 | [レビュー](./review/index.md) | 分析・開発レビュー結果の記録                      | `index.md` を整備済み |
 | [ADR](./adr/index.md) | Architecture Decision Records の管理   | cargo-tracker の ADR-001〜009 を承認済み |

@@ -101,6 +101,9 @@ nav:
           - 運用要件: design/cargo-tracker/operation.md
   - 開発:
       - 概要: development/index.md
+      - cargo-tracker:
+          - 概要: development/cargo-tracker/index.md
+          - リリース計画: development/cargo-tracker/release_plan.md
   - 運用:
       - 概要: operation/index.md
   - レビュー:

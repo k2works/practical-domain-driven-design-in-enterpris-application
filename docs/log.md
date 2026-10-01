@@ -1,6 +1,9 @@
 # Docs Update Log
 
 ## 2026-10-01
+* **Verification**: [release_plan](/development/cargo-tracker/release_plan.md) を human:kakimomokuri が検証
+* **Update**: Bolt を時間単位に改めた（human:kakimomokuri の指示）
+* **Creation**: [release_plan](/development/cargo-tracker/release_plan.md) を作成（anthropic/claude-opus-5-5）
 * **Verification**: [analysis_review_20261001](/review/cargo-tracker/analysis_review_20261001.md) を human:kakimomokuri が検証
 * **Verification**: [user_story](/requirements/cargo-tracker/user_story.md) を human:kakimomokuri が検証
 * **Verification**: [units](/requirements/cargo-tracker/units.md) を human:kakimomokuri が検証
