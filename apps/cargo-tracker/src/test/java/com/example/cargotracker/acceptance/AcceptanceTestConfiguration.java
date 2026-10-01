@@ -10,9 +10,9 @@ import com.example.cargotracker.quotation.domain.events.TransportRequestSubmitte
 import com.example.cargotracker.shared.acceptance.MutableClock;
 import com.example.cargotracker.shared.acceptance.ScenarioContext;
 import io.cucumber.spring.CucumberContextConfiguration;
+import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ContextConfiguration;
 
@@ -25,7 +25,8 @@ import org.springframework.test.context.ContextConfiguration;
 @ContextConfiguration(classes = AcceptanceTestConfiguration.Components.class)
 public class AcceptanceTestConfiguration {
 
-    @Configuration(proxyBeanMethods = false)
+    /** {@code @SpringBootTest} の部品探索に拾われないよう {@code @TestConfiguration} にする。 */
+    @TestConfiguration(proxyBeanMethods = false)
     @Import(ScenarioContext.class)
     static class Components {
 

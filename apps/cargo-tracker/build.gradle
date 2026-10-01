@@ -70,3 +70,8 @@ tasks.named('test') {
 	// 受入シナリオは RunCucumberTest（Suite）からだけ実行し、Cucumber エンジンの直接探索による二重実行を防ぐ
 	systemProperty 'cucumber.junit-platform.discovery.as-root-engine', 'false'
 }
+
+tasks.named('bootRun') {
+	// ローカル起動は H2 の dev プロファイルで動かす（開発体験を優先する。ADR-007）
+	systemProperty 'spring.profiles.active', 'dev'
+}

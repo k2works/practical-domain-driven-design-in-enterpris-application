@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.cargotracker.quotation.infrastructure.persistence.TransportRequestMapper">
+
+    <resultMap id="transportRequestRow" type="com.example.cargotracker.quotation.infrastructure.persistence.TransportRequestRow">
+        <constructor>
+            <idArg column="id" name="id" javaType="java.util.UUID"/>
+            <arg column="shipper_company_id" name="shipperCompanyId" javaType="java.util.UUID"/>
+            <arg column="status" name="status" javaType="String"/>
+            <arg column="current_version_no" name="currentVersionNo" javaType="_int"/>
+            <arg column="version" name="version" javaType="_long"/>
+            <arg column="origin_unlocode" name="originUnlocode" javaType="String"/>
+            <arg column="destination_unlocode" name="destinationUnlocode" javaType="String"/>
+            <arg column="submitted_by" name="submittedBy" javaType="java.util.UUID"/>
+            <arg column="submitted_at" name="submittedAt" javaType="java.time.OffsetDateTime"/>
+        </constructor>
+    </resultMap>
+
+    <insert id="insertTransportRequest">
+        INSERT INTO quotation.transport_request (id, shipper_company_id, status, current_version_no, version)
+        VALUES (#{id}, #{shipperCompanyId}, #{status}, #{currentVersionNo}, #{version})
+    </insert>
+
+    <insert id="insertTransportRequestVersion">
+        INSERT INTO quotation.transport_request_version
+            (transport_request_id, version_no, origin_unlocode, destination_unlocode, submitted_by, submitted_at)
+        VALUES (#{id}, #{currentVersionNo}, #{originUnlocode}, #{destinationUnlocode}, #{submittedBy}, #{submittedAt})
+    </insert>
+
+    <select id="selectById" resultMap="transportRequestRow">
+        SELECT r.id, r.shipper_company_id, r.status, r.current_version_no, r.version,
+               v.origin_unlocode, v.destination_unlocode, v.submitted_by, v.submitted_at
+          FROM quotation.transport_request r
+          JOIN quotation.transport_request_version v
+            ON v.transport_request_id = r.id
+           AND v.version_no = r.current_version_no
+         WHERE r.id = #{id}
+    </select>
+</mapper>

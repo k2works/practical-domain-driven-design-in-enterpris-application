@@ -50,6 +50,14 @@ public class TransportRequest {
     }
 
 
+    /**
+     * 保存されている状態から輸送要求を組み立てる（リポジトリが使う）。イベントは生成しない。
+     */
+    public static TransportRequest reconstitute(TransportRequestId id, CompanyId shipperCompanyId,
+            TransportRequestStatus status, TransportRequestVersion currentVersion) {
+        return new TransportRequest(id, shipperCompanyId, status, currentVersion);
+    }
+
     public TransportRequestId id() {
         return id;
     }

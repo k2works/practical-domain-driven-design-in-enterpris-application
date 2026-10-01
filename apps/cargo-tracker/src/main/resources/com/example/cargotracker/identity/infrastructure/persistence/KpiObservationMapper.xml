@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.cargotracker.identity.infrastructure.persistence.KpiObservationMapper">
+
+    <resultMap id="kpiObservationRow" type="com.example.cargotracker.identity.infrastructure.persistence.KpiObservationRow">
+        <constructor>
+            <idArg column="transport_request_id" name="transportRequestId" javaType="java.util.UUID"/>
+            <arg column="shipper_company_id" name="shipperCompanyId" javaType="java.util.UUID"/>
+            <arg column="submitted_at" name="submittedAt" javaType="java.time.OffsetDateTime"/>
+            <arg column="excluded" name="excluded" javaType="_boolean"/>
+        </constructor>
+    </resultMap>
+
+    <sql id="columns">transport_request_id, shipper_company_id, submitted_at, excluded</sql>
+
+    <insert id="insert">
+        INSERT INTO identity.kpi_observation (<include refid="columns"/>)
+        VALUES (#{transportRequestId}, #{shipperCompanyId}, #{submittedAt}, #{excluded})
+    </insert>
+
+    <select id="selectByTransportRequestId" resultMap="kpiObservationRow">
+        SELECT <include refid="columns"/> FROM identity.kpi_observation WHERE transport_request_id = #{transportRequestId}
+    </select>
+
+    <select id="selectAll" resultMap="kpiObservationRow">
+        SELECT <include refid="columns"/> FROM identity.kpi_observation ORDER BY submitted_at DESC
+    </select>
+</mapper>

@@ -35,6 +35,14 @@ public class KpiObservation {
     }
 
 
+    /**
+     * 保存されている状態から KPI 計測記録を組み立てる（リポジトリが使う）。
+     */
+    public static KpiObservation reconstitute(UUID transportRequestId, CompanyId shipperCompanyId,
+            UtcInstant submittedAt, boolean excluded) {
+        return new KpiObservation(transportRequestId, shipperCompanyId, submittedAt, excluded);
+    }
+
     public UUID transportRequestId() {
         return transportRequestId;
     }
