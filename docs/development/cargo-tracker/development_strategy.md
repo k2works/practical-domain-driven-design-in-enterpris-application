@@ -146,11 +146,13 @@ Bolt 1 で確定したコマンドである。`apps/cargo-tracker/` で実行す
 
 | 目的 | コマンド | 備考 |
 | :--- | :--- | :--- |
-| すべての検証（ユニット・アーキテクチャ・受入シナリオ・統合・Web・H2 のスモーク） | `./gradlew check` | 統合テストは Testcontainers の PostgreSQL 18 を使うため Docker が要る。Bolt 1 の時点で約 1〜2 分 |
+| すべての検証（書式・静的解析・ユニット・アーキテクチャ・受入シナリオ・統合・Web・H2 のスモーク・AT-06・カバレッジの閾値） | `./gradlew check` | 統合テストは Testcontainers の PostgreSQL 18.6 を使うため Docker が要る。Bolt 2 の時点でローカル約 2 分、CI 約 2 分。CI（`.github/workflows/cargo-tracker-ci.yml`）も同じコマンドを動かす |
+| 書式をそろえる | `./gradlew spotlessApply` | palantir-java-format。`check` は `spotlessCheck` で書式の崩れを失敗にする |
+| カバレッジのレポート | `./gradlew jacocoTestReport` | `build/reports/jacoco/test/html/`。閾値の検証はレイヤーごとの `jacocoCoverageVerification*` が `check` で動く |
+| SonarQube の品質ゲート | `npx gulp sonar-local:check`（リポジトリのルートで実行） | ローカルの SonarQube と `.env` の `SONAR_TOKEN` が要る。`check` の後にスキャンし、Quality Gate を判定する。指摘は `npx gulp sonar-local:issues` |
 | 受入シナリオ | `./gradlew test --tests '*RunCucumberTest*'` | 作業中の `@wip` は除外される。結果は `build/reports/cucumber/`。ArchUnit のテストもフィルターに従わず一緒に走る |
 | ローカル起動（H2） | `./gradlew bootRun` | dev プロファイル（H2 の PostgreSQL 互換モード）で起動する |
 | 本番の成果物 | `./gradlew bootJar` | H2 を含まない |
-| カバレッジ、静的解析 | 未設定 | CI と合わせて Bolt 2 で入れる（JaCoCo、Spotless、Checkstyle・SpotBugs、SonarQube） |
 | 設計ドキュメントの生成 | 未設定 | Bolt 3 で入れる（JIG、Spring Modulith の図） |
 
 ---
@@ -435,3 +437,4 @@ Bolt 計画は局所の計画、`docs/design/cargo-tracker/` は全体の正で�
 | 2026-10-01 | Bolt 1 の開始準備の検証を反映: 用語集の整合のテストと JIG・Modulith の図の生成を、CI と合わせて Bolt 2 に移した | anthropic/claude-opus-5-5（承認 human:kakimomokuri） |
 | 2026-10-01 | 開発ガイドライン（`docs/article/` の第 1〜3 章）への準拠を、参照元・準拠の節・局面横断の規律に明記した | anthropic/claude-opus-5-5（承認 human:kakimomokuri） |
 | 2026-10-01 | Bolt 2 の開始準備: 開発基盤の残りを Bolt 2（CI と品質の安全網）と Bolt 3（E2E の基盤、設計ドキュメントの生成）に分けた | anthropic/claude-opus-5-5（承認 human:kakimomokuri） |
+| 2026-10-01 | Bolt 2 の結果を反映: 品質チェックのコマンドに書式・カバレッジ・SonarQube を足し、CI と同じコマンドであることを書いた | anthropic/claude-opus-5-5（承認待ち） |
