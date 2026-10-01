@@ -15,14 +15,15 @@ class LocationTest {
         assertThat(new Location("JPTYO").unLocode()).isEqualTo("JPTYO");
     }
 
-    @Test
-    void 地点コードには2から9の数字を使える() {
-        assertThat(new Location("US2NY").unLocode()).isEqualTo("US2NY");
+    @ParameterizedTest
+    @ValueSource(strings = {"US2NY", "JPTY9"})
+    void 地点コードには2から9の数字を使える(String unLocode) {
+        assertThat(new Location(unLocode).unLocode()).isEqualTo(unLocode);
     }
 
     @ParameterizedTest
     @NullSource
-    @ValueSource(strings = {"", "TYO", "JPTYOO", "jptyo", "JP-TY", "JPTY1", "J1TYO"})
+    @ValueSource(strings = {"", "TYO", "JPTYOO", "jptyo", "JP-TY", "JPTY0", "JPTY1", "J1TYO", " JPTYO"})
     void UN_LOCODEの形式でなければ場所を作れない(String unLocode) {
         assertThatThrownBy(() -> new Location(unLocode))
                 .isInstanceOf(IllegalArgumentException.class)

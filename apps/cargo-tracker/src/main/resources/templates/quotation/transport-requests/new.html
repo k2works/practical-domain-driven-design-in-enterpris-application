@@ -10,14 +10,16 @@
     <form th:action="@{/customer/transport-requests}" th:object="${transportRequestForm}" method="post" novalidate>
         <div>
             <label for="origin">出発地（UN/LOCODE）</label>
-            <input id="origin" type="text" th:field="*{origin}" maxlength="5" autocomplete="off"
-                   th:attr="aria-invalid=${#fields.hasErrors('origin')},aria-describedby=${#fields.hasErrors('origin')} ? 'origin-error'">
+            <p id="origin-hint">例: JPTYO（東京）</p>
+            <input id="origin" type="text" th:field="*{origin}" autocomplete="off"
+                   th:attr="aria-invalid=${#fields.hasErrors('origin')},aria-describedby=${#fields.hasErrors('origin')} ? 'origin-hint origin-error' : 'origin-hint'">
             <p id="origin-error" th:if="${#fields.hasErrors('origin')}" th:errors="*{origin}" role="alert"></p>
         </div>
         <div>
             <label for="destination">目的地（UN/LOCODE）</label>
-            <input id="destination" type="text" th:field="*{destination}" maxlength="5" autocomplete="off"
-                   th:attr="aria-invalid=${#fields.hasErrors('destination')},aria-describedby=${#fields.hasErrors('destination')} ? 'destination-error'">
+            <p id="destination-hint">例: NLRTM（ロッテルダム）</p>
+            <input id="destination" type="text" th:field="*{destination}" autocomplete="off"
+                   th:attr="aria-invalid=${#fields.hasErrors('destination')},aria-describedby=${#fields.hasErrors('destination')} ? 'destination-hint destination-error' : 'destination-hint'">
             <p id="destination-error" th:if="${#fields.hasErrors('destination')}" th:errors="*{destination}" role="alert"></p>
         </div>
         <button type="submit">提出する</button>

@@ -41,6 +41,8 @@ class TransportRequestControllerTest {
 
     private static final CompanyId SHIPPER = new CompanyId(UUID.fromString("00000000-0000-0000-0000-000000000001"));
     private static final UserId USER = new UserId(UUID.fromString("00000000-0000-0000-0000-000000000101"));
+    private static final TransportRequestId ID = new TransportRequestId(
+            UUID.fromString("11111111-1111-1111-1111-111111111111"));
 
     @TestConfiguration(proxyBeanMethods = false)
     @EnableConfigurationProperties(ProvisionalActorProperties.class)
@@ -66,29 +68,64 @@ class TransportRequestControllerTest {
     }
 
     @Test
-    void 輸送要求を提出すると完了画面へリダイレクトする() throws Exception {
-        TransportRequestId id = new TransportRequestId(UUID.fromString("11111111-1111-1111-1111-111111111111"));
-        given(commandService.submit(new SubmitTransportRequestCommand(SHIPPER, USER, new Location("JPTYO"),
-                new Location("NLRTM")))).willReturn(id);
+    void 輸送要求を仮の主体で提出すると完了画面へリダイレクトする() throws Exception {
+        SubmitTransportRequestCommand expected = new SubmitTransportRequestCommand(SHIPPER, USER,
+                new Location("JPTYO"), new Location("NLRTM"));
+        given(commandService.submit(expected)).willReturn(ID);
 
         mockMvc.perform(post("/customer/transport-requests").param("origin", "JPTYO").param("destination", "NLRTM"))
-                .andExpect(redirectedUrl("/customer/transport-requests/" + id.value() + "/submitted"));
+                .andExpect(redirectedUrl("/customer/transport-requests/" + ID.value() + "/submitted"));
+
+        then(commandService).should().submit(expected);
     }
 
     @Test
-    void 場所の形式が誤っていれば提出せず誤りを示す() throws Exception {
+    void 小文字と前後の空白はそろえて提出する() throws Exception {
+        given(commandService.submit(any())).willReturn(ID);
+
+        mockMvc.perform(post("/customer/transport-requests").param("origin", " jptyo ").param("destination", "nlrtm"))
+                .andExpect(redirectedUrl("/customer/transport-requests/" + ID.value() + "/submitted"));
+
+        then(commandService).should().submit(new SubmitTransportRequestCommand(SHIPPER, USER,
+                new Location("JPTYO"), new Location("NLRTM")));
+    }
+
+    @Test
+    void 場所の形式が誤っていれば提出せず誤りと入力値を示す() throws Exception {
         mockMvc.perform(post("/customer/transport-requests").param("origin", "TYO").param("destination", "NLRTM"))
                 .andExpect(status().isOk())
                 .andExpect(view().name("quotation/transport-requests/new"))
                 .andExpect(model().attributeHasFieldErrors("transportRequestForm", "origin"))
-                .andExpect(content().string(containsString("UN/LOCODE")));
+                .andExpect(content().string(containsString("UN/LOCODE（国コード 2 文字 + 地点コード 3 文字、例: JPTYO）")))
+                .andExpect(content().string(containsString("value=\"TYO\"")));
 
         then(commandService).should(never()).submit(any());
     }
 
     @Test
-    void 提出の完了画面に輸送要求IDと審査中を表示する() throws Exception {
-        TransportRequestId id = new TransportRequestId(UUID.fromString("11111111-1111-1111-1111-111111111111"));
+    void 目的地だけが誤っていれば目的地だけに誤りを示す() throws Exception {
+        mockMvc.perform(post("/customer/transport-requests").param("origin", "JPTYO").param("destination", "NL"))
+                .andExpect(status().isOk())
+                .andExpect(model().attributeHasFieldErrors("transportRequestForm", "destination"))
+                .andExpect(model().attributeErrorCount("transportRequestForm", 1));
+
+        then(commandService).should(never()).submit(any());
+    }
+
+    @Test
+    void 空欄なら入力を求める() throws Exception {
+        mockMvc.perform(post("/customer/transport-requests").param("origin", " ").param("destination", ""))
+                .andExpect(status().isOk())
+                .andExpect(model().attributeErrorCount("transportRequestForm", 2))
+                .andExpect(content().string(containsString("出発地を入力してください")))
+                .andExpect(content().string(containsString("目的地を入力してください")));
+
+        then(commandService).should(never()).submit(any());
+    }
+
+    @Test
+    void 提出の完了画面に見積依頼の番号と審査中と次に起きることを表示する() throws Exception {
+        TransportRequestId id = ID;
         given(queryService.findById(id)).willReturn(Optional.of(TransportRequest.submit(id, SHIPPER,
                 new ShipmentTerms(new Location("JPTYO"), new Location("NLRTM")), USER,
                 new UtcInstant(Instant.parse("2026-10-05T01:00:00Z")))));
@@ -96,7 +133,9 @@ class TransportRequestControllerTest {
         mockMvc.perform(get("/customer/transport-requests/{id}/submitted", id.value()))
                 .andExpect(status().isOk())
                 .andExpect(content().string(containsString(id.value().toString())))
-                .andExpect(content().string(containsString("審査中")));
+                .andExpect(content().string(containsString("見積依頼（輸送要求）ID")))
+                .andExpect(content().string(containsString("審査中")))
+                .andExpect(content().string(containsString("営業担当者が内容を審査し")));
     }
 
     @Test

@@ -32,11 +32,20 @@ class KpiObservationControllerTest {
     void KPI計測記録の一覧に輸送要求IDと提出時刻をUTCオフセット付きで表示する() throws Exception {
         UUID transportRequestId = UUID.fromString("11111111-1111-1111-1111-111111111111");
         given(queryService.findAll()).willReturn(List.of(KpiObservation.recordSubmission(transportRequestId,
-                new CompanyId(UUID.randomUUID()), new UtcInstant(Instant.parse("2026-10-05T01:00:00Z")))));
+                new CompanyId(UUID.randomUUID()), new UtcInstant(Instant.parse("2026-10-05T13:04:05Z")))));
 
         mockMvc.perform(get("/staff/kpi-observations"))
                 .andExpect(status().isOk())
                 .andExpect(content().string(containsString(transportRequestId.toString())))
-                .andExpect(content().string(containsString("2026-10-05 01:00:00 +00:00")));
+                .andExpect(content().string(containsString("2026-10-05 13:04:05 +00:00")));
+    }
+
+    @Test
+    void 記録がなければその旨を表示する() throws Exception {
+        given(queryService.findAll()).willReturn(List.of());
+
+        mockMvc.perform(get("/staff/kpi-observations"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("まだ記録はありません。")));
     }
 }

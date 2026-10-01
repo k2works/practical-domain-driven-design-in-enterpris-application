@@ -1,6 +1,7 @@
 package com.example.cargotracker.quotation.domain.model.aggregates;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.example.cargotracker.quotation.domain.events.TransportRequestSubmitted;
 import com.example.cargotracker.quotation.domain.model.valueobjects.ShipmentTerms;
@@ -42,11 +43,19 @@ class TransportRequestTest {
     }
 
     @Test
-    void 生成したイベントは取り出した後に消える() {
+    void イベントを消すと残らない() {
         TransportRequest request = TransportRequest.submit(id, shipper, terms, submitter, now);
 
         request.clearDomainEvents();
 
         assertThat(request.domainEvents()).isEmpty();
+    }
+
+    @Test
+    void 取り出したイベントの一覧を変えても集約は変わらない() {
+        TransportRequest request = TransportRequest.submit(id, shipper, terms, submitter, now);
+
+        assertThatThrownBy(() -> request.domainEvents().clear()).isInstanceOf(UnsupportedOperationException.class);
+        assertThat(request.domainEvents()).hasSize(1);
     }
 }

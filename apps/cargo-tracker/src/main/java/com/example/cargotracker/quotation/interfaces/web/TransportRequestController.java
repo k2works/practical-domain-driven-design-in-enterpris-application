@@ -9,6 +9,7 @@ import com.example.cargotracker.quotation.domain.model.valueobjects.TransportReq
 import com.example.cargotracker.shared.domain.CompanyId;
 import com.example.cargotracker.shared.domain.Location;
 import com.example.cargotracker.shared.domain.UserId;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
@@ -30,7 +31,8 @@ import org.springframework.web.server.ResponseStatusException;
 public class TransportRequestController {
 
     private static final String FORM_VIEW = "quotation/transport-requests/new";
-    private static final String LOCATION_FORMAT_MESSAGE = "UN/LOCODE の形式（例: JPTYO）で入力してください";
+    private static final String LOCATION_FORMAT_MESSAGE =
+            "UN/LOCODE（国コード 2 文字 + 地点コード 3 文字、例: JPTYO）で入力してください";
 
     private final TransportRequestCommandService commandService;
     private final TransportRequestQueryService queryService;
@@ -53,8 +55,8 @@ public class TransportRequestController {
      */
     @PostMapping
     public String submit(@ModelAttribute TransportRequestForm transportRequestForm, BindingResult bindingResult) {
-        Optional<Location> origin = toLocation(transportRequestForm.getOrigin(), "origin", bindingResult);
-        Optional<Location> destination = toLocation(transportRequestForm.getDestination(), "destination",
+        Optional<Location> origin = toLocation(transportRequestForm.getOrigin(), "origin", "出発地", bindingResult);
+        Optional<Location> destination = toLocation(transportRequestForm.getDestination(), "destination", "目的地",
                 bindingResult);
         if (bindingResult.hasErrors()) {
             return FORM_VIEW;
@@ -74,9 +76,18 @@ public class TransportRequestController {
         return "quotation/transport-requests/submitted";
     }
 
-    private static Optional<Location> toLocation(String value, String field, BindingResult bindingResult) {
+    /**
+     * 入力を場所にする。貼り付けで付く前後の空白を除き、小文字は大文字にそろえる。形式の検証はドメインの場所に任せる。
+     */
+    private static Optional<Location> toLocation(String value, String field, String label,
+            BindingResult bindingResult) {
+        String normalized = value == null ? "" : value.strip().toUpperCase(Locale.ROOT);
+        if (normalized.isEmpty()) {
+            bindingResult.rejectValue(field, "location.required", label + "を入力してください");
+            return Optional.empty();
+        }
         try {
-            return Optional.of(new Location(value));
+            return Optional.of(new Location(normalized));
         } catch (IllegalArgumentException e) {
             bindingResult.rejectValue(field, "location.format", LOCATION_FORMAT_MESSAGE);
             return Optional.empty();

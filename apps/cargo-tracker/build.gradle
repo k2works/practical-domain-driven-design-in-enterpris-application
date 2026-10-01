@@ -57,6 +57,8 @@ dependencies {
 	testImplementation 'io.cucumber:cucumber-spring'
 	testImplementation 'io.cucumber:cucumber-junit-platform-engine'
 	testImplementation 'org.junit.platform:junit-platform-suite'
+	// H2 のスモークテスト（テスト戦略）で dev プロファイルの起動とマイグレーションを確かめる。本番の成果物には含めない
+	testRuntimeOnly 'com.h2database:h2'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
