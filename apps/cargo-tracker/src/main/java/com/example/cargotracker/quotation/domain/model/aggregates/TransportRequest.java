@@ -17,7 +17,7 @@ import java.util.Objects;
  * 輸送要求。荷主が見積りを依頼する輸送条件のまとまりで、本予約までの版を持つ。
  */
 @AggregateRoot
-public class TransportRequest {
+public final class TransportRequest {
 
     private static final int FIRST_VERSION_NO = 1;
 

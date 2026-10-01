@@ -3,6 +3,8 @@ plugins {
 	id 'org.springframework.boot' version '4.1.1'
 	id 'io.spring.dependency-management' version '1.1.7'
 	id 'com.diffplug.spotless' version '8.10.3'
+	id 'checkstyle'
+	id 'com.github.spotbugs' version '6.5.12'
 }
 
 group = 'com.example'
@@ -90,4 +92,29 @@ spotless {
 		trimTrailingWhitespace()
 		endWithNewline()
 	}
+}
+
+// 静的解析（技術スタック）。規則は最小から始め、指摘は直す。抑止するときは理由を書く
+checkstyle {
+	toolVersion = '14.3.0'
+	configFile = file('config/checkstyle/checkstyle.xml')
+	maxWarnings = 0
+}
+
+spotbugs {
+	toolVersion = '4.10.4'
+	effort = com.github.spotbugs.snom.Effort.valueOf('MAX')
+	reportLevel = com.github.spotbugs.snom.Confidence.valueOf('MEDIUM')
+	excludeFilter = file('config/spotbugs/exclude.xml')
+}
+
+tasks.withType(com.github.spotbugs.snom.SpotBugsTask).configureEach {
+	reports {
+		html.required = true
+	}
+}
+
+// テストコードの SpotBugs は、Mockito のスタブなど意図した書き方の指摘が多いため本体だけを検査する
+tasks.named('spotbugsTest') {
+	enabled = false
 }

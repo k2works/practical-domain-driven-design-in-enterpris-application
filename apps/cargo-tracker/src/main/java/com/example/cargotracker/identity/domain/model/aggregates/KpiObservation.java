@@ -11,7 +11,7 @@ import java.util.UUID;
  * Bolt 1 では提出時刻だけを持ち、最初の提示時刻と計測からの除外（PV-01）は使う Bolt で足す。
  */
 @AggregateRoot
-public class KpiObservation {
+public final class KpiObservation {
 
     private final UUID transportRequestId;
     private final CompanyId shipperCompanyId;

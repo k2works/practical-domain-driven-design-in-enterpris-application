@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  SpotBugs で抑止する指摘と、その理由。抑止は最小にし、理由のないものは足さない。
+-->
+<FindBugsFilter>
+    <!--
+      EI_EXPOSE_REP2: DI で受け取った部品（MyBatis のマッパーなど）を保持することへの指摘。
+      部品は Spring が管理するシングルトンで、値として外へ渡すものではないため、送信アダプター（infrastructure）に限って抑止する。
+    -->
+    <Match>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+        <Package name="~com\.example\.cargotracker\..*\.infrastructure\..*"/>
+    </Match>
+</FindBugsFilter>
