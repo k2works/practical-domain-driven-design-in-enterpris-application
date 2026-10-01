@@ -4,9 +4,10 @@ title: "Bolt 2 計画 - CI と品質の安全網"
 description: "2 回目の Bolt の計画。GitHub Actions の CI、Spotless・Checkstyle・SpotBugs、JaCoCo のレイヤーごとの閾値、AT-02・AT-06、SonarQube の品質ゲートを、Bolt ゴール・仮説・8 のステップ・確認ポイントで定義する。"
 tags: [development,bolt-plan]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-01T22:41:48Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-01T23:12:31Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T13:06:21Z }
+  - { by: human:kakimomokuri, at: 2026-10-01T23:12:32Z }
 ---
 
 # Bolt 2 計画 - CI と品質の安全網
@@ -160,7 +161,7 @@ C --> INF
 - [x] **7. 文書を合わせる**
   - 開発戦略の「品質チェックのコマンド」に、書式・静的解析・カバレッジ・SonarQube のコマンドを足す。
   - テスト戦略の CI の段階と実際のワークフローの差（配備と E2E がまだないこと）を書く。
-- [?] **8. 検証と Bolt 終了報告**
+- [x] **8. 検証と Bolt 終了報告**
   - `./gradlew check` と CI が緑、Quality Gate が PASS であることを確かめる。
   - `bolt_02_report.md` に成果・指標・仮説の結論・判断と学びを書く。
 
@@ -208,7 +209,7 @@ C --> INF
 
 ### Definition of Done
 
-- [ ] ステップ 1〜8 が完了し、各ステップの承認ゲートを人が通した（ステップは完了。ゲートは終了報告でまとめて受ける）
+- [x] ステップ 1〜8 が完了し、各ステップの承認ゲートを人が通した（終了報告の承認でまとめて通過）
 - [x] `./gradlew check`（書式・静的解析・テスト・AT-02・AT-06・カバレッジ）がローカルと CI の両方で緑
 - [x] SonarQube の Quality Gate が PASS（回した場合はその理由を記録）
 - [x] 規則（AT-02、`@DomainEvent` の配置、AT-06）は、違反で失敗することを確かめた
@@ -231,8 +232,9 @@ C --> INF
 | :--- | :--- | :--- | :--- |
 | 2026-10-01 | 初版 | anthropic/claude-opus-5-5 | human:kakimomokuri |
 | 2026-10-01 | 計画を承認。ステップ 2・3・5・6 の【要確認】（Spotless、D-5、D-1、push、`SONAR_TOKEN`）は、そのステップの実行前に確認する | anthropic/claude-opus-5-5 | human:kakimomokuri |
-| 2026-10-01 | ステップ 1〜8 を完了とした。結果は [Bolt 2 終了報告](bolt_02_report.md) | anthropic/claude-opus-5-5 | 承認待ち |
-| 2026-10-02 | クローズのレビューを受け、ステップ 8 を承認待ち（`[?]`）に戻し、ステップ 3・4 の本文に実施時の変更の注を付けた | anthropic/claude-opus-5-5 | 承認待ち |
+| 2026-10-01 | ステップ 1〜8 を完了とした。結果は [Bolt 2 終了報告](bolt_02_report.md) | anthropic/claude-opus-5-5 | human:kakimomokuri |
+| 2026-10-02 | クローズのレビューを受け、ステップ 8 を承認待ち（`[?]`）に戻し、ステップ 3・4 の本文に実施時の変更の注を付けた | anthropic/claude-opus-5-5 | human:kakimomokuri |
+| 2026-10-02 | 終了報告の承認で、ステップ 8 と各ステップの承認ゲートを通過した。【要確認】の Spotless・D-5・D-1 の判断は別に残る | anthropic/claude-opus-5-5 | human:kakimomokuri |
 
 ## 関連ドキュメント
 

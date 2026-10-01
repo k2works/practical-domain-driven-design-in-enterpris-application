@@ -3,8 +3,10 @@ type: Plan
 title: "Bolt 2 終了報告 - CI と品質の安全網"
 description: "2 回目の Bolt の終了報告。CI・静的解析・カバレッジの閾値・AT-02・AT-06・SonarQube の品質ゲートの成果、指標、仮説 H1〜H4 の結論、ゴールの指示で進めた【要確認】、ふりかえりをまとめる。"
 tags: [development,bolt-report]
-status: draft
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-01T22:45:26Z }
+status: stable
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-01T23:12:31Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-10-01T23:12:32Z }
 ---
 
 # Bolt 2 終了報告 - CI と品質の安全網
@@ -33,7 +35,7 @@ generated: { by: anthropic/claude-opus-5-5, at: 2026-10-01T22:45:26Z }
 | 5. CI | 完了 | `0708ca6` | — |
 | 6. SonarQube の品質ゲート | 完了（運用手順書への反映はレビューの後に行った） | `20f1da4` | 解析の反映を待たずに判定した結果が NONE だった（待ってから判定し直した）。Code Smell 3 件を直した（SonarQube の指摘）。計画で約束した運用手順書の更新を抜かしていた（レビュー R-05 で見つかった） |
 | 7. 文書を合わせる | 完了 | `35873d1` | — |
-| 8. 検証と終了報告 | 完了（人の承認待ち） | 本報告 | — |
+| 8. 検証と終了報告 | 完了（2026-10-02 に人が承認。変更依頼 0） | 本報告 | — |
 
 打ち切りの線（ステップ 6 を Bolt 3 へ）は使わなかった。`SONAR_TOKEN` は人が用意済みだった。
 
@@ -159,5 +161,6 @@ D-1 を承認する場合は、ドメインモデルの共有カーネルの図�
 
 | 日付 | 内容 | 作成 | 承認 |
 | :--- | :--- | :--- | :--- |
-| 2026-10-01 | 初版 | anthropic/claude-opus-5-5 | 承認待ち |
-| 2026-10-02 | クローズの結果を反映: レビューの対応、品質ゲートの判定の手段、カバレッジの根拠の弱さ、push と CI の回数の差、次の Bolt の提案の見直し | anthropic/claude-opus-5-5 | 承認待ち |
+| 2026-10-01 | 初版 | anthropic/claude-opus-5-5 | human:kakimomokuri |
+| 2026-10-02 | クローズの結果を反映: レビューの対応、品質ゲートの判定の手段、カバレッジの根拠の弱さ、push と CI の回数の差、次の Bolt の提案の見直し | anthropic/claude-opus-5-5 | human:kakimomokuri |
+| 2026-10-02 | 人が承認した（変更依頼 0）。【要確認】の Spotless・D-5・D-1 と、D-3・D-4・D-6・D-7・D-8 の判断は別に残る | anthropic/claude-opus-5-5 | human:kakimomokuri |
