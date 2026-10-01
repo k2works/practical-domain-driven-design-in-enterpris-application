@@ -118,3 +118,39 @@ tasks.withType(com.github.spotbugs.snom.SpotBugsTask).configureEach {
 tasks.named('spotbugsTest') {
 	enabled = false
 }
+
+// AT-06: 本番の実行クラスパスに H2・Hibernate ORM・JPA を含めない（ADR-007、テスト戦略）。
+// bootJar が使う productionRuntimeClasspath を検査する（runtimeClasspath は bootRun 用に developmentOnly を含む）
+def forbiddenInProduction = ['com.h2database:h2', 'org.hibernate.orm:hibernate-core', 'jakarta.persistence:jakarta.persistence-api']
+tasks.register('verifyProductionClasspath') {
+	group = 'verification'
+	description = 'AT-06: 本番の実行クラスパスに H2・Hibernate ORM・JPA が含まれないことを確かめる'
+	def runtimeModules = configurations.productionRuntimeClasspath.incoming.resolutionResult.rootComponent.map { root ->
+		def modules = [] as Set
+		def visit
+		visit = { component ->
+			component.dependencies.each { dependency ->
+				if (dependency instanceof org.gradle.api.artifacts.result.ResolvedDependencyResult) {
+					def selected = dependency.selected
+					def id = selected.moduleVersion
+					if (id != null && modules.add("${id.group}:${id.name}".toString())) {
+						visit(selected)
+					}
+				}
+			}
+		}
+		visit(root)
+		modules
+	}
+	inputs.property('runtimeModules', runtimeModules)
+	doLast {
+		def found = runtimeModules.get().findAll { forbiddenInProduction.contains(it) }
+		if (!found.isEmpty()) {
+			throw new GradleException("本番の実行クラスパスに含めてはいけない依存があります: ${found}")
+		}
+	}
+}
+
+tasks.named('check') {
+	dependsOn 'verifyProductionClasspath'
+}
