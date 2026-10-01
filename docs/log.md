@@ -1,6 +1,14 @@
 # Docs Update Log
 
 ## 2026-10-01
+* **Update**: [user_story](/requirements/cargo-tracker/user_story.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [requirements_definition](/requirements/cargo-tracker/requirements_definition.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [tech_stack](/design/cargo-tracker/tech_stack.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [003-inter-context-integration](/adr/cargo-tracker/003-inter-context-integration.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [001-modular-monolith](/adr/cargo-tracker/001-modular-monolith.md) を更新（anthropic/claude-opus-5-5）
 * **Verification**: [bolt_03_plan](/development/cargo-tracker/bolt_03_plan.md) を human:kakimomokuri が検証
 * **Update**: [bolt_03_plan](/development/cargo-tracker/bolt_03_plan.md) を更新（anthropic/claude-opus-5-5）
 * **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）

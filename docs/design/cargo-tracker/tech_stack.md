@@ -4,7 +4,7 @@ title: "cargo-tracker 技術スタック"
 description: "cargo-tracker のバックエンド・画面・データベース・テスト・ビルド・インフラの技術、バージョン、サポート期限、選定理由、アップグレード計画。"
 tags: [design, tech-stack]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-01T22:41:48Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-01T23:28:04Z }
 stale_after: 2027-04-01T00:00:00Z
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T07:29:04Z }
@@ -118,7 +118,7 @@ verified:
 | :--- | :--- | :--- | :--- | :--- |
 | ビルド | Gradle（Groovy DSL）+ Gradle Wrapper | 9.x（2026-10 時点 9.8.0） | ビルド、依存管理、依存のロック | 第 3 章と同じ。依存をロックし、脆弱性スキャンが依存を確実に読めるようにする |
 | 静的解析 | Checkstyle、SpotBugs | Checkstyle 14.3.0、SpotBugs 4.10.4（Gradle プラグイン 6.5.12） | コーディング規約、バグパターン | SpotBugs は Java 25 のクラスファイルを読める版であること。規則は `apps/cargo-tracker/config/` |
-| 書式 | Spotless（palantir-java-format） | Spotless 8.10.3、palantir-java-format 2.98.0 | Java の書式の統一と検査 | Bolt 2 で導入（人の承認待ち。Bolt 2 レビュー）。書式を版で固定し、上げるときは書式だけのコミットに分ける |
+| 書式 | Spotless（palantir-java-format） | Spotless 8.10.3、palantir-java-format 2.98.0 | Java の書式の統一と検査 | Bolt 2 で導入（2026-10-02 に human:kakimomokuri が承認）。書式を版で固定し、上げるときは書式だけのコミットに分ける |
 | 品質ゲート（Gradle） | SonarQube の Gradle プラグイン | 7.5.0.8588 | ローカルの SonarQube へのスキャン | `npx gulp sonar-local:check` から動かす |
 | カバレッジ | JaCoCo | 0.8.15 | カバレッジの計測 | Java 25 対応版 |
 | 品質管理 | SonarQube（Community） | — | 品質ゲート | `operating-qt` スキルの前提 |

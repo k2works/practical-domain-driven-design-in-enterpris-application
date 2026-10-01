@@ -4,7 +4,7 @@ title: "ADR-001: モジュラーモノリスを採用する"
 description: "cargo-tracker のバックエンドを、境界づけられたコンテキストごとのモジュールを持つ 1 つのデプロイ単位として構築する決定。"
 tags: [adr, architecture]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-01T08:48:17Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-01T23:28:04Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T07:11:13Z }
   - { by: human:kakimomokuri, at: 2026-10-01T07:48:16Z }
@@ -66,6 +66,7 @@ verified:
 
 - アーキテクチャテストで、モジュール間の依存が公開 API とイベントだけであることを検査する。
 - 各モジュールのマッパーの SQL が自スキーマ以外の表を参照していないことを、CI のテストで検査する。
+- モジュールの中の層の依存（AT-02）は、`infrastructure.config`（合成ルート）だけを例外とする（2026-10-02 に human:kakimomokuri が承認した D-5。[バックエンドアーキテクチャ](../../design/cargo-tracker/architecture_backend.md) のパッケージ構成を参照）。
 
 ## 改訂の経緯
 

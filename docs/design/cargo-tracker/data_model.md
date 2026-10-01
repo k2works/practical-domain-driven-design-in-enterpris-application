@@ -4,7 +4,7 @@ title: "cargo-tracker データモデル"
 description: "cargo-tracker の概念データモデル、スキーマ分割、命名と型の規約（H2 と PostgreSQL の共通部分）、コンテキストごとの論理データモデルと ER 図、版・追記専用・冪等性・イベント配信の表現。"
 tags: [design, data-model]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-01T12:48:11Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-01T23:28:04Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T07:48:17Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:01:37Z }
@@ -304,6 +304,7 @@ q |o--o| q : 置換
 | 表 | 主な制約 | 対応する不変条件 |
 | :--- | :--- | :--- |
 | `transport_request` | `status` IN（`DRAFT`、`UNDER_REVIEW`、`QUOTING`、`QUOTED`、`ROUTING`、`AWAITING_APPROVAL`、`READY_TO_BOOK`、`BOOKED`、`WITHDRAWN`） | 輸送要求の状態遷移 |
+| `transport_request`（業務番号） | 注（設計への反映が必要）: 業務番号 `TR-年-年ごとの連番`（2026-10-02 の D-4）の列と、年ごとの採番の仕組みは、US-01 AC2 の Bolt で設計して足す。一意制約を付け、画面と通知には業務番号だけを出す | D-4、US-01 |
 | `transport_request_draft` | 輸送要求ごとに 1 行。提出時に内容を版の表へ INSERT する。`copied_from_request_id` は複製元 | Q-INV-03、Q-INV-11 |
 | `transport_request_version` | `cargo_category` IN（`GENERAL`、`DANGEROUS`、`REEFER`、`OTHER_SPECIAL`）。提出した版だけを INSERT し、更新しない。`submitted_at` は KPI-01 の開始時刻 | Q-INV-02、Q-INV-03、US-21 |
 | `review_record` | （`transport_request_id`、`version_no`）→ `transport_request_version` の FK | Q-INV-04 |
