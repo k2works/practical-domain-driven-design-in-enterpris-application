@@ -4,6 +4,7 @@ plugins {
 	id 'io.spring.dependency-management' version '1.1.7'
 	id 'com.diffplug.spotless' version '8.10.3'
 	id 'checkstyle'
+	id 'jacoco'
 	id 'com.github.spotbugs' version '6.5.12'
 }
 
@@ -153,4 +154,57 @@ tasks.register('verifyProductionClasspath') {
 
 tasks.named('check') {
 	dependsOn 'verifyProductionClasspath'
+}
+
+// カバレッジ（テスト戦略）。目標値と分け、最初の閾値をレイヤーごとに検証する。閾値は実績に合わせて段階的に目標へ上げる
+jacoco {
+	toolVersion = '0.8.15'
+}
+
+tasks.named('jacocoTestReport') {
+	dependsOn 'test'
+	reports {
+		xml.required = true
+		html.required = true
+	}
+}
+
+def coverageThresholds = [
+	// レイヤー: [対象のクラス, 行の閾値, 分岐の閾値（null は検証しない）]
+	domain        : ['com/example/cargotracker/**/domain/**', 0.85, 0.75],
+	application   : ['com/example/cargotracker/**/application/**', 0.80, 0.65],
+	interfaces    : ['com/example/cargotracker/**/interfaces/**', 0.65, null],
+	infrastructure: ['com/example/cargotracker/**/infrastructure/**', 0.70, null],
+	overall       : ['com/example/cargotracker/**', 0.75, 0.65],
+]
+
+def layerVerifications = coverageThresholds.collect { layer, threshold ->
+	def (pattern, lineMinimum, branchMinimum) = threshold
+	tasks.register("jacocoCoverageVerification${layer.capitalize()}", JacocoCoverageVerification) {
+		group = 'verification'
+		description = "カバレッジの閾値（${layer}）を検証する"
+		dependsOn 'test'
+		executionData.from(tasks.named('test').map { it.extensions.getByType(JacocoTaskExtension).destinationFile })
+		sourceDirectories.from(sourceSets.main.allJava.srcDirs)
+		classDirectories.from(sourceSets.main.output.classesDirs.asFileTree.matching { include pattern })
+		violationRules {
+			rule {
+				limit {
+					counter = 'LINE'
+					minimum = lineMinimum
+				}
+				if (branchMinimum != null) {
+					limit {
+						counter = 'BRANCH'
+						minimum = branchMinimum
+					}
+				}
+			}
+		}
+	}
+}
+
+tasks.named('check') {
+	dependsOn 'jacocoTestReport'
+	dependsOn layerVerifications
 }
