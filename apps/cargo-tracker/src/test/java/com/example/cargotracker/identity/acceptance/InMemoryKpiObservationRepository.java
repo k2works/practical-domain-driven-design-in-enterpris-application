@@ -32,4 +32,9 @@ public class InMemoryKpiObservationRepository implements KpiObservationRepositor
                 .sorted(Comparator.comparing((KpiObservation o) -> o.submittedAt().instant()).reversed())
                 .toList();
     }
+
+    /** シナリオの開始時に記録を消す。 */
+    public void clear() {
+        store.clear();
+    }
 }

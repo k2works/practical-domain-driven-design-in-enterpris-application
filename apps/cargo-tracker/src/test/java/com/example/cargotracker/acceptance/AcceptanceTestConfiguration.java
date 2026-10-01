@@ -7,11 +7,11 @@ import com.example.cargotracker.quotation.acceptance.InMemoryTransportRequestRep
 import com.example.cargotracker.quotation.application.internal.commandservices.TransportRequestCommandService;
 import com.example.cargotracker.quotation.application.internal.queryservices.TransportRequestQueryService;
 import com.example.cargotracker.quotation.domain.events.TransportRequestSubmitted;
+import com.example.cargotracker.shared.acceptance.DeferredEventDelivery;
 import com.example.cargotracker.shared.acceptance.MutableClock;
 import com.example.cargotracker.shared.acceptance.ScenarioContext;
 import io.cucumber.spring.CucumberContextConfiguration;
 import org.springframework.boot.test.context.TestConfiguration;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ContextConfiguration;
@@ -20,6 +20,7 @@ import org.springframework.test.context.ContextConfiguration;
  * 業務ルール層の受入シナリオの組み立て（テスト戦略）。
  * DB とアプリケーション全体を起動せず、入力ポートの実装・メモリ上のリポジトリ・固定の Clock・
  * テスト用の同期のイベント配信で組み立てる。イベント配信そのものは統合テストで確かめる（ADR-003）。
+ * 時刻・リポジトリ・ためたイベントはシナリオごとに初期化する（{@link ScenarioReset}）。
  */
 @CucumberContextConfiguration
 @ContextConfiguration(classes = AcceptanceTestConfiguration.Components.class)
@@ -50,6 +51,18 @@ public class AcceptanceTestConfiguration {
             return new KpiObservationEventHandler(repository);
         }
 
+        /** 購読側を登録した、テスト用の同期の配信。 */
+        @Bean
+        DeferredEventDelivery eventDelivery(KpiObservationEventHandler kpiObservationEventHandler) {
+            DeferredEventDelivery delivery = new DeferredEventDelivery();
+            delivery.subscribe(event -> {
+                if (event instanceof TransportRequestSubmitted submitted) {
+                    kpiObservationEventHandler.on(submitted);
+                }
+            });
+            return delivery;
+        }
+
         @Bean
         KpiObservationQueryService kpiObservationQueryService(InMemoryKpiObservationRepository repository) {
             return new KpiObservationQueryService(repository);
@@ -57,23 +70,13 @@ public class AcceptanceTestConfiguration {
 
         @Bean
         TransportRequestCommandService transportRequestCommandService(InMemoryTransportRequestRepository repository,
-                KpiObservationEventHandler kpiObservationEventHandler, MutableClock clock) {
-            return new TransportRequestCommandService(repository,
-                    synchronousDelivery(kpiObservationEventHandler), clock);
+                DeferredEventDelivery eventDelivery, MutableClock clock) {
+            return new TransportRequestCommandService(repository, eventDelivery, clock);
         }
 
         @Bean
         TransportRequestQueryService transportRequestQueryService(InMemoryTransportRequestRepository repository) {
             return new TransportRequestQueryService(repository);
-        }
-
-        /** テスト用の同期の配信。発行されたイベントをその場で購読側に渡す。 */
-        private static ApplicationEventPublisher synchronousDelivery(KpiObservationEventHandler handler) {
-            return event -> {
-                if (event instanceof TransportRequestSubmitted submitted) {
-                    handler.on(submitted);
-                }
-            };
         }
     }
 }

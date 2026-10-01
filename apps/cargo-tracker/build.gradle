@@ -50,6 +50,8 @@ dependencies {
 	testImplementation 'org.testcontainers:testcontainers-junit-jupiter'
 	testImplementation 'org.testcontainers:testcontainers-postgresql'
 	testImplementation 'org.springframework.modulith:spring-modulith-starter-test'
+	// イベントの直列化の契約テストで、Spring Modulith の EventSerializer を直接使う
+	testImplementation 'org.springframework.modulith:spring-modulith-events-core'
 	testImplementation "com.tngtech.archunit:archunit-junit5:${archunitVersion}"
 	testImplementation 'io.cucumber:cucumber-java'
 	testImplementation 'io.cucumber:cucumber-spring'

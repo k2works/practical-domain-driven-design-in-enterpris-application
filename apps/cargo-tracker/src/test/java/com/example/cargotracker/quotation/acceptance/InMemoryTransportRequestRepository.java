@@ -26,4 +26,9 @@ public class InMemoryTransportRequestRepository implements TransportRequestRepos
     public Optional<TransportRequest> findById(TransportRequestId id) {
         return Optional.ofNullable(store.get(id));
     }
+
+    /** シナリオの開始時に記録を消す。 */
+    public void clear() {
+        store.clear();
+    }
 }
