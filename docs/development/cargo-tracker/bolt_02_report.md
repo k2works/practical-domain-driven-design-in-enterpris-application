@@ -4,7 +4,7 @@ title: "Bolt 2 終了報告 - CI と品質の安全網"
 description: "2 回目の Bolt の終了報告。CI・静的解析・カバレッジの閾値・AT-02・AT-06・SonarQube の品質ゲートの成果、指標、仮説 H1〜H4 の結論、ゴールの指示で進めた【要確認】、ふりかえりをまとめる。"
 tags: [development,bolt-report]
 status: draft
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-01T13:53:25Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-01T22:41:48Z }
 ---
 
 # Bolt 2 終了報告 - CI と品質の安全網
@@ -20,6 +20,7 @@ generated: { by: anthropic/claude-opus-5-5, at: 2026-10-01T13:53:25Z }
 | GitHub | [#1 [技術] 開発基盤とウォーキングスケルトン](https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/1)（Bolt 3 が残るため Open・In Progress のまま） |
 | ゴール | push と Pull Request のたびに、GitHub Actions がテスト・層の規則・静的解析・カバレッジの閾値を検証する。ローカルでは SonarQube の品質ゲートで同じコードを判定できる |
 | 進め方 | 計画の承認の後、人の指示（`/goal orchestrating-development Bolt2`）でステップ 1〜8 を続けて実行した。各ステップの承認ゲートと【要確認】は本報告でまとめて受ける |
+| レビュー | [Bolt 2 開発成果物レビュー](../../review/cargo-tracker/bolt_02_review_20261002.md)（5 視点、R-01〜R-32）。指摘の対応は 2026-10-02 |
 
 ## 成果
 
@@ -30,7 +31,7 @@ generated: { by: anthropic/claude-opus-5-5, at: 2026-10-01T13:53:25Z }
 | 3. 層とモジュールの規則 | 完了 | `e07841b` | AT-06 の検査対象を `runtimeClasspath` から `productionRuntimeClasspath` に直した。Spring Boot のプラグインが `runtimeClasspath` に `developmentOnly` を含めていたため（テストの失敗） |
 | 4. カバレッジ | 完了 | `e7a9829` | — |
 | 5. CI | 完了 | `0708ca6` | — |
-| 6. SonarQube の品質ゲート | 完了 | `20f1da4` | 解析の反映を待たずに判定した結果が NONE だった（待ってから判定し直した）。Code Smell 3 件を直した（SonarQube の指摘） |
+| 6. SonarQube の品質ゲート | 完了（運用手順書への反映はレビューの後に行った） | `20f1da4` | 解析の反映を待たずに判定した結果が NONE だった（待ってから判定し直した）。Code Smell 3 件を直した（SonarQube の指摘）。計画で約束した運用手順書の更新を抜かしていた（レビュー R-05 で見つかった） |
 | 7. 文書を合わせる | 完了 | `35873d1` | — |
 | 8. 検証と終了報告 | 完了（人の承認待ち） | 本報告 | — |
 
@@ -40,10 +41,10 @@ generated: { by: anthropic/claude-opus-5-5, at: 2026-10-01T13:53:25Z }
 
 | # | デモ | 結果 |
 | :--- | :--- | :--- |
-| 1 | develop に push する | GitHub Actions の cargo-tracker CI が緑（`0708ca6`、`35873d1` の 2 回）。レポートは成果物 `cargo-tracker-reports` に残る |
+| 1 | develop に push する | GitHub Actions の cargo-tracker CI が緑（`0708ca6`、`35873d1` の 2 回）。3 回目の push（`48bb848`）は文書だけのため、`paths` の条件で CI は動かない。レポートは成果物 `cargo-tracker-reports` に残る |
 | 2 | `domain`・`infrastructure` に一時的な違反を入れる | AT-01（Bolt 1）、AT-02 の合成ルートの規則、`domain.events` の規則、AT-06 がそれぞれ失敗した |
 | 3 | `./gradlew jacocoTestReport` | 全体 行 97.6%・分岐 90.0%。全レイヤーが最初の閾値を満たす。閾値を 0.99 に上げると失敗することも確かめた |
-| 4 | `npx gulp sonar-local:check` | Quality Gate PASS |
+| 4 | `npx gulp sonar-local:check` | 実施時は、解析の反映を待って `sonar-local:gate` を再実行し、出力の `Quality Gate: PASS (OK)` を人が読んだ（当時はコマンドが不合格でも成功で終わった）。レビューの対応の後は、コマンドの成否で判定できる |
 
 ## 指標
 
@@ -56,7 +57,7 @@ generated: { by: anthropic/claude-opus-5-5, at: 2026-10-01T13:53:25Z }
 | リードタイム | 約 47 分 |
 | CI の実行時間 | 全体 約 2 分（`./gradlew check` 1 分 38 秒） |
 | テスト | 61 件、すべて成功（Bolt 1 から +4: AT-02 2、ドメインイベントの配置 2） |
-| カバレッジ | domain 100%/100%、application 96.8%、interfaces 100%/83.3%、infrastructure 100%、全体 97.6%/90.0%（行/分岐） |
+| カバレッジ | domain 100%/100%、application 96.8%/分岐は対象なし、interfaces 100%/83.3%、infrastructure 100%、全体 97.6%/90.0%（行/分岐）。domain の分岐は共有カーネルの 4 件だけで、application には分岐がない（分岐の閾値が検証になっていない。レビュー R-02） |
 | SonarQube | Quality Gate PASS、Bug 0、Vulnerability 0、Code Smell 0、Security Hotspot 0、重複 0.0%、カバレッジ 97.3% |
 
 ## 品質ゲート
@@ -67,7 +68,7 @@ generated: { by: anthropic/claude-opus-5-5, at: 2026-10-01T13:53:25Z }
 | 書式・静的解析 | Spotless・Checkstyle・SpotBugs すべて成功 |
 | カバレッジ | 全レイヤーで最初の閾値を満たす |
 | CI | 緑（最新 `35873d1`） |
-| SonarQube の品質ゲート | PASS |
+| SonarQube の品質ゲート | PASS（実施時は人が出力を読んで判定。レビューの対応の後に、コマンドの成否で判定するよう直した） |
 | ユーザーマニュアル | 対象外（画面の変更なし） |
 
 Bolt 1 のクローズで未達だった「CI が緑」と「Quality Gate が PASS」を満たした。
@@ -77,7 +78,7 @@ Bolt 1 のクローズで未達だった「CI が緑」と「Quality Gate が PA
 | # | 仮説 | 結論 | 根拠 |
 | :--- | :--- | :--- | :--- |
 | H1 | CI で `./gradlew check` が時間の目標に収まる | 成り立った | 全体で約 2 分。目標は合計 8 分（2 分 + 6 分）。段階を分けずに 1 つのジョブで足りる |
-| H2 | Bolt 1 のコードがテストを足さずに最初の閾値を満たす | 成り立った | 全レイヤーで閾値を 10 ポイント以上上回った |
+| H2 | Bolt 1 のコードがテストを足さずに最初の閾値を満たす | 成り立った（根拠は弱い） | 行の閾値は全レイヤーで 10 ポイント以上上回った。ただし分岐は分母が小さいか 0 で、未テストの分岐が 2 つ増えるだけで domain は 75% を割り込む。カバレッジは受入シナリオと統合テストを含む単一の実行で測っている（レビュー R-15） |
 | H3 | AT-02 を入れても、合成ルートの例外だけで既存のコードが通る | 成り立った | 違反は 0。合成ルートの外の `infrastructure` が `application` に依存すると失敗することも確かめた |
 | H4 | SonarQube の品質ゲートを Bolt 1 のコードのまま通る | 成り立った | 最初のスキャンで PASS。Code Smell 3 件は品質ゲートの条件外だったが、0 にした |
 
@@ -127,19 +128,32 @@ D-1 を承認する場合は、ドメインモデルの共有カーネルの図�
   - T-6: ゴール（自律の実行）を指示されたときに、計画に【要確認】が残っていれば、実行の前にまとめて確認する（AI、次の Bolt）
   - T-7: `sonar-local:gate` が解析の反映を待つよう、運用スクリプトを直す（AI、Bolt 3）
 
+## レビューとクローズ
+
+[Bolt 2 開発成果物レビュー](../../review/cargo-tracker/bolt_02_review_20261002.md) で、品質ゲートの仕組みそのものに偽の安心を与える穴が見つかり、クローズの前に直した（詳細はレビューの「対応結果」）。
+
+- SonarQube のゲートが不合格でも成功で終わっていた。スキャンが解析の反映を待ち、不合格なら失敗するようにした（R-01。T-7 もこれで片づいた）
+- 対象が 0 件の層のカバレッジの検証が黙って通っていた。対象がなければ失敗させる（R-02）
+- AT-02 が層の外を見ていなかった。`platform` の切り離し、application から技術への依存、interfaces からリポジトリへの依存、合成ルートの `@Configuration` の規則を足した（R-04・R-13・R-16）
+- イベントが Java の標準と共有カーネルの型だけを持つことを規則にした（R-12）
+- CI のアクションを SHA で固定し、`@wip` は develop と Pull Request では警告、main への push で失敗にした（R-03・R-18）
+
+テストは 61 件から 67 件になった（アーキテクチャの規則 +6）。Gradle 11 で削除される `Configuration.setVisible` をプラグインが使っている警告がある（このプロジェクトのスクリプトではない。プラグインの更新で追従する）。
+
 ## 次の Bolt
 
-- **Bolt 3**:
-  - E2E の基盤（Playwright、axe-core、`@ui`）
-  - JIG・Spring Modulith の図の生成と、用語集とクラスの整合のテスト
-  - 追記専用の表の権限（DB 利用者と `afterMigrate`。レビュー R-17）
-  - アプリケーション開発環境の手順書（レビュー R-11。SonarQube の手順を含める）
-  - `sonar-local:gate` の反映待ち（T-7）
-  - D-1 を承認する場合は、ドメインモデルの共有カーネルの図の修正
-- **ゲート密度**: AT-02 と CI がそろった。Bolt 1 の決定（「AT-02 と CI が入った後に、自律実行へ移るかをもう一度判断する」）に従い、人が判断する
+レビューで、利用者の視点から「技術の Bolt はここまでにし、次は業務のストーリーにする」と指摘を受けた（R-07）。AI もこれに賛成し、終了報告の当初の提案（Bolt 3 = E2E の基盤など）を改める（D-8、人の判断）。
+
+- **次の Bolt（提案）**: US-01 AC2（必須条件、下書き → 提出 → 審査中の正規の流れ、業務番号）。その前に D-3・D-4・D-6 を人が決める（D-4 は採番の単位と版の表記まで）
+- **Bolt 3 の項目の振り分け（提案）**:
+  - E2E の基盤（Playwright、axe-core）: 画面を作り込む US-01 AC2 の Bolt
+  - 追記専用の権限: US-02 の前
+  - JIG・Spring Modulith の図と用語集の整合のテスト、手順書: W1 の空き時間か W2 以降
+- **ゲート密度**: 業務のルールに関わる Bolt では、【要確認】を事後に回さない（T-6、R-07 の低）。自律実行へ移るかは人が判断する
 
 ## 更新履歴
 
 | 日付 | 内容 | 作成 | 承認 |
 | :--- | :--- | :--- | :--- |
 | 2026-10-01 | 初版 | anthropic/claude-opus-5-5 | 承認待ち |
+| 2026-10-02 | クローズの結果を反映: レビューの対応、品質ゲートの判定の手段、カバレッジの根拠の弱さ、push と CI の回数の差、次の Bolt の提案の見直し | anthropic/claude-opus-5-5 | 承認待ち |

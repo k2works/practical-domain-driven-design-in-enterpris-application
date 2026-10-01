@@ -4,7 +4,7 @@ title: "SonarQube ローカル開発環境セットアップ手順書"
 description: "ローカル開発 PC 上に SonarQube（Community Build）を Docker ベースで構築し、プロジェクトの静的コード解析環境を提供するための手順を説明します。"
 tags: [reference]
 status: stable
-generated: { by: human:kakimomokuri, at: 2026-03-27T04:43:33Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-01T22:42:35Z }
 stale_after: 2027-02-23T00:00:00Z
 ---
 
@@ -324,7 +324,6 @@ SONAR_TOKEN=<YOUR_TOKEN>
 
 1. SonarQube でプロジェクトを作成してください。Project Key が `sonarqube.config.json` の `projectKey` と一致しているか確認してください。
 2. 次のどちらかで権限を付与してください。
-
 
    - 付与方法 A: 管理者でログイン > Administration > Security > Users で対象ユーザーに `Execute Analysis` を付与
    - 付与方法 B: プロジェクト画面 > Project Settings > Permissions で `Execute Analysis` を付与

@@ -4,7 +4,7 @@ title: "Bolt 2 計画 - CI と品質の安全網"
 description: "2 回目の Bolt の計画。GitHub Actions の CI、Spotless・Checkstyle・SpotBugs、JaCoCo のレイヤーごとの閾値、AT-02・AT-06、SonarQube の品質ゲートを、Bolt ゴール・仮説・8 のステップ・確認ポイントで定義する。"
 tags: [development,bolt-plan]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-01T13:53:25Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-01T22:41:48Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T13:06:21Z }
 ---
@@ -139,10 +139,10 @@ C --> INF
 - [x] **3. 層とモジュールの規則を足す（Red → Green）** 【要確認: D-5 合成ルートの例外、D-1 `DomainEvent` の扱い】
   - AT-02: `layeredArchitecture()` で `interfaces` → `application` → `domain` ← `infrastructure` を固定し、`..infrastructure.config..` だけが `application` に依存してよいとする。違反を一時的に入れて失敗することを確かめる。
   - `@DomainEvent` の付いたクラスは `..domain.events..` にある（D-1 で一本化するなら、逆向きの「`domain.events` のクラスは `@DomainEvent` の付いた record」も入れる）。
-  - AT-06: Gradle のタスクで、`runtimeClasspath`（本番の実行クラスパス）に H2・Hibernate ORM・JPA がないことを検査し、`check` に組み込む。
+  - AT-06: Gradle のタスクで、`runtimeClasspath`（本番の実行クラスパス）に H2・Hibernate ORM・JPA がないことを検査し、`check` に組み込む。（実施時に、`bootJar` が使う `productionRuntimeClasspath` に変更した。`runtimeClasspath` は `bootRun` 用に `developmentOnly` を含むため。[Bolt 2 終了報告](bolt_02_report.md) を参照）
   - 完了の判定: 規則が通り、違反で失敗することを確かめた。
 - [x] **4. カバレッジを測る**
-  - JaCoCo 0.8.15 を入れ、テスト戦略のレイヤーごとの最初の閾値（domain 85%/75%、application 80%/65%、interfaces 65%、infrastructure 70%、全体 75%/65%）を `jacocoTestCoverageVerification` で検証する。
+  - JaCoCo 0.8.15 を入れ、テスト戦略のレイヤーごとの最初の閾値（domain 85%/75%、application 80%/65%、interfaces 65%、infrastructure 70%、全体 75%/65%）を `jacocoTestCoverageVerification` で検証する。（実施時に、コンテキストをまたいだ層の集計のため、層ごとのタスク `jacocoCoverageVerification<層>` に分けた）
   - 閾値に届かないレイヤーがあれば、足りないテストを書いて届かせる（閾値を下げない。下げる場合は人の判断を仰ぐ）。
   - 完了の判定: `./gradlew check` がカバレッジの検証を含めて通る。
 - [x] **5. CI を作る** 【要確認: 新規ファイル、外部連携（GitHub Actions）】
@@ -160,7 +160,7 @@ C --> INF
 - [x] **7. 文書を合わせる**
   - 開発戦略の「品質チェックのコマンド」に、書式・静的解析・カバレッジ・SonarQube のコマンドを足す。
   - テスト戦略の CI の段階と実際のワークフローの差（配備と E2E がまだないこと）を書く。
-- [x] **8. 検証と Bolt 終了報告**
+- [?] **8. 検証と Bolt 終了報告**
   - `./gradlew check` と CI が緑、Quality Gate が PASS であることを確かめる。
   - `bolt_02_report.md` に成果・指標・仮説の結論・判断と学びを書く。
 
@@ -232,6 +232,7 @@ C --> INF
 | 2026-10-01 | 初版 | anthropic/claude-opus-5-5 | human:kakimomokuri |
 | 2026-10-01 | 計画を承認。ステップ 2・3・5・6 の【要確認】（Spotless、D-5、D-1、push、`SONAR_TOKEN`）は、そのステップの実行前に確認する | anthropic/claude-opus-5-5 | human:kakimomokuri |
 | 2026-10-01 | ステップ 1〜8 を完了とした。結果は [Bolt 2 終了報告](bolt_02_report.md) | anthropic/claude-opus-5-5 | 承認待ち |
+| 2026-10-02 | クローズのレビューを受け、ステップ 8 を承認待ち（`[?]`）に戻し、ステップ 3・4 の本文に実施時の変更の注を付けた | anthropic/claude-opus-5-5 | 承認待ち |
 
 ## 関連ドキュメント
 

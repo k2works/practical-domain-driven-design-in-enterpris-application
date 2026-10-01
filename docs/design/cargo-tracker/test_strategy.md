@@ -4,7 +4,7 @@ title: "cargo-tracker テスト戦略"
 description: "cargo-tracker のテスト形状、テストレベルと責務、BDD（Cucumber）のシナリオ階層とタグ規約、不変条件・ユーザーストーリーとテストの対応、カバレッジ目標、CI での実行。"
 tags: [design, test-strategy, bdd]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-01T08:55:35Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-01T22:41:48Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T08:12:04Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:01:38Z }
@@ -359,7 +359,7 @@ CI で毎回実行する。
 
 ## カバレッジ目標
 
-JaCoCo でレイヤーごとに測る。目標値と CI の閾値を分け、閾値は実績に合わせて段階的に目標へ上げる（目標値をそのまま閾値にすると、閾値を満たすためのテストを書くことになる）。
+JaCoCo でレイヤーごとに測る。目標値と CI の閾値を分け、閾値は実績に合わせて段階的に目標へ上げる（目標値をそのまま閾値にすると、閾値を満たすためのテストを書くことになる）。下の表の「最初の閾値」は出発点の記録であり、CI が使う現在の閾値の正は `apps/cargo-tracker/build.gradle` の `coverageThresholds` とする（閾値を上げるときは `build.gradle` だけを直す）。対象のクラスが 0 件の層は検証を失敗させる。分岐が 0 件の層の分岐の閾値は検証にならないため、報告では「対象なし」と書く。
 
 | レイヤー | 行（目標） | 分岐（目標） | 最初の閾値 |
 | :--- | :--- | :--- | :--- |
