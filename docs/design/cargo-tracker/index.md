@@ -8,6 +8,7 @@ cargo-tracker プロジェクトの設計ドキュメントです。
 - [cargo-tracker フロントエンドアーキテクチャ](./architecture_frontend.md) — 利用チャネル、サーバーサイドレンダリングによる画面提供、画面の配置、アクセシビリティと開示制御。
 - [cargo-tracker ドメインモデル](./domain_model.md) — 業務領域の分類、ユビキタス言語、6 コンテキストの集約・不変条件・状態遷移、コマンド・クエリ・イベント、予約サガ。
 - [cargo-tracker データモデル](./data_model.md) — 概念データモデル、スキーマ分割、H2 と PostgreSQL の共通部分の規約、コンテキストごとの論理データモデルと ER 図。
+- [cargo-tracker UI 設計](./ui_design.md) — 画面のオブジェクト、画面一覧、画面遷移、主要画面のイメージ、共通部品、エラー時を含むインタラクション。
 - [cargo-tracker 技術スタック](./tech_stack.md) — バックエンド・画面・DB・テスト・ビルド・インフラの技術、バージョン、サポート期限、アップグレード計画。
 - [cargo-tracker インフラストラクチャアーキテクチャ](./architecture_infrastructure.md) — デプロイ形態、環境構成、データ保護、可観測性、CI/CD。
 
