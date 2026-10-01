@@ -4,9 +4,10 @@ title: "Bolt 1 計画 - ウォーキングスケルトン"
 description: "最初の Bolt（ウォーキングスケルトン）の計画。輸送要求の提出が DE-01 で KPI 計測に届き画面に表示される縦割りを、Bolt ゴール・仮説・10 のステップ・確認ポイントで定義する。"
 tags: [development,bolt-plan]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-01T12:48:11Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-01T12:57:50Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T10:25:23Z }
+  - { by: human:kakimomokuri, at: 2026-10-01T12:57:52Z }
 ---
 
 # Bolt 1 計画 - ウォーキングスケルトン
@@ -290,7 +291,7 @@ S22 : 輸送要求 ID・提出時刻の一覧
 - [x] **9. 検証する**
   - `./gradlew check`（ユニット・アーキテクチャ・受入シナリオ・統合テスト）がすべて通る。
   - 実行時間と、各ステップの承認ゲートの通過数・変更依頼の数を記録する。
-- [?] **10. Bolt 終了報告とゲート密度の判断** 【要確認: 以降の進め方の選択】
+- [x] **10. Bolt 終了報告とゲート密度の判断** 【要確認: 以降の進め方の選択】
   - `bolt_01_report.md` に Bolt 終了報告（成果・指標・仮説の結論・判断と学び）を書く。
   - ウォーキングスケルトンの結果から、次の Bolt 以降を「各ステップでゲート」と「自律実行」のどちらで進めるかを、人が 1 回だけ選ぶ（AI-DLC 版ガイド 2.3）。
 
@@ -339,7 +340,7 @@ S22 : 輸送要求 ID・提出時刻の一覧
 
 ### Definition of Done
 
-- [ ] ステップ 1〜10 が完了し、各ステップの承認ゲートを人が通した（打ち切った場合はステップ 7 まで）（ステップ 10 のゲートは人の判断待ち）
+- [x] ステップ 1〜10 が完了し、各ステップの承認ゲートを人が通した（打ち切った場合はステップ 7 まで）（終了報告の承認でまとめて通過）
 - [x] `./gradlew check` がすべて通る（ユニット・アーキテクチャ AT-01・AT-03・受入シナリオ・統合テスト）
 - [x] `@wip` のシナリオが残っていない
 - [x] H2 での起動と PostgreSQL 18 での統合テストが同じマイグレーションで通る
@@ -366,8 +367,8 @@ S22 : 輸送要求 ID・提出時刻の一覧
 | 2026-10-01 | 開始準備の検証を反映: 対象ストーリー、開発戦略との対応、設計 4 図、リスク、完了条件を追加。表をデータモデルの `transport_request_version` に合わせ、受入シナリオのタグと注釈の語彙を開発戦略・テスト戦略に合わせた | anthropic/claude-opus-5-5 | human:kakimomokuri |
 | 2026-10-01 | 開発戦略に合わせ、入力に開発ガイドラインの第 1 章と第 3 章の節を挙げた | anthropic/claude-opus-5-5 | human:kakimomokuri |
 | 2026-10-01 | 生成の方法（Spring Initializr）と基底パッケージ（`com.example.cargotracker`）の決定を反映し、計画を承認 | anthropic/claude-opus-5-5 | human:kakimomokuri |
-| 2026-10-01 | ステップ 1〜9 を完了とし、ステップ 10 を人の判断待ちにした。デモ 3 の誤りの例を `TYO` に直した。結果は [Bolt 1 終了報告](bolt_01_report.md) | anthropic/claude-opus-5-5 | 承認待ち |
-| 2026-10-01 | クローズで完了条件を実績に合わせて更新した（ステップ 10 のゲートだけが人の判断待ち）。レビューの対応は [Bolt 1 開発成果物レビュー](../../review/cargo-tracker/bolt_01_review_20261001.md) | anthropic/claude-opus-5-5 | 承認待ち |
+| 2026-10-01 | ステップ 1〜9 を完了とし、ステップ 10 を人の判断待ちにした。デモ 3 の誤りの例を `TYO` に直した。結果は [Bolt 1 終了報告](bolt_01_report.md) | anthropic/claude-opus-5-5 | human:kakimomokuri |
+| 2026-10-01 | クローズで完了条件を実績に合わせて更新した（ステップ 10 のゲートだけが人の判断待ち）。レビューの対応は [Bolt 1 開発成果物レビュー](../../review/cargo-tracker/bolt_01_review_20261001.md) | anthropic/claude-opus-5-5 | human:kakimomokuri |
 
 ## 関連ドキュメント
 
