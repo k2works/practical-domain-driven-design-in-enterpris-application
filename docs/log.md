@@ -1,6 +1,9 @@
 # Docs Update Log
 
 ## 2026-10-01
+* **Creation**: [03-spring-modular-monolith](/article/03-spring-modular-monolith.md) を作成（human:kakimomokuri）
+* **Creation**: [02-cargo-domain-model](/article/02-cargo-domain-model.md) を作成（human:kakimomokuri）
+* **Creation**: [01-ddd-fundamentals](/article/01-ddd-fundamentals.md) を作成（human:kakimomokuri）
 * **Update**: MkDocs ビルド成功を確認しユースケース作成計画の仕上げを完了
 * **Update**: 仕上げ状態、Gate 4 承認記録、検証結果を実態に同期
 * **Verification**: [usecases_review_20260930](/review/cargo-tracker/usecases_review_20260930.md) を human:kakimomokuri が検証

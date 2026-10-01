@@ -13,7 +13,7 @@ okf_version: "0.2"
 - [設計](./design/index.md) - アーキテクチャ、モデル、品質方針を整理します。
 - [開発](./development/index.md) - リリース計画とイテレーション管理の入口です。
 - [運用](./operation/index.md) - 環境構築、デプロイ、運用関連の入口です。
-- [記事](./article/index.md) - 学習用の記事シリーズの入口です。
+- [記事](./article/index.md) - DDD の開発ガイドライン（第 1〜3 章）と学習用の記事シリーズの入口です。
 
 ## ドキュメント構成
 
@@ -26,7 +26,7 @@ okf_version: "0.2"
 | [運用](./operation/index.md) | 環境構築、デプロイ、運用手順の整理                   | `index.md` を整備済み |
 | [レビュー](./review/index.md) | 分析・開発レビュー結果の記録                      | `index.md` を整備済み |
 | [ADR](./adr/index.md) | Architecture Decision Records の管理   | `index.md` を整備済み |
-| [記事](./article/index.md) | 学習用の記事シリーズ一覧                        | 公開サイトへのリンク集 |
+| [記事](./article/index.md) | 開発ガイドラインと学習用の記事シリーズ一覧              | DDD 開発ガイドライン 3 章と公開サイトへのリンク集 |
 | [リファレンス](./reference/index.md) | 開発ガイドラインやベストプラクティス                  | 39 件のドキュメントを配置 |
 | [テンプレート](./template/index.md) | 各種ドキュメントの作成テンプレート                   | 18 件のテンプレートを配置 |
 
