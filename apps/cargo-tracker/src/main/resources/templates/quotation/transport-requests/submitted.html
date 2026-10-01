@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="ja" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>見積依頼を提出しました - cargo-tracker</title>
+</head>
+<body>
+<main>
+    <h1>見積依頼を提出しました</h1>
+    <dl>
+        <dt>輸送要求 ID</dt>
+        <dd th:text="${transportRequestId}">00000000-0000-0000-0000-000000000000</dd>
+        <dt>状態</dt>
+        <dd th:text="${statusLabel}">審査中</dd>
+    </dl>
+    <p><a th:href="@{/customer/transport-requests/new}">続けて見積依頼を作成する</a></p>
+</main>
+</body>
+</html>

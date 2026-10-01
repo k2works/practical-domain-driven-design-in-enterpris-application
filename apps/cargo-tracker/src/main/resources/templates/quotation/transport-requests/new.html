@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="ja" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>見積依頼の作成 - cargo-tracker</title>
+</head>
+<body>
+<main>
+    <h1>見積依頼の作成</h1>
+    <form th:action="@{/customer/transport-requests}" th:object="${transportRequestForm}" method="post" novalidate>
+        <div>
+            <label for="origin">出発地（UN/LOCODE）</label>
+            <input id="origin" type="text" th:field="*{origin}" maxlength="5" autocomplete="off"
+                   th:attr="aria-invalid=${#fields.hasErrors('origin')},aria-describedby=${#fields.hasErrors('origin')} ? 'origin-error'">
+            <p id="origin-error" th:if="${#fields.hasErrors('origin')}" th:errors="*{origin}" role="alert"></p>
+        </div>
+        <div>
+            <label for="destination">目的地（UN/LOCODE）</label>
+            <input id="destination" type="text" th:field="*{destination}" maxlength="5" autocomplete="off"
+                   th:attr="aria-invalid=${#fields.hasErrors('destination')},aria-describedby=${#fields.hasErrors('destination')} ? 'destination-error'">
+            <p id="destination-error" th:if="${#fields.hasErrors('destination')}" th:errors="*{destination}" role="alert"></p>
+        </div>
+        <button type="submit">提出する</button>
+    </form>
+</main>
+</body>
+</html>
