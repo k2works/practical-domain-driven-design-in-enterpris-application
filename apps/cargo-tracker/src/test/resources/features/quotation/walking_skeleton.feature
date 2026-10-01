@@ -1,5 +1,5 @@
 # language: ja
-@walking-skeleton @US-01 @US-21 @must @wip
+@walking-skeleton @US-01 @US-21 @must
 機能: ウォーキングスケルトン
   輸送要求の提出が、見積りのドメインイベントでアクセス・監査に届き、
   KPI 計測記録に残ることを確かめる（Bolt 1）。
