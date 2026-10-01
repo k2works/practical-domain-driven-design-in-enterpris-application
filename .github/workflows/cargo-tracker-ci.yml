@@ -1,7 +1,8 @@
 name: cargo-tracker CI
 
 # テスト戦略「CI での実行」のうち、配備の前までを実行する。
-# 配備と E2E（@ui）は運用準備と Bolt 3 で足す。
+# 配備と E2E（@ui）は運用準備と Bolt 3 以降で足す。
+# アクションはタグを付け替えられても中身が変わらないよう、コミットの SHA で固定する（末尾のコメントは版）。
 on:
   push:
     branches:
@@ -20,7 +21,8 @@ permissions:
 
 concurrency:
   group: cargo-tracker-ci-${{ github.ref }}
-  cancel-in-progress: true
+  # main ではコミットごとの結果を残すため、実行中のものを取り消さない
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 defaults:
   run:
@@ -32,30 +34,49 @@ jobs:
     timeout-minutes: 20
     steps:
       - name: リポジトリを取得する
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: JDK 25（Corretto）を用意する
-        uses: actions/setup-java@v6
+        uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
         with:
           distribution: corretto
           java-version: '25'
 
       - name: Gradle を用意する
-        uses: gradle/actions/setup-gradle@v6
+        uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
 
-      - name: 作業中（@wip）の受入シナリオが残っていないことを確かめる
+      # テスト戦略: @wip は必須の実行から外し（RunCucumberTest の not @wip）、@wip を残したまま Bolt を完了しない。
+      # 失敗するシナリオを先に push できるよう、develop と Pull Request では警告にとどめ、main への push では失敗にする
+      - name: 作業中（@wip）の受入シナリオを確かめる
+        env:
+          FAIL_ON_WIP: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
         run: |
-          if grep -rn '@wip' src/test/resources/features; then
-            echo '::error::@wip のシナリオが残っています（テスト戦略: @wip を残したまま Bolt を完了しない）'
+          if [ ! -d src/test/resources/features ]; then
+            echo '::error::src/test/resources/features がありません（@wip を検出できません）'
             exit 1
           fi
+          set +e
+          grep -rnE --include='*.feature' '(^|[[:space:]])@wip([[:space:]]|$)' src/test/resources/features
+          status=$?
+          set -e
+          if [ "$status" -eq 2 ]; then
+            echo '::error::@wip の検出に失敗しました'
+            exit 1
+          fi
+          if [ "$status" -eq 0 ]; then
+            if [ "$FAIL_ON_WIP" = 'true' ]; then
+              echo '::error::@wip のシナリオが残っています（テスト戦略: @wip を残したまま Bolt を完了しない）'
+              exit 1
+            fi
+            echo '::warning::@wip のシナリオがあります。必須の実行から外れています。Bolt を完了する前に外してください'
+          fi
 
-      - name: 書式・静的解析・テスト・アーキテクチャ・カバレッジを検証する
+      - name: 書式・静的解析・テスト・アーキテクチャ・本番の依存・カバレッジを検証する
         run: ./gradlew check
 
       - name: テストとカバレッジと受入シナリオの結果を保存する
         if: always()
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: cargo-tracker-reports
           path: |
