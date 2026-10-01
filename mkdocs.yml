@@ -97,6 +97,7 @@ nav:
           - データモデル: design/cargo-tracker/data_model.md
           - UI 設計: design/cargo-tracker/ui_design.md
           - テスト戦略: design/cargo-tracker/test_strategy.md
+          - 非機能要件: design/cargo-tracker/non_functional.md
   - 開発:
       - 概要: development/index.md
   - 運用:
