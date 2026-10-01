@@ -2,6 +2,7 @@ package com.example.cargotracker.identity.acceptance;
 
 import com.example.cargotracker.identity.domain.model.aggregates.KpiObservation;
 import com.example.cargotracker.identity.domain.model.aggregates.KpiObservationRepository;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -17,7 +18,7 @@ public class InMemoryKpiObservationRepository implements KpiObservationRepositor
 
     @Override
     public void save(KpiObservation observation) {
-        store.put(observation.transportRequestId(), observation);
+        store.putIfAbsent(observation.transportRequestId(), observation);
     }
 
     @Override
@@ -27,6 +28,8 @@ public class InMemoryKpiObservationRepository implements KpiObservationRepositor
 
     @Override
     public List<KpiObservation> findAll() {
-        return List.copyOf(store.values());
+        return store.values().stream()
+                .sorted(Comparator.comparing((KpiObservation o) -> o.submittedAt().instant()).reversed())
+                .toList();
     }
 }

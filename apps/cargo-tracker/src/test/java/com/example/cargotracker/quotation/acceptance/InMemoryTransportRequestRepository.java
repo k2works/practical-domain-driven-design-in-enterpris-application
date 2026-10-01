@@ -9,6 +9,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * 業務ルール層の受入シナリオで使う、メモリ上の輸送要求リポジトリ。
+ * 本物（INSERT）と同じく、同じ ID の輸送要求を 2 回保存すると失敗する。
  */
 public class InMemoryTransportRequestRepository implements TransportRequestRepository {
 
@@ -16,7 +17,9 @@ public class InMemoryTransportRequestRepository implements TransportRequestRepos
 
     @Override
     public void save(TransportRequest transportRequest) {
-        store.put(transportRequest.id(), transportRequest);
+        if (store.putIfAbsent(transportRequest.id(), transportRequest) != null) {
+            throw new IllegalStateException("輸送要求は既に保存されています: " + transportRequest.id());
+        }
     }
 
     @Override

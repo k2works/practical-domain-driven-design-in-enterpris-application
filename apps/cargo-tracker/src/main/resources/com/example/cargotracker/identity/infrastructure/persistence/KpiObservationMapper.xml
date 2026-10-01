@@ -7,15 +7,19 @@
             <idArg column="transport_request_id" name="transportRequestId" javaType="java.util.UUID"/>
             <arg column="shipper_company_id" name="shipperCompanyId" javaType="java.util.UUID"/>
             <arg column="submitted_at" name="submittedAt" javaType="java.time.OffsetDateTime"/>
-            <arg column="excluded" name="excluded" javaType="_boolean"/>
         </constructor>
     </resultMap>
 
-    <sql id="columns">transport_request_id, shipper_company_id, submitted_at, excluded</sql>
+    <sql id="columns">transport_request_id, shipper_company_id, submitted_at</sql>
 
-    <insert id="insert">
+    <!-- 同じ輸送要求の記録が既にあれば何もしない（受信側の冪等性）。
+         一意制約違反を捕まえて続けるのではなく、INSERT の条件で吸収する（ADR-007）。
+         ON CONFLICT は H2 で使えないため、両方で動く INSERT ... SELECT ... WHERE NOT EXISTS にする。 -->
+    <insert id="insertIfAbsent">
         INSERT INTO identity.kpi_observation (<include refid="columns"/>)
-        VALUES (#{transportRequestId}, #{shipperCompanyId}, #{submittedAt}, #{excluded})
+        SELECT #{transportRequestId}, #{shipperCompanyId}, #{submittedAt}
+         WHERE NOT EXISTS (
+               SELECT 1 FROM identity.kpi_observation WHERE transport_request_id = #{transportRequestId})
     </insert>
 
     <select id="selectByTransportRequestId" resultMap="kpiObservationRow">

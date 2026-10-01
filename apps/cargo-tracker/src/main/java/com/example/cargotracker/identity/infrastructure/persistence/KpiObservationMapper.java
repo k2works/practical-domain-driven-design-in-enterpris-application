@@ -11,7 +11,7 @@ import org.apache.ibatis.annotations.Mapper;
 @Mapper
 public interface KpiObservationMapper {
 
-    void insert(KpiObservationRow row);
+    void insertIfAbsent(KpiObservationRow row);
 
     Optional<KpiObservationRow> selectByTransportRequestId(UUID transportRequestId);
 

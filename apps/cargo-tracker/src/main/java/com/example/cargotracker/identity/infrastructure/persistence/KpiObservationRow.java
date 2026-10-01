@@ -4,8 +4,7 @@ import java.time.OffsetDateTime;
 import java.util.UUID;
 
 /**
- * KPI 計測記録の行。
+ * identity.kpi_observation の 1 行。計測からの除外の列（excluded）は DB の既定値に任せ、まだ読み書きしない。
  */
-public record KpiObservationRow(UUID transportRequestId, UUID shipperCompanyId, OffsetDateTime submittedAt,
-        boolean excluded) {
+public record KpiObservationRow(UUID transportRequestId, UUID shipperCompanyId, OffsetDateTime submittedAt) {
 }

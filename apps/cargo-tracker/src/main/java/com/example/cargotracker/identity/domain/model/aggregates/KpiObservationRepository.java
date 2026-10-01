@@ -9,9 +9,15 @@ import java.util.UUID;
  */
 public interface KpiObservationRepository {
 
+    /**
+     * 記録を保存する。同じ輸送要求の記録が既にあれば何もしない（DE-01 の再配信を吸収する。ARCH-HO-01）。
+     */
     void save(KpiObservation observation);
 
     Optional<KpiObservation> findByTransportRequestId(UUID transportRequestId);
 
+    /**
+     * すべての記録を提出時刻の新しい順に返す。
+     */
     List<KpiObservation> findAll();
 }

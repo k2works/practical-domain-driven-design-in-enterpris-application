@@ -11,7 +11,7 @@ import org.junit.jupiter.api.Test;
 class KpiObservationTest {
 
     @Test
-    void 輸送要求の提出時刻を記録し計測の対象とする() {
+    void 輸送要求の提出時刻を記録する() {
         UUID transportRequestId = UUID.randomUUID();
         CompanyId shipper = new CompanyId(UUID.randomUUID());
         UtcInstant submittedAt = new UtcInstant(Instant.parse("2026-10-05T01:00:00Z"));
@@ -21,6 +21,5 @@ class KpiObservationTest {
         assertThat(observation.transportRequestId()).isEqualTo(transportRequestId);
         assertThat(observation.shipperCompanyId()).isEqualTo(shipper);
         assertThat(observation.submittedAt()).isEqualTo(submittedAt);
-        assertThat(observation.excluded()).isFalse();
     }
 }

@@ -49,7 +49,6 @@ public class TransportRequest {
         return request;
     }
 
-
     /**
      * 保存されている状態から輸送要求を組み立てる（リポジトリが使う）。イベントは生成しない。
      */
