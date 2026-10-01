@@ -1,6 +1,8 @@
 # Docs Update Log
 
 ## 2026-10-01
+* **Verification**: [test_strategy](/design/cargo-tracker/test_strategy.md) を human:kakimomokuri が検証
+* **Creation**: [test_strategy](/design/cargo-tracker/test_strategy.md) を草案として作成
 * **Verification**: [ui_design](/design/cargo-tracker/ui_design.md) を human:kakimomokuri が検証
 * **Creation**: [ui_design](/design/cargo-tracker/ui_design.md) を草案として作成
 * **Verification**: [data_model](/design/cargo-tracker/data_model.md) を human:kakimomokuri が検証
