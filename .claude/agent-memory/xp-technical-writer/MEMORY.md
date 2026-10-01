@@ -1,1 +1,1 @@
-- [cargo-tracker のレビュー論点](project_cargo_tracker_review_points.md) — 見積依頼（輸送要求）の併記、共通部品の省略、UN/LOCODE 小文字、テスト件数の検証、README 不在
+- [cargo-tracker のレビュー論点](project_cargo_tracker_review_points.md) — 用語の併記、テスト件数・CI・時刻の照合法、手順書の後追い漏れ、sonar-local の判定の罠、承認待ち決定の反映

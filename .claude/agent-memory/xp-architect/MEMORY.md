@@ -1,1 +1,2 @@
 - [Bolt 1 レビューの未解決リスク](project_bolt1_review.md) — 受信側の冪等性、AT-02、イベント直列化契約、afterMigrate、D-1 への意見
+- [Bolt 2 レビューの指摘](project_bolt2_review.md) — AT-02 の層外の抜け、イベント依存規則、アクション SHA 固定、D-1/D-5 の記録

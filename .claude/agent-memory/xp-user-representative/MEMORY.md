@@ -1,1 +1,1 @@
-- [cargo-tracker の業務と利用者視点の論点](project_cargo_tracker_domain.md) — 業務の流れ・呼び分けと、2026-10-01 レビューで指摘した未解消の論点
+- [cargo-tracker の業務と利用者視点の論点](project_cargo_tracker_domain.md) — 業務の流れ・呼び分け、2026-10-01・10-02 のレビューで指摘した未解消の論点と優先順位

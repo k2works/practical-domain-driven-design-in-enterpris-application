@@ -1,1 +1,1 @@
-- [Bolt 1 テストレビューの未解消点](project_bolt1_test_review.md) — Clock 未切り捨て、配信テストの競合、受入の共有状態、H2 スモーク欠如（2026-10-01）
+- [Bolt 2 品質ゲートレビューの未解消点](project_bolt2_quality_gate_review.md) — sonar gate が常に成功、JaCoCo の分母 0 空振り、AT-02 の抜け、AC 照合未実装（2026-10-02）
