@@ -1,0 +1,1 @@
+- [Bolt 1 レビューの未解決リスク](project_bolt1_review.md) — 受信側の冪等性、AT-02、イベント直列化契約、afterMigrate、D-1 への意見
