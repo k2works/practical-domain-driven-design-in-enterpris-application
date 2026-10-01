@@ -1,6 +1,7 @@
 # Docs Update Log
 
 ## 2026-10-01
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
 * **Update**: [user_story](/requirements/cargo-tracker/user_story.md) を更新（anthropic/claude-opus-5-5）
 * **Update**: [requirements_definition](/requirements/cargo-tracker/requirements_definition.md) を更新（anthropic/claude-opus-5-5）
 * **Update**: [tech_stack](/design/cargo-tracker/tech_stack.md) を更新（anthropic/claude-opus-5-5）

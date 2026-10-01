@@ -62,6 +62,9 @@ dependencies {
 	testImplementation 'io.cucumber:cucumber-spring'
 	testImplementation 'io.cucumber:cucumber-junit-platform-engine'
 	testImplementation 'org.junit.platform:junit-platform-suite'
+	// 画面の層の受入シナリオ（@ui）。実ブラウザの操作とアクセシビリティの自動検査（テスト戦略）
+	testImplementation 'com.microsoft.playwright:playwright:1.63.0'
+	testImplementation 'com.deque.html.axe-core:playwright:4.13.0'
 	// H2 のスモークテスト（テスト戦略）で dev プロファイルの起動とマイグレーションを確かめる。本番の成果物には含めない
 	testRuntimeOnly 'com.h2database:h2'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
@@ -78,6 +81,33 @@ tasks.named('test') {
 	useJUnitPlatform()
 	// 受入シナリオは RunCucumberTest（Suite）からだけ実行し、Cucumber エンジンの直接探索による二重実行を防ぐ
 	systemProperty 'cucumber.junit-platform.discovery.as-root-engine', 'false'
+	// 画面の層（@ui）は実ブラウザを使うため check に入れず、uiTest で動かす
+	filter {
+		excludeTestsMatching '*RunUiCucumberTest'
+	}
+}
+
+// 画面の層の受入シナリオ（@ui）。Playwright の Chromium をヘッドレスで動かす。CI では別のジョブで動かす
+tasks.register('uiTest', Test) {
+	group = 'verification'
+	description = '画面の層の受入シナリオ（@ui。Playwright と axe-core）を動かす'
+	testClassesDirs = sourceSets.test.output.classesDirs
+	classpath = sourceSets.test.runtimeClasspath
+	useJUnitPlatform()
+	systemProperty 'cucumber.junit-platform.discovery.as-root-engine', 'false'
+	filter {
+		includeTestsMatching '*RunUiCucumberTest'
+	}
+	shouldRunAfter 'test'
+}
+
+// Playwright のブラウザ（Chromium）と OS の依存を入れる。CI の uiTest の前に動かす
+tasks.register('playwrightInstall', JavaExec) {
+	group = 'verification'
+	description = 'Playwright の Chromium と OS の依存を入れる'
+	classpath = sourceSets.test.runtimeClasspath
+	mainClass = 'com.microsoft.playwright.CLI'
+	args 'install', '--with-deps', 'chromium'
 }
 
 tasks.named('bootRun') {

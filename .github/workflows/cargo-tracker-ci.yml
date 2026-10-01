@@ -1,7 +1,7 @@
 name: cargo-tracker CI
 
 # テスト戦略「CI での実行」のうち、配備の前までを実行する。
-# 配備と E2E（@ui）は運用準備と Bolt 3 以降で足す。
+# 配備は運用準備で足す。画面の層の受入シナリオ（@ui）は、ステージングができるまでアプリを CI の中で起動して ui ジョブで動かす。
 # アクションはタグを付け替えられても中身が変わらないよう、コミットの SHA で固定する（末尾のコメントは版）。
 on:
   push:
@@ -82,4 +82,44 @@ jobs:
           path: |
             apps/cargo-tracker/build/reports/
             apps/cargo-tracker/build/test-results/
+          retention-days: 14
+
+  ui:
+    # 画面の層の受入シナリオ（@ui）。Playwright の Chromium と axe-core で、画面の流れとアクセシビリティを確かめる（テスト戦略）
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: リポジトリを取得する
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: JDK 25（Corretto）を用意する
+        uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        with:
+          distribution: corretto
+          java-version: '25'
+
+      - name: Gradle を用意する
+        uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
+
+      - name: Playwright のブラウザのキャッシュを使う
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('apps/cargo-tracker/build.gradle') }}
+
+      - name: Playwright の Chromium と OS の依存を入れる
+        run: ./gradlew playwrightInstall
+
+      - name: 画面の層の受入シナリオ（@ui）を動かす
+        run: ./gradlew uiTest
+
+      - name: 画面の層の受入シナリオの結果を保存する
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: cargo-tracker-ui-reports
+          path: |
+            apps/cargo-tracker/build/reports/cucumber-ui/
+            apps/cargo-tracker/build/reports/tests/uiTest/
+            apps/cargo-tracker/build/test-results/uiTest/
           retention-days: 14
