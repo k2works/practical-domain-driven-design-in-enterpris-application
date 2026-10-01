@@ -4,7 +4,7 @@ title: "開発戦略 - cargo-tracker（A 社国際貨物輸送管理システム
 description: "リリース計画の W1〜W14 を序盤・中盤・終盤の局面に分け、各局面の TDD のアプローチ、週ごとのデモ項目を受入シナリオにする方針、Living Documentation の採用を定める開発戦略。"
 tags: [development,development-strategy]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-01T23:12:31Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-01T23:49:27Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T10:25:23Z }
   - { by: human:kakimomokuri, at: 2026-10-01T13:06:21Z }
@@ -154,7 +154,8 @@ Bolt 1 で確定したコマンドである。`apps/cargo-tracker/` で実行す
 | 受入シナリオ | `./gradlew test --tests '*RunCucumberTest*'` | 作業中の `@wip` は除外される。結果は `build/reports/cucumber/`。ArchUnit のテストもフィルターに従わず一緒に走る |
 | ローカル起動（H2） | `./gradlew bootRun` | dev プロファイル（H2 の PostgreSQL 互換モード）で起動する |
 | 本番の成果物 | `./gradlew bootJar` | H2 を含まない |
-| 設計ドキュメントの生成 | 未設定 | Bolt 3 で入れる（JIG、Spring Modulith の図） |
+| 設計ドキュメントの生成 | `./gradlew jigReports`（JIG。`build/jig/index.html`）、`./gradlew test`（Spring Modulith の図。`build/spring-modulith-docs/`） | CI の `check` ジョブで生成し、成果物 `cargo-tracker-reports` に残す。生成物はコミットしない |
+| 画面の層の受入シナリオ | `./gradlew uiTest`（初回は `./gradlew playwrightInstall`） | Playwright の Chromium と axe-core で `@ui` を動かす。`check` には入れず、CI の `ui` ジョブで動かす。結果は `build/reports/cucumber-ui/` |
 
 ---
 
@@ -440,3 +441,4 @@ Bolt 計画は局所の計画、`docs/design/cargo-tracker/` は全体の正で�
 | 2026-10-01 | Bolt 2 の開始準備: 開発基盤の残りを Bolt 2（CI と品質の安全網）と Bolt 3（E2E の基盤、設計ドキュメントの生成）に分けた | anthropic/claude-opus-5-5（承認 human:kakimomokuri） |
 | 2026-10-01 | Bolt 2 の結果を反映: 品質チェックのコマンドに書式・カバレッジ・SonarQube を足し、CI と同じコマンドであることを書いた | anthropic/claude-opus-5-5（承認 human:kakimomokuri） |
 | 2026-10-02 | Bolt 2 レビューの対応: SonarQube の品質ゲートのコマンドが失敗で判定することと、内部で動かすコマンドを書いた | anthropic/claude-opus-5-5（承認 human:kakimomokuri） |
+| 2026-10-02 | Bolt 3 の結果を反映: 設計ドキュメントの生成と画面の層の受入シナリオのコマンドを書いた | anthropic/claude-opus-5-5（承認待ち） |

@@ -74,6 +74,10 @@ jobs:
       - name: 書式・静的解析・テスト・アーキテクチャ・本番の依存・カバレッジを検証する
         run: ./gradlew check
 
+      # 生きたドキュメント（開発戦略）。Spring Modulith の図は check のテストで生成される
+      - name: JIG の設計ドキュメントを生成する
+        run: ./gradlew jigReports
+
       - name: テストとカバレッジと受入シナリオの結果を保存する
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -82,6 +86,8 @@ jobs:
           path: |
             apps/cargo-tracker/build/reports/
             apps/cargo-tracker/build/test-results/
+            apps/cargo-tracker/build/jig/
+            apps/cargo-tracker/build/spring-modulith-docs/
           retention-days: 14
 
   ui:
