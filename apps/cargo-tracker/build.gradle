@@ -67,4 +67,6 @@ dependencyManagement {
 
 tasks.named('test') {
 	useJUnitPlatform()
+	// 受入シナリオは RunCucumberTest（Suite）からだけ実行し、Cucumber エンジンの直接探索による二重実行を防ぐ
+	systemProperty 'cucumber.junit-platform.discovery.as-root-engine', 'false'
 }
