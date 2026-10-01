@@ -11,6 +11,10 @@ cargo-tracker プロジェクトのADRドキュメントです。
 | [ADR-003](./003-inter-context-integration.md) | コンテキスト間は冪等コマンド・永続化したドメインイベント・オーケストレーション型のサガで連携する | 承認済み |
 | [ADR-004](./004-external-data-ingestion.md) | 外部原本は Inbox・隔離・照合の 3 段で取り込む | 承認済み |
 | [ADR-005](./005-server-side-rendering.md) | 画面はサーバーサイドレンダリングとハイパーメディアで提供する | 承認済み |
+| [ADR-006](./006-java-spring-boot-platform.md) | Java 25 LTS・Spring Boot 4.1・Spring Modulith でアプリケーションを構築する | 承認済み |
+| [ADR-007](./007-postgresql-mybatis-flyway.md) | 開発環境は H2、本番は PostgreSQL 18 を使い、永続化は MyBatis、スキーマは Flyway で管理する | 承認済み |
+| [ADR-008](./008-aws-container-platform.md) | AWS の ECS Fargate・RDS・S3 で実行する | 承認済み |
+| [ADR-009](./009-bdd-cucumber.md) | BDD を採用し、受入条件を Cucumber で実行可能な仕様にする | 承認済み |
 
 ## 補足
 

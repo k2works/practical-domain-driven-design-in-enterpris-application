@@ -92,6 +92,7 @@ nav:
           - バックエンドアーキテクチャ: design/cargo-tracker/architecture_backend.md
           - フロントエンドアーキテクチャ: design/cargo-tracker/architecture_frontend.md
           - インフラストラクチャアーキテクチャ: design/cargo-tracker/architecture_infrastructure.md
+          - 技術スタック: design/cargo-tracker/tech_stack.md
   - 開発:
       - 概要: development/index.md
   - 運用:
@@ -109,6 +110,10 @@ nav:
           - ADR-003 コンテキスト間連携: adr/cargo-tracker/003-inter-context-integration.md
           - ADR-004 外部原本の取込: adr/cargo-tracker/004-external-data-ingestion.md
           - ADR-005 サーバーサイドレンダリング: adr/cargo-tracker/005-server-side-rendering.md
+          - ADR-006 Java・Spring Boot 基盤: adr/cargo-tracker/006-java-spring-boot-platform.md
+          - ADR-007 H2・PostgreSQL・MyBatis・Flyway: adr/cargo-tracker/007-postgresql-mybatis-flyway.md
+          - ADR-008 AWS 実行基盤: adr/cargo-tracker/008-aws-container-platform.md
+          - ADR-009 BDD と Cucumber: adr/cargo-tracker/009-bdd-cucumber.md
   - 記事:
       - 概要: article/index.md
       - 第 1 章 ドメイン駆動設計: article/01-ddd-fundamentals.md

@@ -1,6 +1,20 @@
 # Docs Update Log
 
 ## 2026-10-01
+* **Verification**: [009-bdd-cucumber](/adr/cargo-tracker/009-bdd-cucumber.md) を human:kakimomokuri が検証
+* **Verification**: [008-aws-container-platform](/adr/cargo-tracker/008-aws-container-platform.md) を human:kakimomokuri が検証
+* **Verification**: [007-postgresql-mybatis-flyway](/adr/cargo-tracker/007-postgresql-mybatis-flyway.md) を human:kakimomokuri が検証
+* **Verification**: [006-java-spring-boot-platform](/adr/cargo-tracker/006-java-spring-boot-platform.md) を human:kakimomokuri が検証
+* **Verification**: [architecture_infrastructure](/design/cargo-tracker/architecture_infrastructure.md) を human:kakimomokuri が検証
+* **Verification**: [tech_stack](/design/cargo-tracker/tech_stack.md) を human:kakimomokuri が検証
+* **Update**: ローカル環境を H2 で起動する方針（ADR-007 改訂）を反映
+* **Update**: 開発体験を優先し、開発環境は H2・本番は PostgreSQL とする方針を tech_stack と ADR-007 に反映（human:kakimomokuri の決定）
+* **Creation**: [ADR-009](/adr/cargo-tracker/009-bdd-cucumber.md) BDD と Cucumber による受入条件の実行を提案
+* **Update**: [tech_stack](/design/cargo-tracker/tech_stack.md) に Cucumber-JVM を追加
+* **Creation**: [ADR-008](/adr/cargo-tracker/008-aws-container-platform.md) AWS の ECS Fargate・RDS・S3 を提案
+* **Creation**: [ADR-007](/adr/cargo-tracker/007-postgresql-mybatis-flyway.md) PostgreSQL 18・MyBatis・Flyway を提案
+* **Creation**: [ADR-006](/adr/cargo-tracker/006-java-spring-boot-platform.md) Java 25・Spring Boot 4.1・Spring Modulith を提案
+* **Creation**: [tech_stack](/design/cargo-tracker/tech_stack.md) を草案として作成
 * **Verification**: [005-server-side-rendering](/adr/cargo-tracker/005-server-side-rendering.md) を human:kakimomokuri が検証
 * **Verification**: [004-external-data-ingestion](/adr/cargo-tracker/004-external-data-ingestion.md) を human:kakimomokuri が検証
 * **Verification**: [003-inter-context-integration](/adr/cargo-tracker/003-inter-context-integration.md) を human:kakimomokuri が検証

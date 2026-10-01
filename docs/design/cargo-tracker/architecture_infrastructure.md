@@ -4,9 +4,10 @@ title: "cargo-tracker インフラストラクチャアーキテクチャ"
 description: "cargo-tracker のデプロイ形態、環境構成、コンテナ化、データ保護、可観測性、CI/CD の方針。"
 tags: [design, architecture, infrastructure]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-01T06:54:45Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-01T07:27:41Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T07:11:12Z }
+  - { by: human:kakimomokuri, at: 2026-10-01T07:29:04Z }
 ---
 
 # cargo-tracker インフラストラクチャアーキテクチャ
@@ -22,7 +23,7 @@ verified:
 | パイロットの利用者は限定航路の荷主と A 社の担当者に限られる | 要件定義「優先顧客と MVP パイロット境界」 | 大規模な水平分散は不要。単純な構成から始める |
 | 外部 API に接続しない | BR-18、OQ-05 | 外部向けの受信口（webhook など）を MVP では設けない |
 | 権限外開示・外部原本消失が 1 件でもあれば中止 | PV-01 | 通信・保存の暗号化、原本の消失防止、監査証跡の改ざん防止を基盤でも担保する |
-| 開発基盤は Docker・Docker Compose、Nix flake、GitHub Actions | AGENTS.md | ローカルから本番まで同じコンテナイメージを使う |
+| 開発基盤は Docker・Docker Compose、Nix flake、GitHub Actions | AGENTS.md | ステージングから本番まで同じコンテナイメージを使う。ローカルは開発体験を優先し、コンテナなしでも起動できるようにする（ADR-007） |
 
 ## デプロイ形態
 
@@ -74,7 +75,7 @@ app ..> obs
 
 | 環境 | 用途 | 構成 | データ |
 | :--- | :--- | :--- | :--- |
-| ローカル | 開発・テスト | Docker Compose（アプリケーション、DB、オブジェクトストレージ互換） | テスト用データ |
+| ローカル | 開発 | アプリケーションを H2（インメモリ）で起動し、外部原本はローカルのファイルシステムに保存する。統合テストと E2E は Testcontainers の PostgreSQL で行う（ADR-007） | テスト用データ |
 | ステージング | 受入テスト、Golden dataset による検証、リリース前確認 | 本番と同じ構成を小さい規模で | 匿名化または合成したデータ。本番の個人・取引情報を持ち込まない |
 | 本番 | パイロット運用 | 上記デプロイ構成 | 本番データ |
 
