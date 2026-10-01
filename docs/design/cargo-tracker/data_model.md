@@ -4,9 +4,10 @@ title: "cargo-tracker データモデル"
 description: "cargo-tracker の概念データモデル、スキーマ分割、命名と型の規約（H2 と PostgreSQL の共通部分）、コンテキストごとの論理データモデルと ER 図、版・追記専用・冪等性・イベント配信の表現。"
 tags: [design, data-model]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-01T07:44:42Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-01T08:48:15Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T07:48:17Z }
+  - { by: human:kakimomokuri, at: 2026-10-01T09:01:37Z }
 ---
 
 # cargo-tracker データモデル
@@ -17,7 +18,7 @@ verified:
 
 | 前提 | 出典 | データモデルへの影響 |
 | :--- | :--- | :--- |
-| DB は 1 つ、コンテキストごとにスキーマを分ける | ADR-001 | 6 つの業務スキーマと、基盤用のスキーマを置く |
+| DB は 1 つ、コンテキストごとにスキーマを分ける | ADR-001 | 7 つの業務スキーマと、基盤用のスキーマを置く |
 | 集約は状態保存。版は不変、追跡の主要実績と監査記録は追記専用 | ADR-002 | 版はヘッダ・明細の形で別の行にする。追記専用の表には削除の権限を与えない |
 | 冪等コマンド、永続化したドメインイベント、予約サガ | ADR-003 | 処理済みコマンド、イベント発行記録、サガ状態の表を持つ |
 | 外部原本は Inbox・隔離・照合 | ADR-004 | 原本は S3 に置き、DB には冪等性キーとハッシュと分類を持つ |
@@ -111,13 +112,14 @@ package "外部データ" {
 
 | スキーマ | 所有するコンテキスト | 内容 |
 | :--- | :--- | :--- |
-| `quotation` | 見積り | 輸送要求、輸送要求版、審査記録、見積り、料金明細、処理済みコマンド |
+| `quotation` | 見積り | 輸送要求、輸送要求の下書き、輸送要求版、審査記録、見積り、料金明細、処理済みコマンド |
 | `routing` | 経路設計 | 経路設計案件、経路版、経路候補、区間、除外理由、参照情報版、航海、寄港、接続時間規則、処理済みコマンド |
 | `booking` | 予約 | 貨物予約、予約版、変更取消申請、予約サガ、処理済みコマンド |
-| `tracking` | 追跡 | 追跡記録、予定区間、主要実績、訂正、有人案件とその進捗・回答、処理済みコマンド |
-| `identity` | アクセス・監査 | 企業、利用者、役割、担当範囲、参照許可、監査記録 |
+| `tracking` | 追跡 | 追跡記録、予定区間、主要実績、訂正、有人案件とその進捗・回答、照会記録、営業日カレンダー、処理済みコマンド |
+| `identity` | アクセス・監査 | 企業、利用者、役割、担当範囲、参照許可、監査記録、KPI 計測記録、KPI 基準値 |
 | `external_data` | 外部データ | 情報源、取込、外部原本、受信記録、採用値、手動情報、停止期間、復旧照合、差異 |
-| `platform` | 基盤（コンテキストに属さない） | Spring Modulith のイベント発行記録、Spring Session の表 |
+| `notification` | 通知 | 通知（送信の記録） |
+| `platform` | 基盤（コンテキストに属さない） | Spring Modulith のイベント発行記録、Spring Session の表、ShedLock の表 |
 
 `platform` スキーマはフレームワークが定める表だけを置き、業務の表を置かない。イベント発行記録はすべてのコンテキストが書き込むが、内容はフレームワークが管理し、業務のコードは直接読み書きしない。
 
@@ -156,11 +158,14 @@ ADR-007 により、DDL は H2（PostgreSQL 互換モード）と PostgreSQL 18 
 
 | 表 | 許す操作 | 守り方 |
 | :--- | :--- | :--- |
-| `identity.audit_record` | INSERT、SELECT | PostgreSQL ではアプリケーションの DB 利用者から UPDATE・DELETE の権限を外す |
+| `identity.audit_record`、`identity.kpi_baseline` | INSERT、SELECT | PostgreSQL ではアプリケーションの DB 利用者から UPDATE・DELETE の権限を外す |
+| `quotation.transport_request_version`、`booking.booking_version`、`external_data.receipt` | INSERT、SELECT | UPDATE・DELETE の権限を外す |
 | `tracking.milestone` | INSERT、SELECT、状態と下書き内容の UPDATE | DELETE の権限を外す。採用済みの内容を変えないことはドメインと PostgreSQL の統合テストで確かめる（T-INV-01、T-INV-07） |
-| 各版の表、`external_data.receipt` | INSERT、SELECT | UPDATE・DELETE の権限を外す |
+| `routing.route_version` | INSERT、SELECT、UPDATE | 状態が変わる（確定 → 再設計要 → 旧版）ため権限では守らない。確定した経路版の内容（候補・区間・判断根拠・承認）を変えないことは、ドメインと PostgreSQL の統合テストで確かめる（R-INV-06） |
 
-権限の設定は PostgreSQL にしかない構文のため、Flyway のマイグレーション（H2 と共通）には書かず、環境構築（`operating-provision`）の初期化で行う。開発の H2 では権限による保護は働かない。保護は PostgreSQL の統合テストで確かめる。
+輸送要求の下書きは、版の表とは別の `transport_request_draft` に置く（下書きは何度も更新するため）。提出したときに、下書きの内容を `transport_request_version` に新しい版として INSERT する。これにより版の表は INSERT だけになる（Q-INV-03）。
+
+権限の付与と剥奪は、PostgreSQL 用の Flyway のコールバック（`afterMigrate`）で、表の作成と同じ配備の中で行う（ADR-007 の補足の決定）。開発の H2 では権限による保護は働かない。保護は PostgreSQL の統合テストで確かめ、Testcontainers でも同じコールバックが動く。
 
 ### 冪等性（ARCH-HO-01）
 
@@ -212,8 +217,23 @@ entity "transport_request_version\n輸送要求版" as trv {
   * package_count : INTEGER
   * gross_weight_kg : NUMERIC(12,3)
   * volume_m3 : NUMERIC(12,3)
-  submitted_by : UUID
-  submitted_at : TIMESTAMPTZ
+  * submitted_by : UUID
+  * submitted_at : TIMESTAMPTZ
+}
+entity "transport_request_draft\n輸送要求の下書き" as trd {
+  * transport_request_id : UUID <<PK,FK>>
+  --
+  consignee_company_id : UUID
+  origin_unlocode : CHAR(5)
+  destination_unlocode : CHAR(5)
+  arrival_deadline : TIMESTAMPTZ
+  cargo_category : VARCHAR(30)
+  package_type : VARCHAR(30)
+  package_count : INTEGER
+  gross_weight_kg : NUMERIC(12,3)
+  volume_m3 : NUMERIC(12,3)
+  copied_from_request_id : UUID
+  * updated_at / updated_by
 }
 entity "required_document\n必要書類" as doc {
   * transport_request_id : UUID <<PK,FK>>
@@ -243,8 +263,18 @@ entity "quotation\n見積り" as q {
   * expires_at : TIMESTAMPTZ
   * total_amount : NUMERIC(15,2)
   * currency : CHAR(3)
+  * route_policy_via : VARCHAR(200)
+  route_policy_departure_at : TIMESTAMPTZ
+  route_policy_arrival_at : TIMESTAMPTZ
   internal_approved_by : UUID
   internal_approved_at : TIMESTAMPTZ
+  presented_at : TIMESTAMPTZ
+  shipper_response : VARCHAR(30)
+  responded_by : UUID
+  responded_at : TIMESTAMPTZ
+  decline_reason : VARCHAR(4000)
+  routing_case_id : UUID <<REF routing>>
+  route_version_no : INTEGER
   shipper_approved_by : UUID
   shipper_approved_at : TIMESTAMPTZ
   replaced_by_quotation_id : UUID <<FK>>
@@ -262,6 +292,7 @@ entity "pricing_line\n料金明細" as pl {
   contract_reference : VARCHAR(200)
 }
 tr ||--|{ trv
+tr ||--o| trd
 trv ||--o{ doc
 tr ||--o{ rv
 trv ||--o{ q
@@ -272,10 +303,11 @@ q |o--o| q : 置換
 
 | 表 | 主な制約 | 対応する不変条件 |
 | :--- | :--- | :--- |
-| `transport_request` | `status` IN（`DRAFT`、`UNDER_REVIEW`、`REVIEWED`、`QUOTED`、`BOOKED`、`WITHDRAWN`） | 輸送要求の状態遷移 |
-| `transport_request_version` | `cargo_category` IN（`GENERAL`、`DANGEROUS`、`REEFER`、`OTHER_SPECIAL`）。下書き中は `submitted_at` が NULL | Q-INV-02、Q-INV-03 |
+| `transport_request` | `status` IN（`DRAFT`、`UNDER_REVIEW`、`QUOTING`、`QUOTED`、`ROUTING`、`AWAITING_APPROVAL`、`READY_TO_BOOK`、`BOOKED`、`WITHDRAWN`） | 輸送要求の状態遷移 |
+| `transport_request_draft` | 輸送要求ごとに 1 行。提出時に内容を版の表へ INSERT する。`copied_from_request_id` は複製元 | Q-INV-03、Q-INV-11 |
+| `transport_request_version` | `cargo_category` IN（`GENERAL`、`DANGEROUS`、`REEFER`、`OTHER_SPECIAL`）。提出した版だけを INSERT し、更新しない。`submitted_at` は KPI-01 の開始時刻 | Q-INV-02、Q-INV-03、US-21 |
 | `review_record` | （`transport_request_id`、`version_no`）→ `transport_request_version` の FK | Q-INV-04 |
-| `quotation` | `status` IN（`DRAFT`、`PENDING_APPROVAL`、`PRESENTED`、`APPROVED`、`EXPIRED`、`REPLACED`）。`expires_at` と合計金額は NOT NULL | Q-INV-05〜07 |
+| `quotation` | `status` IN（`DRAFT`、`PENDING_APPROVAL`、`PRESENTED`、`ROUTING_REQUESTED`、`AWAITING_SHIPPER_APPROVAL`、`APPROVED`、`EXPIRED`、`REPLACED`）。`shipper_response` IN（`PROCEED`、`DECLINED`）。`presented_at` は KPI-01 の終了時刻。荷主の承認時は `routing_case_id`・`route_version_no` が NOT NULL（アプリケーションで検証） | Q-INV-05〜10、US-21 |
 
 見積りの「失効」は、有効期限を過ぎたときに状態を書き換えるのではなく、判定時刻と `expires_at` の比較で決める（Q-INV-06）。`status` の `EXPIRED` は、期限切れを利用者が確認した・定期処理が記録した結果として残す。予約確定の判定は常に `expires_at` で行う。
 
@@ -292,6 +324,8 @@ entity "routing_case\n経路設計案件" as rc {
   --
   * transport_request_id : UUID <<REF quotation>>
   * transport_request_version_no : INTEGER
+  * quotation_id : UUID <<REF quotation>>
+  route_policy_via : VARCHAR(200)
   * origin_unlocode : CHAR(5)
   * destination_unlocode : CHAR(5)
   * arrival_deadline : TIMESTAMPTZ
@@ -337,6 +371,8 @@ entity "candidate_leg\n区間" as leg {
   * discharge_unlocode : CHAR(5)
   * departure_at : TIMESTAMPTZ
   * arrival_at : TIMESTAMPTZ
+  cargo_cutoff_at : TIMESTAMPTZ
+  doc_cutoff_at : TIMESTAMPTZ
   * executed : BOOLEAN
 }
 entity "exclusion_reason\n除外理由" as ex {
@@ -399,7 +435,7 @@ riv }o..|| v : 航海番号
 
 | 表 | 主な制約 | 対応する不変条件 |
 | :--- | :--- | :--- |
-| `routing_case` | `confirmed_route_version_no` は確定した経路版の番号を 1 つだけ持つ（NULL は未確定） | R-INV-05 |
+| `routing_case` | UK（`transport_request_id`、`transport_request_version_no`）で、詳細経路設計の依頼（DE-16）が再配信されても案件を重複させない。`confirmed_route_version_no` は確定した経路版の番号を 1 つだけ持つ（NULL は未確定） | R-INV-05、R-INV-10 |
 | `route_version` | `status` IN（`DRAFT`、`CANDIDATES_PRESENTED`、`EXPERT_REVIEW`、`CONFIRMED`、`REDESIGN_REQUIRED`、`SUPERSEDED`）。確定時は `approved_by`・`approved_at`・`rationale` が NOT NULL（アプリケーションで検証） | R-INV-03、R-INV-04、R-INV-06 |
 | `exclusion_reason` | `reason_code` IN（`DEADLINE_EXCEEDED`、`CONNECTION_TOO_SHORT`、`CARGO_NOT_SUPPORTED`、`NOT_CONNECTABLE`、`INFO_INSUFFICIENT`） | R-INV-02 |
 | `referenced_info_version` | 確定時に参照した航海ごとの情報版。承認時の再検証と、確定後の再評価に使う | R-INV-03、R-INV-07 |
@@ -481,7 +517,7 @@ b ||--o| saga
 | 表 | 主な制約 | 対応する不変条件 |
 | :--- | :--- | :--- |
 | `booking` | `tracking_number` は一意。`status` IN（`CONFIRMED`、`AMENDMENT_PENDING`、`CANCELLATION_PENDING`、`AMENDING`、`CANCELLED`、`IN_TRANSIT`、`COMPLETED`）。`transport_phase` IN（`BEFORE_PICKUP`、`AFTER_PICKUP`、`COMPLETED`） | B-INV-06、B-INV-07 |
-| `booking_version` | 予約確定時の見積り・経路版・荷受人・貨物の写しと、確定者・commit 時刻 | B-INV-01、B-INV-08 |
+| `booking_version` | 予約確定時の見積り・経路版・荷受人・貨物の写しと、確定者・commit 時刻。UK（`quotation_id`）で、1 つの見積りから 2 件目の予約を作れない（別のコマンド ID による同時確定でも片方が一意制約で失敗する） | B-INV-01、B-INV-08、B-INV-11 |
 | `booking_saga` | 予約ごとに 1 つ。`status` IN（`IN_PROGRESS`、`COMPLETED`、`FAILED`、`NEEDS_HUMAN`） | ARCH-HO-02 |
 | `processed_command` | 本予約確定のコマンド ID を記録し、再送には既存の予約 ID と追跡番号を返す | B-INV-03 |
 
@@ -507,6 +543,9 @@ entity "tracking_record\n追跡記録" as trk {
   * current_status : VARCHAR(30)
   status_basis_milestone_no : INTEGER
   under_review_reason : VARCHAR(1000)
+  procedure_stage : VARCHAR(30)
+  original_eta : TIMESTAMPTZ
+  latest_eta : TIMESTAMPTZ
   last_acquired_at : TIMESTAMPTZ
   * version : BIGINT
   * created_at : TIMESTAMPTZ
@@ -558,6 +597,7 @@ entity "service_case\n有人案件" as sc {
   * case_number : VARCHAR(20) <<PK>>
   --
   * kind : VARCHAR(30)
+  shipper_company_id : UUID <<REF identity>>
   booking_id : UUID <<REF booking>>
   tracking_number : VARCHAR(20)
   * cause : VARCHAR(4000)
@@ -573,6 +613,7 @@ entity "service_case\n有人案件" as sc {
   manual_source_ref : VARCHAR(200)
   * reconciliation_required : BOOLEAN
   reconciliation_id : UUID <<REF external_data>>
+  acknowledged_at : TIMESTAMPTZ
   * status : VARCHAR(30)
   * version : BIGINT
   * created_at / created_by
@@ -604,6 +645,28 @@ entity "service_case_answer\n回答" as sca {
   customer_response : VARCHAR(4000)
   customer_responded_at : TIMESTAMPTZ
 }
+entity "inquiry_record\n照会記録" as ir {
+  * id : UUID <<PK>>
+  --
+  * channel : VARCHAR(30)
+  * shipper_company_id : UUID
+  tracking_number : VARCHAR(20)
+  * inquirer_kind : VARCHAR(30)
+  inquirer_user_id : UUID
+  * received_at : TIMESTAMPTZ
+  * escalated : BOOLEAN
+  case_number : VARCHAR(20)
+  recorded_by : UUID
+}
+entity "business_calendar\n営業日カレンダー" as bc {
+  * calendar_date : DATE <<PK>>
+  --
+  * business_day : BOOLEAN
+  open_time : TIME
+  close_time : TIME
+  * time_zone : VARCHAR(50)
+  note : VARCHAR(200)
+}
 trk ||--|{ sl
 trk ||--o{ m
 m ||--o{ c
@@ -616,10 +679,12 @@ sc ||--o{ sca
 
 | 表 | 主な制約 | 対応する不変条件 |
 | :--- | :--- | :--- |
-| `tracking_record` | `current_status` は主要実績から導出した結果の保存（照会のため）。導出の正は集約のロジック | T-INV-08 |
+| `tracking_record` | `current_status` は主要実績から導出した結果の保存（照会のため）。導出の正は集約のロジック。`original_eta`（確定した経路版の到着予定）と `latest_eta`（最新の見込み）を別に持つ。`procedure_stage` は通関等の手続き中の段階 | T-INV-08、T-INV-10 |
 | `milestone` | UK（`tracking_number`、`source_kind`、`source_ref`）。`state` IN（`DRAFT`、`ADOPTED`、`UNDER_REVIEW`、`RETAINED_ONLY`）。DELETE の権限なし | T-INV-01〜03、T-INV-05 |
 | `correction` | `status` IN（`PENDING_APPROVAL`、`APPLIED`、`REJECTED`）。`approved_by` は `registered_by` と異なる（`CHECK`） | T-INV-06 |
-| `service_case` | `kind` IN（`CUSTOMER_INQUIRY`、`AMENDMENT`、`REDESIGN`、`EXTERNAL_OUTAGE`、`REJECTED_MILESTONE`、`SAGA_FAILURE`）。`status` IN（`RECEIVED`、`ESCALATED`、`IN_PROGRESS`、`ANSWERED`、`CLOSED`、`DUPLICATE_CLOSED`） | SC-INV-01〜03 |
+| `service_case` | `kind` IN（`CUSTOMER_INQUIRY`、`QUOTATION_CONSULTATION`、`AMENDMENT`、`REDESIGN`、`EXTERNAL_OUTAGE`、`REJECTED_MILESTONE`、`SAGA_FAILURE`）。`status` IN（`RECEIVED`、`ESCALATED`、`IN_PROGRESS`、`ANSWERED`、`CLOSED`、`DUPLICATE_CLOSED`）。`shipper_company_id` で荷主の照会範囲を限る。`acknowledged_at` は営業時間外の優先度高の自動受付の時刻 | SC-INV-01〜05 |
+| `inquiry_record` | `channel` IN（`WEB_SELF`、`WEB_INQUIRY`、`PHONE`、`EMAIL`）。`inquirer_kind` IN（`SHIPPER`、`CONSIGNEE`）。`escalated` は有人対応へ移ったか | IR-INV-01〜02、KPI-02 |
+| `business_calendar` | 日ごとの営業日・営業時間。年次で翌年分を登録する | SC-INV-04 |
 
 `tracking_record.current_status` は導出結果を保存した非正規化である。照会（US-09）のたびに全実績から導出し直すのを避けるためで、集約を保存するときに必ず導出し直して書く。
 
@@ -705,6 +770,29 @@ entity "audit_record\n監査記録" as au {
   correlation_id : VARCHAR(100)
   event_id : UUID <<UK>>
 }
+entity "kpi_observation\nKPI 計測記録" as ko {
+  * transport_request_id : UUID <<PK>>
+  --
+  * shipper_company_id : UUID
+  * submitted_at : TIMESTAMPTZ
+  first_presented_at : TIMESTAMPTZ
+  * excluded : BOOLEAN
+  exclusion_reason : VARCHAR(1000)
+  excluded_by : UUID
+}
+entity "kpi_baseline\nKPI 基準値" as kb {
+  * id : UUID <<PK>>
+  --
+  * kpi : VARCHAR(30)
+  * period_from : DATE
+  * period_to : DATE
+  * value_p50 : NUMERIC(12,2)
+  value_p90 : NUMERIC(12,2)
+  * method : VARCHAR(4000)
+  * registered_by : UUID
+  * registered_at : TIMESTAMPTZ
+  supersedes_id : UUID
+}
 co ||--o{ u
 u ||--o{ ur
 u ||--o{ ua
@@ -718,11 +806,43 @@ co ||--o{ ag
 | `user_assignment` | `scope_kind` IN（`COMPANY`、`BOOKING`） | IA-INV-02 |
 | `app_user` | `failed_attempts` と `locked_until` で 5 回失敗・15 分ロックを表す | IA-INV-03 |
 | `access_grant` | `status` IN（`INVITED`、`ACTIVE`、`REVOKED`、`EXPIRED`）。同じ予約・荷受人企業に有効な許可を重複させないことはアプリケーションで確認する | IA-INV-05、IA-INV-06 |
-| `audit_record` | UPDATE・DELETE の権限なし。`event_id` の一意制約で、イベントの再配信による重複記録を防ぐ | IA-INV-07 |
+| `audit_record` | UPDATE・DELETE の権限なし。`event_id` の一意制約で、イベントの再配信による重複記録を防ぐ。認証の失敗と権限外のアクセス試行は `event_id` を持たず、同期で書く | IA-INV-07、IA-INV-08 |
+| `kpi_observation` | 輸送要求ごとに 1 行。DE-01 で作り、DE-03 で最初の提示時刻だけを記録する（2 回目以降の提示では更新しない） | KPI-INV-01 |
+| `kpi_baseline` | UPDATE・DELETE の権限なし。訂正は `supersedes_id` で前の行を指す新しい行にする | KPI-INV-02 |
 
 session は `platform` スキーマの Spring Session の表に置く。利用停止・権限取消し・参照許可の取消しを次の request から反映するため、認可の判断は session に保存した値ではなく、request ごとに `app_user`・`user_role`・`access_grant` を確かめる（IA-INV-04、IA-INV-06）。
 
 `audit_record.before_state` と `after_state` は変更前後の要約である。4000 文字を超える詳細が必要になったら、データモデルを見直す。
+
+### 通知（`notification`）
+
+```plantuml
+@startuml
+title notification スキーマ
+hide circle
+entity "notification\n通知" as n {
+  * id : UUID <<PK>>
+  --
+  * event_id : UUID
+  * recipient_user_id : UUID <<REF identity>>
+  * email : VARCHAR(320)
+  * kind : VARCHAR(30)
+  * target_ref : VARCHAR(200)
+  * locale : VARCHAR(10)
+  * status : VARCHAR(30)
+  sent_at : TIMESTAMPTZ
+  failure_reason : VARCHAR(1000)
+  * created_at : TIMESTAMPTZ
+  .. UK (event_id, recipient_user_id) ..
+}
+@enduml
+```
+
+| 表 | 主な制約 | 対応する不変条件 |
+| :--- | :--- | :--- |
+| `notification` | UK（`event_id`、`recipient_user_id`）で、イベントの再配信でも同じ宛先へ 2 通送らない。`kind` IN（`QUOTATION_PRESENTED`、`ROUTE_APPROVED`、`QUOTATION_EXPIRING`、`BOOKING_CONFIRMED`、`TRACKING_UNDER_REVIEW`、`CONSIGNEE_INVITATION`、`PASSWORD_RESET`）。`status` IN（`PENDING`、`SENT`、`FAILED`） | N-INV-02、N-INV-03 |
+
+メールの本文は保存しない（料金などを含まないことは N-INV-01 で守り、本文はテンプレートと `target_ref` から再現できる）。
 
 ### 外部データ（`external_data`）
 
@@ -869,28 +989,32 @@ ds ||--o{ ff
 | :--- | :--- | :--- |
 | `event_publication`（と完了済みの保管表） | Spring Modulith（JDBC） | イベント発行記録。発行と同じトランザクションで記録し、購読の完了を記録する。未完了のものを再配信する（ADR-003） |
 | `spring_session`、`spring_session_attributes` | Spring Session JDBC | 複数インスタンス間で共有する session |
+| `shedlock` | ShedLock | 定期処理（再配信、予約サガの再試行、日次の処理）を 1 インスタンスに限るためのロック |
 
-表の定義はフレームワークの提供する DDL に従い、Flyway のマイグレーションとして取り込む。完了したイベント発行記録の保管期間と掃除の方針は非機能要件で決める。
+表の定義はフレームワークの提供する DDL に従う。DDL は DB ごとに違うため、Flyway の `db/migration/{vendor}/` に H2 用と PostgreSQL 用を分けて置く（ADR-007）。完了したイベント発行記録は 30 日（RET-05）で削除する。
 
 ## マイグレーションの構成
 
 ```text
-src/main/resources/db/migration/
-├── platform/        V1__create_platform_schema.sql（event_publication、spring_session）
-├── identity/        V100__create_identity.sql ...
-├── quotation/       V200__create_quotation.sql ...
-├── routing/         V300__create_routing.sql ...
-├── booking/         V400__create_booking.sql ...
-├── tracking/        V500__create_tracking.sql ...
-└── external_data/   V600__create_external_data.sql ...
+src/main/resources/db/
+├── migration/
+│   ├── common/        業務の表（H2 と PostgreSQL の共通部分）
+│   │   ├── V20261001090000__create_identity.sql
+│   │   ├── V20261001090100__create_quotation.sql
+│   │   └── ...
+│   ├── h2/            フレームワークの表（H2 用）
+│   └── postgresql/    フレームワークの表（PostgreSQL 用）
+└── callback/
+    └── postgresql/
+        └── afterMigrate__grant_app_user.sql   権限の付与と、追記専用の表の UPDATE・DELETE の剥奪
 ```
 
 | 規約 | 内容 |
 | :--- | :--- |
-| 版番号の帯 | コンテキストごとに版番号の帯を分け（platform 1〜99、identity 100〜199 …）、複数のコンテキストが同時に変更しても番号が衝突しないようにする |
-| 1 つの Flyway | すべての場所を 1 つの Flyway の実行で適用し、履歴表は 1 つにする |
-| 共通部分 | すべての DDL を H2 と PostgreSQL の両方で実行する（ADR-007）。CI で両方に適用して確かめる |
-| 権限 | DB 利用者と権限の設定は Flyway に書かず、環境構築で行う（追記専用の節） |
+| 版番号 | 作成日時の版番号（`VyyyyMMddHHmmss__説明.sql`）にする。コンテキストごとの版番号の帯は使わない（ADR-007。帯を分けると、後から小さい番号を足したときに検証で失敗する） |
+| 1 つの Flyway | `common` と `{vendor}` の場所を 1 つの Flyway の実行で適用し、履歴表は 1 つにする |
+| 共通部分 | 業務の表の DDL は H2 と PostgreSQL の両方で実行する（ADR-007）。CI で両方に適用して確かめる |
+| 権限 | 権限の付与と剥奪は PostgreSQL 用の `afterMigrate` のコールバックで行い、表の作成と同じ配備で反映する。新しい表を足したら、同じ変更でコールバックも更新する |
 | 後方互換 | ローリングデプロイのため、列の削除・名前の変更は「追加 → 移行 → 削除」に分ける（インフラ設計） |
 
 ## インデックス
@@ -910,13 +1034,17 @@ src/main/resources/db/migration/
 | `identity.access_grant` | （`booking_id`、`consignee_company_id`、`status`） | 参照許可の確認（request ごと） |
 | `identity.audit_record` | （`target_type`、`target_id`、`occurred_at`）、（`actor_user_id`、`occurred_at`） | 監査証跡の照会（US-17） |
 | `external_data.receipt` | （`ingestion_id`）、（`classification`） | 取込単位の件数、隔離中の一覧 |
+| `tracking.service_case` | （`shipper_company_id`、`status`） | 荷主の問い合わせ一覧（US-23） |
+| `tracking.inquiry_record` | （`shipper_company_id`、`received_at`） | KPI-02 の週次集計 |
+| `identity.kpi_observation` | （`submitted_at`） | KPI-01 の週次集計 |
+| `quotation.quotation` | （`status`、`expires_at`） | 期限間近の見積り（DE-19）、荷主承認済み・期限間近の一覧 |
 
 ## ドメインモデルとの対応
 
 | 集約（ドメインモデル） | 表 | 対応の注意 |
 | :--- | :--- | :--- |
-| 輸送要求 | `transport_request`、`transport_request_version`、`required_document`、`review_record` | 輸送条件（値オブジェクト）は版の表の列に展開する |
-| 見積り | `quotation`、`pricing_line` | 料金根拠は明細の表、有効期限・荷主承認は列 |
+| 輸送要求 | `transport_request`、`transport_request_draft`、`transport_request_version`、`required_document`、`review_record` | 輸送条件（値オブジェクト）は下書きと版の表の列に展開する |
+| 見積り | `quotation`、`pricing_line` | 料金根拠は明細の表、有効期限・経路方針・荷主の回答・荷主承認は列 |
 | 経路設計案件 | `routing_case`、`route_version`、`route_candidate`、`candidate_leg`、`exclusion_reason`、`referenced_info_version` | 制約適合判定（値オブジェクト）は候補の列と除外理由の表に展開する |
 | 航海 | `voyage`、`port_call` | — |
 | 接続時間規則 | `connection_rule` | — |
@@ -924,6 +1052,9 @@ src/main/resources/db/migration/
 | 予約サガ | `booking_saga` | ドメインモデルの予約サガの状態 |
 | 追跡記録 | `tracking_record`、`scheduled_leg`、`milestone`、`correction` | 現在状態は導出結果を保存する（非正規化） |
 | 有人案件 | `service_case`、`service_case_source`、`service_case_progress`、`service_case_answer` | — |
+| 照会記録・営業日カレンダー | `inquiry_record`、`business_calendar` | — |
+| KPI 計測記録 | `kpi_observation`、`kpi_baseline` | — |
+| 通知 | `notification` | — |
 | 企業・利用者・参照許可・監査記録 | `company`、`app_user`、`user_role`、`user_assignment`、`access_grant`、`audit_record` | 認証の仕組みは Spring Security が使う |
 | 外部データ（トランザクションスクリプト） | `external_data` の各表 | — |
 
@@ -932,7 +1063,7 @@ src/main/resources/db/migration/
 | ID | 引継ぎ内容 | 引継ぎ先 |
 | :--- | :--- | :--- |
 | DA-01 | 監査記録・完了済みイベント発行記録・外部原本・session の保持期間と掃除の方針 | 非機能要件 |
-| DA-02 | アプリケーションの DB 利用者の作成と、追記専用の表の UPDATE・DELETE の権限剥奪の初期化手順 | 運用要件、`operating-provision` |
+| DA-02 | DB 利用者（マイグレーション用・アプリケーション用）の作成。権限の付与と剥奪は Flyway のコールバックで行う | 運用要件、`operating-provision` |
 | DA-03 | H2 と PostgreSQL の両方へのマイグレーション適用、追記専用・CHECK 制約・一意制約のテスト | テスト戦略 |
 | DA-04 | 照会の性能目標に基づくインデックスの見直し | 非機能要件 |
 
@@ -942,3 +1073,5 @@ src/main/resources/db/migration/
 - **荷受人**: 輸送条件に荷受人企業を加えた（UC-01 の記録項目、IA-INV-05 の判定に必要）。ドメインモデルにも同じ修正を入れた。
 - **金額の通貨**: 見積りは 1 つの通貨で表すと仮定した。複数通貨の混在が必要かは営業責任者に確認する。
 - **追跡番号の形式**: `VARCHAR(20)` とし、推測されにくい形式の具体は実装で決める。
+- **外部原本の個人情報と保持**: 外部原本のファイルは荷受人の担当者名などの個人情報を含みうる。Object Lock（コンプライアンスモード）の 7 年の間は削除できないため、取引の証跡として保持期間の満了まで残し、満了後に PRV-06 に従って削除する。保持期間中の利用は採否の照合と監査に限る（要確認: 管理・コンプライアンス責任者）。
+- **保持期間を過ぎた記録の削除**: 追記専用の表はアプリケーションの DB 利用者では削除できないため、年次の削除（`retention:purge`）はマイグレーション用の DB 利用者で、承認を得て実行する（運用要件）。

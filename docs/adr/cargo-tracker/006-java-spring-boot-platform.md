@@ -4,9 +4,10 @@ title: "ADR-006: Java 25 LTS・Spring Boot 4.1・Spring Modulith でアプリケ
 description: "アプリケーションを Java 25 LTS と Spring Boot 4.1 で構築し、モジュール境界の検証とイベント発行記録に Spring Modulith、画面に Thymeleaf + htmx 2 を使う決定。"
 tags: [adr, tech-stack]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-01T07:14:57Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-01T08:48:18Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T07:29:04Z }
+  - { by: human:kakimomokuri, at: 2026-10-01T09:01:36Z }
 ---
 
 # ADR-006: Java 25 LTS・Spring Boot 4.1・Spring Modulith でアプリケーションを構築する
@@ -41,6 +42,9 @@ verified:
 | 画面 | Thymeleaf 3.1 + htmx 2.0.x + Bootstrap 5.3（WebJars で配信） |
 | session | Spring Session JDBC |
 | ビルド | Gradle 9.x |
+
+| 定期処理の排他 | ShedLock 7.10.x（2026-10-01 の分析成果物レビューで追加。ADR-003） |
+| メール・多言語 | Spring Boot Mail（Amazon SES の SMTP）、Spring の MessageSource（2026-10-01 の分析成果物レビューで追加） |
 
 Spring Boot は 4.2 の正式版が出たら追従する。依存の版は Spring Boot の BOM に任せ、脆弱性の修正版が先に出たときだけ上書きする。
 

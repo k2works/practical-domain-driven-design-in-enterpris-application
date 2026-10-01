@@ -4,9 +4,10 @@ title: "ADR-005: 画面はサーバーサイドレンダリングとハイパー
 description: "顧客 Web と社内業務 Web を、各コンテキストの interfaces.web からサーバーサイドで描画した HTML と部分更新で提供し、SPA を作らない決定。"
 tags: [adr, architecture]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-01T06:54:45Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-01T08:48:17Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T07:11:13Z }
+  - { by: human:kakimomokuri, at: 2026-10-01T09:01:36Z }
 ---
 
 # ADR-005: 画面はサーバーサイドレンダリングとハイパーメディアで提供する
@@ -35,7 +36,7 @@ verified:
 - 顧客向けと社内向けで URL の領域・認可規則・レイアウトを分ける。
 - 変更用のフォームは `commandId` と対象の版を隠し項目に持つ（ARCH-HO-01）。
 - MVP では REST API を作らない。外部の利用者が現れた時点で `interfaces.rest` を追加する。
-- テンプレートエンジンと部分更新のライブラリは技術スタック選定で決める。第 3 章の Thymeleaf + htmx を第一候補とする。
+- テンプレートエンジンと部分更新のライブラリは Thymeleaf 3.1 と htmx 2.0 とする（ADR-006 で決定）。
 
 ### 代替案
 

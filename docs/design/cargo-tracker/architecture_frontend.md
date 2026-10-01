@@ -4,16 +4,17 @@ title: "cargo-tracker フロントエンドアーキテクチャ"
 description: "cargo-tracker の利用チャネル、サーバーサイドレンダリングとハイパーメディアによる画面提供、画面の配置、アクセシビリティと開示制御の構造的な担保。"
 tags: [design, architecture, frontend]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-01T06:54:45Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-01T08:48:16Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T07:11:12Z }
+  - { by: human:kakimomokuri, at: 2026-10-01T09:01:37Z }
 ---
 
 # cargo-tracker フロントエンドアーキテクチャ
 
 ## 位置づけ
 
-本書は、[要件定義](../../requirements/cargo-tracker/requirements_definition.md) の画面・帳票モデル（UI-01〜UI-06、RP-01、RP-02）と [ユーザーストーリー](../../requirements/cargo-tracker/user_story.md) の横断受入条件（BR-13）をもとに、画面の提供方式を決める。開発ガイドライン [第 3 章](../../article/03-spring-modular-monolith.md) の受信サービス（ネイティブ Web API：Thymeleaf + htmx）に合わせ、画面を各コンテキストの `interfaces.web` から提供する（ADR-005）。テンプレートエンジンなどの製品は技術スタック選定（後続工程）で決め、画面ごとの設計は UI 設計（後続工程）で行う。
+本書は、[要件定義](../../requirements/cargo-tracker/requirements_definition.md) の画面・帳票モデル（UI-01〜UI-06、RP-01、RP-02）と [ユーザーストーリー](../../requirements/cargo-tracker/user_story.md) の横断受入条件（BR-13）をもとに、画面の提供方式を決める。開発ガイドライン [第 3 章](../../article/03-spring-modular-monolith.md) の受信サービス（ネイティブ Web API：Thymeleaf + htmx）に合わせ、画面を各コンテキストの `interfaces.web` から提供する（ADR-005）。製品は Thymeleaf 3.1・htmx 2.0・Bootstrap 5.3 とし（ADR-006、[技術スタック](tech_stack.md)）、画面ごとの設計は [UI 設計](ui_design.md) で行う。
 
 ## 利用チャネル
 
@@ -99,6 +100,13 @@ WCAG 2.2 AA を目標とし、個々の画面の注意に頼らず共通部品�
 - 参照許可が取り消されたら、次のリクエストで拒否する。既存の session でも対象の予約は表示しない。
 - 顧客向けの各画面について、料金・契約条件・書類が HTML に含まれないことを自動テストで確認する。
 
+## 多言語と session の時間制限
+
+| 項目 | 方式 | 根拠 |
+| :--- | :--- | :--- |
+| 多言語 | 荷受人向けの画面（C-11、C-12）と招待メールは、Spring の MessageSource で日本語と英語を切り替える。言語は利用者の設定、なければブラウザの言語で決める。その他の画面は日本語 | US-10、US-19、レビュー R-10 |
+| session の時間制限 | 無操作による失効の 5 分前に警告し、延長の操作を示す（共通のレイアウトに置く）。失効したときは、送信しようとした入力を下書きとして保持し、再認証後に戻す | WCAG 2.2.1、US 横断受入条件、レビュー R-15 |
+
 ## 後続工程への引継ぎ
 
 | ID | 引継ぎ内容 | 引継ぎ先 |
@@ -111,5 +119,5 @@ WCAG 2.2 AA を目標とし、個々の画面の注意に頼らず共通部品�
 
 ## AI の仮定と要確認
 
-- 多言語対応は要件に明記がないため、MVP は日本語のみを仮定した。アジア・欧州間の荷主が英語を必要とするかは UI 設計で確認する。
+- 多言語は、荷受人向けの画面と招待メールだけを日本語と英語にした（レビュー R-10）。荷主向け・社内向けの画面に英語が必要かは、パイロット顧客（OQ-01）が決まった後に判断する。
 - 経路候補の比較（UI-03）は情報量が多い。サーバーサイドレンダリングで操作性が足りるかは、UI 設計のプロトタイプで確かめる。

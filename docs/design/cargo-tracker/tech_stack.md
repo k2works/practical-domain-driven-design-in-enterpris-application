@@ -4,10 +4,11 @@ title: "cargo-tracker 技術スタック"
 description: "cargo-tracker のバックエンド・画面・データベース・テスト・ビルド・インフラの技術、バージョン、サポート期限、選定理由、アップグレード計画。"
 tags: [design, tech-stack]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-01T07:27:33Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-01T08:48:17Z }
 stale_after: 2027-04-01T00:00:00Z
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T07:29:04Z }
+  - { by: human:kakimomokuri, at: 2026-10-01T09:01:38Z }
 ---
 
 # cargo-tracker 技術スタック
@@ -53,6 +54,9 @@ verified:
 | 入力検証 | Jakarta Bean Validation（Hibernate Validator） | Boot 管理 | 画面入力の形式検証 | Boot に従う | 形式の検証だけに使い、業務規則はドメインに置く |
 | 永続化 | MyBatis（mybatis-spring-boot-starter） | 4.1.0 | 集約の永続化、照会 | — | 第 3 章と同じ。SQL を明示的に管理し、版・追記専用・スキーマ分割を SQL で確実に表現できる（ADR-007） |
 | 運用 | Spring Boot Actuator・Micrometer | Boot 管理 | ヘルスチェック、メトリクス | Boot に従う | 第 3 章の Readiness Patterns |
+| 定期処理の排他 | ShedLock（shedlock-spring、shedlock-provider-jdbc-template） | 7.10.x（2026-10 時点 7.10.1、Spring Framework 7 対応） | イベントの再配信・予約サガの再試行・日次の定期処理を 1 インスタンスに限る | — | 複数インスタンス（AVL）で定期処理が二重に動かないようにする。Spring Modulith は再配信の排他を提供しない（ADR-003） |
+| メール送信 | Spring Boot Mail（spring-boot-starter-mail）+ Amazon SES の SMTP | Boot 管理 | 荷主への通知（US-22）、password の再設定、荷受人への招待 | — | 通知コンテキストの送信アダプター。SES の API を直接使わず SMTP で送り、ローカルではメールを受けるだけのコンテナで確かめる |
+| 多言語 | Spring の MessageSource + Thymeleaf のメッセージ | Boot 管理 | 荷受人向けの画面と招待メールの英語表示（US-10、US-19） | — | 追加のライブラリを使わない |
 
 ## 画面
 
@@ -131,6 +135,7 @@ verified:
 | エッジ | Application Load Balancer、AWS WAF、ACM | — | TLS 終端、WAF、ヘルスチェック | — |
 | イメージ | Amazon ECR | — | コンテナイメージの保管・スキャン | — |
 | シークレット | AWS Secrets Manager | — | DB 接続情報等 | — |
+| メール | Amazon SES（東京リージョン） | — | 通知・再設定・招待のメール送信。バウンスと苦情を記録する | 送信の失敗を通知の記録と運用の監視に使う |
 | 可観測性 | Amazon CloudWatch（Logs・Metrics・Alarms） | — | 構造化ログ、業務メトリクス、アラート | Micrometer から CloudWatch へ送る。分散トレースは導入しない（インフラ設計） |
 | IaC | Terraform | 1.x | 環境の構築 | `operating-provision` スキルの前提 |
 | CI/CD | GitHub Actions（AWS へは OIDC で認証） | — | ビルド・テスト・配備 | AGENTS.md。長期のアクセスキーを持たない |
@@ -154,6 +159,7 @@ verified:
 | TS-02 | Multi-AZ の要否、RPO/RTO、S3 Object Lock の保持期間、リージョンとデータ所在地 | 非機能要件 |
 | TS-03 | テストの配分とカバレッジ目標、ArchUnit と Modulith の検証ルール、Cucumber シナリオの階層とタグの規約 | テスト戦略 |
 | TS-04 | 開発環境・CI・AWS 環境の構築手順 | `operating-setup`、`operating-cicd`、`operating-provision` |
+| TS-05 | 負荷テストのツール（Gatling または k6）の選定と追加 | リリース計画（最初の性能テストの Bolt） |
 
 ## AI の仮定と要確認
 

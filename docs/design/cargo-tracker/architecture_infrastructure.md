@@ -4,11 +4,12 @@ title: "cargo-tracker インフラストラクチャアーキテクチャ"
 description: "cargo-tracker のデプロイ形態、環境構成、コンテナ化、データ保護、可観測性、CI/CD の方針。"
 tags: [design, architecture, infrastructure]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-01T07:48:16Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-01T08:48:16Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T07:11:12Z }
   - { by: human:kakimomokuri, at: 2026-10-01T07:29:04Z }
   - { by: human:kakimomokuri, at: 2026-10-01T07:48:17Z }
+  - { by: human:kakimomokuri, at: 2026-10-01T09:01:37Z }
 ---
 
 # cargo-tracker インフラストラクチャアーキテクチャ
@@ -50,6 +51,7 @@ node "アプリケーション実行基盤（マネージドなコンテナ実�
 database "リレーショナル DB\n（マネージド）\nコンテキスト別スキーマ" as db
 storage "オブジェクトストレージ\n外部原本ファイル\n（バージョニング・削除保護）" as obj
 [シークレット管理] as secrets
+[メール送信（SES）] as mail
 [可観測性\nログ・メトリクス] as obs
 
 customer --> net
@@ -59,6 +61,7 @@ edge --> app
 app --> db
 app --> obj
 app ..> secrets
+app ..> mail
 app ..> obs
 @enduml
 ```
