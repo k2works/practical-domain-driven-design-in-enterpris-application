@@ -4,9 +4,10 @@ title: "開発戦略 - cargo-tracker（A 社国際貨物輸送管理システム
 description: "リリース計画の W1〜W14 を序盤・中盤・終盤の局面に分け、各局面の TDD のアプローチ、週ごとのデモ項目を受入シナリオにする方針、Living Documentation の採用を定める開発戦略。"
 tags: [development,development-strategy]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-01T12:48:11Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-01T13:06:20Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T10:25:23Z }
+  - { by: human:kakimomokuri, at: 2026-10-01T13:06:21Z }
 ---
 
 # 開発戦略 - cargo-tracker（A 社国際貨物輸送管理システム）
@@ -149,7 +150,8 @@ Bolt 1 で確定したコマンドである。`apps/cargo-tracker/` で実行す
 | 受入シナリオ | `./gradlew test --tests '*RunCucumberTest*'` | 作業中の `@wip` は除外される。結果は `build/reports/cucumber/`。ArchUnit のテストもフィルターに従わず一緒に走る |
 | ローカル起動（H2） | `./gradlew bootRun` | dev プロファイル（H2 の PostgreSQL 互換モード）で起動する |
 | 本番の成果物 | `./gradlew bootJar` | H2 を含まない |
-| カバレッジ、静的解析、設計ドキュメントの生成 | 未設定 | CI と合わせて Bolt 2 で入れる（JaCoCo、Checkstyle・SpotBugs、JIG） |
+| カバレッジ、静的解析 | 未設定 | CI と合わせて Bolt 2 で入れる（JaCoCo、Spotless、Checkstyle・SpotBugs、SonarQube） |
+| 設計ドキュメントの生成 | 未設定 | Bolt 3 で入れる（JIG、Spring Modulith の図） |
 
 ---
 
@@ -213,7 +215,7 @@ Living Documentation を **採用する**。局面が変わるたびに設計の
 
 | 重複している知識 | 整合を検証するテスト |
 | :--- | :--- |
-| ドメインモデルの用語集（英語名と日本語名）とクラス名・Javadoc | 用語集の表を読み、実装済みのコンテキストの英語名に対応するクラスがあり、Javadoc の日本語名が一致することを確かめるテスト（CI と合わせて Bolt 2 で作る） |
+| ドメインモデルの用語集（英語名と日本語名）とクラス名・Javadoc | 用語集の表を読み、実装済みのコンテキストの英語名に対応するクラスがあり、Javadoc の日本語名が一致することを確かめるテスト（Bolt 3 で作る） |
 | ユーザーストーリーの受入条件と受入シナリオ | 受入条件の数と `@US-nn-ACm` のタグ付きシナリオの数を照合する（ADR-009 のコンプライアンス） |
 | データモデルの表と、Flyway で作られた実際のスキーマ | jig-erd でスキーマから ER 図を生成し、週次の見直しでデータモデルと見比べる |
 | モジュール境界の設計とコードの依存 | Spring Modulith の検証（AT-03）と ArchUnit |
@@ -237,7 +239,7 @@ Living Documentation を **採用する**。局面が変わるたびに設計の
 
 | 局面 | 生まれる主な知識 | 重点 | 参照ガイド |
 | :--- | :--- | :--- | :--- |
-| 序盤 | アーキテクチャ、レイヤー、モジュール境界 | 語彙の注釈を定義し、アーキテクチャテストで依存と注釈の規則を固定する。語彙の定義と付与はウォーキングスケルトン（Bolt 1）から始め、JIG と Spring Modulith のモジュール図を生成する仕組みは CI と合わせて Bolt 2 で作る | アノテーション導入ガイド |
+| 序盤 | アーキテクチャ、レイヤー、モジュール境界 | 語彙の注釈を定義し、アーキテクチャテストで依存と注釈の規則を固定する。語彙の定義と付与はウォーキングスケルトン（Bolt 1）から始め、JIG と Spring Modulith のモジュール図を生成する仕組みは Bolt 3 で作る（CI は Bolt 2） | アノテーション導入ガイド |
 | 中盤 | 集約、不変条件、業務ルール | `@CoreConcept` で中核をハイライトし、JIG の用語集（Living Glossary）でユビキタス言語をコードに一本化する。判断は ADR に残す。模範となる集約（貨物予約、追跡記録）を示す | ダイナミックキュレーション導入ガイド |
 | 終盤 | 業務シナリオ、処理の流れ | 見積依頼から本予約・追跡までの流れを `@GuidedTour` でたどれるようにし、見どころをサイトシーイング・マップにまとめる。Cucumber のタグでシナリオのダイジェストを作る | ガイドツアー・サイトシーイング導入ガイド |
 
@@ -250,7 +252,7 @@ Living Documentation を **採用する**。局面が変わるたびに設計の
 | jig-erd の ER 図 | 週次の見直しの前（Docker と Graphviz が必要なため、毎回の CI には入れない） | 週次の見直しの記録 |
 | Spring Modulith のモジュール図 | CI の毎回 | CI の成果物 |
 
-CI は Bolt 2 で作る（Bolt 1 計画）。生成物はリポジトリにコミットしない（コードを変えたのに図が古い状態を固定しないため）。
+CI は Bolt 2、生成の仕組みは Bolt 3 で作る（[Bolt 2 計画](bolt_02_plan.md)）。生成物はリポジトリにコミットしない（コードを変えたのに図が古い状態を固定しないため）。
 
 ### 完了条件への組み込み
 
@@ -298,7 +300,7 @@ stop
 ### 手順（序盤）
 
 1. Bolt 1 でウォーキングスケルトンを作る（[Bolt 1 計画](bolt_01_plan.md)）。結果から以降の承認ゲートの密度を決める。
-2. Bolt 2 で CI と、E2E の基盤（Playwright と axe-core）を作る。
+2. Bolt 2 で CI と品質の安全網（静的解析・カバレッジ・AT-02・AT-06・SonarQube）を、Bolt 3 で E2E の基盤（Playwright と axe-core）と設計ドキュメントの生成を作る。半日を超えないよう 2 つの Bolt に分けた。
 3. W2 で password によるログインを入れたら、[UI 設計](../../design/cargo-tracker/ui_design.md) の画面一覧に従って、全ルートの仮の画面と役割ごとのナビゲーションを一度に作る（ナビゲーションの骨格）。役割ごとの表示・非表示・権限なし（A-04）を E2E で確かめる。以降の Bolt は、仮の画面を実際の画面に差し替える作業になる。
 4. 各 Bolt は受入シナリオを入口にし、層を一段ずつ下りる。モックを実装に置き換える境界を承認ゲートにする。
 
@@ -432,3 +434,4 @@ Bolt 計画は局所の計画、`docs/design/cargo-tracker/` は全体の正で�
 | 2026-10-01 | 初版作成（W2 以降の局面の割り当ては暫定） | anthropic/claude-opus-5-5（承認 human:kakimomokuri） |
 | 2026-10-01 | Bolt 1 の開始準備の検証を反映: 用語集の整合のテストと JIG・Modulith の図の生成を、CI と合わせて Bolt 2 に移した | anthropic/claude-opus-5-5（承認 human:kakimomokuri） |
 | 2026-10-01 | 開発ガイドライン（`docs/article/` の第 1〜3 章）への準拠を、参照元・準拠の節・局面横断の規律に明記した | anthropic/claude-opus-5-5（承認 human:kakimomokuri） |
+| 2026-10-01 | Bolt 2 の開始準備: 開発基盤の残りを Bolt 2（CI と品質の安全網）と Bolt 3（E2E の基盤、設計ドキュメントの生成）に分けた | anthropic/claude-opus-5-5（承認 human:kakimomokuri） |

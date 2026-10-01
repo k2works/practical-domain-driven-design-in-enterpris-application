@@ -4,7 +4,7 @@ title: "リリース計画 - cargo-tracker（A 社国際貨物輸送管理シス
 description: "cargo-tracker MVP のリリース計画。1 人 + AI、時間単位の Bolt（= イテレーション）と週次の見直しで、最初の縦の流れ（R0.1）、パイロット準備完了（R1.0）、本格展開前（R1.1）の 3 段階、Unit のエントロピー評価、SP、バッファ、パイロット開始の条件、引継ぎ ID の台帳。"
 tags: [development,release-plan]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-01T12:14:33Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-01T13:06:20Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T09:29:53Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:38:26Z }
@@ -351,6 +351,7 @@ AI-DLC では **Bolt がイテレーション** である（[AI-DLC 導入ガイ
 **主なタスク**:
 
 - [x] 最初の Bolt: ウォーキングスケルトン（すべての統合点を通る最小の縦割り）。[Bolt 1 計画](bolt_01_plan.md)、[Bolt 1 終了報告](bolt_01_report.md)
+- [ ] Bolt 2: CI と品質の安全網。[Bolt 2 計画](bolt_02_plan.md)
 - [ ] 開発基盤（Gradle 9、Spring Boot 4.1、Spring Modulith、MyBatis、Flyway の `common`・`{vendor}`、H2・Testcontainers、ArchUnit・AT-01〜06、Cucumber、CI）
 - [ ] UI の骨格（Thymeleaf、htmx、Bootstrap、共通レイアウト）
 - [ ] US-01（AC1、AC2、AC4）、US-02
@@ -493,7 +494,7 @@ W6 と W9 は 10 SP を超えるため、W4 の見直しで、W5・W8 の祝日�
 
 | 週 | 計画 SP | 実績 SP | 達成率 | 状態 |
 | :--- | ---: | ---: | ---: | :--- |
-| W1 | 6 | - | - | 進行中（Bolt 1 完了） |
+| W1 | 6 | - | - | 進行中（Bolt 1 完了、Bolt 2 計画済み） |
 | W2 | 8 | - | - | 未着手 |
 | W3 | 10 | - | - | 未着手 |
 | W4 | 11 | - | - | 未着手 |
@@ -550,3 +551,4 @@ xychart-beta
 | 2026-10-01 | Bolt をイテレーションとし、1 週間を計画の見直しの区切り（W1〜W15）に改めた。ウォーキングスケルトンを最初の Bolt とし、Release 0.1 を「最初の縦の流れ」と呼び直した | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-10-01 | W1 に Bolt 1 計画へのリンクを付け、進捗状況を「計画済み（Bolt 1）」にした | anthropic/claude-opus-5-5 |
 | 2026-10-01 | Bolt 1（ウォーキングスケルトン）の完了を反映し、W1 を「進行中」にした | anthropic/claude-opus-5-5 |
+| 2026-10-01 | W1 に Bolt 2 計画へのリンクを付けた | anthropic/claude-opus-5-5 |
