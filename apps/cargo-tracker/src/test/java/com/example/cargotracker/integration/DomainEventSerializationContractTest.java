@@ -29,7 +29,8 @@ class DomainEventSerializationContractTest {
             "submittedAt":{"instant":"2026-10-05T01:00:00.123456Z"}}""";
 
     private static final TransportRequestSubmitted EVENT = new TransportRequestSubmitted(
-            UUID.fromString("11111111-1111-1111-1111-111111111111"), 1,
+            UUID.fromString("11111111-1111-1111-1111-111111111111"),
+            1,
             new CompanyId(UUID.fromString("00000000-0000-0000-0000-000000000001")),
             new UtcInstant(Instant.parse("2026-10-05T01:00:00.123456Z")));
 

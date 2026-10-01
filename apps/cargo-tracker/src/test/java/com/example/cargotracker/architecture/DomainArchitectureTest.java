@@ -16,10 +16,12 @@ class DomainArchitectureTest {
 
     @ArchTest
     static final ArchRule ドメイン層はJava標準とドメイン層と注釈の語彙にだけ依存する = classes()
-            .that().resideInAPackage("..domain..")
-            .and().doNotHaveSimpleName("package-info")
-            .should().onlyDependOnClassesThat().resideInAnyPackage(
-                    "java..",
-                    "com.example.cargotracker..domain..",
-                    "com.example.cargotracker.shared.annotation.ddd..");
+            .that()
+            .resideInAPackage("..domain..")
+            .and()
+            .doNotHaveSimpleName("package-info")
+            .should()
+            .onlyDependOnClassesThat()
+            .resideInAnyPackage(
+                    "java..", "com.example.cargotracker..domain..", "com.example.cargotracker.shared.annotation.ddd..");
 }

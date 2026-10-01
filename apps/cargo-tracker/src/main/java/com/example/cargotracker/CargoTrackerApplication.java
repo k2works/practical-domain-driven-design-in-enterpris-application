@@ -11,8 +11,7 @@ import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
 @ConfigurationPropertiesScan
 public class CargoTrackerApplication {
 
-	public static void main(String[] args) {
-		SpringApplication.run(CargoTrackerApplication.class, args);
-	}
-
+    public static void main(String[] args) {
+        SpringApplication.run(CargoTrackerApplication.class, args);
+    }
 }

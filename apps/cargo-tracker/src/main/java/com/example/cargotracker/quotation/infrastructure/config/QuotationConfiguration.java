@@ -15,8 +15,8 @@ import org.springframework.context.annotation.Configuration;
 public class QuotationConfiguration {
 
     @Bean
-    TransportRequestCommandService transportRequestCommandService(TransportRequestRepository repository,
-            ApplicationEventPublisher eventPublisher, Clock clock) {
+    TransportRequestCommandService transportRequestCommandService(
+            TransportRequestRepository repository, ApplicationEventPublisher eventPublisher, Clock clock) {
         return new TransportRequestCommandService(repository, eventPublisher, clock);
     }
 

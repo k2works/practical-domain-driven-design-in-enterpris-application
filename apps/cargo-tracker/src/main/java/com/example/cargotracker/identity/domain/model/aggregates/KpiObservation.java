@@ -26,16 +26,16 @@ public class KpiObservation {
     /**
      * 輸送要求の提出を記録する。
      */
-    public static KpiObservation recordSubmission(UUID transportRequestId, CompanyId shipperCompanyId,
-            UtcInstant submittedAt) {
+    public static KpiObservation recordSubmission(
+            UUID transportRequestId, CompanyId shipperCompanyId, UtcInstant submittedAt) {
         return new KpiObservation(transportRequestId, shipperCompanyId, submittedAt);
     }
 
     /**
      * 保存されている状態から KPI 計測記録を組み立てる（リポジトリが使う）。
      */
-    public static KpiObservation reconstitute(UUID transportRequestId, CompanyId shipperCompanyId,
-            UtcInstant submittedAt) {
+    public static KpiObservation reconstitute(
+            UUID transportRequestId, CompanyId shipperCompanyId, UtcInstant submittedAt) {
         return new KpiObservation(transportRequestId, shipperCompanyId, submittedAt);
     }
 
@@ -50,5 +50,4 @@ public class KpiObservation {
     public UtcInstant submittedAt() {
         return submittedAt;
     }
-
 }

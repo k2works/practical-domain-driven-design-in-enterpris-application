@@ -31,15 +31,16 @@ import org.springframework.web.server.ResponseStatusException;
 public class TransportRequestController {
 
     private static final String FORM_VIEW = "quotation/transport-requests/new";
-    private static final String LOCATION_FORMAT_MESSAGE =
-            "UN/LOCODE（国コード 2 文字 + 地点コード 3 文字、例: JPTYO）で入力してください";
+    private static final String LOCATION_FORMAT_MESSAGE = "UN/LOCODE（国コード 2 文字 + 地点コード 3 文字、例: JPTYO）で入力してください";
 
     private final TransportRequestCommandService commandService;
     private final TransportRequestQueryService queryService;
     private final ProvisionalActorProperties provisionalActor;
 
-    public TransportRequestController(TransportRequestCommandService commandService,
-            TransportRequestQueryService queryService, ProvisionalActorProperties provisionalActor) {
+    public TransportRequestController(
+            TransportRequestCommandService commandService,
+            TransportRequestQueryService queryService,
+            ProvisionalActorProperties provisionalActor) {
         this.commandService = commandService;
         this.queryService = queryService;
         this.provisionalActor = provisionalActor;
@@ -56,20 +57,23 @@ public class TransportRequestController {
     @PostMapping
     public String submit(@ModelAttribute TransportRequestForm transportRequestForm, BindingResult bindingResult) {
         Optional<Location> origin = toLocation(transportRequestForm.getOrigin(), "origin", "出発地", bindingResult);
-        Optional<Location> destination = toLocation(transportRequestForm.getDestination(), "destination", "目的地",
-                bindingResult);
+        Optional<Location> destination =
+                toLocation(transportRequestForm.getDestination(), "destination", "目的地", bindingResult);
         if (bindingResult.hasErrors()) {
             return FORM_VIEW;
         }
         TransportRequestId id = commandService.submit(new SubmitTransportRequestCommand(
-                new CompanyId(provisionalActor.shipperCompanyId()), new UserId(provisionalActor.userId()),
-                origin.orElseThrow(), destination.orElseThrow()));
+                new CompanyId(provisionalActor.shipperCompanyId()),
+                new UserId(provisionalActor.userId()),
+                origin.orElseThrow(),
+                destination.orElseThrow()));
         return "redirect:/customer/transport-requests/" + id.value() + "/submitted";
     }
 
     @GetMapping("/{id}/submitted")
     public String submitted(@PathVariable UUID id, Model model) {
-        TransportRequest transportRequest = queryService.findById(new TransportRequestId(id))
+        TransportRequest transportRequest = queryService
+                .findById(new TransportRequestId(id))
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
         model.addAttribute("transportRequestId", transportRequest.id().value());
         model.addAttribute("statusLabel", statusLabel(transportRequest.status()));
@@ -79,8 +83,8 @@ public class TransportRequestController {
     /**
      * 入力を場所にする。貼り付けで付く前後の空白を除き、小文字は大文字にそろえる。形式の検証はドメインの場所に任せる。
      */
-    private static Optional<Location> toLocation(String value, String field, String label,
-            BindingResult bindingResult) {
+    private static Optional<Location> toLocation(
+            String value, String field, String label, BindingResult bindingResult) {
         String normalized = value == null ? "" : value.strip().toUpperCase(Locale.ROOT);
         if (normalized.isEmpty()) {
             bindingResult.rejectValue(field, "location.required", label + "を入力してください");

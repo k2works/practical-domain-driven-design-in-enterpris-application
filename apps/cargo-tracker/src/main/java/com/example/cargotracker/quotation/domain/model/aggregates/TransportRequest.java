@@ -27,7 +27,10 @@ public class TransportRequest {
     private final TransportRequestVersion currentVersion;
     private final List<Object> domainEvents = new ArrayList<>();
 
-    private TransportRequest(TransportRequestId id, CompanyId shipperCompanyId, TransportRequestStatus status,
+    private TransportRequest(
+            TransportRequestId id,
+            CompanyId shipperCompanyId,
+            TransportRequestStatus status,
             TransportRequestVersion currentVersion) {
         this.id = Objects.requireNonNull(id, "id");
         this.shipperCompanyId = Objects.requireNonNull(shipperCompanyId, "shipperCompanyId");
@@ -38,12 +41,16 @@ public class TransportRequest {
     /**
      * 輸送要求を提出する。最初の版を作って審査中にし、DE-01 を生成する。
      */
-    public static TransportRequest submit(TransportRequestId id, CompanyId shipperCompanyId, ShipmentTerms terms,
-            UserId submittedBy, UtcInstant submittedAt) {
-        TransportRequestVersion firstVersion = new TransportRequestVersion(FIRST_VERSION_NO, terms, submittedBy,
-                submittedAt);
-        TransportRequest request = new TransportRequest(id, shipperCompanyId, TransportRequestStatus.UNDER_REVIEW,
-                firstVersion);
+    public static TransportRequest submit(
+            TransportRequestId id,
+            CompanyId shipperCompanyId,
+            ShipmentTerms terms,
+            UserId submittedBy,
+            UtcInstant submittedAt) {
+        TransportRequestVersion firstVersion =
+                new TransportRequestVersion(FIRST_VERSION_NO, terms, submittedBy, submittedAt);
+        TransportRequest request =
+                new TransportRequest(id, shipperCompanyId, TransportRequestStatus.UNDER_REVIEW, firstVersion);
         request.domainEvents.add(
                 new TransportRequestSubmitted(id.value(), FIRST_VERSION_NO, shipperCompanyId, submittedAt));
         return request;
@@ -52,8 +59,11 @@ public class TransportRequest {
     /**
      * 保存されている状態から輸送要求を組み立てる（リポジトリが使う）。イベントは生成しない。
      */
-    public static TransportRequest reconstitute(TransportRequestId id, CompanyId shipperCompanyId,
-            TransportRequestStatus status, TransportRequestVersion currentVersion) {
+    public static TransportRequest reconstitute(
+            TransportRequestId id,
+            CompanyId shipperCompanyId,
+            TransportRequestStatus status,
+            TransportRequestVersion currentVersion) {
         return new TransportRequest(id, shipperCompanyId, status, currentVersion);
     }
 

@@ -17,13 +17,17 @@ class KpiObservationEventHandlerTest {
 
     @Test
     void 同じDE01が2回届いてもKPI計測記録は1件で最初の提出時刻のまま() {
-        TransportRequestSubmitted event = new TransportRequestSubmitted(UUID.randomUUID(), 1,
-                new CompanyId(UUID.randomUUID()), new UtcInstant(Instant.parse("2026-10-05T01:00:00Z")));
+        TransportRequestSubmitted event = new TransportRequestSubmitted(
+                UUID.randomUUID(),
+                1,
+                new CompanyId(UUID.randomUUID()),
+                new UtcInstant(Instant.parse("2026-10-05T01:00:00Z")));
 
         handler.on(event);
         handler.on(event);
 
-        assertThat(repository.findAll()).singleElement()
+        assertThat(repository.findAll())
+                .singleElement()
                 .satisfies(observation -> assertThat(observation.submittedAt()).isEqualTo(event.submittedAt()));
     }
 }

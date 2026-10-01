@@ -17,8 +17,11 @@ public class ScenarioReset {
     private final InMemoryKpiObservationRepository kpiObservationRepository;
     private final DeferredEventDelivery delivery;
 
-    public ScenarioReset(MutableClock clock, InMemoryTransportRequestRepository transportRequestRepository,
-            InMemoryKpiObservationRepository kpiObservationRepository, DeferredEventDelivery delivery) {
+    public ScenarioReset(
+            MutableClock clock,
+            InMemoryTransportRequestRepository transportRequestRepository,
+            InMemoryKpiObservationRepository kpiObservationRepository,
+            DeferredEventDelivery delivery) {
         this.clock = clock;
         this.transportRequestRepository = transportRequestRepository;
         this.kpiObservationRepository = kpiObservationRepository;

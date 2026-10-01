@@ -19,7 +19,9 @@ public class KpiObservationController {
 
     @GetMapping("/staff/kpi-observations")
     public String list(Model model) {
-        model.addAttribute("observations", queryService.findAll().stream().map(KpiObservationView::from).toList());
+        model.addAttribute(
+                "observations",
+                queryService.findAll().stream().map(KpiObservationView::from).toList());
         return "identity/kpi-observations/list";
     }
 }

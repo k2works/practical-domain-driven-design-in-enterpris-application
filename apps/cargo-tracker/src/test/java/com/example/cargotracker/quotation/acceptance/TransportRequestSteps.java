@@ -27,8 +27,10 @@ public class TransportRequestSteps {
     private final TransportRequestQueryService queryService;
     private final ScenarioContext context;
 
-    public TransportRequestSteps(TransportRequestCommandService commandService,
-            TransportRequestQueryService queryService, ScenarioContext context) {
+    public TransportRequestSteps(
+            TransportRequestCommandService commandService,
+            TransportRequestQueryService queryService,
+            ScenarioContext context) {
         this.commandService = commandService;
         this.queryService = queryService;
         this.context = context;
@@ -36,15 +38,15 @@ public class TransportRequestSteps {
 
     @もし("荷主が出発地 {string}、目的地 {string} の輸送要求を提出する")
     public void 荷主が輸送要求を提出する(String origin, String destination) {
-        TransportRequestId id = commandService.submit(new SubmitTransportRequestCommand(SHIPPER, SUBMITTER,
-                new Location(origin), new Location(destination)));
+        TransportRequestId id = commandService.submit(
+                new SubmitTransportRequestCommand(SHIPPER, SUBMITTER, new Location(origin), new Location(destination)));
         context.transportRequestId(id.value());
     }
 
     @ならば("輸送要求は審査中になる")
     public void 輸送要求は審査中になる() {
         assertThat(queryService.findById(new TransportRequestId(context.transportRequestId())))
-                .hasValueSatisfying(request -> assertThat(request.status())
-                        .isEqualTo(TransportRequestStatus.UNDER_REVIEW));
+                .hasValueSatisfying(
+                        request -> assertThat(request.status()).isEqualTo(TransportRequestStatus.UNDER_REVIEW));
     }
 }

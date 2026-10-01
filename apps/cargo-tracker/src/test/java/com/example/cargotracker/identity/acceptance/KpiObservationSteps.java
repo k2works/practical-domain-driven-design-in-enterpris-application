@@ -24,7 +24,7 @@ public class KpiObservationSteps {
     @ならば("KPI 計測記録にその輸送要求の提出時刻 {string} が記録される")
     public void KPI計測記録に提出時刻が記録される(String submittedAt) {
         assertThat(queryService.findByTransportRequestId(context.transportRequestId()))
-                .hasValueSatisfying(observation -> assertThat(observation.submittedAt())
-                        .isEqualTo(new UtcInstant(Instant.parse(submittedAt))));
+                .hasValueSatisfying(observation ->
+                        assertThat(observation.submittedAt()).isEqualTo(new UtcInstant(Instant.parse(submittedAt))));
     }
 }

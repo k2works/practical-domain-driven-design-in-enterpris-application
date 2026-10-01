@@ -20,8 +20,8 @@ public class TransportRequestCommandService {
     private final ApplicationEventPublisher eventPublisher;
     private final Clock clock;
 
-    public TransportRequestCommandService(TransportRequestRepository repository,
-            ApplicationEventPublisher eventPublisher, Clock clock) {
+    public TransportRequestCommandService(
+            TransportRequestRepository repository, ApplicationEventPublisher eventPublisher, Clock clock) {
         this.repository = repository;
         this.eventPublisher = eventPublisher;
         this.clock = clock;
@@ -32,9 +32,12 @@ public class TransportRequestCommandService {
      */
     @Transactional
     public TransportRequestId submit(SubmitTransportRequestCommand command) {
-        TransportRequest transportRequest = TransportRequest.submit(new TransportRequestId(UUID.randomUUID()),
-                command.shipperCompanyId(), new ShipmentTerms(command.origin(), command.destination()),
-                command.submittedBy(), new UtcInstant(clock.instant()));
+        TransportRequest transportRequest = TransportRequest.submit(
+                new TransportRequestId(UUID.randomUUID()),
+                command.shipperCompanyId(),
+                new ShipmentTerms(command.origin(), command.destination()),
+                command.submittedBy(),
+                new UtcInstant(clock.instant()));
         repository.save(transportRequest);
         transportRequest.domainEvents().forEach(eventPublisher::publishEvent);
         transportRequest.clearDomainEvents();

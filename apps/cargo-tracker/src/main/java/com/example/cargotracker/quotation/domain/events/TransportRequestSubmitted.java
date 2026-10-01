@@ -14,6 +14,5 @@ import java.util.UUID;
  * @param submittedAt 提出時刻
  */
 @DomainEvent
-public record TransportRequestSubmitted(UUID transportRequestId, int versionNo, CompanyId shipperCompanyId,
-        UtcInstant submittedAt) {
-}
+public record TransportRequestSubmitted(
+        UUID transportRequestId, int versionNo, CompanyId shipperCompanyId, UtcInstant submittedAt) {}

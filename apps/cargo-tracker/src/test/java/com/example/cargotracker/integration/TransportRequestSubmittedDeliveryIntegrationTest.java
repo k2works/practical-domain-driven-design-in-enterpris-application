@@ -43,13 +43,16 @@ class TransportRequestSubmittedDeliveryIntegrationTest {
     @Test
     void 輸送要求を提出するとイベントが非同期に配信されKPI計測記録ができて配信が完了する() {
         TransportRequestId id = commandService.submit(new SubmitTransportRequestCommand(
-                new CompanyId(UUID.randomUUID()), new UserId(UUID.randomUUID()), new Location("JPTYO"),
+                new CompanyId(UUID.randomUUID()),
+                new UserId(UUID.randomUUID()),
+                new Location("JPTYO"),
                 new Location("NLRTM")));
 
-        await().atMost(TIMEOUT).untilAsserted(() ->
-                assertThat(kpiObservationQueryService.findByTransportRequestId(id.value())).isPresent());
-        await().atMost(TIMEOUT).untilAsserted(() ->
-                assertThat(completedEventPublications.findAll())
+        await().atMost(TIMEOUT)
+                .untilAsserted(() -> assertThat(kpiObservationQueryService.findByTransportRequestId(id.value()))
+                        .isPresent());
+        await().atMost(TIMEOUT)
+                .untilAsserted(() -> assertThat(completedEventPublications.findAll())
                         .extracting(publication -> publication.getEvent())
                         .filteredOn(TransportRequestSubmitted.class::isInstance)
                         .map(TransportRequestSubmitted.class::cast)

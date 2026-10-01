@@ -1,5 +1,6 @@
 package com.example.cargotracker.quotation.interfaces.web;
 
+import static org.hamcrest.Matchers.containsString;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
@@ -11,7 +12,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.view;
-import static org.hamcrest.Matchers.containsString;
 
 import com.example.cargotracker.quotation.application.internal.commands.SubmitTransportRequestCommand;
 import com.example.cargotracker.quotation.application.internal.commandservices.TransportRequestCommandService;
@@ -34,20 +34,22 @@ import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
-@WebMvcTest(controllers = TransportRequestController.class, properties = {
-        "cargotracker.provisional-actor.shipper-company-id=00000000-0000-0000-0000-000000000001",
-        "cargotracker.provisional-actor.user-id=00000000-0000-0000-0000-000000000101"})
+@WebMvcTest(
+        controllers = TransportRequestController.class,
+        properties = {
+            "cargotracker.provisional-actor.shipper-company-id=00000000-0000-0000-0000-000000000001",
+            "cargotracker.provisional-actor.user-id=00000000-0000-0000-0000-000000000101"
+        })
 class TransportRequestControllerTest {
 
     private static final CompanyId SHIPPER = new CompanyId(UUID.fromString("00000000-0000-0000-0000-000000000001"));
     private static final UserId USER = new UserId(UUID.fromString("00000000-0000-0000-0000-000000000101"));
-    private static final TransportRequestId ID = new TransportRequestId(
-            UUID.fromString("11111111-1111-1111-1111-111111111111"));
+    private static final TransportRequestId ID =
+            new TransportRequestId(UUID.fromString("11111111-1111-1111-1111-111111111111"));
 
     @TestConfiguration(proxyBeanMethods = false)
     @EnableConfigurationProperties(ProvisionalActorProperties.class)
-    static class Properties {
-    }
+    static class Properties {}
 
     @Autowired
     MockMvc mockMvc;
@@ -69,11 +71,13 @@ class TransportRequestControllerTest {
 
     @Test
     void 輸送要求を仮の主体で提出すると完了画面へリダイレクトする() throws Exception {
-        SubmitTransportRequestCommand expected = new SubmitTransportRequestCommand(SHIPPER, USER,
-                new Location("JPTYO"), new Location("NLRTM"));
+        SubmitTransportRequestCommand expected =
+                new SubmitTransportRequestCommand(SHIPPER, USER, new Location("JPTYO"), new Location("NLRTM"));
         given(commandService.submit(expected)).willReturn(ID);
 
-        mockMvc.perform(post("/customer/transport-requests").param("origin", "JPTYO").param("destination", "NLRTM"))
+        mockMvc.perform(post("/customer/transport-requests")
+                        .param("origin", "JPTYO")
+                        .param("destination", "NLRTM"))
                 .andExpect(redirectedUrl("/customer/transport-requests/" + ID.value() + "/submitted"));
 
         then(commandService).should().submit(expected);
@@ -83,16 +87,21 @@ class TransportRequestControllerTest {
     void 小文字と前後の空白はそろえて提出する() throws Exception {
         given(commandService.submit(any())).willReturn(ID);
 
-        mockMvc.perform(post("/customer/transport-requests").param("origin", " jptyo ").param("destination", "nlrtm"))
+        mockMvc.perform(post("/customer/transport-requests")
+                        .param("origin", " jptyo ")
+                        .param("destination", "nlrtm"))
                 .andExpect(redirectedUrl("/customer/transport-requests/" + ID.value() + "/submitted"));
 
-        then(commandService).should().submit(new SubmitTransportRequestCommand(SHIPPER, USER,
-                new Location("JPTYO"), new Location("NLRTM")));
+        then(commandService)
+                .should()
+                .submit(new SubmitTransportRequestCommand(SHIPPER, USER, new Location("JPTYO"), new Location("NLRTM")));
     }
 
     @Test
     void 場所の形式が誤っていれば提出せず誤りと入力値を示す() throws Exception {
-        mockMvc.perform(post("/customer/transport-requests").param("origin", "TYO").param("destination", "NLRTM"))
+        mockMvc.perform(post("/customer/transport-requests")
+                        .param("origin", "TYO")
+                        .param("destination", "NLRTM"))
                 .andExpect(status().isOk())
                 .andExpect(view().name("quotation/transport-requests/new"))
                 .andExpect(model().attributeHasFieldErrors("transportRequestForm", "origin"))
@@ -104,7 +113,9 @@ class TransportRequestControllerTest {
 
     @Test
     void 目的地だけが誤っていれば目的地だけに誤りを示す() throws Exception {
-        mockMvc.perform(post("/customer/transport-requests").param("origin", "JPTYO").param("destination", "NL"))
+        mockMvc.perform(post("/customer/transport-requests")
+                        .param("origin", "JPTYO")
+                        .param("destination", "NL"))
                 .andExpect(status().isOk())
                 .andExpect(model().attributeHasFieldErrors("transportRequestForm", "destination"))
                 .andExpect(model().attributeErrorCount("transportRequestForm", 1));
@@ -114,7 +125,9 @@ class TransportRequestControllerTest {
 
     @Test
     void 空欄なら入力を求める() throws Exception {
-        mockMvc.perform(post("/customer/transport-requests").param("origin", " ").param("destination", ""))
+        mockMvc.perform(post("/customer/transport-requests")
+                        .param("origin", " ")
+                        .param("destination", ""))
                 .andExpect(status().isOk())
                 .andExpect(model().attributeErrorCount("transportRequestForm", 2))
                 .andExpect(content().string(containsString("出発地を入力してください")))
@@ -126,9 +139,13 @@ class TransportRequestControllerTest {
     @Test
     void 提出の完了画面に見積依頼の番号と審査中と次に起きることを表示する() throws Exception {
         TransportRequestId id = ID;
-        given(queryService.findById(id)).willReturn(Optional.of(TransportRequest.submit(id, SHIPPER,
-                new ShipmentTerms(new Location("JPTYO"), new Location("NLRTM")), USER,
-                new UtcInstant(Instant.parse("2026-10-05T01:00:00Z")))));
+        given(queryService.findById(id))
+                .willReturn(Optional.of(TransportRequest.submit(
+                        id,
+                        SHIPPER,
+                        new ShipmentTerms(new Location("JPTYO"), new Location("NLRTM")),
+                        USER,
+                        new UtcInstant(Instant.parse("2026-10-05T01:00:00Z")))));
 
         mockMvc.perform(get("/customer/transport-requests/{id}/submitted", id.value()))
                 .andExpect(status().isOk())

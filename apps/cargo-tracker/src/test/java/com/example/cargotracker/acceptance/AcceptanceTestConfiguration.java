@@ -69,8 +69,10 @@ public class AcceptanceTestConfiguration {
         }
 
         @Bean
-        TransportRequestCommandService transportRequestCommandService(InMemoryTransportRequestRepository repository,
-                DeferredEventDelivery eventDelivery, MutableClock clock) {
+        TransportRequestCommandService transportRequestCommandService(
+                InMemoryTransportRequestRepository repository,
+                DeferredEventDelivery eventDelivery,
+                MutableClock clock) {
             return new TransportRequestCommandService(repository, eventDelivery, clock);
         }
 

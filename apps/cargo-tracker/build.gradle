@@ -2,6 +2,7 @@ plugins {
 	id 'java'
 	id 'org.springframework.boot' version '4.1.1'
 	id 'io.spring.dependency-management' version '1.1.7'
+	id 'com.diffplug.spotless' version '8.10.3'
 }
 
 group = 'com.example'
@@ -78,4 +79,15 @@ tasks.named('test') {
 tasks.named('bootRun') {
 	// ローカル起動は H2 の dev プロファイルで動かす（開発体験を優先する。ADR-007）
 	systemProperty 'spring.profiles.active', 'dev'
+}
+
+// 書式（Bolt 1 レビュー R-31）。既存の書き方（4 スペース、120 桁）に近い palantir-java-format を使う
+spotless {
+	java {
+		target 'src/**/*.java'
+		palantirJavaFormat()
+		removeUnusedImports()
+		trimTrailingWhitespace()
+		endWithNewline()
+	}
 }

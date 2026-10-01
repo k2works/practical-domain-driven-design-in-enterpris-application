@@ -24,28 +24,33 @@ class TransportRequestCommandServiceTest {
 
     private final InMemoryTransportRequestRepository repository = new InMemoryTransportRequestRepository();
     private final List<Object> published = new ArrayList<>();
-    private final TransportRequestCommandService service = new TransportRequestCommandService(repository,
-            published::add, Clock.fixed(NOW, ZoneOffset.UTC));
+    private final TransportRequestCommandService service =
+            new TransportRequestCommandService(repository, published::add, Clock.fixed(NOW, ZoneOffset.UTC));
 
     private final SubmitTransportRequestCommand command = new SubmitTransportRequestCommand(
-            new CompanyId(UUID.randomUUID()), new UserId(UUID.randomUUID()), new Location("JPTYO"),
+            new CompanyId(UUID.randomUUID()),
+            new UserId(UUID.randomUUID()),
+            new Location("JPTYO"),
             new Location("NLRTM"));
 
     @Test
     void 提出した輸送要求をClockの時刻で保存する() {
         TransportRequestId id = service.submit(command);
 
-        assertThat(repository.findById(id)).hasValueSatisfying(request ->
-                assertThat(request.currentVersion().submittedAt()).isEqualTo(new UtcInstant(NOW)));
+        assertThat(repository.findById(id))
+                .hasValueSatisfying(request ->
+                        assertThat(request.currentVersion().submittedAt()).isEqualTo(new UtcInstant(NOW)));
     }
 
     @Test
     void 保存した輸送要求のDE01を1回だけ発行しイベントを残さない() {
         TransportRequestId id = service.submit(command);
 
-        assertThat(published).containsExactly(
-                new TransportRequestSubmitted(id.value(), 1, command.shipperCompanyId(), new UtcInstant(NOW)));
-        assertThat(repository.findById(id)).hasValueSatisfying(request ->
-                assertThat(request.domainEvents()).isEmpty());
+        assertThat(published)
+                .containsExactly(
+                        new TransportRequestSubmitted(id.value(), 1, command.shipperCompanyId(), new UtcInstant(NOW)));
+        assertThat(repository.findById(id))
+                .hasValueSatisfying(
+                        request -> assertThat(request.domainEvents()).isEmpty());
     }
 }

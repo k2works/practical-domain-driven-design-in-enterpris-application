@@ -16,8 +16,8 @@ public abstract class KpiObservationRepositoryContract {
     protected abstract KpiObservationRepository repository();
 
     private static KpiObservation submittedAt(UUID transportRequestId, String instant) {
-        return KpiObservation.recordSubmission(transportRequestId, new CompanyId(UUID.randomUUID()),
-                new UtcInstant(Instant.parse(instant)));
+        return KpiObservation.recordSubmission(
+                transportRequestId, new CompanyId(UUID.randomUUID()), new UtcInstant(Instant.parse(instant)));
     }
 
     @Test
@@ -48,7 +48,8 @@ public abstract class KpiObservationRepositoryContract {
 
         assertThat(repository().findByTransportRequestId(transportRequestId))
                 .hasValueSatisfying(found -> assertThat(found.submittedAt()).isEqualTo(first.submittedAt()));
-        assertThat(repository().findAll()).filteredOn(o -> o.transportRequestId().equals(transportRequestId))
+        assertThat(repository().findAll())
+                .filteredOn(o -> o.transportRequestId().equals(transportRequestId))
                 .hasSize(1);
     }
 
@@ -59,7 +60,8 @@ public abstract class KpiObservationRepositoryContract {
         repository().save(submittedAt(older, "2026-10-05T01:00:00Z"));
         repository().save(submittedAt(newer, "2026-10-05T02:00:00Z"));
 
-        assertThat(repository().findAll()).extracting(KpiObservation::transportRequestId)
+        assertThat(repository().findAll())
+                .extracting(KpiObservation::transportRequestId)
                 .filteredOn(id -> id.equals(older) || id.equals(newer))
                 .containsExactly(newer, older);
     }

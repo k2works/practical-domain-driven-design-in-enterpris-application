@@ -55,6 +55,7 @@ class MyBatisTransportRequestRepositoryIntegrationTest {
 
     @Test
     void 存在しない輸送要求は見つからない() {
-        assertThat(repository.findById(new TransportRequestId(UUID.randomUUID()))).isEmpty();
+        assertThat(repository.findById(new TransportRequestId(UUID.randomUUID())))
+                .isEmpty();
     }
 }

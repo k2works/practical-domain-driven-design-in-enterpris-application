@@ -43,17 +43,28 @@ public class MyBatisTransportRequestRepository implements TransportRequestReposi
 
     private static TransportRequestRow toRow(TransportRequest request) {
         TransportRequestVersion version = request.currentVersion();
-        return new TransportRequestRow(request.id().value(), request.shipperCompanyId().value(),
-                request.status().name(), version.versionNo(), INITIAL_LOCK_VERSION,
-                version.terms().origin().unLocode(), version.terms().destination().unLocode(),
-                version.submittedBy().value(), version.submittedAt().instant().atOffset(ZoneOffset.UTC));
+        return new TransportRequestRow(
+                request.id().value(),
+                request.shipperCompanyId().value(),
+                request.status().name(),
+                version.versionNo(),
+                INITIAL_LOCK_VERSION,
+                version.terms().origin().unLocode(),
+                version.terms().destination().unLocode(),
+                version.submittedBy().value(),
+                version.submittedAt().instant().atOffset(ZoneOffset.UTC));
     }
 
     private static TransportRequest toAggregate(TransportRequestRow row) {
-        TransportRequestVersion version = new TransportRequestVersion(row.currentVersionNo(),
+        TransportRequestVersion version = new TransportRequestVersion(
+                row.currentVersionNo(),
                 new ShipmentTerms(new Location(row.originUnlocode()), new Location(row.destinationUnlocode())),
-                new UserId(row.submittedBy()), new UtcInstant(row.submittedAt().toInstant()));
-        return TransportRequest.reconstitute(new TransportRequestId(row.id()), new CompanyId(row.shipperCompanyId()),
-                TransportRequestStatus.valueOf(row.status()), version);
+                new UserId(row.submittedBy()),
+                new UtcInstant(row.submittedAt().toInstant()));
+        return TransportRequest.reconstitute(
+                new TransportRequestId(row.id()),
+                new CompanyId(row.shipperCompanyId()),
+                TransportRequestStatus.valueOf(row.status()),
+                version);
     }
 }

@@ -29,7 +29,9 @@ public class InMemoryKpiObservationRepository implements KpiObservationRepositor
     @Override
     public List<KpiObservation> findAll() {
         return store.values().stream()
-                .sorted(Comparator.comparing((KpiObservation o) -> o.submittedAt().instant()).reversed())
+                .sorted(Comparator.comparing(
+                                (KpiObservation o) -> o.submittedAt().instant())
+                        .reversed())
                 .toList();
     }
 

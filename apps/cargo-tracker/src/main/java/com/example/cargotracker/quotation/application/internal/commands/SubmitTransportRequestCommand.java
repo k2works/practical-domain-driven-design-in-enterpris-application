@@ -13,6 +13,5 @@ import com.example.cargotracker.shared.domain.UserId;
  * @param origin 出発地
  * @param destination 目的地
  */
-public record SubmitTransportRequestCommand(CompanyId shipperCompanyId, UserId submittedBy, Location origin,
-        Location destination) {
-}
+public record SubmitTransportRequestCommand(
+        CompanyId shipperCompanyId, UserId submittedBy, Location origin, Location destination) {}

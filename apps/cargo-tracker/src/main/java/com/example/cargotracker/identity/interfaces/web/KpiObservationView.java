@@ -13,11 +13,12 @@ import java.util.UUID;
  */
 public record KpiObservationView(UUID transportRequestId, String submittedAt) {
 
-    private static final DateTimeFormatter UTC_WITH_OFFSET = DateTimeFormatter.ofPattern("uuuu-MM-dd HH:mm:ss xxx")
-            .withZone(ZoneOffset.UTC);
+    private static final DateTimeFormatter UTC_WITH_OFFSET =
+            DateTimeFormatter.ofPattern("uuuu-MM-dd HH:mm:ss xxx").withZone(ZoneOffset.UTC);
 
     static KpiObservationView from(KpiObservation observation) {
-        return new KpiObservationView(observation.transportRequestId(),
+        return new KpiObservationView(
+                observation.transportRequestId(),
                 UTC_WITH_OFFSET.format(observation.submittedAt().instant()));
     }
 }

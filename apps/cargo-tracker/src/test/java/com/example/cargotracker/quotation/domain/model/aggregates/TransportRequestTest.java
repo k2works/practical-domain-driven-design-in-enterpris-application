@@ -38,8 +38,7 @@ class TransportRequestTest {
     void 提出すると輸送要求を提出したイベントを生成する() {
         TransportRequest request = TransportRequest.submit(id, shipper, terms, submitter, now);
 
-        assertThat(request.domainEvents())
-                .containsExactly(new TransportRequestSubmitted(id.value(), 1, shipper, now));
+        assertThat(request.domainEvents()).containsExactly(new TransportRequestSubmitted(id.value(), 1, shipper, now));
     }
 
     @Test
