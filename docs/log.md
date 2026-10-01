@@ -1,9 +1,26 @@
 # Docs Update Log
 
 ## 2026-10-01
+* **Verification**: [005-server-side-rendering](/adr/cargo-tracker/005-server-side-rendering.md) を human:kakimomokuri が検証
+* **Verification**: [004-external-data-ingestion](/adr/cargo-tracker/004-external-data-ingestion.md) を human:kakimomokuri が検証
+* **Verification**: [003-inter-context-integration](/adr/cargo-tracker/003-inter-context-integration.md) を human:kakimomokuri が検証
+* **Verification**: [002-domain-logic-pattern-per-context](/adr/cargo-tracker/002-domain-logic-pattern-per-context.md) を human:kakimomokuri が検証
+* **Verification**: [001-modular-monolith](/adr/cargo-tracker/001-modular-monolith.md) を human:kakimomokuri が検証
+* **Verification**: [architecture_infrastructure](/design/cargo-tracker/architecture_infrastructure.md) を human:kakimomokuri が検証
+* **Verification**: [architecture_frontend](/design/cargo-tracker/architecture_frontend.md) を human:kakimomokuri が検証
+* **Verification**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を human:kakimomokuri が検証
+* **Update**: 開発ガイドライン第 1〜3 章との突き合わせでアーキテクチャ設計と ADR-001〜004 を改訂（追跡は状態保存の集約、イベントの永続化、予約サガ、4 パッケージ構成）
+* **Creation**: [ADR-005](/adr/cargo-tracker/005-server-side-rendering.md) 画面のサーバーサイドレンダリングを提案
 * **Creation**: [03-spring-modular-monolith](/article/03-spring-modular-monolith.md) を作成（human:kakimomokuri）
 * **Creation**: [02-cargo-domain-model](/article/02-cargo-domain-model.md) を作成（human:kakimomokuri）
 * **Creation**: [01-ddd-fundamentals](/article/01-ddd-fundamentals.md) を作成（human:kakimomokuri）
+* **Creation**: [ADR-004](/adr/cargo-tracker/004-external-data-ingestion.md) 外部原本の Inbox・隔離・照合を提案
+* **Creation**: [ADR-003](/adr/cargo-tracker/003-inter-context-integration.md) コンテキスト間の冪等コマンド・Outbox・プロセスマネージャーを提案
+* **Creation**: [ADR-002](/adr/cargo-tracker/002-domain-logic-pattern-per-context.md) コンテキストごとのドメインロジックパターン選択を提案
+* **Creation**: [ADR-001](/adr/cargo-tracker/001-modular-monolith.md) モジュラーモノリス採用を提案
+* **Creation**: [architecture_infrastructure](/design/cargo-tracker/architecture_infrastructure.md) を草案として作成
+* **Creation**: [architecture_frontend](/design/cargo-tracker/architecture_frontend.md) を草案として作成
+* **Creation**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を草案として作成
 * **Update**: MkDocs ビルド成功を確認しユースケース作成計画の仕上げを完了
 * **Update**: 仕上げ状態、Gate 4 承認記録、検証結果を実態に同期
 * **Verification**: [usecases_review_20260930](/review/cargo-tracker/usecases_review_20260930.md) を human:kakimomokuri が検証

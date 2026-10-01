@@ -87,6 +87,11 @@ nav:
           - ユースケース作成計画: requirements/cargo-tracker/usecase_plan.md
   - 設計:
       - 概要: design/index.md
+      - cargo-tracker:
+          - 概要: design/cargo-tracker/index.md
+          - バックエンドアーキテクチャ: design/cargo-tracker/architecture_backend.md
+          - フロントエンドアーキテクチャ: design/cargo-tracker/architecture_frontend.md
+          - インフラストラクチャアーキテクチャ: design/cargo-tracker/architecture_infrastructure.md
   - 開発:
       - 概要: development/index.md
   - 運用:
@@ -97,6 +102,13 @@ nav:
       - cargo-tracker ユースケースレビュー（2026-09-30）: review/cargo-tracker/usecases_review_20260930.md
   - ADR:
       - 概要: adr/index.md
+      - cargo-tracker:
+          - 概要: adr/cargo-tracker/index.md
+          - ADR-001 モジュラーモノリス: adr/cargo-tracker/001-modular-monolith.md
+          - ADR-002 コンテキストごとのパターン選択: adr/cargo-tracker/002-domain-logic-pattern-per-context.md
+          - ADR-003 コンテキスト間連携: adr/cargo-tracker/003-inter-context-integration.md
+          - ADR-004 外部原本の取込: adr/cargo-tracker/004-external-data-ingestion.md
+          - ADR-005 サーバーサイドレンダリング: adr/cargo-tracker/005-server-side-rendering.md
   - 記事:
       - 概要: article/index.md
       - 第 1 章 ドメイン駆動設計: article/01-ddd-fundamentals.md
