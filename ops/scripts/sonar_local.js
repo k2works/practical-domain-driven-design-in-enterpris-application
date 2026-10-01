@@ -22,7 +22,7 @@ import { cleanDockerEnv } from './shared.js';
  *   ]
  * }
  *
- * scanType: "sonar-scanner" (npx sonarqube-scanner) | "sbt" (sbt sonarScan) | "maven" (mvn sonar:sonar) | "gradle" (./gradlew があれば ./gradlew check sonar、なければ gradle check sonar)
+ * scanType: "sonar-scanner" (npx sonarqube-scanner) | "sbt" (sbt sonarScan) | "maven" (mvn sonar:sonar) | "gradle" (./gradlew があれば ./gradlew、なければ gradle で test jacocoTestReport sonar。品質ゲートの反映を待つ)
  */
 function loadProjects() {
   const configPath = path.join(process.cwd(), 'sonarqube.config.json');
@@ -222,6 +222,8 @@ function waitForSonarHealthy() {
  * 環境変数 SONAR_PROJECT_KEY で指定可能
  * @returns {string} プロジェクトキー
  */
+// 注意: 判定するのは SONAR_PROJECT_KEY か、sonarqube.config.json の先頭のプロジェクトだけ。
+// 複数のプロジェクトを登録したら、gate と issues をプロジェクトごとに回すよう直す
 function sonarProjectKey() {
   const projects = loadProjects();
   return process.env.SONAR_PROJECT_KEY || (projects.length > 0 ? projects[0].projectKey : 'my-project');
@@ -287,16 +289,19 @@ function runScan(project, token, hostUrl) {
       break;
 
     case 'gradle': {
+      // 前提: scanType が gradle のプロジェクトは jacoco プラグインを使い、test と jacocoTestReport でレポートを作る。
       // Gradle Wrapper があれば使う（ローカルに Gradle を入れていない環境でも動かすため）。
-      // sonar のタスクはテストとカバレッジのレポートを作らないので、check を先に動かす
+      // check ではなく test jacocoTestReport を先に動かす（静的解析や閾値で check が失敗しても、解析の結果を見られるように）。
+      // sonar.qualitygate.wait で、サーバーの解析の反映を待ってから品質ゲートを判定し、不合格ならスキャンを失敗させる。
+      // トークンはコマンドラインに載せず、環境変数 SONAR_TOKEN で渡す（プロセスの一覧から見えないように）
       const gradle = fs.existsSync(path.join(cwd, 'gradlew')) ? './gradlew' : 'gradle';
       execSync(
-        `${gradle} check sonar ` +
+        `${gradle} test jacocoTestReport sonar ` +
         `-Dsonar.projectKey=${project.projectKey} ` +
         `-Dsonar.projectName="${project.label}" ` +
         `-Dsonar.host.url=${hostUrl} ` +
-        `-Dsonar.token=${token}`,
-        { stdio: 'inherit', cwd, shell: true, env: cleanDockerEnv() },
+        `-Dsonar.qualitygate.wait=true`,
+        { stdio: 'inherit', cwd, shell: true, env: { ...cleanDockerEnv(), SONAR_TOKEN: token } },
       );
       break;
     }
@@ -540,7 +545,10 @@ export default function (gulp) {
 
       console.log('');
       if (status !== 'OK') {
-        console.log('  Quality Gate を通過していません。sonar-local:issues で詳細を確認してください。');
+        // OK 以外（ERROR・NONE など）は失敗で終える。表示だけで成功にすると、
+        // sonar-local:check が品質ゲートの不合格を見逃す
+        done(new Error(`Quality Gate を通過していません（${status}）。sonar-local:issues で詳細を確認してください。`));
+        return;
       }
       done();
     } catch (error) {

@@ -152,7 +152,9 @@ sudo sysctl --system
 | `sonar-scanner` | `npx sonarqube-scanner` で実行 | TypeScript / JavaScript / 汎用 |
 | `sbt` | `sbt sonarScan` で実行 | Scala（sbt-sonar プラグイン） |
 | `maven` | `mvn sonar:sonar` で実行 | Java / Kotlin（Maven） |
-| `gradle` | `gradle sonar` で実行 | Java / Kotlin（Gradle） |
+| `gradle` | `./gradlew test jacocoTestReport sonar` で実行（Gradle Wrapper がなければ `gradle`）。`-Dsonar.qualitygate.wait=true` で解析の反映を待ち、品質ゲートが不合格ならスキャンが失敗する。トークンは環境変数 `SONAR_TOKEN` で渡す | Java / Kotlin（Gradle。jacoco プラグインでカバレッジを連携する） |
+
+`sonar-local:gate` は Quality Gate が OK 以外（ERROR・NONE など）のとき失敗で終わる。そのため `sonar-local:check` の成否で品質ゲートの合否を判定できる。判定するのは `SONAR_PROJECT_KEY` か、`sonarqube.config.json` の先頭のプロジェクトだけである。
 
 ---
 
@@ -406,16 +408,19 @@ mvn sonar:sonar \
 
 ```groovy
 plugins {
-  id "org.sonarqube" version "5.1.0.4882"
+  id "jacoco"
+  id "org.sonarqube" version "7.5.0.8588"
 }
 ```
 
 ```bash
-gradle sonar \
+SONAR_TOKEN=<YOUR_TOKEN> ./gradlew test jacocoTestReport sonar \
   -Dsonar.projectKey=<YOUR_PROJECT_KEY> \
   -Dsonar.host.url=http://localhost:9000 \
-  -Dsonar.token=<YOUR_TOKEN>
+  -Dsonar.qualitygate.wait=true
 ```
+
+jacoco プラグインの XML のレポートは自動で連携されるため、`sonar.coverage.jacoco.xmlReportPaths` の設定は要らない。cargo-tracker の設定例は `sonarqube.config.json` と `apps/cargo-tracker/build.gradle` を参照する。
 
 ---
 
