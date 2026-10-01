@@ -1,0 +1,11 @@
+{
+  "projects": [
+    {
+      "name": "cargo-tracker",
+      "label": "cargo-tracker",
+      "projectKey": "cargo-tracker-modular-monolith",
+      "scanType": "gradle",
+      "srcDir": "apps/cargo-tracker"
+    }
+  ]
+}

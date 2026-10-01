@@ -12,6 +12,7 @@ import com.example.cargotracker.shared.domain.Location;
 import com.example.cargotracker.shared.domain.UserId;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 
@@ -54,7 +55,9 @@ class TransportRequestTest {
     void 取り出したイベントの一覧を変えても集約は変わらない() {
         TransportRequest request = TransportRequest.submit(id, shipper, terms, submitter, now);
 
-        assertThatThrownBy(() -> request.domainEvents().clear()).isInstanceOf(UnsupportedOperationException.class);
+        List<Object> events = request.domainEvents();
+
+        assertThatThrownBy(events::clear).isInstanceOf(UnsupportedOperationException.class);
         assertThat(request.domainEvents()).hasSize(1);
     }
 }

@@ -92,7 +92,7 @@ public class TransportRequestController {
         }
         try {
             return Optional.of(new Location(normalized));
-        } catch (IllegalArgumentException e) {
+        } catch (IllegalArgumentException _) {
             bindingResult.rejectValue(field, "location.format", LOCATION_FORMAT_MESSAGE);
             return Optional.empty();
         }

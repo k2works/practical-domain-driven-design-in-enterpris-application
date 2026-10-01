@@ -6,6 +6,7 @@ plugins {
 	id 'checkstyle'
 	id 'jacoco'
 	id 'com.github.spotbugs' version '6.5.12'
+	id 'org.sonarqube' version '7.5.0.8588'
 }
 
 group = 'com.example'
@@ -207,4 +208,11 @@ def layerVerifications = coverageThresholds.collect { layer, threshold ->
 tasks.named('check') {
 	dependsOn 'jacocoTestReport'
 	dependsOn layerVerifications
+}
+
+// SonarQube（ローカルの品質ゲート。operating-qt）。接続先とトークンは ops/scripts/sonar_local.js が渡す
+sonar {
+	properties {
+		property 'sonar.coverage.jacoco.xmlReportPaths', layout.buildDirectory.file('reports/jacoco/test/jacocoTestReport.xml').get().asFile.path
+	}
 }

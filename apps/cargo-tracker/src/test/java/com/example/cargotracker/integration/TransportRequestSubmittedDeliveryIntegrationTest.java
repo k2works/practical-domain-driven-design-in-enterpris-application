@@ -19,6 +19,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.modulith.events.CompletedEventPublications;
+import org.springframework.modulith.events.EventPublication;
 
 /**
  * DE-01 の配信を PostgreSQL 18 で確かめる（ADR-003）。
@@ -53,7 +54,7 @@ class TransportRequestSubmittedDeliveryIntegrationTest {
                         .isPresent());
         await().atMost(TIMEOUT)
                 .untilAsserted(() -> assertThat(completedEventPublications.findAll())
-                        .extracting(publication -> publication.getEvent())
+                        .extracting(EventPublication::getEvent)
                         .filteredOn(TransportRequestSubmitted.class::isInstance)
                         .map(TransportRequestSubmitted.class::cast)
                         .extracting(TransportRequestSubmitted::transportRequestId)

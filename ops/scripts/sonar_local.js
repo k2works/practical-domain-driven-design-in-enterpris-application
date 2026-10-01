@@ -22,7 +22,7 @@ import { cleanDockerEnv } from './shared.js';
  *   ]
  * }
  *
- * scanType: "sonar-scanner" (npx sonarqube-scanner) | "sbt" (sbt sonarScan) | "maven" (mvn sonar:sonar) | "gradle" (gradle sonar)
+ * scanType: "sonar-scanner" (npx sonarqube-scanner) | "sbt" (sbt sonarScan) | "maven" (mvn sonar:sonar) | "gradle" (./gradlew があれば ./gradlew check sonar、なければ gradle check sonar)
  */
 function loadProjects() {
   const configPath = path.join(process.cwd(), 'sonarqube.config.json');
@@ -286,9 +286,12 @@ function runScan(project, token, hostUrl) {
       );
       break;
 
-    case 'gradle':
+    case 'gradle': {
+      // Gradle Wrapper があれば使う（ローカルに Gradle を入れていない環境でも動かすため）。
+      // sonar のタスクはテストとカバレッジのレポートを作らないので、check を先に動かす
+      const gradle = fs.existsSync(path.join(cwd, 'gradlew')) ? './gradlew' : 'gradle';
       execSync(
-        `gradle sonar ` +
+        `${gradle} check sonar ` +
         `-Dsonar.projectKey=${project.projectKey} ` +
         `-Dsonar.projectName="${project.label}" ` +
         `-Dsonar.host.url=${hostUrl} ` +
@@ -296,6 +299,7 @@ function runScan(project, token, hostUrl) {
         { stdio: 'inherit', cwd, shell: true, env: cleanDockerEnv() },
       );
       break;
+    }
 
     case 'sonar-scanner':
     default:
