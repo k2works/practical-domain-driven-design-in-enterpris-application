@@ -1,0 +1,64 @@
+name: cargo-tracker CI
+
+# テスト戦略「CI での実行」のうち、配備の前までを実行する。
+# 配備と E2E（@ui）は運用準備と Bolt 3 で足す。
+on:
+  push:
+    branches:
+      - develop
+      - main
+    paths:
+      - 'apps/cargo-tracker/**'
+      - '.github/workflows/cargo-tracker-ci.yml'
+  pull_request:
+    paths:
+      - 'apps/cargo-tracker/**'
+      - '.github/workflows/cargo-tracker-ci.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cargo-tracker-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    working-directory: apps/cargo-tracker
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: リポジトリを取得する
+        uses: actions/checkout@v7
+
+      - name: JDK 25（Corretto）を用意する
+        uses: actions/setup-java@v6
+        with:
+          distribution: corretto
+          java-version: '25'
+
+      - name: Gradle を用意する
+        uses: gradle/actions/setup-gradle@v6
+
+      - name: 作業中（@wip）の受入シナリオが残っていないことを確かめる
+        run: |
+          if grep -rn '@wip' src/test/resources/features; then
+            echo '::error::@wip のシナリオが残っています（テスト戦略: @wip を残したまま Bolt を完了しない）'
+            exit 1
+          fi
+
+      - name: 書式・静的解析・テスト・アーキテクチャ・カバレッジを検証する
+        run: ./gradlew check
+
+      - name: テストとカバレッジと受入シナリオの結果を保存する
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: cargo-tracker-reports
+          path: |
+            apps/cargo-tracker/build/reports/
+            apps/cargo-tracker/build/test-results/
+          retention-days: 14
