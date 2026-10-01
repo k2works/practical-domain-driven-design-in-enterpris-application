@@ -4,7 +4,7 @@ title: "cargo-tracker データモデル"
 description: "cargo-tracker の概念データモデル、スキーマ分割、命名と型の規約（H2 と PostgreSQL の共通部分）、コンテキストごとの論理データモデルと ER 図、版・追記専用・冪等性・イベント配信の表現。"
 tags: [design, data-model]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-01T08:48:15Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-01T12:48:11Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T07:48:17Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:01:37Z }
@@ -1016,6 +1016,7 @@ src/main/resources/db/
 | 共通部分 | 業務の表の DDL は H2 と PostgreSQL の両方で実行する（ADR-007）。CI で両方に適用して確かめる |
 | 権限 | 権限の付与と剥奪は PostgreSQL 用の `afterMigrate` のコールバックで行い、表の作成と同じ配備で反映する。新しい表を足したら、同じ変更でコールバックも更新する |
 | 後方互換 | ローリングデプロイのため、列の削除・名前の変更は「追加 → 移行 → 削除」に分ける（インフラ設計） |
+| 凍結の時点 | 最初にステージングへ配置したマイグレーションは書き換えない。それまでは Bolt で使う列だけを作り、後の Bolt で足す。凍結の後に `NOT NULL` の列を足すときは、既定値付きで追加するか「追加 → 移行 → 制約」の 3 段にする。状態の `CHECK` 制約は、状態を足すたびに作り直す（Bolt 1 レビュー R-37） |
 
 ## インデックス
 

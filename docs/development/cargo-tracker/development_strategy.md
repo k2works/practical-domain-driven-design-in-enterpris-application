@@ -4,7 +4,7 @@ title: "開発戦略 - cargo-tracker（A 社国際貨物輸送管理システム
 description: "リリース計画の W1〜W14 を序盤・中盤・終盤の局面に分け、各局面の TDD のアプローチ、週ごとのデモ項目を受入シナリオにする方針、Living Documentation の採用を定める開発戦略。"
 tags: [development,development-strategy]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-01T12:14:33Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-01T12:48:11Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T10:25:23Z }
 ---
@@ -145,8 +145,8 @@ Bolt 1 で確定したコマンドである。`apps/cargo-tracker/` で実行す
 
 | 目的 | コマンド | 備考 |
 | :--- | :--- | :--- |
-| すべての検証（ユニット・アーキテクチャ・受入シナリオ・統合・Web） | `./gradlew check` | 統合テストは Testcontainers の PostgreSQL 18 を使うため Docker が要る。Bolt 1 の時点で約 1 分 |
-| 受入シナリオだけ | `./gradlew test --tests '*RunCucumberTest*'` | 作業中の `@wip` は除外される。結果は `build/reports/cucumber/` |
+| すべての検証（ユニット・アーキテクチャ・受入シナリオ・統合・Web・H2 のスモーク） | `./gradlew check` | 統合テストは Testcontainers の PostgreSQL 18 を使うため Docker が要る。Bolt 1 の時点で約 1〜2 分 |
+| 受入シナリオ | `./gradlew test --tests '*RunCucumberTest*'` | 作業中の `@wip` は除外される。結果は `build/reports/cucumber/`。ArchUnit のテストもフィルターに従わず一緒に走る |
 | ローカル起動（H2） | `./gradlew bootRun` | dev プロファイル（H2 の PostgreSQL 互換モード）で起動する |
 | 本番の成果物 | `./gradlew bootJar` | H2 を含まない |
 | カバレッジ、静的解析、設計ドキュメントの生成 | 未設定 | CI と合わせて Bolt 2 で入れる（JaCoCo、Checkstyle・SpotBugs、JIG） |

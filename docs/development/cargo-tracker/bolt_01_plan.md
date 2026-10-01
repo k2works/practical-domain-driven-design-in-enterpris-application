@@ -4,7 +4,7 @@ title: "Bolt 1 計画 - ウォーキングスケルトン"
 description: "最初の Bolt（ウォーキングスケルトン）の計画。輸送要求の提出が DE-01 で KPI 計測に届き画面に表示される縦割りを、Bolt ゴール・仮説・10 のステップ・確認ポイントで定義する。"
 tags: [development,bolt-plan]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-01T12:14:33Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-01T12:48:11Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T10:25:23Z }
 ---
@@ -339,15 +339,15 @@ S22 : 輸送要求 ID・提出時刻の一覧
 
 ### Definition of Done
 
-- [ ] ステップ 1〜10 が完了し、各ステップの承認ゲートを人が通した（打ち切った場合はステップ 7 まで）
-- [ ] `./gradlew check` がすべて通る（ユニット・アーキテクチャ AT-01・AT-03・受入シナリオ・統合テスト）
-- [ ] `@wip` のシナリオが残っていない
-- [ ] H2 での起動と PostgreSQL 18 での統合テストが同じマイグレーションで通る
-- [ ] 作ったクラスに注釈の語彙（`@AggregateRoot`・`@ValueObject`・`@DomainEvent`）が付いている
-- [ ] 設計の判断が変わったら `docs/design/cargo-tracker/` と ADR に反映した（UI 設計の URL の規約を含む）
-- [ ] 開発戦略の「品質チェックのコマンド」を実際のコマンドに更新した
-- [ ] `bolt_01_report.md` に仮説 H1〜H4 の結論とゲート密度の判断を記録した
-- [ ] ユーザーマニュアルは更新しない。この Bolt の画面は認証もナビゲーションもない仮の画面であり、マニュアルの対象になる画面は W2 以降に作る。マニュアルの作成は、利用者が使う画面ができる Bolt の計画で見積もる
+- [ ] ステップ 1〜10 が完了し、各ステップの承認ゲートを人が通した（打ち切った場合はステップ 7 まで）（ステップ 10 のゲートは人の判断待ち）
+- [x] `./gradlew check` がすべて通る（ユニット・アーキテクチャ AT-01・AT-03・受入シナリオ・統合テスト）
+- [x] `@wip` のシナリオが残っていない
+- [x] H2 での起動と PostgreSQL 18 での統合テストが同じマイグレーションで通る
+- [x] 作ったクラスに注釈の語彙（`@AggregateRoot`・`@ValueObject`・`@DomainEvent`）が付いている
+- [x] 設計の判断が変わったら `docs/design/cargo-tracker/` と ADR に反映した（UI 設計の URL の規約を含む。`platform` モジュールと合成ルートの ADR 化は D-5 の判断の後）
+- [x] 開発戦略の「品質チェックのコマンド」を実際のコマンドに更新した
+- [x] `bolt_01_report.md` に仮説 H1〜H4 の結論とゲート密度の判断を記録した
+- [x] ユーザーマニュアルは更新しない。この Bolt の画面は認証もナビゲーションもない仮の画面であり、マニュアルの対象になる画面は W2 以降に作る。マニュアルの作成は、利用者が使う画面ができる Bolt の計画で見積もる
 
 ### デモ項目
 
@@ -367,6 +367,7 @@ S22 : 輸送要求 ID・提出時刻の一覧
 | 2026-10-01 | 開発戦略に合わせ、入力に開発ガイドラインの第 1 章と第 3 章の節を挙げた | anthropic/claude-opus-5-5 | human:kakimomokuri |
 | 2026-10-01 | 生成の方法（Spring Initializr）と基底パッケージ（`com.example.cargotracker`）の決定を反映し、計画を承認 | anthropic/claude-opus-5-5 | human:kakimomokuri |
 | 2026-10-01 | ステップ 1〜9 を完了とし、ステップ 10 を人の判断待ちにした。デモ 3 の誤りの例を `TYO` に直した。結果は [Bolt 1 終了報告](bolt_01_report.md) | anthropic/claude-opus-5-5 | 承認待ち |
+| 2026-10-01 | クローズで完了条件を実績に合わせて更新した（ステップ 10 のゲートだけが人の判断待ち）。レビューの対応は [Bolt 1 開発成果物レビュー](../../review/cargo-tracker/bolt_01_review_20261001.md) | anthropic/claude-opus-5-5 | 承認待ち |
 
 ## 関連ドキュメント
 

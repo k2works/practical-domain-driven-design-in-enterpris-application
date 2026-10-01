@@ -4,7 +4,7 @@ title: "cargo-tracker バックエンドアーキテクチャ"
 description: "cargo-tracker の境界づけられたコンテキスト、コンテキストごとのドメインロジックパターン、パッケージ構成、サガとドメインイベントによる連携（ARCH-HO-01〜03）、受信サービスの方針。"
 tags: [design, architecture, backend]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-01T12:14:33Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-01T12:48:11Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T07:11:12Z }
   - { by: human:kakimomokuri, at: 2026-10-01T07:41:04Z }
@@ -255,7 +255,19 @@ Bolt 1 の実装で次を決めた。
 
 - 各コンテキストの `domain.events` は、Spring Modulith の名前付きインターフェース（`@NamedInterface("events")`）として公開する。他のコンテキストはこのパッケージのイベントの型だけを参照できる。イベントは他のコンテキストのドメインの型を持たず、UUID と共有カーネルの型だけで表す
 - MyBatis の型ハンドラーなど、コンテキストに属さない技術的な部品は基盤（`platform`）モジュールに置き、設定（`mybatis.type-handlers-package`）を通してだけ使う。コンテキストのコードから `platform` を参照しない
-- アプリケーションサービスは各コンテキストの `infrastructure.config` で Bean として組み立てる（`@Service` を付けない）
+- アプリケーションサービスは各コンテキストの `infrastructure.config` で Bean として組み立てる（`@Service` を付けない）。アプリケーション層を Spring の部品探索から切り離し、どのアダプターをつないだかをコンテキストごとに 1 か所で見えるようにするためである。受入シナリオでは、同じサービスをメモリ上のリポジトリと同期の配信で組み直せる
+- `infrastructure.config` は合成ルートであり、依存の向きの規則（`interfaces` → `application` → `domain` ← `infrastructure`）の唯一の例外として `application` に依存してよい。AT-02 では `..infrastructure.config..` だけにこの依存を許す（Bolt 1 レビュー R-15。人の承認待ち D-5）
+- 各コンテキストの `package-info.java` に、依存してよいモジュールを `allowedDependencies` で宣言する（例: アクセス・監査は `shared` と `quotation :: events`）
+
+ドメインイベントは発行記録に JSON で保存され、未完了のものは後で復元されて再配信される。そのため、イベントの形を次の規則で進化させる（Bolt 1 レビュー R-05・R-37）。
+
+| 規則 | 内容 |
+| :--- | :--- |
+| 部品の追加だけ | 既存のイベントには、null を許す部品の追加だけをする。部品の改名・削除・型の変更は、新しいイベントの型を作って行う |
+| 共有カーネルも契約 | イベントが持つ共有カーネルの record（`CompanyId`・`UtcInstant` など）の部品名もイベントの形の一部である。変えるときは同じ規則に従う |
+| 固定した見本で守る | イベントの型ごとに、固定した JSON から復元できることを確かめるテストを置く（`DomainEventSerializationContractTest`） |
+| payload を小さく保つ | イベントには ID・業務キー・判断に要る最小限の値だけを載せ、詳細は購読側が照会する。H2 の発行記録の列は 4,000 文字が上限である |
+| 業務キーを持つ | 受信側の冪等性のキーになる業務キー（DE-01 なら輸送要求 ID と版番号）を必ず持つ |
 
 横断の取り決めは次のとおり。
 
