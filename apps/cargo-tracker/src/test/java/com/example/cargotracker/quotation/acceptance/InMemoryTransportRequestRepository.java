@@ -4,6 +4,7 @@ import com.example.cargotracker.quotation.domain.model.aggregates.TransportReque
 import com.example.cargotracker.quotation.domain.model.aggregates.TransportRequestRepository;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestId;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestNumber;
+import com.example.cargotracker.shared.domain.CompanyId;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -29,9 +30,10 @@ public class InMemoryTransportRequestRepository implements TransportRequestRepos
     }
 
     @Override
-    public Optional<TransportRequest> findByNumber(TransportRequestNumber number) {
+    public Optional<TransportRequest> findByNumber(TransportRequestNumber number, CompanyId shipperCompanyId) {
         return store.values().stream()
                 .filter(request -> request.number().equals(number))
+                .filter(request -> request.shipperCompanyId().equals(shipperCompanyId))
                 .findFirst();
     }
 

@@ -14,7 +14,7 @@ import org.springframework.validation.BindingResult;
  */
 final class SubmissionViolationMessages {
 
-    /** 画面の項目名からエラー要約に出す項目の名前への対応（エラー要約のリンクは項目の名前で始める）。 */
+    /** フォームの項目のキー（consignee など）から、エラー要約に出す表示名（荷受人など）への対応。エラー要約のリンクは表示名で始める。 */
     static final Map<String, String> FIELD_LABELS = Arrays.stream(Item.values())
             .collect(Collectors.toUnmodifiableMap(
                     SubmissionViolationMessages::field, SubmissionViolationMessages::label));
@@ -80,7 +80,7 @@ final class SubmissionViolationMessages {
     /** 特殊貨物の案内（Q-INV-02、BR-03）。画面の案内とエラー要約で同じ文言を使う。 */
     static final class CargoCategoryNotice {
 
-        static final String MESSAGE = "危険物・冷凍・その他特殊の貨物は、この画面では受け付けていません。担当の営業窓口へご相談ください（手動窓口）";
+        static final String MESSAGE = "危険物・冷凍・その他特殊の貨物は、この画面では受け付けていません。担当の営業窓口へご相談ください";
 
         private CargoCategoryNotice() {}
     }

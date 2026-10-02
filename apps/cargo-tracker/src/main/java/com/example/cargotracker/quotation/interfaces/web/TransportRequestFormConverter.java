@@ -13,6 +13,7 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.time.format.ResolverStyle;
 import java.util.Locale;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Function;
@@ -42,7 +43,7 @@ final class TransportRequestFormConverter {
     static Optional<ShipmentTermsInput> convert(
             TransportRequestForm form, ProvisionalConsigneeProperties consignees, BindingResult errors) {
         ShipmentTermsInput input = new ShipmentTermsInput(
-                parse(form.getConsignee(), "consignee", errors, "荷受人を一覧から選んでください", text -> {
+                parse(form.getConsignee(), "consignee", errors, "荷受人を選択肢から選んでください", text -> {
                     UUID id = UUID.fromString(text);
                     return consignees
                             .find(id)
@@ -67,9 +68,9 @@ final class TransportRequestFormConverter {
                         errors,
                         "希望到着期限は 2026-11-02 09:00 の形（日本時間）で入力してください",
                         TransportRequestFormConverter::deadline),
-                parse(form.getCargoCategory(), "cargoCategory", errors, "貨物種別を一覧から選んでください", CargoCategory::valueOf),
-                parse(form.getPackageType(), "packageType", errors, "荷姿を一覧から選んでください", PackageType::valueOf),
-                parse(form.getPackageCount(), "packageCount", errors, "個数は数字で入力してください", Integer::valueOf),
+                parse(form.getCargoCategory(), "cargoCategory", errors, "貨物種別を選択肢から選んでください", CargoCategory::valueOf),
+                parse(form.getPackageType(), "packageType", errors, "荷姿を選択肢から選んでください", PackageType::valueOf),
+                parse(form.getPackageCount(), "packageCount", errors, "個数は 1 以上の整数で入力してください", Integer::valueOf),
                 parse(form.getGrossWeightKg(), "grossWeightKg", errors, "総重量（kg）は数字で入力してください", BigDecimal::new),
                 parse(form.getVolumeM3(), "volumeM3", errors, "容積（m3）は数字で入力してください", BigDecimal::new));
         return errors.hasErrors() ? Optional.empty() : Optional.of(input);
@@ -84,7 +85,9 @@ final class TransportRequestFormConverter {
         }
         try {
             return parser.apply(text);
-        } catch (RuntimeException _) {
+        } catch (IllegalArgumentException | NoSuchElementException _) {
+            // 形式の誤り（UUID・UN/LOCODE・日時・数値・選択肢の値）と、仮の一覧にない荷受人だけを入力の誤りにする。
+            // それ以外の例外は実装の不具合なので、入力の誤りに見せずにそのまま投げる（Bolt 4 レビュー R-13）
             errors.rejectValue(field, field + ".format", formatMessage);
             return null;
         }

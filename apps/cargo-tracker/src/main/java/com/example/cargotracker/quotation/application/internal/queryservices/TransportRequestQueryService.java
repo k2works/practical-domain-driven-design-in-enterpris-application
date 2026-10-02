@@ -4,6 +4,7 @@ import com.example.cargotracker.quotation.domain.model.aggregates.TransportReque
 import com.example.cargotracker.quotation.domain.model.aggregates.TransportRequestRepository;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestId;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestNumber;
+import com.example.cargotracker.shared.domain.CompanyId;
 import java.util.Optional;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,9 +24,9 @@ public class TransportRequestQueryService {
         return repository.findById(id);
     }
 
-    /** 業務番号で輸送要求を照会する（画面には内部の ID でなく業務番号を出す。D-4）。 */
+    /** 荷主企業の輸送要求を業務番号で照会する（画面には内部の ID でなく業務番号を出す。D-4）。他社の輸送要求は見つからない。 */
     @Transactional(readOnly = true)
-    public Optional<TransportRequest> findByNumber(TransportRequestNumber number) {
-        return repository.findByNumber(number);
+    public Optional<TransportRequest> findByNumber(TransportRequestNumber number, CompanyId shipperCompanyId) {
+        return repository.findByNumber(number, shipperCompanyId);
     }
 }

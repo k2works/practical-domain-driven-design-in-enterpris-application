@@ -46,8 +46,9 @@ public class MyBatisTransportRequestRepository implements TransportRequestReposi
     }
 
     @Override
-    public Optional<TransportRequest> findByNumber(TransportRequestNumber number) {
-        return mapper.selectByNumber(number.text()).map(MyBatisTransportRequestRepository::toAggregate);
+    public Optional<TransportRequest> findByNumber(TransportRequestNumber number, CompanyId shipperCompanyId) {
+        return mapper.selectByNumber(number.text(), shipperCompanyId.value())
+                .map(MyBatisTransportRequestRepository::toAggregate);
     }
 
     private static TransportRequestRow toRow(TransportRequest request) {

@@ -150,15 +150,12 @@ public class SubmitTransportRequestUiSteps {
     public void 提出ボタンを押す() {
         // aria-disabled のボタンは Playwright のクリックが待ち続けるため、利用者のキー操作と同じくフォーカスして Enter で押す
         submitButton().focus();
-        page().keyboard().press("Enter");
-        // 提出は POST の後に同じ画面（/customer/transport-requests）を返す。移り終わってから検査する
-        page().waitForURL("**/customer/transport-requests");
-        browser.checkAccessibility();
+        submitAndWait(() -> page().keyboard().press("Enter"));
     }
 
     @ならば("完了画面に業務番号と {string} と状態 {string} が表示される")
     public void 完了画面に業務番号と版と状態が表示される(String version, String status) {
-        Locator number = page().locator("dt:text-is('業務番号') + dd");
+        Locator number = page().locator("dt:text-is('業務番号（版）') + dd");
         assertThat(number).hasText(Pattern.compile("^" + TRANSPORT_REQUEST_NUMBER.pattern() + " " + version + "$"));
         transportRequestNumber = number.textContent().strip().split(" ")[0];
         assertThat(page().locator("dt:text-is('状態') + dd")).hasText(status);
@@ -262,8 +259,16 @@ public class SubmitTransportRequestUiSteps {
         field(VOLUME).fill("32.5");
     }
 
+    /**
+     * 提出ボタンを押し、POST の応答を受け取って画面が移り終わるまで待ってから検査する（Bolt 4 レビュー R-05）。
+     * クリックの直後の waitForLoadState は、画面の移動が始まる前に返り、移る前の画面を検査することがある。
+     */
     private void submit() {
-        submitButton().click();
+        submitAndWait(() -> submitButton().click());
+    }
+
+    private void submitAndWait(Runnable press) {
+        page().waitForResponse(response -> "POST".equals(response.request().method()), press);
         page().waitForLoadState();
         browser.checkAccessibility();
     }

@@ -50,7 +50,7 @@
         </div>
         <div>
             <label for="arrivalDeadline">希望到着期限（日本時間）</label>
-            <p id="arrivalDeadline-hint">例: 2026-11-02 09:00（Asia/Tokyo（UTC+09:00））</p>
+            <p id="arrivalDeadline-hint">例: 2026-11-02 09:00。タイムゾーンは Asia/Tokyo（UTC+09:00）</p>
             <input id="arrivalDeadline" type="text" th:field="*{arrivalDeadline}" autocomplete="off" inputmode="numeric"
                    th:attr="aria-invalid=${#fields.hasErrors('arrivalDeadline')},aria-describedby=${#fields.hasErrors('arrivalDeadline')} ? 'arrivalDeadline-hint arrivalDeadline-error' : 'arrivalDeadline-hint'">
             <p id="arrivalDeadline-error" th:if="${#fields.hasErrors('arrivalDeadline')}" th:errors="*{arrivalDeadline}"></p>

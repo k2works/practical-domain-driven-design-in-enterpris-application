@@ -189,7 +189,7 @@ class TransportRequestControllerTest {
                 .andExpect(content().string(containsString("入力内容に 3 件の誤りがあります")))
                 .andExpect(content().string(containsString("UN/LOCODE（国コード 2 文字 + 地点コード 3 文字、例: JPTYO）")))
                 .andExpect(content().string(containsString("2026-11-02 09:00 の形")))
-                .andExpect(content().string(containsString("個数は数字で入力してください")))
+                .andExpect(content().string(containsString("個数は 1 以上の整数で入力してください")))
                 .andExpect(content().string(containsString("value=\"TYO\"")))
                 .andExpect(content().string(containsString("href=\"#origin\"")));
 
@@ -232,14 +232,14 @@ class TransportRequestControllerTest {
         mockMvc.perform(completeForm("consignee", UUID.randomUUID().toString()))
                 .andExpect(status().isOk())
                 .andExpect(model().attributeHasFieldErrors("transportRequestForm", "consignee"))
-                .andExpect(content().string(containsString("荷受人を一覧から選んでください")));
+                .andExpect(content().string(containsString("荷受人を選択肢から選んでください")));
 
         then(commandService).should(never()).submit(any());
     }
 
     @Test
     void 提出の完了画面に業務番号と版と審査中と日本時間の提出時刻を表示し内部のIDを出さない() throws Exception {
-        given(queryService.findByNumber(NUMBER))
+        given(queryService.findByNumber(NUMBER, SHIPPER))
                 .willReturn(Optional.of(TransportRequest.submit(
                         ID,
                         NUMBER,
@@ -259,10 +259,20 @@ class TransportRequestControllerTest {
 
     @Test
     void 存在しない業務番号の完了画面は見つからない() throws Exception {
-        given(queryService.findByNumber(any())).willReturn(Optional.empty());
+        given(queryService.findByNumber(any(), any())).willReturn(Optional.empty());
 
         mockMvc.perform(get("/customer/transport-requests/TR-2026-0099/submitted"))
                 .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void 完了画面は仮の主体の荷主企業で絞って照会し他社の番号は見つからない() throws Exception {
+        given(queryService.findByNumber(NUMBER, SHIPPER)).willReturn(Optional.empty());
+
+        mockMvc.perform(get("/customer/transport-requests/TR-2026-0001/submitted"))
+                .andExpect(status().isNotFound());
+
+        then(queryService).should().findByNumber(NUMBER, SHIPPER);
     }
 
     @Test
@@ -270,6 +280,6 @@ class TransportRequestControllerTest {
         mockMvc.perform(get("/customer/transport-requests/{id}/submitted", UUID.randomUUID()))
                 .andExpect(status().isNotFound());
 
-        then(queryService).should(never()).findByNumber(any());
+        then(queryService).should(never()).findByNumber(any(), any());
     }
 }

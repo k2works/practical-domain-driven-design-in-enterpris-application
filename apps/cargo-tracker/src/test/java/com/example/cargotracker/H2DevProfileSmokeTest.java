@@ -66,13 +66,14 @@ class H2DevProfileSmokeTest extends KpiObservationRepositoryContract {
 
     @Test
     void H2で提出した輸送要求を業務番号で読み出せる() {
+        CompanyId shipper = new CompanyId(UUID.randomUUID());
         SubmissionOutcome outcome = commandService.submit(new SubmitTransportRequestCommand(
-                new CompanyId(UUID.randomUUID()), new UserId(UUID.randomUUID()), ShipmentTermsFixture.completeInput()));
+                shipper, new UserId(UUID.randomUUID()), ShipmentTermsFixture.completeInput()));
 
         assertThat(outcome)
                 .isInstanceOfSatisfying(
                         SubmissionOutcome.Submitted.class,
-                        submitted -> assertThat(transportRequestRepository.findByNumber(submitted.number()))
+                        submitted -> assertThat(transportRequestRepository.findByNumber(submitted.number(), shipper))
                                 .hasValueSatisfying(found -> assertThat(
                                                 found.currentVersion().terms())
                                         .isEqualTo(ShipmentTermsFixture.generalCargo())));

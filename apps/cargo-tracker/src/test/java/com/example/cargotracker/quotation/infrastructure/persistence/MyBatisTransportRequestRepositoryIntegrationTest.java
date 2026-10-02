@@ -32,10 +32,14 @@ import org.springframework.transaction.annotation.Transactional;
 class MyBatisTransportRequestRepositoryIntegrationTest {
 
     private static TransportRequest submitted(TransportRequestNumber number) {
+        return submitted(number, new CompanyId(UUID.randomUUID()));
+    }
+
+    private static TransportRequest submitted(TransportRequestNumber number, CompanyId shipper) {
         return TransportRequest.submit(
                 new TransportRequestId(UUID.randomUUID()),
                 number,
-                new CompanyId(UUID.randomUUID()),
+                shipper,
                 ShipmentTermsFixture.generalCargo(),
                 new UserId(UUID.randomUUID()),
                 new UtcInstant(Instant.parse("2026-10-05T01:00:00Z")));
@@ -78,14 +82,25 @@ class MyBatisTransportRequestRepositoryIntegrationTest {
     }
 
     @Test
-    void 業務番号で輸送要求を読み出せる() {
+    void 荷主企業の輸送要求を業務番号で読み出せる() {
         TransportRequestNumber number = new TransportRequestNumber(2097, 1);
-        TransportRequest saved = submitted(number);
+        CompanyId shipper = new CompanyId(UUID.randomUUID());
+        TransportRequest saved = submitted(number, shipper);
         repository.save(saved);
 
-        assertThat(repository.findByNumber(number))
+        assertThat(repository.findByNumber(number, shipper))
                 .hasValueSatisfying(found -> assertThat(found.id()).isEqualTo(saved.id()));
-        assertThat(repository.findByNumber(new TransportRequestNumber(2097, 2))).isEmpty();
+        assertThat(repository.findByNumber(new TransportRequestNumber(2097, 2), shipper))
+                .isEmpty();
+    }
+
+    @Test
+    void 他社の輸送要求は業務番号を知っていても見つからない() {
+        TransportRequestNumber number = new TransportRequestNumber(2097, 3);
+        repository.save(submitted(number, new CompanyId(UUID.randomUUID())));
+
+        assertThat(repository.findByNumber(number, new CompanyId(UUID.randomUUID())))
+                .isEmpty();
     }
 
     @Test

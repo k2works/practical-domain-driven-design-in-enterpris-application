@@ -1,7 +1,6 @@
 package com.example.cargotracker.quotation.domain.model.valueobjects;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.example.cargotracker.quotation.domain.model.rules.MvpAcceptancePolicy;
 import com.example.cargotracker.quotation.domain.model.valueobjects.SubmissionViolations.Item;
@@ -12,6 +11,7 @@ import com.example.cargotracker.shared.domain.Location;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 
@@ -35,9 +35,7 @@ class ShipmentTermsInputTest {
 
     @Test
     void 必須条件がそろっていれば違反はなく輸送条件になる() {
-        assertThat(complete.validate(SUBMITTED_AT, policy).isEmpty()).isTrue();
-
-        ShipmentTerms terms = complete.toTerms();
+        ShipmentTerms terms = valid(complete);
 
         assertThat(terms.consigneeCompanyId()).isEqualTo(CONSIGNEE);
         assertThat(terms.origin()).isEqualTo(new Location("JPTYO"));
@@ -53,7 +51,7 @@ class ShipmentTermsInputTest {
         ShipmentTermsInput input = new ShipmentTermsInput(
                 null, new Location("JPTYO"), new Location("JPTYO"), null, CargoCategory.REEFER, null, 0, null, null);
 
-        assertThat(input.validate(SUBMITTED_AT, policy).violations())
+        assertThat(violations(input))
                 .containsExactlyInAnyOrder(
                         new Violation(Item.CONSIGNEE, Reason.MISSING),
                         new Violation(Item.DESTINATION, Reason.SAME_AS_ORIGIN),
@@ -69,21 +67,15 @@ class ShipmentTermsInputTest {
     void すべて空なら全項目の不足を返す() {
         ShipmentTermsInput empty = new ShipmentTermsInput(null, null, null, null, null, null, null, null, null);
 
-        assertThat(empty.validate(SUBMITTED_AT, policy).violations())
-                .extracting(Violation::item)
-                .containsExactlyInAnyOrder(Item.values());
+        assertThat(violations(empty)).extracting(Violation::item).containsExactlyInAnyOrder(Item.values());
     }
 
     @Test
     void 希望到着期限が提出時刻と同時刻なら誤りで1マイクロ秒後なら受け付ける() {
-        assertThat(withDeadline("2026-10-05T01:00:00Z")
-                        .validate(SUBMITTED_AT, policy)
-                        .has(Item.ARRIVAL_DEADLINE, Reason.NOT_AFTER_SUBMISSION))
-                .isTrue();
-        assertThat(withDeadline("2026-10-05T01:00:00.000001Z")
-                        .validate(SUBMITTED_AT, policy)
-                        .isEmpty())
-                .isTrue();
+        assertThat(violations(withDeadline("2026-10-05T01:00:00Z")))
+                .containsExactly(new Violation(Item.ARRIVAL_DEADLINE, Reason.NOT_AFTER_SUBMISSION));
+        assertThat(valid(withDeadline("2026-10-05T01:00:00.000001Z")).arrivalDeadline())
+                .isEqualTo(new UtcInstant(Instant.parse("2026-10-05T01:00:00.000001Z")));
     }
 
     @Test
@@ -99,7 +91,7 @@ class ShipmentTermsInputTest {
                 new BigDecimal("8400.1234"),
                 new BigDecimal("32.5001"));
 
-        assertThat(input.validate(SUBMITTED_AT, policy).violations())
+        assertThat(violations(input))
                 .containsExactlyInAnyOrder(
                         new Violation(Item.GROSS_WEIGHT_KG, Reason.TOO_MANY_DECIMALS),
                         new Violation(Item.VOLUME_M3, Reason.TOO_MANY_DECIMALS));
@@ -118,14 +110,24 @@ class ShipmentTermsInputTest {
                 new BigDecimal("8400.0000"),
                 new BigDecimal("32.50000"));
 
-        assertThat(input.validate(SUBMITTED_AT, policy).isEmpty()).isTrue();
+        assertThat(valid(input).cargo().grossWeightKg()).isEqualByComparingTo("8400");
     }
 
     @Test
-    void 違反があるのに輸送条件にはできない() {
+    void 違反があれば輸送条件は得られず違反だけを返す() {
         ShipmentTermsInput empty = new ShipmentTermsInput(null, null, null, null, null, null, null, null, null);
 
-        assertThatThrownBy(empty::toTerms).isInstanceOf(IllegalStateException.class);
+        assertThat(empty.validate(SUBMITTED_AT, policy)).isInstanceOf(ShipmentTermsInput.Invalid.class);
+    }
+
+    private ShipmentTerms valid(ShipmentTermsInput input) {
+        return ((ShipmentTermsInput.Valid) input.validate(SUBMITTED_AT, policy)).terms();
+    }
+
+    private List<Violation> violations(ShipmentTermsInput input) {
+        return ((ShipmentTermsInput.Invalid) input.validate(SUBMITTED_AT, policy))
+                .violations()
+                .violations();
     }
 
     private ShipmentTermsInput withDeadline(String deadline) {

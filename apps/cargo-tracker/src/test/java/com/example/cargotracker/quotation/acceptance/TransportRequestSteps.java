@@ -41,7 +41,7 @@ public class TransportRequestSteps {
 
     /** シナリオで使う荷受人の呼び名。企業マスターができるまでの仮の一覧（確認ポイント 2）と同じ考え方。 */
     private static final Map<String, CompanyId> CONSIGNEES =
-            Map.of("取引先 A", new CompanyId(UUID.fromString("00000000-0000-0000-0000-000000000201")));
+            Map.of("荷受人 A（仮）", new CompanyId(UUID.fromString("00000000-0000-0000-0000-000000000201")));
 
     private static final Map<String, Item> ITEMS = Map.of(
             "荷受人", Item.CONSIGNEE,
@@ -76,6 +76,7 @@ public class TransportRequestSteps {
     private final TransportRequestCommandService commandService;
     private final TransportRequestQueryService queryService;
     private final InMemoryTransportRequestRepository repository;
+    private final InMemoryTransportRequestNumberIssuer numberIssuer;
     private final ScenarioContext context;
     private final Map<Item, String> input = new EnumMap<>(Item.class);
     private SubmissionOutcome lastOutcome;
@@ -84,10 +85,12 @@ public class TransportRequestSteps {
             TransportRequestCommandService commandService,
             TransportRequestQueryService queryService,
             InMemoryTransportRequestRepository repository,
+            InMemoryTransportRequestNumberIssuer numberIssuer,
             ScenarioContext context) {
         this.commandService = commandService;
         this.queryService = queryService;
         this.repository = repository;
+        this.numberIssuer = numberIssuer;
         this.context = context;
     }
 
@@ -100,7 +103,7 @@ public class TransportRequestSteps {
     @前提("荷主が必須条件をそろえた輸送条件を入力している")
     public void 荷主が必須条件をそろえた輸送条件を入力している() {
         input.clear();
-        input.put(Item.CONSIGNEE, "取引先 A");
+        input.put(Item.CONSIGNEE, "荷受人 A（仮）");
         input.put(Item.ORIGIN, "JPTYO");
         input.put(Item.DESTINATION, "NLRTM");
         input.put(Item.ARRIVAL_DEADLINE, "2026-11-02T00:00:00Z");
@@ -162,6 +165,8 @@ public class TransportRequestSteps {
     public void 提出は受け付けられず輸送要求は作られない() {
         assertThat(lastOutcome).isInstanceOf(SubmissionOutcome.Rejected.class);
         assertThat(repository.count()).isZero();
+        // 受け付けない提出では業務番号を振らない（欠番を出さない。D-10、Bolt 4 レビュー R-21）
+        assertThat(numberIssuer.issuedCount()).isZero();
     }
 
     @ならば("{string} の不足が示される")

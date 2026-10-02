@@ -67,8 +67,8 @@ class AppendOnlyGrantIntegrationTest {
                                 + " gross_weight_kg, volume_m3, submitted_by, submitted_at)"
                                 + " VALUES (?, 1, ?, 'JPTYO', 'NLRTM', ?, 'GENERAL', 'PALLET', 12, 8400, 32.5, ?, ?)")) {
             request.setObject(1, transportRequestId);
-            // 業務番号の一意制約にほかのテストの番号とぶつからないよう、輸送要求ごとに別の連番にする
-            request.setString(2, "TR-2099-" + Math.abs(transportRequestId.hashCode() % 100_000_000));
+            // 業務番号の一意制約にほかのテストの番号とぶつからないよう、輸送要求ごとに別の連番（形式どおりの 8 桁）にする
+            request.setString(2, "TR-2099-" + (10_000_000 + Math.floorMod(transportRequestId.hashCode(), 90_000_000)));
             request.setObject(3, UUID.randomUUID());
             request.executeUpdate();
             version.setObject(1, transportRequestId);

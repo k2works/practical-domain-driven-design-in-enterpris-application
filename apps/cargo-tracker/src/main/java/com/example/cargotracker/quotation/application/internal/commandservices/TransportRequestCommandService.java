@@ -5,6 +5,8 @@ import com.example.cargotracker.quotation.domain.model.aggregates.TransportReque
 import com.example.cargotracker.quotation.domain.model.aggregates.TransportRequestNumberIssuer;
 import com.example.cargotracker.quotation.domain.model.aggregates.TransportRequestRepository;
 import com.example.cargotracker.quotation.domain.model.rules.MvpAcceptancePolicy;
+import com.example.cargotracker.quotation.domain.model.valueobjects.ShipmentTerms;
+import com.example.cargotracker.quotation.domain.model.valueobjects.ShipmentTermsInput;
 import com.example.cargotracker.quotation.domain.model.valueobjects.SubmissionViolations;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestId;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestNumber;
@@ -45,16 +47,22 @@ public class TransportRequestCommandService {
     @Transactional
     public SubmissionOutcome submit(SubmitTransportRequestCommand command) {
         UtcInstant submittedAt = new UtcInstant(clock.instant());
-        SubmissionViolations violations = command.terms().validate(submittedAt, acceptancePolicy);
-        if (!violations.isEmpty()) {
-            return new SubmissionOutcome.Rejected(violations);
-        }
+        return switch (command.terms().validate(submittedAt, acceptancePolicy)) {
+            case ShipmentTermsInput.Invalid(SubmissionViolations violations) ->
+                new SubmissionOutcome.Rejected(violations);
+            case ShipmentTermsInput.Valid(ShipmentTerms terms) -> submitValid(command, terms, submittedAt);
+        };
+    }
+
+    /** 検証を通った輸送条件で、業務番号を振って提出し、DE-01 を発行する。 */
+    private SubmissionOutcome submitValid(
+            SubmitTransportRequestCommand command, ShipmentTerms terms, UtcInstant submittedAt) {
         TransportRequestNumber number = numberIssuer.next(TransportRequestNumber.yearOf(submittedAt));
         TransportRequest transportRequest = TransportRequest.submit(
                 new TransportRequestId(UUID.randomUUID()),
                 number,
                 command.shipperCompanyId(),
-                command.terms().toTerms(),
+                terms,
                 command.submittedBy(),
                 submittedAt);
         repository.save(transportRequest);

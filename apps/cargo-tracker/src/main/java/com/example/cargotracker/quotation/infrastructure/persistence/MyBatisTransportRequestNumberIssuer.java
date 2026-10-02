@@ -15,6 +15,13 @@ import org.springframework.transaction.support.TransactionTemplate;
  * 提出が失敗すれば番号も戻るため、欠番が出ない。その年の行がなければ、提出とは別のトランザクションで
  * {@code last_no = 0} の行を作ってから増やす。PostgreSQL ではトランザクションの中で制約に違反すると
  * そのトランザクションが使えなくなるため、提出のトランザクションの中では INSERT しない。
+ *
+ * <p>別のトランザクションは、外側の接続を握ったまま 2 本目の接続を取る。年の最初の提出が接続のプールの大きさ以上に
+ * 同時に来ると枯渇しうるため、年の行は起動時に今年と来年の分を {@link #prepareYear(int)} で用意しておく
+ * （D-13、Bolt 4 レビュー R-03）。提出の中の別のトランザクションは、年をまたいで動き続けた場合の予備である。
+ *
+ * <p>年の行を作った後の 2 回目の UPDATE がその行を見つけられるのは、トランザクションの分離レベルが
+ * READ COMMITTED（PostgreSQL と H2 の既定）だからである。REPEATABLE READ 以上に上げると見つけられず失敗する。
  */
 @Repository
 public class MyBatisTransportRequestNumberIssuer implements TransportRequestNumberIssuer {
@@ -41,8 +48,11 @@ public class MyBatisTransportRequestNumberIssuer implements TransportRequestNumb
         return new TransportRequestNumber(year, lastNo);
     }
 
-    /** その年の行を別のトランザクションで作る。同時に作られて一意制約に違反したら、行は既にあるので何もしない。 */
-    private void prepareYear(int year) {
+    /**
+     * その年の行がなければ、別のトランザクションで作る。同時に作られて一意制約に違反したら、行は既にあるので何もしない。
+     * 起動時に今年と来年の分を用意するために公開する（D-13）。
+     */
+    public void prepareYear(int year) {
         try {
             newTransaction.executeWithoutResult(status -> mapper.insertYear(year));
         } catch (DuplicateKeyException _) {

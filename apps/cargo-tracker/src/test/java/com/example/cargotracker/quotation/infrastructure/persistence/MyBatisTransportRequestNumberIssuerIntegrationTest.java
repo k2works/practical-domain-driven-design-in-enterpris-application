@@ -5,6 +5,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.example.cargotracker.TestcontainersConfiguration;
 import com.example.cargotracker.quotation.domain.model.aggregates.TransportRequestNumberIssuer;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestNumber;
+import com.example.cargotracker.shared.domain.UtcInstant;
+import com.zaxxer.hikari.HikariDataSource;
+import java.time.Clock;
 import java.time.Duration;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -17,6 +20,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.support.TransactionTemplate;
 
 /**
@@ -34,6 +38,42 @@ class MyBatisTransportRequestNumberIssuerIntegrationTest {
 
     @Autowired
     TransactionTemplate transactionTemplate;
+
+    @Autowired
+    MyBatisTransportRequestNumberIssuer myBatisIssuer;
+
+    @Autowired
+    JdbcTemplate jdbcTemplate;
+
+    @Autowired
+    HikariDataSource dataSource;
+
+    @Autowired
+    Clock clock;
+
+    @Test
+    void 起動時に今年と来年の日本時間の年の行が用意されている() {
+        int year = TransportRequestNumber.yearOf(new UtcInstant(clock.instant()));
+
+        assertThat(jdbcTemplate.queryForList(
+                        "SELECT number_year FROM quotation.transport_request_number_counter WHERE number_year IN (?, ?)",
+                        Integer.class,
+                        year,
+                        year + 1))
+                .containsExactlyInAnyOrder(year, year + 1);
+    }
+
+    @Test
+    void 年の行を用意してあれば接続のプールの大きさを超えて同時に採番しても止まらず連続する() {
+        int threads = dataSource.getMaximumPoolSize() + 6;
+        myBatisIssuer.prepareYear(2086);
+
+        List<Integer> sequences = concurrentSequences(2086, threads);
+
+        assertThat(sequences)
+                .containsExactlyInAnyOrderElementsOf(
+                        IntStream.rangeClosed(1, threads).boxed().toList());
+    }
 
     @Test
     void 年の最初の採番で1を振り同じ年では続きの番号を振る() {

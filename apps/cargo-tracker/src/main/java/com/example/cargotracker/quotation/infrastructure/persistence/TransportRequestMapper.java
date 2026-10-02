@@ -3,6 +3,7 @@ package com.example.cargotracker.quotation.infrastructure.persistence;
 import java.util.Optional;
 import java.util.UUID;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 
 /**
  * 輸送要求の MyBatis マッパー。SQL は同じパッケージの TransportRequestMapper.xml に置く。
@@ -16,5 +17,6 @@ public interface TransportRequestMapper {
 
     Optional<TransportRequestRow> selectById(UUID id);
 
-    Optional<TransportRequestRow> selectByNumber(String requestNumber);
+    Optional<TransportRequestRow> selectByNumber(
+            @Param("requestNumber") String requestNumber, @Param("shipperCompanyId") UUID shipperCompanyId);
 }

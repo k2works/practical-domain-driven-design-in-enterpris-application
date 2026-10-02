@@ -109,12 +109,13 @@ public class TransportRequestController {
 
     /**
      * 提出の完了画面。URL のキーにも業務番号を使い、内部の ID を出さない（D-4）。
-     * 他社の輸送要求の拒否（Q-INV-08）は、認証を入れる US-18・AC3 の Bolt で確かめる。
+     * 業務番号は推測しやすいため、荷主企業で絞り、他社の番号は見つからない（404）とする（Bolt 4 レビュー R-02）。
+     * 荷主企業はいまは仮の主体のもの。認証（US-18）を入れたら、認証の主体に差し替える。
      */
     @GetMapping("/{number}/submitted")
     public String submitted(@PathVariable String number, Model model) {
         TransportRequest transportRequest = parse(number)
-                .flatMap(queryService::findByNumber)
+                .flatMap(found -> queryService.findByNumber(found, new CompanyId(provisionalActor.shipperCompanyId())))
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
         model.addAttribute(
                 "numberWithVersion",

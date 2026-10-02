@@ -14,7 +14,7 @@ import java.util.List;
 
 /**
  * 輸送条件の入力。荷主が提出しようとする輸送条件で、項目が欠けていてよい（欠けた項目は null）。
- * 検証して違反がなければ輸送条件（{@link ShipmentTerms}）になる。
+ * 検証して違反がなければ輸送条件（{@link ShipmentTerms}）になる（{@link #validate}）。
  * 形式の誤り（UN/LOCODE、数値、日時の書き方）は画面の層で扱い、ここには形式の正しい値だけが来る。
  *
  * @param consigneeCompanyId 荷受人企業 ID
@@ -41,11 +41,12 @@ public record ShipmentTermsInput(
 
     /**
      * 提出できるかを検証する（Q-INV-01、Q-INV-02、Q-INV-12）。不足と誤りはすべてまとめて返す（1 件ずつ直させない）。
+     * 違反がなければ輸送条件を返す。検証を通った入力からしか輸送条件を作れないようにするため、変換を別のメソッドに分けない。
      *
      * @param submittedAt 提出時刻（希望到着期限はこれより後でなければならない）
      * @param policy MVP 受付範囲
      */
-    public SubmissionViolations validate(UtcInstant submittedAt, MvpAcceptancePolicy policy) {
+    public Validation validate(UtcInstant submittedAt, MvpAcceptancePolicy policy) {
         List<Violation> violations = new ArrayList<>();
         required(violations, Item.CONSIGNEE, consigneeCompanyId);
         required(violations, Item.ORIGIN, origin);
@@ -65,33 +66,33 @@ public record ShipmentTermsInput(
         }
         measure(violations, Item.GROSS_WEIGHT_KG, grossWeightKg);
         measure(violations, Item.VOLUME_M3, volumeM3);
-        return new SubmissionViolations(violations);
-    }
-
-    /**
-     * 輸送条件にする。検証で違反のない入力だけに使う。
-     *
-     * @throws IllegalStateException 必須の項目が欠けているとき
-     */
-    public ShipmentTerms toTerms() {
-        if (consigneeCompanyId == null
-                || origin == null
-                || destination == null
-                || arrivalDeadline == null
-                || cargoCategory == null
-                || packageType == null
-                || packageCount == null
-                || grossWeightKg == null
-                || volumeM3 == null) {
-            throw new IllegalStateException("必須の項目が欠けた入力は輸送条件にできません。先に検証してください");
+        if (!violations.isEmpty()) {
+            return new Invalid(new SubmissionViolations(violations));
         }
-        return new ShipmentTerms(
+        return new Valid(new ShipmentTerms(
                 consigneeCompanyId,
                 origin,
                 destination,
                 arrivalDeadline,
-                new Cargo(cargoCategory, packageType, packageCount, grossWeightKg, volumeM3));
+                new Cargo(cargoCategory, packageType, packageCount, grossWeightKg, volumeM3)));
     }
+
+    /** 提出の検証の結果。違反がなければ輸送条件、あれば違反の一覧のどちらか。 */
+    public sealed interface Validation {}
+
+    /**
+     * 違反がなく、輸送条件になった。
+     *
+     * @param terms 輸送条件
+     */
+    public record Valid(ShipmentTerms terms) implements Validation {}
+
+    /**
+     * 不足や誤りがあった。
+     *
+     * @param violations 不足と誤り（空でない）
+     */
+    public record Invalid(SubmissionViolations violations) implements Validation {}
 
     /** 入力があるかを確かめ、なければ不足を足す。入力があれば true。 */
     private static boolean required(List<Violation> violations, Item item, Object value) {

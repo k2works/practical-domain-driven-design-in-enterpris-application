@@ -59,5 +59,6 @@
     <select id="selectByNumber" resultMap="transportRequestRow">
         <include refid="selectRow"/>
          WHERE r.request_number = #{requestNumber}
+           AND r.shipper_company_id = #{shipperCompanyId}
     </select>
 </mapper>
