@@ -4,7 +4,7 @@ title: "Bolt 3 計画 - E2E の基盤と生きたドキュメント"
 description: "3 回目の Bolt の計画。人の決定 D-1・D-3〜D-7 の反映、Playwright と axe-core による画面の層の受入シナリオ、JIG と Spring Modulith の生成と用語集の整合テスト、追記専用の表の権限、開発環境の手順書を 6 つのステップで定義する。"
 tags: [development,bolt-plan]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-01T23:26:06Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-02T00:15:02Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T23:26:07Z }
 ---
@@ -134,7 +134,7 @@ stop
 
 状態の記号: `[ ]` 未着手、`[-]` 進行中、`[?]` 承認待ち、`[R]` 修正中、`[x]` 完了、`[S]` スキップ。**【要確認】** の付いた操作は、Try T-6 に従い、計画の承認の場でまとめて確認する。
 
-- [ ] **1. 人の決定を文書に反映する** 【要確認: Dependabot の新規ファイル】
+- [x] **1. 人の決定を文書に反映する** 【要確認: Dependabot の新規ファイル】
   - 次の決定を文書に反映する。
     - D-1: ADR-003 を改訂し、ドメインイベントを注釈 `@DomainEvent` の record で表し、各イベントが業務キーを持つことを記録する。ドメインモデルの共有カーネルの図から `DomainEvent` インターフェースを外す。
     - D-5: バックエンドアーキテクチャの「承認待ち」を外し、ADR-001 の結果から参照する。
@@ -144,7 +144,7 @@ stop
     - D-6: ユーザーストーリー US-01 AC2 と Q-INV-01 に「出発地と目的地が同じなら誤り」を足す。
   - D-7: `.github/dependabot.yml` を作り、`github-actions`（ルート）と `gradle`（`apps/cargo-tracker`）を週 1 回更新する。
   - 完了の判定: 該当の文書の差分があり、`okf:check` が通る。
-- [ ] **2. 画面の層の受入シナリオを作る（Red → Green）** 【要確認: 外部ライブラリ（Playwright、axe-core）、CI の新しいジョブ】
+- [x] **2. 画面の層の受入シナリオを作る（Red → Green）** 【要確認: 外部ライブラリ（Playwright、axe-core）、CI の新しいジョブ】
   - 業務ルール層のスイートのグルーを、`ui` のパッケージを含まないように絞る。画面の層のスイート（`RunUiCucumberTest`、`@ui` だけ）と、その組み立て（`@SpringBootTest` のランダムなポート、Testcontainers の PostgreSQL 18.6、Playwright の Chromium）を作る。
   - `features/quotation/walking_skeleton_ui.feature`（`@ui @walking-skeleton`）に、次の流れを書く。
     - 荷主が画面から提出する
@@ -155,7 +155,7 @@ stop
     - 320 CSS px で横スクロールが出ない
   - Gradle の `uiTest` タスク（`check` に入れない）と、CI の別のジョブ（Playwright のブラウザを用意する）を作る。
   - 完了の判定: `./gradlew uiTest` と CI の新しいジョブが緑。わざと画面のラベルを外すと axe-core が失敗することを確かめる（T-8）。
-- [ ] **3. 生きたドキュメントを生成する** 【要確認: 外部ライブラリ（JIG の Gradle プラグイン）】
+- [x] **3. 生きたドキュメントを生成する** 【要確認: 外部ライブラリ（JIG の Gradle プラグイン）】
   - JIG の Gradle プラグインを入れ、`jigReports` で用語集・パッケージ関連・業務ルール一覧を生成する。
   - Spring Modulith のドキュメント生成（`Documenter`）でモジュール図を生成する。
   - CI の成果物にする。生成物はコミットしない。
@@ -169,11 +169,11 @@ stop
 >
 > ステップ 3 で、整合テストを書く前に用語集の表へ足す（設計に合わせる）。
 
-- [ ] **4. 追記専用の表を DB の権限で守る（Red → Green）** 【要確認: DB の権限（セキュリティ・データベース）】
+- [x] **4. 追記専用の表を DB の権限で守る（Red → Green）** 【要確認: DB の権限（セキュリティ・データベース）】
   - 統合テストを先に書く。Testcontainers の PostgreSQL にアプリケーション利用者（`cargo_tracker_app`）を作り、その利用者では `quotation.transport_request_version` の INSERT・SELECT ができ、UPDATE・DELETE が拒否されることを確かめる。
   - `db/callback/postgresql/afterMigrate__grant_app_user.sql` を作る。アプリケーション利用者があれば権限を与え、追記専用の表から UPDATE・DELETE を外す。利用者の名前は Flyway のプレースホルダーで渡す。Flyway の場所に `db/callback/{vendor}` を足す。
   - 完了の判定: 統合テストが緑。H2 のスモークテストも緑（H2 ではコールバックが動かない）。
-- [ ] **5. アプリケーション開発環境の手順書を作る**（`operating-setup`）
+- [x] **5. アプリケーション開発環境の手順書を作る**（`operating-setup`）
   - `docs/operation/cargo-tracker/` に、次を書く。
     - 前提（JDK 25、Docker、Node.js）
     - 起動（`bootRun`、開く URL、H2 コンソール、仮の主体）
@@ -182,7 +182,7 @@ stop
   - `apps/cargo-tracker/README.md` は手順書への入口だけにする。
   - 開発戦略の「品質チェックのコマンド」から手順書を参照する。
   - 完了の判定: 手順書の差分がある（T-9）。書いたコマンドを実際に動かして確かめる。
-- [ ] **6. 検証と Bolt 終了報告**
+- [?] **6. 検証と Bolt 終了報告**
   - `./gradlew check`・`uiTest` と CI（2 つのジョブ）が緑、SonarQube の品質ゲートが PASS（コマンドの成否で判定）であることを確かめる。
   - `bolt_03_report.md` を書く。
 
@@ -229,14 +229,14 @@ push はステップの完了ごとに行う（Bolt 1・2 と同じく、CI の�
 
 ### Definition of Done
 
-- [ ] ステップ 1〜6 が完了し、各ステップの承認ゲートを人が通した
-- [ ] `./gradlew check` と `./gradlew uiTest` がローカルと CI の両方で緑
-- [ ] SonarQube の品質ゲートが PASS（コマンドの成否で判定）
-- [ ] 新しい検査（axe-core、用語集の整合、権限）は、不合格の入力で失敗することを確かめた（T-8）
-- [ ] D-1・D-3〜D-7 が設計文書・要件・ADR から追える
-- [ ] 手順書の差分がある（T-9）
-- [ ] `bolt_03_report.md` に仮説 H1〜H4 の結論を記録した
-- [ ] ユーザーマニュアルは更新しない（画面の変更がない。`@ui` は既存の仮の画面を使う）
+- [ ] ステップ 1〜6 が完了し、各ステップの承認ゲートを人が通した（ステップは完了。ゲートは終了報告でまとめて受ける）
+- [x] `./gradlew check` と `./gradlew uiTest` がローカルと CI の両方で緑
+- [x] SonarQube の品質ゲートが PASS（コマンドの成否で判定）
+- [x] 新しい検査（axe-core、用語集の整合、権限）は、不合格の入力で失敗することを確かめた（T-8）
+- [x] D-1・D-3〜D-7 が設計文書・要件・ADR から追える
+- [x] 手順書の差分がある（T-9）
+- [x] `bolt_03_report.md` に仮説 H1〜H4 の結論を記録した
+- [x] ユーザーマニュアルは更新しない（画面の変更がない。`@ui` は既存の仮の画面を使う）
 
 ### デモ項目
 
@@ -253,6 +253,7 @@ push はステップの完了ごとに行う（Bolt 1・2 と同じく、CI の�
 | :--- | :--- | :--- | :--- |
 | 2026-10-02 | 初版（人の決定 D-1・D-3〜D-8・Spotless を入力にした） | anthropic/claude-opus-5-5 | human:kakimomokuri |
 | 2026-10-02 | 計画を承認。確認ポイント 1〜5（Dependabot、Playwright・axe-core、CI の `@ui` のジョブと E2E を CI の中で動かすこと、JIG、追記専用の表の権限）も承認された（Try T-6） | anthropic/claude-opus-5-5 | human:kakimomokuri |
+| 2026-10-02 | ステップ 1〜5 を完了とし、ステップ 6 を承認待ちにした。結果は [Bolt 3 終了報告](bolt_03_report.md) | anthropic/claude-opus-5-5 | 承認待ち |
 
 ## 関連ドキュメント
 
