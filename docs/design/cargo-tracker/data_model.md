@@ -4,7 +4,7 @@ title: "cargo-tracker データモデル"
 description: "cargo-tracker の概念データモデル、スキーマ分割、命名と型の規約（H2 と PostgreSQL の共通部分）、コンテキストごとの論理データモデルと ER 図、版・追記専用・冪等性・イベント配信の表現。"
 tags: [design, data-model]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-02T01:04:33Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-02T02:20:33Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T07:48:17Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:01:37Z }
@@ -168,6 +168,16 @@ ADR-007 により、DDL は H2（PostgreSQL 互換モード）と PostgreSQL 18 
 
 権限の付与と剥奪は、PostgreSQL 用の Flyway のコールバック（`afterMigrate`）で、表の作成と同じ配備の中で行う（ADR-007 の補足の決定）。開発の H2 では権限による保護は働かない。保護は PostgreSQL の統合テストで確かめ、Testcontainers でも同じコールバックが動く。
 
+### 業務番号の採番（D-10）
+
+業務番号は、年ごとのカウンター表 `transport_request_number_counter` で振る。H2 と PostgreSQL の共通の SQL で書き（ADR-007）、方言で分けない。
+
+1. その年の行がなければ、提出とは別のトランザクションで `INSERT`（`last_no = 0`）する。同時の `INSERT` による一意制約の違反は、行がすでにあるという意味なので無視する。PostgreSQL では、トランザクションの中で制約に違反するとそのトランザクションが使えなくなるため、提出のトランザクションの中では `INSERT` しない。
+2. 提出のトランザクションで `UPDATE transport_request_number_counter SET last_no = last_no + 1 WHERE year = ?` を実行し、その年の行を行ロックして増やす。
+3. 同じトランザクションで `SELECT last_no` を実行して番号を読む。
+
+採番は提出と同じトランザクションで行う。提出が失敗すれば番号も戻るため、欠番が出ない（`last_no = 0` の行は番号を使わない）。行ロックは提出のトランザクションの終わりまで続くので、同じ年の提出は採番の部分で直列になる。年は、提出時刻の日本時間（Asia/Tokyo）の年をドメインが決めて渡す。
+
 ### 冪等性（ARCH-HO-01）
 
 各業務スキーマに処理済みコマンドの表を置く。
@@ -198,12 +208,18 @@ skinparam linetype ortho
 entity "transport_request\n輸送要求" as tr {
   * id : UUID <<PK>>
   --
+  * request_number : VARCHAR(20) <<UK>>
   * shipper_company_id : UUID <<REF identity>>
   * status : VARCHAR(30)
   * current_version_no : INTEGER
   * version : BIGINT
   * created_at / created_by
   * updated_at / updated_by
+}
+entity "transport_request_number_counter\n業務番号の採番" as cnt {
+  * year : SMALLINT <<PK>>
+  --
+  * last_no : INTEGER
 }
 entity "transport_request_version\n輸送要求版" as trv {
   * transport_request_id : UUID <<PK,FK>>
@@ -305,7 +321,8 @@ q |o--o| q : 置換
 | 表 | 主な制約 | 対応する不変条件 |
 | :--- | :--- | :--- |
 | `transport_request` | `status` IN（`DRAFT`、`UNDER_REVIEW`、`QUOTING`、`QUOTED`、`ROUTING`、`AWAITING_APPROVAL`、`READY_TO_BOOK`、`BOOKED`、`WITHDRAWN`） | 輸送要求の状態遷移 |
-| `transport_request`（業務番号） | 注（設計への反映が必要）: 業務番号 `TR-年-年ごとの連番`（2026-10-02 の D-4）の列と、年ごとの採番の仕組みは、US-01 AC2 の Bolt で設計して足す。一意制約を付け、画面と通知には業務番号だけを出す | D-4、US-01 |
+| `transport_request`（業務番号） | `request_number` に一意制約（`uk_transport_request_number`）。`TR-年-年ごとの連番` の表記をそのまま入れる。画面と通知には業務番号だけを出す（D-4、D-10） | Q-INV-13 |
+| `transport_request_number_counter` | 年ごとに 1 行。`last_no` はその年に最後に振った連番。追記専用ではない（行を更新する） | Q-INV-13 |
 | `transport_request_draft` | 輸送要求ごとに 1 行。提出時に内容を版の表へ INSERT する。`copied_from_request_id` は複製元 | Q-INV-03、Q-INV-11 |
 | `transport_request_version` | `cargo_category` IN（`GENERAL`、`DANGEROUS`、`REEFER`、`OTHER_SPECIAL`）。提出した版だけを INSERT し、更新しない（追記専用の印 `COMMENT ON TABLE ... IS 'append-only'` を付ける）。版 1 の `submitted_at` が KPI-01 の開始時刻（D-3） | Q-INV-02、Q-INV-03、US-21 |
 | `review_record` | （`transport_request_id`、`version_no`）→ `transport_request_version` の FK | Q-INV-04 |
@@ -775,6 +792,7 @@ entity "audit_record\n監査記録" as au {
 entity "kpi_observation\nKPI 計測記録" as ko {
   * transport_request_id : UUID <<PK>>
   --
+  * transport_request_number : VARCHAR(20)
   * shipper_company_id : UUID
   * submitted_at : TIMESTAMPTZ
   first_presented_at : TIMESTAMPTZ
@@ -809,7 +827,7 @@ co ||--o{ ag
 | `app_user` | `failed_attempts` と `locked_until` で 5 回失敗・15 分ロックを表す | IA-INV-03 |
 | `access_grant` | `status` IN（`INVITED`、`ACTIVE`、`REVOKED`、`EXPIRED`）。同じ予約・荷受人企業に有効な許可を重複させないことはアプリケーションで確認する | IA-INV-05、IA-INV-06 |
 | `audit_record` | UPDATE・DELETE の権限なし。`event_id` の一意制約で、イベントの再配信による重複記録を防ぐ。認証の失敗と権限外のアクセス試行は `event_id` を持たず、同期で書く | IA-INV-07、IA-INV-08 |
-| `kpi_observation` | 輸送要求ごとに 1 行。DE-01 で作り、DE-03 で最初の提示時刻だけを記録する（2 回目以降の提示では更新しない） | KPI-INV-01 |
+| `kpi_observation` | 輸送要求ごとに 1 行。DE-01 で作り、DE-03 で最初の提示時刻だけを記録する（2 回目以降の提示では更新しない）。`transport_request_number` は DE-01 の表示用の業務番号の写しで、社内の一覧に UUID の代わりに出す（Bolt 4） | KPI-INV-01 |
 | `kpi_baseline` | UPDATE・DELETE の権限なし。訂正は `supersedes_id` で前の行を指す新しい行にする | KPI-INV-02 |
 
 session は `platform` スキーマの Spring Session の表に置く。利用停止・権限取消し・参照許可の取消しを次の request から反映するため、認可の判断は session に保存した値ではなく、request ごとに `app_user`・`user_role`・`access_grant` を確かめる（IA-INV-04、IA-INV-06）。

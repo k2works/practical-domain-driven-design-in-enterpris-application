@@ -4,7 +4,7 @@ title: "cargo-tracker UI 設計"
 description: "cargo-tracker の顧客 Web と社内業務 Web の画面オブジェクト、システムメタファー、画面一覧、画面遷移、主要画面のイメージ、共通部品（WCAG 2.2 AA）、エラー時を含むインタラクション。"
 tags: [design, ui]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-02T01:04:33Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-02T02:20:33Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T07:57:45Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:01:39Z }
@@ -139,8 +139,8 @@ verified:
 
 | 画面 | URL | 備考 |
 | :--- | :--- | :--- |
-| C-03 見積依頼の作成・編集 | `GET /customer/transport-requests/new`、`POST /customer/transport-requests` | Bolt 1 は出発地・目的地だけの最小形。画面上部のエラー要約は、必須条件を入れる US-01 の Bolt で適用する |
-| C-03 の提出の完了 | `GET /customer/transport-requests/{id}/submitted` | 輸送要求 ID と状態を示す。C-04 見積依頼の詳細ができたらそちらへ統合する |
+| C-03 見積依頼の作成・編集 | `GET /customer/transport-requests/new`、`POST /customer/transport-requests` | Bolt 4 は 1 画面の形。必要書類を除く必須条件（荷受人・出発地・目的地・希望到着期限・貨物）とエラー要約、特殊貨物の案内を持つ。段階入力は #36 のプロトタイプで操作性を確かめてから入れる。荷受人は企業マスターができるまで設定の仮の一覧から選ぶ（US-16 で置き換える） |
+| C-03 の提出の完了 | `GET /customer/transport-requests/{業務番号}/submitted` | 業務番号と版（例: TR-2026-0001 版 1）、状態、提出時刻を示す。URL のキーも業務番号にし、アドレスバーにも UUID を出さない（2026-10-02 に承認。他社の番号の拒否は US-18・AC3 の Bolt で確かめる）。C-04 見積依頼の詳細ができたらそちらへ統合する |
 | S-22 KPI の照会（前身の仮の画面） | `GET /staff/kpi-observations` | Bolt 1 は輸送要求ごとの提出時刻の一覧だけ。日時は UTC だけを表示している（利用者のタイムゾーンを主にし UTC を併記する共通部品は、US-21 の Bolt で適用する）。週次の値と基準値も US-21 の Bolt で作る |
 
 ## ナビゲーションとレイアウト
