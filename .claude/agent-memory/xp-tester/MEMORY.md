@@ -1,2 +1,3 @@
 - [Bolt 2 品質ゲートレビューの未解消点](project_bolt2_quality_gate_review.md) — sonar gate が常に成功、JaCoCo の分母 0 空振り、AT-02 の抜け、AC 照合未実装（2026-10-02）
 - [Bolt 3 E2E・権限・用語集テストのレビュー](project_bolt3_e2e_review.md) — axe 検証の抜け、権限テストが 1 表だけ・superuser で動く、用語集の対象漏れ（2026-10-02）
+- [Bolt 5 審査テストのレビュー](project_bolt5_review_tests.md) — 楽観ロックが 1 トランザクション、審査記録の並び順の差、4,000 文字の UTF-16 判定（2026-10-02）

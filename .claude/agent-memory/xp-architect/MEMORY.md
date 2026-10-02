@@ -2,3 +2,4 @@
 - [Bolt 2 レビューの指摘](project_bolt2_review.md) — AT-02 の層外の抜け、イベント依存規則、アクション SHA 固定、D-1/D-5 の記録
 - [Bolt 3 レビューの指摘](project_bolt3_review.md) — Flyway と実行時の DB 利用者の未分離、REVOKE の fail-open、CI の paths、E2E のステージング移行
 - [Bolt 4 レビューの指摘](project_bolt4_review.md) — 採番の REQUIRES_NEW と接続枯渇、連番 URL の他社参照、null 許容の二重基準
+- [Bolt 5 レビューの指摘](project_bolt5_review.md) — 審査記録の UNIQUE、update の全件 INSERT、N+1、社内照会の取り違え防止、CSRF

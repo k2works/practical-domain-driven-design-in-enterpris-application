@@ -1,6 +1,6 @@
 ---
 name: cargo-tracker-review-points
-description: cargo-tracker のドキュメント・画面レビューで繰り返し見るべき論点（用語の併記、報告書の数値・時刻の検証方法、手順書の環境依存値、承認済み文書の書き換え、決定と画面の食い違い）。Bolt 4（2026-10-02）時点
+description: cargo-tracker のドキュメント・画面レビューで繰り返し見るべき論点（用語の併記、報告書の数値・時刻の検証方法、手順書の環境依存値、承認済み文書の書き換え、決定と画面の食い違い、エラー要約の文言）。Bolt 5（2026-10-02）時点
 metadata:
   type: project
 ---
@@ -13,6 +13,8 @@ Bolt 1〜3（2026-10-01〜02）のレビューで見つかった、以降の Bol
 - 形式の誤りの文言（「数字で入力してください」）がドメインの規則（1 以上の整数・小数 3 桁）とずれやすい
 - 場所（UN/LOCODE）は大文字だけを受け付ける。小文字入力の扱いが UI 側で抜けやすい
 - 報告書のテスト件数は `apps/cargo-tracker/build/test-results/{test,uiTest}/*.xml` の tests・skipped 属性の合計で突き合わせる（Bolt 3 終了時 test 75 件うち skip 2、uiTest 17 件うち skip 3。uiTest は ArchUnit 等も混ざる既知課題）。CI は `gh run list --workflow cargo-tracker-ci.yml` と `gh run view <id> --json jobs`、時刻は `git log --date=iso` で照合する。報告書の「期間」の終了時刻・所要時間がコミット時刻と合わないことが続く（Bolt 3、Bolt 4 は約 4 時間 50 分と記載、実際は 11:19〜15:55 で 4 時間 36 分）
+- Bolt 5（2026-10-02）: 報告の「時間の内訳」が計画の「結果」の時刻と 1 分ずれる、報告コミット（22:41）より後の完了時刻（22:45）を予定値で書く、が起きた。両文書の時刻とコミット時刻を三者で照合する。計画の途中でステップを分割（2→2a・2b）すると、引き継ぎ表など前半の本文に旧番号が残る
+- 社内画面のエラー要約の見出しが「入力内容に N 件の誤り」固定で、古い版・競合・審査中でないなど入力でない拒否にも出る。文字数超過の文言が確定側にも「不足事項」を含む（Bolt 5 時点）
 - 手順書に作者のローカル `.env` の値が混入しやすい（Bolt 3 で SonarQube の URL が 9001。スクリプトの既定は 9000、LOCAL_SONAR_PORT / SONAR_HOST_URL で変わる）。版（Node.js など）は tech_stack に根拠があるか確かめる
 - `sonar-local:gate`/`check` は Bolt 2 レビュー後、OK 以外で失敗するよう直り、scan は `sonar.qualitygate.wait=true`（2026-10-02 確認）
 - status: stable・verified 済みの文書（ADR、設計、要件）を AI が決定の反映で書き換えるとき、generated だけ更新して verified や更新履歴が付かないことがある。承認待ちの印（履歴行・log）があるかを見る
