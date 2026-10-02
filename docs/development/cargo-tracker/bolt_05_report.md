@@ -4,7 +4,7 @@ title: "Bolt 5 終了報告 - 輸送条件の審査と差戻し（US-02）"
 description: "5 回目の Bolt の終了報告。審査の確定・差戻し・古い版の拒否、審査記録と楽観ロック、受付一覧と審査の画面の成果、デモ項目、指標と時間の内訳、仮説 H1〜H3 の結論、見つけて直した問題、既知の課題、ふりかえりをまとめる。"
 tags: [development,bolt-report]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-02T14:27:05Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-02T21:44:19Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-02T13:47:11Z }
 ---
@@ -174,6 +174,7 @@ verified:
 | :--- | :--- | :--- | :--- |
 | 2026-10-02 | 初版 | anthropic/claude-opus-5-5 | — |
 | 2026-10-02 | 終了報告と、承認待ちの書き換え（ドメインモデル・データモデル・ユーザーストーリー・UI 設計・要件定義・手順書・計画・リリース計画）を承認 | anthropic/claude-opus-5-5 | human:kakimomokuri |
+| 2026-10-03 | レビューの対応（レビューとクローズ）を承認し、Bolt 5 をクローズした | anthropic/claude-opus-5-5 | human:kakimomokuri |
 
 ## 関連ドキュメント
 
