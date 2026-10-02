@@ -6,7 +6,6 @@ import com.example.cargotracker.quotation.acceptance.InMemoryTransportRequestRep
 import com.example.cargotracker.quotation.application.internal.commands.ApproveTransportRequestCommand;
 import com.example.cargotracker.quotation.application.internal.commands.SendBackTransportRequestCommand;
 import com.example.cargotracker.quotation.domain.events.TransportRequestReviewed;
-import com.example.cargotracker.quotation.domain.model.aggregates.ConcurrentTransportRequestUpdateException;
 import com.example.cargotracker.quotation.domain.model.aggregates.TransportRequest;
 import com.example.cargotracker.quotation.domain.model.valueobjects.ReviewDecision;
 import com.example.cargotracker.quotation.domain.model.valueobjects.ReviewRejection;
@@ -21,6 +20,7 @@ import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -81,20 +81,27 @@ class TransportRequestReviewServiceTest {
     }
 
     @Test
-    void ほかの更新が先に保存されていたら競合を返しイベントを発行しない() {
-        InMemoryTransportRequestRepository conflicting = new InMemoryTransportRequestRepository() {
+    void 読み込んだ後にほかの更新が先に保存されていたら競合を返しイベントを発行しない() {
+        // 審査のサービスが読み込んだ直後に、別の更新が先に保存される状況を、メモリ上の実装の版照合で作る
+        InMemoryTransportRequestRepository racing = new InMemoryTransportRequestRepository() {
             @Override
-            public void update(TransportRequest transportRequest) {
-                throw new ConcurrentTransportRequestUpdateException(
-                        transportRequest.id(), transportRequest.aggregateVersion());
+            public Optional<TransportRequest> findByNumberForStaff(TransportRequestNumber number) {
+                Optional<TransportRequest> loaded = super.findByNumberForStaff(number);
+                TransportRequest other = super.findByNumberForStaff(number).orElseThrow();
+                other.approve(1, REVIEWER, "先に確定した", new UtcInstant(NOW));
+                super.update(other);
+                return loaded;
             }
         };
-        conflicting.save(repository.findById(id).orElseThrow());
-        TransportRequestReviewService conflictingService =
-                new TransportRequestReviewService(conflicting, published::add, Clock.fixed(NOW, ZoneOffset.UTC));
+        racing.save(repository.findById(id).orElseThrow());
+        TransportRequestReviewService racingService =
+                new TransportRequestReviewService(racing, published::add, Clock.fixed(NOW, ZoneOffset.UTC));
 
-        assertThat(conflictingService.approve(new ApproveTransportRequestCommand(NUMBER, 1, REVIEWER, "確認した")))
+        assertThat(racingService.sendBack(new SendBackTransportRequestCommand(NUMBER, 1, REVIEWER, "差し戻す", null)))
                 .isInstanceOf(ReviewOutcome.Conflict.class);
         assertThat(published).isEmpty();
+        assertThat(racing.findById(id).orElseThrow().reviewRecords())
+                .singleElement()
+                .satisfies(reviewRecord -> assertThat(reviewRecord.rationale()).isEqualTo("先に確定した"));
     }
 }

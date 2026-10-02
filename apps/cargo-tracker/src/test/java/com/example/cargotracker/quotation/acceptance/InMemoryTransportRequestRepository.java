@@ -6,7 +6,9 @@ import com.example.cargotracker.quotation.domain.model.aggregates.TransportReque
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestId;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestNumber;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestStatus;
+import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestSummary;
 import com.example.cargotracker.shared.domain.CompanyId;
+import com.example.cargotracker.shared.domain.UtcInstant;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -25,12 +27,17 @@ public class InMemoryTransportRequestRepository implements TransportRequestRepos
 
     private final Map<TransportRequestId, TransportRequest> store = new ConcurrentHashMap<>();
 
+    /** 最初の提出時刻（版 1）。本物は版 1 の行から読むが、集約は現在の版しか持たないため、保存のときに覚える。 */
+    private final Map<TransportRequestId, UtcInstant> firstSubmittedAt = new ConcurrentHashMap<>();
+
     @Override
     public void save(TransportRequest transportRequest) {
         if (store.putIfAbsent(transportRequest.id(), snapshot(transportRequest, transportRequest.aggregateVersion()))
                 != null) {
             throw new IllegalStateException("輸送要求は既に保存されています: " + transportRequest.id());
         }
+        firstSubmittedAt.put(
+                transportRequest.id(), transportRequest.currentVersion().submittedAt());
     }
 
     @Override
@@ -63,12 +70,21 @@ public class InMemoryTransportRequestRepository implements TransportRequestRepos
     }
 
     @Override
-    public List<TransportRequest> findUnderReview() {
+    public List<TransportRequestSummary> findUnderReviewSummaries() {
         return store.values().stream()
                 .filter(request -> request.status() == TransportRequestStatus.UNDER_REVIEW)
-                .sorted(Comparator.comparing(
-                        request -> request.currentVersion().submittedAt().instant()))
-                .map(InMemoryTransportRequestRepository::copy)
+                .map(request -> new TransportRequestSummary(
+                        request.number(),
+                        request.currentVersion().versionNo(),
+                        firstSubmittedAt.get(request.id()),
+                        request.currentVersion().submittedAt(),
+                        request.currentVersion().terms().origin(),
+                        request.currentVersion().terms().destination(),
+                        request.currentVersion().terms().arrivalDeadline(),
+                        request.currentVersion().terms().cargo().category()))
+                .sorted(Comparator.comparing((TransportRequestSummary summary) ->
+                                summary.firstSubmittedAt().instant())
+                        .thenComparing(summary -> summary.number().text()))
                 .toList();
     }
 
@@ -80,6 +96,7 @@ public class InMemoryTransportRequestRepository implements TransportRequestRepos
     /** シナリオの開始時に記録を消す。 */
     public void clear() {
         store.clear();
+        firstSubmittedAt.clear();
     }
 
     private static TransportRequest copy(TransportRequest request) {

@@ -14,7 +14,9 @@
     <div th:object="${reviewForm}">
         <div id="error-summary" th:if="${#fields.hasErrors('*')}" tabindex="-1" role="alert"
              aria-labelledby="error-summary-title">
-            <h2 id="error-summary-title" th:text="|入力内容に ${#fields.errors('*').size()} 件の誤りがあります|">入力内容に 1 件の誤りがあります</h2>
+            <!-- 入力の誤り（項目に付く）と、それ以外の拒否（古い版・競合・審査中でない）で見出しを分ける（Bolt 5 レビュー R-14） -->
+            <h2 id="error-summary-title"
+                th:text="${#fields.hasGlobalErrors()} ? '審査できませんでした' : |入力内容に ${#fields.errors('*').size()} 件の誤りがあります|">入力内容に 1 件の誤りがあります</h2>
             <ul>
                 <li th:each="error : ${#fields.detailedErrors('*')}">
                     <a th:if="${error.global}" th:href="'#review-title'" th:text="${error.message}">他の利用者が先に更新しました</a>
@@ -35,13 +37,41 @@
         </th:block>
     </dl>
 
+    <h2>これまでの審査</h2>
+    <!-- 版 2 以降を審査するときに、前の版の差戻しの理由と不足事項を確かめられるようにする（Bolt 5 レビュー R-06） -->
+    <p th:if="${#lists.isEmpty(history)}">まだ審査の記録はありません。</p>
+    <div th:unless="${#lists.isEmpty(history)}" style="overflow-x: auto" tabindex="0" role="region"
+         aria-labelledby="history-caption">
+    <table>
+        <caption id="history-caption">審査記録（版の順）</caption>
+        <thead>
+        <tr>
+            <th scope="col">版</th>
+            <th scope="col">判断</th>
+            <th scope="col">根拠・理由</th>
+            <th scope="col">不足事項</th>
+            <th scope="col">判断時刻</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="record : ${history}">
+            <td th:text="${record.version()}">版 1</td>
+            <td th:text="${record.decision()}">差戻し</td>
+            <td th:text="${record.rationale()}">目的地の確認が必要</td>
+            <td th:text="${record.missingItems()}">（なし）</td>
+            <td th:text="${record.decidedAt()}">2026-10-05 12:00 Asia/Tokyo（UTC+09:00）（UTC 2026-10-05 03:00）</td>
+        </tr>
+        </tbody>
+    </table>
+    </div>
+
     <h2>審査を確定する</h2>
     <form th:action="@{/staff/transport-requests/{number}/reviews(number=${number})}" th:object="${reviewForm}" method="post" novalidate>
         <input type="hidden" name="decision" value="APPROVED">
         <input type="hidden" name="versionNo" th:value="*{versionNo}">
         <div>
             <label for="rationale">根拠</label>
-            <p id="rationale-hint">確認した契約条件・輸送条件を書いてください（4,000 文字まで）</p>
+            <p id="rationale-hint">確認した輸送条件を書いてください（4,000 文字まで）</p>
             <textarea id="rationale" name="rationale" rows="3" th:text="*{rationale}"
                       th:attr="aria-invalid=${#fields.hasErrors('rationale')},aria-describedby=${#fields.hasErrors('rationale')} ? 'rationale-hint rationale-error' : 'rationale-hint'"></textarea>
             <p id="rationale-error" th:if="${#fields.hasErrors('rationale')}" th:errors="*{rationale}"></p>
@@ -55,14 +85,17 @@
         <input type="hidden" name="versionNo" th:value="*{versionNo}">
         <div>
             <label for="reason">理由</label>
-            <p id="reason-hint">荷主が直すべき点を書いてください（4,000 文字まで）</p>
+            <p id="reason-hint">荷主がそのまま読みます。何をどう直せばよいかを、荷主に伝わる言葉で書いてください（4,000 文字まで）</p>
             <textarea id="reason" name="reason" rows="3" th:text="*{reason}"
                       th:attr="aria-invalid=${#fields.hasErrors('reason')},aria-describedby=${#fields.hasErrors('reason')} ? 'reason-hint reason-error' : 'reason-hint'"></textarea>
             <p id="reason-error" th:if="${#fields.hasErrors('reason')}" th:errors="*{reason}"></p>
         </div>
         <div>
             <label for="missingItems">不足事項（任意）</label>
-            <textarea id="missingItems" name="missingItems" rows="2" th:text="*{missingItems}"></textarea>
+            <p id="missingItems-hint">足りない書類や項目を、1 行に 1 つずつ書いてください（4,000 文字まで）</p>
+            <textarea id="missingItems" name="missingItems" rows="2" th:text="*{missingItems}"
+                      th:attr="aria-invalid=${#fields.hasErrors('missingItems')},aria-describedby=${#fields.hasErrors('missingItems')} ? 'missingItems-hint missingItems-error' : 'missingItems-hint'"></textarea>
+            <p id="missingItems-error" th:if="${#fields.hasErrors('missingItems')}" th:errors="*{missingItems}"></p>
         </div>
         <button type="submit">差し戻す</button>
     </form>

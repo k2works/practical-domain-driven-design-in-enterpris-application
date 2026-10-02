@@ -13,6 +13,7 @@ import com.example.cargotracker.quotation.domain.model.valueobjects.ShipmentTerm
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestId;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestNumber;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestStatus;
+import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestSummary;
 import com.example.cargotracker.shared.domain.CompanyId;
 import com.example.cargotracker.shared.domain.Location;
 import com.example.cargotracker.shared.domain.UserId;
@@ -64,8 +65,9 @@ public class MyBatisTransportRequestRepository implements TransportRequestReposi
                     transportRequest.id(), transportRequest.aggregateVersion());
         }
         mapper.insertTransportRequestVersionIfAbsent(toRow(transportRequest));
+        // 読み込んだ後に足した審査記録だけを追加する（往復の回数を履歴の件数に比例させない。Bolt 5 レビュー R-03）
         transportRequest
-                .reviewRecords()
+                .newReviewRecords()
                 .forEach(reviewRecord -> mapper.insertReviewRecordIfAbsent(new ReviewRecordRow(
                         reviewRecord.id(),
                         transportRequest.id().value(),
@@ -83,8 +85,18 @@ public class MyBatisTransportRequestRepository implements TransportRequestReposi
     }
 
     @Override
-    public List<TransportRequest> findUnderReview() {
-        return mapper.selectUnderReview().stream().map(this::toAggregate).toList();
+    public List<TransportRequestSummary> findUnderReviewSummaries() {
+        return mapper.selectUnderReviewSummaries().stream()
+                .map(row -> new TransportRequestSummary(
+                        TransportRequestNumber.parse(row.requestNumber()),
+                        row.currentVersionNo(),
+                        new UtcInstant(row.firstSubmittedAt().toInstant()),
+                        new UtcInstant(row.currentSubmittedAt().toInstant()),
+                        new Location(row.originUnlocode()),
+                        new Location(row.destinationUnlocode()),
+                        new UtcInstant(row.arrivalDeadline().toInstant()),
+                        CargoCategory.valueOf(row.cargoCategory())))
+                .toList();
     }
 
     private static TransportRequestRow toRow(TransportRequest request) {

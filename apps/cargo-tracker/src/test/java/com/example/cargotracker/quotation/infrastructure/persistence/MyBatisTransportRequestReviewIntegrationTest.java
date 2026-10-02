@@ -2,27 +2,32 @@ package com.example.cargotracker.quotation.infrastructure.persistence;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.tuple;
 
 import com.example.cargotracker.TestcontainersConfiguration;
 import com.example.cargotracker.quotation.domain.model.aggregates.ConcurrentTransportRequestUpdateException;
 import com.example.cargotracker.quotation.domain.model.aggregates.TransportRequest;
 import com.example.cargotracker.quotation.domain.model.aggregates.TransportRequestRepository;
+import com.example.cargotracker.quotation.domain.model.valueobjects.CargoCategory;
 import com.example.cargotracker.quotation.domain.model.valueobjects.ReviewDecision;
 import com.example.cargotracker.quotation.domain.model.valueobjects.ShipmentTerms;
 import com.example.cargotracker.quotation.domain.model.valueobjects.ShipmentTermsFixture;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestId;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestNumber;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestStatus;
+import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestSummary;
 import com.example.cargotracker.shared.domain.CompanyId;
 import com.example.cargotracker.shared.domain.Location;
 import com.example.cargotracker.shared.domain.UserId;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
@@ -35,20 +40,23 @@ import org.springframework.transaction.annotation.Transactional;
 class MyBatisTransportRequestReviewIntegrationTest {
 
     private static final UserId REVIEWER = new UserId(UUID.randomUUID());
-    private static final UtcInstant SUBMITTED_AT = new UtcInstant(Instant.parse("2085-01-05T01:00:00.123456Z"));
     private static final UtcInstant DECIDED_AT = new UtcInstant(Instant.parse("2085-01-05T03:00:00.654321Z"));
 
     @Autowired
     TransportRequestRepository repository;
 
     private TransportRequest saved(int sequence) {
+        return saved(sequence, "2085-01-05T01:00:00.123456Z");
+    }
+
+    private TransportRequest saved(int sequence, String submittedAt) {
         TransportRequest request = TransportRequest.submit(
                 new TransportRequestId(UUID.randomUUID()),
                 new TransportRequestNumber(2085, sequence),
                 new CompanyId(UUID.randomUUID()),
                 ShipmentTermsFixture.generalCargo(),
                 new UserId(UUID.randomUUID()),
-                SUBMITTED_AT);
+                new UtcInstant(Instant.parse(submittedAt)));
         repository.save(request);
         return repository.findById(request.id()).orElseThrow();
     }
@@ -125,20 +133,75 @@ class MyBatisTransportRequestReviewIntegrationTest {
     }
 
     @Test
-    void 社内用の照会は荷主企業で絞らずに業務番号で探せ審査中だけを提出時刻の古い順に一覧する() {
-        TransportRequest older = saved(4);
-        TransportRequest approved = saved(5);
-        approved.approve(1, REVIEWER, "確認した", DECIDED_AT);
-        repository.update(approved);
+    void 社内用の照会は荷主企業で絞らずに業務番号で探せる() {
+        TransportRequest request = saved(4);
 
         assertThat(repository.findByNumberForStaff(new TransportRequestNumber(2085, 4)))
-                .hasValueSatisfying(found -> assertThat(found.id()).isEqualTo(older.id()));
-        assertThat(repository.findUnderReview())
-                .extracting(TransportRequest::number)
-                .contains(new TransportRequestNumber(2085, 4))
-                .doesNotContain(new TransportRequestNumber(2085, 5));
-        assertThat(repository.findUnderReview())
-                .extracting(found -> found.currentVersion().submittedAt().instant())
-                .isSorted();
+                .hasValueSatisfying(found -> assertThat(found.id()).isEqualTo(request.id()));
+    }
+
+    @Test
+    void 受付一覧は審査中だけを最初の提出時刻の古い順に並べ差し戻して出し直した版2も最初の時刻で並ぶ() {
+        TransportRequest resubmittedLater = saved(6, "2085-01-05T00:00:00Z");
+        TransportRequest submittedSecond = saved(7, "2085-01-05T00:30:00Z");
+        TransportRequest approved = saved(8, "2085-01-05T00:10:00Z");
+        approved.approve(1, REVIEWER, "確認した", DECIDED_AT);
+        repository.update(approved);
+        resubmittedLater.sendBack(1, REVIEWER, "直してください", null, DECIDED_AT);
+        repository.update(resubmittedLater);
+        TransportRequest draft = repository.findById(resubmittedLater.id()).orElseThrow();
+        draft.resubmit(draft.currentVersion().terms(), new UserId(UUID.randomUUID()), DECIDED_AT);
+        repository.update(draft);
+
+        assertThat(repository.findUnderReviewSummaries())
+                .filteredOn(summary -> summary.number().year() == 2085)
+                .extracting(TransportRequestSummary::number, TransportRequestSummary::versionNo)
+                .containsSubsequence(
+                        tuple(new TransportRequestNumber(2085, 6), 2), tuple(new TransportRequestNumber(2085, 7), 1))
+                .doesNotContain(tuple(new TransportRequestNumber(2085, 8), 1));
+        assertThat(repository.findUnderReviewSummaries())
+                .filteredOn(summary -> summary.number().equals(new TransportRequestNumber(2085, 6)))
+                .singleElement()
+                .satisfies(summary -> {
+                    assertThat(summary.firstSubmittedAt())
+                            .isEqualTo(new UtcInstant(Instant.parse("2085-01-05T00:00:00Z")));
+                    assertThat(summary.currentSubmittedAt()).isEqualTo(DECIDED_AT);
+                    assertThat(summary.cargoCategory()).isEqualTo(CargoCategory.GENERAL);
+                });
+    }
+
+    @Test
+    void 審査記録は判断の時刻が同じでも版番号の順に返る() {
+        TransportRequest request = saved(9);
+        request.sendBack(1, REVIEWER, "差し戻す", null, DECIDED_AT);
+        repository.update(request);
+        TransportRequest draft = repository.findById(request.id()).orElseThrow();
+        draft.resubmit(draft.currentVersion().terms(), new UserId(UUID.randomUUID()), DECIDED_AT);
+        repository.update(draft);
+        TransportRequest underReview = repository.findById(request.id()).orElseThrow();
+        underReview.approve(2, REVIEWER, "確定する", DECIDED_AT);
+        repository.update(underReview);
+
+        assertThat(repository.findById(request.id()).orElseThrow().reviewRecords())
+                .extracting(reviewRecord -> reviewRecord.versionNo())
+                .containsExactly(1, 2);
+    }
+
+    @Test
+    void 同じ版の2つ目の審査記録はDBの一意制約で拒否される() {
+        TransportRequest request = saved(10);
+        request.approve(1, REVIEWER, "確認した", DECIDED_AT);
+        repository.update(request);
+        TransportRequest stale = TransportRequest.reconstitute(
+                request.id(),
+                request.number(),
+                request.shipperCompanyId(),
+                TransportRequestStatus.UNDER_REVIEW,
+                request.currentVersion(),
+                List.of(),
+                request.aggregateVersion() + 1);
+        stale.sendBack(1, REVIEWER, "楽観ロックを通らない書き込み", null, DECIDED_AT);
+
+        assertThatThrownBy(() -> repository.update(stale)).isInstanceOf(DataIntegrityViolationException.class);
     }
 }

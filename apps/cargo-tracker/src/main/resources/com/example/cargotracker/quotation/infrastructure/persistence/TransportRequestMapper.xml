@@ -86,7 +86,7 @@
         SELECT id, transport_request_id, version_no, decision, reviewer_id, rationale, missing_items, decided_at
           FROM quotation.review_record
          WHERE transport_request_id = #{transportRequestId}
-         ORDER BY decided_at, id
+         ORDER BY version_no, decided_at, id
     </select>
 
     <sql id="selectRow">
@@ -111,11 +111,33 @@
          WHERE r.request_number = #{requestNumber}
     </select>
 
-    <!-- 社内用: 審査中を、現在の版の提出時刻の古い順に -->
-    <select id="selectUnderReview" resultMap="transportRequestRow">
-        <include refid="selectRow"/>
+    <resultMap id="transportRequestSummaryRow" type="com.example.cargotracker.quotation.infrastructure.persistence.TransportRequestSummaryRow">
+        <constructor>
+            <arg column="request_number" name="requestNumber" javaType="String"/>
+            <arg column="current_version_no" name="currentVersionNo" javaType="_int"/>
+            <arg column="first_submitted_at" name="firstSubmittedAt" javaType="java.time.OffsetDateTime"/>
+            <arg column="current_submitted_at" name="currentSubmittedAt" javaType="java.time.OffsetDateTime"/>
+            <arg column="origin_unlocode" name="originUnlocode" javaType="String"/>
+            <arg column="destination_unlocode" name="destinationUnlocode" javaType="String"/>
+            <arg column="arrival_deadline" name="arrivalDeadline" javaType="java.time.OffsetDateTime"/>
+            <arg column="cargo_category" name="cargoCategory" javaType="String"/>
+        </constructor>
+    </resultMap>
+
+    <!-- 社内用の受付一覧: 審査中を、最初の提出時刻（版 1）の古い順に。集約を組み立てず、審査記録も読まない（N+1 をなくす） -->
+    <select id="selectUnderReviewSummaries" resultMap="transportRequestSummaryRow">
+        SELECT r.request_number, r.current_version_no,
+               first_version.submitted_at AS first_submitted_at, v.submitted_at AS current_submitted_at,
+               v.origin_unlocode, v.destination_unlocode, v.arrival_deadline, v.cargo_category
+          FROM quotation.transport_request r
+          JOIN quotation.transport_request_version v
+            ON v.transport_request_id = r.id
+           AND v.version_no = r.current_version_no
+          JOIN quotation.transport_request_version first_version
+            ON first_version.transport_request_id = r.id
+           AND first_version.version_no = 1
          WHERE r.status = 'UNDER_REVIEW'
-         ORDER BY v.submitted_at, r.request_number
+         ORDER BY first_version.submitted_at, r.request_number
     </select>
 
     <select id="selectByNumber" resultMap="transportRequestRow">

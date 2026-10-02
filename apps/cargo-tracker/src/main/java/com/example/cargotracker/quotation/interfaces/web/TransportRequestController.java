@@ -98,8 +98,9 @@ public class TransportRequestController {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
         model.addAttribute(
                 "numberWithVersion",
-                transportRequest.number().text() + " 版 "
-                        + transportRequest.currentVersion().versionNo());
+                TransportRequestLabels.numberWithVersion(
+                        transportRequest.number(),
+                        transportRequest.currentVersion().versionNo()));
         model.addAttribute("statusLabel", TransportRequestLabels.status(transportRequest.status()));
         model.addAttribute(
                 "submittedAt",

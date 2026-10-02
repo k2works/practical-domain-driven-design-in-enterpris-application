@@ -2,6 +2,7 @@ package com.example.cargotracker.quotation.domain.model.aggregates;
 
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestId;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestNumber;
+import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestSummary;
 import com.example.cargotracker.shared.domain.CompanyId;
 import java.util.List;
 import java.util.Optional;
@@ -34,6 +35,9 @@ public interface TransportRequestRepository {
      */
     Optional<TransportRequest> findByNumberForStaff(TransportRequestNumber number);
 
-    /** 社内用: 審査中の輸送要求を、現在の版の提出時刻の古い順（待たせている順）に一覧する。 */
-    List<TransportRequest> findUnderReview();
+    /**
+     * 社内用: 審査中の輸送要求を、最初の提出時刻（版 1）の古い順に一覧する（受付一覧。待たせている順）。
+     * 差し戻して出し直された版も、最初の提出時刻で並べる（Bolt 5 レビュー R-05）。集約を組み立てない読み取りモデルを返す。
+     */
+    List<TransportRequestSummary> findUnderReviewSummaries();
 }

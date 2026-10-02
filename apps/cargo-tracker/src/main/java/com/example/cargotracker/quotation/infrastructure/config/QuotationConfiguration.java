@@ -2,6 +2,7 @@ package com.example.cargotracker.quotation.infrastructure.config;
 
 import com.example.cargotracker.quotation.application.internal.commandservices.TransportRequestCommandService;
 import com.example.cargotracker.quotation.application.internal.commandservices.TransportRequestReviewService;
+import com.example.cargotracker.quotation.application.internal.queryservices.StaffTransportRequestQueryService;
 import com.example.cargotracker.quotation.application.internal.queryservices.TransportRequestQueryService;
 import com.example.cargotracker.quotation.domain.model.aggregates.TransportRequestNumberIssuer;
 import com.example.cargotracker.quotation.domain.model.aggregates.TransportRequestRepository;
@@ -48,6 +49,11 @@ public class QuotationConfiguration {
     TransportRequestReviewService transportRequestReviewService(
             TransportRequestRepository repository, ApplicationEventPublisher eventPublisher, Clock clock) {
         return new TransportRequestReviewService(repository, eventPublisher, clock);
+    }
+
+    @Bean
+    StaffTransportRequestQueryService staffTransportRequestQueryService(TransportRequestRepository repository) {
+        return new StaffTransportRequestQueryService(repository);
     }
 
     @Bean

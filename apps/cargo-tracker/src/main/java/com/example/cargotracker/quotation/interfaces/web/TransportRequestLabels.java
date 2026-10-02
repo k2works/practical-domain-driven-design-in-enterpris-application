@@ -2,8 +2,11 @@ package com.example.cargotracker.quotation.interfaces.web;
 
 import com.example.cargotracker.quotation.domain.model.valueobjects.CargoCategory;
 import com.example.cargotracker.quotation.domain.model.valueobjects.PackageType;
+import com.example.cargotracker.quotation.domain.model.valueobjects.ReviewDecision;
+import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestNumber;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestStatus;
 import com.example.cargotracker.shared.domain.UtcInstant;
+import java.time.Duration;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
@@ -54,6 +57,33 @@ final class TransportRequestLabels {
             case UNDER_REVIEW -> "審査中";
             case QUOTING -> "見積り作成中";
         };
+    }
+
+    /** 業務番号と版の表記（例: TR-2026-0001 版 1）。電話やメールでそのまま伝えられる形にする（D-4）。 */
+    static String numberWithVersion(TransportRequestNumber number, int versionNo) {
+        return number.text() + " 版 " + versionNo;
+    }
+
+    static String decision(ReviewDecision decision) {
+        return switch (decision) {
+            case APPROVED -> "充足（審査を確定）";
+            case SENT_BACK -> "差戻し";
+        };
+    }
+
+    /** 待っている時間（例: 3 時間 20 分、2 日 4 時間）。受付一覧で、待たせている長さを示す。 */
+    static String elapsed(Duration duration) {
+        long minutes = Math.max(0, duration.toMinutes());
+        long days = minutes / (24 * 60);
+        long hours = minutes % (24 * 60) / 60;
+        long restMinutes = minutes % 60;
+        if (days > 0) {
+            return days + " 日 " + hours + " 時間";
+        }
+        if (hours > 0) {
+            return hours + " 時間 " + restMinutes + " 分";
+        }
+        return restMinutes + " 分";
     }
 
     static String cargoCategory(CargoCategory category) {

@@ -33,7 +33,7 @@ public interface TransportRequestMapper {
 
     Optional<TransportRequestRow> selectByNumberForStaff(String requestNumber);
 
-    List<TransportRequestRow> selectUnderReview();
+    List<TransportRequestSummaryRow> selectUnderReviewSummaries();
 
     Optional<TransportRequestRow> selectById(UUID id);
 
