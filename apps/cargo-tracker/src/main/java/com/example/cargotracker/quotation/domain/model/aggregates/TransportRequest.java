@@ -4,6 +4,7 @@ import com.example.cargotracker.quotation.domain.events.TransportRequestSubmitte
 import com.example.cargotracker.quotation.domain.model.entities.TransportRequestVersion;
 import com.example.cargotracker.quotation.domain.model.valueobjects.ShipmentTerms;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestId;
+import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestNumber;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestStatus;
 import com.example.cargotracker.shared.annotation.ddd.AggregateRoot;
 import com.example.cargotracker.shared.domain.CompanyId;
@@ -22,6 +23,7 @@ public final class TransportRequest {
     private static final int FIRST_VERSION_NO = 1;
 
     private final TransportRequestId id;
+    private final TransportRequestNumber number;
     private final CompanyId shipperCompanyId;
     private final TransportRequestStatus status;
     private final TransportRequestVersion currentVersion;
@@ -29,10 +31,12 @@ public final class TransportRequest {
 
     private TransportRequest(
             TransportRequestId id,
+            TransportRequestNumber number,
             CompanyId shipperCompanyId,
             TransportRequestStatus status,
             TransportRequestVersion currentVersion) {
         this.id = Objects.requireNonNull(id, "id");
+        this.number = Objects.requireNonNull(number, "number");
         this.shipperCompanyId = Objects.requireNonNull(shipperCompanyId, "shipperCompanyId");
         this.status = Objects.requireNonNull(status, "status");
         this.currentVersion = Objects.requireNonNull(currentVersion, "currentVersion");
@@ -40,9 +44,11 @@ public final class TransportRequest {
 
     /**
      * 輸送要求を提出する。最初の版を作って審査中にし、DE-01 を生成する。
+     * 業務番号は初回の提出で振ったものを受け取り、以後変えない（Q-INV-13）。
      */
     public static TransportRequest submit(
             TransportRequestId id,
+            TransportRequestNumber number,
             CompanyId shipperCompanyId,
             ShipmentTerms terms,
             UserId submittedBy,
@@ -50,9 +56,9 @@ public final class TransportRequest {
         TransportRequestVersion firstVersion =
                 new TransportRequestVersion(FIRST_VERSION_NO, terms, submittedBy, submittedAt);
         TransportRequest request =
-                new TransportRequest(id, shipperCompanyId, TransportRequestStatus.UNDER_REVIEW, firstVersion);
-        request.domainEvents.add(
-                new TransportRequestSubmitted(id.value(), FIRST_VERSION_NO, shipperCompanyId, submittedAt));
+                new TransportRequest(id, number, shipperCompanyId, TransportRequestStatus.UNDER_REVIEW, firstVersion);
+        request.domainEvents.add(new TransportRequestSubmitted(
+                id.value(), FIRST_VERSION_NO, shipperCompanyId, submittedAt, number.text()));
         return request;
     }
 
@@ -61,14 +67,19 @@ public final class TransportRequest {
      */
     public static TransportRequest reconstitute(
             TransportRequestId id,
+            TransportRequestNumber number,
             CompanyId shipperCompanyId,
             TransportRequestStatus status,
             TransportRequestVersion currentVersion) {
-        return new TransportRequest(id, shipperCompanyId, status, currentVersion);
+        return new TransportRequest(id, number, shipperCompanyId, status, currentVersion);
     }
 
     public TransportRequestId id() {
         return id;
+    }
+
+    public TransportRequestNumber number() {
+        return number;
     }
 
     public CompanyId shipperCompanyId() {

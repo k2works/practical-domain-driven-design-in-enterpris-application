@@ -26,6 +26,7 @@ public class MyBatisKpiObservationRepository implements KpiObservationRepository
     public void save(KpiObservation observation) {
         mapper.insertIfAbsent(new KpiObservationRow(
                 observation.transportRequestId(),
+                observation.transportRequestNumber(),
                 observation.shipperCompanyId().value(),
                 observation.submittedAt().instant().atOffset(ZoneOffset.UTC)));
     }
@@ -45,6 +46,7 @@ public class MyBatisKpiObservationRepository implements KpiObservationRepository
     private static KpiObservation toAggregate(KpiObservationRow row) {
         return KpiObservation.reconstitute(
                 row.transportRequestId(),
+                row.transportRequestNumber(),
                 new CompanyId(row.shipperCompanyId()),
                 new UtcInstant(row.submittedAt().toInstant()));
     }

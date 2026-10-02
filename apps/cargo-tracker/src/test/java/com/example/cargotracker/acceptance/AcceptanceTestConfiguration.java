@@ -3,10 +3,12 @@ package com.example.cargotracker.acceptance;
 import com.example.cargotracker.identity.acceptance.InMemoryKpiObservationRepository;
 import com.example.cargotracker.identity.application.internal.eventhandlers.KpiObservationEventHandler;
 import com.example.cargotracker.identity.application.internal.queryservices.KpiObservationQueryService;
+import com.example.cargotracker.quotation.acceptance.InMemoryTransportRequestNumberIssuer;
 import com.example.cargotracker.quotation.acceptance.InMemoryTransportRequestRepository;
 import com.example.cargotracker.quotation.application.internal.commandservices.TransportRequestCommandService;
 import com.example.cargotracker.quotation.application.internal.queryservices.TransportRequestQueryService;
 import com.example.cargotracker.quotation.domain.events.TransportRequestSubmitted;
+import com.example.cargotracker.quotation.domain.model.rules.MvpAcceptancePolicy;
 import com.example.cargotracker.shared.acceptance.DeferredEventDelivery;
 import com.example.cargotracker.shared.acceptance.MutableClock;
 import com.example.cargotracker.shared.acceptance.ScenarioContext;
@@ -42,6 +44,11 @@ public class AcceptanceTestConfiguration {
         }
 
         @Bean
+        InMemoryTransportRequestNumberIssuer transportRequestNumberIssuer() {
+            return new InMemoryTransportRequestNumberIssuer();
+        }
+
+        @Bean
         InMemoryKpiObservationRepository kpiObservationRepository() {
             return new InMemoryKpiObservationRepository();
         }
@@ -71,9 +78,11 @@ public class AcceptanceTestConfiguration {
         @Bean
         TransportRequestCommandService transportRequestCommandService(
                 InMemoryTransportRequestRepository repository,
+                InMemoryTransportRequestNumberIssuer numberIssuer,
                 DeferredEventDelivery eventDelivery,
                 MutableClock clock) {
-            return new TransportRequestCommandService(repository, eventDelivery, clock);
+            return new TransportRequestCommandService(
+                    repository, numberIssuer, new MvpAcceptancePolicy(), eventDelivery, clock);
         }
 
         @Bean

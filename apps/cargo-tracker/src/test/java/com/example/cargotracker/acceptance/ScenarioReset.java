@@ -1,6 +1,7 @@
 package com.example.cargotracker.acceptance;
 
 import com.example.cargotracker.identity.acceptance.InMemoryKpiObservationRepository;
+import com.example.cargotracker.quotation.acceptance.InMemoryTransportRequestNumberIssuer;
 import com.example.cargotracker.quotation.acceptance.InMemoryTransportRequestRepository;
 import com.example.cargotracker.shared.acceptance.DeferredEventDelivery;
 import com.example.cargotracker.shared.acceptance.MutableClock;
@@ -8,22 +9,25 @@ import io.cucumber.java.Before;
 import java.time.Instant;
 
 /**
- * シナリオごとに時刻・メモリ上のリポジトリ・ためたイベントを初期化し、シナリオの順序に依存しないようにする。
+ * シナリオごとに時刻・メモリ上のリポジトリ・採番・ためたイベントを初期化し、シナリオの順序に依存しないようにする。
  */
 public class ScenarioReset {
 
     private final MutableClock clock;
     private final InMemoryTransportRequestRepository transportRequestRepository;
+    private final InMemoryTransportRequestNumberIssuer transportRequestNumberIssuer;
     private final InMemoryKpiObservationRepository kpiObservationRepository;
     private final DeferredEventDelivery delivery;
 
     public ScenarioReset(
             MutableClock clock,
             InMemoryTransportRequestRepository transportRequestRepository,
+            InMemoryTransportRequestNumberIssuer transportRequestNumberIssuer,
             InMemoryKpiObservationRepository kpiObservationRepository,
             DeferredEventDelivery delivery) {
         this.clock = clock;
         this.transportRequestRepository = transportRequestRepository;
+        this.transportRequestNumberIssuer = transportRequestNumberIssuer;
         this.kpiObservationRepository = kpiObservationRepository;
         this.delivery = delivery;
     }
@@ -32,6 +36,7 @@ public class ScenarioReset {
     public void reset() {
         clock.setInstant(Instant.EPOCH);
         transportRequestRepository.clear();
+        transportRequestNumberIssuer.clear();
         kpiObservationRepository.clear();
         delivery.clear();
     }

@@ -2,9 +2,12 @@ package com.example.cargotracker.quotation.application.internal.commandservices;
 
 import com.example.cargotracker.quotation.application.internal.commands.SubmitTransportRequestCommand;
 import com.example.cargotracker.quotation.domain.model.aggregates.TransportRequest;
+import com.example.cargotracker.quotation.domain.model.aggregates.TransportRequestNumberIssuer;
 import com.example.cargotracker.quotation.domain.model.aggregates.TransportRequestRepository;
-import com.example.cargotracker.quotation.domain.model.valueobjects.ShipmentTerms;
+import com.example.cargotracker.quotation.domain.model.rules.MvpAcceptancePolicy;
+import com.example.cargotracker.quotation.domain.model.valueobjects.SubmissionViolations;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestId;
+import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestNumber;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import java.time.Clock;
 import java.util.UUID;
@@ -17,30 +20,46 @@ import org.springframework.transaction.annotation.Transactional;
 public class TransportRequestCommandService {
 
     private final TransportRequestRepository repository;
+    private final TransportRequestNumberIssuer numberIssuer;
+    private final MvpAcceptancePolicy acceptancePolicy;
     private final ApplicationEventPublisher eventPublisher;
     private final Clock clock;
 
     public TransportRequestCommandService(
-            TransportRequestRepository repository, ApplicationEventPublisher eventPublisher, Clock clock) {
+            TransportRequestRepository repository,
+            TransportRequestNumberIssuer numberIssuer,
+            MvpAcceptancePolicy acceptancePolicy,
+            ApplicationEventPublisher eventPublisher,
+            Clock clock) {
         this.repository = repository;
+        this.numberIssuer = numberIssuer;
+        this.acceptancePolicy = acceptancePolicy;
         this.eventPublisher = eventPublisher;
         this.clock = clock;
     }
 
     /**
-     * 輸送要求を提出する。保存と同じトランザクションで DE-01 を発行する。
+     * 輸送要求を提出する。輸送条件の入力を検証し、不足や誤りがあれば何も保存せずに違反を返す。
+     * 違反がなければ、提出時刻の年の業務番号を振り、保存と同じトランザクションで DE-01 を発行する。
      */
     @Transactional
-    public TransportRequestId submit(SubmitTransportRequestCommand command) {
+    public SubmissionOutcome submit(SubmitTransportRequestCommand command) {
+        UtcInstant submittedAt = new UtcInstant(clock.instant());
+        SubmissionViolations violations = command.terms().validate(submittedAt, acceptancePolicy);
+        if (!violations.isEmpty()) {
+            return new SubmissionOutcome.Rejected(violations);
+        }
+        TransportRequestNumber number = numberIssuer.next(TransportRequestNumber.yearOf(submittedAt));
         TransportRequest transportRequest = TransportRequest.submit(
                 new TransportRequestId(UUID.randomUUID()),
+                number,
                 command.shipperCompanyId(),
-                new ShipmentTerms(command.origin(), command.destination()),
+                command.terms().toTerms(),
                 command.submittedBy(),
-                new UtcInstant(clock.instant()));
+                submittedAt);
         repository.save(transportRequest);
         transportRequest.domainEvents().forEach(eventPublisher::publishEvent);
         transportRequest.clearDomainEvents();
-        return transportRequest.id();
+        return new SubmissionOutcome.Submitted(transportRequest.id(), number);
     }
 }

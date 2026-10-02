@@ -3,8 +3,12 @@ package com.example.cargotracker.quotation.infrastructure.persistence;
 import com.example.cargotracker.quotation.domain.model.aggregates.TransportRequest;
 import com.example.cargotracker.quotation.domain.model.aggregates.TransportRequestRepository;
 import com.example.cargotracker.quotation.domain.model.entities.TransportRequestVersion;
+import com.example.cargotracker.quotation.domain.model.valueobjects.Cargo;
+import com.example.cargotracker.quotation.domain.model.valueobjects.CargoCategory;
+import com.example.cargotracker.quotation.domain.model.valueobjects.PackageType;
 import com.example.cargotracker.quotation.domain.model.valueobjects.ShipmentTerms;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestId;
+import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestNumber;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestStatus;
 import com.example.cargotracker.shared.domain.CompanyId;
 import com.example.cargotracker.shared.domain.Location;
@@ -43,14 +47,23 @@ public class MyBatisTransportRequestRepository implements TransportRequestReposi
 
     private static TransportRequestRow toRow(TransportRequest request) {
         TransportRequestVersion version = request.currentVersion();
+        Cargo cargo = version.terms().cargo();
         return new TransportRequestRow(
                 request.id().value(),
+                request.number().text(),
                 request.shipperCompanyId().value(),
                 request.status().name(),
                 version.versionNo(),
                 INITIAL_LOCK_VERSION,
+                version.terms().consigneeCompanyId().value(),
                 version.terms().origin().unLocode(),
                 version.terms().destination().unLocode(),
+                version.terms().arrivalDeadline().instant().atOffset(ZoneOffset.UTC),
+                cargo.category().name(),
+                cargo.packageType().name(),
+                cargo.packageCount(),
+                cargo.grossWeightKg(),
+                cargo.volumeM3(),
                 version.submittedBy().value(),
                 version.submittedAt().instant().atOffset(ZoneOffset.UTC));
     }
@@ -58,11 +71,22 @@ public class MyBatisTransportRequestRepository implements TransportRequestReposi
     private static TransportRequest toAggregate(TransportRequestRow row) {
         TransportRequestVersion version = new TransportRequestVersion(
                 row.currentVersionNo(),
-                new ShipmentTerms(new Location(row.originUnlocode()), new Location(row.destinationUnlocode())),
+                new ShipmentTerms(
+                        new CompanyId(row.consigneeCompanyId()),
+                        new Location(row.originUnlocode()),
+                        new Location(row.destinationUnlocode()),
+                        new UtcInstant(row.arrivalDeadline().toInstant()),
+                        new Cargo(
+                                CargoCategory.valueOf(row.cargoCategory()),
+                                PackageType.valueOf(row.packageType()),
+                                row.packageCount(),
+                                row.grossWeightKg(),
+                                row.volumeM3())),
                 new UserId(row.submittedBy()),
                 new UtcInstant(row.submittedAt().toInstant()));
         return TransportRequest.reconstitute(
                 new TransportRequestId(row.id()),
+                TransportRequestNumber.parse(row.requestNumber()),
                 new CompanyId(row.shipperCompanyId()),
                 TransportRequestStatus.valueOf(row.status()),
                 version);

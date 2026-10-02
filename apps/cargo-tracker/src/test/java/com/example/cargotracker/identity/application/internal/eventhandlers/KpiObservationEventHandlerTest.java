@@ -21,7 +21,8 @@ class KpiObservationEventHandlerTest {
                 UUID.randomUUID(),
                 1,
                 new CompanyId(UUID.randomUUID()),
-                new UtcInstant(Instant.parse("2026-10-05T01:00:00Z")));
+                new UtcInstant(Instant.parse("2026-10-05T01:00:00Z")),
+                "TR-2026-0001");
 
         handler.on(event);
         handler.on(event);
@@ -29,5 +30,39 @@ class KpiObservationEventHandlerTest {
         assertThat(repository.findAll())
                 .singleElement()
                 .satisfies(observation -> assertThat(observation.submittedAt()).isEqualTo(event.submittedAt()));
+    }
+
+    @Test
+    void DE01の業務番号をKPI計測記録に写す() {
+        TransportRequestSubmitted event = new TransportRequestSubmitted(
+                UUID.randomUUID(),
+                1,
+                new CompanyId(UUID.randomUUID()),
+                new UtcInstant(Instant.parse("2026-10-05T01:00:00Z")),
+                "TR-2026-0001");
+
+        handler.on(event);
+
+        assertThat(repository.findAll())
+                .singleElement()
+                .satisfies(observation ->
+                        assertThat(observation.transportRequestNumber()).isEqualTo("TR-2026-0001"));
+    }
+
+    @Test
+    void 業務番号を持たない古いDE01でもKPI計測記録を残す() {
+        TransportRequestSubmitted event = new TransportRequestSubmitted(
+                UUID.randomUUID(),
+                1,
+                new CompanyId(UUID.randomUUID()),
+                new UtcInstant(Instant.parse("2026-10-05T01:00:00Z")),
+                null);
+
+        handler.on(event);
+
+        assertThat(repository.findAll())
+                .singleElement()
+                .satisfies(observation ->
+                        assertThat(observation.transportRequestNumber()).isNull());
     }
 }

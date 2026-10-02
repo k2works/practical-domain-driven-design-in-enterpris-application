@@ -6,10 +6,11 @@ import com.example.cargotracker.TestcontainersConfiguration;
 import com.example.cargotracker.quotation.domain.model.aggregates.TransportRequest;
 import com.example.cargotracker.quotation.domain.model.aggregates.TransportRequestRepository;
 import com.example.cargotracker.quotation.domain.model.valueobjects.ShipmentTerms;
+import com.example.cargotracker.quotation.domain.model.valueobjects.ShipmentTermsFixture;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestId;
+import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestNumber;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestStatus;
 import com.example.cargotracker.shared.domain.CompanyId;
-import com.example.cargotracker.shared.domain.Location;
 import com.example.cargotracker.shared.domain.UserId;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import java.time.Instant;
@@ -32,17 +33,19 @@ class MyBatisTransportRequestRepositoryIntegrationTest {
     TransportRequestRepository repository;
 
     @Test
-    void 提出した輸送要求を保存して読み出せる() {
+    void 提出した輸送要求を業務番号と輸送条件とともに保存して読み出せる() {
         TransportRequestId id = new TransportRequestId(UUID.randomUUID());
         CompanyId shipper = new CompanyId(UUID.randomUUID());
         UserId submitter = new UserId(UUID.randomUUID());
-        ShipmentTerms terms = new ShipmentTerms(new Location("JPTYO"), new Location("NLRTM"));
+        TransportRequestNumber number = new TransportRequestNumber(2026, 1);
+        ShipmentTerms terms = ShipmentTermsFixture.generalCargo();
         UtcInstant submittedAt = new UtcInstant(Instant.parse("2026-10-05T01:00:00.123456Z"));
 
-        repository.save(TransportRequest.submit(id, shipper, terms, submitter, submittedAt));
+        repository.save(TransportRequest.submit(id, number, shipper, terms, submitter, submittedAt));
 
         assertThat(repository.findById(id)).hasValueSatisfying(found -> {
             assertThat(found.id()).isEqualTo(id);
+            assertThat(found.number()).isEqualTo(number);
             assertThat(found.shipperCompanyId()).isEqualTo(shipper);
             assertThat(found.status()).isEqualTo(TransportRequestStatus.UNDER_REVIEW);
             assertThat(found.currentVersion().versionNo()).isEqualTo(1);

@@ -24,6 +24,9 @@ public class KpiObservationEventHandler {
     @ApplicationModuleListener
     public void on(TransportRequestSubmitted event) {
         repository.save(KpiObservation.recordSubmission(
-                event.transportRequestId(), event.shipperCompanyId(), event.submittedAt()));
+                event.transportRequestId(),
+                event.transportRequestNumber(),
+                event.shipperCompanyId(),
+                event.submittedAt()));
     }
 }

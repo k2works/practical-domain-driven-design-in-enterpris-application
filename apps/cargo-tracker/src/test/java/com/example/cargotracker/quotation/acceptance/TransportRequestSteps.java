@@ -40,8 +40,8 @@ public class TransportRequestSteps {
     private static final UserId SUBMITTER = new UserId(UUID.fromString("00000000-0000-0000-0000-000000000101"));
 
     /** シナリオで使う荷受人の呼び名。企業マスターができるまでの仮の一覧（確認ポイント 2）と同じ考え方。 */
-    private static final Map<String, CompanyId> CONSIGNEES = Map.of(
-            "取引先 A", new CompanyId(UUID.fromString("00000000-0000-0000-0000-000000000201")));
+    private static final Map<String, CompanyId> CONSIGNEES =
+            Map.of("取引先 A", new CompanyId(UUID.fromString("00000000-0000-0000-0000-000000000201")));
 
     private static final Map<String, Item> ITEMS = Map.of(
             "荷受人", Item.CONSIGNEE,
@@ -150,10 +150,12 @@ public class TransportRequestSteps {
     @ならば("業務番号 {string} が示される")
     public void 業務番号が示される(String number) {
         assertThat(lastOutcome)
-                .isInstanceOfSatisfying(SubmissionOutcome.Submitted.class, submitted ->
-                        assertThat(submitted.number().text()).isEqualTo(number));
+                .isInstanceOfSatisfying(
+                        SubmissionOutcome.Submitted.class,
+                        submitted -> assertThat(submitted.number().text()).isEqualTo(number));
         assertThat(queryService.findById(new TransportRequestId(context.transportRequestId())))
-                .hasValueSatisfying(request -> assertThat(request.number().text()).isEqualTo(number));
+                .hasValueSatisfying(
+                        request -> assertThat(request.number().text()).isEqualTo(number));
     }
 
     @ならば("提出は受け付けられず輸送要求は作られない")

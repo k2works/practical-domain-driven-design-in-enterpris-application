@@ -14,11 +14,14 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.view;
 
 import com.example.cargotracker.quotation.application.internal.commands.SubmitTransportRequestCommand;
+import com.example.cargotracker.quotation.application.internal.commandservices.SubmissionOutcome;
 import com.example.cargotracker.quotation.application.internal.commandservices.TransportRequestCommandService;
 import com.example.cargotracker.quotation.application.internal.queryservices.TransportRequestQueryService;
 import com.example.cargotracker.quotation.domain.model.aggregates.TransportRequest;
-import com.example.cargotracker.quotation.domain.model.valueobjects.ShipmentTerms;
+import com.example.cargotracker.quotation.domain.model.valueobjects.ShipmentTermsFixture;
+import com.example.cargotracker.quotation.domain.model.valueobjects.ShipmentTermsInput;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestId;
+import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestNumber;
 import com.example.cargotracker.shared.domain.CompanyId;
 import com.example.cargotracker.shared.domain.Location;
 import com.example.cargotracker.shared.domain.UserId;
@@ -60,6 +63,15 @@ class TransportRequestControllerTest {
     @MockitoBean
     TransportRequestQueryService queryService;
 
+    private static final SubmissionOutcome SUBMITTED =
+            new SubmissionOutcome.Submitted(ID, new TransportRequestNumber(2026, 1));
+
+    /** ステップ 5 で画面の入力を足すまでの、出発地と目的地だけの入力。 */
+    private static ShipmentTermsInput partialInput() {
+        return new ShipmentTermsInput(
+                null, new Location("JPTYO"), new Location("NLRTM"), null, null, null, null, null, null);
+    }
+
     @Test
     void 見積依頼の作成画面を表示する() throws Exception {
         mockMvc.perform(get("/customer/transport-requests/new"))
@@ -71,9 +83,8 @@ class TransportRequestControllerTest {
 
     @Test
     void 輸送要求を仮の主体で提出すると完了画面へリダイレクトする() throws Exception {
-        SubmitTransportRequestCommand expected =
-                new SubmitTransportRequestCommand(SHIPPER, USER, new Location("JPTYO"), new Location("NLRTM"));
-        given(commandService.submit(expected)).willReturn(ID);
+        SubmitTransportRequestCommand expected = new SubmitTransportRequestCommand(SHIPPER, USER, partialInput());
+        given(commandService.submit(expected)).willReturn(SUBMITTED);
 
         mockMvc.perform(post("/customer/transport-requests")
                         .param("origin", "JPTYO")
@@ -85,16 +96,14 @@ class TransportRequestControllerTest {
 
     @Test
     void 小文字と前後の空白はそろえて提出する() throws Exception {
-        given(commandService.submit(any())).willReturn(ID);
+        given(commandService.submit(any())).willReturn(SUBMITTED);
 
         mockMvc.perform(post("/customer/transport-requests")
                         .param("origin", " jptyo ")
                         .param("destination", "nlrtm"))
                 .andExpect(redirectedUrl("/customer/transport-requests/" + ID.value() + "/submitted"));
 
-        then(commandService)
-                .should()
-                .submit(new SubmitTransportRequestCommand(SHIPPER, USER, new Location("JPTYO"), new Location("NLRTM")));
+        then(commandService).should().submit(new SubmitTransportRequestCommand(SHIPPER, USER, partialInput()));
     }
 
     @Test
@@ -142,8 +151,9 @@ class TransportRequestControllerTest {
         given(queryService.findById(id))
                 .willReturn(Optional.of(TransportRequest.submit(
                         id,
+                        new TransportRequestNumber(2026, 1),
                         SHIPPER,
-                        new ShipmentTerms(new Location("JPTYO"), new Location("NLRTM")),
+                        ShipmentTermsFixture.generalCargo(),
                         USER,
                         new UtcInstant(Instant.parse("2026-10-05T01:00:00Z")))));
 

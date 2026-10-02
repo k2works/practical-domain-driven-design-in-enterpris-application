@@ -17,7 +17,10 @@ public abstract class KpiObservationRepositoryContract {
 
     private static KpiObservation submittedAt(UUID transportRequestId, String instant) {
         return KpiObservation.recordSubmission(
-                transportRequestId, new CompanyId(UUID.randomUUID()), new UtcInstant(Instant.parse(instant)));
+                transportRequestId,
+                "TR-2026-0001",
+                new CompanyId(UUID.randomUUID()),
+                new UtcInstant(Instant.parse(instant)));
     }
 
     @Test
@@ -28,9 +31,26 @@ public abstract class KpiObservationRepositoryContract {
         repository().save(observation);
 
         assertThat(repository().findByTransportRequestId(transportRequestId)).hasValueSatisfying(found -> {
+            assertThat(found.transportRequestNumber()).isEqualTo(observation.transportRequestNumber());
             assertThat(found.shipperCompanyId()).isEqualTo(observation.shipperCompanyId());
             assertThat(found.submittedAt()).isEqualTo(observation.submittedAt());
         });
+    }
+
+    @Test
+    void 業務番号のない古い記録も保存して読み出せる() {
+        UUID transportRequestId = UUID.randomUUID();
+
+        repository()
+                .save(KpiObservation.recordSubmission(
+                        transportRequestId,
+                        null,
+                        new CompanyId(UUID.randomUUID()),
+                        new UtcInstant(Instant.parse("2026-10-05T01:00:00Z"))));
+
+        assertThat(repository().findByTransportRequestId(transportRequestId))
+                .hasValueSatisfying(
+                        found -> assertThat(found.transportRequestNumber()).isNull());
     }
 
     @Test

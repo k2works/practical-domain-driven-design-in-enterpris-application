@@ -4,7 +4,7 @@ title: "Bolt 4 計画 - 業務番号と必須条件の検証（US-01 AC1・AC2�
 description: "4 回目の Bolt の計画。US-01 AC1・AC2（必要書類を除く）・AC4 を対象に、業務番号の採番（D-10）、提出の検証とエラー要約、MvpAcceptancePolicy、画面と KPI 計測記録の一覧から UUID を消すことを 6 つのステップで定義する。"
 tags: [development,bolt-plan]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-02T02:42:16Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-02T04:08:51Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-02T02:18:51Z }
 ---
@@ -214,7 +214,7 @@ package "identity" {
   entity "identity.kpi_observation\nKPI 計測記録" as kpi {
     * transport_request_id : UUID <<PK>>
     --
-    * transport_request_number : VARCHAR(20) 【追加】
+    transport_request_number : VARCHAR(20) 【追加、null を許す】
     * shipper_company_id : UUID
     * submitted_at : TIMESTAMPTZ
     * excluded : BOOLEAN
@@ -272,7 +272,7 @@ C03 --> 完了 : POST の後にリダイレクト（PRG）\n[検証を通る]
     - ユーザーストーリー: US-01 の決定の行に D-10 を書く。AC2 の必要書類と下書き保存を後の Bolt で入れることを書く
     - UI 設計: C-03 の行を Bolt 4 の範囲（1 画面。段階入力は #36）に直す。完了画面の行を、URL のキーを業務番号にして「業務番号と状態を示す」に直す（確認ポイント 5）
   - 完了の判定: 文書の差分があり、`okf:check` が ERROR 0。
-- [?] **2. 受入シナリオを書く（外側のループの Red）**
+- [x] **2. 受入シナリオを書く（外側のループの Red）**
   - `features/quotation/submit_transport_request.feature`（`@US-01 @must`）に、業務ルール層のシナリオを書く。
     - `@US-01-AC1`: 必須条件がそろうと審査中になり、提出者・提出時刻・業務番号 `TR-2026-0001` が記録される。同じ年の 2 件目は `TR-2026-0002`、JST で年が変わった提出（`2026-12-31T15:00:00Z`）は `TR-2027-0001`
     - `@US-01-AC2 @Q-INV-01`: 必須条件の不足。項目ごとに理由と直し方が示され、提出されない。不足と誤りは別のシナリオにする（R-22）
@@ -281,7 +281,7 @@ C03 --> 完了 : POST の後にリダイレクト（PRG）\n[検証を通る]
   - 既存の `walking_skeleton.feature` を、新しい必須条件と業務番号で書き直す。
   - 完了の判定: 新しいシナリオが期待した理由で失敗する（未定義のステップでなく、アサーションで）。
   - 結果（2026-10-02）: ステップ定義がまだない入力ポート（`SubmissionOutcome`、`ShipmentTermsInput`、`SubmissionViolations` など）を呼ぶため、Red はコンパイルエラーになった。開発戦略の序盤のワークフロー（「まだない入力ポートを呼んで Red」）に合わせ、完了の判定をこれに読み替えた。アサーションでの失敗は、ステップ 3 で型を作った時点で確かめる。ビルドが通らないため、push はステップ 3 の Green の後にする
-- [ ] **3. アプリケーションとドメインを作る（内側のループ）**
+- [?] **3. アプリケーションとドメインを作る（内側のループ）**
   - 単体テストを先に書き、次を作る。
     - ドメイン（`domain.model`）
       - `TransportRequestNumber`（形式、JST の年、4 桁のゼロ埋め、1 万件目で 5 桁）
@@ -296,6 +296,9 @@ C03 --> 完了 : POST の後にリダイレクト（PRG）\n[検証を通る]
     - identity: KPI 計測のイベントハンドラーが業務番号を受け取る
   - 業務ルール層では、採番をメモリ上の実装に差し替え、年の区切りを固定の時計で確かめる。
   - 完了の判定: 単体テストと、ステップ 2 の業務ルール層のシナリオが緑。ArchUnit（イベントの持てる型、層の依存）が緑。
+  - 結果（2026-10-02）: 業務ルール層のシナリオ 26 本、単体テスト、ArchUnit、用語集の整合テスト、Spotless・Checkstyle・SpotBugs が緑。`test` の 141 件のうち、アプリケーション全体を起動する 22 件（統合テスト、H2 のスモーク、イベントの直列化の契約）は、採番のポートの実装（ステップ 4）がまだないためコンテキストを読み込めず失敗する。CI を赤にしないよう、push はステップ 4 の後にする
+  - 計画からの変更: DE-01 の業務番号は、イベントの進化の規則（null を許す部品の追加だけ）に従い null を許す部品にした。Bolt 3 までの形の JSON も、業務番号を null として復元できることを契約テストに残した。そのため、KPI 計測記録の業務番号の列は `NOT NULL` でなく null を許す列にする（確認ポイント 4 の変更。ステップ 4 で人が確認する）
+  - 型を合わせるためだけに、永続化の Java（行の部品と組み立て）と画面のコントローラーを手直しした。SQL・マイグレーションはステップ 4、画面はステップ 5 で作る
 - [ ] **4. 永続化と採番を作る（Red → Green）** 【要確認: スキーマの変更】
   - 統合テスト（Testcontainers の PostgreSQL 18.6）を先に書く。
     - 業務番号と追加の列が保存・復元される。KPI 計測記録に業務番号が保存される

@@ -6,11 +6,12 @@ import static org.awaitility.Awaitility.await;
 import com.example.cargotracker.TestcontainersConfiguration;
 import com.example.cargotracker.identity.application.internal.queryservices.KpiObservationQueryService;
 import com.example.cargotracker.quotation.application.internal.commands.SubmitTransportRequestCommand;
+import com.example.cargotracker.quotation.application.internal.commandservices.SubmissionOutcome;
 import com.example.cargotracker.quotation.application.internal.commandservices.TransportRequestCommandService;
 import com.example.cargotracker.quotation.domain.events.TransportRequestSubmitted;
+import com.example.cargotracker.quotation.domain.model.valueobjects.ShipmentTermsFixture;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestId;
 import com.example.cargotracker.shared.domain.CompanyId;
-import com.example.cargotracker.shared.domain.Location;
 import com.example.cargotracker.shared.domain.UserId;
 import java.time.Duration;
 import java.util.UUID;
@@ -43,11 +44,12 @@ class TransportRequestSubmittedDeliveryIntegrationTest {
 
     @Test
     void 輸送要求を提出するとイベントが非同期に配信されKPI計測記録ができて配信が完了する() {
-        TransportRequestId id = commandService.submit(new SubmitTransportRequestCommand(
-                new CompanyId(UUID.randomUUID()),
-                new UserId(UUID.randomUUID()),
-                new Location("JPTYO"),
-                new Location("NLRTM")));
+        SubmissionOutcome.Submitted submitted =
+                (SubmissionOutcome.Submitted) commandService.submit(new SubmitTransportRequestCommand(
+                        new CompanyId(UUID.randomUUID()),
+                        new UserId(UUID.randomUUID()),
+                        ShipmentTermsFixture.completeInput()));
+        TransportRequestId id = submitted.transportRequestId();
 
         await().atMost(TIMEOUT)
                 .untilAsserted(() -> assertThat(kpiObservationQueryService.findByTransportRequestId(id.value()))

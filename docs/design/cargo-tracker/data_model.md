@@ -4,7 +4,7 @@ title: "cargo-tracker データモデル"
 description: "cargo-tracker の概念データモデル、スキーマ分割、命名と型の規約（H2 と PostgreSQL の共通部分）、コンテキストごとの論理データモデルと ER 図、版・追記専用・冪等性・イベント配信の表現。"
 tags: [design, data-model]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-02T02:20:33Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-02T04:08:51Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T07:48:17Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:01:37Z }
@@ -792,7 +792,7 @@ entity "audit_record\n監査記録" as au {
 entity "kpi_observation\nKPI 計測記録" as ko {
   * transport_request_id : UUID <<PK>>
   --
-  * transport_request_number : VARCHAR(20)
+  transport_request_number : VARCHAR(20)
   * shipper_company_id : UUID
   * submitted_at : TIMESTAMPTZ
   first_presented_at : TIMESTAMPTZ
@@ -827,7 +827,7 @@ co ||--o{ ag
 | `app_user` | `failed_attempts` と `locked_until` で 5 回失敗・15 分ロックを表す | IA-INV-03 |
 | `access_grant` | `status` IN（`INVITED`、`ACTIVE`、`REVOKED`、`EXPIRED`）。同じ予約・荷受人企業に有効な許可を重複させないことはアプリケーションで確認する | IA-INV-05、IA-INV-06 |
 | `audit_record` | UPDATE・DELETE の権限なし。`event_id` の一意制約で、イベントの再配信による重複記録を防ぐ。認証の失敗と権限外のアクセス試行は `event_id` を持たず、同期で書く | IA-INV-07、IA-INV-08 |
-| `kpi_observation` | 輸送要求ごとに 1 行。DE-01 で作り、DE-03 で最初の提示時刻だけを記録する（2 回目以降の提示では更新しない）。`transport_request_number` は DE-01 の表示用の業務番号の写しで、社内の一覧に UUID の代わりに出す（Bolt 4） | KPI-INV-01 |
+| `kpi_observation` | 輸送要求ごとに 1 行。DE-01 で作り、DE-03 で最初の提示時刻だけを記録する（2 回目以降の提示では更新しない）。`transport_request_number` は DE-01 の表示用の業務番号の写しで、社内の一覧に UUID の代わりに出す（Bolt 4）。Bolt 4 より前の DE-01 は業務番号を持たないため null を許す | KPI-INV-01 |
 | `kpi_baseline` | UPDATE・DELETE の権限なし。訂正は `supersedes_id` で前の行を指す新しい行にする | KPI-INV-02 |
 
 session は `platform` スキーマの Spring Session の表に置く。利用停止・権限取消し・参照許可の取消しを次の request から反映するため、認可の判断は session に保存した値ではなく、request ごとに `app_user`・`user_role`・`access_grant` を確かめる（IA-INV-04、IA-INV-06）。

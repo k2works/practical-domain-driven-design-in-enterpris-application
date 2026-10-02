@@ -1,9 +1,11 @@
 package com.example.cargotracker.quotation.interfaces.web;
 
 import com.example.cargotracker.quotation.application.internal.commands.SubmitTransportRequestCommand;
+import com.example.cargotracker.quotation.application.internal.commandservices.SubmissionOutcome;
 import com.example.cargotracker.quotation.application.internal.commandservices.TransportRequestCommandService;
 import com.example.cargotracker.quotation.application.internal.queryservices.TransportRequestQueryService;
 import com.example.cargotracker.quotation.domain.model.aggregates.TransportRequest;
+import com.example.cargotracker.quotation.domain.model.valueobjects.ShipmentTermsInput;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestId;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestStatus;
 import com.example.cargotracker.shared.domain.CompanyId;
@@ -62,12 +64,21 @@ public class TransportRequestController {
         if (bindingResult.hasErrors()) {
             return FORM_VIEW;
         }
-        TransportRequestId id = commandService.submit(new SubmitTransportRequestCommand(
+        // Bolt 4 のステップ 5 で、画面に荷受人・希望到着期限・貨物の入力とエラー要約を足すまでの仮の形
+        SubmissionOutcome outcome = commandService.submit(new SubmitTransportRequestCommand(
                 new CompanyId(provisionalActor.shipperCompanyId()),
                 new UserId(provisionalActor.userId()),
-                origin.orElseThrow(),
-                destination.orElseThrow()));
-        return "redirect:/customer/transport-requests/" + id.value() + "/submitted";
+                new ShipmentTermsInput(
+                        null, origin.orElseThrow(), destination.orElseThrow(), null, null, null, null, null, null)));
+        return switch (outcome) {
+            case SubmissionOutcome.Submitted submitted ->
+                "redirect:/customer/transport-requests/"
+                        + submitted.transportRequestId().value() + "/submitted";
+            case SubmissionOutcome.Rejected _ -> {
+                bindingResult.reject("terms.incomplete", "必須条件がそろっていません");
+                yield FORM_VIEW;
+            }
+        };
     }
 
     @GetMapping("/{id}/submitted")

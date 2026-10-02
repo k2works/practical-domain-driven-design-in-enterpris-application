@@ -34,6 +34,7 @@ class KpiObservationControllerTest {
         given(queryService.findAll())
                 .willReturn(List.of(KpiObservation.recordSubmission(
                         transportRequestId,
+                        "TR-2026-0001",
                         new CompanyId(UUID.randomUUID()),
                         new UtcInstant(Instant.parse("2026-10-05T13:04:05Z")))));
 
