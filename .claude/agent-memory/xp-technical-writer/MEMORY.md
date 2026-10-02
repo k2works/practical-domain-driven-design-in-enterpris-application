@@ -1,1 +1,1 @@
-- [cargo-tracker のレビュー論点](project_cargo_tracker_review_points.md) — 用語の併記、テスト件数・CI・時刻の照合法、手順書の後追い漏れ、sonar-local の判定の罠、承認待ち決定の反映
+- [cargo-tracker のレビュー論点](project_cargo_tracker_review_points.md) — 用語の併記、件数・CI・時刻の照合法、手順書の環境依存値、D-4 と画面の食い違い、承認済み文書の書き換え

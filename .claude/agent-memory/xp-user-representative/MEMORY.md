@@ -1,1 +1,1 @@
-- [cargo-tracker の業務と利用者視点の論点](project_cargo_tracker_domain.md) — 業務の流れ・呼び分け、2026-10-01・10-02 のレビューで指摘した未解消の論点と優先順位
+- [cargo-tracker の業務と利用者視点の論点](project_cargo_tracker_domain.md) — 業務の流れ・呼び分け、Bolt 1〜3 レビューで指摘した未解消の論点（D-4 細部、UUID 表示、KPI 終点など）
