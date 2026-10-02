@@ -8,6 +8,7 @@ generated: { by: anthropic/claude-opus-5-5, at: 2026-10-02T01:04:33Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T07:48:17Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:01:37Z }
+  - { by: human:kakimomokuri, at: 2026-10-02T01:37:43Z }
 ---
 
 # cargo-tracker データモデル

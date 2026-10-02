@@ -9,6 +9,7 @@ stale_after: 2027-04-01T00:00:00Z
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T07:29:04Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:01:38Z }
+  - { by: human:kakimomokuri, at: 2026-10-02T01:37:43Z }
 ---
 
 # cargo-tracker 技術スタック

@@ -3,8 +3,10 @@ type: Plan
 title: "Bolt 3 終了報告 - E2E の基盤と生きたドキュメント"
 description: "3 回目の Bolt の終了報告。人の決定の反映、画面の層の受入シナリオ、用語集の整合テストと設計ドキュメントの生成、追記専用の権限、手順書の成果、指標、仮説 H1〜H4 の結論、既知の課題、ふりかえりをまとめる。"
 tags: [development,bolt-report]
-status: draft
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-02T01:04:33Z }
+status: stable
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-02T01:37:39Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-10-02T01:37:43Z }
 ---
 
 # Bolt 3 終了報告 - E2E の基盤と生きたドキュメント
@@ -31,7 +33,7 @@ generated: { by: anthropic/claude-opus-5-5, at: 2026-10-02T01:04:33Z }
 | 3. 生きたドキュメント | 完了 | `e352e48` | 用語集の表に 5 つの型がなかった（整合テストの Red。開始準備で予測した設計の欠落）。Spring Modulith の Documenter の出力先の API が違った（コンパイルエラー）。整合テストが Javadoc だけの変更で UP-TO-DATE になり違反を見逃した（T-8 の確認で発見。テストの入力を宣言して直した） |
 | 4. 追記専用の表の権限 | 完了 | `b95bb90` | — |
 | 5. 手順書 | 完了 | `12cbf2d` | — |
-| 6. 検証と終了報告 | 完了（人の承認待ち） | 本報告 | — |
+| 6. 検証と終了報告 | 完了（2026-10-02 に人が承認。変更依頼 0） | 本報告 | — |
 
 打ち切りの線（ステップ 5 を次の Bolt へ）は使わなかった。
 
@@ -145,7 +147,7 @@ generated: { by: anthropic/claude-opus-5-5, at: 2026-10-02T01:04:33Z }
 
 ### 承認待ちの書き換え（R-21）
 
-Bolt 3 とそのクローズで、承認済み（`stable`）の次の文書の本文を書き換えた。人が承認したのは決定の中身であり、文言ではないため、Bolt 3 の承認のときにまとめて確かめて `verify` する。
+Bolt 3 とそのクローズで、承認済み（`stable`）の次の文書の本文を書き換えた。人が承認したのは決定の中身であり、文言ではないため、Bolt 3 の承認（2026-10-02）でまとめて確かめて `verify` した。
 
 - 決定の反映: ADR-001、ADR-003、`architecture_backend.md`、`domain_model.md`、`data_model.md`、`requirements_definition.md`、`user_story.md`、`tech_stack.md`
 - 決定の範囲を超えた追記:
@@ -170,5 +172,6 @@ Bolt 3 とそのクローズで、承認済み（`stable`）の次の文書の�
 
 | 日付 | 内容 | 作成 | 承認 |
 | :--- | :--- | :--- | :--- |
-| 2026-10-02 | 初版 | anthropic/claude-opus-5-5 | 承認待ち |
-| 2026-10-02 | クローズの結果を反映: レビューの対応、承認待ちの書き換えの一覧、既知の課題、Try T-12・T-13、根拠のある期間（R-08） | anthropic/claude-opus-5-5 | 承認待ち |
+| 2026-10-02 | 初版 | anthropic/claude-opus-5-5 | human:kakimomokuri |
+| 2026-10-02 | クローズの結果を反映: レビューの対応、承認待ちの書き換えの一覧、既知の課題、Try T-12・T-13、根拠のある期間（R-08） | anthropic/claude-opus-5-5 | human:kakimomokuri |
+| 2026-10-02 | 人が承認した（変更依頼 0）。承認待ちの書き換えの文書もまとめて verify した。D-9〜D-12 の判断は別に残る | anthropic/claude-opus-5-5 | human:kakimomokuri |

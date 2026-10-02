@@ -4,9 +4,10 @@ title: "Bolt 3 計画 - E2E の基盤と生きたドキュメント"
 description: "3 回目の Bolt の計画。人の決定 D-1・D-3〜D-7 の反映、Playwright と axe-core による画面の層の受入シナリオ、JIG と Spring Modulith の生成と用語集の整合テスト、追記専用の表の権限、開発環境の手順書を 6 つのステップで定義する。"
 tags: [development,bolt-plan]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-02T00:15:02Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-02T01:37:39Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T23:26:07Z }
+  - { by: human:kakimomokuri, at: 2026-10-02T01:37:43Z }
 ---
 
 # Bolt 3 計画 - E2E の基盤と生きたドキュメント
@@ -182,7 +183,7 @@ stop
   - `apps/cargo-tracker/README.md` は手順書への入口だけにする。
   - 開発戦略の「品質チェックのコマンド」から手順書を参照する。
   - 完了の判定: 手順書の差分がある（T-9）。書いたコマンドを実際に動かして確かめる。
-- [?] **6. 検証と Bolt 終了報告**
+- [x] **6. 検証と Bolt 終了報告**
   - `./gradlew check`・`uiTest` と CI（2 つのジョブ）が緑、SonarQube の品質ゲートが PASS（コマンドの成否で判定）であることを確かめる。
   - `bolt_03_report.md` を書く。
 
@@ -229,7 +230,7 @@ push はステップの完了ごとに行う（Bolt 1・2 と同じく、CI の�
 
 ### Definition of Done
 
-- [ ] ステップ 1〜6 が完了し、各ステップの承認ゲートを人が通した（ステップは完了。ゲートは終了報告でまとめて受ける）
+- [x] ステップ 1〜6 が完了し、各ステップの承認ゲートを人が通した（終了報告の承認でまとめて通過）
 - [x] `./gradlew check` と `./gradlew uiTest` がローカルと CI の両方で緑
 - [x] SonarQube の品質ゲートが PASS（コマンドの成否で判定）
 - [x] 新しい検査（axe-core、用語集の整合、権限）は、不合格の入力で失敗することを確かめた（T-8）
@@ -253,7 +254,8 @@ push はステップの完了ごとに行う（Bolt 1・2 と同じく、CI の�
 | :--- | :--- | :--- | :--- |
 | 2026-10-02 | 初版（人の決定 D-1・D-3〜D-8・Spotless を入力にした） | anthropic/claude-opus-5-5 | human:kakimomokuri |
 | 2026-10-02 | 計画を承認。確認ポイント 1〜5（Dependabot、Playwright・axe-core、CI の `@ui` のジョブと E2E を CI の中で動かすこと、JIG、追記専用の表の権限）も承認された（Try T-6） | anthropic/claude-opus-5-5 | human:kakimomokuri |
-| 2026-10-02 | ステップ 1〜5 を完了とし、ステップ 6 を承認待ちにした。結果は [Bolt 3 終了報告](bolt_03_report.md) | anthropic/claude-opus-5-5 | 承認待ち |
+| 2026-10-02 | ステップ 1〜5 を完了とし、ステップ 6 を承認待ちにした。結果は [Bolt 3 終了報告](bolt_03_report.md) | anthropic/claude-opus-5-5 | human:kakimomokuri |
+| 2026-10-02 | 終了報告の承認で、ステップ 6 と各ステップの承認ゲートを通過した | anthropic/claude-opus-5-5 | human:kakimomokuri |
 
 ## 関連ドキュメント
 

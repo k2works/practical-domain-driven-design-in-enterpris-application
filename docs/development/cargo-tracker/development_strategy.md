@@ -4,11 +4,12 @@ title: "開発戦略 - cargo-tracker（A 社国際貨物輸送管理システム
 description: "リリース計画の W1〜W14 を序盤・中盤・終盤の局面に分け、各局面の TDD のアプローチ、週ごとのデモ項目を受入シナリオにする方針、Living Documentation の採用を定める開発戦略。"
 tags: [development,development-strategy]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-02T01:04:33Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-02T01:37:39Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T10:25:23Z }
   - { by: human:kakimomokuri, at: 2026-10-01T13:06:21Z }
   - { by: human:kakimomokuri, at: 2026-10-01T23:12:32Z }
+  - { by: human:kakimomokuri, at: 2026-10-02T01:37:43Z }
 ---
 
 # 開発戦略 - cargo-tracker（A 社国際貨物輸送管理システム）
@@ -442,5 +443,5 @@ Bolt 計画は局所の計画、`docs/design/cargo-tracker/` は全体の正で�
 | 2026-10-01 | Bolt 2 の開始準備: 開発基盤の残りを Bolt 2（CI と品質の安全網）と Bolt 3（E2E の基盤、設計ドキュメントの生成）に分けた | anthropic/claude-opus-5-5（承認 human:kakimomokuri） |
 | 2026-10-01 | Bolt 2 の結果を反映: 品質チェックのコマンドに書式・カバレッジ・SonarQube を足し、CI と同じコマンドであることを書いた | anthropic/claude-opus-5-5（承認 human:kakimomokuri） |
 | 2026-10-02 | Bolt 2 レビューの対応: SonarQube の品質ゲートのコマンドが失敗で判定することと、内部で動かすコマンドを書いた | anthropic/claude-opus-5-5（承認 human:kakimomokuri） |
-| 2026-10-02 | Bolt 3 の結果を反映: 設計ドキュメントの生成と画面の層の受入シナリオのコマンドを書いた | anthropic/claude-opus-5-5（承認待ち） |
-| 2026-10-02 | Bolt 3 レビューの対応: 用語集の整合テストの実際のコマンドと、注釈の語彙 `@Entity` を書いた | anthropic/claude-opus-5-5（承認待ち） |
+| 2026-10-02 | Bolt 3 の結果を反映: 設計ドキュメントの生成と画面の層の受入シナリオのコマンドを書いた | anthropic/claude-opus-5-5（承認 human:kakimomokuri） |
+| 2026-10-02 | Bolt 3 レビューの対応: 用語集の整合テストの実際のコマンドと、注釈の語彙 `@Entity` を書いた | anthropic/claude-opus-5-5（承認 human:kakimomokuri） |
