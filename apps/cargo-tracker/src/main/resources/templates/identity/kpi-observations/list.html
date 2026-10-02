@@ -12,13 +12,13 @@
         <caption>輸送要求ごとの提出時刻（KPI-01 の開始時刻）</caption>
         <thead>
         <tr>
-            <th scope="col">輸送要求 ID</th>
+            <th scope="col">業務番号</th>
             <th scope="col">提出時刻（UTC）</th>
         </tr>
         </thead>
         <tbody>
         <tr th:each="observation : ${observations}">
-            <td th:text="${observation.transportRequestId}">00000000-0000-0000-0000-000000000000</td>
+            <td th:text="${observation.transportRequestNumber}">TR-2026-0001</td>
             <td th:text="${observation.submittedAt}">2026-10-05 01:00:00 +00:00</td>
         </tr>
         </tbody>

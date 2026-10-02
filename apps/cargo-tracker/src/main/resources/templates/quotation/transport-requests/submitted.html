@@ -2,18 +2,22 @@
 <html lang="ja" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>見積依頼を提出しました - cargo-tracker</title>
 </head>
 <body>
 <main>
     <h1>見積依頼を提出しました</h1>
+    <!-- 荷主と社内が言い合える業務番号を示し、内部の ID（UUID）は出さない（D-4） -->
     <dl>
-        <dt>見積依頼（輸送要求）ID</dt>
-        <dd th:text="${transportRequestId}">00000000-0000-0000-0000-000000000000</dd>
+        <dt>業務番号</dt>
+        <dd th:text="${numberWithVersion}">TR-2026-0001 版 1</dd>
         <dt>状態</dt>
         <dd th:text="${statusLabel}">審査中</dd>
+        <dt>提出時刻</dt>
+        <dd th:text="${submittedAt}">2026-10-05 10:00 Asia/Tokyo（UTC+09:00）</dd>
     </dl>
-    <p>営業担当者が内容を審査し、見積りを提示します。</p>
+    <p>営業担当者が内容を審査し、見積りを提示します。お問い合わせの際は業務番号をお伝えください。</p>
     <p><a th:href="@{/customer/transport-requests/new}">続けて見積依頼を作成する</a></p>
 </main>
 </body>

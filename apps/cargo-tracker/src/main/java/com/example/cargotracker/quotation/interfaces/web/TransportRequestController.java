@@ -5,15 +5,17 @@ import com.example.cargotracker.quotation.application.internal.commandservices.S
 import com.example.cargotracker.quotation.application.internal.commandservices.TransportRequestCommandService;
 import com.example.cargotracker.quotation.application.internal.queryservices.TransportRequestQueryService;
 import com.example.cargotracker.quotation.domain.model.aggregates.TransportRequest;
+import com.example.cargotracker.quotation.domain.model.valueobjects.CargoCategory;
+import com.example.cargotracker.quotation.domain.model.valueobjects.PackageType;
 import com.example.cargotracker.quotation.domain.model.valueobjects.ShipmentTermsInput;
-import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestId;
+import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestNumber;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestStatus;
 import com.example.cargotracker.shared.domain.CompanyId;
-import com.example.cargotracker.shared.domain.Location;
 import com.example.cargotracker.shared.domain.UserId;
-import java.util.Locale;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -26,26 +28,53 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.server.ResponseStatusException;
 
 /**
- * 顧客 Web の見積依頼（C-03 見積依頼の作成・編集の最小形）。
+ * 顧客 Web の見積依頼（C-03 見積依頼の作成・編集の 1 画面の形、Bolt 4）。
+ * 段階入力は #36 のプロトタイプで操作性を確かめてから入れる。
  */
 @Controller
 @RequestMapping("/customer/transport-requests")
 public class TransportRequestController {
 
     private static final String FORM_VIEW = "quotation/transport-requests/new";
-    private static final String LOCATION_FORMAT_MESSAGE = "UN/LOCODE（国コード 2 文字 + 地点コード 3 文字、例: JPTYO）で入力してください";
+
+    /** 日時表示の共通部品（UI 設計）: 「年月日 時刻 タイムゾーン（UTC offset）」。 */
+    private static final DateTimeFormatter DATE_TIME = DateTimeFormatter.ofPattern("uuuu-MM-dd HH:mm VV（'UTC'xxx）");
+
+    private static final List<Option> CARGO_CATEGORIES = List.of(
+            new Option(CargoCategory.GENERAL.name(), "一般"),
+            new Option(CargoCategory.DANGEROUS.name(), "危険物"),
+            new Option(CargoCategory.REEFER.name(), "冷凍"),
+            new Option(CargoCategory.OTHER_SPECIAL.name(), "その他特殊"));
+
+    private static final List<Option> PACKAGE_TYPES = List.of(
+            new Option(PackageType.PALLET.name(), "パレット"),
+            new Option(PackageType.CARTON.name(), "カートン"),
+            new Option(PackageType.CRATE.name(), "クレート"),
+            new Option(PackageType.OTHER.name(), "その他"));
 
     private final TransportRequestCommandService commandService;
     private final TransportRequestQueryService queryService;
     private final ProvisionalActorProperties provisionalActor;
+    private final ProvisionalConsigneeProperties provisionalConsignees;
 
     public TransportRequestController(
             TransportRequestCommandService commandService,
             TransportRequestQueryService queryService,
-            ProvisionalActorProperties provisionalActor) {
+            ProvisionalActorProperties provisionalActor,
+            ProvisionalConsigneeProperties provisionalConsignees) {
         this.commandService = commandService;
         this.queryService = queryService;
         this.provisionalActor = provisionalActor;
+        this.provisionalConsignees = provisionalConsignees;
+    }
+
+    @ModelAttribute
+    void formOptions(Model model) {
+        model.addAttribute("consignees", provisionalConsignees.companies());
+        model.addAttribute("cargoCategories", CARGO_CATEGORIES);
+        model.addAttribute("packageTypes", PACKAGE_TYPES);
+        model.addAttribute("cargoCategoryNotice", SubmissionViolationMessages.CargoCategoryNotice.MESSAGE);
+        model.addAttribute("fieldLabels", SubmissionViolationMessages.FIELD_LABELS);
     }
 
     @GetMapping("/new")
@@ -54,57 +83,56 @@ public class TransportRequestController {
     }
 
     /**
-     * 輸送要求を提出する。成功したら完了画面へリダイレクトする（PRG）。
+     * 輸送要求を提出する。形式の誤りと業務の規則の違反は、入力値を残して同じ画面にエラー要約で示す。
+     * 提出できたら業務番号の完了画面へリダイレクトする（PRG）。
      */
     @PostMapping
     public String submit(@ModelAttribute TransportRequestForm transportRequestForm, BindingResult bindingResult) {
-        Optional<Location> origin = toLocation(transportRequestForm.getOrigin(), "origin", "出発地", bindingResult);
-        Optional<Location> destination =
-                toLocation(transportRequestForm.getDestination(), "destination", "目的地", bindingResult);
-        if (bindingResult.hasErrors()) {
+        Optional<ShipmentTermsInput> input =
+                TransportRequestFormConverter.convert(transportRequestForm, provisionalConsignees, bindingResult);
+        if (input.isEmpty()) {
             return FORM_VIEW;
         }
-        // Bolt 4 のステップ 5 で、画面に荷受人・希望到着期限・貨物の入力とエラー要約を足すまでの仮の形
         SubmissionOutcome outcome = commandService.submit(new SubmitTransportRequestCommand(
                 new CompanyId(provisionalActor.shipperCompanyId()),
                 new UserId(provisionalActor.userId()),
-                new ShipmentTermsInput(
-                        null, origin.orElseThrow(), destination.orElseThrow(), null, null, null, null, null, null)));
+                input.get()));
         return switch (outcome) {
             case SubmissionOutcome.Submitted submitted ->
-                "redirect:/customer/transport-requests/"
-                        + submitted.transportRequestId().value() + "/submitted";
-            case SubmissionOutcome.Rejected _ -> {
-                bindingResult.reject("terms.incomplete", "必須条件がそろっていません");
+                "redirect:/customer/transport-requests/" + submitted.number().text() + "/submitted";
+            case SubmissionOutcome.Rejected rejected -> {
+                SubmissionViolationMessages.reject(rejected.violations(), bindingResult);
                 yield FORM_VIEW;
             }
         };
     }
 
-    @GetMapping("/{id}/submitted")
-    public String submitted(@PathVariable UUID id, Model model) {
-        TransportRequest transportRequest = queryService
-                .findById(new TransportRequestId(id))
+    /**
+     * 提出の完了画面。URL のキーにも業務番号を使い、内部の ID を出さない（D-4）。
+     * 他社の輸送要求の拒否（Q-INV-08）は、認証を入れる US-18・AC3 の Bolt で確かめる。
+     */
+    @GetMapping("/{number}/submitted")
+    public String submitted(@PathVariable String number, Model model) {
+        TransportRequest transportRequest = parse(number)
+                .flatMap(queryService::findByNumber)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
-        model.addAttribute("transportRequestId", transportRequest.id().value());
+        model.addAttribute(
+                "numberWithVersion",
+                transportRequest.number().text() + " 版 "
+                        + transportRequest.currentVersion().versionNo());
         model.addAttribute("statusLabel", statusLabel(transportRequest.status()));
+        model.addAttribute(
+                "submittedAt",
+                DATE_TIME.format(ZonedDateTime.ofInstant(
+                        transportRequest.currentVersion().submittedAt().instant(),
+                        TransportRequestFormConverter.CUSTOMER_ZONE)));
         return "quotation/transport-requests/submitted";
     }
 
-    /**
-     * 入力を場所にする。貼り付けで付く前後の空白を除き、小文字は大文字にそろえる。形式の検証はドメインの場所に任せる。
-     */
-    private static Optional<Location> toLocation(
-            String value, String field, String label, BindingResult bindingResult) {
-        String normalized = value == null ? "" : value.strip().toUpperCase(Locale.ROOT);
-        if (normalized.isEmpty()) {
-            bindingResult.rejectValue(field, "location.required", label + "を入力してください");
-            return Optional.empty();
-        }
+    private static Optional<TransportRequestNumber> parse(String number) {
         try {
-            return Optional.of(new Location(normalized));
+            return Optional.of(TransportRequestNumber.parse(number));
         } catch (IllegalArgumentException _) {
-            bindingResult.rejectValue(field, "location.format", LOCATION_FORMAT_MESSAGE);
             return Optional.empty();
         }
     }
@@ -114,4 +142,12 @@ public class TransportRequestController {
             case UNDER_REVIEW -> "審査中";
         };
     }
+
+    /**
+     * 選択の欄の 1 つの選択肢。
+     *
+     * @param value 送る値（ドメインの定数名）
+     * @param label 画面に出す名前
+     */
+    public record Option(String value, String label) {}
 }

@@ -1,6 +1,7 @@
 package com.example.cargotracker.identity.interfaces.web;
 
 import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.not;
 import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -29,7 +30,7 @@ class KpiObservationControllerTest {
     KpiObservationQueryService queryService;
 
     @Test
-    void KPI計測記録の一覧に輸送要求IDと提出時刻をUTCオフセット付きで表示する() throws Exception {
+    void KPI計測記録の一覧に業務番号と提出時刻をUTCオフセット付きで表示し内部のIDを出さない() throws Exception {
         UUID transportRequestId = UUID.fromString("11111111-1111-1111-1111-111111111111");
         given(queryService.findAll())
                 .willReturn(List.of(KpiObservation.recordSubmission(
@@ -40,8 +41,23 @@ class KpiObservationControllerTest {
 
         mockMvc.perform(get("/staff/kpi-observations"))
                 .andExpect(status().isOk())
-                .andExpect(content().string(containsString(transportRequestId.toString())))
+                .andExpect(content().string(containsString("TR-2026-0001")))
+                .andExpect(content().string(not(containsString(transportRequestId.toString()))))
                 .andExpect(content().string(containsString("2026-10-05 13:04:05 +00:00")));
+    }
+
+    @Test
+    void 業務番号のない古い記録は業務番号なしと表示する() throws Exception {
+        given(queryService.findAll())
+                .willReturn(List.of(KpiObservation.recordSubmission(
+                        UUID.randomUUID(),
+                        null,
+                        new CompanyId(UUID.randomUUID()),
+                        new UtcInstant(Instant.parse("2026-10-05T13:04:05Z")))));
+
+        mockMvc.perform(get("/staff/kpi-observations"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("（業務番号なし）")));
     }
 
     @Test

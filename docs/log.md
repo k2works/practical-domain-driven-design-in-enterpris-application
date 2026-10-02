@@ -2,6 +2,8 @@
 
 ## 2026-10-02
 * **Update**: [bolt_04_plan](/development/cargo-tracker/bolt_04_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_04_plan](/development/cargo-tracker/bolt_04_plan.md) を更新（anthropic/claude-opus-5-5）
 * **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
 * **Update**: [bolt_04_plan](/development/cargo-tracker/bolt_04_plan.md) を更新（anthropic/claude-opus-5-5）
 * **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）

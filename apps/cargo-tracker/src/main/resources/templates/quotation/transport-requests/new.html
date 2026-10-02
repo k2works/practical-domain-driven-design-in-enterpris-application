@@ -2,27 +2,104 @@
 <html lang="ja" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>見積依頼の作成 - cargo-tracker</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="${#fields.hasErrors('${transportRequestForm.*}')} ? '入力内容に誤りがあります - 見積依頼の作成 - cargo-tracker' : '見積依頼の作成 - cargo-tracker'">見積依頼の作成 - cargo-tracker</title>
+    <script th:src="@{/js/transport-request-form.js}" defer></script>
 </head>
 <body>
 <main>
     <h1>見積依頼の作成</h1>
+    <!-- C-03 の 1 画面の形（Bolt 4）。段階入力・下書き保存・必要書類は後の Bolt で入れる -->
     <form th:action="@{/customer/transport-requests}" th:object="${transportRequestForm}" method="post" novalidate>
+        <!-- エラー要約: 送信に失敗したら画面上部に出し、要約へフォーカスを移す。各項目の誤りへのリンクを持つ（UI 設計 C-03） -->
+        <div id="error-summary" th:if="${#fields.hasErrors('*')}" tabindex="-1" role="alert"
+             aria-labelledby="error-summary-title">
+            <h2 id="error-summary-title" th:text="|入力内容に ${#fields.errors('*').size()} 件の誤りがあります|">入力内容に 1 件の誤りがあります</h2>
+            <ul>
+                <li th:each="error : ${#fields.detailedErrors('*')}">
+                    <a th:href="|#${error.fieldName}|"
+                       th:text="|${fieldLabels[error.fieldName]}: ${error.message}|">出発地: 出発地を入力してください</a>
+                </li>
+            </ul>
+        </div>
+
+        <!-- 選択肢が少ないため、一覧を開かずにすべて見えるラジオボタンにする（Bolt 4 の人の決定。キー操作が OS によらない）。
+             荷受人は企業マスターができたら（US-16）検索できる入力に変える -->
+        <fieldset th:attr="aria-invalid=${#fields.hasErrors('consignee')},aria-describedby=${#fields.hasErrors('consignee')} ? 'consignee-error' : null">
+            <legend>荷受人</legend>
+            <div th:each="company, stat : ${consignees}">
+                <input type="radio" th:field="*{consignee}" th:value="${company.id()}"
+                       th:id="${stat.first} ? 'consignee' : |consignee-${stat.index}|">
+                <label th:for="${stat.first} ? 'consignee' : |consignee-${stat.index}|" th:text="${company.name()}">荷受人 A（仮）</label>
+            </div>
+            <p id="consignee-error" th:if="${#fields.hasErrors('consignee')}" th:errors="*{consignee}"></p>
+        </fieldset>
         <div>
             <label for="origin">出発地（UN/LOCODE）</label>
             <p id="origin-hint">例: JPTYO（東京）</p>
             <input id="origin" type="text" th:field="*{origin}" autocomplete="off"
                    th:attr="aria-invalid=${#fields.hasErrors('origin')},aria-describedby=${#fields.hasErrors('origin')} ? 'origin-hint origin-error' : 'origin-hint'">
-            <p id="origin-error" th:if="${#fields.hasErrors('origin')}" th:errors="*{origin}" role="alert"></p>
+            <p id="origin-error" th:if="${#fields.hasErrors('origin')}" th:errors="*{origin}"></p>
         </div>
         <div>
             <label for="destination">目的地（UN/LOCODE）</label>
             <p id="destination-hint">例: NLRTM（ロッテルダム）</p>
             <input id="destination" type="text" th:field="*{destination}" autocomplete="off"
                    th:attr="aria-invalid=${#fields.hasErrors('destination')},aria-describedby=${#fields.hasErrors('destination')} ? 'destination-hint destination-error' : 'destination-hint'">
-            <p id="destination-error" th:if="${#fields.hasErrors('destination')}" th:errors="*{destination}" role="alert"></p>
+            <p id="destination-error" th:if="${#fields.hasErrors('destination')}" th:errors="*{destination}"></p>
         </div>
-        <button type="submit">提出する</button>
+        <div>
+            <label for="arrivalDeadline">希望到着期限（日本時間）</label>
+            <p id="arrivalDeadline-hint">例: 2026-11-02 09:00（Asia/Tokyo（UTC+09:00））</p>
+            <input id="arrivalDeadline" type="text" th:field="*{arrivalDeadline}" autocomplete="off" inputmode="numeric"
+                   th:attr="aria-invalid=${#fields.hasErrors('arrivalDeadline')},aria-describedby=${#fields.hasErrors('arrivalDeadline')} ? 'arrivalDeadline-hint arrivalDeadline-error' : 'arrivalDeadline-hint'">
+            <p id="arrivalDeadline-error" th:if="${#fields.hasErrors('arrivalDeadline')}" th:errors="*{arrivalDeadline}"></p>
+        </div>
+        <fieldset th:attr="aria-invalid=${#fields.hasErrors('cargoCategory')},aria-describedby=${#fields.hasErrors('cargoCategory')} ? 'cargo-category-notice cargoCategory-error' : 'cargo-category-notice'">
+            <legend>貨物種別</legend>
+            <div th:each="option, stat : ${cargoCategories}">
+                <input type="radio" th:field="*{cargoCategory}" th:value="${option.value()}"
+                       th:id="${stat.first} ? 'cargoCategory' : |cargoCategory-${stat.index}|">
+                <label th:for="${stat.first} ? 'cargoCategory' : |cargoCategory-${stat.index}|" th:text="${option.label()}">一般</label>
+            </div>
+            <!-- 一般以外を選ぶと、MVP の対象外であることと手動窓口を示す（Q-INV-02、BR-03） -->
+            <p id="cargo-category-notice" th:text="${cargoCategoryNotice}"
+               th:hidden="${transportRequestForm.cargoCategory == null or transportRequestForm.cargoCategory == 'GENERAL'}">案内</p>
+            <p id="cargoCategory-error" th:if="${#fields.hasErrors('cargoCategory')}" th:errors="*{cargoCategory}"></p>
+        </fieldset>
+        <fieldset th:attr="aria-invalid=${#fields.hasErrors('packageType')},aria-describedby=${#fields.hasErrors('packageType')} ? 'packageType-error' : null">
+            <legend>荷姿</legend>
+            <div th:each="option, stat : ${packageTypes}">
+                <input type="radio" th:field="*{packageType}" th:value="${option.value()}"
+                       th:id="${stat.first} ? 'packageType' : |packageType-${stat.index}|">
+                <label th:for="${stat.first} ? 'packageType' : |packageType-${stat.index}|" th:text="${option.label()}">パレット</label>
+            </div>
+            <p id="packageType-error" th:if="${#fields.hasErrors('packageType')}" th:errors="*{packageType}"></p>
+        </fieldset>
+        <div>
+            <label for="packageCount">個数</label>
+            <input id="packageCount" type="text" th:field="*{packageCount}" autocomplete="off" inputmode="numeric"
+                   th:attr="aria-invalid=${#fields.hasErrors('packageCount')},aria-describedby=${#fields.hasErrors('packageCount')} ? 'packageCount-error' : null">
+            <p id="packageCount-error" th:if="${#fields.hasErrors('packageCount')}" th:errors="*{packageCount}"></p>
+        </div>
+        <div>
+            <label for="grossWeightKg">総重量（kg）</label>
+            <p id="grossWeightKg-hint">小数点以下 3 桁まで</p>
+            <input id="grossWeightKg" type="text" th:field="*{grossWeightKg}" autocomplete="off" inputmode="decimal"
+                   th:attr="aria-invalid=${#fields.hasErrors('grossWeightKg')},aria-describedby=${#fields.hasErrors('grossWeightKg')} ? 'grossWeightKg-hint grossWeightKg-error' : 'grossWeightKg-hint'">
+            <p id="grossWeightKg-error" th:if="${#fields.hasErrors('grossWeightKg')}" th:errors="*{grossWeightKg}"></p>
+        </div>
+        <div>
+            <label for="volumeM3">容積（m3）</label>
+            <p id="volumeM3-hint">小数点以下 3 桁まで</p>
+            <input id="volumeM3" type="text" th:field="*{volumeM3}" autocomplete="off" inputmode="decimal"
+                   th:attr="aria-invalid=${#fields.hasErrors('volumeM3')},aria-describedby=${#fields.hasErrors('volumeM3')} ? 'volumeM3-hint volumeM3-error' : 'volumeM3-hint'">
+            <p id="volumeM3-error" th:if="${#fields.hasErrors('volumeM3')}" th:errors="*{volumeM3}"></p>
+        </div>
+        <!-- 特殊貨物のときは aria-disabled にして理由を関連付ける。押せば、サーバーがエラー要約で同じ理由を示す -->
+        <button id="submit" type="submit"
+                th:with="special=${transportRequestForm.cargoCategory != null and transportRequestForm.cargoCategory != 'GENERAL'}"
+                th:attr="aria-disabled=${special} ? 'true' : null,aria-describedby=${special} ? 'cargo-category-notice' : null">提出する</button>
     </form>
 </main>
 </body>
