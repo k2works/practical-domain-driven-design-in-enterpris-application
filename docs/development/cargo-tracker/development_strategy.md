@@ -4,7 +4,7 @@ title: "開発戦略 - cargo-tracker（A 社国際貨物輸送管理システム
 description: "リリース計画の W1〜W14 を序盤・中盤・終盤の局面に分け、各局面の TDD のアプローチ、週ごとのデモ項目を受入シナリオにする方針、Living Documentation の採用を定める開発戦略。"
 tags: [development,development-strategy]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-02T00:07:55Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-02T01:04:33Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T10:25:23Z }
   - { by: human:kakimomokuri, at: 2026-10-01T13:06:21Z }
@@ -219,7 +219,7 @@ Living Documentation を **採用する**。局面が変わるたびに設計の
 
 | 重複している知識 | 整合を検証するテスト |
 | :--- | :--- |
-| ドメインモデルの用語集（英語名と日本語名）とクラス名・Javadoc | 用語集の表を読み、実装済みのコンテキストの英語名に対応するクラスがあり、Javadoc の日本語名が一致することを確かめるテスト（Bolt 3 で作る） |
+| ドメインモデルの用語集（英語名と日本語名）とクラス名・Javadoc | `LivingGlossaryConsistencyTest`（`./gradlew documentationTest`。`check` に含む）。`@AggregateRoot`・`@Entity`・`@ValueObject` の付いたクラスの英語名が用語集にあり、Javadoc の最初の語が日本語名と一致することを確かめる |
 | ユーザーストーリーの受入条件と受入シナリオ | 受入条件の数と `@US-nn-ACm` のタグ付きシナリオの数を照合する（ADR-009 のコンプライアンス） |
 | データモデルの表と、Flyway で作られた実際のスキーマ | jig-erd でスキーマから ER 図を生成し、週次の見直しでデータモデルと見比べる |
 | モジュール境界の設計とコードの依存 | Spring Modulith の検証（AT-03）と ArchUnit |
@@ -232,6 +232,7 @@ Living Documentation を **採用する**。局面が変わるたびに設計の
 | :--- | :--- | :--- |
 | `@AggregateRoot` | 集約ルート | ArchUnit: `domain` パッケージにあること |
 | `@ValueObject` | 値オブジェクト | ArchUnit: record であること（不変） |
+| `@Entity` | エンティティ（集約の中で識別子を持つもの） | 用語集の整合テストの対象 |
 | `@DomainEvent` | ドメインイベント | ArchUnit: 各コンテキストの `events` パッケージにあること（ADR-003） |
 | `@DomainService` | ドメインサービス（制約適合判定など） | ArchUnit: 状態を持たないこと |
 | `@CoreConcept` | 中核の概念（経路版、制約適合判定、貨物予約、追跡記録など） | 生成する用語集で強調する |
@@ -442,3 +443,4 @@ Bolt 計画は局所の計画、`docs/design/cargo-tracker/` は全体の正で�
 | 2026-10-01 | Bolt 2 の結果を反映: 品質チェックのコマンドに書式・カバレッジ・SonarQube を足し、CI と同じコマンドであることを書いた | anthropic/claude-opus-5-5（承認 human:kakimomokuri） |
 | 2026-10-02 | Bolt 2 レビューの対応: SonarQube の品質ゲートのコマンドが失敗で判定することと、内部で動かすコマンドを書いた | anthropic/claude-opus-5-5（承認 human:kakimomokuri） |
 | 2026-10-02 | Bolt 3 の結果を反映: 設計ドキュメントの生成と画面の層の受入シナリオのコマンドを書いた | anthropic/claude-opus-5-5（承認待ち） |
+| 2026-10-02 | Bolt 3 レビューの対応: 用語集の整合テストの実際のコマンドと、注釈の語彙 `@Entity` を書いた | anthropic/claude-opus-5-5（承認待ち） |

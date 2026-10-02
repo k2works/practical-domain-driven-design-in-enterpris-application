@@ -4,7 +4,7 @@ title: "ADR-003: コンテキスト間は冪等コマンド・永続化したド
 description: "ARCH-HO-01・ARCH-HO-02 を満たすため、冪等なコマンドと期待版、永続化して再配信できるドメインイベント、オーケストレーション型の予約サガを採用する決定。"
 tags: [adr, architecture]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-01T23:28:04Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-02T01:04:33Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T07:11:13Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:01:36Z }
@@ -49,7 +49,7 @@ verified:
 | イベントの型 | 各コンテキストの `events` パッケージに置き、移動しない | イベント発行記録は型を完全修飾クラス名で保存するため、移動すると未完了のイベントを復元できない |
 | 有人確認要の見え方 | 予約サガの状態を業務ホームの一覧の正とし、有人案件の起票はそれに追加して行う | 追跡の開始と同じ原因で起票も失敗しうる |
 
-### 補足の決定（2026-10-02 の Bolt 2 の人の判断 D-1 で追加）
+### 補足の決定（2026-10-02 に human:kakimomokuri が承認した D-1 で追加）
 
 | 項目 | 決定 | 理由 |
 | :--- | :--- | :--- |

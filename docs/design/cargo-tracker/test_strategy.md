@@ -4,7 +4,7 @@ title: "cargo-tracker テスト戦略"
 description: "cargo-tracker のテスト形状、テストレベルと責務、BDD（Cucumber）のシナリオ階層とタグ規約、不変条件・ユーザーストーリーとテストの対応、カバレッジ目標、CI での実行。"
 tags: [design, test-strategy, bdd]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-01T23:38:15Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-02T01:04:33Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T08:12:04Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:01:38Z }
@@ -405,7 +405,7 @@ Pull Request ではステージングへの配備の前までを実行する。E
 
 Bolt 2 の時点の実装（`.github/workflows/cargo-tracker-ci.yml`）は、配備の前までを 1 つのジョブの `./gradlew check` で動かす。段階を分けていないのは、全体で約 2 分と目標（合計 8 分）に収まっているためで、目標を超えたら段階に分ける。コンテナイメージのビルド・配備は運用準備、E2E は Bolt 3 で足す。書式（Spotless）・静的解析（Checkstyle・SpotBugs）・AT-06 も同じジョブで検証する。
 
-Bolt 3 から、画面の層の受入シナリオ（`@ui`）を同じワークフローの `ui` ジョブ（`./gradlew uiTest`）で動かす。ステージングがまだないため、アプリケーションを CI の中で起動し（PostgreSQL は Testcontainers）、Playwright の Chromium をヘッドレスで操作する。表示したすべての画面を axe-core で検査する。ステージングができたら、E2E を main へのマージ後にステージングで実行する形に移す（2026-10-02 に human:kakimomokuri が承認）。
+Bolt 3 から、画面の層の受入シナリオ（`@ui`）を同じワークフローの `ui` ジョブ（`./gradlew uiTest`）で動かす。ステージングがまだないため、アプリケーションを CI の中で起動し（PostgreSQL は Testcontainers）、Playwright の Chromium をヘッドレスで操作する。表示したすべての画面を axe-core で検査する。ステージングができたら、E2E を main へのマージ後にステージングで実行する形に移す（2026-10-02 に human:kakimomokuri が承認）。画面の層のアプリは、本番と同じくアプリケーション利用者（最小の権限）で PostgreSQL に接続し、Flyway だけを所有者で動かす。最小の権限で主要な流れが通ることを、この層で確かめる（Bolt 3 レビュー R-01）。`ui.base-url` を与えると、起動したアプリの代わりにその URL を操作する（ステージングへ移す継ぎ目）。
 
 Cucumber の実行結果（HTML・JSON）を CI の成果物として保存し、受入条件の達成状況を示す生きたドキュメントにする（ADR-009）。
 

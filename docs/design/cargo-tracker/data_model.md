@@ -4,7 +4,7 @@ title: "cargo-tracker データモデル"
 description: "cargo-tracker の概念データモデル、スキーマ分割、命名と型の規約（H2 と PostgreSQL の共通部分）、コンテキストごとの論理データモデルと ER 図、版・追記専用・冪等性・イベント配信の表現。"
 tags: [design, data-model]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-01T23:28:04Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-02T01:04:33Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T07:48:17Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:01:37Z }
@@ -306,7 +306,7 @@ q |o--o| q : 置換
 | `transport_request` | `status` IN（`DRAFT`、`UNDER_REVIEW`、`QUOTING`、`QUOTED`、`ROUTING`、`AWAITING_APPROVAL`、`READY_TO_BOOK`、`BOOKED`、`WITHDRAWN`） | 輸送要求の状態遷移 |
 | `transport_request`（業務番号） | 注（設計への反映が必要）: 業務番号 `TR-年-年ごとの連番`（2026-10-02 の D-4）の列と、年ごとの採番の仕組みは、US-01 AC2 の Bolt で設計して足す。一意制約を付け、画面と通知には業務番号だけを出す | D-4、US-01 |
 | `transport_request_draft` | 輸送要求ごとに 1 行。提出時に内容を版の表へ INSERT する。`copied_from_request_id` は複製元 | Q-INV-03、Q-INV-11 |
-| `transport_request_version` | `cargo_category` IN（`GENERAL`、`DANGEROUS`、`REEFER`、`OTHER_SPECIAL`）。提出した版だけを INSERT し、更新しない。`submitted_at` は KPI-01 の開始時刻 | Q-INV-02、Q-INV-03、US-21 |
+| `transport_request_version` | `cargo_category` IN（`GENERAL`、`DANGEROUS`、`REEFER`、`OTHER_SPECIAL`）。提出した版だけを INSERT し、更新しない（追記専用の印 `COMMENT ON TABLE ... IS 'append-only'` を付ける）。版 1 の `submitted_at` が KPI-01 の開始時刻（D-3） | Q-INV-02、Q-INV-03、US-21 |
 | `review_record` | （`transport_request_id`、`version_no`）→ `transport_request_version` の FK | Q-INV-04 |
 | `quotation` | `status` IN（`DRAFT`、`PENDING_APPROVAL`、`PRESENTED`、`ROUTING_REQUESTED`、`AWAITING_SHIPPER_APPROVAL`、`APPROVED`、`EXPIRED`、`REPLACED`）。`shipper_response` IN（`PROCEED`、`DECLINED`）。`presented_at` は KPI-01 の終了時刻。荷主の承認時は `routing_case_id`・`route_version_no` が NOT NULL（アプリケーションで検証） | Q-INV-05〜10、US-21 |
 
@@ -1017,6 +1017,8 @@ src/main/resources/db/
 | 共通部分 | 業務の表の DDL は H2 と PostgreSQL の両方で実行する（ADR-007）。CI で両方に適用して確かめる |
 | 権限 | 権限の付与と剥奪は PostgreSQL 用の `afterMigrate` のコールバックで行い、表の作成と同じ配備で反映する。新しい表を足したら、同じ変更でコールバックも更新する |
 | 後方互換 | ローリングデプロイのため、列の削除・名前の変更は「追加 → 移行 → 削除」に分ける（インフラ設計） |
+| 追記専用の印 | 追記専用の表には、作るマイグレーションで `COMMENT ON TABLE ... IS 'append-only'` を付ける。PostgreSQL の `afterMigrate` のコールバックは、印の付いた表からアプリケーション利用者の UPDATE・DELETE を外す（名指しにしないので、書き忘れで保護が黙って外れない）。印の付け忘れは、権限の統合テストが設計の一覧との一致で検出する（Bolt 3 レビュー R-02） |
+| スキーマの自動初期化 | 使わない。スキーマと表は Flyway だけが作る（Spring Modulith の `spring.modulith.events.jdbc.schema-initialization.enabled=false`。将来の Spring Session なども同じ）。既定権限（`ALTER DEFAULT PRIVILEGES`）も使わない。Flyway 以外で作られた表に UPDATE・DELETE が付くのを防ぐ。連番（SEQUENCE、IDENTITY）を使う表を足したら、コールバックに `USAGE ON ALL SEQUENCES` の付与を足す（Bolt 3 レビュー R-25） |
 | 凍結の時点 | 最初にステージングへ配置したマイグレーションは書き換えない。それまでは Bolt で使う列だけを作り、後の Bolt で足す。凍結の後に `NOT NULL` の列を足すときは、既定値付きで追加するか「追加 → 移行 → 制約」の 3 段にする。状態の `CHECK` 制約は、状態を足すたびに作り直す（Bolt 1 レビュー R-37） |
 
 ## インデックス

@@ -4,7 +4,7 @@ title: "Bolt 2 終了報告 - CI と品質の安全網"
 description: "2 回目の Bolt の終了報告。CI・静的解析・カバレッジの閾値・AT-02・AT-06・SonarQube の品質ゲートの成果、指標、仮説 H1〜H4 の結論、ゴールの指示で進めた【要確認】、ふりかえりをまとめる。"
 tags: [development,bolt-report]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-01T23:12:31Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-02T01:04:33Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T23:12:32Z }
 ---
@@ -157,6 +157,10 @@ D-1 を承認する場合は、ドメインモデルの共有カーネルの図�
   - JIG・Spring Modulith の図と用語集の整合のテスト、手順書: W1 の空き時間か W2 以降
 - **ゲート密度**: 業務のルールに関わる Bolt では、【要確認】を事後に回さない（T-6、R-07 の低）。自律実行へ移るかは人が判断する
 
+## 人の判断の結果（2026-10-02 の追記）
+
+本文の D-8 で「次の Bolt は US-01 AC2」と提案したが、人（human:kakimomokuri）は **次の Bolt を技術の Bolt 3 にする** と決めた。あわせて D-1・D-3〜D-7 と Spotless は提案どおりに決まった。結果は [Bolt 3 計画](bolt_03_plan.md) の「ふりかえりと前の Bolt からの引き継ぎ」を参照する。本文は承認時の記録として残す（Bolt 3 レビュー R-24）。
+
 ## 更新履歴
 
 | 日付 | 内容 | 作成 | 承認 |
@@ -164,3 +168,4 @@ D-1 を承認する場合は、ドメインモデルの共有カーネルの図�
 | 2026-10-01 | 初版 | anthropic/claude-opus-5-5 | human:kakimomokuri |
 | 2026-10-02 | クローズの結果を反映: レビューの対応、品質ゲートの判定の手段、カバレッジの根拠の弱さ、push と CI の回数の差、次の Bolt の提案の見直し | anthropic/claude-opus-5-5 | human:kakimomokuri |
 | 2026-10-02 | 人が承認した（変更依頼 0）。【要確認】の Spotless・D-5・D-1 と、D-3・D-4・D-6・D-7・D-8 の判断は別に残る | anthropic/claude-opus-5-5 | human:kakimomokuri |
+| 2026-10-02 | 人の判断の結果（D-8 は Bolt 3）を追記した | anthropic/claude-opus-5-5 | 承認待ち |

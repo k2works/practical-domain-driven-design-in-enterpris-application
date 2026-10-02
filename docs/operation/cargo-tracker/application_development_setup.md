@@ -4,7 +4,7 @@ title: "アプリケーション開発環境セットアップ手順書 - cargo-
 description: "cargo-tracker（A 社国際貨物輸送管理システム）を、開発者の PC で起動・テスト・品質チェックするための手順を示す。"
 tags: [operation,playbook,setup]
 status: draft
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-02T00:07:55Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-02T01:04:33Z }
 ---
 
 # アプリケーション開発環境セットアップ手順書 - cargo-tracker
@@ -25,7 +25,7 @@ cargo-tracker（A 社国際貨物輸送管理システム）を、開発者の P
 | :--- | :--- | :--- | :--- |
 | JDK | 25（Amazon Corretto を推奨） | ビルド・実行。Gradle の toolchain が 25 を求める | `java -version` |
 | Docker | 動いていること | 統合テスト・画面の層のテスト・`bootTestRun` の PostgreSQL 18.6（Testcontainers） | `docker info` |
-| Node.js | 24 系 | リポジトリのルートの Gulp のタスク（SonarQube、文書の検査） | `node --version` |
+| Node.js | 版は問わない（技術スタックに定めがない。確認日は v24 で動かした） | SonarQube と文書の検査（ルートの Gulp のタスク）を使うときだけ要る | `node --version` |
 
 Gradle は Gradle Wrapper（`./gradlew`、9.8.0）を使うため、入れなくてよい。
 
@@ -34,14 +34,9 @@ Gradle は Gradle Wrapper（`./gradlew`、9.8.0）を使うため、入れなく
 ```bash
 git clone https://github.com/k2works/practical-domain-driven-design-in-enterpris-application.git
 cd practical-domain-driven-design-in-enterpris-application
-npm install            # ルートの Gulp のタスクを使う場合
+npm install                                           # ルートの Gulp のタスクを使う場合
+git config blame.ignoreRevsFile .git-blame-ignore-revs  # 書式だけのコミットを git blame で飛ばす（一度だけ）
 cd apps/cargo-tracker
-```
-
-書式だけのコミットを `git blame` で飛ばすため、次を一度だけ設定する。
-
-```bash
-git config blame.ignoreRevsFile .git-blame-ignore-revs
 ```
 
 ## 3. 起動
@@ -68,7 +63,7 @@ git config blame.ignoreRevsFile .git-blame-ignore-revs
 
 | URL | 画面 | 備考 |
 | :--- | :--- | :--- |
-| <http://localhost:8080/customer/transport-requests/new> | 見積依頼の作成（C-03 の最小形） | 荷主の画面 |
+| <http://localhost:8080/customer/transport-requests/new> | 見積依頼の作成（C-03 の最小形） | 荷主の画面。提出の完了画面は、いまは内部の ID（UUID）を表示する。D-4（画面には業務番号だけを出す）は US-01 AC2 の Bolt で反映する |
 | <http://localhost:8080/staff/kpi-observations> | KPI 計測記録の一覧（S-22 の前身の仮の画面） | 社内の画面。提出の後、非同期の配信を経て表示される |
 | <http://localhost:8080/h2-console> | H2 コンソール（`bootRun` のときだけ） | JDBC URL は `jdbc:h2:mem:cargotracker`、利用者は `sa`、パスワードは空 |
 
@@ -78,12 +73,13 @@ git config blame.ignoreRevsFile .git-blame-ignore-revs
 
 | 目的 | コマンド（`apps/cargo-tracker` で実行） | 時間の目安 |
 | :--- | :--- | :--- |
-| すべての検証（書式・静的解析・ユニット・アーキテクチャ・業務ルール層の受入シナリオ・統合・Web・H2 のスモーク・本番の依存・カバレッジの閾値） | `./gradlew check` | 約 2 分 |
+| すべての検証（書式・静的解析・ユニット・アーキテクチャ・業務ルール層の受入シナリオ・統合・Web・H2 のスモーク・本番の依存・カバレッジの閾値・用語集の整合） | `./gradlew check` | 約 2 分 |
+| 用語集とコードの整合だけ | `./gradlew documentationTest` | 数秒。設計文書やソースの Javadoc を変えたときに動く |
 | 書式をそろえる | `./gradlew spotlessApply` | 数秒 |
 | 画面の層の受入シナリオ（`@ui`。Playwright と axe-core） | 初回だけ `./gradlew playwrightInstall`、以降 `./gradlew uiTest` | 約 2 分 |
 | 設計ドキュメントの生成 | `./gradlew jigReports` | 十数秒 |
 
-SonarQube の品質ゲートは、リポジトリのルートで次を実行する。ローカルの SonarQube（<http://localhost:9001>）と、`.env` の `SONAR_TOKEN`・`SONAR_PROJECT_KEY` が要る。手順は [SonarQube ローカル環境セットアップ手順書](../../reference/SonarQubeローカル環境セットアップ手順書.md) に従う。
+SonarQube の品質ゲートは、リポジトリのルートで次を実行する。ローカルの SonarQube（既定は <http://localhost:9000>。ポートを変えた場合は `.env` の `LOCAL_SONAR_PORT` か `SONAR_HOST_URL`）と、`.env` の `SONAR_TOKEN`・`SONAR_PROJECT_KEY` が要る。手順は [SonarQube ローカル環境セットアップ手順書](../../reference/SonarQubeローカル環境セットアップ手順書.md) に従う。
 
 ```bash
 npx gulp sonar-local:status   # 起動しているか
@@ -100,7 +96,7 @@ npx gulp sonar-local:issues   # 指摘の一覧
 | カバレッジ（JaCoCo） | `build/reports/jacoco/test/html/index.html` | `check` |
 | 静的解析 | `build/reports/checkstyle/`、`build/reports/spotbugs/main.html` | `check` |
 | JIG（用語集、パッケージ関連、業務ルール一覧） | `build/jig/index.html` | `jigReports` |
-| Spring Modulith のモジュール図 | `build/spring-modulith-docs/` | `check`（`ModuleDocumentationTest`） |
+| Spring Modulith のモジュール図 | `build/spring-modulith-docs/` | `test`（`ModuleDocumentationTest`。`check` でも動く） |
 
 生成物はリポジトリにコミットしない。CI（`.github/workflows/cargo-tracker-ci.yml`）では、成果物 `cargo-tracker-reports`・`cargo-tracker-ui-reports` に 14 日残る。
 
@@ -138,5 +134,4 @@ apps/cargo-tracker/
 | 統合テストや `bootTestRun` が Docker に接続できない | Docker が動いていない。Docker Desktop などを起動する |
 | `uiTest` がブラウザを見つけられない | `./gradlew playwrightInstall` を一度実行する |
 | `check` が書式で失敗する（`spotlessCheck`） | `./gradlew spotlessApply` で書式をそろえ、書式だけの変更は別のコミットにする |
-| Javadoc や用語集だけを直したのに整合テストが動かない | 動く（`test` タスクの入力にソースと設計文書を宣言している）。動かない場合は `./gradlew test --rerun` で確かめる |
 | `sonar-local:check` が NONE で失敗する | 解析の反映を待つ設定（`sonar.qualitygate.wait`）が働いていない可能性がある。`npx gulp sonar-local:status` でサーバーを確かめる |
