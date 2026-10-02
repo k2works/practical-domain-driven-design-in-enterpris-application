@@ -4,7 +4,7 @@ title: "Bolt 4 計画 - 業務番号と必須条件の検証（US-01 AC1・AC2�
 description: "4 回目の Bolt の計画。US-01 AC1・AC2（必要書類を除く）・AC4 を対象に、業務番号の採番（D-10）、提出の検証とエラー要約、MvpAcceptancePolicy、画面と KPI 計測記録の一覧から UUID を消すことを 6 つのステップで定義する。"
 tags: [development,bolt-plan]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-02T07:02:36Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-02T11:02:50Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-02T02:18:51Z }
   - { by: human:kakimomokuri, at: 2026-10-02T07:02:38Z }
@@ -224,7 +224,7 @@ package "identity" {
 @enduml
 ```
 
-- 既存の行（Bolt 1〜3 の開発データ）は、ローカルの H2 と Testcontainers だけにある。ステージング・本番はまだないため、追加の列は `NOT NULL` で足し、既存の行がない前提でマイグレーションを書く（確認ポイント 4）。
+- 既存の行（Bolt 1〜3 の開発データ）は、ローカルの H2 と Testcontainers だけにある。ステージング・本番はまだないため、追加の列は `NOT NULL` で足し、既存の行がない前提でマイグレーションを書く（確認ポイント 4）。KPI 計測記録の業務番号の列は、ステップ 3 で null を許す形に変えた（下の「計画からの変更」）。
 - `cargo_category` と `package_type` は `VARCHAR(30)` に英語の定数名を入れ、`CHECK` 制約で値を限る（データモデルの命名規約）。
 - カウンター表は追記専用ではない。既存のコールバックの規則どおり、アプリケーション利用者に SELECT・INSERT・UPDATE・DELETE を与える。
 - 採番は、H2 と PostgreSQL の共通の SQL で書く（ADR-007）。その年の行がなければ別のトランザクションで `INSERT`（`last_no = 0`。同時の挿入による一意制約の違反は無視する）し、提出のトランザクションで `UPDATE … SET last_no = last_no + 1 WHERE number_year = ?` で行ロックして増やし、`SELECT` で読む（PostgreSQL では、制約の違反でトランザクションが使えなくなるため、提出のトランザクションの中では `INSERT` しない）。採番は提出と同じトランザクションで行うため、提出が失敗すれば番号も戻り、欠番が出ない。
@@ -352,7 +352,7 @@ C03 --> 完了 : POST の後にリダイレクト（PRG）\n[検証を通る]
 | 1 | 希望到着期限の境界: 提出時刻以前（同時刻を含む）は誤りとし、提出時刻より後なら近い期限でも受け付ける。期限が経路設計に間に合うかは、経路設計の制約適合（BR-11）で判定する | 2、3 | 業務のルール。Bolt 3 の報告で人が決めるとした事項 |
 | 2 | 荷受人は、企業マスターができるまで、設定ファイルの仮の一覧（企業 ID と名前、2〜3 社）から選ぶ。仮の主体（`ProvisionalActorProperties`）と同じく、US-16 の Bolt で置き換える | 5 | 仮の実装を画面に入れる |
 | 3 | 荷姿の値: パレット・カートン・クレート・その他の 4 つ。個数は 1 以上の整数、総重量と容積は 0 より大きい小数（小数点以下 3 桁まで） | 2、3 | 業務の値。要件に定義がない |
-| 4 | スキーマの変更: `quotation.transport_request` に `request_number`（一意）、`quotation.transport_request_version` に 7 列、`identity.kpi_observation` に `transport_request_number` を `NOT NULL` で足し、`quotation.transport_request_number_counter` を作る。既存の行はないものとする | 4 | データベース（確認必須） |
+| 4 | スキーマの変更: `quotation.transport_request` に `request_number`（一意）、`quotation.transport_request_version` に 7 列、`identity.kpi_observation` に `transport_request_number` を `NOT NULL` で足し（KPI 計測記録の列はステップ 3 で null を許す形に変更）、`quotation.transport_request_number_counter` を作る。既存の行はないものとする | 4 | データベース（確認必須） |
 | 5 | 完了画面の URL のキーを業務番号にする（`/customer/transport-requests/TR-2026-0001/submitted`）。アドレスバーにも UUID を出さない。他社の番号を開いたときの拒否は、認証を入れる US-18・AC3 の Bolt で確かめる | 1、5 | UI 設計の変更、開示の範囲 |
 
 push はステップの完了ごとに行う（CI の結果を確かめるため）。

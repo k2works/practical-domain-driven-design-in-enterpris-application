@@ -4,7 +4,7 @@ title: "cargo-tracker データモデル"
 description: "cargo-tracker の概念データモデル、スキーマ分割、命名と型の規約（H2 と PostgreSQL の共通部分）、コンテキストごとの論理データモデルと ER 図、版・追記専用・冪等性・イベント配信の表現。"
 tags: [design, data-model]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-02T04:22:52Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-02T11:02:50Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T07:48:17Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:01:37Z }
@@ -177,7 +177,9 @@ ADR-007 により、DDL は H2（PostgreSQL 互換モード）と PostgreSQL 18 
 2. 提出のトランザクションで `UPDATE transport_request_number_counter SET last_no = last_no + 1 WHERE number_year = ?` を実行し、その年の行を行ロックして増やす。
 3. 同じトランザクションで `SELECT last_no` を実行して番号を読む。
 
-採番は提出と同じトランザクションで行う。提出が失敗すれば番号も戻るため、欠番が出ない（`last_no = 0` の行は番号を使わない）。行ロックは提出のトランザクションの終わりまで続くので、同じ年の提出は採番の部分で直列になる。年は、提出時刻の日本時間（Asia/Tokyo）の年をドメインが決めて渡す。
+年の行は、アプリケーションの起動時に今年と来年（日本時間）の分を提出のトランザクションの外で用意する（2026-10-02 の D-13）。手順 1 の別のトランザクションは外側の接続を握ったまま 2 本目の接続を取るため、年の最初の提出が接続のプールの大きさ以上に同時に来ると枯渇しうる。手順 1 は、年をまたいで動き続けた場合の予備として残す。
+
+採番は提出と同じトランザクションで行う。提出が失敗すれば番号も戻るため、欠番が出ない（`last_no = 0` の行は番号を使わない）。手順 1 の後の UPDATE が行を見つけられるのは、分離レベルが READ COMMITTED だからである。行ロックは提出のトランザクションの終わりまで続くので、同じ年の提出は採番の部分で直列になる。年は、提出時刻の日本時間（Asia/Tokyo）の年をドメインが決めて渡す。
 
 ### 冪等性（ARCH-HO-01）
 

@@ -4,7 +4,7 @@ title: "アプリケーション開発環境セットアップ手順書 - cargo-
 description: "cargo-tracker（A 社国際貨物輸送管理システム）を、開発者の PC で起動・テスト・品質チェックするための手順を示す。"
 tags: [operation,playbook,setup]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-02T01:04:33Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-02T10:59:52Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-02T01:37:59Z }
   - { by: human:kakimomokuri, at: 2026-10-02T07:02:38Z }

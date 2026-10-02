@@ -4,7 +4,7 @@ title: "cargo-tracker ドメインモデル"
 description: "cargo-tracker の業務領域の分類、ユビキタス言語、7 つの境界づけられたコンテキスト（通知を含む）の集約・エンティティ・値オブジェクト・ドメインルール、コマンド・クエリ・イベント、予約サガ。"
 tags: [design, domain-model, ddd]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-02T02:20:33Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-02T11:02:50Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T07:41:04Z }
   - { by: human:kakimomokuri, at: 2026-10-01T07:48:17Z }
@@ -82,7 +82,7 @@ quadrantChart
 | 輸送要求版 | TransportRequestVersion | 輸送要求のある時点の条件。提出後は不変で、変更は新しい版になる | 見積り |
 | 輸送条件 | ShipmentTerms | 荷受人、出発地、目的地、希望到着期限、貨物、必要書類の組 | 見積り（共有の写しは予約・経路設計） |
 | 輸送条件の入力 | ShipmentTermsInput | 荷主が提出しようとする輸送条件の入力。項目が欠けていてよく、検証して違反がなければ輸送条件になる | 見積り |
-| 提出の検証結果 | SubmissionViolations | 提出の検証で見つかった不足と誤りの一覧。項目ごとに理由と直し方を持つ（Q-INV-01、Q-INV-02） | 見積り |
+| 提出の検証結果 | SubmissionViolations | 提出の検証で見つかった不足と誤りの一覧。項目と理由の種類だけを持ち、利用者に示す理由と直し方の文言は画面の層が付ける（Q-INV-01、Q-INV-02） | 見積り |
 | 貨物 | Cargo | 貨物種別、荷姿、個数、総重量（kg）、容積（m3）の組 | 見積り |
 | 貨物種別 | CargoCategory | 一般、危険物、冷凍、その他特殊。MVP は一般だけを受け付ける（BR-03） | 見積り |
 | 荷姿 | PackageType | 貨物の梱包の形。パレット、カートン、クレート、その他（2026-10-02 に human:kakimomokuri が承認した仮の値。業務責任者の確認で見直す） | 見積り |
@@ -366,7 +366,7 @@ title 見積りの状態遷移（要件定義の見積り状態モデルに荷�
 | MVP 受付範囲 | MvpAcceptancePolicy | 貨物種別が一般かを判定する。後続段階で特殊貨物を受け付けるときは、この規則を差し替える。提出の検証（ShipmentTermsInput）が使う |
 | 見積有効判定 | QuotationValidity | 判定時刻と有効期限から有効・失効を判定する。判定時刻は呼び出し側が commit 時刻として渡す |
 
-提出の検証は、輸送条件の入力（ShipmentTermsInput）が Q-INV-01・Q-INV-02・Q-INV-12 をまとめて判定し、違反をすべて提出の検証結果（SubmissionViolations）として返す（1 件ずつ直させない）。違反がなければ輸送条件（ShipmentTerms）を作り、業務番号の採番（TransportRequestNumberIssuer）で番号を得て提出する。採番のポートは `domain.model` に置き、実装は `infrastructure.persistence` に置く。
+提出の検証は、輸送条件の入力（ShipmentTermsInput）が Q-INV-01・Q-INV-02・Q-INV-12 をまとめて判定し、違反をすべて提出の検証結果（SubmissionViolations）として返す（1 件ずつ直させない）。違反がなければ、同じ判定の結果として輸送条件（ShipmentTerms）を返す（検証を通らずに輸送条件を作れないよう、変換を別の操作に分けない。Bolt 4 レビュー R-04）。そのうえで業務番号の採番（TransportRequestNumberIssuer）で番号を得て提出する。採番のポートは `domain.model` に置き、実装は `infrastructure.persistence` に置く。
 
 Q-INV-01 の「下書きのまま」は、R1.0 で下書きを保存するまで、下書きを保存せずに入力を残して同じ画面を表示することで満たす（2026-10-02 の人の決定。Bolt 4）。下書きの操作（`下書きを更新する()`）と `transport_request_draft` は R1.0 の下書き保存で作る。必要書類は、ファイルの保存とあわせて Bolt 4 の次の Bolt で必須条件に入れる。
 
