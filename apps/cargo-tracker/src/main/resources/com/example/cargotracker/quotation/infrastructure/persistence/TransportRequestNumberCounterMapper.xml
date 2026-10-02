@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.cargotracker.quotation.infrastructure.persistence.TransportRequestNumberCounterMapper">
+
+    <!-- H2 と PostgreSQL の共通の構文で書く（ADR-007）。ON CONFLICT・MERGE・SELECT ... FOR UPDATE の方言は使わない -->
+
+    <insert id="insertYear">
+        INSERT INTO quotation.transport_request_number_counter (number_year, last_no) VALUES (#{year}, 0)
+    </insert>
+
+    <!-- UPDATE が行ロックを取り、提出のトランザクションの終わりまで同じ年の採番を直列にする -->
+    <update id="increment">
+        UPDATE quotation.transport_request_number_counter SET last_no = last_no + 1 WHERE number_year = #{year}
+    </update>
+
+    <select id="selectLastNo" resultType="int">
+        SELECT last_no FROM quotation.transport_request_number_counter WHERE number_year = #{year}
+    </select>
+</mapper>

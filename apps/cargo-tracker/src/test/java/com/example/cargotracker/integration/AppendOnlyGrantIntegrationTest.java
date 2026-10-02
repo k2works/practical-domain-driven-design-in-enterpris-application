@@ -57,19 +57,25 @@ class AppendOnlyGrantIntegrationTest {
     void アプリケーション利用者で輸送要求と版を追加する() throws SQLException {
         transportRequestId = UUID.randomUUID();
         try (Connection connection = connectAsApplicationUser();
-                PreparedStatement request = connection.prepareStatement(
-                        "INSERT INTO quotation.transport_request"
-                                + " (id, shipper_company_id, status, current_version_no, version) VALUES (?, ?, 'UNDER_REVIEW', 1, 0)");
-                PreparedStatement version =
-                        connection.prepareStatement("INSERT INTO quotation.transport_request_version"
-                                + " (transport_request_id, version_no, origin_unlocode, destination_unlocode, submitted_by,"
-                                + " submitted_at) VALUES (?, 1, 'JPTYO', 'NLRTM', ?, ?)")) {
+                PreparedStatement request = connection.prepareStatement("INSERT INTO quotation.transport_request"
+                        + " (id, request_number, shipper_company_id, status, current_version_no, version)"
+                        + " VALUES (?, ?, ?, 'UNDER_REVIEW', 1, 0)");
+                PreparedStatement version = connection.prepareStatement(
+                        "INSERT INTO quotation.transport_request_version"
+                                + " (transport_request_id, version_no, consignee_company_id, origin_unlocode,"
+                                + " destination_unlocode, arrival_deadline, cargo_category, package_type, package_count,"
+                                + " gross_weight_kg, volume_m3, submitted_by, submitted_at)"
+                                + " VALUES (?, 1, ?, 'JPTYO', 'NLRTM', ?, 'GENERAL', 'PALLET', 12, 8400, 32.5, ?, ?)")) {
             request.setObject(1, transportRequestId);
-            request.setObject(2, UUID.randomUUID());
+            // 業務番号の一意制約にほかのテストの番号とぶつからないよう、輸送要求ごとに別の連番にする
+            request.setString(2, "TR-2099-" + Math.abs(transportRequestId.hashCode() % 100_000_000));
+            request.setObject(3, UUID.randomUUID());
             request.executeUpdate();
             version.setObject(1, transportRequestId);
             version.setObject(2, UUID.randomUUID());
-            version.setTimestamp(3, Timestamp.from(Instant.parse("2026-10-05T01:00:00Z")));
+            version.setTimestamp(3, Timestamp.from(Instant.parse("2026-11-02T00:00:00Z")));
+            version.setObject(4, UUID.randomUUID());
+            version.setTimestamp(5, Timestamp.from(Instant.parse("2026-10-05T01:00:00Z")));
             version.executeUpdate();
         }
     }
@@ -113,6 +119,18 @@ class AppendOnlyGrantIntegrationTest {
                         "UPDATE quotation.transport_request SET version = 1 WHERE id = ?")) {
             statement.setObject(1, transportRequestId);
             assertThat(statement.executeUpdate()).isEqualTo(1);
+        }
+    }
+
+    @Test
+    void アプリケーション利用者は業務番号の採番の表を作って更新できる() throws SQLException {
+        try (Connection connection = connectAsApplicationUser();
+                PreparedStatement insert = connection.prepareStatement(
+                        "INSERT INTO quotation.transport_request_number_counter (number_year, last_no) VALUES (2098, 0)");
+                PreparedStatement update = connection.prepareStatement(
+                        "UPDATE quotation.transport_request_number_counter SET last_no = last_no + 1 WHERE number_year = 2098")) {
+            insert.executeUpdate();
+            assertThat(update.executeUpdate()).isEqualTo(1);
         }
     }
 

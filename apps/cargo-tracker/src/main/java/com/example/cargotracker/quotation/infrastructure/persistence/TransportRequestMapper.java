@@ -15,4 +15,6 @@ public interface TransportRequestMapper {
     void insertTransportRequestVersion(TransportRequestRow row);
 
     Optional<TransportRequestRow> selectById(UUID id);
+
+    Optional<TransportRequestRow> selectByNumber(String requestNumber);
 }

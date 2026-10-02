@@ -4,7 +4,7 @@ title: "cargo-tracker データモデル"
 description: "cargo-tracker の概念データモデル、スキーマ分割、命名と型の規約（H2 と PostgreSQL の共通部分）、コンテキストごとの論理データモデルと ER 図、版・追記専用・冪等性・イベント配信の表現。"
 tags: [design, data-model]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-02T04:08:51Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-02T04:22:52Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T07:48:17Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:01:37Z }
@@ -173,7 +173,7 @@ ADR-007 により、DDL は H2（PostgreSQL 互換モード）と PostgreSQL 18 
 業務番号は、年ごとのカウンター表 `transport_request_number_counter` で振る。H2 と PostgreSQL の共通の SQL で書き（ADR-007）、方言で分けない。
 
 1. その年の行がなければ、提出とは別のトランザクションで `INSERT`（`last_no = 0`）する。同時の `INSERT` による一意制約の違反は、行がすでにあるという意味なので無視する。PostgreSQL では、トランザクションの中で制約に違反するとそのトランザクションが使えなくなるため、提出のトランザクションの中では `INSERT` しない。
-2. 提出のトランザクションで `UPDATE transport_request_number_counter SET last_no = last_no + 1 WHERE year = ?` を実行し、その年の行を行ロックして増やす。
+2. 提出のトランザクションで `UPDATE transport_request_number_counter SET last_no = last_no + 1 WHERE number_year = ?` を実行し、その年の行を行ロックして増やす。
 3. 同じトランザクションで `SELECT last_no` を実行して番号を読む。
 
 採番は提出と同じトランザクションで行う。提出が失敗すれば番号も戻るため、欠番が出ない（`last_no = 0` の行は番号を使わない）。行ロックは提出のトランザクションの終わりまで続くので、同じ年の提出は採番の部分で直列になる。年は、提出時刻の日本時間（Asia/Tokyo）の年をドメインが決めて渡す。
@@ -217,7 +217,7 @@ entity "transport_request\n輸送要求" as tr {
   * updated_at / updated_by
 }
 entity "transport_request_number_counter\n業務番号の採番" as cnt {
-  * year : SMALLINT <<PK>>
+  * number_year : SMALLINT <<PK>>
   --
   * last_no : INTEGER
 }
@@ -322,7 +322,7 @@ q |o--o| q : 置換
 | :--- | :--- | :--- |
 | `transport_request` | `status` IN（`DRAFT`、`UNDER_REVIEW`、`QUOTING`、`QUOTED`、`ROUTING`、`AWAITING_APPROVAL`、`READY_TO_BOOK`、`BOOKED`、`WITHDRAWN`） | 輸送要求の状態遷移 |
 | `transport_request`（業務番号） | `request_number` に一意制約（`uk_transport_request_number`）。`TR-年-年ごとの連番` の表記をそのまま入れる。画面と通知には業務番号だけを出す（D-4、D-10） | Q-INV-13 |
-| `transport_request_number_counter` | 年ごとに 1 行。`last_no` はその年に最後に振った連番。追記専用ではない（行を更新する） | Q-INV-13 |
+| `transport_request_number_counter` | 年ごとに 1 行。`number_year` は業務番号の年（`year` は H2 の予約語のため使わない）。`last_no` はその年に最後に振った連番。追記専用ではない（行を更新する） | Q-INV-13 |
 | `transport_request_draft` | 輸送要求ごとに 1 行。提出時に内容を版の表へ INSERT する。`copied_from_request_id` は複製元 | Q-INV-03、Q-INV-11 |
 | `transport_request_version` | `cargo_category` IN（`GENERAL`、`DANGEROUS`、`REEFER`、`OTHER_SPECIAL`）。提出した版だけを INSERT し、更新しない（追記専用の印 `COMMENT ON TABLE ... IS 'append-only'` を付ける）。版 1 の `submitted_at` が KPI-01 の開始時刻（D-3） | Q-INV-02、Q-INV-03、US-21 |
 | `review_record` | （`transport_request_id`、`version_no`）→ `transport_request_version` の FK | Q-INV-04 |

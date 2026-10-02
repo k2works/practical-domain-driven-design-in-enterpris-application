@@ -3,6 +3,7 @@ package com.example.cargotracker.quotation.acceptance;
 import com.example.cargotracker.quotation.domain.model.aggregates.TransportRequest;
 import com.example.cargotracker.quotation.domain.model.aggregates.TransportRequestRepository;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestId;
+import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestNumber;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -25,6 +26,13 @@ public class InMemoryTransportRequestRepository implements TransportRequestRepos
     @Override
     public Optional<TransportRequest> findById(TransportRequestId id) {
         return Optional.ofNullable(store.get(id));
+    }
+
+    @Override
+    public Optional<TransportRequest> findByNumber(TransportRequestNumber number) {
+        return store.values().stream()
+                .filter(request -> request.number().equals(number))
+                .findFirst();
     }
 
     /** 保存した輸送要求の件数。提出を受け付けなかったときに何も保存していないことを確かめる。 */

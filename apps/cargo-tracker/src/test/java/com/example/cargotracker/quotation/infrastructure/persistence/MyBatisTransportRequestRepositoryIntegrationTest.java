@@ -1,6 +1,7 @@
 package com.example.cargotracker.quotation.infrastructure.persistence;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.example.cargotracker.TestcontainersConfiguration;
 import com.example.cargotracker.quotation.domain.model.aggregates.TransportRequest;
@@ -19,6 +20,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
@@ -29,6 +31,16 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional
 class MyBatisTransportRequestRepositoryIntegrationTest {
 
+    private static TransportRequest submitted(TransportRequestNumber number) {
+        return TransportRequest.submit(
+                new TransportRequestId(UUID.randomUUID()),
+                number,
+                new CompanyId(UUID.randomUUID()),
+                ShipmentTermsFixture.generalCargo(),
+                new UserId(UUID.randomUUID()),
+                new UtcInstant(Instant.parse("2026-10-05T01:00:00Z")));
+    }
+
     @Autowired
     TransportRequestRepository repository;
 
@@ -37,7 +49,7 @@ class MyBatisTransportRequestRepositoryIntegrationTest {
         TransportRequestId id = new TransportRequestId(UUID.randomUUID());
         CompanyId shipper = new CompanyId(UUID.randomUUID());
         UserId submitter = new UserId(UUID.randomUUID());
-        TransportRequestNumber number = new TransportRequestNumber(2026, 1);
+        TransportRequestNumber number = new TransportRequestNumber(2088, 1);
         ShipmentTerms terms = ShipmentTermsFixture.generalCargo();
         UtcInstant submittedAt = new UtcInstant(Instant.parse("2026-10-05T01:00:00.123456Z"));
 
@@ -54,6 +66,25 @@ class MyBatisTransportRequestRepositoryIntegrationTest {
             assertThat(found.currentVersion().submittedAt()).isEqualTo(submittedAt);
             assertThat(found.domainEvents()).isEmpty();
         });
+    }
+
+    @Test
+    void 同じ業務番号の輸送要求は保存できない() {
+        TransportRequestNumber number = new TransportRequestNumber(2096, 1);
+        repository.save(submitted(number));
+
+        assertThatThrownBy(() -> repository.save(submitted(number))).isInstanceOf(DuplicateKeyException.class);
+    }
+
+    @Test
+    void 業務番号で輸送要求を読み出せる() {
+        TransportRequestNumber number = new TransportRequestNumber(2097, 1);
+        TransportRequest saved = submitted(number);
+        repository.save(saved);
+
+        assertThat(repository.findByNumber(number))
+                .hasValueSatisfying(found -> assertThat(found.id()).isEqualTo(saved.id()));
+        assertThat(repository.findByNumber(new TransportRequestNumber(2097, 2))).isEmpty();
     }
 
     @Test

@@ -45,6 +45,11 @@ public class MyBatisTransportRequestRepository implements TransportRequestReposi
         return mapper.selectById(id.value()).map(MyBatisTransportRequestRepository::toAggregate);
     }
 
+    @Override
+    public Optional<TransportRequest> findByNumber(TransportRequestNumber number) {
+        return mapper.selectByNumber(number.text()).map(MyBatisTransportRequestRepository::toAggregate);
+    }
+
     private static TransportRequestRow toRow(TransportRequest request) {
         TransportRequestVersion version = request.currentVersion();
         Cargo cargo = version.terms().cargo();

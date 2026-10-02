@@ -5,35 +5,59 @@
     <resultMap id="transportRequestRow" type="com.example.cargotracker.quotation.infrastructure.persistence.TransportRequestRow">
         <constructor>
             <idArg column="id" name="id" javaType="java.util.UUID"/>
+            <arg column="request_number" name="requestNumber" javaType="String"/>
             <arg column="shipper_company_id" name="shipperCompanyId" javaType="java.util.UUID"/>
             <arg column="status" name="status" javaType="String"/>
             <arg column="current_version_no" name="currentVersionNo" javaType="_int"/>
             <arg column="version" name="version" javaType="_long"/>
+            <arg column="consignee_company_id" name="consigneeCompanyId" javaType="java.util.UUID"/>
             <arg column="origin_unlocode" name="originUnlocode" javaType="String"/>
             <arg column="destination_unlocode" name="destinationUnlocode" javaType="String"/>
+            <arg column="arrival_deadline" name="arrivalDeadline" javaType="java.time.OffsetDateTime"/>
+            <arg column="cargo_category" name="cargoCategory" javaType="String"/>
+            <arg column="package_type" name="packageType" javaType="String"/>
+            <arg column="package_count" name="packageCount" javaType="_int"/>
+            <arg column="gross_weight_kg" name="grossWeightKg" javaType="java.math.BigDecimal"/>
+            <arg column="volume_m3" name="volumeM3" javaType="java.math.BigDecimal"/>
             <arg column="submitted_by" name="submittedBy" javaType="java.util.UUID"/>
             <arg column="submitted_at" name="submittedAt" javaType="java.time.OffsetDateTime"/>
         </constructor>
     </resultMap>
 
     <insert id="insertTransportRequest">
-        INSERT INTO quotation.transport_request (id, shipper_company_id, status, current_version_no, version)
-        VALUES (#{id}, #{shipperCompanyId}, #{status}, #{currentVersionNo}, #{version})
+        INSERT INTO quotation.transport_request
+            (id, request_number, shipper_company_id, status, current_version_no, version)
+        VALUES (#{id}, #{requestNumber}, #{shipperCompanyId}, #{status}, #{currentVersionNo}, #{version})
     </insert>
 
     <insert id="insertTransportRequestVersion">
         INSERT INTO quotation.transport_request_version
-            (transport_request_id, version_no, origin_unlocode, destination_unlocode, submitted_by, submitted_at)
-        VALUES (#{id}, #{currentVersionNo}, #{originUnlocode}, #{destinationUnlocode}, #{submittedBy}, #{submittedAt})
+            (transport_request_id, version_no, consignee_company_id, origin_unlocode, destination_unlocode,
+             arrival_deadline, cargo_category, package_type, package_count, gross_weight_kg, volume_m3,
+             submitted_by, submitted_at)
+        VALUES (#{id}, #{currentVersionNo}, #{consigneeCompanyId}, #{originUnlocode}, #{destinationUnlocode},
+                #{arrivalDeadline}, #{cargoCategory}, #{packageType}, #{packageCount}, #{grossWeightKg}, #{volumeM3},
+                #{submittedBy}, #{submittedAt})
     </insert>
 
-    <select id="selectById" resultMap="transportRequestRow">
-        SELECT r.id, r.shipper_company_id, r.status, r.current_version_no, r.version,
-               v.origin_unlocode, v.destination_unlocode, v.submitted_by, v.submitted_at
+    <sql id="selectRow">
+        SELECT r.id, r.request_number, r.shipper_company_id, r.status, r.current_version_no, r.version,
+               v.consignee_company_id, v.origin_unlocode, v.destination_unlocode, v.arrival_deadline,
+               v.cargo_category, v.package_type, v.package_count, v.gross_weight_kg, v.volume_m3,
+               v.submitted_by, v.submitted_at
           FROM quotation.transport_request r
           JOIN quotation.transport_request_version v
             ON v.transport_request_id = r.id
            AND v.version_no = r.current_version_no
+    </sql>
+
+    <select id="selectById" resultMap="transportRequestRow">
+        <include refid="selectRow"/>
          WHERE r.id = #{id}
+    </select>
+
+    <select id="selectByNumber" resultMap="transportRequestRow">
+        <include refid="selectRow"/>
+         WHERE r.request_number = #{requestNumber}
     </select>
 </mapper>

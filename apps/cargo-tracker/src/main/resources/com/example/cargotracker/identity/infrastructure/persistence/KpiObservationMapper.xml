@@ -5,19 +5,20 @@
     <resultMap id="kpiObservationRow" type="com.example.cargotracker.identity.infrastructure.persistence.KpiObservationRow">
         <constructor>
             <idArg column="transport_request_id" name="transportRequestId" javaType="java.util.UUID"/>
+            <arg column="transport_request_number" name="transportRequestNumber" javaType="String"/>
             <arg column="shipper_company_id" name="shipperCompanyId" javaType="java.util.UUID"/>
             <arg column="submitted_at" name="submittedAt" javaType="java.time.OffsetDateTime"/>
         </constructor>
     </resultMap>
 
-    <sql id="columns">transport_request_id, shipper_company_id, submitted_at</sql>
+    <sql id="columns">transport_request_id, transport_request_number, shipper_company_id, submitted_at</sql>
 
     <!-- 同じ輸送要求の記録が既にあれば何もしない（受信側の冪等性）。
          一意制約違反を捕まえて続けるのではなく、INSERT の条件で吸収する（ADR-007）。
          ON CONFLICT は H2 で使えないため、両方で動く INSERT ... SELECT ... WHERE NOT EXISTS にする。 -->
     <insert id="insertIfAbsent">
         INSERT INTO identity.kpi_observation (<include refid="columns"/>)
-        SELECT #{transportRequestId}, #{shipperCompanyId}, #{submittedAt}
+        SELECT #{transportRequestId}, #{transportRequestNumber}, #{shipperCompanyId}, #{submittedAt}
          WHERE NOT EXISTS (
                SELECT 1 FROM identity.kpi_observation WHERE transport_request_id = #{transportRequestId})
     </insert>
