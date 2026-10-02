@@ -27,4 +27,11 @@ public class KpiObservationSteps {
                 .hasValueSatisfying(observation ->
                         assertThat(observation.submittedAt()).isEqualTo(new UtcInstant(Instant.parse(submittedAt))));
     }
+
+    @ならば("KPI 計測記録にその輸送要求の業務番号 {string} が記録される")
+    public void KPI計測記録に業務番号が記録される(String transportRequestNumber) {
+        assertThat(queryService.findByTransportRequestId(context.transportRequestId()))
+                .hasValueSatisfying(observation ->
+                        assertThat(observation.transportRequestNumber()).isEqualTo(transportRequestNumber));
+    }
 }

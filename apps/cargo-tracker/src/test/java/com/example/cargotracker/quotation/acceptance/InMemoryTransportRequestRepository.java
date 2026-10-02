@@ -27,6 +27,11 @@ public class InMemoryTransportRequestRepository implements TransportRequestRepos
         return Optional.ofNullable(store.get(id));
     }
 
+    /** 保存した輸送要求の件数。提出を受け付けなかったときに何も保存していないことを確かめる。 */
+    public int count() {
+        return store.size();
+    }
+
     /** シナリオの開始時に記録を消す。 */
     public void clear() {
         store.clear();
