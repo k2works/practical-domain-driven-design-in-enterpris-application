@@ -4,6 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>cargo-tracker</title>
+    <style>
+        /* 並んだリンクは押せる範囲を 24 CSS px 以上にし、間隔も取る（WCAG 2.2 の 2.5.8 target-size）。
+           文字の行の高さは OS で違い、Linux の CI では 24 px に届かなかった（Bolt 5）。UI の骨格（#36）で共通の CSS に移す */
+        li + li { margin-top: 8px; }
+        li a { display: inline-block; min-height: 24px; line-height: 24px; }
+    </style>
 </head>
 <body>
 <main>

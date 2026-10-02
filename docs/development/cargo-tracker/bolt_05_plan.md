@@ -4,7 +4,7 @@ title: "Bolt 5 計画 - 輸送条件の審査と差戻し（US-02）"
 description: "5 回目の Bolt の計画。US-02 AC1〜AC3 を対象に、審査の確定と差戻し、古い版の拒否（Q-INV-04）、審査記録と楽観ロック、営業の受付一覧（S-02）と審査（S-03）を、ステップ 1・2a・2b・3・4 で定義する。"
 tags: [development,bolt-plan]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-02T13:13:02Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-02T13:20:31Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-02T11:47:16Z }
 ---
@@ -271,6 +271,7 @@ S03 --> S03 : [古い版] 拒否し、最新版を表示して再審査を求め
   - 完了の判定: `check` と `uiTest` が緑。push する。
   - 結果（2026-10-02 21:47〜22:10）: `check` と `uiTest`（画面の層 11 本、うち審査 4 本。axe-core の違反 0 件）が緑。画面の層のシナリオは、まだない画面（404）で失敗することを先に確かめた（Red）。荷主の画面と社内の画面で、表示名と日時の書式を `TransportRequestLabels` に共通化した（社内の日時は UTC を括弧で併記）。手順書の「開く URL」に受付一覧を足し、`/staff/**` に認証がないことを書いた
   - 見つけて直した問題: 審査の結果をフラッシュ属性で受付一覧へ渡すと、最初のリダイレクトの URL に `;jsessionid=...` が付いていた。セッション ID が履歴やログに漏れるため、セッションの追跡を Cookie だけにした（`server.servlet.session.tracking-modes=cookie`）。受付一覧の表が幅 320 CSS px でページ全体を横にスクロールさせていたため、表だけをスクロールさせる囲み（フォーカスでき、名前を持つ）に入れた
+  - CI で見つけて直した問題（22:13〜22:20）: CI の `ui` ジョブで、入口の一覧（`/`）の axe-core の検査が target-size（WCAG 2.2 の 2.5.8）で失敗した。社内の画面のリンクを 2 つ縦に並べたところ、Linux の CI では文字の行の高さが macOS より小さく、押せる範囲が 24 CSS px に届かなかった。リンクの高さを 24 px 以上にし、間隔を取った（UI の骨格 #36 で共通の CSS に移す）
   - 学び: Playwright の正規表現はブラウザ（JavaScript）で評価されるため、Java の `Pattern.quote`（`\Q...\E`）が効かない。Cucumber は文言でステップを照合するため、同じ文言を 2 つの定義で受けると重複（ambiguous）になる。テストの結果の集計では、通った・失敗した以外の状態（ambiguous・undefined・skipped）も数える
 - [ ] **4. 検証と Bolt 終了報告**
   - `check`・`uiTest`・CI・SonarQube の品質ゲート（PASS）を確かめる。
