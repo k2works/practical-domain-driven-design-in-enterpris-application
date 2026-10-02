@@ -4,7 +4,7 @@ title: "アプリケーション開発環境セットアップ手順書 - cargo-
 description: "cargo-tracker（A 社国際貨物輸送管理システム）を、開発者の PC で起動・テスト・品質チェックするための手順を示す。"
 tags: [operation,playbook,setup]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-02T10:59:52Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-02T11:21:40Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-02T01:37:59Z }
   - { by: human:kakimomokuri, at: 2026-10-02T07:02:38Z }
@@ -54,6 +54,8 @@ cd apps/cargo-tracker
 
 `dev` プロファイル（`application-dev.properties`）で起動し、Flyway のマイグレーションを当てる。権限による保護（追記専用の表）は H2 では働かない。
 
+IDE（IntelliJ IDEA など）から `CargoTrackerApplication` を直接起動するときは、実行構成の Active profiles に `dev` を入れる。入れないと H2 の設定と H2 コンソールが有効にならない（`/h2-console` が 404 になる）。
+
 ### PostgreSQL で起動する（本番に近い確認）
 
 ```bash
@@ -66,6 +68,7 @@ cd apps/cargo-tracker
 
 | URL | 画面 | 備考 |
 | :--- | :--- | :--- |
+| <http://localhost:8080/> | 画面の入口の一覧 | 荷主の画面と社内の画面へのリンク。認証（US-18）を入れたら、ログインの画面に置き換える |
 | <http://localhost:8080/customer/transport-requests/new> | 見積依頼の作成（C-03 の 1 画面の形） | 荷主の画面。必要書類を除く必須条件を入れて提出すると、完了画面に業務番号（例: `TR-2026-0001 版 1`）が出る。内部の ID（UUID）は画面にもアドレスバーにも出さない（D-4）。希望到着期限は日本時間で `2026-11-02 09:00` の形で入れる |
 | <http://localhost:8080/staff/kpi-observations> | KPI 計測記録の一覧（S-22 の前身の仮の画面） | 社内の画面。提出の後、非同期の配信を経て業務番号と提出時刻が表示される。提出時刻はまだ UTC だけで表示する（BR-10 との差。S-22 の本実装で直す） |
 | <http://localhost:8080/h2-console> | H2 コンソール（`bootRun` のときだけ） | JDBC URL は `jdbc:h2:mem:cargotracker`、利用者は `sa`、パスワードは空 |

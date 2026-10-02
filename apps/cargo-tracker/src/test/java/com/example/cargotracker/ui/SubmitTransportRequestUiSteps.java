@@ -77,10 +77,30 @@ public class SubmitTransportRequestUiSteps {
         open("/customer/transport-requests/new");
     }
 
+    @前提("荷主がルートを開いている")
+    public void 荷主がルートを開いている() {
+        open("/");
+    }
+
+    @もし("入口の一覧の {string} を選ぶ")
+    public void 入口の一覧から選ぶ(String name) {
+        page().getByRole(AriaRole.LINK, new Page.GetByRoleOptions().setName(name))
+                .click();
+        page().waitForLoadState();
+        browser.checkAccessibility();
+    }
+
+    @ならば("見積依頼の作成画面が表示される")
+    public void 見積依頼の作成画面が表示される() {
+        assertThat(page().getByRole(AriaRole.HEADING, new Page.GetByRoleOptions().setName("見積依頼の作成")))
+                .isVisible();
+    }
+
     @もし("荷主が{word}を開く")
     public void 荷主が画面を開く(String screen) {
         switch (screen) {
             case "見積依頼の作成画面" -> open("/customer/transport-requests/new");
+            case "入口の一覧" -> open("/");
             case "見積依頼を提出した完了画面" -> {
                 open("/customer/transport-requests/new");
                 fillRequiredTerms();
