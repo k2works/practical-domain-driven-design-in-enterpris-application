@@ -1,6 +1,7 @@
 # Docs Update Log
 
 ## 2026-10-02
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（GitHub と同期: #1 をクローズし #36 に分けた。anthropic/claude-opus-5-5）
 * **Verification**: [application_development_setup](/operation/cargo-tracker/application_development_setup.md) を human:kakimomokuri が検証
 * **Verification**: [operation](/design/cargo-tracker/operation.md) を human:kakimomokuri が検証
 * **Verification**: [ui_design](/design/cargo-tracker/ui_design.md) を human:kakimomokuri が検証

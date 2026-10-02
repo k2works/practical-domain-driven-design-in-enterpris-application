@@ -4,7 +4,7 @@ title: "リリース計画 - cargo-tracker（A 社国際貨物輸送管理シス
 description: "cargo-tracker MVP のリリース計画。1 人 + AI、時間単位の Bolt（= イテレーション）と週次の見直しで、最初の縦の流れ（R0.1）、パイロット準備完了（R1.0）、本格展開前（R1.1）の 3 段階、Unit のエントロピー評価、SP、バッファ、パイロット開始の条件、引継ぎ ID の台帳。"
 tags: [development,release-plan]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-02T01:37:39Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-02T01:56:19Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T09:29:53Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:38:26Z }
@@ -353,10 +353,10 @@ AI-DLC では **Bolt がイテレーション** である（[AI-DLC 導入ガイ
 - [x] 最初の Bolt: ウォーキングスケルトン（すべての統合点を通る最小の縦割り）。[Bolt 1 計画](bolt_01_plan.md)、[Bolt 1 終了報告](bolt_01_report.md)
 - [x] Bolt 2: CI と品質の安全網。[Bolt 2 計画](bolt_02_plan.md)、[Bolt 2 終了報告](bolt_02_report.md)
 - [x] Bolt 3: E2E の基盤と生きたドキュメント（完了、承認済み）。[Bolt 3 計画](bolt_03_plan.md)、[Bolt 3 終了報告](bolt_03_report.md)
-- [ ] 開発基盤（Gradle 9、Spring Boot 4.1、Spring Modulith、MyBatis、Flyway の `common`・`{vendor}`、H2・Testcontainers、ArchUnit・AT-01〜06、Cucumber、CI）
-- [ ] UI の骨格（Thymeleaf、htmx、Bootstrap、共通レイアウト）
+- [x] 開発基盤（Gradle 9、Spring Boot 4.1、Spring Modulith、MyBatis、Flyway の `common`・`{vendor}`、H2・Testcontainers、ArchUnit・AT-01〜06、Cucumber、CI）。Bolt 1〜3 で完了し、#1 をクローズした
+- [ ] UI の骨格（Thymeleaf、htmx、Bootstrap、共通レイアウト）。Thymeleaf は導入済み。#1 から #36 に分けた
 - [ ] US-01（AC1、AC2、AC4）、US-02
-- [ ] 見積依頼の段階入力（C-03）のプロトタイプで操作性を確かめる（UI-HO-04）
+- [ ] 見積依頼の段階入力（C-03）のプロトタイプで操作性を確かめる（UI-HO-04）。#36
 
 **目標 SP**: 6
 
@@ -495,7 +495,7 @@ W6 と W9 は 10 SP を超えるため、W4 の見直しで、W5・W8 の祝日�
 
 | 週 | 計画 SP | 実績 SP | 達成率 | 状態 |
 | :--- | ---: | ---: | ---: | :--- |
-| W1 | 6 | - | - | 進行中（Bolt 1〜3 完了、承認済み。業務のストーリーは未着手。上の「開発基盤」の行は、クローズで #1 を判断するときに一緒に更新する） |
+| W1 | 6 | - | - | 進行中（Bolt 1〜3 完了、承認済み。開発基盤は完了し #1 をクローズした。UI の骨格と C-03 のプロトタイプ（#36）、業務のストーリーは未着手） |
 | W2 | 8 | - | - | 未着手 |
 | W3 | 10 | - | - | 未着手 |
 | W4 | 11 | - | - | 未着手 |
@@ -529,8 +529,8 @@ xychart-beta
 | 項目 | 内容 |
 | :--- | :--- |
 | Project | [CargoTracker practical-ddd/take-1（#42）](https://github.com/users/k2works/projects/42)。フィールド: Status、リリース、優先度、Unit、SP、週（W1〜W15） |
-| Milestone | Release 0.1 最初の縦の流れ（12 件）、Release 1.0 パイロット準備完了（16 件）、Release 1.1 本格展開前（7 件） |
-| Issue | #1〜#35。Release 0.1 と 1.0 にまたがる 9 ストーリーは受入条件の範囲ごとに 2 件に分けた。技術タスクは #1（開発基盤とウォーキングスケルトン）と #28（運用準備） |
+| Milestone | Release 0.1 最初の縦の流れ（13 件）、Release 1.0 パイロット準備完了（16 件）、Release 1.1 本格展開前（7 件） |
+| Issue | #1〜#36。Release 0.1 と 1.0 にまたがる 9 ストーリーは受入条件の範囲ごとに 2 件に分けた。技術タスクは #1（開発基盤とウォーキングスケルトン、2026-10-02 にクローズ）、#36（UI の骨格と見積依頼の段階入力のプロトタイプ、#1 から分けた）、#28（運用準備） |
 | Label | `user-story`、`technical` |
 
 週のフィールドは 1 つの値しか持てないため、US-24 の R0.1 分（#5）は W2、US-16（#14）は W5 に置いた（計画では次の週にまたがる）。
@@ -556,3 +556,4 @@ xychart-beta
 | 2026-10-01 | Bolt 2 の完了を反映した | anthropic/claude-opus-5-5 |
 | 2026-10-02 | W1 に Bolt 3 計画へのリンクを付けた（人の決定 D-8: 次の Bolt は技術の Bolt 3） | anthropic/claude-opus-5-5 |
 | 2026-10-02 | Bolt 3 の完了を反映した（W1 の開発基盤を終えた） | anthropic/claude-opus-5-5 |
+| 2026-10-02 | GitHub と同期した。人の判断で #1 をクローズし、未着手の UI の骨格と C-03 のプロトタイプを #36 に分けた | anthropic/claude-opus-5-5 |
