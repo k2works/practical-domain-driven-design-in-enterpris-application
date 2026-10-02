@@ -46,12 +46,17 @@ public class SubmitTransportRequestUiSteps {
     private static final String SUBMIT = "提出する";
 
     private final BrowserSession browser;
+    private final UiScenarioState state;
     private final String baseUrl;
     private String transportRequestNumber;
 
     public SubmitTransportRequestUiSteps(
-            BrowserSession browser, @LocalServerPort int port, @Value("${ui.base-url:}") String configuredBaseUrl) {
+            BrowserSession browser,
+            UiScenarioState state,
+            @LocalServerPort int port,
+            @Value("${ui.base-url:}") String configuredBaseUrl) {
         this.browser = browser;
+        this.state = state;
         this.baseUrl = configuredBaseUrl.isBlank() ? "http://localhost:" + port : configuredBaseUrl;
     }
 
@@ -75,6 +80,20 @@ public class SubmitTransportRequestUiSteps {
     @前提("荷主が見積依頼の作成画面を開いている")
     public void 荷主が見積依頼の作成画面を開いている() {
         open("/customer/transport-requests/new");
+    }
+
+    @前提("荷主が見積依頼を提出している")
+    public void 荷主が見積依頼を提出している() {
+        open("/customer/transport-requests/new");
+        fillRequiredTerms();
+        submit();
+        page().waitForURL("**/submitted");
+        String number = page().locator("dt:text-is('業務番号（版）') + dd")
+                .textContent()
+                .strip()
+                .split(" ")[0];
+        Assertions.assertThat(number).matches(TRANSPORT_REQUEST_NUMBER);
+        state.transportRequestNumber(number);
     }
 
     @前提("荷主がルートを開いている")
@@ -178,6 +197,7 @@ public class SubmitTransportRequestUiSteps {
         Locator number = page().locator("dt:text-is('業務番号（版）') + dd");
         assertThat(number).hasText(Pattern.compile("^" + TRANSPORT_REQUEST_NUMBER.pattern() + " " + version + "$"));
         transportRequestNumber = number.textContent().strip().split(" ")[0];
+        state.transportRequestNumber(transportRequestNumber);
         assertThat(page().locator("dt:text-is('状態') + dd")).hasText(status);
     }
 

@@ -1,0 +1,82 @@
+package com.example.cargotracker.quotation.interfaces.web;
+
+import com.example.cargotracker.quotation.domain.model.valueobjects.CargoCategory;
+import com.example.cargotracker.quotation.domain.model.valueobjects.PackageType;
+import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestStatus;
+import com.example.cargotracker.shared.domain.UtcInstant;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.List;
+
+/**
+ * 見積依頼の画面（荷主の C-03、社内の S-02・S-03）で共通に使う表示名と日時の書式。
+ */
+final class TransportRequestLabels {
+
+    /** 画面のタイムゾーン。利用者ごとの設定は US-18 以降で入れる（BR-10）。 */
+    static final ZoneId DISPLAY_ZONE = ZoneId.of("Asia/Tokyo");
+
+    /** 日時表示の共通部品（UI 設計）: 「年月日 時刻 タイムゾーン（UTC offset）」。 */
+    private static final DateTimeFormatter DATE_TIME = DateTimeFormatter.ofPattern("uuuu-MM-dd HH:mm VV（'UTC'xxx）");
+
+    private static final DateTimeFormatter UTC_TIME = DateTimeFormatter.ofPattern("uuuu-MM-dd HH:mm");
+
+    static final List<Option> CARGO_CATEGORIES = List.of(
+            new Option(CargoCategory.GENERAL.name(), "一般"),
+            new Option(CargoCategory.DANGEROUS.name(), "危険物"),
+            new Option(CargoCategory.REEFER.name(), "冷凍"),
+            new Option(CargoCategory.OTHER_SPECIAL.name(), "その他特殊"));
+
+    static final List<Option> PACKAGE_TYPES = List.of(
+            new Option(PackageType.PALLET.name(), "パレット"),
+            new Option(PackageType.CARTON.name(), "カートン"),
+            new Option(PackageType.CRATE.name(), "クレート"),
+            new Option(PackageType.OTHER.name(), "その他"));
+
+    private TransportRequestLabels() {}
+
+    /** 荷主の画面の日時（例: 2026-10-05 10:00 Asia/Tokyo（UTC+09:00））。 */
+    static String customerDateTime(UtcInstant instant) {
+        return DATE_TIME.format(ZonedDateTime.ofInstant(instant.instant(), DISPLAY_ZONE));
+    }
+
+    /** 社内の画面の日時。利用者のタイムゾーンを主にし、UTC を括弧で併記する（UI 設計の共通部品「日時表示」）。 */
+    static String staffDateTime(UtcInstant instant) {
+        return customerDateTime(instant) + "（UTC "
+                + UTC_TIME.format(instant.instant().atOffset(ZoneOffset.UTC)) + "）";
+    }
+
+    static String status(TransportRequestStatus status) {
+        return switch (status) {
+            case DRAFT -> "差戻し（下書き）";
+            case UNDER_REVIEW -> "審査中";
+            case QUOTING -> "見積り作成中";
+        };
+    }
+
+    static String cargoCategory(CargoCategory category) {
+        return label(CARGO_CATEGORIES, category.name());
+    }
+
+    static String packageType(PackageType packageType) {
+        return label(PACKAGE_TYPES, packageType.name());
+    }
+
+    private static String label(List<Option> options, String value) {
+        return options.stream()
+                .filter(option -> option.value().equals(value))
+                .map(Option::label)
+                .findFirst()
+                .orElseThrow();
+    }
+
+    /**
+     * 選択の欄の 1 つの選択肢。
+     *
+     * @param value 送る値（ドメインの定数名）
+     * @param label 画面に出す名前
+     */
+    public record Option(String value, String label) {}
+}

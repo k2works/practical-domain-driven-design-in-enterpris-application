@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="ja" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>見積依頼の受付一覧 - cargo-tracker</title>
+</head>
+<body>
+<main>
+    <h1>見積依頼の受付一覧</h1>
+    <!-- S-02（Bolt 5）。審査中だけを、提出時刻の古い順（待たせている順）に示す。社内の画面なので荷主企業で絞らない -->
+    <p role="status" th:if="${result}" th:text="${result}">TR-2026-0001 版 1 の審査を確定しました</p>
+    <p th:if="${#lists.isEmpty(requests)}">審査中の見積依頼はありません。</p>
+    <!-- 狭い画面では表だけを横にスクロールさせ、ページ全体を横にスクロールさせない（WCAG 1.4.10 の表の例外）。
+         キー操作でもスクロールできるよう、囲みをフォーカスできるようにして名前を付ける -->
+    <div th:unless="${#lists.isEmpty(requests)}" style="overflow-x: auto" tabindex="0" role="region"
+         aria-labelledby="requests-caption">
+    <table>
+        <caption id="requests-caption">審査中の見積依頼（提出時刻の古い順）</caption>
+        <thead>
+        <tr>
+            <th scope="col">業務番号</th>
+            <th scope="col">版</th>
+            <th scope="col">提出時刻</th>
+            <th scope="col">出発地 → 目的地</th>
+            <th scope="col">希望到着期限</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="request : ${requests}">
+            <td><a th:href="@{/staff/transport-requests/{number}(number=${request.number()})}" th:text="${request.number()}">TR-2026-0001</a></td>
+            <td th:text="${request.versionNo()}">1</td>
+            <td th:text="${request.submittedAt()}">2026-10-05 10:00 Asia/Tokyo（UTC+09:00）（UTC 2026-10-05 01:00）</td>
+            <td th:text="${request.route()}">JPTYO → NLRTM</td>
+            <td th:text="${request.arrivalDeadline()}">2026-11-02 09:00 Asia/Tokyo（UTC+09:00）（UTC 2026-11-02 00:00）</td>
+        </tr>
+        </tbody>
+    </table>
+    </div>
+    <p><a th:href="@{/}">入口の一覧へ戻る</a></p>
+</main>
+</body>
+</html>

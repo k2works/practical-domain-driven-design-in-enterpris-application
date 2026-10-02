@@ -26,8 +26,8 @@ import org.springframework.validation.BindingResult;
  */
 final class TransportRequestFormConverter {
 
-    /** 荷主の画面のタイムゾーン。利用者ごとの設定は US-18 以降で入れる（BR-10）。 */
-    static final ZoneId CUSTOMER_ZONE = ZoneId.of("Asia/Tokyo");
+    /** 荷主の画面のタイムゾーン（画面の共通の表示と同じ）。 */
+    static final ZoneId CUSTOMER_ZONE = TransportRequestLabels.DISPLAY_ZONE;
 
     static final String DEADLINE_PATTERN = "uuuu-MM-dd HH:mm";
 

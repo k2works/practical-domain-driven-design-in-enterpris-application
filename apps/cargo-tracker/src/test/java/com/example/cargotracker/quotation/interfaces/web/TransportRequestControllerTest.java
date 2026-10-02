@@ -54,6 +54,7 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
         properties = {
             "cargotracker.provisional-actor.shipper-company-id=00000000-0000-0000-0000-000000000001",
             "cargotracker.provisional-actor.user-id=00000000-0000-0000-0000-000000000101",
+            "cargotracker.provisional-actor.staff-user-id=00000000-0000-0000-0000-000000000301",
             "cargotracker.provisional-consignees.companies[0].id=00000000-0000-0000-0000-000000000201",
             "cargotracker.provisional-consignees.companies[0].name=荷受人 A（仮）",
             "cargotracker.provisional-consignees.companies[1].id=00000000-0000-0000-0000-000000000202",

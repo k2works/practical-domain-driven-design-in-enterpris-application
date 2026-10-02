@@ -18,6 +18,7 @@ import org.springframework.context.annotation.Import;
     TestcontainersConfiguration.class,
     ApplicationUserConnection.class,
     PlaywrightBrowser.class,
-    BrowserSession.class
+    BrowserSession.class,
+    UiScenarioState.class
 })
 public class UiTestConfiguration {}

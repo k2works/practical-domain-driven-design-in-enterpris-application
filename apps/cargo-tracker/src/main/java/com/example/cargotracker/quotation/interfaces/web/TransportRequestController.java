@@ -5,17 +5,11 @@ import com.example.cargotracker.quotation.application.internal.commandservices.S
 import com.example.cargotracker.quotation.application.internal.commandservices.TransportRequestCommandService;
 import com.example.cargotracker.quotation.application.internal.queryservices.TransportRequestQueryService;
 import com.example.cargotracker.quotation.domain.model.aggregates.TransportRequest;
-import com.example.cargotracker.quotation.domain.model.valueobjects.CargoCategory;
-import com.example.cargotracker.quotation.domain.model.valueobjects.PackageType;
 import com.example.cargotracker.quotation.domain.model.valueobjects.ShipmentTermsInput;
 import com.example.cargotracker.quotation.domain.model.valueobjects.SubmissionViolations;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestNumber;
-import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestStatus;
 import com.example.cargotracker.shared.domain.CompanyId;
 import com.example.cargotracker.shared.domain.UserId;
-import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.List;
 import java.util.Optional;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
@@ -38,21 +32,6 @@ public class TransportRequestController {
 
     private static final String FORM_VIEW = "quotation/transport-requests/new";
 
-    /** 日時表示の共通部品（UI 設計）: 「年月日 時刻 タイムゾーン（UTC offset）」。 */
-    private static final DateTimeFormatter DATE_TIME = DateTimeFormatter.ofPattern("uuuu-MM-dd HH:mm VV（'UTC'xxx）");
-
-    private static final List<Option> CARGO_CATEGORIES = List.of(
-            new Option(CargoCategory.GENERAL.name(), "一般"),
-            new Option(CargoCategory.DANGEROUS.name(), "危険物"),
-            new Option(CargoCategory.REEFER.name(), "冷凍"),
-            new Option(CargoCategory.OTHER_SPECIAL.name(), "その他特殊"));
-
-    private static final List<Option> PACKAGE_TYPES = List.of(
-            new Option(PackageType.PALLET.name(), "パレット"),
-            new Option(PackageType.CARTON.name(), "カートン"),
-            new Option(PackageType.CRATE.name(), "クレート"),
-            new Option(PackageType.OTHER.name(), "その他"));
-
     private final TransportRequestCommandService commandService;
     private final TransportRequestQueryService queryService;
     private final ProvisionalActorProperties provisionalActor;
@@ -72,8 +51,8 @@ public class TransportRequestController {
     @ModelAttribute
     void formOptions(Model model) {
         model.addAttribute("consignees", provisionalConsignees.companies());
-        model.addAttribute("cargoCategories", CARGO_CATEGORIES);
-        model.addAttribute("packageTypes", PACKAGE_TYPES);
+        model.addAttribute("cargoCategories", TransportRequestLabels.CARGO_CATEGORIES);
+        model.addAttribute("packageTypes", TransportRequestLabels.PACKAGE_TYPES);
         model.addAttribute("cargoCategoryNotice", SubmissionViolationMessages.CargoCategoryNotice.MESSAGE);
         model.addAttribute("fieldLabels", SubmissionViolationMessages.FIELD_LABELS);
     }
@@ -121,12 +100,11 @@ public class TransportRequestController {
                 "numberWithVersion",
                 transportRequest.number().text() + " 版 "
                         + transportRequest.currentVersion().versionNo());
-        model.addAttribute("statusLabel", statusLabel(transportRequest.status()));
+        model.addAttribute("statusLabel", TransportRequestLabels.status(transportRequest.status()));
         model.addAttribute(
                 "submittedAt",
-                DATE_TIME.format(ZonedDateTime.ofInstant(
-                        transportRequest.currentVersion().submittedAt().instant(),
-                        TransportRequestFormConverter.CUSTOMER_ZONE)));
+                TransportRequestLabels.customerDateTime(
+                        transportRequest.currentVersion().submittedAt()));
         return "quotation/transport-requests/submitted";
     }
 
@@ -142,20 +120,4 @@ public class TransportRequestController {
             return Optional.empty();
         }
     }
-
-    private static String statusLabel(TransportRequestStatus status) {
-        return switch (status) {
-            case DRAFT -> "差戻し（下書き）";
-            case UNDER_REVIEW -> "審査中";
-            case QUOTING -> "見積り作成中";
-        };
-    }
-
-    /**
-     * 選択の欄の 1 つの選択肢。
-     *
-     * @param value 送る値（ドメインの定数名）
-     * @param label 画面に出す名前
-     */
-    public record Option(String value, String label) {}
 }
