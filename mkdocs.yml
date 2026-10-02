@@ -112,6 +112,9 @@ nav:
           - Bolt 3 計画: development/cargo-tracker/bolt_03_plan.md
   - 運用:
       - 概要: operation/index.md
+      - cargo-tracker:
+          - 概要: operation/cargo-tracker/index.md
+          - アプリケーション開発環境セットアップ手順書: operation/cargo-tracker/application_development_setup.md
   - レビュー:
       - 概要: review/index.md
       - 戦略成果物レビュー（2026-09-29）: review/戦略成果物_review_20260929.md

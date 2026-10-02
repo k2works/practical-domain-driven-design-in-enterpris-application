@@ -1,0 +1,142 @@
+---
+type: Playbook
+title: "アプリケーション開発環境セットアップ手順書 - cargo-tracker"
+description: "cargo-tracker（A 社国際貨物輸送管理システム）を、開発者の PC で起動・テスト・品質チェックするための手順を示す。"
+tags: [operation,playbook,setup]
+status: draft
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-02T00:07:55Z }
+---
+
+# アプリケーション開発環境セットアップ手順書 - cargo-tracker
+
+## 概要
+
+cargo-tracker（A 社国際貨物輸送管理システム）を、開発者の PC で起動・テスト・品質チェックするための手順を示す。テンプレート（`docs/template/アプリケーション開発環境セットアップ手順書.md`）の構成に従い、このプロジェクトにあるものだけを書く。
+
+| 項目 | 内容 |
+| :--- | :--- |
+| 対象 | `apps/cargo-tracker`（Java 25、Spring Boot 4.1、Spring Modulith のモジュラーモノリス） |
+| 正とする文書 | 品質チェックのコマンドは [開発戦略](../../development/cargo-tracker/development_strategy.md) の「品質チェックのコマンド」、使う技術と版は [技術スタック](../../design/cargo-tracker/tech_stack.md) を正とする。本書は環境を用意して動かす手順だけを書く |
+| 確認日 | 2026-10-02（本書のコマンドはこの日に実際に動かして確かめた） |
+
+## 1. 前提条件
+
+| ツール | 版 | 用途 | 確かめ方 |
+| :--- | :--- | :--- | :--- |
+| JDK | 25（Amazon Corretto を推奨） | ビルド・実行。Gradle の toolchain が 25 を求める | `java -version` |
+| Docker | 動いていること | 統合テスト・画面の層のテスト・`bootTestRun` の PostgreSQL 18.6（Testcontainers） | `docker info` |
+| Node.js | 24 系 | リポジトリのルートの Gulp のタスク（SonarQube、文書の検査） | `node --version` |
+
+Gradle は Gradle Wrapper（`./gradlew`、9.8.0）を使うため、入れなくてよい。
+
+## 2. プロジェクトの取得
+
+```bash
+git clone https://github.com/k2works/practical-domain-driven-design-in-enterpris-application.git
+cd practical-domain-driven-design-in-enterpris-application
+npm install            # ルートの Gulp のタスクを使う場合
+cd apps/cargo-tracker
+```
+
+書式だけのコミットを `git blame` で飛ばすため、次を一度だけ設定する。
+
+```bash
+git config blame.ignoreRevsFile .git-blame-ignore-revs
+```
+
+## 3. 起動
+
+### H2 で起動する（日常の開発）
+
+開発体験を優先し、ローカルの起動は H2 を PostgreSQL 互換モードで使う（ADR-007）。Docker は要らない。
+
+```bash
+./gradlew bootRun
+```
+
+`dev` プロファイル（`application-dev.properties`）で起動し、Flyway のマイグレーションを当てる。権限による保護（追記専用の表）は H2 では働かない。
+
+### PostgreSQL で起動する（本番に近い確認）
+
+```bash
+./gradlew bootTestRun
+```
+
+テストのクラスパスの `TestCargoTrackerApplication` が、Testcontainers で PostgreSQL 18.6 を起動して接続する。追記専用の表の権限（`afterMigrate`）も働く。終了するとコンテナも止まる。
+
+### 開く URL
+
+| URL | 画面 | 備考 |
+| :--- | :--- | :--- |
+| <http://localhost:8080/customer/transport-requests/new> | 見積依頼の作成（C-03 の最小形） | 荷主の画面 |
+| <http://localhost:8080/staff/kpi-observations> | KPI 計測記録の一覧（S-22 の前身の仮の画面） | 社内の画面。提出の後、非同期の配信を経て表示される |
+| <http://localhost:8080/h2-console> | H2 コンソール（`bootRun` のときだけ） | JDBC URL は `jdbc:h2:mem:cargotracker`、利用者は `sa`、パスワードは空 |
+
+認証はまだない。荷主企業と提出者は、`application.properties` の `cargotracker.provisional-actor.*`（仮の主体）の固定値で記録される。認証は US-18 の Bolt で入れ、この設定を消す。
+
+## 4. テストと品質チェック
+
+| 目的 | コマンド（`apps/cargo-tracker` で実行） | 時間の目安 |
+| :--- | :--- | :--- |
+| すべての検証（書式・静的解析・ユニット・アーキテクチャ・業務ルール層の受入シナリオ・統合・Web・H2 のスモーク・本番の依存・カバレッジの閾値） | `./gradlew check` | 約 2 分 |
+| 書式をそろえる | `./gradlew spotlessApply` | 数秒 |
+| 画面の層の受入シナリオ（`@ui`。Playwright と axe-core） | 初回だけ `./gradlew playwrightInstall`、以降 `./gradlew uiTest` | 約 2 分 |
+| 設計ドキュメントの生成 | `./gradlew jigReports` | 十数秒 |
+
+SonarQube の品質ゲートは、リポジトリのルートで次を実行する。ローカルの SonarQube（<http://localhost:9001>）と、`.env` の `SONAR_TOKEN`・`SONAR_PROJECT_KEY` が要る。手順は [SonarQube ローカル環境セットアップ手順書](../../reference/SonarQubeローカル環境セットアップ手順書.md) に従う。
+
+```bash
+npx gulp sonar-local:status   # 起動しているか
+npx gulp sonar-local:check    # スキャンして Quality Gate を判定する（不合格なら失敗で終わる）
+npx gulp sonar-local:issues   # 指摘の一覧
+```
+
+## 5. 生成物の場所
+
+| 生成物 | 場所 | 作るコマンド |
+| :--- | :--- | :--- |
+| テストの結果 | `build/reports/tests/test/index.html`、`build/reports/tests/uiTest/index.html` | `check`、`uiTest` |
+| 受入シナリオ（Cucumber） | `build/reports/cucumber/cucumber.html`（業務ルール層）、`build/reports/cucumber-ui/cucumber.html`（画面の層） | `check`、`uiTest` |
+| カバレッジ（JaCoCo） | `build/reports/jacoco/test/html/index.html` | `check` |
+| 静的解析 | `build/reports/checkstyle/`、`build/reports/spotbugs/main.html` | `check` |
+| JIG（用語集、パッケージ関連、業務ルール一覧） | `build/jig/index.html` | `jigReports` |
+| Spring Modulith のモジュール図 | `build/spring-modulith-docs/` | `check`（`ModuleDocumentationTest`） |
+
+生成物はリポジトリにコミットしない。CI（`.github/workflows/cargo-tracker-ci.yml`）では、成果物 `cargo-tracker-reports`・`cargo-tracker-ui-reports` に 14 日残る。
+
+## 6. ディレクトリ構造
+
+```text
+apps/cargo-tracker/
+├── build.gradle                  依存、品質チェック、カバレッジの閾値（CI の閾値の正）
+├── config/                       Checkstyle の規則、SpotBugs の除外（理由つき）
+└── src/
+    ├── main/java/com/example/cargotracker/
+    │   ├── quotation/            見積りコンテキスト（interfaces・application・domain・infrastructure）
+    │   ├── identity/             アクセス・監査コンテキスト
+    │   ├── shared/               共有カーネル（domain）と注釈の語彙（annotation.ddd）
+    │   └── platform/             技術の部品（MyBatis の型ハンドラー）
+    ├── main/resources/
+    │   ├── db/migration/         Flyway（common と {vendor}）
+    │   ├── db/callback/          Flyway のコールバック（PostgreSQL の権限）
+    │   └── templates/            Thymeleaf の画面
+    └── test/
+        ├── java/                 ユニット・アーキテクチャ・受入シナリオのステップ定義・統合・Web・画面の層
+        └── resources/features/   受入シナリオ（日本語 Gherkin）
+```
+
+パッケージ構成と依存の規則は [バックエンドアーキテクチャ](../../design/cargo-tracker/architecture_backend.md)、テストの階層は [テスト戦略](../../design/cargo-tracker/test_strategy.md) を参照する。
+
+## 7. Git の規約
+
+コミットは Conventional Commits に従い、1 コミット 1 変更にする（`git-commit` スキル）。push すると、`apps/cargo-tracker` の変更で CI の `check` と `ui` の 2 つのジョブが動く。
+
+## 8. よくあるつまずき
+
+| 症状 | 原因と対処 |
+| :--- | :--- |
+| 統合テストや `bootTestRun` が Docker に接続できない | Docker が動いていない。Docker Desktop などを起動する |
+| `uiTest` がブラウザを見つけられない | `./gradlew playwrightInstall` を一度実行する |
+| `check` が書式で失敗する（`spotlessCheck`） | `./gradlew spotlessApply` で書式をそろえ、書式だけの変更は別のコミットにする |
+| Javadoc や用語集だけを直したのに整合テストが動かない | 動く（`test` タスクの入力にソースと設計文書を宣言している）。動かない場合は `./gradlew test --rerun` で確かめる |
+| `sonar-local:check` が NONE で失敗する | 解析の反映を待つ設定（`sonar.qualitygate.wait`）が働いていない可能性がある。`npx gulp sonar-local:status` でサーバーを確かめる |

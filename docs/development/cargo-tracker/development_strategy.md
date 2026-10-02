@@ -4,7 +4,7 @@ title: "開発戦略 - cargo-tracker（A 社国際貨物輸送管理システム
 description: "リリース計画の W1〜W14 を序盤・中盤・終盤の局面に分け、各局面の TDD のアプローチ、週ごとのデモ項目を受入シナリオにする方針、Living Documentation の採用を定める開発戦略。"
 tags: [development,development-strategy]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-01T23:49:27Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-02T00:07:55Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T10:25:23Z }
   - { by: human:kakimomokuri, at: 2026-10-01T13:06:21Z }
@@ -143,7 +143,7 @@ A is {-}
 
 ### 品質チェックのコマンド
 
-Bolt 1 で確定したコマンドである。`apps/cargo-tracker/` で実行する。
+Bolt 1〜3 で確定したコマンドである。`apps/cargo-tracker/` で実行する。環境の用意（JDK・Docker・Node.js）、起動、生成物の場所は [アプリケーション開発環境セットアップ手順書](../../operation/cargo-tracker/application_development_setup.md) に書く。
 
 | 目的 | コマンド | 備考 |
 | :--- | :--- | :--- |

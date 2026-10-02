@@ -1,5 +1,9 @@
 # Docs Update Log
 
+## 2026-10-02
+* **Creation**: [application_development_setup](/operation/cargo-tracker/application_development_setup.md) を作成（anthropic/claude-opus-5-5）
+* **Update**: [development_strategy](/development/cargo-tracker/development_strategy.md) を更新（anthropic/claude-opus-5-5）
+
 ## 2026-10-01
 * **Update**: [development_strategy](/development/cargo-tracker/development_strategy.md) を更新（anthropic/claude-opus-5-5）
 * **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
