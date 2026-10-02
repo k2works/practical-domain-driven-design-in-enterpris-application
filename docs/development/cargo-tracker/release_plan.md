@@ -4,7 +4,7 @@ title: "リリース計画 - cargo-tracker（A 社国際貨物輸送管理シス
 description: "cargo-tracker MVP のリリース計画。1 人 + AI、時間単位の Bolt（= イテレーション）と週次の見直しで、最初の縦の流れ（R0.1）、パイロット準備完了（R1.0）、本格展開前（R1.1）の 3 段階、Unit のエントロピー評価、SP、バッファ、パイロット開始の条件、引継ぎ ID の台帳。"
 tags: [development,release-plan]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-02T13:47:10Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-02T22:31:15Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T09:29:53Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:38:26Z }
@@ -76,7 +76,7 @@ AI-DLC 版ガイドのステップ 4 に従い、AI がどれだけ自律的に�
 
 | Unit | 意図の曖昧さ | 構造的不確実性 | 検証の不確実性 | リスク | 未解決の仮定 | 承認ゲートの密度 |
 | :--- | :---: | :---: | :---: | :---: | :---: | :--- |
-| U1 輸送要求・見積り | LOW | MED | LOW | MED | MED | 標準（ステップごと） |
+| U1 輸送要求・見積り | LOW | MED | LOW | MED | MED | 標準。業務のルール・スキーマ・セキュリティに関わるステップは毎回、それ以外のステップは次の承認ゲートにまとめる（Bolt 1〜5 で人の変更依頼 0 件。2026-10-03 に human:kakimomokuri が決定。Bolt 6 から） |
 | U2 経路設計 | MED | MED | **HIGH** | **HIGH** | **HIGH** | 密（Red・Green ごと） |
 | U6 予約管理 | LOW | MED | MED | **HIGH** | LOW | 密（確定・冪等・重複防止は Red・Green ごと） |
 | U3 基本追跡 | MED | MED | MED | **HIGH** | MED | 密（開示制御は Red・Green ごと） |
@@ -357,6 +357,7 @@ AI-DLC では **Bolt がイテレーション** である（[AI-DLC 導入ガイ
 - [x] Bolt 3: E2E の基盤と生きたドキュメント（完了、承認済み）。[Bolt 3 計画](bolt_03_plan.md)、[Bolt 3 終了報告](bolt_03_report.md)
 - [x] Bolt 4: 業務番号と必須条件の検証（US-01 AC1・AC2・AC4、完了、承認済み。AC2 の必要書類は次の Bolt）。[Bolt 4 計画](bolt_04_plan.md)、[Bolt 4 終了報告](bolt_04_report.md)
 - [x] Bolt 5: 輸送条件の審査と差戻し（US-02、完了、承認済み）。[Bolt 5 計画](bolt_05_plan.md)、[Bolt 5 終了報告](bolt_05_report.md)
+- [ ] Bolt 6: 荷主の再提出の画面（US-02 の差戻しから版 2 まで。C-02 の最小の一覧、C-04、C-03 の編集。計画済み）。[Bolt 6 計画](bolt_06_plan.md)
 - [x] 開発基盤（Gradle 9、Spring Boot 4.1、Spring Modulith、MyBatis、Flyway の `common`・`{vendor}`、H2・Testcontainers、ArchUnit・AT-01〜06、Cucumber、CI）。Bolt 1〜3 で完了し、#1 をクローズした
 - [ ] UI の骨格（Thymeleaf、htmx、Bootstrap、共通レイアウト）。Thymeleaf は導入済み。#1 から #36 に分けた
 - [ ] US-01（AC1、AC2、AC4）、US-02
