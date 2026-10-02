@@ -20,10 +20,10 @@ import com.example.cargotracker.quotation.application.internal.commandservices.T
 import com.example.cargotracker.quotation.application.internal.queryservices.TransportRequestQueryService;
 import com.example.cargotracker.quotation.domain.model.aggregates.TransportRequest;
 import com.example.cargotracker.quotation.domain.model.valueobjects.ReviewDecision;
+import com.example.cargotracker.quotation.domain.model.valueobjects.ReviewRejection;
 import com.example.cargotracker.quotation.domain.model.valueobjects.ShipmentTermsFixture;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestId;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestNumber;
-import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestRejection;
 import com.example.cargotracker.shared.domain.CompanyId;
 import com.example.cargotracker.shared.domain.UserId;
 import com.example.cargotracker.shared.domain.UtcInstant;
@@ -144,7 +144,7 @@ class TransportRequestReviewControllerTest {
     @Test
     void 理由のない差戻しはエラー要約と項目の下に示し入力を残す() throws Exception {
         given(reviewService.sendBack(any()))
-                .willReturn(new ReviewOutcome.Rejected(TransportRequestRejection.RATIONALE_REQUIRED, 1));
+                .willReturn(new ReviewOutcome.Rejected(ReviewRejection.RATIONALE_REQUIRED, 1));
         given(queryService.findByNumberForStaff(NUMBER)).willReturn(Optional.of(underReview()));
 
         mockMvc.perform(post("/staff/transport-requests/TR-2026-0001/reviews")
@@ -161,8 +161,7 @@ class TransportRequestReviewControllerTest {
 
     @Test
     void 古い版の審査は拒否し最新版を示して再審査を求める() throws Exception {
-        given(reviewService.approve(any()))
-                .willReturn(new ReviewOutcome.Rejected(TransportRequestRejection.STALE_VERSION, 2));
+        given(reviewService.approve(any())).willReturn(new ReviewOutcome.Rejected(ReviewRejection.STALE_VERSION, 2));
         given(queryService.findByNumberForStaff(NUMBER)).willReturn(Optional.of(underReview()));
 
         mockMvc.perform(post("/staff/transport-requests/TR-2026-0001/reviews")

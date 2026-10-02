@@ -4,11 +4,12 @@ import com.example.cargotracker.quotation.domain.events.TransportRequestReviewed
 import com.example.cargotracker.quotation.domain.events.TransportRequestSubmitted;
 import com.example.cargotracker.quotation.domain.model.entities.ReviewRecord;
 import com.example.cargotracker.quotation.domain.model.entities.TransportRequestVersion;
+import com.example.cargotracker.quotation.domain.model.valueobjects.ResubmissionRejection;
 import com.example.cargotracker.quotation.domain.model.valueobjects.ReviewDecision;
+import com.example.cargotracker.quotation.domain.model.valueobjects.ReviewRejection;
 import com.example.cargotracker.quotation.domain.model.valueobjects.ShipmentTerms;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestId;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestNumber;
-import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestRejection;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestStatus;
 import com.example.cargotracker.shared.annotation.ddd.AggregateRoot;
 import com.example.cargotracker.shared.domain.CompanyId;
@@ -29,7 +30,7 @@ public final class TransportRequest {
 
     private static final int FIRST_VERSION_NO = 1;
 
-    /** 根拠・理由・不足事項の文字数の上限（Q-INV-14、データモデルの VARCHAR(4000)）。 */
+    /** 根拠・理由・不足事項の文字数の上限（Q-INV-14、データモデルの VARCHAR(4000)）。文字（コードポイント）で数える（D-22）。 */
     private static final int MAX_TEXT_LENGTH = 4000;
 
     /** 新しく作った集約の、楽観ロックの版の初期値。 */
@@ -40,6 +41,7 @@ public final class TransportRequest {
     private final CompanyId shipperCompanyId;
     private final long aggregateVersion;
     private final List<ReviewRecord> reviewRecords;
+    private final List<ReviewRecord> newReviewRecords = new ArrayList<>();
     private final List<Object> domainEvents = new ArrayList<>();
     private TransportRequestStatus status;
     private TransportRequestVersion currentVersion;
@@ -109,7 +111,7 @@ public final class TransportRequest {
      *
      * @return 受け付けなかった理由（受け付けたら空）
      */
-    public Optional<TransportRequestRejection> approve(
+    public Optional<ReviewRejection> approve(
             int targetVersionNo, UserId reviewer, String rationale, UtcInstant decidedAt) {
         return review(targetVersionNo, ReviewDecision.APPROVED, reviewer, rationale, null, decidedAt);
     }
@@ -120,7 +122,7 @@ public final class TransportRequest {
      *
      * @return 受け付けなかった理由（受け付けたら空）
      */
-    public Optional<TransportRequestRejection> sendBack(
+    public Optional<ReviewRejection> sendBack(
             int targetVersionNo, UserId reviewer, String reason, String missingItems, UtcInstant decidedAt) {
         return review(targetVersionNo, ReviewDecision.SENT_BACK, reviewer, reason, missingItems, decidedAt);
     }
@@ -131,10 +133,9 @@ public final class TransportRequest {
      *
      * @return 受け付けなかった理由（受け付けたら空）
      */
-    public Optional<TransportRequestRejection> resubmit(
-            ShipmentTerms terms, UserId submittedBy, UtcInstant submittedAt) {
+    public Optional<ResubmissionRejection> resubmit(ShipmentTerms terms, UserId submittedBy, UtcInstant submittedAt) {
         if (status != TransportRequestStatus.DRAFT) {
-            return Optional.of(TransportRequestRejection.NOT_DRAFT);
+            return Optional.of(ResubmissionRejection.NOT_DRAFT);
         }
         int versionNo = currentVersion.versionNo() + 1;
         currentVersion = new TransportRequestVersion(versionNo, terms, submittedBy, submittedAt);
@@ -144,7 +145,7 @@ public final class TransportRequest {
         return Optional.empty();
     }
 
-    private Optional<TransportRequestRejection> review(
+    private Optional<ReviewRejection> review(
             int targetVersionNo,
             ReviewDecision decision,
             UserId reviewer,
@@ -152,27 +153,32 @@ public final class TransportRequest {
             String missingItems,
             UtcInstant decidedAt) {
         if (status != TransportRequestStatus.UNDER_REVIEW) {
-            return Optional.of(TransportRequestRejection.NOT_UNDER_REVIEW);
+            return Optional.of(ReviewRejection.NOT_UNDER_REVIEW);
         }
         if (targetVersionNo != currentVersion.versionNo()) {
-            return Optional.of(TransportRequestRejection.STALE_VERSION);
+            return Optional.of(ReviewRejection.STALE_VERSION);
         }
         String normalizedRationale = blankToNull(rationale);
         String normalizedMissingItems = blankToNull(missingItems);
         if (normalizedRationale == null) {
-            return Optional.of(TransportRequestRejection.RATIONALE_REQUIRED);
+            return Optional.of(ReviewRejection.RATIONALE_REQUIRED);
         }
-        if (tooLong(normalizedRationale) || tooLong(normalizedMissingItems)) {
-            return Optional.of(TransportRequestRejection.TEXT_TOO_LONG);
+        if (tooLong(normalizedRationale)) {
+            return Optional.of(ReviewRejection.RATIONALE_TOO_LONG);
         }
-        reviewRecords.add(new ReviewRecord(
+        if (tooLong(normalizedMissingItems)) {
+            return Optional.of(ReviewRejection.MISSING_ITEMS_TOO_LONG);
+        }
+        ReviewRecord reviewRecord = new ReviewRecord(
                 UUID.randomUUID(),
                 targetVersionNo,
                 decision,
                 reviewer,
                 normalizedRationale,
                 normalizedMissingItems,
-                decidedAt));
+                decidedAt);
+        reviewRecords.add(reviewRecord);
+        newReviewRecords.add(reviewRecord);
         status = decision == ReviewDecision.APPROVED ? TransportRequestStatus.QUOTING : TransportRequestStatus.DRAFT;
         domainEvents.add(
                 new TransportRequestReviewed(id.value(), targetVersionNo, decision.name(), reviewer, decidedAt));
@@ -184,7 +190,7 @@ public final class TransportRequest {
     }
 
     private static boolean tooLong(String text) {
-        return text != null && text.length() > MAX_TEXT_LENGTH;
+        return text != null && text.codePointCount(0, text.length()) > MAX_TEXT_LENGTH;
     }
 
     public TransportRequestId id() {
@@ -207,12 +213,21 @@ public final class TransportRequest {
         return currentVersion;
     }
 
-    /** 審査記録（古い順）。 */
+    /** 審査記録（版番号の順）。 */
     public List<ReviewRecord> reviewRecords() {
         return List.copyOf(reviewRecords);
     }
 
-    /** 楽観ロックの版（読み込んだときの集約の版）。リポジトリが更新のときに照合する。 */
+    /** 読み込んだ後（または作った後）に足した審査記録。リポジトリは更新のときに、これだけを追加する。 */
+    public List<ReviewRecord> newReviewRecords() {
+        return List.copyOf(newReviewRecords);
+    }
+
+    /**
+     * 楽観ロックの版（読み込んだときの集約の版）。リポジトリが更新のときに照合する。
+     * 更新しても、このインスタンスの版は変わらない。1 つのトランザクションで読み込んだ集約は 1 回だけ更新し、
+     * もう一度変えるときは読み込み直す（同じインスタンスで 2 回更新すると、2 回目は競合として失敗する）。
+     */
     public long aggregateVersion() {
         return aggregateVersion;
     }

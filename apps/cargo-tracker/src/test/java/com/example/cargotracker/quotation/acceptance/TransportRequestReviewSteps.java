@@ -13,12 +13,12 @@ import com.example.cargotracker.quotation.application.internal.queryservices.Tra
 import com.example.cargotracker.quotation.domain.model.aggregates.TransportRequest;
 import com.example.cargotracker.quotation.domain.model.entities.ReviewRecord;
 import com.example.cargotracker.quotation.domain.model.valueobjects.ReviewDecision;
+import com.example.cargotracker.quotation.domain.model.valueobjects.ReviewRejection;
 import com.example.cargotracker.quotation.domain.model.valueobjects.ShipmentTerms;
 import com.example.cargotracker.quotation.domain.model.valueobjects.ShipmentTermsInput;
 import com.example.cargotracker.quotation.domain.model.valueobjects.SubmissionViolations.Item;
 import com.example.cargotracker.quotation.domain.model.valueobjects.SubmissionViolations.Reason;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestId;
-import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestRejection;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestStatus;
 import com.example.cargotracker.shared.acceptance.ScenarioContext;
 import com.example.cargotracker.shared.domain.CompanyId;
@@ -45,10 +45,10 @@ public class TransportRequestReviewSteps {
 
     private static final UserId SUBMITTER = new UserId(UUID.fromString("00000000-0000-0000-0000-000000000101"));
 
-    private static final Map<String, TransportRequestRejection> REJECTIONS = Map.of(
-            "根拠がない", TransportRequestRejection.RATIONALE_REQUIRED,
-            "古い版", TransportRequestRejection.STALE_VERSION,
-            "審査中でない", TransportRequestRejection.NOT_UNDER_REVIEW);
+    private static final Map<String, ReviewRejection> REJECTIONS = Map.of(
+            "根拠がない", ReviewRejection.RATIONALE_REQUIRED,
+            "古い版", ReviewRejection.STALE_VERSION,
+            "審査中でない", ReviewRejection.NOT_UNDER_REVIEW);
 
     private static final Map<String, TransportRequestStatus> STATUSES = Map.of(
             "下書き", TransportRequestStatus.DRAFT,

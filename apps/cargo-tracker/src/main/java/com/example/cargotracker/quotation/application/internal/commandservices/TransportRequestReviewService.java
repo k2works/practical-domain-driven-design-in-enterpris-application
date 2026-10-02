@@ -6,8 +6,8 @@ import com.example.cargotracker.quotation.domain.model.aggregates.ConcurrentTran
 import com.example.cargotracker.quotation.domain.model.aggregates.TransportRequest;
 import com.example.cargotracker.quotation.domain.model.aggregates.TransportRequestRepository;
 import com.example.cargotracker.quotation.domain.model.valueobjects.ReviewDecision;
+import com.example.cargotracker.quotation.domain.model.valueobjects.ReviewRejection;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestNumber;
-import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestRejection;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import java.time.Clock;
 import java.util.Optional;
@@ -61,14 +61,14 @@ public class TransportRequestReviewService {
     private ReviewOutcome review(
             TransportRequestNumber number,
             ReviewDecision decision,
-            Function<TransportRequest, Optional<TransportRequestRejection>> operation) {
+            Function<TransportRequest, Optional<ReviewRejection>> operation) {
         Optional<TransportRequest> found = repository.findByNumberForStaff(number);
         if (found.isEmpty()) {
             return new ReviewOutcome.NotFound();
         }
         TransportRequest request = found.get();
         int reviewedVersionNo = request.currentVersion().versionNo();
-        Optional<TransportRequestRejection> rejection = operation.apply(request);
+        Optional<ReviewRejection> rejection = operation.apply(request);
         if (rejection.isPresent()) {
             return new ReviewOutcome.Rejected(rejection.get(), reviewedVersionNo);
         }
@@ -77,8 +77,13 @@ public class TransportRequestReviewService {
         } catch (ConcurrentTransportRequestUpdateException _) {
             return new ReviewOutcome.Conflict();
         }
+        publishEvents(request);
+        return new ReviewOutcome.Reviewed(number, reviewedVersionNo, decision);
+    }
+
+    /** 保存した集約のイベントを、保存と同じトランザクションで発行し、集約から消す。 */
+    private void publishEvents(TransportRequest request) {
         request.domainEvents().forEach(eventPublisher::publishEvent);
         request.clearDomainEvents();
-        return new ReviewOutcome.Reviewed(number, reviewedVersionNo, decision);
     }
 }

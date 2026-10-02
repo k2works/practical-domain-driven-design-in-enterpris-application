@@ -1,8 +1,8 @@
 package com.example.cargotracker.quotation.application.internal.commandservices;
 
 import com.example.cargotracker.quotation.domain.model.valueobjects.ReviewDecision;
+import com.example.cargotracker.quotation.domain.model.valueobjects.ReviewRejection;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestNumber;
-import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestRejection;
 import java.util.Objects;
 
 /**
@@ -31,7 +31,7 @@ public sealed interface ReviewOutcome {
      * @param reason 理由
      * @param currentVersionNo 現在の版番号（古い版のときは、この版の再審査を求める）
      */
-    record Rejected(TransportRequestRejection reason, int currentVersionNo) implements ReviewOutcome {
+    record Rejected(ReviewRejection reason, int currentVersionNo) implements ReviewOutcome {
 
         public Rejected {
             Objects.requireNonNull(reason, "reason");

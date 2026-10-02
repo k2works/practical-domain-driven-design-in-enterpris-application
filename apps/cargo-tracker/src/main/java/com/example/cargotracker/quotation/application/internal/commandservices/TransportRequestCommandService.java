@@ -7,12 +7,12 @@ import com.example.cargotracker.quotation.domain.model.aggregates.TransportReque
 import com.example.cargotracker.quotation.domain.model.aggregates.TransportRequestNumberIssuer;
 import com.example.cargotracker.quotation.domain.model.aggregates.TransportRequestRepository;
 import com.example.cargotracker.quotation.domain.model.rules.MvpAcceptancePolicy;
+import com.example.cargotracker.quotation.domain.model.valueobjects.ResubmissionRejection;
 import com.example.cargotracker.quotation.domain.model.valueobjects.ShipmentTerms;
 import com.example.cargotracker.quotation.domain.model.valueobjects.ShipmentTermsInput;
 import com.example.cargotracker.quotation.domain.model.valueobjects.SubmissionViolations;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestId;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestNumber;
-import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestRejection;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import java.time.Clock;
 import java.util.Optional;
@@ -82,7 +82,7 @@ public class TransportRequestCommandService {
             ShipmentTerms terms,
             ResubmitTransportRequestCommand command,
             UtcInstant submittedAt) {
-        Optional<TransportRequestRejection> rejection = request.resubmit(terms, command.submittedBy(), submittedAt);
+        Optional<ResubmissionRejection> rejection = request.resubmit(terms, command.submittedBy(), submittedAt);
         if (rejection.isPresent()) {
             return new ResubmissionOutcome.Rejected(rejection.get());
         }
@@ -91,8 +91,7 @@ public class TransportRequestCommandService {
         } catch (ConcurrentTransportRequestUpdateException _) {
             return new ResubmissionOutcome.Conflict();
         }
-        request.domainEvents().forEach(eventPublisher::publishEvent);
-        request.clearDomainEvents();
+        publishEvents(request);
         return new ResubmissionOutcome.Resubmitted(
                 request.number(), request.currentVersion().versionNo());
     }
@@ -109,8 +108,13 @@ public class TransportRequestCommandService {
                 command.submittedBy(),
                 submittedAt);
         repository.save(transportRequest);
+        publishEvents(transportRequest);
+        return new SubmissionOutcome.Submitted(transportRequest.id(), number);
+    }
+
+    /** 保存した集約のイベントを、保存と同じトランザクションで発行し、集約から消す。 */
+    private void publishEvents(TransportRequest transportRequest) {
         transportRequest.domainEvents().forEach(eventPublisher::publishEvent);
         transportRequest.clearDomainEvents();
-        return new SubmissionOutcome.Submitted(transportRequest.id(), number);
     }
 }

@@ -9,10 +9,10 @@ import com.example.cargotracker.quotation.domain.events.TransportRequestReviewed
 import com.example.cargotracker.quotation.domain.model.aggregates.ConcurrentTransportRequestUpdateException;
 import com.example.cargotracker.quotation.domain.model.aggregates.TransportRequest;
 import com.example.cargotracker.quotation.domain.model.valueobjects.ReviewDecision;
+import com.example.cargotracker.quotation.domain.model.valueobjects.ReviewRejection;
 import com.example.cargotracker.quotation.domain.model.valueobjects.ShipmentTermsFixture;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestId;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestNumber;
-import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestRejection;
 import com.example.cargotracker.shared.domain.CompanyId;
 import com.example.cargotracker.shared.domain.UserId;
 import com.example.cargotracker.shared.domain.UtcInstant;
@@ -68,7 +68,7 @@ class TransportRequestReviewServiceTest {
     void 受け付けなければ保存もイベントの発行もせず理由と現在の版を返す() {
         ReviewOutcome outcome = service.sendBack(new SendBackTransportRequestCommand(NUMBER, 2, REVIEWER, "理由", null));
 
-        assertThat(outcome).isEqualTo(new ReviewOutcome.Rejected(TransportRequestRejection.STALE_VERSION, 1));
+        assertThat(outcome).isEqualTo(new ReviewOutcome.Rejected(ReviewRejection.STALE_VERSION, 1));
         assertThat(repository.findById(id).orElseThrow().reviewRecords()).isEmpty();
         assertThat(published).isEmpty();
     }

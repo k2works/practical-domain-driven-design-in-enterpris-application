@@ -5,12 +5,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.example.cargotracker.quotation.domain.events.TransportRequestReviewed;
 import com.example.cargotracker.quotation.domain.events.TransportRequestSubmitted;
 import com.example.cargotracker.quotation.domain.model.entities.ReviewRecord;
+import com.example.cargotracker.quotation.domain.model.valueobjects.ResubmissionRejection;
 import com.example.cargotracker.quotation.domain.model.valueobjects.ReviewDecision;
+import com.example.cargotracker.quotation.domain.model.valueobjects.ReviewRejection;
 import com.example.cargotracker.quotation.domain.model.valueobjects.ShipmentTerms;
 import com.example.cargotracker.quotation.domain.model.valueobjects.ShipmentTermsFixture;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestId;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestNumber;
-import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestRejection;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestStatus;
 import com.example.cargotracker.shared.domain.CompanyId;
 import com.example.cargotracker.shared.domain.Location;
@@ -91,34 +92,75 @@ class TransportRequestReviewTest {
     @ParameterizedTest
     @ValueSource(strings = {"", "   "})
     void 根拠のない確定と理由のない差戻しはできない(String blank) {
-        assertThat(request.approve(1, REVIEWER, blank, DECIDED_AT))
-                .contains(TransportRequestRejection.RATIONALE_REQUIRED);
-        assertThat(request.sendBack(1, REVIEWER, blank, null, DECIDED_AT))
-                .contains(TransportRequestRejection.RATIONALE_REQUIRED);
+        assertThat(request.approve(1, REVIEWER, blank, DECIDED_AT)).contains(ReviewRejection.RATIONALE_REQUIRED);
+        assertThat(request.sendBack(1, REVIEWER, blank, null, DECIDED_AT)).contains(ReviewRejection.RATIONALE_REQUIRED);
         assertThat(request.status()).isEqualTo(TransportRequestStatus.UNDER_REVIEW);
         assertThat(request.reviewRecords()).isEmpty();
         assertThat(request.domainEvents()).isEmpty();
     }
 
     @Test
-    void 根拠と理由と不足事項は4000文字までにする() {
+    void 根拠と理由と不足事項は4000文字までで超えた欄を理由で示す() {
         String justFits = "あ".repeat(4000);
         String tooLong = "あ".repeat(4001);
 
+        assertThat(request.approve(1, REVIEWER, tooLong, DECIDED_AT)).contains(ReviewRejection.RATIONALE_TOO_LONG);
+        assertThat(request.sendBack(1, REVIEWER, tooLong, null, DECIDED_AT))
+                .contains(ReviewRejection.RATIONALE_TOO_LONG);
         assertThat(request.sendBack(1, REVIEWER, "理由", tooLong, DECIDED_AT))
-                .contains(TransportRequestRejection.TEXT_TOO_LONG);
-        assertThat(request.approve(1, REVIEWER, tooLong, DECIDED_AT)).contains(TransportRequestRejection.TEXT_TOO_LONG);
-        assertThat(request.approve(1, REVIEWER, justFits, DECIDED_AT)).isEmpty();
+                .contains(ReviewRejection.MISSING_ITEMS_TOO_LONG);
+        assertThat(request.sendBack(1, REVIEWER, justFits, justFits, DECIDED_AT))
+                .isEmpty();
+    }
+
+    @Test
+    void 文字数は文字で数えサロゲートペアの文字も1文字とする() {
+        String fourThousandCharacters = "𠮷".repeat(4000);
+
+        assertThat(fourThousandCharacters.length()).isEqualTo(8000);
+        assertThat(request.approve(1, REVIEWER, fourThousandCharacters, DECIDED_AT))
+                .isEmpty();
+    }
+
+    @Test
+    void 根拠の前後の空白は除いてから記録し文字数を数える() {
+        assertThat(request.approve(1, REVIEWER, "  " + "あ".repeat(4000) + "  ", DECIDED_AT))
+                .isEmpty();
+
+        assertThat(request.reviewRecords())
+                .singleElement()
+                .satisfies(reviewRecord -> assertThat(reviewRecord.rationale()).hasSize(4000));
+    }
+
+    @Test
+    void 下書きのときは確定できない() {
+        request.sendBack(1, REVIEWER, "差し戻す", null, DECIDED_AT);
+
+        assertThat(request.approve(1, REVIEWER, "確定する", DECIDED_AT)).contains(ReviewRejection.NOT_UNDER_REVIEW);
+    }
+
+    @Test
+    void 新しい審査記録だけを保存の対象として区別する() {
+        request.sendBack(1, REVIEWER, "差し戻す", null, DECIDED_AT);
+        TransportRequest restored = TransportRequest.reconstitute(
+                id, number, shipper, request.status(), request.currentVersion(), request.reviewRecords(), 1L);
+        restored.resubmit(changedTerms(), SHIPPER_USER, RESUBMITTED_AT);
+
+        restored.approve(2, REVIEWER, "確認した", RESUBMITTED_AT);
+
+        assertThat(restored.reviewRecords()).extracting(ReviewRecord::versionNo).containsExactly(1, 2);
+        assertThat(restored.newReviewRecords())
+                .extracting(ReviewRecord::versionNo)
+                .containsExactly(2);
     }
 
     @Test
     void 審査中でなければ確定も差戻しもできない() {
         request.approve(1, REVIEWER, "確認した", DECIDED_AT);
 
-        assertThat(request.approve(1, REVIEWER, "もう一度", DECIDED_AT))
-                .contains(TransportRequestRejection.NOT_UNDER_REVIEW);
+        assertThat(request.approve(1, REVIEWER, "もう一度", DECIDED_AT)).contains(ReviewRejection.NOT_UNDER_REVIEW);
         assertThat(request.sendBack(1, REVIEWER, "やはり差し戻す", null, DECIDED_AT))
-                .contains(TransportRequestRejection.NOT_UNDER_REVIEW);
+                .contains(ReviewRejection.NOT_UNDER_REVIEW);
         assertThat(request.status()).isEqualTo(TransportRequestStatus.QUOTING);
     }
 
@@ -142,7 +184,7 @@ class TransportRequestReviewTest {
     @Test
     void 下書きでなければ再提出できない() {
         assertThat(request.resubmit(changedTerms(), SHIPPER_USER, RESUBMITTED_AT))
-                .contains(TransportRequestRejection.NOT_DRAFT);
+                .contains(ResubmissionRejection.NOT_DRAFT);
         assertThat(request.currentVersion().versionNo()).isEqualTo(1);
     }
 
@@ -151,10 +193,9 @@ class TransportRequestReviewTest {
         request.sendBack(1, REVIEWER, "目的地の確認が必要", null, DECIDED_AT);
         request.resubmit(changedTerms(), SHIPPER_USER, RESUBMITTED_AT);
 
-        assertThat(request.approve(1, REVIEWER, "版 1 を確認した", RESUBMITTED_AT))
-                .contains(TransportRequestRejection.STALE_VERSION);
+        assertThat(request.approve(1, REVIEWER, "版 1 を確認した", RESUBMITTED_AT)).contains(ReviewRejection.STALE_VERSION);
         assertThat(request.sendBack(1, REVIEWER, "版 1 を差し戻す", null, RESUBMITTED_AT))
-                .contains(TransportRequestRejection.STALE_VERSION);
+                .contains(ReviewRejection.STALE_VERSION);
         assertThat(request.status()).isEqualTo(TransportRequestStatus.UNDER_REVIEW);
         assertThat(request.approve(2, REVIEWER, "版 2 を確認した", RESUBMITTED_AT)).isEmpty();
     }

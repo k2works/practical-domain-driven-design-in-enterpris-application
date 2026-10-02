@@ -8,9 +8,9 @@ import com.example.cargotracker.quotation.application.internal.queryservices.Tra
 import com.example.cargotracker.quotation.domain.model.aggregates.TransportRequest;
 import com.example.cargotracker.quotation.domain.model.valueobjects.Cargo;
 import com.example.cargotracker.quotation.domain.model.valueobjects.ReviewDecision;
+import com.example.cargotracker.quotation.domain.model.valueobjects.ReviewRejection;
 import com.example.cargotracker.quotation.domain.model.valueobjects.ShipmentTerms;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestNumber;
-import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestRejection;
 import com.example.cargotracker.shared.domain.UserId;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -108,7 +108,7 @@ public class TransportRequestReviewController {
                 redirectAttributes.addFlashAttribute("result", resultMessage(reviewed));
                 yield "redirect:/staff/transport-requests";
             }
-            case ReviewOutcome.Rejected(TransportRequestRejection reason, int currentVersionNo) -> {
+            case ReviewOutcome.Rejected(ReviewRejection reason, int currentVersionNo) -> {
                 reject(reason, currentVersionNo, approve, reviewForm, bindingResult);
                 yield showReview(find(number), model);
             }
@@ -121,23 +121,44 @@ public class TransportRequestReviewController {
     }
 
     private static void reject(
-            TransportRequestRejection reason,
-            int currentVersionNo,
-            boolean approve,
-            ReviewForm form,
-            BindingResult errors) {
+            ReviewRejection reason, int currentVersionNo, boolean approve, ReviewForm form, BindingResult errors) {
         String field = approve ? "rationale" : "reason";
-        switch (reason) {
-            case RATIONALE_REQUIRED ->
-                errors.rejectValue(field, "required", approve ? "審査を確定する根拠を入力してください" : "差し戻す理由を入力してください");
-            case TEXT_TOO_LONG ->
-                errors.rejectValue(field, "tooLong", FIELD_LABELS.get(field) + "と不足事項は 4,000 文字までで入力してください");
-            case STALE_VERSION -> {
-                errors.reject("stale", "この見積依頼は新しい版 " + currentVersionNo + " が出されています。最新の版を確認して審査し直してください");
-                form.setVersionNo(currentVersionNo);
-            }
-            case NOT_UNDER_REVIEW -> errors.reject("notUnderReview", "この見積依頼は審査中ではありません。受付一覧から確かめてください");
-            default -> throw new IllegalStateException("審査で再提出の理由は返らない: " + reason);
+        RejectionMessage message =
+                switch (reason) {
+                    case RATIONALE_REQUIRED ->
+                        RejectionMessage.forField(field, approve ? "審査を確定する根拠を入力してください" : "差し戻す理由を入力してください");
+                    case RATIONALE_TOO_LONG ->
+                        RejectionMessage.forField(field, FIELD_LABELS.get(field) + "は 4,000 文字までで入力してください");
+                    case MISSING_ITEMS_TOO_LONG ->
+                        RejectionMessage.forField("missingItems", "不足事項は 4,000 文字までで入力してください");
+                    case STALE_VERSION ->
+                        RejectionMessage.global("この見積依頼は新しい版 " + currentVersionNo + " が出されています。最新の版を確認して審査し直してください");
+                    case NOT_UNDER_REVIEW -> RejectionMessage.global("この見積依頼は審査中ではありません。受付一覧から確かめてください");
+                };
+        if (message.field() == null) {
+            errors.reject(reason.name(), message.text());
+        } else {
+            errors.rejectValue(message.field(), reason.name(), message.text());
+        }
+        if (reason == ReviewRejection.STALE_VERSION) {
+            form.setVersionNo(currentVersionNo);
+        }
+    }
+
+    /**
+     * 拒否の理由を示す場所と文言。
+     *
+     * @param field 誤りを付ける入力の項目（入力の誤りでない拒否は null）
+     * @param text 文言
+     */
+    private record RejectionMessage(String field, String text) {
+
+        static RejectionMessage forField(String field, String text) {
+            return new RejectionMessage(field, text);
+        }
+
+        static RejectionMessage global(String text) {
+            return new RejectionMessage(null, text);
         }
     }
 

@@ -1,8 +1,8 @@
 package com.example.cargotracker.quotation.application.internal.commandservices;
 
+import com.example.cargotracker.quotation.domain.model.valueobjects.ResubmissionRejection;
 import com.example.cargotracker.quotation.domain.model.valueobjects.SubmissionViolations;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestNumber;
-import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestRejection;
 import java.util.Objects;
 
 /**
@@ -40,7 +40,7 @@ public sealed interface ResubmissionOutcome {
      *
      * @param reason 理由
      */
-    record Rejected(TransportRequestRejection reason) implements ResubmissionOutcome {
+    record Rejected(ResubmissionRejection reason) implements ResubmissionOutcome {
 
         public Rejected {
             Objects.requireNonNull(reason, "reason");
