@@ -55,12 +55,12 @@ class MyBatisTransportRequestNumberIssuerIntegrationTest {
     }
 
     @Test
-    void 年の最初の採番を同時に行っても番号は重複せず連続する() throws Exception {
+    void 年の最初の採番を同時に行っても番号は重複せず連続する() {
         assertConcurrentNumbersAreDistinctAndConsecutive(2094);
     }
 
     @Test
-    void 年の行がある状態で同時に採番しても番号は重複せず連続する() throws Exception {
+    void 年の行がある状態で同時に採番しても番号は重複せず連続する() {
         nextInTransaction(2095);
 
         List<Integer> sequences = concurrentSequences(2095, 8);
@@ -68,14 +68,14 @@ class MyBatisTransportRequestNumberIssuerIntegrationTest {
         assertThat(sequences).containsExactlyInAnyOrder(2, 3, 4, 5, 6, 7, 8, 9);
     }
 
-    private void assertConcurrentNumbersAreDistinctAndConsecutive(int year) throws Exception {
+    private void assertConcurrentNumbersAreDistinctAndConsecutive(int year) {
         List<Integer> sequences = concurrentSequences(year, 8);
 
         assertThat(sequences).containsExactlyInAnyOrder(1, 2, 3, 4, 5, 6, 7, 8);
     }
 
     /** 開始をラッチでそろえ、別々のトランザクションで同時に採番する。 */
-    private List<Integer> concurrentSequences(int year, int threads) throws Exception {
+    private List<Integer> concurrentSequences(int year, int threads) {
         CountDownLatch start = new CountDownLatch(1);
         ExecutorService executor = Executors.newFixedThreadPool(threads);
         try {

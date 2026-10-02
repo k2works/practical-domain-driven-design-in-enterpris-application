@@ -65,11 +65,13 @@ cd apps/cargo-tracker
 
 | URL | 画面 | 備考 |
 | :--- | :--- | :--- |
-| <http://localhost:8080/customer/transport-requests/new> | 見積依頼の作成（C-03 の最小形） | 荷主の画面。提出の完了画面は、いまは内部の ID（UUID）を表示する。D-4（画面には業務番号だけを出す）は US-01 AC2 の Bolt で反映する |
-| <http://localhost:8080/staff/kpi-observations> | KPI 計測記録の一覧（S-22 の前身の仮の画面） | 社内の画面。提出の後、非同期の配信を経て表示される |
+| <http://localhost:8080/customer/transport-requests/new> | 見積依頼の作成（C-03 の 1 画面の形） | 荷主の画面。必要書類を除く必須条件を入れて提出すると、完了画面に業務番号（例: `TR-2026-0001 版 1`）が出る。内部の ID（UUID）は画面にもアドレスバーにも出さない（D-4）。希望到着期限は日本時間で `2026-11-02 09:00` の形で入れる |
+| <http://localhost:8080/staff/kpi-observations> | KPI 計測記録の一覧（S-22 の前身の仮の画面） | 社内の画面。提出の後、非同期の配信を経て業務番号と提出時刻が表示される。提出時刻はまだ UTC だけで表示する（BR-10 との差。S-22 の本実装で直す） |
 | <http://localhost:8080/h2-console> | H2 コンソール（`bootRun` のときだけ） | JDBC URL は `jdbc:h2:mem:cargotracker`、利用者は `sa`、パスワードは空 |
 
 認証はまだない。荷主企業と提出者は、`application.properties` の `cargotracker.provisional-actor.*`（仮の主体）の固定値で記録される。認証は US-18 の Bolt で入れ、この設定を消す。
+
+荷受人は、企業マスターができるまで `cargotracker.provisional-consignees.*`（仮の荷受人の一覧、3 社）から選ぶ。`.properties` は ISO-8859-1 で読まれるため、名前の日本語は Unicode のエスケープで書く。企業マスターは US-16 の Bolt で入れ、この設定を消す。
 
 ## 4. テストと品質チェック
 

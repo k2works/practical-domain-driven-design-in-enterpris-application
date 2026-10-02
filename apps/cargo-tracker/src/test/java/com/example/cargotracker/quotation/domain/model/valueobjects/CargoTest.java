@@ -24,12 +24,11 @@ class CargoTest {
     @ParameterizedTest
     @CsvSource({"0, 8400, 32.5", "12, 0, 32.5", "12, 8400, 0", "12, -1, 32.5", "12, 8400.1234, 32.5"})
     void 個数と総重量と容積が範囲の外なら作れない(int packageCount, String grossWeightKg, String volumeM3) {
-        assertThatThrownBy(() -> new Cargo(
-                        CargoCategory.GENERAL,
-                        PackageType.PALLET,
-                        packageCount,
-                        new BigDecimal(grossWeightKg),
-                        new BigDecimal(volumeM3)))
+        BigDecimal grossWeight = new BigDecimal(grossWeightKg);
+        BigDecimal volume = new BigDecimal(volumeM3);
+
+        assertThatThrownBy(
+                        () -> new Cargo(CargoCategory.GENERAL, PackageType.PALLET, packageCount, grossWeight, volume))
                 .isInstanceOf(IllegalArgumentException.class);
     }
 }

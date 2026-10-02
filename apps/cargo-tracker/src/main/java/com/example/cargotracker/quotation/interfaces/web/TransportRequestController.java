@@ -8,6 +8,7 @@ import com.example.cargotracker.quotation.domain.model.aggregates.TransportReque
 import com.example.cargotracker.quotation.domain.model.valueobjects.CargoCategory;
 import com.example.cargotracker.quotation.domain.model.valueobjects.PackageType;
 import com.example.cargotracker.quotation.domain.model.valueobjects.ShipmentTermsInput;
+import com.example.cargotracker.quotation.domain.model.valueobjects.SubmissionViolations;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestNumber;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestStatus;
 import com.example.cargotracker.shared.domain.CompanyId;
@@ -98,10 +99,9 @@ public class TransportRequestController {
                 new UserId(provisionalActor.userId()),
                 input.get()));
         return switch (outcome) {
-            case SubmissionOutcome.Submitted submitted ->
-                "redirect:/customer/transport-requests/" + submitted.number().text() + "/submitted";
-            case SubmissionOutcome.Rejected rejected -> {
-                SubmissionViolationMessages.reject(rejected.violations(), bindingResult);
+            case SubmissionOutcome.Submitted submitted -> redirectToSubmitted(submitted);
+            case SubmissionOutcome.Rejected(SubmissionViolations violations) -> {
+                SubmissionViolationMessages.reject(violations, bindingResult);
                 yield FORM_VIEW;
             }
         };
@@ -127,6 +127,11 @@ public class TransportRequestController {
                         transportRequest.currentVersion().submittedAt().instant(),
                         TransportRequestFormConverter.CUSTOMER_ZONE)));
         return "quotation/transport-requests/submitted";
+    }
+
+    /** 業務番号の完了画面へリダイレクトする（PRG）。 */
+    private static String redirectToSubmitted(SubmissionOutcome.Submitted submitted) {
+        return "redirect:/customer/transport-requests/" + submitted.number().text() + "/submitted";
     }
 
     private static Optional<TransportRequestNumber> parse(String number) {

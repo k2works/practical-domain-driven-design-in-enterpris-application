@@ -72,8 +72,9 @@ class MyBatisTransportRequestRepositoryIntegrationTest {
     void 同じ業務番号の輸送要求は保存できない() {
         TransportRequestNumber number = new TransportRequestNumber(2096, 1);
         repository.save(submitted(number));
+        TransportRequest sameNumber = submitted(number);
 
-        assertThatThrownBy(() -> repository.save(submitted(number))).isInstanceOf(DuplicateKeyException.class);
+        assertThatThrownBy(() -> repository.save(sameNumber)).isInstanceOf(DuplicateKeyException.class);
     }
 
     @Test
