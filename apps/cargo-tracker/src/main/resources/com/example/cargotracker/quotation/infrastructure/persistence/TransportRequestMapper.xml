@@ -40,6 +40,55 @@
                 #{submittedBy}, #{submittedAt})
     </insert>
 
+    <!-- 再提出の版。既にある版は変えない（追記専用）。ON CONFLICT は H2 で使えないため、INSERT ... SELECT ... WHERE NOT EXISTS にする（ADR-007） -->
+    <insert id="insertTransportRequestVersionIfAbsent">
+        INSERT INTO quotation.transport_request_version
+            (transport_request_id, version_no, consignee_company_id, origin_unlocode, destination_unlocode,
+             arrival_deadline, cargo_category, package_type, package_count, gross_weight_kg, volume_m3,
+             submitted_by, submitted_at)
+        SELECT #{id}, #{currentVersionNo}, #{consigneeCompanyId}, #{originUnlocode}, #{destinationUnlocode},
+               #{arrivalDeadline}, #{cargoCategory}, #{packageType}, #{packageCount}, #{grossWeightKg}, #{volumeM3},
+               #{submittedBy}, #{submittedAt}
+         WHERE NOT EXISTS (
+               SELECT 1 FROM quotation.transport_request_version
+                WHERE transport_request_id = #{id} AND version_no = #{currentVersionNo})
+    </insert>
+
+    <!-- 楽観ロック（データモデル、ARCH-HO-01）。読み込んだときの版でなければ 0 件になる -->
+    <update id="updateTransportRequest">
+        UPDATE quotation.transport_request
+           SET status = #{status}, current_version_no = #{currentVersionNo}, version = version + 1
+         WHERE id = #{id} AND version = #{expectedVersion}
+    </update>
+
+    <insert id="insertReviewRecordIfAbsent">
+        INSERT INTO quotation.review_record
+            (id, transport_request_id, version_no, decision, reviewer_id, rationale, missing_items, decided_at)
+        SELECT #{id}, #{transportRequestId}, #{versionNo}, #{decision}, #{reviewerId}, #{rationale}, #{missingItems},
+               #{decidedAt}
+         WHERE NOT EXISTS (SELECT 1 FROM quotation.review_record WHERE id = #{id})
+    </insert>
+
+    <resultMap id="reviewRecordRow" type="com.example.cargotracker.quotation.infrastructure.persistence.ReviewRecordRow">
+        <constructor>
+            <idArg column="id" name="id" javaType="java.util.UUID"/>
+            <arg column="transport_request_id" name="transportRequestId" javaType="java.util.UUID"/>
+            <arg column="version_no" name="versionNo" javaType="_int"/>
+            <arg column="decision" name="decision" javaType="String"/>
+            <arg column="reviewer_id" name="reviewerId" javaType="java.util.UUID"/>
+            <arg column="rationale" name="rationale" javaType="String"/>
+            <arg column="missing_items" name="missingItems" javaType="String"/>
+            <arg column="decided_at" name="decidedAt" javaType="java.time.OffsetDateTime"/>
+        </constructor>
+    </resultMap>
+
+    <select id="selectReviewRecords" resultMap="reviewRecordRow">
+        SELECT id, transport_request_id, version_no, decision, reviewer_id, rationale, missing_items, decided_at
+          FROM quotation.review_record
+         WHERE transport_request_id = #{transportRequestId}
+         ORDER BY decided_at, id
+    </select>
+
     <sql id="selectRow">
         SELECT r.id, r.request_number, r.shipper_company_id, r.status, r.current_version_no, r.version,
                v.consignee_company_id, v.origin_unlocode, v.destination_unlocode, v.arrival_deadline,
@@ -54,6 +103,19 @@
     <select id="selectById" resultMap="transportRequestRow">
         <include refid="selectRow"/>
          WHERE r.id = #{id}
+    </select>
+
+    <!-- 社内用: 荷主企業で絞らない（営業担当者はすべての荷主の輸送要求を扱う） -->
+    <select id="selectByNumberForStaff" resultMap="transportRequestRow">
+        <include refid="selectRow"/>
+         WHERE r.request_number = #{requestNumber}
+    </select>
+
+    <!-- 社内用: 審査中を、現在の版の提出時刻の古い順に -->
+    <select id="selectUnderReview" resultMap="transportRequestRow">
+        <include refid="selectRow"/>
+         WHERE r.status = 'UNDER_REVIEW'
+         ORDER BY v.submitted_at, r.request_number
     </select>
 
     <select id="selectByNumber" resultMap="transportRequestRow">

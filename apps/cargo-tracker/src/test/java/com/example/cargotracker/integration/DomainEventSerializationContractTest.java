@@ -3,8 +3,10 @@ package com.example.cargotracker.integration;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.example.cargotracker.TestcontainersConfiguration;
+import com.example.cargotracker.quotation.domain.events.TransportRequestReviewed;
 import com.example.cargotracker.quotation.domain.events.TransportRequestSubmitted;
 import com.example.cargotracker.shared.domain.CompanyId;
+import com.example.cargotracker.shared.domain.UserId;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import java.time.Instant;
 import java.util.UUID;
@@ -50,6 +52,19 @@ class DomainEventSerializationContractTest {
             new UtcInstant(Instant.parse("2026-10-05T01:00:00.123456Z")),
             "TR-2026-0001");
 
+    /** DE-02 輸送要求を審査した（Bolt 5）。判断は文字列で持つ（イベントはドメインの型を持たない）。 */
+    private static final String TRANSPORT_REQUEST_REVIEWED_V1 = """
+            {"transportRequestId":"11111111-1111-1111-1111-111111111111","versionNo":1,"decision":"APPROVED",\
+            "reviewerId":{"value":"00000000-0000-0000-0000-000000000301"},\
+            "decidedAt":{"instant":"2026-10-05T03:00:00.123456Z"}}""";
+
+    private static final TransportRequestReviewed REVIEWED_V1 = new TransportRequestReviewed(
+            UUID.fromString("11111111-1111-1111-1111-111111111111"),
+            1,
+            "APPROVED",
+            new UserId(UUID.fromString("00000000-0000-0000-0000-000000000301")),
+            new UtcInstant(Instant.parse("2026-10-05T03:00:00.123456Z")));
+
     @Autowired
     EventSerializer serializer;
 
@@ -68,5 +83,16 @@ class DomainEventSerializationContractTest {
     @Test
     void DE01のJSONの形が変わっていない() {
         assertThat(serializer.serialize(EVENT_V2)).isEqualTo(TRANSPORT_REQUEST_SUBMITTED_V2);
+    }
+
+    @Test
+    void 保存済みのDE02のJSONから復元できる() {
+        assertThat(serializer.deserialize(TRANSPORT_REQUEST_REVIEWED_V1, TransportRequestReviewed.class))
+                .isEqualTo(REVIEWED_V1);
+    }
+
+    @Test
+    void DE02のJSONの形が変わっていない() {
+        assertThat(serializer.serialize(REVIEWED_V1)).isEqualTo(TRANSPORT_REQUEST_REVIEWED_V1);
     }
 }

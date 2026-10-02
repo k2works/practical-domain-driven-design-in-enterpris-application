@@ -1,11 +1,14 @@
 package com.example.cargotracker.quotation.infrastructure.persistence;
 
+import com.example.cargotracker.quotation.domain.model.aggregates.ConcurrentTransportRequestUpdateException;
 import com.example.cargotracker.quotation.domain.model.aggregates.TransportRequest;
 import com.example.cargotracker.quotation.domain.model.aggregates.TransportRequestRepository;
+import com.example.cargotracker.quotation.domain.model.entities.ReviewRecord;
 import com.example.cargotracker.quotation.domain.model.entities.TransportRequestVersion;
 import com.example.cargotracker.quotation.domain.model.valueobjects.Cargo;
 import com.example.cargotracker.quotation.domain.model.valueobjects.CargoCategory;
 import com.example.cargotracker.quotation.domain.model.valueobjects.PackageType;
+import com.example.cargotracker.quotation.domain.model.valueobjects.ReviewDecision;
 import com.example.cargotracker.quotation.domain.model.valueobjects.ShipmentTerms;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestId;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestNumber;
@@ -15,17 +18,16 @@ import com.example.cargotracker.shared.domain.Location;
 import com.example.cargotracker.shared.domain.UserId;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import java.time.ZoneOffset;
+import java.util.List;
 import java.util.Optional;
 import org.springframework.stereotype.Repository;
 
 /**
- * 輸送要求のリポジトリの MyBatis 実装。ヘッダと版の表を組み立てて集約にする。
+ * 輸送要求のリポジトリの MyBatis 実装。ヘッダ・現在の版・審査記録の表を組み立てて集約にする。
+ * 更新は楽観ロック（集約の版）で照合し、版と審査記録は追記専用の表に足すだけにする。
  */
 @Repository
 public class MyBatisTransportRequestRepository implements TransportRequestRepository {
-
-    /** 楽観ロックの初期値。期待版の照合（ARCH-HO-01）は後の Bolt で入れる。 */
-    private static final long INITIAL_LOCK_VERSION = 0L;
 
     private final TransportRequestMapper mapper;
 
@@ -42,13 +44,47 @@ public class MyBatisTransportRequestRepository implements TransportRequestReposi
 
     @Override
     public Optional<TransportRequest> findById(TransportRequestId id) {
-        return mapper.selectById(id.value()).map(MyBatisTransportRequestRepository::toAggregate);
+        return mapper.selectById(id.value()).map(this::toAggregate);
     }
 
     @Override
     public Optional<TransportRequest> findByNumber(TransportRequestNumber number, CompanyId shipperCompanyId) {
-        return mapper.selectByNumber(number.text(), shipperCompanyId.value())
-                .map(MyBatisTransportRequestRepository::toAggregate);
+        return mapper.selectByNumber(number.text(), shipperCompanyId.value()).map(this::toAggregate);
+    }
+
+    @Override
+    public void update(TransportRequest transportRequest) {
+        int updated = mapper.updateTransportRequest(
+                transportRequest.id().value(),
+                transportRequest.status().name(),
+                transportRequest.currentVersion().versionNo(),
+                transportRequest.aggregateVersion());
+        if (updated == 0) {
+            throw new ConcurrentTransportRequestUpdateException(
+                    transportRequest.id(), transportRequest.aggregateVersion());
+        }
+        mapper.insertTransportRequestVersionIfAbsent(toRow(transportRequest));
+        transportRequest
+                .reviewRecords()
+                .forEach(record -> mapper.insertReviewRecordIfAbsent(new ReviewRecordRow(
+                        record.id(),
+                        transportRequest.id().value(),
+                        record.versionNo(),
+                        record.decision().name(),
+                        record.reviewerId().value(),
+                        record.rationale(),
+                        record.missingItems(),
+                        record.decidedAt().instant().atOffset(ZoneOffset.UTC))));
+    }
+
+    @Override
+    public Optional<TransportRequest> findByNumberForStaff(TransportRequestNumber number) {
+        return mapper.selectByNumberForStaff(number.text()).map(this::toAggregate);
+    }
+
+    @Override
+    public List<TransportRequest> findUnderReview() {
+        return mapper.selectUnderReview().stream().map(this::toAggregate).toList();
     }
 
     private static TransportRequestRow toRow(TransportRequest request) {
@@ -60,7 +96,7 @@ public class MyBatisTransportRequestRepository implements TransportRequestReposi
                 request.shipperCompanyId().value(),
                 request.status().name(),
                 version.versionNo(),
-                INITIAL_LOCK_VERSION,
+                request.aggregateVersion(),
                 version.terms().consigneeCompanyId().value(),
                 version.terms().origin().unLocode(),
                 version.terms().destination().unLocode(),
@@ -74,7 +110,7 @@ public class MyBatisTransportRequestRepository implements TransportRequestReposi
                 version.submittedAt().instant().atOffset(ZoneOffset.UTC));
     }
 
-    private static TransportRequest toAggregate(TransportRequestRow row) {
+    private TransportRequest toAggregate(TransportRequestRow row) {
         TransportRequestVersion version = new TransportRequestVersion(
                 row.currentVersionNo(),
                 new ShipmentTerms(
@@ -95,6 +131,21 @@ public class MyBatisTransportRequestRepository implements TransportRequestReposi
                 TransportRequestNumber.parse(row.requestNumber()),
                 new CompanyId(row.shipperCompanyId()),
                 TransportRequestStatus.valueOf(row.status()),
-                version);
+                version,
+                mapper.selectReviewRecords(row.id()).stream()
+                        .map(MyBatisTransportRequestRepository::toReviewRecord)
+                        .toList(),
+                row.version());
+    }
+
+    private static ReviewRecord toReviewRecord(ReviewRecordRow row) {
+        return new ReviewRecord(
+                row.id(),
+                row.versionNo(),
+                ReviewDecision.valueOf(row.decision()),
+                new UserId(row.reviewerId()),
+                row.rationale(),
+                row.missingItems(),
+                new UtcInstant(row.decidedAt().toInstant()));
     }
 }

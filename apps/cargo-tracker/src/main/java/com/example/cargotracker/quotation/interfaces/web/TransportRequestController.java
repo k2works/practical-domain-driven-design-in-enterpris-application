@@ -145,7 +145,9 @@ public class TransportRequestController {
 
     private static String statusLabel(TransportRequestStatus status) {
         return switch (status) {
+            case DRAFT -> "差戻し（下書き）";
             case UNDER_REVIEW -> "審査中";
+            case QUOTING -> "見積り作成中";
         };
     }
 

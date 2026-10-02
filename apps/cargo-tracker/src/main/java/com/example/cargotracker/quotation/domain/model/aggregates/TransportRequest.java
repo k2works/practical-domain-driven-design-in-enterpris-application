@@ -1,10 +1,14 @@
 package com.example.cargotracker.quotation.domain.model.aggregates;
 
+import com.example.cargotracker.quotation.domain.events.TransportRequestReviewed;
 import com.example.cargotracker.quotation.domain.events.TransportRequestSubmitted;
+import com.example.cargotracker.quotation.domain.model.entities.ReviewRecord;
 import com.example.cargotracker.quotation.domain.model.entities.TransportRequestVersion;
+import com.example.cargotracker.quotation.domain.model.valueobjects.ReviewDecision;
 import com.example.cargotracker.quotation.domain.model.valueobjects.ShipmentTerms;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestId;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestNumber;
+import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestRejection;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestStatus;
 import com.example.cargotracker.shared.annotation.ddd.AggregateRoot;
 import com.example.cargotracker.shared.domain.CompanyId;
@@ -13,33 +17,48 @@ import com.example.cargotracker.shared.domain.UtcInstant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
+import java.util.UUID;
 
 /**
- * 輸送要求。荷主が見積りを依頼する輸送条件のまとまりで、本予約までの版を持つ。
+ * 輸送要求。荷主が見積りを依頼する輸送条件のまとまりで、本予約までの版と審査記録を持つ。
+ * 受け付けない操作（審査中でない、古い版、根拠がないなど）は、利用者が受け止める業務の結果として理由を値で返す。
  */
 @AggregateRoot
 public final class TransportRequest {
 
     private static final int FIRST_VERSION_NO = 1;
 
+    /** 根拠・理由・不足事項の文字数の上限（Q-INV-14、データモデルの VARCHAR(4000)）。 */
+    private static final int MAX_TEXT_LENGTH = 4000;
+
+    /** 新しく作った集約の、楽観ロックの版の初期値。 */
+    private static final long INITIAL_AGGREGATE_VERSION = 0L;
+
     private final TransportRequestId id;
     private final TransportRequestNumber number;
     private final CompanyId shipperCompanyId;
-    private final TransportRequestStatus status;
-    private final TransportRequestVersion currentVersion;
+    private final long aggregateVersion;
+    private final List<ReviewRecord> reviewRecords;
     private final List<Object> domainEvents = new ArrayList<>();
+    private TransportRequestStatus status;
+    private TransportRequestVersion currentVersion;
 
     private TransportRequest(
             TransportRequestId id,
             TransportRequestNumber number,
             CompanyId shipperCompanyId,
             TransportRequestStatus status,
-            TransportRequestVersion currentVersion) {
+            TransportRequestVersion currentVersion,
+            List<ReviewRecord> reviewRecords,
+            long aggregateVersion) {
         this.id = Objects.requireNonNull(id, "id");
         this.number = Objects.requireNonNull(number, "number");
         this.shipperCompanyId = Objects.requireNonNull(shipperCompanyId, "shipperCompanyId");
         this.status = Objects.requireNonNull(status, "status");
         this.currentVersion = Objects.requireNonNull(currentVersion, "currentVersion");
+        this.reviewRecords = new ArrayList<>(reviewRecords);
+        this.aggregateVersion = aggregateVersion;
     }
 
     /**
@@ -55,8 +74,14 @@ public final class TransportRequest {
             UtcInstant submittedAt) {
         TransportRequestVersion firstVersion =
                 new TransportRequestVersion(FIRST_VERSION_NO, terms, submittedBy, submittedAt);
-        TransportRequest request =
-                new TransportRequest(id, number, shipperCompanyId, TransportRequestStatus.UNDER_REVIEW, firstVersion);
+        TransportRequest request = new TransportRequest(
+                id,
+                number,
+                shipperCompanyId,
+                TransportRequestStatus.UNDER_REVIEW,
+                firstVersion,
+                List.of(),
+                INITIAL_AGGREGATE_VERSION);
         request.domainEvents.add(new TransportRequestSubmitted(
                 id.value(), FIRST_VERSION_NO, shipperCompanyId, submittedAt, number.text()));
         return request;
@@ -64,14 +89,102 @@ public final class TransportRequest {
 
     /**
      * 保存されている状態から輸送要求を組み立てる（リポジトリが使う）。イベントは生成しない。
+     *
+     * @param aggregateVersion 楽観ロックの版（保存したときの集約の版。ARCH-HO-01 の期待版）
      */
     public static TransportRequest reconstitute(
             TransportRequestId id,
             TransportRequestNumber number,
             CompanyId shipperCompanyId,
             TransportRequestStatus status,
-            TransportRequestVersion currentVersion) {
-        return new TransportRequest(id, number, shipperCompanyId, status, currentVersion);
+            TransportRequestVersion currentVersion,
+            List<ReviewRecord> reviewRecords,
+            long aggregateVersion) {
+        return new TransportRequest(
+                id, number, shipperCompanyId, status, currentVersion, reviewRecords, aggregateVersion);
+    }
+
+    /**
+     * 審査を確定する（US-02 AC1）。審査中で、対象の版が現在の版のときだけ行え（Q-INV-04・14）、見積り作成中にする。
+     *
+     * @return 受け付けなかった理由（受け付けたら空）
+     */
+    public Optional<TransportRequestRejection> approve(
+            int targetVersionNo, UserId reviewer, String rationale, UtcInstant decidedAt) {
+        return review(targetVersionNo, ReviewDecision.APPROVED, reviewer, rationale, null, decidedAt);
+    }
+
+    /**
+     * 差し戻す（US-02 AC2）。審査中で、対象の版が現在の版のときだけ行え（Q-INV-04・14）、下書きにする。
+     * 不足事項は任意で、空白だけなら記録しない。
+     *
+     * @return 受け付けなかった理由（受け付けたら空）
+     */
+    public Optional<TransportRequestRejection> sendBack(
+            int targetVersionNo, UserId reviewer, String reason, String missingItems, UtcInstant decidedAt) {
+        return review(targetVersionNo, ReviewDecision.SENT_BACK, reviewer, reason, missingItems, decidedAt);
+    }
+
+    /**
+     * 再提出する（Q-INV-15）。下書きのときだけ行え、版番号を 1 増やした新しい版を作って審査中にし、DE-01 を生成する。
+     * 輸送条件は、提出と同じ検証（輸送条件の入力の検証）を通したものを受け取る。業務番号は変えない（Q-INV-13）。
+     *
+     * @return 受け付けなかった理由（受け付けたら空）
+     */
+    public Optional<TransportRequestRejection> resubmit(
+            ShipmentTerms terms, UserId submittedBy, UtcInstant submittedAt) {
+        if (status != TransportRequestStatus.DRAFT) {
+            return Optional.of(TransportRequestRejection.NOT_DRAFT);
+        }
+        int versionNo = currentVersion.versionNo() + 1;
+        currentVersion = new TransportRequestVersion(versionNo, terms, submittedBy, submittedAt);
+        status = TransportRequestStatus.UNDER_REVIEW;
+        domainEvents.add(
+                new TransportRequestSubmitted(id.value(), versionNo, shipperCompanyId, submittedAt, number.text()));
+        return Optional.empty();
+    }
+
+    private Optional<TransportRequestRejection> review(
+            int targetVersionNo,
+            ReviewDecision decision,
+            UserId reviewer,
+            String rationale,
+            String missingItems,
+            UtcInstant decidedAt) {
+        if (status != TransportRequestStatus.UNDER_REVIEW) {
+            return Optional.of(TransportRequestRejection.NOT_UNDER_REVIEW);
+        }
+        if (targetVersionNo != currentVersion.versionNo()) {
+            return Optional.of(TransportRequestRejection.STALE_VERSION);
+        }
+        String normalizedRationale = blankToNull(rationale);
+        String normalizedMissingItems = blankToNull(missingItems);
+        if (normalizedRationale == null) {
+            return Optional.of(TransportRequestRejection.RATIONALE_REQUIRED);
+        }
+        if (tooLong(normalizedRationale) || tooLong(normalizedMissingItems)) {
+            return Optional.of(TransportRequestRejection.TEXT_TOO_LONG);
+        }
+        reviewRecords.add(new ReviewRecord(
+                UUID.randomUUID(),
+                targetVersionNo,
+                decision,
+                reviewer,
+                normalizedRationale,
+                normalizedMissingItems,
+                decidedAt));
+        status = decision == ReviewDecision.APPROVED ? TransportRequestStatus.QUOTING : TransportRequestStatus.DRAFT;
+        domainEvents.add(
+                new TransportRequestReviewed(id.value(), targetVersionNo, decision.name(), reviewer, decidedAt));
+        return Optional.empty();
+    }
+
+    private static String blankToNull(String text) {
+        return text == null || text.isBlank() ? null : text.strip();
+    }
+
+    private static boolean tooLong(String text) {
+        return text != null && text.length() > MAX_TEXT_LENGTH;
     }
 
     public TransportRequestId id() {
@@ -92,6 +205,16 @@ public final class TransportRequest {
 
     public TransportRequestVersion currentVersion() {
         return currentVersion;
+    }
+
+    /** 審査記録（古い順）。 */
+    public List<ReviewRecord> reviewRecords() {
+        return List.copyOf(reviewRecords);
+    }
+
+    /** 楽観ロックの版（読み込んだときの集約の版）。リポジトリが更新のときに照合する。 */
+    public long aggregateVersion() {
+        return aggregateVersion;
     }
 
     public List<Object> domainEvents() {

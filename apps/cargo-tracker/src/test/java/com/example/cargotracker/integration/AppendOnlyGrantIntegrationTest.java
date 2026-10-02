@@ -32,7 +32,8 @@ import org.springframework.context.annotation.Import;
 class AppendOnlyGrantIntegrationTest {
 
     /** データモデルの「追記専用」の表のうち、作成済みのもの。表を足したらここにも足す。 */
-    private static final Set<String> APPEND_ONLY_TABLES = Set.of("quotation.transport_request_version");
+    private static final Set<String> APPEND_ONLY_TABLES =
+            Set.of("quotation.transport_request_version", "quotation.review_record");
 
     private static final String APP_PASSWORD = "cargo_tracker_app_test";
     private static final String INSUFFICIENT_PRIVILEGE = "42501";
@@ -132,6 +133,23 @@ class AppendOnlyGrantIntegrationTest {
             insert.executeUpdate();
             assertThat(update.executeUpdate()).isEqualTo(1);
         }
+    }
+
+    @Test
+    void アプリケーション利用者は審査記録を追加できるが更新も削除もできない() throws SQLException {
+        try (Connection connection = connectAsApplicationUser();
+                PreparedStatement insert = connection.prepareStatement("INSERT INTO quotation.review_record"
+                        + " (id, transport_request_id, version_no, decision, reviewer_id, rationale, decided_at)"
+                        + " VALUES (?, ?, 1, 'APPROVED', ?, '確認した', ?)")) {
+            insert.setObject(1, UUID.randomUUID());
+            insert.setObject(2, transportRequestId);
+            insert.setObject(3, UUID.randomUUID());
+            insert.setTimestamp(4, Timestamp.from(Instant.parse("2026-10-05T03:00:00Z")));
+            assertThat(insert.executeUpdate()).isEqualTo(1);
+        }
+        assertInsufficientPrivilege(
+                "UPDATE quotation.review_record SET rationale = '書き換え' WHERE transport_request_id = ?");
+        assertInsufficientPrivilege("DELETE FROM quotation.review_record WHERE transport_request_id = ?");
     }
 
     private void assertInsufficientPrivilege(String sql) throws SQLException {
