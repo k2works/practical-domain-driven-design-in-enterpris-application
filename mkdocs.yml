@@ -126,6 +126,7 @@ nav:
       - cargo-tracker Bolt 1 開発成果物レビュー（2026-10-01）: review/cargo-tracker/bolt_01_review_20261001.md
       - cargo-tracker Bolt 2 開発成果物レビュー（2026-10-02）: review/cargo-tracker/bolt_02_review_20261002.md
       - cargo-tracker Bolt 3 開発成果物レビュー（2026-10-02）: review/cargo-tracker/bolt_03_review_20261002.md
+      - cargo-tracker Bolt 4 開発成果物レビュー（2026-10-02）: review/cargo-tracker/bolt_04_review_20261002.md
   - ADR:
       - 概要: adr/index.md
       - cargo-tracker:
