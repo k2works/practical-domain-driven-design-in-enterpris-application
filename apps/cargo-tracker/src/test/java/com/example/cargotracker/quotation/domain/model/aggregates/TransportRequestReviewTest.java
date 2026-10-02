@@ -117,7 +117,7 @@ class TransportRequestReviewTest {
     void 文字数は文字で数えサロゲートペアの文字も1文字とする() {
         String fourThousandCharacters = "𠮷".repeat(4000);
 
-        assertThat(fourThousandCharacters.length()).isEqualTo(8000);
+        assertThat(fourThousandCharacters).hasSize(8000);
         assertThat(request.approve(1, REVIEWER, fourThousandCharacters, DECIDED_AT))
                 .isEmpty();
     }

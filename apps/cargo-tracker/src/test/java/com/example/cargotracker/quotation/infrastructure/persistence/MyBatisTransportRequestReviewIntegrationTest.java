@@ -8,6 +8,7 @@ import com.example.cargotracker.TestcontainersConfiguration;
 import com.example.cargotracker.quotation.domain.model.aggregates.ConcurrentTransportRequestUpdateException;
 import com.example.cargotracker.quotation.domain.model.aggregates.TransportRequest;
 import com.example.cargotracker.quotation.domain.model.aggregates.TransportRequestRepository;
+import com.example.cargotracker.quotation.domain.model.entities.ReviewRecord;
 import com.example.cargotracker.quotation.domain.model.valueobjects.CargoCategory;
 import com.example.cargotracker.quotation.domain.model.valueobjects.ReviewDecision;
 import com.example.cargotracker.quotation.domain.model.valueobjects.ShipmentTerms;
@@ -143,7 +144,7 @@ class MyBatisTransportRequestReviewIntegrationTest {
     @Test
     void 受付一覧は審査中だけを最初の提出時刻の古い順に並べ差し戻して出し直した版2も最初の時刻で並ぶ() {
         TransportRequest resubmittedLater = saved(6, "2085-01-05T00:00:00Z");
-        TransportRequest submittedSecond = saved(7, "2085-01-05T00:30:00Z");
+        saved(7, "2085-01-05T00:30:00Z");
         TransportRequest approved = saved(8, "2085-01-05T00:10:00Z");
         approved.approve(1, REVIEWER, "確認した", DECIDED_AT);
         repository.update(approved);
@@ -183,7 +184,7 @@ class MyBatisTransportRequestReviewIntegrationTest {
         repository.update(underReview);
 
         assertThat(repository.findById(request.id()).orElseThrow().reviewRecords())
-                .extracting(reviewRecord -> reviewRecord.versionNo())
+                .extracting(ReviewRecord::versionNo)
                 .containsExactly(1, 2);
     }
 
