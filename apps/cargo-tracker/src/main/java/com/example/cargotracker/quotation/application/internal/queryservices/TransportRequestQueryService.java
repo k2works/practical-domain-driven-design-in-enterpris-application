@@ -5,6 +5,7 @@ import com.example.cargotracker.quotation.domain.model.aggregates.TransportReque
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestId;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestNumber;
 import com.example.cargotracker.shared.domain.CompanyId;
+import java.util.List;
 import java.util.Optional;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,5 +29,17 @@ public class TransportRequestQueryService {
     @Transactional(readOnly = true)
     public Optional<TransportRequest> findByNumber(TransportRequestNumber number, CompanyId shipperCompanyId) {
         return repository.findByNumber(number, shipperCompanyId);
+    }
+
+    /** 社内用: 業務番号で輸送要求を照会する。営業担当者はすべての荷主の輸送要求を扱うため、荷主企業で絞らない。 */
+    @Transactional(readOnly = true)
+    public Optional<TransportRequest> findByNumberForStaff(TransportRequestNumber number) {
+        return repository.findByNumberForStaff(number);
+    }
+
+    /** 社内用: 審査中の輸送要求を、提出時刻の古い順に一覧する（S-02）。 */
+    @Transactional(readOnly = true)
+    public List<TransportRequest> findUnderReview() {
+        return repository.findUnderReview();
     }
 }

@@ -1,6 +1,8 @@
 package com.example.cargotracker.quotation.application.internal.commandservices;
 
+import com.example.cargotracker.quotation.application.internal.commands.ResubmitTransportRequestCommand;
 import com.example.cargotracker.quotation.application.internal.commands.SubmitTransportRequestCommand;
+import com.example.cargotracker.quotation.domain.model.aggregates.ConcurrentTransportRequestUpdateException;
 import com.example.cargotracker.quotation.domain.model.aggregates.TransportRequest;
 import com.example.cargotracker.quotation.domain.model.aggregates.TransportRequestNumberIssuer;
 import com.example.cargotracker.quotation.domain.model.aggregates.TransportRequestRepository;
@@ -10,8 +12,10 @@ import com.example.cargotracker.quotation.domain.model.valueobjects.ShipmentTerm
 import com.example.cargotracker.quotation.domain.model.valueobjects.SubmissionViolations;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestId;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestNumber;
+import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestRejection;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import java.time.Clock;
+import java.util.Optional;
 import java.util.UUID;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.transaction.annotation.Transactional;
@@ -52,6 +56,45 @@ public class TransportRequestCommandService {
                 new SubmissionOutcome.Rejected(violations);
             case ShipmentTermsInput.Valid(ShipmentTerms terms) -> submitValid(command, terms, submittedAt);
         };
+    }
+
+    /**
+     * 差し戻された輸送要求を、直した輸送条件で再提出する（Q-INV-15）。自社（荷主企業）の輸送要求だけを対象にし、
+     * 提出と同じ検証を通す。業務番号は変えず、新しい版を審査中にして DE-01 を発行する。
+     */
+    @Transactional
+    public ResubmissionOutcome resubmit(ResubmitTransportRequestCommand command) {
+        Optional<TransportRequest> found = repository.findByNumber(command.number(), command.shipperCompanyId());
+        if (found.isEmpty()) {
+            return new ResubmissionOutcome.NotFound();
+        }
+        UtcInstant submittedAt = new UtcInstant(clock.instant());
+        return switch (command.terms().validate(submittedAt, acceptancePolicy)) {
+            case ShipmentTermsInput.Invalid(SubmissionViolations violations) ->
+                new ResubmissionOutcome.Invalid(violations);
+            case ShipmentTermsInput.Valid(ShipmentTerms terms) ->
+                resubmitValid(found.get(), terms, command, submittedAt);
+        };
+    }
+
+    private ResubmissionOutcome resubmitValid(
+            TransportRequest request,
+            ShipmentTerms terms,
+            ResubmitTransportRequestCommand command,
+            UtcInstant submittedAt) {
+        Optional<TransportRequestRejection> rejection = request.resubmit(terms, command.submittedBy(), submittedAt);
+        if (rejection.isPresent()) {
+            return new ResubmissionOutcome.Rejected(rejection.get());
+        }
+        try {
+            repository.update(request);
+        } catch (ConcurrentTransportRequestUpdateException _) {
+            return new ResubmissionOutcome.Conflict();
+        }
+        request.domainEvents().forEach(eventPublisher::publishEvent);
+        request.clearDomainEvents();
+        return new ResubmissionOutcome.Resubmitted(
+                request.number(), request.currentVersion().versionNo());
     }
 
     /** 検証を通った輸送条件で、業務番号を振って提出し、DE-01 を発行する。 */

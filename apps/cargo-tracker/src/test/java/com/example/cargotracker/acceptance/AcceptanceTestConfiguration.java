@@ -6,6 +6,7 @@ import com.example.cargotracker.identity.application.internal.queryservices.KpiO
 import com.example.cargotracker.quotation.acceptance.InMemoryTransportRequestNumberIssuer;
 import com.example.cargotracker.quotation.acceptance.InMemoryTransportRequestRepository;
 import com.example.cargotracker.quotation.application.internal.commandservices.TransportRequestCommandService;
+import com.example.cargotracker.quotation.application.internal.commandservices.TransportRequestReviewService;
 import com.example.cargotracker.quotation.application.internal.queryservices.TransportRequestQueryService;
 import com.example.cargotracker.quotation.domain.events.TransportRequestSubmitted;
 import com.example.cargotracker.quotation.domain.model.rules.MvpAcceptancePolicy;
@@ -83,6 +84,14 @@ public class AcceptanceTestConfiguration {
                 MutableClock clock) {
             return new TransportRequestCommandService(
                     repository, numberIssuer, new MvpAcceptancePolicy(), eventDelivery, clock);
+        }
+
+        @Bean
+        TransportRequestReviewService transportRequestReviewService(
+                InMemoryTransportRequestRepository repository,
+                DeferredEventDelivery eventDelivery,
+                MutableClock clock) {
+            return new TransportRequestReviewService(repository, eventDelivery, clock);
         }
 
         @Bean
