@@ -58,7 +58,7 @@ class TransportRequestReviewServiceTest {
         assertThat(outcome).isEqualTo(new ReviewOutcome.Reviewed(NUMBER, 1, ReviewDecision.APPROVED));
         assertThat(repository.findById(id).orElseThrow().reviewRecords())
                 .singleElement()
-                .satisfies(record -> assertThat(record.decidedAt()).isEqualTo(new UtcInstant(NOW)));
+                .satisfies(reviewRecord -> assertThat(reviewRecord.decidedAt()).isEqualTo(new UtcInstant(NOW)));
         assertThat(published)
                 .containsExactly(
                         new TransportRequestReviewed(id.value(), 1, "APPROVED", REVIEWER, new UtcInstant(NOW)));

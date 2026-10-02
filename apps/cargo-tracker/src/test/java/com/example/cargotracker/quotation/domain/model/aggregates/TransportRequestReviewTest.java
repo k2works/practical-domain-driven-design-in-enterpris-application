@@ -51,13 +51,13 @@ class TransportRequestReviewTest {
         assertThat(request.approve(1, REVIEWER, "契約条件と輸送条件を確認した", DECIDED_AT)).isEmpty();
 
         assertThat(request.status()).isEqualTo(TransportRequestStatus.QUOTING);
-        assertThat(request.reviewRecords()).singleElement().satisfies(record -> {
-            assertThat(record.versionNo()).isEqualTo(1);
-            assertThat(record.decision()).isEqualTo(ReviewDecision.APPROVED);
-            assertThat(record.reviewerId()).isEqualTo(REVIEWER);
-            assertThat(record.rationale()).isEqualTo("契約条件と輸送条件を確認した");
-            assertThat(record.missingItems()).isNull();
-            assertThat(record.decidedAt()).isEqualTo(DECIDED_AT);
+        assertThat(request.reviewRecords()).singleElement().satisfies(reviewRecord -> {
+            assertThat(reviewRecord.versionNo()).isEqualTo(1);
+            assertThat(reviewRecord.decision()).isEqualTo(ReviewDecision.APPROVED);
+            assertThat(reviewRecord.reviewerId()).isEqualTo(REVIEWER);
+            assertThat(reviewRecord.rationale()).isEqualTo("契約条件と輸送条件を確認した");
+            assertThat(reviewRecord.missingItems()).isNull();
+            assertThat(reviewRecord.decidedAt()).isEqualTo(DECIDED_AT);
         });
         assertThat(request.domainEvents())
                 .containsExactly(new TransportRequestReviewed(id.value(), 1, "APPROVED", REVIEWER, DECIDED_AT));
@@ -69,10 +69,10 @@ class TransportRequestReviewTest {
                 .isEmpty();
 
         assertThat(request.status()).isEqualTo(TransportRequestStatus.DRAFT);
-        assertThat(request.reviewRecords()).singleElement().satisfies(record -> {
-            assertThat(record.decision()).isEqualTo(ReviewDecision.SENT_BACK);
-            assertThat(record.rationale()).isEqualTo("契約条件の確認が必要");
-            assertThat(record.missingItems()).isEqualTo("取引条件書");
+        assertThat(request.reviewRecords()).singleElement().satisfies(reviewRecord -> {
+            assertThat(reviewRecord.decision()).isEqualTo(ReviewDecision.SENT_BACK);
+            assertThat(reviewRecord.rationale()).isEqualTo("契約条件の確認が必要");
+            assertThat(reviewRecord.missingItems()).isEqualTo("取引条件書");
         });
         assertThat(request.domainEvents())
                 .containsExactly(new TransportRequestReviewed(id.value(), 1, "SENT_BACK", REVIEWER, DECIDED_AT));

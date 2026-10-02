@@ -63,13 +63,13 @@ class MyBatisTransportRequestReviewIntegrationTest {
         assertThat(repository.findById(request.id())).hasValueSatisfying(found -> {
             assertThat(found.status()).isEqualTo(TransportRequestStatus.QUOTING);
             assertThat(found.aggregateVersion()).isEqualTo(request.aggregateVersion() + 1);
-            assertThat(found.reviewRecords()).singleElement().satisfies(record -> {
-                assertThat(record.versionNo()).isEqualTo(1);
-                assertThat(record.decision()).isEqualTo(ReviewDecision.APPROVED);
-                assertThat(record.reviewerId()).isEqualTo(REVIEWER);
-                assertThat(record.rationale()).isEqualTo("契約条件を確認した");
-                assertThat(record.missingItems()).isNull();
-                assertThat(record.decidedAt()).isEqualTo(DECIDED_AT);
+            assertThat(found.reviewRecords()).singleElement().satisfies(reviewRecord -> {
+                assertThat(reviewRecord.versionNo()).isEqualTo(1);
+                assertThat(reviewRecord.decision()).isEqualTo(ReviewDecision.APPROVED);
+                assertThat(reviewRecord.reviewerId()).isEqualTo(REVIEWER);
+                assertThat(reviewRecord.rationale()).isEqualTo("契約条件を確認した");
+                assertThat(reviewRecord.missingItems()).isNull();
+                assertThat(reviewRecord.decidedAt()).isEqualTo(DECIDED_AT);
             });
         });
     }
@@ -97,7 +97,8 @@ class MyBatisTransportRequestReviewIntegrationTest {
             assertThat(found.currentVersion().terms()).isEqualTo(changed);
             assertThat(found.reviewRecords())
                     .singleElement()
-                    .satisfies(record -> assertThat(record.missingItems()).isEqualTo("目的地の港"));
+                    .satisfies(reviewRecord ->
+                            assertThat(reviewRecord.missingItems()).isEqualTo("目的地の港"));
         });
     }
 
@@ -118,7 +119,8 @@ class MyBatisTransportRequestReviewIntegrationTest {
             assertThat(found.status()).isEqualTo(TransportRequestStatus.QUOTING);
             assertThat(found.reviewRecords())
                     .singleElement()
-                    .satisfies(record -> assertThat(record.rationale()).isEqualTo("先に確定した"));
+                    .satisfies(
+                            reviewRecord -> assertThat(reviewRecord.rationale()).isEqualTo("先に確定した"));
         });
     }
 

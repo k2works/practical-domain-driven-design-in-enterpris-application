@@ -138,22 +138,22 @@ public class TransportRequestReviewSteps {
 
     @ならば("版 {int} の審査記録に判断 {string} と判断者と時刻 {string} と根拠 {string} が残る")
     public void 確定の審査記録が残る(int versionNo, String decision, String decidedAt, String rationale) {
-        assertThat(lastRecord()).satisfies(record -> {
-            assertThat(record.versionNo()).isEqualTo(versionNo);
-            assertThat(record.decision()).isEqualTo(DECISIONS.get(decision));
-            assertThat(record.reviewerId()).isEqualTo(REVIEWER);
-            assertThat(record.decidedAt()).isEqualTo(new UtcInstant(Instant.parse(decidedAt)));
-            assertThat(record.rationale()).isEqualTo(rationale);
+        assertThat(lastRecord()).satisfies(reviewRecord -> {
+            assertThat(reviewRecord.versionNo()).isEqualTo(versionNo);
+            assertThat(reviewRecord.decision()).isEqualTo(DECISIONS.get(decision));
+            assertThat(reviewRecord.reviewerId()).isEqualTo(REVIEWER);
+            assertThat(reviewRecord.decidedAt()).isEqualTo(new UtcInstant(Instant.parse(decidedAt)));
+            assertThat(reviewRecord.rationale()).isEqualTo(rationale);
         });
     }
 
     @ならば("版 {int} の審査記録に判断 {string} と理由 {string} と不足事項 {string} が残る")
     public void 差戻しの審査記録が残る(int versionNo, String decision, String reason, String missingItems) {
-        assertThat(lastRecord()).satisfies(record -> {
-            assertThat(record.versionNo()).isEqualTo(versionNo);
-            assertThat(record.decision()).isEqualTo(DECISIONS.get(decision));
-            assertThat(record.rationale()).isEqualTo(reason);
-            assertThat(record.missingItems()).isEqualTo(missingItems);
+        assertThat(lastRecord()).satisfies(reviewRecord -> {
+            assertThat(reviewRecord.versionNo()).isEqualTo(versionNo);
+            assertThat(reviewRecord.decision()).isEqualTo(DECISIONS.get(decision));
+            assertThat(reviewRecord.rationale()).isEqualTo(reason);
+            assertThat(reviewRecord.missingItems()).isEqualTo(missingItems);
         });
     }
 

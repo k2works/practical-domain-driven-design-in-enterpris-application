@@ -66,15 +66,15 @@ public class MyBatisTransportRequestRepository implements TransportRequestReposi
         mapper.insertTransportRequestVersionIfAbsent(toRow(transportRequest));
         transportRequest
                 .reviewRecords()
-                .forEach(record -> mapper.insertReviewRecordIfAbsent(new ReviewRecordRow(
-                        record.id(),
+                .forEach(reviewRecord -> mapper.insertReviewRecordIfAbsent(new ReviewRecordRow(
+                        reviewRecord.id(),
                         transportRequest.id().value(),
-                        record.versionNo(),
-                        record.decision().name(),
-                        record.reviewerId().value(),
-                        record.rationale(),
-                        record.missingItems(),
-                        record.decidedAt().instant().atOffset(ZoneOffset.UTC))));
+                        reviewRecord.versionNo(),
+                        reviewRecord.decision().name(),
+                        reviewRecord.reviewerId().value(),
+                        reviewRecord.rationale(),
+                        reviewRecord.missingItems(),
+                        reviewRecord.decidedAt().instant().atOffset(ZoneOffset.UTC))));
     }
 
     @Override
