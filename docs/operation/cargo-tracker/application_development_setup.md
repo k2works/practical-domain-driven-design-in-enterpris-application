@@ -8,6 +8,7 @@ generated: { by: anthropic/claude-opus-5-5, at: 2026-10-02T11:21:40Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-02T01:37:59Z }
   - { by: human:kakimomokuri, at: 2026-10-02T07:02:38Z }
+  - { by: human:kakimomokuri, at: 2026-10-02T11:26:07Z }
 ---
 
 # アプリケーション開発環境セットアップ手順書 - cargo-tracker

@@ -8,6 +8,7 @@ generated: { by: anthropic/claude-opus-5-5, at: 2026-10-02T11:02:50Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-02T02:18:51Z }
   - { by: human:kakimomokuri, at: 2026-10-02T07:02:38Z }
+  - { by: human:kakimomokuri, at: 2026-10-02T11:26:07Z }
 ---
 
 # Bolt 4 計画 - 業務番号と必須条件の検証（US-01 AC1・AC2・AC4）
