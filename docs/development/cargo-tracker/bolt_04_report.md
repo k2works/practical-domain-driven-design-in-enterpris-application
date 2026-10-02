@@ -3,8 +3,10 @@ type: Plan
 title: "Bolt 4 終了報告 - 業務番号と必須条件の検証（US-01 AC1・AC2・AC4）"
 description: "4 回目の Bolt の終了報告。業務番号の採番、提出の検証とエラー要約、画面と KPI 一覧から UUID を消した成果、デモ項目、指標、仮説 H1〜H3 の結論、既知の課題、ふりかえり、承認待ちの書き換えをまとめる。"
 tags: [development,bolt-report]
-status: draft
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-02T06:55:11Z }
+status: stable
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-02T07:02:36Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-10-02T07:02:38Z }
 ---
 
 # Bolt 4 終了報告 - 業務番号と必須条件の検証（US-01 AC1・AC2・AC4）
@@ -30,7 +32,7 @@ generated: { by: anthropic/claude-opus-5-5, at: 2026-10-02T06:55:11Z }
 | 3. アプリケーションとドメイン | 完了 | `ffa7bff` | テストのメソッド名の「・」が識別子に使えずコンパイルエラー。DE-01 に足す業務番号を、イベントの進化の規則（null を許す部品の追加だけ）に合わせ、KPI 計測記録の列も null を許すように変えた（人が承認） |
 | 4. 永続化と採番 | 完了 | `87ea1db` | 採番の表の `year` が H2 の予約語でマイグレーションが失敗した（H2 のスモーク）。共有のコンテナで、ほかのテストが確定した `TR-2026-0001` と番号がぶつかった（統合テスト。テストごとに年を分けた） |
 | 5. 画面 | 完了 | `473ec0e` | 選択の欄の ↓ キーが macOS の Chromium では値を変えなかった（`@ui`。人の決定でラジオボタンにした）。`application.properties` が ISO-8859-1 で読まれ、仮の荷受人の名前が文字化けした（`@ui` の失敗画面）。MockMvc の `param` が値を足していた（Web テスト）。Playwright が `aria-disabled` のボタンのクリックを待ち続けた、送信の途中で axe-core を注入しようとした（`@ui`） |
-| 6. 検証と終了報告 | 承認待ち | `bbe23d0`、本報告 | SonarQube の品質ゲートが新しいコードの指摘 5 件で不合格。直した後も、整形ツール（record のパターンの `_` を読めない）と SonarQube（型付きの `_` を不要と指摘）がぶつかり、さらに 2 回直した |
+| 6. 検証と終了報告 | 完了（2026-10-02 に人が承認。変更依頼 0） | `bbe23d0`、本報告 | SonarQube の品質ゲートが新しいコードの指摘 5 件で不合格。直した後も、整形ツール（record のパターンの `_` を読めない）と SonarQube（型付きの `_` を不要と指摘）がぶつかり、さらに 2 回直した |
 
 打ち切りの線（画面に固有の `@ui` 2 本を次の Bolt へ）は使わなかった。
 
@@ -146,6 +148,7 @@ generated: { by: anthropic/claude-opus-5-5, at: 2026-10-02T06:55:11Z }
 | 日付 | 内容 | 作成 | 承認 |
 | :--- | :--- | :--- | :--- |
 | 2026-10-02 | 初版 | anthropic/claude-opus-5-5 | — |
+| 2026-10-02 | 終了報告と、承認待ちの書き換え（ドメインモデル・データモデル・ユーザーストーリー・UI 設計・手順書・計画・リリース計画）を承認 | anthropic/claude-opus-5-5 | human:kakimomokuri |
 
 ## 関連ドキュメント
 
