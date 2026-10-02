@@ -4,7 +4,7 @@ title: "cargo-tracker データモデル"
 description: "cargo-tracker の概念データモデル、スキーマ分割、命名と型の規約（H2 と PostgreSQL の共通部分）、コンテキストごとの論理データモデルと ER 図、版・追記専用・冪等性・イベント配信の表現。"
 tags: [design, data-model]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-02T11:02:50Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-02T11:49:11Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T07:48:17Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:01:37Z }
@@ -141,7 +141,7 @@ ADR-007 により、DDL は H2（PostgreSQL 互換モード）と PostgreSQL 18 
 | 区分値 | `VARCHAR(30)` に英語の定数名（例: `UNDER_REVIEW`）を入れ、`CHECK` 制約で値を限る | 列挙型（`CREATE TYPE`）は H2 と PostgreSQL で構文が違う |
 | 真偽 | `BOOLEAN` | 両方で使える |
 | 使わないもの | `JSONB`、部分インデックス、`CREATE TYPE`、シーケンスの方言、トリガー | H2 で動かない。必要になったら ADR-007 に従って別の ADR で判断する |
-| 楽観ロック | 集約ルートの表に `version BIGINT NOT NULL` を置き、`UPDATE ... WHERE id = ? AND version = ?` で更新する | ARCH-HO-01 の期待版の照合 |
+| 楽観ロック | 集約ルートの表に `version BIGINT NOT NULL` を置き、`UPDATE ... SET ..., version = version + 1 WHERE id = ? AND version = ?` で更新する。更新が 0 件なら、ほかの更新が先に入ったとして失敗させる（Bolt 5 の輸送要求の状態の更新で使い始める） | ARCH-HO-01 の期待版の照合 |
 | 監査用の列 | 集約ルートの表に `created_at`、`created_by`、`updated_at`、`updated_by` を置く | ガイドの共通設計原則。業務上の証跡は監査記録が持つ |
 
 ## 版・追記専用・冪等性の表し方
@@ -162,7 +162,7 @@ ADR-007 により、DDL は H2（PostgreSQL 互換モード）と PostgreSQL 18 
 | 表 | 許す操作 | 守り方 |
 | :--- | :--- | :--- |
 | `identity.audit_record`、`identity.kpi_baseline` | INSERT、SELECT | PostgreSQL ではアプリケーションの DB 利用者から UPDATE・DELETE の権限を外す |
-| `quotation.transport_request_version`、`booking.booking_version`、`external_data.receipt` | INSERT、SELECT | UPDATE・DELETE の権限を外す |
+| `quotation.transport_request_version`、`quotation.review_record`、`booking.booking_version`、`external_data.receipt` | INSERT、SELECT | UPDATE・DELETE の権限を外す（`review_record` は判断の事実で後から変えないため。2026-10-02 に承認、Bolt 5） |
 | `tracking.milestone` | INSERT、SELECT、状態と下書き内容の UPDATE | DELETE の権限を外す。採用済みの内容を変えないことはドメインと PostgreSQL の統合テストで確かめる（T-INV-01、T-INV-07） |
 | `routing.route_version` | INSERT、SELECT、UPDATE | 状態が変わる（確定 → 再設計要 → 旧版）ため権限では守らない。確定した経路版の内容（候補・区間・判断根拠・承認）を変えないことは、ドメインと PostgreSQL の統合テストで確かめる（R-INV-06） |
 
@@ -329,7 +329,7 @@ q |o--o| q : 置換
 | `transport_request_number_counter` | 年ごとに 1 行。`number_year` は業務番号の年（`year` は H2 の予約語のため使わない）。`last_no` はその年に最後に振った連番。追記専用ではない（行を更新する） | Q-INV-13 |
 | `transport_request_draft` | 輸送要求ごとに 1 行。提出時に内容を版の表へ INSERT する。`copied_from_request_id` は複製元 | Q-INV-03、Q-INV-11 |
 | `transport_request_version` | `cargo_category` IN（`GENERAL`、`DANGEROUS`、`REEFER`、`OTHER_SPECIAL`）。提出した版だけを INSERT し、更新しない（追記専用の印 `COMMENT ON TABLE ... IS 'append-only'` を付ける）。版 1 の `submitted_at` が KPI-01 の開始時刻（D-3） | Q-INV-02、Q-INV-03、US-21 |
-| `review_record` | （`transport_request_id`、`version_no`）→ `transport_request_version` の FK | Q-INV-04 |
+| `review_record` | （`transport_request_id`、`version_no`）→ `transport_request_version` の FK。`decision` IN（`APPROVED`、`SENT_BACK`）。追記専用の印を付ける | Q-INV-04、Q-INV-14 |
 | `quotation` | `status` IN（`DRAFT`、`PENDING_APPROVAL`、`PRESENTED`、`ROUTING_REQUESTED`、`AWAITING_SHIPPER_APPROVAL`、`APPROVED`、`EXPIRED`、`REPLACED`）。`shipper_response` IN（`PROCEED`、`DECLINED`）。`presented_at` は KPI-01 の終了時刻。荷主の承認時は `routing_case_id`・`route_version_no` が NOT NULL（アプリケーションで検証） | Q-INV-05〜10、US-21 |
 
 見積りの「失効」は、有効期限を過ぎたときに状態を書き換えるのではなく、判定時刻と `expires_at` の比較で決める（Q-INV-06）。`status` の `EXPIRED` は、期限切れを利用者が確認した・定期処理が記録した結果として残す。予約確定の判定は常に `expires_at` で行う。

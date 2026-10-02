@@ -4,7 +4,7 @@ title: "cargo-tracker ユーザーストーリー"
 description: "cargo-tracker MVP の価値単位のユーザーストーリー、受入条件、上流要件へのトレーサビリティ。"
 tags: [requirements, user-story]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-02T02:20:33Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-02T11:49:11Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T05:20:11Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:01:39Z }
@@ -76,6 +76,12 @@ verified:
 - Given 審査中の輸送要求版、When 営業担当者が条件充足を判断する、Then 判断者・時刻・根拠が記録され見積り作成可能になる。
 - Given 書類または契約条件の不足、When 営業担当者が差し戻す、Then 理由と不足事項が記録され輸送要求版が下書きになる。
 - Given 審査開始後に更新された輸送要求版、When 古い版の審査を確定する、Then 確定は拒否され最新版の再審査が要求される。
+
+決定（2026-10-02、Bolt 5 の開始準備）:
+
+- 審査の判断者は、認証（US-18）ができるまで、設定の仮の営業担当者で記録する。
+- 確定の根拠と差戻しの理由は必須、不足事項は任意で、どれも自由記述（4,000 文字まで）。
+- AC3 の「審査開始後に更新された輸送要求版」は、差戻しの後に荷主が再提出した新しい版を指す。荷主が差戻し理由を見て直し出し直す画面は、Bolt 5 の次の Bolt で作る。
 
 ### US-03 根拠付き見積りを提示する
 

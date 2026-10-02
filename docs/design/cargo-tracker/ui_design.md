@@ -4,7 +4,7 @@ title: "cargo-tracker UI 設計"
 description: "cargo-tracker の顧客 Web と社内業務 Web の画面オブジェクト、システムメタファー、画面一覧、画面遷移、主要画面のイメージ、共通部品（WCAG 2.2 AA）、エラー時を含むインタラクション。"
 tags: [design, ui]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-02T11:02:50Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-02T11:49:11Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T07:57:45Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:01:39Z }
@@ -143,6 +143,8 @@ verified:
 | :--- | :--- | :--- |
 | C-03 見積依頼の作成・編集 | `GET /customer/transport-requests/new`、`POST /customer/transport-requests` | Bolt 4 は 1 画面の形。必要書類を除く必須条件（荷受人・出発地・目的地・希望到着期限・貨物）とエラー要約、特殊貨物の案内を持つ。段階入力は #36 のプロトタイプで操作性を確かめてから入れる。荷受人は企業マスターができるまで設定の仮の一覧から選ぶ（US-16 で置き換える） |
 | C-03 の提出の完了 | `GET /customer/transport-requests/{業務番号}/submitted` | 業務番号と版（例: TR-2026-0001 版 1）、状態、提出時刻を示す。URL のキーも業務番号にし、アドレスバーにも UUID を出さない（2026-10-02 に承認。他社の番号の拒否は US-18・AC3 の Bolt で確かめる）。C-04 見積依頼の詳細ができたらそちらへ統合する |
+| S-02 見積依頼の受付一覧 | `GET /staff/transport-requests` | Bolt 5 は審査中だけを、提出時刻の古い順に一覧する。業務番号、版、提出時刻、出発地 → 目的地、希望到着期限を示す。審査の確定・差戻しの結果を一覧の上部に示す。社内の画面では荷主企業で絞らない |
+| S-03 見積依頼の審査 | `GET /staff/transport-requests/{業務番号}`、`POST /staff/transport-requests/{業務番号}/reviews` | 輸送条件と版を示し、審査の確定（根拠）と差戻し（理由・不足事項）の 2 つのフォームを持つ。対象の版番号を隠し項目で送る。古い版なら拒否して最新版を示し、ほかの利用者が先に更新していれば「他の利用者が先に更新しました」と示す。確定・差戻しの後は、S-04 ができるまで受付一覧へ戻る（暫定。2026-10-02 に承認、Bolt 5） |
 | S-22 KPI の照会（前身の仮の画面） | `GET /staff/kpi-observations` | 輸送要求ごとの業務番号と提出時刻の一覧だけ（Bolt 1。業務番号は Bolt 4 で足し、内部の ID は出さない。業務番号のない古い記録は「（業務番号なし）」と示す）。日時は UTC だけを表示している（利用者のタイムゾーンを主にし UTC を併記する共通部品は、US-21 の Bolt で適用する）。週次の値と基準値も US-21 の Bolt で作る |
 
 ## ナビゲーションとレイアウト
