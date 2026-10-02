@@ -78,32 +78,52 @@ dependencyManagement {
 	}
 }
 
-tasks.named('test') {
-	useJUnitPlatform()
-	// 受入シナリオは RunCucumberTest（Suite）からだけ実行し、Cucumber エンジンの直接探索による二重実行を防ぐ
+// すべてのテストのタスクに共通の設定。受入シナリオは Suite（RunCucumberTest・RunUiCucumberTest）からだけ実行し、
+// Cucumber エンジンの直接探索による二重実行を防ぐ
+tasks.withType(Test).configureEach {
 	systemProperty 'cucumber.junit-platform.discovery.as-root-engine', 'false'
-	// 画面の層（@ui）は実ブラウザを使うため check に入れず、uiTest で動かす
-	filter {
-		excludeTestsMatching '*RunUiCucumberTest'
-	}
-	// 用語集の整合テスト（LivingGlossaryConsistencyTest）はソースの Javadoc と設計文書を直接読む。
-	// Javadoc や設計文書だけの変更でもテストが走るよう、入力として宣言する
-	inputs.dir('src/main/java').withPropertyName('mainSources').withPathSensitivity(PathSensitivity.RELATIVE)
-	inputs.file('../../docs/design/cargo-tracker/domain_model.md').withPropertyName('domainModel').withPathSensitivity(PathSensitivity.RELATIVE)
 }
 
-// 画面の層の受入シナリオ（@ui）。Playwright の Chromium をヘッドレスで動かす。CI では別のジョブで動かす
+tasks.named('test') {
+	// 画面の層（@ui）は実ブラウザを使い、用語集の整合（documentation）は設計文書を読むため、それぞれ別のタスクで動かす
+	useJUnitPlatform {
+		excludeTags 'ui', 'documentation'
+	}
+	// Spring Modulith の図（ModuleDocumentationTest）を出力として宣言し、キャッシュから復元しても図が残るようにする
+	outputs.dir(layout.buildDirectory.dir('spring-modulith-docs')).withPropertyName('moduleDocumentation')
+}
+
+// 画面の層の受入シナリオ（@ui）。Playwright の Chromium をヘッドレスで動かす。check に入れず、CI では別のジョブで動かす
 tasks.register('uiTest', Test) {
 	group = 'verification'
 	description = '画面の層の受入シナリオ（@ui。Playwright と axe-core）を動かす'
 	testClassesDirs = sourceSets.test.output.classesDirs
 	classpath = sourceSets.test.runtimeClasspath
-	useJUnitPlatform()
-	systemProperty 'cucumber.junit-platform.discovery.as-root-engine', 'false'
-	filter {
-		includeTestsMatching '*RunUiCucumberTest'
+	useJUnitPlatform {
+		includeTags 'ui'
+		excludeEngines 'archunit'
 	}
 	shouldRunAfter 'test'
+}
+
+// 用語集の整合テスト（LivingGlossaryConsistencyTest）。ソースの Javadoc と設計文書を直接読むため、それらを入力として宣言する。
+// test から分け、文書の誤字の修正で Testcontainers を含む全テストが再実行されないようにする
+tasks.register('documentationTest', Test) {
+	group = 'verification'
+	description = '用語集（ドメインモデル設計）とコードの整合を確かめる'
+	testClassesDirs = sourceSets.test.output.classesDirs
+	classpath = sourceSets.test.runtimeClasspath
+	useJUnitPlatform {
+		includeTags 'documentation'
+		excludeEngines 'archunit', 'junit-platform-suite'
+	}
+	inputs.dir('src/main/java').withPropertyName('mainSources').withPathSensitivity(PathSensitivity.RELATIVE)
+	inputs.file('../../docs/design/cargo-tracker/domain_model.md').withPropertyName('domainModel').withPathSensitivity(PathSensitivity.RELATIVE)
+	systemProperty 'cargotracker.domain-model', file('../../docs/design/cargo-tracker/domain_model.md').absolutePath
+}
+
+tasks.named('check') {
+	dependsOn 'documentationTest'
 }
 
 // Playwright のブラウザ（Chromium）と OS の依存を入れる。CI の uiTest の前に動かす

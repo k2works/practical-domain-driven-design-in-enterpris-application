@@ -14,7 +14,9 @@ import org.junit.platform.suite.api.Suite;
  * 画面の層（{@code @ui}）は {@code RunUiCucumberTest} が別の組み立てで実行するため、ここでは外す。
  * グルーは業務ルール層のパッケージに絞る（Cucumber の Spring 連携は、1 つのグルーに文脈の設定を 1 つしか許さない）。
  */
-@Suite
+// test と uiTest は JUnit のタグ（ui）で振り分けるため、もう一方のタスクではこのスイートのシナリオが 0 件になる。
+// そのときに失敗しないよう failIfNoTests を外す（実行件数はタスクごとの結果で確かめる）
+@Suite(failIfNoTests = false)
 @IncludeEngines("cucumber")
 @SelectClasspathResource("features")
 @ConfigurationParameter(

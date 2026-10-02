@@ -2,27 +2,31 @@ package com.example.cargotracker.ui;
 
 import com.deque.html.axecore.playwright.AxeBuilder;
 import com.deque.html.axecore.results.Rule;
-import com.microsoft.playwright.Browser;
 import com.microsoft.playwright.BrowserContext;
 import com.microsoft.playwright.Page;
-import com.microsoft.playwright.Playwright;
 import io.cucumber.spring.ScenarioScope;
 import java.util.ArrayList;
 import java.util.List;
 import org.springframework.beans.factory.DisposableBean;
 
 /**
- * シナリオごとのブラウザ（Chromium、ヘッドレス）。表示した画面ごとに axe-core で検査し、違反をためておく。
- * Playwright とブラウザの起動は重いため、JVM で 1 つだけ作って使い回す。
+ * シナリオごとのブラウザの文脈とページ。Cookie やストレージをシナリオの間で共有しない。
+ * 表示した画面ごとに axe-core で検査し、違反をためる（確かめるのは {@link UiHooks}）。
  */
 @ScenarioScope
 public class BrowserSession implements DisposableBean {
 
-    private static final Browser BROWSER = Playwright.create().chromium().launch();
+    /** 検査の基準。テスト戦略・NFR-ACCESS-01 の WCAG 2.2 AA。 */
+    private static final List<String> WCAG_TAGS = List.of("wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa");
 
-    private final BrowserContext context = BROWSER.newContext();
-    private final Page page = context.newPage();
+    private final BrowserContext context;
+    private final Page page;
     private final List<String> accessibilityViolations = new ArrayList<>();
+
+    public BrowserSession(PlaywrightBrowser browser) {
+        this.context = browser.newContext();
+        this.page = context.newPage();
+    }
 
     public Page page() {
         return page;
@@ -32,7 +36,7 @@ public class BrowserSession implements DisposableBean {
      * いま表示している画面を axe-core で検査し、違反があればためる。
      */
     public void checkAccessibility() {
-        for (Rule violation : new AxeBuilder(page).analyze().getViolations()) {
+        for (Rule violation : new AxeBuilder(page).withTags(WCAG_TAGS).analyze().getViolations()) {
             accessibilityViolations.add(page.url() + " " + violation.getId() + ": " + violation.getHelp());
         }
     }

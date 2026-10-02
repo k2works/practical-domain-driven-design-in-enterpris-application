@@ -1,6 +1,7 @@
 package com.example.cargotracker.quotation.domain.model.entities;
 
 import com.example.cargotracker.quotation.domain.model.valueobjects.ShipmentTerms;
+import com.example.cargotracker.shared.annotation.ddd.Entity;
 import com.example.cargotracker.shared.domain.UserId;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import java.util.Objects;
@@ -11,8 +12,9 @@ import java.util.Objects;
  * @param versionNo 版番号
  * @param terms 輸送条件
  * @param submittedBy 提出者
- * @param submittedAt 提出時刻（KPI-01 の開始時刻）
+ * @param submittedAt 提出時刻（版 1 の提出時刻が KPI-01 の開始時刻。D-3）
  */
+@Entity
 public record TransportRequestVersion(int versionNo, ShipmentTerms terms, UserId submittedBy, UtcInstant submittedAt) {
 
     public TransportRequestVersion {

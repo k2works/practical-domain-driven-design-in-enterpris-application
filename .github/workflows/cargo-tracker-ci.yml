@@ -10,10 +10,14 @@ on:
       - main
     paths:
       - 'apps/cargo-tracker/**'
+      # 用語集の整合テストが読む設計文書
+      - 'docs/design/cargo-tracker/**'
       - '.github/workflows/cargo-tracker-ci.yml'
   pull_request:
     paths:
       - 'apps/cargo-tracker/**'
+      # 用語集の整合テストが読む設計文書
+      - 'docs/design/cargo-tracker/**'
       - '.github/workflows/cargo-tracker-ci.yml'
 
 permissions:
