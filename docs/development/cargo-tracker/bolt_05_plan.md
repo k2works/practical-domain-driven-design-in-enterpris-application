@@ -8,6 +8,7 @@ generated: { by: anthropic/claude-opus-5-5, at: 2026-10-02T14:27:05Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-02T11:47:16Z }
   - { by: human:kakimomokuri, at: 2026-10-02T13:47:11Z }
+  - { by: human:kakimomokuri, at: 2026-10-02T21:44:57Z }
 ---
 
 # Bolt 5 計画 - 輸送条件の審査と差戻し（US-02）

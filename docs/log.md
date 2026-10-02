@@ -1,6 +1,13 @@
 # Docs Update Log
 
 ## 2026-10-02
+* **Verification**: [requirements_definition](/requirements/cargo-tracker/requirements_definition.md) を human:kakimomokuri が検証
+* **Verification**: [bolt_05_report](/development/cargo-tracker/bolt_05_report.md) を human:kakimomokuri が検証
+* **Verification**: [bolt_05_plan](/development/cargo-tracker/bolt_05_plan.md) を human:kakimomokuri が検証
+* **Verification**: [ui_design](/design/cargo-tracker/ui_design.md) を human:kakimomokuri が検証
+* **Verification**: [domain_model](/design/cargo-tracker/domain_model.md) を human:kakimomokuri が検証
+* **Verification**: [data_model](/design/cargo-tracker/data_model.md) を human:kakimomokuri が検証
+* **Verification**: [bolt_05_review_20261002](/review/cargo-tracker/bolt_05_review_20261002.md) を human:kakimomokuri が検証
 * **Update**: [bolt_05_review_20261002](/review/cargo-tracker/bolt_05_review_20261002.md) を更新（anthropic/claude-opus-5-5）
 * **Update**: [bolt_05_report](/development/cargo-tracker/bolt_05_report.md) を更新（anthropic/claude-opus-5-5）
 * **Update**: [bolt_05_review_20261002](/review/cargo-tracker/bolt_05_review_20261002.md) を更新（anthropic/claude-opus-5-5）
