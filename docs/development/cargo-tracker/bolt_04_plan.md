@@ -4,7 +4,7 @@ title: "Bolt 4 計画 - 業務番号と必須条件の検証（US-01 AC1・AC2�
 description: "4 回目の Bolt の計画。US-01 AC1・AC2（必要書類を除く）・AC4 を対象に、業務番号の採番（D-10）、提出の検証とエラー要約、MvpAcceptancePolicy、画面と KPI 計測記録の一覧から UUID を消すことを 6 つのステップで定義する。"
 tags: [development,bolt-plan]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-02T06:14:00Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-02T06:55:11Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-02T02:18:51Z }
 ---
@@ -324,10 +324,11 @@ C03 --> 完了 : POST の後にリダイレクト（PRG）\n[検証を通る]
   - 計画からの変更（人の決定）: 荷受人・貨物種別・荷姿は、選択の欄（select）でなくラジオボタンにした。select のキー操作は OS によって違い（macOS の Chromium では ↓ で一覧が開くだけで値が変わらない）、キー操作だけの主要フローを OS によらず確かめられないため。UI 設計の C-03 を直した
   - 計画からの変更: 希望到着期限は `datetime-local` でなく、UI 設計の画面イメージどおりテキスト入力（`2026-11-02 09:00` の形、日本時間）にした。`datetime-local` のキー入力もロケールによって変わるため。存在しない日付を丸めないよう、厳格に解釈する
   - 学び: `application.properties` は ISO-8859-1 で読まれるため、日本語の値（仮の荷受人の名前）は Unicode のエスケープで書く。MockMvc の `param` は値を置き換えず足すため、入力を変えるテストは置き換えの補助を使う。Playwright は `aria-disabled` のボタンのクリックを待ち続けるため、押す操作はフォーカスと Enter で行う
-- [ ] **6. 検証と Bolt 終了報告**
+- [?] **6. 検証と Bolt 終了報告**
   - `./gradlew check`・`uiTest` と CI（2 つのジョブ）が緑、SonarQube の品質ゲートが PASS（コマンドの成否で判定）であることを確かめる。
   - 手順書の「UUID を表示する負債」の記述を直す。
   - `bolt_04_report.md` を書く（時刻は計画の承認と報告のコミットを根拠にする。T-13）。
+  - 結果（2026-10-02）: `check`・`uiTest`・SonarQube の品質ゲート（PASS、指摘 0 件）が緑。手順書の UUID の負債の記述を直した。結果は [Bolt 4 終了報告](bolt_04_report.md)
 
 ### 時間の配分と打ち切り
 
