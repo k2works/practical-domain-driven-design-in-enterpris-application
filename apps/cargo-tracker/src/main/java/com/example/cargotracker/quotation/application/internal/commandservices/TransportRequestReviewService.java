@@ -13,12 +13,17 @@ import java.time.Clock;
 import java.util.Optional;
 import java.util.function.Function;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
  * 輸送要求の審査（確定・差戻し）を受け付ける入力ポート（US-02、社内の営業担当者が使う）。トランザクションの境界になる。
  * 社内の画面は営業担当者がすべての荷主の輸送要求を扱うため、荷主企業で絞らない照会を使う。
+ *
+ * <p>{@code @Service} は JIG がユースケースとして読むための印で、部品探索の対象にはしない（CargoTrackerApplication）。
+ * 組み立ては {@code QuotationConfiguration} が担う。
  */
+@Service
 public class TransportRequestReviewService {
 
     private final TransportRequestRepository repository;

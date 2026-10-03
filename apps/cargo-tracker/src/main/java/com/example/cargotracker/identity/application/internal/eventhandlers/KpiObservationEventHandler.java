@@ -4,12 +4,17 @@ import com.example.cargotracker.identity.domain.model.aggregates.KpiObservation;
 import com.example.cargotracker.identity.domain.model.aggregates.KpiObservationRepository;
 import com.example.cargotracker.quotation.domain.events.TransportRequestSubmitted;
 import org.springframework.modulith.events.ApplicationModuleListener;
+import org.springframework.stereotype.Service;
 
 /**
  * 見積りのドメインイベントを購読して KPI 計測記録を残す。
  * 発行元のコミット後に、非同期で、新しいトランザクションの中で処理する（ADR-003）。
  * 配信は少なくとも 1 回なので、同じイベントが再び届いても記録を変えない（リポジトリの保存が冪等）。
+ *
+ * <p>{@code @Service} は JIG がユースケースとして読むための印で、部品探索の対象にはしない（CargoTrackerApplication）。
+ * 組み立ては {@code IdentityConfiguration} が担う。
  */
+@Service
 public class KpiObservationEventHandler {
 
     private final KpiObservationRepository repository;

@@ -26,11 +26,16 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
  * 輸送要求のコマンドを受け付ける入力ポート。トランザクションの境界になる。
+ *
+ * <p>{@code @Service} は JIG がユースケースとして読むための印で、部品探索の対象にはしない（CargoTrackerApplication）。
+ * 組み立ては {@code QuotationConfiguration} が担う。
  */
+@Service
 public class TransportRequestCommandService {
 
     private final TransportRequestRepository repository;

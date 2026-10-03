@@ -9,6 +9,7 @@ import com.tngtech.archunit.junit.AnalyzeClasses;
 import com.tngtech.archunit.junit.ArchTest;
 import com.tngtech.archunit.lang.ArchRule;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.stereotype.Service;
 
 /**
  * AT-02: 依存は interfaces → application → domain ← infrastructure の向きに限る（バックエンドアーキテクチャ）。
@@ -66,6 +67,19 @@ class LayerArchitectureTest {
             .should()
             .dependOnClassesThat()
             .haveSimpleNameEndingWith("Repository");
+
+    /**
+     * アプリケーションサービス（入力ポートの実装）は {@code @Service} を付ける。JIG がユースケースとして読むための印で、
+     * 組み立ては infrastructure.config の {@code @Bean} が担う。application は部品探索の対象から外している
+     * （CargoTrackerApplication。2026-10-03 の人の決定）。
+     */
+    @ArchTest
+    static final ArchRule アプリケーションサービスはServiceの印を付ける = classes()
+            .that()
+            .haveNameMatching(".*\\.application\\.internal\\.(commandservices|queryservices)\\.[^.$]+Service"
+                    + "|.*\\.application\\.internal\\.eventhandlers\\.[^.$]+EventHandler")
+            .should()
+            .beAnnotatedWith(Service.class);
 
     /** application は Spring の部品探索から切り離し、Web・永続化の技術に依存しない（バックエンドアーキテクチャ）。 */
     @ArchTest

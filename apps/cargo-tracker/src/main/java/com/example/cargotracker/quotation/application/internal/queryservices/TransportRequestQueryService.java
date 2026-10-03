@@ -9,12 +9,17 @@ import com.example.cargotracker.quotation.domain.model.valueobjects.TransportReq
 import com.example.cargotracker.shared.domain.CompanyId;
 import java.util.List;
 import java.util.Optional;
+import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
  * 荷主が自社の輸送要求を照会する入力ポート（C-02・C-04）。照会は必ず荷主企業で絞る（Q-INV-08）。
  * 社内の営業担当者の照会は {@link StaffTransportRequestQueryService} を使う。
+ *
+ * <p>{@code @Service} は JIG がユースケースとして読むための印で、部品探索の対象にはしない（CargoTrackerApplication）。
+ * 組み立ては {@code QuotationConfiguration} が担う。
  */
+@Service
 public class TransportRequestQueryService {
 
     private final TransportRequestRepository repository;
