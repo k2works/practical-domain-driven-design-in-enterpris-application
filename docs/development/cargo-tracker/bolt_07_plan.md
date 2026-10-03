@@ -4,7 +4,7 @@ title: "Bolt 7 計画 - 見積依頼の必要書類（US-01 AC2 の残り）"
 description: "7 回目の Bolt の計画。D-20 の決定（任意で添付、PDF・PNG・JPEG で 1 件 10 MB、閲覧は提出した荷主と営業担当者）に従い、提出と出し直しでの必要書類の添付、形式・容量・件数の検証、版ごとの保存と出し直しでの引き継ぎ、荷主と営業の閲覧を、ステップ 1〜5 で定義する。"
 tags: [development,bolt-plan]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-03T01:30:18Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-03T01:31:12Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-03T01:14:26Z }
 ---
@@ -210,14 +210,14 @@ DOC : ファイル（Content-Disposition: attachment）
 
 状態の記号: `[ ]` 未着手、`[-]` 進行中、`[?]` 承認待ち、`[R]` 修正中、`[x]` 完了、`[S]` スキップ。各ステップの終わりに `check` が緑であることを確かめて push する（T-14）。
 
-- [?] **1. 決定を設計文書に反映する**（承認はステップ 2 とまとめて受ける）
+- [x] **1. 決定を設計文書に反映する**（承認はステップ 2 とまとめて受ける）
   - ユーザーストーリー: US-01 の決定に D-20（任意、形式と容量と件数、閲覧できる人、複製は R1.0）を足し、Bolt 4 の「必要書類は次の Bolt で必須条件に入れる」を改める
   - ドメインモデル: Q-INV-01 から必要書類を外し、Q-INV-16（書類の受付規則）、必要書類の属性、書類の種類と形式、書類の保存のポートを足す
   - データモデル: `required_document` の列と制約、追記専用
   - UI 設計: C-03 の書類の入力、C-04・S-03 の書類の一覧と取得の URL、エラー要約の例
   - 完了の判定: `okf:check` が ERROR 0、`documentationTest` が緑。push する
   - 結果（2026-10-03 10:14〜10:15）: ユーザーストーリー（US-01 の決定に D-20、Bolt 4 の決定の文を改めた）、ドメインモデル（用語 5 つ、Q-INV-01 から必要書類を外し Q-INV-16 を足した、必要書類の属性、必要書類の段落）、データモデル（`required_document` の 4 列と制約、追記専用の一覧、スキーマの表の一覧）、UI 設計（C-03 の書類の入力、必要書類の取得の URL、エラー要約の例、ファイルの入力）に反映した。`okf:check` ERROR 0、`documentationTest` 緑
-- [?] **2. 書類の添付と閲覧のユースケース（業務ルール層の Red → Green）** 【承認ゲート: 業務のルール（Q-INV-16）とセキュリティ（閲覧の絞り込み）】
+- [x] **2. 書類の添付と閲覧のユースケース（業務ルール層の Red → Green）** 【承認ゲート: 業務のルール（Q-INV-16）とセキュリティ（閲覧の絞り込み）】
   - 業務ルール層の受入シナリオを先に書く（`features/quotation/attach_required_documents.feature`、`@US-01 @must`）
     - 商業送り状と梱包明細を添付して提出すると、版 1 に 2 件の書類が残り、荷主が取得すると同じ中身が返る
     - 書類なしでも提出できる（D-20）
@@ -227,6 +227,7 @@ DOC : ファイル（Content-Disposition: attachment）
   - 足りない内側を TDD で作る: `RequiredDocument`、`DocumentType`、`DocumentMediaType`、`RequiredDocumentPolicy`、`RequiredDocumentStorage` とメモリ上の実装、提出・出し直しのコマンドの添付、書類の取得（荷主用と社内用）
   - 完了の判定: `check` が緑。push する。ステップ 1 とあわせて承認を受ける
   - 結果（2026-10-03 10:15〜10:30）: 受入シナリオ 6 件（`attach_required_documents.feature`）をステップ定義とともに先に書き、コンパイルの失敗（46 件）で Red を確かめた。内側は、単体テストを先に書いて、`DocumentType`・`DocumentMediaType`（先頭のバイトで判定）・`RequiredDocumentAttachment`・`RequiredDocument`（大きさと SHA-256 を中身から求める）・`RequiredDocumentPolicy`（Q-INV-16）・`RequiredDocumentStorage` を作り、輸送条件に必要書類を持たせた。コマンドサービスは輸送条件の検証と書類の規則の違反をまとめて返し、検証を通った後に書類を保存する。出し直しは、下書きでなければ書類を保存する前に拒否する（`checkResubmittable`）。照会は荷主用（荷主企業で絞る）と社内用に `findDocument` を足した。計画からの変更: (1) アプリの起動に保存の部品が要るため、ローカルのファイルシステムの保存（`LocalFileSystemRequiredDocumentStorage`。キーの形を検証し保存先の外を読まない）をステップ 3 から前に出した。(2) 誤りの文言の表と、項目と画面の入力の対応のテストのため、フォームのファイルの入力欄と書類の誤りの文言をステップ 4 から前に出した。(3) D-20 で必要書類を必須から外したため、`ShipmentTermsInputTest` の「すべて空なら全項目の不足」の期待から書類の項目を外した。実行中に直した誤り: Checkstyle の循環的複雑度（文言の対応を表にした）、静的初期化の順序、SpotBugs 3 件、用語集の不足（書類の添付）。業務ルール層のシナリオは 48 件すべて passed（failed・undefined・skipped 0）。`check` 緑（テスト 386 件）。MyBatis はまだ書類を保存しない（ステップ 3）
+  - 承認（2026-10-03、human:kakimomokuri）: ステップ 1 とあわせて承認された。取得できるのは現在の版の書類だけとする判断も承認された
 - [ ] **3. 表とファイルの保存（内側の TDD、統合テスト）** 【承認ゲート: スキーマの変更】
   - 統合テスト（PostgreSQL）を先に書く: 版ごとの書類の保存と読み出し、出し直しでの引き継ぎ（同じオブジェクトキーの行が版 2 に足される）、CHECK 制約、追記専用（アプリケーション利用者は UPDATE・DELETE できない）
   - マイグレーション `V20261005…__create_required_document.sql`（`common`）。H2 のスモークを先に回す（T-15）
