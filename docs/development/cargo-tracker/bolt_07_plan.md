@@ -4,7 +4,7 @@ title: "Bolt 7 計画 - 見積依頼の必要書類（US-01 AC2 の残り）"
 description: "7 回目の Bolt の計画。D-20 の決定（任意で添付、PDF・PNG・JPEG で 1 件 10 MB、閲覧は提出した荷主と営業担当者）に従い、提出と出し直しでの必要書類の添付、形式・容量・件数の検証、版ごとの保存と出し直しでの引き継ぎ、荷主と営業の閲覧を、ステップ 1〜5 で定義する。"
 tags: [development,bolt-plan]
 status: draft
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-03T01:06:22Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-03T01:09:22Z }
 ---
 
 # Bolt 7 計画 - 見積依頼の必要書類（US-01 AC2 の残り）
@@ -258,7 +258,7 @@ DOC : ファイル（Content-Disposition: attachment）
 
 形式・容量・件数の検証と、閲覧の絞り込みは削らない。
 
-## 確認ポイント（計画の承認の場でまとめて確認する。Try T-6）
+## 確認ポイント（計画の承認の場でまとめて確認する。Try T-6。2026-10-03 に 1〜5 を決定）
 
 | # | 確認すること | ステップ | 理由 |
 | :--- | :--- | :--- | :--- |
@@ -267,6 +267,8 @@ DOC : ファイル（Content-Disposition: attachment）
 | 3 | 出し直しでは、前の版の書類をすべて引き継ぎ（同じオブジェクトキー）、新しく選んだ書類を足す。引き継いだ書類の削除・差し替えは後の Bolt | 1、2、4 | 版は追記専用。削除の画面を作らずに済ませる（H3） |
 | 4 | 取得の URL: 荷主は `GET /customer/transport-requests/{業務番号}/versions/{版}/documents/{書類番号}`、営業は `GET /staff/transport-requests/{業務番号}/versions/{版}/documents/{書類番号}`。`Content-Disposition: attachment` と `X-Content-Type-Options: nosniff` で返す（ブラウザの中で開かせない）。荷主の他社の番号は 404 | 1、2、4 | 閲覧の絞り込みとファイルの安全な返し方（セキュリティ） |
 | 5 | ローカルのファイルシステムの保存先は設定 `cargotracker.document-storage.base-dir`（既定は一時ディレクトリの下）。S3 の実装は運用準備（W10、#28）で作る | 3 | 開発環境だけで動く実装にする |
+
+決定（2026-10-03、human:kakimomokuri）: 確認ポイント 1〜4 はすべて上の案で決まった。確認ポイント 5 と AI の仮定にも異議はなかった。
 
 ## AI の仮定
 
