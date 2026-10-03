@@ -126,8 +126,10 @@ class MyBatisRequiredDocumentIntegrationTest {
                 + " document_type, file_name, media_type, size_bytes, sha256, object_key)"
                 + " VALUES (?, 1, 1, ?, 'x.pdf', ?, ?, ?, 'quotation/x/y')";
 
-        assertThatThrownBy(() ->
-                        jdbc.update(insert, request.id().value(), documentType, mediaType, sizeBytes, "a".repeat(64)))
+        UUID id = request.id().value();
+        String sha256 = "a".repeat(64);
+
+        assertThatThrownBy(() -> jdbc.update(insert, id, documentType, mediaType, sizeBytes, sha256))
                 .isInstanceOf(DataIntegrityViolationException.class);
     }
 }

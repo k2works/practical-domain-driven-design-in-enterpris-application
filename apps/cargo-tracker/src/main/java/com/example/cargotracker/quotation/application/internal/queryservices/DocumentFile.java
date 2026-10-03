@@ -24,9 +24,9 @@ public record DocumentFile(RequiredDocument document, byte[] content) {
 
     @Override
     public boolean equals(Object other) {
-        return other instanceof DocumentFile that
-                && document.equals(that.document)
-                && Arrays.equals(content, that.content);
+        return other instanceof DocumentFile(RequiredDocument otherDocument, byte[] otherContent)
+                && document.equals(otherDocument)
+                && Arrays.equals(content, otherContent);
     }
 
     @Override

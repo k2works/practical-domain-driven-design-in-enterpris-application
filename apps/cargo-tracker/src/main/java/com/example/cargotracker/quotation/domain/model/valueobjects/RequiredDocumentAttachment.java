@@ -32,10 +32,12 @@ public record RequiredDocumentAttachment(DocumentType type, String fileName, byt
 
     @Override
     public boolean equals(Object other) {
-        return other instanceof RequiredDocumentAttachment that
-                && type == that.type
-                && fileName.equals(that.fileName)
-                && Arrays.equals(content, that.content);
+        return other
+                        instanceof
+                        RequiredDocumentAttachment(DocumentType otherType, String otherName, byte[] otherContent)
+                && type == otherType
+                && fileName.equals(otherName)
+                && Arrays.equals(content, otherContent);
     }
 
     @Override

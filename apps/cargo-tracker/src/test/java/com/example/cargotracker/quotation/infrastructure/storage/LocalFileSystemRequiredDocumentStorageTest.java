@@ -45,7 +45,7 @@ class LocalFileSystemRequiredDocumentStorageTest {
         LocalFileSystemRequiredDocumentStorage storage = new LocalFileSystemRequiredDocumentStorage(baseDir);
 
         assertThatThrownBy(() -> storage.read("../../etc/passwd")).isInstanceOf(IllegalArgumentException.class);
-        assertThatThrownBy(() -> storage.read("quotation/" + id.value() + "/../../../secret"))
-                .isInstanceOf(IllegalArgumentException.class);
+        String outside = "quotation/" + id.value() + "/../../../secret";
+        assertThatThrownBy(() -> storage.read(outside)).isInstanceOf(IllegalArgumentException.class);
     }
 }
