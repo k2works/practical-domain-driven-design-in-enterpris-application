@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<!--/* 顧客 Web の共通レイアウト（Bolt 8、UI 設計「ナビゲーションとレイアウト」）。画面は次のように使う。
+       <html lang="ja" th:replace="~{layout/customer :: layout(~{::title}, ~{::main}, ~{::script}, 'transport-requests')}">（スクリプトがなければ ~{} を渡す）
+       ナビには、いまある画面だけを出す。ない画面の項目は、画面を作る Bolt で足す（2026-10-03 に承認） */-->
+<html lang="ja" xmlns:th="http://www.thymeleaf.org" th:fragment="layout(title, content, scripts, active)">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:replace="${title}">cargo-tracker</title>
+    <link rel="stylesheet" th:href="@{/webjars/bootstrap/dist/css/bootstrap.min.css}">
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+    <script th:src="@{/webjars/bootstrap/dist/js/bootstrap.bundle.min.js}" defer></script>
+    <script th:src="@{/webjars/htmx.org/dist/htmx.min.js}" defer></script>
+    <th:block th:replace="${scripts}"></th:block>
+</head>
+<body>
+<header class="navbar navbar-expand-md border-bottom app-header">
+    <div class="container-fluid">
+        <a class="navbar-brand" th:href="@{/}">cargo-tracker</a>
+        <!-- 幅が狭いときは、左のナビを上部のメニューに畳む（UI 設計） -->
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#customer-nav"
+                aria-controls="customer-nav" aria-expanded="false" aria-label="メニュー">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <!-- 認証（US-18）までは仮の主体の名前を出し、ログアウトは出さない（2026-10-03 に承認） -->
+        <p class="navbar-text mb-0 d-none d-md-block">荷主企業（仮） 荷主担当者（仮）</p>
+    </div>
+</header>
+<div class="container-fluid">
+    <div class="row">
+        <nav id="customer-nav" class="col-md-3 col-lg-2 collapse d-md-block app-nav" aria-label="顧客 Web">
+            <ul class="nav flex-column">
+                <li class="nav-item">
+                    <a class="nav-link" th:classappend="${active == 'transport-requests'} ? 'fw-bold'"
+                       th:attr="aria-current=${active == 'transport-requests'} ? 'page' : null"
+                       th:href="@{/customer/transport-requests}">見積依頼</a>
+                </li>
+            </ul>
+        </nav>
+        <div class="col app-main">
+            <main th:replace="${content}"></main>
+        </div>
+    </div>
+</div>
+<!-- 窓口の案内はすべての顧客向け画面で同じ位置に出す（WCAG 3.2.6、R-11）。受付時間は仮の値で、US-18 の後に利用者のタイムゾーンで示す -->
+<footer class="border-top app-footer">
+    <p class="mb-0">お困りのときは: カスタマーサポート 平日 09:00〜18:00（Asia/Tokyo）</p>
+</footer>
+</body>
+</html>

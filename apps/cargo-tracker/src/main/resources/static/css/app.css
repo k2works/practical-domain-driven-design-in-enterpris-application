@@ -1,0 +1,48 @@
+/*
+ * cargo-tracker の共通の CSS（Bolt 8、UI 設計「共通部品」）。Bootstrap 5.3 の上書きは最小にし、
+ * アクセシビリティの約束（WCAG 2.2 AA）のために要るものだけを足す。画面ごとのスタイルは書かない（Try T-18）。
+ */
+
+/* 固定ヘッダーの下にフォーカスが隠れないよう余白をとる（WCAG 2.4.11） */
+html {
+    scroll-padding-top: 4rem;
+}
+
+.app-main {
+    padding-top: 1rem;
+    padding-bottom: 2rem;
+    min-width: 0;
+}
+
+.app-nav {
+    padding-top: 1rem;
+}
+
+.app-footer {
+    padding: 0.75rem 1rem;
+}
+
+/* 本文のリンクは押せる範囲を 24 CSS px 以上にする（WCAG 2.2 の 2.5.8 target-size。Bolt 5 で Linux の CI の行の高さが足りなかった） */
+.app-main a,
+.app-entrance a {
+    display: inline-block;
+    min-height: 24px;
+    line-height: 24px;
+}
+
+/* 縦に並んだリンクの間隔もとる */
+.app-entrance li + li {
+    margin-top: 8px;
+}
+
+/* 狭い画面では表だけを横にスクロールさせ、ページ全体を横にスクロールさせない（WCAG 1.4.10 の表の例外）。
+   囲みはフォーカスでき、名前を持つ（キー操作でもスクロールできる） */
+.table-scroll {
+    overflow-x: auto;
+}
+
+/* 長い理由・ファイル名・UN/LOCODE が狭い画面で横にはみ出さないよう折り返す */
+dd,
+td {
+    overflow-wrap: anywhere;
+}

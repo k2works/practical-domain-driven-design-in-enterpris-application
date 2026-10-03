@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<html lang="ja" xmlns:th="http://www.thymeleaf.org">
+<html lang="ja" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/customer :: layout(~{::title}, ~{::main}, ~{::script}, 'transport-requests')}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -39,21 +40,21 @@
         <div>
             <label for="origin">出発地（UN/LOCODE）</label>
             <p id="origin-hint">例: JPTYO（東京）</p>
-            <input id="origin" type="text" th:field="*{origin}" autocomplete="off"
+            <input id="origin" type="text" class="form-control" th:field="*{origin}" autocomplete="off"
                    th:attr="aria-invalid=${#fields.hasErrors('origin')},aria-describedby=${#fields.hasErrors('origin')} ? 'origin-hint origin-error' : 'origin-hint'">
             <p id="origin-error" th:if="${#fields.hasErrors('origin')}" th:errors="*{origin}"></p>
         </div>
         <div>
             <label for="destination">目的地（UN/LOCODE）</label>
             <p id="destination-hint">例: NLRTM（ロッテルダム）</p>
-            <input id="destination" type="text" th:field="*{destination}" autocomplete="off"
+            <input id="destination" type="text" class="form-control" th:field="*{destination}" autocomplete="off"
                    th:attr="aria-invalid=${#fields.hasErrors('destination')},aria-describedby=${#fields.hasErrors('destination')} ? 'destination-hint destination-error' : 'destination-hint'">
             <p id="destination-error" th:if="${#fields.hasErrors('destination')}" th:errors="*{destination}"></p>
         </div>
         <div>
             <label for="arrivalDeadline">希望到着期限（日本時間）</label>
             <p id="arrivalDeadline-hint">例: 2026-11-02 09:00。タイムゾーンは Asia/Tokyo（UTC+09:00）</p>
-            <input id="arrivalDeadline" type="text" th:field="*{arrivalDeadline}" autocomplete="off" inputmode="numeric"
+            <input id="arrivalDeadline" type="text" class="form-control" th:field="*{arrivalDeadline}" autocomplete="off" inputmode="numeric"
                    th:attr="aria-invalid=${#fields.hasErrors('arrivalDeadline')},aria-describedby=${#fields.hasErrors('arrivalDeadline')} ? 'arrivalDeadline-hint arrivalDeadline-error' : 'arrivalDeadline-hint'">
             <p id="arrivalDeadline-error" th:if="${#fields.hasErrors('arrivalDeadline')}" th:errors="*{arrivalDeadline}"></p>
         </div>
@@ -80,21 +81,21 @@
         </fieldset>
         <div>
             <label for="packageCount">個数</label>
-            <input id="packageCount" type="text" th:field="*{packageCount}" autocomplete="off" inputmode="numeric"
+            <input id="packageCount" type="text" class="form-control" th:field="*{packageCount}" autocomplete="off" inputmode="numeric"
                    th:attr="aria-invalid=${#fields.hasErrors('packageCount')},aria-describedby=${#fields.hasErrors('packageCount')} ? 'packageCount-error' : null">
             <p id="packageCount-error" th:if="${#fields.hasErrors('packageCount')}" th:errors="*{packageCount}"></p>
         </div>
         <div>
             <label for="grossWeightKg">総重量（kg）</label>
             <p id="grossWeightKg-hint">小数点以下 3 桁まで</p>
-            <input id="grossWeightKg" type="text" th:field="*{grossWeightKg}" autocomplete="off" inputmode="decimal"
+            <input id="grossWeightKg" type="text" class="form-control" th:field="*{grossWeightKg}" autocomplete="off" inputmode="decimal"
                    th:attr="aria-invalid=${#fields.hasErrors('grossWeightKg')},aria-describedby=${#fields.hasErrors('grossWeightKg')} ? 'grossWeightKg-hint grossWeightKg-error' : 'grossWeightKg-hint'">
             <p id="grossWeightKg-error" th:if="${#fields.hasErrors('grossWeightKg')}" th:errors="*{grossWeightKg}"></p>
         </div>
         <div>
             <label for="volumeM3">容積（m3）</label>
             <p id="volumeM3-hint">小数点以下 3 桁まで</p>
-            <input id="volumeM3" type="text" th:field="*{volumeM3}" autocomplete="off" inputmode="decimal"
+            <input id="volumeM3" type="text" class="form-control" th:field="*{volumeM3}" autocomplete="off" inputmode="decimal"
                    th:attr="aria-invalid=${#fields.hasErrors('volumeM3')},aria-describedby=${#fields.hasErrors('volumeM3')} ? 'volumeM3-hint volumeM3-error' : 'volumeM3-hint'">
             <p id="volumeM3-error" th:if="${#fields.hasErrors('volumeM3')}" th:errors="*{volumeM3}"></p>
         </div>
@@ -111,25 +112,25 @@
             </div>
             <div>
                 <label for="commercialInvoice">商業送り状（任意）</label>
-                <input id="commercialInvoice" name="commercialInvoice" type="file" accept=".pdf,.png,.jpg,.jpeg,application/pdf,image/png,image/jpeg"
+                <input id="commercialInvoice" name="commercialInvoice" type="file" class="form-control" accept=".pdf,.png,.jpg,.jpeg,application/pdf,image/png,image/jpeg"
                        th:attr="aria-invalid=${#fields.hasErrors('commercialInvoice')},aria-describedby=${#fields.hasErrors('commercialInvoice')} ? 'commercialInvoice-error' : null">
                 <p id="commercialInvoice-error" th:if="${#fields.hasErrors('commercialInvoice')}" th:errors="*{commercialInvoice}"></p>
             </div>
             <div>
                 <label for="packingList">梱包明細（任意）</label>
-                <input id="packingList" name="packingList" type="file" accept=".pdf,.png,.jpg,.jpeg,application/pdf,image/png,image/jpeg"
+                <input id="packingList" name="packingList" type="file" class="form-control" accept=".pdf,.png,.jpg,.jpeg,application/pdf,image/png,image/jpeg"
                        th:attr="aria-invalid=${#fields.hasErrors('packingList')},aria-describedby=${#fields.hasErrors('packingList')} ? 'packingList-error' : null">
                 <p id="packingList-error" th:if="${#fields.hasErrors('packingList')}" th:errors="*{packingList}"></p>
             </div>
             <div>
                 <label for="otherDocuments">その他の書類（任意、3 件まで）</label>
-                <input id="otherDocuments" name="otherDocuments" type="file" multiple accept=".pdf,.png,.jpg,.jpeg,application/pdf,image/png,image/jpeg"
+                <input id="otherDocuments" name="otherDocuments" type="file" class="form-control" multiple accept=".pdf,.png,.jpg,.jpeg,application/pdf,image/png,image/jpeg"
                        th:attr="aria-invalid=${#fields.hasErrors('otherDocuments')},aria-describedby=${#fields.hasErrors('otherDocuments')} ? 'otherDocuments-error' : null">
                 <p id="otherDocuments-error" th:if="${#fields.hasErrors('otherDocuments')}" th:errors="*{otherDocuments}"></p>
             </div>
         </fieldset>
         <!-- 特殊貨物のときは aria-disabled にして理由を関連付ける。押せば、サーバーがエラー要約で同じ理由を示す -->
-        <button id="submit" type="submit"
+        <button id="submit" type="submit" class="btn btn-primary"
                 th:with="special=${transportRequestForm.cargoCategory != null and transportRequestForm.cargoCategory != 'GENERAL'}"
                 th:attr="aria-disabled=${special} ? 'true' : null,aria-describedby=${special} ? 'cargo-category-notice' : null"
                 th:text="${submitLabel}">提出する</button>

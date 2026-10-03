@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<!--/* 社内業務 Web の共通レイアウト（Bolt 8、UI 設計「ナビゲーションとレイアウト」）。画面は次のように使う。
+       <html lang="ja" th:replace="~{layout/staff :: layout(~{::title}, ~{::main}, ~{::script}, 'transport-requests')}">（スクリプトがなければ ~{} を渡す）
+       ナビには、いまある画面だけを出す。役割に応じた出し分けは US-16 で足す */-->
+<html lang="ja" xmlns:th="http://www.thymeleaf.org" th:fragment="layout(title, content, scripts, active)">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:replace="${title}">cargo-tracker</title>
+    <link rel="stylesheet" th:href="@{/webjars/bootstrap/dist/css/bootstrap.min.css}">
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+    <script th:src="@{/webjars/bootstrap/dist/js/bootstrap.bundle.min.js}" defer></script>
+    <script th:src="@{/webjars/htmx.org/dist/htmx.min.js}" defer></script>
+    <th:block th:replace="${scripts}"></th:block>
+</head>
+<body>
+<header class="navbar navbar-expand-md border-bottom app-header">
+    <div class="container-fluid">
+        <a class="navbar-brand" th:href="@{/}">cargo-tracker 社内</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#staff-nav"
+                aria-controls="staff-nav" aria-expanded="false" aria-label="メニュー">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <!-- 認証（US-18）までは仮の主体の名前を出し、ログアウトは出さない（2026-10-03 に承認） -->
+        <p class="navbar-text mb-0 d-none d-md-block">営業担当者（仮）</p>
+    </div>
+</header>
+<div class="container-fluid">
+    <div class="row">
+        <nav id="staff-nav" class="col-md-3 col-lg-2 collapse d-md-block app-nav" aria-label="社内業務 Web">
+            <ul class="nav flex-column">
+                <li class="nav-item">
+                    <a class="nav-link" th:classappend="${active == 'transport-requests'} ? 'fw-bold'"
+                       th:attr="aria-current=${active == 'transport-requests'} ? 'page' : null"
+                       th:href="@{/staff/transport-requests}">見積依頼</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" th:classappend="${active == 'kpi-observations'} ? 'fw-bold'"
+                       th:attr="aria-current=${active == 'kpi-observations'} ? 'page' : null"
+                       th:href="@{/staff/kpi-observations}">KPI 計測記録</a>
+                </li>
+            </ul>
+        </nav>
+        <div class="col app-main">
+            <main th:replace="${content}"></main>
+        </div>
+    </div>
+</div>
+</body>
+</html>

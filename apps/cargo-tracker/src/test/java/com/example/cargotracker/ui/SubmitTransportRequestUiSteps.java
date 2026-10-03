@@ -141,7 +141,8 @@ public class SubmitTransportRequestUiSteps {
 
     @もし("必須条件をキー操作だけで入力して提出する")
     public void 必須条件をキー操作だけで入力して提出する() {
-        tabToGroup(CONSIGNEE);
+        // ヘッダーとナビのリンクを Tab で越えて、最初の入力（荷受人）へ進む（Bolt 8 の共通レイアウト）
+        tabUntilGroup(CONSIGNEE);
         page().keyboard().press("Space");
         tabTo(ORIGIN);
         page().keyboard().type("JPTYO");
@@ -386,6 +387,18 @@ public class SubmitTransportRequestUiSteps {
                                 new Page.GetByRoleOptions().setName(legend).setExact(true))
                         .locator("input:focus"))
                 .hasCount(1);
+    }
+
+    /** ラジオボタンのグループに届くまで Tab を進める（届かなければ失敗する）。 */
+    private void tabUntilGroup(String legend) {
+        Locator focused = page().getByRole(
+                        AriaRole.GROUP,
+                        new Page.GetByRoleOptions().setName(legend).setExact(true))
+                .locator("input:focus");
+        for (int i = 0; i < 20 && focused.count() == 0; i++) {
+            page().keyboard().press("Tab");
+        }
+        assertThat(focused).hasCount(1);
     }
 
     /** Tab で次の要素へ移り、その要素がラベルの入力欄であることを確かめる（フォーカスの順序の確認）。 */

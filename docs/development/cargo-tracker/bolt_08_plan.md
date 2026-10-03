@@ -4,7 +4,7 @@ title: "Bolt 8 計画 - UI の骨格と見積依頼の段階入力のプロト�
 description: "8 回目の Bolt の計画。WebJars で Bootstrap 5.3・htmx 2.0 を同梱し、顧客 Web と社内業務 Web の共通レイアウト（ヘッダー、左ナビ、窓口の案内）と共通の CSS を作って既存の画面を移し、見積依頼（C-03）の段階入力のプロトタイプで操作性を確かめる（UI-HO-04）計画を、ステップ 1〜4 で定義する。"
 tags: [development,bolt-plan]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-03T02:25:29Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-03T02:37:40Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-03T02:24:39Z }
 ---
@@ -141,7 +141,7 @@ state "C-03（1 つのフォーム）" as C03 {
   - リリース計画: W1 の #36 の行に Bolt 8 を書く
   - 完了の判定: `okf:check` が ERROR 0、`documentationTest` が緑。push する
   - 結果（2026-10-03 11:24〜11:25）: UI 設計の「ナビゲーションとレイアウト」に実装（フラグメント、WebJars、共通の CSS、いまある画面だけのナビ、仮のヘッダーと窓口の案内）を、C-03 の段階入力の行にパネルの切り替えの方式を書いた。リリース計画の W1 には開始準備で Bolt 8 を書いた。`okf:check` ERROR 0、`documentationTest` 緑
-- [ ] **2. UI の骨格（画面の層の Red → Green）**
+- [x] **2. UI の骨格（画面の層の Red → Green）**
   - 画面の層の受入シナリオを先に書き、`uiTest` で失敗を記録する（T-21）（`features/ui/layout_ui.feature`、`@ui`）
     - 荷主の画面に顧客 Web のナビと窓口の案内が出て、ナビの「見積依頼」が現在の項目（`aria-current="page"`）になる
     - 営業の画面に社内業務 Web のナビが出て、窓口の案内は出ない
@@ -150,6 +150,7 @@ state "C-03（1 つのフォーム）" as C03 {
   - `templates/layout/customer.html`・`staff.html`（フラグメント）と `static/css/app.css` を作り、既存の 7 画面と入口の一覧を移す。インラインのスタイルを共通の CSS に移す（T-18）
   - 既存の 21 本の画面の層のシナリオを、文言とキー操作の期待を変えずに通す（H3）
   - 完了の判定: `check` と `uiTest` が緑。push する
+  - 結果（2026-10-03 11:25〜11:37）: 画面の層の受入シナリオ（`layout_ui.feature`、4 件）を先に書き、実装の前の `uiTest` で新しい 4 件の失敗（既存の 21 件は通る）を記録した（T-21）。WebJars（webjars-locator-lite 1.1.4、Bootstrap 5.3.8、htmx 2.0.11）を足し、`layout/customer.html`・`staff.html`（Thymeleaf のフラグメント）と `static/css/app.css` を作って、既存の 7 つのテンプレートを移した。画面ごとのインラインのスタイル（`<style>` 3 か所、`style="overflow-x: auto"` 5 か所）を共通の CSS に移した（T-18）。表・ボタン・入力欄に Bootstrap のクラスを付けた。計画からの変更: 入口の一覧はテンプレートにせず、静的なファイルのまま Bootstrap と共通の CSS を読むようにした（コントローラを足さずに済む）。実行中に直した誤り: スクリプトのないページで `~{::script}` が解決できない（`~{}` を渡す）、Bolt 4 のキー操作のシナリオがヘッダーとナビの分の Tab を想定していない（荷受人のグループに届くまで Tab を進める。キー操作だけの期待は変えない）、ナビの移動の途中のアクセシビリティの検査。画面の層のシナリオは 25 件すべて passed（failed・undefined・skipped 0）、axe-core の違反 0 件。`check` 緑（テスト 402 件）
 - [ ] **3. C-03 の段階入力のプロトタイプ（画面の層の Red → Green）**
   - 画面の層の受入シナリオを先に書き、`uiTest` で失敗を記録する（`features/ui/stepwise_transport_request_ui.feature`）
     - キー操作だけで 4 段階を進み、確認の段階で入力の内容を確かめて提出すると、C-04 に版 1 が出る
