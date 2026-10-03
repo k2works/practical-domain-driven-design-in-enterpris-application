@@ -3,8 +3,10 @@ type: Plan
 title: "Bolt 8 計画 - UI の骨格と見積依頼の段階入力のプロトタイプ（#36）"
 description: "8 回目の Bolt の計画。WebJars で Bootstrap 5.3・htmx 2.0 を同梱し、顧客 Web と社内業務 Web の共通レイアウト（ヘッダー、左ナビ、窓口の案内）と共通の CSS を作って既存の画面を移し、見積依頼（C-03）の段階入力のプロトタイプで操作性を確かめる（UI-HO-04）計画を、ステップ 1〜4 で定義する。"
 tags: [development,bolt-plan]
-status: draft
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-03T02:20:04Z }
+status: stable
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-03T02:24:38Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-10-03T02:24:39Z }
 ---
 
 # Bolt 8 計画 - UI の骨格と見積依頼の段階入力のプロトタイプ（#36）
@@ -232,6 +234,7 @@ state "C-03（1 つのフォーム）" as C03 {
 | 日付 | 内容 | 作成 | 承認 |
 | :--- | :--- | :--- | :--- |
 | 2026-10-03 | 初版（人の決定: 対象は #36、段階入力も同じ Bolt、Bootstrap・htmx は WebJars で同梱） | anthropic/claude-opus-5-5 | — |
+| 2026-10-03 | 計画を承認。確認ポイント 1〜4（いまある画面だけのナビと仮のヘッダー・窓口の案内、WebJars の Bootstrap・htmx の導入、段階入力はパネルの切り替え、操作性は人が触って確かめる）も決まった（Try T-6） | anthropic/claude-opus-5-5 | human:kakimomokuri |
 
 ## 関連ドキュメント
 
