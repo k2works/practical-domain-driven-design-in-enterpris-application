@@ -4,14 +4,19 @@ import com.example.cargotracker.quotation.application.internal.commandservices.T
 import com.example.cargotracker.quotation.application.internal.commandservices.TransportRequestReviewService;
 import com.example.cargotracker.quotation.application.internal.queryservices.StaffTransportRequestQueryService;
 import com.example.cargotracker.quotation.application.internal.queryservices.TransportRequestQueryService;
+import com.example.cargotracker.quotation.domain.model.aggregates.RequiredDocumentStorage;
 import com.example.cargotracker.quotation.domain.model.aggregates.TransportRequestNumberIssuer;
 import com.example.cargotracker.quotation.domain.model.aggregates.TransportRequestRepository;
 import com.example.cargotracker.quotation.domain.model.rules.MvpAcceptancePolicy;
+import com.example.cargotracker.quotation.domain.model.rules.RequiredDocumentPolicy;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestNumber;
 import com.example.cargotracker.quotation.infrastructure.persistence.MyBatisTransportRequestNumberIssuer;
+import com.example.cargotracker.quotation.infrastructure.storage.DocumentStorageProperties;
+import com.example.cargotracker.quotation.infrastructure.storage.LocalFileSystemRequiredDocumentStorage;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import java.time.Clock;
 import org.springframework.boot.ApplicationRunner;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -20,16 +25,30 @@ import org.springframework.context.annotation.Configuration;
  * 見積りコンテキストの組み立て。アプリケーションサービスに送信アダプターをつなぐ。
  */
 @Configuration(proxyBeanMethods = false)
+@EnableConfigurationProperties(DocumentStorageProperties.class)
 public class QuotationConfiguration {
 
     @Bean
     TransportRequestCommandService transportRequestCommandService(
             TransportRequestRepository repository,
             TransportRequestNumberIssuer numberIssuer,
+            RequiredDocumentStorage documentStorage,
             ApplicationEventPublisher eventPublisher,
             Clock clock) {
         return new TransportRequestCommandService(
-                repository, numberIssuer, new MvpAcceptancePolicy(), eventPublisher, clock);
+                repository,
+                numberIssuer,
+                new MvpAcceptancePolicy(),
+                new RequiredDocumentPolicy(),
+                documentStorage,
+                eventPublisher,
+                clock);
+    }
+
+    /** 書類の保存。開発環境はローカルのファイルシステム（ADR-007）。S3 の実装は運用準備（W10、#28）で差し替える。 */
+    @Bean
+    RequiredDocumentStorage requiredDocumentStorage(DocumentStorageProperties properties) {
+        return new LocalFileSystemRequiredDocumentStorage(properties.baseDir());
     }
 
     /**
@@ -52,12 +71,14 @@ public class QuotationConfiguration {
     }
 
     @Bean
-    StaffTransportRequestQueryService staffTransportRequestQueryService(TransportRequestRepository repository) {
-        return new StaffTransportRequestQueryService(repository);
+    StaffTransportRequestQueryService staffTransportRequestQueryService(
+            TransportRequestRepository repository, RequiredDocumentStorage documentStorage) {
+        return new StaffTransportRequestQueryService(repository, documentStorage);
     }
 
     @Bean
-    TransportRequestQueryService transportRequestQueryService(TransportRequestRepository repository) {
-        return new TransportRequestQueryService(repository);
+    TransportRequestQueryService transportRequestQueryService(
+            TransportRequestRepository repository, RequiredDocumentStorage documentStorage) {
+        return new TransportRequestQueryService(repository, documentStorage);
     }
 }

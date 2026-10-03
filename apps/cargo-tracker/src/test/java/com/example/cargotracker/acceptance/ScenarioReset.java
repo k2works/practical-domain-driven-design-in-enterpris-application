@@ -1,6 +1,7 @@
 package com.example.cargotracker.acceptance;
 
 import com.example.cargotracker.identity.acceptance.InMemoryKpiObservationRepository;
+import com.example.cargotracker.quotation.acceptance.InMemoryRequiredDocumentStorage;
 import com.example.cargotracker.quotation.acceptance.InMemoryTransportRequestNumberIssuer;
 import com.example.cargotracker.quotation.acceptance.InMemoryTransportRequestRepository;
 import com.example.cargotracker.shared.acceptance.DeferredEventDelivery;
@@ -9,7 +10,7 @@ import io.cucumber.java.Before;
 import java.time.Instant;
 
 /**
- * シナリオごとに時刻・メモリ上のリポジトリ・採番・ためたイベントを初期化し、シナリオの順序に依存しないようにする。
+ * シナリオごとに時刻・メモリ上のリポジトリ・採番・書類の保存・ためたイベントを初期化し、シナリオの順序に依存しないようにする。
  */
 public class ScenarioReset {
 
@@ -18,18 +19,21 @@ public class ScenarioReset {
     private final InMemoryTransportRequestNumberIssuer transportRequestNumberIssuer;
     private final InMemoryKpiObservationRepository kpiObservationRepository;
     private final DeferredEventDelivery delivery;
+    private final InMemoryRequiredDocumentStorage documentStorage;
 
     public ScenarioReset(
             MutableClock clock,
             InMemoryTransportRequestRepository transportRequestRepository,
             InMemoryTransportRequestNumberIssuer transportRequestNumberIssuer,
             InMemoryKpiObservationRepository kpiObservationRepository,
-            DeferredEventDelivery delivery) {
+            DeferredEventDelivery delivery,
+            InMemoryRequiredDocumentStorage documentStorage) {
         this.clock = clock;
         this.transportRequestRepository = transportRequestRepository;
         this.transportRequestNumberIssuer = transportRequestNumberIssuer;
         this.kpiObservationRepository = kpiObservationRepository;
         this.delivery = delivery;
+        this.documentStorage = documentStorage;
     }
 
     @Before
@@ -39,5 +43,6 @@ public class ScenarioReset {
         transportRequestNumberIssuer.clear();
         kpiObservationRepository.clear();
         delivery.clear();
+        documentStorage.clear();
     }
 }

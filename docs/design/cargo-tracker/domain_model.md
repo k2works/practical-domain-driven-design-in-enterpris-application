@@ -4,7 +4,7 @@ title: "cargo-tracker ドメインモデル"
 description: "cargo-tracker の業務領域の分類、ユビキタス言語、7 つの境界づけられたコンテキスト（通知を含む）の集約・エンティティ・値オブジェクト・ドメインルール、コマンド・クエリ・イベント、予約サガ。"
 tags: [design, domain-model, ddd]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-03T01:15:51Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-03T01:30:18Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T07:41:04Z }
   - { by: human:kakimomokuri, at: 2026-10-01T07:48:17Z }
@@ -89,6 +89,7 @@ quadrantChart
 | 提出の検証結果 | SubmissionViolations | 提出の検証で見つかった不足と誤りの一覧。項目と理由の種類だけを持ち、利用者に示す理由と直し方の文言は画面の層が付ける（Q-INV-01、Q-INV-02） | 見積り |
 | 貨物 | Cargo | 貨物種別、荷姿、個数、総重量（kg）、容積（m3）の組 | 見積り |
 | 必要書類 | RequiredDocument | 輸送条件に添付した書類 1 件。書類番号（版の中で 1 から）、書類の種類、ファイル名、形式、大きさ、SHA-256、オブジェクトキーを持つ。版に付き、提出後は変えない（2026-10-03 の D-20。Bolt 7） | 見積り |
+| 書類の添付 | RequiredDocumentAttachment | 荷主が提出・出し直しで添付しようとする書類（種類、ファイル名、中身）。書類の受付規則を通り、保存してオブジェクトキーを得たら必要書類になる | 見積り |
 | 書類の種類 | DocumentType | 商業送り状（COMMERCIAL_INVOICE）、梱包明細（PACKING_LIST）、その他（OTHER） | 見積り |
 | 書類の形式 | DocumentMediaType | PDF、PNG、JPEG。拡張子でなく中身の先頭のバイトで判定する | 見積り |
 | 書類の受付規則 | RequiredDocumentPolicy | 添付の一覧が Q-INV-16 を満たすかを判定し、違反を提出の検証結果に足す | 見積り |

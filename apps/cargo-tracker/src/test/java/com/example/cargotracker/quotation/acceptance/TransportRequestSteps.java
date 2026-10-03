@@ -43,23 +43,29 @@ public class TransportRequestSteps {
     private static final Map<String, CompanyId> CONSIGNEES =
             Map.of("荷受人 A（仮）", new CompanyId(UUID.fromString("00000000-0000-0000-0000-000000000201")));
 
-    private static final Map<String, Item> ITEMS = Map.of(
-            "荷受人", Item.CONSIGNEE,
-            "出発地", Item.ORIGIN,
-            "目的地", Item.DESTINATION,
-            "希望到着期限", Item.ARRIVAL_DEADLINE,
-            "貨物種別", Item.CARGO_CATEGORY,
-            "荷姿", Item.PACKAGE_TYPE,
-            "個数", Item.PACKAGE_COUNT,
-            "総重量（kg）", Item.GROSS_WEIGHT_KG,
-            "容積（m3）", Item.VOLUME_M3);
+    private static final Map<String, Item> ITEMS = Map.ofEntries(
+            Map.entry("荷受人", Item.CONSIGNEE),
+            Map.entry("出発地", Item.ORIGIN),
+            Map.entry("目的地", Item.DESTINATION),
+            Map.entry("希望到着期限", Item.ARRIVAL_DEADLINE),
+            Map.entry("貨物種別", Item.CARGO_CATEGORY),
+            Map.entry("荷姿", Item.PACKAGE_TYPE),
+            Map.entry("個数", Item.PACKAGE_COUNT),
+            Map.entry("総重量（kg）", Item.GROSS_WEIGHT_KG),
+            Map.entry("容積（m3）", Item.VOLUME_M3),
+            Map.entry("商業送り状", Item.COMMERCIAL_INVOICE),
+            Map.entry("梱包明細", Item.PACKING_LIST),
+            Map.entry("その他の書類", Item.OTHER_DOCUMENTS));
 
     private static final Map<String, Reason> REASONS = Map.of(
             "出発地と同じ", Reason.SAME_AS_ORIGIN,
             "提出時刻以前", Reason.NOT_AFTER_SUBMISSION,
             "0 以下", Reason.NOT_POSITIVE,
             "小数点以下 3 桁を超える", Reason.TOO_MANY_DECIMALS,
-            "MVP の対象外", Reason.OUTSIDE_MVP);
+            "MVP の対象外", Reason.OUTSIDE_MVP,
+            "形式が対象外", Reason.UNSUPPORTED_FORMAT,
+            "大きすぎる", Reason.TOO_LARGE,
+            "多すぎる", Reason.TOO_MANY);
 
     private static final Map<String, CargoCategory> CARGO_CATEGORIES = Map.of(
             "一般", CargoCategory.GENERAL,
@@ -78,6 +84,7 @@ public class TransportRequestSteps {
     private final InMemoryTransportRequestRepository repository;
     private final InMemoryTransportRequestNumberIssuer numberIssuer;
     private final ScenarioContext context;
+    private final RequiredDocumentAttachments attachments;
     private final Map<Item, String> input = new EnumMap<>(Item.class);
     private SubmissionOutcome lastOutcome;
 
@@ -86,12 +93,14 @@ public class TransportRequestSteps {
             TransportRequestQueryService queryService,
             InMemoryTransportRequestRepository repository,
             InMemoryTransportRequestNumberIssuer numberIssuer,
-            ScenarioContext context) {
+            ScenarioContext context,
+            RequiredDocumentAttachments attachments) {
         this.commandService = commandService;
         this.queryService = queryService;
         this.repository = repository;
         this.numberIssuer = numberIssuer;
         this.context = context;
+        this.attachments = attachments;
     }
 
     @前提("荷主が次の輸送条件を入力している")
@@ -126,7 +135,8 @@ public class TransportRequestSteps {
 
     @もし("荷主が入力した輸送条件を提出する")
     public void 荷主が入力した輸送条件を提出する() {
-        lastOutcome = commandService.submit(new SubmitTransportRequestCommand(SHIPPER, SUBMITTER, toInput()));
+        lastOutcome = commandService.submit(
+                new SubmitTransportRequestCommand(SHIPPER, SUBMITTER, toInput(), attachments.takePending()));
         if (lastOutcome instanceof SubmissionOutcome.Submitted submitted) {
             context.transportRequestId(submitted.transportRequestId().value());
         }

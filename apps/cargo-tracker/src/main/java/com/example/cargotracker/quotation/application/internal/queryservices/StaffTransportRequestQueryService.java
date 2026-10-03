@@ -1,5 +1,6 @@
 package com.example.cargotracker.quotation.application.internal.queryservices;
 
+import com.example.cargotracker.quotation.domain.model.aggregates.RequiredDocumentStorage;
 import com.example.cargotracker.quotation.domain.model.aggregates.TransportRequest;
 import com.example.cargotracker.quotation.domain.model.aggregates.TransportRequestRepository;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestNumber;
@@ -15,9 +16,12 @@ import org.springframework.transaction.annotation.Transactional;
 public class StaffTransportRequestQueryService {
 
     private final TransportRequestRepository repository;
+    private final RequiredDocumentStorage documentStorage;
 
-    public StaffTransportRequestQueryService(TransportRequestRepository repository) {
+    public StaffTransportRequestQueryService(
+            TransportRequestRepository repository, RequiredDocumentStorage documentStorage) {
         this.repository = repository;
+        this.documentStorage = documentStorage;
     }
 
     /** 業務番号で輸送要求を照会する。 */
@@ -30,5 +34,14 @@ public class StaffTransportRequestQueryService {
     @Transactional(readOnly = true)
     public List<TransportRequestSummary> findUnderReview() {
         return repository.findUnderReviewSummaries();
+    }
+
+    /** 必要書類を取得する（D-20: 営業担当者は開ける）。 */
+    @Transactional(readOnly = true)
+    public Optional<DocumentFile> findDocument(TransportRequestNumber number, int versionNo, int documentNo) {
+        return repository
+                .findByNumberForStaff(number)
+                .flatMap(request ->
+                        TransportRequestQueryService.documentOf(request, versionNo, documentNo, documentStorage));
     }
 }

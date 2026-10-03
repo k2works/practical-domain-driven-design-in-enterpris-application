@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.Objects;
 
 /**
- * 提出の検証結果。提出の検証で見つかった不足と誤りの一覧（Q-INV-01、Q-INV-02、Q-INV-12）。
+ * 提出の検証結果。提出の検証で見つかった不足と誤りの一覧（Q-INV-01、Q-INV-02、Q-INV-12、Q-INV-16）。
  * 理由と直し方の文言は画面の層が付ける。ここでは項目と理由の種類だけを持つ。
  *
  * @param violations 不足と誤り（空なら提出できる）
@@ -60,7 +60,13 @@ public record SubmissionViolations(List<Violation> violations) {
         /** 総重量（kg）。 */
         GROSS_WEIGHT_KG,
         /** 容積（m3）。 */
-        VOLUME_M3
+        VOLUME_M3,
+        /** 商業送り状（Q-INV-16）。 */
+        COMMERCIAL_INVOICE,
+        /** 梱包明細（Q-INV-16）。 */
+        PACKING_LIST,
+        /** その他の書類（Q-INV-16）。 */
+        OTHER_DOCUMENTS
     }
 
     /** 違反の理由の種類。 */
@@ -76,6 +82,12 @@ public record SubmissionViolations(List<Violation> violations) {
         /** 総重量・容積の小数点以下が 3 桁を超える（Q-INV-12）。 */
         TOO_MANY_DECIMALS,
         /** 貨物種別が MVP の対象外（Q-INV-02、BR-03）。 */
-        OUTSIDE_MVP
+        OUTSIDE_MVP,
+        /** 書類の形式が PDF・PNG・JPEG でない（中身で判定。Q-INV-16）。 */
+        UNSUPPORTED_FORMAT,
+        /** 書類が 10 MB を超える（Q-INV-16）。 */
+        TOO_LARGE,
+        /** 書類の件数が種類ごとの上限を超える（Q-INV-16）。 */
+        TOO_MANY
     }
 }

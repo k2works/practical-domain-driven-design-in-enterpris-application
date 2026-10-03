@@ -11,6 +11,8 @@ import com.example.cargotracker.shared.domain.Location;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.Arrays;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
@@ -64,10 +66,16 @@ class ShipmentTermsInputTest {
     }
 
     @Test
-    void すべて空なら全項目の不足を返す() {
+    void すべて空なら必要書類を除く全項目の不足を返す() {
         ShipmentTermsInput empty = new ShipmentTermsInput(null, null, null, null, null, null, null, null, null);
 
-        assertThat(violations(empty)).extracting(Violation::item).containsExactlyInAnyOrder(Item.values());
+        // 必要書類は任意で、輸送条件の入力の検証の対象でない（2026-10-03 の D-20。書類の受付規則は Q-INV-16）
+        assertThat(violations(empty))
+                .extracting(Violation::item)
+                .containsExactlyInAnyOrder(Arrays.stream(Item.values())
+                        .filter(item -> !EnumSet.of(Item.COMMERCIAL_INVOICE, Item.PACKING_LIST, Item.OTHER_DOCUMENTS)
+                                .contains(item))
+                        .toArray(Item[]::new));
     }
 
     @Test

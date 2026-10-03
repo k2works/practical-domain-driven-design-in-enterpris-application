@@ -1,5 +1,6 @@
 package com.example.cargotracker.quotation.application.internal.queryservices;
 
+import com.example.cargotracker.quotation.domain.model.aggregates.RequiredDocumentStorage;
 import com.example.cargotracker.quotation.domain.model.aggregates.TransportRequest;
 import com.example.cargotracker.quotation.domain.model.aggregates.TransportRequestRepository;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestId;
@@ -17,9 +18,12 @@ import org.springframework.transaction.annotation.Transactional;
 public class TransportRequestQueryService {
 
     private final TransportRequestRepository repository;
+    private final RequiredDocumentStorage documentStorage;
 
-    public TransportRequestQueryService(TransportRequestRepository repository) {
+    public TransportRequestQueryService(
+            TransportRequestRepository repository, RequiredDocumentStorage documentStorage) {
         this.repository = repository;
+        this.documentStorage = documentStorage;
     }
 
     @Transactional(readOnly = true)
@@ -37,5 +41,28 @@ public class TransportRequestQueryService {
     @Transactional(readOnly = true)
     public List<TransportRequestSummary> findSummaries(CompanyId shipperCompanyId) {
         return repository.findSummariesByShipper(shipperCompanyId);
+    }
+
+    /**
+     * 荷主企業の輸送要求の必要書類を取得する（D-20: 提出した荷主は開ける）。他社の輸送要求の書類は見つからない（Q-INV-08）。
+     */
+    @Transactional(readOnly = true)
+    public Optional<DocumentFile> findDocument(
+            TransportRequestNumber number, CompanyId shipperCompanyId, int versionNo, int documentNo) {
+        return repository
+                .findByNumber(number, shipperCompanyId)
+                .flatMap(request -> documentOf(request, versionNo, documentNo, documentStorage));
+    }
+
+    /** 輸送要求の版の書類を探し、中身を読む。現在の版の書類だけを返す（前の版の書類は、引き継いでいれば現在の版にある）。 */
+    static Optional<DocumentFile> documentOf(
+            TransportRequest request, int versionNo, int documentNo, RequiredDocumentStorage storage) {
+        if (request.currentVersion().versionNo() != versionNo) {
+            return Optional.empty();
+        }
+        return request.currentVersion().terms().documents().stream()
+                .filter(document -> document.documentNo() == documentNo)
+                .findFirst()
+                .map(document -> new DocumentFile(document, storage.read(document.objectKey())));
     }
 }

@@ -135,8 +135,9 @@ public final class TransportRequest {
      * @return 受け付けなかった理由（受け付けたら空）
      */
     public Optional<ResubmissionRejection> resubmit(ShipmentTerms terms, UserId submittedBy, UtcInstant submittedAt) {
-        if (status != TransportRequestStatus.DRAFT) {
-            return Optional.of(ResubmissionRejection.NOT_DRAFT);
+        Optional<ResubmissionRejection> rejection = checkResubmittable();
+        if (rejection.isPresent()) {
+            return rejection;
         }
         int versionNo = currentVersion.versionNo() + 1;
         currentVersion = new TransportRequestVersion(versionNo, terms, submittedBy, submittedAt);
@@ -144,6 +145,15 @@ public final class TransportRequest {
         domainEvents.add(
                 new TransportRequestSubmitted(id.value(), versionNo, shipperCompanyId, submittedAt, number.text()));
         return Optional.empty();
+    }
+
+    /**
+     * 再提出できるかを確かめる（Q-INV-15）。書類の中身を保存する前に確かめ、受け付けない再提出でファイルを残さないために使う。
+     *
+     * @return 受け付けない理由（再提出できるなら空）
+     */
+    public Optional<ResubmissionRejection> checkResubmittable() {
+        return status == TransportRequestStatus.DRAFT ? Optional.empty() : Optional.of(ResubmissionRejection.NOT_DRAFT);
     }
 
     private Optional<ReviewRejection> review(

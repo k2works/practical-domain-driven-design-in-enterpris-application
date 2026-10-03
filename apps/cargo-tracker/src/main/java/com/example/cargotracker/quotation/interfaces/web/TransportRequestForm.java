@@ -1,5 +1,8 @@
 package com.example.cargotracker.quotation.interfaces.web;
 
+import java.util.List;
+import org.springframework.web.multipart.MultipartFile;
+
 /**
  * 見積依頼の作成画面（C-03 の 1 画面の形）の入力。画面の入力は文字列のまま受け取り、
  * 形式の検証と変換は {@link TransportRequestFormConverter}、業務の規則の検証はドメインに任せる。
@@ -16,6 +19,9 @@ public class TransportRequestForm {
     private String packageCount;
     private String grossWeightKg;
     private String volumeM3;
+    private MultipartFile commercialInvoice;
+    private MultipartFile packingList;
+    private List<MultipartFile> otherDocuments = List.of();
 
     public String getConsignee() {
         return consignee;
@@ -87,5 +93,32 @@ public class TransportRequestForm {
 
     public void setVolumeM3(String volumeM3) {
         this.volumeM3 = volumeM3;
+    }
+
+    /** 商業送り状のファイル（任意。ブラウザは誤りのあとにファイルの選択を残せない）。 */
+    public MultipartFile getCommercialInvoice() {
+        return commercialInvoice;
+    }
+
+    public void setCommercialInvoice(MultipartFile commercialInvoice) {
+        this.commercialInvoice = commercialInvoice;
+    }
+
+    /** 梱包明細のファイル（任意）。 */
+    public MultipartFile getPackingList() {
+        return packingList;
+    }
+
+    public void setPackingList(MultipartFile packingList) {
+        this.packingList = packingList;
+    }
+
+    /** その他の書類のファイル（任意、3 件まで）。 */
+    public List<MultipartFile> getOtherDocuments() {
+        return List.copyOf(otherDocuments);
+    }
+
+    public void setOtherDocuments(List<MultipartFile> otherDocuments) {
+        this.otherDocuments = otherDocuments == null ? List.of() : List.copyOf(otherDocuments);
     }
 }

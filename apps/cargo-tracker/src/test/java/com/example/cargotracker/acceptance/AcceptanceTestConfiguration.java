@@ -3,14 +3,17 @@ package com.example.cargotracker.acceptance;
 import com.example.cargotracker.identity.acceptance.InMemoryKpiObservationRepository;
 import com.example.cargotracker.identity.application.internal.eventhandlers.KpiObservationEventHandler;
 import com.example.cargotracker.identity.application.internal.queryservices.KpiObservationQueryService;
+import com.example.cargotracker.quotation.acceptance.InMemoryRequiredDocumentStorage;
 import com.example.cargotracker.quotation.acceptance.InMemoryTransportRequestNumberIssuer;
 import com.example.cargotracker.quotation.acceptance.InMemoryTransportRequestRepository;
+import com.example.cargotracker.quotation.acceptance.RequiredDocumentAttachments;
 import com.example.cargotracker.quotation.application.internal.commandservices.TransportRequestCommandService;
 import com.example.cargotracker.quotation.application.internal.commandservices.TransportRequestReviewService;
 import com.example.cargotracker.quotation.application.internal.queryservices.StaffTransportRequestQueryService;
 import com.example.cargotracker.quotation.application.internal.queryservices.TransportRequestQueryService;
 import com.example.cargotracker.quotation.domain.events.TransportRequestSubmitted;
 import com.example.cargotracker.quotation.domain.model.rules.MvpAcceptancePolicy;
+import com.example.cargotracker.quotation.domain.model.rules.RequiredDocumentPolicy;
 import com.example.cargotracker.shared.acceptance.DeferredEventDelivery;
 import com.example.cargotracker.shared.acceptance.MutableClock;
 import com.example.cargotracker.shared.acceptance.ScenarioContext;
@@ -32,7 +35,7 @@ public class AcceptanceTestConfiguration {
 
     /** {@code @SpringBootTest} の部品探索に拾われないよう {@code @TestConfiguration} にする。 */
     @TestConfiguration(proxyBeanMethods = false)
-    @Import(ScenarioContext.class)
+    @Import({ScenarioContext.class, RequiredDocumentAttachments.class})
     static class Components {
 
         @Bean
@@ -48,6 +51,11 @@ public class AcceptanceTestConfiguration {
         @Bean
         InMemoryTransportRequestNumberIssuer transportRequestNumberIssuer() {
             return new InMemoryTransportRequestNumberIssuer();
+        }
+
+        @Bean
+        InMemoryRequiredDocumentStorage requiredDocumentStorage() {
+            return new InMemoryRequiredDocumentStorage();
         }
 
         @Bean
@@ -81,10 +89,17 @@ public class AcceptanceTestConfiguration {
         TransportRequestCommandService transportRequestCommandService(
                 InMemoryTransportRequestRepository repository,
                 InMemoryTransportRequestNumberIssuer numberIssuer,
+                InMemoryRequiredDocumentStorage documentStorage,
                 DeferredEventDelivery eventDelivery,
                 MutableClock clock) {
             return new TransportRequestCommandService(
-                    repository, numberIssuer, new MvpAcceptancePolicy(), eventDelivery, clock);
+                    repository,
+                    numberIssuer,
+                    new MvpAcceptancePolicy(),
+                    new RequiredDocumentPolicy(),
+                    documentStorage,
+                    eventDelivery,
+                    clock);
         }
 
         @Bean
@@ -96,14 +111,15 @@ public class AcceptanceTestConfiguration {
         }
 
         @Bean
-        TransportRequestQueryService transportRequestQueryService(InMemoryTransportRequestRepository repository) {
-            return new TransportRequestQueryService(repository);
+        TransportRequestQueryService transportRequestQueryService(
+                InMemoryTransportRequestRepository repository, InMemoryRequiredDocumentStorage documentStorage) {
+            return new TransportRequestQueryService(repository, documentStorage);
         }
 
         @Bean
         StaffTransportRequestQueryService staffTransportRequestQueryService(
-                InMemoryTransportRequestRepository repository) {
-            return new StaffTransportRequestQueryService(repository);
+                InMemoryTransportRequestRepository repository, InMemoryRequiredDocumentStorage documentStorage) {
+            return new StaffTransportRequestQueryService(repository, documentStorage);
         }
     }
 }
