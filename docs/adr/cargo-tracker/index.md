@@ -1,6 +1,6 @@
 # cargo-tracker — ADR
 
-cargo-tracker プロジェクトのADRドキュメントです。
+cargo-tracker プロジェクトの ADR ドキュメントです。
 
 ## ドキュメント一覧
 
