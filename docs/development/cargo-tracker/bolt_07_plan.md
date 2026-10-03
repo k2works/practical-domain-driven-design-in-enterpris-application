@@ -3,8 +3,10 @@ type: Plan
 title: "Bolt 7 計画 - 見積依頼の必要書類（US-01 AC2 の残り）"
 description: "7 回目の Bolt の計画。D-20 の決定（任意で添付、PDF・PNG・JPEG で 1 件 10 MB、閲覧は提出した荷主と営業担当者）に従い、提出と出し直しでの必要書類の添付、形式・容量・件数の検証、版ごとの保存と出し直しでの引き継ぎ、荷主と営業の閲覧を、ステップ 1〜5 で定義する。"
 tags: [development,bolt-plan]
-status: draft
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-03T01:09:22Z }
+status: stable
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-03T01:14:26Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-10-03T01:14:26Z }
 ---
 
 # Bolt 7 計画 - 見積依頼の必要書類（US-01 AC2 の残り）
@@ -314,6 +316,7 @@ DOC : ファイル（Content-Disposition: attachment）
 | 日付 | 内容 | 作成 | 承認 |
 | :--- | :--- | :--- | :--- |
 | 2026-10-03 | 初版（人の決定 D-20: 任意で添付、PDF・PNG・JPEG で 1 件 10 MB、閲覧は提出した荷主と営業担当者） | anthropic/claude-opus-5-5 | — |
+| 2026-10-03 | 計画を承認。確認ポイント 1〜5（`required_document` の 4 列の追加と追記専用、種類ごとの入力欄、出し直しでの引き継ぎと追加、取得の URL と `attachment`・`nosniff`、ローカルのファイルシステムの保存先）も決まった（Try T-6） | anthropic/claude-opus-5-5 | human:kakimomokuri |
 
 ## 関連ドキュメント
 
