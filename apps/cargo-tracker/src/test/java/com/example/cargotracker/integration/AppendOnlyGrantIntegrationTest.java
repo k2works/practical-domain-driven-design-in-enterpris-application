@@ -33,7 +33,7 @@ class AppendOnlyGrantIntegrationTest {
 
     /** データモデルの「追記専用」の表のうち、作成済みのもの。表を足したらここにも足す。 */
     private static final Set<String> APPEND_ONLY_TABLES =
-            Set.of("quotation.transport_request_version", "quotation.review_record");
+            Set.of("quotation.transport_request_version", "quotation.review_record", "quotation.required_document");
 
     private static final String APP_PASSWORD = "cargo_tracker_app_test";
     private static final String INSUFFICIENT_PRIVILEGE = "42501";

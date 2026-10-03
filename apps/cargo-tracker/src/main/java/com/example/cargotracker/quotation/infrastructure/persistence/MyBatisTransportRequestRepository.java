@@ -7,7 +7,10 @@ import com.example.cargotracker.quotation.domain.model.entities.ReviewRecord;
 import com.example.cargotracker.quotation.domain.model.entities.TransportRequestVersion;
 import com.example.cargotracker.quotation.domain.model.valueobjects.Cargo;
 import com.example.cargotracker.quotation.domain.model.valueobjects.CargoCategory;
+import com.example.cargotracker.quotation.domain.model.valueobjects.DocumentMediaType;
+import com.example.cargotracker.quotation.domain.model.valueobjects.DocumentType;
 import com.example.cargotracker.quotation.domain.model.valueobjects.PackageType;
+import com.example.cargotracker.quotation.domain.model.valueobjects.RequiredDocument;
 import com.example.cargotracker.quotation.domain.model.valueobjects.ReviewDecision;
 import com.example.cargotracker.quotation.domain.model.valueobjects.ShipmentTerms;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestId;
@@ -24,7 +27,7 @@ import java.util.Optional;
 import org.springframework.stereotype.Repository;
 
 /**
- * 輸送要求のリポジトリの MyBatis 実装。ヘッダ・現在の版・審査記録の表を組み立てて集約にする。
+ * 輸送要求のリポジトリの MyBatis 実装。ヘッダ・現在の版・必要書類・審査記録の表を組み立てて集約にする。
  * 更新は楽観ロック（集約の版）で照合し、版と審査記録は追記専用の表に足すだけにする。
  */
 @Repository
@@ -41,6 +44,7 @@ public class MyBatisTransportRequestRepository implements TransportRequestReposi
         TransportRequestRow row = toRow(transportRequest);
         mapper.insertTransportRequest(row);
         mapper.insertTransportRequestVersion(row);
+        insertDocuments(transportRequest);
     }
 
     @Override
@@ -65,6 +69,7 @@ public class MyBatisTransportRequestRepository implements TransportRequestReposi
                     transportRequest.id(), transportRequest.aggregateVersion());
         }
         mapper.insertTransportRequestVersionIfAbsent(toRow(transportRequest));
+        insertDocuments(transportRequest);
         // 読み込んだ後に足した審査記録だけを追加する（往復の回数を履歴の件数に比例させない。Bolt 5 レビュー R-03）
         transportRequest
                 .newReviewRecords()
@@ -111,6 +116,23 @@ public class MyBatisTransportRequestRepository implements TransportRequestReposi
                 CargoCategory.valueOf(row.cargoCategory()));
     }
 
+    /** 現在の版の必要書類を、まだなければ追加する（追記専用。再提出の版では引き継いだ書類も新しい版の行になる）。 */
+    private void insertDocuments(TransportRequest request) {
+        TransportRequestVersion version = request.currentVersion();
+        version.terms()
+                .documents()
+                .forEach(document -> mapper.insertRequiredDocumentIfAbsent(new RequiredDocumentRow(
+                        request.id().value(),
+                        version.versionNo(),
+                        document.documentNo(),
+                        document.type().name(),
+                        document.fileName(),
+                        document.mediaType().name(),
+                        document.sizeBytes(),
+                        document.sha256(),
+                        document.objectKey())));
+    }
+
     private static TransportRequestRow toRow(TransportRequest request) {
         TransportRequestVersion version = request.currentVersion();
         Cargo cargo = version.terms().cargo();
@@ -147,7 +169,10 @@ public class MyBatisTransportRequestRepository implements TransportRequestReposi
                                 PackageType.valueOf(row.packageType()),
                                 row.packageCount(),
                                 row.grossWeightKg(),
-                                row.volumeM3())),
+                                row.volumeM3()),
+                        mapper.selectRequiredDocuments(row.id(), row.currentVersionNo()).stream()
+                                .map(MyBatisTransportRequestRepository::toDocument)
+                                .toList()),
                 new UserId(row.submittedBy()),
                 new UtcInstant(row.submittedAt().toInstant()));
         return TransportRequest.reconstitute(
@@ -160,6 +185,17 @@ public class MyBatisTransportRequestRepository implements TransportRequestReposi
                         .map(MyBatisTransportRequestRepository::toReviewRecord)
                         .toList(),
                 row.version());
+    }
+
+    private static RequiredDocument toDocument(RequiredDocumentRow row) {
+        return new RequiredDocument(
+                row.documentNo(),
+                DocumentType.valueOf(row.documentType()),
+                row.fileName(),
+                DocumentMediaType.valueOf(row.mediaType()),
+                row.sizeBytes(),
+                row.sha256(),
+                row.objectKey());
     }
 
     private static ReviewRecord toReviewRecord(ReviewRecordRow row) {

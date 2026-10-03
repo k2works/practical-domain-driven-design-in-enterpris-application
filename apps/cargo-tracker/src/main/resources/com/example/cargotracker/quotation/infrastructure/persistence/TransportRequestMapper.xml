@@ -89,6 +89,41 @@
          ORDER BY version_no, decided_at, id
     </select>
 
+    <insert id="insertRequiredDocumentIfAbsent">
+        INSERT INTO quotation.required_document
+            (transport_request_id, version_no, document_no, document_type, file_name, media_type, size_bytes, sha256,
+             object_key)
+        SELECT #{transportRequestId}, #{versionNo}, #{documentNo}, #{documentType}, #{fileName}, #{mediaType},
+               #{sizeBytes}, #{sha256}, #{objectKey}
+         WHERE NOT EXISTS (SELECT 1 FROM quotation.required_document
+                            WHERE transport_request_id = #{transportRequestId}
+                              AND version_no = #{versionNo}
+                              AND document_no = #{documentNo})
+    </insert>
+
+    <resultMap id="requiredDocumentRow" type="com.example.cargotracker.quotation.infrastructure.persistence.RequiredDocumentRow">
+        <constructor>
+            <idArg column="transport_request_id" name="transportRequestId" javaType="java.util.UUID"/>
+            <idArg column="version_no" name="versionNo" javaType="_int"/>
+            <idArg column="document_no" name="documentNo" javaType="_int"/>
+            <arg column="document_type" name="documentType" javaType="String"/>
+            <arg column="file_name" name="fileName" javaType="String"/>
+            <arg column="media_type" name="mediaType" javaType="String"/>
+            <arg column="size_bytes" name="sizeBytes" javaType="_long"/>
+            <arg column="sha256" name="sha256" javaType="String"/>
+            <arg column="object_key" name="objectKey" javaType="String"/>
+        </constructor>
+    </resultMap>
+
+    <select id="selectRequiredDocuments" resultMap="requiredDocumentRow">
+        SELECT transport_request_id, version_no, document_no, document_type, file_name, media_type, size_bytes, sha256,
+               object_key
+          FROM quotation.required_document
+         WHERE transport_request_id = #{transportRequestId}
+           AND version_no = #{versionNo}
+         ORDER BY document_no
+    </select>
+
     <sql id="selectRow">
         SELECT r.id, r.request_number, r.shipper_company_id, r.status, r.current_version_no, r.version,
                v.consignee_company_id, v.origin_unlocode, v.destination_unlocode, v.arrival_deadline,

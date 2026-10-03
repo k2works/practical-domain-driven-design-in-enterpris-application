@@ -31,6 +31,13 @@ public interface TransportRequestMapper {
 
     List<ReviewRecordRow> selectReviewRecords(UUID transportRequestId);
 
+    /** 必要書類がまだなければ追加する（追記専用。出し直しでは前の版の書類を新しい版の行として足す）。 */
+    void insertRequiredDocumentIfAbsent(RequiredDocumentRow row);
+
+    /** 版の必要書類を書類番号の順に読む。 */
+    List<RequiredDocumentRow> selectRequiredDocuments(
+            @Param("transportRequestId") UUID transportRequestId, @Param("versionNo") int versionNo);
+
     Optional<TransportRequestRow> selectByNumberForStaff(String requestNumber);
 
     List<TransportRequestSummaryRow> selectUnderReviewSummaries();
