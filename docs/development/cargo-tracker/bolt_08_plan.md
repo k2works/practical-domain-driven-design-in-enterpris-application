@@ -4,7 +4,7 @@ title: "Bolt 8 計画 - UI の骨格と見積依頼の段階入力のプロト�
 description: "8 回目の Bolt の計画。WebJars で Bootstrap 5.3・htmx 2.0 を同梱し、顧客 Web と社内業務 Web の共通レイアウト（ヘッダー、左ナビ、窓口の案内）と共通の CSS を作って既存の画面を移し、見積依頼（C-03）の段階入力のプロトタイプで操作性を確かめる（UI-HO-04）計画を、ステップ 1〜4 で定義する。"
 tags: [development,bolt-plan]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-03T02:37:40Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-03T02:51:00Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-03T02:24:39Z }
 ---
@@ -151,7 +151,7 @@ state "C-03（1 つのフォーム）" as C03 {
   - 既存の 21 本の画面の層のシナリオを、文言とキー操作の期待を変えずに通す（H3）
   - 完了の判定: `check` と `uiTest` が緑。push する
   - 結果（2026-10-03 11:25〜11:37）: 画面の層の受入シナリオ（`layout_ui.feature`、4 件）を先に書き、実装の前の `uiTest` で新しい 4 件の失敗（既存の 21 件は通る）を記録した（T-21）。WebJars（webjars-locator-lite 1.1.4、Bootstrap 5.3.8、htmx 2.0.11）を足し、`layout/customer.html`・`staff.html`（Thymeleaf のフラグメント）と `static/css/app.css` を作って、既存の 7 つのテンプレートを移した。画面ごとのインラインのスタイル（`<style>` 3 か所、`style="overflow-x: auto"` 5 か所）を共通の CSS に移した（T-18）。表・ボタン・入力欄に Bootstrap のクラスを付けた。計画からの変更: 入口の一覧はテンプレートにせず、静的なファイルのまま Bootstrap と共通の CSS を読むようにした（コントローラを足さずに済む）。実行中に直した誤り: スクリプトのないページで `~{::script}` が解決できない（`~{}` を渡す）、Bolt 4 のキー操作のシナリオがヘッダーとナビの分の Tab を想定していない（荷受人のグループに届くまで Tab を進める。キー操作だけの期待は変えない）、ナビの移動の途中のアクセシビリティの検査。画面の層のシナリオは 25 件すべて passed（failed・undefined・skipped 0）、axe-core の違反 0 件。`check` 緑（テスト 402 件）
-- [ ] **3. C-03 の段階入力のプロトタイプ（画面の層の Red → Green）**
+- [x] **3. C-03 の段階入力のプロトタイプ（画面の層の Red → Green）**
   - 画面の層の受入シナリオを先に書き、`uiTest` で失敗を記録する（`features/ui/stepwise_transport_request_ui.feature`）
     - キー操作だけで 4 段階を進み、確認の段階で入力の内容を確かめて提出すると、C-04 に版 1 が出る
     - 確認の段階から段階の見出しで前の段階に戻って直せる。選んだ書類が残っている
@@ -159,6 +159,7 @@ state "C-03（1 つのフォーム）" as C03 {
   - `new.html` を 4 つのパネルに分け、段階の切り替えと確認のまとめを `transport-request-form.js` に足す。JavaScript がないときは全段階を 1 画面で示す
   - 既存の C-03 のシナリオ（キー操作の提出、エラー要約、特殊貨物、書類）を、段階入力の操作に合わせて直す（期待する結果は変えない）
   - 完了の判定: `check` と `uiTest` が緑。push する
+  - 結果（2026-10-03 11:38〜11:51）: 画面の層の受入シナリオ（`stepwise_transport_request_ui.feature`、3 件）と段階を進める操作を先に書き、実装の前の `uiTest` で新しい 3 件の失敗（既存の 25 件は通る）を記録した（T-21）。`new.html` を 4 つの段階（輸送条件・貨物・書類・確認）のパネルに分け、段階の一覧と「次へ」は `hidden` で出して JavaScript が表示するようにした。`transport-request-form.js` に段階の切り替え（見出しへのフォーカス、`aria-current="step"`）、確認のまとめ（値は `textContent` で入れる）、エラー要約のリンクで誤りの段階を開く振る舞いを足した。作成と編集（出し直し）の両方で段階入力になる。既存の C-03 のシナリオ（キー操作の提出、エラー要約、特殊貨物、書類、出し直し）は、期待する結果を変えずに段階を進める操作を足した。JavaScript がないときに全段階を 1 画面で示すことは、コントローラの単体テストで確かめた。画面の層のシナリオは 28 件すべて passed（failed・undefined・skipped 0）、axe-core の違反 0 件。`check` 緑
 - [ ] **4. 検証と Bolt 終了報告**
   - `check`・`uiTest`・CI・SonarQube の品質ゲート（PASS）を確かめる
   - `bolt_08_report.md` を書く（仮説 H1〜H3 の結論、各ステップの時刻、UI-HO-04 の所見）。人が `bootRun` で段階入力を触って操作性を確かめる場を、承認の場に入れる

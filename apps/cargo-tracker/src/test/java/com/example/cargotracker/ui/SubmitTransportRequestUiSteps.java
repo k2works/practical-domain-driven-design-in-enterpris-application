@@ -141,28 +141,17 @@ public class SubmitTransportRequestUiSteps {
 
     @もし("必須条件をキー操作だけで入力して提出する")
     public void 必須条件をキー操作だけで入力して提出する() {
-        // ヘッダーとナビのリンクを Tab で越えて、最初の入力（荷受人）へ進む（Bolt 8 の共通レイアウト）
-        tabUntilGroup(CONSIGNEE);
-        page().keyboard().press("Space");
-        tabTo(ORIGIN);
-        page().keyboard().type("JPTYO");
-        tabTo(DESTINATION);
-        page().keyboard().type("NLRTM");
-        tabTo(ARRIVAL_DEADLINE_LABEL);
-        page().keyboard().type(ARRIVAL_DEADLINE);
-        tabToGroup(CARGO_CATEGORY);
-        tabToGroup(PACKAGE_TYPE);
-        page().keyboard().press("Space");
-        tabTo(PACKAGE_COUNT);
-        page().keyboard().type("12");
-        tabTo(GROSS_WEIGHT);
-        page().keyboard().type("8400");
-        tabTo(VOLUME);
-        page().keyboard().type("32.5");
+        キー操作だけで輸送条件と貨物を入力する();
+        page().keyboard().press("Tab");
+        assertThat(nextButton()).isFocused();
+        page().keyboard().press("Enter");
         // 必要書類は任意なので選ばずに進む（Bolt 7）。フォーカスの順序は書類の 3 つの欄を通る
         tabTo(COMMERCIAL_INVOICE);
         tabTo(PACKING_LIST);
         tabTo(OTHER_DOCUMENTS);
+        page().keyboard().press("Tab");
+        assertThat(nextButton()).isFocused();
+        page().keyboard().press("Enter");
         page().keyboard().press("Tab");
         assertThat(submitButton()).isFocused();
         page().keyboard().press("Enter");
@@ -172,15 +161,19 @@ public class SubmitTransportRequestUiSteps {
 
     @もし("必須条件を入力し、目的地を {string} に、希望到着期限を空にして提出する")
     public void 誤りのある入力で提出する(String destination) {
-        fillRequiredTerms();
+        fillTerms();
         field(DESTINATION).fill(destination);
         field(ARRIVAL_DEADLINE_LABEL).fill("");
+        next();
+        fillCargo();
         submit();
     }
 
     @もし("必須条件を入力し、貨物種別に {string} を選ぶ")
     public void 貨物種別を選ぶ(String category) {
-        fillRequiredTerms();
+        fillTerms();
+        next();
+        fillCargo();
         radio(category).check();
     }
 
@@ -205,6 +198,7 @@ public class SubmitTransportRequestUiSteps {
         // ファイルの選択はボタンを Space で開き、OS のファイルの選択の画面の代わりに Playwright で選ぶ（WCAG 2.5.7）
         page().waitForFileChooser(() -> page().keyboard().press("Space"))
                 .setFiles(RequiredDocumentUiSteps.uiFile(fileName));
+        確認の段階まで進む();
         submitButton().focus();
         // リダイレクトの途中で検査しないよう、詳細に移り終わってから検査する
         page().keyboard().press("Enter");
@@ -245,6 +239,7 @@ public class SubmitTransportRequestUiSteps {
     @もし("提出ボタンを押す")
     public void 提出ボタンを押す() {
         // aria-disabled のボタンは Playwright のクリックが待ち続けるため、利用者のキー操作と同じくフォーカスして Enter で押す
+        確認の段階まで進む();
         submitButton().focus();
         submitAndWait(() -> page().keyboard().press("Enter"));
     }
@@ -314,6 +309,8 @@ public class SubmitTransportRequestUiSteps {
 
     @かつ("提出ボタンが使えないことが理由とともに示される")
     public void 提出ボタンが使えないことが示される() {
+        // 提出ボタンは確認の段階にある（Bolt 8 の段階入力）
+        確認の段階まで進む();
         assertThat(submitButton()).hasAttribute("aria-disabled", "true");
         assertThat(submitButton()).hasAttribute("aria-describedby", Pattern.compile("cargo-category-notice"));
     }
@@ -325,6 +322,88 @@ public class SubmitTransportRequestUiSteps {
                         .getByRole(AriaRole.LINK, new Locator.GetByRoleOptions().setName(Pattern.compile("^貨物種別"))))
                 .isVisible();
         Assertions.assertThat(page().url()).doesNotContainPattern(TRANSPORT_REQUEST_NUMBER);
+    }
+
+    // ---- 段階入力（C-03、Bolt 8）の操作。StepwiseTransportRequestUiSteps からも使う ----
+
+    /** キー操作だけで輸送条件の段階を入力して次へ進み、貨物の段階を入力する（貨物の段階にとどまる）。 */
+    public void キー操作だけで輸送条件と貨物を入力する() {
+        tabUntilGroup(CONSIGNEE);
+        page().keyboard().press("Space");
+        tabTo(ORIGIN);
+        page().keyboard().type("JPTYO");
+        tabTo(DESTINATION);
+        page().keyboard().type("NLRTM");
+        tabTo(ARRIVAL_DEADLINE_LABEL);
+        page().keyboard().type(ARRIVAL_DEADLINE);
+        page().keyboard().press("Tab");
+        assertThat(nextButton()).isFocused();
+        page().keyboard().press("Enter");
+        tabToGroup(CARGO_CATEGORY);
+        tabToGroup(PACKAGE_TYPE);
+        page().keyboard().press("Space");
+        tabTo(PACKAGE_COUNT);
+        page().keyboard().type("12");
+        tabTo(GROSS_WEIGHT);
+        page().keyboard().type("8400");
+        tabTo(VOLUME);
+        page().keyboard().type("32.5");
+    }
+
+    /** 必須条件を入力し、商業送り状を選んで、確認の段階まで進む。 */
+    public void 必須条件と書類を入力して確認の段階まで進む(String fileName) {
+        fillTerms();
+        next();
+        fillCargo();
+        next();
+        field(COMMERCIAL_INVOICE).setInputFiles(RequiredDocumentUiSteps.uiFile(fileName));
+        確認の段階まで進む();
+    }
+
+    /** 見えている「次へ」を押して、確認の段階まで進む。 */
+    public void 確認の段階まで進む() {
+        for (int i = 0; i < 3 && nextButton().count() > 0; i++) {
+            next();
+        }
+        assertThat(page().getByRole(
+                                AriaRole.HEADING,
+                                new Page.GetByRoleOptions().setName("4 確認").setExact(true)))
+                .isVisible();
+    }
+
+    /** 必須条件を入力し、貨物の段階の項目を変えて、確認の段階から提出する。 */
+    public void 項目を変えて提出する(String label, String value) {
+        fillTerms();
+        next();
+        fillCargo();
+        field(label).fill(value);
+        submit();
+    }
+
+    private Locator nextButton() {
+        return page().getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("次へ"));
+    }
+
+    /** 見えている「次へ」を押して次の段階へ移る。 */
+    private void next() {
+        nextButton().click();
+    }
+
+    /** 輸送条件の段階を入力する。 */
+    private void fillTerms() {
+        radio("荷受人 A（仮）").check();
+        field(ORIGIN).fill("JPTYO");
+        field(DESTINATION).fill("NLRTM");
+        field(ARRIVAL_DEADLINE_LABEL).fill(ARRIVAL_DEADLINE);
+    }
+
+    /** 貨物の段階を入力する。 */
+    private void fillCargo() {
+        radio("一般").check();
+        radio("パレット").check();
+        field(PACKAGE_COUNT).fill("12");
+        field(GROSS_WEIGHT).fill("8400");
+        field(VOLUME).fill("32.5");
     }
 
     @前提("画面の幅が {int} CSS px である")
@@ -343,17 +422,12 @@ public class SubmitTransportRequestUiSteps {
         return page().locator("#error-summary");
     }
 
-    /** 必須条件をそろえて入力する（キー操作の流れを確かめない場面で使う）。 */
+    /** 必須条件をそろえて入力する（キー操作の流れを確かめない場面で使う）。段階を進め、書類の段階で止まる（Bolt 8 の段階入力）。 */
     private void fillRequiredTerms() {
-        radio("荷受人 A（仮）").check();
-        field(ORIGIN).fill("JPTYO");
-        field(DESTINATION).fill("NLRTM");
-        field(ARRIVAL_DEADLINE_LABEL).fill(ARRIVAL_DEADLINE);
-        radio("一般").check();
-        radio("パレット").check();
-        field(PACKAGE_COUNT).fill("12");
-        field(GROSS_WEIGHT).fill("8400");
-        field(VOLUME).fill("32.5");
+        fillTerms();
+        next();
+        fillCargo();
+        next();
     }
 
     /**
@@ -361,6 +435,7 @@ public class SubmitTransportRequestUiSteps {
      * クリックの直後の waitForLoadState は、画面の移動が始まる前に返り、移る前の画面を検査することがある。
      */
     private void submit() {
+        確認の段階まで進む();
         submitAndWait(() -> submitButton().click());
     }
 

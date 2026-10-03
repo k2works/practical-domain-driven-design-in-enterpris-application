@@ -10,10 +10,11 @@
 <body>
 <main>
     <h1 th:text="${formTitle}">見積依頼の作成</h1>
-    <!-- C-03 の 1 画面の形（Bolt 4）。作成と編集（出し直し。Bolt 6）で共有し、見出し・送り先・案内・ボタン名だけを変える。
-         段階入力・下書き保存・必要書類は後の Bolt で入れる -->
+    <!-- C-03（Bolt 4）。作成と編集（出し直し。Bolt 6）で共有し、見出し・送り先・案内・ボタン名だけを変える。
+         段階入力（Bolt 8 のプロトタイプ、UI-HO-04）: R1.0 で下書きを保存するまでは、1 つのフォームの中で 4 つの段階を切り替える（2026-10-03 に承認）。
+         段階の一覧と「次へ」は JavaScript が表示し、JavaScript がないときは全段階を 1 画面で示す。下書き保存は R1.0 -->
     <p id="version-notice" th:if="${versionNotice}" th:text="${versionNotice}">TR-2026-0001 を直して出し直します。出し直すと版 2 になります。業務番号は変わりません。</p>
-    <form th:action="@{${formAction}}" th:object="${transportRequestForm}" method="post" enctype="multipart/form-data" novalidate>
+    <form th:action="@{${formAction}}" th:object="${transportRequestForm}" method="post" enctype="multipart/form-data" novalidate data-stepwise>
         <!-- エラー要約: 送信に失敗したら画面上部に出し、要約へフォーカスを移す。各項目の誤りへのリンクを持つ（UI 設計 C-03） -->
         <div id="error-summary" th:if="${#fields.hasErrors('*')}" tabindex="-1" role="alert"
              aria-labelledby="error-summary-title">
@@ -26,9 +27,20 @@
             </ul>
         </div>
 
+        <nav id="step-nav" aria-label="入力の段階" hidden>
+            <ol class="app-steps">
+                <li><a href="#step-terms">1 輸送条件</a></li>
+                <li><a href="#step-cargo">2 貨物</a></li>
+                <li><a href="#step-documents">3 書類</a></li>
+                <li><a href="#step-confirm">4 確認</a></li>
+            </ol>
+        </nav>
+
+        <section class="app-step" id="step-terms" aria-labelledby="step-terms-title">
+            <h2 id="step-terms-title" tabindex="-1">1 輸送条件</h2>
         <!-- 選択肢が少ないため、一覧を開かずにすべて見えるラジオボタンにする（Bolt 4 の人の決定。キー操作が OS によらない）。
              荷受人は企業マスターができたら（US-16）検索できる入力に変える -->
-        <fieldset th:attr="aria-invalid=${#fields.hasErrors('consignee')},aria-describedby=${#fields.hasErrors('consignee')} ? 'consignee-error' : null">
+        <fieldset data-summary-label="荷受人" th:attr="aria-invalid=${#fields.hasErrors('consignee')},aria-describedby=${#fields.hasErrors('consignee')} ? 'consignee-error' : null">
             <legend>荷受人</legend>
             <div th:each="company, stat : ${consignees}">
                 <input type="radio" th:field="*{consignee}" th:value="${company.id()}"
@@ -40,25 +52,30 @@
         <div>
             <label for="origin">出発地（UN/LOCODE）</label>
             <p id="origin-hint">例: JPTYO（東京）</p>
-            <input id="origin" type="text" class="form-control" th:field="*{origin}" autocomplete="off"
+            <input id="origin" type="text" class="form-control" data-summary-label="出発地" th:field="*{origin}" autocomplete="off"
                    th:attr="aria-invalid=${#fields.hasErrors('origin')},aria-describedby=${#fields.hasErrors('origin')} ? 'origin-hint origin-error' : 'origin-hint'">
             <p id="origin-error" th:if="${#fields.hasErrors('origin')}" th:errors="*{origin}"></p>
         </div>
         <div>
             <label for="destination">目的地（UN/LOCODE）</label>
             <p id="destination-hint">例: NLRTM（ロッテルダム）</p>
-            <input id="destination" type="text" class="form-control" th:field="*{destination}" autocomplete="off"
+            <input id="destination" type="text" class="form-control" data-summary-label="目的地" th:field="*{destination}" autocomplete="off"
                    th:attr="aria-invalid=${#fields.hasErrors('destination')},aria-describedby=${#fields.hasErrors('destination')} ? 'destination-hint destination-error' : 'destination-hint'">
             <p id="destination-error" th:if="${#fields.hasErrors('destination')}" th:errors="*{destination}"></p>
         </div>
         <div>
             <label for="arrivalDeadline">希望到着期限（日本時間）</label>
             <p id="arrivalDeadline-hint">例: 2026-11-02 09:00。タイムゾーンは Asia/Tokyo（UTC+09:00）</p>
-            <input id="arrivalDeadline" type="text" class="form-control" th:field="*{arrivalDeadline}" autocomplete="off" inputmode="numeric"
+            <input id="arrivalDeadline" type="text" class="form-control" data-summary-label="希望到着期限" th:field="*{arrivalDeadline}" autocomplete="off" inputmode="numeric"
                    th:attr="aria-invalid=${#fields.hasErrors('arrivalDeadline')},aria-describedby=${#fields.hasErrors('arrivalDeadline')} ? 'arrivalDeadline-hint arrivalDeadline-error' : 'arrivalDeadline-hint'">
             <p id="arrivalDeadline-error" th:if="${#fields.hasErrors('arrivalDeadline')}" th:errors="*{arrivalDeadline}"></p>
         </div>
-        <fieldset th:attr="aria-invalid=${#fields.hasErrors('cargoCategory')},aria-describedby=${#fields.hasErrors('cargoCategory')} ? 'cargo-category-notice cargoCategory-error' : 'cargo-category-notice'">
+            <p class="app-step-actions" hidden><button type="button" class="btn btn-secondary" data-step-next>次へ</button></p>
+        </section>
+
+        <section class="app-step" id="step-cargo" aria-labelledby="step-cargo-title">
+            <h2 id="step-cargo-title" tabindex="-1">2 貨物</h2>
+        <fieldset data-summary-label="貨物種別" th:attr="aria-invalid=${#fields.hasErrors('cargoCategory')},aria-describedby=${#fields.hasErrors('cargoCategory')} ? 'cargo-category-notice cargoCategory-error' : 'cargo-category-notice'">
             <legend>貨物種別</legend>
             <div th:each="option, stat : ${cargoCategories}">
                 <input type="radio" th:field="*{cargoCategory}" th:value="${option.value()}"
@@ -70,7 +87,7 @@
                th:hidden="${transportRequestForm.cargoCategory == null or transportRequestForm.cargoCategory == 'GENERAL'}">案内</p>
             <p id="cargoCategory-error" th:if="${#fields.hasErrors('cargoCategory')}" th:errors="*{cargoCategory}"></p>
         </fieldset>
-        <fieldset th:attr="aria-invalid=${#fields.hasErrors('packageType')},aria-describedby=${#fields.hasErrors('packageType')} ? 'packageType-error' : null">
+        <fieldset data-summary-label="荷姿" th:attr="aria-invalid=${#fields.hasErrors('packageType')},aria-describedby=${#fields.hasErrors('packageType')} ? 'packageType-error' : null">
             <legend>荷姿</legend>
             <div th:each="option, stat : ${packageTypes}">
                 <input type="radio" th:field="*{packageType}" th:value="${option.value()}"
@@ -81,24 +98,29 @@
         </fieldset>
         <div>
             <label for="packageCount">個数</label>
-            <input id="packageCount" type="text" class="form-control" th:field="*{packageCount}" autocomplete="off" inputmode="numeric"
+            <input id="packageCount" type="text" class="form-control" data-summary-label="個数" th:field="*{packageCount}" autocomplete="off" inputmode="numeric"
                    th:attr="aria-invalid=${#fields.hasErrors('packageCount')},aria-describedby=${#fields.hasErrors('packageCount')} ? 'packageCount-error' : null">
             <p id="packageCount-error" th:if="${#fields.hasErrors('packageCount')}" th:errors="*{packageCount}"></p>
         </div>
         <div>
             <label for="grossWeightKg">総重量（kg）</label>
             <p id="grossWeightKg-hint">小数点以下 3 桁まで</p>
-            <input id="grossWeightKg" type="text" class="form-control" th:field="*{grossWeightKg}" autocomplete="off" inputmode="decimal"
+            <input id="grossWeightKg" type="text" class="form-control" data-summary-label="総重量（kg）" th:field="*{grossWeightKg}" autocomplete="off" inputmode="decimal"
                    th:attr="aria-invalid=${#fields.hasErrors('grossWeightKg')},aria-describedby=${#fields.hasErrors('grossWeightKg')} ? 'grossWeightKg-hint grossWeightKg-error' : 'grossWeightKg-hint'">
             <p id="grossWeightKg-error" th:if="${#fields.hasErrors('grossWeightKg')}" th:errors="*{grossWeightKg}"></p>
         </div>
         <div>
             <label for="volumeM3">容積（m3）</label>
             <p id="volumeM3-hint">小数点以下 3 桁まで</p>
-            <input id="volumeM3" type="text" class="form-control" th:field="*{volumeM3}" autocomplete="off" inputmode="decimal"
+            <input id="volumeM3" type="text" class="form-control" data-summary-label="容積（m3）" th:field="*{volumeM3}" autocomplete="off" inputmode="decimal"
                    th:attr="aria-invalid=${#fields.hasErrors('volumeM3')},aria-describedby=${#fields.hasErrors('volumeM3')} ? 'volumeM3-hint volumeM3-error' : 'volumeM3-hint'">
             <p id="volumeM3-error" th:if="${#fields.hasErrors('volumeM3')}" th:errors="*{volumeM3}"></p>
         </div>
+            <p class="app-step-actions" hidden><button type="button" class="btn btn-secondary" data-step-next>次へ</button></p>
+        </section>
+
+        <section class="app-step" id="step-documents" aria-labelledby="step-documents-title">
+            <h2 id="step-documents-title" tabindex="-1">3 書類</h2>
         <!-- 必要書類（Bolt 7、D-20）。任意。種類ごとに入力欄を分ける（2026-10-03 に承認）。
              ブラウザは誤りのあとにファイルの選択を残せないため、誤りがあれば選び直してもらう -->
         <fieldset aria-describedby="documents-hint">
@@ -112,28 +134,37 @@
             </div>
             <div>
                 <label for="commercialInvoice">商業送り状（任意）</label>
-                <input id="commercialInvoice" name="commercialInvoice" type="file" class="form-control" accept=".pdf,.png,.jpg,.jpeg,application/pdf,image/png,image/jpeg"
+                <input id="commercialInvoice" name="commercialInvoice" type="file" class="form-control" data-summary-label="商業送り状" accept=".pdf,.png,.jpg,.jpeg,application/pdf,image/png,image/jpeg"
                        th:attr="aria-invalid=${#fields.hasErrors('commercialInvoice')},aria-describedby=${#fields.hasErrors('commercialInvoice')} ? 'commercialInvoice-error' : null">
                 <p id="commercialInvoice-error" th:if="${#fields.hasErrors('commercialInvoice')}" th:errors="*{commercialInvoice}"></p>
             </div>
             <div>
                 <label for="packingList">梱包明細（任意）</label>
-                <input id="packingList" name="packingList" type="file" class="form-control" accept=".pdf,.png,.jpg,.jpeg,application/pdf,image/png,image/jpeg"
+                <input id="packingList" name="packingList" type="file" class="form-control" data-summary-label="梱包明細" accept=".pdf,.png,.jpg,.jpeg,application/pdf,image/png,image/jpeg"
                        th:attr="aria-invalid=${#fields.hasErrors('packingList')},aria-describedby=${#fields.hasErrors('packingList')} ? 'packingList-error' : null">
                 <p id="packingList-error" th:if="${#fields.hasErrors('packingList')}" th:errors="*{packingList}"></p>
             </div>
             <div>
                 <label for="otherDocuments">その他の書類（任意、3 件まで）</label>
-                <input id="otherDocuments" name="otherDocuments" type="file" class="form-control" multiple accept=".pdf,.png,.jpg,.jpeg,application/pdf,image/png,image/jpeg"
+                <input id="otherDocuments" name="otherDocuments" type="file" class="form-control" data-summary-label="その他の書類" multiple accept=".pdf,.png,.jpg,.jpeg,application/pdf,image/png,image/jpeg"
                        th:attr="aria-invalid=${#fields.hasErrors('otherDocuments')},aria-describedby=${#fields.hasErrors('otherDocuments')} ? 'otherDocuments-error' : null">
                 <p id="otherDocuments-error" th:if="${#fields.hasErrors('otherDocuments')}" th:errors="*{otherDocuments}"></p>
             </div>
         </fieldset>
+            <p class="app-step-actions" hidden><button type="button" class="btn btn-secondary" data-step-next>次へ</button></p>
+        </section>
+
+        <section class="app-step" id="step-confirm" aria-labelledby="step-confirm-title">
+            <h2 id="step-confirm-title" tabindex="-1">4 確認</h2>
+            <p>入力した内容を確かめてください。直すときは、上の段階の一覧から段階を選んでください。</p>
+            <!-- 入力のまとめは JavaScript が段階を切り替えたときに作る（Bolt 8 のプロトタイプ） -->
+            <dl id="confirm-summary"></dl>
         <!-- 特殊貨物のときは aria-disabled にして理由を関連付ける。押せば、サーバーがエラー要約で同じ理由を示す -->
         <button id="submit" type="submit" class="btn btn-primary"
                 th:with="special=${transportRequestForm.cargoCategory != null and transportRequestForm.cargoCategory != 'GENERAL'}"
                 th:attr="aria-disabled=${special} ? 'true' : null,aria-describedby=${special} ? 'cargo-category-notice' : null"
                 th:text="${submitLabel}">提出する</button>
+        </section>
     </form>
 </main>
 </body>

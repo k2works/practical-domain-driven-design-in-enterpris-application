@@ -46,3 +46,17 @@ dd,
 td {
     overflow-wrap: anywhere;
 }
+
+/* 段階入力（C-03、Bolt 8）の段階の一覧。現在の段階は aria-current="step" で示し、色だけに頼らず太字にする */
+.app-steps {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1rem;
+    padding-left: 0;
+    list-style: none;
+}
+
+.app-steps a[aria-current="step"] {
+    font-weight: bold;
+    text-decoration: none;
+}

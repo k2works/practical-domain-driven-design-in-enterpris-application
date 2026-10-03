@@ -563,4 +563,19 @@ class TransportRequestControllerTest {
                 .andExpect(content().string(containsString("商業送り状: 送り状 invoice.pdf（1 KB）")))
                 .andExpect(content().string(containsString("enctype=\"multipart/form-data\"")));
     }
+
+    @Test
+    void 段階入力はJavaScriptがなくても全段階を1画面で示し段階の一覧と次へはJavaScriptが出す() throws Exception {
+        String html = mockMvc.perform(get("/customer/transport-requests/new"))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        org.assertj.core.api.Assertions.assertThat(html)
+                .contains("<nav id=\"step-nav\" aria-label=\"入力の段階\" hidden>")
+                .contains("<p class=\"app-step-actions\" hidden>")
+                .contains("id=\"step-terms\"", "id=\"step-cargo\"", "id=\"step-documents\"", "id=\"step-confirm\"")
+                .doesNotContainPattern("<section class=\"app-step\"[^>]*hidden");
+    }
 }

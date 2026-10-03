@@ -56,6 +56,10 @@ public class ResubmitTransportRequestUiSteps {
         return page().getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(RESUBMIT));
     }
 
+    private Locator nextButton() {
+        return page().getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("次へ"));
+    }
+
     private Locator definition(String term) {
         return page().locator("dt:text-is('" + term + "') + dd");
     }
@@ -97,6 +101,11 @@ public class ResubmitTransportRequestUiSteps {
         tabUntilFocused(field(DESTINATION));
         page().keyboard().press("ControlOrMeta+A");
         page().keyboard().type(destination);
+        // 段階入力（Bolt 8）: 見えている「次へ」を Enter で押して確認の段階まで進む
+        for (int i = 0; i < 3; i++) {
+            tabUntilFocused(nextButton());
+            page().keyboard().press("Enter");
+        }
         tabUntilFocused(resubmitButton());
         page().keyboard().press("Enter");
         page().waitForURL(SubmitTransportRequestUiSteps.DETAIL_URL);
@@ -107,6 +116,9 @@ public class ResubmitTransportRequestUiSteps {
     public void 目的地を空にして出し直す(String origin) {
         field(ORIGIN).fill(origin);
         field(DESTINATION).fill("");
+        for (int i = 0; i < 3; i++) {
+            nextButton().click();
+        }
         page().waitForResponse(
                         response -> "POST".equals(response.request().method()),
                         () -> resubmitButton().click());
