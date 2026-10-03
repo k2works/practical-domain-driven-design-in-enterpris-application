@@ -6,7 +6,7 @@
 
 | プロジェクト | 概要 | 状況 |
 | :--- | :--- | :--- |
-| [cargo-tracker](cargo-tracker/index.md) | A 社国際貨物輸送管理システム | ユースケース・分析成果物・Bolt 1〜5 のレビュー 7 件 |
+| [cargo-tracker](cargo-tracker/index.md) | A 社国際貨物輸送管理システム | ユースケース・分析成果物・Bolt 1〜8 のレビュー 8 件 |
 
 ## 共通のレビュー
 

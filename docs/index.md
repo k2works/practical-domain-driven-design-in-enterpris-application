@@ -24,7 +24,7 @@ okf_version: "0.2"
 | [設計](./design/index.md) | アーキテクチャ、モデル、テスト、非機能の整理              | cargo-tracker のアーキテクチャ設計・技術スタック・ドメインモデル・データモデル・UI 設計・テスト戦略・非機能要件・運用要件を作成済み |
 | [開発](./development/index.md) | リリース計画、イテレーション計画、進捗管理               | cargo-tracker のリリース計画・開発戦略を作成済み。Bolt 1（ウォーキングスケルトン）、Bolt 2（CI と品質の安全網）、Bolt 3（E2E の基盤と生きたドキュメント）、Bolt 4（業務番号と必須条件の検証、US-01 AC1・AC2・AC4）、Bolt 5（輸送条件の審査と差戻し、US-02）、Bolt 6（荷主の再提出の画面）、Bolt 7（見積依頼の必要書類、US-01 AC2 の残り）、Bolt 8（UI の骨格と見積依頼の段階入力のプロトタイプ）を完了し `apps/cargo-tracker` に実装。W1 は計画 6 SP に対し実績 6 SP |
 | [運用](./operation/index.md) | 環境構築、デプロイ、運用手順の整理                   | `index.md` を整備済み |
-| [レビュー](./review/index.md) | 分析・開発レビュー結果の記録                      | cargo-tracker のユースケース・分析成果物・Bolt 1〜5 のレビュー 7 件 |
+| [レビュー](./review/index.md) | 分析・開発レビュー結果の記録                      | cargo-tracker のユースケース・分析成果物・Bolt 1〜8 のレビュー 8 件 |
 | [ADR](./adr/index.md) | Architecture Decision Records の管理   | cargo-tracker の ADR-001〜009 を承認済み |
 | [記事](./article/index.md) | 開発ガイドラインと学習用の記事シリーズ一覧              | DDD 開発ガイドライン 3 章と公開サイトへのリンク集 |
 | [リファレンス](./reference/index.md) | 開発ガイドラインやベストプラクティス                  | 39 件のドキュメントを配置 |
