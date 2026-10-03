@@ -48,6 +48,9 @@ public class SubmitTransportRequestUiSteps {
     private static final String GROSS_WEIGHT = "総重量（kg）";
     private static final String VOLUME = "容積（m3）";
     private static final String SUBMIT = "提出する";
+    private static final String COMMERCIAL_INVOICE = "商業送り状（任意）";
+    private static final String PACKING_LIST = "梱包明細（任意）";
+    private static final String OTHER_DOCUMENTS = "その他の書類（任意、3 件まで）";
 
     private final BrowserSession browser;
     private final UiScenarioState state;
@@ -155,6 +158,10 @@ public class SubmitTransportRequestUiSteps {
         page().keyboard().type("8400");
         tabTo(VOLUME);
         page().keyboard().type("32.5");
+        // 必要書類は任意なので選ばずに進む（Bolt 7）。フォーカスの順序は書類の 3 つの欄を通る
+        tabTo(COMMERCIAL_INVOICE);
+        tabTo(PACKING_LIST);
+        tabTo(OTHER_DOCUMENTS);
         page().keyboard().press("Tab");
         assertThat(submitButton()).isFocused();
         page().keyboard().press("Enter");
@@ -174,6 +181,48 @@ public class SubmitTransportRequestUiSteps {
     public void 貨物種別を選ぶ(String category) {
         fillRequiredTerms();
         radio(category).check();
+    }
+
+    @前提("荷主が商業送り状に {string} を添付して見積依頼を提出している")
+    public void 書類を添付して提出している(String fileName) {
+        open("/customer/transport-requests/new");
+        fillRequiredTerms();
+        field(COMMERCIAL_INVOICE).setInputFiles(RequiredDocumentUiSteps.uiFile(fileName));
+        submit();
+        page().waitForURL(DETAIL_URL);
+        String number = page().locator("dt:text-is('業務番号（版）') + dd")
+                .textContent()
+                .strip()
+                .split(" ")[0];
+        state.transportRequestNumber(number);
+    }
+
+    @もし("必須条件を入力し、キー操作で商業送り状に {string} を選んで提出する")
+    public void キー操作で書類を選んで提出する(String fileName) {
+        fillRequiredTerms();
+        field(COMMERCIAL_INVOICE).focus();
+        // ファイルの選択はボタンを Space で開き、OS のファイルの選択の画面の代わりに Playwright で選ぶ（WCAG 2.5.7）
+        page().waitForFileChooser(() -> page().keyboard().press("Space"))
+                .setFiles(RequiredDocumentUiSteps.uiFile(fileName));
+        submitButton().focus();
+        // リダイレクトの途中で検査しないよう、詳細に移り終わってから検査する
+        page().keyboard().press("Enter");
+        page().waitForURL(DETAIL_URL);
+        browser.checkAccessibility();
+    }
+
+    @もし("必須条件を入力し、商業送り状に {string} を選んで提出する")
+    public void 書類を選んで提出する(String fileName) {
+        fillRequiredTerms();
+        field(COMMERCIAL_INVOICE).setInputFiles(RequiredDocumentUiSteps.uiFile(fileName));
+        submit();
+    }
+
+    @ならば("エラー要約に {string} のファイルを選び直すよう示される")
+    public void ファイルを選び直すよう示される(String item) {
+        assertThat(errorSummary()
+                        .getByRole(AriaRole.LINK, new Locator.GetByRoleOptions().setName(Pattern.compile("^" + item))))
+                .containsText("選び直してください");
     }
 
     @もし("エラー要約の {string} のリンクを選ぶ")

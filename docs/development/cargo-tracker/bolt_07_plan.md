@@ -4,7 +4,7 @@ title: "Bolt 7 計画 - 見積依頼の必要書類（US-01 AC2 の残り）"
 description: "7 回目の Bolt の計画。D-20 の決定（任意で添付、PDF・PNG・JPEG で 1 件 10 MB、閲覧は提出した荷主と営業担当者）に従い、提出と出し直しでの必要書類の添付、形式・容量・件数の検証、版ごとの保存と出し直しでの引き継ぎ、荷主と営業の閲覧を、ステップ 1〜5 で定義する。"
 tags: [development,bolt-plan]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-03T01:41:28Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-03T01:57:26Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-03T01:14:26Z }
 ---
@@ -235,7 +235,7 @@ DOC : ファイル（Content-Disposition: attachment）
   - 完了の判定: `check` が緑。push する。スキーマの承認を受ける
   - 結果（2026-10-03 10:31〜10:35）: PostgreSQL の統合テスト（`MyBatisRequiredDocumentIntegrationTest`。保存と読み出し、書類なし、出し直しでの引き継ぎ、CHECK 制約 4 件）と、追記専用の権限のテストの一覧への追加を先に書き、4 件の失敗で Red を確かめた。マイグレーション `V20261003100000__create_required_document.sql`（`common`）を書き、H2 のスモークを先に回して通した（T-15）。MyBatis は、保存と更新で現在の版の書類を、まだなければ追加し（`insertRequiredDocumentIfAbsent`）、読み出しで現在の版の書類を書類番号の順に読む。ローカルのファイルシステムの保存はステップ 2 で作った。実行中に直した誤り: 統合テストの年が既存のテストとぶつかった（2084 → 2083）、PostgreSQL は制約違反でトランザクションを中断するため、CHECK 制約のテストを違反ごとに分けた。`check` 緑（テスト 393 件）
   - 承認（2026-10-03、human:kakimomokuri）: スキーマ（`required_document`）が承認された
-- [ ] **4. 画面の層（Red → Green）**（承認はステップ 5 とまとめて受ける）
+- [x] **4. 画面の層（Red → Green）**（承認はステップ 5 とまとめて受ける）
   - 画面の層の受入シナリオ（`features/ui/attach_required_documents_ui.feature`、`@ui @US-01`）を先に書き、`uiTest` で失敗を確かめて記録する（T-21）
     - 主成功: 作成画面で商業送り状（PDF）を選んで提出すると、C-04 に書類の一覧が出て、取得できる。キー操作だけで行える
     - 画面に固有の条件: 形式の誤ったファイルを選んで提出すると、エラー要約に誤りが出て、ほかの入力が残り、ファイルの選び直しを求める
@@ -243,6 +243,7 @@ DOC : ファイル（Content-Disposition: attachment）
     - 幅 320 CSS px で横スクロールが出ない。axe-core の違反 0 件
   - C-03 の作成と編集の書類の入力（`enctype="multipart/form-data"`）、C-04・S-03 の書類の一覧、取得の URL を作る。上限を超える送信（`MaxUploadSizeExceededException`）はエラー要約で示す
   - 完了の判定: `check` と `uiTest` が緑。push する
+  - 結果（2026-10-03 10:41〜10:57）: 画面の層の受入シナリオ（`attach_required_documents_ui.feature`、5 件）とテスト用のファイル（`ui-files`）を先に書き、実装の前に `uiTest` を実行して、新しい 5 件の失敗（ファイルの入力欄がなく時間切れ）を記録した（T-21）。C-03 の作成と編集に書類の入力（種類ごとの 3 つの欄、`multipart/form-data`。編集では前の版の書類を一覧で示す）、C-04・S-03 に書類の一覧と取得（`attachment`・`nosniff`・RFC 6266 の `filename*`）を作った。共通の部品は `RequiredDocumentViews`（ファイル名のパスの部分と制御文字を除き 255 文字まで）。1 件 10 MB の上限は業務の規則がエラー要約で示すよう、multipart の上限を送信の合計の 55 MB にそろえ、超えたときは 413 の案内を出す（`UploadLimitAdvice`。エラー要約にはできない）。手順書に書類の保存先を書いた。実行中に直した誤り: Bolt 4 のキー操作のシナリオのフォーカスの順序に書類の欄を足した、リダイレクトの途中のアクセシビリティの検査、領域の名前の部分一致、テストの補助の型、SpotBugs 1 件。画面の層のシナリオは 21 件すべて passed（failed・undefined・skipped 0）。`check` 緑（テスト 402 件）
 - [ ] **5. 検証と Bolt 終了報告**
   - `check`・`uiTest`・CI・SonarQube の品質ゲート（PASS）を確かめる
   - `bolt_07_report.md` を書く（仮説 H1〜H3 の結論、各ステップの開始と完了の時刻）。ステップ 4 の結果をここでまとめて報告する

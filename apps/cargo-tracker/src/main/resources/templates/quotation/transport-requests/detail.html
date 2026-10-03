@@ -6,7 +6,7 @@
     <title th:text="|見積依頼 ${number} - cargo-tracker|">見積依頼 TR-2026-0001 - cargo-tracker</title>
     <style>
         /* 並んだリンクは押せる範囲を 24 CSS px 以上にする（WCAG 2.2 の 2.5.8 target-size）。UI の骨格（#36）で共通の CSS に移す（Try T-18） */
-        p a { display: inline-block; min-height: 24px; line-height: 24px; }
+        p a, td a { display: inline-block; min-height: 24px; line-height: 24px; }
         /* 長い理由や UN/LOCODE が狭い画面で横にはみ出さないよう折り返す */
         dd { overflow-wrap: anywhere; }
     </style>
@@ -36,6 +36,31 @@
             <dd th:text="${sendBack.missingItems()}">目的地の港</dd>
         </dl>
         <p th:if="${editable}"><a th:href="@{/customer/transport-requests/{number}/edit(number=${number})}">編集して出し直す</a></p>
+    </section>
+
+    <!-- 必要書類（Bolt 7）。現在の版の書類だけを示し、ブラウザの中で開かせずダウンロードさせる -->
+    <section aria-labelledby="documents-title">
+        <h2 id="documents-title">必要書類</h2>
+        <p th:if="${#lists.isEmpty(documents)}">添付された書類はありません。</p>
+        <div th:unless="${#lists.isEmpty(documents)}" style="overflow-x: auto" tabindex="0" role="region"
+             aria-label="必要書類の一覧">
+        <table>
+            <thead>
+            <tr>
+                <th scope="col">種類</th>
+                <th scope="col">ファイル</th>
+                <th scope="col">大きさ</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="document : ${documents}">
+                <td th:text="${document.type()}">商業送り状</td>
+                <td><a th:href="@{${document.url()}}" th:text="${document.fileName()}" download>invoice.pdf</a></td>
+                <td th:text="${document.size()}">120 KB</td>
+            </tr>
+            </tbody>
+        </table>
+        </div>
     </section>
 
     <h2>輸送条件</h2>

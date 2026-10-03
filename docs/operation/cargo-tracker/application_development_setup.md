@@ -4,7 +4,7 @@ title: "アプリケーション開発環境セットアップ手順書 - cargo-
 description: "cargo-tracker（A 社国際貨物輸送管理システム）を、開発者の PC で起動・テスト・品質チェックするための手順を示す。"
 tags: [operation,playbook,setup]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-03T00:34:45Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-03T01:57:26Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-02T01:37:59Z }
   - { by: human:kakimomokuri, at: 2026-10-02T07:02:38Z }
@@ -72,11 +72,13 @@ IDE（IntelliJ IDEA など）から `CargoTrackerApplication` を直接起動す
 | URL | 画面 | 備考 |
 | :--- | :--- | :--- |
 | <http://localhost:8080/> | 画面の入口の一覧 | 荷主の画面と社内の画面へのリンク。認証（US-18）を入れたら、ログインの画面に置き換える |
-| <http://localhost:8080/customer/transport-requests/new> | 見積依頼の作成（C-03 の 1 画面の形） | 荷主の画面。必要書類を除く必須条件を入れて提出すると、見積依頼の詳細（C-04）に業務番号（例: `TR-2026-0001 版 1`）と「提出しました」が出る。内部の ID（UUID）は画面にもアドレスバーにも出さない（D-4）。希望到着期限は日本時間で `2026-11-02 09:00` の形で入れる |
+| <http://localhost:8080/customer/transport-requests/new> | 見積依頼の作成（C-03 の 1 画面の形） | 荷主の画面。必須条件を入れて提出すると（必要書類は任意。PDF・PNG・JPEG で 1 件 10 MB まで、商業送り状・梱包明細・その他 3 件）、見積依頼の詳細（C-04）に業務番号（例: `TR-2026-0001 版 1`）と「提出しました」が出る。内部の ID（UUID）は画面にもアドレスバーにも出さない（D-4）。希望到着期限は日本時間で `2026-11-02 09:00` の形で入れる |
 | <http://localhost:8080/customer/transport-requests> | 見積依頼の一覧（C-02） | 荷主の画面。自社の見積依頼だけを、最初の提出時刻の新しい順に示す。業務番号から詳細（C-04）を開ける。差し戻された見積依頼は「差戻し（お客様の対応待ち）」で出て、詳細で理由と不足事項を読み、「編集して出し直す」から版 2 を出し直せる |
 | <http://localhost:8080/staff/transport-requests> | 見積依頼の受付一覧（S-02） | 社内の画面。審査中の見積依頼を提出時刻の古い順に示す。業務番号から審査（S-03）を開き、確定・差戻しできる |
 | <http://localhost:8080/staff/kpi-observations> | KPI 計測記録の一覧（S-22 の前身の仮の画面） | 社内の画面。提出の後、非同期の配信を経て業務番号と提出時刻が表示される。提出時刻はまだ UTC だけで表示する（BR-10 との差。S-22 の本実装で直す） |
 | <http://localhost:8080/h2-console> | H2 コンソール（`bootRun` のときだけ） | JDBC URL は `jdbc:h2:mem:cargotracker`、利用者は `sa`、パスワードは空 |
+
+添付した書類のファイルは、ローカルのファイルシステムの `cargotracker.document-storage.base-dir` に置く（既定は一時ディレクトリの下の `cargo-tracker/documents`。Bolt 7）。DB は H2 のインメモリなので、`bootRun` をやり直すと書類の記録は消え、ファイルだけが残る。気になるときはこのディレクトリを消してよい。本番の S3 の実装は運用準備（W10、#28）で作る。
 
 認証はまだない。荷主企業と提出者は、`application.properties` の `cargotracker.provisional-actor.*`（仮の主体）の固定値で記録される。認証は US-18 の Bolt で入れ、この設定を消す。
 

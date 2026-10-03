@@ -9,6 +9,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.flash;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.model;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -17,9 +18,13 @@ import com.example.cargotracker.quotation.application.internal.commands.ApproveT
 import com.example.cargotracker.quotation.application.internal.commands.SendBackTransportRequestCommand;
 import com.example.cargotracker.quotation.application.internal.commandservices.ReviewOutcome;
 import com.example.cargotracker.quotation.application.internal.commandservices.TransportRequestReviewService;
+import com.example.cargotracker.quotation.application.internal.queryservices.DocumentFile;
 import com.example.cargotracker.quotation.application.internal.queryservices.StaffTransportRequestQueryService;
 import com.example.cargotracker.quotation.domain.model.aggregates.TransportRequest;
 import com.example.cargotracker.quotation.domain.model.valueobjects.CargoCategory;
+import com.example.cargotracker.quotation.domain.model.valueobjects.DocumentMediaType;
+import com.example.cargotracker.quotation.domain.model.valueobjects.DocumentType;
+import com.example.cargotracker.quotation.domain.model.valueobjects.RequiredDocument;
 import com.example.cargotracker.quotation.domain.model.valueobjects.ReviewDecision;
 import com.example.cargotracker.quotation.domain.model.valueobjects.ReviewRejection;
 import com.example.cargotracker.quotation.domain.model.valueobjects.ShipmentTermsFixture;
@@ -289,5 +294,33 @@ class TransportRequestReviewControllerTest {
         mockMvc.perform(get("/staff/transport-requests/{id}", UUID.randomUUID()))
                 .andExpect(status().isNotFound());
         then(reviewService).shouldHaveNoInteractions();
+    }
+
+    @Test
+    void 営業担当者は書類をattachmentとnosniffでダウンロードできる() throws Exception {
+        byte[] content = "%PDF-1.7 test".getBytes(java.nio.charset.StandardCharsets.US_ASCII);
+        RequiredDocument document = new RequiredDocument(
+                1,
+                DocumentType.PACKING_LIST,
+                "packing.pdf",
+                DocumentMediaType.PDF,
+                14,
+                "a".repeat(64),
+                "quotation/x/y");
+        given(queryService.findDocument(NUMBER, 1, 1)).willReturn(Optional.of(new DocumentFile(document, content)));
+
+        mockMvc.perform(get("/staff/transport-requests/TR-2026-0001/versions/1/documents/1"))
+                .andExpect(status().isOk())
+                .andExpect(header().string("X-Content-Type-Options", "nosniff"))
+                .andExpect(header().string("Content-Disposition", org.hamcrest.Matchers.startsWith("attachment;")))
+                .andExpect(content().bytes(content));
+    }
+
+    @Test
+    void ない書類の取得は見つからない() throws Exception {
+        given(queryService.findDocument(NUMBER, 1, 9)).willReturn(Optional.empty());
+
+        mockMvc.perform(get("/staff/transport-requests/TR-2026-0001/versions/1/documents/9"))
+                .andExpect(status().isNotFound());
     }
 }

@@ -3,13 +3,16 @@ package com.example.cargotracker.quotation.interfaces.web;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.not;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.never;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.flash;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.model;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -20,10 +23,15 @@ import com.example.cargotracker.quotation.application.internal.commands.SubmitTr
 import com.example.cargotracker.quotation.application.internal.commandservices.ResubmissionOutcome;
 import com.example.cargotracker.quotation.application.internal.commandservices.SubmissionOutcome;
 import com.example.cargotracker.quotation.application.internal.commandservices.TransportRequestCommandService;
+import com.example.cargotracker.quotation.application.internal.queryservices.DocumentFile;
 import com.example.cargotracker.quotation.application.internal.queryservices.TransportRequestQueryService;
 import com.example.cargotracker.quotation.domain.model.aggregates.TransportRequest;
 import com.example.cargotracker.quotation.domain.model.valueobjects.CargoCategory;
+import com.example.cargotracker.quotation.domain.model.valueobjects.DocumentMediaType;
+import com.example.cargotracker.quotation.domain.model.valueobjects.DocumentType;
 import com.example.cargotracker.quotation.domain.model.valueobjects.PackageType;
+import com.example.cargotracker.quotation.domain.model.valueobjects.RequiredDocument;
+import com.example.cargotracker.quotation.domain.model.valueobjects.RequiredDocumentAttachment;
 import com.example.cargotracker.quotation.domain.model.valueobjects.ResubmissionRejection;
 import com.example.cargotracker.quotation.domain.model.valueobjects.ShipmentTermsFixture;
 import com.example.cargotracker.quotation.domain.model.valueobjects.ShipmentTermsInput;
@@ -40,6 +48,7 @@ import com.example.cargotracker.shared.domain.Location;
 import com.example.cargotracker.shared.domain.UserId;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -51,9 +60,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.request.AbstractMockHttpServletRequestBuilder;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
+import org.springframework.test.web.servlet.request.MockMultipartHttpServletRequestBuilder;
 
 @WebMvcTest(
         controllers = TransportRequestController.class,
@@ -107,8 +119,7 @@ class TransportRequestControllerTest {
     }
 
     /** 必須条件をそろえた画面の入力を、指定の送り先に送る。 */
-    private static MockHttpServletRequestBuilder completeForm(
-            MockHttpServletRequestBuilder request, String... overrides) {
+    private static <B extends AbstractMockHttpServletRequestBuilder<B>> B completeForm(B request, String... overrides) {
         Map<String, String> values = new LinkedHashMap<>();
         values.put("consignee", "00000000-0000-0000-0000-000000000201");
         values.put("origin", "JPTYO");
@@ -456,5 +467,100 @@ class TransportRequestControllerTest {
         given(commandService.resubmit(any())).willReturn(new ResubmissionOutcome.NotFound());
 
         mockMvc.perform(resubmitForm()).andExpect(status().isNotFound());
+    }
+
+    private static RequiredDocument invoiceDocument() {
+        return new RequiredDocument(
+                1,
+                DocumentType.COMMERCIAL_INVOICE,
+                "送り状 invoice.pdf",
+                DocumentMediaType.PDF,
+                14,
+                "a".repeat(64),
+                "quotation/" + ID.value() + "/" + UUID.randomUUID());
+    }
+
+    private static TransportRequest underReviewWithInvoice() {
+        return TransportRequest.submit(
+                ID,
+                NUMBER,
+                SHIPPER,
+                ShipmentTermsFixture.generalCargo().withDocuments(List.of(invoiceDocument())),
+                USER,
+                new UtcInstant(Instant.parse("2026-10-05T01:00:00Z")));
+    }
+
+    @Test
+    void 選んだファイルを種類ごとの添付にして提出し選んでいない欄は無視する() throws Exception {
+        byte[] pdf = "%PDF-1.7 test".getBytes(StandardCharsets.US_ASCII);
+        SubmitTransportRequestCommand expected = new SubmitTransportRequestCommand(
+                SHIPPER,
+                USER,
+                COMPLETE_INPUT,
+                List.of(
+                        new RequiredDocumentAttachment(DocumentType.COMMERCIAL_INVOICE, "invoice.pdf", pdf),
+                        new RequiredDocumentAttachment(DocumentType.OTHER, "memo.pdf", pdf)));
+        given(commandService.submit(expected)).willReturn(SUBMITTED);
+        MockMultipartHttpServletRequestBuilder request = multipart("/customer/transport-requests");
+        request.file(new MockMultipartFile("commercialInvoice", "invoice.pdf", "application/pdf", pdf));
+        request.file(new MockMultipartFile("packingList", "", "application/octet-stream", new byte[0]));
+        request.file(new MockMultipartFile("otherDocuments", "memo.pdf", "application/pdf", pdf));
+
+        mockMvc.perform(completeForm(request)).andExpect(redirectedUrl("/customer/transport-requests/TR-2026-0001"));
+
+        then(commandService).should().submit(expected);
+    }
+
+    @Test
+    void 詳細に現在の版の書類の一覧と取得のリンクを示す() throws Exception {
+        given(queryService.findByNumber(NUMBER, SHIPPER)).willReturn(Optional.of(underReviewWithInvoice()));
+
+        mockMvc.perform(get("/customer/transport-requests/TR-2026-0001"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("商業送り状")))
+                .andExpect(content().string(containsString("送り状 invoice.pdf")))
+                .andExpect(content()
+                        .string(containsString(
+                                "href=\"/customer/transport-requests/TR-2026-0001/versions/1/documents/1\"")));
+    }
+
+    @Test
+    void 書類はattachmentとnosniffと形式でダウンロードさせる() throws Exception {
+        byte[] content = "%PDF-1.7 test".getBytes(StandardCharsets.US_ASCII);
+        given(queryService.findDocument(NUMBER, SHIPPER, 1, 1))
+                .willReturn(Optional.of(new DocumentFile(invoiceDocument(), content)));
+
+        mockMvc.perform(get("/customer/transport-requests/TR-2026-0001/versions/1/documents/1"))
+                .andExpect(status().isOk())
+                .andExpect(header().string("Content-Type", "application/pdf"))
+                .andExpect(header().string("X-Content-Type-Options", "nosniff"))
+                .andExpect(header().string("Content-Disposition", org.hamcrest.Matchers.startsWith("attachment;")))
+                .andExpect(header().string("Content-Disposition", containsString("filename*=UTF-8''")))
+                .andExpect(content().bytes(content));
+    }
+
+    @Test
+    void 他社やない書類の取得は見つからない() throws Exception {
+        given(queryService.findDocument(any(), any(), anyInt(), anyInt())).willReturn(Optional.empty());
+
+        mockMvc.perform(get("/customer/transport-requests/TR-2026-0001/versions/1/documents/1"))
+                .andExpect(status().isNotFound());
+        mockMvc.perform(get("/customer/transport-requests/{id}/versions/1/documents/1", UUID.randomUUID()))
+                .andExpect(status().isNotFound());
+
+        then(queryService).should().findDocument(NUMBER, SHIPPER, 1, 1);
+    }
+
+    @Test
+    void 編集画面に前の版の書類を引き継ぐことを示す() throws Exception {
+        TransportRequest request = underReviewWithInvoice();
+        request.sendBack(1, STAFF, "梱包明細が必要", "梱包明細", new UtcInstant(Instant.parse("2026-10-05T03:00:00Z")));
+        given(queryService.findByNumber(NUMBER, SHIPPER)).willReturn(Optional.of(request));
+
+        mockMvc.perform(get("/customer/transport-requests/TR-2026-0001/edit"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("前の版の書類（出し直しても引き継ぎます）")))
+                .andExpect(content().string(containsString("商業送り状: 送り状 invoice.pdf（1 KB）")))
+                .andExpect(content().string(containsString("enctype=\"multipart/form-data\"")));
     }
 }

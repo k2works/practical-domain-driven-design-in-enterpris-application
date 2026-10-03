@@ -20,6 +20,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -209,7 +210,18 @@ public class TransportRequestReviewController {
                         .map(TransportRequestReviewController::history)
                         .toList());
         model.addAttribute("fieldLabels", FIELD_LABELS);
+        model.addAttribute("documents", RequiredDocumentViews.rows(request, "/staff/transport-requests"));
         return REVIEW_VIEW;
+    }
+
+    /** 必要書類を取得する（D-20: 営業担当者は開ける）。ブラウザの中で開かせず、ダウンロードさせる。 */
+    @GetMapping("/{number}/versions/{versionNo}/documents/{documentNo}")
+    public ResponseEntity<byte[]> document(
+            @PathVariable String number, @PathVariable int versionNo, @PathVariable int documentNo) {
+        return parse(number)
+                .flatMap(found -> queryService.findDocument(found, versionNo, documentNo))
+                .map(RequiredDocumentViews::download)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
     }
 
     private Row row(TransportRequestSummary summary) {

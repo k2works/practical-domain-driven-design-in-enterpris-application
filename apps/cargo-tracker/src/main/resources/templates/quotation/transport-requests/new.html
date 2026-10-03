@@ -12,7 +12,7 @@
     <!-- C-03 の 1 画面の形（Bolt 4）。作成と編集（出し直し。Bolt 6）で共有し、見出し・送り先・案内・ボタン名だけを変える。
          段階入力・下書き保存・必要書類は後の Bolt で入れる -->
     <p id="version-notice" th:if="${versionNotice}" th:text="${versionNotice}">TR-2026-0001 を直して出し直します。出し直すと版 2 になります。業務番号は変わりません。</p>
-    <form th:action="@{${formAction}}" th:object="${transportRequestForm}" method="post" novalidate>
+    <form th:action="@{${formAction}}" th:object="${transportRequestForm}" method="post" enctype="multipart/form-data" novalidate>
         <!-- エラー要約: 送信に失敗したら画面上部に出し、要約へフォーカスを移す。各項目の誤りへのリンクを持つ（UI 設計 C-03） -->
         <div id="error-summary" th:if="${#fields.hasErrors('*')}" tabindex="-1" role="alert"
              aria-labelledby="error-summary-title">
@@ -98,6 +98,36 @@
                    th:attr="aria-invalid=${#fields.hasErrors('volumeM3')},aria-describedby=${#fields.hasErrors('volumeM3')} ? 'volumeM3-hint volumeM3-error' : 'volumeM3-hint'">
             <p id="volumeM3-error" th:if="${#fields.hasErrors('volumeM3')}" th:errors="*{volumeM3}"></p>
         </div>
+        <!-- 必要書類（Bolt 7、D-20）。任意。種類ごとに入力欄を分ける（2026-10-03 に承認）。
+             ブラウザは誤りのあとにファイルの選択を残せないため、誤りがあれば選び直してもらう -->
+        <fieldset aria-describedby="documents-hint">
+            <legend>必要書類（任意）</legend>
+            <p id="documents-hint">PDF・PNG・JPEG のファイルを、1 件 10 MB まで添付できます。書類が足りなければ、営業担当者が審査で差し戻します。</p>
+            <div th:if="${carriedDocuments != null and !#lists.isEmpty(carriedDocuments)}">
+                <p id="carried-documents-title">前の版の書類（出し直しても引き継ぎます）</p>
+                <ul aria-labelledby="carried-documents-title">
+                    <li th:each="document : ${carriedDocuments}" th:text="|${document.type()}: ${document.fileName()}（${document.size()}）|">商業送り状: invoice.pdf（120 KB）</li>
+                </ul>
+            </div>
+            <div>
+                <label for="commercialInvoice">商業送り状（任意）</label>
+                <input id="commercialInvoice" name="commercialInvoice" type="file" accept=".pdf,.png,.jpg,.jpeg,application/pdf,image/png,image/jpeg"
+                       th:attr="aria-invalid=${#fields.hasErrors('commercialInvoice')},aria-describedby=${#fields.hasErrors('commercialInvoice')} ? 'commercialInvoice-error' : null">
+                <p id="commercialInvoice-error" th:if="${#fields.hasErrors('commercialInvoice')}" th:errors="*{commercialInvoice}"></p>
+            </div>
+            <div>
+                <label for="packingList">梱包明細（任意）</label>
+                <input id="packingList" name="packingList" type="file" accept=".pdf,.png,.jpg,.jpeg,application/pdf,image/png,image/jpeg"
+                       th:attr="aria-invalid=${#fields.hasErrors('packingList')},aria-describedby=${#fields.hasErrors('packingList')} ? 'packingList-error' : null">
+                <p id="packingList-error" th:if="${#fields.hasErrors('packingList')}" th:errors="*{packingList}"></p>
+            </div>
+            <div>
+                <label for="otherDocuments">その他の書類（任意、3 件まで）</label>
+                <input id="otherDocuments" name="otherDocuments" type="file" multiple accept=".pdf,.png,.jpg,.jpeg,application/pdf,image/png,image/jpeg"
+                       th:attr="aria-invalid=${#fields.hasErrors('otherDocuments')},aria-describedby=${#fields.hasErrors('otherDocuments')} ? 'otherDocuments-error' : null">
+                <p id="otherDocuments-error" th:if="${#fields.hasErrors('otherDocuments')}" th:errors="*{otherDocuments}"></p>
+            </div>
+        </fieldset>
         <!-- 特殊貨物のときは aria-disabled にして理由を関連付ける。押せば、サーバーがエラー要約で同じ理由を示す -->
         <button id="submit" type="submit"
                 th:with="special=${transportRequestForm.cargoCategory != null and transportRequestForm.cargoCategory != 'GENERAL'}"

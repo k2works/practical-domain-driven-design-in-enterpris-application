@@ -21,6 +21,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -105,8 +106,11 @@ public class TransportRequestController {
         if (input.isEmpty()) {
             return showCreateForm(model);
         }
-        SubmissionOutcome outcome = commandService.submit(
-                new SubmitTransportRequestCommand(shipper(), new UserId(provisionalActor.userId()), input.get()));
+        SubmissionOutcome outcome = commandService.submit(new SubmitTransportRequestCommand(
+                shipper(),
+                new UserId(provisionalActor.userId()),
+                input.get(),
+                RequiredDocumentViews.attachments(transportRequestForm)));
         return switch (outcome) {
             case SubmissionOutcome.Submitted submitted ->
                 redirectToDetail(
@@ -156,7 +160,21 @@ public class TransportRequestController {
                         .map(TransportRequestController::sendBack)
                         .orElse(null));
         model.addAttribute("editable", request.status() == TransportRequestStatus.DRAFT);
+        model.addAttribute("documents", RequiredDocumentViews.rows(request, BASE_PATH));
         return DETAIL_VIEW;
+    }
+
+    /**
+     * 必要書類を取得する（D-20: 提出した荷主は開ける）。荷主企業で絞り、他社の番号・ない書類は 404 にする（Q-INV-08）。
+     * ブラウザの中で開かせず、ダウンロードさせる。
+     */
+    @GetMapping("/{number}/versions/{versionNo}/documents/{documentNo}")
+    public ResponseEntity<byte[]> document(
+            @PathVariable String number, @PathVariable int versionNo, @PathVariable int documentNo) {
+        return parse(number)
+                .flatMap(found -> queryService.findDocument(found, shipper(), versionNo, documentNo))
+                .map(RequiredDocumentViews::download)
+                .orElseThrow(TransportRequestController::notFound);
     }
 
     /**
@@ -166,14 +184,13 @@ public class TransportRequestController {
     @GetMapping("/{number}/edit")
     public String edit(@PathVariable String number, Model model, RedirectAttributes redirectAttributes) {
         TransportRequest request = find(number);
-        int versionNo = request.currentVersion().versionNo();
         if (request.status() != TransportRequestStatus.DRAFT) {
             return redirectToDetail(request.number(), notResubmittable(request), redirectAttributes);
         }
         model.addAttribute(
                 "transportRequestForm",
                 TransportRequestFormConverter.toForm(request.currentVersion().terms()));
-        return showEditForm(request.number(), versionNo + 1, model);
+        return showEditForm(request, model);
     }
 
     /**
@@ -194,7 +211,11 @@ public class TransportRequestController {
             return showEditForm(find(number), model);
         }
         ResubmissionOutcome outcome = commandService.resubmit(new ResubmitTransportRequestCommand(
-                transportRequestNumber, shipper(), new UserId(provisionalActor.userId()), input.get()));
+                transportRequestNumber,
+                shipper(),
+                new UserId(provisionalActor.userId()),
+                input.get(),
+                RequiredDocumentViews.attachments(transportRequestForm)));
         return switch (outcome) {
             case ResubmissionOutcome.Resubmitted(TransportRequestNumber resubmittedNumber, int versionNo) ->
                 redirectToDetail(
@@ -222,7 +243,9 @@ public class TransportRequestController {
         return FORM_VIEW;
     }
 
+    /** 編集画面。前の版の書類を一覧で示し、引き継ぐことを案内する（確認ポイント 3）。 */
     private String showEditForm(TransportRequest request, Model model) {
+        model.addAttribute("carriedDocuments", RequiredDocumentViews.rows(request, BASE_PATH));
         return showEditForm(request.number(), request.currentVersion().versionNo() + 1, model);
     }
 
