@@ -11,6 +11,7 @@ verified:
   - { by: human:kakimomokuri, at: 2026-10-02T11:26:07Z }
   - { by: human:kakimomokuri, at: 2026-10-02T13:47:11Z }
   - { by: human:kakimomokuri, at: 2026-10-03T00:50:25Z }
+  - { by: human:kakimomokuri, at: 2026-10-03T02:07:18Z }
 ---
 
 # アプリケーション開発環境セットアップ手順書 - cargo-tracker

@@ -4,9 +4,10 @@ title: "Bolt 7 計画 - 見積依頼の必要書類（US-01 AC2 の残り）"
 description: "7 回目の Bolt の計画。D-20 の決定（任意で添付、PDF・PNG・JPEG で 1 件 10 MB、閲覧は提出した荷主と営業担当者）に従い、提出と出し直しでの必要書類の添付、形式・容量・件数の検証、版ごとの保存と出し直しでの引き継ぎ、荷主と営業の閲覧を、ステップ 1〜5 で定義する。"
 tags: [development,bolt-plan]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-03T02:03:03Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-03T02:07:17Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-03T01:14:26Z }
+  - { by: human:kakimomokuri, at: 2026-10-03T02:07:18Z }
 ---
 
 # Bolt 7 計画 - 見積依頼の必要書類（US-01 AC2 の残り）
@@ -244,7 +245,7 @@ DOC : ファイル（Content-Disposition: attachment）
   - C-03 の作成と編集の書類の入力（`enctype="multipart/form-data"`）、C-04・S-03 の書類の一覧、取得の URL を作る。上限を超える送信（`MaxUploadSizeExceededException`）はエラー要約で示す
   - 完了の判定: `check` と `uiTest` が緑。push する
   - 結果（2026-10-03 10:41〜10:57）: 画面の層の受入シナリオ（`attach_required_documents_ui.feature`、5 件）とテスト用のファイル（`ui-files`）を先に書き、実装の前に `uiTest` を実行して、新しい 5 件の失敗（ファイルの入力欄がなく時間切れ）を記録した（T-21）。C-03 の作成と編集に書類の入力（種類ごとの 3 つの欄、`multipart/form-data`。編集では前の版の書類を一覧で示す）、C-04・S-03 に書類の一覧と取得（`attachment`・`nosniff`・RFC 6266 の `filename*`）を作った。共通の部品は `RequiredDocumentViews`（ファイル名のパスの部分と制御文字を除き 255 文字まで）。1 件 10 MB の上限は業務の規則がエラー要約で示すよう、multipart の上限を送信の合計の 55 MB にそろえ、超えたときは 413 の案内を出す（`UploadLimitAdvice`。エラー要約にはできない）。手順書に書類の保存先を書いた。実行中に直した誤り: Bolt 4 のキー操作のシナリオのフォーカスの順序に書類の欄を足した、リダイレクトの途中のアクセシビリティの検査、領域の名前の部分一致、テストの補助の型、SpotBugs 1 件。画面の層のシナリオは 21 件すべて passed（failed・undefined・skipped 0）。`check` 緑（テスト 402 件）
-- [?] **5. 検証と Bolt 終了報告**
+- [x] **5. 検証と Bolt 終了報告**
   - `check`・`uiTest`・CI・SonarQube の品質ゲート（PASS）を確かめる
   - `bolt_07_report.md` を書く（仮説 H1〜H3 の結論、各ステップの開始と完了の時刻）。ステップ 4 の結果をここでまとめて報告する
   - 結果（2026-10-03 10:57〜11:02）: SonarQube の品質ゲートが Code Smell 4 件で不合格になり、直して PASS にした（`a6b068a`）。`check`・`uiTest`・CI は緑。[Bolt 7 終了報告](bolt_07_report.md) を書いた。本報告の承認で、ステップ 4 とあわせて承認を受ける
@@ -300,14 +301,14 @@ DOC : ファイル（Content-Disposition: attachment）
 
 ### Definition of Done
 
-- [ ] ステップ 1〜5 が完了し、計画・ステップ 2・ステップ 3・終了報告の承認ゲートを人が通した
-- [ ] `./gradlew check` と `./gradlew uiTest` がローカルと CI の両方で緑。各ステップの終わりに push できた
-- [ ] SonarQube の品質ゲートが PASS
-- [ ] 業務ルール層で添付・検証・引き継ぎ・閲覧の絞り込みのシナリオ（他社を含む）が緑。画面の層で主成功と画面に固有の条件が緑
-- [ ] 確認ポイント 1〜5 と D-20 の決定が、設計文書から追える
-- [ ] `bolt_07_report.md` に仮説 H1〜H3 の結論と、各ステップの時刻を記録した
-- [ ] #2 を、終了報告の承認でクローズした
-- [ ] ユーザーマニュアルは更新しない（マニュアルはまだない。画面は UI の骨格（#36）の前の仮の画面）
+- [x] ステップ 1〜5 が完了し、計画・ステップ 2・ステップ 3・終了報告の承認ゲートを人が通した
+- [x] `./gradlew check` と `./gradlew uiTest` がローカルと CI の両方で緑。各ステップの終わりに push できた
+- [x] SonarQube の品質ゲートが PASS
+- [x] 業務ルール層で添付・検証・引き継ぎ・閲覧の絞り込みのシナリオ（他社を含む）が緑。画面の層で主成功と画面に固有の条件が緑
+- [x] 確認ポイント 1〜5 と D-20 の決定が、設計文書から追える
+- [x] `bolt_07_report.md` に仮説 H1〜H3 の結論と、各ステップの時刻を記録した
+- [x] #2 を、終了報告の承認でクローズした
+- [x] ユーザーマニュアルは更新しない（マニュアルはまだない。画面は UI の骨格（#36）の前の仮の画面）
 
 ### デモ項目
 
@@ -324,6 +325,7 @@ DOC : ファイル（Content-Disposition: attachment）
 | :--- | :--- | :--- | :--- |
 | 2026-10-03 | 初版（人の決定 D-20: 任意で添付、PDF・PNG・JPEG で 1 件 10 MB、閲覧は提出した荷主と営業担当者） | anthropic/claude-opus-5-5 | — |
 | 2026-10-03 | 計画を承認。確認ポイント 1〜5（`required_document` の 4 列の追加と追記専用、種類ごとの入力欄、出し直しでの引き継ぎと追加、取得の URL と `attachment`・`nosniff`、ローカルのファイルシステムの保存先）も決まった（Try T-6） | anthropic/claude-opus-5-5 | human:kakimomokuri |
+| 2026-10-03 | ステップ 1・2、ステップ 3（スキーマ）の承認ゲートと、ステップ 4・5 をまとめた終了報告の承認を通し、Bolt を終えた（人の変更依頼 0） | anthropic/claude-opus-5-5 | human:kakimomokuri |
 
 ## 関連ドキュメント
 

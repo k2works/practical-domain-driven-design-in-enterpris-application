@@ -4,13 +4,14 @@ title: "リリース計画 - cargo-tracker（A 社国際貨物輸送管理シス
 description: "cargo-tracker MVP のリリース計画。1 人 + AI、時間単位の Bolt（= イテレーション）と週次の見直しで、最初の縦の流れ（R0.1）、パイロット準備完了（R1.0）、本格展開前（R1.1）の 3 段階、Unit のエントロピー評価、SP、バッファ、パイロット開始の条件、引継ぎ ID の台帳。"
 tags: [development,release-plan]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-03T02:03:03Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-03T02:07:17Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T09:29:53Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:38:26Z }
   - { by: human:kakimomokuri, at: 2026-10-02T07:02:38Z }
   - { by: human:kakimomokuri, at: 2026-10-02T13:47:11Z }
   - { by: human:kakimomokuri, at: 2026-10-03T00:50:25Z }
+  - { by: human:kakimomokuri, at: 2026-10-03T02:07:18Z }
 ---
 
 # リリース計画 - cargo-tracker（A 社国際貨物輸送管理システム）
@@ -306,6 +307,7 @@ Release 1.0 はソフトウェアの準備である。パイロットの開始�
 | 十分性認定の適用と保持期間の法務・コンプライアンス確認 | PRV-03、RET | 法務、管理・コンプライアンス責任者 | 2026-12-11 |
 | 本予約と船腹確保の扱いの確認 | R-28 | 業務責任者 | 2026-11-27（W9 の前） |
 | 外部の侵入テスト | SEC-19 | IT 責任者 | Release 1.0 の後、パイロット開始の前 |
+| 必要書類のウイルスの検査が動いていること（動くまでパイロットで書類の添付を使わない） | Bolt 7 終了報告（2026-10-03 に human:kakimomokuri が決定） | IT 責任者 | パイロット開始の前（方式は W10 の運用準備で決める） |
 | チャットツール・当番の体制 | OP-05 | 運用責任者 | 2026-12-04（W10 の前） |
 | 業務担当者の教育 | インセプションデッキ | 運用責任者 | パイロット開始の前 |
 
@@ -361,8 +363,8 @@ AI-DLC では **Bolt がイテレーション** である（[AI-DLC 導入ガイ
 - [x] Bolt 6: 荷主の再提出の画面（US-02 の差戻しから版 2 まで。C-02 の最小の一覧、C-04、C-03 の編集。完了、承認済み）。[Bolt 6 計画](bolt_06_plan.md)、[Bolt 6 終了報告](bolt_06_report.md)
 - [x] 開発基盤（Gradle 9、Spring Boot 4.1、Spring Modulith、MyBatis、Flyway の `common`・`{vendor}`、H2・Testcontainers、ArchUnit・AT-01〜06、Cucumber、CI）。Bolt 1〜3 で完了し、#1 をクローズした
 - [ ] UI の骨格（Thymeleaf、htmx、Bootstrap、共通レイアウト）。Thymeleaf は導入済み。#1 から #36 に分けた
-- [ ] Bolt 7: 見積依頼の必要書類（US-01 AC2 の残り。D-20 は 2026-10-03 に決定。実装済み、終了報告の承認待ち）。[Bolt 7 計画](bolt_07_plan.md)、[Bolt 7 終了報告](bolt_07_report.md)
-- [ ] US-01（AC1、AC2、AC4）。AC1・AC4 と AC2 の必要書類を除く部分は Bolt 4 で完了。AC2 の必要書類は Bolt 7。#2
+- [x] Bolt 7: 見積依頼の必要書類（US-01 AC2 の残り。D-20 は 2026-10-03 に決定。完了、承認済み）。[Bolt 7 計画](bolt_07_plan.md)、[Bolt 7 終了報告](bolt_07_report.md)
+- [x] US-01（AC1、AC2、AC4）。Bolt 4 と Bolt 7 で完了し、#2 をクローズした
 - [x] US-02（全受入条件）。Bolt 5 で審査、Bolt 6 で荷主の再提出の画面を完了し、#3 をクローズした
 - [ ] 見積依頼の段階入力（C-03）のプロトタイプで操作性を確かめる（UI-HO-04）。#36
 
@@ -416,7 +418,7 @@ AI-DLC では **Bolt がイテレーション** である（[AI-DLC 導入ガイ
 | W7 | 11-16 〜 11-20 | 外部原本の取込 | US-14（8）、US-12 残り（2） | 10 |
 | W8 | 11-23 〜 11-27（11-23 祝日） | 有人対応と問い合わせ | US-11（3）、US-20（5） | 8 |
 | W9 | 11-30 〜 12-04 | 通知・KPI・残りの受入条件 | US-23（3）、US-22（3）、US-21 残り（3）、US-01 残り（2）、US-24 残り（2）、US-09 残り（2） | 15 |
-| W10 | 12-07 〜 12-11 | 運用準備 | AWS 環境（Terraform）、CI/CD、監視、運用タスクとランブック、性能テスト（負荷テストのツールの選定 TS-05、R-36）、時点復旧の訓練、Spring Boot 4.2 への追従（公開済みなら） | 0（技術タスク） |
+| W10 | 12-07 〜 12-11 | 運用準備 | AWS 環境（Terraform）、CI/CD、監視、運用タスクとランブック、必要書類の S3 の保存とウイルスの検査（Bolt 7）、性能テスト（負荷テストのツールの選定 TS-05、R-36）、時点復旧の訓練、Spring Boot 4.2 への追従（公開済みなら） | 0（技術タスク） |
 
 W6 と W9 は 10 SP を超えるため、W4 の見直しで、W5・W8 の祝日の週との入れ替えや、Release 1.1 への繰り下げを判断する。
 
