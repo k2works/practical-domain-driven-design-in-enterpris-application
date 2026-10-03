@@ -1,1 +1,1 @@
-- [cargo-tracker の業務と利用者視点の論点](project_cargo_tracker_domain.md) — 業務の流れ・呼び分け、Bolt 1〜3 レビューで指摘した未解消の論点（D-4 細部、UUID 表示、KPI 終点など）
+- [cargo-tracker の業務と利用者視点の論点](project_cargo_tracker_domain.md) — 業務の流れ・呼び分け、Bolt 1〜8 レビューの未解消の論点（書類の差し替え、差戻しの知らせ等）
