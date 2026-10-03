@@ -4,7 +4,7 @@ title: "リリース計画 - cargo-tracker（A 社国際貨物輸送管理シス
 description: "cargo-tracker MVP のリリース計画。1 人 + AI、時間単位の Bolt（= イテレーション）と週次の見直しで、最初の縦の流れ（R0.1）、パイロット準備完了（R1.0）、本格展開前（R1.1）の 3 段階、Unit のエントロピー評価、SP、バッファ、パイロット開始の条件、引継ぎ ID の台帳。"
 tags: [development,release-plan]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-03T01:01:30Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-03T01:06:21Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T09:29:53Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:38:26Z }
@@ -361,7 +361,8 @@ AI-DLC では **Bolt がイテレーション** である（[AI-DLC 導入ガイ
 - [x] Bolt 6: 荷主の再提出の画面（US-02 の差戻しから版 2 まで。C-02 の最小の一覧、C-04、C-03 の編集。完了、承認済み）。[Bolt 6 計画](bolt_06_plan.md)、[Bolt 6 終了報告](bolt_06_report.md)
 - [x] 開発基盤（Gradle 9、Spring Boot 4.1、Spring Modulith、MyBatis、Flyway の `common`・`{vendor}`、H2・Testcontainers、ArchUnit・AT-01〜06、Cucumber、CI）。Bolt 1〜3 で完了し、#1 をクローズした
 - [ ] UI の骨格（Thymeleaf、htmx、Bootstrap、共通レイアウト）。Thymeleaf は導入済み。#1 から #36 に分けた
-- [ ] US-01（AC1、AC2、AC4）。AC1・AC4 と AC2 の必要書類を除く部分は Bolt 4 で完了。AC2 の必要書類が残り（D-20 の決定が必要）。#2
+- [ ] Bolt 7: 見積依頼の必要書類（US-01 AC2 の残り。D-20 は 2026-10-03 に決定。計画済み）。[Bolt 7 計画](bolt_07_plan.md)
+- [ ] US-01（AC1、AC2、AC4）。AC1・AC4 と AC2 の必要書類を除く部分は Bolt 4 で完了。AC2 の必要書類は Bolt 7。#2
 - [x] US-02（全受入条件）。Bolt 5 で審査、Bolt 6 で荷主の再提出の画面を完了し、#3 をクローズした
 - [ ] 見積依頼の段階入力（C-03）のプロトタイプで操作性を確かめる（UI-HO-04）。#36
 
