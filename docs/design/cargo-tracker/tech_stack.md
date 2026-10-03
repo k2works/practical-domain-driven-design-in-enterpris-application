@@ -4,7 +4,7 @@ title: "cargo-tracker 技術スタック"
 description: "cargo-tracker のバックエンド・画面・データベース・テスト・ビルド・インフラの技術、バージョン、サポート期限、選定理由、アップグレード計画。"
 tags: [design, tech-stack]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-03T05:19:49Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-03T05:47:24Z }
 stale_after: 2027-04-01T00:00:00Z
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T07:29:04Z }
@@ -74,6 +74,7 @@ verified:
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | RDBMS | PostgreSQL | 18 | 本番・ステージング・CI のリポジトリテスト・E2E | 2030-11-14（コミュニティ）／2031-02-28（RDS 標準サポート） | 新規構築のため、最も長くサポートされる版を選ぶ。スキーマ分割、TIMESTAMPTZ（BR-10 の UTC 時点）、行単位のロック（イベント再配信の排他）を使う |
 | 開発用 DB | H2（PostgreSQL 互換モード、インメモリ） | 2.x（Boot 管理） | ローカルでのアプリ起動・画面確認 | — | 開発体験を優先する（ADR-007）。`developmentOnly` 依存とし、本番の成果物に含めない |
+| 開発の補助 | Spring Boot DevTools | Boot 管理 | ローカル起動での自動再起動・ライブリロード、テンプレートのキャッシュの無効化 | — | 画面と Java の変更を起動し直さずに確かめる（2026-10-03、human:kakimomokuri）。`developmentOnly` 依存とし、本番の成果物に含めない |
 | マイグレーション | Flyway（spring-boot-flyway + flyway-database-postgresql） | Boot 管理 | スキーマの版管理 | — | 第 3 章と同じ。Spring Boot 4 では `spring-boot-flyway` が無いとマイグレーションが静かに実行されない点に注意する（第 3 章） |
 | JDBC ドライバ | PostgreSQL JDBC | Boot 管理 | DB 接続 | — | 脆弱性の修正版が先に出た場合だけ上書きする |
 

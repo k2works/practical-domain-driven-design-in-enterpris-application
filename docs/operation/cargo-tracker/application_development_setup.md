@@ -4,7 +4,7 @@ title: "アプリケーション開発環境セットアップ手順書 - cargo-
 description: "cargo-tracker（A 社国際貨物輸送管理システム）を、開発者の PC で起動・テスト・品質チェックするための手順を示す。"
 tags: [operation,playbook,setup]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-03T05:19:49Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-03T05:47:24Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-02T01:37:59Z }
   - { by: human:kakimomokuri, at: 2026-10-02T07:02:38Z }
@@ -57,6 +57,8 @@ cd apps/cargo-tracker
 ```
 
 `dev` プロファイル（`application-dev.properties`）で起動し、Flyway のマイグレーションを当てる。権限による保護（追記専用の表）は H2 では働かない。
+
+Spring Boot DevTools が入っているので、起動したまま変更を確かめられる。テンプレート（`src/main/resources/templates`）と静的ファイルは保存すると反映され、Java の変更はクラスファイルが変わると自動で再起動する。`bootRun` を動かしたまま、別の端末で `./gradlew classes` を実行するか、IDE でビルドする（IntelliJ IDEA は「Build Project」、または設定の「Build project automatically」）。再起動すると H2 のインメモリの DB は作り直され、入力したデータは消える。
 
 IDE（IntelliJ IDEA など）から `CargoTrackerApplication` を直接起動するときは、実行構成の Active profiles に `dev` を入れる。入れないと H2 の設定と H2 コンソールが有効にならない（`/h2-console` が 404 になる）。
 
