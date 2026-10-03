@@ -4,7 +4,7 @@ title: "Bolt 7 計画 - 見積依頼の必要書類（US-01 AC2 の残り）"
 description: "7 回目の Bolt の計画。D-20 の決定（任意で添付、PDF・PNG・JPEG で 1 件 10 MB、閲覧は提出した荷主と営業担当者）に従い、提出と出し直しでの必要書類の添付、形式・容量・件数の検証、版ごとの保存と出し直しでの引き継ぎ、荷主と営業の閲覧を、ステップ 1〜5 で定義する。"
 tags: [development,bolt-plan]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-03T01:36:09Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-03T01:41:28Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-03T01:14:26Z }
 ---
@@ -228,12 +228,13 @@ DOC : ファイル（Content-Disposition: attachment）
   - 完了の判定: `check` が緑。push する。ステップ 1 とあわせて承認を受ける
   - 結果（2026-10-03 10:15〜10:30）: 受入シナリオ 6 件（`attach_required_documents.feature`）をステップ定義とともに先に書き、コンパイルの失敗（46 件）で Red を確かめた。内側は、単体テストを先に書いて、`DocumentType`・`DocumentMediaType`（先頭のバイトで判定）・`RequiredDocumentAttachment`・`RequiredDocument`（大きさと SHA-256 を中身から求める）・`RequiredDocumentPolicy`（Q-INV-16）・`RequiredDocumentStorage` を作り、輸送条件に必要書類を持たせた。コマンドサービスは輸送条件の検証と書類の規則の違反をまとめて返し、検証を通った後に書類を保存する。出し直しは、下書きでなければ書類を保存する前に拒否する（`checkResubmittable`）。照会は荷主用（荷主企業で絞る）と社内用に `findDocument` を足した。計画からの変更: (1) アプリの起動に保存の部品が要るため、ローカルのファイルシステムの保存（`LocalFileSystemRequiredDocumentStorage`。キーの形を検証し保存先の外を読まない）をステップ 3 から前に出した。(2) 誤りの文言の表と、項目と画面の入力の対応のテストのため、フォームのファイルの入力欄と書類の誤りの文言をステップ 4 から前に出した。(3) D-20 で必要書類を必須から外したため、`ShipmentTermsInputTest` の「すべて空なら全項目の不足」の期待から書類の項目を外した。実行中に直した誤り: Checkstyle の循環的複雑度（文言の対応を表にした）、静的初期化の順序、SpotBugs 3 件、用語集の不足（書類の添付）。業務ルール層のシナリオは 48 件すべて passed（failed・undefined・skipped 0）。`check` 緑（テスト 386 件）。MyBatis はまだ書類を保存しない（ステップ 3）
   - 承認（2026-10-03、human:kakimomokuri）: ステップ 1 とあわせて承認された。取得できるのは現在の版の書類だけとする判断も承認された
-- [?] **3. 表とファイルの保存（内側の TDD、統合テスト）** 【承認ゲート: スキーマの変更】
+- [x] **3. 表とファイルの保存（内側の TDD、統合テスト）** 【承認ゲート: スキーマの変更】
   - 統合テスト（PostgreSQL）を先に書く: 版ごとの書類の保存と読み出し、出し直しでの引き継ぎ（同じオブジェクトキーの行が版 2 に足される）、CHECK 制約、追記専用（アプリケーション利用者は UPDATE・DELETE できない）
   - マイグレーション `V20261005…__create_required_document.sql`（`common`）。H2 のスモークを先に回す（T-15）
   - MyBatis のリポジトリの書類の保存と読み出し。ローカルのファイルシステムの保存（`cargotracker.document-storage.base-dir`。オブジェクトキーはファイル名を使わず `quotation/{輸送要求 ID}/{UUID}`）
   - 完了の判定: `check` が緑。push する。スキーマの承認を受ける
   - 結果（2026-10-03 10:31〜10:35）: PostgreSQL の統合テスト（`MyBatisRequiredDocumentIntegrationTest`。保存と読み出し、書類なし、出し直しでの引き継ぎ、CHECK 制約 4 件）と、追記専用の権限のテストの一覧への追加を先に書き、4 件の失敗で Red を確かめた。マイグレーション `V20261003100000__create_required_document.sql`（`common`）を書き、H2 のスモークを先に回して通した（T-15）。MyBatis は、保存と更新で現在の版の書類を、まだなければ追加し（`insertRequiredDocumentIfAbsent`）、読み出しで現在の版の書類を書類番号の順に読む。ローカルのファイルシステムの保存はステップ 2 で作った。実行中に直した誤り: 統合テストの年が既存のテストとぶつかった（2084 → 2083）、PostgreSQL は制約違反でトランザクションを中断するため、CHECK 制約のテストを違反ごとに分けた。`check` 緑（テスト 393 件）
+  - 承認（2026-10-03、human:kakimomokuri）: スキーマ（`required_document`）が承認された
 - [ ] **4. 画面の層（Red → Green）**（承認はステップ 5 とまとめて受ける）
   - 画面の層の受入シナリオ（`features/ui/attach_required_documents_ui.feature`、`@ui @US-01`）を先に書き、`uiTest` で失敗を確かめて記録する（T-21）
     - 主成功: 作成画面で商業送り状（PDF）を選んで提出すると、C-04 に書類の一覧が出て、取得できる。キー操作だけで行える
