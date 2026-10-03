@@ -4,7 +4,7 @@ title: "cargo-tracker 運用要件"
 description: "cargo-tracker の運用体制、定常運用、監視と通知、バックアップと復旧、障害対応の手順（ランブック）、変更管理、DB 利用者と権限の初期化、アカウント運用、運用タスクの一覧。"
 tags: [design, operation]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-02T01:04:33Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-03T06:11:52Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T08:30:35Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:01:38Z }
@@ -264,7 +264,7 @@ stop
 
 1. マスター利用者でマイグレーション利用者とアプリケーション利用者を作る（`db:init`、環境ごとに 1 回）。
 2. 配備のたびに、Flyway をマイグレーション利用者で実行し、スキーマと表を作る。
-3. 同じ Flyway の実行の中で、PostgreSQL 用の `afterMigrate` コールバックがアプリケーション利用者に権限を与える。追記専用の表は、表の定義の印（`COMMENT ON TABLE ... IS 'append-only'`）で選んで UPDATE・DELETE を外す。ステージング・本番では Flyway のプレースホルダー `requireappuser=true` にし、アプリケーション利用者がなければマイグレーションを失敗させる（Bolt 3）。Flyway とアプリの DB 利用者を同じ配備の中でどう分けるか（アプリの中で `spring.flyway.user` を分けるか、配備の前の別ジョブにするか）は人の判断待ち（D-9）。追記専用の表（`identity.audit_record`、`identity.kpi_baseline`、`quotation.transport_request_version`、`booking.booking_version`、`external_data.receipt`）には SELECT・INSERT だけを与え、`tracking.milestone` には DELETE を与えない（データモデル、ADR-007）。
+3. 同じ Flyway の実行の中で、PostgreSQL 用の `afterMigrate` コールバックがアプリケーション利用者に権限を与える。追記専用の表は、表の定義の印（`COMMENT ON TABLE ... IS '<日本語名> [append-only]'`）で選んで UPDATE・DELETE を外す。ステージング・本番では Flyway のプレースホルダー `requireappuser=true` にし、アプリケーション利用者がなければマイグレーションを失敗させる（Bolt 3）。Flyway とアプリの DB 利用者を同じ配備の中でどう分けるか（アプリの中で `spring.flyway.user` を分けるか、配備の前の別ジョブにするか）は人の判断待ち（D-9）。追記専用の表（`identity.audit_record`、`identity.kpi_baseline`、`quotation.transport_request_version`、`booking.booking_version`、`external_data.receipt`）には SELECT・INSERT だけを与え、`tracking.milestone` には DELETE を与えない（データモデル、ADR-007）。
 4. 新しい表を足すときは、同じ変更でコールバックも更新する。権限の付与が表の作成と同じ配備で行われるため、配備の途中で表を使えない・保護が外れる時間ができない。
 5. 配備後に `db:grants:verify` で、追記専用の表の権限を確かめる（PostgreSQL の統合テストと同じ確認）。
 
