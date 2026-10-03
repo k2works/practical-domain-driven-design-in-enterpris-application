@@ -196,11 +196,10 @@ public class TransportRequestController {
         ResubmissionOutcome outcome = commandService.resubmit(new ResubmitTransportRequestCommand(
                 transportRequestNumber, shipper(), new UserId(provisionalActor.userId()), input.get()));
         return switch (outcome) {
-            case ResubmissionOutcome.Resubmitted resubmitted ->
+            case ResubmissionOutcome.Resubmitted(TransportRequestNumber resubmittedNumber, int versionNo) ->
                 redirectToDetail(
-                        resubmitted.number(),
-                        TransportRequestLabels.numberWithVersion(resubmitted.number(), resubmitted.versionNo())
-                                + " を出し直しました",
+                        resubmittedNumber,
+                        TransportRequestLabels.numberWithVersion(resubmittedNumber, versionNo) + " を出し直しました",
                         redirectAttributes);
             case ResubmissionOutcome.Invalid(SubmissionViolations violations) -> {
                 SubmissionViolationMessages.reject(violations, bindingResult);
