@@ -4,7 +4,7 @@ title: "cargo-tracker バックエンドアーキテクチャ"
 description: "cargo-tracker の境界づけられたコンテキスト、コンテキストごとのドメインロジックパターン、パッケージ構成、サガとドメインイベントによる連携（ARCH-HO-01〜03）、受信サービスの方針。"
 tags: [design, architecture, backend]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-01T23:28:04Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-03T05:43:59Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T07:11:12Z }
   - { by: human:kakimomokuri, at: 2026-10-01T07:41:04Z }
@@ -256,7 +256,8 @@ Bolt 1 の実装で次を決めた。
 
 - 各コンテキストの `domain.events` は、Spring Modulith の名前付きインターフェース（`@NamedInterface("events")`）として公開する。他のコンテキストはこのパッケージのイベントの型だけを参照できる。イベントは他のコンテキストのドメインの型を持たず、UUID と共有カーネルの型だけで表す
 - MyBatis の型ハンドラーなど、コンテキストに属さない技術的な部品は基盤（`platform`）モジュールに置き、設定（`mybatis.type-handlers-package`）を通してだけ使う。コンテキストのコードから `platform` を参照しない
-- アプリケーションサービスは各コンテキストの `infrastructure.config` で Bean として組み立てる（`@Service` を付けない）。アプリケーション層を Spring の部品探索から切り離し、どのアダプターをつないだかをコンテキストごとに 1 か所で見えるようにするためである。受入シナリオでは、同じサービスをメモリ上のリポジトリと同期の配信で組み直せる
+- アプリケーションサービスは各コンテキストの `infrastructure.config` で Bean として組み立てる。アプリケーション層を Spring の部品探索から切り離し、どのアダプターをつないだかをコンテキストごとに 1 か所で見えるようにするためである。受入シナリオでは、同じサービスをメモリ上のリポジトリと同期の配信で組み直せる
+- アプリケーションサービス（`commandservices`・`queryservices` の `*Service`、`eventhandlers` の `*EventHandler`）には `@Service` を付ける。JIG がユースケースとして読むための印で、部品探索には拾わせない（`CargoTrackerApplication` の部品探索から `..application..` を外す）。2026-10-03 に human:kakimomokuri が決定。ArchUnit（`LayerArchitectureTest`）が印を、`ComponentScanTest` が部品探索の除外を固定する。Spring は同じ名前の `@Bean` が部品探索の定義を上書きするため、除外が外れても起動では気づけない
 - `infrastructure.config` は合成ルートであり、依存の向きの規則（`interfaces` → `application` → `domain` ← `infrastructure`）の唯一の例外として `application` に依存してよい。AT-02 では `..infrastructure.config..` だけにこの依存を許し、`config` には `@Configuration` のクラスだけを置く（Bolt 1 レビュー R-15。2026-10-02 に human:kakimomokuri が承認した D-5。ADR-001 のコンプライアンスから参照）
 - 各コンテキストの `package-info.java` に、依存してよいモジュールを `allowedDependencies` で宣言する（例: アクセス・監査は `shared` と `quotation :: events`）
 
