@@ -1,7 +1,9 @@
 package com.example.cargotracker.quotation.interfaces.web;
 
+import com.example.cargotracker.quotation.domain.model.valueobjects.Cargo;
 import com.example.cargotracker.quotation.domain.model.valueobjects.CargoCategory;
 import com.example.cargotracker.quotation.domain.model.valueobjects.PackageType;
+import com.example.cargotracker.quotation.domain.model.valueobjects.ShipmentTerms;
 import com.example.cargotracker.quotation.domain.model.valueobjects.ShipmentTermsInput;
 import com.example.cargotracker.shared.domain.CompanyId;
 import com.example.cargotracker.shared.domain.Location;
@@ -74,6 +76,25 @@ final class TransportRequestFormConverter {
                 parse(form.getGrossWeightKg(), "grossWeightKg", errors, "総重量（kg）は数字で入力してください", BigDecimal::new),
                 parse(form.getVolumeM3(), "volumeM3", errors, "容積（m3）は数字で入力してください", BigDecimal::new));
         return errors.hasErrors() ? Optional.empty() : Optional.of(input);
+    }
+
+    /**
+     * 現在の版の輸送条件を、編集画面（出し直し）の初期値にする。希望到着期限は荷主の画面のタイムゾーンで示す。
+     */
+    static TransportRequestForm toForm(ShipmentTerms terms) {
+        Cargo cargo = terms.cargo();
+        TransportRequestForm form = new TransportRequestForm();
+        form.setConsignee(terms.consigneeCompanyId().value().toString());
+        form.setOrigin(terms.origin().unLocode());
+        form.setDestination(terms.destination().unLocode());
+        form.setArrivalDeadline(
+                DEADLINE_FORMAT.format(terms.arrivalDeadline().instant().atZone(CUSTOMER_ZONE)));
+        form.setCargoCategory(cargo.category().name());
+        form.setPackageType(cargo.packageType().name());
+        form.setPackageCount(String.valueOf(cargo.packageCount()));
+        form.setGrossWeightKg(cargo.grossWeightKg().stripTrailingZeros().toPlainString());
+        form.setVolumeM3(cargo.volumeM3().stripTrailingZeros().toPlainString());
+        return form;
     }
 
     /** 空欄は null（入力なし）にする。形式の誤りは記録して null にする。 */

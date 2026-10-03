@@ -9,18 +9,22 @@ import static org.mockito.Mockito.never;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.flash;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.model;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.view;
 
+import com.example.cargotracker.quotation.application.internal.commands.ResubmitTransportRequestCommand;
 import com.example.cargotracker.quotation.application.internal.commands.SubmitTransportRequestCommand;
+import com.example.cargotracker.quotation.application.internal.commandservices.ResubmissionOutcome;
 import com.example.cargotracker.quotation.application.internal.commandservices.SubmissionOutcome;
 import com.example.cargotracker.quotation.application.internal.commandservices.TransportRequestCommandService;
 import com.example.cargotracker.quotation.application.internal.queryservices.TransportRequestQueryService;
 import com.example.cargotracker.quotation.domain.model.aggregates.TransportRequest;
 import com.example.cargotracker.quotation.domain.model.valueobjects.CargoCategory;
 import com.example.cargotracker.quotation.domain.model.valueobjects.PackageType;
+import com.example.cargotracker.quotation.domain.model.valueobjects.ResubmissionRejection;
 import com.example.cargotracker.quotation.domain.model.valueobjects.ShipmentTermsFixture;
 import com.example.cargotracker.quotation.domain.model.valueobjects.ShipmentTermsInput;
 import com.example.cargotracker.quotation.domain.model.valueobjects.SubmissionViolations;
@@ -29,6 +33,8 @@ import com.example.cargotracker.quotation.domain.model.valueobjects.SubmissionVi
 import com.example.cargotracker.quotation.domain.model.valueobjects.SubmissionViolations.Violation;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestId;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestNumber;
+import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestStatus;
+import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestSummary;
 import com.example.cargotracker.shared.domain.CompanyId;
 import com.example.cargotracker.shared.domain.Location;
 import com.example.cargotracker.shared.domain.UserId;
@@ -64,6 +70,7 @@ class TransportRequestControllerTest {
 
     private static final CompanyId SHIPPER = new CompanyId(UUID.fromString("00000000-0000-0000-0000-000000000001"));
     private static final UserId USER = new UserId(UUID.fromString("00000000-0000-0000-0000-000000000101"));
+    private static final UserId STAFF = new UserId(UUID.fromString("00000000-0000-0000-0000-000000000301"));
     private static final TransportRequestId ID =
             new TransportRequestId(UUID.fromString("11111111-1111-1111-1111-111111111111"));
     private static final TransportRequestNumber NUMBER = new TransportRequestNumber(2026, 1);
@@ -96,6 +103,12 @@ class TransportRequestControllerTest {
 
     /** 必須条件をそろえた画面の入力。{@code overrides} は「項目名, 値」の組で、その項目の値を置き換える。 */
     private static MockHttpServletRequestBuilder completeForm(String... overrides) {
+        return completeForm(post("/customer/transport-requests"), overrides);
+    }
+
+    /** 必須条件をそろえた画面の入力を、指定の送り先に送る。 */
+    private static MockHttpServletRequestBuilder completeForm(
+            MockHttpServletRequestBuilder request, String... overrides) {
         Map<String, String> values = new LinkedHashMap<>();
         values.put("consignee", "00000000-0000-0000-0000-000000000201");
         values.put("origin", "JPTYO");
@@ -109,7 +122,6 @@ class TransportRequestControllerTest {
         for (int i = 0; i < overrides.length; i += 2) {
             values.put(overrides[i], overrides[i + 1]);
         }
-        MockHttpServletRequestBuilder request = post("/customer/transport-requests");
         values.forEach(request::param);
         return request;
     }
@@ -134,11 +146,13 @@ class TransportRequestControllerTest {
     }
 
     @Test
-    void 必須条件をそろえて提出すると日本時間の期限をUTCにして提出し業務番号の完了画面へリダイレクトする() throws Exception {
+    void 必須条件をそろえて提出すると日本時間の期限をUTCにして提出し見積依頼の詳細へリダイレクトして結果を示す() throws Exception {
         SubmitTransportRequestCommand expected = new SubmitTransportRequestCommand(SHIPPER, USER, COMPLETE_INPUT);
         given(commandService.submit(expected)).willReturn(SUBMITTED);
 
-        mockMvc.perform(completeForm()).andExpect(redirectedUrl("/customer/transport-requests/TR-2026-0001/submitted"));
+        mockMvc.perform(completeForm())
+                .andExpect(redirectedUrl("/customer/transport-requests/TR-2026-0001"))
+                .andExpect(flash().attribute("result", "TR-2026-0001 版 1 を提出しました"));
 
         then(commandService).should().submit(expected);
     }
@@ -148,7 +162,7 @@ class TransportRequestControllerTest {
         given(commandService.submit(any())).willReturn(SUBMITTED);
 
         mockMvc.perform(completeForm("origin", " jptyo ", "destination", "nlrtm"))
-                .andExpect(redirectedUrl("/customer/transport-requests/TR-2026-0001/submitted"));
+                .andExpect(redirectedUrl("/customer/transport-requests/TR-2026-0001"));
 
         then(commandService).should().submit(new SubmitTransportRequestCommand(SHIPPER, USER, COMPLETE_INPUT));
     }
@@ -238,49 +252,209 @@ class TransportRequestControllerTest {
         then(commandService).should(never()).submit(any());
     }
 
-    @Test
-    void 提出の完了画面に業務番号と版と審査中と日本時間の提出時刻を表示し内部のIDを出さない() throws Exception {
-        given(queryService.findByNumber(NUMBER, SHIPPER))
-                .willReturn(Optional.of(TransportRequest.submit(
-                        ID,
-                        NUMBER,
-                        SHIPPER,
-                        ShipmentTermsFixture.generalCargo(),
-                        USER,
-                        new UtcInstant(Instant.parse("2026-10-05T01:00:00Z")))));
+    private static TransportRequest underReview() {
+        return TransportRequest.submit(
+                ID,
+                NUMBER,
+                SHIPPER,
+                ShipmentTermsFixture.generalCargo(),
+                USER,
+                new UtcInstant(Instant.parse("2026-10-05T01:00:00Z")));
+    }
 
-        mockMvc.perform(get("/customer/transport-requests/TR-2026-0001/submitted"))
+    private static TransportRequest sentBack() {
+        TransportRequest request = underReview();
+        request.sendBack(1, STAFF, "目的地の確認が必要", "目的地の港", new UtcInstant(Instant.parse("2026-10-05T03:00:00Z")));
+        return request;
+    }
+
+    private static TransportRequestSummary summary(TransportRequestStatus status) {
+        return new TransportRequestSummary(
+                NUMBER,
+                1,
+                status,
+                new UtcInstant(Instant.parse("2026-10-05T01:00:00Z")),
+                new UtcInstant(Instant.parse("2026-10-05T01:00:00Z")),
+                new Location("JPTYO"),
+                new Location("NLRTM"),
+                ShipmentTermsFixture.ARRIVAL_DEADLINE,
+                CargoCategory.GENERAL);
+    }
+
+    /** 出し直しの画面の入力。{@code overrides} は「項目名, 値」の組。 */
+    private static MockHttpServletRequestBuilder resubmitForm(String... overrides) {
+        return completeForm(post("/customer/transport-requests/TR-2026-0001/versions"), overrides);
+    }
+
+    @Test
+    void 見積依頼の一覧は仮の主体の荷主企業の輸送要求を状態といま誰の対応待ちかとともに示す() throws Exception {
+        given(queryService.findSummaries(SHIPPER)).willReturn(List.of(summary(TransportRequestStatus.DRAFT)));
+
+        mockMvc.perform(get("/customer/transport-requests"))
                 .andExpect(status().isOk())
-                .andExpect(content().string(containsString("TR-2026-0001 版 1")))
-                .andExpect(content().string(containsString("審査中")))
+                .andExpect(view().name("quotation/transport-requests/list"))
+                .andExpect(content().string(containsString("TR-2026-0001")))
+                .andExpect(content().string(containsString("差戻し（お客様の対応待ち）")))
+                .andExpect(content().string(containsString("JPTYO → NLRTM")))
                 .andExpect(content().string(containsString("2026-10-05 10:00 Asia/Tokyo（UTC+09:00）")))
-                .andExpect(content().string(containsString("営業担当者が内容を審査し")))
+                .andExpect(content().string(not(containsString(ID.value().toString()))));
+
+        then(queryService).should().findSummaries(SHIPPER);
+    }
+
+    @Test
+    void 見積依頼の詳細に業務番号と版と状態と輸送条件と日本時間の提出時刻を示し内部のIDを出さない() throws Exception {
+        given(queryService.findByNumber(NUMBER, SHIPPER)).willReturn(Optional.of(underReview()));
+
+        mockMvc.perform(get("/customer/transport-requests/TR-2026-0001"))
+                .andExpect(status().isOk())
+                .andExpect(view().name("quotation/transport-requests/detail"))
+                .andExpect(content().string(containsString("TR-2026-0001 版 1")))
+                .andExpect(content().string(containsString("審査中（A 社の対応待ち）")))
+                .andExpect(content().string(containsString("営業担当者が内容を審査しています")))
+                .andExpect(content().string(containsString("NLRTM")))
+                .andExpect(content().string(containsString("2026-10-05 10:00 Asia/Tokyo（UTC+09:00）")))
+                .andExpect(content().string(not(containsString("編集して出し直す"))))
+                .andExpect(content().string(not(containsString("<dt>差戻しの理由</dt>"))))
                 .andExpect(content().string(not(containsString(ID.value().toString()))));
     }
 
     @Test
-    void 存在しない業務番号の完了画面は見つからない() throws Exception {
-        given(queryService.findByNumber(any(), any())).willReturn(Optional.empty());
+    void 差し戻された見積依頼の詳細は差戻しの理由と不足事項と編集への入口を示し判断者は出さない() throws Exception {
+        given(queryService.findByNumber(NUMBER, SHIPPER)).willReturn(Optional.of(sentBack()));
 
-        mockMvc.perform(get("/customer/transport-requests/TR-2026-0099/submitted"))
-                .andExpect(status().isNotFound());
+        mockMvc.perform(get("/customer/transport-requests/TR-2026-0001"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("差戻し（お客様の対応待ち）")))
+                .andExpect(content().string(containsString("目的地の確認が必要")))
+                .andExpect(content().string(containsString("目的地の港")))
+                .andExpect(content().string(containsString("編集して出し直す")))
+                .andExpect(content().string(not(containsString(STAFF.value().toString()))));
     }
 
     @Test
-    void 完了画面は仮の主体の荷主企業で絞って照会し他社の番号は見つからない() throws Exception {
+    void 詳細は仮の主体の荷主企業で絞って照会し他社や存在しない番号は見つからない() throws Exception {
         given(queryService.findByNumber(NUMBER, SHIPPER)).willReturn(Optional.empty());
 
-        mockMvc.perform(get("/customer/transport-requests/TR-2026-0001/submitted"))
-                .andExpect(status().isNotFound());
+        mockMvc.perform(get("/customer/transport-requests/TR-2026-0001")).andExpect(status().isNotFound());
+        mockMvc.perform(get("/customer/transport-requests/TR-2026-0001/edit")).andExpect(status().isNotFound());
 
-        then(queryService).should().findByNumber(NUMBER, SHIPPER);
+        then(queryService).should(org.mockito.Mockito.times(2)).findByNumber(NUMBER, SHIPPER);
     }
 
     @Test
-    void 業務番号の形式でない完了画面は見つからない() throws Exception {
-        mockMvc.perform(get("/customer/transport-requests/{id}/submitted", UUID.randomUUID()))
+    void 業務番号の形式でない詳細は見つからない() throws Exception {
+        mockMvc.perform(get("/customer/transport-requests/{id}", UUID.randomUUID()))
                 .andExpect(status().isNotFound());
 
         then(queryService).should(never()).findByNumber(any(), any());
+    }
+
+    @Test
+    void 完了画面は詳細に統合してなくした() throws Exception {
+        mockMvc.perform(get("/customer/transport-requests/TR-2026-0001/submitted"))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void 下書きの編集画面は現在の版の輸送条件を日本時間の期限で初期値にし新しい版になる旨を示す() throws Exception {
+        given(queryService.findByNumber(NUMBER, SHIPPER)).willReturn(Optional.of(sentBack()));
+
+        mockMvc.perform(get("/customer/transport-requests/TR-2026-0001/edit"))
+                .andExpect(status().isOk())
+                .andExpect(view().name("quotation/transport-requests/new"))
+                .andExpect(model().attribute(
+                                "transportRequestForm",
+                                org.hamcrest.Matchers.allOf(
+                                        org.hamcrest.Matchers.hasProperty(
+                                                "destination", org.hamcrest.Matchers.is("NLRTM")),
+                                        org.hamcrest.Matchers.hasProperty(
+                                                "arrivalDeadline", org.hamcrest.Matchers.is("2099-11-02 09:00")),
+                                        org.hamcrest.Matchers.hasProperty(
+                                                "packageType", org.hamcrest.Matchers.is("PALLET")),
+                                        org.hamcrest.Matchers.hasProperty(
+                                                "grossWeightKg", org.hamcrest.Matchers.is("8400")))))
+                .andExpect(content().string(containsString("見積依頼の編集")))
+                .andExpect(content().string(containsString("出し直すと版 2 になります。業務番号は変わりません")))
+                .andExpect(content()
+                        .string(containsString("action=\"/customer/transport-requests/TR-2026-0001/versions\"")))
+                .andExpect(content().string(containsString("出し直す")));
+    }
+
+    @Test
+    void 下書きでない見積依頼の編集画面は詳細に戻して理由を示す() throws Exception {
+        given(queryService.findByNumber(NUMBER, SHIPPER)).willReturn(Optional.of(underReview()));
+
+        mockMvc.perform(get("/customer/transport-requests/TR-2026-0001/edit"))
+                .andExpect(redirectedUrl("/customer/transport-requests/TR-2026-0001"))
+                .andExpect(flash().attribute("result", "TR-2026-0001 版 1 は審査中のため出し直せません"));
+    }
+
+    @Test
+    void 出し直すと仮の主体の荷主企業で再提出し詳細へリダイレクトして新しい版を示す() throws Exception {
+        ResubmitTransportRequestCommand expected =
+                new ResubmitTransportRequestCommand(NUMBER, SHIPPER, USER, COMPLETE_INPUT);
+        given(commandService.resubmit(expected)).willReturn(new ResubmissionOutcome.Resubmitted(NUMBER, 2));
+
+        mockMvc.perform(resubmitForm())
+                .andExpect(redirectedUrl("/customer/transport-requests/TR-2026-0001"))
+                .andExpect(flash().attribute("result", "TR-2026-0001 版 2 を出し直しました"));
+
+        then(commandService).should().resubmit(expected);
+    }
+
+    @Test
+    void 出し直しの不足はエラー要約で示し編集画面に入力値を残す() throws Exception {
+        given(queryService.findByNumber(NUMBER, SHIPPER)).willReturn(Optional.of(sentBack()));
+        given(commandService.resubmit(any()))
+                .willReturn(new ResubmissionOutcome.Invalid(
+                        new SubmissionViolations(List.of(new Violation(Item.DESTINATION, Reason.MISSING)))));
+
+        mockMvc.perform(resubmitForm("destination", "", "origin", "KRPUS"))
+                .andExpect(status().isOk())
+                .andExpect(view().name("quotation/transport-requests/new"))
+                .andExpect(content().string(containsString("error-summary")))
+                .andExpect(content().string(containsString("value=\"KRPUS\"")))
+                .andExpect(content().string(containsString("出し直すと版 2 になります")));
+    }
+
+    @Test
+    void 業務の規則の違反は編集画面にエラー要約で示す() throws Exception {
+        given(queryService.findByNumber(NUMBER, SHIPPER)).willReturn(Optional.of(sentBack()));
+        given(commandService.resubmit(any()))
+                .willReturn(new ResubmissionOutcome.Invalid(
+                        new SubmissionViolations(List.of(new Violation(Item.DESTINATION, Reason.SAME_AS_ORIGIN)))));
+
+        mockMvc.perform(resubmitForm("destination", "JPTYO"))
+                .andExpect(status().isOk())
+                .andExpect(view().name("quotation/transport-requests/new"))
+                .andExpect(content().string(containsString("error-summary")));
+    }
+
+    @Test
+    void 下書きでなくなった見積依頼の出し直しは詳細に戻して理由を示す() throws Exception {
+        given(queryService.findByNumber(NUMBER, SHIPPER)).willReturn(Optional.of(underReview()));
+        given(commandService.resubmit(any()))
+                .willReturn(new ResubmissionOutcome.Rejected(ResubmissionRejection.NOT_DRAFT));
+
+        mockMvc.perform(resubmitForm())
+                .andExpect(redirectedUrl("/customer/transport-requests/TR-2026-0001"))
+                .andExpect(flash().attribute("result", "TR-2026-0001 版 1 は審査中のため出し直せません"));
+    }
+
+    @Test
+    void 同時の更新で出し直せなかったら詳細に戻して先に更新されたことを示す() throws Exception {
+        given(commandService.resubmit(any())).willReturn(new ResubmissionOutcome.Conflict());
+
+        mockMvc.perform(resubmitForm())
+                .andExpect(redirectedUrl("/customer/transport-requests/TR-2026-0001"))
+                .andExpect(flash().attribute("result", "他の利用者が先に更新しました。内容を確かめてから出し直してください"));
+    }
+
+    @Test
+    void 他社や存在しない番号の出し直しは見つからない() throws Exception {
+        given(commandService.resubmit(any())).willReturn(new ResubmissionOutcome.NotFound());
+
+        mockMvc.perform(resubmitForm()).andExpect(status().isNotFound());
     }
 }

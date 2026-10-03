@@ -7,6 +7,7 @@ import com.microsoft.playwright.Page;
 import com.microsoft.playwright.options.AriaRole;
 import io.cucumber.java.ja.ならば;
 import io.cucumber.java.ja.もし;
+import io.cucumber.java.ja.前提;
 import java.util.regex.Pattern;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.web.server.LocalServerPort;
@@ -63,6 +64,17 @@ public class ReviewTransportRequestUiSteps {
             case "提出した見積依頼の審査画面" -> open("/staff/transport-requests/" + number());
             default -> throw new IllegalArgumentException("シナリオの画面名: " + screen);
         }
+    }
+
+    @前提("営業担当者が提出した見積依頼を理由 {string} と不足事項 {string} で差し戻している")
+    public void 差し戻している(String reason, String missingItems) {
+        open("/staff/transport-requests/" + number());
+        field(REASON).fill(reason);
+        field(MISSING_ITEMS).fill(missingItems);
+        page().waitForResponse(
+                        response -> "POST".equals(response.request().method()),
+                        () -> button("差し戻す").click());
+        page().waitForURL("**/staff/transport-requests");
     }
 
     @ならば("受付一覧に提出した見積依頼が表示される")

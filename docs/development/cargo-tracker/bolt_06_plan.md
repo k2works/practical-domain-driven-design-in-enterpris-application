@@ -4,7 +4,7 @@ title: "Bolt 6 計画 - 荷主の再提出の画面（US-02 の差戻しから�
 description: "6 回目の Bolt の計画。US-02 の差戻しの後、荷主が自社の見積依頼の一覧（C-02）・詳細（C-04）で差戻しの理由と不足事項を見て、編集（C-03）で版 2 を出し直す流れを、荷主企業での絞り込みを守りながらステップ 1〜4 で定義する。"
 tags: [development,bolt-plan]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-03T00:22:53Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-03T00:34:45Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-03T00:10:59Z }
 ---
@@ -236,7 +236,7 @@ C03N --> C04 : POST /customer/transport-requests\n（PRG、「提出しました
   - 完了の判定: `check` が緑。push する。ステップ 1 とあわせて承認を受ける。
   - 結果（2026-10-03 09:13〜09:19）: 受入シナリオ 4 件（`resubmit_transport_request.feature`）をステップ定義とともに先に書き、コンパイルの失敗で Red を確かめた。内側は、集約の `sendBackNotice()`（荷主に見せる差戻しの知らせ `SendBackNotice`。現在の版への差戻しの理由と不足事項だけで、下書きのときだけ返す）、一覧の行の状態、リポジトリの `findSummariesByShipper`（メモリ上の実装と MyBatis。一覧の SQL は社内の受付一覧と共通の断片にした）、荷主の照会サービスの `findSummaries` を、単体テスト 3 件と統合テスト 1 件を先に書いて作った。業務ルール層のシナリオは 42 件すべて passed（failed・undefined・skipped 0）。`check` 緑（テスト 293 件）
   - 承認（2026-10-03、human:kakimomokuri）: ステップ 1 とあわせて承認された。「直近の差戻し」を「下書きのときの、現在の版への差戻し」とする解釈も承認された（出し直した後は前の版の差戻しの理由を示さない）
-- [ ] **3. 荷主の画面を作る（画面の層の Red → Green）**（承認はステップ 4 とまとめて受ける）
+- [x] **3. 荷主の画面を作る（画面の層の Red → Green）**（承認はステップ 4 とまとめて受ける）
   - 画面の層の受入シナリオ（`features/ui/resubmit_transport_request_ui.feature`、`@ui @US-02`）を先に書く。主成功と画面に固有の条件だけにする（テスト戦略）。
     - 主成功: 営業が差し戻した見積依頼を、荷主が一覧から開き、理由と不足事項を読み、編集で目的地を直して出し直すと、詳細に「版 2 を出し直しました」と審査中が示される。キー操作だけで行える
     - 画面に固有の条件: 編集で必須の項目を空にして送ると、エラー要約が出て入力が残る
@@ -245,6 +245,7 @@ C03N --> C04 : POST /customer/transport-requests\n（PRG、「提出しました
   - 提出の完了画面（`/{業務番号}/submitted`）を C-04 に統合する。Bolt 4 の画面の層のシナリオの期待（完了画面の文言）を C-04 に合わせる。
   - 入口の一覧（`/`）に C-02 を足す。手順書の「開く URL」を更新する。
   - 完了の判定: `check` と `uiTest` が緑。push する。
+  - 結果（2026-10-03 09:23〜09:34）: 画面の層の受入シナリオ（`resubmit_transport_request_ui.feature`、5 件）と、Bolt 4 のシナリオの期待の C-04 への書き換えを先に書いた。コントローラの単体テストを先に書き、13 件の失敗で Red を確かめた（画面の層のシナリオの Red は実行していない）。C-02（`list.html`）、C-04（`detail.html`）、C-03 の編集（`new.html` を見出し・送り先・案内・ボタン名で共有）、出し直し（`POST /{業務番号}/versions`）を作り、完了画面（`submitted.html`）を C-04 に統合して消した。出し直せない理由の文は、編集を開いたときと出し直したときで 1 か所（`notResubmittable`）にまとめた。同時の更新は、詳細に戻して「他の利用者が先に更新しました」と示す（入力は残らない）。入口の一覧と手順書の「開く URL」に C-02 を足した。押せる範囲のスタイルは Bolt 5 と同じく画面ごとに書き、#36 で共通の CSS に移す。画面の層のシナリオは 16 件すべて passed（failed・undefined・skipped 0）。`check` 緑（テスト 303 件）
 - [ ] **4. 検証と Bolt 終了報告**
   - `check`・`uiTest`・CI・SonarQube の品質ゲート（PASS）を確かめる。
   - `bolt_06_report.md` を書く（仮説 H1〜H3 の結論、各ステップの開始と完了の時刻）。ステップ 3 の結果をここでまとめて報告する。

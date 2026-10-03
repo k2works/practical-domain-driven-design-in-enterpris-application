@@ -31,6 +31,10 @@ public class SubmitTransportRequestUiSteps {
     private static final String ARRIVAL_DEADLINE = "2099-11-02 09:00";
 
     private static final Pattern TRANSPORT_REQUEST_NUMBER = Pattern.compile("TR-\\d{4}-\\d{4,}");
+
+    /** 提出と出し直しの後の PRG のリダイレクト先（C-04 見積依頼の詳細）。完了画面は C-04 に統合した（Bolt 6）。 */
+    static final String DETAIL_URL = "**/customer/transport-requests/TR-*";
+
     private static final Pattern UUID_TEXT =
             Pattern.compile("[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}");
 
@@ -87,7 +91,7 @@ public class SubmitTransportRequestUiSteps {
         open("/customer/transport-requests/new");
         fillRequiredTerms();
         submit();
-        page().waitForURL("**/submitted");
+        page().waitForURL(DETAIL_URL);
         String number = page().locator("dt:text-is('業務番号（版）') + dd")
                 .textContent()
                 .strip()
@@ -120,11 +124,14 @@ public class SubmitTransportRequestUiSteps {
         switch (screen) {
             case "見積依頼の作成画面" -> open("/customer/transport-requests/new");
             case "入口の一覧" -> open("/");
-            case "見積依頼を提出した完了画面" -> {
-                open("/customer/transport-requests/new");
-                fillRequiredTerms();
-                submit();
+            case "見積依頼の一覧" -> open("/customer/transport-requests");
+            case "提出した見積依頼の詳細画面" -> {
+                if (state.transportRequestNumber() == null) {
+                    荷主が見積依頼を提出している();
+                }
+                open("/customer/transport-requests/" + state.transportRequestNumber());
             }
+            case "提出した見積依頼の編集画面" -> open("/customer/transport-requests/" + state.transportRequestNumber() + "/edit");
             default -> throw new IllegalArgumentException("シナリオの画面名: " + screen);
         }
     }
@@ -151,7 +158,7 @@ public class SubmitTransportRequestUiSteps {
         page().keyboard().press("Tab");
         assertThat(submitButton()).isFocused();
         page().keyboard().press("Enter");
-        page().waitForURL("**/submitted");
+        page().waitForURL(DETAIL_URL);
         browser.checkAccessibility();
     }
 
@@ -181,7 +188,7 @@ public class SubmitTransportRequestUiSteps {
         field(DESTINATION).fill(destination);
         field(ARRIVAL_DEADLINE_LABEL).fill(deadline);
         submit();
-        page().waitForURL("**/submitted");
+        page().waitForURL(DETAIL_URL);
         browser.checkAccessibility();
     }
 
@@ -192,8 +199,8 @@ public class SubmitTransportRequestUiSteps {
         submitAndWait(() -> page().keyboard().press("Enter"));
     }
 
-    @ならば("完了画面に業務番号と {string} と状態 {string} が表示される")
-    public void 完了画面に業務番号と版と状態が表示される(String version, String status) {
+    @ならば("見積依頼の詳細に業務番号と {string} と状態 {string} が表示される")
+    public void 詳細に業務番号と版と状態が表示される(String version, String status) {
         Locator number = page().locator("dt:text-is('業務番号（版）') + dd");
         assertThat(number).hasText(Pattern.compile("^" + TRANSPORT_REQUEST_NUMBER.pattern() + " " + version + "$"));
         transportRequestNumber = number.textContent().strip().split(" ")[0];
@@ -201,7 +208,7 @@ public class SubmitTransportRequestUiSteps {
         assertThat(page().locator("dt:text-is('状態') + dd")).hasText(status);
     }
 
-    @かつ("完了画面にもアドレスバーにも内部の ID が出ない")
+    @かつ("見積依頼の詳細にもアドレスバーにも内部の ID が出ない")
     public void 内部のIDが出ない() {
         Assertions.assertThat(page().url()).doesNotContainPattern(UUID_TEXT).contains(transportRequestNumber);
         Assertions.assertThat(page().content()).doesNotContainPattern(UUID_TEXT);
@@ -267,7 +274,7 @@ public class SubmitTransportRequestUiSteps {
         assertThat(errorSummary()
                         .getByRole(AriaRole.LINK, new Locator.GetByRoleOptions().setName(Pattern.compile("^貨物種別"))))
                 .isVisible();
-        Assertions.assertThat(page().url()).doesNotContain("/submitted");
+        Assertions.assertThat(page().url()).doesNotContainPattern(TRANSPORT_REQUEST_NUMBER);
     }
 
     @前提("画面の幅が {int} CSS px である")

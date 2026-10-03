@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="ja" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>見積依頼の一覧 - cargo-tracker</title>
+    <style>
+        /* 表の中のリンクも押せる範囲を 24 CSS px 以上にする（WCAG 2.2 の 2.5.8 target-size。Bolt 5 の入口の一覧と同じ書き方）。
+           UI の骨格（#36）で共通の CSS に移す（Try T-18） */
+        td a { display: inline-block; min-height: 24px; line-height: 24px; }
+    </style>
+</head>
+<body>
+<main>
+    <h1>見積依頼の一覧</h1>
+    <!-- C-02（Bolt 6）。自社の見積依頼だけを、最初の提出時刻（版 1）の新しい順に示す。状態の絞り込みとページ分けは後の Bolt -->
+    <p th:if="${#lists.isEmpty(requests)}">見積依頼はまだありません。</p>
+    <!-- 狭い画面では表だけを横にスクロールさせ、ページ全体を横にスクロールさせない（WCAG 1.4.10 の表の例外）。
+         キー操作でもスクロールできるよう、囲みをフォーカスできるようにして名前を付ける -->
+    <div th:unless="${#lists.isEmpty(requests)}" style="overflow-x: auto" tabindex="0" role="region"
+         aria-labelledby="requests-caption">
+    <table>
+        <caption id="requests-caption">自社の見積依頼（最初の提出時刻の新しい順）</caption>
+        <thead>
+        <tr>
+            <th scope="col">業務番号</th>
+            <th scope="col">版</th>
+            <th scope="col">状態（いま誰の対応待ちか）</th>
+            <th scope="col">出発地 → 目的地</th>
+            <th scope="col">最初の提出時刻</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="request : ${requests}">
+            <td><a th:href="@{/customer/transport-requests/{number}(number=${request.number()})}" th:text="${request.number()}">TR-2026-0001</a></td>
+            <td th:text="${request.versionNo()}">1</td>
+            <td th:text="${request.status()}">差戻し（お客様の対応待ち）</td>
+            <td th:text="${request.route()}">JPTYO → NLRTM</td>
+            <td th:text="${request.firstSubmittedAt()}">2026-10-05 10:00 Asia/Tokyo（UTC+09:00）</td>
+        </tr>
+        </tbody>
+    </table>
+    </div>
+    <p><a th:href="@{/customer/transport-requests/new}">見積依頼を作成する</a></p>
+    <p><a th:href="@{/}">入口の一覧へ戻る</a></p>
+</main>
+</body>
+</html>

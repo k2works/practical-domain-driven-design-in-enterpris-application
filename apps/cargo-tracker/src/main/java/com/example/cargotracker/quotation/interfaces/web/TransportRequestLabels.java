@@ -14,7 +14,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 /**
- * 見積依頼の画面（荷主の C-03、社内の S-02・S-03）で共通に使う表示名と日時の書式。
+ * 見積依頼の画面（荷主の C-02・C-03・C-04、社内の S-02・S-03）で共通に使う表示名と日時の書式。
  */
 final class TransportRequestLabels {
 
@@ -49,6 +49,27 @@ final class TransportRequestLabels {
     static String staffDateTime(UtcInstant instant) {
         return customerDateTime(instant) + "（UTC "
                 + UTC_TIME.format(instant.instant().atOffset(ZoneOffset.UTC)) + "）";
+    }
+
+    /**
+     * 荷主の画面の状態の表示名。いま誰の対応待ちかを添える（UI 設計 C-04 の対応表。Bolt 6）。
+     * 社内の画面の表示名（{@link #status(TransportRequestStatus)}）は変えない。
+     */
+    static String customerStatus(TransportRequestStatus status) {
+        return switch (status) {
+            case DRAFT -> "差戻し（お客様の対応待ち）";
+            case UNDER_REVIEW -> "審査中（A 社の対応待ち）";
+            case QUOTING -> "見積り作成中（A 社の対応待ち）";
+        };
+    }
+
+    /** 荷主の画面で、いま誰が何をしているか、荷主が次に何をするかの案内。 */
+    static String customerGuidance(TransportRequestStatus status) {
+        return switch (status) {
+            case DRAFT -> "営業担当者が見積依頼を差し戻しました。差戻しの理由を確かめ、直して出し直してください。";
+            case UNDER_REVIEW -> "営業担当者が内容を審査しています。お問い合わせの際は業務番号をお伝えください。";
+            case QUOTING -> "営業担当者が見積りを作成しています。お問い合わせの際は業務番号をお伝えください。";
+        };
     }
 
     static String status(TransportRequestStatus status) {

@@ -3,14 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title th:text="${#fields.hasErrors('${transportRequestForm.*}')} ? '入力内容に誤りがあります - 見積依頼の作成 - cargo-tracker' : '見積依頼の作成 - cargo-tracker'">見積依頼の作成 - cargo-tracker</title>
+    <title th:text="${#fields.hasErrors('${transportRequestForm.*}')} ? |入力内容に誤りがあります - ${formTitle} - cargo-tracker| : |${formTitle} - cargo-tracker|">見積依頼の作成 - cargo-tracker</title>
     <script th:src="@{/js/transport-request-form.js}" defer></script>
 </head>
 <body>
 <main>
-    <h1>見積依頼の作成</h1>
-    <!-- C-03 の 1 画面の形（Bolt 4）。段階入力・下書き保存・必要書類は後の Bolt で入れる -->
-    <form th:action="@{/customer/transport-requests}" th:object="${transportRequestForm}" method="post" novalidate>
+    <h1 th:text="${formTitle}">見積依頼の作成</h1>
+    <!-- C-03 の 1 画面の形（Bolt 4）。作成と編集（出し直し。Bolt 6）で共有し、見出し・送り先・案内・ボタン名だけを変える。
+         段階入力・下書き保存・必要書類は後の Bolt で入れる -->
+    <p id="version-notice" th:if="${versionNotice}" th:text="${versionNotice}">TR-2026-0001 を直して出し直します。出し直すと版 2 になります。業務番号は変わりません。</p>
+    <form th:action="@{${formAction}}" th:object="${transportRequestForm}" method="post" novalidate>
         <!-- エラー要約: 送信に失敗したら画面上部に出し、要約へフォーカスを移す。各項目の誤りへのリンクを持つ（UI 設計 C-03） -->
         <div id="error-summary" th:if="${#fields.hasErrors('*')}" tabindex="-1" role="alert"
              aria-labelledby="error-summary-title">
@@ -99,7 +101,8 @@
         <!-- 特殊貨物のときは aria-disabled にして理由を関連付ける。押せば、サーバーがエラー要約で同じ理由を示す -->
         <button id="submit" type="submit"
                 th:with="special=${transportRequestForm.cargoCategory != null and transportRequestForm.cargoCategory != 'GENERAL'}"
-                th:attr="aria-disabled=${special} ? 'true' : null,aria-describedby=${special} ? 'cargo-category-notice' : null">提出する</button>
+                th:attr="aria-disabled=${special} ? 'true' : null,aria-describedby=${special} ? 'cargo-category-notice' : null"
+                th:text="${submitLabel}">提出する</button>
     </form>
 </main>
 </body>
