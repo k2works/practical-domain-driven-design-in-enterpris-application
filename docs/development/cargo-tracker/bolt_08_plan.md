@@ -4,7 +4,7 @@ title: "Bolt 8 計画 - UI の骨格と見積依頼の段階入力のプロト�
 description: "8 回目の Bolt の計画。WebJars で Bootstrap 5.3・htmx 2.0 を同梱し、顧客 Web と社内業務 Web の共通レイアウト（ヘッダー、左ナビ、窓口の案内）と共通の CSS を作って既存の画面を移し、見積依頼（C-03）の段階入力のプロトタイプで操作性を確かめる（UI-HO-04）計画を、ステップ 1〜4 で定義する。"
 tags: [development,bolt-plan]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-03T02:55:55Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-03T03:00:43Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-03T02:24:39Z }
   - { by: human:kakimomokuri, at: 2026-10-03T02:55:56Z }
@@ -81,7 +81,7 @@ verified:
 
 ```plantuml
 @startuml
-title 共通レイアウトと C-03 の段階入力（Bolt 8 の範囲）
+title 共通レイアウト（Bolt 8 の範囲）
 package "顧客 Web のレイアウト（layout/customer）" {
   [ヘッダー: cargo-tracker / 荷主企業名 利用者名] as CH
   [左ナビ: 見積依頼（aria-current）] as CN
@@ -93,18 +93,27 @@ package "社内業務 Web のレイアウト（layout/staff）" {
   [左ナビ: 見積依頼、KPI] as SN
   [本文] as SM
 }
-state "C-03（1 つのフォーム）" as C03 {
-  state "1 輸送条件" as S1
-  state "2 貨物" as S2
-  state "3 書類" as S3
-  state "4 確認" as S4
-  [*] --> S1
-  S1 --> S2 : 次へ
-  S2 --> S3 : 次へ
-  S3 --> S4 : 次へ
-  S4 --> S1 : 段階の見出しから戻る
-  S4 --> [*] : 提出する（POST、今と同じ）
-}
+CH -[hidden]down- CN
+CN -[hidden]right- CM
+CM -[hidden]down- CF
+SH -[hidden]down- SN
+SN -[hidden]right- SM
+@enduml
+```
+
+```plantuml
+@startuml
+title C-03 の段階入力（1 つのフォームの中で段階を切り替える。Bolt 8 の範囲）
+state "1 輸送条件" as S1
+state "2 貨物" as S2
+state "3 書類" as S3
+state "4 確認" as S4
+[*] --> S1
+S1 --> S2 : 次へ
+S2 --> S3 : 次へ
+S3 --> S4 : 次へ
+S4 --> S1 : 段階の一覧から戻る
+S4 --> [*] : 提出する（POST、今と同じ）
 @enduml
 ```
 
@@ -241,6 +250,7 @@ state "C-03（1 つのフォーム）" as C03 {
 | 2026-10-03 | 初版（人の決定: 対象は #36、段階入力も同じ Bolt、Bootstrap・htmx は WebJars で同梱） | anthropic/claude-opus-5-5 | — |
 | 2026-10-03 | 計画を承認。確認ポイント 1〜4（いまある画面だけのナビと仮のヘッダー・窓口の案内、WebJars の Bootstrap・htmx の導入、段階入力はパネルの切り替え、操作性は人が触って確かめる）も決まった（Try T-6） | anthropic/claude-opus-5-5 | human:kakimomokuri |
 | 2026-10-03 | 終了報告の承認を通し、Bolt を終えた（人の変更依頼 0）。段階入力（UI-HO-04）はこの形で残すと決まった | anthropic/claude-opus-5-5 | human:kakimomokuri |
+| 2026-10-03 | 「画面遷移とレイアウト」の図が壊れていた（コンポーネント図と状態遷移図の書き方を 1 つの図に混ぜていた）と人に指摘され、2 つの図に分けて直した。`plantuml -checkonly` で確かめた | anthropic/claude-opus-5-5 | — |
 
 ## 関連ドキュメント
 
