@@ -4,7 +4,7 @@ title: "cargo-tracker データモデル"
 description: "cargo-tracker の概念データモデル、スキーマ分割、命名と型の規約（H2 と PostgreSQL の共通部分）、コンテキストごとの論理データモデルと ER 図、版・追記専用・冪等性・イベント配信の表現。"
 tags: [design, data-model]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-02T14:27:05Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-03T01:15:51Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T07:48:17Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:01:37Z }
@@ -117,7 +117,7 @@ package "外部データ" {
 
 | スキーマ | 所有するコンテキスト | 内容 |
 | :--- | :--- | :--- |
-| `quotation` | 見積り | 輸送要求、輸送要求の下書き、輸送要求版、審査記録、見積り、料金明細、処理済みコマンド |
+| `quotation` | 見積り | 輸送要求、輸送要求の下書き、輸送要求版、必要書類、審査記録、見積り、料金明細、処理済みコマンド |
 | `routing` | 経路設計 | 経路設計案件、経路版、経路候補、区間、除外理由、参照情報版、航海、寄港、接続時間規則、処理済みコマンド |
 | `booking` | 予約 | 貨物予約、予約版、変更取消申請、予約サガ、処理済みコマンド |
 | `tracking` | 追跡 | 追跡記録、予定区間、主要実績、訂正、有人案件とその進捗・回答、照会記録、営業日カレンダー、処理済みコマンド |
@@ -164,7 +164,7 @@ ADR-007 により、DDL は H2（PostgreSQL 互換モード）と PostgreSQL 18 
 | 表 | 許す操作 | 守り方 |
 | :--- | :--- | :--- |
 | `identity.audit_record`、`identity.kpi_baseline` | INSERT、SELECT | PostgreSQL ではアプリケーションの DB 利用者から UPDATE・DELETE の権限を外す |
-| `quotation.transport_request_version`、`quotation.review_record`、`booking.booking_version`、`external_data.receipt` | INSERT、SELECT | UPDATE・DELETE の権限を外す（`review_record` は判断の事実で後から変えないため。2026-10-02 に承認、Bolt 5） |
+| `quotation.transport_request_version`、`quotation.review_record`、`quotation.required_document`、`booking.booking_version`、`external_data.receipt` | INSERT、SELECT | UPDATE・DELETE の権限を外す（`review_record` は判断の事実で後から変えないため。2026-10-02 に承認、Bolt 5。`required_document` は版に付く書類の事実のため。2026-10-03 に承認、Bolt 7） |
 | `tracking.milestone` | INSERT、SELECT、状態と下書き内容の UPDATE | DELETE の権限を外す。採用済みの内容を変えないことはドメインと PostgreSQL の統合テストで確かめる（T-INV-01、T-INV-07） |
 | `routing.route_version` | INSERT、SELECT、UPDATE | 状態が変わる（確定 → 再設計要 → 旧版）ため権限では守らない。確定した経路版の内容（候補・区間・判断根拠・承認）を変えないことは、ドメインと PostgreSQL の統合テストで確かめる（R-INV-06） |
 
@@ -264,6 +264,10 @@ entity "required_document\n必要書類" as doc {
   * document_no : INTEGER <<PK>>
   --
   * document_type : VARCHAR(30)
+  * file_name : VARCHAR(255)
+  * media_type : VARCHAR(30)
+  * size_bytes : BIGINT
+  * sha256 : CHAR(64)
   * object_key : VARCHAR(500)
 }
 entity "review_record\n審査記録" as rv {
@@ -332,6 +336,7 @@ q |o--o| q : 置換
 | `transport_request_draft` | 輸送要求ごとに 1 行。提出時に内容を版の表へ INSERT する。`copied_from_request_id` は複製元 | Q-INV-03、Q-INV-11 |
 | `transport_request_version` | `cargo_category` IN（`GENERAL`、`DANGEROUS`、`REEFER`、`OTHER_SPECIAL`）。提出した版だけを INSERT し、更新しない（追記専用の印 `COMMENT ON TABLE ... IS 'append-only'` を付ける）。版 1 の `submitted_at` が KPI-01 の開始時刻（D-3） | Q-INV-02、Q-INV-03、US-21 |
 | `review_record` | （`transport_request_id`、`version_no`）→ `transport_request_version` の FK。（`transport_request_id`、`version_no`）に一意制約（1 つの版に判断は 1 つ。差し戻すと新しい版ができるため。Bolt 5 レビュー R-02）。`decision` IN（`APPROVED`、`SENT_BACK`）。`rationale` は確定の根拠と差戻しの理由の両方を入れる（判断で読み分ける）。追記専用の印を付ける | Q-INV-04、Q-INV-14 |
+| `required_document` | 主キー（`transport_request_id`、`version_no`、`document_no`）。（`transport_request_id`、`version_no`）→ `transport_request_version` の FK。`document_type` IN（`COMMERCIAL_INVOICE`、`PACKING_LIST`、`OTHER`）。`media_type` IN（`PDF`、`PNG`、`JPEG`）。`size_bytes` は 1 以上 10,485,760 以下。`sha256` は中身の SHA-256 の 16 進 64 文字。`file_name` は画面に出すだけに使い、`object_key` は `quotation/{輸送要求 ID}/{UUID}`（ファイル名を使わない）。出し直しでは前の版の行を同じ `object_key` で新しい版に INSERT する（ファイルを複製しない）。追記専用の印を付ける（2026-10-03 に承認、Bolt 7） | Q-INV-16、US-01 |
 | `quotation` | `status` IN（`DRAFT`、`PENDING_APPROVAL`、`PRESENTED`、`ROUTING_REQUESTED`、`AWAITING_SHIPPER_APPROVAL`、`APPROVED`、`EXPIRED`、`REPLACED`）。`shipper_response` IN（`PROCEED`、`DECLINED`）。`presented_at` は KPI-01 の終了時刻。荷主の承認時は `routing_case_id`・`route_version_no` が NOT NULL（アプリケーションで検証） | Q-INV-05〜10、US-21 |
 
 見積りの「失効」は、有効期限を過ぎたときに状態を書き換えるのではなく、判定時刻と `expires_at` の比較で決める（Q-INV-06）。`status` の `EXPIRED` は、期限切れを利用者が確認した・定期処理が記録した結果として残す。予約確定の判定は常に `expires_at` で行う。
@@ -1007,7 +1012,7 @@ ds ||--o{ ff
 | `manual_entry` | 出典・入力者・入力時刻・仮状態を NOT NULL にする | BR-08 |
 | `recovery_reconciliation` | 停止期間ごとに 1 つ。完了には全件の分類、件数の一致、差異の解消が必要（アプリケーションで判定） | BR-12、US-15 |
 
-原本の payload は S3 に置き（ADR-004、ADR-008）、DB には `payload_object_key` とハッシュだけを持つ。開発環境では同じキーでローカルのファイルシステムに置く（ADR-007）。
+原本の payload は S3 に置き（ADR-004、ADR-008）、DB には `payload_object_key` とハッシュだけを持つ。開発環境では同じキーでローカルのファイルシステムに置く（ADR-007）。輸送要求の必要書類（`required_document`）も同じく、ファイルの中身は保存先に置き、DB にはオブジェクトキーと SHA-256 を持つ（Bolt 7）。
 
 ### 基盤（`platform`）
 
