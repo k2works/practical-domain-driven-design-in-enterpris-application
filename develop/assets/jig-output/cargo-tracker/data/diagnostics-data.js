@@ -1,0 +1,1 @@
+globalThis.diagnosticsData = {"diagnostics":[{"code":"SQL読み込み一部失敗","error":false,"jigDocuments":["OutboundInterface"],"ja":"SQLの読み込みに一部失敗しました。CRUDの出力に欠落が存在します。","en":"Partial loading of SQL failed. There is a missing in the output of CRUD."}]}

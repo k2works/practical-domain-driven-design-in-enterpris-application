@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<database name="cargotracker" schema="identity" type="PostgreSQL - 18.6 (Debian 18.6-1.pgdg13+2)">
+   <tables>
+      <table name="kpi_observation" remarks="KPI 計測記録" schema="identity" type="TABLE">
+         <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="transport_request_id" nullable="false" remarks="輸送要求 ID" size="2147483647" type="uuid" typeCode="1111"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="shipper_company_id" nullable="false" remarks="荷主企業 ID" size="2147483647" type="uuid" typeCode="1111"/>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="2" name="submitted_at" nullable="false" remarks="提出時刻（KPI-01 の開始）" size="35" type="timestamptz" typeCode="93"/>
+         <column autoUpdated="false" defaultValue="false" digits="0" id="3" name="excluded" nullable="false" remarks="集計からの除外" size="1" type="bool" typeCode="-7"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="4" name="transport_request_number" nullable="true" remarks="業務番号" size="20" type="varchar" typeCode="12"/>
+         <primaryKey column="transport_request_id" sequenceNumberInPK="1"/>
+         <index name="pk_kpi_observation" unique="true">
+            <column ascending="true" name="transport_request_id"/>
+         </index>
+         <index name="ix_kpi_observation_submitted_at" unique="false">
+            <column ascending="true" name="submitted_at"/>
+         </index>
+      </table>
+   </tables>
+</database>
