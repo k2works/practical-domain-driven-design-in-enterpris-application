@@ -4,7 +4,7 @@ title: "Bolt 8 計画 - UI の骨格と見積依頼の段階入力のプロト�
 description: "8 回目の Bolt の計画。WebJars で Bootstrap 5.3・htmx 2.0 を同梱し、顧客 Web と社内業務 Web の共通レイアウト（ヘッダー、左ナビ、窓口の案内）と共通の CSS を作って既存の画面を移し、見積依頼（C-03）の段階入力のプロトタイプで操作性を確かめる（UI-HO-04）計画を、ステップ 1〜4 で定義する。"
 tags: [development,bolt-plan]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-03T02:51:00Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-03T02:54:27Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-03T02:24:39Z }
 ---
@@ -159,10 +159,11 @@ state "C-03（1 つのフォーム）" as C03 {
   - `new.html` を 4 つのパネルに分け、段階の切り替えと確認のまとめを `transport-request-form.js` に足す。JavaScript がないときは全段階を 1 画面で示す
   - 既存の C-03 のシナリオ（キー操作の提出、エラー要約、特殊貨物、書類）を、段階入力の操作に合わせて直す（期待する結果は変えない）
   - 完了の判定: `check` と `uiTest` が緑。push する
-  - 結果（2026-10-03 11:38〜11:51）: 画面の層の受入シナリオ（`stepwise_transport_request_ui.feature`、3 件）と段階を進める操作を先に書き、実装の前の `uiTest` で新しい 3 件の失敗（既存の 25 件は通る）を記録した（T-21）。`new.html` を 4 つの段階（輸送条件・貨物・書類・確認）のパネルに分け、段階の一覧と「次へ」は `hidden` で出して JavaScript が表示するようにした。`transport-request-form.js` に段階の切り替え（見出しへのフォーカス、`aria-current="step"`）、確認のまとめ（値は `textContent` で入れる）、エラー要約のリンクで誤りの段階を開く振る舞いを足した。作成と編集（出し直し）の両方で段階入力になる。既存の C-03 のシナリオ（キー操作の提出、エラー要約、特殊貨物、書類、出し直し）は、期待する結果を変えずに段階を進める操作を足した。JavaScript がないときに全段階を 1 画面で示すことは、コントローラの単体テストで確かめた。画面の層のシナリオは 28 件すべて passed（failed・undefined・skipped 0）、axe-core の違反 0 件。`check` 緑
-- [ ] **4. 検証と Bolt 終了報告**
+  - 結果（2026-10-03 11:37（ステップ 2 のコミットの直後）〜11:51）: 画面の層の受入シナリオ（`stepwise_transport_request_ui.feature`、3 件）と段階を進める操作を先に書き、実装の前の `uiTest` で新しい 3 件の失敗（既存の 25 件は通る）を記録した（T-21）。`new.html` を 4 つの段階（輸送条件・貨物・書類・確認）のパネルに分け、段階の一覧と「次へ」は `hidden` で出して JavaScript が表示するようにした。`transport-request-form.js` に段階の切り替え（見出しへのフォーカス、`aria-current="step"`）、確認のまとめ（値は `textContent` で入れる）、エラー要約のリンクで誤りの段階を開く振る舞いを足した。作成と編集（出し直し）の両方で段階入力になる。既存の C-03 のシナリオ（キー操作の提出、エラー要約、特殊貨物、書類、出し直し）は、期待する結果を変えずに段階を進める操作を足した。JavaScript がないときに全段階を 1 画面で示すことは、コントローラの単体テストで確かめた。画面の層のシナリオは 28 件すべて passed（failed・undefined・skipped 0）、axe-core の違反 0 件。`check` 緑
+- [?] **4. 検証と Bolt 終了報告**
   - `check`・`uiTest`・CI・SonarQube の品質ゲート（PASS）を確かめる
   - `bolt_08_report.md` を書く（仮説 H1〜H3 の結論、各ステップの時刻、UI-HO-04 の所見）。人が `bootRun` で段階入力を触って操作性を確かめる場を、承認の場に入れる
+  - 結果（2026-10-03 11:51〜11:54）: SonarQube の品質ゲートは 1 回で PASS（指摘 0 件）。`check`・`uiTest` は緑。[Bolt 8 終了報告](bolt_08_report.md) を書いた。本報告の承認の場で、段階入力の操作性を人が確かめる
 
 ### 時間の配分と打ち切り
 
