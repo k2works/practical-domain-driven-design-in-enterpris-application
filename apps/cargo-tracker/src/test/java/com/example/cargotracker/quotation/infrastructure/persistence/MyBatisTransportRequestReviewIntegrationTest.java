@@ -172,6 +172,50 @@ class MyBatisTransportRequestReviewIntegrationTest {
     }
 
     @Test
+    void 荷主の一覧は自社の輸送要求だけを最初の提出時刻の新しい順に状態とともに返し出し直した版2の提出時刻を示す() {
+        CompanyId shipper = new CompanyId(UUID.randomUUID());
+        TransportRequest older = savedFor(shipper, 21, "2085-02-01T00:00:00Z");
+        TransportRequest newer = savedFor(shipper, 22, "2085-02-01T01:00:00Z");
+        TransportRequest otherCompany = savedFor(new CompanyId(UUID.randomUUID()), 23, "2085-02-01T02:00:00Z");
+        older.sendBack(1, REVIEWER, "直してください", null, DECIDED_AT);
+        repository.update(older);
+        newer.sendBack(1, REVIEWER, "直してください", null, DECIDED_AT);
+        repository.update(newer);
+        TransportRequest draft = repository.findById(older.id()).orElseThrow();
+        draft.resubmit(draft.currentVersion().terms(), new UserId(UUID.randomUUID()), DECIDED_AT);
+        repository.update(draft);
+
+        assertThat(repository.findSummariesByShipper(shipper))
+                .extracting(
+                        TransportRequestSummary::number,
+                        TransportRequestSummary::versionNo,
+                        TransportRequestSummary::status,
+                        TransportRequestSummary::currentSubmittedAt)
+                .containsExactly(
+                        tuple(
+                                newer.number(),
+                                1,
+                                TransportRequestStatus.DRAFT,
+                                new UtcInstant(Instant.parse("2085-02-01T01:00:00Z"))),
+                        tuple(older.number(), 2, TransportRequestStatus.UNDER_REVIEW, DECIDED_AT));
+        assertThat(repository.findSummariesByShipper(shipper))
+                .extracting(TransportRequestSummary::number)
+                .doesNotContain(otherCompany.number());
+    }
+
+    private TransportRequest savedFor(CompanyId shipper, int sequence, String submittedAt) {
+        TransportRequest request = TransportRequest.submit(
+                new TransportRequestId(UUID.randomUUID()),
+                new TransportRequestNumber(2085, sequence),
+                shipper,
+                ShipmentTermsFixture.generalCargo(),
+                new UserId(UUID.randomUUID()),
+                new UtcInstant(Instant.parse(submittedAt)));
+        repository.save(request);
+        return repository.findById(request.id()).orElseThrow();
+    }
+
+    @Test
     void 審査記録は判断の時刻が同じでも版番号の順に返る() {
         TransportRequest request = saved(9);
         request.sendBack(1, REVIEWER, "差し戻す", null, DECIDED_AT);

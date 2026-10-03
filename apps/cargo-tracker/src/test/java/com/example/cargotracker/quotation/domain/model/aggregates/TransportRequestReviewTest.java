@@ -8,6 +8,7 @@ import com.example.cargotracker.quotation.domain.model.entities.ReviewRecord;
 import com.example.cargotracker.quotation.domain.model.valueobjects.ResubmissionRejection;
 import com.example.cargotracker.quotation.domain.model.valueobjects.ReviewDecision;
 import com.example.cargotracker.quotation.domain.model.valueobjects.ReviewRejection;
+import com.example.cargotracker.quotation.domain.model.valueobjects.SendBackNotice;
 import com.example.cargotracker.quotation.domain.model.valueobjects.ShipmentTerms;
 import com.example.cargotracker.quotation.domain.model.valueobjects.ShipmentTermsFixture;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestId;
@@ -198,6 +199,30 @@ class TransportRequestReviewTest {
                 .contains(ReviewRejection.STALE_VERSION);
         assertThat(request.status()).isEqualTo(TransportRequestStatus.UNDER_REVIEW);
         assertThat(request.approve(2, REVIEWER, "版 2 を確認した", RESUBMITTED_AT)).isEmpty();
+    }
+
+    @Test
+    void 差し戻した下書きは荷主への差戻しの知らせとして理由と不足事項だけを示す() {
+        request.sendBack(1, REVIEWER, "契約条件の確認が必要", "取引条件書", DECIDED_AT);
+
+        assertThat(request.sendBackNotice()).contains(new SendBackNotice("契約条件の確認が必要", "取引条件書"));
+    }
+
+    @Test
+    void 審査中と確定の後は差戻しの知らせがない() {
+        assertThat(request.sendBackNotice()).isEmpty();
+
+        request.approve(1, REVIEWER, "契約条件と輸送条件を確認した", DECIDED_AT);
+
+        assertThat(request.sendBackNotice()).isEmpty();
+    }
+
+    @Test
+    void 出し直した後は前の版への差戻しの知らせを示さない() {
+        request.sendBack(1, REVIEWER, "目的地の確認が必要", null, DECIDED_AT);
+        request.resubmit(ShipmentTermsFixture.generalCargo(), SHIPPER_USER, RESUBMITTED_AT);
+
+        assertThat(request.sendBackNotice()).isEmpty();
     }
 
     @Test

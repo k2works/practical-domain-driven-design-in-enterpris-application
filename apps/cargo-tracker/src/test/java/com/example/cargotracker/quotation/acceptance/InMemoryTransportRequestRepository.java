@@ -20,7 +20,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * <ul>
  *   <li>同じ ID の輸送要求を 2 回保存（新規）すると失敗する
  *   <li>読み出すたびに保存した時点の写しを返し、更新は読み込んだときの集約の版で照合する（楽観ロック）
- *   <li>荷主の照会は荷主企業で絞り、社内用の照会は絞らない
+ *   <li>荷主の照会は荷主企業で絞り、社内用の照会は絞らない。荷主の一覧は新しい順、受付一覧は古い順に並べる
  * </ul>
  */
 public class InMemoryTransportRequestRepository implements TransportRequestRepository {
@@ -70,22 +70,40 @@ public class InMemoryTransportRequestRepository implements TransportRequestRepos
     }
 
     @Override
+    public List<TransportRequestSummary> findSummariesByShipper(CompanyId shipperCompanyId) {
+        return store.values().stream()
+                .filter(request -> request.shipperCompanyId().equals(shipperCompanyId))
+                .map(this::toSummary)
+                .sorted(byFirstSubmittedAt().reversed())
+                .toList();
+    }
+
+    @Override
     public List<TransportRequestSummary> findUnderReviewSummaries() {
         return store.values().stream()
                 .filter(request -> request.status() == TransportRequestStatus.UNDER_REVIEW)
-                .map(request -> new TransportRequestSummary(
-                        request.number(),
-                        request.currentVersion().versionNo(),
-                        firstSubmittedAt.get(request.id()),
-                        request.currentVersion().submittedAt(),
-                        request.currentVersion().terms().origin(),
-                        request.currentVersion().terms().destination(),
-                        request.currentVersion().terms().arrivalDeadline(),
-                        request.currentVersion().terms().cargo().category()))
-                .sorted(Comparator.comparing((TransportRequestSummary summary) ->
-                                summary.firstSubmittedAt().instant())
-                        .thenComparing(summary -> summary.number().text()))
+                .map(this::toSummary)
+                .sorted(byFirstSubmittedAt())
                 .toList();
+    }
+
+    private TransportRequestSummary toSummary(TransportRequest request) {
+        return new TransportRequestSummary(
+                request.number(),
+                request.currentVersion().versionNo(),
+                request.status(),
+                firstSubmittedAt.get(request.id()),
+                request.currentVersion().submittedAt(),
+                request.currentVersion().terms().origin(),
+                request.currentVersion().terms().destination(),
+                request.currentVersion().terms().arrivalDeadline(),
+                request.currentVersion().terms().cargo().category());
+    }
+
+    private static Comparator<TransportRequestSummary> byFirstSubmittedAt() {
+        return Comparator.comparing((TransportRequestSummary summary) ->
+                        summary.firstSubmittedAt().instant())
+                .thenComparing(summary -> summary.number().text());
     }
 
     /** 保存した輸送要求の件数。提出を受け付けなかったときに何も保存していないことを確かめる。 */

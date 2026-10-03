@@ -7,6 +7,7 @@ import com.example.cargotracker.quotation.domain.model.entities.TransportRequest
 import com.example.cargotracker.quotation.domain.model.valueobjects.ResubmissionRejection;
 import com.example.cargotracker.quotation.domain.model.valueobjects.ReviewDecision;
 import com.example.cargotracker.quotation.domain.model.valueobjects.ReviewRejection;
+import com.example.cargotracker.quotation.domain.model.valueobjects.SendBackNotice;
 import com.example.cargotracker.quotation.domain.model.valueobjects.ShipmentTerms;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestId;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestNumber;
@@ -216,6 +217,21 @@ public final class TransportRequest {
     /** 審査記録（版番号の順）。 */
     public List<ReviewRecord> reviewRecords() {
         return List.copyOf(reviewRecords);
+    }
+
+    /**
+     * 荷主に見せる差戻しの知らせ。差し戻されて下書きのとき、現在の版への差戻しの理由と不足事項を返す。
+     * 出し直して新しい版になったら、前の版への差戻しは示さない。
+     */
+    public Optional<SendBackNotice> sendBackNotice() {
+        if (status != TransportRequestStatus.DRAFT) {
+            return Optional.empty();
+        }
+        return reviewRecords.reversed().stream()
+                .filter(reviewRecord -> reviewRecord.versionNo() == currentVersion.versionNo())
+                .filter(reviewRecord -> reviewRecord.decision() == ReviewDecision.SENT_BACK)
+                .findFirst()
+                .map(reviewRecord -> new SendBackNotice(reviewRecord.rationale(), reviewRecord.missingItems()));
     }
 
     /** 読み込んだ後（または作った後）に足した審査記録。リポジトリは更新のときに、これだけを追加する。 */

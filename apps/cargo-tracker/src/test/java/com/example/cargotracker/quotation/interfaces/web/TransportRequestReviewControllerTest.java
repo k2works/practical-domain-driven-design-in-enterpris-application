@@ -25,6 +25,7 @@ import com.example.cargotracker.quotation.domain.model.valueobjects.ReviewReject
 import com.example.cargotracker.quotation.domain.model.valueobjects.ShipmentTermsFixture;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestId;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestNumber;
+import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestStatus;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestSummary;
 import com.example.cargotracker.shared.domain.CompanyId;
 import com.example.cargotracker.shared.domain.Location;
@@ -95,6 +96,7 @@ class TransportRequestReviewControllerTest {
         return new TransportRequestSummary(
                 NUMBER,
                 1,
+                TransportRequestStatus.UNDER_REVIEW,
                 new UtcInstant(Instant.parse("2026-10-05T01:00:00Z")),
                 new UtcInstant(Instant.parse("2026-10-05T01:00:00Z")),
                 new Location("JPTYO"),

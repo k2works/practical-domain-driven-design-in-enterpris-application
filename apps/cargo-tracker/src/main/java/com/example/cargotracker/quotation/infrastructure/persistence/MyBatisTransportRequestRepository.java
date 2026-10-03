@@ -85,18 +85,30 @@ public class MyBatisTransportRequestRepository implements TransportRequestReposi
     }
 
     @Override
+    public List<TransportRequestSummary> findSummariesByShipper(CompanyId shipperCompanyId) {
+        return mapper.selectSummariesByShipper(shipperCompanyId.value()).stream()
+                .map(MyBatisTransportRequestRepository::toSummary)
+                .toList();
+    }
+
+    @Override
     public List<TransportRequestSummary> findUnderReviewSummaries() {
         return mapper.selectUnderReviewSummaries().stream()
-                .map(row -> new TransportRequestSummary(
-                        TransportRequestNumber.parse(row.requestNumber()),
-                        row.currentVersionNo(),
-                        new UtcInstant(row.firstSubmittedAt().toInstant()),
-                        new UtcInstant(row.currentSubmittedAt().toInstant()),
-                        new Location(row.originUnlocode()),
-                        new Location(row.destinationUnlocode()),
-                        new UtcInstant(row.arrivalDeadline().toInstant()),
-                        CargoCategory.valueOf(row.cargoCategory())))
+                .map(MyBatisTransportRequestRepository::toSummary)
                 .toList();
+    }
+
+    private static TransportRequestSummary toSummary(TransportRequestSummaryRow row) {
+        return new TransportRequestSummary(
+                TransportRequestNumber.parse(row.requestNumber()),
+                row.currentVersionNo(),
+                TransportRequestStatus.valueOf(row.status()),
+                new UtcInstant(row.firstSubmittedAt().toInstant()),
+                new UtcInstant(row.currentSubmittedAt().toInstant()),
+                new Location(row.originUnlocode()),
+                new Location(row.destinationUnlocode()),
+                new UtcInstant(row.arrivalDeadline().toInstant()),
+                CargoCategory.valueOf(row.cargoCategory()));
     }
 
     private static TransportRequestRow toRow(TransportRequest request) {

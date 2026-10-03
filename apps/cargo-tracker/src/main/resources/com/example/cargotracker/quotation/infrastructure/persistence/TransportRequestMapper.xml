@@ -115,6 +115,7 @@
         <constructor>
             <arg column="request_number" name="requestNumber" javaType="String"/>
             <arg column="current_version_no" name="currentVersionNo" javaType="_int"/>
+            <arg column="status" name="status" javaType="String"/>
             <arg column="first_submitted_at" name="firstSubmittedAt" javaType="java.time.OffsetDateTime"/>
             <arg column="current_submitted_at" name="currentSubmittedAt" javaType="java.time.OffsetDateTime"/>
             <arg column="origin_unlocode" name="originUnlocode" javaType="String"/>
@@ -124,9 +125,9 @@
         </constructor>
     </resultMap>
 
-    <!-- 社内用の受付一覧: 審査中を、最初の提出時刻（版 1）の古い順に。集約を組み立てず、審査記録も読まない（N+1 をなくす） -->
-    <select id="selectUnderReviewSummaries" resultMap="transportRequestSummaryRow">
-        SELECT r.request_number, r.current_version_no,
+    <!-- 一覧の 1 行: ヘッダ、現在の版、版 1 の提出時刻を結合する。集約を組み立てず、審査記録も読まない（N+1 をなくす） -->
+    <sql id="selectSummary">
+        SELECT r.request_number, r.current_version_no, r.status,
                first_version.submitted_at AS first_submitted_at, v.submitted_at AS current_submitted_at,
                v.origin_unlocode, v.destination_unlocode, v.arrival_deadline, v.cargo_category
           FROM quotation.transport_request r
@@ -136,8 +137,20 @@
           JOIN quotation.transport_request_version first_version
             ON first_version.transport_request_id = r.id
            AND first_version.version_no = 1
+    </sql>
+
+    <!-- 社内用の受付一覧: 審査中を、最初の提出時刻（版 1）の古い順に -->
+    <select id="selectUnderReviewSummaries" resultMap="transportRequestSummaryRow">
+        <include refid="selectSummary"/>
          WHERE r.status = 'UNDER_REVIEW'
          ORDER BY first_version.submitted_at, r.request_number
+    </select>
+
+    <!-- 荷主の見積依頼の一覧: 自社だけを、最初の提出時刻（版 1）の新しい順に。荷主企業で必ず絞る（Q-INV-08） -->
+    <select id="selectSummariesByShipper" resultMap="transportRequestSummaryRow">
+        <include refid="selectSummary"/>
+         WHERE r.shipper_company_id = #{shipperCompanyId}
+         ORDER BY first_version.submitted_at DESC, r.request_number DESC
     </select>
 
     <select id="selectByNumber" resultMap="transportRequestRow">

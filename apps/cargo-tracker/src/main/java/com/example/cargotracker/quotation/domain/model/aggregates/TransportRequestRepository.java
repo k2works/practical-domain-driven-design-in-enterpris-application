@@ -30,6 +30,12 @@ public interface TransportRequestRepository {
     Optional<TransportRequest> findByNumber(TransportRequestNumber number, CompanyId shipperCompanyId);
 
     /**
+     * 荷主企業の輸送要求を、最初の提出時刻（版 1）の新しい順に一覧する（見積依頼の一覧 C-02。荷主は最近の依頼から探す）。
+     * 必ず荷主企業で絞る（Q-INV-08）。集約を組み立てない読み取りモデルを返す。
+     */
+    List<TransportRequestSummary> findSummariesByShipper(CompanyId shipperCompanyId);
+
+    /**
      * 社内用: 業務番号で輸送要求を探す。営業担当者はすべての荷主の輸送要求を扱うため、荷主企業で絞らない。
      * 荷主の画面では使わない（荷主の画面は {@link #findByNumber(TransportRequestNumber, CompanyId)} で必ず絞る）。
      */

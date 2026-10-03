@@ -35,6 +35,8 @@ public interface TransportRequestMapper {
 
     List<TransportRequestSummaryRow> selectUnderReviewSummaries();
 
+    List<TransportRequestSummaryRow> selectSummariesByShipper(UUID shipperCompanyId);
+
     Optional<TransportRequestRow> selectById(UUID id);
 
     Optional<TransportRequestRow> selectByNumber(

@@ -7,6 +7,7 @@ import com.example.cargotracker.quotation.acceptance.InMemoryTransportRequestNum
 import com.example.cargotracker.quotation.acceptance.InMemoryTransportRequestRepository;
 import com.example.cargotracker.quotation.application.internal.commandservices.TransportRequestCommandService;
 import com.example.cargotracker.quotation.application.internal.commandservices.TransportRequestReviewService;
+import com.example.cargotracker.quotation.application.internal.queryservices.StaffTransportRequestQueryService;
 import com.example.cargotracker.quotation.application.internal.queryservices.TransportRequestQueryService;
 import com.example.cargotracker.quotation.domain.events.TransportRequestSubmitted;
 import com.example.cargotracker.quotation.domain.model.rules.MvpAcceptancePolicy;
@@ -97,6 +98,12 @@ public class AcceptanceTestConfiguration {
         @Bean
         TransportRequestQueryService transportRequestQueryService(InMemoryTransportRequestRepository repository) {
             return new TransportRequestQueryService(repository);
+        }
+
+        @Bean
+        StaffTransportRequestQueryService staffTransportRequestQueryService(
+                InMemoryTransportRequestRepository repository) {
+            return new StaffTransportRequestQueryService(repository);
         }
     }
 }
