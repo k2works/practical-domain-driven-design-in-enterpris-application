@@ -1,5 +1,13 @@
 # 実践ドメイン駆動設計 in エンタープライズアプリケーション
 
+[![cargo-tracker CI](https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/actions/workflows/cargo-tracker-ci.yml/badge.svg?branch=develop)](https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/actions/workflows/cargo-tracker-ci.yml?query=branch%3Adevelop)
+[![Deploy MkDocs](https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/actions/workflows/mkdocs.yml/badge.svg?branch=develop)](https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/actions/workflows/mkdocs.yml?query=branch%3Adevelop)
+[![GitHub Pages](https://img.shields.io/badge/GitHub%20Pages-main-222222?logo=github)](https://k2works.github.io/practical-domain-driven-design-in-enterpris-application/)
+[![GitHub Pages develop](https://img.shields.io/badge/GitHub%20Pages-develop-222222?logo=github)](https://k2works.github.io/practical-domain-driven-design-in-enterpris-application/develop/)
+![Java 25](https://img.shields.io/badge/Java-25-007396?logo=openjdk&logoColor=white)
+![Spring Boot 4.1.1](https://img.shields.io/badge/Spring%20Boot-4.1.1-6DB33F?logo=springboot&logoColor=white)
+![Node.js 22](https://img.shields.io/badge/Node.js-22-5FA04E?logo=nodedotjs&logoColor=white)
+
 ## 概要
 
 ### 目的
