@@ -4,7 +4,7 @@ title: "Bolt 8 計画 - UI の骨格と見積依頼の段階入力のプロト�
 description: "8 回目の Bolt の計画。WebJars で Bootstrap 5.3・htmx 2.0 を同梱し、顧客 Web と社内業務 Web の共通レイアウト（ヘッダー、左ナビ、窓口の案内）と共通の CSS を作って既存の画面を移し、見積依頼（C-03）の段階入力のプロトタイプで操作性を確かめる（UI-HO-04）計画を、ステップ 1〜4 で定義する。"
 tags: [development,bolt-plan]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-03T02:24:38Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-03T02:25:29Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-03T02:24:39Z }
 ---
@@ -136,10 +136,11 @@ state "C-03（1 つのフォーム）" as C03 {
 
 状態の記号: `[ ]` 未着手、`[-]` 進行中、`[?]` 承認待ち、`[R]` 修正中、`[x]` 完了、`[S]` スキップ。各ステップの終わりに `check` と `uiTest` が緑であることを確かめて push する（T-14）。
 
-- [ ] **1. 決定を設計文書に反映する**（承認は終了報告とまとめて受ける）
+- [x] **1. 決定を設計文書に反映する**（承認は終了報告とまとめて受ける）
   - UI 設計: 上の注（共通レイアウトの実装、いまあるナビの項目、段階入力のパネルの切り替え）
   - リリース計画: W1 の #36 の行に Bolt 8 を書く
   - 完了の判定: `okf:check` が ERROR 0、`documentationTest` が緑。push する
+  - 結果（2026-10-03 11:24〜11:25）: UI 設計の「ナビゲーションとレイアウト」に実装（フラグメント、WebJars、共通の CSS、いまある画面だけのナビ、仮のヘッダーと窓口の案内）を、C-03 の段階入力の行にパネルの切り替えの方式を書いた。リリース計画の W1 には開始準備で Bolt 8 を書いた。`okf:check` ERROR 0、`documentationTest` 緑
 - [ ] **2. UI の骨格（画面の層の Red → Green）**
   - 画面の層の受入シナリオを先に書き、`uiTest` で失敗を記録する（T-21）（`features/ui/layout_ui.feature`、`@ui`）
     - 荷主の画面に顧客 Web のナビと窓口の案内が出て、ナビの「見積依頼」が現在の項目（`aria-current="page"`）になる
