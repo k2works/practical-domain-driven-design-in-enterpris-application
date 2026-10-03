@@ -7,6 +7,7 @@ import java.util.Arrays;
 import java.util.regex.Pattern;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.config.BeanDefinition;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.ClassPathScanningCandidateComponentProvider;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.FilterType;
@@ -21,6 +22,12 @@ import org.springframework.core.type.filter.RegexPatternTypeFilter;
  * そこで、アプリの部品探索の除外の設定を当てた候補に application のクラスがないことを、ここで確かめる。
  */
 class ComponentScanTest {
+
+    @Test
+    void ルートはSpringBootApplicationとしてSpringModulithから見つけられる() {
+        assertThat(AnnotatedElementUtils.hasAnnotation(CargoTrackerApplication.class, SpringBootApplication.class))
+                .isTrue();
+    }
 
     @Test
     void 部品探索はapplicationのクラスを拾わない() {
