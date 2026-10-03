@@ -24,7 +24,9 @@ Gradle のタスクは `apps/cargo-tracker` で、Gulp のタスクはリポジ�
 | `./gradlew bootTestRun` | Testcontainers の PostgreSQL で起動する（本番に近い確認） |
 | `./gradlew check` | すべての検証（書式・静的解析・テスト・カバレッジの閾値・用語集の整合） |
 | `./gradlew uiTest` | 画面の層の受入シナリオ（Playwright と axe-core） |
-| `./gradlew jigReports` | 設計ドキュメントの生成 |
+| `./gradlew jigReports` | 設計ドキュメントの生成（JIG） |
+| `npx gulp docs:generate` | ER 図（SchemaSpy）と JIG を生成する |
+| `npx gulp docs:build` | 生成ドキュメントを作ってからドキュメントサイトをビルドする |
 | `npx gulp sonar-local:check` | SonarQube でスキャンして品質ゲートを判定する |
 
 ### インフラ

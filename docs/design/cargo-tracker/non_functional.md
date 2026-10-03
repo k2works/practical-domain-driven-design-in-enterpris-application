@@ -4,7 +4,7 @@ title: "cargo-tracker 非機能要件"
 description: "cargo-tracker の性能・可用性・復旧・データ鮮度・セキュリティ・プライバシー・保持・アクセシビリティ・保守性・拡張性の測定可能な目標値、根拠、決定者、検証方法。"
 tags: [design, non-functional]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-01T08:53:08Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-03T05:19:49Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T08:22:09Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:01:38Z }
@@ -230,7 +230,7 @@ verified:
 | MNT-01 | カバレッジ | テスト戦略の目標と閾値 | 確定（テスト戦略） |
 | MNT-02 | 品質ゲート | SonarQube の品質ゲートを通る。新しいコードで重大な問題 0 件、重複 3% 未満 | 提案 |
 | MNT-03 | 複雑度 | メソッドの循環的複雑度 10 以下を目安にし、超えたらレビューで理由を確認する | 提案 |
-| MNT-04 | 設計との乖離 | JIG・jig-erd の生成物を Bolt ごとに設計書と見比べる | 提案（技術スタック） |
+| MNT-04 | 設計との乖離 | JIG・SchemaSpy の生成物を Bolt ごとに設計書と見比べる | 提案（技術スタック） |
 | MNT-05 | 依存の更新 | Bolt の開始時に依存の更新を確認する。Spring Boot は新しい版の正式公開から 3 か月以内に追従する | 提案（技術スタック） |
 
 ## 可観測性と監視（運用要件の入力）

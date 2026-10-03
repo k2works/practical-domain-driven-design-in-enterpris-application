@@ -11,6 +11,15 @@ cargo-tracker プロジェクトの開発ドキュメントです。
 | [リリース計画](release_plan.md) | MVP を 3 段階（最初の縦の流れ・パイロット準備完了・本格展開前）で届ける計画。Bolt と週次の見直し、SP、パイロット開始の条件、引継ぎ ID の台帳 | 承認済み |
 | [開発戦略](development_strategy.md) | W1〜W14 を序盤・中盤・終盤に分けた TDD のアプローチ、週ごとのデモ項目、Living Documentation | 承認済み |
 
+### 生成ドキュメント
+
+コードと DB スキーマから生成します（`npx gulp docs:generate`）。公開サイトのビルド（`npm run docs:build`）でも毎回生成します。
+
+| ドキュメント | 概要 | 生成元 |
+| :--- | :--- | :--- |
+| [ER 図（SchemaSpy）](../../assets/schemaspy-output/cargo-tracker/index.html) | identity・quotation・platform のスキーマの ER 図と表定義 | Flyway のマイグレーション |
+| [JIG](../../assets/jig-output/cargo-tracker/index.html) | 用語集、パッケージ関連、業務ルール一覧 | `./gradlew jigReports` |
+
 ### Bolt 計画
 
 Bolt がイテレーションに当たります。ふりかえりは各 Bolt の終了報告に含めます。

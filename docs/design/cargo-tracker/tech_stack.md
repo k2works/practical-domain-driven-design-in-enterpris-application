@@ -4,7 +4,7 @@ title: "cargo-tracker 技術スタック"
 description: "cargo-tracker のバックエンド・画面・データベース・テスト・ビルド・インフラの技術、バージョン、サポート期限、選定理由、アップグレード計画。"
 tags: [design, tech-stack]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-01T23:28:04Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-03T05:19:49Z }
 stale_after: 2027-04-01T00:00:00Z
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T07:29:04Z }
@@ -124,7 +124,7 @@ verified:
 | カバレッジ | JaCoCo | 0.8.15 | カバレッジの計測 | Java 25 対応版 |
 | 品質管理 | SonarQube（Community） | — | 品質ゲート | `operating-qt` スキルの前提 |
 | 脆弱性スキャン | Trivy | — | 依存・コンテナイメージのスキャン | 依存のロックファイルとイメージの両方を検査する |
-| 設計との乖離検出 | JIG、jig-erd | JIG 2026.7.x | コードと DB スキーマから設計図を生成 | 第 3 章の実装と同じ。設計書と実装の乖離を生成物の差分で検出する |
+| 設計との乖離検出 | JIG、SchemaSpy | JIG 2026.9.1、SchemaSpy 7.0.2 | コード（JIG）と DB スキーマ（SchemaSpy）から設計図を生成 | 設計書と実装の乖離を生成物の差分で検出する。ER 図は jig-erd から SchemaSpy に変えた（2026-10-03、human:kakimomokuri。PostgreSQL 18 に Flyway で当てた実スキーマから表定義まで出せるため）。どちらも `npx gulp docs:generate` で作り、公開サイトに載せる |
 
 ## インフラ
 

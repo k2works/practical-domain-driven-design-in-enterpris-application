@@ -4,7 +4,7 @@ title: "アプリケーション開発環境セットアップ手順書 - cargo-
 description: "cargo-tracker（A 社国際貨物輸送管理システム）を、開発者の PC で起動・テスト・品質チェックするための手順を示す。"
 tags: [operation,playbook,setup]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-03T01:57:26Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-03T05:19:49Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-02T01:37:59Z }
   - { by: human:kakimomokuri, at: 2026-10-02T07:02:38Z }
@@ -95,7 +95,7 @@ IDE（IntelliJ IDEA など）から `CargoTrackerApplication` を直接起動す
 | 用語集とコードの整合だけ | `./gradlew documentationTest` | 数秒。設計文書やソースの Javadoc を変えたときに動く |
 | 書式をそろえる | `./gradlew spotlessApply` | 数秒 |
 | 画面の層の受入シナリオ（`@ui`。Playwright と axe-core） | 初回だけ `./gradlew playwrightInstall`、以降 `./gradlew uiTest` | 約 2 分 |
-| 設計ドキュメントの生成 | `./gradlew jigReports` | 十数秒 |
+| 設計ドキュメントの生成（JIG だけ） | `./gradlew jigReports` | 十数秒 |
 
 SonarQube の品質ゲートは、リポジトリのルートで次を実行する。ローカルの SonarQube（既定は <http://localhost:9000>。ポートを変えた場合は `.env` の `LOCAL_SONAR_PORT` か `SONAR_HOST_URL`）と、`.env` の `SONAR_TOKEN`・`SONAR_PROJECT_KEY` が要る。手順は [SonarQube ローカル環境セットアップ手順書](../../reference/SonarQubeローカル環境セットアップ手順書.md) に従う。
 
@@ -115,6 +115,10 @@ npx gulp sonar-local:issues   # 指摘の一覧
 | 静的解析 | `build/reports/checkstyle/`、`build/reports/spotbugs/main.html` | `check` |
 | JIG（用語集、パッケージ関連、業務ルール一覧） | `build/jig/index.html` | `jigReports` |
 | Spring Modulith のモジュール図 | `build/spring-modulith-docs/` | `test`（`ModuleDocumentationTest`。`check` でも動く） |
+| ドキュメントサイトに載せる ER 図（SchemaSpy） | リポジトリのルートの `docs/assets/schemaspy-output/cargo-tracker/index.html` | リポジトリのルートで `npx gulp schemaspy:generate`（Docker が要る。約 2 分） |
+| ドキュメントサイトに載せる JIG | リポジトリのルートの `docs/assets/jig-output/cargo-tracker/index.html` | リポジトリのルートで `npx gulp jig:generate`（`jigReports` の出力を写す） |
+
+ER 図は、`apps/cargo-tracker/docker-compose.yml` の使い捨ての PostgreSQL 18.6 にアプリと同じ Flyway のマイグレーションを当て、SchemaSpy で作る。`npx gulp docs:generate` で ER 図と JIG をまとめて作り、`npx gulp docs:build` で続けてドキュメントサイトを作る。公開サイトのビルド（`.github/workflows/mkdocs.yml`）も同じタスクを使う。
 
 生成物はリポジトリにコミットしない。CI（`.github/workflows/cargo-tracker-ci.yml`）では、成果物 `cargo-tracker-reports`・`cargo-tracker-ui-reports` に 14 日残る。
 
