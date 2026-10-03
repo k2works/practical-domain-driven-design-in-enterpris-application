@@ -4,7 +4,7 @@ title: "Bolt 7 終了報告 - 見積依頼の必要書類（US-01 AC2 の残り�
 description: "7 回目の Bolt の終了報告。必要書類の受付規則（Q-INV-16）、版ごとの保存と出し直しでの引き継ぎ、荷主と営業の取得、画面の添付と一覧の成果、デモ項目、指標と時間の内訳、仮説 H1〜H3 の結論、見つけて直した問題、既知の課題、ふりかえりをまとめる。"
 tags: [development,bolt-report]
 status: draft
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-03T02:03:03Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-03T02:04:26Z }
 ---
 
 # Bolt 7 終了報告 - 見積依頼の必要書類（US-01 AC2 の残り）
@@ -101,7 +101,7 @@ generated: { by: anthropic/claude-opus-5-5, at: 2026-10-03T02:03:03Z }
 | :--- | :--- |
 | 全テスト | `check`（402 件）、`uiTest`（21 シナリオ）、すべて成功 |
 | 書式・静的解析・本番の依存・カバレッジの閾値・用語集の整合 | すべて成功 |
-| CI | 緑（`97442ef`。最新の `a6b068a` は本報告の初版の時点で実行中） |
+| CI | 緑（コードの最新のコミット `a6b068a` の `check` と `ui`） |
 | SonarQube の品質ゲート | PASS |
 | ユーザーマニュアル | 対象外（マニュアルはまだない。画面は UI の骨格（#36）の前の仮の画面） |
 
