@@ -11,7 +11,6 @@ theme:
     accent: indigo
   features:
     - navigation.tabs
-    - navigation.sections
     - toc.integrate
     - search.suggest
     - search.highlight
@@ -129,13 +128,16 @@ nav:
   - レビュー:
       - 概要: review/index.md
       - 戦略成果物レビュー（2026-09-29）: review/戦略成果物_review_20260929.md
-      - cargo-tracker ユースケースレビュー（2026-09-30）: review/cargo-tracker/usecases_review_20260930.md
-      - cargo-tracker 分析成果物レビュー（2026-10-01）: review/cargo-tracker/analysis_review_20261001.md
-      - cargo-tracker Bolt 1 開発成果物レビュー（2026-10-01）: review/cargo-tracker/bolt_01_review_20261001.md
-      - cargo-tracker Bolt 2 開発成果物レビュー（2026-10-02）: review/cargo-tracker/bolt_02_review_20261002.md
-      - cargo-tracker Bolt 3 開発成果物レビュー（2026-10-02）: review/cargo-tracker/bolt_03_review_20261002.md
-      - cargo-tracker Bolt 4 開発成果物レビュー（2026-10-02）: review/cargo-tracker/bolt_04_review_20261002.md
-      - cargo-tracker Bolt 5 開発成果物レビュー（2026-10-02）: review/cargo-tracker/bolt_05_review_20261002.md
+      - cargo-tracker:
+          - 概要: review/cargo-tracker/index.md
+          - ユースケースレビュー（2026-09-30）: review/cargo-tracker/usecases_review_20260930.md
+          - 分析成果物レビュー（2026-10-01）: review/cargo-tracker/analysis_review_20261001.md
+          - Bolt 1 開発成果物レビュー（2026-10-01）: review/cargo-tracker/bolt_01_review_20261001.md
+          - Bolt 2 開発成果物レビュー（2026-10-02）: review/cargo-tracker/bolt_02_review_20261002.md
+          - Bolt 3 開発成果物レビュー（2026-10-02）: review/cargo-tracker/bolt_03_review_20261002.md
+          - Bolt 4 開発成果物レビュー（2026-10-02）: review/cargo-tracker/bolt_04_review_20261002.md
+          - Bolt 5 開発成果物レビュー（2026-10-02）: review/cargo-tracker/bolt_05_review_20261002.md
+          - Bolt 6〜8 開発成果物レビュー（2026-10-03）: review/cargo-tracker/bolt_06-08_review_20261003.md
   - ADR:
       - 概要: adr/index.md
       - cargo-tracker:
