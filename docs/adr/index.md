@@ -11,4 +11,5 @@
 ## 補足
 
 - 実ドキュメントを追加したら、この一覧と `docs/index.md` を更新します。
-- ADR の作成には `creating-adr` スキルを使用してください。テンプレートは [template/ADR.md](../template/ADR.md) です。
+- ADR の作成には `creating-adr` スキルを使用してください。
+- テンプレートは [template/ADR.md](../template/ADR.md) です。
