@@ -120,7 +120,7 @@ npx gulp sonar-local:issues   # 指摘の一覧
 | ドキュメントサイトに載せる ER 図（SchemaSpy） | リポジトリのルートの `docs/assets/schemaspy-output/cargo-tracker/index.html` | リポジトリのルートで `npx gulp schemaspy:generate`（Docker が要る。約 2 分） |
 | ドキュメントサイトに載せる JIG | リポジトリのルートの `docs/assets/jig-output/cargo-tracker/index.html` | リポジトリのルートで `npx gulp jig:generate`（`jigReports` の出力を写す） |
 
-ER 図は、`apps/cargo-tracker/docker-compose.yml` の使い捨ての PostgreSQL 18.6 にアプリと同じ Flyway のマイグレーションを当て、SchemaSpy で作る。`npx gulp docs:generate` で ER 図と JIG をまとめて作り、`npx gulp docs:build` で続けてドキュメントサイトを作る。公開サイトのビルド（`.github/workflows/mkdocs.yml`）も同じタスクを使う。
+ER 図は、`apps/cargo-tracker/docker-compose.yml` の使い捨ての PostgreSQL 18.6 にアプリと同じ Flyway のマイグレーションを当て、SchemaSpy で作る。`npx gulp docs:generate` で ER 図と JIG をまとめて作り、`npx gulp docs:build` で続けてドキュメントサイトを作る。公開サイトのビルド（`.github/workflows/mkdocs.yml`）も同じタスクを使う。`main` は GitHub Pages のルート、`develop` は `develop/` に公開し、同時デプロイは直列化する。
 
 生成物はリポジトリにコミットしない。CI（`.github/workflows/cargo-tracker-ci.yml`）では、成果物 `cargo-tracker-reports`・`cargo-tracker-ui-reports` に 14 日残る。
 

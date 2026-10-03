@@ -75,7 +75,9 @@ Skills 一覧は [CLAUDE.md の Skills 体系](CLAUDE.md#skills-体系) を参�
     - `Save` をクリック
 
 4. **初回デプロイ**
-    - main ブランチにプッシュすると GitHub Actions が自動実行
+    - `main` ブランチにプッシュすると GitHub Actions が自動実行され、`https://k2works.github.io/practical-domain-driven-design-in-enterpris-application/` に公開
+    - `develop` ブランチにプッシュすると同じ workflow が自動実行され、`https://k2works.github.io/practical-domain-driven-design-in-enterpris-application/develop/` に公開
+    - 両ブランチのデプロイは直列に実行し、`main` のルートと `develop/` を相互に保持
     - Actions タブでデプロイ状況を確認
 
 **[⬆ back to top](#構成)**
