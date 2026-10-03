@@ -3,7 +3,7 @@
 --
 -- - アプリケーション利用者は db:init（運用準備）で作る。利用者の名前はプレースホルダー appuser で渡す
 -- - 利用者がないとき: requireappuser が true（ステージング・本番）なら失敗させ、false（ローカル）なら何もしない
--- - 追記専用の表は、表の定義の印（COMMENT ON TABLE ... IS 'append-only'）で選ぶ。名指しにしないので、
+-- - 追記専用の表は、表の定義の印（COMMENT ON TABLE ... IS '<日本語名> [append-only]'）で選ぶ。名指しにしないので、
 --   印を付ければ新しい表も保護される（名指しの書き忘れで保護が黙って外れることを防ぐ）
 -- - 業務のスキーマを足したら、GRANT のスキーマの一覧も同じ変更で更新する（漏れるとアプリが権限不足で失敗する）
 -- - 既定権限（ALTER DEFAULT PRIVILEGES）は使わない。Flyway 以外で作られた表に UPDATE・DELETE が付くのを防ぐ
@@ -30,7 +30,7 @@ BEGIN
           FROM pg_class c
           JOIN pg_namespace n ON n.oid = c.relnamespace
          WHERE c.relkind = 'r'
-           AND obj_description(c.oid, 'pg_class') = 'append-only'
+           AND obj_description(c.oid, 'pg_class') LIKE '% [append-only]'
     LOOP
         EXECUTE format('REVOKE UPDATE, DELETE ON %I.%I FROM %I',
                        append_only.schema_name, append_only.table_name, app_user);

@@ -24,7 +24,7 @@ import org.springframework.context.annotation.Import;
 
 /**
  * 追記専用の表を PostgreSQL の権限で守る（データモデル「追記専用」、運用要件 DA-02、ADR-007）。
- * 追記専用の表は、表の定義に印（COMMENT ON TABLE ... IS 'append-only'）を付け、afterMigrate のコールバックが
+ * 追記専用の表は、表の定義に印（COMMENT ON TABLE ... IS '<日本語名> [append-only]'）を付け、afterMigrate のコールバックが
  * 印の付いた表から UPDATE・DELETE を外す。印の付け忘れと外し忘れを、表の集合の一致で検出する。
  */
 @SpringBootTest
@@ -32,7 +32,7 @@ import org.springframework.context.annotation.Import;
 class AppendOnlyGrantIntegrationTest {
 
     /** データモデルの「追記専用」の表のうち、作成済みのもの。表を足したらここにも足す。 */
-    private static final Set<String> APPEND_ONLY_TABLES =
+    static final Set<String> APPEND_ONLY_TABLES =
             Set.of("quotation.transport_request_version", "quotation.review_record", "quotation.required_document");
 
     private static final String APP_PASSWORD = "cargo_tracker_app_test";
@@ -166,7 +166,7 @@ class AppendOnlyGrantIntegrationTest {
         return tables(
                 connection,
                 "SELECT n.nspname || '.' || c.relname FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace"
-                        + " WHERE c.relkind = 'r' AND obj_description(c.oid, 'pg_class') = 'append-only'");
+                        + " WHERE c.relkind = 'r' AND obj_description(c.oid, 'pg_class') LIKE '% [append-only]'");
     }
 
     private Set<String> tablesWithoutUpdatePrivilege(Connection connection) throws SQLException {
