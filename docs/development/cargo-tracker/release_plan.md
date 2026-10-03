@@ -4,12 +4,13 @@ title: "リリース計画 - cargo-tracker（A 社国際貨物輸送管理シス
 description: "cargo-tracker MVP のリリース計画。1 人 + AI、時間単位の Bolt（= イテレーション）と週次の見直しで、最初の縦の流れ（R0.1）、パイロット準備完了（R1.0）、本格展開前（R1.1）の 3 段階、Unit のエントロピー評価、SP、バッファ、パイロット開始の条件、引継ぎ ID の台帳。"
 tags: [development,release-plan]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-03T00:41:12Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-03T00:50:24Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T09:29:53Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:38:26Z }
   - { by: human:kakimomokuri, at: 2026-10-02T07:02:38Z }
   - { by: human:kakimomokuri, at: 2026-10-02T13:47:11Z }
+  - { by: human:kakimomokuri, at: 2026-10-03T00:50:25Z }
 ---
 
 # リリース計画 - cargo-tracker（A 社国際貨物輸送管理システム）
@@ -357,7 +358,7 @@ AI-DLC では **Bolt がイテレーション** である（[AI-DLC 導入ガイ
 - [x] Bolt 3: E2E の基盤と生きたドキュメント（完了、承認済み）。[Bolt 3 計画](bolt_03_plan.md)、[Bolt 3 終了報告](bolt_03_report.md)
 - [x] Bolt 4: 業務番号と必須条件の検証（US-01 AC1・AC2・AC4、完了、承認済み。AC2 の必要書類は次の Bolt）。[Bolt 4 計画](bolt_04_plan.md)、[Bolt 4 終了報告](bolt_04_report.md)
 - [x] Bolt 5: 輸送条件の審査と差戻し（US-02、完了、承認済み）。[Bolt 5 計画](bolt_05_plan.md)、[Bolt 5 終了報告](bolt_05_report.md)
-- [ ] Bolt 6: 荷主の再提出の画面（US-02 の差戻しから版 2 まで。C-02 の最小の一覧、C-04、C-03 の編集。実装済み、終了報告の承認待ち）。[Bolt 6 計画](bolt_06_plan.md)、[Bolt 6 終了報告](bolt_06_report.md)
+- [x] Bolt 6: 荷主の再提出の画面（US-02 の差戻しから版 2 まで。C-02 の最小の一覧、C-04、C-03 の編集。完了、承認済み）。[Bolt 6 計画](bolt_06_plan.md)、[Bolt 6 終了報告](bolt_06_report.md)
 - [x] 開発基盤（Gradle 9、Spring Boot 4.1、Spring Modulith、MyBatis、Flyway の `common`・`{vendor}`、H2・Testcontainers、ArchUnit・AT-01〜06、Cucumber、CI）。Bolt 1〜3 で完了し、#1 をクローズした
 - [ ] UI の骨格（Thymeleaf、htmx、Bootstrap、共通レイアウト）。Thymeleaf は導入済み。#1 から #36 に分けた
 - [ ] US-01（AC1、AC2、AC4）、US-02
