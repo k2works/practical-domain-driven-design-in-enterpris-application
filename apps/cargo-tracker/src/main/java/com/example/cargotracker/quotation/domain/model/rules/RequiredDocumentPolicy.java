@@ -7,6 +7,7 @@ import com.example.cargotracker.quotation.domain.model.valueobjects.RequiredDocu
 import com.example.cargotracker.quotation.domain.model.valueobjects.SubmissionViolations.Item;
 import com.example.cargotracker.quotation.domain.model.valueobjects.SubmissionViolations.Reason;
 import com.example.cargotracker.quotation.domain.model.valueobjects.SubmissionViolations.Violation;
+import com.example.cargotracker.shared.annotation.ddd.DomainRule;
 import java.util.EnumMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -18,6 +19,7 @@ import java.util.stream.Stream;
  * 書類の受付規則（Q-INV-16、2026-10-03 の D-20）。添付した書類の形式・大きさ・件数を判定し、違反を提出の検証結果の形で返す。
  * 必要書類は任意なので、書類がないことは違反にしない。
  */
+@DomainRule
 public class RequiredDocumentPolicy {
 
     /** 1 件の大きさの上限（10 MB）。 */

@@ -3,6 +3,7 @@ package com.example.cargotracker.quotation.application.internal.commands;
 import com.example.cargotracker.quotation.domain.model.valueobjects.RequiredDocumentAttachment;
 import com.example.cargotracker.quotation.domain.model.valueobjects.ShipmentTermsInput;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestNumber;
+import com.example.cargotracker.shared.annotation.ddd.Command;
 import com.example.cargotracker.shared.domain.CompanyId;
 import com.example.cargotracker.shared.domain.UserId;
 import java.util.List;
@@ -17,6 +18,7 @@ import java.util.Objects;
  * @param terms 輸送条件の入力（提出と同じ検証を通す）
  * @param attachments 足す書類（前の版の書類は引き継ぐ）
  */
+@Command
 public record ResubmitTransportRequestCommand(
         TransportRequestNumber number,
         CompanyId shipperCompanyId,

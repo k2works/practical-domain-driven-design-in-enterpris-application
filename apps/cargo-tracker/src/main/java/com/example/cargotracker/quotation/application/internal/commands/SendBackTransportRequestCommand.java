@@ -1,6 +1,7 @@
 package com.example.cargotracker.quotation.application.internal.commands;
 
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestNumber;
+import com.example.cargotracker.shared.annotation.ddd.Command;
 import com.example.cargotracker.shared.domain.UserId;
 import java.util.Objects;
 
@@ -13,6 +14,7 @@ import java.util.Objects;
  * @param reason 理由（必須）
  * @param missingItems 不足事項（任意）
  */
+@Command
 public record SendBackTransportRequestCommand(
         TransportRequestNumber number, int targetVersionNo, UserId reviewer, String reason, String missingItems) {
 

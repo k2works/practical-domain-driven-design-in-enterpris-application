@@ -1,6 +1,7 @@
 package com.example.cargotracker.quotation.application.internal.commands;
 
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestNumber;
+import com.example.cargotracker.shared.annotation.ddd.Command;
 import com.example.cargotracker.shared.domain.UserId;
 import java.util.Objects;
 
@@ -12,6 +13,7 @@ import java.util.Objects;
  * @param reviewer 判断者
  * @param rationale 根拠（必須）
  */
+@Command
 public record ApproveTransportRequestCommand(
         TransportRequestNumber number, int targetVersionNo, UserId reviewer, String rationale) {
 
