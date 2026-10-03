@@ -50,6 +50,8 @@ dependencies {
 	// 開発体験を優先し、ローカル起動だけ H2 を使う。本番の成果物には含めない（ADR-007、AT-06）
 	developmentOnly 'com.h2database:h2'
 	developmentOnly 'org.springframework.boot:spring-boot-h2console'
+	// ローカル起動（bootRun・bootTestRun）での自動再起動とライブリロード、テンプレートのキャッシュの無効化。本番の成果物には含めない
+	developmentOnly 'org.springframework.boot:spring-boot-devtools'
 
 	testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
 	testImplementation 'org.springframework.boot:spring-boot-starter-thymeleaf-test'
