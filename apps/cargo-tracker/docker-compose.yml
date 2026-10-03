@@ -1,0 +1,50 @@
+# cargo-tracker の ER 図（SchemaSpy）の生成用。リポジトリのルートで `npx gulp schemaspy:generate` を実行すると使う。
+# 使い捨ての PostgreSQL にアプリと同じマイグレーションを当て、SchemaSpy で docs/assets/schemaspy-output/cargo-tracker に出す。
+# 業務の表は Flyway だけが作る（ADR-007）。アプリのローカル起動（bootRun・bootTestRun）はこのファイルを使わない。
+name: cargo-tracker-schemaspy
+
+services:
+  postgres:
+    image: postgres:18.6
+    environment:
+      POSTGRES_DB: cargotracker
+      POSTGRES_USER: cargotracker
+      POSTGRES_PASSWORD: cargotracker
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cargotracker -d cargotracker"]
+      interval: 2s
+      timeout: 5s
+      retries: 30
+
+  # アプリと同じ版・同じ置き場・同じプレースホルダーでマイグレーションを当てる（ADR-007）
+  flyway:
+    image: flyway/flyway:12.4.0
+    volumes:
+      - ./src/main/resources/db/migration/common:/flyway/sql/common:ro
+      - ./src/main/resources/db/migration/postgresql:/flyway/sql/postgresql:ro
+      - ./src/main/resources/db/callback/postgresql:/flyway/sql/callback:ro
+    command: >-
+      -url=jdbc:postgresql://postgres:5432/cargotracker
+      -user=cargotracker -password=cargotracker
+      -locations=filesystem:/flyway/sql/common,filesystem:/flyway/sql/postgresql,filesystem:/flyway/sql/callback
+      -placeholders.appuser=cargo_tracker_app
+      -placeholders.requireappuser=false
+      migrate
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  schemaspy:
+    image: schemaspy/schemaspy:7.0.2
+    # 出力先のバインドマウントに書けるよう root で動かす（イメージの既定の利用者は CI の作業ディレクトリに書けない）
+    user: root
+    volumes:
+      - ../../docs/assets/schemaspy-output/cargo-tracker:/output
+    command: >-
+      -t pgsql11 -host postgres -port 5432 -db cargotracker
+      -u cargotracker -p cargotracker
+      -schemas identity,quotation,platform
+      -vizjs
+    depends_on:
+      postgres:
+        condition: service_healthy
