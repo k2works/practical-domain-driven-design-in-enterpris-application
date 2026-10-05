@@ -10,8 +10,10 @@ import com.example.cargotracker.quotation.domain.model.valueobjects.PricingLine;
 import com.example.cargotracker.quotation.domain.model.valueobjects.QuotationExpiry;
 import com.example.cargotracker.quotation.domain.model.valueobjects.QuotationId;
 import com.example.cargotracker.quotation.domain.model.valueobjects.QuotationStatus;
+import com.example.cargotracker.quotation.domain.model.valueobjects.QuotedRequestSummary;
 import com.example.cargotracker.quotation.domain.model.valueobjects.RoutePolicy;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestId;
+import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestNumber;
 import com.example.cargotracker.shared.domain.Location;
 import com.example.cargotracker.shared.domain.UserId;
 import com.example.cargotracker.shared.domain.UtcInstant;
@@ -87,6 +89,17 @@ public class MyBatisQuotationRepository implements QuotationRepository {
                         .collect(Collectors.groupingBy(PricingLineRow::quotationId));
         return mapper.selectByTransportRequestId(transportRequestId.value()).stream()
                 .map(row -> toAggregate(row, lines.getOrDefault(row.id(), List.of())))
+                .toList();
+    }
+
+    @Override
+    public List<QuotedRequestSummary> findLatestOfQuotedRequests() {
+        return mapper.selectLatestOfQuotedRequests().stream()
+                .map(row -> new QuotedRequestSummary(
+                        TransportRequestNumber.parse(row.requestNumber()),
+                        row.quotationNo(),
+                        QuotationStatus.valueOf(row.status()),
+                        toUtc(row.expiresAt())))
                 .toList();
     }
 

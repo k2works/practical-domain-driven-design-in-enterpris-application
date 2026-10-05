@@ -1,6 +1,7 @@
 package com.example.cargotracker.quotation.application.internal.commandservices;
 
 import com.example.cargotracker.quotation.domain.model.valueobjects.QuotationRejection;
+import com.example.cargotracker.quotation.domain.model.valueobjects.QuotationStatus;
 import com.example.cargotracker.quotation.domain.model.valueobjects.QuotationViolations;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestNumber;
 import java.util.Objects;
@@ -15,11 +16,14 @@ public sealed interface RequotationOutcome {
      *
      * @param number 業務番号
      * @param quotationNo 新しい見積りの見積り番号
+     * @param previousStatus 旧版の状態（置換済み、または有効期限を過ぎていたので失効）
      */
-    record Calculated(TransportRequestNumber number, int quotationNo) implements RequotationOutcome {
+    record Calculated(TransportRequestNumber number, int quotationNo, QuotationStatus previousStatus)
+            implements RequotationOutcome {
 
         public Calculated {
             Objects.requireNonNull(number, "number");
+            Objects.requireNonNull(previousStatus, "previousStatus");
         }
     }
 
@@ -36,7 +40,7 @@ public sealed interface RequotationOutcome {
     }
 
     /**
-     * 業務の規則で再見積りできなかった（置換済み・失効、見積り作成中でない見積依頼、見積りがすでにある）。
+     * 業務の規則で再見積りできなかった（置換済み・失効、見積り作成中でも見積提示済みでもない見積依頼、古い版に対する見積り）。
      *
      * @param reason 理由
      */

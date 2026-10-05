@@ -23,4 +23,7 @@ public interface QuotationMapper {
 
     /** 輸送要求の見積りの料金明細を、見積り ID と明細の番号の順に返す（見積りごとに読まない）。 */
     List<PricingLineRow> selectPricingLinesByTransportRequestId(UUID transportRequestId);
+
+    /** 見積提示済みの見積依頼ごとの最新の見積り（受付一覧 S-02。Bolt 11）。 */
+    List<QuotedRequestSummaryRow> selectLatestOfQuotedRequests();
 }

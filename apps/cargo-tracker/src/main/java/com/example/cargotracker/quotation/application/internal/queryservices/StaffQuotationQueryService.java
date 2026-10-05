@@ -3,6 +3,7 @@ package com.example.cargotracker.quotation.application.internal.queryservices;
 import com.example.cargotracker.quotation.domain.model.aggregates.Quotation;
 import com.example.cargotracker.quotation.domain.model.aggregates.QuotationRepository;
 import com.example.cargotracker.quotation.domain.model.aggregates.TransportRequestRepository;
+import com.example.cargotracker.quotation.domain.model.valueobjects.QuotedRequestSummary;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestNumber;
 import java.util.Comparator;
 import java.util.List;
@@ -54,5 +55,11 @@ public class StaffQuotationQueryService {
                 .findByNumberForStaff(number)
                 .map(request -> quotationRepository.findByTransportRequestId(request.id()))
                 .orElse(List.of());
+    }
+
+    /** 受付一覧（S-02）の見積提示済みの表。見積依頼ごとの最新の見積りを、有効期限の近い順に返す（Bolt 11 レビュー R-02）。 */
+    @Transactional(readOnly = true)
+    public List<QuotedRequestSummary> findQuotedSummaries() {
+        return quotationRepository.findLatestOfQuotedRequests();
     }
 }

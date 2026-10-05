@@ -1,5 +1,6 @@
 package com.example.cargotracker.quotation.domain.model.aggregates;
 
+import com.example.cargotracker.quotation.domain.model.valueobjects.QuotedRequestSummary;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestId;
 import java.util.List;
 import java.util.Optional;
@@ -26,6 +27,12 @@ public interface QuotationRepository {
 
     /** 輸送要求の見積りを、見積り番号の順に返す。 */
     List<Quotation> findByTransportRequestId(TransportRequestId transportRequestId);
+
+    /**
+     * 見積提示済みの見積依頼ごとに、最新の見積り（見積り番号の最大）を、有効期限の近い順に返す（受付一覧 S-02。Bolt 11 レビュー R-02）。
+     * 社内の照会で、荷主企業で絞らない。
+     */
+    List<QuotedRequestSummary> findLatestOfQuotedRequests();
 
     /** 輸送要求の見積りを見積り番号で探す。 */
     Optional<Quotation> findByTransportRequestIdAndNo(TransportRequestId transportRequestId, int quotationNo);

@@ -23,6 +23,7 @@ public record QuotationExpiry(UtcInstant expiresAt) {
      * @param judgedAt 判定時刻（呼び出し側が渡す。提示・再見積りは操作の時刻、予約確定は commit 時刻）
      */
     public boolean isValidAt(UtcInstant judgedAt) {
+        Objects.requireNonNull(judgedAt, "judgedAt");
         return judgedAt.instant().isBefore(expiresAt.instant());
     }
 }

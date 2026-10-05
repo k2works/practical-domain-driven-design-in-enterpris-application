@@ -3,12 +3,10 @@ package com.example.cargotracker.quotation.application.internal.queryservices;
 import com.example.cargotracker.quotation.domain.model.aggregates.Quotation;
 import com.example.cargotracker.quotation.domain.model.aggregates.QuotationRepository;
 import com.example.cargotracker.quotation.domain.model.aggregates.TransportRequestRepository;
-import com.example.cargotracker.quotation.domain.model.valueobjects.QuotationStatus;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestNumber;
 import com.example.cargotracker.shared.domain.CompanyId;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Optional;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,16 +27,6 @@ public class QuotationQueryService {
             TransportRequestRepository transportRequestRepository, QuotationRepository quotationRepository) {
         this.transportRequestRepository = transportRequestRepository;
         this.quotationRepository = quotationRepository;
-    }
-
-    /** 荷主企業の見積依頼の、提示済みの見積り（いちばん新しいもの）。他社の見積依頼の見積りは見つからない。 */
-    @Transactional(readOnly = true)
-    public Optional<Quotation> findPresented(TransportRequestNumber number, CompanyId shipperCompanyId) {
-        return transportRequestRepository
-                .findByNumber(number, shipperCompanyId)
-                .flatMap(request -> quotationRepository.findByTransportRequestId(request.id()).stream()
-                        .filter(quotation -> quotation.status() == QuotationStatus.PRESENTED)
-                        .max(Comparator.comparingInt(Quotation::quotationNo)));
     }
 
     /**

@@ -162,16 +162,9 @@ public final class Quotation {
      */
     public Optional<QuotationRejection> presentInternally(UserId approver, UtcInstant at) {
         Objects.requireNonNull(approver, "approver");
-        Objects.requireNonNull(at, "at");
-        Optional<QuotationRejection> retired = retiredRejection();
-        if (retired.isPresent()) {
-            return retired;
-        }
-        if (status != QuotationStatus.PENDING_APPROVAL) {
-            return Optional.of(QuotationRejection.NOT_PENDING_APPROVAL);
-        }
-        if (isExpiredAt(at)) {
-            return Optional.of(QuotationRejection.EXPIRED);
+        Optional<QuotationRejection> rejection = presentRejectionAt(at);
+        if (rejection.isPresent()) {
+            return rejection;
         }
         approvedBy = approver;
         presentedAt = at;
@@ -202,9 +195,9 @@ public final class Quotation {
     public Optional<QuotationRejection> replaceWith(QuotationId replacement, UtcInstant at) {
         Objects.requireNonNull(replacement, "replacement");
         Objects.requireNonNull(at, "at");
-        Optional<QuotationRejection> retired = retiredRejection();
-        if (retired.isPresent()) {
-            return retired;
+        Optional<QuotationRejection> rejection = requoteRejection();
+        if (rejection.isPresent()) {
+            return rejection;
         }
         if (status == QuotationStatus.DRAFT) {
             throw new IllegalStateException("作成中の見積りは置換できません: " + id);
@@ -227,6 +220,37 @@ public final class Quotation {
         return status == QuotationStatus.EXPIRED
                 || ((status == QuotationStatus.PENDING_APPROVAL || status == QuotationStatus.PRESENTED)
                         && !expiry.isValidAt(judgedAt));
+    }
+
+    /**
+     * 判定時刻に社内承認して提示できないなら、その理由（Q-INV-07。Bolt 11 レビュー R-07・R-16）。置換済み・失効の記録・
+     * 判定時刻で失効（承認待ち・提示済みとも）を先に見て、そうでなければ承認待ちかを見る。画面の操作の出し分けもこれを使う。
+     *
+     * @return 提示できない理由（提示できるなら空）
+     */
+    public Optional<QuotationRejection> presentRejectionAt(UtcInstant at) {
+        Objects.requireNonNull(at, "at");
+        Optional<QuotationRejection> retired = retiredRejection();
+        if (retired.isPresent()) {
+            return retired;
+        }
+        if (isExpiredAt(at)) {
+            return Optional.of(QuotationRejection.EXPIRED);
+        }
+        if (status != QuotationStatus.PENDING_APPROVAL) {
+            return Optional.of(QuotationRejection.NOT_PENDING_APPROVAL);
+        }
+        return Optional.empty();
+    }
+
+    /**
+     * 再見積りできないなら、その理由（置換済み・失効の記録。Q-INV-07）。承認待ち・提示済みは、判定時刻で失効していても
+     * 再見積りできる。画面の操作の出し分けもこれを使う（Bolt 11 レビュー R-07）。
+     *
+     * @return 再見積りできない理由（再見積りできるなら空）
+     */
+    public Optional<QuotationRejection> requoteRejection() {
+        return retiredRejection();
     }
 
     private Optional<QuotationRejection> retiredRejection() {

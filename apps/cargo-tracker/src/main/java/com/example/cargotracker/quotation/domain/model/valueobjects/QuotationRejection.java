@@ -13,5 +13,7 @@ public enum QuotationRejection {
     /** 見積りが失効している（判定時刻が有効期限と同時刻または後。Q-INV-07。再見積りが必要）。 */
     EXPIRED,
     /** 見積りが置換済み（Q-INV-07。置換先の見積りを使う）。 */
-    REPLACED
+    REPLACED,
+    /** 見積りの対象の版が、輸送要求の現在の版でない（古い版に対する見積りは再見積りできない。Bolt 11 レビュー R-06）。 */
+    OUTDATED_VERSION
 }

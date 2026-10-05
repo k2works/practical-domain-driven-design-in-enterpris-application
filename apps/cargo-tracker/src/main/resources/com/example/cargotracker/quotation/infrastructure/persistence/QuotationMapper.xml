@@ -72,6 +72,28 @@
          ORDER BY quotation_no
     </select>
 
+    <resultMap id="quotedRequestSummaryRow" type="com.example.cargotracker.quotation.infrastructure.persistence.QuotedRequestSummaryRow">
+        <constructor>
+            <arg column="request_number" name="requestNumber" javaType="String"/>
+            <arg column="quotation_no" name="quotationNo" javaType="_int"/>
+            <arg column="status" name="status" javaType="String"/>
+            <arg column="expires_at" name="expiresAt" javaType="java.time.OffsetDateTime"/>
+        </constructor>
+    </resultMap>
+
+    <!-- 受付一覧（S-02）の見積提示済みの表（Bolt 11 レビュー R-02）。見積提示済みの見積依頼ごとに、見積り番号の最大の見積りを、
+         有効期限の近い順に返す。社内の照会なので荷主企業で絞らない -->
+    <select id="selectLatestOfQuotedRequests" resultMap="quotedRequestSummaryRow">
+        SELECT r.request_number, q.quotation_no, q.status, q.expires_at
+          FROM quotation.transport_request r
+          JOIN quotation.quotation q ON q.transport_request_id = r.id
+         WHERE r.status = 'QUOTED'
+           AND q.quotation_no = (SELECT MAX(latest.quotation_no)
+                                   FROM quotation.quotation latest
+                                  WHERE latest.transport_request_id = r.id)
+         ORDER BY q.expires_at, r.request_number
+    </select>
+
     <select id="selectPricingLinesByTransportRequestId" resultMap="pricingLineRow">
         SELECT l.quotation_id, l.line_no, l.description, l.amount, l.currency, l.contract_reference
           FROM quotation.pricing_line l

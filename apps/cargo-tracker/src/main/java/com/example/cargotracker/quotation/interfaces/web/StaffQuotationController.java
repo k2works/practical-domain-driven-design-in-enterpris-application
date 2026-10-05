@@ -209,7 +209,7 @@ public class StaffQuotationController {
         String oldLabel = QuotationViews.label(request.number(), quotationNo);
         return switch (commandService.requote(
                 new RequoteQuotationCommand(request.number(), quotationNo, input.get()))) {
-            case RequotationOutcome.Calculated(TransportRequestNumber calculated, int newNo) -> {
+            case RequotationOutcome.Calculated(TransportRequestNumber calculated, int newNo, QuotationStatus _) -> {
                 redirectAttributes.addFlashAttribute(
                         RESULT,
                         QuotationViews.label(calculated, newNo) + " を算出しました。見積 " + quotationNo
@@ -308,6 +308,7 @@ public class StaffQuotationController {
             case NOT_PENDING_APPROVAL -> subject + " は承認待ちでないため提示できません";
             case EXPIRED -> subject + " は有効期限を過ぎて失効しています。再見積りしてください";
             case REPLACED -> subject + " は置換済みです。新しい見積りを使ってください";
+            case OUTDATED_VERSION -> subject + " は輸送要求の古い版に対する見積りのため、再見積りできません";
         };
     }
 

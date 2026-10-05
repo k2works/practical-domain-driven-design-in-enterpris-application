@@ -74,8 +74,7 @@ public class QuotationCommandService {
         if (existing.stream().anyMatch(Quotation::isActive)) {
             return new CalculationOutcome.Rejected(QuotationRejection.ALREADY_QUOTED);
         }
-        int quotationNo =
-                existing.stream().mapToInt(Quotation::quotationNo).max().orElse(0) + 1;
+        int quotationNo = nextQuotationNo(existing);
         Quotation quotation = Quotation.create(
                 new QuotationId(UUID.randomUUID()),
                 request.id(),
@@ -129,30 +128,33 @@ public class QuotationCommandService {
     @Transactional
     public RequotationOutcome requote(RequoteQuotationCommand command) {
         Optional<TransportRequest> found = transportRequestRepository.findByNumberForStaff(command.number());
-        Optional<Quotation> previous = found.flatMap(
-                request -> quotationRepository.findByTransportRequestIdAndNo(request.id(), command.quotationNo()));
-        if (found.isEmpty() || previous.isEmpty()) {
+        if (found.isEmpty()) {
             return new RequotationOutcome.NotFound();
         }
         TransportRequest request = found.get();
+        List<Quotation> existing = quotationRepository.findByTransportRequestId(request.id());
+        Optional<Quotation> previous = existing.stream()
+                .filter(quotation -> quotation.quotationNo() == command.quotationNo())
+                .findFirst();
+        if (previous.isEmpty()) {
+            return new RequotationOutcome.NotFound();
+        }
         Quotation old = previous.get();
-        if (!REQUOTABLE.contains(request.status())
-                || old.transportRequestVersionNo() != request.currentVersion().versionNo()) {
+        if (!REQUOTABLE.contains(request.status())) {
             return new RequotationOutcome.Rejected(QuotationRejection.TRANSPORT_REQUEST_NOT_QUOTING);
         }
+        if (old.transportRequestVersionNo() != request.currentVersion().versionNo()) {
+            return new RequotationOutcome.Rejected(QuotationRejection.OUTDATED_VERSION);
+        }
         UtcInstant now = new UtcInstant(clock.instant());
-        int quotationNo = quotationRepository.findByTransportRequestId(request.id()).stream()
-                        .mapToInt(Quotation::quotationNo)
-                        .max()
-                        .orElse(0)
-                + 1;
+        int quotationNo = nextQuotationNo(existing);
         Quotation replacement = Quotation.create(
                 new QuotationId(UUID.randomUUID()),
                 request.id(),
                 request.currentVersion().versionNo(),
                 quotationNo);
-        // 置換済み・失効の旧版は、入力を見る前に拒否する（旧版の変更は保存するまで集約の中にとどまる）
-        Optional<QuotationRejection> rejection = old.replaceWith(replacement.id(), now);
+        // 置換済み・失効の旧版は、入力を見る前に拒否する。旧版は、入力に誤りがないと分かってから置き換える
+        Optional<QuotationRejection> rejection = old.requoteRejection();
         if (rejection.isPresent()) {
             return new RequotationOutcome.Rejected(rejection.get());
         }
@@ -160,6 +162,7 @@ public class QuotationCommandService {
         if (violations.isPresent()) {
             return new RequotationOutcome.Invalid(violations.get());
         }
+        old.replaceWith(replacement.id(), now);
         try {
             quotationRepository.update(old);
         } catch (ConcurrentQuotationUpdateException _) {
@@ -168,6 +171,11 @@ public class QuotationCommandService {
         // 旧版を更新できた（行を押さえた）後は、同じ旧版の再見積りは楽観ロックで止まるため、新しい見積りの保存が
         // 一意制約に触れるのは壊れた前提として例外のまま返し、旧版の更新ごとロールバックする
         quotationRepository.save(replacement);
-        return new RequotationOutcome.Calculated(command.number(), quotationNo);
+        return new RequotationOutcome.Calculated(command.number(), quotationNo, old.status());
+    }
+
+    /** 次の見積り番号（輸送要求の見積りの番号の最大 + 1。同時の作成は UK と部分一意インデックスで止める。R-02・R-08）。 */
+    private static int nextQuotationNo(List<Quotation> existing) {
+        return existing.stream().mapToInt(Quotation::quotationNo).max().orElse(0) + 1;
     }
 }
