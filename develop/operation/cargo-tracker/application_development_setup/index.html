@@ -3091,6 +3091,17 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#9-claude-code-on-the-web" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9. クラウドの実行環境（Claude Code on the web）
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -6721,7 +6732,7 @@
 </tr>
 <tr>
 <td style="text-align: left;">確認日</td>
-<td style="text-align: left;">2026-10-02（本書のコマンドはこの日に実際に動かして確かめた）</td>
+<td style="text-align: left;">2026-10-02（本書のコマンドはこの日に実際に動かして確かめた）。9 節（クラウドの実行環境）は 2026-10-05</td>
 </tr>
 </tbody>
 </table>
@@ -6968,6 +6979,82 @@ npx<span class="w"> </span>gulp<span class="w"> </span>sonar-local:issues<span c
 <tr>
 <td style="text-align: left;"><code>sonar-local:check</code> が NONE で失敗する</td>
 <td style="text-align: left;">解析の反映を待つ設定（<code>sonar.qualitygate.wait</code>）が働いていない可能性がある。<code>npx gulp sonar-local:status</code> でサーバーを確かめる</td>
+</tr>
+</tbody>
+</table>
+<h2 id="9-claude-code-on-the-web">9. クラウドの実行環境（Claude Code on the web）<a class="headerlink" href="#9-claude-code-on-the-web" title="Permanent link">&para;</a></h2>
+<p>Claude Code のクラウドの実行環境では、セッションの開始のフック（<code>.claude/hooks/session-start.sh</code>。<code>.claude/settings.json</code> に登録）が、検証を動かせる状態を作る（Bolt 11 の Try T-34。2026-10-05 に human:kakimomokuri が決定）。クラウドの実行環境のときだけ動き（<code>CLAUDE_CODE_REMOTE=true</code>）、何度動かしても同じ結果になる。</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">順</th>
+<th style="text-align: left;">フックがすること</th>
+<th style="text-align: left;">理由</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">1</td>
+<td style="text-align: left;">ロケールを <code>C.UTF-8</code> にする（<code>LC_ALL</code>・<code>LANG</code> をセッションの環境変数に足す）</td>
+<td style="text-align: left;">日本語のシナリオ名のテストの報告を書き出すときに失敗するため</td>
+</tr>
+<tr>
+<td style="text-align: left;">2</td>
+<td style="text-align: left;">JDK 25 がなければ apt で <code>openjdk-25-jdk-headless</code> を入れる</td>
+<td style="text-align: left;">Gradle の toolchain が 25 を求める。JDK のダウンロードのサイトはネットワークの方針で許可されていない</td>
+</tr>
+<tr>
+<td style="text-align: left;">3</td>
+<td style="text-align: left;">dockerd が止まっていれば起動する</td>
+<td style="text-align: left;">Testcontainers の PostgreSQL に要る。待機中に止まることがある</td>
+</tr>
+<tr>
+<td style="text-align: left;">4</td>
+<td style="text-align: left;"><code>./gradlew testClasses</code> で依存を取り、Maven Central の 429 なら間を置いて 3 回まで取り直す</td>
+<td style="text-align: left;">依存の取得で 429 が返ることがある</td>
+</tr>
+<tr>
+<td style="text-align: left;">5</td>
+<td style="text-align: left;">Playwright が求める Chromium（driver の <code>browsers.json</code> の版）がなければ、環境にある Chromium を求める版の場所から参照させる</td>
+<td style="text-align: left;">求める版のダウンロード元（<code>cdn.playwright.dev</code>）が許可されていない。CI は正規の版で回る</td>
+</tr>
+<tr>
+<td style="text-align: left;">6</td>
+<td style="text-align: left;">ルートの <code>node_modules</code> がなければ <code>npm install</code> する</td>
+<td style="text-align: left;">文書の検査（<code>npx gulp okf:check</code>）に要る</td>
+</tr>
+<tr>
+<td style="text-align: left;">7</td>
+<td style="text-align: left;"><code>vm.max_map_count</code> を 262144 にする</td>
+<td style="text-align: left;">SonarQube の Elasticsearch が求める</td>
+</tr>
+</tbody>
+</table>
+<p>フックの後は、4 節のコマンドがそのまま動く。SonarQube を使うときは、フックでは起動しないため、次の手順で起動してから 4 節の <code>sonar-local:check</code> を実行する。</p>
+<div class="highlight"><pre><span></span><code><span class="nb">cd</span><span class="w"> </span>ops/docker/sonarqube-local
+docker<span class="w"> </span>compose<span class="w"> </span>-f<span class="w"> </span>docker-compose.yml<span class="w"> </span>-f<span class="w"> </span>docker-compose.cloud.yml<span class="w"> </span>up<span class="w"> </span>-d<span class="w">   </span><span class="c1"># 起動時チェックを外し Web の heap を 2 GB に</span>
+<span class="k">until</span><span class="w"> </span>curl<span class="w"> </span>-s<span class="w"> </span>localhost:9000/api/system/status<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>-q<span class="w"> </span><span class="s1">'"UP"'</span><span class="p">;</span><span class="w"> </span><span class="k">do</span><span class="w"> </span>sleep<span class="w"> </span><span class="m">3</span><span class="p">;</span><span class="w"> </span><span class="k">done</span>
+</code></pre></div>
+<p>初回は admin のパスワードを変えてトークンを作り、ルートの <code>.env</code>（Git の対象外）に <code>SONAR_TOKEN</code> と <code>SONAR_PROJECT_KEY=cargo-tracker-modular-monolith</code> を書く（<a href="../../../reference/SonarQube%E3%83%AD%E3%83%BC%E3%82%AB%E3%83%AB%E7%92%B0%E5%A2%83%E3%82%BB%E3%83%83%E3%83%88%E3%82%A2%E3%83%83%E3%83%97%E6%89%8B%E9%A0%86%E6%9B%B8/">SonarQube ローカル環境セットアップ手順書</a>）。クラウドの実行環境のコンテナはセッションの終わりに消えるため、トークンはセッションごとに作り直す。</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">つまずき</th>
+<th style="text-align: left;">対処</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>uiTest</code> が <code>Executable doesn't exist at /opt/pw-browsers/chromium_headless_shell-…</code> で全件失敗する</td>
+<td style="text-align: left;">フックの 5 が動いていない。<code>CLAUDE_CODE_REMOTE=true .claude/hooks/session-start.sh</code> を実行する</td>
+</tr>
+<tr>
+<td style="text-align: left;">統合テストが <code>Could not find a valid Docker environment</code> で失敗する</td>
+<td style="text-align: left;">dockerd が止まった。フックをもう一度実行する</td>
+</tr>
+<tr>
+<td style="text-align: left;">SonarQube のコンテナが起動を繰り返す</td>
+<td style="text-align: left;"><code>docker-compose.cloud.yml</code> を重ねずに起動した。上の手順で起動し直す</td>
 </tr>
 </tbody>
 </table>

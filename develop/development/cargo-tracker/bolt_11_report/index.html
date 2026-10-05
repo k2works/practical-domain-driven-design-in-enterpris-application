@@ -7198,6 +7198,7 @@
 <li>確認ポイント 1〜8（AC4・AC5 の範囲、失効の判定、承認待ちの失効、再見積り、トランザクション、部分一意インデックス、表の変更、S-04・C-04 の URL と表示）</li>
 <li>失効の判定を <code>QuotationExpiry</code> に置くこと、置換先の FK を PostgreSQL の遅延の FK にすること</li>
 <li>開発レビューの対応の範囲（D-40）、C-04 の案内と荷主向けの言葉（D-37）、S-02 の見積提示済みの表（D-38）</li>
+<li>画面の層の失効の準備は DB の書き換えのまま（D-39）、業務責任者に確かめる事項に D-41 を足す、Try T-34 はクラウドの実行環境の準備を手順書にまとめてセッションの開始のフックにする（2026-10-05、本報告の確認の場で決定）</li>
 </ul>
 <h3 id="_13">既知の課題<a class="headerlink" href="#_13" title="Permanent link">&para;</a></h3>
 <table>
@@ -7210,9 +7211,9 @@
 </thead>
 <tbody>
 <tr>
-<td style="text-align: left;">D-39（画面の層の失効の準備を DB の書き換えで作る）と D-41（業務責任者に確かめる事項）に明示の判断がない</td>
-<td style="text-align: left;">画面の層のテストが DB の時刻に依存する。旧版を新しい見積りの提示まで残すかが決まっていない</td>
-<td style="text-align: left;">本報告の承認の場で確かめる</td>
+<td style="text-align: left;">業務責任者に確かめる事項に足した D-41（旧版を新しい見積りの提示まで残すか、失効の連絡の責任、失効・置換の後の輸送要求の状態）</td>
+<td style="text-align: left;">残すと決まれば Q-INV-18 の見直しが要る</td>
+<td style="text-align: left;">W2 の間に確かめる</td>
 </tr>
 <tr>
 <td style="text-align: left;">実 DB の 2 つのトランザクションでの同時の再見積り（R-15）</td>
@@ -7285,12 +7286,12 @@
 <li><strong>Try</strong>:</li>
 <li>T-32: 状態を変える操作を計画するときは、操作の前・最中・後に、関係する利用者（荷主・営業）がどの画面で何を見て、次に何をするかを確認ポイントに入れる（AI、すぐ）</li>
 <li>T-33: ステップの結果の時刻は、そのステップの最後のコミットの時刻で書く（AI、すぐ）</li>
-<li>T-34: この環境の準備（JDK 25、ロケール、ブラウザ、SonarQube の起動）を、手順書かセッション開始のフックにまとめるかを人に確かめたい</li>
+<li>T-34: この環境の準備（JDK 25、ロケール、ブラウザ、SonarQube の起動）を、手順書にまとめてセッションの開始のフックにする（人の決定。本報告の確認の場で対応した: <code>.claude/hooks/session-start.sh</code>、<a href="../../../operation/cargo-tracker/application_development_setup/">アプリケーション開発環境セットアップ手順書</a> の 9 節、<code>ops/docker/sonarqube-local/docker-compose.cloud.yml</code>）</li>
 </ul>
 <h2 id="_15">承認待ちの書き換え<a class="headerlink" href="#_15" title="Permanent link">&para;</a></h2>
 <ul>
 <li>本報告の承認で確かめてほしいもの: <code>bolt_11_plan.md</code>（ステップ 5・6 の結果）、<code>bolt_11_review_20261005.md</code>（対応結果）、ドメインモデル・UI 設計（S-02・C-04・S-04 の変更）、デモの動画 2 本</li>
-<li>人に確かめたいこと: D-39（画面の層の失効の準備）、D-41（業務責任者に確かめる事項に足すもの）、Try T-34</li>
+<li>人に確かめたいこと: なし（D-39・D-41・T-34 は決定済み）</li>
 </ul>
 <h2 id="bolt">次の Bolt<a class="headerlink" href="#bolt" title="Permanent link">&para;</a></h2>
 <ul>
@@ -7313,6 +7314,12 @@
 <td style="text-align: left;">初版</td>
 <td style="text-align: left;">anthropic/claude-opus-5-5</td>
 <td style="text-align: left;">—</td>
+</tr>
+<tr>
+<td style="text-align: left;">2026-10-05</td>
+<td style="text-align: left;">D-39・D-41・T-34 の決定と、T-34 の対応（セッションの開始のフックと手順書）を記録した</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5</td>
+<td style="text-align: left;">human:kakimomokuri（判断）</td>
 </tr>
 </tbody>
 </table>
