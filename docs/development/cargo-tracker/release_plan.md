@@ -4,7 +4,7 @@ title: "リリース計画 - cargo-tracker（A 社国際貨物輸送管理シス
 description: "cargo-tracker MVP のリリース計画。1 人 + AI、時間単位の Bolt（= イテレーション）と週次の見直しで、最初の縦の流れ（R0.1）、パイロット準備完了（R1.0）、本格展開前（R1.1）の 3 段階、Unit のエントロピー評価、SP、バッファ、パイロット開始の条件、引継ぎ ID の台帳。"
 tags: [development,release-plan]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-05T00:58:09Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-05T02:48:06Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T09:29:53Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:38:26Z }
@@ -385,7 +385,7 @@ AI-DLC では **Bolt がイテレーション** である（[AI-DLC 導入ガイ
 
 **主なタスク**:
 
-- [ ] Bolt 9: Bolt 6〜8 レビューの返済（書類の差し替え R-01 と改善提案。D-25 で W2 の最初の Bolt にした）。[Bolt 9 計画](bolt_09_plan.md)、[#37](https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/37)
+- [ ] Bolt 9: Bolt 6〜8 レビューの返済（書類の差し替え R-01 と改善提案。D-25 で W2 の最初の Bolt にした。実装済み、終了報告の承認待ち）。[Bolt 9 計画](bolt_09_plan.md)、[Bolt 9 終了報告](bolt_09_report.md)、[#37](https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/37)
 - [ ] US-03（全受入条件、BR-10 の境界）。Bolt 10 から
 - [ ] US-24（AC1 詳細経路設計へ進む）
 - [ ] US-18 の一部（password によるログインと session）
