@@ -7,6 +7,7 @@ status: stable
 generated: { by: anthropic/claude-opus-5-5, at: 2026-10-05T00:58:09Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-03T00:50:25Z }
+  - { by: human:kakimomokuri, at: 2026-10-05T03:42:37Z }
 ---
 
 # Bolt 6 終了報告 - 荷主の再提出の画面（US-02 の差戻しから版 2 まで）

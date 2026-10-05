@@ -3,8 +3,10 @@ type: ADR
 title: "ADR-010: 必要書類のファイルは DB のトランザクションの外で保存し、失敗したときは補償で消す"
 description: "必要書類の中身の保存を DB のトランザクションの外に出し、DB の保存が確定しなかったときは補償で消し、取りこぼしは S3 のライフサイクルか定期の片付けで拾う決定（D-26）。実装は W10。"
 tags: [adr, required-document, transaction]
-status: draft
+status: stable
 generated: { by: anthropic/claude-opus-5-5, at: 2026-10-05T00:58:09Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-10-05T03:42:34Z }
 ---
 
 # ADR-010: 必要書類のファイルは DB のトランザクションの外で保存し、失敗したときは補償で消す
