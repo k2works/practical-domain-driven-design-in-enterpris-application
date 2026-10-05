@@ -4,7 +4,7 @@ title: "リリース計画 - cargo-tracker（A 社国際貨物輸送管理シス
 description: "cargo-tracker MVP のリリース計画。1 人 + AI、時間単位の Bolt（= イテレーション）と週次の見直しで、最初の縦の流れ（R0.1）、パイロット準備完了（R1.0）、本格展開前（R1.1）の 3 段階、Unit のエントロピー評価、SP、バッファ、パイロット開始の条件、引継ぎ ID の台帳。"
 tags: [development,release-plan]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-05T06:15:48Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-05T06:28:14Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T09:29:53Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:38:26Z }
@@ -17,6 +17,7 @@ verified:
   - { by: human:kakimomokuri, at: 2026-10-05T00:54:43Z }
   - { by: human:kakimomokuri, at: 2026-10-05T03:42:38Z }
   - { by: human:kakimomokuri, at: 2026-10-05T04:12:47Z }
+  - { by: human:kakimomokuri, at: 2026-10-05T06:28:16Z }
 ---
 
 # リリース計画 - cargo-tracker（A 社国際貨物輸送管理システム）
@@ -240,7 +241,7 @@ gantt
 | 週 | 実績 |
 | :--- | :--- |
 | W1 | 2026-10-01 〜 2026-10-03（期間の前に前倒し）。Bolt 1〜8（開発基盤、CI、E2E の基盤、US-01 の提出と必要書類、US-02 の審査と荷主の再提出、UI の骨格と段階入力）。6 SP。ベロシティの見直しは計画どおり W4 で行う |
-| W2 | 2026-10-05 から（W2 の期間の前に前倒し）。Bolt 9（Bolt 6〜8 レビューの返済。SP 0）を終えた |
+| W2 | 2026-10-05 から（W2 の期間の前に前倒し）。Bolt 9（Bolt 6〜8 レビューの返済。SP 0）と Bolt 10（US-03 の提示 AC1〜AC3）を終えた |
 
 ### リリース内容
 
@@ -389,7 +390,7 @@ AI-DLC では **Bolt がイテレーション** である（[AI-DLC 導入ガイ
 **主なタスク**:
 
 - [x] Bolt 9: Bolt 6〜8 レビューの返済（書類の差し替え R-01 と改善提案。D-25 で W2 の最初の Bolt にした。完了、承認済み。#37 をクローズした）。[Bolt 9 計画](bolt_09_plan.md)、[Bolt 9 終了報告](bolt_09_report.md)、[#37](https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/37)
-- [ ] US-03（全受入条件、BR-10 の境界）。Bolt 10 で提示（AC1〜AC3）、Bolt 11 で失効・置換（AC4・AC5）に分ける（2026-10-05 に human:kakimomokuri が決定）。[Bolt 10 計画](bolt_10_plan.md)、[Bolt 10 終了報告](bolt_10_report.md)（提示は実装済み、終了報告の承認待ち）
+- [ ] US-03（全受入条件、BR-10 の境界）。Bolt 10 で提示（AC1〜AC3）、Bolt 11 で失効・置換（AC4・AC5）に分ける（2026-10-05 に human:kakimomokuri が決定）。[Bolt 10 計画](bolt_10_plan.md)、[Bolt 10 終了報告](bolt_10_report.md)（提示は完了、承認済み。AC4・AC5 は Bolt 11）
 - [ ] US-24（AC1 詳細経路設計へ進む）
 - [ ] US-18 の一部（password によるログインと session）
 - [ ] TOTP ライブラリのスパイク（TS-01）
@@ -519,7 +520,7 @@ W6 と W9 は 10 SP を超えるため、W4 の見直しで、W5・W8 の祝日�
 | 週 | 計画 SP | 実績 SP | 達成率 | 状態 |
 | :--- | ---: | ---: | ---: | :--- |
 | W1 | 6 | 6 | 100% | 完了（W1 の期間の前に前倒しで、2026-10-03 に Bolt 1〜8 を終えた。すべて承認済み。US-01（R0.1）・US-02 を完了し、#1・#2・#3・#36 をクローズした。人の変更依頼 0） |
-| W2 | 8 | - | - | 進行中（Bolt 9 完了。Bolt 10（US-03 の提示）は終了報告の承認待ち） |
+| W2 | 8 | - | - | 進行中（Bolt 9・10 完了。US-03 は AC4・AC5 の Bolt 11 の後に完了） |
 | W3 | 10 | - | - | 未着手 |
 | W4 | 11 | - | - | 未着手 |
 | W5 | 8 | - | - | 未着手 |
@@ -589,3 +590,4 @@ xychart-beta
 | 2026-10-05 | W2 の開始準備。W2 の最初の Bolt を Bolt 6〜8 レビューの返済（Bolt 9）にし、US-03 は Bolt 10 からにした（D-25） | anthropic/claude-opus-5-5 |
 | 2026-10-05 | Bolt 9 の完了を W2 に反映し、パイロット開始の条件に D-27・D-31 を足した（承認済み） | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-10-05 | W2 に Bolt 10 計画へのリンクを付けた（US-03 を Bolt 10・11 に分ける人の決定） | anthropic/claude-opus-5-5 |
+| 2026-10-05 | Bolt 10 の完了を W2 に反映した（承認済み） | anthropic/claude-opus-5-5、承認 human:kakimomokuri |

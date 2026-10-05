@@ -9,6 +9,7 @@ verified:
   - { by: human:kakimomokuri, at: 2026-10-01T07:11:13Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:01:36Z }
   - { by: human:kakimomokuri, at: 2026-10-02T01:37:43Z }
+  - { by: human:kakimomokuri, at: 2026-10-05T06:28:15Z }
 ---
 
 # ADR-003: コンテキスト間は冪等コマンド・永続化したドメインイベント・オーケストレーション型のサガで連携する

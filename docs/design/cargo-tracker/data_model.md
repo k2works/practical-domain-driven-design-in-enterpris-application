@@ -15,6 +15,7 @@ verified:
   - { by: human:kakimomokuri, at: 2026-10-02T21:44:56Z }
   - { by: human:kakimomokuri, at: 2026-10-03T01:31:13Z }
   - { by: human:kakimomokuri, at: 2026-10-05T03:42:35Z }
+  - { by: human:kakimomokuri, at: 2026-10-05T06:28:15Z }
 ---
 
 # cargo-tracker データモデル

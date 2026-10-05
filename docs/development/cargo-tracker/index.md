@@ -35,7 +35,7 @@ Bolt がイテレーションに当たります。ふりかえりは各 Bolt の
 | 7 | [見積依頼の必要書類（US-01 AC2）](bolt_07_plan.md) | [終了報告](bolt_07_report.md) | W1 | 完了 |
 | 8 | [UI の骨格と見積依頼の段階入力のプロトタイプ（#36）](bolt_08_plan.md) | [終了報告](bolt_08_report.md) | W1 | 完了 |
 | 9 | [Bolt 6〜8 レビューの返済（書類の差し替えと改善提案）](bolt_09_plan.md) | [終了報告](bolt_09_report.md) | W2 | 完了 |
-| 10 | [根拠付き見積りの提示（US-03 AC1〜AC3）](bolt_10_plan.md) | [終了報告](bolt_10_report.md) | W2 | 終了報告の承認待ち |
+| 10 | [根拠付き見積りの提示（US-03 AC1〜AC3）](bolt_10_plan.md) | [終了報告](bolt_10_report.md) | W2 | 完了 |
 
 Bolt を始めるときに行を追加します。
 

@@ -18,6 +18,7 @@ verified:
   - { by: human:kakimomokuri, at: 2026-10-03T01:31:12Z }
   - { by: human:kakimomokuri, at: 2026-10-03T02:07:19Z }
   - { by: human:kakimomokuri, at: 2026-10-05T03:42:36Z }
+  - { by: human:kakimomokuri, at: 2026-10-05T06:28:15Z }
 ---
 
 # cargo-tracker ドメインモデル

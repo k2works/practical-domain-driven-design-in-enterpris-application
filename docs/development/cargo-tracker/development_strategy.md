@@ -4,13 +4,14 @@ title: "開発戦略 - cargo-tracker（A 社国際貨物輸送管理システム
 description: "リリース計画の W1〜W14 を序盤・中盤・終盤の局面に分け、各局面の TDD のアプローチ、週ごとのデモ項目を受入シナリオにする方針、Living Documentation の採用を定める開発戦略。"
 tags: [development,development-strategy]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-05T03:58:13Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-05T06:28:14Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T10:25:23Z }
   - { by: human:kakimomokuri, at: 2026-10-01T13:06:21Z }
   - { by: human:kakimomokuri, at: 2026-10-01T23:12:32Z }
   - { by: human:kakimomokuri, at: 2026-10-02T01:37:43Z }
   - { by: human:kakimomokuri, at: 2026-10-05T03:58:14Z }
+  - { by: human:kakimomokuri, at: 2026-10-05T06:28:16Z }
 ---
 
 # 開発戦略 - cargo-tracker（A 社国際貨物輸送管理システム）
@@ -133,6 +134,7 @@ A is {-}
 | ソース束縛レビュー | AI はステップで変更したファイルの一覧を完了報告に含め、人は `git diff --stat` と突き合わせる |
 | 開発レビュー | 各 Bolt の終了報告の前に、開発成果物のレビュー（`developing-review`）を行い、指摘への対応を終了報告に書く。省くときは理由を終了報告に書く。Bolt 6〜8 で省いた結果、30 件を超える指摘を Bolt 9 でまとめて返済した（Try T-28。2026-10-05 に human:kakimomokuri が決定） |
 | CI の確認 | push した後、次のステップに入る前に CI の結果を確かめる。赤ければ先に直す（Try T-26。Bolt 9 で、赤い CI にステップ 5 まで気づかなかった） |
+| デモの動画 | 画面を伴う Bolt では、デモ項目に当たる画面の層のシナリオに `@demo` と `@demo-<名前>` の印を付け、終了報告の前に `./gradlew demoVideo -PdemoBolt=<Bolt>` で録画して `docs/assets/demo/<Bolt>/` に置き、終了報告のデモ項目の表からリンクする。人は承認の場で再生して確かめる（Try T-31。2026-10-05 に human:kakimomokuri が決定） |
 
 ### テストの種類とレイヤーの対応
 
@@ -449,3 +451,4 @@ Bolt 計画は局所の計画、`docs/design/cargo-tracker/` は全体の正で�
 | 2026-10-02 | Bolt 3 の結果を反映: 設計ドキュメントの生成と画面の層の受入シナリオのコマンドを書いた | anthropic/claude-opus-5-5（承認 human:kakimomokuri） |
 | 2026-10-02 | Bolt 3 レビューの対応: 用語集の整合テストの実際のコマンドと、注釈の語彙 `@Entity` を書いた | anthropic/claude-opus-5-5（承認 human:kakimomokuri） |
 | 2026-10-05 | Bolt 9 のふりかえりを反映: 開発レビューを各 Bolt の終了報告の前に行う決まり（T-28）と、push の後に CI を確かめる決まり（T-26）を、局面を横断する規律に足した | anthropic/claude-opus-5-5（承認 human:kakimomokuri） |
+| 2026-10-05 | Bolt 10 のふりかえりを反映: デモ項目の動画を撮って終了報告からリンクする決まり（T-31）を、局面を横断する規律に足した | anthropic/claude-opus-5-5（承認 human:kakimomokuri） |
