@@ -6780,7 +6780,7 @@
 <li>見積り番号は、採番の表を作らず、輸送要求の見積りの番号の最大 + 1 にした。同時の算出は UK で止め、リポジトリがセーブポイントに戻してドメインの例外にし、入力ポートが「見積りがすでにある」として値で返す（R-02）。</li>
 <li>ER 図の監査の列（<code>created_at</code> など）は、ほかの業務の表と同じく作らなかった。</li>
 <li>開発レビューの指摘（下の「開発レビューと対応」）のうち重要度「高」を、この Bolt で直した。</li>
-<li>人の依頼で、デモ項目の画面を Playwright で録画し、<code>docs/assets/demo/bolt-10/</code> に置いて本報告からリンクした（<code>./gradlew demoVideo -PdemoBolt=bolt-10</code>。シナリオの <code>@demo</code> の印のものだけを録画する）。</li>
+<li>人の依頼で、デモ項目の画面を Playwright で録画し、<code>docs/assets/demo/bolt-10/</code> に置いて本報告からリンクした（<code>./gradlew demoVideo</code>。シナリオの <code>@demo-&lt;Bolt&gt;/&lt;名前&gt;</code> の印のものだけを録画する。2026-10-05 に過去の Bolt の分も撮り、開発の索引に一覧を足した）。</li>
 </ul>
 <h3 id="_4">見つけて直した問題<a class="headerlink" href="#_4" title="Permanent link">&para;</a></h3>
 <table>
@@ -7176,7 +7176,7 @@
 <li><strong>Try</strong>:</li>
 <li>T-29: 桁や長さに上限のある列を作るときは、同じ上限を業務の規則として持ち、境界ちょうどと 1 つ超えのテストを書く（AI、すぐ）</li>
 <li>T-30: テストの件数は、<code>check</code> の後に全体の結果から数えて書く（AI、すぐ）</li>
-<li>T-31: 画面を伴う Bolt では、デモ項目のシナリオに <code>@demo</code> の印を付け、終了報告の前に <code>./gradlew demoVideo -PdemoBolt=&lt;Bolt&gt;</code> で動画を撮ってリンクする（AI、すぐ。開発戦略に足すかを人に確かめたい）</li>
+<li>T-31: 画面を伴う Bolt では、デモ項目のシナリオに <code>@demo</code> の印を付け、終了報告の前に <code>./gradlew demoVideo</code> で動画を撮ってリンクする（AI、すぐ。開発戦略に足すかを人に確かめたい）</li>
 </ul>
 <h2 id="_14">承認待ちの書き換え<a class="headerlink" href="#_14" title="Permanent link">&para;</a></h2>
 <ul>
