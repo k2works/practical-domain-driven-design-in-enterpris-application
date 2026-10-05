@@ -123,6 +123,15 @@ class StaffQuotationControllerTest {
     }
 
     @Test
+    void 作成中か承認待ちか提示済みの見積りがあれば作成画面でなくその見積りへ移す() throws Exception {
+        transportRequestExists();
+        given(queryService.findActive(NUMBER)).willReturn(Optional.of(pendingApproval()));
+
+        mockMvc.perform(get("/staff/transport-requests/TR-2026-0001/quotations/new"))
+                .andExpect(redirectedUrl("/staff/transport-requests/TR-2026-0001/quotations/1"));
+    }
+
+    @Test
     void 入力した明細と日本時間の日時を見積りの入力にして算出し算出した見積りへリダイレクトする() throws Exception {
         transportRequestExists();
         QuotationInput expected = new QuotationInput(
@@ -189,7 +198,7 @@ class StaffQuotationControllerTest {
     }
 
     @Test
-    void 見積りを作れないときは受付一覧に戻して理由を示す() throws Exception {
+    void 見積りがすでにあるときはその見積りへ移して理由を示す() throws Exception {
         transportRequestExists();
         given(commandService.calculate(any()))
                 .willReturn(new CalculationOutcome.Rejected(QuotationRejection.ALREADY_QUOTED));

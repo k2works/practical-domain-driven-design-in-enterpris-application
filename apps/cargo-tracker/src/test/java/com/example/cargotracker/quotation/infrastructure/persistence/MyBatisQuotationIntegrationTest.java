@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.example.cargotracker.TestcontainersConfiguration;
 import com.example.cargotracker.quotation.domain.model.aggregates.ConcurrentQuotationUpdateException;
+import com.example.cargotracker.quotation.domain.model.aggregates.DuplicateQuotationException;
 import com.example.cargotracker.quotation.domain.model.aggregates.Quotation;
 import com.example.cargotracker.quotation.domain.model.aggregates.QuotationRepository;
 import com.example.cargotracker.quotation.domain.model.aggregates.TransportRequest;
@@ -33,7 +34,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.dao.DuplicateKeyException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -167,12 +167,15 @@ class MyBatisQuotationIntegrationTest {
     }
 
     @Test
-    void 同じ輸送要求の同じ見積り番号はUKで拒否する() {
+    void 同じ輸送要求の同じ見積り番号はUKで拒否しドメインの例外にしてトランザクションを続けられる() {
         TransportRequestId transportRequestId = transportRequest(5);
         repository.save(calculated(transportRequestId, 1));
+        Quotation duplicated = calculated(transportRequestId, 1);
 
-        assertThatThrownBy(() -> repository.save(calculated(transportRequestId, 1)))
-                .isInstanceOf(DuplicateKeyException.class);
+        assertThatThrownBy(() -> repository.save(duplicated)).isInstanceOf(DuplicateQuotationException.class);
+        assertThat(repository.findByTransportRequestId(transportRequestId))
+                .as("UK の違反の後も同じトランザクションで読める（セーブポイントに戻す。Bolt 9・10 レビュー R-02）")
+                .hasSize(1);
     }
 
     @Test

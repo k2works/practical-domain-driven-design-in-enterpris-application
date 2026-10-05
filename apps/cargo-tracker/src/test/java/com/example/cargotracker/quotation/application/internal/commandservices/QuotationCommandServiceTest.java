@@ -7,6 +7,8 @@ import com.example.cargotracker.quotation.acceptance.InMemoryTransportRequestRep
 import com.example.cargotracker.quotation.application.internal.commands.CalculateQuotationCommand;
 import com.example.cargotracker.quotation.application.internal.commands.PresentQuotationCommand;
 import com.example.cargotracker.quotation.domain.events.QuotationPresented;
+import com.example.cargotracker.quotation.domain.model.aggregates.DuplicateQuotationException;
+import com.example.cargotracker.quotation.domain.model.aggregates.Quotation;
 import com.example.cargotracker.quotation.domain.model.aggregates.TransportRequest;
 import com.example.cargotracker.quotation.domain.model.valueobjects.QuotationFixture;
 import com.example.cargotracker.quotation.domain.model.valueobjects.QuotationRejection;
@@ -126,4 +128,21 @@ class QuotationCommandServiceTest {
         assertThat(service.present(new PresentQuotationCommand(NUMBER, 1, STAFF)))
                 .isEqualTo(new PresentationOutcome.NotFound());
     }
+
+    @Test
+    void 同時に算出して見積り番号がぶつかったら見積りがすでにあるとして値で返す() {
+        approved();
+        InMemoryQuotationRepository racing = new InMemoryQuotationRepository() {
+            @Override
+            public void save(Quotation quotation) {
+                throw new DuplicateQuotationException(quotation.transportRequestId(), quotation.quotationNo());
+            }
+        };
+        QuotationCommandService racingService =
+                new QuotationCommandService(transportRequests, racing, published::add, Clock.fixed(NOW, ZoneOffset.UTC));
+
+        assertThat(racingService.calculate(new CalculateQuotationCommand(NUMBER, QuotationFixture.completeInput())))
+                .isEqualTo(new CalculationOutcome.Rejected(QuotationRejection.ALREADY_QUOTED));
+    }
 }
+

@@ -164,4 +164,30 @@ class QuotationInputTest {
                 at("2026-10-10T00:00:00Z"),
                 at("2026-10-30T09:00:00Z"));
     }
+
+    @Test
+    void 金額は整数部13桁まで受け付け14桁は大きすぎる() {
+        assertThat(input(List.of(new PricingLineInput("海上運賃", new BigDecimal("9999999999999.99"), null)))
+                        .validate(CALCULATED_AT))
+                .isInstanceOf(QuotationInput.Valid.class);
+        assertThat(violations(input(List.of(new PricingLineInput("海上運賃", new BigDecimal("10000000000000.00"), null))))
+                        .violations())
+                .containsExactly(new QuotationViolations.Violation(Item.PRICING_LINES, Reason.AMOUNT_TOO_LARGE, 1));
+    }
+
+    @Test
+    void 指数の表記の巨大な金額は桁を作らずに大きすぎるとする() {
+        assertThat(violations(input(List.of(new PricingLineInput("海上運賃", new BigDecimal("1E999999999"), null))))
+                        .violations())
+                .containsExactly(new QuotationViolations.Violation(Item.PRICING_LINES, Reason.AMOUNT_TOO_LARGE, 1));
+    }
+
+    @Test
+    void 合計が整数部13桁を超えると合計が大きすぎる() {
+        PricingLineInput max = new PricingLineInput("海上運賃", new BigDecimal("9999999999999.99"), null);
+
+        assertThat(violations(input(List.of(max, max))).violations())
+                .containsExactly(new QuotationViolations.Violation(Item.PRICING_LINES, Reason.TOTAL_TOO_LARGE));
+    }
 }
+
