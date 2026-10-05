@@ -4,7 +4,7 @@ title: "Bolt 11 計画 - 見積りの失効と置換（US-03 AC4・AC5）"
 description: "11 回目の Bolt の計画。Bolt 9・10 レビューの中・低の指摘の返済と、見積りの失効の判定（同時刻は失効）、再提示の拒否、再見積りによる置換と旧版の読み取り専用、Q-INV-18 の部分一意インデックス、S-04 と C-04 の表示を、ステップ 1〜6 で定義する。"
 tags: [development,bolt-plan]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-05T07:34:47Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-05T07:36:31Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-05T07:21:04Z }
 ---
@@ -253,12 +253,13 @@ S04 -[dashed]-> C04 : 荷主が開くと最新の見積りが見える
     - Green: R-06・R-09・R-10（ヒントだけ）・R-16・R-17・R-20・R-22 を直した（`92e691a`）。文書の R-15・R-21・R-23 を直した（`874d411`）。R-13 は D-34、R-10 の日付だけは D-35 の回答を待つ。R-14 はステップ 4、R-24 はステップ 3・5
     - 実行中に直した誤り: なし（環境の準備として、JDK 25 を apt で入れ、Gradle をロケール C.UTF-8 で動かした。Maven Central の 429 は取り直した。Playwright 1.63 の Chromium 1243 は `cdn.playwright.dev` が許可されていないため、この環境だけ既存の 1194 で代用した）
     - `check` 緑（`test` 672 件。Bolt 10 の 664 件から +8）、`uiTest` 35 シナリオすべて passed
-- [ ] **2. 決定を設計文書に反映する**（承認はステップ 3 とまとめて受ける）
+- [x] **2. 決定を設計文書に反映する**（承認はステップ 3 とまとめて受ける）
   - ユーザーストーリー: US-03 の決定（AC4・AC5 のうち Bolt 11 で作る範囲と、承認・予約確定での利用を US-24・US-04 で確かめること、失効の判定、再見積り）
   - ドメインモデル: 状態遷移（承認待ち → 失効・置換済み）、Q-INV-07・18 の書き直し、拒否の理由、再見積りのトランザクションの例外の理由、`QuotationValidity`
   - データモデル: `ck_quotation_replaced`、`ux_quotation_active`（PostgreSQL）、`EXPIRED` を残す時点
   - UI 設計: S-04 の再見積りの URL と画面イメージ、旧版の読み取り専用、C-04 の失効・置換済みの表示と案内
   - 完了の判定: `okf:check` が ERROR 0、`documentationTest` が緑。push する
+  - 結果（2026-10-05 16:35〜16:37）: ユーザーストーリー（US-03 の Bolt 11 の決定）、ドメインモデル（用語の再見積り、状態遷移の承認待ち → 置換済み・失効、Q-INV-07・18、見積りの失効と置換の段落とトランザクションの例外）、データモデル（`EXPIRED`・`REPLACED`、`replaced_by_quotation_id`、`ck_quotation_replaced`、`ux_quotation_active`、`EXPIRED` を残す時点）、UI 設計（S-04 の再見積りの URL と失効・置換済みの表示、C-04 の最新の見積りと旧版）に反映した
 - [ ] **3. 失効と置換（業務ルール層の Red → Green）** 【承認ゲート: 業務のルール（Q-INV-06 の境界・07・18）】
   - 業務ルール層の受入シナリオを先に書き、Red をコミットする（`features/quotation/expire_and_replace_quotation.feature`、`@US-03 @must`、`@US-03-AC4`・`@US-03-AC5`）
     - 見積有効判定: 判定時刻が有効期限の 1 秒前なら有効、同時刻と 1 秒後なら失効（AC4 の境界。シナリオアウトライン）
