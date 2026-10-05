@@ -4,7 +4,7 @@ title: "Bolt 11 計画 - 見積りの失効と置換（US-03 AC4・AC5）"
 description: "11 回目の Bolt の計画。Bolt 9・10 レビューの中・低の指摘の返済と、見積りの失効の判定（同時刻は失効）、再提示の拒否、再見積りによる置換と旧版の読み取り専用、Q-INV-18 の部分一意インデックス、S-04 と C-04 の表示を、ステップ 1〜6 で定義する。"
 tags: [development,bolt-plan]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-05T07:36:31Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-05T07:48:54Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-05T07:21:04Z }
 ---
@@ -260,7 +260,7 @@ S04 -[dashed]-> C04 : 荷主が開くと最新の見積りが見える
   - UI 設計: S-04 の再見積りの URL と画面イメージ、旧版の読み取り専用、C-04 の失効・置換済みの表示と案内
   - 完了の判定: `okf:check` が ERROR 0、`documentationTest` が緑。push する
   - 結果（2026-10-05 16:35〜16:37）: ユーザーストーリー（US-03 の Bolt 11 の決定）、ドメインモデル（用語の再見積り、状態遷移の承認待ち → 置換済み・失効、Q-INV-07・18、見積りの失効と置換の段落とトランザクションの例外）、データモデル（`EXPIRED`・`REPLACED`、`replaced_by_quotation_id`、`ck_quotation_replaced`、`ux_quotation_active`、`EXPIRED` を残す時点）、UI 設計（S-04 の再見積りの URL と失効・置換済みの表示、C-04 の最新の見積りと旧版）に反映した
-- [ ] **3. 失効と置換（業務ルール層の Red → Green）** 【承認ゲート: 業務のルール（Q-INV-06 の境界・07・18）】
+- [?] **3. 失効と置換（業務ルール層の Red → Green）** 【承認ゲート: 業務のルール（Q-INV-06 の境界・07・18）】
   - 業務ルール層の受入シナリオを先に書き、Red をコミットする（`features/quotation/expire_and_replace_quotation.feature`、`@US-03 @must`、`@US-03-AC4`・`@US-03-AC5`）
     - 見積有効判定: 判定時刻が有効期限の 1 秒前なら有効、同時刻と 1 秒後なら失効（AC4 の境界。シナリオアウトライン）
     - 承認待ちの見積りを、有効期限と同時刻または後に社内承認して提示しようとすると拒否され、失効と再見積りが必要と示される（AC4・AC5）
@@ -269,8 +269,14 @@ S04 -[dashed]-> C04 : 荷主が開くと最新の見積りが見える
     - 置換済み・失効の見積りは、社内承認して提示できない（再提示の拒否。AC5）
     - 荷主が見積依頼を照会すると、最新の見積りが示され、旧版は読み取り専用（状態と置換先）で示される（AC5）
     - 1 つの輸送要求に、作成中・承認待ち・提示済みの見積りは 1 つだけ（Q-INV-18）。置換済み・失効の見積りは数えない
-  - 足りない内側を TDD で作る: `QuotationExpiry.isValidAt`、`QuotationValidity`、`QuotationStatus` の `EXPIRED`・`REPLACED`、`Quotation` の置換と失効の記録と提示の拒否、`QuotationRejection` の理由、`QuotationCommandService` の再見積り（旧版の遷移と新しい見積りの作成を 1 つのトランザクションで）、照会（荷主・社内）の最新と旧版
+  - 足りない内側を TDD で作る: `QuotationExpiry.isValidAt`、`QuotationStatus` の `EXPIRED`・`REPLACED`、`Quotation` の置換と失効の記録と提示の拒否、`QuotationRejection` の理由、`QuotationCommandService` の再見積り（旧版の遷移と新しい見積りの作成を 1 つのトランザクションで）、照会（荷主・社内）の最新と旧版
   - 完了の判定: `check` が緑。push して CI を確かめる。ステップ 1・2 とあわせて承認を受ける
+  - 結果（2026-10-05 16:42〜16:48）
+    - Red: 受入シナリオ 11 件（`expire_and_replace_quotation.feature`。シナリオアウトラインの 6 例を含む）と、見積りの集約・アプリケーションサービスの単体テストを先に書き、メモリ上の見積りリポジトリに部分一意インデックスと同じ規則を足した。まだない型を呼ぶためのコンパイルの失敗で Red を確かめ、Red のままコミットした（`699d880`。R-38）
+    - Green: `QuotationExpiry.isValidAt`（同時刻は失効）、`QuotationStatus` の `EXPIRED`・`REPLACED`、見積りの集約の `isExpiredAt`・`replaceWith`（期限を過ぎていれば失効を記録）・提示の拒否（置換済み・失効・提示の時刻に失効した承認待ち）、`QuotationRejection` の `EXPIRED`・`REPLACED`、`RequoteQuotationCommand`・`RequotationOutcome`・`QuotationCommandService.requote`（旧版の更新を先に、新しい見積りの保存を後に 1 つのトランザクションで）、荷主の照会 `findVisible`（提示した見積りを新しい順に）（`c8ef96a`）
+    - 計画からの変更: 失効の判定は `QuotationExpiry.isValidAt` の 1 か所に置き、ルールの型 `QuotationValidity` は作らなかった（同じ判定が 2 か所になるため）。ドメインモデルの「見積有効判定」の行をそれに合わせた。再見積りでは、置換済み・失効の旧版を入力の検証より先に拒否する
+    - 実行中に直した誤り: 拒否の文言の `switch` が新しい理由を網羅していない（コンパイラが検出。失効・置換済みの文言を足した）
+    - 業務ルール層のシナリオは 69 件すべて passed（Bolt 10 の 57 件から、ステップ 1 の R-08 で +1、この Bolt の 11 件で +11）。`check` 緑（`test` 697 件）。表の列（`replaced_by_quotation_id`）はステップ 4 で足すまで読み出しで空にしている
 - [ ] **4. 表（内側の TDD、統合テスト）** 【承認ゲート: スキーマの変更】
   - 統合テスト（PostgreSQL）を先に書く: 置換済み・失効の保存と読み出し、置換先の FK、`ck_quotation_replaced`、`status` の CHECK、部分一意インデックスで同時の作成・再見積りが止まり値で返る（R-02 と同じ変換）、置換済み・失効は数えない
   - マイグレーション: `common` に状態の値・`replaced_by_quotation_id`・CHECK・COMMENT（R-14 を含む）、`postgresql` に `ux_quotation_active`。H2 のスモークを先に回す（T-15）
