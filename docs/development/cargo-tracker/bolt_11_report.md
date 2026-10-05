@@ -3,8 +3,10 @@ type: Plan
 title: "Bolt 11 終了報告 - 見積りの失効と置換（US-03 AC4・AC5）"
 description: "11 回目の Bolt の終了報告。Bolt 9・10 レビューの中・低の返済、見積りの失効の判定と再見積りによる置換、部分一意インデックスと遅延の FK、S-02・S-04・C-04 の成果、デモ項目と動画、指標と時間の内訳、仮説 H1〜H3 の結論、開発レビューと対応、環境の準備、ふりかえりをまとめる。"
 tags: [development,bolt-report]
-status: draft
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-05T09:55:11Z }
+status: stable
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-05T09:58:24Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-10-05T09:58:24Z }
 ---
 
 # Bolt 11 終了報告 - 見積りの失効と置換（US-03 AC4・AC5）
@@ -15,7 +17,7 @@ generated: { by: anthropic/claude-opus-5-5, at: 2026-10-05T09:55:11Z }
 | :--- | :--- |
 | Bolt | 第 11 回 |
 | 期間 | 2026-10-05 16:21 JST（計画の承認のコミット `0a33509`）〜 18:35（本報告の初版）。開始準備は 16:12〜16:17（計画のコミット `f5511a7`） |
-| 対象 | U1 輸送要求・見積り。Bolt 9・10 レビューの中・低の返済と、US-03 根拠付き見積りを提示する（AC4・AC5）。[#4](https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/4)（SP 5。本報告の承認でクローズする） |
+| 対象 | U1 輸送要求・見積り。Bolt 9・10 レビューの中・低の返済と、US-03 根拠付き見積りを提示する（AC4・AC5）。[#4](https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/4)（SP 5。本報告の承認でクローズした） |
 | 計画 | [Bolt 11 計画](bolt_11_plan.md) |
 | ゴール | 見積りは有効期限と同時刻から失効として扱われ、失効・置換済みの見積りは提示できず読み取り専用で示される。営業担当者は承認待ち・提示済みの見積りから再見積りし、次の番号の見積りを作って旧版を置換済み（期限切れなら失効）にできる。荷主には旧版が読み取り専用であることと、次に何をすればよいかが示される |
 | 進め方 | U1 の密度。承認ゲートは、計画（確認ポイント 1〜8）、ステップ 1〜3（業務のルール）、ステップ 4（スキーマ）、開発レビューの判断、本報告の 5 回 |
@@ -183,7 +185,7 @@ T-28 に従い、本報告の前に Bolt 11 の変更をレビューした（[Bo
 ## 次の Bolt
 
 - **Bolt 12**: W2 の残り（US-24 AC1 詳細経路設計へ進む、US-18 の一部のログインと session、TOTP のスパイク TS-01）から選ぶ。US-24 は C-04 の「回答の画面ができるまで」の案内を置き換える
-- **人が決めること**: 本報告の承認、#4 のクローズ、Bolt 12 の範囲
+- **人が決めること**: Bolt 12 の範囲
 
 ## 更新履歴
 
@@ -191,6 +193,7 @@ T-28 に従い、本報告の前に Bolt 11 の変更をレビューした（[Bo
 | :--- | :--- | :--- | :--- |
 | 2026-10-05 | 初版 | anthropic/claude-opus-5-5 | — |
 | 2026-10-05 | D-39・D-41・T-34 の決定と、T-34 の対応（セッションの開始のフックと手順書）を記録した | anthropic/claude-opus-5-5 | human:kakimomokuri（判断） |
+| 2026-10-05 | 終了報告と、承認待ちの書き換え（計画・レビューの対応結果・ドメインモデル・UI 設計・手順書・デモの動画）を承認し、Bolt 11 を終えた。#4 をクローズした | anthropic/claude-opus-5-5 | human:kakimomokuri |
 
 ## 関連ドキュメント
 
