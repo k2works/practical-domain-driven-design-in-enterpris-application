@@ -4,7 +4,7 @@ title: "cargo-tracker ドメインモデル"
 description: "cargo-tracker の業務領域の分類、ユビキタス言語、7 つの境界づけられたコンテキスト（通知を含む）の集約・エンティティ・値オブジェクト・ドメインルール、コマンド・クエリ・イベント、予約サガ。"
 tags: [design, domain-model, ddd]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-05T04:14:31Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-05T04:28:41Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T07:41:04Z }
   - { by: human:kakimomokuri, at: 2026-10-01T07:48:17Z }
@@ -108,6 +108,9 @@ quadrantChart
 | 荷主承認 | ShipperApproval | 荷主担当者が見積りと承認済み経路を確認して与える承認。BR-01 の確定条件の 1 つ | 見積り |
 | 料金根拠 | PricingBasis | 見積り金額の内訳と参照した契約条件。料金明細の列（1〜10 行）と通貨（USD・EUR・JPY）を持ち、合計は明細の和（2026-10-05 の決定。Bolt 10） | 見積り |
 | 料金明細 | PricingLine | 料金根拠の 1 行。内容、金額（0 より大きい、小数点以下 2 桁まで）、参照した契約条件（任意） | 見積り |
+| 料金明細の入力 | PricingLineInput | 営業担当者が入れようとする料金明細の 1 行。項目が欠けていてよく、検証して違反がなければ料金明細になる（Bolt 10） | 見積り |
+| 見積りの入力 | QuotationInput | 営業担当者が算出しようとする料金明細・通貨・有効期限・経路方針。算出の時刻で検証し（Q-INV-05・17）、違反がなければ料金根拠・有効期限・経路方針になる（Bolt 10） | 見積り |
+| 見積りの算出の検証結果 | QuotationViolations | 見積りの算出の検証で見つかった不足と誤りの一覧。項目・理由の種類・料金明細の行の番号だけを持ち、文言は画面の層が付ける（Bolt 10） | 見積り |
 | 見積り番号 | — | 輸送要求の中で 1 から振る見積りの番号。画面と URL には内部の ID の代わりに「TR-2026-0001 見積 1」の形で出す（D-4 と同じ考え方。Bolt 10） | 見積り |
 | 見積有効期限 | QuotationExpiry | 予約確定の commit 時刻がこれより前のときだけ見積りが有効になる UTC 時点（BR-10） | 見積り |
 | 経路設計案件 | RoutingCase | 1 つの輸送要求について経路版を作り、確定・再設計する単位 | 経路設計 |
@@ -148,6 +151,7 @@ quadrantChart
 | 復旧照合 | RecoveryReconciliation | 停止期間の全原本の分類・件数照合・手動情報との差異確認（BR-12） | 外部データ |
 | 採用値 | AdoptedValue | 外部原本から採用し、業務に公開した値 | 外部データ |
 | 輸送要求 ID | TransportRequestId | 輸送要求を識別する、システムが発行する不透明な値。画面には出さず、業務番号を出す | 見積り |
+| 見積り ID | QuotationId | 見積りを識別する、システムが発行する不透明な値。画面には出さず、見積り番号を出す（Bolt 10） | 見積り |
 | 場所 | Location | UN/LOCODE（国コード 2 文字 + 地点コード 3 文字）で識別する港・地点 | 共有カーネル |
 | UTC 時点 | UtcInstant | 業務上の時刻。UTC の時点として保持し、表示ではタイムゾーンと UTC offset を付ける（BR-10） | 共有カーネル |
 | 企業 ID | CompanyId | 荷主・荷受人・A 社などの企業を識別する値 | 共有カーネル |

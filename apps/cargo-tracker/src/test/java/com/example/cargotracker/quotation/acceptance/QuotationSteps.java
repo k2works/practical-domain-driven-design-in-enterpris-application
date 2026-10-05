@@ -108,17 +108,19 @@ public class QuotationSteps {
     public void 経路方針を入れる(String viaCodes, String departure, String arrival) {
         via = viaCodes.isBlank()
                 ? List.of()
-                : Arrays.stream(viaCodes.split(",")).map(String::strip).map(Location::new).toList();
+                : Arrays.stream(viaCodes.split(","))
+                        .map(String::strip)
+                        .map(Location::new)
+                        .toList();
         departureAt = new UtcInstant(Instant.parse(departure));
         arrivalAt = new UtcInstant(Instant.parse(arrival));
     }
 
     @前提("営業担当者が標準の見積りを算出して社内承認して提示している")
     public void 標準の見積りを提示している() {
-        料金明細を入れる(DataTable.create(List.of(
-                List.of("内容", "金額", "参照した契約条件"),
-                List.of("海上運賃", "3200.00", "年間契約 2026-A"),
-                List.of("燃料調整金", "530.00", ""))));
+        lines.clear();
+        lines.add(new PricingLineInput("海上運賃", new BigDecimal("3200.00"), "年間契約 2026-A"));
+        lines.add(new PricingLineInput("燃料調整金", new BigDecimal("530.00"), null));
         通貨と有効期限を入れる("USD", "2026-10-08T09:00:00Z");
         経路方針を入れる("SGSIN", "2026-10-10T00:00:00Z", "2026-10-30T09:00:00Z");
         見積りを算出する();
@@ -129,8 +131,7 @@ public class QuotationSteps {
     @もし("営業担当者が見積りを算出する")
     public void 見積りを算出する() {
         lastCalculation = commandService.calculate(new CalculateQuotationCommand(
-                number(),
-                new QuotationInput(List.copyOf(lines), currency, expiresAt, via, departureAt, arrivalAt)));
+                number(), new QuotationInput(List.copyOf(lines), currency, expiresAt, via, departureAt, arrivalAt)));
     }
 
     @もし("営業担当者が見積り {int} を社内承認して提示する")
@@ -176,8 +177,7 @@ public class QuotationSteps {
                     .containsExactly("海上運賃", "燃料調整金");
             assertThat(quotation.pricingBasis().orElseThrow().total()).isEqualByComparingTo(total);
             assertThat(quotation.pricingBasis().orElseThrow().currency()).isEqualTo(Currency.valueOf(currencyCode));
-            assertThat(quotation.expiry().orElseThrow().expiresAt())
-                    .isEqualTo(new UtcInstant(Instant.parse(expires)));
+            assertThat(quotation.expiry().orElseThrow().expiresAt()).isEqualTo(new UtcInstant(Instant.parse(expires)));
         });
     }
 
@@ -229,8 +229,7 @@ public class QuotationSteps {
 
     @ならば("見積りは作られず {string} と示される")
     public void 見積りは作られず理由が示される(String reason) {
-        assertThat(lastCalculation)
-                .isEqualTo(new CalculationOutcome.Rejected(QuotationRejection.ALREADY_QUOTED));
+        assertThat(lastCalculation).isEqualTo(new CalculationOutcome.Rejected(QuotationRejection.ALREADY_QUOTED));
         assertThat(reason).isEqualTo("見積りがすでにある");
         assertThat(staffQueryService.find(number(), 2)).isEmpty();
     }

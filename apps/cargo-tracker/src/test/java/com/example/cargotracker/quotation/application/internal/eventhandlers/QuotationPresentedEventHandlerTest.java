@@ -64,7 +64,8 @@ class QuotationPresentedEventHandlerTest {
 
         handler.on(event);
 
-        assertThat(repository.findById(request.id()).orElseThrow().aggregateVersion()).isEqualTo(versionAfterFirst);
+        assertThat(repository.findById(request.id()).orElseThrow().aggregateVersion())
+                .isEqualTo(versionAfterFirst);
     }
 
     @Test

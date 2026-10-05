@@ -1,0 +1,42 @@
+package com.example.cargotracker.quotation.application.internal.queryservices;
+
+import com.example.cargotracker.quotation.domain.model.aggregates.Quotation;
+import com.example.cargotracker.quotation.domain.model.aggregates.QuotationRepository;
+import com.example.cargotracker.quotation.domain.model.aggregates.TransportRequestRepository;
+import com.example.cargotracker.quotation.domain.model.valueobjects.QuotationStatus;
+import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestNumber;
+import com.example.cargotracker.shared.domain.CompanyId;
+import java.util.Comparator;
+import java.util.Optional;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+/**
+ * 荷主が自社の見積依頼の見積りを照会する入力ポート（C-04。US-03 AC2）。照会は必ず荷主企業で絞る（Q-INV-08）。
+ * 荷主に見せるのは提示済みの見積りだけで、社内承認の前の見積りは見せない。
+ *
+ * <p>{@code @Service} は JIG がユースケースとして読むための印で、部品探索の対象にはしない（CargoTrackerApplication）。
+ * 組み立ては {@code QuotationConfiguration} が担う。
+ */
+@Service
+public class QuotationQueryService {
+
+    private final TransportRequestRepository transportRequestRepository;
+    private final QuotationRepository quotationRepository;
+
+    public QuotationQueryService(
+            TransportRequestRepository transportRequestRepository, QuotationRepository quotationRepository) {
+        this.transportRequestRepository = transportRequestRepository;
+        this.quotationRepository = quotationRepository;
+    }
+
+    /** 荷主企業の見積依頼の、提示済みの見積り（いちばん新しいもの）。他社の見積依頼の見積りは見つからない。 */
+    @Transactional(readOnly = true)
+    public Optional<Quotation> findPresented(TransportRequestNumber number, CompanyId shipperCompanyId) {
+        return transportRequestRepository
+                .findByNumber(number, shipperCompanyId)
+                .flatMap(request -> quotationRepository.findByTransportRequestId(request.id()).stream()
+                        .filter(quotation -> quotation.status() == QuotationStatus.PRESENTED)
+                        .max(Comparator.comparingInt(Quotation::quotationNo)));
+    }
+}

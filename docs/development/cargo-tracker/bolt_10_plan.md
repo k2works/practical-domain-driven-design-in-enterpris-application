@@ -4,7 +4,7 @@ title: "Bolt 10 計画 - 根拠付き見積りの提示（US-03 AC1〜AC3）"
 description: "10 回目の Bolt の計画。見積り集約（料金根拠の明細・有効期限・経路方針）の算出と社内承認・提示、DE-03 を受けた輸送要求の状態の更新、S-04 と C-04 の見積りの節、quotation と pricing_line の表を、ステップ 1〜5 で定義する。"
 tags: [development,bolt-plan]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-05T04:14:31Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-05T04:28:41Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-05T04:12:46Z }
 ---
@@ -261,7 +261,7 @@ S04 -[dashed]-> C04 : 荷主が開くと見積りが見える
   - UI 設計: S-04 の画面イメージと URL、S-02 の見積り作成中、S-03 の確定の後の遷移、C-04 の見積りの節
   - 完了の判定: `okf:check` が ERROR 0、`documentationTest` が緑。push する
   - 結果（2026-10-05 13:12〜13:14）: ユーザーストーリー（US-03 の決定）、ドメインモデル（用語に料金根拠の明細と通貨・料金明細・見積り番号、集約の図に見積り番号と料金明細、Q-INV-17・18、DE-03 の購読、見積りの提示の段落）、データモデル（`quotation` の `quotation_no`・NULL 可の列と CHECK・Bolt 10 で作る範囲、`pricing_line` の制約）、UI 設計（S-02・S-03・S-04・C-04 の URL の表、S-04 の画面イメージ）に反映した。`okf:check` ERROR 0、`documentationTest` 緑
-- [ ] **2. 見積りの算出と提示（業務ルール層の Red → Green）** 【承認ゲート: 業務のルール（Q-INV-05・17・18）】
+- [?] **2. 見積りの算出と提示（業務ルール層の Red → Green）** 【承認ゲート: 業務のルール（Q-INV-05・17・18）】
   - 業務ルール層の受入シナリオを先に書き、Red をコミットする（`features/quotation/present_quotation.feature`、`@US-03 @must`）
     - 審査を確定した見積依頼に、料金明細 2 行・有効期限・経路方針を入れて算出し、社内承認して提示すると、見積りは提示済みになり、提示時刻と承認者が残り、DE-03 が発行される（AC1）
     - 荷主が見積依頼を照会すると、料金根拠（明細と合計）、有効期限、経路方針、詳細な経路は経路設計者の承認後に確定する旨が示される（AC2）。輸送要求は見積提示済みになる（H1）
@@ -270,6 +270,12 @@ S04 -[dashed]-> C04 : 荷主が開くと見積りが見える
     - 他社の荷主には見積りは見えない（Q-INV-08）
   - 足りない内側を TDD で作る: `Quotation`、`QuotationId`、`QuotationStatus`、`PricingBasis`、`PricingLine`、`QuotationExpiry`、`RoutePolicy`、`QuotationRepository` とメモリ上の実装、`QuotationCommandService`（作る・算出する・社内承認して提示する）、荷主用と社内用の照会、`QuotationPresented`（DE-03）、DE-03 を受けて輸送要求を見積提示済みにする購読
   - 完了の判定: `check` が緑。push して CI を確かめる。ステップ 1 とあわせて承認を受ける
+  - 結果（2026-10-05 13:14〜13:28）
+    - Red: 受入シナリオ 8 件（`present_quotation.feature`。シナリオアウトラインの 3 例を含む）と、単体テスト（見積りの入力の検証、見積りの集約、輸送要求の見積提示済み、見積りのサービス、DE-03 の購読）とステップ定義を先に書き、まだない型を呼ぶためのコンパイルの失敗で Red を確かめ、Red のままコミットした（`6d4918f`。R-38）
+    - Green: 値オブジェクト（`QuotationId`、`QuotationStatus`、`Currency`、`PricingLine`、`PricingBasis`、`QuotationExpiry`、`RoutePolicy`、`PricingLineInput`、`QuotationInput`、`QuotationViolations`、`QuotationRejection`）、見積りの集約（`Quotation`。作る・算出する・社内承認して提示する、DE-03 の生成）、`QuotationRepository`、`QuotationPresented`（DE-03）、`QuotationCommandService`（Q-INV-18 の確認、見積り番号の採番）、`QuotationPresentedEventHandler`（DE-03 を受けて輸送要求を見積提示済みにする。冪等）、荷主用の `QuotationQueryService`（荷主企業で絞り、提示済みだけを見せる）と社内用の `StaffQuotationQueryService`。輸送要求に `markQuotationPresented` と状態 `QUOTED`（見積提示済み）を足し、画面の状態の表示名と UI 設計の対応表に「見積提示済み（お客様の対応待ち）」を足した
+    - 本番の組み立て（`QuotationConfiguration`）への登録は、DB の実装（ステップ 3）と一緒に行う
+    - 実行中に直した誤り: 状態の表示名の `switch` が新しい状態を網羅していない（コンパイラが検出）、ステップ定義の中で作った `DataTable` が変換を持たない、用語集に新しい型の行がない・Javadoc の書き出しが用語集の名前と違う（用語集の整合テスト）、書式
+    - 業務ルール層のシナリオは 57 件すべて passed（Bolt 9 の 49 件から +8）。`check` 緑（テスト 564 件）
 - [ ] **3. 表（内側の TDD、統合テスト）** 【承認ゲート: スキーマの変更】
   - 統合テスト（PostgreSQL）を先に書く: 見積りと料金明細の保存と読み出し、楽観ロック、UK（輸送要求 ID・見積り番号）、承認待ち以後の NOT NULL の CHECK、`status` の CHECK、DE-03 の配信で輸送要求が見積提示済みになる（別のトランザクション。H1）
   - マイグレーション `V20261005…__create_quotation.sql`（`common`）。H2 のスモークを先に回す（T-15）。表と列に日本語名のコメントを付ける（データモデルの決まり）

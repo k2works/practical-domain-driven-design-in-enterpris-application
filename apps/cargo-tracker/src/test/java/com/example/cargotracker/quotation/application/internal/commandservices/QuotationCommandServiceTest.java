@@ -63,8 +63,14 @@ class QuotationCommandServiceTest {
                 service.calculate(new CalculateQuotationCommand(NUMBER, QuotationFixture.completeInput()));
 
         assertThat(outcome).isEqualTo(new CalculationOutcome.Calculated(NUMBER, 1));
-        assertThat(quotations.findByTransportRequestIdAndNo(transportRequests.findByNumberForStaff(NUMBER).orElseThrow().id(), 1))
-                .hasValueSatisfying(quotation -> assertThat(quotation.status()).isEqualTo(QuotationStatus.PENDING_APPROVAL));
+        assertThat(quotations.findByTransportRequestIdAndNo(
+                        transportRequests
+                                .findByNumberForStaff(NUMBER)
+                                .orElseThrow()
+                                .id(),
+                        1))
+                .hasValueSatisfying(
+                        quotation -> assertThat(quotation.status()).isEqualTo(QuotationStatus.PENDING_APPROVAL));
         assertThat(published).isEmpty();
     }
 

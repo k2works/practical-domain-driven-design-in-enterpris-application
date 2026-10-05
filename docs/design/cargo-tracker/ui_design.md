@@ -4,7 +4,7 @@ title: "cargo-tracker UI 設計"
 description: "cargo-tracker の顧客 Web と社内業務 Web の画面オブジェクト、システムメタファー、画面一覧、画面遷移、主要画面のイメージ、共通部品（WCAG 2.2 AA）、エラー時を含むインタラクション。"
 tags: [design, ui]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-05T04:14:31Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-05T04:28:41Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T07:57:45Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:01:39Z }
@@ -861,6 +861,7 @@ Bolt 6 での輸送要求の状態と、荷主の画面（C-02・C-04）の表�
 | 審査中 | 審査中（A 社の対応待ち） | A 社。営業担当者が審査している |
 | 下書き（差し戻された） | 差戻し（お客様の対応待ち） | お客様。差戻しの理由を確かめ、直して出し直す |
 | 見積り作成中 | 見積り作成中（A 社の対応待ち） | A 社。営業担当者が見積りを作成している |
+| 見積提示済み | 見積提示済み（お客様の対応待ち） | お客様。見積りと経路方針を確かめ、回答する（回答は US-24。Bolt 10 で足した） |
 
 #### 主要実績の訂正（追跡管理者 2 名）
 

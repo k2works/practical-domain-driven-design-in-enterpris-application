@@ -46,9 +46,12 @@ class QuotationTest {
         assertThat(quotation.calculate(QuotationFixture.completeInput(), now)).isEmpty();
 
         assertThat(quotation.status()).isEqualTo(QuotationStatus.PENDING_APPROVAL);
-        assertThat(quotation.pricingBasis()).hasValueSatisfying(basis -> assertThat(basis.total()).isEqualByComparingTo("3730.00"));
-        assertThat(quotation.expiry()).hasValueSatisfying(expiry -> assertThat(expiry.expiresAt()).isEqualTo(QuotationFixture.EXPIRES_AT));
-        assertThat(quotation.routePolicy()).hasValueSatisfying(policy -> assertThat(policy.via()).containsExactly(new Location("SGSIN")));
+        assertThat(quotation.pricingBasis())
+                .hasValueSatisfying(basis -> assertThat(basis.total()).isEqualByComparingTo("3730.00"));
+        assertThat(quotation.expiry())
+                .hasValueSatisfying(expiry -> assertThat(expiry.expiresAt()).isEqualTo(QuotationFixture.EXPIRES_AT));
+        assertThat(quotation.routePolicy())
+                .hasValueSatisfying(policy -> assertThat(policy.via()).containsExactly(new Location("SGSIN")));
     }
 
     @Test
@@ -56,7 +59,8 @@ class QuotationTest {
         Quotation quotation = created();
 
         assertThat(quotation.calculate(new QuotationInput(List.of(), null, null, List.of(), null, null), now))
-                .hasValueSatisfying(violations -> assertThat(violations.isEmpty()).isFalse());
+                .hasValueSatisfying(
+                        violations -> assertThat(violations.isEmpty()).isFalse());
         assertThat(quotation.status()).isEqualTo(QuotationStatus.DRAFT);
     }
 

@@ -1,7 +1,7 @@
 package com.example.cargotracker.acceptance;
 
-import com.example.cargotracker.quotation.acceptance.InMemoryQuotationRepository;
 import com.example.cargotracker.identity.acceptance.InMemoryKpiObservationRepository;
+import com.example.cargotracker.quotation.acceptance.InMemoryQuotationRepository;
 import com.example.cargotracker.quotation.acceptance.InMemoryRequiredDocumentStorage;
 import com.example.cargotracker.quotation.acceptance.InMemoryTransportRequestNumberIssuer;
 import com.example.cargotracker.quotation.acceptance.InMemoryTransportRequestRepository;

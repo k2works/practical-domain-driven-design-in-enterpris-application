@@ -60,6 +60,7 @@ final class TransportRequestLabels {
             case DRAFT -> "差戻し（お客様の対応待ち）";
             case UNDER_REVIEW -> "審査中（A 社の対応待ち）";
             case QUOTING -> "見積り作成中（A 社の対応待ち）";
+            case QUOTED -> "見積提示済み（お客様の対応待ち）";
         };
     }
 
@@ -69,6 +70,7 @@ final class TransportRequestLabels {
             case DRAFT -> "営業担当者が見積依頼を差し戻しました。差戻しの理由を確かめ、直して出し直してください。";
             case UNDER_REVIEW -> "営業担当者が内容を審査しています。お問い合わせの際は業務番号をお伝えください。";
             case QUOTING -> "営業担当者が見積りを作成しています。お問い合わせの際は業務番号をお伝えください。";
+            case QUOTED -> "見積りと経路方針を提示しました。料金根拠と有効期限を確かめてください。";
         };
     }
 
@@ -77,6 +79,7 @@ final class TransportRequestLabels {
             case DRAFT -> "差戻し（下書き）";
             case UNDER_REVIEW -> "審査中";
             case QUOTING -> "見積り作成中";
+            case QUOTED -> "見積提示済み";
         };
     }
 

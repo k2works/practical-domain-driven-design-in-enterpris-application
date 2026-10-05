@@ -17,7 +17,8 @@ import org.junit.jupiter.api.Test;
 class QuotationInputTest {
 
     private static final UtcInstant CALCULATED_AT = at("2026-10-05T04:00:00Z");
-    private static final PricingLineInput FREIGHT = new PricingLineInput("海上運賃", new BigDecimal("3200.00"), "年間契約 2026-A");
+    private static final PricingLineInput FREIGHT =
+            new PricingLineInput("海上運賃", new BigDecimal("3200.00"), "年間契約 2026-A");
 
     private static UtcInstant at(String instant) {
         return new UtcInstant(Instant.parse(instant));
@@ -39,9 +40,9 @@ class QuotationInputTest {
 
     @Test
     void そろった入力は料金根拠と有効期限と経路方針になる() {
-        QuotationInput.Validation validation =
-                input(List.of(FREIGHT, new PricingLineInput("燃料調整金", new BigDecimal("530.00"), null)))
-                        .validate(CALCULATED_AT);
+        QuotationInput.Validation validation = input(
+                        List.of(FREIGHT, new PricingLineInput("燃料調整金", new BigDecimal("530.00"), null)))
+                .validate(CALCULATED_AT);
 
         assertThat(validation).isInstanceOfSatisfying(QuotationInput.Valid.class, valid -> {
             assertThat(valid.pricingBasis().total()).isEqualByComparingTo("3730.00");
@@ -67,7 +68,8 @@ class QuotationInputTest {
 
     @Test
     void 料金明細は10行まで受け付け11行は多すぎる() {
-        assertThat(input(Collections.nCopies(10, FREIGHT)).validate(CALCULATED_AT)).isInstanceOf(QuotationInput.Valid.class);
+        assertThat(input(Collections.nCopies(10, FREIGHT)).validate(CALCULATED_AT))
+                .isInstanceOf(QuotationInput.Valid.class);
         assertThat(violations(input(Collections.nCopies(11, FREIGHT))).has(Item.PRICING_LINES, Reason.TOO_MANY))
                 .isTrue();
     }
@@ -91,14 +93,20 @@ class QuotationInputTest {
 
     @Test
     void 金額のない明細は不足とする() {
-        assertThat(violations(input(List.of(new PricingLineInput("海上運賃", null, null)))).violations())
+        assertThat(violations(input(List.of(new PricingLineInput("海上運賃", null, null))))
+                        .violations())
                 .containsExactly(new QuotationViolations.Violation(Item.PRICING_LINES, Reason.AMOUNT_MISSING, 1));
     }
 
     @Test
     void 有効期限は算出の時刻より後でなければならない() {
         QuotationInput same = new QuotationInput(
-                List.of(FREIGHT), Currency.USD, CALCULATED_AT, List.of(), at("2026-10-10T00:00:00Z"), at("2026-10-30T09:00:00Z"));
+                List.of(FREIGHT),
+                Currency.USD,
+                CALCULATED_AT,
+                List.of(),
+                at("2026-10-10T00:00:00Z"),
+                at("2026-10-30T09:00:00Z"));
         QuotationInput oneSecondLater = new QuotationInput(
                 List.of(FREIGHT),
                 Currency.USD,
@@ -107,14 +115,19 @@ class QuotationInputTest {
                 at("2026-10-10T00:00:00Z"),
                 at("2026-10-30T09:00:00Z"));
 
-        assertThat(violations(same).has(Item.EXPIRES_AT, Reason.NOT_AFTER_CALCULATION)).isTrue();
+        assertThat(violations(same).has(Item.EXPIRES_AT, Reason.NOT_AFTER_CALCULATION))
+                .isTrue();
         assertThat(oneSecondLater.validate(CALCULATED_AT)).isInstanceOf(QuotationInput.Valid.class);
     }
 
     @Test
     void 経由地は5件まで受け付け6件は多すぎる() {
         List<Location> five = List.of(
-                new Location("SGSIN"), new Location("CNSHA"), new Location("LKCMB"), new Location("AEJEA"), new Location("EGPSD"));
+                new Location("SGSIN"),
+                new Location("CNSHA"),
+                new Location("LKCMB"),
+                new Location("AEJEA"),
+                new Location("EGPSD"));
         List<Location> six = List.of(
                 new Location("SGSIN"),
                 new Location("CNSHA"),
@@ -124,7 +137,8 @@ class QuotationInputTest {
                 new Location("ESALG"));
 
         assertThat(withVia(five).validate(CALCULATED_AT)).isInstanceOf(QuotationInput.Valid.class);
-        assertThat(violations(withVia(six)).has(Item.ROUTE_VIA, Reason.TOO_MANY)).isTrue();
+        assertThat(violations(withVia(six)).has(Item.ROUTE_VIA, Reason.TOO_MANY))
+                .isTrue();
     }
 
     @Test
@@ -137,11 +151,17 @@ class QuotationInputTest {
                 at("2026-10-30T09:00:00Z"),
                 at("2026-10-30T09:00:00Z"));
 
-        assertThat(violations(arrivalBeforeDeparture).has(Item.ARRIVAL_AT, Reason.NOT_AFTER_DEPARTURE)).isTrue();
+        assertThat(violations(arrivalBeforeDeparture).has(Item.ARRIVAL_AT, Reason.NOT_AFTER_DEPARTURE))
+                .isTrue();
     }
 
     private static QuotationInput withVia(List<Location> via) {
         return new QuotationInput(
-                List.of(FREIGHT), Currency.USD, at("2026-10-08T09:00:00Z"), via, at("2026-10-10T00:00:00Z"), at("2026-10-30T09:00:00Z"));
+                List.of(FREIGHT),
+                Currency.USD,
+                at("2026-10-08T09:00:00Z"),
+                via,
+                at("2026-10-10T00:00:00Z"),
+                at("2026-10-30T09:00:00Z"));
     }
 }

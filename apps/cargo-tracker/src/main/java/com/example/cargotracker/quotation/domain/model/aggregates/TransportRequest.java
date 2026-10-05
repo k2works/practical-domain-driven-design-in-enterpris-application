@@ -151,6 +151,21 @@ public final class TransportRequest {
     }
 
     /**
+     * 見積りが提示されたことを受けて、見積提示済みにする（DE-03 の購読。US-03）。見積り作成中で、見積りの対象の版が現在の版のときだけ変え、
+     * ほかのときは何もしない（イベントは少なくとも 1 回届くため、2 回目は変えない）。
+     *
+     * @param quotedVersionNo 見積りの対象の版番号
+     * @return 状態を変えたら true
+     */
+    public boolean markQuotationPresented(int quotedVersionNo) {
+        if (status != TransportRequestStatus.QUOTING || quotedVersionNo != currentVersion.versionNo()) {
+            return false;
+        }
+        status = TransportRequestStatus.QUOTED;
+        return true;
+    }
+
+    /**
      * 再提出できるかを確かめる（Q-INV-15）。書類の中身を保存する前に確かめ、受け付けない再提出でファイルを残さないために使う。
      *
      * @return 受け付けない理由（再提出できるなら空）

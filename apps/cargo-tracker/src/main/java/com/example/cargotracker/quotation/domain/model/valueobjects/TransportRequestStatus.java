@@ -9,5 +9,7 @@ public enum TransportRequestStatus {
     /** 審査中。 */
     UNDER_REVIEW,
     /** 見積り作成中（審査を確定した後）。 */
-    QUOTING
+    QUOTING,
+    /** 見積提示済み（見積りと経路方針を提示した後。DE-03 を受けて変える。Bolt 10）。 */
+    QUOTED
 }
