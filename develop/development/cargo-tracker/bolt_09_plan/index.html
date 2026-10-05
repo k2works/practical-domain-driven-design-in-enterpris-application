@@ -2899,7 +2899,7 @@
     
   
   
-    <span class="md-status md-status--draft"></span>
+    <span class="md-status md-status--stable"></span>
   
 
   
@@ -3591,7 +3591,7 @@
     
   
   
-    <span class="md-status md-status--draft"></span>
+    <span class="md-status md-status--stable"></span>
   
 
   
@@ -4112,7 +4112,7 @@
     
   
   
-    <span class="md-status md-status--draft"></span>
+    <span class="md-status md-status--stable"></span>
   
 
   
@@ -7018,6 +7018,7 @@
 <li>レビューの「対応結果」に、改善提案ごとの対応（修正のコミット、後の Bolt）を書き、レビューを承認待ちにする</li>
 <li><code>bolt_09_report.md</code> を書く（仮説 H1〜H3 の結論、各ステップの開始と完了の時刻、Red の記録）。ステップ 3・4 の結果をここでまとめて報告する</li>
 <li>結果（2026-10-05 11:30〜11:48）: SonarQube の品質ゲートが不合格（Bug 1: <code>Optional</code> を確かめずに取り出す、Code Smell 3: 413 の案内のパスの決め打ち、スキーマのコメントのテストのアサーション 2 件）になり、直して PASS にした（<code>f286877</code>）。<code>check</code>・<code>uiTest</code>・CI は緑。ステップ 3 のコミット（<code>23cd5c2</code>）の CI で、画面の層の 1 件（キー操作のファイルの選択）が時間切れで失敗した。後のコミットでは通っている（既知の課題）。レビューの対応結果と <a href="../bolt_09_report/">Bolt 9 終了報告</a> を書いた</li>
+<li>承認（2026-10-05、human:kakimomokuri）: ステップ 3〜5 と終了報告が承認された</li>
 </ul>
 <h3 id="_12">時間の配分と打ち切り<a class="headerlink" href="#_12" title="Permanent link">&para;</a></h3>
 <table>
@@ -7147,15 +7148,15 @@
 <h2 id="_14">完了条件<a class="headerlink" href="#_14" title="Permanent link">&para;</a></h2>
 <h3 id="definition-of-done">Definition of Done<a class="headerlink" href="#definition-of-done" title="Permanent link">&para;</a></h3>
 <ul class="task-list">
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> ステップ 1〜5 が完了し、計画・ステップ 2・終了報告の承認ゲートを人が通した</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <code>./gradlew check</code> と <code>./gradlew uiTest</code> がローカルと CI の両方で緑。各ステップの終わりに push できた</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> SonarQube の品質ゲートが PASS</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> 業務ルール層で差し替え（版 1 は変わらない）のシナリオが緑。画面の層で差し替えと R-02・R-03 のシナリオが緑</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> 確認ポイント 1〜5 と D-25・D-26・D-27・D-31 の決定が、設計文書・ADR・リリース計画から追える</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> レビューの「対応結果」に、改善提案ごとの対応が書かれている</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <code>bolt_09_report.md</code> に仮説 H1〜H3 の結論と、各ステップの時刻と Red の記録を書いた</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> 確認ポイント 3 の Issue を、終了報告の承認でクローズした</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> ユーザーマニュアルは更新しない（マニュアルはまだない。認証と主要な画面がそろってから書く）</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> ステップ 1〜5 が完了し、計画・ステップ 2・終了報告の承認ゲートを人が通した</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <code>./gradlew check</code> と <code>./gradlew uiTest</code> がローカルと CI の両方で緑。各ステップの終わりに push できた</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> SonarQube の品質ゲートが PASS</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> 業務ルール層で差し替え（版 1 は変わらない）のシナリオが緑。画面の層で差し替えと R-02・R-03 のシナリオが緑</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> 確認ポイント 1〜5 と D-25・D-26・D-27・D-31 の決定が、設計文書・ADR・リリース計画から追える</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> レビューの「対応結果」に、改善提案ごとの対応が書かれている</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <code>bolt_09_report.md</code> に仮説 H1〜H3 の結論と、各ステップの時刻と Red の記録を書いた</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> 確認ポイント 3 の Issue を、終了報告の承認でクローズした</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> ユーザーマニュアルは更新しない（マニュアルはまだない。認証と主要な画面がそろってから書く）</li>
 </ul>
 <h3 id="_15">デモ項目<a class="headerlink" href="#_15" title="Permanent link">&para;</a></h3>
 <table>
@@ -7209,6 +7210,12 @@
 <tr>
 <td style="text-align: left;">2026-10-05</td>
 <td style="text-align: left;">計画を承認。確認ポイント 1〜5（種類ごとの差し替え、ADR-010、技術タスクの Issue、<code>findById</code> の削除、W2 の目標 SP は 8 のまま）も決まった（Try T-6）</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5</td>
+<td style="text-align: left;">human:kakimomokuri</td>
+</tr>
+<tr>
+<td style="text-align: left;">2026-10-05</td>
+<td style="text-align: left;">ステップ 1・2 の承認ゲートと、ステップ 3〜5 をまとめた終了報告の承認を通し、Bolt を終えた（人の変更依頼 0）</td>
 <td style="text-align: left;">anthropic/claude-opus-5-5</td>
 <td style="text-align: left;">human:kakimomokuri</td>
 </tr>
