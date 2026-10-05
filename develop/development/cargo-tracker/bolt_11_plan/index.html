@@ -16,7 +16,7 @@
         <link rel="prev" href="../bolt_10_report/">
       
       
-        <link rel="next" href="../../../operation/">
+        <link rel="next" href="../bolt_11_report/">
       
       
         
@@ -2927,6 +2927,41 @@
   
 </nav>
       
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../bolt_11_report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 11 終了報告
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--draft"></span>
+  
+
+  
+
+      </a>
     </li>
   
 
@@ -7154,7 +7189,7 @@
 <li>画面の層のシナリオは 38 件すべて passed（Bolt 10 の 35 件から +3）、axe-core の違反 0 件。<code>check</code> 緑（<code>test</code> 715 件）</li>
 </ul>
 </li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>6. 開発レビューと Bolt 終了報告</strong></li>
+<li>[?] <strong>6. 開発レビューと Bolt 終了報告</strong></li>
 <li><code>developing-review</code> で Bolt 11 の変更をレビューし、指摘への対応を決める（T-28）</li>
 <li><code>check</code>・<code>uiTest</code>・CI・SonarQube の品質ゲート（PASS）を確かめる</li>
 <li>デモ項目のシナリオを <code>./gradlew demoVideo -PdemoBolt=bolt-11</code> で録画し、<code>docs/assets/demo/bolt-11/</code> に置いて終了報告と開発の索引からリンクする（T-31）</li>
@@ -7162,6 +7197,7 @@
 <li>
 <h1 id="4-1">4 をクローズする（確認ポイント 1）<a class="headerlink" href="#4-1" title="Permanent link">&para;</a></h1>
 </li>
+<li>結果（2026-10-05 17:35〜18:35）: <code>developing-review</code> で Bolt 11 の変更をレビューし（<a href="../../../review/cargo-tracker/bolt_11_review_20261005/">レビュー</a>、<code>f13bd00</code>）、人の判断（D-37・D-38・D-40）で高・中の大半・低を直した（Red <code>522ca88</code>・<code>07c4773</code>、Green <code>013b3a8</code>・<code>8bfa8d5</code>、文書 <code>bc930b8</code>）。SonarQube はこの環境で立ち上げ（終了報告の「環境」）、品質ゲートは 1 回不合格になり（Code Smell 1 件）、直して PASS にした。デモ項目のシナリオ 2 本を <code>./gradlew demoVideo -PdemoBolt=bolt-11</code> で録画し、<a href="../bolt_11_report/">Bolt 11 終了報告</a> と開発の索引からリンクした。<code>check</code>・<code>uiTest</code>・CI は緑。#4 は終了報告の承認の後にクローズする</li>
 </ul>
 <h3 id="_12">時間の配分と打ち切り<a class="headerlink" href="#_12" title="Permanent link">&para;</a></h3>
 <table>
