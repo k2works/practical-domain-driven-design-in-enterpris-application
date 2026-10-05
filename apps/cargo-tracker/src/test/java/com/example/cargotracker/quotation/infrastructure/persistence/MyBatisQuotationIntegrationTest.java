@@ -16,6 +16,7 @@ import com.example.cargotracker.quotation.domain.model.valueobjects.QuotationFix
 import com.example.cargotracker.quotation.domain.model.valueobjects.QuotationId;
 import com.example.cargotracker.quotation.domain.model.valueobjects.QuotationInput;
 import com.example.cargotracker.quotation.domain.model.valueobjects.QuotationStatus;
+import com.example.cargotracker.quotation.domain.model.valueobjects.QuotedRequestSummary;
 import com.example.cargotracker.quotation.domain.model.valueobjects.ShipmentTermsFixture;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestId;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestNumber;
@@ -346,5 +347,31 @@ class MyBatisQuotationIntegrationTest {
         assertThatThrownBy(() -> jdbc.execute("SET CONSTRAINTS ALL IMMEDIATE"))
                 .isInstanceOf(DataIntegrityViolationException.class)
                 .hasMessageContaining("fk_quotation_replaced_by");
+    }
+
+    @Test
+    void 見積提示済みの見積依頼の最新の見積りを有効期限の近い順に返し見積り作成中の見積依頼は返さない() {
+        TransportRequestId quoted = transportRequest(15);
+        TransportRequest request = transportRequests.findById(quoted).orElseThrow();
+        request.approve(1, STAFF, "根拠", NOW);
+        request.markQuotationPresented(1);
+        transportRequests.update(request);
+        repository.save(presented(quoted, 1));
+        Quotation latest = calculated(quoted, 2);
+        requote(repository.findByTransportRequestIdAndNo(quoted, 1).orElseThrow(), latest, APPROVED_AT);
+        TransportRequestId quoting = transportRequest(16);
+        TransportRequest quotingRequest = transportRequests.findById(quoting).orElseThrow();
+        quotingRequest.approve(1, STAFF, "根拠", NOW);
+        transportRequests.update(quotingRequest);
+        repository.save(calculated(quoting, 1));
+
+        assertThat(repository.findLatestOfQuotedRequests())
+                .filteredOn(summary -> summary.number().equals(new TransportRequestNumber(2082, 15))
+                        || summary.number().equals(new TransportRequestNumber(2082, 16)))
+                .containsExactly(new QuotedRequestSummary(
+                        new TransportRequestNumber(2082, 15),
+                        2,
+                        QuotationStatus.PENDING_APPROVAL,
+                        QuotationFixture.EXPIRES_AT));
     }
 }
