@@ -7078,6 +7078,24 @@
 <td style="text-align: left;">見積り</td>
 </tr>
 <tr>
+<td style="text-align: left;">料金明細の入力</td>
+<td style="text-align: left;">PricingLineInput</td>
+<td style="text-align: left;">営業担当者が入れようとする料金明細の 1 行。項目が欠けていてよく、検証して違反がなければ料金明細になる（Bolt 10）</td>
+<td style="text-align: left;">見積り</td>
+</tr>
+<tr>
+<td style="text-align: left;">見積りの入力</td>
+<td style="text-align: left;">QuotationInput</td>
+<td style="text-align: left;">営業担当者が算出しようとする料金明細・通貨・有効期限・経路方針。算出の時刻で検証し（Q-INV-05・17）、違反がなければ料金根拠・有効期限・経路方針になる（Bolt 10）</td>
+<td style="text-align: left;">見積り</td>
+</tr>
+<tr>
+<td style="text-align: left;">見積りの算出の検証結果</td>
+<td style="text-align: left;">QuotationViolations</td>
+<td style="text-align: left;">見積りの算出の検証で見つかった不足と誤りの一覧。項目・理由の種類・料金明細の行の番号だけを持ち、文言は画面の層が付ける（Bolt 10）</td>
+<td style="text-align: left;">見積り</td>
+</tr>
+<tr>
 <td style="text-align: left;">見積り番号</td>
 <td style="text-align: left;">—</td>
 <td style="text-align: left;">輸送要求の中で 1 から振る見積りの番号。画面と URL には内部の ID の代わりに「TR-2026-0001 見積 1」の形で出す（D-4 と同じ考え方。Bolt 10）</td>
@@ -7315,6 +7333,12 @@
 <td style="text-align: left;">輸送要求 ID</td>
 <td style="text-align: left;">TransportRequestId</td>
 <td style="text-align: left;">輸送要求を識別する、システムが発行する不透明な値。画面には出さず、業務番号を出す</td>
+<td style="text-align: left;">見積り</td>
+</tr>
+<tr>
+<td style="text-align: left;">見積り ID</td>
+<td style="text-align: left;">QuotationId</td>
+<td style="text-align: left;">見積りを識別する、システムが発行する不透明な値。画面には出さず、見積り番号を出す（Bolt 10）</td>
 <td style="text-align: left;">見積り</td>
 </tr>
 <tr>

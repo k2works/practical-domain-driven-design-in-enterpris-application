@@ -7016,8 +7016,8 @@
 <li>データモデル: <code>quotation</code> の NULL 可の列と CHECK、<code>quotation_no</code>、<code>pricing_line</code></li>
 <li>UI 設計: S-04 の画面イメージと URL、S-02 の見積り作成中、S-03 の確定の後の遷移、C-04 の見積りの節</li>
 <li>完了の判定: <code>okf:check</code> が ERROR 0、<code>documentationTest</code> が緑。push する</li>
-<li>結果（2026-10-05 13:12〜13:17）: ユーザーストーリー（US-03 の決定）、ドメインモデル（用語に料金根拠の明細と通貨・料金明細・見積り番号、集約の図に見積り番号と料金明細、Q-INV-17・18、DE-03 の購読、見積りの提示の段落）、データモデル（<code>quotation</code> の <code>quotation_no</code>・NULL 可の列と CHECK・Bolt 10 で作る範囲、<code>pricing_line</code> の制約）、UI 設計（S-02・S-03・S-04・C-04 の URL の表、S-04 の画面イメージ）に反映した。<code>okf:check</code> ERROR 0、<code>documentationTest</code> 緑</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>2. 見積りの算出と提示（業務ルール層の Red → Green）</strong> 【承認ゲート: 業務のルール（Q-INV-05・17・18）】</li>
+<li>結果（2026-10-05 13:12〜13:14）: ユーザーストーリー（US-03 の決定）、ドメインモデル（用語に料金根拠の明細と通貨・料金明細・見積り番号、集約の図に見積り番号と料金明細、Q-INV-17・18、DE-03 の購読、見積りの提示の段落）、データモデル（<code>quotation</code> の <code>quotation_no</code>・NULL 可の列と CHECK・Bolt 10 で作る範囲、<code>pricing_line</code> の制約）、UI 設計（S-02・S-03・S-04・C-04 の URL の表、S-04 の画面イメージ）に反映した。<code>okf:check</code> ERROR 0、<code>documentationTest</code> 緑</li>
+<li>[?] <strong>2. 見積りの算出と提示（業務ルール層の Red → Green）</strong> 【承認ゲート: 業務のルール（Q-INV-05・17・18）】</li>
 <li>業務ルール層の受入シナリオを先に書き、Red をコミットする（<code>features/quotation/present_quotation.feature</code>、<code>@US-03 @must</code>）<ul>
 <li>審査を確定した見積依頼に、料金明細 2 行・有効期限・経路方針を入れて算出し、社内承認して提示すると、見積りは提示済みになり、提示時刻と承認者が残り、DE-03 が発行される（AC1）</li>
 <li>荷主が見積依頼を照会すると、料金根拠（明細と合計）、有効期限、経路方針、詳細な経路は経路設計者の承認後に確定する旨が示される（AC2）。輸送要求は見積提示済みになる（H1）</li>
@@ -7028,6 +7028,14 @@
 </li>
 <li>足りない内側を TDD で作る: <code>Quotation</code>、<code>QuotationId</code>、<code>QuotationStatus</code>、<code>PricingBasis</code>、<code>PricingLine</code>、<code>QuotationExpiry</code>、<code>RoutePolicy</code>、<code>QuotationRepository</code> とメモリ上の実装、<code>QuotationCommandService</code>（作る・算出する・社内承認して提示する）、荷主用と社内用の照会、<code>QuotationPresented</code>（DE-03）、DE-03 を受けて輸送要求を見積提示済みにする購読</li>
 <li>完了の判定: <code>check</code> が緑。push して CI を確かめる。ステップ 1 とあわせて承認を受ける</li>
+<li>結果（2026-10-05 13:14〜13:28）<ul>
+<li>Red: 受入シナリオ 8 件（<code>present_quotation.feature</code>。シナリオアウトラインの 3 例を含む）と、単体テスト（見積りの入力の検証、見積りの集約、輸送要求の見積提示済み、見積りのサービス、DE-03 の購読）とステップ定義を先に書き、まだない型を呼ぶためのコンパイルの失敗で Red を確かめ、Red のままコミットした（<code>6d4918f</code>。R-38）</li>
+<li>Green: 値オブジェクト（<code>QuotationId</code>、<code>QuotationStatus</code>、<code>Currency</code>、<code>PricingLine</code>、<code>PricingBasis</code>、<code>QuotationExpiry</code>、<code>RoutePolicy</code>、<code>PricingLineInput</code>、<code>QuotationInput</code>、<code>QuotationViolations</code>、<code>QuotationRejection</code>）、見積りの集約（<code>Quotation</code>。作る・算出する・社内承認して提示する、DE-03 の生成）、<code>QuotationRepository</code>、<code>QuotationPresented</code>（DE-03）、<code>QuotationCommandService</code>（Q-INV-18 の確認、見積り番号の採番）、<code>QuotationPresentedEventHandler</code>（DE-03 を受けて輸送要求を見積提示済みにする。冪等）、荷主用の <code>QuotationQueryService</code>（荷主企業で絞り、提示済みだけを見せる）と社内用の <code>StaffQuotationQueryService</code>。輸送要求に <code>markQuotationPresented</code> と状態 <code>QUOTED</code>（見積提示済み）を足し、画面の状態の表示名と UI 設計の対応表に「見積提示済み（お客様の対応待ち）」を足した</li>
+<li>本番の組み立て（<code>QuotationConfiguration</code>）への登録は、DB の実装（ステップ 3）と一緒に行う</li>
+<li>実行中に直した誤り: 状態の表示名の <code>switch</code> が新しい状態を網羅していない（コンパイラが検出）、ステップ定義の中で作った <code>DataTable</code> が変換を持たない、用語集に新しい型の行がない・Javadoc の書き出しが用語集の名前と違う（用語集の整合テスト）、書式</li>
+<li>業務ルール層のシナリオは 57 件すべて passed（Bolt 9 の 49 件から +8）。<code>check</code> 緑（テスト 564 件）</li>
+</ul>
+</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>3. 表（内側の TDD、統合テスト）</strong> 【承認ゲート: スキーマの変更】</li>
 <li>統合テスト（PostgreSQL）を先に書く: 見積りと料金明細の保存と読み出し、楽観ロック、UK（輸送要求 ID・見積り番号）、承認待ち以後の NOT NULL の CHECK、<code>status</code> の CHECK、DE-03 の配信で輸送要求が見積提示済みになる（別のトランザクション。H1）</li>
 <li>マイグレーション <code>V20261005…__create_quotation.sql</code>（<code>common</code>）。H2 のスモークを先に回す（T-15）。表と列に日本語名のコメントを付ける（データモデルの決まり）</li>
