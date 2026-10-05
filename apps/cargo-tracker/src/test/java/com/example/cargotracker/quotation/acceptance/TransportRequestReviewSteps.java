@@ -18,7 +18,7 @@ import com.example.cargotracker.quotation.domain.model.valueobjects.ShipmentTerm
 import com.example.cargotracker.quotation.domain.model.valueobjects.ShipmentTermsInput;
 import com.example.cargotracker.quotation.domain.model.valueobjects.SubmissionViolations.Item;
 import com.example.cargotracker.quotation.domain.model.valueobjects.SubmissionViolations.Reason;
-import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestId;
+import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestNumber;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestStatus;
 import com.example.cargotracker.shared.acceptance.ScenarioContext;
 import com.example.cargotracker.shared.domain.CompanyId;
@@ -178,8 +178,7 @@ public class TransportRequestReviewSteps {
     }
 
     private TransportRequest current() {
-        return queryService
-                .findById(new TransportRequestId(context.transportRequestId()))
+        return queryService.findByNumber(TransportRequestNumber.parse(context.transportRequestNumber()), SHIPPER)
                 .orElseThrow();
     }
 

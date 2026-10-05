@@ -17,7 +17,7 @@ import com.example.cargotracker.quotation.domain.model.valueobjects.ShipmentTerm
 import com.example.cargotracker.quotation.domain.model.valueobjects.ShipmentTermsInput;
 import com.example.cargotracker.quotation.domain.model.valueobjects.SubmissionViolations.Item;
 import com.example.cargotracker.quotation.domain.model.valueobjects.SubmissionViolations.Reason;
-import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestId;
+import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestNumber;
 import com.example.cargotracker.shared.acceptance.ScenarioContext;
 import com.example.cargotracker.shared.domain.CompanyId;
 import com.example.cargotracker.shared.domain.UserId;
@@ -124,8 +124,14 @@ public class RequiredDocumentSteps {
                 .isEmpty();
     }
 
-    @もし("荷主が目的地を {string} のまま書類を足して出し直す")
-    public void 書類を足して出し直す(String destination) {
+    @ならば("荷主が版 {int} の書類 {int} を取得しても見つからない")
+    public void 荷主は取得できない(int versionNo, int documentNo) {
+        assertThat(queryService.findDocument(current().number(), SHIPPER, versionNo, documentNo))
+                .isEmpty();
+    }
+
+    @もし("荷主が目的地を {string} のまま選んだ書類で出し直す")
+    public void 選んだ書類で出し直す(String destination) {
         ShipmentTerms terms = current().currentVersion().terms();
         assertThat(terms.destination().unLocode()).isEqualTo(destination);
         ShipmentTermsInput input = new ShipmentTermsInput(
@@ -151,6 +157,17 @@ public class RequiredDocumentSteps {
                 .containsExactly(first, second);
     }
 
+    @ならば("版 {int} の書類は次のとおりになる")
+    public void 版の書類は次のとおり(int versionNo, DataTable table) {
+        assertThat(lastResubmission).isInstanceOf(ResubmissionOutcome.Resubmitted.class);
+        assertThat(current().currentVersion().versionNo()).isEqualTo(versionNo);
+        assertThat(current().currentVersion().terms().documents())
+                .extracting(document -> document.documentNo() + ":" + document.fileName())
+                .containsExactlyElementsOf(table.asMaps().stream()
+                        .map(row -> row.get("書類番号") + ":" + row.get("ファイル名"))
+                        .toList());
+    }
+
     @ならば("出し直しは受け付けられず {string} に誤り {string} が示される")
     public void 出し直しは受け付けられない(String item, String reason) {
         assertThat(lastResubmission)
@@ -171,8 +188,7 @@ public class RequiredDocumentSteps {
     }
 
     private TransportRequest current() {
-        return queryService
-                .findById(new TransportRequestId(context.transportRequestId()))
+        return queryService.findByNumber(TransportRequestNumber.parse(context.transportRequestNumber()), SHIPPER)
                 .orElseThrow();
     }
 

@@ -12,11 +12,22 @@ public class ScenarioContext {
 
     private UUID transportRequestId;
 
+    /** 提出した輸送要求の業務番号（例: TR-2026-0001）。コンテキストをまたいで渡すため文字列で持つ。 */
+    private String transportRequestNumber;
+
     public UUID transportRequestId() {
         return transportRequestId;
     }
 
     public void transportRequestId(UUID transportRequestId) {
         this.transportRequestId = transportRequestId;
+    }
+
+    public String transportRequestNumber() {
+        return transportRequestNumber;
+    }
+
+    public void transportRequestNumber(String transportRequestNumber) {
+        this.transportRequestNumber = transportRequestNumber;
     }
 }

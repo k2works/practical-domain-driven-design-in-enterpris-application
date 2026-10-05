@@ -12,7 +12,7 @@ import com.example.cargotracker.quotation.domain.model.valueobjects.ShipmentTerm
 import com.example.cargotracker.quotation.domain.model.valueobjects.SubmissionViolations;
 import com.example.cargotracker.quotation.domain.model.valueobjects.SubmissionViolations.Item;
 import com.example.cargotracker.quotation.domain.model.valueobjects.SubmissionViolations.Reason;
-import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestId;
+import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestNumber;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestStatus;
 import com.example.cargotracker.shared.acceptance.ScenarioContext;
 import com.example.cargotracker.shared.domain.CompanyId;
@@ -139,20 +139,21 @@ public class TransportRequestSteps {
                 new SubmitTransportRequestCommand(SHIPPER, SUBMITTER, toInput(), attachments.takePending()));
         if (lastOutcome instanceof SubmissionOutcome.Submitted submitted) {
             context.transportRequestId(submitted.transportRequestId().value());
+            context.transportRequestNumber(submitted.number().text());
         }
     }
 
     @ならば("輸送要求は審査中になる")
     public void 輸送要求は審査中になる() {
         assertThat(lastOutcome).isInstanceOf(SubmissionOutcome.Submitted.class);
-        assertThat(queryService.findById(new TransportRequestId(context.transportRequestId())))
+        assertThat(queryService.findByNumber(TransportRequestNumber.parse(context.transportRequestNumber()), SHIPPER))
                 .hasValueSatisfying(
                         request -> assertThat(request.status()).isEqualTo(TransportRequestStatus.UNDER_REVIEW));
     }
 
     @ならば("提出者と提出時刻 {string} が記録される")
     public void 提出者と提出時刻が記録される(String submittedAt) {
-        assertThat(queryService.findById(new TransportRequestId(context.transportRequestId())))
+        assertThat(queryService.findByNumber(TransportRequestNumber.parse(context.transportRequestNumber()), SHIPPER))
                 .hasValueSatisfying(request -> {
                     assertThat(request.currentVersion().submittedBy()).isEqualTo(SUBMITTER);
                     assertThat(request.currentVersion().submittedAt())
@@ -166,7 +167,7 @@ public class TransportRequestSteps {
                 .isInstanceOfSatisfying(
                         SubmissionOutcome.Submitted.class,
                         submitted -> assertThat(submitted.number().text()).isEqualTo(number));
-        assertThat(queryService.findById(new TransportRequestId(context.transportRequestId())))
+        assertThat(queryService.findByNumber(TransportRequestNumber.parse(context.transportRequestNumber()), SHIPPER))
                 .hasValueSatisfying(
                         request -> assertThat(request.number().text()).isEqualTo(number));
     }
