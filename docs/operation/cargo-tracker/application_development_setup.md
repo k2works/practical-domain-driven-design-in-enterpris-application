@@ -4,7 +4,7 @@ title: "アプリケーション開発環境セットアップ手順書 - cargo-
 description: "cargo-tracker（A 社国際貨物輸送管理システム）を、開発者の PC で起動・テスト・品質チェックするための手順を示す。"
 tags: [operation,playbook,setup]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-05T06:43:10Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-05T09:55:11Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-02T01:37:59Z }
   - { by: human:kakimomokuri, at: 2026-10-02T07:02:38Z }
@@ -26,7 +26,7 @@ cargo-tracker（A 社国際貨物輸送管理システム）を、開発者の P
 | :--- | :--- |
 | 対象 | `apps/cargo-tracker`（Java 25、Spring Boot 4.1、Spring Modulith のモジュラーモノリス） |
 | 正とする文書 | 品質チェックのコマンドは [開発戦略](../../development/cargo-tracker/development_strategy.md) の「品質チェックのコマンド」、使う技術と版は [技術スタック](../../design/cargo-tracker/tech_stack.md) を正とする。本書は環境を用意して動かす手順だけを書く |
-| 確認日 | 2026-10-02（本書のコマンドはこの日に実際に動かして確かめた） |
+| 確認日 | 2026-10-02（本書のコマンドはこの日に実際に動かして確かめた）。9 節（クラウドの実行環境）は 2026-10-05 |
 
 ## 1. 前提条件
 
@@ -162,3 +162,34 @@ apps/cargo-tracker/
 | `uiTest` がブラウザを見つけられない | `./gradlew playwrightInstall` を一度実行する |
 | `check` が書式で失敗する（`spotlessCheck`） | `./gradlew spotlessApply` で書式をそろえ、書式だけの変更は別のコミットにする |
 | `sonar-local:check` が NONE で失敗する | 解析の反映を待つ設定（`sonar.qualitygate.wait`）が働いていない可能性がある。`npx gulp sonar-local:status` でサーバーを確かめる |
+
+## 9. クラウドの実行環境（Claude Code on the web）
+
+Claude Code のクラウドの実行環境では、セッションの開始のフック（`.claude/hooks/session-start.sh`。`.claude/settings.json` に登録）が、検証を動かせる状態を作る（Bolt 11 の Try T-34。2026-10-05 に human:kakimomokuri が決定）。クラウドの実行環境のときだけ動き（`CLAUDE_CODE_REMOTE=true`）、何度動かしても同じ結果になる。
+
+| 順 | フックがすること | 理由 |
+| :--- | :--- | :--- |
+| 1 | ロケールを `C.UTF-8` にする（`LC_ALL`・`LANG` をセッションの環境変数に足す） | 日本語のシナリオ名のテストの報告を書き出すときに失敗するため |
+| 2 | JDK 25 がなければ apt で `openjdk-25-jdk-headless` を入れる | Gradle の toolchain が 25 を求める。JDK のダウンロードのサイトはネットワークの方針で許可されていない |
+| 3 | dockerd が止まっていれば起動する | Testcontainers の PostgreSQL に要る。待機中に止まることがある |
+| 4 | `./gradlew testClasses` で依存を取り、Maven Central の 429 なら間を置いて 3 回まで取り直す | 依存の取得で 429 が返ることがある |
+| 5 | Playwright が求める Chromium（driver の `browsers.json` の版）がなければ、環境にある Chromium を求める版の場所から参照させる | 求める版のダウンロード元（`cdn.playwright.dev`）が許可されていない。CI は正規の版で回る |
+| 6 | ルートの `node_modules` がなければ `npm install` する | 文書の検査（`npx gulp okf:check`）に要る |
+| 7 | `vm.max_map_count` を 262144 にする | SonarQube の Elasticsearch が求める |
+
+フックの後は、4 節のコマンドがそのまま動く。SonarQube を使うときは、フックでは起動しないため、次の手順で起動してから 4 節の `sonar-local:check` を実行する。
+
+```bash
+cd ops/docker/sonarqube-local
+docker compose -f docker-compose.yml -f docker-compose.cloud.yml up -d   # 起動時チェックを外し Web の heap を 2 GB に
+until curl -s localhost:9000/api/system/status | grep -q '"UP"'; do sleep 3; done
+```
+
+初回は admin のパスワードを変えてトークンを作り、ルートの `.env`（Git の対象外）に `SONAR_TOKEN` と `SONAR_PROJECT_KEY=cargo-tracker-modular-monolith` を書く（[SonarQube ローカル環境セットアップ手順書](../../reference/SonarQubeローカル環境セットアップ手順書.md)）。クラウドの実行環境のコンテナはセッションの終わりに消えるため、トークンはセッションごとに作り直す。
+
+| つまずき | 対処 |
+| :--- | :--- |
+| `uiTest` が `Executable doesn't exist at /opt/pw-browsers/chromium_headless_shell-…` で全件失敗する | フックの 5 が動いていない。`CLAUDE_CODE_REMOTE=true .claude/hooks/session-start.sh` を実行する |
+| 統合テストが `Could not find a valid Docker environment` で失敗する | dockerd が止まった。フックをもう一度実行する |
+| SonarQube のコンテナが起動を繰り返す | `docker-compose.cloud.yml` を重ねずに起動した。上の手順で起動し直す |
+

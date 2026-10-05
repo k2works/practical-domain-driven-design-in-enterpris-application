@@ -1,0 +1,9 @@
+# Claude Code のクラウドの実行環境で SonarQube を起動するときの上書き（Bolt 11 の Try T-34）。
+# この環境はファイルディスクリプタの上限を 20,000 から上げられないため Elasticsearch の起動時チェックを外し、
+# 初回のルールの登録で Web の heap（256 MB）が足りないため 2 GB にする。開発者の PC では使わない。
+# 使い方: docs/operation/cargo-tracker/application_development_setup.md の「9. クラウドの実行環境」
+services:
+  sonarqube:
+    environment:
+      SONAR_ES_BOOTSTRAP_CHECKS_DISABLE: "true"
+      SONAR_WEB_JAVAOPTS: "-Xmx2g -Xms512m"
