@@ -1,6 +1,67 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <database name="cargotracker" schema="quotation" type="PostgreSQL - 18.6 (Debian 18.6-1.pgdg13+2)">
    <tables>
+      <table name="pricing_line" remarks="料金明細" schema="quotation" type="TABLE">
+         <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="quotation_id" nullable="false" remarks="見積り ID" size="2147483647" type="uuid" typeCode="1111">
+            <parent column="id" foreignKey="fk_pricing_line_quotation" implied="false" onDeleteCascade="false" schema="quotation" table="quotation"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="line_no" nullable="false" remarks="明細の番号" size="10" type="int4" typeCode="4"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="2" name="description" nullable="false" remarks="内容" size="200" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="2" id="3" name="amount" nullable="false" remarks="金額" size="15" type="numeric" typeCode="2"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="4" name="currency" nullable="false" remarks="通貨" size="3" type="bpchar" typeCode="1"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="5" name="contract_reference" nullable="true" remarks="参照した契約条件" size="200" type="varchar" typeCode="12"/>
+         <primaryKey column="quotation_id" sequenceNumberInPK="1"/>
+         <primaryKey column="line_no" sequenceNumberInPK="2"/>
+         <index name="pk_pricing_line" unique="true">
+            <column ascending="true" name="quotation_id"/>
+            <column ascending="true" name="line_no"/>
+         </index>
+         <checkConstraint constraint="(amount &gt; (0)::numeric)" name="ck_pricing_line_amount"/>
+         <checkConstraint constraint="(currency = ANY (ARRAY['USD'::bpchar, 'EUR'::bpchar, 'JPY'::bpchar]))" name="ck_pricing_line_currency"/>
+         <checkConstraint constraint="((line_no &gt;= 1) AND (line_no &lt;= 10))" name="ck_pricing_line_no"/>
+      </table>
+      <table name="quotation" remarks="見積り" schema="quotation" type="TABLE">
+         <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="id" nullable="false" remarks="見積り ID" size="2147483647" type="uuid" typeCode="1111">
+            <child column="quotation_id" foreignKey="fk_pricing_line_quotation" implied="false" onDeleteCascade="false" schema="quotation" table="pricing_line"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="transport_request_id" nullable="false" remarks="輸送要求 ID" size="2147483647" type="uuid" typeCode="1111">
+            <parent column="transport_request_id" foreignKey="fk_quotation_request_version" implied="false" onDeleteCascade="false" schema="quotation" table="transport_request_version"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="2" name="quotation_no" nullable="false" remarks="見積り番号" size="10" type="int4" typeCode="4"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="3" name="transport_request_version_no" nullable="false" remarks="対象版番号" size="10" type="int4" typeCode="4">
+            <parent column="version_no" foreignKey="fk_quotation_request_version" implied="false" onDeleteCascade="false" schema="quotation" table="transport_request_version"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="4" name="status" nullable="false" remarks="状態" size="30" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="5" name="expires_at" nullable="true" remarks="見積有効期限" size="35" type="timestamptz" typeCode="93"/>
+         <column autoUpdated="false" defaultValue="null" digits="2" id="6" name="total_amount" nullable="true" remarks="合計" size="15" type="numeric" typeCode="2"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="7" name="currency" nullable="true" remarks="通貨" size="3" type="bpchar" typeCode="1"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="8" name="route_policy_via" nullable="true" remarks="経路方針の主な経由地（UN/LOCODE のカンマ区切り）" size="200" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="9" name="route_policy_departure_at" nullable="true" remarks="経路方針の概算の出発日時" size="35" type="timestamptz" typeCode="93"/>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="10" name="route_policy_arrival_at" nullable="true" remarks="経路方針の概算の到着日時" size="35" type="timestamptz" typeCode="93"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="11" name="internal_approved_by" nullable="true" remarks="社内承認者" size="2147483647" type="uuid" typeCode="1111"/>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="12" name="internal_approved_at" nullable="true" remarks="社内承認時刻" size="35" type="timestamptz" typeCode="93"/>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="13" name="presented_at" nullable="true" remarks="提示時刻（KPI-01 の終了）" size="35" type="timestamptz" typeCode="93"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="14" name="version" nullable="false" remarks="楽観ロックの版（業務の版番号とは別）" size="19" type="int8" typeCode="-5"/>
+         <primaryKey column="id" sequenceNumberInPK="1"/>
+         <index name="pk_quotation" unique="true">
+            <column ascending="true" name="id"/>
+         </index>
+         <index name="ix_quotation_request_status" unique="false">
+            <column ascending="true" name="transport_request_id"/>
+            <column ascending="true" name="status"/>
+         </index>
+         <index name="uk_quotation_request_no" unique="true">
+            <column ascending="true" name="transport_request_id"/>
+            <column ascending="true" name="quotation_no"/>
+         </index>
+         <checkConstraint constraint="(((status)::text = 'DRAFT'::text) OR ((expires_at IS NOT NULL) AND (total_amount IS NOT NULL) AND (currency IS NOT NULL) AND (route_policy_via IS NOT NULL) AND (route_policy_departure_at IS NOT NULL) AND (route_policy_arrival_at IS NOT NULL)))" name="ck_quotation_calculated"/>
+         <checkConstraint constraint="(currency = ANY (ARRAY['USD'::bpchar, 'EUR'::bpchar, 'JPY'::bpchar]))" name="ck_quotation_currency"/>
+         <checkConstraint constraint="(quotation_no &gt;= 1)" name="ck_quotation_no"/>
+         <checkConstraint constraint="(((status)::text &lt;&gt; 'PRESENTED'::text) OR ((presented_at IS NOT NULL) AND (internal_approved_by IS NOT NULL) AND (internal_approved_at IS NOT NULL)))" name="ck_quotation_presented"/>
+         <checkConstraint constraint="(route_policy_arrival_at &gt; route_policy_departure_at)" name="ck_quotation_route_policy_dates"/>
+         <checkConstraint constraint="((status)::text = ANY ((ARRAY['DRAFT'::character varying, 'PENDING_APPROVAL'::character varying, 'PRESENTED'::character varying])::text[]))" name="ck_quotation_status"/>
+         <checkConstraint constraint="(total_amount &gt; (0)::numeric)" name="ck_quotation_total_amount"/>
+      </table>
       <table name="required_document" remarks="必要書類 [append-only]" schema="quotation" type="TABLE">
          <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="transport_request_id" nullable="false" remarks="輸送要求 ID" size="2147483647" type="uuid" typeCode="1111">
             <parent column="transport_request_id" foreignKey="fk_required_document_version" implied="false" onDeleteCascade="false" schema="quotation" table="transport_request_version"/>
@@ -90,11 +151,13 @@
       </table>
       <table name="transport_request_version" remarks="輸送要求版 [append-only]" schema="quotation" type="TABLE">
          <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="transport_request_id" nullable="false" remarks="輸送要求 ID" size="2147483647" type="uuid" typeCode="1111">
+            <child column="transport_request_id" foreignKey="fk_quotation_request_version" implied="false" onDeleteCascade="false" schema="quotation" table="quotation"/>
             <child column="transport_request_id" foreignKey="fk_required_document_version" implied="false" onDeleteCascade="false" schema="quotation" table="required_document"/>
             <child column="transport_request_id" foreignKey="fk_review_record_version" implied="false" onDeleteCascade="false" schema="quotation" table="review_record"/>
             <parent column="id" foreignKey="fk_transport_request_version_request" implied="false" onDeleteCascade="false" schema="quotation" table="transport_request"/>
          </column>
          <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="version_no" nullable="false" remarks="版番号" size="10" type="int4" typeCode="4">
+            <child column="transport_request_version_no" foreignKey="fk_quotation_request_version" implied="false" onDeleteCascade="false" schema="quotation" table="quotation"/>
             <child column="version_no" foreignKey="fk_required_document_version" implied="false" onDeleteCascade="false" schema="quotation" table="required_document"/>
             <child column="version_no" foreignKey="fk_review_record_version" implied="false" onDeleteCascade="false" schema="quotation" table="review_record"/>
          </column>

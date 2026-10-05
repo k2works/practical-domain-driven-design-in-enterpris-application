@@ -7017,7 +7017,7 @@
 <li>UI 設計: S-04 の画面イメージと URL、S-02 の見積り作成中、S-03 の確定の後の遷移、C-04 の見積りの節</li>
 <li>完了の判定: <code>okf:check</code> が ERROR 0、<code>documentationTest</code> が緑。push する</li>
 <li>結果（2026-10-05 13:12〜13:14）: ユーザーストーリー（US-03 の決定）、ドメインモデル（用語に料金根拠の明細と通貨・料金明細・見積り番号、集約の図に見積り番号と料金明細、Q-INV-17・18、DE-03 の購読、見積りの提示の段落）、データモデル（<code>quotation</code> の <code>quotation_no</code>・NULL 可の列と CHECK・Bolt 10 で作る範囲、<code>pricing_line</code> の制約）、UI 設計（S-02・S-03・S-04・C-04 の URL の表、S-04 の画面イメージ）に反映した。<code>okf:check</code> ERROR 0、<code>documentationTest</code> 緑</li>
-<li>[?] <strong>2. 見積りの算出と提示（業務ルール層の Red → Green）</strong> 【承認ゲート: 業務のルール（Q-INV-05・17・18）】</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>2. 見積りの算出と提示（業務ルール層の Red → Green）</strong> 【承認ゲート: 業務のルール（Q-INV-05・17・18）】</li>
 <li>業務ルール層の受入シナリオを先に書き、Red をコミットする（<code>features/quotation/present_quotation.feature</code>、<code>@US-03 @must</code>）<ul>
 <li>審査を確定した見積依頼に、料金明細 2 行・有効期限・経路方針を入れて算出し、社内承認して提示すると、見積りは提示済みになり、提示時刻と承認者が残り、DE-03 が発行される（AC1）</li>
 <li>荷主が見積依頼を照会すると、料金根拠（明細と合計）、有効期限、経路方針、詳細な経路は経路設計者の承認後に確定する旨が示される（AC2）。輸送要求は見積提示済みになる（H1）</li>
@@ -7036,11 +7036,19 @@
 <li>業務ルール層のシナリオは 57 件すべて passed（Bolt 9 の 49 件から +8）。<code>check</code> 緑（テスト 564 件）</li>
 </ul>
 </li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>3. 表（内側の TDD、統合テスト）</strong> 【承認ゲート: スキーマの変更】</li>
+<li>承認（2026-10-05、human:kakimomokuri）: ステップ 1 とあわせて承認された。見積提示済みの表示名と案内も承認された</li>
+<li>[?] <strong>3. 表（内側の TDD、統合テスト）</strong> 【承認ゲート: スキーマの変更】</li>
 <li>統合テスト（PostgreSQL）を先に書く: 見積りと料金明細の保存と読み出し、楽観ロック、UK（輸送要求 ID・見積り番号）、承認待ち以後の NOT NULL の CHECK、<code>status</code> の CHECK、DE-03 の配信で輸送要求が見積提示済みになる（別のトランザクション。H1）</li>
 <li>マイグレーション <code>V20261005…__create_quotation.sql</code>（<code>common</code>）。H2 のスモークを先に回す（T-15）。表と列に日本語名のコメントを付ける（データモデルの決まり）</li>
 <li>MyBatis のリポジトリ。見積り番号の採番（輸送要求の中で最大 + 1、同じトランザクション）</li>
 <li>完了の判定: <code>check</code> が緑。push して CI を確かめる。スキーマの承認を受ける</li>
+<li>結果（2026-10-05 13:44〜13:52）<ul>
+<li>Red: 統合テスト（<code>MyBatisQuotationIntegrationTest</code>: 保存と読み出し、経由地なし、提示の保存と集約の版、楽観ロック、UK、見積り番号の順、承認待ち以後の必須・通貨・状態の CHECK 4 件、作成中は必須の列なしで保存できる。<code>QuotationPresentedDeliveryIntegrationTest</code>: DE-03 の配信で輸送要求が見積提示済みになり配信が完了する）を先に書き、見積りのリポジトリと入力ポートの部品がないための起動の失敗で Red を確かめた</li>
+<li>Green: マイグレーション <code>V20261005130000__create_quotation.sql</code>（<code>quotation</code>・<code>pricing_line</code>、表と列の日本語名のコメント）を書き、H2 のスモークを先に回して通した（T-15）。<code>QuotationMapper</code>（XML）と <code>MyBatisQuotationRepository</code>（料金明細は保存のときだけ書き、輸送要求の見積りの明細は 1 回の SELECT で読む）。<code>QuotationConfiguration</code> に見積りの入力ポート・照会・DE-03 の購読を登録した</li>
+<li>計画からの変更: 見積り番号の採番は、アプリケーションサービスが輸送要求の見積りを読んで最大 + 1 にし、同時の作成は UK で防ぐ（採番の表は作らない）。データモデルの ER 図の監査の列（<code>created_at</code> など）は、ほかの業務の表と同じく作らなかった</li>
+<li><code>check</code> 緑（業務ルール層・統合テストを含む）</li>
+</ul>
+</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>4. 画面の層（Red → Green）</strong>（承認はステップ 5 とまとめて受ける）</li>
 <li>画面の層の受入シナリオを先に書き、<code>uiTest</code> で失敗を記録する（T-21。<code>features/ui/present_quotation_ui.feature</code>、<code>@ui @US-03</code>）<ul>
 <li>主成功: 営業担当者が S-03 で審査を確定すると S-04 が開き、料金明細・有効期限・経路方針を入れて算出し、社内承認して提示する。荷主が C-04 を開くと見積りの節に料金根拠・有効期限（Asia/Tokyo（UTC+09:00））・経路方針・確定の旨が出る。キー操作だけで行える</li>

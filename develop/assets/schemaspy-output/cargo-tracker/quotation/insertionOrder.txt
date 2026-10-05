@@ -1,5 +1,7 @@
 transport_request
 transport_request_version
+quotation
+pricing_line
 required_document
 review_record
 transport_request_number_counter

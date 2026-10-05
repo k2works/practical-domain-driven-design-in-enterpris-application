@@ -80,7 +80,7 @@
                     <div class="box box-primary">
                         <div class="box-header with-border">
                             <i class="ion ion-key"></i>
-                            <h3 class="box-title">3 Foreign Key Constraints</h3>
+                            <h3 class="box-title">5 Foreign Key Constraints</h3>
                             <div class="box-tools pull-right">
                                 <button type="button" class="btn btn-box-tool" data-widget="collapse"><i class="fa fa-minus"></i></button>
                                 <button type="button" class="btn btn-box-tool" data-widget="remove"><i class="fa fa-times"></i></button>
@@ -116,6 +116,30 @@
                                             <table border='0' cellspacing='0' cellpadding='0'>
                                                 <tr>
                                                     <td><a href='tables/transport_request.html'>transport_request</a><span>.id</span></td>
+                                                </tr>
+                                            </table>
+                                        </td>
+                                        <td><span title='Restrict delete:&#10;Parent cannot be deleted if children exist'>Restrict delete</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td>fk_quotation_request_version</td>
+                                        <td>
+                                            <table border='0' cellspacing='0' cellpadding='0'>
+                                                <tr>
+                                                    <td><a href='tables/quotation.html'>quotation</a><span>.transport_request_id</span></td>
+                                                </tr>
+                                                <tr>
+                                                    <td><a href='tables/quotation.html'>quotation</a><span>.transport_request_version_no</span></td>
+                                                </tr>
+                                            </table>
+                                        </td>
+                                        <td>
+                                            <table border='0' cellspacing='0' cellpadding='0'>
+                                                <tr>
+                                                    <td><a href='tables/transport_request_version.html'>transport_request_version</a><span>.transport_request_id</span></td>
+                                                </tr>
+                                                <tr>
+                                                    <td><a href='tables/transport_request_version.html'>transport_request_version</a><span>.version_no</span></td>
                                                 </tr>
                                             </table>
                                         </td>
@@ -164,6 +188,24 @@
                                                 </tr>
                                                 <tr>
                                                     <td><a href='tables/transport_request_version.html'>transport_request_version</a><span>.version_no</span></td>
+                                                </tr>
+                                            </table>
+                                        </td>
+                                        <td><span title='Restrict delete:&#10;Parent cannot be deleted if children exist'>Restrict delete</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td>fk_pricing_line_quotation</td>
+                                        <td>
+                                            <table border='0' cellspacing='0' cellpadding='0'>
+                                                <tr>
+                                                    <td><a href='tables/pricing_line.html'>pricing_line</a><span>.quotation_id</span></td>
+                                                </tr>
+                                            </table>
+                                        </td>
+                                        <td>
+                                            <table border='0' cellspacing='0' cellpadding='0'>
+                                                <tr>
+                                                    <td><a href='tables/quotation.html'>quotation</a><span>.id</span></td>
                                                 </tr>
                                             </table>
                                         </td>
@@ -219,6 +261,41 @@
                                         <td>(origin_unlocode &lt;&gt; destination_unlocode)</td>
                                     </tr>
                                     <tr>
+                                        <td><a href='tables/quotation.html'>quotation</a></td>
+                                        <td>ck_quotation_calculated</td>
+                                        <td>(((status)::text &#61; &#39;DRAFT&#39;::text) OR ((expires_at IS NOT NULL) AND (total_amount IS NOT NULL) AND (currency IS NOT NULL) AND (route_policy_via IS NOT NULL) AND (route_policy_departure_at IS NOT NULL) AND (route_policy_arrival_at IS NOT NULL)))</td>
+                                    </tr>
+                                    <tr>
+                                        <td><a href='tables/quotation.html'>quotation</a></td>
+                                        <td>ck_quotation_currency</td>
+                                        <td>(currency &#61; ANY (ARRAY[&#39;USD&#39;::bpchar, &#39;EUR&#39;::bpchar, &#39;JPY&#39;::bpchar]))</td>
+                                    </tr>
+                                    <tr>
+                                        <td><a href='tables/quotation.html'>quotation</a></td>
+                                        <td>ck_quotation_no</td>
+                                        <td>(quotation_no &gt;&#61; 1)</td>
+                                    </tr>
+                                    <tr>
+                                        <td><a href='tables/quotation.html'>quotation</a></td>
+                                        <td>ck_quotation_presented</td>
+                                        <td>(((status)::text &lt;&gt; &#39;PRESENTED&#39;::text) OR ((presented_at IS NOT NULL) AND (internal_approved_by IS NOT NULL) AND (internal_approved_at IS NOT NULL)))</td>
+                                    </tr>
+                                    <tr>
+                                        <td><a href='tables/quotation.html'>quotation</a></td>
+                                        <td>ck_quotation_route_policy_dates</td>
+                                        <td>(route_policy_arrival_at &gt; route_policy_departure_at)</td>
+                                    </tr>
+                                    <tr>
+                                        <td><a href='tables/quotation.html'>quotation</a></td>
+                                        <td>ck_quotation_status</td>
+                                        <td>((status)::text &#61; ANY ((ARRAY[&#39;DRAFT&#39;::character varying, &#39;PENDING_APPROVAL&#39;::character varying, &#39;PRESENTED&#39;::character varying])::text[]))</td>
+                                    </tr>
+                                    <tr>
+                                        <td><a href='tables/quotation.html'>quotation</a></td>
+                                        <td>ck_quotation_total_amount</td>
+                                        <td>(total_amount &gt; (0)::numeric)</td>
+                                    </tr>
+                                    <tr>
                                         <td><a href='tables/required_document.html'>required_document</a></td>
                                         <td>ck_required_document_media_type</td>
                                         <td>((media_type)::text &#61; ANY ((ARRAY[&#39;PDF&#39;::character varying, &#39;PNG&#39;::character varying, &#39;JPEG&#39;::character varying])::text[]))</td>
@@ -242,6 +319,21 @@
                                         <td><a href='tables/review_record.html'>review_record</a></td>
                                         <td>ck_review_record_decision</td>
                                         <td>((decision)::text &#61; ANY ((ARRAY[&#39;APPROVED&#39;::character varying, &#39;SENT_BACK&#39;::character varying])::text[]))</td>
+                                    </tr>
+                                    <tr>
+                                        <td><a href='tables/pricing_line.html'>pricing_line</a></td>
+                                        <td>ck_pricing_line_amount</td>
+                                        <td>(amount &gt; (0)::numeric)</td>
+                                    </tr>
+                                    <tr>
+                                        <td><a href='tables/pricing_line.html'>pricing_line</a></td>
+                                        <td>ck_pricing_line_currency</td>
+                                        <td>(currency &#61; ANY (ARRAY[&#39;USD&#39;::bpchar, &#39;EUR&#39;::bpchar, &#39;JPY&#39;::bpchar]))</td>
+                                    </tr>
+                                    <tr>
+                                        <td><a href='tables/pricing_line.html'>pricing_line</a></td>
+                                        <td>ck_pricing_line_no</td>
+                                        <td>((line_no &gt;&#61; 1) AND (line_no &lt;&#61; 10))</td>
                                     </tr>
                                     <tr>
                                         <td><a href='tables/transport_request.html'>transport_request</a></td>
