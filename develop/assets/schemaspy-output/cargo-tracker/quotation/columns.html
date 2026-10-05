@@ -374,7 +374,7 @@
         "nullable": "√",
         "autoUpdated": "",
         "defaultValue": "null",
-        "comments": "<p>社内承認時刻</p>"
+        "comments": "<p>社内承認時刻（提示時刻と同じ）</p>"
     },
     {
         "tableName": "quotation",
@@ -388,7 +388,7 @@
         "nullable": "√",
         "autoUpdated": "",
         "defaultValue": "null",
-        "comments": "<p>提示時刻（KPI-01 の終了）</p>"
+        "comments": "<p>提示時刻（KPI-01 の終了。社内承認時刻と同じ）</p>"
     },
     {
         "tableName": "quotation",
@@ -403,6 +403,20 @@
         "autoUpdated": "",
         "defaultValue": "null",
         "comments": "<p>楽観ロックの版（業務の版番号とは別）</p>"
+    },
+    {
+        "tableName": "quotation",
+        "tableFileName": "quotation",
+        "tableType": "Table",
+        "keyClass": "foreignKey",
+        "keyTitle": "Foreign Key",
+        "name": "<i class='icon ion-key iconkey' style='padding-left: 5px;'></i>replaced_by_quotation_id",
+        "type": "uuid",
+        "length": 2147483647,
+        "nullable": "√",
+        "autoUpdated": "",
+        "defaultValue": "null",
+        "comments": "<p>置換先の見積り ID（置換済みのとき）</p>"
     },
     {
         "tableName": "required_document",

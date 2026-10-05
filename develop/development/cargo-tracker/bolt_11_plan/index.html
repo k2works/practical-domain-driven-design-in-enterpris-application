@@ -7066,7 +7066,7 @@
 <li>UI 設計: S-04 の再見積りの URL と画面イメージ、旧版の読み取り専用、C-04 の失効・置換済みの表示と案内</li>
 <li>完了の判定: <code>okf:check</code> が ERROR 0、<code>documentationTest</code> が緑。push する</li>
 <li>結果（2026-10-05 16:35〜16:37）: ユーザーストーリー（US-03 の Bolt 11 の決定）、ドメインモデル（用語の再見積り、状態遷移の承認待ち → 置換済み・失効、Q-INV-07・18、見積りの失効と置換の段落とトランザクションの例外）、データモデル（<code>EXPIRED</code>・<code>REPLACED</code>、<code>replaced_by_quotation_id</code>、<code>ck_quotation_replaced</code>、<code>ux_quotation_active</code>、<code>EXPIRED</code> を残す時点）、UI 設計（S-04 の再見積りの URL と失効・置換済みの表示、C-04 の最新の見積りと旧版）に反映した</li>
-<li>[?] <strong>3. 失効と置換（業務ルール層の Red → Green）</strong> 【承認ゲート: 業務のルール（Q-INV-06 の境界・07・18）】</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>3. 失効と置換（業務ルール層の Red → Green）</strong> 【承認ゲート: 業務のルール（Q-INV-06 の境界・07・18）】</li>
 <li>業務ルール層の受入シナリオを先に書き、Red をコミットする（<code>features/quotation/expire_and_replace_quotation.feature</code>、<code>@US-03 @must</code>、<code>@US-03-AC4</code>・<code>@US-03-AC5</code>）<ul>
 <li>見積有効判定: 判定時刻が有効期限の 1 秒前なら有効、同時刻と 1 秒後なら失効（AC4 の境界。シナリオアウトライン）</li>
 <li>承認待ちの見積りを、有効期限と同時刻または後に社内承認して提示しようとすると拒否され、失効と再見積りが必要と示される（AC4・AC5）</li>
@@ -7087,11 +7087,20 @@
 <li>業務ルール層のシナリオは 69 件すべて passed（Bolt 10 の 57 件から、ステップ 1 の R-08 で +1、この Bolt の 11 件で +11）。<code>check</code> 緑（<code>test</code> 697 件）。表の列（<code>replaced_by_quotation_id</code>）はステップ 4 で足すまで読み出しで空にしている</li>
 </ul>
 </li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>4. 表（内側の TDD、統合テスト）</strong> 【承認ゲート: スキーマの変更】</li>
+<li>承認（2026-10-05、human:kakimomokuri）: ステップ 1・2 とあわせて承認された（失効の判定を <code>QuotationExpiry</code> に置く変更を含む）</li>
+<li>[?] <strong>4. 表（内側の TDD、統合テスト）</strong> 【承認ゲート: スキーマの変更】</li>
 <li>統合テスト（PostgreSQL）を先に書く: 置換済み・失効の保存と読み出し、置換先の FK、<code>ck_quotation_replaced</code>、<code>status</code> の CHECK、部分一意インデックスで同時の作成・再見積りが止まり値で返る（R-02 と同じ変換）、置換済み・失効は数えない</li>
 <li>マイグレーション: <code>common</code> に状態の値・<code>replaced_by_quotation_id</code>・CHECK・COMMENT（R-14 を含む）、<code>postgresql</code> に <code>ux_quotation_active</code>。H2 のスモークを先に回す（T-15）</li>
 <li>MyBatis のリポジトリ: 置換先の列、旧版と新しい見積りを同じトランザクションで書く順（旧版の更新を先に）</li>
 <li>完了の判定: <code>check</code> が緑。push して CI を確かめる。スキーマの承認を受ける</li>
+<li>結果（2026-10-05 17:08〜17:14）<ul>
+<li>Red: 統合テスト（置換済みの保存と読み出しと置換先の FK、失効の記録、部分一意インデックスの違反がドメインの例外になる、置換済み・失効は数えない、<code>ck_quotation_replaced</code> の 3 例、ない置換先は FK の違反）を先に書いた。同じ輸送要求に有効な見積りを 2 つ保存していた並びのテストは、旧版を置換済みにして保存する形に直した。新しく書いた・直した 9 件だけが失敗することを確かめてコミットした（<code>fc005f1</code>）</li>
+<li>Green: <code>common</code> の <code>V20261005170000__add_quotation_replacement.sql</code>（<code>EXPIRED</code>・<code>REPLACED</code>、<code>replaced_by_quotation_id</code>、<code>ck_quotation_replaced</code>、R-14 の COMMENT）と、<code>postgresql</code> の <code>V20261005170100__add_quotation_active_index_and_replacement_fk.sql</code>（<code>ux_quotation_active</code>、<code>fk_quotation_replaced_by</code>）。H2 のスモークを先に回して通した（T-15）。MyBatis の行・マッパー・リポジトリに置換先の列を足した（<code>0ecf416</code>）</li>
+<li>計画からの変更: 置換先の FK は、ふつうの FK だと再見積りの旧版の更新（新しい見積りの保存より先）で違反になるため、PostgreSQL の遅延の FK（<code>DEFERRABLE INITIALLY DEFERRED</code>。コミットの時に確かめる）にした。H2 は遅延の FK を作れないため、部分一意インデックスと同じく <code>postgresql</code> のフォルダだけに置いた（確認ポイント 6 と同じ考え方。確認ポイント 7 の形を変えたので、この承認ゲートで確かめてほしい）</li>
+<li>実行中に直した誤り: なし（環境: dockerd が待機中に止まっていたため起動し直した）</li>
+<li><code>check</code> 緑（<code>test</code> 705 件。統合テスト +8）</li>
+</ul>
+</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>5. 画面の層（Red → Green）</strong>（承認はステップ 6 とまとめて受ける）</li>
 <li>画面の層の受入シナリオを先に書き、<code>uiTest</code> で失敗を記録する（T-21。<code>features/ui/replace_quotation_ui.feature</code>、<code>@ui @US-03</code>。デモ項目に <code>@demo @demo-bolt-11/&lt;名前&gt;</code>）<ul>
 <li>主成功: 営業担当者が提示済みの見積り（S-04）から再見積りし、旧版の明細を初期値に有効期限を入れて算出する。新しい見積り（見積 2）が承認待ちで開き、旧版（見積 1）は「見積 2 に置き換えました」と読み取り専用で出る。キー操作だけで行える</li>
@@ -7327,6 +7336,12 @@
 <tr>
 <td style="text-align: left;">2026-10-05</td>
 <td style="text-align: left;">計画を承認。確認ポイント 1〜8（AC4・AC5 の範囲、失効の判定、承認待ちの失効、再見積り、トランザクション、Q-INV-18 の部分一意インデックス、表の変更、S-04・C-04 の URL と表示）も決まった（Try T-6）</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5</td>
+<td style="text-align: left;">human:kakimomokuri</td>
+</tr>
+<tr>
+<td style="text-align: left;">2026-10-05</td>
+<td style="text-align: left;">ステップ 1〜3（レビューの中・低の返済、設計文書への反映、失効と置換の業務のルール）の承認ゲートを通した</td>
 <td style="text-align: left;">anthropic/claude-opus-5-5</td>
 <td style="text-align: left;">human:kakimomokuri</td>
 </tr>
