@@ -3578,6 +3578,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#bolt-11-1-bolt-11-2026-10-05" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bolt 11 のステップ 1 での対応（Bolt 11 計画、2026-10-05）
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -7075,7 +7086,104 @@
 </tr>
 <tr>
 <td style="text-align: left;">R-06〜R-10、R-13〜R-24</td>
-<td style="text-align: left;">Bolt 11 の最初に回す（R-13 は D-34、R-10 の日付だけにするかは D-35 の後）</td>
+<td style="text-align: left;">Bolt 11 の最初に回した（下の表）</td>
+<td style="text-align: left;">—</td>
+</tr>
+</tbody>
+</table>
+<h3 id="bolt-11-1-bolt-11-2026-10-05">Bolt 11 のステップ 1 での対応（<a href="../../../development/cargo-tracker/bolt_11_plan/">Bolt 11 計画</a>、2026-10-05）<a class="headerlink" href="#bolt-11-1-bolt-11-2026-10-05" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">#</th>
+<th style="text-align: left;">対応</th>
+<th style="text-align: left;">コミット</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">R-06</td>
+<td style="text-align: left;">修正。版の食い違い・輸送要求がないときに警告のログを残す。同じ版で見積提示済み（再配信）は残さない</td>
+<td style="text-align: left;"><code>296677e</code>（Red）、<code>92e691a</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">R-07</td>
+<td style="text-align: left;">修正。算出と提示の時刻を分けた（業務ルール層のシナリオ、<code>QuotationTest</code>、統合テスト）。今の実装で通る（テストの強化）</td>
+<td style="text-align: left;"><code>296677e</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">R-08</td>
+<td style="text-align: left;">修正。出し直しの書類の誤りで、下書きのまま書類を保存しないシナリオを戻した。今の実装で通る</td>
+<td style="text-align: left;"><code>296677e</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">R-09</td>
+<td style="text-align: left;">修正。3 桁ごとの区切りのカンマだけを除き、ほかの位置のカンマは形式の誤りにする。ヒントに書いた</td>
+<td style="text-align: left;"><code>a7ed944</code>（Red）、<code>92e691a</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">R-10</td>
+<td style="text-align: left;">一部修正。概算の出発・到着の欄に形式のヒントを付けた。日付だけ・現地の日付にするかは D-35 の後</td>
+<td style="text-align: left;"><code>a7ed944</code>（Red）、<code>92e691a</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">R-13</td>
+<td style="text-align: left;">保留（D-34 の業務責任者の回答を待つ）</td>
+<td style="text-align: left;">—</td>
+</tr>
+<tr>
+<td style="text-align: left;">R-14</td>
+<td style="text-align: left;">Bolt 11 のステップ 4 のマイグレーションで COMMENT を足す</td>
+<td style="text-align: left;">—</td>
+</tr>
+<tr>
+<td style="text-align: left;">R-15</td>
+<td style="text-align: left;">修正。データモデルに、作成中はまだ表に入らないことと、NULL 可の列に <code>route_policy_via</code> を足した</td>
+<td style="text-align: left;"><code>874d411</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">R-16</td>
+<td style="text-align: left;">修正。拒否の文言を理由から決める 1 つの関数にまとめた</td>
+<td style="text-align: left;"><code>92e691a</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">R-17</td>
+<td style="text-align: left;">修正。前後の空白を除いた長さで判定する</td>
+<td style="text-align: left;"><code>296677e</code>（Red）、<code>92e691a</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">R-18</td>
+<td style="text-align: left;">修正。テスト名を「作成中でない見積りは算出し直せない」にした</td>
+<td style="text-align: left;"><code>296677e</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">R-19</td>
+<td style="text-align: left;">修正。拒否の理由を文字列から引いて結果と突き合わせる</td>
+<td style="text-align: left;"><code>296677e</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">R-20</td>
+<td style="text-align: left;">修正。作成画面の説明を見積りの節と同じ「詳細な経路は、経路設計者の承認後に確定します。」にした</td>
+<td style="text-align: left;"><code>a7ed944</code>（Red）、<code>92e691a</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">R-21</td>
+<td style="text-align: left;">修正。UI 設計の S-02 の行と URL の表を、審査中と見積り作成中の 2 つの表と実際の列に合わせた</td>
+<td style="text-align: left;"><code>874d411</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">R-22</td>
+<td style="text-align: left;">修正。「直行（経由地なし）」と示す</td>
+<td style="text-align: left;"><code>a7ed944</code>（Red）、<code>92e691a</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">R-23</td>
+<td style="text-align: left;">修正。リリース計画の W2 は Bolt 10 で反映済み。Bolt 9 終了報告の期間に終了の時刻（11:48、承認 12:42）を書いた</td>
+<td style="text-align: left;"><code>874d411</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">R-24</td>
+<td style="text-align: left;">Bolt 11 のステップ 3・5 で守る（失効の判定と表示）</td>
 <td style="text-align: left;">—</td>
 </tr>
 </tbody>
@@ -7094,6 +7202,12 @@
 <tr>
 <td style="text-align: left;">2026-10-05</td>
 <td style="text-align: left;">初版（5 視点の並列レビューと SonarQube の結果を統合）</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5</td>
+<td style="text-align: left;">—</td>
+</tr>
+<tr>
+<td style="text-align: left;">2026-10-05</td>
+<td style="text-align: left;">Bolt 11 のステップ 1 での中・低の対応を記録した</td>
 <td style="text-align: left;">anthropic/claude-opus-5-5</td>
 <td style="text-align: left;">—</td>
 </tr>

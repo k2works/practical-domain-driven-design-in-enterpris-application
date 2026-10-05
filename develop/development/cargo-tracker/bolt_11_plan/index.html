@@ -7046,12 +7046,19 @@
 <h2 id="_11">ステップ計画<a class="headerlink" href="#_11" title="Permanent link">&para;</a></h2>
 <p>状態の記号: <code>[ ]</code> 未着手、<code>[-]</code> 進行中、<code>[?]</code> 承認待ち、<code>[R]</code> 修正中、<code>[x]</code> 完了、<code>[S]</code> スキップ。各ステップの終わりに <code>check</code> が緑であることを確かめて push し、CI の結果を確かめてから次のステップに入る（T-14、T-26）。</p>
 <ul class="task-list">
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>1. Bolt 9・10 レビューの中・低の返済</strong>（承認はステップ 2・3 とまとめて受ける）</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>1. Bolt 9・10 レビューの中・低の返済</strong>（承認はステップ 2・3 とまとめて受ける）</li>
 <li>テスト: R-07（算出と提示の時刻を分ける。シナリオ・<code>QuotationTest</code>・統合テスト）、R-08（出し直しの違反で書類を保存しない受入シナリオを戻す）、R-18（テスト名）、R-19（理由の突き合わせ）。直す前に失敗する形にできるもの（R-07）は Red を先にコミットする</li>
 <li>コード: R-06（DE-03 の受け取りで状態を変えなかったときのログ）、R-16（提示の拒否の文言を理由から決める関数）、R-17（内容の 200 文字を前後の空白を除いて判定。境界のテストから）</li>
 <li>画面: R-09（金額の 3 桁区切りのカンマを受け付けて除き、ヒントに書く）、R-10（概算の出発・到着の欄の形式のヒント。日付だけにするかは D-35 の後）、R-20（詳細な経路の説明の言い方）、R-22（経由地がないときは「直行（経由地なし）」）</li>
 <li>文書: R-15（データモデルの作成中と NULL 可の列）、R-21（UI 設計の S-02 の行と列名）、R-23（リリース計画の W2 の進捗、Bolt 9 終了報告の期間の終了時刻）。R-14 の COMMENT はステップ 4 のマイグレーションでまとめる。R-24 はステップ 3・5 で守る</li>
 <li>完了の判定: <code>check</code> と <code>uiTest</code> が緑。レビューの「対応結果」に指摘ごとの対応とコミットを書く。push して CI を確かめる</li>
+<li>結果（2026-10-05 16:22〜16:45）<ul>
+<li>Red: R-06（ログ 2 件）・R-17（空白を除いた長さ 1 件）のテストと、R-07・R-08・R-18・R-19 のテストを先に書き、3 件だけが失敗することを確かめてコミットした（<code>296677e</code>）。画面の R-09・R-10・R-20・R-22 のテストを書き、3 件が失敗することを確かめてコミットした（<code>a7ed944</code>）。R-07・R-08 と、区切りの位置の違うカンマの誤りは、今の実装が正しいので最初から通る（テストの強化と、消えたシナリオの復元）</li>
+<li>Green: R-06・R-09・R-10（ヒントだけ）・R-16・R-17・R-20・R-22 を直した（<code>92e691a</code>）。文書の R-15・R-21・R-23 を直した（<code>874d411</code>）。R-13 は D-34、R-10 の日付だけは D-35 の回答を待つ。R-14 はステップ 4、R-24 はステップ 3・5</li>
+<li>実行中に直した誤り: なし（環境の準備として、JDK 25 を apt で入れ、Gradle をロケール C.UTF-8 で動かした。Maven Central の 429 は取り直した。Playwright 1.63 の Chromium 1243 は <code>cdn.playwright.dev</code> が許可されていないため、この環境だけ既存の 1194 で代用した）</li>
+<li><code>check</code> 緑（<code>test</code> 672 件。Bolt 10 の 664 件から +8）、<code>uiTest</code> 35 シナリオすべて passed</li>
+</ul>
+</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>2. 決定を設計文書に反映する</strong>（承認はステップ 3 とまとめて受ける）</li>
 <li>ユーザーストーリー: US-03 の決定（AC4・AC5 のうち Bolt 11 で作る範囲と、承認・予約確定での利用を US-24・US-04 で確かめること、失効の判定、再見積り）</li>
 <li>ドメインモデル: 状態遷移（承認待ち → 失効・置換済み）、Q-INV-07・18 の書き直し、拒否の理由、再見積りのトランザクションの例外の理由、<code>QuotationValidity</code></li>
