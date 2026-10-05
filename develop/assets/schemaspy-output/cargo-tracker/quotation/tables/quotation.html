@@ -468,32 +468,32 @@
                                 </thead>
                                 <tbody>
                                 <tr>
-                                    <td>ck_quotation_status</td>
-                                    <td>((status)::text &#61; ANY ((ARRAY[&#39;DRAFT&#39;::character varying, &#39;PENDING_APPROVAL&#39;::character varying, &#39;PRESENTED&#39;::character varying])::text[]))</td>
-                                </tr>
-                                <tr>
-                                    <td>ck_quotation_currency</td>
-                                    <td>(currency &#61; ANY (ARRAY[&#39;USD&#39;::bpchar, &#39;EUR&#39;::bpchar, &#39;JPY&#39;::bpchar]))</td>
-                                </tr>
-                                <tr>
                                     <td>ck_quotation_route_policy_dates</td>
                                     <td>(route_policy_arrival_at &gt; route_policy_departure_at)</td>
+                                </tr>
+                                <tr>
+                                    <td>ck_quotation_status</td>
+                                    <td>((status)::text &#61; ANY ((ARRAY[&#39;DRAFT&#39;::character varying, &#39;PENDING_APPROVAL&#39;::character varying, &#39;PRESENTED&#39;::character varying])::text[]))</td>
                                 </tr>
                                 <tr>
                                     <td>ck_quotation_no</td>
                                     <td>(quotation_no &gt;&#61; 1)</td>
                                 </tr>
                                 <tr>
+                                    <td>ck_quotation_total_amount</td>
+                                    <td>(total_amount &gt; (0)::numeric)</td>
+                                </tr>
+                                <tr>
                                     <td>ck_quotation_calculated</td>
                                     <td>(((status)::text &#61; &#39;DRAFT&#39;::text) OR ((expires_at IS NOT NULL) AND (total_amount IS NOT NULL) AND (currency IS NOT NULL) AND (route_policy_via IS NOT NULL) AND (route_policy_departure_at IS NOT NULL) AND (route_policy_arrival_at IS NOT NULL)))</td>
                                 </tr>
                                 <tr>
-                                    <td>ck_quotation_presented</td>
-                                    <td>(((status)::text &lt;&gt; &#39;PRESENTED&#39;::text) OR ((presented_at IS NOT NULL) AND (internal_approved_by IS NOT NULL) AND (internal_approved_at IS NOT NULL)))</td>
+                                    <td>ck_quotation_currency</td>
+                                    <td>(currency &#61; ANY (ARRAY[&#39;USD&#39;::bpchar, &#39;EUR&#39;::bpchar, &#39;JPY&#39;::bpchar]))</td>
                                 </tr>
                                 <tr>
-                                    <td>ck_quotation_total_amount</td>
-                                    <td>(total_amount &gt; (0)::numeric)</td>
+                                    <td>ck_quotation_presented</td>
+                                    <td>(((status)::text &lt;&gt; &#39;PRESENTED&#39;::text) OR ((presented_at IS NOT NULL) AND (internal_approved_by IS NOT NULL) AND (internal_approved_at IS NOT NULL)))</td>
                                 </tr>
                                 </tbody>
                             </table>

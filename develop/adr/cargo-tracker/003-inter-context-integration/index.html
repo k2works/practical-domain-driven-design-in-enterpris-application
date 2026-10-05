@@ -6706,10 +6706,12 @@
 <li>同じ <code>commandId</code> を 2 回送っても結果が 1 つになることを統合テストで確認する。</li>
 <li>イベントの購読前にアプリケーションを止めて再起動しても、イベントが失われず二重処理もされないことを統合テストで確認する。</li>
 <li>可観測性で、未完了の配信件数と滞留時間、止まったサガの件数を監視する。</li>
+<li>完了していない配信は、起動のときに配り直す（<code>spring.modulith.events.republish-outstanding-events-on-restart=true</code>。2026-10-05、Bolt 10）。再起動しない間の定期の再配信は運用準備（W10、#28）で入れる。</li>
 </ul>
 <h2 id="_9">改訂の経緯<a class="headerlink" href="#_9" title="Permanent link">&para;</a></h2>
 <ul>
 <li>2026-10-02: ドメインイベントの表し方（D-1）を補足の決定に追加した。Bolt 2 で実装した規則（<code>DomainEventArchitectureTest</code>）を human:kakimomokuri が承認した。</li>
+<li>2026-10-05: DE-03 の受け取りが集約の状態を変えるため、起動のときの再配信を有効にした（Bolt 9・10 レビュー R-03、D-32。human:kakimomokuri が決定）。定期の再配信は W10。</li>
 </ul>
 <h2 id="_10">備考<a class="headerlink" href="#_10" title="Permanent link">&para;</a></h2>
 <ul>
