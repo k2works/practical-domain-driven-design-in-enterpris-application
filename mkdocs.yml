@@ -122,6 +122,7 @@ nav:
           - Bolt 7 終了報告: development/cargo-tracker/bolt_07_report.md
           - Bolt 8 計画: development/cargo-tracker/bolt_08_plan.md
           - Bolt 8 終了報告: development/cargo-tracker/bolt_08_report.md
+          - Bolt 9 計画: development/cargo-tracker/bolt_09_plan.md
   - 運用:
       - 概要: operation/index.md
       - cargo-tracker:
