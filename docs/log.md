@@ -1,6 +1,8 @@
 # Docs Update Log
 
 ## 2026-10-05
+* **Verification**: [ui_design](/design/cargo-tracker/ui_design.md) を human:kakimomokuri が検証
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
 * **Verification**: [bolt_06-08_review_20261003](/review/cargo-tracker/bolt_06-08_review_20261003.md) を human:kakimomokuri が検証
 * **Verification**: [user_story](/requirements/cargo-tracker/user_story.md) を human:kakimomokuri が検証
 * **Verification**: [application_development_setup](/operation/cargo-tracker/application_development_setup.md) を human:kakimomokuri が検証

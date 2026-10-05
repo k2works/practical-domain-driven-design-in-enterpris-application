@@ -30,11 +30,12 @@ class SubmissionViolationMessagesTest {
         assertThat(message).isNotBlank().endsWith("ください");
     }
 
+    /** エラー要約は「表示名: 文言」の形なので、どの文言も表示名で始めない（R-04。2026-10-05 の決定）。 */
     @ParameterizedTest
-    @EnumSource(Item.class)
-    void 不足の文言は項目の名前で始まる(Item item) {
-        assertThat(SubmissionViolationMessages.message(new Violation(item, Reason.MISSING)))
-                .startsWith(SubmissionViolationMessages.label(item));
+    @MethodSource("allViolations")
+    void どの文言も項目の名前で始めない(Item item, Reason reason) {
+        assertThat(SubmissionViolationMessages.message(new Violation(item, reason)))
+                .doesNotStartWith(SubmissionViolationMessages.label(item));
     }
 
     @ParameterizedTest

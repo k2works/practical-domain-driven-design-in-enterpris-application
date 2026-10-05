@@ -188,7 +188,7 @@ class TransportRequestControllerTest {
 
         mockMvc.perform(completeForm("origin", " "))
                 .andExpect(status().isOk())
-                .andExpect(content().string(containsString("出発地を入力してください")));
+                .andExpect(content().string(containsString(">出発地: 入力してください</a>")));
 
         then(commandService)
                 .should()
@@ -216,8 +216,8 @@ class TransportRequestControllerTest {
                                 "transportRequestForm", "origin", "arrivalDeadline", "packageCount"))
                 .andExpect(content().string(containsString("入力内容に 3 件の誤りがあります")))
                 .andExpect(content().string(containsString("UN/LOCODE（国コード 2 文字 + 地点コード 3 文字、例: JPTYO）")))
-                .andExpect(content().string(containsString("2026-11-02 09:00 の形")))
-                .andExpect(content().string(containsString("個数は 1 以上の整数で入力してください")))
+                .andExpect(content().string(containsString(">希望到着期限: 2026-11-02 09:00 の形（日本時間）で入力してください</a>")))
+                .andExpect(content().string(containsString(">個数: 1 以上の整数で入力してください</a>")))
                 .andExpect(content().string(containsString("value=\"TYO\"")))
                 .andExpect(content().string(containsString("href=\"#origin\"")));
 
@@ -237,9 +237,9 @@ class TransportRequestControllerTest {
                 .andExpect(model().attributeHasFieldErrors(
                                 "transportRequestForm", "destination", "arrivalDeadline", "grossWeightKg"))
                 .andExpect(content().string(containsString("入力内容に 3 件の誤りがあります")))
-                .andExpect(content().string(containsString("目的地が出発地と同じです。別の港を入力してください")))
-                .andExpect(content().string(containsString("提出する時刻より後の日時を入力してください")))
-                .andExpect(content().string(containsString("総重量（kg）は小数点以下 3 桁までで入力してください")))
+                .andExpect(content().string(containsString(">目的地: 同じ港が出発地に入っています。別の港を入力してください</a>")))
+                .andExpect(content().string(containsString(">希望到着期限: 過ぎているか、提出する時刻と同じです。提出する時刻より後の日時を入力してください</a>")))
+                .andExpect(content().string(containsString(">総重量（kg）: 小数点以下 3 桁までで入力してください</a>")))
                 .andExpect(content().string(containsString("value=\"JPTYO\"")));
     }
 
@@ -260,7 +260,7 @@ class TransportRequestControllerTest {
         mockMvc.perform(completeForm("consignee", UUID.randomUUID().toString()))
                 .andExpect(status().isOk())
                 .andExpect(model().attributeHasFieldErrors("transportRequestForm", "consignee"))
-                .andExpect(content().string(containsString("荷受人を選択肢から選んでください")));
+                .andExpect(content().string(containsString(">荷受人: 選択肢から選んでください</a>")));
 
         then(commandService).should(never()).submit(any());
     }

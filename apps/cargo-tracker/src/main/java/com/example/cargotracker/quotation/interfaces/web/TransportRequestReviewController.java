@@ -154,10 +154,8 @@ public class TransportRequestReviewController {
                     case RATIONALE_REQUIRED ->
                         RejectionMessage.forField(
                                 field, decision == ReviewDecision.APPROVED ? "審査を確定する根拠を入力してください" : "差し戻す理由を入力してください");
-                    case RATIONALE_TOO_LONG ->
-                        RejectionMessage.forField(field, FIELD_LABELS.get(field) + "は 4,000 文字までで入力してください");
-                    case MISSING_ITEMS_TOO_LONG ->
-                        RejectionMessage.forField("missingItems", "不足事項は 4,000 文字までで入力してください");
+                    case RATIONALE_TOO_LONG -> RejectionMessage.forField(field, "4,000 文字までで入力してください");
+                    case MISSING_ITEMS_TOO_LONG -> RejectionMessage.forField("missingItems", "4,000 文字までで入力してください");
                     case STALE_VERSION ->
                         RejectionMessage.global("この見積依頼は新しい版 " + currentVersionNo + " が出されています。版 " + currentVersionNo
                                 + " の内容を確かめてから、根拠・理由を書き直してください");

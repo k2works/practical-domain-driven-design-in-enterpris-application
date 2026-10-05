@@ -197,7 +197,7 @@ class TransportRequestReviewControllerTest {
                         .param("missingItems", "あ".repeat(4001)))
                 .andExpect(status().isOk())
                 .andExpect(model().attributeHasFieldErrors("reviewForm", "missingItems"))
-                .andExpect(content().string(containsString("不足事項は 4,000 文字までで入力してください")));
+                .andExpect(content().string(containsString(">不足事項: 4,000 文字までで入力してください</a>")));
     }
 
     @Test
@@ -252,7 +252,7 @@ class TransportRequestReviewControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(model().attributeHasFieldErrors("reviewForm", "reason"))
                 .andExpect(content().string(containsString("入力内容に 1 件の誤りがあります")))
-                .andExpect(content().string(containsString("差し戻す理由を入力してください")))
+                .andExpect(content().string(containsString(">理由: 差し戻す理由を入力してください</a>")))
                 .andExpect(content().string(containsString("取引条件書")));
     }
 

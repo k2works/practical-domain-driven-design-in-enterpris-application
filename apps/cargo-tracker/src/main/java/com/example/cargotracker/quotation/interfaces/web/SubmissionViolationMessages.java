@@ -53,24 +53,24 @@ final class SubmissionViolationMessages {
         return FIELDS.get(item).label();
     }
 
+    /**
+     * 理由と直し方の文言。エラー要約は「表示名: 文言」の形で、入力欄の下の文言は欄のラベルのすぐ下に出るため、
+     * 文言を表示名で始めない（Bolt 6〜8 レビュー R-04。書類以外の文言も 2026-10-05 に human:kakimomokuri が決定）。
+     */
     static String message(Violation violation) {
         Item item = violation.item();
         return switch (violation.reason()) {
             case MISSING -> missing(item);
-            case SAME_AS_ORIGIN -> "目的地が出発地と同じです。別の港を入力してください";
-            case NOT_AFTER_SUBMISSION -> "希望到着期限が過ぎているか、提出する時刻と同じです。提出する時刻より後の日時を入力してください";
-            case NOT_POSITIVE ->
-                item == Item.PACKAGE_COUNT ? "個数は 1 以上の整数で入力してください" : label(item) + "は 0 より大きい値で入力してください";
-            case TOO_MANY_DECIMALS -> label(item) + "は小数点以下 3 桁までで入力してください";
+            case SAME_AS_ORIGIN -> "同じ港が出発地に入っています。別の港を入力してください";
+            case NOT_AFTER_SUBMISSION -> "過ぎているか、提出する時刻と同じです。提出する時刻より後の日時を入力してください";
+            case NOT_POSITIVE -> item == Item.PACKAGE_COUNT ? "1 以上の整数で入力してください" : "0 より大きい値で入力してください";
+            case TOO_MANY_DECIMALS -> "小数点以下 3 桁までで入力してください";
             case OUTSIDE_MVP -> CargoCategoryNotice.MESSAGE;
             case UNSUPPORTED_FORMAT, TOO_LARGE, TOO_MANY -> documentMessage(violation);
         };
     }
 
-    /**
-     * 必要書類の誤り（Q-INV-16）。ブラウザはファイルの選択を残せないため、選び直しを求める。
-     * エラー要約は「表示名: 文言」の形で、入力欄の下の文言は欄のラベルのすぐ下に出るため、文言に表示名を入れない（Bolt 6〜8 レビュー R-04）。
-     */
+    /** 必要書類の誤り（Q-INV-16）。ブラウザはファイルの選択を残せないため、選び直しを求める。 */
     private static String documentMessage(Violation violation) {
         return switch (violation.reason()) {
             case UNSUPPORTED_FORMAT -> "PDF・PNG・JPEG のファイルを選び直してください";
@@ -81,8 +81,8 @@ final class SubmissionViolationMessages {
 
     private static String missing(Item item) {
         return switch (item) {
-            case CONSIGNEE, CARGO_CATEGORY, PACKAGE_TYPE -> label(item) + "を選んでください";
-            default -> label(item) + "を入力してください";
+            case CONSIGNEE, CARGO_CATEGORY, PACKAGE_TYPE -> "選んでください";
+            default -> "入力してください";
         };
     }
 
