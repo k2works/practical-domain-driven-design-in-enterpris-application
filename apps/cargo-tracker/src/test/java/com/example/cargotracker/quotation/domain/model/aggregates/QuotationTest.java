@@ -103,4 +103,109 @@ class QuotationTest {
         assertThat(draft.status()).isEqualTo(QuotationStatus.DRAFT);
         assertThat(draft.domainEvents()).isEmpty();
     }
+
+    /** 承認待ちの見積り（有効期限は QuotationFixture.EXPIRES_AT = 2099-10-08T09:00:00Z）。 */
+    private Quotation pendingApproval() {
+        Quotation quotation = created();
+        quotation.calculate(QuotationFixture.completeInput(), now);
+        return quotation;
+    }
+
+    private Quotation presented() {
+        Quotation quotation = pendingApproval();
+        quotation.presentInternally(approver, approvedAt);
+        quotation.clearDomainEvents();
+        return quotation;
+    }
+
+    private static UtcInstant at(String instant) {
+        return new UtcInstant(Instant.parse(instant));
+    }
+
+    @Test
+    void 有効期限の前は有効で同時刻からは失効として扱う() {
+        Quotation quotation = presented();
+
+        assertThat(quotation.isExpiredAt(at("2099-10-08T08:59:59Z"))).isFalse();
+        assertThat(quotation.isExpiredAt(at("2099-10-08T09:00:00Z"))).isTrue();
+        assertThat(quotation.isExpiredAt(at("2099-10-08T09:00:01Z"))).isTrue();
+        assertThat(quotation.status()).isEqualTo(QuotationStatus.PRESENTED);
+    }
+
+    @Test
+    void 有効期限と同時刻の承認待ちの見積りは提示できない() {
+        Quotation quotation = pendingApproval();
+
+        assertThat(quotation.presentInternally(approver, at("2099-10-08T09:00:00Z")))
+                .contains(QuotationRejection.EXPIRED);
+        assertThat(quotation.status()).isEqualTo(QuotationStatus.PENDING_APPROVAL);
+        assertThat(quotation.domainEvents()).isEmpty();
+    }
+
+    @Test
+    void 有効期限の1秒前なら承認待ちの見積りを提示できる() {
+        Quotation quotation = pendingApproval();
+
+        assertThat(quotation.presentInternally(approver, at("2099-10-08T08:59:59Z")))
+                .isEmpty();
+        assertThat(quotation.status()).isEqualTo(QuotationStatus.PRESENTED);
+    }
+
+    @Test
+    void 有効な提示済みの見積りを置換すると置換済みになり置換先を指す() {
+        Quotation quotation = presented();
+        QuotationId replacement = new QuotationId(UUID.randomUUID());
+
+        assertThat(quotation.replaceWith(replacement, at("2026-10-06T01:00:00Z")))
+                .isEmpty();
+
+        assertThat(quotation.status()).isEqualTo(QuotationStatus.REPLACED);
+        assertThat(quotation.replacedBy()).contains(replacement);
+        assertThat(quotation.isActive()).isFalse();
+    }
+
+    @Test
+    void 有効な承認待ちの見積りも置換できる() {
+        Quotation quotation = pendingApproval();
+
+        assertThat(quotation.replaceWith(new QuotationId(UUID.randomUUID()), now))
+                .isEmpty();
+
+        assertThat(quotation.status()).isEqualTo(QuotationStatus.REPLACED);
+    }
+
+    @Test
+    void 有効期限を過ぎた見積りを置換すると失効として記録し置換先は持たない() {
+        Quotation quotation = presented();
+
+        assertThat(quotation.replaceWith(new QuotationId(UUID.randomUUID()), at("2099-10-08T09:00:00Z")))
+                .isEmpty();
+
+        assertThat(quotation.status()).isEqualTo(QuotationStatus.EXPIRED);
+        assertThat(quotation.replacedBy()).isEmpty();
+        assertThat(quotation.isActive()).isFalse();
+        assertThat(quotation.isExpiredAt(now)).isTrue();
+    }
+
+    @Test
+    void 置換済みと失効の見積りは置換も提示もできない() {
+        Quotation replaced = presented();
+        replaced.replaceWith(new QuotationId(UUID.randomUUID()), now);
+        Quotation expired = presented();
+        expired.replaceWith(new QuotationId(UUID.randomUUID()), at("2099-10-09T00:00:00Z"));
+
+        assertThat(replaced.replaceWith(new QuotationId(UUID.randomUUID()), now))
+                .contains(QuotationRejection.REPLACED);
+        assertThat(replaced.presentInternally(approver, now)).contains(QuotationRejection.REPLACED);
+        assertThat(expired.replaceWith(new QuotationId(UUID.randomUUID()), now)).contains(QuotationRejection.EXPIRED);
+        assertThat(expired.presentInternally(approver, now)).contains(QuotationRejection.EXPIRED);
+    }
+
+    @Test
+    void 作成中の見積りは置換できない() {
+        Quotation draft = created();
+
+        assertThatThrownBy(() -> draft.replaceWith(new QuotationId(UUID.randomUUID()), now))
+                .isInstanceOf(IllegalStateException.class);
+    }
 }

@@ -4,9 +4,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.example.cargotracker.quotation.application.internal.commands.CalculateQuotationCommand;
 import com.example.cargotracker.quotation.application.internal.commands.PresentQuotationCommand;
+import com.example.cargotracker.quotation.application.internal.commands.RequoteQuotationCommand;
 import com.example.cargotracker.quotation.application.internal.commandservices.CalculationOutcome;
 import com.example.cargotracker.quotation.application.internal.commandservices.PresentationOutcome;
 import com.example.cargotracker.quotation.application.internal.commandservices.QuotationCommandService;
+import com.example.cargotracker.quotation.application.internal.commandservices.RequotationOutcome;
 import com.example.cargotracker.quotation.application.internal.queryservices.QuotationQueryService;
 import com.example.cargotracker.quotation.application.internal.queryservices.StaffQuotationQueryService;
 import com.example.cargotracker.quotation.domain.events.QuotationPresented;
@@ -53,8 +55,11 @@ public class QuotationSteps {
 
     private static final UserId APPROVER = new UserId(UUID.fromString("00000000-0000-0000-0000-000000000301"));
 
-    private static final Map<String, QuotationStatus> STATUSES =
-            Map.of("承認待ち", QuotationStatus.PENDING_APPROVAL, "提示済み", QuotationStatus.PRESENTED);
+    private static final Map<String, QuotationStatus> STATUSES = Map.of(
+            "承認待ち", QuotationStatus.PENDING_APPROVAL,
+            "提示済み", QuotationStatus.PRESENTED,
+            "失効", QuotationStatus.EXPIRED,
+            "置換済み", QuotationStatus.REPLACED);
 
     private static final Map<String, Item> ITEMS = Map.of(
             "料金明細", Item.PRICING_LINES,
@@ -64,8 +69,10 @@ public class QuotationSteps {
     private static final Map<String, Reason> REASONS =
             Map.of("不足", Reason.MISSING, "有効期限が算出の時刻以前", Reason.NOT_AFTER_CALCULATION);
 
-    private static final Map<String, QuotationRejection> REJECTIONS =
-            Map.of("見積りがすでにある", QuotationRejection.ALREADY_QUOTED);
+    private static final Map<String, QuotationRejection> REJECTIONS = Map.of(
+            "見積りがすでにある", QuotationRejection.ALREADY_QUOTED,
+            "失効している", QuotationRejection.EXPIRED,
+            "置換済み", QuotationRejection.REPLACED);
 
     private final QuotationCommandService commandService;
     private final QuotationQueryService queryService;
@@ -79,6 +86,8 @@ public class QuotationSteps {
     private UtcInstant departureAt;
     private UtcInstant arrivalAt;
     private CalculationOutcome lastCalculation;
+    private PresentationOutcome lastPresentation;
+    private RequotationOutcome lastRequotation;
 
     public QuotationSteps(
             QuotationCommandService commandService,
@@ -131,6 +140,17 @@ public class QuotationSteps {
         社内承認して提示する(1);
     }
 
+    @前提("営業担当者が標準の見積りを算出している")
+    public void 標準の見積りを算出している() {
+        lines.clear();
+        lines.add(new PricingLineInput("海上運賃", new BigDecimal("3200.00"), "年間契約 2026-A"));
+        lines.add(new PricingLineInput("燃料調整金", new BigDecimal("530.00"), null));
+        通貨と有効期限を入れる("USD", "2026-10-08T09:00:00Z");
+        経路方針を入れる("SGSIN", "2026-10-10T00:00:00Z", "2026-10-30T09:00:00Z");
+        見積りを算出する();
+        assertThat(lastCalculation).isInstanceOf(CalculationOutcome.Calculated.class);
+    }
+
     @もし("営業担当者が見積りを算出する")
     public void 見積りを算出する() {
         lastCalculation = commandService.calculate(new CalculateQuotationCommand(
@@ -141,6 +161,63 @@ public class QuotationSteps {
     public void 社内承認して提示する(int quotationNo) {
         assertThat(commandService.present(new PresentQuotationCommand(number(), quotationNo, APPROVER)))
                 .isInstanceOf(PresentationOutcome.Presented.class);
+    }
+
+    @もし("営業担当者が見積り {int} の社内承認と提示を試みる")
+    public void 社内承認と提示を試みる(int quotationNo) {
+        lastPresentation = commandService.present(new PresentQuotationCommand(number(), quotationNo, APPROVER));
+    }
+
+    @ならば("見積りの提示の結果は {string} である")
+    public void 提示の結果(String result) {
+        if ("提示した".equals(result)) {
+            assertThat(lastPresentation).isInstanceOf(PresentationOutcome.Presented.class);
+        } else {
+            assertThat(lastPresentation).isEqualTo(new PresentationOutcome.Rejected(REJECTIONS.get(result)));
+        }
+    }
+
+    @もし("営業担当者が見積り {int} を再見積りする")
+    public void 再見積りする(int quotationNo) {
+        lastRequotation = commandService.requote(new RequoteQuotationCommand(
+                number(),
+                quotationNo,
+                new QuotationInput(List.copyOf(lines), currency, expiresAt, via, departureAt, arrivalAt)));
+    }
+
+    @ならば("再見積りは受け付けられず {string} と示される")
+    public void 再見積りは受け付けられない(String reason) {
+        assertThat(lastRequotation).isEqualTo(new RequotationOutcome.Rejected(REJECTIONS.get(reason)));
+    }
+
+    @ならば("見積り {int} は {string} に {string} として扱われる")
+    public void 判定時刻での有効性(int quotationNo, String at, String validity) {
+        assertThat(staffQueryService.find(number(), quotationNo))
+                .hasValueSatisfying(quotation -> assertThat(quotation.isExpiredAt(new UtcInstant(Instant.parse(at))))
+                        .isEqualTo("失効".equals(validity)));
+    }
+
+    @ならば("見積り {int} は {string} になり見積り {int} に置き換えられている")
+    public void 置き換えられている(int quotationNo, String status, int replacementNo) {
+        Quotation replacement = staffQueryService.find(number(), replacementNo).orElseThrow();
+        assertThat(staffQueryService.find(number(), quotationNo)).hasValueSatisfying(quotation -> {
+            assertThat(quotation.status()).isEqualTo(STATUSES.get(status));
+            assertThat(quotation.replacedBy()).contains(replacement.id());
+        });
+    }
+
+    @ならば("見積り {int} はない")
+    public void 見積りはない(int quotationNo) {
+        assertThat(staffQueryService.find(number(), quotationNo)).isEmpty();
+    }
+
+    @ならば("荷主が照会する見積りは次のとおりである")
+    public void 荷主が照会する見積り(DataTable table) {
+        assertThat(queryService.findVisible(number(), SHIPPER))
+                .extracting(quotation -> quotation.quotationNo() + ":" + quotation.status())
+                .containsExactlyElementsOf(table.asMaps().stream()
+                        .map(row -> row.get("見積り番号") + ":" + STATUSES.get(row.get("状態")))
+                        .toList());
     }
 
     @ならば("見積り {int} は {string} になる")
