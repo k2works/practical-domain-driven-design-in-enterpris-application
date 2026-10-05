@@ -75,6 +75,7 @@ public class RequiredDocumentSteps {
     private final TransportRequestQueryService queryService;
     private final StaffTransportRequestQueryService staffQueryService;
     private final RequiredDocumentAttachments attachments;
+    private final InMemoryRequiredDocumentStorage storage;
     private final ScenarioContext context;
     private ResubmissionOutcome lastResubmission;
 
@@ -83,11 +84,13 @@ public class RequiredDocumentSteps {
             TransportRequestQueryService queryService,
             StaffTransportRequestQueryService staffQueryService,
             RequiredDocumentAttachments attachments,
+            InMemoryRequiredDocumentStorage storage,
             ScenarioContext context) {
         this.commandService = commandService;
         this.queryService = queryService;
         this.staffQueryService = staffQueryService;
         this.attachments = attachments;
+        this.storage = storage;
         this.context = context;
     }
 
@@ -176,6 +179,11 @@ public class RequiredDocumentSteps {
                         invalid -> assertThat(invalid.violations().has(ITEMS.get(item), REASONS.get(reason)))
                                 .as("%s に %s: %s", item, reason, invalid.violations())
                                 .isTrue());
+    }
+
+    @ならば("保存された書類は {int} 件のままである")
+    public void 保存された書類の件数(int count) {
+        assertThat(storage.count()).isEqualTo(count);
     }
 
     private void assertSameContent(Optional<DocumentFile> found, String fileName, String mediaType) {

@@ -25,6 +25,7 @@ class QuotationTest {
     private final TransportRequestId transportRequestId = new TransportRequestId(UUID.randomUUID());
     private final UserId approver = new UserId(UUID.randomUUID());
     private final UtcInstant now = new UtcInstant(Instant.parse("2026-10-05T04:00:00Z"));
+    private final UtcInstant approvedAt = new UtcInstant(Instant.parse("2026-10-05T04:30:00Z"));
 
     private Quotation created() {
         return Quotation.create(id, transportRequestId, 1, 1);
@@ -65,7 +66,7 @@ class QuotationTest {
     }
 
     @Test
-    void 承認待ちでない見積りは算出し直せない() {
+    void 作成中でない見積りは算出し直せない() {
         Quotation quotation = created();
         QuotationInput input = QuotationFixture.completeInput();
         quotation.calculate(input, now);
@@ -78,11 +79,11 @@ class QuotationTest {
         Quotation quotation = created();
         quotation.calculate(QuotationFixture.completeInput(), now);
 
-        assertThat(quotation.presentInternally(approver, now)).isEmpty();
+        assertThat(quotation.presentInternally(approver, approvedAt)).isEmpty();
 
         assertThat(quotation.status()).isEqualTo(QuotationStatus.PRESENTED);
         assertThat(quotation.approvedBy()).contains(approver);
-        assertThat(quotation.presentedAt()).contains(now);
+        assertThat(quotation.presentedAt()).contains(approvedAt);
         assertThat(quotation.domainEvents()).singleElement().isInstanceOfSatisfying(QuotationPresented.class, event -> {
             assertThat(event.quotationId()).isEqualTo(id.value());
             assertThat(event.quotationNo()).isEqualTo(1);
@@ -90,7 +91,7 @@ class QuotationTest {
             assertThat(event.transportRequestVersionNo()).isEqualTo(1);
             assertThat(event.expiresAt()).isEqualTo(QuotationFixture.EXPIRES_AT);
             assertThat(event.routeVia()).containsExactly("SGSIN");
-            assertThat(event.presentedAt()).isEqualTo(now);
+            assertThat(event.presentedAt()).isEqualTo(approvedAt);
         });
     }
 

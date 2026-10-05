@@ -92,6 +92,20 @@ class QuotationInputTest {
     }
 
     @Test
+    void 内容と参照した契約条件の長さは前後の空白を除いて数える() {
+        QuotationInput.Validation validation = input(List.of(new PricingLineInput(
+                        " " + "x".repeat(200) + " ", new BigDecimal("1.00"), " " + "y".repeat(200) + " ")))
+                .validate(CALCULATED_AT);
+
+        assertThat(validation)
+                .isInstanceOfSatisfying(
+                        QuotationInput.Valid.class,
+                        valid -> assertThat(
+                                        valid.pricingBasis().lines().getFirst().description())
+                                .hasSize(200));
+    }
+
+    @Test
     void 金額のない明細は不足とする() {
         assertThat(violations(input(List.of(new PricingLineInput("海上運賃", null, null))))
                         .violations())

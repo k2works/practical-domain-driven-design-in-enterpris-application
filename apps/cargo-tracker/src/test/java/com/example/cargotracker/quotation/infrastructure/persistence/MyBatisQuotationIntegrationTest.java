@@ -47,6 +47,7 @@ import org.springframework.transaction.annotation.Transactional;
 class MyBatisQuotationIntegrationTest {
 
     private static final UtcInstant NOW = new UtcInstant(Instant.parse("2082-01-05T04:00:00Z"));
+    private static final UtcInstant APPROVED_AT = new UtcInstant(Instant.parse("2082-01-05T04:30:00Z"));
     private static final UserId STAFF = new UserId(UUID.randomUUID());
 
     @Autowired
@@ -138,7 +139,7 @@ class MyBatisQuotationIntegrationTest {
         repository.save(calculated(transportRequestId, 1));
         Quotation loaded =
                 repository.findByTransportRequestIdAndNo(transportRequestId, 1).orElseThrow();
-        loaded.presentInternally(STAFF, NOW);
+        loaded.presentInternally(STAFF, APPROVED_AT);
 
         repository.update(loaded);
 
@@ -146,7 +147,7 @@ class MyBatisQuotationIntegrationTest {
                 .hasValueSatisfying(found -> {
                     assertThat(found.status()).isEqualTo(QuotationStatus.PRESENTED);
                     assertThat(found.approvedBy()).contains(STAFF);
-                    assertThat(found.presentedAt()).contains(NOW);
+                    assertThat(found.presentedAt()).contains(APPROVED_AT);
                     assertThat(found.aggregateVersion()).isEqualTo(loaded.aggregateVersion() + 1);
                 });
     }

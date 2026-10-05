@@ -64,6 +64,9 @@ public class QuotationSteps {
     private static final Map<String, Reason> REASONS =
             Map.of("不足", Reason.MISSING, "有効期限が算出の時刻以前", Reason.NOT_AFTER_CALCULATION);
 
+    private static final Map<String, QuotationRejection> REJECTIONS =
+            Map.of("見積りがすでにある", QuotationRejection.ALREADY_QUOTED);
+
     private final QuotationCommandService commandService;
     private final QuotationQueryService queryService;
     private final StaffQuotationQueryService staffQueryService;
@@ -229,8 +232,7 @@ public class QuotationSteps {
 
     @ならば("見積りは作られず {string} と示される")
     public void 見積りは作られず理由が示される(String reason) {
-        assertThat(lastCalculation).isEqualTo(new CalculationOutcome.Rejected(QuotationRejection.ALREADY_QUOTED));
-        assertThat(reason).isEqualTo("見積りがすでにある");
+        assertThat(lastCalculation).isEqualTo(new CalculationOutcome.Rejected(REJECTIONS.get(reason)));
         assertThat(staffQueryService.find(number(), 2)).isEmpty();
     }
 
