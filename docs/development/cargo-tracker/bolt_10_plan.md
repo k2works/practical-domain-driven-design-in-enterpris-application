@@ -4,7 +4,7 @@ title: "Bolt 10 計画 - 根拠付き見積りの提示（US-03 AC1〜AC3）"
 description: "10 回目の Bolt の計画。見積り集約（料金根拠の明細・有効期限・経路方針）の算出と社内承認・提示、DE-03 を受けた輸送要求の状態の更新、S-04 と C-04 の見積りの節、quotation と pricing_line の表を、ステップ 1〜5 で定義する。"
 tags: [development,bolt-plan]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-05T05:38:10Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-05T06:15:48Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-05T04:12:46Z }
 ---
@@ -301,10 +301,11 @@ S04 -[dashed]-> C04 : 荷主が開くと見積りが見える
     - 画面の単体テスト（`StaffQuotationControllerTest` 9 件、C-04 の見積りの節 2 件）を足した
     - 実行中に直した誤り: 荷主のコントローラーのテストに見積りの照会のモックがなく起動しない、C-04 の HTML のコメントに「社内承認者」の文字が残る（出力されない Thymeleaf のコメントにした）、Checkstyle の循環的複雑度（項目の対応を表にした）、SpotBugs 1 件（フォームの一覧を写しで返す）、書式
     - 画面の層のシナリオは 35 件すべて passed（Bolt 9 の 30 件から +5）、axe-core の違反 0 件。`check` 緑（テスト 587 件）
-- [-] **5. 開発レビューと Bolt 終了報告**
+- [?] **5. 開発レビューと Bolt 終了報告**
   - `developing-review` で Bolt 10 の変更（と Bolt 9 の変更）をレビューし、指摘への対応を決める（T-28）
   - `check`・`uiTest`・CI・SonarQube の品質ゲート（PASS）を確かめる
   - `bolt_10_report.md` を書く（仮説 H1〜H3 の結論、各ステップの開始と完了の時刻、Red の記録）。ステップ 4 の結果をここでまとめて報告する
+  - 結果（2026-10-05 14:30〜15:15）: `developing-review` で Bolt 9・10 の変更をレビューし（[レビュー](../../review/cargo-tracker/bolt_09-10_review_20261005.md)）、人の判断で重要度「高」の R-01〜R-05 と SonarQube の指摘を直した（`ee21d23` で Red、`f21b2fe` で Green）。中・低は Bolt 11 の最初に回した。SonarQube の品質ゲートは 2 回不合格になり（Code Smell 5 件、2 件）、直して PASS にした。人の依頼で、デモ項目のシナリオ 2 本を `./gradlew demoVideo -PdemoBolt=bolt-10` で録画し、[Bolt 10 終了報告](bolt_10_report.md) からリンクした。`check`・`uiTest`・CI は緑
 
 ### 時間の配分と打ち切り
 
