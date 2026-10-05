@@ -6,17 +6,17 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="8 回目の Bolt の計画。WebJars で Bootstrap 5.3・htmx 2.0 を同梱し、顧客 Web と社内業務 Web の共通レイアウト（ヘッダー、左ナビ、窓口の案内）と共通の CSS を作って既存の画面を移し、見積依頼（C-03）の段階入力のプロトタイプで操作性を確かめる（UI-HO-04）計画を、ステップ 1〜4 で定義する。">
+        <meta name="description" content="10 回目の Bolt の計画。見積り集約（料金根拠の明細・有効期限・経路方針）の算出と社内承認・提示、DE-03 を受けた輸送要求の状態の更新、S-04 と C-04 の見積りの節、quotation と pricing_line の表を、ステップ 1〜5 で定義する。">
       
       
         <meta name="author" content="k2works">
       
       
       
-        <link rel="prev" href="../bolt_07_report/">
+        <link rel="prev" href="../bolt_09_report/">
       
       
-        <link rel="next" href="../bolt_08_report/">
+        <link rel="next" href="../../../operation/">
       
       
         
@@ -27,7 +27,7 @@
     
     
       
-        <title>Bolt 8 計画 - UI の骨格と見積依頼の段階入力のプロトタイプ（#36） - 実践ドメイン駆動設計 in エンタープライズアプリケーション</title>
+        <title>Bolt 10 計画 - 根拠付き見積りの提示（US-03 AC1〜AC3） - 実践ドメイン駆動設計 in エンタープライズアプリケーション</title>
       
     
     
@@ -78,7 +78,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#bolt-8-ui-36" class="md-skip">
+        <a href="#bolt-10-us-03-ac1ac3" class="md-skip">
           Skip to content
         </a>
       
@@ -112,7 +112,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Bolt 8 計画 - UI の骨格と見積依頼の段階入力のプロトタイプ（#36）
+              Bolt 10 計画 - 根拠付き見積りの提示（US-03 AC1〜AC3）
             
           </span>
         </div>
@@ -2426,6 +2426,146 @@
                 
   
   
+  
+  
+    <li class="md-nav__item">
+      <a href="../bolt_08_plan/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 8 計画
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--stable"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../bolt_08_report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 8 終了報告
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--stable"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../bolt_09_plan/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 9 計画
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--stable"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../bolt_09_report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 9 終了報告
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--stable"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
     
   
   
@@ -2445,7 +2585,7 @@
   <span class="md-ellipsis">
     
   
-    Bolt 8 計画
+    Bolt 10 計画
   
 
     
@@ -2455,7 +2595,7 @@
     
   
   
-    <span class="md-status md-status--stable"></span>
+    <span class="md-status md-status--draft"></span>
   
 
   
@@ -2470,7 +2610,7 @@
   <span class="md-ellipsis">
     
   
-    Bolt 8 計画
+    Bolt 10 計画
   
 
     
@@ -2480,7 +2620,7 @@
     
   
   
-    <span class="md-status md-status--stable"></span>
+    <span class="md-status md-status--draft"></span>
   
 
   
@@ -2607,7 +2747,7 @@
   <a href="#_5" class="md-nav__link">
     <span class="md-ellipsis">
       
-        ドメインモデル・状態遷移・データモデル
+        ドメインモデル
       
     </span>
   </a>
@@ -2618,7 +2758,29 @@
   <a href="#_6" class="md-nav__link">
     <span class="md-ellipsis">
       
-        画面遷移とレイアウト
+        状態遷移
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_7" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        データモデル
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_8" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        画面遷移
       
     </span>
   </a>
@@ -2631,7 +2793,7 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#_7" class="md-nav__link">
+  <a href="#_9" class="md-nav__link">
     <span class="md-ellipsis">
       
         開始準備の検証
@@ -2642,7 +2804,7 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#_8" class="md-nav__link">
+  <a href="#_10" class="md-nav__link">
     <span class="md-ellipsis">
       
         入力
@@ -2653,7 +2815,7 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#_9" class="md-nav__link">
+  <a href="#_11" class="md-nav__link">
     <span class="md-ellipsis">
       
         ステップ計画
@@ -2665,7 +2827,7 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#_10" class="md-nav__link">
+  <a href="#_12" class="md-nav__link">
     <span class="md-ellipsis">
       
         時間の配分と打ち切り
@@ -2681,10 +2843,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#try-t-62026-10-03-14" class="md-nav__link">
+  <a href="#try-t-6" class="md-nav__link">
     <span class="md-ellipsis">
       
-        確認ポイント（計画の承認の場でまとめて確認する。Try T-6。2026-10-03 に 1〜4 を決定）
+        確認ポイント（計画の承認の場でまとめて確認する。Try T-6）
       
     </span>
   </a>
@@ -2703,7 +2865,7 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#_11" class="md-nav__link">
+  <a href="#_13" class="md-nav__link">
     <span class="md-ellipsis">
       
         リスクと対策
@@ -2714,7 +2876,7 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#_12" class="md-nav__link">
+  <a href="#_14" class="md-nav__link">
     <span class="md-ellipsis">
       
         完了条件
@@ -2737,7 +2899,7 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#_13" class="md-nav__link">
+  <a href="#_15" class="md-nav__link">
     <span class="md-ellipsis">
       
         デモ項目
@@ -2753,7 +2915,7 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#_14" class="md-nav__link">
+  <a href="#_16" class="md-nav__link">
     <span class="md-ellipsis">
       
         更新履歴
@@ -2764,7 +2926,7 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#_15" class="md-nav__link">
+  <a href="#_17" class="md-nav__link">
     <span class="md-ellipsis">
       
         関連ドキュメント
@@ -2778,146 +2940,6 @@
   
 </nav>
       
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../bolt_08_report/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Bolt 8 終了報告
-  
-
-    
-  </span>
-  
-  
-    
-  
-  
-    <span class="md-status md-status--stable"></span>
-  
-
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../bolt_09_plan/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Bolt 9 計画
-  
-
-    
-  </span>
-  
-  
-    
-  
-  
-    <span class="md-status md-status--stable"></span>
-  
-
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../bolt_09_report/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Bolt 9 終了報告
-  
-
-    
-  </span>
-  
-  
-    
-  
-  
-    <span class="md-status md-status--stable"></span>
-  
-
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../bolt_10_plan/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Bolt 10 計画
-  
-
-    
-  </span>
-  
-  
-    
-  
-  
-    <span class="md-status md-status--draft"></span>
-  
-
-  
-
-      </a>
     </li>
   
 
@@ -6659,7 +6681,7 @@
   
 
 
-<h1 id="bolt-8-ui-36">Bolt 8 計画 - UI の骨格と見積依頼の段階入力のプロトタイプ（#36）<a class="headerlink" href="#bolt-8-ui-36" title="Permanent link">&para;</a></h1>
+<h1 id="bolt-10-us-03-ac1ac3">Bolt 10 計画 - 根拠付き見積りの提示（US-03 AC1〜AC3）<a class="headerlink" href="#bolt-10-us-03-ac1ac3" title="Permanent link">&para;</a></h1>
 <h2 id="_1">基本情報<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
@@ -6671,32 +6693,36 @@
 <tbody>
 <tr>
 <td style="text-align: left;">Bolt</td>
-<td style="text-align: left;">第 8 回</td>
+<td style="text-align: left;">第 10 回</td>
 </tr>
 <tr>
 <td style="text-align: left;">予定</td>
-<td style="text-align: left;">W1（2026-10-05 の週）、3〜4 時間（段階入力を同じ Bolt に入れたため、打ち切りの線を決めておく）</td>
+<td style="text-align: left;">W2（2026-10-12 の週。前倒しで 2026-10-05 から）、3〜4 時間</td>
 </tr>
 <tr>
 <td style="text-align: left;">対象</td>
-<td style="text-align: left;">技術タスク <a href="https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/36">#36 [技術] UI の骨格と見積依頼の段階入力のプロトタイプ</a>（SP 0）。UI-HO-04（C-03 の段階入力の操作性）</td>
+<td style="text-align: left;">U1 輸送要求・見積り。US-03 根拠付き見積りを提示する（AC1〜AC3。AC4・AC5 の失効・置換は Bolt 11）</td>
+</tr>
+<tr>
+<td style="text-align: left;">GitHub</td>
+<td style="text-align: left;"><a href="https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/4">#4 [US-03] 根拠付き見積りを提示する</a>（SP 5）。Bolt 11 の終了報告の承認でクローズする</td>
 </tr>
 <tr>
 <td style="text-align: left;">承認ゲート</td>
-<td style="text-align: left;">業務のルール以外はまとめる（Bolt 6 の H3）。業務のルール・スキーマ・セキュリティに関わるステップはない。計画の承認（外部ライブラリの導入を含む）と、終了報告の承認（段階入力の操作性を人が触って確かめる）の 2 回</td>
+<td style="text-align: left;">U1 の密度。計画の承認、業務のルール（ステップ 2）、スキーマ（ステップ 3）、終了報告（ステップ 4・5 をまとめる）の 4 回</td>
 </tr>
 <tr>
 <td style="text-align: left;">アプローチ</td>
-<td style="text-align: left;">開発戦略の序盤のアウトサイドイン。画面の層の受入シナリオから入る。骨格の移行は既存の画面の層のシナリオ（21 本）を回帰の安全網にし、文言とキー操作の期待を変えずに見た目を移す</td>
+<td style="text-align: left;">開発戦略の序盤のアウトサイドイン。業務ルール層の受入シナリオから入り、新しい集約（見積り）は不変条件を単体テストで固めながら内側へ下りる。そのあと表を内側に作り、最後に画面の層を外側から駆動する</td>
 </tr>
 <tr>
 <td style="text-align: left;">前の Bolt</td>
-<td style="text-align: left;"><a href="../bolt_07_report/">Bolt 7 終了報告</a></td>
+<td style="text-align: left;"><a href="../bolt_09_report/">Bolt 9 終了報告</a></td>
 </tr>
 </tbody>
 </table>
 <h2 id="bolt">Bolt ゴール<a class="headerlink" href="#bolt" title="Permanent link">&para;</a></h2>
-<p>顧客 Web と社内業務 Web のすべての画面が、共通レイアウト（ヘッダー、左ナビ、顧客 Web の窓口の案内）と Bootstrap 5.3 の部品で表示され、画面ごとに書いていたスタイルが共通の CSS に移る。荷主は見積依頼の作成と編集を、輸送条件・貨物・書類・確認の 4 段階で入力でき、キー操作だけで段階を行き来して提出できる。</p>
+<p>営業担当者は、審査を確定した見積依頼に、料金根拠（明細）・有効期限・経路方針を入力して見積りを算出し、社内承認して荷主へ提示できる。料金根拠か有効期限が足りなければ提示できず、足りない項目が示される。荷主は見積依頼の詳細で、料金根拠と、利用者のタイムゾーンと UTC offset を伴う有効期限、経路方針、詳細な経路は経路設計者の承認後に確定する旨を確かめられる。</p>
 <h3 id="_2">確かめたい仮説<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
@@ -6709,18 +6735,18 @@
 <tbody>
 <tr>
 <td style="text-align: left;">H1</td>
-<td style="text-align: left;">Thymeleaf のフラグメント（<code>th:replace</code>）だけで、顧客 Web と社内業務 Web の 2 つのレイアウトを作れる（Layout Dialect を足さない）</td>
-<td style="text-align: left;">依存を増やさずにレイアウトを共通にできるか</td>
+<td style="text-align: left;">見積りを輸送要求と別の集約にし、輸送要求の状態（見積提示済み）は DE-03 を受けて別のトランザクションで変えれば、2 つの集約を 1 つのトランザクションで更新せずに済む</td>
+<td style="text-align: left;">集約の境界（ドメインモデル「見積りを輸送要求の中に入れない理由」）が、コンテキストの中の結果整合で成り立つか</td>
 </tr>
 <tr>
 <td style="text-align: left;">H2</td>
-<td style="text-align: left;">段階入力を 1 つのフォームの中のパネルの切り替えにすれば、選んだファイル・サーバーの検証・エラー要約を変えずに、JavaScript がなくても今の 1 画面の形で動く</td>
-<td style="text-align: left;">下書きの保存（R1.0）の前に段階入力を入れられるか</td>
+<td style="text-align: left;">有効期限を <code>UtcInstant</code> で持ち、表示の共通部品（利用者のタイムゾーンと UTC offset）を使えば、AC1 を画面の層の新しい部品なしに満たせる</td>
+<td style="text-align: left;">BR-10 の日時の扱いが、見積りの境界（Bolt 11 の AC4）まで今の部品で通るか</td>
 </tr>
 <tr>
 <td style="text-align: left;">H3</td>
-<td style="text-align: left;">Bootstrap 5.3 の部品に移しても、既存の画面の層のシナリオ（文言とキー操作）と axe-core（WCAG 2.2 AA）を変えずに通せる</td>
-<td style="text-align: left;">Bootstrap の部品が BR-13 を満たすか</td>
+<td style="text-align: left;">算出・社内承認・提示を 1 つの集約の状態遷移（作成中 → 承認待ち → 提示済み）として作れば、認証（US-18）の前でも仮の承認者で流れを通せ、後で本人の承認に差し替えられる</td>
+<td style="text-align: left;">承認者を入れ替えるだけで済む形になっているか</td>
 </tr>
 </tbody>
 </table>
@@ -6735,29 +6761,44 @@
 </thead>
 <tbody>
 <tr>
-<td style="text-align: left;">人の決定（2026-10-03、Bolt 8 の開始準備）</td>
-<td style="text-align: left;">対象は #36。段階入力のプロトタイプも同じ Bolt に入れる。Bootstrap・htmx は WebJars で同梱する（技術スタックの決定のとおり）</td>
-<td style="text-align: left;">計画に入れた。半日を超えないよう打ち切りの線を決めた</td>
+<td style="text-align: left;">人の決定（2026-10-05、Bolt 10 の開始準備）</td>
+<td style="text-align: left;">US-03 を 2 つの Bolt に分ける。Bolt 10 は提示（AC1〜AC3）、Bolt 11 は失効・置換（AC4・AC5）</td>
+<td style="text-align: left;">本計画</td>
 </tr>
 <tr>
-<td style="text-align: left;">Try T-18（Bolt 5）</td>
-<td style="text-align: left;">押せる範囲（24 CSS px）と横スクロールに効くスタイルは、UI の骨格の共通の CSS で決める</td>
-<td style="text-align: left;">ステップ 2 で、画面ごとのインラインのスタイル（入口の一覧、C-02、C-04、S-03 の 4 か所）を共通の CSS に移す</td>
+<td style="text-align: left;">人の決定（2026-10-05、W2 の開始準備）</td>
+<td style="text-align: left;">社内承認の状態（承認待ち）は残し、承認者は認証（US-18）までは設定の仮の営業担当者で記録する。作成者と承認者を分ける職務分離は入れない</td>
+<td style="text-align: left;">ステップ 2・4</td>
 </tr>
 <tr>
-<td style="text-align: left;">Try T-22・T-23・T-24（Bolt 7）</td>
-<td style="text-align: left;">書式の整形の後のファイルは、今の形を読んでから書き換える。統合テストの年は <code>grep</code> で確かめる。時刻は同じコマンドの中で <code>date</code> を実行して差し込む</td>
+<td style="text-align: left;">Try T-26（Bolt 9）</td>
+<td style="text-align: left;">push した後、次のステップに入る前に CI の結果を確かめる</td>
 <td style="text-align: left;">全ステップ</td>
 </tr>
 <tr>
-<td style="text-align: left;">Try T-21・T-19・T-14・T-16・T-17</td>
-<td style="text-align: left;">画面の層の Red を実行して記録する。<code>passed</code> 以外を数える。ステップの終わりに <code>check</code> を緑にして push。時刻を残す。<code>cd</code> は絶対パス</td>
+<td style="text-align: left;">Try T-27（Bolt 9）</td>
+<td style="text-align: left;">開始準備でも、最初のコマンドで <code>date</code> を実行して開始時刻を残す</td>
+<td style="text-align: left;">本計画の開始準備（12:47 に開始）</td>
+</tr>
+<tr>
+<td style="text-align: left;">Try T-28（Bolt 9。開発戦略に反映済み）</td>
+<td style="text-align: left;">開発レビューを終了報告の前に行う。省くときは理由を書く</td>
+<td style="text-align: left;">ステップ 5 で <code>developing-review</code> を行う</td>
+</tr>
+<tr>
+<td style="text-align: left;">Try T-21・T-24・T-25・T-19・T-14</td>
+<td style="text-align: left;">画面の層の Red を実行して記録する。時刻は同じコマンドの中の <code>date</code>。<code>passed</code> 以外を数える。ステップの終わりに <code>check</code> を緑にして push</td>
 <td style="text-align: left;">全ステップ</td>
 </tr>
 <tr>
-<td style="text-align: left;">Bolt 7 の既知の課題</td>
-<td style="text-align: left;">書類の一覧の表とリンクのスタイルを画面ごとに書いた</td>
-<td style="text-align: left;">ステップ 2 で共通の CSS に移す</td>
+<td style="text-align: left;">R-38（Bolt 6〜8 レビュー）</td>
+<td style="text-align: left;">Red を確かめたことを履歴に残す</td>
+<td style="text-align: left;">業務ルール層の Red のシナリオを先にコミットする</td>
+</tr>
+<tr>
+<td style="text-align: left;">Bolt 9 の既知の課題</td>
+<td style="text-align: left;">キー操作のファイルの選択のシナリオが CI で 1 回だけ時間切れになった</td>
+<td style="text-align: left;">起きたら Playwright の trace を残して調べる</td>
 </tr>
 </tbody>
 </table>
@@ -6773,54 +6814,49 @@
 </thead>
 <tbody>
 <tr>
-<td style="text-align: left;">顧客 Web と社内業務 Web で別のレイアウト・ナビゲーションにする</td>
-<td style="text-align: left;">UI 設計「ナビゲーションとレイアウト」、ADR-005</td>
+<td style="text-align: left;">見積りは輸送要求と別の集約。見積り ID、輸送要求 ID、対象版番号、状態、料金根拠、有効期限、経路方針、提示時刻を持つ</td>
+<td style="text-align: left;">ドメインモデル「見積りの集約」</td>
+<td style="text-align: left;">入れる。荷主の回答・荷主承認・経路版の割当て・置換は入れない</td>
+</tr>
+<tr>
+<td style="text-align: left;">見積りの状態: 作成中 → 承認待ち（算出する）→ 提示済み（社内承認して提示する）</td>
+<td style="text-align: left;">ドメインモデル「見積りの状態遷移」</td>
+<td style="text-align: left;">入れる。承認待ちからの差戻し（→ 作成中）は入れない</td>
+</tr>
+<tr>
+<td style="text-align: left;">輸送要求の状態: 見積り作成中 → 見積提示済み（US-03）</td>
+<td style="text-align: left;">ドメインモデル「輸送要求の状態遷移」</td>
+<td style="text-align: left;">入れる（確認ポイント 4）</td>
+</tr>
+<tr>
+<td style="text-align: left;">Q-INV-05 見積りの算出には料金根拠・有効期限・経路方針が必要。提示した時刻を記録する</td>
+<td style="text-align: left;">ドメインモデル</td>
 <td style="text-align: left;">入れる</td>
 </tr>
 <tr>
-<td style="text-align: left;">顧客 Web は左サイドナビ、狭いときは上部のメニューに畳む。社内は左サイドナビ</td>
-<td style="text-align: left;">同上</td>
-<td style="text-align: left;">入れる。ナビの項目は、いまある画面だけを出す（顧客: 見積依頼。社内: 見積依頼、KPI）。ない画面の項目は、画面を作る Bolt で足す</td>
+<td style="text-align: left;">料金根拠は明細の表（<code>pricing_line</code>）、有効期限・経路方針は列</td>
+<td style="text-align: left;">データモデル</td>
+<td style="text-align: left;">入れる（確認ポイント 1・2）</td>
 </tr>
 <tr>
-<td style="text-align: left;">ヘッダーに企業名・利用者名とログアウト</td>
-<td style="text-align: left;">同上</td>
-<td style="text-align: left;">仮の主体の名前を出す。ログアウトは認証（US-18）で足す</td>
+<td style="text-align: left;">DE-03 見積りを提示した（見積り ID、輸送要求 ID・版番号、有効期限、経路方針、提示時刻）</td>
+<td style="text-align: left;">ドメインモデル「イベント一覧」</td>
+<td style="text-align: left;">入れる。KPI 計測（KPI-01 の終了時刻）の購読は US-21（W3）、通知は US-22（R1.0）</td>
 </tr>
 <tr>
-<td style="text-align: left;">顧客 Web のすべての画面の下部に、窓口と受付時間を利用者のタイムゾーンで示す</td>
-<td style="text-align: left;">UI 設計（WCAG 3.2.6、R-11）</td>
-<td style="text-align: left;">入れる。受付時間は UI 設計の画面イメージの値を仮に使い、利用者のタイムゾーンは Asia/Tokyo（US-18 の後に利用者の設定にする）</td>
+<td style="text-align: left;">S-04 見積りの作成（算出、社内承認、提示）</td>
+<td style="text-align: left;">UI 設計</td>
+<td style="text-align: left;">入れる（確認ポイント 5）</td>
 </tr>
 <tr>
-<td style="text-align: left;">ナビの現在項目を太字と <code>aria-current="page"</code> で示す</td>
-<td style="text-align: left;">同上</td>
-<td style="text-align: left;">入れる</td>
+<td style="text-align: left;">C-04 で見積りを確かめる（AC2）。C-05 見積りへの回答</td>
+<td style="text-align: left;">UI 設計</td>
+<td style="text-align: left;">C-04 に見積りの節を入れる。C-05 は US-24 の Bolt</td>
 </tr>
 <tr>
-<td style="text-align: left;">操作の大きさ 24 × 24 CSS px 以上、画面幅 320 CSS px、固定ヘッダーの <code>scroll-padding</code></td>
-<td style="text-align: left;">UI 設計「共通部品」</td>
-<td style="text-align: left;">入れる（共通の CSS）</td>
-</tr>
-<tr>
-<td style="text-align: left;">表は狭い画面で時系列のリストに切り替える</td>
-<td style="text-align: left;">UI 設計「共通部品」画面幅</td>
-<td style="text-align: left;">入れない。表の横スクロールの囲み（WCAG 1.4.10 の表の例外）を共通の部品にする。リストへの切り替えは一覧が増えてから</td>
-</tr>
-<tr>
-<td style="text-align: left;">C-03 の段階入力: 輸送条件・貨物・書類・確認の 4 段階、各段階で下書き保存</td>
-<td style="text-align: left;">UI 設計 C-03</td>
-<td style="text-align: left;">4 段階を入れる。下書き保存は R1.0（入れない。確認ポイント 3）</td>
-</tr>
-<tr>
-<td style="text-align: left;">C-03 の「過去の依頼から複製」「取り下げる」</td>
-<td style="text-align: left;">UI 設計 C-03</td>
-<td style="text-align: left;">入れない（R1.0、US-05）</td>
-</tr>
-<tr>
-<td style="text-align: left;">htmx の部分更新は一覧の絞り込みなどに限る</td>
-<td style="text-align: left;">UI 設計「部分更新を使う箇所」</td>
-<td style="text-align: left;">htmx は同梱して読み込むだけにする。部分更新を使う画面はまだない（確認ポイント 2）</td>
+<td style="text-align: left;">日時表示の共通部品（利用者のタイムゾーンと UTC offset）</td>
+<td style="text-align: left;">UI 設計、BR-10</td>
+<td style="text-align: left;">使う（H2）</td>
 </tr>
 </tbody>
 </table>
@@ -6834,37 +6870,53 @@
 </thead>
 <tbody>
 <tr>
-<td style="text-align: left;">WebJars の Bootstrap 5.3・htmx 2.0、共通の CSS</td>
-<td style="text-align: left;">Thymeleaf Layout Dialect、フロントエンドのビルド</td>
+<td style="text-align: left;">見積りの算出（料金根拠の明細・有効期限・経路方針）と、不足・誤りの検証（AC3）</td>
+<td style="text-align: left;">見積りの失効（AC4）、置換・再提示・旧版の読み取り専用（AC5）。Bolt 11</td>
 </tr>
 <tr>
-<td style="text-align: left;">顧客 Web と社内業務 Web の共通レイアウト（フラグメント）と、既存の 7 画面と入口の一覧の移行</td>
-<td style="text-align: left;">ログアウト、言語の切替、役割に応じたナビの出し分け（US-18・US-16）</td>
+<td style="text-align: left;">社内承認して提示（仮の承認者）、提示時刻の記録、DE-03 の発行</td>
+<td style="text-align: left;">承認待ちからの差戻し、作成者と承認者の職務分離</td>
 </tr>
 <tr>
-<td style="text-align: left;">C-03 の作成と編集の 4 段階の入力（ブラウザの中でパネルを切り替える）</td>
-<td style="text-align: left;">段階ごとの下書き保存（R1.0）、段階ごとのサーバーの検証</td>
+<td style="text-align: left;">DE-03 を受けて輸送要求を見積提示済みにする</td>
+<td style="text-align: left;">KPI-01 の終了時刻の記録（US-21）、荷主へのメール（US-22）</td>
 </tr>
 <tr>
-<td style="text-align: left;">確認の段階の入力内容のまとめ</td>
-<td style="text-align: left;">経路候補の比較（S-06）のプロトタイプ（W3）</td>
+<td style="text-align: left;">S-02 に見積り作成中の行、S-03 の審査確定の後に S-04 へ、S-04 の作成と提示</td>
+<td style="text-align: left;">見積りの一覧（S-01 の期限間近を含む）</td>
+</tr>
+<tr>
+<td style="text-align: left;">C-04 の見積りの節（AC2）</td>
+<td style="text-align: left;">C-05 見積りへの回答（US-24）</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>quotation</code>・<code>pricing_line</code> の表</td>
+<td style="text-align: left;">料金の自動計算（料金規則。後続段階）</td>
 </tr>
 </tbody>
 </table>
 <h2 id="bolt_2">設計（この Bolt の範囲）<a class="headerlink" href="#bolt_2" title="Permanent link">&para;</a></h2>
-<h3 id="_5">ドメインモデル・状態遷移・データモデル<a class="headerlink" href="#_5" title="Permanent link">&para;</a></h3>
-<p>業務の型、状態、表は変えない（画面の層だけの Bolt）。ドメインモデル図・状態遷移図・ER 図は省く。</p>
-<h3 id="_6">画面遷移とレイアウト<a class="headerlink" href="#_6" title="Permanent link">&para;</a></h3>
-<p><img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB2ZXJzaW9uPSIxLjEiIGRhdGEtZGlhZ3JhbS10eXBlPSJERVNDUklQVElPTiIgc3R5bGU9IndpZHRoOjgxOHB4O2hlaWdodDozNjhweDtiYWNrZ3JvdW5kOiNGRkZGRkY7IiB3aWR0aD0iODE4cHgiIGhlaWdodD0iMzY4cHgiIHZpZXdCb3g9IjAgMCA4MTggMzY4IiB6b29tQW5kUGFuPSJtYWduaWZ5IiBwcmVzZXJ2ZUFzcGVjdFJhdGlvPSJub25lIiBjb250ZW50U3R5bGVUeXBlPSJ0ZXh0L2NzcyI+PD9wbGFudHVtbCAxLjIwMjYuOD8+PGRlZnMvPjxnIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBsZW5ndGhBZGp1c3Q9InNwYWNpbmciPjxnIGNsYXNzPSJ0aXRsZSIgZGF0YS1zb3VyY2UtbGluZT0iMSI+PHRleHQgeD0iMjk1Ljg2NiIgeT0iMjIuOTk1IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE0IiB0ZXh0TGVuZ3RoPSIyMTkuMjY5IiBmb250LXdlaWdodD0iNzAwIj7lhbHpgJrjg6zjgqTjgqLjgqbjg4jvvIhCb2x0IDgg44Gu56+E5Zuy77yJPC90ZXh0PjwvZz48IS0tY2x1c3RlciDpoaflrqIgV2ViIOOBruODrOOCpOOCouOCpuODiO+8iGxheW91dC9jdXN0b21lcu+8iS0tPjxnIGNsYXNzPSJjbHVzdGVyIiBkYXRhLXF1YWxpZmllZC1uYW1lPSIuLiBXZWIgLi4uLi4uLmxheW91dC5jdXN0b21lci4iIGlkPSJlbnQwMDAxIiBkYXRhLXNvdXJjZS1saW5lPSIyIj48cGF0aCBkPSJNOC41LDQzLjI5NyBMMzIyLjg2Niw0My4yOTcgQTMuNzUsMy43NSAwIDAgMSAzMjUuMzY2LDQ1Ljc5NyBMMzMyLjM2Niw2NS41OTQgTDM5Ni41LDY1LjU5NCBBMi41LDIuNSAwIDAgMSAzOTksNjguMDk0IEwzOTksMzUwLjY4NyBBMi41LDIuNSAwIDAgMSAzOTYuNSwzNTMuMTg3IEw4LjUsMzUzLjE4NyBBMi41LDIuNSAwIDAgMSA2LDM1MC42ODcgTDYsNDUuNzk3IEEyLjUsMi41IDAgMCAxIDguNSw0My4yOTciIHN0eWxlPSJzdHJva2U6IzAwMDtzdHJva2Utd2lkdGg6MS41OyIgZmlsbD0ibm9uZSIvPjxsaW5lIHgxPSI2IiB5MT0iNjUuNTk0IiB4Mj0iMzMyLjM2NiIgeTI9IjY1LjU5NCIgc3R5bGU9InN0cm9rZTojMDAwO3N0cm9rZS13aWR0aDoxLjU7Ii8+PHRleHQgeD0iMTAiIHk9IjU4LjI5MiIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxNCIgdGV4dExlbmd0aD0iMzEzLjM2NiIgZm9udC13ZWlnaHQ9IjcwMCI+6aGn5a6iIFdlYiDjga7jg6zjgqTjgqLjgqbjg4jvvIhsYXlvdXQvY3VzdG9tZXLvvIk8L3RleHQ+PC9nPjwhLS1jbHVzdGVyIOekvuWGhealreWLmSBXZWIg44Gu44Os44Kk44Ki44Km44OI77yIbGF5b3V0L3N0YWZm77yJLS0+PGcgY2xhc3M9ImNsdXN0ZXIiIGRhdGEtcXVhbGlmaWVkLW5hbWU9Ii4uLi4gV2ViIC4uLi4uLi5sYXlvdXQuc3RhZmYuIiBpZD0iZW50MDAwNiIgZGF0YS1zb3VyY2UtbGluZT0iOCI+PHBhdGggZD0iTTQyNS41LDQzLjI5NyBMNzMwLjYyMyw0My4yOTcgQTMuNzUsMy43NSAwIDAgMSA3MzMuMTIzLDQ1Ljc5NyBMNzQwLjEyMyw2NS41OTQgTDgwMC41LDY1LjU5NCBBMi41LDIuNSAwIDAgMSA4MDMsNjguMDk0IEw4MDMsMjQ0LjM4NyBBMi41LDIuNSAwIDAgMSA4MDAuNSwyNDYuODg3IEw0MjUuNSwyNDYuODg3IEEyLjUsMi41IDAgMCAxIDQyMywyNDQuMzg3IEw0MjMsNDUuNzk3IEEyLjUsMi41IDAgMCAxIDQyNS41LDQzLjI5NyIgc3R5bGU9InN0cm9rZTojMDAwO3N0cm9rZS13aWR0aDoxLjU7IiBmaWxsPSJub25lIi8+PGxpbmUgeDE9IjQyMyIgeTE9IjY1LjU5NCIgeDI9Ijc0MC4xMjMiIHkyPSI2NS41OTQiIHN0eWxlPSJzdHJva2U6IzAwMDtzdHJva2Utd2lkdGg6MS41OyIvPjx0ZXh0IHg9IjQyNyIgeT0iNTguMjkyIiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE0IiB0ZXh0TGVuZ3RoPSIzMDQuMTIzIiBmb250LXdlaWdodD0iNzAwIj7npL7lhoXmpa3li5kgV2ViIOOBruODrOOCpOOCouOCpuODiO+8iGxheW91dC9zdGFmZu+8iTwvdGV4dD48L2c+PCEtLWVudGl0eSBDSC0tPjxnIGNsYXNzPSJlbnRpdHkiIGRhdGEtcXVhbGlmaWVkLW5hbWU9Ii4uIFdlYiAuLi4uLi4ubGF5b3V0LmN1c3RvbWVyLi5DSCIgaWQ9ImVudDAwMDIiIGRhdGEtc291cmNlLWxpbmU9IjMiPjxyZWN0IHg9IjIyLjEyIiB5PSI3OC4yOTciIHdpZHRoPSIzNDMuNzY4IiBoZWlnaHQ9IjQ2LjI5NyIgZmlsbD0iI0YxRjFGMSIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDowLjU7IiByeD0iMi41IiByeT0iMi41Ii8+PHJlY3QgeD0iMzQ1Ljg4OCIgeT0iODMuMjk3IiB3aWR0aD0iMTUiIGhlaWdodD0iMTAiIGZpbGw9IiNGMUYxRjEiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MC41OyIvPjxyZWN0IHg9IjM0My44ODgiIHk9Ijg1LjI5NyIgd2lkdGg9IjQiIGhlaWdodD0iMiIgZmlsbD0iI0YxRjFGMSIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDowLjU7Ii8+PHJlY3QgeD0iMzQzLjg4OCIgeT0iODkuMjk3IiB3aWR0aD0iNCIgaGVpZ2h0PSIyIiBmaWxsPSIjRjFGMUYxIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjAuNTsiLz48dGV4dCB4PSIzNy4xMiIgeT0iMTExLjI5MiIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxNCIgdGV4dExlbmd0aD0iMzAzLjc2OCI+44OY44OD44OA44O8OiBjYXJnby10cmFja2VyIC8g6I235Li75LyB5qWt5ZCNIOWIqeeUqOiAheWQjTwvdGV4dD48L2c+PCEtLWVudGl0eSBDTi0tPjxnIGNsYXNzPSJlbnRpdHkiIGRhdGEtcXVhbGlmaWVkLW5hbWU9Ii4uIFdlYiAuLi4uLi4ubGF5b3V0LmN1c3RvbWVyLi5DTiIgaWQ9ImVudDAwMDMiIGRhdGEtc291cmNlLWxpbmU9IjQiPjxyZWN0IHg9IjIxLjk2IiB5PSIxODQuNTk3IiB3aWR0aD0iMjU4LjA4IiBoZWlnaHQ9IjQ2LjI5NyIgZmlsbD0iI0YxRjFGMSIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDowLjU7IiByeD0iMi41IiByeT0iMi41Ii8+PHJlY3QgeD0iMjYwLjA0IiB5PSIxODkuNTk3IiB3aWR0aD0iMTUiIGhlaWdodD0iMTAiIGZpbGw9IiNGMUYxRjEiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MC41OyIvPjxyZWN0IHg9IjI1OC4wNCIgeT0iMTkxLjU5NyIgd2lkdGg9IjQiIGhlaWdodD0iMiIgZmlsbD0iI0YxRjFGMSIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDowLjU7Ii8+PHJlY3QgeD0iMjU4LjA0IiB5PSIxOTUuNTk3IiB3aWR0aD0iNCIgaGVpZ2h0PSIyIiBmaWxsPSIjRjFGMUYxIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjAuNTsiLz48dGV4dCB4PSIzNi45NiIgeT0iMjE3LjU5MiIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxNCIgdGV4dExlbmd0aD0iMjE4LjA4Ij7lt6bjg4rjg5M6IOimi+epjeS+nemgvO+8iGFyaWEtY3VycmVudO+8iTwvdGV4dD48L2c+PCEtLWVudGl0eSBDTS0tPjxnIGNsYXNzPSJlbnRpdHkiIGRhdGEtcXVhbGlmaWVkLW5hbWU9Ii4uIFdlYiAuLi4uLi4ubGF5b3V0LmN1c3RvbWVyLi5DTSIgaWQ9ImVudDAwMDQiIGRhdGEtc291cmNlLWxpbmU9IjUiPjxyZWN0IHg9IjMxNSIgeT0iMTg0LjU5NyIgd2lkdGg9IjY4IiBoZWlnaHQ9IjQ2LjI5NyIgZmlsbD0iI0YxRjFGMSIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDowLjU7IiByeD0iMi41IiByeT0iMi41Ii8+PHJlY3QgeD0iMzYzIiB5PSIxODkuNTk3IiB3aWR0aD0iMTUiIGhlaWdodD0iMTAiIGZpbGw9IiNGMUYxRjEiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MC41OyIvPjxyZWN0IHg9IjM2MSIgeT0iMTkxLjU5NyIgd2lkdGg9IjQiIGhlaWdodD0iMiIgZmlsbD0iI0YxRjFGMSIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDowLjU7Ii8+PHJlY3QgeD0iMzYxIiB5PSIxOTUuNTk3IiB3aWR0aD0iNCIgaGVpZ2h0PSIyIiBmaWxsPSIjRjFGMUYxIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjAuNTsiLz48dGV4dCB4PSIzMzAiIHk9IjIxNy41OTIiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTQiIHRleHRMZW5ndGg9IjI4Ij7mnKzmloc8L3RleHQ+PC9nPjwhLS1lbnRpdHkgQ0YtLT48ZyBjbGFzcz0iZW50aXR5IiBkYXRhLXF1YWxpZmllZC1uYW1lPSIuLiBXZWIgLi4uLi4uLmxheW91dC5jdXN0b21lci4uQ0YiIGlkPSJlbnQwMDA1IiBkYXRhLXNvdXJjZS1saW5lPSI2Ij48cmVjdCB4PSIxNjguOTMiIHk9IjI5MC44ODciIHdpZHRoPSIyMTQuMTMxIiBoZWlnaHQ9IjQ2LjI5NyIgZmlsbD0iI0YxRjFGMSIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDowLjU7IiByeD0iMi41IiByeT0iMi41Ii8+PHJlY3QgeD0iMzYzLjA2MSIgeT0iMjk1Ljg4NyIgd2lkdGg9IjE1IiBoZWlnaHQ9IjEwIiBmaWxsPSIjRjFGMUYxIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjAuNTsiLz48cmVjdCB4PSIzNjEuMDYxIiB5PSIyOTcuODg3IiB3aWR0aD0iNCIgaGVpZ2h0PSIyIiBmaWxsPSIjRjFGMUYxIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjAuNTsiLz48cmVjdCB4PSIzNjEuMDYxIiB5PSIzMDEuODg3IiB3aWR0aD0iNCIgaGVpZ2h0PSIyIiBmaWxsPSIjRjFGMUYxIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjAuNTsiLz48dGV4dCB4PSIxODMuOTMiIHk9IjMyMy44ODIiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTQiIHRleHRMZW5ndGg9IjE3NC4xMzEiPueqk+WPo+OBruahiOWGhe+8iEFzaWEvVG9reW/vvIk8L3RleHQ+PC9nPjwhLS1lbnRpdHkgU0gtLT48ZyBjbGFzcz0iZW50aXR5IiBkYXRhLXF1YWxpZmllZC1uYW1lPSIuLi4uIFdlYiAuLi4uLi4ubGF5b3V0LnN0YWZmLi5TSCIgaWQ9ImVudDAwMDciIGRhdGEtc291cmNlLWxpbmU9IjkiPjxyZWN0IHg9IjQzOC44OSIgeT0iNzguMjk3IiB3aWR0aD0iMzQ4LjIxOCIgaGVpZ2h0PSI0Ni4yOTciIGZpbGw9IiNGMUYxRjEiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MC41OyIgcng9IjIuNSIgcnk9IjIuNSIvPjxyZWN0IHg9Ijc2Ny4xMDgiIHk9IjgzLjI5NyIgd2lkdGg9IjE1IiBoZWlnaHQ9IjEwIiBmaWxsPSIjRjFGMUYxIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjAuNTsiLz48cmVjdCB4PSI3NjUuMTA4IiB5PSI4NS4yOTciIHdpZHRoPSI0IiBoZWlnaHQ9IjIiIGZpbGw9IiNGMUYxRjEiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MC41OyIvPjxyZWN0IHg9Ijc2NS4xMDgiIHk9Ijg5LjI5NyIgd2lkdGg9IjQiIGhlaWdodD0iMiIgZmlsbD0iI0YxRjFGMSIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDowLjU7Ii8+PHRleHQgeD0iNDUzLjg5IiB5PSIxMTEuMjkyIiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE0IiB0ZXh0TGVuZ3RoPSIzMDguMjE4Ij7jg5jjg4Pjg4Djg7w6IGNhcmdvLXRyYWNrZXIg56S+5YaFIC8g5b255Ymy5ZCNIOWIqeeUqOiAheWQjTwvdGV4dD48L2c+PCEtLWVudGl0eSBTTi0tPjxnIGNsYXNzPSJlbnRpdHkiIGRhdGEtcXVhbGlmaWVkLW5hbWU9Ii4uLi4gV2ViIC4uLi4uLi5sYXlvdXQuc3RhZmYuLlNOIiBpZD0iZW50MDAwOCIgZGF0YS1zb3VyY2UtbGluZT0iMTAiPjxyZWN0IHg9IjUwMS41NCIgeT0iMTg0LjU5NyIgd2lkdGg9IjE4Mi45MTgiIGhlaWdodD0iNDYuMjk3IiBmaWxsPSIjRjFGMUYxIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjAuNTsiIHJ4PSIyLjUiIHJ5PSIyLjUiLz48cmVjdCB4PSI2NjQuNDU4IiB5PSIxODkuNTk3IiB3aWR0aD0iMTUiIGhlaWdodD0iMTAiIGZpbGw9IiNGMUYxRjEiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MC41OyIvPjxyZWN0IHg9IjY2Mi40NTgiIHk9IjE5MS41OTciIHdpZHRoPSI0IiBoZWlnaHQ9IjIiIGZpbGw9IiNGMUYxRjEiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MC41OyIvPjxyZWN0IHg9IjY2Mi40NTgiIHk9IjE5NS41OTciIHdpZHRoPSI0IiBoZWlnaHQ9IjIiIGZpbGw9IiNGMUYxRjEiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MC41OyIvPjx0ZXh0IHg9IjUxNi41NCIgeT0iMjE3LjU5MiIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxNCIgdGV4dExlbmd0aD0iMTQyLjkxOCI+5bem44OK44OTOiDopovnqY3kvp3poLzjgIFLUEk8L3RleHQ+PC9nPjwhLS1lbnRpdHkgU00tLT48ZyBjbGFzcz0iZW50aXR5IiBkYXRhLXF1YWxpZmllZC1uYW1lPSIuLi4uIFdlYiAuLi4uLi4ubGF5b3V0LnN0YWZmLi5TTSIgaWQ9ImVudDAwMDkiIGRhdGEtc291cmNlLWxpbmU9IjExIj48cmVjdCB4PSI3MTkiIHk9IjE4NC41OTciIHdpZHRoPSI2OCIgaGVpZ2h0PSI0Ni4yOTciIGZpbGw9IiNGMUYxRjEiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MC41OyIgcng9IjIuNSIgcnk9IjIuNSIvPjxyZWN0IHg9Ijc2NyIgeT0iMTg5LjU5NyIgd2lkdGg9IjE1IiBoZWlnaHQ9IjEwIiBmaWxsPSIjRjFGMUYxIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjAuNTsiLz48cmVjdCB4PSI3NjUiIHk9IjE5MS41OTciIHdpZHRoPSI0IiBoZWlnaHQ9IjIiIGZpbGw9IiNGMUYxRjEiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MC41OyIvPjxyZWN0IHg9Ijc2NSIgeT0iMTk1LjU5NyIgd2lkdGg9IjQiIGhlaWdodD0iMiIgZmlsbD0iI0YxRjFGMSIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDowLjU7Ii8+PHRleHQgeD0iNzM0IiB5PSIyMTcuNTkyIiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE0IiB0ZXh0TGVuZ3RoPSIyOCI+5pys5paHPC90ZXh0PjwvZz48IS0tbGluayBDSCB0byBDTi0tPjwhLS1saW5rIENOIHRvIENNLS0+PCEtLWxpbmsgQ00gdG8gQ0YtLT48IS0tbGluayBTSCB0byBTTi0tPjwhLS1saW5rIFNOIHRvIFNNLS0+PD9wbGFudHVtbC1zcmMgWlAxVkl5OUc2OFZsem9hRXRXemxteGlRWTE2Sk80NE5tdWxKZDNlcTV6a0hhMFljb3ZnOTUxWkhOcVdwb3AwWlJvblFWZmRac1ZKQWh6MFBXb0hNckVLdl85eHR6cHVsS2IxRTFnSm9DWktraURkM3ZKT2tqdDJ2V3FyaFBiakJRV3cxMU8xQlZWVHZacm1FUGRRTHNPOUk1Z1BiNDllc3hxY18xVFJiM0l5R1g3RW1nMVBHTTJoZUlEc0tEU2c2bTB1Wk9sQ0Njb09zM01wUTRJMTFCUXNvSUFEM1BHczRtUUctN0ItLVotc0lTX1Q0WmtrME01dHR2NjVZTEVXWjBRMEVrMVdaYVk2akVDSGM4bThjZFBoUmhPejdyekNSY3RQMkpPNmlMRDBxRU96ZWVLXzQ2VDZ2d1pjZDFfd0pQcUp0aUs2RVJrZE1KakNZLW5LQUJrZUEzQS1mc1FCd1hLTVB0UmNpc254SGVCVEt4Vm5GUEh0MUxFZV9sbHZLZ2FxLXRhWHJ5QUVteUJpbURhZWhneWotd2hrYW1ERmJrSFhXbk9vSUpDaHZINUJUcGhGVUFSWnVfNURKcVhkNFVYVlgtNDBxb1dXMWRoTzhHTHhXRm00MD8+PC9nPjwvc3ZnPg==" class="uml" alt="uml diagram" title="" /></p>
-<p><img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB2ZXJzaW9uPSIxLjEiIGRhdGEtZGlhZ3JhbS10eXBlPSJTVEFURSIgc3R5bGU9IndpZHRoOjUyNXB4O2hlaWdodDo2NjhweDtiYWNrZ3JvdW5kOiNGRkZGRkY7IiB3aWR0aD0iNTI1cHgiIGhlaWdodD0iNjY4cHgiIHZpZXdCb3g9IjAgMCA1MjUgNjY4IiB6b29tQW5kUGFuPSJtYWduaWZ5IiBwcmVzZXJ2ZUFzcGVjdFJhdGlvPSJub25lIiBjb250ZW50U3R5bGVUeXBlPSJ0ZXh0L2NzcyI+PD9wbGFudHVtbCAxLjIwMjYuOD8+PGRlZnMvPjxnIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBsZW5ndGhBZGp1c3Q9InNwYWNpbmciPjxnIGNsYXNzPSJ0aXRsZSIgZGF0YS1zb3VyY2UtbGluZT0iMSI+PHRleHQgeD0iMTAiIHk9IjIyLjk5NSIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxNCIgdGV4dExlbmd0aD0iNDk4LjMyNCIgZm9udC13ZWlnaHQ9IjcwMCI+Qy0wMyDjga7mrrXpmo7lhaXlipvvvIgxIOOBpOOBruODleOCqeODvOODoOOBruS4reOBp+autemajuOCkuWIh+OCiuabv+OBiOOCi+OAgkJvbHQgOCDjga7nr4Tlm7LvvIk8L3RleHQ+PC9nPjxnIGNsYXNzPSJlbnRpdHkiIGRhdGEtcXVhbGlmaWVkLW5hbWU9IlMxIiBpZD0iZW50MDAwMSIgZGF0YS1zb3VyY2UtbGluZT0iMiI+PHJlY3QgeD0iMTYwLjY5IiB5PSIxMjQuMjk3IiB3aWR0aD0iODkuMzU3IiBoZWlnaHQ9IjUwIiBmaWxsPSIjRjFGMUYxIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjAuNTsiIHJ4PSIxMi41IiByeT0iMTIuNSIvPjxsaW5lIHgxPSIxNjAuNjkiIHkxPSIxNTAuNTk0IiB4Mj0iMjUwLjA0NyIgeTI9IjE1MC41OTQiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MC41OyIvPjx0ZXh0IHg9IjE3MC42OSIgeT0iMTQyLjI5MiIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxNCIgdGV4dExlbmd0aD0iNjkuMzU3Ij4xIOi8uOmAgeadoeS7tjwvdGV4dD48L2c+PGcgY2xhc3M9ImVudGl0eSIgZGF0YS1xdWFsaWZpZWQtbmFtZT0iUzIiIGlkPSJlbnQwMDAyIiBkYXRhLXNvdXJjZS1saW5lPSIzIj48cmVjdCB4PSIxMzIuNjkiIHk9IjI1MS4yOTciIHdpZHRoPSI2MS4zNTciIGhlaWdodD0iNTAiIGZpbGw9IiNGMUYxRjEiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MC41OyIgcng9IjEyLjUiIHJ5PSIxMi41Ii8+PGxpbmUgeDE9IjEzMi42OSIgeTE9IjI3Ny41OTQiIHgyPSIxOTQuMDQ3IiB5Mj0iMjc3LjU5NCIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDowLjU7Ii8+PHRleHQgeD0iMTQyLjY5IiB5PSIyNjkuMjkyIiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE0IiB0ZXh0TGVuZ3RoPSI0MS4zNTciPjIg6LKo54mpPC90ZXh0PjwvZz48ZyBjbGFzcz0iZW50aXR5IiBkYXRhLXF1YWxpZmllZC1uYW1lPSJTMyIgaWQ9ImVudDAwMDMiIGRhdGEtc291cmNlLWxpbmU9IjQiPjxyZWN0IHg9IjEzMi42OSIgeT0iMzc4LjI5NyIgd2lkdGg9IjYxLjM1NyIgaGVpZ2h0PSI1MCIgZmlsbD0iI0YxRjFGMSIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDowLjU7IiByeD0iMTIuNSIgcnk9IjEyLjUiLz48bGluZSB4MT0iMTMyLjY5IiB5MT0iNDA0LjU5NCIgeDI9IjE5NC4wNDciIHkyPSI0MDQuNTk0IiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjAuNTsiLz48dGV4dCB4PSIxNDIuNjkiIHk9IjM5Ni4yOTIiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTQiIHRleHRMZW5ndGg9IjQxLjM1NyI+MyDmm7jpoZ48L3RleHQ+PC9nPjxnIGNsYXNzPSJlbnRpdHkiIGRhdGEtcXVhbGlmaWVkLW5hbWU9IlM0IiBpZD0iZW50MDAwNCIgZGF0YS1zb3VyY2UtbGluZT0iNSI+PHJlY3QgeD0iMTc0LjY5IiB5PSI1MDUuMjk3IiB3aWR0aD0iNjEuMzU3IiBoZWlnaHQ9IjUwIiBmaWxsPSIjRjFGMUYxIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjAuNTsiIHJ4PSIxMi41IiByeT0iMTIuNSIvPjxsaW5lIHgxPSIxNzQuNjkiIHkxPSI1MzEuNTk0IiB4Mj0iMjM2LjA0NyIgeTI9IjUzMS41OTQiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MC41OyIvPjx0ZXh0IHg9IjE4NC42OSIgeT0iNTIzLjI5MiIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxNCIgdGV4dExlbmd0aD0iNDEuMzU3Ij40IOeiuuiqjTwvdGV4dD48L2c+PGcgY2xhc3M9InN0YXJ0X2VudGl0eSIgZGF0YS1xdWFsaWZpZWQtbmFtZT0iLnN0YXJ0LiIgaWQ9ImVudDAwMDUiIGRhdGEtc291cmNlLWxpbmU9IjYiPjxlbGxpcHNlIGN4PSIyMDUuMzciIGN5PSI1My4yOTciIHJ4PSIxMCIgcnk9IjEwIiBmaWxsPSIjMjIyIiBzdHlsZT0ic3Ryb2tlOiMyMjI7c3Ryb2tlLXdpZHRoOjE7Ii8+PC9nPjxnIGNsYXNzPSJlbmRfZW50aXR5IiBkYXRhLXF1YWxpZmllZC1uYW1lPSIuZW5kLiIgaWQ9ImVudDAwMTEiIGRhdGEtc291cmNlLWxpbmU9IjExIj48ZWxsaXBzZSBjeD0iMjA1LjM3IiBjeT0iNjQzLjI5NyIgcng9IjExIiByeT0iMTEiIGZpbGw9Im5vbmUiIHN0eWxlPSJzdHJva2U6IzIyMjtzdHJva2Utd2lkdGg6MTsiLz48ZWxsaXBzZSBjeD0iMjA1LjM3IiBjeT0iNjQzLjI5NyIgcng9IjYiIHJ5PSI2IiBmaWxsPSIjMjIyIiBzdHlsZT0ic3Ryb2tlOiMyMjI7c3Ryb2tlLXdpZHRoOjE7Ii8+PC9nPjwhLS1saW5rICpzdGFydCogdG8gUzEtLT48ZyBjbGFzcz0ibGluayIgZGF0YS1lbnRpdHktMT0iZW50MDAwNSIgZGF0YS1lbnRpdHktMj0iZW50MDAwMSIgaWQ9ImxuazYiIGRhdGEtc291cmNlLWxpbmU9IjYiIGRhdGEtbGluay10eXBlPSJkZXBlbmRlbmN5Ij48cGF0aCBkPSJNMjA1LjM3LDYzLjY1NyBDMjA1LjM3LDc3LjU4NyAyMDUuMzcsOTkuMjQ3IDIwNS4zNywxMTguOTQ3IiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjE7IiBmaWxsPSJub25lIiBpZD0iKnN0YXJ0Ki10by1TMSIvPjxwb2x5Z29uIHBvaW50cz0iMjA1LjM3LDEyMy45NDcsMjA5LjM3LDExNC45NDcsMjA1LjM3LDExOC45NDcsMjAxLjM3LDExNC45NDcsMjA1LjM3LDEyMy45NDciIGZpbGw9IiMxODE4MTgiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTtzdHJva2UtbGluZWpvaW46bWl0ZXI7c3Ryb2tlLW1pdGVybGltaXQ6MTA7Ii8+PC9nPjwhLS1saW5rIFMxIHRvIFMyLS0+PGcgY2xhc3M9ImxpbmsiIGRhdGEtZW50aXR5LTE9ImVudDAwMDEiIGRhdGEtZW50aXR5LTI9ImVudDAwMDIiIGlkPSJsbms3IiBkYXRhLXNvdXJjZS1saW5lPSI3IiBkYXRhLWxpbmstdHlwZT0iZGVwZW5kZW5jeSI+PHBhdGggZD0iTTE5Ny4xNywxNzQuNjk3IEMxODkuNzcsMTk2LjcxNyAxODAuNTMyLDIyNC4yMTcgMTczLjE0MiwyNDYuMjE3IiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjE7IiBmaWxsPSJub25lIiBpZD0iUzEtdG8tUzIiLz48cG9seWdvbiBwb2ludHM9IjE3MS41NSwyNTAuOTU3LDE3OC4yMDcsMjQzLjY5OSwxNzMuMTQyLDI0Ni4yMTcsMTcwLjYyNCwyNDEuMTUyLDE3MS41NSwyNTAuOTU3IiBmaWxsPSIjMTgxODE4IiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjE7c3Ryb2tlLWxpbmVqb2luOm1pdGVyO3N0cm9rZS1taXRlcmxpbWl0OjEwOyIvPjx0ZXh0IHg9IjE4Ny44OCIgeT0iMjE3LjM2NCIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxMyIgdGV4dExlbmd0aD0iMjYiPuasoeOBuDwvdGV4dD48L2c+PCEtLWxpbmsgUzIgdG8gUzMtLT48ZyBjbGFzcz0ibGluayIgZGF0YS1lbnRpdHktMT0iZW50MDAwMiIgZGF0YS1lbnRpdHktMj0iZW50MDAwMyIgaWQ9ImxuazgiIGRhdGEtc291cmNlLWxpbmU9IjgiIGRhdGEtbGluay10eXBlPSJkZXBlbmRlbmN5Ij48cGF0aCBkPSJNMTYzLjM3LDMwMS42OTcgQzE2My4zNywzMjMuNzE3IDE2My4zNywzNTAuOTU3IDE2My4zNywzNzIuOTU3IiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjE7IiBmaWxsPSJub25lIiBpZD0iUzItdG8tUzMiLz48cG9seWdvbiBwb2ludHM9IjE2My4zNywzNzcuOTU3LDE2Ny4zNywzNjguOTU3LDE2My4zNywzNzIuOTU3LDE1OS4zNywzNjguOTU3LDE2My4zNywzNzcuOTU3IiBmaWxsPSIjMTgxODE4IiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjE7c3Ryb2tlLWxpbmVqb2luOm1pdGVyO3N0cm9rZS1taXRlcmxpbWl0OjEwOyIvPjx0ZXh0IHg9IjE2NC4zNyIgeT0iMzQ0LjM2NCIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxMyIgdGV4dExlbmd0aD0iMjYiPuasoeOBuDwvdGV4dD48L2c+PCEtLWxpbmsgUzMgdG8gUzQtLT48ZyBjbGFzcz0ibGluayIgZGF0YS1lbnRpdHktMT0iZW50MDAwMyIgZGF0YS1lbnRpdHktMj0iZW50MDAwNCIgaWQ9ImxuazkiIGRhdGEtc291cmNlLWxpbmU9IjkiIGRhdGEtbGluay10eXBlPSJkZXBlbmRlbmN5Ij48cGF0aCBkPSJNMTcxLjU3LDQyOC42OTcgQzE3OC45Nyw0NTAuNzE3IDE4OC4yMDgsNDc4LjIxNyAxOTUuNTk4LDUwMC4yMTciIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTsiIGZpbGw9Im5vbmUiIGlkPSJTMy10by1TNCIvPjxwb2x5Z29uIHBvaW50cz0iMTk3LjE5LDUwNC45NTcsMTk4LjExNiw0OTUuMTUyLDE5NS41OTgsNTAwLjIxNywxOTAuNTMyLDQ5Ny42OTksMTk3LjE5LDUwNC45NTciIGZpbGw9IiMxODE4MTgiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTtzdHJva2UtbGluZWpvaW46bWl0ZXI7c3Ryb2tlLW1pdGVybGltaXQ6MTA7Ii8+PHRleHQgeD0iMTg3Ljg4IiB5PSI0NzEuMzY0IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjEzIiB0ZXh0TGVuZ3RoPSIyNiI+5qyh44G4PC90ZXh0PjwvZz48IS0tbGluayBTNCB0byBTMS0tPjxnIGNsYXNzPSJsaW5rIiBkYXRhLWVudGl0eS0xPSJlbnQwMDA0IiBkYXRhLWVudGl0eS0yPSJlbnQwMDAxIiBpZD0ibG5rMTAiIGRhdGEtc291cmNlLWxpbmU9IjEwIiBkYXRhLWxpbmstdHlwZT0iZGVwZW5kZW5jeSI+PHBhdGggZD0iTTIxNS4zMiw1MDQuOTg3IEMyMTguNTcsNDk1LjgzNyAyMjEuNzUsNDg1LjI0NyAyMjMuMzcsNDc1LjI5NyBDMjQyLjY2LDM1Ni40MDcgMjQyLjY2LDMyMy4xODcgMjIzLjM3LDIwNC4yOTcgQzIyMS43NSwxOTQuMzQ3IDIyMC4yNDMsMTg4LjQ2OCAyMTYuOTkzLDE3OS4zMTgiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTsiIGZpbGw9Im5vbmUiIGlkPSJTNC10by1TMSIvPjxwb2x5Z29uIHBvaW50cz0iMjE1LjMyLDE3NC42MDcsMjE0LjU2MywxODQuNDI3LDIxNi45OTMsMTc5LjMxOCwyMjIuMTAxLDE4MS43NDksMjE1LjMyLDE3NC42MDciIGZpbGw9IiMxODE4MTgiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTtzdHJva2UtbGluZWpvaW46bWl0ZXI7c3Ryb2tlLW1pdGVybGltaXQ6MTA7Ii8+PHRleHQgeD0iMjM4Ljg0IiB5PSIzNDQuMzY0IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjEzIiB0ZXh0TGVuZ3RoPSIxMTciPuautemajuOBruS4gOimp+OBi+OCieaIu+OCizwvdGV4dD48L2c+PCEtLWxpbmsgUzQgdG8gKmVuZCotLT48ZyBjbGFzcz0ibGluayIgZGF0YS1lbnRpdHktMT0iZW50MDAwNCIgZGF0YS1lbnRpdHktMj0iZW50MDAxMSIgaWQ9ImxuazEyIiBkYXRhLXNvdXJjZS1saW5lPSIxMSIgZGF0YS1saW5rLXR5cGU9ImRlcGVuZGVuY3kiPjxwYXRoIGQ9Ik0yMDUuMzcsNTU1LjY1NyBDMjA1LjM3LDU3OS41MjcgMjA1LjM3LDYwOS43NTcgMjA1LjM3LDYyNy4wMDciIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTsiIGZpbGw9Im5vbmUiIGlkPSJTNC10by0qZW5kKiIvPjxwb2x5Z29uIHBvaW50cz0iMjA1LjM3LDYzMi4wMDcsMjA5LjM3LDYyMy4wMDcsMjA1LjM3LDYyNy4wMDcsMjAxLjM3LDYyMy4wMDcsMjA1LjM3LDYzMi4wMDciIGZpbGw9IiMxODE4MTgiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTtzdHJva2UtbGluZWpvaW46bWl0ZXI7c3Ryb2tlLW1pdGVybGltaXQ6MTA7Ii8+PHRleHQgeD0iMjA2LjM3IiB5PSI1OTguMzY0IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjEzIiB0ZXh0TGVuZ3RoPSIxNzcuMjY1Ij7mj5Dlh7rjgZnjgovvvIhQT1NU44CB5LuK44Go5ZCM44GY77yJPC90ZXh0PjwvZz48P3BsYW50dW1sLXNyYyBKVDNESWlEMDQwVm1VdnZZdzU0OGM2bUV1aTYzRmUxMmw4Yzc3ZGVHMlh3UTF5WGtiMlFmN3FLR3JBME9LVGtBTFlZcVgyUldtcW5zYXZwdzJjdlMweHREX2NRT3ZKX0VZVEZqbTl3LUlHM2ZMNHBkclNDTEZ0X1pPUkpBVjRGUWdzSnFSZjVEcUNsR1V2UkZGRmIyRWJBcG82d3V0cVNNWWtXN2dPemlXMnhSRlVxd2k1S2xCQnhGVTNIUlBPN01TemZFMXJlNmI1YklrTEd5bmRjd1E0NngxeFJIRDRxZVAtQ1ljMldzNm9PV2VnSUFkbklKWFlxZU5mUmJud0xZSXBsUUUwUFR0d2R0c09RZ0pEVzZ5SGFaSkpIUF9uNVA4d0I4TVlGaFZxTERBYzJUcm90VkhxVzdvMEJYZnA5WkNyVF9BR1VsWHhvX0g3ZWxFXzlnMV9sczhSZXFKcUVhT3B3eUc3ZWQzXzBCPz48L2c+PC9zdmc+" class="uml" alt="uml diagram" title="" /></p>
+<h3 id="_5">ドメインモデル<a class="headerlink" href="#_5" title="Permanent link">&para;</a></h3>
+<p><img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB2ZXJzaW9uPSIxLjEiIGRhdGEtZGlhZ3JhbS10eXBlPSJDTEFTUyIgc3R5bGU9IndpZHRoOjExNDBweDtoZWlnaHQ6NjQxcHg7YmFja2dyb3VuZDojRkZGRkZGOyIgd2lkdGg9IjExNDBweCIgaGVpZ2h0PSI2NDFweCIgdmlld0JveD0iMCAwIDExNDAgNjQxIiB6b29tQW5kUGFuPSJtYWduaWZ5IiBwcmVzZXJ2ZUFzcGVjdFJhdGlvPSJub25lIiBjb250ZW50U3R5bGVUeXBlPSJ0ZXh0L2NzcyI+PD9wbGFudHVtbCAxLjIwMjYuOD8+PGRlZnMvPjxnIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBsZW5ndGhBZGp1c3Q9InNwYWNpbmciPjxnIGNsYXNzPSJ0aXRsZSIgZGF0YS1zb3VyY2UtbGluZT0iMSI+PHRleHQgeD0iNDUyLjA2NSIgeT0iMjIuOTk1IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE0IiB0ZXh0TGVuZ3RoPSIyMjkuMDEiIGZvbnQtd2VpZ2h0PSI3MDAiPuimi+epjeOCiumbhue0hO+8iEJvbHQgMTAg44Gn5L2c44KL56+E5Zuy77yJPC90ZXh0PjwvZz48IS0tY2xhc3MgUS0tPjxnIGNsYXNzPSJlbnRpdHkiIGRhdGEtcXVhbGlmaWVkLW5hbWU9IlEiIGlkPSJlbnQwMDAxIiBkYXRhLXNvdXJjZS1saW5lPSIyIj48cmVjdCB4PSIyNDkuOTYiIHk9IjQ0LjI5NyIgd2lkdGg9IjQyNy4yNDEiIGhlaWdodD0iMjE5LjIzNCIgZmlsbD0iI0YxRjFGMSIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDowLjU7IiByeD0iMi41IiByeT0iMi41Ii8+PGVsbGlwc2UgY3g9IjQxOS4xOTciIGN5PSI3Mi41NzgiIHJ4PSIxMSIgcnk9IjExIiBmaWxsPSIjQUREMUIyIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjE7Ii8+PHBhdGggZD0iTTQyMi4xNjUsNzguMjE5IFE0MjEuNTg3LDc4LjUxNiA0MjAuOTQ3LDc4LjY1NiBRNDIwLjMwNiw3OC44MTMgNDE5LjYwMyw3OC44MTMgUTQxNy4xMDMsNzguODEzIDQxNS43NzUsNzcuMTcyIFE0MTQuNDYyLDc1LjUxNiA0MTQuNDYyLDcyLjM5MSBRNDE0LjQ2Miw2OS4yNjYgNDE1Ljc3NSw2Ny42MDkgUTQxNy4xMDMsNjUuOTUzIDQxOS42MDMsNjUuOTUzIFE0MjAuMzA2LDY1Ljk1MyA0MjAuOTQ3LDY2LjEwOSBRNDIxLjYwMyw2Ni4yNjYgNDIyLjE2NSw2Ni41NjMgTDQyMi4xNjUsNjkuMjgxIFE0MjEuNTQsNjguNzAzIDQyMC45NDcsNjguNDM4IFE0MjAuMzUzLDY4LjE1NiA0MTkuNzI4LDY4LjE1NiBRNDE4LjM4NCw2OC4xNTYgNDE3LjY5Nyw2OS4yMzQgUTQxNy4wMDksNzAuMjk3IDQxNy4wMDksNzIuMzkxIFE0MTcuMDA5LDc0LjQ4NCA0MTcuNjk3LDc1LjU2MyBRNDE4LjM4NCw3Ni42MjUgNDE5LjcyOCw3Ni42MjUgUTQyMC4zNTMsNzYuNjI1IDQyMC45NDcsNzYuMzU5IFE0MjEuNTQsNzYuMDc4IDQyMi4xNjUsNzUuNSBMNDIyLjE2NSw3OC4yMTkgWiAiIGZpbGw9IiMwMDAiLz48dGV4dCB4PSI0NDIuNDg4IiB5PSI2MC40MzYiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTIiIHRleHRMZW5ndGg9Ijc0LjY4NCIgZm9udC1zdHlsZT0iaXRhbGljIj7Cq+mbhue0hOODq+ODvOODiMK7PC90ZXh0Pjx0ZXh0IHg9IjQ1OC44MyIgeT0iNzYuMjYxIiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE0IiB0ZXh0TGVuZ3RoPSI0MiI+6KaL56mN44KKPC90ZXh0Pjx0ZXh0IHg9IjQzOS42OTciIHk9IjkyLjU1OCIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxNCIgdGV4dExlbmd0aD0iODAuMjY4Ij4oUXVvdGF0aW9uKTwvdGV4dD48bGluZSB4MT0iMjUwLjk2IiB5MT0iMTAwLjg1OSIgeDI9IjY3Ni4yMDEiIHkyPSIxMDAuODU5IiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjAuNTsiLz48dGV4dCB4PSIyNTUuOTYiIHk9IjExNy44NTQiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTQiIHRleHRMZW5ndGg9IjE1Ny4zMzYiPuimi+epjeOCiiBJRCA6IFF1b3RhdGlvbklkPC90ZXh0Pjx0ZXh0IHg9IjI1NS45NiIgeT0iMTM0LjE1MSIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxNCIgdGV4dExlbmd0aD0iMjQxLjgwNyI+6KaL56mN44KK55Wq5Y+377yI6Ly46YCB6KaB5rGC44Gu5Lit44GnIDEg44GL44KJ77yJPC90ZXh0Pjx0ZXh0IHg9IjI1NS45NiIgeT0iMTUwLjQ0OCIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxNCIgdGV4dExlbmd0aD0iNzUuMzU5Ij7ovLjpgIHopoHmsYIgSUQ8L3RleHQ+PHRleHQgeD0iMjU1Ljk2IiB5PSIxNjYuNzQ1IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE0IiB0ZXh0TGVuZ3RoPSI3MCI+5a++6LGh54mI55Wq5Y+3PC90ZXh0Pjx0ZXh0IHg9IjI1NS45NiIgeT0iMTgzLjA0MiIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxNCIgdGV4dExlbmd0aD0iMTU1LjU3MiI+54q25oWLIDogUXVvdGF0aW9uU3RhdHVzPC90ZXh0Pjx0ZXh0IHg9IjI1NS45NiIgeT0iMTk5LjMzOSIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxNCIgdGV4dExlbmd0aD0iMTY3Ljk5OSI+56S+5YaF5om/6KqN6ICF44O756S+5YaF5om/6KqN5pmC5Yi7PC90ZXh0Pjx0ZXh0IHg9IjI1NS45NiIgeT0iMjE1LjYzNiIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxNCIgdGV4dExlbmd0aD0iMTQxLjc3NyI+5o+Q56S65pmC5Yi7IDogVXRjSW5zdGFudDwvdGV4dD48bGluZSB4MT0iMjUwLjk2IiB5MT0iMjIyLjkzOCIgeDI9IjY3Ni4yMDEiIHkyPSIyMjIuOTM4IiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjAuNTsiLz48ZyBkYXRhLXZpc2liaWxpdHktbW9kaWZpZXI9IlBVQkxJQ19NRVRIT0QiPjxlbGxpcHNlIGN4PSIyNjAuOTYiIGN5PSIyMzYuNTg2IiByeD0iMyIgcnk9IjMiIGZpbGw9IiM4NEJFODQiIHN0eWxlPSJzdHJva2U6IzAzODA0ODtzdHJva2Utd2lkdGg6MTsiLz48L2c+PHRleHQgeD0iMjY5Ljk2IiB5PSIyMzkuOTMzIiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE0IiB0ZXh0TGVuZ3RoPSI0MDEuMjQxIj7nrpflh7rjgZnjgoso5paZ6YeR5qC55ougLCDmnInlirnmnJ/pmZAsIOe1jOi3r+aWuemHnSwg566X5Ye65pmC5Yi7KSA6IOmBleWPjeOBruS4gOimpzwvdGV4dD48ZyBkYXRhLXZpc2liaWxpdHktbW9kaWZpZXI9IlBVQkxJQ19NRVRIT0QiPjxlbGxpcHNlIGN4PSIyNjAuOTYiIGN5PSIyNTIuODgzIiByeD0iMyIgcnk9IjMiIGZpbGw9IiM4NEJFODQiIHN0eWxlPSJzdHJva2U6IzAzODA0ODtzdHJva2Utd2lkdGg6MTsiLz48L2c+PHRleHQgeD0iMjY5Ljk2IiB5PSIyNTYuMjI5IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE0IiB0ZXh0TGVuZ3RoPSIzNDEuNDQiPuekvuWGheaJv+iqjeOBl+OBpuaPkOekuuOBmeOCiyjmib/oqo3ogIUsIOaPkOekuuaZguWIuykgOiDmi5LlkKbjga7nkIbnlLE8L3RleHQ+PC9nPjwhLS1jbGFzcyBQQi0tPjxnIGNsYXNzPSJlbnRpdHkiIGRhdGEtcXVhbGlmaWVkLW5hbWU9IlBCIiBpZD0iZW50MDAwMiIgZGF0YS1zb3VyY2UtbGluZT0iMTMiPjxyZWN0IHg9Ijc3IiB5PSIzMjMuNTI3IiB3aWR0aD0iMTU1LjE3MSIgaGVpZ2h0PSIxMjEuNDUzIiBmaWxsPSIjRjFGMUYxIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjAuNTsiIHJ4PSIyLjUiIHJ5PSIyLjUiLz48ZWxsaXBzZSBjeD0iMTA0LjY2OCIgY3k9IjM1MS44MDgiIHJ4PSIxMSIgcnk9IjExIiBmaWxsPSIjQUREMUIyIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjE7Ii8+PHBhdGggZD0iTTEwNy42MzcsMzU3LjQ0OSBRMTA3LjA1OSwzNTcuNzQ2IDEwNi40MTgsMzU3Ljg4NiBRMTA1Ljc3OCwzNTguMDQyIDEwNS4wNzUsMzU4LjA0MiBRMTAyLjU3NSwzNTguMDQyIDEwMS4yNDYsMzU2LjQwMiBROTkuOTM0LDM1NC43NDYgOTkuOTM0LDM1MS42MjEgUTk5LjkzNCwzNDguNDk2IDEwMS4yNDYsMzQ2LjgzOSBRMTAyLjU3NSwzNDUuMTgzIDEwNS4wNzUsMzQ1LjE4MyBRMTA1Ljc3OCwzNDUuMTgzIDEwNi40MTgsMzQ1LjMzOSBRMTA3LjA3NSwzNDUuNDk2IDEwNy42MzcsMzQ1Ljc5MiBMMTA3LjYzNywzNDguNTExIFExMDcuMDEyLDM0Ny45MzMgMTA2LjQxOCwzNDcuNjY3IFExMDUuODI1LDM0Ny4zODYgMTA1LjIsMzQ3LjM4NiBRMTAzLjg1NiwzNDcuMzg2IDEwMy4xNjgsMzQ4LjQ2NCBRMTAyLjQ4MSwzNDkuNTI3IDEwMi40ODEsMzUxLjYyMSBRMTAyLjQ4MSwzNTMuNzE0IDEwMy4xNjgsMzU0Ljc5MiBRMTAzLjg1NiwzNTUuODU1IDEwNS4yLDM1NS44NTUgUTEwNS44MjUsMzU1Ljg1NSAxMDYuNDE4LDM1NS41ODkgUTEwNy4wMTIsMzU1LjMwOCAxMDcuNjM3LDM1NC43MyBMMTA3LjYzNywzNTcuNDQ5IFogIiBmaWxsPSIjMDAwIi8+PHRleHQgeD0iMTE5LjY1MSIgeT0iMzM5LjY2NiIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxMiIgdGV4dExlbmd0aD0iOTguNjg0IiBmb250LXN0eWxlPSJpdGFsaWMiPsKr5YCk44Kq44OW44K444Kn44Kv44OIwrs8L3RleHQ+PHRleHQgeD0iMTQwLjk5MyIgeT0iMzU1LjQ5MSIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxNCIgdGV4dExlbmd0aD0iNTYiPuaWmemHkeagueaLoDwvdGV4dD48dGV4dCB4PSIxMjEuNDg0IiB5PSIzNzEuNzg4IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE0IiB0ZXh0TGVuZ3RoPSI5NS4wMiI+KFByaWNpbmdCYXNpcyk8L3RleHQ+PGxpbmUgeDE9Ijc4IiB5MT0iMzgwLjA4OSIgeDI9IjIzMS4xNzEiIHkyPSIzODAuMDg5IiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjAuNTsiLz48dGV4dCB4PSI4MyIgeT0iMzk3LjA4NCIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxNCIgdGV4dExlbmd0aD0iMTQzLjE3MSI+5piO57Sw44Gu5YiX77yIMeOAnDEwIOihjO+8iTwvdGV4dD48dGV4dCB4PSI4MyIgeT0iNDEzLjM4MSIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxNCIgdGV4dExlbmd0aD0iMTA1LjI0NiI+6YCa6LKoIDogQ3VycmVuY3k8L3RleHQ+PGxpbmUgeDE9Ijc4IiB5MT0iNDIwLjY4MyIgeDI9IjIzMS4xNzEiIHkyPSI0MjAuNjgzIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjAuNTsiLz48ZyBkYXRhLXZpc2liaWxpdHktbW9kaWZpZXI9IlBVQkxJQ19NRVRIT0QiPjxlbGxpcHNlIGN4PSI4OCIgY3k9IjQzNC4zMzIiIHJ4PSIzIiByeT0iMyIgZmlsbD0iIzg0QkU4NCIgc3R5bGU9InN0cm9rZTojMDM4MDQ4O3N0cm9rZS13aWR0aDoxOyIvPjwvZz48dGV4dCB4PSI5NyIgeT0iNDM3LjY3OCIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxNCIgdGV4dExlbmd0aD0iODAuNTQxIj7lkIjoqIgoKSA6IOmHkemhjTwvdGV4dD48L2c+PCEtLWNsYXNzIFBMLS0+PGcgY2xhc3M9ImVudGl0eSIgZGF0YS1xdWFsaWZpZWQtbmFtZT0iUEwiIGlkPSJlbnQwMDAzIiBkYXRhLXNvdXJjZS1saW5lPSIxOCI+PHJlY3QgeD0iNyIgeT0iNTA0Ljk4NyIgd2lkdGg9IjI5NS4xNjQiIGhlaWdodD0iMTIxLjQ1MyIgZmlsbD0iI0YxRjFGMSIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDowLjU7IiByeD0iMi41IiByeT0iMi41Ii8+PGVsbGlwc2UgY3g9IjEwMi45OSIgY3k9IjUzMy4yNjgiIHJ4PSIxMSIgcnk9IjExIiBmaWxsPSIjQUREMUIyIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjE7Ii8+PHBhdGggZD0iTTEwNS45NTksNTM4LjkwOSBRMTA1LjM4LDUzOS4yMDYgMTA0Ljc0LDUzOS4zNDYgUTEwNC4wOTksNTM5LjUwMyAxMDMuMzk2LDUzOS41MDMgUTEwMC44OTYsNTM5LjUwMyA5OS41NjgsNTM3Ljg2MiBROTguMjU1LDUzNi4yMDYgOTguMjU1LDUzMy4wODEgUTk4LjI1NSw1MjkuOTU2IDk5LjU2OCw1MjguMjk5IFExMDAuODk2LDUyNi42NDMgMTAzLjM5Niw1MjYuNjQzIFExMDQuMDk5LDUyNi42NDMgMTA0Ljc0LDUyNi43OTkgUTEwNS4zOTYsNTI2Ljk1NiAxMDUuOTU5LDUyNy4yNTMgTDEwNS45NTksNTI5Ljk3MSBRMTA1LjMzNCw1MjkuMzkzIDEwNC43NCw1MjkuMTI4IFExMDQuMTQ2LDUyOC44NDYgMTAzLjUyMSw1MjguODQ2IFExMDIuMTc3LDUyOC44NDYgMTAxLjQ5LDUyOS45MjQgUTEwMC44MDIsNTMwLjk4NyAxMDAuODAyLDUzMy4wODEgUTEwMC44MDIsNTM1LjE3NCAxMDEuNDksNTM2LjI1MyBRMTAyLjE3Nyw1MzcuMzE1IDEwMy41MjEsNTM3LjMxNSBRMTA0LjE0Niw1MzcuMzE1IDEwNC43NCw1MzcuMDQ5IFExMDUuMzM0LDUzNi43NjggMTA1Ljk1OSw1MzYuMTkgTDEwNS45NTksNTM4LjkwOSBaICIgZmlsbD0iIzAwMCIvPjx0ZXh0IHg9IjEyMS40OSIgeT0iNTIxLjEyNiIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxMiIgdGV4dExlbmd0aD0iOTguNjg0IiBmb250LXN0eWxlPSJpdGFsaWMiPsKr5YCk44Kq44OW44K444Kn44Kv44OIwrs8L3RleHQ+PHRleHQgeD0iMTQyLjgzMiIgeT0iNTM2Ljk1MSIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxNCIgdGV4dExlbmd0aD0iNTYiPuaWmemHkeaYjue0sDwvdGV4dD48dGV4dCB4PSIxMjcuMDY1IiB5PSI1NTMuMjQ4IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE0IiB0ZXh0TGVuZ3RoPSI4Ny41MzQiPihQcmljaW5nTGluZSk8L3RleHQ+PGxpbmUgeDE9IjgiIHkxPSI1NjEuNTQ5IiB4Mj0iMzAxLjE2NCIgeTI9IjU2MS41NDkiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MC41OyIvPjx0ZXh0IHg9IjEzIiB5PSI1NzguNTQ0IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE0IiB0ZXh0TGVuZ3RoPSIyOCI+5YaF5a65PC90ZXh0Pjx0ZXh0IHg9IjEzIiB5PSI1OTQuODQxIiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE0IiB0ZXh0TGVuZ3RoPSIyODMuMTY0Ij7ph5HpoY3vvIgwIOOCiOOCiuWkp+OBjeOBhOOAgeWwj+aVsOeCueS7peS4iyAyIOahgeOBvuOBp++8iTwvdGV4dD48dGV4dCB4PSIxMyIgeT0iNjExLjEzOCIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxNCIgdGV4dExlbmd0aD0iMTY3Ljk5OSI+5Y+C54Wn44GX44Gf5aWR57SE5p2h5Lu277yI5Lu75oSP77yJPC90ZXh0PjxsaW5lIHgxPSI4IiB5MT0iNjE4LjQ0IiB4Mj0iMzAxLjE2NCIgeTI9IjYxOC40NCIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDowLjU7Ii8+PC9nPjwhLS1jbGFzcyBFeHAtLT48ZyBjbGFzcz0iZW50aXR5IiBkYXRhLXF1YWxpZmllZC1uYW1lPSJFeHAiIGlkPSJlbnQwMDA0IiBkYXRhLXNvdXJjZS1saW5lPSIyMyI+PHJlY3QgeD0iMjY3LjQ3IiB5PSIzMzkuODI3IiB3aWR0aD0iMTU2LjIxNiIgaGVpZ2h0PSI4OC44NTkiIGZpbGw9IiNGMUYxRjEiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MC41OyIgcng9IjIuNSIgcnk9IjIuNSIvPjxlbGxpcHNlIGN4PSIyODIuNDciIGN5PSIzNjguMTA4IiByeD0iMTEiIHJ5PSIxMSIgZmlsbD0iI0FERDFCMiIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxOyIvPjxwYXRoIGQ9Ik0yODUuNDM5LDM3My43NDkgUTI4NC44NjEsMzc0LjA0NiAyODQuMjIsMzc0LjE4NiBRMjgzLjU3OSwzNzQuMzQzIDI4Mi44NzYsMzc0LjM0MyBRMjgwLjM3NiwzNzQuMzQzIDI3OS4wNDgsMzcyLjcwMiBRMjc3LjczNiwzNzEuMDQ2IDI3Ny43MzYsMzY3LjkyMSBRMjc3LjczNiwzNjQuNzk2IDI3OS4wNDgsMzYzLjEzOSBRMjgwLjM3NiwzNjEuNDgzIDI4Mi44NzYsMzYxLjQ4MyBRMjgzLjU3OSwzNjEuNDgzIDI4NC4yMiwzNjEuNjM5IFEyODQuODc2LDM2MS43OTYgMjg1LjQzOSwzNjIuMDkzIEwyODUuNDM5LDM2NC44MTEgUTI4NC44MTQsMzY0LjIzMyAyODQuMjIsMzYzLjk2OCBRMjgzLjYyNiwzNjMuNjg2IDI4My4wMDEsMzYzLjY4NiBRMjgxLjY1OCwzNjMuNjg2IDI4MC45NywzNjQuNzY0IFEyODAuMjgzLDM2NS44MjcgMjgwLjI4MywzNjcuOTIxIFEyODAuMjgzLDM3MC4wMTQgMjgwLjk3LDM3MS4wOTMgUTI4MS42NTgsMzcyLjE1NSAyODMuMDAxLDM3Mi4xNTUgUTI4My42MjYsMzcyLjE1NSAyODQuMjIsMzcxLjg4OSBRMjg0LjgxNCwzNzEuNjA4IDI4NS40MzksMzcxLjAzIEwyODUuNDM5LDM3My43NDkgWiAiIGZpbGw9IiMwMDAiLz48dGV4dCB4PSIzMDkuMjM2IiB5PSIzNTUuOTY2IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjEyIiB0ZXh0TGVuZ3RoPSI5OC42ODQiIGZvbnQtc3R5bGU9Iml0YWxpYyI+wqvlgKTjgqrjg5bjgrjjgqfjgq/jg4jCuzwvdGV4dD48dGV4dCB4PSIzMTYuNTc4IiB5PSIzNzEuNzkxIiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE0IiB0ZXh0TGVuZ3RoPSI4NCI+6KaL56mN5pyJ5Yq55pyf6ZmQPC90ZXh0Pjx0ZXh0IHg9IjI5Ni40NyIgeT0iMzg4LjA4OCIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxNCIgdGV4dExlbmd0aD0iMTI0LjIxNiI+KFF1b3RhdGlvbkV4cGlyeSk8L3RleHQ+PGxpbmUgeDE9IjI2OC40NyIgeTE9IjM5Ni4zODkiIHgyPSI0MjIuNjg2IiB5Mj0iMzk2LjM4OSIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDowLjU7Ii8+PHRleHQgeD0iMjczLjQ3IiB5PSI0MTMuMzg0IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE0IiB0ZXh0TGVuZ3RoPSIxMTMuNzc3Ij7mnJ/pmZAgOiBVdGNJbnN0YW50PC90ZXh0PjxsaW5lIHgxPSIyNjguNDciIHkxPSI0MjAuNjg2IiB4Mj0iNDIyLjY4NiIgeTI9IjQyMC42ODYiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MC41OyIvPjwvZz48IS0tY2xhc3MgUlAtLT48ZyBjbGFzcz0iZW50aXR5IiBkYXRhLXF1YWxpZmllZC1uYW1lPSJSUCIgaWQ9ImVudDAwMDUiIGRhdGEtc291cmNlLWxpbmU9IjI2Ij48cmVjdCB4PSI0NTguOTEiIHk9IjMyMy41MjciIHdpZHRoPSIyNDcuMzQiIGhlaWdodD0iMTIxLjQ1MyIgZmlsbD0iI0YxRjFGMSIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDowLjU7IiByeD0iMi41IiByeT0iMi41Ii8+PGVsbGlwc2UgY3g9IjUzMC45ODgiIGN5PSIzNTEuODA4IiByeD0iMTEiIHJ5PSIxMSIgZmlsbD0iI0FERDFCMiIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxOyIvPjxwYXRoIGQ9Ik01MzMuOTU3LDM1Ny40NDkgUTUzMy4zNzksMzU3Ljc0NiA1MzIuNzM4LDM1Ny44ODYgUTUzMi4wOTcsMzU4LjA0MiA1MzEuMzk0LDM1OC4wNDIgUTUyOC44OTQsMzU4LjA0MiA1MjcuNTY2LDM1Ni40MDIgUTUyNi4yNTQsMzU0Ljc0NiA1MjYuMjU0LDM1MS42MjEgUTUyNi4yNTQsMzQ4LjQ5NiA1MjcuNTY2LDM0Ni44MzkgUTUyOC44OTQsMzQ1LjE4MyA1MzEuMzk0LDM0NS4xODMgUTUzMi4wOTcsMzQ1LjE4MyA1MzIuNzM4LDM0NS4zMzkgUTUzMy4zOTQsMzQ1LjQ5NiA1MzMuOTU3LDM0NS43OTIgTDUzMy45NTcsMzQ4LjUxMSBRNTMzLjMzMiwzNDcuOTMzIDUzMi43MzgsMzQ3LjY2NyBRNTMyLjE0NCwzNDcuMzg2IDUzMS41MTksMzQ3LjM4NiBRNTMwLjE3NSwzNDcuMzg2IDUyOS40ODgsMzQ4LjQ2NCBRNTI4LjgsMzQ5LjUyNyA1MjguOCwzNTEuNjIxIFE1MjguOCwzNTMuNzE0IDUyOS40ODgsMzU0Ljc5MiBRNTMwLjE3NSwzNTUuODU1IDUzMS41MTksMzU1Ljg1NSBRNTMyLjE0NCwzNTUuODU1IDUzMi43MzgsMzU1LjU4OSBRNTMzLjMzMiwzNTUuMzA4IDUzMy45NTcsMzU0LjczIEw1MzMuOTU3LDM1Ny40NDkgWiAiIGZpbGw9IiMwMDAiLz48dGV4dCB4PSI1NDkuNDg4IiB5PSIzMzkuNjY2IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjEyIiB0ZXh0TGVuZ3RoPSI5OC42ODQiIGZvbnQtc3R5bGU9Iml0YWxpYyI+wqvlgKTjgqrjg5bjgrjjgqfjgq/jg4jCuzwvdGV4dD48dGV4dCB4PSI1NzAuODMiIHk9IjM1NS40OTEiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTQiIHRleHRMZW5ndGg9IjU2Ij7ntYzot6/mlrnph508L3RleHQ+PHRleHQgeD0iNTUyLjM0OSIgeT0iMzcxLjc4OCIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxNCIgdGV4dExlbmd0aD0iOTIuOTYyIj4oUm91dGVQb2xpY3kpPC90ZXh0PjxsaW5lIHgxPSI0NTkuOTEiIHkxPSIzODAuMDg5IiB4Mj0iNzA1LjI1IiB5Mj0iMzgwLjA4OSIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDowLjU7Ii8+PHRleHQgeD0iNDY0LjkxIiB5PSIzOTcuMDg0IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE0IiB0ZXh0TGVuZ3RoPSIyMzUuMzQiPuS4u+OBque1jOeUseWcsCA6IExvY2F0aW9uIOOBruWIl++8iDDjgJw177yJPC90ZXh0Pjx0ZXh0IHg9IjQ2NC45MSIgeT0iNDEzLjM4MSIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxNCIgdGV4dExlbmd0aD0iMTgzLjc3NyI+5qaC566X44Gu5Ye655m65pel5pmCIDogVXRjSW5zdGFudDwvdGV4dD48dGV4dCB4PSI0NjQuOTEiIHk9IjQyOS42NzgiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTQiIHRleHRMZW5ndGg9IjE4My43NzciPuamgueul+OBruWIsOedgOaXpeaZgiA6IFV0Y0luc3RhbnQ8L3RleHQ+PGxpbmUgeDE9IjQ1OS45MSIgeTE9IjQzNi45OCIgeDI9IjcwNS4yNSIgeTI9IjQzNi45OCIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDowLjU7Ii8+PC9nPjwhLS1jbGFzcyBTdC0tPjxnIGNsYXNzPSJlbnRpdHkiIGRhdGEtcXVhbGlmaWVkLW5hbWU9IlN0IiBpZD0iZW50MDAwNiIgZGF0YS1zb3VyY2UtbGluZT0iMzEiPjxyZWN0IHg9Ijc0MC43OCIgeT0iMzMwLjUxNyIgd2lkdGg9IjIxNy42MDQiIGhlaWdodD0iMTA3LjQ4NCIgZmlsbD0iI0YxRjFGMSIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDowLjU7IiByeD0iMi41IiByeT0iMi41Ii8+PGVsbGlwc2UgY3g9Ijc4My4xMDYiIGN5PSIzNTEuODE0IiByeD0iMTEiIHJ5PSIxMSIgZmlsbD0iI0VCOTM3RiIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxOyIvPjxwYXRoIGQ9Ik03ODcuMjE2LDM1Ny44MTQgTDc3OS40OTcsMzU3LjgxNCBMNzc5LjQ5NywzNDUuNDIzIEw3ODcuMjE2LDM0NS40MjMgTDc4Ny4yMTYsMzQ3LjU3OSBMNzgxLjk1LDM0Ny41NzkgTDc4MS45NSwzNTAuMjUxIEw3ODYuNzE2LDM1MC4yNTEgTDc4Ni43MTYsMzUyLjQwNyBMNzgxLjk1LDM1Mi40MDcgTDc4MS45NSwzNTUuNjU3IEw3ODcuMjE2LDM1NS42NTcgTDc4Ny4yMTYsMzU3LjgxNCBaICIgZmlsbD0iIzAwMCIvPjx0ZXh0IHg9IjgyMy42MTkiIHk9IjM0OC41MTIiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTQiIHRleHRMZW5ndGg9Ijg0Ij7opovnqY3jgorjga7nirbmhYs8L3RleHQ+PHRleHQgeD0iODAzLjE3OSIgeT0iMzY0LjgwOSIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxNCIgdGV4dExlbmd0aD0iMTI0Ljg3OSI+KFF1b3RhdGlvblN0YXR1cyk8L3RleHQ+PGxpbmUgeDE9Ijc0MS43OCIgeTE9IjM3My4xMTEiIHgyPSI5NTcuMzg0IiB5Mj0iMzczLjExMSIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDowLjU7Ii8+PHRleHQgeD0iNzQ2Ljc4IiB5PSIzOTAuMTA2IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE0IiB0ZXh0TGVuZ3RoPSI5My4xMzkiPkRSQUZUIOS9nOaIkOS4rTwvdGV4dD48dGV4dCB4PSI3NDYuNzgiIHk9IjQwNi40MDMiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTQiIHRleHRMZW5ndGg9IjIwNS42MDQiPlBFTkRJTkdfQVBQUk9WQUwg5om/6KqN5b6F44GhPC90ZXh0Pjx0ZXh0IHg9Ijc0Ni43OCIgeT0iNDIyLjY5OSIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxNCIgdGV4dExlbmd0aD0iMTQzLjg0OCI+UFJFU0VOVEVEIOaPkOekuua4iOOBvzwvdGV4dD48bGluZSB4MT0iNzQxLjc4IiB5MT0iNDMwLjAwMSIgeDI9Ijk1Ny4zODQiIHkyPSI0MzAuMDAxIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjAuNTsiLz48L2c+PGcgY2xhc3M9ImVudGl0eSIgZGF0YS1xdWFsaWZpZWQtbmFtZT0iR01OMTIiIGlkPSJlbnQwMDEzIiBkYXRhLXNvdXJjZS1saW5lPSI0MiI+PHBhdGggZD0iTTcxMi4wMiwxMjYuMjE3IEw3MTIuMDIsMTQ5LjkxNyBMNjc3LjMxLDE1My45MTcgTDcxMi4wMiwxNTcuOTE3IEw3MTIuMDIsMTgxLjYxNSBBMCwwIDAgMCAwIDcxMi4wMiwxODEuNjE1IEwxMTI1LjE0LDE4MS42MTUgQTAsMCAwIDAgMCAxMTI1LjE0LDE4MS42MTUgTDExMjUuMTQsMTM2LjIxNyBMMTExNS4xNCwxMjYuMjE3IEw3MTIuMDIsMTI2LjIxNyBBMCwwIDAgMCAwIDcxMi4wMiwxMjYuMjE3IiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjAuNTsiIGZpbGw9IiNGRUZGREQiLz48cGF0aCBkPSJNMTExNS4xNCwxMjYuMjE3IEwxMTE1LjE0LDEzNi4yMTcgTDExMjUuMTQsMTM2LjIxNyBMMTExNS4xNCwxMjYuMjE3IiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjAuNTsiIGZpbGw9IiNGRUZGREQiLz48dGV4dCB4PSI3MTguMDIiIHk9IjE0My4yODQiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTMiIHRleHRMZW5ndGg9IjM5Mi4xMiI+US1JTlYtMDU6IOeul+WHuuOBq+OBr+aWmemHkeagueaLoOODu+acieWKueacn+mZkOODu+e1jOi3r+aWuemHneOBjOOBneOCjeOBhuOBk+OBqOOAgjwvdGV4dD48dGV4dCB4PSI3MTguMDIiIHk9IjE1OC40MTciIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTMiIHRleHRMZW5ndGg9IjI5OC40MDQiPuacieWKueacn+mZkOOBr+eul+WHuuOBruaZguWIu+OCiOOCiuW+jO+8iOeiuuiqjeODneOCpOODs+ODiCAz77yJ44CCPC90ZXh0Pjx0ZXh0IHg9IjcxOC4wMiIgeT0iMTczLjU0OSIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxMyIgdGV4dExlbmd0aD0iMTc3LjcyMiI+5o+Q56S644GZ44KL44GoIERFLTAzIOOCkueUn+aIkOOBmeOCizwvdGV4dD48L2c+PCEtLXJldmVyc2UgbGluayBRIHRvIFBCLS0+PGcgY2xhc3M9ImxpbmsiIGRhdGEtZW50aXR5LTE9ImVudDAwMDEiIGRhdGEtZW50aXR5LTI9ImVudDAwMDIiIGlkPSJsbms3IiBkYXRhLXNvdXJjZS1saW5lPSIzNiIgZGF0YS1saW5rLXR5cGU9ImNvbXBvc2l0aW9uIj48cGF0aCBkPSJNMzA2LjY2OSwyNzAuODY4IEMyNzcuNzU5LDI5Mi4yMjggMjU4LjE2LDMwNi43MTcgMjMyLjYzLDMyNS41NzciIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTsiIGZpbGw9Im5vbmUiIGlkPSJRLWJhY2t0by1QQiIgY29kZUxpbmU9IjM2Ii8+PHBvbHlnb24gcG9pbnRzPSIzMTYuMzIsMjYzLjczNywzMDkuMTE3LDI2NC4wODUsMzA2LjY2OSwyNzAuODY4LDMxMy44NzEsMjcwLjUxOSwzMTYuMzIsMjYzLjczNyIgZmlsbD0iIzE4MTgxOCIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxO3N0cm9rZS1saW5lam9pbjptaXRlcjtzdHJva2UtbWl0ZXJsaW1pdDoxMDsiLz48dGV4dCB4PSIyNDAuMTIiIHk9IjMxNy4xNjkiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTMiIHRleHRMZW5ndGg9IjI0LjgwNyI+MC4uMTwvdGV4dD48L2c+PCEtLXJldmVyc2UgbGluayBRIHRvIEV4cC0tPjxnIGNsYXNzPSJsaW5rIiBkYXRhLWVudGl0eS0xPSJlbnQwMDAxIiBkYXRhLWVudGl0eS0yPSJlbnQwMDA0IiBpZD0ibG5rOCIgZGF0YS1zb3VyY2UtbGluZT0iMzciIGRhdGEtbGluay10eXBlPSJjb21wb3NpdGlvbiI+PHBhdGggZD0iTTQwMS44NDEsMjc0LjM5OCBDMzg3Ljk1MSwzMDEuMjc4IDM3OS4zNiwzMTcuODg3IDM2OC4xNSwzMzkuNTg3IiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjE7IiBmaWxsPSJub25lIiBpZD0iUS1iYWNrdG8tRXhwIiBjb2RlTGluZT0iMzciLz48cG9seWdvbiBwb2ludHM9IjQwNy4zNSwyNjMuNzM3LDQwMS4wNDIsMjY3LjIzMSw0MDEuODQxLDI3NC4zOTgsNDA4LjE0OSwyNzAuOTA0LDQwNy4zNSwyNjMuNzM3IiBmaWxsPSIjMTgxODE4IiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjE7c3Ryb2tlLWxpbmVqb2luOm1pdGVyO3N0cm9rZS1taXRlcmxpbWl0OjEwOyIvPjx0ZXh0IHg9IjM0NS44MzEiIHk9IjMyOC42NzUiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTMiIHRleHRMZW5ndGg9IjI0LjgwNyI+MC4uMTwvdGV4dD48L2c+PCEtLXJldmVyc2UgbGluayBRIHRvIFJQLS0+PGcgY2xhc3M9ImxpbmsiIGRhdGEtZW50aXR5LTE9ImVudDAwMDEiIGRhdGEtZW50aXR5LTI9ImVudDAwMDUiIGlkPSJsbms5IiBkYXRhLXNvdXJjZS1saW5lPSIzOCIgZGF0YS1saW5rLXR5cGU9ImNvbXBvc2l0aW9uIj48cGF0aCBkPSJNNTI1LjgzOSwyNzQuMzc3IEM1MzYuNDk5LDI5NC44MTcgNTQxLjcyLDMwNC44NTcgNTUxLjI1LDMyMy4xMzciIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTsiIGZpbGw9Im5vbmUiIGlkPSJRLWJhY2t0by1SUCIgY29kZUxpbmU9IjM4Ii8+PHBvbHlnb24gcG9pbnRzPSI1MjAuMjksMjYzLjczNyw1MTkuNTE4LDI3MC45MDcsNTI1LjgzOSwyNzQuMzc3LDUyNi42MTEsMjY3LjIwNyw1MjAuMjksMjYzLjczNyIgZmlsbD0iIzE4MTgxOCIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxO3N0cm9rZS1saW5lam9pbjptaXRlcjtzdHJva2UtbWl0ZXJsaW1pdDoxMDsiLz48dGV4dCB4PSI1MjIuMjg3IiB5PSIzMTIuMjc4IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjEzIiB0ZXh0TGVuZ3RoPSIyNC44MDciPjAuLjE8L3RleHQ+PC9nPjwhLS1yZXZlcnNlIGxpbmsgUEIgdG8gUEwtLT48ZyBjbGFzcz0ibGluayIgZGF0YS1lbnRpdHktMT0iZW50MDAwMiIgZGF0YS1lbnRpdHktMj0iZW50MDAwMyIgaWQ9ImxuazEwIiBkYXRhLXNvdXJjZS1saW5lPSIzOSIgZGF0YS1saW5rLXR5cGU9ImNvbXBvc2l0aW9uIj48cGF0aCBkPSJNMTU0LjU4LDQ1Ny4wMTcgQzE1NC41OCw0NzYuMTc3IDE1NC41OCw0ODUuNDA3IDE1NC41OCw1MDQuNjA3IiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjE7IiBmaWxsPSJub25lIiBpZD0iUEItYmFja3RvLVBMIiBjb2RlTGluZT0iMzkiLz48cG9seWdvbiBwb2ludHM9IjE1NC41OCw0NDUuMDE3LDE1MC41OCw0NTEuMDE3LDE1NC41OCw0NTcuMDE3LDE1OC41OCw0NTEuMDE3LDE1NC41OCw0NDUuMDE3IiBmaWxsPSIjMTgxODE4IiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjE7c3Ryb2tlLWxpbmVqb2luOm1pdGVyO3N0cm9rZS1taXRlcmxpbWl0OjEwOyIvPjx0ZXh0IHg9IjExOS42NzYiIHk9IjQ5My43NDkiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTMiIHRleHRMZW5ndGg9IjMzLjA3OCI+MS4uMTA8L3RleHQ+PC9nPjwhLS1saW5rIFEgdG8gU3QtLT48ZyBjbGFzcz0ibGluayIgZGF0YS1lbnRpdHktMT0iZW50MDAwMSIgZGF0YS1lbnRpdHktMj0iZW50MDAwNiIgaWQ9ImxuazExIiBkYXRhLXNvdXJjZS1saW5lPSI0MCIgZGF0YS1saW5rLXR5cGU9ImRlcGVuZGVuY3kiPjxwYXRoIGQ9Ik02NDcuODIsMjYzLjkwNyBDNjg2LjcyLDI4Ni45MTcgNzIxLjc4NiwzMDcuNjYxIDc1NS4yOTYsMzI3LjQ4MSIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxOyIgZmlsbD0ibm9uZSIgaWQ9IlEtdG8tU3QiIGNvZGVMaW5lPSI0MCIvPjxwb2x5Z29uIHBvaW50cz0iNzU5LjYsMzMwLjAyNyw3NTMuODksMzIyLjAwMiw3NTUuMjk2LDMyNy40ODEsNzQ5LjgxNywzMjguODg4LDc1OS42LDMzMC4wMjciIGZpbGw9IiMxODE4MTgiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTtzdHJva2UtbGluZWpvaW46bWl0ZXI7c3Ryb2tlLW1pdGVybGltaXQ6MTA7Ii8+PC9nPjw/cGxhbnR1bWwtc3JjIFZMSFRSbjkxNTd0Vk5wN2ZLekxZR0VEQk92Z3FXZVE0cjhMTWRxbUNHUW9SckNOMGFjWENhdnNiYkFNcUdqTXNPY2FnWGFBamlMMF8tUVp1T3VRUE1QeHc1eG94TS1XSUpQenNUdFJra1VWVVMtdkw5NktuWWVuZ1pkelE5emZnVnNVNVZyeS1GVDVkT2VpQXloV0htUk5VeG5CSFNoby1KN1UtZGZ2YVhTWFlFOTUwT3lFTzFfOXVDMWJKbWVlS2FvLURlTjAyMVQ3RGNwT0lJTnFjZ0hFSXFnVWNxNGpYNjhCeU5aSTlYYjctSC1VXy1FT1hwVnkyMWlQOWl3ellldWhQaUtSbUtRX3YxUldXM3AzQTRJcmg0ZDdVMDRJMXJobDZTUGJkVEhqM3VBaV9NSmhkSjNHN1pzSDJ1OUtrTktjcHgxX1pTRHJHcW9KTFNQd21lYVJyWmkzbzFMdmZzbi0wU0stOS1FTTQ0Zk9MdUdoWUh6aXFxb1F1MjhxUFBybDVWY1EzVk1ZbnQ4UzluNGZQa2pmWWZSci1pSjIxLTh5cnVyVVRSUk53Y1RzOWlwMFJ5WDlXemw0Y3BRelJuUWI2ak1PMkV0V0dsNHJtclFPbkkzTVczN2FTejRtaWJkakQyck4wdWVLTF9sUE9NMWhldkFHN0tlYm5BSUI5MnBGWFg5SW1ySDlkRzJ3Z0xlWHNJNTlSSDZpSWhLUXEtYTBxemt1TF96dTBPQWZsV29tVWVmUjA1cVB2cFBJV2h4dXRsWHYwLWJsOVUzbWdIcnYwM1JJVzZtVndrNUxXUGdEVk5sLTdZdUx1cFlLV29UNHBBZTRCZ0sxaHc1NUJpNTYxMnpYSnF5NHBqNThaNkZncko1SEM2dGNzc1UxUWd6VlB4cExwdzFmWVBLbm01eW5aNGdQdlpRVGhMY2x0d0Z1Nk05SmpiZGtUZHUzTXd0Sk9Tand5ajNKZ1NRVWFKaEZ4ZFotSnVZeml2bDEtU0hVanc1NFYzVEN1Tkc4OUdoNmE0WExaWXJCYTMzbWFOZVpUUXRPOEZXR0dxOXNNNmYwYTQ4ak8zRDVHRFpWOFRpRWlaTEtyaUE1dmRjZHBPZmpqeHVFN0hkY1ROejRSVjVWenR2S2I4SWVkZHBnTVc2YXlRem9TM1JCN3BRdlhKVzZjdGozcXhOYTQydU5mMUhYZUdWSkRVbHNwVG52RVlzQmV4bHRmMEI4REpoamZXaWsyNkZCRC1NUmRWVHcxc1Bpd21OeVdUbjFUVGhkR2NGbGdMU3lPczdWcTZ2R09GR1k5MGJaU0VsMzBXSGoyMGQzM3ZQZTJLZThTS3c4ZUJZcXlLTDNpQ0dlQUdQVF96aHhCVk1Eb0VFSVYyUXV4WG1aTVhUQ0h2bFBtdzRWbTZpNnhIMEN4aFgzeVhrMDNlY2gySTAyazN3MkZ4RmF6U3Q0TkhhaGQ3emxjeEFTMGVhOUl0cTFaVDFycWlxMFNnbTFtYVRWZFNiLTc0TlpEdC12MUctcVY4Q21aUDFScjVtMDA/PjwvZz48L3N2Zz4=" class="uml" alt="uml diagram" title="" /></p>
 <blockquote>
-<p>注（設計への反映。ステップ 1 で反映する）: UI 設計に次を書く。</p>
+<p>注（設計への反映。ステップ 1 で反映する）: 次は計画を書いた時点でドメインモデルになかった。</p>
 <ul>
-<li>共通レイアウトの実装（Thymeleaf のフラグメント、WebJars、共通の CSS の置き場）と、いまあるナビの項目</li>
-<li>C-03 の段階入力を、R1.0 で下書きを保存するまでは 1 つのフォームの中のパネルの切り替えにすること。JavaScript がないときは全段階を 1 画面で示すこと。エラー要約のリンクを選ぶと、その項目のある段階を開いてフォーカスを移すこと</li>
+<li>料金明細（PricingLine）と、料金根拠の明細の数・通貨・合計</li>
+<li>見積り番号（輸送要求の中で 1 から。画面と URL には内部の ID の代わりにこれを出す。D-4 と同じ考え方）</li>
+<li>算出の検証の不変条件（Q-INV-17: 料金根拠の明細・有効期限・経路方針の形と、有効期限は算出の時刻より後）</li>
+<li>見積りを作れるのは、輸送要求が見積り作成中で、対象の版が現在の版のときだけ。1 つの輸送要求に、作成中・承認待ち・提示済みの見積りは 1 つだけ（置換は Bolt 11。Q-INV-18）</li>
 </ul>
 </blockquote>
-<h2 id="_7">開始準備の検証<a class="headerlink" href="#_7" title="Permanent link">&para;</a></h2>
+<h3 id="_6">状態遷移<a class="headerlink" href="#_6" title="Permanent link">&para;</a></h3>
+<p><img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB2ZXJzaW9uPSIxLjEiIGRhdGEtZGlhZ3JhbS10eXBlPSJTVEFURSIgc3R5bGU9IndpZHRoOjY3MHB4O2hlaWdodDo0MzdweDtiYWNrZ3JvdW5kOiNGRkZGRkY7IiB3aWR0aD0iNjcwcHgiIGhlaWdodD0iNDM3cHgiIHZpZXdCb3g9IjAgMCA2NzAgNDM3IiB6b29tQW5kUGFuPSJtYWduaWZ5IiBwcmVzZXJ2ZUFzcGVjdFJhdGlvPSJub25lIiBjb250ZW50U3R5bGVUeXBlPSJ0ZXh0L2NzcyI+PD9wbGFudHVtbCAxLjIwMjYuOD8+PGRlZnMvPjxnIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBsZW5ndGhBZGp1c3Q9InNwYWNpbmciPjxnIGNsYXNzPSJ0aXRsZSIgZGF0YS1zb3VyY2UtbGluZT0iMSI+PHRleHQgeD0iMTg5LjI1NSIgeT0iMjIuOTk1IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE0IiB0ZXh0TGVuZ3RoPSIyODUuMDEiIGZvbnQtd2VpZ2h0PSI3MDAiPuimi+epjeOCiuOBqOi8uOmAgeimgeaxguOBrueKtuaFi++8iEJvbHQgMTAg44Gu56+E5Zuy77yJPC90ZXh0PjwvZz48ZyBjbGFzcz0iZW50aXR5IiBkYXRhLXF1YWxpZmllZC1uYW1lPSJRUyIgaWQ9ImVudDAwMDEiIGRhdGEtc291cmNlLWxpbmU9IjIiPjxwYXRoIGQ9Ik0xOS41LDQ0LjI5NyBMMjY1Ljk1Nyw0NC4yOTcgQTEyLjUsMTIuNSAwIDAgMSAyNzguNDU3LDU2Ljc5NyBMMjc4LjQ1Nyw3MC41OTQgTDcsNzAuNTk0IEw3LDU2Ljc5NyBBMTIuNSwxMi41IDAgMCAxIDE5LjUsNDQuMjk3IiBmaWxsPSIjRjFGMUYxIi8+PHJlY3QgeD0iNyIgeT0iNDQuMjk3IiB3aWR0aD0iMjcxLjQ1NyIgaGVpZ2h0PSIzNzkuMjk3IiBmaWxsPSJub25lIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjAuNTsiIHJ4PSIxMi41IiByeT0iMTIuNSIvPjxsaW5lIHgxPSI3IiB5MT0iNzAuNTk0IiB4Mj0iMjc4LjQ1NyIgeTI9IjcwLjU5NCIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDowLjU7Ii8+PHRleHQgeD0iMTIxLjcyOSIgeT0iNjIuMjkyIiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE0IiB0ZXh0TGVuZ3RoPSI0MiI+6KaL56mN44KKPC90ZXh0PjxnIGNsYXNzPSJzdGFydF9lbnRpdHkiIGRhdGEtcXVhbGlmaWVkLW5hbWU9IlFTLi5zdGFydC5RUyIgaWQ9ImVudDAwMDMiIGRhdGEtc291cmNlLWxpbmU9IjMiPjxlbGxpcHNlIGN4PSI1NyIgY3k9IjkxLjU5NCIgcng9IjEwIiByeT0iMTAiIGZpbGw9IiMyMjIiIHN0eWxlPSJzdHJva2U6IzIyMjtzdHJva2Utd2lkdGg6MTsiLz48L2c+PGcgY2xhc3M9ImVudGl0eSIgZGF0YS1xdWFsaWZpZWQtbmFtZT0iUVMuLi4uIiBpZD0iZW50MDAwNCIgZGF0YS1zb3VyY2UtbGluZT0iMyI+PHJlY3QgeD0iMjYiIHk9IjE1NC41OTQiIHdpZHRoPSI2MiIgaGVpZ2h0PSI1MCIgZmlsbD0iI0YxRjFGMSIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDowLjU7IiByeD0iMTIuNSIgcnk9IjEyLjUiLz48bGluZSB4MT0iMjYiIHkxPSIxODAuODkxIiB4Mj0iODgiIHkyPSIxODAuODkxIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjAuNTsiLz48dGV4dCB4PSIzNiIgeT0iMTcyLjU4OSIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxNCIgdGV4dExlbmd0aD0iNDIiPuS9nOaIkOS4rTwvdGV4dD48L2c+PGcgY2xhc3M9ImVudGl0eSIgZGF0YS1xdWFsaWZpZWQtbmFtZT0iUVMuLi4uLiIgaWQ9ImVudDAwMDYiIGRhdGEtc291cmNlLWxpbmU9IjQiPjxyZWN0IHg9IjE5IiB5PSIyNTcuNTk0IiB3aWR0aD0iNzYiIGhlaWdodD0iNTAiIGZpbGw9IiNGMUYxRjEiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MC41OyIgcng9IjEyLjUiIHJ5PSIxMi41Ii8+PGxpbmUgeDE9IjE5IiB5MT0iMjgzLjg5MSIgeDI9Ijk1IiB5Mj0iMjgzLjg5MSIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDowLjU7Ii8+PHRleHQgeD0iMjkiIHk9IjI3NS41ODkiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTQiIHRleHRMZW5ndGg9IjU2Ij7mib/oqo3lvoXjgaE8L3RleHQ+PC9nPjxnIGNsYXNzPSJlbnRpdHkiIGRhdGEtcXVhbGlmaWVkLW5hbWU9IlFTLi4uLi4iIGlkPSJlbnQwMDA4IiBkYXRhLXNvdXJjZS1saW5lPSI1Ij48cmVjdCB4PSIxOSIgeT0iMzYwLjU5NCIgd2lkdGg9Ijc2IiBoZWlnaHQ9IjUwIiBmaWxsPSIjRjFGMUYxIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjAuNTsiIHJ4PSIxMi41IiByeT0iMTIuNSIvPjxsaW5lIHgxPSIxOSIgeTE9IjM4Ni44OTEiIHgyPSI5NSIgeTI9IjM4Ni44OTEiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MC41OyIvPjx0ZXh0IHg9IjI5IiB5PSIzNzguNTg5IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE0IiB0ZXh0TGVuZ3RoPSI1NiI+5o+Q56S65riI44G/PC90ZXh0PjwvZz48IS0tbGluayAqc3RhcnQqUVMgdG8g5L2c5oiQ5LitLS0+PGcgY2xhc3M9ImxpbmsiIGRhdGEtZW50aXR5LTE9ImVudDAwMDMiIGRhdGEtZW50aXR5LTI9ImVudDAwMDQiIGlkPSJsbms1IiBkYXRhLXNvdXJjZS1saW5lPSIzIiBkYXRhLWxpbmstdHlwZT0iZGVwZW5kZW5jeSI+PHBhdGggZD0iTTU3LDEwMS43OTQgQzU3LDExNC4xOTQgNTcsMTMxLjcwNCA1NywxNDkuMTU0IiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjE7IiBmaWxsPSJub25lIiBpZD0iKnN0YXJ0KlFTLXRvLeS9nOaIkOS4rSIvPjxwb2x5Z29uIHBvaW50cz0iNTcsMTU0LjE1NCw2MSwxNDUuMTU0LDU3LDE0OS4xNTQsNTMsMTQ1LjE1NCw1NywxNTQuMTU0IiBmaWxsPSIjMTgxODE4IiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjE7c3Ryb2tlLWxpbmVqb2luOm1pdGVyO3N0cm9rZS1taXRlcmxpbWl0OjEwOyIvPjx0ZXh0IHg9IjU4IiB5PSIxMzIuNjYxIiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjEzIiB0ZXh0TGVuZ3RoPSI3OCI+6KaL56mN44KK44KS5L2c44KLPC90ZXh0PjwvZz48IS0tbGluayDkvZzmiJDkuK0gdG8g5om/6KqN5b6F44GhLS0+PGcgY2xhc3M9ImxpbmsiIGRhdGEtZW50aXR5LTE9ImVudDAwMDQiIGRhdGEtZW50aXR5LTI9ImVudDAwMDYiIGlkPSJsbms3IiBkYXRhLXNvdXJjZS1saW5lPSI0IiBkYXRhLWxpbmstdHlwZT0iZGVwZW5kZW5jeSI+PHBhdGggZD0iTTU3LDIwNS4wNDQgQzU3LDIyMC45MjQgNTcsMjM2LjUzNCA1NywyNTIuMzc0IiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjE7IiBmaWxsPSJub25lIiBpZD0i5L2c5oiQ5LitLXRvLeaJv+iqjeW+heOBoSIvPjxwb2x5Z29uIHBvaW50cz0iNTcsMjU3LjM3NCw2MSwyNDguMzc0LDU3LDI1Mi4zNzQsNTMsMjQ4LjM3NCw1NywyNTcuMzc0IiBmaWxsPSIjMTgxODE4IiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjE7c3Ryb2tlLWxpbmVqb2luOm1pdGVyO3N0cm9rZS1taXRlcmxpbWl0OjEwOyIvPjx0ZXh0IHg9IjU4IiB5PSIyMzUuNjYxIiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjEzIiB0ZXh0TGVuZ3RoPSIxNjYuMTUiPueul+WHuuOBmeOCi++8iFEtSU5WLTA144O7MTfvvIk8L3RleHQ+PC9nPjwhLS1saW5rIOaJv+iqjeW+heOBoSB0byDmj5DnpLrmuIjjgb8tLT48ZyBjbGFzcz0ibGluayIgZGF0YS1lbnRpdHktMT0iZW50MDAwNiIgZGF0YS1lbnRpdHktMj0iZW50MDAwOCIgaWQ9ImxuazkiIGRhdGEtc291cmNlLWxpbmU9IjUiIGRhdGEtbGluay10eXBlPSJkZXBlbmRlbmN5Ij48cGF0aCBkPSJNNTcsMzA4LjA0NCBDNTcsMzIzLjkyNCA1NywzMzkuNTM0IDU3LDM1NS4zNzQiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTsiIGZpbGw9Im5vbmUiIGlkPSLmib/oqo3lvoXjgaEtdG8t5o+Q56S65riI44G/Ii8+PHBvbHlnb24gcG9pbnRzPSI1NywzNjAuMzc0LDYxLDM1MS4zNzQsNTcsMzU1LjM3NCw1MywzNTEuMzc0LDU3LDM2MC4zNzQiIGZpbGw9IiMxODE4MTgiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTtzdHJva2UtbGluZWpvaW46bWl0ZXI7c3Ryb2tlLW1pdGVybGltaXQ6MTA7Ii8+PHRleHQgeD0iNTgiIHk9IjMzOC42NjEiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTMiIHRleHRMZW5ndGg9IjE5NS40NTciPuekvuWGheaJv+iqjeOBl+OBpuaPkOekuuOBmeOCi++8iERFLTAz77yJPC90ZXh0PjwvZz48L2c+PGcgY2xhc3M9ImVudGl0eSIgZGF0YS1xdWFsaWZpZWQtbmFtZT0iVFJTIiBpZD0iZW50MDAwMiIgZGF0YS1zb3VyY2UtbGluZT0iNyI+PHBhdGggZD0iTTMyNi40MywxMzEuNzk3IEw2NDMuMDIsMTMxLjc5NyBBMTIuNSwxMi41IDAgMCAxIDY1NS41MiwxNDQuMjk3IEw2NTUuNTIsMTU4LjA5NCBMMzEzLjkzLDE1OC4wOTQgTDMxMy45MywxNDQuMjk3IEExMi41LDEyLjUgMCAwIDEgMzI2LjQzLDEzMS43OTciIGZpbGw9IiNGMUYxRjEiLz48cmVjdCB4PSIzMTMuOTMiIHk9IjEzMS43OTciIHdpZHRoPSIzNDEuNTkiIGhlaWdodD0iMjA0LjI5NyIgZmlsbD0ibm9uZSIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDowLjU7IiByeD0iMTIuNSIgcnk9IjEyLjUiLz48bGluZSB4MT0iMzEzLjkzIiB5MT0iMTU4LjA5NCIgeDI9IjY1NS41MiIgeTI9IjE1OC4wOTQiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MC41OyIvPjx0ZXh0IHg9IjQ1Ni43MjUiIHk9IjE0OS43OTIiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTQiIHRleHRMZW5ndGg9IjU2Ij7ovLjpgIHopoHmsYI8L3RleHQ+PGcgY2xhc3M9ImVudGl0eSIgZGF0YS1xdWFsaWZpZWQtbmFtZT0iVFJTLi4uLi4uLiIgaWQ9ImVudDAwMTAiIGRhdGEtc291cmNlLWxpbmU9IjgiPjxyZWN0IHg9IjMyNS45MyIgeT0iMTcwLjA5NCIgd2lkdGg9IjEwNCIgaGVpZ2h0PSI1MCIgZmlsbD0iI0YxRjFGMSIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDowLjU7IiByeD0iMTIuNSIgcnk9IjEyLjUiLz48bGluZSB4MT0iMzI1LjkzIiB5MT0iMTk2LjM5MSIgeDI9IjQyOS45MyIgeTI9IjE5Ni4zOTEiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MC41OyIvPjx0ZXh0IHg9IjMzNS45MyIgeT0iMTg4LjA4OSIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxNCIgdGV4dExlbmd0aD0iODQiPuimi+epjeOCiuS9nOaIkOS4rTwvdGV4dD48L2c+PGcgY2xhc3M9ImVudGl0eSIgZGF0YS1xdWFsaWZpZWQtbmFtZT0iVFJTLi4uLi4uLiIgaWQ9ImVudDAwMTEiIGRhdGEtc291cmNlLWxpbmU9IjgiPjxyZWN0IHg9IjMyNS45MyIgeT0iMjczLjA5NCIgd2lkdGg9IjEwNCIgaGVpZ2h0PSI1MCIgZmlsbD0iI0YxRjFGMSIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDowLjU7IiByeD0iMTIuNSIgcnk9IjEyLjUiLz48bGluZSB4MT0iMzI1LjkzIiB5MT0iMjk5LjM5MSIgeDI9IjQyOS45MyIgeTI9IjI5OS4zOTEiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MC41OyIvPjx0ZXh0IHg9IjMzNS45MyIgeT0iMjkxLjA4OSIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxNCIgdGV4dExlbmd0aD0iODQiPuimi+epjeaPkOekuua4iOOBvzwvdGV4dD48L2c+PCEtLWxpbmsg6KaL56mN44KK5L2c5oiQ5LitIHRvIOimi+epjeaPkOekuua4iOOBvy0tPjxnIGNsYXNzPSJsaW5rIiBkYXRhLWVudGl0eS0xPSJlbnQwMDEwIiBkYXRhLWVudGl0eS0yPSJlbnQwMDExIiBpZD0ibG5rMTIiIGRhdGEtc291cmNlLWxpbmU9IjgiIGRhdGEtbGluay10eXBlPSJkZXBlbmRlbmN5Ij48cGF0aCBkPSJNMzc3LjkzLDIyMC41NDQgQzM3Ny45MywyMzYuNDI0IDM3Ny45MywyNTIuMDM0IDM3Ny45MywyNjcuODc0IiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjE7IiBmaWxsPSJub25lIiBpZD0i6KaL56mN44KK5L2c5oiQ5LitLXRvLeimi+epjeaPkOekuua4iOOBvyIvPjxwb2x5Z29uIHBvaW50cz0iMzc3LjkzLDI3Mi44NzQsMzgxLjkzLDI2My44NzQsMzc3LjkzLDI2Ny44NzQsMzczLjkzLDI2My44NzQsMzc3LjkzLDI3Mi44NzQiIGZpbGw9IiMxODE4MTgiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTtzdHJva2UtbGluZWpvaW46bWl0ZXI7c3Ryb2tlLW1pdGVybGltaXQ6MTA7Ii8+PHRleHQgeD0iMzc4LjkzIiB5PSIyNTEuMTYxIiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjEzIiB0ZXh0TGVuZ3RoPSIyNTEuNTkiPkRFLTAzIOOCkuWPl+OBkeOCi++8iOWIpeOBruODiOODqeODs+OCtuOCr+OCt+ODp+ODs++8iTwvdGV4dD48L2c+PC9nPjw/cGxhbnR1bWwtc3JjIEF5YWlvS2JMVUI2aS1fZEF0aVRETk95Ukx4cE9pLURiRy1FQlBPdEZEWk96UmJwdGw2bFJpelJrenRpd2RGOXBJWEdDM0hIME9ralJkaXhVejd2RjlyVG5JTTk5Z2U4SU5CLUlHY0FuR2MybUdaTE5qNVFpV2d3a2RTQUpsTkVVVEtudWljRWpXWE1JREtzSldFQUZjeGd2NEQ4V25TeXd6eHpPclZqcU4tbFpuZUwwelNfTkpOX1Fsa2pudXFvV0lnMEIwZEt6X1M5cTNLbVZELXlzRDBWUFpnOFNoQnpfbWxDYmt2eGp3N1pTazEtYVZ5Yy1mc3NqNDVNRjZ3U19SYm02S0cwdHFTTExyeTBPUDU4anQyVDhsV1R4OVlHOHYxa3VvcjdUMm41NmluTGlnMEJHWXFfeFdMUEVYRFpxajZDZkNFMFVEdFN5UmJ4dms3ZHB1d1BqWnZsTUZzeFFfaFh2RVAwQlRXODA/PjwvZz48L3N2Zz4=" class="uml" alt="uml diagram" title="" /></p>
+<h3 id="_7">データモデル<a class="headerlink" href="#_7" title="Permanent link">&para;</a></h3>
+<p><img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB2ZXJzaW9uPSIxLjEiIGRhdGEtZGlhZ3JhbS10eXBlPSJDTEFTUyIgc3R5bGU9IndpZHRoOjgxMXB4O2hlaWdodDo3MTRweDtiYWNrZ3JvdW5kOiNGRkZGRkY7IiB3aWR0aD0iODExcHgiIGhlaWdodD0iNzE0cHgiIHZpZXdCb3g9IjAgMCA4MTEgNzE0IiB6b29tQW5kUGFuPSJtYWduaWZ5IiBwcmVzZXJ2ZUFzcGVjdFJhdGlvPSJub25lIiBjb250ZW50U3R5bGVUeXBlPSJ0ZXh0L2NzcyI+PD9wbGFudHVtbCAxLjIwMjYuOD8+PGRlZnMvPjxnIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBsZW5ndGhBZGp1c3Q9InNwYWNpbmciPjxnIGNsYXNzPSJ0aXRsZSIgZGF0YS1zb3VyY2UtbGluZT0iMSI+PHRleHQgeD0iMzQzLjcwNyIgeT0iMjIuOTk1IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE0IiB0ZXh0TGVuZ3RoPSIxMTcuMDEiIGZvbnQtd2VpZ2h0PSI3MDAiPkJvbHQgMTAg44Gn5L2c44KL6KGoPC90ZXh0PjwvZz48IS0tY2xhc3MgdHItLT48ZyBjbGFzcz0iZW50aXR5IiBkYXRhLXF1YWxpZmllZC1uYW1lPSJ0ciIgaWQ9ImVudDAwMDEiIGRhdGEtc291cmNlLWxpbmU9IjIiPjxyZWN0IHg9IjUzLjUzIiB5PSI0NC4yOTciIHdpZHRoPSIyMjguODc1IiBoZWlnaHQ9IjY0LjI5NyIgZmlsbD0iI0YxRjFGMSIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDowLjU7IiByeD0iMi41IiByeT0iMi41Ii8+PGVsbGlwc2UgY3g9IjY4LjUzIiBjeT0iNjAuMjk3IiByeD0iMTEiIHJ5PSIxMSIgZmlsbD0iI0FERDFCMiIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxOyIvPjxwYXRoIGQ9Ik03Mi42MzksNjYuMjk3IEw2NC45MjEsNjYuMjk3IEw2NC45MjEsNTMuOTA2IEw3Mi42MzksNTMuOTA2IEw3Mi42MzksNTYuMDYzIEw2Ny4zNzQsNTYuMDYzIEw2Ny4zNzQsNTguNzM0IEw3Mi4xMzksNTguNzM0IEw3Mi4xMzksNjAuODkxIEw2Ny4zNzQsNjAuODkxIEw2Ny4zNzQsNjQuMTQxIEw3Mi42MzksNjQuMTQxIEw3Mi42MzksNjYuMjk3IFogIiBmaWxsPSIjMDAwIi8+PHRleHQgeD0iODIuNTMiIHk9IjY1LjE0NCIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxNCIgdGV4dExlbmd0aD0iMTk2Ljg3NSI+cXVvdGF0aW9uLnRyYW5zcG9ydF9yZXF1ZXN0PC90ZXh0PjxsaW5lIHgxPSI1NC41MyIgeTE9Ijc2LjI5NyIgeDI9IjI4MS40MDUiIHkyPSI3Ni4yOTciIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MC41OyIvPjxnIGRhdGEtdmlzaWJpbGl0eS1tb2RpZmllcj0iSUVfTUFOREFUT1JZIj48ZWxsaXBzZSBjeD0iNjQuNTMiIGN5PSI4OS45NDUiIHJ4PSIzIiByeT0iMyIgZmlsbD0iIzAwMCIgc3R5bGU9InN0cm9rZTojMDAwO3N0cm9rZS13aWR0aDoxOyIvPjwvZz48dGV4dCB4PSI3My41MyIgeT0iOTMuMjkyIiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE0IiB0ZXh0TGVuZ3RoPSI1MS45OCI+aWQgwqtQS8K7PC90ZXh0PjxsaW5lIHgxPSI1NC41MyIgeTE9IjEwMC41OTQiIHgyPSIyODEuNDA1IiB5Mj0iMTAwLjU5NCIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDowLjU7Ii8+PC9nPjwhLS1jbGFzcyBxLS0+PGcgY2xhc3M9ImVudGl0eSIgZGF0YS1xdWFsaWZpZWQtbmFtZT0icSIgaWQ9ImVudDAwMDIiIGRhdGEtc291cmNlLWxpbmU9IjUiPjxyZWN0IHg9IjciIHk9IjE2OC41OTciIHdpZHRoPSIzMjEuOTM1IiBoZWlnaHQ9IjMyNS4wNDciIGZpbGw9IiNGMUYxRjEiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MC41OyIgcng9IjIuNSIgcnk9IjIuNSIvPjxlbGxpcHNlIGN4PSI5NC4yODEiIGN5PSIxODQuNTk3IiByeD0iMTEiIHJ5PSIxMSIgZmlsbD0iI0FERDFCMiIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxOyIvPjxwYXRoIGQ9Ik05OC4zOTEsMTkwLjU5NyBMOTAuNjcyLDE5MC41OTcgTDkwLjY3MiwxNzguMjA2IEw5OC4zOTEsMTc4LjIwNiBMOTguMzkxLDE4MC4zNjIgTDkzLjEyNSwxODAuMzYyIEw5My4xMjUsMTgzLjAzNCBMOTcuODkxLDE4My4wMzQgTDk3Ljg5MSwxODUuMTkxIEw5My4xMjUsMTg1LjE5MSBMOTMuMTI1LDE4OC40NDEgTDk4LjM5MSwxODguNDQxIEw5OC4zOTEsMTkwLjU5NyBaICIgZmlsbD0iIzAwMCIvPjx0ZXh0IHg9IjExNC43ODEiIHk9IjE4OS40NDQiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTQiIHRleHRMZW5ndGg9IjEzOC44NzIiPnF1b3RhdGlvbi5xdW90YXRpb248L3RleHQ+PGxpbmUgeDE9IjgiIHkxPSIyMDAuNTk3IiB4Mj0iMzI3LjkzNSIgeTI9IjIwMC41OTciIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MC41OyIvPjxnIGRhdGEtdmlzaWJpbGl0eS1tb2RpZmllcj0iSUVfTUFOREFUT1JZIj48ZWxsaXBzZSBjeD0iMTgiIGN5PSIyMTQuMjQ1IiByeD0iMyIgcnk9IjMiIGZpbGw9IiMwMDAiIHN0eWxlPSJzdHJva2U6IzAwMDtzdHJva2Utd2lkdGg6MTsiLz48L2c+PHRleHQgeD0iMjciIHk9IjIxNy41OTIiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTQiIHRleHRMZW5ndGg9IjEwMS4wMDEiPmlkIDogVVVJRCDCq1BLwrs8L3RleHQ+PGxpbmUgeDE9IjgiIHkxPSIyMjQuODk0IiB4Mj0iMzI3LjkzNSIgeTI9IjIyNC44OTQiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTsiLz48ZyBkYXRhLXZpc2liaWxpdHktbW9kaWZpZXI9IklFX01BTkRBVE9SWSI+PGVsbGlwc2UgY3g9IjE4IiBjeT0iMjM4LjU0MiIgcng9IjMiIHJ5PSIzIiBmaWxsPSIjMDAwIiBzdHlsZT0ic3Ryb2tlOiMwMDA7c3Ryb2tlLXdpZHRoOjE7Ii8+PC9nPjx0ZXh0IHg9IjI3IiB5PSIyNDEuODg5IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE0IiB0ZXh0TGVuZ3RoPSIyMzIuODI1Ij50cmFuc3BvcnRfcmVxdWVzdF9pZCA6IFVVSUQgwqtGS8K7PC90ZXh0PjxnIGRhdGEtdmlzaWJpbGl0eS1tb2RpZmllcj0iSUVfTUFOREFUT1JZIj48ZWxsaXBzZSBjeD0iMTgiIGN5PSIyNTQuODM5IiByeD0iMyIgcnk9IjMiIGZpbGw9IiMwMDAiIHN0eWxlPSJzdHJva2U6IzAwMDtzdHJva2Utd2lkdGg6MTsiLz48L2c+PHRleHQgeD0iMjciIHk9IjI1OC4xODYiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTQiIHRleHRMZW5ndGg9IjIyNy4xMzciPnF1b3RhdGlvbl9ubyA6IElOVEVHRVIg44CQ5paw6KaP44CRPC90ZXh0PjxnIGRhdGEtdmlzaWJpbGl0eS1tb2RpZmllcj0iSUVfTUFOREFUT1JZIj48ZWxsaXBzZSBjeD0iMTgiIGN5PSIyNzEuMTM2IiByeD0iMyIgcnk9IjMiIGZpbGw9IiMwMDAiIHN0eWxlPSJzdHJva2U6IzAwMDtzdHJva2Utd2lkdGg6MTsiLz48L2c+PHRleHQgeD0iMjciIHk9IjI3NC40ODMiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTQiIHRleHRMZW5ndGg9IjI4Mi45NjciPnRyYW5zcG9ydF9yZXF1ZXN0X3ZlcnNpb25fbm8gOiBJTlRFR0VSPC90ZXh0PjxnIGRhdGEtdmlzaWJpbGl0eS1tb2RpZmllcj0iSUVfTUFOREFUT1JZIj48ZWxsaXBzZSBjeD0iMTgiIGN5PSIyODcuNDMzIiByeD0iMyIgcnk9IjMiIGZpbGw9IiMwMDAiIHN0eWxlPSJzdHJva2U6IzAwMDtzdHJva2Utd2lkdGg6MTsiLz48L2c+PHRleHQgeD0iMjciIHk9IjI5MC43NzkiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTQiIHRleHRMZW5ndGg9IjE1My44NjMiPnN0YXR1cyA6IFZBUkNIQVIoMzApPC90ZXh0Pjx0ZXh0IHg9IjI3IiB5PSIzMDcuMDc2IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE0IiB0ZXh0TGVuZ3RoPSIxODUuMzA5Ij5leHBpcmVzX2F0IDogVElNRVNUQU1QVFo8L3RleHQ+PHRleHQgeD0iMjciIHk9IjMyMy4zNzMiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTQiIHRleHRMZW5ndGg9IjIxNC4wMiI+dG90YWxfYW1vdW50IDogTlVNRVJJQygxNSwyKTwvdGV4dD48dGV4dCB4PSIyNyIgeT0iMzM5LjY3IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE0IiB0ZXh0TGVuZ3RoPSIxMzQuNjA2Ij5jdXJyZW5jeSA6IENIQVIoMyk8L3RleHQ+PHRleHQgeD0iMjciIHk9IjM1NS45NjciIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTQiIHRleHRMZW5ndGg9IjIzMy4wMTciPnJvdXRlX3BvbGljeV92aWEgOiBWQVJDSEFSKDIwMCk8L3RleHQ+PHRleHQgeD0iMjciIHk9IjM3Mi4yNjQiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTQiIHRleHRMZW5ndGg9IjI5NS45MzUiPnJvdXRlX3BvbGljeV9kZXBhcnR1cmVfYXQgOiBUSU1FU1RBTVBUWjwvdGV4dD48dGV4dCB4PSIyNyIgeT0iMzg4LjU2MSIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxNCIgdGV4dExlbmd0aD0iMjcxLjIxNiI+cm91dGVfcG9saWN5X2Fycml2YWxfYXQgOiBUSU1FU1RBTVBUWjwvdGV4dD48dGV4dCB4PSIyNyIgeT0iNDA0Ljg1OCIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxNCIgdGV4dExlbmd0aD0iMjAwLjYxNCI+aW50ZXJuYWxfYXBwcm92ZWRfYnkgOiBVVUlEPC90ZXh0Pjx0ZXh0IHg9IjI3IiB5PSI0MjEuMTU0IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE0IiB0ZXh0TGVuZ3RoPSIyNjEuMzkzIj5pbnRlcm5hbF9hcHByb3ZlZF9hdCA6IFRJTUVTVEFNUFRaPC90ZXh0Pjx0ZXh0IHg9IjI3IiB5PSI0MzcuNDUxIiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE0IiB0ZXh0TGVuZ3RoPSIyMDQuOTk2Ij5wcmVzZW50ZWRfYXQgOiBUSU1FU1RBTVBUWjwvdGV4dD48ZyBkYXRhLXZpc2liaWxpdHktbW9kaWZpZXI9IklFX01BTkRBVE9SWSI+PGVsbGlwc2UgY3g9IjE4IiBjeT0iNDUwLjQwMiIgcng9IjMiIHJ5PSIzIiBmaWxsPSIjMDAwIiBzdHlsZT0ic3Ryb2tlOiMwMDA7c3Ryb2tlLXdpZHRoOjE7Ii8+PC9nPjx0ZXh0IHg9IjI3IiB5PSI0NTMuNzQ4IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE0IiB0ZXh0TGVuZ3RoPSIxMTIuNjI5Ij52ZXJzaW9uIDogQklHSU5UPC90ZXh0PjxnIGRhdGEtdmlzaWJpbGl0eS1tb2RpZmllcj0iSUVfTUFOREFUT1JZIj48ZWxsaXBzZSBjeD0iMTgiIGN5PSI0NjYuNjk4IiByeD0iMyIgcnk9IjMiIGZpbGw9IiMwMDAiIHN0eWxlPSJzdHJva2U6IzAwMDtzdHJva2Utd2lkdGg6MTsiLz48L2c+PHRleHQgeD0iMjciIHk9IjQ3MC4wNDUiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTQiIHRleHRMZW5ndGg9IjE2Ni4xMjciPmNyZWF0ZWRfYXQgLyBjcmVhdGVkX2J5PC90ZXh0PjxnIGRhdGEtdmlzaWJpbGl0eS1tb2RpZmllcj0iSUVfTUFOREFUT1JZIj48ZWxsaXBzZSBjeD0iMTgiIGN5PSI0ODIuOTk1IiByeD0iMyIgcnk9IjMiIGZpbGw9IiMwMDAiIHN0eWxlPSJzdHJva2U6IzAwMDtzdHJva2Utd2lkdGg6MTsiLz48L2c+PHRleHQgeD0iMjciIHk9IjQ4Ni4zNDIiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTQiIHRleHRMZW5ndGg9IjE3NS4yODciPnVwZGF0ZWRfYXQgLyB1cGRhdGVkX2J5PC90ZXh0PjwvZz48IS0tY2xhc3MgcGwtLT48ZyBjbGFzcz0iZW50aXR5IiBkYXRhLXF1YWxpZmllZC1uYW1lPSJwbCIgaWQ9ImVudDAwMDMiIGRhdGEtc291cmNlLWxpbmU9IjI1Ij48cmVjdCB4PSIyOC43OSIgeT0iNTUzLjY0NyIgd2lkdGg9IjI3OC4zNjIiIGhlaWdodD0iMTQ1Ljc4MSIgZmlsbD0iI0YxRjFGMSIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDowLjU7IiByeD0iMi41IiByeT0iMi41Ii8+PGVsbGlwc2UgY3g9Ijg3LjgxOCIgY3k9IjU2OS42NDciIHJ4PSIxMSIgcnk9IjExIiBmaWxsPSIjQUREMUIyIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjE7Ii8+PHBhdGggZD0iTTkxLjkyOCw1NzUuNjQ3IEw4NC4yMDksNTc1LjY0NyBMODQuMjA5LDU2My4yNTYgTDkxLjkyOCw1NjMuMjU2IEw5MS45MjgsNTY1LjQxMyBMODYuNjYyLDU2NS40MTMgTDg2LjY2Miw1NjguMDg0IEw5MS40MjgsNTY4LjA4NCBMOTEuNDI4LDU3MC4yNDEgTDg2LjY2Miw1NzAuMjQxIEw4Ni42NjIsNTczLjQ5MSBMOTEuOTI4LDU3My40OTEgTDkxLjkyOCw1NzUuNjQ3IFogIiBmaWxsPSIjMDAwIi8+PHRleHQgeD0iMTA4LjMxOCIgeT0iNTc0LjQ5NCIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxNCIgdGV4dExlbmd0aD0iMTUxLjgwNiI+cXVvdGF0aW9uLnByaWNpbmdfbGluZTwvdGV4dD48bGluZSB4MT0iMjkuNzkiIHkxPSI1ODUuNjQ3IiB4Mj0iMzA2LjE1MiIgeTI9IjU4NS42NDciIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MC41OyIvPjxnIGRhdGEtdmlzaWJpbGl0eS1tb2RpZmllcj0iSUVfTUFOREFUT1JZIj48ZWxsaXBzZSBjeD0iMzkuNzkiIGN5PSI1OTkuMjk1IiByeD0iMyIgcnk9IjMiIGZpbGw9IiMwMDAiIHN0eWxlPSJzdHJva2U6IzAwMDtzdHJva2Utd2lkdGg6MTsiLz48L2c+PHRleHQgeD0iNDguNzkiIHk9IjYwMi42NDIiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTQiIHRleHRMZW5ndGg9IjE5Ni44OTYiPnF1b3RhdGlvbl9pZCA6IFVVSUQgwqtQSyxGS8K7PC90ZXh0PjxnIGRhdGEtdmlzaWJpbGl0eS1tb2RpZmllcj0iSUVfTUFOREFUT1JZIj48ZWxsaXBzZSBjeD0iMzkuNzkiIGN5PSI2MTUuNTkyIiByeD0iMyIgcnk9IjMiIGZpbGw9IiMwMDAiIHN0eWxlPSJzdHJva2U6IzAwMDtzdHJva2Utd2lkdGg6MTsiLz48L2c+PHRleHQgeD0iNDguNzkiIHk9IjYxOC45MzkiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTQiIHRleHRMZW5ndGg9IjE2My45NDYiPmxpbmVfbm8gOiBJTlRFR0VSIMKrUEvCuzwvdGV4dD48bGluZSB4MT0iMjkuNzkiIHkxPSI2MjYuMjQxIiB4Mj0iMzA2LjE1MiIgeTI9IjYyNi4yNDEiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTsiLz48ZyBkYXRhLXZpc2liaWxpdHktbW9kaWZpZXI9IklFX01BTkRBVE9SWSI+PGVsbGlwc2UgY3g9IjM5Ljc5IiBjeT0iNjM5Ljg4OSIgcng9IjMiIHJ5PSIzIiBmaWxsPSIjMDAwIiBzdHlsZT0ic3Ryb2tlOiMwMDA7c3Ryb2tlLXdpZHRoOjE7Ii8+PC9nPjx0ZXh0IHg9IjQ4Ljc5IiB5PSI2NDMuMjM2IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE0IiB0ZXh0TGVuZ3RoPSIxOTcuNTkzIj5kZXNjcmlwdGlvbiA6IFZBUkNIQVIoMjAwKTwvdGV4dD48ZyBkYXRhLXZpc2liaWxpdHktbW9kaWZpZXI9IklFX01BTkRBVE9SWSI+PGVsbGlwc2UgY3g9IjM5Ljc5IiBjeT0iNjU2LjE4NiIgcng9IjMiIHJ5PSIzIiBmaWxsPSIjMDAwIiBzdHlsZT0ic3Ryb2tlOiMwMDA7c3Ryb2tlLXdpZHRoOjE7Ii8+PC9nPjx0ZXh0IHg9IjQ4Ljc5IiB5PSI2NTkuNTMzIiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE0IiB0ZXh0TGVuZ3RoPSIxNzUuMDA3Ij5hbW91bnQgOiBOVU1FUklDKDE1LDIpPC90ZXh0PjxnIGRhdGEtdmlzaWJpbGl0eS1tb2RpZmllcj0iSUVfTUFOREFUT1JZIj48ZWxsaXBzZSBjeD0iMzkuNzkiIGN5PSI2NzIuNDgzIiByeD0iMyIgcnk9IjMiIGZpbGw9IiMwMDAiIHN0eWxlPSJzdHJva2U6IzAwMDtzdHJva2Utd2lkdGg6MTsiLz48L2c+PHRleHQgeD0iNDguNzkiIHk9IjY3NS44MjkiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTQiIHRleHRMZW5ndGg9IjEzNC42MDYiPmN1cnJlbmN5IDogQ0hBUigzKTwvdGV4dD48dGV4dCB4PSI0OC43OSIgeT0iNjkyLjEyNiIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxNCIgdGV4dExlbmd0aD0iMjUyLjM2MiI+Y29udHJhY3RfcmVmZXJlbmNlIDogVkFSQ0hBUigyMDApPC90ZXh0PjwvZz48ZyBjbGFzcz0iZW50aXR5IiBkYXRhLXF1YWxpZmllZC1uYW1lPSJHTU42IiBpZD0iZW50MDAwNyIgZGF0YS1zb3VyY2UtbGluZT0iMzciPjxwYXRoIGQ9Ik0zNjMuNSwyODguMjg3IEwzNjMuNSwzMjcuMTI3IEwzMjkuMzEsMzMxLjEyNyBMMzYzLjUsMzM1LjEyNyBMMzYzLjUsMzczLjk1MSBBMCwwIDAgMCAwIDM2My41LDM3My45NTEgTDc5Ni40MjUsMzczLjk1MSBBMCwwIDAgMCAwIDc5Ni40MjUsMzczLjk1MSBMNzk2LjQyNSwyOTguMjg3IEw3ODYuNDI1LDI4OC4yODcgTDM2My41LDI4OC4yODcgQTAsMCAwIDAgMCAzNjMuNSwyODguMjg3IiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjAuNTsiIGZpbGw9IiNGRUZGREQiLz48cGF0aCBkPSJNNzg2LjQyNSwyODguMjg3IEw3ODYuNDI1LDI5OC4yODcgTDc5Ni40MjUsMjk4LjI4NyBMNzg2LjQyNSwyODguMjg3IiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjAuNTsiIGZpbGw9IiNGRUZGREQiLz48dGV4dCB4PSIzNjkuNSIgeT0iMzA1LjM1NCIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxMyIgdGV4dExlbmd0aD0iMjg1LjA0MiI+VUvvvIh0cmFuc3BvcnRfcmVxdWVzdF9pZCwgcXVvdGF0aW9uX25v77yJ44CCPC90ZXh0Pjx0ZXh0IHg9IjM2OS41IiB5PSIzMjAuNDg3IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjEzIiB0ZXh0TGVuZ3RoPSI0MTEuOTI1Ij5zdGF0dXMg44GvIERSQUZU44O7UEVORElOR19BUFBST1ZBTOODu1BSRVNFTlRFRCDjgYvjgonlp4vjgoHjgIE8L3RleHQ+PHRleHQgeD0iMzY5LjUiIHk9IjMzNS42MTkiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTMiIHRleHRMZW5ndGg9IjI0Mi43NzkiPuOBu+OBi+OBruWApOOBr+S9v+OBhiBCb2x0IOOBpyBDSEVDSyDjgavotrPjgZnjgII8L3RleHQ+PHRleHQgeD0iMzY5LjUiIHk9IjM1MC43NTIiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTMiIHRleHRMZW5ndGg9IjM1OC44NDYiPuiNt+S4u+OBruWbnuetlOODu+e1jOi3r+eJiOODu+iNt+S4u+aJv+iqjeODu+e9ruaPm+OBruWIl+OBr+S9v+OBhiBCb2x0IOOBp+i2s+OBmTwvdGV4dD48dGV4dCB4PSIzNjkuNSIgeT0iMzY1Ljg4NSIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxMyIgdGV4dExlbmd0aD0iMTE2LjQwMyI+77yI56K66KqN44Od44Kk44Oz44OIIDHvvIk8L3RleHQ+PC9nPjwhLS1saW5rIHRyIHRvIHEtLT48ZyBjbGFzcz0ibGluayIgZGF0YS1lbnRpdHktMT0iZW50MDAwMSIgZGF0YS1lbnRpdHktMj0iZW50MDAwMiIgaWQ9ImxuazQiIGRhdGEtc291cmNlLWxpbmU9IjM0IiBkYXRhLWxpbmstdHlwZT0iY3Jvd2Zvb3QiPjxwYXRoIGQ9Ik0xNjcuOTcsMTE2LjkzNyBDMTY3Ljk3LDEzMi45NDcgMTY3Ljk3LDEyNy43NDcgMTY3Ljk3LDE1MC4xNjciIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTsiIGZpbGw9Im5vbmUiIGlkPSJ0ci1xIiBjb2RlTGluZT0iMzQiLz48bGluZSB4MT0iMTYzLjk3IiB5MT0iMTEyLjkzNyIgeDI9IjE3MS45NyIgeTI9IjExMi45MzciIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTsiLz48bGluZSB4MT0iMTYzLjk3IiB5MT0iMTE1LjkzNyIgeDI9IjE3MS45NyIgeTI9IjExNS45MzciIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTsiLz48bGluZSB4MT0iMTY3Ljk3IiB5MT0iMTE2LjkzNyIgeDI9IjE2Ny45NyIgeTI9IjEwOC45MzciIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTsiLz48bGluZSB4MT0iMTY3Ljk3IiB5MT0iMTYwLjE2NyIgeDI9IjE3My45NyIgeTI9IjE2OC4xNjciIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTsiLz48bGluZSB4MT0iMTY3Ljk3IiB5MT0iMTYwLjE2NyIgeDI9IjE2MS45NyIgeTI9IjE2OC4xNjciIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTsiLz48bGluZSB4MT0iMTY3Ljk3IiB5MT0iMTYwLjE2NyIgeDI9IjE2Ny45NyIgeTI9IjE2OC4xNjciIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTsiLz48ZWxsaXBzZSBjeD0iMTY3Ljk3IiBjeT0iMTU0LjE2NyIgcng9IjQiIHJ5PSI0IiBmaWxsPSJub25lIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjE7Ii8+PC9nPjwhLS1saW5rIHEgdG8gcGwtLT48ZyBjbGFzcz0ibGluayIgZGF0YS1lbnRpdHktMT0iZW50MDAwMiIgZGF0YS1lbnRpdHktMj0iZW50MDAwMyIgaWQ9ImxuazUiIGRhdGEtc291cmNlLWxpbmU9IjM1IiBkYXRhLWxpbmstdHlwZT0iY3Jvd2Zvb3QiPjxwYXRoIGQ9Ik0xNjcuOTcsNTAxLjg0NyBDMTY3Ljk3LDUyMi43MDcgMTY3Ljk3LDUxNy4xNTcgMTY3Ljk3LDUzNS40ODciIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTsiIGZpbGw9Im5vbmUiIGlkPSJxLXBsIiBjb2RlTGluZT0iMzUiLz48bGluZSB4MT0iMTYzLjk3IiB5MT0iNDk3Ljg0NyIgeDI9IjE3MS45NyIgeTI9IjQ5Ny44NDciIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTsiLz48bGluZSB4MT0iMTYzLjk3IiB5MT0iNTAwLjg0NyIgeDI9IjE3MS45NyIgeTI9IjUwMC44NDciIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTsiLz48bGluZSB4MT0iMTY3Ljk3IiB5MT0iNTAxLjg0NyIgeDI9IjE2Ny45NyIgeTI9IjQ5My44NDciIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTsiLz48bGluZSB4MT0iMTY3Ljk3IiB5MT0iNTQ1LjQ4NyIgeDI9IjE3My45NyIgeTI9IjU1My40ODciIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTsiLz48bGluZSB4MT0iMTY3Ljk3IiB5MT0iNTQ1LjQ4NyIgeDI9IjE2MS45NyIgeTI9IjU1My40ODciIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTsiLz48bGluZSB4MT0iMTY3Ljk3IiB5MT0iNTQ1LjQ4NyIgeDI9IjE2Ny45NyIgeTI9IjU1My40ODciIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTsiLz48ZWxsaXBzZSBjeD0iMTY3Ljk3IiBjeT0iNTM5LjQ4NyIgcng9IjQiIHJ5PSI0IiBmaWxsPSJub25lIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjE7Ii8+PC9nPjw/cGxhbnR1bWwtc3JjIFRMRFRJbmoxNTdzVk5wN3VmQzZxcVRBTjhhOHFnbXNmUUxXSjdfZ29oOWxIM2NudERoRXBlSzY1UjA4Ym1PZWpiOVBZTXNZSE1iZ2cxTWFqclUyRmNQWmFwUl9HRV9iR3ktN0JTbFVVU3ktVFUtVUNlQzhjVTh4UDBhejVpMG1Fd2hLRmloSlQtbG1ENEtUR0tTMVpFUHk5S3IzY3QxN1NUM29OU001bWFsRTk5eVFtd003MXlHT0FPUGg1Q3BFZm5FbWlzWGZIVVhNckl0QXpZV1N1YXVkN1VlTlhDNkk3Y1hXdFVHa0E1eTlOU2VSMzA4bWRxemdZZmNEUFZETHUtd2xyVExTTU51LUtvWEZrM0xPMXFHQ250dUZLSWJJVlZuWkxuLXo1OVgxdnhiOUVGQ0NLMEFKWkl6Zm9FaGdLSVp6MTBkaFJYbGNDLU93MmFmYWJKT19GWnFfVGR2b1VHOVJGRU42aTBXMFRmR2Q0Y0ktOHVKQVJNV0taSnlxUlZRT1phRzR5SXJvSjJ2LUp1UnZ6RjlEcGNiVjc2NkhISG4za0FDSHJFU2tKaEI1UXdFdmwxM1BLeGlCOFM3c1plMTNraFdfb1NfNTVNMS1hQjR4Q0JsbGtyU3pnMEgzVnBMdVpsSHowSGpkM3ZUSVlwaGZYS3VVcTdVQlFST2pTdHRFX01JUXhGYjN5VldsU2o1QU1VMVFkaGtXU2tNX2Q4TnBCX1M1NG1wVGVDR1V5UDJhVmhINDVhYTZ6QkdKRk83Q3A3Nk9SRThUb2xUMnJhU0M0bVBva0ZuTU9oRzZNSUxvVUxLUVBWQkJGclBUZExMYWllUXVwUE4yNE90ZnE4SXRCZm9hajZPaWQ1dXJlQWdLX05lYS1LWWJUTXpQVzBKNFdSaWpJelU4MGxlNGkxYVc2Zm9lTDc1dUt6cTZhTlprTm1PbEVVdVY3M1dEZ3ltYzhWaEotN0NsV2xVaE9zWmNmX3ByTDVOa1ZjWl9WVzdocHp5bE1vTDZwTWU2dVdwUWd2d3RsRW1nZzdKUHN6bkl2eWN2T2xZRUFPRHhjYnRfaldlLW9qMl9Cbng5U21MQ204SldYWXpNMl9XQzA/PjwvZz48L3N2Zz4=" class="uml" alt="uml diagram" title="" /></p>
+<blockquote>
+<p>注（設計への反映。ステップ 1 で反映する）: データモデルの <code>quotation</code> は <code>expires_at</code>・<code>total_amount</code>・<code>currency</code>・<code>route_policy_via</code> を NOT NULL にしている。算出の前（作成中）の見積りを保存するため、これらを NULL 可にし、承認待ち以後は NOT NULL を CHECK で守る。<code>quotation_no</code> を足す。どちらもスキーマの変更（確認ポイント 1）。</p>
+</blockquote>
+<h3 id="_8">画面遷移<a class="headerlink" href="#_8" title="Permanent link">&para;</a></h3>
+<p><img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB2ZXJzaW9uPSIxLjEiIGRhdGEtZGlhZ3JhbS10eXBlPSJTVEFURSIgc3R5bGU9IndpZHRoOjU3OXB4O2hlaWdodDo0MDJweDtiYWNrZ3JvdW5kOiNGRkZGRkY7IiB3aWR0aD0iNTc5cHgiIGhlaWdodD0iNDAycHgiIHZpZXdCb3g9IjAgMCA1NzkgNDAyIiB6b29tQW5kUGFuPSJtYWduaWZ5IiBwcmVzZXJ2ZUFzcGVjdFJhdGlvPSJub25lIiBjb250ZW50U3R5bGVUeXBlPSJ0ZXh0L2NzcyI+PD9wbGFudHVtbCAxLjIwMjYuOD8+PGRlZnMvPjxnIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBsZW5ndGhBZGp1c3Q9InNwYWNpbmciPjxnIGNsYXNzPSJ0aXRsZSIgZGF0YS1zb3VyY2UtbGluZT0iMSI+PHRleHQgeD0iMTU3LjU3MyIgeT0iMjIuOTk1IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE0IiB0ZXh0TGVuZ3RoPSIyNTcuMDEiIGZvbnQtd2VpZ2h0PSI3MDAiPuimi+epjeOCiuOBruS9nOaIkOOBqOaPkOekuu+8iEJvbHQgMTAg44Gu56+E5Zuy77yJPC90ZXh0PjwvZz48ZyBjbGFzcz0iZW50aXR5IiBkYXRhLXF1YWxpZmllZC1uYW1lPSJTMDIiIGlkPSJlbnQwMDAxIiBkYXRhLXNvdXJjZS1saW5lPSIyIj48cmVjdCB4PSI3IiB5PSI0NC4yOTciIHdpZHRoPSIyMDUuNzUyIiBoZWlnaHQ9IjUyLjU5NCIgZmlsbD0iI0YxRjFGMSIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDowLjU7IiByeD0iMTIuNSIgcnk9IjEyLjUiLz48bGluZSB4MT0iNyIgeTE9IjcwLjU5NCIgeDI9IjIxMi43NTIiIHkyPSI3MC41OTQiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MC41OyIvPjx0ZXh0IHg9IjE3IiB5PSI2Mi4yOTIiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTQiIHRleHRMZW5ndGg9IjE4NS43NTIiPuimi+epjeS+nemgvOOBruWPl+S7mOS4gOimp++8iFMtMDLvvIk8L3RleHQ+PHRleHQgeD0iMTIiIHk9Ijg4LjU4OSIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxNCIgdGV4dExlbmd0aD0iMTM5Ljk5OSI+5a+p5p+75Lit44Go6KaL56mN44KK5L2c5oiQ5LitPC90ZXh0PjwvZz48ZyBjbGFzcz0iZW50aXR5IiBkYXRhLXF1YWxpZmllZC1uYW1lPSJTMDMiIGlkPSJlbnQwMDAyIiBkYXRhLXNvdXJjZS1saW5lPSI0Ij48cmVjdCB4PSIzMTkiIHk9IjQ1LjU4NyIgd2lkdGg9IjE3Ny43NTIiIGhlaWdodD0iNTAiIGZpbGw9IiNGMUYxRjEiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MC41OyIgcng9IjEyLjUiIHJ5PSIxMi41Ii8+PGxpbmUgeDE9IjMxOSIgeTE9IjcxLjg4NCIgeDI9IjQ5Ni43NTIiIHkyPSI3MS44ODQiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MC41OyIvPjx0ZXh0IHg9IjMyOSIgeT0iNjMuNTgyIiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE0IiB0ZXh0TGVuZ3RoPSIxNTcuNzUyIj7opovnqY3kvp3poLzjga7lr6nmn7vvvIhTLTAz77yJPC90ZXh0PjwvZz48ZyBjbGFzcz0iZW50aXR5IiBkYXRhLXF1YWxpZmllZC1uYW1lPSJTMDQiIGlkPSJlbnQwMDAzIiBkYXRhLXNvdXJjZS1saW5lPSI1Ij48cmVjdCB4PSI3Mi44OCIgeT0iMTczLjg4NyIgd2lkdGg9IjI5OS45OTkiIGhlaWdodD0iNjguODkxIiBmaWxsPSIjRjFGMUYxIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjAuNTsiIHJ4PSIxMi41IiByeT0iMTIuNSIvPjxsaW5lIHgxPSI3Mi44OCIgeTE9IjIwMC4xODQiIHgyPSIzNzIuODc5IiB5Mj0iMjAwLjE4NCIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDowLjU7Ii8+PHRleHQgeD0iMTUxLjAwMyIgeT0iMTkxLjg4MiIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxNCIgdGV4dExlbmd0aD0iMTQzLjc1MiI+6KaL56mN44KK44Gu5L2c5oiQ77yIUy0wNO+8iTwvdGV4dD48dGV4dCB4PSI3Ny44OCIgeT0iMjE4LjE3OSIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxNCIgdGV4dExlbmd0aD0iMjc5Ljk5OSI+5paZ6YeR5piO57Sw44O76YCa6LKo44O75pyJ5Yq55pyf6ZmQ44O757WM6Lev5pa56Yed44Gu5YWl5YqbPC90ZXh0Pjx0ZXh0IHg9Ijc3Ljg4IiB5PSIyMzQuNDc2IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE0IiB0ZXh0TGVuZ3RoPSIyNjUuOTk5Ij7nrpflh7rvvIjmib/oqo3lvoXjgaHjgbjvvInjgajjgIHnpL7lhoXmib/oqo3jgZfjgabmj5DnpLo8L3RleHQ+PC9nPjxnIGNsYXNzPSJlbnRpdHkiIGRhdGEtcXVhbGlmaWVkLW5hbWU9IkMwNCIgaWQ9ImVudDAwMDQiIGRhdGEtc291cmNlLWxpbmU9IjgiPjxyZWN0IHg9IjU4Ljg4IiB5PSIzMTkuNzc3IiB3aWR0aD0iMzI3Ljk5OSIgaGVpZ2h0PSI2OC44OTEiIGZpbGw9IiNGMUYxRjEiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MC41OyIgcng9IjEyLjUiIHJ5PSIxMi41Ii8+PGxpbmUgeDE9IjU4Ljg4IiB5MT0iMzQ2LjA3NCIgeDI9IjM4Ni44NzkiIHkyPSIzNDYuMDc0IiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjAuNTsiLz48dGV4dCB4PSIxNDMuNTU5IiB5PSIzMzcuNzcyIiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE0IiB0ZXh0TGVuZ3RoPSIxNTguNjQxIj7opovnqY3kvp3poLzjga7oqbPntLDvvIhDLTA077yJPC90ZXh0Pjx0ZXh0IHg9IjYzLjg4IiB5PSIzNjQuMDY5IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE0IiB0ZXh0TGVuZ3RoPSIyOTMuOTk5Ij7opovnqY3jgorjga7nr4DvvIjmlpnph5HmoLnmi6DjgIHmnInlirnmnJ/pmZDjgIHntYzot6/mlrnph53jgIE8L3RleHQ+PHRleHQgeD0iNjMuODgiIHk9IjM4MC4zNjYiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTQiIHRleHRMZW5ndGg9IjMwNy45OTkiPuips+e0sOOBque1jOi3r+OBr+e1jOi3r+ioreioiOiAheOBruaJv+iqjeW+jOOBq+eiuuWumuOBmeOCi+aXqO+8iTwvdGV4dD48L2c+PCEtLWxpbmsgUzAzIHRvIFMwNC0tPjxnIGNsYXNzPSJsaW5rIiBkYXRhLWVudGl0eS0xPSJlbnQwMDAyIiBkYXRhLWVudGl0eS0yPSJlbnQwMDAzIiBpZD0ibG5rNSIgZGF0YS1zb3VyY2UtbGluZT0iMTEiIGRhdGEtbGluay10eXBlPSJkZXBlbmRlbmN5Ij48cGF0aCBkPSJNMzkxLjYyLDk1LjkwNyBDMzgwLjU5LDExMS4wNzcgMzY0Ljk2LDEzMC4yNDcgMzQ3Ljg4LDE0My44ODcgQzMzMy45OSwxNTQuOTc3IDMyMi4yNzEsMTYyLjU0MiAzMDYuMzExLDE3MS4wNjIiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTsiIGZpbGw9Im5vbmUiIGlkPSJTMDMtdG8tUzA0Ii8+PHBvbHlnb24gcG9pbnRzPSIzMDEuOSwxNzMuNDE3LDMxMS43MjMsMTcyLjcwNywzMDYuMzExLDE3MS4wNjIsMzA3Ljk1NiwxNjUuNjUsMzAxLjksMTczLjQxNyIgZmlsbD0iIzE4MTgxOCIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxO3N0cm9rZS1saW5lam9pbjptaXRlcjtzdHJva2UtbWl0ZXJsaW1pdDoxMDsiLz48dGV4dCB4PSIzNjUuODYiIHk9IjEzOS45NTQiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTMiIHRleHRMZW5ndGg9IjkxIj7lr6nmn7vjgpLnorrlrprjgZnjgos8L3RleHQ+PC9nPjwhLS1saW5rIFMwMiB0byBTMDQtLT48ZyBjbGFzcz0ibGluayIgZGF0YS1lbnRpdHktMT0iZW50MDAwMSIgZGF0YS1lbnRpdHktMj0iZW50MDAwMyIgaWQ9ImxuazYiIGRhdGEtc291cmNlLWxpbmU9IjEyIiBkYXRhLWxpbmstdHlwZT0iZGVwZW5kZW5jeSI+PHBhdGggZD0iTTU2LjM5LDk3LjM0NyBDMzcuMDIsMTEwLjI1NyAyMi41OSwxMjYuNzY3IDM0Ljg4LDE0My44ODcgQzQ0LjgyLDE1Ny43MzcgNTMuNjIzLDE2Ni4xMDEgNjguMzMzLDE3NC42MjEiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTsiIGZpbGw9Im5vbmUiIGlkPSJTMDItdG8tUzA0Ii8+PHBvbHlnb24gcG9pbnRzPSI3Mi42NiwxNzcuMTI3LDY2Ljg3NywxNjkuMTU1LDY4LjMzMywxNzQuNjIxLDYyLjg2NywxNzYuMDc3LDcyLjY2LDE3Ny4xMjciIGZpbGw9IiMxODE4MTgiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTtzdHJva2UtbGluZWpvaW46bWl0ZXI7c3Ryb2tlLW1pdGVybGltaXQ6MTA7Ii8+PHRleHQgeD0iMzUuODgiIHk9IjEzOS45NTQiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTMiIHRleHRMZW5ndGg9IjE0MyI+6KaL56mN44KK5L2c5oiQ5Lit44Gu6KGM44KS6ZaL44GPPC90ZXh0PjwvZz48IS0tbGluayBTMDQgdG8gUzAyLS0+PGcgY2xhc3M9ImxpbmsiIGRhdGEtZW50aXR5LTE9ImVudDAwMDMiIGRhdGEtZW50aXR5LTI9ImVudDAwMDEiIGlkPSJsbms4IiBkYXRhLXNvdXJjZS1saW5lPSIxNCIgZGF0YS1saW5rLXR5cGU9ImRlcGVuZGVuY3kiPjxwYXRoIGQ9Ik0yMTAuNzYsMTczLjUyNyBDMjA0LjI3LDE1OC4yNzcgMTk1LjI0LDE0MC42NDcgMTgzLjg4LDEyNi44ODcgQzE3NC42OSwxMTUuNzU3IDE2Ni44NCwxMDguNTc3IDE1NS4zMSwxMDAuMTA3IiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjE7IiBmaWxsPSJub25lIiBpZD0iUzA0LXRvLVMwMiIvPjxwb2x5Z29uIHBvaW50cz0iMTUxLjI4LDk3LjE0NywxNTYuMTY1LDEwNS42OTksMTU1LjMxLDEwMC4xMDcsMTYwLjkwMSw5OS4yNTEsMTUxLjI4LDk3LjE0NyIgZmlsbD0iIzE4MTgxOCIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxO3N0cm9rZS1saW5lam9pbjptaXRlcjtzdHJva2UtbWl0ZXJsaW1pdDoxMDsiLz48dGV4dCB4PSIxOTYuMTIiIHk9IjEzOS45NTQiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTMiIHRleHRMZW5ndGg9IjE0MyI+5o+Q56S644GX44Gf77yI57WQ5p6c44KS56S644GZ77yJPC90ZXh0PjwvZz48IS0tbGluayBTMDQgdG8gUzA0LS0+PGcgY2xhc3M9ImxpbmsiIGRhdGEtZW50aXR5LTE9ImVudDAwMDMiIGRhdGEtZW50aXR5LTI9ImVudDAwMDMiIGlkPSJsbms3IiBkYXRhLXNvdXJjZS1saW5lPSIxMyIgZGF0YS1saW5rLXR5cGU9ImRlcGVuZGVuY3kiPjxwYXRoIGQ9Ik0zNzMuMTMsMTk2LjEyNyBDMzkzLjk2LDE5OC4xMzcgNDA3Ljg4LDIwMi4yMDcgNDA3Ljg4LDIwOC4zMjcgQzQwNy44OCwyMTQuNDU3IDM5OC45MzcsMjE4LjA0NyAzNzguMTA3LDIyMC4wNTciIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTsiIGZpbGw9Im5vbmUiIGlkPSJTMDQtdG8tUzA0Ii8+PHBvbHlnb24gcG9pbnRzPSIzNzMuMTMsMjIwLjUzNywzODIuNDczLDIyMy42NTQsMzc4LjEwNywyMjAuMDU3LDM4MS43MDQsMjE1LjY5MSwzNzMuMTMsMjIwLjUzNyIgZmlsbD0iIzE4MTgxOCIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxO3N0cm9rZS1saW5lam9pbjptaXRlcjtzdHJva2UtbWl0ZXJsaW1pdDoxMDsiLz48dGV4dCB4PSI0MTMuODgiIHk9IjIxMi44OTQiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTMiIHRleHRMZW5ndGg9IjE0NC4yNzYiPlvkuI3otrPjg7voqqTjgopdIOOCqOODqeODvOimgee0hDwvdGV4dD48L2c+PCEtLWxpbmsgUzA0IHRvIEMwNC0tPjxnIGNsYXNzPSJsaW5rIiBkYXRhLWVudGl0eS0xPSJlbnQwMDAzIiBkYXRhLWVudGl0eS0yPSJlbnQwMDA0IiBpZD0ibG5rOSIgZGF0YS1zb3VyY2UtbGluZT0iMTUiIGRhdGEtbGluay10eXBlPSJkZXBlbmRlbmN5Ij48cGF0aCBkPSJNMjIyLjg4LDI0My4wNjcgQzIyMi44OCwyNjYuMTU3IDIyMi44OCwyOTEuNjQ3IDIyMi44OCwzMTQuNjk3IiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjE7c3Ryb2tlLWRhc2hhcnJheTo3LDc7IiBmaWxsPSJub25lIiBpZD0iUzA0LXRvLUMwNCIvPjxwb2x5Z29uIHBvaW50cz0iMjIyLjg4LDMxOS42OTcsMjI2Ljg4LDMxMC42OTcsMjIyLjg4LDMxNC42OTcsMjE4Ljg4LDMxMC42OTcsMjIyLjg4LDMxOS42OTciIGZpbGw9IiMxODE4MTgiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTtzdHJva2UtbGluZWpvaW46bWl0ZXI7c3Ryb2tlLW1pdGVybGltaXQ6MTA7Ii8+PHRleHQgeD0iMjIzLjg4IiB5PSIyODUuODQ0IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjEzIiB0ZXh0TGVuZ3RoPSIxNjkiPuiNt+S4u+OBjOmWi+OBj+OBqOimi+epjeOCiuOBjOimi+OBiOOCizwvdGV4dD48L2c+PD9wbGFudHVtbC1zcmMgVExCQkppOTA1RHRwNUhGczlBWWlOQllHSnMxZk05MThlZWM5Ml9lMTdIMXYyeGUwVUlYZTQwajZRZG1NZ1ZXbmpfRmVvYl9tamdESU9ybXFjU3V6enZ4NzdNck5zcWlKRVFnOFNHc29QUTFKdnd0N1ltc1cxZ3l0bkYzcm1vdmt4a3pmUDJMQWkyWkMwelF6X3gxQmVPb01xajhhaDNnVG5QYXhpQjdFd1lyZFZrZk9rWG5UT3NTWTRicjVTOVlhQ1lHSE5HdFhIek85Q3lVeUZ0VWlNb0p2T0xRcVVGZFZQQno5cExuUnBicHgzR3pRS0RaTzRYajNfWFpveXNSUkJIcHBxb0ZuVTBVdmtRanR2QnMxMXp1aGlWQUN6X2Zra3U2X3VnYWdOcXBVZEJjNUNxejBfZWdMa3J5Wm5CSjUyYnVzbEZHazlwTXNvMEV6MDZlWDZQZTJkT2hYV1h0Y0xITGUyLVg4blZjRkVwYi1HMzR1Qm52Rzc0VjVTUHlrUTR3T2tpVWhGMG5jbDM5MGtiX0lhSnFlTlFWVkt0bUllMURMMWNnZ1dwSGtmTDZLRWRnT1Zsa2YwaHFIYnd6aXNXN1FYY281am1ubHduV3VZS0dzWTRmMXhHSW85cTZhbC1HYnZrLTJGUmlOTFVub2NuTVdUSl9IOU54QmlNaG8tRzdwYnZDWGpZSzlQNzR2T3laUFNhSjV1cTQweHBxYzVRaVZTSHpwNEt5RFZqeHA5N2NOUlFLUHlMbFJnU25FVVprOVZMelhyNXVTUW13cWdiRzRkbzlVdVhiZTRUcnkwVzAwPz48L2c+PC9zdmc+" class="uml" alt="uml diagram" title="" /></p>
+<h2 id="_9">開始準備の検証<a class="headerlink" href="#_9" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
 <tr>
@@ -6875,38 +6927,48 @@
 </thead>
 <tbody>
 <tr>
-<td style="text-align: left;">詳細（UI 設計）</td>
-<td style="text-align: left;">C-03 の段階入力は「各段階で下書き保存する」。下書き保存は R1.0 の範囲（ドメインモデル Q-INV-01 の注）</td>
-<td style="text-align: left;">確認ポイント 3。段階の切り替えだけを入れ、保存は R1.0 に残す</td>
+<td style="text-align: left;">詳細（ユーザーストーリー）</td>
+<td style="text-align: left;">AC1〜AC3 は「営業担当者が見積りを確定する」。ドメインモデルは算出・社内承認・提示の 3 つ</td>
+<td style="text-align: left;">確定 = 社内承認して提示とする（W2 の開始準備の人の決定）。ステップ 1 で US-03 の決定に書く</td>
+</tr>
+<tr>
+<td style="text-align: left;">詳細（ドメインモデル）</td>
+<td style="text-align: left;">料金根拠に属性がない。見積り番号がない。算出の検証の不変条件がない</td>
+<td style="text-align: left;">上の注。Q-INV-17・18 を足す</td>
+</tr>
+<tr>
+<td style="text-align: left;">詳細（データモデル）</td>
+<td style="text-align: left;"><code>quotation</code> の金額・期限・経路方針が NOT NULL で、作成中を保存できない。<code>quotation_no</code> がない。<code>status</code> の CHECK に Bolt 10 で使わない値が多い</td>
+<td style="text-align: left;">確認ポイント 1</td>
 </tr>
 <tr>
 <td style="text-align: left;">詳細（UI 設計）</td>
-<td style="text-align: left;">ナビの項目には、まだない画面（予約、追跡の照会、問い合わせ、通知、経路設計など）が並ぶ</td>
-<td style="text-align: left;">いまある画面だけを出し、ない項目は画面を作る Bolt で足す（確認ポイント 1）</td>
-</tr>
-<tr>
-<td style="text-align: left;">詳細（技術スタック）</td>
-<td style="text-align: left;">WebJars（webjars-locator-lite）、Bootstrap 5.3.x、htmx 2.0.x は選定済み</td>
-<td style="text-align: left;">外部ライブラリの導入として計画の承認で確かめる（確認ポイント 2）</td>
+<td style="text-align: left;">S-04 の画面イメージと URL がない。S-03 の確定の後は「S-04 ができるまで受付一覧へ戻る（暫定）」</td>
+<td style="text-align: left;">確認ポイント 5。ステップ 1 で URL の表と S-03 の行を直す</td>
 </tr>
 <tr>
 <td style="text-align: left;">横断（開発戦略）</td>
-<td style="text-align: left;">序盤はアウトサイドイン。骨格は既存の画面の層のシナリオを安全網にする移行</td>
-<td style="text-align: left;">新しい振る舞い（ナビ、窓口の案内、段階入力）だけ新しいシナリオで駆動する</td>
+<td style="text-align: left;">序盤はアウトサイドイン。見積りは新しい集約で不変条件が多い</td>
+<td style="text-align: left;">受入シナリオから入り、集約は単体テストで固める（Bolt 5 と同じ進め方）</td>
 </tr>
 <tr>
 <td style="text-align: left;">横断（BC の独立性）</td>
-<td style="text-align: left;">レイアウトのフラグメントは <code>identity</code> と <code>quotation</code> の両方の画面が使う。テンプレートは <code>templates/layout/</code> に置き、どのコンテキストの Java の型にも依存しない（モデルの値だけで描く）</td>
-<td style="text-align: left;">問題なし。ナビの項目は設定の値でなく、レイアウトの中の固定のリンクにする</td>
+<td style="text-align: left;">見積りは <code>quotation</code> の中。輸送要求と同じコンテキストの別の集約。DE-03 の型は公表された言語のパッケージ（<code>quotation.domain.events</code>）に置く</td>
+<td style="text-align: left;">問題なし</td>
 </tr>
 <tr>
 <td style="text-align: left;">横断（過去の計画との連続性）</td>
-<td style="text-align: left;">画面の層のシナリオは文言とキー操作で操作する（Bolt 3 R-13）。表の横スクロールの囲み（Bolt 5）、押せる範囲（Bolt 5）、<code>aria-disabled</code>（Bolt 4）</td>
-<td style="text-align: left;">部品の作りは変えず、スタイルだけを共通の CSS に移す</td>
+<td style="text-align: left;">画面に内部の ID を出さない（D-4）。社内の照会は荷主企業で絞らない入力ポートを分ける（Bolt 5 R-10）。日時は利用者のタイムゾーンと UTC offset（Bolt 4）</td>
+<td style="text-align: left;">見積り番号を使う。社内の見積りの照会は <code>Staff…</code> の入力ポートにする（ArchUnit の R-16 の規則が守る）</td>
+</tr>
+<tr>
+<td style="text-align: left;">前の Bolt のレビュー・既知の課題</td>
+<td style="text-align: left;">Bolt 9 は開発レビューを行っていない（T-28 は Bolt 9 の後に決めた）。既知の課題は上の表のとおり</td>
+<td style="text-align: left;">Bolt 9 の変更は Bolt 6〜8 の指摘の返済で、指摘ごとの対応はレビューに記録した。Bolt 10 のレビューで Bolt 9 の変更も見る</td>
 </tr>
 </tbody>
 </table>
-<h2 id="_8">入力<a class="headerlink" href="#_8" title="Permanent link">&para;</a></h2>
+<h2 id="_10">入力<a class="headerlink" href="#_10" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
 <tr>
@@ -6916,60 +6978,75 @@
 </thead>
 <tbody>
 <tr>
-<td style="text-align: left;">UI 設計（ナビゲーションとレイアウト、共通部品、C-03、部分更新）</td>
+<td style="text-align: left;">ユーザーストーリー（US-03、US-02 の決定）</td>
+<td style="text-align: left;"><code>docs/requirements/cargo-tracker/user_story.md</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">システムユースケース（UC-03）</td>
+<td style="text-align: left;"><code>docs/requirements/cargo-tracker/system_usecase.md</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">ドメインモデル（見積りの集約・状態遷移・Q-INV-05、DE-03）</td>
+<td style="text-align: left;"><code>docs/design/cargo-tracker/domain_model.md</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">データモデル（<code>quotation</code>、<code>pricing_line</code>）</td>
+<td style="text-align: left;"><code>docs/design/cargo-tracker/data_model.md</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">UI 設計（S-02・S-03・S-04・C-04、日時表示、エラー要約）</td>
 <td style="text-align: left;"><code>docs/design/cargo-tracker/ui_design.md</code></td>
 </tr>
 <tr>
-<td style="text-align: left;">フロントエンドのアーキテクチャ、技術スタック</td>
-<td style="text-align: left;"><code>docs/design/cargo-tracker/architecture_frontend.md</code>、<code>docs/design/cargo-tracker/tech_stack.md</code></td>
+<td style="text-align: left;">ADR（コンテキスト間の連携、ドメインロジックのパターン）</td>
+<td style="text-align: left;"><code>docs/adr/cargo-tracker/002-domain-logic-pattern-per-context.md</code>、<code>003-inter-context-integration.md</code></td>
 </tr>
 <tr>
-<td style="text-align: left;">ADR-005（サーバーサイドレンダリング）、ADR-006</td>
-<td style="text-align: left;"><code>docs/adr/cargo-tracker/005-server-side-rendering.md</code>、<code>006-java-spring-boot-platform.md</code></td>
-</tr>
-<tr>
-<td style="text-align: left;">テスト戦略（画面の層、アクセシビリティの自動検査）</td>
-<td style="text-align: left;"><code>docs/design/cargo-tracker/test_strategy.md</code></td>
+<td style="text-align: left;">開発ガイドライン 第 2 章・第 3 章</td>
+<td style="text-align: left;"><code>docs/article/02-cargo-domain-model.md</code>、<code>docs/article/03-spring-modular-monolith.md</code></td>
 </tr>
 </tbody>
 </table>
-<h2 id="_9">ステップ計画<a class="headerlink" href="#_9" title="Permanent link">&para;</a></h2>
-<p>状態の記号: <code>[ ]</code> 未着手、<code>[-]</code> 進行中、<code>[?]</code> 承認待ち、<code>[R]</code> 修正中、<code>[x]</code> 完了、<code>[S]</code> スキップ。各ステップの終わりに <code>check</code> と <code>uiTest</code> が緑であることを確かめて push する（T-14）。</p>
+<h2 id="_11">ステップ計画<a class="headerlink" href="#_11" title="Permanent link">&para;</a></h2>
+<p>状態の記号: <code>[ ]</code> 未着手、<code>[-]</code> 進行中、<code>[?]</code> 承認待ち、<code>[R]</code> 修正中、<code>[x]</code> 完了、<code>[S]</code> スキップ。各ステップの終わりに <code>check</code> が緑であることを確かめて push し、CI の結果を確かめてから次のステップに入る（T-14、T-26）。</p>
 <ul class="task-list">
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>1. 決定を設計文書に反映する</strong>（承認は終了報告とまとめて受ける）</li>
-<li>UI 設計: 上の注（共通レイアウトの実装、いまあるナビの項目、段階入力のパネルの切り替え）</li>
-<li>リリース計画: W1 の #36 の行に Bolt 8 を書く</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>1. 決定を設計文書に反映する</strong>（承認はステップ 2 とまとめて受ける）</li>
+<li>ユーザーストーリー: US-03 の決定（確定 = 社内承認して提示、仮の承認者、料金根拠の明細と通貨、有効期限の入力と境界、経路方針、Bolt 10・11 の分け方）</li>
+<li>ドメインモデル: 料金明細、見積り番号、Q-INV-17・18、DE-03 の購読（輸送要求の状態）</li>
+<li>データモデル: <code>quotation</code> の NULL 可の列と CHECK、<code>quotation_no</code>、<code>pricing_line</code></li>
+<li>UI 設計: S-04 の画面イメージと URL、S-02 の見積り作成中、S-03 の確定の後の遷移、C-04 の見積りの節</li>
 <li>完了の判定: <code>okf:check</code> が ERROR 0、<code>documentationTest</code> が緑。push する</li>
-<li>結果（2026-10-03 11:24〜11:25）: UI 設計の「ナビゲーションとレイアウト」に実装（フラグメント、WebJars、共通の CSS、いまある画面だけのナビ、仮のヘッダーと窓口の案内）を、C-03 の段階入力の行にパネルの切り替えの方式を書いた。リリース計画の W1 には開始準備で Bolt 8 を書いた。<code>okf:check</code> ERROR 0、<code>documentationTest</code> 緑</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>2. UI の骨格（画面の層の Red → Green）</strong></li>
-<li>画面の層の受入シナリオを先に書き、<code>uiTest</code> で失敗を記録する（T-21）（<code>features/ui/layout_ui.feature</code>、<code>@ui</code>）<ul>
-<li>荷主の画面に顧客 Web のナビと窓口の案内が出て、ナビの「見積依頼」が現在の項目（<code>aria-current="page"</code>）になる</li>
-<li>営業の画面に社内業務 Web のナビが出て、窓口の案内は出ない</li>
-<li>ナビの項目へキー操作だけで移れる。幅 320 CSS px でナビが畳まれ、横スクロールが出ない</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>2. 見積りの算出と提示（業務ルール層の Red → Green）</strong> 【承認ゲート: 業務のルール（Q-INV-05・17・18）】</li>
+<li>業務ルール層の受入シナリオを先に書き、Red をコミットする（<code>features/quotation/present_quotation.feature</code>、<code>@US-03 @must</code>）<ul>
+<li>審査を確定した見積依頼に、料金明細 2 行・有効期限・経路方針を入れて算出し、社内承認して提示すると、見積りは提示済みになり、提示時刻と承認者が残り、DE-03 が発行される（AC1）</li>
+<li>荷主が見積依頼を照会すると、料金根拠（明細と合計）、有効期限、経路方針、詳細な経路は経路設計者の承認後に確定する旨が示される（AC2）。輸送要求は見積提示済みになる（H1）</li>
+<li>料金明細がない・有効期限がない・有効期限が算出の時刻と同じか前、のときは算出できず、足りない項目と誤りがまとめて示される（AC3）</li>
+<li>審査中の見積依頼と、すでに見積りのある見積依頼には、見積りを作れない（Q-INV-18）</li>
+<li>他社の荷主には見積りは見えない（Q-INV-08）</li>
 </ul>
 </li>
-<li>WebJars（<code>org.webjars.npm:bootstrap</code> 5.3.x、<code>org.webjars.npm:htmx.org</code> 2.0.x、<code>webjars-locator-lite</code>）を足し、本番の依存の検査を通す</li>
-<li><code>templates/layout/customer.html</code>・<code>staff.html</code>（フラグメント）と <code>static/css/app.css</code> を作り、既存の 7 画面と入口の一覧を移す。インラインのスタイルを共通の CSS に移す（T-18）</li>
-<li>既存の 21 本の画面の層のシナリオを、文言とキー操作の期待を変えずに通す（H3）</li>
-<li>完了の判定: <code>check</code> と <code>uiTest</code> が緑。push する</li>
-<li>結果（2026-10-03 11:25〜11:37）: 画面の層の受入シナリオ（<code>layout_ui.feature</code>、4 件）を先に書き、実装の前の <code>uiTest</code> で新しい 4 件の失敗（既存の 21 件は通る）を記録した（T-21）。WebJars（webjars-locator-lite 1.1.4、Bootstrap 5.3.8、htmx 2.0.11）を足し、<code>layout/customer.html</code>・<code>staff.html</code>（Thymeleaf のフラグメント）と <code>static/css/app.css</code> を作って、既存の 7 つのテンプレートを移した。画面ごとのインラインのスタイル（<code>&lt;style&gt;</code> 3 か所、<code>style="overflow-x: auto"</code> 5 か所）を共通の CSS に移した（T-18）。表・ボタン・入力欄に Bootstrap のクラスを付けた。計画からの変更: 入口の一覧はテンプレートにせず、静的なファイルのまま Bootstrap と共通の CSS を読むようにした（コントローラを足さずに済む）。実行中に直した誤り: スクリプトのないページで <code>~{::script}</code> が解決できない（<code>~{}</code> を渡す）、Bolt 4 のキー操作のシナリオがヘッダーとナビの分の Tab を想定していない（荷受人のグループに届くまで Tab を進める。キー操作だけの期待は変えない）、ナビの移動の途中のアクセシビリティの検査。画面の層のシナリオは 25 件すべて passed（failed・undefined・skipped 0）、axe-core の違反 0 件。<code>check</code> 緑（テスト 402 件）</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>3. C-03 の段階入力のプロトタイプ（画面の層の Red → Green）</strong></li>
-<li>画面の層の受入シナリオを先に書き、<code>uiTest</code> で失敗を記録する（<code>features/ui/stepwise_transport_request_ui.feature</code>）<ul>
-<li>キー操作だけで 4 段階を進み、確認の段階で入力の内容を確かめて提出すると、C-04 に版 1 が出る</li>
-<li>確認の段階から段階の見出しで前の段階に戻って直せる。選んだ書類が残っている</li>
-<li>提出して誤りがあると、エラー要約のリンクで誤りのある段階が開き、その項目にフォーカスが移る</li>
+<li>足りない内側を TDD で作る: <code>Quotation</code>、<code>QuotationId</code>、<code>QuotationStatus</code>、<code>PricingBasis</code>、<code>PricingLine</code>、<code>QuotationExpiry</code>、<code>RoutePolicy</code>、<code>QuotationRepository</code> とメモリ上の実装、<code>QuotationCommandService</code>（作る・算出する・社内承認して提示する）、荷主用と社内用の照会、<code>QuotationPresented</code>（DE-03）、DE-03 を受けて輸送要求を見積提示済みにする購読</li>
+<li>完了の判定: <code>check</code> が緑。push して CI を確かめる。ステップ 1 とあわせて承認を受ける</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>3. 表（内側の TDD、統合テスト）</strong> 【承認ゲート: スキーマの変更】</li>
+<li>統合テスト（PostgreSQL）を先に書く: 見積りと料金明細の保存と読み出し、楽観ロック、UK（輸送要求 ID・見積り番号）、承認待ち以後の NOT NULL の CHECK、<code>status</code> の CHECK、DE-03 の配信で輸送要求が見積提示済みになる（別のトランザクション。H1）</li>
+<li>マイグレーション <code>V20261005…__create_quotation.sql</code>（<code>common</code>）。H2 のスモークを先に回す（T-15）。表と列に日本語名のコメントを付ける（データモデルの決まり）</li>
+<li>MyBatis のリポジトリ。見積り番号の採番（輸送要求の中で最大 + 1、同じトランザクション）</li>
+<li>完了の判定: <code>check</code> が緑。push して CI を確かめる。スキーマの承認を受ける</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>4. 画面の層（Red → Green）</strong>（承認はステップ 5 とまとめて受ける）</li>
+<li>画面の層の受入シナリオを先に書き、<code>uiTest</code> で失敗を記録する（T-21。<code>features/ui/present_quotation_ui.feature</code>、<code>@ui @US-03</code>）<ul>
+<li>主成功: 営業担当者が S-03 で審査を確定すると S-04 が開き、料金明細・有効期限・経路方針を入れて算出し、社内承認して提示する。荷主が C-04 を開くと見積りの節に料金根拠・有効期限（Asia/Tokyo（UTC+09:00））・経路方針・確定の旨が出る。キー操作だけで行える</li>
+<li>画面に固有の条件: 料金明細を空にして算出すると、エラー要約にフォーカスが移り、入力が残る</li>
+<li>幅 320 CSS px で横スクロールが出ない。axe-core の違反 0 件</li>
 </ul>
 </li>
-<li><code>new.html</code> を 4 つのパネルに分け、段階の切り替えと確認のまとめを <code>transport-request-form.js</code> に足す。JavaScript がないときは全段階を 1 画面で示す</li>
-<li>既存の C-03 のシナリオ（キー操作の提出、エラー要約、特殊貨物、書類）を、段階入力の操作に合わせて直す（期待する結果は変えない）</li>
-<li>完了の判定: <code>check</code> と <code>uiTest</code> が緑。push する</li>
-<li>結果（2026-10-03 11:37（ステップ 2 のコミットの直後）〜11:51）: 画面の層の受入シナリオ（<code>stepwise_transport_request_ui.feature</code>、3 件）と段階を進める操作を先に書き、実装の前の <code>uiTest</code> で新しい 3 件の失敗（既存の 25 件は通る）を記録した（T-21）。<code>new.html</code> を 4 つの段階（輸送条件・貨物・書類・確認）のパネルに分け、段階の一覧と「次へ」は <code>hidden</code> で出して JavaScript が表示するようにした。<code>transport-request-form.js</code> に段階の切り替え（見出しへのフォーカス、<code>aria-current="step"</code>）、確認のまとめ（値は <code>textContent</code> で入れる）、エラー要約のリンクで誤りの段階を開く振る舞いを足した。作成と編集（出し直し）の両方で段階入力になる。既存の C-03 のシナリオ（キー操作の提出、エラー要約、特殊貨物、書類、出し直し）は、期待する結果を変えずに段階を進める操作を足した。JavaScript がないときに全段階を 1 画面で示すことは、コントローラの単体テストで確かめた。画面の層のシナリオは 28 件すべて passed（failed・undefined・skipped 0）、axe-core の違反 0 件。<code>check</code> 緑</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>4. 検証と Bolt 終了報告</strong></li>
+<li>S-04（作成・算出・提示）、S-02 の見積り作成中の行、S-03 の確定の後の S-04 への遷移、C-04 の見積りの節</li>
+<li>完了の判定: <code>check</code> と <code>uiTest</code> が緑。push して CI を確かめる</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>5. 開発レビューと Bolt 終了報告</strong></li>
+<li><code>developing-review</code> で Bolt 10 の変更（と Bolt 9 の変更）をレビューし、指摘への対応を決める（T-28）</li>
 <li><code>check</code>・<code>uiTest</code>・CI・SonarQube の品質ゲート（PASS）を確かめる</li>
-<li><code>bolt_08_report.md</code> を書く（仮説 H1〜H3 の結論、各ステップの時刻、UI-HO-04 の所見）。人が <code>bootRun</code> で段階入力を触って操作性を確かめる場を、承認の場に入れる</li>
-<li>結果（2026-10-03 11:51〜11:54）: SonarQube の品質ゲートは 1 回で PASS（指摘 0 件）。<code>check</code>・<code>uiTest</code> は緑。<a href="../bolt_08_report/">Bolt 8 終了報告</a> を書いた。本報告の承認の場で、段階入力の操作性を人が確かめる</li>
+<li><code>bolt_10_report.md</code> を書く（仮説 H1〜H3 の結論、各ステップの開始と完了の時刻、Red の記録）。ステップ 4 の結果をここでまとめて報告する</li>
 </ul>
-<h3 id="_10">時間の配分と打ち切り<a class="headerlink" href="#_10" title="Permanent link">&para;</a></h3>
+<h3 id="_12">時間の配分と打ち切り<a class="headerlink" href="#_12" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
 <tr>
@@ -6980,34 +7057,38 @@
 <tbody>
 <tr>
 <td style="text-align: left;">1</td>
-<td style="text-align: left;">15 分</td>
-</tr>
-<tr>
-<td style="text-align: left;">2</td>
-<td style="text-align: left;">110 分</td>
-</tr>
-<tr>
-<td style="text-align: left;">3</td>
-<td style="text-align: left;">100 分</td>
-</tr>
-<tr>
-<td style="text-align: left;">4</td>
 <td style="text-align: left;">20 分</td>
 </tr>
 <tr>
+<td style="text-align: left;">2</td>
+<td style="text-align: left;">70 分</td>
+</tr>
+<tr>
+<td style="text-align: left;">3</td>
+<td style="text-align: left;">50 分</td>
+</tr>
+<tr>
+<td style="text-align: left;">4</td>
+<td style="text-align: left;">80 分</td>
+</tr>
+<tr>
+<td style="text-align: left;">5</td>
+<td style="text-align: left;">30 分</td>
+</tr>
+<tr>
 <td style="text-align: left;">合計</td>
-<td style="text-align: left;">245 分</td>
+<td style="text-align: left;">250 分</td>
 </tr>
 </tbody>
 </table>
-<p>4 時間を超えそうなときは、次の順で次の Bolt に回す。</p>
+<p>4 時間を超えそうなときは、次の順で Bolt 11 に回す。</p>
 <ol>
-<li>編集（出し直し）の画面の段階入力（作成の画面だけにする）</li>
-<li>確認の段階の入力内容のまとめ（確認の段階は提出ボタンだけにする）</li>
-<li>社内業務 Web のレイアウト（顧客 Web だけにする）</li>
+<li>ステップ 4 の幅 320 CSS px のシナリオ</li>
+<li>S-02 の見積り作成中の行（S-03 の確定の後の遷移だけで S-04 に届く）</li>
+<li>経路方針の主な経由地（概算の日程だけを残す）</li>
 </ol>
-<p>既存の画面の層のシナリオとアクセシビリティの検査は削らない。</p>
-<h2 id="try-t-62026-10-03-14">確認ポイント（計画の承認の場でまとめて確認する。Try T-6。2026-10-03 に 1〜4 を決定）<a class="headerlink" href="#try-t-62026-10-03-14" title="Permanent link">&para;</a></h2>
+<p>算出の検証（AC3）、提示時刻と DE-03、C-04 の見積りの節（AC2）、他社に見えないことは削らない。</p>
+<h2 id="try-t-6">確認ポイント（計画の承認の場でまとめて確認する。Try T-6）<a class="headerlink" href="#try-t-6" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
 <tr>
@@ -7020,39 +7101,52 @@
 <tbody>
 <tr>
 <td style="text-align: left;">1</td>
-<td style="text-align: left;">ナビの項目は、いまある画面だけを出す（顧客: 見積依頼。社内: 見積依頼、KPI 計測記録）。ヘッダーは仮の主体の名前を出し、ログアウトは出さない。窓口の案内は UI 設計の画面イメージの値（平日 09:00〜18:00 Asia/Tokyo）を仮に使う</td>
-<td style="text-align: left;">1、2</td>
-<td style="text-align: left;">UI 設計のナビの項目と、未実装の画面・認証との差</td>
+<td style="text-align: left;"><code>quotation</code> と <code>pricing_line</code> の表を新しく作る。<code>quotation</code> は Bolt 10 で使う列だけにし、金額・期限・経路方針の列は NULL 可にして、承認待ち以後の NOT NULL を CHECK で守る。<code>quotation_no</code>（輸送要求の中で 1 から）と UK を足す。荷主の回答・経路版・荷主承認・置換の列と、<code>status</code> のほかの値は、使う Bolt で足す（ALTER）</td>
+<td style="text-align: left;">1、3</td>
+<td style="text-align: left;">スキーマの変更。作成中の見積りを保存するため、データモデルの NOT NULL を変える</td>
 </tr>
 <tr>
 <td style="text-align: left;">2</td>
-<td style="text-align: left;">外部ライブラリとして WebJars の Bootstrap 5.3.x・htmx 2.0.x・webjars-locator-lite を足す。htmx は読み込むだけで、部分更新はまだ使わない</td>
-<td style="text-align: left;">2</td>
-<td style="text-align: left;">外部ライブラリの導入（技術スタックで選定済み）</td>
+<td style="text-align: left;">料金根拠は明細の表で、1〜10 行。各行は内容（200 文字まで）・金額（0 より大きい、小数点以下 2 桁まで）・参照した契約条件（任意、200 文字まで）。通貨は見積りに 1 つで、USD・EUR・JPY から選ぶ（明細はすべて同じ通貨）。合計は明細の和</td>
+<td style="text-align: left;">1、2、4</td>
+<td style="text-align: left;">業務のルール。通貨の候補と明細の数は仮の値（業務責任者の確認で見直す）</td>
 </tr>
 <tr>
 <td style="text-align: left;">3</td>
-<td style="text-align: left;">段階入力は、R1.0 で下書きを保存するまで、1 つのフォームの中のパネルの切り替えにする。段階ごとのサーバーの検証はせず、提出のときに今と同じ検証とエラー要約で示す。JavaScript がないときは全段階を 1 画面で示す</td>
-<td style="text-align: left;">1、3</td>
-<td style="text-align: left;">UI 設計の「各段階で下書き保存」との差（H2）</td>
+<td style="text-align: left;">有効期限は営業担当者が日本時間の日時で入れ、UTC の時点で保存する。算出の時刻と同じか前なら誤りにする。経路方針は、主な経由地（UN/LOCODE、0〜5 件）と、概算の出発日時・到着日時（必須。到着は出発より後）</td>
+<td style="text-align: left;">1、2、4</td>
+<td style="text-align: left;">業務のルール。AC3 は料金根拠と有効期限の不足だけを挙げるが、Q-INV-05 は経路方針も必要とする</td>
 </tr>
 <tr>
 <td style="text-align: left;">4</td>
-<td style="text-align: left;">段階入力の操作性（UI-HO-04）は、終了報告の承認の場で人が <code>bootRun</code> で触って確かめる。合否で、段階入力をこの形で残すか、1 画面の形に戻すかを決める</td>
-<td style="text-align: left;">4</td>
-<td style="text-align: left;">プロトタイプの目的は操作性の確認</td>
+<td style="text-align: left;">輸送要求を見積提示済みにするのは、DE-03 を受けた別のトランザクションにする（2 つの集約を 1 つのトランザクションで更新しない。H1）。受け取りは冪等にし、見積り作成中でなければ何もしない。DE-03 の配信は既存の DE-01 と同じ仕組み（Spring Modulith のイベントの記録）</td>
+<td style="text-align: left;">2、3</td>
+<td style="text-align: left;">集約の境界とイベントの扱い（設計判断）</td>
+</tr>
+<tr>
+<td style="text-align: left;">5</td>
+<td style="text-align: left;">S-04 の URL: 作成 <code>GET /staff/transport-requests/{業務番号}/quotations/new</code>・<code>POST /staff/transport-requests/{業務番号}/quotations</code>、算出と提示 <code>GET /staff/transport-requests/{業務番号}/quotations/{見積り番号}</code>・<code>POST …/{見積り番号}/calculation</code>・<code>POST …/{見積り番号}/presentation</code>。S-03 で審査を確定したら S-04 の作成へ進む（暫定の受付一覧への戻りをやめる）。作成と算出は 1 つの画面で入力し、送ると算出まで進む（作成中のまま保存する操作は入れない）</td>
+<td style="text-align: left;">1、4</td>
+<td style="text-align: left;">画面の流れと URL</td>
+</tr>
+<tr>
+<td style="text-align: left;">6</td>
+<td style="text-align: left;">1 つの輸送要求に、作成中・承認待ち・提示済みの見積りは 1 つだけとする（Q-INV-18）。置換（AC5）は Bolt 11 で入れる</td>
+<td style="text-align: left;">1、2</td>
+<td style="text-align: left;">業務のルール</td>
 </tr>
 </tbody>
 </table>
-<p>決定（2026-10-03、human:kakimomokuri）: 確認ポイント 1〜4 はすべて上の案で決まった（外部ライブラリの導入を含む）。AI の仮定にも異議はなかった。</p>
 <h2 id="ai">AI の仮定<a class="headerlink" href="#ai" title="Permanent link">&para;</a></h2>
 <ul>
-<li>段階の見出しは、段階の名前と番号を持つリストにし、現在の段階に <code>aria-current="step"</code> を付ける。前の段階の見出しはリンクにして戻れるようにする。</li>
-<li>「次へ」で段階を移ったら、フォーカスを次の段階の見出しへ移す（支援技術に段階の変化を伝える）。</li>
-<li>共通の CSS は Bootstrap の上書きを最小にし、24 CSS px の操作範囲、<code>scroll-padding</code>、表の横スクロールの囲み、長い語の折り返しだけを足す。</li>
-<li>入口の一覧（<code>static/index.html</code>）はテンプレートにし、レイアウトを使わない（荷主と社内のどちらでもない入口のため）。Bootstrap の見た目だけをそろえる。</li>
+<li>見積りの社内承認者と提示時刻は、審査の判断者と同じく設定の仮の営業担当者（<code>ProvisionalActorProperties</code>）で記録する。</li>
+<li>提示時刻は社内承認の時刻と同じとする（社内承認して提示するを 1 つの操作にする）。</li>
+<li>荷主に見せる料金根拠は、明細の内容・金額・合計・通貨と、参照した契約条件とする。社内承認者は見せない。</li>
+<li>見積り番号は画面に「TR-2026-0001 見積 1」の形で出す。</li>
+<li>経路方針の主な経由地は <code>route_policy_via</code> に UN/LOCODE をカンマ区切りで入れる（データモデルの VARCHAR(200)）。</li>
+<li>DE-03 の受け取りは、DE-01 の KPI 計測と同じく、配信が失敗しても再配信される（イベントの記録）。</li>
 </ul>
-<h2 id="_11">リスクと対策<a class="headerlink" href="#_11" title="Permanent link">&para;</a></h2>
+<h2 id="_13">リスクと対策<a class="headerlink" href="#_13" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
 <tr>
@@ -7063,41 +7157,40 @@
 </thead>
 <tbody>
 <tr>
-<td style="text-align: left;">Bootstrap の部品（ナビの畳み、フォームの部品）が axe-core の違反になる</td>
-<td style="text-align: left;">画面の層が赤になる</td>
-<td style="text-align: left;">既存のシナリオを安全網にして画面ごとに移し、違反が出た部品は Bootstrap の部品を使わず素の要素に戻す</td>
+<td style="text-align: left;">DE-03 の配信が遅れ、提示した直後に荷主の詳細が見積り作成中のまま見える</td>
+<td style="text-align: left;">荷主が見積りの提示に気づかない</td>
+<td style="text-align: left;">C-04 の見積りの節は見積りの状態（提示済み）から出し、輸送要求の状態に頼らない。統合テストで配信の後に状態が変わることを確かめる</td>
 </tr>
 <tr>
-<td style="text-align: left;">段階入力で既存の C-03 のシナリオ（キー操作の提出）の操作が変わる</td>
-<td style="text-align: left;">シナリオの書き換えが増える</td>
-<td style="text-align: left;">期待する結果（C-04 に版 1、エラー要約）は変えず、段階を進める操作だけを足す</td>
+<td style="text-align: left;">同じ輸送要求に 2 人が同時に見積りを作る</td>
+<td style="text-align: left;">見積りが 2 つできる（Q-INV-18 の破れ）</td>
+<td style="text-align: left;">UK（輸送要求 ID、見積り番号）と、作成のときの輸送要求の楽観ロックの照合で防ぐ。統合テストで確かめる</td>
 </tr>
 <tr>
-<td style="text-align: left;">段階入力と骨格を同じ Bolt に入れて半日を超える</td>
-<td style="text-align: left;">Bolt が長引く</td>
-<td style="text-align: left;">打ち切りの線 1〜3</td>
+<td style="text-align: left;">金額の丸めと通貨の扱いが業務と違う</td>
+<td style="text-align: left;">荷主に誤った金額を見せる</td>
+<td style="text-align: left;">小数点以下 2 桁で、丸めはしない（入力を誤りにする）。通貨の候補と JPY の小数の扱いは、業務責任者の確認で見直す（R1.0 の前）</td>
 </tr>
 <tr>
-<td style="text-align: left;">Bootstrap と htmx の版の脆弱性</td>
-<td style="text-align: left;">本番の依存の検査で止まる</td>
-<td style="text-align: left;">技術スタックの版を使い、本番の依存の検査（<code>check</code>）で確かめる</td>
+<td style="text-align: left;">新しい集約と画面で 4 時間を超える</td>
+<td style="text-align: left;">Bolt が半日を超える</td>
+<td style="text-align: left;">打ち切りの順を決めた</td>
 </tr>
 </tbody>
 </table>
-<h2 id="_12">完了条件<a class="headerlink" href="#_12" title="Permanent link">&para;</a></h2>
+<h2 id="_14">完了条件<a class="headerlink" href="#_14" title="Permanent link">&para;</a></h2>
 <h3 id="definition-of-done">Definition of Done<a class="headerlink" href="#definition-of-done" title="Permanent link">&para;</a></h3>
 <ul class="task-list">
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> ステップ 1〜4 が完了し、計画と終了報告の承認ゲートを人が通した</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <code>./gradlew check</code> と <code>./gradlew uiTest</code> がローカルと CI の両方で緑。各ステップの終わりに push できた</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> SonarQube の品質ゲートが PASS</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> 既存の画面の層のシナリオ 21 本が、文言とキー操作の期待を変えずに通る（段階入力の操作を足したものを除く）。新しいシナリオ（レイアウト、段階入力）が通る。axe-core の違反 0 件</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> 画面ごとのインラインのスタイルがなくなり、共通の CSS にある（T-18）</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> 確認ポイント 1〜4 の決定が、設計文書から追える</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <code>bolt_08_report.md</code> に仮説 H1〜H3 の結論、各ステップの時刻、UI-HO-04 の所見を記録した</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> #36 を、終了報告の承認でクローズした</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> ユーザーマニュアルは更新しない（マニュアルはまだない。認証と主要な画面がそろってから書く）</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> ステップ 1〜5 が完了し、計画・ステップ 2・ステップ 3・終了報告の承認ゲートを人が通した</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <code>./gradlew check</code> と <code>./gradlew uiTest</code> がローカルと CI の両方で緑。各ステップの終わりに push し、CI を確かめた</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> SonarQube の品質ゲートが PASS</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> 業務ルール層で AC1〜AC3 と Q-INV-18・Q-INV-08 のシナリオが緑。画面の層で主成功と画面に固有の条件が緑</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> 確認ポイント 1〜6 の決定が、設計文書から追える</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> 開発レビューを行い、指摘への対応を終了報告に書いた（T-28）</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <code>bolt_10_report.md</code> に仮説 H1〜H3 の結論と、各ステップの時刻と Red の記録を書いた</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> ユーザーマニュアルは更新しない（マニュアルはまだない。認証と主要な画面がそろってから書く）</li>
 </ul>
-<h3 id="_13">デモ項目<a class="headerlink" href="#_13" title="Permanent link">&para;</a></h3>
+<h3 id="_15">デモ項目<a class="headerlink" href="#_15" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
 <tr>
@@ -7109,27 +7202,22 @@
 <tbody>
 <tr>
 <td style="text-align: left;">1</td>
-<td style="text-align: left;"><code>bootRun</code> で荷主の見積依頼の一覧と詳細を開く</td>
-<td style="text-align: left;">顧客 Web のナビと窓口の案内が出て、現在の項目が分かる</td>
+<td style="text-align: left;"><code>bootRun</code> で見積依頼を提出し、営業が審査を確定して S-04 で見積りを算出・提示する</td>
+<td style="text-align: left;">S-02 に戻って結果が出る。荷主の C-04 に料金根拠・有効期限（Asia/Tokyo（UTC+09:00））・経路方針・確定の旨が出て、状態が見積提示済みになる</td>
 </tr>
 <tr>
 <td style="text-align: left;">2</td>
-<td style="text-align: left;">見積依頼の作成で 4 段階を進み、書類を選んで確認の段階から提出する</td>
-<td style="text-align: left;">段階を行き来しても入力と書類が残り、C-04 に版 1 が出る（UI-HO-04 の操作性を人が確かめる）</td>
+<td style="text-align: left;">料金明細を空にして算出する</td>
+<td style="text-align: left;">エラー要約に料金根拠の不足が出て、算出されない</td>
 </tr>
 <tr>
 <td style="text-align: left;">3</td>
-<td style="text-align: left;">営業の受付一覧と審査画面を開く</td>
-<td style="text-align: left;">社内業務 Web のナビが出る</td>
-</tr>
-<tr>
-<td style="text-align: left;">4</td>
 <td style="text-align: left;"><code>./gradlew uiTest</code></td>
-<td style="text-align: left;">画面の層のシナリオがすべて通り、axe-core の違反が 0 件</td>
+<td style="text-align: left;">見積りの画面の層のシナリオが通り、axe-core の違反が 0 件</td>
 </tr>
 </tbody>
 </table>
-<h2 id="_14">更新履歴<a class="headerlink" href="#_14" title="Permanent link">&para;</a></h2>
+<h2 id="_16">更新履歴<a class="headerlink" href="#_16" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
 <tr>
@@ -7141,37 +7229,19 @@
 </thead>
 <tbody>
 <tr>
-<td style="text-align: left;">2026-10-03</td>
-<td style="text-align: left;">初版（人の決定: 対象は #36、段階入力も同じ Bolt、Bootstrap・htmx は WebJars で同梱）</td>
-<td style="text-align: left;">anthropic/claude-opus-5-5</td>
-<td style="text-align: left;">—</td>
-</tr>
-<tr>
-<td style="text-align: left;">2026-10-03</td>
-<td style="text-align: left;">計画を承認。確認ポイント 1〜4（いまある画面だけのナビと仮のヘッダー・窓口の案内、WebJars の Bootstrap・htmx の導入、段階入力はパネルの切り替え、操作性は人が触って確かめる）も決まった（Try T-6）</td>
-<td style="text-align: left;">anthropic/claude-opus-5-5</td>
-<td style="text-align: left;">human:kakimomokuri</td>
-</tr>
-<tr>
-<td style="text-align: left;">2026-10-03</td>
-<td style="text-align: left;">終了報告の承認を通し、Bolt を終えた（人の変更依頼 0）。段階入力（UI-HO-04）はこの形で残すと決まった</td>
-<td style="text-align: left;">anthropic/claude-opus-5-5</td>
-<td style="text-align: left;">human:kakimomokuri</td>
-</tr>
-<tr>
-<td style="text-align: left;">2026-10-03</td>
-<td style="text-align: left;">「画面遷移とレイアウト」の図が壊れていた（コンポーネント図と状態遷移図の書き方を 1 つの図に混ぜていた）と人に指摘され、2 つの図に分けて直した。<code>plantuml -checkonly</code> で確かめた</td>
+<td style="text-align: left;">2026-10-05</td>
+<td style="text-align: left;">初版（人の決定: US-03 を Bolt 10（AC1〜AC3）と Bolt 11（AC4・AC5）に分ける）</td>
 <td style="text-align: left;">anthropic/claude-opus-5-5</td>
 <td style="text-align: left;">—</td>
 </tr>
 </tbody>
 </table>
-<h2 id="_15">関連ドキュメント<a class="headerlink" href="#_15" title="Permanent link">&para;</a></h2>
+<h2 id="_17">関連ドキュメント<a class="headerlink" href="#_17" title="Permanent link">&para;</a></h2>
 <ul>
-<li><a href="../release_plan/">リリース計画</a>（W1）</li>
-<li><a href="../development_strategy/">開発戦略</a>（序盤・アウトサイドイン）</li>
-<li><a href="../bolt_07_report/">Bolt 7 終了報告</a></li>
-<li><a href="../../../design/cargo-tracker/ui_design/">UI 設計</a>、<a href="../../../design/cargo-tracker/architecture_frontend/">フロントエンドのアーキテクチャ</a>、<a href="../../../design/cargo-tracker/tech_stack/">技術スタック</a></li>
+<li><a href="../release_plan/">リリース計画</a>（W2）</li>
+<li><a href="../development_strategy/">開発戦略</a>（序盤・アウトサイドイン、開発レビュー）</li>
+<li><a href="../bolt_09_report/">Bolt 9 終了報告</a></li>
+<li><a href="../../../requirements/cargo-tracker/user_story/">ユーザーストーリー</a>、<a href="../../../design/cargo-tracker/domain_model/">ドメインモデル</a>、<a href="../../../design/cargo-tracker/data_model/">データモデル</a>、<a href="../../../design/cargo-tracker/ui_design/">UI 設計</a></li>
 </ul>
 
 
