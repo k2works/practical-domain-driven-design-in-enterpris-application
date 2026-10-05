@@ -26,12 +26,16 @@ import com.example.cargotracker.quotation.application.internal.commandservices.R
 import com.example.cargotracker.quotation.application.internal.commandservices.SubmissionOutcome;
 import com.example.cargotracker.quotation.application.internal.commandservices.TransportRequestCommandService;
 import com.example.cargotracker.quotation.application.internal.queryservices.DocumentFile;
+import com.example.cargotracker.quotation.application.internal.queryservices.QuotationQueryService;
 import com.example.cargotracker.quotation.application.internal.queryservices.TransportRequestQueryService;
+import com.example.cargotracker.quotation.domain.model.aggregates.Quotation;
 import com.example.cargotracker.quotation.domain.model.aggregates.TransportRequest;
 import com.example.cargotracker.quotation.domain.model.valueobjects.CargoCategory;
 import com.example.cargotracker.quotation.domain.model.valueobjects.DocumentMediaType;
 import com.example.cargotracker.quotation.domain.model.valueobjects.DocumentType;
 import com.example.cargotracker.quotation.domain.model.valueobjects.PackageType;
+import com.example.cargotracker.quotation.domain.model.valueobjects.QuotationFixture;
+import com.example.cargotracker.quotation.domain.model.valueobjects.QuotationId;
 import com.example.cargotracker.quotation.domain.model.valueobjects.RequiredDocument;
 import com.example.cargotracker.quotation.domain.model.valueobjects.RequiredDocumentAttachment;
 import com.example.cargotracker.quotation.domain.model.valueobjects.ResubmissionRejection;
@@ -114,6 +118,9 @@ class TransportRequestControllerTest {
 
     @MockitoBean
     TransportRequestQueryService queryService;
+
+    @MockitoBean
+    QuotationQueryService quotationQueryService;
 
     /** 必須条件をそろえた画面の入力。{@code overrides} は「項目名, 値」の組で、その項目の値を置き換える。 */
     private static MockHttpServletRequestBuilder completeForm(String... overrides) {
@@ -371,6 +378,34 @@ class TransportRequestControllerTest {
                 .andExpect(content()
                         .string(containsString("<div class=\"alert alert-warning\" role=\"alert\">出し直せませんでした</div>")))
                 .andExpect(content().string(not(containsString("role=\"status\""))));
+    }
+
+    @Test
+    void 提示済みの見積りがあれば詳細に料金根拠と有効期限と経路方針と確定の旨を示し社内承認者は出さない() throws Exception {
+        TransportRequest request = underReviewWithInvoice();
+        given(queryService.findByNumber(NUMBER, SHIPPER)).willReturn(Optional.of(request));
+        Quotation quotation = Quotation.create(new QuotationId(UUID.randomUUID()), request.id(), 1, 1);
+        quotation.calculate(QuotationFixture.completeInput(), new UtcInstant(Instant.parse("2026-10-05T04:00:00Z")));
+        quotation.presentInternally(
+                new UserId(UUID.randomUUID()), new UtcInstant(Instant.parse("2026-10-05T04:00:00Z")));
+        given(quotationQueryService.findPresented(NUMBER, SHIPPER)).willReturn(Optional.of(quotation));
+
+        mockMvc.perform(get("/customer/transport-requests/TR-2026-0001"))
+                .andExpect(content().string(containsString("<h2 id=\"quotation-title\">見積り</h2>")))
+                .andExpect(content().string(containsString("燃料調整金")))
+                .andExpect(content().string(containsString("3,730.00 USD")))
+                .andExpect(content().string(containsString("2099-10-08 18:00 Asia/Tokyo（UTC+09:00）")))
+                .andExpect(content().string(not(containsString("（UTC 2099-10-08 09:00）"))))
+                .andExpect(content().string(containsString("詳細な経路は、経路設計者の承認後に確定します。")))
+                .andExpect(content().string(not(containsString("承認者"))));
+    }
+
+    @Test
+    void 提示済みの見積りがなければ見積りの節を出さない() throws Exception {
+        given(queryService.findByNumber(NUMBER, SHIPPER)).willReturn(Optional.of(underReviewWithInvoice()));
+
+        mockMvc.perform(get("/customer/transport-requests/TR-2026-0001"))
+                .andExpect(content().string(not(containsString("quotation-title"))));
     }
 
     @Test

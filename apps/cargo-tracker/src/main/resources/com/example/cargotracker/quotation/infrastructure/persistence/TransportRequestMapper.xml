@@ -164,6 +164,13 @@
          ORDER BY first_version.submitted_at, r.request_number
     </select>
 
+    <!-- 社内用の受付一覧の見積り作成中: 審査を確定した見積依頼を、最初の提出時刻（版 1）の古い順に（Bolt 10） -->
+    <select id="selectQuotingSummaries" resultMap="transportRequestSummaryRow">
+        <include refid="selectSummary"/>
+         WHERE r.status = 'QUOTING'
+         ORDER BY first_version.submitted_at, r.request_number
+    </select>
+
     <!-- 荷主の見積依頼の一覧: 自社だけを、最初の提出時刻（版 1）の新しい順に。荷主企業で必ず絞る（Q-INV-08） -->
     <select id="selectSummariesByShipper" resultMap="transportRequestSummaryRow">
         <include refid="selectSummary"/>

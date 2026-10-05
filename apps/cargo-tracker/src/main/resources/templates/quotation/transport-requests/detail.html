@@ -36,6 +36,13 @@
         <p th:if="${editable}"><a th:href="@{/customer/transport-requests/{number}/edit(number=${number})}">編集して出し直す</a></p>
     </section>
 
+    <!--/* 見積り（Bolt 10、US-03 AC2）。提示済みの見積りの料金根拠・有効期限（利用者のタイムゾーンと UTC offset）・経路方針と、
+         詳細な経路は経路設計者の承認後に確定する旨を示す。社内承認者は見せない（荷主に届く HTML にも書かない）。回答（C-05）は US-24 */-->
+    <section th:if="${quotation}" aria-labelledby="quotation-title">
+        <h2 id="quotation-title">見積り</h2>
+        <div th:replace="~{quotation/fragments/quotation :: details(${quotation})}"></div>
+    </section>
+
     <!-- 必要書類（Bolt 7）。現在の版の書類だけを示し、ブラウザの中で開かせずダウンロードさせる -->
     <section aria-labelledby="documents-title">
         <h2 id="documents-title">必要書類</h2>

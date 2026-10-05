@@ -106,6 +106,13 @@ public class MyBatisTransportRequestRepository implements TransportRequestReposi
                 .toList();
     }
 
+    @Override
+    public List<TransportRequestSummary> findQuotingSummaries() {
+        return mapper.selectQuotingSummaries().stream()
+                .map(MyBatisTransportRequestRepository::toSummary)
+                .toList();
+    }
+
     private static TransportRequestSummary toSummary(TransportRequestSummaryRow row) {
         return new TransportRequestSummary(
                 TransportRequestNumber.parse(row.requestNumber()),

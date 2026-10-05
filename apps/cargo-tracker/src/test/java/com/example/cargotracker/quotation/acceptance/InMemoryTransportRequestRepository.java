@@ -87,6 +87,15 @@ public class InMemoryTransportRequestRepository implements TransportRequestRepos
                 .toList();
     }
 
+    @Override
+    public List<TransportRequestSummary> findQuotingSummaries() {
+        return store.values().stream()
+                .filter(request -> request.status() == TransportRequestStatus.QUOTING)
+                .map(this::toSummary)
+                .sorted(byFirstSubmittedAt())
+                .toList();
+    }
+
     private TransportRequestSummary toSummary(TransportRequest request) {
         return new TransportRequestSummary(
                 request.number(),

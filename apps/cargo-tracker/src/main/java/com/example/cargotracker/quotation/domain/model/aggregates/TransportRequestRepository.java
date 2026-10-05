@@ -46,4 +46,7 @@ public interface TransportRequestRepository {
      * 差し戻して出し直された版も、最初の提出時刻で並べる（Bolt 5 レビュー R-05）。集約を組み立てない読み取りモデルを返す。
      */
     List<TransportRequestSummary> findUnderReviewSummaries();
+
+    /** 社内用: 見積り作成中の輸送要求を、最初の提出時刻（版 1）の古い順に一覧する（受付一覧の見積り作成中。Bolt 10）。 */
+    List<TransportRequestSummary> findQuotingSummaries();
 }

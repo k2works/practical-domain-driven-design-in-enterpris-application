@@ -5,6 +5,7 @@ import com.example.cargotracker.quotation.application.internal.commands.SubmitTr
 import com.example.cargotracker.quotation.application.internal.commandservices.ResubmissionOutcome;
 import com.example.cargotracker.quotation.application.internal.commandservices.SubmissionOutcome;
 import com.example.cargotracker.quotation.application.internal.commandservices.TransportRequestCommandService;
+import com.example.cargotracker.quotation.application.internal.queryservices.QuotationQueryService;
 import com.example.cargotracker.quotation.application.internal.queryservices.TransportRequestQueryService;
 import com.example.cargotracker.quotation.domain.model.aggregates.TransportRequest;
 import com.example.cargotracker.quotation.domain.model.valueobjects.SendBackNotice;
@@ -48,16 +49,19 @@ public class TransportRequestController {
 
     private final TransportRequestCommandService commandService;
     private final TransportRequestQueryService queryService;
+    private final QuotationQueryService quotationQueryService;
     private final ProvisionalActorProperties provisionalActor;
     private final ProvisionalConsigneeProperties provisionalConsignees;
 
     public TransportRequestController(
             TransportRequestCommandService commandService,
             TransportRequestQueryService queryService,
+            QuotationQueryService quotationQueryService,
             ProvisionalActorProperties provisionalActor,
             ProvisionalConsigneeProperties provisionalConsignees) {
         this.commandService = commandService;
         this.queryService = queryService;
+        this.quotationQueryService = quotationQueryService;
         this.provisionalActor = provisionalActor;
         this.provisionalConsignees = provisionalConsignees;
     }
@@ -145,6 +149,13 @@ public class TransportRequestController {
         // 出し直せるかは集約が判定する（Bolt 6〜8 レビュー R-13）
         model.addAttribute("editable", request.checkResubmittable().isEmpty());
         model.addAttribute("documents", RequiredDocumentViews.rows(request, BASE_PATH));
+        // 見積りの節は提示済みの見積りから出し、輸送要求の状態の更新（DE-03 の受け取り）を待たない（Bolt 10。US-03 AC2）
+        model.addAttribute(
+                "quotation",
+                quotationQueryService
+                        .findPresented(request.number(), shipper())
+                        .map(quotation -> QuotationViews.view(quotation, TransportRequestLabels::customerDateTime))
+                        .orElse(null));
         return DETAIL_VIEW;
     }
 

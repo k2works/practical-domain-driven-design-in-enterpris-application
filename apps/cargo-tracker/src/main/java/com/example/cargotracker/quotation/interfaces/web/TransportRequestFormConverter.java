@@ -35,7 +35,7 @@ final class TransportRequestFormConverter {
 
     private static final DateTimeFormatter DEADLINE_FORMAT =
             DateTimeFormatter.ofPattern(DEADLINE_PATTERN).withResolverStyle(ResolverStyle.STRICT);
-    private static final String LOCATION_FORMAT_MESSAGE = "UN/LOCODE（国コード 2 文字 + 地点コード 3 文字、例: JPTYO）で入力してください";
+    static final String LOCATION_FORMAT_MESSAGE = "UN/LOCODE（国コード 2 文字 + 地点コード 3 文字、例: JPTYO）で入力してください";
 
     private TransportRequestFormConverter() {}
 
@@ -98,7 +98,7 @@ final class TransportRequestFormConverter {
     }
 
     /** 空欄は null（入力なし）にする。形式の誤りは記録して null にする。 */
-    private static <T> T parse(
+    static <T> T parse(
             String value, String field, BindingResult errors, String formatMessage, Function<String, T> parser) {
         String text = value == null ? "" : value.strip();
         if (text.isEmpty()) {
@@ -115,11 +115,11 @@ final class TransportRequestFormConverter {
     }
 
     /** 貼り付けで付く前後の空白を除き、小文字は大文字にそろえる。形式の検証はドメインの場所に任せる。 */
-    private static Location location(String text) {
+    static Location location(String text) {
         return new Location(text.toUpperCase(Locale.ROOT));
     }
 
-    private static UtcInstant deadline(String text) {
+    static UtcInstant deadline(String text) {
         try {
             return new UtcInstant(LocalDateTime.parse(text, DEADLINE_FORMAT)
                     .atZone(CUSTOMER_ZONE)

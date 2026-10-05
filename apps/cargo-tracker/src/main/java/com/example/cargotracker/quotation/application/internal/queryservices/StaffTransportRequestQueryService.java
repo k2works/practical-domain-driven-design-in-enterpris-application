@@ -41,6 +41,12 @@ public class StaffTransportRequestQueryService {
         return repository.findUnderReviewSummaries();
     }
 
+    /** 見積り作成中の輸送要求を、最初の提出時刻の古い順に一覧する（受付一覧の見積り作成中。Bolt 10）。 */
+    @Transactional(readOnly = true)
+    public List<TransportRequestSummary> findQuoting() {
+        return repository.findQuotingSummaries();
+    }
+
     /** 必要書類を取得する（D-20: 営業担当者は開ける）。 */
     @Transactional(readOnly = true)
     public Optional<DocumentFile> findDocument(TransportRequestNumber number, int versionNo, int documentNo) {

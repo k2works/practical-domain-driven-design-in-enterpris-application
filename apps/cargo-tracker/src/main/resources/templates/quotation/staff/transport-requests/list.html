@@ -11,7 +11,9 @@
     <h1>見積依頼の受付一覧</h1>
     <!-- S-02（Bolt 5）。審査中だけを、最初の提出時刻（版 1）の古い順（待たせている順）に示す。差し戻して出し直された版も最初の時刻で並ぶ。
          社内の画面なので荷主企業で絞らない。荷主企業名は企業マスター（US-16）の後に足す -->
-    <p role="status" th:if="${result}" th:text="${result}">TR-2026-0001 版 1 の審査を確定しました</p>
+    <p role="status" th:if="${result}" th:text="${result}">TR-2026-0001 見積 1 を提示しました</p>
+    <div class="alert alert-warning" role="alert" th:if="${problem}" th:text="${problem}">TR-2026-0001 にはすでに見積りがあります</div>
+    <h2>審査中</h2>
     <p th:if="${#lists.isEmpty(requests)}">審査中の見積依頼はありません。</p>
     <!-- 狭い画面では表だけを横にスクロールさせ、ページ全体を横にスクロールさせない（WCAG 1.4.10 の表の例外）。
          キー操作でもスクロールできるよう、囲みをフォーカスできるようにして名前を付ける -->
@@ -37,6 +39,36 @@
             <td th:text="${request.firstSubmittedAt()}">2026-10-05 10:00 Asia/Tokyo（UTC+09:00）（UTC 2026-10-05 01:00）</td>
             <td th:text="${request.waiting()}">3 時間 20 分</td>
             <td th:text="${request.cargoCategory()}">一般</td>
+            <td th:text="${request.route()}">JPTYO → NLRTM</td>
+            <td th:text="${request.arrivalDeadline()}">2026-11-02 09:00 Asia/Tokyo（UTC+09:00）（UTC 2026-11-02 00:00）</td>
+        </tr>
+        </tbody>
+    </table>
+    </div>
+
+    <!-- 見積り作成中（Bolt 10）。審査を確定した見積依頼を、最初の提出時刻の古い順に示し、見積りの作成（S-04）を開ける -->
+    <h2>見積り作成中</h2>
+    <p th:if="${#lists.isEmpty(quotingRequests)}">見積り作成中の見積依頼はありません。</p>
+    <div th:unless="${#lists.isEmpty(quotingRequests)}" class="table-scroll" tabindex="0" role="region"
+         aria-labelledby="quoting-caption">
+    <table class="table">
+        <caption id="quoting-caption">見積り作成中の見積依頼</caption>
+        <thead>
+        <tr>
+            <th scope="col">業務番号</th>
+            <th scope="col">版</th>
+            <th scope="col">最初の提出時刻</th>
+            <th scope="col">待っている時間</th>
+            <th scope="col">出発地 → 目的地</th>
+            <th scope="col">希望到着期限</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="request : ${quotingRequests}">
+            <td><a th:href="@{/staff/transport-requests/{number}/quotations/new(number=${request.number()})}" th:text="${request.number()}">TR-2026-0001</a></td>
+            <td th:text="${request.versionNo()}">1</td>
+            <td th:text="${request.firstSubmittedAt()}">2026-10-05 10:00 Asia/Tokyo（UTC+09:00）（UTC 2026-10-05 01:00）</td>
+            <td th:text="${request.waiting()}">3 時間 20 分</td>
             <td th:text="${request.route()}">JPTYO → NLRTM</td>
             <td th:text="${request.arrivalDeadline()}">2026-11-02 09:00 Asia/Tokyo（UTC+09:00）（UTC 2026-11-02 00:00）</td>
         </tr>

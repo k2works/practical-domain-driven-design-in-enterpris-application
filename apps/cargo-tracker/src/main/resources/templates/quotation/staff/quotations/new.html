@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="ja" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/staff :: layout(~{::title}, ~{::main}, ~{::script}, 'transport-requests')}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="${#fields.hasErrors('${quotationForm.*}')} ? |入力内容に誤りがあります - ${number} の見積りの作成 - cargo-tracker| : |${number} の見積りの作成 - cargo-tracker|">見積りの作成 - cargo-tracker</title>
+    <script th:src="@{/js/transport-request-form.js}" defer></script>
+</head>
+<body>
+<main>
+    <h1>見積りの作成</h1>
+    <!-- S-04（Bolt 10、US-03 AC1・AC3）。料金明細・通貨・有効期限・経路方針を 1 つの画面で入れ、「算出する」で承認待ちまで進む。
+         作成中のまま保存する操作は入れない（2026-10-05 に承認） -->
+    <p role="status" th:if="${result}" th:text="${result}">TR-2026-0001 版 1 の審査を確定しました</p>
+    <p th:text="|対象: ${numberWithVersion}|">対象: TR-2026-0001 版 1</p>
+    <p><a th:href="@{/staff/transport-requests}">受付一覧へ戻る</a></p>
+    <form th:action="@{/staff/transport-requests/{number}/quotations(number=${number})}" th:object="${quotationForm}" method="post" novalidate>
+        <div id="error-summary" th:if="${#fields.hasErrors('*')}" tabindex="-1" role="alert"
+             aria-labelledby="error-summary-title">
+            <h2 id="error-summary-title" th:text="|入力内容に ${#fields.errors('*').size()} 件の誤りがあります|">入力内容に 1 件の誤りがあります</h2>
+            <ul>
+                <li th:each="error : ${#fields.detailedErrors('*')}">
+                    <a th:href="|#${error.fieldName}|"
+                       th:text="|${fieldLabels[error.fieldName]}: ${error.message}|">料金明細: 1 行以上入力してください</a>
+                </li>
+            </ul>
+        </div>
+
+        <details>
+            <summary>輸送条件</summary>
+            <dl>
+                <th:block th:each="term : ${terms}">
+                    <dt th:text="${term.key}">出発地</dt>
+                    <dd th:text="${term.value}">JPTYO</dd>
+                </th:block>
+            </dl>
+        </details>
+
+        <fieldset id="lines" tabindex="-1" aria-describedby="lines-hint"
+                  th:attr="aria-invalid=${#fields.hasErrors('lines')}">
+            <legend>料金根拠（料金明細）</legend>
+            <p id="lines-hint">1 行に 1 つの料金を入れてください（10 行まで。空の行は無視します）。金額は小数点以下 2 桁までです。</p>
+            <p id="lines-error" th:if="${#fields.hasErrors('lines')}" th:errors="*{lines}"></p>
+            <div th:each="line, row : *{lines}" class="app-pricing-line">
+                <div>
+                    <label th:for="|lines[${row.index}].description|" th:text="|明細 ${row.count} の内容|">明細 1 の内容</label>
+                    <input class="form-control" type="text" maxlength="200"
+                           th:id="|lines[${row.index}].description|" th:name="|lines[${row.index}].description|"
+                           th:value="${line.description}"
+                           th:attr="aria-invalid=${#fields.hasErrors('lines[__${row.index}__].description')}">
+                    <p th:if="${#fields.hasErrors('lines[__${row.index}__].description')}" th:errors="*{lines[__${row.index}__].description}"></p>
+                </div>
+                <div>
+                    <label th:for="|lines[${row.index}].amount|" th:text="|明細 ${row.count} の金額|">明細 1 の金額</label>
+                    <input class="form-control" type="text" inputmode="decimal"
+                           th:id="|lines[${row.index}].amount|" th:name="|lines[${row.index}].amount|"
+                           th:value="${line.amount}"
+                           th:attr="aria-invalid=${#fields.hasErrors('lines[__${row.index}__].amount')}">
+                    <p th:if="${#fields.hasErrors('lines[__${row.index}__].amount')}" th:errors="*{lines[__${row.index}__].amount}"></p>
+                </div>
+                <div>
+                    <label th:for="|lines[${row.index}].contractReference|" th:text="|明細 ${row.count} の参照した契約条件（任意）|">明細 1 の参照した契約条件（任意）</label>
+                    <input class="form-control" type="text" maxlength="200"
+                           th:id="|lines[${row.index}].contractReference|" th:name="|lines[${row.index}].contractReference|"
+                           th:value="${line.contractReference}"
+                           th:attr="aria-invalid=${#fields.hasErrors('lines[__${row.index}__].contractReference')}">
+                    <p th:if="${#fields.hasErrors('lines[__${row.index}__].contractReference')}" th:errors="*{lines[__${row.index}__].contractReference}"></p>
+                </div>
+            </div>
+        </fieldset>
+
+        <fieldset id="currency" th:attr="aria-invalid=${#fields.hasErrors('currency')}">
+            <legend>通貨</legend>
+            <p id="currency-error" th:if="${#fields.hasErrors('currency')}" th:errors="*{currency}"></p>
+            <div class="form-check" th:each="code : ${ {'USD', 'EUR', 'JPY'} }">
+                <input class="form-check-input" type="radio" name="currency" th:id="|currency-${code}|" th:value="${code}"
+                       th:checked="${quotationForm.currency == code}">
+                <label class="form-check-label" th:for="|currency-${code}|" th:text="${code}">USD</label>
+            </div>
+        </fieldset>
+
+        <div>
+            <label for="expiresAt">有効期限（日本時間）</label>
+            <p id="expiresAt-hint">2026-11-02 09:00 の形。予約の確定がこの時刻より前のときだけ、見積りは有効です</p>
+            <input class="form-control" id="expiresAt" name="expiresAt" type="text" th:value="*{expiresAt}"
+                   th:attr="aria-invalid=${#fields.hasErrors('expiresAt')},aria-describedby=${#fields.hasErrors('expiresAt')} ? 'expiresAt-hint expiresAt-error' : 'expiresAt-hint'">
+            <p id="expiresAt-error" th:if="${#fields.hasErrors('expiresAt')}" th:errors="*{expiresAt}"></p>
+        </div>
+
+        <fieldset>
+            <legend>経路方針</legend>
+            <p>詳細な経路は、荷主が詳細経路設計を依頼した後に、経路設計者が確定します。</p>
+            <div>
+                <label for="via">主な経由地（UN/LOCODE、カンマ区切り、任意）</label>
+                <input class="form-control" id="via" name="via" type="text" th:value="*{via}"
+                       th:attr="aria-invalid=${#fields.hasErrors('via')},aria-describedby=${#fields.hasErrors('via')} ? 'via-error' : null">
+                <p id="via-error" th:if="${#fields.hasErrors('via')}" th:errors="*{via}"></p>
+            </div>
+            <div>
+                <label for="departureAt">概算の出発日時（日本時間）</label>
+                <input class="form-control" id="departureAt" name="departureAt" type="text" th:value="*{departureAt}"
+                       th:attr="aria-invalid=${#fields.hasErrors('departureAt')},aria-describedby=${#fields.hasErrors('departureAt')} ? 'departureAt-error' : null">
+                <p id="departureAt-error" th:if="${#fields.hasErrors('departureAt')}" th:errors="*{departureAt}"></p>
+            </div>
+            <div>
+                <label for="arrivalAt">概算の到着日時（日本時間）</label>
+                <input class="form-control" id="arrivalAt" name="arrivalAt" type="text" th:value="*{arrivalAt}"
+                       th:attr="aria-invalid=${#fields.hasErrors('arrivalAt')},aria-describedby=${#fields.hasErrors('arrivalAt')} ? 'arrivalAt-error' : null">
+                <p id="arrivalAt-error" th:if="${#fields.hasErrors('arrivalAt')}" th:errors="*{arrivalAt}"></p>
+            </div>
+        </fieldset>
+
+        <button type="submit" class="btn btn-primary">算出する</button>
+    </form>
+</main>
+</body>
+</html>

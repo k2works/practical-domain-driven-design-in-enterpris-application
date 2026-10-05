@@ -4,7 +4,7 @@ title: "Bolt 10 計画 - 根拠付き見積りの提示（US-03 AC1〜AC3）"
 description: "10 回目の Bolt の計画。見積り集約（料金根拠の明細・有効期限・経路方針）の算出と社内承認・提示、DE-03 を受けた輸送要求の状態の更新、S-04 と C-04 の見積りの節、quotation と pricing_line の表を、ステップ 1〜5 で定義する。"
 tags: [development,bolt-plan]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-05T04:52:34Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-05T05:28:22Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-05T04:12:46Z }
 ---
@@ -277,7 +277,7 @@ S04 -[dashed]-> C04 : 荷主が開くと見積りが見える
     - 実行中に直した誤り: 状態の表示名の `switch` が新しい状態を網羅していない（コンパイラが検出）、ステップ定義の中で作った `DataTable` が変換を持たない、用語集に新しい型の行がない・Javadoc の書き出しが用語集の名前と違う（用語集の整合テスト）、書式
     - 業務ルール層のシナリオは 57 件すべて passed（Bolt 9 の 49 件から +8）。`check` 緑（テスト 564 件）
   - 承認（2026-10-05、human:kakimomokuri）: ステップ 1 とあわせて承認された。見積提示済みの表示名と案内も承認された
-- [?] **3. 表（内側の TDD、統合テスト）** 【承認ゲート: スキーマの変更】
+- [x] **3. 表（内側の TDD、統合テスト）** 【承認ゲート: スキーマの変更】
   - 統合テスト（PostgreSQL）を先に書く: 見積りと料金明細の保存と読み出し、楽観ロック、UK（輸送要求 ID・見積り番号）、承認待ち以後の NOT NULL の CHECK、`status` の CHECK、DE-03 の配信で輸送要求が見積提示済みになる（別のトランザクション。H1）
   - マイグレーション `V20261005…__create_quotation.sql`（`common`）。H2 のスモークを先に回す（T-15）。表と列に日本語名のコメントを付ける（データモデルの決まり）
   - MyBatis のリポジトリ。見積り番号の採番（輸送要求の中で最大 + 1、同じトランザクション）
@@ -287,13 +287,20 @@ S04 -[dashed]-> C04 : 荷主が開くと見積りが見える
     - Green: マイグレーション `V20261005130000__create_quotation.sql`（`quotation`・`pricing_line`、表と列の日本語名のコメント）を書き、H2 のスモークを先に回して通した（T-15）。`QuotationMapper`（XML）と `MyBatisQuotationRepository`（料金明細は保存のときだけ書き、輸送要求の見積りの明細は 1 回の SELECT で読む）。`QuotationConfiguration` に見積りの入力ポート・照会・DE-03 の購読を登録した
     - 計画からの変更: 見積り番号の採番は、アプリケーションサービスが輸送要求の見積りを読んで最大 + 1 にし、同時の作成は UK で防ぐ（採番の表は作らない）。データモデルの ER 図の監査の列（`created_at` など）は、ほかの業務の表と同じく作らなかった
     - `check` 緑（業務ルール層・統合テストを含む）
-- [ ] **4. 画面の層（Red → Green）**（承認はステップ 5 とまとめて受ける）
+  - 承認（2026-10-05、human:kakimomokuri）: スキーマ（`quotation`・`pricing_line`）と、見積り番号の採番・監査の列を作らないことが承認された
+- [x] **4. 画面の層（Red → Green）**（承認はステップ 5 とまとめて受ける）
   - 画面の層の受入シナリオを先に書き、`uiTest` で失敗を記録する（T-21。`features/ui/present_quotation_ui.feature`、`@ui @US-03`）
     - 主成功: 営業担当者が S-03 で審査を確定すると S-04 が開き、料金明細・有効期限・経路方針を入れて算出し、社内承認して提示する。荷主が C-04 を開くと見積りの節に料金根拠・有効期限（Asia/Tokyo（UTC+09:00））・経路方針・確定の旨が出る。キー操作だけで行える
     - 画面に固有の条件: 料金明細を空にして算出すると、エラー要約にフォーカスが移り、入力が残る
     - 幅 320 CSS px で横スクロールが出ない。axe-core の違反 0 件
   - S-04（作成・算出・提示）、S-02 の見積り作成中の行、S-03 の確定の後の S-04 への遷移、C-04 の見積りの節
   - 完了の判定: `check` と `uiTest` が緑。push して CI を確かめる
+  - 結果（2026-10-05 13:57〜14:25）
+    - Red: 画面の層の受入シナリオ（`present_quotation_ui.feature`。主成功をキー操作だけで、受付一覧の見積り作成中から開く、料金明細なしのエラー要約、幅 320 CSS px の 2 例）を先に書き、審査の確定の後の遷移を変えた既存のシナリオ（審査の確定 → S-04）と合わせて、実装の前の `uiTest` で新しい 5 件と変えた 1 件だけが失敗することを記録し、Red のままコミットした（`da82d9f`。T-21、R-38）
+    - Green: S-04（`StaffQuotationController`。作成と算出 `…/quotations/new`・`POST …/quotations`、算出した見積り `…/quotations/{見積り番号}`、社内承認して提示 `POST …/presentation`）。料金明細の 10 行の欄、通貨のラジオボタン、日本時間の日時、主な経由地のカンマ区切り（`QuotationForm`、`QuotationFormConverter`）。算出の誤りを欄に戻す文言（`QuotationViolationMessages`。文言は表示名で始めない）。見積りの表示の部品（`QuotationViews`。金額は 3 桁区切りと通貨）と、社内と荷主で共通の断片（`quotation/fragments/quotation.html`）。S-03 で審査を確定したら S-04 の作成へ移る。S-02 に見積り作成中の表（`findQuotingSummaries`）。C-04 に見積りの節（提示済みの見積りから出し、輸送要求の状態の更新を待たない）
+    - 画面の単体テスト（`StaffQuotationControllerTest` 9 件、C-04 の見積りの節 2 件）を足した
+    - 実行中に直した誤り: 荷主のコントローラーのテストに見積りの照会のモックがなく起動しない、C-04 の HTML のコメントに「社内承認者」の文字が残る（出力されない Thymeleaf のコメントにした）、Checkstyle の循環的複雑度（項目の対応を表にした）、SpotBugs 1 件（フォームの一覧を写しで返す）、書式
+    - 画面の層のシナリオは 35 件すべて passed（Bolt 9 の 30 件から +5）、axe-core の違反 0 件。`check` 緑（テスト 289 件。`test` の結果の数）
 - [ ] **5. 開発レビューと Bolt 終了報告**
   - `developing-review` で Bolt 10 の変更（と Bolt 9 の変更）をレビューし、指摘への対応を決める（T-28）
   - `check`・`uiTest`・CI・SonarQube の品質ゲート（PASS）を確かめる

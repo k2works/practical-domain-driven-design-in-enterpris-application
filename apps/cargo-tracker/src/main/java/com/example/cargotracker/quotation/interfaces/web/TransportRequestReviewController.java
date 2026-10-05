@@ -62,12 +62,15 @@ public class TransportRequestReviewController {
         this.clock = clock;
     }
 
-    /** S-02 受付一覧。審査中の見積依頼を、最初の提出時刻の古い順（待たせている順）に示す。 */
+    /** S-02 受付一覧。審査中と見積り作成中の見積依頼を、それぞれ最初の提出時刻の古い順（待たせている順）に示す（見積り作成中は Bolt 10）。 */
     @GetMapping
     public String list(Model model) {
         model.addAttribute(
                 "requests",
                 queryService.findUnderReview().stream().map(this::row).toList());
+        model.addAttribute(
+                "quotingRequests",
+                queryService.findQuoting().stream().map(this::row).toList());
         return LIST_VIEW;
     }
 
@@ -82,7 +85,7 @@ public class TransportRequestReviewController {
     }
 
     /**
-     * 審査を確定する・差し戻す。受け付けたら受付一覧へ戻り、結果を示す（PRG。S-04 ができるまでの暫定の遷移）。
+     * 審査を確定する・差し戻す。確定したら見積りの作成（S-04）へ、差し戻したら受付一覧へ移り、結果を示す（PRG。Bolt 10）。
      * 受け付けなかったら、理由を示して審査画面を出し直す。判断と版番号が送られていなければ、要求そのものの誤り（400）とする。
      */
     @PostMapping("/{number}/reviews")
@@ -116,7 +119,10 @@ public class TransportRequestReviewController {
         return switch (outcome) {
             case ReviewOutcome.Reviewed reviewed -> {
                 redirectAttributes.addFlashAttribute("result", resultMessage(reviewed));
-                yield "redirect:/staff/transport-requests";
+                yield reviewed.decision() == ReviewDecision.APPROVED
+                        ? "redirect:/staff/transport-requests/"
+                                + reviewed.number().text() + "/quotations/new"
+                        : "redirect:/staff/transport-requests";
             }
             case ReviewOutcome.Rejected(ReviewRejection reason, int currentVersionNo) -> {
                 reject(reason, currentVersionNo, decision, reviewForm, bindingResult);

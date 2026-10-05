@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<!--/* 見積りの内容の断片（社内の S-04 と荷主の C-04 で共通。US-03 AC1・AC2）。日時の表し方は呼び出し側が渡す表示（QuotationViews）で決まる */-->
+<html lang="ja" xmlns:th="http://www.thymeleaf.org">
+<body>
+<div th:fragment="details(quotation)">
+    <h3>料金根拠</h3>
+    <div class="table-scroll" tabindex="0" role="region" aria-label="料金明細">
+    <table class="table">
+        <thead>
+        <tr>
+            <th scope="col">内容</th>
+            <th scope="col">金額</th>
+            <th scope="col">参照した契約条件</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="line : ${quotation.lines()}">
+            <td th:text="${line.description()}">海上運賃</td>
+            <td th:text="${line.amount()}">3,200.00 USD</td>
+            <td th:text="${line.contractReference()}">年間契約 2026-A</td>
+        </tr>
+        </tbody>
+    </table>
+    </div>
+    <dl>
+        <dt>合計</dt>
+        <dd th:text="${quotation.total()}">3,730.00 USD</dd>
+        <dt>有効期限</dt>
+        <dd th:text="${quotation.expiresAt()}">2026-10-08 18:00 Asia/Tokyo（UTC+09:00）</dd>
+    </dl>
+    <h3>経路方針</h3>
+    <dl>
+        <dt>主な経由地</dt>
+        <dd th:text="${quotation.via()}">SGSIN</dd>
+        <dt>概算の出発</dt>
+        <dd th:text="${quotation.departureAt()}">2026-10-10 09:00 Asia/Tokyo（UTC+09:00）</dd>
+        <dt>概算の到着</dt>
+        <dd th:text="${quotation.arrivalAt()}">2026-10-30 18:00 Asia/Tokyo（UTC+09:00）</dd>
+    </dl>
+    <p>詳細な経路は、経路設計者の承認後に確定します。</p>
+</div>
+</body>
+</html>

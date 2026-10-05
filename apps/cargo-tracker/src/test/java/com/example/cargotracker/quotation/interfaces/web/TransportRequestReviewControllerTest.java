@@ -212,7 +212,7 @@ class TransportRequestReviewControllerTest {
     }
 
     @Test
-    void 確定すると仮の営業担当者で審査し結果を一覧に示すためにリダイレクトする() throws Exception {
+    void 確定すると仮の営業担当者で審査し結果を示して見積りの作成へリダイレクトする() throws Exception {
         given(reviewService.approve(new ApproveTransportRequestCommand(NUMBER, 1, STAFF, "確認した")))
                 .willReturn(new ReviewOutcome.Reviewed(NUMBER, 1, ReviewDecision.APPROVED));
 
@@ -220,7 +220,7 @@ class TransportRequestReviewControllerTest {
                         .param("decision", "APPROVED")
                         .param("versionNo", "1")
                         .param("rationale", "確認した"))
-                .andExpect(redirectedUrl("/staff/transport-requests"))
+                .andExpect(redirectedUrl("/staff/transport-requests/TR-2026-0001/quotations/new"))
                 .andExpect(flash().attribute("result", "TR-2026-0001 版 1 の審査を確定しました"));
     }
 

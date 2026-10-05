@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="ja" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/staff :: layout(~{::title}, ~{::main}, ~{}, 'transport-requests')}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="|${quotationLabel} - cargo-tracker|">TR-2026-0001 見積 1 - cargo-tracker</title>
+</head>
+<body>
+<main>
+    <h1 th:text="|見積り ${quotationLabel}|">見積り TR-2026-0001 見積 1</h1>
+    <!-- S-04 の算出した見積り（Bolt 10、US-03 AC1）。承認待ちなら社内承認して提示する。承認者は認証（US-18）までは仮の営業担当者 -->
+    <p role="status" th:if="${result}" th:text="${result}">TR-2026-0001 見積 1 を算出しました</p>
+    <div class="alert alert-warning" role="alert" th:if="${problem}" th:text="${problem}">他の利用者が先に更新しました</div>
+    <p><a th:href="@{/staff/transport-requests}">受付一覧へ戻る</a></p>
+    <dl>
+        <dt>対象</dt>
+        <dd th:text="${numberWithVersion}">TR-2026-0001 版 1</dd>
+        <dt>状態</dt>
+        <dd th:text="${quotation.status()}">承認待ち</dd>
+    </dl>
+    <h2>見積りの内容</h2>
+    <div th:replace="~{quotation/fragments/quotation :: details(${quotation})}"></div>
+    <form th:if="${quotation.presentable()}"
+          th:action="@{/staff/transport-requests/{number}/quotations/{no}/presentation(number=${number},no=${quotation.quotationNo()})}"
+          method="post">
+        <button type="submit" class="btn btn-primary">社内承認して提示する</button>
+    </form>
+</main>
+</body>
+</html>
