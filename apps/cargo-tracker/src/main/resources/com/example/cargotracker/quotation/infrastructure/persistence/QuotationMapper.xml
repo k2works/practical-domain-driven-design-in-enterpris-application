@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.cargotracker.quotation.infrastructure.persistence.QuotationMapper">
+
+    <resultMap id="quotationRow" type="com.example.cargotracker.quotation.infrastructure.persistence.QuotationRow">
+        <constructor>
+            <idArg column="id" name="id" javaType="java.util.UUID"/>
+            <arg column="transport_request_id" name="transportRequestId" javaType="java.util.UUID"/>
+            <arg column="quotation_no" name="quotationNo" javaType="_int"/>
+            <arg column="transport_request_version_no" name="transportRequestVersionNo" javaType="_int"/>
+            <arg column="status" name="status" javaType="String"/>
+            <arg column="expires_at" name="expiresAt" javaType="java.time.OffsetDateTime"/>
+            <arg column="total_amount" name="totalAmount" javaType="java.math.BigDecimal"/>
+            <arg column="currency" name="currency" javaType="String"/>
+            <arg column="route_policy_via" name="routePolicyVia" javaType="String"/>
+            <arg column="route_policy_departure_at" name="routePolicyDepartureAt" javaType="java.time.OffsetDateTime"/>
+            <arg column="route_policy_arrival_at" name="routePolicyArrivalAt" javaType="java.time.OffsetDateTime"/>
+            <arg column="internal_approved_by" name="internalApprovedBy" javaType="java.util.UUID"/>
+            <arg column="internal_approved_at" name="internalApprovedAt" javaType="java.time.OffsetDateTime"/>
+            <arg column="presented_at" name="presentedAt" javaType="java.time.OffsetDateTime"/>
+            <arg column="version" name="version" javaType="_long"/>
+        </constructor>
+    </resultMap>
+
+    <resultMap id="pricingLineRow" type="com.example.cargotracker.quotation.infrastructure.persistence.PricingLineRow">
+        <constructor>
+            <idArg column="quotation_id" name="quotationId" javaType="java.util.UUID"/>
+            <idArg column="line_no" name="lineNo" javaType="_int"/>
+            <arg column="description" name="description" javaType="String"/>
+            <arg column="amount" name="amount" javaType="java.math.BigDecimal"/>
+            <arg column="currency" name="currency" javaType="String"/>
+            <arg column="contract_reference" name="contractReference" javaType="String"/>
+        </constructor>
+    </resultMap>
+
+    <insert id="insertQuotation">
+        INSERT INTO quotation.quotation
+            (id, transport_request_id, quotation_no, transport_request_version_no, status, expires_at, total_amount,
+             currency, route_policy_via, route_policy_departure_at, route_policy_arrival_at, internal_approved_by,
+             internal_approved_at, presented_at, version)
+        VALUES (#{id}, #{transportRequestId}, #{quotationNo}, #{transportRequestVersionNo}, #{status}, #{expiresAt},
+                #{totalAmount}, #{currency}, #{routePolicyVia}, #{routePolicyDepartureAt}, #{routePolicyArrivalAt},
+                #{internalApprovedBy}, #{internalApprovedAt}, #{presentedAt}, #{version})
+    </insert>
+
+    <insert id="insertPricingLine">
+        INSERT INTO quotation.pricing_line (quotation_id, line_no, description, amount, currency, contract_reference)
+        VALUES (#{quotationId}, #{lineNo}, #{description}, #{amount}, #{currency}, #{contractReference})
+    </insert>
+
+    <!-- 楽観ロック（データモデル、ARCH-HO-01）。読み込んだときの版でなければ 0 件になる。料金明細は変えない（算出し直しは Bolt 10 で入れない） -->
+    <update id="updateQuotation">
+        UPDATE quotation.quotation
+           SET status = #{row.status}, expires_at = #{row.expiresAt}, total_amount = #{row.totalAmount},
+               currency = #{row.currency}, route_policy_via = #{row.routePolicyVia},
+               route_policy_departure_at = #{row.routePolicyDepartureAt},
+               route_policy_arrival_at = #{row.routePolicyArrivalAt},
+               internal_approved_by = #{row.internalApprovedBy}, internal_approved_at = #{row.internalApprovedAt},
+               presented_at = #{row.presentedAt}, version = version + 1
+         WHERE id = #{row.id} AND version = #{expectedVersion}
+    </update>
+
+    <select id="selectByTransportRequestId" resultMap="quotationRow">
+        SELECT id, transport_request_id, quotation_no, transport_request_version_no, status, expires_at, total_amount,
+               currency, route_policy_via, route_policy_departure_at, route_policy_arrival_at, internal_approved_by,
+               internal_approved_at, presented_at, version
+          FROM quotation.quotation
+         WHERE transport_request_id = #{transportRequestId}
+         ORDER BY quotation_no
+    </select>
+
+    <select id="selectPricingLinesByTransportRequestId" resultMap="pricingLineRow">
+        SELECT l.quotation_id, l.line_no, l.description, l.amount, l.currency, l.contract_reference
+          FROM quotation.pricing_line l
+          JOIN quotation.quotation q ON q.id = l.quotation_id
+         WHERE q.transport_request_id = #{transportRequestId}
+         ORDER BY l.quotation_id, l.line_no
+    </select>
+</mapper>

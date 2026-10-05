@@ -1,9 +1,14 @@
 package com.example.cargotracker.quotation.infrastructure.config;
 
+import com.example.cargotracker.quotation.application.internal.commandservices.QuotationCommandService;
 import com.example.cargotracker.quotation.application.internal.commandservices.TransportRequestCommandService;
 import com.example.cargotracker.quotation.application.internal.commandservices.TransportRequestReviewService;
+import com.example.cargotracker.quotation.application.internal.eventhandlers.QuotationPresentedEventHandler;
+import com.example.cargotracker.quotation.application.internal.queryservices.QuotationQueryService;
+import com.example.cargotracker.quotation.application.internal.queryservices.StaffQuotationQueryService;
 import com.example.cargotracker.quotation.application.internal.queryservices.StaffTransportRequestQueryService;
 import com.example.cargotracker.quotation.application.internal.queryservices.TransportRequestQueryService;
+import com.example.cargotracker.quotation.domain.model.aggregates.QuotationRepository;
 import com.example.cargotracker.quotation.domain.model.aggregates.RequiredDocumentStorage;
 import com.example.cargotracker.quotation.domain.model.aggregates.TransportRequestNumberIssuer;
 import com.example.cargotracker.quotation.domain.model.aggregates.TransportRequestRepository;
@@ -74,6 +79,33 @@ public class QuotationConfiguration {
     StaffTransportRequestQueryService staffTransportRequestQueryService(
             TransportRequestRepository repository, RequiredDocumentStorage documentStorage) {
         return new StaffTransportRequestQueryService(repository, documentStorage);
+    }
+
+    @Bean
+    QuotationCommandService quotationCommandService(
+            TransportRequestRepository transportRequestRepository,
+            QuotationRepository quotationRepository,
+            ApplicationEventPublisher eventPublisher,
+            Clock clock) {
+        return new QuotationCommandService(transportRequestRepository, quotationRepository, eventPublisher, clock);
+    }
+
+    /** DE-03 を受けて輸送要求を見積提示済みにする（Spring Modulith のイベントの記録を経て、別のトランザクションで動く）。 */
+    @Bean
+    QuotationPresentedEventHandler quotationPresentedEventHandler(TransportRequestRepository repository) {
+        return new QuotationPresentedEventHandler(repository);
+    }
+
+    @Bean
+    QuotationQueryService quotationQueryService(
+            TransportRequestRepository transportRequestRepository, QuotationRepository quotationRepository) {
+        return new QuotationQueryService(transportRequestRepository, quotationRepository);
+    }
+
+    @Bean
+    StaffQuotationQueryService staffQuotationQueryService(
+            TransportRequestRepository transportRequestRepository, QuotationRepository quotationRepository) {
+        return new StaffQuotationQueryService(transportRequestRepository, quotationRepository);
     }
 
     @Bean
