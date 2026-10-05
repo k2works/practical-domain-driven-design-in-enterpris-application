@@ -85,4 +85,24 @@ class TransportRequestTest {
         assertThat(request.document(1, 2)).isEmpty();
         assertThat(request.document(2, 1)).as("現在の版でない版の書類は見つからない").isEmpty();
     }
+
+    @Test
+    void 提出した集約と審査しただけの集約には読み込んだ後に作った版がない() {
+        TransportRequest request = TransportRequest.submit(id, number, shipper, terms, submitter, now);
+
+        assertThat(request.newVersion()).as("最初の版は保存（save）が書く").isEmpty();
+        request.sendBack(1, submitter, "理由", "", now);
+        assertThat(request.newVersion()).isEmpty();
+    }
+
+    @Test
+    void 再提出すると読み込んだ後に作った版として新しい版を持つ() {
+        TransportRequest request = TransportRequest.submit(id, number, shipper, terms, submitter, now);
+        request.sendBack(1, submitter, "理由", "", now);
+
+        request.resubmit(terms, submitter, now);
+
+        assertThat(request.newVersion())
+                .hasValueSatisfying(version -> assertThat(version.versionNo()).isEqualTo(2));
+    }
 }

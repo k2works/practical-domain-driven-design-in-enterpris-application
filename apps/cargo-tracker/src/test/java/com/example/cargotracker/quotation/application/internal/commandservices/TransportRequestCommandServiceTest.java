@@ -8,6 +8,7 @@ import com.example.cargotracker.quotation.acceptance.InMemoryTransportRequestRep
 import com.example.cargotracker.quotation.application.internal.commands.ResubmitTransportRequestCommand;
 import com.example.cargotracker.quotation.application.internal.commands.SubmitTransportRequestCommand;
 import com.example.cargotracker.quotation.domain.events.TransportRequestSubmitted;
+import com.example.cargotracker.quotation.domain.model.aggregates.TransportRequest;
 import com.example.cargotracker.quotation.domain.model.rules.MvpAcceptancePolicy;
 import com.example.cargotracker.quotation.domain.model.rules.RequiredDocumentPolicy;
 import com.example.cargotracker.quotation.domain.model.valueobjects.DocumentMediaType;
@@ -100,7 +101,10 @@ class TransportRequestCommandServiceTest {
                                     assertThat(first.type()).isEqualTo(DocumentType.COMMERCIAL_INVOICE);
                                     assertThat(first.mediaType()).isEqualTo(DocumentMediaType.PDF);
                                     assertThat(first.sizeBytes()).isEqualTo(13);
-                                    assertThat(first.sha256()).hasSize(64);
+                                    assertThat(first.sha256())
+                                            .as("中身 %PDF-1.7 test の SHA-256（shasum -a 256 で求めた値。R-17）")
+                                            .isEqualTo(
+                                                    "eddc31937fbdaf708e866af0d20b9fb8c79dd001881c8a11e4c617f2882e779f");
                                     assertThat(first.objectKey())
                                             .startsWith("quotation/"
                                                     + submitted
@@ -127,6 +131,30 @@ class TransportRequestCommandServiceTest {
 
         assertThat(outcome).isEqualTo(new ResubmissionOutcome.Rejected(ResubmissionRejection.NOT_DRAFT));
         assertThat(storage.count()).isZero();
+    }
+
+    @Test
+    void 出し直しで書類に違反があればファイルを保存しない() {
+        CompanyId shipper = new CompanyId(UUID.randomUUID());
+        SubmissionOutcome.Submitted submitted =
+                (SubmissionOutcome.Submitted) service.submit(new SubmitTransportRequestCommand(
+                        shipper, new UserId(UUID.randomUUID()), ShipmentTermsFixture.completeInput()));
+        TransportRequest request =
+                repository.findById(submitted.transportRequestId()).orElseThrow();
+        request.sendBack(1, new UserId(UUID.randomUUID()), "書類を直してください", "", new UtcInstant(NOW));
+        repository.update(request);
+        RequiredDocumentAttachment text =
+                new RequiredDocumentAttachment(DocumentType.OTHER, "memo.pdf", "text".getBytes(StandardCharsets.UTF_8));
+
+        ResubmissionOutcome outcome = service.resubmit(new ResubmitTransportRequestCommand(
+                submitted.number(),
+                shipper,
+                new UserId(UUID.randomUUID()),
+                ShipmentTermsFixture.completeInput(),
+                List.of(pdf(DocumentType.COMMERCIAL_INVOICE, "invoice.pdf"), text)));
+
+        assertThat(outcome).isInstanceOf(ResubmissionOutcome.Invalid.class);
+        assertThat(storage.count()).as("正しい書類も保存しない（R-05）").isZero();
     }
 
     private final SubmitTransportRequestCommand command = new SubmitTransportRequestCommand(

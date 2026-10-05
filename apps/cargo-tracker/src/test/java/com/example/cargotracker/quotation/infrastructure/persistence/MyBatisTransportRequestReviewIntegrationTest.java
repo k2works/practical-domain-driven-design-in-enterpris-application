@@ -203,6 +203,18 @@ class MyBatisTransportRequestReviewIntegrationTest {
                 .doesNotContain(otherCompany.number());
     }
 
+    @Test
+    void 荷主の一覧は最初の提出時刻が同じなら業務番号の新しい順に並ぶ() {
+        CompanyId shipper = new CompanyId(UUID.randomUUID());
+        TransportRequest first = savedFor(shipper, 41, "2085-03-01T00:00:00Z");
+        TransportRequest second = savedFor(shipper, 42, "2085-03-01T00:00:00Z");
+
+        assertThat(repository.findSummariesByShipper(shipper))
+                .extracting(TransportRequestSummary::number)
+                .as("同じ時刻の並びを SQL で固定する（Bolt 6〜8 レビュー R-31）")
+                .containsExactly(second.number(), first.number());
+    }
+
     private TransportRequest savedFor(CompanyId shipper, int sequence, String submittedAt) {
         TransportRequest request = TransportRequest.submit(
                 new TransportRequestId(UUID.randomUUID()),

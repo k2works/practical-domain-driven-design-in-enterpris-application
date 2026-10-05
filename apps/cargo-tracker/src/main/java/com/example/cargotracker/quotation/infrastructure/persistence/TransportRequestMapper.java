@@ -16,9 +16,6 @@ public interface TransportRequestMapper {
 
     void insertTransportRequestVersion(TransportRequestRow row);
 
-    /** 現在の版がまだなければ追加する（再提出の版。追記専用の表なので既存の版は変えない）。 */
-    void insertTransportRequestVersionIfAbsent(TransportRequestRow row);
-
     /** 楽観ロックで状態と現在の版番号を更新し、集約の版を 1 進める。更新した行の数を返す（競合なら 0）。 */
     int updateTransportRequest(
             @Param("id") UUID id,
@@ -31,8 +28,8 @@ public interface TransportRequestMapper {
 
     List<ReviewRecordRow> selectReviewRecords(UUID transportRequestId);
 
-    /** 必要書類がまだなければ追加する（追記専用。出し直しでは前の版の書類を新しい版の行として足す）。 */
-    void insertRequiredDocumentIfAbsent(RequiredDocumentRow row);
+    /** 新しい版の必要書類を追加する（追記専用。出し直しでは引き継いだ書類も新しい版の行として足す）。 */
+    void insertRequiredDocument(RequiredDocumentRow row);
 
     /** 版の必要書類を書類番号の順に読む。 */
     List<RequiredDocumentRow> selectRequiredDocuments(

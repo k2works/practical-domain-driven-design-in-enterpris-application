@@ -47,6 +47,7 @@ public final class TransportRequest {
     private final List<Object> domainEvents = new ArrayList<>();
     private TransportRequestStatus status;
     private TransportRequestVersion currentVersion;
+    private boolean versionAddedAfterLoad;
 
     private TransportRequest(
             TransportRequestId id,
@@ -142,6 +143,7 @@ public final class TransportRequest {
         }
         int versionNo = currentVersion.versionNo() + 1;
         currentVersion = new TransportRequestVersion(versionNo, terms, submittedBy, submittedAt);
+        versionAddedAfterLoad = true;
         status = TransportRequestStatus.UNDER_REVIEW;
         domainEvents.add(
                 new TransportRequestSubmitted(id.value(), versionNo, shipperCompanyId, submittedAt, number.text()));
@@ -256,6 +258,14 @@ public final class TransportRequest {
                 .filter(reviewRecord -> reviewRecord.decision() == ReviewDecision.SENT_BACK)
                 .findFirst()
                 .map(reviewRecord -> new SendBackNotice(reviewRecord.rationale(), reviewRecord.missingItems()));
+    }
+
+    /**
+     * 読み込んだ後（または作った後）に作った版（再提出の版）。リポジトリは更新のときに、これがあるときだけ版と必要書類の行を追加する
+     * （新しい事実だけを書く。Bolt 5 レビュー R-03、Bolt 6〜8 レビュー R-07）。最初の版は保存（{@code save}）が書く。
+     */
+    public Optional<TransportRequestVersion> newVersion() {
+        return versionAddedAfterLoad ? Optional.of(currentVersion) : Optional.empty();
     }
 
     /** 読み込んだ後（または作った後）に足した審査記録。リポジトリは更新のときに、これだけを追加する。 */

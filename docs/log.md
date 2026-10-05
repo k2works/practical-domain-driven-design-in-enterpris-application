@@ -3,6 +3,7 @@
 ## 2026-10-05
 * **Update**: [bolt_09_plan](/development/cargo-tracker/bolt_09_plan.md) を更新（anthropic/claude-opus-5-5）
 * **Update**: [bolt_09_plan](/development/cargo-tracker/bolt_09_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_09_plan](/development/cargo-tracker/bolt_09_plan.md) を更新（anthropic/claude-opus-5-5）
 * **Update**: [010-required-document-storage-transaction](/adr/cargo-tracker/010-required-document-storage-transaction.md) を更新（anthropic/claude-opus-5-5）
 * **Update**: [user_story](/requirements/cargo-tracker/user_story.md) を更新（anthropic/claude-opus-5-5）
 * **Update**: [application_development_setup](/operation/cargo-tracker/application_development_setup.md) を更新（anthropic/claude-opus-5-5）

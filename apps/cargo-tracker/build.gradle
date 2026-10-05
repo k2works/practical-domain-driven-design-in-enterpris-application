@@ -88,6 +88,13 @@ dependencyManagement {
 // Cucumber エンジンの直接探索による二重実行を防ぐ
 tasks.withType(Test).configureEach {
 	systemProperty 'cucumber.junit-platform.discovery.as-root-engine', 'false'
+	// テストが保存する必要書類のファイルは、タスクごとの build の下に置き、実行の前に消す
+	// （既定の一時ディレクトリに残さない。Bolt 6〜8 レビュー R-15）
+	def documentsDir = layout.buildDirectory.dir("test-documents/${name}").get().asFile
+	systemProperty 'cargotracker.document-storage.base-dir', documentsDir.absolutePath
+	doFirst {
+		documentsDir.deleteDir()
+	}
 }
 
 tasks.named('test') {

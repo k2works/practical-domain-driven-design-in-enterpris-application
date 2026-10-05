@@ -44,7 +44,7 @@ public class MyBatisTransportRequestRepository implements TransportRequestReposi
         TransportRequestRow row = toRow(transportRequest);
         mapper.insertTransportRequest(row);
         mapper.insertTransportRequestVersion(row);
-        insertDocuments(transportRequest);
+        insertDocuments(transportRequest.id(), transportRequest.currentVersion());
     }
 
     @Override
@@ -68,8 +68,11 @@ public class MyBatisTransportRequestRepository implements TransportRequestReposi
             throw new ConcurrentTransportRequestUpdateException(
                     transportRequest.id(), transportRequest.aggregateVersion());
         }
-        mapper.insertTransportRequestVersionIfAbsent(toRow(transportRequest));
-        insertDocuments(transportRequest);
+        // 読み込んだ後に作った版（再提出）があるときだけ、版と書類の行を追加する（新しい事実だけを書く。Bolt 6〜8 レビュー R-07）
+        if (transportRequest.newVersion().isPresent()) {
+            mapper.insertTransportRequestVersion(toRow(transportRequest));
+            insertDocuments(transportRequest.id(), transportRequest.newVersion().get());
+        }
         // 読み込んだ後に足した審査記録だけを追加する（往復の回数を履歴の件数に比例させない。Bolt 5 レビュー R-03）
         transportRequest
                 .newReviewRecords()
@@ -116,13 +119,12 @@ public class MyBatisTransportRequestRepository implements TransportRequestReposi
                 CargoCategory.valueOf(row.cargoCategory()));
     }
 
-    /** 現在の版の必要書類を、まだなければ追加する（追記専用。再提出の版では引き継いだ書類も新しい版の行になる）。 */
-    private void insertDocuments(TransportRequest request) {
-        TransportRequestVersion version = request.currentVersion();
+    /** 新しい版の必要書類を追加する（追記専用。再提出の版では引き継いだ書類も新しい版の行になる）。 */
+    private void insertDocuments(TransportRequestId id, TransportRequestVersion version) {
         version.terms()
                 .documents()
-                .forEach(document -> mapper.insertRequiredDocumentIfAbsent(new RequiredDocumentRow(
-                        request.id().value(),
+                .forEach(document -> mapper.insertRequiredDocument(new RequiredDocumentRow(
+                        id.value(),
                         version.versionNo(),
                         document.documentNo(),
                         document.type().name(),
