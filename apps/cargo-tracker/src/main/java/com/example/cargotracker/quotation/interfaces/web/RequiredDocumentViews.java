@@ -11,6 +11,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Optional;
 import java.util.stream.Stream;
 import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
@@ -47,21 +48,23 @@ public final class RequiredDocumentViews {
         return Stream.concat(
                         Stream.of(form.getCommercialInvoice(), form.getPackingList()),
                         form.getOtherDocuments().stream())
-                .anyMatch(file -> file != null
-                        && file.getOriginalFilename() != null
-                        && !file.getOriginalFilename().isBlank());
+                .anyMatch(file -> selectedName(file).isPresent());
+    }
+
+    /** 選んだファイルの名前。欄でファイルを選んでいなければ空（ブラウザは名前のない空の部分を送る）。 */
+    private static Optional<String> selectedName(MultipartFile file) {
+        String original = file == null ? null : file.getOriginalFilename();
+        return original == null || original.isBlank() ? Optional.empty() : Optional.of(original);
     }
 
     private static void add(List<RequiredDocumentAttachment> attachments, DocumentType type, MultipartFile file) {
-        String original = file == null ? null : file.getOriginalFilename();
-        if (original == null || original.isBlank()) {
-            return;
-        }
-        try {
-            attachments.add(new RequiredDocumentAttachment(type, fileName(original), file.getBytes()));
-        } catch (IOException e) {
-            throw new UncheckedIOException("添付したファイルを読めません", e);
-        }
+        selectedName(file).ifPresent(original -> {
+            try {
+                attachments.add(new RequiredDocumentAttachment(type, fileName(original), file.getBytes()));
+            } catch (IOException e) {
+                throw new UncheckedIOException("添付したファイルを読めません", e);
+            }
+        });
     }
 
     /** 画面に出すファイル名。パスの部分と制御文字を除き、255 文字までにする（保存のキーには使わない）。 */

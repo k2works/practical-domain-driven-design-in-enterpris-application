@@ -4,12 +4,17 @@ import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 import static com.tngtech.archunit.library.Architectures.layeredArchitecture;
 
+import com.tngtech.archunit.base.DescribedPredicate;
+import com.tngtech.archunit.core.domain.JavaClass;
 import com.tngtech.archunit.core.importer.ImportOption;
 import com.tngtech.archunit.junit.AnalyzeClasses;
 import com.tngtech.archunit.junit.ArchTest;
 import com.tngtech.archunit.lang.ArchRule;
+import java.util.Arrays;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.stereotype.Controller;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.RequestMapping;
 
 /**
  * AT-02: 依存は interfaces → application → domain ← infrastructure の向きに限る（バックエンドアーキテクチャ）。
@@ -20,6 +25,20 @@ import org.springframework.stereotype.Service;
  */
 @AnalyzeClasses(packages = "com.example.cargotracker", importOptions = ImportOption.DoNotIncludeTests.class)
 class LayerArchitectureTest {
+
+    /** 顧客 Web の URL（{@code /customer/}）の下に割り当てたコントローラー。 */
+    private static final DescribedPredicate<JavaClass> CUSTOMER_WEB_CONTROLLERS =
+            new DescribedPredicate<>("顧客 Web（/customer/**）のコントローラー") {
+                @Override
+                public boolean test(JavaClass javaClass) {
+                    return javaClass.isAnnotatedWith(Controller.class)
+                            && javaClass
+                                    .tryGetAnnotationOfType(RequestMapping.class)
+                                    .map(mapping -> Arrays.stream(mapping.value())
+                                            .anyMatch(path -> path.startsWith("/customer")))
+                                    .orElse(false);
+                }
+            };
 
     @ArchTest
     static final ArchRule 層の依存は内側に向かう = layeredArchitecture()
@@ -67,6 +86,17 @@ class LayerArchitectureTest {
             .should()
             .dependOnClassesThat()
             .haveSimpleNameEndingWith("Repository");
+
+    /**
+     * 顧客 Web（{@code /customer/**}）のコントローラーは、荷主企業で絞らない社内用の照会（{@code Staff…}）を使わない。
+     * 荷主の画面の照会は必ず荷主企業で絞る（Q-INV-08、Bolt 4 R-02、Bolt 5 R-10。Bolt 6〜8 レビュー R-16 で規則にした）。
+     */
+    @ArchTest
+    static final ArchRule 顧客Webのコントローラーは社内用の照会を使わない = noClasses()
+            .that(CUSTOMER_WEB_CONTROLLERS)
+            .should()
+            .dependOnClassesThat()
+            .haveSimpleNameStartingWith("Staff");
 
     /**
      * アプリケーションサービス（入力ポートの実装）は {@code @Service} を付ける。JIG がユースケースとして読むための印で、

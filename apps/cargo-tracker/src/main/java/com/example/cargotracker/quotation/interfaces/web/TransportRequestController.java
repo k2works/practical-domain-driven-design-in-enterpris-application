@@ -7,17 +7,13 @@ import com.example.cargotracker.quotation.application.internal.commandservices.S
 import com.example.cargotracker.quotation.application.internal.commandservices.TransportRequestCommandService;
 import com.example.cargotracker.quotation.application.internal.queryservices.TransportRequestQueryService;
 import com.example.cargotracker.quotation.domain.model.aggregates.TransportRequest;
-import com.example.cargotracker.quotation.domain.model.valueobjects.Cargo;
 import com.example.cargotracker.quotation.domain.model.valueobjects.SendBackNotice;
-import com.example.cargotracker.quotation.domain.model.valueobjects.ShipmentTerms;
 import com.example.cargotracker.quotation.domain.model.valueobjects.ShipmentTermsInput;
 import com.example.cargotracker.quotation.domain.model.valueobjects.SubmissionViolations;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestNumber;
-import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestStatus;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestSummary;
 import com.example.cargotracker.shared.domain.CompanyId;
 import com.example.cargotracker.shared.domain.UserId;
-import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
 import org.springframework.http.HttpStatus;
@@ -34,8 +30,8 @@ import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 /**
- * 顧客 Web の見積依頼（C-02 見積依頼の一覧、C-03 見積依頼の作成・編集の 1 画面の形、C-04 見積依頼の詳細）。
- * 段階入力は #36 のプロトタイプで操作性を確かめてから入れる。
+ * 顧客 Web の見積依頼（C-02 見積依頼の一覧、C-03 見積依頼の作成・編集、C-04 見積依頼の詳細）。
+ * C-03 は 1 つのフォームの中で 4 つの段階を切り替える段階入力にする（Bolt 8 のプロトタイプで操作性を確かめ、この形で残すと決めた。UI-HO-04）。
  * 業務番号は推測しやすいため、照会と出し直しはすべて荷主企業で絞り、他社の番号は見つからない（404）とする（Q-INV-08、Bolt 4 レビュー R-02）。
  * 荷主企業はいまは仮の主体のもの。認証（US-18）を入れたら、認証の主体に差し替える。
  */
@@ -49,7 +45,6 @@ public class TransportRequestController {
     private static final String DETAIL_VIEW = "quotation/transport-requests/detail";
     private static final String RESULT = "result";
     private static final String PROBLEM = "problem";
-    private static final String UNKNOWN_CONSIGNEE = "（仮の一覧にない荷受人）";
 
     private final TransportRequestCommandService commandService;
     private final TransportRequestQueryService queryService;
@@ -132,21 +127,8 @@ public class TransportRequestController {
     @GetMapping("/{number}")
     public String detail(@PathVariable String number, Model model) {
         TransportRequest request = find(number);
-        ShipmentTerms terms = request.currentVersion().terms();
-        Cargo cargo = terms.cargo();
-        Map<String, String> rows = new LinkedHashMap<>();
-        rows.put("荷受人", consigneeName(terms));
-        rows.put("出発地", terms.origin().unLocode());
-        rows.put("目的地", terms.destination().unLocode());
-        rows.put("希望到着期限", TransportRequestLabels.customerDateTime(terms.arrivalDeadline()));
-        rows.put("貨物種別", TransportRequestLabels.cargoCategory(cargo.category()));
-        rows.put("荷姿", TransportRequestLabels.packageType(cargo.packageType()));
-        rows.put("個数", String.valueOf(cargo.packageCount()));
-        rows.put("総重量（kg）", cargo.grossWeightKg().stripTrailingZeros().toPlainString());
-        rows.put("容積（m3）", cargo.volumeM3().stripTrailingZeros().toPlainString());
-        rows.put(
-                "提出時刻",
-                TransportRequestLabels.customerDateTime(request.currentVersion().submittedAt()));
+        Map<String, String> rows = TransportRequestViews.termsRows(
+                request.currentVersion(), provisionalConsignees, TransportRequestLabels::customerDateTime);
         model.addAttribute("number", request.number().text());
         model.addAttribute(
                 "numberWithVersion",
@@ -160,7 +142,8 @@ public class TransportRequestController {
                 request.sendBackNotice()
                         .map(TransportRequestController::sendBack)
                         .orElse(null));
-        model.addAttribute("editable", request.status() == TransportRequestStatus.DRAFT);
+        // 出し直せるかは集約が判定する（Bolt 6〜8 レビュー R-13）
+        model.addAttribute("editable", request.checkResubmittable().isEmpty());
         model.addAttribute("documents", RequiredDocumentViews.rows(request, BASE_PATH));
         return DETAIL_VIEW;
     }
@@ -172,7 +155,7 @@ public class TransportRequestController {
     @GetMapping("/{number}/versions/{versionNo}/documents/{documentNo}")
     public ResponseEntity<byte[]> document(
             @PathVariable String number, @PathVariable int versionNo, @PathVariable int documentNo) {
-        return parse(number)
+        return TransportRequestViews.parseNumber(number)
                 .flatMap(found -> queryService.findDocument(found, shipper(), versionNo, documentNo))
                 .map(RequiredDocumentViews::download)
                 .orElseThrow(TransportRequestController::notFound);
@@ -185,7 +168,7 @@ public class TransportRequestController {
     @GetMapping("/{number}/edit")
     public String edit(@PathVariable String number, Model model, RedirectAttributes redirectAttributes) {
         TransportRequest request = find(number);
-        if (request.status() != TransportRequestStatus.DRAFT) {
+        if (request.checkResubmittable().isPresent()) {
             return redirectToDetailWithProblem(request.number(), notResubmittable(request), redirectAttributes);
         }
         model.addAttribute(
@@ -205,7 +188,8 @@ public class TransportRequestController {
             BindingResult bindingResult,
             Model model,
             RedirectAttributes redirectAttributes) {
-        TransportRequestNumber transportRequestNumber = parse(number).orElseThrow(TransportRequestController::notFound);
+        TransportRequestNumber transportRequestNumber =
+                TransportRequestViews.parseNumber(number).orElseThrow(TransportRequestController::notFound);
         Optional<ShipmentTermsInput> input =
                 TransportRequestFormConverter.convert(transportRequestForm, provisionalConsignees, bindingResult);
         if (input.isEmpty()) {
@@ -277,16 +261,9 @@ public class TransportRequestController {
     }
 
     private TransportRequest find(String number) {
-        return parse(number)
+        return TransportRequestViews.parseNumber(number)
                 .flatMap(found -> queryService.findByNumber(found, shipper()))
                 .orElseThrow(TransportRequestController::notFound);
-    }
-
-    private String consigneeName(ShipmentTerms terms) {
-        return provisionalConsignees
-                .find(terms.consigneeCompanyId().value())
-                .map(ProvisionalConsigneeProperties.Company::name)
-                .orElse(UNKNOWN_CONSIGNEE);
     }
 
     /** 見積依頼の詳細へリダイレクトし、結果を上部に示す（PRG）。 */
@@ -325,14 +302,6 @@ public class TransportRequestController {
 
     private static ResponseStatusException notFound() {
         return new ResponseStatusException(HttpStatus.NOT_FOUND);
-    }
-
-    private static Optional<TransportRequestNumber> parse(String number) {
-        try {
-            return Optional.of(TransportRequestNumber.parse(number));
-        } catch (IllegalArgumentException _) {
-            return Optional.empty();
-        }
     }
 
     /**

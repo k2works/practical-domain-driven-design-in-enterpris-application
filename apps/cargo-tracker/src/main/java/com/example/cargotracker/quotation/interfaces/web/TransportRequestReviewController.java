@@ -7,18 +7,14 @@ import com.example.cargotracker.quotation.application.internal.commandservices.T
 import com.example.cargotracker.quotation.application.internal.queryservices.StaffTransportRequestQueryService;
 import com.example.cargotracker.quotation.domain.model.aggregates.TransportRequest;
 import com.example.cargotracker.quotation.domain.model.entities.ReviewRecord;
-import com.example.cargotracker.quotation.domain.model.valueobjects.Cargo;
 import com.example.cargotracker.quotation.domain.model.valueobjects.ReviewDecision;
 import com.example.cargotracker.quotation.domain.model.valueobjects.ReviewRejection;
-import com.example.cargotracker.quotation.domain.model.valueobjects.ShipmentTerms;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestNumber;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestSummary;
 import com.example.cargotracker.shared.domain.UserId;
 import java.time.Clock;
 import java.time.Duration;
-import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Optional;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -42,7 +38,6 @@ public class TransportRequestReviewController {
 
     private static final String LIST_VIEW = "quotation/staff/transport-requests/list";
     private static final String REVIEW_VIEW = "quotation/staff/transport-requests/review";
-    private static final String UNKNOWN_CONSIGNEE = "（仮の一覧にない荷受人）";
 
     /** 審査の入力の項目のキーから、エラー要約に出す表示名への対応。 */
     private static final Map<String, String> FIELD_LABELS =
@@ -97,8 +92,8 @@ public class TransportRequestReviewController {
             BindingResult bindingResult,
             Model model,
             RedirectAttributes redirectAttributes) {
-        TransportRequestNumber transportRequestNumber =
-                parse(number).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        TransportRequestNumber transportRequestNumber = TransportRequestViews.parseNumber(number)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
         ReviewDecision decision = decision(reviewForm.getDecision());
         if (reviewForm.getVersionNo() == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "審査の対象の版番号がありません");
@@ -182,21 +177,8 @@ public class TransportRequestReviewController {
     }
 
     private String showReview(TransportRequest request, Model model) {
-        ShipmentTerms terms = request.currentVersion().terms();
-        Cargo cargo = terms.cargo();
-        Map<String, String> rows = new LinkedHashMap<>();
-        rows.put("荷受人", consigneeName(terms));
-        rows.put("出発地", terms.origin().unLocode());
-        rows.put("目的地", terms.destination().unLocode());
-        rows.put("希望到着期限", TransportRequestLabels.staffDateTime(terms.arrivalDeadline()));
-        rows.put("貨物種別", TransportRequestLabels.cargoCategory(cargo.category()));
-        rows.put("荷姿", TransportRequestLabels.packageType(cargo.packageType()));
-        rows.put("個数", String.valueOf(cargo.packageCount()));
-        rows.put("総重量（kg）", cargo.grossWeightKg().stripTrailingZeros().toPlainString());
-        rows.put("容積（m3）", cargo.volumeM3().stripTrailingZeros().toPlainString());
-        rows.put(
-                "提出時刻",
-                TransportRequestLabels.staffDateTime(request.currentVersion().submittedAt()));
+        Map<String, String> rows = TransportRequestViews.termsRows(
+                request.currentVersion(), provisionalConsignees, TransportRequestLabels::staffDateTime);
         model.addAttribute(
                 "numberWithVersion",
                 TransportRequestLabels.numberWithVersion(
@@ -218,7 +200,7 @@ public class TransportRequestReviewController {
     @GetMapping("/{number}/versions/{versionNo}/documents/{documentNo}")
     public ResponseEntity<byte[]> document(
             @PathVariable String number, @PathVariable int versionNo, @PathVariable int documentNo) {
-        return parse(number)
+        return TransportRequestViews.parseNumber(number)
                 .flatMap(found -> queryService.findDocument(found, versionNo, documentNo))
                 .map(RequiredDocumentViews::download)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
@@ -245,15 +227,8 @@ public class TransportRequestReviewController {
                 TransportRequestLabels.staffDateTime(reviewRecord.decidedAt()));
     }
 
-    private String consigneeName(ShipmentTerms terms) {
-        return provisionalConsignees
-                .find(terms.consigneeCompanyId().value())
-                .map(ProvisionalConsigneeProperties.Company::name)
-                .orElse(UNKNOWN_CONSIGNEE);
-    }
-
     private TransportRequest find(String number) {
-        return parse(number)
+        return TransportRequestViews.parseNumber(number)
                 .flatMap(queryService::findByNumber)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
     }
@@ -261,14 +236,6 @@ public class TransportRequestReviewController {
     private static String resultMessage(ReviewOutcome.Reviewed reviewed) {
         String target = TransportRequestLabels.numberWithVersion(reviewed.number(), reviewed.versionNo());
         return reviewed.decision() == ReviewDecision.APPROVED ? target + " の審査を確定しました" : target + " を差し戻しました";
-    }
-
-    private static Optional<TransportRequestNumber> parse(String number) {
-        try {
-            return Optional.of(TransportRequestNumber.parse(number));
-        } catch (IllegalArgumentException _) {
-            return Optional.empty();
-        }
     }
 
     /**

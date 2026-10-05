@@ -1,5 +1,6 @@
 package com.example.cargotracker.quotation.interfaces.web;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.nullValue;
@@ -620,7 +621,7 @@ class TransportRequestControllerTest {
                 .getResponse()
                 .getContentAsString();
 
-        org.assertj.core.api.Assertions.assertThat(html)
+        assertThat(html)
                 .contains("<nav id=\"step-nav\" aria-label=\"入力の段階\" hidden>")
                 .contains("<p class=\"app-step-actions\" hidden>")
                 .contains("id=\"step-terms\"", "id=\"step-cargo\"", "id=\"step-documents\"", "id=\"step-confirm\"")

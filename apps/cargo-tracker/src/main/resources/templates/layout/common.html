@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<!--/* 顧客 Web と社内業務 Web のレイアウトで共通の head の読み込み（Bolt 6〜8 レビュー R-27）。
+       レイアウトの head で <th:block th:replace="~{layout/common :: assets(${scripts})}"></th:block> のように使う。
+       scripts には画面ごとのスクリプトのフラグメントを渡す（なければ ~{}） */-->
+<html lang="ja" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <th:block th:fragment="assets(scripts)">
+        <link rel="stylesheet" th:href="@{/webjars/bootstrap/dist/css/bootstrap.min.css}">
+        <link rel="stylesheet" th:href="@{/css/app.css}">
+        <script th:src="@{/webjars/bootstrap/dist/js/bootstrap.bundle.min.js}" defer></script>
+        <script th:src="@{/webjars/htmx.org/dist/htmx.min.js}" defer></script>
+        <th:block th:replace="${scripts}"></th:block>
+    </th:block>
+</head>
+</html>
