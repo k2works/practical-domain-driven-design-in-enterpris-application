@@ -4,7 +4,7 @@ title: "Bolt 9 終了報告 - Bolt 6〜8 レビューの返済（書類の差し
 description: "9 回目の Bolt（W2 の最初）の終了報告。出し直しでの必要書類の種類ごとの差し替え（D-25）と、Bolt 6〜8 レビューの改善提案の返済の成果、デモ項目、指標と時間の内訳、仮説 H1〜H3 の結論、見つけて直した問題、既知の課題、ふりかえりをまとめる。"
 tags: [development,bolt-report]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-05T07:03:56Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-05T07:34:47Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-05T03:42:37Z }
 ---
@@ -16,7 +16,7 @@ verified:
 | 項目 | 内容 |
 | :--- | :--- |
 | Bolt | 第 9 回（W2 の最初の Bolt） |
-| 期間 | 2026-10-05 09:54 JST（計画の承認のコミット `271d9d8`）〜 終了報告のコミット。開始準備（W2 の開始準備と計画の作成）は 〜 09:49（計画のコミット `ff4fdea`） |
+| 期間 | 2026-10-05 09:54 JST（計画の承認のコミット `271d9d8`）〜 11:48（終了報告の初版のコミット `50765c1`）。終了報告の承認は 12:42（`d733948`。Bolt 9・10 レビュー R-23）。開始準備（W2 の開始準備と計画の作成）は 〜 09:49（計画のコミット `ff4fdea`） |
 | 対象 | 技術タスク [#37](https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/37)（SP 0）。[Bolt 6〜8 開発成果物レビュー](../../review/cargo-tracker/bolt_06-08_review_20261003.md) の R-01（D-25）と「修正」の改善提案 |
 | 計画 | [Bolt 9 計画](bolt_09_plan.md) |
 | ゴール | 荷主は出し直しで、引き継いだ書類を種類ごとに選び直して差し替えられる。前の版の書類の行は変わらない。Bolt 6〜8 のレビューで「修正」とした指摘を片付ける |
