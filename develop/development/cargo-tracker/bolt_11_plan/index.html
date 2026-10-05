@@ -7088,7 +7088,7 @@
 </ul>
 </li>
 <li>承認（2026-10-05、human:kakimomokuri）: ステップ 1・2 とあわせて承認された（失効の判定を <code>QuotationExpiry</code> に置く変更を含む）</li>
-<li>[?] <strong>4. 表（内側の TDD、統合テスト）</strong> 【承認ゲート: スキーマの変更】</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>4. 表（内側の TDD、統合テスト）</strong> 【承認ゲート: スキーマの変更】</li>
 <li>統合テスト（PostgreSQL）を先に書く: 置換済み・失効の保存と読み出し、置換先の FK、<code>ck_quotation_replaced</code>、<code>status</code> の CHECK、部分一意インデックスで同時の作成・再見積りが止まり値で返る（R-02 と同じ変換）、置換済み・失効は数えない</li>
 <li>マイグレーション: <code>common</code> に状態の値・<code>replaced_by_quotation_id</code>・CHECK・COMMENT（R-14 を含む）、<code>postgresql</code> に <code>ux_quotation_active</code>。H2 のスモークを先に回す（T-15）</li>
 <li>MyBatis のリポジトリ: 置換先の列、旧版と新しい見積りを同じトランザクションで書く順（旧版の更新を先に）</li>
@@ -7101,6 +7101,7 @@
 <li><code>check</code> 緑（<code>test</code> 705 件。統合テスト +8）</li>
 </ul>
 </li>
+<li>承認（2026-10-05、human:kakimomokuri）: スキーマ（2 つのマイグレーション）と、置換先の FK を PostgreSQL の遅延の FK にした形が承認された</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>5. 画面の層（Red → Green）</strong>（承認はステップ 6 とまとめて受ける）</li>
 <li>画面の層の受入シナリオを先に書き、<code>uiTest</code> で失敗を記録する（T-21。<code>features/ui/replace_quotation_ui.feature</code>、<code>@ui @US-03</code>。デモ項目に <code>@demo @demo-bolt-11/&lt;名前&gt;</code>）<ul>
 <li>主成功: 営業担当者が提示済みの見積り（S-04）から再見積りし、旧版の明細を初期値に有効期限を入れて算出する。新しい見積り（見積 2）が承認待ちで開き、旧版（見積 1）は「見積 2 に置き換えました」と読み取り専用で出る。キー操作だけで行える</li>
@@ -7342,6 +7343,12 @@
 <tr>
 <td style="text-align: left;">2026-10-05</td>
 <td style="text-align: left;">ステップ 1〜3（レビューの中・低の返済、設計文書への反映、失効と置換の業務のルール）の承認ゲートを通した</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5</td>
+<td style="text-align: left;">human:kakimomokuri</td>
+</tr>
+<tr>
+<td style="text-align: left;">2026-10-05</td>
+<td style="text-align: left;">ステップ 4（スキーマ）の承認ゲートを通した（置換先の FK は PostgreSQL の遅延の FK）</td>
 <td style="text-align: left;">anthropic/claude-opus-5-5</td>
 <td style="text-align: left;">human:kakimomokuri</td>
 </tr>
