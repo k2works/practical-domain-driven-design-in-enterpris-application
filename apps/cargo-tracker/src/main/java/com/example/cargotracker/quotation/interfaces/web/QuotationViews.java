@@ -53,7 +53,7 @@ final class QuotationViews {
                 money(basis.total(), currency),
                 dateTime.apply(quotation.expiry().orElseThrow().expiresAt()),
                 policy.via().isEmpty()
-                        ? "（経由地なし）"
+                        ? "直行（経由地なし）"
                         : policy.via().stream().map(Location::unLocode).collect(Collectors.joining("、")),
                 dateTime.apply(policy.departureAt()),
                 dateTime.apply(policy.arrivalAt()),

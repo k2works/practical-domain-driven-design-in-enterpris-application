@@ -40,7 +40,7 @@
         <fieldset id="lines" tabindex="-1" aria-describedby="lines-hint"
                   th:attr="aria-invalid=${#fields.hasErrors('lines')}">
             <legend>料金根拠（料金明細）</legend>
-            <p id="lines-hint">1 行に 1 つの料金を入れてください（10 行まで。空の行は無視します）。金額は小数点以下 2 桁までです。</p>
+            <p id="lines-hint">1 行に 1 つの料金を入れてください（10 行まで。空の行は無視します）。金額は小数点以下 2 桁までで、3,200.00 のように 3 桁区切りのカンマを付けてもかまいません。</p>
             <p id="lines-error" th:if="${#fields.hasErrors('lines')}" th:errors="*{lines}"></p>
             <div th:each="line, row : *{lines}" class="app-pricing-line">
                 <div>
@@ -90,7 +90,7 @@
 
         <fieldset>
             <legend>経路方針</legend>
-            <p>詳細な経路は、荷主が詳細経路設計を依頼した後に、経路設計者が確定します。</p>
+            <p>詳細な経路は、経路設計者の承認後に確定します。</p>
             <div>
                 <label for="via">主な経由地（UN/LOCODE、カンマ区切り、任意）</label>
                 <input class="form-control" id="via" name="via" type="text" th:value="*{via}"
@@ -99,14 +99,16 @@
             </div>
             <div>
                 <label for="departureAt">概算の出発日時（日本時間）</label>
+                <p id="departureAt-hint">2026-11-02 09:00 の形</p>
                 <input class="form-control" id="departureAt" name="departureAt" type="text" th:value="*{departureAt}"
-                       th:attr="aria-invalid=${#fields.hasErrors('departureAt')},aria-describedby=${#fields.hasErrors('departureAt')} ? 'departureAt-error' : null">
+                       th:attr="aria-invalid=${#fields.hasErrors('departureAt')},aria-describedby=${#fields.hasErrors('departureAt')} ? 'departureAt-hint departureAt-error' : 'departureAt-hint'">
                 <p id="departureAt-error" th:if="${#fields.hasErrors('departureAt')}" th:errors="*{departureAt}"></p>
             </div>
             <div>
                 <label for="arrivalAt">概算の到着日時（日本時間）</label>
+                <p id="arrivalAt-hint">2026-11-02 09:00 の形</p>
                 <input class="form-control" id="arrivalAt" name="arrivalAt" type="text" th:value="*{arrivalAt}"
-                       th:attr="aria-invalid=${#fields.hasErrors('arrivalAt')},aria-describedby=${#fields.hasErrors('arrivalAt')} ? 'arrivalAt-error' : null">
+                       th:attr="aria-invalid=${#fields.hasErrors('arrivalAt')},aria-describedby=${#fields.hasErrors('arrivalAt')} ? 'arrivalAt-hint arrivalAt-error' : 'arrivalAt-hint'">
                 <p id="arrivalAt-error" th:if="${#fields.hasErrors('arrivalAt')}" th:errors="*{arrivalAt}"></p>
             </div>
         </fieldset>

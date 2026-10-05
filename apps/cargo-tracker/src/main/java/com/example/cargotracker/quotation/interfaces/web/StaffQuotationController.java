@@ -110,7 +110,8 @@ public class StaffQuotationController {
                     yield REDIRECT
                             + quotationPath(request.number(), active.get().quotationNo());
                 }
-                redirectAttributes.addFlashAttribute(PROBLEM, rejection(request.number(), reason));
+                redirectAttributes.addFlashAttribute(
+                        PROBLEM, rejection(request.number().text(), reason));
                 yield REDIRECT + LIST_PATH;
             }
             case CalculationOutcome.NotFound _ -> throw notFound();
@@ -145,9 +146,9 @@ public class StaffQuotationController {
                 redirectAttributes.addFlashAttribute(RESULT, QuotationViews.label(presented, presentedNo) + " を提示しました");
                 yield REDIRECT + LIST_PATH;
             }
-            case PresentationOutcome.Rejected _ -> {
+            case PresentationOutcome.Rejected(QuotationRejection reason) -> {
                 redirectAttributes.addFlashAttribute(
-                        PROBLEM, QuotationViews.label(transportRequestNumber, quotationNo) + " は承認待ちでないため提示できません");
+                        PROBLEM, rejection(QuotationViews.label(transportRequestNumber, quotationNo), reason));
                 yield REDIRECT + quotationPath(transportRequestNumber, quotationNo);
             }
             case PresentationOutcome.Conflict _ -> {
@@ -182,11 +183,16 @@ public class StaffQuotationController {
         return LIST_PATH + "/" + number.text() + "/quotations/" + quotationNo;
     }
 
-    private static String rejection(TransportRequestNumber number, QuotationRejection reason) {
+    /**
+     * 見積りの操作を受け付けなかった理由の文言（Bolt 9・10 レビュー R-16）。算出は見積依頼、提示は見積りを主語にする。
+     *
+     * @param subject 主語（業務番号、または「TR-2026-0001 見積 1」）
+     */
+    private static String rejection(String subject, QuotationRejection reason) {
         return switch (reason) {
-            case TRANSPORT_REQUEST_NOT_QUOTING -> number.text() + " は見積り作成中でないため、見積りを作れません";
-            case ALREADY_QUOTED -> number.text() + " にはすでに見積りがあります";
-            case NOT_PENDING_APPROVAL -> number.text() + " の見積りは承認待ちではありません";
+            case TRANSPORT_REQUEST_NOT_QUOTING -> subject + " は見積り作成中でないため、見積りを作れません";
+            case ALREADY_QUOTED -> subject + " にはすでに見積りがあります";
+            case NOT_PENDING_APPROVAL -> subject + " は承認待ちでないため提示できません";
         };
     }
 

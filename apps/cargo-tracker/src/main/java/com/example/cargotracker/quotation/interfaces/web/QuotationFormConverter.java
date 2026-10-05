@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.regex.Pattern;
 import org.springframework.validation.BindingResult;
 
 /**
@@ -22,7 +23,15 @@ final class QuotationFormConverter {
     static final String DATE_TIME_FORMAT_MESSAGE = "2026-11-02 09:00 の形（日本時間）で入力してください";
     static final String AMOUNT_FORMAT_MESSAGE = "数字で入力してください";
 
+    /** 3 桁区切りのカンマを付けた金額（例: 1,234,567.50）。区切りの位置が 3 桁ごとでなければ形式の誤り（Bolt 9・10 レビュー R-09）。 */
+    private static final Pattern GROUPED_AMOUNT = Pattern.compile("\\d{1,3}(,\\d{3})+(\\.\\d*)?");
+
     private QuotationFormConverter() {}
+
+    /** 金額の文字列を数にする。3 桁区切りのカンマは除く。 */
+    private static BigDecimal amount(String value) {
+        return new BigDecimal(GROUPED_AMOUNT.matcher(value).matches() ? value.replace(",", "") : value);
+    }
 
     /**
      * 変換する。形式の誤りがあれば空。
@@ -44,7 +53,7 @@ final class QuotationFormConverter {
                             QuotationViolationMessages.LINES_PREFIX + row + "].amount",
                             errors,
                             AMOUNT_FORMAT_MESSAGE,
-                            BigDecimal::new),
+                            QuotationFormConverter::amount),
                     line.getContractReference()));
         }
         Currency currency = TransportRequestFormConverter.parse(

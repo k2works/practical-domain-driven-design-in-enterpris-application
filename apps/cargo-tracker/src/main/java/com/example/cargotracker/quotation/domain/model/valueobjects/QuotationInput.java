@@ -105,7 +105,7 @@ public record QuotationInput(
         String description = line.description();
         if (description == null || description.isBlank()) {
             violations.add(new Violation(Item.PRICING_LINES, Reason.DESCRIPTION_MISSING, lineNo));
-        } else if (description.length() > MAX_TEXT) {
+        } else if (description.strip().length() > MAX_TEXT) {
             violations.add(new Violation(Item.PRICING_LINES, Reason.DESCRIPTION_TOO_LONG, lineNo));
         }
         BigDecimal amount = line.amount();
@@ -119,7 +119,7 @@ public record QuotationInput(
             violations.add(new Violation(Item.PRICING_LINES, Reason.AMOUNT_TOO_MANY_DECIMALS, lineNo));
         }
         String reference = line.contractReference();
-        if (reference != null && reference.length() > MAX_TEXT) {
+        if (reference != null && reference.strip().length() > MAX_TEXT) {
             violations.add(new Violation(Item.PRICING_LINES, Reason.REFERENCE_TOO_LONG, lineNo));
         }
     }
