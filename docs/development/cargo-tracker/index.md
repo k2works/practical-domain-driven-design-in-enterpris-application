@@ -36,7 +36,7 @@ Bolt がイテレーションに当たります。ふりかえりは各 Bolt の
 | 8 | [UI の骨格と見積依頼の段階入力のプロトタイプ（#36）](bolt_08_plan.md) | [終了報告](bolt_08_report.md) | W1 | 完了 |
 | 9 | [Bolt 6〜8 レビューの返済（書類の差し替えと改善提案）](bolt_09_plan.md) | [終了報告](bolt_09_report.md) | W2 | 完了 |
 | 10 | [根拠付き見積りの提示（US-03 AC1〜AC3）](bolt_10_plan.md) | [終了報告](bolt_10_report.md) | W2 | 完了 |
-| 11 | [見積りの失効と置換（US-03 AC4・AC5）](bolt_11_plan.md) | — | W2 | 進行中 |
+| 11 | [見積りの失効と置換（US-03 AC4・AC5）](bolt_11_plan.md) | [終了報告](bolt_11_report.md) | W2 | 終了報告の承認待ち |
 
 Bolt を始めるときに行を追加します。
 
@@ -69,6 +69,8 @@ Bolt を始めるときに行を追加します。
 |  |  | ほかの項目の誤りで、選んだ書類をもう一度選ぶよう求める | [reselect-documents.webm](../../assets/demo/bolt-09/reselect-documents.webm){:target="_blank"} |
 | 10 | 根拠付き見積りの提示（US-03 AC1〜AC3） | 審査を確定して見積りを算出・社内承認・提示し、荷主の詳細に見積りが出る | [present-quotation.webm](../../assets/demo/bolt-10/present-quotation.webm){:target="_blank"} |
 |  |  | 料金明細を入れずに算出するとエラー要約が出て入力が残る | [quotation-error-summary.webm](../../assets/demo/bolt-10/quotation-error-summary.webm){:target="_blank"} |
+| 11 | 見積りの失効と置換（US-03 AC4・AC5） | 提示した見積りからキー操作だけで再見積りし、受付一覧の見積提示済みから新しい見積りを開き、旧版の置換済みと荷主の案内を確かめる | [requote-quotation.webm](../../assets/demo/bolt-11/requote-quotation.webm){:target="_blank"} |
+|  |  | 有効期限を過ぎた承認待ちの見積りは失効と示され、提示できず再見積りの操作がある | [expired-quotation.webm](../../assets/demo/bolt-11/expired-quotation.webm){:target="_blank"} |
 
 ### 進捗サマリー
 

@@ -4,7 +4,7 @@ title: "Bolt 11 計画 - 見積りの失効と置換（US-03 AC4・AC5）"
 description: "11 回目の Bolt の計画。Bolt 9・10 レビューの中・低の指摘の返済と、見積りの失効の判定（同時刻は失効）、再提示の拒否、再見積りによる置換と旧版の読み取り専用、Q-INV-18 の部分一意インデックス、S-04 と C-04 の表示を、ステップ 1〜6 で定義する。"
 tags: [development,bolt-plan]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-05T09:29:26Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-05T09:33:10Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-05T07:21:04Z }
   - { by: human:kakimomokuri, at: 2026-10-05T08:08:38Z }
@@ -305,12 +305,13 @@ S04 -[dashed]-> C04 : 荷主が開くと最新の見積りが見える
     - Green: S-04 の再見積り（`GET`・`POST …/{見積り番号}/requotation`、作成と同じ入力の画面に見出し・送り先・案内を渡す）、算出した見積りの画面の失効の案内と置換先へのリンク、「再見積りする」の出し分け。C-04 の最新の見積りと以前の見積り（読み取り専用）。見積りの表示に表示する時刻での失効の判定を入れ、controller に `Clock` を渡した（`1caeb3d`）
     - 実行中に直した誤り: 画面の単体テストが、有効期限の不足を形式の誤りと思い込んでいた（不足は業務の検証の結果 `Invalid` で返る。テストを直した）
     - 画面の層のシナリオは 38 件すべて passed（Bolt 10 の 35 件から +3）、axe-core の違反 0 件。`check` 緑（`test` 715 件）
-- [ ] **6. 開発レビューと Bolt 終了報告**
+- [?] **6. 開発レビューと Bolt 終了報告**
   - `developing-review` で Bolt 11 の変更をレビューし、指摘への対応を決める（T-28）
   - `check`・`uiTest`・CI・SonarQube の品質ゲート（PASS）を確かめる
   - デモ項目のシナリオを `./gradlew demoVideo -PdemoBolt=bolt-11` で録画し、`docs/assets/demo/bolt-11/` に置いて終了報告と開発の索引からリンクする（T-31）
   - `bolt_11_report.md` を書く（仮説 H1〜H3 の結論、各ステップの開始と完了の時刻、Red の記録、テストの件数は全体から数える（T-30））。ステップ 5 の結果をここでまとめて報告する
   - #4 をクローズする（確認ポイント 1）
+  - 結果（2026-10-05 17:35〜18:35）: `developing-review` で Bolt 11 の変更をレビューし（[レビュー](../../review/cargo-tracker/bolt_11_review_20261005.md)、`f13bd00`）、人の判断（D-37・D-38・D-40）で高・中の大半・低を直した（Red `522ca88`・`07c4773`、Green `013b3a8`・`8bfa8d5`、文書 `bc930b8`）。SonarQube はこの環境で立ち上げ（終了報告の「環境」）、品質ゲートは 1 回不合格になり（Code Smell 1 件）、直して PASS にした。デモ項目のシナリオ 2 本を `./gradlew demoVideo -PdemoBolt=bolt-11` で録画し、[Bolt 11 終了報告](bolt_11_report.md) と開発の索引からリンクした。`check`・`uiTest`・CI は緑。#4 は終了報告の承認の後にクローズする
 
 ### 時間の配分と打ち切り
 
