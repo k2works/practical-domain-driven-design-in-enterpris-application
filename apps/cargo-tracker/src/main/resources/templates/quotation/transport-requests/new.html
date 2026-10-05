@@ -126,7 +126,7 @@
              ブラウザは誤りのあとにファイルの選択を残せないため、誤りがあれば選び直してもらう -->
         <fieldset aria-describedby="documents-hint">
             <legend>必要書類（任意）</legend>
-            <p id="documents-hint">PDF・PNG・JPEG のファイルを、1 件 10 MB まで添付できます。書類が足りなければ、営業担当者が審査で差し戻します。</p>
+            <p id="documents-hint">PDF・PNG・JPEG のファイルを、1 件 10 MB まで、1 つの版に 5 件まで（商業送り状 1 件、梱包明細 1 件、その他 3 件まで）添付できます。書類が足りなければ、営業担当者が審査で差し戻します。</p>
             <p id="documents-reselect" th:if="${reselectDocuments}">選んだ書類は残っていません。もう一度選んでください（入力に誤りがあると、選んだファイルは画面に残りません）。</p>
             <div th:if="${carriedDocuments != null and !#lists.isEmpty(carriedDocuments)}">
                 <p id="carried-documents-title">前の版の書類</p>
@@ -159,7 +159,7 @@
 
         <section class="app-step" id="step-confirm" aria-labelledby="step-confirm-title">
             <h2 id="step-confirm-title" tabindex="-1">4 確認</h2>
-            <p>入力した内容を確かめてください。直すときは、上の段階の一覧から段階を選んでください。</p>
+            <p>入力した内容を確かめてください。直すときは、その項目の入力欄に戻って直してください。</p>
             <!-- 入力のまとめは JavaScript が段階を切り替えたときに作る（Bolt 8 のプロトタイプ） -->
             <dl id="confirm-summary"></dl>
         <!-- 特殊貨物のときは aria-disabled にして理由を関連付ける。押せば、サーバーがエラー要約で同じ理由を示す -->
