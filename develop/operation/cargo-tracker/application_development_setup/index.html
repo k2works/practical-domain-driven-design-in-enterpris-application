@@ -3897,6 +3897,41 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../adr/cargo-tracker/010-required-document-storage-transaction/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-010 必要書類の保存とトランザクション
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--draft"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -6513,8 +6548,8 @@ git<span class="w"> </span>config<span class="w"> </span>blame.ignoreRevsFile<sp
 </tr>
 <tr>
 <td style="text-align: left;"><a href="http://localhost:8080/customer/transport-requests/new">http://localhost:8080/customer/transport-requests/new</a></td>
-<td style="text-align: left;">見積依頼の作成（C-03 の 1 画面の形）</td>
-<td style="text-align: left;">荷主の画面。必須条件を入れて提出すると（必要書類は任意。PDF・PNG・JPEG で 1 件 10 MB まで、商業送り状・梱包明細・その他 3 件）、見積依頼の詳細（C-04）に業務番号（例: <code>TR-2026-0001 版 1</code>）と「提出しました」が出る。内部の ID（UUID）は画面にもアドレスバーにも出さない（D-4）。希望到着期限は日本時間で <code>2026-11-02 09:00</code> の形で入れる</td>
+<td style="text-align: left;">見積依頼の作成（C-03。輸送条件・貨物・書類・確認の 4 段階）</td>
+<td style="text-align: left;">荷主の画面。必須条件を入れて提出すると（必要書類は任意。PDF・PNG・JPEG で 1 件 10 MB まで、1 つの版に 5 件まで（商業送り状 1 件、梱包明細 1 件、その他 3 件まで）。Q-INV-16）、見積依頼の詳細（C-04）に業務番号（例: <code>TR-2026-0001 版 1</code>）と「提出しました」が出る。内部の ID（UUID）は画面にもアドレスバーにも出さない（D-4）。希望到着期限は日本時間で <code>2026-11-02 09:00</code> の形で入れる</td>
 </tr>
 <tr>
 <td style="text-align: left;"><a href="http://localhost:8080/customer/transport-requests">http://localhost:8080/customer/transport-requests</a></td>
@@ -6538,7 +6573,7 @@ git<span class="w"> </span>config<span class="w"> </span>blame.ignoreRevsFile<sp
 </tr>
 </tbody>
 </table>
-<p>添付した書類のファイルは、ローカルのファイルシステムの <code>cargotracker.document-storage.base-dir</code> に置く（既定は一時ディレクトリの下の <code>cargo-tracker/documents</code>。Bolt 7）。DB は H2 のインメモリなので、<code>bootRun</code> をやり直すと書類の記録は消え、ファイルだけが残る。気になるときはこのディレクトリを消してよい。本番の S3 の実装は運用準備（W10、#28）で作る。</p>
+<p>添付した書類のファイルは、ローカルのファイルシステムの <code>cargotracker.document-storage.base-dir</code> に置く（既定は一時ディレクトリの下の <code>cargo-tracker/documents</code>。Bolt 7）。DB は H2 のインメモリなので、<code>bootRun</code> をやり直すと書類の記録は消え、ファイルだけが残る。気になるときはこのディレクトリを消してよい。本番の S3 の実装は運用準備（W10、#28）で作る（保存とトランザクションの扱いは ADR-010）。認証（US-18）が入るまで、社内の画面（<code>/staff</code>）は誰でも開けて書類の実ファイルを取れるので、この状態の環境をステージングに置かない（Bolt 6〜8 レビュー D-27）。</p>
 <p>認証はまだない。荷主企業と提出者は、<code>application.properties</code> の <code>cargotracker.provisional-actor.*</code>（仮の主体）の固定値で記録される。認証は US-18 の Bolt で入れ、この設定を消す。</p>
 <p>社内の画面（<code>/staff/**</code>）にも認証はまだなく、誰でも開ける。ローカルの開発環境だけで動かす。審査の判断者は <code>cargotracker.provisional-actor.staff-user-id</code>（仮の営業担当者）で記録される。</p>
 <p>荷受人は、企業マスターができるまで <code>cargotracker.provisional-consignees.*</code>（仮の荷受人の一覧、3 社）から選ぶ。<code>.properties</code> は ISO-8859-1 で読まれるため、名前の日本語は Unicode のエスケープで書く。企業マスターは US-16 の Bolt で入れ、この設定を消す。</p>

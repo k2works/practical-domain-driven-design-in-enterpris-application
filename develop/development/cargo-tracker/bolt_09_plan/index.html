@@ -4053,6 +4053,41 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../adr/cargo-tracker/010-required-document-storage-transaction/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-010 必要書類の保存とトランザクション
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--draft"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -6872,7 +6907,7 @@
 <h2 id="_11">ステップ計画<a class="headerlink" href="#_11" title="Permanent link">&para;</a></h2>
 <p>状態の記号: <code>[ ]</code> 未着手、<code>[-]</code> 進行中、<code>[?]</code> 承認待ち、<code>[R]</code> 修正中、<code>[x]</code> 完了、<code>[S]</code> スキップ。各ステップの終わりに <code>check</code>（ステップ 4 は <code>uiTest</code> も）が緑であることを確かめて push する（T-14）。</p>
 <ul class="task-list">
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>1. 決定を設計文書に反映する</strong>（承認はステップ 2 とまとめて受ける）</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>1. 決定を設計文書に反映する</strong>（承認はステップ 2 とまとめて受ける）</li>
 <li>ユーザーストーリー: US-01 の D-20 の決定に、差し替え（確認ポイント 1）を足し、「削除・差し替えは後の Bolt」を改める</li>
 <li>ドメインモデル: Q-INV-16 に差し替え、書類を探す集約の操作（R-10）</li>
 <li>データモデル: <code>required_document</code> の差し替えの行と、新しい版のときだけ INSERT すること（R-07）</li>
@@ -6882,6 +6917,7 @@
 <li>手順書（アプリケーション開発環境）: 書類の件数を Q-INV-16 の表現にそろえる（R-20）。社内の画面の書類の扱い（D-27）</li>
 <li>Bolt 8 終了報告の承認前の文（50・127・159 行）を決定に合わせ、Bolt 6〜8 のレビューを省いたことと、このレビューで補ったことを書く（R-09）。Bolt 6 の終了報告に開始準備の時刻の行を足す（R-34）</li>
 <li>完了の判定: <code>okf:check</code> が ERROR 0、<code>documentationTest</code> が緑。push する</li>
+<li>結果（2026-10-05 09:54〜09:57）: ユーザーストーリー（US-01 の D-20 の決定に種類ごとの差し替え）、ドメインモデル（Q-INV-16 に差し替えと書類番号の振り直し、輸送要求の <code>書類を探す</code>、書類の取得は現在の版だけ・形式を判定し直さない）、データモデル（差し替えの行、新しい版のときだけ INSERT）、UI 設計（C-03 の行を段階入力と Q-INV-16 の表現に、書類の取得の行に差し替えの案内と前の版の 404）、<a href="../../../adr/cargo-tracker/010-required-document-storage-transaction/">ADR-010</a>（新規、索引とナビに追加）、リリース計画（パイロット開始の条件に D-27・D-31）、手順書（C-03 の形、件数、ADR-010、D-27）、Bolt 8 終了報告（承認前の文 3 か所とレビューを省いたこと）、Bolt 6 終了報告（開始準備の行）に反映した。<code>okf:check</code> ERROR 0、<code>documentationTest</code> 緑</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>2. 書類の差し替えと書類の規則の整理（業務ルール層の Red → Green）</strong> 【承認ゲート: 業務のルール（Q-INV-16 の差し替え）とセキュリティ（R-37）】</li>
 <li>業務ルール層の受入シナリオを先に書き、Red をコミットする（<code>attach_required_documents.feature</code> の出し直しのシナリオを直す。<code>@US-01 @US-02 @must</code>）<ul>
 <li>版 1 に商業送り状と梱包明細がある。出し直しで商業送り状だけを選ぶと、版 2 は新しい商業送り状と引き継いだ梱包明細になり、版 1 の 2 件は変わらない（H1）</li>

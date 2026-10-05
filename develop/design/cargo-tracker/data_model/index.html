@@ -4024,6 +4024,41 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../adr/cargo-tracker/010-required-document-storage-transaction/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-010 必要書類の保存とトランザクション
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--draft"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -6833,7 +6868,7 @@
 </tr>
 <tr>
 <td style="text-align: left;"><code>required_document</code></td>
-<td style="text-align: left;">主キー（<code>transport_request_id</code>、<code>version_no</code>、<code>document_no</code>）。（<code>transport_request_id</code>、<code>version_no</code>）→ <code>transport_request_version</code> の FK。<code>document_type</code> IN（<code>COMMERCIAL_INVOICE</code>、<code>PACKING_LIST</code>、<code>OTHER</code>）。<code>media_type</code> IN（<code>PDF</code>、<code>PNG</code>、<code>JPEG</code>）。<code>size_bytes</code> は 1 以上 10,485,760 以下。<code>sha256</code> は中身の SHA-256 の 16 進 64 文字。<code>file_name</code> は画面に出すだけに使い、<code>object_key</code> は <code>quotation/{輸送要求 ID}/{UUID}</code>（ファイル名を使わない）。出し直しでは前の版の行を同じ <code>object_key</code> で新しい版に INSERT する（ファイルを複製しない）。追記専用の印を付ける（2026-10-03 に承認、Bolt 7）</td>
+<td style="text-align: left;">主キー（<code>transport_request_id</code>、<code>version_no</code>、<code>document_no</code>）。（<code>transport_request_id</code>、<code>version_no</code>）→ <code>transport_request_version</code> の FK。<code>document_type</code> IN（<code>COMMERCIAL_INVOICE</code>、<code>PACKING_LIST</code>、<code>OTHER</code>）。<code>media_type</code> IN（<code>PDF</code>、<code>PNG</code>、<code>JPEG</code>）。<code>size_bytes</code> は 1 以上 10,485,760 以下。<code>sha256</code> は中身の SHA-256 の 16 進 64 文字。<code>file_name</code> は画面に出すだけに使い、<code>object_key</code> は <code>quotation/{輸送要求 ID}/{UUID}</code>（ファイル名を使わない）。出し直しでは、引き継ぐ書類は前の版の行と同じ <code>object_key</code> で新しい版に INSERT し（ファイルを複製しない）、差し替えた種類は新しい <code>object_key</code> の行にする。前の版の行は変えない。新しい版の <code>document_no</code> は 1 から振り直す。行は新しい版を作るとき（提出・出し直し）だけ INSERT し、審査の確定・差戻しの保存では書かない（2026-10-05 の D-25。Bolt 9。Bolt 6〜8 レビュー R-07）。追記専用の印を付ける（2026-10-03 に承認、Bolt 7）</td>
 <td style="text-align: left;">Q-INV-16、US-01</td>
 </tr>
 <tr>

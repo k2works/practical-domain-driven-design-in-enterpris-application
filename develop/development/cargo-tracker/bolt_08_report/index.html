@@ -2586,7 +2586,7 @@
   <a href="#ui-ho-04-ai" class="md-nav__link">
     <span class="md-ellipsis">
       
-        UI-HO-04 の所見（AI の観察。合否は本報告の承認の場で人が触って決める）
+        UI-HO-04 の所見（AI の観察。合否は本報告の承認の場で人が触り、この形で残すと決めた）
       
     </span>
   </a>
@@ -2757,7 +2757,7 @@
   <a href="#_14" class="md-nav__link">
     <span class="md-ellipsis">
       
-        更新履歴
+        開発レビューについて
       
     </span>
   </a>
@@ -2766,6 +2766,17 @@
       
         <li class="md-nav__item">
   <a href="#_15" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        更新履歴
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_16" class="md-nav__link">
     <span class="md-ellipsis">
       
         関連ドキュメント
@@ -3987,6 +3998,41 @@
   
   
     <span class="md-status md-status--stable"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../adr/cargo-tracker/010-required-document-storage-transaction/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-010 必要書類の保存とトランザクション
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--draft"></span>
   
 
   
@@ -6636,7 +6682,7 @@
 </tr>
 </tbody>
 </table>
-<h3 id="ui-ho-04-ai">UI-HO-04 の所見（AI の観察。合否は本報告の承認の場で人が触って決める）<a class="headerlink" href="#ui-ho-04-ai" title="Permanent link">&para;</a></h3>
+<h3 id="ui-ho-04-ai">UI-HO-04 の所見（AI の観察。合否は本報告の承認の場で人が触り、この形で残すと決めた）<a class="headerlink" href="#ui-ho-04-ai" title="Permanent link">&para;</a></h3>
 <ul>
 <li>1 つのフォームの中で段階を切り替えるので、選んだ書類は段階を行き来しても残る（シナリオ「確認の段階から前の段階に戻って直しても選んだ書類が残っている」）。</li>
 <li>段階を移ると見出しへフォーカスが移り、次の Tab で段階の最初の入力に届く。キー操作だけで 4 段階を進めて提出できた。</li>
@@ -6859,7 +6905,7 @@
 <tr>
 <td style="text-align: left;">2 つの段階に誤りがあると、提出の直後に開くのは最初の段階だけ</td>
 <td style="text-align: left;">もう 1 つの段階はエラー要約のリンクから開く</td>
-<td style="text-align: left;">操作性の確認の結果で決める</td>
+<td style="text-align: left;">承認の場で今の形のまま残すと決めた。段階ごとの検証とあわせて R1.0 の下書き保存の Bolt で見直す</td>
 </tr>
 <tr>
 <td style="text-align: left;">表を狭い画面で時系列のリストに切り替えていない</td>
@@ -6920,9 +6966,11 @@
 <ul>
 <li><strong>W1</strong>: #36 をクローズすれば、W1 の計画（Bolt 1〜8）はすべて終わる</li>
 <li><strong>W2</strong>: US-03（根拠付き見積り）、US-24 の一部、US-18 の一部（password によるログインと session）、TOTP のスパイク（TS-01）</li>
-<li><strong>人が決めること</strong>: 段階入力の合否（上の「人に確かめたいこと」）、W2 の最初の Bolt</li>
+<li><strong>人が決めたこと</strong>: 段階入力はこの形で残す（2026-10-03）。W2 の最初の Bolt は Bolt 6〜8 レビューの返済（Bolt 9）にする（2026-10-05、D-25）</li>
 </ul>
-<h2 id="_14">更新履歴<a class="headerlink" href="#_14" title="Permanent link">&para;</a></h2>
+<h2 id="_14">開発レビューについて<a class="headerlink" href="#_14" title="Permanent link">&para;</a></h2>
+<p>Bolt 6〜8 は、各 Bolt の終わりに開発レビューを行わずに閉じていた（省いた理由は記録していない）。人の指摘で、W1 の完了後に 3 つの Bolt をまとめてレビューした（<a href="../../../review/cargo-tracker/bolt_06-08_review_20261003/">Bolt 6〜8 開発成果物レビュー</a>、2026-10-03）。指摘は Bolt 9 で返済する（R-09）。</p>
+<h2 id="_15">更新履歴<a class="headerlink" href="#_15" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
 <tr>
@@ -6947,7 +6995,7 @@
 </tr>
 </tbody>
 </table>
-<h2 id="_15">関連ドキュメント<a class="headerlink" href="#_15" title="Permanent link">&para;</a></h2>
+<h2 id="_16">関連ドキュメント<a class="headerlink" href="#_16" title="Permanent link">&para;</a></h2>
 <ul>
 <li><a href="../bolt_08_plan/">Bolt 8 計画</a></li>
 <li><a href="../release_plan/">リリース計画</a>（W1）</li>

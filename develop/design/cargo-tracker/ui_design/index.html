@@ -4251,6 +4251,41 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../adr/cargo-tracker/010-required-document-storage-transaction/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-010 必要書類の保存とトランザクション
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--draft"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -7414,7 +7449,7 @@
 <tr>
 <td style="text-align: left;">C-03 見積依頼の作成・編集</td>
 <td style="text-align: left;"><code>GET /customer/transport-requests/new</code>、<code>POST /customer/transport-requests</code></td>
-<td style="text-align: left;">Bolt 4 は 1 画面の形。必要書類を除く必須条件（荷受人・出発地・目的地・希望到着期限・貨物）とエラー要約、特殊貨物の案内を持つ。段階入力は #36 のプロトタイプで操作性を確かめてから入れる。荷受人は企業マスターができるまで設定の仮の一覧から選ぶ（US-16 で置き換える）。Bolt 7 で必要書類の入力（商業送り状 1 件、梱包明細 1 件、その他の書類 3 件まで。<code>multipart/form-data</code>）を足した。書類は任意（D-20）。形式・容量・件数の誤りはエラー要約で示し、ブラウザはファイルの選択を残せないため選び直しを求める</td>
+<td style="text-align: left;">必須条件（荷受人・出発地・目的地・希望到着期限・貨物）とエラー要約、特殊貨物の案内を持つ。共通レイアウト（顧客 Web）の中で、輸送条件・貨物・書類・確認の 4 段階の段階入力にする（Bolt 8。下の「段階入力」）。荷受人は企業マスターができるまで設定の仮の一覧から選ぶ（US-16 で置き換える）。必要書類の入力は種類ごとの欄（<code>multipart/form-data</code>）で、1 つの版に 5 件まで（商業送り状 1 件、梱包明細 1 件、その他 3 件まで。Q-INV-16）。書類は任意（D-20）。形式・容量・件数の誤りはエラー要約で示し、ブラウザはファイルの選択を残せないため、エラー要約と書類の段階で選び直しを求める（Bolt 6〜8 レビュー R-02・R-20）</td>
 </tr>
 <tr>
 <td style="text-align: left;">C-02 見積依頼の一覧</td>
@@ -7434,7 +7469,7 @@
 <tr>
 <td style="text-align: left;">必要書類の取得</td>
 <td style="text-align: left;">荷主: <code>GET /customer/transport-requests/{業務番号}/versions/{版}/documents/{書類番号}</code>、営業: <code>GET /staff/transport-requests/{業務番号}/versions/{版}/documents/{書類番号}</code></td>
-<td style="text-align: left;">Bolt 7。C-04 と S-03 に現在の版の書類の一覧（種類、ファイル名、大きさ）と取得のリンクを出す。<code>Content-Disposition: attachment</code>（RFC 6266 の <code>filename*</code>）と <code>X-Content-Type-Options: nosniff</code> で返し、ブラウザの中で開かせない。荷主は荷主企業で絞り、他社の番号は 404（2026-10-03 に承認）。編集（出し直し）では前の版の書類を一覧で示し、引き継ぐことと、書類を足せることを案内する</td>
+<td style="text-align: left;">Bolt 7。C-04 と S-03 に現在の版の書類の一覧（種類、ファイル名、大きさ）と取得のリンクを出す。<code>Content-Disposition: attachment</code>（RFC 6266 の <code>filename*</code>）と <code>X-Content-Type-Options: nosniff</code> で返し、ブラウザの中で開かせない。荷主は荷主企業で絞り、他社の番号は 404（2026-10-03 に承認）。編集（出し直し）では前の版の書類を一覧で示し、選ばなかった種類は引き継ぐことと、ある種類を選ぶとその種類の前の版の書類を差し替えることを案内する（2026-10-05 の D-25。Bolt 9）。取得できるのは現在の版の書類だけで、前の版の書類の URL は 404 にする（Bolt 6〜8 レビュー R-19）</td>
 </tr>
 <tr>
 <td style="text-align: left;">S-02 見積依頼の受付一覧</td>
