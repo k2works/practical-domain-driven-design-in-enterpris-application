@@ -4,7 +4,7 @@ title: "Bolt 11 計画 - 見積りの失効と置換（US-03 AC4・AC5）"
 description: "11 回目の Bolt の計画。Bolt 9・10 レビューの中・低の指摘の返済と、見積りの失効の判定（同時刻は失効）、再提示の拒否、再見積りによる置換と旧版の読み取り専用、Q-INV-18 の部分一意インデックス、S-04 と C-04 の表示を、ステップ 1〜6 で定義する。"
 tags: [development,bolt-plan]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-05T08:08:38Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-05T08:14:11Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-05T07:21:04Z }
   - { by: human:kakimomokuri, at: 2026-10-05T08:08:38Z }
@@ -279,11 +279,17 @@ S04 -[dashed]-> C04 : 荷主が開くと最新の見積りが見える
     - 実行中に直した誤り: 拒否の文言の `switch` が新しい理由を網羅していない（コンパイラが検出。失効・置換済みの文言を足した）
     - 業務ルール層のシナリオは 69 件すべて passed（Bolt 10 の 57 件から、ステップ 1 の R-08 で +1、この Bolt の 11 件で +11）。`check` 緑（`test` 697 件）。表の列（`replaced_by_quotation_id`）はステップ 4 で足すまで読み出しで空にしている
   - 承認（2026-10-05、human:kakimomokuri）: ステップ 1・2 とあわせて承認された（失効の判定を `QuotationExpiry` に置く変更を含む）
-- [ ] **4. 表（内側の TDD、統合テスト）** 【承認ゲート: スキーマの変更】
+- [?] **4. 表（内側の TDD、統合テスト）** 【承認ゲート: スキーマの変更】
   - 統合テスト（PostgreSQL）を先に書く: 置換済み・失効の保存と読み出し、置換先の FK、`ck_quotation_replaced`、`status` の CHECK、部分一意インデックスで同時の作成・再見積りが止まり値で返る（R-02 と同じ変換）、置換済み・失効は数えない
   - マイグレーション: `common` に状態の値・`replaced_by_quotation_id`・CHECK・COMMENT（R-14 を含む）、`postgresql` に `ux_quotation_active`。H2 のスモークを先に回す（T-15）
   - MyBatis のリポジトリ: 置換先の列、旧版と新しい見積りを同じトランザクションで書く順（旧版の更新を先に）
   - 完了の判定: `check` が緑。push して CI を確かめる。スキーマの承認を受ける
+  - 結果（2026-10-05 17:08〜17:14）
+    - Red: 統合テスト（置換済みの保存と読み出しと置換先の FK、失効の記録、部分一意インデックスの違反がドメインの例外になる、置換済み・失効は数えない、`ck_quotation_replaced` の 3 例、ない置換先は FK の違反）を先に書いた。同じ輸送要求に有効な見積りを 2 つ保存していた並びのテストは、旧版を置換済みにして保存する形に直した。新しく書いた・直した 9 件だけが失敗することを確かめてコミットした（`fc005f1`）
+    - Green: `common` の `V20261005170000__add_quotation_replacement.sql`（`EXPIRED`・`REPLACED`、`replaced_by_quotation_id`、`ck_quotation_replaced`、R-14 の COMMENT）と、`postgresql` の `V20261005170100__add_quotation_active_index_and_replacement_fk.sql`（`ux_quotation_active`、`fk_quotation_replaced_by`）。H2 のスモークを先に回して通した（T-15）。MyBatis の行・マッパー・リポジトリに置換先の列を足した（`0ecf416`）
+    - 計画からの変更: 置換先の FK は、ふつうの FK だと再見積りの旧版の更新（新しい見積りの保存より先）で違反になるため、PostgreSQL の遅延の FK（`DEFERRABLE INITIALLY DEFERRED`。コミットの時に確かめる）にした。H2 は遅延の FK を作れないため、部分一意インデックスと同じく `postgresql` のフォルダだけに置いた（確認ポイント 6 と同じ考え方。確認ポイント 7 の形を変えたので、この承認ゲートで確かめてほしい）
+    - 実行中に直した誤り: なし（環境: dockerd が待機中に止まっていたため起動し直した）
+    - `check` 緑（`test` 705 件。統合テスト +8）
 - [ ] **5. 画面の層（Red → Green）**（承認はステップ 6 とまとめて受ける）
   - 画面の層の受入シナリオを先に書き、`uiTest` で失敗を記録する（T-21。`features/ui/replace_quotation_ui.feature`、`@ui @US-03`。デモ項目に `@demo @demo-bolt-11/<名前>`）
     - 主成功: 営業担当者が提示済みの見積り（S-04）から再見積りし、旧版の明細を初期値に有効期限を入れて算出する。新しい見積り（見積 2）が承認待ちで開き、旧版（見積 1）は「見積 2 に置き換えました」と読み取り専用で出る。キー操作だけで行える
