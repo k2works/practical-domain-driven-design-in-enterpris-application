@@ -38,7 +38,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * 見積り（`quotation`・`pricing_line`、Q-INV-05・17・18）の永続化を PostgreSQL で確かめる。
+ * 見積り（`quotation`・`pricing_line`、Q-INV-05・07・17・18）の永続化を PostgreSQL で確かめる。
  * 業務番号はほかのテストとぶつからないよう 2082 年を使う。
  */
 @SpringBootTest
@@ -182,8 +182,11 @@ class MyBatisQuotationIntegrationTest {
     @Test
     void 見積りは見積り番号の順に返る() {
         TransportRequestId transportRequestId = transportRequest(6);
-        repository.save(calculated(transportRequestId, 2));
-        repository.save(calculated(transportRequestId, 1));
+        Quotation first = calculated(transportRequestId, 1);
+        Quotation second = calculated(transportRequestId, 2);
+        first.replaceWith(second.id(), NOW);
+        repository.save(second);
+        repository.save(first);
 
         assertThat(repository.findByTransportRequestId(transportRequestId))
                 .extracting(Quotation::quotationNo)
@@ -196,7 +199,7 @@ class MyBatisQuotationIntegrationTest {
         "PENDING_APPROVAL, , 100.00, USD", // 承認待ちなのに有効期限がない
         "PENDING_APPROVAL, 2082-01-08T09:00:00Z, , USD", // 承認待ちなのに合計がない
         "PENDING_APPROVAL, 2082-01-08T09:00:00Z, 100.00, GBP", // 通貨が候補にない
-        "EXPIRED, 2082-01-08T09:00:00Z, 100.00, USD" // Bolt 10 で使わない状態
+        "ROUTING_REQUESTED, 2082-01-08T09:00:00Z, 100.00, USD" // Bolt 11 でまだ使わない状態
     })
     void 承認待ち以後の必須の列と通貨と状態はCHECK制約で守る(String status, String expiresAt, String totalAmount, String currency) {
         TransportRequestId transportRequestId = transportRequest(7);
@@ -223,5 +226,125 @@ class MyBatisQuotationIntegrationTest {
                 transportRequestId.value());
 
         assertThat(inserted).isEqualTo(1);
+    }
+
+    private Quotation presented(TransportRequestId transportRequestId, int quotationNo) {
+        Quotation quotation = calculated(transportRequestId, quotationNo);
+        quotation.presentInternally(STAFF, APPROVED_AT);
+        return quotation;
+    }
+
+    /** 再見積りと同じ順に書く: 旧版の更新を先に、新しい見積りの保存を後に（Q-INV-18。Bolt 11）。 */
+    private void requote(Quotation old, Quotation replacement, UtcInstant at) {
+        old.replaceWith(replacement.id(), at);
+        repository.update(old);
+        repository.save(replacement);
+    }
+
+    @Test
+    void 置換済みの見積りは置換先とともに保存し読み出せ置換先のFKはコミットの時に確かめる() {
+        TransportRequestId transportRequestId = transportRequest(9);
+        repository.save(presented(transportRequestId, 1));
+        Quotation old =
+                repository.findByTransportRequestIdAndNo(transportRequestId, 1).orElseThrow();
+        Quotation replacement = calculated(transportRequestId, 2);
+
+        requote(old, replacement, APPROVED_AT);
+        jdbc.execute("SET CONSTRAINTS ALL IMMEDIATE");
+
+        assertThat(repository.findByTransportRequestIdAndNo(transportRequestId, 1))
+                .hasValueSatisfying(found -> {
+                    assertThat(found.status()).isEqualTo(QuotationStatus.REPLACED);
+                    assertThat(found.replacedBy()).contains(replacement.id());
+                    assertThat(found.presentedAt()).contains(APPROVED_AT);
+                });
+        assertThat(repository.findByTransportRequestIdAndNo(transportRequestId, 2))
+                .hasValueSatisfying(found -> assertThat(found.status()).isEqualTo(QuotationStatus.PENDING_APPROVAL));
+    }
+
+    @Test
+    void 有効期限を過ぎて置き換えた見積りは失効として保存し置換先を持たない() {
+        TransportRequestId transportRequestId = transportRequest(10);
+        repository.save(presented(transportRequestId, 1));
+        Quotation old =
+                repository.findByTransportRequestIdAndNo(transportRequestId, 1).orElseThrow();
+
+        requote(old, calculated(transportRequestId, 2), new UtcInstant(QuotationFixture.EXPIRES_AT.instant()));
+
+        assertThat(repository.findByTransportRequestIdAndNo(transportRequestId, 1))
+                .hasValueSatisfying(found -> {
+                    assertThat(found.status()).isEqualTo(QuotationStatus.EXPIRED);
+                    assertThat(found.replacedBy()).isEmpty();
+                });
+    }
+
+    @Test
+    void 作成中と承認待ちと提示済みの見積りは輸送要求に1つだけで部分一意インデックスがドメインの例外にする() {
+        TransportRequestId transportRequestId = transportRequest(11);
+        repository.save(presented(transportRequestId, 1));
+        Quotation second = calculated(transportRequestId, 2);
+
+        assertThatThrownBy(() -> repository.save(second)).isInstanceOf(DuplicateQuotationException.class);
+        assertThat(repository.findByTransportRequestId(transportRequestId))
+                .as("違反の後も同じトランザクションで読める（セーブポイントに戻す）")
+                .hasSize(1);
+    }
+
+    @Test
+    void 置換済みと失効の見積りは1つだけの数に入らない() {
+        TransportRequestId transportRequestId = transportRequest(12);
+        repository.save(presented(transportRequestId, 1));
+        Quotation second = calculated(transportRequestId, 2);
+        requote(repository.findByTransportRequestIdAndNo(transportRequestId, 1).orElseThrow(), second, NOW);
+        Quotation third = calculated(transportRequestId, 3);
+        Quotation loadedSecond =
+                repository.findByTransportRequestIdAndNo(transportRequestId, 2).orElseThrow();
+
+        requote(loadedSecond, third, new UtcInstant(QuotationFixture.EXPIRES_AT.instant()));
+
+        assertThat(repository.findByTransportRequestId(transportRequestId))
+                .extracting(Quotation::status)
+                .containsExactly(QuotationStatus.REPLACED, QuotationStatus.EXPIRED, QuotationStatus.PENDING_APPROVAL);
+    }
+
+    /** PostgreSQL は制約違反でトランザクションを中断するため、違反ごとに別のテストにする。 */
+    @ParameterizedTest
+    @CsvSource({
+        "REPLACED, ", // 置換済みなのに置換先がない
+        "PRESENTED, replacement", // 置換済みでないのに置換先がある
+        "EXPIRED, replacement" // 失効なのに置換先がある
+    })
+    void 置換先は置換済みのときだけ持つことをCHECK制約で守る(String status, String replacement) {
+        TransportRequestId transportRequestId = transportRequest(13);
+        Quotation target = calculated(transportRequestId, 1);
+        repository.save(target);
+        Quotation other = calculated(transportRequestId, 2);
+        other.replaceWith(target.id(), NOW);
+        repository.save(other);
+        UUID replacedBy = replacement == null ? null : other.id().value();
+
+        assertThatThrownBy(() -> jdbc.update(
+                        "UPDATE quotation.quotation SET status = ?, replaced_by_quotation_id = ?,"
+                                + " internal_approved_by = ?, internal_approved_at = expires_at - INTERVAL '1 day',"
+                                + " presented_at = expires_at - INTERVAL '1 day' WHERE id = ?",
+                        status,
+                        replacedBy,
+                        STAFF.value(),
+                        target.id().value()))
+                .isInstanceOf(DataIntegrityViolationException.class);
+    }
+
+    @Test
+    void 置換先はある見積りでなければならない() {
+        TransportRequestId transportRequestId = transportRequest(14);
+        Quotation target = calculated(transportRequestId, 1);
+        repository.save(target);
+        jdbc.update(
+                "UPDATE quotation.quotation SET status = 'REPLACED', replaced_by_quotation_id = ? WHERE id = ?",
+                UUID.randomUUID(),
+                target.id().value());
+
+        assertThatThrownBy(() -> jdbc.execute("SET CONSTRAINTS ALL IMMEDIATE"))
+                .isInstanceOf(DataIntegrityViolationException.class);
     }
 }
