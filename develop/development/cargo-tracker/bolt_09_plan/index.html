@@ -16,7 +16,7 @@
         <link rel="prev" href="../bolt_08_report/">
       
       
-        <link rel="next" href="../../../operation/">
+        <link rel="next" href="../bolt_09_report/">
       
       
         
@@ -2870,6 +2870,41 @@
   
 </nav>
       
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../bolt_09_report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 9 終了報告
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--draft"></span>
+  
+
+  
+
+      </a>
     </li>
   
 
@@ -6957,7 +6992,7 @@
 <li><code>check</code> 緑（テスト 429 件）</li>
 </ul>
 </li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>4. 画面の層（Red → Green と、振る舞いを変えないリファクタリング）</strong>（承認はステップ 5 とまとめて受ける）</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>4. 画面の層（Red → Green と、振る舞いを変えないリファクタリング）</strong>（承認はステップ 5 とまとめて受ける）</li>
 <li>画面の層の受入シナリオを先に書き、<code>uiTest</code> で失敗を記録する（T-21）<ul>
 <li>出し直しの書類の段階で、商業送り状を選び直して出し直すと、C-04 に新しい商業送り状と引き継いだ梱包明細が並ぶ（R-01）</li>
 <li>誤りの再表示で、エラー要約と書類の段階に「選んだ書類をもう一度選んでください」と出る（R-02）</li>
@@ -6969,10 +7004,20 @@
 <li>リファクタリング（既存のテストを安全網にする）: 輸送条件の表示の行と業務番号の解釈を共通の部品にする（R-12）。再提出できるかの判定を集約の <code>checkResubmittable()</code> に寄せる（R-13）。2 つのレイアウトの head と script を 1 つの断片にする（R-27）。<code>static/index.html</code> の <code>/webjars/...</code> の絶対パスをやめる（R-36）。古い Javadoc（R-25）、ポートの置き場所の理由（R-26）、<code>assertThat</code> の import（R-28）</li>
 <li>顧客側のコントローラーが社内用の照会を使わない規則を ArchUnit で固定する（R-16）。規則を足してから、違反がないことを確かめる</li>
 <li>完了の判定: <code>check</code> と <code>uiTest</code> が緑。push する</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>5. 検証と Bolt 終了報告</strong></li>
+<li>結果（2026-10-05 10:57〜11:29）<ul>
+<li>Red: 画面の層のシナリオ 2 件（ほかの項目の誤りで書類の選び直しを求める R-02、編集で商業送り状を選び直すと差し替わる R-01）と、R-04 で既存のシナリオの期待を完全一致に変えたものを先に書き、実装の前の <code>uiTest</code> で、この 3 件だけが失敗することを記録した（T-21）。画面の単体テストは、不足事項の改行と「（なし）」（R-03・R-32）、拒否の警告（R-24）、拒否の 3 か所の期待を先に書き、5 件の失敗を確かめた。413 の統合テスト（<code>UploadLimitIntegrationTest</code>、<code>RANDOM_PORT</code>）は、実装の前に接続のリセット（<code>IOException</code>）で失敗した（R-08 の懸念のとおり）</li>
+<li>Green: 編集の書類の段階に差し替えの案内（R-01）。ファイルを選んで誤りになったとき、エラー要約と書類の段階で選び直しを案内（R-02）。書類の誤りの文言から表示名を外した（R-04）。理由と不足事項の改行を保つ <code>app-preline</code>、空の不足事項は「（なし）」（R-03・R-32）。出し直せなかった理由は <code>role="alert"</code> の警告に分けた（R-24）。確認の段階の文言（R-23）、書類の欄の件数と 413 の案内の合計（R-33）。Tomcat の <code>max-swallow-size</code> を 60 MB にして 413 と案内を返す（R-08）。413 の案内は荷主の見積依頼のコントローラーのパスのときだけ（R-35）</li>
+<li>リファクタリング（既存のテストを安全網にした）: <code>TransportRequestViews</code>（輸送条件の表示の行、荷受人の名前、業務番号の解釈。R-12）、<code>checkResubmittable()</code> で判定（R-13）、<code>layout/common.html</code>（R-27）、入口の一覧の相対パス（R-36）、Javadoc（R-25・R-26）、<code>assertThat</code> の import（R-28）。ArchUnit に「顧客 Web のコントローラーは <code>Staff…</code> に依存しない」（R-16）</li>
+<li>計画からの変更: (1) R-03・R-32 は画面の層のシナリオでなく画面の単体テストで確かめた（描いた HTML の <code>class</code> と文言で足りる）。(2) R-32 は「なし」でなく、すでに使っていた「（なし）」にそろえ、空文字も「（なし）」にした。(3) R-35 は、multipart の上限の超過がコントローラーを決める前に起きるため、<code>assignableTypes</code> では絞れなかった（<code>resolve-lazily</code> も試したが案内に届かなかった）。要求のパスで絞る形にした</li>
+<li>実行中に直した誤り: 413 のテストの要求に <code>Accept: text/html</code> がなく JSON が返った、SpotBugs 1 件（<code>getOriginalFilename()</code> の null）、書式</li>
+<li>画面の層のシナリオは 30 件すべて passed、axe-core の違反 0 件。<code>check</code> 緑（テスト 435 件）。テストの書類は <code>build/test-documents/uiTest</code> に置かれた（R-15）</li>
+</ul>
+</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>5. 検証と Bolt 終了報告</strong></li>
 <li><code>check</code>・<code>uiTest</code>・CI・SonarQube の品質ゲート（PASS）を確かめる</li>
 <li>レビューの「対応結果」に、改善提案ごとの対応（修正のコミット、後の Bolt）を書き、レビューを承認待ちにする</li>
 <li><code>bolt_09_report.md</code> を書く（仮説 H1〜H3 の結論、各ステップの開始と完了の時刻、Red の記録）。ステップ 3・4 の結果をここでまとめて報告する</li>
+<li>結果（2026-10-05 11:30〜11:50）: SonarQube の品質ゲートが不合格（Bug 1: <code>Optional</code> を確かめずに取り出す、Code Smell 3: 413 の案内のパスの決め打ち、スキーマのコメントのテストのアサーション 2 件）になり、直して PASS にした（<code>f286877</code>）。<code>check</code>・<code>uiTest</code>・CI は緑。ステップ 3 のコミット（<code>23cd5c2</code>）の CI で、画面の層の 1 件（キー操作のファイルの選択）が時間切れで失敗した。後のコミットでは通っている（既知の課題）。レビューの対応結果と <a href="../bolt_09_report/">Bolt 9 終了報告</a> を書いた</li>
 </ul>
 <h3 id="_12">時間の配分と打ち切り<a class="headerlink" href="#_12" title="Permanent link">&para;</a></h3>
 <table>
