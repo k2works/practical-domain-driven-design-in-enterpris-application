@@ -54,16 +54,16 @@ public class BrowserSession implements DisposableBean {
     }
 
     /**
-     * 録画を閉じて、指定の場所に保存する（録画していなければ何もしない）。動画はページを閉じたときに書き終わるため、
-     * 文脈を閉じてから保存し、録画の一時ファイルを消す。
+     * 録画を閉じて、指定の場所に保存する（録画していなければ何もしない）。1 つのシナリオを複数の Bolt のデモに使うときは、
+     * 同じ動画をそれぞれの場所に保存する。動画はページを閉じたときに書き終わるため、文脈を閉じてから保存し、録画の一時ファイルを消す。
      */
-    public void saveVideo(Path target) {
+    public void saveVideo(List<Path> targets) {
         Video video = page.video();
-        if (video == null) {
+        if (video == null || targets.isEmpty()) {
             return;
         }
         context.close();
-        video.saveAs(target);
+        targets.forEach(video::saveAs);
         video.delete();
     }
 
