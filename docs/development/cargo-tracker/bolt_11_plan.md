@@ -3,8 +3,10 @@ type: Plan
 title: "Bolt 11 計画 - 見積りの失効と置換（US-03 AC4・AC5）"
 description: "11 回目の Bolt の計画。Bolt 9・10 レビューの中・低の指摘の返済と、見積りの失効の判定（同時刻は失効）、再提示の拒否、再見積りによる置換と旧版の読み取り専用、Q-INV-18 の部分一意インデックス、S-04 と C-04 の表示を、ステップ 1〜6 で定義する。"
 tags: [development,bolt-plan]
-status: draft
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-05T07:17:01Z }
+status: stable
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-05T07:21:03Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-10-05T07:21:04Z }
 ---
 
 # Bolt 11 計画 - 見積りの失効と置換（US-03 AC4・AC5）
@@ -316,6 +318,8 @@ S04 -[dashed]-> C04 : 荷主が開くと最新の見積りが見える
 | 7 | `quotation` の `status` の CHECK に `EXPIRED`・`REPLACED` を足し、`replaced_by_quotation_id`（`quotation.id` への FK、NULL 可）と `ck_quotation_replaced`（置換済みのときだけ値を持つ）を足す。失効の時刻・置換の時刻の列は足さない（監査記録は US-17）。R-14 の COMMENT を同じマイグレーションで足す | 4 | スキーマの変更 |
 | 8 | S-04 の再見積りの URL: `GET /staff/transport-requests/{業務番号}/quotations/{見積り番号}/requotation`（初期値の入った入力）・`POST …/requotation`（算出して新しい見積りへ移る）。旧版の S-04 は読み取り専用で、置換済みなら置換先へのリンク、失効なら再見積りの操作を出す。C-04 は最新の見積りの節を出し、置換済み・失効なら読み取り専用の旨と「新しい見積りは担当営業にご依頼ください」の案内を出す（回答の画面は US-24） | 2、5 | 画面の流れと URL、文言 |
 
+決定（2026-10-05、human:kakimomokuri）: 確認ポイント 1〜8 はすべて上の案で決まった。
+
 ## AI の仮定
 
 - 判定時刻は、提示と再見積りでは操作の時刻（`Clock`）を使う。画面の失効の表示も、照会した時刻で判定する。
@@ -364,6 +368,7 @@ S04 -[dashed]-> C04 : 荷主が開くと最新の見積りが見える
 | 日付 | 内容 | 作成 | 承認 |
 | :--- | :--- | :--- | :--- |
 | 2026-10-05 | 初版（Bolt 10 終了報告の次の Bolt: レビューの中・低の返済と US-03 AC4・AC5） | anthropic/claude-opus-5-5 | — |
+| 2026-10-05 | 計画を承認。確認ポイント 1〜8（AC4・AC5 の範囲、失効の判定、承認待ちの失効、再見積り、トランザクション、Q-INV-18 の部分一意インデックス、表の変更、S-04・C-04 の URL と表示）も決まった（Try T-6） | anthropic/claude-opus-5-5 | human:kakimomokuri |
 
 ## 関連ドキュメント
 
