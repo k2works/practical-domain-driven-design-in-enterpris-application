@@ -1,5 +1,11 @@
 package com.example.cargotracker.acceptance;
 
+import com.example.cargotracker.quotation.acceptance.InMemoryQuotationRepository;
+import com.example.cargotracker.quotation.application.internal.commandservices.QuotationCommandService;
+import com.example.cargotracker.quotation.application.internal.eventhandlers.QuotationPresentedEventHandler;
+import com.example.cargotracker.quotation.application.internal.queryservices.QuotationQueryService;
+import com.example.cargotracker.quotation.application.internal.queryservices.StaffQuotationQueryService;
+import com.example.cargotracker.quotation.domain.events.QuotationPresented;
 import com.example.cargotracker.identity.acceptance.InMemoryKpiObservationRepository;
 import com.example.cargotracker.identity.application.internal.eventhandlers.KpiObservationEventHandler;
 import com.example.cargotracker.identity.application.internal.queryservices.KpiObservationQueryService;
@@ -68,16 +74,54 @@ public class AcceptanceTestConfiguration {
             return new KpiObservationEventHandler(repository);
         }
 
+        @Bean
+        InMemoryQuotationRepository quotationRepository() {
+            return new InMemoryQuotationRepository();
+        }
+
+        @Bean
+        QuotationPresentedEventHandler quotationPresentedEventHandler(InMemoryTransportRequestRepository repository) {
+            return new QuotationPresentedEventHandler(repository);
+        }
+
         /** 購読側を登録した、テスト用の同期の配信。 */
         @Bean
-        DeferredEventDelivery eventDelivery(KpiObservationEventHandler kpiObservationEventHandler) {
+        DeferredEventDelivery eventDelivery(
+                KpiObservationEventHandler kpiObservationEventHandler,
+                QuotationPresentedEventHandler quotationPresentedEventHandler) {
             DeferredEventDelivery delivery = new DeferredEventDelivery();
             delivery.subscribe(event -> {
                 if (event instanceof TransportRequestSubmitted submitted) {
                     kpiObservationEventHandler.on(submitted);
                 }
+                if (event instanceof QuotationPresented presented) {
+                    quotationPresentedEventHandler.on(presented);
+                }
             });
             return delivery;
+        }
+
+        @Bean
+        QuotationCommandService quotationCommandService(
+                InMemoryTransportRequestRepository transportRequestRepository,
+                InMemoryQuotationRepository quotationRepository,
+                DeferredEventDelivery eventDelivery,
+                MutableClock clock) {
+            return new QuotationCommandService(transportRequestRepository, quotationRepository, eventDelivery, clock);
+        }
+
+        @Bean
+        QuotationQueryService quotationQueryService(
+                InMemoryTransportRequestRepository transportRequestRepository,
+                InMemoryQuotationRepository quotationRepository) {
+            return new QuotationQueryService(transportRequestRepository, quotationRepository);
+        }
+
+        @Bean
+        StaffQuotationQueryService staffQuotationQueryService(
+                InMemoryTransportRequestRepository transportRequestRepository,
+                InMemoryQuotationRepository quotationRepository) {
+            return new StaffQuotationQueryService(transportRequestRepository, quotationRepository);
         }
 
         @Bean

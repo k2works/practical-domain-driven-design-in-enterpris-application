@@ -260,7 +260,7 @@ S04 -[dashed]-> C04 : 荷主が開くと見積りが見える
   - データモデル: `quotation` の NULL 可の列と CHECK、`quotation_no`、`pricing_line`
   - UI 設計: S-04 の画面イメージと URL、S-02 の見積り作成中、S-03 の確定の後の遷移、C-04 の見積りの節
   - 完了の判定: `okf:check` が ERROR 0、`documentationTest` が緑。push する
-  - 結果（2026-10-05 13:12〜13:17）: ユーザーストーリー（US-03 の決定）、ドメインモデル（用語に料金根拠の明細と通貨・料金明細・見積り番号、集約の図に見積り番号と料金明細、Q-INV-17・18、DE-03 の購読、見積りの提示の段落）、データモデル（`quotation` の `quotation_no`・NULL 可の列と CHECK・Bolt 10 で作る範囲、`pricing_line` の制約）、UI 設計（S-02・S-03・S-04・C-04 の URL の表、S-04 の画面イメージ）に反映した。`okf:check` ERROR 0、`documentationTest` 緑
+  - 結果（2026-10-05 13:12〜13:14）: ユーザーストーリー（US-03 の決定）、ドメインモデル（用語に料金根拠の明細と通貨・料金明細・見積り番号、集約の図に見積り番号と料金明細、Q-INV-17・18、DE-03 の購読、見積りの提示の段落）、データモデル（`quotation` の `quotation_no`・NULL 可の列と CHECK・Bolt 10 で作る範囲、`pricing_line` の制約）、UI 設計（S-02・S-03・S-04・C-04 の URL の表、S-04 の画面イメージ）に反映した。`okf:check` ERROR 0、`documentationTest` 緑
 - [ ] **2. 見積りの算出と提示（業務ルール層の Red → Green）** 【承認ゲート: 業務のルール（Q-INV-05・17・18）】
   - 業務ルール層の受入シナリオを先に書き、Red をコミットする（`features/quotation/present_quotation.feature`、`@US-03 @must`）
     - 審査を確定した見積依頼に、料金明細 2 行・有効期限・経路方針を入れて算出し、社内承認して提示すると、見積りは提示済みになり、提示時刻と承認者が残り、DE-03 が発行される（AC1）

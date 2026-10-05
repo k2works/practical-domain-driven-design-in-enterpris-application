@@ -105,4 +105,16 @@ class TransportRequestTest {
         assertThat(request.newVersion())
                 .hasValueSatisfying(version -> assertThat(version.versionNo()).isEqualTo(2));
     }
+
+    @Test
+    void 見積り作成中の現在の版に見積りが提示されると見積提示済みになりほかでは変わらない() {
+        TransportRequest request = TransportRequest.submit(id, number, shipper, terms, submitter, now);
+
+        assertThat(request.markQuotationPresented(1)).as("審査中では変えない").isFalse();
+        request.approve(1, submitter, "根拠", now);
+        assertThat(request.markQuotationPresented(2)).as("現在の版でなければ変えない").isFalse();
+        assertThat(request.markQuotationPresented(1)).isTrue();
+        assertThat(request.status()).isEqualTo(TransportRequestStatus.QUOTED);
+        assertThat(request.markQuotationPresented(1)).as("2 回目は変えない（冪等）").isFalse();
+    }
 }

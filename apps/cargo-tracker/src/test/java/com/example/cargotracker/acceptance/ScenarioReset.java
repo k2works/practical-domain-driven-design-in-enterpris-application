@@ -1,5 +1,6 @@
 package com.example.cargotracker.acceptance;
 
+import com.example.cargotracker.quotation.acceptance.InMemoryQuotationRepository;
 import com.example.cargotracker.identity.acceptance.InMemoryKpiObservationRepository;
 import com.example.cargotracker.quotation.acceptance.InMemoryRequiredDocumentStorage;
 import com.example.cargotracker.quotation.acceptance.InMemoryTransportRequestNumberIssuer;
@@ -20,6 +21,7 @@ public class ScenarioReset {
     private final InMemoryKpiObservationRepository kpiObservationRepository;
     private final DeferredEventDelivery delivery;
     private final InMemoryRequiredDocumentStorage documentStorage;
+    private final InMemoryQuotationRepository quotationRepository;
 
     public ScenarioReset(
             MutableClock clock,
@@ -27,13 +29,15 @@ public class ScenarioReset {
             InMemoryTransportRequestNumberIssuer transportRequestNumberIssuer,
             InMemoryKpiObservationRepository kpiObservationRepository,
             DeferredEventDelivery delivery,
-            InMemoryRequiredDocumentStorage documentStorage) {
+            InMemoryRequiredDocumentStorage documentStorage,
+            InMemoryQuotationRepository quotationRepository) {
         this.clock = clock;
         this.transportRequestRepository = transportRequestRepository;
         this.transportRequestNumberIssuer = transportRequestNumberIssuer;
         this.kpiObservationRepository = kpiObservationRepository;
         this.delivery = delivery;
         this.documentStorage = documentStorage;
+        this.quotationRepository = quotationRepository;
     }
 
     @Before
@@ -44,5 +48,6 @@ public class ScenarioReset {
         kpiObservationRepository.clear();
         delivery.clear();
         documentStorage.clear();
+        quotationRepository.clear();
     }
 }

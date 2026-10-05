@@ -33,6 +33,11 @@ public class DeferredEventDelivery implements ApplicationEventPublisher {
         events.forEach(event -> subscribers.forEach(subscriber -> subscriber.accept(event)));
     }
 
+    /** 発行されて、まだ配信していないイベント（発行の順）。 */
+    public List<Object> published() {
+        return List.copyOf(published);
+    }
+
     public void clear() {
         published.clear();
     }

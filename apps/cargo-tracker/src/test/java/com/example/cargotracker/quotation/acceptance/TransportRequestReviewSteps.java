@@ -53,7 +53,8 @@ public class TransportRequestReviewSteps {
     private static final Map<String, TransportRequestStatus> STATUSES = Map.of(
             "下書き", TransportRequestStatus.DRAFT,
             "審査中", TransportRequestStatus.UNDER_REVIEW,
-            "見積り作成中", TransportRequestStatus.QUOTING);
+            "見積り作成中", TransportRequestStatus.QUOTING,
+            "見積提示済み", TransportRequestStatus.QUOTED);
 
     /** 再提出の検証の誤りの呼び名（このシナリオで使うものだけ。提出の誤りは TransportRequestSteps で網羅する）。 */
     private static final Map<String, Item> ITEMS = Map.of("目的地", Item.DESTINATION);
