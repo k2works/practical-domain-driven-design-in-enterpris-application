@@ -2956,7 +2956,7 @@
     
   
   
-    <span class="md-status md-status--draft"></span>
+    <span class="md-status md-status--stable"></span>
   
 
   
@@ -3718,7 +3718,7 @@
     
   
   
-    <span class="md-status md-status--draft"></span>
+    <span class="md-status md-status--stable"></span>
   
 
   
@@ -7189,7 +7189,7 @@
 <li>画面の層のシナリオは 38 件すべて passed（Bolt 10 の 35 件から +3）、axe-core の違反 0 件。<code>check</code> 緑（<code>test</code> 715 件）</li>
 </ul>
 </li>
-<li>[?] <strong>6. 開発レビューと Bolt 終了報告</strong></li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>6. 開発レビューと Bolt 終了報告</strong></li>
 <li><code>developing-review</code> で Bolt 11 の変更をレビューし、指摘への対応を決める（T-28）</li>
 <li><code>check</code>・<code>uiTest</code>・CI・SonarQube の品質ゲート（PASS）を確かめる</li>
 <li>デモ項目のシナリオを <code>./gradlew demoVideo -PdemoBolt=bolt-11</code> で録画し、<code>docs/assets/demo/bolt-11/</code> に置いて終了報告と開発の索引からリンクする（T-31）</li>
@@ -7197,7 +7197,7 @@
 <li>
 <h1 id="4-1">4 をクローズする（確認ポイント 1）<a class="headerlink" href="#4-1" title="Permanent link">&para;</a></h1>
 </li>
-<li>結果（2026-10-05 17:35〜18:35）: <code>developing-review</code> で Bolt 11 の変更をレビューし（<a href="../../../review/cargo-tracker/bolt_11_review_20261005/">レビュー</a>、<code>f13bd00</code>）、人の判断（D-37・D-38・D-40）で高・中の大半・低を直した（Red <code>522ca88</code>・<code>07c4773</code>、Green <code>013b3a8</code>・<code>8bfa8d5</code>、文書 <code>bc930b8</code>）。SonarQube はこの環境で立ち上げ（終了報告の「環境」）、品質ゲートは 1 回不合格になり（Code Smell 1 件）、直して PASS にした。デモ項目のシナリオ 2 本を <code>./gradlew demoVideo -PdemoBolt=bolt-11</code> で録画し、<a href="../bolt_11_report/">Bolt 11 終了報告</a> と開発の索引からリンクした。<code>check</code>・<code>uiTest</code>・CI は緑。#4 は終了報告の承認の後にクローズする</li>
+<li>結果（2026-10-05 17:35〜18:35）: <code>developing-review</code> で Bolt 11 の変更をレビューし（<a href="../../../review/cargo-tracker/bolt_11_review_20261005/">レビュー</a>、<code>f13bd00</code>）、人の判断（D-37・D-38・D-40）で高・中の大半・低を直した（Red <code>522ca88</code>・<code>07c4773</code>、Green <code>013b3a8</code>・<code>8bfa8d5</code>、文書 <code>bc930b8</code>）。SonarQube はこの環境で立ち上げ（終了報告の「環境」）、品質ゲートは 1 回不合格になり（Code Smell 1 件）、直して PASS にした。デモ項目のシナリオ 2 本を <code>./gradlew demoVideo -PdemoBolt=bolt-11</code> で録画し、<a href="../bolt_11_report/">Bolt 11 終了報告</a> と開発の索引からリンクした。<code>check</code>・<code>uiTest</code>・CI は緑。#4 は終了報告の承認の後にクローズした</li>
 </ul>
 <h3 id="_12">時間の配分と打ち切り<a class="headerlink" href="#_12" title="Permanent link">&para;</a></h3>
 <table>
@@ -7355,18 +7355,18 @@
 <h2 id="_14">完了条件<a class="headerlink" href="#_14" title="Permanent link">&para;</a></h2>
 <h3 id="definition-of-done">Definition of Done<a class="headerlink" href="#definition-of-done" title="Permanent link">&para;</a></h3>
 <ul class="task-list">
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> ステップ 1〜6 が完了し、計画・ステップ 1〜3・ステップ 4・開発レビューの判断・終了報告の承認ゲートを人が通した</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <code>./gradlew check</code> と <code>./gradlew uiTest</code> がローカルと CI の両方で緑。各ステップの終わりに push し、CI を確かめた</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> SonarQube の品質ゲートが PASS</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> 業務ルール層で AC4 の境界（1 秒前・同時刻・1 秒後）、AC5 の再提示の拒否・置換・旧版の読み取り専用、Q-INV-18 のシナリオが緑（<code>@US-03-AC4</code>・<code>@US-03-AC5</code>）。画面の層で主成功と失効の表示と荷主の案内が緑</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> Q-INV-18 の部分一意インデックスを PostgreSQL の統合テストで確かめた</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> Bolt 9・10 レビューの中・低の指摘への対応を、レビューの「対応結果」に書いた</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> 確認ポイント 1〜8 の決定が、設計文書から追える</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> 開発レビューを行い、指摘への対応を終了報告に書いた（T-28）</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> デモ項目の動画を撮り、終了報告と開発の索引からリンクした（T-31）</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <code>bolt_11_report.md</code> に仮説 H1〜H3 の結論と、各ステップの時刻と Red の記録を書いた</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> #4 をクローズした</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> ユーザーマニュアルは更新しない（マニュアルはまだない。認証と主要な画面がそろってから書く）</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> ステップ 1〜6 が完了し、計画・ステップ 1〜3・ステップ 4・開発レビューの判断・終了報告の承認ゲートを人が通した</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <code>./gradlew check</code> と <code>./gradlew uiTest</code> がローカルと CI の両方で緑。各ステップの終わりに push し、CI を確かめた</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> SonarQube の品質ゲートが PASS</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> 業務ルール層で AC4 の境界（1 秒前・同時刻・1 秒後）、AC5 の再提示の拒否・置換・旧版の読み取り専用、Q-INV-18 のシナリオが緑（<code>@US-03-AC4</code>・<code>@US-03-AC5</code>）。画面の層で主成功と失効の表示と荷主の案内が緑</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Q-INV-18 の部分一意インデックスを PostgreSQL の統合テストで確かめた</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Bolt 9・10 レビューの中・低の指摘への対応を、レビューの「対応結果」に書いた</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> 確認ポイント 1〜8 の決定が、設計文書から追える</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> 開発レビューを行い、指摘への対応を終了報告に書いた（T-28）</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> デモ項目の動画を撮り、終了報告と開発の索引からリンクした（T-31）</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <code>bolt_11_report.md</code> に仮説 H1〜H3 の結論と、各ステップの時刻と Red の記録を書いた</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> #4 をクローズした</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> ユーザーマニュアルは更新しない（マニュアルはまだない。認証と主要な画面がそろってから書く）</li>
 </ul>
 <h3 id="_15">デモ項目<a class="headerlink" href="#_15" title="Permanent link">&para;</a></h3>
 <table>
@@ -7427,6 +7427,12 @@
 <tr>
 <td style="text-align: left;">2026-10-05</td>
 <td style="text-align: left;">ステップ 4（スキーマ）の承認ゲートを通した（置換先の FK は PostgreSQL の遅延の FK）</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5</td>
+<td style="text-align: left;">human:kakimomokuri</td>
+</tr>
+<tr>
+<td style="text-align: left;">2026-10-05</td>
+<td style="text-align: left;">開発レビューの判断（D-37・D-38・D-40）と、ステップ 5・6 をまとめた終了報告の承認を通し、Bolt を終えた（人の変更依頼 0）。#4 をクローズした</td>
 <td style="text-align: left;">anthropic/claude-opus-5-5</td>
 <td style="text-align: left;">human:kakimomokuri</td>
 </tr>
