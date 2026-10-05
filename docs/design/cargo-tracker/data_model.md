@@ -4,7 +4,7 @@ title: "cargo-tracker データモデル"
 description: "cargo-tracker の概念データモデル、スキーマ分割、命名と型の規約（H2 と PostgreSQL の共通部分）、コンテキストごとの論理データモデルと ER 図、版・追記専用・冪等性・イベント配信の表現。"
 tags: [design, data-model]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-05T00:58:09Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-05T04:14:31Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T07:48:17Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:01:37Z }
@@ -287,12 +287,13 @@ entity "quotation\n見積り" as q {
   * id : UUID <<PK>>
   --
   * transport_request_id : UUID <<FK>>
+  * quotation_no : INTEGER
   * transport_request_version_no : INTEGER
   * status : VARCHAR(30)
-  * expires_at : TIMESTAMPTZ
-  * total_amount : NUMERIC(15,2)
-  * currency : CHAR(3)
-  * route_policy_via : VARCHAR(200)
+  expires_at : TIMESTAMPTZ
+  total_amount : NUMERIC(15,2)
+  currency : CHAR(3)
+  route_policy_via : VARCHAR(200)
   route_policy_departure_at : TIMESTAMPTZ
   route_policy_arrival_at : TIMESTAMPTZ
   internal_approved_by : UUID
@@ -339,7 +340,8 @@ q |o--o| q : 置換
 | `transport_request_version` | `cargo_category` IN（`GENERAL`、`DANGEROUS`、`REEFER`、`OTHER_SPECIAL`）。提出した版だけを INSERT し、更新しない（追記専用の印 `COMMENT ON TABLE ... IS '輸送要求版 [append-only]'` を付ける）。版 1 の `submitted_at` が KPI-01 の開始時刻（D-3） | Q-INV-02、Q-INV-03、US-21 |
 | `review_record` | （`transport_request_id`、`version_no`）→ `transport_request_version` の FK。（`transport_request_id`、`version_no`）に一意制約（1 つの版に判断は 1 つ。差し戻すと新しい版ができるため。Bolt 5 レビュー R-02）。`decision` IN（`APPROVED`、`SENT_BACK`）。`rationale` は確定の根拠と差戻しの理由の両方を入れる（判断で読み分ける）。追記専用の印を付ける | Q-INV-04、Q-INV-14 |
 | `required_document` | 主キー（`transport_request_id`、`version_no`、`document_no`）。（`transport_request_id`、`version_no`）→ `transport_request_version` の FK。`document_type` IN（`COMMERCIAL_INVOICE`、`PACKING_LIST`、`OTHER`）。`media_type` IN（`PDF`、`PNG`、`JPEG`）。`size_bytes` は 1 以上 10,485,760 以下。`sha256` は中身の SHA-256 の 16 進 64 文字。`file_name` は画面に出すだけに使い、`object_key` は `quotation/{輸送要求 ID}/{UUID}`（ファイル名を使わない）。出し直しでは、引き継ぐ書類は前の版の行と同じ `object_key` で新しい版に INSERT し（ファイルを複製しない）、差し替えた種類は新しい `object_key` の行にする。前の版の行は変えない。新しい版の `document_no` は 1 から振り直す。行は新しい版を作るとき（提出・出し直し）だけ INSERT し、審査の確定・差戻しの保存では書かない（2026-10-05 の D-25。Bolt 9。Bolt 6〜8 レビュー R-07）。追記専用の印を付ける（2026-10-03 に承認、Bolt 7） | Q-INV-16、US-01 |
-| `quotation` | `status` IN（`DRAFT`、`PENDING_APPROVAL`、`PRESENTED`、`ROUTING_REQUESTED`、`AWAITING_SHIPPER_APPROVAL`、`APPROVED`、`EXPIRED`、`REPLACED`）。`shipper_response` IN（`PROCEED`、`DECLINED`）。`presented_at` は KPI-01 の終了時刻。荷主の承認時は `routing_case_id`・`route_version_no` が NOT NULL（アプリケーションで検証） | Q-INV-05〜10、US-21 |
+| `quotation` | UK（`transport_request_id`、`quotation_no`）。`quotation_no` は輸送要求の中で 1 から振り、画面と URL に出す（内部の ID を出さない。Bolt 10）。`expires_at`・`total_amount`・`currency`・`route_policy_departure_at`・`route_policy_arrival_at` は作成中（`DRAFT`）の見積りを保存するため NULL を許し、承認待ち以後は NOT NULL を CHECK で守る。`currency` IN（`USD`、`EUR`、`JPY`）。`route_policy_via` は UN/LOCODE のカンマ区切り（0〜5 件、空は経由地なし）。`status` IN（`DRAFT`、`PENDING_APPROVAL`、`PRESENTED`、`ROUTING_REQUESTED`、`AWAITING_SHIPPER_APPROVAL`、`APPROVED`、`EXPIRED`、`REPLACED`）。Bolt 10 は `DRAFT`・`PENDING_APPROVAL`・`PRESENTED` の値と、提示までに使う列だけで表を作り、ほかの値と列（荷主の回答・経路版・荷主承認・置換）は使う Bolt で足す（2026-10-05 の決定）。`shipper_response` IN（`PROCEED`、`DECLINED`）。`presented_at` は KPI-01 の終了時刻。荷主の承認時は `routing_case_id`・`route_version_no` が NOT NULL（アプリケーションで検証） | Q-INV-05〜10、US-21 |
+| `pricing_line` | 主キー（`quotation_id`、`line_no`）。`line_no` は 1〜10。`amount` は 0 より大きい（NUMERIC(15,2)）。`currency` は見積りの `currency` と同じ値（アプリケーションで守る）。見積りを算出し直すときは明細を入れ替える（Bolt 10 は算出し直しを入れない） | Q-INV-17、US-03 |
 
 見積りの「失効」は、有効期限を過ぎたときに状態を書き換えるのではなく、判定時刻と `expires_at` の比較で決める（Q-INV-06）。`status` の `EXPIRED` は、期限切れを利用者が確認した・定期処理が記録した結果として残す。予約確定の判定は常に `expires_at` で行う。
 

@@ -4,7 +4,7 @@ title: "Bolt 10 計画 - 根拠付き見積りの提示（US-03 AC1〜AC3）"
 description: "10 回目の Bolt の計画。見積り集約（料金根拠の明細・有効期限・経路方針）の算出と社内承認・提示、DE-03 を受けた輸送要求の状態の更新、S-04 と C-04 の見積りの節、quotation と pricing_line の表を、ステップ 1〜5 で定義する。"
 tags: [development,bolt-plan]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-05T04:12:46Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-05T04:14:31Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-05T04:12:46Z }
 ---
@@ -254,12 +254,13 @@ S04 -[dashed]-> C04 : 荷主が開くと見積りが見える
 
 状態の記号: `[ ]` 未着手、`[-]` 進行中、`[?]` 承認待ち、`[R]` 修正中、`[x]` 完了、`[S]` スキップ。各ステップの終わりに `check` が緑であることを確かめて push し、CI の結果を確かめてから次のステップに入る（T-14、T-26）。
 
-- [ ] **1. 決定を設計文書に反映する**（承認はステップ 2 とまとめて受ける）
+- [x] **1. 決定を設計文書に反映する**（承認はステップ 2 とまとめて受ける）
   - ユーザーストーリー: US-03 の決定（確定 = 社内承認して提示、仮の承認者、料金根拠の明細と通貨、有効期限の入力と境界、経路方針、Bolt 10・11 の分け方）
   - ドメインモデル: 料金明細、見積り番号、Q-INV-17・18、DE-03 の購読（輸送要求の状態）
   - データモデル: `quotation` の NULL 可の列と CHECK、`quotation_no`、`pricing_line`
   - UI 設計: S-04 の画面イメージと URL、S-02 の見積り作成中、S-03 の確定の後の遷移、C-04 の見積りの節
   - 完了の判定: `okf:check` が ERROR 0、`documentationTest` が緑。push する
+  - 結果（2026-10-05 13:12〜13:17）: ユーザーストーリー（US-03 の決定）、ドメインモデル（用語に料金根拠の明細と通貨・料金明細・見積り番号、集約の図に見積り番号と料金明細、Q-INV-17・18、DE-03 の購読、見積りの提示の段落）、データモデル（`quotation` の `quotation_no`・NULL 可の列と CHECK・Bolt 10 で作る範囲、`pricing_line` の制約）、UI 設計（S-02・S-03・S-04・C-04 の URL の表、S-04 の画面イメージ）に反映した。`okf:check` ERROR 0、`documentationTest` 緑
 - [ ] **2. 見積りの算出と提示（業務ルール層の Red → Green）** 【承認ゲート: 業務のルール（Q-INV-05・17・18）】
   - 業務ルール層の受入シナリオを先に書き、Red をコミットする（`features/quotation/present_quotation.feature`、`@US-03 @must`）
     - 審査を確定した見積依頼に、料金明細 2 行・有効期限・経路方針を入れて算出し、社内承認して提示すると、見積りは提示済みになり、提示時刻と承認者が残り、DE-03 が発行される（AC1）
