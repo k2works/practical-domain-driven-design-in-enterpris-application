@@ -13,6 +13,12 @@
     <p role="status" th:if="${result}" th:text="${result}">TR-2026-0001 見積 1 を算出しました</p>
     <div class="alert alert-warning" role="alert" th:if="${problem}" th:text="${problem}">他の利用者が先に更新しました</div>
     <p><a th:href="@{/staff/transport-requests}">受付一覧へ戻る</a></p>
+    <!-- 失効（表示する時刻で有効期限を過ぎた）と置換済みは読み取り専用（Bolt 11、US-03 AC4・AC5） -->
+    <p class="alert alert-warning" th:if="${expiredNotice}" th:text="${expiredNotice}">有効期限を過ぎたため、この見積りは提示できません。再見積りしてください。</p>
+    <p th:if="${replacement}">
+        <span th:text="|見積 ${replacement.quotationNo()} に置き換えました。この見積りは読み取り専用です。|">見積 2 に置き換えました。この見積りは読み取り専用です。</span>
+        <a th:href="@{${replacement.path()}}" th:text="${replacement.label()}">TR-2026-0001 見積 2</a>
+    </p>
     <dl>
         <dt>対象</dt>
         <dd th:text="${numberWithVersion}">TR-2026-0001 版 1</dd>
@@ -26,6 +32,9 @@
           method="post">
         <button type="submit" class="btn btn-primary">社内承認して提示する</button>
     </form>
+    <p th:if="${quotation.requotable()}">
+        <a th:href="@{/staff/transport-requests/{number}/quotations/{no}/requotation(number=${number},no=${quotation.quotationNo()})}">再見積りする</a>
+    </p>
 </main>
 </body>
 </html>

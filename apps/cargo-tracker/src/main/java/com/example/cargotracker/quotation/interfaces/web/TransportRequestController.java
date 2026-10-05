@@ -15,6 +15,9 @@ import com.example.cargotracker.quotation.domain.model.valueobjects.TransportReq
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestSummary;
 import com.example.cargotracker.shared.domain.CompanyId;
 import com.example.cargotracker.shared.domain.UserId;
+import com.example.cargotracker.shared.domain.UtcInstant;
+import java.time.Clock;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import org.springframework.http.HttpStatus;
@@ -52,18 +55,21 @@ public class TransportRequestController {
     private final QuotationQueryService quotationQueryService;
     private final ProvisionalActorProperties provisionalActor;
     private final ProvisionalConsigneeProperties provisionalConsignees;
+    private final Clock clock;
 
     public TransportRequestController(
             TransportRequestCommandService commandService,
             TransportRequestQueryService queryService,
             QuotationQueryService quotationQueryService,
             ProvisionalActorProperties provisionalActor,
-            ProvisionalConsigneeProperties provisionalConsignees) {
+            ProvisionalConsigneeProperties provisionalConsignees,
+            Clock clock) {
         this.commandService = commandService;
         this.queryService = queryService;
         this.quotationQueryService = quotationQueryService;
         this.provisionalActor = provisionalActor;
         this.provisionalConsignees = provisionalConsignees;
+        this.clock = clock;
     }
 
     @ModelAttribute
@@ -149,13 +155,15 @@ public class TransportRequestController {
         // 出し直せるかは集約が判定する（Bolt 6〜8 レビュー R-13）
         model.addAttribute("editable", request.checkResubmittable().isEmpty());
         model.addAttribute("documents", RequiredDocumentViews.rows(request, BASE_PATH));
-        // 見積りの節は提示済みの見積りから出し、輸送要求の状態の更新（DE-03 の受け取り）を待たない（Bolt 10。US-03 AC2）
+        // 見積りの節は提示した見積りから出し、輸送要求の状態の更新（DE-03 の受け取り）を待たない（Bolt 10。US-03 AC2）。
+        // 最新の見積りを先に、以前の見積りを読み取り専用で並べる。失効は表示する時刻で判定する（Bolt 11。US-03 AC5）
+        UtcInstant now = new UtcInstant(clock.instant());
+        List<QuotationViews.View> quotations = quotationQueryService.findVisible(request.number(), shipper()).stream()
+                .map(quotation -> QuotationViews.view(quotation, TransportRequestLabels::customerDateTime, now))
+                .toList();
+        model.addAttribute("quotation", quotations.isEmpty() ? null : quotations.getFirst());
         model.addAttribute(
-                "quotation",
-                quotationQueryService
-                        .findPresented(request.number(), shipper())
-                        .map(quotation -> QuotationViews.view(quotation, TransportRequestLabels::customerDateTime))
-                        .orElse(null));
+                "previousQuotations", quotations.isEmpty() ? List.of() : quotations.subList(1, quotations.size()));
         return DETAIL_VIEW;
     }
 

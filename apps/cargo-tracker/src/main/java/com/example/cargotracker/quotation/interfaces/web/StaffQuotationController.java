@@ -2,18 +2,23 @@ package com.example.cargotracker.quotation.interfaces.web;
 
 import com.example.cargotracker.quotation.application.internal.commands.CalculateQuotationCommand;
 import com.example.cargotracker.quotation.application.internal.commands.PresentQuotationCommand;
+import com.example.cargotracker.quotation.application.internal.commands.RequoteQuotationCommand;
 import com.example.cargotracker.quotation.application.internal.commandservices.CalculationOutcome;
 import com.example.cargotracker.quotation.application.internal.commandservices.PresentationOutcome;
 import com.example.cargotracker.quotation.application.internal.commandservices.QuotationCommandService;
+import com.example.cargotracker.quotation.application.internal.commandservices.RequotationOutcome;
 import com.example.cargotracker.quotation.application.internal.queryservices.StaffQuotationQueryService;
 import com.example.cargotracker.quotation.application.internal.queryservices.StaffTransportRequestQueryService;
 import com.example.cargotracker.quotation.domain.model.aggregates.Quotation;
 import com.example.cargotracker.quotation.domain.model.aggregates.TransportRequest;
 import com.example.cargotracker.quotation.domain.model.valueobjects.QuotationInput;
 import com.example.cargotracker.quotation.domain.model.valueobjects.QuotationRejection;
+import com.example.cargotracker.quotation.domain.model.valueobjects.QuotationStatus;
 import com.example.cargotracker.quotation.domain.model.valueobjects.QuotationViolations;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestNumber;
 import com.example.cargotracker.shared.domain.UserId;
+import com.example.cargotracker.shared.domain.UtcInstant;
+import java.time.Clock;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -32,6 +37,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 /**
  * 社内業務 Web の見積りの作成（S-04。US-03）。料金明細・通貨・有効期限・経路方針を 1 つの画面で入れて算出し（承認待ち）、
  * 算出した見積りを確かめて社内承認して提示する。社内の画面なので荷主企業で絞らない。社内承認者は、認証（US-18）までは仮の営業担当者。
+ * 承認待ち・提示済みの見積りからは再見積りでき、旧版は置換済み（有効期限を過ぎていれば失効）として読み取り専用で残る（Bolt 11）。
  */
 @Controller
 @RequestMapping("/staff/transport-requests/{number}/quotations")
@@ -43,24 +49,30 @@ public class StaffQuotationController {
     private static final String SHOW_VIEW = "quotation/staff/quotations/show";
     private static final String RESULT = "result";
     private static final String PROBLEM = "problem";
+    private static final String CONFLICT_MESSAGE = "他の利用者が先に更新しました。内容を確かめてください";
+    private static final String FORM_HEADING = "formHeading";
+    private static final String FORM_ACTION = "formAction";
 
     private final QuotationCommandService commandService;
     private final StaffQuotationQueryService queryService;
     private final StaffTransportRequestQueryService transportRequestQueryService;
     private final ProvisionalActorProperties provisionalActor;
     private final ProvisionalConsigneeProperties provisionalConsignees;
+    private final Clock clock;
 
     public StaffQuotationController(
             QuotationCommandService commandService,
             StaffQuotationQueryService queryService,
             StaffTransportRequestQueryService transportRequestQueryService,
             ProvisionalActorProperties provisionalActor,
-            ProvisionalConsigneeProperties provisionalConsignees) {
+            ProvisionalConsigneeProperties provisionalConsignees,
+            Clock clock) {
         this.commandService = commandService;
         this.queryService = queryService;
         this.transportRequestQueryService = transportRequestQueryService;
         this.provisionalActor = provisionalActor;
         this.provisionalConsignees = provisionalConsignees;
+        this.clock = clock;
     }
 
     /**
@@ -75,7 +87,7 @@ public class StaffQuotationController {
             return REDIRECT + quotationPath(request.number(), active.get().quotationNo());
         }
         model.addAttribute("quotationForm", new QuotationForm());
-        return showForm(request, model);
+        return showCreateForm(request, model);
     }
 
     /** 見積りを作って算出する。算出したら算出した見積りの画面へ移り（PRG）、誤りがあれば入力を残してエラー要約で示す（AC3）。 */
@@ -90,7 +102,7 @@ public class StaffQuotationController {
         List<Integer> rowsOfLines = new ArrayList<>();
         Optional<QuotationInput> input = QuotationFormConverter.convert(quotationForm, bindingResult, rowsOfLines);
         if (input.isEmpty()) {
-            return showForm(request, model);
+            return showCreateForm(request, model);
         }
         return switch (commandService.calculate(new CalculateQuotationCommand(request.number(), input.get()))) {
             case CalculationOutcome.Calculated(TransportRequestNumber calculated, int quotationNo) -> {
@@ -100,7 +112,7 @@ public class StaffQuotationController {
             }
             case CalculationOutcome.Invalid(QuotationViolations violations) -> {
                 QuotationViolationMessages.reject(violations, bindingResult, rowsOfLines);
-                yield showForm(request, model);
+                yield showCreateForm(request, model);
             }
             case CalculationOutcome.Rejected(QuotationRejection reason) -> {
                 Optional<Quotation> active = queryService.findActive(request.number());
@@ -118,19 +130,106 @@ public class StaffQuotationController {
         };
     }
 
-    /** 算出した見積り。承認待ちなら、社内承認して提示するボタンを出す。 */
+    /**
+     * 算出した見積り。承認待ちで失効していなければ社内承認して提示するボタンを、承認待ち・提示済みなら再見積りの操作を出す。
+     * 失効（表示する時刻で有効期限を過ぎた）と置換済みは読み取り専用で、置換済みなら置換先へのリンクを示す（Bolt 11）。
+     */
     @GetMapping("/{quotationNo}")
     public String show(@PathVariable String number, @PathVariable int quotationNo, Model model) {
         TransportRequest request = findTransportRequest(number);
         Quotation quotation =
                 queryService.find(request.number(), quotationNo).orElseThrow(StaffQuotationController::notFound);
+        UtcInstant now = new UtcInstant(clock.instant());
+        model.addAttribute("expiredNotice", expiredNotice(quotation, now));
+        model.addAttribute(
+                "replacement",
+                quotation
+                        .replacedBy()
+                        .flatMap(replacement -> queryService.findAll(request.number()).stream()
+                                .filter(candidate -> candidate.id().equals(replacement))
+                                .findFirst())
+                        .map(found -> new Replacement(
+                                found.quotationNo(),
+                                QuotationViews.label(request.number(), found.quotationNo()),
+                                quotationPath(request.number(), found.quotationNo())))
+                        .orElse(null));
         model.addAttribute("number", request.number().text());
         model.addAttribute("quotationLabel", QuotationViews.label(request.number(), quotationNo));
         model.addAttribute(
                 "numberWithVersion",
                 TransportRequestLabels.numberWithVersion(request.number(), quotation.transportRequestVersionNo()));
-        model.addAttribute("quotation", QuotationViews.view(quotation, TransportRequestLabels::staffDateTime));
+        model.addAttribute("quotation", QuotationViews.view(quotation, TransportRequestLabels::staffDateTime, now));
         return SHOW_VIEW;
+    }
+
+    /** S-04 の再見積り。旧版の料金明細・通貨・経路方針を初期値にし、有効期限は空にする。置換済み・失効の見積りからは開けない。 */
+    @GetMapping("/{quotationNo}/requotation")
+    public String requotation(
+            @PathVariable String number,
+            @PathVariable int quotationNo,
+            Model model,
+            RedirectAttributes redirectAttributes) {
+        TransportRequest request = findTransportRequest(number);
+        Quotation quotation =
+                queryService.find(request.number(), quotationNo).orElseThrow(StaffQuotationController::notFound);
+        QuotationViews.View view =
+                QuotationViews.view(quotation, TransportRequestLabels::staffDateTime, new UtcInstant(clock.instant()));
+        if (!view.requotable()) {
+            redirectAttributes.addFlashAttribute(
+                    PROBLEM,
+                    rejection(
+                            QuotationViews.label(request.number(), quotationNo),
+                            quotation.status() == QuotationStatus.REPLACED
+                                    ? QuotationRejection.REPLACED
+                                    : QuotationRejection.EXPIRED));
+            return REDIRECT + quotationPath(request.number(), quotationNo);
+        }
+        model.addAttribute("quotationForm", QuotationFormConverter.toForm(quotation));
+        return showRequotationForm(request, quotationNo, model);
+    }
+
+    /**
+     * 再見積りする。算出したら新しい見積りへ移り（PRG）、誤りがあれば入力を残してエラー要約で示す。
+     * 受け付けなかったとき（置換済み・失効など）と競合したときは、旧版に戻して理由を示す。
+     */
+    @PostMapping("/{quotationNo}/requotation")
+    public String requote(
+            @PathVariable String number,
+            @PathVariable int quotationNo,
+            @ModelAttribute QuotationForm quotationForm,
+            BindingResult bindingResult,
+            Model model,
+            RedirectAttributes redirectAttributes) {
+        TransportRequest request = findTransportRequest(number);
+        List<Integer> rowsOfLines = new ArrayList<>();
+        Optional<QuotationInput> input = QuotationFormConverter.convert(quotationForm, bindingResult, rowsOfLines);
+        if (input.isEmpty()) {
+            return showRequotationForm(request, quotationNo, model);
+        }
+        String oldLabel = QuotationViews.label(request.number(), quotationNo);
+        return switch (commandService.requote(
+                new RequoteQuotationCommand(request.number(), quotationNo, input.get()))) {
+            case RequotationOutcome.Calculated(TransportRequestNumber calculated, int newNo) -> {
+                redirectAttributes.addFlashAttribute(
+                        RESULT,
+                        QuotationViews.label(calculated, newNo) + " を算出しました。見積 " + quotationNo
+                                + " は置き換えました。内容を確かめて社内承認してください");
+                yield REDIRECT + quotationPath(calculated, newNo);
+            }
+            case RequotationOutcome.Invalid(QuotationViolations violations) -> {
+                QuotationViolationMessages.reject(violations, bindingResult, rowsOfLines);
+                yield showRequotationForm(request, quotationNo, model);
+            }
+            case RequotationOutcome.Rejected(QuotationRejection reason) -> {
+                redirectAttributes.addFlashAttribute(PROBLEM, rejection(oldLabel, reason));
+                yield REDIRECT + quotationPath(request.number(), quotationNo);
+            }
+            case RequotationOutcome.Conflict _ -> {
+                redirectAttributes.addFlashAttribute(PROBLEM, CONFLICT_MESSAGE);
+                yield REDIRECT + quotationPath(request.number(), quotationNo);
+            }
+            case RequotationOutcome.NotFound _ -> throw notFound();
+        };
     }
 
     /** 社内承認して提示する。提示したら受付一覧へ戻り、結果を示す（PRG）。 */
@@ -152,11 +251,25 @@ public class StaffQuotationController {
                 yield REDIRECT + quotationPath(transportRequestNumber, quotationNo);
             }
             case PresentationOutcome.Conflict _ -> {
-                redirectAttributes.addFlashAttribute(PROBLEM, "他の利用者が先に更新しました。内容を確かめてください");
+                redirectAttributes.addFlashAttribute(PROBLEM, CONFLICT_MESSAGE);
                 yield REDIRECT + quotationPath(transportRequestNumber, quotationNo);
             }
             case PresentationOutcome.NotFound _ -> throw notFound();
         };
+    }
+
+    private String showCreateForm(TransportRequest request, Model model) {
+        model.addAttribute(FORM_HEADING, "見積りの作成");
+        model.addAttribute(FORM_ACTION, LIST_PATH + "/" + request.number().text() + "/quotations");
+        return showForm(request, model);
+    }
+
+    private String showRequotationForm(TransportRequest request, int quotationNo, Model model) {
+        model.addAttribute(FORM_HEADING, "再見積り（" + QuotationViews.label(request.number(), quotationNo) + " から）");
+        model.addAttribute(FORM_ACTION, quotationPath(request.number(), quotationNo) + "/requotation");
+        model.addAttribute(
+                "requotationNotice", "算出すると、見積 " + quotationNo + " は置換済みになります（有効期限を過ぎていれば失効）。旧版は読み取り専用で残ります。");
+        return showForm(request, model);
     }
 
     private String showForm(TransportRequest request, Model model) {
@@ -197,6 +310,27 @@ public class StaffQuotationController {
             case REPLACED -> subject + " は置換済みです。新しい見積りを使ってください";
         };
     }
+
+    /** 表示する時刻で失効しているときの案内（承認待ちは提示できない、提示済みは使えない）。失効していなければ null。 */
+    private static String expiredNotice(Quotation quotation, UtcInstant now) {
+        if (!quotation.isExpiredAt(now)) {
+            return null;
+        }
+        return switch (quotation.status()) {
+            case PENDING_APPROVAL -> "有効期限を過ぎたため、この見積りは提示できません。再見積りしてください。";
+            case PRESENTED -> "有効期限を過ぎたため、この見積りは使えません。再見積りしてください。";
+            case DRAFT, EXPIRED, REPLACED -> "この見積りは有効期限を過ぎて失効しました。";
+        };
+    }
+
+    /**
+     * 置換先の見積りの表示。
+     *
+     * @param quotationNo 置換先の見積り番号
+     * @param label 置換先の表記（例: TR-2026-0001 見積 2）
+     * @param path 置換先の画面のパス
+     */
+    record Replacement(int quotationNo, String label, String path) {}
 
     private static ResponseStatusException notFound() {
         return new ResponseStatusException(HttpStatus.NOT_FOUND);

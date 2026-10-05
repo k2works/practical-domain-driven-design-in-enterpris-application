@@ -38,14 +38,24 @@ final class QuotationViews {
         };
     }
 
-    /** 見積りの表示。料金根拠・有効期限・経路方針がそろった見積り（承認待ち以後）だけを渡す。 */
-    static View view(Quotation quotation, Function<UtcInstant, String> dateTime) {
+    /**
+     * 見積りの表示。料金根拠・有効期限・経路方針がそろった見積り（承認待ち以後）だけを渡す。
+     * 状態は表示する時刻で判定し、承認待ち・提示済みでも有効期限を過ぎていれば「失効」と示す（Q-INV-07。Bolt 11）。
+     *
+     * @param now 表示する時刻（失効の判定時刻）
+     */
+    static View view(Quotation quotation, Function<UtcInstant, String> dateTime, UtcInstant now) {
         PricingBasis basis = quotation.pricingBasis().orElseThrow();
         RoutePolicy policy = quotation.routePolicy().orElseThrow();
         String currency = basis.currency().name();
+        boolean expired = quotation.isExpiredAt(now);
+        boolean open = quotation.status() == QuotationStatus.PENDING_APPROVAL
+                || quotation.status() == QuotationStatus.PRESENTED;
+        String status = expired ? status(QuotationStatus.EXPIRED) : status(quotation.status());
         return new View(
                 quotation.quotationNo(),
-                status(quotation.status()),
+                status,
+                "見積 " + quotation.quotationNo() + "（" + status + "）",
                 basis.lines().stream()
                         .map(line -> new Line(
                                 line.description(),
@@ -59,7 +69,9 @@ final class QuotationViews {
                         : policy.via().stream().map(Location::unLocode).collect(Collectors.joining("、")),
                 dateTime.apply(policy.departureAt()),
                 dateTime.apply(policy.arrivalAt()),
-                quotation.status() == QuotationStatus.PENDING_APPROVAL);
+                quotation.status() == QuotationStatus.PENDING_APPROVAL && !expired,
+                open,
+                !open || expired);
     }
 
     static String money(BigDecimal amount, String currency) {
@@ -71,25 +83,31 @@ final class QuotationViews {
      * 見積りの表示。
      *
      * @param quotationNo 見積り番号
-     * @param status 状態の表示名
+     * @param status 状態の表示名（表示する時刻で失効していれば「失効」）
+     * @param title 見積りの見出し（例: 見積 1（置換済み））
      * @param lines 料金明細
      * @param total 合計（通貨つき）
      * @param expiresAt 有効期限
      * @param via 主な経由地
      * @param departureAt 概算の出発日時
      * @param arrivalAt 概算の到着日時
-     * @param presentable 社内承認して提示できるか（承認待ち）
+     * @param presentable 社内承認して提示できるか（承認待ちで、失効していない）
+     * @param requotable 再見積りできるか（承認待ち・提示済み。失効したものを含む）
+     * @param readOnly 読み取り専用か（置換済み・失効）
      */
     record View(
             int quotationNo,
             String status,
+            String title,
             List<Line> lines,
             String total,
             String expiresAt,
             String via,
             String departureAt,
             String arrivalAt,
-            boolean presentable) {}
+            boolean presentable,
+            boolean requotable,
+            boolean readOnly) {}
 
     /**
      * 料金明細の 1 行の表示。

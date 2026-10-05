@@ -1,16 +1,22 @@
 package com.example.cargotracker.quotation.interfaces.web;
 
+import com.example.cargotracker.quotation.domain.model.aggregates.Quotation;
 import com.example.cargotracker.quotation.domain.model.valueobjects.Currency;
+import com.example.cargotracker.quotation.domain.model.valueobjects.PricingBasis;
+import com.example.cargotracker.quotation.domain.model.valueobjects.PricingLine;
 import com.example.cargotracker.quotation.domain.model.valueobjects.PricingLineInput;
 import com.example.cargotracker.quotation.domain.model.valueobjects.QuotationInput;
+import com.example.cargotracker.quotation.domain.model.valueobjects.RoutePolicy;
 import com.example.cargotracker.shared.domain.Location;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import java.math.BigDecimal;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import org.springframework.validation.BindingResult;
 
 /**
@@ -25,6 +31,10 @@ final class QuotationFormConverter {
 
     /** 3 桁区切りのカンマを付けた金額（例: 1,234,567.50）。区切りの位置が 3 桁ごとでなければ形式の誤り（Bolt 9・10 レビュー R-09）。 */
     private static final Pattern GROUPED_AMOUNT = Pattern.compile("\\d{1,3}(,\\d{3})+(\\.\\d*)?");
+
+    /** 日時の欄の形（日本時間。算出の画面のヒントと同じ）。 */
+    private static final DateTimeFormatter FORM_DATE_TIME =
+            DateTimeFormatter.ofPattern(TransportRequestFormConverter.DEADLINE_PATTERN);
 
     private QuotationFormConverter() {}
 
@@ -93,5 +103,30 @@ final class QuotationFormConverter {
                         .map(TransportRequestFormConverter::location)
                         .toList());
         return locations == null ? List.of() : locations;
+    }
+
+    /**
+     * 再見積りの初期値にする。旧版の料金明細・通貨・経路方針を移し、有効期限は空にする（新しく決めてもらう。2026-10-05 の決定）。
+     * 日時は算出の画面と同じ日本時間の形で示す。
+     */
+    static QuotationForm toForm(Quotation quotation) {
+        QuotationForm form = new QuotationForm();
+        PricingBasis basis = quotation.pricingBasis().orElseThrow();
+        for (int i = 0; i < basis.lines().size(); i++) {
+            PricingLine line = basis.lines().get(i);
+            QuotationForm.Line row = form.getLines().get(i);
+            row.setDescription(line.description());
+            row.setAmount(line.amount().toPlainString());
+            row.setContractReference(line.reference().orElse(""));
+        }
+        form.setCurrency(basis.currency().name());
+        form.setExpiresAt("");
+        RoutePolicy policy = quotation.routePolicy().orElseThrow();
+        form.setVia(policy.via().stream().map(Location::unLocode).collect(Collectors.joining(", ")));
+        form.setDepartureAt(FORM_DATE_TIME.format(
+                policy.departureAt().instant().atZone(TransportRequestFormConverter.CUSTOMER_ZONE)));
+        form.setArrivalAt(FORM_DATE_TIME.format(
+                policy.arrivalAt().instant().atZone(TransportRequestFormConverter.CUSTOMER_ZONE)));
+        return form;
     }
 }

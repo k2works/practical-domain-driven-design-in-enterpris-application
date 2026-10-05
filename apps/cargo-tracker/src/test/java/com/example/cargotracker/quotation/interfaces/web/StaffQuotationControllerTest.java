@@ -446,18 +446,20 @@ class StaffQuotationControllerTest {
     }
 
     @Test
-    void 再見積りの入力の誤りはエラー要約に示し旧版を変えない() throws Exception {
+    void 再見積りの入力の誤りは再見積りの画面に戻してエラー要約に示す() throws Exception {
         transportRequestExists();
-        given(queryService.find(NUMBER, 1)).willReturn(Optional.of(presented()));
+        given(commandService.requote(any()))
+                .willReturn(new RequotationOutcome.Invalid(
+                        new QuotationViolations(List.of(new Violation(Item.EXPIRES_AT, Reason.MISSING)))));
 
         mockMvc.perform(post("/staff/transport-requests/TR-2026-0001/quotations/1/requotation")
                         .param("currency", "USD"))
                 .andExpect(status().isOk())
                 .andExpect(model().attributeHasFieldErrors("quotationForm", "expiresAt"))
+                .andExpect(content().string(containsString("<h1>再見積り（TR-2026-0001 見積 1 から）</h1>")))
                 .andExpect(content()
                         .string(containsString(
                                 "action=\"/staff/transport-requests/TR-2026-0001/quotations/1/requotation\"")));
-        then(commandService).should(never()).requote(any());
     }
 
     @Test

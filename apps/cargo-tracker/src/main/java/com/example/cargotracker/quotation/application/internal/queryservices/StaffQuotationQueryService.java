@@ -5,6 +5,7 @@ import com.example.cargotracker.quotation.domain.model.aggregates.QuotationRepos
 import com.example.cargotracker.quotation.domain.model.aggregates.TransportRequestRepository;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestNumber;
 import java.util.Comparator;
+import java.util.List;
 import java.util.Optional;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -44,5 +45,14 @@ public class StaffQuotationQueryService {
         return transportRequestRepository
                 .findByNumberForStaff(number)
                 .flatMap(request -> quotationRepository.findByTransportRequestIdAndNo(request.id(), quotationNo));
+    }
+
+    /** 見積依頼の見積りを、見積り番号の順にすべて返す（置換先の見積り番号を示すため。Bolt 11）。見積依頼がなければ空。 */
+    @Transactional(readOnly = true)
+    public List<Quotation> findAll(TransportRequestNumber number) {
+        return transportRequestRepository
+                .findByNumberForStaff(number)
+                .map(request -> quotationRepository.findByTransportRequestId(request.id()))
+                .orElse(List.of());
     }
 }

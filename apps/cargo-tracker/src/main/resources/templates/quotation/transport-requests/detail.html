@@ -40,9 +40,19 @@
          詳細な経路は経路設計者の承認後に確定する旨を示す。社内承認者は見せない（荷主に届く HTML にも書かない）。回答（C-05）は US-24 */-->
     <section th:if="${quotation}" aria-labelledby="quotation-title">
         <h2 id="quotation-title">見積り</h2>
+        <h3 th:text="${quotation.title()}">見積 1（提示済み）</h3>
+        <!--/* 失効・置換済みは読み取り専用で、新しい見積りの依頼のしかたを示す（Bolt 11、US-03 AC5）。回答の画面は US-24 */-->
+        <p th:if="${quotation.readOnly()}" class="alert alert-warning">この見積りは読み取り専用です。新しい見積りは担当営業にご依頼ください。</p>
         <div th:replace="~{quotation/fragments/quotation :: details(${quotation})}"></div>
         <!--/* 回答の画面（C-05、US-24）ができるまでの案内（Bolt 9・10 レビュー R-05、D-33） */-->
-        <p>この見積りへの回答（詳細経路設計へ進む・辞退・相談）は、次の更新で画面からできるようになります。それまでは担当営業にご連絡ください。</p>
+        <p th:unless="${quotation.readOnly()}">この見積りへの回答（詳細経路設計へ進む・辞退・相談）は、次の更新で画面からできるようになります。それまでは担当営業にご連絡ください。</p>
+        <th:block th:unless="${#lists.isEmpty(previousQuotations)}">
+            <h3>以前の見積り（読み取り専用）</h3>
+            <details th:each="previous : ${previousQuotations}">
+                <summary th:text="${previous.title()}">見積 1（置換済み）</summary>
+                <div th:replace="~{quotation/fragments/quotation :: details(${previous})}"></div>
+            </details>
+        </th:block>
     </section>
 
     <!-- 必要書類（Bolt 7）。現在の版の書類だけを示し、ブラウザの中で開かせずダウンロードさせる -->
