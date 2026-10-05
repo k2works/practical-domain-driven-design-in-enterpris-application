@@ -3163,7 +3163,7 @@
     
   
   
-    <span class="md-status md-status--draft"></span>
+    <span class="md-status md-status--stable"></span>
   
 
   
@@ -3890,7 +3890,7 @@
     
   
   
-    <span class="md-status md-status--draft"></span>
+    <span class="md-status md-status--stable"></span>
   
 
   
@@ -7192,6 +7192,10 @@
 <td style="text-align: left;">CI の確認</td>
 <td style="text-align: left;">push した後、次のステップに入る前に CI の結果を確かめる。赤ければ先に直す（Try T-26。Bolt 9 で、赤い CI にステップ 5 まで気づかなかった）</td>
 </tr>
+<tr>
+<td style="text-align: left;">デモの動画</td>
+<td style="text-align: left;">画面を伴う Bolt では、デモ項目に当たる画面の層のシナリオに <code>@demo</code> と <code>@demo-&lt;名前&gt;</code> の印を付け、終了報告の前に <code>./gradlew demoVideo -PdemoBolt=&lt;Bolt&gt;</code> で録画して <code>docs/assets/demo/&lt;Bolt&gt;/</code> に置き、終了報告のデモ項目の表からリンクする。人は承認の場で再生して確かめる（Try T-31。2026-10-05 に human:kakimomokuri が決定）</td>
+</tr>
 </tbody>
 </table>
 <h3 id="_5">テストの種類とレイヤーの対応<a class="headerlink" href="#_5" title="Permanent link">&para;</a></h3>
@@ -7867,6 +7871,11 @@
 <tr>
 <td style="text-align: left;">2026-10-05</td>
 <td style="text-align: left;">Bolt 9 のふりかえりを反映: 開発レビューを各 Bolt の終了報告の前に行う決まり（T-28）と、push の後に CI を確かめる決まり（T-26）を、局面を横断する規律に足した</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5（承認 human:kakimomokuri）</td>
+</tr>
+<tr>
+<td style="text-align: left;">2026-10-05</td>
+<td style="text-align: left;">Bolt 10 のふりかえりを反映: デモ項目の動画を撮って終了報告からリンクする決まり（T-31）を、局面を横断する規律に足した</td>
 <td style="text-align: left;">anthropic/claude-opus-5-5（承認 human:kakimomokuri）</td>
 </tr>
 </tbody>

@@ -2969,7 +2969,7 @@
     
   
   
-    <span class="md-status md-status--draft"></span>
+    <span class="md-status md-status--stable"></span>
   
 
   
@@ -3696,7 +3696,7 @@
     
   
   
-    <span class="md-status md-status--draft"></span>
+    <span class="md-status md-status--stable"></span>
   
 
   
@@ -7120,7 +7120,7 @@
 </ul>
 </li>
 <li>承認（2026-10-05、human:kakimomokuri）: スキーマ（<code>quotation</code>・<code>pricing_line</code>）と、見積り番号の採番・監査の列を作らないことが承認された</li>
-<li>[?] <strong>4. 画面の層（Red → Green）</strong>（承認はステップ 5 とまとめて受ける）</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>4. 画面の層（Red → Green）</strong>（承認はステップ 5 とまとめて受ける）</li>
 <li>画面の層の受入シナリオを先に書き、<code>uiTest</code> で失敗を記録する（T-21。<code>features/ui/present_quotation_ui.feature</code>、<code>@ui @US-03</code>）<ul>
 <li>主成功: 営業担当者が S-03 で審査を確定すると S-04 が開き、料金明細・有効期限・経路方針を入れて算出し、社内承認して提示する。荷主が C-04 を開くと見積りの節に料金根拠・有効期限（Asia/Tokyo（UTC+09:00））・経路方針・確定の旨が出る。キー操作だけで行える</li>
 <li>画面に固有の条件: 料金明細を空にして算出すると、エラー要約にフォーカスが移り、入力が残る</li>
@@ -7137,7 +7137,7 @@
 <li>画面の層のシナリオは 35 件すべて passed（Bolt 9 の 30 件から +5）、axe-core の違反 0 件。<code>check</code> 緑（テスト 587 件）</li>
 </ul>
 </li>
-<li>[?] <strong>5. 開発レビューと Bolt 終了報告</strong></li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>5. 開発レビューと Bolt 終了報告</strong></li>
 <li><code>developing-review</code> で Bolt 10 の変更（と Bolt 9 の変更）をレビューし、指摘への対応を決める（T-28）</li>
 <li><code>check</code>・<code>uiTest</code>・CI・SonarQube の品質ゲート（PASS）を確かめる</li>
 <li><code>bolt_10_report.md</code> を書く（仮説 H1〜H3 の結論、各ステップの開始と完了の時刻、Red の記録）。ステップ 4 の結果をここでまとめて報告する</li>
@@ -7279,14 +7279,14 @@
 <h2 id="_14">完了条件<a class="headerlink" href="#_14" title="Permanent link">&para;</a></h2>
 <h3 id="definition-of-done">Definition of Done<a class="headerlink" href="#definition-of-done" title="Permanent link">&para;</a></h3>
 <ul class="task-list">
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> ステップ 1〜5 が完了し、計画・ステップ 2・ステップ 3・終了報告の承認ゲートを人が通した</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <code>./gradlew check</code> と <code>./gradlew uiTest</code> がローカルと CI の両方で緑。各ステップの終わりに push し、CI を確かめた</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> SonarQube の品質ゲートが PASS</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> 業務ルール層で AC1〜AC3 と Q-INV-18・Q-INV-08 のシナリオが緑。画面の層で主成功と画面に固有の条件が緑</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> 確認ポイント 1〜6 の決定が、設計文書から追える</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> 開発レビューを行い、指摘への対応を終了報告に書いた（T-28）</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <code>bolt_10_report.md</code> に仮説 H1〜H3 の結論と、各ステップの時刻と Red の記録を書いた</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> ユーザーマニュアルは更新しない（マニュアルはまだない。認証と主要な画面がそろってから書く）</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> ステップ 1〜5 が完了し、計画・ステップ 2・ステップ 3・終了報告の承認ゲートを人が通した</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <code>./gradlew check</code> と <code>./gradlew uiTest</code> がローカルと CI の両方で緑。各ステップの終わりに push し、CI を確かめた</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> SonarQube の品質ゲートが PASS</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> 業務ルール層で AC1〜AC3 と Q-INV-18・Q-INV-08 のシナリオが緑。画面の層で主成功と画面に固有の条件が緑</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> 確認ポイント 1〜6 の決定が、設計文書から追える</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> 開発レビューを行い、指摘への対応を終了報告に書いた（T-28）</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <code>bolt_10_report.md</code> に仮説 H1〜H3 の結論と、各ステップの時刻と Red の記録を書いた</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> ユーザーマニュアルは更新しない（マニュアルはまだない。認証と主要な画面がそろってから書く）</li>
 </ul>
 <h3 id="_15">デモ項目<a class="headerlink" href="#_15" title="Permanent link">&para;</a></h3>
 <table>
@@ -7335,6 +7335,12 @@
 <tr>
 <td style="text-align: left;">2026-10-05</td>
 <td style="text-align: left;">計画を承認。確認ポイント 1〜6（表と NULL 可の列、料金根拠の明細と通貨、有効期限と経路方針、DE-03 での状態の更新、S-04 の URL と流れ、見積りは 1 つ）も決まった（Try T-6）</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5</td>
+<td style="text-align: left;">human:kakimomokuri</td>
+</tr>
+<tr>
+<td style="text-align: left;">2026-10-05</td>
+<td style="text-align: left;">ステップ 1・2、ステップ 3（スキーマ）、開発レビューの判断の承認ゲートと、ステップ 4・5 をまとめた終了報告の承認を通し、Bolt を終えた（人の変更依頼 0）</td>
 <td style="text-align: left;">anthropic/claude-opus-5-5</td>
 <td style="text-align: left;">human:kakimomokuri</td>
 </tr>
