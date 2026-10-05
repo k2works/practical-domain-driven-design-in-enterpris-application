@@ -4,7 +4,7 @@ title: "ADR-003: コンテキスト間は冪等コマンド・永続化したド
 description: "ARCH-HO-01・ARCH-HO-02 を満たすため、冪等なコマンドと期待版、永続化して再配信できるドメインイベント、オーケストレーション型の予約サガを採用する決定。"
 tags: [adr, architecture]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-02T01:04:33Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-05T05:58:18Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T07:11:13Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:01:36Z }
@@ -88,10 +88,12 @@ verified:
 - 同じ `commandId` を 2 回送っても結果が 1 つになることを統合テストで確認する。
 - イベントの購読前にアプリケーションを止めて再起動しても、イベントが失われず二重処理もされないことを統合テストで確認する。
 - 可観測性で、未完了の配信件数と滞留時間、止まったサガの件数を監視する。
+- 完了していない配信は、起動のときに配り直す（`spring.modulith.events.republish-outstanding-events-on-restart=true`。2026-10-05、Bolt 10）。再起動しない間の定期の再配信は運用準備（W10、#28）で入れる。
 
 ## 改訂の経緯
 
 - 2026-10-02: ドメインイベントの表し方（D-1）を補足の決定に追加した。Bolt 2 で実装した規則（`DomainEventArchitectureTest`）を human:kakimomokuri が承認した。
+- 2026-10-05: DE-03 の受け取りが集約の状態を変えるため、起動のときの再配信を有効にした（Bolt 9・10 レビュー R-03、D-32。human:kakimomokuri が決定）。定期の再配信は W10。
 
 ## 備考
 

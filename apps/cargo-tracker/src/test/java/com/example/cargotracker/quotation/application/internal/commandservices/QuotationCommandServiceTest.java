@@ -138,11 +138,10 @@ class QuotationCommandServiceTest {
                 throw new DuplicateQuotationException(quotation.transportRequestId(), quotation.quotationNo());
             }
         };
-        QuotationCommandService racingService =
-                new QuotationCommandService(transportRequests, racing, published::add, Clock.fixed(NOW, ZoneOffset.UTC));
+        QuotationCommandService racingService = new QuotationCommandService(
+                transportRequests, racing, published::add, Clock.fixed(NOW, ZoneOffset.UTC));
 
         assertThat(racingService.calculate(new CalculateQuotationCommand(NUMBER, QuotationFixture.completeInput())))
                 .isEqualTo(new CalculationOutcome.Rejected(QuotationRejection.ALREADY_QUOTED));
     }
 }
-

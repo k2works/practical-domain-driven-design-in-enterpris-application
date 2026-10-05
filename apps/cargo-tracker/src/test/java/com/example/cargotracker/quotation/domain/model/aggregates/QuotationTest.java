@@ -67,10 +67,10 @@ class QuotationTest {
     @Test
     void 承認待ちでない見積りは算出し直せない() {
         Quotation quotation = created();
-        quotation.calculate(QuotationFixture.completeInput(), now);
+        QuotationInput input = QuotationFixture.completeInput();
+        quotation.calculate(input, now);
 
-        assertThatThrownBy(() -> quotation.calculate(QuotationFixture.completeInput(), now))
-                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> quotation.calculate(input, now)).isInstanceOf(IllegalStateException.class);
     }
 
     @Test

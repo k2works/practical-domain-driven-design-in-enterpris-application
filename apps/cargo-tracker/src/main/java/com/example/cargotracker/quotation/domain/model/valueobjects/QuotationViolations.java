@@ -77,6 +77,10 @@ public record QuotationViolations(List<Violation> violations) {
         AMOUNT_MISSING,
         /** 明細の金額が 0 以下。 */
         AMOUNT_NOT_POSITIVE,
+        /** 明細の金額が整数部 13 桁を超える（表の NUMERIC(15,2)）。 */
+        AMOUNT_TOO_LARGE,
+        /** 明細の合計が整数部 13 桁を超える。 */
+        TOTAL_TOO_LARGE,
         /** 明細の金額が小数点以下 3 桁以上。 */
         AMOUNT_TOO_MANY_DECIMALS,
         /** 参照した契約条件が 200 文字を超える。 */

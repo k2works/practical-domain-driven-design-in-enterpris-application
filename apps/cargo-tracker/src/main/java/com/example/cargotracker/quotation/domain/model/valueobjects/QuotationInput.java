@@ -32,6 +32,8 @@ public record QuotationInput(
 
     private static final int MAX_TEXT = 200;
     private static final int AMOUNT_SCALE = 2;
+    /** 金額と合計の整数部の桁の上限（表の NUMERIC(15,2) に収める。Bolt 9・10 レビュー R-01）。 */
+    private static final int MAX_INTEGER_DIGITS = 13;
 
     public QuotationInput {
         lines = List.copyOf(lines);
@@ -86,6 +88,17 @@ public record QuotationInput(
         for (int i = 0; i < lines.size(); i++) {
             validateLine(lines.get(i), i + 1, violations);
         }
+        boolean amountsValid = violations.stream().noneMatch(violation -> violation.item() == Item.PRICING_LINES);
+        if (amountsValid
+                && integerDigits(lines.stream().map(PricingLineInput::amount).reduce(BigDecimal.ZERO, BigDecimal::add))
+                        > MAX_INTEGER_DIGITS) {
+            violations.add(new Violation(Item.PRICING_LINES, Reason.TOTAL_TOO_LARGE));
+        }
+    }
+
+    /** 整数部の桁の数。指数の表記の巨大な値でも、桁を作らずに求める（{@code setScale} しない）。 */
+    private static long integerDigits(BigDecimal value) {
+        return (long) value.precision() - value.scale();
     }
 
     private static void validateLine(PricingLineInput line, int lineNo, List<Violation> violations) {
@@ -100,6 +113,8 @@ public record QuotationInput(
             violations.add(new Violation(Item.PRICING_LINES, Reason.AMOUNT_MISSING, lineNo));
         } else if (amount.signum() <= 0) {
             violations.add(new Violation(Item.PRICING_LINES, Reason.AMOUNT_NOT_POSITIVE, lineNo));
+        } else if (integerDigits(amount) > MAX_INTEGER_DIGITS) {
+            violations.add(new Violation(Item.PRICING_LINES, Reason.AMOUNT_TOO_LARGE, lineNo));
         } else if (amount.stripTrailingZeros().scale() > AMOUNT_SCALE) {
             violations.add(new Violation(Item.PRICING_LINES, Reason.AMOUNT_TOO_MANY_DECIMALS, lineNo));
         }

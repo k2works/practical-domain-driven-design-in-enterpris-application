@@ -3,6 +3,7 @@ package com.example.cargotracker.quotation.application.internal.commandservices;
 import com.example.cargotracker.quotation.application.internal.commands.CalculateQuotationCommand;
 import com.example.cargotracker.quotation.application.internal.commands.PresentQuotationCommand;
 import com.example.cargotracker.quotation.domain.model.aggregates.ConcurrentQuotationUpdateException;
+import com.example.cargotracker.quotation.domain.model.aggregates.DuplicateQuotationException;
 import com.example.cargotracker.quotation.domain.model.aggregates.Quotation;
 import com.example.cargotracker.quotation.domain.model.aggregates.QuotationRepository;
 import com.example.cargotracker.quotation.domain.model.aggregates.TransportRequest;
@@ -76,7 +77,12 @@ public class QuotationCommandService {
         if (violations.isPresent()) {
             return new CalculationOutcome.Invalid(violations.get());
         }
-        quotationRepository.save(quotation);
+        try {
+            quotationRepository.save(quotation);
+        } catch (DuplicateQuotationException _) {
+            // 同時の算出で、ほかの見積りが先に保存された（Q-INV-18。Bolt 9・10 レビュー R-02）
+            return new CalculationOutcome.Rejected(QuotationRejection.ALREADY_QUOTED);
+        }
         return new CalculationOutcome.Calculated(command.number(), quotationNo);
     }
 

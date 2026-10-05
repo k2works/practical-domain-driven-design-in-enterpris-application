@@ -41,14 +41,18 @@ final class QuotationFormConverter {
                     line.getDescription(),
                     TransportRequestFormConverter.parse(
                             line.getAmount(),
-                            "lines[" + row + "].amount",
+                            QuotationViolationMessages.LINES_PREFIX + row + "].amount",
                             errors,
                             AMOUNT_FORMAT_MESSAGE,
                             BigDecimal::new),
                     line.getContractReference()));
         }
         Currency currency = TransportRequestFormConverter.parse(
-                form.getCurrency(), "currency", errors, "選択肢から選んでください", Currency::valueOf);
+                form.getCurrency(),
+                "currency",
+                errors,
+                TransportRequestFormConverter.CHOICE_MESSAGE,
+                Currency::valueOf);
         UtcInstant expiresAt = dateTime(form.getExpiresAt(), "expiresAt", errors);
         List<Location> via = via(form.getVia(), errors);
         UtcInstant departureAt = dateTime(form.getDepartureAt(), "departureAt", errors);

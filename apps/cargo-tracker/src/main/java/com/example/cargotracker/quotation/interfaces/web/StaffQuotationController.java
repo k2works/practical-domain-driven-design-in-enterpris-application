@@ -38,6 +38,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 public class StaffQuotationController {
 
     private static final String LIST_PATH = "/staff/transport-requests";
+    private static final String REDIRECT = "redirect:";
     private static final String FORM_VIEW = "quotation/staff/quotations/new";
     private static final String SHOW_VIEW = "quotation/staff/quotations/show";
     private static final String RESULT = "result";
@@ -62,11 +63,19 @@ public class StaffQuotationController {
         this.provisionalConsignees = provisionalConsignees;
     }
 
-    /** S-04 見積りの作成。 */
+    /**
+     * S-04 見積りの作成。見積依頼に作成中・承認待ち・提示済みの見積りがあれば、作成画面でなくその見積りへ移す
+     * （算出した後に画面を離れても、受付一覧の見積り作成中から戻れる。Bolt 9・10 レビュー R-04）。
+     */
     @GetMapping("/new")
     public String newQuotation(@PathVariable String number, Model model) {
+        TransportRequest request = findTransportRequest(number);
+        Optional<Quotation> active = queryService.findActive(request.number());
+        if (active.isPresent()) {
+            return REDIRECT + quotationPath(request.number(), active.get().quotationNo());
+        }
         model.addAttribute("quotationForm", new QuotationForm());
-        return showForm(findTransportRequest(number), model);
+        return showForm(request, model);
     }
 
     /** 見積りを作って算出する。算出したら算出した見積りの画面へ移り（PRG）、誤りがあれば入力を残してエラー要約で示す（AC3）。 */
@@ -87,15 +96,22 @@ public class StaffQuotationController {
             case CalculationOutcome.Calculated(TransportRequestNumber calculated, int quotationNo) -> {
                 redirectAttributes.addFlashAttribute(
                         RESULT, QuotationViews.label(calculated, quotationNo) + " を算出しました。内容を確かめて社内承認してください");
-                yield "redirect:" + quotationPath(calculated, quotationNo);
+                yield REDIRECT + quotationPath(calculated, quotationNo);
             }
             case CalculationOutcome.Invalid(QuotationViolations violations) -> {
                 QuotationViolationMessages.reject(violations, bindingResult, rowsOfLines);
                 yield showForm(request, model);
             }
             case CalculationOutcome.Rejected(QuotationRejection reason) -> {
+                Optional<Quotation> active = queryService.findActive(request.number());
+                if (reason == QuotationRejection.ALREADY_QUOTED && active.isPresent()) {
+                    redirectAttributes.addFlashAttribute(
+                            PROBLEM, request.number().text() + " にはすでに見積りがあります。その見積りを示します");
+                    yield REDIRECT
+                            + quotationPath(request.number(), active.get().quotationNo());
+                }
                 redirectAttributes.addFlashAttribute(PROBLEM, rejection(request.number(), reason));
-                yield "redirect:" + LIST_PATH;
+                yield REDIRECT + LIST_PATH;
             }
             case CalculationOutcome.NotFound _ -> throw notFound();
         };
@@ -127,16 +143,16 @@ public class StaffQuotationController {
                 new PresentQuotationCommand(transportRequestNumber, quotationNo, approver))) {
             case PresentationOutcome.Presented(TransportRequestNumber presented, int presentedNo) -> {
                 redirectAttributes.addFlashAttribute(RESULT, QuotationViews.label(presented, presentedNo) + " を提示しました");
-                yield "redirect:" + LIST_PATH;
+                yield REDIRECT + LIST_PATH;
             }
             case PresentationOutcome.Rejected _ -> {
                 redirectAttributes.addFlashAttribute(
                         PROBLEM, QuotationViews.label(transportRequestNumber, quotationNo) + " は承認待ちでないため提示できません");
-                yield "redirect:" + quotationPath(transportRequestNumber, quotationNo);
+                yield REDIRECT + quotationPath(transportRequestNumber, quotationNo);
             }
             case PresentationOutcome.Conflict _ -> {
                 redirectAttributes.addFlashAttribute(PROBLEM, "他の利用者が先に更新しました。内容を確かめてください");
-                yield "redirect:" + quotationPath(transportRequestNumber, quotationNo);
+                yield REDIRECT + quotationPath(transportRequestNumber, quotationNo);
             }
             case PresentationOutcome.NotFound _ -> throw notFound();
         };

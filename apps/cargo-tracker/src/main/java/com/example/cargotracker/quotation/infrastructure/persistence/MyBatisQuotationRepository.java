@@ -1,6 +1,7 @@
 package com.example.cargotracker.quotation.infrastructure.persistence;
 
 import com.example.cargotracker.quotation.domain.model.aggregates.ConcurrentQuotationUpdateException;
+import com.example.cargotracker.quotation.domain.model.aggregates.DuplicateQuotationException;
 import com.example.cargotracker.quotation.domain.model.aggregates.Quotation;
 import com.example.cargotracker.quotation.domain.model.aggregates.QuotationRepository;
 import com.example.cargotracker.quotation.domain.model.valueobjects.Currency;
@@ -22,7 +23,10 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * 見積りのリポジトリの MyBatis 実装。見積りと料金明細の表を組み立てて集約にする（Bolt 10）。
@@ -40,9 +44,18 @@ public class MyBatisQuotationRepository implements QuotationRepository {
         this.mapper = mapper;
     }
 
+    /**
+     * 新しい見積りを保存する。同時の算出で UK に違反したら、セーブポイントに戻してドメインの例外にする
+     * （PostgreSQL は制約違反でトランザクションを中断するため。呼び出し側のトランザクションは続けられる。R-02）。
+     */
     @Override
+    @Transactional(propagation = Propagation.NESTED)
     public void save(Quotation quotation) {
-        mapper.insertQuotation(toRow(quotation, quotation.aggregateVersion()));
+        try {
+            mapper.insertQuotation(toRow(quotation, quotation.aggregateVersion()));
+        } catch (DuplicateKeyException _) {
+            throw new DuplicateQuotationException(quotation.transportRequestId(), quotation.quotationNo());
+        }
         quotation.pricingBasis().ifPresent(basis -> {
             for (int i = 0; i < basis.lines().size(); i++) {
                 PricingLine line = basis.lines().get(i);

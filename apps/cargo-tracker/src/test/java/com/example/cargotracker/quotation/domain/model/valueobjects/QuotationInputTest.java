@@ -190,4 +190,3 @@ class QuotationInputTest {
                 .containsExactly(new QuotationViolations.Violation(Item.PRICING_LINES, Reason.TOTAL_TOO_LARGE));
     }
 }
-

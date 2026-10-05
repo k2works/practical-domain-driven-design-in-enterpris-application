@@ -35,6 +35,7 @@ final class TransportRequestFormConverter {
 
     private static final DateTimeFormatter DEADLINE_FORMAT =
             DateTimeFormatter.ofPattern(DEADLINE_PATTERN).withResolverStyle(ResolverStyle.STRICT);
+    static final String CHOICE_MESSAGE = "選択肢から選んでください";
     static final String LOCATION_FORMAT_MESSAGE = "UN/LOCODE（国コード 2 文字 + 地点コード 3 文字、例: JPTYO）で入力してください";
 
     private TransportRequestFormConverter() {}
@@ -45,7 +46,7 @@ final class TransportRequestFormConverter {
     static Optional<ShipmentTermsInput> convert(
             TransportRequestForm form, ProvisionalConsigneeProperties consignees, BindingResult errors) {
         ShipmentTermsInput input = new ShipmentTermsInput(
-                parse(form.getConsignee(), "consignee", errors, "選択肢から選んでください", text -> {
+                parse(form.getConsignee(), "consignee", errors, CHOICE_MESSAGE, text -> {
                     UUID id = UUID.fromString(text);
                     return consignees
                             .find(id)
@@ -70,8 +71,8 @@ final class TransportRequestFormConverter {
                         errors,
                         "2026-11-02 09:00 の形（日本時間）で入力してください",
                         TransportRequestFormConverter::deadline),
-                parse(form.getCargoCategory(), "cargoCategory", errors, "選択肢から選んでください", CargoCategory::valueOf),
-                parse(form.getPackageType(), "packageType", errors, "選択肢から選んでください", PackageType::valueOf),
+                parse(form.getCargoCategory(), "cargoCategory", errors, CHOICE_MESSAGE, CargoCategory::valueOf),
+                parse(form.getPackageType(), "packageType", errors, CHOICE_MESSAGE, PackageType::valueOf),
                 parse(form.getPackageCount(), "packageCount", errors, "1 以上の整数で入力してください", Integer::valueOf),
                 parse(form.getGrossWeightKg(), "grossWeightKg", errors, "数字で入力してください", BigDecimal::new),
                 parse(form.getVolumeM3(), "volumeM3", errors, "数字で入力してください", BigDecimal::new));

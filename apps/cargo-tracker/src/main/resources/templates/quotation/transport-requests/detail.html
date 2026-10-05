@@ -41,6 +41,8 @@
     <section th:if="${quotation}" aria-labelledby="quotation-title">
         <h2 id="quotation-title">見積り</h2>
         <div th:replace="~{quotation/fragments/quotation :: details(${quotation})}"></div>
+        <!--/* 回答の画面（C-05、US-24）ができるまでの案内（Bolt 9・10 レビュー R-05、D-33） */-->
+        <p>この見積りへの回答（詳細経路設計へ進む・辞退・相談）は、次の更新で画面からできるようになります。それまでは担当営業にご連絡ください。</p>
     </section>
 
     <!-- 必要書類（Bolt 7）。現在の版の書類だけを示し、ブラウザの中で開かせずダウンロードさせる -->

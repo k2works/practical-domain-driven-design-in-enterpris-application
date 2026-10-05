@@ -4,6 +4,7 @@ import com.example.cargotracker.quotation.domain.model.aggregates.Quotation;
 import com.example.cargotracker.quotation.domain.model.aggregates.QuotationRepository;
 import com.example.cargotracker.quotation.domain.model.aggregates.TransportRequestRepository;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestNumber;
+import java.util.Comparator;
 import java.util.Optional;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,6 +26,16 @@ public class StaffQuotationQueryService {
             TransportRequestRepository transportRequestRepository, QuotationRepository quotationRepository) {
         this.transportRequestRepository = transportRequestRepository;
         this.quotationRepository = quotationRepository;
+    }
+
+    /** 見積依頼の、作成中・承認待ち・提示済みの見積り（1 つだけ。Q-INV-18）。算出した後に画面を離れても戻れるようにする（R-04）。 */
+    @Transactional(readOnly = true)
+    public Optional<Quotation> findActive(TransportRequestNumber number) {
+        return transportRequestRepository
+                .findByNumberForStaff(number)
+                .flatMap(request -> quotationRepository.findByTransportRequestId(request.id()).stream()
+                        .filter(Quotation::isActive)
+                        .max(Comparator.comparingInt(Quotation::quotationNo)));
     }
 
     /** 業務番号と見積り番号で見積りを照会する。 */

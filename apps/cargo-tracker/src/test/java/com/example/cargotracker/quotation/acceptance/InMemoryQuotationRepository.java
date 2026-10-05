@@ -1,6 +1,7 @@
 package com.example.cargotracker.quotation.acceptance;
 
 import com.example.cargotracker.quotation.domain.model.aggregates.ConcurrentQuotationUpdateException;
+import com.example.cargotracker.quotation.domain.model.aggregates.DuplicateQuotationException;
 import com.example.cargotracker.quotation.domain.model.aggregates.Quotation;
 import com.example.cargotracker.quotation.domain.model.aggregates.QuotationRepository;
 import com.example.cargotracker.quotation.domain.model.valueobjects.QuotationId;
@@ -27,8 +28,11 @@ public class InMemoryQuotationRepository implements QuotationRepository {
         boolean duplicatedNo = store.values().stream()
                 .anyMatch(stored -> stored.transportRequestId().equals(quotation.transportRequestId())
                         && stored.quotationNo() == quotation.quotationNo());
-        if (duplicatedNo || store.containsKey(quotation.id())) {
+        if (store.containsKey(quotation.id())) {
             throw new IllegalStateException("見積りは既に保存されています: " + quotation.id());
+        }
+        if (duplicatedNo) {
+            throw new DuplicateQuotationException(quotation.transportRequestId(), quotation.quotationNo());
         }
         store.put(quotation.id(), snapshot(quotation, quotation.aggregateVersion()));
     }

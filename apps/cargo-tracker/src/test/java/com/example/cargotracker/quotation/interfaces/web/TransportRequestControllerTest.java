@@ -398,8 +398,8 @@ class TransportRequestControllerTest {
                 .andExpect(content().string(not(containsString("（UTC 2099-10-08 09:00）"))))
                 .andExpect(content().string(containsString("詳細な経路は、経路設計者の承認後に確定します。")))
                 .andExpect(content()
-                        .string(containsString("この見積りへの回答（詳細経路設計へ進む・辞退・相談）は、次の更新で画面からできるようになります。"
-                                + "それまでは担当営業にご連絡ください。")))
+                        .string(containsString(
+                                "この見積りへの回答（詳細経路設計へ進む・辞退・相談）は、次の更新で画面からできるようになります。" + "それまでは担当営業にご連絡ください。")))
                 .andExpect(content().string(not(containsString("承認者"))));
     }
 

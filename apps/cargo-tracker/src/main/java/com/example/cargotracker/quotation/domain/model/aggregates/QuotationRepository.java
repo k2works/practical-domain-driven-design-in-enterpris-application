@@ -10,7 +10,11 @@ import java.util.Optional;
  */
 public interface QuotationRepository {
 
-    /** 新しい見積りを保存する。同じ輸送要求の同じ見積り番号は保存できない（UK）。 */
+    /**
+     * 新しい見積りを保存する。同じ輸送要求の同じ見積り番号は保存できない（UK）。
+     *
+     * @throws DuplicateQuotationException 同じ見積り番号の見積りが先に保存されていた（同時の算出）
+     */
     void save(Quotation quotation);
 
     /**
