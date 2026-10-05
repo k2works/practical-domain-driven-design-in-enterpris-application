@@ -16,7 +16,7 @@
         <link rel="prev" href="../bolt_09_report/">
       
       
-        <link rel="next" href="../../../operation/">
+        <link rel="next" href="../bolt_10_report/">
       
       
         
@@ -2940,6 +2940,41 @@
   
 </nav>
       
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../bolt_10_report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 10 終了報告
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--draft"></span>
+  
+
+  
+
+      </a>
     </li>
   
 
@@ -7102,10 +7137,11 @@
 <li>画面の層のシナリオは 35 件すべて passed（Bolt 9 の 30 件から +5）、axe-core の違反 0 件。<code>check</code> 緑（テスト 587 件）</li>
 </ul>
 </li>
-<li>[-] <strong>5. 開発レビューと Bolt 終了報告</strong></li>
+<li>[?] <strong>5. 開発レビューと Bolt 終了報告</strong></li>
 <li><code>developing-review</code> で Bolt 10 の変更（と Bolt 9 の変更）をレビューし、指摘への対応を決める（T-28）</li>
 <li><code>check</code>・<code>uiTest</code>・CI・SonarQube の品質ゲート（PASS）を確かめる</li>
 <li><code>bolt_10_report.md</code> を書く（仮説 H1〜H3 の結論、各ステップの開始と完了の時刻、Red の記録）。ステップ 4 の結果をここでまとめて報告する</li>
+<li>結果（2026-10-05 14:30〜15:15）: <code>developing-review</code> で Bolt 9・10 の変更をレビューし（<a href="../../../review/cargo-tracker/bolt_09-10_review_20261005/">レビュー</a>）、人の判断で重要度「高」の R-01〜R-05 と SonarQube の指摘を直した（<code>ee21d23</code> で Red、<code>f21b2fe</code> で Green）。中・低は Bolt 11 の最初に回した。SonarQube の品質ゲートは 2 回不合格になり（Code Smell 5 件、2 件）、直して PASS にした。人の依頼で、デモ項目のシナリオ 2 本を <code>./gradlew demoVideo -PdemoBolt=bolt-10</code> で録画し、<a href="../bolt_10_report/">Bolt 10 終了報告</a> からリンクした。<code>check</code>・<code>uiTest</code>・CI は緑</li>
 </ul>
 <h3 id="_12">時間の配分と打ち切り<a class="headerlink" href="#_12" title="Permanent link">&para;</a></h3>
 <table>
