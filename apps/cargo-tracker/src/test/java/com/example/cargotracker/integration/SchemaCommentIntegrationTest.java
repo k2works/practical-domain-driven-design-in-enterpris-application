@@ -41,8 +41,8 @@ class SchemaCommentIntegrationTest {
                         + " WHERE c.relkind = 'r' AND n.nspname IN (" + BUSINESS_SCHEMAS + ")"
                         + " AND c.relname <> 'flyway_schema_history'");
 
-        assertThat(comments).isNotEmpty();
         assertThat(comments)
+                .isNotEmpty()
                 .allSatisfy((table, comment) ->
                         assertThat(comment).as("%s の表のコメント", table).isNotNull().containsPattern(JAPANESE));
     }
@@ -56,8 +56,8 @@ class SchemaCommentIntegrationTest {
                 + " WHERE c.table_schema IN (" + BUSINESS_SCHEMAS + ") AND t.table_type = 'BASE TABLE'"
                 + " AND c.table_name <> 'flyway_schema_history'");
 
-        assertThat(comments).isNotEmpty();
         assertThat(comments)
+                .isNotEmpty()
                 .allSatisfy((column, comment) ->
                         assertThat(comment).as("%s の列のコメント", column).isNotNull().containsPattern(JAPANESE));
     }

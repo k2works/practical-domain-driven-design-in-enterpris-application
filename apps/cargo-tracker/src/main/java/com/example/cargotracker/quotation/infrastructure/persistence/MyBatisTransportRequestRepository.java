@@ -69,10 +69,10 @@ public class MyBatisTransportRequestRepository implements TransportRequestReposi
                     transportRequest.id(), transportRequest.aggregateVersion());
         }
         // 読み込んだ後に作った版（再提出）があるときだけ、版と書類の行を追加する（新しい事実だけを書く。Bolt 6〜8 レビュー R-07）
-        if (transportRequest.newVersion().isPresent()) {
+        transportRequest.newVersion().ifPresent(version -> {
             mapper.insertTransportRequestVersion(toRow(transportRequest));
-            insertDocuments(transportRequest.id(), transportRequest.newVersion().get());
-        }
+            insertDocuments(transportRequest.id(), version);
+        });
         // 読み込んだ後に足した審査記録だけを追加する（往復の回数を履歴の件数に比例させない。Bolt 5 レビュー R-03）
         transportRequest
                 .newReviewRecords()
