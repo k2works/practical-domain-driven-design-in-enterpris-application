@@ -1,6 +1,6 @@
 ---
 name: cargo-tracker-review-points
-description: cargo-tracker のドキュメント・画面レビューで繰り返し見るべき論点（用語の併記、報告書の数値・時刻の検証方法、手順書の環境依存値、承認済み文書の書き換え、決定と画面の食い違い、エラー要約の文言）。Bolt 5（2026-10-02）時点
+description: cargo-tracker のドキュメント・画面レビューで繰り返し見るべき論点（用語の併記、報告書の数値・時刻の検証方法、手順書の環境依存値、承認済み文書の書き換え、決定と画面の食い違い、エラー要約の文言）。Bolt 10（2026-10-05）時点
 metadata:
   type: project
 ---
@@ -19,6 +19,7 @@ Bolt 1〜3（2026-10-01〜02）のレビューで見つかった、以降の Bol
 - `sonar-local:gate`/`check` は Bolt 2 レビュー後、OK 以外で失敗するよう直り、scan は `sonar.qualitygate.wait=true`（2026-10-02 確認）
 - status: stable・verified 済みの文書（ADR、設計、要件）を AI が決定の反映で書き換えるとき、generated だけ更新して verified や更新履歴が付かないことがある。承認待ちの印（履歴行・log）があるかを見る
 - 計画・release_plan のチェックボックスが、終了報告の人の承認前に [x] にされがち。また「開発基盤」など上位項目が [ ] のまま残る
+- Bolt 10（2026-10-05）: 計画の状態の記号に `[?]` 承認待ちがあるのに、承認を次のステップとまとめるステップを `[x]` にする。画面イメージ（salt）の入力例と実装の受け付ける形がずれる（金額の 3 桁区切りを salt に書くが変換は BigDecimal で弾く）。データモデルの「NOT NULL を CHECK で守る列」の列挙がマイグレーションの CHECK と 1 列ずれる。画面一覧（ui_design の表の行 119 など）と URL の表で Bolt の追記が片方だけになる
 - apps/cargo-tracker/README.md と docs/operation/cargo-tracker/application_development_setup.md は Bolt 3 で作成済み。運用スクリプトやビルドを変えたコミットでは手順書の差分を確認する
 
 **Why:** AI が自律実行で作る成果物は、設計書の横断ルールを骨格の段階で落としやすく、報告書もコードの後追いになりやすい。
