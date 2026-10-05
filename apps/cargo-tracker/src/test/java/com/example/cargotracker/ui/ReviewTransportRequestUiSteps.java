@@ -62,6 +62,7 @@ public class ReviewTransportRequestUiSteps {
         switch (screen) {
             case "受付一覧" -> open("/staff/transport-requests");
             case "提出した見積依頼の審査画面" -> open("/staff/transport-requests/" + number());
+            case "提出した見積依頼の見積り画面" -> open("/staff/transport-requests/" + number() + "/quotations/1");
             default -> throw new IllegalArgumentException("シナリオの画面名: " + screen);
         }
     }
@@ -83,9 +84,10 @@ public class ReviewTransportRequestUiSteps {
                 .isVisible();
     }
 
-    @ならば("受付一覧に提出した見積依頼が表示されない")
-    public void 受付一覧に表示されない() {
-        assertThat(page().getByRole(AriaRole.LINK, new Page.GetByRoleOptions().setName(number())))
+    @ならば("受付一覧の審査中に提出した見積依頼が表示されない")
+    public void 受付一覧の審査中に表示されない() {
+        assertThat(page().getByRole(AriaRole.REGION, new Page.GetByRoleOptions().setName("審査中の見積依頼（最初の提出時刻の古い順）"))
+                        .getByRole(AriaRole.LINK, new Locator.GetByRoleOptions().setName(number())))
                 .hasCount(0);
     }
 
@@ -104,16 +106,10 @@ public class ReviewTransportRequestUiSteps {
         page().keyboard().type(rationale);
         page().keyboard().press("Tab");
         assertThat(button("審査を確定する")).isFocused();
-        // 確定すると受付一覧へリダイレクトする（PRG）。移り終わってから検査する
+        // 確定すると見積りの作成（S-04）へリダイレクトする（PRG。Bolt 10）。移り終わってから検査する
         page().keyboard().press("Enter");
-        page().waitForURL("**/staff/transport-requests");
+        page().waitForURL("**/staff/transport-requests/" + number() + "/quotations/new");
         browser.checkAccessibility();
-    }
-
-    @ならば("受付一覧に提出した見積依頼の審査を確定したことが表示される")
-    public void 確定したことが表示される() {
-        // Playwright の正規表現はブラウザ（JavaScript）で評価され、Java の Pattern.quote（\Q...\E）が効かないため文字列で比べる
-        assertThat(page().getByRole(AriaRole.STATUS)).containsText(number() + " 版 1 の審査を確定しました");
     }
 
     @もし("不足事項 {string} だけを入力して差し戻す")
