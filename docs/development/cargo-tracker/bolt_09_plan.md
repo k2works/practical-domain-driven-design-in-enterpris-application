@@ -1,9 +1,12 @@
 ---
 type: Plan
 title: "Bolt 9 計画 - Bolt 6〜8 レビューの返済（書類の差し替えと改善提案）"
-tags: [plan]
-status: draft
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-05T00:48:29Z }
+description: "9 回目の Bolt（W2 の最初）の計画。D-25 の決定に従い、出し直しでの必要書類の種類ごとの差し替え（R-01）と、Bolt 6〜8 レビューで「修正」とした改善提案を、文書・業務ルール層・永続化・画面の層・終了報告のステップ 1〜5 で定義する。"
+tags: [development,bolt-plan]
+status: stable
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-05T00:54:27Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-10-05T00:54:43Z }
 ---
 
 # Bolt 9 計画 - Bolt 6〜8 レビューの返済（書類の差し替えと改善提案）
@@ -15,7 +18,7 @@ generated: { by: anthropic/claude-opus-5-5, at: 2026-10-05T00:48:29Z }
 | Bolt | 第 9 回（W2 の最初の Bolt） |
 | 予定 | W2（2026-10-12 の週。前倒しで 2026-10-05 から）、3〜4 時間 |
 | 対象 | U1 輸送要求・見積り。[Bolt 6〜8 開発成果物レビュー](../../review/cargo-tracker/bolt_06-08_review_20261003.md) の R-01（引き継いだ書類の差し替え。D-25）と、AI の提案する対応方針が「修正」の改善提案 |
-| GitHub | 技術タスクの Issue を新しく作る（確認ポイント 3）。SP 0 |
+| GitHub | [#37 [技術] Bolt 6〜8 レビューの返済（書類の差し替えと改善提案）](https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/37)（確認ポイント 3。SP 0）。終了報告の承認でクローズする |
 | 承認ゲート | 業務のルール・セキュリティに関わるステップは毎回、それ以外は次の承認ゲートにまとめる（U1 の密度。2026-10-03 の決定）。計画の承認、業務のルールとセキュリティ（ステップ 2）、終了報告（ステップ 3・4・5 をまとめる）の 3 回 |
 | アプローチ | 開発戦略の序盤のアウトサイドイン。R-01 は業務ルール層の受入シナリオから入る。ほかの改善提案は、振る舞いを変えるものはテストを先に書き、振る舞いを変えないものは既存のテストを安全網にしてリファクタリングする |
 | 前の Bolt | [Bolt 8 終了報告](bolt_08_report.md)、[Bolt 6〜8 開発成果物レビュー](../../review/cargo-tracker/bolt_06-08_review_20261003.md) |
@@ -247,6 +250,8 @@ R-01（差し替え）、R-02〜R-04（画面の表示の誤り）、R-07（書�
 | 4 | `TransportRequestQueryService.findById`（荷主企業で絞らない）は、テスト専用に残さず消す | 2 | セキュリティ（Q-INV-08 の抜け道をなくす） |
 | 5 | W2 の目標 SP は 8 のまま変えない。Bolt 9 は SP 0 で、W2 の時間を使う。W2 で US-03 などが終わらなければ、W4 の見直しで扱う | — | 週の計画 |
 
+決定（2026-10-05、human:kakimomokuri）: 確認ポイント 1〜5 はすべて上の案で決まった。
+
 ## AI の仮定
 
 - 差し替えの規則は、提出（版 1）では関係しない。提出では今までどおり、選んだ書類がすべて版 1 の書類になる。
@@ -291,6 +296,7 @@ R-01（差し替え）、R-02〜R-04（画面の表示の誤り）、R-07（書�
 | 日付 | 内容 | 作成 | 承認 |
 | :--- | :--- | :--- | :--- |
 | 2026-10-05 | 初版（人の決定: W2 の最初の Bolt をレビューの返済にする。D-25・D-26・D-27・D-31 は AI の提案どおり） | anthropic/claude-opus-5-5 | — |
+| 2026-10-05 | 計画を承認。確認ポイント 1〜5（種類ごとの差し替え、ADR-010、技術タスクの Issue、`findById` の削除、W2 の目標 SP は 8 のまま）も決まった（Try T-6） | anthropic/claude-opus-5-5 | human:kakimomokuri |
 
 ## 関連ドキュメント
 

@@ -4,7 +4,7 @@ title: "リリース計画 - cargo-tracker（A 社国際貨物輸送管理シス
 description: "cargo-tracker MVP のリリース計画。1 人 + AI、時間単位の Bolt（= イテレーション）と週次の見直しで、最初の縦の流れ（R0.1）、パイロット準備完了（R1.0）、本格展開前（R1.1）の 3 段階、Unit のエントロピー評価、SP、バッファ、パイロット開始の条件、引継ぎ ID の台帳。"
 tags: [development,release-plan]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-05T00:48:29Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-05T00:54:27Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T09:29:53Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:38:26Z }
@@ -14,6 +14,7 @@ verified:
   - { by: human:kakimomokuri, at: 2026-10-03T02:07:18Z }
   - { by: human:kakimomokuri, at: 2026-10-03T02:55:57Z }
   - { by: human:kakimomokuri, at: 2026-10-03T03:10:15Z }
+  - { by: human:kakimomokuri, at: 2026-10-05T00:54:43Z }
 ---
 
 # リリース計画 - cargo-tracker（A 社国際貨物輸送管理システム）
@@ -383,7 +384,7 @@ AI-DLC では **Bolt がイテレーション** である（[AI-DLC 導入ガイ
 
 **主なタスク**:
 
-- [ ] Bolt 9: Bolt 6〜8 レビューの返済（書類の差し替え R-01 と改善提案。D-25 で W2 の最初の Bolt にした）。[Bolt 9 計画](bolt_09_plan.md)
+- [ ] Bolt 9: Bolt 6〜8 レビューの返済（書類の差し替え R-01 と改善提案。D-25 で W2 の最初の Bolt にした）。[Bolt 9 計画](bolt_09_plan.md)、[#37](https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/37)
 - [ ] US-03（全受入条件、BR-10 の境界）。Bolt 10 から
 - [ ] US-24（AC1 詳細経路設計へ進む）
 - [ ] US-18 の一部（password によるログインと session）
@@ -548,7 +549,7 @@ xychart-beta
 | :--- | :--- |
 | Project | [CargoTracker practical-ddd/take-1（#42）](https://github.com/users/k2works/projects/42)。フィールド: Status、リリース、優先度、Unit、SP、週（W1〜W15） |
 | Milestone | Release 0.1 最初の縦の流れ（13 件）、Release 1.0 パイロット準備完了（16 件）、Release 1.1 本格展開前（7 件） |
-| Issue | #1〜#36。Release 0.1 と 1.0 にまたがる 9 ストーリーは受入条件の範囲ごとに 2 件に分けた。技術タスクは #1（開発基盤とウォーキングスケルトン、2026-10-02 にクローズ）、#36（UI の骨格と見積依頼の段階入力のプロトタイプ、#1 から分けた）、#28（運用準備） |
+| Issue | #1〜#37。Release 0.1 と 1.0 にまたがる 9 ストーリーは受入条件の範囲ごとに 2 件に分けた。技術タスクは #1（開発基盤とウォーキングスケルトン、2026-10-02 にクローズ）、#36（UI の骨格と見積依頼の段階入力のプロトタイプ、#1 から分けた）、#28（運用準備）、#37（Bolt 6〜8 レビューの返済、W2） |
 | Label | `user-story`、`technical` |
 
 週のフィールドは 1 つの値しか持てないため、US-24 の R0.1 分（#5）は W2、US-16（#14）は W5 に置いた（計画では次の週にまたがる）。
