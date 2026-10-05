@@ -12,6 +12,8 @@
     <!-- C-04（Bolt 6）。提出と出し直しの後の PRG のリダイレクト先で、結果を上部に示す（旧 C-03 の提出の完了を統合した）。
          担当営業・見積り・複製・取下げは後の Bolt -->
     <p role="status" th:if="${result}" th:text="${result}">TR-2026-0001 版 1 を提出しました</p>
+    <!-- 出し直せなかった理由は、結果と見た目と役割を分けて警告として示す（Bolt 6〜8 レビュー R-24） -->
+    <div class="alert alert-warning" role="alert" th:if="${problem}" th:text="${problem}">TR-2026-0001 版 2 は審査中のため出し直せません</div>
     <!-- 荷主と社内が言い合える業務番号を示し、内部の ID（UUID）は出さない（D-4） -->
     <dl>
         <dt>業務番号（版）</dt>
@@ -26,9 +28,10 @@
         <h2 id="send-back-title">差戻し</h2>
         <dl>
             <dt>差戻しの理由</dt>
-            <dd th:text="${sendBack.reason()}">目的地の確認が必要</dd>
+            <dd class="app-preline" th:text="${sendBack.reason()}">目的地の確認が必要</dd>
             <dt>不足事項</dt>
-            <dd th:text="${sendBack.missingItems()}">目的地の港</dd>
+            <!-- 改行を保つ（R-03）。なければ「（なし）」（R-32） -->
+            <dd class="app-preline" th:text="${sendBack.missingItems()}">目的地の港</dd>
         </dl>
         <p th:if="${editable}"><a th:href="@{/customer/transport-requests/{number}/edit(number=${number})}">編集して出し直す</a></p>
     </section>

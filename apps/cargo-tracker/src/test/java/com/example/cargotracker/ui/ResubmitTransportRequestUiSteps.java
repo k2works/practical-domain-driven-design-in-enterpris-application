@@ -21,6 +21,7 @@ public class ResubmitTransportRequestUiSteps {
     private static final String DESTINATION = "目的地（UN/LOCODE）";
     private static final String EDIT_LINK = "編集して出し直す";
     private static final String RESUBMIT = "出し直す";
+    private static final String COMMERCIAL_INVOICE = "商業送り状（任意）";
 
     private final BrowserSession browser;
     private final UiScenarioState state;
@@ -108,6 +109,23 @@ public class ResubmitTransportRequestUiSteps {
         }
         tabUntilFocused(resubmitButton());
         page().keyboard().press("Enter");
+        page().waitForURL(SubmitTransportRequestUiSteps.DETAIL_URL);
+        browser.checkAccessibility();
+    }
+
+    @ならば("編集画面の書類の段階に、ファイルを選ぶとその種類の書類を差し替えることが示される")
+    public void 差し替えることが示される() {
+        assertThat(page().locator("#step-documents")).containsText("ファイルを選んだ種類は、前の版の書類を差し替えます。選ばなかった種類は引き継ぎます");
+    }
+
+    @もし("商業送り状に {string} を選んで出し直す")
+    public void 商業送り状を選んで出し直す(String fileName) {
+        for (int i = 0; i < 2; i++) {
+            nextButton().click();
+        }
+        field(COMMERCIAL_INVOICE).setInputFiles(RequiredDocumentUiSteps.uiFile(fileName));
+        nextButton().click();
+        resubmitButton().click();
         page().waitForURL(SubmitTransportRequestUiSteps.DETAIL_URL);
         browser.checkAccessibility();
     }

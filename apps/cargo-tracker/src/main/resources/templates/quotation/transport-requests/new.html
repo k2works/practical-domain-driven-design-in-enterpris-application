@@ -25,6 +25,7 @@
                        th:text="|${fieldLabels[error.fieldName]}: ${error.message}|">出発地: 出発地を入力してください</a>
                 </li>
             </ul>
+            <p th:if="${reselectDocuments}">選んだ書類は残っていません。もう一度選んでください。</p>
         </div>
 
         <nav id="step-nav" aria-label="入力の段階" hidden>
@@ -126,8 +127,10 @@
         <fieldset aria-describedby="documents-hint">
             <legend>必要書類（任意）</legend>
             <p id="documents-hint">PDF・PNG・JPEG のファイルを、1 件 10 MB まで添付できます。書類が足りなければ、営業担当者が審査で差し戻します。</p>
+            <p id="documents-reselect" th:if="${reselectDocuments}">選んだ書類は残っていません。もう一度選んでください（入力に誤りがあると、選んだファイルは画面に残りません）。</p>
             <div th:if="${carriedDocuments != null and !#lists.isEmpty(carriedDocuments)}">
-                <p id="carried-documents-title">前の版の書類（出し直しても引き継ぎます）</p>
+                <p id="carried-documents-title">前の版の書類</p>
+                <p id="carried-documents-hint">ファイルを選んだ種類は、前の版の書類を差し替えます。選ばなかった種類は引き継ぎます。</p>
                 <ul aria-labelledby="carried-documents-title">
                     <li th:each="document : ${carriedDocuments}" th:text="|${document.type()}: ${document.fileName()}（${document.size()}）|">商業送り状: invoice.pdf（120 KB）</li>
                 </ul>

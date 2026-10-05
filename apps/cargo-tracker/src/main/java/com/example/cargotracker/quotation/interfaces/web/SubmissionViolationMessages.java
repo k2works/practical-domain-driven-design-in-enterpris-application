@@ -67,13 +67,15 @@ final class SubmissionViolationMessages {
         };
     }
 
-    /** 必要書類の誤り（Q-INV-16）。ブラウザはファイルの選択を残せないため、選び直しを求める。 */
+    /**
+     * 必要書類の誤り（Q-INV-16）。ブラウザはファイルの選択を残せないため、選び直しを求める。
+     * エラー要約は「表示名: 文言」の形で、入力欄の下の文言は欄のラベルのすぐ下に出るため、文言に表示名を入れない（Bolt 6〜8 レビュー R-04）。
+     */
     private static String documentMessage(Violation violation) {
-        Item item = violation.item();
         return switch (violation.reason()) {
-            case UNSUPPORTED_FORMAT -> label(item) + "は PDF・PNG・JPEG のファイルを選び直してください";
-            case TOO_LARGE -> label(item) + "は 1 件 10 MB までのファイルを選び直してください";
-            default -> item == Item.OTHER_DOCUMENTS ? "その他の書類は 3 件までにしてください" : label(item) + "は 1 件までにしてください";
+            case UNSUPPORTED_FORMAT -> "PDF・PNG・JPEG のファイルを選び直してください";
+            case TOO_LARGE -> "1 件 10 MB までのファイルを選び直してください";
+            default -> violation.item() == Item.OTHER_DOCUMENTS ? "3 件までにしてください" : "1 件までにしてください";
         };
     }
 

@@ -60,3 +60,8 @@ td {
     font-weight: bold;
     text-decoration: none;
 }
+
+/* 自由記述（差戻しの理由・不足事項）の改行を保って示す（Bolt 6〜8 レビュー R-03） */
+.app-preline {
+    white-space: pre-line;
+}

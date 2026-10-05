@@ -241,7 +241,7 @@ public class TransportRequestReviewController {
                 "版 " + reviewRecord.versionNo(),
                 TransportRequestLabels.decision(reviewRecord.decision()),
                 reviewRecord.rationale(),
-                reviewRecord.missingItems() == null ? "（なし）" : reviewRecord.missingItems(),
+                TransportRequestLabels.missingItems(reviewRecord.missingItems()),
                 TransportRequestLabels.staffDateTime(reviewRecord.decidedAt()));
     }
 

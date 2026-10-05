@@ -11,6 +11,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.stream.Stream;
 import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -36,6 +37,19 @@ public final class RequiredDocumentViews {
         add(attachments, DocumentType.PACKING_LIST, form.getPackingList());
         form.getOtherDocuments().forEach(file -> add(attachments, DocumentType.OTHER, file));
         return attachments;
+    }
+
+    /**
+     * ファイルを 1 件でも選んで送ったか。誤りで画面を出し直すとブラウザはファイルの選択を残せないため、
+     * 選んでいたときは選び直しを案内する（Bolt 6〜8 レビュー R-02）。
+     */
+    static boolean hasSelectedFiles(TransportRequestForm form) {
+        return Stream.concat(
+                        Stream.of(form.getCommercialInvoice(), form.getPackingList()),
+                        form.getOtherDocuments().stream())
+                .anyMatch(file -> file != null
+                        && file.getOriginalFilename() != null
+                        && !file.getOriginalFilename().isBlank());
     }
 
     private static void add(List<RequiredDocumentAttachment> attachments, DocumentType type, MultipartFile file) {

@@ -53,6 +53,11 @@ public class RequiredDocumentUiSteps {
         assertThat(row).containsText(type);
     }
 
+    @ならば("見積依頼の詳細の書類の一覧に {string} が表示されない")
+    public void 書類の一覧に表示されない(String fileName) {
+        assertThat(documents()).not().containsText(fileName);
+    }
+
     @ならば("見積依頼の詳細から {string} を取得すると選んだファイルと同じ中身がダウンロードされる")
     @ならば("審査画面から {string} を取得すると選んだファイルと同じ中身がダウンロードされる")
     public void 取得すると同じ中身がダウンロードされる(String fileName) throws IOException {

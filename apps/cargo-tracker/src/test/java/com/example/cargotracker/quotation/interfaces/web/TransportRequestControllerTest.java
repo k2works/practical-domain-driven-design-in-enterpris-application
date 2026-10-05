@@ -2,6 +2,7 @@ package com.example.cargotracker.quotation.interfaces.web;
 
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.not;
+import static org.hamcrest.Matchers.nullValue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.BDDMockito.given;
@@ -344,6 +345,34 @@ class TransportRequestControllerTest {
     }
 
     @Test
+    void 差戻しの不足事項は改行を保って示し空ならなしと示す() throws Exception {
+        TransportRequest withItems = underReviewWithInvoice();
+        withItems.sendBack(
+                1, STAFF, "直してください", "梱包明細\n商業送り状の宛先", new UtcInstant(Instant.parse("2026-10-05T03:00:00Z")));
+        given(queryService.findByNumber(NUMBER, SHIPPER)).willReturn(Optional.of(withItems));
+
+        mockMvc.perform(get("/customer/transport-requests/TR-2026-0001"))
+                .andExpect(content().string(containsString("<dd class=\"app-preline\">梱包明細\n商業送り状の宛先</dd>")));
+
+        TransportRequest withoutItems = underReviewWithInvoice();
+        withoutItems.sendBack(1, STAFF, "直してください", "", new UtcInstant(Instant.parse("2026-10-05T03:00:00Z")));
+        given(queryService.findByNumber(NUMBER, SHIPPER)).willReturn(Optional.of(withoutItems));
+
+        mockMvc.perform(get("/customer/transport-requests/TR-2026-0001"))
+                .andExpect(content().string(containsString("<dd class=\"app-preline\">（なし）</dd>")));
+    }
+
+    @Test
+    void 出し直せなかった理由は結果と分けて警告として示す() throws Exception {
+        given(queryService.findByNumber(NUMBER, SHIPPER)).willReturn(Optional.of(underReviewWithInvoice()));
+
+        mockMvc.perform(get("/customer/transport-requests/TR-2026-0001").flashAttr("problem", "出し直せませんでした"))
+                .andExpect(content()
+                        .string(containsString("<div class=\"alert alert-warning\" role=\"alert\">出し直せませんでした</div>")))
+                .andExpect(content().string(not(containsString("role=\"status\""))));
+    }
+
+    @Test
     void 詳細は仮の主体の荷主企業で絞って照会し他社や存在しない番号は見つからない() throws Exception {
         given(queryService.findByNumber(NUMBER, SHIPPER)).willReturn(Optional.empty());
 
@@ -398,7 +427,8 @@ class TransportRequestControllerTest {
 
         mockMvc.perform(get("/customer/transport-requests/TR-2026-0001/edit"))
                 .andExpect(redirectedUrl("/customer/transport-requests/TR-2026-0001"))
-                .andExpect(flash().attribute("result", "TR-2026-0001 版 1 は審査中のため出し直せません"));
+                .andExpect(flash().attribute("problem", "TR-2026-0001 版 1 は審査中のため出し直せません"))
+                .andExpect(flash().attribute("result", nullValue()));
     }
 
     @Test
@@ -450,7 +480,8 @@ class TransportRequestControllerTest {
 
         mockMvc.perform(resubmitForm())
                 .andExpect(redirectedUrl("/customer/transport-requests/TR-2026-0001"))
-                .andExpect(flash().attribute("result", "TR-2026-0001 版 1 は審査中のため出し直せません"));
+                .andExpect(flash().attribute("problem", "TR-2026-0001 版 1 は審査中のため出し直せません"))
+                .andExpect(flash().attribute("result", nullValue()));
     }
 
     @Test
@@ -459,7 +490,7 @@ class TransportRequestControllerTest {
 
         mockMvc.perform(resubmitForm())
                 .andExpect(redirectedUrl("/customer/transport-requests/TR-2026-0001"))
-                .andExpect(flash().attribute("result", "他の利用者が先に更新しました。内容を確かめてから出し直してください"));
+                .andExpect(flash().attribute("problem", "他の利用者が先に更新しました。内容を確かめてから出し直してください"));
     }
 
     @Test
@@ -488,6 +519,22 @@ class TransportRequestControllerTest {
                 ShipmentTermsFixture.generalCargo().withDocuments(List.of(invoiceDocument())),
                 USER,
                 new UtcInstant(Instant.parse("2026-10-05T01:00:00Z")));
+    }
+
+    @Test
+    void ファイルを選んで誤りがあると選び直しを案内し選んでいなければ案内しない() throws Exception {
+        byte[] pdf = "%PDF-1.7 test".getBytes(StandardCharsets.US_ASCII);
+        MockMultipartHttpServletRequestBuilder withFile = multipart("/customer/transport-requests");
+        withFile.file(new MockMultipartFile("commercialInvoice", "invoice.pdf", "application/pdf", pdf));
+
+        mockMvc.perform(completeForm(withFile, "origin", "TYO"))
+                .andExpect(status().isOk())
+                .andExpect(model().attribute("reselectDocuments", true))
+                .andExpect(content().string(containsString("選んだ書類は残っていません。もう一度選んでください。")));
+        mockMvc.perform(completeForm("origin", "TYO"))
+                .andExpect(status().isOk())
+                .andExpect(model().attribute("reselectDocuments", false))
+                .andExpect(content().string(not(containsString("選んだ書類は残っていません"))));
     }
 
     @Test
@@ -552,14 +599,15 @@ class TransportRequestControllerTest {
     }
 
     @Test
-    void 編集画面に前の版の書類を引き継ぐことを示す() throws Exception {
+    void 編集画面に前の版の書類と選んだ種類は差し替え選ばなかった種類は引き継ぐことを示す() throws Exception {
         TransportRequest request = underReviewWithInvoice();
         request.sendBack(1, STAFF, "梱包明細が必要", "梱包明細", new UtcInstant(Instant.parse("2026-10-05T03:00:00Z")));
         given(queryService.findByNumber(NUMBER, SHIPPER)).willReturn(Optional.of(request));
 
         mockMvc.perform(get("/customer/transport-requests/TR-2026-0001/edit"))
                 .andExpect(status().isOk())
-                .andExpect(content().string(containsString("前の版の書類（出し直しても引き継ぎます）")))
+                .andExpect(content().string(containsString("前の版の書類")))
+                .andExpect(content().string(containsString("ファイルを選んだ種類は、前の版の書類を差し替えます。選ばなかった種類は引き継ぎます。")))
                 .andExpect(content().string(containsString("商業送り状: 送り状 invoice.pdf（1 KB）")))
                 .andExpect(content().string(containsString("enctype=\"multipart/form-data\"")));
     }

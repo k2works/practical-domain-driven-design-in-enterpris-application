@@ -51,6 +51,7 @@ public class SubmitTransportRequestUiSteps {
     private static final String COMMERCIAL_INVOICE = "商業送り状（任意）";
     private static final String PACKING_LIST = "梱包明細（任意）";
     private static final String OTHER_DOCUMENTS = "その他の書類（任意、3 件まで）";
+    private static final String RESELECT_DOCUMENTS = "選んだ書類は残っていません。もう一度選んでください";
 
     private final BrowserSession browser;
     private final UiScenarioState state;
@@ -215,9 +216,28 @@ public class SubmitTransportRequestUiSteps {
 
     @ならば("エラー要約に {string} のファイルを選び直すよう示される")
     public void ファイルを選び直すよう示される(String item) {
+        // 表示名は 1 回だけ出す（Bolt 6〜8 レビュー R-04。UI 設計の C-03 のエラー要約の例と同じ形）
         assertThat(errorSummary()
                         .getByRole(AriaRole.LINK, new Locator.GetByRoleOptions().setName(Pattern.compile("^" + item))))
-                .containsText("選び直してください");
+                .hasText(item + ": PDF・PNG・JPEG のファイルを選び直してください");
+    }
+
+    @もし("必須条件を入力し、目的地を空にし、商業送り状に {string} を選んで提出する")
+    public void 目的地を空にし書類を選んで提出する(String fileName) {
+        fillTerms();
+        field(DESTINATION).fill("");
+        next();
+        fillCargo();
+        next();
+        field(COMMERCIAL_INVOICE).setInputFiles(RequiredDocumentUiSteps.uiFile(fileName));
+        submit();
+    }
+
+    @ならば("エラー要約と書類の段階に、選んだ書類をもう一度選ぶよう示される")
+    public void 選んだ書類をもう一度選ぶよう示される() {
+        // ブラウザは誤りのあとにファイルの選択を残せないため、正しく選んだ書類も選び直してもらう（R-02）
+        assertThat(errorSummary()).containsText(RESELECT_DOCUMENTS);
+        assertThat(page().locator("#step-documents")).containsText(RESELECT_DOCUMENTS);
     }
 
     @もし("エラー要約の {string} のリンクを選ぶ")

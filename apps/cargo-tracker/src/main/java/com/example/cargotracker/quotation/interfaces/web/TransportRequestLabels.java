@@ -130,4 +130,9 @@ final class TransportRequestLabels {
      * @param label 画面に出す名前
      */
     public record Option(String value, String label) {}
+
+    /** 不足事項の表示。なければ（空・空白だけを含む）「（なし）」とする（Bolt 6〜8 レビュー R-32）。 */
+    static String missingItems(String missingItems) {
+        return missingItems == null || missingItems.isBlank() ? "（なし）" : missingItems;
+    }
 }

@@ -48,6 +48,7 @@ public class TransportRequestController {
     private static final String FORM_VIEW = "quotation/transport-requests/new";
     private static final String DETAIL_VIEW = "quotation/transport-requests/detail";
     private static final String RESULT = "result";
+    private static final String PROBLEM = "problem";
     private static final String UNKNOWN_CONSIGNEE = "（仮の一覧にない荷受人）";
 
     private final TransportRequestCommandService commandService;
@@ -104,7 +105,7 @@ public class TransportRequestController {
         Optional<ShipmentTermsInput> input =
                 TransportRequestFormConverter.convert(transportRequestForm, provisionalConsignees, bindingResult);
         if (input.isEmpty()) {
-            return showCreateForm(model);
+            return showCreateFormWithErrors(transportRequestForm, model);
         }
         SubmissionOutcome outcome = commandService.submit(new SubmitTransportRequestCommand(
                 shipper(),
@@ -119,7 +120,7 @@ public class TransportRequestController {
                         redirectAttributes);
             case SubmissionOutcome.Rejected(SubmissionViolations violations) -> {
                 SubmissionViolationMessages.reject(violations, bindingResult);
-                yield showCreateForm(model);
+                yield showCreateFormWithErrors(transportRequestForm, model);
             }
         };
     }
@@ -185,7 +186,7 @@ public class TransportRequestController {
     public String edit(@PathVariable String number, Model model, RedirectAttributes redirectAttributes) {
         TransportRequest request = find(number);
         if (request.status() != TransportRequestStatus.DRAFT) {
-            return redirectToDetail(request.number(), notResubmittable(request), redirectAttributes);
+            return redirectToDetailWithProblem(request.number(), notResubmittable(request), redirectAttributes);
         }
         model.addAttribute(
                 "transportRequestForm",
@@ -208,7 +209,7 @@ public class TransportRequestController {
         Optional<ShipmentTermsInput> input =
                 TransportRequestFormConverter.convert(transportRequestForm, provisionalConsignees, bindingResult);
         if (input.isEmpty()) {
-            return showEditForm(find(number), model);
+            return showEditFormWithErrors(find(number), transportRequestForm, model);
         }
         ResubmissionOutcome outcome = commandService.resubmit(new ResubmitTransportRequestCommand(
                 transportRequestNumber,
@@ -224,14 +225,15 @@ public class TransportRequestController {
                         redirectAttributes);
             case ResubmissionOutcome.Invalid(SubmissionViolations violations) -> {
                 SubmissionViolationMessages.reject(violations, bindingResult);
-                yield showEditForm(find(number), model);
+                yield showEditFormWithErrors(find(number), transportRequestForm, model);
             }
             case ResubmissionOutcome.Rejected _ -> {
                 TransportRequest current = find(number);
-                yield redirectToDetail(current.number(), notResubmittable(current), redirectAttributes);
+                yield redirectToDetailWithProblem(current.number(), notResubmittable(current), redirectAttributes);
             }
             case ResubmissionOutcome.Conflict _ ->
-                redirectToDetail(transportRequestNumber, "他の利用者が先に更新しました。内容を確かめてから出し直してください", redirectAttributes);
+                redirectToDetailWithProblem(
+                        transportRequestNumber, "他の利用者が先に更新しました。内容を確かめてから出し直してください", redirectAttributes);
             case ResubmissionOutcome.NotFound _ -> throw notFound();
         };
     }
@@ -243,7 +245,19 @@ public class TransportRequestController {
         return FORM_VIEW;
     }
 
-    /** 編集画面。前の版の書類を一覧で示し、引き継ぐことを案内する（確認ポイント 3）。 */
+    /** 誤りのある作成画面。ファイルを選んでいたら、選び直しを案内する（R-02）。 */
+    private String showCreateFormWithErrors(TransportRequestForm form, Model model) {
+        model.addAttribute("reselectDocuments", RequiredDocumentViews.hasSelectedFiles(form));
+        return showCreateForm(model);
+    }
+
+    /** 誤りのある編集画面。ファイルを選んでいたら、選び直しを案内する（R-02）。 */
+    private String showEditFormWithErrors(TransportRequest request, TransportRequestForm form, Model model) {
+        model.addAttribute("reselectDocuments", RequiredDocumentViews.hasSelectedFiles(form));
+        return showEditForm(request, model);
+    }
+
+    /** 編集画面。前の版の書類を一覧で示し、選ばなかった種類は引き継ぎ、選んだ種類は差し替えることを案内する（D-25）。 */
     private String showEditForm(TransportRequest request, Model model) {
         model.addAttribute("carriedDocuments", RequiredDocumentViews.rows(request, BASE_PATH));
         return showEditForm(request.number(), request.currentVersion().versionNo() + 1, model);
@@ -282,6 +296,13 @@ public class TransportRequestController {
         return "redirect:" + BASE_PATH + "/" + number.text();
     }
 
+    /** 操作できなかった理由を、結果と分けて詳細の上部に警告として示す（Bolt 6〜8 レビュー R-24）。 */
+    private static String redirectToDetailWithProblem(
+            TransportRequestNumber number, String problem, RedirectAttributes redirectAttributes) {
+        redirectAttributes.addFlashAttribute(PROBLEM, problem);
+        return "redirect:" + BASE_PATH + "/" + number.text();
+    }
+
     /** 下書きでないため出し直せない理由（例: TR-2026-0001 版 2 は審査中のため出し直せません）。二重送信の 2 回目もこれになる。 */
     private static String notResubmittable(TransportRequest request) {
         return TransportRequestLabels.numberWithVersion(
@@ -299,7 +320,7 @@ public class TransportRequestController {
     }
 
     private static SendBack sendBack(SendBackNotice notice) {
-        return new SendBack(notice.reason(), notice.missingItems() == null ? "（なし）" : notice.missingItems());
+        return new SendBack(notice.reason(), TransportRequestLabels.missingItems(notice.missingItems()));
     }
 
     private static ResponseStatusException notFound() {
