@@ -4,9 +4,10 @@ title: "Bolt 11 計画 - 見積りの失効と置換（US-03 AC4・AC5）"
 description: "11 回目の Bolt の計画。Bolt 9・10 レビューの中・低の指摘の返済と、見積りの失効の判定（同時刻は失効）、再提示の拒否、再見積りによる置換と旧版の読み取り専用、Q-INV-18 の部分一意インデックス、S-04 と C-04 の表示を、ステップ 1〜6 で定義する。"
 tags: [development,bolt-plan]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-05T07:48:54Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-05T08:08:38Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-05T07:21:04Z }
+  - { by: human:kakimomokuri, at: 2026-10-05T08:08:38Z }
 ---
 
 # Bolt 11 計画 - 見積りの失効と置換（US-03 AC4・AC5）
@@ -260,7 +261,7 @@ S04 -[dashed]-> C04 : 荷主が開くと最新の見積りが見える
   - UI 設計: S-04 の再見積りの URL と画面イメージ、旧版の読み取り専用、C-04 の失効・置換済みの表示と案内
   - 完了の判定: `okf:check` が ERROR 0、`documentationTest` が緑。push する
   - 結果（2026-10-05 16:35〜16:37）: ユーザーストーリー（US-03 の Bolt 11 の決定）、ドメインモデル（用語の再見積り、状態遷移の承認待ち → 置換済み・失効、Q-INV-07・18、見積りの失効と置換の段落とトランザクションの例外）、データモデル（`EXPIRED`・`REPLACED`、`replaced_by_quotation_id`、`ck_quotation_replaced`、`ux_quotation_active`、`EXPIRED` を残す時点）、UI 設計（S-04 の再見積りの URL と失効・置換済みの表示、C-04 の最新の見積りと旧版）に反映した
-- [?] **3. 失効と置換（業務ルール層の Red → Green）** 【承認ゲート: 業務のルール（Q-INV-06 の境界・07・18）】
+- [x] **3. 失効と置換（業務ルール層の Red → Green）** 【承認ゲート: 業務のルール（Q-INV-06 の境界・07・18）】
   - 業務ルール層の受入シナリオを先に書き、Red をコミットする（`features/quotation/expire_and_replace_quotation.feature`、`@US-03 @must`、`@US-03-AC4`・`@US-03-AC5`）
     - 見積有効判定: 判定時刻が有効期限の 1 秒前なら有効、同時刻と 1 秒後なら失効（AC4 の境界。シナリオアウトライン）
     - 承認待ちの見積りを、有効期限と同時刻または後に社内承認して提示しようとすると拒否され、失効と再見積りが必要と示される（AC4・AC5）
@@ -277,6 +278,7 @@ S04 -[dashed]-> C04 : 荷主が開くと最新の見積りが見える
     - 計画からの変更: 失効の判定は `QuotationExpiry.isValidAt` の 1 か所に置き、ルールの型 `QuotationValidity` は作らなかった（同じ判定が 2 か所になるため）。ドメインモデルの「見積有効判定」の行をそれに合わせた。再見積りでは、置換済み・失効の旧版を入力の検証より先に拒否する
     - 実行中に直した誤り: 拒否の文言の `switch` が新しい理由を網羅していない（コンパイラが検出。失効・置換済みの文言を足した）
     - 業務ルール層のシナリオは 69 件すべて passed（Bolt 10 の 57 件から、ステップ 1 の R-08 で +1、この Bolt の 11 件で +11）。`check` 緑（`test` 697 件）。表の列（`replaced_by_quotation_id`）はステップ 4 で足すまで読み出しで空にしている
+  - 承認（2026-10-05、human:kakimomokuri）: ステップ 1・2 とあわせて承認された（失効の判定を `QuotationExpiry` に置く変更を含む）
 - [ ] **4. 表（内側の TDD、統合テスト）** 【承認ゲート: スキーマの変更】
   - 統合テスト（PostgreSQL）を先に書く: 置換済み・失効の保存と読み出し、置換先の FK、`ck_quotation_replaced`、`status` の CHECK、部分一意インデックスで同時の作成・再見積りが止まり値で返る（R-02 と同じ変換）、置換済み・失効は数えない
   - マイグレーション: `common` に状態の値・`replaced_by_quotation_id`・CHECK・COMMENT（R-14 を含む）、`postgresql` に `ux_quotation_active`。H2 のスモークを先に回す（T-15）
@@ -381,6 +383,7 @@ S04 -[dashed]-> C04 : 荷主が開くと最新の見積りが見える
 | :--- | :--- | :--- | :--- |
 | 2026-10-05 | 初版（Bolt 10 終了報告の次の Bolt: レビューの中・低の返済と US-03 AC4・AC5） | anthropic/claude-opus-5-5 | — |
 | 2026-10-05 | 計画を承認。確認ポイント 1〜8（AC4・AC5 の範囲、失効の判定、承認待ちの失効、再見積り、トランザクション、Q-INV-18 の部分一意インデックス、表の変更、S-04・C-04 の URL と表示）も決まった（Try T-6） | anthropic/claude-opus-5-5 | human:kakimomokuri |
+| 2026-10-05 | ステップ 1〜3（レビューの中・低の返済、設計文書への反映、失効と置換の業務のルール）の承認ゲートを通した | anthropic/claude-opus-5-5 | human:kakimomokuri |
 
 ## 関連ドキュメント
 
