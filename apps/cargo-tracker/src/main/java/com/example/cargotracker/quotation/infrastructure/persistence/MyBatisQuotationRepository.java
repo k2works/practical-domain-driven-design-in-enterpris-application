@@ -151,6 +151,7 @@ public class MyBatisQuotationRepository implements QuotationRepository {
                 policy,
                 row.internalApprovedBy() == null ? null : new UserId(row.internalApprovedBy()),
                 row.presentedAt() == null ? null : toUtc(row.presentedAt()),
+                null, // 置換先の列（replaced_by_quotation_id）は Bolt 11 のステップ 4 のマイグレーションで足す
                 row.version());
     }
 

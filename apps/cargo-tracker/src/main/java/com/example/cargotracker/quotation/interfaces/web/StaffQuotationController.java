@@ -193,6 +193,8 @@ public class StaffQuotationController {
             case TRANSPORT_REQUEST_NOT_QUOTING -> subject + " は見積り作成中でないため、見積りを作れません";
             case ALREADY_QUOTED -> subject + " にはすでに見積りがあります";
             case NOT_PENDING_APPROVAL -> subject + " は承認待ちでないため提示できません";
+            case EXPIRED -> subject + " は有効期限を過ぎて失効しています。再見積りしてください";
+            case REPLACED -> subject + " は置換済みです。新しい見積りを使ってください";
         };
     }
 

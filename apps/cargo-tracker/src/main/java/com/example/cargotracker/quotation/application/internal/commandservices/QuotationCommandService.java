@@ -2,6 +2,7 @@ package com.example.cargotracker.quotation.application.internal.commandservices;
 
 import com.example.cargotracker.quotation.application.internal.commands.CalculateQuotationCommand;
 import com.example.cargotracker.quotation.application.internal.commands.PresentQuotationCommand;
+import com.example.cargotracker.quotation.application.internal.commands.RequoteQuotationCommand;
 import com.example.cargotracker.quotation.domain.model.aggregates.ConcurrentQuotationUpdateException;
 import com.example.cargotracker.quotation.domain.model.aggregates.DuplicateQuotationException;
 import com.example.cargotracker.quotation.domain.model.aggregates.Quotation;
@@ -14,8 +15,10 @@ import com.example.cargotracker.quotation.domain.model.valueobjects.QuotationVio
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestStatus;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import java.time.Clock;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
@@ -24,12 +27,18 @@ import org.springframework.transaction.annotation.Transactional;
 /**
  * 見積りのコマンドを受け付ける入力ポート（US-03、社内の営業担当者が使う）。トランザクションの境界になる。
  * 1 つのトランザクションでは見積りの集約だけを更新し、輸送要求の状態は DE-03 を受けて別のトランザクションで変える（Bolt 10 の H1）。
+ * 再見積りだけは、旧版と新しい見積りの 2 つの見積りを 1 つのトランザクションで書く（Q-INV-18 が見積りをまたぐ規則のため。
+ * ドメインモデル「見積りの失効と置換」。Bolt 11）。
  *
  * <p>{@code @Service} は JIG がユースケースとして読むための印で、部品探索の対象にはしない（CargoTrackerApplication）。
  * 組み立ては {@code QuotationConfiguration} が担う。
  */
 @Service
 public class QuotationCommandService {
+
+    /** 再見積りできる見積依頼の状態（見積提示済みは DE-03 を受けた後）。 */
+    private static final Set<TransportRequestStatus> REQUOTABLE =
+            EnumSet.of(TransportRequestStatus.QUOTING, TransportRequestStatus.QUOTED);
 
     private final TransportRequestRepository transportRequestRepository;
     private final QuotationRepository quotationRepository;
@@ -110,5 +119,55 @@ public class QuotationCommandService {
         quotation.domainEvents().forEach(eventPublisher::publishEvent);
         quotation.clearDomainEvents();
         return new PresentationOutcome.Presented(command.number(), command.quotationNo());
+    }
+
+    /**
+     * 見積りを再見積りする（US-03 AC5、Q-INV-07・18）。旧版を置換済み（有効期限を過ぎていれば失効）にし、次の見積り番号の
+     * 新しい見積りを作って算出する（承認待ち）。見積依頼は見積り作成中か見積提示済みで、旧版の対象の版が現在の版のときだけ。
+     * 旧版が置換済み・失効なら拒否し、入力に違反があれば何も保存せずに違反を返す。旧版の更新を先に書き、DB の部分一意インデックスに触れないようにする。
+     */
+    @Transactional
+    public RequotationOutcome requote(RequoteQuotationCommand command) {
+        Optional<TransportRequest> found = transportRequestRepository.findByNumberForStaff(command.number());
+        Optional<Quotation> previous = found.flatMap(
+                request -> quotationRepository.findByTransportRequestIdAndNo(request.id(), command.quotationNo()));
+        if (found.isEmpty() || previous.isEmpty()) {
+            return new RequotationOutcome.NotFound();
+        }
+        TransportRequest request = found.get();
+        Quotation old = previous.get();
+        if (!REQUOTABLE.contains(request.status())
+                || old.transportRequestVersionNo() != request.currentVersion().versionNo()) {
+            return new RequotationOutcome.Rejected(QuotationRejection.TRANSPORT_REQUEST_NOT_QUOTING);
+        }
+        UtcInstant now = new UtcInstant(clock.instant());
+        int quotationNo = quotationRepository.findByTransportRequestId(request.id()).stream()
+                        .mapToInt(Quotation::quotationNo)
+                        .max()
+                        .orElse(0)
+                + 1;
+        Quotation replacement = Quotation.create(
+                new QuotationId(UUID.randomUUID()),
+                request.id(),
+                request.currentVersion().versionNo(),
+                quotationNo);
+        // 置換済み・失効の旧版は、入力を見る前に拒否する（旧版の変更は保存するまで集約の中にとどまる）
+        Optional<QuotationRejection> rejection = old.replaceWith(replacement.id(), now);
+        if (rejection.isPresent()) {
+            return new RequotationOutcome.Rejected(rejection.get());
+        }
+        Optional<QuotationViolations> violations = replacement.calculate(command.input(), now);
+        if (violations.isPresent()) {
+            return new RequotationOutcome.Invalid(violations.get());
+        }
+        try {
+            quotationRepository.update(old);
+        } catch (ConcurrentQuotationUpdateException _) {
+            return new RequotationOutcome.Conflict();
+        }
+        // 旧版を更新できた（行を押さえた）後は、同じ旧版の再見積りは楽観ロックで止まるため、新しい見積りの保存が
+        // 一意制約に触れるのは壊れた前提として例外のまま返し、旧版の更新ごとロールバックする
+        quotationRepository.save(replacement);
+        return new RequotationOutcome.Calculated(command.number(), quotationNo);
     }
 }

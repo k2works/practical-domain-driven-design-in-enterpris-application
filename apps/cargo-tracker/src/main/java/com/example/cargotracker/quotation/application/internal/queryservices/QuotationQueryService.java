@@ -7,13 +7,14 @@ import com.example.cargotracker.quotation.domain.model.valueobjects.QuotationSta
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestNumber;
 import com.example.cargotracker.shared.domain.CompanyId;
 import java.util.Comparator;
+import java.util.List;
 import java.util.Optional;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
  * 荷主が自社の見積依頼の見積りを照会する入力ポート（C-04。US-03 AC2）。照会は必ず荷主企業で絞る（Q-INV-08）。
- * 荷主に見せるのは提示済みの見積りだけで、社内承認の前の見積りは見せない。
+ * 荷主に見せるのは提示した見積り（提示済みと、提示した後に置換済み・失効になったもの）だけで、社内承認の前の見積りは見せない。
  *
  * <p>{@code @Service} は JIG がユースケースとして読むための印で、部品探索の対象にはしない（CargoTrackerApplication）。
  * 組み立ては {@code QuotationConfiguration} が担う。
@@ -38,5 +39,20 @@ public class QuotationQueryService {
                 .flatMap(request -> quotationRepository.findByTransportRequestId(request.id()).stream()
                         .filter(quotation -> quotation.status() == QuotationStatus.PRESENTED)
                         .max(Comparator.comparingInt(Quotation::quotationNo)));
+    }
+
+    /**
+     * 荷主企業の見積依頼の、提示した見積りを見積り番号の新しい順に返す（C-04。最新と読み取り専用の旧版。US-03 AC5。Bolt 11）。
+     * 提示する前に置き換えた見積りと、承認待ちの見積りは含めない。他社の見積依頼の見積りは見つからない。
+     */
+    @Transactional(readOnly = true)
+    public List<Quotation> findVisible(TransportRequestNumber number, CompanyId shipperCompanyId) {
+        return transportRequestRepository
+                .findByNumber(number, shipperCompanyId)
+                .map(request -> quotationRepository.findByTransportRequestId(request.id()).stream()
+                        .filter(quotation -> quotation.presentedAt().isPresent())
+                        .sorted(Comparator.comparingInt(Quotation::quotationNo).reversed())
+                        .toList())
+                .orElse(List.of());
     }
 }

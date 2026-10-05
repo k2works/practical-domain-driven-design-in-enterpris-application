@@ -22,6 +22,8 @@ import java.util.Optional;
 /**
  * 見積り。審査済みの輸送要求版に対する料金根拠・有効期限・経路方針の提示（US-03。集約ルート）。
  * 作成中 → 承認待ち（算出する。Q-INV-05・17）→ 提示済み（社内承認して提示する。DE-03）の順に進む。
+ * 承認待ち・提示済みの見積りは、再見積りで置換済み（有効期限を過ぎていれば失効）になる（Q-INV-07。Bolt 11）。
+ * 失効は状態を書き換えずに判定時刻で決める（{@link #isExpiredAt}）。
  *
  * <p>輸送要求と別の集約にする理由は、見積りが版ごとに複数作られ（置換）、有効期限で単独に失効するため
  * （ドメインモデル「見積りを輸送要求の中に入れない理由」）。輸送要求の状態は DE-03 を受けて別のトランザクションで変える。
@@ -43,6 +45,7 @@ public final class Quotation {
     private RoutePolicy routePolicy;
     private UserId approvedBy;
     private UtcInstant presentedAt;
+    private QuotationId replacedBy;
 
     @SuppressWarnings("java:S107") // 保存されている状態から組み立てるため、集約の値をすべて受け取る
     private Quotation(
@@ -56,6 +59,7 @@ public final class Quotation {
             RoutePolicy routePolicy,
             UserId approvedBy,
             UtcInstant presentedAt,
+            QuotationId replacedBy,
             long aggregateVersion) {
         this.id = Objects.requireNonNull(id, "id");
         this.transportRequestId = Objects.requireNonNull(transportRequestId, "transportRequestId");
@@ -70,6 +74,7 @@ public final class Quotation {
         this.routePolicy = routePolicy;
         this.approvedBy = approvedBy;
         this.presentedAt = presentedAt;
+        this.replacedBy = replacedBy;
         this.aggregateVersion = aggregateVersion;
     }
 
@@ -92,6 +97,7 @@ public final class Quotation {
                 null,
                 null,
                 null,
+                null,
                 INITIAL_AGGREGATE_VERSION);
     }
 
@@ -108,6 +114,7 @@ public final class Quotation {
             RoutePolicy routePolicy,
             UserId approvedBy,
             UtcInstant presentedAt,
+            QuotationId replacedBy,
             long aggregateVersion) {
         return new Quotation(
                 id,
@@ -120,6 +127,7 @@ public final class Quotation {
                 routePolicy,
                 approvedBy,
                 presentedAt,
+                replacedBy,
                 aggregateVersion);
     }
 
@@ -148,14 +156,22 @@ public final class Quotation {
     /**
      * 社内承認して提示する（承認待ち → 提示済み）。承認者と提示時刻を記録し（KPI-01）、DE-03 を生成する。
      * 承認者は、認証（US-18）ができるまで仮の営業担当者（2026-10-05 の決定）。
+     * 置換済み・失効の見積りと、提示の時刻に有効期限を過ぎた承認待ちの見積りは提示できない（Q-INV-07。Bolt 11）。
      *
      * @return 受け付けなかった理由（受け付けたら空）
      */
     public Optional<QuotationRejection> presentInternally(UserId approver, UtcInstant at) {
         Objects.requireNonNull(approver, "approver");
         Objects.requireNonNull(at, "at");
+        Optional<QuotationRejection> retired = retiredRejection();
+        if (retired.isPresent()) {
+            return retired;
+        }
         if (status != QuotationStatus.PENDING_APPROVAL) {
             return Optional.of(QuotationRejection.NOT_PENDING_APPROVAL);
+        }
+        if (isExpiredAt(at)) {
+            return Optional.of(QuotationRejection.EXPIRED);
         }
         approvedBy = approver;
         presentedAt = at;
@@ -173,7 +189,55 @@ public final class Quotation {
         return Optional.empty();
     }
 
-    /** 作成中・承認待ち・提示済みか（1 つの輸送要求に 1 つだけ。Q-INV-18）。 */
+    /**
+     * 再見積りで新しい見積りに置き換える（承認待ち・提示済み → 置換済み）。置き換える時刻に有効期限を過ぎていれば、
+     * 置換済みでなく失効として記録し、置換先は持たない（2026-10-05 の決定。Bolt 11）。新しい見積りの作成は、同じトランザクションで
+     * アプリケーションサービスが行う（Q-INV-18）。
+     *
+     * @param replacement 新しい見積りの ID
+     * @param at 置き換える時刻（判定時刻）
+     * @return 受け付けなかった理由（置換済み・失効。受け付けたら空）
+     * @throws IllegalStateException 作成中の見積り（算出の前の見積りは保存されない）
+     */
+    public Optional<QuotationRejection> replaceWith(QuotationId replacement, UtcInstant at) {
+        Objects.requireNonNull(replacement, "replacement");
+        Objects.requireNonNull(at, "at");
+        Optional<QuotationRejection> retired = retiredRejection();
+        if (retired.isPresent()) {
+            return retired;
+        }
+        if (status == QuotationStatus.DRAFT) {
+            throw new IllegalStateException("作成中の見積りは置換できません: " + id);
+        }
+        if (isExpiredAt(at)) {
+            status = QuotationStatus.EXPIRED;
+        } else {
+            status = QuotationStatus.REPLACED;
+            replacedBy = replacement;
+        }
+        return Optional.empty();
+    }
+
+    /**
+     * 判定時刻に失効しているか（Q-INV-06・07）。失効を記録した見積りと、承認待ち・提示済みで判定時刻が有効期限と同時刻または後の
+     * 見積りは失効。置換済みと作成中は失効でない。
+     */
+    public boolean isExpiredAt(UtcInstant judgedAt) {
+        Objects.requireNonNull(judgedAt, "judgedAt");
+        return status == QuotationStatus.EXPIRED
+                || ((status == QuotationStatus.PENDING_APPROVAL || status == QuotationStatus.PRESENTED)
+                        && !expiry.isValidAt(judgedAt));
+    }
+
+    private Optional<QuotationRejection> retiredRejection() {
+        return switch (status) {
+            case EXPIRED -> Optional.of(QuotationRejection.EXPIRED);
+            case REPLACED -> Optional.of(QuotationRejection.REPLACED);
+            case DRAFT, PENDING_APPROVAL, PRESENTED -> Optional.empty();
+        };
+    }
+
+    /** 作成中・承認待ち・提示済みか（1 つの輸送要求に 1 つだけ。失効・置換済みは数えない。Q-INV-18）。 */
     public boolean isActive() {
         return status == QuotationStatus.DRAFT
                 || status == QuotationStatus.PENDING_APPROVAL
@@ -220,6 +284,11 @@ public final class Quotation {
     /** 提示時刻（提示済みのとき。社内承認の時刻と同じ）。 */
     public Optional<UtcInstant> presentedAt() {
         return Optional.ofNullable(presentedAt);
+    }
+
+    /** 置換先の見積り（置換済みのとき）。 */
+    public Optional<QuotationId> replacedBy() {
+        return Optional.ofNullable(replacedBy);
     }
 
     /** 楽観ロックの版（読み込んだときの集約の版）。リポジトリが更新のときに照合する。 */

@@ -33,6 +33,8 @@ final class QuotationViews {
             case DRAFT -> "作成中";
             case PENDING_APPROVAL -> "承認待ち";
             case PRESENTED -> "提示済み";
+            case EXPIRED -> "失効";
+            case REPLACED -> "置換済み";
         };
     }
 
