@@ -4,7 +4,7 @@ title: "Bolt 4 終了報告 - 業務番号と必須条件の検証（US-01 AC1�
 description: "4 回目の Bolt の終了報告。業務番号の採番、提出の検証とエラー要約、画面と KPI 一覧から UUID を消した成果、デモ項目、指標、仮説 H1〜H3 の結論、既知の課題、ふりかえり、承認待ちの書き換えをまとめる。"
 tags: [development,bolt-report]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-02T11:26:06Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-05T06:43:10Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-02T07:02:38Z }
   - { by: human:kakimomokuri, at: 2026-10-02T11:26:07Z }
@@ -45,6 +45,9 @@ verified:
 | 2 | 出発地と目的地を同じにし、希望到着期限を空にして提出する | `@ui` で、エラー要約にフォーカスが移り 2 件が示され、入力が残り、要約のリンクから目的地へ移って直し提出できることを確かめた。**支援技術（VoiceOver）による手動確認は人の作業として残っている** |
 | 3 | 貨物種別を冷凍にする | `@ui` で、対象外と営業窓口への相談が示され、提出ボタンが `aria-disabled` で理由が関連付き、押してもエラー要約に貨物種別の誤りが出て提出されないことを確かめた |
 | 4 | `./gradlew uiTest` | 画面の層のシナリオ 5 本が通り、axe-core の違反は 0 件 |
+
+
+デモの動画（2026-10-05 にいまのコードで撮った。その Bolt で作った機能のいまの振る舞いを示す）: [submit-with-number](../../assets/demo/bolt-04/submit-with-number.webm)、[error-summary](../../assets/demo/bolt-04/error-summary.webm)、[special-cargo](../../assets/demo/bolt-04/special-cargo.webm)
 
 ## 指標
 

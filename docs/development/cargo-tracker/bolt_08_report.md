@@ -4,7 +4,7 @@ title: "Bolt 8 終了報告 - UI の骨格と見積依頼の段階入力のプ�
 description: "8 回目の Bolt の終了報告。WebJars の Bootstrap・htmx、顧客 Web と社内業務 Web の共通レイアウトと共通の CSS、既存の画面の移行、C-03 の段階入力のプロトタイプ（UI-HO-04）の成果、デモ項目、指標と時間の内訳、仮説 H1〜H3 の結論、見つけて直した問題、既知の課題、ふりかえりをまとめる。"
 tags: [development,bolt-report]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-05T00:58:09Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-05T06:43:10Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-03T02:55:56Z }
   - { by: human:kakimomokuri, at: 2026-10-05T03:42:37Z }
@@ -64,6 +64,9 @@ verified:
 | 2 | 見積依頼の作成で 4 段階を進み、書類を選んで確認の段階から提出する | `@ui` で、段階を行き来しても入力と書類が残り、C-04 に版 1 が出ることを確かめた。操作性は承認の場で人が `bootRun` で確かめる |
 | 3 | 営業の受付一覧と審査画面を開く | `@ui` で、社内業務 Web のナビと、キー操作でのナビの移動を確かめた |
 | 4 | `./gradlew uiTest` | 画面の層 28 本（うちレイアウト 4 本、段階入力 3 本）が通り、axe-core の違反は 0 件 |
+
+
+デモの動画（2026-10-05 にいまのコードで撮った。その Bolt で作った機能のいまの振る舞いを示す）: [customer-navigation](../../assets/demo/bolt-08/customer-navigation.webm)、[staff-navigation](../../assets/demo/bolt-08/staff-navigation.webm)、[stepwise-submit](../../assets/demo/bolt-08/stepwise-submit.webm)、[stepwise-documents-kept](../../assets/demo/bolt-08/stepwise-documents-kept.webm)
 
 ## 指標
 

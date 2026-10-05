@@ -4,7 +4,7 @@ title: "Bolt 3 終了報告 - E2E の基盤と生きたドキュメント"
 description: "3 回目の Bolt の終了報告。人の決定の反映、画面の層の受入シナリオ、用語集の整合テストと設計ドキュメントの生成、追記専用の権限、手順書の成果、指標、仮説 H1〜H4 の結論、既知の課題、ふりかえりをまとめる。"
 tags: [development,bolt-report]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-02T01:37:39Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-05T06:43:10Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-02T01:37:43Z }
 ---
@@ -45,6 +45,9 @@ verified:
 | 2 | CI の成果物を開く | `cargo-tracker-reports` に JIG（`jig/`）、Spring Modulith の図（`spring-modulith-docs/`）、テスト・カバレッジ・受入シナリオの結果があることを、ダウンロードして確かめた。`cargo-tracker-ui-reports` に画面の層の結果が残る |
 | 3 | アプリケーション利用者で `transport_request_version` を UPDATE する | 統合テストで、SQLSTATE 42501（権限なし）で拒否された |
 | 4 | 手順書どおりに起動する | `bootRun`（H2）と `bootTestRun`（PostgreSQL 18.6）で起動し、2 つの画面と H2 コンソールが応答した |
+
+
+デモの動画（2026-10-05 にいまのコードで撮った。その Bolt で作った機能のいまの振る舞いを示す）: [keyboard-submit-to-kpi](../../assets/demo/bolt-03/keyboard-submit-to-kpi.webm)、[entrance](../../assets/demo/bolt-03/entrance.webm)
 
 ## 指標
 

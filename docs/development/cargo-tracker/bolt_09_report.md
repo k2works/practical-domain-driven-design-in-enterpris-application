@@ -4,7 +4,7 @@ title: "Bolt 9 終了報告 - Bolt 6〜8 レビューの返済（書類の差し
 description: "9 回目の Bolt（W2 の最初）の終了報告。出し直しでの必要書類の種類ごとの差し替え（D-25）と、Bolt 6〜8 レビューの改善提案の返済の成果、デモ項目、指標と時間の内訳、仮説 H1〜H3 の結論、見つけて直した問題、既知の課題、ふりかえりをまとめる。"
 tags: [development,bolt-report]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-05T03:42:24Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-05T06:43:10Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-05T03:42:37Z }
 ---
@@ -62,6 +62,9 @@ verified:
 | 2 | 形式の誤ったファイルを選んで提出する | `@ui` で、エラー要約に「商業送り状: PDF・PNG・JPEG のファイルを選び直してください」（表示名は 1 回）が出ることを確かめた |
 | 3 | 改行を含む不足事項で差し戻す | 画面の単体テストで、C-04 と S-03 が改行を保つ `app-preline` で描くことを確かめた |
 | 4 | `./gradlew uiTest` | 画面の層 30 本（Bolt 8 の 28 本から +2）がすべて通り、axe-core の違反は 0 件 |
+
+
+デモの動画（2026-10-05 にいまのコードで撮った。その Bolt で作った機能のいまの振る舞いを示す）: [replace-documents](../../assets/demo/bolt-09/replace-documents.webm)、[wrong-format](../../assets/demo/bolt-09/wrong-format.webm)、[reselect-documents](../../assets/demo/bolt-09/reselect-documents.webm)
 
 ## 指標
 
