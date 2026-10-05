@@ -7079,6 +7079,14 @@
 <td style="text-align: left;">ソース束縛レビュー</td>
 <td style="text-align: left;">AI はステップで変更したファイルの一覧を完了報告に含め、人は <code>git diff --stat</code> と突き合わせる</td>
 </tr>
+<tr>
+<td style="text-align: left;">開発レビュー</td>
+<td style="text-align: left;">各 Bolt の終了報告の前に、開発成果物のレビュー（<code>developing-review</code>）を行い、指摘への対応を終了報告に書く。省くときは理由を終了報告に書く。Bolt 6〜8 で省いた結果、30 件を超える指摘を Bolt 9 でまとめて返済した（Try T-28。2026-10-05 に human:kakimomokuri が決定）</td>
+</tr>
+<tr>
+<td style="text-align: left;">CI の確認</td>
+<td style="text-align: left;">push した後、次のステップに入る前に CI の結果を確かめる。赤ければ先に直す（Try T-26。Bolt 9 で、赤い CI にステップ 5 まで気づかなかった）</td>
+</tr>
 </tbody>
 </table>
 <h3 id="_5">テストの種類とレイヤーの対応<a class="headerlink" href="#_5" title="Permanent link">&para;</a></h3>
@@ -7749,6 +7757,11 @@
 <tr>
 <td style="text-align: left;">2026-10-02</td>
 <td style="text-align: left;">Bolt 3 レビューの対応: 用語集の整合テストの実際のコマンドと、注釈の語彙 <code>@Entity</code> を書いた</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5（承認 human:kakimomokuri）</td>
+</tr>
+<tr>
+<td style="text-align: left;">2026-10-05</td>
+<td style="text-align: left;">Bolt 9 のふりかえりを反映: 開発レビューを各 Bolt の終了報告の前に行う決まり（T-28）と、push の後に CI を確かめる決まり（T-26）を、局面を横断する規律に足した</td>
 <td style="text-align: left;">anthropic/claude-opus-5-5（承認 human:kakimomokuri）</td>
 </tr>
 </tbody>
