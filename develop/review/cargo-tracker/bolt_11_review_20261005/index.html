@@ -6,35 +6,35 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="{{プロジェクト名}} v{{バージョン}} のリリース完了報告書です。">
+        <meta name="description" content="見積りの失効と置換（Bolt 11）に対する 5 つの XP 視点の統合レビューと SonarQube の結果。改善提案 R-01〜R-35、人の判断事項 D-37〜D-41。">
       
       
         <meta name="author" content="k2works">
       
       
       
-        <link rel="prev" href="../%E3%83%AA%E3%83%AA%E3%83%BC%E3%82%B9%E8%A8%88%E7%94%BB/">
+        <link rel="prev" href="../bolt_09-10_review_20261005/">
       
       
-        <link rel="next" href="../%E3%82%A2%E3%83%97%E3%83%AA%E3%82%B1%E3%83%BC%E3%82%B7%E3%83%A7%E3%83%B3%E9%96%8B%E7%99%BA%E7%92%B0%E5%A2%83%E3%82%BB%E3%83%83%E3%83%88%E3%82%A2%E3%83%83%E3%83%97%E6%89%8B%E9%A0%86%E6%9B%B8/">
+        <link rel="next" href="../../../adr/">
       
       
         
       
       
-      <link rel="icon" href="../../assets/images/favicon.png">
+      <link rel="icon" href="../../../assets/images/favicon.png">
       <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
     
     
       
-        <title>リリース完了報告書 {{バージョン}} - {{プロジェクト名}} - 実践ドメイン駆動設計 in エンタープライズアプリケーション</title>
+        <title>cargo-tracker Bolt 11 開発成果物レビュー（2026-10-05） - 実践ドメイン駆動設計 in エンタープライズアプリケーション</title>
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.ec1eaa64.min.css">
       
         
-        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+        <link rel="stylesheet" href="../../../assets/stylesheets/palette.ab4e12ef.min.css">
       
       
 
@@ -53,9 +53,9 @@
       
     
     
-      <link rel="stylesheet" href="../../assets/css/extra.css">
+      <link rel="stylesheet" href="../../../assets/css/extra.css">
     
-    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
 
@@ -78,7 +78,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#-" class="md-skip">
+        <a href="#cargo-tracker-bolt-11-2026-10-05" class="md-skip">
           Skip to content
         </a>
       
@@ -92,7 +92,7 @@
 
 <header class="md-header" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href="../.." title="実践ドメイン駆動設計 in エンタープライズアプリケーション" class="md-header__button md-logo" aria-label="実践ドメイン駆動設計 in エンタープライズアプリケーション" data-md-component="logo">
+    <a href="../../.." title="実践ドメイン駆動設計 in エンタープライズアプリケーション" class="md-header__button md-logo" aria-label="実践ドメイン駆動設計 in エンタープライズアプリケーション" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -112,7 +112,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              リリース完了報告書 {{バージョン}} - {{プロジェクト名}}
+              cargo-tracker Bolt 11 開発成果物レビュー（2026-10-05）
             
           </span>
         </div>
@@ -199,7 +199,7 @@
   
   
     <li class="md-tabs__item">
-      <a href="../.." class="md-tabs__link">
+      <a href="../../.." class="md-tabs__link">
         
   
   
@@ -220,7 +220,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../strategy/" class="md-tabs__link">
+        <a href="../../../strategy/" class="md-tabs__link">
           
   
   
@@ -240,7 +240,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../requirements/" class="md-tabs__link">
+        <a href="../../../requirements/" class="md-tabs__link">
           
   
   
@@ -260,7 +260,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../design/" class="md-tabs__link">
+        <a href="../../../design/" class="md-tabs__link">
           
   
   
@@ -280,7 +280,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../development/" class="md-tabs__link">
+        <a href="../../../development/" class="md-tabs__link">
           
   
   
@@ -300,7 +300,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../operation/" class="md-tabs__link">
+        <a href="../../../operation/" class="md-tabs__link">
           
   
   
@@ -316,11 +316,13 @@
   
   
   
+    
+  
   
     
     
-      <li class="md-tabs__item">
-        <a href="../../review/" class="md-tabs__link">
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../../" class="md-tabs__link">
           
   
   
@@ -340,7 +342,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../adr/" class="md-tabs__link">
+        <a href="../../../adr/" class="md-tabs__link">
           
   
   
@@ -360,7 +362,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../article/" class="md-tabs__link">
+        <a href="../../../article/" class="md-tabs__link">
           
   
   
@@ -380,7 +382,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../reference/" class="md-tabs__link">
+        <a href="../../../reference/" class="md-tabs__link">
           
   
   
@@ -396,13 +398,11 @@
   
   
   
-    
-  
   
     
     
-      <li class="md-tabs__item md-tabs__item--active">
-        <a href="../" class="md-tabs__link">
+      <li class="md-tabs__item">
+        <a href="../../../template/" class="md-tabs__link">
           
   
   
@@ -438,7 +438,7 @@
 
 <nav class="md-nav md-nav--primary md-nav--lifted md-nav--integrated" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href="../.." title="実践ドメイン駆動設計 in エンタープライズアプリケーション" class="md-nav__button md-logo" aria-label="実践ドメイン駆動設計 in エンタープライズアプリケーション" data-md-component="logo">
+    <a href="../../.." title="実践ドメイン駆動設計 in エンタープライズアプリケーション" class="md-nav__button md-logo" aria-label="実践ドメイン駆動設計 in エンタープライズアプリケーション" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -468,7 +468,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../.." class="md-nav__link">
+      <a href="../../.." class="md-nav__link">
         
   
   
@@ -545,7 +545,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../strategy/" class="md-nav__link">
+      <a href="../../../strategy/" class="md-nav__link">
         
   
   
@@ -573,7 +573,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../strategy/business_case/" class="md-nav__link">
+      <a href="../../../strategy/business_case/" class="md-nav__link">
         
   
   
@@ -608,7 +608,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../strategy/business_strategy/" class="md-nav__link">
+      <a href="../../../strategy/business_strategy/" class="md-nav__link">
         
   
   
@@ -643,7 +643,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../strategy/business_architecture/" class="md-nav__link">
+      <a href="../../../strategy/business_architecture/" class="md-nav__link">
         
   
   
@@ -678,7 +678,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../strategy/inception-deck/" class="md-nav__link">
+      <a href="../../../strategy/inception-deck/" class="md-nav__link">
         
   
   
@@ -713,7 +713,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../strategy/BMC.svg" class="md-nav__link">
+      <a href="../../../strategy/BMC.svg" class="md-nav__link">
         
   
   
@@ -798,7 +798,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../requirements/" class="md-nav__link">
+      <a href="../../../requirements/" class="md-nav__link">
         
   
   
@@ -876,7 +876,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../requirements/cargo-tracker/" class="md-nav__link">
+      <a href="../../../requirements/cargo-tracker/" class="md-nav__link">
         
   
   
@@ -904,7 +904,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../requirements/cargo-tracker/requirements_definition/" class="md-nav__link">
+      <a href="../../../requirements/cargo-tracker/requirements_definition/" class="md-nav__link">
         
   
   
@@ -939,7 +939,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../requirements/cargo-tracker/business_usecase/" class="md-nav__link">
+      <a href="../../../requirements/cargo-tracker/business_usecase/" class="md-nav__link">
         
   
   
@@ -974,7 +974,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../requirements/cargo-tracker/system_usecase/" class="md-nav__link">
+      <a href="../../../requirements/cargo-tracker/system_usecase/" class="md-nav__link">
         
   
   
@@ -1009,7 +1009,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../requirements/cargo-tracker/user_story/" class="md-nav__link">
+      <a href="../../../requirements/cargo-tracker/user_story/" class="md-nav__link">
         
   
   
@@ -1044,7 +1044,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../requirements/cargo-tracker/units/" class="md-nav__link">
+      <a href="../../../requirements/cargo-tracker/units/" class="md-nav__link">
         
   
   
@@ -1079,7 +1079,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../requirements/cargo-tracker/usecase_plan/" class="md-nav__link">
+      <a href="../../../requirements/cargo-tracker/usecase_plan/" class="md-nav__link">
         
   
   
@@ -1179,7 +1179,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../design/" class="md-nav__link">
+      <a href="../../../design/" class="md-nav__link">
         
   
   
@@ -1257,7 +1257,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../design/cargo-tracker/" class="md-nav__link">
+      <a href="../../../design/cargo-tracker/" class="md-nav__link">
         
   
   
@@ -1285,7 +1285,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../design/cargo-tracker/architecture_backend/" class="md-nav__link">
+      <a href="../../../design/cargo-tracker/architecture_backend/" class="md-nav__link">
         
   
   
@@ -1320,7 +1320,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../design/cargo-tracker/architecture_frontend/" class="md-nav__link">
+      <a href="../../../design/cargo-tracker/architecture_frontend/" class="md-nav__link">
         
   
   
@@ -1355,7 +1355,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../design/cargo-tracker/architecture_infrastructure/" class="md-nav__link">
+      <a href="../../../design/cargo-tracker/architecture_infrastructure/" class="md-nav__link">
         
   
   
@@ -1390,7 +1390,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../design/cargo-tracker/tech_stack/" class="md-nav__link">
+      <a href="../../../design/cargo-tracker/tech_stack/" class="md-nav__link">
         
   
   
@@ -1425,7 +1425,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../design/cargo-tracker/domain_model/" class="md-nav__link">
+      <a href="../../../design/cargo-tracker/domain_model/" class="md-nav__link">
         
   
   
@@ -1460,7 +1460,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../design/cargo-tracker/data_model/" class="md-nav__link">
+      <a href="../../../design/cargo-tracker/data_model/" class="md-nav__link">
         
   
   
@@ -1495,7 +1495,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../design/cargo-tracker/ui_design/" class="md-nav__link">
+      <a href="../../../design/cargo-tracker/ui_design/" class="md-nav__link">
         
   
   
@@ -1530,7 +1530,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../design/cargo-tracker/test_strategy/" class="md-nav__link">
+      <a href="../../../design/cargo-tracker/test_strategy/" class="md-nav__link">
         
   
   
@@ -1565,7 +1565,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../design/cargo-tracker/non_functional/" class="md-nav__link">
+      <a href="../../../design/cargo-tracker/non_functional/" class="md-nav__link">
         
   
   
@@ -1600,7 +1600,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../design/cargo-tracker/operation/" class="md-nav__link">
+      <a href="../../../design/cargo-tracker/operation/" class="md-nav__link">
         
   
   
@@ -1700,7 +1700,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../development/" class="md-nav__link">
+      <a href="../../../development/" class="md-nav__link">
         
   
   
@@ -1778,7 +1778,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../development/cargo-tracker/" class="md-nav__link">
+      <a href="../../../development/cargo-tracker/" class="md-nav__link">
         
   
   
@@ -1806,7 +1806,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../development/cargo-tracker/release_plan/" class="md-nav__link">
+      <a href="../../../development/cargo-tracker/release_plan/" class="md-nav__link">
         
   
   
@@ -1841,7 +1841,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../development/cargo-tracker/development_strategy/" class="md-nav__link">
+      <a href="../../../development/cargo-tracker/development_strategy/" class="md-nav__link">
         
   
   
@@ -1876,7 +1876,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../assets/schemaspy-output/cargo-tracker/" class="md-nav__link">
+      <a href="../../../assets/schemaspy-output/cargo-tracker/" class="md-nav__link">
         
   
   
@@ -1904,7 +1904,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../assets/jig-output/cargo-tracker/" class="md-nav__link">
+      <a href="../../../assets/jig-output/cargo-tracker/" class="md-nav__link">
         
   
   
@@ -1932,7 +1932,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../development/cargo-tracker/bolt_01_plan/" class="md-nav__link">
+      <a href="../../../development/cargo-tracker/bolt_01_plan/" class="md-nav__link">
         
   
   
@@ -1967,7 +1967,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../development/cargo-tracker/bolt_01_report/" class="md-nav__link">
+      <a href="../../../development/cargo-tracker/bolt_01_report/" class="md-nav__link">
         
   
   
@@ -2002,7 +2002,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../development/cargo-tracker/bolt_02_plan/" class="md-nav__link">
+      <a href="../../../development/cargo-tracker/bolt_02_plan/" class="md-nav__link">
         
   
   
@@ -2037,7 +2037,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../development/cargo-tracker/bolt_02_report/" class="md-nav__link">
+      <a href="../../../development/cargo-tracker/bolt_02_report/" class="md-nav__link">
         
   
   
@@ -2072,7 +2072,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../development/cargo-tracker/bolt_03_plan/" class="md-nav__link">
+      <a href="../../../development/cargo-tracker/bolt_03_plan/" class="md-nav__link">
         
   
   
@@ -2107,7 +2107,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../development/cargo-tracker/bolt_03_report/" class="md-nav__link">
+      <a href="../../../development/cargo-tracker/bolt_03_report/" class="md-nav__link">
         
   
   
@@ -2142,7 +2142,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../development/cargo-tracker/bolt_04_plan/" class="md-nav__link">
+      <a href="../../../development/cargo-tracker/bolt_04_plan/" class="md-nav__link">
         
   
   
@@ -2177,7 +2177,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../development/cargo-tracker/bolt_04_report/" class="md-nav__link">
+      <a href="../../../development/cargo-tracker/bolt_04_report/" class="md-nav__link">
         
   
   
@@ -2212,7 +2212,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../development/cargo-tracker/bolt_05_plan/" class="md-nav__link">
+      <a href="../../../development/cargo-tracker/bolt_05_plan/" class="md-nav__link">
         
   
   
@@ -2247,7 +2247,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../development/cargo-tracker/bolt_05_report/" class="md-nav__link">
+      <a href="../../../development/cargo-tracker/bolt_05_report/" class="md-nav__link">
         
   
   
@@ -2282,7 +2282,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../development/cargo-tracker/bolt_06_plan/" class="md-nav__link">
+      <a href="../../../development/cargo-tracker/bolt_06_plan/" class="md-nav__link">
         
   
   
@@ -2317,7 +2317,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../development/cargo-tracker/bolt_06_report/" class="md-nav__link">
+      <a href="../../../development/cargo-tracker/bolt_06_report/" class="md-nav__link">
         
   
   
@@ -2352,7 +2352,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../development/cargo-tracker/bolt_07_plan/" class="md-nav__link">
+      <a href="../../../development/cargo-tracker/bolt_07_plan/" class="md-nav__link">
         
   
   
@@ -2387,7 +2387,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../development/cargo-tracker/bolt_07_report/" class="md-nav__link">
+      <a href="../../../development/cargo-tracker/bolt_07_report/" class="md-nav__link">
         
   
   
@@ -2422,7 +2422,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../development/cargo-tracker/bolt_08_plan/" class="md-nav__link">
+      <a href="../../../development/cargo-tracker/bolt_08_plan/" class="md-nav__link">
         
   
   
@@ -2457,7 +2457,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../development/cargo-tracker/bolt_08_report/" class="md-nav__link">
+      <a href="../../../development/cargo-tracker/bolt_08_report/" class="md-nav__link">
         
   
   
@@ -2492,7 +2492,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../development/cargo-tracker/bolt_09_plan/" class="md-nav__link">
+      <a href="../../../development/cargo-tracker/bolt_09_plan/" class="md-nav__link">
         
   
   
@@ -2527,7 +2527,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../development/cargo-tracker/bolt_09_report/" class="md-nav__link">
+      <a href="../../../development/cargo-tracker/bolt_09_report/" class="md-nav__link">
         
   
   
@@ -2562,7 +2562,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../development/cargo-tracker/bolt_10_plan/" class="md-nav__link">
+      <a href="../../../development/cargo-tracker/bolt_10_plan/" class="md-nav__link">
         
   
   
@@ -2597,7 +2597,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../development/cargo-tracker/bolt_10_report/" class="md-nav__link">
+      <a href="../../../development/cargo-tracker/bolt_10_report/" class="md-nav__link">
         
   
   
@@ -2632,7 +2632,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../development/cargo-tracker/bolt_11_plan/" class="md-nav__link">
+      <a href="../../../development/cargo-tracker/bolt_11_plan/" class="md-nav__link">
         
   
   
@@ -2732,7 +2732,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../operation/" class="md-nav__link">
+      <a href="../../../operation/" class="md-nav__link">
         
   
   
@@ -2810,7 +2810,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../operation/cargo-tracker/" class="md-nav__link">
+      <a href="../../../operation/cargo-tracker/" class="md-nav__link">
         
   
   
@@ -2838,7 +2838,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../operation/cargo-tracker/application_development_setup/" class="md-nav__link">
+      <a href="../../../operation/cargo-tracker/application_development_setup/" class="md-nav__link">
         
   
   
@@ -2885,24 +2885,29 @@
       
   
   
+    
   
   
+  
     
     
     
     
-      
-      
-    
-    
-    <li class="md-nav__item md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" >
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" checked>
         
           
-          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="">
             
   
   
@@ -2920,7 +2925,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_7">
             <span class="md-nav__icon md-icon"></span>
             
@@ -2938,7 +2943,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../review/" class="md-nav__link">
+      <a href="../../" class="md-nav__link">
         
   
   
@@ -2966,7 +2971,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../review/%E6%88%A6%E7%95%A5%E6%88%90%E6%9E%9C%E7%89%A9_review_20260929/" class="md-nav__link">
+      <a href="../../%E6%88%A6%E7%95%A5%E6%88%90%E6%9E%9C%E7%89%A9_review_20260929/" class="md-nav__link">
         
   
   
@@ -2998,6 +3003,8 @@
                 
   
   
+    
+  
   
   
     
@@ -3008,11 +3015,11 @@
       
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_3" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_3" checked>
         
           
           <label class="md-nav__link" for="__nav_7_3" id="__nav_7_3_label" tabindex="0">
@@ -3033,7 +3040,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_7_3_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_7_3_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_7_3">
             <span class="md-nav__icon md-icon"></span>
             
@@ -3051,7 +3058,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../review/cargo-tracker/" class="md-nav__link">
+      <a href="../" class="md-nav__link">
         
   
   
@@ -3079,7 +3086,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../review/cargo-tracker/usecases_review_20260930/" class="md-nav__link">
+      <a href="../usecases_review_20260930/" class="md-nav__link">
         
   
   
@@ -3114,7 +3121,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../review/cargo-tracker/analysis_review_20261001/" class="md-nav__link">
+      <a href="../analysis_review_20261001/" class="md-nav__link">
         
   
   
@@ -3149,7 +3156,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../review/cargo-tracker/bolt_01_review_20261001/" class="md-nav__link">
+      <a href="../bolt_01_review_20261001/" class="md-nav__link">
         
   
   
@@ -3184,7 +3191,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../review/cargo-tracker/bolt_02_review_20261002/" class="md-nav__link">
+      <a href="../bolt_02_review_20261002/" class="md-nav__link">
         
   
   
@@ -3219,7 +3226,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../review/cargo-tracker/bolt_03_review_20261002/" class="md-nav__link">
+      <a href="../bolt_03_review_20261002/" class="md-nav__link">
         
   
   
@@ -3254,7 +3261,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../review/cargo-tracker/bolt_04_review_20261002/" class="md-nav__link">
+      <a href="../bolt_04_review_20261002/" class="md-nav__link">
         
   
   
@@ -3289,7 +3296,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../review/cargo-tracker/bolt_05_review_20261002/" class="md-nav__link">
+      <a href="../bolt_05_review_20261002/" class="md-nav__link">
         
   
   
@@ -3324,7 +3331,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../review/cargo-tracker/bolt_06-08_review_20261003/" class="md-nav__link">
+      <a href="../bolt_06-08_review_20261003/" class="md-nav__link">
         
   
   
@@ -3359,7 +3366,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../review/cargo-tracker/bolt_09-10_review_20261005/" class="md-nav__link">
+      <a href="../bolt_09-10_review_20261005/" class="md-nav__link">
         
   
   
@@ -3391,10 +3398,44 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../../review/cargo-tracker/bolt_11_review_20261005/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 11 開発成果物レビュー（2026-10-05）
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--draft"></span>
+  
+
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -3417,6 +3458,153 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        レビュー対象
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        総合評価
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        改善提案（重要度順）
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="改善提案（重要度順）">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        高
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        中
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_6" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        低
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_7" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        人の判断事項
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_8" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        矛盾事項
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_9" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        エージェント別フィードバック詳細
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_10" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        対応結果
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_11" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        更新履歴
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -3494,7 +3682,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../adr/" class="md-nav__link">
+      <a href="../../../adr/" class="md-nav__link">
         
   
   
@@ -3572,7 +3760,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../adr/cargo-tracker/" class="md-nav__link">
+      <a href="../../../adr/cargo-tracker/" class="md-nav__link">
         
   
   
@@ -3600,7 +3788,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../adr/cargo-tracker/001-modular-monolith/" class="md-nav__link">
+      <a href="../../../adr/cargo-tracker/001-modular-monolith/" class="md-nav__link">
         
   
   
@@ -3635,7 +3823,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../adr/cargo-tracker/002-domain-logic-pattern-per-context/" class="md-nav__link">
+      <a href="../../../adr/cargo-tracker/002-domain-logic-pattern-per-context/" class="md-nav__link">
         
   
   
@@ -3670,7 +3858,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../adr/cargo-tracker/003-inter-context-integration/" class="md-nav__link">
+      <a href="../../../adr/cargo-tracker/003-inter-context-integration/" class="md-nav__link">
         
   
   
@@ -3705,7 +3893,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../adr/cargo-tracker/004-external-data-ingestion/" class="md-nav__link">
+      <a href="../../../adr/cargo-tracker/004-external-data-ingestion/" class="md-nav__link">
         
   
   
@@ -3740,7 +3928,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../adr/cargo-tracker/005-server-side-rendering/" class="md-nav__link">
+      <a href="../../../adr/cargo-tracker/005-server-side-rendering/" class="md-nav__link">
         
   
   
@@ -3775,7 +3963,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../adr/cargo-tracker/006-java-spring-boot-platform/" class="md-nav__link">
+      <a href="../../../adr/cargo-tracker/006-java-spring-boot-platform/" class="md-nav__link">
         
   
   
@@ -3810,7 +3998,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../adr/cargo-tracker/007-postgresql-mybatis-flyway/" class="md-nav__link">
+      <a href="../../../adr/cargo-tracker/007-postgresql-mybatis-flyway/" class="md-nav__link">
         
   
   
@@ -3845,7 +4033,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../adr/cargo-tracker/008-aws-container-platform/" class="md-nav__link">
+      <a href="../../../adr/cargo-tracker/008-aws-container-platform/" class="md-nav__link">
         
   
   
@@ -3880,7 +4068,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../adr/cargo-tracker/009-bdd-cucumber/" class="md-nav__link">
+      <a href="../../../adr/cargo-tracker/009-bdd-cucumber/" class="md-nav__link">
         
   
   
@@ -3915,7 +4103,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../adr/cargo-tracker/010-required-document-storage-transaction/" class="md-nav__link">
+      <a href="../../../adr/cargo-tracker/010-required-document-storage-transaction/" class="md-nav__link">
         
   
   
@@ -4015,7 +4203,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../article/" class="md-nav__link">
+      <a href="../../../article/" class="md-nav__link">
         
   
   
@@ -4043,7 +4231,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../article/01-ddd-fundamentals/" class="md-nav__link">
+      <a href="../../../article/01-ddd-fundamentals/" class="md-nav__link">
         
   
   
@@ -4078,7 +4266,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../article/02-cargo-domain-model/" class="md-nav__link">
+      <a href="../../../article/02-cargo-domain-model/" class="md-nav__link">
         
   
   
@@ -4113,7 +4301,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../article/03-spring-modular-monolith/" class="md-nav__link">
+      <a href="../../../article/03-spring-modular-monolith/" class="md-nav__link">
         
   
   
@@ -4205,7 +4393,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/" class="md-nav__link">
+      <a href="../../../reference/" class="md-nav__link">
         
   
   
@@ -4233,7 +4421,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/%E3%82%88%E3%81%84%E3%82%BD%E3%83%95%E3%83%88%E3%82%A6%E3%82%A7%E3%82%A2%E3%81%A8%E3%81%AF/" class="md-nav__link">
+      <a href="../../../reference/%E3%82%88%E3%81%84%E3%82%BD%E3%83%95%E3%83%88%E3%82%A6%E3%82%A7%E3%82%A2%E3%81%A8%E3%81%AF/" class="md-nav__link">
         
   
   
@@ -4268,7 +4456,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/%E3%83%AD%E3%82%B8%E3%82%AB%E3%83%AB%E3%82%B7%E3%83%B3%E3%82%AD%E3%83%B3%E3%82%B0/" class="md-nav__link">
+      <a href="../../../reference/%E3%83%AD%E3%82%B8%E3%82%AB%E3%83%AB%E3%82%B7%E3%83%B3%E3%82%AD%E3%83%B3%E3%82%B0/" class="md-nav__link">
         
   
   
@@ -4303,7 +4491,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/%E9%96%8B%E7%99%BA%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
+      <a href="../../../reference/%E9%96%8B%E7%99%BA%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
         
   
   
@@ -4338,7 +4526,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/%E9%96%8B%E7%99%BA%E3%82%AC%E3%82%A4%E3%83%89_AI-DLC%E7%89%88/" class="md-nav__link">
+      <a href="../../../reference/%E9%96%8B%E7%99%BA%E3%82%AC%E3%82%A4%E3%83%89_AI-DLC%E7%89%88/" class="md-nav__link">
         
   
   
@@ -4373,7 +4561,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/AI-DLC%E5%B0%8E%E5%85%A5%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
+      <a href="../../../reference/AI-DLC%E5%B0%8E%E5%85%A5%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
         
   
   
@@ -4408,7 +4596,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/AI-DLC%E7%94%A8%E8%AA%9E%E9%9B%86/" class="md-nav__link">
+      <a href="../../../reference/AI-DLC%E7%94%A8%E8%AA%9E%E9%9B%86/" class="md-nav__link">
         
   
   
@@ -4443,7 +4631,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/%E3%83%89%E3%82%AD%E3%83%A5%E3%83%A1%E3%83%B3%E3%83%88%E6%A7%8B%E6%88%90%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
+      <a href="../../../reference/%E3%83%89%E3%82%AD%E3%83%A5%E3%83%A1%E3%83%B3%E3%83%88%E6%A7%8B%E6%88%90%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
         
   
   
@@ -4478,7 +4666,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/LivingDocumentation%E5%B0%8E%E5%85%A5%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
+      <a href="../../../reference/LivingDocumentation%E5%B0%8E%E5%85%A5%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
         
   
   
@@ -4513,7 +4701,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/%E3%82%A2%E3%83%8E%E3%83%86%E3%83%BC%E3%82%B7%E3%83%A7%E3%83%B3%E5%B0%8E%E5%85%A5%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
+      <a href="../../../reference/%E3%82%A2%E3%83%8E%E3%83%86%E3%83%BC%E3%82%B7%E3%83%A7%E3%83%B3%E5%B0%8E%E5%85%A5%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
         
   
   
@@ -4548,7 +4736,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/%E3%83%80%E3%82%A4%E3%83%8A%E3%83%9F%E3%83%83%E3%82%AF%E3%82%AD%E3%83%A5%E3%83%AC%E3%83%BC%E3%82%B7%E3%83%A7%E3%83%B3%E5%B0%8E%E5%85%A5%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
+      <a href="../../../reference/%E3%83%80%E3%82%A4%E3%83%8A%E3%83%9F%E3%83%83%E3%82%AF%E3%82%AD%E3%83%A5%E3%83%AC%E3%83%BC%E3%82%B7%E3%83%A7%E3%83%B3%E5%B0%8E%E5%85%A5%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
         
   
   
@@ -4583,7 +4771,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/%E3%82%AC%E3%82%A4%E3%83%89%E3%83%84%E3%82%A2%E3%83%BC%E3%83%BB%E3%82%B5%E3%82%A4%E3%83%88%E3%82%B7%E3%83%BC%E3%82%A4%E3%83%B3%E3%82%B0%E5%B0%8E%E5%85%A5%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
+      <a href="../../../reference/%E3%82%AC%E3%82%A4%E3%83%89%E3%83%84%E3%82%A2%E3%83%BC%E3%83%BB%E3%82%B5%E3%82%A4%E3%83%88%E3%82%B7%E3%83%BC%E3%82%A4%E3%83%B3%E3%82%B0%E5%B0%8E%E5%85%A5%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
         
   
   
@@ -4618,7 +4806,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/OKF%E5%B0%8E%E5%85%A5%E3%82%AC%E3%82%A4%E3%83%89_V0.2/" class="md-nav__link">
+      <a href="../../../reference/OKF%E5%B0%8E%E5%85%A5%E3%82%AC%E3%82%A4%E3%83%89_V0.2/" class="md-nav__link">
         
   
   
@@ -4653,7 +4841,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/%E7%B5%8C%E5%96%B6%E6%88%A6%E7%95%A5%E5%88%86%E6%9E%90%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
+      <a href="../../../reference/%E7%B5%8C%E5%96%B6%E6%88%A6%E7%95%A5%E5%88%86%E6%9E%90%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
         
   
   
@@ -4688,7 +4876,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/%E3%83%93%E3%82%B8%E3%83%8D%E3%82%B9%E3%82%A2%E3%83%BC%E3%82%AD%E3%83%86%E3%82%AF%E3%83%81%E3%83%A3%E5%88%86%E6%9E%90%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
+      <a href="../../../reference/%E3%83%93%E3%82%B8%E3%83%8D%E3%82%B9%E3%82%A2%E3%83%BC%E3%82%AD%E3%83%86%E3%82%AF%E3%83%81%E3%83%A3%E5%88%86%E6%9E%90%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
         
   
   
@@ -4723,7 +4911,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/%E8%A6%81%E4%BB%B6%E5%AE%9A%E7%BE%A9%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
+      <a href="../../../reference/%E8%A6%81%E4%BB%B6%E5%AE%9A%E7%BE%A9%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
         
   
   
@@ -4758,7 +4946,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/%E3%83%A6%E3%83%BC%E3%82%B9%E3%82%B1%E3%83%BC%E3%82%B9%E4%BD%9C%E6%88%90%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
+      <a href="../../../reference/%E3%83%A6%E3%83%BC%E3%82%B9%E3%82%B1%E3%83%BC%E3%82%B9%E4%BD%9C%E6%88%90%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
         
   
   
@@ -4793,7 +4981,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/%E3%83%A6%E3%83%BC%E3%82%B9%E3%82%B1%E3%83%BC%E3%82%B9%E4%BD%9C%E6%88%90%E3%82%AC%E3%82%A4%E3%83%89_AI-DLC%E7%89%88/" class="md-nav__link">
+      <a href="../../../reference/%E3%83%A6%E3%83%BC%E3%82%B9%E3%82%B1%E3%83%BC%E3%82%B9%E4%BD%9C%E6%88%90%E3%82%AC%E3%82%A4%E3%83%89_AI-DLC%E7%89%88/" class="md-nav__link">
         
   
   
@@ -4828,7 +5016,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/%E3%82%A2%E3%83%BC%E3%82%AD%E3%83%86%E3%82%AF%E3%83%81%E3%83%A3%E8%A8%AD%E8%A8%88%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
+      <a href="../../../reference/%E3%82%A2%E3%83%BC%E3%82%AD%E3%83%86%E3%82%AF%E3%83%81%E3%83%A3%E8%A8%AD%E8%A8%88%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
         
   
   
@@ -4863,7 +5051,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/%E3%83%87%E3%83%BC%E3%82%BF%E3%83%A2%E3%83%87%E3%83%AB%E8%A8%AD%E8%A8%88%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
+      <a href="../../../reference/%E3%83%87%E3%83%BC%E3%82%BF%E3%83%A2%E3%83%87%E3%83%AB%E8%A8%AD%E8%A8%88%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
         
   
   
@@ -4898,7 +5086,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/%E3%83%89%E3%83%A1%E3%82%A4%E3%83%B3%E3%83%A2%E3%83%87%E3%83%AB%E8%A8%AD%E8%A8%88%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
+      <a href="../../../reference/%E3%83%89%E3%83%A1%E3%82%A4%E3%83%B3%E3%83%A2%E3%83%87%E3%83%AB%E8%A8%AD%E8%A8%88%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
         
   
   
@@ -4933,7 +5121,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/UI%E8%A8%AD%E8%A8%88%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
+      <a href="../../../reference/UI%E8%A8%AD%E8%A8%88%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
         
   
   
@@ -4968,7 +5156,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/%E3%83%86%E3%82%B9%E3%83%88%E6%88%A6%E7%95%A5%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
+      <a href="../../../reference/%E3%83%86%E3%82%B9%E3%83%88%E6%88%A6%E7%95%A5%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
         
   
   
@@ -5003,7 +5191,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/%E9%9D%9E%E6%A9%9F%E8%83%BD%E8%A6%81%E4%BB%B6%E5%AE%9A%E7%BE%A9%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
+      <a href="../../../reference/%E9%9D%9E%E6%A9%9F%E8%83%BD%E8%A6%81%E4%BB%B6%E5%AE%9A%E7%BE%A9%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
         
   
   
@@ -5038,7 +5226,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/%E9%81%8B%E7%94%A8%E8%A6%81%E4%BB%B6%E5%AE%9A%E7%BE%A9%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
+      <a href="../../../reference/%E9%81%8B%E7%94%A8%E8%A6%81%E4%BB%B6%E5%AE%9A%E7%BE%A9%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
         
   
   
@@ -5073,7 +5261,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/%E3%82%A4%E3%83%B3%E3%83%95%E3%83%A9%E8%A8%AD%E8%A8%88%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
+      <a href="../../../reference/%E3%82%A4%E3%83%B3%E3%83%95%E3%83%A9%E8%A8%AD%E8%A8%88%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
         
   
   
@@ -5108,7 +5296,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/%E3%82%B3%E3%83%BC%E3%83%87%E3%82%A3%E3%83%B3%E3%82%B0%E3%81%A8%E3%83%86%E3%82%B9%E3%83%88%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
+      <a href="../../../reference/%E3%82%B3%E3%83%BC%E3%83%87%E3%82%A3%E3%83%B3%E3%82%B0%E3%81%A8%E3%83%86%E3%82%B9%E3%83%88%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
         
   
   
@@ -5143,7 +5331,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/%E3%82%B3%E3%83%BC%E3%83%87%E3%82%A3%E3%83%B3%E3%82%B0%E3%81%A8%E3%83%86%E3%82%B9%E3%83%88%E3%82%AC%E3%82%A4%E3%83%89_AI-DLC%E7%89%88/" class="md-nav__link">
+      <a href="../../../reference/%E3%82%B3%E3%83%BC%E3%83%87%E3%82%A3%E3%83%B3%E3%82%B0%E3%81%A8%E3%83%86%E3%82%B9%E3%83%88%E3%82%AC%E3%82%A4%E3%83%89_AI-DLC%E7%89%88/" class="md-nav__link">
         
   
   
@@ -5178,7 +5366,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/BDD%E5%B0%8E%E5%85%A5%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
+      <a href="../../../reference/BDD%E5%B0%8E%E5%85%A5%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
         
   
   
@@ -5213,7 +5401,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/%E3%82%A8%E3%82%AF%E3%82%B9%E3%83%88%E3%83%AA%E3%83%BC%E3%83%A0%E3%83%97%E3%83%AD%E3%82%B0%E3%83%A9%E3%83%9F%E3%83%B3%E3%82%B0/" class="md-nav__link">
+      <a href="../../../reference/%E3%82%A8%E3%82%AF%E3%82%B9%E3%83%88%E3%83%AA%E3%83%BC%E3%83%A0%E3%83%97%E3%83%AD%E3%82%B0%E3%83%A9%E3%83%9F%E3%83%B3%E3%82%B0/" class="md-nav__link">
         
   
   
@@ -5248,7 +5436,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/%E3%83%AA%E3%83%AA%E3%83%BC%E3%82%B9%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
+      <a href="../../../reference/%E3%83%AA%E3%83%AA%E3%83%BC%E3%82%B9%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
         
   
   
@@ -5283,7 +5471,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/%E3%83%AA%E3%83%AA%E3%83%BC%E3%82%B9%E3%83%BB%E3%82%A4%E3%83%86%E3%83%AC%E3%83%BC%E3%82%B7%E3%83%A7%E3%83%B3%E8%A8%88%E7%94%BB%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
+      <a href="../../../reference/%E3%83%AA%E3%83%AA%E3%83%BC%E3%82%B9%E3%83%BB%E3%82%A4%E3%83%86%E3%83%AC%E3%83%BC%E3%82%B7%E3%83%A7%E3%83%B3%E8%A8%88%E7%94%BB%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
         
   
   
@@ -5318,7 +5506,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/%E3%83%AA%E3%83%AA%E3%83%BC%E3%82%B9%E3%83%BB%E3%82%A4%E3%83%86%E3%83%AC%E3%83%BC%E3%82%B7%E3%83%A7%E3%83%B3%E8%A8%88%E7%94%BB%E3%82%AC%E3%82%A4%E3%83%89_AI-DLC%E7%89%88/" class="md-nav__link">
+      <a href="../../../reference/%E3%83%AA%E3%83%AA%E3%83%BC%E3%82%B9%E3%83%BB%E3%82%A4%E3%83%86%E3%83%AC%E3%83%BC%E3%82%B7%E3%83%A7%E3%83%B3%E8%A8%88%E7%94%BB%E3%82%AC%E3%82%A4%E3%83%89_AI-DLC%E7%89%88/" class="md-nav__link">
         
   
   
@@ -5353,7 +5541,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/%E7%92%B0%E5%A2%83%E5%A4%89%E6%95%B0%E7%AE%A1%E7%90%86%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
+      <a href="../../../reference/%E7%92%B0%E5%A2%83%E5%A4%89%E6%95%B0%E7%AE%A1%E7%90%86%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
         
   
   
@@ -5388,7 +5576,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/%E8%A8%80%E8%AA%9E%E5%88%A5%E9%96%8B%E7%99%BA%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
+      <a href="../../../reference/%E8%A8%80%E8%AA%9E%E5%88%A5%E9%96%8B%E7%99%BA%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
         
   
   
@@ -5423,7 +5611,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/Java%E3%82%A2%E3%83%97%E3%83%AA%E3%82%B1%E3%83%BC%E3%82%B7%E3%83%A7%E3%83%B3%E7%92%B0%E5%A2%83%E6%A7%8B%E7%AF%89%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
+      <a href="../../../reference/Java%E3%82%A2%E3%83%97%E3%83%AA%E3%82%B1%E3%83%BC%E3%82%B7%E3%83%A7%E3%83%B3%E7%92%B0%E5%A2%83%E6%A7%8B%E7%AF%89%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
         
   
   
@@ -5458,7 +5646,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/TypeScript%E3%82%A2%E3%83%97%E3%83%AA%E3%82%B1%E3%83%BC%E3%82%B7%E3%83%A7%E3%83%B3%E7%92%B0%E5%A2%83%E6%A7%8B%E7%AF%89%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
+      <a href="../../../reference/TypeScript%E3%82%A2%E3%83%97%E3%83%AA%E3%82%B1%E3%83%BC%E3%82%B7%E3%83%A7%E3%83%B3%E7%92%B0%E5%A2%83%E6%A7%8B%E7%AF%89%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
         
   
   
@@ -5493,7 +5681,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/%E9%81%8B%E7%94%A8%E3%82%B9%E3%82%AF%E3%83%AA%E3%83%97%E3%83%88%E4%BD%9C%E6%88%90%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
+      <a href="../../../reference/%E9%81%8B%E7%94%A8%E3%82%B9%E3%82%AF%E3%83%AA%E3%83%97%E3%83%88%E4%BD%9C%E6%88%90%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
         
   
   
@@ -5528,7 +5716,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/CodexCLIMCP%E3%82%A2%E3%83%97%E3%83%AA%E3%82%B1%E3%83%BC%E3%82%B7%E3%83%A7%E3%83%B3%E9%96%8B%E7%99%BA%E3%83%95%E3%83%AD%E3%83%BC/" class="md-nav__link">
+      <a href="../../../reference/CodexCLIMCP%E3%82%A2%E3%83%97%E3%83%AA%E3%82%B1%E3%83%BC%E3%82%B7%E3%83%A7%E3%83%B3%E9%96%8B%E7%99%BA%E3%83%95%E3%83%AD%E3%83%BC/" class="md-nav__link">
         
   
   
@@ -5563,7 +5751,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/CodexCLIMCP%E3%82%B5%E3%83%BC%E3%83%90%E3%83%BC%E8%A8%AD%E5%AE%9A%E6%89%8B%E9%A0%86/" class="md-nav__link">
+      <a href="../../../reference/CodexCLIMCP%E3%82%B5%E3%83%BC%E3%83%90%E3%83%BC%E8%A8%AD%E5%AE%9A%E6%89%8B%E9%A0%86/" class="md-nav__link">
         
   
   
@@ -5598,7 +5786,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/SonarQube%E3%83%AD%E3%83%BC%E3%82%AB%E3%83%AB%E7%92%B0%E5%A2%83%E3%82%BB%E3%83%83%E3%83%88%E3%82%A2%E3%83%83%E3%83%97%E6%89%8B%E9%A0%86%E6%9B%B8/" class="md-nav__link">
+      <a href="../../../reference/SonarQube%E3%83%AD%E3%83%BC%E3%82%AB%E3%83%AB%E7%92%B0%E5%A2%83%E3%82%BB%E3%83%83%E3%83%88%E3%82%A2%E3%83%83%E3%83%97%E6%89%8B%E9%A0%86%E6%9B%B8/" class="md-nav__link">
         
   
   
@@ -5633,7 +5821,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/Vim%E6%93%8D%E4%BD%9C%E3%83%9E%E3%83%8B%E3%83%A5%E3%82%A2%E3%83%AB/" class="md-nav__link">
+      <a href="../../../reference/Vim%E6%93%8D%E4%BD%9C%E3%83%9E%E3%83%8B%E3%83%A5%E3%82%A2%E3%83%AB/" class="md-nav__link">
         
   
   
@@ -5668,7 +5856,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/%E4%BC%81%E6%A5%AD%E7%B5%8C%E5%96%B6%E8%AB%96/" class="md-nav__link">
+      <a href="../../../reference/%E4%BC%81%E6%A5%AD%E7%B5%8C%E5%96%B6%E8%AB%96/" class="md-nav__link">
         
   
   
@@ -5703,7 +5891,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/%E9%81%8B%E5%96%B6%E7%AE%A1%E7%90%86/" class="md-nav__link">
+      <a href="../../../reference/%E9%81%8B%E5%96%B6%E7%AE%A1%E7%90%86/" class="md-nav__link">
         
   
   
@@ -5742,29 +5930,24 @@
       
   
   
-    
   
   
-  
     
     
     
     
       
-        
-        
-      
       
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_11" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_11" >
         
           
-          <label class="md-nav__link" for="__nav_11" id="__nav_11_label" tabindex="">
+          <label class="md-nav__link" for="__nav_11" id="__nav_11_label" tabindex="0">
             
   
   
@@ -5782,7 +5965,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_11_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_11_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_11">
             <span class="md-nav__icon md-icon"></span>
             
@@ -5800,7 +5983,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../" class="md-nav__link">
+      <a href="../../../template/" class="md-nav__link">
         
   
   
@@ -5828,7 +6011,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../%E3%81%BE%E3%81%9A%E3%81%93%E3%82%8C%E3%82%92%E8%AA%AD%E3%82%82%E3%81%86%E3%83%AA%E3%82%B9%E3%83%88/" class="md-nav__link">
+      <a href="../../../template/%E3%81%BE%E3%81%9A%E3%81%93%E3%82%8C%E3%82%92%E8%AA%AD%E3%82%82%E3%81%86%E3%83%AA%E3%82%B9%E3%83%88/" class="md-nav__link">
         
   
   
@@ -5863,7 +6046,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../%E3%83%93%E3%82%B8%E3%83%8D%E3%82%B9%E3%82%A2%E3%83%BC%E3%82%AD%E3%83%86%E3%82%AF%E3%83%81%E3%83%A3/" class="md-nav__link">
+      <a href="../../../template/%E3%83%93%E3%82%B8%E3%83%8D%E3%82%B9%E3%82%A2%E3%83%BC%E3%82%AD%E3%83%86%E3%82%AF%E3%83%81%E3%83%A3/" class="md-nav__link">
         
   
   
@@ -5898,7 +6081,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../%E8%A6%81%E4%BB%B6%E5%AE%9A%E7%BE%A9/" class="md-nav__link">
+      <a href="../../../template/%E8%A6%81%E4%BB%B6%E5%AE%9A%E7%BE%A9/" class="md-nav__link">
         
   
   
@@ -5933,7 +6116,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../%E5%AE%8C%E5%85%A8%E5%BD%A2%E5%BC%8F%E3%81%AE%E3%83%A6%E3%83%BC%E3%82%B9%E3%82%B1%E3%83%BC%E3%82%B9/" class="md-nav__link">
+      <a href="../../../template/%E5%AE%8C%E5%85%A8%E5%BD%A2%E5%BC%8F%E3%81%AE%E3%83%A6%E3%83%BC%E3%82%B9%E3%82%B1%E3%83%BC%E3%82%B9/" class="md-nav__link">
         
   
   
@@ -5968,7 +6151,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../%E8%A8%AD%E8%A8%88/" class="md-nav__link">
+      <a href="../../../template/%E8%A8%AD%E8%A8%88/" class="md-nav__link">
         
   
   
@@ -6003,7 +6186,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../ADR/" class="md-nav__link">
+      <a href="../../../template/ADR/" class="md-nav__link">
         
   
   
@@ -6038,7 +6221,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../%E3%82%A4%E3%83%B3%E3%82%BB%E3%83%97%E3%82%B7%E3%83%A7%E3%83%B3%E3%83%87%E3%83%83%E3%82%AD/" class="md-nav__link">
+      <a href="../../../template/%E3%82%A4%E3%83%B3%E3%82%BB%E3%83%97%E3%82%B7%E3%83%A7%E3%83%B3%E3%83%87%E3%83%83%E3%82%AD/" class="md-nav__link">
         
   
   
@@ -6073,7 +6256,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../%E3%82%A4%E3%83%86%E3%83%AC%E3%83%BC%E3%82%B7%E3%83%A7%E3%83%B3%E8%A8%88%E7%94%BB/" class="md-nav__link">
+      <a href="../../../template/%E3%82%A4%E3%83%86%E3%83%AC%E3%83%BC%E3%82%B7%E3%83%A7%E3%83%B3%E8%A8%88%E7%94%BB/" class="md-nav__link">
         
   
   
@@ -6108,7 +6291,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../%E3%82%A4%E3%83%86%E3%83%AC%E3%83%BC%E3%82%B7%E3%83%A7%E3%83%B3%E5%AE%8C%E4%BA%86%E5%A0%B1%E5%91%8A%E6%9B%B8/" class="md-nav__link">
+      <a href="../../../template/%E3%82%A4%E3%83%86%E3%83%AC%E3%83%BC%E3%82%B7%E3%83%A7%E3%83%B3%E5%AE%8C%E4%BA%86%E5%A0%B1%E5%91%8A%E6%9B%B8/" class="md-nav__link">
         
   
   
@@ -6143,7 +6326,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../%E3%83%AA%E3%83%AA%E3%83%BC%E3%82%B9%E8%A8%88%E7%94%BB/" class="md-nav__link">
+      <a href="../../../template/%E3%83%AA%E3%83%AA%E3%83%BC%E3%82%B9%E8%A8%88%E7%94%BB/" class="md-nav__link">
         
   
   
@@ -6175,44 +6358,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    リリース完了報告書
-  
-
-    
-  </span>
-  
-  
-    
-  
-  
-    <span class="md-status md-status--stable"></span>
-  
-
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../../../template/%E3%83%AA%E3%83%AA%E3%83%BC%E3%82%B9%E5%AE%8C%E4%BA%86%E5%A0%B1%E5%91%8A%E6%9B%B8/" class="md-nav__link">
         
   
   
@@ -6235,409 +6384,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#_1" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        概要
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#_2" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        プロジェクトサマリー
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#_3" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        計画と実績の差異分析
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="計画と実績の差異分析">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#_4" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        イテレーション別達成状況
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#_5" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        リリース別達成状況
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#_6" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        リリースバーンダウン
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#vs" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        計画日程 vs 実績日数の差異分析
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="計画日程 vs 実績日数の差異分析">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#_7" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        イテレーション別日程比較
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#_8" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        工期短縮の可視化
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#vs_1" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        計画 vs 実績ガントチャート
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="計画 vs 実績ガントチャート">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#_9" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        当初計画スケジュール
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#_10" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        実績スケジュール
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#_11" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        サマリー
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#_12" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        差異分析
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#_13" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        工期短縮の要因分析
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#_14" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        コミットログ分析
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="コミットログ分析">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#_15" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        コミットプリフィックス別内訳
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#_16" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        コミットプリフィックス別パイチャート
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#_17" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        分析
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#_18" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        品質メトリクス
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="品質メトリクス">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#_19" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        テストカバレッジ
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#_20" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        テスト数のリリース別推移
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#_21" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        静的解析
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#_22" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        ベロシティ
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#_23" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        リリース履歴
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#_24" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        主要な成果物
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="主要な成果物">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#_25" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        実装した主要機能
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#_26" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        技術的成果
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#_27" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        総評
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="総評">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#_28" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        ハイライト
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#_29" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        プロジェクト完了メトリクス
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -6650,7 +6396,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../%E3%82%A2%E3%83%97%E3%83%AA%E3%82%B1%E3%83%BC%E3%82%B7%E3%83%A7%E3%83%B3%E9%96%8B%E7%99%BA%E7%92%B0%E5%A2%83%E3%82%BB%E3%83%83%E3%83%88%E3%82%A2%E3%83%83%E3%83%97%E6%89%8B%E9%A0%86%E6%9B%B8/" class="md-nav__link">
+      <a href="../../../template/%E3%82%A2%E3%83%97%E3%83%AA%E3%82%B1%E3%83%BC%E3%82%B7%E3%83%A7%E3%83%B3%E9%96%8B%E7%99%BA%E7%92%B0%E5%A2%83%E3%82%BB%E3%83%83%E3%83%88%E3%82%A2%E3%83%83%E3%83%97%E6%89%8B%E9%A0%86%E6%9B%B8/" class="md-nav__link">
         
   
   
@@ -6685,7 +6431,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../%E9%96%8B%E7%99%BA%E7%92%B0%E5%A2%83%E3%82%BB%E3%83%83%E3%83%88%E3%82%A2%E3%83%83%E3%83%97%E6%89%8B%E9%A0%86%E6%9B%B8/" class="md-nav__link">
+      <a href="../../../template/%E9%96%8B%E7%99%BA%E7%92%B0%E5%A2%83%E3%82%BB%E3%83%83%E3%83%88%E3%82%A2%E3%83%83%E3%83%97%E6%89%8B%E9%A0%86%E6%9B%B8/" class="md-nav__link">
         
   
   
@@ -6720,7 +6466,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../AWS%E3%82%B9%E3%83%86%E3%83%BC%E3%82%B8%E3%83%B3%E3%82%B0%E7%92%B0%E5%A2%83%E3%82%BB%E3%83%83%E3%83%88%E3%82%A2%E3%83%83%E3%83%97%E6%89%8B%E9%A0%86%E6%9B%B8/" class="md-nav__link">
+      <a href="../../../template/AWS%E3%82%B9%E3%83%86%E3%83%BC%E3%82%B8%E3%83%B3%E3%82%B0%E7%92%B0%E5%A2%83%E3%82%BB%E3%83%83%E3%83%88%E3%82%A2%E3%83%83%E3%83%97%E6%89%8B%E9%A0%86%E6%9B%B8/" class="md-nav__link">
         
   
   
@@ -6755,7 +6501,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../AWS%E3%83%97%E3%83%AD%E3%83%80%E3%82%AF%E3%82%B7%E3%83%A7%E3%83%B3%E7%92%B0%E5%A2%83%E3%82%BB%E3%83%83%E3%83%88%E3%82%A2%E3%83%83%E3%83%97%E6%89%8B%E9%A0%86%E6%9B%B8/" class="md-nav__link">
+      <a href="../../../template/AWS%E3%83%97%E3%83%AD%E3%83%80%E3%82%AF%E3%82%B7%E3%83%A7%E3%83%B3%E7%92%B0%E5%A2%83%E3%82%BB%E3%83%83%E3%83%88%E3%82%A2%E3%83%83%E3%83%97%E6%89%8B%E9%A0%86%E6%9B%B8/" class="md-nav__link">
         
   
   
@@ -6790,7 +6536,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../%E4%BC%81%E6%A5%AD%E5%88%86%E6%9E%90/" class="md-nav__link">
+      <a href="../../../template/%E4%BC%81%E6%A5%AD%E5%88%86%E6%9E%90/" class="md-nav__link">
         
   
   
@@ -6825,7 +6571,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../%E4%BA%8B%E4%BE%8B%E5%88%86%E6%9E%90/" class="md-nav__link">
+      <a href="../../../template/%E4%BA%8B%E4%BE%8B%E5%88%86%E6%9E%90/" class="md-nav__link">
         
   
   
@@ -6860,7 +6606,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../README.md" class="md-nav__link">
+      <a href="../../../template/README.md" class="md-nav__link">
         
   
   
@@ -6908,574 +6654,463 @@
   
 
 
-<h1 id="-">リリース完了報告書 {{バージョン}} - {{プロジェクト名}}<a class="headerlink" href="#-" title="Permanent link">&para;</a></h1>
-<p><strong>報告書作成日</strong>: {{YYYY-MM-DD}}</p>
-<h2 id="_1">概要<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h2>
-<p>{{プロジェクト名}} v{{バージョン}} のリリース完了報告書です。全 {{イテレーション数}} イテレーション、{{総 SP}} ストーリーポイントを {{達成率}}% 達成し、{{完了状態の説明}}。</p>
-<hr />
-<h2 id="_2">プロジェクトサマリー<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h2>
+<h1 id="cargo-tracker-bolt-11-2026-10-05">cargo-tracker Bolt 11 開発成果物レビュー（2026-10-05）<a class="headerlink" href="#cargo-tracker-bolt-11-2026-10-05" title="Permanent link">&para;</a></h1>
+<h2 id="_1">レビュー対象<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Bolt 11 の変更: Bolt 10 のクローズの後（<code>ffeec0d</code>）から <code>fd17464</code> まで（<code>apps/cargo-tracker</code> の 39 ファイル、+1,659 行・-81 行と、文書）</li>
+<li>ステップ 1: Bolt 9・10 レビューの中・低の返済</li>
+<li>ステップ 2〜5: 見積りの失効の判定（同時刻は失効）、再提示の拒否、再見積りによる置換と失効の記録、<code>quotation</code> の <code>EXPIRED</code>・<code>REPLACED</code>・<code>replaced_by_quotation_id</code>、部分一意インデックス <code>ux_quotation_active</code>、置換先の遅延の FK、S-04 の再見積りと失効・置換済みの表示、C-04 の旧版</li>
+<li>文書: <a href="../../../development/cargo-tracker/bolt_11_plan/">Bolt 11 計画</a>、設計文書・要件定義・Bolt 9・10 レビューの差分</li>
+<li>観点: xp-programmer、xp-tester、xp-architect、xp-technical-writer、xp-user-representative の 5 つ（並列に実施）</li>
+<li>同じ時点の SonarQube の品質ゲート: PASS（Bug 0、Vulnerability 0、Security Hotspot 0、重複 0.0%、カバレッジ 93.5%、Code Smell 5。下の R-18）</li>
+</ul>
+<h2 id="_2">総合評価<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h2>
+<p>TDD の手順（Red のコミット 5 つがどれもテストだけで Green より先）、業務の拒否は値・壊れた前提は例外の使い分け、再見積りの書く順（旧版の更新が先、新しい見積りの保存が後）と、部分一意インデックス・遅延の FK の組み合わせは規律どおりで、整合している（programmer、architect）。失効を判定時刻で決める判断は <code>QuotationExpiry.isValidAt</code> の 1 か所にまとまり、予約確定（US-04）でもそのまま使える（architect）。境界値（1 秒前・同時刻・1 秒後）は判定と提示の両方でシナリオアウトラインになっている（tester）。営業の再見積りの流れ（旧版を初期値に、有効期限だけ空に）は現場の運用に合う（user-representative）。</p>
+<p>一方、次が重要度「高」として挙がった。</p>
+<ul>
+<li><strong>再見積りの最中に荷主が誤解する</strong>: 旧版を置換済みにして新しい見積りがまだ承認待ちの間、荷主の C-04 には置換済みの旧版が最新として出て「新しい見積りは担当営業にご依頼ください」と案内される。営業はすでに作り直しているのに依頼を促し、輸送要求の状態「見積提示済み（お客様の対応待ち）」とも食い違う（user-representative。technical-writer・architect も懸念に挙げた）</li>
+<li><strong>営業が見積りに戻る入口がない</strong>: 受付一覧（S-02）は審査中と見積り作成中だけを出すため、提示済み・失効の見積りと、再見積りで作った承認待ちの見積りに一覧からたどれない（user-representative）</li>
+<li><strong>荷主に見せない・見せる規則のテストの抜け</strong>: 提示済みのまま期限を過ぎた見積りの C-04 の表示、提示する前に置き換えた見積りを荷主に見せないこと、をどの層でも確かめていない（tester）</li>
+<li><strong>計画の時刻の誤り</strong>: ステップ 1 の期間が 16:22〜16:45 になっている（最後のコミットは 16:35）（technical-writer）</li>
+</ul>
+<h2 id="_3">改善提案（重要度順）<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h2>
+<h3 id="_4">高<a class="headerlink" href="#_4" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
 <tr>
-<th>項目</th>
-<th>値</th>
+<th style="text-align: left;">#</th>
+<th style="text-align: left;">提案</th>
+<th style="text-align: left;">箇所</th>
+<th style="text-align: left;">指摘元</th>
+<th style="text-align: left;">AI の提案する対応方針</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><strong>プロジェクト期間</strong></td>
-<td>{{開始日}} 〜 {{終了日}} (約 {{期間}} 週間)</td>
+<td style="text-align: left;">R-01</td>
+<td style="text-align: left;">最新の見積りが置換済み（新しい見積りが承認待ち）なら「担当営業が新しい見積りを準備しています。提示されるまでお待ちください。」とし、「新しい見積りは担当営業にご依頼ください」は失効のときだけにする</td>
+<td style="text-align: left;">C-04 <code>detail.html</code>、<code>QuotationViews</code></td>
+<td style="text-align: left;">user-representative、technical-writer、architect</td>
+<td style="text-align: left;">Bolt 11 で修正（文言は人の判断 D-37）</td>
 </tr>
 <tr>
-<td><strong>総イテレーション数</strong></td>
-<td>{{イテレーション数}}</td>
+<td style="text-align: left;">R-02</td>
+<td style="text-align: left;">受付一覧（S-02）に「見積提示済み」の表を足し、行から最新の見積り（S-04）を開けるようにする（有効期限の近い順）</td>
+<td style="text-align: left;">S-02 <code>list.html</code>、照会</td>
+<td style="text-align: left;">user-representative</td>
+<td style="text-align: left;">人の判断（D-38）</td>
 </tr>
 <tr>
-<td><strong>総ストーリーポイント</strong></td>
-<td>{{総 SP}} SP</td>
+<td style="text-align: left;">R-03</td>
+<td style="text-align: left;">提示済みのまま期限を過ぎた見積りが、C-04 で「失効」と読み取り専用で示され、回答の案内が出ないことを確かめるテストを足す</td>
+<td style="text-align: left;"><code>TransportRequestControllerTest</code></td>
+<td style="text-align: left;">tester</td>
+<td style="text-align: left;">Bolt 11 で修正</td>
 </tr>
 <tr>
-<td><strong>総コミット数</strong></td>
-<td>{{コミット数}}</td>
+<td style="text-align: left;">R-04</td>
+<td style="text-align: left;">承認待ちのまま置き換えた見積りが荷主に見えないことを、業務ルール層のシナリオで確かめる</td>
+<td style="text-align: left;"><code>expire_and_replace_quotation.feature</code></td>
+<td style="text-align: left;">tester</td>
+<td style="text-align: left;">Bolt 11 で修正</td>
 </tr>
 <tr>
-<td><strong>総テスト数</strong></td>
-<td>{{テスト数}}</td>
-</tr>
-<tr>
-<td><strong>ユーザーストーリー数</strong></td>
-<td>{{ストーリー数}}</td>
+<td style="text-align: left;">R-05</td>
+<td style="text-align: left;">ステップ 1 の期間を 16:22〜16:35 に直す</td>
+<td style="text-align: left;"><code>bolt_11_plan.md</code></td>
+<td style="text-align: left;">technical-writer</td>
+<td style="text-align: left;">修正</td>
 </tr>
 </tbody>
 </table>
-<hr />
-<h2 id="_3">計画と実績の差異分析<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h2>
-<h3 id="_4">イテレーション別達成状況<a class="headerlink" href="#_4" title="Permanent link">&para;</a></h3>
+<h3 id="_5">中<a class="headerlink" href="#_5" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
 <tr>
-<th>イテレーション</th>
-<th>リリース</th>
-<th>計画 SP</th>
-<th>実績 SP</th>
-<th>達成率</th>
-<th>差異</th>
+<th style="text-align: left;">#</th>
+<th style="text-align: left;">提案</th>
+<th style="text-align: left;">箇所</th>
+<th style="text-align: left;">指摘元</th>
+<th style="text-align: left;">AI の提案する対応方針</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>IT1</td>
-<td>{{リリース名}}</td>
-<td>{{計画 SP}}</td>
-<td>{{実績 SP}}</td>
-<td>{{達成率}}%</td>
-<td>{{差異}}</td>
+<td style="text-align: left;">R-06</td>
+<td style="text-align: left;">再見積りで、旧版の対象の版が現在の版でないときの理由を「見積り作成中でない」と分け、テストを足す</td>
+<td style="text-align: left;"><code>QuotationCommandService.requote</code>、<code>QuotationRejection</code></td>
+<td style="text-align: left;">programmer、tester</td>
+<td style="text-align: left;">Bolt 11 で修正</td>
 </tr>
 <tr>
-<td>IT2</td>
-<td>{{リリース名}}</td>
-<td>{{計画 SP}}</td>
-<td>{{実績 SP}}</td>
-<td>{{達成率}}%</td>
-<td>{{差異}}</td>
+<td style="text-align: left;">R-07</td>
+<td style="text-align: left;">提示できるか・再見積りできるか・読み取り専用かと拒否の理由を、集約の問い合わせ（例: <code>presentRejectionAt(at)</code>・<code>requoteRejectionAt(at)</code>）にまとめ、画面はその結果を写すだけにする</td>
+<td style="text-align: left;"><code>QuotationViews</code>、<code>StaffQuotationController</code>、<code>Quotation</code></td>
+<td style="text-align: left;">programmer、architect</td>
+<td style="text-align: left;">Bolt 11 で修正</td>
 </tr>
 <tr>
-<td>...</td>
-<td></td>
-<td></td>
-<td></td>
-<td></td>
-<td></td>
+<td style="text-align: left;">R-08</td>
+<td style="text-align: left;">次の見積り番号の計算（最大 + 1）を 1 か所にまとめ、再見積りで同じ見積りを 2 回読まない</td>
+<td style="text-align: left;"><code>QuotationCommandService</code></td>
+<td style="text-align: left;">programmer</td>
+<td style="text-align: left;">Bolt 11 で修正</td>
 </tr>
 <tr>
-<td><strong>合計</strong></td>
-<td></td>
-<td><strong>{{計画合計}}</strong></td>
-<td><strong>{{実績合計}}</strong></td>
-<td><strong>{{全体達成率}}%</strong></td>
-<td><strong>{{全体差異}}</strong></td>
+<td style="text-align: left;">R-09</td>
+<td style="text-align: left;">失効として記録した旧版の S-04 にも、最新の見積りへのリンクと「読み取り専用です」を出す</td>
+<td style="text-align: left;"><code>show.html</code>、<code>StaffQuotationController</code></td>
+<td style="text-align: left;">technical-writer</td>
+<td style="text-align: left;">Bolt 11 で修正</td>
+</tr>
+<tr>
+<td style="text-align: left;">R-10</td>
+<td style="text-align: left;">再見積りの結果の文言を、旧版が置換済みか失効かで出し分け、置換の言い方をそろえる</td>
+<td style="text-align: left;"><code>StaffQuotationController</code>、<code>new.html</code>、<code>show.html</code></td>
+<td style="text-align: left;">technical-writer</td>
+<td style="text-align: left;">Bolt 11 で修正</td>
+</tr>
+<tr>
+<td style="text-align: left;">R-11</td>
+<td style="text-align: left;">ドメインモデルの集約の操作を実装に合わせる（置換する(新しい見積り ID, 判定時刻)、失効しているか(判定時刻)）</td>
+<td style="text-align: left;"><code>domain_model.md</code></td>
+<td style="text-align: left;">technical-writer</td>
+<td style="text-align: left;">修正</td>
+</tr>
+<tr>
+<td style="text-align: left;">R-12</td>
+<td style="text-align: left;">Bolt 9・10 レビューの対応結果の R-14（<code>0ecf416</code> で修正）・R-24 を埋め、節の見出しを「Bolt 11 での対応」にする</td>
+<td style="text-align: left;"><code>bolt_09-10_review_20261005.md</code></td>
+<td style="text-align: left;">technical-writer</td>
+<td style="text-align: left;">修正</td>
+</tr>
+<tr>
+<td style="text-align: left;">R-13</td>
+<td style="text-align: left;">画面の層の失効の準備を、DB の時刻の書き換えでなく時計の差し替えで作る</td>
+<td style="text-align: left;"><code>QuotationUiSteps</code></td>
+<td style="text-align: left;">tester</td>
+<td style="text-align: left;">人の判断（D-39）</td>
+</tr>
+<tr>
+<td style="text-align: left;">R-14</td>
+<td style="text-align: left;">新しい見積りの保存が失敗したとき旧版の更新ごとロールバックすることを、サービスを通した統合テストで確かめる</td>
+<td style="text-align: left;">統合テスト</td>
+<td style="text-align: left;">tester</td>
+<td style="text-align: left;">Bolt 11 で修正</td>
+</tr>
+<tr>
+<td style="text-align: left;">R-15</td>
+<td style="text-align: left;">同時の再見積りを、実 DB の 2 つのトランザクションで確かめる</td>
+<td style="text-align: left;">統合テスト</td>
+<td style="text-align: left;">tester</td>
+<td style="text-align: left;">Bolt 12 以降（Bolt 5 からの持ち越しと一緒に）</td>
+</tr>
+<tr>
+<td style="text-align: left;">R-16</td>
+<td style="text-align: left;">提示済みのまま期限を過ぎた見積りを再提示したときの理由を「承認待ちでない」でなく「失効している」にする</td>
+<td style="text-align: left;"><code>Quotation.presentInternally</code></td>
+<td style="text-align: left;">tester</td>
+<td style="text-align: left;">Bolt 11 で修正（R-07 と一緒に）</td>
+</tr>
+<tr>
+<td style="text-align: left;">R-17</td>
+<td style="text-align: left;">提示済みで失効した見積りの案内に、失効した日時（有効期限）を併記する</td>
+<td style="text-align: left;">S-04 <code>show.html</code></td>
+<td style="text-align: left;">user-representative</td>
+<td style="text-align: left;">Bolt 11 で修正</td>
+</tr>
+<tr>
+<td style="text-align: left;">R-18</td>
+<td style="text-align: left;">SonarQube の Code Smell 5 件（この Bolt の 3 件と、以前からの 2 件）</td>
+<td style="text-align: left;"><code>QuotationViews:54</code>、<code>QuotationTest:208</code>、<code>MyBatisQuotationIntegrationTest:326</code>、<code>LivingGlossaryConsistencyTest:36</code>、<code>TransportRequestControllerTest:469</code></td>
+<td style="text-align: left;">SonarQube</td>
+<td style="text-align: left;">Bolt 11 で修正</td>
+</tr>
+<tr>
+<td style="text-align: left;">R-19</td>
+<td style="text-align: left;">予約確定（US-04）のため、見積り側に「予約確定に使えるか(commit 時刻)」を置き、予約から見積りの判定をどう問い合わせるか（公開 API か有効期限の写し）を ADR で決める</td>
+<td style="text-align: left;"><code>Quotation</code>、ADR</td>
+<td style="text-align: left;">architect</td>
+<td style="text-align: left;">US-04 の Bolt の前（W4）</td>
 </tr>
 </tbody>
 </table>
-<h3 id="_5">リリース別達成状況<a class="headerlink" href="#_5" title="Permanent link">&para;</a></h3>
+<h3 id="_6">低<a class="headerlink" href="#_6" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
 <tr>
-<th>リリース</th>
-<th>内容</th>
-<th>計画 SP</th>
-<th>実績 SP</th>
-<th>達成率</th>
+<th style="text-align: left;">#</th>
+<th style="text-align: left;">提案</th>
+<th style="text-align: left;">箇所</th>
+<th style="text-align: left;">指摘元</th>
+<th style="text-align: left;">AI の提案する対応方針</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>Release {{X}}.0 {{名称}}</td>
-<td>{{内容}}</td>
-<td>{{計画 SP}}</td>
-<td>{{実績 SP}}</td>
-<td>{{達成率}}%</td>
+<td style="text-align: left;">R-20</td>
+<td style="text-align: left;">置換先の見積りを、全件を読んで絞るのでなく ID で探す</td>
+<td style="text-align: left;"><code>StaffQuotationController</code></td>
+<td style="text-align: left;">programmer</td>
+<td style="text-align: left;">R-07・R-09 と一緒に見直す</td>
 </tr>
 <tr>
-<td>...</td>
-<td></td>
-<td></td>
-<td></td>
-<td></td>
+<td style="text-align: left;">R-21</td>
+<td style="text-align: left;">失効の案内の <code>switch</code> の到達しない枝を、到達しないと分かる書き方にする</td>
+<td style="text-align: left;"><code>StaffQuotationController</code></td>
+<td style="text-align: left;">programmer</td>
+<td style="text-align: left;">R-07 と一緒に修正</td>
+</tr>
+<tr>
+<td style="text-align: left;">R-22</td>
+<td style="text-align: left;"><code>RequotationOutcome.Rejected</code> の Javadoc から「見積りがすでにある」を除く（返さない）</td>
+<td style="text-align: left;"><code>RequotationOutcome</code></td>
+<td style="text-align: left;">programmer</td>
+<td style="text-align: left;">修正</td>
+</tr>
+<tr>
+<td style="text-align: left;">R-23</td>
+<td style="text-align: left;"><code>QuotationExpiry.isValidAt</code> に null の検査を足す</td>
+<td style="text-align: left;"><code>QuotationExpiry</code></td>
+<td style="text-align: left;">programmer</td>
+<td style="text-align: left;">修正</td>
+</tr>
+<tr>
+<td style="text-align: left;">R-24</td>
+<td style="text-align: left;">旧版を更新した後に新しい見積りの保存が一意制約に触れたら、500 でなく競合として返す</td>
+<td style="text-align: left;"><code>QuotationCommandService.requote</code></td>
+<td style="text-align: left;">architect</td>
+<td style="text-align: left;">修正（R-14 と一緒に）</td>
+</tr>
+<tr>
+<td style="text-align: left;">R-25</td>
+<td style="text-align: left;"><code>isRedelivery</code> の名前を意図に合わせる（再配信と再見積りの後の提示の両方）</td>
+<td style="text-align: left;"><code>QuotationPresentedEventHandler</code></td>
+<td style="text-align: left;">architect</td>
+<td style="text-align: left;">修正</td>
+</tr>
+<tr>
+<td style="text-align: left;">R-26</td>
+<td style="text-align: left;">シナリオの前提に標準の見積りの有効期限を書く</td>
+<td style="text-align: left;"><code>expire_and_replace_quotation.feature</code></td>
+<td style="text-align: left;">tester</td>
+<td style="text-align: left;">修正</td>
+</tr>
+<tr>
+<td style="text-align: left;">R-27</td>
+<td style="text-align: left;">境界のテストをパラメータ化し、<code>isValidAt</code> の直接のテスト・置換済みは期限後も失効でないこと・<code>replaceWith</code> の 1 秒前を足す</td>
+<td style="text-align: left;"><code>QuotationTest</code></td>
+<td style="text-align: left;">tester</td>
+<td style="text-align: left;">修正</td>
+</tr>
+<tr>
+<td style="text-align: left;">R-28</td>
+<td style="text-align: left;">制約の違反のテストで制約名も確かめる</td>
+<td style="text-align: left;"><code>MyBatisQuotationIntegrationTest</code></td>
+<td style="text-align: left;">tester</td>
+<td style="text-align: left;">修正</td>
+</tr>
+<tr>
+<td style="text-align: left;">R-29</td>
+<td style="text-align: left;">画面の層のステップの「見積 2」を引数にする</td>
+<td style="text-align: left;"><code>QuotationUiSteps</code></td>
+<td style="text-align: left;">tester</td>
+<td style="text-align: left;">修正</td>
+</tr>
+<tr>
+<td style="text-align: left;">R-30</td>
+<td style="text-align: left;">計画の H1・設計の約束・図の <code>QuotationValidity</code> と、確認ポイント 7 の FK に、ステップ 3・4 での変更の注を付ける</td>
+<td style="text-align: left;"><code>bolt_11_plan.md</code></td>
+<td style="text-align: left;">technical-writer</td>
+<td style="text-align: left;">修正</td>
+</tr>
+<tr>
+<td style="text-align: left;">R-31</td>
+<td style="text-align: left;">開発の索引の Bolt 11 の状態を実態に合わせる</td>
+<td style="text-align: left;"><code>development/cargo-tracker/index.md</code></td>
+<td style="text-align: left;">technical-writer</td>
+<td style="text-align: left;">修正</td>
+</tr>
+<tr>
+<td style="text-align: left;">R-32</td>
+<td style="text-align: left;"><code>RequoteQuotationCommand</code> の Javadoc の書き出しを簡潔にする</td>
+<td style="text-align: left;"><code>RequoteQuotationCommand</code></td>
+<td style="text-align: left;">technical-writer</td>
+<td style="text-align: left;">修正</td>
+</tr>
+<tr>
+<td style="text-align: left;">R-33</td>
+<td style="text-align: left;">荷主の画面の「置換済み」を荷主向けの言葉にする</td>
+<td style="text-align: left;">C-04</td>
+<td style="text-align: left;">technical-writer</td>
+<td style="text-align: left;">人の判断（D-37 と一緒に）</td>
+</tr>
+<tr>
+<td style="text-align: left;">R-34</td>
+<td style="text-align: left;">本番で使われなくなった <code>QuotationQueryService.findPresented</code> を <code>findVisible</code> に寄せて消す</td>
+<td style="text-align: left;"><code>QuotationQueryService</code>、<code>QuotationSteps</code></td>
+<td style="text-align: left;">programmer</td>
+<td style="text-align: left;">修正</td>
+</tr>
+<tr>
+<td style="text-align: left;">R-35</td>
+<td style="text-align: left;">荷主の画面で、失効した見積りの見出しに有効期限を並べる</td>
+<td style="text-align: left;">C-04</td>
+<td style="text-align: left;">user-representative</td>
+<td style="text-align: left;">R-17 と一緒に修正</td>
 </tr>
 </tbody>
 </table>
-<h3 id="_6">リリースバーンダウン<a class="headerlink" href="#_6" title="Permanent link">&para;</a></h3>
-<pre class="mermaid"><code>xychart-beta
-    title "リリースバーンダウン（計画 vs 実績）"
-    x-axis ["開始", "IT1", "IT2", "..."]
-    y-axis "残 SP" 0 --&gt; {{総 SP}}
-    line "計画" [{{計画値のカンマ区切り}}]
-    line "実績" [{{実績値のカンマ区切り}}]</code></pre>
-<p><strong>分析結果</strong>: {{バーンダウンの傾向分析}}</p>
-<hr />
-<h2 id="vs">計画日程 vs 実績日数の差異分析<a class="headerlink" href="#vs" title="Permanent link">&para;</a></h2>
-<h3 id="_7">イテレーション別日程比較<a class="headerlink" href="#_7" title="Permanent link">&para;</a></h3>
+<h2 id="_7">人の判断事項<a class="headerlink" href="#_7" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
 <tr>
-<th>IT</th>
-<th>計画期間</th>
-<th>計画日数</th>
-<th>実績期間</th>
-<th>実績日数</th>
-<th>短縮日数</th>
-<th>短縮率</th>
+<th style="text-align: left;">#</th>
+<th style="text-align: left;">判断事項</th>
+<th style="text-align: left;">AI の提案</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>1</td>
-<td>{{計画期間}}</td>
-<td>{{計画日数}} 日</td>
-<td>{{実績期間}}</td>
-<td><strong>{{実績日数}} 日</strong></td>
-<td>{{短縮日数}} 日</td>
-<td>{{短縮率}}%</td>
+<td style="text-align: left;">D-37</td>
+<td style="text-align: left;">再見積りの最中の C-04 の案内（R-01）と、荷主向けの状態の言葉（R-33）</td>
+<td style="text-align: left;">最新が置換済みなら「担当営業が新しい見積りを準備しています。提示されるまでお待ちください。」、失効なら今の「この見積りは読み取り専用です。新しい見積りは担当営業にご依頼ください。」。荷主の画面の状態の言葉は「置換済み」を「新しい見積りに置き換え」に、「失効」はそのままにする</td>
 </tr>
 <tr>
-<td>...</td>
-<td></td>
-<td></td>
-<td></td>
-<td></td>
-<td></td>
-<td></td>
+<td style="text-align: left;">D-38</td>
+<td style="text-align: left;">受付一覧（S-02）から提示済み・失効の見積りに戻る入口（R-02）</td>
+<td style="text-align: left;">Bolt 11 で、S-02 に「見積提示済み」の表（業務番号、最新の見積り番号と状態、有効期限、有効期限の近い順）を足し、行から最新の見積り（S-04）を開けるようにする</td>
 </tr>
 <tr>
-<td><strong>合計</strong></td>
-<td><strong>{{計画総期間}}</strong></td>
-<td><strong>{{計画総日数}} 日</strong></td>
-<td><strong>{{実績総期間}}</strong></td>
-<td><strong>{{実績総日数}} 日</strong></td>
-<td><strong>{{短縮合計}} 日</strong></td>
-<td><strong>{{短縮率合計}}%</strong></td>
+<td style="text-align: left;">D-39</td>
+<td style="text-align: left;">画面の層の失効の準備（R-13）</td>
+<td style="text-align: left;">今の DB の書き換えのまま残す。画面の層は実際の時計で動く方針（Bolt 10）なので、時計の差し替えは画面の層の時刻の扱いを決めるときにまとめて見直す</td>
+</tr>
+<tr>
+<td style="text-align: left;">D-40</td>
+<td style="text-align: left;">対応の範囲</td>
+<td style="text-align: left;">高（R-01〜R-05）、中のうち R-06〜R-12・R-14・R-16〜R-18 と低の全部を Bolt 11 で直す。R-13 は D-39、R-15 は Bolt 12 以降、R-19 は US-04 の Bolt の前</td>
+</tr>
+<tr>
+<td style="text-align: left;">D-41</td>
+<td style="text-align: left;">業務責任者に確かめる事項（D-36 に足す）: 有効期限内の提示済みの旧版を、新しい見積りの提示まで有効のまま残すべきか（今は再見積りで算出した時点で置き換える。確認ポイント 4）。失効したときに荷主へ連絡するのは営業の責任か。失効・置換の後も輸送要求の状態を「見積提示済み」のままにしてよいか</td>
+<td style="text-align: left;">W2 の間に D-28・D-29・D-34〜D-36 とあわせて確かめる</td>
 </tr>
 </tbody>
 </table>
-<h3 id="_8">工期短縮の可視化<a class="headerlink" href="#_8" title="Permanent link">&para;</a></h3>
-<pre class="mermaid"><code>xychart-beta
-    title "計画日数 vs 実績日数"
-    x-axis ["IT1", "IT2", "..."]
-    y-axis "日数" 0 --&gt; {{最大日数}}
-    bar "計画" [{{計画日数のカンマ区切り}}]
-    bar "実績" [{{実績日数のカンマ区切り}}]</code></pre>
-<h3 id="vs_1">計画 vs 実績ガントチャート<a class="headerlink" href="#vs_1" title="Permanent link">&para;</a></h3>
-<h4 id="_9">当初計画スケジュール<a class="headerlink" href="#_9" title="Permanent link">&para;</a></h4>
-<pre class="mermaid"><code>gantt
-    title 当初計画スケジュール
-    dateFormat  YYYY-MM-DD
+<h2 id="_8">矛盾事項<a class="headerlink" href="#_8" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">#</th>
+<th style="text-align: left;">視点 A</th>
+<th style="text-align: left;">視点 B</th>
+<th style="text-align: left;">論点</th>
+<th style="text-align: left;">推奨判断</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">1</td>
+<td style="text-align: left;">user-representative: 有効期限内の提示済みの旧版は、新しい見積りの提示まで残すべき（荷主が旧版で社内決裁を進めている最中に無効になる）</td>
+<td style="text-align: left;">確認ポイント 4（承認済み）: 算出した時点で旧版を置き換える。旧版を残すと作成中・承認待ちと提示済みが 2 つになり Q-INV-18 が崩れる</td>
+<td style="text-align: left;">置換の時点</td>
+<td style="text-align: left;">Bolt 11 は承認済みの確認ポイント 4 のまま。業務責任者に確かめ（D-41）、残すと決まれば Q-INV-18 を「承認待ちは 1 つ、提示済み（有効）は 1 つ」に分けて見直す</td>
+</tr>
+<tr>
+<td style="text-align: left;">2</td>
+<td style="text-align: left;">architect: 予約確定は見積りの判定を公開 API で問い合わせる</td>
+<td style="text-align: left;">architect（同じ指摘の中）: 有効期限の写しを予約側に持つ</td>
+<td style="text-align: left;">US-04 での見積りの有効性の確かめ方</td>
+<td style="text-align: left;">US-04 の Bolt の前に ADR で決める（R-19）</td>
+</tr>
+</tbody>
+</table>
+<h2 id="_9">エージェント別フィードバック詳細<a class="headerlink" href="#_9" title="Permanent link">&para;</a></h2>
+<details>
+<summary>xp-programmer（高: 0 / 中: 3 / 低: 4）</summary>
 
-    section Release {{X}}.0
-    IT1 {{ゴール}}  :p1, {{開始日}}, {{日数}}d
-    IT2 {{ゴール}}  :p2, after p1, {{日数}}d</code></pre>
-<h4 id="_10">実績スケジュール<a class="headerlink" href="#_10" title="Permanent link">&para;</a></h4>
-<pre class="mermaid"><code>gantt
-    title 実績スケジュール
-    dateFormat  YYYY-MM-DD
+- 評価: TDD の手順、値と例外の使い分け、トランザクションの順序はどれも規律どおり。拒否の理由の意味のずれと、画面の層への業務の判断の漏れがある
+- 良い点: 失効を判定時刻で決め BR-10 を 1 か所に、`retiredRejection` で拒否の順をそろえた、DRAFT の置換は例外、書く順とインデックス・遅延の FK の整合、例外の理由を Javadoc に、ハンドラーで再配信と結果整合の崩れを分けたログ
+- 中: 版の食い違いの理由（R-06）、`requotable` を画面で決める（R-07）、番号の計算の重複と 2 回の読み出し（R-08）
+- 低: 置換先の探し方（R-20）、到達しない枝（R-21）、Javadoc（R-22）、null の検査（R-23）
+- 懸念: 入力の検証の前に旧版を置換済みにする（保存しないので実害はないが、`Invalid` のとき旧版が変わらないことをテストで固定したい）。H2 では Q-INV-18 を DB で守らない
+- スコープ外: 本番で使われない `findPresented`（R-34）
 
-    section Release {{X}}.0
-    IT1 {{ゴール}} ({{日数}}日)  :done, a1, {{開始日}}, {{日数}}d
-    IT2 {{ゴール}} ({{日数}}日)  :done, a2, {{開始日}}, {{日数}}d
-    リリース {{X}}.0              :milestone, m1, {{日付}}, 0d</code></pre>
-<h3 id="_11">サマリー<a class="headerlink" href="#_11" title="Permanent link">&para;</a></h3>
+</details>
+
+<details>
+<summary>xp-tester（高: 2 / 中: 5 / 低: 4）</summary>
+
+- 評価: 業務ルール層のシナリオは計画の 6 項目と 1:1。境界値は判定と提示の両方にある。R-07・R-08 は返済された。荷主側の失効の表示と、提示前に置き換えた見積りを見せないことが確かめられていない
+- 良い点: 3 点の境界の例の表、提示時刻を 04:30 に分けた、「見積り 3 はない」、`SET CONSTRAINTS ALL IMMEDIATE`、メモリ上のリポジトリに部分一意インデックスの規則、ログのテスト
+- 高: C-04 の失効の表示（R-03）、提示前の置換を荷主に見せない（R-04）
+- 中: 画面の層の DB の書き換え（R-13）、ロールバックのテスト（R-14）、実 DB の同時の再見積り（R-15）、再見積りの版の不一致のテスト（R-06）
+- 低: 前提の有効期限（R-26）、パラメータ化と直接のテスト（R-27）、制約名（R-28）、「見積 2」の固定（R-29）
+- 懸念: 業務ルール層の Red がコンパイルの失敗だけ（PIT で補う余地）。提示済みで失効した見積りの再提示の理由が「承認待ちでない」（R-16）
+- スコープ外: US-04 で commit 時刻を判定時刻として渡す統合テストを最初に
+
+</details>
+
+<details>
+<summary>xp-architect（高: 0 / 中: 2 / 低: 2）</summary>
+
+- 評価: 変更は見積りのコンテキストの中で閉じ、依存の向きも崩れていない。2 つのインスタンスを 1 つのトランザクションで書く例外は、理由が書かれ範囲も限られており妥当。承認可
+- 良い点: 判定時刻を呼び出し側が渡す形、書く順と遅延の FK の整合と統合テスト、DB ごとのフォルダ、同時の再見積りは楽観ロックで値に
+- 中: 画面の層の業務ルールの複製（R-07）、US-04 の判定 API と ADR（R-19）
+- 低: 保存の失敗を競合に（R-24）、`isRedelivery` の名前（R-25）
+- 懸念: 再見積りの間、有効な見積りが承認待ちしかない（荷主の表示、R-01）。見積りの置換と予約確定の同時の競合はまだ設計されていない。H2 の前提をテスト戦略に書く
+- スコープ外: 輸送要求の条件変更（新しい版）を入れると、旧版の見積りが有効なまま残り、算出も再見積りも拒否されて行き詰まる。条件変更の Bolt で旧版の見積りを置換・失効にする遷移を一緒に設計する
+
+</details>
+
+<details>
+<summary>xp-technical-writer（高: 1 / 中: 4 / 低: 4）</summary>
+
+- 評価: 計画・結果・コミットの順にたどれ、マイグレーション名・URL・状態の表示名・確認ポイントの決定は設計文書と実装で一致。計画からの 2 つの変更も追える
+- 良い点: Bolt 9 終了報告の期間がコミットの時刻と一致、ステップの結果のハッシュの順、データモデルに遅延の FK の理由、C-04 の以前の見積りを `details` で畳む
+- 高: ステップ 1 の時刻（R-05）
+- 中: レビューの対応結果の R-14・R-24（R-12）、失効として記録した旧版の画面（R-09）、結果の文言と言い方（R-10）、ドメインモデルの操作（R-11）
+- 低: 計画の注（R-30）、索引の状態（R-31）、Javadoc（R-32）、荷主向けの言葉（R-33）
+- 懸念: 承認待ちの新しい見積りがある間の C-04 の案内（R-01）
+- スコープ外: レビューとリリース計画の更新履歴の承認の列が「—」のまま（フロントマターの `verified` とずれる）
+
+</details>
+
+<details>
+<summary>xp-user-representative（高: 2 / 中: 1 / 低: 1）</summary>
+
+- 評価: 営業の流れは見積り業務に合う。再見積りの最中に荷主が見る表示が誤解を招く。条件付きで合格
+- 良い点: 同時刻から失効の規則と次の操作の案内、旧版を初期値にし有効期限だけ空に、置換の事前と事後の案内、承認前の見積りを荷主に見せない
+- 高: 再見積りの最中の C-04 の案内（R-01）、S-02 の入口（R-02）
+- 中: 失効した日時の併記（R-17）
+- 低: 荷主の失効の見出しに有効期限（R-35）
+- 懸念: 算出の時点で旧版を置き換えると、荷主が有効な見積りを持たない期間ができる（矛盾事項 1）。失効・置換を荷主へ知らせる手段がない（Bolt 10 から継続）
+- 業務責任者に確かめること: D-36、旧版を提示まで残すか、失効の連絡の責任、輸送要求の状態（D-41）
+
+</details>
+
+<h2 id="_10">対応結果<a class="headerlink" href="#_10" title="Permanent link">&para;</a></h2>
+<p>（人の判断の後に記録する）</p>
+<h2 id="_11">更新履歴<a class="headerlink" href="#_11" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
 <tr>
-<th>指標</th>
-<th>値</th>
+<th style="text-align: left;">日付</th>
+<th style="text-align: left;">内容</th>
+<th style="text-align: left;">作成</th>
+<th style="text-align: left;">承認</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><strong>計画総日数</strong></td>
-<td>{{計画総日数}} 日</td>
-</tr>
-<tr>
-<td><strong>実績総日数</strong></td>
-<td>{{実績総日数}} 日</td>
-</tr>
-<tr>
-<td><strong>短縮日数</strong></td>
-<td>{{短縮日数}} 日</td>
-</tr>
-<tr>
-<td><strong>短縮率</strong></td>
-<td><strong>{{短縮率}}%</strong></td>
-</tr>
-<tr>
-<td><strong>効率倍率</strong></td>
-<td><strong>{{効率倍率}} 倍</strong></td>
+<td style="text-align: left;">2026-10-05</td>
+<td style="text-align: left;">初版（5 視点の並列レビューと SonarQube の結果を統合）</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5</td>
+<td style="text-align: left;">—</td>
 </tr>
 </tbody>
 </table>
-<h3 id="_12">差異分析<a class="headerlink" href="#_12" title="Permanent link">&para;</a></h3>
-<ol>
-<li>{{差異分析ポイント 1}}</li>
-<li>{{差異分析ポイント 2}}</li>
-<li>{{差異分析ポイント 3}}</li>
-</ol>
-<h3 id="_13">工期短縮の要因分析<a class="headerlink" href="#_13" title="Permanent link">&para;</a></h3>
-<table>
-<thead>
-<tr>
-<th>要因</th>
-<th>説明</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>{{要因 1}}</td>
-<td>{{説明}}</td>
-</tr>
-<tr>
-<td>{{要因 2}}</td>
-<td>{{説明}}</td>
-</tr>
-</tbody>
-</table>
-<hr />
-<h2 id="_14">コミットログ分析<a class="headerlink" href="#_14" title="Permanent link">&para;</a></h2>
-<h3 id="_15">コミットプリフィックス別内訳<a class="headerlink" href="#_15" title="Permanent link">&para;</a></h3>
-<table>
-<thead>
-<tr>
-<th>プリフィックス</th>
-<th>件数</th>
-<th>割合</th>
-<th>説明</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>docs</td>
-<td>{{件数}}</td>
-<td>{{割合}}%</td>
-<td>ドキュメント更新</td>
-</tr>
-<tr>
-<td>feat</td>
-<td>{{件数}}</td>
-<td>{{割合}}%</td>
-<td>新機能追加</td>
-</tr>
-<tr>
-<td>fix</td>
-<td>{{件数}}</td>
-<td>{{割合}}%</td>
-<td>バグ修正</td>
-</tr>
-<tr>
-<td>refactor</td>
-<td>{{件数}}</td>
-<td>{{割合}}%</td>
-<td>リファクタリング</td>
-</tr>
-<tr>
-<td>test</td>
-<td>{{件数}}</td>
-<td>{{割合}}%</td>
-<td>テスト追加</td>
-</tr>
-<tr>
-<td>chore</td>
-<td>{{件数}}</td>
-<td>{{割合}}%</td>
-<td>保守作業</td>
-</tr>
-<tr>
-<td>ci</td>
-<td>{{件数}}</td>
-<td>{{割合}}%</td>
-<td>CI/CD 改善</td>
-</tr>
-<tr>
-<td>その他</td>
-<td>{{件数}}</td>
-<td>{{割合}}%</td>
-<td>マージ・リバート等</td>
-</tr>
-<tr>
-<td><strong>合計</strong></td>
-<td><strong>{{合計}}</strong></td>
-<td><strong>100%</strong></td>
-<td></td>
-</tr>
-</tbody>
-</table>
-<h3 id="_16">コミットプリフィックス別パイチャート<a class="headerlink" href="#_16" title="Permanent link">&para;</a></h3>
-<pre class="mermaid"><code>pie showData
-    title "コミットプリフィックス別内訳"
-    "docs (ドキュメント)" : {{件数}}
-    "feat (新機能)" : {{件数}}
-    "fix (バグ修正)" : {{件数}}
-    "refactor (リファクタ)" : {{件数}}
-    "test (テスト)" : {{件数}}
-    "chore (保守)" : {{件数}}
-    "その他" : {{件数}}</code></pre>
-<h3 id="_17">分析<a class="headerlink" href="#_17" title="Permanent link">&para;</a></h3>
-<ol>
-<li>{{コミット分析ポイント 1}}</li>
-<li>{{コミット分析ポイント 2}}</li>
-<li>{{コミット分析ポイント 3}}</li>
-</ol>
-<hr />
-<h2 id="_18">品質メトリクス<a class="headerlink" href="#_18" title="Permanent link">&para;</a></h2>
-<h3 id="_19">テストカバレッジ<a class="headerlink" href="#_19" title="Permanent link">&para;</a></h3>
-<table>
-<thead>
-<tr>
-<th>対象</th>
-<th>目標</th>
-<th>実績</th>
-<th>判定</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>バックエンド</td>
-<td>{{目標}}%</td>
-<td>{{実績}}%</td>
-<td>{{判定}}</td>
-</tr>
-<tr>
-<td>フロントエンド</td>
-<td>{{目標}}%</td>
-<td>{{実績}}%</td>
-<td>{{判定}}</td>
-</tr>
-</tbody>
-</table>
-<h3 id="_20">テスト数のリリース別推移<a class="headerlink" href="#_20" title="Permanent link">&para;</a></h3>
-<table>
-<thead>
-<tr>
-<th>リリース</th>
-<th>バックエンド</th>
-<th>フロントエンド</th>
-<th>E2E</th>
-<th>合計</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Release {{X}}.0</td>
-<td>{{件数}}</td>
-<td>{{件数}}</td>
-<td>{{件数}}</td>
-<td>{{合計}}</td>
-</tr>
-<tr>
-<td>...</td>
-<td></td>
-<td></td>
-<td></td>
-<td></td>
-</tr>
-</tbody>
-</table>
-<pre class="mermaid"><code>xychart-beta
-    title "テスト数のリリース別推移"
-    x-axis ["Release {{X}}.0", "..."]
-    y-axis "テスト数" 0 --&gt; {{最大値}}
-    bar [{{テスト数のカンマ区切り}}]</code></pre>
-<h3 id="_21">静的解析<a class="headerlink" href="#_21" title="Permanent link">&para;</a></h3>
-<table>
-<thead>
-<tr>
-<th>指標</th>
-<th>結果</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>ESLint</td>
-<td>{{結果}}</td>
-</tr>
-<tr>
-<td>SonarQube BLOCKER</td>
-<td>{{結果}}</td>
-</tr>
-<tr>
-<td>Flaky テスト率</td>
-<td>{{結果}}</td>
-</tr>
-</tbody>
-</table>
-<h3 id="_22">ベロシティ<a class="headerlink" href="#_22" title="Permanent link">&para;</a></h3>
-<pre class="mermaid"><code>xychart-beta
-    title "イテレーション別ベロシティ"
-    x-axis ["IT1", "IT2", "..."]
-    y-axis "完了したストーリーポイント" 0 --&gt; {{最大 SP}}
-    bar [{{実績 SP のカンマ区切り}}]
-    line "平均（{{平均}} SP）" [{{平均値の繰り返し}}]</code></pre>
-<table>
-<thead>
-<tr>
-<th>項目</th>
-<th>値</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>平均ベロシティ</td>
-<td>{{平均}} SP/イテレーション</td>
-</tr>
-<tr>
-<td>最大ベロシティ</td>
-<td>{{最大}} SP</td>
-</tr>
-<tr>
-<td>最小ベロシティ</td>
-<td>{{最小}} SP</td>
-</tr>
-</tbody>
-</table>
-<hr />
-<h2 id="_23">リリース履歴<a class="headerlink" href="#_23" title="Permanent link">&para;</a></h2>
-<table>
-<thead>
-<tr>
-<th>リリース</th>
-<th>含まれる IT</th>
-<th>リリース日</th>
-<th>SP</th>
-<th>状態</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Release {{X}}.0 {{名称}}</td>
-<td>IT{{開始}}-{{終了}}</td>
-<td>{{日付}}</td>
-<td>{{SP}}</td>
-<td>{{状態}}</td>
-</tr>
-<tr>
-<td>...</td>
-<td></td>
-<td></td>
-<td></td>
-<td></td>
-</tr>
-</tbody>
-</table>
-<hr />
-<h2 id="_24">主要な成果物<a class="headerlink" href="#_24" title="Permanent link">&para;</a></h2>
-<h3 id="_25">実装した主要機能<a class="headerlink" href="#_25" title="Permanent link">&para;</a></h3>
-<ol>
-<li>
-<p><strong>{{機能カテゴリ 1}}</strong> ({{リリース}} / {{IT}})</p>
-<ul>
-<li>{{機能詳細}}</li>
-</ul>
-</li>
-<li>
-<p><strong>{{機能カテゴリ 2}}</strong> ({{リリース}} / {{IT}})</p>
-<ul>
-<li>{{機能詳細}}</li>
-</ul>
-</li>
-</ol>
-<h3 id="_26">技術的成果<a class="headerlink" href="#_26" title="Permanent link">&para;</a></h3>
-<table>
-<thead>
-<tr>
-<th>成果</th>
-<th>内容</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>テスト駆動開発</td>
-<td>{{テスト数}}テスト、カバレッジ {{カバレッジ}}%</td>
-</tr>
-<tr>
-<td>{{アーキテクチャ}}</td>
-<td>{{説明}}</td>
-</tr>
-<tr>
-<td>CI/CD</td>
-<td>{{説明}}</td>
-</tr>
-</tbody>
-</table>
-<hr />
-<h2 id="_27">総評<a class="headerlink" href="#_27" title="Permanent link">&para;</a></h2>
-<p>{{プロジェクト名}} v{{バージョン}} は、全 {{総 SP}} SP を {{イテレーション数}} イテレーションで {{達成率}}% 達成し、{{完了状態}}。</p>
-<h3 id="_28">ハイライト<a class="headerlink" href="#_28" title="Permanent link">&para;</a></h3>
-<ul>
-<li><strong>全 {{ストーリー数}} ユーザーストーリー完了</strong>: {{概要}}</li>
-<li><strong>{{テスト数}} テストによる品質保証</strong>: バックエンド {{BE テスト数}} + フロントエンド {{FE テスト数}} + E2E {{E2E テスト数}}</li>
-<li><strong>{{カバレッジ}}% テストカバレッジ</strong>: 目標 {{目標}}% を上回る品質水準</li>
-<li><strong>{{リリース回数}} 段階リリース戦略の成功</strong>: {{リリース戦略の説明}}</li>
-</ul>
-<h3 id="_29">プロジェクト完了メトリクス<a class="headerlink" href="#_29" title="Permanent link">&para;</a></h3>
-<table>
-<thead>
-<tr>
-<th>指標</th>
-<th>値</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><strong>総ストーリーポイント</strong></td>
-<td>{{総 SP}} SP</td>
-</tr>
-<tr>
-<td><strong>総コミット数</strong></td>
-<td>{{コミット数}}</td>
-</tr>
-<tr>
-<td><strong>総テスト数</strong></td>
-<td>{{テスト数}}</td>
-</tr>
-<tr>
-<td><strong>テストカバレッジ</strong></td>
-<td>{{カバレッジ}}%</td>
-</tr>
-<tr>
-<td><strong>リリース回数</strong></td>
-<td>{{リリース回数}}</td>
-</tr>
-<tr>
-<td><strong>イテレーション回数</strong></td>
-<td>{{イテレーション数}}</td>
-</tr>
-<tr>
-<td><strong>ユーザーストーリー数</strong></td>
-<td>{{ストーリー数}}</td>
-</tr>
-</tbody>
-</table>
-<hr />
-<p><strong>リリース完了</strong> - Simple made easy.</p>
 
 
 
@@ -7541,16 +7176,16 @@
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "toc.integrate", "search.suggest", "search.highlight"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.tabs", "toc.integrate", "search.suggest", "search.highlight"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      <script src="../../../assets/javascripts/bundle.d7400e89.min.js"></script>
       
         <script src="https://cdn.jsdelivr.net/npm/mermaid@11.17.2/dist/mermaid.min.js"></script>
       
-        <script src="../../assets/js/extra.js"></script>
+        <script src="../../../assets/js/extra.js"></script>
       
-        <script src="../../assets/js/mathjax.js"></script>
+        <script src="../../../assets/js/mathjax.js"></script>
       
         <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
       
