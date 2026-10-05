@@ -7059,12 +7059,13 @@
 <li><code>check</code> 緑（<code>test</code> 672 件。Bolt 10 の 664 件から +8）、<code>uiTest</code> 35 シナリオすべて passed</li>
 </ul>
 </li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>2. 決定を設計文書に反映する</strong>（承認はステップ 3 とまとめて受ける）</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>2. 決定を設計文書に反映する</strong>（承認はステップ 3 とまとめて受ける）</li>
 <li>ユーザーストーリー: US-03 の決定（AC4・AC5 のうち Bolt 11 で作る範囲と、承認・予約確定での利用を US-24・US-04 で確かめること、失効の判定、再見積り）</li>
 <li>ドメインモデル: 状態遷移（承認待ち → 失効・置換済み）、Q-INV-07・18 の書き直し、拒否の理由、再見積りのトランザクションの例外の理由、<code>QuotationValidity</code></li>
 <li>データモデル: <code>ck_quotation_replaced</code>、<code>ux_quotation_active</code>（PostgreSQL）、<code>EXPIRED</code> を残す時点</li>
 <li>UI 設計: S-04 の再見積りの URL と画面イメージ、旧版の読み取り専用、C-04 の失効・置換済みの表示と案内</li>
 <li>完了の判定: <code>okf:check</code> が ERROR 0、<code>documentationTest</code> が緑。push する</li>
+<li>結果（2026-10-05 16:35〜16:37）: ユーザーストーリー（US-03 の Bolt 11 の決定）、ドメインモデル（用語の再見積り、状態遷移の承認待ち → 置換済み・失効、Q-INV-07・18、見積りの失効と置換の段落とトランザクションの例外）、データモデル（<code>EXPIRED</code>・<code>REPLACED</code>、<code>replaced_by_quotation_id</code>、<code>ck_quotation_replaced</code>、<code>ux_quotation_active</code>、<code>EXPIRED</code> を残す時点）、UI 設計（S-04 の再見積りの URL と失効・置換済みの表示、C-04 の最新の見積りと旧版）に反映した</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>3. 失効と置換（業務ルール層の Red → Green）</strong> 【承認ゲート: 業務のルール（Q-INV-06 の境界・07・18）】</li>
 <li>業務ルール層の受入シナリオを先に書き、Red をコミットする（<code>features/quotation/expire_and_replace_quotation.feature</code>、<code>@US-03 @must</code>、<code>@US-03-AC4</code>・<code>@US-03-AC5</code>）<ul>
 <li>見積有効判定: 判定時刻が有効期限の 1 秒前なら有効、同時刻と 1 秒後なら失効（AC4 の境界。シナリオアウトライン）</li>
