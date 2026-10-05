@@ -9,6 +9,7 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -36,6 +37,7 @@ import com.example.cargotracker.quotation.domain.model.valueobjects.DocumentType
 import com.example.cargotracker.quotation.domain.model.valueobjects.PackageType;
 import com.example.cargotracker.quotation.domain.model.valueobjects.QuotationFixture;
 import com.example.cargotracker.quotation.domain.model.valueobjects.QuotationId;
+import com.example.cargotracker.quotation.domain.model.valueobjects.QuotationInput;
 import com.example.cargotracker.quotation.domain.model.valueobjects.RequiredDocument;
 import com.example.cargotracker.quotation.domain.model.valueobjects.RequiredDocumentAttachment;
 import com.example.cargotracker.quotation.domain.model.valueobjects.ResubmissionRejection;
@@ -414,7 +416,7 @@ class TransportRequestControllerTest {
     }
 
     @Test
-    void 置換済みの見積りは読み取り専用と示し新しい見積りの依頼を案内し回答の案内は出さない() throws Exception {
+    void 置換済みの見積りは新しい見積りの準備中と示し依頼の案内と回答の案内は出さない() throws Exception {
         TransportRequest request = underReviewWithInvoice();
         given(queryService.findByNumber(NUMBER, SHIPPER)).willReturn(Optional.of(request));
         Quotation quotation = Quotation.create(new QuotationId(UUID.randomUUID()), request.id(), 1, 1);
@@ -425,8 +427,36 @@ class TransportRequestControllerTest {
         given(quotationQueryService.findVisible(NUMBER, SHIPPER)).willReturn(List.of(quotation));
 
         mockMvc.perform(get("/customer/transport-requests/TR-2026-0001"))
-                .andExpect(content().string(containsString("見積 1（置換済み）")))
-                .andExpect(content().string(containsString("この見積りは読み取り専用です。新しい見積りは担当営業にご依頼ください。")))
+                .andExpect(content().string(containsString("見積 1（新しい見積りに置き換え）")))
+                .andExpect(content().string(containsString("この見積りは読み取り専用です。担当営業が新しい見積りを準備しています。提示されるまでお待ちください。")))
+                .andExpect(content().string(not(containsString("担当営業にご依頼ください"))))
+                .andExpect(content().string(not(containsString("この見積りへの回答"))));
+    }
+
+    @Test
+    void 提示済みのまま有効期限を過ぎた見積りは失効と読み取り専用で示し新しい見積りの依頼を案内する() throws Exception {
+        TransportRequest request = underReviewWithInvoice();
+        given(queryService.findByNumber(NUMBER, SHIPPER)).willReturn(Optional.of(request));
+        UtcInstant at = new UtcInstant(Instant.parse("2026-10-05T00:00:00Z"));
+        QuotationInput standard = QuotationFixture.completeInput();
+        Quotation quotation = Quotation.create(new QuotationId(UUID.randomUUID()), request.id(), 1, 1);
+        quotation.calculate(
+                new QuotationInput(
+                        standard.lines(),
+                        standard.currency(),
+                        new UtcInstant(Instant.parse("2026-10-05T12:00:00Z")),
+                        standard.via(),
+                        standard.departureAt(),
+                        standard.arrivalAt()),
+                at);
+        quotation.presentInternally(new UserId(UUID.randomUUID()), at);
+        given(quotationQueryService.findVisible(NUMBER, SHIPPER)).willReturn(List.of(quotation));
+
+        mockMvc.perform(get("/customer/transport-requests/TR-2026-0001"))
+                .andExpect(content().string(containsString("見積 1（失効）")))
+                .andExpect(content()
+                        .string(containsString("有効期限（2026-10-05 21:00 Asia/Tokyo（UTC+09:00））を過ぎたため、"
+                                + "この見積りは使えません（読み取り専用）。新しい見積りは担当営業にご依頼ください。")))
                 .andExpect(content().string(not(containsString("この見積りへの回答"))));
     }
 
@@ -448,7 +478,7 @@ class TransportRequestControllerTest {
                 .andExpect(content().string(containsString("見積 2（提示済み）")))
                 .andExpect(content().string(containsString("この見積りへの回答")))
                 .andExpect(content().string(containsString("以前の見積り（読み取り専用）")))
-                .andExpect(content().string(containsString("見積 1（置換済み）")));
+                .andExpect(content().string(containsString("見積 1（新しい見積りに置き換え）")));
     }
 
     @Test
@@ -466,7 +496,7 @@ class TransportRequestControllerTest {
         mockMvc.perform(get("/customer/transport-requests/TR-2026-0001")).andExpect(status().isNotFound());
         mockMvc.perform(get("/customer/transport-requests/TR-2026-0001/edit")).andExpect(status().isNotFound());
 
-        then(queryService).should(org.mockito.Mockito.times(2)).findByNumber(NUMBER, SHIPPER);
+        then(queryService).should(times(2)).findByNumber(NUMBER, SHIPPER);
     }
 
     @Test

@@ -152,15 +152,33 @@ public class QuotationUiSteps {
         browser.checkAccessibility();
     }
 
-    @ならば("見積り {int} は {string} で {string} と置換先へのリンクが表示され、提示と再見積りの操作はない")
-    public void 置換済みが表示される(int quotationNo, String status, String message) {
+    @ならば("見積り {int} は {string} で {string} と見積り {int} へのリンクが表示され、提示と再見積りの操作はない")
+    public void 置換済みが表示される(int quotationNo, String status, String message, int replacementNo) {
         assertThat(page().getByRole(AriaRole.HEADING, new Page.GetByRoleOptions().setLevel(1)))
                 .hasText("見積り " + number() + " 見積 " + quotationNo);
         assertThat(definition("状態")).hasText(status);
         assertThat(page().locator("main")).containsText(message);
-        assertThat(link(number() + " 見積 2")).isVisible();
+        assertThat(link(number() + " 見積 " + replacementNo)).isVisible();
         assertThat(button(PRESENT)).hasCount(0);
         assertThat(link(REQUOTE)).hasCount(0);
+    }
+
+    /** 見積提示済みの表は DE-03 を受けた輸送要求の状態の更新（非同期）を待つため、行が出るまで開き直す。 */
+    @もし("営業担当者が受付一覧の見積提示済みから提出した見積依頼の見積り {int} を開く")
+    public void 見積提示済みから開く(int quotationNo) {
+        Locator row = page().getByRole(
+                        AriaRole.REGION, new Page.GetByRoleOptions().setName("見積提示済みの見積依頼（最新の見積りの有効期限の近い順）"))
+                .getByRole(AriaRole.LINK, new Locator.GetByRoleOptions().setName(number() + " 見積 " + quotationNo));
+        for (int i = 0; i < 20; i++) {
+            page().navigate(baseUrl + "/staff/transport-requests");
+            if (row.count() > 0) {
+                break;
+            }
+            page().waitForTimeout(500);
+        }
+        row.click();
+        page().waitForURL("**" + quotationsPath() + "/" + quotationNo);
+        browser.checkAccessibility();
     }
 
     @ならば("見積り {int} は {string} と示され、社内承認して提示する操作はなく、再見積りの操作がある")

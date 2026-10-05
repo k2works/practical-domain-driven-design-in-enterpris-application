@@ -17,6 +17,8 @@ import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 
 /** 見積りの集約（作成中 → 承認待ち → 提示済み。Q-INV-05・17。Bolt 10）。 */
 class QuotationTest {
@@ -122,14 +124,53 @@ class QuotationTest {
         return new UtcInstant(Instant.parse(instant));
     }
 
-    @Test
-    void 有効期限の前は有効で同時刻からは失効として扱う() {
+    @ParameterizedTest
+    @CsvSource({"2099-10-08T08:59:59Z, false", "2099-10-08T09:00:00Z, true", "2099-10-08T09:00:01Z, true"})
+    void 有効期限の前は有効で同時刻からは失効として扱う(String judgedAt, boolean expired) {
         Quotation quotation = presented();
 
-        assertThat(quotation.isExpiredAt(at("2099-10-08T08:59:59Z"))).isFalse();
-        assertThat(quotation.isExpiredAt(at("2099-10-08T09:00:00Z"))).isTrue();
-        assertThat(quotation.isExpiredAt(at("2099-10-08T09:00:01Z"))).isTrue();
+        assertThat(quotation.isExpiredAt(at(judgedAt))).isEqualTo(expired);
         assertThat(quotation.status()).isEqualTo(QuotationStatus.PRESENTED);
+    }
+
+    @Test
+    void 有効期限を過ぎた提示済みの見積りを提示しようとすると失効しているとして拒否する() {
+        Quotation quotation = presented();
+
+        assertThat(quotation.presentInternally(approver, at("2099-10-08T09:00:00Z")))
+                .contains(QuotationRejection.EXPIRED);
+        assertThat(quotation.presentRejectionAt(at("2099-10-08T09:00:00Z"))).contains(QuotationRejection.EXPIRED);
+        assertThat(quotation.presentRejectionAt(at("2099-10-08T08:59:59Z")))
+                .contains(QuotationRejection.NOT_PENDING_APPROVAL);
+    }
+
+    @Test
+    void 提示できるかと再見積りできるかを問い合わせられる() {
+        Quotation pending = pendingApproval();
+        Quotation replaced = presented();
+        replaced.replaceWith(new QuotationId(UUID.randomUUID()), now);
+
+        assertThat(pending.presentRejectionAt(now)).isEmpty();
+        assertThat(pending.requoteRejection()).isEmpty();
+        assertThat(replaced.presentRejectionAt(now)).contains(QuotationRejection.REPLACED);
+        assertThat(replaced.requoteRejection()).contains(QuotationRejection.REPLACED);
+    }
+
+    @Test
+    void 置換済みの見積りは有効期限を過ぎても失効としない() {
+        Quotation replaced = presented();
+        replaced.replaceWith(new QuotationId(UUID.randomUUID()), now);
+
+        assertThat(replaced.isExpiredAt(at("2099-10-09T00:00:00Z"))).isFalse();
+    }
+
+    @Test
+    void 有効期限の1秒前に置換すると置換済みになる() {
+        Quotation quotation = presented();
+
+        quotation.replaceWith(new QuotationId(UUID.randomUUID()), at("2099-10-08T08:59:59Z"));
+
+        assertThat(quotation.status()).isEqualTo(QuotationStatus.REPLACED);
     }
 
     @Test
@@ -205,7 +246,8 @@ class QuotationTest {
     void 作成中の見積りは置換できない() {
         Quotation draft = created();
 
-        assertThatThrownBy(() -> draft.replaceWith(new QuotationId(UUID.randomUUID()), now))
-                .isInstanceOf(IllegalStateException.class);
+        QuotationId replacement = new QuotationId(UUID.randomUUID());
+
+        assertThatThrownBy(() -> draft.replaceWith(replacement, now)).isInstanceOf(IllegalStateException.class);
     }
 }

@@ -74,6 +74,9 @@ public class QuotationSteps {
             "失効している", QuotationRejection.EXPIRED,
             "置換済み", QuotationRejection.REPLACED);
 
+    /** 標準の見積りの有効期限（有効期限を書かない前提の文で使う）。 */
+    private static final String STANDARD_EXPIRES_AT = "2026-10-08T09:00:00Z";
+
     private final QuotationCommandService commandService;
     private final QuotationQueryService queryService;
     private final StaffQuotationQueryService staffQueryService;
@@ -130,22 +133,21 @@ public class QuotationSteps {
 
     @前提("営業担当者が標準の見積りを算出して社内承認して提示している")
     public void 標準の見積りを提示している() {
-        lines.clear();
-        lines.add(new PricingLineInput("海上運賃", new BigDecimal("3200.00"), "年間契約 2026-A"));
-        lines.add(new PricingLineInput("燃料調整金", new BigDecimal("530.00"), null));
-        通貨と有効期限を入れる("USD", "2026-10-08T09:00:00Z");
-        経路方針を入れる("SGSIN", "2026-10-10T00:00:00Z", "2026-10-30T09:00:00Z");
-        見積りを算出する();
-        assertThat(lastCalculation).isInstanceOf(CalculationOutcome.Calculated.class);
+        有効期限を決めた標準の見積りを提示している(STANDARD_EXPIRES_AT);
+    }
+
+    @前提("営業担当者が有効期限 {string} の標準の見積りを算出して社内承認して提示している")
+    public void 有効期限を決めた標準の見積りを提示している(String expires) {
+        有効期限を決めた標準の見積りを算出している(expires);
         社内承認して提示する(1);
     }
 
-    @前提("営業担当者が標準の見積りを算出している")
-    public void 標準の見積りを算出している() {
+    @前提("営業担当者が有効期限 {string} の標準の見積りを算出している")
+    public void 有効期限を決めた標準の見積りを算出している(String expires) {
         lines.clear();
         lines.add(new PricingLineInput("海上運賃", new BigDecimal("3200.00"), "年間契約 2026-A"));
         lines.add(new PricingLineInput("燃料調整金", new BigDecimal("530.00"), null));
-        通貨と有効期限を入れる("USD", "2026-10-08T09:00:00Z");
+        通貨と有効期限を入れる("USD", expires);
         経路方針を入れる("SGSIN", "2026-10-10T00:00:00Z", "2026-10-30T09:00:00Z");
         見積りを算出する();
         assertThat(lastCalculation).isInstanceOf(CalculationOutcome.Calculated.class);
@@ -204,6 +206,11 @@ public class QuotationSteps {
             assertThat(quotation.status()).isEqualTo(STATUSES.get(status));
             assertThat(quotation.replacedBy()).contains(replacement.id());
         });
+    }
+
+    @ならば("荷主が照会する見積りはない")
+    public void 荷主が照会する見積りはない() {
+        assertThat(queryService.findVisible(number(), SHIPPER)).isEmpty();
     }
 
     @ならば("見積り {int} はない")
@@ -274,7 +281,7 @@ public class QuotationSteps {
 
     @ならば("他社の荷主には見積りが見えない")
     public void 他社の荷主には見えない() {
-        assertThat(queryService.findPresented(number(), OTHER_SHIPPER)).isEmpty();
+        assertThat(queryService.findVisible(number(), OTHER_SHIPPER)).isEmpty();
     }
 
     @ならば("荷主が見積りを照会しても見つからない")
@@ -314,7 +321,7 @@ public class QuotationSteps {
     }
 
     private Optional<Quotation> shipperQuotation() {
-        return queryService.findPresented(number(), SHIPPER);
+        return queryService.findVisible(number(), SHIPPER).stream().findFirst();
     }
 
     private TransportRequestNumber number() {

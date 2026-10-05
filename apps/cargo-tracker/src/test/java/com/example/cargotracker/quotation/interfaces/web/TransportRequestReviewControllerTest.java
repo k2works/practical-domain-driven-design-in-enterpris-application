@@ -19,11 +19,14 @@ import com.example.cargotracker.quotation.application.internal.commands.SendBack
 import com.example.cargotracker.quotation.application.internal.commandservices.ReviewOutcome;
 import com.example.cargotracker.quotation.application.internal.commandservices.TransportRequestReviewService;
 import com.example.cargotracker.quotation.application.internal.queryservices.DocumentFile;
+import com.example.cargotracker.quotation.application.internal.queryservices.StaffQuotationQueryService;
 import com.example.cargotracker.quotation.application.internal.queryservices.StaffTransportRequestQueryService;
 import com.example.cargotracker.quotation.domain.model.aggregates.TransportRequest;
 import com.example.cargotracker.quotation.domain.model.valueobjects.CargoCategory;
 import com.example.cargotracker.quotation.domain.model.valueobjects.DocumentMediaType;
 import com.example.cargotracker.quotation.domain.model.valueobjects.DocumentType;
+import com.example.cargotracker.quotation.domain.model.valueobjects.QuotationStatus;
+import com.example.cargotracker.quotation.domain.model.valueobjects.QuotedRequestSummary;
 import com.example.cargotracker.quotation.domain.model.valueobjects.RequiredDocument;
 import com.example.cargotracker.quotation.domain.model.valueobjects.ReviewDecision;
 import com.example.cargotracker.quotation.domain.model.valueobjects.ReviewRejection;
@@ -87,6 +90,9 @@ class TransportRequestReviewControllerTest {
     @MockitoBean
     StaffTransportRequestQueryService queryService;
 
+    @MockitoBean
+    StaffQuotationQueryService quotationQueryService;
+
     private static TransportRequest underReview() {
         return TransportRequest.submit(
                 ID,
@@ -134,6 +140,33 @@ class TransportRequestReviewControllerTest {
                 .andExpect(content().string(containsString("3 時間 20 分")))
                 .andExpect(content().string(containsString("一般")))
                 .andExpect(content().string(not(containsString(ID.value().toString()))));
+    }
+
+    @Test
+    void 受付一覧に見積提示済みの見積依頼の最新の見積りを有効期限の近い順に示し見積りを開ける() throws Exception {
+        given(quotationQueryService.findQuotedSummaries())
+                .willReturn(List.of(
+                        new QuotedRequestSummary(
+                                NUMBER,
+                                2,
+                                QuotationStatus.PENDING_APPROVAL,
+                                new UtcInstant(Instant.parse("2026-10-09T09:00:00Z"))),
+                        new QuotedRequestSummary(
+                                new TransportRequestNumber(2026, 2),
+                                1,
+                                QuotationStatus.PRESENTED,
+                                new UtcInstant(Instant.parse("2026-10-05T04:00:00Z")))));
+
+        mockMvc.perform(get("/staff/transport-requests"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("見積提示済みの見積依頼（最新の見積りの有効期限の近い順）")))
+                .andExpect(content()
+                        .string(containsString(
+                                "href=\"/staff/transport-requests/TR-2026-0001/quotations/2\">TR-2026-0001 見積 2</a>")))
+                .andExpect(content().string(containsString("承認待ち")))
+                .andExpect(content().string(containsString("2026-10-09 18:00 Asia/Tokyo（UTC+09:00）")))
+                .andExpect(content().string(containsString(">TR-2026-0002 見積 1</a>")))
+                .andExpect(content().string(containsString("<td>失効</td>")));
     }
 
     @Test

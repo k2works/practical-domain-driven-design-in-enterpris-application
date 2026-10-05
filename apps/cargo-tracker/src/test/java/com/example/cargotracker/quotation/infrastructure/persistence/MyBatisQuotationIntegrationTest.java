@@ -322,16 +322,15 @@ class MyBatisQuotationIntegrationTest {
         other.replaceWith(target.id(), NOW);
         repository.save(other);
         UUID replacedBy = replacement == null ? null : other.id().value();
+        UUID approver = STAFF.value();
+        UUID targetId = target.id().value();
+        String update = "UPDATE quotation.quotation SET status = ?, replaced_by_quotation_id = ?,"
+                + " internal_approved_by = ?, internal_approved_at = expires_at - INTERVAL '1 day',"
+                + " presented_at = expires_at - INTERVAL '1 day' WHERE id = ?";
 
-        assertThatThrownBy(() -> jdbc.update(
-                        "UPDATE quotation.quotation SET status = ?, replaced_by_quotation_id = ?,"
-                                + " internal_approved_by = ?, internal_approved_at = expires_at - INTERVAL '1 day',"
-                                + " presented_at = expires_at - INTERVAL '1 day' WHERE id = ?",
-                        status,
-                        replacedBy,
-                        STAFF.value(),
-                        target.id().value()))
-                .isInstanceOf(DataIntegrityViolationException.class);
+        assertThatThrownBy(() -> jdbc.update(update, status, replacedBy, approver, targetId))
+                .isInstanceOf(DataIntegrityViolationException.class)
+                .hasMessageContaining("ck_quotation_replaced");
     }
 
     @Test
@@ -345,6 +344,7 @@ class MyBatisQuotationIntegrationTest {
                 target.id().value());
 
         assertThatThrownBy(() -> jdbc.execute("SET CONSTRAINTS ALL IMMEDIATE"))
-                .isInstanceOf(DataIntegrityViolationException.class);
+                .isInstanceOf(DataIntegrityViolationException.class)
+                .hasMessageContaining("fk_quotation_replaced_by");
     }
 }
