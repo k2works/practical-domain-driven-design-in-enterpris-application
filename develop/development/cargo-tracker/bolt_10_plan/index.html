@@ -3637,6 +3637,41 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../review/cargo-tracker/bolt_09-10_review_20261005/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 9・10 開発成果物レビュー（2026-10-05）
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--draft"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -7050,7 +7085,7 @@
 </ul>
 </li>
 <li>承認（2026-10-05、human:kakimomokuri）: スキーマ（<code>quotation</code>・<code>pricing_line</code>）と、見積り番号の採番・監査の列を作らないことが承認された</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>4. 画面の層（Red → Green）</strong>（承認はステップ 5 とまとめて受ける）</li>
+<li>[?] <strong>4. 画面の層（Red → Green）</strong>（承認はステップ 5 とまとめて受ける）</li>
 <li>画面の層の受入シナリオを先に書き、<code>uiTest</code> で失敗を記録する（T-21。<code>features/ui/present_quotation_ui.feature</code>、<code>@ui @US-03</code>）<ul>
 <li>主成功: 営業担当者が S-03 で審査を確定すると S-04 が開き、料金明細・有効期限・経路方針を入れて算出し、社内承認して提示する。荷主が C-04 を開くと見積りの節に料金根拠・有効期限（Asia/Tokyo（UTC+09:00））・経路方針・確定の旨が出る。キー操作だけで行える</li>
 <li>画面に固有の条件: 料金明細を空にして算出すると、エラー要約にフォーカスが移り、入力が残る</li>
@@ -7067,7 +7102,7 @@
 <li>画面の層のシナリオは 35 件すべて passed（Bolt 9 の 30 件から +5）、axe-core の違反 0 件。<code>check</code> 緑（テスト 587 件）</li>
 </ul>
 </li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>5. 開発レビューと Bolt 終了報告</strong></li>
+<li>[-] <strong>5. 開発レビューと Bolt 終了報告</strong></li>
 <li><code>developing-review</code> で Bolt 10 の変更（と Bolt 9 の変更）をレビューし、指摘への対応を決める（T-28）</li>
 <li><code>check</code>・<code>uiTest</code>・CI・SonarQube の品質ゲート（PASS）を確かめる</li>
 <li><code>bolt_10_report.md</code> を書く（仮説 H1〜H3 の結論、各ステップの開始と完了の時刻、Red の記録）。ステップ 4 の結果をここでまとめて報告する</li>
