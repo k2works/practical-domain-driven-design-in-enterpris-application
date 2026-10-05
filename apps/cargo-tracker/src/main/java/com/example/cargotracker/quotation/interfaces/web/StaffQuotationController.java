@@ -20,6 +20,7 @@ import com.example.cargotracker.shared.domain.UserId;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import java.time.Clock;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.http.HttpStatus;
@@ -141,24 +142,38 @@ public class StaffQuotationController {
                 queryService.find(request.number(), quotationNo).orElseThrow(StaffQuotationController::notFound);
         UtcInstant now = new UtcInstant(clock.instant());
         model.addAttribute("expiredNotice", expiredNotice(quotation, now));
+        List<Quotation> all =
+                quotation.status() == QuotationStatus.REPLACED || quotation.status() == QuotationStatus.EXPIRED
+                        ? queryService.findAll(request.number())
+                        : List.of();
         model.addAttribute(
                 "replacement",
                 quotation
                         .replacedBy()
-                        .flatMap(replacement -> queryService.findAll(request.number()).stream()
+                        .flatMap(replacement -> all.stream()
                                 .filter(candidate -> candidate.id().equals(replacement))
                                 .findFirst())
-                        .map(found -> new Replacement(
-                                found.quotationNo(),
-                                QuotationViews.label(request.number(), found.quotationNo()),
-                                quotationPath(request.number(), found.quotationNo())))
+                        .map(found -> link(request.number(), found.quotationNo()))
                         .orElse(null));
+        // 失効を記録した旧版は置換先を持たないため、最新の見積りへのリンクを出す（Bolt 11 レビュー R-09）
+        model.addAttribute(
+                "latest",
+                quotation.status() == QuotationStatus.EXPIRED
+                        ? all.stream()
+                                .max(Comparator.comparingInt(Quotation::quotationNo))
+                                .filter(latest -> latest.quotationNo() != quotationNo)
+                                .map(latest -> link(request.number(), latest.quotationNo()))
+                                .orElse(null)
+                        : null);
         model.addAttribute("number", request.number().text());
         model.addAttribute("quotationLabel", QuotationViews.label(request.number(), quotationNo));
         model.addAttribute(
                 "numberWithVersion",
                 TransportRequestLabels.numberWithVersion(request.number(), quotation.transportRequestVersionNo()));
-        model.addAttribute("quotation", QuotationViews.view(quotation, TransportRequestLabels::staffDateTime, now));
+        model.addAttribute(
+                "quotation",
+                QuotationViews.view(
+                        quotation, TransportRequestLabels::staffDateTime, now, QuotationViews.Audience.STAFF));
         return SHOW_VIEW;
     }
 
@@ -172,16 +187,10 @@ public class StaffQuotationController {
         TransportRequest request = findTransportRequest(number);
         Quotation quotation =
                 queryService.find(request.number(), quotationNo).orElseThrow(StaffQuotationController::notFound);
-        QuotationViews.View view =
-                QuotationViews.view(quotation, TransportRequestLabels::staffDateTime, new UtcInstant(clock.instant()));
-        if (!view.requotable()) {
+        Optional<QuotationRejection> rejection = quotation.requoteRejection();
+        if (rejection.isPresent()) {
             redirectAttributes.addFlashAttribute(
-                    PROBLEM,
-                    rejection(
-                            QuotationViews.label(request.number(), quotationNo),
-                            quotation.status() == QuotationStatus.REPLACED
-                                    ? QuotationRejection.REPLACED
-                                    : QuotationRejection.EXPIRED));
+                    PROBLEM, rejection(QuotationViews.label(request.number(), quotationNo), rejection.get()));
             return REDIRECT + quotationPath(request.number(), quotationNo);
         }
         model.addAttribute("quotationForm", QuotationFormConverter.toForm(quotation));
@@ -209,11 +218,15 @@ public class StaffQuotationController {
         String oldLabel = QuotationViews.label(request.number(), quotationNo);
         return switch (commandService.requote(
                 new RequoteQuotationCommand(request.number(), quotationNo, input.get()))) {
-            case RequotationOutcome.Calculated(TransportRequestNumber calculated, int newNo, QuotationStatus _) -> {
+            case RequotationOutcome.Calculated(
+                    TransportRequestNumber calculated,
+                    int newNo,
+                    QuotationStatus previousStatus) -> {
+                String previous = previousStatus == QuotationStatus.EXPIRED ? "は失効として記録しました" : "は新しい見積りに置き換えました";
                 redirectAttributes.addFlashAttribute(
                         RESULT,
-                        QuotationViews.label(calculated, newNo) + " を算出しました。見積 " + quotationNo
-                                + " は置き換えました。内容を確かめて社内承認してください");
+                        QuotationViews.label(calculated, newNo) + " を算出しました。見積 " + quotationNo + " " + previous
+                                + "。内容を確かめて社内承認してください");
                 yield REDIRECT + quotationPath(calculated, newNo);
             }
             case RequotationOutcome.Invalid(QuotationViolations violations) -> {
@@ -268,7 +281,8 @@ public class StaffQuotationController {
         model.addAttribute(FORM_HEADING, "再見積り（" + QuotationViews.label(request.number(), quotationNo) + " から）");
         model.addAttribute(FORM_ACTION, quotationPath(request.number(), quotationNo) + "/requotation");
         model.addAttribute(
-                "requotationNotice", "算出すると、見積 " + quotationNo + " は置換済みになります（有効期限を過ぎていれば失効）。旧版は読み取り専用で残ります。");
+                "requotationNotice",
+                "算出すると、見積 " + quotationNo + " を新しい見積りに置き換えます（有効期限を過ぎていれば失効として記録します）。" + "旧版は読み取り専用で残ります。");
         return showForm(request, model);
     }
 
@@ -312,26 +326,38 @@ public class StaffQuotationController {
         };
     }
 
-    /** 表示する時刻で失効しているときの案内（承認待ちは提示できない、提示済みは使えない）。失効していなければ null。 */
+    /**
+     * 失効しているときの案内。有効期限の日時を併記する（Bolt 11 レビュー R-17）。失効を記録した旧版は読み取り専用、
+     * 表示する時刻で失効した承認待ちは提示できず、提示済みは使えない。失効していなければ null。
+     */
     private static String expiredNotice(Quotation quotation, UtcInstant now) {
         if (!quotation.isExpiredAt(now)) {
             return null;
         }
-        return switch (quotation.status()) {
-            case PENDING_APPROVAL -> "有効期限を過ぎたため、この見積りは提示できません。再見積りしてください。";
-            case PRESENTED -> "有効期限を過ぎたため、この見積りは使えません。再見積りしてください。";
-            case DRAFT, EXPIRED, REPLACED -> "この見積りは有効期限を過ぎて失効しました。";
-        };
+        String expiresAt = "有効期限（"
+                + TransportRequestLabels.staffDateTime(
+                        quotation.expiry().orElseThrow().expiresAt())
+                + "）";
+        if (quotation.status() == QuotationStatus.EXPIRED) {
+            return expiresAt + "を過ぎて失効しました。この見積りは読み取り専用です。";
+        }
+        String action = quotation.status() == QuotationStatus.PENDING_APPROVAL ? "提示できません" : "使えません";
+        return expiresAt + "を過ぎたため、この見積りは" + action + "。再見積りしてください。";
+    }
+
+    private static QuotationLink link(TransportRequestNumber number, int quotationNo) {
+        return new QuotationLink(
+                quotationNo, QuotationViews.label(number, quotationNo), quotationPath(number, quotationNo));
     }
 
     /**
-     * 置換先の見積りの表示。
+     * ほかの見積り（置換先・最新の見積り）へのリンク。
      *
-     * @param quotationNo 置換先の見積り番号
-     * @param label 置換先の表記（例: TR-2026-0001 見積 2）
-     * @param path 置換先の画面のパス
+     * @param quotationNo 見積り番号
+     * @param label 表記（例: TR-2026-0001 見積 2）
+     * @param path 画面のパス
      */
-    record Replacement(int quotationNo, String label, String path) {}
+    record QuotationLink(int quotationNo, String label, String path) {}
 
     private static ResponseStatusException notFound() {
         return new ResponseStatusException(HttpStatus.NOT_FOUND);

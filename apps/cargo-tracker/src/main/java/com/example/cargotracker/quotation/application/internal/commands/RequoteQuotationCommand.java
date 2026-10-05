@@ -6,7 +6,7 @@ import com.example.cargotracker.shared.annotation.ddd.Command;
 import java.util.Objects;
 
 /**
- * 見積りを再見積りするコマンド（US-03 AC5、Q-INV-07・18。Bolt 11）。旧版を置換済み（有効期限を過ぎていれば失効）にし、
+ * 再見積りのコマンド（US-03 AC5、Q-INV-07・18。Bolt 11）。旧版を置換済み（有効期限を過ぎていれば失効）にし、
  * 次の見積り番号の新しい見積りを作って算出する。
  *
  * @param number 業務番号

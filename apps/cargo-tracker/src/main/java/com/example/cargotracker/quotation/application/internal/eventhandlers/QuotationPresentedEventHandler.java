@@ -42,7 +42,7 @@ public class QuotationPresentedEventHandler {
         TransportRequest request = found.get();
         if (request.markQuotationPresented(event.transportRequestVersionNo())) {
             repository.update(request);
-        } else if (!isRedelivery(request, event)) {
+        } else if (!isAlreadyQuotedForVersion(request, event)) {
             LOG.warn(
                     "DE-03 で輸送要求を見積提示済みにしなかった: 輸送要求 {}、見積り {} の版 {}、現在の版 {}、状態 {}",
                     event.transportRequestId(),
@@ -53,7 +53,8 @@ public class QuotationPresentedEventHandler {
         }
     }
 
-    private static boolean isRedelivery(TransportRequest request, QuotationPresented event) {
+    /** 同じ版で見積提示済み（DE-03 の再配信か、再見積りの後の新しい見積りの提示。どちらも変えなくてよい。Bolt 11 レビュー R-25）。 */
+    private static boolean isAlreadyQuotedForVersion(TransportRequest request, QuotationPresented event) {
         return request.status() == TransportRequestStatus.QUOTED
                 && request.currentVersion().versionNo() == event.transportRequestVersionNo();
     }

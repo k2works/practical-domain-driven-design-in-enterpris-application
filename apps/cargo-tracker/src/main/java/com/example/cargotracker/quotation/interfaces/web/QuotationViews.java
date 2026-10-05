@@ -2,6 +2,7 @@ package com.example.cargotracker.quotation.interfaces.web;
 
 import com.example.cargotracker.quotation.domain.model.aggregates.Quotation;
 import com.example.cargotracker.quotation.domain.model.valueobjects.PricingBasis;
+import com.example.cargotracker.quotation.domain.model.valueobjects.QuotationExpiry;
 import com.example.cargotracker.quotation.domain.model.valueobjects.QuotationStatus;
 import com.example.cargotracker.quotation.domain.model.valueobjects.RoutePolicy;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestNumber;
@@ -28,6 +29,19 @@ final class QuotationViews {
         return number.text() + " 見積 " + quotationNo;
     }
 
+    /** 見積りを見る人。荷主の画面では、社内の言葉の「置換済み」を荷主向けの言葉にする（Bolt 11 レビュー R-33、D-37）。 */
+    enum Audience {
+        STAFF,
+        CUSTOMER
+    }
+
+    /** 表示する時刻で失効していれば「失効」、そうでなければ保存されている状態の表示名（社内の受付一覧 S-02 で使う）。 */
+    static String effectiveStatus(QuotationStatus status, UtcInstant expiresAt, UtcInstant now) {
+        boolean open = status == QuotationStatus.PENDING_APPROVAL || status == QuotationStatus.PRESENTED;
+        boolean expired = open && !new QuotationExpiry(expiresAt).isValidAt(now);
+        return status(expired ? QuotationStatus.EXPIRED : status);
+    }
+
     static String status(QuotationStatus status) {
         return switch (status) {
             case DRAFT -> "作成中";
@@ -41,17 +55,18 @@ final class QuotationViews {
     /**
      * 見積りの表示。料金根拠・有効期限・経路方針がそろった見積り（承認待ち以後）だけを渡す。
      * 状態は表示する時刻で判定し、承認待ち・提示済みでも有効期限を過ぎていれば「失効」と示す（Q-INV-07。Bolt 11）。
+     * 提示できるか・再見積りできるかは集約に問い合わせる（Bolt 11 レビュー R-07）。
      *
      * @param now 表示する時刻（失効の判定時刻）
+     * @param audience 見る人（荷主なら置換済みを荷主向けの言葉にする）
      */
-    static View view(Quotation quotation, Function<UtcInstant, String> dateTime, UtcInstant now) {
+    static View view(Quotation quotation, Function<UtcInstant, String> dateTime, UtcInstant now, Audience audience) {
         PricingBasis basis = quotation.pricingBasis().orElseThrow();
         RoutePolicy policy = quotation.routePolicy().orElseThrow();
         String currency = basis.currency().name();
         boolean expired = quotation.isExpiredAt(now);
-        boolean open = quotation.status() == QuotationStatus.PENDING_APPROVAL
-                || quotation.status() == QuotationStatus.PRESENTED;
-        String status = expired ? status(QuotationStatus.EXPIRED) : status(quotation.status());
+        boolean replaced = quotation.status() == QuotationStatus.REPLACED;
+        String status = statusLabel(quotation.status(), expired, audience);
         return new View(
                 quotation.quotationNo(),
                 status,
@@ -69,9 +84,22 @@ final class QuotationViews {
                         : policy.via().stream().map(Location::unLocode).collect(Collectors.joining("、")),
                 dateTime.apply(policy.departureAt()),
                 dateTime.apply(policy.arrivalAt()),
-                quotation.status() == QuotationStatus.PENDING_APPROVAL && !expired,
-                open,
-                !open || expired);
+                quotation.presentRejectionAt(now).isEmpty(),
+                quotation.requoteRejection().isEmpty() && quotation.status() != QuotationStatus.DRAFT,
+                replaced || expired,
+                replaced,
+                expired);
+    }
+
+    /** 状態の表示名。失効していれば「失効」、荷主に見せる置換済みは「新しい見積りに置き換え」（D-37）。 */
+    private static String statusLabel(QuotationStatus status, boolean expired, Audience audience) {
+        if (expired) {
+            return status(QuotationStatus.EXPIRED);
+        }
+        if (status == QuotationStatus.REPLACED && audience == Audience.CUSTOMER) {
+            return "新しい見積りに置き換え";
+        }
+        return status(status);
     }
 
     static String money(BigDecimal amount, String currency) {
@@ -94,6 +122,8 @@ final class QuotationViews {
      * @param presentable 社内承認して提示できるか（承認待ちで、失効していない）
      * @param requotable 再見積りできるか（承認待ち・提示済み。失効したものを含む）
      * @param readOnly 読み取り専用か（置換済み・失効）
+     * @param replaced 置換済みか（荷主には新しい見積りを準備中と案内する。D-37）
+     * @param expired 表示する時刻で失効しているか（失効を記録したものを含む）
      */
     record View(
             int quotationNo,
@@ -107,7 +137,9 @@ final class QuotationViews {
             String arrivalAt,
             boolean presentable,
             boolean requotable,
-            boolean readOnly) {}
+            boolean readOnly,
+            boolean replaced,
+            boolean expired) {}
 
     /**
      * 料金明細の 1 行の表示。

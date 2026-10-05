@@ -19,6 +19,9 @@
         <span th:text="|見積 ${replacement.quotationNo()} に置き換えました。この見積りは読み取り専用です。|">見積 2 に置き換えました。この見積りは読み取り専用です。</span>
         <a th:href="@{${replacement.path()}}" th:text="${replacement.label()}">TR-2026-0001 見積 2</a>
     </p>
+    <p th:if="${latest}">
+        最新の見積り: <a th:href="@{${latest.path()}}" th:text="${latest.label()}">TR-2026-0001 見積 2</a>
+    </p>
     <dl>
         <dt>対象</dt>
         <dd th:text="${numberWithVersion}">TR-2026-0001 版 1</dd>

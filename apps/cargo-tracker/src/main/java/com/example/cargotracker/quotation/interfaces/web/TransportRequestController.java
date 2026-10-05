@@ -159,7 +159,8 @@ public class TransportRequestController {
         // 最新の見積りを先に、以前の見積りを読み取り専用で並べる。失効は表示する時刻で判定する（Bolt 11。US-03 AC5）
         UtcInstant now = new UtcInstant(clock.instant());
         List<QuotationViews.View> quotations = quotationQueryService.findVisible(request.number(), shipper()).stream()
-                .map(quotation -> QuotationViews.view(quotation, TransportRequestLabels::customerDateTime, now))
+                .map(quotation -> QuotationViews.view(
+                        quotation, TransportRequestLabels::customerDateTime, now, QuotationViews.Audience.CUSTOMER))
                 .toList();
         model.addAttribute("quotation", quotations.isEmpty() ? null : quotations.getFirst());
         model.addAttribute(

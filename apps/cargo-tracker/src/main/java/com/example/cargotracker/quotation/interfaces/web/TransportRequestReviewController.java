@@ -4,6 +4,7 @@ import com.example.cargotracker.quotation.application.internal.commands.ApproveT
 import com.example.cargotracker.quotation.application.internal.commands.SendBackTransportRequestCommand;
 import com.example.cargotracker.quotation.application.internal.commandservices.ReviewOutcome;
 import com.example.cargotracker.quotation.application.internal.commandservices.TransportRequestReviewService;
+import com.example.cargotracker.quotation.application.internal.queryservices.StaffQuotationQueryService;
 import com.example.cargotracker.quotation.application.internal.queryservices.StaffTransportRequestQueryService;
 import com.example.cargotracker.quotation.domain.model.aggregates.TransportRequest;
 import com.example.cargotracker.quotation.domain.model.entities.ReviewRecord;
@@ -12,6 +13,7 @@ import com.example.cargotracker.quotation.domain.model.valueobjects.ReviewReject
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestNumber;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestSummary;
 import com.example.cargotracker.shared.domain.UserId;
+import com.example.cargotracker.shared.domain.UtcInstant;
 import java.time.Clock;
 import java.time.Duration;
 import java.util.Map;
@@ -45,6 +47,7 @@ public class TransportRequestReviewController {
 
     private final TransportRequestReviewService reviewService;
     private final StaffTransportRequestQueryService queryService;
+    private final StaffQuotationQueryService quotationQueryService;
     private final ProvisionalActorProperties provisionalActor;
     private final ProvisionalConsigneeProperties provisionalConsignees;
     private final Clock clock;
@@ -52,17 +55,22 @@ public class TransportRequestReviewController {
     public TransportRequestReviewController(
             TransportRequestReviewService reviewService,
             StaffTransportRequestQueryService queryService,
+            StaffQuotationQueryService quotationQueryService,
             ProvisionalActorProperties provisionalActor,
             ProvisionalConsigneeProperties provisionalConsignees,
             Clock clock) {
         this.reviewService = reviewService;
         this.queryService = queryService;
+        this.quotationQueryService = quotationQueryService;
         this.provisionalActor = provisionalActor;
         this.provisionalConsignees = provisionalConsignees;
         this.clock = clock;
     }
 
-    /** S-02 受付一覧。審査中と見積り作成中の見積依頼を、それぞれ最初の提出時刻の古い順（待たせている順）に示す（見積り作成中は Bolt 10）。 */
+    /**
+     * S-02 受付一覧。審査中と見積り作成中の見積依頼を、それぞれ最初の提出時刻の古い順（待たせている順）に示す（見積り作成中は Bolt 10）。
+     * 見積提示済みの見積依頼は、最新の見積りを有効期限の近い順に示し、見積り（S-04）を開ける（Bolt 11 レビュー R-02、D-38）。
+     */
     @GetMapping
     public String list(Model model) {
         model.addAttribute(
@@ -71,6 +79,17 @@ public class TransportRequestReviewController {
         model.addAttribute(
                 "quotingRequests",
                 queryService.findQuoting().stream().map(this::row).toList());
+        UtcInstant now = new UtcInstant(clock.instant());
+        model.addAttribute(
+                "quotedRequests",
+                quotationQueryService.findQuotedSummaries().stream()
+                        .map(summary -> new QuotedRow(
+                                QuotationViews.label(summary.number(), summary.quotationNo()),
+                                "/staff/transport-requests/" + summary.number().text() + "/quotations/"
+                                        + summary.quotationNo(),
+                                QuotationViews.effectiveStatus(summary.status(), summary.expiresAt(), now),
+                                TransportRequestLabels.staffDateTime(summary.expiresAt())))
+                        .toList());
         return LIST_VIEW;
     }
 
@@ -278,6 +297,16 @@ public class TransportRequestReviewController {
             String route,
             String arrivalDeadline,
             String cargoCategory) {}
+
+    /**
+     * 受付一覧の見積提示済みの 1 行。
+     *
+     * @param label 最新の見積りの表記（例: TR-2026-0001 見積 2）
+     * @param path 最新の見積り（S-04）のパス
+     * @param status 状態（表示する時刻で失効していれば「失効」）
+     * @param expiresAt 有効期限（社内の日時）
+     */
+    public record QuotedRow(String label, String path, String status, String expiresAt) {}
 
     /**
      * 審査画面の審査記録の 1 行（これまでの判断）。

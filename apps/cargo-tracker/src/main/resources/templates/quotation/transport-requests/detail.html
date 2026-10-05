@@ -41,8 +41,11 @@
     <section th:if="${quotation}" aria-labelledby="quotation-title">
         <h2 id="quotation-title">見積り</h2>
         <h3 th:text="${quotation.title()}">見積 1（提示済み）</h3>
-        <!--/* 失効・置換済みは読み取り専用で、新しい見積りの依頼のしかたを示す（Bolt 11、US-03 AC5）。回答の画面は US-24 */-->
-        <p th:if="${quotation.readOnly()}" class="alert alert-warning">この見積りは読み取り専用です。新しい見積りは担当営業にご依頼ください。</p>
+        <!--/* 失効・置換済みは読み取り専用（Bolt 11、US-03 AC5）。置換済みは新しい見積りを準備中と、失効は有効期限と新しい見積りの依頼の
+             しかたを示す（Bolt 11 レビュー R-01・R-03・R-35、D-37）。回答の画面は US-24 */-->
+        <p th:if="${quotation.replaced()}" class="alert alert-info">この見積りは読み取り専用です。担当営業が新しい見積りを準備しています。提示されるまでお待ちください。</p>
+        <p th:if="${quotation.expired()}" class="alert alert-warning"
+           th:text="|有効期限（${quotation.expiresAt()}）を過ぎたため、この見積りは使えません（読み取り専用）。新しい見積りは担当営業にご依頼ください。|">有効期限（2026-10-05 21:00 Asia/Tokyo（UTC+09:00））を過ぎたため、この見積りは使えません（読み取り専用）。新しい見積りは担当営業にご依頼ください。</p>
         <div th:replace="~{quotation/fragments/quotation :: details(${quotation})}"></div>
         <!--/* 回答の画面（C-05、US-24）ができるまでの案内（Bolt 9・10 レビュー R-05、D-33） */-->
         <p th:unless="${quotation.readOnly()}">この見積りへの回答（詳細経路設計へ進む・辞退・相談）は、次の更新で画面からできるようになります。それまでは担当営業にご連絡ください。</p>

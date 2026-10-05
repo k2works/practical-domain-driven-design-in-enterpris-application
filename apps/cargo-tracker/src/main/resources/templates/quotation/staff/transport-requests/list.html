@@ -75,6 +75,31 @@
         </tbody>
     </table>
     </div>
+
+    <!-- 見積提示済み（Bolt 11 レビュー R-02、D-38）。見積依頼ごとに最新の見積り（再見積りで作った承認待ちを含む）を、有効期限の近い順に示し、
+         見積り（S-04）を開ける。失効は表示する時刻で判定する -->
+    <h2>見積提示済み</h2>
+    <p th:if="${#lists.isEmpty(quotedRequests)}">見積提示済みの見積依頼はありません。</p>
+    <div th:unless="${#lists.isEmpty(quotedRequests)}" class="table-scroll" tabindex="0" role="region"
+         aria-labelledby="quoted-caption">
+    <table class="table">
+        <caption id="quoted-caption">見積提示済みの見積依頼（最新の見積りの有効期限の近い順）</caption>
+        <thead>
+        <tr>
+            <th scope="col">最新の見積り</th>
+            <th scope="col">状態</th>
+            <th scope="col">有効期限</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="quoted : ${quotedRequests}">
+            <td><a th:href="@{${quoted.path()}}" th:text="${quoted.label()}">TR-2026-0001 見積 2</a></td>
+            <td th:text="${quoted.status()}">承認待ち</td>
+            <td th:text="${quoted.expiresAt()}">2026-10-09 18:00 Asia/Tokyo（UTC+09:00）（UTC 2026-10-09 09:00）</td>
+        </tr>
+        </tbody>
+    </table>
+    </div>
     <p><a th:href="@{/}">入口の一覧へ戻る</a></p>
 </main>
 </body>

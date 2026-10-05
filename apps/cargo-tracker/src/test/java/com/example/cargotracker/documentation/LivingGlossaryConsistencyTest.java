@@ -33,7 +33,8 @@ class LivingGlossaryConsistencyTest {
             Path.of(System.getProperty("cargotracker.domain-model", "../../docs/design/cargo-tracker/domain_model.md"));
     private static final Path SOURCE_ROOT = Path.of("src/main/java");
     private static final Pattern GLOSSARY_ROW = Pattern.compile("^\\| ([^|]+?) \\| ([A-Za-z][A-Za-z0-9]*) \\|.*");
-    private static final Pattern CLASS_JAVADOC_FIRST_TERM = Pattern.compile("/\\*\\*\\s*\\n\\s*\\*\\s*([^\\n。]+)");
+    private static final Pattern CLASS_JAVADOC_FIRST_TERM =
+            Pattern.compile("/\\*\\*[ \\t]*\\n[ \\t]*\\*[ \\t]*([^\\n。]+)");
 
     @Test
     void 集約ルートとエンティティと値オブジェクトは用語集にありJavadocが用語集の日本語名で始まる() throws IOException {

@@ -15,7 +15,7 @@
     <p role="status" th:if="${result}" th:text="${result}">TR-2026-0001 版 1 の審査を確定しました</p>
     <p th:text="|対象: ${numberWithVersion}|">対象: TR-2026-0001 版 1</p>
     <!-- 再見積り（Bolt 11、US-03 AC5）。旧版の料金明細・通貨・経路方針を初期値にし、有効期限は空にする -->
-    <p th:if="${requotationNotice}" th:text="${requotationNotice}">算出すると、見積 1 は置換済みになります</p>
+    <p th:if="${requotationNotice}" th:text="${requotationNotice}">算出すると、見積 1 を新しい見積りに置き換えます</p>
     <p><a th:href="@{/staff/transport-requests}">受付一覧へ戻る</a></p>
     <form th:action="@{${formAction}}" th:object="${quotationForm}" method="post" novalidate>
         <div id="error-summary" th:if="${#fields.hasErrors('*')}" tabindex="-1" role="alert"
