@@ -22,4 +22,5 @@ public record QuotationRow(
         UUID internalApprovedBy,
         OffsetDateTime internalApprovedAt,
         OffsetDateTime presentedAt,
+        UUID replacedByQuotationId,
         long version) {}

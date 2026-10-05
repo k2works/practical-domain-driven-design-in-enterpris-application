@@ -18,6 +18,7 @@
             <arg column="internal_approved_by" name="internalApprovedBy" javaType="java.util.UUID"/>
             <arg column="internal_approved_at" name="internalApprovedAt" javaType="java.time.OffsetDateTime"/>
             <arg column="presented_at" name="presentedAt" javaType="java.time.OffsetDateTime"/>
+            <arg column="replaced_by_quotation_id" name="replacedByQuotationId" javaType="java.util.UUID"/>
             <arg column="version" name="version" javaType="_long"/>
         </constructor>
     </resultMap>
@@ -37,10 +38,10 @@
         INSERT INTO quotation.quotation
             (id, transport_request_id, quotation_no, transport_request_version_no, status, expires_at, total_amount,
              currency, route_policy_via, route_policy_departure_at, route_policy_arrival_at, internal_approved_by,
-             internal_approved_at, presented_at, version)
+             internal_approved_at, presented_at, replaced_by_quotation_id, version)
         VALUES (#{id}, #{transportRequestId}, #{quotationNo}, #{transportRequestVersionNo}, #{status}, #{expiresAt},
                 #{totalAmount}, #{currency}, #{routePolicyVia}, #{routePolicyDepartureAt}, #{routePolicyArrivalAt},
-                #{internalApprovedBy}, #{internalApprovedAt}, #{presentedAt}, #{version})
+                #{internalApprovedBy}, #{internalApprovedAt}, #{presentedAt}, #{replacedByQuotationId}, #{version})
     </insert>
 
     <insert id="insertPricingLine">
@@ -48,7 +49,8 @@
         VALUES (#{quotationId}, #{lineNo}, #{description}, #{amount}, #{currency}, #{contractReference})
     </insert>
 
-    <!-- 楽観ロック（データモデル、ARCH-HO-01）。読み込んだときの版でなければ 0 件になる。料金明細は変えない（算出し直しは Bolt 10 で入れない） -->
+    <!-- 楽観ロック（データモデル、ARCH-HO-01）。読み込んだときの版でなければ 0 件になる。料金明細は変えない（算出し直しは入れない）。
+         置換先の FK はコミットの時に確かめる（再見積りは旧版を先に更新する。Bolt 11） -->
     <update id="updateQuotation">
         UPDATE quotation.quotation
            SET status = #{row.status}, expires_at = #{row.expiresAt}, total_amount = #{row.totalAmount},
@@ -56,14 +58,15 @@
                route_policy_departure_at = #{row.routePolicyDepartureAt},
                route_policy_arrival_at = #{row.routePolicyArrivalAt},
                internal_approved_by = #{row.internalApprovedBy}, internal_approved_at = #{row.internalApprovedAt},
-               presented_at = #{row.presentedAt}, version = version + 1
+               presented_at = #{row.presentedAt}, replaced_by_quotation_id = #{row.replacedByQuotationId},
+               version = version + 1
          WHERE id = #{row.id} AND version = #{expectedVersion}
     </update>
 
     <select id="selectByTransportRequestId" resultMap="quotationRow">
         SELECT id, transport_request_id, quotation_no, transport_request_version_no, status, expires_at, total_amount,
                currency, route_policy_via, route_policy_departure_at, route_policy_arrival_at, internal_approved_by,
-               internal_approved_at, presented_at, version
+               internal_approved_at, presented_at, replaced_by_quotation_id, version
           FROM quotation.quotation
          WHERE transport_request_id = #{transportRequestId}
          ORDER BY quotation_no

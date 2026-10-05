@@ -45,7 +45,8 @@ public class MyBatisQuotationRepository implements QuotationRepository {
     }
 
     /**
-     * 新しい見積りを保存する。同時の算出で UK に違反したら、セーブポイントに戻してドメインの例外にする
+     * 新しい見積りを保存する。同時の算出で UK（見積り番号）か部分一意インデックス（作成中・承認待ち・提示済みは 1 つ。Q-INV-18）に
+     * 違反したら、セーブポイントに戻してドメインの例外にする
      * （PostgreSQL は制約違反でトランザクションを中断するため。呼び出し側のトランザクションは続けられる。R-02）。
      */
     @Override
@@ -122,6 +123,7 @@ public class MyBatisQuotationRepository implements QuotationRepository {
                         .presentedAt()
                         .map(MyBatisQuotationRepository::toOffset)
                         .orElse(null),
+                quotation.replacedBy().map(QuotationId::value).orElse(null),
                 version);
     }
 
@@ -151,7 +153,7 @@ public class MyBatisQuotationRepository implements QuotationRepository {
                 policy,
                 row.internalApprovedBy() == null ? null : new UserId(row.internalApprovedBy()),
                 row.presentedAt() == null ? null : toUtc(row.presentedAt()),
-                null, // 置換先の列（replaced_by_quotation_id）は Bolt 11 のステップ 4 のマイグレーションで足す
+                row.replacedByQuotationId() == null ? null : new QuotationId(row.replacedByQuotationId()),
                 row.version());
     }
 
