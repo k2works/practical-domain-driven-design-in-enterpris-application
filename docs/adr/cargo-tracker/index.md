@@ -15,6 +15,7 @@ cargo-tracker プロジェクトの ADR ドキュメントです。
 | [ADR-007](./007-postgresql-mybatis-flyway.md) | 開発環境は H2、本番は PostgreSQL 18 を使い、永続化は MyBatis、スキーマは Flyway で管理する | 承認済み |
 | [ADR-008](./008-aws-container-platform.md) | AWS の ECS Fargate・RDS・S3 で実行する | 承認済み |
 | [ADR-009](./009-bdd-cucumber.md) | BDD を採用し、受入条件を Cucumber で実行可能な仕様にする | 承認済み |
+| [ADR-010](./010-required-document-storage-transaction.md) | 必要書類のファイルは DB のトランザクションの外で保存し、失敗したときは補償で消す | 承認済み（実装は W10） |
 
 ## 補足
 

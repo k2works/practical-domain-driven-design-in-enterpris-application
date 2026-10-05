@@ -1,6 +1,25 @@
 # Docs Update Log
 
 ## 2026-10-05
+* **Update**: [010-required-document-storage-transaction](/adr/cargo-tracker/010-required-document-storage-transaction.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [user_story](/requirements/cargo-tracker/user_story.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [application_development_setup](/operation/cargo-tracker/application_development_setup.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_09_plan](/development/cargo-tracker/bolt_09_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_08_report](/development/cargo-tracker/bolt_08_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_06_report](/development/cargo-tracker/bolt_06_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Creation**: [010-required-document-storage-transaction](/adr/cargo-tracker/010-required-document-storage-transaction.md) を作成（anthropic/claude-opus-5-5）
+* **Update**: [user_story](/requirements/cargo-tracker/user_story.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [application_development_setup](/operation/cargo-tracker/application_development_setup.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_08_report](/development/cargo-tracker/bolt_08_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_06_report](/development/cargo-tracker/bolt_06_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
 * **Verification**: [release_plan](/development/cargo-tracker/release_plan.md) を human:kakimomokuri が検証
 * **Verification**: [bolt_09_plan](/development/cargo-tracker/bolt_09_plan.md) を human:kakimomokuri が検証
 * **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）

@@ -4,7 +4,7 @@ title: "リリース計画 - cargo-tracker（A 社国際貨物輸送管理シス
 description: "cargo-tracker MVP のリリース計画。1 人 + AI、時間単位の Bolt（= イテレーション）と週次の見直しで、最初の縦の流れ（R0.1）、パイロット準備完了（R1.0）、本格展開前（R1.1）の 3 段階、Unit のエントロピー評価、SP、バッファ、パイロット開始の条件、引継ぎ ID の台帳。"
 tags: [development,release-plan]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-05T00:54:27Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-05T00:58:09Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T09:29:53Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:38:26Z }
@@ -315,6 +315,7 @@ Release 1.0 はソフトウェアの準備である。パイロットの開始�
 | 本予約と船腹確保の扱いの確認 | R-28 | 業務責任者 | 2026-11-27（W9 の前） |
 | 外部の侵入テスト | SEC-19 | IT 責任者 | Release 1.0 の後、パイロット開始の前 |
 | 必要書類のウイルスの検査が動いていること（動くまでパイロットで書類の添付を使わない） | Bolt 7 終了報告（2026-10-03 に human:kakimomokuri が決定） | IT 責任者 | パイロット開始の前（方式は W10 の運用準備で決める） |
+| 書類の添付を使う画面に認証（US-18）が入っていること。認証の前は、社内の画面（`/staff`）の書類の実ファイルをステージングに置かない（置くなら `/staff` を網で制限する） | Bolt 6〜8 レビュー D-27・D-31（2026-10-05 に human:kakimomokuri が決定） | IT 責任者 | パイロット開始の前（ステージングは W10） |
 | チャットツール・当番の体制 | OP-05 | 運用責任者 | 2026-12-04（W10 の前） |
 | 業務担当者の教育 | インセプションデッキ | 運用責任者 | パイロット開始の前 |
 

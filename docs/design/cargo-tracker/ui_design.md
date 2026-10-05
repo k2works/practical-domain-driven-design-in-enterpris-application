@@ -4,7 +4,7 @@ title: "cargo-tracker UI 設計"
 description: "cargo-tracker の顧客 Web と社内業務 Web の画面オブジェクト、システムメタファー、画面一覧、画面遷移、主要画面のイメージ、共通部品（WCAG 2.2 AA）、エラー時を含むインタラクション。"
 tags: [design, ui]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-03T02:55:55Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-05T00:58:09Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T07:57:45Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:01:39Z }
@@ -146,11 +146,11 @@ verified:
 
 | 画面 | URL | 備考 |
 | :--- | :--- | :--- |
-| C-03 見積依頼の作成・編集 | `GET /customer/transport-requests/new`、`POST /customer/transport-requests` | Bolt 4 は 1 画面の形。必要書類を除く必須条件（荷受人・出発地・目的地・希望到着期限・貨物）とエラー要約、特殊貨物の案内を持つ。段階入力は #36 のプロトタイプで操作性を確かめてから入れる。荷受人は企業マスターができるまで設定の仮の一覧から選ぶ（US-16 で置き換える）。Bolt 7 で必要書類の入力（商業送り状 1 件、梱包明細 1 件、その他の書類 3 件まで。`multipart/form-data`）を足した。書類は任意（D-20）。形式・容量・件数の誤りはエラー要約で示し、ブラウザはファイルの選択を残せないため選び直しを求める |
+| C-03 見積依頼の作成・編集 | `GET /customer/transport-requests/new`、`POST /customer/transport-requests` | 必須条件（荷受人・出発地・目的地・希望到着期限・貨物）とエラー要約、特殊貨物の案内を持つ。共通レイアウト（顧客 Web）の中で、輸送条件・貨物・書類・確認の 4 段階の段階入力にする（Bolt 8。下の「段階入力」）。荷受人は企業マスターができるまで設定の仮の一覧から選ぶ（US-16 で置き換える）。必要書類の入力は種類ごとの欄（`multipart/form-data`）で、1 つの版に 5 件まで（商業送り状 1 件、梱包明細 1 件、その他 3 件まで。Q-INV-16）。書類は任意（D-20）。形式・容量・件数の誤りはエラー要約で示し、ブラウザはファイルの選択を残せないため、エラー要約と書類の段階で選び直しを求める（Bolt 6〜8 レビュー R-02・R-20） |
 | C-02 見積依頼の一覧 | `GET /customer/transport-requests` | Bolt 6 は自社の輸送要求を、最初の提出時刻の新しい順に一覧する（ページ分けと状態の絞り込みは後の Bolt）。業務番号、版、状態（いま誰の対応待ちか）、出発地 → 目的地、提出時刻を示す |
 | C-04 見積依頼の詳細 | `GET /customer/transport-requests/{業務番号}` | Bolt 6 は版、状態、いま誰の対応待ちか、輸送条件、直近の差戻しの理由と不足事項、下書きのときの編集への入口を示す（担当営業・見積り・複製・取下げは後の Bolt）。審査の確定の根拠と判断者は見せない。提出と出し直しの後の PRG のリダイレクト先で、結果（例: TR-2026-0001 版 1 を提出しました）を上部に示す。旧 C-03 の提出の完了（`/{業務番号}/submitted`）を統合してなくした（2026-10-03 に承認） |
 | C-03 見積依頼の編集（出し直し） | `GET /customer/transport-requests/{業務番号}/edit`、`POST /customer/transport-requests/{業務番号}/versions` | 下書き（差戻し）のときだけ開ける。現在の版の輸送条件を初期値にし、「出し直すと版 N になります。業務番号は変わりません」と案内する。出し直しは新しい版を作る。下書きでないときは C-04 に戻して理由を示す。期待版（ARCH-HO-01）は画面に持たせず、二重送信は「審査中のため出し直せません」、同時の更新は「他の利用者が先に更新しました」で拒否する（2026-10-03 に承認） |
-| 必要書類の取得 | 荷主: `GET /customer/transport-requests/{業務番号}/versions/{版}/documents/{書類番号}`、営業: `GET /staff/transport-requests/{業務番号}/versions/{版}/documents/{書類番号}` | Bolt 7。C-04 と S-03 に現在の版の書類の一覧（種類、ファイル名、大きさ）と取得のリンクを出す。`Content-Disposition: attachment`（RFC 6266 の `filename*`）と `X-Content-Type-Options: nosniff` で返し、ブラウザの中で開かせない。荷主は荷主企業で絞り、他社の番号は 404（2026-10-03 に承認）。編集（出し直し）では前の版の書類を一覧で示し、引き継ぐことと、書類を足せることを案内する |
+| 必要書類の取得 | 荷主: `GET /customer/transport-requests/{業務番号}/versions/{版}/documents/{書類番号}`、営業: `GET /staff/transport-requests/{業務番号}/versions/{版}/documents/{書類番号}` | Bolt 7。C-04 と S-03 に現在の版の書類の一覧（種類、ファイル名、大きさ）と取得のリンクを出す。`Content-Disposition: attachment`（RFC 6266 の `filename*`）と `X-Content-Type-Options: nosniff` で返し、ブラウザの中で開かせない。荷主は荷主企業で絞り、他社の番号は 404（2026-10-03 に承認）。編集（出し直し）では前の版の書類を一覧で示し、選ばなかった種類は引き継ぐことと、ある種類を選ぶとその種類の前の版の書類を差し替えることを案内する（2026-10-05 の D-25。Bolt 9）。取得できるのは現在の版の書類だけで、前の版の書類の URL は 404 にする（Bolt 6〜8 レビュー R-19） |
 | S-02 見積依頼の受付一覧 | `GET /staff/transport-requests` | Bolt 5 は審査中だけを、提出時刻の古い順に一覧する。業務番号、版、提出時刻、出発地 → 目的地、希望到着期限を示す。審査の確定・差戻しの結果を一覧の上部に示す。社内の画面では荷主企業で絞らない |
 | S-03 見積依頼の審査 | `GET /staff/transport-requests/{業務番号}`、`POST /staff/transport-requests/{業務番号}/reviews` | 輸送条件と版を示し、審査の確定（根拠）と差戻し（理由・不足事項）の 2 つのフォームを持つ。対象の版番号を隠し項目で送る。古い版なら拒否して最新版を示し、ほかの利用者が先に更新していれば「他の利用者が先に更新しました」と示す。確定・差戻しの後は、S-04 ができるまで受付一覧へ戻る（暫定。2026-10-02 に承認、Bolt 5） |
 | S-22 KPI の照会（前身の仮の画面） | `GET /staff/kpi-observations` | 輸送要求ごとの業務番号と提出時刻の一覧だけ（Bolt 1。業務番号は Bolt 4 で足し、内部の ID は出さない。業務番号のない古い記録は「（業務番号なし）」と示す）。日時は UTC だけを表示している（利用者のタイムゾーンを主にし UTC を併記する共通部品は、US-21 の Bolt で適用する）。週次の値と基準値も US-21 の Bolt で作る |
