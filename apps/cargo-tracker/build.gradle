@@ -119,6 +119,31 @@ tasks.register('uiTest', Test) {
 	shouldRunAfter 'test'
 }
 
+// デモ項目の動画（Bolt 10 から）。画面の層のシナリオのうち @demo の印のものだけを動かし、Playwright で録画して
+// docs/assets/demo/<Bolt>/<名前>.webm に置く（名前はシナリオの @demo-<名前> の印から）。終了報告のデモ項目からリンクする。
+// 例: ./gradlew demoVideo -PdemoBolt=bolt-10。check に入れない（2026-10-05 に human:kakimomokuri が決定）
+tasks.register('demoVideo', Test) {
+	group = 'verification'
+	description = 'デモ項目の画面の層のシナリオ（@demo）を録画し、docs/assets/demo/<Bolt> に動画を置く'
+	testClassesDirs = sourceSets.test.output.classesDirs
+	classpath = sourceSets.test.runtimeClasspath
+	useJUnitPlatform {
+		includeTags 'demo'
+		excludeEngines 'archunit'
+	}
+	def videoDir = file("../../docs/assets/demo/${project.findProperty('demoBolt') ?: 'latest'}")
+	systemProperty 'cargotracker.ui.video-dir', videoDir.absolutePath
+	outputs.dir(videoDir).withPropertyName('demoVideos')
+	outputs.upToDateWhen { false }
+	doFirst {
+		videoDir.deleteDir()
+		videoDir.mkdirs()
+	}
+	doLast {
+		new File(videoDir, 'raw').deleteDir()
+	}
+}
+
 // 用語集の整合テスト（LivingGlossaryConsistencyTest）。ソースの Javadoc と設計文書を直接読むため、それらを入力として宣言する。
 // test から分け、文書の誤字の修正で Testcontainers を含む全テストが再実行されないようにする
 tasks.register('documentationTest', Test) {

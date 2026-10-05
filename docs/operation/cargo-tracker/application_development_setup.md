@@ -4,7 +4,7 @@ title: "アプリケーション開発環境セットアップ手順書 - cargo-
 description: "cargo-tracker（A 社国際貨物輸送管理システム）を、開発者の PC で起動・テスト・品質チェックするための手順を示す。"
 tags: [operation,playbook,setup]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-05T00:58:09Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-05T06:15:48Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-02T01:37:59Z }
   - { by: human:kakimomokuri, at: 2026-10-02T07:02:38Z }
@@ -98,6 +98,7 @@ IDE（IntelliJ IDEA など）から `CargoTrackerApplication` を直接起動す
 | 用語集とコードの整合だけ | `./gradlew documentationTest` | 数秒。設計文書やソースの Javadoc を変えたときに動く |
 | 書式をそろえる | `./gradlew spotlessApply` | 数秒 |
 | 画面の層の受入シナリオ（`@ui`。Playwright と axe-core） | 初回だけ `./gradlew playwrightInstall`、以降 `./gradlew uiTest` | 約 2 分 |
+| デモ項目の動画（`@demo`。Bolt の終了報告からリンクする） | `./gradlew demoVideo -PdemoBolt=bolt-10`。`docs/assets/demo/bolt-10/<名前>.webm` に置く（名前はシナリオの `@demo-<名前>` の印）。実行の前に同じ Bolt の動画を消して撮り直す | 約 2 分 |
 | 設計ドキュメントの生成（JIG だけ） | `./gradlew jigReports` | 十数秒 |
 
 SonarQube の品質ゲートは、リポジトリのルートで次を実行する。ローカルの SonarQube（既定は <http://localhost:9000>。ポートを変えた場合は `.env` の `LOCAL_SONAR_PORT` か `SONAR_HOST_URL`）と、`.env` の `SONAR_TOKEN`・`SONAR_PROJECT_KEY` が要る。手順は [SonarQube ローカル環境セットアップ手順書](../../reference/SonarQubeローカル環境セットアップ手順書.md) に従う。

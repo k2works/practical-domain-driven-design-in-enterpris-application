@@ -11,10 +11,27 @@ import io.cucumber.java.Scenario;
  */
 public class UiHooks {
 
+    /** デモの動画の名前を付ける印の始まり。 */
+    private static final String DEMO_NAME_PREFIX = "@demo-";
+
     private final BrowserSession browser;
 
     public UiHooks(BrowserSession browser) {
         this.browser = browser;
+    }
+
+    /**
+     * デモ項目のシナリオ（{@code @demo}）の画面の動画を残す（{@code ./gradlew demoVideo -PdemoBolt=bolt-10}）。
+     * 動画の名前は、シナリオの {@code @demo-<名前>} の印から {@code <名前>.webm} にする。終了報告のデモ項目からリンクする。
+     */
+    @After(value = "@demo", order = 5_000)
+    public void デモの動画を残す(Scenario scenario) {
+        BrowserSession.videoDir()
+                .ifPresent(dir -> scenario.getSourceTagNames().stream()
+                        .filter(tag -> tag.startsWith(DEMO_NAME_PREFIX))
+                        .findFirst()
+                        .ifPresent(tag ->
+                                browser.saveVideo(dir.resolve(tag.substring(DEMO_NAME_PREFIX.length()) + ".webm"))));
     }
 
     @After(value = "@ui", order = 10_000)

@@ -18,6 +18,10 @@ public class PlaywrightBrowser implements DisposableBean {
         return browser.newContext();
     }
 
+    BrowserContext newContext(Browser.NewContextOptions options) {
+        return browser.newContext(options);
+    }
+
     @Override
     public void destroy() {
         browser.close();
