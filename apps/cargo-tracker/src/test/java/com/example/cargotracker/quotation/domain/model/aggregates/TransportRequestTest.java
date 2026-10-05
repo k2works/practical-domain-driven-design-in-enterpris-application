@@ -4,6 +4,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.example.cargotracker.quotation.domain.events.TransportRequestSubmitted;
+import com.example.cargotracker.quotation.domain.model.valueobjects.DocumentMediaType;
+import com.example.cargotracker.quotation.domain.model.valueobjects.DocumentType;
+import com.example.cargotracker.quotation.domain.model.valueobjects.RequiredDocument;
 import com.example.cargotracker.quotation.domain.model.valueobjects.ShipmentTerms;
 import com.example.cargotracker.quotation.domain.model.valueobjects.ShipmentTermsFixture;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestId;
@@ -63,5 +66,23 @@ class TransportRequestTest {
 
         assertThatThrownBy(events::clear).isInstanceOf(UnsupportedOperationException.class);
         assertThat(request.domainEvents()).hasSize(1);
+    }
+
+    @Test
+    void 現在の版の書類を版と書類番号で探せる() {
+        RequiredDocument invoice = new RequiredDocument(
+                1,
+                DocumentType.COMMERCIAL_INVOICE,
+                "i.pdf",
+                DocumentMediaType.PDF,
+                10,
+                "0".repeat(64),
+                "quotation/x/1");
+        TransportRequest request =
+                TransportRequest.submit(id, number, shipper, terms.withDocuments(List.of(invoice)), submitter, now);
+
+        assertThat(request.document(1, 1)).contains(invoice);
+        assertThat(request.document(1, 2)).isEmpty();
+        assertThat(request.document(2, 1)).as("現在の版でない版の書類は見つからない").isEmpty();
     }
 }

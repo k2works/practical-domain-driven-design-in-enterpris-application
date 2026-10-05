@@ -3,7 +3,6 @@ package com.example.cargotracker.quotation.application.internal.queryservices;
 import com.example.cargotracker.quotation.domain.model.aggregates.RequiredDocumentStorage;
 import com.example.cargotracker.quotation.domain.model.aggregates.TransportRequest;
 import com.example.cargotracker.quotation.domain.model.aggregates.TransportRequestRepository;
-import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestId;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestNumber;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestSummary;
 import com.example.cargotracker.shared.domain.CompanyId;
@@ -31,11 +30,6 @@ public class TransportRequestQueryService {
         this.documentStorage = documentStorage;
     }
 
-    @Transactional(readOnly = true)
-    public Optional<TransportRequest> findById(TransportRequestId id) {
-        return repository.findById(id);
-    }
-
     /** 荷主企業の輸送要求を業務番号で照会する（画面には内部の ID でなく業務番号を出す。D-4）。他社の輸送要求は見つからない。 */
     @Transactional(readOnly = true)
     public Optional<TransportRequest> findByNumber(TransportRequestNumber number, CompanyId shipperCompanyId) {
@@ -56,18 +50,7 @@ public class TransportRequestQueryService {
             TransportRequestNumber number, CompanyId shipperCompanyId, int versionNo, int documentNo) {
         return repository
                 .findByNumber(number, shipperCompanyId)
-                .flatMap(request -> documentOf(request, versionNo, documentNo, documentStorage));
-    }
-
-    /** 輸送要求の版の書類を探し、中身を読む。現在の版の書類だけを返す（前の版の書類は、引き継いでいれば現在の版にある）。 */
-    static Optional<DocumentFile> documentOf(
-            TransportRequest request, int versionNo, int documentNo, RequiredDocumentStorage storage) {
-        if (request.currentVersion().versionNo() != versionNo) {
-            return Optional.empty();
-        }
-        return request.currentVersion().terms().documents().stream()
-                .filter(document -> document.documentNo() == documentNo)
-                .findFirst()
-                .map(document -> new DocumentFile(document, storage.read(document.objectKey())));
+                .flatMap(request -> request.document(versionNo, documentNo))
+                .map(document -> new DocumentFile(document, documentStorage.read(document.objectKey())));
     }
 }

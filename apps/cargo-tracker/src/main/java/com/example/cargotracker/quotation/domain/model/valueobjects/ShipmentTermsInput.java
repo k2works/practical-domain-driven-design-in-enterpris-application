@@ -78,7 +78,24 @@ public record ShipmentTermsInput(
     }
 
     /** 提出の検証の結果。違反がなければ輸送条件、あれば違反の一覧のどちらか。 */
-    public sealed interface Validation {}
+    public sealed interface Validation {
+
+        /**
+         * ほかの規則（書類の受付規則など）の違反を足した結果を返す。足す違反がなければこの結果のまま、あれば違反をまとめた結果にする
+         * （1 件ずつ直させない。Bolt 6〜8 レビュー R-11）。
+         */
+        default Validation and(List<Violation> more) {
+            if (more.isEmpty()) {
+                return this;
+            }
+            List<Violation> violations = new ArrayList<>();
+            if (this instanceof Invalid(SubmissionViolations own)) {
+                violations.addAll(own.violations());
+            }
+            violations.addAll(more);
+            return new Invalid(new SubmissionViolations(violations));
+        }
+    }
 
     /**
      * 違反がなく、輸送条件になった。

@@ -10,7 +10,7 @@ import java.util.Objects;
  * 必要書類。輸送条件に添付した書類 1 件で、版に付き、提出後は変えない（2026-10-03 の D-20。Bolt 7）。
  * 中身は書類の保存（{@code RequiredDocumentStorage}）に置き、ここにはオブジェクトキーと SHA-256 を持つ。
  *
- * @param documentNo 書類番号（版の中で 1 から。出し直しで引き継いだ書類は番号を変えない）
+ * @param documentNo 書類番号（版の中で 1 から。出し直しでは新しい版の中で 1 から振り直す。D-25）
  * @param type 書類の種類
  * @param fileName ファイル名（画面に出すだけに使い、オブジェクトキーには使わない）
  * @param mediaType 形式
@@ -39,18 +39,24 @@ public record RequiredDocument(
         Objects.requireNonNull(objectKey, "objectKey");
     }
 
-    /** 受付規則を通った添付を、保存したオブジェクトキーとともに必要書類にする。大きさと SHA-256 は中身から求める。 */
+    /**
+     * 受付規則を通った添付を、判定した形式と保存したオブジェクトキーとともに必要書類にする。大きさと SHA-256 は中身から求める。
+     */
     public static RequiredDocument of(
             int documentNo, RequiredDocumentAttachment attachment, DocumentMediaType mediaType, String objectKey) {
-        byte[] content = attachment.content();
         return new RequiredDocument(
                 documentNo,
                 attachment.type(),
                 attachment.fileName(),
                 mediaType,
-                content.length,
-                sha256(content),
+                attachment.size(),
+                attachment.sha256(),
                 objectKey);
+    }
+
+    /** 書類番号だけを変えた必要書類（出し直しで引き継ぐ書類に、新しい版の番号を振る。D-25）。オブジェクトキーは変えない。 */
+    public RequiredDocument withDocumentNo(int newDocumentNo) {
+        return new RequiredDocument(newDocumentNo, type, fileName, mediaType, sizeBytes, sha256, objectKey);
     }
 
     /** 中身の SHA-256 を 16 進で返す。 */

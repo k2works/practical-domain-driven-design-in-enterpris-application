@@ -5,7 +5,9 @@ import com.example.cargotracker.shared.domain.CompanyId;
 import com.example.cargotracker.shared.domain.Location;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * 輸送条件。荷受人、出発地、目的地、希望到着期限、貨物、必要書類（0〜5 件。任意。D-20）の組。
@@ -37,6 +39,7 @@ public record ShipmentTerms(
         if (origin.equals(destination)) {
             throw new IllegalArgumentException("出発地と目的地が同じです: " + origin.unLocode());
         }
+        requireDocumentLimits(documents);
     }
 
     /** 必要書類のない輸送条件。 */
@@ -47,6 +50,27 @@ public record ShipmentTerms(
             UtcInstant arrivalDeadline,
             Cargo cargo) {
         this(consigneeCompanyId, origin, destination, arrivalDeadline, cargo, List.of());
+    }
+
+    /**
+     * 種類ごとの件数の上限と、書類番号の一意を守る（Q-INV-16。Bolt 6〜8 レビュー R-29）。
+     * 利用者の誤りは書類の受付規則が先に判定するので、ここで破れるのは前提の誤りである。
+     */
+    private static void requireDocumentLimits(List<RequiredDocument> documents) {
+        Map<DocumentType, Long> counts =
+                documents.stream().collect(Collectors.groupingBy(RequiredDocument::type, Collectors.counting()));
+        counts.forEach((type, count) -> {
+            if (count > type.maxPerVersion()) {
+                throw new IllegalArgumentException("書類の件数が上限を超えています: " + type + " " + count + " 件");
+            }
+        });
+        long distinctNumbers = documents.stream()
+                .mapToInt(RequiredDocument::documentNo)
+                .distinct()
+                .count();
+        if (distinctNumbers != documents.size()) {
+            throw new IllegalArgumentException("書類番号が重なっています: " + documents);
+        }
     }
 
     /** 必要書類を置き換えた輸送条件。 */

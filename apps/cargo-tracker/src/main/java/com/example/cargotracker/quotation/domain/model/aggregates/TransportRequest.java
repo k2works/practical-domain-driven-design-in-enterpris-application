@@ -4,6 +4,7 @@ import com.example.cargotracker.quotation.domain.events.TransportRequestReviewed
 import com.example.cargotracker.quotation.domain.events.TransportRequestSubmitted;
 import com.example.cargotracker.quotation.domain.model.entities.ReviewRecord;
 import com.example.cargotracker.quotation.domain.model.entities.TransportRequestVersion;
+import com.example.cargotracker.quotation.domain.model.valueobjects.RequiredDocument;
 import com.example.cargotracker.quotation.domain.model.valueobjects.ResubmissionRejection;
 import com.example.cargotracker.quotation.domain.model.valueobjects.ReviewDecision;
 import com.example.cargotracker.quotation.domain.model.valueobjects.ReviewRejection;
@@ -222,6 +223,19 @@ public final class TransportRequest {
 
     public TransportRequestVersion currentVersion() {
         return currentVersion;
+    }
+
+    /**
+     * 版と書類番号で必要書類を探す。取得できるのは現在の版の書類だけで、前の版の書類番号は見つからない扱いにする
+     * （前の版の書類は、引き継いでいれば現在の版にある。Bolt 6〜8 レビュー R-10・R-19）。
+     */
+    public Optional<RequiredDocument> document(int versionNo, int documentNo) {
+        if (versionNo != currentVersion.versionNo()) {
+            return Optional.empty();
+        }
+        return currentVersion.terms().documents().stream()
+                .filter(document -> document.documentNo() == documentNo)
+                .findFirst();
     }
 
     /** 審査記録（版番号の順）。 */

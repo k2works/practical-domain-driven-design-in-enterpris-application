@@ -3,6 +3,7 @@ package com.example.cargotracker.quotation.domain.model.valueobjects;
 import com.example.cargotracker.shared.annotation.ddd.ValueObject;
 import java.util.Arrays;
 import java.util.Objects;
+import java.util.Optional;
 
 /**
  * 書類の添付。荷主が提出・出し直しで添付しようとする書類。書類の受付規則（Q-INV-16）を通り、保存してオブジェクトキーを得たら必要書類になる。
@@ -28,6 +29,16 @@ public record RequiredDocumentAttachment(DocumentType type, String fileName, byt
     /** 中身の大きさ（バイト）。 */
     public long size() {
         return content.length;
+    }
+
+    /** 中身の先頭のバイトから形式を判定する（Q-INV-16）。中身を複製しない（Bolt 6〜8 レビュー R-14）。 */
+    public Optional<DocumentMediaType> detectMediaType() {
+        return DocumentMediaType.detect(content);
+    }
+
+    /** 中身の SHA-256 を 16 進で返す。中身を複製しない（R-14）。 */
+    public String sha256() {
+        return RequiredDocument.sha256(content);
     }
 
     @Override

@@ -9,14 +9,13 @@ import com.example.cargotracker.quotation.domain.model.aggregates.TransportReque
 import com.example.cargotracker.quotation.domain.model.aggregates.TransportRequestRepository;
 import com.example.cargotracker.quotation.domain.model.rules.MvpAcceptancePolicy;
 import com.example.cargotracker.quotation.domain.model.rules.RequiredDocumentPolicy;
-import com.example.cargotracker.quotation.domain.model.valueobjects.DocumentMediaType;
+import com.example.cargotracker.quotation.domain.model.rules.RequiredDocumentPolicy.AcceptedAttachment;
+import com.example.cargotracker.quotation.domain.model.rules.RequiredDocumentPolicy.DocumentCheck;
 import com.example.cargotracker.quotation.domain.model.valueobjects.RequiredDocument;
-import com.example.cargotracker.quotation.domain.model.valueobjects.RequiredDocumentAttachment;
 import com.example.cargotracker.quotation.domain.model.valueobjects.ResubmissionRejection;
 import com.example.cargotracker.quotation.domain.model.valueobjects.ShipmentTerms;
 import com.example.cargotracker.quotation.domain.model.valueobjects.ShipmentTermsInput;
 import com.example.cargotracker.quotation.domain.model.valueobjects.SubmissionViolations;
-import com.example.cargotracker.quotation.domain.model.valueobjects.SubmissionViolations.Violation;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestId;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestNumber;
 import com.example.cargotracker.shared.domain.UtcInstant;
@@ -70,17 +69,18 @@ public class TransportRequestCommandService {
     @Transactional
     public SubmissionOutcome submit(SubmitTransportRequestCommand command) {
         UtcInstant submittedAt = new UtcInstant(clock.instant());
-        return switch (validate(command.terms(), submittedAt, List.of(), command.attachments())) {
+        DocumentCheck documents = documentPolicy.check(List.of(), command.attachments());
+        return switch (command.terms().validate(submittedAt, acceptancePolicy).and(documents.violations())) {
             case ShipmentTermsInput.Invalid(SubmissionViolations violations) ->
                 new SubmissionOutcome.Rejected(violations);
-            case ShipmentTermsInput.Valid(ShipmentTerms terms) -> submitValid(command, terms, submittedAt);
+            case ShipmentTermsInput.Valid(ShipmentTerms terms) -> submitValid(command, terms, documents, submittedAt);
         };
     }
 
     /**
      * 差し戻された輸送要求を、直した輸送条件で再提出する（Q-INV-15）。自社（荷主企業）の輸送要求だけを対象にし、
-     * 提出と同じ検証を通す。前の版の書類は引き継ぎ、足した書類と合わせて受付規則を判定する（Q-INV-16）。
-     * 業務番号は変えず、新しい版を審査中にして DE-01 を発行する。下書きでなければ、書類を保存する前に拒否する。
+     * 提出と同じ検証を通す。添付した種類の前の版の書類は差し替え、添付しなかった種類は引き継いで、受付規則を判定する
+     * （Q-INV-16、D-25）。業務番号は変えず、新しい版を審査中にして DE-01 を発行する。下書きでなければ、書類を保存する前に拒否する。
      */
     @Transactional
     public ResubmissionOutcome resubmit(ResubmitTransportRequestCommand command) {
@@ -94,54 +94,32 @@ public class TransportRequestCommandService {
             return new ResubmissionOutcome.Rejected(rejection.get());
         }
         UtcInstant submittedAt = new UtcInstant(clock.instant());
-        List<RequiredDocument> carried = request.currentVersion().terms().documents();
-        return switch (validate(command.terms(), submittedAt, carried, command.attachments())) {
+        DocumentCheck documents =
+                documentPolicy.check(request.currentVersion().terms().documents(), command.attachments());
+        return switch (command.terms().validate(submittedAt, acceptancePolicy).and(documents.violations())) {
             case ShipmentTermsInput.Invalid(SubmissionViolations violations) ->
                 new ResubmissionOutcome.Invalid(violations);
             case ShipmentTermsInput.Valid(ShipmentTerms terms) ->
                 resubmitValid(
-                        request,
-                        terms.withDocuments(storeDocuments(request.id(), carried, command.attachments())),
-                        command,
-                        submittedAt);
+                        request, terms.withDocuments(storeDocuments(request.id(), documents)), command, submittedAt);
         };
     }
 
-    /** 輸送条件の入力の検証（Q-INV-01・02・12）に、書類の受付規則（Q-INV-16）の違反を足して、まとめて返す。 */
-    private ShipmentTermsInput.Validation validate(
-            ShipmentTermsInput input,
-            UtcInstant submittedAt,
-            List<RequiredDocument> carried,
-            List<RequiredDocumentAttachment> added) {
-        ShipmentTermsInput.Validation validation = input.validate(submittedAt, acceptancePolicy);
-        List<Violation> documentViolations = documentPolicy.check(carried, added);
-        if (documentViolations.isEmpty()) {
-            return validation;
-        }
-        List<Violation> violations = new ArrayList<>();
-        if (validation instanceof ShipmentTermsInput.Invalid(SubmissionViolations termsViolations)) {
-            violations.addAll(termsViolations.violations());
-        }
-        violations.addAll(documentViolations);
-        return new ShipmentTermsInput.Invalid(new SubmissionViolations(violations));
-    }
-
     /**
-     * 受付規則を通った書類の中身を保存し、引き継いだ書類の後ろに足す。書類番号は引き継いだ書類の続きから振る。
-     * ファイルを保存した後に DB の保存が失敗すると、ファイルが残る（片付けは S3 の実装のときに決める。Bolt 7 のリスク）。
+     * 受付規則を通った書類から、新しい版の書類を作る。引き継ぐ書類の後ろに、受け付けた添付の中身を保存して足し、
+     * 書類番号は新しい版の中で 1 から振り直す（D-25）。引き継ぐ書類のオブジェクトキーは変えない（ファイルを複製しない）。
+     * ファイルを保存した後に DB の保存が失敗すると、ファイルが残る（片付けは ADR-010 のとおり運用準備（W10）で行う）。
      */
-    private List<RequiredDocument> storeDocuments(
-            TransportRequestId id, List<RequiredDocument> carried, List<RequiredDocumentAttachment> added) {
-        List<RequiredDocument> documents = new ArrayList<>(carried);
-        int nextNo =
-                carried.stream().mapToInt(RequiredDocument::documentNo).max().orElse(0) + 1;
-        for (RequiredDocumentAttachment attachment : added) {
-            DocumentMediaType mediaType = DocumentMediaType.detect(attachment.content())
-                    .orElseThrow(() -> new IllegalStateException("受付規則を通っていない書類です: " + attachment));
-            String objectKey = documentStorage.store(id, attachment.content());
-            documents.add(RequiredDocument.of(nextNo++, attachment, mediaType, objectKey));
+    private List<RequiredDocument> storeDocuments(TransportRequestId id, DocumentCheck documents) {
+        List<RequiredDocument> stored = new ArrayList<>();
+        for (RequiredDocument carried : documents.carried()) {
+            stored.add(carried.withDocumentNo(stored.size() + 1));
         }
-        return documents;
+        for (AcceptedAttachment accepted : documents.accepted()) {
+            String objectKey = documentStorage.store(id, accepted.attachment().content());
+            stored.add(RequiredDocument.of(stored.size() + 1, accepted.attachment(), accepted.mediaType(), objectKey));
+        }
+        return stored;
     }
 
     private ResubmissionOutcome resubmitValid(
@@ -165,9 +143,12 @@ public class TransportRequestCommandService {
 
     /** 検証を通った輸送条件で、書類を保存し、業務番号を振って提出し、DE-01 を発行する。 */
     private SubmissionOutcome submitValid(
-            SubmitTransportRequestCommand command, ShipmentTerms terms, UtcInstant submittedAt) {
+            SubmitTransportRequestCommand command,
+            ShipmentTerms terms,
+            DocumentCheck documents,
+            UtcInstant submittedAt) {
         TransportRequestId id = new TransportRequestId(UUID.randomUUID());
-        ShipmentTerms withDocuments = terms.withDocuments(storeDocuments(id, List.of(), command.attachments()));
+        ShipmentTerms withDocuments = terms.withDocuments(storeDocuments(id, documents));
         TransportRequestNumber number = numberIssuer.next(TransportRequestNumber.yearOf(submittedAt));
         TransportRequest transportRequest = TransportRequest.submit(
                 id, number, command.shipperCompanyId(), withDocuments, command.submittedBy(), submittedAt);

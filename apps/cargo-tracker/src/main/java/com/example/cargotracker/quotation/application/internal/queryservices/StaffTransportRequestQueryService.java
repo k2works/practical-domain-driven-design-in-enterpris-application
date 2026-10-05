@@ -46,7 +46,7 @@ public class StaffTransportRequestQueryService {
     public Optional<DocumentFile> findDocument(TransportRequestNumber number, int versionNo, int documentNo) {
         return repository
                 .findByNumberForStaff(number)
-                .flatMap(request ->
-                        TransportRequestQueryService.documentOf(request, versionNo, documentNo, documentStorage));
+                .flatMap(request -> request.document(versionNo, documentNo))
+                .map(document -> new DocumentFile(document, documentStorage.read(document.objectKey())));
     }
 }

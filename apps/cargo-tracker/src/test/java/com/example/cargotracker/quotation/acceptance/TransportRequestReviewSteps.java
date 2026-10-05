@@ -178,7 +178,8 @@ public class TransportRequestReviewSteps {
     }
 
     private TransportRequest current() {
-        return queryService.findByNumber(TransportRequestNumber.parse(context.transportRequestNumber()), SHIPPER)
+        return queryService
+                .findByNumber(TransportRequestNumber.parse(context.transportRequestNumber()), SHIPPER)
                 .orElseThrow();
     }
 
