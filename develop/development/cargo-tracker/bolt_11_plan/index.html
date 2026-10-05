@@ -7102,7 +7102,7 @@
 </ul>
 </li>
 <li>承認（2026-10-05、human:kakimomokuri）: スキーマ（2 つのマイグレーション）と、置換先の FK を PostgreSQL の遅延の FK にした形が承認された</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>5. 画面の層（Red → Green）</strong>（承認はステップ 6 とまとめて受ける）</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>5. 画面の層（Red → Green）</strong>（承認はステップ 6 とまとめて受ける）</li>
 <li>画面の層の受入シナリオを先に書き、<code>uiTest</code> で失敗を記録する（T-21。<code>features/ui/replace_quotation_ui.feature</code>、<code>@ui @US-03</code>。デモ項目に <code>@demo @demo-bolt-11/&lt;名前&gt;</code>）<ul>
 <li>主成功: 営業担当者が提示済みの見積り（S-04）から再見積りし、旧版の明細を初期値に有効期限を入れて算出する。新しい見積り（見積 2）が承認待ちで開き、旧版（見積 1）は「見積 2 に置き換えました」と読み取り専用で出る。キー操作だけで行える</li>
 <li>失効: 有効期限を過ぎた承認待ちの見積りを開くと「失効」と出て提示の操作がなく、再見積りの操作がある</li>
@@ -7112,6 +7112,13 @@
 </li>
 <li>S-04 の再見積り（<code>GET</code>・<code>POST …/quotations/{見積り番号}/requotation</code>）、旧版の読み取り専用と失効の表示、C-04 の失効・置換済みの表示と案内。有効期限のヒント（R-24）の約束を、失効の表示で守る</li>
 <li>完了の判定: <code>check</code> と <code>uiTest</code> が緑。push して CI を確かめる</li>
+<li>結果（2026-10-05 17:22〜17:34）<ul>
+<li>Red: 画面の層の受入シナリオ（<code>replace_quotation_ui.feature</code>。キー操作だけの再見積りと置換済みの表示・荷主の案内、失効の表示、幅 320 CSS px）と、画面の単体テスト（S-04 の再見積り・失効・置換済み・提示済みの出し分け、C-04 の旧版）を先に書いた。照会 <code>findAll</code> がないとコンパイルできないため照会だけを先に足し、実装の前の <code>uiTest</code> で新しい 3 件だけ、画面の単体テストで 10 件だけが失敗することを記録し、テストを Red のままコミットした（<code>43f5e00</code>。T-21、R-38）。デモ項目の 2 本に <code>@demo-bolt-11</code> の印を付けた</li>
+<li>Green: S-04 の再見積り（<code>GET</code>・<code>POST …/{見積り番号}/requotation</code>、作成と同じ入力の画面に見出し・送り先・案内を渡す）、算出した見積りの画面の失効の案内と置換先へのリンク、「再見積りする」の出し分け。C-04 の最新の見積りと以前の見積り（読み取り専用）。見積りの表示に表示する時刻での失効の判定を入れ、controller に <code>Clock</code> を渡した（<code>1caeb3d</code>）</li>
+<li>実行中に直した誤り: 画面の単体テストが、有効期限の不足を形式の誤りと思い込んでいた（不足は業務の検証の結果 <code>Invalid</code> で返る。テストを直した）</li>
+<li>画面の層のシナリオは 38 件すべて passed（Bolt 10 の 35 件から +3）、axe-core の違反 0 件。<code>check</code> 緑（<code>test</code> 715 件）</li>
+</ul>
+</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>6. 開発レビューと Bolt 終了報告</strong></li>
 <li><code>developing-review</code> で Bolt 11 の変更をレビューし、指摘への対応を決める（T-28）</li>
 <li><code>check</code>・<code>uiTest</code>・CI・SonarQube の品質ゲート（PASS）を確かめる</li>
