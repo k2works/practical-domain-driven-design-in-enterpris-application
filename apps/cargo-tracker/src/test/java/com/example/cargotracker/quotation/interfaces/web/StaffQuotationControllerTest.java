@@ -119,7 +119,51 @@ class StaffQuotationControllerTest {
                 .andExpect(content().string(containsString("明細 10 の内容")))
                 .andExpect(content().string(not(containsString("明細 11 の内容"))))
                 .andExpect(content().string(containsString("有効期限（日本時間）")))
-                .andExpect(content().string(containsString("概算の到着日時（日本時間）")));
+                .andExpect(content().string(containsString("概算の到着日時（日本時間）")))
+                .andExpect(content().string(containsString("3,200.00 のように 3 桁区切りのカンマを付けてもかまいません")))
+                .andExpect(content().string(containsString("id=\"departureAt-hint\">2026-11-02 09:00 の形")))
+                .andExpect(content().string(containsString("id=\"arrivalAt-hint\">2026-11-02 09:00 の形")))
+                .andExpect(content().string(containsString("詳細な経路は、経路設計者の承認後に確定します。")));
+    }
+
+    @Test
+    void 金額の3桁区切りのカンマを除いて算出する() throws Exception {
+        transportRequestExists();
+        QuotationInput expected = new QuotationInput(
+                List.of(new PricingLineInput("海上運賃", new BigDecimal("1234567.50"), null)),
+                Currency.USD,
+                tokyo("2099-10-08T18:00"),
+                List.of(),
+                tokyo("2099-10-10T09:00"),
+                tokyo("2099-10-30T18:00"));
+        given(commandService.calculate(new CalculateQuotationCommand(NUMBER, expected)))
+                .willReturn(new CalculationOutcome.Calculated(NUMBER, 1));
+
+        mockMvc.perform(post("/staff/transport-requests/TR-2026-0001/quotations")
+                        .param("lines[0].description", "海上運賃")
+                        .param("lines[0].amount", "1,234,567.50")
+                        .param("currency", "USD")
+                        .param("expiresAt", "2099-10-08 18:00")
+                        .param("via", "")
+                        .param("departureAt", "2099-10-10 09:00")
+                        .param("arrivalAt", "2099-10-30 18:00"))
+                .andExpect(redirectedUrl("/staff/transport-requests/TR-2026-0001/quotations/1"));
+    }
+
+    @Test
+    void 区切りの位置が3桁ごとでないカンマは形式の誤りにする() throws Exception {
+        transportRequestExists();
+
+        mockMvc.perform(post("/staff/transport-requests/TR-2026-0001/quotations")
+                        .param("lines[0].description", "海上運賃")
+                        .param("lines[0].amount", "32,00.00")
+                        .param("currency", "USD")
+                        .param("expiresAt", "2099-10-08 18:00")
+                        .param("via", "")
+                        .param("departureAt", "2099-10-10 09:00")
+                        .param("arrivalAt", "2099-10-30 18:00"))
+                .andExpect(model().attributeHasFieldErrors("quotationForm", "lines[0].amount"))
+                .andExpect(content().string(containsString(">明細 1 の金額: 数字で入力してください</a>")));
     }
 
     @Test
@@ -207,6 +251,27 @@ class StaffQuotationControllerTest {
                         .param("currency", "USD"))
                 .andExpect(redirectedUrl("/staff/transport-requests"))
                 .andExpect(flash().attribute("problem", "TR-2026-0001 にはすでに見積りがあります"));
+    }
+
+    @Test
+    void 経由地のない見積りは直行と示す() throws Exception {
+        transportRequestExists();
+        QuotationInput complete = QuotationFixture.completeInput();
+        Quotation direct = Quotation.create(new QuotationId(UUID.randomUUID()), ID, 1, 1);
+        direct.calculate(
+                new QuotationInput(
+                        complete.lines(),
+                        complete.currency(),
+                        complete.expiresAt(),
+                        List.of(),
+                        complete.departureAt(),
+                        complete.arrivalAt()),
+                new UtcInstant(Instant.parse("2026-10-05T04:00:00Z")));
+        given(queryService.find(NUMBER, 1)).willReturn(Optional.of(direct));
+
+        mockMvc.perform(get("/staff/transport-requests/TR-2026-0001/quotations/1"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("直行（経由地なし）")));
     }
 
     @Test
