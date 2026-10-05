@@ -4,7 +4,7 @@ title: "Bolt 4 終了報告 - 業務番号と必須条件の検証（US-01 AC1�
 description: "4 回目の Bolt の終了報告。業務番号の採番、提出の検証とエラー要約、画面と KPI 一覧から UUID を消した成果、デモ項目、指標、仮説 H1〜H3 の結論、既知の課題、ふりかえり、承認待ちの書き換えをまとめる。"
 tags: [development,bolt-report]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-05T06:43:10Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-05T07:03:56Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-02T07:02:38Z }
   - { by: human:kakimomokuri, at: 2026-10-02T11:26:07Z }
@@ -47,7 +47,7 @@ verified:
 | 4 | `./gradlew uiTest` | 画面の層のシナリオ 5 本が通り、axe-core の違反は 0 件 |
 
 
-デモの動画（2026-10-05 にいまのコードで撮った。その Bolt で作った機能のいまの振る舞いを示す）: [submit-with-number](../../assets/demo/bolt-04/submit-with-number.webm)、[error-summary](../../assets/demo/bolt-04/error-summary.webm)、[special-cargo](../../assets/demo/bolt-04/special-cargo.webm)
+デモの動画（2026-10-05 にいまのコードで撮った。その Bolt で作った機能のいまの振る舞いを示す）: [submit-with-number](../../assets/demo/bolt-04/submit-with-number.webm){:target="_blank"}、[error-summary](../../assets/demo/bolt-04/error-summary.webm){:target="_blank"}、[special-cargo](../../assets/demo/bolt-04/special-cargo.webm){:target="_blank"}
 
 ## 指標
 

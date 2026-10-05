@@ -4,7 +4,7 @@ title: "Bolt 5 終了報告 - 輸送条件の審査と差戻し（US-02）"
 description: "5 回目の Bolt の終了報告。審査の確定・差戻し・古い版の拒否、審査記録と楽観ロック、受付一覧と審査の画面の成果、デモ項目、指標と時間の内訳、仮説 H1〜H3 の結論、見つけて直した問題、既知の課題、ふりかえりをまとめる。"
 tags: [development,bolt-report]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-05T06:43:10Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-05T07:03:56Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-02T13:47:11Z }
   - { by: human:kakimomokuri, at: 2026-10-02T21:44:57Z }
@@ -55,7 +55,7 @@ verified:
 | 3 | `./gradlew uiTest` | 画面の層 11 本（うち審査 4 本）が通り、axe-core の違反は 0 件 |
 
 
-デモの動画（2026-10-05 にいまのコードで撮った。その Bolt で作った機能のいまの振る舞いを示す）: [approve](../../assets/demo/bolt-05/approve.webm)、[send-back-error](../../assets/demo/bolt-05/send-back-error.webm)
+デモの動画（2026-10-05 にいまのコードで撮った。その Bolt で作った機能のいまの振る舞いを示す）: [approve](../../assets/demo/bolt-05/approve.webm){:target="_blank"}、[send-back-error](../../assets/demo/bolt-05/send-back-error.webm){:target="_blank"}
 
 ## 指標
 

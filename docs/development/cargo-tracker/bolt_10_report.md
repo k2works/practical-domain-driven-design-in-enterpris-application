@@ -4,7 +4,7 @@ title: "Bolt 10 終了報告 - 根拠付き見積りの提示（US-03 AC1〜AC3�
 description: "10 回目の Bolt の終了報告。見積りの算出・社内承認・提示と DE-03 での輸送要求の見積提示済み、S-04 と C-04 の見積りの節の成果、デモ項目と動画、指標と時間の内訳、仮説 H1〜H3 の結論、開発レビューと対応、既知の課題、ふりかえりをまとめる。"
 tags: [development,bolt-report]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-05T06:43:10Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-05T07:03:56Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-05T06:28:16Z }
 ---
@@ -59,8 +59,8 @@ verified:
 
 | # | デモ | 結果 | 動画 |
 | :--- | :--- | :--- | :--- |
-| 1 | 見積依頼を提出し、営業が審査を確定して S-04 で見積りを算出・提示する | `@ui` で、審査の確定 → S-04 → 算出（承認待ち、合計 3,730.00 USD）→ 社内承認して提示 → 受付一覧に「見積 1 を提示しました」→ 荷主の C-04 に料金明細・合計・有効期限（2099-10-08 18:00 Asia/Tokyo（UTC+09:00））・経由地・確定の旨、までをキー操作だけで確かめた | [present-quotation.webm](../../assets/demo/bolt-10/present-quotation.webm) |
-| 2 | 料金明細を空にして算出する | `@ui` で、エラー要約にフォーカスが移り「料金明細: 1 行以上入力してください」が出て、有効期限の入力が残ることを確かめた | [quotation-error-summary.webm](../../assets/demo/bolt-10/quotation-error-summary.webm) |
+| 1 | 見積依頼を提出し、営業が審査を確定して S-04 で見積りを算出・提示する | `@ui` で、審査の確定 → S-04 → 算出（承認待ち、合計 3,730.00 USD）→ 社内承認して提示 → 受付一覧に「見積 1 を提示しました」→ 荷主の C-04 に料金明細・合計・有効期限（2099-10-08 18:00 Asia/Tokyo（UTC+09:00））・経由地・確定の旨、までをキー操作だけで確かめた | [present-quotation.webm](../../assets/demo/bolt-10/present-quotation.webm){:target="_blank"} |
+| 2 | 料金明細を空にして算出する | `@ui` で、エラー要約にフォーカスが移り「料金明細: 1 行以上入力してください」が出て、有効期限の入力が残ることを確かめた | [quotation-error-summary.webm](../../assets/demo/bolt-10/quotation-error-summary.webm){:target="_blank"} |
 | 3 | `./gradlew uiTest` | 画面の層 35 本（Bolt 9 の 30 本から +5）がすべて通り、axe-core の違反は 0 件 | — |
 
 動画は録画の後に AI が中身を再生して確かめていない（この環境に動画を読む道具がない）。本報告の承認の場で人が再生して確かめる。

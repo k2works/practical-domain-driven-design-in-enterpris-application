@@ -4,7 +4,7 @@ title: "Bolt 7 終了報告 - 見積依頼の必要書類（US-01 AC2 の残り�
 description: "7 回目の Bolt の終了報告。必要書類の受付規則（Q-INV-16）、版ごとの保存と出し直しでの引き継ぎ、荷主と営業の取得、画面の添付と一覧の成果、デモ項目、指標と時間の内訳、仮説 H1〜H3 の結論、見つけて直した問題、既知の課題、ふりかえりをまとめる。"
 tags: [development,bolt-report]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-05T06:43:10Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-05T07:03:56Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-03T02:07:18Z }
 ---
@@ -71,7 +71,7 @@ verified:
 `bootRun` での手動のデモはまだ行っていない（承認の場で行う）。
 
 
-デモの動画（2026-10-05 にいまのコードで撮った。その Bolt で作った機能のいまの振る舞いを示す）: [attach-and-download](../../assets/demo/bolt-07/attach-and-download.webm)、[wrong-format](../../assets/demo/bolt-07/wrong-format.webm)、[staff-download](../../assets/demo/bolt-07/staff-download.webm)
+デモの動画（2026-10-05 にいまのコードで撮った。その Bolt で作った機能のいまの振る舞いを示す）: [attach-and-download](../../assets/demo/bolt-07/attach-and-download.webm){:target="_blank"}、[wrong-format](../../assets/demo/bolt-07/wrong-format.webm){:target="_blank"}、[staff-download](../../assets/demo/bolt-07/staff-download.webm){:target="_blank"}
 
 ## 指標
 

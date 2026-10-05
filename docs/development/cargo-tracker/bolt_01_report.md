@@ -4,7 +4,7 @@ title: "Bolt 1 終了報告 - ウォーキングスケルトン"
 description: "最初の Bolt（ウォーキングスケルトン）の終了報告。ステップごとの成果、デモ項目の結果、指標、仮説 H1〜H4 の結論、設計への反映、以降のゲート密度の提案をまとめる。"
 tags: [development,bolt-report]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-05T06:43:10Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-05T07:03:56Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T12:57:52Z }
 ---
@@ -56,7 +56,7 @@ H2 の `bootRun` で確かめた（2026-10-01 21:11 JST、レビューの対応�
 計画のデモ 3 は誤りの例を `TOKYO` としていたが、`TOKYO` は UN/LOCODE の形式（国 2 文字 + 地点 3 文字）に合うため、`TYO` に直した。レビューの対応で、小文字と前後の空白はそろえて受け付け、空欄は「出発地を入力してください」と分けた。
 
 
-デモの動画（2026-10-05 にいまのコードで撮った。その Bolt で作った機能のいまの振る舞いを示す）: [submit-to-kpi](../../assets/demo/bolt-01/submit-to-kpi.webm)、[input-error](../../assets/demo/bolt-01/input-error.webm)
+デモの動画（2026-10-05 にいまのコードで撮った。その Bolt で作った機能のいまの振る舞いを示す）: [submit-to-kpi](../../assets/demo/bolt-01/submit-to-kpi.webm){:target="_blank"}、[input-error](../../assets/demo/bolt-01/input-error.webm){:target="_blank"}
 
 ## 指標
 

@@ -4,7 +4,7 @@ title: "Bolt 8 終了報告 - UI の骨格と見積依頼の段階入力のプ�
 description: "8 回目の Bolt の終了報告。WebJars の Bootstrap・htmx、顧客 Web と社内業務 Web の共通レイアウトと共通の CSS、既存の画面の移行、C-03 の段階入力のプロトタイプ（UI-HO-04）の成果、デモ項目、指標と時間の内訳、仮説 H1〜H3 の結論、見つけて直した問題、既知の課題、ふりかえりをまとめる。"
 tags: [development,bolt-report]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-05T06:43:10Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-05T07:03:56Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-03T02:55:56Z }
   - { by: human:kakimomokuri, at: 2026-10-05T03:42:37Z }
@@ -66,7 +66,7 @@ verified:
 | 4 | `./gradlew uiTest` | 画面の層 28 本（うちレイアウト 4 本、段階入力 3 本）が通り、axe-core の違反は 0 件 |
 
 
-デモの動画（2026-10-05 にいまのコードで撮った。その Bolt で作った機能のいまの振る舞いを示す）: [customer-navigation](../../assets/demo/bolt-08/customer-navigation.webm)、[staff-navigation](../../assets/demo/bolt-08/staff-navigation.webm)、[stepwise-submit](../../assets/demo/bolt-08/stepwise-submit.webm)、[stepwise-documents-kept](../../assets/demo/bolt-08/stepwise-documents-kept.webm)
+デモの動画（2026-10-05 にいまのコードで撮った。その Bolt で作った機能のいまの振る舞いを示す）: [customer-navigation](../../assets/demo/bolt-08/customer-navigation.webm){:target="_blank"}、[staff-navigation](../../assets/demo/bolt-08/staff-navigation.webm){:target="_blank"}、[stepwise-submit](../../assets/demo/bolt-08/stepwise-submit.webm){:target="_blank"}、[stepwise-documents-kept](../../assets/demo/bolt-08/stepwise-documents-kept.webm){:target="_blank"}
 
 ## 指標
 

@@ -4,7 +4,7 @@ title: "Bolt 6 終了報告 - 荷主の再提出の画面（US-02 の差戻し�
 description: "6 回目の Bolt の終了報告。荷主の見積依頼の一覧（C-02）・詳細（C-04）・編集（C-03）と出し直し、荷主企業での絞り込みと差戻しの知らせの成果、デモ項目、指標と時間の内訳、仮説 H1〜H3 の結論、見つけて直した問題、既知の課題、ふりかえりをまとめる。"
 tags: [development,bolt-report]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-05T06:43:10Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-05T07:03:56Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-03T00:50:25Z }
   - { by: human:kakimomokuri, at: 2026-10-05T03:42:37Z }
@@ -54,7 +54,7 @@ verified:
 `bootRun` での手動のデモはまだ行っていない（承認の場で行う）。
 
 
-デモの動画（2026-10-05 にいまのコードで撮った。その Bolt で作った機能のいまの振る舞いを示す）: [resubmit](../../assets/demo/bolt-06/resubmit.webm)
+デモの動画（2026-10-05 にいまのコードで撮った。その Bolt で作った機能のいまの振る舞いを示す）: [resubmit](../../assets/demo/bolt-06/resubmit.webm){:target="_blank"}
 
 ## 指標
 
