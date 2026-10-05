@@ -16,9 +16,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.example.cargotracker.quotation.application.internal.commands.CalculateQuotationCommand;
 import com.example.cargotracker.quotation.application.internal.commands.PresentQuotationCommand;
+import com.example.cargotracker.quotation.application.internal.commands.RequoteQuotationCommand;
 import com.example.cargotracker.quotation.application.internal.commandservices.CalculationOutcome;
 import com.example.cargotracker.quotation.application.internal.commandservices.PresentationOutcome;
 import com.example.cargotracker.quotation.application.internal.commandservices.QuotationCommandService;
+import com.example.cargotracker.quotation.application.internal.commandservices.RequotationOutcome;
 import com.example.cargotracker.quotation.application.internal.queryservices.StaffQuotationQueryService;
 import com.example.cargotracker.quotation.application.internal.queryservices.StaffTransportRequestQueryService;
 import com.example.cargotracker.quotation.domain.model.aggregates.Quotation;
@@ -36,6 +38,7 @@ import com.example.cargotracker.quotation.domain.model.valueobjects.QuotationVio
 import com.example.cargotracker.quotation.domain.model.valueobjects.ShipmentTermsFixture;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestId;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestNumber;
+import com.example.cargotracker.shared.acceptance.MutableClock;
 import com.example.cargotracker.shared.domain.CompanyId;
 import com.example.cargotracker.shared.domain.Location;
 import com.example.cargotracker.shared.domain.UserId;
@@ -52,6 +55,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.context.annotation.Bean;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -72,9 +76,23 @@ class StaffQuotationControllerTest {
             new TransportRequestId(UUID.fromString("11111111-1111-1111-1111-111111111111"));
     private static final ZoneId TOKYO = ZoneId.of("Asia/Tokyo");
 
+    /** 失効の表示を決める固定の時計（見本の有効期限 2099-10-08T09:00:00Z より前）。 */
+    private static final Instant NOW = Instant.parse("2026-10-06T01:00:00Z");
+
     @TestConfiguration(proxyBeanMethods = false)
     @EnableConfigurationProperties({ProvisionalActorProperties.class, ProvisionalConsigneeProperties.class})
-    static class Properties {}
+    static class Properties {
+
+        @Bean
+        MutableClock clock() {
+            MutableClock clock = new MutableClock();
+            clock.setInstant(NOW);
+            return clock;
+        }
+    }
+
+    @Autowired
+    MutableClock clock;
 
     @Autowired
     MockMvc mockMvc;
@@ -321,5 +339,161 @@ class StaffQuotationControllerTest {
                 .andExpect(flash().attribute("problem", "TR-2026-0001 見積 1 は承認待ちでないため提示できません"));
         mockMvc.perform(post("/staff/transport-requests/TR-2026-0001/quotations/1/presentation"))
                 .andExpect(flash().attribute("problem", "他の利用者が先に更新しました。内容を確かめてください"));
+    }
+
+    private static Quotation presented() {
+        Quotation quotation = pendingApproval();
+        quotation.presentInternally(STAFF, new UtcInstant(Instant.parse("2026-10-05T04:30:00Z")));
+        quotation.clearDomainEvents();
+        return quotation;
+    }
+
+    @Test
+    void 提示済みの見積りには再見積りの操作を出し提示の操作は出さない() throws Exception {
+        transportRequestExists();
+        given(queryService.find(NUMBER, 1)).willReturn(Optional.of(presented()));
+
+        mockMvc.perform(get("/staff/transport-requests/TR-2026-0001/quotations/1"))
+                .andExpect(content().string(containsString("<dd>提示済み</dd>")))
+                .andExpect(content()
+                        .string(containsString(
+                                "href=\"/staff/transport-requests/TR-2026-0001/quotations/1/requotation\"")))
+                .andExpect(content().string(not(containsString("社内承認して提示する</button>"))));
+    }
+
+    @Test
+    void 有効期限を過ぎた承認待ちの見積りは失効と示し提示の操作を出さず再見積りの操作を出す() throws Exception {
+        transportRequestExists();
+        given(queryService.find(NUMBER, 1)).willReturn(Optional.of(pendingApproval()));
+        clock.setInstant(QuotationFixture.EXPIRES_AT.instant());
+        try {
+            mockMvc.perform(get("/staff/transport-requests/TR-2026-0001/quotations/1"))
+                    .andExpect(content().string(containsString("<dd>失効</dd>")))
+                    .andExpect(content().string(containsString("有効期限を過ぎたため、この見積りは提示できません。再見積りしてください。")))
+                    .andExpect(content().string(not(containsString("社内承認して提示する</button>"))))
+                    .andExpect(content().string(containsString("/quotations/1/requotation")));
+        } finally {
+            clock.setInstant(NOW);
+        }
+    }
+
+    @Test
+    void 置換済みの見積りは置換先へのリンクを示し操作を出さない() throws Exception {
+        transportRequestExists();
+        Quotation old = presented();
+        Quotation replacement = Quotation.create(new QuotationId(UUID.randomUUID()), ID, 1, 2);
+        replacement.calculate(QuotationFixture.completeInput(), new UtcInstant(NOW));
+        old.replaceWith(replacement.id(), new UtcInstant(NOW));
+        given(queryService.find(NUMBER, 1)).willReturn(Optional.of(old));
+        given(queryService.findAll(NUMBER)).willReturn(List.of(old, replacement));
+
+        mockMvc.perform(get("/staff/transport-requests/TR-2026-0001/quotations/1"))
+                .andExpect(content().string(containsString("<dd>置換済み</dd>")))
+                .andExpect(content().string(containsString("見積 2 に置き換えました")))
+                .andExpect(content().string(containsString(">TR-2026-0001 見積 2</a>")))
+                .andExpect(content().string(not(containsString("/requotation"))))
+                .andExpect(content().string(not(containsString("社内承認して提示する</button>"))));
+    }
+
+    @Test
+    void 再見積りの画面は旧版の明細と通貨と経路方針を初期値にし有効期限は空にする() throws Exception {
+        transportRequestExists();
+        given(queryService.find(NUMBER, 1)).willReturn(Optional.of(presented()));
+
+        mockMvc.perform(get("/staff/transport-requests/TR-2026-0001/quotations/1/requotation"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("<h1>再見積り（TR-2026-0001 見積 1 から）</h1>")))
+                .andExpect(content()
+                        .string(containsString(
+                                "action=\"/staff/transport-requests/TR-2026-0001/quotations/1/requotation\"")))
+                .andExpect(content().string(containsString("value=\"海上運賃\"")))
+                .andExpect(content().string(containsString("value=\"3200.00\"")))
+                .andExpect(content().string(containsString("value=\"年間契約 2026-A\"")))
+                .andExpect(content().string(containsString("id=\"via\" name=\"via\" type=\"text\" value=\"SGSIN\"")))
+                .andExpect(content().string(containsString("value=\"2099-10-10 09:00\"")))
+                .andExpect(content()
+                        .string(containsString("id=\"expiresAt\" name=\"expiresAt\" type=\"text\" value=\"\"")))
+                .andExpect(content().string(containsString("算出すると、見積 1 は置換済みになります")));
+    }
+
+    @Test
+    void 再見積りして算出すると新しい見積りへ移り結果を示す() throws Exception {
+        transportRequestExists();
+        given(commandService.requote(any())).willReturn(new RequotationOutcome.Calculated(NUMBER, 2));
+
+        mockMvc.perform(post("/staff/transport-requests/TR-2026-0001/quotations/1/requotation")
+                        .param("lines[0].description", "海上運賃")
+                        .param("lines[0].amount", "3,000.00")
+                        .param("currency", "USD")
+                        .param("expiresAt", "2099-10-09 18:00")
+                        .param("via", "")
+                        .param("departureAt", "2099-10-10 09:00")
+                        .param("arrivalAt", "2099-10-30 18:00"))
+                .andExpect(redirectedUrl("/staff/transport-requests/TR-2026-0001/quotations/2"))
+                .andExpect(flash().attribute("result", "TR-2026-0001 見積 2 を算出しました。見積 1 は置き換えました。内容を確かめて社内承認してください"));
+        then(commandService)
+                .should()
+                .requote(new RequoteQuotationCommand(
+                        NUMBER,
+                        1,
+                        new QuotationInput(
+                                List.of(new PricingLineInput("海上運賃", new BigDecimal("3000.00"), null)),
+                                Currency.USD,
+                                tokyo("2099-10-09T18:00"),
+                                List.of(),
+                                tokyo("2099-10-10T09:00"),
+                                tokyo("2099-10-30T18:00"))));
+    }
+
+    @Test
+    void 再見積りの入力の誤りはエラー要約に示し旧版を変えない() throws Exception {
+        transportRequestExists();
+        given(queryService.find(NUMBER, 1)).willReturn(Optional.of(presented()));
+
+        mockMvc.perform(post("/staff/transport-requests/TR-2026-0001/quotations/1/requotation")
+                        .param("currency", "USD"))
+                .andExpect(status().isOk())
+                .andExpect(model().attributeHasFieldErrors("quotationForm", "expiresAt"))
+                .andExpect(content()
+                        .string(containsString(
+                                "action=\"/staff/transport-requests/TR-2026-0001/quotations/1/requotation\"")));
+        then(commandService).should(never()).requote(any());
+    }
+
+    @Test
+    void 再見積りできないときと競合したときは旧版に戻して理由を示す() throws Exception {
+        transportRequestExists();
+        given(commandService.requote(any()))
+                .willReturn(new RequotationOutcome.Rejected(QuotationRejection.REPLACED))
+                .willReturn(new RequotationOutcome.Conflict());
+
+        mockMvc.perform(post("/staff/transport-requests/TR-2026-0001/quotations/1/requotation")
+                        .param("lines[0].description", "海上運賃")
+                        .param("lines[0].amount", "3000.00")
+                        .param("currency", "USD")
+                        .param("expiresAt", "2099-10-09 18:00")
+                        .param("via", "")
+                        .param("departureAt", "2099-10-10 09:00")
+                        .param("arrivalAt", "2099-10-30 18:00"))
+                .andExpect(redirectedUrl("/staff/transport-requests/TR-2026-0001/quotations/1"))
+                .andExpect(flash().attribute("problem", "TR-2026-0001 見積 1 は置換済みです。新しい見積りを使ってください"));
+        mockMvc.perform(post("/staff/transport-requests/TR-2026-0001/quotations/1/requotation")
+                        .param("lines[0].description", "海上運賃")
+                        .param("lines[0].amount", "3000.00")
+                        .param("currency", "USD")
+                        .param("expiresAt", "2099-10-09 18:00")
+                        .param("via", "")
+                        .param("departureAt", "2099-10-10 09:00")
+                        .param("arrivalAt", "2099-10-30 18:00"))
+                .andExpect(flash().attribute("problem", "他の利用者が先に更新しました。内容を確かめてください"));
+    }
+
+    @Test
+    void 失効した見積りを提示しようとすると理由と再見積りの案内を示す() throws Exception {
+        given(commandService.present(any())).willReturn(new PresentationOutcome.Rejected(QuotationRejection.EXPIRED));
+
+        mockMvc.perform(post("/staff/transport-requests/TR-2026-0001/quotations/1/presentation"))
+                .andExpect(redirectedUrl("/staff/transport-requests/TR-2026-0001/quotations/1"))
+                .andExpect(flash().attribute("problem", "TR-2026-0001 見積 1 は有効期限を過ぎて失効しています。再見積りしてください"));
     }
 }

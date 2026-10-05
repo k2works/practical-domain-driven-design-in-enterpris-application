@@ -63,6 +63,7 @@ public class ReviewTransportRequestUiSteps {
             case "受付一覧" -> open("/staff/transport-requests");
             case "提出した見積依頼の審査画面" -> open("/staff/transport-requests/" + number());
             case "提出した見積依頼の見積り画面" -> open("/staff/transport-requests/" + number() + "/quotations/1");
+            case "提出した見積依頼の再見積り画面" -> open("/staff/transport-requests/" + number() + "/quotations/1/requotation");
             default -> throw new IllegalArgumentException("シナリオの画面名: " + screen);
         }
     }

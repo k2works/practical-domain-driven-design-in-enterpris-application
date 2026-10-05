@@ -55,7 +55,9 @@ import com.example.cargotracker.shared.domain.UserId;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
+import java.time.Clock;
 import java.time.Instant;
+import java.time.ZoneOffset;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -66,6 +68,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.context.annotation.Bean;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -106,9 +109,16 @@ class TransportRequestControllerTest {
             new BigDecimal("8400"),
             new BigDecimal("32.5"));
 
+    /** 見積りの失効の表示を決める固定の時計（見本の有効期限 2099-10-08T09:00:00Z より前）。 */
     @TestConfiguration(proxyBeanMethods = false)
     @EnableConfigurationProperties({ProvisionalActorProperties.class, ProvisionalConsigneeProperties.class})
-    static class Properties {}
+    static class Properties {
+
+        @Bean
+        Clock clock() {
+            return Clock.fixed(Instant.parse("2026-10-06T01:00:00Z"), ZoneOffset.UTC);
+        }
+    }
 
     @Autowired
     MockMvc mockMvc;
@@ -388,7 +398,7 @@ class TransportRequestControllerTest {
         quotation.calculate(QuotationFixture.completeInput(), new UtcInstant(Instant.parse("2026-10-05T04:00:00Z")));
         quotation.presentInternally(
                 new UserId(UUID.randomUUID()), new UtcInstant(Instant.parse("2026-10-05T04:00:00Z")));
-        given(quotationQueryService.findPresented(NUMBER, SHIPPER)).willReturn(Optional.of(quotation));
+        given(quotationQueryService.findVisible(NUMBER, SHIPPER)).willReturn(List.of(quotation));
 
         mockMvc.perform(get("/customer/transport-requests/TR-2026-0001"))
                 .andExpect(content().string(containsString("<h2 id=\"quotation-title\">見積り</h2>")))
@@ -401,6 +411,44 @@ class TransportRequestControllerTest {
                         .string(containsString(
                                 "この見積りへの回答（詳細経路設計へ進む・辞退・相談）は、次の更新で画面からできるようになります。" + "それまでは担当営業にご連絡ください。")))
                 .andExpect(content().string(not(containsString("承認者"))));
+    }
+
+    @Test
+    void 置換済みの見積りは読み取り専用と示し新しい見積りの依頼を案内し回答の案内は出さない() throws Exception {
+        TransportRequest request = underReviewWithInvoice();
+        given(queryService.findByNumber(NUMBER, SHIPPER)).willReturn(Optional.of(request));
+        Quotation quotation = Quotation.create(new QuotationId(UUID.randomUUID()), request.id(), 1, 1);
+        UtcInstant at = new UtcInstant(Instant.parse("2026-10-05T04:00:00Z"));
+        quotation.calculate(QuotationFixture.completeInput(), at);
+        quotation.presentInternally(new UserId(UUID.randomUUID()), at);
+        quotation.replaceWith(new QuotationId(UUID.randomUUID()), at);
+        given(quotationQueryService.findVisible(NUMBER, SHIPPER)).willReturn(List.of(quotation));
+
+        mockMvc.perform(get("/customer/transport-requests/TR-2026-0001"))
+                .andExpect(content().string(containsString("見積 1（置換済み）")))
+                .andExpect(content().string(containsString("この見積りは読み取り専用です。新しい見積りは担当営業にご依頼ください。")))
+                .andExpect(content().string(not(containsString("この見積りへの回答"))));
+    }
+
+    @Test
+    void 新しい見積りの下に以前の見積りを読み取り専用で並べる() throws Exception {
+        TransportRequest request = underReviewWithInvoice();
+        given(queryService.findByNumber(NUMBER, SHIPPER)).willReturn(Optional.of(request));
+        UtcInstant at = new UtcInstant(Instant.parse("2026-10-05T04:00:00Z"));
+        Quotation latest = Quotation.create(new QuotationId(UUID.randomUUID()), request.id(), 1, 2);
+        latest.calculate(QuotationFixture.completeInput(), at);
+        latest.presentInternally(new UserId(UUID.randomUUID()), at);
+        Quotation old = Quotation.create(new QuotationId(UUID.randomUUID()), request.id(), 1, 1);
+        old.calculate(QuotationFixture.completeInput(), at);
+        old.presentInternally(new UserId(UUID.randomUUID()), at);
+        old.replaceWith(latest.id(), at);
+        given(quotationQueryService.findVisible(NUMBER, SHIPPER)).willReturn(List.of(latest, old));
+
+        mockMvc.perform(get("/customer/transport-requests/TR-2026-0001"))
+                .andExpect(content().string(containsString("見積 2（提示済み）")))
+                .andExpect(content().string(containsString("この見積りへの回答")))
+                .andExpect(content().string(containsString("以前の見積り（読み取り専用）")))
+                .andExpect(content().string(containsString("見積 1（置換済み）")));
     }
 
     @Test

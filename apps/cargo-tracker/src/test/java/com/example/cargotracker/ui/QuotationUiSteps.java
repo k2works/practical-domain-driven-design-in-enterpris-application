@@ -10,6 +10,7 @@ import io.cucumber.java.ja.もし;
 import io.cucumber.java.ja.前提;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.web.server.LocalServerPort;
+import org.springframework.jdbc.core.JdbcTemplate;
 
 /**
  * 見積りの作成と提示（S-04）と、荷主の見積依頼の詳細（C-04）の見積りの節の画面の層のステップ定義（US-03）。
@@ -27,17 +28,22 @@ public class QuotationUiSteps {
     private static final String PRESENT = "社内承認して提示する";
     private static final String[][] STANDARD_LINES = {{"海上運賃", "3200.00", "年間契約 2026-A"}, {"燃料調整金", "530.00", ""}};
 
+    private static final String REQUOTE = "再見積りする";
+
     private final BrowserSession browser;
     private final UiScenarioState state;
+    private final JdbcTemplate jdbc;
     private final String baseUrl;
 
     public QuotationUiSteps(
             BrowserSession browser,
             UiScenarioState state,
+            JdbcTemplate jdbc,
             @LocalServerPort int port,
             @Value("${ui.base-url:}") String configuredBaseUrl) {
         this.browser = browser;
         this.state = state;
+        this.jdbc = jdbc;
         this.baseUrl = configuredBaseUrl.isBlank() ? "http://localhost:" + port : configuredBaseUrl;
     }
 
@@ -83,6 +89,13 @@ public class QuotationUiSteps {
 
     @前提("営業担当者が提出した見積依頼の見積りを算出して提示している")
     public void 見積りを算出して提示している() {
+        見積りを算出している();
+        button(PRESENT).click();
+        page().waitForURL("**/staff/transport-requests");
+    }
+
+    @前提("営業担当者が提出した見積依頼の見積りを算出している")
+    public void 見積りを算出している() {
         審査を確定している();
         for (int i = 0; i < STANDARD_LINES.length; i++) {
             field(line(i + 1, "内容")).fill(STANDARD_LINES[i][0]);
@@ -96,8 +109,81 @@ public class QuotationUiSteps {
         fillSchedule();
         button(CALCULATE).click();
         page().waitForURL("**" + quotationsPath() + "/1");
-        button(PRESENT).click();
-        page().waitForURL("**/staff/transport-requests");
+    }
+
+    /**
+     * 時間が経って有効期限を過ぎた状態を作る。画面の層は実際の時計で動き、有効期限は算出の時刻より後でなければ算出できないため、
+     * 算出した見積りの有効期限を DB で 1 分前にする（テストの準備だけに使う）。
+     */
+    @前提("見積り {int} の有効期限が過ぎている")
+    public void 有効期限が過ぎている(int quotationNo) {
+        int updated = jdbc.update(
+                "UPDATE quotation.quotation q SET expires_at = CURRENT_TIMESTAMP - INTERVAL '1 minute'"
+                        + " FROM quotation.transport_request t"
+                        + " WHERE q.transport_request_id = t.id AND t.request_number = ? AND q.quotation_no = ?",
+                number(),
+                quotationNo);
+        if (updated != 1) {
+            throw new IllegalStateException("有効期限を過ぎた状態にする見積りがありません: 見積 " + quotationNo);
+        }
+    }
+
+    @もし("営業担当者が提出した見積依頼の見積り {int} を開く")
+    public void 見積りを開く(int quotationNo) {
+        page().navigate(baseUrl + quotationsPath() + "/" + quotationNo);
+        browser.checkAccessibility();
+    }
+
+    @もし("キー操作だけで再見積りを開き、有効期限 {string} を入れて算出する")
+    public void キー操作だけで再見積りする(String expiresAt) {
+        page().locator("body").focus();
+        tabUntilFocused(link(REQUOTE));
+        page().keyboard().press("Enter");
+        page().waitForURL("**" + quotationsPath() + "/1/requotation");
+        browser.checkAccessibility();
+        assertThat(field(line(1, "内容"))).hasValue(STANDARD_LINES[0][0]);
+        assertThat(field(EXPIRES_AT)).hasValue("");
+        page().locator("body").focus();
+        tabUntilFocused(field(EXPIRES_AT));
+        page().keyboard().type(expiresAt);
+        tabUntilFocused(button(CALCULATE));
+        page().keyboard().press("Enter");
+        page().waitForURL("**" + quotationsPath() + "/2");
+        browser.checkAccessibility();
+    }
+
+    @ならば("見積り {int} は {string} で {string} と置換先へのリンクが表示され、提示と再見積りの操作はない")
+    public void 置換済みが表示される(int quotationNo, String status, String message) {
+        assertThat(page().getByRole(AriaRole.HEADING, new Page.GetByRoleOptions().setLevel(1)))
+                .hasText("見積り " + number() + " 見積 " + quotationNo);
+        assertThat(definition("状態")).hasText(status);
+        assertThat(page().locator("main")).containsText(message);
+        assertThat(link(number() + " 見積 2")).isVisible();
+        assertThat(button(PRESENT)).hasCount(0);
+        assertThat(link(REQUOTE)).hasCount(0);
+    }
+
+    @ならば("見積り {int} は {string} と示され、社内承認して提示する操作はなく、再見積りの操作がある")
+    public void 失効が表示される(int quotationNo, String status) {
+        assertThat(page().getByRole(AriaRole.HEADING, new Page.GetByRoleOptions().setLevel(1)))
+                .hasText("見積り " + number() + " 見積 " + quotationNo);
+        assertThat(definition("状態")).hasText(status);
+        assertThat(button(PRESENT)).hasCount(0);
+        assertThat(link(REQUOTE)).isVisible();
+    }
+
+    @ならば("見積りの節に見積 {int} が {string} の読み取り専用で示され、{string} と案内される")
+    public void 荷主に旧版が示される(int quotationNo, String status, String guidance) {
+        Locator quotation = quotationRegion();
+        assertThat(quotation).containsText("見積 " + quotationNo);
+        assertThat(quotation).containsText(status);
+        assertThat(quotation).containsText("読み取り専用");
+        assertThat(quotation).containsText(guidance);
+    }
+
+    private Locator link(String name) {
+        return page().getByRole(
+                        AriaRole.LINK, new Page.GetByRoleOptions().setName(name).setExact(true));
     }
 
     @ならば("見積りの作成画面に提出した見積依頼の審査を確定したことが表示される")
