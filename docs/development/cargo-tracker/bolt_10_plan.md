@@ -3,8 +3,10 @@ type: Plan
 title: "Bolt 10 計画 - 根拠付き見積りの提示（US-03 AC1〜AC3）"
 description: "10 回目の Bolt の計画。見積り集約（料金根拠の明細・有効期限・経路方針）の算出と社内承認・提示、DE-03 を受けた輸送要求の状態の更新、S-04 と C-04 の見積りの節、quotation と pricing_line の表を、ステップ 1〜5 で定義する。"
 tags: [development,bolt-plan]
-status: draft
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-05T04:06:17Z }
+status: stable
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-05T04:12:46Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-10-05T04:12:46Z }
 ---
 
 # Bolt 10 計画 - 根拠付き見積りの提示（US-03 AC1〜AC3）
@@ -314,6 +316,8 @@ S04 -[dashed]-> C04 : 荷主が開くと見積りが見える
 | 5 | S-04 の URL: 作成 `GET /staff/transport-requests/{業務番号}/quotations/new`・`POST /staff/transport-requests/{業務番号}/quotations`、算出と提示 `GET /staff/transport-requests/{業務番号}/quotations/{見積り番号}`・`POST …/{見積り番号}/calculation`・`POST …/{見積り番号}/presentation`。S-03 で審査を確定したら S-04 の作成へ進む（暫定の受付一覧への戻りをやめる）。作成と算出は 1 つの画面で入力し、送ると算出まで進む（作成中のまま保存する操作は入れない） | 1、4 | 画面の流れと URL |
 | 6 | 1 つの輸送要求に、作成中・承認待ち・提示済みの見積りは 1 つだけとする（Q-INV-18）。置換（AC5）は Bolt 11 で入れる | 1、2 | 業務のルール |
 
+決定（2026-10-05、human:kakimomokuri）: 確認ポイント 1〜6 はすべて上の案で決まった。
+
 ## AI の仮定
 
 - 見積りの社内承認者と提示時刻は、審査の判断者と同じく設定の仮の営業担当者（`ProvisionalActorProperties`）で記録する。
@@ -358,6 +362,7 @@ S04 -[dashed]-> C04 : 荷主が開くと見積りが見える
 | 日付 | 内容 | 作成 | 承認 |
 | :--- | :--- | :--- | :--- |
 | 2026-10-05 | 初版（人の決定: US-03 を Bolt 10（AC1〜AC3）と Bolt 11（AC4・AC5）に分ける） | anthropic/claude-opus-5-5 | — |
+| 2026-10-05 | 計画を承認。確認ポイント 1〜6（表と NULL 可の列、料金根拠の明細と通貨、有効期限と経路方針、DE-03 での状態の更新、S-04 の URL と流れ、見積りは 1 つ）も決まった（Try T-6） | anthropic/claude-opus-5-5 | human:kakimomokuri |
 
 ## 関連ドキュメント
 

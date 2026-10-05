@@ -16,6 +16,7 @@ verified:
   - { by: human:kakimomokuri, at: 2026-10-03T03:10:15Z }
   - { by: human:kakimomokuri, at: 2026-10-05T00:54:43Z }
   - { by: human:kakimomokuri, at: 2026-10-05T03:42:38Z }
+  - { by: human:kakimomokuri, at: 2026-10-05T04:12:47Z }
 ---
 
 # リリース計画 - cargo-tracker（A 社国際貨物輸送管理システム）
