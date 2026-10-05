@@ -6792,7 +6792,7 @@
 <tbody>
 <tr>
 <td style="text-align: left;">H1</td>
-<td style="text-align: left;">失効を状態として書き換えず、判定時刻と有効期限の比較（見積有効判定 <code>QuotationValidity</code>）で決めれば（データモデルの方針）、定期処理なしで AC4 の境界（同時刻は失効）と AC5 の拒否を満たせ、予約確定（US-04）も同じ判定を使える</td>
+<td style="text-align: left;">失効を状態として書き換えず、判定時刻と有効期限の比較（見積有効判定 <code>QuotationValidity</code>。注: ステップ 3 で型を作らず <code>QuotationExpiry.isValidAt</code> に置いた）で決めれば（データモデルの方針）、定期処理なしで AC4 の境界（同時刻は失効）と AC5 の拒否を満たせ、予約確定（US-04）も同じ判定を使える</td>
 <td style="text-align: left;">失効の判定を 1 か所に置けるか。定期処理（DE-19・W10）を待たずに済むか</td>
 </tr>
 <tr>
@@ -6893,7 +6893,7 @@
 <tr>
 <td style="text-align: left;"><code>quotation.status</code> の <code>EXPIRED</code>・<code>REPLACED</code>、<code>replaced_by_quotation_id</code>（自己参照の FK）</td>
 <td style="text-align: left;">データモデル</td>
-<td style="text-align: left;">入れる（確認ポイント 7）</td>
+<td style="text-align: left;">入れる（確認ポイント 7。注: ステップ 4 で PostgreSQL の遅延の FK に変えた）</td>
 </tr>
 <tr>
 <td style="text-align: left;">失効・置換済みの見積りは読み取り専用で表示し、新しい見積りを依頼する手順を示す</td>
@@ -7087,7 +7087,7 @@
 <li>画面: R-09（金額の 3 桁区切りのカンマを受け付けて除き、ヒントに書く）、R-10（概算の出発・到着の欄の形式のヒント。日付だけにするかは D-35 の後）、R-20（詳細な経路の説明の言い方）、R-22（経由地がないときは「直行（経由地なし）」）</li>
 <li>文書: R-15（データモデルの作成中と NULL 可の列）、R-21（UI 設計の S-02 の行と列名）、R-23（リリース計画の W2 の進捗、Bolt 9 終了報告の期間の終了時刻）。R-14 の COMMENT はステップ 4 のマイグレーションでまとめる。R-24 はステップ 3・5 で守る</li>
 <li>完了の判定: <code>check</code> と <code>uiTest</code> が緑。レビューの「対応結果」に指摘ごとの対応とコミットを書く。push して CI を確かめる</li>
-<li>結果（2026-10-05 16:22〜16:45）<ul>
+<li>結果（2026-10-05 16:22〜16:35。最後のコミット <code>b94f6be</code> の時刻。Bolt 11 レビュー R-05）<ul>
 <li>Red: R-06（ログ 2 件）・R-17（空白を除いた長さ 1 件）のテストと、R-07・R-08・R-18・R-19 のテストを先に書き、3 件だけが失敗することを確かめてコミットした（<code>296677e</code>）。画面の R-09・R-10・R-20・R-22 のテストを書き、3 件が失敗することを確かめてコミットした（<code>a7ed944</code>）。R-07・R-08 と、区切りの位置の違うカンマの誤りは、今の実装が正しいので最初から通る（テストの強化と、消えたシナリオの復元）</li>
 <li>Green: R-06・R-09・R-10（ヒントだけ）・R-16・R-17・R-20・R-22 を直した（<code>92e691a</code>）。文書の R-15・R-21・R-23 を直した（<code>874d411</code>）。R-13 は D-34、R-10 の日付だけは D-35 の回答を待つ。R-14 はステップ 4、R-24 はステップ 3・5</li>
 <li>実行中に直した誤り: なし（環境の準備として、JDK 25 を apt で入れ、Gradle をロケール C.UTF-8 で動かした。Maven Central の 429 は取り直した。Playwright 1.63 の Chromium 1243 は <code>cdn.playwright.dev</code> が許可されていないため、この環境だけ既存の 1194 で代用した）</li>

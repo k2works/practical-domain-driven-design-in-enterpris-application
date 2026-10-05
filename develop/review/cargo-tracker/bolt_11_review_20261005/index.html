@@ -3588,6 +3588,34 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="対応結果">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#2026-10-05bolt-11-6humankakimomokuri" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        人の判断（2026-10-05、Bolt 11 のステップ 6。human:kakimomokuri）
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bolt-11-62026-10-05" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        改善提案ごとの対応（Bolt 11 計画 のステップ 6、2026-10-05）
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -7091,7 +7119,221 @@
 </details>
 
 <h2 id="_10">対応結果<a class="headerlink" href="#_10" title="Permanent link">&para;</a></h2>
-<p>（人の判断の後に記録する）</p>
+<h3 id="2026-10-05bolt-11-6humankakimomokuri">人の判断（2026-10-05、Bolt 11 のステップ 6。human:kakimomokuri）<a class="headerlink" href="#2026-10-05bolt-11-6humankakimomokuri" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">#</th>
+<th style="text-align: left;">決定</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">D-40 対応の範囲</td>
+<td style="text-align: left;">AI の提案どおり。高（R-01〜R-05）、中のうち R-06〜R-12・R-14・R-16〜R-18、低の全部を Bolt 11 で直す。R-13 は D-39、R-15 は Bolt 12 以降、R-19 は US-04 の Bolt の前</td>
+</tr>
+<tr>
+<td style="text-align: left;">D-37</td>
+<td style="text-align: left;">AI の提案どおり。最新が置換済みなら「担当営業が新しい見積りを準備しています。提示されるまでお待ちください。」、失効なら「新しい見積りは担当営業にご依頼ください」。荷主の画面の状態の言葉は「置換済み」を「新しい見積りに置き換え」にする</td>
+</tr>
+<tr>
+<td style="text-align: left;">D-38</td>
+<td style="text-align: left;">AI の提案どおり。Bolt 11 で S-02 に「見積提示済み」の表を足す</td>
+</tr>
+<tr>
+<td style="text-align: left;">D-39・D-41</td>
+<td style="text-align: left;">明示の判断はなく、AI の提案のまま進める（終了報告の承認の場で改めて確かめる）</td>
+</tr>
+</tbody>
+</table>
+<h3 id="bolt-11-62026-10-05">改善提案ごとの対応（<a href="../../../development/cargo-tracker/bolt_11_plan/">Bolt 11 計画</a> のステップ 6、2026-10-05）<a class="headerlink" href="#bolt-11-62026-10-05" title="Permanent link">&para;</a></h3>
+<p>テストを先に書き（Red: <code>522ca88</code>・<code>07c4773</code>）、業務の規則と照会（<code>013b3a8</code>）、画面（<code>8bfa8d5</code>）の順に直した。画面の層の Red は、画面を変える前の <code>uiTest</code> と画面の単体テストで記録した（T-21）。</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">#</th>
+<th style="text-align: left;">対応</th>
+<th style="text-align: left;">コミット</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">R-01</td>
+<td style="text-align: left;">修正。最新が置換済みなら「担当営業が新しい見積りを準備しています。提示されるまでお待ちください。」、失効なら有効期限と依頼の案内（D-37）</td>
+<td style="text-align: left;"><code>522ca88</code>、<code>8bfa8d5</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">R-02</td>
+<td style="text-align: left;">修正。S-02 に見積提示済みの表（見積依頼ごとの最新の見積りを有効期限の近い順。1 回の SQL）を足し、行から S-04 を開ける（D-38）。画面の層の主成功のシナリオにも入れた</td>
+<td style="text-align: left;"><code>522ca88</code>・<code>07c4773</code>、<code>013b3a8</code>・<code>8bfa8d5</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">R-03</td>
+<td style="text-align: left;">修正。提示済みのまま期限を過ぎた見積りの C-04 のテストを足した</td>
+<td style="text-align: left;"><code>522ca88</code>、<code>8bfa8d5</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">R-04</td>
+<td style="text-align: left;">修正。提示前に置き換えた見積りは荷主に見えないシナリオを足した</td>
+<td style="text-align: left;"><code>522ca88</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">R-05</td>
+<td style="text-align: left;">修正。ステップ 1 の期間を 16:22〜16:35 にした</td>
+<td style="text-align: left;">文書</td>
+</tr>
+<tr>
+<td style="text-align: left;">R-06</td>
+<td style="text-align: left;">修正。古い版に対する見積りの再見積りは <code>OUTDATED_VERSION</code>、見積り作成中でも見積提示済みでもない見積依頼のテストも足した</td>
+<td style="text-align: left;"><code>522ca88</code>、<code>013b3a8</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">R-07</td>
+<td style="text-align: left;">修正。集約に「提示できない理由(判定時刻)」「再見積りできない理由()」を置き、画面はそれを写す</td>
+<td style="text-align: left;"><code>522ca88</code>、<code>013b3a8</code>・<code>8bfa8d5</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">R-08</td>
+<td style="text-align: left;">修正。見積りを 1 回だけ読み、番号の計算を 1 か所にした。あわせて、旧版は入力の検証の後に置き換える（programmer の懸念）</td>
+<td style="text-align: left;"><code>013b3a8</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">R-09</td>
+<td style="text-align: left;">修正。失効を記録した旧版の S-04 に「読み取り専用です」と最新の見積りへのリンク</td>
+<td style="text-align: left;"><code>522ca88</code>、<code>8bfa8d5</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">R-10</td>
+<td style="text-align: left;">修正。結果を「新しい見積りに置き換えました」「失効として記録しました」で出し分け、言い方を「置き換え」にそろえた</td>
+<td style="text-align: left;"><code>522ca88</code>、<code>013b3a8</code>・<code>8bfa8d5</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">R-11</td>
+<td style="text-align: left;">修正。ドメインモデルの集約の操作を実装に合わせた</td>
+<td style="text-align: left;">文書</td>
+</tr>
+<tr>
+<td style="text-align: left;">R-12</td>
+<td style="text-align: left;">修正。Bolt 9・10 レビューの R-14・R-24 を埋め、見出しを「Bolt 11 での対応」にした</td>
+<td style="text-align: left;">文書</td>
+</tr>
+<tr>
+<td style="text-align: left;">R-13</td>
+<td style="text-align: left;">今の DB の書き換えのまま（D-39。終了報告の承認で確かめる）</td>
+<td style="text-align: left;">—</td>
+</tr>
+<tr>
+<td style="text-align: left;">R-14</td>
+<td style="text-align: left;">修正。サービスを通した統合テストで、新しい見積りの保存が失敗すると旧版の置換もロールバックすることを確かめた</td>
+<td style="text-align: left;"><code>522ca88</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">R-15</td>
+<td style="text-align: left;">Bolt 12 以降（Bolt 5 からの持ち越しと一緒に）</td>
+<td style="text-align: left;">—</td>
+</tr>
+<tr>
+<td style="text-align: left;">R-16</td>
+<td style="text-align: left;">修正。提示済みで失効した見積りの再提示は「失効している」</td>
+<td style="text-align: left;"><code>522ca88</code>、<code>013b3a8</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">R-17</td>
+<td style="text-align: left;">修正。失効の案内に有効期限を併記した</td>
+<td style="text-align: left;"><code>522ca88</code>、<code>8bfa8d5</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">R-18</td>
+<td style="text-align: left;">修正。Code Smell 5 件を直した（品質ゲート PASS、Code Smell 0）</td>
+<td style="text-align: left;"><code>522ca88</code>、<code>8bfa8d5</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">R-19</td>
+<td style="text-align: left;">US-04 の Bolt の前に ADR で決める</td>
+<td style="text-align: left;">—</td>
+</tr>
+<tr>
+<td style="text-align: left;">R-20</td>
+<td style="text-align: left;">見直した。置換先と最新の見積りの両方を示すため、見積依頼の見積りを 1 回読んで探す形のまま</td>
+<td style="text-align: left;"><code>8bfa8d5</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">R-21</td>
+<td style="text-align: left;">修正。失効の案内を到達しない枝のない形にした</td>
+<td style="text-align: left;"><code>8bfa8d5</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">R-22</td>
+<td style="text-align: left;">修正</td>
+<td style="text-align: left;"><code>013b3a8</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">R-23</td>
+<td style="text-align: left;">修正</td>
+<td style="text-align: left;"><code>522ca88</code>、<code>013b3a8</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">R-24</td>
+<td style="text-align: left;">直さない。旧版の更新の後の一意制約の違反は、同じ旧版の再見積りが楽観ロックで止まるため起きない前提で、起きたら例外のままロールバックする（R-14 のテストで確かめた）。値で返すと旧版の更新をロールバックできない</td>
+<td style="text-align: left;">—</td>
+</tr>
+<tr>
+<td style="text-align: left;">R-25</td>
+<td style="text-align: left;">修正。<code>isAlreadyQuotedForVersion</code> にした</td>
+<td style="text-align: left;"><code>8bfa8d5</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">R-26</td>
+<td style="text-align: left;">修正。前提の文に有効期限を書いた</td>
+<td style="text-align: left;"><code>522ca88</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">R-27</td>
+<td style="text-align: left;">修正</td>
+<td style="text-align: left;"><code>522ca88</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">R-28</td>
+<td style="text-align: left;">修正</td>
+<td style="text-align: left;"><code>522ca88</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">R-29</td>
+<td style="text-align: left;">修正</td>
+<td style="text-align: left;"><code>522ca88</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">R-30</td>
+<td style="text-align: left;">修正。計画の H1 と設計の約束に注を付けた</td>
+<td style="text-align: left;">文書</td>
+</tr>
+<tr>
+<td style="text-align: left;">R-31</td>
+<td style="text-align: left;">修正。索引の Bolt 11 を「進行中」にした</td>
+<td style="text-align: left;">文書</td>
+</tr>
+<tr>
+<td style="text-align: left;">R-32</td>
+<td style="text-align: left;">修正</td>
+<td style="text-align: left;"><code>8bfa8d5</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">R-33</td>
+<td style="text-align: left;">修正。荷主の画面の「置換済み」を「新しい見積りに置き換え」にした（D-37）</td>
+<td style="text-align: left;"><code>522ca88</code>、<code>8bfa8d5</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">R-34</td>
+<td style="text-align: left;">修正。<code>findPresented</code> を消し、受入テストも <code>findVisible</code> に寄せた</td>
+<td style="text-align: left;"><code>522ca88</code>、<code>013b3a8</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">R-35</td>
+<td style="text-align: left;">修正（R-17 と一緒に、C-04 の失効の案内に有効期限）</td>
+<td style="text-align: left;"><code>522ca88</code>、<code>8bfa8d5</code></td>
+</tr>
+</tbody>
+</table>
 <h2 id="_11">更新履歴<a class="headerlink" href="#_11" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
@@ -7106,6 +7348,12 @@
 <tr>
 <td style="text-align: left;">2026-10-05</td>
 <td style="text-align: left;">初版（5 視点の並列レビューと SonarQube の結果を統合）</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5</td>
+<td style="text-align: left;">—</td>
+</tr>
+<tr>
+<td style="text-align: left;">2026-10-05</td>
+<td style="text-align: left;">人の判断（D-37・D-38・D-40）と、改善提案ごとの対応を記録した</td>
 <td style="text-align: left;">anthropic/claude-opus-5-5</td>
 <td style="text-align: left;">—</td>
 </tr>
