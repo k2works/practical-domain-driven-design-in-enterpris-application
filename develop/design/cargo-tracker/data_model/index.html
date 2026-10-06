@@ -4584,6 +4584,41 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../adr/cargo-tracker/012-authentication-principal-and-session/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-012 認証の主体と session
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--draft"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -7577,6 +7612,17 @@
 </table>
 <p>session は <code>platform</code> スキーマの Spring Session の表に置く。利用停止・権限取消し・参照許可の取消しを次の request から反映するため、認可の判断は session に保存した値ではなく、request ごとに <code>app_user</code>・<code>user_role</code>・<code>access_grant</code> を確かめる（IA-INV-04、IA-INV-06）。</p>
 <p><code>audit_record.before_state</code> と <code>after_state</code> は変更前後の要約である。4000 文字を超える詳細が必要になったら、データモデルを見直す。</p>
+<p>Bolt 14 で作る範囲（2026-10-06、human:kakimomokuri。<a href="../../../development/cargo-tracker/bolt_14_plan/">Bolt 14 計画</a> の確認ポイント 4・5・7・12）:</p>
+<ul>
+<li><code>company</code> は全列を作る。<code>kind</code> は <code>SHIPPER</code>・<code>CONSIGNEE</code>・<code>OPERATOR</code>（A 社）。</li>
+<li><code>app_user</code> は <code>id</code>・<code>company_id</code>・<code>email</code>・<code>display_name</code>・<code>password_hash</code>・<code>status</code>（<code>ACTIVE</code>・<code>SUSPENDED</code>）・<code>version</code>・<code>created_at</code>・<code>updated_at</code> を作る。<code>email</code> は前後の空白を除き小文字にして保存し、一意にする。<code>totp_secret_encrypted</code>・<code>failed_attempts</code>・<code>locked_until</code> は TOTP とロックの W5 で足す。<code>password_hash</code> は <code>{bcrypt}</code> の接頭辞を付けた DelegatingPasswordEncoder の形式（SEC-07）。</li>
+<li><code>user_role</code> は全列を作る。<code>role</code> は <code>SHIPPER</code>（荷主担当者）・<code>SALES</code>（営業担当者）・<code>ROUTE_DESIGNER</code>（経路設計者）・<code>TRACKING_MANAGER</code>（追跡管理者）・<code>DATA_STEWARD</code>（データ責任者）・<code>CUSTOMER_SUPPORT</code>（カスタマーサポート）・<code>SYSTEM_ADMIN</code>（システム管理者）・<code>AUDITOR</code>（監査担当者）。</li>
+<li><code>audit_record</code> は <code>id</code>・<code>occurred_at</code>・<code>actor_user_id</code>・<code>actor_company_id</code>・<code>action</code>・<code>result</code>・<code>reason</code>・<code>correlation_id</code> を作り、追記だけにする（<code>[append-only]</code>）。<code>action</code> はログインの成功・失敗・ログアウト（<code>LOGIN_SUCCEEDED</code>・<code>LOGIN_FAILED</code>・<code>LOGOUT</code>）、<code>reason</code> は失敗の理由（<code>BAD_CREDENTIALS</code>・<code>UNKNOWN_USER</code>・<code>SUSPENDED</code>・<code>COMPANY_INACTIVE</code>）。存在しないメールアドレスは記録しない。対象・変更前後・承認・出典・<code>event_id</code> の列は使う Bolt で足す。</li>
+<li><code>user_assignment</code>・<code>access_grant</code>・<code>kpi_baseline</code> は使う Bolt（US-16・US-19・US-21）で作る。</li>
+<li>既存の表の <code>shipper_company_id</code>・<code>consignee_company_id</code>・<code>submitted_by</code> などには外部キーを張らない。仮の荷受人の企業（US-16 の企業マスターまで設定にある）を表に持たないため、企業マスターで決める。</li>
+<li>開発用の企業と利用者は <code>db/dev-data/</code> に置き、<code>dev</code> のときだけ Flyway の場所に足す。共通・ベンダーの場所に置かない（ADR-011 の決定 3）。</li>
+<li>Bolt 14 の認可はログインの時点の役割で行う。request ごとに <code>app_user</code>・<code>user_role</code> を確かめるのは、権限の取消し（US-18 AC6）とあわせて W5 で入れる。</li>
+</ul>
 <h3 id="notification">通知（<code>notification</code>）<a class="headerlink" href="#notification" title="Permanent link">&para;</a></h3>
 <p><img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB2ZXJzaW9uPSIxLjEiIGRhdGEtZGlhZ3JhbS10eXBlPSJDTEFTUyIgc3R5bGU9IndpZHRoOjMyMHB4O2hlaWdodDozMTlweDtiYWNrZ3JvdW5kOiNGRkZGRkY7IiB3aWR0aD0iMzIwcHgiIGhlaWdodD0iMzE5cHgiIHZpZXdCb3g9IjAgMCAzMjAgMzE5IiB6b29tQW5kUGFuPSJtYWduaWZ5IiBwcmVzZXJ2ZUFzcGVjdFJhdGlvPSJub25lIiBjb250ZW50U3R5bGVUeXBlPSJ0ZXh0L2NzcyI+PD9wbGFudHVtbCAxLjIwMjYuOD8+PGRlZnMvPjxnIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBsZW5ndGhBZGp1c3Q9InNwYWNpbmciPjxnIGNsYXNzPSJ0aXRsZSIgZGF0YS1zb3VyY2UtbGluZT0iMSI+PHRleHQgeD0iODAuNzI2IiB5PSIyMi45OTUiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTQiIHRleHRMZW5ndGg9IjE1MS42NjIiIGZvbnQtd2VpZ2h0PSI3MDAiPm5vdGlmaWNhdGlvbiDjgrnjgq3jg7zjg548L3RleHQ+PC9nPjwhLS1jbGFzcyBuLS0+PGcgY2xhc3M9ImVudGl0eSIgZGF0YS1xdWFsaWZpZWQtbmFtZT0ibiIgaWQ9ImVudDAwMDEiIGRhdGEtc291cmNlLWxpbmU9IjMiPjxyZWN0IHg9IjciIHk9IjQ0LjI5NyIgd2lkdGg9IjMwMC4xMTQiIGhlaWdodD0iMjYyLjMwNSIgZmlsbD0iI0YxRjFGMSIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDowLjU7IiByeD0iMi41IiByeT0iMi41Ii8+PHRleHQgeD0iMTE3LjY5MiIgeT0iNjIuMjkyIiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE0IiB0ZXh0TGVuZ3RoPSI3OC43MjkiPm5vdGlmaWNhdGlvbjwvdGV4dD48dGV4dCB4PSIxNDMuMDU3IiB5PSI3OC41ODkiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTQiIHRleHRMZW5ndGg9IjI4Ij7pgJrnn6U8L3RleHQ+PGxpbmUgeDE9IjgiIHkxPSI4Ni44OTEiIHgyPSIzMDYuMTE0IiB5Mj0iODYuODkxIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjAuNTsiLz48ZyBkYXRhLXZpc2liaWxpdHktbW9kaWZpZXI9IklFX01BTkRBVE9SWSI+PGVsbGlwc2UgY3g9IjE4IiBjeT0iMTAwLjUzOSIgcng9IjMiIHJ5PSIzIiBmaWxsPSIjMDAwIiBzdHlsZT0ic3Ryb2tlOiMwMDA7c3Ryb2tlLXdpZHRoOjE7Ii8+PC9nPjx0ZXh0IHg9IjI3IiB5PSIxMDMuODg2IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE0IiB0ZXh0TGVuZ3RoPSIxMDEuMDAxIj5pZCA6IFVVSUQgwqtQS8K7PC90ZXh0PjxsaW5lIHgxPSI4IiB5MT0iMTExLjE4OCIgeDI9IjMwNi4xMTQiIHkyPSIxMTEuMTg4IiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjE7Ii8+PGcgZGF0YS12aXNpYmlsaXR5LW1vZGlmaWVyPSJJRV9NQU5EQVRPUlkiPjxlbGxpcHNlIGN4PSIxOCIgY3k9IjEyNC44MzYiIHJ4PSIzIiByeT0iMyIgZmlsbD0iIzAwMCIgc3R5bGU9InN0cm9rZTojMDAwO3N0cm9rZS13aWR0aDoxOyIvPjwvZz48dGV4dCB4PSIyNyIgeT0iMTI4LjE4MyIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxNCIgdGV4dExlbmd0aD0iMTA4LjY3MSI+ZXZlbnRfaWQgOiBVVUlEPC90ZXh0PjxnIGRhdGEtdmlzaWJpbGl0eS1tb2RpZmllcj0iSUVfTUFOREFUT1JZIj48ZWxsaXBzZSBjeD0iMTgiIGN5PSIxNDEuMTMzIiByeD0iMyIgcnk9IjMiIGZpbGw9IiMwMDAiIHN0eWxlPSJzdHJva2U6IzAwMDtzdHJva2Utd2lkdGg6MTsiLz48L2c+PHRleHQgeD0iMjciIHk9IjE0NC40NzkiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTQiIHRleHRMZW5ndGg9IjI3NC4xMTQiPnJlY2lwaWVudF91c2VyX2lkIDogVVVJRCDCq1JFRiBpZGVudGl0ecK7PC90ZXh0PjxnIGRhdGEtdmlzaWJpbGl0eS1tb2RpZmllcj0iSUVfTUFOREFUT1JZIj48ZWxsaXBzZSBjeD0iMTgiIGN5PSIxNTcuNDMiIHJ4PSIzIiByeT0iMyIgZmlsbD0iIzAwMCIgc3R5bGU9InN0cm9rZTojMDAwO3N0cm9rZS13aWR0aDoxOyIvPjwvZz48dGV4dCB4PSIyNyIgeT0iMTYwLjc3NiIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxNCIgdGV4dExlbmd0aD0iMTU4LjM2MSI+ZW1haWwgOiBWQVJDSEFSKDMyMCk8L3RleHQ+PGcgZGF0YS12aXNpYmlsaXR5LW1vZGlmaWVyPSJJRV9NQU5EQVRPUlkiPjxlbGxpcHNlIGN4PSIxOCIgY3k9IjE3My43MjciIHJ4PSIzIiByeT0iMyIgZmlsbD0iIzAwMCIgc3R5bGU9InN0cm9rZTojMDAwO3N0cm9rZS13aWR0aDoxOyIvPjwvZz48dGV4dCB4PSIyNyIgeT0iMTc3LjA3MyIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxNCIgdGV4dExlbmd0aD0iMTQwLjYwMiI+a2luZCA6IFZBUkNIQVIoMzApPC90ZXh0PjxnIGRhdGEtdmlzaWJpbGl0eS1tb2RpZmllcj0iSUVfTUFOREFUT1JZIj48ZWxsaXBzZSBjeD0iMTgiIGN5PSIxOTAuMDIzIiByeD0iMyIgcnk9IjMiIGZpbGw9IiMwMDAiIHN0eWxlPSJzdHJva2U6IzAwMDtzdHJva2Utd2lkdGg6MTsiLz48L2c+PHRleHQgeD0iMjciIHk9IjE5My4zNyIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxNCIgdGV4dExlbmd0aD0iMTg4Ljg2MyI+dGFyZ2V0X3JlZiA6IFZBUkNIQVIoMjAwKTwvdGV4dD48ZyBkYXRhLXZpc2liaWxpdHktbW9kaWZpZXI9IklFX01BTkRBVE9SWSI+PGVsbGlwc2UgY3g9IjE4IiBjeT0iMjA2LjMyIiByeD0iMyIgcnk9IjMiIGZpbGw9IiMwMDAiIHN0eWxlPSJzdHJva2U6IzAwMDtzdHJva2Utd2lkdGg6MTsiLz48L2c+PHRleHQgeD0iMjciIHk9IjIwOS42NjciIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTQiIHRleHRMZW5ndGg9IjE1Mi4wNzkiPmxvY2FsZSA6IFZBUkNIQVIoMTApPC90ZXh0PjxnIGRhdGEtdmlzaWJpbGl0eS1tb2RpZmllcj0iSUVfTUFOREFUT1JZIj48ZWxsaXBzZSBjeD0iMTgiIGN5PSIyMjIuNjE3IiByeD0iMyIgcnk9IjMiIGZpbGw9IiMwMDAiIHN0eWxlPSJzdHJva2U6IzAwMDtzdHJva2Utd2lkdGg6MTsiLz48L2c+PHRleHQgeD0iMjciIHk9IjIyNS45NjQiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTQiIHRleHRMZW5ndGg9IjE1My44NjMiPnN0YXR1cyA6IFZBUkNIQVIoMzApPC90ZXh0Pjx0ZXh0IHg9IjI3IiB5PSIyNDIuMjYxIiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE0IiB0ZXh0TGVuZ3RoPSIxNjQuMjQiPnNlbnRfYXQgOiBUSU1FU1RBTVBUWjwvdGV4dD48dGV4dCB4PSIyNyIgeT0iMjU4LjU1OCIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxNCIgdGV4dExlbmd0aD0iMjI3Ljg2OSI+ZmFpbHVyZV9yZWFzb24gOiBWQVJDSEFSKDEwMDApPC90ZXh0PjxnIGRhdGEtdmlzaWJpbGl0eS1tb2RpZmllcj0iSUVfTUFOREFUT1JZIj48ZWxsaXBzZSBjeD0iMTgiIGN5PSIyNzEuNTA4IiByeD0iMyIgcnk9IjMiIGZpbGw9IiMwMDAiIHN0eWxlPSJzdHJva2U6IzAwMDtzdHJva2Utd2lkdGg6MTsiLz48L2c+PHRleHQgeD0iMjciIHk9IjI3NC44NTQiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTQiIHRleHRMZW5ndGg9IjE4Ny42MDUiPmNyZWF0ZWRfYXQgOiBUSU1FU1RBTVBUWjwvdGV4dD48bGluZSB4MT0iOCIgeTE9IjI5MC4zMDUiIHgyPSI0NS44NzEiIHkyPSIyOTAuMzA1IiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjE7c3Ryb2tlLWRhc2hhcnJheToxLDI7Ii8+PHRleHQgeD0iNDUuODcxIiB5PSIyOTQuNjUxIiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE0IiB0ZXh0TGVuZ3RoPSIyMjIuMzczIj5VSyAoZXZlbnRfaWQsIHJlY2lwaWVudF91c2VyX2lkKTwvdGV4dD48bGluZSB4MT0iMjY4LjI0NCIgeTE9IjI5MC4zMDUiIHgyPSIzMDYuMTE0IiB5Mj0iMjkwLjMwNSIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxO3N0cm9rZS1kYXNoYXJyYXk6MSwyOyIvPjwvZz48P3BsYW50dW1sLXNyYyBQUDMxSWlEMDQ4UmwtbkgzSnd0T0tFakRJWTVlbkw4QTlJT1VIMFpCUGdBM1NJRXhLcTU0YUZPakZFWjlPbnoweTZybzREXzJRT2VReEZOeHZfemR2Y1ZZMGk2TUozYVBwTEhRZzFSbHJNOUxCSi1ndk9rd2VXcDFhM0M1QWhIQ1YwLWp2bEk1X05md19kbnpRdTdzT0U1MXhHMWJTMDE5Q1p3Mm1NMHM2R3ZMam9pS3h5SVVfY2YyNzFnd2ZKTVRVdEhmcW5RRFpZTGNpcXkybjdzWmdIM3pCOG1FSnlBZWxUX2xUR0hWYXlzUWo4UWl0SUxvd1oxbElGclVoSE1icVZCbDd6LWhpTVZEU195bG9RekZxb21xN2F6N2Z0NHVkU05kQWZUM3ZXdWJOZGlmZ3ZjcU1NNTRPU29zZEs0MG9HSlFGcU5pUlhWR1dJMUdaenkwPz48L2c+PC9zdmc+" class="uml" alt="uml diagram" title="" /></p>
 <table>
@@ -7667,7 +7713,7 @@
 </tr>
 </tbody>
 </table>
-<p>表の定義はフレームワークの提供する DDL に従う。DDL は DB ごとに違うため、Flyway の <code>db/migration/{vendor}/</code> に H2 用と PostgreSQL 用を分けて置く（ADR-007）。完了したイベント発行記録は 30 日（RET-05）で削除する。</p>
+<p><code>spring_session</code> と <code>spring_session_attributes</code> は Bolt 14 で作る（Spring Session JDBC の DDL を <code>platform</code> スキーマに置く。無操作 30 分の期限は session の <code>MAX_INACTIVE_INTERVAL</code>、発行から 8 時間の上限は session の属性に置いた認証時刻で判定する）。表の定義はフレームワークの提供する DDL に従う。DDL は DB ごとに違うため、Flyway の <code>db/migration/{vendor}/</code> に H2 用と PostgreSQL 用を分けて置く（ADR-007）。完了したイベント発行記録は 30 日（RET-05）で削除する。</p>
 <h2 id="_8">マイグレーションの構成<a class="headerlink" href="#_8" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code>src/main/resources/db/
 ├── migration/

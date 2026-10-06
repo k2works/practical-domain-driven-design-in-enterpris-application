@@ -4629,6 +4629,41 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../adr/cargo-tracker/012-authentication-principal-and-session/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-012 認証の主体と session
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--draft"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -7728,8 +7763,8 @@
 <tr>
 <td style="text-align: left;">SEC-07</td>
 <td style="text-align: left;">password の保存</td>
-<td style="text-align: left;">Spring Security の推奨するハッシュ（Argon2id または bcrypt）で保存する</td>
-<td style="text-align: left;">提案</td>
+<td style="text-align: left;">Spring Security の推奨するハッシュで保存する。DelegatingPasswordEncoder の既定の bcrypt（強さ 10、<code>{bcrypt}</code> の接頭辞）を使う（2026-10-06 の Bolt 14 の確認ポイント 6。Argon2id は Bouncy Castle が要るため採らない。接頭辞で後から移せる）</td>
+<td style="text-align: left;">確定</td>
 <td style="text-align: left;">平文や可逆な暗号で保存しない</td>
 </tr>
 <tr>
@@ -7819,8 +7854,8 @@
 <tr>
 <td style="text-align: left;">SEC-17</td>
 <td style="text-align: left;">Web の基本対策</td>
-<td style="text-align: left;">CSRF 対策、Cookie の Secure・HttpOnly・SameSite、Content-Security-Policy（外部スクリプトを読まない）、クリックジャッキング対策</td>
-<td style="text-align: left;">提案</td>
+<td style="text-align: left;">CSRF 対策、Cookie の Secure・HttpOnly・SameSite、Content-Security-Policy（外部スクリプトを読まない）、クリックジャッキング対策。Bolt 14 で、Spring Security の CSRF の同期トークン（<code>same-site=lax</code> は多層の守りとして残す）、HttpOnly・SameSite（Secure は <code>dev</code> の外）、<code>X-Frame-Options: DENY</code>、<code>X-Content-Type-Options: nosniff</code>、CSP <code>default-src 'self'</code> を入れる（2026-10-06 の Bolt 14 の確認ポイント 8）</td>
+<td style="text-align: left;">確定</td>
 </tr>
 <tr>
 <td style="text-align: left;">SEC-18</td>

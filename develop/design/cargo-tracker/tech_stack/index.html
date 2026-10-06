@@ -4440,6 +4440,41 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../adr/cargo-tracker/012-authentication-principal-and-session/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-012 認証の主体と session
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--draft"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -7084,7 +7119,7 @@
 <td style="text-align: left;">7.x（Boot 管理）</td>
 <td style="text-align: left;">フォームログイン、役割による認可、CSRF、session 管理、ロック</td>
 <td style="text-align: left;">Boot に従う</td>
-<td style="text-align: left;">BR-14・BR-15 の固定役割・ロック・session 失効を標準機能で実現する</td>
+<td style="text-align: left;">BR-14・BR-15 の固定役割・ロック・session 失効を標準機能で実現する。Bolt 14 で導入（form login、役割による認可、CSRF、session の固定化の防止。<a href="../../../adr/cargo-tracker/012-authentication-principal-and-session/">ADR-012</a>、提案）</td>
 </tr>
 <tr>
 <td style="text-align: left;">多要素認証</td>
@@ -7100,7 +7135,7 @@
 <td style="text-align: left;">Boot 管理</td>
 <td style="text-align: left;">複数インスタンス間の session 共有</td>
 <td style="text-align: left;">Boot に従う</td>
-<td style="text-align: left;">追加ミドルウェア（Redis 等）を持たずに、DB に session を置く。BR-07・BR-14 の即時失効を DB の削除で実現できる</td>
+<td style="text-align: left;">追加ミドルウェア（Redis 等）を持たずに、DB に session を置く。BR-07・BR-14 の即時失効を DB の削除で実現できる。Bolt 14 で導入（<code>platform</code> スキーマ）</td>
 </tr>
 <tr>
 <td style="text-align: left;">入力検証</td>
