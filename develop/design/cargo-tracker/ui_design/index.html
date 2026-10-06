@@ -8080,22 +8080,22 @@
 <tr>
 <td style="text-align: left;">A-03 再認証の案内</td>
 <td style="text-align: left;"><code>GET /session-expired</code></td>
-<td style="text-align: left;">Bolt 14。無操作 30 分または発行から 8 時間を過ぎた session で request すると、業務データを出さずにここへ移す。「一定時間操作がなかったため、またはログインから 8 時間を過ぎたため、ログアウトしました。もう一度ログインしてください。」と「ログインへ」。入力の保持と失効 5 分前の警告（ACC-06）は W5</td>
+<td style="text-align: left;">Bolt 14。無操作 30 分または発行から 8 時間を過ぎた session で request すると、業務データを出さずにここへ移す。「一定時間操作がなかったため、またはログインから 8 時間を過ぎたため、ログアウトしました。もう一度ログインしてください。」「ログインすると、開いていた画面に戻ります。送信していない入力は保存されていません。」と「ログインへ」、繰り返しログアウトされる場合の問い合わせ先。入力の保持と失効 5 分前の警告（ACC-06）は W5</td>
 </tr>
 <tr>
 <td style="text-align: left;">A-04 権限なし</td>
 <td style="text-align: left;">403 の応答の画面（URL は開いた URL のまま）</td>
-<td style="text-align: left;">Bolt 14。役割にない領域（荷主の <code>/staff/**</code>、営業の <code>/customer/**</code>）を開いたとき。「この画面を表示する権限がありません。」と「ホームへ戻る」。他社のデータは今のまま 404（存在しない番号と同じ）</td>
+<td style="text-align: left;">Bolt 14。役割にない領域（荷主の <code>/staff/**</code>、営業の <code>/customer/**</code>）を開いたとき。「この画面を表示する権限がありません。」「荷主の方は担当営業に、社内の方はシステム管理者にお問い合わせください。」と「ホームへ戻る」。他社のデータは今のまま 404（存在しない番号と同じ）。権限外のアクセスの試行の監査記録（IA-INV-08）は、利用者と役割の管理（US-16）の Bolt で足す</td>
 </tr>
 <tr>
 <td style="text-align: left;">ホーム</td>
 <td style="text-align: left;"><code>GET /</code></td>
-<td style="text-align: left;">Bolt 14。役割のホームへ移す（未認証なら A-01）。Bolt 1 の静的な入口の画面を置き換える</td>
+<td style="text-align: left;">Bolt 14。役割のホームへ移す（未認証なら A-01）。役割とホームの対応はここだけに置き、ログインの後もここを通る。荷主担当者は C-02、営業担当者は S-02。画面のまだない役割（経路設計者など）は A-04（その役割の画面を作る Bolt で対応を足す）。Bolt 3 の画面の入口の一覧を置き換えた</td>
 </tr>
 <tr>
 <td style="text-align: left;">準備中の画面</td>
 <td style="text-align: left;">各画面の予定の URL</td>
-<td style="text-align: left;">Bolt 14。ナビゲーションの骨格のため、荷主・営業のナビの項目のうち、まだ作っていない画面は 1 つの controller と 1 つの template で「この画面は準備中です」と予定の週と「ホームへ戻る」を示す（開発戦略の序盤の手順 3）。画面を作る Bolt で置き換える</td>
+<td style="text-align: left;">Bolt 14。ナビゲーションの骨格のため、荷主・営業のナビの項目のうち、まだ作っていない画面は 1 つの controller と 1 つの template で「この画面は準備中です」と「ホームへ戻る」を示し、荷主には「使えるようになるまでは、担当営業にご連絡ください。」を添える（開発戦略の序盤の手順 3）。予定の週は出さない（計画の見直しで週が動き、画面に古い予定が残るため）。画面を作る Bolt で置き換える。荷主のナビは見積依頼・予約・追跡の照会・問い合わせ・通知、営業のナビは見積依頼・予約・KPI 計測記録</td>
 </tr>
 </tbody>
 </table>
@@ -8138,7 +8138,7 @@
 </tbody>
 </table>
 <p>ナビに表示しない項目は、URL を直接開いても権限がなければ A-04 を表示する（表示の制御を権限の防御にしない）。</p>
-<p>実装（Bolt 8、2026-10-03 に承認）: レイアウトは Thymeleaf のフラグメント（<code>templates/layout/customer.html</code>・<code>staff.html</code>）で作り、Layout Dialect は使わない。Bootstrap 5.3 と htmx 2.0 は WebJars（webjars-locator-lite）で同梱し、共通の CSS は <code>static/css/app.css</code> に置く（操作の大きさ、<code>scroll-padding</code>、表の横スクロールの囲み、長い語の折り返し）。画面ごとのスタイルは書かない。ナビには、いまある画面だけを出す（顧客 Web: 見積依頼。社内業務 Web: 見積依頼、KPI 計測記録）。ない画面の項目は、画面を作る Bolt で足す。ヘッダーは認証（US-18）までは仮の主体の名前を出し、ログアウトは出さない。Bolt 14 で、ヘッダーに認証した利用者（荷主は企業名・利用者名、社内は役割名・利用者名）とログアウトを出し、ナビは役割ごとに荷主・営業の項目を出す（まだない画面は準備中の画面へ。2026-10-06 に承認）。窓口の案内は仮に「平日 09:00〜18:00（Asia/Tokyo）」とする（US-18 の後に利用者のタイムゾーンで示す）。</p>
+<p>実装（Bolt 8、2026-10-03 に承認）: レイアウトは Thymeleaf のフラグメント（<code>templates/layout/customer.html</code>・<code>staff.html</code>）で作り、Layout Dialect は使わない。Bootstrap 5.3 と htmx 2.0 は WebJars（webjars-locator-lite）で同梱し、共通の CSS は <code>static/css/app.css</code> に置く（操作の大きさ、<code>scroll-padding</code>、表の横スクロールの囲み、長い語の折り返し）。画面ごとのスタイルは書かない。Bolt 8 では、ナビにいまある画面だけを出した（顧客 Web: 見積依頼。社内業務 Web: 見積依頼、KPI 計測記録）。ヘッダーは認証（US-18）までは仮の主体の名前を出し、ログアウトは出さない。Bolt 14 で、ヘッダーに認証した利用者（荷主は企業名・利用者名、社内は役割名・利用者名）とログアウトを出し、ナビは役割ごとに荷主・営業の項目を出す（まだない画面は準備中の画面へ。2026-10-06 に承認）。窓口の案内は仮に「平日 09:00〜18:00（Asia/Tokyo）」とする（利用者のタイムゾーンを持つ Bolt で、利用者のタイムゾーンで示す）。</p>
 <h2 id="_7">画面遷移<a class="headerlink" href="#_7" title="Permanent link">&para;</a></h2>
 <p>確認（重要操作の実行前確認）は、詳細画面の中に開く確認の領域で行う（共通部品）。遷移図では、確認の段階を区別するために状態として描いている。</p>
 <h3 id="_8">認証とアカウント<a class="headerlink" href="#_8" title="Permanent link">&para;</a></h3>

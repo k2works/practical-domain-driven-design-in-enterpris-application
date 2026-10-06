@@ -7097,7 +7097,7 @@ git<span class="w"> </span>config<span class="w"> </span>blame.ignoreRevsFile<sp
 </code></pre></div>
 <p><code>dev</code> プロファイル（<code>application-dev.properties</code>）で起動し、Flyway のマイグレーションを当てる。権限による保護（追記専用の表）は H2 では働かない。</p>
 <p>Spring Boot DevTools が入っているので、起動したまま変更を確かめられる。テンプレート（<code>src/main/resources/templates</code>）と静的ファイルは保存すると反映され、Java の変更はクラスファイルが変わると自動で再起動する。<code>bootRun</code> を動かしたまま、別の端末で <code>./gradlew classes</code> を実行するか、IDE でビルドする（IntelliJ IDEA は「Build Project」、または設定の「Build project automatically」）。再起動すると H2 のインメモリの DB は作り直され、入力したデータは消える。</p>
-<p>IDE（IntelliJ IDEA など）から <code>CargoTrackerApplication</code> を直接起動するときは、実行構成の Active profiles に <code>dev</code> を入れる。入れないと H2 の設定と H2 コンソールが有効にならない（<code>/h2-console</code> が 404 になる）。</p>
+<p>IDE（IntelliJ IDEA など）から <code>CargoTrackerApplication</code> を直接起動するときは、実行構成の Active profiles に <code>dev</code> を入れる。入れないと H2 の設定と、開発用の利用者・ログインの入力済みが有効にならない。</p>
 <h3 id="postgresql">PostgreSQL で起動する（本番に近い確認）<a class="headerlink" href="#postgresql" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code>./gradlew<span class="w"> </span>bootTestRun
 </code></pre></div>
@@ -7114,13 +7114,13 @@ git<span class="w"> </span>config<span class="w"> </span>blame.ignoreRevsFile<sp
 <tbody>
 <tr>
 <td style="text-align: left;"><a href="http://localhost:8080/">http://localhost:8080/</a></td>
-<td style="text-align: left;">画面の入口の一覧</td>
-<td style="text-align: left;">荷主の画面と社内の画面へのリンク。認証（US-18）を入れたら、ログインの画面に置き換える</td>
+<td style="text-align: left;">ログイン（A-01）と役割のホーム</td>
+<td style="text-align: left;">未認証ならログインの画面に移る。開発環境では荷主の開発用の利用者で入力済み。ログインすると、荷主は見積依頼の一覧（C-02）、営業担当者は受付一覧（S-02）へ移る。開発用の利用者のメールアドレスと password は <a href="https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/blob/develop/apps/cargo-tracker/README.md">README</a> の「開発環境のログイン」を見る。営業の画面を使うときは、ヘッダーの「ログアウト」の後に、入力済みの値を営業担当者の値に書き換えてログインする</td>
 </tr>
 <tr>
 <td style="text-align: left;"><a href="http://localhost:8080/customer/transport-requests/new">http://localhost:8080/customer/transport-requests/new</a></td>
 <td style="text-align: left;">見積依頼の作成（C-03。輸送条件・貨物・書類・確認の 4 段階）</td>
-<td style="text-align: left;">荷主の画面。必須条件を入れて提出すると（必要書類は任意。PDF・PNG・JPEG で 1 件 10 MB まで、1 つの版に 5 件まで（商業送り状 1 件、梱包明細 1 件、その他 3 件まで）。Q-INV-16）、見積依頼の詳細（C-04）に業務番号（例: <code>TR-2026-0001 版 1</code>）と「提出しました」が出る。内部の ID（UUID）は画面にもアドレスバーにも出さない（D-4）。希望到着期限は日本時間で <code>2026-11-02 09:00</code> の形で入れる</td>
+<td style="text-align: left;">荷主の画面（荷主担当者でログインして開く）。必須条件を入れて提出すると（必要書類は任意。PDF・PNG・JPEG で 1 件 10 MB まで、1 つの版に 5 件まで（商業送り状 1 件、梱包明細 1 件、その他 3 件まで）。Q-INV-16）、見積依頼の詳細（C-04）に業務番号（例: <code>TR-2026-0001 版 1</code>）と「提出しました」が出る。内部の ID（UUID）は画面にもアドレスバーにも出さない（D-4）。希望到着期限は日本時間で <code>2026-11-02 09:00</code> の形で入れる</td>
 </tr>
 <tr>
 <td style="text-align: left;"><a href="http://localhost:8080/customer/transport-requests">http://localhost:8080/customer/transport-requests</a></td>
@@ -7130,22 +7130,17 @@ git<span class="w"> </span>config<span class="w"> </span>blame.ignoreRevsFile<sp
 <tr>
 <td style="text-align: left;"><a href="http://localhost:8080/staff/transport-requests">http://localhost:8080/staff/transport-requests</a></td>
 <td style="text-align: left;">見積依頼の受付一覧（S-02）</td>
-<td style="text-align: left;">社内の画面。審査中の見積依頼を提出時刻の古い順に示す。業務番号から審査（S-03）を開き、確定・差戻しできる</td>
+<td style="text-align: left;">社内の画面（営業担当者でログインして開く）。審査中の見積依頼を提出時刻の古い順に示す。業務番号から審査（S-03）を開き、確定・差戻しできる</td>
 </tr>
 <tr>
 <td style="text-align: left;"><a href="http://localhost:8080/staff/kpi-observations">http://localhost:8080/staff/kpi-observations</a></td>
 <td style="text-align: left;">KPI 計測記録の一覧（S-22 の前身の仮の画面）</td>
 <td style="text-align: left;">社内の画面。提出の後、非同期の配信を経て業務番号と提出時刻が表示される。提出時刻はまだ UTC だけで表示する（BR-10 との差。S-22 の本実装で直す）</td>
 </tr>
-<tr>
-<td style="text-align: left;"><a href="http://localhost:8080/h2-console">http://localhost:8080/h2-console</a></td>
-<td style="text-align: left;">H2 コンソール（<code>bootRun</code> のときだけ）</td>
-<td style="text-align: left;">JDBC URL は <code>jdbc:h2:mem:cargotracker</code>、利用者は <code>sa</code>、パスワードは空</td>
-</tr>
 </tbody>
 </table>
-<p>添付した書類のファイルは、ローカルのファイルシステムの <code>cargotracker.document-storage.base-dir</code> に置く（既定は一時ディレクトリの下の <code>cargo-tracker/documents</code>。Bolt 7）。DB は H2 のインメモリなので、<code>bootRun</code> をやり直すと書類の記録は消え、ファイルだけが残る。気になるときはこのディレクトリを消してよい。本番の S3 の実装は運用準備（W10、#28）で作る（保存とトランザクションの扱いは ADR-010）。認証（US-18）が入るまで、社内の画面（<code>/staff</code>）は誰でも開けて書類の実ファイルを取れるので、この状態の環境をステージングに置かない（Bolt 6〜8 レビュー D-27）。</p>
-<p>認証はまだない。荷主企業と提出者は、<code>application.properties</code> の <code>cargotracker.provisional-actor.*</code>（仮の主体）の固定値で記録される。認証は US-18 の Bolt で入れ、この設定を消す。</p>
+<p>添付した書類のファイルは、ローカルのファイルシステムの <code>cargotracker.document-storage.base-dir</code> に置く（既定は一時ディレクトリの下の <code>cargo-tracker/documents</code>。Bolt 7）。DB は H2 のインメモリなので、<code>bootRun</code> をやり直すと書類の記録は消え、ファイルだけが残る。気になるときはこのディレクトリを消してよい。本番の S3 の実装は運用準備（W10、#28）で作る（保存とトランザクションの扱いは ADR-010）。社内の画面（<code>/staff</code>）は、Bolt 14 から営業担当者でログインしないと開けない（Bolt 6〜8 レビュー D-27 のパイロット開始の条件のうち、認証の部分）。</p>
+<p>荷主企業と提出者・審査者・承認者は、ログインした利用者で記録される（Bolt 14。US-18 の password によるログインと session。TOTP は W5）。H2 のコンソールは、ログインと CSRF の守りの外に置くことになるため Bolt 14 で外した。開発中の DB の中身は、テストか画面で確かめる。</p>
 <p>社内の画面（<code>/staff/**</code>）にも認証はまだなく、誰でも開ける。ローカルの開発環境だけで動かす。審査の判断者は <code>cargotracker.provisional-actor.staff-user-id</code>（仮の営業担当者）で記録される。</p>
 <p>荷受人は、企業マスターができるまで <code>cargotracker.provisional-consignees.*</code>（仮の荷受人の一覧、3 社）から選ぶ。<code>.properties</code> は ISO-8859-1 で読まれるため、名前の日本語は Unicode のエスケープで書く。企業マスターは US-16 の Bolt で入れ、この設定を消す。</p>
 <h2 id="4">4. テストと品質チェック<a class="headerlink" href="#4" title="Permanent link">&para;</a></h2>

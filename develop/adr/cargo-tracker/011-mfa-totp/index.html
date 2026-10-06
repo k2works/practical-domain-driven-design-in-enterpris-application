@@ -7252,6 +7252,7 @@
 </table>
 <p>本体の <code>dev</code> プロファイルは今「H2 で bootRun」の意味で、入力済みの意味がそこに相乗りする。</p>
 <h3 id="4-identity">4. <code>identity</code> への置き方と仮の主体の置き換え<a class="headerlink" href="#4-identity" title="Permanent link">&para;</a></h3>
+<p>（置き換えは Bolt 14 で行った。構成は <a href="../012-authentication-principal-and-session/">ADR-012</a>）</p>
 <ul>
 <li>認証の主体の型（例: <code>AuthenticatedActor(UserId, CompanyId, Role)</code>）は共有カーネル <code>shared</code> に置く。ほかのコンテキストは <code>@AuthenticationPrincipal</code> でそれだけを受け取り、<code>FACTOR_*</code> や認証方式を知らない。今の依存（<code>identity → quotation::events</code>）のまま <code>quotation</code> が <code>identity</code> の API から利用者を引くと、<code>quotation → identity → quotation::events</code> の循環になるため。</li>
 <li><code>identity</code> は、利用者・TOTP の資格・回復コード・失敗の記録と、<code>UserDetailsService</code>・<code>AuthenticationProvider</code>・失敗のリスナーを持つ。TOTP のライブラリへの依存は <code>identity.infrastructure</code> に閉じ込める。</li>

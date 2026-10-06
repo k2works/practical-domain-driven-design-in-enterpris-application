@@ -8883,6 +8883,24 @@
 <td style="text-align: left;">Bolt 13 でスパイクし（2026-10-06）、Spring Security 7.1 の要素の権限で 2 段階のログインを組めることを確かめた（発生確率を中から低に。ADR-011 が却下されたら中に戻す）。方式は <a href="../../../adr/cargo-tracker/011-mfa-totp/">ADR-011</a>（提案）。残りは登録の QR・秘密の暗号化の鍵の管理・Spring Session JDBC の上での確認（W5）</td>
 </tr>
 <tr>
+<td style="text-align: left;">利用停止・権限の取消しが既存の session に反映されない（W5 まで。最長 8 時間）</td>
+<td style="text-align: center;">中</td>
+<td style="text-align: center;">低</td>
+<td style="text-align: left;">Bolt 14 の認可はログインの時点の役割（ADR-012）。パイロットの前で本番の利用者はいない。W5 で request ごとに DB の現在値を確かめる（SEC-12、US-18 AC6）</td>
+</tr>
+<tr>
+<td style="text-align: left;">未認証の request で session の行が増え続ける（ログインの画面の CSRF のトークン、失敗の後のメールアドレス）</td>
+<td style="text-align: center;">中</td>
+<td style="text-align: center;">低</td>
+<td style="text-align: left;">Spring Session の期限切れの掃除に任せる。作られる速さの上限は W5 のロックか W10 の WAF で決める（Bolt 14 レビュー）</td>
+</tr>
+<tr>
+<td style="text-align: left;">session の直列化の互換を壊す変更の配備で、既存の session が復元できない</td>
+<td style="text-align: center;">低</td>
+<td style="text-align: center;">中</td>
+<td style="text-align: left;">互換を壊す変更の配備では <code>platform.spring_session</code> を消してログインし直してもらう（ADR-012。W10 の運用手順書）</td>
+</tr>
+<tr>
 <td style="text-align: left;">H2 と PostgreSQL の方言差（一意制約違反後の振る舞いなど）</td>
 <td style="text-align: center;">高</td>
 <td style="text-align: center;">中</td>
@@ -9334,6 +9352,11 @@
 <tr>
 <td style="text-align: left;">2026-10-06</td>
 <td style="text-align: left;">W2 に Bolt 14 計画へのリンクを付けた（範囲は US-18 の password によるログインと session を 1 つの Bolt で。人の決定）</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5</td>
+</tr>
+<tr>
+<td style="text-align: left;">2026-10-06</td>
+<td style="text-align: left;">Bolt 14 レビューから、リスク台帳に session の反映・匿名の session・直列化の互換の 3 行を足した</td>
 <td style="text-align: left;">anthropic/claude-opus-5-5</td>
 </tr>
 <tr>

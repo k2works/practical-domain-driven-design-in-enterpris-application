@@ -4490,6 +4490,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#w5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        W5 で見直すこと
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#_8" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -7060,7 +7071,7 @@
 <h2 id="_3">決定（案）<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h2>
 <h3 id="1">1. 認証の主体の型<a class="headerlink" href="#1" title="Permanent link">&para;</a></h3>
 <ul>
-<li>共有カーネル（<code>shared</code>）に、認証された利用者 <code>AuthenticatedActor</code>（利用者 ID・企業 ID・役割・表示名・企業名）と役割 <code>Role</code>（BR-15 の 8 役割）を置く。</li>
+<li>共有カーネル（<code>shared</code>）に、認証された利用者 <code>AuthenticatedActor</code>（利用者 ID・企業 ID・役割（1 つ以上）・表示名・企業名）と役割 <code>Role</code>（BR-15 の 8 役割）を置く。</li>
 <li><code>quotation</code> の controller は、引数に <code>AuthenticatedActor</code> を書くだけでこの型を受け取る。<code>identity</code> の引数の解決（<code>AuthenticatedActorArgumentResolver</code>）が Spring Security の主体から作って渡すため、<code>@AuthenticationPrincipal</code> も使わない。Spring Security の型（<code>UserDetails</code>、<code>Authentication</code>）と <code>identity</code> には依存しない（ArchUnit で確かめる。Bolt 14 の実装で、注釈も Spring Security の型であるため引数の解決にした）。</li>
 <li>Spring Security の主体は <code>identity</code> の型（<code>CargoUserDetails</code>。<code>UserDetails</code> を実装する）で、session（Spring Session JDBC）に直列化できる値だけを持ち、<code>actor()</code> で <code>AuthenticatedActor</code> を作る。</li>
 <li>置き換えの順は ADR-011 の決定 4 に従う（型を足す → 認証を入れる → controller を 1 つずつ置き換える → <code>ProvisionalActorProperties</code> を消す）。</li>
@@ -7077,14 +7088,17 @@
 <h3 id="3-session">3. session<a class="headerlink" href="#3-session" title="Permanent link">&para;</a></h3>
 <ul>
 <li>Spring Session JDBC で、<code>platform</code> スキーマの <code>spring_session</code>・<code>spring_session_attributes</code> に置く（DDL はベンダーごと）。</li>
-<li>無操作 30 分は session の期限（<code>MAX_INACTIVE_INTERVAL</code>）で判定する。</li>
-<li>発行から 8 時間の上限は、ログインのときに session の属性に置いた認証時刻と、アプリケーションの <code>Clock</code> で比べるフィルターで判定する。このフィルターは認証の処理より前に置く（Bolt 13 の Try T-40）。</li>
+<li>無操作 30 分は session の期限（<code>MAX_INACTIVE_INTERVAL</code>）で判定する。期限は <code>spring.session.timeout</code> で決める（<code>server.servlet.session.timeout</code> は Spring Session に効かないことを、既定と違う値のテストで確かめた）。</li>
+<li>発行から 8 時間の上限は、ログインのときに session の属性（固定の名前）に置いた認証時刻と、アプリケーションの <code>Clock</code> で比べるフィルターで判定する。このフィルターは認証の処理より前に置く（Bolt 13 の Try T-40）。認証済みなのに認証時刻がない session も失効させる（fail-closed。ログインの時刻を置かない認証の経路を足しても上限が外れない）。</li>
+<li>役割とホームの対応はルートのコントローラーの 1 か所に置き、ログインの後もルートを通す。画面のまだない役割は A-04 にする。</li>
 <li>失効した session の request は、業務データを出さずに A-03（<code>/session-expired</code>）へ移す。上限を過ぎた session のままのログインの送信も A-03 へ移し、ログインの送信で session を延命させない。session に CSRF のトークンがない古いフォームの送信も、Spring Security が無効な session として A-03 へ移す。</li>
 </ul>
 <h3 id="4">4. 監査<a class="headerlink" href="#4" title="Permanent link">&para;</a></h3>
 <ul>
 <li>ログインの成功・失敗・ログアウトを、Spring Security のイベントの listener から、同じ request の中で <code>identity.audit_record</code>（追記だけ）に書く。失敗の理由（<code>BAD_CREDENTIALS</code>・<code>UNKNOWN_USER</code>・<code>SUSPENDED</code>・<code>COMPANY_INACTIVE</code>）は記録にだけ残す。</li>
-<li>存在しないメールアドレスは記録しない。</li>
+<li>存在しないメールアドレスでの失敗は、操作者を空にして記録し、メールアドレスは残さない。</li>
+<li>監査記録の書き込みに失敗したら、ログインも失敗にする（IA-INV-08 の同期の書き込み。fail-closed）。</li>
+<li>権限外のアクセスの試行の記録は、利用者と役割の管理（US-16）の Bolt で足す。</li>
 <li>W5 のロックの失敗の数え方も、この listener に足す（ADR-011 の決定 2 の「失敗を一か所で数える」）。</li>
 </ul>
 <h3 id="5">5. 開発環境の入力済み<a class="headerlink" href="#5" title="Permanent link">&para;</a></h3>
@@ -7127,13 +7141,27 @@
 </ul>
 <h3 id="_7">ネガティブ<a class="headerlink" href="#_7" title="Permanent link">&para;</a></h3>
 <ul>
-<li>W5 まで、利用停止しても既存の session は最長 8 時間使える（パイロットの前で本番の利用者はいない）。</li>
+<li>session は JDK の直列化で DB に置く。<code>Role</code> の定数の改名・削除、<code>CargoUserDetails</code> の移動や項目の変更、Spring Security の版の更新、W5 の要素の権限の追加で、配備の前の session が復元できなくなる。互換を壊す変更を配備するときは、配備の手順で <code>platform.spring_session</code> の行を消し、利用者にログインし直してもらう（W10 の運用手順書に書く）。復元の失敗を無効な session として扱う変換は、W5 の要素の権限を足すときに検討する。</li>
+<li>
+<p>未認証の request（ログインの画面の CSRF のトークン、失敗の後のメールアドレス）でも session の行ができる。作られる速さの上限（レート制限）は、W5 のロックか W10 の WAF で扱う（リスク台帳）。</p>
+</li>
+<li>
+<p>W5 まで、利用停止しても既存の session は最長 8 時間使える（パイロットの前で本番の利用者はいない）。</p>
+</li>
 <li>既存のテスト（controller の単体テスト、画面の層のシナリオ）にログインの準備が要る。</li>
 <li>ステージング・本番の利用者を作る手段は、利用者の管理（US-16）まで無い。</li>
 </ul>
+<h2 id="w5">W5 で見直すこと<a class="headerlink" href="#w5" title="Permanent link">&para;</a></h2>
+<ul>
+<li><code>@EnableMultiFactorAuthentication</code> を入れると、password の段でも認証の成功のイベントが出る。監査の操作を「password を確かめた」と「ログインした」に分ける。</li>
+<li>認可の条件（<code>hasRole</code>）に要素の権限を加える。</li>
+<li>request ごとの DB の確かめ（SEC-12・AC6）は、利用者 ID から主体を作り直して差し替える形にし、問い合わせを 1 回にまとめる。</li>
+<li>引数の解決で、TOTP まで済んでいない主体を渡さない。画面の単体テストの主体（<code>WithAuthenticatedActor</code>）にも要素の権限を足す。</li>
+<li>ロックの数え方（IA-INV-03）は <code>identity.application</code> のサービスと利用者の集約に置き、監査の listener は入口だけにする。</li>
+</ul>
 <h2 id="_8">コンプライアンス<a class="headerlink" href="#_8" title="Permanent link">&para;</a></h2>
 <ul>
-<li>ArchUnit: <code>quotation</code> は <code>org.springframework.security</code> と <code>identity</code> に依存しない。</li>
+<li>ArchUnit: <code>identity</code> の外は <code>org.springframework.security</code> に依存しない。Spring Modulith の検証で、<code>quotation</code> は <code>identity</code> に依存しない。</li>
 <li>セキュリティの統合テスト: 未認証の拒否、AC2・AC4 の同じ応答、session ID の変化、30 分・8 時間の境界の 3 点、8 時間の確認が認証より前、CSRF、役割の分離、監査記録の同期の書き込み、応答のヘッダー。</li>
 <li>既定の設定で A-01 が入力済みにならないこと、<code>dev</code> の外の <code>cargotracker.dev-login.*</code> で起動が失敗すること。</li>
 </ul>
