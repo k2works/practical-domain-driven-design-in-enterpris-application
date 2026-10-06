@@ -4,7 +4,7 @@ title: "Bolt 14 計画 - password によるログインと session（US-18 の�
 description: "14 回目の Bolt の計画。Spring Security の form login と Spring Session JDBC を入れ、企業・利用者・役割・監査記録の表を作り、password によるログイン（A-01）、誤り・利用停止・無効な企業の拒否、無操作 30 分・発行から 8 時間の失効（A-03）、役割ごとのナビゲーションと A-04、開発環境の入力済みを作り、仮の主体を認証の主体に置き換えるまでを、ステップ 1〜5 で定義する。"
 tags: [development,bolt-plan]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-06T04:56:02Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-06T05:05:35Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-06T04:53:35Z }
 ---
@@ -304,13 +304,19 @@ URL（確認ポイント 10）: `GET /login`（A-01）、`POST /login`、`POST /
   - 技術スタック: Spring Security・Spring Session JDBC・thymeleaf-extras-springsecurity を「採用」にする
   - 完了の判定: `okf:check` が ERROR 0、`documentationTest` が緑。push する
   - 結果（2026-10-06 13:53〜13:58 JST。最後のコミットの時刻）: ユーザーストーリー（US-18 の Bolt 14 の決定）、ドメインモデル（`AuthenticatedActor`・`Role` を共有カーネルに、IA-INV-09、監査記録の操作）、データモデル（Bolt 14 で作る列と W5 で足す列、役割の値、外部キーを張らない理由、`db/dev-data/`、`spring_session`）、UI 設計（A-01・ログアウト・A-03・A-04・ホーム・準備中の画面の URL と文言、ヘッダー、開発環境の入力済みの設定）、非機能要件（SEC-07・SEC-17 を確定）、技術スタック（Spring Security・Spring Session JDBC を Bolt 14 で導入）に反映した。[ADR-012](../../adr/cargo-tracker/012-authentication-principal-and-session.md)（提案）を書き、ADR の索引と mkdocs に足した。`okf:check` ERROR 0、`documentationTest` 緑
-- [ ] **2. 企業・利用者・監査記録の業務のルールと表（内側の TDD、統合テスト）** 【承認ゲート: 業務のルールとスキーマの変更】
+- [?] **2. 企業・利用者・監査記録の業務のルールと表（内側の TDD、統合テスト）** 【承認ゲート: 業務のルールとスキーマの変更】
   - 単体テストを先に書く: 有効な企業の有効な利用者は認証できる。利用停止の利用者、無効な企業の利用者は理由付きで認証できない。メールアドレスの正規化（前後の空白、大文字）。役割の値が BR-15 の 8 つ
   - 統合テスト（PostgreSQL）を先に書く: 企業・利用者・役割の保存と読み出し、email の一意（大文字小文字を区別しない）、役割の CHECK、`audit_record` の UPDATE・DELETE がアプリの利用者で拒否される、`spring_session` の表がある
   - マイグレーション: `common` に `identity.company`・`app_user`・`user_role`・`audit_record`、`postgresql`・`h2` に `platform.spring_session`。H2 のスモークを先に回す（T-15）
   - 開発用の利用者: `db/dev-data`（dev のときだけ Flyway の場所に足す）に、荷主の企業と利用者 2 人（同じ企業、別の企業）、A 社と営業担当者 1 人を入れる。共通・ベンダーの場所に置かないことをテストで確かめる（ADR-011 の決定 3 の 4 層目）
   - MyBatis のリポジトリ（企業・利用者・監査記録）
   - 完了の判定: `check` が緑。push して CI を確かめる。業務のルールとスキーマの承認を受ける
+  - 結果（2026-10-06 13:58〜14:05 JST。最後のコミット `e67b16a` の時刻）
+    - Red: 単体テスト（役割の 8 つ、メールアドレスの正規化と検証、利用停止・無効な企業の拒否と優先順、所属外の企業、役割のない利用者、監査記録の作り方）と、統合テスト（PostgreSQL。企業・利用者・役割・監査記録の保存と読み出し、email の一意、表の CHECK の 4 つ、`spring_session` の表、追記専用の印）、開発用のデータの置き場所のテスト、dev の H2 で開発用の利用者がいることを先に書いた。値・集約・リポジトリの骨組み（何もしない実装）と、制約のない表だけを足し、新しいテスト 45 件の失敗を記録してコミットした（`a3075e6`）。T-39 の記録: 監査記録の 5 件は、骨組みが null を返したための NullPointerException（本命の前で落ちた）。統合テストの 2 件（正規化していないメールアドレス、利用状態の値）は、骨組みの企業の登録が何もしないため外部キーの違反で例外になり、本命の CHECK を見ずに通った（Green の後で CHECK で落ちることを確かめた）。ほかは本命のアサーションで落ちた。最初の実行は dockerd が止まっていて統合テストが起動できず、手順書どおりセッションの開始のフックを実行し直した
+    - Green: `Role`（共有カーネル）、`EmailAddress`・`CompanyKind`・`UserStatus`・`AuthenticationRejection`・`AuditAction`・`AuditResult`、集約 `Company`・`User`（認証できない理由。利用停止を企業の無効より先に返す）・`AuditRecord`、MyBatis のリポジトリ 3 つ（`IdentityMapper`）。`common` の `V20261006140000__create_identity_users.sql`（4 表、CHECK、email の一意と正規化、COMMENT、監査記録の ` [append-only]`）、`h2`・`postgresql` の `V20261006140100__create_spring_session.sql`（spring-session-jdbc 4.1.1 の DDL を `platform` に）、`db/dev-data/V20261006140900__seed_dev_users.sql`（荷主 A・B、A 社、利用者 3 人。ID は仮の主体を引き継ぐ）と `application-dev.properties` の Flyway の場所（`e67b16a`）
+    - 計画からの変更: 利用者の集約の型の名前を、用語集に合わせて `User` にした（表は `app_user`）。`EmailAddress` を用語集に足した。監査記録の `correlation_id` は列だけを作り、埋めるのは使う Bolt にした
+    - 実行中に直した誤り: Red のコミットの整形で監査記録の失敗の作り方のシグネチャが折り返され、Green の置き換えが当たらなかった（直した）。用語集に `EmailAddress` がなく `documentationTest` が落ちた（足した）
+    - `check` 緑（`test` 825 件。Bolt 12 の 786 件から +39）
 - [ ] **3. 認証の構成（セキュリティの統合テスト、外側から）** 【承認ゲート: セキュリティ】
   - セキュリティの統合テスト（`@SpringBootTest`、PostgreSQL）を先に書く
     - 未認証の `/customer/**`・`/staff/**` は A-01 へ。業務データを返さない
