@@ -7804,7 +7804,7 @@
 <h3 id="definition-of-done">Definition of Done<a class="headerlink" href="#definition-of-done" title="Permanent link">&para;</a></h3>
 <ul class="task-list">
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> ステップ 1〜5 が完了し、計画・外部連携（ステップ 3）・終了報告の承認ゲートを人が通した（終了報告の承認を待つ）</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <code>./gradlew check</code> と <code>./gradlew uiTest</code> がローカルと CI の両方で緑（アプリのコードは変えていない。CI の check・ui と、ローカルの <code>check</code> は緑。ローカルの <code>uiTest</code> は実行中）</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <code>./gradlew check</code> と <code>./gradlew uiTest</code> がローカルと CI の両方で緑（アプリのコードは変えていない。CI の check・ui、ローカルの <code>check</code>（4 分 20 秒）と <code>uiTest</code>（6 分 49 秒）が緑）</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> ローカルのコンテナ（<code>PORT=5001</code>、メモリ 512 MB）で起動し、https のリダイレクトとログインを確かめた</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> 公開の URL でデモ項目 1〜4 を確かめ、録画した</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <code>npx gulp deploy:demo</code> 1 つで配備でき、手順書のコマンドだけで状態・ログ・再起動・停止・ロールバック・削除を行える（削除は取り消せないため、タスクにせず手順書の <code>heroku apps:destroy</code> で人が行う）</li>
