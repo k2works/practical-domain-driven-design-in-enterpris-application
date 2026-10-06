@@ -14,6 +14,7 @@ import sshTasks from './ops/scripts/ssh.js';
 import sonarLocalTasks from './ops/scripts/sonar_local.js';
 import okfTasks from './ops/scripts/okf.js';
 import designDocsTasks from './ops/scripts/design_docs.js';
+import deployDemoTasks from './ops/scripts/deploy_demo.js';
 
 // Load gulp tasks from script modules
 mkdocsTasks(gulp);
@@ -24,6 +25,7 @@ sshTasks(gulp);
 sonarLocalTasks(gulp);
 okfTasks(gulp);
 designDocsTasks(gulp);
+deployDemoTasks(gulp);
 
 export const spec = gulp.series('mkdocs:serve', 'mkdocs:open');
 

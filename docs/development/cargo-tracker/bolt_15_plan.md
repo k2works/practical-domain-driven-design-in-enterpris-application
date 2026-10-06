@@ -146,6 +146,7 @@ app --> tmp
 
   - アプリ名と Config Vars（`SPRING_PROFILES_ACTIVE=dev`、`JAVA_TOOL_OPTIONS`）は `ops/scripts/heroku.js` の設定か環境変数で持ち、秘密はない（dev の固定値だけ）
   - `npx gulp heroku:setup` と `npx gulp heroku:deploy` で配備し、`heroku:status` と `heroku:logs` で起動と R14 が出ないことを確かめる
+  - 途中の結果（17:35〜17:45 JST）: 運用スクリプト作成ガイドの命名（`{カテゴリ}_{環境}.js`、`{カテゴリ}:{環境}:{アクション}`）に合わせ、上の表の `heroku:*` を `ops/scripts/deploy_demo.js` の `deploy:demo:*` にした（`setup`・`build`・`push`・`release`・`deploy:demo`（build → push → release）・`status`・`logs`・`restart`・`open`・`stop`・`start`・`help`）。`stop`（dyno を 0）と `start` を足し、アプリの削除は取り消せないためタスクにせず手順書の手で行う。`deploy:demo:build` は、作業ツリーに変更がないことと、アプリを最後に変えたコミットの CI が緑であることを確かめる（確認ポイント 8）。`.env.example` に `DEMO_*` を足した。`deploy:demo:help` の表示と、未ログインで止まることを確かめた。命名の変更は外部連携の承認ゲートで承認を受ける
 - [ ] **4. デモ環境でデモ項目を確かめ、手順書を仕上げる**
   - 下の「デモ項目」1〜4 を公開の URL で行い、録画する（T-31）
   - 30 分の無アクセスでスリープした後の起動の時間を計る（Eco の制約。手順書の「デモの前に」に書く）
@@ -181,7 +182,7 @@ Eco で R14 が続く（H2 が外れる）ときは、ここで止めて dyno �
 | 1 | 新しい技術 Issue を立て、Milestone は Release 0.1、週は W3、SP 0 にする。リリース計画の W3 の主なタスクの先頭に Bolt 15 を足す | 1、5 | 計画の置き場（人の決定） |
 | 2 | ADR 013「dev プロファイルによる Heroku のデモ環境」（新規、提案）を書く。ADR-008 は変えない（ステージング・本番は AWS のまま。デモ環境は関係者が触って確かめるための環境で、非機能要件の対象にしない） | 1 | 新規ファイルの作成。外部連携。ADR-008 の「他のクラウド・PaaS は却下」と矛盾しないことを示す |
 | 3 | デモ環境は dev で動かすため、`DevLoginGuard` は働かず、固定の password の開発用の利用者で誰でもログインできる。アクセスの制限はしない（人の決定）。代わりに、本物の荷主・利用者のデータを入れないことを手順書と ADR 013 に書き、URL は関係者にだけ伝える | 1、4 | セキュリティ。制限しないことの帰結を記録に残す |
-| 4 | 新規ファイルは次の 6 つ: `apps/cargo-tracker/Dockerfile`、`apps/cargo-tracker/.dockerignore`、`ops/scripts/heroku.js`、`docs/operation/cargo-tracker/heroku_demo_setup.md`、`docs/adr/cargo-tracker/013-heroku-demo-environment.md`、`bolt_15_report.md`。既存のリポジトリのルートの `Dockerfile`（開発用のツールのイメージ）とは別にする | 1〜5 | 新規ファイルの作成。ルートの `Dockerfile` は Ubuntu の開発環境で、実行用ではない |
+| 4 | 新規ファイルは次の 6 つ: `apps/cargo-tracker/Dockerfile`、`apps/cargo-tracker/.dockerignore`、`ops/scripts/heroku.js`（ステップ 3 で、運用スクリプト作成ガイドの命名に合わせて `ops/scripts/deploy_demo.js` にした）、`docs/operation/cargo-tracker/heroku_demo_setup.md`、`docs/adr/cargo-tracker/013-heroku-demo-environment.md`、`bolt_15_report.md`。既存のリポジトリのルートの `Dockerfile`（開発用のツールのイメージ）とは別にする | 1〜5 | 新規ファイルの作成。ルートの `Dockerfile` は Ubuntu の開発環境で、実行用ではない |
 | 5 | アプリ名は `cargo-tracker-mono-demo`（2026-10-06 に human:kakimomokuri が決定。使われていたら作成の前に人に諮る）、region は `us`（Common Runtime で選べるのは `us`・`eu`。日本からの遅さはデモでは許す） | 3 | 外部の資源の名前。URL になる |
 | 6 | dyno は Eco（月 5 USD の定額で、アカウントの全 Eco dyno に共通）。費用は人の Heroku のアカウントに付く。30 分アクセスがないとスリープし、次のアクセスで起動を待つ | 3 | 費用（人の決定） |
 | 7 | データ（H2 のインメモリ、書類の `/tmp`）は dyno の再起動（1 日 1 回以上の自動の再起動、配備、スリープ）で消え、`db/dev-data` の初期状態に戻る。永続化はしない | 1、4 | データ。デモの前に `heroku:restart` で初期状態に戻せることを利点として使う |
