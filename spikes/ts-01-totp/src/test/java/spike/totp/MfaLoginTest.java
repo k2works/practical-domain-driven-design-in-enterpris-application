@@ -81,7 +81,7 @@ class MfaLoginTest {
     void passwordだけでは業務の画面を開けずTOTPの画面へ導く() throws Exception {
         MockHttpSession session = password(SpikeUsers.SHIPPER, SpikeUsers.PASSWORD);
 
-        mockMvc.perform(get("/staff").session(session)).andExpect(redirectedUrl("/login/totp"));
+        mockMvc.perform(get("/staff").session(session)).andExpect(redirectedUrl("/login/totp?factor.type=totp&factor.reason=missing"));
         mockMvc.perform(get("/login/totp").session(session)).andExpect(status().isOk());
     }
 
@@ -104,7 +104,7 @@ class MfaLoginTest {
         mockMvc.perform(post("/login/totp").session(session).with(csrf()).param("code", "000000"))
                 .andExpect(redirectedUrl("/login/totp?error"));
 
-        mockMvc.perform(get("/staff").session(session)).andExpect(redirectedUrl("/login/totp"));
+        mockMvc.perform(get("/staff").session(session)).andExpect(redirectedUrl("/login/totp?factor.type=totp&factor.reason=missing"));
     }
 
     @Test
@@ -116,7 +116,7 @@ class MfaLoginTest {
 
         mockMvc.perform(post("/login/totp").session(second).with(csrf()).param("code", code))
                 .andExpect(redirectedUrl("/login/totp?error"));
-        mockMvc.perform(get("/staff").session(second)).andExpect(redirectedUrl("/login/totp"));
+        mockMvc.perform(get("/staff").session(second)).andExpect(redirectedUrl("/login/totp?factor.type=totp&factor.reason=missing"));
     }
 
     @Test
@@ -154,7 +154,7 @@ class MfaLoginTest {
 
         MockHttpSession second = password(SpikeUsers.SHIPPER, SpikeUsers.PASSWORD);
         totp(second, recoveryCode);
-        mockMvc.perform(get("/staff").session(second)).andExpect(redirectedUrl("/login/totp"));
+        mockMvc.perform(get("/staff").session(second)).andExpect(redirectedUrl("/login/totp?factor.type=totp&factor.reason=missing"));
     }
 
     @Test

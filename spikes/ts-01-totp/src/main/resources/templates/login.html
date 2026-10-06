@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html lang="ja" xmlns:th="http://www.thymeleaf.org">
+<head><meta charset="UTF-8"><title>ログイン</title></head>
+<body>
+<main>
+    <h1>ログイン（A-01）</h1>
+    <form th:action="@{/login}" method="post">
+        <label>メールアドレス <input type="email" name="username" autocomplete="username" th:value="${username}"></label>
+        <label>password <input type="password" name="password" autocomplete="current-password" th:value="${password}"></label>
+        <button type="submit">ログイン</button>
+    </form>
+</main>
+</body>
+</html>
