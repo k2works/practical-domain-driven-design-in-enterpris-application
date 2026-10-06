@@ -16,6 +16,7 @@ verified:
   - { by: human:kakimomokuri, at: 2026-10-05T03:42:38Z }
   - { by: human:kakimomokuri, at: 2026-10-05T06:28:16Z }
   - { by: human:kakimomokuri, at: 2026-10-05T08:08:38Z }
+  - { by: human:kakimomokuri, at: 2026-10-06T02:51:39Z }
 ---
 
 # cargo-tracker ユーザーストーリー

@@ -1,6 +1,17 @@
 # Docs Update Log
 
 ## 2026-10-06
+* **Verification**: [ui_design](/design/cargo-tracker/ui_design.md) を human:kakimomokuri が検証
+* **Verification**: [data_model](/design/cargo-tracker/data_model.md) を human:kakimomokuri が検証
+* **Verification**: [domain_model](/design/cargo-tracker/domain_model.md) を human:kakimomokuri が検証
+* **Verification**: [user_story](/requirements/cargo-tracker/user_story.md) を human:kakimomokuri が検証
+* **Verification**: [bolt_12_review_20261006](/review/cargo-tracker/bolt_12_review_20261006.md) を human:kakimomokuri が検証
+* **Verification**: [bolt_12_report](/development/cargo-tracker/bolt_12_report.md) を human:kakimomokuri が検証
+* **Verification**: [bolt_12_plan](/development/cargo-tracker/bolt_12_plan.md) を human:kakimomokuri が検証
+* **Update**: [bolt_12_review_20261006](/review/cargo-tracker/bolt_12_review_20261006.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_12_report](/development/cargo-tracker/bolt_12_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_12_plan](/development/cargo-tracker/bolt_12_plan.md) を更新（anthropic/claude-opus-5-5）
 * **Update**: [bolt_12_report](/development/cargo-tracker/bolt_12_report.md) を更新（anthropic/claude-opus-5-5）
 * **Creation**: [bolt_12_report](/development/cargo-tracker/bolt_12_report.md) を作成（anthropic/claude-opus-5-5）
 * **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
