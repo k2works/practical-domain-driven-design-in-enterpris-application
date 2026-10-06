@@ -9,14 +9,17 @@ import com.example.cargotracker.quotation.acceptance.InMemoryTransportRequestNum
 import com.example.cargotracker.quotation.acceptance.InMemoryTransportRequestRepository;
 import com.example.cargotracker.quotation.acceptance.RequiredDocumentAttachments;
 import com.example.cargotracker.quotation.application.internal.commandservices.QuotationCommandService;
+import com.example.cargotracker.quotation.application.internal.commandservices.QuotationResponseService;
 import com.example.cargotracker.quotation.application.internal.commandservices.TransportRequestCommandService;
 import com.example.cargotracker.quotation.application.internal.commandservices.TransportRequestReviewService;
 import com.example.cargotracker.quotation.application.internal.eventhandlers.QuotationPresentedEventHandler;
+import com.example.cargotracker.quotation.application.internal.eventhandlers.RouteDesignRequestedEventHandler;
 import com.example.cargotracker.quotation.application.internal.queryservices.QuotationQueryService;
 import com.example.cargotracker.quotation.application.internal.queryservices.StaffQuotationQueryService;
 import com.example.cargotracker.quotation.application.internal.queryservices.StaffTransportRequestQueryService;
 import com.example.cargotracker.quotation.application.internal.queryservices.TransportRequestQueryService;
 import com.example.cargotracker.quotation.domain.events.QuotationPresented;
+import com.example.cargotracker.quotation.domain.events.RouteDesignRequested;
 import com.example.cargotracker.quotation.domain.events.TransportRequestSubmitted;
 import com.example.cargotracker.quotation.domain.model.rules.MvpAcceptancePolicy;
 import com.example.cargotracker.quotation.domain.model.rules.RequiredDocumentPolicy;
@@ -84,11 +87,18 @@ public class AcceptanceTestConfiguration {
             return new QuotationPresentedEventHandler(repository);
         }
 
+        @Bean
+        RouteDesignRequestedEventHandler routeDesignRequestedEventHandler(
+                InMemoryTransportRequestRepository repository) {
+            return new RouteDesignRequestedEventHandler(repository);
+        }
+
         /** 購読側を登録した、テスト用の同期の配信。 */
         @Bean
         DeferredEventDelivery eventDelivery(
                 KpiObservationEventHandler kpiObservationEventHandler,
-                QuotationPresentedEventHandler quotationPresentedEventHandler) {
+                QuotationPresentedEventHandler quotationPresentedEventHandler,
+                RouteDesignRequestedEventHandler routeDesignRequestedEventHandler) {
             DeferredEventDelivery delivery = new DeferredEventDelivery();
             delivery.subscribe(event -> {
                 if (event instanceof TransportRequestSubmitted submitted) {
@@ -96,6 +106,9 @@ public class AcceptanceTestConfiguration {
                 }
                 if (event instanceof QuotationPresented presented) {
                     quotationPresentedEventHandler.on(presented);
+                }
+                if (event instanceof RouteDesignRequested requested) {
+                    routeDesignRequestedEventHandler.on(requested);
                 }
             });
             return delivery;
@@ -108,6 +121,15 @@ public class AcceptanceTestConfiguration {
                 DeferredEventDelivery eventDelivery,
                 MutableClock clock) {
             return new QuotationCommandService(transportRequestRepository, quotationRepository, eventDelivery, clock);
+        }
+
+        @Bean
+        QuotationResponseService quotationResponseService(
+                InMemoryTransportRequestRepository transportRequestRepository,
+                InMemoryQuotationRepository quotationRepository,
+                DeferredEventDelivery eventDelivery,
+                MutableClock clock) {
+            return new QuotationResponseService(transportRequestRepository, quotationRepository, eventDelivery, clock);
         }
 
         @Bean

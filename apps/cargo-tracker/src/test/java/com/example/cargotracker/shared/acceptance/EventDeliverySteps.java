@@ -17,4 +17,9 @@ public class EventDeliverySteps {
     public void 発行されたドメインイベントが配信される() {
         delivery.deliverAll();
     }
+
+    @もし("直前に配信したドメインイベントがもう一度配信される")
+    public void 直前に配信したドメインイベントがもう一度配信される() {
+        delivery.redeliverLast();
+    }
 }

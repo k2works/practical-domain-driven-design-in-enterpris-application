@@ -59,7 +59,8 @@ public class QuotationSteps {
             "承認待ち", QuotationStatus.PENDING_APPROVAL,
             "提示済み", QuotationStatus.PRESENTED,
             "失効", QuotationStatus.EXPIRED,
-            "置換済み", QuotationStatus.REPLACED);
+            "置換済み", QuotationStatus.REPLACED,
+            "詳細設計依頼済み", QuotationStatus.ROUTING_REQUESTED);
 
     private static final Map<String, Item> ITEMS = Map.of(
             "料金明細", Item.PRICING_LINES,
@@ -72,7 +73,8 @@ public class QuotationSteps {
     private static final Map<String, QuotationRejection> REJECTIONS = Map.of(
             "見積りがすでにある", QuotationRejection.ALREADY_QUOTED,
             "失効している", QuotationRejection.EXPIRED,
-            "置換済み", QuotationRejection.REPLACED);
+            "置換済み", QuotationRejection.REPLACED,
+            "詳細設計依頼済み", QuotationRejection.ROUTING_REQUESTED);
 
     /** 標準の見積りの有効期限（有効期限を書かない前提の文で使う）。 */
     private static final String STANDARD_EXPIRES_AT = "2026-10-08T09:00:00Z";

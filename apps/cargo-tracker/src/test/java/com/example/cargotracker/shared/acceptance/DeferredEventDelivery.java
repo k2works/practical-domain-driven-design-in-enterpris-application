@@ -14,6 +14,7 @@ public class DeferredEventDelivery implements ApplicationEventPublisher {
 
     private final List<Object> published = new ArrayList<>();
     private final List<Consumer<Object>> subscribers = new ArrayList<>();
+    private List<Object> lastDelivered = List.of();
 
     public void subscribe(Consumer<Object> subscriber) {
         subscribers.add(subscriber);
@@ -30,7 +31,13 @@ public class DeferredEventDelivery implements ApplicationEventPublisher {
     public void deliverAll() {
         List<Object> events = List.copyOf(published);
         published.clear();
+        lastDelivered = events;
         events.forEach(event -> subscribers.forEach(subscriber -> subscriber.accept(event)));
+    }
+
+    /** 直前に配信したイベントを、もう一度購読側へ届ける（少なくとも 1 回の配信の再配信。受け取りの冪等を確かめる）。 */
+    public void redeliverLast() {
+        lastDelivered.forEach(event -> subscribers.forEach(subscriber -> subscriber.accept(event)));
     }
 
     /** 発行されて、まだ配信していないイベント（発行の順）。 */
@@ -40,5 +47,6 @@ public class DeferredEventDelivery implements ApplicationEventPublisher {
 
     public void clear() {
         published.clear();
+        lastDelivered = List.of();
     }
 }

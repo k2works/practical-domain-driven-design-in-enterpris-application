@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.example.cargotracker.quotation.domain.events.QuotationPresented;
+import com.example.cargotracker.quotation.domain.events.RouteDesignRequested;
 import com.example.cargotracker.quotation.domain.model.valueobjects.QuotationFixture;
 import com.example.cargotracker.quotation.domain.model.valueobjects.QuotationId;
 import com.example.cargotracker.quotation.domain.model.valueobjects.QuotationInput;
@@ -15,6 +16,7 @@ import com.example.cargotracker.shared.domain.UserId;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -249,5 +251,93 @@ class QuotationTest {
         QuotationId replacement = new QuotationId(UUID.randomUUID());
 
         assertThatThrownBy(() -> draft.replaceWith(replacement, now)).isInstanceOf(IllegalStateException.class);
+    }
+
+    // 荷主の回答（US-24 AC1、Q-INV-07・09、DE-16。Bolt 12）
+
+    private final UserId respondent = new UserId(UUID.randomUUID());
+
+    @Test
+    void 提示済みの見積りに詳細経路設計を依頼すると詳細設計依頼済みになり回答者と回答時刻を残しDE16を生成する() {
+        Quotation quotation = presented();
+        UtcInstant respondedAt = at("2026-10-06T02:00:00Z");
+
+        assertThat(quotation.requestRouteDesign(respondent, respondedAt)).isEmpty();
+
+        assertThat(quotation.status()).isEqualTo(QuotationStatus.ROUTING_REQUESTED);
+        assertThat(quotation.respondedBy()).contains(respondent);
+        assertThat(quotation.respondedAt()).contains(respondedAt);
+        assertThat(quotation.domainEvents())
+                .singleElement()
+                .isInstanceOfSatisfying(RouteDesignRequested.class, event -> {
+                    assertThat(event.quotationId()).isEqualTo(id.value());
+                    assertThat(event.quotationNo()).isEqualTo(1);
+                    assertThat(event.transportRequestId()).isEqualTo(transportRequestId.value());
+                    assertThat(event.transportRequestVersionNo()).isEqualTo(1);
+                    assertThat(event.routeVia()).containsExactly("SGSIN");
+                    assertThat(event.expiresAt()).isEqualTo(QuotationFixture.EXPIRES_AT);
+                    assertThat(event.requestedBy()).isEqualTo(respondent.value());
+                    assertThat(event.requestedAt()).isEqualTo(respondedAt);
+                });
+    }
+
+    @ParameterizedTest
+    @CsvSource({"2099-10-08T08:59:59Z, true", "2099-10-08T09:00:00Z, false", "2099-10-08T09:00:01Z, false"})
+    void 有効期限の前だけ回答でき同時刻からは失効として拒否する(String respondedAt, boolean accepted) {
+        Quotation quotation = presented();
+
+        assertThat(quotation.requestRouteDesign(respondent, at(respondedAt)))
+                .isEqualTo(accepted ? Optional.empty() : Optional.of(QuotationRejection.EXPIRED));
+        assertThat(quotation.status())
+                .isEqualTo(accepted ? QuotationStatus.ROUTING_REQUESTED : QuotationStatus.PRESENTED);
+    }
+
+    @Test
+    void 提示済みでない見積りと置換済み失効と回答済みの見積りには回答できない() {
+        Quotation pending = pendingApproval();
+        Quotation replaced = presented();
+        replaced.replaceWith(new QuotationId(UUID.randomUUID()), now);
+        Quotation expired = presented();
+        expired.replaceWith(new QuotationId(UUID.randomUUID()), at("2099-10-09T00:00:00Z"));
+        Quotation responded = presented();
+        responded.requestRouteDesign(respondent, now);
+        responded.clearDomainEvents();
+
+        assertThat(pending.requestRouteDesign(respondent, now)).contains(QuotationRejection.NOT_PRESENTED);
+        assertThat(replaced.requestRouteDesign(respondent, now)).contains(QuotationRejection.REPLACED);
+        assertThat(expired.requestRouteDesign(respondent, now)).contains(QuotationRejection.EXPIRED);
+        assertThat(responded.requestRouteDesign(respondent, now)).contains(QuotationRejection.ROUTING_REQUESTED);
+        assertThat(responded.domainEvents()).isEmpty();
+    }
+
+    @Test
+    void 回答できるかを判定時刻で問い合わせられる() {
+        Quotation quotation = presented();
+
+        assertThat(quotation.responseRejectionAt(now)).isEmpty();
+        assertThat(quotation.responseRejectionAt(at("2099-10-08T09:00:00Z"))).contains(QuotationRejection.EXPIRED);
+    }
+
+    @Test
+    void 詳細設計依頼済みの見積りは有効期限と同時刻から失効として扱い数える見積りに入る() {
+        Quotation quotation = presented();
+        quotation.requestRouteDesign(respondent, now);
+
+        assertThat(quotation.isExpiredAt(at("2099-10-08T08:59:59Z"))).isFalse();
+        assertThat(quotation.isExpiredAt(at("2099-10-08T09:00:00Z"))).isTrue();
+        assertThat(quotation.isActive()).isTrue();
+        assertThat(quotation.responseRejectionAt(at("2099-10-08T09:00:00Z"))).contains(QuotationRejection.EXPIRED);
+    }
+
+    @Test
+    void 詳細設計依頼済みの見積りは再見積りも提示もできない() {
+        Quotation quotation = presented();
+        quotation.requestRouteDesign(respondent, now);
+
+        assertThat(quotation.requoteRejection()).contains(QuotationRejection.ROUTING_REQUESTED);
+        assertThat(quotation.replaceWith(new QuotationId(UUID.randomUUID()), now))
+                .contains(QuotationRejection.ROUTING_REQUESTED);
+        assertThat(quotation.status()).isEqualTo(QuotationStatus.ROUTING_REQUESTED);
+        assertThat(quotation.presentInternally(approver, now)).contains(QuotationRejection.NOT_PENDING_APPROVAL);
     }
 }

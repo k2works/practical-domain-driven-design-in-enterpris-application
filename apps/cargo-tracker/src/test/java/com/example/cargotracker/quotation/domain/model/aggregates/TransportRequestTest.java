@@ -117,4 +117,27 @@ class TransportRequestTest {
         assertThat(request.status()).isEqualTo(TransportRequestStatus.QUOTED);
         assertThat(request.markQuotationPresented(1)).as("2 回目は変えない（冪等）").isFalse();
     }
+
+    @Test
+    void 見積提示済みか見積り作成中の現在の版に詳細経路設計が依頼されると経路設計中になりほかでは変わらない() {
+        TransportRequest request = TransportRequest.submit(id, number, shipper, terms, submitter, now);
+
+        assertThat(request.markRoutingRequested(1)).as("審査中では変えない").isFalse();
+        request.approve(1, submitter, "根拠", now);
+        request.markQuotationPresented(1);
+        assertThat(request.markRoutingRequested(2)).as("現在の版でなければ変えない").isFalse();
+        assertThat(request.markRoutingRequested(1)).isTrue();
+        assertThat(request.status()).isEqualTo(TransportRequestStatus.ROUTING);
+        assertThat(request.markRoutingRequested(1)).as("2 回目は変えない（冪等）").isFalse();
+        assertThat(request.markQuotationPresented(1)).as("遅れて届いた DE-03 では戻らない").isFalse();
+    }
+
+    @Test
+    void DE03より先にDE16が届いても見積り作成中から経路設計中になる() {
+        TransportRequest request = TransportRequest.submit(id, number, shipper, terms, submitter, now);
+        request.approve(1, submitter, "根拠", now);
+
+        assertThat(request.markRoutingRequested(1)).isTrue();
+        assertThat(request.status()).isEqualTo(TransportRequestStatus.ROUTING);
+    }
 }
