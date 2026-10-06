@@ -42,7 +42,10 @@ public final class User {
         this.displayName = Objects.requireNonNull(displayName, "displayName");
         this.passwordHash = Objects.requireNonNull(passwordHash, "passwordHash");
         this.status = Objects.requireNonNull(status, "status");
-        this.roles = roles.isEmpty() ? EnumSet.noneOf(Role.class) : EnumSet.copyOf(roles);
+        if (roles.isEmpty()) {
+            throw new IllegalArgumentException("利用者には役割が 1 つ以上要る（BR-15）");
+        }
+        this.roles = EnumSet.copyOf(roles);
     }
 
     /** 利用者を組み立てる（登録とリポジトリの復元が使う）。password はハッシュ（DelegatingPasswordEncoder の形式。SEC-07）で受け取る。 */
@@ -63,7 +66,15 @@ public final class User {
      * @param company 所属企業
      */
     public Optional<AuthenticationRejection> authenticationRejection(Company company) {
-        // Red の骨組み: まだ規則を持たない
+        if (!company.id().equals(companyId)) {
+            throw new IllegalArgumentException("所属企業で確かめる");
+        }
+        if (status == UserStatus.SUSPENDED) {
+            return Optional.of(AuthenticationRejection.SUSPENDED);
+        }
+        if (!company.active()) {
+            return Optional.of(AuthenticationRejection.COMPANY_INACTIVE);
+        }
         return Optional.empty();
     }
 

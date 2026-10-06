@@ -109,7 +109,7 @@ package identity {
     種類 : CompanyKind
     有効か
   }
-  class "利用者\n(AppUser)" as U <<集約ルート>> {
+  class "利用者\n(User)" as U <<集約ルート>> {
     利用者 ID : UserId
     企業 ID : CompanyId
     メールアドレス

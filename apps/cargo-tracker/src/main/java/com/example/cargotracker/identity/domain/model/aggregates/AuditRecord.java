@@ -45,7 +45,8 @@ public final class AuditRecord {
 
     /** ログインの成功を記録する。 */
     public static AuditRecord loginSucceeded(UserId user, CompanyId company, UtcInstant at) {
-        return null;
+        return new AuditRecord(
+                UUID.randomUUID(), at, user, company, AuditAction.LOGIN_SUCCEEDED, AuditResult.SUCCESS, null);
     }
 
     /**
@@ -53,12 +54,14 @@ public final class AuditRecord {
      */
     public static AuditRecord loginFailed(
             UserId user, CompanyId company, AuthenticationRejection reason, UtcInstant at) {
-        return null;
+        Objects.requireNonNull(reason, "reason");
+        return new AuditRecord(
+                UUID.randomUUID(), at, user, company, AuditAction.LOGIN_FAILED, AuditResult.FAILURE, reason.name());
     }
 
     /** ログアウトを記録する。 */
     public static AuditRecord logout(UserId user, CompanyId company, UtcInstant at) {
-        return null;
+        return new AuditRecord(UUID.randomUUID(), at, user, company, AuditAction.LOGOUT, AuditResult.SUCCESS, null);
     }
 
     /** 保存されている状態から組み立てる（リポジトリが使う）。 */
