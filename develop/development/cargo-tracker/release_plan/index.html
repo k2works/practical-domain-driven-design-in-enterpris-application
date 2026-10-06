@@ -6,7 +6,7 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="cargo-tracker MVP のリリース計画。1 人 + AI、時間単位の Bolt（= イテレーション）と週次の見直しで、最初の縦の流れ（R0.1）、パイロット準備完了（R1.0）、本格展開前（R1.1）の 3 段階、Unit のエントロピー評価、SP、バッファ、パイロット開始の条件、引継ぎ ID の台帳。">
+        <meta name="description" content="cargo-tracker MVP のリリース計画。1 人 + AI、時間単位の Bolt（= イテレーション）と週次の見直しで、最初の縦の流れ（R0.1）、パイロット準備完了（R1.0）、本格展開前（R1.1）の 3 段階、Unit のエントロピー評価、SP、バッファ、パイロット開始の条件、引継ぎ ID の台帳、業務責任者に確かめる事項の台帳。">
       
       
         <meta name="author" content="k2works">
@@ -2368,6 +2368,17 @@
   <a href="#_25" class="md-nav__link">
     <span class="md-ellipsis">
       
+        業務責任者に確かめる事項の台帳
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_26" class="md-nav__link">
+    <span class="md-ellipsis">
+      
         リスク管理
       
     </span>
@@ -2377,7 +2388,7 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#_26" class="md-nav__link">
+  <a href="#_27" class="md-nav__link">
     <span class="md-ellipsis">
       
         技術リスク
@@ -2388,7 +2399,7 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#_27" class="md-nav__link">
+  <a href="#_28" class="md-nav__link">
     <span class="md-ellipsis">
       
         スケジュールリスク
@@ -2399,7 +2410,7 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#_28" class="md-nav__link">
+  <a href="#_29" class="md-nav__link">
     <span class="md-ellipsis">
       
         リスク台帳との対応
@@ -2415,7 +2426,7 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#_29" class="md-nav__link">
+  <a href="#_30" class="md-nav__link">
     <span class="md-ellipsis">
       
         進捗管理
@@ -2427,7 +2438,7 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#_30" class="md-nav__link">
+  <a href="#_31" class="md-nav__link">
     <span class="md-ellipsis">
       
         メトリクス
@@ -2438,7 +2449,7 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#_31" class="md-nav__link">
+  <a href="#_32" class="md-nav__link">
     <span class="md-ellipsis">
       
         進捗状況
@@ -2449,7 +2460,7 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#_32" class="md-nav__link">
+  <a href="#_33" class="md-nav__link">
     <span class="md-ellipsis">
       
         バーンダウンチャート
@@ -2476,7 +2487,7 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#_33" class="md-nav__link">
+  <a href="#_34" class="md-nav__link">
     <span class="md-ellipsis">
       
         次のステップ
@@ -2487,7 +2498,7 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#_34" class="md-nav__link">
+  <a href="#_35" class="md-nav__link">
     <span class="md-ellipsis">
       
         更新履歴
@@ -8388,8 +8399,152 @@
 </table>
 <p>上記以外の引継ぎ ID（AB-01〜06、AF-01〜04、AI-01〜03、DM-01〜04、DA-01〜04、TS-02・03、UI-HO-01〜03、TST-01）は、後続の設計書で受け止め済みである。</p>
 <hr />
-<h2 id="_25">リスク管理<a class="headerlink" href="#_25" title="Permanent link">&para;</a></h2>
-<h3 id="_26">技術リスク<a class="headerlink" href="#_26" title="Permanent link">&para;</a></h3>
+<h2 id="_25">業務責任者に確かめる事項の台帳<a class="headerlink" href="#_25" title="Permanent link">&para;</a></h2>
+<p>Bolt のレビューや終了報告で「業務責任者に確かめる」とした事項を一か所にまとめる（2026-10-06 に human:kakimomokuri が決定）。決まるまでは「仮の決定」で開発を進め、回答を得たら、回答・日付・回答者を「状態」に書き、「影響する文書・ストーリー」に反映して、反映したコミットを書く。新しく確かめる事項ができたら、決めたレビューの D 番号のままこの表に足す。パイロットの開始に要るものは「パイロット開始の条件」に、責任者と期限が決まっている調整は「引継ぎ ID の台帳」に置く。</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">ID</th>
+<th style="text-align: left;">確かめること</th>
+<th style="text-align: left;">決まるまでの仮の決定</th>
+<th style="text-align: left;">影響する文書・ストーリー</th>
+<th style="text-align: left;">出典</th>
+<th style="text-align: left;">期限</th>
+<th style="text-align: left;">状態</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">D-28</td>
+<td style="text-align: left;">差戻しの知らせ（US-22）ができるまで、営業が電話・メールで知らせる暫定の運用を置くか。KPI-01 から荷主の対応待ちの時間を除くか</td>
+<td style="text-align: left;">暫定の運用は置かない。KPI-01 は対応待ちを含めて測る</td>
+<td style="text-align: left;">US-02、US-21、US-22、運用要件</td>
+<td style="text-align: left;"><a href="../../../review/cargo-tracker/bolt_06-08_review_20261003/">Bolt 6〜8 レビュー</a></td>
+<td style="text-align: left;">W2 の終わり（2026-10-16）</td>
+<td style="text-align: left;">未回答</td>
+</tr>
+<tr>
+<td style="text-align: left;">D-29</td>
+<td style="text-align: left;">顧客 Web のフッターと特殊貨物の案内に出す窓口の連絡手段と、欧州向けの受付時間</td>
+<td style="text-align: left;">今のフッターの仮の案内のまま</td>
+<td style="text-align: left;">UI 設計（共通レイアウト、C-03）、US-01</td>
+<td style="text-align: left;">同上</td>
+<td style="text-align: left;">W2 の終わり（2026-10-16）</td>
+<td style="text-align: left;">未回答</td>
+</tr>
+<tr>
+<td style="text-align: left;">D-30</td>
+<td style="text-align: left;">見積依頼の段階入力（UI-HO-04）を、実際の荷主 2〜3 社（初回とリピートを 1 社ずつ以上）で確かめ直す場を、いつ誰で設けるか</td>
+<td style="text-align: left;">段階入力を残す（Bolt 8 の決定）</td>
+<td style="text-align: left;">UI 設計（C-03）、US-01</td>
+<td style="text-align: left;">同上</td>
+<td style="text-align: left;">W9 の前（2026-11-27）</td>
+<td style="text-align: left;">未回答</td>
+</tr>
+<tr>
+<td style="text-align: left;">D-34</td>
+<td style="text-align: left;">JPY の金額を整数にするか（円の見積書に銭を付けない）</td>
+<td style="text-align: left;">すべての通貨で小数点以下 2 桁まで</td>
+<td style="text-align: left;">US-03、ドメインモデル（Q-INV-17）、S-04</td>
+<td style="text-align: left;"><a href="../../../review/cargo-tracker/bolt_09-10_review_20261005/">Bolt 9・10 レビュー</a> R-13</td>
+<td style="text-align: left;">W2 の終わり（2026-10-16）</td>
+<td style="text-align: left;">未回答</td>
+</tr>
+<tr>
+<td style="text-align: left;">D-35</td>
+<td style="text-align: left;">経路方針の概算の出発・到着を「日付だけ・現地の日付」にするか</td>
+<td style="text-align: left;">日本時間の日時</td>
+<td style="text-align: left;">US-03、UI 設計（S-04・C-04）、ドメインモデル（経路方針）</td>
+<td style="text-align: left;">同上 R-10</td>
+<td style="text-align: left;">W2 の終わり（2026-10-16）</td>
+<td style="text-align: left;">未回答</td>
+</tr>
+<tr>
+<td style="text-align: left;">D-36-1</td>
+<td style="text-align: left;">通貨の候補に CNY・SGD・GBP を足すか</td>
+<td style="text-align: left;">USD・EUR・JPY</td>
+<td style="text-align: left;">US-03、データモデル（<code>currency</code> の CHECK）</td>
+<td style="text-align: left;">同上</td>
+<td style="text-align: left;">W2 の終わり（2026-10-16）</td>
+<td style="text-align: left;">未回答</td>
+</tr>
+<tr>
+<td style="text-align: left;">D-36-2</td>
+<td style="text-align: left;">料金明細は 10 行で足りるか</td>
+<td style="text-align: left;">1〜10 行</td>
+<td style="text-align: left;">US-03、データモデル（<code>pricing_line</code>）</td>
+<td style="text-align: left;">同上</td>
+<td style="text-align: left;">W2 の終わり（2026-10-16）</td>
+<td style="text-align: left;">未回答</td>
+</tr>
+<tr>
+<td style="text-align: left;">D-36-3</td>
+<td style="text-align: left;">有効期限の標準の日数と、経路設計にかかる日数との関係</td>
+<td style="text-align: left;">営業担当者が都度入れる（標準の日数は持たない）</td>
+<td style="text-align: left;">US-03、US-06・US-07、US-23（期限間近の通知）</td>
+<td style="text-align: left;">同上</td>
+<td style="text-align: left;">W2 の終わり（2026-10-16）</td>
+<td style="text-align: left;">未回答</td>
+</tr>
+<tr>
+<td style="text-align: left;">D-36-4</td>
+<td style="text-align: left;">パイロット中に、作成者と承認者を分けない（職務分離なしの）社内承認を許すか</td>
+<td style="text-align: left;">職務分離を入れない。承認者は認証までは仮の営業担当者</td>
+<td style="text-align: left;">US-03、US-18、ドメインモデル（見積りの社内承認）</td>
+<td style="text-align: left;">同上</td>
+<td style="text-align: left;">W2 の終わり（2026-10-16）</td>
+<td style="text-align: left;">未回答</td>
+</tr>
+<tr>
+<td style="text-align: left;">D-36-5</td>
+<td style="text-align: left;">承認待ちのまま有効期限を過ぎた見積りを提示できてよいか</td>
+<td style="text-align: left;">提示できない（Bolt 11 の確認ポイント 3）</td>
+<td style="text-align: left;">US-03、ドメインモデル（Q-INV-07）</td>
+<td style="text-align: left;">同上</td>
+<td style="text-align: left;">W2 の終わり（2026-10-16）</td>
+<td style="text-align: left;">未回答</td>
+</tr>
+<tr>
+<td style="text-align: left;">D-36-6</td>
+<td style="text-align: left;">建値条件（Incoterms）と、税・現地費用を見積りでどう扱うか</td>
+<td style="text-align: left;">扱わない（料金明細の内容に書く）</td>
+<td style="text-align: left;">US-03、ドメインモデル（料金根拠）、データモデル</td>
+<td style="text-align: left;">同上</td>
+<td style="text-align: left;">W2 の終わり（2026-10-16）</td>
+<td style="text-align: left;">未回答</td>
+</tr>
+<tr>
+<td style="text-align: left;">D-41-1</td>
+<td style="text-align: left;">有効期限内の提示済みの旧版を、新しい見積りの提示まで有効のまま残すべきか</td>
+<td style="text-align: left;">再見積りで算出した時点で旧版を置き換える（Bolt 11 の確認ポイント 4）。残すと決まれば Q-INV-18 を見直す</td>
+<td style="text-align: left;">US-03、ドメインモデル（Q-INV-18）、データモデル（<code>ux_quotation_active</code>）、C-04</td>
+<td style="text-align: left;"><a href="../../../review/cargo-tracker/bolt_11_review_20261005/">Bolt 11 レビュー</a> 矛盾事項 1</td>
+<td style="text-align: left;">W2 の終わり（2026-10-16）</td>
+<td style="text-align: left;">未回答</td>
+</tr>
+<tr>
+<td style="text-align: left;">D-41-2</td>
+<td style="text-align: left;">見積りが失効したとき、荷主へ連絡するのは営業の責任か</td>
+<td style="text-align: left;">連絡の手段はない（画面の案内だけ）</td>
+<td style="text-align: left;">US-22、運用要件</td>
+<td style="text-align: left;">同上</td>
+<td style="text-align: left;">W2 の終わり（2026-10-16）</td>
+<td style="text-align: left;">未回答</td>
+</tr>
+<tr>
+<td style="text-align: left;">D-41-3</td>
+<td style="text-align: left;">見積りの失効・置換の後も、輸送要求の状態を「見積提示済み」のままにしてよいか</td>
+<td style="text-align: left;">見積提示済みのまま</td>
+<td style="text-align: left;">ドメインモデル（輸送要求の状態遷移）、UI 設計（C-02・C-04・S-02）</td>
+<td style="text-align: left;">同上</td>
+<td style="text-align: left;">W2 の終わり（2026-10-16）</td>
+<td style="text-align: left;">未回答</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="_26">リスク管理<a class="headerlink" href="#_26" title="Permanent link">&para;</a></h2>
+<h3 id="_27">技術リスク<a class="headerlink" href="#_27" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
 <tr>
@@ -8438,7 +8593,7 @@
 </tr>
 </tbody>
 </table>
-<h3 id="_27">スケジュールリスク<a class="headerlink" href="#_27" title="Permanent link">&para;</a></h3>
+<h3 id="_28">スケジュールリスク<a class="headerlink" href="#_28" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
 <tr>
@@ -8475,7 +8630,7 @@
 </tr>
 </tbody>
 </table>
-<h3 id="_28">リスク台帳との対応<a class="headerlink" href="#_28" title="Permanent link">&para;</a></h3>
+<h3 id="_29">リスク台帳との対応<a class="headerlink" href="#_29" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
 <tr>
@@ -8513,8 +8668,8 @@
 </tbody>
 </table>
 <hr />
-<h2 id="_29">進捗管理<a class="headerlink" href="#_29" title="Permanent link">&para;</a></h2>
-<h3 id="_30">メトリクス<a class="headerlink" href="#_30" title="Permanent link">&para;</a></h3>
+<h2 id="_30">進捗管理<a class="headerlink" href="#_30" title="Permanent link">&para;</a></h2>
+<h3 id="_31">メトリクス<a class="headerlink" href="#_31" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
 <tr>
@@ -8545,7 +8700,7 @@
 </tr>
 </tbody>
 </table>
-<h3 id="_31">進捗状況<a class="headerlink" href="#_31" title="Permanent link">&para;</a></h3>
+<h3 id="_32">進捗状況<a class="headerlink" href="#_32" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
 <tr>
@@ -8657,7 +8812,7 @@
 </tr>
 </tbody>
 </table>
-<h3 id="_32">バーンダウンチャート<a class="headerlink" href="#_32" title="Permanent link">&para;</a></h3>
+<h3 id="_33">バーンダウンチャート<a class="headerlink" href="#_33" title="Permanent link">&para;</a></h3>
 <pre class="mermaid"><code>xychart-beta
     title "リリースバーンダウン（計画）"
     x-axis ["開始", "W1", "W2", "W3", "W4", "W5", "W6", "W7", "W8", "W9", "W10", "W11", "W12", "W13", "W14"]
@@ -8693,7 +8848,7 @@
 </tbody>
 </table>
 <p>週のフィールドは 1 つの値しか持てないため、US-24 の R0.1 分（#5）は W2、US-16（#14）は W5 に置いた（計画では次の週にまたがる）。</p>
-<h2 id="_33">次のステップ<a class="headerlink" href="#_33" title="Permanent link">&para;</a></h2>
+<h2 id="_34">次のステップ<a class="headerlink" href="#_34" title="Permanent link">&para;</a></h2>
 <ol>
 <li>本計画のレビューと承認</li>
 <li>GitHub との同期（済み。以後は週次の見直しで <code>syncing-github-project --sync</code> を実行する）</li>
@@ -8701,7 +8856,7 @@
 <li>パイロット開始の条件（OQ-01 など）の責任者へ依頼する</li>
 </ol>
 <hr />
-<h2 id="_34">更新履歴<a class="headerlink" href="#_34" title="Permanent link">&para;</a></h2>
+<h2 id="_35">更新履歴<a class="headerlink" href="#_35" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
 <tr>
@@ -8820,6 +8975,11 @@
 <td style="text-align: left;">2026-10-05</td>
 <td style="text-align: left;">Bolt 11 の完了を W2 に反映し、US-03（5 SP）の完了を進捗に記録した（承認済み）</td>
 <td style="text-align: left;">anthropic/claude-opus-5-5、承認 human:kakimomokuri</td>
+</tr>
+<tr>
+<td style="text-align: left;">2026-10-06</td>
+<td style="text-align: left;">業務責任者に確かめる事項の台帳を足した（D-28〜D-30、D-34〜D-36、D-41。各レビューに散らばっていたものを集めた）</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5</td>
 </tr>
 </tbody>
 </table>
