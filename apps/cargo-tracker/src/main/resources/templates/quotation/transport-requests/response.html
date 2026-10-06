@@ -9,19 +9,22 @@
 <body>
 <main>
     <h1 th:text="|見積りへの回答 ${quotationLabel}|">見積りへの回答 TR-2026-0001 見積 1</h1>
-    <!-- C-05（Bolt 12、US-24 AC1）。料金根拠・有効期限・経路方針を確かめ、詳細経路設計へ進む。辞退・相談（AC2・AC3）は後の Bolt。
-         確認の領域は挟まない（この画面自体が確かめる画面。2026-10-06 の決定）。社内承認者は見せない -->
+    <!--/* C-05（Bolt 12、US-24 AC1）。料金根拠・有効期限・経路方針を確かめ、詳細経路設計へ進む。辞退・相談（AC2・AC3）は後の Bolt。
+         確認の領域は挟まない（この画面自体が確かめる画面。2026-10-06 の決定）。社内承認者は見せない。
+         開発の注記は荷主のブラウザに届かないパーサーレベルのコメントにする（Bolt 12 レビュー R-18） */-->
     <dl>
         <dt>状態</dt>
-        <dd th:text="${quotation.status()}">提示済み</dd>
+        <dd>提示済み（回答待ち）</dd>
     </dl>
     <div th:replace="~{quotation/fragments/quotation :: details(${quotation})}"></div>
     <p>詳細な経路と日程は経路設計者の承認後に確定します。</p>
+    <p>この回答は予約の確定ではありません。経路が決まったら、あらためて見積りと経路を確かめて承認していただきます。</p>
+    <p>辞退や条件の相談は担当営業にご連絡ください。</p>
     <form th:action="@{/customer/transport-requests/{number}/quotations/{no}/response(number=${number},no=${quotation.quotationNo()})}"
           method="post">
         <button type="submit" class="btn btn-primary">この条件で詳細経路設計へ進む</button>
     </form>
-    <p>辞退や条件の相談は担当営業にご連絡ください。</p>
+    <p>回答を取り消したい場合は、業務番号を添えて担当営業にご連絡ください。</p>
     <p><a th:href="@{/customer/transport-requests/{number}(number=${number})}">見積依頼の詳細へ戻る</a></p>
 </main>
 </body>

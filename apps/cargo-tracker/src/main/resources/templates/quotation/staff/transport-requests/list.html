@@ -111,6 +111,7 @@
         <thead>
         <tr>
             <th scope="col">見積り</th>
+            <th scope="col">状態</th>
             <th scope="col">依頼時刻</th>
             <th scope="col">有効期限</th>
         </tr>
@@ -118,6 +119,7 @@
         <tbody>
         <tr th:each="routing : ${routingRequests}">
             <td><a th:href="@{${routing.path()}}" th:text="${routing.label()}">TR-2026-0001 見積 1</a></td>
+            <td th:text="${routing.status()}">詳細設計依頼済み</td>
             <td th:text="${routing.requestedAt()}">2026-10-06 09:30 Asia/Tokyo（UTC+09:00）（UTC 2026-10-06 00:30）</td>
             <td th:text="${routing.expiresAt()}">2026-10-09 18:00 Asia/Tokyo（UTC+09:00）（UTC 2026-10-09 09:00）</td>
         </tr>

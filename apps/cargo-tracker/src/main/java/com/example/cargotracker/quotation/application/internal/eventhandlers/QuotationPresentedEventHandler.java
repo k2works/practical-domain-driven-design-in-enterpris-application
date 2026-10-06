@@ -53,9 +53,12 @@ public class QuotationPresentedEventHandler {
         }
     }
 
-    /** 同じ版で見積提示済み（DE-03 の再配信か、再見積りの後の新しい見積りの提示。どちらも変えなくてよい。Bolt 11 レビュー R-25）。 */
+    /**
+     * 同じ版で見積提示済み（DE-03 の再配信か、再見積りの後の新しい見積りの提示。Bolt 11 レビュー R-25）か、同じ版で経路設計中
+     * （DE-16 が先に届いた後の DE-03。Bolt 12 レビュー R-04）。どれも変えなくてよい。
+     */
     private static boolean isAlreadyQuotedForVersion(TransportRequest request, QuotationPresented event) {
-        return request.status() == TransportRequestStatus.QUOTED
+        return (request.status() == TransportRequestStatus.QUOTED || request.status() == TransportRequestStatus.ROUTING)
                 && request.currentVersion().versionNo() == event.transportRequestVersionNo();
     }
 }

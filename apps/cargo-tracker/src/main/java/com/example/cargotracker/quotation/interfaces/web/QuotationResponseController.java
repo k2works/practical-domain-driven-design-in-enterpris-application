@@ -69,8 +69,7 @@ public class QuotationResponseController {
         UtcInstant now = new UtcInstant(clock.instant());
         Optional<QuotationRejection> rejection = quotation.responseRejectionAt(now);
         if (rejection.isPresent()) {
-            return redirectToDetail(
-                    parsed, PROBLEM, rejection(parsed, quotationNo, rejection.get()), redirectAttributes);
+            return rejected(parsed, quotationNo, rejection.get(), redirectAttributes);
         }
         model.addAttribute("number", parsed.text());
         model.addAttribute("quotationLabel", QuotationViews.label(parsed, quotationNo));
@@ -96,11 +95,30 @@ public class QuotationResponseController {
                         QuotationViews.label(requestedNumber, requestedNo) + " で詳細経路設計を依頼しました",
                         redirectAttributes);
             case RouteDesignRequestOutcome.Rejected(QuotationRejection reason) ->
-                redirectToDetail(parsed, PROBLEM, rejection(parsed, quotationNo, reason), redirectAttributes);
+                rejected(parsed, quotationNo, reason, redirectAttributes);
             case RouteDesignRequestOutcome.Conflict _ ->
-                redirectToDetail(parsed, PROBLEM, "他の利用者が先に更新しました。内容を確かめてください", redirectAttributes);
+                redirectToDetail(parsed, PROBLEM, "見積りが更新されました。最新の見積りを確かめてから回答してください", redirectAttributes);
             case RouteDesignRequestOutcome.NotFound _ -> throw notFound();
         };
+    }
+
+    /**
+     * 回答を受け付けなかったときに見積依頼の詳細へ戻す。回答済み（二重送信など）は、荷主の望んだ結果が成り立っているので
+     * 警告でなく結果として示す（Bolt 12 レビュー R-13）。
+     */
+    private static String rejected(
+            TransportRequestNumber number,
+            int quotationNo,
+            QuotationRejection reason,
+            RedirectAttributes redirectAttributes) {
+        if (reason == QuotationRejection.ROUTING_REQUESTED) {
+            return redirectToDetail(
+                    number,
+                    "result",
+                    QuotationViews.label(number, quotationNo) + " ですでに詳細経路設計を依頼しています",
+                    redirectAttributes);
+        }
+        return redirectToDetail(number, PROBLEM, rejection(number, quotationNo, reason), redirectAttributes);
     }
 
     /** 回答を受け付けなかった理由の、荷主向けの文言。荷主には社内の言葉（置換済み）を使わない（Bolt 11 レビュー R-33）。 */
@@ -108,8 +126,8 @@ public class QuotationResponseController {
         String subject = QuotationViews.label(number, quotationNo);
         return switch (reason) {
             case EXPIRED -> subject + " は有効期限を過ぎて失効しています。新しい見積りは担当営業にご依頼ください";
-            case REPLACED -> subject + " は新しい見積りに置き換えられました。新しい見積りをお待ちください";
-            case ROUTING_REQUESTED -> subject + " にはすでに回答しています";
+            case REPLACED -> subject + " は新しい見積りに置き換えられました。見積依頼の詳細で最新の状況をご確認ください";
+            case ROUTING_REQUESTED -> subject + " ですでに詳細経路設計を依頼しています";
             case TRANSPORT_REQUEST_NOT_QUOTING, ALREADY_QUOTED, NOT_PENDING_APPROVAL, OUTDATED_VERSION, NOT_PRESENTED ->
                 subject + " には回答できません。担当営業にご連絡ください";
         };

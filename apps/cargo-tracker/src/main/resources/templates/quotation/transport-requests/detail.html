@@ -44,12 +44,15 @@
         <!--/* 失効・置換済みは読み取り専用（Bolt 11、US-03 AC5）。置換済みは新しい見積りを準備中と、失効は有効期限と新しい見積りの依頼の
              しかたを示す（Bolt 11 レビュー R-01・R-03・R-35、D-37）。回答の画面は US-24 */-->
         <p th:if="${quotation.replaced()}" class="alert alert-info">この見積りは読み取り専用です。担当営業が新しい見積りを準備しています。提示されるまでお待ちください。</p>
-        <p th:if="${quotation.expired()}" class="alert alert-warning"
+        <!--/* 経路設計中に失効した見積りは、依頼済みのまま進めていると示し、新しい見積りの依頼を求めない（Bolt 12 レビュー R-01、D-42） */-->
+        <p th:if="${quotation.expired() and quotation.routingRequested()}" class="alert alert-warning"
+           th:text="|有効期限（${quotation.expiresAt()}）を過ぎました。詳細経路設計は依頼済みのまま進めています。料金の扱いは担当営業からご連絡します。|">有効期限（2026-10-05 21:00 Asia/Tokyo（UTC+09:00））を過ぎました。詳細経路設計は依頼済みのまま進めています。料金の扱いは担当営業からご連絡します。</p>
+        <p th:if="${quotation.expired() and !quotation.routingRequested()}" class="alert alert-warning"
            th:text="|有効期限（${quotation.expiresAt()}）を過ぎたため、この見積りは使えません（読み取り専用）。新しい見積りは担当営業にご依頼ください。|">有効期限（2026-10-05 21:00 Asia/Tokyo（UTC+09:00））を過ぎたため、この見積りは使えません（読み取り専用）。新しい見積りは担当営業にご依頼ください。</p>
         <div th:replace="~{quotation/fragments/quotation :: details(${quotation})}"></div>
         <!--/* 回答（C-05、US-24 AC1。Bolt 12）。提示済みで有効なときだけ入口を出し、詳細設計依頼済みなら依頼した日時を示す */-->
         <p th:if="${quotation.respondable()}"><a th:href="@{/customer/transport-requests/{number}/quotations/{no}/response(number=${number},no=${quotation.quotationNo()})}">見積りに回答する</a></p>
-        <p th:if="${quotation.routingRequested() and !quotation.expired()}"
+        <p th:if="${quotation.routingRequested()}"
            th:text="|${quotation.respondedAt()}にこの見積りで詳細経路設計を依頼しました。|">2026-10-06 09:30 Asia/Tokyo（UTC+09:00）にこの見積りで詳細経路設計を依頼しました。</p>
         <th:block th:unless="${#lists.isEmpty(previousQuotations)}">
             <h3>以前の見積り（読み取り専用）</h3>

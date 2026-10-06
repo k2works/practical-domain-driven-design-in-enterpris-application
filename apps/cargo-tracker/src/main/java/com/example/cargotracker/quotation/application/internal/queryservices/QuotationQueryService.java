@@ -38,7 +38,7 @@ public class QuotationQueryService {
         return transportRequestRepository
                 .findByNumber(number, shipperCompanyId)
                 .map(request -> quotationRepository.findByTransportRequestId(request.id()).stream()
-                        .filter(quotation -> quotation.presentedAt().isPresent())
+                        .filter(Quotation::isVisibleToShipper)
                         .sorted(Comparator.comparingInt(Quotation::quotationNo).reversed())
                         .toList())
                 .orElse(List.of());

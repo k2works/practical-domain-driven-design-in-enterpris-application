@@ -8,6 +8,7 @@ import com.example.cargotracker.quotation.application.internal.queryservices.Sta
 import com.example.cargotracker.quotation.application.internal.queryservices.StaffTransportRequestQueryService;
 import com.example.cargotracker.quotation.domain.model.aggregates.TransportRequest;
 import com.example.cargotracker.quotation.domain.model.entities.ReviewRecord;
+import com.example.cargotracker.quotation.domain.model.valueobjects.QuotationStatus;
 import com.example.cargotracker.quotation.domain.model.valueobjects.ReviewDecision;
 import com.example.cargotracker.quotation.domain.model.valueobjects.ReviewRejection;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestNumber;
@@ -98,6 +99,8 @@ public class TransportRequestReviewController {
                                 QuotationViews.label(summary.number(), summary.quotationNo()),
                                 "/staff/transport-requests/" + summary.number().text() + "/quotations/"
                                         + summary.quotationNo(),
+                                QuotationViews.effectiveStatus(
+                                        QuotationStatus.ROUTING_REQUESTED, summary.expiresAt(), now),
                                 TransportRequestLabels.staffDateTime(summary.requestedAt()),
                                 TransportRequestLabels.staffDateTime(summary.expiresAt())))
                         .toList());
@@ -324,10 +327,11 @@ public class TransportRequestReviewController {
      *
      * @param label 詳細設計依頼済みの見積りの表記（例: TR-2026-0001 見積 1）
      * @param path 見積り（S-04）のパス
+     * @param status 状態（表示する時刻で失効していれば「失効」。Bolt 12 レビュー R-02）
      * @param requestedAt 依頼時刻（社内の日時）
      * @param expiresAt 有効期限（社内の日時）
      */
-    public record RoutingRow(String label, String path, String requestedAt, String expiresAt) {}
+    public record RoutingRow(String label, String path, String status, String requestedAt, String expiresAt) {}
 
     /**
      * 審査画面の審査記録の 1 行（これまでの判断）。

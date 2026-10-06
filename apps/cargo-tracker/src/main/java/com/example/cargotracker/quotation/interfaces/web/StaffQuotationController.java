@@ -345,7 +345,8 @@ public class StaffQuotationController {
             return expiresAt + "を過ぎて失効しました。この見積りは読み取り専用です。";
         }
         if (quotation.status() == QuotationStatus.ROUTING_REQUESTED) {
-            return expiresAt + "を過ぎたため、この見積りは使えません。荷主が詳細経路設計を依頼済みのため、再見積りはできません。";
+            return expiresAt + "を過ぎたため、この見積りは使えません。荷主が詳細経路設計を依頼済みのため、再見積りはできません。"
+                    + "荷主と経路設計者に連絡し、扱いを決めてください（経路設計の途中の再見積りは今後の更新で入れます）。";
         }
         String action = quotation.status() == QuotationStatus.PENDING_APPROVAL ? "提示できません" : "使えません";
         return expiresAt + "を過ぎたため、この見積りは" + action + "。再見積りしてください。";

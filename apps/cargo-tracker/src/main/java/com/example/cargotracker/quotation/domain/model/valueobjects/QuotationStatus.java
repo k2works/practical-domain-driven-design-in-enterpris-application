@@ -17,5 +17,15 @@ public enum QuotationStatus {
     /** 失効（再見積りのときに有効期限を過ぎていた。終わりの状態）。 */
     EXPIRED,
     /** 置換済み（再見積りで新しい見積りに置き換えた。終わりの状態）。 */
-    REPLACED
+    REPLACED;
+
+    /** 判定時刻で失効し得るか（承認待ち・提示済み・詳細設計依頼済み。Q-INV-07）。状態を足すときはここだけを直す（Bolt 12 レビュー R-05）。 */
+    public boolean expiresByTime() {
+        return this == PENDING_APPROVAL || this == PRESENTED || this == ROUTING_REQUESTED;
+    }
+
+    /** 1 つの輸送要求に 1 つだけの見積りに数えるか（作成中と、判定時刻で失効し得る状態。Q-INV-18）。DB の部分一意インデックスと合わせる。 */
+    public boolean countsAsActive() {
+        return this == DRAFT || expiresByTime();
+    }
 }

@@ -27,5 +27,6 @@ public interface QuotationMapper {
     /** 見積提示済みの見積依頼ごとの最新の見積り（受付一覧 S-02。Bolt 11）。 */
     List<QuotedRequestSummaryRow> selectLatestOfQuotedRequests();
 
+    /** 経路設計中の見積依頼の、詳細設計依頼済みの見積りを依頼時刻の古い順に（受付一覧 S-02。Bolt 12）。 */
     List<RoutingRequestedSummaryRow> selectRoutingRequested();
 }

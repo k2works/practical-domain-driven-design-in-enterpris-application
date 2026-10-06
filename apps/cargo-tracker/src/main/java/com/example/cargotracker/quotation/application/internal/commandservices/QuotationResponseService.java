@@ -51,7 +51,7 @@ public class QuotationResponseService {
                 .findByNumber(command.number(), command.shipperCompanyId())
                 .flatMap(request ->
                         quotationRepository.findByTransportRequestIdAndNo(request.id(), command.quotationNo()))
-                .filter(quotation -> quotation.presentedAt().isPresent());
+                .filter(Quotation::isVisibleToShipper);
         if (found.isEmpty()) {
             return new RouteDesignRequestOutcome.NotFound();
         }

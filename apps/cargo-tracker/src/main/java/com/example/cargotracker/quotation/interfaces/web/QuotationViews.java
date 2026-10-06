@@ -37,10 +37,7 @@ final class QuotationViews {
 
     /** 表示する時刻で失効していれば「失効」、そうでなければ保存されている状態の表示名（社内の受付一覧 S-02 で使う）。 */
     static String effectiveStatus(QuotationStatus status, UtcInstant expiresAt, UtcInstant now) {
-        boolean open = status == QuotationStatus.PENDING_APPROVAL
-                || status == QuotationStatus.PRESENTED
-                || status == QuotationStatus.ROUTING_REQUESTED;
-        boolean expired = open && !new QuotationExpiry(expiresAt).isValidAt(now);
+        boolean expired = status.expiresByTime() && !new QuotationExpiry(expiresAt).isValidAt(now);
         return status(expired ? QuotationStatus.EXPIRED : status);
     }
 

@@ -258,7 +258,7 @@ public final class Quotation {
 
     /**
      * 判定時刻に荷主が回答できないなら、その理由（Q-INV-07・09。Bolt 12）。置換済み・失効（記録または判定時刻で）を先に見て、
-     * 次に詳細設計依頼済み（回答済み）、提示済みでないの順に見る。画面の操作の出し分けもこれを使う。
+     * そうでなければ状態に応じて、詳細設計依頼済み（回答済み）か提示済みでないかを返す。画面の操作の出し分けもこれを使う。
      *
      * @return 回答できない理由（回答できるなら空）
      */
@@ -284,11 +284,7 @@ public final class Quotation {
      */
     public boolean isExpiredAt(UtcInstant judgedAt) {
         Objects.requireNonNull(judgedAt, "judgedAt");
-        return status == QuotationStatus.EXPIRED
-                || ((status == QuotationStatus.PENDING_APPROVAL
-                                || status == QuotationStatus.PRESENTED
-                                || status == QuotationStatus.ROUTING_REQUESTED)
-                        && !expiry.isValidAt(judgedAt));
+        return status == QuotationStatus.EXPIRED || (status.expiresByTime() && !expiry.isValidAt(judgedAt));
     }
 
     /**
@@ -334,12 +330,14 @@ public final class Quotation {
         };
     }
 
+    /** 荷主に見えるか（提示した見積りだけ。承認待ちと、提示する前に置き換えた見積りは見えない。Q-INV-08。Bolt 12 レビュー R-19）。 */
+    public boolean isVisibleToShipper() {
+        return presentedAt != null;
+    }
+
     /** 作成中・承認待ち・提示済み・詳細設計依頼済みか（1 つの輸送要求に 1 つだけ。失効・置換済みは数えない。Q-INV-18）。 */
     public boolean isActive() {
-        return status == QuotationStatus.DRAFT
-                || status == QuotationStatus.PENDING_APPROVAL
-                || status == QuotationStatus.PRESENTED
-                || status == QuotationStatus.ROUTING_REQUESTED;
+        return status.countsAsActive();
     }
 
     public QuotationId id() {
