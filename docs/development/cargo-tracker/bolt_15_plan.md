@@ -7,6 +7,7 @@ status: stable
 generated: { by: anthropic/claude-opus-5-5, at: 2026-10-06T07:49:47Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-06T08:00:21Z }
+  - { by: human:kakimomokuri, at: 2026-10-06T08:16:39Z }
 ---
 
 # Bolt 15 計画 - dev プロファイルによる Heroku のデモ環境
@@ -119,6 +120,9 @@ app --> tmp
     - 開発用の利用者のボタンでログインし、輸送要求の一覧が開く
     - 起動の後と、デモの操作の後の RSS とヒープの使用量（H2）
   - `JAVA_TOOL_OPTIONS` の初期値の案: `-XX:MaxRAMPercentage=60 -XX:+UseSerialGC -Xss512k -XX:ReservedCodeCacheSize=64m -XX:MaxMetaspaceSize=192m`（値は計測で決める）
+  - 途中の結果（17:02〜17:16 JST）: Dockerfile のない状態のビルドの失敗を記録した（`failed to read dockerfile`）。bootJar だけのイメージは dev で起動に失敗した（`ClassNotFoundException: org.h2.Driver`）。H2 は `developmentOnly` で、AT-06（`verifyProductionClasspath`）が bootJar に入れないことを守っているため。確認ポイント 9 に従って止め、人に諮った（確認ポイント 13）。スクラッチの試作（bootJar を `jarmode tools extract` で展開し、H2 をクラスパスに足す）で、512 MB の制限・`PORT=5001` の下で 24 秒で起動し、メモリは 346 MiB。`X-Forwarded-Proto: https` でリダイレクトの `Location` が https のまま、開発用の利用者でログインして一覧が 200（H1 は成り立つ見込み）
+  - 確認ポイント 13 の決定で作り直す: `build.gradle` に `developmentOnly` の H2 を `build/demo-lib` に写すタスク `copyDemoLibs` を足す（版は Spring Boot の BOM のまま。bootJar と AT-06 は変えない）。Dockerfile は `build`（`bootJar copyDemoLibs` と展開）、`runtime`（H2 なし。W10 の ECR・ECS 用）、`demo`（`runtime` に H2 を足す。Heroku 用）の 3 つのステージにする。Heroku へは `--target demo --provenance=false` でビルドする（Container Registry は provenance の attestation 付きの manifest list を受けないため）
+  - 追加で確かめること: `runtime` のステージのイメージに H2 がないこと（dev で起動すると `org.h2.Driver` で失敗する）
 - [ ] **3. Heroku のアプリを作り、初回の配備をする** 【承認ゲート: 外部連携】
   - 人が `! heroku login` と `! heroku container:login` を実行する（AI はログインできない）
   - Gulp のタスクを作る（`operating-script` スキルに従う）:
@@ -178,8 +182,11 @@ Eco で R14 が続く（H2 が外れる）ときは、ここで止めて dyno �
 | 10 | GitHub Actions からの自動配備は作らない。必要になったら、W10 の CI/CD（`operating-cicd`）で AWS と一緒に決める | 3 | 外部連携の範囲を小さく保つ |
 | 11 | デモ環境の画面に「デモ環境」の表示（バナー）は出さない（アプリの変更になるため）。必要なら次の Bolt で、dev プロファイルの表示として決める | — | UI の変更をこの Bolt に入れない |
 | 12 | Heroku の CLI は 10.16.0 のまま使う（更新は求められれば人が行う）。`heroku login` は対話のため人が行う | 3 | 外部のツール |
+| 13 | （ステップ 2 で追加）dev の H2 はデモのイメージにだけ入れる。`build.gradle` に `copyDemoLibs`（`developmentOnly` の H2 を `build/demo-lib` へ）を足し、Dockerfile を `runtime`（H2 なし）と `demo`（H2 あり）のステージに分ける。bootJar と AT-06 は変えない | 2、3 | ビルドの構成の変更。本番の成果物に H2 を入れない約束（ADR-007、AT-06）を守ったまま、dev のデモを動かす |
 
 決定（2026-10-06、human:kakimomokuri）: 確認ポイント 1〜12 はすべて上の案で決まった。
+
+確認ポイント 13 は、ステップ 2 の途中で human:kakimomokuri が 3 つの案（Gradle のタスクと demo のステージ、Dockerfile だけで Maven Central から取る、デモ用の bootJar）から選び、計画の変更の承認で確定した（2026-10-06）。
 
 ## AI の仮定
 
@@ -228,6 +235,8 @@ Eco で R14 が続く（H2 が外れる）ときは、ここで止めて dyno �
 | 2026-10-06 | 初版（人の依頼で、W3 の前に dev プロファイルの Heroku のデモ環境を作る。アクセスの制限なし、Container Registry、Eco dyno、Bolt 15 は人の決定） | anthropic/claude-opus-5-5 | — |
 | 2026-10-06 | 人の決定で、アプリ名を `cargo-tracker-mono-demo` にした（確認ポイント 5） | anthropic/claude-opus-5-5 | — |
 | 2026-10-06 | 計画を承認。確認ポイント 1〜12 も決まった（Try T-6） | anthropic/claude-opus-5-5 | human:kakimomokuri |
+| 2026-10-06 | ステップ 2 の途中で、bootJar に H2 がなく dev で起動しないことが分かった。人の選択で確認ポイント 13（`copyDemoLibs` と Dockerfile の `runtime`・`demo` のステージ）を足し、ステップ 2 を直した | anthropic/claude-opus-5-5 | — |
+| 2026-10-06 | 計画の変更（確認ポイント 13、ステップ 2）を承認 | anthropic/claude-opus-5-5 | human:kakimomokuri |
 
 ## 関連ドキュメント
 
