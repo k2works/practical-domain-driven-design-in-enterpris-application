@@ -57,7 +57,7 @@ verified:
 | 入れるもの | 入れないもの |
 | :--- | :--- |
 | 実行用の `apps/cargo-tracker/Dockerfile`（マルチステージ）と `.dockerignore` | PostgreSQL（Heroku Postgres）・S3 互換のストレージ。データは永続化しない |
-| Gulp の運用タスク `heroku:*`（`ops/scripts/heroku.js`）と `gulpfile.js` への登録 | GitHub Actions からの自動配備（手元の Gulp のタスクだけ） |
+| Gulp の運用タスク `deploy:demo:*`（`ops/scripts/deploy_demo.js`。ステップ 3 で運用スクリプト作成ガイドの命名に合わせた）と `gulpfile.js` への登録 | GitHub Actions からの自動配備（手元の Gulp のタスクだけ） |
 | 手順書 `docs/operation/cargo-tracker/heroku_demo_setup.md` と運用の索引 | アクセスの制限（Basic 認証など）。人の決定で入れない |
 | ADR 013（デモ環境の位置づけ）。インフラストラクチャアーキテクチャの環境構成に 1 行足す | 独自ドメイン・TLS の証明書の設定（`herokuapp.com` のまま） |
 | Heroku のアプリの作成・Config Vars・初回の配備（人のログインの後） | アプリのコードの変更。H1 が外れたときだけ、ステップ 2 で人に諮る |
@@ -71,7 +71,7 @@ title Heroku のデモ環境（Bolt 15）
 actor "関係者" as user
 node "開発者の PC" as pc {
   artifact "Dockerfile\n(apps/cargo-tracker)" as df
-  component "npx gulp heroku:deploy" as gulp
+  component "npx gulp deploy:demo" as gulp
 }
 cloud "Heroku" {
   node "Container Registry" as reg
@@ -83,8 +83,8 @@ cloud "Heroku" {
   component "Router（TLS 終端）" as router
 }
 
-gulp --> df : docker build\n(linux/amd64)
-gulp --> reg : container:push
+gulp --> df : docker buildx build\n(linux/amd64、--target demo)
+gulp --> reg : docker push
 reg --> dyno : container:release
 user --> router : https
 router --> app : http + X-Forwarded-Proto\n$PORT
@@ -192,7 +192,7 @@ app --> tmp
 
 4 時間を超えそうなときは、次の順で次の Bolt に回す。
 
-1. `heroku:open`・`heroku:restart` のタスク（手順書に `heroku` のコマンドを書いて代える）
+1. `deploy:demo:open`・`deploy:demo:restart` のタスク（手順書に `heroku` のコマンドを書いて代える）
 2. スリープからの起動の時間の計測
 
 Eco で R14 が続く（H2 が外れる）ときは、ここで止めて dyno の種類の変更を人に諮る。
@@ -207,7 +207,7 @@ Eco で R14 が続く（H2 が外れる）ときは、ここで止めて dyno �
 | 4 | 新規ファイルは次の 6 つ: `apps/cargo-tracker/Dockerfile`、`apps/cargo-tracker/.dockerignore`、`ops/scripts/heroku.js`（ステップ 3 で、運用スクリプト作成ガイドの命名に合わせて `ops/scripts/deploy_demo.js` にした）、`docs/operation/cargo-tracker/heroku_demo_setup.md`、`docs/adr/cargo-tracker/013-heroku-demo-environment.md`、`bolt_15_report.md`。既存のリポジトリのルートの `Dockerfile`（開発用のツールのイメージ）とは別にする | 1〜5 | 新規ファイルの作成。ルートの `Dockerfile` は Ubuntu の開発環境で、実行用ではない |
 | 5 | アプリ名は `cargo-tracker-mono-demo`（2026-10-06 に human:kakimomokuri が決定。使われていたら作成の前に人に諮る）、region は `us`（Common Runtime で選べるのは `us`・`eu`。日本からの遅さはデモでは許す） | 3 | 外部の資源の名前。URL になる |
 | 6 | dyno は Eco（月 5 USD の定額で、アカウントの全 Eco dyno に共通）。費用は人の Heroku のアカウントに付く。30 分アクセスがないとスリープし、次のアクセスで起動を待つ | 3 | 費用（人の決定） |
-| 7 | データ（H2 のインメモリ、書類の `/tmp`）は dyno の再起動（1 日 1 回以上の自動の再起動、配備、スリープ）で消え、`db/dev-data` の初期状態に戻る。永続化はしない | 1、4 | データ。デモの前に `heroku:restart` で初期状態に戻せることを利点として使う |
+| 7 | データ（H2 のインメモリ、書類の `/tmp`）は dyno の再起動（1 日 1 回以上の自動の再起動、配備、スリープ）で消え、`db/dev-data` の初期状態に戻る。永続化はしない | 1、4 | データ。デモの前に `deploy:demo:restart` で初期状態に戻せることを利点として使う |
 | 8 | イメージは手元の Docker でビルドする（`linux/amd64`）。ビルドの段で `bootJar` だけを行い、テストは CI（`cargo-tracker-ci.yml`）の緑を前提にする。配備は develop の緑のコミットからだけ行うことを手順書に書く | 2、3 | 品質の担保の置き場所 |
 | 9 | アプリの設定ファイル（`application*.properties`）は変えない。Heroku 向けの値は Config Vars と起動の引数だけで渡す（H1）。H1 が外れたら（https のリダイレクトが http になるなど）、ステップ 2 で止めて人に諮る | 2 | アプリの変更をしない範囲の決定 |
 | 10 | GitHub Actions からの自動配備は作らない。必要になったら、W10 の CI/CD（`operating-cicd`）で AWS と一緒に決める | 3 | 外部連携の範囲を小さく保つ |
@@ -232,8 +232,8 @@ Eco で R14 が続く（H2 が外れる）ときは、ここで止めて dyno �
 | :--- | :--- | :--- |
 | Eco（512 MB）でメモリが足りず R14・R15 になる | 起動しない、デモの途中で落ちる | ステップ 2 で `--memory=512m` の計測をしてから送る。足りなければ人に諮る |
 | 起動に 60 秒を超えて R10（起動のタイムアウト）になる | 配備に失敗する | ステップ 2 で起動の時間を計る。Flyway と H2 の初期化の時間を見て、`-XX:TieredStopAtLevel=1` などを試す |
-| 誰でもログインでき、だれかが本物のデータや不適切なファイルを入れる | 情報の漏えい、不適切な内容の公開 | 本物のデータを入れない運用を手順書と ADR に書く。再起動で消える。問題があれば `heroku:restart` か `heroku ps:scale web=0` で止める |
-| 手元のビルドが CI と違うコミットから行われる | 未検証のコードがデモに出る | 手順書で、develop の緑のコミットから配備すると決める。`heroku:deploy` で作業ツリーに変更があれば止める |
+| 誰でもログインでき、だれかが本物のデータや不適切なファイルを入れる | 情報の漏えい、不適切な内容の公開 | 本物のデータを入れない運用を手順書と ADR に書く。再起動で消える。問題があれば `deploy:demo:restart` か `deploy:demo:stop` で止める |
+| 手元のビルドが CI と違うコミットから行われる | 未検証のコードがデモに出る | 手順書で、develop の緑のコミットから配備すると決める。`deploy:demo:build`・`push` で、作業ツリーの変更・develop の外・未 push・CI が緑でないときは止める（レビュー R-03・R-07） |
 | Heroku の費用が人の想定を超える | 費用 | Eco の定額だけを使う。手順書に費用と削除の手順を書く |
 
 ## 完了条件
@@ -244,7 +244,7 @@ Eco で R14 が続く（H2 が外れる）ときは、ここで止めて dyno �
 - [ ] `./gradlew check` と `./gradlew uiTest` がローカルと CI の両方で緑（アプリのコードは変えていない）
 - [ ] ローカルのコンテナ（`PORT=5001`、メモリ 512 MB）で起動し、https のリダイレクトとログインを確かめた
 - [ ] 公開の URL でデモ項目 1〜4 を確かめ、録画した
-- [ ] `npx gulp heroku:deploy` 1 つで配備でき、手順書のコマンドだけで状態・ログ・再起動・削除を行える
+- [ ] `npx gulp deploy:demo` 1 つで配備でき、手順書のコマンドだけで状態・ログ・再起動・停止・ロールバック・削除を行える（削除は取り消せないため、タスクにせず手順書の `heroku apps:destroy` で人が行う）
 - [ ] ADR 013 と手順書に、dev で動かすこと・アクセスの制限がないこと・データが消えること・本物のデータを入れないことが書かれている
 - [ ] 運用レビューを行い、指摘への対応を終了報告に書いた
 - [ ] `bolt_15_report.md` に仮説 H1〜H3 の結論、メモリと起動の時間の計測値、所要時間を書いた
@@ -256,8 +256,8 @@ Eco で R14 が続く（H2 が外れる）ときは、ここで止めて dyno �
 | :--- | :--- | :--- |
 | 1 | 公開の URL を開き、荷主担当者の開発用の利用者を選んでログインする | https のまま A-01 から荷主のホームへ移る |
 | 2 | 荷主担当者が輸送要求を提出し、営業担当者に切り替えて審査・見積りの提示をする | ローカルの `bootRun` と同じ流れが通る |
-| 3 | `npx gulp heroku:restart` の後に開き直す | データが初期状態に戻る |
-| 4 | `npx gulp heroku:status`・`heroku:logs` | dyno の状態、release、ログに R14 がない |
+| 3 | `npx gulp deploy:demo:restart` の後に開き直す | データが初期状態に戻る |
+| 4 | `npx gulp deploy:demo:status`・`deploy:demo:logs` | dyno の状態、release、ログに R14 がない |
 
 ## 更新履歴
 

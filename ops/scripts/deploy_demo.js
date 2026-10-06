@@ -18,6 +18,10 @@ const DYNO_TYPE = process.env.DEMO_HEROKU_DYNO_TYPE || 'eco';
 const APP_DIR = path.join(process.cwd(), 'apps', 'cargo-tracker');
 const IMAGE = `registry.heroku.com/${APP}/web`;
 const CI_WORKFLOW = 'cargo-tracker-ci.yml';
+/** 配備してよいブランチ（ADR-013 の運用の約束） */
+const DEPLOY_BRANCH = 'develop';
+/** イメージに付けるコミットの SHA のラベル（OCI の注釈） */
+const REVISION_LABEL = 'org.opencontainers.image.revision';
 
 /**
  * Config Vars。プロファイルは dev だけにする（staging・prod を混ぜない。ADR-013 のコンプライアンス）。
@@ -79,34 +83,72 @@ function appExists() {
 }
 
 /**
- * 配備してよいコミットかを確かめる。作業ツリーに変更がなく、アプリの最後の変更のコミットの CI が緑であること。
- * 確かめを飛ばすときは DEMO_SKIP_GUARD=1 を付ける（手順書に理由を残す）
+ * 配備してよいコミットかを確かめる（ADR-013 の運用の約束。Bolt 15 レビュー R-03・R-07）。
+ * - 作業ツリーに変更がない
+ * - develop にいて、HEAD が origin/develop に含まれる（push 済み）
+ * - アプリを最後に変えたコミットの、develop での CI が緑
+ * 確かめを飛ばすときは DEMO_SKIP_GUARD=1 を付け、理由を終了報告かジャーナルに書く（R-25）
  */
 function requireDeployableCommit() {
   if (process.env.DEMO_SKIP_GUARD === '1') {
-    console.warn('DEMO_SKIP_GUARD=1: 作業ツリーと CI の確かめを飛ばします');
+    console.warn('DEMO_SKIP_GUARD=1: 作業ツリー・ブランチ・CI の確かめを飛ばします。理由を終了報告かジャーナルに書いてください');
     return;
   }
   if (capture('git status --porcelain')) {
     throw new Error('作業ツリーに変更があります。コミットしてから配備してください');
   }
+  const branch = capture('git rev-parse --abbrev-ref HEAD');
+  if (branch !== DEPLOY_BRANCH) {
+    throw new Error(`${DEPLOY_BRANCH} から配備してください（いまは ${branch}）`);
+  }
+  capture(`git fetch --quiet origin ${DEPLOY_BRANCH}`);
+  try {
+    capture(`git merge-base --is-ancestor HEAD origin/${DEPLOY_BRANCH}`);
+  } catch {
+    throw new Error(`HEAD が origin/${DEPLOY_BRANCH} にありません。push して CI を待ってから配備してください`);
+  }
   // CI はアプリの変更でだけ動くため、アプリを最後に変えたコミットの結果を見る
   const sha = capture('git log -1 --format=%H -- apps/cargo-tracker .github/workflows/cargo-tracker-ci.yml');
   const conclusion = capture(
-    `gh run list --workflow ${CI_WORKFLOW} --commit ${sha} --limit 1 --json conclusion --jq '.[0].conclusion // "none"'`,
+    `gh run list --workflow ${CI_WORKFLOW} --branch ${DEPLOY_BRANCH} --commit ${sha} --limit 1 ` +
+      `--json conclusion --jq '.[0].conclusion // "none"'`,
   );
   if (conclusion !== 'success') {
     throw new Error(`アプリの最後の変更 ${sha.slice(0, 8)} の CI が緑ではありません（${conclusion}）`);
   }
-  console.log(`CI: ${sha.slice(0, 8)} は success`);
+  console.log(`CI: ${sha.slice(0, 8)} は success（${DEPLOY_BRANCH}）`);
 }
 
 /**
- * デモのアプリの URL を返す
+ * HEAD のコミットの SHA を返す
+ * @returns {string}
+ */
+function headRevision() {
+  return capture('git rev-parse HEAD');
+}
+
+/**
+ * 手元のデモのイメージに付いたコミットの SHA を返す。イメージがなければ空文字
+ * @returns {string}
+ */
+function imageRevision() {
+  try {
+    return capture(`docker image inspect ${IMAGE} --format '{{index .Config.Labels "${REVISION_LABEL}"}}'`);
+  } catch {
+    return '';
+  }
+}
+
+/**
+ * デモのアプリの URL を返す。取れなければ案内して止める
  * @returns {string}
  */
 function webUrl() {
-  return capture(`heroku apps:info -a ${APP} --json`).match(/"web_url":\s*"([^"]+)"/)[1];
+  const url = JSON.parse(capture(`heroku apps:info -a ${APP} --json`))?.app?.web_url;
+  if (!url) {
+    throw new Error(`アプリ ${APP} の URL が取れません。\`npx gulp deploy:demo:setup\` でアプリを作ったか確かめてください`);
+  }
+  return url;
 }
 
 // ============================================
@@ -126,6 +168,8 @@ export default function (gulp) {
       .map(([key, value]) => `${key}="${value}"`)
       .join(' ');
     run(`heroku config:set ${vars} -a ${APP}`);
+    // メモリの値（sample#memory_total）をログに出す。R14 の判断に使う（R-17）
+    run(`heroku labs:enable log-runtime-metrics -a ${APP}`);
     done();
   });
 
@@ -139,21 +183,37 @@ export default function (gulp) {
     requireDeployableCommit();
     run(
       `docker buildx build --platform linux/amd64 --provenance=false --sbom=false --target demo ` +
+        `--label ${REVISION_LABEL}=${headRevision()} ` +
         `--output type=image,name=${IMAGE},oci-mediatypes=false ${APP_DIR}`,
     );
     done();
   });
 
+  // 単独で動かしても未検証のイメージを送らないよう、ここでも確かめる。手元のイメージが HEAD から作ったものであること（R-03）
   gulp.task('deploy:demo:push', (done) => {
     requireHerokuLogin();
-    run(`docker push ${IMAGE}`);
+    requireDeployableCommit();
+    const revision = imageRevision();
+    if (process.env.DEMO_SKIP_GUARD !== '1' && revision !== headRevision()) {
+      throw new Error(`手元のイメージ（${revision.slice(0, 8) || 'なし'}）が HEAD から作ったものではありません。deploy:demo:build を先に実行してください`);
+    }
+    try {
+      run(`docker push ${IMAGE}`);
+    } catch (error) {
+      throw new Error(`push に失敗しました。\`heroku container:login\` をしたか確かめてください（${error.message}）`);
+    }
     done();
   });
 
+  // release の後に、動いているコミットを Config Vars の DEMO_REVISION に残す（R-04。config:set で再起動が 1 回増える）
   gulp.task('deploy:demo:release', (done) => {
     requireHerokuLogin();
+    const revision = imageRevision();
     run(`heroku container:release web -a ${APP}`);
     run(`heroku ps:type web=${DYNO_TYPE} -a ${APP}`);
+    if (revision) {
+      run(`heroku config:set DEMO_REVISION=${revision} -a ${APP}`);
+    }
     done();
   });
 
@@ -164,6 +224,7 @@ export default function (gulp) {
     run(`heroku ps -a ${APP}`);
     run(`heroku releases -n 5 -a ${APP}`);
     run(`heroku config:get SPRING_PROFILES_ACTIVE -a ${APP}`);
+    console.log(`動いているコミット（DEMO_REVISION）: ${capture(`heroku config:get DEMO_REVISION -a ${APP}`) || '不明'}`);
     console.log(`URL: ${webUrl()}`);
     done();
   });

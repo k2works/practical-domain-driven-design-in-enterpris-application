@@ -177,8 +177,9 @@ tasks.register('playwrightInstall', JavaExec) {
 }
 
 // Heroku のデモ環境（ADR-013）は dev プロファイルで動かすため、Dockerfile の demo のステージで H2 をクラスパスに足す。
-// bootJar（本番の成果物）には入れない（AT-06）。版は developmentOnly と同じく Spring Boot の BOM で決まる。devtools は写さない
-tasks.register('copyDemoLibs', Copy) {
+// bootJar（本番の成果物）には入れない（AT-06）。版は developmentOnly と同じく Spring Boot の BOM で決まる。devtools は写さない。
+// Sync にして、版を上げたときに古い jar を残さない（Bolt 15 レビュー R-19）
+tasks.register('copyDemoLibs', Sync) {
 	group = 'distribution'
 	description = 'デモのイメージ用に、developmentOnly の H2 を build/demo-lib に写す（ADR-013）'
 	from(configurations.developmentOnly.incoming.artifactView {
