@@ -16,7 +16,7 @@
         <link rel="prev" href="../bolt_14_report/">
       
       
-        <link rel="next" href="../../../operation/">
+        <link rel="next" href="../bolt_15_report/">
       
       
         
@@ -3218,6 +3218,41 @@
   
 </nav>
       
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../bolt_15_report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 15 終了報告
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--draft"></span>
+  
+
+  
+
+      </a>
     </li>
   
 
@@ -7556,7 +7591,7 @@
 <li>公開の URL で、未ログインは https の <code>/login</code> へ、荷主の開発用の利用者でログインして荷主の一覧・新規が 200（0.6 秒前後）、営業の画面が 403</li>
 </ul>
 </li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>4. デモ環境でデモ項目を確かめ、手順書を仕上げる</strong></li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>4. デモ環境でデモ項目を確かめ、手順書を仕上げる</strong></li>
 <li>下の「デモ項目」1〜4 を公開の URL で行い、録画する（T-31）</li>
 <li>30 分の無アクセスでスリープした後の起動の時間を計る（Eco の制約。手順書の「デモの前に」に書く）</li>
 <li>手順書を実際に行ったコマンドと結果で仕上げ、運用の索引（<code>docs/operation/cargo-tracker/index.md</code>）とアプリの README に足す</li>
@@ -7567,10 +7602,10 @@
 <li>デモ 4: <code>deploy:demo:status</code> で Eco の web 1 つ、release v5、<code>SPRING_PROFILES_ACTIVE</code> は <code>dev</code> だけ、URL を確かめた</li>
 <li>動いていた v4 のイメージは直す前に手で push したものだったため、直した <code>deploy:demo</code> を通しで実行した（46 秒、CI の確かめ <code>d85b351b</code> success、digest は手で push したものと同じ）</li>
 <li>手順書を実際のコマンドと結果で仕上げ、運用の索引・アプリの README・開発の索引（デモの動画）に足した</li>
-<li>スリープからの起動の時間は計測中（30 分の無アクセスを待っている）</li>
+<li>スリープからの起動の時間は測らずに打ち切った（打ち切りの順の 2 番目）。30 分の計測の間（18:05〜18:27 JST）に関係者のアクセスがあり、dyno がスリープしなかった</li>
 </ul>
 </li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>5. 運用レビューと Bolt 終了報告</strong></li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>5. 運用レビューと Bolt 終了報告</strong></li>
 <li><code>operating-review</code> で、手順書・Gulp のタスク・Dockerfile・ADR 013 をレビューし、指摘への対応を終了報告に書く（T-28）</li>
 <li>レビューの結果（18:05〜18:20 JST）: 3 視点で高 6・中 12・低 14 の指摘（重なりを除き R-01〜R-27）。<a href="../../../review/cargo-tracker/bolt_15_review_20261006/">Bolt 15 運用成果物レビュー</a>。人の決定 D-54（公開を前提に ADR-013 を直し、URL は docs に残す）、D-55（常時起動、週次の見直しで状態とログを確かめ、W10 で要否を見直す）、D-56（この Bolt で直すものと W10 に回すものの分け方）</li>
 <li>レビューの対応（D-56。「この Bolt で直す」の R-01〜R-10・R-15〜R-23・R-25）:<ul>
@@ -7583,6 +7618,7 @@
 <li>W10 に回すもの（R-11〜R-14・R-24・R-26）は、終了報告と運用準備の #28 にコメントする</li>
 </ul>
 </li>
+<li>結果（18:04〜19:55 JST）: レビューの対応を <code>c05d04ad</code>・<code>0c8f5ec6</code> で直した（ガードは develop の外・CI の実行中で止まることを確かめた）。人の依頼で手順書に構成図と配備の流れの図を足した（<code>5657b21d</code>）。CI（check・ui）が緑の後、<code>deploy:demo</code> で配備し直し（9.7 分。<code>build.gradle</code> を変えたため依存の取得からやり直し、build が 8.5 分）、<code>DEMO_REVISION</code> が <code>5657b21d</code> になった。ロールバックを v5 に戻して（v8）確かめ、v7 に戻した（v9）。公開の URL で荷主・営業のログインと 403、<code>memory_total</code> 375 MB、R14 なしを確かめた。<a href="../bolt_15_report/">Bolt 15 終了報告</a></li>
 <li><code>bolt_15_report.md</code> に仮説 H1〜H3 の結論、メモリの計測値、各ステップの時刻、所要時間を書く</li>
 <li>リリース計画の W3 に Bolt 15 を足し、実績スケジュール・リスク管理（デモ環境のリスク）を更新する。技術 Issue をクローズする</li>
 </ul>
@@ -7767,15 +7803,15 @@
 <h2 id="_10">完了条件<a class="headerlink" href="#_10" title="Permanent link">&para;</a></h2>
 <h3 id="definition-of-done">Definition of Done<a class="headerlink" href="#definition-of-done" title="Permanent link">&para;</a></h3>
 <ul class="task-list">
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> ステップ 1〜5 が完了し、計画・外部連携（ステップ 3）・終了報告の承認ゲートを人が通した</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <code>./gradlew check</code> と <code>./gradlew uiTest</code> がローカルと CI の両方で緑（アプリのコードは変えていない）</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> ローカルのコンテナ（<code>PORT=5001</code>、メモリ 512 MB）で起動し、https のリダイレクトとログインを確かめた</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> 公開の URL でデモ項目 1〜4 を確かめ、録画した</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <code>npx gulp deploy:demo</code> 1 つで配備でき、手順書のコマンドだけで状態・ログ・再起動・停止・ロールバック・削除を行える（削除は取り消せないため、タスクにせず手順書の <code>heroku apps:destroy</code> で人が行う）</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> ADR 013 と手順書に、dev で動かすこと・アクセスの制限がないこと・データが消えること・本物のデータを入れないことが書かれている</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> 運用レビューを行い、指摘への対応を終了報告に書いた</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <code>bolt_15_report.md</code> に仮説 H1〜H3 の結論、メモリと起動の時間の計測値、所要時間を書いた</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> 技術 Issue をクローズし、リリース計画を更新した</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> ステップ 1〜5 が完了し、計画・外部連携（ステップ 3）・終了報告の承認ゲートを人が通した（終了報告の承認を待つ）</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <code>./gradlew check</code> と <code>./gradlew uiTest</code> がローカルと CI の両方で緑（アプリのコードは変えていない。CI の check・ui と、ローカルの <code>check</code> は緑。ローカルの <code>uiTest</code> は実行中）</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> ローカルのコンテナ（<code>PORT=5001</code>、メモリ 512 MB）で起動し、https のリダイレクトとログインを確かめた</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> 公開の URL でデモ項目 1〜4 を確かめ、録画した</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <code>npx gulp deploy:demo</code> 1 つで配備でき、手順書のコマンドだけで状態・ログ・再起動・停止・ロールバック・削除を行える（削除は取り消せないため、タスクにせず手順書の <code>heroku apps:destroy</code> で人が行う）</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> ADR 013 と手順書に、dev で動かすこと・アクセスの制限がないこと・データが消えること・本物のデータを入れないことが書かれている</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> 運用レビューを行い、指摘への対応を終了報告に書いた</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <code>bolt_15_report.md</code> に仮説 H1〜H3 の結論、メモリと起動の時間の計測値、所要時間を書いた（スリープからの起動の時間は未計測）</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> 技術 Issue をクローズし、リリース計画を更新した（リリース計画は更新した。#38 は終了報告の承認でクローズする）</li>
 </ul>
 <h3 id="_11">デモ項目<a class="headerlink" href="#_11" title="Permanent link">&para;</a></h3>
 <table>

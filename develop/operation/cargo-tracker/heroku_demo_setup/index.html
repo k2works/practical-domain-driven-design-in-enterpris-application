@@ -2940,6 +2940,41 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../development/cargo-tracker/bolt_15_report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 15 終了報告
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--draft"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -7393,7 +7428,7 @@ heroku<span class="w"> </span>container:login
 <li>ビルドの context は作業ツリーの <code>apps/cargo-tracker</code> です。gitignore されたファイルは作業ツリーの確かめに出ないまま、<code>src/</code> の下にあればイメージに入ります。手元だけのファイルを <code>src/</code> に置かないでください（W10 で <code>git archive</code> からの context を検討します）。</li>
 <li>確かめを飛ばすときだけ <code>DEMO_SKIP_GUARD=1</code> を付けます。使ったら、理由を Bolt の終了報告かジャーナルに書きます。</li>
 </ul>
-<p>所要時間の目安は、依存のキャッシュがあれば 1 分弱です（初回のビルドは 3〜4 分）。</p>
+<p>所要時間の目安は、依存のキャッシュがあれば 1 分前後です。初回と、<code>build.gradle</code> を変えた後は、依存の取得からやり直すため 4〜9 分かかります（Bolt 15 で <code>build.gradle</code> を変えた後の build は 8.5 分）。</p>
 <h2 id="4">4. 確認<a class="headerlink" href="#4" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code>npx<span class="w"> </span>gulp<span class="w"> </span>deploy:demo:status<span class="w">   </span><span class="c1"># dyno・release・プロファイル（dev だけ）・URL</span>
 npx<span class="w"> </span>gulp<span class="w"> </span>deploy:demo:open<span class="w">     </span><span class="c1"># ブラウザで開く</span>
@@ -7457,7 +7492,7 @@ npx<span class="w"> </span>gulp<span class="w"> </span>deploy:demo:open
 <div class="highlight"><pre><span></span><code>heroku<span class="w"> </span>releases<span class="w"> </span>-a<span class="w"> </span>cargo-tracker-mono-demo
 heroku<span class="w"> </span>rollback<span class="w"> </span>v&lt;番号&gt;<span class="w"> </span>-a<span class="w"> </span>cargo-tracker-mono-demo
 </code></pre></div>
-<p><code>heroku rollback</code> は Config Vars も含めてその release の状態に戻します。戻した後の <code>DEMO_REVISION</code> は、その release の値です。<code>rollback</code> で戻せないとき（イメージが Registry から消えているなど）は、戻したいコミットを develop で作り直して <code>deploy:demo</code> で配備します（<code>git revert</code> で develop を戻すのが基本です。ガードは develop の CI が緑のコミットだけを通します）。</p>
+<p><code>heroku rollback</code> は、イメージと Config Vars をその release の状態に戻した新しい release を作ります。戻した後の <code>DEMO_REVISION</code> は、その release の値です（<code>DEMO_REVISION</code> を足す前の release に戻すと空になります）。Bolt 15 で、v7 から v5 に戻して起動とログインの画面を確かめ、v7 に戻しました（v8・v9）。<code>rollback</code> で戻せないとき（イメージが Registry から消えているなど）は、戻したいコミットを develop で作り直して <code>deploy:demo</code> で配備します（<code>git revert</code> で develop を戻すのが基本です。ガードは develop の CI が緑のコミットだけを通します）。</p>
 <h2 id="8">8. 停止と削除<a class="headerlink" href="#8" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code>npx<span class="w"> </span>gulp<span class="w"> </span>deploy:demo:stop<span class="w">     </span><span class="c1"># dyno を 0 にする（公開と Eco の時間の消費を止める）</span>
 npx<span class="w"> </span>gulp<span class="w"> </span>deploy:demo:start<span class="w">    </span><span class="c1"># dyno を 1 に戻す</span>
