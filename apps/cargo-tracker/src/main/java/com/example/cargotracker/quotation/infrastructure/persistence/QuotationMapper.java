@@ -26,4 +26,6 @@ public interface QuotationMapper {
 
     /** 見積提示済みの見積依頼ごとの最新の見積り（受付一覧 S-02。Bolt 11）。 */
     List<QuotedRequestSummaryRow> selectLatestOfQuotedRequests();
+
+    List<RoutingRequestedSummaryRow> selectRoutingRequested();
 }

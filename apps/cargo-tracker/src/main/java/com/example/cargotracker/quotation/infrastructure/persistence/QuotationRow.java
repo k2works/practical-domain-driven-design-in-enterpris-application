@@ -23,4 +23,7 @@ public record QuotationRow(
         OffsetDateTime internalApprovedAt,
         OffsetDateTime presentedAt,
         UUID replacedByQuotationId,
+        String shipperResponse,
+        UUID respondedBy,
+        OffsetDateTime respondedAt,
         long version) {}

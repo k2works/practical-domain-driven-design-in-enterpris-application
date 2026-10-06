@@ -40,6 +40,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class MyBatisQuotationRepository implements QuotationRepository {
 
     private static final String VIA_SEPARATOR = ",";
+    private static final String PROCEED = "PROCEED";
 
     private final QuotationMapper mapper;
 
@@ -95,7 +96,13 @@ public class MyBatisQuotationRepository implements QuotationRepository {
 
     @Override
     public List<RoutingRequestedSummary> findRoutingRequestedSummaries() {
-        return List.of();
+        return mapper.selectRoutingRequested().stream()
+                .map(row -> new RoutingRequestedSummary(
+                        TransportRequestNumber.parse(row.requestNumber()),
+                        row.quotationNo(),
+                        toUtc(row.respondedAt()),
+                        toUtc(row.expiresAt())))
+                .toList();
     }
 
     @Override
@@ -143,6 +150,13 @@ public class MyBatisQuotationRepository implements QuotationRepository {
                         .map(MyBatisQuotationRepository::toOffset)
                         .orElse(null),
                 quotation.replacedBy().map(QuotationId::value).orElse(null),
+                // 荷主の回答は、Bolt 12 では詳細経路設計へ進む（PROCEED）だけ。辞退（DECLINED）は US-24 AC2 で足す
+                quotation.respondedBy().map(_ -> PROCEED).orElse(null),
+                quotation.respondedBy().map(UserId::value).orElse(null),
+                quotation
+                        .respondedAt()
+                        .map(MyBatisQuotationRepository::toOffset)
+                        .orElse(null),
                 version);
     }
 
@@ -170,11 +184,11 @@ public class MyBatisQuotationRepository implements QuotationRepository {
                 basis,
                 row.expiresAt() == null ? null : new QuotationExpiry(toUtc(row.expiresAt())),
                 policy,
-                row.internalApprovedBy() == null ? null : new UserId(row.internalApprovedBy()),
-                row.presentedAt() == null ? null : toUtc(row.presentedAt()),
+                userIdOrNull(row.internalApprovedBy()),
+                utcOrNull(row.presentedAt()),
                 row.replacedByQuotationId() == null ? null : new QuotationId(row.replacedByQuotationId()),
-                null,
-                null,
+                userIdOrNull(row.respondedBy()),
+                utcOrNull(row.respondedAt()),
                 row.version());
     }
 
@@ -194,5 +208,13 @@ public class MyBatisQuotationRepository implements QuotationRepository {
 
     private static UtcInstant toUtc(OffsetDateTime value) {
         return new UtcInstant(value.toInstant());
+    }
+
+    private static UtcInstant utcOrNull(OffsetDateTime value) {
+        return value == null ? null : toUtc(value);
+    }
+
+    private static UserId userIdOrNull(UUID value) {
+        return value == null ? null : new UserId(value);
     }
 }

@@ -19,6 +19,9 @@
             <arg column="internal_approved_at" name="internalApprovedAt" javaType="java.time.OffsetDateTime"/>
             <arg column="presented_at" name="presentedAt" javaType="java.time.OffsetDateTime"/>
             <arg column="replaced_by_quotation_id" name="replacedByQuotationId" javaType="java.util.UUID"/>
+            <arg column="shipper_response" name="shipperResponse" javaType="String"/>
+            <arg column="responded_by" name="respondedBy" javaType="java.util.UUID"/>
+            <arg column="responded_at" name="respondedAt" javaType="java.time.OffsetDateTime"/>
             <arg column="version" name="version" javaType="_long"/>
         </constructor>
     </resultMap>
@@ -38,10 +41,12 @@
         INSERT INTO quotation.quotation
             (id, transport_request_id, quotation_no, transport_request_version_no, status, expires_at, total_amount,
              currency, route_policy_via, route_policy_departure_at, route_policy_arrival_at, internal_approved_by,
-             internal_approved_at, presented_at, replaced_by_quotation_id, version)
+             internal_approved_at, presented_at, replaced_by_quotation_id, shipper_response, responded_by, responded_at,
+             version)
         VALUES (#{id}, #{transportRequestId}, #{quotationNo}, #{transportRequestVersionNo}, #{status}, #{expiresAt},
                 #{totalAmount}, #{currency}, #{routePolicyVia}, #{routePolicyDepartureAt}, #{routePolicyArrivalAt},
-                #{internalApprovedBy}, #{internalApprovedAt}, #{presentedAt}, #{replacedByQuotationId}, #{version})
+                #{internalApprovedBy}, #{internalApprovedAt}, #{presentedAt}, #{replacedByQuotationId},
+                #{shipperResponse}, #{respondedBy}, #{respondedAt}, #{version})
     </insert>
 
     <insert id="insertPricingLine">
@@ -59,14 +64,16 @@
                route_policy_arrival_at = #{row.routePolicyArrivalAt},
                internal_approved_by = #{row.internalApprovedBy}, internal_approved_at = #{row.internalApprovedAt},
                presented_at = #{row.presentedAt}, replaced_by_quotation_id = #{row.replacedByQuotationId},
-               version = version + 1
+               shipper_response = #{row.shipperResponse}, responded_by = #{row.respondedBy},
+               responded_at = #{row.respondedAt}, version = version + 1
          WHERE id = #{row.id} AND version = #{expectedVersion}
     </update>
 
     <select id="selectByTransportRequestId" resultMap="quotationRow">
         SELECT id, transport_request_id, quotation_no, transport_request_version_no, status, expires_at, total_amount,
                currency, route_policy_via, route_policy_departure_at, route_policy_arrival_at, internal_approved_by,
-               internal_approved_at, presented_at, replaced_by_quotation_id, version
+               internal_approved_at, presented_at, replaced_by_quotation_id, shipper_response, responded_by,
+               responded_at, version
           FROM quotation.quotation
          WHERE transport_request_id = #{transportRequestId}
          ORDER BY quotation_no
@@ -92,6 +99,25 @@
                                    FROM quotation.quotation latest
                                   WHERE latest.transport_request_id = r.id)
          ORDER BY q.expires_at, r.request_number
+    </select>
+
+    <resultMap id="routingRequestedSummaryRow" type="com.example.cargotracker.quotation.infrastructure.persistence.RoutingRequestedSummaryRow">
+        <constructor>
+            <arg column="request_number" name="requestNumber" javaType="String"/>
+            <arg column="quotation_no" name="quotationNo" javaType="_int"/>
+            <arg column="responded_at" name="respondedAt" javaType="java.time.OffsetDateTime"/>
+            <arg column="expires_at" name="expiresAt" javaType="java.time.OffsetDateTime"/>
+        </constructor>
+    </resultMap>
+
+    <!-- 経路設計中の見積依頼の、詳細設計依頼済みの見積り（受付一覧 S-02。Bolt 12）。依頼時刻の古い順 -->
+    <select id="selectRoutingRequested" resultMap="routingRequestedSummaryRow">
+        SELECT r.request_number, q.quotation_no, q.responded_at, q.expires_at
+          FROM quotation.transport_request r
+          JOIN quotation.quotation q ON q.transport_request_id = r.id
+         WHERE r.status = 'ROUTING'
+           AND q.status = 'ROUTING_REQUESTED'
+         ORDER BY q.responded_at, r.request_number
     </select>
 
     <select id="selectPricingLinesByTransportRequestId" resultMap="pricingLineRow">
