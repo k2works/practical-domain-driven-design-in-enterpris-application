@@ -75,6 +75,28 @@ class DevLoginPrefillTest {
         @Autowired
         MockMvc mockMvc;
 
+        @Autowired
+        MutableClock clock;
+
+        @Autowired
+        SpikeUsers users;
+
+        @Test
+        void 認証コードの画面にコードは入らない() throws Exception {
+            clock.set(NOW);
+            users.reset();
+            MockHttpSession session = new MockHttpSession();
+            mockMvc.perform(post("/login")
+                    .session(session)
+                    .with(csrf())
+                    .param("username", SpikeUsers.SHIPPER)
+                    .param("password", SpikeUsers.PASSWORD));
+
+            mockMvc.perform(get("/login/totp").session(session))
+                    .andExpect(content().string(containsString("name=\"code\"")))
+                    .andExpect(content().string(not(containsString(users.currentCode(SpikeUsers.SHIPPER, NOW)))));
+        }
+
         @Test
         void ログインの画面は空で出る() throws Exception {
             mockMvc.perform(get("/login"))
@@ -82,5 +104,17 @@ class DevLoginPrefillTest {
                     .andExpect(content().string(not(containsString(SpikeUsers.SHIPPER))))
                     .andExpect(content().string(not(containsString(SpikeUsers.PASSWORD))));
         }
+    }
+
+    @Test
+    void 開発環境のプロファイルでないのに入力済みの設定があると起動しない() {
+        org.springframework.boot.SpringApplication application = new org.springframework.boot.SpringApplication(SpikeApplication.class);
+        application.setDefaultProperties(java.util.Map.of(
+                "cargotracker.dev-login.username", SpikeUsers.SHIPPER, "server.port", "0"));
+
+        org.assertj.core.api.Assertions.assertThatThrownBy(application::run)
+                .hasRootCauseInstanceOf(IllegalStateException.class)
+                .rootCause()
+                .hasMessageContaining("dev");
     }
 }

@@ -23,6 +23,7 @@ import org.springframework.stereotype.Component;
 public class SpikeUsers implements UserDetailsService {
 
     public static final String SHIPPER = "shipper@example.com";
+    public static final String STAFF = "staff@example.com";
     public static final String PASSWORD = "correct horse battery staple";
 
     /** 開発用の固定の TOTP の秘密（スパイクと開発環境だけ。本体では利用者ごとに生成して暗号化して保存する）。 */
