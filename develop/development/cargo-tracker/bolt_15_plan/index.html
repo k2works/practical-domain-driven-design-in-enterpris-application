@@ -7446,7 +7446,7 @@
 <li>インフラストラクチャアーキテクチャの環境構成に、デモ環境（Heroku、dev、永続化なし）を 1 行足す</li>
 <li>GitHub に技術 Issue を立て、Project のフィールド（リリース・週・Unit なし・SP 0）を設定する</li>
 <li>結果（17:00〜17:05 JST）: ADR-013（提案）、手順書の骨組み、インフラストラクチャアーキテクチャの環境構成のデモの行、ADR・運用・開発の索引と <code>mkdocs.yml</code>。<a href="https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/38">#38</a> を立て、Project に Release 0.1・W3・横断・SP 0・In Progress を設定した（Unit は「なし」の値がないため「横断」）。<code>okf:check</code> は ERROR 0</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>2. 実行用の Dockerfile を作り、ローカルのコンテナで起動を確かめる</strong></li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>2. 実行用の Dockerfile を作り、ローカルのコンテナで起動を確かめる</strong></li>
 <li><code>apps/cargo-tracker/Dockerfile</code>: ビルドの段は <code>eclipse-temurin:25-jdk</code> で <code>./gradlew bootJar</code>（テストは CI に任せて飛ばす）、実行の段は <code>eclipse-temurin:25-jre</code>。root でない利用者で動かし、<code>server.port=${PORT:8080}</code> を起動の引数で渡す</li>
 <li><code>.dockerignore</code>: <code>build/</code>・<code>.gradle/</code>・IDE の設定を除く</li>
 <li>確かめること（Red の代わりに、まず Dockerfile のない状態で起動の確認のコマンドが失敗することを記録する）:<ul>
@@ -7457,6 +7457,19 @@
 </ul>
 </li>
 <li><code>JAVA_TOOL_OPTIONS</code> の初期値の案: <code>-XX:MaxRAMPercentage=60 -XX:+UseSerialGC -Xss512k -XX:ReservedCodeCacheSize=64m -XX:MaxMetaspaceSize=192m</code>（値は計測で決める）</li>
+<li>途中の結果（17:02〜17:16 JST）: Dockerfile のない状態のビルドの失敗を記録した（<code>failed to read dockerfile</code>）。bootJar だけのイメージは dev で起動に失敗した（<code>ClassNotFoundException: org.h2.Driver</code>）。H2 は <code>developmentOnly</code> で、AT-06（<code>verifyProductionClasspath</code>）が bootJar に入れないことを守っているため。確認ポイント 9 に従って止め、人に諮った（確認ポイント 13）。スクラッチの試作（bootJar を <code>jarmode tools extract</code> で展開し、H2 をクラスパスに足す）で、512 MB の制限・<code>PORT=5001</code> の下で 24 秒で起動し、メモリは 346 MiB。<code>X-Forwarded-Proto: https</code> でリダイレクトの <code>Location</code> が https のまま、開発用の利用者でログインして一覧が 200（H1 は成り立つ見込み）</li>
+<li>確認ポイント 13 の決定で作り直す: <code>build.gradle</code> に <code>developmentOnly</code> の H2 を <code>build/demo-lib</code> に写すタスク <code>copyDemoLibs</code> を足す（版は Spring Boot の BOM のまま。bootJar と AT-06 は変えない）。Dockerfile は <code>build</code>（<code>bootJar copyDemoLibs</code> と展開）、<code>runtime</code>（H2 なし。W10 の ECR・ECS 用）、<code>demo</code>（<code>runtime</code> に H2 を足す。Heroku 用）の 3 つのステージにする。Heroku へは <code>--target demo --provenance=false</code> でビルドする（Container Registry は provenance の attestation 付きの manifest list を受けないため）</li>
+<li>追加で確かめること: <code>runtime</code> のステージのイメージに H2 がないこと（dev で起動すると <code>org.h2.Driver</code> で失敗する）</li>
+<li>結果（17:16〜17:35 JST）:<ul>
+<li>Red: <code>copyDemoLibs</code> がない状態で <code>Task 'copyDemoLibs' not found</code>。足した後、<code>build/demo-lib</code> は <code>h2-2.4.240.jar</code> だけ（devtools は写らない）</li>
+<li><code>runtime</code> のイメージは dev で起動に失敗した（<code>ClassNotFoundException: org.h2.Driver</code>。14 秒で停止）。H2 が入っていないことを確かめた</li>
+<li><code>demo</code> のイメージは、512 MB の制限・<code>PORT=5001</code>・<code>DYNO=web.1</code> で 24.5 秒で起動した（R10 の 60 秒の内）。起動の後 358 MiB、荷主・営業のログインと画面の操作の後 367 MiB（R14 の 512 MB の内。H2 は成り立つ見込み）</li>
+<li><code>X-Forwarded-Proto: https</code> で、ログインの前後のリダイレクトの <code>Location</code> が https のまま（H1 は成り立つ）。荷主・営業の開発用の利用者でログインし、荷主の一覧・新規が 200、営業の一覧が 200、営業から荷主の画面が 403</li>
+<li>イメージの大きさは <code>runtime</code> 563 MB、<code>demo</code> 568 MB。ビルドは初回 3 分半（依存のキャッシュの後は 1 分弱）</li>
+<li>途中で、展開した jar の名前が <code>cargo-tracker-0.0.1-SNAPSHOT.jar</code> になり、<code>app.jar</code> を指す起動が失敗したため、展開の前に <code>app.jar</code> に名前を変えた</li>
+<li><code>./gradlew check verifyProductionClasspath</code> は緑（4 分 20 秒）</li>
+</ul>
+</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>3. Heroku のアプリを作り、初回の配備をする</strong> 【承認ゲート: 外部連携】</li>
 <li>人が <code>! heroku login</code> と <code>! heroku container:login</code> を実行する（AI はログインできない）</li>
 <li>
@@ -7634,9 +7647,16 @@
 <td style="text-align: left;">3</td>
 <td style="text-align: left;">外部のツール</td>
 </tr>
+<tr>
+<td style="text-align: left;">13</td>
+<td style="text-align: left;">（ステップ 2 で追加）dev の H2 はデモのイメージにだけ入れる。<code>build.gradle</code> に <code>copyDemoLibs</code>（<code>developmentOnly</code> の H2 を <code>build/demo-lib</code> へ）を足し、Dockerfile を <code>runtime</code>（H2 なし）と <code>demo</code>（H2 あり）のステージに分ける。bootJar と AT-06 は変えない</td>
+<td style="text-align: left;">2、3</td>
+<td style="text-align: left;">ビルドの構成の変更。本番の成果物に H2 を入れない約束（ADR-007、AT-06）を守ったまま、dev のデモを動かす</td>
+</tr>
 </tbody>
 </table>
 <p>決定（2026-10-06、human:kakimomokuri）: 確認ポイント 1〜12 はすべて上の案で決まった。</p>
+<p>確認ポイント 13 は、ステップ 2 の途中で human:kakimomokuri が 3 つの案（Gradle のタスクと demo のステージ、Dockerfile だけで Maven Central から取る、デモ用の bootJar）から選び、計画の変更の承認で確定した（2026-10-06）。</p>
 <h2 id="ai">AI の仮定<a class="headerlink" href="#ai" title="Permanent link">&para;</a></h2>
 <ul>
 <li>Heroku の Container Registry は、Eco dyno でも使える。</li>
@@ -7752,6 +7772,18 @@
 <tr>
 <td style="text-align: left;">2026-10-06</td>
 <td style="text-align: left;">計画を承認。確認ポイント 1〜12 も決まった（Try T-6）</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5</td>
+<td style="text-align: left;">human:kakimomokuri</td>
+</tr>
+<tr>
+<td style="text-align: left;">2026-10-06</td>
+<td style="text-align: left;">ステップ 2 の途中で、bootJar に H2 がなく dev で起動しないことが分かった。人の選択で確認ポイント 13（<code>copyDemoLibs</code> と Dockerfile の <code>runtime</code>・<code>demo</code> のステージ）を足し、ステップ 2 を直した</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5</td>
+<td style="text-align: left;">—</td>
+</tr>
+<tr>
+<td style="text-align: left;">2026-10-06</td>
+<td style="text-align: left;">計画の変更（確認ポイント 13、ステップ 2）を承認</td>
 <td style="text-align: left;">anthropic/claude-opus-5-5</td>
 <td style="text-align: left;">human:kakimomokuri</td>
 </tr>
