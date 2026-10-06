@@ -4,7 +4,7 @@ title: "リリース計画 - cargo-tracker（A 社国際貨物輸送管理シス
 description: "cargo-tracker MVP のリリース計画。1 人 + AI、時間単位の Bolt（= イテレーション）と週次の見直しで、最初の縦の流れ（R0.1）、パイロット準備完了（R1.0）、本格展開前（R1.1）の 3 段階、Unit のエントロピー評価、SP、バッファ、パイロット開始の条件、引継ぎ ID の台帳、業務責任者に確かめる事項の台帳。"
 tags: [development,release-plan]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-06T02:55:12Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-06T03:33:59Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T09:29:53Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:38:26Z }
@@ -454,7 +454,7 @@ W6 と W9 は 10 SP を超えるため、W4 の見直しで、W5・W8 の祝日�
 
 | ID | 内容 | 扱う場所 |
 | :--- | :--- | :--- |
-| TS-01 | TOTP ライブラリと Spring Security 7 の多要素認証の統合 | W2（スパイク）、W5（実装） |
+| TS-01 | TOTP ライブラリと Spring Security 7 の多要素認証の統合 | W2（スパイク。Bolt 13 で済み、ADR-011 の案）、W5（実装） |
 | UI-HO-04 | 見積依頼の段階入力（C-03）と経路候補の比較（S-06）のプロトタイプ | W1、W3 |
 | DM-05 | 追跡状態の状態名、必要最小接続時間の値 | パイロット開始の条件（W6 の前） |
 | TST-02 | Golden dataset の案件と期待結果 | パイロット開始の条件（W6 の前） |
@@ -500,7 +500,7 @@ Bolt のレビューや終了報告で「業務責任者に確かめる」とし
 | リスク | 影響度 | 発生確率 | 対策 |
 | :--- | :---: | :---: | :--- |
 | Spring Boot 4.1 のサポート期限（2027-07-31）がパイロット中に来る | 中 | 高 | 4.2 の公開後、W10 または Release 1.1 の間に追従する（技術スタック） |
-| TOTP と Spring Security 7 の統合が想定より難しい | 中 | 中 | W2 でスパイクし、W5 の前に方式を決める |
+| TOTP と Spring Security 7 の統合が想定より難しい | 低 | 中 | Bolt 13 でスパイクし（2026-10-06）、Spring Security 7.1 の要素の権限で 2 段階のログインを組めることを確かめた。方式は [ADR-011](../../adr/cargo-tracker/011-mfa-totp.md)（提案）。残りは登録の QR と秘密の暗号化の鍵の管理（W5） |
 | H2 と PostgreSQL の方言差（一意制約違反後の振る舞いなど） | 高 | 中 | 統合テストは PostgreSQL、H2 はスモークだけ（ADR-007） |
 | イベント配信と予約サガの非同期の不具合（重複・取りこぼし） | 高 | 中 | 統合テストで再配信・順序・受信側の冪等性を確かめる（テスト戦略） |
 | 外部原本の取込（PERF-06）で版の競合が連鎖する | 中 | 中 | W7 で同じ追跡番号への集中を含めて確かめ、W10 の性能テストで再確認する |
@@ -623,3 +623,4 @@ xychart-beta
 | 2026-10-06 | W2 に Bolt 12 終了報告へのリンクを付け、進捗に Bolt 12 の完了を記録した（終了報告の承認待ち） | anthropic/claude-opus-5-5 |
 | 2026-10-06 | Bolt 12 の完了を W2 に反映した（承認済み） | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-10-06 | W2 に Bolt 13 計画へのリンクを付けた（範囲は TS-01 だけ。人の決定） | anthropic/claude-opus-5-5 |
+| 2026-10-06 | リスク台帳と引継ぎの TS-01 に Bolt 13 のスパイクの結論（ADR-011 の案）を反映した | anthropic/claude-opus-5-5 |

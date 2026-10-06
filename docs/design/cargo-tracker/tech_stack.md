@@ -4,7 +4,7 @@ title: "cargo-tracker 技術スタック"
 description: "cargo-tracker のバックエンド・画面・データベース・テスト・ビルド・インフラの技術、バージョン、サポート期限、選定理由、アップグレード計画。"
 tags: [design, tech-stack]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-03T05:47:24Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-06T03:33:59Z }
 stale_after: 2027-04-01T00:00:00Z
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T07:29:04Z }
@@ -50,7 +50,7 @@ verified:
 | フレームワーク | Spring Framework（MVC・トランザクション・イベント） | 7.x（Boot 管理） | 受信、宣言的トランザクション、アプリケーションイベント | Boot に従う | 第 3 章のとおり、アプリケーションサービスをトランザクション境界にし、BC 間通知にアプリケーションイベントを使う |
 | モジュール境界・イベント | Spring Modulith | 2.1.x（2026-10 時点 2.1.1） | モジュール構造の検証、イベント発行記録（JDBC）、未完了イベントの再配信 | Boot 4.1 に従う | ADR-003 の「永続化したドメインイベント」を自作せずに実現する。第 3 章のプラットフォーム要求（Domain Events）にも挙がっている |
 | 認証・認可 | Spring Security | 7.x（Boot 管理） | フォームログイン、役割による認可、CSRF、session 管理、ロック | Boot に従う | BR-14・BR-15 の固定役割・ロック・session 失効を標準機能で実現する |
-| 多要素認証 | TOTP ライブラリ（候補: `dev.samstevens.totp`） | 未定 | TOTP の生成・検証、登録用 QR | — | BR-14。Spring Security 7 の多要素認証の仕組みと組み合わせる。採用ライブラリは最初の Bolt のスパイクで決める（要確認） |
+| 多要素認証 | `com.eatthepath:java-otp`（案） | 1.0.0 | TOTP の生成。時間の窓の照合・再利用の拒否・回復コードはアプリケーションで持つ | MIT | BR-14。Spring Security 7.1 の多要素認証（要素の権限 `FACTOR_PASSWORD`・`FACTOR_TOTP`）と組み合わせる。Bolt 13 のスパイク（TS-01）の結論で、[ADR-011](../../adr/cargo-tracker/011-mfa-totp.md)（提案）。採否は W5 の US-18 の計画で決める。登録用 QR の描き方は未確認 |
 | session ストア | Spring Session JDBC | Boot 管理 | 複数インスタンス間の session 共有 | Boot に従う | 追加ミドルウェア（Redis 等）を持たずに、DB に session を置く。BR-07・BR-14 の即時失効を DB の削除で実現できる |
 | 入力検証 | Jakarta Bean Validation（Hibernate Validator） | Boot 管理 | 画面入力の形式検証 | Boot に従う | 形式の検証だけに使い、業務規則はドメインに置く |
 | 永続化 | MyBatis（mybatis-spring-boot-starter） | 4.1.0 | 集約の永続化、照会 | — | 第 3 章と同じ。SQL を明示的に管理し、版・追記専用・スキーマ分割を SQL で確実に表現できる（ADR-007） |
@@ -159,7 +159,7 @@ verified:
 
 | ID | 引継ぎ内容 | 引継ぎ先 |
 | :--- | :--- | :--- |
-| TS-01 | TOTP ライブラリの決定と、Spring Security 7 の多要素認証との統合方法 | 最初の Bolt（スパイク） |
+| TS-01 | TOTP ライブラリの決定と、Spring Security 7 の多要素認証との統合方法 | スパイク済み（Bolt 13、2026-10-06）。結論は [ADR-011](../../adr/cargo-tracker/011-mfa-totp.md)（提案）。W5 の US-18 で採否を決めて実装する |
 | TS-02 | Multi-AZ の要否、RPO/RTO、S3 Object Lock の保持期間、リージョンとデータ所在地 | 非機能要件 |
 | TS-03 | テストの配分とカバレッジ目標、ArchUnit と Modulith の検証ルール、Cucumber シナリオの階層とタグの規約 | テスト戦略 |
 | TS-04 | 開発環境・CI・AWS 環境の構築手順 | `operating-setup`、`operating-cicd`、`operating-provision` |
@@ -169,4 +169,4 @@ verified:
 
 - チームは Java と Spring に習熟していると仮定した。開発ガイドラインが Spring Platform を前提にしていることと、兄弟プロジェクト（cargo-tracker の Java 版）の実績を根拠にしている。
 - リージョンは東京を仮置きした。欧州の荷主の個人情報を扱う場合、越境移転の要件でリージョン構成が変わる可能性がある。
-- TOTP ライブラリは候補を挙げただけで、評価していない。
+- TOTP ライブラリは Bolt 13 のスパイクで 3 つの候補を比べた（[ADR-011](../../adr/cargo-tracker/011-mfa-totp.md)）。本体への採用は ADR の承認の後。
