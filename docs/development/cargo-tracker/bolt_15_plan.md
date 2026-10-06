@@ -246,6 +246,7 @@ Eco で R14 が続く（H2 が外れる）ときは、ここで止めて dyno �
 | 2026-10-06 | 計画を承認。確認ポイント 1〜12 も決まった（Try T-6） | anthropic/claude-opus-5-5 | human:kakimomokuri |
 | 2026-10-06 | ステップ 2 の途中で、bootJar に H2 がなく dev で起動しないことが分かった。人の選択で確認ポイント 13（`copyDemoLibs` と Dockerfile の `runtime`・`demo` のステージ）を足し、ステップ 2 を直した | anthropic/claude-opus-5-5 | — |
 | 2026-10-06 | 計画の変更（確認ポイント 13、ステップ 2）を承認 | anthropic/claude-opus-5-5 | human:kakimomokuri |
+| 2026-10-06 | ステップ 3 の外部連携の承認ゲートを通した（タスク名を `deploy:demo:*` にした変更、`stop`・`start` の追加、Heroku のアプリの作成・Config Vars・配備・Eco dyno）。人が `heroku login`・`heroku container:login` を行った | anthropic/claude-opus-5-5 | human:kakimomokuri |
 
 ## 関連ドキュメント
 
