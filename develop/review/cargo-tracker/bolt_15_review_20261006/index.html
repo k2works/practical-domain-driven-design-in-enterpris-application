@@ -6,35 +6,35 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="ドメイン駆動設計をエンタープライズアプリケーション開発で実践するプロジェクト">
+        <meta name="description" content="dev プロファイルによる Heroku のデモ環境（Bolt 15）の運用成果物を、xp-architect・xp-tester・xp-project-manager の 3 視点でレビューした結果と対応（D-54〜D-56）。">
       
       
         <meta name="author" content="k2works">
       
       
       
-        <link rel="prev" href="../adr/cargo-tracker/013-heroku-demo-environment/">
+        <link rel="prev" href="../bolt_14_review_20261006/">
       
       
-        <link rel="next" href="01-ddd-fundamentals/">
+        <link rel="next" href="../../../adr/">
       
       
         
       
       
-      <link rel="icon" href="../assets/images/favicon.png">
+      <link rel="icon" href="../../../assets/images/favicon.png">
       <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
     
     
       
-        <title>概要 - 実践ドメイン駆動設計 in エンタープライズアプリケーション</title>
+        <title>cargo-tracker Bolt 15 運用成果物レビュー（2026-10-06） - 実践ドメイン駆動設計 in エンタープライズアプリケーション</title>
       
     
     
-      <link rel="stylesheet" href="../assets/stylesheets/main.ec1eaa64.min.css">
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.ec1eaa64.min.css">
       
         
-        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+        <link rel="stylesheet" href="../../../assets/stylesheets/palette.ab4e12ef.min.css">
       
       
 
@@ -53,9 +53,9 @@
       
     
     
-      <link rel="stylesheet" href="../assets/css/extra.css">
+      <link rel="stylesheet" href="../../../assets/css/extra.css">
     
-    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
 
@@ -78,7 +78,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#_1" class="md-skip">
+        <a href="#cargo-tracker-bolt-15-2026-10-06" class="md-skip">
           Skip to content
         </a>
       
@@ -92,7 +92,7 @@
 
 <header class="md-header" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href=".." title="実践ドメイン駆動設計 in エンタープライズアプリケーション" class="md-header__button md-logo" aria-label="実践ドメイン駆動設計 in エンタープライズアプリケーション" data-md-component="logo">
+    <a href="../../.." title="実践ドメイン駆動設計 in エンタープライズアプリケーション" class="md-header__button md-logo" aria-label="実践ドメイン駆動設計 in エンタープライズアプリケーション" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -112,7 +112,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              概要
+              cargo-tracker Bolt 15 運用成果物レビュー（2026-10-06）
             
           </span>
         </div>
@@ -199,7 +199,7 @@
   
   
     <li class="md-tabs__item">
-      <a href=".." class="md-tabs__link">
+      <a href="../../.." class="md-tabs__link">
         
   
   
@@ -220,7 +220,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../strategy/" class="md-tabs__link">
+        <a href="../../../strategy/" class="md-tabs__link">
           
   
   
@@ -240,7 +240,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../requirements/" class="md-tabs__link">
+        <a href="../../../requirements/" class="md-tabs__link">
           
   
   
@@ -260,7 +260,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../design/" class="md-tabs__link">
+        <a href="../../../design/" class="md-tabs__link">
           
   
   
@@ -280,7 +280,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../development/" class="md-tabs__link">
+        <a href="../../../development/" class="md-tabs__link">
           
   
   
@@ -300,7 +300,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../operation/" class="md-tabs__link">
+        <a href="../../../operation/" class="md-tabs__link">
           
   
   
@@ -316,11 +316,13 @@
   
   
   
+    
+  
   
     
     
-      <li class="md-tabs__item">
-        <a href="../review/" class="md-tabs__link">
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../../" class="md-tabs__link">
           
   
   
@@ -340,7 +342,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../adr/" class="md-tabs__link">
+        <a href="../../../adr/" class="md-tabs__link">
           
   
   
@@ -356,13 +358,11 @@
   
   
   
-    
-  
   
     
     
-      <li class="md-tabs__item md-tabs__item--active">
-        <a href="./" class="md-tabs__link">
+      <li class="md-tabs__item">
+        <a href="../../../article/" class="md-tabs__link">
           
   
   
@@ -382,7 +382,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../reference/" class="md-tabs__link">
+        <a href="../../../reference/" class="md-tabs__link">
           
   
   
@@ -402,7 +402,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../template/" class="md-tabs__link">
+        <a href="../../../template/" class="md-tabs__link">
           
   
   
@@ -438,7 +438,7 @@
 
 <nav class="md-nav md-nav--primary md-nav--lifted md-nav--integrated" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href=".." title="実践ドメイン駆動設計 in エンタープライズアプリケーション" class="md-nav__button md-logo" aria-label="実践ドメイン駆動設計 in エンタープライズアプリケーション" data-md-component="logo">
+    <a href="../../.." title="実践ドメイン駆動設計 in エンタープライズアプリケーション" class="md-nav__button md-logo" aria-label="実践ドメイン駆動設計 in エンタープライズアプリケーション" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -468,7 +468,7 @@
   
   
     <li class="md-nav__item">
-      <a href=".." class="md-nav__link">
+      <a href="../../.." class="md-nav__link">
         
   
   
@@ -545,7 +545,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../strategy/" class="md-nav__link">
+      <a href="../../../strategy/" class="md-nav__link">
         
   
   
@@ -573,7 +573,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../strategy/business_case/" class="md-nav__link">
+      <a href="../../../strategy/business_case/" class="md-nav__link">
         
   
   
@@ -608,7 +608,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../strategy/business_strategy/" class="md-nav__link">
+      <a href="../../../strategy/business_strategy/" class="md-nav__link">
         
   
   
@@ -643,7 +643,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../strategy/business_architecture/" class="md-nav__link">
+      <a href="../../../strategy/business_architecture/" class="md-nav__link">
         
   
   
@@ -678,7 +678,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../strategy/inception-deck/" class="md-nav__link">
+      <a href="../../../strategy/inception-deck/" class="md-nav__link">
         
   
   
@@ -713,7 +713,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../strategy/BMC.svg" class="md-nav__link">
+      <a href="../../../strategy/BMC.svg" class="md-nav__link">
         
   
   
@@ -798,7 +798,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../requirements/" class="md-nav__link">
+      <a href="../../../requirements/" class="md-nav__link">
         
   
   
@@ -876,7 +876,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../requirements/cargo-tracker/" class="md-nav__link">
+      <a href="../../../requirements/cargo-tracker/" class="md-nav__link">
         
   
   
@@ -904,7 +904,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../requirements/cargo-tracker/requirements_definition/" class="md-nav__link">
+      <a href="../../../requirements/cargo-tracker/requirements_definition/" class="md-nav__link">
         
   
   
@@ -939,7 +939,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../requirements/cargo-tracker/business_usecase/" class="md-nav__link">
+      <a href="../../../requirements/cargo-tracker/business_usecase/" class="md-nav__link">
         
   
   
@@ -974,7 +974,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../requirements/cargo-tracker/system_usecase/" class="md-nav__link">
+      <a href="../../../requirements/cargo-tracker/system_usecase/" class="md-nav__link">
         
   
   
@@ -1009,7 +1009,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../requirements/cargo-tracker/user_story/" class="md-nav__link">
+      <a href="../../../requirements/cargo-tracker/user_story/" class="md-nav__link">
         
   
   
@@ -1044,7 +1044,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../requirements/cargo-tracker/units/" class="md-nav__link">
+      <a href="../../../requirements/cargo-tracker/units/" class="md-nav__link">
         
   
   
@@ -1079,7 +1079,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../requirements/cargo-tracker/usecase_plan/" class="md-nav__link">
+      <a href="../../../requirements/cargo-tracker/usecase_plan/" class="md-nav__link">
         
   
   
@@ -1179,7 +1179,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../design/" class="md-nav__link">
+      <a href="../../../design/" class="md-nav__link">
         
   
   
@@ -1257,7 +1257,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../design/cargo-tracker/" class="md-nav__link">
+      <a href="../../../design/cargo-tracker/" class="md-nav__link">
         
   
   
@@ -1285,7 +1285,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../design/cargo-tracker/architecture_backend/" class="md-nav__link">
+      <a href="../../../design/cargo-tracker/architecture_backend/" class="md-nav__link">
         
   
   
@@ -1320,7 +1320,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../design/cargo-tracker/architecture_frontend/" class="md-nav__link">
+      <a href="../../../design/cargo-tracker/architecture_frontend/" class="md-nav__link">
         
   
   
@@ -1355,7 +1355,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../design/cargo-tracker/architecture_infrastructure/" class="md-nav__link">
+      <a href="../../../design/cargo-tracker/architecture_infrastructure/" class="md-nav__link">
         
   
   
@@ -1390,7 +1390,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../design/cargo-tracker/tech_stack/" class="md-nav__link">
+      <a href="../../../design/cargo-tracker/tech_stack/" class="md-nav__link">
         
   
   
@@ -1425,7 +1425,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../design/cargo-tracker/domain_model/" class="md-nav__link">
+      <a href="../../../design/cargo-tracker/domain_model/" class="md-nav__link">
         
   
   
@@ -1460,7 +1460,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../design/cargo-tracker/data_model/" class="md-nav__link">
+      <a href="../../../design/cargo-tracker/data_model/" class="md-nav__link">
         
   
   
@@ -1495,7 +1495,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../design/cargo-tracker/ui_design/" class="md-nav__link">
+      <a href="../../../design/cargo-tracker/ui_design/" class="md-nav__link">
         
   
   
@@ -1530,7 +1530,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../design/cargo-tracker/test_strategy/" class="md-nav__link">
+      <a href="../../../design/cargo-tracker/test_strategy/" class="md-nav__link">
         
   
   
@@ -1565,7 +1565,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../design/cargo-tracker/non_functional/" class="md-nav__link">
+      <a href="../../../design/cargo-tracker/non_functional/" class="md-nav__link">
         
   
   
@@ -1600,7 +1600,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../design/cargo-tracker/operation/" class="md-nav__link">
+      <a href="../../../design/cargo-tracker/operation/" class="md-nav__link">
         
   
   
@@ -1700,7 +1700,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../development/" class="md-nav__link">
+      <a href="../../../development/" class="md-nav__link">
         
   
   
@@ -1778,7 +1778,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../development/cargo-tracker/" class="md-nav__link">
+      <a href="../../../development/cargo-tracker/" class="md-nav__link">
         
   
   
@@ -1806,7 +1806,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../development/cargo-tracker/release_plan/" class="md-nav__link">
+      <a href="../../../development/cargo-tracker/release_plan/" class="md-nav__link">
         
   
   
@@ -1841,7 +1841,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../development/cargo-tracker/development_strategy/" class="md-nav__link">
+      <a href="../../../development/cargo-tracker/development_strategy/" class="md-nav__link">
         
   
   
@@ -1876,7 +1876,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../assets/schemaspy-output/cargo-tracker/" class="md-nav__link">
+      <a href="../../../assets/schemaspy-output/cargo-tracker/" class="md-nav__link">
         
   
   
@@ -1904,7 +1904,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../assets/jig-output/cargo-tracker/" class="md-nav__link">
+      <a href="../../../assets/jig-output/cargo-tracker/" class="md-nav__link">
         
   
   
@@ -1932,7 +1932,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../development/cargo-tracker/bolt_01_plan/" class="md-nav__link">
+      <a href="../../../development/cargo-tracker/bolt_01_plan/" class="md-nav__link">
         
   
   
@@ -1967,7 +1967,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../development/cargo-tracker/bolt_01_report/" class="md-nav__link">
+      <a href="../../../development/cargo-tracker/bolt_01_report/" class="md-nav__link">
         
   
   
@@ -2002,7 +2002,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../development/cargo-tracker/bolt_02_plan/" class="md-nav__link">
+      <a href="../../../development/cargo-tracker/bolt_02_plan/" class="md-nav__link">
         
   
   
@@ -2037,7 +2037,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../development/cargo-tracker/bolt_02_report/" class="md-nav__link">
+      <a href="../../../development/cargo-tracker/bolt_02_report/" class="md-nav__link">
         
   
   
@@ -2072,7 +2072,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../development/cargo-tracker/bolt_03_plan/" class="md-nav__link">
+      <a href="../../../development/cargo-tracker/bolt_03_plan/" class="md-nav__link">
         
   
   
@@ -2107,7 +2107,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../development/cargo-tracker/bolt_03_report/" class="md-nav__link">
+      <a href="../../../development/cargo-tracker/bolt_03_report/" class="md-nav__link">
         
   
   
@@ -2142,7 +2142,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../development/cargo-tracker/bolt_04_plan/" class="md-nav__link">
+      <a href="../../../development/cargo-tracker/bolt_04_plan/" class="md-nav__link">
         
   
   
@@ -2177,7 +2177,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../development/cargo-tracker/bolt_04_report/" class="md-nav__link">
+      <a href="../../../development/cargo-tracker/bolt_04_report/" class="md-nav__link">
         
   
   
@@ -2212,7 +2212,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../development/cargo-tracker/bolt_05_plan/" class="md-nav__link">
+      <a href="../../../development/cargo-tracker/bolt_05_plan/" class="md-nav__link">
         
   
   
@@ -2247,7 +2247,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../development/cargo-tracker/bolt_05_report/" class="md-nav__link">
+      <a href="../../../development/cargo-tracker/bolt_05_report/" class="md-nav__link">
         
   
   
@@ -2282,7 +2282,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../development/cargo-tracker/bolt_06_plan/" class="md-nav__link">
+      <a href="../../../development/cargo-tracker/bolt_06_plan/" class="md-nav__link">
         
   
   
@@ -2317,7 +2317,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../development/cargo-tracker/bolt_06_report/" class="md-nav__link">
+      <a href="../../../development/cargo-tracker/bolt_06_report/" class="md-nav__link">
         
   
   
@@ -2352,7 +2352,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../development/cargo-tracker/bolt_07_plan/" class="md-nav__link">
+      <a href="../../../development/cargo-tracker/bolt_07_plan/" class="md-nav__link">
         
   
   
@@ -2387,7 +2387,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../development/cargo-tracker/bolt_07_report/" class="md-nav__link">
+      <a href="../../../development/cargo-tracker/bolt_07_report/" class="md-nav__link">
         
   
   
@@ -2422,7 +2422,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../development/cargo-tracker/bolt_08_plan/" class="md-nav__link">
+      <a href="../../../development/cargo-tracker/bolt_08_plan/" class="md-nav__link">
         
   
   
@@ -2457,7 +2457,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../development/cargo-tracker/bolt_08_report/" class="md-nav__link">
+      <a href="../../../development/cargo-tracker/bolt_08_report/" class="md-nav__link">
         
   
   
@@ -2492,7 +2492,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../development/cargo-tracker/bolt_09_plan/" class="md-nav__link">
+      <a href="../../../development/cargo-tracker/bolt_09_plan/" class="md-nav__link">
         
   
   
@@ -2527,7 +2527,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../development/cargo-tracker/bolt_09_report/" class="md-nav__link">
+      <a href="../../../development/cargo-tracker/bolt_09_report/" class="md-nav__link">
         
   
   
@@ -2562,7 +2562,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../development/cargo-tracker/bolt_10_plan/" class="md-nav__link">
+      <a href="../../../development/cargo-tracker/bolt_10_plan/" class="md-nav__link">
         
   
   
@@ -2597,7 +2597,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../development/cargo-tracker/bolt_10_report/" class="md-nav__link">
+      <a href="../../../development/cargo-tracker/bolt_10_report/" class="md-nav__link">
         
   
   
@@ -2632,7 +2632,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../development/cargo-tracker/bolt_11_plan/" class="md-nav__link">
+      <a href="../../../development/cargo-tracker/bolt_11_plan/" class="md-nav__link">
         
   
   
@@ -2667,7 +2667,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../development/cargo-tracker/bolt_11_report/" class="md-nav__link">
+      <a href="../../../development/cargo-tracker/bolt_11_report/" class="md-nav__link">
         
   
   
@@ -2702,7 +2702,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../development/cargo-tracker/bolt_12_plan/" class="md-nav__link">
+      <a href="../../../development/cargo-tracker/bolt_12_plan/" class="md-nav__link">
         
   
   
@@ -2737,7 +2737,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../development/cargo-tracker/bolt_12_report/" class="md-nav__link">
+      <a href="../../../development/cargo-tracker/bolt_12_report/" class="md-nav__link">
         
   
   
@@ -2772,7 +2772,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../development/cargo-tracker/bolt_13_plan/" class="md-nav__link">
+      <a href="../../../development/cargo-tracker/bolt_13_plan/" class="md-nav__link">
         
   
   
@@ -2807,7 +2807,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../development/cargo-tracker/bolt_13_report/" class="md-nav__link">
+      <a href="../../../development/cargo-tracker/bolt_13_report/" class="md-nav__link">
         
   
   
@@ -2842,7 +2842,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../development/cargo-tracker/bolt_14_plan/" class="md-nav__link">
+      <a href="../../../development/cargo-tracker/bolt_14_plan/" class="md-nav__link">
         
   
   
@@ -2877,7 +2877,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../development/cargo-tracker/bolt_14_report/" class="md-nav__link">
+      <a href="../../../development/cargo-tracker/bolt_14_report/" class="md-nav__link">
         
   
   
@@ -2912,7 +2912,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../development/cargo-tracker/bolt_15_plan/" class="md-nav__link">
+      <a href="../../../development/cargo-tracker/bolt_15_plan/" class="md-nav__link">
         
   
   
@@ -3012,7 +3012,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../operation/" class="md-nav__link">
+      <a href="../../../operation/" class="md-nav__link">
         
   
   
@@ -3090,7 +3090,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../operation/cargo-tracker/" class="md-nav__link">
+      <a href="../../../operation/cargo-tracker/" class="md-nav__link">
         
   
   
@@ -3118,7 +3118,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../operation/cargo-tracker/application_development_setup/" class="md-nav__link">
+      <a href="../../../operation/cargo-tracker/application_development_setup/" class="md-nav__link">
         
   
   
@@ -3153,7 +3153,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../operation/cargo-tracker/heroku_demo_setup/" class="md-nav__link">
+      <a href="../../../operation/cargo-tracker/heroku_demo_setup/" class="md-nav__link">
         
   
   
@@ -3200,24 +3200,29 @@
       
   
   
+    
   
   
+  
     
     
     
     
-      
-      
-    
-    
-    <li class="md-nav__item md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" >
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" checked>
         
           
-          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="">
             
   
   
@@ -3235,7 +3240,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_7">
             <span class="md-nav__icon md-icon"></span>
             
@@ -3253,7 +3258,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../review/" class="md-nav__link">
+      <a href="../../" class="md-nav__link">
         
   
   
@@ -3281,7 +3286,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../review/%E6%88%A6%E7%95%A5%E6%88%90%E6%9E%9C%E7%89%A9_review_20260929/" class="md-nav__link">
+      <a href="../../%E6%88%A6%E7%95%A5%E6%88%90%E6%9E%9C%E7%89%A9_review_20260929/" class="md-nav__link">
         
   
   
@@ -3313,6 +3318,8 @@
                 
   
   
+    
+  
   
   
     
@@ -3323,11 +3330,11 @@
       
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_3" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_3" checked>
         
           
           <label class="md-nav__link" for="__nav_7_3" id="__nav_7_3_label" tabindex="0">
@@ -3348,7 +3355,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_7_3_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_7_3_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_7_3">
             <span class="md-nav__icon md-icon"></span>
             
@@ -3366,7 +3373,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../review/cargo-tracker/" class="md-nav__link">
+      <a href="../" class="md-nav__link">
         
   
   
@@ -3394,7 +3401,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../review/cargo-tracker/usecases_review_20260930/" class="md-nav__link">
+      <a href="../usecases_review_20260930/" class="md-nav__link">
         
   
   
@@ -3429,7 +3436,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../review/cargo-tracker/analysis_review_20261001/" class="md-nav__link">
+      <a href="../analysis_review_20261001/" class="md-nav__link">
         
   
   
@@ -3464,7 +3471,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../review/cargo-tracker/bolt_01_review_20261001/" class="md-nav__link">
+      <a href="../bolt_01_review_20261001/" class="md-nav__link">
         
   
   
@@ -3499,7 +3506,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../review/cargo-tracker/bolt_02_review_20261002/" class="md-nav__link">
+      <a href="../bolt_02_review_20261002/" class="md-nav__link">
         
   
   
@@ -3534,7 +3541,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../review/cargo-tracker/bolt_03_review_20261002/" class="md-nav__link">
+      <a href="../bolt_03_review_20261002/" class="md-nav__link">
         
   
   
@@ -3569,7 +3576,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../review/cargo-tracker/bolt_04_review_20261002/" class="md-nav__link">
+      <a href="../bolt_04_review_20261002/" class="md-nav__link">
         
   
   
@@ -3604,7 +3611,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../review/cargo-tracker/bolt_05_review_20261002/" class="md-nav__link">
+      <a href="../bolt_05_review_20261002/" class="md-nav__link">
         
   
   
@@ -3639,7 +3646,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../review/cargo-tracker/bolt_06-08_review_20261003/" class="md-nav__link">
+      <a href="../bolt_06-08_review_20261003/" class="md-nav__link">
         
   
   
@@ -3674,7 +3681,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../review/cargo-tracker/bolt_09-10_review_20261005/" class="md-nav__link">
+      <a href="../bolt_09-10_review_20261005/" class="md-nav__link">
         
   
   
@@ -3709,7 +3716,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../review/cargo-tracker/bolt_11_review_20261005/" class="md-nav__link">
+      <a href="../bolt_11_review_20261005/" class="md-nav__link">
         
   
   
@@ -3744,7 +3751,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../review/cargo-tracker/bolt_12_review_20261006/" class="md-nav__link">
+      <a href="../bolt_12_review_20261006/" class="md-nav__link">
         
   
   
@@ -3779,7 +3786,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../review/cargo-tracker/bolt_13_review_20261006/" class="md-nav__link">
+      <a href="../bolt_13_review_20261006/" class="md-nav__link">
         
   
   
@@ -3814,7 +3821,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../review/cargo-tracker/bolt_14_review_20261006/" class="md-nav__link">
+      <a href="../bolt_14_review_20261006/" class="md-nav__link">
         
   
   
@@ -3846,10 +3853,44 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../review/cargo-tracker/bolt_15_review_20261006/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 15 運用成果物レビュー（2026-10-06）
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--stable"></span>
+  
+
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -3872,6 +3913,142 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        レビュー対象
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        総合評価
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        改善提案と対応
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="改善提案と対応">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        高
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        中
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_6" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        低
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_7" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        人の決定
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_8" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        矛盾事項
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_9" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        エージェント別フィードバック詳細
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_10" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        更新履歴
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -3949,7 +4126,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../adr/" class="md-nav__link">
+      <a href="../../../adr/" class="md-nav__link">
         
   
   
@@ -4027,7 +4204,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../adr/cargo-tracker/" class="md-nav__link">
+      <a href="../../../adr/cargo-tracker/" class="md-nav__link">
         
   
   
@@ -4055,7 +4232,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../adr/cargo-tracker/001-modular-monolith/" class="md-nav__link">
+      <a href="../../../adr/cargo-tracker/001-modular-monolith/" class="md-nav__link">
         
   
   
@@ -4090,7 +4267,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../adr/cargo-tracker/002-domain-logic-pattern-per-context/" class="md-nav__link">
+      <a href="../../../adr/cargo-tracker/002-domain-logic-pattern-per-context/" class="md-nav__link">
         
   
   
@@ -4125,7 +4302,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../adr/cargo-tracker/003-inter-context-integration/" class="md-nav__link">
+      <a href="../../../adr/cargo-tracker/003-inter-context-integration/" class="md-nav__link">
         
   
   
@@ -4160,7 +4337,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../adr/cargo-tracker/004-external-data-ingestion/" class="md-nav__link">
+      <a href="../../../adr/cargo-tracker/004-external-data-ingestion/" class="md-nav__link">
         
   
   
@@ -4195,7 +4372,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../adr/cargo-tracker/005-server-side-rendering/" class="md-nav__link">
+      <a href="../../../adr/cargo-tracker/005-server-side-rendering/" class="md-nav__link">
         
   
   
@@ -4230,7 +4407,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../adr/cargo-tracker/006-java-spring-boot-platform/" class="md-nav__link">
+      <a href="../../../adr/cargo-tracker/006-java-spring-boot-platform/" class="md-nav__link">
         
   
   
@@ -4265,7 +4442,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../adr/cargo-tracker/007-postgresql-mybatis-flyway/" class="md-nav__link">
+      <a href="../../../adr/cargo-tracker/007-postgresql-mybatis-flyway/" class="md-nav__link">
         
   
   
@@ -4300,7 +4477,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../adr/cargo-tracker/008-aws-container-platform/" class="md-nav__link">
+      <a href="../../../adr/cargo-tracker/008-aws-container-platform/" class="md-nav__link">
         
   
   
@@ -4335,7 +4512,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../adr/cargo-tracker/009-bdd-cucumber/" class="md-nav__link">
+      <a href="../../../adr/cargo-tracker/009-bdd-cucumber/" class="md-nav__link">
         
   
   
@@ -4370,7 +4547,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../adr/cargo-tracker/010-required-document-storage-transaction/" class="md-nav__link">
+      <a href="../../../adr/cargo-tracker/010-required-document-storage-transaction/" class="md-nav__link">
         
   
   
@@ -4405,7 +4582,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../adr/cargo-tracker/011-mfa-totp/" class="md-nav__link">
+      <a href="../../../adr/cargo-tracker/011-mfa-totp/" class="md-nav__link">
         
   
   
@@ -4440,7 +4617,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../adr/cargo-tracker/012-authentication-principal-and-session/" class="md-nav__link">
+      <a href="../../../adr/cargo-tracker/012-authentication-principal-and-session/" class="md-nav__link">
         
   
   
@@ -4475,7 +4652,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../adr/cargo-tracker/013-heroku-demo-environment/" class="md-nav__link">
+      <a href="../../../adr/cargo-tracker/013-heroku-demo-environment/" class="md-nav__link">
         
   
   
@@ -4522,29 +4699,24 @@
       
   
   
-    
   
   
-  
     
     
     
     
       
-        
-        
-      
       
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9" >
         
           
-          <label class="md-nav__link" for="__nav_9" id="__nav_9_label" tabindex="">
+          <label class="md-nav__link" for="__nav_9" id="__nav_9_label" tabindex="0">
             
   
   
@@ -4562,7 +4734,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_9">
             <span class="md-nav__icon md-icon"></span>
             
@@ -4577,37 +4749,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    概要
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../../../article/" class="md-nav__link">
         
   
   
@@ -4623,48 +4768,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#_2" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        開発ガイドライン：実践ドメイン駆動設計
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#_3" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        学習用記事シリーズ（外部サイト）
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -4677,7 +4780,7 @@
   
   
     <li class="md-nav__item">
-      <a href="01-ddd-fundamentals/" class="md-nav__link">
+      <a href="../../../article/01-ddd-fundamentals/" class="md-nav__link">
         
   
   
@@ -4712,7 +4815,7 @@
   
   
     <li class="md-nav__item">
-      <a href="02-cargo-domain-model/" class="md-nav__link">
+      <a href="../../../article/02-cargo-domain-model/" class="md-nav__link">
         
   
   
@@ -4747,7 +4850,7 @@
   
   
     <li class="md-nav__item">
-      <a href="03-spring-modular-monolith/" class="md-nav__link">
+      <a href="../../../article/03-spring-modular-monolith/" class="md-nav__link">
         
   
   
@@ -4839,7 +4942,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../reference/" class="md-nav__link">
+      <a href="../../../reference/" class="md-nav__link">
         
   
   
@@ -4867,7 +4970,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../reference/%E3%82%88%E3%81%84%E3%82%BD%E3%83%95%E3%83%88%E3%82%A6%E3%82%A7%E3%82%A2%E3%81%A8%E3%81%AF/" class="md-nav__link">
+      <a href="../../../reference/%E3%82%88%E3%81%84%E3%82%BD%E3%83%95%E3%83%88%E3%82%A6%E3%82%A7%E3%82%A2%E3%81%A8%E3%81%AF/" class="md-nav__link">
         
   
   
@@ -4902,7 +5005,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../reference/%E3%83%AD%E3%82%B8%E3%82%AB%E3%83%AB%E3%82%B7%E3%83%B3%E3%82%AD%E3%83%B3%E3%82%B0/" class="md-nav__link">
+      <a href="../../../reference/%E3%83%AD%E3%82%B8%E3%82%AB%E3%83%AB%E3%82%B7%E3%83%B3%E3%82%AD%E3%83%B3%E3%82%B0/" class="md-nav__link">
         
   
   
@@ -4937,7 +5040,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../reference/%E9%96%8B%E7%99%BA%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
+      <a href="../../../reference/%E9%96%8B%E7%99%BA%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
         
   
   
@@ -4972,7 +5075,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../reference/%E9%96%8B%E7%99%BA%E3%82%AC%E3%82%A4%E3%83%89_AI-DLC%E7%89%88/" class="md-nav__link">
+      <a href="../../../reference/%E9%96%8B%E7%99%BA%E3%82%AC%E3%82%A4%E3%83%89_AI-DLC%E7%89%88/" class="md-nav__link">
         
   
   
@@ -5007,7 +5110,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../reference/AI-DLC%E5%B0%8E%E5%85%A5%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
+      <a href="../../../reference/AI-DLC%E5%B0%8E%E5%85%A5%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
         
   
   
@@ -5042,7 +5145,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../reference/AI-DLC%E7%94%A8%E8%AA%9E%E9%9B%86/" class="md-nav__link">
+      <a href="../../../reference/AI-DLC%E7%94%A8%E8%AA%9E%E9%9B%86/" class="md-nav__link">
         
   
   
@@ -5077,7 +5180,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../reference/%E3%83%89%E3%82%AD%E3%83%A5%E3%83%A1%E3%83%B3%E3%83%88%E6%A7%8B%E6%88%90%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
+      <a href="../../../reference/%E3%83%89%E3%82%AD%E3%83%A5%E3%83%A1%E3%83%B3%E3%83%88%E6%A7%8B%E6%88%90%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
         
   
   
@@ -5112,7 +5215,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../reference/LivingDocumentation%E5%B0%8E%E5%85%A5%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
+      <a href="../../../reference/LivingDocumentation%E5%B0%8E%E5%85%A5%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
         
   
   
@@ -5147,7 +5250,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../reference/%E3%82%A2%E3%83%8E%E3%83%86%E3%83%BC%E3%82%B7%E3%83%A7%E3%83%B3%E5%B0%8E%E5%85%A5%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
+      <a href="../../../reference/%E3%82%A2%E3%83%8E%E3%83%86%E3%83%BC%E3%82%B7%E3%83%A7%E3%83%B3%E5%B0%8E%E5%85%A5%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
         
   
   
@@ -5182,7 +5285,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../reference/%E3%83%80%E3%82%A4%E3%83%8A%E3%83%9F%E3%83%83%E3%82%AF%E3%82%AD%E3%83%A5%E3%83%AC%E3%83%BC%E3%82%B7%E3%83%A7%E3%83%B3%E5%B0%8E%E5%85%A5%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
+      <a href="../../../reference/%E3%83%80%E3%82%A4%E3%83%8A%E3%83%9F%E3%83%83%E3%82%AF%E3%82%AD%E3%83%A5%E3%83%AC%E3%83%BC%E3%82%B7%E3%83%A7%E3%83%B3%E5%B0%8E%E5%85%A5%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
         
   
   
@@ -5217,7 +5320,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../reference/%E3%82%AC%E3%82%A4%E3%83%89%E3%83%84%E3%82%A2%E3%83%BC%E3%83%BB%E3%82%B5%E3%82%A4%E3%83%88%E3%82%B7%E3%83%BC%E3%82%A4%E3%83%B3%E3%82%B0%E5%B0%8E%E5%85%A5%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
+      <a href="../../../reference/%E3%82%AC%E3%82%A4%E3%83%89%E3%83%84%E3%82%A2%E3%83%BC%E3%83%BB%E3%82%B5%E3%82%A4%E3%83%88%E3%82%B7%E3%83%BC%E3%82%A4%E3%83%B3%E3%82%B0%E5%B0%8E%E5%85%A5%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
         
   
   
@@ -5252,7 +5355,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../reference/OKF%E5%B0%8E%E5%85%A5%E3%82%AC%E3%82%A4%E3%83%89_V0.2/" class="md-nav__link">
+      <a href="../../../reference/OKF%E5%B0%8E%E5%85%A5%E3%82%AC%E3%82%A4%E3%83%89_V0.2/" class="md-nav__link">
         
   
   
@@ -5287,7 +5390,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../reference/%E7%B5%8C%E5%96%B6%E6%88%A6%E7%95%A5%E5%88%86%E6%9E%90%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
+      <a href="../../../reference/%E7%B5%8C%E5%96%B6%E6%88%A6%E7%95%A5%E5%88%86%E6%9E%90%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
         
   
   
@@ -5322,7 +5425,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../reference/%E3%83%93%E3%82%B8%E3%83%8D%E3%82%B9%E3%82%A2%E3%83%BC%E3%82%AD%E3%83%86%E3%82%AF%E3%83%81%E3%83%A3%E5%88%86%E6%9E%90%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
+      <a href="../../../reference/%E3%83%93%E3%82%B8%E3%83%8D%E3%82%B9%E3%82%A2%E3%83%BC%E3%82%AD%E3%83%86%E3%82%AF%E3%83%81%E3%83%A3%E5%88%86%E6%9E%90%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
         
   
   
@@ -5357,7 +5460,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../reference/%E8%A6%81%E4%BB%B6%E5%AE%9A%E7%BE%A9%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
+      <a href="../../../reference/%E8%A6%81%E4%BB%B6%E5%AE%9A%E7%BE%A9%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
         
   
   
@@ -5392,7 +5495,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../reference/%E3%83%A6%E3%83%BC%E3%82%B9%E3%82%B1%E3%83%BC%E3%82%B9%E4%BD%9C%E6%88%90%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
+      <a href="../../../reference/%E3%83%A6%E3%83%BC%E3%82%B9%E3%82%B1%E3%83%BC%E3%82%B9%E4%BD%9C%E6%88%90%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
         
   
   
@@ -5427,7 +5530,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../reference/%E3%83%A6%E3%83%BC%E3%82%B9%E3%82%B1%E3%83%BC%E3%82%B9%E4%BD%9C%E6%88%90%E3%82%AC%E3%82%A4%E3%83%89_AI-DLC%E7%89%88/" class="md-nav__link">
+      <a href="../../../reference/%E3%83%A6%E3%83%BC%E3%82%B9%E3%82%B1%E3%83%BC%E3%82%B9%E4%BD%9C%E6%88%90%E3%82%AC%E3%82%A4%E3%83%89_AI-DLC%E7%89%88/" class="md-nav__link">
         
   
   
@@ -5462,7 +5565,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../reference/%E3%82%A2%E3%83%BC%E3%82%AD%E3%83%86%E3%82%AF%E3%83%81%E3%83%A3%E8%A8%AD%E8%A8%88%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
+      <a href="../../../reference/%E3%82%A2%E3%83%BC%E3%82%AD%E3%83%86%E3%82%AF%E3%83%81%E3%83%A3%E8%A8%AD%E8%A8%88%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
         
   
   
@@ -5497,7 +5600,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../reference/%E3%83%87%E3%83%BC%E3%82%BF%E3%83%A2%E3%83%87%E3%83%AB%E8%A8%AD%E8%A8%88%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
+      <a href="../../../reference/%E3%83%87%E3%83%BC%E3%82%BF%E3%83%A2%E3%83%87%E3%83%AB%E8%A8%AD%E8%A8%88%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
         
   
   
@@ -5532,7 +5635,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../reference/%E3%83%89%E3%83%A1%E3%82%A4%E3%83%B3%E3%83%A2%E3%83%87%E3%83%AB%E8%A8%AD%E8%A8%88%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
+      <a href="../../../reference/%E3%83%89%E3%83%A1%E3%82%A4%E3%83%B3%E3%83%A2%E3%83%87%E3%83%AB%E8%A8%AD%E8%A8%88%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
         
   
   
@@ -5567,7 +5670,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../reference/UI%E8%A8%AD%E8%A8%88%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
+      <a href="../../../reference/UI%E8%A8%AD%E8%A8%88%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
         
   
   
@@ -5602,7 +5705,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../reference/%E3%83%86%E3%82%B9%E3%83%88%E6%88%A6%E7%95%A5%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
+      <a href="../../../reference/%E3%83%86%E3%82%B9%E3%83%88%E6%88%A6%E7%95%A5%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
         
   
   
@@ -5637,7 +5740,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../reference/%E9%9D%9E%E6%A9%9F%E8%83%BD%E8%A6%81%E4%BB%B6%E5%AE%9A%E7%BE%A9%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
+      <a href="../../../reference/%E9%9D%9E%E6%A9%9F%E8%83%BD%E8%A6%81%E4%BB%B6%E5%AE%9A%E7%BE%A9%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
         
   
   
@@ -5672,7 +5775,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../reference/%E9%81%8B%E7%94%A8%E8%A6%81%E4%BB%B6%E5%AE%9A%E7%BE%A9%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
+      <a href="../../../reference/%E9%81%8B%E7%94%A8%E8%A6%81%E4%BB%B6%E5%AE%9A%E7%BE%A9%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
         
   
   
@@ -5707,7 +5810,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../reference/%E3%82%A4%E3%83%B3%E3%83%95%E3%83%A9%E8%A8%AD%E8%A8%88%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
+      <a href="../../../reference/%E3%82%A4%E3%83%B3%E3%83%95%E3%83%A9%E8%A8%AD%E8%A8%88%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
         
   
   
@@ -5742,7 +5845,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../reference/%E3%82%B3%E3%83%BC%E3%83%87%E3%82%A3%E3%83%B3%E3%82%B0%E3%81%A8%E3%83%86%E3%82%B9%E3%83%88%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
+      <a href="../../../reference/%E3%82%B3%E3%83%BC%E3%83%87%E3%82%A3%E3%83%B3%E3%82%B0%E3%81%A8%E3%83%86%E3%82%B9%E3%83%88%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
         
   
   
@@ -5777,7 +5880,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../reference/%E3%82%B3%E3%83%BC%E3%83%87%E3%82%A3%E3%83%B3%E3%82%B0%E3%81%A8%E3%83%86%E3%82%B9%E3%83%88%E3%82%AC%E3%82%A4%E3%83%89_AI-DLC%E7%89%88/" class="md-nav__link">
+      <a href="../../../reference/%E3%82%B3%E3%83%BC%E3%83%87%E3%82%A3%E3%83%B3%E3%82%B0%E3%81%A8%E3%83%86%E3%82%B9%E3%83%88%E3%82%AC%E3%82%A4%E3%83%89_AI-DLC%E7%89%88/" class="md-nav__link">
         
   
   
@@ -5812,7 +5915,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../reference/BDD%E5%B0%8E%E5%85%A5%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
+      <a href="../../../reference/BDD%E5%B0%8E%E5%85%A5%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
         
   
   
@@ -5847,7 +5950,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../reference/%E3%82%A8%E3%82%AF%E3%82%B9%E3%83%88%E3%83%AA%E3%83%BC%E3%83%A0%E3%83%97%E3%83%AD%E3%82%B0%E3%83%A9%E3%83%9F%E3%83%B3%E3%82%B0/" class="md-nav__link">
+      <a href="../../../reference/%E3%82%A8%E3%82%AF%E3%82%B9%E3%83%88%E3%83%AA%E3%83%BC%E3%83%A0%E3%83%97%E3%83%AD%E3%82%B0%E3%83%A9%E3%83%9F%E3%83%B3%E3%82%B0/" class="md-nav__link">
         
   
   
@@ -5882,7 +5985,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../reference/%E3%83%AA%E3%83%AA%E3%83%BC%E3%82%B9%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
+      <a href="../../../reference/%E3%83%AA%E3%83%AA%E3%83%BC%E3%82%B9%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
         
   
   
@@ -5917,7 +6020,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../reference/%E3%83%AA%E3%83%AA%E3%83%BC%E3%82%B9%E3%83%BB%E3%82%A4%E3%83%86%E3%83%AC%E3%83%BC%E3%82%B7%E3%83%A7%E3%83%B3%E8%A8%88%E7%94%BB%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
+      <a href="../../../reference/%E3%83%AA%E3%83%AA%E3%83%BC%E3%82%B9%E3%83%BB%E3%82%A4%E3%83%86%E3%83%AC%E3%83%BC%E3%82%B7%E3%83%A7%E3%83%B3%E8%A8%88%E7%94%BB%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
         
   
   
@@ -5952,7 +6055,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../reference/%E3%83%AA%E3%83%AA%E3%83%BC%E3%82%B9%E3%83%BB%E3%82%A4%E3%83%86%E3%83%AC%E3%83%BC%E3%82%B7%E3%83%A7%E3%83%B3%E8%A8%88%E7%94%BB%E3%82%AC%E3%82%A4%E3%83%89_AI-DLC%E7%89%88/" class="md-nav__link">
+      <a href="../../../reference/%E3%83%AA%E3%83%AA%E3%83%BC%E3%82%B9%E3%83%BB%E3%82%A4%E3%83%86%E3%83%AC%E3%83%BC%E3%82%B7%E3%83%A7%E3%83%B3%E8%A8%88%E7%94%BB%E3%82%AC%E3%82%A4%E3%83%89_AI-DLC%E7%89%88/" class="md-nav__link">
         
   
   
@@ -5987,7 +6090,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../reference/%E7%92%B0%E5%A2%83%E5%A4%89%E6%95%B0%E7%AE%A1%E7%90%86%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
+      <a href="../../../reference/%E7%92%B0%E5%A2%83%E5%A4%89%E6%95%B0%E7%AE%A1%E7%90%86%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
         
   
   
@@ -6022,7 +6125,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../reference/%E8%A8%80%E8%AA%9E%E5%88%A5%E9%96%8B%E7%99%BA%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
+      <a href="../../../reference/%E8%A8%80%E8%AA%9E%E5%88%A5%E9%96%8B%E7%99%BA%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
         
   
   
@@ -6057,7 +6160,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../reference/Java%E3%82%A2%E3%83%97%E3%83%AA%E3%82%B1%E3%83%BC%E3%82%B7%E3%83%A7%E3%83%B3%E7%92%B0%E5%A2%83%E6%A7%8B%E7%AF%89%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
+      <a href="../../../reference/Java%E3%82%A2%E3%83%97%E3%83%AA%E3%82%B1%E3%83%BC%E3%82%B7%E3%83%A7%E3%83%B3%E7%92%B0%E5%A2%83%E6%A7%8B%E7%AF%89%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
         
   
   
@@ -6092,7 +6195,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../reference/TypeScript%E3%82%A2%E3%83%97%E3%83%AA%E3%82%B1%E3%83%BC%E3%82%B7%E3%83%A7%E3%83%B3%E7%92%B0%E5%A2%83%E6%A7%8B%E7%AF%89%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
+      <a href="../../../reference/TypeScript%E3%82%A2%E3%83%97%E3%83%AA%E3%82%B1%E3%83%BC%E3%82%B7%E3%83%A7%E3%83%B3%E7%92%B0%E5%A2%83%E6%A7%8B%E7%AF%89%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
         
   
   
@@ -6127,7 +6230,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../reference/%E9%81%8B%E7%94%A8%E3%82%B9%E3%82%AF%E3%83%AA%E3%83%97%E3%83%88%E4%BD%9C%E6%88%90%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
+      <a href="../../../reference/%E9%81%8B%E7%94%A8%E3%82%B9%E3%82%AF%E3%83%AA%E3%83%97%E3%83%88%E4%BD%9C%E6%88%90%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
         
   
   
@@ -6162,7 +6265,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../reference/CodexCLIMCP%E3%82%A2%E3%83%97%E3%83%AA%E3%82%B1%E3%83%BC%E3%82%B7%E3%83%A7%E3%83%B3%E9%96%8B%E7%99%BA%E3%83%95%E3%83%AD%E3%83%BC/" class="md-nav__link">
+      <a href="../../../reference/CodexCLIMCP%E3%82%A2%E3%83%97%E3%83%AA%E3%82%B1%E3%83%BC%E3%82%B7%E3%83%A7%E3%83%B3%E9%96%8B%E7%99%BA%E3%83%95%E3%83%AD%E3%83%BC/" class="md-nav__link">
         
   
   
@@ -6197,7 +6300,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../reference/CodexCLIMCP%E3%82%B5%E3%83%BC%E3%83%90%E3%83%BC%E8%A8%AD%E5%AE%9A%E6%89%8B%E9%A0%86/" class="md-nav__link">
+      <a href="../../../reference/CodexCLIMCP%E3%82%B5%E3%83%BC%E3%83%90%E3%83%BC%E8%A8%AD%E5%AE%9A%E6%89%8B%E9%A0%86/" class="md-nav__link">
         
   
   
@@ -6232,7 +6335,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../reference/SonarQube%E3%83%AD%E3%83%BC%E3%82%AB%E3%83%AB%E7%92%B0%E5%A2%83%E3%82%BB%E3%83%83%E3%83%88%E3%82%A2%E3%83%83%E3%83%97%E6%89%8B%E9%A0%86%E6%9B%B8/" class="md-nav__link">
+      <a href="../../../reference/SonarQube%E3%83%AD%E3%83%BC%E3%82%AB%E3%83%AB%E7%92%B0%E5%A2%83%E3%82%BB%E3%83%83%E3%83%88%E3%82%A2%E3%83%83%E3%83%97%E6%89%8B%E9%A0%86%E6%9B%B8/" class="md-nav__link">
         
   
   
@@ -6267,7 +6370,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../reference/Vim%E6%93%8D%E4%BD%9C%E3%83%9E%E3%83%8B%E3%83%A5%E3%82%A2%E3%83%AB/" class="md-nav__link">
+      <a href="../../../reference/Vim%E6%93%8D%E4%BD%9C%E3%83%9E%E3%83%8B%E3%83%A5%E3%82%A2%E3%83%AB/" class="md-nav__link">
         
   
   
@@ -6302,7 +6405,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../reference/%E4%BC%81%E6%A5%AD%E7%B5%8C%E5%96%B6%E8%AB%96/" class="md-nav__link">
+      <a href="../../../reference/%E4%BC%81%E6%A5%AD%E7%B5%8C%E5%96%B6%E8%AB%96/" class="md-nav__link">
         
   
   
@@ -6337,7 +6440,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../reference/%E9%81%8B%E5%96%B6%E7%AE%A1%E7%90%86/" class="md-nav__link">
+      <a href="../../../reference/%E9%81%8B%E5%96%B6%E7%AE%A1%E7%90%86/" class="md-nav__link">
         
   
   
@@ -6429,7 +6532,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../template/" class="md-nav__link">
+      <a href="../../../template/" class="md-nav__link">
         
   
   
@@ -6457,7 +6560,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../template/%E3%81%BE%E3%81%9A%E3%81%93%E3%82%8C%E3%82%92%E8%AA%AD%E3%82%82%E3%81%86%E3%83%AA%E3%82%B9%E3%83%88/" class="md-nav__link">
+      <a href="../../../template/%E3%81%BE%E3%81%9A%E3%81%93%E3%82%8C%E3%82%92%E8%AA%AD%E3%82%82%E3%81%86%E3%83%AA%E3%82%B9%E3%83%88/" class="md-nav__link">
         
   
   
@@ -6492,7 +6595,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../template/%E3%83%93%E3%82%B8%E3%83%8D%E3%82%B9%E3%82%A2%E3%83%BC%E3%82%AD%E3%83%86%E3%82%AF%E3%83%81%E3%83%A3/" class="md-nav__link">
+      <a href="../../../template/%E3%83%93%E3%82%B8%E3%83%8D%E3%82%B9%E3%82%A2%E3%83%BC%E3%82%AD%E3%83%86%E3%82%AF%E3%83%81%E3%83%A3/" class="md-nav__link">
         
   
   
@@ -6527,7 +6630,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../template/%E8%A6%81%E4%BB%B6%E5%AE%9A%E7%BE%A9/" class="md-nav__link">
+      <a href="../../../template/%E8%A6%81%E4%BB%B6%E5%AE%9A%E7%BE%A9/" class="md-nav__link">
         
   
   
@@ -6562,7 +6665,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../template/%E5%AE%8C%E5%85%A8%E5%BD%A2%E5%BC%8F%E3%81%AE%E3%83%A6%E3%83%BC%E3%82%B9%E3%82%B1%E3%83%BC%E3%82%B9/" class="md-nav__link">
+      <a href="../../../template/%E5%AE%8C%E5%85%A8%E5%BD%A2%E5%BC%8F%E3%81%AE%E3%83%A6%E3%83%BC%E3%82%B9%E3%82%B1%E3%83%BC%E3%82%B9/" class="md-nav__link">
         
   
   
@@ -6597,7 +6700,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../template/%E8%A8%AD%E8%A8%88/" class="md-nav__link">
+      <a href="../../../template/%E8%A8%AD%E8%A8%88/" class="md-nav__link">
         
   
   
@@ -6632,7 +6735,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../template/ADR/" class="md-nav__link">
+      <a href="../../../template/ADR/" class="md-nav__link">
         
   
   
@@ -6667,7 +6770,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../template/%E3%82%A4%E3%83%B3%E3%82%BB%E3%83%97%E3%82%B7%E3%83%A7%E3%83%B3%E3%83%87%E3%83%83%E3%82%AD/" class="md-nav__link">
+      <a href="../../../template/%E3%82%A4%E3%83%B3%E3%82%BB%E3%83%97%E3%82%B7%E3%83%A7%E3%83%B3%E3%83%87%E3%83%83%E3%82%AD/" class="md-nav__link">
         
   
   
@@ -6702,7 +6805,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../template/%E3%82%A4%E3%83%86%E3%83%AC%E3%83%BC%E3%82%B7%E3%83%A7%E3%83%B3%E8%A8%88%E7%94%BB/" class="md-nav__link">
+      <a href="../../../template/%E3%82%A4%E3%83%86%E3%83%AC%E3%83%BC%E3%82%B7%E3%83%A7%E3%83%B3%E8%A8%88%E7%94%BB/" class="md-nav__link">
         
   
   
@@ -6737,7 +6840,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../template/%E3%82%A4%E3%83%86%E3%83%AC%E3%83%BC%E3%82%B7%E3%83%A7%E3%83%B3%E5%AE%8C%E4%BA%86%E5%A0%B1%E5%91%8A%E6%9B%B8/" class="md-nav__link">
+      <a href="../../../template/%E3%82%A4%E3%83%86%E3%83%AC%E3%83%BC%E3%82%B7%E3%83%A7%E3%83%B3%E5%AE%8C%E4%BA%86%E5%A0%B1%E5%91%8A%E6%9B%B8/" class="md-nav__link">
         
   
   
@@ -6772,7 +6875,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../template/%E3%83%AA%E3%83%AA%E3%83%BC%E3%82%B9%E8%A8%88%E7%94%BB/" class="md-nav__link">
+      <a href="../../../template/%E3%83%AA%E3%83%AA%E3%83%BC%E3%82%B9%E8%A8%88%E7%94%BB/" class="md-nav__link">
         
   
   
@@ -6807,7 +6910,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../template/%E3%83%AA%E3%83%AA%E3%83%BC%E3%82%B9%E5%AE%8C%E4%BA%86%E5%A0%B1%E5%91%8A%E6%9B%B8/" class="md-nav__link">
+      <a href="../../../template/%E3%83%AA%E3%83%AA%E3%83%BC%E3%82%B9%E5%AE%8C%E4%BA%86%E5%A0%B1%E5%91%8A%E6%9B%B8/" class="md-nav__link">
         
   
   
@@ -6842,7 +6945,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../template/%E3%82%A2%E3%83%97%E3%83%AA%E3%82%B1%E3%83%BC%E3%82%B7%E3%83%A7%E3%83%B3%E9%96%8B%E7%99%BA%E7%92%B0%E5%A2%83%E3%82%BB%E3%83%83%E3%83%88%E3%82%A2%E3%83%83%E3%83%97%E6%89%8B%E9%A0%86%E6%9B%B8/" class="md-nav__link">
+      <a href="../../../template/%E3%82%A2%E3%83%97%E3%83%AA%E3%82%B1%E3%83%BC%E3%82%B7%E3%83%A7%E3%83%B3%E9%96%8B%E7%99%BA%E7%92%B0%E5%A2%83%E3%82%BB%E3%83%83%E3%83%88%E3%82%A2%E3%83%83%E3%83%97%E6%89%8B%E9%A0%86%E6%9B%B8/" class="md-nav__link">
         
   
   
@@ -6877,7 +6980,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../template/%E9%96%8B%E7%99%BA%E7%92%B0%E5%A2%83%E3%82%BB%E3%83%83%E3%83%88%E3%82%A2%E3%83%83%E3%83%97%E6%89%8B%E9%A0%86%E6%9B%B8/" class="md-nav__link">
+      <a href="../../../template/%E9%96%8B%E7%99%BA%E7%92%B0%E5%A2%83%E3%82%BB%E3%83%83%E3%83%88%E3%82%A2%E3%83%83%E3%83%97%E6%89%8B%E9%A0%86%E6%9B%B8/" class="md-nav__link">
         
   
   
@@ -6912,7 +7015,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../template/AWS%E3%82%B9%E3%83%86%E3%83%BC%E3%82%B8%E3%83%B3%E3%82%B0%E7%92%B0%E5%A2%83%E3%82%BB%E3%83%83%E3%83%88%E3%82%A2%E3%83%83%E3%83%97%E6%89%8B%E9%A0%86%E6%9B%B8/" class="md-nav__link">
+      <a href="../../../template/AWS%E3%82%B9%E3%83%86%E3%83%BC%E3%82%B8%E3%83%B3%E3%82%B0%E7%92%B0%E5%A2%83%E3%82%BB%E3%83%83%E3%83%88%E3%82%A2%E3%83%83%E3%83%97%E6%89%8B%E9%A0%86%E6%9B%B8/" class="md-nav__link">
         
   
   
@@ -6947,7 +7050,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../template/AWS%E3%83%97%E3%83%AD%E3%83%80%E3%82%AF%E3%82%B7%E3%83%A7%E3%83%B3%E7%92%B0%E5%A2%83%E3%82%BB%E3%83%83%E3%83%88%E3%82%A2%E3%83%83%E3%83%97%E6%89%8B%E9%A0%86%E6%9B%B8/" class="md-nav__link">
+      <a href="../../../template/AWS%E3%83%97%E3%83%AD%E3%83%80%E3%82%AF%E3%82%B7%E3%83%A7%E3%83%B3%E7%92%B0%E5%A2%83%E3%82%BB%E3%83%83%E3%83%88%E3%82%A2%E3%83%83%E3%83%97%E6%89%8B%E9%A0%86%E6%9B%B8/" class="md-nav__link">
         
   
   
@@ -6982,7 +7085,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../template/%E4%BC%81%E6%A5%AD%E5%88%86%E6%9E%90/" class="md-nav__link">
+      <a href="../../../template/%E4%BC%81%E6%A5%AD%E5%88%86%E6%9E%90/" class="md-nav__link">
         
   
   
@@ -7017,7 +7120,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../template/%E4%BA%8B%E4%BE%8B%E5%88%86%E6%9E%90/" class="md-nav__link">
+      <a href="../../../template/%E4%BA%8B%E4%BE%8B%E5%88%86%E6%9E%90/" class="md-nav__link">
         
   
   
@@ -7052,7 +7155,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../template/README.md" class="md-nav__link">
+      <a href="../../../template/README.md" class="md-nav__link">
         
   
   
@@ -7100,101 +7203,316 @@
   
 
 
-<h1 id="_1">記事<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h1>
-<p>本リポジトリの開発ガイドラインと、学習用の記事シリーズの一覧です。</p>
-<h2 id="_2">開発ガイドライン：実践ドメイン駆動設計<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h2>
-<p>本リポジトリの開発で従う DDD の考え方と実装方針です。cargo-tracker の分析・設計・実装では、次の 3 章を開発ガイドラインとして参照します。</p>
+<h1 id="cargo-tracker-bolt-15-2026-10-06">cargo-tracker Bolt 15 運用成果物レビュー（2026-10-06）<a class="headerlink" href="#cargo-tracker-bolt-15-2026-10-06" title="Permanent link">&para;</a></h1>
+<h2 id="_1">レビュー対象<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h2>
+<ul>
+<li>範囲: <code>41ff69d2..1028af52</code>（Bolt 15 のステップ 1〜4）</li>
+<li>内容: <code>apps/cargo-tracker/Dockerfile</code>（build・runtime・demo）、<code>.dockerignore</code>、<code>build.gradle</code> の <code>copyDemoLibs</code>、<code>ops/scripts/deploy_demo.js</code>、<code>gulpfile.js</code>、<code>.env.example</code>、<a href="../../../operation/cargo-tracker/heroku_demo_setup/">Heroku デモ環境セットアップ手順書</a>、<a href="../../../adr/cargo-tracker/013-heroku-demo-environment/">ADR-013</a>、<a href="../../../development/cargo-tracker/bolt_15_plan/">Bolt 15 計画</a></li>
+<li>視点: xp-architect（インフラ設計）、xp-tester（信頼性・セキュリティ）、xp-project-manager（運用性）の 3 つ（並列。<code>operating-review</code>）</li>
+</ul>
+<h2 id="_2">総合評価<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h2>
+<p>本番の成果物に H2 を入れない約束（ADR-007、AT-06）を守ったまま dev のデモを動かす構成（bootJar を変えず、<code>copyDemoLibs</code> と <code>demo</code> のステージで H2 だけを足す）は、3 つの視点のどれからも評価された。<code>runtime</code> のイメージが dev で落ちることを失敗の側から確かめたこと、R14 を計測して <code>-Xmx300m</code> に固定したこと、取り消せない削除をタスクにしなかったこと、つまずきを手順書に残したことも評価された。</p>
+<p>一方で、リポジトリと GitHub Pages が公開のため「URL は関係者にだけ伝える」が成り立たないこと、ADR と計画が旧いタスク名（<code>heroku:*</code>）のままで実装と食い違うこと、配備のガードがブランチを見ず <code>build</code> にしかないこと、動いているコミットが分からないこと、ロールバックの手順がないことが指摘された。<code>runtime</code> のステージに Heroku の都合（<code>PORT</code>・<code>sh -c</code>・<code>EXTRA_CLASSPATH</code>）が混ざっていて、W10 の ECS の出発点としては分け直しが要ることも指摘された。</p>
+<h2 id="_3">改善提案と対応<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h2>
+<h3 id="_4">高<a class="headerlink" href="#_4" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
 <tr>
-<th>章</th>
-<th>内容</th>
-<th>主に使う工程</th>
+<th style="text-align: left;">#</th>
+<th style="text-align: left;">提案</th>
+<th style="text-align: left;">箇所</th>
+<th style="text-align: left;">指摘元</th>
+<th style="text-align: left;">対応</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><a href="01-ddd-fundamentals/">第 1 章：ドメイン駆動設計</a></td>
-<td>問題空間と解決空間、戦略的設計（サブドメイン・境界づけられたコンテキスト）と戦術的設計（集約・エンティティ・値オブジェクト・ドメインイベント）の概念</td>
-<td>アーキテクチャ設計、ドメインモデル設計</td>
+<td style="text-align: left;">R-01</td>
+<td style="text-align: left;">公開のリポジトリと GitHub Pages に URL と開発用の password があり、「URL は関係者にだけ伝える」が成り立たない</td>
+<td style="text-align: left;">ADR-013、手順書、README</td>
+<td style="text-align: left;">PM</td>
+<td style="text-align: left;">D-54: 公開を前提に ADR-013 を直す。URL は docs に残す</td>
 </tr>
 <tr>
-<td><a href="02-cargo-domain-model/">第 2 章：Cargo Tracker のドメインモデル</a></td>
-<td>Cargo Tracker を題材にした、コアドメイン、境界づけられたコンテキスト、ドメインモデル、コマンド・クエリ・イベント・サガの導出</td>
-<td>ドメインモデル設計、データモデル設計</td>
+<td style="text-align: left;">R-02</td>
+<td style="text-align: left;">ADR-013 が旧いタスク名（<code>heroku:*</code>）と <code>heroku container:push</code> のまま。ビルドの構成（<code>copyDemoLibs</code>、3 つのステージ、確認ポイント 13 の案と却下の理由）が決定にない</td>
+<td style="text-align: left;">ADR-013</td>
+<td style="text-align: left;">3 視点</td>
+<td style="text-align: left;">この Bolt で直す</td>
 </tr>
 <tr>
-<td><a href="03-spring-modular-monolith/">第 3 章：Spring Platform × モジュラーモノリス</a></td>
-<td>Spring Platform による Cargo Tracker のモジュラーモノリス実装</td>
-<td>技術スタック選定、バックエンド実装</td>
+<td style="text-align: left;">R-03</td>
+<td style="text-align: left;">配備のガードが <code>build</code> にしかなく、<code>push</code>・<code>release</code> を単独で動かすと未検証のイメージが出る</td>
+<td style="text-align: left;"><code>deploy_demo.js</code></td>
+<td style="text-align: left;">テスター</td>
+<td style="text-align: left;">この Bolt で直す（<code>push</code> にもガードを掛ける）</td>
+</tr>
+<tr>
+<td style="text-align: left;">R-04</td>
+<td style="text-align: left;">イメージと release にコミットの SHA がなく、何が動いているか分からない</td>
+<td style="text-align: left;"><code>deploy_demo.js</code></td>
+<td style="text-align: left;">テスター</td>
+<td style="text-align: left;">この Bolt で直す（イメージのラベルと Config Vars <code>DEMO_REVISION</code>、<code>status</code> で表示）</td>
+</tr>
+<tr>
+<td style="text-align: left;">R-05</td>
+<td style="text-align: left;">Secure のない session の Cookie が公開の URL で動くことが ADR の帰結にない</td>
+<td style="text-align: left;">ADR-013</td>
+<td style="text-align: left;">テスター、アーキテクト</td>
+<td style="text-align: left;">この Bolt で直す（ADR のネガティブに書く）</td>
 </tr>
 </tbody>
 </table>
-<h2 id="_3">学習用記事シリーズ（外部サイト）<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h2>
-<p>外部シリーズの記事は各リポジトリで継続的に追加・更新されているため、本文はここに置かず、公開サイトへのリンクのみを掲載しています。</p>
+<h3 id="_5">中<a class="headerlink" href="#_5" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
 <tr>
-<th>シリーズ</th>
-<th>テーマ</th>
-<th>説明</th>
+<th style="text-align: left;">#</th>
+<th style="text-align: left;">提案</th>
+<th style="text-align: left;">箇所</th>
+<th style="text-align: left;">指摘元</th>
+<th style="text-align: left;">対応</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><a href="https://k2works.github.io/getting-started-tdd/article/">テスト駆動開発から始めるプログラミング入門</a></td>
-<td>TDD を軸にした言語入門</td>
-<td>共通題材で Red-Green-Refactor を体験し、言語ごとの設計思想を比較できます。</td>
+<td style="text-align: left;">R-06</td>
+<td style="text-align: left;">計画の本文（構成図・スコープ・打ち切り・リスク・DoD・デモ項目）が旧いタスク名のまま</td>
+<td style="text-align: left;">計画</td>
+<td style="text-align: left;">PM、アーキテクト</td>
+<td style="text-align: left;">この Bolt で直す</td>
 </tr>
 <tr>
-<td><a href="https://k2works.github.io/getting-started-algorithm/article/">アルゴリズムからはじめるプログラミング入門</a></td>
-<td>アルゴリズムを軸にした言語入門</td>
-<td>基本アルゴリズム、配列、探索、スタックとキュー、再帰、ソート、文字列処理、リスト、木構造までを TDD で実装しながら、多言語で比較して学べます。</td>
+<td style="text-align: left;">R-07</td>
+<td style="text-align: left;">ガードがブランチを見ない（「develop の緑のコミットから」を守らせていない）</td>
+<td style="text-align: left;"><code>deploy_demo.js</code></td>
+<td style="text-align: left;">3 視点</td>
+<td style="text-align: left;">この Bolt で直す（HEAD が develop で、<code>origin/develop</code> に含まれる。CI は develop の実行を見る）</td>
 </tr>
 <tr>
-<td><a href="https://k2works.github.io/getting-started-design-pattern/article/">デザインパターンからはじめるプログラミング入門</a></td>
-<td>デザインパターンを軸にした言語入門</td>
-<td>Template Method・Strategy・Observer から Builder・Interpreter までの GoF パターンを TDD で実装しながら、パターンを支える設計原則とともに多言語で比較して学べます。</td>
+<td style="text-align: left;">R-08</td>
+<td style="text-align: left;">ロールバックの手順がない</td>
+<td style="text-align: left;">手順書</td>
+<td style="text-align: left;">テスター</td>
+<td style="text-align: left;">この Bolt で直す（<code>heroku releases</code>・<code>heroku rollback</code>、前のコミットからの配備）</td>
 </tr>
 <tr>
-<td><a href="https://k2works.github.io/getting-started-machine-learning/article/getting-start-ml/">機械学習から始めるプログラミング入門</a></td>
-<td>機械学習を軸にした言語入門</td>
-<td>機械学習の題材をテストファーストで実装しながら、データ前処理、CI/CD、評価指標、モデル選択、API 設計まで多言語で学べます。</td>
+<td style="text-align: left;">R-09</td>
+<td style="text-align: left;">スリープからの起動の時間を「終了報告を参照」としている</td>
+<td style="text-align: left;">手順書</td>
+<td style="text-align: left;">PM</td>
+<td style="text-align: left;">この Bolt で直す（計測値を手順書に書く）</td>
 </tr>
 <tr>
-<td><a href="https://k2works.github.io/grokkingfp-excersice/">Grokking Functional Programming</a></td>
-<td>関数型プログラミング</td>
-<td>純粋関数、イミュータブルデータ、Option/Either、IO、並行処理まで体系的に学べます。</td>
+<td style="text-align: left;">R-10</td>
+<td style="text-align: left;"><code>-Xmx300m</code> は Heroku だけの値（Fargate は cgroup が効き <code>MaxRAMPercentage</code> が正しい）</td>
+<td style="text-align: left;">ADR-013、手順書</td>
+<td style="text-align: left;">アーキテクト</td>
+<td style="text-align: left;">この Bolt で直す</td>
 </tr>
 <tr>
-<td><a href="https://k2works.github.io/grokking-concurrency-exercise/">Grokking Concurrency</a></td>
-<td>並行処理プログラミング</td>
-<td>スレッド、同期、非同期、ノンブロッキング I/O、分散並列処理を多言語で比較できます。</td>
+<td style="text-align: left;">R-11</td>
+<td style="text-align: left;"><code>runtime</code> のステージに <code>EXTRA_CLASSPATH</code>・<code>PORT</code>・<code>sh -c</code> が混ざる</td>
+<td style="text-align: left;">Dockerfile</td>
+<td style="text-align: left;">アーキテクト</td>
+<td style="text-align: left;">W10 に回す（<code>runtime</code> は exec 形式、<code>PORT</code> と <code>demo-lib</code> は <code>demo</code> で上書き）</td>
 </tr>
 <tr>
-<td><a href="https://k2works.github.io/grokking-machine-learning-excersice/grokking-machine-learning/">Grokking Machine Learning</a></td>
-<td>機械学習</td>
-<td>線形回帰から決定木、ニューラルネットワーク、SVM、アンサンブル学習まで、機械学習アルゴリズムを Python・Kotlin・F# で自前実装しながら学べます。</td>
+<td style="text-align: left;">R-12</td>
+<td style="text-align: left;">展開した <code>extracted/</code> を 1 つのレイヤーで入れるため、コードの変更で全体を送り直す</td>
+<td style="text-align: left;">Dockerfile</td>
+<td style="text-align: left;">アーキテクト</td>
+<td style="text-align: left;">W10 に回す（<code>extract --layers</code>）</td>
 </tr>
 <tr>
-<td><a href="https://k2works.github.io/functional-desgin-ppp/article/">関数型デザイン - 原則、パターン、実践</a></td>
-<td>関数型デザインパターン</td>
-<td>OOP のデザインパターンを関数型パラダイムでどう表現するかを実践的に学べます。</td>
+<td style="text-align: left;">R-13</td>
+<td style="text-align: left;">イメージの検証が手作業だけ（<code>runtime</code> に H2 がない、<code>demo</code> が起動する）。forward headers の振る舞いがテストで固定されていない</td>
+<td style="text-align: left;">CI、テスト</td>
+<td style="text-align: left;">テスター、アーキテクト</td>
+<td style="text-align: left;">W10 に回す（ECR・ECS の最初の受入条件にする）</td>
 </tr>
 <tr>
-<td><a href="https://k2works.github.io/from-objects-to-functions-excersice/article/zettai/">From Objects to Functions 演習</a></td>
-<td>関数型アーキテクチャ</td>
-<td>To-Do アプリ Zettai を題材に、HTTP、ドメインモデリング、イベントソーシング、関数型エラーハンドリング、ファンクタ・モナドによる射影と永続化までを Kotlin・なでしこ3・Rust で実装しながら学べます。</td>
+<td style="text-align: left;">R-14</td>
+<td style="text-align: left;">ビルドの context に gitignore されたファイルが入りうる（作業ツリーの確かめに出ない）</td>
+<td style="text-align: left;"><code>deploy_demo.js</code>、<code>.dockerignore</code></td>
+<td style="text-align: left;">テスター</td>
+<td style="text-align: left;">W10 に回す（<code>git archive</code> から作った context でビルドする案）。この Bolt では手順書に書く</td>
 </tr>
 <tr>
-<td><a href="https://k2works.github.io/practical-database-design/article/">実践データベース設計：基幹業務システム編</a></td>
-<td>データベース設計</td>
-<td>販売管理・財務会計・生産管理の基幹業務システムを題材に、業務フローとデータモデルを体系的に学べます。</td>
+<td style="text-align: left;">R-15</td>
+<td style="text-align: left;">公開のファイル置き場としての悪用と、Heroku のアカウント全体が止められる恐れ</td>
+<td style="text-align: left;">ADR-013</td>
+<td style="text-align: left;">アーキテクト、テスター</td>
+<td style="text-align: left;">この Bolt で直す（ADR のネガティブと、気づいたら <code>stop</code> する運用）</td>
 </tr>
 <tr>
-<td><a href="https://k2works.github.io/getting-started-docker-kubernetes/article/">Docker/Kubernetes 実践コンテナ解説</a></td>
-<td>コンテナ・オーケストレーション</td>
-<td>コンテナの基礎から複数コンテナ構成、Kubernetes、継続的デリバリー、ケーススタディまで実践的に学べます。</td>
+<td style="text-align: left;">R-16</td>
+<td style="text-align: left;">1 人に Heroku のアカウント・費用・停止の手段が集中する</td>
+<td style="text-align: left;">手順書、リリース計画</td>
+<td style="text-align: left;">PM</td>
+<td style="text-align: left;">この Bolt で直す（手順書に所有者、リリース計画のリスクに足す）</td>
+</tr>
+</tbody>
+</table>
+<h3 id="_6">低<a class="headerlink" href="#_6" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">#</th>
+<th style="text-align: left;">提案</th>
+<th style="text-align: left;">対応</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">R-17</td>
+<td style="text-align: left;"><code>log-runtime-metrics</code> を <code>deploy:demo:setup</code> で有効にする</td>
+<td style="text-align: left;">この Bolt で直す</td>
+</tr>
+<tr>
+<td style="text-align: left;">R-18</td>
+<td style="text-align: left;">R14 の判断の基準（<code>memory_total</code> が 450 MB を超えたら dyno の種類を人に諮る）</td>
+<td style="text-align: left;">この Bolt で直す（手順書）</td>
+</tr>
+<tr>
+<td style="text-align: left;">R-19</td>
+<td style="text-align: left;"><code>copyDemoLibs</code> を <code>Sync</code> にする（古い jar を残さない）</td>
+<td style="text-align: left;">この Bolt で直す</td>
+</tr>
+<tr>
+<td style="text-align: left;">R-20</td>
+<td style="text-align: left;"><code>webUrl()</code> の正規表現を <code>JSON.parse</code> にし、取れないときに案内して止める</td>
+<td style="text-align: left;">この Bolt で直す</td>
+</tr>
+<tr>
+<td style="text-align: left;">R-21</td>
+<td style="text-align: left;"><code>container:login</code> をしていないときの push の失敗の案内</td>
+<td style="text-align: left;">この Bolt で直す</td>
+</tr>
+<tr>
+<td style="text-align: left;">R-22</td>
+<td style="text-align: left;">ADR のコンプライアンスに「dev に H2 Console と devtools を入れない」</td>
+<td style="text-align: left;">この Bolt で直す</td>
+</tr>
+<tr>
+<td style="text-align: left;">R-23</td>
+<td style="text-align: left;">ADR-008 から ADR-013 への参照</td>
+<td style="text-align: left;">この Bolt で直す（ADR の索引の注記）</td>
+</tr>
+<tr>
+<td style="text-align: left;">R-24</td>
+<td style="text-align: left;">ベースイメージの digest での固定、<code>--platform=$BUILDPLATFORM</code>、Gradle のキャッシュの mount、jar の名前の glob</td>
+<td style="text-align: left;">W10 に回す</td>
+</tr>
+<tr>
+<td style="text-align: left;">R-25</td>
+<td style="text-align: left;"><code>DEMO_SKIP_GUARD</code> を使ったことの記録の置き場</td>
+<td style="text-align: left;">この Bolt で直す（手順書: 使ったら終了報告かジャーナルに理由を書く）</td>
+</tr>
+<tr>
+<td style="text-align: left;">R-26</td>
+<td style="text-align: left;">シェルの文字列への環境変数の埋め込み（<code>execFileSync</code> の配列へ）</td>
+<td style="text-align: left;">W10 に回す（値は手元の <code>.env</code> だけで、実害は小さい）</td>
+</tr>
+<tr>
+<td style="text-align: left;">R-27</td>
+<td style="text-align: left;">動画のアドレスバーに URL が映るか</td>
+<td style="text-align: left;">対応しない（D-54 で URL は公開とした。Playwright の録画はアドレスバーを映さない）</td>
+</tr>
+</tbody>
+</table>
+<h2 id="_7">人の決定<a class="headerlink" href="#_7" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">ID</th>
+<th style="text-align: left;">決定</th>
+<th style="text-align: left;">日付</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">D-54</td>
+<td style="text-align: left;">デモ環境はだれでも開ける公開のデモとして認め、ADR-013 の「アクセス」と「運用の約束」を書き直す。URL は docs に残す。悪用の影響（書類の添付、Heroku のアカウントの停止の恐れ）を ADR に書き、気づいたら <code>deploy:demo:stop</code> する</td>
+<td style="text-align: left;">2026-10-06、human:kakimomokuri</td>
+</tr>
+<tr>
+<td style="text-align: left;">D-55</td>
+<td style="text-align: left;">デモのない期間も常時起動にする（Eco のスリープに任せる。費用は定額で増えない）。週次の見直しで状態とログを確かめ、W10 でステージングができたら要否を見直す</td>
+<td style="text-align: left;">2026-10-06、human:kakimomokuri</td>
+</tr>
+<tr>
+<td style="text-align: left;">D-56</td>
+<td style="text-align: left;">上の表の「この Bolt で直す」と「W10 に回す」の分け方</td>
+<td style="text-align: left;">2026-10-06、human:kakimomokuri</td>
+</tr>
+</tbody>
+</table>
+<h2 id="_8">矛盾事項<a class="headerlink" href="#_8" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">#</th>
+<th style="text-align: left;">視点 A</th>
+<th style="text-align: left;">視点 B</th>
+<th style="text-align: left;">論点</th>
+<th style="text-align: left;">判断</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">1</td>
+<td style="text-align: left;">アーキテクト: 書類を第三者が取り出す経路になる</td>
+<td style="text-align: left;">テスター: ダウンロードの経路が見当たらず、悪用の心配は小さい</td>
+<td style="text-align: left;">書類の取り出し</td>
+<td style="text-align: left;">荷主の詳細と営業の審査の画面に書類の取得がある（Bolt 7）。だれでも営業でログインできるため、取り出せる。アーキテクトの見方をとり、ADR に書く（R-15）</td>
+</tr>
+</tbody>
+</table>
+<h2 id="_9">エージェント別フィードバック詳細<a class="headerlink" href="#_9" title="Permanent link">&para;</a></h2>
+<details>
+<summary>xp-architect（高: 1 / 中: 4 / 低: 6）</summary>
+
+ADR-008・007 との整合と AT-06 の保持を評価。ADR-013 の本文の食い違い（高）、`runtime` への Heroku の都合の混入、レイヤーの分割、`-Xmx` の Heroku 専用の明記、ブランチのガード（中）、`$BUILDPLATFORM`、依存のキャッシュ、jar の名前の glob、`copyDemoLibs` の漏れのスモーク、digest の固定、`webUrl` の JSON（低）。セキュリティは公開のファイル置き場の悪用、Secure のない Cookie、H2 Console と devtools を入れない約束。スコープ外は ADR-008 からの参照、`readonlyRootFilesystem` と `/tmp`、イメージの層までの AT-06。
+
+</details>
+
+<details>
+<summary>xp-tester（高: 3 / 中: 5 / 低: 4）</summary>
+
+失敗の側からの確かめ、T-41、R14 の原因の分析、安全側に倒れるガードを評価。ガードが `build` にしかない、SHA がない、Secure のない Cookie が ADR にない（高）、ブランチ、gitignore されたファイル、ロールバック、イメージの自動の検証と forward headers のテスト、旧いタスク名（中）、`Sync`、digest、`execFileSync`、`DEMO_SKIP_GUARD` の記録（低）。運用リスクは R14 の余裕と判断の基準、ガードの誤判定（設計文書の変更、concurrency による取り消し）。
+
+</details>
+
+<details>
+<summary>xp-project-manager（高: 2 / 中: 3 / 低: 4）</summary>
+
+ガードによる約束の強制、削除を手で行うこと、命名、つまずきの表、計測値の根拠を評価。URL の秘匿が成り立たない、ADR の旧いタスク名（高）、計画の旧いタスク名、ブランチ、スリープの値（中）、`log-runtime-metrics`、`container:login` の案内、`DEMO_SKIP_GUARD` の記録先、`webUrl` の例外（低）。運用リスクは属人化、止め忘れの方針、リスク台帳。
+
+</details>
+
+<h2 id="_10">更新履歴<a class="headerlink" href="#_10" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">日付</th>
+<th style="text-align: left;">内容</th>
+<th style="text-align: left;">作成</th>
+<th style="text-align: left;">承認</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">2026-10-06</td>
+<td style="text-align: left;">初版（3 視点のレビュー、人の決定 D-54〜D-56）</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5</td>
+<td style="text-align: left;">—</td>
+</tr>
+<tr>
+<td style="text-align: left;">2026-10-06</td>
+<td style="text-align: left;">対応の範囲（D-54〜D-56）を承認</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5</td>
+<td style="text-align: left;">human:kakimomokuri</td>
 </tr>
 </tbody>
 </table>
@@ -7204,6 +7522,9 @@
 
 
 
+
+  
+  
 
 
 
@@ -7260,16 +7581,16 @@
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.tabs", "toc.integrate", "search.suggest", "search.highlight"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.tabs", "toc.integrate", "search.suggest", "search.highlight"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../assets/javascripts/bundle.d7400e89.min.js"></script>
+      <script src="../../../assets/javascripts/bundle.d7400e89.min.js"></script>
       
         <script src="https://cdn.jsdelivr.net/npm/mermaid@11.17.2/dist/mermaid.min.js"></script>
       
-        <script src="../assets/js/extra.js"></script>
+        <script src="../../../assets/js/extra.js"></script>
       
-        <script src="../assets/js/mathjax.js"></script>
+        <script src="../../../assets/js/mathjax.js"></script>
       
         <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
       
