@@ -39,7 +39,7 @@ Bolt がイテレーションに当たります。ふりかえりは各 Bolt の
 | 11 | [見積りの失効と置換（US-03 AC4・AC5）](bolt_11_plan.md) | [終了報告](bolt_11_report.md) | W2 | 完了 |
 | 12 | [詳細経路設計へ進む回答（US-24 AC1）](bolt_12_plan.md) | [終了報告](bolt_12_report.md) | W2 | 完了 |
 | 13 | [TOTP と Spring Security 7 の多要素認証のスパイク（TS-01）](bolt_13_plan.md) | [終了報告](bolt_13_report.md) | W2 | 完了 |
-| 14 | [password によるログインと session（US-18 の一部）](bolt_14_plan.md) | [終了報告](bolt_14_report.md) | W2 | 完了（終了報告の承認待ち） |
+| 14 | [password によるログインと session（US-18 の一部）](bolt_14_plan.md) | [終了報告](bolt_14_report.md) | W2 | 完了 |
 
 Bolt を始めるときに行を追加します。
 

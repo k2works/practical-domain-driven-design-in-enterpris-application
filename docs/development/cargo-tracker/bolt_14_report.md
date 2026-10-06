@@ -3,8 +3,10 @@ type: Plan
 title: "Bolt 14 終了報告 - password によるログインと session（US-18 の一部）"
 description: "14 回目の Bolt の終了報告。Spring Security と Spring Session JDBC による password のログインと session、企業・利用者・役割・監査記録の表、A-01・A-03・A-04 と役割ごとのナビ、仮の主体の置き換え、開発環境の入力済み、5 視点の開発レビューと対応、デモ項目と動画、仮説 H1〜H3 の結論、承認ゲートを後でまとめて受ける議題、ふりかえりをまとめる。"
 tags: [development,bolt-report]
-status: draft
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-06T06:41:11Z }
+status: stable
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-06T06:51:29Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-10-06T06:51:29Z }
 ---
 
 # Bolt 14 終了報告 - password によるログインと session（US-18 の一部）
@@ -149,6 +151,7 @@ T-28 に従い、本報告の前に Bolt 14 の変更を 5 つの視点でレビ
 ### 人の決定
 
 - Bolt 14 の範囲（分けずに 1 つの Bolt）、確認ポイント 1〜14（2026-10-06）
+- 承認の議題 1〜6（ステップ 2 の業務のルールとスキーマ、ステップ 3 のセキュリティ、D-49〜D-53、H2 のコンソールを外したこと、413 の画面、画面の文言は「password」のまま）、ADR-012 の採用、開発用の利用者の選択、Try T-41〜T-43（2026-10-06、本報告の承認でまとめて決定）
 - 開発環境のログインの画面で、荷主担当者・営業担当者の開発用の利用者を選んでそのままログインできるようにする（2026-10-06。本報告の初版の後の追加の依頼。Red `f137194` の後に Green）
 
 ### 既知の課題（W5 の US-18 の計画に持ち込む）
@@ -206,6 +209,7 @@ T-28 に従い、本報告の前に Bolt 14 の変更を 5 つの視点でレビ
 | :--- | :--- | :--- | :--- |
 | 2026-10-06 | 初版（ステップ 1〜5 の結果、レビューと対応、仮説の結論、KPT） | anthropic/claude-opus-5-5 | — |
 | 2026-10-06 | 人の依頼で、開発環境のログインの画面に開発用の利用者（荷主担当者 2 人・営業担当者 1 人）を選ぶボタンを足した。`check`・`uiTest` は緑 | anthropic/claude-opus-5-5 | — |
+| 2026-10-06 | 承認の議題 1〜6、ADR-012（採用）、開発用の利用者の選択、Try T-41〜T-43 を承認し、Bolt 14 を終えた（人の変更依頼 0。追加の依頼 1） | anthropic/claude-opus-5-5 | human:kakimomokuri |
 
 ## 関連ドキュメント
 

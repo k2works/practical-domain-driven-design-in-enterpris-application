@@ -3,8 +3,10 @@ type: ADR
 title: "ADR-012: 認証の主体は共有カーネルの型にし、password の段を Spring Security の form login と Spring Session JDBC で作る"
 description: "US-18 の password によるログインと session を、Spring Security 7 の form login と Spring Session JDBC で作る。"
 tags: [adr, authentication, session]
-status: draft
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-06T06:13:27Z }
+status: stable
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-06T06:51:29Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-10-06T06:51:29Z }
 ---
 
 # ADR-012: 認証の主体は共有カーネルの型にし、password の段を Spring Security の form login と Spring Session JDBC で作る
@@ -15,7 +17,7 @@ US-18 の password によるログインと session を、Spring Security 7 の 
 
 ## ステータス
 
-提案（Bolt 14 の確認ポイント 2・3 で人が承認した方針。Bolt 14 の終了報告の承認で採否を決める）
+承認（2026-10-06、human:kakimomokuri が Bolt 14 の終了報告の承認で採用した。Bolt 14 の確認ポイント 2・3 の方針）
 
 ## コンテキスト
 
