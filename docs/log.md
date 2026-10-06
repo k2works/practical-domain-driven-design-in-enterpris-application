@@ -2,6 +2,8 @@
 
 ## 2026-10-06
 * **Update**: [bolt_14_plan](/development/cargo-tracker/bolt_14_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [012-authentication-principal-and-session](/adr/cargo-tracker/012-authentication-principal-and-session.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_14_plan](/development/cargo-tracker/bolt_14_plan.md) を更新（anthropic/claude-opus-5-5）
 * **Update**: [bolt_14_plan](/development/cargo-tracker/bolt_14_plan.md) を更新（anthropic/claude-opus-5-5）
 * **Update**: [012-authentication-principal-and-session](/adr/cargo-tracker/012-authentication-principal-and-session.md) を更新（anthropic/claude-opus-5-5）
 * **Update**: [user_story](/requirements/cargo-tracker/user_story.md) を更新（anthropic/claude-opus-5-5）

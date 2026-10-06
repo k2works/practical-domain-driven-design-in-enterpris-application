@@ -4,7 +4,7 @@ title: "ADR-012: 認証の主体は共有カーネルの型にし、password の
 description: "US-18 の password によるログインと session を、Spring Security 7 の form login と Spring Session JDBC で作る。"
 tags: [adr, authentication, session]
 status: draft
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-06T04:56:02Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-06T05:47:30Z }
 ---
 
 # ADR-012: 認証の主体は共有カーネルの型にし、password の段を Spring Security の form login と Spring Session JDBC で作る
@@ -31,8 +31,8 @@ US-18 の password によるログインと session を、Spring Security 7 の 
 ### 1. 認証の主体の型
 
 - 共有カーネル（`shared`）に、認証された利用者 `AuthenticatedActor`（利用者 ID・企業 ID・役割・表示名・企業名）と役割 `Role`（BR-15 の 8 役割）を置く。
-- `quotation` の controller は `@AuthenticationPrincipal` でこの型だけを受け取る。Spring Security の型（`UserDetails`、`Authentication`）と `identity` には依存しない（ArchUnit で確かめる）。
-- Spring Security の主体は `identity` の型（`UserDetails` を実装する）で、`AuthenticatedActor` を持つ。controller の引数への変換は `identity` の設定に置く。
+- `quotation` の controller は、引数に `AuthenticatedActor` を書くだけでこの型を受け取る。`identity` の引数の解決（`AuthenticatedActorArgumentResolver`）が Spring Security の主体から作って渡すため、`@AuthenticationPrincipal` も使わない。Spring Security の型（`UserDetails`、`Authentication`）と `identity` には依存しない（ArchUnit で確かめる。Bolt 14 の実装で、注釈も Spring Security の型であるため引数の解決にした）。
+- Spring Security の主体は `identity` の型（`CargoUserDetails`。`UserDetails` を実装する）で、session（Spring Session JDBC）に直列化できる値だけを持ち、`actor()` で `AuthenticatedActor` を作る。
 - 置き換えの順は ADR-011 の決定 4 に従う（型を足す → 認証を入れる → controller を 1 つずつ置き換える → `ProvisionalActorProperties` を消す）。
 
 ### 2. 認証の構成
@@ -49,7 +49,7 @@ US-18 の password によるログインと session を、Spring Security 7 の 
 - Spring Session JDBC で、`platform` スキーマの `spring_session`・`spring_session_attributes` に置く（DDL はベンダーごと）。
 - 無操作 30 分は session の期限（`MAX_INACTIVE_INTERVAL`）で判定する。
 - 発行から 8 時間の上限は、ログインのときに session の属性に置いた認証時刻と、アプリケーションの `Clock` で比べるフィルターで判定する。このフィルターは認証の処理より前に置く（Bolt 13 の Try T-40）。
-- 失効した session の request は、業務データを出さずに A-03（`/session-expired`）へ移す。
+- 失効した session の request は、業務データを出さずに A-03（`/session-expired`）へ移す。上限を過ぎた session のままのログインの送信も A-03 へ移し、ログインの送信で session を延命させない。session に CSRF のトークンがない古いフォームの送信も、Spring Security が無効な session として A-03 へ移す。
 
 ### 4. 監査
 

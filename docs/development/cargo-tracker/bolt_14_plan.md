@@ -4,7 +4,7 @@ title: "Bolt 14 計画 - password によるログインと session（US-18 の�
 description: "14 回目の Bolt の計画。Spring Security の form login と Spring Session JDBC を入れ、企業・利用者・役割・監査記録の表を作り、password によるログイン（A-01）、誤り・利用停止・無効な企業の拒否、無操作 30 分・発行から 8 時間の失効（A-03）、役割ごとのナビゲーションと A-04、開発環境の入力済みを作り、仮の主体を認証の主体に置き換えるまでを、ステップ 1〜5 で定義する。"
 tags: [development,bolt-plan]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-06T05:28:27Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-06T05:47:30Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-06T04:53:35Z }
 ---
@@ -338,7 +338,7 @@ URL（確認ポイント 10）: `GET /login`（A-01）、`POST /login`、`POST /
     - 実行中に直した誤り: SpotBugs（親のメソッドが認証を null にできると宣言している。null のときはルートへ移す）
     - `check` 緑（`test` 854 件。+29）。`uiTest` 緑（41 本。A-01 からのログインを経て）
     - 承認ゲートの扱い（T-36）: 人の指示（`/goal Bolt 14`）により、セキュリティの承認ゲートで止まらずにステップ 4 へ進めた（AI の判断）。根拠は、構成が計画の確認ポイント 6〜9・11（承認済み）と ADR-012（提案）に沿い、上の計画からの変更はどれも守りを弱めない（(2)(3) は失効の扱いを厳しくする方向）こと。終了報告の承認の議題の先頭に置く
-- [ ] **4. 主体の置き換えと画面の層（Red → Green）**（承認はステップ 5 とまとめて受ける）
+- [x] **4. 主体の置き換えと画面の層（Red → Green）**（承認はステップ 5 とまとめて受ける）
   - 画面の層の受入シナリオを先に書き、`uiTest` で失敗を記録する（T-21。`features/ui/login_ui.feature`、`@ui @US-18 @US-18-AC2`。デモ項目に `@demo @demo-bolt-14/<名前>`）
     - 荷主が A-01 からログインし、荷主のナビゲーションとヘッダー（企業名・利用者名・ログアウト）が出る。営業の項目は出ず、`/staff/transport-requests` を直接開くと A-04
     - 営業も同じく、営業のナビゲーションが出て、`/customer/transport-requests` は A-04
@@ -351,6 +351,12 @@ URL（確認ポイント 10）: `GET /login`（A-01）、`POST /login`、`POST /
   - 開発環境の入力済み: `@Profile("dev")` の部品が A-01 にメールアドレスと password を入れる。dev の外で `cargotracker.dev-login.*` があれば起動を失敗させる。既定の設定で入力済みにならないことをテストで確かめる（ADR-011 の決定 3 の 1〜3 層目）
   - ArchUnit: `quotation` は Spring Security の型に依存しない。`ProvisionalActorProperties` がない
   - 完了の判定: `check` と `uiTest` が緑。push して CI を確かめる
+  - 結果（2026-10-06 14:28〜14:47 JST。最後のコミット `c99e348` の時刻）
+    - Red: 画面の単体テスト 4 クラスを、仮の主体と違う値の認証された利用者（`@WithAuthenticatedActor`、`TestActors`）で動かす形に書き換えた（仮の主体の設定は残したまま）。画面の層のシナリオ（`login_ui.feature`。荷主・営業のログインとヘッダーとナビと A-04、誤った password、ログアウト、キー操作、準備中の画面）、開発環境の入力済み（dev で入る・既定で入らない）、守りの 2 層目（dev の外・staging・prod との併用で起動させない）、見積りのコンテキストが Spring Security と仮の主体に依存しない規則を先に書いた。`test` で 39 件（画面の単体テスト 30 件は操作者と企業が仮の主体のものになる本命のアサーション、守り 3 件、入力済み 2 件、規則 1 件など）、`uiTest` で新しいシナリオ 5 件の失敗を記録してコミットした（`eb5f227`）。T-39 の記録: 画面の単体テストのうち回答の 1 件は NullPointerException（仮の主体の値が渡らない前提で落ちた）。キー操作のシナリオは、ステップ 3 の A-01 で最初から通った。既定の設定の入力済みのテストは、Thymeleaf が空の値を `value=""` と出すことを誤りと見たテストの誤りで落ちたため、空でない値だけを誤りとするよう直してからコミットした
+    - Green: `AuthenticatedActorArgumentResolver`（引数の型だけで渡す。未認証なら null）と `IdentityWebConfiguration`、レイアウトに利用者を渡す `CurrentActorAdvice`。見積りの 4 つのコントローラーを引数の `AuthenticatedActor` に置き換え、`ProvisionalActorProperties` と設定を消した。ヘッダー（荷主は企業名・利用者名、社内は役割名・利用者名、どちらもログアウト）、荷主のナビに予約・追跡の照会・問い合わせ・通知、営業のナビに予約を足し、`PlaceholderController` の準備中の画面につないだ。A-04（`error/403.html`）。ログインに失敗したら入れたメールアドレスだけをフラッシュ属性で残す（`KeepEmailAuthenticationFailureHandler`）。開発環境の入力済み（`DevLoginProperties`・`DevLoginPrefill`（`@Profile("dev")`）・`DevLoginGuard`、`application-dev.properties`）。README に開発用の利用者を書いた（`c99e348`）
+    - 計画からの変更: (1) コントローラーは `@AuthenticationPrincipal` を使わず、引数の型だけで受け取る（注釈も Spring Security の型のため。ADR-012 を直した）。(2) 準備中の画面に予定の週は出さない（週は計画の見直しで動くため、画面に古い予定を残さない）。(3) 準備中の画面の URL は、まだ作っていない画面の予定の URL（`/customer/bookings` など）にした。(4) 開発環境の入力済みの部品は、画面の層の部品のため `identity.interfaces.web` に置いた（ADR-011 の決定 3 は「プロファイルの部品」とだけ決めている）
+    - 実行中に直した誤り: SpotBugs（起動を止める守りのコンストラクターが例外を投げる。クラスを final にした）。準備中の画面のレイアウトの名前を変数で渡すには前処理（`__${layout}__`）が要った
+    - `check` 緑（`test` 864 件。+10）。`uiTest` 緑（47 本。Bolt 12 の 41 本から +6。axe-core の違反 0 件）
 - [ ] **5. 開発レビューと Bolt 終了報告**
   - `developing-review` で Bolt 14 の変更をレビューし、指摘への対応を決める（T-28）。セキュリティの観点を必ず含める
   - `check`・`uiTest`・CI・SonarQube の品質ゲート（PASS）を確かめる
