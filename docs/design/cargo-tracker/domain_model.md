@@ -4,7 +4,7 @@ title: "cargo-tracker ドメインモデル"
 description: "cargo-tracker の業務領域の分類、ユビキタス言語、7 つの境界づけられたコンテキスト（通知を含む）の集約・エンティティ・値オブジェクト・ドメインルール、コマンド・クエリ・イベント、予約サガ。"
 tags: [design, domain-model, ddd]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-06T01:48:48Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-06T04:56:02Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T07:41:04Z }
   - { by: human:kakimomokuri, at: 2026-10-01T07:48:17Z }
@@ -144,7 +144,7 @@ quadrantChart
 | 受付番号 | CaseNumber | 有人案件の一意な識別子 | 追跡 |
 | 企業 | Company | 荷主・荷受人・A 社などの利用者の所属組織 | アクセス・監査 |
 | 利用者 | User | 事前登録され、固定役割を持つ人（BR-14、BR-15） | アクセス・監査 |
-| 役割 | Role | 荷主担当者、営業担当者、経路設計者、追跡管理者、データ責任者、カスタマーサポート、システム管理者、監査担当者 | アクセス・監査 |
+| 役割 | Role | 荷主担当者、営業担当者、経路設計者、追跡管理者、データ責任者、カスタマーサポート、システム管理者、監査担当者 | 共有カーネル（Bolt 14） |
 | 参照許可 | AccessGrant | 荷主担当者が予約単位で荷受人に与える照会の許可（BR-07） | アクセス・監査 |
 | KPI 計測記録 | KpiObservation | KPI-01・KPI-02 の算出に使う時刻・件数と、パイロット開始前の基準値 | アクセス・監査 |
 | 通知 | Notification | 荷主担当者へ送るメール 1 通の宛先・種類・対象・送信結果 | 通知 |
@@ -161,6 +161,7 @@ quadrantChart
 | UTC 時点 | UtcInstant | 業務上の時刻。UTC の時点として保持し、表示ではタイムゾーンと UTC offset を付ける（BR-10） | 共有カーネル |
 | 企業 ID | CompanyId | 荷主・荷受人・A 社などの企業を識別する値 | 共有カーネル |
 | 利用者 ID | UserId | 操作した利用者を識別する値 | 共有カーネル |
+| 認証された利用者 | AuthenticatedActor | ログインした利用者の利用者 ID・企業 ID・役割・表示名・企業名。ほかのコンテキストが操作者と所属企業を知るための値（Bolt 14） | 共有カーネル |
 
 ## 共有カーネル
 
@@ -191,7 +192,18 @@ package "shared.domain" {
   }
   class "企業 ID\n(CompanyId)" as CompanyId <<値オブジェクト>>
   class "利用者 ID\n(UserId)" as UserId <<値オブジェクト>>
+  enum "役割\n(Role)" as Role
+  class "認証された利用者\n(AuthenticatedActor)" as AuthenticatedActor <<値オブジェクト>> {
+    userId : UserId
+    companyId : CompanyId
+    role : Role
+    displayName
+    companyName
+  }
 }
+AuthenticatedActor --> UserId
+AuthenticatedActor --> CompanyId
+AuthenticatedActor --> Role
 Source --> UtcInstant
 @enduml
 ```
@@ -862,6 +874,8 @@ title 有人案件の状態遷移
 
 ADR-002 により単純なモデルとする。認証の仕組み（password、TOTP、session）は Spring Security に任せ、ドメインモデルは業務上の規則だけを持つ。
 
+認証された利用者を表す値 `AuthenticatedActor`（利用者 ID・企業 ID・役割・表示名・企業名）と役割 `Role`（BR-15 の 8 役割）は、共有カーネル（`shared`）に置く。ほかのコンテキストはこの型だけを受け取り、Spring Security の型にも `identity` にも依存しない。`identity` に置くと、`quotation → identity → quotation::events` の依存が循環するため（ADR-011 の決定 4、[ADR-012](../../adr/cargo-tracker/012-authentication-principal-and-session.md)、Bolt 14 の確認ポイント 2）。利用者の集約は「認証できない理由」（利用停止・企業が無効）を返し、Spring Security の利用者の読み出しがその理由を認証の失敗に変える（IA-INV-09）。監査記録の操作には、ログインの成功（`LOGIN_SUCCEEDED`）・失敗（`LOGIN_FAILED`）・ログアウト（`LOGOUT`）を Bolt 14 で足す。
+
 | 集約 | 集約ルート | 識別子 | 含むもの | 責務 |
 | :--- | :--- | :--- | :--- | :--- |
 | 企業 | 企業（Company） | 企業 ID | 種類（荷主・荷受人・A 社）、有効・無効 | 企業の有効性 |
@@ -880,6 +894,7 @@ ADR-002 により単純なモデルとする。認証の仕組み（password、T
 | IA-INV-06 | 取り消された参照許可は、既存の session でも直ちに無効になる | BR-07、US-10、US-19 |
 | IA-INV-07 | 監査記録は追記だけを許し、更新・削除しない。関連する記録の欠落は異常として示す | NFR-AUDIT-01、US-17 |
 | IA-INV-08 | 認証の成功・失敗・ロック、権限外のアクセス試行は、ドメインイベントを経ずに同じ request の中で同期に監査記録へ書く | AUD-01、US-16〜US-19 |
+| IA-INV-09 | 利用停止の利用者と、無効な企業に所属する利用者は認証できない。理由は監査記録にだけ残し、利用者には誤った認証情報と同じ応答を返す（Bolt 14 で追加） | US-18 AC2・AC4、SEC-11 |
 | KPI-INV-01 | KPI-01 は、版 1 を最初に提出した時刻と、最初の有効な見積り・経路方針の提示時刻から求める（「有効な」の定義は D-11 で人が決める）。差戻し・再提出・新しい版で開始時刻を戻さない（2026-10-02 の D-3）。KPI-02 は照会記録から求める。PV-01 の除外（訓練データ、顧客都合の取消し）を適用し、除外の対象・理由・判断者を記録する | US-21、PV-01 |
 | KPI-INV-02 | パイロット開始前の基準値は、算出方法と登録者とともに記録し、登録後は変更せず訂正は新しい記録で行う | US-21、PV-01 |
 

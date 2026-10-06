@@ -17,6 +17,7 @@ cargo-tracker プロジェクトの ADR ドキュメントです。
 | [ADR-009](./009-bdd-cucumber.md) | BDD を採用し、受入条件を Cucumber で実行可能な仕様にする | 承認済み |
 | [ADR-010](./010-required-document-storage-transaction.md) | 必要書類のファイルは DB のトランザクションの外で保存し、失敗したときは補償で消す | 承認済み（実装は W10） |
 | [ADR-011](./011-mfa-totp.md) | 多要素認証は Spring Security 7 の要素の権限で組み、TOTP は java-otp で作る | 提案（W5 の US-18 の計画で採否を決める） |
+| [ADR-012](./012-authentication-principal-and-session.md) | 認証の主体は共有カーネルの型にし、password の段を Spring Security の form login と Spring Session JDBC で作る | 提案（Bolt 14 の終了報告の承認で採否を決める） |
 
 ## 補足
 

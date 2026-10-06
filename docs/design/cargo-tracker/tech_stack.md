@@ -4,7 +4,7 @@ title: "cargo-tracker 技術スタック"
 description: "cargo-tracker のバックエンド・画面・データベース・テスト・ビルド・インフラの技術、バージョン、サポート期限、選定理由、アップグレード計画。"
 tags: [design, tech-stack]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-06T03:33:59Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-06T04:56:02Z }
 stale_after: 2027-04-01T00:00:00Z
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T07:29:04Z }
@@ -49,9 +49,9 @@ verified:
 | フレームワーク | Spring Boot | 4.1.x（2026-10 時点 4.1.1） | アプリケーション基盤、自動構成、Actuator | 2027-07-31（OSS サポート） | 第 3 章と同じ。4.2 が出たら追従する（アップグレード計画） |
 | フレームワーク | Spring Framework（MVC・トランザクション・イベント） | 7.x（Boot 管理） | 受信、宣言的トランザクション、アプリケーションイベント | Boot に従う | 第 3 章のとおり、アプリケーションサービスをトランザクション境界にし、BC 間通知にアプリケーションイベントを使う |
 | モジュール境界・イベント | Spring Modulith | 2.1.x（2026-10 時点 2.1.1） | モジュール構造の検証、イベント発行記録（JDBC）、未完了イベントの再配信 | Boot 4.1 に従う | ADR-003 の「永続化したドメインイベント」を自作せずに実現する。第 3 章のプラットフォーム要求（Domain Events）にも挙がっている |
-| 認証・認可 | Spring Security | 7.x（Boot 管理） | フォームログイン、役割による認可、CSRF、session 管理、ロック | Boot に従う | BR-14・BR-15 の固定役割・ロック・session 失効を標準機能で実現する |
+| 認証・認可 | Spring Security | 7.x（Boot 管理） | フォームログイン、役割による認可、CSRF、session 管理、ロック | Boot に従う | BR-14・BR-15 の固定役割・ロック・session 失効を標準機能で実現する。Bolt 14 で導入（form login、役割による認可、CSRF、session の固定化の防止。[ADR-012](../../adr/cargo-tracker/012-authentication-principal-and-session.md)、提案） |
 | 多要素認証 | `com.eatthepath:java-otp`（案） | 1.0.0 | TOTP の生成。時間の窓の照合・再利用の拒否・回復コードはアプリケーションで持つ | MIT | BR-14。Spring Security 7.1 の多要素認証（要素の権限 `FACTOR_PASSWORD`・`FACTOR_TOTP`）と組み合わせる。Bolt 13 のスパイク（TS-01）の結論で、[ADR-011](../../adr/cargo-tracker/011-mfa-totp.md)（提案）。採否は W5 の US-18 の計画で決める。登録用 QR の描き方は未確認 |
-| session ストア | Spring Session JDBC | Boot 管理 | 複数インスタンス間の session 共有 | Boot に従う | 追加ミドルウェア（Redis 等）を持たずに、DB に session を置く。BR-07・BR-14 の即時失効を DB の削除で実現できる |
+| session ストア | Spring Session JDBC | Boot 管理 | 複数インスタンス間の session 共有 | Boot に従う | 追加ミドルウェア（Redis 等）を持たずに、DB に session を置く。BR-07・BR-14 の即時失効を DB の削除で実現できる。Bolt 14 で導入（`platform` スキーマ） |
 | 入力検証 | Jakarta Bean Validation（Hibernate Validator） | Boot 管理 | 画面入力の形式検証 | Boot に従う | 形式の検証だけに使い、業務規則はドメインに置く |
 | 永続化 | MyBatis（mybatis-spring-boot-starter） | 4.1.0 | 集約の永続化、照会 | — | 第 3 章と同じ。SQL を明示的に管理し、版・追記専用・スキーマ分割を SQL で確実に表現できる（ADR-007） |
 | 運用 | Spring Boot Actuator・Micrometer | Boot 管理 | ヘルスチェック、メトリクス | Boot に従う | 第 3 章の Readiness Patterns |

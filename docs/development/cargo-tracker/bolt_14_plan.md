@@ -4,7 +4,7 @@ title: "Bolt 14 計画 - password によるログインと session（US-18 の�
 description: "14 回目の Bolt の計画。Spring Security の form login と Spring Session JDBC を入れ、企業・利用者・役割・監査記録の表を作り、password によるログイン（A-01）、誤り・利用停止・無効な企業の拒否、無操作 30 分・発行から 8 時間の失効（A-03）、役割ごとのナビゲーションと A-04、開発環境の入力済みを作り、仮の主体を認証の主体に置き換えるまでを、ステップ 1〜5 で定義する。"
 tags: [development,bolt-plan]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-06T04:53:35Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-06T04:56:02Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-06T04:53:35Z }
 ---
@@ -294,7 +294,7 @@ URL（確認ポイント 10）: `GET /login`（A-01）、`POST /login`、`POST /
 
 状態の記号: `[ ]` 未着手、`[-]` 進行中、`[?]` 承認待ち、`[R]` 修正中、`[x]` 完了、`[S]` スキップ。各ステップの終わりに `check` が緑であることを確かめて push し、CI の結果を確かめてから次のステップに入る（T-14、T-26）。結果の時刻はそのステップの最後のコミットの時刻で書く（T-33）。Red の記録には、テストごとに本命のアサーションで落ちたか前提で落ちたかを書く（T-39）。
 
-- [ ] **1. 決定を設計文書に反映し、ADR 012 の案を書く**（承認はステップ 2 とまとめて受ける）
+- [x] **1. 決定を設計文書に反映し、ADR 012 の案を書く**（承認はステップ 2 とまとめて受ける）
   - ユーザーストーリー: US-18 の Bolt 14 の決定（前倒しする AC、#6 と #13 の分け方）
   - ドメインモデル: `AuthenticatedActor` と `Role` を共有カーネルに置く、認証できない理由、監査記録の操作
   - データモデル: Bolt 14 で足す列と W5 で足す列、email の正規化、既存の表の外部キーを張らない理由、`spring_session` のベンダーごとの DDL
@@ -303,6 +303,7 @@ URL（確認ポイント 10）: `GET /login`（A-01）、`POST /login`、`POST /
   - ADR 012「認証の主体と Spring Security・Spring Session の導入」（新規、提案）: 主体の型の置き場所、`SecurityFilterChain` の置き場所、session の保存先、監査の同期の書き込み、開発環境の入力済みの守り。TOTP は ADR-011 のまま
   - 技術スタック: Spring Security・Spring Session JDBC・thymeleaf-extras-springsecurity を「採用」にする
   - 完了の判定: `okf:check` が ERROR 0、`documentationTest` が緑。push する
+  - 結果（2026-10-06 13:53〜13:58 JST。最後のコミットの時刻）: ユーザーストーリー（US-18 の Bolt 14 の決定）、ドメインモデル（`AuthenticatedActor`・`Role` を共有カーネルに、IA-INV-09、監査記録の操作）、データモデル（Bolt 14 で作る列と W5 で足す列、役割の値、外部キーを張らない理由、`db/dev-data/`、`spring_session`）、UI 設計（A-01・ログアウト・A-03・A-04・ホーム・準備中の画面の URL と文言、ヘッダー、開発環境の入力済みの設定）、非機能要件（SEC-07・SEC-17 を確定）、技術スタック（Spring Security・Spring Session JDBC を Bolt 14 で導入）に反映した。[ADR-012](../../adr/cargo-tracker/012-authentication-principal-and-session.md)（提案）を書き、ADR の索引と mkdocs に足した。`okf:check` ERROR 0、`documentationTest` 緑
 - [ ] **2. 企業・利用者・監査記録の業務のルールと表（内側の TDD、統合テスト）** 【承認ゲート: 業務のルールとスキーマの変更】
   - 単体テストを先に書く: 有効な企業の有効な利用者は認証できる。利用停止の利用者、無効な企業の利用者は理由付きで認証できない。メールアドレスの正規化（前後の空白、大文字）。役割の値が BR-15 の 8 つ
   - 統合テスト（PostgreSQL）を先に書く: 企業・利用者・役割の保存と読み出し、email の一意（大文字小文字を区別しない）、役割の CHECK、`audit_record` の UPDATE・DELETE がアプリの利用者で拒否される、`spring_session` の表がある

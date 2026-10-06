@@ -4,7 +4,7 @@ title: "cargo-tracker ユーザーストーリー"
 description: "cargo-tracker MVP の価値単位のユーザーストーリー、受入条件、上流要件へのトレーサビリティ。"
 tags: [requirements, user-story]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-06T01:48:48Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-06T04:56:02Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T05:20:11Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:01:39Z }
@@ -468,6 +468,13 @@ MVP の決定: 通知はメールだけとし、配信設定・静穏時間・�
 - Given TOTP の端末を失った利用者、When 回復コードを使う、またはシステム管理者が定めた別経路で本人確認して登録を解除する、Then TOTP を再登録でき、解除が監査証跡へ記録され本人へ通知される。
 
 パイロットの決定: password の強度・回復、TOTP の登録・再登録は非機能要件 SEC-04〜SEC-10 を適用する。
+
+Bolt 14 の決定（2026-10-06、human:kakimomokuri。[Bolt 14 計画](../../development/cargo-tracker/bolt_14_plan.md) の確認ポイント 1・9・13）:
+
+- Release 0.1 の #6（AC2）に加え、Release 1.0 の #13 から AC1 の password と session の部分、AC4、AC5 を Bolt 14 で前倒しして作る。AC1 の TOTP、AC3（ロック）、AC6（権限の取消し）、初回の TOTP の登録、password の再設定、TOTP の再登録、失効 5 分前の警告は W5 に残す。
+- AC1 の「利用者・企業・認証時刻が記録される」は、session に置く認証時刻と、監査記録のログインの成功で満たす。
+- Bolt 14 の認可はログインの時点の役割で行う。request ごとに DB の現在値を確かめるのは、AC6 とあわせて W5 で入れる。
+- ステージング・本番の利用者を作る手段は、利用者の管理（US-16）まで作らない。
 
 ### US-19 荷受人の参照許可を管理する
 

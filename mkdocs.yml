@@ -170,6 +170,7 @@ nav:
           - ADR-009 BDD と Cucumber: adr/cargo-tracker/009-bdd-cucumber.md
           - ADR-010 必要書類の保存とトランザクション: adr/cargo-tracker/010-required-document-storage-transaction.md
           - ADR-011 多要素認証と TOTP: adr/cargo-tracker/011-mfa-totp.md
+          - ADR-012 認証の主体と session: adr/cargo-tracker/012-authentication-principal-and-session.md
   - 記事:
       - 概要: article/index.md
       - 第 1 章 ドメイン駆動設計: article/01-ddd-fundamentals.md
