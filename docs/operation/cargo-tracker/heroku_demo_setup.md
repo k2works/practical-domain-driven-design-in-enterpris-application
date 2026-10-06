@@ -27,6 +27,62 @@ generated: { by: anthropic/claude-opus-5-5, at: 2026-10-06T09:00:00Z }
 
 > **注意**: だれでも開ける公開のデモです（ADR-013、D-54）。URL はこの手順書と README に書いてあり、開発用の利用者でだれでもログインできます。本物の荷主・利用者・取引のデータを入れないでください。データは dyno の再起動で初期状態に戻ります。不審な利用に気づいたら、`deploy:demo:restart` か `deploy:demo:stop` をしてください。
 
+### 環境の構成
+
+```plantuml
+@startuml
+title Heroku のデモ環境（ADR-013）
+
+actor "関係者（だれでも）" as visitor
+actor "所有者\n(human:kakimomokuri)" as owner
+
+node "開発者の PC" as pc {
+  component "npx gulp deploy:demo:*\n(ops/scripts/deploy_demo.js)" as gulp
+  artifact "apps/cargo-tracker/Dockerfile\n(build / runtime / demo)" as dockerfile
+  component "Docker buildx" as buildx
+}
+
+cloud "GitHub" as github {
+  component "cargo-tracker CI\n(develop)" as ci
+}
+
+cloud "Heroku（Common Runtime、region us）" as heroku {
+  node "Container Registry" as registry {
+    artifact "registry.heroku.com/\ncargo-tracker-mono-demo/web" as image
+  }
+  component "Router\n(TLS 終端、30 秒の上限)" as router
+  node "Eco dyno web.1（512 MB）" as dyno {
+    component "cargo-tracker\nSPRING_PROFILES_ACTIVE=dev\n-Xmx300m" as app
+    database "H2（インメモリ）\ndb/dev-data の初期状態" as h2
+    folder "/tmp\n(添付した書類)" as tmp
+  }
+  collections "Config Vars\n(SPRING_PROFILES_ACTIVE、\nJAVA_TOOL_OPTIONS、DEMO_REVISION)" as config
+  component "Logplex\n(log-runtime-metrics)" as logs
+}
+
+owner --> gulp : 配備・状態・ログ・\n再起動・停止
+gulp --> ci : CI が緑かを確かめる\n(gh run list)
+gulp --> buildx : --target demo\noci-mediatypes=false
+buildx --> dockerfile
+gulp --> image : docker push
+gulp --> config : heroku config:set
+image --> dyno : heroku container:release
+config --> app
+visitor --> router : https
+router --> app : http + X-Forwarded-Proto\n$PORT
+app --> h2
+app --> tmp
+app --> logs
+gulp --> logs : heroku logs
+
+note bottom of dyno
+  再起動（1 日 1 回以上、配備、
+  Config Vars の変更、スリープ）で
+  データは初期状態に戻る
+end note
+@enduml
+```
+
 ### イメージの構成
 
 `apps/cargo-tracker/Dockerfile` は 3 つのステージを持ちます。
@@ -75,6 +131,45 @@ npx gulp deploy:demo
 ```
 
 `deploy:demo:build` → `deploy:demo:push` → `deploy:demo:release` を順に行います。
+
+```plantuml
+@startuml
+title deploy:demo の流れとガード
+
+start
+partition "deploy:demo:build" {
+  if (作業ツリーに変更がある?) then (はい)
+    :止める;
+    stop
+  endif
+  if (develop の外、または HEAD が origin/develop にない?) then (はい)
+    :止める;
+    stop
+  endif
+  if (アプリの最後の変更の develop の CI が success でない?) then (はい・実行中)
+    :止める;
+    stop
+  endif
+  :docker buildx build --target demo
+  （ラベルに HEAD の SHA、oci-mediatypes=false）;
+}
+partition "deploy:demo:push" {
+  :build と同じ確かめ;
+  if (手元のイメージのラベルが HEAD の SHA でない?) then (はい)
+    :止める（build を先に）;
+    stop
+  endif
+  :docker push（Container Registry）;
+}
+partition "deploy:demo:release" {
+  :heroku container:release web;
+  :heroku ps:type web=eco;
+  :heroku config:set DEMO_REVISION=<SHA>
+  （再起動がもう 1 回起きる）;
+}
+stop
+@enduml
+```
 
 - `build` と `push` は、次をすべて確かめてから進みます。
   - 作業ツリーに変更がない
@@ -130,7 +225,7 @@ npx gulp deploy:demo:open
 ```
 
 - 再起動すると、それまでに入れた輸送要求・見積り・添付した書類は消え、開発用の企業と利用者だけになります。起動は 5 秒前後です。
-- Eco dyno は 30 分アクセスがないとスリープします。スリープからの最初のアクセスは、起動を待つため遅くなります（Bolt 15 の計測は終了報告を参照）。デモの数分前に一度開いておきます。
+- Eco dyno は 30 分アクセスがないとスリープします。スリープからの最初のアクセスは、起動を待つため遅くなります（再起動の起動は 5 秒前後。スリープからの時間は Bolt 15 では未計測で、計測の 30 分の間に関係者のアクセスがありスリープしなかった）。デモの数分前に一度開いておきます。
 
 ## 7. ロールバック
 
