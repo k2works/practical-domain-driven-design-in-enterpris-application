@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<!--/* 認証の前の画面（A-01 ログイン、A-03 再認証の案内）の共通レイアウト（Bolt 14）。ナビゲーションと利用者の名前を持たない。
+       <html lang="ja" th:replace="~{layout/public :: layout(~{::title}, ~{::main})}"> */-->
+<html lang="ja" xmlns:th="http://www.thymeleaf.org" th:fragment="layout(title, content)">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:replace="${title}">cargo-tracker</title>
+    <th:block th:replace="~{layout/common :: assets(~{})}"></th:block>
+</head>
+<body>
+<header class="navbar border-bottom app-header">
+    <div class="container-fluid">
+        <span class="navbar-brand">cargo-tracker</span>
+    </div>
+</header>
+<div class="container app-main app-public">
+    <main th:replace="${content}"></main>
+</div>
+</body>
+</html>

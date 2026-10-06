@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<!--/* A-03 再認証の案内（US-18 AC5、UI 設計「A-03」）。業務データを出さない。入力の保持と失効の前の警告は W5 */-->
+<html lang="ja" xmlns:th="http://www.thymeleaf.org" th:replace="~{layout/public :: layout(~{::title}, ~{::main})}">
+<head>
+    <meta charset="UTF-8">
+    <title>もう一度ログインしてください - cargo-tracker</title>
+</head>
+<body>
+<main>
+    <h1>もう一度ログインしてください</h1>
+    <p>一定時間操作がなかったため、またはログインから 8 時間を過ぎたため、ログアウトしました。もう一度ログインしてください。</p>
+    <p><a th:href="@{/login}">ログインへ</a></p>
+</main>
+</body>
+</html>

@@ -99,7 +99,7 @@ public class RouteDesignUiSteps {
         Locator row = page().getByRole(AriaRole.REGION, new Page.GetByRoleOptions().setName("経路設計中の見積依頼（依頼時刻の古い順）"))
                 .getByRole(AriaRole.LINK, new Locator.GetByRoleOptions().setName(number() + " 見積 " + quotationNo));
         for (int i = 0; i < 20; i++) {
-            page().navigate(baseUrl + "/staff/transport-requests");
+            browser.navigate(baseUrl + "/staff/transport-requests");
             if (row.count() > 0) {
                 break;
             }

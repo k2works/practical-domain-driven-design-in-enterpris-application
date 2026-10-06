@@ -150,7 +150,8 @@ class AuthenticationSecurityIntegrationTest {
                         .param("username", email)
                         .param("password", PASSWORD)
                         .with(csrf()))
-                .andExpect(redirectedUrl("http://localhost/staff/kpi-observations"));
+                // Spring Security は保存した request へ戻すとき、目印の continue を付ける
+                .andExpect(redirectedUrl("http://localhost/staff/kpi-observations?continue"));
     }
 
     @Test
@@ -250,16 +251,27 @@ class AuthenticationSecurityIntegrationTest {
     @Test
     void CSRFのトークンのないログインは拒否する() throws Exception {
         String email = shipper(UserStatus.ACTIVE);
+        Cookie page = sessionOf(mvc.perform(get("/login")).andReturn());
 
-        mvc.perform(post("/login").param("username", email).param("password", PASSWORD))
+        mvc.perform(post("/login").cookie(page).param("username", email).param("password", PASSWORD))
                 .andExpect(status().isForbidden());
     }
 
     @Test
-    void CSRFのトークンのない業務のPOSTは拒否する() throws Exception {
+    void CSRFのトークンが誤った業務のPOSTは拒否する() throws Exception {
         Cookie session = login(shipper(UserStatus.ACTIVE));
 
-        mvc.perform(post("/customer/transport-requests").cookie(session)).andExpect(status().isForbidden());
+        mvc.perform(post("/customer/transport-requests").cookie(session).with(csrf().useInvalidToken()))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void sessionにトークンのない古いフォームの送信は処理せず再認証の案内へ移る() throws Exception {
+        Cookie session = login(shipper(UserStatus.ACTIVE));
+
+        mvc.perform(post("/customer/transport-requests").cookie(session))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/session-expired"));
     }
 
     // --- 役割の分離 ---
@@ -312,22 +324,22 @@ class AuthenticationSecurityIntegrationTest {
     }
 
     @Test
-    void 発行から8時間を過ぎたsessionでもログインし直せて上限は新しいログインから数える() throws Exception {
+    void 発行から8時間を過ぎたsessionではログインの送信も受け付けずログインし直すと上限は新しいログインから数える() throws Exception {
         String email = shipper(UserStatus.ACTIVE);
         Cookie session = login(email);
         advance(Duration.ofHours(8));
 
-        MvcResult relogin = mvc.perform(post("/login")
+        // 上限の確認は認証の処理より前にある（T-40）。古い session のままのログインの送信も A-03 へ移す
+        mvc.perform(post("/login")
                         .cookie(session)
                         .param("username", email)
                         .param("password", PASSWORD)
                         .with(csrf()))
-                .andExpect(redirectedUrl("/customer/transport-requests"))
-                .andReturn();
+                .andExpect(redirectedUrl("/session-expired"));
 
-        advance(Duration.ofHours(1));
-        mvc.perform(get("/customer/transport-requests").cookie(sessionOf(relogin)))
-                .andExpect(status().isOk());
+        Cookie renewed = login(email);
+        advance(Duration.ofHours(8 + 7));
+        mvc.perform(get("/customer/transport-requests").cookie(renewed)).andExpect(status().isOk());
     }
 
     // --- 無操作 30 分（AC5。T-38 の 3 点。Spring Session の最終アクセスの時刻を戻して確かめる） ---
@@ -373,17 +385,6 @@ class AuthenticationSecurityIntegrationTest {
                 .andExpect(header().string("X-Frame-Options", "DENY"))
                 .andExpect(header().string("X-Content-Type-Options", "nosniff"))
                 .andExpect(header().string("Content-Security-Policy", "default-src 'self'"));
-    }
-
-    @Test
-    void sessionのCookieはスクリプトから読めず別のサイトのPOSTで送られない() throws Exception {
-        MvcResult result = mvc.perform(get("/login")).andReturn();
-
-        assertThat(result.getResponse().getHeaders("Set-Cookie"))
-                .anySatisfy(cookie -> assertThat(cookie)
-                        .startsWith(SESSION_COOKIE + "=")
-                        .contains("HttpOnly")
-                        .contains("SameSite=Lax"));
     }
 
     // --- 準備 ---

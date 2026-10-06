@@ -67,7 +67,7 @@ public class ResubmitTransportRequestUiSteps {
 
     @前提("荷主が提出した見積依頼の編集画面を開いている")
     public void 編集画面を開いている() {
-        page().navigate(baseUrl + "/customer/transport-requests/" + number() + "/edit");
+        browser.navigate(baseUrl + "/customer/transport-requests/" + number() + "/edit");
         browser.checkAccessibility();
     }
 

@@ -41,7 +41,7 @@ public class ReviewTransportRequestUiSteps {
     }
 
     private void open(String path) {
-        page().navigate(baseUrl + path);
+        browser.navigate(baseUrl + path);
         browser.checkAccessibility();
     }
 

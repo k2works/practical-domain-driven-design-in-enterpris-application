@@ -2,11 +2,14 @@ package com.example.cargotracker.ui;
 
 import com.deque.html.axecore.playwright.AxeBuilder;
 import com.deque.html.axecore.results.Rule;
+import com.example.cargotracker.shared.domain.Role;
 import com.microsoft.playwright.Browser;
 import com.microsoft.playwright.BrowserContext;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.Video;
+import com.microsoft.playwright.options.AriaRole;
 import io.cucumber.spring.ScenarioScope;
+import java.net.URI;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
@@ -26,6 +29,8 @@ public class BrowserSession implements DisposableBean {
     private final BrowserContext context;
     private final Page page;
     private final List<String> accessibilityViolations = new ArrayList<>();
+    private final UiUsers users;
+    private Role signedIn;
 
     /**
      * デモの動画を残すときの置き場所の設定（{@code ./gradlew demoVideo} が渡す）。指定があれば、シナリオの画面を録画する。
@@ -37,7 +42,8 @@ public class BrowserSession implements DisposableBean {
 
     private static final int VIDEO_HEIGHT = 720;
 
-    public BrowserSession(PlaywrightBrowser browser) {
+    public BrowserSession(PlaywrightBrowser browser, UiUsers users) {
+        this.users = users;
         this.context = videoDir()
                 .map(dir -> browser.newContext(new Browser.NewContextOptions()
                         .setViewportSize(VIDEO_WIDTH, VIDEO_HEIGHT)
@@ -69,6 +75,32 @@ public class BrowserSession implements DisposableBean {
 
     public Page page() {
         return page;
+    }
+
+    /**
+     * 画面を開く。荷主の画面（{@code /customer/}）は荷主担当者、社内の画面（{@code /staff/}）は営業担当者でログインしてから開く
+     * （Bolt 14）。いまの利用者の役割が違えば、Cookie を消して A-01 からログインし直す。
+     */
+    public void navigate(String url) {
+        Role role = url.contains("/customer/") ? Role.SHIPPER : url.contains("/staff/") ? Role.SALES : null;
+        if (role != null && role != signedIn) {
+            signInAs(role, URI.create(url).resolve("/login").toString());
+        }
+        page.navigate(url);
+    }
+
+    /** A-01 からその役割の利用者でログインする（Cookie を消してから）。 */
+    public void signInAs(Role role, String loginUrl) {
+        UiUsers.Credentials credentials = users.of(role);
+        context.clearCookies();
+        page.navigate(loginUrl);
+        checkAccessibility();
+        page.getByLabel("メールアドレス").fill(credentials.email());
+        page.getByLabel("password").fill(credentials.password());
+        page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("ログイン"))
+                .click();
+        page.waitForURL(url -> !url.contains("/login"));
+        signedIn = role;
     }
 
     /**

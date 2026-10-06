@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<!--/* 1 回の送信の合計が multipart の上限（55 MB）を超えたときの案内（Bolt 7、Bolt 6〜8 レビュー R-08・R-35）。
+       Bolt 14 で CSRF の確認（Spring Security）が送信の本体を読むようになり、超過はコントローラーより前で起きるため、
+       エラーの画面（/error の 413）で示す。荷主の見積依頼への送信のときだけ荷主向けの案内を出し、ほかは一般の文言にする。
+       業務データを出さないため、認証の前の画面と同じレイアウトにする */-->
+<html lang="ja" xmlns:th="http://www.thymeleaf.org" th:replace="~{layout/public :: layout(~{::title}, ~{::main})}">
+<head>
+    <meta charset="UTF-8">
+    <title>送信が大きすぎます - cargo-tracker</title>
+</head>
+<body>
+<main>
+    <th:block th:if="${path != null and #strings.startsWith(path, '/customer/transport-requests')}">
+        <h1>送信したファイルが大きすぎます</h1>
+        <!-- 入力はブラウザの「戻る」で残っていることが多い -->
+        <p>書類は 1 件 10 MB まで、1 つの版に 5 件までです。1 回に送れるのは合計 55 MB までです。ブラウザの「戻る」で入力の画面に戻り、ファイルを選び直してください。</p>
+        <p><a th:href="@{/customer/transport-requests}">見積依頼の一覧へ</a></p>
+    </th:block>
+    <th:block th:unless="${path != null and #strings.startsWith(path, '/customer/transport-requests')}">
+        <h1>送信が大きすぎます</h1>
+        <p>1 回に送れる大きさの上限を超えました。ブラウザの「戻る」で前の画面に戻ってください。</p>
+    </th:block>
+</main>
+</body>
+</html>

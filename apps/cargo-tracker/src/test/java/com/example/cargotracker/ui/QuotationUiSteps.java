@@ -79,7 +79,7 @@ public class QuotationUiSteps {
 
     @前提("営業担当者が提出した見積依頼の審査を確定している")
     public void 審査を確定している() {
-        page().navigate(baseUrl + "/staff/transport-requests/" + number());
+        browser.navigate(baseUrl + "/staff/transport-requests/" + number());
         field("根拠").fill("契約条件を確認した");
         page().waitForResponse(
                         response -> "POST".equals(response.request().method()),
@@ -130,7 +130,7 @@ public class QuotationUiSteps {
 
     @もし("営業担当者が提出した見積依頼の見積り {int} を開く")
     public void 見積りを開く(int quotationNo) {
-        page().navigate(baseUrl + quotationsPath() + "/" + quotationNo);
+        browser.navigate(baseUrl + quotationsPath() + "/" + quotationNo);
         browser.checkAccessibility();
     }
 
@@ -170,7 +170,7 @@ public class QuotationUiSteps {
                         AriaRole.REGION, new Page.GetByRoleOptions().setName("見積提示済みの見積依頼（最新の見積りの有効期限の近い順）"))
                 .getByRole(AriaRole.LINK, new Locator.GetByRoleOptions().setName(number() + " 見積 " + quotationNo));
         for (int i = 0; i < 20; i++) {
-            page().navigate(baseUrl + "/staff/transport-requests");
+            browser.navigate(baseUrl + "/staff/transport-requests");
             if (row.count() > 0) {
                 break;
             }

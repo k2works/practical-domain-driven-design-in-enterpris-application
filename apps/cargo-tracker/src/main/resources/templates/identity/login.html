@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<!--/* A-01 ログイン（US-18 の password の段、UI 設計「A-01」）。どの失敗も同じ文言にし、どれが誤りかを示さない（AC2、SEC-11）。
+       「password を忘れた場合」（A-05）は W5 で足す */-->
+<html lang="ja" xmlns:th="http://www.thymeleaf.org" th:replace="~{layout/public :: layout(~{::title}, ~{::main})}">
+<head>
+    <meta charset="UTF-8">
+    <title>ログイン - cargo-tracker</title>
+</head>
+<body>
+<main>
+    <h1>ログイン</h1>
+    <div th:if="${param.error}" class="alert alert-danger" role="alert" tabindex="-1" id="login-error">
+        メールアドレスまたは password が正しくありません。
+    </div>
+    <div th:if="${param.logout}" class="alert alert-success" role="status">ログアウトしました。</div>
+    <p>メールアドレスと password を入力してください。</p>
+    <form th:action="@{/login}" method="post" class="app-login-form">
+        <div class="mb-3">
+            <label for="username" class="form-label">メールアドレス</label>
+            <input type="email" id="username" name="username" class="form-control" autocomplete="username" required
+                   th:value="${username}">
+        </div>
+        <div class="mb-3">
+            <label for="password" class="form-label">password</label>
+            <input type="password" id="password" name="password" class="form-control"
+                   autocomplete="current-password" required th:value="${password}">
+        </div>
+        <button type="submit" class="btn btn-primary">ログイン</button>
+    </form>
+    <p class="mt-4">ログインできない場合は、荷主の方は担当営業に、社内の方はシステム管理者にお問い合わせください。</p>
+</main>
+</body>
+</html>
