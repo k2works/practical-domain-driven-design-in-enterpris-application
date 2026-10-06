@@ -31,7 +31,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 @RequestMapping("/customer/transport-requests/{number}/quotations/{quotationNo}/response")
 public class QuotationResponseController {
 
-    private static final String DETAIL_PATH = "/customer/transport-requests/";
+    private static final String BASE_PATH = "/customer/transport-requests";
     private static final String RESPONSE_VIEW = "quotation/transport-requests/response";
     private static final String PROBLEM = "problem";
 
@@ -89,11 +89,11 @@ public class QuotationResponseController {
         RouteDesignRequestOutcome outcome = responseService.requestRouteDesign(
                 new RequestRouteDesignCommand(parsed, quotationNo, shipper(), new UserId(provisionalActor.userId())));
         return switch (outcome) {
-            case RouteDesignRequestOutcome.Requested requested ->
+            case RouteDesignRequestOutcome.Requested(TransportRequestNumber requestedNumber, int requestedNo) ->
                 redirectToDetail(
                         parsed,
                         "result",
-                        QuotationViews.label(requested.number(), requested.quotationNo()) + " で詳細経路設計を依頼しました",
+                        QuotationViews.label(requestedNumber, requestedNo) + " で詳細経路設計を依頼しました",
                         redirectAttributes);
             case RouteDesignRequestOutcome.Rejected(QuotationRejection reason) ->
                 redirectToDetail(parsed, PROBLEM, rejection(parsed, quotationNo, reason), redirectAttributes);
@@ -118,7 +118,7 @@ public class QuotationResponseController {
     private static String redirectToDetail(
             TransportRequestNumber number, String attribute, String message, RedirectAttributes redirectAttributes) {
         redirectAttributes.addFlashAttribute(attribute, message);
-        return "redirect:" + DETAIL_PATH + number.text();
+        return "redirect:" + BASE_PATH + "/" + number.text();
     }
 
     private static TransportRequestNumber parse(String number) {

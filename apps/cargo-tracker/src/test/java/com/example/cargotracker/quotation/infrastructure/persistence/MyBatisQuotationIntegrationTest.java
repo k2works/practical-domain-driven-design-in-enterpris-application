@@ -434,14 +434,9 @@ class MyBatisQuotationIntegrationTest {
         UUID respondedBy = complete ? RESPONDENT.value() : null;
         String update = "UPDATE quotation.quotation SET status = ?, shipper_response = ?, responded_by = ?,"
                 + " responded_at = CASE WHEN ? THEN presented_at END WHERE id = ?";
+        UUID targetId = target.id().value();
 
-        assertThatThrownBy(() -> jdbc.update(
-                        update,
-                        status,
-                        shipperResponse,
-                        respondedBy,
-                        complete,
-                        target.id().value()))
+        assertThatThrownBy(() -> jdbc.update(update, status, shipperResponse, respondedBy, complete, targetId))
                 .isInstanceOf(DataIntegrityViolationException.class)
                 .hasMessageContaining(constraint);
     }
