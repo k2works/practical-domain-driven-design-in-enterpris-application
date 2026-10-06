@@ -4,7 +4,7 @@ title: "Bolt 14 計画 - password によるログインと session（US-18 の�
 description: "14 回目の Bolt の計画。Spring Security の form login と Spring Session JDBC を入れ、企業・利用者・役割・監査記録の表を作り、password によるログイン（A-01）、誤り・利用停止・無効な企業の拒否、無操作 30 分・発行から 8 時間の失効（A-03）、役割ごとのナビゲーションと A-04、開発環境の入力済みを作り、仮の主体を認証の主体に置き換えるまでを、ステップ 1〜5 で定義する。"
 tags: [development,bolt-plan]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-06T05:05:35Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-06T05:28:27Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-06T04:53:35Z }
 ---
@@ -304,7 +304,7 @@ URL（確認ポイント 10）: `GET /login`（A-01）、`POST /login`、`POST /
   - 技術スタック: Spring Security・Spring Session JDBC・thymeleaf-extras-springsecurity を「採用」にする
   - 完了の判定: `okf:check` が ERROR 0、`documentationTest` が緑。push する
   - 結果（2026-10-06 13:53〜13:58 JST。最後のコミットの時刻）: ユーザーストーリー（US-18 の Bolt 14 の決定）、ドメインモデル（`AuthenticatedActor`・`Role` を共有カーネルに、IA-INV-09、監査記録の操作）、データモデル（Bolt 14 で作る列と W5 で足す列、役割の値、外部キーを張らない理由、`db/dev-data/`、`spring_session`）、UI 設計（A-01・ログアウト・A-03・A-04・ホーム・準備中の画面の URL と文言、ヘッダー、開発環境の入力済みの設定）、非機能要件（SEC-07・SEC-17 を確定）、技術スタック（Spring Security・Spring Session JDBC を Bolt 14 で導入）に反映した。[ADR-012](../../adr/cargo-tracker/012-authentication-principal-and-session.md)（提案）を書き、ADR の索引と mkdocs に足した。`okf:check` ERROR 0、`documentationTest` 緑
-- [?] **2. 企業・利用者・監査記録の業務のルールと表（内側の TDD、統合テスト）** 【承認ゲート: 業務のルールとスキーマの変更】
+- [x] **2. 企業・利用者・監査記録の業務のルールと表（内側の TDD、統合テスト）** 【承認ゲート: 業務のルールとスキーマの変更】
   - 単体テストを先に書く: 有効な企業の有効な利用者は認証できる。利用停止の利用者、無効な企業の利用者は理由付きで認証できない。メールアドレスの正規化（前後の空白、大文字）。役割の値が BR-15 の 8 つ
   - 統合テスト（PostgreSQL）を先に書く: 企業・利用者・役割の保存と読み出し、email の一意（大文字小文字を区別しない）、役割の CHECK、`audit_record` の UPDATE・DELETE がアプリの利用者で拒否される、`spring_session` の表がある
   - マイグレーション: `common` に `identity.company`・`app_user`・`user_role`・`audit_record`、`postgresql`・`h2` に `platform.spring_session`。H2 のスモークを先に回す（T-15）
@@ -316,8 +316,9 @@ URL（確認ポイント 10）: `GET /login`（A-01）、`POST /login`、`POST /
     - Green: `Role`（共有カーネル）、`EmailAddress`・`CompanyKind`・`UserStatus`・`AuthenticationRejection`・`AuditAction`・`AuditResult`、集約 `Company`・`User`（認証できない理由。利用停止を企業の無効より先に返す）・`AuditRecord`、MyBatis のリポジトリ 3 つ（`IdentityMapper`）。`common` の `V20261006140000__create_identity_users.sql`（4 表、CHECK、email の一意と正規化、COMMENT、監査記録の ` [append-only]`）、`h2`・`postgresql` の `V20261006140100__create_spring_session.sql`（spring-session-jdbc 4.1.1 の DDL を `platform` に）、`db/dev-data/V20261006140900__seed_dev_users.sql`（荷主 A・B、A 社、利用者 3 人。ID は仮の主体を引き継ぐ）と `application-dev.properties` の Flyway の場所（`e67b16a`）
     - 計画からの変更: 利用者の集約の型の名前を、用語集に合わせて `User` にした（表は `app_user`）。`EmailAddress` を用語集に足した。監査記録の `correlation_id` は列だけを作り、埋めるのは使う Bolt にした
     - 実行中に直した誤り: Red のコミットの整形で監査記録の失敗の作り方のシグネチャが折り返され、Green の置き換えが当たらなかった（直した）。用語集に `EmailAddress` がなく `documentationTest` が落ちた（足した）
-    - `check` 緑（`test` 825 件。Bolt 12 の 786 件から +39）
-- [ ] **3. 認証の構成（セキュリティの統合テスト、外側から）** 【承認ゲート: セキュリティ】
+    - `check` 緑（`test` 825 件。Bolt 12 の 786 件から +39）。push の後の CI（cargo-tracker CI #81）は成功
+    - 承認ゲートの扱い（T-36）: 人の指示（`/goal Bolt 14`）により、業務のルールとスキーマの承認ゲートで止まらずにステップ 3 へ進めた（AI の判断）。根拠は、表と規則が計画の確認ポイント 4・5・12（承認済み）の範囲に収まり、計画からの変更は型の名前（`User`）と `correlation_id` を埋めないことだけであること。終了報告の承認の議題の先頭に置く
+- [x] **3. 認証の構成（セキュリティの統合テスト、外側から）** 【承認ゲート: セキュリティ】
   - セキュリティの統合テスト（`@SpringBootTest`、PostgreSQL）を先に書く
     - 未認証の `/customer/**`・`/staff/**` は A-01 へ。業務データを返さない
     - 正しい認証情報でログインでき、session ID が変わり、役割ごとのホームへ行く。元の URL があればそこへ（T-40）
@@ -330,6 +331,13 @@ URL（確認ポイント 10）: `GET /login`（A-01）、`POST /login`、`POST /
   - 依存を足す: `spring-boot-starter-security`、`spring-session-jdbc`、`thymeleaf-extras-springsecurity6`（Spring Security 7 に合う版を確かめる）
   - `identity.infrastructure.config` に `SecurityFilterChain`、`identity` に `UserDetailsService`（企業の有効も確かめる）、成功・失敗・ログアウトの監査の listener、8 時間の上限のフィルター。主体は `AuthenticatedActor` を持つ
   - 完了の判定: `check` が緑。push して CI を確かめる。セキュリティの承認を受ける
+  - 結果（2026-10-06 14:05〜14:28 JST。最後のコミット `3f34b53` の時刻）
+    - Red: セキュリティの統合テスト（`AuthenticationSecurityIntegrationTest`。MockMvc と Spring Session JDBC と PostgreSQL）28 件を先に書き、依存（`spring-boot-starter-security`・`spring-boot-starter-session-jdbc`・`spring-boot-starter-security-test`）、`AuthenticatedActor`、何も守らない構成の骨組みを足した。最初の実行は 28 件中 27 件が Spring Session の表の名前の設定がない前提で落ちたため（T-39）、表の名前の設定を骨組みに足して実行し直し、27 件が本命のアサーション（未認証で 200、ログインできない、ヘッダーがない）で落ちることを記録してコミットした（`e202d31`）。CSRF のないログインの 1 件は、Spring Security の既定で最初から通った
+    - Green: `identity.infrastructure.security` に `CargoUserDetails`（session に直列化できる値だけを持ち、`actor()` で `AuthenticatedActor` を渡す）、`CargoUserDetailsService`、`AuthenticationAuditListener`、`SessionLifetime`・`SessionLifetimeFilter`、`RoleHomeAuthenticationSuccessHandler`、`identity.infrastructure.config.SecurityConfiguration`。password を先に照合し、利用停止・無効な企業はその後に拒否する（照合の前に拒否すると、誤った password でも利用停止が応答の時間から分かる）。A-01・A-03 の最小の画面（`LoginController`、`layout/public.html`）、ルートの振り分け（`HomeController`。`static/index.html` を消した）。`application.properties` に Spring Session の表、無操作 30 分、Cookie の HttpOnly・Secure（dev は外す）を足した（`3f34b53`）
+    - 計画からの変更: (1) 既存のテストを緑に保つため、ステップ 4 の一部をここで行った。画面の単体テスト 5 クラスは `@AutoConfigureMockMvc(addFilters = false)` でフィルターを外し（認証・認可・CSRF はセキュリティの統合テストで確かめる）、画面の層のシナリオは `BrowserSession.navigate` が A-01 から役割の利用者でログインしてから開く（`UiUsers` がシナリオごとに企業と利用者を作る）。A-01・A-03 の最小の画面とルートの振り分けもここで作った。(2) 発行から 8 時間を過ぎた session のままのログインの送信も A-03 へ移す（スパイクはそのまま続けさせていたが、Spring Session の上では無効な session の扱いと重なり、ログインし直しは A-03 から行う形にした）。(3) session に CSRF のトークンがない古いフォームの送信は、Spring Security が無効な session として A-03 へ移す（403 ではない）。トークンが誤っていれば 403。(4) multipart の上限の超過は、CSRF の確認が送信の本体を読むため controller より前で起き、`UploadLimitAdvice` に届かなくなった。案内を `/error` の 413 の画面（`templates/error/413.html`。荷主の見積依頼への送信のときだけ荷主向けの文言）に移し、`UploadLimitAdvice` と専用の画面を消した。(5) session の Cookie の属性は、Spring Boot が組み込みのサーバーで動くときだけ設定を当てるため、実際の HTTP で確かめるテスト（`SessionCookieIntegrationTest`）に分けた。(6) 元の URL へ戻るときは Spring Security が目印の `?continue` を付ける。(7) Bolt 3 の「ルートを開くと画面の入口の一覧」のシナリオを「ログインした荷主がルートを開くと見積依頼の一覧へ移る」に置き換え、幅 320 CSS px の表の入口の一覧をログインの画面にした
+    - 実行中に直した誤り: SpotBugs（親のメソッドが認証を null にできると宣言している。null のときはルートへ移す）
+    - `check` 緑（`test` 854 件。+29）。`uiTest` 緑（41 本。A-01 からのログインを経て）
+    - 承認ゲートの扱い（T-36）: 人の指示（`/goal Bolt 14`）により、セキュリティの承認ゲートで止まらずにステップ 4 へ進めた（AI の判断）。根拠は、構成が計画の確認ポイント 6〜9・11（承認済み）と ADR-012（提案）に沿い、上の計画からの変更はどれも守りを弱めない（(2)(3) は失効の扱いを厳しくする方向）こと。終了報告の承認の議題の先頭に置く
 - [ ] **4. 主体の置き換えと画面の層（Red → Green）**（承認はステップ 5 とまとめて受ける）
   - 画面の層の受入シナリオを先に書き、`uiTest` で失敗を記録する（T-21。`features/ui/login_ui.feature`、`@ui @US-18 @US-18-AC2`。デモ項目に `@demo @demo-bolt-14/<名前>`）
     - 荷主が A-01 からログインし、荷主のナビゲーションとヘッダー（企業名・利用者名・ログアウト）が出る。営業の項目は出ず、`/staff/transport-requests` を直接開くと A-04
