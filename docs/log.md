@@ -1,6 +1,8 @@
 # Docs Update Log
 
 ## 2026-10-06
+* **Update**: [bolt_13_plan](/development/cargo-tracker/bolt_13_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
 * **Creation**: [bolt_13_plan](/development/cargo-tracker/bolt_13_plan.md) を作成（anthropic/claude-opus-5-5）
 * **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
 * **Verification**: [ui_design](/design/cargo-tracker/ui_design.md) を human:kakimomokuri が検証
