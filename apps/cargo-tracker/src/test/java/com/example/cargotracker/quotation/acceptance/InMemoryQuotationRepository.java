@@ -17,7 +17,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * 業務ルール層の受入シナリオで使う、メモリ上の見積りリポジトリ。本物と同じ規則で振る舞う。
  * <ul>
  *   <li>同じ ID の見積りや、同じ輸送要求の同じ見積り番号を 2 回保存（新規）すると失敗する（UK）
- *   <li>同じ輸送要求に作成中・承認待ち・提示済みの見積りを 2 つ保存すると失敗する（部分一意インデックス。Q-INV-18。Bolt 11）
+ *   <li>同じ輸送要求に作成中・承認待ち・提示済み・詳細設計依頼済みの見積りを 2 つ保存すると失敗する（部分一意インデックス。Q-INV-18。Bolt 11）
  *   <li>読み出すたびに保存した時点の写しを返し、更新は読み込んだときの集約の版で照合する（楽観ロック）
  * </ul>
  */
@@ -91,6 +91,8 @@ public class InMemoryQuotationRepository implements QuotationRepository {
                 quotation.approvedBy().orElse(null),
                 quotation.presentedAt().orElse(null),
                 quotation.replacedBy().orElse(null),
+                quotation.respondedBy().orElse(null),
+                quotation.respondedAt().orElse(null),
                 aggregateVersion);
     }
 }

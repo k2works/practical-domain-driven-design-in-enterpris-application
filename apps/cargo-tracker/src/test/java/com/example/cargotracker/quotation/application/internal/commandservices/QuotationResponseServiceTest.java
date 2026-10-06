@@ -114,7 +114,10 @@ class QuotationResponseServiceTest {
 
         assertThat(later.requestRouteDesign(command(SHIPPER)))
                 .isEqualTo(new RouteDesignRequestOutcome.Rejected(QuotationRejection.EXPIRED));
-        assertThat(quotations.findByTransportRequestIdAndNo(requestId, 1).orElseThrow().status())
+        assertThat(quotations
+                        .findByTransportRequestIdAndNo(requestId, 1)
+                        .orElseThrow()
+                        .status())
                 .isEqualTo(QuotationStatus.PRESENTED);
         assertThat(published).isEmpty();
     }
@@ -133,8 +136,8 @@ class QuotationResponseServiceTest {
         quotation.presentInternally(STAFF, new UtcInstant(NOW.minusSeconds(900)));
         quotation.clearDomainEvents();
         racing.save(quotation);
-        QuotationResponseService racingService =
-                new QuotationResponseService(transportRequests, racing, published::add, Clock.fixed(NOW, ZoneOffset.UTC));
+        QuotationResponseService racingService = new QuotationResponseService(
+                transportRequests, racing, published::add, Clock.fixed(NOW, ZoneOffset.UTC));
 
         assertThat(racingService.requestRouteDesign(command(SHIPPER)))
                 .isEqualTo(new RouteDesignRequestOutcome.Conflict());

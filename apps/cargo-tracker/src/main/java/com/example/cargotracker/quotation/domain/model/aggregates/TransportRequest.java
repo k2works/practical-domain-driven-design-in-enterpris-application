@@ -166,6 +166,23 @@ public final class TransportRequest {
     }
 
     /**
+     * 荷主が詳細経路設計を依頼したことを受けて、経路設計中にする（DE-16 の受け取り。US-24 AC1。Bolt 12）。
+     * 見積り作成中・見積提示済みで、依頼した見積りの対象の版が現在の版のときだけ変える。DE-03 より先に DE-16 が届いても
+     * 経路設計中にし、遅れて届いた DE-03 では戻らない（{@link #markQuotationPresented} は見積り作成中だけを変える）。
+     *
+     * @param quotedVersionNo 依頼した見積りの対象の版番号
+     * @return 状態を変えたら true（すでに経路設計中なら false。冪等）
+     */
+    public boolean markRoutingRequested(int quotedVersionNo) {
+        if ((status != TransportRequestStatus.QUOTING && status != TransportRequestStatus.QUOTED)
+                || quotedVersionNo != currentVersion.versionNo()) {
+            return false;
+        }
+        status = TransportRequestStatus.ROUTING;
+        return true;
+    }
+
+    /**
      * 再提出できるかを確かめる（Q-INV-15）。書類の中身を保存する前に確かめ、受け付けない再提出でファイルを残さないために使う。
      *
      * @return 受け付けない理由（再提出できるなら空）

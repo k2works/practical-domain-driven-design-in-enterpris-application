@@ -37,7 +37,9 @@ final class QuotationViews {
 
     /** 表示する時刻で失効していれば「失効」、そうでなければ保存されている状態の表示名（社内の受付一覧 S-02 で使う）。 */
     static String effectiveStatus(QuotationStatus status, UtcInstant expiresAt, UtcInstant now) {
-        boolean open = status == QuotationStatus.PENDING_APPROVAL || status == QuotationStatus.PRESENTED;
+        boolean open = status == QuotationStatus.PENDING_APPROVAL
+                || status == QuotationStatus.PRESENTED
+                || status == QuotationStatus.ROUTING_REQUESTED;
         boolean expired = open && !new QuotationExpiry(expiresAt).isValidAt(now);
         return status(expired ? QuotationStatus.EXPIRED : status);
     }
@@ -47,6 +49,7 @@ final class QuotationViews {
             case DRAFT -> "作成中";
             case PENDING_APPROVAL -> "承認待ち";
             case PRESENTED -> "提示済み";
+            case ROUTING_REQUESTED -> "詳細設計依頼済み";
             case EXPIRED -> "失効";
             case REPLACED -> "置換済み";
         };
@@ -98,6 +101,9 @@ final class QuotationViews {
         }
         if (status == QuotationStatus.REPLACED && audience == Audience.CUSTOMER) {
             return "新しい見積りに置き換え";
+        }
+        if (status == QuotationStatus.ROUTING_REQUESTED && audience == Audience.CUSTOMER) {
+            return "詳細経路設計を依頼済み";
         }
         return status(status);
     }

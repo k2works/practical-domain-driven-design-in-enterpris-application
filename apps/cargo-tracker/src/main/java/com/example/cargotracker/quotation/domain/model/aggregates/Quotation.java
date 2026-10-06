@@ -1,6 +1,7 @@
 package com.example.cargotracker.quotation.domain.model.aggregates;
 
 import com.example.cargotracker.quotation.domain.events.QuotationPresented;
+import com.example.cargotracker.quotation.domain.events.RouteDesignRequested;
 import com.example.cargotracker.quotation.domain.model.valueobjects.PricingBasis;
 import com.example.cargotracker.quotation.domain.model.valueobjects.QuotationExpiry;
 import com.example.cargotracker.quotation.domain.model.valueobjects.QuotationId;
@@ -21,7 +22,8 @@ import java.util.Optional;
 
 /**
  * 見積り。審査済みの輸送要求版に対する料金根拠・有効期限・経路方針の提示（US-03。集約ルート）。
- * 作成中 → 承認待ち（算出する。Q-INV-05・17）→ 提示済み（社内承認して提示する。DE-03）の順に進む。
+ * 作成中 → 承認待ち（算出する。Q-INV-05・17）→ 提示済み（社内承認して提示する。DE-03）→ 詳細設計依頼済み（荷主が詳細経路設計へ
+ * 進むと回答する。DE-16。Bolt 12）の順に進む。
  * 承認待ち・提示済みの見積りは、再見積りで置換済み（有効期限を過ぎていれば失効）になる（Q-INV-07。Bolt 11）。
  * 失効は状態を書き換えずに判定時刻で決める（{@link #isExpiredAt}）。
  *
@@ -46,6 +48,8 @@ public final class Quotation {
     private UserId approvedBy;
     private UtcInstant presentedAt;
     private QuotationId replacedBy;
+    private UserId respondedBy;
+    private UtcInstant respondedAt;
 
     @SuppressWarnings("java:S107") // 保存されている状態から組み立てるため、集約の値をすべて受け取る
     private Quotation(
@@ -60,6 +64,8 @@ public final class Quotation {
             UserId approvedBy,
             UtcInstant presentedAt,
             QuotationId replacedBy,
+            UserId respondedBy,
+            UtcInstant respondedAt,
             long aggregateVersion) {
         this.id = Objects.requireNonNull(id, "id");
         this.transportRequestId = Objects.requireNonNull(transportRequestId, "transportRequestId");
@@ -75,6 +81,8 @@ public final class Quotation {
         this.approvedBy = approvedBy;
         this.presentedAt = presentedAt;
         this.replacedBy = replacedBy;
+        this.respondedBy = respondedBy;
+        this.respondedAt = respondedAt;
         this.aggregateVersion = aggregateVersion;
     }
 
@@ -98,6 +106,8 @@ public final class Quotation {
                 null,
                 null,
                 null,
+                null,
+                null,
                 INITIAL_AGGREGATE_VERSION);
     }
 
@@ -115,6 +125,8 @@ public final class Quotation {
             UserId approvedBy,
             UtcInstant presentedAt,
             QuotationId replacedBy,
+            UserId respondedBy,
+            UtcInstant respondedAt,
             long aggregateVersion) {
         return new Quotation(
                 id,
@@ -128,6 +140,8 @@ public final class Quotation {
                 approvedBy,
                 presentedAt,
                 replacedBy,
+                respondedBy,
+                respondedAt,
                 aggregateVersion);
     }
 
@@ -212,13 +226,68 @@ public final class Quotation {
     }
 
     /**
-     * 判定時刻に失効しているか（Q-INV-06・07）。失効を記録した見積りと、承認待ち・提示済みで判定時刻が有効期限と同時刻または後の
+     * 荷主が詳細経路設計へ進むと回答する（提示済み → 詳細設計依頼済み。US-24 AC1、Q-INV-09）。回答者と回答時刻を記録し、
+     * DE-16 を生成する。回答者は、認証（US-18）ができるまで仮の荷主の利用者（2026-10-06 の決定。Bolt 12）。
+     *
+     * @param respondent 回答した荷主担当者
+     * @param at 回答時刻（判定時刻）
+     * @return 受け付けなかった理由（受け付けたら空）
+     */
+    public Optional<QuotationRejection> requestRouteDesign(UserId respondent, UtcInstant at) {
+        Objects.requireNonNull(respondent, "respondent");
+        Optional<QuotationRejection> rejection = responseRejectionAt(at);
+        if (rejection.isPresent()) {
+            return rejection;
+        }
+        respondedBy = respondent;
+        respondedAt = at;
+        status = QuotationStatus.ROUTING_REQUESTED;
+        domainEvents.add(new RouteDesignRequested(
+                id.value(),
+                quotationNo,
+                transportRequestId.value(),
+                transportRequestVersionNo,
+                routePolicy.via().stream().map(Location::unLocode).toList(),
+                routePolicy.departureAt(),
+                routePolicy.arrivalAt(),
+                expiry.expiresAt(),
+                respondent.value(),
+                at));
+        return Optional.empty();
+    }
+
+    /**
+     * 判定時刻に荷主が回答できないなら、その理由（Q-INV-07・09。Bolt 12）。置換済み・失効（記録または判定時刻で）を先に見て、
+     * 次に詳細設計依頼済み（回答済み）、提示済みでないの順に見る。画面の操作の出し分けもこれを使う。
+     *
+     * @return 回答できない理由（回答できるなら空）
+     */
+    public Optional<QuotationRejection> responseRejectionAt(UtcInstant at) {
+        Objects.requireNonNull(at, "at");
+        Optional<QuotationRejection> retired = retiredRejection();
+        if (retired.isPresent()) {
+            return retired;
+        }
+        if (isExpiredAt(at)) {
+            return Optional.of(QuotationRejection.EXPIRED);
+        }
+        return switch (status) {
+            case PRESENTED -> Optional.empty();
+            case ROUTING_REQUESTED -> Optional.of(QuotationRejection.ROUTING_REQUESTED);
+            case DRAFT, PENDING_APPROVAL, EXPIRED, REPLACED -> Optional.of(QuotationRejection.NOT_PRESENTED);
+        };
+    }
+
+    /**
+     * 判定時刻に失効しているか（Q-INV-06・07）。失効を記録した見積りと、承認待ち・提示済み・詳細設計依頼済みで判定時刻が有効期限と同時刻または後の
      * 見積りは失効。置換済みと作成中は失効でない。
      */
     public boolean isExpiredAt(UtcInstant judgedAt) {
         Objects.requireNonNull(judgedAt, "judgedAt");
         return status == QuotationStatus.EXPIRED
-                || ((status == QuotationStatus.PENDING_APPROVAL || status == QuotationStatus.PRESENTED)
+                || ((status == QuotationStatus.PENDING_APPROVAL
+                                || status == QuotationStatus.PRESENTED
+                                || status == QuotationStatus.ROUTING_REQUESTED)
                         && !expiry.isValidAt(judgedAt));
     }
 
@@ -245,11 +314,15 @@ public final class Quotation {
 
     /**
      * 再見積りできないなら、その理由（置換済み・失効の記録。Q-INV-07）。承認待ち・提示済みは、判定時刻で失効していても
-     * 再見積りできる。画面の操作の出し分けもこれを使う（Bolt 11 レビュー R-07）。
+     * 再見積りできる。詳細設計依頼済みは、経路設計の途中の再見積りを US-05・US-07 で決めるまで再見積りできない（Bolt 12）。
+     * 画面の操作の出し分けもこれを使う（Bolt 11 レビュー R-07）。
      *
      * @return 再見積りできない理由（再見積りできるなら空）
      */
     public Optional<QuotationRejection> requoteRejection() {
+        if (status == QuotationStatus.ROUTING_REQUESTED) {
+            return Optional.of(QuotationRejection.ROUTING_REQUESTED);
+        }
         return retiredRejection();
     }
 
@@ -257,15 +330,16 @@ public final class Quotation {
         return switch (status) {
             case EXPIRED -> Optional.of(QuotationRejection.EXPIRED);
             case REPLACED -> Optional.of(QuotationRejection.REPLACED);
-            case DRAFT, PENDING_APPROVAL, PRESENTED -> Optional.empty();
+            case DRAFT, PENDING_APPROVAL, PRESENTED, ROUTING_REQUESTED -> Optional.empty();
         };
     }
 
-    /** 作成中・承認待ち・提示済みか（1 つの輸送要求に 1 つだけ。失効・置換済みは数えない。Q-INV-18）。 */
+    /** 作成中・承認待ち・提示済み・詳細設計依頼済みか（1 つの輸送要求に 1 つだけ。失効・置換済みは数えない。Q-INV-18）。 */
     public boolean isActive() {
         return status == QuotationStatus.DRAFT
                 || status == QuotationStatus.PENDING_APPROVAL
-                || status == QuotationStatus.PRESENTED;
+                || status == QuotationStatus.PRESENTED
+                || status == QuotationStatus.ROUTING_REQUESTED;
     }
 
     public QuotationId id() {
@@ -313,6 +387,16 @@ public final class Quotation {
     /** 置換先の見積り（置換済みのとき）。 */
     public Optional<QuotationId> replacedBy() {
         return Optional.ofNullable(replacedBy);
+    }
+
+    /** 回答者（荷主が回答したとき）。 */
+    public Optional<UserId> respondedBy() {
+        return Optional.ofNullable(respondedBy);
+    }
+
+    /** 回答時刻（荷主が回答したとき）。 */
+    public Optional<UtcInstant> respondedAt() {
+        return Optional.ofNullable(respondedAt);
     }
 
     /** 楽観ロックの版（読み込んだときの集約の版）。リポジトリが更新のときに照合する。 */

@@ -1,9 +1,11 @@
 package com.example.cargotracker.quotation.infrastructure.config;
 
 import com.example.cargotracker.quotation.application.internal.commandservices.QuotationCommandService;
+import com.example.cargotracker.quotation.application.internal.commandservices.QuotationResponseService;
 import com.example.cargotracker.quotation.application.internal.commandservices.TransportRequestCommandService;
 import com.example.cargotracker.quotation.application.internal.commandservices.TransportRequestReviewService;
 import com.example.cargotracker.quotation.application.internal.eventhandlers.QuotationPresentedEventHandler;
+import com.example.cargotracker.quotation.application.internal.eventhandlers.RouteDesignRequestedEventHandler;
 import com.example.cargotracker.quotation.application.internal.queryservices.QuotationQueryService;
 import com.example.cargotracker.quotation.application.internal.queryservices.StaffQuotationQueryService;
 import com.example.cargotracker.quotation.application.internal.queryservices.StaffTransportRequestQueryService;
@@ -88,6 +90,21 @@ public class QuotationConfiguration {
             ApplicationEventPublisher eventPublisher,
             Clock clock) {
         return new QuotationCommandService(transportRequestRepository, quotationRepository, eventPublisher, clock);
+    }
+
+    @Bean
+    QuotationResponseService quotationResponseService(
+            TransportRequestRepository transportRequestRepository,
+            QuotationRepository quotationRepository,
+            ApplicationEventPublisher eventPublisher,
+            Clock clock) {
+        return new QuotationResponseService(transportRequestRepository, quotationRepository, eventPublisher, clock);
+    }
+
+    /** DE-16 を受けて輸送要求を経路設計中にする（Spring Modulith のイベントの記録を経て、別のトランザクションで動く。Bolt 12）。 */
+    @Bean
+    RouteDesignRequestedEventHandler routeDesignRequestedEventHandler(TransportRequestRepository repository) {
+        return new RouteDesignRequestedEventHandler(repository);
     }
 
     /** DE-03 を受けて輸送要求を見積提示済みにする（Spring Modulith のイベントの記録を経て、別のトランザクションで動く）。 */

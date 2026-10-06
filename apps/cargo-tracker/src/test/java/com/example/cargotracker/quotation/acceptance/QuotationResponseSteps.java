@@ -74,7 +74,8 @@ public class QuotationResponseSteps {
         switch (result) {
             case "依頼した" -> assertThat(lastOutcome).isInstanceOf(RouteDesignRequestOutcome.Requested.class);
             case "見つからない" -> assertThat(lastOutcome).isInstanceOf(RouteDesignRequestOutcome.NotFound.class);
-            default -> assertThat(lastOutcome).isEqualTo(new RouteDesignRequestOutcome.Rejected(REJECTIONS.get(result)));
+            default ->
+                assertThat(lastOutcome).isEqualTo(new RouteDesignRequestOutcome.Rejected(REJECTIONS.get(result)));
         }
     }
 

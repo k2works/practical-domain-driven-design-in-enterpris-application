@@ -167,6 +167,8 @@ public class MyBatisQuotationRepository implements QuotationRepository {
                 row.internalApprovedBy() == null ? null : new UserId(row.internalApprovedBy()),
                 row.presentedAt() == null ? null : toUtc(row.presentedAt()),
                 row.replacedByQuotationId() == null ? null : new QuotationId(row.replacedByQuotationId()),
+                null,
+                null,
                 row.version());
     }
 

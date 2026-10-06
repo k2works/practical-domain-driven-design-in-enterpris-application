@@ -11,5 +11,7 @@ public enum TransportRequestStatus {
     /** 見積り作成中（審査を確定した後）。 */
     QUOTING,
     /** 見積提示済み（見積りと経路方針を提示した後。DE-03 を受けて変える。Bolt 10）。 */
-    QUOTED
+    QUOTED,
+    /** 経路設計中（荷主が詳細経路設計を依頼した後。DE-16 を受けて変える。Bolt 12）。 */
+    ROUTING
 }

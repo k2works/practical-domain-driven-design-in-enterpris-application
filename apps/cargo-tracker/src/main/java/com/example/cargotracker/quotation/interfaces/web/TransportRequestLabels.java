@@ -61,6 +61,7 @@ final class TransportRequestLabels {
             case UNDER_REVIEW -> "審査中（A 社の対応待ち）";
             case QUOTING -> "見積り作成中（A 社の対応待ち）";
             case QUOTED -> "見積提示済み（お客様の対応待ち）";
+            case ROUTING -> "経路設計中（A 社の対応待ち）";
         };
     }
 
@@ -71,6 +72,7 @@ final class TransportRequestLabels {
             case UNDER_REVIEW -> "営業担当者が内容を審査しています。お問い合わせの際は業務番号をお伝えください。";
             case QUOTING -> "営業担当者が見積りを作成しています。お問い合わせの際は業務番号をお伝えください。";
             case QUOTED -> "見積りと経路方針を提示しました。料金根拠と有効期限を確かめてください。";
+            case ROUTING -> "経路設計者が詳細な経路を設計しています。承認の準備ができたらお知らせします。";
         };
     }
 
@@ -80,6 +82,7 @@ final class TransportRequestLabels {
             case UNDER_REVIEW -> "審査中";
             case QUOTING -> "見積り作成中";
             case QUOTED -> "見積提示済み";
+            case ROUTING -> "経路設計中";
         };
     }
 
