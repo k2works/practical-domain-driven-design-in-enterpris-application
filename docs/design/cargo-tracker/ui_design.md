@@ -4,7 +4,7 @@ title: "cargo-tracker UI 設計"
 description: "cargo-tracker の顧客 Web と社内業務 Web の画面オブジェクト、システムメタファー、画面一覧、画面遷移、主要画面のイメージ、共通部品（WCAG 2.2 AA）、エラー時を含むインタラクション。"
 tags: [design, ui]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-06T06:41:11Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-06T06:59:54Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T07:57:45Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:01:39Z }
@@ -209,7 +209,7 @@ verified:
 
 ナビに表示しない項目は、URL を直接開いても権限がなければ A-04 を表示する（表示の制御を権限の防御にしない）。
 
-実装（Bolt 8、2026-10-03 に承認）: レイアウトは Thymeleaf のフラグメント（`templates/layout/customer.html`・`staff.html`）で作り、Layout Dialect は使わない。Bootstrap 5.3 と htmx 2.0 は WebJars（webjars-locator-lite）で同梱し、共通の CSS は `static/css/app.css` に置く（操作の大きさ、`scroll-padding`、表の横スクロールの囲み、長い語の折り返し）。画面ごとのスタイルは書かない。Bolt 8 では、ナビにいまある画面だけを出した（顧客 Web: 見積依頼。社内業務 Web: 見積依頼、KPI 計測記録）。ヘッダーは認証（US-18）までは仮の主体の名前を出し、ログアウトは出さない。Bolt 14 で、ヘッダーに認証した利用者（荷主は企業名・利用者名、社内は役割名・利用者名）とログアウトを出し、ナビは役割ごとに荷主・営業の項目を出す（まだない画面は準備中の画面へ。2026-10-06 に承認）。窓口の案内は仮に「平日 09:00〜18:00（Asia/Tokyo）」とする（利用者のタイムゾーンを持つ Bolt で、利用者のタイムゾーンで示す）。
+実装（Bolt 8、2026-10-03 に承認）: レイアウトは Thymeleaf のフラグメント（`templates/layout/customer.html`・`staff.html`）で作り、Layout Dialect は使わない。Bootstrap 5.3 と htmx 2.0 は WebJars（webjars-locator-lite）で同梱し、共通の CSS は `static/css/app.css` に置く（操作の大きさ、`scroll-padding`、表の横スクロールの囲み、長い語の折り返し）。画面ごとのスタイルは書かない。Bolt 8 では、ナビにいまある画面だけを出した（顧客 Web: 見積依頼。社内業務 Web: 見積依頼、KPI 計測記録）。ヘッダーは認証（US-18）までは仮の主体の名前を出し、ログアウトは出さない。Bolt 14 で、ヘッダーに認証した利用者（荷主は企業名・利用者名、社内は役割名・利用者名）とログアウトを出し、ナビは役割ごとに荷主・営業の項目を出す（まだない画面は準備中の画面へ。2026-10-06 に承認）。窓口の案内は「平日 09:00〜18:00（Asia/Tokyo）」とする（2026-10-06 に決定。D-29。利用者のタイムゾーンを持つ Bolt で、利用者のタイムゾーンで示す）。
 
 ## 画面遷移
 
