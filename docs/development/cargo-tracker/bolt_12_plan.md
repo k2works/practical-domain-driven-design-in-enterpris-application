@@ -4,7 +4,7 @@ title: "Bolt 12 計画 - 詳細経路設計へ進む回答（US-24 AC1）"
 description: "12 回目の Bolt の計画。荷主が提示済みで有効な見積りに詳細経路設計へ進むと回答し、見積りを詳細設計依頼済みにして DE-16 を発行し、輸送要求を経路設計中にするまでを、回答の拒否、Q-INV-18 のインデックスの作り直し、C-05・C-04・S-02・S-04 の利用者の見え方とあわせて、ステップ 1〜5 で定義する。"
 tags: [development,bolt-plan]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-06T01:17:35Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-06T01:22:10Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-06T01:07:01Z }
 ---
@@ -274,11 +274,16 @@ URL（確認ポイント 7）: `GET /customer/transport-requests/{業務番号}/
     - 計画からの変更: 承認待ちの見積りへの回答は、理由を示す代わりに「見つからない」にした。荷主に提示していない見積りは荷主に見えないため（Bolt 10 の照会の規則と同じ。提示前に置き換えた見積りも同じ）。集約は理由「提示済みでない」を返し、入力ポートが荷主に見えるかで先に絞る。DE-16 は DE-03 より先に届いても輸送要求を経路設計中にする（見積り作成中からも変える）。遅れて届いた DE-03 では戻らない
     - 実行中に直した誤り: 書式の検査（spotless）で 1 回止まった（整形をかけ直した）。業務ルール層のテストの「古い版」の単体テストは今の状態遷移で作れない場面だったため外した
     - 業務ルール層のシナリオはすべて passed（+10）。`check` 緑（`test` 765 件。Bolt 11 の 737 件から +28）。回答の列（`shipper_response` ほか）はステップ 3 で足すまで、読み出しで空にしている
-- [ ] **3. 表（内側の TDD、統合テスト）** 【承認ゲート: スキーマの変更】
+- [?] **3. 表（内側の TDD、統合テスト）** 【承認ゲート: スキーマの変更】
   - 統合テスト（PostgreSQL）を先に書く: 詳細設計依頼済みの保存と読み出し、回答の列の CHECK（そろって NULL・そろって値、詳細設計依頼済みなら必須）、部分一意インデックスが詳細設計依頼済みを数える、回答と再見積りの同時の更新が楽観ロックで拒否される、輸送要求の `ROUTING` の保存
   - マイグレーション: `common` に状態の値・回答の 3 列・CHECK・COMMENT、`postgresql` に `ux_quotation_active` の作り直し。H2 のスモークを先に回す（T-15）
   - MyBatis のリポジトリ: 回答の列、S-02 の経路設計中の読み取りモデル
   - 完了の判定: `check` が緑。push して CI を確かめる。スキーマの承認を受ける
+  - 結果（2026-10-06 10:17〜10:21。最後のコミット `48e31d4` の時刻）
+    - Red: 統合テスト（詳細設計依頼済みの回答者・回答時刻と `shipper_response` の保存と読み出し、部分一意インデックスが詳細設計依頼済みを数える、回答の列の CHECK の 3 例、回答と再見積りの同時の更新が楽観ロックで止まる、経路設計中の一覧と輸送要求の `ROUTING` の保存）を先に書いた。読み取りモデルの型 `RoutingRequestedSummary` とリポジトリの口（空を返す）だけを先に足し、新しく書いた 7 件だけが失敗することを確かめてコミットした（`83ae352`）
+    - Green: `common` の `V20261006100000__add_quotation_shipper_response.sql`（`ROUTING_REQUESTED`、回答の 3 列、`ck_quotation_shipper_response`、`ck_quotation_responded`、COMMENT）と、`postgresql` の `V20261006100100__add_routing_requested_to_quotation_active_index.sql`（`ux_quotation_active` を作り直す）。H2 のスモークを先に回して通した（T-15）。MyBatis の行・マッパー・リポジトリに回答の列と経路設計中の一覧（`selectRoutingRequested`）を足した。`shipper_response` は、回答者があれば `PROCEED` と書く（辞退は AC2 で集約に回答の種類を足す）（`48e31d4`）
+    - 実行中に直した誤り: 復元のメソッドの分岐が checkstyle の上限（11 > 10）を超えた（null を扱う小さな関数に分けた）
+    - `check` 緑（`test` 772 件。統合テスト +7）
 - [ ] **4. 画面の層（Red → Green）**（承認はステップ 5 とまとめて受ける）
   - 画面の層の受入シナリオを先に書き、`uiTest` で失敗を記録する（T-21。`features/ui/request_route_design_ui.feature`、`@ui @US-24`。デモ項目に `@demo @demo-bolt-12/<名前>`）
     - 主成功: 荷主が C-04 から「見積りに回答する」で C-05 を開き、キー操作だけで「この条件で詳細経路設計へ進む」を選ぶ。C-04 に結果と「経路設計中（A 社の対応待ち）」、見積りの「詳細経路設計を依頼済み」が出て、回答の入口がない。営業の S-02 の経路設計中の表に出て、S-04 は読み取り専用
