@@ -21,4 +21,4 @@ A 社国際貨物輸送管理システム。境界づけられたコンテキス
 | 荷主担当者（別の企業） | `shipper-b@dev.cargo-tracker.example` | `dev-password-shipper` | 荷主 B（開発） |
 | 営業担当者 | `sales@dev.cargo-tracker.example` | `dev-password-staff` | A 社（開発） |
 
-営業の画面を使うときは、ヘッダーの「ログアウト」の後に営業担当者のメールアドレスと password を入れてください。
+営業の画面を使うときは、ヘッダーの「ログアウト」の後に、入力済みのメールアドレスと password を営業担当者の値に書き換えてログインしてください。H2 のコンソールは、ログインと CSRF の守りの外に置くことになるため Bolt 14 で外しました。

@@ -4,7 +4,7 @@ title: "リリース計画 - cargo-tracker（A 社国際貨物輸送管理シス
 description: "cargo-tracker MVP のリリース計画。1 人 + AI、時間単位の Bolt（= イテレーション）と週次の見直しで、最初の縦の流れ（R0.1）、パイロット準備完了（R1.0）、本格展開前（R1.1）の 3 段階、Unit のエントロピー評価、SP、バッファ、パイロット開始の条件、引継ぎ ID の台帳、業務責任者に確かめる事項の台帳。"
 tags: [development,release-plan]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-06T04:53:35Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-06T06:13:27Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T09:29:53Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:38:26Z }
@@ -501,6 +501,9 @@ Bolt のレビューや終了報告で「業務責任者に確かめる」とし
 | :--- | :---: | :---: | :--- |
 | Spring Boot 4.1 のサポート期限（2027-07-31）がパイロット中に来る | 中 | 高 | 4.2 の公開後、W10 または Release 1.1 の間に追従する（技術スタック） |
 | TOTP と Spring Security 7 の統合が想定より難しい | 中 | 低 | Bolt 13 でスパイクし（2026-10-06）、Spring Security 7.1 の要素の権限で 2 段階のログインを組めることを確かめた（発生確率を中から低に。ADR-011 が却下されたら中に戻す）。方式は [ADR-011](../../adr/cargo-tracker/011-mfa-totp.md)（提案）。残りは登録の QR・秘密の暗号化の鍵の管理・Spring Session JDBC の上での確認（W5） |
+| 利用停止・権限の取消しが既存の session に反映されない（W5 まで。最長 8 時間） | 中 | 低 | Bolt 14 の認可はログインの時点の役割（ADR-012）。パイロットの前で本番の利用者はいない。W5 で request ごとに DB の現在値を確かめる（SEC-12、US-18 AC6） |
+| 未認証の request で session の行が増え続ける（ログインの画面の CSRF のトークン、失敗の後のメールアドレス） | 中 | 低 | Spring Session の期限切れの掃除に任せる。作られる速さの上限は W5 のロックか W10 の WAF で決める（Bolt 14 レビュー） |
+| session の直列化の互換を壊す変更の配備で、既存の session が復元できない | 低 | 中 | 互換を壊す変更の配備では `platform.spring_session` を消してログインし直してもらう（ADR-012。W10 の運用手順書） |
 | H2 と PostgreSQL の方言差（一意制約違反後の振る舞いなど） | 高 | 中 | 統合テストは PostgreSQL、H2 はスモークだけ（ADR-007） |
 | イベント配信と予約サガの非同期の不具合（重複・取りこぼし） | 高 | 中 | 統合テストで再配信・順序・受信側の冪等性を確かめる（テスト戦略） |
 | 外部原本の取込（PERF-06）で版の競合が連鎖する | 中 | 中 | W7 で同じ追跡番号への集中を含めて確かめ、W10 の性能テストで再確認する |
@@ -627,4 +630,5 @@ xychart-beta
 | 2026-10-06 | TOTP のリスクで下げる列を影響度から発生確率に直した（Bolt 13 レビュー R-13、D-46）。W2 に Bolt 13 終了報告へのリンクを付けた | anthropic/claude-opus-5-5 |
 | 2026-10-06 | W2 の TS-01 を完了にした（Bolt 13 終了報告の承認） | anthropic/claude-opus-5-5 |
 | 2026-10-06 | W2 に Bolt 14 計画へのリンクを付けた（範囲は US-18 の password によるログインと session を 1 つの Bolt で。人の決定） | anthropic/claude-opus-5-5 |
+| 2026-10-06 | Bolt 14 レビューから、リスク台帳に session の反映・匿名の session・直列化の互換の 3 行を足した | anthropic/claude-opus-5-5 |
 | 2026-10-06 | Bolt 14 計画の承認を W2 に反映した | anthropic/claude-opus-5-5、承認 human:kakimomokuri |

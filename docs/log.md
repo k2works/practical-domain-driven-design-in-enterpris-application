@@ -1,6 +1,13 @@
 # Docs Update Log
 
 ## 2026-10-06
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_14_plan](/development/cargo-tracker/bolt_14_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [012-authentication-principal-and-session](/adr/cargo-tracker/012-authentication-principal-and-session.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [011-mfa-totp](/adr/cargo-tracker/011-mfa-totp.md) を更新（anthropic/claude-opus-5-5）
 * **Update**: [bolt_14_plan](/development/cargo-tracker/bolt_14_plan.md) を更新（anthropic/claude-opus-5-5）
 * **Update**: [012-authentication-principal-and-session](/adr/cargo-tracker/012-authentication-principal-and-session.md) を更新（anthropic/claude-opus-5-5）
 * **Update**: [bolt_14_plan](/development/cargo-tracker/bolt_14_plan.md) を更新（anthropic/claude-opus-5-5）

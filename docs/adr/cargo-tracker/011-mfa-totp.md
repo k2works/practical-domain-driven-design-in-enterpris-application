@@ -4,7 +4,7 @@ title: "ADR-011: 多要素認証は Spring Security 7 の要素の権限で組�
 description: "password の後に TOTP を求める 2 段階のログインを、Spring Security 7 の多要素認証（要素ごとの権限）で組む。"
 tags: [adr, authentication, mfa, totp]
 status: draft
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-06T03:50:03Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-06T06:13:27Z }
 ---
 
 # ADR-011: 多要素認証は Spring Security 7 の要素の権限で組み、TOTP は java-otp で作る
@@ -97,6 +97,8 @@ T --> U : 2 つの要素を合わせた認証。業務の画面へ
 本体の `dev` プロファイルは今「H2 で bootRun」の意味で、入力済みの意味がそこに相乗りする。
 
 ### 4. `identity` への置き方と仮の主体の置き換え
+
+（置き換えは Bolt 14 で行った。構成は [ADR-012](012-authentication-principal-and-session.md)）
 
 - 認証の主体の型（例: `AuthenticatedActor(UserId, CompanyId, Role)`）は共有カーネル `shared` に置く。ほかのコンテキストは `@AuthenticationPrincipal` でそれだけを受け取り、`FACTOR_*` や認証方式を知らない。今の依存（`identity → quotation::events`）のまま `quotation` が `identity` の API から利用者を引くと、`quotation → identity → quotation::events` の循環になるため。
 - `identity` は、利用者・TOTP の資格・回復コード・失敗の記録と、`UserDetailsService`・`AuthenticationProvider`・失敗のリスナーを持つ。TOTP のライブラリへの依存は `identity.infrastructure` に閉じ込める。
