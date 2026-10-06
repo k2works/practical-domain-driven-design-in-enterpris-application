@@ -7470,7 +7470,7 @@
 <li><code>./gradlew check verifyProductionClasspath</code> は緑（4 分 20 秒）</li>
 </ul>
 </li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>3. Heroku のアプリを作り、初回の配備をする</strong> 【承認ゲート: 外部連携】</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>3. Heroku のアプリを作り、初回の配備をする</strong> 【承認ゲート: 外部連携】</li>
 <li>人が <code>! heroku login</code> と <code>! heroku container:login</code> を実行する（AI はログインできない）</li>
 <li>
 <p>Gulp のタスクを作る（<code>operating-script</code> スキルに従う）:</p>
@@ -7514,6 +7514,13 @@
 </li>
 <li><code>npx gulp heroku:setup</code> と <code>npx gulp heroku:deploy</code> で配備し、<code>heroku:status</code> と <code>heroku:logs</code> で起動と R14 が出ないことを確かめる</li>
 <li>途中の結果（17:35〜17:45 JST）: 運用スクリプト作成ガイドの命名（<code>{カテゴリ}_{環境}.js</code>、<code>{カテゴリ}:{環境}:{アクション}</code>）に合わせ、上の表の <code>heroku:*</code> を <code>ops/scripts/deploy_demo.js</code> の <code>deploy:demo:*</code> にした（<code>setup</code>・<code>build</code>・<code>push</code>・<code>release</code>・<code>deploy:demo</code>（build → push → release）・<code>status</code>・<code>logs</code>・<code>restart</code>・<code>open</code>・<code>stop</code>・<code>start</code>・<code>help</code>）。<code>stop</code>（dyno を 0）と <code>start</code> を足し、アプリの削除は取り消せないためタスクにせず手順書の手で行う。<code>deploy:demo:build</code> は、作業ツリーに変更がないことと、アプリを最後に変えたコミットの CI が緑であることを確かめる（確認ポイント 8）。<code>.env.example</code> に <code>DEMO_*</code> を足した。<code>deploy:demo:help</code> の表示と、未ログインで止まることを確かめた。命名の変更は外部連携の承認ゲートで承認を受ける</li>
+<li>結果（17:44〜17:52 JST）:<ul>
+<li><code>deploy:demo:setup</code> でアプリを作った（<code>https://cargo-tracker-mono-demo-883bf0b92807.herokuapp.com/</code>、region <code>us</code>、stack <code>container</code>）</li>
+<li>最初の <code>deploy:demo</code> は push で <code>error from registry: unsupported</code> になった。Docker 29 の containerd のイメージストアが OCI の media type で送るため。<code>docker buildx build --provenance=false --sbom=false --output type=image,name=…,oci-mediatypes=false</code> に直して push が通った</li>
+<li>release の後、Eco dyno で 15.5 秒で起動したが、起動中に R14（メモリ超過）が出た。ローカルの 512 MB の制限（cgroup）では 358 MiB だったので、dyno では <code>-XX:MaxRAMPercentage</code> が 512 MB を基準にしていないと見て、ヒープを <code>-Xmx300m</code> に固定した（Heroku の Java の 512 MB の既定と同じ）。その後は R14 が出ず、起動は 4.8 秒、<code>memory_total</code> は 354.6 MB（<code>log-runtime-metrics</code> を有効にして計測）</li>
+<li>公開の URL で、未ログインは https の <code>/login</code> へ、荷主の開発用の利用者でログインして荷主の一覧・新規が 200（0.6 秒前後）、営業の画面が 403</li>
+</ul>
+</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>4. デモ環境でデモ項目を確かめ、手順書を仕上げる</strong></li>
 <li>下の「デモ項目」1〜4 を公開の URL で行い、録画する（T-31）</li>
 <li>30 分の無アクセスでスリープした後の起動の時間を計る（Eco の制約。手順書の「デモの前に」に書く）</li>
