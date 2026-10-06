@@ -19,10 +19,10 @@ public class DevLoginPrefill {
     }
 
     public String email() {
-        return properties.email();
+        return properties.accounts().getFirst().email();
     }
 
     public String password() {
-        return properties.password();
+        return properties.accounts().getFirst().password();
     }
 }

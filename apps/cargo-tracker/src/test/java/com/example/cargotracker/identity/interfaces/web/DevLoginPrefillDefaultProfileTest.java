@@ -39,6 +39,7 @@ class DevLoginPrefillDefaultProfileTest {
                 .contains("id=\"username\"")
                 .doesNotContain("value=\"shipper@")
                 .doesNotContain("dev-password")
+                .doesNotContain("開発用の利用者でログイン")
                 .containsPattern("id=\"password\"[^>]*>")
                 .doesNotContainPattern("id=\"password\"[^>]*value=\"[^\"]+\"");
     }
