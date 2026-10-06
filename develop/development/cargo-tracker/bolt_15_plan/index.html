@@ -7513,6 +7513,7 @@
 <p>アプリ名と Config Vars（<code>SPRING_PROFILES_ACTIVE=dev</code>、<code>JAVA_TOOL_OPTIONS</code>）は <code>ops/scripts/heroku.js</code> の設定か環境変数で持ち、秘密はない（dev の固定値だけ）</p>
 </li>
 <li><code>npx gulp heroku:setup</code> と <code>npx gulp heroku:deploy</code> で配備し、<code>heroku:status</code> と <code>heroku:logs</code> で起動と R14 が出ないことを確かめる</li>
+<li>途中の結果（17:35〜17:45 JST）: 運用スクリプト作成ガイドの命名（<code>{カテゴリ}_{環境}.js</code>、<code>{カテゴリ}:{環境}:{アクション}</code>）に合わせ、上の表の <code>heroku:*</code> を <code>ops/scripts/deploy_demo.js</code> の <code>deploy:demo:*</code> にした（<code>setup</code>・<code>build</code>・<code>push</code>・<code>release</code>・<code>deploy:demo</code>（build → push → release）・<code>status</code>・<code>logs</code>・<code>restart</code>・<code>open</code>・<code>stop</code>・<code>start</code>・<code>help</code>）。<code>stop</code>（dyno を 0）と <code>start</code> を足し、アプリの削除は取り消せないためタスクにせず手順書の手で行う。<code>deploy:demo:build</code> は、作業ツリーに変更がないことと、アプリを最後に変えたコミットの CI が緑であることを確かめる（確認ポイント 8）。<code>.env.example</code> に <code>DEMO_*</code> を足した。<code>deploy:demo:help</code> の表示と、未ログインで止まることを確かめた。命名の変更は外部連携の承認ゲートで承認を受ける</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>4. デモ環境でデモ項目を確かめ、手順書を仕上げる</strong></li>
 <li>下の「デモ項目」1〜4 を公開の URL で行い、録画する（T-31）</li>
 <li>30 分の無アクセスでスリープした後の起動の時間を計る（Eco の制約。手順書の「デモの前に」に書く）</li>
@@ -7595,7 +7596,7 @@
 </tr>
 <tr>
 <td style="text-align: left;">4</td>
-<td style="text-align: left;">新規ファイルは次の 6 つ: <code>apps/cargo-tracker/Dockerfile</code>、<code>apps/cargo-tracker/.dockerignore</code>、<code>ops/scripts/heroku.js</code>、<code>docs/operation/cargo-tracker/heroku_demo_setup.md</code>、<code>docs/adr/cargo-tracker/013-heroku-demo-environment.md</code>、<code>bolt_15_report.md</code>。既存のリポジトリのルートの <code>Dockerfile</code>（開発用のツールのイメージ）とは別にする</td>
+<td style="text-align: left;">新規ファイルは次の 6 つ: <code>apps/cargo-tracker/Dockerfile</code>、<code>apps/cargo-tracker/.dockerignore</code>、<code>ops/scripts/heroku.js</code>（ステップ 3 で、運用スクリプト作成ガイドの命名に合わせて <code>ops/scripts/deploy_demo.js</code> にした）、<code>docs/operation/cargo-tracker/heroku_demo_setup.md</code>、<code>docs/adr/cargo-tracker/013-heroku-demo-environment.md</code>、<code>bolt_15_report.md</code>。既存のリポジトリのルートの <code>Dockerfile</code>（開発用のツールのイメージ）とは別にする</td>
 <td style="text-align: left;">1〜5</td>
 <td style="text-align: left;">新規ファイルの作成。ルートの <code>Dockerfile</code> は Ubuntu の開発環境で、実行用ではない</td>
 </tr>
