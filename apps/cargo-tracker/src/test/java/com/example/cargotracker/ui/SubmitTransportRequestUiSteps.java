@@ -136,6 +136,8 @@ public class SubmitTransportRequestUiSteps {
                 open("/customer/transport-requests/" + state.transportRequestNumber());
             }
             case "提出した見積依頼の編集画面" -> open("/customer/transport-requests/" + state.transportRequestNumber() + "/edit");
+            case "提出した見積依頼の見積りへの回答画面" ->
+                open("/customer/transport-requests/" + state.transportRequestNumber() + "/quotations/1/response");
             default -> throw new IllegalArgumentException("シナリオの画面名: " + screen);
         }
     }

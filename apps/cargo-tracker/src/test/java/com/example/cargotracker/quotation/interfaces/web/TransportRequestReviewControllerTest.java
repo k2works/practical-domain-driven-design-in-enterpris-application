@@ -30,6 +30,7 @@ import com.example.cargotracker.quotation.domain.model.valueobjects.QuotedReques
 import com.example.cargotracker.quotation.domain.model.valueobjects.RequiredDocument;
 import com.example.cargotracker.quotation.domain.model.valueobjects.ReviewDecision;
 import com.example.cargotracker.quotation.domain.model.valueobjects.ReviewRejection;
+import com.example.cargotracker.quotation.domain.model.valueobjects.RoutingRequestedSummary;
 import com.example.cargotracker.quotation.domain.model.valueobjects.ShipmentTermsFixture;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestId;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestNumber;
@@ -140,6 +141,26 @@ class TransportRequestReviewControllerTest {
                 .andExpect(content().string(containsString("3 時間 20 分")))
                 .andExpect(content().string(containsString("一般")))
                 .andExpect(content().string(not(containsString(ID.value().toString()))));
+    }
+
+    @Test
+    void 受付一覧に経路設計中の見積依頼の見積りを依頼時刻の古い順に示し見積りを開ける() throws Exception {
+        given(quotationQueryService.findRoutingRequestedSummaries())
+                .willReturn(List.of(new RoutingRequestedSummary(
+                        NUMBER,
+                        1,
+                        new UtcInstant(Instant.parse("2026-10-06T00:30:00Z")),
+                        new UtcInstant(Instant.parse("2099-10-09T09:00:00Z")))));
+
+        mockMvc.perform(get("/staff/transport-requests"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("経路設計中の見積依頼（依頼時刻の古い順）")))
+                .andExpect(content()
+                        .string(containsString(
+                                "href=\"/staff/transport-requests/TR-2026-0001/quotations/1\">TR-2026-0001 見積 1</a>")))
+                .andExpect(content()
+                        .string(containsString("2026-10-06 09:30 Asia/Tokyo（UTC+09:00）（UTC 2026-10-06 00:30）")))
+                .andExpect(content().string(containsString("2099-10-09 18:00 Asia/Tokyo（UTC+09:00）")));
     }
 
     @Test

@@ -4,6 +4,7 @@ import com.example.cargotracker.quotation.domain.model.aggregates.Quotation;
 import com.example.cargotracker.quotation.domain.model.aggregates.QuotationRepository;
 import com.example.cargotracker.quotation.domain.model.aggregates.TransportRequestRepository;
 import com.example.cargotracker.quotation.domain.model.valueobjects.QuotedRequestSummary;
+import com.example.cargotracker.quotation.domain.model.valueobjects.RoutingRequestedSummary;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestNumber;
 import java.util.Comparator;
 import java.util.List;
@@ -61,5 +62,11 @@ public class StaffQuotationQueryService {
     @Transactional(readOnly = true)
     public List<QuotedRequestSummary> findQuotedSummaries() {
         return quotationRepository.findLatestOfQuotedRequests();
+    }
+
+    /** 受付一覧（S-02）の経路設計中の表。経路設計中の見積依頼ごとの詳細設計依頼済みの見積りを、依頼時刻の古い順に返す（Bolt 12）。 */
+    @Transactional(readOnly = true)
+    public List<RoutingRequestedSummary> findRoutingRequestedSummaries() {
+        return quotationRepository.findRoutingRequestedSummaries();
     }
 }

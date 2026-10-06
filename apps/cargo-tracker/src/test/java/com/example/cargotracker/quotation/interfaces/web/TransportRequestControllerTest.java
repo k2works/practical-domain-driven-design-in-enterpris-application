@@ -409,10 +409,31 @@ class TransportRequestControllerTest {
                 .andExpect(content().string(containsString("2099-10-08 18:00 Asia/Tokyo（UTC+09:00）")))
                 .andExpect(content().string(not(containsString("（UTC 2099-10-08 09:00）"))))
                 .andExpect(content().string(containsString("詳細な経路は、経路設計者の承認後に確定します。")))
-                .andExpect(content()
-                        .string(containsString(
-                                "この見積りへの回答（詳細経路設計へ進む・辞退・相談）は、次の更新で画面からできるようになります。" + "それまでは担当営業にご連絡ください。")))
+                .andExpect(
+                        content()
+                                .string(
+                                        containsString(
+                                                "<a href=\"/customer/transport-requests/TR-2026-0001/quotations/1/response\">見積りに回答する</a>")))
+                .andExpect(content().string(not(containsString("次の更新で画面からできるようになります"))))
                 .andExpect(content().string(not(containsString("承認者"))));
+    }
+
+    @Test
+    void 詳細経路設計を依頼した見積りは依頼済みと回答の日時を示し回答の入口を出さない() throws Exception {
+        TransportRequest request = underReviewWithInvoice();
+        given(queryService.findByNumber(NUMBER, SHIPPER)).willReturn(Optional.of(request));
+        Quotation quotation = Quotation.create(new QuotationId(UUID.randomUUID()), request.id(), 1, 1);
+        UtcInstant at = new UtcInstant(Instant.parse("2026-10-05T04:00:00Z"));
+        quotation.calculate(QuotationFixture.completeInput(), at);
+        quotation.presentInternally(new UserId(UUID.randomUUID()), at);
+        quotation.requestRouteDesign(USER, new UtcInstant(Instant.parse("2026-10-06T00:30:00Z")));
+        given(quotationQueryService.findVisible(NUMBER, SHIPPER)).willReturn(List.of(quotation));
+
+        mockMvc.perform(get("/customer/transport-requests/TR-2026-0001"))
+                .andExpect(content().string(containsString("見積 1（詳細経路設計を依頼済み）")))
+                .andExpect(
+                        content().string(containsString("2026-10-06 09:30 Asia/Tokyo（UTC+09:00）にこの見積りで詳細経路設計を依頼しました。")))
+                .andExpect(content().string(not(containsString("/response"))));
     }
 
     @Test

@@ -401,6 +401,25 @@ class StaffQuotationControllerTest {
     }
 
     @Test
+    void 詳細設計依頼済みの見積りは読み取り専用と依頼の日時を示し提示と再見積りの操作を出さない() throws Exception {
+        transportRequestExists();
+        Quotation quotation = presented();
+        quotation.requestRouteDesign(
+                new UserId(UUID.randomUUID()), new UtcInstant(Instant.parse("2026-10-06T00:30:00Z")));
+        given(queryService.find(NUMBER, 1)).willReturn(Optional.of(quotation));
+        given(queryService.findAll(NUMBER)).willReturn(List.of(quotation));
+
+        mockMvc.perform(get("/staff/transport-requests/TR-2026-0001/quotations/1"))
+                .andExpect(content().string(containsString("<dd>詳細設計依頼済み</dd>")))
+                .andExpect(content()
+                        .string(containsString(
+                                "荷主が 2026-10-06 09:30 Asia/Tokyo（UTC+09:00）（UTC 2026-10-06 00:30）に詳細経路設計を依頼しました。"
+                                        + "この見積りは読み取り専用です。")))
+                .andExpect(content().string(not(containsString("/requotation"))))
+                .andExpect(content().string(not(containsString("社内承認して提示する</button>"))));
+    }
+
+    @Test
     void 再見積りの画面は旧版の明細と通貨と経路方針を初期値にし有効期限は空にする() throws Exception {
         transportRequestExists();
         given(queryService.find(NUMBER, 1)).willReturn(Optional.of(presented()));
