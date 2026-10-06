@@ -1,4 +1,4 @@
-package com.example.cargotracker.identity.interfaces.web;
+package com.example.cargotracker.identity.devlogin;
 
 import org.springframework.core.env.Environment;
 import org.springframework.core.env.Profiles;
@@ -12,6 +12,14 @@ import org.springframework.stereotype.Component;
 public final class DevLoginGuard {
 
     public DevLoginGuard(DevLoginProperties properties, Environment environment) {
+        check(properties, environment);
+    }
+
+    /** Red の骨組み。 */
+    public static void check(DevLoginProperties properties, Environment environment) {
+        if (properties == properties) {
+            return;
+        }
         boolean devOnly = environment.acceptsProfiles(Profiles.of("dev"))
                 && !environment.acceptsProfiles(Profiles.of("staging | prod"));
         if (properties.configured() && !devOnly) {

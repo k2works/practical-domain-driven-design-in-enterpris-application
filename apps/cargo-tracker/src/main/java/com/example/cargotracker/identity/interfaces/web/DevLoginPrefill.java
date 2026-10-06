@@ -1,5 +1,6 @@
 package com.example.cargotracker.identity.interfaces.web;
 
+import com.example.cargotracker.identity.devlogin.DevLoginProperties;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 

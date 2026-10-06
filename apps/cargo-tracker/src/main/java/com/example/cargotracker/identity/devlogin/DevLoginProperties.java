@@ -1,4 +1,4 @@
-package com.example.cargotracker.identity.interfaces.web;
+package com.example.cargotracker.identity.devlogin;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 

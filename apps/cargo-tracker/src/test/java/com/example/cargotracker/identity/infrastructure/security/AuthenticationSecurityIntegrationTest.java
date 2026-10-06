@@ -121,23 +121,28 @@ class AuthenticationSecurityIntegrationTest {
                         .param("password", PASSWORD)
                         .with(csrf()))
                 .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/customer/transport-requests"))
+                .andExpect(redirectedUrl("/"))
                 .andReturn();
 
         Cookie after = sessionOf(login);
+        mvc.perform(get("/").cookie(after)).andExpect(redirectedUrl("/customer/transport-requests"));
         assertThat(after.getValue()).isNotEqualTo(before.getValue());
         mvc.perform(get("/customer/transport-requests").cookie(after)).andExpect(status().isOk());
     }
 
     @Test
     void 営業担当者はログインすると社内のホームへ移る() throws Exception {
-        String email = user(staffCompany(), Role.SALES, UserStatus.ACTIVE);
+        Cookie session = login(user(staffCompany(), Role.SALES, UserStatus.ACTIVE));
 
-        mvc.perform(post("/login")
-                        .param("username", email)
-                        .param("password", PASSWORD)
-                        .with(csrf()))
-                .andExpect(redirectedUrl("/staff/transport-requests"));
+        mvc.perform(get("/").cookie(session)).andExpect(redirectedUrl("/staff/transport-requests"));
+    }
+
+    @Test
+    void 画面のまだない役割の利用者はログインできてもホームは権限なしになり行き先が循環しない() throws Exception {
+        Cookie session = login(user(staffCompany(), Role.ROUTE_DESIGNER, UserStatus.ACTIVE));
+
+        mvc.perform(get("/").cookie(session)).andExpect(status().isForbidden());
+        mvc.perform(get("/staff/transport-requests").cookie(session)).andExpect(status().isForbidden());
     }
 
     @Test
@@ -162,7 +167,15 @@ class AuthenticationSecurityIntegrationTest {
                         .param("username", "  " + email.toUpperCase(java.util.Locale.ROOT) + " ")
                         .param("password", PASSWORD)
                         .with(csrf()))
-                .andExpect(redirectedUrl("/customer/transport-requests"));
+                .andExpect(redirectedUrl("/"));
+    }
+
+    @Test
+    void 長いメールアドレスの利用者もログインできる() throws Exception {
+        String local = "long-" + "x".repeat(150);
+        String email = user(shipperCompany, Role.SHIPPER, UserStatus.ACTIVE, local + "@example.com");
+
+        login(email);
     }
 
     @Test
@@ -173,6 +186,20 @@ class AuthenticationSecurityIntegrationTest {
 
         assertThat(auditOf(email))
                 .containsExactly(Map.of("action", "LOGIN_SUCCEEDED", "result", "SUCCESS", "reason", "-"));
+    }
+
+    @Test
+    void ログインの成功の監査記録に利用者と企業と認証時刻を残す() throws Exception {
+        String email = shipper(UserStatus.ACTIVE);
+        UUID userId =
+                users.findByEmail(EmailAddress.of(email)).orElseThrow().id().value();
+
+        login(email);
+
+        Map<String, Object> row = jdbc.queryForMap(
+                "SELECT actor_company_id, occurred_at FROM identity.audit_record WHERE actor_user_id = ?", userId);
+        assertThat(row.get("actor_company_id")).isEqualTo(shipperCompany.id().value());
+        assertThat(((java.sql.Timestamp) row.get("occurred_at")).toInstant()).isEqualTo(LOGIN_AT);
     }
 
     // --- ログインの失敗（AC2・AC4） ---
@@ -227,8 +254,12 @@ class AuthenticationSecurityIntegrationTest {
     }
 
     @Test
-    void 形式の誤ったメールアドレスでも同じ応答にする() throws Exception {
+    void 形式の誤ったメールアドレスでも同じ応答にし存在しないメールアドレスとして記録する() throws Exception {
+        Integer before = unknownUserFailures();
+
         assertLoginRejected("not-an-email", PASSWORD);
+
+        assertThat(unknownUserFailures()).isEqualTo(before + 1);
     }
 
     // --- ログアウト ---
@@ -237,6 +268,7 @@ class AuthenticationSecurityIntegrationTest {
     void ログアウトするとログインへ移りsessionが使えなくなり監査記録に残す() throws Exception {
         String email = shipper(UserStatus.ACTIVE);
         Cookie session = login(email);
+        advance(Duration.ofMinutes(1));
 
         mvc.perform(post("/logout").cookie(session).with(csrf()))
                 .andExpect(status().is3xxRedirection())
@@ -244,6 +276,15 @@ class AuthenticationSecurityIntegrationTest {
 
         mvc.perform(get("/customer/transport-requests").cookie(session)).andExpect(status().is3xxRedirection());
         assertThat(auditOf(email)).extracting(row -> row.get("action")).containsExactly("LOGIN_SUCCEEDED", "LOGOUT");
+    }
+
+    @Test
+    void GETのログアウトではログアウトしない() throws Exception {
+        Cookie session = login(shipper(UserStatus.ACTIVE));
+
+        mvc.perform(get("/logout").cookie(session));
+
+        mvc.perform(get("/customer/transport-requests").cookie(session)).andExpect(status().isOk());
     }
 
     // --- CSRF ---
@@ -288,6 +329,36 @@ class AuthenticationSecurityIntegrationTest {
         Cookie session = login(user(staffCompany(), Role.SALES, UserStatus.ACTIVE));
 
         mvc.perform(get("/customer/transport-requests").cookie(session)).andExpect(status().isForbidden());
+    }
+
+    @Test
+    void 荷主担当者は見積りの提示のPOSTを送れない() throws Exception {
+        Cookie session = login(shipper(UserStatus.ACTIVE));
+
+        mvc.perform(post("/staff/transport-requests/TR-2026-0001/quotations/1/presentation")
+                        .cookie(session)
+                        .with(csrf()))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void 営業担当者は荷主の回答のPOSTを送れない() throws Exception {
+        Cookie session = login(user(staffCompany(), Role.SALES, UserStatus.ACTIVE));
+
+        mvc.perform(post("/customer/transport-requests/TR-2026-0001/quotations/1/response")
+                        .cookie(session)
+                        .with(csrf()))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void CSRFのトークンが誤った見積りの提示は拒否する() throws Exception {
+        Cookie session = login(user(staffCompany(), Role.SALES, UserStatus.ACTIVE));
+
+        mvc.perform(post("/staff/transport-requests/TR-2026-0001/quotations/1/presentation")
+                        .cookie(session)
+                        .with(csrf().useInvalidToken()))
+                .andExpect(status().isForbidden());
     }
 
     // --- 発行から 8 時間（AC5。T-38 の 3 点） ---
@@ -353,8 +424,12 @@ class AuthenticationSecurityIntegrationTest {
         mvc.perform(get("/customer/transport-requests").cookie(session)).andExpect(status().isOk());
     }
 
+    /**
+     * 最終アクセスの時刻を 30 分前に書いてから request を送るまでに数ミリ秒かかるため、判定の時点では 30 分を数ミリ秒過ぎている。
+     * ちょうど 30 分の扱い（以上か超えか）は Spring Session の実装に任せ、このテストでは確かめない（T-38）。
+     */
     @Test
-    void 無操作30分ちょうどで再認証の案内へ移る() throws Exception {
+    void 無操作30分で再認証の案内へ移る() throws Exception {
         Cookie session = login(shipper(UserStatus.ACTIVE));
 
         idle(session, Duration.ofMinutes(30));
@@ -384,7 +459,10 @@ class AuthenticationSecurityIntegrationTest {
         mvc.perform(get("/login"))
                 .andExpect(header().string("X-Frame-Options", "DENY"))
                 .andExpect(header().string("X-Content-Type-Options", "nosniff"))
-                .andExpect(header().string("Content-Security-Policy", "default-src 'self'"));
+                .andExpect(
+                        header().string(
+                                        "Content-Security-Policy",
+                                        "default-src 'self'; frame-ancestors 'none'; form-action 'self'; base-uri 'self'; object-src 'none'"));
     }
 
     // --- 準備 ---
@@ -406,7 +484,10 @@ class AuthenticationSecurityIntegrationTest {
     }
 
     private String user(Company company, Role role, UserStatus status) {
-        String email = "user-" + UUID.randomUUID() + "@example.com";
+        return user(company, role, status, "user-" + UUID.randomUUID() + "@example.com");
+    }
+
+    private String user(Company company, Role role, UserStatus status, String email) {
         users.add(User.of(
                 new UserId(UUID.randomUUID()),
                 company.id(),
@@ -471,7 +552,7 @@ class AuthenticationSecurityIntegrationTest {
                 users.findByEmail(EmailAddress.of(email)).orElseThrow().id().value();
         return jdbc.query(
                 "SELECT action, result, reason FROM identity.audit_record WHERE actor_user_id = ?"
-                        + " ORDER BY occurred_at, action",
+                        + " ORDER BY occurred_at",
                 (rs, n) -> Map.of(
                         "action", rs.getString("action"),
                         "result", rs.getString("result"),

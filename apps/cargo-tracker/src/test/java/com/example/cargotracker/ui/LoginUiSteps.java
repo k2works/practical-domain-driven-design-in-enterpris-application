@@ -105,9 +105,16 @@ public class LoginUiSteps {
         browser.checkAccessibility();
     }
 
+    @もし("ログインせずに見積依頼の作成画面の URL を開く")
+    public void ログインせずに見積依頼の作成画面のURLを開く() {
+        page().navigate(baseUrl + "/customer/transport-requests/new");
+        browser.checkAccessibility();
+    }
+
     @ならば("権限がないと表示される")
     public void 権限がないと表示される() {
         assertThat(page().getByText("この画面を表示する権限がありません。")).isVisible();
+        assertThat(page().getByText("荷主の方は担当営業に、社内の方はシステム管理者にお問い合わせください。")).isVisible();
         assertThat(page().getByRole(AriaRole.LINK, new Page.GetByRoleOptions().setName("ホームへ戻る")))
                 .isVisible();
     }
