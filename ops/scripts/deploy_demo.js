@@ -111,7 +111,7 @@ function requireDeployableCommit() {
   const sha = capture('git log -1 --format=%H -- apps/cargo-tracker .github/workflows/cargo-tracker-ci.yml');
   const conclusion = capture(
     `gh run list --workflow ${CI_WORKFLOW} --branch ${DEPLOY_BRANCH} --commit ${sha} --limit 1 ` +
-      `--json conclusion --jq '.[0].conclusion // "none"'`,
+      `--json status,conclusion --jq 'if .[0] then (.[0].conclusion | if . == "" then "実行中" else . end) else "実行なし" end'`,
   );
   if (conclusion !== 'success') {
     throw new Error(`アプリの最後の変更 ${sha.slice(0, 8)} の CI が緑ではありません（${conclusion}）`);
