@@ -7061,8 +7061,8 @@
 <h3 id="1">1. 認証の主体の型<a class="headerlink" href="#1" title="Permanent link">&para;</a></h3>
 <ul>
 <li>共有カーネル（<code>shared</code>）に、認証された利用者 <code>AuthenticatedActor</code>（利用者 ID・企業 ID・役割・表示名・企業名）と役割 <code>Role</code>（BR-15 の 8 役割）を置く。</li>
-<li><code>quotation</code> の controller は <code>@AuthenticationPrincipal</code> でこの型だけを受け取る。Spring Security の型（<code>UserDetails</code>、<code>Authentication</code>）と <code>identity</code> には依存しない（ArchUnit で確かめる）。</li>
-<li>Spring Security の主体は <code>identity</code> の型（<code>UserDetails</code> を実装する）で、<code>AuthenticatedActor</code> を持つ。controller の引数への変換は <code>identity</code> の設定に置く。</li>
+<li><code>quotation</code> の controller は、引数に <code>AuthenticatedActor</code> を書くだけでこの型を受け取る。<code>identity</code> の引数の解決（<code>AuthenticatedActorArgumentResolver</code>）が Spring Security の主体から作って渡すため、<code>@AuthenticationPrincipal</code> も使わない。Spring Security の型（<code>UserDetails</code>、<code>Authentication</code>）と <code>identity</code> には依存しない（ArchUnit で確かめる。Bolt 14 の実装で、注釈も Spring Security の型であるため引数の解決にした）。</li>
+<li>Spring Security の主体は <code>identity</code> の型（<code>CargoUserDetails</code>。<code>UserDetails</code> を実装する）で、session（Spring Session JDBC）に直列化できる値だけを持ち、<code>actor()</code> で <code>AuthenticatedActor</code> を作る。</li>
 <li>置き換えの順は ADR-011 の決定 4 に従う（型を足す → 認証を入れる → controller を 1 つずつ置き換える → <code>ProvisionalActorProperties</code> を消す）。</li>
 </ul>
 <h3 id="2">2. 認証の構成<a class="headerlink" href="#2" title="Permanent link">&para;</a></h3>
@@ -7079,7 +7079,7 @@
 <li>Spring Session JDBC で、<code>platform</code> スキーマの <code>spring_session</code>・<code>spring_session_attributes</code> に置く（DDL はベンダーごと）。</li>
 <li>無操作 30 分は session の期限（<code>MAX_INACTIVE_INTERVAL</code>）で判定する。</li>
 <li>発行から 8 時間の上限は、ログインのときに session の属性に置いた認証時刻と、アプリケーションの <code>Clock</code> で比べるフィルターで判定する。このフィルターは認証の処理より前に置く（Bolt 13 の Try T-40）。</li>
-<li>失効した session の request は、業務データを出さずに A-03（<code>/session-expired</code>）へ移す。</li>
+<li>失効した session の request は、業務データを出さずに A-03（<code>/session-expired</code>）へ移す。上限を過ぎた session のままのログインの送信も A-03 へ移し、ログインの送信で session を延命させない。session に CSRF のトークンがない古いフォームの送信も、Spring Security が無効な session として A-03 へ移す。</li>
 </ul>
 <h3 id="4">4. 監査<a class="headerlink" href="#4" title="Permanent link">&para;</a></h3>
 <ul>
