@@ -7,8 +7,7 @@ import com.example.cargotracker.quotation.application.internal.queryservices.Quo
 import com.example.cargotracker.quotation.domain.model.aggregates.Quotation;
 import com.example.cargotracker.quotation.domain.model.valueobjects.QuotationRejection;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestNumber;
-import com.example.cargotracker.shared.domain.CompanyId;
-import com.example.cargotracker.shared.domain.UserId;
+import com.example.cargotracker.shared.domain.AuthenticatedActor;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import java.time.Clock;
 import java.util.Optional;
@@ -25,7 +24,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 /**
  * C-05 見積りへの回答（US-24 AC1。Bolt 12）。荷主担当者が見積りと経路方針を確かめ、詳細経路設計へ進む。辞退・相談（AC2・AC3）は
  * 後の Bolt で、それまでは担当営業への連絡を案内する。確認の領域は挟まない（C-05 自体が確かめる画面。2026-10-06 の決定）。
- * 荷主企業と回答者はいまは仮の主体のもの。認証（US-18）を入れたら、認証の主体に差し替える。
+ * 荷主企業と回答者は、ログインした荷主担当者（認証の主体 {@link AuthenticatedActor}。ADR-012）のもの。
  */
 @Controller
 @RequestMapping("/customer/transport-requests/{number}/quotations/{quotationNo}/response")
@@ -37,17 +36,12 @@ public class QuotationResponseController {
 
     private final QuotationResponseService responseService;
     private final QuotationQueryService quotationQueryService;
-    private final ProvisionalActorProperties provisionalActor;
     private final Clock clock;
 
     public QuotationResponseController(
-            QuotationResponseService responseService,
-            QuotationQueryService quotationQueryService,
-            ProvisionalActorProperties provisionalActor,
-            Clock clock) {
+            QuotationResponseService responseService, QuotationQueryService quotationQueryService, Clock clock) {
         this.responseService = responseService;
         this.quotationQueryService = quotationQueryService;
-        this.provisionalActor = provisionalActor;
         this.clock = clock;
     }
 
@@ -59,10 +53,11 @@ public class QuotationResponseController {
     public String show(
             @PathVariable String number,
             @PathVariable int quotationNo,
+            AuthenticatedActor actor,
             Model model,
             RedirectAttributes redirectAttributes) {
         TransportRequestNumber parsed = parse(number);
-        Quotation quotation = quotationQueryService.findVisible(parsed, shipper()).stream()
+        Quotation quotation = quotationQueryService.findVisible(parsed, actor.companyId()).stream()
                 .filter(candidate -> candidate.quotationNo() == quotationNo)
                 .findFirst()
                 .orElseThrow(QuotationResponseController::notFound);
@@ -83,10 +78,13 @@ public class QuotationResponseController {
     /** 詳細経路設計へ進む。依頼したら見積依頼の詳細へリダイレクトし、結果を示す（PRG）。 */
     @PostMapping
     public String proceed(
-            @PathVariable String number, @PathVariable int quotationNo, RedirectAttributes redirectAttributes) {
+            @PathVariable String number,
+            @PathVariable int quotationNo,
+            AuthenticatedActor actor,
+            RedirectAttributes redirectAttributes) {
         TransportRequestNumber parsed = parse(number);
         RouteDesignRequestOutcome outcome = responseService.requestRouteDesign(
-                new RequestRouteDesignCommand(parsed, quotationNo, shipper(), new UserId(provisionalActor.userId())));
+                new RequestRouteDesignCommand(parsed, quotationNo, actor.companyId(), actor.userId()));
         return switch (outcome) {
             case RouteDesignRequestOutcome.Requested(TransportRequestNumber requestedNumber, int requestedNo) ->
                 redirectToDetail(
@@ -141,10 +139,6 @@ public class QuotationResponseController {
 
     private static TransportRequestNumber parse(String number) {
         return TransportRequestViews.parseNumber(number).orElseThrow(QuotationResponseController::notFound);
-    }
-
-    private CompanyId shipper() {
-        return new CompanyId(provisionalActor.shipperCompanyId());
     }
 
     private static ResponseStatusException notFound() {

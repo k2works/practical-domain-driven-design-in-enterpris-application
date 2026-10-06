@@ -9,7 +9,7 @@
 <body>
 <main>
     <h1 th:text="|見積り ${quotationLabel}|">見積り TR-2026-0001 見積 1</h1>
-    <!-- S-04 の算出した見積り（Bolt 10、US-03 AC1）。承認待ちなら社内承認して提示する。承認者は認証（US-18）までは仮の営業担当者 -->
+    <!-- S-04 の算出した見積り（Bolt 10、US-03 AC1）。承認待ちなら社内承認して提示する。承認者はログインした営業担当者 -->
     <p role="status" th:if="${result}" th:text="${result}">TR-2026-0001 見積 1 を算出しました</p>
     <div class="alert alert-warning" role="alert" th:if="${problem}" th:text="${problem}">他の利用者が先に更新しました</div>
     <p><a th:href="@{/staff/transport-requests}">受付一覧へ戻る</a></p>

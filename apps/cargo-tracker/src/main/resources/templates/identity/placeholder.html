@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<!--/* まだ作っていない画面の仮の画面（Bolt 14。開発戦略の序盤の手順 3「ナビゲーションの骨格」）。画面を作る Bolt で置き換える */-->
+<html lang="ja" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{__${layout}__ :: layout(~{::title}, ~{::main}, ~{}, ${active})}">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="${screenName} + ' - cargo-tracker'">準備中 - cargo-tracker</title>
+</head>
+<body>
+<main>
+    <h1 th:text="${screenName}">予約</h1>
+    <p>この画面は準備中です。</p>
+    <p><a th:href="@{/}">ホームへ戻る</a></p>
+</main>
+</body>
+</html>

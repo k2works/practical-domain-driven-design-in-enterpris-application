@@ -5,6 +5,7 @@ import com.example.cargotracker.identity.domain.model.aggregates.CompanyReposito
 import com.example.cargotracker.identity.domain.model.aggregates.UserRepository;
 import com.example.cargotracker.identity.infrastructure.security.AuthenticationAuditListener;
 import com.example.cargotracker.identity.infrastructure.security.CargoUserDetailsService;
+import com.example.cargotracker.identity.infrastructure.security.KeepEmailAuthenticationFailureHandler;
 import com.example.cargotracker.identity.infrastructure.security.RoleHomeAuthenticationSuccessHandler;
 import com.example.cargotracker.identity.infrastructure.security.SessionLifetime;
 import com.example.cargotracker.identity.infrastructure.security.SessionLifetimeFilter;
@@ -92,7 +93,7 @@ public class SecurityConfiguration {
                         .authenticated())
                 .formLogin(form -> form.loginPage("/login")
                         .successHandler(new RoleHomeAuthenticationSuccessHandler(clock))
-                        .failureUrl("/login?error"))
+                        .failureHandler(new KeepEmailAuthenticationFailureHandler()))
                 .logout(logout -> logout.logoutUrl("/logout").logoutSuccessUrl("/login?logout"))
                 .sessionManagement(session -> session.invalidSessionUrl(SessionLifetime.EXPIRED_URL))
                 .addFilterBefore(new SessionLifetimeFilter(clock), UsernamePasswordAuthenticationFilter.class)

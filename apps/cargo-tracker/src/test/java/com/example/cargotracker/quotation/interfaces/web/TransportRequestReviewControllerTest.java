@@ -65,9 +65,6 @@ import org.springframework.test.web.servlet.MockMvc;
 @WebMvcTest(
         controllers = TransportRequestReviewController.class,
         properties = {
-            "cargotracker.provisional-actor.shipper-company-id=00000000-0000-0000-0000-000000000001",
-            "cargotracker.provisional-actor.user-id=00000000-0000-0000-0000-000000000101",
-            "cargotracker.provisional-actor.staff-user-id=00000000-0000-0000-0000-000000000301",
             "cargotracker.provisional-consignees.companies[0].id=00000000-0000-0000-0000-000000000201",
             "cargotracker.provisional-consignees.companies[0].name=荷受人 A（仮）"
         })
@@ -80,7 +77,7 @@ class TransportRequestReviewControllerTest {
 
     /** 受付一覧の待っている時間を決めるための固定の時計（最初の提出から 3 時間 20 分後）。 */
     @TestConfiguration(proxyBeanMethods = false)
-    @EnableConfigurationProperties({ProvisionalActorProperties.class, ProvisionalConsigneeProperties.class})
+    @EnableConfigurationProperties(ProvisionalConsigneeProperties.class)
     static class Properties {
 
         @Bean
@@ -281,7 +278,7 @@ class TransportRequestReviewControllerTest {
     }
 
     @Test
-    void 確定すると仮の営業担当者で審査し結果を示して見積りの作成へリダイレクトする() throws Exception {
+    void 確定するとログインした営業担当者で審査し結果を示して見積りの作成へリダイレクトする() throws Exception {
         given(reviewService.approve(new ApproveTransportRequestCommand(NUMBER, 1, STAFF, "確認した")))
                 .willReturn(new ReviewOutcome.Reviewed(NUMBER, 1, ReviewDecision.APPROVED));
 

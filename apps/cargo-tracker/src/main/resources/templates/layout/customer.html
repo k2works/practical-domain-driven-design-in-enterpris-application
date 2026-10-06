@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!--/* 顧客 Web の共通レイアウト（Bolt 8、UI 設計「ナビゲーションとレイアウト」）。画面は次のように使う。
        <html lang="ja" th:replace="~{layout/customer :: layout(~{::title}, ~{::main}, ~{::script}, 'transport-requests')}">（スクリプトがなければ ~{} を渡す）
-       ナビには、いまある画面だけを出す。ない画面の項目は、画面を作る Bolt で足す（2026-10-03 に承認） */-->
+       ナビには荷主担当者の画面を出し、まだ作っていない画面は準備中の画面へつなぐ（Bolt 14。開発戦略の序盤の手順 3） */-->
 <html lang="ja" xmlns:th="http://www.thymeleaf.org" th:fragment="layout(title, content, scripts, active)">
 <head>
     <meta charset="UTF-8">
@@ -18,8 +18,16 @@
                 aria-controls="customer-nav" aria-expanded="false" aria-label="メニュー">
             <span class="navbar-toggler-icon"></span>
         </button>
-        <!-- 認証（US-18）までは仮の主体の名前を出し、ログアウトは出さない（2026-10-03 に承認） -->
-        <p class="navbar-text mb-0 d-none d-md-block">荷主企業（仮） 荷主担当者（仮）</p>
+        <!-- ログインした利用者の企業名・利用者名とログアウト（Bolt 14、UI 設計「ナビゲーションとレイアウト」） -->
+        <div class="d-flex align-items-center gap-3 ms-auto" th:if="${currentActor != null}">
+            <p class="navbar-text mb-0 d-none d-md-block">
+                <span th:text="${currentActor.companyName()}">荷主 A</span>
+                <span th:text="${currentActor.displayName()}">荷主 太郎</span>
+            </p>
+            <form th:action="@{/logout}" method="post" class="mb-0">
+                <button type="submit" class="btn btn-outline-secondary btn-sm">ログアウト</button>
+            </form>
+        </div>
     </div>
 </header>
 <div class="container-fluid">
@@ -30,6 +38,12 @@
                     <a class="nav-link" th:classappend="${active == 'transport-requests'} ? 'fw-bold'"
                        th:attr="aria-current=${active == 'transport-requests'} ? 'page' : null"
                        th:href="@{/customer/transport-requests}">見積依頼</a>
+                </li>
+                <li class="nav-item" th:each="item : ${ {'bookings:予約', 'tracking:追跡の照会', 'inquiries:問い合わせ', 'notifications:通知'} }"
+                    th:with="key=${#strings.substringBefore(item, ':')}, label=${#strings.substringAfter(item, ':')}">
+                    <a class="nav-link" th:classappend="${active == key} ? 'fw-bold'"
+                       th:attr="aria-current=${active == key} ? 'page' : null"
+                       th:href="@{/customer/{key}(key=${key})}" th:text="${label}">予約</a>
                 </li>
             </ul>
         </nav>

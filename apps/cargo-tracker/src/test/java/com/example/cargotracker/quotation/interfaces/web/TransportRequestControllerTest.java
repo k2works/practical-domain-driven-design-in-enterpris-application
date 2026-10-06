@@ -88,9 +88,6 @@ import org.springframework.test.web.servlet.request.MockMultipartHttpServletRequ
 @WebMvcTest(
         controllers = TransportRequestController.class,
         properties = {
-            "cargotracker.provisional-actor.shipper-company-id=00000000-0000-0000-0000-000000000001",
-            "cargotracker.provisional-actor.user-id=00000000-0000-0000-0000-000000000101",
-            "cargotracker.provisional-actor.staff-user-id=00000000-0000-0000-0000-000000000301",
             "cargotracker.provisional-consignees.companies[0].id=00000000-0000-0000-0000-000000000201",
             "cargotracker.provisional-consignees.companies[0].name=荷受人 A（仮）",
             "cargotracker.provisional-consignees.companies[1].id=00000000-0000-0000-0000-000000000202",
@@ -120,7 +117,7 @@ class TransportRequestControllerTest {
 
     /** 見積りの失効の表示を決める固定の時計（見本の有効期限 2099-10-08T09:00:00Z より前）。 */
     @TestConfiguration(proxyBeanMethods = false)
-    @EnableConfigurationProperties({ProvisionalActorProperties.class, ProvisionalConsigneeProperties.class})
+    @EnableConfigurationProperties(ProvisionalConsigneeProperties.class)
     static class Properties {
 
         @Bean
@@ -334,7 +331,7 @@ class TransportRequestControllerTest {
     }
 
     @Test
-    void 見積依頼の一覧は仮の主体の荷主企業の輸送要求を状態といま誰の対応待ちかとともに示す() throws Exception {
+    void 見積依頼の一覧はログインした荷主担当者の企業の輸送要求を状態といま誰の対応待ちかとともに示す() throws Exception {
         given(queryService.findSummaries(SHIPPER)).willReturn(List.of(summary(TransportRequestStatus.DRAFT)));
 
         mockMvc.perform(get("/customer/transport-requests"))
@@ -570,7 +567,7 @@ class TransportRequestControllerTest {
     }
 
     @Test
-    void 詳細は仮の主体の荷主企業で絞って照会し他社や存在しない番号は見つからない() throws Exception {
+    void 詳細はログインした荷主担当者の企業で絞って照会し他社や存在しない番号は見つからない() throws Exception {
         given(queryService.findByNumber(NUMBER, SHIPPER)).willReturn(Optional.empty());
 
         mockMvc.perform(get("/customer/transport-requests/TR-2026-0001")).andExpect(status().isNotFound());
@@ -629,7 +626,7 @@ class TransportRequestControllerTest {
     }
 
     @Test
-    void 出し直すと仮の主体の荷主企業で再提出し詳細へリダイレクトして新しい版を示す() throws Exception {
+    void 出し直すとログインした荷主担当者の企業で再提出し詳細へリダイレクトして新しい版を示す() throws Exception {
         ResubmitTransportRequestCommand expected =
                 new ResubmitTransportRequestCommand(NUMBER, SHIPPER, USER, COMPLETE_INPUT);
         given(commandService.resubmit(expected)).willReturn(new ResubmissionOutcome.Resubmitted(NUMBER, 2));

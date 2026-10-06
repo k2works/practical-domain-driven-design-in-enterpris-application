@@ -16,6 +16,7 @@ import com.example.cargotracker.quotation.domain.model.valueobjects.QuotationRej
 import com.example.cargotracker.quotation.domain.model.valueobjects.QuotationStatus;
 import com.example.cargotracker.quotation.domain.model.valueobjects.QuotationViolations;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestNumber;
+import com.example.cargotracker.shared.domain.AuthenticatedActor;
 import com.example.cargotracker.shared.domain.UserId;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import java.time.Clock;
@@ -37,7 +38,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 /**
  * 社内業務 Web の見積りの作成（S-04。US-03）。料金明細・通貨・有効期限・経路方針を 1 つの画面で入れて算出し（承認待ち）、
- * 算出した見積りを確かめて社内承認して提示する。社内の画面なので荷主企業で絞らない。社内承認者は、認証（US-18）までは仮の営業担当者。
+ * 算出した見積りを確かめて社内承認して提示する。社内の画面なので荷主企業で絞らない。社内承認者はログインした営業担当者（認証の主体。ADR-012）。
  * 承認待ち・提示済みの見積りからは再見積りでき、旧版は置換済み（有効期限を過ぎていれば失効）として読み取り専用で残る（Bolt 11）。
  */
 @Controller
@@ -57,7 +58,6 @@ public class StaffQuotationController {
     private final QuotationCommandService commandService;
     private final StaffQuotationQueryService queryService;
     private final StaffTransportRequestQueryService transportRequestQueryService;
-    private final ProvisionalActorProperties provisionalActor;
     private final ProvisionalConsigneeProperties provisionalConsignees;
     private final Clock clock;
 
@@ -65,13 +65,11 @@ public class StaffQuotationController {
             QuotationCommandService commandService,
             StaffQuotationQueryService queryService,
             StaffTransportRequestQueryService transportRequestQueryService,
-            ProvisionalActorProperties provisionalActor,
             ProvisionalConsigneeProperties provisionalConsignees,
             Clock clock) {
         this.commandService = commandService;
         this.queryService = queryService;
         this.transportRequestQueryService = transportRequestQueryService;
-        this.provisionalActor = provisionalActor;
         this.provisionalConsignees = provisionalConsignees;
         this.clock = clock;
     }
@@ -249,10 +247,13 @@ public class StaffQuotationController {
     /** 社内承認して提示する。提示したら受付一覧へ戻り、結果を示す（PRG）。 */
     @PostMapping("/{quotationNo}/presentation")
     public String present(
-            @PathVariable String number, @PathVariable int quotationNo, RedirectAttributes redirectAttributes) {
+            @PathVariable String number,
+            @PathVariable int quotationNo,
+            AuthenticatedActor actor,
+            RedirectAttributes redirectAttributes) {
         TransportRequestNumber transportRequestNumber =
                 TransportRequestViews.parseNumber(number).orElseThrow(StaffQuotationController::notFound);
-        UserId approver = new UserId(provisionalActor.staffUserId());
+        UserId approver = actor.userId();
         return switch (commandService.present(
                 new PresentQuotationCommand(transportRequestNumber, quotationNo, approver))) {
             case PresentationOutcome.Presented(TransportRequestNumber presented, int presentedNo) -> {

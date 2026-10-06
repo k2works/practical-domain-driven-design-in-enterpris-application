@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<!--/* A-04 権限なし（UI 設計「A-04」、Bolt 14）。役割にない画面を URL で直接開いたとき。表示の制御を権限の防御にしない。
+       業務データを出さないため、認証の前の画面と同じレイアウトにする */-->
+<html lang="ja" xmlns:th="http://www.thymeleaf.org" th:replace="~{layout/public :: layout(~{::title}, ~{::main})}">
+<head>
+    <meta charset="UTF-8">
+    <title>権限がありません - cargo-tracker</title>
+</head>
+<body>
+<main>
+    <h1>権限がありません</h1>
+    <p>この画面を表示する権限がありません。</p>
+    <p>必要な場合は、システム管理者にお問い合わせください。</p>
+    <p><a th:href="@{/}">ホームへ戻る</a></p>
+</main>
+</body>
+</html>

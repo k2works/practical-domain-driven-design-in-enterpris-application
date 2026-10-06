@@ -13,6 +13,7 @@ import com.example.cargotracker.quotation.domain.model.valueobjects.ReviewDecisi
 import com.example.cargotracker.quotation.domain.model.valueobjects.ReviewRejection;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestNumber;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestSummary;
+import com.example.cargotracker.shared.domain.AuthenticatedActor;
 import com.example.cargotracker.shared.domain.UserId;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import java.time.Clock;
@@ -33,7 +34,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 /**
  * 社内業務 Web の見積依頼の審査（S-02 受付一覧、S-03 審査。US-02、Bolt 5）。
- * 営業担当者はすべての荷主の見積依頼を扱うため、荷主企業で絞らない。認証（US-18）ができるまで、判断者は仮の営業担当者とする。
+ * 営業担当者はすべての荷主の見積依頼を扱うため、荷主企業で絞らない。判断者はログインした営業担当者（認証の主体。ADR-012）。
  */
 @Controller
 @RequestMapping("/staff/transport-requests")
@@ -49,7 +50,6 @@ public class TransportRequestReviewController {
     private final TransportRequestReviewService reviewService;
     private final StaffTransportRequestQueryService queryService;
     private final StaffQuotationQueryService quotationQueryService;
-    private final ProvisionalActorProperties provisionalActor;
     private final ProvisionalConsigneeProperties provisionalConsignees;
     private final Clock clock;
 
@@ -57,13 +57,11 @@ public class TransportRequestReviewController {
             TransportRequestReviewService reviewService,
             StaffTransportRequestQueryService queryService,
             StaffQuotationQueryService quotationQueryService,
-            ProvisionalActorProperties provisionalActor,
             ProvisionalConsigneeProperties provisionalConsignees,
             Clock clock) {
         this.reviewService = reviewService;
         this.queryService = queryService;
         this.quotationQueryService = quotationQueryService;
-        this.provisionalActor = provisionalActor;
         this.provisionalConsignees = provisionalConsignees;
         this.clock = clock;
     }
@@ -124,6 +122,7 @@ public class TransportRequestReviewController {
     @PostMapping("/{number}/reviews")
     public String submitReview(
             @PathVariable String number,
+            AuthenticatedActor actor,
             @ModelAttribute ReviewForm reviewForm,
             BindingResult bindingResult,
             Model model,
@@ -135,7 +134,7 @@ public class TransportRequestReviewController {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "審査の対象の版番号がありません");
         }
         int versionNo = reviewForm.getVersionNo();
-        UserId reviewer = new UserId(provisionalActor.staffUserId());
+        UserId reviewer = actor.userId();
         ReviewOutcome outcome =
                 switch (decision) {
                     case APPROVED ->

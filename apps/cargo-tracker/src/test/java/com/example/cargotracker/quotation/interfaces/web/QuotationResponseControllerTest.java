@@ -36,7 +36,6 @@ import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
@@ -48,13 +47,7 @@ import org.springframework.test.web.servlet.MockMvc;
 // 画面の単体テストはコントローラーの振る舞いだけを見る。認証・認可・CSRF はセキュリティの統合テストで確かめる（Bolt 14）
 @WithAuthenticatedActor(Role.SHIPPER)
 @AutoConfigureMockMvc(addFilters = false)
-@WebMvcTest(
-        controllers = QuotationResponseController.class,
-        properties = {
-            "cargotracker.provisional-actor.shipper-company-id=00000000-0000-0000-0000-000000000001",
-            "cargotracker.provisional-actor.user-id=00000000-0000-0000-0000-000000000101",
-            "cargotracker.provisional-actor.staff-user-id=00000000-0000-0000-0000-000000000301"
-        })
+@WebMvcTest(controllers = QuotationResponseController.class)
 class QuotationResponseControllerTest {
 
     private static final CompanyId SHIPPER = TestActors.SHIPPER_COMPANY;
@@ -65,8 +58,7 @@ class QuotationResponseControllerTest {
 
     /** 見積りの失効の表示を決める固定の時計（見本の有効期限 2099-10-08T09:00:00Z より前）。 */
     @TestConfiguration(proxyBeanMethods = false)
-    @EnableConfigurationProperties(ProvisionalActorProperties.class)
-    static class Properties {
+    static class FixedClock {
 
         @Bean
         Clock clock() {
@@ -125,7 +117,7 @@ class QuotationResponseControllerTest {
     }
 
     @Test
-    void 進むと仮の主体で依頼し詳細へリダイレクトして結果を示す() throws Exception {
+    void 進むとログインした荷主担当者で依頼し詳細へリダイレクトして結果を示す() throws Exception {
         given(responseService.requestRouteDesign(new RequestRouteDesignCommand(NUMBER, 1, SHIPPER, USER)))
                 .willReturn(new RouteDesignRequestOutcome.Requested(NUMBER, 1));
 

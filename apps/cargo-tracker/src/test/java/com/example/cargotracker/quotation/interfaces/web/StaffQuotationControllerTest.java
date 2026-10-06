@@ -71,9 +71,6 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
 @WebMvcTest(
         controllers = StaffQuotationController.class,
         properties = {
-            "cargotracker.provisional-actor.shipper-company-id=00000000-0000-0000-0000-000000000001",
-            "cargotracker.provisional-actor.user-id=00000000-0000-0000-0000-000000000101",
-            "cargotracker.provisional-actor.staff-user-id=00000000-0000-0000-0000-000000000301",
             "cargotracker.provisional-consignees.companies[0].id=00000000-0000-0000-0000-000000000201",
             "cargotracker.provisional-consignees.companies[0].name=荷受人 A（仮）"
         })
@@ -89,7 +86,7 @@ class StaffQuotationControllerTest {
     private static final Instant NOW = Instant.parse("2026-10-06T01:00:00Z");
 
     @TestConfiguration(proxyBeanMethods = false)
-    @EnableConfigurationProperties({ProvisionalActorProperties.class, ProvisionalConsigneeProperties.class})
+    @EnableConfigurationProperties(ProvisionalConsigneeProperties.class)
     static class Properties {
 
         @Bean
@@ -328,7 +325,7 @@ class StaffQuotationControllerTest {
     }
 
     @Test
-    void 社内承認して提示すると仮の営業担当者で提示し受付一覧に結果を示す() throws Exception {
+    void 社内承認して提示するとログインした営業担当者で提示し受付一覧に結果を示す() throws Exception {
         given(commandService.present(new PresentQuotationCommand(NUMBER, 1, STAFF)))
                 .willReturn(new PresentationOutcome.Presented(NUMBER, 1));
 

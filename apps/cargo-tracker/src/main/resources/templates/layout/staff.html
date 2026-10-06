@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!--/* 社内業務 Web の共通レイアウト（Bolt 8、UI 設計「ナビゲーションとレイアウト」）。画面は次のように使う。
        <html lang="ja" th:replace="~{layout/staff :: layout(~{::title}, ~{::main}, ~{::script}, 'transport-requests')}">（スクリプトがなければ ~{} を渡す）
-       ナビには、いまある画面だけを出す。役割に応じた出し分けは US-16 で足す */-->
+       ナビには営業担当者の画面を出し、まだ作っていない画面は準備中の画面へつなぐ（Bolt 14）。ほかの役割の画面はその役割の Bolt で足す */-->
 <html lang="ja" xmlns:th="http://www.thymeleaf.org" th:fragment="layout(title, content, scripts, active)">
 <head>
     <meta charset="UTF-8">
@@ -17,8 +17,16 @@
                 aria-controls="staff-nav" aria-expanded="false" aria-label="メニュー">
             <span class="navbar-toggler-icon"></span>
         </button>
-        <!-- 認証（US-18）までは仮の主体の名前を出し、ログアウトは出さない（2026-10-03 に承認） -->
-        <p class="navbar-text mb-0 d-none d-md-block">営業担当者（仮）</p>
+        <!-- ログインした利用者の役割名・利用者名とログアウト（Bolt 14、UI 設計「ナビゲーションとレイアウト」） -->
+        <div class="d-flex align-items-center gap-3 ms-auto" th:if="${currentActor != null}">
+            <p class="navbar-text mb-0 d-none d-md-block">
+                <span th:text="${#strings.listJoin(currentActor.roles().![displayName()], '・')}">営業担当者</span>
+                <span th:text="${currentActor.displayName()}">営業 一郎</span>
+            </p>
+            <form th:action="@{/logout}" method="post" class="mb-0">
+                <button type="submit" class="btn btn-outline-secondary btn-sm">ログアウト</button>
+            </form>
+        </div>
     </div>
 </header>
 <div class="container-fluid">
@@ -29,6 +37,11 @@
                     <a class="nav-link" th:classappend="${active == 'transport-requests'} ? 'fw-bold'"
                        th:attr="aria-current=${active == 'transport-requests'} ? 'page' : null"
                        th:href="@{/staff/transport-requests}">見積依頼</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" th:classappend="${active == 'bookings'} ? 'fw-bold'"
+                       th:attr="aria-current=${active == 'bookings'} ? 'page' : null"
+                       th:href="@{/staff/bookings}">予約</a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" th:classappend="${active == 'kpi-observations'} ? 'fw-bold'"

@@ -10,7 +10,7 @@ import java.util.Objects;
  *
  * @param number 業務番号
  * @param quotationNo 見積り番号
- * @param approver 社内承認者（認証（US-18）までは仮の営業担当者）
+ * @param approver 社内承認者（ログインした営業担当者）
  */
 @Command
 public record PresentQuotationCommand(TransportRequestNumber number, int quotationNo, UserId approver) {

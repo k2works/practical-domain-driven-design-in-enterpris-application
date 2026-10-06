@@ -13,8 +13,7 @@ import com.example.cargotracker.quotation.domain.model.valueobjects.ShipmentTerm
 import com.example.cargotracker.quotation.domain.model.valueobjects.SubmissionViolations;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestNumber;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestSummary;
-import com.example.cargotracker.shared.domain.CompanyId;
-import com.example.cargotracker.shared.domain.UserId;
+import com.example.cargotracker.shared.domain.AuthenticatedActor;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import java.time.Clock;
 import java.util.List;
@@ -37,7 +36,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
  * 顧客 Web の見積依頼（C-02 見積依頼の一覧、C-03 見積依頼の作成・編集、C-04 見積依頼の詳細）。
  * C-03 は 1 つのフォームの中で 4 つの段階を切り替える段階入力にする（Bolt 8 のプロトタイプで操作性を確かめ、この形で残すと決めた。UI-HO-04）。
  * 業務番号は推測しやすいため、照会と出し直しはすべて荷主企業で絞り、他社の番号は見つからない（404）とする（Q-INV-08、Bolt 4 レビュー R-02）。
- * 荷主企業はいまは仮の主体のもの。認証（US-18）を入れたら、認証の主体に差し替える。
+ * 荷主企業と操作者は、ログインした荷主担当者（認証の主体 {@link AuthenticatedActor}。ADR-012）のもの。
  */
 @Controller
 @RequestMapping("/customer/transport-requests")
@@ -53,7 +52,6 @@ public class TransportRequestController {
     private final TransportRequestCommandService commandService;
     private final TransportRequestQueryService queryService;
     private final QuotationQueryService quotationQueryService;
-    private final ProvisionalActorProperties provisionalActor;
     private final ProvisionalConsigneeProperties provisionalConsignees;
     private final Clock clock;
 
@@ -61,13 +59,11 @@ public class TransportRequestController {
             TransportRequestCommandService commandService,
             TransportRequestQueryService queryService,
             QuotationQueryService quotationQueryService,
-            ProvisionalActorProperties provisionalActor,
             ProvisionalConsigneeProperties provisionalConsignees,
             Clock clock) {
         this.commandService = commandService;
         this.queryService = queryService;
         this.quotationQueryService = quotationQueryService;
-        this.provisionalActor = provisionalActor;
         this.provisionalConsignees = provisionalConsignees;
         this.clock = clock;
     }
@@ -83,10 +79,10 @@ public class TransportRequestController {
 
     /** C-02 見積依頼の一覧。自社の輸送要求を、最初の提出時刻の新しい順に示す。 */
     @GetMapping
-    public String list(Model model) {
+    public String list(AuthenticatedActor actor, Model model) {
         model.addAttribute(
                 "requests",
-                queryService.findSummaries(shipper()).stream()
+                queryService.findSummaries(actor.companyId()).stream()
                         .map(TransportRequestController::row)
                         .toList());
         return LIST_VIEW;
@@ -103,6 +99,7 @@ public class TransportRequestController {
      */
     @PostMapping
     public String submit(
+            AuthenticatedActor actor,
             @ModelAttribute TransportRequestForm transportRequestForm,
             BindingResult bindingResult,
             Model model,
@@ -113,8 +110,8 @@ public class TransportRequestController {
             return showCreateFormWithErrors(transportRequestForm, model);
         }
         SubmissionOutcome outcome = commandService.submit(new SubmitTransportRequestCommand(
-                shipper(),
-                new UserId(provisionalActor.userId()),
+                actor.companyId(),
+                actor.userId(),
                 input.get(),
                 RequiredDocumentViews.attachments(transportRequestForm)));
         return switch (outcome) {
@@ -135,8 +132,8 @@ public class TransportRequestController {
      * 差し戻されているときは、差戻しの理由と不足事項だけを示す。判断者と審査の確定の根拠は見せない（2026-10-03 の人の決定）。
      */
     @GetMapping("/{number}")
-    public String detail(@PathVariable String number, Model model) {
-        TransportRequest request = find(number);
+    public String detail(@PathVariable String number, AuthenticatedActor actor, Model model) {
+        TransportRequest request = find(number, actor);
         Map<String, String> rows = TransportRequestViews.termsRows(
                 request.currentVersion(), provisionalConsignees, TransportRequestLabels::customerDateTime);
         model.addAttribute("number", request.number().text());
@@ -158,10 +155,14 @@ public class TransportRequestController {
         // 見積りの節は提示した見積りから出し、輸送要求の状態の更新（DE-03 の受け取り）を待たない（Bolt 10。US-03 AC2）。
         // 最新の見積りを先に、以前の見積りを読み取り専用で並べる。失効は表示する時刻で判定する（Bolt 11。US-03 AC5）
         UtcInstant now = new UtcInstant(clock.instant());
-        List<QuotationViews.View> quotations = quotationQueryService.findVisible(request.number(), shipper()).stream()
-                .map(quotation -> QuotationViews.view(
-                        quotation, TransportRequestLabels::customerDateTime, now, QuotationViews.Audience.CUSTOMER))
-                .toList();
+        List<QuotationViews.View> quotations =
+                quotationQueryService.findVisible(request.number(), actor.companyId()).stream()
+                        .map(quotation -> QuotationViews.view(
+                                quotation,
+                                TransportRequestLabels::customerDateTime,
+                                now,
+                                QuotationViews.Audience.CUSTOMER))
+                        .toList();
         model.addAttribute("quotation", quotations.isEmpty() ? null : quotations.getFirst());
         model.addAttribute(
                 "previousQuotations", quotations.isEmpty() ? List.of() : quotations.subList(1, quotations.size()));
@@ -174,9 +175,12 @@ public class TransportRequestController {
      */
     @GetMapping("/{number}/versions/{versionNo}/documents/{documentNo}")
     public ResponseEntity<byte[]> document(
-            @PathVariable String number, @PathVariable int versionNo, @PathVariable int documentNo) {
+            @PathVariable String number,
+            @PathVariable int versionNo,
+            @PathVariable int documentNo,
+            AuthenticatedActor actor) {
         return TransportRequestViews.parseNumber(number)
-                .flatMap(found -> queryService.findDocument(found, shipper(), versionNo, documentNo))
+                .flatMap(found -> queryService.findDocument(found, actor.companyId(), versionNo, documentNo))
                 .map(RequiredDocumentViews::download)
                 .orElseThrow(TransportRequestController::notFound);
     }
@@ -186,8 +190,9 @@ public class TransportRequestController {
      * 下書きでなければ、詳細に戻して理由を示す。
      */
     @GetMapping("/{number}/edit")
-    public String edit(@PathVariable String number, Model model, RedirectAttributes redirectAttributes) {
-        TransportRequest request = find(number);
+    public String edit(
+            @PathVariable String number, AuthenticatedActor actor, Model model, RedirectAttributes redirectAttributes) {
+        TransportRequest request = find(number, actor);
         if (request.checkResubmittable().isPresent()) {
             return redirectToDetailWithProblem(request.number(), notResubmittable(request), redirectAttributes);
         }
@@ -204,6 +209,7 @@ public class TransportRequestController {
     @PostMapping("/{number}/versions")
     public String resubmit(
             @PathVariable String number,
+            AuthenticatedActor actor,
             @ModelAttribute TransportRequestForm transportRequestForm,
             BindingResult bindingResult,
             Model model,
@@ -213,12 +219,12 @@ public class TransportRequestController {
         Optional<ShipmentTermsInput> input =
                 TransportRequestFormConverter.convert(transportRequestForm, provisionalConsignees, bindingResult);
         if (input.isEmpty()) {
-            return showEditFormWithErrors(find(number), transportRequestForm, model);
+            return showEditFormWithErrors(find(number, actor), transportRequestForm, model);
         }
         ResubmissionOutcome outcome = commandService.resubmit(new ResubmitTransportRequestCommand(
                 transportRequestNumber,
-                shipper(),
-                new UserId(provisionalActor.userId()),
+                actor.companyId(),
+                actor.userId(),
                 input.get(),
                 RequiredDocumentViews.attachments(transportRequestForm)));
         return switch (outcome) {
@@ -229,10 +235,10 @@ public class TransportRequestController {
                         redirectAttributes);
             case ResubmissionOutcome.Invalid(SubmissionViolations violations) -> {
                 SubmissionViolationMessages.reject(violations, bindingResult);
-                yield showEditFormWithErrors(find(number), transportRequestForm, model);
+                yield showEditFormWithErrors(find(number, actor), transportRequestForm, model);
             }
             case ResubmissionOutcome.Rejected _ -> {
-                TransportRequest current = find(number);
+                TransportRequest current = find(number, actor);
                 yield redirectToDetailWithProblem(current.number(), notResubmittable(current), redirectAttributes);
             }
             case ResubmissionOutcome.Conflict _ ->
@@ -276,13 +282,9 @@ public class TransportRequestController {
         return FORM_VIEW;
     }
 
-    private CompanyId shipper() {
-        return new CompanyId(provisionalActor.shipperCompanyId());
-    }
-
-    private TransportRequest find(String number) {
+    private TransportRequest find(String number, AuthenticatedActor actor) {
         return TransportRequestViews.parseNumber(number)
-                .flatMap(found -> queryService.findByNumber(found, shipper()))
+                .flatMap(found -> queryService.findByNumber(found, actor.companyId()))
                 .orElseThrow(TransportRequestController::notFound);
     }
 
