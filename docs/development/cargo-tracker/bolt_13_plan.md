@@ -4,9 +4,10 @@ title: "Bolt 13 計画 - TOTP と Spring Security 7 の多要素認証のスパ�
 description: "13 回目の Bolt の計画。TOTP ライブラリの候補の比較と、Spring Security 7 の多要素認証で password の後に TOTP を求める 2 段階のログインを、本体と分けたスパイクの学習テストで確かめ、ADR 011 の案と技術スタックに結論を残すまでを、ステップ 1〜5 で定義する。"
 tags: [development,bolt-plan]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-06T03:50:03Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-06T04:04:43Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-06T03:10:00Z }
+  - { by: human:kakimomokuri, at: 2026-10-06T04:04:44Z }
 ---
 
 # Bolt 13 計画 - TOTP と Spring Security 7 の多要素認証のスパイク（TS-01）
@@ -164,7 +165,7 @@ password確認済み --> ロック : 5 回連続の失敗
     - Green（Green で、4 件の期待値を `/login/totp` から `factor.type`・`factor.reason` の付いた URL に書き換えた）: `@EnableMultiFactorAuthentication`（`FACTOR_PASSWORD`・`FACTOR_TOTP`）、TOTP の認証フィルター（`mfaEnabled`）と provider、足りない要素の画面へ導く `DelegatingMissingAuthorityAccessDeniedHandler`、失敗のイベントでの数え方とロック、再利用の拒否、回復コード、最長 8 時間のフィルター、無操作 30 分の設定、`dev` プロファイルだけの入力済み（`7c02540`）
     - 分かったこと: 結果のトークンの型が `toBuilder()` を宣言していないと、password の要素が合わさらず置き換わる（調べて直した）。足りない要素の画面へは `factor.type`・`factor.reason` が付く。Argon2id は Bouncy Castle が要る。要素の権限の発行時刻はシステムの時計で決まる
     - 学習テスト 29 件がすべて通る（候補の比較 13、2 段階のログイン 9、開発環境の入力済み 3、password の保存 2、session の期限 1、準備 1）
-- [?] **4. 結論を ADR の案と技術スタックに書く** 【承認ゲート: 方式の決定】
+- [x] **4. 結論を ADR の案と技術スタックに書く** 【承認ゲート: 方式の決定】
   - `docs/adr/cargo-tracker/011-mfa-totp.md`（状態: 提案）: 背景、選択肢（ライブラリの候補、枠組みの使い方）、決定の案、影響（US-18 の表・画面・ドメインモデルに要るもの、監査記録のイベントの出どころ、仮の主体の置き換えの順）、未確認の項目
   - 技術スタックの多要素認証の行と TS-01 の行、リスク台帳の行を更新する
   - 完了の判定: `okf:check` が ERROR 0。push して CI を確かめる。人が方式の案を選ぶ
@@ -232,13 +233,13 @@ password確認済み --> ロック : 5 回連続の失敗
 
 ### Definition of Done
 
-- [ ] ステップ 1〜5 が完了し、計画・方式の決定・終了報告の承認ゲートを人が通した
-- [ ] スパイクの学習テストが通り、実行の結果を終了報告に載せた
-- [ ] TOTP の候補の比較の表と、2 段階のログインの構成を、ADR 011 の案に書いた
-- [ ] 技術スタックの TS-01 とリスク台帳を更新した
-- [ ] 本体の `check` と CI が緑のまま（本体のコードを変えていない）
-- [ ] US-18 の Issue に結論をコメントした
-- [ ] ユーザーマニュアルは更新しない（本体の画面を変えない）
+- [x] ステップ 1〜5 が完了し、計画・方式の決定・終了報告の承認ゲートを人が通した（方式の決定のゲートとレビューの判断は、終了報告の承認の場でまとめて通した。T-36）
+- [x] スパイクの学習テストが通り、実行の結果を終了報告に載せた
+- [x] TOTP の候補の比較の表と、2 段階のログインの構成を、ADR 011 の案に書いた
+- [x] 技術スタックの TS-01 とリスク台帳を更新した
+- [x] 本体の `check` と CI が緑のまま（本体のコードを変えていない）
+- [x] US-18 の Issue に結論をコメントした
+- [x] ユーザーマニュアルは更新しない（本体の画面を変えない）
 
 ### デモ項目
 
@@ -254,6 +255,7 @@ password確認済み --> ロック : 5 回連続の失敗
 | 2026-10-06 | 人の決定（開発環境ではログインの画面を入力済みにする）をスコープ・ステップ 3・確認ポイント 7 に足した | anthropic/claude-opus-5-5 | human:kakimomokuri（決定） |
 | 2026-10-06 | 計画を承認。確認ポイント 1〜7（スパイクの置き場所、依存の入れ方、候補、ADR 011 の扱い、レビューの縮小、Issue のコメント、開発環境のログインの入力済み）も決まった（Try T-6） | anthropic/claude-opus-5-5 | human:kakimomokuri |
 | 2026-10-06 | ステップ 3 の Red の記録を事実に直し（レビュー K-07）、ステップ 4・5 の結果を書いた | anthropic/claude-opus-5-5 | — |
+| 2026-10-06 | 方式の決定（ステップ 4。ADR-011 は「提案」のまま）、レビューの判断（D-45〜D-48）、終了報告の承認をまとめて通し、Bolt を終えた（人の変更依頼 0）。#6・#13 の状態は変えていない | anthropic/claude-opus-5-5 | human:kakimomokuri |
 
 ## 関連ドキュメント
 

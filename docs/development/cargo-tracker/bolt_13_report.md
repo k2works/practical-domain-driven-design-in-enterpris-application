@@ -3,8 +3,10 @@ type: Plan
 title: "Bolt 13 終了報告 - TOTP と Spring Security 7 の多要素認証のスパイク（TS-01）"
 description: "13 回目の Bolt の終了報告。TOTP の候補の比較、Spring Security 7 の多要素認証で組んだ 2 段階のログイン、開発環境の入力済みの守り、学習テストの結果、仮説 H1〜H3 の結論、レビューと対応、承認ゲートを止めずに進めた判断、ふりかえりをまとめる。"
 tags: [development,bolt-report]
-status: draft
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-06T03:54:42Z }
+status: stable
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-06T04:04:43Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-10-06T04:04:44Z }
 ---
 
 # Bolt 13 終了報告 - TOTP と Spring Security 7 の多要素認証のスパイク（TS-01）
@@ -97,6 +99,7 @@ generated: { by: anthropic/claude-opus-5-5, at: 2026-10-06T03:54:42Z }
 ### 人の決定
 
 - Bolt 13 の範囲（TS-01 だけ）、開発環境の入力済み、確認ポイント 1〜7（2026-10-06）
+- ステップ 4 の方式の決定のゲート、案の段階の技術スタックとリスク台帳の更新、D-45〜D-48、Try T-38〜T-40（2026-10-06、本報告の承認でまとめて決定）
 
 ### 既知の課題（W5 の US-18 の計画に持ち込む）
 
@@ -154,6 +157,7 @@ generated: { by: anthropic/claude-opus-5-5, at: 2026-10-06T03:54:42Z }
 | 日付 | 内容 | 作成 | 承認 |
 | :--- | :--- | :--- | :--- |
 | 2026-10-06 | 初版 | anthropic/claude-opus-5-5 | — |
+| 2026-10-06 | 承認の議題（ステップ 4 のゲート、技術スタックとリスク台帳の案の段階の更新、D-45〜D-48）、ADR-011 の案の中身、レビューの対応結果、スパイクのコード、Try T-38〜T-40 を承認し、Bolt 13 を終えた。ADR-011 は「提案」のまま、採否は W5 の US-18 の計画で決める | anthropic/claude-opus-5-5 | human:kakimomokuri |
 
 ## 関連ドキュメント
 
