@@ -17,9 +17,11 @@ import com.example.cargotracker.quotation.domain.model.valueobjects.QuotationId;
 import com.example.cargotracker.quotation.domain.model.valueobjects.QuotationInput;
 import com.example.cargotracker.quotation.domain.model.valueobjects.QuotationStatus;
 import com.example.cargotracker.quotation.domain.model.valueobjects.QuotedRequestSummary;
+import com.example.cargotracker.quotation.domain.model.valueobjects.RoutingRequestedSummary;
 import com.example.cargotracker.quotation.domain.model.valueobjects.ShipmentTermsFixture;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestId;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestNumber;
+import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestStatus;
 import com.example.cargotracker.shared.domain.CompanyId;
 import com.example.cargotracker.shared.domain.Location;
 import com.example.cargotracker.shared.domain.UserId;
@@ -373,5 +375,135 @@ class MyBatisQuotationIntegrationTest {
                         2,
                         QuotationStatus.PENDING_APPROVAL,
                         QuotationFixture.EXPIRES_AT));
+    }
+
+    // 荷主の回答（US-24 AC1、Q-INV-09・18。Bolt 12）
+
+    private static final UserId RESPONDENT = new UserId(UUID.randomUUID());
+
+    private Quotation routingRequested(TransportRequestId transportRequestId) {
+        repository.save(presented(transportRequestId, 1));
+        Quotation quotation =
+                repository.findByTransportRequestIdAndNo(transportRequestId, 1).orElseThrow();
+        quotation.requestRouteDesign(RESPONDENT, APPROVED_AT);
+        repository.update(quotation);
+        return quotation;
+    }
+
+    @Test
+    void 詳細設計依頼済みの見積りは回答者と回答時刻とともに保存し読み出せる() {
+        TransportRequestId transportRequestId = transportRequest(17);
+
+        routingRequested(transportRequestId);
+
+        assertThat(repository.findByTransportRequestIdAndNo(transportRequestId, 1))
+                .hasValueSatisfying(found -> {
+                    assertThat(found.status()).isEqualTo(QuotationStatus.ROUTING_REQUESTED);
+                    assertThat(found.respondedBy()).contains(RESPONDENT);
+                    assertThat(found.respondedAt()).contains(APPROVED_AT);
+                });
+        assertThat(jdbc.queryForObject(
+                        "SELECT shipper_response FROM quotation.quotation WHERE transport_request_id = ?",
+                        String.class,
+                        transportRequestId.value()))
+                .isEqualTo("PROCEED");
+    }
+
+    @Test
+    void 詳細設計依頼済みの見積りも1つだけの数に入り部分一意インデックスがドメインの例外にする() {
+        TransportRequestId transportRequestId = transportRequest(18);
+        routingRequested(transportRequestId);
+        Quotation second = calculated(transportRequestId, 2);
+
+        assertThatThrownBy(() -> repository.save(second)).isInstanceOf(DuplicateQuotationException.class);
+    }
+
+    /** PostgreSQL は制約違反でトランザクションを中断するため、違反ごとに別のテストにする。 */
+    @ParameterizedTest
+    @CsvSource({
+        "ROUTING_REQUESTED, , ck_quotation_responded", // 詳細設計依頼済みなのに回答がない
+        "PRESENTED, PROCEED_ONLY, ck_quotation_responded", // 回答の列がそろっていない
+        "ROUTING_REQUESTED, DECLINED, ck_quotation_shipper_response" // 回答の値は進むだけ（辞退は AC2）
+    })
+    void 回答の列はそろって値を持ち詳細設計依頼済みなら必須で回答の値をCHECK制約で守る(String status, String response, String constraint) {
+        TransportRequestId transportRequestId = transportRequest(19);
+        Quotation target = presented(transportRequestId, 1);
+        repository.save(target);
+        boolean complete = "DECLINED".equals(response);
+        String shipperResponse = response == null ? null : complete ? "DECLINED" : "PROCEED";
+        UUID respondedBy = complete ? RESPONDENT.value() : null;
+        String update = "UPDATE quotation.quotation SET status = ?, shipper_response = ?, responded_by = ?,"
+                + " responded_at = CASE WHEN ? THEN presented_at END WHERE id = ?";
+
+        assertThatThrownBy(() -> jdbc.update(
+                        update,
+                        status,
+                        shipperResponse,
+                        respondedBy,
+                        complete,
+                        target.id().value()))
+                .isInstanceOf(DataIntegrityViolationException.class)
+                .hasMessageContaining(constraint);
+    }
+
+    @Test
+    void 回答と再見積りが同じ版を読んで更新すると後の更新は競合で失敗する() {
+        TransportRequestId transportRequestId = transportRequest(20);
+        repository.save(presented(transportRequestId, 1));
+        Quotation forShipper =
+                repository.findByTransportRequestIdAndNo(transportRequestId, 1).orElseThrow();
+        Quotation forStaff =
+                repository.findByTransportRequestIdAndNo(transportRequestId, 1).orElseThrow();
+        forShipper.requestRouteDesign(RESPONDENT, APPROVED_AT);
+        repository.update(forShipper);
+        forStaff.replaceWith(new QuotationId(UUID.randomUUID()), APPROVED_AT);
+
+        assertThatThrownBy(() -> repository.update(forStaff)).isInstanceOf(ConcurrentQuotationUpdateException.class);
+        assertThat(repository
+                        .findByTransportRequestIdAndNo(transportRequestId, 1)
+                        .orElseThrow()
+                        .status())
+                .isEqualTo(QuotationStatus.ROUTING_REQUESTED);
+    }
+
+    @Test
+    void 経路設計中の見積依頼の詳細設計依頼済みの見積りを依頼時刻の古い順に返し輸送要求は経路設計中で保存できる() {
+        TransportRequestId later = transportRequest(21);
+        TransportRequestId earlier = transportRequest(22);
+        TransportRequestId notYetRouting = transportRequest(23);
+        for (TransportRequestId id : List.of(later, earlier, notYetRouting)) {
+            TransportRequest request = transportRequests.findById(id).orElseThrow();
+            request.approve(1, STAFF, "根拠", NOW);
+            request.markQuotationPresented(1);
+            transportRequests.update(request);
+            repository.save(presented(id, 1));
+        }
+        UtcInstant laterAt = new UtcInstant(Instant.parse("2082-01-06T02:00:00Z"));
+        UtcInstant earlierAt = new UtcInstant(Instant.parse("2082-01-06T01:00:00Z"));
+        respond(later, laterAt);
+        respond(earlier, earlierAt);
+        respond(notYetRouting, earlierAt);
+        for (TransportRequestId id : List.of(later, earlier)) {
+            TransportRequest request = transportRequests.findById(id).orElseThrow();
+            request.markRoutingRequested(1);
+            transportRequests.update(request);
+        }
+
+        assertThat(transportRequests.findById(earlier).orElseThrow().status())
+                .isEqualTo(TransportRequestStatus.ROUTING);
+        assertThat(repository.findRoutingRequestedSummaries())
+                .filteredOn(summary -> summary.number().year() == 2082)
+                .containsExactly(
+                        new RoutingRequestedSummary(
+                                new TransportRequestNumber(2082, 22), 1, earlierAt, QuotationFixture.EXPIRES_AT),
+                        new RoutingRequestedSummary(
+                                new TransportRequestNumber(2082, 21), 1, laterAt, QuotationFixture.EXPIRES_AT));
+    }
+
+    private void respond(TransportRequestId transportRequestId, UtcInstant at) {
+        Quotation quotation =
+                repository.findByTransportRequestIdAndNo(transportRequestId, 1).orElseThrow();
+        quotation.requestRouteDesign(RESPONDENT, at);
+        repository.update(quotation);
     }
 }

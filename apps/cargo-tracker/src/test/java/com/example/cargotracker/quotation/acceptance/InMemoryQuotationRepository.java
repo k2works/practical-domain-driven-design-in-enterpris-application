@@ -6,6 +6,7 @@ import com.example.cargotracker.quotation.domain.model.aggregates.Quotation;
 import com.example.cargotracker.quotation.domain.model.aggregates.QuotationRepository;
 import com.example.cargotracker.quotation.domain.model.valueobjects.QuotationId;
 import com.example.cargotracker.quotation.domain.model.valueobjects.QuotedRequestSummary;
+import com.example.cargotracker.quotation.domain.model.valueobjects.RoutingRequestedSummary;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestId;
 import java.util.Comparator;
 import java.util.List;
@@ -72,6 +73,12 @@ public class InMemoryQuotationRepository implements QuotationRepository {
     @Override
     public List<QuotedRequestSummary> findLatestOfQuotedRequests() {
         throw new UnsupportedOperationException("見積提示済みの一覧は業務ルール層で使わない");
+    }
+
+    /** 輸送要求の状態を知らないため、業務ルール層では使わない（PostgreSQL の統合テストで確かめる。Bolt 12）。 */
+    @Override
+    public List<RoutingRequestedSummary> findRoutingRequestedSummaries() {
+        throw new UnsupportedOperationException("経路設計中の一覧は業務ルール層で使わない");
     }
 
     public void clear() {

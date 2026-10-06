@@ -12,6 +12,7 @@ import com.example.cargotracker.quotation.domain.model.valueobjects.QuotationId;
 import com.example.cargotracker.quotation.domain.model.valueobjects.QuotationStatus;
 import com.example.cargotracker.quotation.domain.model.valueobjects.QuotedRequestSummary;
 import com.example.cargotracker.quotation.domain.model.valueobjects.RoutePolicy;
+import com.example.cargotracker.quotation.domain.model.valueobjects.RoutingRequestedSummary;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestId;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestNumber;
 import com.example.cargotracker.shared.domain.Location;
@@ -90,6 +91,11 @@ public class MyBatisQuotationRepository implements QuotationRepository {
         return mapper.selectByTransportRequestId(transportRequestId.value()).stream()
                 .map(row -> toAggregate(row, lines.getOrDefault(row.id(), List.of())))
                 .toList();
+    }
+
+    @Override
+    public List<RoutingRequestedSummary> findRoutingRequestedSummaries() {
+        return List.of();
     }
 
     @Override
