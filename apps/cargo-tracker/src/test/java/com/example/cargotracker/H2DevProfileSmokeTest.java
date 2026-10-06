@@ -4,6 +4,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.example.cargotracker.identity.domain.model.aggregates.KpiObservationRepository;
 import com.example.cargotracker.identity.domain.model.aggregates.KpiObservationRepositoryContract;
+import com.example.cargotracker.identity.domain.model.aggregates.UserRepository;
+import com.example.cargotracker.identity.domain.model.valueobjects.EmailAddress;
 import com.example.cargotracker.quotation.application.internal.commands.SubmitTransportRequestCommand;
 import com.example.cargotracker.quotation.application.internal.commandservices.SubmissionOutcome;
 import com.example.cargotracker.quotation.application.internal.commandservices.TransportRequestCommandService;
@@ -12,6 +14,7 @@ import com.example.cargotracker.quotation.domain.model.aggregates.TransportReque
 import com.example.cargotracker.quotation.domain.model.valueobjects.ShipmentTermsFixture;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestNumber;
 import com.example.cargotracker.shared.domain.CompanyId;
+import com.example.cargotracker.shared.domain.Role;
 import com.example.cargotracker.shared.domain.UserId;
 import java.util.UUID;
 import org.flywaydb.core.Flyway;
@@ -46,6 +49,9 @@ class H2DevProfileSmokeTest extends KpiObservationRepositoryContract {
     @Autowired
     TransportRequestRepository transportRequestRepository;
 
+    @Autowired
+    UserRepository users;
+
     @Override
     protected KpiObservationRepository repository() {
         return repository;
@@ -77,5 +83,23 @@ class H2DevProfileSmokeTest extends KpiObservationRepositoryContract {
                                 .hasValueSatisfying(found -> assertThat(
                                                 found.currentVersion().terms())
                                         .isEqualTo(ShipmentTermsFixture.generalCargo())));
+    }
+
+    @Test
+    void devでは開発用の荷主2人と営業1人が入っている() {
+        assertThat(users.findByEmail(EmailAddress.of("shipper@dev.cargo-tracker.example")))
+                .hasValueSatisfying(user -> {
+                    assertThat(user.id().value()).hasToString("00000000-0000-0000-0000-000000000101");
+                    assertThat(user.companyId().value()).hasToString("00000000-0000-0000-0000-000000000001");
+                    assertThat(user.roles()).containsExactly(Role.SHIPPER);
+                });
+        assertThat(users.findByEmail(EmailAddress.of("shipper-b@dev.cargo-tracker.example")))
+                .hasValueSatisfying(user ->
+                        assertThat(user.companyId().value()).hasToString("00000000-0000-0000-0000-000000000002"));
+        assertThat(users.findByEmail(EmailAddress.of("sales@dev.cargo-tracker.example")))
+                .hasValueSatisfying(user -> {
+                    assertThat(user.id().value()).hasToString("00000000-0000-0000-0000-000000000301");
+                    assertThat(user.roles()).containsExactly(Role.SALES);
+                });
     }
 }
