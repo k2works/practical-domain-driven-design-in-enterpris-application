@@ -91,7 +91,7 @@ generated: { by: anthropic/claude-opus-5-5, at: 2026-10-06T11:00:00Z }
 | :--- | :--- |
 | `./gradlew check verifyProductionClasspath`（ローカル） | 緑（4 分 20 秒、ステップ 2） |
 | CI（`c05d04ad`） | check・ui ともに success |
-| `./gradlew uiTest`（ローカル） | 本報告の承認の前に結果を書く |
+| `./gradlew uiTest`（ローカル） | 緑（6 分 49 秒、`5657b21d` の後） |
 | `runtime` のイメージに H2 がない | dev で起動すると `org.h2.Driver` で失敗（ステップ 2） |
 | `okf:check` | ERROR 0 |
 | PlantUML（計画・手順書の図） | `plantuml -checkonly` が通った |

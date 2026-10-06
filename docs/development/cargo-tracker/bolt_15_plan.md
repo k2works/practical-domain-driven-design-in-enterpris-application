@@ -242,7 +242,7 @@ Eco で R14 が続く（H2 が外れる）ときは、ここで止めて dyno �
 ### Definition of Done
 
 - [ ] ステップ 1〜5 が完了し、計画・外部連携（ステップ 3）・終了報告の承認ゲートを人が通した（終了報告の承認を待つ）
-- [ ] `./gradlew check` と `./gradlew uiTest` がローカルと CI の両方で緑（アプリのコードは変えていない。CI の check・ui と、ローカルの `check` は緑。ローカルの `uiTest` は実行中）
+- [x] `./gradlew check` と `./gradlew uiTest` がローカルと CI の両方で緑（アプリのコードは変えていない。CI の check・ui、ローカルの `check`（4 分 20 秒）と `uiTest`（6 分 49 秒）が緑）
 - [x] ローカルのコンテナ（`PORT=5001`、メモリ 512 MB）で起動し、https のリダイレクトとログインを確かめた
 - [x] 公開の URL でデモ項目 1〜4 を確かめ、録画した
 - [x] `npx gulp deploy:demo` 1 つで配備でき、手順書のコマンドだけで状態・ログ・再起動・停止・ロールバック・削除を行える（削除は取り消せないため、タスクにせず手順書の `heroku apps:destroy` で人が行う）
