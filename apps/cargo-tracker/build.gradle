@@ -40,6 +40,9 @@ dependencies {
 	implementation 'org.flywaydb:flyway-database-postgresql'
 	implementation "org.mybatis.spring.boot:mybatis-spring-boot-starter:${mybatisVersion}"
 	implementation 'org.springframework.modulith:spring-modulith-starter-jdbc'
+	// 認証と session（US-18、ADR-012）。form login・役割による認可・CSRF と、DB に置く session（Bolt 14）
+	implementation 'org.springframework.boot:spring-boot-starter-security'
+	implementation 'org.springframework.boot:spring-boot-starter-session-jdbc'
 	// 画面の CSS と部分更新（ADR-005、技術スタック）。フロントエンドのビルドを持たず、WebJars で同梱して版を固定する（Bolt 8）
 	implementation 'org.webjars:webjars-locator-lite'
 	implementation 'org.webjars.npm:bootstrap:5.3.8'
@@ -54,6 +57,7 @@ dependencies {
 	developmentOnly 'org.springframework.boot:spring-boot-devtools'
 
 	testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
+	testImplementation 'org.springframework.boot:spring-boot-starter-security-test'
 	testImplementation 'org.springframework.boot:spring-boot-starter-thymeleaf-test'
 	testImplementation 'org.springframework.boot:spring-boot-starter-validation-test'
 	testImplementation 'org.springframework.boot:spring-boot-starter-flyway-test'
