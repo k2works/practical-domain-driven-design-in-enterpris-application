@@ -3242,6 +3242,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="概要">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        イメージの構成
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -3333,7 +3350,7 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#_2" class="md-nav__link">
+  <a href="#_3" class="md-nav__link">
     <span class="md-ellipsis">
       
         関連ドキュメント
@@ -7164,7 +7181,7 @@
 
 <h1 id="heroku-cargo-tracker">Heroku デモ環境セットアップ手順書 - cargo-tracker<a class="headerlink" href="#heroku-cargo-tracker" title="Permanent link">&para;</a></h1>
 <h2 id="_1">概要<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h2>
-<p>関係者がブラウザで触って確かめるためのデモ環境を、Heroku に作る手順です。位置づけと制約は <a href="../../../adr/cargo-tracker/013-heroku-demo-environment/">ADR-013</a> を参照してください。</p>
+<p>関係者がブラウザで触って確かめるためのデモ環境を、Heroku に作る手順です。位置づけと制約は <a href="../../../adr/cargo-tracker/013-heroku-demo-environment/">ADR-013</a> を参照してください。操作は Gulp のタスク <code>deploy:demo:*</code>（<code>ops/scripts/deploy_demo.js</code>）だけで行います。</p>
 <table>
 <thead>
 <tr>
@@ -7179,7 +7196,7 @@
 </tr>
 <tr>
 <td style="text-align: left;">URL</td>
-<td style="text-align: left;">（初回のセットアップの後に記入する）</td>
+<td style="text-align: left;"><a href="https://cargo-tracker-mono-demo-883bf0b92807.herokuapp.com/">https://cargo-tracker-mono-demo-883bf0b92807.herokuapp.com/</a></td>
 </tr>
 <tr>
 <td style="text-align: left;">プロファイル</td>
@@ -7187,11 +7204,15 @@
 </tr>
 <tr>
 <td style="text-align: left;">dyno</td>
-<td style="text-align: left;">Eco（512 MB）、web 1 つ、region <code>us</code></td>
+<td style="text-align: left;">Eco（512 MB）、web 1 つ、region <code>us</code>、stack <code>container</code></td>
 </tr>
 <tr>
 <td style="text-align: left;">配備</td>
-<td style="text-align: left;">Container Registry（<code>apps/cargo-tracker/Dockerfile</code>）</td>
+<td style="text-align: left;">Container Registry。<code>apps/cargo-tracker/Dockerfile</code> の <code>demo</code> のステージ</td>
+</tr>
+<tr>
+<td style="text-align: left;">Config Vars</td>
+<td style="text-align: left;"><code>SPRING_PROFILES_ACTIVE=dev</code>、<code>JAVA_TOOL_OPTIONS=-Xmx300m -XX:+UseSerialGC -Xss512k -XX:ReservedCodeCacheSize=64m -XX:MaxMetaspaceSize=192m</code></td>
 </tr>
 <tr>
 <td style="text-align: left;">費用</td>
@@ -7202,27 +7223,186 @@
 <blockquote>
 <p><strong>注意</strong>: アクセスの制限はありません。URL を知っていれば、だれでも開発用の利用者でログインできます。本物の荷主・利用者・取引のデータを入れないでください。URL は関係者にだけ伝えてください。データは dyno の再起動で初期状態に戻ります。</p>
 </blockquote>
+<h3 id="_2">イメージの構成<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h3>
+<p><code>apps/cargo-tracker/Dockerfile</code> は 3 つのステージを持ちます。</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">ステージ</th>
+<th style="text-align: left;">中身</th>
+<th style="text-align: left;">使う場所</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>build</code></td>
+<td style="text-align: left;"><code>./gradlew bootJar copyDemoLibs</code> と、bootJar の <code>app.jar</code>・<code>lib/</code> への展開</td>
+<td style="text-align: left;">—</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>runtime</code></td>
+<td style="text-align: left;">bootJar だけ。H2 を含まない（AT-06）</td>
+<td style="text-align: left;">W10 の ECR・ECS の出発点</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>demo</code></td>
+<td style="text-align: left;"><code>runtime</code> に <code>build/demo-lib</code> の H2 を足す</td>
+<td style="text-align: left;">このデモ環境</td>
+</tr>
+</tbody>
+</table>
+<p>H2 は <code>developmentOnly</code> の依存で、本番の成果物の bootJar には入りません（ADR-007、AT-06）。<code>copyDemoLibs</code> が H2 だけを <code>build/demo-lib</code> に写し、<code>demo</code> のステージがクラスパスに足します。</p>
 <h2 id="1">1. 前提条件<a class="headerlink" href="#1" title="Permanent link">&para;</a></h2>
-<p>（ステップ 3 で記入する: Heroku のアカウントと Eco の契約、Heroku CLI、Docker、ログイン）</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">もの</th>
+<th style="text-align: left;">確かめ方</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">Heroku のアカウントと Eco の契約</td>
+<td style="text-align: left;">Heroku の Billing で Eco dynos plan が有効</td>
+</tr>
+<tr>
+<td style="text-align: left;">Heroku CLI</td>
+<td style="text-align: left;"><code>heroku --version</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">Docker（buildx を含む）</td>
+<td style="text-align: left;"><code>docker buildx version</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">GitHub CLI（CI の結果を見る）</td>
+<td style="text-align: left;"><code>gh auth status</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">Node.js と依存</td>
+<td style="text-align: left;">リポジトリのルートで <code>npm install</code> 済み</td>
+</tr>
+</tbody>
+</table>
+<p>ログインは対話のため、人が行います。</p>
+<div class="highlight"><pre><span></span><code>heroku<span class="w"> </span>login
+heroku<span class="w"> </span>container:login
+</code></pre></div>
 <h2 id="2">2. 初回のセットアップ<a class="headerlink" href="#2" title="Permanent link">&para;</a></h2>
-<p>（ステップ 3 で記入する: <code>npx gulp heroku:setup</code>）</p>
+<p>リポジトリのルートで実行します。2 回目以降に実行しても、作成を飛ばして Config Vars を合わせるだけです。</p>
+<div class="highlight"><pre><span></span><code>npx<span class="w"> </span>gulp<span class="w"> </span>deploy:demo:setup
+</code></pre></div>
+<p>アプリの作成（<code>--stack container --region us</code>）と Config Vars の設定を行います。アプリ名・region・JVM の設定は <code>.env</code> の <code>DEMO_*</code> で変えられます（<code>.env.example</code> を参照）。</p>
 <h2 id="3">3. 配備<a class="headerlink" href="#3" title="Permanent link">&para;</a></h2>
-<p>（ステップ 3 で記入する: develop の CI が緑のコミットから <code>npx gulp heroku:deploy</code>）</p>
+<p>develop の CI が緑のコミットから配備します。</p>
+<div class="highlight"><pre><span></span><code>npx<span class="w"> </span>gulp<span class="w"> </span>deploy:demo
+</code></pre></div>
+<p><code>deploy:demo:build</code> → <code>deploy:demo:push</code> → <code>deploy:demo:release</code> を順に行います。</p>
+<ul>
+<li><code>build</code> は、作業ツリーに変更がないことと、アプリ（<code>apps/cargo-tracker</code>）を最後に変えたコミットの <code>cargo-tracker-ci.yml</code> が success であることを確かめてから、<code>demo</code> のステージをビルドします。確かめを飛ばすときだけ <code>DEMO_SKIP_GUARD=1</code> を付けます。</li>
+<li>イメージは <code>docker buildx build --provenance=false --sbom=false --output type=image,…,oci-mediatypes=false</code> で作ります。Heroku の Container Registry は Docker v2 の manifest だけを受けるためです。</li>
+<li><code>release</code> の後に dyno の種類を Eco にします。</li>
+</ul>
+<p>所要時間の目安は、依存のキャッシュがあれば 1 分弱です（初回のビルドは 3〜4 分）。</p>
 <h2 id="4">4. 確認<a class="headerlink" href="#4" title="Permanent link">&para;</a></h2>
-<p>（ステップ 4 で記入する: <code>npx gulp heroku:status</code>、<code>heroku:open</code>、開発用の利用者でのログイン）</p>
+<div class="highlight"><pre><span></span><code>npx<span class="w"> </span>gulp<span class="w"> </span>deploy:demo:status<span class="w">   </span><span class="c1"># dyno・release・プロファイル（dev だけ）・URL</span>
+npx<span class="w"> </span>gulp<span class="w"> </span>deploy:demo:open<span class="w">     </span><span class="c1"># ブラウザで開く</span>
+</code></pre></div>
+<p>ブラウザでは、ログインの画面の「開発用の利用者でログイン（開発環境だけ）」から、荷主担当者 2 人・営業担当者 1 人を選んでログインします。</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">確かめること</th>
+<th style="text-align: left;">期待する結果</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">URL を開く</td>
+<td style="text-align: left;">https のまま A-01（<code>/login</code>）へ移る</td>
+</tr>
+<tr>
+<td style="text-align: left;">荷主担当者でログイン</td>
+<td style="text-align: left;">荷主の輸送要求の一覧（<code>/customer/transport-requests</code>）</td>
+</tr>
+<tr>
+<td style="text-align: left;">営業担当者でログイン</td>
+<td style="text-align: left;">営業の受付一覧（<code>/staff/transport-requests</code>）</td>
+</tr>
+<tr>
+<td style="text-align: left;">営業担当者で荷主の画面を開く</td>
+<td style="text-align: left;">「権限がありません」（A-04）</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>deploy:demo:status</code> のプロファイル</td>
+<td style="text-align: left;"><code>dev</code> だけ（<code>staging</code>・<code>prod</code> を含まない。ADR-013 のコンプライアンス）</td>
+</tr>
+</tbody>
+</table>
 <h2 id="5">5. ログ<a class="headerlink" href="#5" title="Permanent link">&para;</a></h2>
-<p>（ステップ 3 で記入する: <code>npx gulp heroku:logs</code>）</p>
+<div class="highlight"><pre><span></span><code>npx<span class="w"> </span>gulp<span class="w"> </span>deploy:demo:logs<span class="w">     </span><span class="c1"># tail。Ctrl+C で止める</span>
+</code></pre></div>
+<p>メモリの値は <code>log-runtime-metrics</code> で 20 秒ごとにログに出ます（<code>sample#memory_total</code>）。無効になっていたら <code>heroku labs:enable log-runtime-metrics -a cargo-tracker-mono-demo</code> で有効にし、<code>deploy:demo:restart</code> します。</p>
 <h2 id="6">6. デモの前に<a class="headerlink" href="#6" title="Permanent link">&para;</a></h2>
-<p>（ステップ 4 で記入する: <code>npx gulp heroku:restart</code> で初期状態に戻す。スリープからの起動の時間）</p>
+<div class="highlight"><pre><span></span><code>npx<span class="w"> </span>gulp<span class="w"> </span>deploy:demo:restart<span class="w">  </span><span class="c1"># データを db/dev-data の初期状態に戻す</span>
+npx<span class="w"> </span>gulp<span class="w"> </span>deploy:demo:open
+</code></pre></div>
+<ul>
+<li>再起動すると、それまでに入れた輸送要求・見積り・添付した書類は消え、開発用の企業と利用者だけになります。起動は 5 秒前後です。</li>
+<li>Eco dyno は 30 分アクセスがないとスリープします。スリープからの最初のアクセスは、起動を待つため遅くなります（Bolt 15 の計測は終了報告を参照）。デモの数分前に一度開いておきます。</li>
+</ul>
 <h2 id="7">7. 停止と削除<a class="headerlink" href="#7" title="Permanent link">&para;</a></h2>
-<p>（ステップ 3 で記入する: <code>heroku ps:scale web=0</code>、<code>heroku apps:destroy</code>）</p>
+<div class="highlight"><pre><span></span><code>npx<span class="w"> </span>gulp<span class="w"> </span>deploy:demo:stop<span class="w">     </span><span class="c1"># dyno を 0 にする（公開と Eco の時間の消費を止める）</span>
+npx<span class="w"> </span>gulp<span class="w"> </span>deploy:demo:start<span class="w">    </span><span class="c1"># dyno を 1 に戻す</span>
+</code></pre></div>
+<p>デモ環境が要らなくなったら、アプリを消します。取り消せないため、タスクにはしていません。人が確かめてから手で実行します。</p>
+<div class="highlight"><pre><span></span><code>heroku<span class="w"> </span>apps:destroy<span class="w"> </span>-a<span class="w"> </span>cargo-tracker-mono-demo<span class="w"> </span>--confirm<span class="w"> </span>cargo-tracker-mono-demo
+</code></pre></div>
+<p>消した後は、Eco の契約（月 5 USD）がほかのアプリで要らないかを Heroku の Billing で確かめます。</p>
 <h2 id="8">8. 制約とよくあるつまずき<a class="headerlink" href="#8" title="Permanent link">&para;</a></h2>
-<p>（ステップ 4 で記入する: R14（メモリ超過）、R10（起動のタイムアウト）、Router の 30 秒のタイムアウトと書類の添付、データの消失）</p>
-<h2 id="_2">関連ドキュメント<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">症状</th>
+<th style="text-align: left;">原因と対処</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>docker push</code> が <code>error from registry: unsupported</code></td>
+<td style="text-align: left;">Docker の containerd のイメージストアが OCI の media type で送っている。<code>deploy:demo:build</code> を使う（<code>oci-mediatypes=false</code>、<code>--provenance=false</code>、<code>--sbom=false</code>）。<code>docker build</code> で作り直さない</td>
+</tr>
+<tr>
+<td style="text-align: left;">ログに <code>Error R14 (Memory quota exceeded)</code></td>
+<td style="text-align: left;">ヒープが 512 MB を基準にしていない。<code>-XX:MaxRAMPercentage</code> ではなく <code>-Xmx300m</code> を使う（<code>deploy:demo:setup</code> で Config Vars を合わせる）。Bolt 15 の計測で、起動の後 355 MB、操作の後 382 MB</td>
+</tr>
+<tr>
+<td style="text-align: left;">起動で <code>ClassNotFoundException: org.h2.Driver</code></td>
+<td style="text-align: left;"><code>runtime</code> のステージのイメージを送った。<code>--target demo</code> で作る（<code>deploy:demo:build</code>）</td>
+</tr>
+<tr>
+<td style="text-align: left;">起動で <code>cargotracker.dev-login は dev プロファイルでだけ設定できる</code></td>
+<td style="text-align: left;">Config Vars の <code>SPRING_PROFILES_ACTIVE</code> に <code>staging</code>・<code>prod</code> が混ざっている。<code>dev</code> だけにする</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>deploy:demo:build</code> が「CI が緑ではありません」で止まる</td>
+<td style="text-align: left;">アプリの最後の変更の CI が終わっていないか、失敗している。<code>gh run list --workflow cargo-tracker-ci.yml</code> で確かめ、緑になってから配備する</td>
+</tr>
+<tr>
+<td style="text-align: left;">入れたデータが消えた</td>
+<td style="text-align: left;">仕様（H2 のインメモリ）。Heroku は dyno を 1 日 1 回以上再起動し、配備とスリープでも初期状態に戻る</td>
+</tr>
+<tr>
+<td style="text-align: left;">大きな書類の添付が失敗する</td>
+<td style="text-align: left;">Heroku の Router は 30 秒で request を打ち切る。デモでは小さなファイルを使う</td>
+</tr>
+</tbody>
+</table>
+<h2 id="_3">関連ドキュメント<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h2>
 <ul>
 <li><a href="../../../adr/cargo-tracker/013-heroku-demo-environment/">ADR-013 デモ環境</a></li>
 <li><a href="../application_development_setup/">アプリケーション開発環境セットアップ手順書</a></li>
 <li><a href="../../../development/cargo-tracker/bolt_15_plan/">Bolt 15 計画</a></li>
+<li><a href="https://devcenter.heroku.com/articles/container-registry-and-runtime">Heroku Container Registry &amp; Runtime</a></li>
 </ul>
 
 

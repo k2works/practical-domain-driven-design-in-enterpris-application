@@ -7126,8 +7126,8 @@
 </tr>
 <tr>
 <td style="text-align: left;"><a href="heroku_demo_setup/">Heroku デモ環境セットアップ手順書</a></td>
-<td style="text-align: left;">dev プロファイルのデモ環境（Heroku、ADR-013）の作成・配備・停止</td>
-<td style="text-align: left;">作成中（Bolt 15）</td>
+<td style="text-align: left;">dev プロファイルのデモ環境（Heroku、ADR-013）の作成・配備・確認・停止・削除</td>
+<td style="text-align: left;">作成済み（Bolt 15 の終了報告で承認を受ける）</td>
 </tr>
 <tr>
 <td style="text-align: left;">開発環境セットアップ手順書</td>
@@ -7188,6 +7188,10 @@ Gradle のタスクは <code>apps/cargo-tracker</code> で、Gulp のタスク�
 <tr>
 <td style="text-align: left;"><code>npx gulp sonar-local:check</code></td>
 <td style="text-align: left;">SonarQube でスキャンして品質ゲートを判定する</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>npx gulp deploy:demo</code></td>
+<td style="text-align: left;">Heroku のデモ環境へ配備する（<a href="heroku_demo_setup/">Heroku デモ環境セットアップ手順書</a>。<code>deploy:demo:help</code> でほかのタスク）</td>
 </tr>
 </tbody>
 </table>
