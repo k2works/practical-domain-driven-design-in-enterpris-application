@@ -3378,6 +3378,41 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../bolt_12_plan/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 12 計画
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--draft"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -8204,7 +8239,7 @@
 <ul class="task-list">
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Bolt 9: Bolt 6〜8 レビューの返済（書類の差し替え R-01 と改善提案。D-25 で W2 の最初の Bolt にした。完了、承認済み。#37 をクローズした）。<a href="../bolt_09_plan/">Bolt 9 計画</a>、<a href="../bolt_09_report/">Bolt 9 終了報告</a>、<a href="https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/37">#37</a></li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> US-03（全受入条件、BR-10 の境界）。Bolt 10 で提示（AC1〜AC3）、Bolt 11 で失効・置換（AC4・AC5）に分ける（2026-10-05 に human:kakimomokuri が決定）。<a href="../bolt_10_plan/">Bolt 10 計画</a>、<a href="../bolt_10_report/">Bolt 10 終了報告</a>（提示は完了、承認済み。AC4・AC5 は Bolt 11）。<a href="../bolt_11_plan/">Bolt 11 計画</a>、<a href="../bolt_11_report/">Bolt 11 終了報告</a>（失効・置換と Bolt 9・10 レビューの中・低の返済。完了、承認済み。#4 をクローズした。AC4・AC5 の予約確定と荷主の承認での利用の拒否は US-04・US-24 の Bolt で確かめる）</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> US-24（AC1 詳細経路設計へ進む）</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> US-24（AC1 詳細経路設計へ進む）。Bolt 12 で行う（2026-10-06 に human:kakimomokuri が W2 の残りから選んだ。US-18 の一部と TS-01 は後の Bolt）。<a href="../bolt_12_plan/">Bolt 12 計画</a></li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> US-18 の一部（password によるログインと session）</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> TOTP ライブラリのスパイク（TS-01）</li>
 </ul>
@@ -8481,7 +8516,7 @@
 <td style="text-align: left;">D-36-3</td>
 <td style="text-align: left;">有効期限の標準の日数と、経路設計にかかる日数との関係</td>
 <td style="text-align: left;">営業担当者が都度入れる（標準の日数は持たない）</td>
-<td style="text-align: left;">US-03、US-06・US-07、US-23（期限間近の通知）</td>
+<td style="text-align: left;">US-03、US-06・US-07、US-23（期限間近の通知）、US-24（詳細設計依頼済みの見積りの失効。Bolt 12 の確認ポイント 5）</td>
 <td style="text-align: left;">同上</td>
 <td style="text-align: left;">W2 の終わり（2026-10-16）</td>
 <td style="text-align: left;">未回答</td>
@@ -8535,7 +8570,7 @@
 <td style="text-align: left;">D-41-3</td>
 <td style="text-align: left;">見積りの失効・置換の後も、輸送要求の状態を「見積提示済み」のままにしてよいか</td>
 <td style="text-align: left;">見積提示済みのまま</td>
-<td style="text-align: left;">ドメインモデル（輸送要求の状態遷移）、UI 設計（C-02・C-04・S-02）</td>
+<td style="text-align: left;">ドメインモデル（輸送要求の状態遷移）、UI 設計（C-02・C-04・S-02）、US-24（経路設計中の見積りの失効）</td>
 <td style="text-align: left;">同上</td>
 <td style="text-align: left;">W2 の終わり（2026-10-16）</td>
 <td style="text-align: left;">未回答</td>
@@ -8724,7 +8759,7 @@
 <td style="text-align: right;">8</td>
 <td style="text-align: right;">5</td>
 <td style="text-align: right;">-</td>
-<td style="text-align: left;">進行中（Bolt 9〜11 完了。US-03 を完了し #4 をクローズした。人の変更依頼 0）</td>
+<td style="text-align: left;">進行中（Bolt 9〜11 完了。US-03 を完了し #4 をクローズした。Bolt 12（US-24 AC1）は計画済み。人の変更依頼 0）</td>
 </tr>
 <tr>
 <td style="text-align: left;">W3</td>
@@ -8979,6 +9014,11 @@
 <tr>
 <td style="text-align: left;">2026-10-06</td>
 <td style="text-align: left;">業務責任者に確かめる事項の台帳を足した（D-28〜D-30、D-34〜D-36、D-41。各レビューに散らばっていたものを集めた）</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5</td>
+</tr>
+<tr>
+<td style="text-align: left;">2026-10-06</td>
+<td style="text-align: left;">W2 に Bolt 12 計画へのリンクを付けた（範囲は US-24 AC1 だけ。人の決定）。台帳の D-36-3・D-41-3 の影響に US-24 を足した</td>
 <td style="text-align: left;">anthropic/claude-opus-5-5</td>
 </tr>
 </tbody>
