@@ -7215,13 +7215,14 @@
 <h2 id="_11">ステップ計画<a class="headerlink" href="#_11" title="Permanent link">&para;</a></h2>
 <p>状態の記号: <code>[ ]</code> 未着手、<code>[-]</code> 進行中、<code>[?]</code> 承認待ち、<code>[R]</code> 修正中、<code>[x]</code> 完了、<code>[S]</code> スキップ。各ステップの終わりに <code>check</code> が緑であることを確かめて push し、CI の結果を確かめてから次のステップに入る（T-14、T-26）。結果の時刻はそのステップの最後のコミットの時刻で書く（T-33）。</p>
 <ul class="task-list">
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>1. 決定を設計文書に反映する</strong>（承認はステップ 2 とまとめて受ける）</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>1. 決定を設計文書に反映する</strong>（承認はステップ 2 とまとめて受ける）</li>
 <li>ユーザーストーリー: US-24 の Bolt 12 の決定（AC1 の記録先と DE-16、AC2〜AC5 の扱い）</li>
 <li>ドメインモデル: 状態遷移の注、Q-INV-09・18、DE-16 の項目、詳細設計依頼済みの失効と再見積り、拒否の理由、回答の段落</li>
 <li>データモデル: <code>quotation</code> の Bolt 12 の値・列・CHECK、<code>ux_quotation_active</code> の作り直し</li>
 <li>UI 設計: C-05 の URL と Bolt 12 の範囲、C-04 の回答の入口と経路設計中の案内、荷主の進み具合の表に経路設計中、S-02 の経路設計中の表、S-04 の詳細設計依頼済み</li>
 <li>リリース計画の台帳: D-36-3・D-41-3 の「影響する文書」に US-24 を足す</li>
 <li>完了の判定: <code>okf:check</code> が ERROR 0、<code>documentationTest</code> が緑。push する</li>
+<li>結果（2026-10-06 10:15）: ユーザーストーリー（US-24 の Bolt 12 の決定）、ドメインモデル（Q-INV-09・18、荷主の回答の段落、DE-16 の項目と購読者）、データモデル（<code>quotation</code> の Bolt 12 の値・列・CHECK、<code>ux_quotation_active</code> の作り直し）、UI 設計（C-04 の回答の入口、C-05 の URL と範囲、S-02 の経路設計中の表、S-04 の詳細設計依頼済み、荷主の進み具合の経路設計中）に反映した。台帳の D-36-3・D-41-3 は開始準備で足した。<code>okf:check</code> ERROR 0、<code>documentationTest</code> 緑</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>2. 回答の業務のルール（業務ルール層の Red → Green）</strong> 【承認ゲート: 業務のルール（Q-INV-07・09・18、DE-16）】</li>
 <li>業務ルール層の受入シナリオを先に書き、Red をコミットする（<code>features/quotation/request_route_design.feature</code>、<code>@US-24 @must @US-24-AC1</code>）<ul>
 <li>提示済みで有効な見積りに、荷主担当者が詳細経路設計へ進むと回答すると、見積りは詳細設計依頼済みになり回答者と回答時刻が記録され、DE-16 が発行され、輸送要求は経路設計中になる（AC1）</li>
