@@ -3,8 +3,10 @@ type: Plan
 title: "Bolt 13 計画 - TOTP と Spring Security 7 の多要素認証のスパイク（TS-01）"
 description: "13 回目の Bolt の計画。TOTP ライブラリの候補の比較と、Spring Security 7 の多要素認証で password の後に TOTP を求める 2 段階のログインを、本体と分けたスパイクの学習テストで確かめ、ADR 011 の案と技術スタックに結論を残すまでを、ステップ 1〜5 で定義する。"
 tags: [development,bolt-plan]
-status: draft
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-06T03:06:06Z }
+status: stable
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-06T03:10:00Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-10-06T03:10:00Z }
 ---
 
 # Bolt 13 計画 - TOTP と Spring Security 7 の多要素認証のスパイク（TS-01）
@@ -194,6 +196,8 @@ password確認済み --> ロック : 5 回連続の失敗
 | 6 | US-18 の Issue は #6（R0.1）と #13（R1.0。W5）。結論を #13 にコメントする。どちらも状態は変えない | 5 | GitHub の同期 |
 | 7 | 開発環境のログインの入力済み（人の決定。2026-10-06）の範囲。A-01 は `dev` プロファイルの設定があるときだけ、開発用の利用者のメールアドレスと password を入力済みにする。A-02（TOTP）は、開発用の利用者に固定の TOTP の秘密を持たせ、`dev` プロファイルだけで現在のコードを入力済みにする案を AI は勧める（TOTP を飛ばす案は、開発と本番で認証の流れが変わり、2 段階のログインを開発環境で確かめられなくなるため採らない）。既定の設定で入力済みにならないことを学習テストで確かめ、ADR 011 の案に書く | 3、4 | セキュリティ（認証）。開発環境の設定が本番に漏れないことを守る |
 
+決定（2026-10-06、human:kakimomokuri）: 確認ポイント 1〜7 はすべて上の案で決まった。
+
 ## AI の仮定
 
 - Spring Boot 4.1.1 が管理する Spring Security の版（7 系）を使う。マイルストーンの版（7.2.0-M2）は使わない。
@@ -233,6 +237,7 @@ password確認済み --> ロック : 5 回連続の失敗
 | :--- | :--- | :--- | :--- |
 | 2026-10-06 | 初版（Bolt 12 終了報告の次の Bolt。範囲は人の決定で TS-01 だけ） | anthropic/claude-opus-5-5 | — |
 | 2026-10-06 | 人の決定（開発環境ではログインの画面を入力済みにする）をスコープ・ステップ 3・確認ポイント 7 に足した | anthropic/claude-opus-5-5 | human:kakimomokuri（決定） |
+| 2026-10-06 | 計画を承認。確認ポイント 1〜7（スパイクの置き場所、依存の入れ方、候補、ADR 011 の扱い、レビューの縮小、Issue のコメント、開発環境のログインの入力済み）も決まった（Try T-6） | anthropic/claude-opus-5-5 | human:kakimomokuri |
 
 ## 関連ドキュメント
 
