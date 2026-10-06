@@ -4,7 +4,7 @@ title: "cargo-tracker UI 設計"
 description: "cargo-tracker の顧客 Web と社内業務 Web の画面オブジェクト、システムメタファー、画面一覧、画面遷移、主要画面のイメージ、共通部品（WCAG 2.2 AA）、エラー時を含むインタラクション。"
 tags: [design, ui]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-06T06:13:27Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-06T06:41:11Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T07:57:45Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:01:39Z }
@@ -450,7 +450,7 @@ KPI : S-22
 
 Bolt 14 の A-01 は、メールアドレス・password・「ログイン」と、ログインできない場合の問い合わせ先の案内だけにする。「password を忘れた場合」は W5（A-05）で足す。password と認証コードの欄は貼り付けとパスワード管理ツールを妨げない。`autocomplete="username"`・`"current-password"`・`"one-time-code"` を付ける（WCAG 3.3.8）。
 
-開発環境（`dev` プロファイル）では、開発体験を優先し、A-01 のメールアドレスと password を既定の開発用の利用者で入力済みにする（2026-10-06 に human:kakimomokuri が決定）。入力済みにするのは `dev` プロファイルの設定があるときだけで、既定の設定（ステージング・本番を含む）では入力済みにしない。値は開発用の利用者の固定の値で、本物の秘密を使わない。既定の設定で入力済みにならないことをテストで守る。Bolt 14 では `cargotracker.dev-login.email`・`cargotracker.dev-login.password`（`application-dev.properties`、既定は荷主の開発用の利用者）を入れ、`dev` の外または `staging`・`prod` と一緒にこの設定があれば起動を失敗させる（ADR-011 の決定 3、ADR-012）。A-02（認証コード）は、開発用の利用者に固定の TOTP の秘密を持たせ、`dev` プロファイルのときだけその時点のコードを入力済みにする。TOTP を飛ばさず、開発環境でも 2 段階のログインを通す（2026-10-06 に human:kakimomokuri が承認。Bolt 13 の確認ポイント 7）。
+開発環境（`dev` プロファイル）では、開発体験を優先し、A-01 のメールアドレスと password を既定の開発用の利用者で入力済みにする（2026-10-06 に human:kakimomokuri が決定）。入力済みにするのは `dev` プロファイルの設定があるときだけで、既定の設定（ステージング・本番を含む）では入力済みにしない。値は開発用の利用者の固定の値で、本物の秘密を使わない。既定の設定で入力済みにならないことをテストで守る。Bolt 14 では `cargotracker.dev-login.accounts[n].role`・`email`・`password`（`application-dev.properties`。開発用の荷主担当者 2 人と営業担当者 1 人）を入れ、最初の利用者で A-01 を入力済みにし、A-01 の下に「開発用の利用者でログイン（開発環境だけ）」として利用者ごとのボタン（例: 「営業担当者でログイン（sales@dev.cargo-tracker.example）」）を出して、選んでそのままログインできるようにする（2026-10-06 に human:kakimomokuri が決定）。`dev` の外または `staging`・`prod` と一緒にこの設定があれば起動を失敗させる（ADR-011 の決定 3、ADR-012）。A-02（認証コード）は、開発用の利用者に固定の TOTP の秘密を持たせ、`dev` プロファイルのときだけその時点のコードを入力済みにする。TOTP を飛ばさず、開発環境でも 2 段階のログインを通す（2026-10-06 に human:kakimomokuri が承認。Bolt 13 の確認ポイント 7）。
 
 ### A-07 認証アプリの登録
 

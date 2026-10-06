@@ -1,11 +1,12 @@
 package com.example.cargotracker.identity.interfaces.web;
 
 import com.example.cargotracker.identity.devlogin.DevLoginProperties;
+import java.util.List;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 /**
- * 開発環境のログインの入力済み（守りの 1 層目）。dev プロファイルでだけ部品になり、ほかの環境ではこの部品自体がない。
+ * 開発環境のログインの入力済みと、開発用の利用者の選択（守りの 1 層目）。dev プロファイルでだけ部品になり、ほかの環境ではこの部品自体がない。
  * 設定の値が誤ってほかの環境に入っても、部品がなければ画面は入力済みにならない。
  */
 @Component
@@ -24,5 +25,10 @@ public class DevLoginPrefill {
 
     public String password() {
         return properties.accounts().getFirst().password();
+    }
+
+    /** 選んでそのままログインできる開発用の利用者。 */
+    public List<DevLoginProperties.Account> accounts() {
+        return properties.accounts();
     }
 }

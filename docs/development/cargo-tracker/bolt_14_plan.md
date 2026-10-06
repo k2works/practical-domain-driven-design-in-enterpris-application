@@ -4,7 +4,7 @@ title: "Bolt 14 計画 - password によるログインと session（US-18 の�
 description: "14 回目の Bolt の計画。Spring Security の form login と Spring Session JDBC を入れ、企業・利用者・役割・監査記録の表を作り、password によるログイン（A-01）、誤り・利用停止・無効な企業の拒否、無操作 30 分・発行から 8 時間の失効（A-03）、役割ごとのナビゲーションと A-04、開発環境の入力済みを作り、仮の主体を認証の主体に置き換えるまでを、ステップ 1〜5 で定義する。"
 tags: [development,bolt-plan]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-06T06:19:28Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-06T06:41:11Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-06T04:53:35Z }
 ---
@@ -458,6 +458,7 @@ AC2・AC4・AC5、CSRF、session の固定化の防止、監査記録、仮の�
 | 2026-10-06 | 初版（Bolt 13 終了報告の次の Bolt。範囲は人の決定で US-18 の password によるログインと session を 1 つの Bolt で） | anthropic/claude-opus-5-5 | — |
 | 2026-10-06 | 計画を承認。確認ポイント 1〜14（#6 と #13 の分け方、主体の型の置き場所、ADR 012、表、監査記録、bcrypt、Spring Session JDBC、CSRF と応答ヘッダー、ログインの時点の役割での認可、URL と画面、開発環境の入力済み、開発用の利用者、ステージングの利用者、テストの層）も決まった（Try T-6） | anthropic/claude-opus-5-5 | human:kakimomokuri |
 | 2026-10-06 | ステップ 1〜5 の結果を記録し、終了報告を書いた（ステップ 2・3 の承認ゲートと開発レビューの判断は、終了報告の承認の場でまとめて受ける。T-36） | anthropic/claude-opus-5-5 | — |
+| 2026-10-06 | 人の依頼で、開発環境のログインの画面に開発用の利用者を選んでそのままログインするボタンを足した（確認ポイント 11 の入力済みの拡張。守りの層は変えない） | anthropic/claude-opus-5-5 | — |
 
 ## 関連ドキュメント
 

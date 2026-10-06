@@ -27,6 +27,16 @@
         </div>
         <button type="submit" class="btn btn-primary">ログイン</button>
     </form>
+    <!-- 開発環境（dev）だけ: 開発用の利用者を選んでそのままログインする（2026-10-06 の人の決定）。既定の設定では出ない -->
+    <section th:if="${devAccounts != null}" class="mt-4" aria-labelledby="dev-login-heading">
+        <h2 id="dev-login-heading" class="h5">開発用の利用者でログイン（開発環境だけ）</h2>
+        <form th:each="account : ${devAccounts}" th:action="@{/login}" method="post" class="d-inline-block me-2 mb-2">
+            <input type="hidden" name="username" th:value="${account.email()}">
+            <input type="hidden" name="password" th:value="${account.password()}">
+            <button type="submit" class="btn btn-outline-secondary"
+                    th:text="${account.role().displayName()} + 'でログイン（' + ${account.email()} + '）'">荷主担当者でログイン</button>
+        </form>
+    </section>
     <p class="mt-4">ログインできない場合は、荷主の方は担当営業に、社内の方はシステム管理者にお問い合わせください。</p>
 </main>
 </body>

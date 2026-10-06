@@ -4,7 +4,7 @@ title: "アプリケーション開発環境セットアップ手順書 - cargo-
 description: "cargo-tracker（A 社国際貨物輸送管理システム）を、開発者の PC で起動・テスト・品質チェックするための手順を示す。"
 tags: [operation,playbook,setup]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-05T09:55:11Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-06T06:41:11Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-02T01:37:59Z }
   - { by: human:kakimomokuri, at: 2026-10-02T07:02:38Z }
@@ -77,7 +77,7 @@ IDE（IntelliJ IDEA など）から `CargoTrackerApplication` を直接起動す
 
 | URL | 画面 | 備考 |
 | :--- | :--- | :--- |
-| <http://localhost:8080/> | ログイン（A-01）と役割のホーム | 未認証ならログインの画面に移る。開発環境では荷主の開発用の利用者で入力済み。ログインすると、荷主は見積依頼の一覧（C-02）、営業担当者は受付一覧（S-02）へ移る。開発用の利用者のメールアドレスと password は [README](https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/blob/develop/apps/cargo-tracker/README.md) の「開発環境のログイン」を見る。営業の画面を使うときは、ヘッダーの「ログアウト」の後に、入力済みの値を営業担当者の値に書き換えてログインする |
+| <http://localhost:8080/> | ログイン（A-01）と役割のホーム | 未認証ならログインの画面に移る。開発環境では荷主の開発用の利用者で入力済み。ログインすると、荷主は見積依頼の一覧（C-02）、営業担当者は受付一覧（S-02）へ移る。開発用の利用者のメールアドレスと password は [README](https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/blob/develop/apps/cargo-tracker/README.md) の「開発環境のログイン」を見る。ログインの画面の下の「開発用の利用者でログイン」から、荷主担当者・営業担当者を選んでそのままログインできる。営業の画面を使うときは、ヘッダーの「ログアウト」の後に「営業担当者でログイン」を押す |
 | <http://localhost:8080/customer/transport-requests/new> | 見積依頼の作成（C-03。輸送条件・貨物・書類・確認の 4 段階） | 荷主の画面（荷主担当者でログインして開く）。必須条件を入れて提出すると（必要書類は任意。PDF・PNG・JPEG で 1 件 10 MB まで、1 つの版に 5 件まで（商業送り状 1 件、梱包明細 1 件、その他 3 件まで）。Q-INV-16）、見積依頼の詳細（C-04）に業務番号（例: `TR-2026-0001 版 1`）と「提出しました」が出る。内部の ID（UUID）は画面にもアドレスバーにも出さない（D-4）。希望到着期限は日本時間で `2026-11-02 09:00` の形で入れる |
 | <http://localhost:8080/customer/transport-requests> | 見積依頼の一覧（C-02） | 荷主の画面。自社の見積依頼だけを、最初の提出時刻の新しい順に示す。業務番号から詳細（C-04）を開ける。差し戻された見積依頼は「差戻し（お客様の対応待ち）」で出て、詳細で理由と不足事項を読み、「編集して出し直す」から版 2 を出し直せる |
 | <http://localhost:8080/staff/transport-requests> | 見積依頼の受付一覧（S-02） | 社内の画面（営業担当者でログインして開く）。審査中の見積依頼を提出時刻の古い順に示す。業務番号から審査（S-03）を開き、確定・差戻しできる |
