@@ -419,6 +419,48 @@
         "comments": "<p>置換先の見積り ID（置換済みのとき）</p>"
     },
     {
+        "tableName": "quotation",
+        "tableFileName": "quotation",
+        "tableType": "Table",
+        "keyClass": "",
+        "keyTitle": "",
+        "name": "shipper_response",
+        "type": "varchar",
+        "length": 30,
+        "nullable": "√",
+        "autoUpdated": "",
+        "defaultValue": "null",
+        "comments": "<p>荷主の回答（PROCEED: 詳細経路設計へ進む）</p>"
+    },
+    {
+        "tableName": "quotation",
+        "tableFileName": "quotation",
+        "tableType": "Table",
+        "keyClass": "",
+        "keyTitle": "",
+        "name": "responded_by",
+        "type": "uuid",
+        "length": 2147483647,
+        "nullable": "√",
+        "autoUpdated": "",
+        "defaultValue": "null",
+        "comments": "<p>回答者</p>"
+    },
+    {
+        "tableName": "quotation",
+        "tableFileName": "quotation",
+        "tableType": "Table",
+        "keyClass": "",
+        "keyTitle": "",
+        "name": "responded_at",
+        "type": "timestamptz",
+        "length": 35,
+        "nullable": "√",
+        "autoUpdated": "",
+        "defaultValue": "null",
+        "comments": "<p>回答時刻（詳細経路設計の依頼時刻）</p>"
+    },
+    {
         "tableName": "required_document",
         "tableFileName": "required_document",
         "tableType": "Table",

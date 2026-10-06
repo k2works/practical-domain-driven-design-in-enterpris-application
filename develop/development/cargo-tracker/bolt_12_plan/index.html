@@ -7243,11 +7243,18 @@
 <li>業務ルール層のシナリオはすべて passed（+10）。<code>check</code> 緑（<code>test</code> 765 件。Bolt 11 の 737 件から +28）。回答の列（<code>shipper_response</code> ほか）はステップ 3 で足すまで、読み出しで空にしている</li>
 </ul>
 </li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>3. 表（内側の TDD、統合テスト）</strong> 【承認ゲート: スキーマの変更】</li>
+<li>[?] <strong>3. 表（内側の TDD、統合テスト）</strong> 【承認ゲート: スキーマの変更】</li>
 <li>統合テスト（PostgreSQL）を先に書く: 詳細設計依頼済みの保存と読み出し、回答の列の CHECK（そろって NULL・そろって値、詳細設計依頼済みなら必須）、部分一意インデックスが詳細設計依頼済みを数える、回答と再見積りの同時の更新が楽観ロックで拒否される、輸送要求の <code>ROUTING</code> の保存</li>
 <li>マイグレーション: <code>common</code> に状態の値・回答の 3 列・CHECK・COMMENT、<code>postgresql</code> に <code>ux_quotation_active</code> の作り直し。H2 のスモークを先に回す（T-15）</li>
 <li>MyBatis のリポジトリ: 回答の列、S-02 の経路設計中の読み取りモデル</li>
 <li>完了の判定: <code>check</code> が緑。push して CI を確かめる。スキーマの承認を受ける</li>
+<li>結果（2026-10-06 10:17〜10:21。最後のコミット <code>48e31d4</code> の時刻）<ul>
+<li>Red: 統合テスト（詳細設計依頼済みの回答者・回答時刻と <code>shipper_response</code> の保存と読み出し、部分一意インデックスが詳細設計依頼済みを数える、回答の列の CHECK の 3 例、回答と再見積りの同時の更新が楽観ロックで止まる、経路設計中の一覧と輸送要求の <code>ROUTING</code> の保存）を先に書いた。読み取りモデルの型 <code>RoutingRequestedSummary</code> とリポジトリの口（空を返す）だけを先に足し、新しく書いた 7 件だけが失敗することを確かめてコミットした（<code>83ae352</code>）</li>
+<li>Green: <code>common</code> の <code>V20261006100000__add_quotation_shipper_response.sql</code>（<code>ROUTING_REQUESTED</code>、回答の 3 列、<code>ck_quotation_shipper_response</code>、<code>ck_quotation_responded</code>、COMMENT）と、<code>postgresql</code> の <code>V20261006100100__add_routing_requested_to_quotation_active_index.sql</code>（<code>ux_quotation_active</code> を作り直す）。H2 のスモークを先に回して通した（T-15）。MyBatis の行・マッパー・リポジトリに回答の列と経路設計中の一覧（<code>selectRoutingRequested</code>）を足した。<code>shipper_response</code> は、回答者があれば <code>PROCEED</code> と書く（辞退は AC2 で集約に回答の種類を足す）（<code>48e31d4</code>）</li>
+<li>実行中に直した誤り: 復元のメソッドの分岐が checkstyle の上限（11 &gt; 10）を超えた（null を扱う小さな関数に分けた）</li>
+<li><code>check</code> 緑（<code>test</code> 772 件。統合テスト +7）</li>
+</ul>
+</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>4. 画面の層（Red → Green）</strong>（承認はステップ 5 とまとめて受ける）</li>
 <li>画面の層の受入シナリオを先に書き、<code>uiTest</code> で失敗を記録する（T-21。<code>features/ui/request_route_design_ui.feature</code>、<code>@ui @US-24</code>。デモ項目に <code>@demo @demo-bolt-12/&lt;名前&gt;</code>）<ul>
 <li>主成功: 荷主が C-04 から「見積りに回答する」で C-05 を開き、キー操作だけで「この条件で詳細経路設計へ進む」を選ぶ。C-04 に結果と「経路設計中（A 社の対応待ち）」、見積りの「詳細経路設計を依頼済み」が出て、回答の入口がない。営業の S-02 の経路設計中の表に出て、S-04 は読み取り専用</li>

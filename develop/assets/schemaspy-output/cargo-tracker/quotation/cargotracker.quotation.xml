@@ -46,6 +46,9 @@
          <column autoUpdated="false" defaultValue="null" digits="0" id="15" name="replaced_by_quotation_id" nullable="true" remarks="置換先の見積り ID（置換済みのとき）" size="2147483647" type="uuid" typeCode="1111">
             <parent column="id" foreignKey="fk_quotation_replaced_by" implied="false" onDeleteCascade="false" schema="quotation" table="quotation"/>
          </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="16" name="shipper_response" nullable="true" remarks="荷主の回答（PROCEED: 詳細経路設計へ進む）" size="30" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="17" name="responded_by" nullable="true" remarks="回答者" size="2147483647" type="uuid" typeCode="1111"/>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="18" name="responded_at" nullable="true" remarks="回答時刻（詳細経路設計の依頼時刻）" size="35" type="timestamptz" typeCode="93"/>
          <primaryKey column="id" sequenceNumberInPK="1"/>
          <index name="pk_quotation" unique="true">
             <column ascending="true" name="id"/>
@@ -66,8 +69,10 @@
          <checkConstraint constraint="(quotation_no &gt;= 1)" name="ck_quotation_no"/>
          <checkConstraint constraint="(((status)::text &lt;&gt; 'PRESENTED'::text) OR ((presented_at IS NOT NULL) AND (internal_approved_by IS NOT NULL) AND (internal_approved_at IS NOT NULL)))" name="ck_quotation_presented"/>
          <checkConstraint constraint="((((status)::text = 'REPLACED'::text) AND (replaced_by_quotation_id IS NOT NULL)) OR (((status)::text &lt;&gt; 'REPLACED'::text) AND (replaced_by_quotation_id IS NULL)))" name="ck_quotation_replaced"/>
+         <checkConstraint constraint="((((shipper_response IS NULL) AND (responded_by IS NULL) AND (responded_at IS NULL)) OR ((shipper_response IS NOT NULL) AND (responded_by IS NOT NULL) AND (responded_at IS NOT NULL))) AND (((status)::text &lt;&gt; 'ROUTING_REQUESTED'::text) OR (shipper_response IS NOT NULL)))" name="ck_quotation_responded"/>
          <checkConstraint constraint="(route_policy_arrival_at &gt; route_policy_departure_at)" name="ck_quotation_route_policy_dates"/>
-         <checkConstraint constraint="((status)::text = ANY ((ARRAY['DRAFT'::character varying, 'PENDING_APPROVAL'::character varying, 'PRESENTED'::character varying, 'EXPIRED'::character varying, 'REPLACED'::character varying])::text[]))" name="ck_quotation_status"/>
+         <checkConstraint constraint="((shipper_response)::text = 'PROCEED'::text)" name="ck_quotation_shipper_response"/>
+         <checkConstraint constraint="((status)::text = ANY ((ARRAY['DRAFT'::character varying, 'PENDING_APPROVAL'::character varying, 'PRESENTED'::character varying, 'ROUTING_REQUESTED'::character varying, 'EXPIRED'::character varying, 'REPLACED'::character varying])::text[]))" name="ck_quotation_status"/>
          <checkConstraint constraint="(total_amount &gt; (0)::numeric)" name="ck_quotation_total_amount"/>
       </table>
       <table name="required_document" remarks="必要書類 [append-only]" schema="quotation" type="TABLE">
