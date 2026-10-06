@@ -3146,7 +3146,7 @@
     
   
   
-    <span class="md-status md-status--draft"></span>
+    <span class="md-status md-status--stable"></span>
   
 
   
@@ -3978,7 +3978,7 @@
     
   
   
-    <span class="md-status md-status--draft"></span>
+    <span class="md-status md-status--stable"></span>
   
 
   
@@ -7372,7 +7372,7 @@
 <li>学習テスト 29 件がすべて通る（候補の比較 13、2 段階のログイン 9、開発環境の入力済み 3、password の保存 2、session の期限 1、準備 1）</li>
 </ul>
 </li>
-<li>[?] <strong>4. 結論を ADR の案と技術スタックに書く</strong> 【承認ゲート: 方式の決定】</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>4. 結論を ADR の案と技術スタックに書く</strong> 【承認ゲート: 方式の決定】</li>
 <li><code>docs/adr/cargo-tracker/011-mfa-totp.md</code>（状態: 提案）: 背景、選択肢（ライブラリの候補、枠組みの使い方）、決定の案、影響（US-18 の表・画面・ドメインモデルに要るもの、監査記録のイベントの出どころ、仮の主体の置き換えの順）、未確認の項目</li>
 <li>技術スタックの多要素認証の行と TS-01 の行、リスク台帳の行を更新する</li>
 <li>完了の判定: <code>okf:check</code> が ERROR 0。push して CI を確かめる。人が方式の案を選ぶ</li>
@@ -7529,13 +7529,13 @@
 <h2 id="_10">完了条件<a class="headerlink" href="#_10" title="Permanent link">&para;</a></h2>
 <h3 id="definition-of-done">Definition of Done<a class="headerlink" href="#definition-of-done" title="Permanent link">&para;</a></h3>
 <ul class="task-list">
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> ステップ 1〜5 が完了し、計画・方式の決定・終了報告の承認ゲートを人が通した</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> スパイクの学習テストが通り、実行の結果を終了報告に載せた</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> TOTP の候補の比較の表と、2 段階のログインの構成を、ADR 011 の案に書いた</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> 技術スタックの TS-01 とリスク台帳を更新した</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> 本体の <code>check</code> と CI が緑のまま（本体のコードを変えていない）</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> US-18 の Issue に結論をコメントした</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> ユーザーマニュアルは更新しない（本体の画面を変えない）</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> ステップ 1〜5 が完了し、計画・方式の決定・終了報告の承認ゲートを人が通した（方式の決定のゲートとレビューの判断は、終了報告の承認の場でまとめて通した。T-36）</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> スパイクの学習テストが通り、実行の結果を終了報告に載せた</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> TOTP の候補の比較の表と、2 段階のログインの構成を、ADR 011 の案に書いた</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> 技術スタックの TS-01 とリスク台帳を更新した</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> 本体の <code>check</code> と CI が緑のまま（本体のコードを変えていない）</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> US-18 の Issue に結論をコメントした</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> ユーザーマニュアルは更新しない（本体の画面を変えない）</li>
 </ul>
 <h3 id="_11">デモ項目<a class="headerlink" href="#_11" title="Permanent link">&para;</a></h3>
 <table>
@@ -7588,6 +7588,12 @@
 <td style="text-align: left;">ステップ 3 の Red の記録を事実に直し（レビュー K-07）、ステップ 4・5 の結果を書いた</td>
 <td style="text-align: left;">anthropic/claude-opus-5-5</td>
 <td style="text-align: left;">—</td>
+</tr>
+<tr>
+<td style="text-align: left;">2026-10-06</td>
+<td style="text-align: left;">方式の決定（ステップ 4。ADR-011 は「提案」のまま）、レビューの判断（D-45〜D-48）、終了報告の承認をまとめて通し、Bolt を終えた（人の変更依頼 0）。#6・#13 の状態は変えていない</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5</td>
+<td style="text-align: left;">human:kakimomokuri</td>
 </tr>
 </tbody>
 </table>
