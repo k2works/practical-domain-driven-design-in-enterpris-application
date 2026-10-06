@@ -4,7 +4,7 @@ title: "Bolt 12 計画 - 詳細経路設計へ進む回答（US-24 AC1）"
 description: "12 回目の Bolt の計画。荷主が提示済みで有効な見積りに詳細経路設計へ進むと回答し、見積りを詳細設計依頼済みにして DE-16 を発行し、輸送要求を経路設計中にするまでを、回答の拒否、Q-INV-18 のインデックスの作り直し、C-05・C-04・S-02・S-04 の利用者の見え方とあわせて、ステップ 1〜5 で定義する。"
 tags: [development,bolt-plan]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-06T01:40:03Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-06T01:48:48Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-06T01:07:01Z }
 ---
@@ -271,7 +271,7 @@ URL（確認ポイント 7）: `GET /customer/transport-requests/{業務番号}/
   - 結果（2026-10-06 10:09〜10:17。最後のコミット `0515eb1` の時刻）
     - Red: 業務ルール層の受入シナリオ 10 件（`request_route_design.feature`。シナリオアウトラインの 3 例を含む）と、見積りの集約・輸送要求・DE-16 の受け取り・荷主の回答の入力ポートの単体テストを先に書いた。まだない型を呼ぶためのコンパイルの失敗で Red を確かめ、Red のままコミットした（`4188c9b`。CI を赤にしないよう push は Green と一緒にした）。再配信のステップ（直前に配信したイベントをもう一度配信する）をテスト用の配信に足した
     - Green: `QuotationStatus.ROUTING_REQUESTED`、`QuotationRejection` の `NOT_PRESENTED`・`ROUTING_REQUESTED`、見積りの集約の `requestRouteDesign`・`responseRejectionAt`・回答者と回答時刻、`isExpiredAt`・`isActive`・`requoteRejection` の詳細設計依頼済み、`RouteDesignRequested`（DE-16）、`TransportRequestStatus.ROUTING`・`markRoutingRequested`、`RouteDesignRequestedEventHandler`、荷主の回答の入力ポート `QuotationResponseService`（`RequestRouteDesignCommand`・`RouteDesignRequestOutcome`）。画面の状態の表示名と拒否の文言は、網羅のために値だけ足した（画面はステップ 4）（`0515eb1`）
-    - 計画からの変更: 承認待ちの見積りへの回答は、理由を示す代わりに「見つからない」にした。荷主に提示していない見積りは荷主に見えないため（Bolt 10 の照会の規則と同じ。提示前に置き換えた見積りも同じ）。集約は理由「提示済みでない」を返し、入力ポートが荷主に見えるかで先に絞る。DE-16 は DE-03 より先に届いても輸送要求を経路設計中にする（見積り作成中からも変える）。遅れて届いた DE-03 では戻らない
+    - 計画からの変更: 荷主の回答の入力ポートは `QuotationCommandService` に足さず、`QuotationResponseService` に分けた（荷主の入力ポートを社内と分け、必ず荷主企業で絞るため。Bolt 12 レビュー R-06）。承認待ちの見積りへの回答は、理由を示す代わりに「見つからない」にした。荷主に提示していない見積りは荷主に見えないため（Bolt 10 の照会の規則と同じ。提示前に置き換えた見積りも同じ）。集約は理由「提示済みでない」を返し、入力ポートが荷主に見えるかで先に絞る。DE-16 は DE-03 より先に届いても輸送要求を経路設計中にする（見積り作成中からも変える）。遅れて届いた DE-03 では戻らない
     - 実行中に直した誤り: 書式の検査（spotless）で 1 回止まった（整形をかけ直した）。業務ルール層のテストの「古い版」の単体テストは今の状態遷移で作れない場面だったため外した
     - 業務ルール層のシナリオはすべて passed（+10）。`check` 緑（`test` 765 件。Bolt 11 の 737 件から +28）。回答の列（`shipper_response` ほか）はステップ 3 で足すまで、読み出しで空にしている
 - [?] **3. 表（内側の TDD、統合テスト）** 【承認ゲート: スキーマの変更】
