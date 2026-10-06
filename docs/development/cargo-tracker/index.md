@@ -39,13 +39,13 @@ Bolt がイテレーションに当たります。ふりかえりは各 Bolt の
 | 11 | [見積りの失効と置換（US-03 AC4・AC5）](bolt_11_plan.md) | [終了報告](bolt_11_report.md) | W2 | 完了 |
 | 12 | [詳細経路設計へ進む回答（US-24 AC1）](bolt_12_plan.md) | [終了報告](bolt_12_report.md) | W2 | 完了 |
 | 13 | [TOTP と Spring Security 7 の多要素認証のスパイク（TS-01）](bolt_13_plan.md) | [終了報告](bolt_13_report.md) | W2 | 完了 |
-| 14 | [password によるログインと session（US-18 の一部）](bolt_14_plan.md) | — | W2 | 計画済み |
+| 14 | [password によるログインと session（US-18 の一部）](bolt_14_plan.md) | [終了報告](bolt_14_report.md) | W2 | 完了（終了報告の承認待ち） |
 
 Bolt を始めるときに行を追加します。
 
 ### デモの動画
 
-各 Bolt のデモ項目に当たる画面の層のシナリオを、Playwright で録画した動画です（`./gradlew demoVideo`。シナリオの `@demo-<Bolt>/<名前>` の印で選ぶ）。Bolt 9 までの動画は、2026-10-05 にいまのコードで撮り直したもので、その Bolt の時点の画面ではなく、その Bolt で作った機能のいまの振る舞いを示します（例: Bolt 5 の審査の確定の後は、Bolt 10 から見積りの作成へ進む）。
+各 Bolt のデモ項目に当たる画面の層のシナリオを、Playwright で録画した動画です（`./gradlew demoVideo`。シナリオの `@demo-<Bolt>/<名前>` の印で選ぶ）。Bolt 9 までの動画は、2026-10-05 にいまのコードで撮り直したもので、その Bolt の時点の画面ではなく、その Bolt で作った機能のいまの振る舞いを示します（例: Bolt 5 の審査の確定の後は、Bolt 10 から見積りの作成へ進む）。2026-10-06 の Bolt 14 で全部を撮り直し、どの動画もログイン（A-01）を経て画面を開きます。
 
 | Bolt | 内容 | デモ | 動画 |
 | :--- | :--- | :--- | :--- |
@@ -53,7 +53,6 @@ Bolt を始めるときに行を追加します。
 |  |  | 誤りのある入力で提出すると、エラー要約から項目へ移って直し出し直せる | [input-error.webm](../../assets/demo/bolt-01/input-error.webm){:target="_blank"} |
 | 2 | CI と品質の安全網 | （画面のデモなし。CI と静的解析） | — |
 | 3 | E2E の基盤と生きたドキュメント | キー操作だけの提出から社内の一覧まで（画面の層の基盤） | [keyboard-submit-to-kpi.webm](../../assets/demo/bolt-03/keyboard-submit-to-kpi.webm){:target="_blank"} |
-|  |  | 入口の一覧から見積依頼の作成画面へ移る | [entrance.webm](../../assets/demo/bolt-03/entrance.webm){:target="_blank"} |
 | 4 | 業務番号と必須条件の検証（US-01） | 提出すると業務番号（TR-年-連番）が示される | [submit-with-number.webm](../../assets/demo/bolt-04/submit-with-number.webm){:target="_blank"} |
 |  |  | 出発地と目的地を同じにし希望到着期限を空にすると、エラー要約から直して提出できる | [error-summary.webm](../../assets/demo/bolt-04/error-summary.webm){:target="_blank"} |
 |  |  | 特殊貨物を選ぶと対象外と手動窓口が示され提出できない | [special-cargo.webm](../../assets/demo/bolt-04/special-cargo.webm){:target="_blank"} |
@@ -76,6 +75,9 @@ Bolt を始めるときに行を追加します。
 |  |  | 有効期限を過ぎた承認待ちの見積りは失効と示され、提示できず再見積りの操作がある | [expired-quotation.webm](../../assets/demo/bolt-11/expired-quotation.webm){:target="_blank"} |
 | 12 | 詳細経路設計へ進む回答（US-24 AC1） | 荷主が C-04 からキー操作だけで C-05 を開いて詳細経路設計へ進み、経路設計中（A 社の対応待ち）を確かめ、営業が受付一覧の経路設計中から見積りを読み取り専用で開く | [request-route-design.webm](../../assets/demo/bolt-12/request-route-design.webm){:target="_blank"} |
 |  |  | 有効期限を過ぎた見積りの回答の画面を開くと、理由が示されて見積依頼の詳細に戻り、回答の入口がない | [expired-response.webm](../../assets/demo/bolt-12/expired-response.webm){:target="_blank"} |
+| 14 | password によるログインと session（US-18 の一部） | 荷主担当者がログインし、荷主のホームとナビとヘッダーを確かめ、社内の受付一覧の URL を直接開くと権限なしになる | [shipper-login.webm](../../assets/demo/bolt-14/shipper-login.webm){:target="_blank"} |
+|  |  | 営業担当者がログインし、社内のナビとヘッダーを確かめ、荷主の画面の URL を直接開くと権限なしになる | [staff-login.webm](../../assets/demo/bolt-14/staff-login.webm){:target="_blank"} |
+|  |  | 誤った password でログインしようとすると、どれが誤りかを示さない文言が出て、メールアドレスだけが残る | [wrong-password.webm](../../assets/demo/bolt-14/wrong-password.webm){:target="_blank"} |
 
 ### 進捗サマリー
 

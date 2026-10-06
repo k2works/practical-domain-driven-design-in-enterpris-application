@@ -4,7 +4,7 @@ title: "Bolt 14 計画 - password によるログインと session（US-18 の�
 description: "14 回目の Bolt の計画。Spring Security の form login と Spring Session JDBC を入れ、企業・利用者・役割・監査記録の表を作り、password によるログイン（A-01）、誤り・利用停止・無効な企業の拒否、無操作 30 分・発行から 8 時間の失効（A-03）、役割ごとのナビゲーションと A-04、開発環境の入力済みを作り、仮の主体を認証の主体に置き換えるまでを、ステップ 1〜5 で定義する。"
 tags: [development,bolt-plan]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-06T06:13:27Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-06T06:19:28Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-06T04:53:35Z }
 ---
@@ -303,7 +303,7 @@ URL（確認ポイント 10）: `GET /login`（A-01）、`POST /login`、`POST /
   - ADR 012「認証の主体と Spring Security・Spring Session の導入」（新規、提案）: 主体の型の置き場所、`SecurityFilterChain` の置き場所、session の保存先、監査の同期の書き込み、開発環境の入力済みの守り。TOTP は ADR-011 のまま
   - 技術スタック: Spring Security・Spring Session JDBC・thymeleaf-extras-springsecurity を「採用」にする
   - 完了の判定: `okf:check` が ERROR 0、`documentationTest` が緑。push する
-  - 結果（2026-10-06 13:53〜13:58 JST。最後のコミットの時刻）: ユーザーストーリー（US-18 の Bolt 14 の決定）、ドメインモデル（`AuthenticatedActor`・`Role` を共有カーネルに、IA-INV-09、監査記録の操作）、データモデル（Bolt 14 で作る列と W5 で足す列、役割の値、外部キーを張らない理由、`db/dev-data/`、`spring_session`）、UI 設計（A-01・ログアウト・A-03・A-04・ホーム・準備中の画面の URL と文言、ヘッダー、開発環境の入力済みの設定）、非機能要件（SEC-07・SEC-17 を確定）、技術スタック（Spring Security・Spring Session JDBC を Bolt 14 で導入）に反映した。[ADR-012](../../adr/cargo-tracker/012-authentication-principal-and-session.md)（提案）を書き、ADR の索引と mkdocs に足した。`okf:check` ERROR 0、`documentationTest` 緑
+  - 結果（2026-10-06 13:53〜13:56 JST。最後のコミット `f1173bd` の時刻）: ユーザーストーリー（US-18 の Bolt 14 の決定）、ドメインモデル（`AuthenticatedActor`・`Role` を共有カーネルに、IA-INV-09、監査記録の操作）、データモデル（Bolt 14 で作る列と W5 で足す列、役割の値、外部キーを張らない理由、`db/dev-data/`、`spring_session`）、UI 設計（A-01・ログアウト・A-03・A-04・ホーム・準備中の画面の URL と文言、ヘッダー、開発環境の入力済みの設定）、非機能要件（SEC-07・SEC-17 を確定）、技術スタック（Spring Security・Spring Session JDBC を Bolt 14 で導入）に反映した。[ADR-012](../../adr/cargo-tracker/012-authentication-principal-and-session.md)（提案）を書き、ADR の索引と mkdocs に足した。`okf:check` ERROR 0、`documentationTest` 緑
 - [x] **2. 企業・利用者・監査記録の業務のルールと表（内側の TDD、統合テスト）** 【承認ゲート: 業務のルールとスキーマの変更】
   - 単体テストを先に書く: 有効な企業の有効な利用者は認証できる。利用停止の利用者、無効な企業の利用者は理由付きで認証できない。メールアドレスの正規化（前後の空白、大文字）。役割の値が BR-15 の 8 つ
   - 統合テスト（PostgreSQL）を先に書く: 企業・利用者・役割の保存と読み出し、email の一意（大文字小文字を区別しない）、役割の CHECK、`audit_record` の UPDATE・DELETE がアプリの利用者で拒否される、`spring_session` の表がある
@@ -357,12 +357,13 @@ URL（確認ポイント 10）: `GET /login`（A-01）、`POST /login`、`POST /
     - 計画からの変更: (1) コントローラーは `@AuthenticationPrincipal` を使わず、引数の型だけで受け取る（注釈も Spring Security の型のため。ADR-012 を直した）。(2) 準備中の画面に予定の週は出さない（週は計画の見直しで動くため、画面に古い予定を残さない）。(3) 準備中の画面の URL は、まだ作っていない画面の予定の URL（`/customer/bookings` など）にした。(4) 開発環境の入力済みの部品は、画面の層の部品のため `identity.interfaces.web` に置いた（ADR-011 の決定 3 は「プロファイルの部品」とだけ決めている）
     - 実行中に直した誤り: SpotBugs（起動を止める守りのコンストラクターが例外を投げる。クラスを final にした）。準備中の画面のレイアウトの名前を変数で渡すには前処理（`__${layout}__`）が要った
     - `check` 緑（`test` 864 件。+10）。`uiTest` 緑（47 本。Bolt 12 の 41 本から +6。axe-core の違反 0 件）
-- [ ] **5. 開発レビューと Bolt 終了報告**
+- [x] **5. 開発レビューと Bolt 終了報告**
   - `developing-review` で Bolt 14 の変更をレビューし、指摘への対応を決める（T-28）。セキュリティの観点を必ず含める
   - `check`・`uiTest`・CI・SonarQube の品質ゲート（PASS）を確かめる
   - デモ項目のシナリオを `./gradlew demoVideo -PdemoBolt=bolt-14` で録画し、`docs/assets/demo/bolt-14/` に置いて終了報告と開発の索引からリンクする（T-31）
   - `bolt_14_report.md` を書く（仮説 H1〜H3 の結論、各ステップの時刻と Red の記録、テストの件数は全体から数える（T-30）、所要時間と打ち切った項目（H3））
   - #6 の AC2 にチェックを付けてクローズする。#13 に前倒しした AC と残り（TOTP・ロック・再設定・AC6・警告）をコメントする（確認ポイント 1）
+  - 結果（2026-10-06 14:47〜15:17 JST）: 5 つの視点でレビューし（[レビュー](../../review/cargo-tracker/bolt_14_review_20261006.md)。高 6・中 12・低 7）、D-49〜D-53（AI の判断。T-36）の範囲で直した（Red `75d8fe6`、Green `89eb6ad`、文書 `16a5967`）。無操作 30 分の設定の鍵が Spring Session に効いていなかったことを、既定と違う値のテストで見つけて直した（D-50）。SonarQube は 2 回不合格になり（Code Smell 20 件、次に H2 のコンソールの道筋の CSRF の除外 1 件）、直して PASS にした（H2 のコンソールは外した。D-52）。デモ項目の 3 本を `./gradlew demoVideo` で録画し、画面がすべてログインを経るため過去の Bolt の動画も撮り直したまま残した。`check`（883 件）・`uiTest`（48 本）は緑。[Bolt 14 終了報告](bolt_14_report.md) を書いた。#6 をクローズし、#13 にコメントした
 
 ### 時間の配分と打ち切り
 
@@ -427,19 +428,19 @@ AC2・AC4・AC5、CSRF、session の固定化の防止、監査記録、仮の�
 
 ### Definition of Done
 
-- [ ] ステップ 1〜5 が完了し、計画・ステップ 2（業務のルールとスキーマ）・ステップ 3（セキュリティ）・開発レビューの判断・終了報告の承認ゲートを人が通した
-- [ ] `./gradlew check` と `./gradlew uiTest` がローカルと CI の両方で緑。各ステップの終わりに push し、CI を確かめた
-- [ ] SonarQube の品質ゲートが PASS
-- [ ] セキュリティの統合テストで、AC2・AC4・AC5（30 分・8 時間の境界の 3 点）、session ID の変化、CSRF、役割の分離、監査記録の同期の書き込みが緑
-- [ ] 画面の層で `@US-18-AC2` のシナリオと、ログイン・ナビゲーション・A-04・ログアウトのシナリオが緑。既存の `@ui` のシナリオがログインを経て緑
-- [ ] `ProvisionalActorProperties` と設定がなくなり、ArchUnit で `quotation` が Spring Security の型に依存しないことを確かめた
-- [ ] 既定の設定で A-01 が入力済みにならず、dev の外の `cargotracker.dev-login.*` で起動が失敗することをテストで確かめた
-- [ ] 確認ポイント 1〜14 の決定が、設計文書と ADR 012 から追える
-- [ ] 開発レビューを行い、指摘への対応を終了報告に書いた（T-28）
-- [ ] デモ項目の動画を撮り、終了報告と開発の索引からリンクした（T-31）
-- [ ] `bolt_14_report.md` に仮説 H1〜H3 の結論、各ステップの時刻と Red の記録、所要時間を書いた
-- [ ] #6 をクローズし、#13 にコメントした
-- [ ] ユーザーマニュアルは更新しない（マニュアルはまだない。認証と主要な画面がそろってから書く）
+- [ ] ステップ 1〜5 が完了し、計画・ステップ 2（業務のルールとスキーマ）・ステップ 3（セキュリティ）・開発レビューの判断・終了報告の承認ゲートを人が通した（ステップ 1〜5 は完了。ステップ 2・3 と開発レビューの判断は、終了報告の承認の場でまとめて受ける。T-36）
+- [x] `./gradlew check` と `./gradlew uiTest` がローカルと CI の両方で緑。各ステップの終わりに push し、CI を確かめた
+- [x] SonarQube の品質ゲートが PASS
+- [x] セキュリティの統合テストで、AC2・AC4・AC5（30 分・8 時間の境界の 3 点）、session ID の変化、CSRF、役割の分離、監査記録の同期の書き込みが緑
+- [x] 画面の層で `@US-18-AC2` のシナリオと、ログイン・ナビゲーション・A-04・ログアウトのシナリオが緑。既存の `@ui` のシナリオがログインを経て緑
+- [x] `ProvisionalActorProperties` と設定がなくなり、ArchUnit で `quotation` が Spring Security の型に依存しないことを確かめた
+- [x] 既定の設定で A-01 が入力済みにならず、dev の外の `cargotracker.dev-login.*` で起動が失敗することをテストで確かめた
+- [x] 確認ポイント 1〜14 の決定が、設計文書と ADR 012 から追える
+- [x] 開発レビューを行い、指摘への対応を終了報告に書いた（T-28）
+- [x] デモ項目の動画を撮り、終了報告と開発の索引からリンクした（T-31）
+- [x] `bolt_14_report.md` に仮説 H1〜H3 の結論、各ステップの時刻と Red の記録、所要時間を書いた
+- [x] #6 をクローズし、#13 にコメントした
+- [x] ユーザーマニュアルは更新しない（マニュアルはまだない。認証と主要な画面がそろってから書く）
 
 ### デモ項目
 
@@ -456,6 +457,7 @@ AC2・AC4・AC5、CSRF、session の固定化の防止、監査記録、仮の�
 | :--- | :--- | :--- | :--- |
 | 2026-10-06 | 初版（Bolt 13 終了報告の次の Bolt。範囲は人の決定で US-18 の password によるログインと session を 1 つの Bolt で） | anthropic/claude-opus-5-5 | — |
 | 2026-10-06 | 計画を承認。確認ポイント 1〜14（#6 と #13 の分け方、主体の型の置き場所、ADR 012、表、監査記録、bcrypt、Spring Session JDBC、CSRF と応答ヘッダー、ログインの時点の役割での認可、URL と画面、開発環境の入力済み、開発用の利用者、ステージングの利用者、テストの層）も決まった（Try T-6） | anthropic/claude-opus-5-5 | human:kakimomokuri |
+| 2026-10-06 | ステップ 1〜5 の結果を記録し、終了報告を書いた（ステップ 2・3 の承認ゲートと開発レビューの判断は、終了報告の承認の場でまとめて受ける。T-36） | anthropic/claude-opus-5-5 | — |
 
 ## 関連ドキュメント
 
