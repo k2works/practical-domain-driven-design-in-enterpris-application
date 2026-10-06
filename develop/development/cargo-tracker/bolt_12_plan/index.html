@@ -7223,7 +7223,7 @@
 <li>リリース計画の台帳: D-36-3・D-41-3 の「影響する文書」に US-24 を足す</li>
 <li>完了の判定: <code>okf:check</code> が ERROR 0、<code>documentationTest</code> が緑。push する</li>
 <li>結果（2026-10-06 10:07〜10:09。最後のコミット <code>0f768b7</code> の時刻）: ユーザーストーリー（US-24 の Bolt 12 の決定）、ドメインモデル（Q-INV-09・18、荷主の回答の段落、DE-16 の項目と購読者）、データモデル（<code>quotation</code> の Bolt 12 の値・列・CHECK、<code>ux_quotation_active</code> の作り直し）、UI 設計（C-04 の回答の入口、C-05 の URL と範囲、S-02 の経路設計中の表、S-04 の詳細設計依頼済み、荷主の進み具合の経路設計中）に反映した。台帳の D-36-3・D-41-3 は開始準備で足した。<code>okf:check</code> ERROR 0、<code>documentationTest</code> 緑</li>
-<li>[?] <strong>2. 回答の業務のルール（業務ルール層の Red → Green）</strong> 【承認ゲート: 業務のルール（Q-INV-07・09・18、DE-16）】</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>2. 回答の業務のルール（業務ルール層の Red → Green）</strong> 【承認ゲート: 業務のルール（Q-INV-07・09・18、DE-16）】</li>
 <li>業務ルール層の受入シナリオを先に書き、Red をコミットする（<code>features/quotation/request_route_design.feature</code>、<code>@US-24 @must @US-24-AC1</code>）<ul>
 <li>提示済みで有効な見積りに、荷主担当者が詳細経路設計へ進むと回答すると、見積りは詳細設計依頼済みになり回答者と回答時刻が記録され、DE-16 が発行され、輸送要求は経路設計中になる（AC1）</li>
 <li>回答の時刻が有効期限の 1 秒前なら進める。同時刻と 1 秒後は失効で拒否される（シナリオアウトライン。Q-INV-07）</li>
@@ -7243,7 +7243,7 @@
 <li>業務ルール層のシナリオはすべて passed（+10）。<code>check</code> 緑（<code>test</code> 765 件。Bolt 11 の 737 件から +28）。回答の列（<code>shipper_response</code> ほか）はステップ 3 で足すまで、読み出しで空にしている</li>
 </ul>
 </li>
-<li>[?] <strong>3. 表（内側の TDD、統合テスト）</strong> 【承認ゲート: スキーマの変更】</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>3. 表（内側の TDD、統合テスト）</strong> 【承認ゲート: スキーマの変更】</li>
 <li>統合テスト（PostgreSQL）を先に書く: 詳細設計依頼済みの保存と読み出し、回答の列の CHECK（そろって NULL・そろって値、詳細設計依頼済みなら必須）、部分一意インデックスが詳細設計依頼済みを数える、回答と再見積りの同時の更新が楽観ロックで拒否される、輸送要求の <code>ROUTING</code> の保存</li>
 <li>マイグレーション: <code>common</code> に状態の値・回答の 3 列・CHECK・COMMENT、<code>postgresql</code> に <code>ux_quotation_active</code> の作り直し。H2 のスモークを先に回す（T-15）</li>
 <li>MyBatis のリポジトリ: 回答の列、S-02 の経路設計中の読み取りモデル</li>
@@ -7255,7 +7255,7 @@
 <li><code>check</code> 緑（<code>test</code> 772 件。統合テスト +7）</li>
 </ul>
 </li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>4. 画面の層（Red → Green）</strong>（承認はステップ 5 とまとめて受ける）</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>4. 画面の層（Red → Green）</strong>（承認はステップ 5 とまとめて受ける）</li>
 <li>画面の層の受入シナリオを先に書き、<code>uiTest</code> で失敗を記録する（T-21。<code>features/ui/request_route_design_ui.feature</code>、<code>@ui @US-24</code>。デモ項目に <code>@demo @demo-bolt-12/&lt;名前&gt;</code>）<ul>
 <li>主成功: 荷主が C-04 から「見積りに回答する」で C-05 を開き、キー操作だけで「この条件で詳細経路設計へ進む」を選ぶ。C-04 に結果と「経路設計中（A 社の対応待ち）」、見積りの「詳細経路設計を依頼済み」が出て、回答の入口がない。営業の S-02 の経路設計中の表に出て、S-04 は読み取り専用</li>
 <li>失効: 有効期限を過ぎた提示済みの見積りの C-05 を開くと、理由を示して C-04 に戻り、回答の入口がない</li>
@@ -7264,6 +7264,14 @@
 </li>
 <li>C-05（<code>GET</code>・<code>POST …/quotations/{見積り番号}/response</code>）、C-04 の回答の入口と仮の案内の置き換え、C-02・C-04 の経路設計中の表示、S-02 の経路設計中の表、S-04 の詳細設計依頼済みの表示</li>
 <li>完了の判定: <code>check</code> と <code>uiTest</code> が緑。push して CI を確かめる</li>
+<li>結果（2026-10-06 10:22〜10:33。最後のコミット <code>303c7a9</code> の時刻）<ul>
+<li>Red: 画面の層の受入シナリオ（<code>request_route_design_ui.feature</code>。キー操作だけの回答と経路設計中・S-02・S-04、失効した見積りへの回答、幅 320 CSS px）と、画面の単体テスト（C-05 の表示・拒否・依頼、C-04 の回答の入口と依頼済み、S-02 の経路設計中の表、S-04 の詳細設計依頼済み）を先に書いた。テストのコンパイルのため、社内の照会 <code>findRoutingRequestedSummaries</code> と中身のない C-05 の controller だけを先に足し、実装の前の <code>uiTest</code> で新しい 3 件だけ、画面の単体テストで 8 件だけが失敗することを記録し、テストを Red のままコミットした（<code>dae86f9</code>。T-21、R-38）。デモ項目の 2 本に <code>@demo-bolt-12</code> の印を付けた</li>
+<li>Green: C-05（<code>QuotationResponseController</code>、<code>response.html</code>。荷主企業で絞り、回答できない見積りは C-04 に戻して荷主向けの言葉で理由を示す）、C-04 の「見積りに回答する」と依頼した日時、荷主の進み具合の経路設計中と案内、S-02 の経路設計中の表、S-04 の詳細設計依頼済みの案内（失効していれば、依頼済みのため再見積りできない旨）。見積りの表示に回答できるか・詳細設計依頼済みか・回答時刻を足した（<code>303c7a9</code>）</li>
+<li>計画からの変更: S-04 の「依頼者」は名前を出さず、依頼した日時だけを示した（利用者の名前を引く手段が、利用者の管理（US-16・US-18）までない）</li>
+<li>実行中に直した誤り: Bolt 11 の C-04 の単体テストが仮の案内の文言を期待していた（「見積りに回答する」のリンクを期待する形に直した）。画面の層のステップが依頼の案内の文言を実装と違えて期待していた（実装の文言に合わせた）</li>
+<li>画面の層のシナリオは 41 件すべて passed（Bolt 11 の 38 件から +3）、axe-core の違反 0 件。<code>check</code> 緑（<code>test</code> 780 件。+8）</li>
+</ul>
+</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>5. 開発レビューと Bolt 終了報告</strong></li>
 <li><code>developing-review</code> で Bolt 12 の変更をレビューし、指摘への対応を決める（T-28）。H3 の判定に、利用者の見え方の指摘の数と重さを数える</li>
 <li><code>check</code>・<code>uiTest</code>・CI・SonarQube の品質ゲート（PASS）を確かめる</li>
