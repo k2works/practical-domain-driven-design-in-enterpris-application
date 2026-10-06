@@ -8,6 +8,7 @@ generated: { by: anthropic/claude-opus-5-5, at: 2026-10-06T07:49:47Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-06T08:00:21Z }
   - { by: human:kakimomokuri, at: 2026-10-06T08:16:39Z }
+  - { by: human:kakimomokuri, at: 2026-10-06T09:04:46Z }
 ---
 
 # Bolt 15 計画 - dev プロファイルによる Heroku のデモ環境
@@ -166,6 +167,15 @@ app --> tmp
     - スリープからの起動の時間は計測中（30 分の無アクセスを待っている）
 - [ ] **5. 運用レビューと Bolt 終了報告**
   - `operating-review` で、手順書・Gulp のタスク・Dockerfile・ADR 013 をレビューし、指摘への対応を終了報告に書く（T-28）
+  - レビューの結果（18:05〜18:20 JST）: 3 視点で高 6・中 12・低 14 の指摘（重なりを除き R-01〜R-27）。[Bolt 15 運用成果物レビュー](../../review/cargo-tracker/bolt_15_review_20261006.md)。人の決定 D-54（公開を前提に ADR-013 を直し、URL は docs に残す）、D-55（常時起動、週次の見直しで状態とログを確かめ、W10 で要否を見直す）、D-56（この Bolt で直すものと W10 に回すものの分け方）
+  - レビューの対応（D-56。「この Bolt で直す」の R-01〜R-10・R-15〜R-23・R-25）:
+    - ADR-013: 公開を前提に「アクセス」「運用の約束」を書き直す。タスク名と配備の方式を実装に合わせる。決定にビルドの構成（`copyDemoLibs`、3 つのステージ、確認ポイント 13 の案と却下の理由）を足す。ネガティブに、Secure のない Cookie、書類の置き場としての悪用と Heroku のアカウントの停止の恐れ、`-Xmx300m` は Heroku だけの値であることを足す。コンプライアンスに「dev に H2 Console と devtools を入れない」を足す。やめ方に、W10 で要否を見直すことを足す。ADR の索引に、ADR-008 との関係を注記する
+    - `deploy_demo.js`: HEAD が develop で `origin/develop` に含まれ、develop の CI が緑であることを確かめる。ガードを `push` にも掛ける。イメージにコミットの SHA のラベルを付け、release の後に Config Vars `DEMO_REVISION` に入れ、`status` で表示する。`setup` で `log-runtime-metrics` を有効にする。`webUrl()` を `JSON.parse` にし、取れないときと `container:login` をしていないときに案内して止める
+    - `build.gradle`: `copyDemoLibs` を `Sync` にする
+    - 手順書: 所有者（human:kakimomokuri）、公開の前提、ロールバック、スリープからの起動の計測値、R14 の判断の基準（450 MB）、`DEMO_SKIP_GUARD` を使ったときの記録、gitignore されたファイルがビルドの context に入りうること、常時起動と週次の確かめ
+    - 計画の本文の旧いタスク名を直す。リリース計画のリスクにデモ環境（公開・データの消失・属人化）を足す
+    - 直した後に `deploy:demo` で配備し直し、`status` で SHA を確かめる
+    - W10 に回すもの（R-11〜R-14・R-24・R-26）は、終了報告と運用準備の #28 にコメントする
   - `bolt_15_report.md` に仮説 H1〜H3 の結論、メモリの計測値、各ステップの時刻、所要時間を書く
   - リリース計画の W3 に Bolt 15 を足し、実績スケジュール・リスク管理（デモ環境のリスク）を更新する。技術 Issue をクローズする
 
@@ -259,6 +269,8 @@ Eco で R14 が続く（H2 が外れる）ときは、ここで止めて dyno �
 | 2026-10-06 | ステップ 2 の途中で、bootJar に H2 がなく dev で起動しないことが分かった。人の選択で確認ポイント 13（`copyDemoLibs` と Dockerfile の `runtime`・`demo` のステージ）を足し、ステップ 2 を直した | anthropic/claude-opus-5-5 | — |
 | 2026-10-06 | 計画の変更（確認ポイント 13、ステップ 2）を承認 | anthropic/claude-opus-5-5 | human:kakimomokuri |
 | 2026-10-06 | ステップ 3 の外部連携の承認ゲートを通した（タスク名を `deploy:demo:*` にした変更、`stop`・`start` の追加、Heroku のアプリの作成・Config Vars・配備・Eco dyno）。人が `heroku login`・`heroku container:login` を行った | anthropic/claude-opus-5-5 | human:kakimomokuri |
+| 2026-10-06 | ステップ 5 の運用レビューの結果と人の決定 D-54〜D-56、レビューの対応の範囲を書いた | anthropic/claude-opus-5-5 | — |
+| 2026-10-06 | レビューの対応の範囲（D-54〜D-56）を承認 | anthropic/claude-opus-5-5 | human:kakimomokuri |
 
 ## 関連ドキュメント
 
