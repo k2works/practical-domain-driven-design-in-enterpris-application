@@ -21,7 +21,9 @@ class AuthenticatedActorArgumentResolverTest {
     private final AuthenticatedActorArgumentResolver resolver = new AuthenticatedActorArgumentResolver();
 
     @SuppressWarnings("unused")
-    void handler(AuthenticatedActor actor, Optional<AuthenticatedActor> optional, Optional<String> other) {}
+    void handler(AuthenticatedActor actor, Optional<AuthenticatedActor> optional, Optional<String> other) {
+        // 引数の型だけを使う見本のメソッド。呼ばない
+    }
 
     private static MethodParameter parameter(int index) throws NoSuchMethodException {
         Method method = AuthenticatedActorArgumentResolverTest.class.getDeclaredMethod(

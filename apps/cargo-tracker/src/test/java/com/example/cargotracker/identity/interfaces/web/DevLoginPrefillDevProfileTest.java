@@ -28,13 +28,4 @@ class DevLoginPrefillDevProfileTest {
                 .andExpect(content().string(containsString("value=\"shipper@dev.cargo-tracker.example\"")))
                 .andExpect(content().string(containsString("value=\"dev-password-shipper\"")));
     }
-
-    @Test
-    void devではH2のコンソールをログインなしで開ける() throws Exception {
-        mvc.perform(get("/h2-console/"))
-                .andExpect(result -> org.assertj.core.api.Assertions.assertThat(
-                                result.getResponse().getRedirectedUrl())
-                        .as("ログインへ移さない")
-                        .isNull());
-    }
 }

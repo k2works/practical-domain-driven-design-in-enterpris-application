@@ -7,7 +7,6 @@ import com.example.cargotracker.shared.domain.UserId;
 import java.io.Serial;
 import java.util.Collection;
 import java.util.EnumSet;
-import java.util.Set;
 import java.util.UUID;
 import org.springframework.security.core.CredentialsContainer;
 import org.springframework.security.core.GrantedAuthority;
@@ -33,21 +32,19 @@ public final class CargoUserDetails implements UserDetails, CredentialsContainer
     private final boolean enabled;
     private String passwordHash;
 
-    CargoUserDetails(
-            UUID userId,
-            UUID companyId,
-            String email,
-            String displayName,
-            String companyName,
-            Set<Role> roles,
-            boolean enabled,
-            String passwordHash) {
-        this.userId = userId;
-        this.companyId = companyId;
+    /**
+     * @param actor 認証された利用者（値を直列化できる型に写して持つ）
+     * @param email ログインのメールアドレス
+     * @param enabled 認証できるか（利用停止・無効な企業なら false。IA-INV-09）
+     * @param passwordHash password のハッシュ（認証の後に消す）
+     */
+    CargoUserDetails(AuthenticatedActor actor, String email, boolean enabled, String passwordHash) {
+        this.userId = actor.userId().value();
+        this.companyId = actor.companyId().value();
         this.email = email;
-        this.displayName = displayName;
-        this.companyName = companyName;
-        this.roles = EnumSet.copyOf(roles);
+        this.displayName = actor.displayName();
+        this.companyName = actor.companyName();
+        this.roles = EnumSet.copyOf(actor.roles());
         this.enabled = enabled;
         this.passwordHash = passwordHash;
     }

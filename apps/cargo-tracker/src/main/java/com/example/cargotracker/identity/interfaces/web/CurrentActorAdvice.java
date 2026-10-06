@@ -1,6 +1,7 @@
 package com.example.cargotracker.identity.interfaces.web;
 
 import com.example.cargotracker.shared.domain.AuthenticatedActor;
+import java.util.Optional;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ModelAttribute;
 
@@ -12,7 +13,7 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 public class CurrentActorAdvice {
 
     @ModelAttribute("currentActor")
-    public AuthenticatedActor currentActor(AuthenticatedActor actor) {
-        return actor;
+    public AuthenticatedActor currentActor(Optional<AuthenticatedActor> actor) {
+        return actor.orElse(null);
     }
 }

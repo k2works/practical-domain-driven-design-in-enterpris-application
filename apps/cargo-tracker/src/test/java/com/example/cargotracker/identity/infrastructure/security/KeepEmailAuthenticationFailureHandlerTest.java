@@ -35,8 +35,9 @@ class KeepEmailAuthenticationFailureHandlerTest {
                             }
                         },
                         new MockHttpServletResponse());
-        assertThat(flash.get("username")).isEqualTo("shipper@example.com");
-        assertThat(flash.containsKey("password")).isFalse();
+        assertThat((java.util.Map<String, Object>) flash)
+                .containsEntry("username", "shipper@example.com")
+                .doesNotContainKey("password");
     }
 
     @Test

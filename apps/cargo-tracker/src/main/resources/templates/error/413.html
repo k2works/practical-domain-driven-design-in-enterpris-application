@@ -19,6 +19,7 @@
     <th:block th:unless="${path != null and #strings.startsWith(path, '/customer/transport-requests')}">
         <h1>送信が大きすぎます</h1>
         <p>1 回に送れる大きさの上限を超えました。ブラウザの「戻る」で前の画面に戻ってください。</p>
+        <p><a th:href="@{/}">ホームへ戻る</a></p>
     </th:block>
 </main>
 </body>

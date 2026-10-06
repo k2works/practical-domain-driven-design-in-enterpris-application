@@ -198,7 +198,7 @@ class AuthenticationSecurityIntegrationTest {
 
         Map<String, Object> row = jdbc.queryForMap(
                 "SELECT actor_company_id, occurred_at FROM identity.audit_record WHERE actor_user_id = ?", userId);
-        assertThat(row.get("actor_company_id")).isEqualTo(shipperCompany.id().value());
+        assertThat(row).containsEntry("actor_company_id", shipperCompany.id().value());
         assertThat(((java.sql.Timestamp) row.get("occurred_at")).toInstant()).isEqualTo(LOGIN_AT);
     }
 

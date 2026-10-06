@@ -1,7 +1,9 @@
 package com.example.cargotracker.identity.infrastructure.security;
 
 import com.example.cargotracker.shared.domain.AuthenticatedActor;
+import java.util.Optional;
 import org.springframework.core.MethodParameter;
+import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.support.WebDataBinderFactory;
@@ -12,29 +14,39 @@ import org.springframework.web.method.support.ModelAndViewContainer;
 /**
  * コントローラーの引数の {@link AuthenticatedActor} に、ログインした利用者を渡す（ADR-012）。
  * ほかのコンテキストのコントローラーは、注釈も Spring Security の型も使わずに操作者と所属企業を受け取る。
- * 未認証（ログインの画面など）では null を渡す。業務の画面は Spring Security が認証を求めるため null にならない。
+ * 業務の引数（{@code AuthenticatedActor}）は、未認証なら例外にして A-01 へ移す（fail-closed。null を渡さない）。
+ * 未認証の画面でも使う場所（レイアウトのヘッダー）は {@code Optional<AuthenticatedActor>} で受け取る（Bolt 14 レビュー）。
+ * 引数の解決があることで、{@code AuthenticatedActor} が request の値から組み立てられることもない。
  */
 public class AuthenticatedActorArgumentResolver implements HandlerMethodArgumentResolver {
 
     @Override
     public boolean supportsParameter(MethodParameter parameter) {
-        return AuthenticatedActor.class.equals(parameter.getParameterType());
+        return AuthenticatedActor.class.equals(parameter.getParameterType()) || isOptionalActor(parameter);
     }
 
     @Override
-    public AuthenticatedActor resolveArgument(
+    public Object resolveArgument(
             MethodParameter parameter,
             ModelAndViewContainer mavContainer,
             NativeWebRequest webRequest,
             WebDataBinderFactory binderFactory) {
-        return currentActor();
+        Optional<AuthenticatedActor> actor = currentActor();
+        if (isOptionalActor(parameter)) {
+            return actor;
+        }
+        return actor.orElseThrow(() -> new AuthenticationCredentialsNotFoundException("ログインしていない"));
     }
 
-    /** いまの request の認証された利用者。未認証なら null。 */
-    public static AuthenticatedActor currentActor() {
+    private static boolean isOptionalActor(MethodParameter parameter) {
+        return Optional.class.equals(parameter.getParameterType())
+                && AuthenticatedActor.class.equals(parameter.nested().getNestedParameterType());
+    }
+
+    private static Optional<AuthenticatedActor> currentActor() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         return authentication != null && authentication.getPrincipal() instanceof CargoUserDetails details
-                ? details.actor()
-                : null;
+                ? Optional.of(details.actor())
+                : Optional.empty();
     }
 }

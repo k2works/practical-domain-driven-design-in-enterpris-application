@@ -1,5 +1,7 @@
 <!DOCTYPE html>
-<!--/* まだ作っていない画面の仮の画面（Bolt 14。開発戦略の序盤の手順 3「ナビゲーションの骨格」）。画面を作る Bolt で置き換える */-->
+<!--/* まだ作っていない画面の仮の画面（Bolt 14。開発戦略の序盤の手順 3「ナビゲーションの骨格」）。画面を作る Bolt で置き換える。
+       レイアウトの名前は前処理（__${layout}__）で組み立てるため、コントローラーの固定の値だけを渡す。request の値を渡さない
+       （テンプレートの注入になる） */-->
 <html lang="ja" xmlns:th="http://www.thymeleaf.org"
       th:replace="~{__${layout}__ :: layout(~{::title}, ~{::main}, ~{}, ${active})}">
 <head>
@@ -10,6 +12,7 @@
 <main>
     <h1 th:text="${screenName}">予約</h1>
     <p>この画面は準備中です。</p>
+    <p th:if="${layout == 'layout/customer'}">使えるようになるまでは、担当営業にご連絡ください。</p>
     <p><a th:href="@{/}">ホームへ戻る</a></p>
 </main>
 </body>

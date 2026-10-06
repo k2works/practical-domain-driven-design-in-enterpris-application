@@ -8,6 +8,8 @@
         <link rel="stylesheet" th:href="@{/webjars/bootstrap/dist/css/bootstrap.min.css}">
         <link rel="stylesheet" th:href="@{/css/app.css}">
         <script th:src="@{/webjars/bootstrap/dist/js/bootstrap.bundle.min.js}" defer></script>
+        <!-- htmx は既定でインラインの style を足すが、CSP（default-src 'self'）が拒否するため足させない（Bolt 14 レビュー） -->
+        <meta name="htmx-config" content='{"includeIndicatorStyles":false}'>
         <script th:src="@{/webjars/htmx.org/dist/htmx.min.js}" defer></script>
         <th:block th:replace="${scripts}"></th:block>
     </th:block>

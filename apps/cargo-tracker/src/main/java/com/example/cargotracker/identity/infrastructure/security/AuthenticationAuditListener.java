@@ -10,6 +10,7 @@ import com.example.cargotracker.shared.domain.UtcInstant;
 import java.time.Clock;
 import java.util.Optional;
 import org.springframework.context.event.EventListener;
+import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.event.AbstractAuthenticationFailureEvent;
 import org.springframework.security.authentication.event.AuthenticationSuccessEvent;
 import org.springframework.security.authentication.event.LogoutSuccessEvent;
@@ -54,13 +55,21 @@ public class AuthenticationAuditListener {
             return;
         }
         User found = user.get();
-        AuthenticationRejection reason = companies
-                .findById(found.companyId())
-                .flatMap(found::authenticationRejection)
-                .filter(rejection ->
-                        event.getException() instanceof org.springframework.security.authentication.DisabledException)
+        auditRecords.append(AuditRecord.loginFailed(found.id(), found.companyId(), reasonOf(event, found), now()));
+    }
+
+    /**
+     * 失敗の理由。password が正しく、利用停止・無効な企業で拒否したとき（DisabledException）だけ業務の規則で理由を求め、
+     * ほかは password の誤りとする（password を先に照合するため、利用停止でも password が誤っていれば password の誤り）。
+     */
+    private AuthenticationRejection reasonOf(AbstractAuthenticationFailureEvent event, User user) {
+        if (!(event.getException() instanceof DisabledException)) {
+            return AuthenticationRejection.BAD_CREDENTIALS;
+        }
+        return companies
+                .findById(user.companyId())
+                .flatMap(user::authenticationRejection)
                 .orElse(AuthenticationRejection.BAD_CREDENTIALS);
-        auditRecords.append(AuditRecord.loginFailed(found.id(), found.companyId(), reason, now()));
     }
 
     @EventListener

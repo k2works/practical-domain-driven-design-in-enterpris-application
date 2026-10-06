@@ -1,5 +1,6 @@
 package com.example.cargotracker.identity.infrastructure.security;
 
+import com.example.cargotracker.shared.domain.AuthenticatedActor;
 import com.example.cargotracker.shared.domain.Role;
 import java.util.Set;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -16,15 +17,14 @@ public class WithAuthenticatedActorSecurityContextFactory
     @Override
     public SecurityContext createSecurityContext(WithAuthenticatedActor annotation) {
         boolean shipper = annotation.value() == Role.SHIPPER;
-        CargoUserDetails details = new CargoUserDetails(
-                (shipper ? TestActors.SHIPPER_USER : TestActors.STAFF_USER).value(),
-                (shipper ? TestActors.SHIPPER_COMPANY : TestActors.STAFF_COMPANY).value(),
-                shipper ? "shipper@example.com" : "sales@example.com",
-                shipper ? "荷主 太郎" : "営業 一郎",
-                shipper ? "荷主 A" : "A 社",
+        AuthenticatedActor actor = new AuthenticatedActor(
+                shipper ? TestActors.SHIPPER_USER : TestActors.STAFF_USER,
+                shipper ? TestActors.SHIPPER_COMPANY : TestActors.STAFF_COMPANY,
                 Set.of(annotation.value()),
-                true,
-                null);
+                shipper ? "荷主 太郎" : "営業 一郎",
+                shipper ? "荷主 A" : "A 社");
+        CargoUserDetails details =
+                new CargoUserDetails(actor, shipper ? "shipper@example.com" : "sales@example.com", true, null);
         SecurityContext context = SecurityContextHolder.createEmptyContext();
         context.setAuthentication(
                 UsernamePasswordAuthenticationToken.authenticated(details, null, details.getAuthorities()));

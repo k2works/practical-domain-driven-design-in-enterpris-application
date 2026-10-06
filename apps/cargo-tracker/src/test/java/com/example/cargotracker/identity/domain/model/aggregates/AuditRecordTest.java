@@ -23,41 +23,41 @@ class AuditRecordTest {
 
     @Test
     void ログインの成功は利用者と企業と時刻を記録する() {
-        AuditRecord record = AuditRecord.loginSucceeded(USER, COMPANY, AT);
+        AuditRecord auditRecord = AuditRecord.loginSucceeded(USER, COMPANY, AT);
 
-        assertThat(record.action()).isEqualTo(AuditAction.LOGIN_SUCCEEDED);
-        assertThat(record.result()).isEqualTo(AuditResult.SUCCESS);
-        assertThat(record.actorUserId()).isEqualTo(USER);
-        assertThat(record.actorCompanyId()).isEqualTo(COMPANY);
-        assertThat(record.occurredAt()).isEqualTo(AT);
-        assertThat(record.reason()).isNull();
+        assertThat(auditRecord.action()).isEqualTo(AuditAction.LOGIN_SUCCEEDED);
+        assertThat(auditRecord.result()).isEqualTo(AuditResult.SUCCESS);
+        assertThat(auditRecord.actorUserId()).isEqualTo(USER);
+        assertThat(auditRecord.actorCompanyId()).isEqualTo(COMPANY);
+        assertThat(auditRecord.occurredAt()).isEqualTo(AT);
+        assertThat(auditRecord.reason()).isNull();
     }
 
     @Test
     void ログインの失敗は理由を記録する() {
-        AuditRecord record = AuditRecord.loginFailed(USER, COMPANY, AuthenticationRejection.SUSPENDED, AT);
+        AuditRecord auditRecord = AuditRecord.loginFailed(USER, COMPANY, AuthenticationRejection.SUSPENDED, AT);
 
-        assertThat(record.action()).isEqualTo(AuditAction.LOGIN_FAILED);
-        assertThat(record.result()).isEqualTo(AuditResult.FAILURE);
-        assertThat(record.reason()).isEqualTo("SUSPENDED");
-        assertThat(record.actorUserId()).isEqualTo(USER);
+        assertThat(auditRecord.action()).isEqualTo(AuditAction.LOGIN_FAILED);
+        assertThat(auditRecord.result()).isEqualTo(AuditResult.FAILURE);
+        assertThat(auditRecord.reason()).isEqualTo("SUSPENDED");
+        assertThat(auditRecord.actorUserId()).isEqualTo(USER);
     }
 
     @Test
     void 存在しないメールアドレスでの失敗は操作者を記録しない() {
-        AuditRecord record = AuditRecord.loginFailed(null, null, AuthenticationRejection.UNKNOWN_USER, AT);
+        AuditRecord auditRecord = AuditRecord.loginFailed(null, null, AuthenticationRejection.UNKNOWN_USER, AT);
 
-        assertThat(record.actorUserId()).isNull();
-        assertThat(record.actorCompanyId()).isNull();
-        assertThat(record.reason()).isEqualTo("UNKNOWN_USER");
+        assertThat(auditRecord.actorUserId()).isNull();
+        assertThat(auditRecord.actorCompanyId()).isNull();
+        assertThat(auditRecord.reason()).isEqualTo("UNKNOWN_USER");
     }
 
     @Test
     void ログアウトを記録する() {
-        AuditRecord record = AuditRecord.logout(USER, COMPANY, AT);
+        AuditRecord auditRecord = AuditRecord.logout(USER, COMPANY, AT);
 
-        assertThat(record.action()).isEqualTo(AuditAction.LOGOUT);
-        assertThat(record.result()).isEqualTo(AuditResult.SUCCESS);
+        assertThat(auditRecord.action()).isEqualTo(AuditAction.LOGOUT);
+        assertThat(auditRecord.result()).isEqualTo(AuditResult.SUCCESS);
     }
 
     @Test

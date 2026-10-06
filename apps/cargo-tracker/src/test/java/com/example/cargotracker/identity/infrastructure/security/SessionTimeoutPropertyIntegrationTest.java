@@ -27,10 +27,10 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.web.servlet.MockMvc;
 
 /**
- * 無操作の期限の設定の鍵（server.servlet.session.timeout）が Spring Session JDBC の session に効くことを、既定（30 分）と
+ * 無操作の期限の設定の鍵（spring.session.timeout）が Spring Session JDBC の session に効くことを、既定（30 分）と
  * 違う値で確かめる（Bolt 14 レビュー。既定の 30 分のままでは、鍵を誤っても境界のテストが通ってしまう）。
  */
-@SpringBootTest(properties = "server.servlet.session.timeout=10m")
+@SpringBootTest(properties = "spring.session.timeout=10m")
 @AutoConfigureMockMvc
 @Import(TestcontainersConfiguration.class)
 class SessionTimeoutPropertyIntegrationTest {

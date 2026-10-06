@@ -38,8 +38,7 @@ class DevLoginPrefillDefaultProfileTest {
         assertThat(html)
                 .contains("id=\"username\"")
                 .doesNotContain("value=\"shipper@")
-                .doesNotContain("dev-password");
-        assertThat(html)
+                .doesNotContain("dev-password")
                 .containsPattern("id=\"password\"[^>]*>")
                 .doesNotContainPattern("id=\"password\"[^>]*value=\"[^\"]+\"");
     }

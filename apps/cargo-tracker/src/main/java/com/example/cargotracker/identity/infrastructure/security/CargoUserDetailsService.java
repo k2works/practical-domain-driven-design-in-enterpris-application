@@ -5,6 +5,7 @@ import com.example.cargotracker.identity.domain.model.aggregates.CompanyReposito
 import com.example.cargotracker.identity.domain.model.aggregates.User;
 import com.example.cargotracker.identity.domain.model.aggregates.UserRepository;
 import com.example.cargotracker.identity.domain.model.valueobjects.EmailAddress;
+import com.example.cargotracker.shared.domain.AuthenticatedActor;
 import java.util.Optional;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -31,12 +32,8 @@ public class CargoUserDetailsService implements UserDetailsService {
         Company company =
                 companies.findById(user.companyId()).orElseThrow(() -> new IllegalStateException("利用者の所属企業がない"));
         return new CargoUserDetails(
-                user.id().value(),
-                company.id().value(),
+                new AuthenticatedActor(user.id(), company.id(), user.roles(), user.displayName(), company.name()),
                 user.email().value(),
-                user.displayName(),
-                company.name(),
-                user.roles(),
                 user.authenticationRejection(company).isEmpty(),
                 user.passwordHash());
     }
@@ -45,7 +42,7 @@ public class CargoUserDetailsService implements UserDetailsService {
     Optional<User> findUser(String username) {
         try {
             return users.findByEmail(EmailAddress.of(username));
-        } catch (IllegalArgumentException e) {
+        } catch (IllegalArgumentException _) {
             return Optional.empty();
         }
     }

@@ -25,15 +25,19 @@ public class MyBatisAuditRecordRepository implements AuditRecordRepository {
     }
 
     @Override
-    public void append(AuditRecord record) {
+    public void append(AuditRecord auditRecord) {
         mapper.insertAuditRecord(new AuditRecordRow(
-                record.id(),
-                record.occurredAt().instant().atOffset(ZoneOffset.UTC),
-                record.actorUserId() == null ? null : record.actorUserId().value(),
-                record.actorCompanyId() == null ? null : record.actorCompanyId().value(),
-                record.action().name(),
-                record.result().name(),
-                record.reason()));
+                auditRecord.id(),
+                auditRecord.occurredAt().instant().atOffset(ZoneOffset.UTC),
+                auditRecord.actorUserId() == null
+                        ? null
+                        : auditRecord.actorUserId().value(),
+                auditRecord.actorCompanyId() == null
+                        ? null
+                        : auditRecord.actorCompanyId().value(),
+                auditRecord.action().name(),
+                auditRecord.result().name(),
+                auditRecord.reason()));
     }
 
     @Override

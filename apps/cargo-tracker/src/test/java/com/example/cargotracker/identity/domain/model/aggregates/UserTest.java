@@ -63,21 +63,18 @@ class UserTest {
     @Test
     void 所属していない企業では確かめられない() {
         Company other = Company.of(new CompanyId(UUID.randomUUID()), "荷主 B", CompanyKind.SHIPPER, true);
+        User user = user(UserStatus.ACTIVE);
 
-        assertThatThrownBy(() -> user(UserStatus.ACTIVE).authenticationRejection(other))
-                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> user.authenticationRejection(other)).isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
     void 役割のない利用者は作れない() {
-        assertThatThrownBy(() -> User.of(
-                        new UserId(UUID.randomUUID()),
-                        COMPANY,
-                        EmailAddress.of("norole@example.com"),
-                        "役割なし",
-                        "{bcrypt}$2a$10$hash",
-                        UserStatus.ACTIVE,
-                        Set.of()))
+        UserId id = new UserId(UUID.randomUUID());
+        EmailAddress email = EmailAddress.of("norole@example.com");
+        Set<Role> noRoles = Set.of();
+
+        assertThatThrownBy(() -> User.of(id, COMPANY, email, "役割なし", "{bcrypt}$2a$10$hash", UserStatus.ACTIVE, noRoles))
                 .isInstanceOf(IllegalArgumentException.class);
     }
 }

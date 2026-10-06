@@ -61,7 +61,7 @@ public final class User {
     }
 
     /**
-     * 認証できない理由を返す（IA-INV-09）。認証できるなら空。password の照合の前に確かめる理由だけを返す。
+     * 認証できない理由を返す（IA-INV-09）。認証できるなら空。password の照合の後に確かめる（照合の前に拒否すると、誤った password でも利用停止が応答の時間から分かるため）。
      *
      * @param company 所属企業
      */

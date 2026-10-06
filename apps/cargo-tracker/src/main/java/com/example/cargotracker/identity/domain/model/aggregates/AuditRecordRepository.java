@@ -8,7 +8,7 @@ import java.util.List;
  */
 public interface AuditRecordRepository {
 
-    void append(AuditRecord record);
+    void append(AuditRecord auditRecord);
 
     /** 操作者の監査記録を、発生時刻の古い順に返す。 */
     List<AuditRecord> findByActorUserId(UserId actor);

@@ -120,9 +120,9 @@ class MyBatisIdentityRepositoriesIntegrationTest {
     void 同じメールアドレスの利用者は2人登録できない() {
         String email = uniqueEmail();
         users.add(user(email, UserStatus.ACTIVE, Set.of(Role.SHIPPER)));
+        User same = user(email, UserStatus.ACTIVE, Set.of(Role.SHIPPER));
 
-        assertThatThrownBy(() -> users.add(user(email, UserStatus.ACTIVE, Set.of(Role.SHIPPER))))
-                .isInstanceOf(DuplicateEmailException.class);
+        assertThatThrownBy(() -> users.add(same)).isInstanceOf(DuplicateEmailException.class);
     }
 
     @Test
@@ -133,8 +133,9 @@ class MyBatisIdentityRepositoriesIntegrationTest {
 
     @Test
     void 利用状態の値は表が確かめる() {
-        assertThatThrownBy(() -> insertUser(uniqueEmail(), "LOCKED"))
-                .isInstanceOf(DataIntegrityViolationException.class);
+        String email = uniqueEmail();
+
+        assertThatThrownBy(() -> insertUser(email, "LOCKED")).isInstanceOf(DataIntegrityViolationException.class);
     }
 
     @Test
@@ -149,11 +150,13 @@ class MyBatisIdentityRepositoriesIntegrationTest {
 
     @Test
     void 企業の種類の値は表が確かめる() {
+        UUID id = UUID.randomUUID();
+
         assertThatThrownBy(() -> jdbc.update(
                         "INSERT INTO identity.company"
                                 + " (id, name, kind, active, version, created_at, updated_at)"
                                 + " VALUES (?, '不明', 'PARTNER', TRUE, 0, now(), now())",
-                        UUID.randomUUID()))
+                        id))
                 .isInstanceOf(DataIntegrityViolationException.class);
     }
 
@@ -175,19 +178,19 @@ class MyBatisIdentityRepositoriesIntegrationTest {
 
     @Test
     void 操作者のない監査記録も追記できる() {
-        AuditRecord record = AuditRecord.loginFailed(
+        AuditRecord failure = AuditRecord.loginFailed(
                 null,
                 null,
                 AuthenticationRejection.UNKNOWN_USER,
                 new UtcInstant(Instant.parse("2026-10-06T05:00:00Z")));
 
-        auditRecords.append(record);
+        auditRecords.append(failure);
 
         assertThat(jdbc.queryForObject(
                         "SELECT count(*) FROM identity.audit_record WHERE id = ? AND actor_user_id IS NULL"
                                 + " AND reason = 'UNKNOWN_USER'",
                         Integer.class,
-                        record.id()))
+                        failure.id()))
                 .isEqualTo(1);
     }
 

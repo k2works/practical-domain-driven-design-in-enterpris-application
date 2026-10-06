@@ -6,9 +6,10 @@ import com.example.cargotracker.identity.domain.model.aggregates.UserRepository;
 import com.example.cargotracker.identity.infrastructure.security.AuthenticationAuditListener;
 import com.example.cargotracker.identity.infrastructure.security.CargoUserDetailsService;
 import com.example.cargotracker.identity.infrastructure.security.KeepEmailAuthenticationFailureHandler;
-import com.example.cargotracker.identity.infrastructure.security.RoleHomeAuthenticationSuccessHandler;
+import com.example.cargotracker.identity.infrastructure.security.LoginSuccessHandler;
 import com.example.cargotracker.identity.infrastructure.security.SessionLifetime;
 import com.example.cargotracker.identity.infrastructure.security.SessionLifetimeFilter;
+import com.example.cargotracker.shared.domain.Role;
 import java.time.Clock;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
@@ -43,6 +44,13 @@ public class SecurityConfiguration {
     private static final String[] PUBLIC_PATHS = {
         "/login", SessionLifetime.EXPIRED_URL, "/error", "/css/**", "/js/**", "/webjars/**", "/favicon.ico"
     };
+
+    /**
+     * 外部の資源とインラインのスクリプトを読まない（SEC-17）。default-src が覆わない埋め込み・フォームの送信先・base も閉じる
+     * （Bolt 14 レビュー）。
+     */
+    private static final String CONTENT_SECURITY_POLICY =
+            "default-src 'self'; frame-ancestors 'none'; form-action 'self'; base-uri 'self'; object-src 'none'";
 
     @Bean
     PasswordEncoder passwordEncoder() {
@@ -80,25 +88,25 @@ public class SecurityConfiguration {
     }
 
     @Bean
-    SecurityFilterChain securityFilterChain(HttpSecurity http, AuthenticationManager authenticationManager, Clock clock)
-            throws Exception {
+    SecurityFilterChain securityFilterChain(
+            HttpSecurity http, AuthenticationManager authenticationManager, Clock clock) {
         return http.authenticationManager(authenticationManager)
                 .authorizeHttpRequests(requests -> requests.requestMatchers(PUBLIC_PATHS)
                         .permitAll()
                         .requestMatchers("/customer/**")
-                        .hasRole("SHIPPER")
+                        .hasRole(Role.SHIPPER.name())
                         .requestMatchers("/staff/**")
-                        .hasRole("SALES")
+                        .hasRole(Role.SALES.name())
                         .anyRequest()
                         .authenticated())
                 .formLogin(form -> form.loginPage("/login")
-                        .successHandler(new RoleHomeAuthenticationSuccessHandler(clock))
+                        .successHandler(new LoginSuccessHandler(clock))
                         .failureHandler(new KeepEmailAuthenticationFailureHandler()))
                 .logout(logout -> logout.logoutUrl("/logout").logoutSuccessUrl("/login?logout"))
                 .sessionManagement(session -> session.invalidSessionUrl(SessionLifetime.EXPIRED_URL))
                 .addFilterBefore(new SessionLifetimeFilter(clock), UsernamePasswordAuthenticationFilter.class)
                 .headers(headers -> headers.frameOptions(frame -> frame.deny())
-                        .contentSecurityPolicy(csp -> csp.policyDirectives("default-src 'self'")))
+                        .contentSecurityPolicy(csp -> csp.policyDirectives(CONTENT_SECURITY_POLICY)))
                 .build();
     }
 }
