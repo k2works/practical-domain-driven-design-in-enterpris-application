@@ -2800,6 +2800,41 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../development/cargo-tracker/bolt_13_report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 13 終了報告
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--draft"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -3597,6 +3632,41 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../review/cargo-tracker/bolt_13_review_20261006/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 13 開発成果物レビュー（2026-10-06）
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--draft"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -4273,6 +4343,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#4-identity" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. identity への置き方と仮の主体の置き換え
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#_4" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -4338,6 +4419,17 @@
     <span class="md-ellipsis">
       
         未確認の項目
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#w5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        W5 で人が決める論点
       
     </span>
   </a>
@@ -6915,7 +7007,7 @@
 <li>技術スタックは、TOTP のライブラリを候補（<code>dev.samstevens.totp</code>）として挙げただけで、評価していなかった（TS-01）。リスク台帳には「TOTP と Spring Security 7 の統合が想定より難しい（中・中）」がある。</li>
 <li>アクセス・監査は「単純なモデル」で、認証の仕組みは実績のある部品に任せる（<a href="../../../design/cargo-tracker/architecture_backend/">アーキテクチャ</a>）。認証の成功・失敗・ロックは、Spring Security のイベントから同期で監査記録に書く（IA-INV-08）。</li>
 <li>開発環境では、ログインの画面（A-01）と認証コードの画面（A-02）を入力済みにする（2026-10-06 の人の決定。Bolt 13 の確認ポイント 7）。</li>
-<li>Bolt 13 で、本体と分けたスパイク（<a href="https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/tree/develop/spikes/ts-01-totp"><code>spikes/ts-01-totp/</code></a>）を Spring Boot 4.1.1（Spring Security 7.1.1）で作り、学習テスト 29 件で確かめた。</li>
+<li>Bolt 13 で、本体と分けたスパイク（<a href="https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/tree/develop/spikes/ts-01-totp"><code>spikes/ts-01-totp/</code></a>）を Spring Boot 4.1.1（Spring Security 7.1.1）で作り、学習テストで確かめた（初めは 29 件。<a href="../../../review/cargo-tracker/bolt_13_review_20261006/">Bolt 13 のレビュー</a>の指摘で直し、57 件）。</li>
 </ul>
 <h2 id="_3">決定（案）<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h2>
 <h3 id="1-totp">1. TOTP の生成<a class="headerlink" href="#1-totp" title="Permanent link">&para;</a></h3>
@@ -6938,15 +7030,15 @@
 <td style="text-align: left;">自分で持つ</td>
 <td style="text-align: left;">—</td>
 <td style="text-align: left;">なし</td>
-<td style="text-align: left;">代わりの案。約 50 行で書けるが、暗号の手順を自分で保守する</td>
+<td style="text-align: left;">代わりの案。HMAC は JDK にあり、自分で持つのは切り詰めの約 10 行で、試験ベクトルで固定できる。差は小さい</td>
 </tr>
 <tr>
 <td style="text-align: left;">(b) <code>java-otp</code> 1.0.0</td>
-<td style="text-align: left;">試した 3 件とも一致</td>
+<td style="text-align: left;">8 桁で試した 3 件と、6 桁で 6 件とも一致</td>
 <td style="text-align: left;">2026-08</td>
 <td style="text-align: left;">MIT</td>
 <td style="text-align: left;">なし</td>
-<td style="text-align: left;"><strong>採る案</strong>。小さく、依存がなく、保守されている</td>
+<td style="text-align: left;"><strong>採る案</strong>。小さく、依存がなく、保守されている。スパイクの 2 段階のログインはこの生成の上で通る</td>
 </tr>
 <tr>
 <td style="text-align: left;">(c) <code>dev.samstevens.totp</code> 1.7.1</td>
@@ -6967,8 +7059,9 @@
 </tbody>
 </table>
 <ul>
-<li>(b) は時間の窓での照合の API を持たないため、照合は「前後 1 つの刻みのコードを作り、一定時間で比べる」をアプリケーションで書く（スパイクの (a) の <code>verify</code> と同じ形）。</li>
-<li>秘密は 160 ビット（20 バイト）の乱数で作り、Base32 で <code>otpauth://</code> の URI と、手で入力する文字列に使う。登録の QR は、US-18 の Bolt で ZXing（Apache-2.0）を使うかクライアントで描くかを決める（未確認）。</li>
+<li>(b) が担うのは HOTP の計算と切り詰めだけで、時間の窓での照合の API を持たない。照合は「前後 1 つの刻みのコードを作り、一定時間で比べる」をアプリケーションで書く（スパイクの <code>SpikeUsers</code>）。再利用の拒否・秘密の生成・Base32・<code>otpauth://</code> の URI もアプリケーションが持つ。</li>
+<li>(a) と (b) の差は小さく、生成をポートの裏に置けば後で替えられる判断である（下の「US-18 の Bolt で要るもの」）。</li>
+<li>秘密は 160 ビット（20 バイト）の乱数で作り、Base32 で <code>otpauth://</code> の URI と、手で入力する文字列に使う案とする。Base32 は JDK にも (b) にもない見込みで、出どころ（自分で書くか <code>commons-codec</code> を足すか）と URI の組み立ては、スパイクで確かめていない（未確認）。登録の QR は、US-18 の Bolt で ZXing（Apache-2.0）を使うかクライアントで描くかを決める（未確認）。</li>
 </ul>
 <h3 id="2-2-spring-security-7">2. 2 段階のログイン（Spring Security 7）<a class="headerlink" href="#2-2-spring-security-7" title="Permanent link">&para;</a></h3>
 <p><strong>password（<code>FACTOR_PASSWORD</code>）と TOTP（独自の要素 <code>FACTOR_TOTP</code>）の両方を、認証が要るすべての画面に求める。</strong></p>
@@ -6995,7 +7088,17 @@
 <tr>
 <td style="text-align: left;">TOTP の認証</td>
 <td style="text-align: left;"><code>AbstractAuthenticationProcessingFilter</code> を継ぐフィルター（<code>POST /login/totp</code>）と <code>AuthenticationProvider</code>。password の要素がそろった session でだけ受け付ける</td>
-<td style="text-align: left;">フィルターの <code>mfaEnabled</code> を有効にしても、<strong>結果のトークンの型が <code>toBuilder()</code> を自分で宣言していないと、password の要素が合わさらず置き換わる</strong>。独自のトークンにビルダーを持たせる</td>
+<td style="text-align: left;">フィルターの <code>mfaEnabled</code> を有効にしても、<strong>結果のトークンの型が <code>toBuilder()</code> を自分で宣言していないと、password の要素が合わさらず置き換わる</strong>。独自のトークンにビルダーを持たせる。要素を合わせるのは主体の名前が同じときだけで、別の利用者の password を送っても先の利用者の <code>FACTOR_TOTP</code> は引き継がれない</td>
+</tr>
+<tr>
+<td style="text-align: left;">session の固定化</td>
+<td style="text-align: left;">TOTP の段でも session の ID を変え、CSRF のトークンを作り直す（<code>ChangeSessionIdAuthenticationStrategy</code> と <code>CsrfAuthenticationStrategy</code>）。本体では <code>http.getSharedObject(SessionAuthenticationStrategy.class)</code> を渡すか、configurer で組んで formLogin とそろえる</td>
+<td style="text-align: left;"><code>new</code> で足したフィルターの既定は何もしない戦略で、権限が上がる TOTP の段で ID が変わらなかった（レビューで見つけて直した）</td>
+</tr>
+<tr>
+<td style="text-align: left;">成功の後の行き先</td>
+<td style="text-align: left;">保存した request（深いリンク）へ戻すか、役割ごとの既定の画面へ導く</td>
+<td style="text-align: left;">スパイクは固定の <code>/staff</code>。荷主（<code>/customer</code>）と社内（<code>/staff</code>）の役割分け（US-16）と一緒に決める</td>
 </tr>
 <tr>
 <td style="text-align: left;">session の保存</td>
@@ -7019,25 +7122,71 @@
 </tr>
 <tr>
 <td style="text-align: left;">無操作 30 分</td>
-<td style="text-align: left;"><code>server.servlet.session.timeout=30m</code></td>
-<td style="text-align: left;">設定で守れる</td>
+<td style="text-align: left;"><code>server.servlet.session.timeout=30m</code>（Spring Session JDBC では効く設定を確かめる）</td>
+<td style="text-align: left;">設定しただけで、振る舞いは確かめていない（W5 の統合テスト）</td>
 </tr>
 <tr>
 <td style="text-align: left;">最長 8 時間</td>
-<td style="text-align: left;">本人確認の時刻を session に残し、request ごとに比べるフィルター</td>
-<td style="text-align: left;">Spring Security に既製の部品はない。時刻はアプリケーションの <code>Clock</code> で比べる</td>
+<td style="text-align: left;">本人確認の時刻を、その session で初めて TOTP が通ったときだけ残し、request ごとに比べるフィルター。<strong>期限の確認を 2 つの要素の認証より前に置く</strong>（フィルターの順序に頼らない形も W5 で比べる）</td>
+<td style="text-align: left;">確認を認可の直前に置いたら、期限切れの session に TOTP だけを送って 8 時間延ばせた（レビューで見つけて直した）。Spring Security の <code>RequiredFactor</code> には有効期間（<code>validDuration</code>）があり時計も替えられるが、期限切れは要素の再入力を求めるもので session を終わらせない。AC5 の再認証には session を捨てるフィルターを使う</td>
 </tr>
 <tr>
 <td style="text-align: left;">password の保存</td>
-<td style="text-align: left;"><code>PasswordEncoderFactories</code> の既定（bcrypt）</td>
-<td style="text-align: left;">Argon2id は Bouncy Castle を足さないと使えない。SEC-07 は bcrypt で満たす</td>
+<td style="text-align: left;"><code>PasswordEncoderFactories</code> の既定（bcrypt、強さ 10）</td>
+<td style="text-align: left;">Argon2id は Bouncy Castle を足さないと符号化で <code>NoClassDefFoundError</code> になる。SEC-07 は bcrypt で満たす</td>
+</tr>
+<tr>
+<td style="text-align: left;">更新の原子性</td>
+<td style="text-align: left;">失敗の回数は <code>UPDATE ... SET failures = failures + 1 ... RETURNING</code>、再利用の拒否は <code>UPDATE ... SET last_used_step = :step WHERE last_used_step &lt; :step</code> の更新件数で判定する。存在しないメールアドレスの失敗では行を作らない</td>
+<td style="text-align: left;">スパイクは <code>synchronized</code> とメモリで守った。読んでから書く形では、並んだ試行や複数のインスタンスで 5 回を超えて試せ、同じコードが 2 回通る</td>
 </tr>
 </tbody>
 </table>
 <h3 id="3">3. 開発環境の入力済み<a class="headerlink" href="#3" title="Permanent link">&para;</a></h3>
+<p><code>dev</code> プロファイルのときだけ、A-01 にメールアドレスと password、A-02 にその時点のコードを入れる。既定の設定（ステージング・本番を含む）では入力済みにしない。誤って入力済みが本番で効くと、password を知った者に A-02 が TOTP を差し出し、多要素認証が無効になるため、次の層で守る。</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">層</th>
+<th style="text-align: left;">守り方</th>
+<th style="text-align: left;">スパイク</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">1</td>
+<td style="text-align: left;">入力済みの部品を <code>@Profile("dev")</code> の bean にする。controller はその部品の有無だけを見て、TOTP の生成器や利用者の秘密を直接参照しない</td>
+<td style="text-align: left;"><code>DevLoginPrefill</code>。既定の設定で A-01・A-02 が空で出ることを確かめた</td>
+</tr>
+<tr>
+<td style="text-align: left;">2</td>
+<td style="text-align: left;">dev-login の設定（<code>cargotracker.dev-login.*</code>）が、<code>dev</code> でない、または <code>staging</code>・<code>prod</code> と併用のプロファイルで入っていたら、起動を失敗させる</td>
+<td style="text-align: left;"><code>DevLoginGuard</code>。起動が <code>IllegalStateException</code> で失敗することを確かめた</td>
+</tr>
+<tr>
+<td style="text-align: left;">3</td>
+<td style="text-align: left;">コードを作れるのは、<code>dev</code> の設定に書いた開発用の固定の秘密だけにする。利用者の表の秘密（暗号化した値）は復号しない。開発用の利用者でない主体には何も入れない</td>
+<td style="text-align: left;">スパイクは全員が固定の秘密。本体で守る</td>
+</tr>
+<tr>
+<td style="text-align: left;">4</td>
+<td style="text-align: left;">開発用の利用者と固定の秘密は、<code>spring.flyway.locations</code> の共通・ベンダーの場所に置かず、<code>dev</code> だけで足す場所か起動時の投入にし、その場所をテストで確かめる。利用者を 2 人以上にし、秘密が別であることも確かめる</td>
+<td style="text-align: left;">本体で守る</td>
+</tr>
+<tr>
+<td style="text-align: left;">5</td>
+<td style="text-align: left;">ステージング・本番で <code>SPRING_PROFILES_ACTIVE</code> を固定し、<code>dev</code> を拒否する確認を IaC・CD と運用の手順に足す</td>
+<td style="text-align: left;">本体で守る（W5）</td>
+</tr>
+</tbody>
+</table>
+<p>本体の <code>dev</code> プロファイルは今「H2 で bootRun」の意味で、入力済みの意味がそこに相乗りする。</p>
+<h3 id="4-identity">4. <code>identity</code> への置き方と仮の主体の置き換え<a class="headerlink" href="#4-identity" title="Permanent link">&para;</a></h3>
 <ul>
-<li><code>dev</code> プロファイルの設定（<code>cargotracker.dev-login.username</code>・<code>password</code>・<code>prefill-totp</code>）があるときだけ、A-01 にメールアドレスと password、A-02 にその時点のコードを入れる。既定の設定（ステージング・本番を含む）では入力済みにしない。学習テストで両方を確かめた。</li>
-<li>開発用の利用者は固定の TOTP の秘密を持つ。本番の利用者の秘密は利用者ごとに作る。</li>
+<li>認証の主体の型（例: <code>AuthenticatedActor(UserId, CompanyId, Role)</code>）は共有カーネル <code>shared</code> に置く。ほかのコンテキストは <code>@AuthenticationPrincipal</code> でそれだけを受け取り、<code>FACTOR_*</code> や認証方式を知らない。今の依存（<code>identity → quotation::events</code>）のまま <code>quotation</code> が <code>identity</code> の API から利用者を引くと、<code>quotation → identity → quotation::events</code> の循環になるため。</li>
+<li><code>identity</code> は、利用者・TOTP の資格・回復コード・失敗の記録と、<code>UserDetailsService</code>・<code>AuthenticationProvider</code>・失敗のリスナーを持つ。TOTP のライブラリへの依存は <code>identity.infrastructure</code> に閉じ込める。</li>
+<li><code>SecurityFilterChain</code>（URL ごとの規則、<code>/customer</code>・<code>/staff</code>）は <code>platform</code> か <code>identity.infrastructure.config</code> に置く。W5 で決める。</li>
+<li>置き換えの順: ① 主体の型を <code>shared</code> に足す → ② 認証を入れて主体を解決する → ③ controller を 1 つずつ置き換える → ④ <code>ProvisionalActorProperties</code> を消す。</li>
 </ul>
 <h3 id="_4">代替案<a class="headerlink" href="#_4" title="Permanent link">&para;</a></h3>
 <table>
@@ -7054,11 +7203,15 @@
 </tr>
 <tr>
 <td style="text-align: left;">password と TOTP を 1 つの画面で同時に送る</td>
-<td style="text-align: left;">誤った password でも TOTP を試せ、どちらが誤りかの扱いが複雑になる。US-18 の画面（A-01・A-02）と合わない</td>
+<td style="text-align: left;">誤った password でも TOTP を試せ、どちらが誤りかの扱いが複雑になる。US-18 の画面（A-01・A-02）と合わない。ただし 2 段階の画面は AC2 と緊張する（下の「W5 で人が決める論点」）</td>
 </tr>
 <tr>
 <td style="text-align: left;">開発環境では TOTP を飛ばす</td>
 <td style="text-align: left;">開発と本番で認証の流れが変わり、2 段階のログインを開発環境で確かめられない（確認ポイント 7）</td>
+</tr>
+<tr>
+<td style="text-align: left;">要素を全体の注釈でなく URL ごとに求める（<code>AuthorizationManagerFactories</code> 等で、登録の画面は <code>FACTOR_PASSWORD</code> だけ）</td>
+<td style="text-align: left;">却下ではなく W5 で比べる。全体の注釈では、初回の登録（AC7）と再設定（SEC-08）の画面を開く経路を別に作り、登録を終えていない利用者が業務の画面に入れないことを同時に守る必要がある</td>
 </tr>
 <tr>
 <td style="text-align: left;">Argon2id にする</td>
@@ -7075,7 +7228,8 @@
 </ul>
 <h3 id="_7">ネガティブ<a class="headerlink" href="#_7" title="Permanent link">&para;</a></h3>
 <ul>
-<li>Spring Security 7 の多要素認証は新しい仕組みで、「結果の型が <code>toBuilder()</code> を宣言していないと要素が合わさらない」のような資料の少ない振る舞いがある。US-18 で統合テストを厚くする。</li>
+<li>Spring Security 7 の多要素認証は新しい仕組みで、「結果の型が <code>toBuilder()</code> を宣言していないと要素が合わさらない」「追加したフィルターは session の ID を変えない」のような資料の少ない振る舞いがある。US-18 で統合テストを厚くし、版を上げるときの回帰の守りにする。</li>
+<li>TOTP はサーバーの時計の正しさに依存する。前後 1 つの窓（±30 秒）を超えるずれは認証の障害になる。NTP（ECS なら Amazon Time Sync）の前提を、非機能要件か運用要件に書く。</li>
 <li>要素の権限の発行時刻（<code>FactorGrantedAuthority</code> の <code>issuedAt</code>）はシステムの時計で決まり、アプリケーションの <code>Clock</code> で動かせない。時刻に頼る判定（最長 8 時間）は、session に残す自分の時刻で行う。</li>
 <li>再利用の拒否・失敗の回数・ロック・回復コードの記録が、複数のアプリケーションの実行環境で共有される必要がある（本体では表）。</li>
 </ul>
@@ -7102,26 +7256,46 @@
 </tr>
 <tr>
 <td style="text-align: left;">開発環境</td>
-<td style="text-align: left;">開発用の利用者（荷主担当者・営業担当者）と固定の TOTP の秘密を <code>dev</code> プロファイルで投入し、A-01・A-02 を入力済みにする</td>
+<td style="text-align: left;">開発用の利用者（荷主担当者・営業担当者）と固定の TOTP の秘密を <code>dev</code> プロファイルで投入し、A-01・A-02 を入力済みにする（決定 3 の 5 つの層）</td>
+</tr>
+<tr>
+<td style="text-align: left;">部品の分け方</td>
+<td style="text-align: left;">TOTP の生成は <code>TotpCodeGenerator</code> のポート（<code>identity.domain</code>）と java-otp の実装（<code>identity.infrastructure</code>）に分け、RFC 6238 の試験ベクトルを契約テストにする。ロックの方針（5 回・15 分）は利用者の集約、再利用の不変条件（刻みは単調に増える）は TOTP の資格、一度だけ使う回復コードはハッシュの照合に置く</td>
+</tr>
+<tr>
+<td style="text-align: left;">テストのデータ</td>
+<td style="text-align: left;">スパイクは singleton の利用者と時計をテストで共有し、並列実行では壊れる。本体ではテストごとにデータを分ける</td>
 </tr>
 </tbody>
 </table>
 <h3 id="_8">未確認の項目<a class="headerlink" href="#_8" title="Permanent link">&para;</a></h3>
 <ul>
 <li>登録の QR の描き方（ZXing をサーバーで使うか、クライアントで描くか）と、TOTP の秘密の暗号化の鍵の管理。</li>
-<li>実際のサーブレットコンテナでの session の固定化の対策と、同じ利用者の同時のログイン。学習テストは MockMvc だけ。</li>
+<li>秘密の Base32 の出どころと <code>otpauth://</code> の URI の組み立て。回復コード 10 個の発行（SEC-09）とハッシュでの保存（スパイクは 2 個を平文で持つ）。</li>
+<li>java-otp の生成器のスレッドセーフ（スパイクは照合を <code>synchronized</code> の中で行う）。</li>
+<li>Spring Session JDBC の上で: session に置く値（独自のトークン、<code>FactorGrantedAuthority</code>、<code>Instant</code>）の直列化、changeSessionId、無操作 30 分が <code>spring.session.timeout</code> と <code>server.servlet.session.timeout</code> のどちらで効くか、最長 8 時間を即時失効（BR-14）と同じ経路にできるか。</li>
+<li>同じ利用者の同時のログインと、同じコードの同時の送信（1 つだけ通ること）。学習テストは MockMvc だけ。</li>
+<li>初回の登録（AC7）の画面の認可と、登録を終えていない利用者の扱い。登録の完了時に最初のコードを確かめて <code>FACTOR_TOTP</code> を与えるか。</li>
 <li>password の再設定（SEC-08）と、TOTP の再登録（SEC-10）の流れ。</li>
 <li>利用者の画面で「次に取れる操作」（T-35）: A-02 で誤ったときは再入力か回復コード、ロック中は解ける時刻を示して待つ、端末を失ったときは回復コードか管理者への連絡。US-18 の計画の確認ポイントにする。</li>
 </ul>
+<h3 id="w5">W5 で人が決める論点<a class="headerlink" href="#w5" title="Permanent link">&para;</a></h3>
+<ul>
+<li>AC2（利用者の存在や失敗箇所を第三者が推測できる詳細を示さない）と 2 段階の画面の緊張。A-02 に進めば password が正しいと分かる。ロックの確認は password の照合より先に行われ、存在しない利用者はロックされないため、ロックの表示（A-02 の解ける時刻を含む）から利用者の存在が分かる。</li>
+<li>複数の利用者への password の総当たり（spraying）は利用者ごとのロックでは防げない。送信元ごとの流量の制限を非機能要件で扱うか。</li>
+<li>本体の <code>same-site=lax</code> のつなぎ（D-21）と、US-18 で有効にする CSRF の防御との関係。</li>
+</ul>
 <h2 id="_9">コンプライアンス<a class="headerlink" href="#_9" title="Permanent link">&para;</a></h2>
 <ul>
-<li>US-18 の Bolt で、本体の統合テストに、2 つの要素がそろわないと業務の画面を開けないこと、再利用の拒否、5 回の失敗のロック、最長 8 時間を加える。</li>
-<li>既定の設定で A-01・A-02 が入力済みにならないことを、本体のテストで守る。</li>
+<li>US-18 の Bolt で、本体の統合テストに次を加える。2 つの要素がそろわないと業務の画面を開けない（全 URL）、再利用の拒否、5 回の失敗のロックの境界（4・5 回、14 分 59 秒・15 分）、最長 8 時間の境界（7 時間 59 分 59 秒・8 時間）、期限切れの session に TOTP を送っても延びない、TOTP の段で session の ID が変わる、ロック中の誤りで期限が延びない、認証の成功・失敗・ロックが同じ transaction で監査記録に書かれる（IA-INV-08）。</li>
+<li>枠組みの振る舞いの特性テスト（ビルダーのないトークンでは <code>FACTOR_PASSWORD</code> が失われる、既定のリポジトリでは request の中にしか残らない、要素の発行時刻はシステムの時計）を置き、Spring Security の版を上げるときの回帰の守りにする。</li>
+<li>既定・staging・prod の設定で A-01・A-02 が入力済みにならないこと、dev の外で dev-login の設定があると起動しないことを、本体のテストで守る。</li>
+<li>ArchUnit で、TOTP のライブラリへの依存を <code>identity.infrastructure</code> に閉じ込め、ほかのコンテキストが <code>FACTOR_*</code> を参照しないことを守る。</li>
 </ul>
 <h2 id="_10">参考資料<a class="headerlink" href="#_10" title="Permanent link">&para;</a></h2>
 <ul>
-<li><a href="../../../development/cargo-tracker/bolt_13_plan/">Bolt 13 計画</a>、<a href="../../development/cargo-tracker/bolt_13_report.md">Bolt 13 終了報告</a></li>
-<li>スパイク: <code>spikes/ts-01-totp/</code>（<code>TotpCandidatesTest</code>、<code>MfaLoginTest</code>、<code>DevLoginPrefillTest</code>、<code>PasswordStorageTest</code>、<code>SessionTimeoutTest</code>）</li>
+<li><a href="../../../development/cargo-tracker/bolt_13_plan/">Bolt 13 計画</a>、<a href="../../../development/cargo-tracker/bolt_13_report/">Bolt 13 終了報告</a>、<a href="../../../review/cargo-tracker/bolt_13_review_20261006/">Bolt 13 のレビュー</a></li>
+<li>スパイク: <code>spikes/ts-01-totp/</code>（<code>SpikeSetupTest</code>、<code>TotpCandidatesTest</code>、<code>MfaLoginTest</code>、<code>DevLoginPrefillTest</code>、<code>PasswordStorageTest</code>、<code>SessionTimeoutTest</code>）</li>
 <li>RFC 6238（TOTP）、RFC 4226（HOTP）</li>
 <li><a href="../../../requirements/cargo-tracker/user_story/">ユーザーストーリー</a>（US-18）、<a href="../../../design/cargo-tracker/non_functional/">非機能要件</a>（SEC-04〜10）、<a href="../../../design/cargo-tracker/tech_stack/">技術スタック</a>（TS-01）</li>
 </ul>

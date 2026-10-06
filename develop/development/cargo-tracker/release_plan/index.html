@@ -3483,6 +3483,41 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../bolt_13_report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 13 終了報告
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--draft"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -4270,6 +4305,41 @@
   
   
     <span class="md-status md-status--stable"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../review/cargo-tracker/bolt_13_review_20261006/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 13 開発成果物レビュー（2026-10-06）
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--draft"></span>
   
 
   
@@ -8381,7 +8451,7 @@
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> US-03（全受入条件、BR-10 の境界）。Bolt 10 で提示（AC1〜AC3）、Bolt 11 で失効・置換（AC4・AC5）に分ける（2026-10-05 に human:kakimomokuri が決定）。<a href="../bolt_10_plan/">Bolt 10 計画</a>、<a href="../bolt_10_report/">Bolt 10 終了報告</a>（提示は完了、承認済み。AC4・AC5 は Bolt 11）。<a href="../bolt_11_plan/">Bolt 11 計画</a>、<a href="../bolt_11_report/">Bolt 11 終了報告</a>（失効・置換と Bolt 9・10 レビューの中・低の返済。完了、承認済み。#4 をクローズした。AC4・AC5 の予約確定と荷主の承認での利用の拒否は US-04・US-24 の Bolt で確かめる）</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> US-24（AC1 詳細経路設計へ進む）。Bolt 12 で行う（2026-10-06 に human:kakimomokuri が W2 の残りから選んだ。US-18 の一部と TS-01 は後の Bolt）。<a href="../bolt_12_plan/">Bolt 12 計画</a>、<a href="../bolt_12_report/">Bolt 12 終了報告</a>（完了、承認済み。#5 は AC1 にチェックを付け、AC4・AC5 の W3 まで開いたまま）</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> US-18 の一部（password によるログインと session）</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> TOTP ライブラリのスパイク（TS-01）。Bolt 13 で行う（2026-10-06 に human:kakimomokuri が W2 の残りから選んだ。US-18 の一部は後の Bolt）。<a href="../bolt_13_plan/">Bolt 13 計画</a></li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> TOTP ライブラリのスパイク（TS-01）。Bolt 13 で行う（2026-10-06 に human:kakimomokuri が W2 の残りから選んだ。US-18 の一部は後の Bolt）。<a href="../bolt_13_plan/">Bolt 13 計画</a>、<a href="../bolt_13_report/">Bolt 13 終了報告</a>（完了、終了報告の承認待ち。方式は <a href="../../../adr/cargo-tracker/011-mfa-totp/">ADR-011</a> の案で、採否は W5 の US-18 の計画で決める）</li>
 </ul>
 <p><strong>目標 SP</strong>: 8（US-03 5、US-24 の一部 1、US-18 の一部 2）</p>
 <h3 id="w32026-10-19-10-23">W3（2026-10-19 〜 10-23）<a class="headerlink" href="#w32026-10-19-10-23" title="Permanent link">&para;</a></h3>
@@ -8738,9 +8808,9 @@
 </tr>
 <tr>
 <td style="text-align: left;">TOTP と Spring Security 7 の統合が想定より難しい</td>
-<td style="text-align: center;">低</td>
 <td style="text-align: center;">中</td>
-<td style="text-align: left;">Bolt 13 でスパイクし（2026-10-06）、Spring Security 7.1 の要素の権限で 2 段階のログインを組めることを確かめた。方式は <a href="../../../adr/cargo-tracker/011-mfa-totp/">ADR-011</a>（提案）。残りは登録の QR と秘密の暗号化の鍵の管理（W5）</td>
+<td style="text-align: center;">低</td>
+<td style="text-align: left;">Bolt 13 でスパイクし（2026-10-06）、Spring Security 7.1 の要素の権限で 2 段階のログインを組めることを確かめた（発生確率を中から低に。ADR-011 が却下されたら中に戻す）。方式は <a href="../../../adr/cargo-tracker/011-mfa-totp/">ADR-011</a>（提案）。残りは登録の QR・秘密の暗号化の鍵の管理・Spring Session JDBC の上での確認（W5）</td>
 </tr>
 <tr>
 <td style="text-align: left;">H2 と PostgreSQL の方言差（一意制約違反後の振る舞いなど）</td>
@@ -9179,6 +9249,11 @@
 <tr>
 <td style="text-align: left;">2026-10-06</td>
 <td style="text-align: left;">リスク台帳と引継ぎの TS-01 に Bolt 13 のスパイクの結論（ADR-011 の案）を反映した</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5</td>
+</tr>
+<tr>
+<td style="text-align: left;">2026-10-06</td>
+<td style="text-align: left;">TOTP のリスクで下げる列を影響度から発生確率に直した（Bolt 13 レビュー R-13、D-46）。W2 に Bolt 13 終了報告へのリンクを付けた</td>
 <td style="text-align: left;">anthropic/claude-opus-5-5</td>
 </tr>
 </tbody>
