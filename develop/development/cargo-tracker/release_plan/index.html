@@ -3542,7 +3542,7 @@
     
   
   
-    <span class="md-status md-status--draft"></span>
+    <span class="md-status md-status--stable"></span>
   
 
   
@@ -8485,7 +8485,7 @@
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Bolt 9: Bolt 6〜8 レビューの返済（書類の差し替え R-01 と改善提案。D-25 で W2 の最初の Bolt にした。完了、承認済み。#37 をクローズした）。<a href="../bolt_09_plan/">Bolt 9 計画</a>、<a href="../bolt_09_report/">Bolt 9 終了報告</a>、<a href="https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/37">#37</a></li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> US-03（全受入条件、BR-10 の境界）。Bolt 10 で提示（AC1〜AC3）、Bolt 11 で失効・置換（AC4・AC5）に分ける（2026-10-05 に human:kakimomokuri が決定）。<a href="../bolt_10_plan/">Bolt 10 計画</a>、<a href="../bolt_10_report/">Bolt 10 終了報告</a>（提示は完了、承認済み。AC4・AC5 は Bolt 11）。<a href="../bolt_11_plan/">Bolt 11 計画</a>、<a href="../bolt_11_report/">Bolt 11 終了報告</a>（失効・置換と Bolt 9・10 レビューの中・低の返済。完了、承認済み。#4 をクローズした。AC4・AC5 の予約確定と荷主の承認での利用の拒否は US-04・US-24 の Bolt で確かめる）</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> US-24（AC1 詳細経路設計へ進む）。Bolt 12 で行う（2026-10-06 に human:kakimomokuri が W2 の残りから選んだ。US-18 の一部と TS-01 は後の Bolt）。<a href="../bolt_12_plan/">Bolt 12 計画</a>、<a href="../bolt_12_report/">Bolt 12 終了報告</a>（完了、承認済み。#5 は AC1 にチェックを付け、AC4・AC5 の W3 まで開いたまま）</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> US-18 の一部（password によるログインと session）。Bolt 14 で行う（2026-10-06 に human:kakimomokuri が分けずに 1 つの Bolt にすると決めた。AC1 の password の部分・AC4・AC5 を R1.0 の #13 から前倒しする案）。<a href="../bolt_14_plan/">Bolt 14 計画</a>（承認待ち）</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> US-18 の一部（password によるログインと session）。Bolt 14 で行う（2026-10-06 に human:kakimomokuri が分けずに 1 つの Bolt にすると決めた。AC1 の password の部分・AC4・AC5 を R1.0 の #13 から前倒しする）。<a href="../bolt_14_plan/">Bolt 14 計画</a>（承認済み）</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> TOTP ライブラリのスパイク（TS-01）。Bolt 13 で行う（2026-10-06 に human:kakimomokuri が W2 の残りから選んだ。US-18 の一部は後の Bolt）。<a href="../bolt_13_plan/">Bolt 13 計画</a>、<a href="../bolt_13_report/">Bolt 13 終了報告</a>（完了、承認済み。方式は <a href="../../../adr/cargo-tracker/011-mfa-totp/">ADR-011</a> の案で、採否は W5 の US-18 の計画で決める）</li>
 </ul>
 <p><strong>目標 SP</strong>: 8（US-03 5、US-24 の一部 1、US-18 の一部 2）</p>
@@ -9300,6 +9300,11 @@
 <td style="text-align: left;">2026-10-06</td>
 <td style="text-align: left;">W2 に Bolt 14 計画へのリンクを付けた（範囲は US-18 の password によるログインと session を 1 つの Bolt で。人の決定）</td>
 <td style="text-align: left;">anthropic/claude-opus-5-5</td>
+</tr>
+<tr>
+<td style="text-align: left;">2026-10-06</td>
+<td style="text-align: left;">Bolt 14 計画の承認を W2 に反映した</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5、承認 human:kakimomokuri</td>
 </tr>
 </tbody>
 </table>
