@@ -21,6 +21,10 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-security'
 	implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
 
+	// TOTP の候補（ステップ 2 で比べる。本体には入れない）
+	implementation 'com.eatthepath:java-otp:1.0.0'
+	implementation 'dev.samstevens.totp:totp:1.7.1'
+
 	testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
 	testImplementation 'org.springframework.boot:spring-boot-starter-security-test'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
