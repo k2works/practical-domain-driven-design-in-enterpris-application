@@ -176,6 +176,17 @@ tasks.register('playwrightInstall', JavaExec) {
 	args 'install', '--with-deps', 'chromium'
 }
 
+// Heroku のデモ環境（ADR-013）は dev プロファイルで動かすため、Dockerfile の demo のステージで H2 をクラスパスに足す。
+// bootJar（本番の成果物）には入れない（AT-06）。版は developmentOnly と同じく Spring Boot の BOM で決まる。devtools は写さない
+tasks.register('copyDemoLibs', Copy) {
+	group = 'distribution'
+	description = 'デモのイメージ用に、developmentOnly の H2 を build/demo-lib に写す（ADR-013）'
+	from(configurations.developmentOnly.incoming.artifactView {
+		componentFilter { it instanceof ModuleComponentIdentifier && it.group == 'com.h2database' }
+	}.files)
+	into layout.buildDirectory.dir('demo-lib')
+}
+
 tasks.named('bootRun') {
 	// ローカル起動は H2 の dev プロファイルで動かす（開発体験を優先する。ADR-007）
 	systemProperty 'spring.profiles.active', 'dev'

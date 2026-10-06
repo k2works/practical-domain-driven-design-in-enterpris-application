@@ -111,7 +111,7 @@ app --> tmp
   - インフラストラクチャアーキテクチャの環境構成に、デモ環境（Heroku、dev、永続化なし）を 1 行足す
   - GitHub に技術 Issue を立て、Project のフィールド（リリース・週・Unit なし・SP 0）を設定する
   - 結果（17:00〜17:05 JST）: ADR-013（提案）、手順書の骨組み、インフラストラクチャアーキテクチャの環境構成のデモの行、ADR・運用・開発の索引と `mkdocs.yml`。[#38](https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/38) を立て、Project に Release 0.1・W3・横断・SP 0・In Progress を設定した（Unit は「なし」の値がないため「横断」）。`okf:check` は ERROR 0
-- [ ] **2. 実行用の Dockerfile を作り、ローカルのコンテナで起動を確かめる**
+- [x] **2. 実行用の Dockerfile を作り、ローカルのコンテナで起動を確かめる**
   - `apps/cargo-tracker/Dockerfile`: ビルドの段は `eclipse-temurin:25-jdk` で `./gradlew bootJar`（テストは CI に任せて飛ばす）、実行の段は `eclipse-temurin:25-jre`。root でない利用者で動かし、`server.port=${PORT:8080}` を起動の引数で渡す
   - `.dockerignore`: `build/`・`.gradle/`・IDE の設定を除く
   - 確かめること（Red の代わりに、まず Dockerfile のない状態で起動の確認のコマンドが失敗することを記録する）:
@@ -123,6 +123,14 @@ app --> tmp
   - 途中の結果（17:02〜17:16 JST）: Dockerfile のない状態のビルドの失敗を記録した（`failed to read dockerfile`）。bootJar だけのイメージは dev で起動に失敗した（`ClassNotFoundException: org.h2.Driver`）。H2 は `developmentOnly` で、AT-06（`verifyProductionClasspath`）が bootJar に入れないことを守っているため。確認ポイント 9 に従って止め、人に諮った（確認ポイント 13）。スクラッチの試作（bootJar を `jarmode tools extract` で展開し、H2 をクラスパスに足す）で、512 MB の制限・`PORT=5001` の下で 24 秒で起動し、メモリは 346 MiB。`X-Forwarded-Proto: https` でリダイレクトの `Location` が https のまま、開発用の利用者でログインして一覧が 200（H1 は成り立つ見込み）
   - 確認ポイント 13 の決定で作り直す: `build.gradle` に `developmentOnly` の H2 を `build/demo-lib` に写すタスク `copyDemoLibs` を足す（版は Spring Boot の BOM のまま。bootJar と AT-06 は変えない）。Dockerfile は `build`（`bootJar copyDemoLibs` と展開）、`runtime`（H2 なし。W10 の ECR・ECS 用）、`demo`（`runtime` に H2 を足す。Heroku 用）の 3 つのステージにする。Heroku へは `--target demo --provenance=false` でビルドする（Container Registry は provenance の attestation 付きの manifest list を受けないため）
   - 追加で確かめること: `runtime` のステージのイメージに H2 がないこと（dev で起動すると `org.h2.Driver` で失敗する）
+  - 結果（17:16〜17:35 JST）:
+    - Red: `copyDemoLibs` がない状態で `Task 'copyDemoLibs' not found`。足した後、`build/demo-lib` は `h2-2.4.240.jar` だけ（devtools は写らない）
+    - `runtime` のイメージは dev で起動に失敗した（`ClassNotFoundException: org.h2.Driver`。14 秒で停止）。H2 が入っていないことを確かめた
+    - `demo` のイメージは、512 MB の制限・`PORT=5001`・`DYNO=web.1` で 24.5 秒で起動した（R10 の 60 秒の内）。起動の後 358 MiB、荷主・営業のログインと画面の操作の後 367 MiB（R14 の 512 MB の内。H2 は成り立つ見込み）
+    - `X-Forwarded-Proto: https` で、ログインの前後のリダイレクトの `Location` が https のまま（H1 は成り立つ）。荷主・営業の開発用の利用者でログインし、荷主の一覧・新規が 200、営業の一覧が 200、営業から荷主の画面が 403
+    - イメージの大きさは `runtime` 563 MB、`demo` 568 MB。ビルドは初回 3 分半（依存のキャッシュの後は 1 分弱）
+    - 途中で、展開した jar の名前が `cargo-tracker-0.0.1-SNAPSHOT.jar` になり、`app.jar` を指す起動が失敗したため、展開の前に `app.jar` に名前を変えた
+    - `./gradlew check verifyProductionClasspath` は緑（4 分 20 秒）
 - [ ] **3. Heroku のアプリを作り、初回の配備をする** 【承認ゲート: 外部連携】
   - 人が `! heroku login` と `! heroku container:login` を実行する（AI はログインできない）
   - Gulp のタスクを作る（`operating-script` スキルに従う）:
