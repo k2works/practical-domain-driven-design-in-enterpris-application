@@ -329,11 +329,6 @@
                                         <td>(total_amount &gt; (0)::numeric)</td>
                                     </tr>
                                     <tr>
-                                        <td><a href='tables/transport_request_number_counter.html'>transport_request_number_counter</a></td>
-                                        <td>ck_transport_request_number_counter_last_no</td>
-                                        <td>(last_no &gt;&#61; 0)</td>
-                                    </tr>
-                                    <tr>
                                         <td><a href='tables/required_document.html'>required_document</a></td>
                                         <td>ck_required_document_media_type</td>
                                         <td>((media_type)::text &#61; ANY ((ARRAY[&#39;PDF&#39;::character varying, &#39;PNG&#39;::character varying, &#39;JPEG&#39;::character varying])::text[]))</td>
@@ -347,6 +342,11 @@
                                         <td><a href='tables/required_document.html'>required_document</a></td>
                                         <td>ck_required_document_type</td>
                                         <td>((document_type)::text &#61; ANY ((ARRAY[&#39;COMMERCIAL_INVOICE&#39;::character varying, &#39;PACKING_LIST&#39;::character varying, &#39;OTHER&#39;::character varying])::text[]))</td>
+                                    </tr>
+                                    <tr>
+                                        <td><a href='tables/transport_request_number_counter.html'>transport_request_number_counter</a></td>
+                                        <td>ck_transport_request_number_counter_last_no</td>
+                                        <td>(last_no &gt;&#61; 0)</td>
                                     </tr>
                                     <tr>
                                         <td><a href='tables/review_record.html'>review_record</a></td>
