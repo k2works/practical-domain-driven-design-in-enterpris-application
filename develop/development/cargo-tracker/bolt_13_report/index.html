@@ -2952,7 +2952,7 @@
   <a href="#_5" class="md-nav__link">
     <span class="md-ellipsis">
       
-        学習テストの結果
+        品質ゲート
       
     </span>
   </a>
@@ -2963,7 +2963,7 @@
   <a href="#_6" class="md-nav__link">
     <span class="md-ellipsis">
       
-        仮説の結論
+        学習テストの結果
       
     </span>
   </a>
@@ -2974,7 +2974,7 @@
   <a href="#_7" class="md-nav__link">
     <span class="md-ellipsis">
       
-        開発レビューと対応
+        仮説の結論
       
     </span>
   </a>
@@ -2983,6 +2983,17 @@
       
         <li class="md-nav__item">
   <a href="#_8" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        開発レビューと対応
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_9" class="md-nav__link">
     <span class="md-ellipsis">
       
         判断と学び
@@ -2994,7 +3005,7 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#_9" class="md-nav__link">
+  <a href="#_10" class="md-nav__link">
     <span class="md-ellipsis">
       
         人の決定
@@ -3043,7 +3054,7 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#_10" class="md-nav__link">
+  <a href="#_11" class="md-nav__link">
     <span class="md-ellipsis">
       
         承認待ちの書き換え
@@ -3065,7 +3076,7 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#_11" class="md-nav__link">
+  <a href="#_12" class="md-nav__link">
     <span class="md-ellipsis">
       
         更新履歴
@@ -3076,7 +3087,7 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#_12" class="md-nav__link">
+  <a href="#_13" class="md-nav__link">
     <span class="md-ellipsis">
       
         関連ドキュメント
@@ -7140,7 +7151,34 @@
 </tr>
 </tbody>
 </table>
-<h2 id="_5">学習テストの結果<a class="headerlink" href="#_5" title="Permanent link">&para;</a></h2>
+<h2 id="_5">品質ゲート<a class="headerlink" href="#_5" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">項目</th>
+<th style="text-align: left;">結果</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">スパイクの学習テスト</td>
+<td style="text-align: left;">57 件すべて passed（本体の build と CI の対象外）</td>
+</tr>
+<tr>
+<td style="text-align: left;">CI</td>
+<td style="text-align: left;">本体のコードを変えていないため、cargo-tracker CI は path filter で走らない。最後の実行（#79、<code>4e0adb3</code>）は緑。Deploy MkDocs は <code>0f3a512</code> まで緑（T-26）</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>okf:check</code></td>
+<td style="text-align: left;">ERROR 0</td>
+</tr>
+<tr>
+<td style="text-align: left;">SonarQube・デモの動画・ユーザーマニュアル</td>
+<td style="text-align: left;">対象外（確認ポイント 5。本体の画面を変えない）</td>
+</tr>
+</tbody>
+</table>
+<h2 id="_6">学習テストの結果<a class="headerlink" href="#_6" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
 <tr>
@@ -7187,7 +7225,7 @@
 </tr>
 </tbody>
 </table>
-<h2 id="_6">仮説の結論<a class="headerlink" href="#_6" title="Permanent link">&para;</a></h2>
+<h2 id="_7">仮説の結論<a class="headerlink" href="#_7" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
 <tr>
@@ -7218,7 +7256,7 @@
 </tr>
 </tbody>
 </table>
-<h2 id="_7">開発レビューと対応<a class="headerlink" href="#_7" title="Permanent link">&para;</a></h2>
+<h2 id="_8">開発レビューと対応<a class="headerlink" href="#_8" title="Permanent link">&para;</a></h2>
 <p>確認ポイント 5 に従い、xp-architect と xp-tester の 2 つの視点でレビューした（<a href="../../../review/cargo-tracker/bolt_13_review_20261006/">Bolt 13 のレビュー</a>）。</p>
 <table>
 <thead>
@@ -7250,8 +7288,8 @@
 </tr>
 </tbody>
 </table>
-<h2 id="_8">判断と学び<a class="headerlink" href="#_8" title="Permanent link">&para;</a></h2>
-<h3 id="_9">人の決定<a class="headerlink" href="#_9" title="Permanent link">&para;</a></h3>
+<h2 id="_9">判断と学び<a class="headerlink" href="#_9" title="Permanent link">&para;</a></h2>
+<h3 id="_10">人の決定<a class="headerlink" href="#_10" title="Permanent link">&para;</a></h3>
 <ul>
 <li>Bolt 13 の範囲（TS-01 だけ）、開発環境の入力済み、確認ポイント 1〜7（2026-10-06）</li>
 </ul>
@@ -7333,7 +7371,7 @@
 <li>T-39: Red の記録では、失敗したテストごとに、本命のアサーションで落ちたか前提で落ちたかを書く。前提で落ちたものは、前提を満たす骨組みを足して本命の Red を見る（AI、すぐ）</li>
 <li>T-40: 認証のフィルターを足すときは、権限が上がる段ごとに、session の ID の変化と期限の確認の順をテストで確かめる（AI、W5 の US-18）</li>
 </ul>
-<h2 id="_10">承認待ちの書き換え<a class="headerlink" href="#_10" title="Permanent link">&para;</a></h2>
+<h2 id="_11">承認待ちの書き換え<a class="headerlink" href="#_11" title="Permanent link">&para;</a></h2>
 <ul>
 <li>本報告の承認で確かめてほしいもの:</li>
 <li>上の承認の議題の 3 つ（ステップ 4 のゲート、技術スタックとリスク台帳の案の段階の更新、D-45〜D-48）。</li>
@@ -7348,7 +7386,7 @@
 <li><strong>Bolt 14</strong>: W2 の残り（US-18 の一部の password によるログインと session）。ADR-011 の採否は W5 の US-18 の計画で決めるが、password と session の部分は Spring Security の導入と認証の主体の置き方（D-48）にかかる</li>
 <li><strong>人が決めること</strong>: Bolt 14 の範囲</li>
 </ul>
-<h2 id="_11">更新履歴<a class="headerlink" href="#_11" title="Permanent link">&para;</a></h2>
+<h2 id="_12">更新履歴<a class="headerlink" href="#_12" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
 <tr>
@@ -7367,7 +7405,7 @@
 </tr>
 </tbody>
 </table>
-<h2 id="_12">関連ドキュメント<a class="headerlink" href="#_12" title="Permanent link">&para;</a></h2>
+<h2 id="_13">関連ドキュメント<a class="headerlink" href="#_13" title="Permanent link">&para;</a></h2>
 <ul>
 <li><a href="../bolt_13_plan/">Bolt 13 計画</a></li>
 <li><a href="../../../review/cargo-tracker/bolt_13_review_20261006/">Bolt 13 のレビュー</a></li>
