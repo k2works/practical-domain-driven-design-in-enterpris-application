@@ -6,17 +6,17 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="見積りの失効と置換（Bolt 11）に対する 5 つの XP 視点の統合レビューと SonarQube の結果。改善提案 R-01〜R-35、人の判断事項 D-37〜D-41。">
+        <meta name="description" content="password の後に TOTP を求める 2 段階のログインを、Spring Security 7 の多要素認証（要素ごとの権限）で組む。">
       
       
         <meta name="author" content="k2works">
       
       
       
-        <link rel="prev" href="../bolt_09-10_review_20261005/">
+        <link rel="prev" href="../010-required-document-storage-transaction/">
       
       
-        <link rel="next" href="../bolt_12_review_20261006/">
+        <link rel="next" href="../../../article/">
       
       
         
@@ -27,7 +27,7 @@
     
     
       
-        <title>cargo-tracker Bolt 11 開発成果物レビュー（2026-10-05） - 実践ドメイン駆動設計 in エンタープライズアプリケーション</title>
+        <title>ADR-011: 多要素認証は Spring Security 7 の要素の権限で組み、TOTP は java-otp で作る - 実践ドメイン駆動設計 in エンタープライズアプリケーション</title>
       
     
     
@@ -78,7 +78,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#cargo-tracker-bolt-11-2026-10-05" class="md-skip">
+        <a href="#adr-011-spring-security-7-totp-java-otp" class="md-skip">
           Skip to content
         </a>
       
@@ -112,7 +112,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              cargo-tracker Bolt 11 開発成果物レビュー（2026-10-05）
+              ADR-011: 多要素認証は Spring Security 7 の要素の権限で組み、TOTP は java-otp で作る
             
           </span>
         </div>
@@ -316,13 +316,11 @@
   
   
   
-    
-  
   
     
     
-      <li class="md-tabs__item md-tabs__item--active">
-        <a href="../../" class="md-tabs__link">
+      <li class="md-tabs__item">
+        <a href="../../../review/" class="md-tabs__link">
           
   
   
@@ -338,11 +336,13 @@
   
   
   
+    
+  
   
     
     
-      <li class="md-tabs__item">
-        <a href="../../../adr/" class="md-tabs__link">
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../../" class="md-tabs__link">
           
   
   
@@ -3025,29 +3025,24 @@
       
   
   
-    
   
   
-  
     
     
     
     
       
-        
-        
-      
       
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" >
         
           
-          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="">
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
             
   
   
@@ -3065,7 +3060,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_7">
             <span class="md-nav__icon md-icon"></span>
             
@@ -3083,7 +3078,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../" class="md-nav__link">
+      <a href="../../../review/" class="md-nav__link">
         
   
   
@@ -3111,7 +3106,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../%E6%88%A6%E7%95%A5%E6%88%90%E6%9E%9C%E7%89%A9_review_20260929/" class="md-nav__link">
+      <a href="../../../review/%E6%88%A6%E7%95%A5%E6%88%90%E6%9E%9C%E7%89%A9_review_20260929/" class="md-nav__link">
         
   
   
@@ -3143,8 +3138,6 @@
                 
   
   
-    
-  
   
   
     
@@ -3155,11 +3148,11 @@
       
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_3" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_3" >
         
           
           <label class="md-nav__link" for="__nav_7_3" id="__nav_7_3_label" tabindex="0">
@@ -3180,7 +3173,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_7_3_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_7_3_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_7_3">
             <span class="md-nav__icon md-icon"></span>
             
@@ -3198,7 +3191,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../" class="md-nav__link">
+      <a href="../../../review/cargo-tracker/" class="md-nav__link">
         
   
   
@@ -3226,7 +3219,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../usecases_review_20260930/" class="md-nav__link">
+      <a href="../../../review/cargo-tracker/usecases_review_20260930/" class="md-nav__link">
         
   
   
@@ -3261,7 +3254,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../analysis_review_20261001/" class="md-nav__link">
+      <a href="../../../review/cargo-tracker/analysis_review_20261001/" class="md-nav__link">
         
   
   
@@ -3296,7 +3289,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../bolt_01_review_20261001/" class="md-nav__link">
+      <a href="../../../review/cargo-tracker/bolt_01_review_20261001/" class="md-nav__link">
         
   
   
@@ -3331,7 +3324,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../bolt_02_review_20261002/" class="md-nav__link">
+      <a href="../../../review/cargo-tracker/bolt_02_review_20261002/" class="md-nav__link">
         
   
   
@@ -3366,7 +3359,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../bolt_03_review_20261002/" class="md-nav__link">
+      <a href="../../../review/cargo-tracker/bolt_03_review_20261002/" class="md-nav__link">
         
   
   
@@ -3401,7 +3394,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../bolt_04_review_20261002/" class="md-nav__link">
+      <a href="../../../review/cargo-tracker/bolt_04_review_20261002/" class="md-nav__link">
         
   
   
@@ -3436,7 +3429,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../bolt_05_review_20261002/" class="md-nav__link">
+      <a href="../../../review/cargo-tracker/bolt_05_review_20261002/" class="md-nav__link">
         
   
   
@@ -3471,7 +3464,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../bolt_06-08_review_20261003/" class="md-nav__link">
+      <a href="../../../review/cargo-tracker/bolt_06-08_review_20261003/" class="md-nav__link">
         
   
   
@@ -3506,7 +3499,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../bolt_09-10_review_20261005/" class="md-nav__link">
+      <a href="../../../review/cargo-tracker/bolt_09-10_review_20261005/" class="md-nav__link">
         
   
   
@@ -3538,44 +3531,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Bolt 11 開発成果物レビュー（2026-10-05）
-  
-
-    
-  </span>
-  
-  
-    
-  
-  
-    <span class="md-status md-status--stable"></span>
-  
-
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../../../review/cargo-tracker/bolt_11_review_20261005/" class="md-nav__link">
         
   
   
@@ -3598,181 +3557,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#_1" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        レビュー対象
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#_2" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        総合評価
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#_3" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        改善提案（重要度順）
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="改善提案（重要度順）">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#_4" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        高
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#_5" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        中
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#_6" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        低
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#_7" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        人の判断事項
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#_8" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        矛盾事項
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#_9" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        エージェント別フィードバック詳細
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#_10" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        対応結果
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="対応結果">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#2026-10-05bolt-11-6humankakimomokuri" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        人の判断（2026-10-05、Bolt 11 のステップ 6。human:kakimomokuri）
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#bolt-11-62026-10-05" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        改善提案ごとの対応（Bolt 11 計画 のステップ 6、2026-10-05）
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#_11" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        更新履歴
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -3785,7 +3569,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../bolt_12_review_20261006/" class="md-nav__link">
+      <a href="../../../review/cargo-tracker/bolt_12_review_20261006/" class="md-nav__link">
         
   
   
@@ -3832,24 +3616,29 @@
       
   
   
+    
   
   
+  
     
     
     
     
-      
-      
-    
-    
-    <li class="md-nav__item md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_8" >
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_8" checked>
         
           
-          <label class="md-nav__link" for="__nav_8" id="__nav_8_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_8" id="__nav_8_label" tabindex="">
             
   
   
@@ -3867,7 +3656,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_8">
             <span class="md-nav__icon md-icon"></span>
             
@@ -3885,7 +3674,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../adr/" class="md-nav__link">
+      <a href="../../" class="md-nav__link">
         
   
   
@@ -3910,6 +3699,8 @@
                 
   
   
+    
+  
   
   
     
@@ -3920,11 +3711,11 @@
       
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_8_2" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_8_2" checked>
         
           
           <label class="md-nav__link" for="__nav_8_2" id="__nav_8_2_label" tabindex="0">
@@ -3945,7 +3736,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_8_2_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_8_2_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_8_2">
             <span class="md-nav__icon md-icon"></span>
             
@@ -3963,7 +3754,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../adr/cargo-tracker/" class="md-nav__link">
+      <a href="../" class="md-nav__link">
         
   
   
@@ -3991,7 +3782,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../adr/cargo-tracker/001-modular-monolith/" class="md-nav__link">
+      <a href="../001-modular-monolith/" class="md-nav__link">
         
   
   
@@ -4026,7 +3817,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../adr/cargo-tracker/002-domain-logic-pattern-per-context/" class="md-nav__link">
+      <a href="../002-domain-logic-pattern-per-context/" class="md-nav__link">
         
   
   
@@ -4061,7 +3852,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../adr/cargo-tracker/003-inter-context-integration/" class="md-nav__link">
+      <a href="../003-inter-context-integration/" class="md-nav__link">
         
   
   
@@ -4096,7 +3887,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../adr/cargo-tracker/004-external-data-ingestion/" class="md-nav__link">
+      <a href="../004-external-data-ingestion/" class="md-nav__link">
         
   
   
@@ -4131,7 +3922,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../adr/cargo-tracker/005-server-side-rendering/" class="md-nav__link">
+      <a href="../005-server-side-rendering/" class="md-nav__link">
         
   
   
@@ -4166,7 +3957,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../adr/cargo-tracker/006-java-spring-boot-platform/" class="md-nav__link">
+      <a href="../006-java-spring-boot-platform/" class="md-nav__link">
         
   
   
@@ -4201,7 +3992,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../adr/cargo-tracker/007-postgresql-mybatis-flyway/" class="md-nav__link">
+      <a href="../007-postgresql-mybatis-flyway/" class="md-nav__link">
         
   
   
@@ -4236,7 +4027,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../adr/cargo-tracker/008-aws-container-platform/" class="md-nav__link">
+      <a href="../008-aws-container-platform/" class="md-nav__link">
         
   
   
@@ -4271,7 +4062,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../adr/cargo-tracker/009-bdd-cucumber/" class="md-nav__link">
+      <a href="../009-bdd-cucumber/" class="md-nav__link">
         
   
   
@@ -4306,7 +4097,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../adr/cargo-tracker/010-required-document-storage-transaction/" class="md-nav__link">
+      <a href="../010-required-document-storage-transaction/" class="md-nav__link">
         
   
   
@@ -4338,10 +4129,44 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../../../adr/cargo-tracker/011-mfa-totp/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-011 多要素認証と TOTP
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--draft"></span>
+  
+
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -4364,6 +4189,192 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ステータス
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        コンテキスト
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        決定（案）
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="決定（案）">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-totp" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. TOTP の生成
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-2-spring-security-7" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. 2 段階のログイン（Spring Security 7）
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. 開発環境の入力済み
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        代替案
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        影響
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="影響">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_6" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ポジティブ
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_7" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ネガティブ
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#us-18-bolt" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        US-18 の Bolt で要るもの
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_8" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        未確認の項目
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_9" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        コンプライアンス
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_10" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        参考資料
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -6892,693 +6903,228 @@
   
 
 
-<h1 id="cargo-tracker-bolt-11-2026-10-05">cargo-tracker Bolt 11 開発成果物レビュー（2026-10-05）<a class="headerlink" href="#cargo-tracker-bolt-11-2026-10-05" title="Permanent link">&para;</a></h1>
-<h2 id="_1">レビュー対象<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h2>
+<h1 id="adr-011-spring-security-7-totp-java-otp">ADR-011: 多要素認証は Spring Security 7 の要素の権限で組み、TOTP は java-otp で作る<a class="headerlink" href="#adr-011-spring-security-7-totp-java-otp" title="Permanent link">&para;</a></h1>
+<p>password の後に TOTP を求める 2 段階のログインを、Spring Security 7 の多要素認証（要素ごとの権限）で組む。TOTP の生成は <code>com.eatthepath:java-otp</code> に任せ、時間の窓・再利用の拒否・失敗の数え方・回復コードはアプリケーションで持つ。</p>
+<p>日付: 2026-10-06</p>
+<h2 id="_1">ステータス<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h2>
+<p>提案（Bolt 13 のスパイク TS-01 の結論。W5 の US-18 の計画の承認で採否を決める。Bolt 13 の確認ポイント 4）</p>
+<h2 id="_2">コンテキスト<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h2>
 <ul>
-<li>Bolt 11 の変更: Bolt 10 のクローズの後（<code>ffeec0d</code>）から <code>fd17464</code> まで（<code>apps/cargo-tracker</code> の 39 ファイル、+1,659 行・-81 行と、文書）</li>
-<li>ステップ 1: Bolt 9・10 レビューの中・低の返済</li>
-<li>ステップ 2〜5: 見積りの失効の判定（同時刻は失効）、再提示の拒否、再見積りによる置換と失効の記録、<code>quotation</code> の <code>EXPIRED</code>・<code>REPLACED</code>・<code>replaced_by_quotation_id</code>、部分一意インデックス <code>ux_quotation_active</code>、置換先の遅延の FK、S-04 の再見積りと失効・置換済みの表示、C-04 の旧版</li>
-<li>文書: <a href="../../../development/cargo-tracker/bolt_11_plan/">Bolt 11 計画</a>、設計文書・要件定義・Bolt 9・10 レビューの差分</li>
-<li>観点: xp-programmer、xp-tester、xp-architect、xp-technical-writer、xp-user-representative の 5 つ（並列に実施）</li>
-<li>同じ時点の SonarQube の品質ゲート: PASS（Bug 0、Vulnerability 0、Security Hotspot 0、重複 0.0%、カバレッジ 93.5%、Code Smell 5。下の R-18）</li>
+<li>US-18 は、メールアドレス・password・TOTP で本人確認し、無操作 30 分・最長 8 時間の session を発行する（AC1）。password か TOTP の失敗が 5 回続いたら 15 分ロックする（AC3）。初回は TOTP を登録し、一度だけ使える回復コードを発行する（AC7・AC9）。</li>
+<li>非機能要件は、password を Argon2id か bcrypt で保存し（SEC-07）、回復コードを 10 個発行する（SEC-09）。</li>
+<li>技術スタックは、TOTP のライブラリを候補（<code>dev.samstevens.totp</code>）として挙げただけで、評価していなかった（TS-01）。リスク台帳には「TOTP と Spring Security 7 の統合が想定より難しい（中・中）」がある。</li>
+<li>アクセス・監査は「単純なモデル」で、認証の仕組みは実績のある部品に任せる（<a href="../../../design/cargo-tracker/architecture_backend/">アーキテクチャ</a>）。認証の成功・失敗・ロックは、Spring Security のイベントから同期で監査記録に書く（IA-INV-08）。</li>
+<li>開発環境では、ログインの画面（A-01）と認証コードの画面（A-02）を入力済みにする（2026-10-06 の人の決定。Bolt 13 の確認ポイント 7）。</li>
+<li>Bolt 13 で、本体と分けたスパイク（<a href="https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/tree/develop/spikes/ts-01-totp"><code>spikes/ts-01-totp/</code></a>）を Spring Boot 4.1.1（Spring Security 7.1.1）で作り、学習テスト 29 件で確かめた。</li>
 </ul>
-<h2 id="_2">総合評価<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h2>
-<p>TDD の手順（Red のコミット 5 つがどれもテストだけで Green より先）、業務の拒否は値・壊れた前提は例外の使い分け、再見積りの書く順（旧版の更新が先、新しい見積りの保存が後）と、部分一意インデックス・遅延の FK の組み合わせは規律どおりで、整合している（programmer、architect）。失効を判定時刻で決める判断は <code>QuotationExpiry.isValidAt</code> の 1 か所にまとまり、予約確定（US-04）でもそのまま使える（architect）。境界値（1 秒前・同時刻・1 秒後）は判定と提示の両方でシナリオアウトラインになっている（tester）。営業の再見積りの流れ（旧版を初期値に、有効期限だけ空に）は現場の運用に合う（user-representative）。</p>
-<p>一方、次が重要度「高」として挙がった。</p>
+<h2 id="_3">決定（案）<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h2>
+<h3 id="1-totp">1. TOTP の生成<a class="headerlink" href="#1-totp" title="Permanent link">&para;</a></h3>
+<p><strong><code>com.eatthepath:java-otp</code> で TOTP を作る（HMAC-SHA1、6 桁、30 秒）。前後 1 つの時間の窓の照合、再利用の拒否、一定時間の比較はアプリケーションで持つ。</strong></p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">候補</th>
+<th style="text-align: left;">RFC 6238 の試験ベクトル</th>
+<th style="text-align: left;">保守（最後の公開）</th>
+<th style="text-align: left;">ライセンス</th>
+<th style="text-align: left;">推移的な依存</th>
+<th style="text-align: left;">判断</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">(a) JDK の HMAC だけの実装</td>
+<td style="text-align: left;">6 件とも一致</td>
+<td style="text-align: left;">自分で持つ</td>
+<td style="text-align: left;">—</td>
+<td style="text-align: left;">なし</td>
+<td style="text-align: left;">代わりの案。約 50 行で書けるが、暗号の手順を自分で保守する</td>
+</tr>
+<tr>
+<td style="text-align: left;">(b) <code>java-otp</code> 1.0.0</td>
+<td style="text-align: left;">試した 3 件とも一致</td>
+<td style="text-align: left;">2026-08</td>
+<td style="text-align: left;">MIT</td>
+<td style="text-align: left;">なし</td>
+<td style="text-align: left;"><strong>採る案</strong>。小さく、依存がなく、保守されている</td>
+</tr>
+<tr>
+<td style="text-align: left;">(c) <code>dev.samstevens.totp</code> 1.7.1</td>
+<td style="text-align: left;">試した 3 件とも一致</td>
+<td style="text-align: left;">2020-11</td>
+<td style="text-align: left;">POM に記載なし</td>
+<td style="text-align: left;"><code>commons-codec</code>、ZXing（core・javase）</td>
+<td style="text-align: left;">採らない。6 年近く更新がなく、QR の画像の部品まで入る</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>googleauth</code> 1.5.0</td>
+<td style="text-align: left;">試していない</td>
+<td style="text-align: left;">2020-04</td>
+<td style="text-align: left;">—</td>
+<td style="text-align: left;">—</td>
+<td style="text-align: left;">採らない（(c) と同じ理由。計画の確認ポイント 3）</td>
+</tr>
+</tbody>
+</table>
 <ul>
-<li><strong>再見積りの最中に荷主が誤解する</strong>: 旧版を置換済みにして新しい見積りがまだ承認待ちの間、荷主の C-04 には置換済みの旧版が最新として出て「新しい見積りは担当営業にご依頼ください」と案内される。営業はすでに作り直しているのに依頼を促し、輸送要求の状態「見積提示済み（お客様の対応待ち）」とも食い違う（user-representative。technical-writer・architect も懸念に挙げた）</li>
-<li><strong>営業が見積りに戻る入口がない</strong>: 受付一覧（S-02）は審査中と見積り作成中だけを出すため、提示済み・失効の見積りと、再見積りで作った承認待ちの見積りに一覧からたどれない（user-representative）</li>
-<li><strong>荷主に見せない・見せる規則のテストの抜け</strong>: 提示済みのまま期限を過ぎた見積りの C-04 の表示、提示する前に置き換えた見積りを荷主に見せないこと、をどの層でも確かめていない（tester）</li>
-<li><strong>計画の時刻の誤り</strong>: ステップ 1 の期間が 16:22〜16:45 になっている（最後のコミットは 16:35）（technical-writer）</li>
+<li>(b) は時間の窓での照合の API を持たないため、照合は「前後 1 つの刻みのコードを作り、一定時間で比べる」をアプリケーションで書く（スパイクの (a) の <code>verify</code> と同じ形）。</li>
+<li>秘密は 160 ビット（20 バイト）の乱数で作り、Base32 で <code>otpauth://</code> の URI と、手で入力する文字列に使う。登録の QR は、US-18 の Bolt で ZXing（Apache-2.0）を使うかクライアントで描くかを決める（未確認）。</li>
 </ul>
-<h2 id="_3">改善提案（重要度順）<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h2>
-<h3 id="_4">高<a class="headerlink" href="#_4" title="Permanent link">&para;</a></h3>
+<h3 id="2-2-spring-security-7">2. 2 段階のログイン（Spring Security 7）<a class="headerlink" href="#2-2-spring-security-7" title="Permanent link">&para;</a></h3>
+<p><strong>password（<code>FACTOR_PASSWORD</code>）と TOTP（独自の要素 <code>FACTOR_TOTP</code>）の両方を、認証が要るすべての画面に求める。</strong></p>
+<p><img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB2ZXJzaW9uPSIxLjEiIGRhdGEtZGlhZ3JhbS10eXBlPSJTRVFVRU5DRSIgc3R5bGU9IndpZHRoOjEyNjlweDtoZWlnaHQ6NDc3cHg7YmFja2dyb3VuZDojRkZGRkZGOyIgd2lkdGg9IjEyNjlweCIgaGVpZ2h0PSI0NzdweCIgdmlld0JveD0iMCAwIDEyNjkgNDc3IiB6b29tQW5kUGFuPSJtYWduaWZ5IiBwcmVzZXJ2ZUFzcGVjdFJhdGlvPSJub25lIiBjb250ZW50U3R5bGVUeXBlPSJ0ZXh0L2NzcyI+PD9wbGFudHVtbCAxLjIwMjYuOD8+PGRlZnMvPjxnIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBsZW5ndGhBZGp1c3Q9InNwYWNpbmciPjxnIGNsYXNzPSJ0aXRsZSIgZGF0YS1zb3VyY2UtbGluZT0iMSI+PHRleHQgeD0iNDg2LjYwOCIgeT0iMjcuOTk1IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE0IiB0ZXh0TGVuZ3RoPSIyOTQuNjE0IiBmb250LXdlaWdodD0iNzAwIj4yIOautemajuOBruODreOCsOOCpOODs++8iOOCueODkeOCpOOCr+OBp+eiuuOBi+OCgeOBn+ani+aIkO+8iTwvdGV4dD48L2c+PGc+PHRpdGxlPi4uLjwvdGl0bGU+PHJlY3QgeD0iMzAuNSIgeT0iMTIzLjU5NCIgd2lkdGg9IjgiIGhlaWdodD0iMjY2LjE5NSIgZmlsbD0iIzAwMCIgZmlsbC1vcGFjaXR5PSIwIi8+PGxpbmUgeDE9IjM0IiB5MT0iMTIzLjU5NCIgeDI9IjM0IiB5Mj0iMzg5Ljc4OSIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDowLjU7c3Ryb2tlLWRhc2hhcnJheTo1LDU7Ii8+PC9nPjxnPjx0aXRsZT5Vc2VybmFtZVBhc3N3b3JkQXV0aGVudGljYXRpb25GaWx0ZXI8L3RpdGxlPjxyZWN0IHg9IjI4NS45OCIgeT0iMTIzLjU5NCIgd2lkdGg9IjgiIGhlaWdodD0iMjY2LjE5NSIgZmlsbD0iIzAwMCIgZmlsbC1vcGFjaXR5PSIwIi8+PGxpbmUgeDE9IjI4OS40OCIgeTE9IjEyMy41OTQiIHgyPSIyODkuNDgiIHkyPSIzODkuNzg5IiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjAuNTtzdHJva2UtZGFzaGFycmF5OjUsNTsiLz48L2c+PGc+PHRpdGxlPlRPVFAgLi4uLi4uLi48L3RpdGxlPjxyZWN0IHg9IjU4Ny4xNTMiIHk9IjEyMy41OTQiIHdpZHRoPSI4IiBoZWlnaHQ9IjI2Ni4xOTUiIGZpbGw9IiMwMDAiIGZpbGwtb3BhY2l0eT0iMCIvPjxsaW5lIHgxPSI1OTAuNjUzIiB5MT0iMTIzLjU5NCIgeDI9IjU5MC42NTMiIHkyPSIzODkuNzg5IiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjAuNTtzdHJva2UtZGFzaGFycmF5OjUsNTsiLz48L2c+PGc+PHRpdGxlPlRPVFAgLiBBdXRoZW50aWNhdGlvblByb3ZpZGVyPC90aXRsZT48cmVjdCB4PSI4NjAuMzcxIiB5PSIxMjMuNTk0IiB3aWR0aD0iOCIgaGVpZ2h0PSIyNjYuMTk1IiBmaWxsPSIjMDAwIiBmaWxsLW9wYWNpdHk9IjAiLz48bGluZSB4MT0iODYzLjg3MSIgeTE9IjEyMy41OTQiIHgyPSI4NjMuODcxIiB5Mj0iMzg5Ljc4OSIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDowLjU7c3Ryb2tlLWRhc2hhcnJheTo1LDU7Ii8+PC9nPjxnPjx0aXRsZT4uLjwvdGl0bGU+PHJlY3QgeD0iMTEyMS40NTgiIHk9IjEyMy41OTQiIHdpZHRoPSI4IiBoZWlnaHQ9IjI2Ni4xOTUiIGZpbGw9IiMwMDAiIGZpbGwtb3BhY2l0eT0iMCIvPjxsaW5lIHgxPSIxMTI0Ljk1OCIgeTE9IjEyMy41OTQiIHgyPSIxMTI0Ljk1OCIgeTI9IjM4OS43ODkiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MC41O3N0cm9rZS1kYXNoYXJyYXk6NSw1OyIvPjwvZz48dGV4dCB4PSIxMCIgeT0iMTIwLjI5MiIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxNCIgdGV4dExlbmd0aD0iNDIiPuWIqeeUqOiAhTwvdGV4dD48ZWxsaXBzZSBjeD0iMzQiIGN5PSI1NS43OTciIHJ4PSI4IiByeT0iOCIgZmlsbD0iI0UyRTJGMCIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDowLjU7Ii8+PHBhdGggZD0iTTM0LDYzLjc5NyBMMzQsOTAuNzk3IE0yMSw3MS43OTcgTDQ3LDcxLjc5NyBNMzQsOTAuNzk3IEwyMSwxMDUuNzk3IE0zNCw5MC43OTcgTDQ3LDEwNS43OTciIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MC41OyIgZmlsbD0ibm9uZSIvPjxyZWN0IHg9IjE0NC4zMDkiIHk9Ijc2IiB3aWR0aD0iMjkwLjM0MyIgaGVpZ2h0PSI0Ni41OTQiIGZpbGw9IiNFMkUyRjAiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MC41OyIgcng9IjIuNSIgcnk9IjIuNSIvPjx0ZXh0IHg9IjE1MS4zMDkiIHk9Ijk1Ljk5NSIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxNCIgdGV4dExlbmd0aD0iMjc2LjM0MyI+VXNlcm5hbWVQYXNzd29yZEF1dGhlbnRpY2F0aW9uRmlsdGVyPC90ZXh0Pjx0ZXh0IHg9IjI0OC41NjciIHk9IjExMi4yOTIiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTQiIHRleHRMZW5ndGg9IjgxLjgyNiI+KGZvcm1Mb2dpbik8L3RleHQ+PHJlY3QgeD0iNDQ0LjY1MSIgeT0iNTkuNzAzIiB3aWR0aD0iMjkyLjAwNCIgaGVpZ2h0PSI2Mi44OTEiIGZpbGw9IiNFMkUyRjAiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MC41OyIgcng9IjIuNSIgcnk9IjIuNSIvPjx0ZXh0IHg9IjUxNC4xNDYiIHk9Ijc5LjY5OCIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxNCIgdGV4dExlbmd0aD0iMTUzLjAxNSI+VE9UUCDjga7oqo3oqLzjg5XjgqPjg6vjgr/jg7w8L3RleHQ+PHRleHQgeD0iNDUxLjY1MSIgeT0iOTUuOTk1IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE0IiB0ZXh0TGVuZ3RoPSIyNzguMDA0Ij4oQWJzdHJhY3RBdXRoZW50aWNhdGlvblByb2Nlc3NpbmdGaWx0ZXI8L3RleHQ+PHRleHQgeD0iNTQ2LjA2MiIgeT0iMTEyLjI5MiIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxNCIgdGV4dExlbmd0aD0iODkuMTgyIj5tZmFFbmFibGVkKTwvdGV4dD48cmVjdCB4PSI3NDYuNjU1IiB5PSI5Mi4yOTciIHdpZHRoPSIyMzQuNDMyIiBoZWlnaHQ9IjMwLjI5NyIgZmlsbD0iI0UyRTJGMCIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDowLjU7IiByeD0iMi41IiByeT0iMi41Ii8+PHRleHQgeD0iNzUzLjY1NSIgeT0iMTEyLjI5MiIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxNCIgdGV4dExlbmd0aD0iMjIwLjQzMiI+VE9UUCDjga4gQXV0aGVudGljYXRpb25Qcm92aWRlcjwvdGV4dD48cmVjdCB4PSI5OTEuMDg3IiB5PSI3NiIgd2lkdGg9IjI2Ny43NDMiIGhlaWdodD0iNDYuNTk0IiBmaWxsPSIjRTJFMkYwIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjAuNTsiIHJ4PSIyLjUiIHJ5PSIyLjUiLz48dGV4dCB4PSIxMTEwLjk1OCIgeT0iOTUuOTk1IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE0IiB0ZXh0TGVuZ3RoPSIyOCI+6KqN5Y+vPC90ZXh0Pjx0ZXh0IHg9Ijk5OC4wODciIHk9IjExMi4yOTIiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTQiIHRleHRMZW5ndGg9IjI1My43NDMiPihARW5hYmxlTXVsdGlGYWN0b3JBdXRoZW50aWNhdGlvbik8L3RleHQ+PHRleHQgeD0iMTAiIHk9IjQwMi43ODQiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTQiIHRleHRMZW5ndGg9IjQyIj7liKnnlKjogIU8L3RleHQ+PGVsbGlwc2UgY3g9IjM0IiBjeT0iNDE0LjU4NiIgcng9IjgiIHJ5PSI4IiBmaWxsPSIjRTJFMkYwIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjAuNTsiLz48cGF0aCBkPSJNMzQsNDIyLjU4NiBMMzQsNDQ5LjU4NiBNMjEsNDMwLjU4NiBMNDcsNDMwLjU4NiBNMzQsNDQ5LjU4NiBMMjEsNDY0LjU4NiBNMzQsNDQ5LjU4NiBMNDcsNDY0LjU4NiIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDowLjU7IiBmaWxsPSJub25lIi8+PHJlY3QgeD0iMTQ0LjMwOSIgeT0iMzg5Ljc4OSIgd2lkdGg9IjI5MC4zNDMiIGhlaWdodD0iNDYuNTk0IiBmaWxsPSIjRTJFMkYwIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjAuNTsiIHJ4PSIyLjUiIHJ5PSIyLjUiLz48dGV4dCB4PSIxNTEuMzA5IiB5PSI0MDkuNzg0IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE0IiB0ZXh0TGVuZ3RoPSIyNzYuMzQzIj5Vc2VybmFtZVBhc3N3b3JkQXV0aGVudGljYXRpb25GaWx0ZXI8L3RleHQ+PHRleHQgeD0iMjQ4LjU2NyIgeT0iNDI2LjA4MSIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxNCIgdGV4dExlbmd0aD0iODEuODI2Ij4oZm9ybUxvZ2luKTwvdGV4dD48cmVjdCB4PSI0NDQuNjUxIiB5PSIzODkuNzg5IiB3aWR0aD0iMjkyLjAwNCIgaGVpZ2h0PSI2Mi44OTEiIGZpbGw9IiNFMkUyRjAiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MC41OyIgcng9IjIuNSIgcnk9IjIuNSIvPjx0ZXh0IHg9IjUxNC4xNDYiIHk9IjQwOS43ODQiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTQiIHRleHRMZW5ndGg9IjE1My4wMTUiPlRPVFAg44Gu6KqN6Ki844OV44Kj44Or44K/44O8PC90ZXh0Pjx0ZXh0IHg9IjQ1MS42NTEiIHk9IjQyNi4wODEiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTQiIHRleHRMZW5ndGg9IjI3OC4wMDQiPihBYnN0cmFjdEF1dGhlbnRpY2F0aW9uUHJvY2Vzc2luZ0ZpbHRlcjwvdGV4dD48dGV4dCB4PSI1NDYuMDYyIiB5PSI0NDIuMzc4IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE0IiB0ZXh0TGVuZ3RoPSI4OS4xODIiPm1mYUVuYWJsZWQpPC90ZXh0PjxyZWN0IHg9Ijc0Ni42NTUiIHk9IjM4OS43ODkiIHdpZHRoPSIyMzQuNDMyIiBoZWlnaHQ9IjMwLjI5NyIgZmlsbD0iI0UyRTJGMCIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDowLjU7IiByeD0iMi41IiByeT0iMi41Ii8+PHRleHQgeD0iNzUzLjY1NSIgeT0iNDA5Ljc4NCIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxNCIgdGV4dExlbmd0aD0iMjIwLjQzMiI+VE9UUCDjga4gQXV0aGVudGljYXRpb25Qcm92aWRlcjwvdGV4dD48cmVjdCB4PSI5OTEuMDg3IiB5PSIzODkuNzg5IiB3aWR0aD0iMjY3Ljc0MyIgaGVpZ2h0PSI0Ni41OTQiIGZpbGw9IiNFMkUyRjAiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MC41OyIgcng9IjIuNSIgcnk9IjIuNSIvPjx0ZXh0IHg9IjExMTAuOTU4IiB5PSI0MDkuNzg0IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE0IiB0ZXh0TGVuZ3RoPSIyOCI+6KqN5Y+vPC90ZXh0Pjx0ZXh0IHg9Ijk5OC4wODciIHk9IjQyNi4wODEiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTQiIHRleHRMZW5ndGg9IjI1My43NDMiPihARW5hYmxlTXVsdGlGYWN0b3JBdXRoZW50aWNhdGlvbik8L3RleHQ+PHBvbHlnb24gcG9pbnRzPSIyNzcuNDgsMTQ4LjcyNywyODcuNDgsMTUyLjcyNywyNzcuNDgsMTU2LjcyNywyODEuNDgsMTUyLjcyNyIgZmlsbD0iIzE4MTgxOCIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxO3N0cm9rZS1saW5lam9pbjptaXRlcjtzdHJva2UtbWl0ZXJsaW1pdDoxMDsiLz48bGluZSB4MT0iMzQiIHkxPSIxNTIuNzI3IiB4Mj0iMjgzLjQ4IiB5Mj0iMTUyLjcyNyIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxOyIvPjx0ZXh0IHg9IjQxIiB5PSIxNDcuNjYxIiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjEzIiB0ZXh0TGVuZ3RoPSI3NC40NDUiPlBPU1QgL2xvZ2luPC90ZXh0Pjxwb2x5Z29uIHBvaW50cz0iNDUsMTc3Ljg1OSwzNSwxODEuODU5LDQ1LDE4NS44NTksNDEsMTgxLjg1OSIgZmlsbD0iIzE4MTgxOCIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxO3N0cm9rZS1saW5lam9pbjptaXRlcjtzdHJva2UtbWl0ZXJsaW1pdDoxMDsiLz48bGluZSB4MT0iMzkiIHkxPSIxODEuODU5IiB4Mj0iMjg4LjQ4IiB5Mj0iMTgxLjg1OSIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxO3N0cm9rZS1kYXNoYXJyYXk6MiwyOyIvPjx0ZXh0IHg9IjUxIiB5PSIxNzYuNzkzIiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjEzIiB0ZXh0TGVuZ3RoPSIyMzEuNDgiPkZBQ1RPUl9QQVNTV09SROOAgi9sb2dpbi90b3RwIOOBuDwvdGV4dD48cG9seWdvbiBwb2ludHM9IjExMTIuOTU4LDIwNi45OTIsMTEyMi45NTgsMjEwLjk5MiwxMTEyLjk1OCwyMTQuOTkyLDExMTYuOTU4LDIxMC45OTIiIGZpbGw9IiMxODE4MTgiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTtzdHJva2UtbGluZWpvaW46bWl0ZXI7c3Ryb2tlLW1pdGVybGltaXQ6MTA7Ii8+PGxpbmUgeDE9IjM0IiB5MT0iMjEwLjk5MiIgeDI9IjExMTguOTU4IiB5Mj0iMjEwLjk5MiIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxOyIvPjx0ZXh0IHg9IjQxIiB5PSIyMDUuOTI2IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjEzIiB0ZXh0TGVuZ3RoPSI2My43MyI+R0VUIC9zdGFmZjwvdGV4dD48cG9seWdvbiBwb2ludHM9IjQ1LDI1MS4yNTgsMzUsMjU1LjI1OCw0NSwyNTkuMjU4LDQxLDI1NS4yNTgiIGZpbGw9IiMxODE4MTgiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTtzdHJva2UtbGluZWpvaW46bWl0ZXI7c3Ryb2tlLW1pdGVybGltaXQ6MTA7Ii8+PGxpbmUgeDE9IjM5IiB5MT0iMjU1LjI1OCIgeDI9IjExMjMuOTU4IiB5Mj0iMjU1LjI1OCIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxO3N0cm9rZS1kYXNoYXJyYXk6MiwyOyIvPjx0ZXh0IHg9IjUxIiB5PSIyMzUuMDU5IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjEzIiB0ZXh0TGVuZ3RoPSIxNjIuMjQiPkZBQ1RPUl9UT1RQIOOBjOi2s+OCiuOBquOBhDwvdGV4dD48dGV4dCB4PSI1MSIgeT0iMjUwLjE5MiIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxMyIgdGV4dExlbmd0aD0iMzU0Ljc1MSI+4oaSIC9sb2dpbi90b3RwP2ZhY3Rvci50eXBlPXRvdHAmYW1wO2ZhY3Rvci5yZWFzb249bWlzc2luZzwvdGV4dD48cG9seWdvbiBwb2ludHM9IjU3OC42NTMsMjgwLjM5MSw1ODguNjUzLDI4NC4zOTEsNTc4LjY1MywyODguMzkxLDU4Mi42NTMsMjg0LjM5MSIgZmlsbD0iIzE4MTgxOCIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxO3N0cm9rZS1saW5lam9pbjptaXRlcjtzdHJva2UtbWl0ZXJsaW1pdDoxMDsiLz48bGluZSB4MT0iMzQiIHkxPSIyODQuMzkxIiB4Mj0iNTg0LjY1MyIgeTI9IjI4NC4zOTEiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTsiLz48dGV4dCB4PSI0MSIgeT0iMjc5LjMyNSIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxMyIgdGV4dExlbmd0aD0iMTcwLjIyNSI+UE9TVCAvbG9naW4vdG90cO+8iOOCs+ODvOODie+8iTwvdGV4dD48cG9seWdvbiBwb2ludHM9Ijg1MS44NzEsMzA5LjUyMyw4NjEuODcxLDMxMy41MjMsODUxLjg3MSwzMTcuNTIzLDg1NS44NzEsMzEzLjUyMyIgZmlsbD0iIzE4MTgxOCIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxO3N0cm9rZS1saW5lam9pbjptaXRlcjtzdHJva2UtbWl0ZXJsaW1pdDoxMDsiLz48bGluZSB4MT0iNTkwLjY1MyIgeTE9IjMxMy41MjMiIHgyPSI4NTcuODcxIiB5Mj0iMzEzLjUyMyIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxOyIvPjx0ZXh0IHg9IjU5Ny42NTMiIHk9IjMwOC40NTgiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTMiIHRleHRMZW5ndGg9IjI0NyI+6KqN6Ki877yI56qT44O75YaN5Yip55So44O744Ot44OD44Kv44O75Zue5b6p44Kz44O844OJ77yJPC90ZXh0Pjxwb2x5Z29uIHBvaW50cz0iNjAxLjY1MywzMzguNjU2LDU5MS42NTMsMzQyLjY1Niw2MDEuNjUzLDM0Ni42NTYsNTk3LjY1MywzNDIuNjU2IiBmaWxsPSIjMTgxODE4IiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjE7c3Ryb2tlLWxpbmVqb2luOm1pdGVyO3N0cm9rZS1taXRlcmxpbWl0OjEwOyIvPjxsaW5lIHgxPSI1OTUuNjUzIiB5MT0iMzQyLjY1NiIgeDI9Ijg2Mi44NzEiIHkyPSIzNDIuNjU2IiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjE7c3Ryb2tlLWRhc2hhcnJheToyLDI7Ii8+PHRleHQgeD0iNjA3LjY1MyIgeT0iMzM3LjU5IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjEzIiB0ZXh0TGVuZ3RoPSI5My4xMDciPkZBQ1RPUl9UT1RQPC90ZXh0Pjxwb2x5Z29uIHBvaW50cz0iNDUsMzY3Ljc4OSwzNSwzNzEuNzg5LDQ1LDM3NS43ODksNDEsMzcxLjc4OSIgZmlsbD0iIzE4MTgxOCIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxO3N0cm9rZS1saW5lam9pbjptaXRlcjtzdHJva2UtbWl0ZXJsaW1pdDoxMDsiLz48bGluZSB4MT0iMzkiIHkxPSIzNzEuNzg5IiB4Mj0iNTg5LjY1MyIgeTI9IjM3MS43ODkiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTtzdHJva2UtZGFzaGFycmF5OjIsMjsiLz48dGV4dCB4PSI1MSIgeT0iMzY2LjcyMyIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxMyIgdGV4dExlbmd0aD0iMjQ2LjQwNCI+MiDjgaTjga7opoHntKDjgpLlkIjjgo/jgZvjgZ/oqo3oqLzjgILmpa3li5njga7nlLvpnaLjgbg8L3RleHQ+PD9wbGFudHVtbC1zcmMgUlBCRkpuRDE1Q1ZsX0lpYzc4bVVXOElaMlVlNmdIVEREdEhSQm9IY1E2VG5ha3JpQ3BqZWw3TGRiMUdnV2VXNzlWdThlYTBETzU4ckFldC1CeHZpanZwdTV0b3hNbkRObFVzLVVVX3Bsai1QaC1CQU9zSUEzOHUtZEp2XzFFNEhjNEZHN3EzbFdrY1R6VGtXbHU5dmRGcGdPbVp0dWZybDQ3UDBYbjItNmtucjFrc0RpX3ZBV1RRS0JxZEtGZVl0emVVajF1RzZmNTllS2didVpKVWZLNklpNFowZlE4RlBEMFprLWg5a0JRZFJKRTB2TFRtTkhVdWY5a1Y1VVRVTlpVbC04WFNOblhBOGRPU3U5U1NjQTc3T05IbGt6eTR5MVZxNnA3bEdGeTNxU1RmUTI5SDRCTmN1QlZxUTJtOGs1ZC1sUVJYcUxqMDVaek1wRFN4X3J2MV9FN1R1ZFNicWY5ZVZHS05ILVo1QWs5QTFSb252WVhWSlF5YjNpZUxNZUtCNkJuNlJOMkhzZ1VvR0lJX25OQjM5RTVPaE0yclFDcXZmeGZQamJTaXRJdEROZVFNcGJhZGJnb1BnLXY4MUI2b3pEZWxwV1FBa014My1kWHl2VUpaeXQwRXoyYzRObWxscHVrVm85bGEzVHpiRFRLd2VVcXFzZEhKRVpHZ0lxUzBOcW1zVU5id3NxU2JCSlc1ZklkaHUxNjFNYVpHdUlNQ0w2eER0bWtFdS1tSkNJUkl5YmFLNGx2RUs2UERhMmtsUkJ3RmwxcGI0RE5OWXY5cWF1OTZfQU5JcmNvSlhOSFhfVjByd0N6ZjAzVWlHUmNDa0hfNWV3UzdSbXdacDNEbFloUEZKNXBqdVJSeTA/PjwvZz48L3N2Zz4=" class="uml" alt="uml diagram" title="" /></p>
 <table>
 <thead>
 <tr>
-<th style="text-align: left;">#</th>
-<th style="text-align: left;">提案</th>
-<th style="text-align: left;">箇所</th>
-<th style="text-align: left;">指摘元</th>
-<th style="text-align: left;">AI の提案する対応方針</th>
+<th style="text-align: left;">項目</th>
+<th style="text-align: left;">方針</th>
+<th style="text-align: left;">スパイクで分かったこと</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td style="text-align: left;">R-01</td>
-<td style="text-align: left;">最新の見積りが置換済み（新しい見積りが承認待ち）なら「担当営業が新しい見積りを準備しています。提示されるまでお待ちください。」とし、「新しい見積りは担当営業にご依頼ください」は失効のときだけにする</td>
-<td style="text-align: left;">C-04 <code>detail.html</code>、<code>QuotationViews</code></td>
-<td style="text-align: left;">user-representative、technical-writer、architect</td>
-<td style="text-align: left;">Bolt 11 で修正（文言は人の判断 D-37）</td>
+<td style="text-align: left;">要素の要求</td>
+<td style="text-align: left;"><code>@EnableMultiFactorAuthentication(authorities = {FACTOR_PASSWORD, FACTOR_TOTP})</code></td>
+<td style="text-align: left;">独自の要素の名前（<code>FACTOR_TOTP</code>）をそのまま使える</td>
 </tr>
 <tr>
-<td style="text-align: left;">R-02</td>
-<td style="text-align: left;">受付一覧（S-02）に「見積提示済み」の表を足し、行から最新の見積り（S-04）を開けるようにする（有効期限の近い順）</td>
-<td style="text-align: left;">S-02 <code>list.html</code>、照会</td>
-<td style="text-align: left;">user-representative</td>
-<td style="text-align: left;">人の判断（D-38）</td>
+<td style="text-align: left;">足りない要素の画面へ導く</td>
+<td style="text-align: left;"><code>DelegatingMissingAuthorityAccessDeniedHandler</code> で、<code>FACTOR_TOTP</code> が足りなければ A-02、<code>FACTOR_PASSWORD</code> が足りなければ A-01</td>
+<td style="text-align: left;">枠組みが <code>factor.type</code>・<code>factor.reason</code> を付けて導く。A-02 で理由を示すのに使える</td>
 </tr>
 <tr>
-<td style="text-align: left;">R-03</td>
-<td style="text-align: left;">提示済みのまま期限を過ぎた見積りが、C-04 で「失効」と読み取り専用で示され、回答の案内が出ないことを確かめるテストを足す</td>
-<td style="text-align: left;"><code>TransportRequestControllerTest</code></td>
-<td style="text-align: left;">tester</td>
-<td style="text-align: left;">Bolt 11 で修正</td>
+<td style="text-align: left;">TOTP の認証</td>
+<td style="text-align: left;"><code>AbstractAuthenticationProcessingFilter</code> を継ぐフィルター（<code>POST /login/totp</code>）と <code>AuthenticationProvider</code>。password の要素がそろった session でだけ受け付ける</td>
+<td style="text-align: left;">フィルターの <code>mfaEnabled</code> を有効にしても、<strong>結果のトークンの型が <code>toBuilder()</code> を自分で宣言していないと、password の要素が合わさらず置き換わる</strong>。独自のトークンにビルダーを持たせる</td>
 </tr>
 <tr>
-<td style="text-align: left;">R-04</td>
-<td style="text-align: left;">承認待ちのまま置き換えた見積りが荷主に見えないことを、業務ルール層のシナリオで確かめる</td>
-<td style="text-align: left;"><code>expire_and_replace_quotation.feature</code></td>
-<td style="text-align: left;">tester</td>
-<td style="text-align: left;">Bolt 11 で修正</td>
+<td style="text-align: left;">session の保存</td>
+<td style="text-align: left;">TOTP のフィルターに <code>HttpSessionSecurityContextRepository</code> を設定する</td>
+<td style="text-align: left;">既定のままでは request の中だけに残る</td>
 </tr>
 <tr>
-<td style="text-align: left;">R-05</td>
-<td style="text-align: left;">ステップ 1 の期間を 16:22〜16:35 に直す</td>
-<td style="text-align: left;"><code>bolt_11_plan.md</code></td>
-<td style="text-align: left;">technical-writer</td>
-<td style="text-align: left;">修正</td>
+<td style="text-align: left;">失敗の数え方</td>
+<td style="text-align: left;">password と TOTP の誤りを、<code>AuthenticationFailureBadCredentialsEvent</code> の 1 か所で数える。5 回続いたら 15 分ロック（<code>UserDetails</code> の <code>accountLocked</code> と、TOTP の provider の確認）</td>
+<td style="text-align: left;">監査記録（IA-INV-08）を書く箇所と同じにできる。ロック中の拒否は数えない</td>
+</tr>
+<tr>
+<td style="text-align: left;">再利用の拒否</td>
+<td style="text-align: left;">利用者ごとに最後に使った時間の刻みの番号を持ち、それ以下の刻みを拒否する</td>
+<td style="text-align: left;">TOTP のライブラリの外の記録が要る（H3）</td>
+</tr>
+<tr>
+<td style="text-align: left;">回復コード</td>
+<td style="text-align: left;">TOTP の欄で受け付け、一度使ったら消す</td>
+<td style="text-align: left;">本体ではハッシュで保存する</td>
+</tr>
+<tr>
+<td style="text-align: left;">無操作 30 分</td>
+<td style="text-align: left;"><code>server.servlet.session.timeout=30m</code></td>
+<td style="text-align: left;">設定で守れる</td>
+</tr>
+<tr>
+<td style="text-align: left;">最長 8 時間</td>
+<td style="text-align: left;">本人確認の時刻を session に残し、request ごとに比べるフィルター</td>
+<td style="text-align: left;">Spring Security に既製の部品はない。時刻はアプリケーションの <code>Clock</code> で比べる</td>
+</tr>
+<tr>
+<td style="text-align: left;">password の保存</td>
+<td style="text-align: left;"><code>PasswordEncoderFactories</code> の既定（bcrypt）</td>
+<td style="text-align: left;">Argon2id は Bouncy Castle を足さないと使えない。SEC-07 は bcrypt で満たす</td>
 </tr>
 </tbody>
 </table>
-<h3 id="_5">中<a class="headerlink" href="#_5" title="Permanent link">&para;</a></h3>
+<h3 id="3">3. 開発環境の入力済み<a class="headerlink" href="#3" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>dev</code> プロファイルの設定（<code>cargotracker.dev-login.username</code>・<code>password</code>・<code>prefill-totp</code>）があるときだけ、A-01 にメールアドレスと password、A-02 にその時点のコードを入れる。既定の設定（ステージング・本番を含む）では入力済みにしない。学習テストで両方を確かめた。</li>
+<li>開発用の利用者は固定の TOTP の秘密を持つ。本番の利用者の秘密は利用者ごとに作る。</li>
+</ul>
+<h3 id="_4">代替案<a class="headerlink" href="#_4" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
 <tr>
-<th style="text-align: left;">#</th>
-<th style="text-align: left;">提案</th>
-<th style="text-align: left;">箇所</th>
-<th style="text-align: left;">指摘元</th>
-<th style="text-align: left;">AI の提案する対応方針</th>
+<th style="text-align: left;">案</th>
+<th style="text-align: left;">却下理由</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td style="text-align: left;">R-06</td>
-<td style="text-align: left;">再見積りで、旧版の対象の版が現在の版でないときの理由を「見積り作成中でない」と分け、テストを足す</td>
-<td style="text-align: left;"><code>QuotationCommandService.requote</code>、<code>QuotationRejection</code></td>
-<td style="text-align: left;">programmer、tester</td>
-<td style="text-align: left;">Bolt 11 で修正</td>
+<td style="text-align: left;">独自のフィルターの連鎖で段階を管理する（Spring Security 6 までのやり方）</td>
+<td style="text-align: left;">Spring Security 7 の要素の権限で、足りない要素への誘導と認可の判定を枠組みに任せられる</td>
 </tr>
 <tr>
-<td style="text-align: left;">R-07</td>
-<td style="text-align: left;">提示できるか・再見積りできるか・読み取り専用かと拒否の理由を、集約の問い合わせ（例: <code>presentRejectionAt(at)</code>・<code>requoteRejectionAt(at)</code>）にまとめ、画面はその結果を写すだけにする</td>
-<td style="text-align: left;"><code>QuotationViews</code>、<code>StaffQuotationController</code>、<code>Quotation</code></td>
-<td style="text-align: left;">programmer、architect</td>
-<td style="text-align: left;">Bolt 11 で修正</td>
+<td style="text-align: left;">password と TOTP を 1 つの画面で同時に送る</td>
+<td style="text-align: left;">誤った password でも TOTP を試せ、どちらが誤りかの扱いが複雑になる。US-18 の画面（A-01・A-02）と合わない</td>
 </tr>
 <tr>
-<td style="text-align: left;">R-08</td>
-<td style="text-align: left;">次の見積り番号の計算（最大 + 1）を 1 か所にまとめ、再見積りで同じ見積りを 2 回読まない</td>
-<td style="text-align: left;"><code>QuotationCommandService</code></td>
-<td style="text-align: left;">programmer</td>
-<td style="text-align: left;">Bolt 11 で修正</td>
+<td style="text-align: left;">開発環境では TOTP を飛ばす</td>
+<td style="text-align: left;">開発と本番で認証の流れが変わり、2 段階のログインを開発環境で確かめられない（確認ポイント 7）</td>
 </tr>
 <tr>
-<td style="text-align: left;">R-09</td>
-<td style="text-align: left;">失効として記録した旧版の S-04 にも、最新の見積りへのリンクと「読み取り専用です」を出す</td>
-<td style="text-align: left;"><code>show.html</code>、<code>StaffQuotationController</code></td>
-<td style="text-align: left;">technical-writer</td>
-<td style="text-align: left;">Bolt 11 で修正</td>
-</tr>
-<tr>
-<td style="text-align: left;">R-10</td>
-<td style="text-align: left;">再見積りの結果の文言を、旧版が置換済みか失効かで出し分け、置換の言い方をそろえる</td>
-<td style="text-align: left;"><code>StaffQuotationController</code>、<code>new.html</code>、<code>show.html</code></td>
-<td style="text-align: left;">technical-writer</td>
-<td style="text-align: left;">Bolt 11 で修正</td>
-</tr>
-<tr>
-<td style="text-align: left;">R-11</td>
-<td style="text-align: left;">ドメインモデルの集約の操作を実装に合わせる（置換する(新しい見積り ID, 判定時刻)、失効しているか(判定時刻)）</td>
-<td style="text-align: left;"><code>domain_model.md</code></td>
-<td style="text-align: left;">technical-writer</td>
-<td style="text-align: left;">修正</td>
-</tr>
-<tr>
-<td style="text-align: left;">R-12</td>
-<td style="text-align: left;">Bolt 9・10 レビューの対応結果の R-14（<code>0ecf416</code> で修正）・R-24 を埋め、節の見出しを「Bolt 11 での対応」にする</td>
-<td style="text-align: left;"><code>bolt_09-10_review_20261005.md</code></td>
-<td style="text-align: left;">technical-writer</td>
-<td style="text-align: left;">修正</td>
-</tr>
-<tr>
-<td style="text-align: left;">R-13</td>
-<td style="text-align: left;">画面の層の失効の準備を、DB の時刻の書き換えでなく時計の差し替えで作る</td>
-<td style="text-align: left;"><code>QuotationUiSteps</code></td>
-<td style="text-align: left;">tester</td>
-<td style="text-align: left;">人の判断（D-39）</td>
-</tr>
-<tr>
-<td style="text-align: left;">R-14</td>
-<td style="text-align: left;">新しい見積りの保存が失敗したとき旧版の更新ごとロールバックすることを、サービスを通した統合テストで確かめる</td>
-<td style="text-align: left;">統合テスト</td>
-<td style="text-align: left;">tester</td>
-<td style="text-align: left;">Bolt 11 で修正</td>
-</tr>
-<tr>
-<td style="text-align: left;">R-15</td>
-<td style="text-align: left;">同時の再見積りを、実 DB の 2 つのトランザクションで確かめる</td>
-<td style="text-align: left;">統合テスト</td>
-<td style="text-align: left;">tester</td>
-<td style="text-align: left;">Bolt 12 以降（Bolt 5 からの持ち越しと一緒に）</td>
-</tr>
-<tr>
-<td style="text-align: left;">R-16</td>
-<td style="text-align: left;">提示済みのまま期限を過ぎた見積りを再提示したときの理由を「承認待ちでない」でなく「失効している」にする</td>
-<td style="text-align: left;"><code>Quotation.presentInternally</code></td>
-<td style="text-align: left;">tester</td>
-<td style="text-align: left;">Bolt 11 で修正（R-07 と一緒に）</td>
-</tr>
-<tr>
-<td style="text-align: left;">R-17</td>
-<td style="text-align: left;">提示済みで失効した見積りの案内に、失効した日時（有効期限）を併記する</td>
-<td style="text-align: left;">S-04 <code>show.html</code></td>
-<td style="text-align: left;">user-representative</td>
-<td style="text-align: left;">Bolt 11 で修正</td>
-</tr>
-<tr>
-<td style="text-align: left;">R-18</td>
-<td style="text-align: left;">SonarQube の Code Smell 5 件（この Bolt の 3 件と、以前からの 2 件）</td>
-<td style="text-align: left;"><code>QuotationViews:54</code>、<code>QuotationTest:208</code>、<code>MyBatisQuotationIntegrationTest:326</code>、<code>LivingGlossaryConsistencyTest:36</code>、<code>TransportRequestControllerTest:469</code></td>
-<td style="text-align: left;">SonarQube</td>
-<td style="text-align: left;">Bolt 11 で修正</td>
-</tr>
-<tr>
-<td style="text-align: left;">R-19</td>
-<td style="text-align: left;">予約確定（US-04）のため、見積り側に「予約確定に使えるか(commit 時刻)」を置き、予約から見積りの判定をどう問い合わせるか（公開 API か有効期限の写し）を ADR で決める</td>
-<td style="text-align: left;"><code>Quotation</code>、ADR</td>
-<td style="text-align: left;">architect</td>
-<td style="text-align: left;">US-04 の Bolt の前（W4）</td>
+<td style="text-align: left;">Argon2id にする</td>
+<td style="text-align: left;">Bouncy Castle が要る。bcrypt で SEC-07 を満たすため、足す理由がまだない</td>
 </tr>
 </tbody>
 </table>
-<h3 id="_6">低<a class="headerlink" href="#_6" title="Permanent link">&para;</a></h3>
+<h2 id="_5">影響<a class="headerlink" href="#_5" title="Permanent link">&para;</a></h2>
+<h3 id="_6">ポジティブ<a class="headerlink" href="#_6" title="Permanent link">&para;</a></h3>
+<ul>
+<li>認証の流れと認可の判定を枠組みに任せ、アプリケーションが持つのは TOTP の照合・再利用・失敗の数え方・回復コードだけになる。</li>
+<li>失敗の数え方と監査記録を、Spring Security のイベントの 1 か所にまとめられる。</li>
+<li>新しい依存は <code>java-otp</code> 1 つで、推移的な依存がない。</li>
+</ul>
+<h3 id="_7">ネガティブ<a class="headerlink" href="#_7" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Spring Security 7 の多要素認証は新しい仕組みで、「結果の型が <code>toBuilder()</code> を宣言していないと要素が合わさらない」のような資料の少ない振る舞いがある。US-18 で統合テストを厚くする。</li>
+<li>要素の権限の発行時刻（<code>FactorGrantedAuthority</code> の <code>issuedAt</code>）はシステムの時計で決まり、アプリケーションの <code>Clock</code> で動かせない。時刻に頼る判定（最長 8 時間）は、session に残す自分の時刻で行う。</li>
+<li>再利用の拒否・失敗の回数・ロック・回復コードの記録が、複数のアプリケーションの実行環境で共有される必要がある（本体では表）。</li>
+</ul>
+<h3 id="us-18-bolt">US-18 の Bolt で要るもの<a class="headerlink" href="#us-18-bolt" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
 <tr>
-<th style="text-align: left;">#</th>
-<th style="text-align: left;">提案</th>
-<th style="text-align: left;">箇所</th>
-<th style="text-align: left;">指摘元</th>
-<th style="text-align: left;">AI の提案する対応方針</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align: left;">R-20</td>
-<td style="text-align: left;">置換先の見積りを、全件を読んで絞るのでなく ID で探す</td>
-<td style="text-align: left;"><code>StaffQuotationController</code></td>
-<td style="text-align: left;">programmer</td>
-<td style="text-align: left;">R-07・R-09 と一緒に見直す</td>
-</tr>
-<tr>
-<td style="text-align: left;">R-21</td>
-<td style="text-align: left;">失効の案内の <code>switch</code> の到達しない枝を、到達しないと分かる書き方にする</td>
-<td style="text-align: left;"><code>StaffQuotationController</code></td>
-<td style="text-align: left;">programmer</td>
-<td style="text-align: left;">R-07 と一緒に修正</td>
-</tr>
-<tr>
-<td style="text-align: left;">R-22</td>
-<td style="text-align: left;"><code>RequotationOutcome.Rejected</code> の Javadoc から「見積りがすでにある」を除く（返さない）</td>
-<td style="text-align: left;"><code>RequotationOutcome</code></td>
-<td style="text-align: left;">programmer</td>
-<td style="text-align: left;">修正</td>
-</tr>
-<tr>
-<td style="text-align: left;">R-23</td>
-<td style="text-align: left;"><code>QuotationExpiry.isValidAt</code> に null の検査を足す</td>
-<td style="text-align: left;"><code>QuotationExpiry</code></td>
-<td style="text-align: left;">programmer</td>
-<td style="text-align: left;">修正</td>
-</tr>
-<tr>
-<td style="text-align: left;">R-24</td>
-<td style="text-align: left;">旧版を更新した後に新しい見積りの保存が一意制約に触れたら、500 でなく競合として返す</td>
-<td style="text-align: left;"><code>QuotationCommandService.requote</code></td>
-<td style="text-align: left;">architect</td>
-<td style="text-align: left;">修正（R-14 と一緒に）</td>
-</tr>
-<tr>
-<td style="text-align: left;">R-25</td>
-<td style="text-align: left;"><code>isRedelivery</code> の名前を意図に合わせる（再配信と再見積りの後の提示の両方）</td>
-<td style="text-align: left;"><code>QuotationPresentedEventHandler</code></td>
-<td style="text-align: left;">architect</td>
-<td style="text-align: left;">修正</td>
-</tr>
-<tr>
-<td style="text-align: left;">R-26</td>
-<td style="text-align: left;">シナリオの前提に標準の見積りの有効期限を書く</td>
-<td style="text-align: left;"><code>expire_and_replace_quotation.feature</code></td>
-<td style="text-align: left;">tester</td>
-<td style="text-align: left;">修正</td>
-</tr>
-<tr>
-<td style="text-align: left;">R-27</td>
-<td style="text-align: left;">境界のテストをパラメータ化し、<code>isValidAt</code> の直接のテスト・置換済みは期限後も失効でないこと・<code>replaceWith</code> の 1 秒前を足す</td>
-<td style="text-align: left;"><code>QuotationTest</code></td>
-<td style="text-align: left;">tester</td>
-<td style="text-align: left;">修正</td>
-</tr>
-<tr>
-<td style="text-align: left;">R-28</td>
-<td style="text-align: left;">制約の違反のテストで制約名も確かめる</td>
-<td style="text-align: left;"><code>MyBatisQuotationIntegrationTest</code></td>
-<td style="text-align: left;">tester</td>
-<td style="text-align: left;">修正</td>
-</tr>
-<tr>
-<td style="text-align: left;">R-29</td>
-<td style="text-align: left;">画面の層のステップの「見積 2」を引数にする</td>
-<td style="text-align: left;"><code>QuotationUiSteps</code></td>
-<td style="text-align: left;">tester</td>
-<td style="text-align: left;">修正</td>
-</tr>
-<tr>
-<td style="text-align: left;">R-30</td>
-<td style="text-align: left;">計画の H1・設計の約束・図の <code>QuotationValidity</code> と、確認ポイント 7 の FK に、ステップ 3・4 での変更の注を付ける</td>
-<td style="text-align: left;"><code>bolt_11_plan.md</code></td>
-<td style="text-align: left;">technical-writer</td>
-<td style="text-align: left;">修正</td>
-</tr>
-<tr>
-<td style="text-align: left;">R-31</td>
-<td style="text-align: left;">開発の索引の Bolt 11 の状態を実態に合わせる</td>
-<td style="text-align: left;"><code>development/cargo-tracker/index.md</code></td>
-<td style="text-align: left;">technical-writer</td>
-<td style="text-align: left;">修正</td>
-</tr>
-<tr>
-<td style="text-align: left;">R-32</td>
-<td style="text-align: left;"><code>RequoteQuotationCommand</code> の Javadoc の書き出しを簡潔にする</td>
-<td style="text-align: left;"><code>RequoteQuotationCommand</code></td>
-<td style="text-align: left;">technical-writer</td>
-<td style="text-align: left;">修正</td>
-</tr>
-<tr>
-<td style="text-align: left;">R-33</td>
-<td style="text-align: left;">荷主の画面の「置換済み」を荷主向けの言葉にする</td>
-<td style="text-align: left;">C-04</td>
-<td style="text-align: left;">technical-writer</td>
-<td style="text-align: left;">人の判断（D-37 と一緒に）</td>
-</tr>
-<tr>
-<td style="text-align: left;">R-34</td>
-<td style="text-align: left;">本番で使われなくなった <code>QuotationQueryService.findPresented</code> を <code>findVisible</code> に寄せて消す</td>
-<td style="text-align: left;"><code>QuotationQueryService</code>、<code>QuotationSteps</code></td>
-<td style="text-align: left;">programmer</td>
-<td style="text-align: left;">修正</td>
-</tr>
-<tr>
-<td style="text-align: left;">R-35</td>
-<td style="text-align: left;">荷主の画面で、失効した見積りの見出しに有効期限を並べる</td>
-<td style="text-align: left;">C-04</td>
-<td style="text-align: left;">user-representative</td>
-<td style="text-align: left;">R-17 と一緒に修正</td>
-</tr>
-</tbody>
-</table>
-<h2 id="_7">人の判断事項<a class="headerlink" href="#_7" title="Permanent link">&para;</a></h2>
-<table>
-<thead>
-<tr>
-<th style="text-align: left;">#</th>
-<th style="text-align: left;">判断事項</th>
-<th style="text-align: left;">AI の提案</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align: left;">D-37</td>
-<td style="text-align: left;">再見積りの最中の C-04 の案内（R-01）と、荷主向けの状態の言葉（R-33）</td>
-<td style="text-align: left;">最新が置換済みなら「担当営業が新しい見積りを準備しています。提示されるまでお待ちください。」、失効なら今の「この見積りは読み取り専用です。新しい見積りは担当営業にご依頼ください。」。荷主の画面の状態の言葉は「置換済み」を「新しい見積りに置き換え」に、「失効」はそのままにする</td>
-</tr>
-<tr>
-<td style="text-align: left;">D-38</td>
-<td style="text-align: left;">受付一覧（S-02）から提示済み・失効の見積りに戻る入口（R-02）</td>
-<td style="text-align: left;">Bolt 11 で、S-02 に「見積提示済み」の表（業務番号、最新の見積り番号と状態、有効期限、有効期限の近い順）を足し、行から最新の見積り（S-04）を開けるようにする</td>
-</tr>
-<tr>
-<td style="text-align: left;">D-39</td>
-<td style="text-align: left;">画面の層の失効の準備（R-13）</td>
-<td style="text-align: left;">今の DB の書き換えのまま残す。画面の層は実際の時計で動く方針（Bolt 10）なので、時計の差し替えは画面の層の時刻の扱いを決めるときにまとめて見直す</td>
-</tr>
-<tr>
-<td style="text-align: left;">D-40</td>
-<td style="text-align: left;">対応の範囲</td>
-<td style="text-align: left;">高（R-01〜R-05）、中のうち R-06〜R-12・R-14・R-16〜R-18 と低の全部を Bolt 11 で直す。R-13 は D-39、R-15 は Bolt 12 以降、R-19 は US-04 の Bolt の前</td>
-</tr>
-<tr>
-<td style="text-align: left;">D-41</td>
-<td style="text-align: left;">業務責任者に確かめる事項（D-36 に足す）: 有効期限内の提示済みの旧版を、新しい見積りの提示まで有効のまま残すべきか（今は再見積りで算出した時点で置き換える。確認ポイント 4）。失効したときに荷主へ連絡するのは営業の責任か。失効・置換の後も輸送要求の状態を「見積提示済み」のままにしてよいか</td>
-<td style="text-align: left;">W2 の間に D-28・D-29・D-34〜D-36 とあわせて確かめる</td>
-</tr>
-</tbody>
-</table>
-<h2 id="_8">矛盾事項<a class="headerlink" href="#_8" title="Permanent link">&para;</a></h2>
-<table>
-<thead>
-<tr>
-<th style="text-align: left;">#</th>
-<th style="text-align: left;">視点 A</th>
-<th style="text-align: left;">視点 B</th>
-<th style="text-align: left;">論点</th>
-<th style="text-align: left;">推奨判断</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align: left;">1</td>
-<td style="text-align: left;">user-representative: 有効期限内の提示済みの旧版は、新しい見積りの提示まで残すべき（荷主が旧版で社内決裁を進めている最中に無効になる）</td>
-<td style="text-align: left;">確認ポイント 4（承認済み）: 算出した時点で旧版を置き換える。旧版を残すと作成中・承認待ちと提示済みが 2 つになり Q-INV-18 が崩れる</td>
-<td style="text-align: left;">置換の時点</td>
-<td style="text-align: left;">Bolt 11 は承認済みの確認ポイント 4 のまま。業務責任者に確かめ（D-41）、残すと決まれば Q-INV-18 を「承認待ちは 1 つ、提示済み（有効）は 1 つ」に分けて見直す</td>
-</tr>
-<tr>
-<td style="text-align: left;">2</td>
-<td style="text-align: left;">architect: 予約確定は見積りの判定を公開 API で問い合わせる</td>
-<td style="text-align: left;">architect（同じ指摘の中）: 有効期限の写しを予約側に持つ</td>
-<td style="text-align: left;">US-04 での見積りの有効性の確かめ方</td>
-<td style="text-align: left;">US-04 の Bolt の前に ADR で決める（R-19）</td>
-</tr>
-</tbody>
-</table>
-<h2 id="_9">エージェント別フィードバック詳細<a class="headerlink" href="#_9" title="Permanent link">&para;</a></h2>
-<details>
-<summary>xp-programmer（高: 0 / 中: 3 / 低: 4）</summary>
-
-- 評価: TDD の手順、値と例外の使い分け、トランザクションの順序はどれも規律どおり。拒否の理由の意味のずれと、画面の層への業務の判断の漏れがある
-- 良い点: 失効を判定時刻で決め BR-10 を 1 か所に、`retiredRejection` で拒否の順をそろえた、DRAFT の置換は例外、書く順とインデックス・遅延の FK の整合、例外の理由を Javadoc に、ハンドラーで再配信と結果整合の崩れを分けたログ
-- 中: 版の食い違いの理由（R-06）、`requotable` を画面で決める（R-07）、番号の計算の重複と 2 回の読み出し（R-08）
-- 低: 置換先の探し方（R-20）、到達しない枝（R-21）、Javadoc（R-22）、null の検査（R-23）
-- 懸念: 入力の検証の前に旧版を置換済みにする（保存しないので実害はないが、`Invalid` のとき旧版が変わらないことをテストで固定したい）。H2 では Q-INV-18 を DB で守らない
-- スコープ外: 本番で使われない `findPresented`（R-34）
-
-</details>
-
-<details>
-<summary>xp-tester（高: 2 / 中: 5 / 低: 4）</summary>
-
-- 評価: 業務ルール層のシナリオは計画の 6 項目と 1:1。境界値は判定と提示の両方にある。R-07・R-08 は返済された。荷主側の失効の表示と、提示前に置き換えた見積りを見せないことが確かめられていない
-- 良い点: 3 点の境界の例の表、提示時刻を 04:30 に分けた、「見積り 3 はない」、`SET CONSTRAINTS ALL IMMEDIATE`、メモリ上のリポジトリに部分一意インデックスの規則、ログのテスト
-- 高: C-04 の失効の表示（R-03）、提示前の置換を荷主に見せない（R-04）
-- 中: 画面の層の DB の書き換え（R-13）、ロールバックのテスト（R-14）、実 DB の同時の再見積り（R-15）、再見積りの版の不一致のテスト（R-06）
-- 低: 前提の有効期限（R-26）、パラメータ化と直接のテスト（R-27）、制約名（R-28）、「見積 2」の固定（R-29）
-- 懸念: 業務ルール層の Red がコンパイルの失敗だけ（PIT で補う余地）。提示済みで失効した見積りの再提示の理由が「承認待ちでない」（R-16）
-- スコープ外: US-04 で commit 時刻を判定時刻として渡す統合テストを最初に
-
-</details>
-
-<details>
-<summary>xp-architect（高: 0 / 中: 2 / 低: 2）</summary>
-
-- 評価: 変更は見積りのコンテキストの中で閉じ、依存の向きも崩れていない。2 つのインスタンスを 1 つのトランザクションで書く例外は、理由が書かれ範囲も限られており妥当。承認可
-- 良い点: 判定時刻を呼び出し側が渡す形、書く順と遅延の FK の整合と統合テスト、DB ごとのフォルダ、同時の再見積りは楽観ロックで値に
-- 中: 画面の層の業務ルールの複製（R-07）、US-04 の判定 API と ADR（R-19）
-- 低: 保存の失敗を競合に（R-24）、`isRedelivery` の名前（R-25）
-- 懸念: 再見積りの間、有効な見積りが承認待ちしかない（荷主の表示、R-01）。見積りの置換と予約確定の同時の競合はまだ設計されていない。H2 の前提をテスト戦略に書く
-- スコープ外: 輸送要求の条件変更（新しい版）を入れると、旧版の見積りが有効なまま残り、算出も再見積りも拒否されて行き詰まる。条件変更の Bolt で旧版の見積りを置換・失効にする遷移を一緒に設計する
-
-</details>
-
-<details>
-<summary>xp-technical-writer（高: 1 / 中: 4 / 低: 4）</summary>
-
-- 評価: 計画・結果・コミットの順にたどれ、マイグレーション名・URL・状態の表示名・確認ポイントの決定は設計文書と実装で一致。計画からの 2 つの変更も追える
-- 良い点: Bolt 9 終了報告の期間がコミットの時刻と一致、ステップの結果のハッシュの順、データモデルに遅延の FK の理由、C-04 の以前の見積りを `details` で畳む
-- 高: ステップ 1 の時刻（R-05）
-- 中: レビューの対応結果の R-14・R-24（R-12）、失効として記録した旧版の画面（R-09）、結果の文言と言い方（R-10）、ドメインモデルの操作（R-11）
-- 低: 計画の注（R-30）、索引の状態（R-31）、Javadoc（R-32）、荷主向けの言葉（R-33）
-- 懸念: 承認待ちの新しい見積りがある間の C-04 の案内（R-01）
-- スコープ外: レビューとリリース計画の更新履歴の承認の列が「—」のまま（フロントマターの `verified` とずれる）
-
-</details>
-
-<details>
-<summary>xp-user-representative（高: 2 / 中: 1 / 低: 1）</summary>
-
-- 評価: 営業の流れは見積り業務に合う。再見積りの最中に荷主が見る表示が誤解を招く。条件付きで合格
-- 良い点: 同時刻から失効の規則と次の操作の案内、旧版を初期値にし有効期限だけ空に、置換の事前と事後の案内、承認前の見積りを荷主に見せない
-- 高: 再見積りの最中の C-04 の案内（R-01）、S-02 の入口（R-02）
-- 中: 失効した日時の併記（R-17）
-- 低: 荷主の失効の見出しに有効期限（R-35）
-- 懸念: 算出の時点で旧版を置き換えると、荷主が有効な見積りを持たない期間ができる（矛盾事項 1）。失効・置換を荷主へ知らせる手段がない（Bolt 10 から継続）
-- 業務責任者に確かめること: D-36、旧版を提示まで残すか、失効の連絡の責任、輸送要求の状態（D-41）
-
-</details>
-
-<h2 id="_10">対応結果<a class="headerlink" href="#_10" title="Permanent link">&para;</a></h2>
-<h3 id="2026-10-05bolt-11-6humankakimomokuri">人の判断（2026-10-05、Bolt 11 のステップ 6。human:kakimomokuri）<a class="headerlink" href="#2026-10-05bolt-11-6humankakimomokuri" title="Permanent link">&para;</a></h3>
-<table>
-<thead>
-<tr>
-<th style="text-align: left;">#</th>
-<th style="text-align: left;">決定</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align: left;">D-40 対応の範囲</td>
-<td style="text-align: left;">AI の提案どおり。高（R-01〜R-05）、中のうち R-06〜R-12・R-14・R-16〜R-18、低の全部を Bolt 11 で直す。R-13 は D-39、R-15 は Bolt 12 以降、R-19 は US-04 の Bolt の前</td>
-</tr>
-<tr>
-<td style="text-align: left;">D-37</td>
-<td style="text-align: left;">AI の提案どおり。最新が置換済みなら「担当営業が新しい見積りを準備しています。提示されるまでお待ちください。」、失効なら「新しい見積りは担当営業にご依頼ください」。荷主の画面の状態の言葉は「置換済み」を「新しい見積りに置き換え」にする</td>
-</tr>
-<tr>
-<td style="text-align: left;">D-38</td>
-<td style="text-align: left;">AI の提案どおり。Bolt 11 で S-02 に「見積提示済み」の表を足す</td>
-</tr>
-<tr>
-<td style="text-align: left;">D-39</td>
-<td style="text-align: left;">AI の提案どおり。画面の層の失効の準備は今の DB の書き換えのまま（2026-10-05、終了報告の確認の場で決定）</td>
-</tr>
-<tr>
-<td style="text-align: left;">D-41</td>
-<td style="text-align: left;">AI の提案どおり。業務責任者に確かめる事項に足す（旧版を新しい見積りの提示まで残すか、失効の連絡の責任、失効・置換の後の輸送要求の状態）</td>
-</tr>
-</tbody>
-</table>
-<h3 id="bolt-11-62026-10-05">改善提案ごとの対応（<a href="../../../development/cargo-tracker/bolt_11_plan/">Bolt 11 計画</a> のステップ 6、2026-10-05）<a class="headerlink" href="#bolt-11-62026-10-05" title="Permanent link">&para;</a></h3>
-<p>テストを先に書き（Red: <code>522ca88</code>・<code>07c4773</code>）、業務の規則と照会（<code>013b3a8</code>）、画面（<code>8bfa8d5</code>）の順に直した。画面の層の Red は、画面を変える前の <code>uiTest</code> と画面の単体テストで記録した（T-21）。</p>
-<table>
-<thead>
-<tr>
-<th style="text-align: left;">#</th>
-<th style="text-align: left;">対応</th>
-<th style="text-align: left;">コミット</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align: left;">R-01</td>
-<td style="text-align: left;">修正。最新が置換済みなら「担当営業が新しい見積りを準備しています。提示されるまでお待ちください。」、失効なら有効期限と依頼の案内（D-37）</td>
-<td style="text-align: left;"><code>522ca88</code>、<code>8bfa8d5</code></td>
-</tr>
-<tr>
-<td style="text-align: left;">R-02</td>
-<td style="text-align: left;">修正。S-02 に見積提示済みの表（見積依頼ごとの最新の見積りを有効期限の近い順。1 回の SQL）を足し、行から S-04 を開ける（D-38）。画面の層の主成功のシナリオにも入れた</td>
-<td style="text-align: left;"><code>522ca88</code>・<code>07c4773</code>、<code>013b3a8</code>・<code>8bfa8d5</code></td>
-</tr>
-<tr>
-<td style="text-align: left;">R-03</td>
-<td style="text-align: left;">修正。提示済みのまま期限を過ぎた見積りの C-04 のテストを足した</td>
-<td style="text-align: left;"><code>522ca88</code>、<code>8bfa8d5</code></td>
-</tr>
-<tr>
-<td style="text-align: left;">R-04</td>
-<td style="text-align: left;">修正。提示前に置き換えた見積りは荷主に見えないシナリオを足した</td>
-<td style="text-align: left;"><code>522ca88</code></td>
-</tr>
-<tr>
-<td style="text-align: left;">R-05</td>
-<td style="text-align: left;">修正。ステップ 1 の期間を 16:22〜16:35 にした</td>
-<td style="text-align: left;"><code>bc930b8</code></td>
-</tr>
-<tr>
-<td style="text-align: left;">R-06</td>
-<td style="text-align: left;">修正。古い版に対する見積りの再見積りは <code>OUTDATED_VERSION</code>、見積り作成中でも見積提示済みでもない見積依頼のテストも足した</td>
-<td style="text-align: left;"><code>522ca88</code>、<code>013b3a8</code></td>
-</tr>
-<tr>
-<td style="text-align: left;">R-07</td>
-<td style="text-align: left;">修正。集約に「提示できない理由(判定時刻)」「再見積りできない理由()」を置き、画面はそれを写す</td>
-<td style="text-align: left;"><code>522ca88</code>、<code>013b3a8</code>・<code>8bfa8d5</code></td>
-</tr>
-<tr>
-<td style="text-align: left;">R-08</td>
-<td style="text-align: left;">修正。見積りを 1 回だけ読み、番号の計算を 1 か所にした。あわせて、旧版は入力の検証の後に置き換える（programmer の懸念）</td>
-<td style="text-align: left;"><code>013b3a8</code></td>
-</tr>
-<tr>
-<td style="text-align: left;">R-09</td>
-<td style="text-align: left;">修正。失効を記録した旧版の S-04 に「読み取り専用です」と最新の見積りへのリンク</td>
-<td style="text-align: left;"><code>522ca88</code>、<code>8bfa8d5</code></td>
-</tr>
-<tr>
-<td style="text-align: left;">R-10</td>
-<td style="text-align: left;">修正。結果を「新しい見積りに置き換えました」「失効として記録しました」で出し分け、言い方を「置き換え」にそろえた</td>
-<td style="text-align: left;"><code>522ca88</code>、<code>013b3a8</code>・<code>8bfa8d5</code></td>
-</tr>
-<tr>
-<td style="text-align: left;">R-11</td>
-<td style="text-align: left;">修正。ドメインモデルの集約の操作を実装に合わせた</td>
-<td style="text-align: left;"><code>bc930b8</code></td>
-</tr>
-<tr>
-<td style="text-align: left;">R-12</td>
-<td style="text-align: left;">修正。Bolt 9・10 レビューの R-14・R-24 を埋め、見出しを「Bolt 11 での対応」にした</td>
-<td style="text-align: left;"><code>bc930b8</code></td>
-</tr>
-<tr>
-<td style="text-align: left;">R-13</td>
-<td style="text-align: left;">今の DB の書き換えのまま（D-39）</td>
-<td style="text-align: left;">—</td>
-</tr>
-<tr>
-<td style="text-align: left;">R-14</td>
-<td style="text-align: left;">修正。サービスを通した統合テストで、新しい見積りの保存が失敗すると旧版の置換もロールバックすることを確かめた</td>
-<td style="text-align: left;"><code>522ca88</code></td>
-</tr>
-<tr>
-<td style="text-align: left;">R-15</td>
-<td style="text-align: left;">Bolt 12 以降（Bolt 5 からの持ち越しと一緒に）</td>
-<td style="text-align: left;">—</td>
-</tr>
-<tr>
-<td style="text-align: left;">R-16</td>
-<td style="text-align: left;">修正。提示済みで失効した見積りの再提示は「失効している」</td>
-<td style="text-align: left;"><code>522ca88</code>、<code>013b3a8</code></td>
-</tr>
-<tr>
-<td style="text-align: left;">R-17</td>
-<td style="text-align: left;">修正。失効の案内に有効期限を併記した</td>
-<td style="text-align: left;"><code>522ca88</code>、<code>8bfa8d5</code></td>
-</tr>
-<tr>
-<td style="text-align: left;">R-18</td>
-<td style="text-align: left;">修正。Code Smell 5 件を直した（品質ゲート PASS、Code Smell 0）</td>
-<td style="text-align: left;"><code>522ca88</code>、<code>8bfa8d5</code></td>
-</tr>
-<tr>
-<td style="text-align: left;">R-19</td>
-<td style="text-align: left;">US-04 の Bolt の前に ADR で決める</td>
-<td style="text-align: left;">—</td>
-</tr>
-<tr>
-<td style="text-align: left;">R-20</td>
-<td style="text-align: left;">見直した。置換先と最新の見積りの両方を示すため、見積依頼の見積りを 1 回読んで探す形のまま</td>
-<td style="text-align: left;"><code>8bfa8d5</code></td>
-</tr>
-<tr>
-<td style="text-align: left;">R-21</td>
-<td style="text-align: left;">修正。失効の案内を到達しない枝のない形にした</td>
-<td style="text-align: left;"><code>8bfa8d5</code></td>
-</tr>
-<tr>
-<td style="text-align: left;">R-22</td>
-<td style="text-align: left;">修正</td>
-<td style="text-align: left;"><code>013b3a8</code></td>
-</tr>
-<tr>
-<td style="text-align: left;">R-23</td>
-<td style="text-align: left;">修正</td>
-<td style="text-align: left;"><code>522ca88</code>、<code>013b3a8</code></td>
-</tr>
-<tr>
-<td style="text-align: left;">R-24</td>
-<td style="text-align: left;">直さない。旧版の更新の後の一意制約の違反は、同じ旧版の再見積りが楽観ロックで止まるため起きない前提で、起きたら例外のままロールバックする（R-14 のテストで確かめた）。値で返すと旧版の更新をロールバックできない</td>
-<td style="text-align: left;">—</td>
-</tr>
-<tr>
-<td style="text-align: left;">R-25</td>
-<td style="text-align: left;">修正。<code>isAlreadyQuotedForVersion</code> にした</td>
-<td style="text-align: left;"><code>8bfa8d5</code></td>
-</tr>
-<tr>
-<td style="text-align: left;">R-26</td>
-<td style="text-align: left;">修正。前提の文に有効期限を書いた</td>
-<td style="text-align: left;"><code>522ca88</code></td>
-</tr>
-<tr>
-<td style="text-align: left;">R-27</td>
-<td style="text-align: left;">修正</td>
-<td style="text-align: left;"><code>522ca88</code></td>
-</tr>
-<tr>
-<td style="text-align: left;">R-28</td>
-<td style="text-align: left;">修正</td>
-<td style="text-align: left;"><code>522ca88</code></td>
-</tr>
-<tr>
-<td style="text-align: left;">R-29</td>
-<td style="text-align: left;">修正</td>
-<td style="text-align: left;"><code>522ca88</code></td>
-</tr>
-<tr>
-<td style="text-align: left;">R-30</td>
-<td style="text-align: left;">修正。計画の H1 と設計の約束に注を付けた</td>
-<td style="text-align: left;"><code>bc930b8</code></td>
-</tr>
-<tr>
-<td style="text-align: left;">R-31</td>
-<td style="text-align: left;">修正。索引の Bolt 11 を「進行中」にした</td>
-<td style="text-align: left;"><code>bc930b8</code></td>
-</tr>
-<tr>
-<td style="text-align: left;">R-32</td>
-<td style="text-align: left;">修正</td>
-<td style="text-align: left;"><code>8bfa8d5</code></td>
-</tr>
-<tr>
-<td style="text-align: left;">R-33</td>
-<td style="text-align: left;">修正。荷主の画面の「置換済み」を「新しい見積りに置き換え」にした（D-37）</td>
-<td style="text-align: left;"><code>522ca88</code>、<code>8bfa8d5</code></td>
-</tr>
-<tr>
-<td style="text-align: left;">R-34</td>
-<td style="text-align: left;">修正。<code>findPresented</code> を消し、受入テストも <code>findVisible</code> に寄せた</td>
-<td style="text-align: left;"><code>522ca88</code>、<code>013b3a8</code></td>
-</tr>
-<tr>
-<td style="text-align: left;">R-35</td>
-<td style="text-align: left;">修正（R-17 と一緒に、C-04 の失効の案内に有効期限）</td>
-<td style="text-align: left;"><code>522ca88</code>、<code>8bfa8d5</code></td>
-</tr>
-</tbody>
-</table>
-<h2 id="_11">更新履歴<a class="headerlink" href="#_11" title="Permanent link">&para;</a></h2>
-<table>
-<thead>
-<tr>
-<th style="text-align: left;">日付</th>
+<th style="text-align: left;">種類</th>
 <th style="text-align: left;">内容</th>
-<th style="text-align: left;">作成</th>
-<th style="text-align: left;">承認</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td style="text-align: left;">2026-10-05</td>
-<td style="text-align: left;">初版（5 視点の並列レビューと SonarQube の結果を統合）</td>
-<td style="text-align: left;">anthropic/claude-opus-5-5</td>
-<td style="text-align: left;">—</td>
+<td style="text-align: left;">表（<code>identity</code>）</td>
+<td style="text-align: left;">利用者（メールアドレス、password のハッシュ、状態、所属企業）、TOTP の資格（暗号化した秘密、最後に使った時間の刻み）、回復コード（ハッシュ、使った時刻）、ログインの失敗（連続の回数、ロックの期限）</td>
 </tr>
 <tr>
-<td style="text-align: left;">2026-10-05</td>
-<td style="text-align: left;">人の判断（D-37・D-38・D-40）と、改善提案ごとの対応を記録した</td>
-<td style="text-align: left;">anthropic/claude-opus-5-5</td>
-<td style="text-align: left;">—</td>
+<td style="text-align: left;">画面</td>
+<td style="text-align: left;">A-01（ログイン）、A-02（認証コード。<code>factor.reason</code> に応じた案内、回復コードの入力、ロック中の案内と解ける時刻）、TOTP の登録（QR か手入力の秘密、回復コードの表示）</td>
 </tr>
 <tr>
-<td style="text-align: left;">2026-10-05</td>
-<td style="text-align: left;">Bolt 11 終了報告とあわせて対応結果を承認した</td>
-<td style="text-align: left;">anthropic/claude-opus-5-5</td>
-<td style="text-align: left;">human:kakimomokuri</td>
+<td style="text-align: left;">置き換え</td>
+<td style="text-align: left;">仮の主体（<code>ProvisionalActorProperties</code>）を、認証の主体から利用者と荷主企業を引く形に置き換える。荷主の画面（<code>/customer</code>）と社内の画面（<code>/staff</code>）の役割を分ける（US-16）</td>
+</tr>
+<tr>
+<td style="text-align: left;">開発環境</td>
+<td style="text-align: left;">開発用の利用者（荷主担当者・営業担当者）と固定の TOTP の秘密を <code>dev</code> プロファイルで投入し、A-01・A-02 を入力済みにする</td>
 </tr>
 </tbody>
 </table>
+<h3 id="_8">未確認の項目<a class="headerlink" href="#_8" title="Permanent link">&para;</a></h3>
+<ul>
+<li>登録の QR の描き方（ZXing をサーバーで使うか、クライアントで描くか）と、TOTP の秘密の暗号化の鍵の管理。</li>
+<li>実際のサーブレットコンテナでの session の固定化の対策と、同じ利用者の同時のログイン。学習テストは MockMvc だけ。</li>
+<li>password の再設定（SEC-08）と、TOTP の再登録（SEC-10）の流れ。</li>
+<li>利用者の画面で「次に取れる操作」（T-35）: A-02 で誤ったときは再入力か回復コード、ロック中は解ける時刻を示して待つ、端末を失ったときは回復コードか管理者への連絡。US-18 の計画の確認ポイントにする。</li>
+</ul>
+<h2 id="_9">コンプライアンス<a class="headerlink" href="#_9" title="Permanent link">&para;</a></h2>
+<ul>
+<li>US-18 の Bolt で、本体の統合テストに、2 つの要素がそろわないと業務の画面を開けないこと、再利用の拒否、5 回の失敗のロック、最長 8 時間を加える。</li>
+<li>既定の設定で A-01・A-02 が入力済みにならないことを、本体のテストで守る。</li>
+</ul>
+<h2 id="_10">参考資料<a class="headerlink" href="#_10" title="Permanent link">&para;</a></h2>
+<ul>
+<li><a href="../../../development/cargo-tracker/bolt_13_plan/">Bolt 13 計画</a>、<a href="../../development/cargo-tracker/bolt_13_report.md">Bolt 13 終了報告</a></li>
+<li>スパイク: <code>spikes/ts-01-totp/</code>（<code>TotpCandidatesTest</code>、<code>MfaLoginTest</code>、<code>DevLoginPrefillTest</code>、<code>PasswordStorageTest</code>、<code>SessionTimeoutTest</code>）</li>
+<li>RFC 6238（TOTP）、RFC 4226（HOTP）</li>
+<li><a href="../../../requirements/cargo-tracker/user_story/">ユーザーストーリー</a>（US-18）、<a href="../../../design/cargo-tracker/non_functional/">非機能要件</a>（SEC-04〜10）、<a href="../../../design/cargo-tracker/tech_stack/">技術スタック</a>（TS-01）</li>
+</ul>
 
 
 

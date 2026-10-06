@@ -4300,6 +4300,41 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../adr/cargo-tracker/011-mfa-totp/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-011 多要素認証と TOTP
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--draft"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -6948,11 +6983,11 @@
 </tr>
 <tr>
 <td style="text-align: left;">多要素認証</td>
-<td style="text-align: left;">TOTP ライブラリ（候補: <code>dev.samstevens.totp</code>）</td>
-<td style="text-align: left;">未定</td>
-<td style="text-align: left;">TOTP の生成・検証、登録用 QR</td>
-<td style="text-align: left;">—</td>
-<td style="text-align: left;">BR-14。Spring Security 7 の多要素認証の仕組みと組み合わせる。採用ライブラリは最初の Bolt のスパイクで決める（要確認）</td>
+<td style="text-align: left;"><code>com.eatthepath:java-otp</code>（案）</td>
+<td style="text-align: left;">1.0.0</td>
+<td style="text-align: left;">TOTP の生成。時間の窓の照合・再利用の拒否・回復コードはアプリケーションで持つ</td>
+<td style="text-align: left;">MIT</td>
+<td style="text-align: left;">BR-14。Spring Security 7.1 の多要素認証（要素の権限 <code>FACTOR_PASSWORD</code>・<code>FACTOR_TOTP</code>）と組み合わせる。Bolt 13 のスパイク（TS-01）の結論で、<a href="../../../adr/cargo-tracker/011-mfa-totp/">ADR-011</a>（提案）。採否は W5 の US-18 の計画で決める。登録用 QR の描き方は未確認</td>
 </tr>
 <tr>
 <td style="text-align: left;">session ストア</td>
@@ -7484,7 +7519,7 @@
 <tr>
 <td style="text-align: left;">TS-01</td>
 <td style="text-align: left;">TOTP ライブラリの決定と、Spring Security 7 の多要素認証との統合方法</td>
-<td style="text-align: left;">最初の Bolt（スパイク）</td>
+<td style="text-align: left;">スパイク済み（Bolt 13、2026-10-06）。結論は <a href="../../../adr/cargo-tracker/011-mfa-totp/">ADR-011</a>（提案）。W5 の US-18 で採否を決めて実装する</td>
 </tr>
 <tr>
 <td style="text-align: left;">TS-02</td>
@@ -7512,7 +7547,7 @@
 <ul>
 <li>チームは Java と Spring に習熟していると仮定した。開発ガイドラインが Spring Platform を前提にしていることと、兄弟プロジェクト（cargo-tracker の Java 版）の実績を根拠にしている。</li>
 <li>リージョンは東京を仮置きした。欧州の荷主の個人情報を扱う場合、越境移転の要件でリージョン構成が変わる可能性がある。</li>
-<li>TOTP ライブラリは候補を挙げただけで、評価していない。</li>
+<li>TOTP ライブラリは Bolt 13 のスパイクで 3 つの候補を比べた（<a href="../../../adr/cargo-tracker/011-mfa-totp/">ADR-011</a>）。本体への採用は ADR の承認の後。</li>
 </ul>
 
 

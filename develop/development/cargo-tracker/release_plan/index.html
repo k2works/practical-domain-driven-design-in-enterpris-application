@@ -4801,6 +4801,41 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../adr/cargo-tracker/011-mfa-totp/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-011 多要素認証と TOTP
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--draft"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -8483,7 +8518,7 @@
 <tr>
 <td style="text-align: left;">TS-01</td>
 <td style="text-align: left;">TOTP ライブラリと Spring Security 7 の多要素認証の統合</td>
-<td style="text-align: left;">W2（スパイク）、W5（実装）</td>
+<td style="text-align: left;">W2（スパイク。Bolt 13 で済み、ADR-011 の案）、W5（実装）</td>
 </tr>
 <tr>
 <td style="text-align: left;">UI-HO-04</td>
@@ -8703,9 +8738,9 @@
 </tr>
 <tr>
 <td style="text-align: left;">TOTP と Spring Security 7 の統合が想定より難しい</td>
+<td style="text-align: center;">低</td>
 <td style="text-align: center;">中</td>
-<td style="text-align: center;">中</td>
-<td style="text-align: left;">W2 でスパイクし、W5 の前に方式を決める</td>
+<td style="text-align: left;">Bolt 13 でスパイクし（2026-10-06）、Spring Security 7.1 の要素の権限で 2 段階のログインを組めることを確かめた。方式は <a href="../../../adr/cargo-tracker/011-mfa-totp/">ADR-011</a>（提案）。残りは登録の QR と秘密の暗号化の鍵の管理（W5）</td>
 </tr>
 <tr>
 <td style="text-align: left;">H2 と PostgreSQL の方言差（一意制約違反後の振る舞いなど）</td>
@@ -9139,6 +9174,11 @@
 <tr>
 <td style="text-align: left;">2026-10-06</td>
 <td style="text-align: left;">W2 に Bolt 13 計画へのリンクを付けた（範囲は TS-01 だけ。人の決定）</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5</td>
+</tr>
+<tr>
+<td style="text-align: left;">2026-10-06</td>
+<td style="text-align: left;">リスク台帳と引継ぎの TS-01 に Bolt 13 のスパイクの結論（ADR-011 の案）を反映した</td>
 <td style="text-align: left;">anthropic/claude-opus-5-5</td>
 </tr>
 </tbody>
