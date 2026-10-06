@@ -1,6 +1,8 @@
 # Docs Update Log
 
 ## 2026-10-06
+* **Creation**: [bolt_12_review_20261006](/review/cargo-tracker/bolt_12_review_20261006.md) を作成（anthropic/claude-opus-5-5）
+* **Update**: [bolt_12_plan](/development/cargo-tracker/bolt_12_plan.md) を更新（anthropic/claude-opus-5-5）
 * **Update**: [bolt_12_plan](/development/cargo-tracker/bolt_12_plan.md) を更新（anthropic/claude-opus-5-5）
 * **Update**: [bolt_12_plan](/development/cargo-tracker/bolt_12_plan.md) を更新（anthropic/claude-opus-5-5）
 * **Update**: [bolt_12_plan](/development/cargo-tracker/bolt_12_plan.md) を更新（anthropic/claude-opus-5-5）
