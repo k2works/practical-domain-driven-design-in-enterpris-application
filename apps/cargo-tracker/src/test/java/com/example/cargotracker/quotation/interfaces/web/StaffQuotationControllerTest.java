@@ -14,6 +14,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.example.cargotracker.identity.infrastructure.security.TestActors;
+import com.example.cargotracker.identity.infrastructure.security.WithAuthenticatedActor;
 import com.example.cargotracker.quotation.application.internal.commands.CalculateQuotationCommand;
 import com.example.cargotracker.quotation.application.internal.commands.PresentQuotationCommand;
 import com.example.cargotracker.quotation.application.internal.commands.RequoteQuotationCommand;
@@ -42,6 +44,7 @@ import com.example.cargotracker.quotation.domain.model.valueobjects.TransportReq
 import com.example.cargotracker.shared.acceptance.MutableClock;
 import com.example.cargotracker.shared.domain.CompanyId;
 import com.example.cargotracker.shared.domain.Location;
+import com.example.cargotracker.shared.domain.Role;
 import com.example.cargotracker.shared.domain.UserId;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import java.math.BigDecimal;
@@ -63,6 +66,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
 // 画面の単体テストはコントローラーの振る舞いだけを見る。認証・認可・CSRF はセキュリティの統合テストで確かめる（Bolt 14）
+@WithAuthenticatedActor(Role.SALES)
 @AutoConfigureMockMvc(addFilters = false)
 @WebMvcTest(
         controllers = StaffQuotationController.class,
@@ -76,7 +80,7 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
 class StaffQuotationControllerTest {
 
     private static final TransportRequestNumber NUMBER = new TransportRequestNumber(2026, 1);
-    private static final UserId STAFF = new UserId(UUID.fromString("00000000-0000-0000-0000-000000000301"));
+    private static final UserId STAFF = TestActors.STAFF_USER;
     private static final TransportRequestId ID =
             new TransportRequestId(UUID.fromString("11111111-1111-1111-1111-111111111111"));
     private static final ZoneId TOKYO = ZoneId.of("Asia/Tokyo");

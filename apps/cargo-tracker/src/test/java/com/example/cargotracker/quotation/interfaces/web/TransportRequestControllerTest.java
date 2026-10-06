@@ -21,6 +21,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.view;
 
+import com.example.cargotracker.identity.infrastructure.security.TestActors;
+import com.example.cargotracker.identity.infrastructure.security.WithAuthenticatedActor;
 import com.example.cargotracker.quotation.application.internal.commands.ResubmitTransportRequestCommand;
 import com.example.cargotracker.quotation.application.internal.commands.SubmitTransportRequestCommand;
 import com.example.cargotracker.quotation.application.internal.commandservices.ResubmissionOutcome;
@@ -53,6 +55,7 @@ import com.example.cargotracker.quotation.domain.model.valueobjects.TransportReq
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestSummary;
 import com.example.cargotracker.shared.domain.CompanyId;
 import com.example.cargotracker.shared.domain.Location;
+import com.example.cargotracker.shared.domain.Role;
 import com.example.cargotracker.shared.domain.UserId;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import java.math.BigDecimal;
@@ -80,6 +83,7 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
 import org.springframework.test.web.servlet.request.MockMultipartHttpServletRequestBuilder;
 
 // 画面の単体テストはコントローラーの振る舞いだけを見る。認証・認可・CSRF はセキュリティの統合テストで確かめる（Bolt 14）
+@WithAuthenticatedActor(Role.SHIPPER)
 @AutoConfigureMockMvc(addFilters = false)
 @WebMvcTest(
         controllers = TransportRequestController.class,
@@ -94,9 +98,9 @@ import org.springframework.test.web.servlet.request.MockMultipartHttpServletRequ
         })
 class TransportRequestControllerTest {
 
-    private static final CompanyId SHIPPER = new CompanyId(UUID.fromString("00000000-0000-0000-0000-000000000001"));
-    private static final UserId USER = new UserId(UUID.fromString("00000000-0000-0000-0000-000000000101"));
-    private static final UserId STAFF = new UserId(UUID.fromString("00000000-0000-0000-0000-000000000301"));
+    private static final CompanyId SHIPPER = TestActors.SHIPPER_COMPANY;
+    private static final UserId USER = TestActors.SHIPPER_USER;
+    private static final UserId STAFF = TestActors.STAFF_USER;
     private static final TransportRequestId ID =
             new TransportRequestId(UUID.fromString("11111111-1111-1111-1111-111111111111"));
     private static final TransportRequestNumber NUMBER = new TransportRequestNumber(2026, 1);

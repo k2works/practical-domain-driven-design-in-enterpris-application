@@ -13,6 +13,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.example.cargotracker.identity.infrastructure.security.TestActors;
+import com.example.cargotracker.identity.infrastructure.security.WithAuthenticatedActor;
 import com.example.cargotracker.quotation.application.internal.commands.RequestRouteDesignCommand;
 import com.example.cargotracker.quotation.application.internal.commandservices.QuotationResponseService;
 import com.example.cargotracker.quotation.application.internal.commandservices.RouteDesignRequestOutcome;
@@ -24,6 +26,7 @@ import com.example.cargotracker.quotation.domain.model.valueobjects.QuotationRej
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestId;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestNumber;
 import com.example.cargotracker.shared.domain.CompanyId;
+import com.example.cargotracker.shared.domain.Role;
 import com.example.cargotracker.shared.domain.UserId;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import java.time.Clock;
@@ -43,6 +46,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 /** C-05 見積りへの回答（US-24 AC1。Bolt 12）。 */
 // 画面の単体テストはコントローラーの振る舞いだけを見る。認証・認可・CSRF はセキュリティの統合テストで確かめる（Bolt 14）
+@WithAuthenticatedActor(Role.SHIPPER)
 @AutoConfigureMockMvc(addFilters = false)
 @WebMvcTest(
         controllers = QuotationResponseController.class,
@@ -53,8 +57,8 @@ import org.springframework.test.web.servlet.MockMvc;
         })
 class QuotationResponseControllerTest {
 
-    private static final CompanyId SHIPPER = new CompanyId(UUID.fromString("00000000-0000-0000-0000-000000000001"));
-    private static final UserId USER = new UserId(UUID.fromString("00000000-0000-0000-0000-000000000101"));
+    private static final CompanyId SHIPPER = TestActors.SHIPPER_COMPANY;
+    private static final UserId USER = TestActors.SHIPPER_USER;
     private static final TransportRequestNumber NUMBER = new TransportRequestNumber(2026, 1);
     private static final String DETAIL = "/customer/transport-requests/TR-2026-0001";
     private static final String RESPONSE = DETAIL + "/quotations/1/response";
