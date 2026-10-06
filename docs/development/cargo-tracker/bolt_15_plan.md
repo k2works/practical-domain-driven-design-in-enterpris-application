@@ -18,7 +18,7 @@ verified:
 | Bolt | 第 15 回 |
 | 予定 | W3 の前（2026-10-06 から）、3〜4 時間 |
 | 対象 | 技術タスク（SP 0）。ストーリーの受入条件は増やさない |
-| GitHub | 新しい技術 Issue「[技術] dev プロファイルによる Heroku のデモ環境」を立てる（Milestone は Release 0.1、週は W3。確認ポイント 1） |
+| GitHub | [#38 [技術] dev プロファイルによる Heroku のデモ環境](https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/38)（Milestone は Release 0.1、週は W3、Unit は横断、SP 0。確認ポイント 1） |
 | 承認ゲート | 計画の承認（確認ポイント 1〜12）、外部連携（ステップ 3 の Heroku のアプリの作成と初回の配備。人が Heroku にログインする）、終了報告の 3 回 |
 | アプローチ | 運用の Bolt。アプリの振る舞いは変えない。コンテナの起動を先にローカルで確かめ（ステップ 2）、同じイメージを Heroku に送る（ステップ 3）。運用の手順は手順書に定義したタスクだけで行う（CLAUDE.md「環境操作は運用手順書に従う」） |
 | 範囲の決定 | 2026-10-06 に human:kakimomokuri が、Heroku のデモ環境を dev プロファイルで作ると決めた。アクセスの制限はしない。配備は Container Registry、dyno は Eco、W3 の前の Bolt 15 として行う |
@@ -104,11 +104,12 @@ app --> tmp
 
 各ステップの終わりに push し、CI を確かめる。
 
-- [ ] **1. ADR 013 の案と手順書の骨組みを書き、技術 Issue を立てる**（承認はステップ 3 の外部連携の承認ゲートとまとめて受ける）
+- [x] **1. ADR 013 の案と手順書の骨組みを書き、技術 Issue を立てる**（承認はステップ 3 の外部連携の承認ゲートとまとめて受ける）
   - ADR 013（提案）: デモ環境の目的、dev プロファイルで動かすこと、守りの層（`DevLoginGuard`）が働かないこと、アクセスの制限をしないこと、データが消えること、本物のデータを入れない運用、ADR-008 との役割の違い、やめ方（`heroku apps:destroy`）
   - 手順書 `heroku_demo_setup.md` の骨組み（前提・初回のセットアップ・配備・確認・ログ・停止と削除・費用・制約）
   - インフラストラクチャアーキテクチャの環境構成に、デモ環境（Heroku、dev、永続化なし）を 1 行足す
   - GitHub に技術 Issue を立て、Project のフィールド（リリース・週・Unit なし・SP 0）を設定する
+  - 結果（17:00〜17:05 JST）: ADR-013（提案）、手順書の骨組み、インフラストラクチャアーキテクチャの環境構成のデモの行、ADR・運用・開発の索引と `mkdocs.yml`。[#38](https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/38) を立て、Project に Release 0.1・W3・横断・SP 0・In Progress を設定した（Unit は「なし」の値がないため「横断」）。`okf:check` は ERROR 0
 - [ ] **2. 実行用の Dockerfile を作り、ローカルのコンテナで起動を確かめる**
   - `apps/cargo-tracker/Dockerfile`: ビルドの段は `eclipse-temurin:25-jdk` で `./gradlew bootJar`（テストは CI に任せて飛ばす）、実行の段は `eclipse-temurin:25-jre`。root でない利用者で動かし、`server.port=${PORT:8080}` を起動の引数で渡す
   - `.dockerignore`: `build/`・`.gradle/`・IDE の設定を除く
