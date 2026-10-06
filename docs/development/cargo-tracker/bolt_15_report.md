@@ -3,8 +3,10 @@ type: Plan
 title: "Bolt 15 終了報告 - dev プロファイルによる Heroku のデモ環境"
 description: "15 回目の Bolt の終了報告。cargo-tracker を dev プロファイルのまま Heroku（Container Registry、Eco dyno）に配備した公開のデモ環境、H2 をデモのイメージにだけ入れる Dockerfile の構成、Gulp のタスク deploy:demo:*、手順書と ADR-013、3 視点の運用レビューと対応、デモ項目と動画、仮説 H1〜H3 の結論、ふりかえりをまとめる。"
 tags: [development,bolt-report,operation]
-status: draft
+status: stable
 generated: { by: anthropic/claude-opus-5-5, at: 2026-10-06T11:00:00Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-10-06T11:19:09Z }
 ---
 
 # Bolt 15 終了報告 - dev プロファイルによる Heroku のデモ環境
@@ -157,6 +159,7 @@ generated: { by: anthropic/claude-opus-5-5, at: 2026-10-06T11:00:00Z }
 | 日付 | 内容 | 作成 | 承認 |
 | :--- | :--- | :--- | :--- |
 | 2026-10-06 | 初版（ステップ 1〜5 の結果、レビューと対応、仮説の結論、KPT） | anthropic/claude-opus-5-5 | — |
+| 2026-10-06 | 承認の議題 1〜5（ADR-013 の採用、`log-runtime-metrics`、スリープの計測の打ち切り、ロールバックの確かめ、Try T-44〜T-46）を承認し、Bolt 15 を終えた（人の変更依頼 1、追加の依頼 1） | anthropic/claude-opus-5-5 | human:kakimomokuri |
 
 ## 関連ドキュメント
 

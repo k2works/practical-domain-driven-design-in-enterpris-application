@@ -3,8 +3,10 @@ type: Playbook
 title: "Heroku デモ環境セットアップ手順書 - cargo-tracker"
 description: "cargo-tracker を dev プロファイルのまま Heroku（Container Registry、Eco dyno）へ配備し、関係者が触って確かめるデモ環境を作る・更新する・止める手順を示す。"
 tags: [operation,playbook,setup,heroku]
-status: draft
+status: stable
 generated: { by: anthropic/claude-opus-5-5, at: 2026-10-06T09:00:00Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-10-06T11:19:09Z }
 ---
 
 # Heroku デモ環境セットアップ手順書 - cargo-tracker

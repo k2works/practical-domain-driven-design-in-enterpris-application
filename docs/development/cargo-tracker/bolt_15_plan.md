@@ -9,6 +9,7 @@ verified:
   - { by: human:kakimomokuri, at: 2026-10-06T08:00:21Z }
   - { by: human:kakimomokuri, at: 2026-10-06T08:16:39Z }
   - { by: human:kakimomokuri, at: 2026-10-06T09:04:46Z }
+  - { by: human:kakimomokuri, at: 2026-10-06T11:19:09Z }
 ---
 
 # Bolt 15 計画 - dev プロファイルによる Heroku のデモ環境
@@ -241,7 +242,7 @@ Eco で R14 が続く（H2 が外れる）ときは、ここで止めて dyno �
 
 ### Definition of Done
 
-- [ ] ステップ 1〜5 が完了し、計画・外部連携（ステップ 3）・終了報告の承認ゲートを人が通した（終了報告の承認を待つ）
+- [x] ステップ 1〜5 が完了し、計画・外部連携（ステップ 3）・終了報告の承認ゲートを人が通した
 - [x] `./gradlew check` と `./gradlew uiTest` がローカルと CI の両方で緑（アプリのコードは変えていない。CI の check・ui、ローカルの `check`（4 分 20 秒）と `uiTest`（6 分 49 秒）が緑）
 - [x] ローカルのコンテナ（`PORT=5001`、メモリ 512 MB）で起動し、https のリダイレクトとログインを確かめた
 - [x] 公開の URL でデモ項目 1〜4 を確かめ、録画した
@@ -249,7 +250,7 @@ Eco で R14 が続く（H2 が外れる）ときは、ここで止めて dyno �
 - [x] ADR 013 と手順書に、dev で動かすこと・アクセスの制限がないこと・データが消えること・本物のデータを入れないことが書かれている
 - [x] 運用レビューを行い、指摘への対応を終了報告に書いた
 - [x] `bolt_15_report.md` に仮説 H1〜H3 の結論、メモリと起動の時間の計測値、所要時間を書いた（スリープからの起動の時間は未計測）
-- [ ] 技術 Issue をクローズし、リリース計画を更新した（リリース計画は更新した。#38 は終了報告の承認でクローズする）
+- [x] 技術 Issue（#38）をクローズし、リリース計画を更新した
 
 ### デモ項目
 
@@ -272,6 +273,7 @@ Eco で R14 が続く（H2 が外れる）ときは、ここで止めて dyno �
 | 2026-10-06 | ステップ 3 の外部連携の承認ゲートを通した（タスク名を `deploy:demo:*` にした変更、`stop`・`start` の追加、Heroku のアプリの作成・Config Vars・配備・Eco dyno）。人が `heroku login`・`heroku container:login` を行った | anthropic/claude-opus-5-5 | human:kakimomokuri |
 | 2026-10-06 | ステップ 5 の運用レビューの結果と人の決定 D-54〜D-56、レビューの対応の範囲を書いた | anthropic/claude-opus-5-5 | — |
 | 2026-10-06 | レビューの対応の範囲（D-54〜D-56）を承認 | anthropic/claude-opus-5-5 | human:kakimomokuri |
+| 2026-10-06 | ステップ 4・5 の結果を記録し、終了報告の承認で Bolt を終えた。ADR-013 を採用 | anthropic/claude-opus-5-5 | human:kakimomokuri |
 
 ## 関連ドキュメント
 

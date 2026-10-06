@@ -3,8 +3,10 @@ type: ADR
 title: "ADR-013: 関係者が触って確かめるデモ環境は、dev プロファイルのまま Heroku の Eco dyno で動かす"
 description: "ステージング・本番（ADR-008、AWS）とは別に、dev プロファイル（H2 のインメモリ・開発用の利用者）の cargo-tracker を Heroku の Container Registry で配備し、だれでも開ける公開のデモ環境にする決定。H2 は Dockerfile の demo のステージにだけ入れ、本番の成果物（bootJar）と AT-06 は変えない。"
 tags: [adr, operation, demo]
-status: draft
+status: stable
 generated: { by: anthropic/claude-opus-5-5, at: 2026-10-06T09:30:00Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-10-06T11:19:09Z }
 ---
 
 # ADR-013: 関係者が触って確かめるデモ環境は、dev プロファイルのまま Heroku の Eco dyno で動かす
@@ -15,7 +17,7 @@ generated: { by: anthropic/claude-opus-5-5, at: 2026-10-06T09:30:00Z }
 
 ## ステータス
 
-提案（Bolt 15 の終了報告の承認で採否を決める。却下するなら `heroku apps:destroy` まで行う）
+承認（2026-10-06、human:kakimomokuri が Bolt 15 の終了報告の承認で採用した）
 
 ## コンテキスト
 
@@ -28,7 +30,7 @@ generated: { by: anthropic/claude-opus-5-5, at: 2026-10-06T09:30:00Z }
 - リポジトリは公開で、docs は GitHub Pages にも出る。デモ環境の URL を docs に書けば、だれでも知りうる。
 - 2026-10-06 に human:kakimomokuri が、dev プロファイルの Heroku のデモ環境を、アクセスの制限なし・Container Registry・Eco dyno で作ると決めた（[Bolt 15 計画](../../development/cargo-tracker/bolt_15_plan.md)）。H2 の入れ方（確認ポイント 13）、公開を前提にすること（D-54）、常時起動（D-55）も人が決めた（[Bolt 15 運用成果物レビュー](../../review/cargo-tracker/bolt_15_review_20261006.md)）。
 
-## 決定（案）
+## 決定
 
 **デモ環境を、ステージング・本番とは別の、だれでも開ける公開の環境として Heroku に置く。**
 
