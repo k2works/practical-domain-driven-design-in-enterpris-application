@@ -90,6 +90,17 @@ public class TransportRequestReviewController {
                                 QuotationViews.effectiveStatus(summary.status(), summary.expiresAt(), now),
                                 TransportRequestLabels.staffDateTime(summary.expiresAt())))
                         .toList());
+        // 経路設計中（Bolt 12、US-24 AC1）。荷主が詳細経路設計を依頼した見積りを依頼時刻の古い順に示し、見積り（S-04）を開ける
+        model.addAttribute(
+                "routingRequests",
+                quotationQueryService.findRoutingRequestedSummaries().stream()
+                        .map(summary -> new RoutingRow(
+                                QuotationViews.label(summary.number(), summary.quotationNo()),
+                                "/staff/transport-requests/" + summary.number().text() + "/quotations/"
+                                        + summary.quotationNo(),
+                                TransportRequestLabels.staffDateTime(summary.requestedAt()),
+                                TransportRequestLabels.staffDateTime(summary.expiresAt())))
+                        .toList());
         return LIST_VIEW;
     }
 
@@ -307,6 +318,16 @@ public class TransportRequestReviewController {
      * @param expiresAt 有効期限（社内の日時）
      */
     public record QuotedRow(String label, String path, String status, String expiresAt) {}
+
+    /**
+     * 受付一覧の経路設計中の 1 行（Bolt 12）。
+     *
+     * @param label 詳細設計依頼済みの見積りの表記（例: TR-2026-0001 見積 1）
+     * @param path 見積り（S-04）のパス
+     * @param requestedAt 依頼時刻（社内の日時）
+     * @param expiresAt 有効期限（社内の日時）
+     */
+    public record RoutingRow(String label, String path, String requestedAt, String expiresAt) {}
 
     /**
      * 審査画面の審査記録の 1 行（これまでの判断）。

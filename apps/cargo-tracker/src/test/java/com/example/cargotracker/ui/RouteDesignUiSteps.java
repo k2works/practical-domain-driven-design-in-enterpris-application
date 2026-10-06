@@ -116,7 +116,7 @@ public class RouteDesignUiSteps {
         assertThat(page().getByRole(AriaRole.HEADING, new Page.GetByRoleOptions().setLevel(1)))
                 .hasText("見積り " + number() + " 見積 " + quotationNo);
         assertThat(definition("状態")).hasText(status);
-        assertThat(page().locator("main")).containsText("荷主が詳細経路設計を依頼しました");
+        assertThat(page().locator("main")).containsText("に詳細経路設計を依頼しました");
         assertThat(page().locator("main")).containsText("読み取り専用");
         assertThat(button("社内承認して提示する")).hasCount(0);
         assertThat(link("再見積りする")).hasCount(0);

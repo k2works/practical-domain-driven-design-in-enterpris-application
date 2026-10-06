@@ -15,6 +15,8 @@
     <p><a th:href="@{/staff/transport-requests}">受付一覧へ戻る</a></p>
     <!-- 失効（表示する時刻で有効期限を過ぎた）と置換済みは読み取り専用（Bolt 11、US-03 AC4・AC5） -->
     <p class="alert alert-warning" th:if="${expiredNotice}" th:text="${expiredNotice}">有効期限を過ぎたため、この見積りは提示できません。再見積りしてください。</p>
+    <!-- 荷主が詳細経路設計を依頼した見積りは読み取り専用（Bolt 12、US-24 AC1）。経路設計の途中の再見積りは US-05・US-07 で決める -->
+    <p class="alert alert-info" th:if="${routingRequestedNotice}" th:text="${routingRequestedNotice}">荷主が 2026-10-06 09:30 Asia/Tokyo（UTC+09:00）（UTC 2026-10-06 00:30）に詳細経路設計を依頼しました。この見積りは読み取り専用です。</p>
     <p th:if="${replacement}">
         <span th:text="|見積 ${replacement.quotationNo()} に置き換えました。この見積りは読み取り専用です。|">見積 2 に置き換えました。この見積りは読み取り専用です。</span>
         <a th:href="@{${replacement.path()}}" th:text="${replacement.label()}">TR-2026-0001 見積 2</a>

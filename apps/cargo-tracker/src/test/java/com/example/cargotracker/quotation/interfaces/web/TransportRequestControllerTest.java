@@ -497,7 +497,8 @@ class TransportRequestControllerTest {
 
         mockMvc.perform(get("/customer/transport-requests/TR-2026-0001"))
                 .andExpect(content().string(containsString("見積 2（提示済み）")))
-                .andExpect(content().string(containsString("この見積りへの回答")))
+                .andExpect(content().string(containsString("/quotations/2/response\">見積りに回答する</a>")))
+                .andExpect(content().string(not(containsString("/quotations/1/response"))))
                 .andExpect(content().string(containsString("以前の見積り（読み取り専用）")))
                 .andExpect(content().string(containsString("見積 1（新しい見積りに置き換え）")));
     }

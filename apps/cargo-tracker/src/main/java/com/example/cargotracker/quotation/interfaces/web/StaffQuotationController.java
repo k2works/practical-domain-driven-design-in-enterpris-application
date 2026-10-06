@@ -142,6 +142,7 @@ public class StaffQuotationController {
                 queryService.find(request.number(), quotationNo).orElseThrow(StaffQuotationController::notFound);
         UtcInstant now = new UtcInstant(clock.instant());
         model.addAttribute("expiredNotice", expiredNotice(quotation, now));
+        model.addAttribute("routingRequestedNotice", routingRequestedNotice(quotation, now));
         List<Quotation> all =
                 quotation.status() == QuotationStatus.REPLACED || quotation.status() == QuotationStatus.EXPIRED
                         ? queryService.findAll(request.number())
@@ -343,8 +344,24 @@ public class StaffQuotationController {
         if (quotation.status() == QuotationStatus.EXPIRED) {
             return expiresAt + "を過ぎて失効しました。この見積りは読み取り専用です。";
         }
+        if (quotation.status() == QuotationStatus.ROUTING_REQUESTED) {
+            return expiresAt + "を過ぎたため、この見積りは使えません。荷主が詳細経路設計を依頼済みのため、再見積りはできません。";
+        }
         String action = quotation.status() == QuotationStatus.PENDING_APPROVAL ? "提示できません" : "使えません";
         return expiresAt + "を過ぎたため、この見積りは" + action + "。再見積りしてください。";
+    }
+
+    /**
+     * 荷主が詳細経路設計を依頼した見積りの案内（Bolt 12）。依頼した日時を示し、読み取り専用とする。失効していれば失効の案内に任せて null。
+     * 依頼者の名前は、利用者の管理（US-16・US-18）ができるまで出さない。
+     */
+    private static String routingRequestedNotice(Quotation quotation, UtcInstant now) {
+        if (quotation.status() != QuotationStatus.ROUTING_REQUESTED || quotation.isExpiredAt(now)) {
+            return null;
+        }
+        return "荷主が "
+                + TransportRequestLabels.staffDateTime(quotation.respondedAt().orElseThrow())
+                + "に詳細経路設計を依頼しました。この見積りは読み取り専用です。";
     }
 
     private static QuotationLink link(TransportRequestNumber number, int quotationNo) {

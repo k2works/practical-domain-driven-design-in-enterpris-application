@@ -91,7 +91,10 @@ final class QuotationViews {
                 quotation.requoteRejection().isEmpty() && quotation.status() != QuotationStatus.DRAFT,
                 replaced || expired,
                 replaced,
-                expired);
+                expired,
+                quotation.responseRejectionAt(now).isEmpty(),
+                quotation.status() == QuotationStatus.ROUTING_REQUESTED,
+                quotation.respondedAt().map(dateTime).orElse(null));
     }
 
     /** 状態の表示名。失効していれば「失効」、荷主に見せる置換済みは「新しい見積りに置き換え」（D-37）。 */
@@ -130,6 +133,9 @@ final class QuotationViews {
      * @param readOnly 読み取り専用か（置換済み・失効）
      * @param replaced 置換済みか（荷主には新しい見積りを準備中と案内する。D-37）
      * @param expired 表示する時刻で失効しているか（失効を記録したものを含む）
+     * @param respondable 荷主が回答できるか（提示済みで、失効していない。Bolt 12）
+     * @param routingRequested 詳細設計依頼済みか（Bolt 12）
+     * @param respondedAt 回答時刻（荷主が回答していなければ null）
      */
     record View(
             int quotationNo,
@@ -145,7 +151,10 @@ final class QuotationViews {
             boolean requotable,
             boolean readOnly,
             boolean replaced,
-            boolean expired) {}
+            boolean expired,
+            boolean respondable,
+            boolean routingRequested,
+            String respondedAt) {}
 
     /**
      * 料金明細の 1 行の表示。
