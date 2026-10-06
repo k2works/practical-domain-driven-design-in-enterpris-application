@@ -1,0 +1,2 @@
+// TS-01 のスパイク（Bolt 13）。本体（apps/cargo-tracker）の build と CI に含めない独立したプロジェクト
+rootProject.name = 'ts-01-totp'
