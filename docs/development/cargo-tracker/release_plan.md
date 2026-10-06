@@ -4,7 +4,7 @@ title: "リリース計画 - cargo-tracker（A 社国際貨物輸送管理シス
 description: "cargo-tracker MVP のリリース計画。1 人 + AI、時間単位の Bolt（= イテレーション）と週次の見直しで、最初の縦の流れ（R0.1）、パイロット準備完了（R1.0）、本格展開前（R1.1）の 3 段階、Unit のエントロピー評価、SP、バッファ、パイロット開始の条件、引継ぎ ID の台帳、業務責任者に確かめる事項の台帳。"
 tags: [development,release-plan]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-06T02:51:39Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-06T02:55:12Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T09:29:53Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:38:26Z }
@@ -394,7 +394,7 @@ AI-DLC では **Bolt がイテレーション** である（[AI-DLC 導入ガイ
 - [x] US-03（全受入条件、BR-10 の境界）。Bolt 10 で提示（AC1〜AC3）、Bolt 11 で失効・置換（AC4・AC5）に分ける（2026-10-05 に human:kakimomokuri が決定）。[Bolt 10 計画](bolt_10_plan.md)、[Bolt 10 終了報告](bolt_10_report.md)（提示は完了、承認済み。AC4・AC5 は Bolt 11）。[Bolt 11 計画](bolt_11_plan.md)、[Bolt 11 終了報告](bolt_11_report.md)（失効・置換と Bolt 9・10 レビューの中・低の返済。完了、承認済み。#4 をクローズした。AC4・AC5 の予約確定と荷主の承認での利用の拒否は US-04・US-24 の Bolt で確かめる）
 - [ ] US-24（AC1 詳細経路設計へ進む）。Bolt 12 で行う（2026-10-06 に human:kakimomokuri が W2 の残りから選んだ。US-18 の一部と TS-01 は後の Bolt）。[Bolt 12 計画](bolt_12_plan.md)、[Bolt 12 終了報告](bolt_12_report.md)（完了、承認済み。#5 は AC1 にチェックを付け、AC4・AC5 の W3 まで開いたまま）
 - [ ] US-18 の一部（password によるログインと session）
-- [ ] TOTP ライブラリのスパイク（TS-01）
+- [ ] TOTP ライブラリのスパイク（TS-01）。Bolt 13 で行う（2026-10-06 に human:kakimomokuri が W2 の残りから選んだ。US-18 の一部は後の Bolt）。[Bolt 13 計画](bolt_13_plan.md)
 
 **目標 SP**: 8（US-03 5、US-24 の一部 1、US-18 の一部 2）
 
@@ -622,3 +622,4 @@ xychart-beta
 | 2026-10-06 | W2 に Bolt 12 計画へのリンクを付けた（範囲は US-24 AC1 だけ。人の決定）。台帳の D-36-3・D-41-3 の影響に US-24 を足した | anthropic/claude-opus-5-5 |
 | 2026-10-06 | W2 に Bolt 12 終了報告へのリンクを付け、進捗に Bolt 12 の完了を記録した（終了報告の承認待ち） | anthropic/claude-opus-5-5 |
 | 2026-10-06 | Bolt 12 の完了を W2 に反映した（承認済み） | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
+| 2026-10-06 | W2 に Bolt 13 計画へのリンクを付けた（範囲は TS-01 だけ。人の決定） | anthropic/claude-opus-5-5 |
