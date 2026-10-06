@@ -129,6 +129,7 @@ nav:
           - Bolt 11 計画: development/cargo-tracker/bolt_11_plan.md
           - Bolt 11 終了報告: development/cargo-tracker/bolt_11_report.md
           - Bolt 12 計画: development/cargo-tracker/bolt_12_plan.md
+          - Bolt 12 終了報告: development/cargo-tracker/bolt_12_report.md
   - 運用:
       - 概要: operation/index.md
       - cargo-tracker:

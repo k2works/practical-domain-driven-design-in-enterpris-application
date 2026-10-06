@@ -37,7 +37,7 @@ Bolt がイテレーションに当たります。ふりかえりは各 Bolt の
 | 9 | [Bolt 6〜8 レビューの返済（書類の差し替えと改善提案）](bolt_09_plan.md) | [終了報告](bolt_09_report.md) | W2 | 完了 |
 | 10 | [根拠付き見積りの提示（US-03 AC1〜AC3）](bolt_10_plan.md) | [終了報告](bolt_10_report.md) | W2 | 完了 |
 | 11 | [見積りの失効と置換（US-03 AC4・AC5）](bolt_11_plan.md) | [終了報告](bolt_11_report.md) | W2 | 完了 |
-| 12 | [詳細経路設計へ進む回答（US-24 AC1）](bolt_12_plan.md) | — | W2 | 計画済み |
+| 12 | [詳細経路設計へ進む回答（US-24 AC1）](bolt_12_plan.md) | [終了報告](bolt_12_report.md) | W2 | 完了（承認待ち） |
 
 Bolt を始めるときに行を追加します。
 
@@ -72,6 +72,8 @@ Bolt を始めるときに行を追加します。
 |  |  | 料金明細を入れずに算出するとエラー要約が出て入力が残る | [quotation-error-summary.webm](../../assets/demo/bolt-10/quotation-error-summary.webm){:target="_blank"} |
 | 11 | 見積りの失効と置換（US-03 AC4・AC5） | 提示した見積りからキー操作だけで再見積りし、受付一覧の見積提示済みから新しい見積りを開き、旧版の置換済みと荷主の案内を確かめる | [requote-quotation.webm](../../assets/demo/bolt-11/requote-quotation.webm){:target="_blank"} |
 |  |  | 有効期限を過ぎた承認待ちの見積りは失効と示され、提示できず再見積りの操作がある | [expired-quotation.webm](../../assets/demo/bolt-11/expired-quotation.webm){:target="_blank"} |
+| 12 | 詳細経路設計へ進む回答（US-24 AC1） | 荷主が C-04 からキー操作だけで C-05 を開いて詳細経路設計へ進み、経路設計中（A 社の対応待ち）を確かめ、営業が受付一覧の経路設計中から見積りを読み取り専用で開く | [request-route-design.webm](../../assets/demo/bolt-12/request-route-design.webm){:target="_blank"} |
+|  |  | 有効期限を過ぎた見積りの回答の画面を開くと、理由が示されて見積依頼の詳細に戻り、回答の入口がない | [expired-response.webm](../../assets/demo/bolt-12/expired-response.webm){:target="_blank"} |
 
 ### 進捗サマリー
 

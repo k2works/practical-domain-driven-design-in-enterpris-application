@@ -4,7 +4,7 @@ title: "リリース計画 - cargo-tracker（A 社国際貨物輸送管理シス
 description: "cargo-tracker MVP のリリース計画。1 人 + AI、時間単位の Bolt（= イテレーション）と週次の見直しで、最初の縦の流れ（R0.1）、パイロット準備完了（R1.0）、本格展開前（R1.1）の 3 段階、Unit のエントロピー評価、SP、バッファ、パイロット開始の条件、引継ぎ ID の台帳、業務責任者に確かめる事項の台帳。"
 tags: [development,release-plan]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-06T00:49:18Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-06T01:52:35Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T09:29:53Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:38:26Z }
@@ -392,7 +392,7 @@ AI-DLC では **Bolt がイテレーション** である（[AI-DLC 導入ガイ
 
 - [x] Bolt 9: Bolt 6〜8 レビューの返済（書類の差し替え R-01 と改善提案。D-25 で W2 の最初の Bolt にした。完了、承認済み。#37 をクローズした）。[Bolt 9 計画](bolt_09_plan.md)、[Bolt 9 終了報告](bolt_09_report.md)、[#37](https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/37)
 - [x] US-03（全受入条件、BR-10 の境界）。Bolt 10 で提示（AC1〜AC3）、Bolt 11 で失効・置換（AC4・AC5）に分ける（2026-10-05 に human:kakimomokuri が決定）。[Bolt 10 計画](bolt_10_plan.md)、[Bolt 10 終了報告](bolt_10_report.md)（提示は完了、承認済み。AC4・AC5 は Bolt 11）。[Bolt 11 計画](bolt_11_plan.md)、[Bolt 11 終了報告](bolt_11_report.md)（失効・置換と Bolt 9・10 レビューの中・低の返済。完了、承認済み。#4 をクローズした。AC4・AC5 の予約確定と荷主の承認での利用の拒否は US-04・US-24 の Bolt で確かめる）
-- [ ] US-24（AC1 詳細経路設計へ進む）。Bolt 12 で行う（2026-10-06 に human:kakimomokuri が W2 の残りから選んだ。US-18 の一部と TS-01 は後の Bolt）。[Bolt 12 計画](bolt_12_plan.md)
+- [ ] US-24（AC1 詳細経路設計へ進む）。Bolt 12 で行う（2026-10-06 に human:kakimomokuri が W2 の残りから選んだ。US-18 の一部と TS-01 は後の Bolt）。[Bolt 12 計画](bolt_12_plan.md)、[Bolt 12 終了報告](bolt_12_report.md)（完了、終了報告の承認待ち。#5 は AC1 にチェックを付け、AC4・AC5 の W3 まで開いたまま）
 - [ ] US-18 の一部（password によるログインと session）
 - [ ] TOTP ライブラリのスパイク（TS-01）
 
@@ -544,7 +544,7 @@ Bolt のレビューや終了報告で「業務責任者に確かめる」とし
 | 週 | 計画 SP | 実績 SP | 達成率 | 状態 |
 | :--- | ---: | ---: | ---: | :--- |
 | W1 | 6 | 6 | 100% | 完了（W1 の期間の前に前倒しで、2026-10-03 に Bolt 1〜8 を終えた。すべて承認済み。US-01（R0.1）・US-02 を完了し、#1・#2・#3・#36 をクローズした。人の変更依頼 0） |
-| W2 | 8 | 5 | - | 進行中（Bolt 9〜11 完了。US-03 を完了し #4 をクローズした。Bolt 12（US-24 AC1）は計画済み。人の変更依頼 0） |
+| W2 | 8 | 5 | - | 進行中（Bolt 9〜12 完了。US-03 を完了し #4 をクローズした。US-24 AC1 は Bolt 12 で作った（終了報告の承認待ち。US-24 の SP は AC4・AC5 の後に数える）。人の変更依頼 0） |
 | W3 | 10 | - | - | 未着手 |
 | W4 | 11 | - | - | 未着手 |
 | W5 | 8 | - | - | 未着手 |
@@ -620,3 +620,4 @@ xychart-beta
 | 2026-10-05 | Bolt 11 の完了を W2 に反映し、US-03（5 SP）の完了を進捗に記録した（承認済み） | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-10-06 | 業務責任者に確かめる事項の台帳を足した（D-28〜D-30、D-34〜D-36、D-41。各レビューに散らばっていたものを集めた） | anthropic/claude-opus-5-5 |
 | 2026-10-06 | W2 に Bolt 12 計画へのリンクを付けた（範囲は US-24 AC1 だけ。人の決定）。台帳の D-36-3・D-41-3 の影響に US-24 を足した | anthropic/claude-opus-5-5 |
+| 2026-10-06 | W2 に Bolt 12 終了報告へのリンクを付け、進捗に Bolt 12 の完了を記録した（終了報告の承認待ち） | anthropic/claude-opus-5-5 |
