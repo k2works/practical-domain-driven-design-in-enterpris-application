@@ -4,7 +4,7 @@ title: "Bolt 13 計画 - TOTP と Spring Security 7 の多要素認証のスパ�
 description: "13 回目の Bolt の計画。TOTP ライブラリの候補の比較と、Spring Security 7 の多要素認証で password の後に TOTP を求める 2 段階のログインを、本体と分けたスパイクの学習テストで確かめ、ADR 011 の案と技術スタックに結論を残すまでを、ステップ 1〜5 で定義する。"
 tags: [development,bolt-plan]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-06T03:33:59Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-06T03:50:03Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-06T03:10:00Z }
 ---
@@ -159,20 +159,26 @@ password確認済み --> ロック : 5 回連続の失敗
   - 開発環境の入力済み（人の決定。2026-10-06）: `dev` プロファイルの設定（例: `cargotracker.dev-login.*`）があるときだけ、ログインの画面にメールアドレスと password が入った状態で出る。設定がないとき（既定）は空で出る。確認ポイント 7 の A-02 の扱いも確かめる
   - 完了の判定: MockMvc の学習テストが、上の振る舞いを確かめて通る。確かめられなかった項目は理由を書く
   - 結果（2026-10-06 12:28〜12:32。最後のコミット `7c02540`）
-    - Red: 2 段階のログインの学習テスト 9 件を、password だけのフォームログインの骨組みの上で書き、認証の振る舞いのアサーションで失敗することを確かめた（`2dfe45d`）。開発環境の入力済みと password の保存の学習テストも同じく書いた（`8ba68bf`）
-    - Green: `@EnableMultiFactorAuthentication`（`FACTOR_PASSWORD`・`FACTOR_TOTP`）、TOTP の認証フィルター（`mfaEnabled`）と provider、足りない要素の画面へ導く `DelegatingMissingAuthorityAccessDeniedHandler`、失敗のイベントでの数え方とロック、再利用の拒否、回復コード、最長 8 時間のフィルター、無操作 30 分の設定、`dev` プロファイルだけの入力済み（`7c02540`）
+    - Red: 2 段階のログインの学習テスト 9 件を、password だけのフォームログインの骨組みの上で書いた（`2dfe45d`）。開発環境の入力済みと password の保存の学習テストも書いた（`8ba68bf`）
+    - Red の事実（レビュー K-07 で訂正。`8ba68bf` で 28 件中 9 件が失敗）: 2 段階のログインの 9 件のうち 7 件が失敗し、2 件（未認証で業務の画面を開く、password を経ずに TOTP だけを送る）は枠組みの既定で骨組みの上でも通った。失敗した 7 件のうち 4 件（8 時間、ロック、回復コード、正しい TOTP）は前提の段階（ログインできない）で落ち、本命のアサーションは Red を見ていない。開発環境の入力済みは 2 件が失敗した。`SessionTimeoutTest` は Green のコミットで足し、Red を経ていない
+    - Green（Green で、4 件の期待値を `/login/totp` から `factor.type`・`factor.reason` の付いた URL に書き換えた）: `@EnableMultiFactorAuthentication`（`FACTOR_PASSWORD`・`FACTOR_TOTP`）、TOTP の認証フィルター（`mfaEnabled`）と provider、足りない要素の画面へ導く `DelegatingMissingAuthorityAccessDeniedHandler`、失敗のイベントでの数え方とロック、再利用の拒否、回復コード、最長 8 時間のフィルター、無操作 30 分の設定、`dev` プロファイルだけの入力済み（`7c02540`）
     - 分かったこと: 結果のトークンの型が `toBuilder()` を宣言していないと、password の要素が合わさらず置き換わる（調べて直した）。足りない要素の画面へは `factor.type`・`factor.reason` が付く。Argon2id は Bouncy Castle が要る。要素の権限の発行時刻はシステムの時計で決まる
     - 学習テスト 29 件がすべて通る（候補の比較 13、2 段階のログイン 9、開発環境の入力済み 3、password の保存 2、session の期限 1、準備 1）
 - [?] **4. 結論を ADR の案と技術スタックに書く** 【承認ゲート: 方式の決定】
   - `docs/adr/cargo-tracker/011-mfa-totp.md`（状態: 提案）: 背景、選択肢（ライブラリの候補、枠組みの使い方）、決定の案、影響（US-18 の表・画面・ドメインモデルに要るもの、監査記録のイベントの出どころ、仮の主体の置き換えの順）、未確認の項目
   - 技術スタックの多要素認証の行と TS-01 の行、リスク台帳の行を更新する
   - 完了の判定: `okf:check` が ERROR 0。push して CI を確かめる。人が方式の案を選ぶ
-  - 結果（2026-10-06）: [ADR-011](../../adr/cargo-tracker/011-mfa-totp.md)（提案）を書き、技術スタックの多要素認証の行と TS-01、リスク台帳（可能性を中から低に）と引継ぎ、ADR の索引と mkdocs を更新した
+  - 結果（2026-10-06）: [ADR-011](../../adr/cargo-tracker/011-mfa-totp.md)（提案）を書き、技術スタックの多要素認証の行と TS-01、リスク台帳と引継ぎ、ADR の索引と mkdocs を更新した（リスク台帳は誤って影響度を下げていたため、ステップ 5 で発生確率を中から低に直した。レビュー R-13）
   - 承認ゲートの扱い（T-36）: 人の指示（`/goal Bolt13`）により、方式の決定の承認ゲートで止まらずにステップ 5 へ進めた（AI の判断）。根拠は、ADR-011 が「提案」の状態で、採否は W5 の US-18 の計画で人が決めること（確認ポイント 4）。本体のコードと依存は変えていない。終了報告の承認の議題の先頭に置く
-- [ ] **5. レビューと Bolt 終了報告**
+- [x] **5. レビューと Bolt 終了報告**
   - スパイクの規模に合わせ、xp-architect と xp-tester の 2 つの視点で、ADR の案と学習テストをレビューする（T-28 の縮小版。確認ポイント 5）
   - `bolt_13_report.md` を書く（仮説 H1〜H3 の結論、比較の表、未確認の項目、時刻）
   - US-18 の Issue #13 に結論をコメントする（確認ポイント 6）
+  - 結果（2026-10-06 12:34〜。最後のコミットは本計画の更新のコミット）
+    - [Bolt 13 のレビュー](../../review/cargo-tracker/bolt_13_review_20261006.md): 改善提案は高 7・中 11・低 5、懸念 8、スコープ外 4。高は、期限切れの session に TOTP を送って 8 時間延ばせる迂回、TOTP の段で session の ID が変わらない、入力済みの守りが 1 層だけ、ロックと 8 時間の境界のテストがない、ADR が採る java-otp が流れで動いていない、`identity` への置き方がない
+    - スパイクで直した: Red `8eef0c7`（57 件中 5 件が失敗）、Green `0616c67`（57 件すべてが通る）。ADR-011 に決定 3（入力済みの 5 つの層）・決定 4（置き方と置き換えの順）、原子的な更新、未確認の項目、W5 で人が決める論点、コンプライアンスを足した
+    - 判断 D-45〜D-48 は、`/goal Bolt13` により AI の判断で進めた（T-36）。終了報告の承認の議題に置く
+    - [Bolt 13 終了報告](bolt_13_report.md) を書き、#13 に結論をコメントした
 
 ### 時間の配分と打ち切り
 
@@ -247,6 +253,7 @@ password確認済み --> ロック : 5 回連続の失敗
 | 2026-10-06 | 初版（Bolt 12 終了報告の次の Bolt。範囲は人の決定で TS-01 だけ） | anthropic/claude-opus-5-5 | — |
 | 2026-10-06 | 人の決定（開発環境ではログインの画面を入力済みにする）をスコープ・ステップ 3・確認ポイント 7 に足した | anthropic/claude-opus-5-5 | human:kakimomokuri（決定） |
 | 2026-10-06 | 計画を承認。確認ポイント 1〜7（スパイクの置き場所、依存の入れ方、候補、ADR 011 の扱い、レビューの縮小、Issue のコメント、開発環境のログインの入力済み）も決まった（Try T-6） | anthropic/claude-opus-5-5 | human:kakimomokuri |
+| 2026-10-06 | ステップ 3 の Red の記録を事実に直し（レビュー K-07）、ステップ 4・5 の結果を書いた | anthropic/claude-opus-5-5 | — |
 
 ## 関連ドキュメント
 
