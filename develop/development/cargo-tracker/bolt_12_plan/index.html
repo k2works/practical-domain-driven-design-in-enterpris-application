@@ -3775,6 +3775,41 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../review/cargo-tracker/bolt_12_review_20261006/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 12 開発成果物レビュー（2026-10-06）
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--draft"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -7223,7 +7258,7 @@
 <li>リリース計画の台帳: D-36-3・D-41-3 の「影響する文書」に US-24 を足す</li>
 <li>完了の判定: <code>okf:check</code> が ERROR 0、<code>documentationTest</code> が緑。push する</li>
 <li>結果（2026-10-06 10:07〜10:09。最後のコミット <code>0f768b7</code> の時刻）: ユーザーストーリー（US-24 の Bolt 12 の決定）、ドメインモデル（Q-INV-09・18、荷主の回答の段落、DE-16 の項目と購読者）、データモデル（<code>quotation</code> の Bolt 12 の値・列・CHECK、<code>ux_quotation_active</code> の作り直し）、UI 設計（C-04 の回答の入口、C-05 の URL と範囲、S-02 の経路設計中の表、S-04 の詳細設計依頼済み、荷主の進み具合の経路設計中）に反映した。台帳の D-36-3・D-41-3 は開始準備で足した。<code>okf:check</code> ERROR 0、<code>documentationTest</code> 緑</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>2. 回答の業務のルール（業務ルール層の Red → Green）</strong> 【承認ゲート: 業務のルール（Q-INV-07・09・18、DE-16）】</li>
+<li>[?] <strong>2. 回答の業務のルール（業務ルール層の Red → Green）</strong> 【承認ゲート: 業務のルール（Q-INV-07・09・18、DE-16）】</li>
 <li>業務ルール層の受入シナリオを先に書き、Red をコミットする（<code>features/quotation/request_route_design.feature</code>、<code>@US-24 @must @US-24-AC1</code>）<ul>
 <li>提示済みで有効な見積りに、荷主担当者が詳細経路設計へ進むと回答すると、見積りは詳細設計依頼済みになり回答者と回答時刻が記録され、DE-16 が発行され、輸送要求は経路設計中になる（AC1）</li>
 <li>回答の時刻が有効期限の 1 秒前なら進める。同時刻と 1 秒後は失効で拒否される（シナリオアウトライン。Q-INV-07）</li>
@@ -7243,7 +7278,7 @@
 <li>業務ルール層のシナリオはすべて passed（+10）。<code>check</code> 緑（<code>test</code> 765 件。Bolt 11 の 737 件から +28）。回答の列（<code>shipper_response</code> ほか）はステップ 3 で足すまで、読み出しで空にしている</li>
 </ul>
 </li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>3. 表（内側の TDD、統合テスト）</strong> 【承認ゲート: スキーマの変更】</li>
+<li>[?] <strong>3. 表（内側の TDD、統合テスト）</strong> 【承認ゲート: スキーマの変更】</li>
 <li>統合テスト（PostgreSQL）を先に書く: 詳細設計依頼済みの保存と読み出し、回答の列の CHECK（そろって NULL・そろって値、詳細設計依頼済みなら必須）、部分一意インデックスが詳細設計依頼済みを数える、回答と再見積りの同時の更新が楽観ロックで拒否される、輸送要求の <code>ROUTING</code> の保存</li>
 <li>マイグレーション: <code>common</code> に状態の値・回答の 3 列・CHECK・COMMENT、<code>postgresql</code> に <code>ux_quotation_active</code> の作り直し。H2 のスモークを先に回す（T-15）</li>
 <li>MyBatis のリポジトリ: 回答の列、S-02 の経路設計中の読み取りモデル</li>
