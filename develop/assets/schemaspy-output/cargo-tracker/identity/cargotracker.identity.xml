@@ -1,6 +1,71 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <database name="cargotracker" schema="identity" type="PostgreSQL - 18.6 (Debian 18.6-1.pgdg13+2)">
    <tables>
+      <table name="app_user" remarks="利用者" schema="identity" type="TABLE">
+         <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="id" nullable="false" remarks="利用者 ID" size="2147483647" type="uuid" typeCode="1111">
+            <child column="user_id" foreignKey="fk_user_role_user" implied="false" onDeleteCascade="false" schema="identity" table="user_role"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="company_id" nullable="false" remarks="所属企業" size="2147483647" type="uuid" typeCode="1111">
+            <parent column="id" foreignKey="fk_app_user_company" implied="false" onDeleteCascade="false" schema="identity" table="company"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="2" name="email" nullable="false" remarks="メールアドレス（前後の空白を除いた小文字。ログインの識別子）" size="320" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="3" name="display_name" nullable="false" remarks="表示名" size="200" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="4" name="password_hash" nullable="false" remarks="password のハッシュ（{bcrypt} の接頭辞付き。SEC-07）" size="200" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="5" name="status" nullable="false" remarks="利用状態（ACTIVE: 利用中、SUSPENDED: 利用停止）" size="30" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="6" name="version" nullable="false" remarks="版（楽観ロック）" size="19" type="int8" typeCode="-5"/>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="7" name="created_at" nullable="false" remarks="作成時刻" size="35" type="timestamptz" typeCode="93"/>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="8" name="updated_at" nullable="false" remarks="更新時刻" size="35" type="timestamptz" typeCode="93"/>
+         <primaryKey column="id" sequenceNumberInPK="1"/>
+         <index name="pk_app_user" unique="true">
+            <column ascending="true" name="id"/>
+         </index>
+         <index name="ix_app_user_company" unique="false">
+            <column ascending="true" name="company_id"/>
+         </index>
+         <index name="ux_app_user_email" unique="true">
+            <column ascending="true" name="email"/>
+         </index>
+         <checkConstraint constraint="((email)::text = lower(TRIM(BOTH FROM email)))" name="ck_app_user_email_normalized"/>
+         <checkConstraint constraint="((status)::text = ANY ((ARRAY['ACTIVE'::character varying, 'SUSPENDED'::character varying])::text[]))" name="ck_app_user_status"/>
+      </table>
+      <table name="audit_record" remarks="監査記録 [append-only]" schema="identity" type="TABLE">
+         <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="id" nullable="false" remarks="監査記録 ID" size="2147483647" type="uuid" typeCode="1111"/>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="1" name="occurred_at" nullable="false" remarks="発生時刻" size="35" type="timestamptz" typeCode="93"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="2" name="actor_user_id" nullable="true" remarks="操作者（存在しないメールアドレスでのログインの失敗では null）" size="2147483647" type="uuid" typeCode="1111"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="3" name="actor_company_id" nullable="true" remarks="操作者の企業" size="2147483647" type="uuid" typeCode="1111"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="4" name="action" nullable="false" remarks="操作（LOGIN_SUCCEEDED・LOGIN_FAILED・LOGOUT など）" size="100" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="5" name="result" nullable="false" remarks="結果（SUCCESS・FAILURE）" size="30" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="6" name="reason" nullable="true" remarks="理由（ログインの失敗の理由など）" size="100" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="7" name="correlation_id" nullable="true" remarks="相関 ID（同じ操作の記録をつなぐ。使う Bolt で埋める）" size="100" type="varchar" typeCode="12"/>
+         <primaryKey column="id" sequenceNumberInPK="1"/>
+         <index name="pk_audit_record" unique="true">
+            <column ascending="true" name="id"/>
+         </index>
+         <index name="ix_audit_record_actor" unique="false">
+            <column ascending="true" name="actor_user_id"/>
+            <column ascending="true" name="occurred_at"/>
+         </index>
+         <index name="ix_audit_record_occurred_at" unique="false">
+            <column ascending="true" name="occurred_at"/>
+         </index>
+         <checkConstraint constraint="((result)::text = ANY ((ARRAY['SUCCESS'::character varying, 'FAILURE'::character varying])::text[]))" name="ck_audit_record_result"/>
+      </table>
+      <table name="company" remarks="企業" schema="identity" type="TABLE">
+         <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="id" nullable="false" remarks="企業 ID" size="2147483647" type="uuid" typeCode="1111">
+            <child column="company_id" foreignKey="fk_app_user_company" implied="false" onDeleteCascade="false" schema="identity" table="app_user"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="name" nullable="false" remarks="企業名" size="200" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="2" name="kind" nullable="false" remarks="種類（SHIPPER: 荷主、CONSIGNEE: 荷受人、OPERATOR: A 社）" size="30" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="3" name="active" nullable="false" remarks="有効か（無効な企業の利用者は認証できない）" size="1" type="bool" typeCode="-7"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="4" name="version" nullable="false" remarks="版（楽観ロック）" size="19" type="int8" typeCode="-5"/>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="5" name="created_at" nullable="false" remarks="作成時刻" size="35" type="timestamptz" typeCode="93"/>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="6" name="updated_at" nullable="false" remarks="更新時刻" size="35" type="timestamptz" typeCode="93"/>
+         <primaryKey column="id" sequenceNumberInPK="1"/>
+         <index name="pk_company" unique="true">
+            <column ascending="true" name="id"/>
+         </index>
+         <checkConstraint constraint="((kind)::text = ANY ((ARRAY['SHIPPER'::character varying, 'CONSIGNEE'::character varying, 'OPERATOR'::character varying])::text[]))" name="ck_company_kind"/>
+      </table>
       <table name="kpi_observation" remarks="KPI 計測記録" schema="identity" type="TABLE">
          <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="transport_request_id" nullable="false" remarks="輸送要求 ID" size="2147483647" type="uuid" typeCode="1111"/>
          <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="shipper_company_id" nullable="false" remarks="荷主企業 ID" size="2147483647" type="uuid" typeCode="1111"/>
@@ -14,6 +79,21 @@
          <index name="ix_kpi_observation_submitted_at" unique="false">
             <column ascending="true" name="submitted_at"/>
          </index>
+      </table>
+      <table name="user_role" remarks="利用者の役割" schema="identity" type="TABLE">
+         <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="user_id" nullable="false" remarks="利用者 ID" size="2147483647" type="uuid" typeCode="1111">
+            <parent column="id" foreignKey="fk_user_role_user" implied="false" onDeleteCascade="false" schema="identity" table="app_user"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="role" nullable="false" remarks="役割（BR-15 の 8 役割）" size="30" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="2" name="granted_by" nullable="true" remarks="付与した利用者（初期の登録では null）" size="2147483647" type="uuid" typeCode="1111"/>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="3" name="granted_at" nullable="false" remarks="付与した時刻" size="35" type="timestamptz" typeCode="93"/>
+         <primaryKey column="user_id" sequenceNumberInPK="1"/>
+         <primaryKey column="role" sequenceNumberInPK="2"/>
+         <index name="pk_user_role" unique="true">
+            <column ascending="true" name="user_id"/>
+            <column ascending="true" name="role"/>
+         </index>
+         <checkConstraint constraint="((role)::text = ANY ((ARRAY['SHIPPER'::character varying, 'SALES'::character varying, 'ROUTE_DESIGNER'::character varying, 'TRACKING_MANAGER'::character varying, 'DATA_STEWARD'::character varying, 'CUSTOMER_SUPPORT'::character varying, 'SYSTEM_ADMIN'::character varying, 'AUDITOR'::character varying])::text[]))" name="ck_user_role_role"/>
       </table>
    </tables>
 </database>

@@ -1,1 +1,5 @@
 kpi_observation
+audit_record
+user_role
+app_user
+company

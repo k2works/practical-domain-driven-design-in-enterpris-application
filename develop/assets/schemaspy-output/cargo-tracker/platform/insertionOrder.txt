@@ -1,1 +1,3 @@
+spring_session
+spring_session_attributes
 event_publication
