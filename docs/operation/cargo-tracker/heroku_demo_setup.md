@@ -181,7 +181,7 @@ stop
 - ビルドの context は作業ツリーの `apps/cargo-tracker` です。gitignore されたファイルは作業ツリーの確かめに出ないまま、`src/` の下にあればイメージに入ります。手元だけのファイルを `src/` に置かないでください（W10 で `git archive` からの context を検討します）。
 - 確かめを飛ばすときだけ `DEMO_SKIP_GUARD=1` を付けます。使ったら、理由を Bolt の終了報告かジャーナルに書きます。
 
-所要時間の目安は、依存のキャッシュがあれば 1 分弱です（初回のビルドは 3〜4 分）。
+所要時間の目安は、依存のキャッシュがあれば 1 分前後です。初回と、`build.gradle` を変えた後は、依存の取得からやり直すため 4〜9 分かかります（Bolt 15 で `build.gradle` を変えた後の build は 8.5 分）。
 
 ## 4. 確認
 
@@ -236,7 +236,7 @@ heroku releases -a cargo-tracker-mono-demo
 heroku rollback v<番号> -a cargo-tracker-mono-demo
 ```
 
-`heroku rollback` は Config Vars も含めてその release の状態に戻します。戻した後の `DEMO_REVISION` は、その release の値です。`rollback` で戻せないとき（イメージが Registry から消えているなど）は、戻したいコミットを develop で作り直して `deploy:demo` で配備します（`git revert` で develop を戻すのが基本です。ガードは develop の CI が緑のコミットだけを通します）。
+`heroku rollback` は、イメージと Config Vars をその release の状態に戻した新しい release を作ります。戻した後の `DEMO_REVISION` は、その release の値です（`DEMO_REVISION` を足す前の release に戻すと空になります）。Bolt 15 で、v7 から v5 に戻して起動とログインの画面を確かめ、v7 に戻しました（v8・v9）。`rollback` で戻せないとき（イメージが Registry から消えているなど）は、戻したいコミットを develop で作り直して `deploy:demo` で配備します（`git revert` で develop を戻すのが基本です。ガードは develop の CI が緑のコミットだけを通します）。
 
 ## 8. 停止と削除
 
