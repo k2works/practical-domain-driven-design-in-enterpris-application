@@ -4,7 +4,7 @@ title: "Bolt 14 終了報告 - password によるログインと session（US-18
 description: "14 回目の Bolt の終了報告。Spring Security と Spring Session JDBC による password のログインと session、企業・利用者・役割・監査記録の表、A-01・A-03・A-04 と役割ごとのナビ、仮の主体の置き換え、開発環境の入力済み、5 視点の開発レビューと対応、デモ項目と動画、仮説 H1〜H3 の結論、承認ゲートを後でまとめて受ける議題、ふりかえりをまとめる。"
 tags: [development,bolt-report]
 status: draft
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-06T06:19:28Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-06T06:20:15Z }
 ---
 
 # Bolt 14 終了報告 - password によるログインと session（US-18 の一部）
@@ -163,6 +163,7 @@ T-28 に従い、本報告の前に Bolt 14 の変更を 5 つの視点でレビ
 | session の直列化の互換 | 配備で既存の session が復元できない | 配備の手順で session を消す（ADR-012、W10） |
 | 狭い画面でヘッダーの利用者名が出ない、email の正規化の差、テストの補助の置き場所 | 小さい | D-53 |
 | デモの動画を AI が再生して確かめていない | 録画が崩れていても気づかない | 本報告の承認の場で人が再生する |
+| 支援技術による手動確認を記録していない（#6 の完了の定義の 1 行） | 読み上げでの A-01・A-03・A-04 の使い勝手が未確認 | `@ui` と axe-core は通った。手動確認は人に依頼する（#6 の本文に残した） |
 
 ### Bolt 13 の Try の結果
 
