@@ -157,6 +157,13 @@ app --> tmp
   - 30 分の無アクセスでスリープした後の起動の時間を計る（Eco の制約。手順書の「デモの前に」に書く）
   - 手順書を実際に行ったコマンドと結果で仕上げ、運用の索引（`docs/operation/cargo-tracker/index.md`）とアプリの README に足す
   - `operating-docs` で索引と `mkdocs.yml` を同期し、`apply-okf` で変更した文書に規約を適用する
+  - 結果（17:52〜18:05 JST）:
+    - Chrome の拡張機能につながらなかったため、スクラッチパッドに Playwright（Node、1.63.0）を入れ、公開の URL を録画した（リポジトリには残さない）。デモ 1・2 を 1 本で撮った: 荷主担当者でログイン → 見積依頼を提出（TR-2026-0001）→ ログアウト → 営業担当者でログイン → 受付一覧から開いて審査を確定（見積りの作成へ）→ 荷主の画面は「権限がありません」。動画は `docs/assets/heroku-demo/bolt-15/submit-review-on-heroku.webm`（`demoVideo` は `docs/assets/demo` を消して撮り直すため、その外に置いた）
+    - デモ 3: 再起動の前は営業の受付一覧に TR-2026-0001 があり、`deploy:demo:restart` の後はなかった。操作の後の `memory_total` は 381.6 MB、R14 は出ていない
+    - デモ 4: `deploy:demo:status` で Eco の web 1 つ、release v5、`SPRING_PROFILES_ACTIVE` は `dev` だけ、URL を確かめた
+    - 動いていた v4 のイメージは直す前に手で push したものだったため、直した `deploy:demo` を通しで実行した（46 秒、CI の確かめ `d85b351b` success、digest は手で push したものと同じ）
+    - 手順書を実際のコマンドと結果で仕上げ、運用の索引・アプリの README・開発の索引（デモの動画）に足した
+    - スリープからの起動の時間は計測中（30 分の無アクセスを待っている）
 - [ ] **5. 運用レビューと Bolt 終了報告**
   - `operating-review` で、手順書・Gulp のタスク・Dockerfile・ADR 013 をレビューし、指摘への対応を終了報告に書く（T-28）
   - `bolt_15_report.md` に仮説 H1〜H3 の結論、メモリの計測値、各ステップの時刻、所要時間を書く

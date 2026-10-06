@@ -22,3 +22,14 @@ A 社国際貨物輸送管理システム。境界づけられたコンテキス
 | 営業担当者 | `sales@dev.cargo-tracker.example` | `dev-password-staff` | A 社（開発） |
 
 営業の画面を使うときは、ヘッダーの「ログアウト」の後に「営業担当者でログイン（sales@dev.cargo-tracker.example）」を押してください。H2 のコンソールは、ログインと CSRF の守りの外に置くことになるため Bolt 14 で外しました。
+
+## デモ環境（Heroku）
+
+関係者が触って確かめるデモ環境を、`dev` プロファイルのまま Heroku で動かしています（ADR-013）。上の開発用の利用者で、だれでもログインできます。本物のデータを入れないでください。データは再起動で初期状態に戻ります。
+
+```bash
+npx gulp deploy:demo          # リポジトリのルートで。develop の CI が緑のコミットから配備する
+npx gulp deploy:demo:help     # ほかのタスク（状態・ログ・再起動・停止）
+```
+
+手順: [Heroku デモ環境セットアップ手順書](../../docs/operation/cargo-tracker/heroku_demo_setup.md)

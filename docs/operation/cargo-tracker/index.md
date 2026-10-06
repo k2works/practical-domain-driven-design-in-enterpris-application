@@ -9,7 +9,7 @@ cargo-tracker プロジェクトの運用ドキュメントです。
 | ドキュメント | 概要 | 状況 |
 | :--- | :--- | :--- |
 | [アプリケーション開発環境セットアップ手順書](application_development_setup.md) | 開発者の PC での起動（H2 の `bootRun`、PostgreSQL の `bootTestRun`）・テスト・品質チェック・生成物の確認 | 承認済み |
-| [Heroku デモ環境セットアップ手順書](heroku_demo_setup.md) | dev プロファイルのデモ環境（Heroku、ADR-013）の作成・配備・停止 | 作成中（Bolt 15） |
+| [Heroku デモ環境セットアップ手順書](heroku_demo_setup.md) | dev プロファイルのデモ環境（Heroku、ADR-013）の作成・配備・確認・停止・削除 | 作成済み（Bolt 15 の終了報告で承認を受ける） |
 | 開発環境セットアップ手順書 | 開発環境のインフラ構築手順 | 未作成 |
 | AWS ステージング環境セットアップ手順書 | ステージング環境の構築手順 | 未作成（運用準備 W10、#28） |
 | AWS プロダクション環境セットアップ手順書 | 本番環境の構築手順 | 未作成（運用準備 W10、#28） |
@@ -29,6 +29,7 @@ Gradle のタスクは `apps/cargo-tracker` で、Gulp のタスクはリポジ�
 | `npx gulp docs:generate` | ER 図（SchemaSpy）と JIG を生成する |
 | `npx gulp docs:build` | 生成ドキュメントを作ってからドキュメントサイトをビルドする |
 | `npx gulp sonar-local:check` | SonarQube でスキャンして品質ゲートを判定する |
+| `npx gulp deploy:demo` | Heroku のデモ環境へ配備する（[Heroku デモ環境セットアップ手順書](heroku_demo_setup.md)。`deploy:demo:help` でほかのタスク） |
 
 ### インフラ
 

@@ -79,6 +79,7 @@ Bolt を始めるときに行を追加します。
 | 14 | password によるログインと session（US-18 の一部） | 荷主担当者がログインし、荷主のホームとナビとヘッダーを確かめ、社内の受付一覧の URL を直接開くと権限なしになる | [shipper-login.webm](../../assets/demo/bolt-14/shipper-login.webm){:target="_blank"} |
 |  |  | 営業担当者がログインし、社内のナビとヘッダーを確かめ、荷主の画面の URL を直接開くと権限なしになる | [staff-login.webm](../../assets/demo/bolt-14/staff-login.webm){:target="_blank"} |
 |  |  | 誤った password でログインしようとすると、どれが誤りかを示さない文言が出て、メールアドレスだけが残る | [wrong-password.webm](../../assets/demo/bolt-14/wrong-password.webm){:target="_blank"} |
+| 15 | dev プロファイルによる Heroku のデモ環境（技術タスク） | 公開の URL で荷主担当者がログインして見積依頼を提出し、営業担当者が受付一覧から開いて審査を確定し、荷主の画面は権限なしになる（`demoVideo` ではなく、公開の URL を Playwright で録画した。`demoVideo` が消さないよう `docs/assets/heroku-demo` に置く） | [submit-review-on-heroku.webm](../../assets/heroku-demo/bolt-15/submit-review-on-heroku.webm){:target="_blank"} |
 
 ### 進捗サマリー
 
