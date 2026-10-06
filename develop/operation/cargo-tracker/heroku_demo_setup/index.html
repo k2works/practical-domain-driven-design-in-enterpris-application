@@ -3314,6 +3314,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="5. ログ">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        週次の確かめ
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -3331,7 +3348,7 @@
   <a href="#7" class="md-nav__link">
     <span class="md-ellipsis">
       
-        7. 停止と削除
+        7. ロールバック
       
     </span>
   </a>
@@ -3342,7 +3359,7 @@
   <a href="#8" class="md-nav__link">
     <span class="md-ellipsis">
       
-        8. 制約とよくあるつまずき
+        8. 停止と削除
       
     </span>
   </a>
@@ -3350,7 +3367,18 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#_3" class="md-nav__link">
+  <a href="#9" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9. 制約とよくあるつまずき
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_4" class="md-nav__link">
     <span class="md-ellipsis">
       
         関連ドキュメント
@@ -7253,10 +7281,18 @@
 <td style="text-align: left;">費用</td>
 <td style="text-align: left;">Eco の定額、月 5 USD（アカウントの全 Eco dyno に共通）</td>
 </tr>
+<tr>
+<td style="text-align: left;">所有者</td>
+<td style="text-align: left;">human:kakimomokuri（Heroku のアカウント・費用・停止の手段。不在のときに止める必要があれば、Heroku の collaborator を足す）</td>
+</tr>
+<tr>
+<td style="text-align: left;">稼働</td>
+<td style="text-align: left;">常時起動。30 分アクセスがなければ Eco のスリープに任せる（ADR-013、D-55）</td>
+</tr>
 </tbody>
 </table>
 <blockquote>
-<p><strong>注意</strong>: アクセスの制限はありません。URL を知っていれば、だれでも開発用の利用者でログインできます。本物の荷主・利用者・取引のデータを入れないでください。URL は関係者にだけ伝えてください。データは dyno の再起動で初期状態に戻ります。</p>
+<p><strong>注意</strong>: だれでも開ける公開のデモです（ADR-013、D-54）。URL はこの手順書と README に書いてあり、開発用の利用者でだれでもログインできます。本物の荷主・利用者・取引のデータを入れないでください。データは dyno の再起動で初期状態に戻ります。不審な利用に気づいたら、<code>deploy:demo:restart</code> か <code>deploy:demo:stop</code> をしてください。</p>
 </blockquote>
 <h3 id="_2">イメージの構成<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h3>
 <p><code>apps/cargo-tracker/Dockerfile</code> は 3 つのステージを持ちます。</p>
@@ -7326,16 +7362,22 @@ heroku<span class="w"> </span>container:login
 <p>リポジトリのルートで実行します。2 回目以降に実行しても、作成を飛ばして Config Vars を合わせるだけです。</p>
 <div class="highlight"><pre><span></span><code>npx<span class="w"> </span>gulp<span class="w"> </span>deploy:demo:setup
 </code></pre></div>
-<p>アプリの作成（<code>--stack container --region us</code>）と Config Vars の設定を行います。アプリ名・region・JVM の設定は <code>.env</code> の <code>DEMO_*</code> で変えられます（<code>.env.example</code> を参照）。</p>
+<p>アプリの作成（<code>--stack container --region us</code>）、Config Vars の設定、<code>log-runtime-metrics</code>（メモリの値をログに出す）の有効化を行います。アプリ名・region・JVM の設定は <code>.env</code> の <code>DEMO_*</code> で変えられます（<code>.env.example</code> を参照）。</p>
 <h2 id="3">3. 配備<a class="headerlink" href="#3" title="Permanent link">&para;</a></h2>
 <p>develop の CI が緑のコミットから配備します。</p>
 <div class="highlight"><pre><span></span><code>npx<span class="w"> </span>gulp<span class="w"> </span>deploy:demo
 </code></pre></div>
 <p><code>deploy:demo:build</code> → <code>deploy:demo:push</code> → <code>deploy:demo:release</code> を順に行います。</p>
 <ul>
-<li><code>build</code> は、作業ツリーに変更がないことと、アプリ（<code>apps/cargo-tracker</code>）を最後に変えたコミットの <code>cargo-tracker-ci.yml</code> が success であることを確かめてから、<code>demo</code> のステージをビルドします。確かめを飛ばすときだけ <code>DEMO_SKIP_GUARD=1</code> を付けます。</li>
+<li><code>build</code> と <code>push</code> は、次をすべて確かめてから進みます。</li>
+<li>作業ツリーに変更がない</li>
+<li>develop にいて、HEAD が <code>origin/develop</code> に含まれる（push 済み）</li>
+<li>アプリ（<code>apps/cargo-tracker</code>）を最後に変えたコミットの、develop での <code>cargo-tracker-ci.yml</code> が success</li>
+<li>（<code>push</code> だけ）手元のイメージが HEAD から作ったもの（イメージのラベル <code>org.opencontainers.image.revision</code>）</li>
 <li>イメージは <code>docker buildx build --provenance=false --sbom=false --output type=image,…,oci-mediatypes=false</code> で作ります。Heroku の Container Registry は Docker v2 の manifest だけを受けるためです。</li>
-<li><code>release</code> の後に dyno の種類を Eco にします。</li>
+<li><code>release</code> の後に dyno の種類を Eco にし、動いているコミットを Config Vars の <code>DEMO_REVISION</code> に残します（Config Vars の変更で再起動がもう 1 回起きます）。</li>
+<li>ビルドの context は作業ツリーの <code>apps/cargo-tracker</code> です。gitignore されたファイルは作業ツリーの確かめに出ないまま、<code>src/</code> の下にあればイメージに入ります。手元だけのファイルを <code>src/</code> に置かないでください（W10 で <code>git archive</code> からの context を検討します）。</li>
+<li>確かめを飛ばすときだけ <code>DEMO_SKIP_GUARD=1</code> を付けます。使ったら、理由を Bolt の終了報告かジャーナルに書きます。</li>
 </ul>
 <p>所要時間の目安は、依存のキャッシュがあれば 1 分弱です（初回のビルドは 3〜4 分）。</p>
 <h2 id="4">4. 確認<a class="headerlink" href="#4" title="Permanent link">&para;</a></h2>
@@ -7371,12 +7413,23 @@ npx<span class="w"> </span>gulp<span class="w"> </span>deploy:demo:open<span cla
 <td style="text-align: left;"><code>deploy:demo:status</code> のプロファイル</td>
 <td style="text-align: left;"><code>dev</code> だけ（<code>staging</code>・<code>prod</code> を含まない。ADR-013 のコンプライアンス）</td>
 </tr>
+<tr>
+<td style="text-align: left;"><code>deploy:demo:status</code> の動いているコミット</td>
+<td style="text-align: left;"><code>DEMO_REVISION</code> が配備したコミット</td>
+</tr>
 </tbody>
 </table>
 <h2 id="5">5. ログ<a class="headerlink" href="#5" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code>npx<span class="w"> </span>gulp<span class="w"> </span>deploy:demo:logs<span class="w">     </span><span class="c1"># tail。Ctrl+C で止める</span>
 </code></pre></div>
-<p>メモリの値は <code>log-runtime-metrics</code> で 20 秒ごとにログに出ます（<code>sample#memory_total</code>）。無効になっていたら <code>heroku labs:enable log-runtime-metrics -a cargo-tracker-mono-demo</code> で有効にし、<code>deploy:demo:restart</code> します。</p>
+<p>メモリの値は <code>log-runtime-metrics</code> で 20 秒ごとにログに出ます（<code>sample#memory_total</code>）。<code>deploy:demo:setup</code> で有効になります。<code>memory_total</code> が 450 MB を超えるか、R14・R15 が出たら、dyno の種類（Basic・Standard-2X）の変更を所有者に諮ります。</p>
+<h3 id="_3">週次の確かめ<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h3>
+<p>週次の見直しのときに、次を確かめます（ADR-013 の運用の約束）。</p>
+<ul>
+<li><code>npx gulp deploy:demo:status</code>: dyno が up、プロファイルが <code>dev</code> だけ、<code>DEMO_REVISION</code> が想定のコミット</li>
+<li><code>npx gulp deploy:demo:logs</code>: R14・R15・R10 がないか。見覚えのない大量のアクセスや書類の添付がないか</li>
+<li>不審な利用があれば <code>deploy:demo:restart</code> でデータを消し、続くなら <code>deploy:demo:stop</code> で止めて所有者に知らせる</li>
+</ul>
 <h2 id="6">6. デモの前に<a class="headerlink" href="#6" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code>npx<span class="w"> </span>gulp<span class="w"> </span>deploy:demo:restart<span class="w">  </span><span class="c1"># データを db/dev-data の初期状態に戻す</span>
 npx<span class="w"> </span>gulp<span class="w"> </span>deploy:demo:open
@@ -7385,7 +7438,13 @@ npx<span class="w"> </span>gulp<span class="w"> </span>deploy:demo:open
 <li>再起動すると、それまでに入れた輸送要求・見積り・添付した書類は消え、開発用の企業と利用者だけになります。起動は 5 秒前後です。</li>
 <li>Eco dyno は 30 分アクセスがないとスリープします。スリープからの最初のアクセスは、起動を待つため遅くなります（Bolt 15 の計測は終了報告を参照）。デモの数分前に一度開いておきます。</li>
 </ul>
-<h2 id="7">7. 停止と削除<a class="headerlink" href="#7" title="Permanent link">&para;</a></h2>
+<h2 id="7">7. ロールバック<a class="headerlink" href="#7" title="Permanent link">&para;</a></h2>
+<p>直前の release に戻すときは、release の一覧で番号を確かめてから戻します。</p>
+<div class="highlight"><pre><span></span><code>heroku<span class="w"> </span>releases<span class="w"> </span>-a<span class="w"> </span>cargo-tracker-mono-demo
+heroku<span class="w"> </span>rollback<span class="w"> </span>v&lt;番号&gt;<span class="w"> </span>-a<span class="w"> </span>cargo-tracker-mono-demo
+</code></pre></div>
+<p><code>heroku rollback</code> は Config Vars も含めてその release の状態に戻します。戻した後の <code>DEMO_REVISION</code> は、その release の値です。<code>rollback</code> で戻せないとき（イメージが Registry から消えているなど）は、戻したいコミットを develop で作り直して <code>deploy:demo</code> で配備します（<code>git revert</code> で develop を戻すのが基本です。ガードは develop の CI が緑のコミットだけを通します）。</p>
+<h2 id="8">8. 停止と削除<a class="headerlink" href="#8" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code>npx<span class="w"> </span>gulp<span class="w"> </span>deploy:demo:stop<span class="w">     </span><span class="c1"># dyno を 0 にする（公開と Eco の時間の消費を止める）</span>
 npx<span class="w"> </span>gulp<span class="w"> </span>deploy:demo:start<span class="w">    </span><span class="c1"># dyno を 1 に戻す</span>
 </code></pre></div>
@@ -7393,7 +7452,7 @@ npx<span class="w"> </span>gulp<span class="w"> </span>deploy:demo:start<span cl
 <div class="highlight"><pre><span></span><code>heroku<span class="w"> </span>apps:destroy<span class="w"> </span>-a<span class="w"> </span>cargo-tracker-mono-demo<span class="w"> </span>--confirm<span class="w"> </span>cargo-tracker-mono-demo
 </code></pre></div>
 <p>消した後は、Eco の契約（月 5 USD）がほかのアプリで要らないかを Heroku の Billing で確かめます。</p>
-<h2 id="8">8. 制約とよくあるつまずき<a class="headerlink" href="#8" title="Permanent link">&para;</a></h2>
+<h2 id="9">9. 制約とよくあるつまずき<a class="headerlink" href="#9" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
 <tr>
@@ -7420,7 +7479,19 @@ npx<span class="w"> </span>gulp<span class="w"> </span>deploy:demo:start<span cl
 </tr>
 <tr>
 <td style="text-align: left;"><code>deploy:demo:build</code> が「CI が緑ではありません」で止まる</td>
-<td style="text-align: left;">アプリの最後の変更の CI が終わっていないか、失敗している。<code>gh run list --workflow cargo-tracker-ci.yml</code> で確かめ、緑になってから配備する</td>
+<td style="text-align: left;">アプリの最後の変更の CI が終わっていないか、失敗している。<code>gh run list --workflow cargo-tracker-ci.yml --branch develop</code> で確かめ、緑になってから配備する。CI が後の push で取り消された（cancelled）ときは、CI を再実行する</td>
+</tr>
+<tr>
+<td style="text-align: left;">「develop から配備してください」「HEAD が origin/develop にありません」で止まる</td>
+<td style="text-align: left;">develop に切り替え、push して CI を待ってから配備する</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>deploy:demo:push</code> が「HEAD から作ったものではありません」で止まる</td>
+<td style="text-align: left;">手元のイメージが古い。<code>deploy:demo:build</code> を先に行う（<code>deploy:demo</code> なら順に行う）</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>push に失敗しました</code></td>
+<td style="text-align: left;"><code>heroku container:login</code> をしていない（Registry の認証は Heroku CLI のログインとは別）</td>
 </tr>
 <tr>
 <td style="text-align: left;">入れたデータが消えた</td>
@@ -7432,7 +7503,7 @@ npx<span class="w"> </span>gulp<span class="w"> </span>deploy:demo:start<span cl
 </tr>
 </tbody>
 </table>
-<h2 id="_3">関連ドキュメント<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h2>
+<h2 id="_4">関連ドキュメント<a class="headerlink" href="#_4" title="Permanent link">&para;</a></h2>
 <ul>
 <li><a href="../../../adr/cargo-tracker/013-heroku-demo-environment/">ADR-013 デモ環境</a></li>
 <li><a href="../application_development_setup/">アプリケーション開発環境セットアップ手順書</a></li>

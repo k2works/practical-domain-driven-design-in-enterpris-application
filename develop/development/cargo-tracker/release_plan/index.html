@@ -9136,6 +9136,18 @@
 <td style="text-align: center;">中</td>
 <td style="text-align: left;">W4 で承認ゲートの密度とベロシティを見直す</td>
 </tr>
+<tr>
+<td style="text-align: left;">公開のデモ環境（Heroku、dev、ADR-013）が、だれでもログインして書類を添付できるため悪用され、人の Heroku のアカウントが止められる</td>
+<td style="text-align: center;">中</td>
+<td style="text-align: center;">低</td>
+<td style="text-align: left;">本物のデータを入れない。週次の見直しで <code>deploy:demo:status</code>・<code>deploy:demo:logs</code> を確かめ、不審な利用があれば <code>deploy:demo:restart</code>・<code>stop</code>。W10 でステージングができたら要否を見直す（Bolt 15 レビュー D-54・D-55）</td>
+</tr>
+<tr>
+<td style="text-align: left;">デモ環境のメモリ（Eco 512 MB）が画面の追加で足りなくなる（R14）</td>
+<td style="text-align: center;">低</td>
+<td style="text-align: center;">中</td>
+<td style="text-align: left;"><code>memory_total</code> が 450 MB を超えたら dyno の種類を人に諮る（Bolt 15 の計測で操作の後 382 MB）</td>
+</tr>
 </tbody>
 </table>
 <h3 id="_28">スケジュールリスク<a class="headerlink" href="#_28" title="Permanent link">&para;</a></h3>
@@ -9153,7 +9165,7 @@
 <td style="text-align: left;">開発者 1 名が不在になる（体制の単一障害点）</td>
 <td style="text-align: center;">高</td>
 <td style="text-align: center;">中</td>
-<td style="text-align: left;">判断と学びをジャーナル・ADR・計画に残し、AI が文脈を引き継げるようにする</td>
+<td style="text-align: left;">判断と学びをジャーナル・ADR・計画に残し、AI が文脈を引き継げるようにする。デモ環境（Heroku）の停止の手段もこの 1 名にあるため、必要になったら Heroku の collaborator を足す</td>
 </tr>
 <tr>
 <td style="text-align: left;">OQ-01（パイロット顧客・航路）が決まらず、基準値の計測を始められない</td>
