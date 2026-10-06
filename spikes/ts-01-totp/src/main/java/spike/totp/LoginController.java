@@ -1,7 +1,7 @@
 package spike.totp;
 
 import java.security.Principal;
-import java.time.Clock;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -11,28 +11,27 @@ import org.springframework.web.bind.annotation.ResponseBody;
 @Controller
 public class LoginController {
 
-    private final DevLoginProperties devLogin;
-    private final SpikeUsers users;
-    private final Clock clock;
+    /** dev プロファイルでだけある。ほかの環境では空で、画面は入力済みにならない。 */
+    private final ObjectProvider<DevLoginPrefill> devLogin;
 
-    public LoginController(DevLoginProperties devLogin, SpikeUsers users, Clock clock) {
+    public LoginController(ObjectProvider<DevLoginPrefill> devLogin) {
         this.devLogin = devLogin;
-        this.users = users;
-        this.clock = clock;
     }
 
     @GetMapping("/login")
     public String login(Model model) {
-        model.addAttribute("username", devLogin.username());
-        model.addAttribute("password", devLogin.password());
+        devLogin.ifAvailable(prefill -> {
+            model.addAttribute("username", prefill.username());
+            model.addAttribute("password", prefill.password());
+        });
         return "login";
     }
 
     @GetMapping("/login/totp")
     public String totp(Principal principal, Model model) {
-        model.addAttribute(
-                "code",
-                devLogin.prefillTotp() && principal != null ? users.currentCode(principal.getName(), clock.instant()) : null);
+        if (principal != null) {
+            devLogin.ifAvailable(prefill -> model.addAttribute("code", prefill.totpCode(principal.getName())));
+        }
         return "totp";
     }
 

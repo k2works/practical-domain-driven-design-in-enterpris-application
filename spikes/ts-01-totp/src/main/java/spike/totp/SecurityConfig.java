@@ -12,7 +12,6 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.core.authority.FactorGrantedAuthority;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.access.DelegatingMissingAuthorityAccessDeniedHandler;
-import org.springframework.security.web.access.intercept.AuthorizationFilter;
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.context.ApplicationEventPublisher;
@@ -43,7 +42,8 @@ public class SecurityConfig {
                         .authenticated())
                 .formLogin(form -> form.loginPage("/login").defaultSuccessUrl("/login/totp", true))
                 .addFilterAfter(new TotpAuthenticationFilter(authenticationManager, clock), UsernamePasswordAuthenticationFilter.class)
-                .addFilterBefore(new SessionLifetimeFilter(clock), AuthorizationFilter.class)
+                // 期限の確認を 2 つの要素の認証より先に置く。後ろに置くと、期限切れの session が POST /login/totp で通ってしまう
+                .addFilterBefore(new SessionLifetimeFilter(clock), UsernamePasswordAuthenticationFilter.class)
                 .exceptionHandling(exceptions -> exceptions.accessDeniedHandler(DelegatingMissingAuthorityAccessDeniedHandler.builder()
                         .addEntryPointFor(new LoginUrlAuthenticationEntryPoint("/login/totp"), TotpAuthenticationToken.FACTOR_TOTP)
                         .addEntryPointFor(new LoginUrlAuthenticationEntryPoint("/login"), FactorGrantedAuthority.PASSWORD_AUTHORITY)

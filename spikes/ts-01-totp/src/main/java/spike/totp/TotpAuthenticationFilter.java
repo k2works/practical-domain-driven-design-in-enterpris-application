@@ -3,6 +3,7 @@ package spike.totp;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.time.Clock;
+import java.util.List;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.InsufficientAuthenticationException;
@@ -12,13 +13,18 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.AbstractAuthenticationProcessingFilter;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationFailureHandler;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
+import org.springframework.security.web.authentication.session.ChangeSessionIdAuthenticationStrategy;
+import org.springframework.security.web.authentication.session.CompositeSessionAuthenticationStrategy;
+import org.springframework.security.web.csrf.CsrfAuthenticationStrategy;
+import org.springframework.security.web.csrf.HttpSessionCsrfTokenRepository;
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
 
 /**
  * POST /login/totp で TOTP の要素を認証する。password の要素がそろった session でだけ受け付ける。
  * mfaEnabled を有効にし、認証の結果（FACTOR_TOTP）を、同じ利用者の password の要素の権限に合わせる（Spring Security 7）。
- * 成功したら本人確認の時刻を session に残し、session の最長 8 時間の起点にする。
+ * 成功したら session の ID を変え CSRF のトークンを作り直す（session の固定化を防ぐ。form login と同じ扱い）。
+ * 本人確認の時刻はその session で初めて TOTP が通ったときだけ残し、session の最長 8 時間の起点にする（送り直しで延ばさせない）。
  */
 public class TotpAuthenticationFilter extends AbstractAuthenticationProcessingFilter {
 
@@ -28,12 +34,17 @@ public class TotpAuthenticationFilter extends AbstractAuthenticationProcessingFi
         super(PathPatternRequestMatcher.withDefaults().matcher(HttpMethod.POST, "/login/totp"), authenticationManager);
         setMfaEnabled(true);
         setSecurityContextRepository(new HttpSessionSecurityContextRepository());
+        setSessionAuthenticationStrategy(new CompositeSessionAuthenticationStrategy(List.of(
+                new ChangeSessionIdAuthenticationStrategy(),
+                new CsrfAuthenticationStrategy(new HttpSessionCsrfTokenRepository()))));
         SimpleUrlAuthenticationSuccessHandler success = new SimpleUrlAuthenticationSuccessHandler("/staff") {
             @Override
             public void onAuthenticationSuccess(
                     HttpServletRequest request, HttpServletResponse response, Authentication authentication)
                     throws java.io.IOException, jakarta.servlet.ServletException {
-                request.getSession().setAttribute(AUTHENTICATED_AT, clock.instant());
+                if (request.getSession().getAttribute(AUTHENTICATED_AT) == null) {
+                    request.getSession().setAttribute(AUTHENTICATED_AT, clock.instant());
+                }
                 super.onAuthenticationSuccess(request, response, authentication);
             }
         };
