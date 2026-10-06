@@ -275,6 +275,10 @@ class QuotationTest {
                     assertThat(event.transportRequestId()).isEqualTo(transportRequestId.value());
                     assertThat(event.transportRequestVersionNo()).isEqualTo(1);
                     assertThat(event.routeVia()).containsExactly("SGSIN");
+                    assertThat(event.departureAt())
+                            .isEqualTo(QuotationFixture.completeInput().departureAt());
+                    assertThat(event.arrivalAt())
+                            .isEqualTo(QuotationFixture.completeInput().arrivalAt());
                     assertThat(event.expiresAt()).isEqualTo(QuotationFixture.EXPIRES_AT);
                     assertThat(event.requestedBy()).isEqualTo(respondent.value());
                     assertThat(event.requestedAt()).isEqualTo(respondedAt);
@@ -339,5 +343,19 @@ class QuotationTest {
                 .contains(QuotationRejection.ROUTING_REQUESTED);
         assertThat(quotation.status()).isEqualTo(QuotationStatus.ROUTING_REQUESTED);
         assertThat(quotation.presentInternally(approver, now)).contains(QuotationRejection.NOT_PENDING_APPROVAL);
+    }
+
+    @Test
+    void 荷主に見えるのは提示した見積りだけ() {
+        Quotation pending = pendingApproval();
+        Quotation replacedBeforePresentation = pendingApproval();
+        replacedBeforePresentation.replaceWith(new QuotationId(UUID.randomUUID()), now);
+        Quotation responded = presented();
+        responded.requestRouteDesign(respondent, now);
+
+        assertThat(pending.isVisibleToShipper()).isFalse();
+        assertThat(replacedBeforePresentation.isVisibleToShipper()).isFalse();
+        assertThat(presented().isVisibleToShipper()).isTrue();
+        assertThat(responded.isVisibleToShipper()).isTrue();
     }
 }

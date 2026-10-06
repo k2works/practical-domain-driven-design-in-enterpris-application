@@ -97,7 +97,10 @@ class QuotationResponseControllerTest {
                 .andExpect(content().string(containsString("2099-10-08 18:00 Asia/Tokyo（UTC+09:00）")))
                 .andExpect(content().string(containsString("詳細な経路と日程は経路設計者の承認後に確定します。")))
                 .andExpect(content().string(containsString("この条件で詳細経路設計へ進む</button>")))
-                .andExpect(content().string(containsString("辞退や条件の相談は担当営業にご連絡ください。")));
+                .andExpect(content().string(containsString("辞退や条件の相談は担当営業にご連絡ください。")))
+                .andExpect(content().string(containsString("この回答は予約の確定ではありません。経路が決まったら、あらためて見積りと経路を確かめて承認していただきます。")))
+                .andExpect(content().string(containsString("回答を取り消したい場合は、業務番号を添えて担当営業にご連絡ください。")))
+                .andExpect(content().string(not(containsString("<!-- C-05"))));
     }
 
     @Test
@@ -108,7 +111,7 @@ class QuotationResponseControllerTest {
 
         mockMvc.perform(get(RESPONSE))
                 .andExpect(redirectedUrl(DETAIL))
-                .andExpect(flash().attribute("problem", "TR-2026-0001 見積 1 にはすでに回答しています"));
+                .andExpect(flash().attribute("result", "TR-2026-0001 見積 1 ですでに詳細経路設計を依頼しています"));
         mockMvc.perform(get(DETAIL + "/quotations/2/response")).andExpect(status().isNotFound());
         mockMvc.perform(get("/customer/transport-requests/XX/quotations/1/response"))
                 .andExpect(status().isNotFound());
@@ -130,6 +133,7 @@ class QuotationResponseControllerTest {
                 .willReturn(
                         new RouteDesignRequestOutcome.Rejected(QuotationRejection.EXPIRED),
                         new RouteDesignRequestOutcome.Rejected(QuotationRejection.REPLACED),
+                        new RouteDesignRequestOutcome.Rejected(QuotationRejection.ROUTING_REQUESTED),
                         new RouteDesignRequestOutcome.Conflict(),
                         new RouteDesignRequestOutcome.NotFound());
 
@@ -137,8 +141,9 @@ class QuotationResponseControllerTest {
                 .andExpect(redirectedUrl(DETAIL))
                 .andExpect(flash().attribute("problem", "TR-2026-0001 見積 1 は有効期限を過ぎて失効しています。新しい見積りは担当営業にご依頼ください"));
         mockMvc.perform(post(RESPONSE))
-                .andExpect(flash().attribute("problem", "TR-2026-0001 見積 1 は新しい見積りに置き換えられました。新しい見積りをお待ちください"));
-        mockMvc.perform(post(RESPONSE)).andExpect(flash().attribute("problem", "他の利用者が先に更新しました。内容を確かめてください"));
+                .andExpect(flash().attribute("problem", "TR-2026-0001 見積 1 は新しい見積りに置き換えられました。見積依頼の詳細で最新の状況をご確認ください"));
+        mockMvc.perform(post(RESPONSE)).andExpect(flash().attribute("result", "TR-2026-0001 見積 1 ですでに詳細経路設計を依頼しています"));
+        mockMvc.perform(post(RESPONSE)).andExpect(flash().attribute("problem", "見積りが更新されました。最新の見積りを確かめてから回答してください"));
         mockMvc.perform(post(RESPONSE)).andExpect(status().isNotFound());
     }
 

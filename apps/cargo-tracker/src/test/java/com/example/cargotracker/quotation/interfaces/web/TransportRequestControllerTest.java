@@ -294,6 +294,14 @@ class TransportRequestControllerTest {
                 new UtcInstant(Instant.parse("2026-10-05T01:00:00Z")));
     }
 
+    private static TransportRequest routing() {
+        TransportRequest request = underReview();
+        request.approve(1, STAFF, "根拠", new UtcInstant(Instant.parse("2026-10-05T02:00:00Z")));
+        request.markQuotationPresented(1);
+        request.markRoutingRequested(1);
+        return request;
+    }
+
     private static TransportRequest sentBack() {
         TransportRequest request = underReview();
         request.sendBack(1, STAFF, "目的地の確認が必要", "目的地の港", new UtcInstant(Instant.parse("2026-10-05T03:00:00Z")));
@@ -479,6 +487,49 @@ class TransportRequestControllerTest {
                         .string(containsString("有効期限（2026-10-05 21:00 Asia/Tokyo（UTC+09:00））を過ぎたため、"
                                 + "この見積りは使えません（読み取り専用）。新しい見積りは担当営業にご依頼ください。")))
                 .andExpect(content().string(not(containsString("この見積りへの回答"))));
+    }
+
+    @Test
+    void 経路設計中に有効期限を過ぎた見積りは依頼済みのまま進めていると示し新しい見積りの依頼を求めない() throws Exception {
+        TransportRequest request = routing();
+        given(queryService.findByNumber(NUMBER, SHIPPER)).willReturn(Optional.of(request));
+        UtcInstant at = new UtcInstant(Instant.parse("2026-10-05T00:00:00Z"));
+        QuotationInput standard = QuotationFixture.completeInput();
+        Quotation quotation = Quotation.create(new QuotationId(UUID.randomUUID()), request.id(), 1, 1);
+        quotation.calculate(
+                new QuotationInput(
+                        standard.lines(),
+                        standard.currency(),
+                        new UtcInstant(Instant.parse("2026-10-05T12:00:00Z")),
+                        standard.via(),
+                        standard.departureAt(),
+                        standard.arrivalAt()),
+                at);
+        quotation.presentInternally(new UserId(UUID.randomUUID()), at);
+        quotation.requestRouteDesign(USER, new UtcInstant(Instant.parse("2026-10-05T03:00:00Z")));
+        given(quotationQueryService.findVisible(NUMBER, SHIPPER)).willReturn(List.of(quotation));
+
+        mockMvc.perform(get("/customer/transport-requests/TR-2026-0001"))
+                .andExpect(content().string(containsString("経路設計中（A 社の対応待ち）")))
+                .andExpect(
+                        content().string(containsString("2026-10-05 12:00 Asia/Tokyo（UTC+09:00）にこの見積りで詳細経路設計を依頼しました。")))
+                .andExpect(content()
+                        .string(containsString("有効期限（2026-10-05 21:00 Asia/Tokyo（UTC+09:00））を過ぎました。"
+                                + "詳細経路設計は依頼済みのまま進めています。料金の扱いは担当営業からご連絡します。")))
+                .andExpect(content().string(not(containsString("新しい見積りは担当営業にご依頼ください"))))
+                .andExpect(content().string(not(containsString("/response"))));
+    }
+
+    @Test
+    void 経路設計中の見積依頼は詳細と一覧でA社の対応待ちと示し連絡は担当営業からと案内する() throws Exception {
+        given(queryService.findByNumber(NUMBER, SHIPPER)).willReturn(Optional.of(routing()));
+        given(queryService.findSummaries(SHIPPER)).willReturn(List.of(summary(TransportRequestStatus.ROUTING)));
+
+        mockMvc.perform(get("/customer/transport-requests/TR-2026-0001"))
+                .andExpect(content().string(containsString("<dd>経路設計中（A 社の対応待ち）</dd>")))
+                .andExpect(content().string(containsString("経路設計者が詳細な経路を設計しています。承認の準備ができたら担当営業からご連絡します。")));
+        mockMvc.perform(get("/customer/transport-requests"))
+                .andExpect(content().string(containsString("経路設計中（A 社の対応待ち）")));
     }
 
     @Test

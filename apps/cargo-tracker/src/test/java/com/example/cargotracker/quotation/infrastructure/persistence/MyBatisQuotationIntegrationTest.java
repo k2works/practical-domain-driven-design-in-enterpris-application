@@ -199,12 +199,13 @@ class MyBatisQuotationIntegrationTest {
     /** PostgreSQL は制約違反でトランザクションを中断するため、違反ごとに別のテストにする。 */
     @ParameterizedTest
     @CsvSource({
-        "PENDING_APPROVAL, , 100.00, USD", // 承認待ちなのに有効期限がない
-        "PENDING_APPROVAL, 2082-01-08T09:00:00Z, , USD", // 承認待ちなのに合計がない
-        "PENDING_APPROVAL, 2082-01-08T09:00:00Z, 100.00, GBP", // 通貨が候補にない
-        "ROUTING_REQUESTED, 2082-01-08T09:00:00Z, 100.00, USD" // Bolt 11 でまだ使わない状態
+        "PENDING_APPROVAL, , 100.00, USD, ck_quotation_calculated", // 承認待ちなのに有効期限がない
+        "PENDING_APPROVAL, 2082-01-08T09:00:00Z, , USD, ck_quotation_calculated", // 承認待ちなのに合計がない
+        "PENDING_APPROVAL, 2082-01-08T09:00:00Z, 100.00, GBP, ck_quotation_currency", // 通貨が候補にない
+        "APPROVED, 2082-01-08T09:00:00Z, 100.00, USD, ck_quotation_status" // まだ使わない状態（荷主の承認は US-24 AC4）
     })
-    void 承認待ち以後の必須の列と通貨と状態はCHECK制約で守る(String status, String expiresAt, String totalAmount, String currency) {
+    void 承認待ち以後の必須の列と通貨と状態はCHECK制約で守る(
+            String status, String expiresAt, String totalAmount, String currency, String constraint) {
         TransportRequestId transportRequestId = transportRequest(7);
         String insert = "INSERT INTO quotation.quotation (id, transport_request_id, quotation_no,"
                 + " transport_request_version_no, status, expires_at, total_amount, currency, route_policy_via,"
@@ -215,7 +216,8 @@ class MyBatisQuotationIntegrationTest {
         UUID requestId = transportRequestId.value();
 
         assertThatThrownBy(() -> jdbc.update(insert, id, requestId, status, expiresAt, totalAmount, currency))
-                .isInstanceOf(DataIntegrityViolationException.class);
+                .isInstanceOf(DataIntegrityViolationException.class)
+                .hasMessageContaining(constraint);
     }
 
     @Test

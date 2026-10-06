@@ -105,6 +105,9 @@ public class RouteDesignUiSteps {
             }
             page().waitForTimeout(500);
         }
+        if (row.count() == 0) {
+            throw new AssertionError("受付一覧の経路設計中に " + number() + " 見積 " + quotationNo + " が出ない（DE-16 の受け取りを待ちきれない）");
+        }
         browser.checkAccessibility();
         row.click();
         page().waitForURL("**/staff/transport-requests/" + number() + "/quotations/" + quotationNo);

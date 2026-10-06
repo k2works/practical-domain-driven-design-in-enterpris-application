@@ -136,4 +136,17 @@ class QuotationPresentedEventHandlerTest {
             assertThat(event.getFormattedMessage()).contains(missing.toString());
         });
     }
+
+    @Test
+    void 経路設計中になった後に遅れて届いた提示は輸送要求を変えずログも残さない() {
+        TransportRequest request = quoting();
+        TransportRequest found = repository.findById(request.id()).orElseThrow();
+        found.markRoutingRequested(1);
+        repository.update(found);
+
+        handler.on(presented(request));
+
+        assertThat(repository.findById(request.id()).orElseThrow().status()).isEqualTo(TransportRequestStatus.ROUTING);
+        assertThat(logs.list).isEmpty();
+    }
 }

@@ -420,6 +420,26 @@ class StaffQuotationControllerTest {
     }
 
     @Test
+    void 経路設計中に有効期限を過ぎた見積りは荷主と経路設計者への連絡を案内し再見積りの操作を出さない() throws Exception {
+        transportRequestExists();
+        Quotation quotation = presented();
+        quotation.requestRouteDesign(
+                new UserId(UUID.randomUUID()), new UtcInstant(Instant.parse("2026-10-06T00:30:00Z")));
+        given(queryService.find(NUMBER, 1)).willReturn(Optional.of(quotation));
+        clock.setInstant(QuotationFixture.EXPIRES_AT.instant());
+        try {
+            mockMvc.perform(get("/staff/transport-requests/TR-2026-0001/quotations/1"))
+                    .andExpect(content().string(containsString("<dd>失効</dd>")))
+                    .andExpect(content()
+                            .string(containsString("荷主が詳細経路設計を依頼済みのため、再見積りはできません。"
+                                    + "荷主と経路設計者に連絡し、扱いを決めてください（経路設計の途中の再見積りは今後の更新で入れます）。")))
+                    .andExpect(content().string(not(containsString("/requotation"))));
+        } finally {
+            clock.setInstant(NOW);
+        }
+    }
+
+    @Test
     void 再見積りの画面は旧版の明細と通貨と経路方針を初期値にし有効期限は空にする() throws Exception {
         transportRequestExists();
         given(queryService.find(NUMBER, 1)).willReturn(Optional.of(presented()));

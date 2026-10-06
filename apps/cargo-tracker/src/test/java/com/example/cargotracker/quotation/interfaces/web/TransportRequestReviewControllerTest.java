@@ -146,11 +146,17 @@ class TransportRequestReviewControllerTest {
     @Test
     void 受付一覧に経路設計中の見積依頼の見積りを依頼時刻の古い順に示し見積りを開ける() throws Exception {
         given(quotationQueryService.findRoutingRequestedSummaries())
-                .willReturn(List.of(new RoutingRequestedSummary(
-                        NUMBER,
-                        1,
-                        new UtcInstant(Instant.parse("2026-10-06T00:30:00Z")),
-                        new UtcInstant(Instant.parse("2099-10-09T09:00:00Z")))));
+                .willReturn(List.of(
+                        new RoutingRequestedSummary(
+                                NUMBER,
+                                1,
+                                new UtcInstant(Instant.parse("2026-10-06T00:30:00Z")),
+                                new UtcInstant(Instant.parse("2099-10-09T09:00:00Z"))),
+                        new RoutingRequestedSummary(
+                                new TransportRequestNumber(2026, 2),
+                                1,
+                                new UtcInstant(Instant.parse("2026-10-06T00:40:00Z")),
+                                new UtcInstant(Instant.parse("2026-10-05T04:00:00Z")))));
 
         mockMvc.perform(get("/staff/transport-requests"))
                 .andExpect(status().isOk())
@@ -160,7 +166,9 @@ class TransportRequestReviewControllerTest {
                                 "href=\"/staff/transport-requests/TR-2026-0001/quotations/1\">TR-2026-0001 見積 1</a>")))
                 .andExpect(content()
                         .string(containsString("2026-10-06 09:30 Asia/Tokyo（UTC+09:00）（UTC 2026-10-06 00:30）")))
-                .andExpect(content().string(containsString("2099-10-09 18:00 Asia/Tokyo（UTC+09:00）")));
+                .andExpect(content().string(containsString("2099-10-09 18:00 Asia/Tokyo（UTC+09:00）")))
+                .andExpect(content().string(containsString("<td>詳細設計依頼済み</td>")))
+                .andExpect(content().string(containsString("<td>失効</td>")));
     }
 
     @Test
