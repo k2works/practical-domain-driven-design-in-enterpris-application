@@ -7120,6 +7120,10 @@
 <td style="text-align: left;">監査記録（US-17）、ロックの解除の運用</td>
 </tr>
 <tr>
+<td style="text-align: left;">開発環境だけでログインの画面を入力済みにする仕組み（<code>dev</code> プロファイルの設定があるときだけ。既定では入力済みにならない）の確認（人の決定。2026-10-06）</td>
+<td style="text-align: left;">本体の開発用の利用者の投入（US-18 の Bolt）</td>
+</tr>
+<tr>
 <td style="text-align: left;">ADR の案（011。状態は「提案」）、技術スタックの TS-01 の更新</td>
 <td style="text-align: left;">ADR の確定（W5 の US-18 の計画で、人が採否を決める）</td>
 </tr>
@@ -7251,6 +7255,7 @@
 <li>回復コード（1 回だけ使える）で TOTP の代わりにできるか</li>
 <li>session の無操作 30 分（<code>server.servlet.session.timeout</code>）と、発行から 8 時間の上限を、どの部品で守れるか（時間箱を超えたら「未確認」）</li>
 <li>password のハッシュは <code>DelegatingPasswordEncoder</code> の既定と Argon2id を確かめる（SEC-07）</li>
+<li>開発環境の入力済み（人の決定。2026-10-06）: <code>dev</code> プロファイルの設定（例: <code>cargotracker.dev-login.*</code>）があるときだけ、ログインの画面にメールアドレスと password が入った状態で出る。設定がないとき（既定）は空で出る。確認ポイント 7 の A-02 の扱いも確かめる</li>
 <li>完了の判定: MockMvc の学習テストが、上の振る舞いを確かめて通る。確かめられなかった項目は理由を書く</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>4. 結論を ADR の案と技術スタックに書く</strong> 【承認ゲート: 方式の決定】</li>
 <li><code>docs/adr/cargo-tracker/011-mfa-totp.md</code>（状態: 提案）: 背景、選択肢（ライブラリの候補、枠組みの使い方）、決定の案、影響（US-18 の表・画面・ドメインモデルに要るもの、監査記録のイベントの出どころ、仮の主体の置き換えの順）、未確認の項目</li>
@@ -7350,6 +7355,12 @@
 <td style="text-align: left;">5</td>
 <td style="text-align: left;">GitHub の同期</td>
 </tr>
+<tr>
+<td style="text-align: left;">7</td>
+<td style="text-align: left;">開発環境のログインの入力済み（人の決定。2026-10-06）の範囲。A-01 は <code>dev</code> プロファイルの設定があるときだけ、開発用の利用者のメールアドレスと password を入力済みにする。A-02（TOTP）は、開発用の利用者に固定の TOTP の秘密を持たせ、<code>dev</code> プロファイルだけで現在のコードを入力済みにする案を AI は勧める（TOTP を飛ばす案は、開発と本番で認証の流れが変わり、2 段階のログインを開発環境で確かめられなくなるため採らない）。既定の設定で入力済みにならないことを学習テストで確かめ、ADR 011 の案に書く</td>
+<td style="text-align: left;">3、4</td>
+<td style="text-align: left;">セキュリティ（認証）。開発環境の設定が本番に漏れないことを守る</td>
+</tr>
 </tbody>
 </table>
 <h2 id="ai">AI の仮定<a class="headerlink" href="#ai" title="Permanent link">&para;</a></h2>
@@ -7434,6 +7445,12 @@
 <td style="text-align: left;">初版（Bolt 12 終了報告の次の Bolt。範囲は人の決定で TS-01 だけ）</td>
 <td style="text-align: left;">anthropic/claude-opus-5-5</td>
 <td style="text-align: left;">—</td>
+</tr>
+<tr>
+<td style="text-align: left;">2026-10-06</td>
+<td style="text-align: left;">人の決定（開発環境ではログインの画面を入力済みにする）をスコープ・ステップ 3・確認ポイント 7 に足した</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5</td>
+<td style="text-align: left;">human:kakimomokuri（決定）</td>
 </tr>
 </tbody>
 </table>
