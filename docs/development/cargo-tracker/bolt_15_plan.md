@@ -131,7 +131,7 @@ app --> tmp
     - イメージの大きさは `runtime` 563 MB、`demo` 568 MB。ビルドは初回 3 分半（依存のキャッシュの後は 1 分弱）
     - 途中で、展開した jar の名前が `cargo-tracker-0.0.1-SNAPSHOT.jar` になり、`app.jar` を指す起動が失敗したため、展開の前に `app.jar` に名前を変えた
     - `./gradlew check verifyProductionClasspath` は緑（4 分 20 秒）
-- [ ] **3. Heroku のアプリを作り、初回の配備をする** 【承認ゲート: 外部連携】
+- [x] **3. Heroku のアプリを作り、初回の配備をする** 【承認ゲート: 外部連携】
   - 人が `! heroku login` と `! heroku container:login` を実行する（AI はログインできない）
   - Gulp のタスクを作る（`operating-script` スキルに従う）:
 
@@ -147,6 +147,11 @@ app --> tmp
   - アプリ名と Config Vars（`SPRING_PROFILES_ACTIVE=dev`、`JAVA_TOOL_OPTIONS`）は `ops/scripts/heroku.js` の設定か環境変数で持ち、秘密はない（dev の固定値だけ）
   - `npx gulp heroku:setup` と `npx gulp heroku:deploy` で配備し、`heroku:status` と `heroku:logs` で起動と R14 が出ないことを確かめる
   - 途中の結果（17:35〜17:45 JST）: 運用スクリプト作成ガイドの命名（`{カテゴリ}_{環境}.js`、`{カテゴリ}:{環境}:{アクション}`）に合わせ、上の表の `heroku:*` を `ops/scripts/deploy_demo.js` の `deploy:demo:*` にした（`setup`・`build`・`push`・`release`・`deploy:demo`（build → push → release）・`status`・`logs`・`restart`・`open`・`stop`・`start`・`help`）。`stop`（dyno を 0）と `start` を足し、アプリの削除は取り消せないためタスクにせず手順書の手で行う。`deploy:demo:build` は、作業ツリーに変更がないことと、アプリを最後に変えたコミットの CI が緑であることを確かめる（確認ポイント 8）。`.env.example` に `DEMO_*` を足した。`deploy:demo:help` の表示と、未ログインで止まることを確かめた。命名の変更は外部連携の承認ゲートで承認を受ける
+  - 結果（17:44〜17:52 JST）:
+    - `deploy:demo:setup` でアプリを作った（`https://cargo-tracker-mono-demo-883bf0b92807.herokuapp.com/`、region `us`、stack `container`）
+    - 最初の `deploy:demo` は push で `error from registry: unsupported` になった。Docker 29 の containerd のイメージストアが OCI の media type で送るため。`docker buildx build --provenance=false --sbom=false --output type=image,name=…,oci-mediatypes=false` に直して push が通った
+    - release の後、Eco dyno で 15.5 秒で起動したが、起動中に R14（メモリ超過）が出た。ローカルの 512 MB の制限（cgroup）では 358 MiB だったので、dyno では `-XX:MaxRAMPercentage` が 512 MB を基準にしていないと見て、ヒープを `-Xmx300m` に固定した（Heroku の Java の 512 MB の既定と同じ）。その後は R14 が出ず、起動は 4.8 秒、`memory_total` は 354.6 MB（`log-runtime-metrics` を有効にして計測）
+    - 公開の URL で、未ログインは https の `/login` へ、荷主の開発用の利用者でログインして荷主の一覧・新規が 200（0.6 秒前後）、営業の画面が 403
 - [ ] **4. デモ環境でデモ項目を確かめ、手順書を仕上げる**
   - 下の「デモ項目」1〜4 を公開の URL で行い、録画する（T-31）
   - 30 分の無アクセスでスリープした後の起動の時間を計る（Eco の制約。手順書の「デモの前に」に書く）

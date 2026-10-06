@@ -21,13 +21,14 @@ const CI_WORKFLOW = 'cargo-tracker-ci.yml';
 
 /**
  * Config Vars。プロファイルは dev だけにする（staging・prod を混ぜない。ADR-013 のコンプライアンス）。
- * JVM の値は Eco dyno（512 MB）で計測して決めた（Bolt 15 ステップ 2）
+ * JVM の値は Eco dyno（512 MB）で計測して決めた（Bolt 15 ステップ 2・3）。dyno では -XX:MaxRAMPercentage が
+ * dyno の 512 MB ではなく大きなメモリを基準にして R14 になったため、ヒープは -Xmx で固定する（Heroku の Java の既定と同じ 300 MB）
  */
 const CONFIG_VARS = {
   SPRING_PROFILES_ACTIVE: 'dev',
   JAVA_TOOL_OPTIONS:
     process.env.DEMO_JAVA_TOOL_OPTIONS ||
-    '-XX:MaxRAMPercentage=60 -XX:+UseSerialGC -Xss512k -XX:ReservedCodeCacheSize=64m -XX:MaxMetaspaceSize=192m',
+    '-Xmx300m -XX:+UseSerialGC -Xss512k -XX:ReservedCodeCacheSize=64m -XX:MaxMetaspaceSize=192m',
 };
 
 // ============================================
@@ -128,13 +129,18 @@ export default function (gulp) {
     done();
   });
 
-  // demo のステージのイメージをビルドする（Container Registry は provenance の attestation を受けないため外す）
+  // demo のステージのイメージをビルドする。Heroku の Container Registry は Docker v2 の manifest だけを受けるため、
+  // attestation（provenance・SBOM）を外し、OCI の media type を使わない（containerd のイメージストアでは既定が OCI。
+  // 外さないと push が `error from registry: unsupported` になる。Bolt 15 ステップ 3）
   gulp.task('deploy:demo:build', (done) => {
     if (!isDockerAvailable()) {
       throw new Error('Docker が動いていません');
     }
     requireDeployableCommit();
-    run(`docker build --platform linux/amd64 --provenance=false --target demo -t ${IMAGE} ${APP_DIR}`);
+    run(
+      `docker buildx build --platform linux/amd64 --provenance=false --sbom=false --target demo ` +
+        `--output type=image,name=${IMAGE},oci-mediatypes=false ${APP_DIR}`,
+    );
     done();
   });
 
