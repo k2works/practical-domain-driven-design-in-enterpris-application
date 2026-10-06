@@ -4,7 +4,7 @@ title: "Bolt 12 終了報告 - 詳細経路設計へ進む回答（US-24 AC1）"
 description: "12 回目の Bolt の終了報告。荷主の詳細経路設計へ進む回答、DE-16 と輸送要求の経路設計中、回答の列と部分一意インデックスの作り直し、C-05・C-04・S-02・S-04 の成果、デモ項目と動画、指標と時間の内訳、仮説 H1〜H3 の結論、開発レビューと対応、承認ゲートを後でまとめて受けた判断、ふりかえりをまとめる。"
 tags: [development,bolt-report]
 status: draft
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-06T01:52:35Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-06T01:54:02Z }
 ---
 
 # Bolt 12 終了報告 - 詳細経路設計へ進む回答（US-24 AC1）
@@ -68,7 +68,7 @@ generated: { by: anthropic/claude-opus-5-5, at: 2026-10-06T01:52:35Z }
 | 実行中に AI が直した誤り | 5 件（上の表の行の数） |
 | テスト | `test` 786 件（Bolt 11 の 737 件から +49。数え方は `build/test-results/test` の件数の和）。業務ルール層のシナリオ +11（`request_route_design.feature` 11 件）、画面の層 41 本（+3）。すべて passed |
 | Red の記録 | 業務ルール層はコンパイルの失敗で Red を確かめた（まだない型を呼ぶ）。表・画面の層・レビューの対応は、実装の前に実行して新しく書いたテストだけが失敗することを記録した（統合テスト 7 件、画面の単体テスト 8 件・uiTest 3 件、レビューの対応 8 件。T-21） |
-| CI | 各ステップの push の後に CI の結果を確かめた（T-26）。`f8417d9` まで緑。それ以後は本報告の push の後に確かめる |
+| CI | 各ステップの push の後に CI の結果を確かめた（T-26）。`a2ee173`（レビューの対応のコードを含む）まで緑。ステップ 4 の実行は次の push に追い越されて取り消され、それを含む `b1cd47c` の実行で緑を確かめた |
 | SonarQube | Quality Gate PASS、Bug 0、Vulnerability 0、Code Smell 0、Security Hotspot 0、重複 0.0%、カバレッジ 94.0% |
 | コード | 本体の Java 8,363 行、テスト 11,929 行（どちらも `cargo-tracker` の全体を `wc -l` で数えた。Bolt 11 の報告の数え方と同じかは確かめていない） |
 
@@ -92,7 +92,7 @@ generated: { by: anthropic/claude-opus-5-5, at: 2026-10-06T01:52:35Z }
 | :--- | :--- |
 | 全テスト | `check`（786 件）、`uiTest`（41 シナリオ）、すべて成功 |
 | 書式・静的解析・本番の依存・カバレッジの閾値・用語集の整合・アーキテクチャテスト | すべて成功 |
-| CI | `f8417d9` まで緑。本報告の push の後に確かめる |
+| CI | 緑（`a2ee173`） |
 | SonarQube の品質ゲート | PASS |
 | ユーザーマニュアル | 対象外（マニュアルはまだない。認証と主要な画面がそろってから書く） |
 
