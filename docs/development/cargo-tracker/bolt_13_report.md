@@ -4,7 +4,7 @@ title: "Bolt 13 終了報告 - TOTP と Spring Security 7 の多要素認証の�
 description: "13 回目の Bolt の終了報告。TOTP の候補の比較、Spring Security 7 の多要素認証で組んだ 2 段階のログイン、開発環境の入力済みの守り、学習テストの結果、仮説 H1〜H3 の結論、レビューと対応、承認ゲートを止めずに進めた判断、ふりかえりをまとめる。"
 tags: [development,bolt-report]
 status: draft
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-06T03:50:03Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-06T03:54:42Z }
 ---
 
 # Bolt 13 終了報告 - TOTP と Spring Security 7 の多要素認証のスパイク（TS-01）
@@ -52,6 +52,15 @@ generated: { by: anthropic/claude-opus-5-5, at: 2026-10-06T03:50:03Z }
 | # | デモ | 結果 |
 | :--- | :--- | :--- |
 | 1 | スパイクの学習テストを実行する（`cd spikes/ts-01-totp && ../../apps/cargo-tracker/gradlew test`） | 57 件すべてが通る。RFC 6238 の試験ベクトル、password だけでは業務の画面を開けないこと、再利用の拒否、失敗の数え方とロックの境界、最長 8 時間の境界と迂回の拒否、session の ID の変化、既定の設定で入力済みにならないことを含む |
+
+## 品質ゲート
+
+| 項目 | 結果 |
+| :--- | :--- |
+| スパイクの学習テスト | 57 件すべて passed（本体の build と CI の対象外） |
+| CI | 本体のコードを変えていないため、cargo-tracker CI は path filter で走らない。最後の実行（#79、`4e0adb3`）は緑。Deploy MkDocs は `0f3a512` まで緑（T-26） |
+| `okf:check` | ERROR 0 |
+| SonarQube・デモの動画・ユーザーマニュアル | 対象外（確認ポイント 5。本体の画面を変えない） |
 
 ## 学習テストの結果
 
