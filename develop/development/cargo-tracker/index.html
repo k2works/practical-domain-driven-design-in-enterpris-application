@@ -3029,6 +3029,41 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="bolt_14_report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 14 終了報告
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--draft"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -3851,6 +3886,41 @@
   
   
     <span class="md-status md-status--stable"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../review/cargo-tracker/bolt_14_review_20261006/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 14 開発成果物レビュー（2026-10-06）
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--draft"></span>
   
 
   
@@ -7130,15 +7200,15 @@
 <tr>
 <td style="text-align: left;">14</td>
 <td style="text-align: left;"><a href="bolt_14_plan/">password によるログインと session（US-18 の一部）</a></td>
-<td style="text-align: left;">—</td>
+<td style="text-align: left;"><a href="bolt_14_report/">終了報告</a></td>
 <td style="text-align: left;">W2</td>
-<td style="text-align: left;">計画済み</td>
+<td style="text-align: left;">完了（終了報告の承認待ち）</td>
 </tr>
 </tbody>
 </table>
 <p>Bolt を始めるときに行を追加します。</p>
 <h3 id="_4">デモの動画<a class="headerlink" href="#_4" title="Permanent link">&para;</a></h3>
-<p>各 Bolt のデモ項目に当たる画面の層のシナリオを、Playwright で録画した動画です（<code>./gradlew demoVideo</code>。シナリオの <code>@demo-&lt;Bolt&gt;/&lt;名前&gt;</code> の印で選ぶ）。Bolt 9 までの動画は、2026-10-05 にいまのコードで撮り直したもので、その Bolt の時点の画面ではなく、その Bolt で作った機能のいまの振る舞いを示します（例: Bolt 5 の審査の確定の後は、Bolt 10 から見積りの作成へ進む）。</p>
+<p>各 Bolt のデモ項目に当たる画面の層のシナリオを、Playwright で録画した動画です（<code>./gradlew demoVideo</code>。シナリオの <code>@demo-&lt;Bolt&gt;/&lt;名前&gt;</code> の印で選ぶ）。Bolt 9 までの動画は、2026-10-05 にいまのコードで撮り直したもので、その Bolt の時点の画面ではなく、その Bolt で作った機能のいまの振る舞いを示します（例: Bolt 5 の審査の確定の後は、Bolt 10 から見積りの作成へ進む）。2026-10-06 の Bolt 14 で全部を撮り直し、どの動画もログイン（A-01）を経て画面を開きます。</p>
 <table>
 <thead>
 <tr>
@@ -7172,12 +7242,6 @@
 <td style="text-align: left;">E2E の基盤と生きたドキュメント</td>
 <td style="text-align: left;">キー操作だけの提出から社内の一覧まで（画面の層の基盤）</td>
 <td style="text-align: left;"><a href="../../assets/demo/bolt-03/keyboard-submit-to-kpi.webm" target="_blank">keyboard-submit-to-kpi.webm</a></td>
-</tr>
-<tr>
-<td style="text-align: left;"></td>
-<td style="text-align: left;"></td>
-<td style="text-align: left;">入口の一覧から見積依頼の作成画面へ移る</td>
-<td style="text-align: left;"><a href="../../assets/demo/bolt-03/entrance.webm" target="_blank">entrance.webm</a></td>
 </tr>
 <tr>
 <td style="text-align: left;">4</td>
@@ -7310,6 +7374,24 @@
 <td style="text-align: left;"></td>
 <td style="text-align: left;">有効期限を過ぎた見積りの回答の画面を開くと、理由が示されて見積依頼の詳細に戻り、回答の入口がない</td>
 <td style="text-align: left;"><a href="../../assets/demo/bolt-12/expired-response.webm" target="_blank">expired-response.webm</a></td>
+</tr>
+<tr>
+<td style="text-align: left;">14</td>
+<td style="text-align: left;">password によるログインと session（US-18 の一部）</td>
+<td style="text-align: left;">荷主担当者がログインし、荷主のホームとナビとヘッダーを確かめ、社内の受付一覧の URL を直接開くと権限なしになる</td>
+<td style="text-align: left;"><a href="../../assets/demo/bolt-14/shipper-login.webm" target="_blank">shipper-login.webm</a></td>
+</tr>
+<tr>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">営業担当者がログインし、社内のナビとヘッダーを確かめ、荷主の画面の URL を直接開くと権限なしになる</td>
+<td style="text-align: left;"><a href="../../assets/demo/bolt-14/staff-login.webm" target="_blank">staff-login.webm</a></td>
+</tr>
+<tr>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">誤った password でログインしようとすると、どれが誤りかを示さない文言が出て、メールアドレスだけが残る</td>
+<td style="text-align: left;"><a href="../../assets/demo/bolt-14/wrong-password.webm" target="_blank">wrong-password.webm</a></td>
 </tr>
 </tbody>
 </table>

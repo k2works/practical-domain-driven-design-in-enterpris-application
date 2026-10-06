@@ -16,7 +16,7 @@
         <link rel="prev" href="../bolt_13_report/">
       
       
-        <link rel="next" href="../../../operation/">
+        <link rel="next" href="../bolt_14_report/">
       
       
         
@@ -3153,6 +3153,41 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../bolt_14_report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 14 終了報告
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--draft"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -3975,6 +4010,41 @@
   
   
     <span class="md-status md-status--stable"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../review/cargo-tracker/bolt_14_review_20261006/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 14 開発成果物レビュー（2026-10-06）
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--draft"></span>
   
 
   
@@ -7545,7 +7615,7 @@
 <li>ADR 012「認証の主体と Spring Security・Spring Session の導入」（新規、提案）: 主体の型の置き場所、<code>SecurityFilterChain</code> の置き場所、session の保存先、監査の同期の書き込み、開発環境の入力済みの守り。TOTP は ADR-011 のまま</li>
 <li>技術スタック: Spring Security・Spring Session JDBC・thymeleaf-extras-springsecurity を「採用」にする</li>
 <li>完了の判定: <code>okf:check</code> が ERROR 0、<code>documentationTest</code> が緑。push する</li>
-<li>結果（2026-10-06 13:53〜13:58 JST。最後のコミットの時刻）: ユーザーストーリー（US-18 の Bolt 14 の決定）、ドメインモデル（<code>AuthenticatedActor</code>・<code>Role</code> を共有カーネルに、IA-INV-09、監査記録の操作）、データモデル（Bolt 14 で作る列と W5 で足す列、役割の値、外部キーを張らない理由、<code>db/dev-data/</code>、<code>spring_session</code>）、UI 設計（A-01・ログアウト・A-03・A-04・ホーム・準備中の画面の URL と文言、ヘッダー、開発環境の入力済みの設定）、非機能要件（SEC-07・SEC-17 を確定）、技術スタック（Spring Security・Spring Session JDBC を Bolt 14 で導入）に反映した。<a href="../../../adr/cargo-tracker/012-authentication-principal-and-session/">ADR-012</a>（提案）を書き、ADR の索引と mkdocs に足した。<code>okf:check</code> ERROR 0、<code>documentationTest</code> 緑</li>
+<li>結果（2026-10-06 13:53〜13:56 JST。最後のコミット <code>f1173bd</code> の時刻）: ユーザーストーリー（US-18 の Bolt 14 の決定）、ドメインモデル（<code>AuthenticatedActor</code>・<code>Role</code> を共有カーネルに、IA-INV-09、監査記録の操作）、データモデル（Bolt 14 で作る列と W5 で足す列、役割の値、外部キーを張らない理由、<code>db/dev-data/</code>、<code>spring_session</code>）、UI 設計（A-01・ログアウト・A-03・A-04・ホーム・準備中の画面の URL と文言、ヘッダー、開発環境の入力済みの設定）、非機能要件（SEC-07・SEC-17 を確定）、技術スタック（Spring Security・Spring Session JDBC を Bolt 14 で導入）に反映した。<a href="../../../adr/cargo-tracker/012-authentication-principal-and-session/">ADR-012</a>（提案）を書き、ADR の索引と mkdocs に足した。<code>okf:check</code> ERROR 0、<code>documentationTest</code> 緑</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>2. 企業・利用者・監査記録の業務のルールと表（内側の TDD、統合テスト）</strong> 【承認ゲート: 業務のルールとスキーマの変更】</li>
 <li>単体テストを先に書く: 有効な企業の有効な利用者は認証できる。利用停止の利用者、無効な企業の利用者は理由付きで認証できない。メールアドレスの正規化（前後の空白、大文字）。役割の値が BR-15 の 8 つ</li>
 <li>統合テスト（PostgreSQL）を先に書く: 企業・利用者・役割の保存と読み出し、email の一意（大文字小文字を区別しない）、役割の CHECK、<code>audit_record</code> の UPDATE・DELETE がアプリの利用者で拒否される、<code>spring_session</code> の表がある</li>
@@ -7609,7 +7679,7 @@
 <li><code>check</code> 緑（<code>test</code> 864 件。+10）。<code>uiTest</code> 緑（47 本。Bolt 12 の 41 本から +6。axe-core の違反 0 件）</li>
 </ul>
 </li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>5. 開発レビューと Bolt 終了報告</strong></li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>5. 開発レビューと Bolt 終了報告</strong></li>
 <li><code>developing-review</code> で Bolt 14 の変更をレビューし、指摘への対応を決める（T-28）。セキュリティの観点を必ず含める</li>
 <li><code>check</code>・<code>uiTest</code>・CI・SonarQube の品質ゲート（PASS）を確かめる</li>
 <li>デモ項目のシナリオを <code>./gradlew demoVideo -PdemoBolt=bolt-14</code> で録画し、<code>docs/assets/demo/bolt-14/</code> に置いて終了報告と開発の索引からリンクする（T-31）</li>
@@ -7617,6 +7687,7 @@
 <li>
 <h1 id="6-ac2-13-ac-totpac6-1">6 の AC2 にチェックを付けてクローズする。#13 に前倒しした AC と残り（TOTP・ロック・再設定・AC6・警告）をコメントする（確認ポイント 1）<a class="headerlink" href="#6-ac2-13-ac-totpac6-1" title="Permanent link">&para;</a></h1>
 </li>
+<li>結果（2026-10-06 14:47〜15:17 JST）: 5 つの視点でレビューし（<a href="../../../review/cargo-tracker/bolt_14_review_20261006/">レビュー</a>。高 6・中 12・低 7）、D-49〜D-53（AI の判断。T-36）の範囲で直した（Red <code>75d8fe6</code>、Green <code>89eb6ad</code>、文書 <code>16a5967</code>）。無操作 30 分の設定の鍵が Spring Session に効いていなかったことを、既定と違う値のテストで見つけて直した（D-50）。SonarQube は 2 回不合格になり（Code Smell 20 件、次に H2 のコンソールの道筋の CSRF の除外 1 件）、直して PASS にした（H2 のコンソールは外した。D-52）。デモ項目の 3 本を <code>./gradlew demoVideo</code> で録画し、画面がすべてログインを経るため過去の Bolt の動画も撮り直したまま残した。<code>check</code>（883 件）・<code>uiTest</code>（48 本）は緑。<a href="../bolt_14_report/">Bolt 14 終了報告</a> を書いた。#6 をクローズし、#13 にコメントした</li>
 </ul>
 <h3 id="_12">時間の配分と打ち切り<a class="headerlink" href="#_12" title="Permanent link">&para;</a></h3>
 <table>
@@ -7811,19 +7882,19 @@
 <h2 id="_14">完了条件<a class="headerlink" href="#_14" title="Permanent link">&para;</a></h2>
 <h3 id="definition-of-done">Definition of Done<a class="headerlink" href="#definition-of-done" title="Permanent link">&para;</a></h3>
 <ul class="task-list">
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> ステップ 1〜5 が完了し、計画・ステップ 2（業務のルールとスキーマ）・ステップ 3（セキュリティ）・開発レビューの判断・終了報告の承認ゲートを人が通した</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <code>./gradlew check</code> と <code>./gradlew uiTest</code> がローカルと CI の両方で緑。各ステップの終わりに push し、CI を確かめた</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> SonarQube の品質ゲートが PASS</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> セキュリティの統合テストで、AC2・AC4・AC5（30 分・8 時間の境界の 3 点）、session ID の変化、CSRF、役割の分離、監査記録の同期の書き込みが緑</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> 画面の層で <code>@US-18-AC2</code> のシナリオと、ログイン・ナビゲーション・A-04・ログアウトのシナリオが緑。既存の <code>@ui</code> のシナリオがログインを経て緑</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <code>ProvisionalActorProperties</code> と設定がなくなり、ArchUnit で <code>quotation</code> が Spring Security の型に依存しないことを確かめた</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> 既定の設定で A-01 が入力済みにならず、dev の外の <code>cargotracker.dev-login.*</code> で起動が失敗することをテストで確かめた</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> 確認ポイント 1〜14 の決定が、設計文書と ADR 012 から追える</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> 開発レビューを行い、指摘への対応を終了報告に書いた（T-28）</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> デモ項目の動画を撮り、終了報告と開発の索引からリンクした（T-31）</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <code>bolt_14_report.md</code> に仮説 H1〜H3 の結論、各ステップの時刻と Red の記録、所要時間を書いた</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> #6 をクローズし、#13 にコメントした</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> ユーザーマニュアルは更新しない（マニュアルはまだない。認証と主要な画面がそろってから書く）</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> ステップ 1〜5 が完了し、計画・ステップ 2（業務のルールとスキーマ）・ステップ 3（セキュリティ）・開発レビューの判断・終了報告の承認ゲートを人が通した（ステップ 1〜5 は完了。ステップ 2・3 と開発レビューの判断は、終了報告の承認の場でまとめて受ける。T-36）</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <code>./gradlew check</code> と <code>./gradlew uiTest</code> がローカルと CI の両方で緑。各ステップの終わりに push し、CI を確かめた</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> SonarQube の品質ゲートが PASS</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> セキュリティの統合テストで、AC2・AC4・AC5（30 分・8 時間の境界の 3 点）、session ID の変化、CSRF、役割の分離、監査記録の同期の書き込みが緑</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> 画面の層で <code>@US-18-AC2</code> のシナリオと、ログイン・ナビゲーション・A-04・ログアウトのシナリオが緑。既存の <code>@ui</code> のシナリオがログインを経て緑</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <code>ProvisionalActorProperties</code> と設定がなくなり、ArchUnit で <code>quotation</code> が Spring Security の型に依存しないことを確かめた</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> 既定の設定で A-01 が入力済みにならず、dev の外の <code>cargotracker.dev-login.*</code> で起動が失敗することをテストで確かめた</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> 確認ポイント 1〜14 の決定が、設計文書と ADR 012 から追える</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> 開発レビューを行い、指摘への対応を終了報告に書いた（T-28）</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> デモ項目の動画を撮り、終了報告と開発の索引からリンクした（T-31）</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <code>bolt_14_report.md</code> に仮説 H1〜H3 の結論、各ステップの時刻と Red の記録、所要時間を書いた</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> #6 をクローズし、#13 にコメントした</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> ユーザーマニュアルは更新しない（マニュアルはまだない。認証と主要な画面がそろってから書く）</li>
 </ul>
 <h3 id="_15">デモ項目<a class="headerlink" href="#_15" title="Permanent link">&para;</a></h3>
 <table>
@@ -7879,6 +7950,12 @@
 <td style="text-align: left;">計画を承認。確認ポイント 1〜14（#6 と #13 の分け方、主体の型の置き場所、ADR 012、表、監査記録、bcrypt、Spring Session JDBC、CSRF と応答ヘッダー、ログインの時点の役割での認可、URL と画面、開発環境の入力済み、開発用の利用者、ステージングの利用者、テストの層）も決まった（Try T-6）</td>
 <td style="text-align: left;">anthropic/claude-opus-5-5</td>
 <td style="text-align: left;">human:kakimomokuri</td>
+</tr>
+<tr>
+<td style="text-align: left;">2026-10-06</td>
+<td style="text-align: left;">ステップ 1〜5 の結果を記録し、終了報告を書いた（ステップ 2・3 の承認ゲートと開発レビューの判断は、終了報告の承認の場でまとめて受ける。T-36）</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5</td>
+<td style="text-align: left;">—</td>
 </tr>
 </tbody>
 </table>
