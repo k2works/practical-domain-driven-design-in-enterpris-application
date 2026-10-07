@@ -16,7 +16,7 @@
         <link rel="prev" href="../bolt_18_plan/">
       
       
-        <link rel="next" href="../../../operation/">
+        <link rel="next" href="../bolt_19_report/">
       
       
         
@@ -3402,6 +3402,41 @@
   
 </nav>
       
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../bolt_19_report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 19 終了報告
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--draft"></span>
+  
+
+  
+
+      </a>
     </li>
   
 
@@ -7940,7 +7975,7 @@
 <li>承認ゲートの扱い（T-36）: 画面の承認ゲートで止まらずに進めた（AI の判断）。根拠は、文言と構成が計画の確認ポイント 5・7・9・10 と UI 設計の S-07 の行のとおりであること</li>
 </ul>
 </li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>5. 開発レビューと Bolt 終了報告</strong></li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>5. 開発レビューと Bolt 終了報告</strong></li>
 <li><code>developing-review</code> で Bolt 19 の変更をレビューし、指摘への対応を決める（T-28）。確定の再検証の時刻と、集約の形の変更（D-64）の観点を必ず含める</li>
 <li><code>check</code>・<code>uiTest</code>・CI・SonarQube の品質ゲート（PASS。ステップ 1 のタスクで起動する）を確かめる</li>
 <li>デモ項目のシナリオを <code>./gradlew demoVideo -PdemoBolt=bolt-19</code> で録画し、<code>docs/assets/demo/bolt-19/</code> に置く（過去の Bolt の動画は元に戻す。T-31）</li>
@@ -7948,7 +7983,13 @@
 <li>
 <h1 id="8-ac1ac2-16-r01">8 の AC1・AC2 にチェックを付けてクローズする。#16 に R0.1 で作った範囲（再検証の時刻、確定の後の拒否）をコメントする<a class="headerlink" href="#8-ac1ac2-16-r01" title="Permanent link">&para;</a></h1>
 </li>
-<li>デモ環境で、人が RC-2026-0902 の候補を確定して S-07 の操作性を確かめる</li>
+<li>
+<p>デモ環境で、人が RC-2026-0902 の候補を確定して S-07 の操作性を確かめる</p>
+</li>
+<li>
+<p>結果（2026-10-07 22:28〜23:05 JST）: 5 つの視点でレビューし（<a href="../../../review/cargo-tracker/bolt_19_review_20261007/">レビュー</a>。高 8・中 26・低 22）、D-67〜D-70 をこの Bolt で直した（Red <code>9f959dc</code>、Green <code>85a87a7</code>）。DE-05 の購読の循環は人の判断に回し（D-71）、ほかは後の Bolt に回した（D-72）。SonarQube は最初の走査で Code Smell 4 件、対応の後に 1 件を出し、直して PASS にした（<code>sonar-local:start</code> で起動）。デモ項目の 2 本を録画した（過去の Bolt の動画は元に戻した）。<code>check</code>（1,049 件）・<code>uiTest</code>（54 本）は緑。<a href="../bolt_19_report/">Bolt 19 終了報告</a> を書いた。#8 をクローズし、#16 にコメントした。デモ環境での確かめは人に依頼する（終了報告の議題 7）</p>
+</li>
+<li>承認ゲートの扱い（T-36）: 開発レビューの判断で止まらずに進めた（AI の判断）。終了報告の承認の議題に置く</li>
 </ul>
 <h3 id="_10">時間の配分と打ち切り<a class="headerlink" href="#_10" title="Permanent link">&para;</a></h3>
 <table>
@@ -8079,12 +8120,12 @@
 </table>
 <h2 id="_11">完了条件<a class="headerlink" href="#_11" title="Permanent link">&para;</a></h2>
 <ul class="task-list">
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> US-07 AC1・AC2 の受入シナリオ（業務ルール層・画面の層）が通る</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> 確定の拒否の表（根拠・権限・候補・再検証・出発・状態）の単体テストが通る</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <code>check</code> と <code>uiTest</code> が緑。push して CI とデモ環境の配備を確かめた</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> SonarQube の Quality Gate が PASS（<code>sonar-local:start</code> で起動した）</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> 設計文書（ドメインモデル・データモデル・UI 設計・ユーザーストーリー）と手順書に決定を書いた</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> 開発レビューと終了報告を書き、#8 をクローズした</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> US-07 AC1・AC2 の受入シナリオ（業務ルール層・画面の層）が通る</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> 確定の拒否の表（根拠・権限・候補・再検証・出発・状態）の単体テストが通る</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <code>check</code> と <code>uiTest</code> が緑。push して CI とデモ環境の配備を確かめた</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> SonarQube の Quality Gate が PASS（<code>sonar-local:start</code> で起動した）</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> 設計文書（ドメインモデル・データモデル・UI 設計・ユーザーストーリー）と手順書に決定を書いた</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> 開発レビューと終了報告を書き、#8 をクローズした</li>
 </ul>
 <h2 id="_12">更新履歴<a class="headerlink" href="#_12" title="Permanent link">&para;</a></h2>
 <table>
