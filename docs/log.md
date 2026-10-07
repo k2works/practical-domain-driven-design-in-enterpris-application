@@ -1,6 +1,9 @@
 # Docs Update Log
 
 ## 2026-10-07
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_18_plan](/development/cargo-tracker/bolt_18_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [013-heroku-demo-environment](/adr/cargo-tracker/013-heroku-demo-environment.md) を更新（anthropic/claude-opus-5-5）
 * **Update**: [bolt_17_review_20261007](/review/cargo-tracker/bolt_17_review_20261007.md) を更新（anthropic/claude-opus-5-5）
 * **Update**: [bolt_17_report](/development/cargo-tracker/bolt_17_report.md) を更新（anthropic/claude-opus-5-5）
 * **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）

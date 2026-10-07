@@ -43,6 +43,7 @@ Bolt がイテレーションに当たります。ふりかえりは各 Bolt の
 | 15 | [dev プロファイルによる Heroku のデモ環境（技術タスク）](bolt_15_plan.md) | [終了報告](bolt_15_report.md) | W3 | 完了 |
 | 16 | [デモ環境への CI からの配備（技術タスク）](bolt_16_plan.md) | [終了報告](bolt_16_report.md) | W3 | 完了 |
 | 17 | [経路候補の算出と比較（US-06 AC1〜AC3）](bolt_17_plan.md) | [終了報告](bolt_17_report.md)（[動画](../../assets/demo/bolt-17/compare-route-candidates.webm)） | W3 | 完了（終了報告の承認待ち） |
+| 18 | [デモ環境のサンプルの業務データ（技術タスク）](bolt_18_plan.md) | — | W3 | 完了（配備の確認中） |
 
 Bolt を始めるときに行を追加します。
 

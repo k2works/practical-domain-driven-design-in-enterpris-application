@@ -4,7 +4,7 @@ title: "ADR-013: 関係者が触って確かめるデモ環境は、dev プロ�
 description: "ステージング・本番（ADR-008、AWS）とは別に、dev プロファイル（H2 のインメモリ・開発用の利用者）の cargo-tracker を Heroku の Container Registry で配備し、だれでも開ける公開のデモ環境にする決定。H2 は Dockerfile の demo のステージにだけ入れ、本番の成果物（bootJar）と AT-06 は変えない。"
 tags: [adr, operation, demo]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-06T09:30:00Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-07T09:35:22Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-06T11:19:09Z }
   - { by: human:kakimomokuri, at: 2026-10-07T02:53:59Z }
@@ -47,7 +47,7 @@ verified:
 | 配備 | 主は CI。develop への push（アプリの変更・設計文書の変更で cargo-tracker CI が動いたとき）と develop での手動の実行で、check・ui が緑になった後に `deploy-demo` ジョブが `docker/build-push-action`（`--target demo`、Docker v2 の manifest）で Container Registry に push し、Heroku Platform API で release する。手元の Gulp のタスク `deploy:demo`（`ops/scripts/deploy_demo.js`。`docker buildx build` → `docker push` → `heroku container:release`）は、CI が使えないときの手段。CI の配備の実行中は手元で配備しない |
 | CI の認証 | Heroku の API キー（authorization、`global`、期限 90 日）を人が `deploy:demo:ci-key` で作り、GitHub の Environment `demo`（配備のブランチは develop だけ）の secret `HEROKU_API_KEY` に登録する。AI はキーの値を扱わない。期限の 2 週間前を期日にした Issue で更新を知らせ、新しいキーで配備が通った後に `deploy:demo:ci-key:revoke-old` で古いキーを失効させる（D-57）。キーの境界は「k2works のアカウントで develop に push するもの（人と AI のセッション）」で、develop に push できればワークフローを書き換えてキーを使える。develop の直接 push の運用は変えず、`.github/workflows/` の変更は人がレビューする（D-58） |
 | 配備のガード | CI: `deploy-demo` は `needs: [check, ui]` で、develop の push と手動の実行のときだけ動き、Environment `demo` が develop の外からのキーの利用を拒む。CI の対象のパスを最後に変えたコミットが、配備するコミットまでと develop の先頭までで同じときだけ配備する（古い実行の再実行で古いコミットを出さない）。配備のジョブはワークフローの取り消しの外に置き、1 つずつ動かす。手元: 作業ツリーに変更がなく、develop にいて、HEAD が `origin/develop` に含まれ、アプリを最後に変えたコミットの develop での CI が緑のときだけ、ビルドと push を行う。どちらも、イメージにコミットの SHA のラベルを付け、release の後に Config Vars の `DEMO_REVISION` に残す。CI は配備の後、`DEMO_REVISION` が配備したコミットで、最新の release が succeeded で、その版の web の dyno が up で、`/login` が 200 になるのを最大 180 秒待ち、来なければ直前の release に戻してジョブを失敗にする |
-| データ | H2 のインメモリと dyno の `/tmp`。dyno の再起動（自動の再起動、配備、スリープ、Config Vars の変更）で `db/dev-data` の初期状態に戻る。永続化しない |
+| データ | H2 のインメモリと dyno の `/tmp`。dyno の再起動（自動の再起動、配備、スリープ、Config Vars の変更）で `db/dev-data` の初期状態に戻る。永続化しない。初期状態にはサンプルの見積依頼 5 件と経路設計の案件 2 件、架空の航海が入っており、日時は起動した日からの相対（Bolt 18、2026-10-07 に human:kakimomokuri が決定） |
 | アクセス | 制限しない。URL は docs（手順書・README）に書き、だれでも開発用の利用者でログインできる公開のデモとする（D-54） |
 | 稼働 | 常時起動にし、30 分アクセスがなければ Eco のスリープに任せる（D-55） |
 | 運用の約束 | 本物の荷主・利用者・取引のデータを入れない。週次の見直しで `deploy:demo:status` と `deploy:demo:logs` を確かめる。不審な利用に気づいたら `deploy:demo:restart` か `deploy:demo:stop` をする |
