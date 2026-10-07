@@ -111,7 +111,7 @@ deploy --> dyno : スモーク（/login が 200）
   - インフラストラクチャアーキテクチャの CI/CD の節に、デモ環境の配備を 1 行足す
   - GitHub に技術 Issue を立て、Project のフィールドを設定する
   - 結果（09:58〜10:06 JST）: ADR-013 に改訂の注記、配備・CI の認証・配備のガードの行、代替案 2 つ、ネガティブ 2 つ、コンプライアンス 1 つを足した。手順書に CI からの配備（通常）と手元からの配備、Environment と secret の作り方・キーの更新と失効を足した。インフラストラクチャアーキテクチャの CI/CD の節に 1 行足した。[#39](https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/39) を立て、Project に Release 0.1・W3・横断・SP 0・In Progress を設定した
-- [ ] **2. `deploy-demo` ジョブを書き、静的に検査する**
+- [x] **2. `deploy-demo` ジョブを書き、静的に検査する**
   - Red: ジョブを足す前に、ワークフローに `deploy-demo` がないことと、actionlint（`rhysd/actionlint` のコンテナ）が今のワークフローで通ることを記録する
   - `on` に `workflow_dispatch` を足す（`push` の `paths` は変えない。アプリの変更でだけ配備する）
   - `deploy-demo` ジョブ:
@@ -124,6 +124,11 @@ deploy --> dyno : スモーク（/login が 200）
     - スモーク: `/login` が 200 になるまで最大 120 秒待つ。来なければジョブを失敗にする
     - キーは `env` で渡し、コマンドの引数やログに出さない。`curl` は `--fail-with-body --silent --show-error` にし、応答の本文は出さない
   - actionlint を通す
+  - 結果（10:03〜10:15 JST）:
+    - Red: 変更の前のワークフローに `deploy-demo` は 0 件、actionlint（`rhysd/actionlint:1.7.12`）は exit 0
+    - ジョブを書き、actionlint は exit 0
+    - 計画からの変更: スモークは `/login` の 200 だけでは足りない。formation の更新はすぐ応答し、新しい dyno が上がるまで古い dyno が 200 を返すため。Platform API で最新の release の版を取り、その版の web の dyno が `up` になり、かつ `/login` が 200 になるまで最大 180 秒待つ形にした。jq の式は手元から読み取りの API（releases・dynos）で確かめた（v9、up）
+    - 計画からの変更: ステップ 2 は push しない。push すると CI が `deploy-demo` まで進み、GitHub がブランチの規則のない Environment `demo` を自動で作り、secret がないまま失敗するため。ステップ 3 で Environment と secret を用意してから push する
 - [ ] **3. Environment と secret を用意し、最初の CI からの配備を確かめる** 【承認ゲート: 外部連携・セキュリティ】
   - AI が `gh api` で Environment `demo` を作り、配備のブランチの規則を develop だけにする。読み返して確かめる
   - 人が API キーを作って登録する（AI はキーの値に触れない）:
