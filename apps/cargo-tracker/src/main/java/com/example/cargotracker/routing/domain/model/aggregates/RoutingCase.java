@@ -215,8 +215,7 @@ public final class RoutingCase {
             throw reject(RouteConfirmationRejectionReason.NOT_ROUTE_DESIGNER, "経路を確定できるのは経路設計者だけです");
         }
         RouteVersion routeVersion = routeVersion();
-        if (routeVersion.status() != RouteVersionStatus.CANDIDATES_PRESENTED
-                || confirmedRouteVersion().isPresent()) {
+        if (!confirmable()) {
             throw reject(
                     RouteConfirmationRejectionReason.NOT_CONFIRMABLE_STATE, "確定できない経路版の状態です: " + routeVersion.status());
         }
@@ -228,7 +227,14 @@ public final class RoutingCase {
         if (!candidate.evaluation().conforming()) {
             throw reject(RouteConfirmationRejectionReason.CANDIDATE_EXCLUDED, "除外の候補は確定できません");
         }
-        DecisionRationale decisionRationale = rationaleOf(rationale);
+        DecisionRationale.rejectionOf(rationale).ifPresent(reason -> {
+            throw reject(
+                    reason,
+                    reason == RouteConfirmationRejectionReason.RATIONALE_MISSING
+                            ? "判断根拠を入れてください"
+                            : "判断根拠は " + DecisionRationale.MAX_LENGTH + " 文字までです");
+        });
+        DecisionRationale decisionRationale = DecisionRationale.of(rationale);
         if (!candidate.legs().getFirst().departureAt().instant().isAfter(commitAt.instant())) {
             throw reject(RouteConfirmationRejectionReason.ALREADY_DEPARTED, "最初の区間が出発済みです");
         }
@@ -254,19 +260,6 @@ public final class RoutingCase {
                 approver.userId(),
                 commitAt,
                 candidate.legs().stream().map(Leg::infoVersion).toList());
-    }
-
-    private static DecisionRationale rationaleOf(String rationale) {
-        if (rationale == null || rationale.isBlank()) {
-            throw reject(RouteConfirmationRejectionReason.RATIONALE_MISSING, "判断根拠を入れてください");
-        }
-        String text = rationale.strip();
-        if (text.codePointCount(0, text.length()) > DecisionRationale.MAX_LENGTH) {
-            throw reject(
-                    RouteConfirmationRejectionReason.RATIONALE_TOO_LONG,
-                    "判断根拠は " + DecisionRationale.MAX_LENGTH + " 文字までです");
-        }
-        return new DecisionRationale(text);
     }
 
     private static RouteConfirmationRejected reject(RouteConfirmationRejectionReason reason, String message) {
@@ -366,7 +359,8 @@ public final class RoutingCase {
 
     /** いまの経路版を確定できるか（候補提示済みで、確定した経路版がない）。画面の入口と確定の判定が使う。 */
     public boolean confirmable() {
-        return false;
+        return routeVersion().status() == RouteVersionStatus.CANDIDATES_PRESENTED
+                && confirmedRouteVersion().isEmpty();
     }
 
     /** 確定した経路版（案件に 1 つだけ。R-INV-05）。 */

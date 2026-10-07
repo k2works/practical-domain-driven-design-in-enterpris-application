@@ -57,6 +57,7 @@ final class RoutingCaseViews {
             String routePolicy,
             String requestedAt,
             String quotationExpiresAt,
+            boolean quotationExpired,
             long aggregateVersion,
             boolean calculated,
             boolean confirmable,
@@ -75,6 +76,7 @@ final class RoutingCaseViews {
             String route,
             String arrivalDeadline,
             String quotationExpiresAt,
+            boolean quotationExpired,
             long aggregateVersion,
             CandidateView candidate) {}
 
@@ -110,9 +112,9 @@ final class RoutingCaseViews {
                 status(summary.status()));
     }
 
-    static CaseDetail detail(RoutingCase routingCase) {
+    static CaseDetail detail(RoutingCase routingCase, Instant now) {
         RouteVersion version = routingCase.routeVersion();
-        boolean confirmable = version.status() == RouteVersionStatus.CANDIDATES_PRESENTED;
+        boolean confirmable = routingCase.confirmable();
         Integer confirmedNo =
                 version.confirmation().map(RouteConfirmation::candidateNo).orElse(null);
         return new CaseDetail(
@@ -129,6 +131,7 @@ final class RoutingCaseViews {
                                 .collect(Collectors.joining("、")),
                 dateTime(routingCase.requestedAt()),
                 expiresAt(routingCase),
+                expired(routingCase, now),
                 routingCase.aggregateVersion(),
                 version.status() != RouteVersionStatus.DRAFT,
                 confirmable,
@@ -137,7 +140,8 @@ final class RoutingCaseViews {
                 version.confirmation()
                         .map(confirmation -> new ConfirmedRouteView(
                                 confirmation.candidateNo(),
-                                "経路設計者（利用者 ID " + confirmation.approvedBy() + "）",
+                                // 画面に内部の ID を出さない（D-4）。名前は利用者の公開 API ができてから引く（Bolt 19 レビュー）
+                                "経路設計者",
                                 dateTime(confirmation.approvedAt()),
                                 confirmation.rationale().text()))
                         .orElse(null),
@@ -151,7 +155,7 @@ final class RoutingCaseViews {
     }
 
     /** 経路の確定（S-07）の画面。 */
-    static ConfirmationPage confirmation(RoutingCase routingCase, RouteCandidate candidate) {
+    static ConfirmationPage confirmation(RoutingCase routingCase, RouteCandidate candidate, Instant now) {
         return new ConfirmationPage(
                 routingCase.number().text(),
                 transportRequest(routingCase.transportRequestNumber(), routingCase.transportRequestVersionNo()),
@@ -160,8 +164,17 @@ final class RoutingCaseViews {
                         routingCase.specification().destination()),
                 dateTime(routingCase.specification().arrivalDeadline()),
                 expiresAt(routingCase),
+                expired(routingCase, now),
                 routingCase.aggregateVersion(),
                 candidate(candidate, routingCase.specification().arrivalDeadline(), true, false));
+    }
+
+    /** 見積有効期限と同時刻または後は期限切れ（見積りの失効 Q-INV-07 と同じ向き）。経路設計は期限で確定を拒否しない。 */
+    private static boolean expired(RoutingCase routingCase, Instant now) {
+        return routingCase
+                .quotationExpiresAt()
+                .map(expiry -> !now.isBefore(expiry.instant()))
+                .orElse(false);
     }
 
     private static String expiresAt(RoutingCase routingCase) {

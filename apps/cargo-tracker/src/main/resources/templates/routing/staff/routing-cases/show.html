@@ -12,7 +12,7 @@
     <!-- S-06（Bolt 17、US-06 AC1〜AC3。Bolt 19 で US-07 の確定への入口と確定の後の表示を足した）。候補は表にせず候補ごとの
          まとまりで並べ、幅 320 CSS px で横スクロールを出さない。専門判断の記録は自動判定できない候補を扱う Bolt で足す -->
     <p role="status" th:if="${result}" th:text="${result}">候補を 4 件算出しました（適合 2 件、除外 2 件）</p>
-    <div class="alert alert-warning" role="alert" th:if="${problem}" th:text="${problem}">ほかの経路設計者が先に候補を算出しました</div>
+    <div class="alert alert-warning" role="alert" th:if="${problem}" th:text="${problem}">ほかの経路設計者が先にこの案件を更新しました</div>
     <dl class="row">
         <dt class="col-sm-3">見積依頼</dt>
         <dd class="col-sm-9" th:text="${routingCase.transportRequest()}">TR-2026-0001 版 1</dd>
@@ -23,7 +23,10 @@
         <dt class="col-sm-3">経路方針（参考）</dt>
         <dd class="col-sm-9" th:text="${routingCase.routePolicy()}">SGSIN</dd>
         <dt class="col-sm-3">見積有効期限</dt>
-        <dd class="col-sm-9" th:text="${routingCase.quotationExpiresAt()}">2026-10-08 18:00 Asia/Tokyo（UTC+09:00）（UTC 2026-10-08 09:00）</dd>
+        <dd class="col-sm-9">
+            <span th:text="${routingCase.quotationExpiresAt()}">2026-10-08 18:00 Asia/Tokyo（UTC+09:00）（UTC 2026-10-08 09:00）</span>
+            <strong th:if="${routingCase.quotationExpired()}">（見積りの期限切れ。確定の前後に担当営業と扱いを相談してください）</strong>
+        </dd>
         <dt class="col-sm-3">依頼の日時</dt>
         <dd class="col-sm-9" th:text="${routingCase.requestedAt()}">2026-10-06 11:00 Asia/Tokyo（UTC+09:00）（UTC 2026-10-06 02:00）</dd>
         <dt class="col-sm-3" th:if="${routingCase.calculated()}">判定時刻</dt>

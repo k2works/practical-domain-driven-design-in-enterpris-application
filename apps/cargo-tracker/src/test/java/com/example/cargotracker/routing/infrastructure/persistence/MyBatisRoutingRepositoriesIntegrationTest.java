@@ -335,13 +335,21 @@ class MyBatisRoutingRepositoriesIntegrationTest {
                 .isInstanceOf(DataIntegrityViolationException.class);
     }
 
-    @Test
-    void 確定した経路版の番号はある経路版だけを指せる() {
+    /**
+     * 確定の記録と確定した経路版の番号の表の守り（CHECK `ck_route_version_confirmed` と外部キー。Bolt 19）。PostgreSQL は制約違反で
+     * トランザクションを中断するため、1 つの例に 1 つの違反だけを書く。
+     */
+    @org.junit.jupiter.params.ParameterizedTest(name = "{0}")
+    @org.junit.jupiter.params.provider.ValueSource(
+            strings = {
+                "UPDATE routing.route_version SET rationale = '根拠' WHERE routing_case_id = ?",
+                "UPDATE routing.route_version SET status = 'CONFIRMED' WHERE routing_case_id = ?",
+                "UPDATE routing.routing_case SET confirmed_route_version_no = 9 WHERE id = ?"
+            })
+    void 確定の記録と確定した経路版の番号は表が守る(String violation) {
         UUID id = calculatedAndSaved().id().value();
 
-        assertThatThrownBy(() ->
-                        jdbc.update("UPDATE routing.routing_case SET confirmed_route_version_no = 9 WHERE id = ?", id))
-                .isInstanceOf(DataIntegrityViolationException.class);
+        assertThatThrownBy(() -> jdbc.update(violation, id)).isInstanceOf(DataIntegrityViolationException.class);
     }
 
     @Test
@@ -364,24 +372,6 @@ class MyBatisRoutingRepositoriesIntegrationTest {
                 repository.findByNumber(routingCase.number()).orElseThrow().routeVersion();
         assertThat(found.candidatesFound()).isEqualTo(21);
         assertThat(found.omittedCandidates()).isEqualTo(1);
-    }
-
-    @Test
-    void 確定していない経路版は確定の記録を持てない() {
-        UUID id = calculatedAndSaved().id().value();
-
-        assertThatThrownBy(() ->
-                        jdbc.update("UPDATE routing.route_version SET rationale = '根拠' WHERE routing_case_id = ?", id))
-                .isInstanceOf(DataIntegrityViolationException.class);
-    }
-
-    @Test
-    void 確定の経路版は確定の記録がなければ保存できない() {
-        UUID id = calculatedAndSaved().id().value();
-
-        assertThatThrownBy(() -> jdbc.update(
-                        "UPDATE routing.route_version SET status = 'CONFIRMED' WHERE routing_case_id = ?", id))
-                .isInstanceOf(DataIntegrityViolationException.class);
     }
 
     @Test

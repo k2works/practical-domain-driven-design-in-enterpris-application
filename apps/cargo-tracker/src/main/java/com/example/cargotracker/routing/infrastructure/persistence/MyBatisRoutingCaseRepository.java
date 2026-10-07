@@ -93,10 +93,15 @@ public class MyBatisRoutingCaseRepository implements RoutingCaseRepository {
             throw new ConcurrentRoutingCaseUpdateException(routingCase.number(), routingCase.aggregateVersion());
         }
         RouteVersion version = routingCase.routeVersion();
-        // 確定した経路版は表でも書き直さない（R-INV-06）。確定するときは状態と確定の記録だけを書き、候補はそのまま残す
-        if (mapper.updateRouteVersion(toRow(id, version, null)) == 0
-                || version.status() == RouteVersionStatus.CONFIRMED) {
+        int updated = mapper.updateRouteVersion(toRow(id, version, null));
+        // 確定した経路版の候補は書き直さない（R-INV-06）。確定するときは状態と確定の記録だけを書き（1 件）、確定の後の更新では
+        // 表の条件（作成中・候補提示済みだけ）で何も書かない（0 件）。表の条件は最後の守りで、分岐はドメインの状態で決める
+        if (version.status() == RouteVersionStatus.CONFIRMED) {
             return;
+        }
+        if (updated == 0) {
+            throw new IllegalStateException("経路版を書き直せない: "
+                    + routingCase.number().text() + " 版 " + version.routeVersionNo() + " " + version.status());
         }
         mapper.deleteExclusionReasons(id, version.routeVersionNo());
         mapper.deleteLegs(id, version.routeVersionNo());

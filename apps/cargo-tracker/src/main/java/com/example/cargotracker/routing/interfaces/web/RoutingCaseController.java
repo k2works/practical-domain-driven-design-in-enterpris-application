@@ -9,14 +9,15 @@ import com.example.cargotracker.routing.application.internal.queryservices.Routi
 import com.example.cargotracker.routing.domain.model.aggregates.RoutingCase;
 import com.example.cargotracker.routing.domain.model.entities.RouteCandidate;
 import com.example.cargotracker.routing.domain.model.valueobjects.CandidateCalculation;
+import com.example.cargotracker.routing.domain.model.valueobjects.DecisionRationale;
 import com.example.cargotracker.routing.domain.model.valueobjects.RouteConfirmationRejectionReason;
-import com.example.cargotracker.routing.domain.model.valueobjects.RouteVersionStatus;
 import com.example.cargotracker.routing.domain.model.valueobjects.RoutingCaseNumber;
 import com.example.cargotracker.shared.domain.AuthenticatedActor;
 import com.example.cargotracker.shared.domain.Role;
 import java.time.Clock;
 import java.time.Instant;
 import java.util.EnumSet;
+import java.util.Optional;
 import java.util.Set;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
@@ -46,6 +47,17 @@ public class RoutingCaseController {
     private static final String PROBLEM = "problem";
     private static final String CONFIRMATION_VIEW = "routing/staff/routing-cases/confirmation";
     private static final String CONFLICT_MESSAGE = "ほかの経路設計者が先にこの案件を更新しました。最新の候補を確かめてください。";
+
+    /** S-07 にとどまって示す拒否の理由（入力を直せば、または再算出の判断に使う）。ほかは S-06 に戻して示す。 */
+    private static final Set<RouteConfirmationRejectionReason> SHOWN_ON_CONFIRMATION = EnumSet.of(
+            RouteConfirmationRejectionReason.RATIONALE_MISSING,
+            RouteConfirmationRejectionReason.RATIONALE_TOO_LONG,
+            RouteConfirmationRejectionReason.NOT_ROUTE_DESIGNER,
+            RouteConfirmationRejectionReason.ALREADY_DEPARTED,
+            RouteConfirmationRejectionReason.NO_LONGER_CONFORMING);
+
+    private static final Set<RouteConfirmationRejectionReason> RATIONALE_REASONS = EnumSet.of(
+            RouteConfirmationRejectionReason.RATIONALE_MISSING, RouteConfirmationRejectionReason.RATIONALE_TOO_LONG);
 
     private final RoutingCaseQueryService queryService;
     private final RoutingCaseCommandService commandService;
@@ -77,7 +89,7 @@ public class RoutingCaseController {
                 "routingCase",
                 queryService
                         .findByNumber(parse(number))
-                        .map(RoutingCaseViews::detail)
+                        .map(routingCase -> RoutingCaseViews.detail(routingCase, clock.instant()))
                         .orElseThrow(RoutingCaseController::notFound));
         return SHOW_VIEW;
     }
@@ -114,17 +126,17 @@ public class RoutingCaseController {
             Model model,
             RedirectAttributes redirectAttributes) {
         RoutingCase routingCase = find(parse(number));
-        RouteCandidate selected = candidateOf(routingCase, candidate);
-        if (routingCase.routeVersion().status() != RouteVersionStatus.CANDIDATES_PRESENTED) {
+        if (!routingCase.confirmable()) {
             redirectAttributes.addFlashAttribute(
                     PROBLEM, message(RouteConfirmationRejectionReason.NOT_CONFIRMABLE_STATE));
             return REDIRECT + routingCase.number().text();
         }
+        RouteCandidate selected = candidateOf(routingCase, candidate).orElseThrow(RoutingCaseController::notFound);
         if (!selected.evaluation().conforming()) {
             redirectAttributes.addFlashAttribute(PROBLEM, message(RouteConfirmationRejectionReason.CANDIDATE_EXCLUDED));
             return REDIRECT + routingCase.number().text();
         }
-        model.addAttribute("page", RoutingCaseViews.confirmation(routingCase, selected));
+        model.addAttribute("page", RoutingCaseViews.confirmation(routingCase, selected, clock.instant()));
         model.addAttribute("rationale", "");
         return CONFIRMATION_VIEW;
     }
@@ -144,7 +156,8 @@ public class RoutingCaseController {
                 caseNumber, candidate, rationale, expectedVersion, actor.userId(), actor.hasRole(Role.ROUTE_DESIGNER)));
         return switch (outcome) {
             case RouteConfirmationOutcome.Confirmed confirmed -> {
-                redirectAttributes.addFlashAttribute(RESULT, "候補 %d の経路を確定しました。".formatted(confirmed.candidateNo()));
+                redirectAttributes.addFlashAttribute(
+                        RESULT, "候補 %d の経路を確定しました。確定したことを担当営業に伝えてください。".formatted(confirmed.candidateNo()));
                 yield REDIRECT + confirmed.number().text();
             }
             case RouteConfirmationOutcome.Conflict() -> {
@@ -158,8 +171,14 @@ public class RoutingCaseController {
                     yield REDIRECT + caseNumber.text();
                 }
                 RoutingCase routingCase = find(caseNumber);
-                model.addAttribute(
-                        "page", RoutingCaseViews.confirmation(routingCase, candidateOf(routingCase, candidate)));
+                Optional<RouteCandidate> selected = candidateOf(routingCase, candidate);
+                if (selected.isEmpty()) {
+                    // 拒否の後に候補が算出し直されていた。S-06 で最新の候補を確かめてもらう
+                    redirectAttributes.addFlashAttribute(
+                            PROBLEM, message(RouteConfirmationRejectionReason.CANDIDATE_NOT_FOUND));
+                    yield REDIRECT + caseNumber.text();
+                }
+                model.addAttribute("page", RoutingCaseViews.confirmation(routingCase, selected.get(), clock.instant()));
                 model.addAttribute("rationale", rationale);
                 model.addAttribute("error", message(reason));
                 model.addAttribute("rationaleError", RATIONALE_REASONS.contains(reason));
@@ -168,22 +187,11 @@ public class RoutingCaseController {
         };
     }
 
-    /** S-07 にとどまって示す拒否の理由（入力を直せば、または再算出の判断に使う）。ほかは S-06 に戻して示す。 */
-    private static final Set<RouteConfirmationRejectionReason> SHOWN_ON_CONFIRMATION = EnumSet.of(
-            RouteConfirmationRejectionReason.RATIONALE_MISSING,
-            RouteConfirmationRejectionReason.RATIONALE_TOO_LONG,
-            RouteConfirmationRejectionReason.NOT_ROUTE_DESIGNER,
-            RouteConfirmationRejectionReason.ALREADY_DEPARTED,
-            RouteConfirmationRejectionReason.NO_LONGER_CONFORMING);
-
-    private static final Set<RouteConfirmationRejectionReason> RATIONALE_REASONS = EnumSet.of(
-            RouteConfirmationRejectionReason.RATIONALE_MISSING, RouteConfirmationRejectionReason.RATIONALE_TOO_LONG);
-
     /** 確定の拒否の理由の文言（UI 設計 S-07）。 */
     static String message(RouteConfirmationRejectionReason reason) {
         return switch (reason) {
             case RATIONALE_MISSING -> "判断根拠を入れてください。";
-            case RATIONALE_TOO_LONG -> "判断根拠は 4,000 文字までで入れてください。";
+            case RATIONALE_TOO_LONG -> "判断根拠は %,d 文字までで入れてください。".formatted(DecisionRationale.MAX_LENGTH);
             case NOT_ROUTE_DESIGNER -> "経路を確定できるのは経路設計者だけです。";
             case NOT_CONFIRMABLE_STATE -> "この案件の経路はすでに確定しているか、候補をまだ算出していません。";
             case CANDIDATE_NOT_FOUND -> "選んだ候補がありません。経路候補の比較で最新の候補を確かめてください。";
@@ -197,11 +205,10 @@ public class RoutingCaseController {
         return queryService.findByNumber(number).orElseThrow(RoutingCaseController::notFound);
     }
 
-    private static RouteCandidate candidateOf(RoutingCase routingCase, int candidateNo) {
+    private static Optional<RouteCandidate> candidateOf(RoutingCase routingCase, int candidateNo) {
         return routingCase.routeVersion().candidates().stream()
                 .filter(each -> each.candidateNo() == candidateNo)
-                .findFirst()
-                .orElseThrow(RoutingCaseController::notFound);
+                .findFirst();
     }
 
     private static String result(CandidateCalculation calculation) {

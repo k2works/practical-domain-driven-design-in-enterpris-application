@@ -18,21 +18,29 @@ public record DecisionRationale(String text) {
 
     public DecisionRationale {
         Objects.requireNonNull(text, "text");
-        if (text.isBlank() || !text.equals(text.strip())) {
-            throw new IllegalArgumentException("判断根拠は前後の空白を除いた 1 文字以上です");
+        if (!text.equals(text.strip())) {
+            throw new IllegalArgumentException("前後の空白を除いた値を渡してください");
         }
-        if (text.codePointCount(0, text.length()) > MAX_LENGTH) {
-            throw new IllegalArgumentException("判断根拠は " + MAX_LENGTH + " 文字までです");
-        }
+        rejectionOf(text).ifPresent(reason -> {
+            throw new IllegalArgumentException("判断根拠にならない値です: " + reason);
+        });
     }
 
     /** 入力が判断根拠にならない理由（なれば空）。 */
     public static Optional<RouteConfirmationRejectionReason> rejectionOf(String input) {
+        if (input == null || input.isBlank()) {
+            return Optional.of(RouteConfirmationRejectionReason.RATIONALE_MISSING);
+        }
+        String text = input.strip();
+        // 文字はコードポイントで数える（表の VARCHAR(4000) と同じ数え方。サロゲートペアは 1 文字）
+        if (text.codePointCount(0, text.length()) > MAX_LENGTH) {
+            return Optional.of(RouteConfirmationRejectionReason.RATIONALE_TOO_LONG);
+        }
         return Optional.empty();
     }
 
     /** 入力から判断根拠を作る（前後の空白を除く）。 */
     public static DecisionRationale of(String input) {
-        return new DecisionRationale(input);
+        return new DecisionRationale(Objects.requireNonNull(input, "input").strip());
     }
 }

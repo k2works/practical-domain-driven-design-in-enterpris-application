@@ -214,7 +214,7 @@
          ORDER BY route_version_no, candidate_no, reason_no
     </select>
 
-    <!-- 案件一覧（S-05）。Bolt 17 の案件は経路版 1 だけを持つ。依頼時刻の新しい順、同時刻は案件番号の降順 -->
+    <!-- 案件一覧（S-05）。最新の経路版の状態を示し、見積有効期限の近い順（NULL は後ろ）、依頼の古い順、案件番号の順（Bolt 19） -->
     <select id="selectSummaries" resultMap="routingCaseSummaryRow">
         SELECT c.case_number, c.transport_request_number, c.transport_request_version_no, c.origin_unlocode,
                c.destination_unlocode, c.arrival_deadline, c.requested_at, v.status, c.quotation_expires_at
