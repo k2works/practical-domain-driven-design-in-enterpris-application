@@ -7887,7 +7887,7 @@
 <li>承認ゲートの扱い（T-36）: 人の指示（<code>/goal Bolt19</code>）により、ステップ 2 の Green とこのステップのデータベースの承認ゲートで止まらずに進めた（AI の判断）。根拠は、列と CHECK が計画の確認ポイント 2・3・8・10 とデータモデルのとおりで、足した列（<code>candidates_found</code>）は D-64 の範囲であること。終了報告の承認の議題に置く</li>
 </ul>
 </li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>4. S-07 と確定の操作、S-05・S-06 の変更（画面の層の Red → Green）</strong> 【承認ゲート: 画面】</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>4. S-07 と確定の操作、S-05・S-06 の変更（画面の層の Red → Green）</strong> 【承認ゲート: 画面】</li>
 <li>画面の単体テストと画面の層の受入シナリオを先に書き、<code>uiTest</code> で失敗を記録する（T-21。<code>features/ui/confirm_route_ui.feature</code>、<code>@ui @US-07</code>。デモ項目に <code>@demo @demo-bolt-19/&lt;名前&gt;</code>）<ul>
 <li>経路設計者が S-06 の適合の候補から S-07 を開き、根拠を入れて確認の領域で確定すると、S-06 に「経路を確定しました」と確定した候補が示される</li>
 <li>根拠を入れずに確定すると、エラー要約に理由が示され入力が残る</li>
@@ -7897,6 +7897,14 @@
 </li>
 <li>S-05 の見積有効期限の列と並び、S-06 の確定へのリンクと確定の後の表示、版を持つフォーム、S-07 の controller と template。営業・荷主は S-07 で 403（Bolt 17 の認可のまま）</li>
 <li>完了の判定: <code>check</code> と <code>uiTest</code> が緑。push して CI を確かめる</li>
+<li>結果（2026-10-07 22:04〜22:28 JST。Red <code>241e3d9</code>、Green <code>d91ebf2</code>）<ul>
+<li>Red: 画面の単体テスト（S-05 の見積有効期限・期限切れ・確定済み、S-06 の確定への入口・算出のフォームの版・示さなかった候補の数・確定の後の表示、S-07 の表示・除外の候補・ない候補と案件の 404・確定・拒否のエラー要約と入力の保持・根拠の不足・競合の 11 件）、セキュリティの統合テスト（営業・荷主は S-07 を開けず送れない）、画面の層の受入シナリオ（<code>features/ui/confirm_route_ui.feature</code>。確定 <code>@demo-bolt-19/confirm-route</code>、根拠なし <code>@demo-bolt-19/confirm-route-without-rationale</code>、幅 320 CSS px）を先に書いた。骨組みは、算出のコマンドに版を足し、コントローラーが算出で版を受け取る（フォームはまだ版を持たない）ところまで。<code>test</code> で 10 件、<code>uiTest</code> で 5 本の失敗を記録した（<code>241e3d9</code>）。T-39 の記録: 画面の単体テストの 10 件は、S-07 のマッピングがない（404）か表示がない（本命）で落ちた。<code>uiTest</code> の 5 本は、算出のフォームが版を送らず 400 になったため、候補の算出（前提）で落ちた（Bolt 17 の 2 本を含む）。セキュリティのテストは最初から通った（<code>/staff/routing-cases/**</code> の認可が S-07 も覆う）。確定した案件の表示のテストは、テストで接続時間規則を渡し忘れて確定の再判定で拒否されたため、直してからコミットした（テストの誤り）</li>
+<li>Green: コントローラー（S-05 は時計で期限切れを判定、S-07 の表示と確定、拒否の理由ごとの文言、入力で直せる理由は S-07 に、ほかは S-06 に戻して示す）、表示の値（<code>RoutingCaseViews</code>）、テンプレート（S-05 の見積有効期限の列、S-06 の確定した経路の欄・確定への入口・示さなかった候補の数・算出のフォームの版、S-07）、算出の入力ポートの版の照合。<code>check</code> 緑、<code>uiTest</code> 緑（54 本。Bolt 18 の 51 本から +3。axe-core の違反 0 件）</li>
+<li>途中で直したこと: 判断根拠を候補のまとまりではなく「確定した経路」の欄に示す構成に合わせて、画面の層の手順の文を直した。textarea の <code>required</code> でブラウザが送信を止め、サーバーのエラー要約が出なかったため、<code>required</code> を外し <code>aria-required</code> にした（見積依頼の画面と同じくサーバーで確かめる）。エラー要約に Bootstrap の <code>alert-danger</code> を使って色のコントラストの違反になったため、見積依頼の画面と同じ書き方にした。算出の競合の文言を、確認ポイント 9 のとおり確定と同じ「ほかの経路設計者が先にこの案件を更新しました。…」にし、Bolt 17 の画面の単体テスト 1 件と UI 設計を直した（H2 の数に入れる）</li>
+<li>計画からの変更: 確定の画面（S-07）は、見積りへの回答（C-05）と同じく画面そのものを確認の領域にした（別のダイアログは挟まない）。承認者は利用者の名前を引く仕組みが経路設計にないため「経路設計者（利用者 ID …）」と示す（開発レビューの論点にする）。画面の層で確定した案件はシナリオの後に消さない（業務番号でシナリオごとに分かれ、ほかのシナリオと交わらない。T-50。航海はこれまでどおり消す）</li>
+<li>承認ゲートの扱い（T-36）: 画面の承認ゲートで止まらずに進めた（AI の判断）。根拠は、文言と構成が計画の確認ポイント 5・7・9・10 と UI 設計の S-07 の行のとおりであること</li>
+</ul>
+</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>5. 開発レビューと Bolt 終了報告</strong></li>
 <li><code>developing-review</code> で Bolt 19 の変更をレビューし、指摘への対応を決める（T-28）。確定の再検証の時刻と、集約の形の変更（D-64）の観点を必ず含める</li>
 <li><code>check</code>・<code>uiTest</code>・CI・SonarQube の品質ゲート（PASS。ステップ 1 のタスクで起動する）を確かめる</li>
