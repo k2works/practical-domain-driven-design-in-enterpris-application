@@ -3616,6 +3616,41 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../development/cargo-tracker/bolt_19_plan/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 19 計画
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--draft"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -8160,6 +8195,18 @@
 <td style="text-align: left;">経路設計</td>
 </tr>
 <tr>
+<td style="text-align: left;">判断根拠</td>
+<td style="text-align: left;">DecisionRationale</td>
+<td style="text-align: left;">経路設計者が経路を確定するときに記録する、その候補を選んだ理由。前後の空白を除いて 1〜4,000 文字（R-INV-04。Bolt 19）</td>
+<td style="text-align: left;">経路設計</td>
+</tr>
+<tr>
+<td style="text-align: left;">経路の承認者</td>
+<td style="text-align: left;">RouteApprover</td>
+<td style="text-align: left;">経路を確定した利用者と、確定の時点で経路設計者の役割を持つか（R-INV-04。Bolt 19）</td>
+<td style="text-align: left;">経路設計</td>
+</tr>
+<tr>
 <td style="text-align: left;">必要最小接続時間</td>
 <td style="text-align: left;">MinimumConnectionTime</td>
 <td style="text-align: left;">航路・港ごとの、区間の乗り継ぎに必要な最小時間（BR-11）</td>
@@ -8740,6 +8787,15 @@
 <li>候補を算出すると経路版は作成中から候補提示済みになる。候補提示済みで再算出すると、候補を置き換え、判定時刻を更新する。</li>
 <li>依頼の後に輸送要求が再提出されて経路条件が得られないときは、案件を作らず警告のログを残す（確認ポイント 3。補償の扱いは Bolt 17 レビュー D-64 で後の Bolt に回した）。案件の作成と候補の算出は監査記録に書かない（確認ポイント 16。監査の対象は確定から）。</li>
 <li>候補探索は、目的地に寄った後の港へ運んでから積み替えて目的地へ戻る列を列挙しない（Bolt 17 レビュー D-60）。</li>
+</ul>
+<p>Bolt 19（US-07 AC1・AC2）で決めたこと（<a href="../../../development/cargo-tracker/bolt_19_plan/">Bolt 19 計画</a> の確認ポイント 2〜10）:</p>
+<ul>
+<li>経路設計案件は経路版の一覧を持つ（Bolt 17 レビュー D-64）。R0.1 は案件に経路版 1 つで運用し、新しい経路版を作るのは再設計（US-08）。候補の算出は最新の経路版だけを書き換え、確定した経路版は書き換えない。</li>
+<li>確定は、候補提示済みの経路版の適合の候補に、判断根拠（前後の空白を除いて 1〜4,000 文字）と承認者を付けて行う。承認者が経路設計者の役割を持つかを集約でも確かめる（URL の認可と二重に守る）。</li>
+<li>確定の再検証（R-INV-03 の R0.1 の範囲）: 選んだ候補の保存済みの区間を、確定の時刻（承認 commit 時刻）で有効な接続時間規則と希望到着期限で制約適合判定にかけ直し、不適合なら拒否する。最初の区間の出発予定が確定の時刻と同時刻または前なら出発済みとして拒否する。航海を読み直して参照情報版の更新を拒否するのは AC3（W6、#16）。</li>
+<li>確定の拒否の理由は、根拠の不足（<code>RATIONALE_MISSING</code>）、経路設計者でない（<code>NOT_ROUTE_DESIGNER</code>）、ない候補（<code>CANDIDATE_NOT_FOUND</code>）、除外の候補（<code>CANDIDATE_EXCLUDED</code>）、確定の時刻で不適合（<code>NO_LONGER_CONFORMING</code>）、出発済み（<code>ALREADY_DEPARTED</code>）、確定できない状態（<code>NOT_CONFIRMABLE_STATE</code>。作成中、確定済み）。確定の後の候補の再算出も確定できない状態として拒否する（R-INV-06）。</li>
+<li>確定すると経路版は確定になり、選んだ候補番号・判断根拠・承認者・承認 commit 時刻を持つ。案件は確定した経路版の番号を 1 つだけ持つ（R-INV-05）。参照情報版は候補の区間の採用情報版で、経路版に写しを持たない。</li>
+<li>確定すると DE-05（経路を確定した）を発行する。見積りの有効期限で確定を拒否しない（失効した見積りへの割当てと荷主の承認の拒否は見積り側。US-24 AC4・AC5）。DE-05 を購読して見積りに経路版を割り当てるのは US-24 AC4 の Bolt（R-INV-11）。確定は監査証跡（US-17）にまだ書かず、経路版の列で残す。</li>
 </ul>
 <h3 id="bookingu6">予約（Booking、U6）<a class="headerlink" href="#bookingu6" title="Permanent link">&para;</a></h3>
 <h4 id="_14">予約の集約<a class="headerlink" href="#_14" title="Permanent link">&para;</a></h4>
@@ -9375,7 +9431,7 @@
 <td style="text-align: left;">DE-05</td>
 <td style="text-align: left;">経路を確定した</td>
 <td style="text-align: left;">経路設計</td>
-<td style="text-align: left;">経路設計案件 ID、経路版番号、見積り ID、承認者、参照情報版</td>
+<td style="text-align: left;">経路設計案件 ID・案件番号、経路版番号、見積り ID、輸送要求 ID・版番号、承認者、承認 commit 時刻、参照情報版の一覧（<code>routing.domain.events</code>。イベントはドメインの型を持たない。Bolt 19）</td>
 <td style="text-align: left;">見積り: 経路版を割り当てる（荷主承認待ち）。通知（荷主の承認が必要）。予約（再設計後の割当て）、追跡（予定の更新）</td>
 <td style="text-align: left;">EV-04</td>
 </tr>

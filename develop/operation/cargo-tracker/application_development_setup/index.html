@@ -3150,6 +3150,41 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../development/cargo-tracker/bolt_19_plan/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 19 計画
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--draft"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -7830,9 +7865,8 @@ npx<span class="w"> </span>gulp<span class="w"> </span>sonar-local:issues<span c
 </tr>
 </tbody>
 </table>
-<p>フックの後は、4 節のコマンドがそのまま動く。SonarQube を使うときは、フックでは起動しないため、次の手順で起動してから 4 節の <code>sonar-local:check</code> を実行する。</p>
-<div class="highlight"><pre><span></span><code><span class="nb">cd</span><span class="w"> </span>ops/docker/sonarqube-local
-docker<span class="w"> </span>compose<span class="w"> </span>-f<span class="w"> </span>docker-compose.yml<span class="w"> </span>-f<span class="w"> </span>docker-compose.cloud.yml<span class="w"> </span>up<span class="w"> </span>-d<span class="w">   </span><span class="c1"># 起動時チェックを外し Web の heap を 2 GB に</span>
+<p>フックの後は、4 節のコマンドがそのまま動く。SonarQube を使うときは、フックでは起動しないため、次の手順で起動してから 4 節の <code>sonar-local:check</code> を実行する。<code>sonar-local:*</code> のタスクは、クラウドの実行環境（<code>CLAUDE_CODE_REMOTE=true</code>）では <code>ops/docker/sonarqube-local/docker-compose.cloud.yml</code>（起動時チェックを外し Web の heap を 2 GB にする上書き）を自動で重ねる。開発者の PC では重ねない（Bolt 19。T-52）。</p>
+<div class="highlight"><pre><span></span><code>npx<span class="w"> </span>gulp<span class="w"> </span>sonar-local:start
 <span class="k">until</span><span class="w"> </span>curl<span class="w"> </span>-s<span class="w"> </span>localhost:9000/api/system/status<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>-q<span class="w"> </span><span class="s1">'"UP"'</span><span class="p">;</span><span class="w"> </span><span class="k">do</span><span class="w"> </span>sleep<span class="w"> </span><span class="m">3</span><span class="p">;</span><span class="w"> </span><span class="k">done</span>
 </code></pre></div>
 <p>初回は admin のパスワードを変えてトークンを作り、ルートの <code>.env</code>（Git の対象外）に <code>SONAR_TOKEN</code> と <code>SONAR_PROJECT_KEY=cargo-tracker-modular-monolith</code> を書く（<a href="../../../reference/SonarQube%E3%83%AD%E3%83%BC%E3%82%AB%E3%83%AB%E7%92%B0%E5%A2%83%E3%82%BB%E3%83%83%E3%83%88%E3%82%A2%E3%83%83%E3%83%97%E6%89%8B%E9%A0%86%E6%9B%B8/">SonarQube ローカル環境セットアップ手順書</a>）。クラウドの実行環境のコンテナはセッションの終わりに消えるため、トークンはセッションごとに作り直す。</p>
@@ -7854,7 +7888,7 @@ docker<span class="w"> </span>compose<span class="w"> </span>-f<span class="w"> 
 </tr>
 <tr>
 <td style="text-align: left;">SonarQube のコンテナが起動を繰り返す</td>
-<td style="text-align: left;"><code>docker-compose.cloud.yml</code> を重ねずに起動した。上の手順で起動し直す</td>
+<td style="text-align: left;"><code>docker-compose.cloud.yml</code> を重ねずに起動した（<code>docker compose</code> を直接使った、または <code>CLAUDE_CODE_REMOTE</code> がない）。<code>npx gulp sonar-local:stop</code> の後、上の手順で起動し直す</td>
 </tr>
 </tbody>
 </table>
