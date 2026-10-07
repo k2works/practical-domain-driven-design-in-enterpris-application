@@ -4518,6 +4518,41 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../review/cargo-tracker/bolt_19_review_20261007/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 19 開発成果物レビュー（2026-10-07）
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--draft"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -8015,7 +8050,7 @@
 <li>実装で足した列（Bolt 17 のステップ 3）: <code>routing_case.transport_request_number</code>（業務番号の写し。S-05 で見積依頼を示す）、<code>routing_case.requested_at</code>（詳細経路設計の依頼時刻。S-05 の並びと案件番号の年）、<code>route_version.candidates_evaluated_at</code>（候補の判定時刻。候補が 0 件でも算出したことを残す）、<code>candidate_leg.info_version</code>・<code>info_acquired_at</code>（区間を取った航海の採用情報版と取得時刻。理由の参照情報版と情報鮮度に使う）。<code>routing_case</code> の <code>created_by</code>・<code>updated_by</code> は、操作者を残す Bolt（US-07 の確定）で足す。<code>route_candidate.candidate_no</code> は 1〜20（候補の上限）、<code>voyage.source_kind</code> は出典の種類の 4 値を CHECK で守る。</li>
 <li><code>route_candidate.min_connection_slack_minutes</code> は候補の接続余裕（接続時間 − 必要最小接続時間の最小。分）。直行は NULL。<code>info_insufficient</code> は AC4（W6）まで常に false。</li>
 <li>候補を再算出したら、経路版の候補・区間・除外理由を消して入れ直す（候補は追記専用ではない）。確定した経路版の候補は書き換えない（Bolt 19）。</li>
-<li>Bolt 19（US-07 AC1・AC2）で足す列: <code>route_version</code> の <code>candidates_found</code>（見つけた候補の数。上限で示さなかった候補の数を常に示す。Bolt 17 レビュー D-64。既存の行は示した候補の数で埋める）、<code>selected_candidate_no</code>・<code>rationale</code>（VARCHAR(4000)）・<code>approved_by</code>・<code>approved_at</code>。4 列は <code>status = 'CONFIRMED'</code> のときだけそろって値を持つ（CHECK <code>ck_route_version_confirmed</code>）。確定すると <code>routing_case.confirmed_route_version_no</code> に経路版番号を入れる。<code>routing_case</code> の <code>quotation_expires_at</code>（DE-16 の見積有効期限。S-05 の並び）・<code>created_by</code>（DE-16 の依頼者）・<code>updated_by</code>（最後に算出・確定した経路設計者）。Bolt 17 で作った行のために NULL を許す（デモ環境のサンプルの案件は <code>db/dev-data</code> で依頼元の見積りから写す）。S-05 は最新の経路版の状態を示し、見積有効期限の近い順（NULL は後ろ）、同じなら依頼の古い順に並べる。確定した経路版の行は、<code>updateRouteVersion</code> の条件（作成中・候補提示済みだけ）で書き直さない。参照情報版は <code>candidate_leg.info_version</code> から読み、写しの列は作らない。<code>decided_by</code>（専門判断）と再設計の列は使う Bolt で足す。</li>
+<li>Bolt 19（US-07 AC1・AC2）で足す列: <code>route_version</code> の <code>candidates_found</code>（見つけた候補の数。上限で示さなかった候補の数を常に示す。Bolt 17 レビュー D-64。既存の行は示した候補の数で埋める）、<code>selected_candidate_no</code>・<code>rationale</code>（VARCHAR(4000)）・<code>approved_by</code>・<code>approved_at</code>。4 列はそろって NULL かそろって値を持ち、確定では値を持ち、作成中・候補提示済み・要専門家判断では持たない（再設計要・旧版は確定の後の状態なので持てる）（CHECK <code>ck_route_version_confirmed</code>）。確定すると <code>routing_case.confirmed_route_version_no</code> に経路版番号を入れる。<code>routing_case</code> の <code>quotation_expires_at</code>（DE-16 の見積有効期限。S-05 の並び）・<code>created_by</code>（行を作った操作者ではなく、DE-16 の依頼者の荷主担当者。行はイベントの購読が作る）・<code>updated_by</code>（最後に算出・確定した経路設計者）。Bolt 17 で作った行のために NULL を許す（デモ環境のサンプルの案件は <code>db/dev-data</code> で依頼元の見積りから写す）。S-05 は最新の経路版の状態を示し、見積有効期限の近い順（NULL は後ろ）、同じなら依頼の古い順に並べる。確定した経路版の行は、<code>updateRouteVersion</code> の条件（作成中・候補提示済みだけ）で書き直さない。参照情報版は <code>candidate_leg.info_version</code> から読み、写しの列は作らない。開発レビューの後に外部キーを 2 本足した（<code>V20261007140000</code>）。<code>routing_case</code>（<code>id</code>、<code>confirmed_route_version_no</code>）→ <code>route_version</code>、<code>route_version</code>（<code>routing_case_id</code>、<code>route_version_no</code>、<code>selected_candidate_no</code>）→ <code>route_candidate</code>（確定した候補を消せない）。「確定は案件に 1 つ」は H2 で部分一意インデックスを作れないため <code>confirmed_route_version_no</code> と集約の検証で守る。<code>decided_by</code>（専門判断）と再設計の列は使う Bolt で足す。</li>
 <li>経路設計の表と見積りの表の間に外部キーは張らない（スキーマの所有。ADR-001）。輸送要求・見積りの ID は、見積りの公開 API とイベントから得た値の写し。</li>
 <li>航海・寄港・接続時間規則は、外部原本の取込（US-14、W7）と規則の管理ができるまで、開発環境の <code>db/dev-data</code> にだけ入れる仮のデータ（出典 <code>MANUAL_ENTRY</code>、情報版 <code>PROVISIONAL-1</code>、架空の航海番号）。ステージング・本番では 0 件。</li>
 </ul>
