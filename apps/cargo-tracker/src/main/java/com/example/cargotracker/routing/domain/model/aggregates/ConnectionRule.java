@@ -31,8 +31,10 @@ public record ConnectionRule(
         }
     }
 
-    /** その港の積替えに、その時刻で適用するか。骨組み（ステップ 2 の Red）。 */
+    /** その港の積替えに、その時刻で適用するか。適用期間は開始を含み、終わりを含まない。 */
     public boolean appliesTo(Location at, UtcInstant judgedAt) {
-        return false;
+        return port.equals(at)
+                && !judgedAt.instant().isBefore(validFrom.instant())
+                && (validTo == null || judgedAt.instant().isBefore(validTo.instant()));
     }
 }
