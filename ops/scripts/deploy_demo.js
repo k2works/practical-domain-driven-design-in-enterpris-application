@@ -73,12 +73,14 @@ function capture(cmd) {
  * @returns {string}
  */
 function execArgs(file, args, options = {}) {
-  return execFileSync(file, args, {
+  // 標準出力を端末に流す（stdio が inherit）ときは null が返るので、空文字にする
+  const output = execFileSync(file, args, {
     encoding: 'utf8',
     stdio: ['pipe', 'pipe', 'inherit'],
     env: cleanDockerEnv(),
     ...options,
-  }).trim();
+  });
+  return (output ?? '').trim();
 }
 
 /**
