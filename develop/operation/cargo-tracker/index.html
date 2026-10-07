@@ -7330,8 +7330,16 @@ Gradle のタスクは <code>apps/cargo-tracker</code> で、Gulp のタスク�
 <td style="text-align: left;">SonarQube でスキャンして品質ゲートを判定する</td>
 </tr>
 <tr>
+<td style="text-align: left;"><code>npx gulp deploy:demo:status</code></td>
+<td style="text-align: left;">Heroku のデモ環境の状態と動いているコミット（配備は develop の CI が自動で行う。<a href="heroku_demo_setup/">Heroku デモ環境セットアップ手順書</a>）</td>
+</tr>
+<tr>
 <td style="text-align: left;"><code>npx gulp deploy:demo</code></td>
-<td style="text-align: left;">Heroku のデモ環境へ配備する（<a href="heroku_demo_setup/">Heroku デモ環境セットアップ手順書</a>。<code>deploy:demo:help</code> でほかのタスク）</td>
+<td style="text-align: left;">CI が使えないときに、手元からデモ環境へ配備する</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>npx gulp deploy:demo:ci-key</code></td>
+<td style="text-align: left;">CI の配備の API キー（期限 90 日）を更新する。<code>deploy:demo:ci-key:revoke-old</code> で古いキーを失効させる</td>
 </tr>
 </tbody>
 </table>

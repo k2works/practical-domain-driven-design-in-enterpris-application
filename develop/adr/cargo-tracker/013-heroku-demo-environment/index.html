@@ -7367,11 +7367,11 @@
 </tr>
 <tr>
 <td style="text-align: left;">CI の認証</td>
-<td style="text-align: left;">Heroku の API キー（authorization、期限 1 年）を人が作り、GitHub の Environment <code>demo</code>（配備のブランチは develop だけ）の secret <code>HEROKU_API_KEY</code> に人が登録する。AI はキーの値を扱わない。期限の 1 か月前に更新し、漏えいの疑いがあれば失効させる</td>
+<td style="text-align: left;">Heroku の API キー（authorization、<code>global</code>、期限 90 日）を人が <code>deploy:demo:ci-key</code> で作り、GitHub の Environment <code>demo</code>（配備のブランチは develop だけ）の secret <code>HEROKU_API_KEY</code> に登録する。AI はキーの値を扱わない。期限の 2 週間前を期日にした Issue で更新を知らせ、新しいキーで配備が通った後に <code>deploy:demo:ci-key:revoke-old</code> で古いキーを失効させる（D-57）。キーの境界は「k2works のアカウントで develop に push するもの（人と AI のセッション）」で、develop に push できればワークフローを書き換えてキーを使える。develop の直接 push の運用は変えず、<code>.github/workflows/</code> の変更は人がレビューする（D-58）</td>
 </tr>
 <tr>
 <td style="text-align: left;">配備のガード</td>
-<td style="text-align: left;">CI: <code>deploy-demo</code> は <code>needs: [check, ui]</code> で、develop の push と手動の実行のときだけ動き、Environment <code>demo</code> が develop の外からのキーの利用を拒む。手元: 作業ツリーに変更がなく、develop にいて、HEAD が <code>origin/develop</code> に含まれ、アプリを最後に変えたコミットの develop での CI が緑のときだけ、ビルドと push を行う。どちらも、イメージにコミットの SHA のラベルを付け、release の後に Config Vars の <code>DEMO_REVISION</code> に残す。配備の後に <code>/login</code> が 200 になることを確かめる（CI）</td>
+<td style="text-align: left;">CI: <code>deploy-demo</code> は <code>needs: [check, ui]</code> で、develop の push と手動の実行のときだけ動き、Environment <code>demo</code> が develop の外からのキーの利用を拒む。CI の対象のパスを最後に変えたコミットが、配備するコミットまでと develop の先頭までで同じときだけ配備する（古い実行の再実行で古いコミットを出さない）。配備のジョブはワークフローの取り消しの外に置き、1 つずつ動かす。手元: 作業ツリーに変更がなく、develop にいて、HEAD が <code>origin/develop</code> に含まれ、アプリを最後に変えたコミットの develop での CI が緑のときだけ、ビルドと push を行う。どちらも、イメージにコミットの SHA のラベルを付け、release の後に Config Vars の <code>DEMO_REVISION</code> に残す。CI は配備の後、<code>DEMO_REVISION</code> が配備したコミットで、最新の release が succeeded で、その版の web の dyno が up で、<code>/login</code> が 200 になるのを最大 180 秒待ち、来なければ直前の release に戻してジョブを失敗にする</td>
 </tr>
 <tr>
 <td style="text-align: left;">データ</td>
@@ -7492,8 +7492,9 @@
 <li><code>-Xmx300m</code> は Heroku の dyno だけの値。dyno では JVM が 512 MB の上限を基準にせず、<code>-XX:MaxRAMPercentage</code> で R14 が出た。cgroup の上限が JVM に見える Fargate（W10）では <code>-XX:MaxRAMPercentage</code> を使い、この値を写さない。</li>
 <li>月 5 USD（Eco の定額）が人の Heroku のアカウントに付く。アカウント・費用・停止の手段が 1 人に集まる。</li>
 <li><code>DevLoginGuard</code> の守りは働かない。dev のプロファイルが公開の環境で動くことを、この ADR で認める。</li>
-<li>GitHub に長期の API キー（期限 1 年、<code>global</code> のスコープ）を置く。Heroku は OIDC に対応しないため、ADR-008 の「長期のアクセスキーを置かない」（AWS 向け）と同じ守り方はできない。範囲を Environment <code>demo</code> と develop に限り、期限と失効で補う。漏れると人の Heroku のアカウント全体を操作される。</li>
+<li>GitHub に API キー（期限 90 日、<code>global</code> のスコープ）を置く。Heroku は OIDC に対応しないため、ADR-008 の「長期のアクセスキーを置かない」（AWS 向け）と同じ守り方はできない。範囲を Environment <code>demo</code> と develop に限り、期限と失効で補う。漏れると人の Heroku のアカウント全体を操作される。デモのアプリだけの collaborator にした専用のアカウントのキーにすれば範囲を狭められる（W10 で検討する。D-57）。</li>
 <li>develop に push するたびに（アプリと設計文書の変更のとき）デモ環境が再起動し、データが初期状態に戻る。デモの最中は develop に push しない。</li>
+<li>release が 2 段（formation と Config Vars）で、配備のたびに再起動が 2 回起きる。<code>DEMO_REVISION</code> をイメージに入れて 1 回にするのは W10 で、配備のジョブを分け、イメージを 1 回だけビルドして昇格させる構造と合わせて行う（Bolt 16 レビュー R-02・R-11）。</li>
 <li><code>runtime</code> のステージに Heroku の都合（<code>PORT</code>、<code>sh -c</code>、<code>EXTRA_CLASSPATH</code>）が残る。W10 で <code>runtime</code> を exec 形式にし、これらを <code>demo</code> に移す（Bolt 15 レビュー R-11）。</li>
 </ul>
 <h2 id="_9">コンプライアンス<a class="headerlink" href="#_9" title="Permanent link">&para;</a></h2>

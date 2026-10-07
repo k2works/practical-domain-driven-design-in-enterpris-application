@@ -7398,7 +7398,7 @@
 <h2 id="_8">コンプライアンス<a class="headerlink" href="#_8" title="Permanent link">&para;</a></h2>
 <ul>
 <li>Terraform で、S3 のバージョニングと Object Lock、RDS の暗号化と自動バックアップが有効であることを確認する。</li>
-<li>GitHub Actions に長期のアクセスキーを置かず、OIDC で認証していることを確認する。</li>
+<li>GitHub Actions に長期のアクセスキーを置かず、OIDC で認証していることを確認する（AWS への認証。OIDC に対応しない Heroku のデモ環境の API キーは、ADR-013 の例外として Environment <code>demo</code> に置く）。</li>
 </ul>
 <h2 id="_9">備考<a class="headerlink" href="#_9" title="Permanent link">&para;</a></h2>
 <ul>
