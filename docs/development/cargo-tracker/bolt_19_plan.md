@@ -4,7 +4,7 @@ title: "Bolt 19 計画 - 判断根拠を記録して経路を確定する（US-0
 description: "19 回目の Bolt の計画。経路設計者が S-06 で選んだ適合の候補について、判断根拠を記録し、確定の時刻で再検証して経路版を確定する（US-07 AC1）。根拠・権限の不足と、確定できない候補・状態を拒否する（AC2）。あわせて Bolt 17 レビューの D-64（経路版の一覧、版による競合、一覧の見積有効期限の順）と、Try T-52（ローカルの SonarQube のクラウドの上書きを起動のタスクに組み込む）を行う。"
 tags: [development,bolt-plan]
 status: draft
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-07T10:23:34Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-07T10:27:28Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-07T10:21:14Z }
 ---
@@ -224,7 +224,7 @@ S07 --> S06 : 戻る
   - `ops/scripts/sonar_local.js` の `sonar-local:start`（と `restart`）が、`CLAUDE_CODE_REMOTE=true` のとき `docker-compose.cloud.yml` を重ねて起動する。手順書（`application_development_setup.md` の 9 節）の手作業の `docker compose` をタスクに置き換え、コマンドリファレンス（`docs/operation/cargo-tracker/index.md`）に書く（T-52）
   - 完了の判定: `okf:check` が ERROR 0、`documentationTest` が緑。`npx gulp sonar-local:start` でこの環境の SonarQube が起動する。push する
   - 結果（2026-10-07 19:15〜19:23 JST）: ドメインモデル（用語集に判断根拠・経路の承認者、「Bolt 19 で決めたこと」、DE-05 の項目）、データモデル（Bolt 19 で足す列と CHECK）、UI 設計（S-07 の URL と文言、S-05・S-06 の変更）、ユーザーストーリー（US-07 の Bolt 19 の決定）に反映した。`sonar_local.js` の `dockerCompose` が、`CLAUDE_CODE_REMOTE=true` で `docker-compose.cloud.yml` を重ねるようにし（`start` だけでなく `stop`・`status`・`logs` も同じ設定ファイルの組で動く）、手順書の 9 節とコマンドリファレンスを直した。`npx gulp sonar-local:start` で起動し、コンテナに上書きの環境変数が入り UP になった。`okf:check` ERROR 0、`documentationTest` 緑
-- [ ] **2. 経路版の一覧と確定の規則（集約の TDD）** 【承認ゲート: Red（拒否の表）／ Green】
+- [?] **2. 経路版の一覧と確定の規則（集約の TDD）** 【承認ゲート: Red（拒否の表）／ Green】
   - 単体テストを先に書き、Red を記録する（テストの表が R-INV-03・04・05・06 の仕様になる）
     - 確定: 適合の候補、根拠、経路設計者で確定すると、経路版が確定になり、選んだ候補・根拠・承認者・承認 commit 時刻を持ち、DE-05 が返る。参照情報版は候補の区間の採用情報版
     - 根拠: 空・空白だけは `RATIONALE_MISSING`、1 文字・4,000 文字は確定、4,001 文字は `RATIONALE_MISSING`（長すぎる）
@@ -235,6 +235,11 @@ S07 --> S06 : 戻る
     - 経路版の一覧（D-64）: 案件は経路版の一覧を持ち、算出は最新の経路版だけを書き換える。確定した経路版は 1 つだけ（R-INV-05）
   - Red をコミットし、Green で `RoutingCase.confirm`・`RouteVersion` の確定・`DecisionRationale`・`RouteApprover`・`RouteConfirmationRejected`・`RouteConfirmed` を作る。Bolt 17 のテストは振る舞いを変えずに通す（H2）
   - 完了の判定: `check` が緑。push して CI を確かめる
+  - 結果（Red。2026-10-07 19:27 JST。`6db18cb`）
+    - `RoutingCaseConfirmationTest`（24 件）を先に書いた。確定と DE-05 の項目、根拠（空・空白・null、1 文字・4,000 文字・4,001 文字）、経路設計者でない承認者、除外の候補、ない候補（0・4・99）、確定の時刻で有効になった厳しい規則（12 時間）での不適合と同値（10 時間）の適合、最初の区間の出発の 1 分前・同時刻・1 分後、作成中、確定し直し、確定の後の算出、経路版の一覧と最新の経路版だけの書き換え、確定の経路版は案件に 1 つ、確定と確定の記録の対応
+    - 骨組み: `RoutingCase.confirm`（null を返す）・`routeVersions`（最新だけ）・`confirmedRouteVersion`（空）、`RouteVersion` の確定の記録の成分、`DecisionRationale`・`RouteApprover`・`RouteConfirmation`・`RouteConfirmationRejectionReason`・`RouteConfirmationRejected`、`routing.domain.events.RouteConfirmed`。`reconstitute` は経路版の一覧を受け取る形に変え、呼び出し 3 か所（MyBatis のリポジトリ、テストのインメモリのリポジトリ、`RoutingCaseTest` の 1 件）を直した（H2 の数に入れる）
+    - 新しいテスト 24 件の失敗を記録した。T-39 の記録: 22 件は本命のアサーションで落ちた（拒否の例外が出ない、確定にならない、経路版の一覧が 1 つだけ）。「確定した経路版は確定し直せない」「確定した経路版の候補は算出し直せない」の 2 件は、前の確定が骨組みで何もしないために落ちた（前提）。前提のアサーション（候補 3 は除外）は通った。既存の routing のテスト 174 件は通った
+    - 計画からの変更: 根拠が 4,000 文字を超えるときの理由を、`RATIONALE_MISSING` ではなく `RATIONALE_TOO_LONG` に分けた（画面の文言を分けるため）。確定の後の算出は、Bolt 17 のとおり `IllegalStateException` で拒否する（計画の「NOT_CONFIRMABLE_STATE」は確定し直しだけ）
 - [ ] **3. 表の列・リポジトリ・DE-05・入力ポート（統合テスト）** 【承認ゲート: データベース】
   - 業務ルール層の受入シナリオを先に書く（`features/routing/confirm_route.feature`、`@US-07 @US-07-AC1`・`AC2`）
     - 経路設計者が適合の候補を根拠を付けて確定すると、経路版が確定し、根拠・承認者・commit 時刻・参照情報版が記録される（AC1）
