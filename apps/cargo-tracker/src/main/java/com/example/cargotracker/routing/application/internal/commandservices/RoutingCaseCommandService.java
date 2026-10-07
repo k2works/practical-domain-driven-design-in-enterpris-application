@@ -1,15 +1,23 @@
 package com.example.cargotracker.routing.application.internal.commandservices;
 
 import com.example.cargotracker.routing.application.internal.commands.CalculateCandidatesCommand;
+import com.example.cargotracker.routing.domain.model.aggregates.ConcurrentRoutingCaseUpdateException;
 import com.example.cargotracker.routing.domain.model.aggregates.ConnectionRuleRepository;
+import com.example.cargotracker.routing.domain.model.aggregates.RoutingCase;
 import com.example.cargotracker.routing.domain.model.aggregates.RoutingCaseRepository;
 import com.example.cargotracker.routing.domain.model.aggregates.VoyageRepository;
+import com.example.cargotracker.routing.domain.model.rules.ConstraintEvaluator;
+import com.example.cargotracker.routing.domain.model.rules.RouteCandidateFinder;
+import com.example.cargotracker.routing.domain.model.valueobjects.CandidateCalculation;
+import com.example.cargotracker.shared.domain.UtcInstant;
 import java.time.Clock;
+import java.util.Optional;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * 経路設計案件の入力ポート（経路設計者が使う。US-06）。トランザクションの境界になる。骨組み（ステップ 3 の Red）。
+ * 経路設計案件の入力ポート（経路設計者が使う。US-06）。トランザクションの境界になる。
+ * 判定時刻は Clock から得る。航海と接続時間規則を読み込み、候補探索と制約適合判定に渡す（どちらもリポジトリを呼ばない）。
  *
  * <p>{@code @Service} は JIG がユースケースとして読むための印で、部品探索の対象にはしない（CargoTrackerApplication）。
  * 組み立ては {@code RoutingConfiguration} が担う。
@@ -21,6 +29,8 @@ public class RoutingCaseCommandService {
     private final VoyageRepository voyageRepository;
     private final ConnectionRuleRepository connectionRuleRepository;
     private final Clock clock;
+    private final RouteCandidateFinder finder = new RouteCandidateFinder();
+    private final ConstraintEvaluator evaluator = new ConstraintEvaluator();
 
     public RoutingCaseCommandService(
             RoutingCaseRepository repository,
@@ -33,9 +43,25 @@ public class RoutingCaseCommandService {
         this.clock = clock;
     }
 
-    /** 経路候補を算出・再算出する。骨組み。 */
+    /** 経路候補を算出・再算出する（US-06 AC1〜AC3）。 */
     @Transactional
     public CandidateCalculationOutcome calculateCandidates(CalculateCandidatesCommand command) {
-        return new CandidateCalculationOutcome.NotFound();
+        Optional<RoutingCase> found = repository.findByNumber(command.number());
+        if (found.isEmpty()) {
+            return new CandidateCalculationOutcome.NotFound();
+        }
+        RoutingCase routingCase = found.get();
+        CandidateCalculation calculation = routingCase.calculateCandidates(
+                voyageRepository.findAll(),
+                connectionRuleRepository.findAll(),
+                new UtcInstant(clock.instant()),
+                finder,
+                evaluator);
+        try {
+            repository.update(routingCase);
+        } catch (ConcurrentRoutingCaseUpdateException _) {
+            return new CandidateCalculationOutcome.Conflict();
+        }
+        return new CandidateCalculationOutcome.Calculated(routingCase.number(), calculation);
     }
 }

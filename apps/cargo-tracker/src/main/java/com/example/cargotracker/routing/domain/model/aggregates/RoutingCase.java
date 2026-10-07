@@ -1,15 +1,21 @@
 package com.example.cargotracker.routing.domain.model.aggregates;
 
+import com.example.cargotracker.routing.domain.model.entities.RouteCandidate;
 import com.example.cargotracker.routing.domain.model.entities.RouteVersion;
 import com.example.cargotracker.routing.domain.model.rules.ConstraintEvaluator;
 import com.example.cargotracker.routing.domain.model.rules.RouteCandidateFinder;
 import com.example.cargotracker.routing.domain.model.valueobjects.CandidateCalculation;
+import com.example.cargotracker.routing.domain.model.valueobjects.ConstraintEvaluation;
+import com.example.cargotracker.routing.domain.model.valueobjects.Leg;
 import com.example.cargotracker.routing.domain.model.valueobjects.RouteSpecification;
+import com.example.cargotracker.routing.domain.model.valueobjects.RouteVersionStatus;
 import com.example.cargotracker.routing.domain.model.valueobjects.RoutingCaseId;
 import com.example.cargotracker.routing.domain.model.valueobjects.RoutingCaseNumber;
 import com.example.cargotracker.shared.annotation.ddd.AggregateRoot;
 import com.example.cargotracker.shared.domain.Location;
 import com.example.cargotracker.shared.domain.UtcInstant;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
@@ -126,15 +132,50 @@ public final class RoutingCase {
                 aggregateVersion);
     }
 
-    /** 候補を算出する。骨組み（ステップ 3 の Red）。 */
+    /**
+     * 候補を算出する（作成中・候補提示済み → 候補提示済み。US-06 AC1）。航海の一覧から区間の列を列挙し（候補探索）、
+     * それぞれを判定時刻で判定して（制約適合判定）、適合を先に、到着予定の早い順に上限まで残し、1 から候補番号を振る。
+     * 候補提示済みで算出し直したら、候補を置き換え、判定時刻を更新する。
+     *
+     * @throws IllegalStateException 作成中・候補提示済みでない（確定の後の再算出は US-08 の再設計で行う）
+     */
     public CandidateCalculation calculateCandidates(
             List<Voyage> voyages,
             List<ConnectionRule> rules,
             UtcInstant judgedAt,
             RouteCandidateFinder finder,
             ConstraintEvaluator evaluator) {
-        return new CandidateCalculation(0, 0, 0, judgedAt);
+        RouteVersionStatus status = routeVersion.status();
+        if (status != RouteVersionStatus.DRAFT && status != RouteVersionStatus.CANDIDATES_PRESENTED) {
+            throw new IllegalStateException("候補を算出できない経路版の状態です: " + status);
+        }
+        List<Evaluated> evaluated = finder.find(specification, voyages, judgedAt).stream()
+                .map(legs -> new Evaluated(legs, evaluator.evaluate(specification, legs, rules, judgedAt)))
+                .sorted(PRESENTATION_ORDER)
+                .toList();
+        List<RouteCandidate> candidates = new ArrayList<>();
+        for (Evaluated candidate : evaluated.subList(0, Math.min(MAX_CANDIDATES, evaluated.size()))) {
+            candidates.add(
+                    new RouteCandidate(candidates.size() + 1, candidate.legs(), candidate.evaluation(), judgedAt));
+        }
+        routeVersion = new RouteVersion(
+                routeVersion.routeVersionNo(), RouteVersionStatus.CANDIDATES_PRESENTED, candidates, judgedAt);
+        int conforming = (int) candidates.stream()
+                .filter(candidate -> candidate.evaluation().conforming())
+                .count();
+        return new CandidateCalculation(evaluated.size(), candidates.size(), conforming, judgedAt);
     }
+
+    /** 判定した区間の列（候補番号を振る前）。 */
+    private record Evaluated(List<Leg> legs, ConstraintEvaluation evaluation) {}
+
+    /** 示す順。適合を先に、到着予定の早い順、同時刻は航海番号の順（確定的にする）。 */
+    private static final Comparator<Evaluated> PRESENTATION_ORDER = Comparator.comparing(
+                    (Evaluated candidate) -> !candidate.evaluation().conforming())
+            .thenComparing(
+                    candidate -> candidate.evaluation().estimatedArrivalAt().instant())
+            .thenComparing(candidate -> String.join(
+                    ",", candidate.legs().stream().map(Leg::voyageNumber).toList()));
 
     public RoutingCaseId id() {
         return id;

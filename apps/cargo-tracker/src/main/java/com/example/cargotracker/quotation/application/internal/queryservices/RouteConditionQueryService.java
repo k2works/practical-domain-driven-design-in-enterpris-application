@@ -3,12 +3,15 @@ package com.example.cargotracker.quotation.application.internal.queryservices;
 import com.example.cargotracker.quotation.api.RouteConditionQuery;
 import com.example.cargotracker.quotation.api.RouteConditionView;
 import com.example.cargotracker.quotation.domain.model.aggregates.TransportRequestRepository;
+import com.example.cargotracker.quotation.domain.model.valueobjects.ShipmentTerms;
+import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestId;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.stereotype.Service;
 
 /**
- * 経路条件の照会の実装（見積りの公開 API。Bolt 17）。骨組み（ステップ 3 の Red）。
+ * 経路条件の照会の実装（見積りの公開 API。Bolt 17）。輸送要求の現在の版の輸送条件から、経路設計が使う項目を写す。
+ * 輸送要求は現在の版だけを読み出すため、依頼の後に再提出された（現在の版が違う）ときは空を返す。
  *
  * <p>{@code @Service} は JIG がユースケースとして読むための印で、部品探索の対象にはしない（CargoTrackerApplication）。
  * 組み立ては {@code QuotationConfiguration} が担う。
@@ -24,6 +27,17 @@ public class RouteConditionQueryService implements RouteConditionQuery {
 
     @Override
     public Optional<RouteConditionView> find(UUID transportRequestId, int transportRequestVersionNo) {
-        return Optional.empty();
+        return repository
+                .findById(new TransportRequestId(transportRequestId))
+                .filter(request -> request.currentVersion().versionNo() == transportRequestVersionNo)
+                .map(request -> {
+                    ShipmentTerms terms = request.currentVersion().terms();
+                    return new RouteConditionView(
+                            request.number().text(),
+                            terms.origin(),
+                            terms.destination(),
+                            terms.arrivalDeadline(),
+                            terms.cargo().category().name());
+                });
     }
 }
