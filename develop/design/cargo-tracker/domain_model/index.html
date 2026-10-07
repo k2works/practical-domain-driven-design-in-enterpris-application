@@ -8019,6 +8019,42 @@
 <td style="text-align: left;">経路設計</td>
 </tr>
 <tr>
+<td style="text-align: left;">経路設計案件 ID</td>
+<td style="text-align: left;">RoutingCaseId</td>
+<td style="text-align: left;">経路設計案件を識別する、システムが発行する不透明な値。画面には出さず、案件番号を出す（Bolt 17）</td>
+<td style="text-align: left;">経路設計</td>
+</tr>
+<tr>
+<td style="text-align: left;">案件番号</td>
+<td style="text-align: left;">RoutingCaseNumber</td>
+<td style="text-align: left;">経路設計者と営業が言い合える経路設計案件の番号。<code>RC-年-年ごとの連番</code>（例: RC-2026-0088）。年は詳細経路設計の依頼時刻の日本時間の年で、業務番号と同じ規則で振る（D-10。Bolt 17）</td>
+<td style="text-align: left;">経路設計</td>
+</tr>
+<tr>
+<td style="text-align: left;">経路条件</td>
+<td style="text-align: left;">RouteSpecification</td>
+<td style="text-align: left;">経路設計案件の出発地・目的地・希望到着期限・貨物種別。見積りの公開 API（経路条件の照会）から得た輸送要求版の写し（Bolt 17）</td>
+<td style="text-align: left;">経路設計</td>
+</tr>
+<tr>
+<td style="text-align: left;">寄港</td>
+<td style="text-align: left;">PortCall</td>
+<td style="text-align: left;">航海が寄る港と、その到着予定・出発予定</td>
+<td style="text-align: left;">経路設計</td>
+</tr>
+<tr>
+<td style="text-align: left;">接続時間規則</td>
+<td style="text-align: left;">ConnectionRule</td>
+<td style="text-align: left;">積替えの港ごとの必要最小接続時間と適用期間（BR-11）。業務責任者の値（DM-05）が届くまでは仮の値</td>
+<td style="text-align: left;">経路設計</td>
+</tr>
+<tr>
+<td style="text-align: left;">除外理由</td>
+<td style="text-align: left;">ExclusionReason</td>
+<td style="text-align: left;">候補を除外した理由の区分（期限超過・接続不足・接続できない・貨物種別・情報不足）と、不適合となった時刻・閾値・参照情報版（R-INV-02）</td>
+<td style="text-align: left;">経路設計</td>
+</tr>
+<tr>
 <td style="text-align: left;">必要最小接続時間</td>
 <td style="text-align: left;">MinimumConnectionTime</td>
 <td style="text-align: left;">航路・港ごとの、区間の乗り継ぎに必要な最小時間（BR-11）</td>
@@ -8589,6 +8625,15 @@
 </tbody>
 </table>
 <p>経路候補探索と制約適合判定は複数の航海と規則を扱うため、ドメインサービスにする。どちらも状態を持たず、リポジトリを呼ばない。必要な航海と規則はアプリケーションサービスが読み込んで渡す。</p>
+<p>Bolt 17（US-06 AC1〜AC3）で決めたこと（<a href="../../../development/cargo-tracker/bolt_17_plan/">Bolt 17 計画</a> の確認ポイント 2・3・8・9・10）:</p>
+<ul>
+<li>経路設計案件は DE-16 を受けて作り、経路条件は見積りの公開 API（<code>quotation.api</code> の経路条件の照会）から ACL 越しに得て、経路条件（<code>RouteSpecification</code>）に変える。案件には案件番号を振り、経路版 1 を作成中で持つ。</li>
+<li>候補探索は、判定時刻より後に出発する区間で、出発地から目的地への直行と 1 回の積替え（区間 1〜2）を列挙する。同じ航海を 2 回使う列は列挙しない。3 区間以上は R1.0（W6）。候補は到着予定の早い順に 20 件まで。</li>
+<li>接続時間は、前の区間の到着予定から、同じ港での次の区間の出発予定まで。積替えの港に判定時刻で有効な接続時間規則がなければ、その候補を「接続できない」で除外する（失敗に倒す）。</li>
+<li>制約適合判定は、期限超過（不適合の時刻は到着予定、閾値は希望到着期限、参照情報版は最終区間の航海の採用情報版）と、接続不足（時刻は次の区間の出発予定、閾値は必要最小接続時間と規則の港、参照情報版は次の区間の航海の採用情報版）を返す。両方に当たれば理由を 2 つ持つ。貨物種別は R0.1 では判定しない。</li>
+<li>候補の接続余裕は、接続時間から必要最小接続時間を引いた値のうち最も小さいもの（直行は持たない）。情報鮮度は、候補に使った航海の取得時刻のうち最も古いもの。</li>
+<li>候補を算出すると経路版は作成中から候補提示済みになる。候補提示済みで再算出すると、候補を置き換え、判定時刻を更新する。</li>
+</ul>
 <h3 id="bookingu6">予約（Booking、U6）<a class="headerlink" href="#bookingu6" title="Permanent link">&para;</a></h3>
 <h4 id="_14">予約の集約<a class="headerlink" href="#_14" title="Permanent link">&para;</a></h4>
 <table>
@@ -9207,8 +9252,8 @@
 <td style="text-align: left;">DE-16</td>
 <td style="text-align: left;">荷主が詳細経路設計を依頼した</td>
 <td style="text-align: left;">見積り</td>
-<td style="text-align: left;">見積り ID・見積り番号、輸送要求 ID・版番号、経路方針、有効期限、依頼者、依頼時刻（経路条件は経路設計が見積りの公開 API から問い合わせる。形は US-06 で決める。Bolt 12）</td>
-<td style="text-align: left;">見積り: 輸送要求を経路設計中にする（別のトランザクション。冪等で、見積り作成中・見積提示済みかつ同じ版のときだけ変える。Bolt 12）。経路設計: 経路設計案件を作る（R-INV-10。US-06）</td>
+<td style="text-align: left;">見積り ID・見積り番号、輸送要求 ID・版番号、経路方針、有効期限、依頼者、依頼時刻（経路条件は経路設計が見積りの公開 API（<code>quotation.api</code> の経路条件の照会。輸送要求 ID と版番号で、出発地・目的地・希望到着期限・貨物種別を返す）から問い合わせる。Bolt 12・17）</td>
+<td style="text-align: left;">見積り: 輸送要求を経路設計中にする（別のトランザクション。冪等で、見積り作成中・見積提示済みかつ同じ版のときだけ変える。Bolt 12）。経路設計: 経路設計案件を作る（R-INV-10。冪等で、同じ輸送要求の版の案件があれば何もしない。US-06。Bolt 17）</td>
 <td style="text-align: left;">—</td>
 </tr>
 <tr>
