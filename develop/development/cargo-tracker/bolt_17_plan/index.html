@@ -16,7 +16,7 @@
         <link rel="prev" href="../bolt_16_report/">
       
       
-        <link rel="next" href="../../../operation/">
+        <link rel="next" href="../bolt_17_report/">
       
       
         
@@ -3363,6 +3363,41 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../bolt_17_report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 17 終了報告
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--draft"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -4325,6 +4360,41 @@
   
   
     <span class="md-status md-status--stable"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../review/cargo-tracker/bolt_17_review_20261007/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 17 開発成果物レビュー（2026-10-07）
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--draft"></span>
   
 
   
@@ -7992,7 +8062,7 @@
 <li>承認ゲートの扱い（T-36）: セキュリティの承認ゲートで止まらずに進めた（AI の判断）。根拠は、認可が確認ポイント 11 のとおりで、営業・荷主の 403 と経路設計者の営業の画面の 403 をテストで確かめたこと</li>
 </ul>
 </li>
-<li>[-] <strong>5. 開発レビューと Bolt 終了報告</strong></li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>5. 開発レビューと Bolt 終了報告</strong></li>
 <li><code>developing-review</code> で Bolt 17 の変更をレビューし、指摘への対応を決める（T-28）。境界の判定とモジュールの境界の観点を必ず含める</li>
 <li><code>check</code>・<code>uiTest</code>・CI・SonarQube の品質ゲート（PASS）を確かめる</li>
 <li>デモ環境（develop の CI の配備）で、人が S-06 を操作して操作性を確かめる（UI-HO-04。確認ポイント 15）。算出の時間を測る（確認ポイント 8、T-44）</li>
@@ -8001,6 +8071,8 @@
 <li>
 <h1 id="7-ac1ac3-15-r01-2">7 の AC1〜AC3 にチェックを付けてクローズする。#15 に R0.1 で作った範囲（区間 2 まで、規則のない港の扱い）をコメントする<a class="headerlink" href="#7-ac1ac3-15-r01-2" title="Permanent link">&para;</a></h1>
 </li>
+<li>結果（2026-10-07 13:27〜14:25 JST）: 5 つの視点でレビューし（<a href="../../../review/cargo-tracker/bolt_17_review_20261007/">レビュー</a>。高 6・中 17・低 13）、D-60〜D-63 をこの Bolt で直した（Red <code>368c0df</code>、Green <code>bc20b95</code>、文書）。経路版の一覧と一覧の並びは US-07（D-64）、結果整合・航海の絞り込みなどは W6・W7（D-65）に回した。SonarQube は最初の走査で Code Smell 7 件を出し、直して PASS にした（<code>e5c8b70</code>）。ローカルの SonarQube はこの環境のファイル記述子の上限と web の heap で起動しなかったため、スクラッチパッドの上書きで起動した（T-52）。デモ項目の 2 本を <code>./gradlew demoVideo</code> で録画した（過去の Bolt の動画は撮り直さず元に戻した）。<code>check</code>（967 件）・<code>uiTest</code>（51 本）は緑。<a href="../bolt_17_report/">Bolt 17 終了報告</a> を書いた。#7 をクローズし、#15 にコメントした。デモ環境の S-06 の操作性（UI-HO-04）と算出の時間は人が確かめる（終了報告の議題 7）</li>
+<li>承認ゲートの扱い（T-36）: 開発レビューの判断で止まらずに進めた（AI の判断）。終了報告の承認の議題に置く</li>
 </ul>
 <h3 id="_12">時間の配分と打ち切り<a class="headerlink" href="#_12" title="Permanent link">&para;</a></h3>
 <table>
@@ -8208,20 +8280,20 @@
 <h3 id="definition-of-done">Definition of Done<a class="headerlink" href="#definition-of-done" title="Permanent link">&para;</a></h3>
 <ul class="task-list">
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> ステップ 1〜5 が完了し、計画・ステップ 2 の Red・Green・ステップ 3（データベース）・ステップ 4（セキュリティ）・開発レビューの判断・終了報告の承認ゲートを人が通した</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <code>./gradlew check</code> と <code>./gradlew uiTest</code> がローカルと CI の両方で緑。各ステップの終わりに push し、CI を確かめた</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> SonarQube の品質ゲートが PASS</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> 期限・接続時間の境界（直前・同時刻・直後の 3 点）と、既定と違う規則の値のテストが緑</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> 業務ルール層で <code>@US-06-AC1</code>〜<code>AC3</code> のシナリオが緑。画面の層で <code>@US-06</code> のシナリオが緑</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> DE-16 の再配信で案件が重複しないことを統合テストで確かめた</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> ApplicationModules の検証と ArchUnit で、<code>routing</code> が <code>quotation</code> の <code>api</code>・<code>events</code> 以外に依存しないことを確かめた</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> 経路設計者・営業担当者・荷主の認可をセキュリティの統合テストで確かめた</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> 確認ポイント 1〜16 の決定が、設計文書から追える</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> 開発レビューを行い、指摘への対応を終了報告に書いた（T-28）</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> UI-HO-04 の結果を終了報告とリリース計画の引継ぎ ID の台帳に書いた</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> デモ項目の動画を撮り、終了報告と開発の索引からリンクした（T-31）</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <code>bolt_17_report.md</code> に仮説 H1〜H3 の結論、各ステップの時刻と Red の記録、所要時間を書いた</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> #7 をクローズし、#15 にコメントした</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> ユーザーマニュアルは更新しない（マニュアルはまだない。認証と主要な画面がそろってから書く）</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <code>./gradlew check</code> と <code>./gradlew uiTest</code> がローカルと CI の両方で緑。各ステップの終わりに push し、CI を確かめた</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> SonarQube の品質ゲートが PASS</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> 期限・接続時間の境界（直前・同時刻・直後の 3 点）と、既定と違う規則の値のテストが緑</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> 業務ルール層で <code>@US-06-AC1</code>〜<code>AC3</code> のシナリオが緑。画面の層で <code>@US-06</code> のシナリオが緑</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> DE-16 の再配信で案件が重複しないことを統合テストで確かめた</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> ApplicationModules の検証と ArchUnit で、<code>routing</code> が <code>quotation</code> の <code>api</code>・<code>events</code> 以外に依存しないことを確かめた</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> 経路設計者・営業担当者・荷主の認可をセキュリティの統合テストで確かめた</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> 確認ポイント 1〜16 の決定が、設計文書から追える</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> 開発レビューを行い、指摘への対応を終了報告に書いた（T-28）</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> UI-HO-04 の結果を終了報告とリリース計画の引継ぎ ID の台帳に書いた（人がデモ環境で確かめる。終了報告の議題 7）</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> デモ項目の動画を撮り、終了報告と開発の索引からリンクした（T-31）</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <code>bolt_17_report.md</code> に仮説 H1〜H3 の結論、各ステップの時刻と Red の記録、所要時間を書いた</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> #7 をクローズし、#15 にコメントした</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> ユーザーマニュアルは更新しない（マニュアルはまだない。認証と主要な画面がそろってから書く）</li>
 </ul>
 <h3 id="_15">デモ項目<a class="headerlink" href="#_15" title="Permanent link">&para;</a></h3>
 <table>
@@ -8274,6 +8346,12 @@
 <tr>
 <td style="text-align: left;">2026-10-07</td>
 <td style="text-align: left;">初版（W3 の最初の Bolt。範囲は人の決定で US-06 AC1〜AC3 を 1 つの Bolt で）</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5</td>
+<td style="text-align: left;">—</td>
+</tr>
+<tr>
+<td style="text-align: left;">2026-10-07</td>
+<td style="text-align: left;">人の指示（<code>/goal Bolt17</code>）で、計画の承認を待たずに確認ポイント 1〜16 の案のとおりに進め、ステップ 1〜5 の結果を記録し、終了報告を書いた（承認ゲートは終了報告の承認の場でまとめて受ける。T-36）</td>
 <td style="text-align: left;">anthropic/claude-opus-5-5</td>
 <td style="text-align: left;">—</td>
 </tr>

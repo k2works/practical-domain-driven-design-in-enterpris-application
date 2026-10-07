@@ -3546,6 +3546,41 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../development/cargo-tracker/bolt_17_report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 17 終了報告
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--draft"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -4508,6 +4543,41 @@
   
   
     <span class="md-status md-status--stable"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../review/cargo-tracker/bolt_17_review_20261007/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 17 開発成果物レビュー（2026-10-07）
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--draft"></span>
   
 
   
@@ -8633,6 +8703,8 @@
 <li>制約適合判定は、期限超過（不適合の時刻は到着予定、閾値は希望到着期限、参照情報版は最終区間の航海の採用情報版）と、接続不足（時刻は次の区間の出発予定、閾値は必要最小接続時間と規則の港、参照情報版は次の区間の航海の採用情報版）を返す。両方に当たれば理由を 2 つ持つ。貨物種別は R0.1 では判定しない。</li>
 <li>候補の接続余裕は、接続時間から必要最小接続時間を引いた値のうち最も小さいもの（直行は持たない）。情報鮮度は、候補に使った航海の取得時刻のうち最も古いもの。</li>
 <li>候補を算出すると経路版は作成中から候補提示済みになる。候補提示済みで再算出すると、候補を置き換え、判定時刻を更新する。</li>
+<li>依頼の後に輸送要求が再提出されて経路条件が得られないときは、案件を作らず警告のログを残す（確認ポイント 3。補償の扱いは Bolt 17 レビュー D-64 で後の Bolt に回した）。案件の作成と候補の算出は監査記録に書かない（確認ポイント 16。監査の対象は確定から）。</li>
+<li>候補探索は、目的地に寄った後の港へ運んでから積み替えて目的地へ戻る列を列挙しない（Bolt 17 レビュー D-60）。</li>
 </ul>
 <h3 id="bookingu6">予約（Booking、U6）<a class="headerlink" href="#bookingu6" title="Permanent link">&para;</a></h3>
 <h4 id="_14">予約の集約<a class="headerlink" href="#_14" title="Permanent link">&para;</a></h4>
