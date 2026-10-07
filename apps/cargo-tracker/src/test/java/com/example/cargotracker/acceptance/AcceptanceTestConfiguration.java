@@ -139,8 +139,10 @@ public class AcceptanceTestConfiguration {
                 InMemoryRoutingCaseRepository repository,
                 InMemoryVoyageRepository voyageRepository,
                 InMemoryConnectionRuleRepository connectionRuleRepository,
+                DeferredEventDelivery eventDelivery,
                 MutableClock clock) {
-            return new RoutingCaseCommandService(repository, voyageRepository, connectionRuleRepository, clock);
+            return new RoutingCaseCommandService(
+                    repository, voyageRepository, connectionRuleRepository, eventDelivery, clock);
         }
 
         @Bean

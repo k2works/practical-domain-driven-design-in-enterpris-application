@@ -1,6 +1,7 @@
 package com.example.cargotracker.routing.application.internal.commandservices;
 
 import com.example.cargotracker.routing.application.internal.commands.CalculateCandidatesCommand;
+import com.example.cargotracker.routing.application.internal.commands.ConfirmRouteCommand;
 import com.example.cargotracker.routing.domain.model.aggregates.ConcurrentRoutingCaseUpdateException;
 import com.example.cargotracker.routing.domain.model.aggregates.ConnectionRuleRepository;
 import com.example.cargotracker.routing.domain.model.aggregates.RoutingCase;
@@ -12,6 +13,7 @@ import com.example.cargotracker.routing.domain.model.valueobjects.CandidateCalcu
 import com.example.cargotracker.shared.domain.UtcInstant;
 import java.time.Clock;
 import java.util.Optional;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,6 +30,7 @@ public class RoutingCaseCommandService {
     private final RoutingCaseRepository repository;
     private final VoyageRepository voyageRepository;
     private final ConnectionRuleRepository connectionRuleRepository;
+    private final ApplicationEventPublisher eventPublisher;
     private final Clock clock;
     private final RouteCandidateFinder finder = new RouteCandidateFinder();
     private final ConstraintEvaluator evaluator = new ConstraintEvaluator();
@@ -36,10 +39,12 @@ public class RoutingCaseCommandService {
             RoutingCaseRepository repository,
             VoyageRepository voyageRepository,
             ConnectionRuleRepository connectionRuleRepository,
+            ApplicationEventPublisher eventPublisher,
             Clock clock) {
         this.repository = repository;
         this.voyageRepository = voyageRepository;
         this.connectionRuleRepository = connectionRuleRepository;
+        this.eventPublisher = eventPublisher;
         this.clock = clock;
     }
 
@@ -58,10 +63,19 @@ public class RoutingCaseCommandService {
                 finder,
                 evaluator);
         try {
-            repository.update(routingCase);
+            repository.update(routingCase, command.operator().value());
         } catch (ConcurrentRoutingCaseUpdateException _) {
             return new CandidateCalculationOutcome.Conflict();
         }
         return new CandidateCalculationOutcome.Calculated(routingCase.number(), calculation);
+    }
+
+    /**
+     * 判断根拠を記録して経路を確定する（US-07 AC1・AC2）。確定の時刻（承認 commit 時刻）は Clock から得て、その時刻で有効な
+     * 接続時間規則で判定し直す。確定したら DE-05 を発行する（購読は US-24 AC4）。
+     */
+    @Transactional
+    public RouteConfirmationOutcome confirm(ConfirmRouteCommand command) {
+        return new RouteConfirmationOutcome.NotFound();
     }
 }

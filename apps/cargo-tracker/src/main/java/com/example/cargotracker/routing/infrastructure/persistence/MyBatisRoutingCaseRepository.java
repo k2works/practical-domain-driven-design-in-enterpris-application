@@ -74,7 +74,7 @@ public class MyBatisRoutingCaseRepository implements RoutingCaseRepository {
     }
 
     @Override
-    public void update(RoutingCase routingCase) {
+    public void update(RoutingCase routingCase, UUID operatorId) {
         UUID id = routingCase.id().value();
         if (mapper.touchRoutingCase(id, routingCase.aggregateVersion(), OffsetDateTime.now(clock)) == 0) {
             throw new ConcurrentRoutingCaseUpdateException(routingCase.number(), routingCase.aggregateVersion());
@@ -108,7 +108,8 @@ public class MyBatisRoutingCaseRepository implements RoutingCaseRepository {
                         new Location(row.destinationUnlocode()),
                         toUtc(row.arrivalDeadline()),
                         toUtc(row.requestedAt()),
-                        RouteVersionStatus.valueOf(row.status())))
+                        RouteVersionStatus.valueOf(row.status()),
+                        null))
                 .toList();
     }
 
@@ -199,6 +200,8 @@ public class MyBatisRoutingCaseRepository implements RoutingCaseRepository {
                         toUtc(row.arrivalDeadline()),
                         row.cargoCategory()),
                 toUtc(row.requestedAt()),
+                null,
+                null,
                 List.of(version),
                 row.version());
     }

@@ -17,6 +17,7 @@ import com.example.cargotracker.routing.domain.model.valueobjects.Leg;
 import com.example.cargotracker.routing.domain.model.valueobjects.PortCall;
 import com.example.cargotracker.routing.domain.model.valueobjects.RoutingCaseSummary;
 import com.example.cargotracker.shared.domain.Location;
+import com.example.cargotracker.shared.domain.UserId;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import io.cucumber.datatable.DataTable;
 import io.cucumber.java.ja.ならば;
@@ -33,6 +34,9 @@ import java.util.stream.Collectors;
  * 経路候補の比較（US-06）の業務ルール層のステップ。経路設計案件は DE-16 の配信で作られたものを使う（シナリオに 1 件）。
  */
 public class RoutingSteps {
+
+    /** 経路設計者（業務ルール層のシナリオの操作者）。 */
+    static final UserId ROUTE_DESIGNER = new UserId(UUID.fromString("00000000-0000-0000-0000-000000000501"));
 
     private static final UtcInstant INFO_ACQUIRED_AT = new UtcInstant(Instant.parse("2026-10-01T06:10:00Z"));
     private static final Map<String, ExclusionReasonCode> REASONS = Map.of(
@@ -93,7 +97,8 @@ public class RoutingSteps {
     @もし("経路設計者が案件の候補を算出する")
     public void 経路設計者が案件の候補を算出する() {
         RoutingCaseSummary routingCase = onlyCase();
-        outcome = commandService.calculateCandidates(new CalculateCandidatesCommand(routingCase.number()));
+        outcome = commandService.calculateCandidates(
+                new CalculateCandidatesCommand(routingCase.number(), ROUTE_DESIGNER));
     }
 
     @ならば("算出の結果は {int} 件で、適合は {int} 件、除外は {int} 件である")

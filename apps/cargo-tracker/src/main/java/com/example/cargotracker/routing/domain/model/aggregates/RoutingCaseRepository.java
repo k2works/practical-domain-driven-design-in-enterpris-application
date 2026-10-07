@@ -19,11 +19,12 @@ public interface RoutingCaseRepository {
     void save(RoutingCase routingCase);
 
     /**
-     * 案件を更新する。読み込んだときの集約の版で照合し、いまの経路版の状態と候補を書き直す。
+     * 案件を更新する。読み込んだときの集約の版で照合し、いまの経路版の状態と候補を書き直す（確定した経路版の候補は書き直さない）。
+     * 確定したら確定した経路版の番号を残す。操作者を案件の最終更新者に残す（Bolt 19）。
      *
      * @throws ConcurrentRoutingCaseUpdateException 読み込んだ後に、ほかの更新が先に保存されていた
      */
-    void update(RoutingCase routingCase);
+    void update(RoutingCase routingCase, UUID operatorId);
 
     /** 案件番号で探す。 */
     Optional<RoutingCase> findByNumber(RoutingCaseNumber number);
@@ -31,6 +32,6 @@ public interface RoutingCaseRepository {
     /** 輸送要求版の案件があるか（DE-16 の再配信で重複して作らないため。R-INV-10）。 */
     boolean existsForTransportRequestVersion(UUID transportRequestId, int transportRequestVersionNo);
 
-    /** 案件一覧（S-05）を、依頼時刻の新しい順に返す。 */
+    /** 案件一覧（S-05）を、見積有効期限の近い順（期限のない案件は後ろ）、同じなら依頼の古い順に返す（Bolt 19）。 */
     List<RoutingCaseSummary> findSummaries();
 }

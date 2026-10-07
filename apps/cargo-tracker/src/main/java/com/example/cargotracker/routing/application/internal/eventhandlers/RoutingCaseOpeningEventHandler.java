@@ -70,6 +70,8 @@ public class RoutingCaseOpeningEventHandler {
                 event.quotationId(),
                 event.routeVia().stream().map(Location::new).toList(),
                 conditions.get().specification(),
-                event.requestedAt()));
+                event.requestedAt(),
+                event.expiresAt(),
+                event.requestedBy()));
     }
 }

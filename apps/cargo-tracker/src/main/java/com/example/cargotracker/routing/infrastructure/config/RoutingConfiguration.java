@@ -14,6 +14,7 @@ import com.example.cargotracker.routing.infrastructure.persistence.MyBatisRoutin
 import com.example.cargotracker.shared.domain.UtcInstant;
 import java.time.Clock;
 import org.springframework.boot.ApplicationRunner;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -43,8 +44,10 @@ public class RoutingConfiguration {
             RoutingCaseRepository repository,
             VoyageRepository voyageRepository,
             ConnectionRuleRepository connectionRuleRepository,
+            ApplicationEventPublisher eventPublisher,
             Clock clock) {
-        return new RoutingCaseCommandService(repository, voyageRepository, connectionRuleRepository, clock);
+        return new RoutingCaseCommandService(
+                repository, voyageRepository, connectionRuleRepository, eventPublisher, clock);
     }
 
     @Bean

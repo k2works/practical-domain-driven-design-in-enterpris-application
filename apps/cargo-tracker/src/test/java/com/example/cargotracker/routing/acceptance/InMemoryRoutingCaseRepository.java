@@ -6,6 +6,8 @@ import com.example.cargotracker.routing.domain.model.aggregates.RoutingCase;
 import com.example.cargotracker.routing.domain.model.aggregates.RoutingCaseRepository;
 import com.example.cargotracker.routing.domain.model.valueobjects.RoutingCaseNumber;
 import com.example.cargotracker.routing.domain.model.valueobjects.RoutingCaseSummary;
+import com.example.cargotracker.shared.domain.UtcInstant;
+import java.time.Instant;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -35,7 +37,7 @@ public class InMemoryRoutingCaseRepository implements RoutingCaseRepository {
     }
 
     @Override
-    public synchronized void update(RoutingCase routingCase) {
+    public synchronized void update(RoutingCase routingCase, UUID operatorId) {
         RoutingCase stored = store.get(routingCase.number());
         if (stored == null || stored.aggregateVersion() != routingCase.aggregateVersion()) {
             throw new ConcurrentRoutingCaseUpdateException(routingCase.number(), routingCase.aggregateVersion());
@@ -58,10 +60,11 @@ public class InMemoryRoutingCaseRepository implements RoutingCaseRepository {
     @Override
     public List<RoutingCaseSummary> findSummaries() {
         return store.values().stream()
-                .sorted(Comparator.comparing(
-                                (RoutingCase found) -> found.requestedAt().instant())
-                        .thenComparing(found -> found.number().text())
-                        .reversed())
+                .sorted(Comparator.comparing((RoutingCase found) -> found.quotationExpiresAt()
+                                .map(UtcInstant::instant)
+                                .orElse(Instant.MAX))
+                        .thenComparing(found -> found.requestedAt().instant())
+                        .thenComparing(found -> found.number().text()))
                 .map(found -> new RoutingCaseSummary(
                         found.number(),
                         found.transportRequestNumber(),
@@ -70,7 +73,8 @@ public class InMemoryRoutingCaseRepository implements RoutingCaseRepository {
                         found.specification().destination(),
                         found.specification().arrivalDeadline(),
                         found.requestedAt(),
-                        found.routeVersion().status()))
+                        found.routeVersion().status(),
+                        found.quotationExpiresAt().orElse(null)))
                 .toList();
     }
 
@@ -94,6 +98,8 @@ public class InMemoryRoutingCaseRepository implements RoutingCaseRepository {
                 source.routePolicyVia(),
                 source.specification(),
                 source.requestedAt(),
+                source.quotationExpiresAt().orElse(null),
+                source.requestedBy().orElse(null),
                 source.routeVersions(),
                 version);
     }

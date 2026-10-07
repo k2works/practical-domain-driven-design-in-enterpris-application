@@ -50,6 +50,8 @@ public final class RoutingCase {
     private final List<Location> routePolicyVia;
     private final RouteSpecification specification;
     private final UtcInstant requestedAt;
+    private final UtcInstant quotationExpiresAt;
+    private final UUID requestedBy;
     private final long aggregateVersion;
     private final List<RouteVersion> routeVersions;
 
@@ -64,6 +66,8 @@ public final class RoutingCase {
             List<Location> routePolicyVia,
             RouteSpecification specification,
             UtcInstant requestedAt,
+            UtcInstant quotationExpiresAt,
+            UUID requestedBy,
             List<RouteVersion> routeVersions,
             long aggregateVersion) {
         this.id = Objects.requireNonNull(id, "id");
@@ -78,13 +82,15 @@ public final class RoutingCase {
         this.routePolicyVia = List.copyOf(routePolicyVia);
         this.specification = Objects.requireNonNull(specification, "specification");
         this.requestedAt = Objects.requireNonNull(requestedAt, "requestedAt");
+        this.quotationExpiresAt = quotationExpiresAt;
+        this.requestedBy = requestedBy;
         this.routeVersions = new ArrayList<>(validated(routeVersions));
         this.aggregateVersion = aggregateVersion;
     }
 
     /**
      * 詳細経路設計の依頼を受けて案件を作る（経路版 1 は作成中）。同じ輸送要求版の案件がないことは、アプリケーションサービスが
-     * 確かめ、リポジトリの一意制約が最後に守る（R-INV-10）。
+     * 確かめ、リポジトリの一意制約が最後に守る（R-INV-10）。見積有効期限と依頼者は DE-16 の値の写し（Bolt 19）。
      */
     @SuppressWarnings("java:S107") // 依頼と経路条件の値をすべて受け取る
     public static RoutingCase open(
@@ -96,7 +102,9 @@ public final class RoutingCase {
             UUID quotationId,
             List<Location> routePolicyVia,
             RouteSpecification specification,
-            UtcInstant requestedAt) {
+            UtcInstant requestedAt,
+            UtcInstant quotationExpiresAt,
+            UUID requestedBy) {
         return new RoutingCase(
                 id,
                 number,
@@ -107,11 +115,15 @@ public final class RoutingCase {
                 routePolicyVia,
                 specification,
                 requestedAt,
+                Objects.requireNonNull(quotationExpiresAt, "quotationExpiresAt"),
+                Objects.requireNonNull(requestedBy, "requestedBy"),
                 List.of(RouteVersion.draft(1)),
                 INITIAL_AGGREGATE_VERSION);
     }
 
-    /** 保存されている状態から案件を組み立てる（リポジトリが使う）。 */
+    /**
+     * 保存されている状態から案件を組み立てる（リポジトリが使う）。見積有効期限と依頼者は、Bolt 19 より前に作った案件にはない。
+     */
     @SuppressWarnings("java:S107") // 保存されている状態から組み立てるため、集約の値をすべて受け取る
     public static RoutingCase reconstitute(
             RoutingCaseId id,
@@ -123,6 +135,8 @@ public final class RoutingCase {
             List<Location> routePolicyVia,
             RouteSpecification specification,
             UtcInstant requestedAt,
+            UtcInstant quotationExpiresAt,
+            UUID requestedBy,
             List<RouteVersion> routeVersions,
             long aggregateVersion) {
         return new RoutingCase(
@@ -135,6 +149,8 @@ public final class RoutingCase {
                 routePolicyVia,
                 specification,
                 requestedAt,
+                quotationExpiresAt,
+                requestedBy,
                 routeVersions,
                 aggregateVersion);
     }
@@ -167,7 +183,12 @@ public final class RoutingCase {
                     new RouteCandidate(candidates.size() + 1, candidate.legs(), candidate.evaluation(), judgedAt));
         }
         replaceLatest(new RouteVersion(
-                routeVersion.routeVersionNo(), RouteVersionStatus.CANDIDATES_PRESENTED, candidates, judgedAt));
+                routeVersion.routeVersionNo(),
+                RouteVersionStatus.CANDIDATES_PRESENTED,
+                candidates,
+                judgedAt,
+                evaluated.size(),
+                null));
         int conforming = (int) candidates.stream()
                 .filter(candidate -> candidate.evaluation().conforming())
                 .count();
@@ -221,6 +242,7 @@ public final class RoutingCase {
                 RouteVersionStatus.CONFIRMED,
                 routeVersion.candidates(),
                 routeVersion.candidatesEvaluatedAt(),
+                routeVersion.candidatesFound(),
                 new RouteConfirmation(candidateNo, decisionRationale, approver.userId(), commitAt)));
         return new RouteConfirmed(
                 id.value(),
@@ -320,6 +342,16 @@ public final class RoutingCase {
 
     public UtcInstant requestedAt() {
         return requestedAt;
+    }
+
+    /** 見積有効期限（DE-16 の写し。Bolt 19 より前に作った案件にはない）。経路設計は期限で確定を拒否しない。 */
+    public Optional<UtcInstant> quotationExpiresAt() {
+        return Optional.ofNullable(quotationExpiresAt);
+    }
+
+    /** 詳細経路設計を依頼した荷主担当者の利用者 ID（DE-16 の写し。Bolt 19 より前に作った案件にはない）。 */
+    public Optional<UUID> requestedBy() {
+        return Optional.ofNullable(requestedBy);
     }
 
     /** いまの（最新の）経路版。 */

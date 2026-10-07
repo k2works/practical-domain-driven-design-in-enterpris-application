@@ -9,6 +9,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.example.cargotracker.identity.infrastructure.security.TestActors;
 import com.example.cargotracker.identity.infrastructure.security.WithAuthenticatedActor;
 import com.example.cargotracker.routing.application.internal.commands.CalculateCandidatesCommand;
 import com.example.cargotracker.routing.application.internal.commandservices.CandidateCalculationOutcome;
@@ -77,7 +78,8 @@ class RoutingCaseControllerTest {
                         ROTTERDAM,
                         DEADLINE,
                         at("2026-10-06T02:00:00Z"),
-                        RouteVersionStatus.DRAFT)));
+                        RouteVersionStatus.DRAFT,
+                        at("2026-10-08T09:00:00Z"))));
 
         mockMvc.perform(get("/staff/routing-cases"))
                 .andExpect(status().isOk())
@@ -103,7 +105,8 @@ class RoutingCaseControllerTest {
                         ROTTERDAM,
                         DEADLINE,
                         at("2026-10-06T02:00:00Z"),
-                        RouteVersionStatus.CANDIDATES_PRESENTED)));
+                        RouteVersionStatus.CANDIDATES_PRESENTED,
+                        at("2026-10-08T09:00:00Z"))));
 
         mockMvc.perform(get("/staff/routing-cases"))
                 .andExpect(content().string(Matchers.containsString("候補算出済み（確定待ち）")));
@@ -184,7 +187,7 @@ class RoutingCaseControllerTest {
 
     @Test
     void 候補を算出すると比較の画面に戻り件数を示す() throws Exception {
-        when(commandService.calculateCandidates(new CalculateCandidatesCommand(NUMBER)))
+        when(commandService.calculateCandidates(new CalculateCandidatesCommand(NUMBER, TestActors.STAFF_USER)))
                 .thenReturn(new CandidateCalculationOutcome.Calculated(
                         NUMBER, new CandidateCalculation(22, 20, 18, at("2026-10-07T03:00:00Z"))));
 
@@ -198,7 +201,7 @@ class RoutingCaseControllerTest {
 
     @Test
     void ほかの経路設計者が先に算出していたら確かめるよう示す() throws Exception {
-        when(commandService.calculateCandidates(new CalculateCandidatesCommand(NUMBER)))
+        when(commandService.calculateCandidates(new CalculateCandidatesCommand(NUMBER, TestActors.STAFF_USER)))
                 .thenReturn(new CandidateCalculationOutcome.Conflict());
 
         mockMvc.perform(post(SHOW + "/candidates"))
@@ -208,7 +211,7 @@ class RoutingCaseControllerTest {
 
     @Test
     void ない案件の候補は算出できず404() throws Exception {
-        when(commandService.calculateCandidates(new CalculateCandidatesCommand(NUMBER)))
+        when(commandService.calculateCandidates(new CalculateCandidatesCommand(NUMBER, TestActors.STAFF_USER)))
                 .thenReturn(new CandidateCalculationOutcome.NotFound());
 
         mockMvc.perform(post(SHOW + "/candidates")).andExpect(status().isNotFound());
@@ -224,7 +227,9 @@ class RoutingCaseControllerTest {
                 UUID.randomUUID(),
                 List.of(SINGAPORE),
                 new RouteSpecification(TOKYO, ROTTERDAM, DEADLINE, "GENERAL"),
-                at("2026-10-06T02:00:00Z"));
+                at("2026-10-06T02:00:00Z"),
+                at("2026-10-08T09:00:00Z"),
+                UUID.randomUUID());
     }
 
     /** 適合（接続 12 時間）、接続不足（4 時間）、規則のない香港、期限超過 1 日 12 時間。 */

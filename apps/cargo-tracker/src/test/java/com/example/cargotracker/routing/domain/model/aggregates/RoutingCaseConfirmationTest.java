@@ -265,6 +265,8 @@ class RoutingCaseConfirmationTest {
                 List.of(),
                 new RouteSpecification(TOKYO, ROTTERDAM, RoutingCaseTest.DEADLINE, "GENERAL"),
                 at("2026-10-06T02:00:00Z"),
+                null,
+                null,
                 List.of(old, RouteVersion.draft(2)),
                 5);
 
@@ -300,6 +302,8 @@ class RoutingCaseConfirmationTest {
                         List.of(),
                         new RouteSpecification(TOKYO, ROTTERDAM, RoutingCaseTest.DEADLINE, "GENERAL"),
                         at("2026-10-06T02:00:00Z"),
+                        null,
+                        null,
                         List.of(confirmedV1, withNo(confirmedV1, 2)),
                         5))
                 .isInstanceOf(IllegalArgumentException.class);

@@ -18,6 +18,7 @@ import java.util.Set;
  * @param status 状態
  * @param candidates 経路候補（候補番号の順）
  * @param candidatesEvaluatedAt 候補の判定時刻（作成中は null）
+ * @param candidatesFound 見つけた候補の数（上限で切る前。示す候補の数以上。Bolt 19。Bolt 17 レビュー D-64）
  * @param routeConfirmation 確定の記録（確定のときだけ。ほかは null）
  */
 @Entity
@@ -26,6 +27,7 @@ public record RouteVersion(
         RouteVersionStatus status,
         List<RouteCandidate> candidates,
         UtcInstant candidatesEvaluatedAt,
+        int candidatesFound,
         RouteConfirmation routeConfirmation) {
 
     /** 確定の記録を持てる状態（確定と、確定の後の再設計要・旧版）。 */
@@ -44,7 +46,20 @@ public record RouteVersion(
         if (status != RouteVersionStatus.DRAFT && candidatesEvaluatedAt == null) {
             throw new IllegalArgumentException("候補を算出した経路版には判定時刻が要ります");
         }
+        if (candidatesFound < candidates.size()) {
+            throw new IllegalArgumentException("見つけた候補の数は示す候補の数以上です: " + candidatesFound);
+        }
         requireConsistentConfirmation(status, candidates, routeConfirmation);
+    }
+
+    /** 確定の記録を持つ経路版（見つけた候補の数は示す候補の数）。 */
+    public RouteVersion(
+            int routeVersionNo,
+            RouteVersionStatus status,
+            List<RouteCandidate> candidates,
+            UtcInstant candidatesEvaluatedAt,
+            RouteConfirmation routeConfirmation) {
+        this(routeVersionNo, status, candidates, candidatesEvaluatedAt, candidates.size(), routeConfirmation);
     }
 
     /** 確定していない経路版。 */
@@ -53,7 +68,7 @@ public record RouteVersion(
             RouteVersionStatus status,
             List<RouteCandidate> candidates,
             UtcInstant candidatesEvaluatedAt) {
-        this(routeVersionNo, status, candidates, candidatesEvaluatedAt, null);
+        this(routeVersionNo, status, candidates, candidatesEvaluatedAt, candidates.size(), null);
     }
 
     /** 確定の経路版は確定の記録を持ち、確定していない経路版は持たない。記録の候補は経路版にある。 */
@@ -80,6 +95,11 @@ public record RouteVersion(
     /** 確定の記録（確定のときだけ）。 */
     public Optional<RouteConfirmation> confirmation() {
         return Optional.ofNullable(routeConfirmation);
+    }
+
+    /** 上限で切って示さなかった候補の数（Bolt 17 レビュー D-64。算出の直後だけでなく常に示す）。 */
+    public int omittedCandidates() {
+        return candidatesFound - candidates.size();
     }
 
     /** 候補の判定時刻。 */

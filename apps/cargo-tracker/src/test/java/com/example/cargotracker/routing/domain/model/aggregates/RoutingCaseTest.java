@@ -30,6 +30,8 @@ class RoutingCaseTest {
     static final Location ROTTERDAM = new Location("NLRTM");
     static final UtcInstant DEADLINE = at("2026-11-02T00:00:00Z");
     static final UtcInstant JUDGED_AT = at("2026-10-07T03:00:00Z");
+    static final UtcInstant QUOTATION_EXPIRES_AT = at("2026-10-08T09:00:00Z");
+    static final UUID REQUESTED_BY = UUID.randomUUID();
     static final List<ConnectionRule> RULES = List.of(
             new ConnectionRule(UUID.randomUUID(), SINGAPORE, Duration.ofHours(8), at("2026-01-01T00:00:00Z"), null));
 
@@ -126,6 +128,8 @@ class RoutingCaseTest {
                 List.of(),
                 new RouteSpecification(TOKYO, ROTTERDAM, DEADLINE, "GENERAL"),
                 at("2026-10-06T02:00:00Z"),
+                null,
+                null,
                 List.of(new com.example.cargotracker.routing.domain.model.entities.RouteVersion(
                         1, RouteVersionStatus.SUPERSEDED, List.of(), JUDGED_AT)),
                 3);
@@ -174,7 +178,9 @@ class RoutingCaseTest {
                 UUID.randomUUID(),
                 List.of(SINGAPORE),
                 new RouteSpecification(TOKYO, ROTTERDAM, DEADLINE, "GENERAL"),
-                at("2026-10-06T02:00:00Z"));
+                at("2026-10-06T02:00:00Z"),
+                QUOTATION_EXPIRES_AT,
+                REQUESTED_BY);
     }
 
     static Voyage direct(String number, String arrival) {

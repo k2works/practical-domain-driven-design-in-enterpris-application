@@ -6,6 +6,7 @@ import com.example.cargotracker.routing.application.internal.commandservices.Rou
 import com.example.cargotracker.routing.application.internal.queryservices.RoutingCaseQueryService;
 import com.example.cargotracker.routing.domain.model.valueobjects.CandidateCalculation;
 import com.example.cargotracker.routing.domain.model.valueobjects.RoutingCaseNumber;
+import com.example.cargotracker.shared.domain.AuthenticatedActor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -63,9 +64,10 @@ public class RoutingCaseController {
 
     /** 候補を算出・再算出する。結果の件数を S-06 の上部に示す。 */
     @PostMapping("/{number}/candidates")
-    public String calculate(@PathVariable String number, RedirectAttributes redirectAttributes) {
+    public String calculate(
+            @PathVariable String number, AuthenticatedActor actor, RedirectAttributes redirectAttributes) {
         RoutingCaseNumber caseNumber = parse(number);
-        return switch (commandService.calculateCandidates(new CalculateCandidatesCommand(caseNumber))) {
+        return switch (commandService.calculateCandidates(new CalculateCandidatesCommand(caseNumber, actor.userId()))) {
             case CandidateCalculationOutcome.Calculated(
                     RoutingCaseNumber calculated,
                     CandidateCalculation calculation) -> {

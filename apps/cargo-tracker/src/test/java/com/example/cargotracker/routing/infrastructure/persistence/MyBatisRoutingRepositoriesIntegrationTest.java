@@ -13,11 +13,15 @@ import com.example.cargotracker.routing.domain.model.aggregates.RoutingCaseNumbe
 import com.example.cargotracker.routing.domain.model.aggregates.RoutingCaseRepository;
 import com.example.cargotracker.routing.domain.model.aggregates.Voyage;
 import com.example.cargotracker.routing.domain.model.aggregates.VoyageRepository;
+import com.example.cargotracker.routing.domain.model.entities.RouteVersion;
 import com.example.cargotracker.routing.domain.model.rules.ConstraintEvaluator;
 import com.example.cargotracker.routing.domain.model.rules.RouteCandidateFinder;
+import com.example.cargotracker.routing.domain.model.valueobjects.DecisionRationale;
 import com.example.cargotracker.routing.domain.model.valueobjects.ExclusionReason;
 import com.example.cargotracker.routing.domain.model.valueobjects.ExclusionReasonCode;
 import com.example.cargotracker.routing.domain.model.valueobjects.PortCall;
+import com.example.cargotracker.routing.domain.model.valueobjects.RouteApprover;
+import com.example.cargotracker.routing.domain.model.valueobjects.RouteConfirmation;
 import com.example.cargotracker.routing.domain.model.valueobjects.RouteSpecification;
 import com.example.cargotracker.routing.domain.model.valueobjects.RouteVersionStatus;
 import com.example.cargotracker.routing.domain.model.valueobjects.RoutingCaseId;
@@ -38,7 +42,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * 経路設計（`routing`、R-INV-01・02・10）の永続化を PostgreSQL で確かめる（Bolt 17）。
+ * 経路設計（`routing`、R-INV-01・02・05・06・10）の永続化を PostgreSQL で確かめる（Bolt 17・19）。
  * 案件番号はほかのテストとぶつからないよう 2083 年を使う。航海の番号はこのテストだけのもの（IT- で始まる）を使う。
  */
 @SpringBootTest
@@ -52,6 +56,9 @@ class MyBatisRoutingRepositoriesIntegrationTest {
     static final Location ROTTERDAM = new Location("NLRTM");
     static final UtcInstant DEADLINE = at("2083-11-02T00:00:00Z");
     static final UtcInstant JUDGED_AT = at("2083-10-07T03:00:00Z");
+    static final String EXPIRES_AT = "2083-10-08T09:00:00Z";
+    static final UUID OPERATOR = UUID.randomUUID();
+    static final RouteApprover APPROVER = new RouteApprover(UUID.randomUUID(), true);
 
     @Autowired
     RoutingCaseRepository repository;
@@ -106,7 +113,7 @@ class MyBatisRoutingRepositoriesIntegrationTest {
         loaded.calculateCandidates(
                 voyages(), rules(), JUDGED_AT, new RouteCandidateFinder(), new ConstraintEvaluator());
 
-        repository.update(loaded);
+        repository.update(loaded, OPERATOR);
 
         RoutingCase found = repository.findByNumber(routingCase.number()).orElseThrow();
         assertThat(found.routeVersion()).isEqualTo(loaded.routeVersion());
@@ -125,7 +132,7 @@ class MyBatisRoutingRepositoriesIntegrationTest {
                 at("2083-10-07T04:00:00Z"),
                 new RouteCandidateFinder(),
                 new ConstraintEvaluator());
-        repository.update(found);
+        repository.update(found, OPERATOR);
 
         assertThat(repository.findByNumber(routingCase.number()).orElseThrow().routeVersion())
                 .isEqualTo(found.routeVersion());
@@ -138,19 +145,27 @@ class MyBatisRoutingRepositoriesIntegrationTest {
         RoutingCase first = repository.findByNumber(routingCase.number()).orElseThrow();
         RoutingCase second = repository.findByNumber(routingCase.number()).orElseThrow();
         first.calculateCandidates(voyages(), rules(), JUDGED_AT, new RouteCandidateFinder(), new ConstraintEvaluator());
-        repository.update(first);
+        repository.update(first, OPERATOR);
         second.calculateCandidates(
                 voyages(), rules(), JUDGED_AT, new RouteCandidateFinder(), new ConstraintEvaluator());
 
-        assertThatThrownBy(() -> repository.update(second)).isInstanceOf(ConcurrentRoutingCaseUpdateException.class);
+        assertThatThrownBy(() -> repository.update(second, OPERATOR))
+                .isInstanceOf(ConcurrentRoutingCaseUpdateException.class);
     }
 
     @Test
-    void 案件一覧は依頼時刻の新しい順() {
-        RoutingCase older = open(UUID.randomUUID(), "2083-10-06T02:00:00Z");
-        RoutingCase newer = open(UUID.randomUUID(), "2083-10-06T03:00:00Z");
-        repository.save(older);
-        repository.save(newer);
+    void 案件一覧は見積有効期限の近い順で同じなら依頼の古い順で期限のない案件は後ろ() {
+        RoutingCase later = open(UUID.randomUUID(), "2083-10-06T01:00:00Z", "2083-10-09T09:00:00Z");
+        RoutingCase soonNewer = open(UUID.randomUUID(), "2083-10-06T03:00:00Z", "2083-10-08T09:00:00Z");
+        RoutingCase soonOlder = open(UUID.randomUUID(), "2083-10-06T02:00:00Z", "2083-10-08T09:00:00Z");
+        repository.save(later);
+        repository.save(soonNewer);
+        repository.save(soonOlder);
+        RoutingCase withoutExpiry = open(UUID.randomUUID(), "2083-10-06T00:00:00Z", "2083-10-10T09:00:00Z");
+        repository.save(withoutExpiry);
+        jdbc.update(
+                "UPDATE routing.routing_case SET quotation_expires_at = NULL WHERE id = ?",
+                withoutExpiry.id().value());
 
         List<RoutingCaseSummary> summaries = repository.findSummaries().stream()
                 .filter(summary -> summary.number().year() == 2083)
@@ -158,17 +173,118 @@ class MyBatisRoutingRepositoriesIntegrationTest {
 
         assertThat(summaries)
                 .extracting(RoutingCaseSummary::number)
-                .containsSubsequence(newer.number(), older.number());
-        assertThat(summaries.getFirst())
+                .containsSubsequence(soonOlder.number(), soonNewer.number(), later.number(), withoutExpiry.number());
+        assertThat(summaries)
+                .filteredOn(summary -> summary.number().equals(soonOlder.number()))
+                .singleElement()
                 .isEqualTo(new RoutingCaseSummary(
-                        newer.number(),
+                        soonOlder.number(),
                         "TR-2083-0001",
                         1,
                         TOKYO,
                         ROTTERDAM,
                         DEADLINE,
-                        newer.requestedAt(),
-                        RouteVersionStatus.DRAFT));
+                        soonOlder.requestedAt(),
+                        RouteVersionStatus.DRAFT,
+                        at("2083-10-08T09:00:00Z")));
+        assertThat(summaries)
+                .filteredOn(summary -> summary.number().equals(withoutExpiry.number()))
+                .singleElement()
+                .satisfies(summary -> assertThat(summary.expiresAt()).isEmpty());
+    }
+
+    @Test
+    void 依頼の見積有効期限と依頼者を保存して読み出せる() {
+        RoutingCase routingCase = open(UUID.randomUUID(), "2083-10-06T02:00:00Z");
+
+        repository.save(routingCase);
+
+        RoutingCase found = repository.findByNumber(routingCase.number()).orElseThrow();
+        assertThat(found.quotationExpiresAt()).contains(at(EXPIRES_AT));
+        assertThat(found.requestedBy()).isEqualTo(routingCase.requestedBy());
+        assertThat(jdbc.queryForObject(
+                        "SELECT created_by FROM routing.routing_case WHERE id = ?",
+                        UUID.class,
+                        routingCase.id().value()))
+                .isEqualTo(routingCase.requestedBy().orElseThrow());
+    }
+
+    @Test
+    void 確定した案件を更新すると確定の記録と確定した経路版の番号と操作者が読み出せる() {
+        RoutingCase routingCase = calculatedAndSaved();
+        RoutingCase loaded = repository.findByNumber(routingCase.number()).orElseThrow();
+        UtcInstant commitAt = at("2083-10-07T04:00:00Z");
+        loaded.confirm(1, "直行で期限まで 3 日ある。", APPROVER, rules(), commitAt, new ConstraintEvaluator());
+
+        repository.update(loaded, APPROVER.userId());
+
+        RoutingCase found = repository.findByNumber(routingCase.number()).orElseThrow();
+        assertThat(found.routeVersions()).isEqualTo(loaded.routeVersions());
+        assertThat(found.routeVersion().confirmation())
+                .contains(
+                        new RouteConfirmation(1, new DecisionRationale("直行で期限まで 3 日ある。"), APPROVER.userId(), commitAt));
+        assertThat(found.confirmedRouteVersion())
+                .map(RouteVersion::routeVersionNo)
+                .contains(1);
+        assertThat(jdbc.queryForMap(
+                        "SELECT confirmed_route_version_no, updated_by FROM routing.routing_case WHERE id = ?",
+                        routingCase.id().value()))
+                .containsEntry("confirmed_route_version_no", 1)
+                .containsEntry("updated_by", APPROVER.userId());
+    }
+
+    @Test
+    void 確定した経路版の候補は案件をもう一度更新しても変わらない() {
+        RoutingCase routingCase = calculatedAndSaved();
+        RoutingCase loaded = repository.findByNumber(routingCase.number()).orElseThrow();
+        loaded.confirm(1, "根拠", APPROVER, rules(), at("2083-10-07T04:00:00Z"), new ConstraintEvaluator());
+        repository.update(loaded, APPROVER.userId());
+        RoutingCase confirmed = repository.findByNumber(routingCase.number()).orElseThrow();
+
+        repository.update(confirmed, OPERATOR);
+
+        assertThat(repository.findByNumber(routingCase.number()).orElseThrow().routeVersions())
+                .isEqualTo(confirmed.routeVersions());
+    }
+
+    @Test
+    void 見つけた候補の数を残し上限で示さなかった候補の数が読み出せる() {
+        RoutingCase routingCase = open(UUID.randomUUID(), "2083-10-06T02:00:00Z");
+        repository.save(routingCase);
+        RoutingCase loaded = repository.findByNumber(routingCase.number()).orElseThrow();
+        List<Voyage> voyages = new java.util.ArrayList<>();
+        for (int i = 0; i < 21; i++) {
+            voyages.add(voyage(
+                    "IT-MANY-%02d".formatted(i),
+                    call(TOKYO, null, "2083-10-08T00:00:00Z"),
+                    call(ROTTERDAM, "2083-10-%02dT00:00:00Z".formatted(10 + i), null)));
+        }
+        loaded.calculateCandidates(voyages, rules(), JUDGED_AT, new RouteCandidateFinder(), new ConstraintEvaluator());
+
+        repository.update(loaded, OPERATOR);
+
+        RouteVersion found =
+                repository.findByNumber(routingCase.number()).orElseThrow().routeVersion();
+        assertThat(found.candidatesFound()).isEqualTo(21);
+        assertThat(found.omittedCandidates()).isEqualTo(1);
+    }
+
+    @Test
+    void 確定していない経路版は確定の記録を持てない() {
+        UUID id = calculatedAndSaved().id().value();
+
+        assertThatThrownBy(() ->
+                        jdbc.update("UPDATE routing.route_version SET rationale = '根拠' WHERE routing_case_id = ?", id))
+                .isInstanceOf(DataIntegrityViolationException.class);
+    }
+
+    @Test
+    void 確定の経路版は確定の記録がなければ保存できない() {
+        UUID id = calculatedAndSaved().id().value();
+
+        assertThatThrownBy(() -> jdbc.update(
+                        "UPDATE routing.route_version SET status = 'CONFIRMED' WHERE routing_case_id = ?", id))
+                .isInstanceOf(DataIntegrityViolationException.class);
     }
 
     @Test
@@ -224,7 +340,7 @@ class MyBatisRoutingRepositoriesIntegrationTest {
         RoutingCase loaded = repository.findByNumber(routingCase.number()).orElseThrow();
         loaded.calculateCandidates(
                 voyages(), rules(), JUDGED_AT, new RouteCandidateFinder(), new ConstraintEvaluator());
-        repository.update(loaded);
+        repository.update(loaded, OPERATOR);
 
         UUID id = routingCase.id().value();
 
@@ -242,7 +358,21 @@ class MyBatisRoutingRepositoriesIntegrationTest {
         assertThat(second.year()).isEqualTo(2083);
     }
 
+    private RoutingCase calculatedAndSaved() {
+        RoutingCase routingCase = open(UUID.randomUUID(), "2083-10-06T02:00:00Z");
+        repository.save(routingCase);
+        RoutingCase loaded = repository.findByNumber(routingCase.number()).orElseThrow();
+        loaded.calculateCandidates(
+                voyages(), rules(), JUDGED_AT, new RouteCandidateFinder(), new ConstraintEvaluator());
+        repository.update(loaded, OPERATOR);
+        return loaded;
+    }
+
     private RoutingCase open(UUID transportRequestId, String requestedAt) {
+        return open(transportRequestId, requestedAt, EXPIRES_AT);
+    }
+
+    private RoutingCase open(UUID transportRequestId, String requestedAt, String expiresAt) {
         return RoutingCase.open(
                 new RoutingCaseId(UUID.randomUUID()),
                 numberIssuer.next(2083),
@@ -252,7 +382,9 @@ class MyBatisRoutingRepositoriesIntegrationTest {
                 UUID.randomUUID(),
                 List.of(SINGAPORE),
                 new RouteSpecification(TOKYO, ROTTERDAM, DEADLINE, "GENERAL"),
-                at(requestedAt));
+                at(requestedAt),
+                at(expiresAt),
+                UUID.randomUUID());
     }
 
     /** 直行（適合）、シンガポールで接続不足、香港で規則なし、期限超過の組合せ。 */
