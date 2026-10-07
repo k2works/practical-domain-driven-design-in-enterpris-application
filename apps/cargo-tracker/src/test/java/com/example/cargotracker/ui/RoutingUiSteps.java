@@ -1,0 +1,185 @@
+package com.example.cargotracker.ui;
+
+import static com.microsoft.playwright.assertions.PlaywrightAssertions.assertThat;
+
+import com.example.cargotracker.shared.domain.Role;
+import com.microsoft.playwright.Locator;
+import com.microsoft.playwright.Page;
+import com.microsoft.playwright.options.AriaRole;
+import io.cucumber.java.ja.かつ;
+import io.cucumber.java.ja.ならば;
+import io.cucumber.java.ja.もし;
+import io.cucumber.java.ja.前提;
+import java.util.UUID;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.test.web.server.LocalServerPort;
+import org.springframework.jdbc.core.JdbcTemplate;
+
+/**
+ * 経路設計案件一覧（S-05）と経路候補の比較（S-06）の画面の層のステップ定義（US-06。Bolt 17）。
+ * 案件は、同じシナリオで荷主が提出して詳細経路設計を依頼した見積依頼（{@link UiScenarioState}）のもの。
+ * 航海はシナリオごとに一意の航海番号で DB に入れる（画面の層は実際の時計で動くため、2099 年の運航予定にする。
+ * 荷主の希望到着期限は 2099-11-02 09:00 JST）。
+ */
+public class RoutingUiSteps {
+
+    private static final String CALCULATE = "候補を算出";
+
+    private final BrowserSession browser;
+    private final UiScenarioState state;
+    private final JdbcTemplate jdbc;
+    private final String baseUrl;
+    private final String suffix = UUID.randomUUID().toString().substring(0, 8).toUpperCase(java.util.Locale.ROOT);
+
+    public RoutingUiSteps(
+            BrowserSession browser,
+            UiScenarioState state,
+            JdbcTemplate jdbc,
+            @LocalServerPort int port,
+            @Value("${ui.base-url:}") String configuredBaseUrl) {
+        this.browser = browser;
+        this.state = state;
+        this.jdbc = jdbc;
+        this.baseUrl = configuredBaseUrl.isBlank() ? "http://localhost:" + port : configuredBaseUrl;
+    }
+
+    private Page page() {
+        return browser.page();
+    }
+
+    private String voyage(String name) {
+        return "UI-" + suffix + "-" + name;
+    }
+
+    /**
+     * 直行（適合）、東京 → シンガポールと、シンガポールで 8 時間ちょうどで接続し期限と同時刻に着く航海（適合）、
+     * 期限の 1 日 12 時間後に着く直行（期限超過）。シンガポールの必要最小接続時間は 8 時間。
+     */
+    @前提("経路の比較に使う航海と接続時間規則がある")
+    public void 航海と接続時間規則がある() {
+        insertVoyage("DIRECT", "JPTYO", "2099-10-12 00:00:00+00", "NLRTM", "2099-10-30 09:00:00+00");
+        insertVoyage("FEEDER", "JPTYO", "2099-10-10 00:00:00+00", "SGSIN", "2099-10-20 00:00:00+00");
+        insertVoyage("MAIN", "SGSIN", "2099-10-20 08:00:00+00", "NLRTM", "2099-11-02 00:00:00+00");
+        insertVoyage("LATE", "JPTYO", "2099-10-12 00:00:00+00", "NLRTM", "2099-11-03 12:00:00+00");
+        jdbc.update(
+                "INSERT INTO routing.connection_rule (id, route_scope, port_unlocode, min_connection_minutes, valid_from,"
+                        + " valid_to, version) VALUES (?, '*', 'SGSIN', 480, TIMESTAMP WITH TIME ZONE"
+                        + " '2026-01-01 00:00:00+00', NULL, 0)",
+                UUID.randomUUID());
+    }
+
+    private void insertVoyage(String name, String load, String departure, String discharge, String arrival) {
+        String number = voyage(name);
+        jdbc.update(
+                "INSERT INTO routing.voyage (voyage_number, adopted_info_version, source_kind, source_ref, acquired_at,"
+                        + " version, updated_at) VALUES (?, ?, 'MANUAL_ENTRY', '画面の層のテスト',"
+                        + " TIMESTAMP WITH TIME ZONE '2026-10-01 06:10:00+00', 0, CURRENT_TIMESTAMP)",
+                number,
+                number + "@1");
+        jdbc.update(
+                "INSERT INTO routing.port_call VALUES (?, 1, ?, NULL, CAST(? AS TIMESTAMP WITH TIME ZONE))",
+                number,
+                load,
+                departure);
+        jdbc.update(
+                "INSERT INTO routing.port_call VALUES (?, 2, ?, CAST(? AS TIMESTAMP WITH TIME ZONE), NULL)",
+                number,
+                discharge,
+                arrival);
+    }
+
+    /** 案件は DE-16 を受けて非同期に作られるため、行が出るまで開き直す。 */
+    @もし("経路設計者が案件一覧から提出した見積依頼の案件を開く")
+    public void 経路設計者が案件を開く() {
+        Locator row = page().getByRole(AriaRole.ROW)
+                .filter(new Locator.FilterOptions().setHasText(state.transportRequestNumber()));
+        for (int i = 0; i < 20; i++) {
+            browser.navigate(baseUrl + "/staff/routing-cases");
+            if (row.count() > 0) {
+                break;
+            }
+            page().waitForTimeout(500);
+        }
+        if (row.count() == 0) {
+            throw new AssertionError("案件一覧に " + state.transportRequestNumber() + " の案件が出ない（DE-16 の受け取りを待ちきれない）");
+        }
+        browser.checkAccessibility();
+        row.getByRole(AriaRole.LINK).first().click();
+        page().waitForURL("**/staff/routing-cases/RC-*");
+        assertThat(page().locator("main")).containsText("まだ候補を算出していません");
+        browser.checkAccessibility();
+    }
+
+    @かつ("キー操作だけで候補を算出する")
+    public void キー操作だけで候補を算出する() {
+        page().locator("body").focus();
+        Locator button = page().getByRole(
+                        AriaRole.BUTTON,
+                        new Page.GetByRoleOptions().setName(CALCULATE).setExact(true));
+        for (int i = 0; i < 60 && !isFocused(button); i++) {
+            page().keyboard().press("Tab");
+        }
+        if (!isFocused(button)) {
+            throw new AssertionError("キー操作で「" + CALCULATE + "」に届かない");
+        }
+        page().keyboard().press("Enter");
+        page().waitForURL("**/staff/routing-cases/RC-*");
+        assertThat(page().getByRole(AriaRole.STATUS)).containsText("算出しました");
+        browser.checkAccessibility();
+    }
+
+    private static boolean isFocused(Locator locator) {
+        return (Boolean) locator.evaluate("element => element === document.activeElement");
+    }
+
+    @ならば("算出した件数が示される")
+    public void 算出した件数が示される() {
+        assertThat(page().getByRole(AriaRole.STATUS)).containsText("候補を");
+        assertThat(page().getByRole(AriaRole.STATUS)).containsText("件算出しました");
+    }
+
+    @ならば("直行の航海の候補は {string} と示される")
+    public void 直行の候補(String judgement) {
+        assertThat(candidate(voyage("DIRECT"))).containsText(judgement);
+    }
+
+    @ならば("期限と同時刻に着き接続時間が必要最小接続時間と同値の候補は {string} と示される")
+    public void 同時刻と同値の候補(String judgement) {
+        Locator candidate = candidate(voyage("FEEDER"), voyage("MAIN"));
+        assertThat(candidate).containsText(judgement);
+        assertThat(candidate).containsText("余裕 0 分");
+    }
+
+    @ならば("期限に間に合わない候補は {string} と示され、理由に {string} と参照情報版が示される")
+    public void 期限超過の候補(String judgement, String reason) {
+        Locator candidate = candidate(voyage("LATE"));
+        assertThat(candidate).containsText(judgement);
+        assertThat(candidate).containsText(reason);
+        assertThat(candidate).containsText("参照情報版 " + voyage("LATE") + "@1");
+    }
+
+    /**
+     * 航海番号をすべて含む候補のまとまり（候補ごとの article）。航海は DB をシナリオの間で共有するため、ほかのシナリオの航海と
+     * つないだ候補もある。このシナリオの航海番号だけで絞る。
+     */
+    private Locator candidate(String... voyageNumbers) {
+        Locator found = page().locator("article.route-candidate");
+        for (String voyageNumber : voyageNumbers) {
+            found = found.filter(new Locator.FilterOptions().setHasText(voyageNumber));
+        }
+        assertThat(found).hasCount(1);
+        return found;
+    }
+
+    @もし("営業担当者が経路設計の案件一覧の URL を直接開く")
+    public void 営業担当者が案件一覧を開く() {
+        browser.signInAs(Role.SALES, baseUrl + "/login");
+        page().navigate(baseUrl + "/staff/routing-cases");
+    }
+
+    @ならば("権限なしと示される")
+    public void 権限なしと示される() {
+        assertThat(page().locator("main")).containsText("この画面を表示する権限がありません");
+        browser.checkAccessibility();
+    }
+}

@@ -78,11 +78,15 @@ public class BrowserSession implements DisposableBean {
     }
 
     /**
-     * 画面を開く。荷主の画面（{@code /customer/}）は荷主担当者、社内の画面（{@code /staff/}）は営業担当者でログインしてから開く
-     * （Bolt 14）。いまの利用者の役割が違えば、Cookie を消して A-01 からログインし直す。
+     * 画面を開く。荷主の画面（{@code /customer/}）は荷主担当者、経路設計の画面（{@code /staff/routing-cases}）は経路設計者
+     * （Bolt 17）、ほかの社内の画面（{@code /staff/}）は営業担当者でログインしてから開く（Bolt 14）。いまの利用者の役割が違えば、Cookie を消して A-01 からログインし直す。
      */
     public void navigate(String url) {
-        Role role = url.contains("/customer/") ? Role.SHIPPER : url.contains("/staff/") ? Role.SALES : null;
+        Role role = url.contains("/customer/")
+                ? Role.SHIPPER
+                : url.contains("/staff/routing-cases")
+                        ? Role.ROUTE_DESIGNER
+                        : url.contains("/staff/") ? Role.SALES : null;
         if (role != null && role != signedIn) {
             signInAs(role, URI.create(url).resolve("/login").toString());
         }

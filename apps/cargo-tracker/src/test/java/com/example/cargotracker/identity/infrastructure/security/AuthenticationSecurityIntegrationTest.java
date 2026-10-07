@@ -139,10 +139,22 @@ class AuthenticationSecurityIntegrationTest {
 
     @Test
     void 画面のまだない役割の利用者はログインできてもホームは権限なしになり行き先が循環しない() throws Exception {
-        Cookie session = login(user(staffCompany(), Role.ROUTE_DESIGNER, UserStatus.ACTIVE));
+        // 経路設計者は Bolt 17 でホームを持った。画面のまだない役割の例を追跡管理者にした
+        Cookie session = login(user(staffCompany(), Role.TRACKING_MANAGER, UserStatus.ACTIVE));
 
         mvc.perform(get("/").cookie(session)).andExpect(status().isForbidden());
         mvc.perform(get("/staff/transport-requests").cookie(session)).andExpect(status().isForbidden());
+        mvc.perform(get("/staff/routing-cases").cookie(session)).andExpect(status().isForbidden());
+    }
+
+    @Test
+    void 経路設計者はログインすると案件一覧へ移り営業の画面は開けない() throws Exception {
+        Cookie session = login(user(staffCompany(), Role.ROUTE_DESIGNER, UserStatus.ACTIVE));
+
+        mvc.perform(get("/").cookie(session)).andExpect(redirectedUrl("/staff/routing-cases"));
+        mvc.perform(get("/staff/routing-cases").cookie(session)).andExpect(status().isOk());
+        mvc.perform(get("/staff/transport-requests").cookie(session)).andExpect(status().isForbidden());
+        mvc.perform(get("/staff/kpi-observations").cookie(session)).andExpect(status().isForbidden());
     }
 
     @Test
@@ -322,6 +334,20 @@ class AuthenticationSecurityIntegrationTest {
         Cookie session = login(shipper(UserStatus.ACTIVE));
 
         mvc.perform(get("/staff/transport-requests").cookie(session)).andExpect(status().isForbidden());
+    }
+
+    @Test
+    void 営業担当者と荷主担当者は経路設計の画面を開けず候補の算出を送れない() throws Exception {
+        for (Cookie session : List.of(
+                login(user(staffCompany(), Role.SALES, UserStatus.ACTIVE)), login(shipper(UserStatus.ACTIVE)))) {
+            mvc.perform(get("/staff/routing-cases").cookie(session)).andExpect(status().isForbidden());
+            mvc.perform(get("/staff/routing-cases/RC-2026-0001").cookie(session))
+                    .andExpect(status().isForbidden());
+            mvc.perform(post("/staff/routing-cases/RC-2026-0001/candidates")
+                            .cookie(session)
+                            .with(csrf()))
+                    .andExpect(status().isForbidden());
+        }
     }
 
     @Test

@@ -18,7 +18,7 @@ import java.util.UUID;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 /**
- * 画面の層のシナリオで使う利用者（Bolt 14）。シナリオごとに荷主の企業と荷主担当者、A 社の営業担当者を作り、
+ * 画面の層のシナリオで使う利用者（Bolt 14）。シナリオごとに荷主の企業と荷主担当者、A 社の営業担当者・経路設計者（Bolt 17）を作り、
  * ほかのシナリオと共有しない（テストのデータを分ける。ADR-011 の「テストごとのデータ」）。
  */
 @ScenarioScope
@@ -57,7 +57,7 @@ public class UiUsers {
                 new UserId(UUID.randomUUID()),
                 company.id(),
                 EmailAddress.of(email),
-                shipper ? "荷主 太郎" : "営業 一郎",
+                shipper ? "荷主 太郎" : role == Role.ROUTE_DESIGNER ? "経路 設計" : "営業 一郎",
                 passwordEncoder.encode(PASSWORD),
                 UserStatus.ACTIVE,
                 Set.of(role)));
