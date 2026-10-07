@@ -13,7 +13,7 @@ verified:
 
 ## 概要
 
-関係者がブラウザで触って確かめるためのデモ環境を、Heroku に作る手順です。位置づけと制約は [ADR-013](../../adr/cargo-tracker/013-heroku-demo-environment.md) を参照してください。操作は Gulp のタスク `deploy:demo:*`（`ops/scripts/deploy_demo.js`）だけで行います。
+関係者がブラウザで触って確かめるためのデモ環境を、Heroku に作る手順です。位置づけと制約は [ADR-013](../../adr/cargo-tracker/013-heroku-demo-environment.md) を参照してください。配備は、develop の cargo-tracker CI が緑になった後に `deploy-demo` ジョブが自動で行います（Bolt 16）。そのほかの操作（状態・ログ・再起動・停止）と、CI が使えないときの配備は、Gulp のタスク `deploy:demo:*`（`ops/scripts/deploy_demo.js`）で行います。
 
 | 項目 | 内容 |
 | :--- | :--- |
@@ -21,7 +21,8 @@ verified:
 | URL | <https://cargo-tracker-mono-demo-883bf0b92807.herokuapp.com/> |
 | プロファイル | `dev`（H2 のインメモリ、開発用の利用者） |
 | dyno | Eco（512 MB）、web 1 つ、region `us`、stack `container` |
-| 配備 | Container Registry。`apps/cargo-tracker/Dockerfile` の `demo` のステージ |
+| 配備 | CI の `deploy-demo` ジョブ（`.github/workflows/cargo-tracker-ci.yml`）が自動で行う。手元の `deploy:demo` は CI が使えないとき。どちらも Container Registry に `apps/cargo-tracker/Dockerfile` の `demo` のステージを送る |
+| CI の認証 | GitHub の Environment `demo`（develop だけ）の secret `HEROKU_API_KEY`（Heroku の authorization、期限 1 年） |
 | Config Vars | `SPRING_PROFILES_ACTIVE=dev`、`JAVA_TOOL_OPTIONS=-Xmx300m -XX:+UseSerialGC -Xss512k -XX:ReservedCodeCacheSize=64m -XX:MaxMetaspaceSize=192m` |
 | 費用 | Eco の定額、月 5 USD（アカウントの全 Eco dyno に共通） |
 | 所有者 | human:kakimomokuri（Heroku のアカウント・費用・停止の手段。不在のときに止める必要があれば、Heroku の collaborator を足す） |
@@ -124,7 +125,51 @@ npx gulp deploy:demo:setup
 
 アプリの作成（`--stack container --region us`）、Config Vars の設定、`log-runtime-metrics`（メモリの値をログに出す）の有効化を行います。アプリ名・region・JVM の設定は `.env` の `DEMO_*` で変えられます（`.env.example` を参照）。
 
+### CI からの配備の準備
+
+GitHub の Environment `demo` を作り、配備のブランチを develop に限ります（Bolt 16 で作成済み）。
+
+```bash
+gh api -X PUT repos/k2works/practical-domain-driven-design-in-enterpris-application/environments/demo \
+  -F 'deployment_branch_policy[protected_branches]=false' -F 'deployment_branch_policy[custom_branch_policies]=true'
+gh api -X POST repos/k2works/practical-domain-driven-design-in-enterpris-application/environments/demo/deployment-branch-policies \
+  -f name=develop -f type=branch
+```
+
+Heroku の API キーは所有者が作り、そのまま secret に登録します。キーの値を画面やファイルに出さないでください。
+
+```bash
+heroku authorizations:create -S -d "GitHub Actions cargo-tracker demo deploy" -e 31536000 \
+  | gh secret set HEROKU_API_KEY --env demo
+gh secret list --env demo        # 名前と更新日だけを確かめる
+```
+
+| 場面 | すること |
+| :--- | :--- |
+| 期限の 1 か月前（作成から 11 か月） | 上のコマンドで新しいキーを作って登録し直し、`heroku authorizations` で古いキーの ID を確かめて `heroku authorizations:revoke <ID>` で失効させる |
+| 漏えいの疑い | すぐに `heroku authorizations:revoke <ID>` で失効させ、新しいキーを作って登録し直す |
+| デモ環境をやめる | `heroku authorizations:revoke <ID>` と `gh secret delete HEROKU_API_KEY --env demo` |
+
 ## 3. 配備
+
+### CI からの配備（通常）
+
+develop にアプリか設計文書（`docs/design/cargo-tracker/**`）の変更を push すると、cargo-tracker CI の check・ui が緑になった後に、`deploy-demo` ジョブが配備します。手で配備し直すときは、develop で CI を実行します。
+
+```bash
+gh workflow run cargo-tracker-ci.yml --ref develop
+gh run watch                      # 実行を見る
+npx gulp deploy:demo:status       # DEMO_REVISION が配備したコミットか確かめる
+```
+
+- `deploy-demo` は `needs: [check, ui]` で、develop の push と手動の実行のときだけ動きます。Pull Request と develop の外では動きません。
+- `docker/build-push-action` で `demo` のステージを `linux/amd64`・Docker v2 の manifest（`oci-mediatypes=false`）で作り、ラベルに `github.sha` を付けて push します。
+- Heroku Platform API で formation を更新して release し、Config Vars の `DEMO_REVISION` を `github.sha` にします。
+- 配備の後、`/login` が 200 になるまで最大 120 秒待ち、来なければジョブを失敗にします。失敗しても、前の release のまま動き続けます。
+- develop に push するたびにデモ環境が再起動し、データが初期状態に戻ります。デモの最中は develop に push しないでください。
+- CI の配備の実行中は、手元で配備しないでください（どちらのコミットが出たか分からなくなります）。
+
+### 手元からの配備（CI が使えないとき）
 
 develop の CI が緑のコミットから配備します。
 

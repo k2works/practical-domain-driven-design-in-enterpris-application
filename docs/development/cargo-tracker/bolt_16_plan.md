@@ -18,7 +18,7 @@ verified:
 | Bolt | 第 16 回 |
 | 予定 | W3 の前（2026-10-07 から）、2〜3 時間 |
 | 対象 | 技術タスク（SP 0）。ストーリーの受入条件は増やさない |
-| GitHub | 新しい技術 Issue「[技術] デモ環境への CI からの配備」を立てる（Milestone は Release 0.1、週は W3、Unit は横断、SP 0） |
+| GitHub | [#39 [技術] デモ環境への CI からの配備](https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/39)（Milestone は Release 0.1、週は W3、Unit は横断、SP 0） |
 | 承認ゲート | 計画の承認（確認ポイント 1〜12）、外部連携とセキュリティ（ステップ 3。Environment と secret、最初の CI からの配備）、終了報告の 3 回 |
 | アプローチ | 運用の Bolt。アプリの振る舞いは変えない。ワークフローの静的な検査（actionlint）を先に通し、最初の develop への push で配備のジョブを動かして確かめる |
 | 範囲の決定 | 2026-10-07 に human:kakimomokuri が、develop の CI が緑なら自動で配備する、Heroku の API キーは GitHub の Environment `demo` の secret に置く、W3 の前の Bolt 16 として行う、と決めた |
@@ -105,11 +105,12 @@ deploy --> dyno : スモーク（/login が 200）
 
 各ステップの終わりに push し、CI を確かめる。
 
-- [ ] **1. 決定を ADR-013 と手順書に反映する案を書き、技術 Issue を立てる**（承認はステップ 3 の承認ゲートとまとめて受ける）
+- [x] **1. 決定を ADR-013 と手順書に反映する案を書き、技術 Issue を立てる**（承認はステップ 3 の承認ゲートとまとめて受ける）
   - ADR-013: 「配備」に CI の `deploy-demo` を足し、手元の `deploy:demo` は CI が使えないときの手段にする。ガードの約束を CI の仕組み（`needs`、Environment のブランチの規則）で守ることを書く。ネガティブに長期の API キーを足す。代替案に「自動配備を作らない（Bolt 15 の確認ポイント 10）」を足す
   - 手順書: 「3. 配備」に CI からの配備を先に書き、手元の配備を後に置く。初回のセットアップに Environment と secret の作り方、キーの更新（期限の前）と失効のさせ方を足す
   - インフラストラクチャアーキテクチャの CI/CD の節に、デモ環境の配備を 1 行足す
   - GitHub に技術 Issue を立て、Project のフィールドを設定する
+  - 結果（09:58〜10:06 JST）: ADR-013 に改訂の注記、配備・CI の認証・配備のガードの行、代替案 2 つ、ネガティブ 2 つ、コンプライアンス 1 つを足した。手順書に CI からの配備（通常）と手元からの配備、Environment と secret の作り方・キーの更新と失効を足した。インフラストラクチャアーキテクチャの CI/CD の節に 1 行足した。[#39](https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/39) を立て、Project に Release 0.1・W3・横断・SP 0・In Progress を設定した
 - [ ] **2. `deploy-demo` ジョブを書き、静的に検査する**
   - Red: ジョブを足す前に、ワークフローに `deploy-demo` がないことと、actionlint（`rhysd/actionlint` のコンテナ）が今のワークフローで通ることを記録する
   - `on` に `workflow_dispatch` を足す（`push` の `paths` は変えない。アプリの変更でだけ配備する）

@@ -147,6 +147,7 @@ stop
 - CI/CD は GitHub Actions で構築する（AGENTS.md）。
 - DB のマイグレーションはマイグレーションツールで版管理する（第 3 章 Database Migration）。前のバージョンのアプリと互換のある変更（追加 → 移行 → 削除の段階分け）にし、ローリングデプロイ中も動くようにする。
 - 本番へのデプロイは人の承認を必須にする（開発ガイド AI-DLC 版「本番環境に関わる操作はすべて確認必須」）。
+- デモ環境（Heroku、ADR-013）は、develop の cargo-tracker CI の check・ui が緑になった後に、`deploy-demo` ジョブが自動で配備する（Bolt 16）。人の承認は要らない（ステージング・本番ではなく、非機能要件の対象にしない）。Heroku の API キーは GitHub の Environment `demo`（develop だけ）に置く。
 
 ## Infrastructure as Code
 
