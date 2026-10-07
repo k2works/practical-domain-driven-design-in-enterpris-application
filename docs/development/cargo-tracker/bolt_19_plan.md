@@ -4,7 +4,7 @@ title: "Bolt 19 計画 - 判断根拠を記録して経路を確定する（US-0
 description: "19 回目の Bolt の計画。経路設計者が S-06 で選んだ適合の候補について、判断根拠を記録し、確定の時刻で再検証して経路版を確定する（US-07 AC1）。根拠・権限の不足と、確定できない候補・状態を拒否する（AC2）。あわせて Bolt 17 レビューの D-64（経路版の一覧、版による競合、一覧の見積有効期限の順）と、Try T-52（ローカルの SonarQube のクラウドの上書きを起動のタスクに組み込む）を行う。"
 tags: [development,bolt-plan]
 status: draft
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-07T11:07:08Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-07T11:14:47Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-07T10:21:14Z }
 ---
@@ -242,7 +242,7 @@ S07 --> S06 : 戻る
     - 計画からの変更: 根拠が 4,000 文字を超えるときの理由を、`RATIONALE_MISSING` ではなく `RATIONALE_TOO_LONG` に分けた（画面の文言を分けるため）。確定の後の算出は、Bolt 17 のとおり `IllegalStateException` で拒否する（計画の「NOT_CONFIRMABLE_STATE」は確定し直しだけ）
   - 結果（Green。2026-10-07 20:06 JST。`2a4e243`）
     - `RoutingCase` が経路版の一覧を持ち（経路版番号は 1 から順、確定は 1 つだけ）、算出・確定は最新の経路版だけを置き換える。`confirm` は、経路設計者 → 状態（候補提示済みで、確定した経路版がない）→ 候補の有無 → 適合 → 根拠（前後の空白を除いて 1〜4,000 文字。文字数はコードポイントで数える）→ 出発（最初の区間の出発予定が確定の時刻より後）→ 確定の時刻で判定し直す、の順に確かめ、DE-05 を返す。`RouteVersion` は、確定なら確定の記録を持ち、作成中・候補提示済み・要専門家判断は持たない（再設計要・旧版は確定の後の状態なので持てる）。記録の候補は経路版にある。`DecisionRationale` は自分の値（前後の空白なし、1〜4,000 文字）を確かめる
-    - `check` 緑（`test` 996 件）。途中で、Checkstyle の循環的複雑度（`RouteVersion` の検証を別のメソッドに分けた）、用語集のテスト（`RouteConfirmation` を用語集に「確定の記録」で足した）、SpotBugs の `CT_CONSTRUCTOR_THROW`（`RouteConfirmationRejected` を final にした）で落ち、直した
+    - `check` 緑（`test` 996 件）。CI（cargo-tracker CI #113）は check・ui・deploy-demo とも成功（Red の #112 は失敗）。途中で、Checkstyle の循環的複雑度（`RouteVersion` の検証を別のメソッドに分けた）、用語集のテスト（`RouteConfirmation` を用語集に「確定の記録」で足した）、SpotBugs の `CT_CONSTRUCTOR_THROW`（`RouteConfirmationRejected` を final にした）で落ち、直した
     - H1: `ConstraintEvaluator` は変えていない（0 か所）。確定の再検証は判定を確定の時刻で呼び直すだけで作れた
     - H2（途中）: Bolt 17 のテストで書き換えたのは 1 件（`RoutingCaseTest` の算出できない状態の例。経路版の一覧で組み立て、確定の記録を持たない確定は作れなくなったため旧版にした）と、テストのインメモリのリポジトリ 1 か所（経路版の一覧を写す）。ほかの Bolt 17 のテストは変えずに通った
 - [ ] **3. 表の列・リポジトリ・DE-05・入力ポート（統合テスト）** 【承認ゲート: データベース】
