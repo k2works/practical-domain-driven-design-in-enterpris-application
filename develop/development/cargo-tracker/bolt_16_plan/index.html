@@ -7577,17 +7577,30 @@
 <li>計画からの変更: ステップ 2 は push しない。push すると CI が <code>deploy-demo</code> まで進み、GitHub がブランチの規則のない Environment <code>demo</code> を自動で作り、secret がないまま失敗するため。ステップ 3 で Environment と secret を用意してから push する</li>
 </ul>
 </li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>3. Environment と secret を用意し、最初の CI からの配備を確かめる</strong> 【承認ゲート: 外部連携・セキュリティ】</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>3. Environment と secret を用意し、最初の CI からの配備を確かめる</strong> 【承認ゲート: 外部連携・セキュリティ】</li>
 <li>AI が <code>gh api</code> で Environment <code>demo</code> を作り、配備のブランチの規則を develop だけにする。読み返して確かめる</li>
 <li>人が API キーを作って登録する（AI はキーの値に触れない）:
     <code>! heroku authorizations:create -S -d "GitHub Actions cargo-tracker demo deploy" -e 31536000 | gh secret set HEROKU_API_KEY --env demo</code></li>
 <li><code>gh secret list --env demo</code> で名前だけを確かめる</li>
 <li>push して CI を見る: check・ui の後に <code>deploy-demo</code> が動き、<code>deploy:demo:status</code> で <code>DEMO_REVISION</code> が push したコミットになり、R14 がないこと</li>
 <li>手動の実行（<code>gh workflow run cargo-tracker-ci.yml --ref develop</code>）でも配備のジョブが動くこと</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>4. 手順書を仕上げ、ガードが止める場合を確かめる</strong></li>
+<li>結果（10:16〜10:38 JST。外部連携・セキュリティの承認ゲートは 10:16 に通した）:<ul>
+<li>Environment <code>demo</code> を作り、配備のブランチの規則を develop（branch）だけにした。読み返して <code>protection_rules</code> が <code>branch_policy</code> 1 件、規則が <code>develop</code> 1 件であることを確かめた</li>
+<li>人がキーを登録した。1 回目は、計画のコマンドを端末に貼ったときに折り返しで改行が入り、<code>gh secret set</code> に値が渡らず空の secret になった。push（<code>1ce566ef</code>）の CI で check・ui は緑、<code>deploy-demo</code> は Container Registry へのログインで <code>Password required</code> で失敗した（前の release のまま動き続けた）。2 回目も折り返しで崩れ、secret は登録されず、作ったキーは捨てられた。3 回目は、AI がスクラッチに置いた短いスクリプト（キーの長さだけを表示し、登録し、使われなかった 2 つのキーを失効させる）を人が実行して登録できた（長さ 65）。使われなかったキー 2 つは失効させた。スクリプトは消した</li>
+<li>失敗した <code>deploy-demo</code> だけを再実行して成功（2 分 41 秒、キャッシュなし）。release v10（イメージ）・v11（<code>DEMO_REVISION</code>）。<code>deploy:demo:status</code> で <code>DEMO_REVISION</code> が <code>1ce566ef</code>、プロファイルは <code>dev</code> だけ、R14 は 0 件</li>
+</ul>
+</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>4. 手順書を仕上げ、ガードが止める場合を確かめる</strong></li>
 <li>develop の外のブランチから <code>workflow_dispatch</code> を実行し、<code>deploy-demo</code> が動かない（<code>if</code> で飛ぶ）ことを確かめる。確かめに使ったブランチは消す</li>
 <li>配備のジョブの時間を記録する（H3）</li>
 <li>手順書・README・索引を実際の結果で仕上げる。<code>operating-docs</code> と <code>apply-okf</code> を行う</li>
+<li>結果（10:38〜10:55 JST）:<ul>
+<li>develop と確かめ用のブランチ <code>tmp-bolt16-dispatch-check</code> で同時に手動の実行をした。develop は check・ui・<code>deploy-demo</code> が success（<code>deploy-demo</code> は 29 秒）。ブランチは check・ui が success、<code>deploy-demo</code> は skipped。ブランチは消した</li>
+<li>develop の手動の実行では release が増えなかった（v11 のまま）。同じイメージと同じ <code>DEMO_REVISION</code> のため Heroku が新しい release を作らない。再起動もデータの初期化も起きない</li>
+<li>H3: 配備のジョブはキャッシュなしで 2 分 41 秒、キャッシュありで 29 秒（5 分以内）</li>
+<li>手順書の構成図に CI の経路（<code>deploy-demo</code>、Environment <code>demo</code>、Platform API、スモーク）を足し、流れの図を手元の配備の図とした。配備の所要時間、同じコミットの再配備、キーの登録のコマンドの折り返しの注意、<code>Password required</code> のつまずきを足した。README を CI からの配備に直した</li>
+</ul>
+</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>5. 運用レビューと Bolt 終了報告</strong></li>
 <li><code>operating-review</code> でワークフロー・ADR-013・手順書をレビューし、指摘への対応を終了報告に書く</li>
 <li><code>bolt_16_report.md</code> に仮説 H1〜H3 の結論、各ステップの時刻、所要時間を書く</li>
