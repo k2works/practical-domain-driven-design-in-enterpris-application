@@ -129,17 +129,26 @@ deploy --> dyno : スモーク（/login が 200）
     - ジョブを書き、actionlint は exit 0
     - 計画からの変更: スモークは `/login` の 200 だけでは足りない。formation の更新はすぐ応答し、新しい dyno が上がるまで古い dyno が 200 を返すため。Platform API で最新の release の版を取り、その版の web の dyno が `up` になり、かつ `/login` が 200 になるまで最大 180 秒待つ形にした。jq の式は手元から読み取りの API（releases・dynos）で確かめた（v9、up）
     - 計画からの変更: ステップ 2 は push しない。push すると CI が `deploy-demo` まで進み、GitHub がブランチの規則のない Environment `demo` を自動で作り、secret がないまま失敗するため。ステップ 3 で Environment と secret を用意してから push する
-- [ ] **3. Environment と secret を用意し、最初の CI からの配備を確かめる** 【承認ゲート: 外部連携・セキュリティ】
+- [x] **3. Environment と secret を用意し、最初の CI からの配備を確かめる** 【承認ゲート: 外部連携・セキュリティ】
   - AI が `gh api` で Environment `demo` を作り、配備のブランチの規則を develop だけにする。読み返して確かめる
   - 人が API キーを作って登録する（AI はキーの値に触れない）:
     `! heroku authorizations:create -S -d "GitHub Actions cargo-tracker demo deploy" -e 31536000 | gh secret set HEROKU_API_KEY --env demo`
   - `gh secret list --env demo` で名前だけを確かめる
   - push して CI を見る: check・ui の後に `deploy-demo` が動き、`deploy:demo:status` で `DEMO_REVISION` が push したコミットになり、R14 がないこと
   - 手動の実行（`gh workflow run cargo-tracker-ci.yml --ref develop`）でも配備のジョブが動くこと
-- [ ] **4. 手順書を仕上げ、ガードが止める場合を確かめる**
+  - 結果（10:16〜10:38 JST。外部連携・セキュリティの承認ゲートは 10:16 に通した）:
+    - Environment `demo` を作り、配備のブランチの規則を develop（branch）だけにした。読み返して `protection_rules` が `branch_policy` 1 件、規則が `develop` 1 件であることを確かめた
+    - 人がキーを登録した。1 回目は、計画のコマンドを端末に貼ったときに折り返しで改行が入り、`gh secret set` に値が渡らず空の secret になった。push（`1ce566ef`）の CI で check・ui は緑、`deploy-demo` は Container Registry へのログインで `Password required` で失敗した（前の release のまま動き続けた）。2 回目も折り返しで崩れ、secret は登録されず、作ったキーは捨てられた。3 回目は、AI がスクラッチに置いた短いスクリプト（キーの長さだけを表示し、登録し、使われなかった 2 つのキーを失効させる）を人が実行して登録できた（長さ 65）。使われなかったキー 2 つは失効させた。スクリプトは消した
+    - 失敗した `deploy-demo` だけを再実行して成功（2 分 41 秒、キャッシュなし）。release v10（イメージ）・v11（`DEMO_REVISION`）。`deploy:demo:status` で `DEMO_REVISION` が `1ce566ef`、プロファイルは `dev` だけ、R14 は 0 件
+- [x] **4. 手順書を仕上げ、ガードが止める場合を確かめる**
   - develop の外のブランチから `workflow_dispatch` を実行し、`deploy-demo` が動かない（`if` で飛ぶ）ことを確かめる。確かめに使ったブランチは消す
   - 配備のジョブの時間を記録する（H3）
   - 手順書・README・索引を実際の結果で仕上げる。`operating-docs` と `apply-okf` を行う
+  - 結果（10:38〜10:55 JST）:
+    - develop と確かめ用のブランチ `tmp-bolt16-dispatch-check` で同時に手動の実行をした。develop は check・ui・`deploy-demo` が success（`deploy-demo` は 29 秒）。ブランチは check・ui が success、`deploy-demo` は skipped。ブランチは消した
+    - develop の手動の実行では release が増えなかった（v11 のまま）。同じイメージと同じ `DEMO_REVISION` のため Heroku が新しい release を作らない。再起動もデータの初期化も起きない
+    - H3: 配備のジョブはキャッシュなしで 2 分 41 秒、キャッシュありで 29 秒（5 分以内）
+    - 手順書の構成図に CI の経路（`deploy-demo`、Environment `demo`、Platform API、スモーク）を足し、流れの図を手元の配備の図とした。配備の所要時間、同じコミットの再配備、キーの登録のコマンドの折り返しの注意、`Password required` のつまずきを足した。README を CI からの配備に直した
 - [ ] **5. 運用レビューと Bolt 終了報告**
   - `operating-review` でワークフロー・ADR-013・手順書をレビューし、指摘への対応を終了報告に書く
   - `bolt_16_report.md` に仮説 H1〜H3 の結論、各ステップの時刻、所要時間を書く

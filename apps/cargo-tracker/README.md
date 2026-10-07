@@ -27,9 +27,11 @@ A 社国際貨物輸送管理システム。境界づけられたコンテキス
 
 関係者が触って確かめるデモ環境を、`dev` プロファイルのまま Heroku で動かしています（ADR-013）。上の開発用の利用者で、だれでもログインできます。本物のデータを入れないでください。データは再起動で初期状態に戻ります。
 
+develop にアプリの変更を push すると、cargo-tracker CI の check・ui が緑になった後に、`deploy-demo` ジョブが自動で配備します（Bolt 16）。
+
 ```bash
-npx gulp deploy:demo          # リポジトリのルートで。develop の CI が緑のコミットから配備する
-npx gulp deploy:demo:help     # ほかのタスク（状態・ログ・再起動・停止）
+npx gulp deploy:demo:status   # リポジトリのルートで。動いているコミット（DEMO_REVISION）と URL
+npx gulp deploy:demo:help     # ほかのタスク（ログ・再起動・停止、CI が使えないときの手元からの配備）
 ```
 
 手順: [Heroku デモ環境セットアップ手順書](../../docs/operation/cargo-tracker/heroku_demo_setup.md)

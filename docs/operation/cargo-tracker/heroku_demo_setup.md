@@ -46,7 +46,9 @@ node "開発者の PC" as pc {
 }
 
 cloud "GitHub" as github {
-  component "cargo-tracker CI\n(develop)" as ci
+  component "cargo-tracker CI\n(check・ui)" as ci
+  component "deploy-demo\n(environment: demo)" as deploy
+  collections "Environment demo\n(develop だけ)\nsecret HEROKU_API_KEY" as env
 }
 
 cloud "Heroku（Common Runtime、region us）" as heroku {
@@ -63,7 +65,13 @@ cloud "Heroku（Common Runtime、region us）" as heroku {
   component "Logplex\n(log-runtime-metrics)" as logs
 }
 
-owner --> gulp : 配備・状態・ログ・\n再起動・停止
+owner --> github : git push develop
+ci --> deploy : needs（緑のとき）
+env --> deploy
+deploy --> image : docker/build-push-action\n(--target demo、oci-mediatypes=false)
+deploy --> config : Platform API\n(formation・DEMO_REVISION)
+deploy --> router : スモーク（/login）
+owner --> gulp : 状態・ログ・再起動・停止\n(CI が使えないときの配備)
 gulp --> ci : CI が緑かを確かめる\n(gh run list)
 gulp --> buildx : --target demo\noci-mediatypes=false
 buildx --> dockerfile
@@ -144,6 +152,8 @@ heroku authorizations:create -S -d "GitHub Actions cargo-tracker demo deploy" -e
 gh secret list --env demo        # 名前と更新日だけを確かめる
 ```
 
+上のコマンドは、行末の `\` で 1 つのコマンドにつながっています。チャットや端末から貼ると、折り返しの位置に改行が入って崩れることがあります（Bolt 16 で、`gh secret set` に値が渡らず空の secret が登録され、`deploy-demo` が `Password required` で失敗した）。貼る前に 1 つのコマンドになっていることを確かめ、`gh secret list --env demo` で更新日時が変わったことを確かめてください。
+
 | 場面 | すること |
 | :--- | :--- |
 | 期限の 1 か月前（作成から 11 か月） | 上のコマンドで新しいキーを作って登録し直し、`heroku authorizations` で古いキーの ID を確かめて `heroku authorizations:revoke <ID>` で失効させる |
@@ -165,7 +175,9 @@ npx gulp deploy:demo:status       # DEMO_REVISION が配備したコミットか
 - `deploy-demo` は `needs: [check, ui]` で、develop の push と手動の実行のときだけ動きます。Pull Request と develop の外では動きません。
 - `docker/build-push-action` で `demo` のステージを `linux/amd64`・Docker v2 の manifest（`oci-mediatypes=false`）で作り、ラベルに `github.sha` を付けて push します。
 - Heroku Platform API で formation を更新して release し、Config Vars の `DEMO_REVISION` を `github.sha` にします。
-- 配備の後、`/login` が 200 になるまで最大 120 秒待ち、来なければジョブを失敗にします。失敗しても、前の release のまま動き続けます。
+- 配備の後、最新の release の web の dyno が up になり、`/login` が 200 になるまで最大 180 秒待ちます。来なければジョブを失敗にします。失敗しても、前の release のまま動き続けます。
+- 同じコミットを配備し直しても（手動の実行など）、イメージと `DEMO_REVISION` が変わらないため Heroku は新しい release を作らず、再起動もしません（Bolt 16 で確かめた）。
+- 所要時間は、配備のジョブが 30 秒〜3 分（キャッシュがあれば短い）。push から配備までは、check・ui を含めて 12〜15 分です。
 - develop に push するたびにデモ環境が再起動し、データが初期状態に戻ります。デモの最中は develop に push しないでください。
 - CI の配備の実行中は、手元で配備しないでください（どちらのコミットが出たか分からなくなります）。
 
@@ -181,7 +193,7 @@ npx gulp deploy:demo
 
 ```plantuml
 @startuml
-title deploy:demo の流れとガード
+title 手元の deploy:demo の流れとガード（CI が使えないとき）
 
 start
 partition "deploy:demo:build" {
@@ -311,6 +323,7 @@ heroku apps:destroy -a cargo-tracker-mono-demo --confirm cargo-tracker-mono-demo
 | `deploy:demo:build` が「CI が緑ではありません」で止まる | アプリの最後の変更の CI が終わっていないか、失敗している。`gh run list --workflow cargo-tracker-ci.yml --branch develop` で確かめ、緑になってから配備する。CI が後の push で取り消された（cancelled）ときは、CI を再実行する |
 | 「develop から配備してください」「HEAD が origin/develop にありません」で止まる | develop に切り替え、push して CI を待ってから配備する |
 | `deploy:demo:push` が「HEAD から作ったものではありません」で止まる | 手元のイメージが古い。`deploy:demo:build` を先に行う（`deploy:demo` なら順に行う） |
+| `deploy-demo` が「Heroku の Container Registry にログインする」で `Password required` | secret `HEROKU_API_KEY` が空。「CI からの配備の準備」のコマンドで登録し直し、失敗した実行を `gh run rerun <ID> --failed` で再実行する |
 | `push に失敗しました` | `heroku container:login` をしていない（Registry の認証は Heroku CLI のログインとは別） |
 | 入れたデータが消えた | 仕様（H2 のインメモリ）。Heroku は dyno を 1 日 1 回以上再起動し、配備とスリープでも初期状態に戻る |
 | 大きな書類の添付が失敗する | Heroku の Router は 30 秒で request を打ち切る。デモでは小さなファイルを使う |
