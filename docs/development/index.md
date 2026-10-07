@@ -6,7 +6,7 @@
 
 | プロジェクト | 概要 | 状況 |
 | :--- | :--- | :--- |
-| [cargo-tracker](cargo-tracker/index.md) | A 社国際貨物輸送管理システム | W1 完了（Bolt 1〜8）、W2 進行中（Bolt 9〜11 完了）。Release 0.1 は 11 / 35 SP |
+| [cargo-tracker](cargo-tracker/index.md) | A 社国際貨物輸送管理システム | W1 完了（Bolt 1〜8、6 SP）、W2 完了（Bolt 9〜14、7 SP）、W3 の前に技術タスクの Bolt 15・16（デモ環境と CI からの配備）。Release 0.1 は 13 / 35 SP |
 
 ## デモ環境
 

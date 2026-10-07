@@ -243,7 +243,8 @@ gantt
 | 週 | 実績 |
 | :--- | :--- |
 | W1 | 2026-10-01 〜 2026-10-03（期間の前に前倒し）。Bolt 1〜8（開発基盤、CI、E2E の基盤、US-01 の提出と必要書類、US-02 の審査と荷主の再提出、UI の骨格と段階入力）。6 SP。ベロシティの見直しは計画どおり W4 で行う |
-| W2 | 2026-10-05 から（W2 の期間の前に前倒し）。Bolt 9（Bolt 6〜8 レビューの返済。SP 0）、Bolt 10（US-03 の提示 AC1〜AC3）、Bolt 11（US-03 の失効・置換 AC4・AC5 と Bolt 9・10 レビューの返済）を終えた。US-03（5 SP）完了 |
+| W2 | 2026-10-05 〜 2026-10-06（W2 の期間の前に前倒し）。Bolt 9（Bolt 6〜8 レビューの返済。SP 0）、Bolt 10（US-03 の提示 AC1〜AC3）、Bolt 11（US-03 の失効・置換 AC4・AC5 と Bolt 9・10 レビューの返済）、Bolt 12（US-24 AC1 詳細経路設計へ進む）、Bolt 13（TOTP のスパイク TS-01。SP 0）、Bolt 14（US-18 の password によるログインと session）。7 SP（US-03 5、US-18 の一部 2）。US-24 の 1 SP は W3 へ。業務責任者に確かめる事項の 14 件を仮の決定のとおりに決めた。W1〜W2 の累計は 13 SP（計画は 14 SP） |
+| W3 | 2026-10-06 〜（W3 の期間の前に前倒し）。W3 の前に Bolt 15（dev プロファイルによる Heroku のデモ環境。SP 0、ADR-013）と Bolt 16（デモ環境への CI からの配備。SP 0）を終えた |
 
 ### リリース内容
 
@@ -393,11 +394,13 @@ AI-DLC では **Bolt がイテレーション** である（[AI-DLC 導入ガイ
 
 - [x] Bolt 9: Bolt 6〜8 レビューの返済（書類の差し替え R-01 と改善提案。D-25 で W2 の最初の Bolt にした。完了、承認済み。#37 をクローズした）。[Bolt 9 計画](bolt_09_plan.md)、[Bolt 9 終了報告](bolt_09_report.md)、[#37](https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/37)
 - [x] US-03（全受入条件、BR-10 の境界）。Bolt 10 で提示（AC1〜AC3）、Bolt 11 で失効・置換（AC4・AC5）に分ける（2026-10-05 に human:kakimomokuri が決定）。[Bolt 10 計画](bolt_10_plan.md)、[Bolt 10 終了報告](bolt_10_report.md)（提示は完了、承認済み。AC4・AC5 は Bolt 11）。[Bolt 11 計画](bolt_11_plan.md)、[Bolt 11 終了報告](bolt_11_report.md)（失効・置換と Bolt 9・10 レビューの中・低の返済。完了、承認済み。#4 をクローズした。AC4・AC5 の予約確定と荷主の承認での利用の拒否は US-04・US-24 の Bolt で確かめる）
-- [ ] US-24（AC1 詳細経路設計へ進む）。Bolt 12 で行う（2026-10-06 に human:kakimomokuri が W2 の残りから選んだ。US-18 の一部と TS-01 は後の Bolt）。[Bolt 12 計画](bolt_12_plan.md)、[Bolt 12 終了報告](bolt_12_report.md)（完了、承認済み。#5 は AC1 にチェックを付け、AC4・AC5 の W3 まで開いたまま）
+- [ ] US-24（AC1 詳細経路設計へ進む）。Bolt 12 で行う（2026-10-06 に human:kakimomokuri が W2 の残りから選んだ。US-18 の一部と TS-01 は後の Bolt）。[Bolt 12 計画](bolt_12_plan.md)、[Bolt 12 終了報告](bolt_12_report.md)（完了、承認済み。#5 は AC1 にチェックを付け、AC4・AC5 の W3 まで開いたまま。W2 の締めで #5 の週を W3 に移した。US-24 の SP 1 は AC4・AC5 の後に W3 で数える）
 - [x] US-18 の一部（password によるログインと session）。Bolt 14 で行う（2026-10-06 に human:kakimomokuri が分けずに 1 つの Bolt にすると決めた。AC1 の password の部分・AC4・AC5 を R1.0 の #13 から前倒しする）。[Bolt 14 計画](bolt_14_plan.md)（承認済み）、[Bolt 14 終了報告](bolt_14_report.md)（完了、承認済み。ADR-012 を採用。#6 をクローズし、#13 に前倒しした AC をコメントした）
 - [x] TOTP ライブラリのスパイク（TS-01）。Bolt 13 で行う（2026-10-06 に human:kakimomokuri が W2 の残りから選んだ。US-18 の一部は後の Bolt）。[Bolt 13 計画](bolt_13_plan.md)、[Bolt 13 終了報告](bolt_13_report.md)（完了、承認済み。方式は [ADR-011](../../adr/cargo-tracker/011-mfa-totp.md) の案で、採否は W5 の US-18 の計画で決める）
 
 **目標 SP**: 8（US-03 5、US-24 の一部 1、US-18 の一部 2）
+
+**結果**（2026-10-07 に締めた）: 7 SP（US-03 5、US-18 の一部 2）。Bolt 9〜14 を、W2 の期間（10-12〜10-16）の前の 2026-10-05〜10-06 に終えた。US-24 の 1 SP は AC4・AC5 とあわせて W3 で数える。人の変更依頼 0
 
 ### W3（2026-10-19 〜 10-23）
 
@@ -554,8 +557,8 @@ Bolt のレビューや終了報告で「業務責任者に確かめる」とし
 | 週 | 計画 SP | 実績 SP | 達成率 | 状態 |
 | :--- | ---: | ---: | ---: | :--- |
 | W1 | 6 | 6 | 100% | 完了（W1 の期間の前に前倒しで、2026-10-03 に Bolt 1〜8 を終えた。すべて承認済み。US-01（R0.1）・US-02 を完了し、#1・#2・#3・#36 をクローズした。人の変更依頼 0） |
-| W2 | 8 | 7 | - | 進行中（Bolt 9〜14 完了。US-18 の一部（2 SP）を Bolt 14 で完了し #6 をクローズした。US-03 を完了し #4 をクローズした。US-24 AC1 は Bolt 12 で作った（承認済み。US-24 の SP は AC4・AC5 の後に数える）。人の変更依頼 0） |
-| W3 | 10 | - | - | 未着手 |
+| W2 | 8 | 7 | 88% | 完了（2026-10-06 に Bolt 9〜14 を終え、2026-10-07 に締めた。US-03 を完了し #4・#37 を、US-18 の一部（2 SP）を完了し #6 をクローズした。US-24 AC1 は Bolt 12 で作り、残りの AC4・AC5 と SP 1 は W3 へ（#5 の週を W3 に移した）。人の変更依頼 0） |
+| W3 | 10 | - | - | 準備中（W3 の前に技術タスクの Bolt 15・16 を終えた。SP 0。#38・#39 をクローズした） |
 | W4 | 11 | - | - | 未着手 |
 | W5 | 8 | - | - | 未着手 |
 | W6 | 13 | - | - | 未着手 |
@@ -642,3 +645,4 @@ xychart-beta
 | 2026-10-06 | Bolt 14 の完了を W2 に反映し、US-18 の一部（2 SP）の完了を進捗に記録した（承認済み） | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-10-06 | 業務責任者に確かめる事項の台帳の 14 件（D-28〜D-41-3）を、仮の決定のとおりに決定した | anthropic/claude-opus-5-5、決定 human:kakimomokuri |
 | 2026-10-06 | Bolt 14 計画の承認を W2 に反映した | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
+| 2026-10-07 | W2 を締めた（7 SP、達成率 88%、US-24 の 1 SP を W3 へ）。実績スケジュールに W2 の Bolt 12〜14 と W3 の前の Bolt 15・16 を足した。GitHub の #5 の週を W3 に移した | anthropic/claude-opus-5-5 |
