@@ -6,17 +6,17 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="cargo-tracker のユースケース分析における入力、Unit 分解、承認ゲート、未確定事項を管理する計画。">
+        <meta name="description" content="16 回目の Bolt の計画。develop の cargo-tracker CI（check・ui）が緑になったら、同じワークフローの deploy-demo ジョブで Heroku のデモ環境（ADR-013）へ配備する。GitHub の Environment demo と secret、Heroku Platform API での release、配備の後のスモーク、ADR-013 と手順書の更新までを、ステップ 1〜5 で定義する。">
       
       
         <meta name="author" content="k2works">
       
       
       
-        <link rel="prev" href="../units/">
+        <link rel="prev" href="../bolt_15_report/">
       
       
-        <link rel="next" href="../../../design/">
+        <link rel="next" href="../../../operation/">
       
       
         
@@ -27,7 +27,7 @@
     
     
       
-        <title>cargo-tracker ユースケース作成計画 - 実践ドメイン駆動設計 in エンタープライズアプリケーション</title>
+        <title>Bolt 16 計画 - デモ環境への CI からの配備 - 実践ドメイン駆動設計 in エンタープライズアプリケーション</title>
       
     
     
@@ -78,7 +78,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#cargo-tracker" class="md-skip">
+        <a href="#bolt-16-ci" class="md-skip">
           Skip to content
         </a>
       
@@ -112,7 +112,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              cargo-tracker ユースケース作成計画
+              Bolt 16 計画 - デモ環境への CI からの配備
             
           </span>
         </div>
@@ -236,13 +236,11 @@
   
   
   
-    
-  
   
     
     
-      <li class="md-tabs__item md-tabs__item--active">
-        <a href="../../" class="md-tabs__link">
+      <li class="md-tabs__item">
+        <a href="../../../requirements/" class="md-tabs__link">
           
   
   
@@ -278,11 +276,13 @@
   
   
   
+    
+  
   
     
     
-      <li class="md-tabs__item">
-        <a href="../../../development/" class="md-tabs__link">
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../../" class="md-tabs__link">
           
   
   
@@ -745,29 +745,24 @@
       
   
   
-    
   
   
-  
     
     
     
     
       
-        
-        
-      
       
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
         
           
-          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
             
   
   
@@ -785,7 +780,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_3">
             <span class="md-nav__icon md-icon"></span>
             
@@ -803,7 +798,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../" class="md-nav__link">
+      <a href="../../../requirements/" class="md-nav__link">
         
   
   
@@ -828,8 +823,6 @@
                 
   
   
-    
-  
   
   
     
@@ -840,11 +833,11 @@
       
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_2" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_2" >
         
           
           <label class="md-nav__link" for="__nav_3_2" id="__nav_3_2_label" tabindex="0">
@@ -865,7 +858,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_2_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_2_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_3_2">
             <span class="md-nav__icon md-icon"></span>
             
@@ -883,7 +876,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../" class="md-nav__link">
+      <a href="../../../requirements/cargo-tracker/" class="md-nav__link">
         
   
   
@@ -911,7 +904,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../requirements_definition/" class="md-nav__link">
+      <a href="../../../requirements/cargo-tracker/requirements_definition/" class="md-nav__link">
         
   
   
@@ -946,7 +939,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../business_usecase/" class="md-nav__link">
+      <a href="../../../requirements/cargo-tracker/business_usecase/" class="md-nav__link">
         
   
   
@@ -981,7 +974,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../system_usecase/" class="md-nav__link">
+      <a href="../../../requirements/cargo-tracker/system_usecase/" class="md-nav__link">
         
   
   
@@ -1016,7 +1009,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../user_story/" class="md-nav__link">
+      <a href="../../../requirements/cargo-tracker/user_story/" class="md-nav__link">
         
   
   
@@ -1051,7 +1044,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../units/" class="md-nav__link">
+      <a href="../../../requirements/cargo-tracker/units/" class="md-nav__link">
         
   
   
@@ -1083,44 +1076,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ユースケース作成計画
-  
-
-    
-  </span>
-  
-  
-    
-  
-  
-    <span class="md-status md-status--stable"></span>
-  
-
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../../../requirements/cargo-tracker/usecase_plan/" class="md-nav__link">
         
   
   
@@ -1143,142 +1102,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#intent" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Intent
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#_1" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        入力
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#_2" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        出力
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#_3" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        実行計画
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="実行計画">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#1-1" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        ゲート 1: 精度レベル 1 — スコープ、アクター、目的
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#2-2" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        ゲート 2: 精度レベル 2 — ビジネスユースケースと主成功シナリオ
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#3-3" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        ゲート 3: 精度レベル 3 — 拡張と例外
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#4-4-unit" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        ゲート 4: 精度レベル 4 — ストーリー、受入条件、Unit
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#_4" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        仕上げ
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#_5" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        初稿で置く制約
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -1824,24 +1647,29 @@
       
   
   
+    
   
   
+  
     
     
     
     
-      
-      
-    
-    
-    <li class="md-nav__item md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" checked>
         
           
-          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="">
             
   
   
@@ -1859,7 +1687,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_5">
             <span class="md-nav__icon md-icon"></span>
             
@@ -1877,7 +1705,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../development/" class="md-nav__link">
+      <a href="../../" class="md-nav__link">
         
   
   
@@ -1902,6 +1730,8 @@
                 
   
   
+    
+  
   
   
     
@@ -1912,11 +1742,11 @@
       
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_2" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_2" checked>
         
           
           <label class="md-nav__link" for="__nav_5_2" id="__nav_5_2_label" tabindex="0">
@@ -1937,7 +1767,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_2_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_2_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_5_2">
             <span class="md-nav__icon md-icon"></span>
             
@@ -1955,7 +1785,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../development/cargo-tracker/" class="md-nav__link">
+      <a href="../" class="md-nav__link">
         
   
   
@@ -1983,7 +1813,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../development/cargo-tracker/release_plan/" class="md-nav__link">
+      <a href="../release_plan/" class="md-nav__link">
         
   
   
@@ -2018,7 +1848,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../development/cargo-tracker/development_strategy/" class="md-nav__link">
+      <a href="../development_strategy/" class="md-nav__link">
         
   
   
@@ -2109,7 +1939,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../development/cargo-tracker/bolt_01_plan/" class="md-nav__link">
+      <a href="../bolt_01_plan/" class="md-nav__link">
         
   
   
@@ -2144,7 +1974,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../development/cargo-tracker/bolt_01_report/" class="md-nav__link">
+      <a href="../bolt_01_report/" class="md-nav__link">
         
   
   
@@ -2179,7 +2009,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../development/cargo-tracker/bolt_02_plan/" class="md-nav__link">
+      <a href="../bolt_02_plan/" class="md-nav__link">
         
   
   
@@ -2214,7 +2044,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../development/cargo-tracker/bolt_02_report/" class="md-nav__link">
+      <a href="../bolt_02_report/" class="md-nav__link">
         
   
   
@@ -2249,7 +2079,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../development/cargo-tracker/bolt_03_plan/" class="md-nav__link">
+      <a href="../bolt_03_plan/" class="md-nav__link">
         
   
   
@@ -2284,7 +2114,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../development/cargo-tracker/bolt_03_report/" class="md-nav__link">
+      <a href="../bolt_03_report/" class="md-nav__link">
         
   
   
@@ -2319,7 +2149,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../development/cargo-tracker/bolt_04_plan/" class="md-nav__link">
+      <a href="../bolt_04_plan/" class="md-nav__link">
         
   
   
@@ -2354,7 +2184,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../development/cargo-tracker/bolt_04_report/" class="md-nav__link">
+      <a href="../bolt_04_report/" class="md-nav__link">
         
   
   
@@ -2389,7 +2219,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../development/cargo-tracker/bolt_05_plan/" class="md-nav__link">
+      <a href="../bolt_05_plan/" class="md-nav__link">
         
   
   
@@ -2424,7 +2254,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../development/cargo-tracker/bolt_05_report/" class="md-nav__link">
+      <a href="../bolt_05_report/" class="md-nav__link">
         
   
   
@@ -2459,7 +2289,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../development/cargo-tracker/bolt_06_plan/" class="md-nav__link">
+      <a href="../bolt_06_plan/" class="md-nav__link">
         
   
   
@@ -2494,7 +2324,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../development/cargo-tracker/bolt_06_report/" class="md-nav__link">
+      <a href="../bolt_06_report/" class="md-nav__link">
         
   
   
@@ -2529,7 +2359,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../development/cargo-tracker/bolt_07_plan/" class="md-nav__link">
+      <a href="../bolt_07_plan/" class="md-nav__link">
         
   
   
@@ -2564,7 +2394,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../development/cargo-tracker/bolt_07_report/" class="md-nav__link">
+      <a href="../bolt_07_report/" class="md-nav__link">
         
   
   
@@ -2599,7 +2429,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../development/cargo-tracker/bolt_08_plan/" class="md-nav__link">
+      <a href="../bolt_08_plan/" class="md-nav__link">
         
   
   
@@ -2634,7 +2464,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../development/cargo-tracker/bolt_08_report/" class="md-nav__link">
+      <a href="../bolt_08_report/" class="md-nav__link">
         
   
   
@@ -2669,7 +2499,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../development/cargo-tracker/bolt_09_plan/" class="md-nav__link">
+      <a href="../bolt_09_plan/" class="md-nav__link">
         
   
   
@@ -2704,7 +2534,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../development/cargo-tracker/bolt_09_report/" class="md-nav__link">
+      <a href="../bolt_09_report/" class="md-nav__link">
         
   
   
@@ -2739,7 +2569,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../development/cargo-tracker/bolt_10_plan/" class="md-nav__link">
+      <a href="../bolt_10_plan/" class="md-nav__link">
         
   
   
@@ -2774,7 +2604,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../development/cargo-tracker/bolt_10_report/" class="md-nav__link">
+      <a href="../bolt_10_report/" class="md-nav__link">
         
   
   
@@ -2809,7 +2639,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../development/cargo-tracker/bolt_11_plan/" class="md-nav__link">
+      <a href="../bolt_11_plan/" class="md-nav__link">
         
   
   
@@ -2844,7 +2674,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../development/cargo-tracker/bolt_11_report/" class="md-nav__link">
+      <a href="../bolt_11_report/" class="md-nav__link">
         
   
   
@@ -2879,7 +2709,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../development/cargo-tracker/bolt_12_plan/" class="md-nav__link">
+      <a href="../bolt_12_plan/" class="md-nav__link">
         
   
   
@@ -2914,7 +2744,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../development/cargo-tracker/bolt_12_report/" class="md-nav__link">
+      <a href="../bolt_12_report/" class="md-nav__link">
         
   
   
@@ -2949,7 +2779,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../development/cargo-tracker/bolt_13_plan/" class="md-nav__link">
+      <a href="../bolt_13_plan/" class="md-nav__link">
         
   
   
@@ -2984,7 +2814,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../development/cargo-tracker/bolt_13_report/" class="md-nav__link">
+      <a href="../bolt_13_report/" class="md-nav__link">
         
   
   
@@ -3019,7 +2849,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../development/cargo-tracker/bolt_14_plan/" class="md-nav__link">
+      <a href="../bolt_14_plan/" class="md-nav__link">
         
   
   
@@ -3054,7 +2884,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../development/cargo-tracker/bolt_14_report/" class="md-nav__link">
+      <a href="../bolt_14_report/" class="md-nav__link">
         
   
   
@@ -3089,7 +2919,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../development/cargo-tracker/bolt_15_plan/" class="md-nav__link">
+      <a href="../bolt_15_plan/" class="md-nav__link">
         
   
   
@@ -3124,7 +2954,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../development/cargo-tracker/bolt_15_report/" class="md-nav__link">
+      <a href="../bolt_15_report/" class="md-nav__link">
         
   
   
@@ -3156,10 +2986,44 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../../../development/cargo-tracker/bolt_16_plan/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 16 計画
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--stable"></span>
+  
+
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -3182,6 +3046,248 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        基本情報
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#bolt" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bolt ゴール
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Bolt ゴール">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        確かめたい仮説
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#bolt_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ふりかえりと前の Bolt からの引き継ぎ
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        スコープ
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="スコープ">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        入れるもの・入れないもの
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        構成
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_6" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        入力
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_7" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ステップ計画
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="ステップ計画">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_8" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        時間の配分と打ち切り
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_9" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        確認ポイント（計画の承認の場でまとめて確認する）
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ai" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        AI の仮定
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_10" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        リスクと対策
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_11" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        完了条件
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="完了条件">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#definition-of-done" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Definition of Done
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_12" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        デモ項目
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_13" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        更新履歴
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_14" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        関連ドキュメント
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -7273,115 +7379,449 @@
   
 
 
-<h1 id="cargo-tracker">cargo-tracker ユースケース作成計画<a class="headerlink" href="#cargo-tracker" title="Permanent link">&para;</a></h1>
-<h2 id="intent">Intent<a class="headerlink" href="#intent" title="Permanent link">&para;</a></h2>
-<p>承認済みの要件定義を、業務目標から実装可能なユーザーストーリーまで一貫して追跡できる契約へ具体化する。</p>
-<h2 id="_1">入力<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h2>
-<ul>
-<li><code>requirements_definition.md</code> の BUC-01〜BUC-07、UC-01〜UC-20。</li>
-<li>同文書のステークホルダー要求 RQ-01〜RQ-11、ビジネスルール BR-01〜BR-18。</li>
-<li>KPI・ガードレール、戦略レビュー H-1〜H-10、未決事項 OQ-01〜OQ-08。</li>
-</ul>
-<h2 id="_2">出力<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h2>
+<h1 id="bolt-16-ci">Bolt 16 計画 - デモ環境への CI からの配備<a class="headerlink" href="#bolt-16-ci" title="Permanent link">&para;</a></h1>
+<h2 id="_1">基本情報<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
 <tr>
-<th style="text-align: left;">成果物</th>
-<th style="text-align: left;">パス</th>
+<th style="text-align: left;">項目</th>
 <th style="text-align: left;">内容</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td style="text-align: left;">ビジネスユースケース</td>
-<td style="text-align: left;"><code>business_usecase.md</code></td>
-<td style="text-align: left;">業務目標、アクター、開始・完了、業務シナリオ</td>
+<td style="text-align: left;">Bolt</td>
+<td style="text-align: left;">第 16 回</td>
 </tr>
 <tr>
-<td style="text-align: left;">システムユースケース</td>
-<td style="text-align: left;"><code>system_usecase.md</code></td>
-<td style="text-align: left;">MVP を中心とする完全形式ユースケース、拡張、保証、測定基準</td>
+<td style="text-align: left;">予定</td>
+<td style="text-align: left;">W3 の前（2026-10-07 から）、2〜3 時間</td>
 </tr>
 <tr>
-<td style="text-align: left;">ユーザーストーリー</td>
-<td style="text-align: left;"><code>user_story.md</code></td>
-<td style="text-align: left;">Given / When / Then 形式の受入条件と要件トレース</td>
+<td style="text-align: left;">対象</td>
+<td style="text-align: left;">技術タスク（SP 0）。ストーリーの受入条件は増やさない</td>
 </tr>
 <tr>
-<td style="text-align: left;">Unit 定義</td>
-<td style="text-align: left;"><code>units.md</code></td>
-<td style="text-align: left;">Unit、依存 DAG、ユースケース × Unit × ストーリー対応表</td>
+<td style="text-align: left;">GitHub</td>
+<td style="text-align: left;">新しい技術 Issue「[技術] デモ環境への CI からの配備」を立てる（Milestone は Release 0.1、週は W3、Unit は横断、SP 0）</td>
+</tr>
+<tr>
+<td style="text-align: left;">承認ゲート</td>
+<td style="text-align: left;">計画の承認（確認ポイント 1〜12）、外部連携とセキュリティ（ステップ 3。Environment と secret、最初の CI からの配備）、終了報告の 3 回</td>
+</tr>
+<tr>
+<td style="text-align: left;">アプローチ</td>
+<td style="text-align: left;">運用の Bolt。アプリの振る舞いは変えない。ワークフローの静的な検査（actionlint）を先に通し、最初の develop への push で配備のジョブを動かして確かめる</td>
+</tr>
+<tr>
+<td style="text-align: left;">範囲の決定</td>
+<td style="text-align: left;">2026-10-07 に human:kakimomokuri が、develop の CI が緑なら自動で配備する、Heroku の API キーは GitHub の Environment <code>demo</code> の secret に置く、W3 の前の Bolt 16 として行う、と決めた</td>
+</tr>
+<tr>
+<td style="text-align: left;">前の Bolt</td>
+<td style="text-align: left;"><a href="../bolt_15_report/">Bolt 15 終了報告</a></td>
 </tr>
 </tbody>
 </table>
-<p>すべて <code>docs/requirements/cargo-tracker/</code> に配置し、作成時は <code>status: draft</code> とする。</p>
-<h2 id="_3">実行計画<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h2>
-<h3 id="1-1">ゲート 1: 精度レベル 1 — スコープ、アクター、目的<a class="headerlink" href="#1-1" title="Permanent link">&para;</a></h3>
-<ul class="task-list">
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> MVP の In / Out と後続段階の境界を要件定義から転記する。</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> 主アクター、支援アクター、オフステージアクターを分類する。</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> アクター・目的・優先度・所属 Unit 候補を整理する。</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> 要件定義に存在しないアクターや権限を追加していないことを確認する。</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> 人がアクターの実在性とスコープを承認する。（2026-09-30、human:kakimomokuri）</li>
-</ul>
-<h3 id="2-2">ゲート 2: 精度レベル 2 — ビジネスユースケースと主成功シナリオ<a class="headerlink" href="#2-2" title="Permanent link">&para;</a></h3>
-<ul class="task-list">
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> BUC-01〜BUC-07 を業務目標、開始、完了、責任の観点で詳細化する。</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> MVP のシステムユースケースをユーザー目的レベルへ整理する。</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> 各主成功シナリオを 3〜9 ステップで記述する。</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> UI・技術実装・未承認の業務ルールを混入させていないことを確認する。</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> 人が目的、保証、シナリオを承認する。（2026-09-30、human:kakimomokuri）</li>
-</ul>
-<h3 id="3-3">ゲート 3: 精度レベル 3 — 拡張と例外<a class="headerlink" href="#3-3" title="Permanent link">&para;</a></h3>
-<ul class="task-list">
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> 入力欠落、権限、重複、並行変更、状態矛盾を洗い出す。</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> 外部システムの timeout、再送、順序逆転、停止、復旧照合を洗い出す。</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> 変更、取消し、再見積り、再設計、訂正、手動代替をシナリオへ関連付ける。</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> MVP で扱う拡張と後続段階へ送る拡張を区別する。</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> 人が採用する拡張と先送りする拡張を承認する。（2026-09-30、human:kakimomokuri）</li>
-</ul>
-<h3 id="4-4-unit">ゲート 4: 精度レベル 4 — ストーリー、受入条件、Unit<a class="headerlink" href="#4-4-unit" title="Permanent link">&para;</a></h3>
-<ul class="task-list">
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> システムユースケースから価値単位のユーザーストーリーを導出する。</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> 受入条件を Given / When / Then で一意に判定可能にする。（レビュー H-02、H-03、H-07 の修正と最終再レビューで確認済み）</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> 各ストーリーを RQ、BUC、UC、BR、KPI、リスクへトレースする。（レビュー H-08 の指摘箇所を対応表へ統合して再検査済み）</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> ストーリーを凝集度の高い Unit にまとめる。</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Unit 間の依存 DAG とストーリーマップを作成する。</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> 未決事項は推測せず「AI の仮定」または「要確認」として残す。</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> 人が契約としてユースケース、ストーリー、Unit を承認する。（2026-10-01、human:kakimomokuri）</li>
-</ul>
-<p>レビュー H-01 の対応として、業務順序を「輸送要求・見積り → 経路設計 → 本予約確定 → 基本追跡」に統一し、予約管理を U6 として分離した。H-01〜H-13 は修正または拘束付きの後続引継ぎを完了し、2026-10-01 の最終再レビューで高重要度の残件がないことを確認した。Gate 4 は 2026-10-01 に human:kakimomokuri が契約として再承認した。</p>
-<p>レビュー H-11、H-13 は本ゲートで具体的な実装方式や数値を確定せず、ARCH-HO-01〜ARCH-HO-03 と NFR-AUTH-01〜NFR-PRIVACY-01 を必須引継ぎとして定義した。方式はアーキテクチャ分析、測定値は非機能要件、検証方法はテスト戦略で決定する。</p>
-<h3 id="_4">仕上げ<a class="headerlink" href="#_4" title="Permanent link">&para;</a></h3>
-<ul class="task-list">
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> 各成果物に <code>apply-okf</code> を適用する。</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <code>docs/requirements/cargo-tracker/index.md</code> と MkDocs ナビゲーションを更新する。</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> 全 PlantUML を実レンダリングする。（2026-10-01、cargo-tracker 配下 15 ブロック、PlantUML 1.2026.2、ERROR 0）</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <code>apply-docs-structure check --check</code> と <code>gulp okf:check</code> で ERROR 0 を確認する。（2026-10-01。既存警告は構成 1 件、OKF 10 件）</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> MkDocs ビルドで ERROR 0 を確認する。（2026-10-01、<code>npm run docs:build</code>、終了コード 0。既存のナビゲーション・リンク警告あり）</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> 承認後に <code>verify --by human:kakimomokuri</code> で <code>stable</code> へ昇格する。（2026-10-01）</li>
-</ul>
-<h2 id="_5">初稿で置く制約<a class="headerlink" href="#_5" title="Permanent link">&para;</a></h2>
+<h2 id="bolt">Bolt ゴール<a class="headerlink" href="#bolt" title="Permanent link">&para;</a></h2>
+<p>develop にアプリの変更を push すると、cargo-tracker CI の check と ui が緑になった後に、同じワークフローの <code>deploy-demo</code> ジョブがデモ環境へ配備する。配備の後、デモ環境の <code>DEMO_REVISION</code> は push したコミットになり、ログインの画面が 200 を返す。開発者は手元で <code>deploy:demo</code> を実行しなくても、デモ環境が develop の最新の緑のコミットになっていると分かる。API キーは人だけが扱い、develop の外からは使えない。</p>
+<h3 id="_2">確かめたい仮説<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">#</th>
+<th style="text-align: left;">仮説</th>
+<th style="text-align: left;">この Bolt で分かること</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">H1</td>
+<td style="text-align: left;">配備のジョブを check・ui の後ろに置き（<code>needs</code>）、Environment <code>demo</code> を develop に限れば、手元の <code>deploy:demo</code> のガード（作業ツリー・develop・CI の緑）と同じ約束を、Gulp を使わずに CI だけで守れる</td>
+<td style="text-align: left;">ガードを CI の仕組み（<code>needs</code>、Environment のブランチの規則）に置き換えられるか</td>
+</tr>
+<tr>
+<td style="text-align: left;">H2</td>
+<td style="text-align: left;">Heroku CLI を入れずに、<code>docker/build-push-action</code>（Docker v2 の manifest）と Heroku Platform API（formation の更新と Config Vars）だけで release できる</td>
+<td style="text-align: left;">ランナーへの追加の導入なしで配備できるか。Ubuntu 24.04 のランナーには Heroku CLI がない</td>
+</tr>
+<tr>
+<td style="text-align: left;">H3</td>
+<td style="text-align: left;">buildx の GitHub Actions のキャッシュ（<code>type=gha</code>）を使えば、依存が変わらないときの配備のジョブは 5 分以内に終わる</td>
+<td style="text-align: left;">毎回の push の後、デモ環境に出るまでの時間</td>
+</tr>
+</tbody>
+</table>
+<h2 id="bolt_1">ふりかえりと前の Bolt からの引き継ぎ<a class="headerlink" href="#bolt_1" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">入力</th>
+<th style="text-align: left;">内容</th>
+<th style="text-align: left;">この Bolt での扱い</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">人の決定（2026-10-07）</td>
+<td style="text-align: left;">develop の CI が緑なら自動配備。API キーは Environment <code>demo</code> の secret。Bolt 16</td>
+<td style="text-align: left;">スコープ、確認ポイント 1〜4</td>
+</tr>
+<tr>
+<td style="text-align: left;">Bolt 15 の確認ポイント 10</td>
+<td style="text-align: left;">「GitHub Actions からの自動配備は作らない。必要になったら W10 の CI/CD で決める」</td>
+<td style="text-align: left;">人の決定で改める。ADR-013 の「配備」を直す（確認ポイント 5）</td>
+</tr>
+<tr>
+<td style="text-align: left;">ADR-013</td>
+<td style="text-align: left;">配備のガード（develop、<code>origin/develop</code>、CI の緑、SHA のラベル、<code>DEMO_REVISION</code>）、<code>oci-mediatypes=false</code></td>
+<td style="text-align: left;">CI の配備も同じ約束を守る（確認ポイント 6・7）</td>
+</tr>
+<tr>
+<td style="text-align: left;">ADR-008 のコンプライアンス</td>
+<td style="text-align: left;">GitHub Actions に長期のアクセスキーを置かず、AWS へは OIDC で認証する</td>
+<td style="text-align: left;">AWS 向けの約束。Heroku は OIDC に対応しないため長期のキーを置く。範囲を Environment <code>demo</code> と develop に限り、期限を付ける（確認ポイント 3）</td>
+</tr>
+<tr>
+<td style="text-align: left;">Bolt 15 レビュー R-13・R-24</td>
+<td style="text-align: left;">CI でのイメージの検証、アクションの SHA の固定</td>
+<td style="text-align: left;">配備の後のスモーク（<code>/login</code> が 200）を入れる。新しく使うアクションは SHA で固定する。<code>runtime</code> の検証は W10 のまま</td>
+</tr>
+<tr>
+<td style="text-align: left;">Try T-44</td>
+<td style="text-align: left;">資源の設定は目標の環境で計測してから決める</td>
+<td style="text-align: left;">配備のジョブの時間を実際の実行で計る（H3）</td>
+</tr>
+<tr>
+<td style="text-align: left;">Try T-45</td>
+<td style="text-align: left;">守りの部品は、変更をコミットしてから確かめる</td>
+<td style="text-align: left;">Environment のブランチの規則は、設定の後に API で読み返して確かめる</td>
+</tr>
+<tr>
+<td style="text-align: left;">Try T-46</td>
+<td style="text-align: left;">公開の範囲に関わる約束は、置き場所の公開の範囲を確かめてから書く</td>
+<td style="text-align: left;">リポジトリは公開。ワークフローのログは公開で読めるため、キーや Config Vars の値をログに出さない（確認ポイント 8）</td>
+</tr>
+</tbody>
+</table>
+<h2 id="_3">スコープ<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h2>
+<h3 id="_4">入れるもの・入れないもの<a class="headerlink" href="#_4" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">入れるもの</th>
+<th style="text-align: left;">入れないもの</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>.github/workflows/cargo-tracker-ci.yml</code> に <code>deploy-demo</code> ジョブ（<code>needs: [check, ui]</code>、develop の push と手動の実行だけ）と <code>workflow_dispatch</code></td>
+<td style="text-align: left;">main・Pull Request からの配備</td>
+</tr>
+<tr>
+<td style="text-align: left;">GitHub の Environment <code>demo</code>（配備のブランチを develop に限る）と secret <code>HEROKU_API_KEY</code>（値は人が作って登録する）</td>
+<td style="text-align: left;">Heroku CLI のランナーへの導入</td>
+</tr>
+<tr>
+<td style="text-align: left;">Heroku Platform API での release（formation の更新）と <code>DEMO_REVISION</code> の設定、配備の後のスモーク</td>
+<td style="text-align: left;">配備の失敗の通知（Slack など）。GitHub の通知だけ</td>
+</tr>
+<tr>
+<td style="text-align: left;">ADR-013・手順書・インフラストラクチャアーキテクチャの CI/CD の節の更新</td>
+<td style="text-align: left;"><code>runtime</code> のイメージの検証と ECR・ECS（W10 の #28）</td>
+</tr>
+<tr>
+<td style="text-align: left;">手元の <code>deploy:demo</code> は残す（CI が止まったとき・手動の確かめ用）</td>
+<td style="text-align: left;"><code>deploy_demo.js</code> を CI から呼ぶ形への作り替え</td>
+</tr>
+</tbody>
+</table>
+<h3 id="_5">構成<a class="headerlink" href="#_5" title="Permanent link">&para;</a></h3>
+<p><img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB2ZXJzaW9uPSIxLjEiIGRhdGEtZGlhZ3JhbS10eXBlPSJERVNDUklQVElPTiIgc3R5bGU9IndpZHRoOjczMHB4O2hlaWdodDo4NTlweDtiYWNrZ3JvdW5kOiNGRkZGRkY7IiB3aWR0aD0iNzMwcHgiIGhlaWdodD0iODU5cHgiIHZpZXdCb3g9IjAgMCA3MzAgODU5IiB6b29tQW5kUGFuPSJtYWduaWZ5IiBwcmVzZXJ2ZUFzcGVjdFJhdGlvPSJub25lIiBjb250ZW50U3R5bGVUeXBlPSJ0ZXh0L2NzcyI+PD9wbGFudHVtbCAxLjIwMjYuOD8+PGRlZnMvPjxnIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBsZW5ndGhBZGp1c3Q9InNwYWNpbmciPjxnIGNsYXNzPSJ0aXRsZSIgZGF0YS1zb3VyY2UtbGluZT0iMSI+PHRleHQgeD0iMjI5Ljk4OCIgeT0iMjIuOTk1IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE0IiB0ZXh0TGVuZ3RoPSIyNjMuMzY3IiBmb250LXdlaWdodD0iNzAwIj7jg4fjg6LnkrDlooPjgbjjga4gQ0kg44GL44KJ44Gu6YWN5YKZ77yIQm9sdCAxNu+8iTwvdGV4dD48L2c+PCEtLWNsdXN0ZXIgR2l0SHViLS0+PGcgY2xhc3M9ImNsdXN0ZXIiIGRhdGEtcXVhbGlmaWVkLW5hbWU9IkdpdEh1YiIgaWQ9ImVudDAwMDIiIGRhdGEtc291cmNlLWxpbmU9IjQiPjxwYXRoIGQ9Ik0xNTEuMTgxLDE5My44NDMgQzE1OC42MjEsMTc2LjkyNiAxNzIuMzQ1LDE3Mi4xMTEgMTg0LjY1NiwxODkuMDIzIEMxOTYuNDI1LDE3MS45MSAyMTMuNDQyLDE3Mi4zMTQgMjIyLjA5NiwxOTIuMTc3IEMyMzIuMDMzLDE3NC4xODggMjQ0LjM3MywxNzQuNTYxIDI1NC43NTgsMTkxLjc2MiBDMjY1LjY5NywxNzEuOTQ0IDI3Ny41NjEsMTcyLjkyMSAyOTIuMDczLDE4Ny45MzQgQzMwMi4xMjYsMTczLjIxOSAzMTYuNjM0LDE3Mi44OTggMzI1LjY5MiwxODkuMDE3IEMzMzMuMTU1LDE2OC40MiAzNTAuODUxLDE2NS4wNDkgMzYzLjU2MywxODMuOTg5IEMzNzUuNTE2LDE2Ni4wNTMgMzg3LjA5OSwxNjguMjk1IDM5OS40NDYsMTgzLjU2NCBDNDA3LjUzNCwxNjcuNzQgNDIyLjY5MiwxNjcuMzA2IDQzMi4zMTQsMTgxLjkwNyBDNDQ0LjQwMiwxNjQuNjkgNDU4Ljk5NiwxNjcuNzQxIDQ2OS4zMDMsMTgzLjg4MSBDNDgxLjcwNCwxNjQuODkyIDQ5NS4wNCwxNjcuODExIDUwNi45MjEsMTg0LjQzIEM1MTguNDY3LDE3MC4wMDEgNTMzLjQzNSwxNjkuNzg1IDU0MS42OTksMTg3LjkzNCBDNTU2LjA2NCwxNjcuOTY1IDU2Ny42MDYsMTczLjA0IDU3OS41NiwxOTAuMzgxIEM1ODcuOTczLDE3NS45ODcgNjA0LjIwNCwxNzcuMDUgNjEyLjMzNiwxOTAuNzEgQzYyNy42NjksMTc0LjUzNyA2NDMuMTY5LDE3Ny44NDUgNjUyLjkyOCwxOTcuMDk3IEM2NTUuNzg1LDE5NS45MzggNjU4LjIxMywxOTcuNzcxIDY1Ny45MDcsMjAwLjgzMSBDNjcxLjU1NywyMTEuNzkyIDY3Mi4wNTcsMjI0Ljc3NCA2NTQuODg2LDIzMi44MjQgQzY3Mi4zMTMsMjQzLjQxNyA2NzIuMjM1LDI1OC40OTEgNjUzLjgyMywyNjggQzY3MC43MTEsMjc3LjEwMSA2NzIuMTQzLDI5MS4wMzEgNjU1LjIzMywzMDEuNTUyIEM2NzUuNDUyLDMxMC4zOTQgNjcyLjY1MSwzMjUuMzYgNjU4Ljg1NCwzMzcuNjE2IEM2NzIuMjA4LDM0OS41MDQgNjc1LjIwNSwzNTkuODc0IDY1Ny4yNDEsMzcwLjIxMiBDNjcyLjY1MiwzNzkuMDU2IDY3MS44ODcsMzg4LjQ5NyA2NjAuODUzLDQwMC40OTUgQzY3Ni44MzQsNDE0LjkyOCA2NzMuMjgsNDI1LjcyMyA2NTUuMTA0LDQzNC4zNTYgQzY3MS4wNDgsNDQzLjkwMyA2NzIuMzYsNDU4LjkwNiA2NTUuNjE3LDQ2OC45MzcgQzY3MS42ODUsNDc5LjYzNiA2NzUuMzQ3LDQ5My4zMzYgNjU2Ljg1Miw1MDUuMjEyIEM2NzIuNDYzLDUyMS4zODMgNjY2LjA5Miw1MzYuNjU2IDY0NS45MjgsNTQyLjI4NyBDNjQ4Ljc0NSw1NDMuNDI2IDY0OS4zNDUsNTQ2LjAxMyA2NDcuMzQ1LDU0OC4yODkgQzYzNC44NjQsNTY0Ljk2OCA2MTkuODU5LDU2MS4wNTMgNjEwLjkwNiw1NDQuNDI5IEM2MDMuMzA4LDU2MC40MTggNTkxLjgzNyw1NjYuODQ5IDU3Ny4xNTIsNTUyLjI1IEM1NjUuMzkyLDU2Ny4yMiA1NTIuMzI4LDU2NS43NDQgNTQxLjk5Miw1NTAuNTg4IEM1MzIuMjEsNTY3LjUyNyA1MTUuNDY5LDU2Ni45MTQgNTA0Ljk3Myw1NTEuNDAyIEM0OTQuOTk0LDU3MC4xNzMgNDc5LjM1Niw1NjguNjc3IDQ2OS45MjYsNTUwLjg3NyBDNDU4LjQ4LDU2OC4xMjMgNDQ2LjAwNyw1NzIuMjU4IDQzMi45MTQsNTUyLjUyNSBDNDI0LjI4MSw1NjguNDEyIDQwOS43MTIsNTcwLjQwMiAzOTguODE5LDU1NC45ODggQzM4OS4zMjcsNTY5Ljk1NCAzNzQuMTcyLDU2OS41OTkgMzY2LjA0Niw1NTMuNTQ1IEMzNTUuMzU5LDU3MC42ODYgMzM3LjE4Niw1NjkuMzA0IDMyOC4wMjQsNTUxLjg2OCBDMzE4LjUxOCw1NjguODQ3IDMwNS4xODMsNTY5LjA1MiAyOTMuNzgsNTUzLjg4OSBDMjgyLjIwNiw1NzEuMjg3IDI2OC4zODYsNTY5LjYxMiAyNTguNzAxLDU1MS45OTYgQzI0Ny4yMyw1NjkuMTgyIDIyOS4xMyw1NjkuODMzIDIxOS4wNTUsNTUwLjQ4MiBDMjA4Ljk4NCw1NjUuNzY0IDE5My44MzksNTY1LjEyOCAxODQuNzA1LDU0OS40NDIgQzE2NS40NzYsNTY0LjIyMiAxNDUuMTk4LDU2MC4wMzIgMTM3LjkyOCw1MzUuMjg3IEMxMzguNDM5LDUzNC42OTggMTM4Ljk4NCw1MzQuOTEgMTM5LjI4NSw1MzUuNTIzIEMxMjQuODgsNTI3LjczIDEyMy43NTksNTEzLjU5NCAxMzcuNzI1LDUwNC4zNzkgQzEyNC43MjksNDk0LjQ0NyAxMjAuNzI4LDQ4My44MDcgMTM2Ljk4LDQ3My4xNzcgQzExNy4zOTEsNDYzLjA2IDExOS42NzgsNDUwLjk4OSAxMzQuMTQ0LDQzOC4xMTcgQzExNi4wMzksNDI3LjgwNSAxMTQuMDQxLDQxMy44NjMgMTMxLjQwOCw0MDAuOTQxIEMxMTQuODM1LDM4OS42NDIgMTE1LjYyOCwzNzguNDcxIDEzMy4yNTcsMzY5LjE2MiBDMTE3LjM4LDM1Ny4wNjIgMTE2LjM3NSwzNDMuNTUxIDEzNS4xNywzMzMuMyBDMTIyLjczNSwzMjIuNDEyIDEyMy4yNjgsMzEwLjc2NiAxMzguNDExLDMwMi44MDkgQzEyMi4xMjYsMjkwLjEgMTE5LjQ0NCwyNzkuMzE3IDEzOS4wMDEsMjY3LjIwMiBDMTE5LjY4MSwyNTkuMjQ5IDEyMS40MzQsMjQxLjYyNiAxMzcuMjQ4LDIzMS45MjcgQzEyMC45ODksMjE2LjMyNCAxMjEuMzIsMTk4LjM4MSAxNDQuOTI4LDE5MC4wOTcgQzE0OC40NDUsMTg3LjkwNCAxNTEuMjE3LDE5MC4xMDQgMTUxLjE4MSwxOTMuODQzIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjE7IiBmaWxsPSJub25lIi8+PHRleHQgeD0iMzY4LjA4NCIgeT0iMjA4LjA5MiIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxNCIgdGV4dExlbmd0aD0iNTQuNjg4IiBmb250LXdlaWdodD0iNzAwIj5HaXRIdWI8L3RleHQ+PC9nPjwhLS1jbHVzdGVyIHdmLS0+PGcgY2xhc3M9ImNsdXN0ZXIiIGRhdGEtcXVhbGlmaWVkLW5hbWU9IkdpdEh1Yi53ZiIgaWQ9ImVudDAwMDMiIGRhdGEtc291cmNlLWxpbmU9IjUiPjxwb2x5Z29uIHBvaW50cz0iMTYxLjkyOCwyNDMuMDk3LDE3MS45MjgsMjMzLjA5Nyw0MzAuOTI4LDIzMy4wOTcsNDMwLjkyOCw1MDguMjg3LDQyMC45MjgsNTE4LjI4NywxNjEuOTI4LDUxOC4yODcsMTYxLjkyOCwyNDMuMDk3IiBmaWxsPSJub25lIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjE7c3Ryb2tlLWxpbmVqb2luOm1pdGVyO3N0cm9rZS1taXRlcmxpbWl0OjEwOyIvPjxsaW5lIHgxPSI0MjAuOTI4IiB5MT0iMjQzLjA5NyIgeDI9IjQzMC45MjgiIHkyPSIyMzMuMDk3IiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjE7Ii8+PGxpbmUgeDE9IjE2MS45MjgiIHkxPSIyNDMuMDk3IiB4Mj0iNDIwLjkyOCIgeTI9IjI0My4wOTciIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTsiLz48bGluZSB4MT0iNDIwLjkyOCIgeTE9IjI0My4wOTciIHgyPSI0MjAuOTI4IiB5Mj0iNTE4LjI4NyIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxOyIvPjx0ZXh0IHg9IjIyOC42NzMiIHk9IjI1OS4wOTIiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTQiIHRleHRMZW5ndGg9IjEyNy41MTEiIGZvbnQtd2VpZ2h0PSI3MDAiPmNhcmdvLXRyYWNrZXIgQ0k8L3RleHQ+PHRleHQgeD0iMTk1LjcyNCIgeT0iMjc1LjM4OSIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxNCIgdGV4dExlbmd0aD0iMTkzLjQwOSIgZm9udC13ZWlnaHQ9IjcwMCI+KGRldmVsb3Ag44G444GuIHB1c2jjgIHmiYvli5UpPC90ZXh0PjwvZz48IS0tY2x1c3RlciBIZXJva3UtLT48ZyBjbGFzcz0iY2x1c3RlciIgZGF0YS1xdWFsaWZpZWQtbmFtZT0iSGVyb2t1IiBpZD0iZW50MDAwOCIgZGF0YS1zb3VyY2UtbGluZT0iMTIiPjxwYXRoIGQ9Ik0zMS45NSw2MzkuODA3IEMzOS42NDMsNjI5LjU3IDQ3LjU1Niw2MjguNjgxIDU1LjkxOCw2MzkuMDI3IEM2Mi44MTIsNjI2LjQ5NiA3MC4xMDQsNjIyLjY0OSA4MS4yNjYsNjM0LjYxIEM5MC4zMzQsNjIxLjQ0MyA5OS41MzcsNjIyLjY0NSAxMDYuNjgxLDYzNi40MjUgQzExMy44NDcsNjI1LjY1MyAxMjIuMDM0LDYyNC4wODYgMTMxLjM0LDYzMy44NTcgQzEzNy4wMyw2MjMuODAyIDE0My4yMjgsNjIwLjYxNiAxNTIuMTMzLDYzMC41MDYgQzE1OC42MTEsNjE4LjI0IDE2Ni45NzYsNjE3LjExMSAxNzUuMzQ5LDYyOC42NTcgQzE4MS43MDgsNjE1LjcxMSAxOTAuMjYsNjE1LjM5MiAxOTguNTQzLDYyNi44MjYgQzIwOC43NTUsNjEzLjAwMiAyMTkuNDUxLDYxNC42NjkgMjI2LjY2Miw2MjkuNzQ2IEMyMzIuODI1LDYyMS4zNzIgMjM5LjgwMiw2MTguODA0IDI0Ni43Myw2MjguOTE1IEMyNTUuNzg0LDYxOC41ODIgMjY4LjIyNiw2MTkuODM5IDI3My4wNjcsNjMzLjUzMyBDMjc4LjgwOCw2MjAuODk0IDI4OC42OTMsNjIwLjc1NSAyOTUuNjEyLDYzMi40NCBDMzA0Ljc5Miw2MjEuNDM4IDMxNS43NSw2MjYuMTgyIDMxOS45NzEsNjM3Ljc4MyBDMzI3LjY2Myw2MjguNjQyIDMzNy40NTMsNjI4LjU1OSAzNDMuMjQ0LDYzOS45MzggQzM1NS4zODcsNjI2LjU5NSAzNjMuOTM4LDYzMC4yNDIgMzcxLjkyOCw2NDQuMjg3IEMzNzQuMTUyLDY0NS41OTQgMzczLjcwNiw2NDcuMTgzIDM3MS45NzIsNjQ4LjUzMSBDMzg2LjU4NSw2NTQuMTg0IDM4Ni4wNjcsNjY2LjMzMiAzNzUuMzg2LDY3NS4yMiBDMzg4LjkzNyw2ODMuOTIgMzkzLjg5MSw2OTYuMzczIDM3Ny4zMDgsNzA2LjkwMiBDMzkzLjE4Myw3MTEuMjk5IDM5NC4yODUsNzIyLjkyNyAzODIuOTA4LDczMy4xNDEgQzM5Ny44NjYsNzQzLjg4NSAzOTYuNjgxLDc1NS4xNTYgMzgwLjM5Nyw3NjMuMyBDMzkyLjY1NSw3NzQuODc1IDM4OS44ODMsNzgzLjE1IDM3Ni41MTMsNzkxLjE1MSBDMzkwLjExLDgwNy40MjQgMzg2LjAwNyw4MjEuMTcyIDM2NC45MjgsODI1Ljg3NyBDMzY2LjMyMiw4MjUuODc3IDM2Ny4wNSw4MjYuOTAyIDM2Ni4yMjYsODI4LjE2MiBDMzU4LjI3Niw4MzguNTkxIDM1MC4yNjcsODM5LjYxNiAzNDIuNTQ0LDgyNy45MTkgQzMzNi41MTQsODM5LjIxOCAzMjYuNjIzLDgzNy4zNzIgMzIxLjAzMSw4MjcuNDc2IEMzMTUuMDUsODM4Ljk3NiAzMDUuMDM5LDgzOS4yNTMgMjk3LjA1NSw4MjkuNzYzIEMyODguOTgyLDg0My4wMjEgMjc3LjAwMyw4NDEuOTc1IDI3MC41ODIsODI4LjE0OSBDMjY0LjQzMiw4MzguOTAxIDI1NS40MTMsODQwLjU0IDI0Ny41NDIsODMwLjAxMiBDMjM5LjgzNSw4NDAuOTkzIDIzMS42NTYsODQwLjg5OSAyMjMuNDI2LDgzMC42MDUgQzIxNi43MTEsODM5LjU0NiAyMDguMTkzLDg0MC4xODcgMjAxLjk5Nyw4MzAuMDIyIEMxOTQuNDYsODQyLjMxNiAxODYuODU3LDg0Mi44ODQgMTc3LjQ5Nyw4MzEuOTQ1IEMxNjkuNDA1LDg0MS42OTYgMTYxLjExMiw4NDAuNDMyIDE1NC42Nyw4MzAuMDczIEMxNDcuNjEzLDg0NC44MTYgMTM2LDg0NC4wOTIgMTI3LjM2Miw4MzEuNjYyIEMxMTguOTk3LDg0MS44NTcgMTA4LjIyNyw4NDEuNzM2IDEwMy4zMyw4MjguMTU3IEM5Ny4yNDQsODM3LjgwOSA5MC44MzMsODM5LjE1NyA4My40LDgyOS41NSBDNzYuMTIyLDg0My4xMTcgNjQuNjUzLDg0MS4xNDUgNTYuODIzLDgzMC4xNDggQzQwLjkyOCw4NDEuMTk2IDMwLjQ3Myw4MzcuMTIxIDI0LjkyOCw4MTguODc3IEMyNy4zNjUsODE3Ljg2NyAyOC42ODcsODE4LjgzNiAyOC44NTUsODIxLjM4MyBDMTQuNDE5LDgxNS4wNTUgMTQuNjQ0LDgwMS42NzcgMjcuMzE0LDc5My44MzMgQzEzLjU1Myw3ODcuNDU5IDEyLjkxNSw3NzMuNDYgMjUuMjA5LDc2NS4xNzMgQzYuODI4LDc1Ny44ODkgNiw3NDIuMzU3IDIxLjgwOSw3MzEuNjA5IEM4LjI1OSw3MjQuNTkgMTEuMzczLDcxMy45NTcgMjEuNTQyLDcwNi42ODMgQzkuNzUzLDY5Ny4xNiA3LjE0Myw2ODMuNDgyIDIzLjY1OSw2NzUuOTA1IEM3LjY2Myw2NjAuNzY3IDkuMDk2LDY0NC4xMTEgMzEuOTI4LDYzNy4yODcgQzMzLjE0NSw2MzguMDU1IDMyLjk3NSw2MzkuMDE5IDMxLjk1LDYzOS44MDciIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTsiIGZpbGw9Im5vbmUiLz48dGV4dCB4PSIxNjkuOTIyIiB5PSI2NTUuMjgyIiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE0IiB0ZXh0TGVuZ3RoPSI1Ny4wMTIiIGZvbnQtd2VpZ2h0PSI3MDAiPkhlcm9rdTwvdGV4dD48L2c+PCEtLWVudGl0eSBlbnYtLT48ZyBjbGFzcz0iZW50aXR5IiBkYXRhLXF1YWxpZmllZC1uYW1lPSJHaXRIdWIuZW52IiBpZD0iZW50MDAwNyIgZGF0YS1zb3VyY2UtbGluZT0iMTAiPjxyZWN0IHg9IjQ1OC44MzgiIHk9IjI4OS43OTciIHdpZHRoPSIxODYuMTg4IiBoZWlnaHQ9IjY0Ljg5MSIgZmlsbD0iI0YxRjFGMSIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDowLjU7IiByeD0iMi41IiByeT0iMi41Ii8+PHJlY3QgeD0iNDU0LjgzOCIgeT0iMjg1Ljc5NyIgd2lkdGg9IjE4Ni4xODgiIGhlaWdodD0iNjQuODkxIiBmaWxsPSIjRjFGMUYxIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjAuNTsiIHJ4PSIyLjUiIHJ5PSIyLjUiLz48dGV4dCB4PSI0NjIuODM4IiB5PSIzMDYuNzkyIiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE0IiB0ZXh0TGVuZ3RoPSIxMzMuODU0Ij5FbnZpcm9ubWVudCBkZW1vPC90ZXh0Pjx0ZXh0IHg9IjQ2Mi44MzgiIHk9IjMyMy4wODkiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTQiIHRleHRMZW5ndGg9Ijk5LjExNCI+KGRldmVsb3Ag44Gg44GRKTwvdGV4dD48dGV4dCB4PSI0NjIuODM4IiB5PSIzMzkuMzg2IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE0IiB0ZXh0TGVuZ3RoPSIxNzAuMTg4Ij5zZWNyZXQgSEVST0tVX0FQSV9LRVk8L3RleHQ+PC9nPjwhLS1lbnRpdHkgY2hlY2stLT48ZyBjbGFzcz0iZW50aXR5IiBkYXRhLXF1YWxpZmllZC1uYW1lPSJHaXRIdWIud2YuY2hlY2siIGlkPSJlbnQwMDA0IiBkYXRhLXNvdXJjZS1saW5lPSI2Ij48cmVjdCB4PSIyMTAuNDM4IiB5PSIyOTcuMDk3IiB3aWR0aD0iODAuOTg4IiBoZWlnaHQ9IjQ2LjI5NyIgZmlsbD0iI0YxRjFGMSIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDowLjU7IiByeD0iMi41IiByeT0iMi41Ii8+PHJlY3QgeD0iMjcxLjQyNiIgeT0iMzAyLjA5NyIgd2lkdGg9IjE1IiBoZWlnaHQ9IjEwIiBmaWxsPSIjRjFGMUYxIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjAuNTsiLz48cmVjdCB4PSIyNjkuNDI2IiB5PSIzMDQuMDk3IiB3aWR0aD0iNCIgaGVpZ2h0PSIyIiBmaWxsPSIjRjFGMUYxIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjAuNTsiLz48cmVjdCB4PSIyNjkuNDI2IiB5PSIzMDguMDk3IiB3aWR0aD0iNCIgaGVpZ2h0PSIyIiBmaWxsPSIjRjFGMUYxIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjAuNTsiLz48dGV4dCB4PSIyMjUuNDM4IiB5PSIzMzAuMDkyIiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE0IiB0ZXh0TGVuZ3RoPSI0MC45ODgiPmNoZWNrPC90ZXh0PjwvZz48IS0tZW50aXR5IHVpLS0+PGcgY2xhc3M9ImVudGl0eSIgZGF0YS1xdWFsaWZpZWQtbmFtZT0iR2l0SHViLndmLnVpIiBpZD0iZW50MDAwNSIgZGF0YS1zb3VyY2UtbGluZT0iNyI+PHJlY3QgeD0iMzI2LjU0OCIgeT0iMjk3LjA5NyIgd2lkdGg9IjUyLjc2MyIgaGVpZ2h0PSI0Ni4yOTciIGZpbGw9IiNGMUYxRjEiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MC41OyIgcng9IjIuNSIgcnk9IjIuNSIvPjxyZWN0IHg9IjM1OS4zMTEiIHk9IjMwMi4wOTciIHdpZHRoPSIxNSIgaGVpZ2h0PSIxMCIgZmlsbD0iI0YxRjFGMSIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDowLjU7Ii8+PHJlY3QgeD0iMzU3LjMxMSIgeT0iMzA0LjA5NyIgd2lkdGg9IjQiIGhlaWdodD0iMiIgZmlsbD0iI0YxRjFGMSIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDowLjU7Ii8+PHJlY3QgeD0iMzU3LjMxMSIgeT0iMzA4LjA5NyIgd2lkdGg9IjQiIGhlaWdodD0iMiIgZmlsbD0iI0YxRjFGMSIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDowLjU7Ii8+PHRleHQgeD0iMzQxLjU0OCIgeT0iMzMwLjA5MiIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxNCIgdGV4dExlbmd0aD0iMTIuNzYzIj51aTwvdGV4dD48L2c+PCEtLWVudGl0eSBkZXBsb3ktLT48ZyBjbGFzcz0iZW50aXR5IiBkYXRhLXF1YWxpZmllZC1uYW1lPSJHaXRIdWIud2YuZGVwbG95IiBpZD0iZW50MDAwNiIgZGF0YS1zb3VyY2UtbGluZT0iOCI+PHJlY3QgeD0iMjA2LjI5OCIgeT0iNDMxLjY4NyIgd2lkdGg9IjE4OS4yNjMiIGhlaWdodD0iNjIuNTk0IiBmaWxsPSIjRjFGMUYxIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjAuNTsiIHJ4PSIyLjUiIHJ5PSIyLjUiLz48cmVjdCB4PSIzNzUuNTYxIiB5PSI0MzYuNjg3IiB3aWR0aD0iMTUiIGhlaWdodD0iMTAiIGZpbGw9IiNGMUYxRjEiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MC41OyIvPjxyZWN0IHg9IjM3My41NjEiIHk9IjQzOC42ODciIHdpZHRoPSI0IiBoZWlnaHQ9IjIiIGZpbGw9IiNGMUYxRjEiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MC41OyIvPjxyZWN0IHg9IjM3My41NjEiIHk9IjQ0Mi42ODciIHdpZHRoPSI0IiBoZWlnaHQ9IjIiIGZpbGw9IiNGMUYxRjEiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MC41OyIvPjx0ZXh0IHg9IjIyMS4yOTgiIHk9IjQ2NC42ODIiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTQiIHRleHRMZW5ndGg9IjkxLjg4MiI+ZGVwbG95LWRlbW88L3RleHQ+PHRleHQgeD0iMjIxLjI5OCIgeT0iNDgwLjk3OSIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxNCIgdGV4dExlbmd0aD0iMTQ5LjI2MyI+KGVudmlyb25tZW50OiBkZW1vKTwvdGV4dD48L2c+PCEtLWVudGl0eSByZWctLT48ZyBjbGFzcz0iZW50aXR5IiBkYXRhLXF1YWxpZmllZC1uYW1lPSJIZXJva3UucmVnIiBpZD0iZW50MDAwOSIgZGF0YS1zb3VyY2UtbGluZT0iMTMiPjxwb2x5Z29uIHBvaW50cz0iMzIuNTI4LDY3NC4yODcsNDIuNTI4LDY2NC4yODcsMjAzLjMzNCw2NjQuMjg3LDIwMy4zMzQsNzAwLjU4NCwxOTMuMzM0LDcxMC41ODQsMzIuNTI4LDcxMC41ODQsMzIuNTI4LDY3NC4yODciIGZpbGw9IiNGMUYxRjEiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MC41O3N0cm9rZS1saW5lam9pbjptaXRlcjtzdHJva2UtbWl0ZXJsaW1pdDoxMDsiLz48bGluZSB4MT0iMTkzLjMzNCIgeTE9IjY3NC4yODciIHgyPSIyMDMuMzM0IiB5Mj0iNjY0LjI4NyIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDowLjU7Ii8+PGxpbmUgeDE9IjMyLjUyOCIgeTE9IjY3NC4yODciIHgyPSIxOTMuMzM0IiB5Mj0iNjc0LjI4NyIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDowLjU7Ii8+PGxpbmUgeDE9IjE5My4zMzQiIHkxPSI2NzQuMjg3IiB4Mj0iMTkzLjMzNCIgeTI9IjcxMC41ODQiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MC41OyIvPjx0ZXh0IHg9IjQ3LjUyOCIgeT0iNjk3LjI4MiIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxNCIgdGV4dExlbmd0aD0iMTMwLjgwNiI+Q29udGFpbmVyIFJlZ2lzdHJ5PC90ZXh0PjwvZz48IS0tZW50aXR5IGFwaS0tPjxnIGNsYXNzPSJlbnRpdHkiIGRhdGEtcXVhbGlmaWVkLW5hbWU9Ikhlcm9rdS5hcGkiIGlkPSJlbnQwMDEwIiBkYXRhLXNvdXJjZS1saW5lPSIxNCI+PHJlY3QgeD0iMjM3Ljk4OCIgeT0iNjY0LjI4NyIgd2lkdGg9IjEyNS44ODciIGhlaWdodD0iNDYuMjk3IiBmaWxsPSIjRjFGMUYxIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjAuNTsiIHJ4PSIyLjUiIHJ5PSIyLjUiLz48cmVjdCB4PSIzNDMuODc1IiB5PSI2NjkuMjg3IiB3aWR0aD0iMTUiIGhlaWdodD0iMTAiIGZpbGw9IiNGMUYxRjEiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MC41OyIvPjxyZWN0IHg9IjM0MS44NzUiIHk9IjY3MS4yODciIHdpZHRoPSI0IiBoZWlnaHQ9IjIiIGZpbGw9IiNGMUYxRjEiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MC41OyIvPjxyZWN0IHg9IjM0MS44NzUiIHk9IjY3NS4yODciIHdpZHRoPSI0IiBoZWlnaHQ9IjIiIGZpbGw9IiNGMUYxRjEiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MC41OyIvPjx0ZXh0IHg9IjI1Mi45ODgiIHk9IjY5Ny4yODIiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTQiIHRleHRMZW5ndGg9Ijg1Ljg4NyI+UGxhdGZvcm0gQVBJPC90ZXh0PjwvZz48IS0tZW50aXR5IGR5bm8tLT48ZyBjbGFzcz0iZW50aXR5IiBkYXRhLXF1YWxpZmllZC1uYW1lPSJIZXJva3UuZHlubyIgaWQ9ImVudDAwMTEiIGRhdGEtc291cmNlLWxpbmU9IjE1Ij48cG9seWdvbiBwb2ludHM9IjIxMy40NjgsNzgxLjU3NywyMjMuNDY4LDc3MS41NzcsMzY0LjM5NSw3NzEuNTc3LDM2NC4zOTUsODA3Ljg3NCwzNTQuMzk1LDgxNy44NzQsMjEzLjQ2OCw4MTcuODc0LDIxMy40NjgsNzgxLjU3NyIgZmlsbD0iI0YxRjFGMSIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDowLjU7c3Ryb2tlLWxpbmVqb2luOm1pdGVyO3N0cm9rZS1taXRlcmxpbWl0OjEwOyIvPjxsaW5lIHgxPSIzNTQuMzk1IiB5MT0iNzgxLjU3NyIgeDI9IjM2NC4zOTUiIHkyPSI3NzEuNTc3IiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjAuNTsiLz48bGluZSB4MT0iMjEzLjQ2OCIgeTE9Ijc4MS41NzciIHgyPSIzNTQuMzk1IiB5Mj0iNzgxLjU3NyIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDowLjU7Ii8+PGxpbmUgeDE9IjM1NC4zOTUiIHkxPSI3ODEuNTc3IiB4Mj0iMzU0LjM5NSIgeTI9IjgxNy44NzQiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MC41OyIvPjx0ZXh0IHg9IjIyOC40NjgiIHk9IjgwNC41NzIiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTQiIHRleHRMZW5ndGg9IjExMC45MjciPkVjbyBkeW5vIHdlYi4xPC90ZXh0PjwvZz48IS0tZW50aXR5IGRldi0tPjxnIGNsYXNzPSJlbnRpdHkiIGRhdGEtcXVhbGlmaWVkLW5hbWU9ImRldiIgaWQ9ImVudDAwMDEiIGRhdGEtc291cmNlLWxpbmU9IjMiPjxlbGxpcHNlIGN4PSI0MTkuOTI4IiBjeT0iNTEuMjk3IiByeD0iOCIgcnk9IjgiIGZpbGw9IiNGMUYxRjEiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MC41OyIvPjxwYXRoIGQ9Ik00MTkuOTI4LDU5LjI5NyBMNDE5LjkyOCw4Ni4yOTcgTTQwNi45MjgsNjcuMjk3IEw0MzIuOTI4LDY3LjI5NyBNNDE5LjkyOCw4Ni4yOTcgTDQwNi45MjgsMTAxLjI5NyBNNDE5LjkyOCw4Ni4yOTcgTDQzMi45MjgsMTAxLjI5NyIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDowLjU7IiBmaWxsPSJub25lIi8+PHRleHQgeD0iMzk4LjkyOCIgeT0iMTE1Ljc5MiIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxNCIgdGV4dExlbmd0aD0iNDIiPumWi+eZuuiAhTwvdGV4dD48L2c+PCEtLWxpbmsgZGV2IHRvIHdmLS0+PGcgY2xhc3M9ImxpbmsiIGRhdGEtZW50aXR5LTE9ImVudDAwMDEiIGRhdGEtZW50aXR5LTI9ImVudDAwMDMiIGlkPSJsbmsxMiIgZGF0YS1zb3VyY2UtbGluZT0iMTgiIGRhdGEtbGluay10eXBlPSJkZXBlbmRlbmN5Ij48cGF0aCBkPSJNNDE5LjkyOCwxMTkuNTQ3IEM0MTkuOTI4LDEzNi4wMTQgNDE5LjkyOCwxNTYuNDcxIDQxOS45MjgsMTc3Ljk1NSBDNDE5LjkyOCwxODguNjk3IDQxOS45MjgsMTk5LjY5NyA0MTkuOTI4LDIxMC41ODMgQzQxOS45MjgsMjE2LjAyNiA0MTkuOTI4LDIyMS40NDEgNDE5LjkyOCwyMjYuNzgyIEM0MTkuOTI4LDIyOC4xMTcgNDE5LjkyOCwyMjkuNDQ3IDQxOS45MjgsMjMwLjc3MiBDNDE5LjkyOCwyMzEuNDM1IDQxOS45MjgsMjI3LjA5NiA0MTkuOTI4LDIyNy43NTYiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTsiIGZpbGw9Im5vbmUiIGlkPSJkZXYtdG8td2YiLz48cG9seWdvbiBwb2ludHM9IjQxOS45MjgsMjMyLjc1Niw0MjMuOTI4LDIyMy43NTYsNDE5LjkyOCwyMjcuNzU2LDQxNS45MjgsMjIzLjc1Niw0MTkuOTI4LDIzMi43NTYiIGZpbGw9IiMxODE4MTgiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTtzdHJva2UtbGluZWpvaW46bWl0ZXI7c3Ryb2tlLW1pdGVybGltaXQ6MTA7Ii8+PHRleHQgeD0iNDIwLjkyOCIgeT0iMTYyLjE2NCIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxMyIgdGV4dExlbmd0aD0iMTA4LjQ4OCI+Z2l0IHB1c2ggZGV2ZWxvcDwvdGV4dD48L2c+PCEtLWxpbmsgY2hlY2sgdG8gZGVwbG95LS0+PGcgY2xhc3M9ImxpbmsiIGRhdGEtZW50aXR5LTE9ImVudDAwMDQiIGRhdGEtZW50aXR5LTI9ImVudDAwMDYiIGlkPSJsbmsxMyIgZGF0YS1zb3VyY2UtbGluZT0iMTkiIGRhdGEtbGluay10eXBlPSJkZXBlbmRlbmN5Ij48cGF0aCBkPSJNMjUxLjc5OCwzNDMuNzA3IEMyNTMuMDI4LDM2MC4xOTcgMjU1Ljk1OCwzODIuODg3IDI2Mi45MjgsNDAxLjY4NyBDMjY2LjcxOCw0MTEuODk3IDI2OS43MDMsNDE3Ljk5OSAyNzUuNTIzLDQyNy4xMzkiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTsiIGZpbGw9Im5vbmUiIGlkPSJjaGVjay10by1kZXBsb3kiLz48cG9seWdvbiBwb2ludHM9IjI3OC4yMDgsNDMxLjM1NywyNzYuNzQ4LDQyMS42MTcsMjc1LjUyMyw0MjcuMTM5LDI3MCw0MjUuOTE0LDI3OC4yMDgsNDMxLjM1NyIgZmlsbD0iIzE4MTgxOCIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxO3N0cm9rZS1saW5lam9pbjptaXRlcjtzdHJva2UtbWl0ZXJsaW1pdDoxMDsiLz48dGV4dCB4PSIyNjMuOTI4IiB5PSIzOTcuNzU0IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjEzIiB0ZXh0TGVuZ3RoPSIzOS4yNiI+bmVlZHM8L3RleHQ+PC9nPjwhLS1saW5rIHVpIHRvIGRlcGxveS0tPjxnIGNsYXNzPSJsaW5rIiBkYXRhLWVudGl0eS0xPSJlbnQwMDA1IiBkYXRhLWVudGl0eS0yPSJlbnQwMDA2IiBpZD0ibG5rMTQiIGRhdGEtc291cmNlLWxpbmU9IjIwIiBkYXRhLWxpbmstdHlwZT0iZGVwZW5kZW5jeSI+PHBhdGggZD0iTTMzNy4yNTgsMzQzLjgwNyBDMzI5Ljc3OCwzNTUuNTM3IDMyMS4zMTgsMzcwLjM2NyAzMTUuOTI4LDM4NC42ODcgQzMxMC4zNDgsMzk5LjUyNyAzMDcuNTE1LDQxMS44NTggMzA1LjI0NSw0MjYuMjk4IiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjE7IiBmaWxsPSJub25lIiBpZD0idWktdG8tZGVwbG95Ii8+PHBvbHlnb24gcG9pbnRzPSIzMDQuNDY4LDQzMS4yMzcsMzA5LjgxNyw0MjIuOTY3LDMwNS4yNDUsNDI2LjI5OCwzMDEuOTE0LDQyMS43MjUsMzA0LjQ2OCw0MzEuMjM3IiBmaWxsPSIjMTgxODE4IiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjE7c3Ryb2tlLWxpbmVqb2luOm1pdGVyO3N0cm9rZS1taXRlcmxpbWl0OjEwOyIvPjx0ZXh0IHg9IjMxNi45MjgiIHk9IjM5Ny43NTQiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTMiIHRleHRMZW5ndGg9IjM5LjI2Ij5uZWVkczwvdGV4dD48L2c+PCEtLWxpbmsgZW52IHRvIGRlcGxveS0tPjxnIGNsYXNzPSJsaW5rIiBkYXRhLWVudGl0eS0xPSJlbnQwMDA3IiBkYXRhLWVudGl0eS0yPSJlbnQwMDA2IiBpZD0ibG5rMTUiIGRhdGEtc291cmNlLWxpbmU9IjIxIiBkYXRhLWxpbmstdHlwZT0iZGVwZW5kZW5jeSI+PHBhdGggZD0iTTQ4OS45NjgsMzU1LjEzNyBDNDQ4Ljk1OCwzNzguMzE3IDM5OS4zODEsNDA2LjMzNyAzNTkuNjIxLDQyOC44MDciIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTsiIGZpbGw9Im5vbmUiIGlkPSJlbnYtdG8tZGVwbG95Ii8+PHBvbHlnb24gcG9pbnRzPSIzNTUuMjY4LDQzMS4yNjcsMzY1LjA3MSw0MzAuMzIxLDM1OS42MjEsNDI4LjgwNywzNjEuMTM1LDQyMy4zNTYsMzU1LjI2OCw0MzEuMjY3IiBmaWxsPSIjMTgxODE4IiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjE7c3Ryb2tlLWxpbmVqb2luOm1pdGVyO3N0cm9rZS1taXRlcmxpbWl0OjEwOyIvPjx0ZXh0IHg9IjQzMy44OTgiIHk9IjM5Ny43NTQiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTMiIHRleHRMZW5ndGg9IjExMy41NDEiPkhFUk9LVV9BUElfS0VZPC90ZXh0PjwvZz48IS0tbGluayBkZXBsb3kgdG8gcmVnLS0+PGcgY2xhc3M9ImxpbmsiIGRhdGEtZW50aXR5LTE9ImVudDAwMDYiIGRhdGEtZW50aXR5LTI9ImVudDAwMDkiIGlkPSJsbmsxNiIgZGF0YS1zb3VyY2UtbGluZT0iMjIiIGRhdGEtbGluay10eXBlPSJkZXBlbmRlbmN5Ij48cGF0aCBkPSJNMjA2LjA4OCw0NzIuMTc3IEMxNDMuNjU4LDQ4My4wNjcgNjYuMjU4LDUwOC4yNDcgMjUuOTI4LDU2Ni4yODcgQzE0LjAwOCw1ODMuNDM3IDE2Ljg0OCw1OTQuNDY3IDI1LjkyOCw2MTMuMjg3IEMzNi4yMTgsNjM0LjYwNyA1MS44ODksNjQ4Ljg3MiA3MC41MjksNjYxLjExMiIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxOyIgZmlsbD0ibm9uZSIgaWQ9ImRlcGxveS10by1yZWciLz48cG9seWdvbiBwb2ludHM9Ijc0LjcwOCw2NjMuODU3LDY5LjM4MSw2NTUuNTczLDcwLjUyOSw2NjEuMTEyLDY0Ljk5LDY2Mi4yNiw3NC43MDgsNjYzLjg1NyIgZmlsbD0iIzE4MTgxOCIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxO3N0cm9rZS1saW5lam9pbjptaXRlcjtzdHJva2UtbWl0ZXJsaW1pdDoxMDsiLz48dGV4dCB4PSI3Ny41NiIgeT0iNTc5LjM1NCIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxMyIgdGV4dExlbmd0aD0iMTYxLjQ3MiI+ZG9ja2VyL2J1aWxkLXB1c2gtYWN0aW9uPC90ZXh0Pjx0ZXh0IHg9IjI2LjkyOCIgeT0iNTk0LjQ4NyIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxMyIgdGV4dExlbmd0aD0iMjYyLjczNiI+KC0tdGFyZ2V0IGRlbW/jgIFvY2ktbWVkaWF0eXBlcz1mYWxzZeOAgTwvdGV4dD48dGV4dCB4PSI5My4yOTMiIHk9IjYwOS42MTkiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTMiIHRleHRMZW5ndGg9IjEzMC4wMDYiPuODqeODmeODq+OBqyBnaXRodWIuc2hhKTwvdGV4dD48L2c+PCEtLWxpbmsgZGVwbG95IHRvIGFwaS0tPjxnIGNsYXNzPSJsaW5rIiBkYXRhLWVudGl0eS0xPSJlbnQwMDA2IiBkYXRhLWVudGl0eS0yPSJlbnQwMDEwIiBpZD0ibG5rMTciIGRhdGEtc291cmNlLWxpbmU9IjIzIiBkYXRhLWxpbmstdHlwZT0iZGVwZW5kZW5jeSI+PHBhdGggZD0iTTI5OS41ODgsNDk0LjU3NyBDMjk4LjQzOCw1MjQuNzU3IDI5Ny4wODgsNTcyLjE5NyAyOTcuOTI4LDYxMy4yODcgQzI5OC4yNzgsNjMwLjMwNyAyOTguODQsNjQ0LjU2MyAyOTkuNTMsNjU5LjAzMyIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxOyIgZmlsbD0ibm9uZSIgaWQ9ImRlcGxveS10by1hcGkiLz48cG9seWdvbiBwb2ludHM9IjI5OS43NjgsNjY0LjAyNywzMDMuMzM1LDY1NC44NDcsMjk5LjUzLDY1OS4wMzMsMjk1LjM0NCw2NTUuMjI4LDI5OS43NjgsNjY0LjAyNyIgZmlsbD0iIzE4MTgxOCIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxO3N0cm9rZS1saW5lam9pbjptaXRlcjtzdHJva2UtbWl0ZXJsaW1pdDoxMDsiLz48dGV4dCB4PSIzMzMuNTk5IiB5PSI1ODYuODU0IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjEzIiB0ZXh0TGVuZ3RoPSIxODQuNzU1Ij5QQVRDSCBmb3JtYXRpb27vvIhyZWxlYXNl77yJPC90ZXh0Pjx0ZXh0IHg9IjI5OC45MjgiIHk9IjYwMS45ODciIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTMiIHRleHRMZW5ndGg9IjI1NC4wOTciPlBBVENIIGNvbmZpZy12YXJz77yIREVNT19SRVZJU0lPTu+8iTwvdGV4dD48L2c+PCEtLWxpbmsgYXBpIHRvIGR5bm8tLT48ZyBjbGFzcz0ibGluayIgZGF0YS1lbnRpdHktMT0iZW50MDAxMCIgZGF0YS1lbnRpdHktMj0iZW50MDAxMSIgaWQ9ImxuazE4IiBkYXRhLXNvdXJjZS1saW5lPSIyNCIgZGF0YS1saW5rLXR5cGU9ImRlcGVuZGVuY3kiPjxwYXRoIGQ9Ik0yOTguMzU4LDcxMS4wMTcgQzI5Ni4zMjgsNzI4Ljc4NyAyOTQuMDgzLDc0OC40NDkgMjkyLjA2Myw3NjYuMjA5IiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjE7IiBmaWxsPSJub25lIiBpZD0iYXBpLXRvLWR5bm8iLz48cG9seWdvbiBwb2ludHM9IjI5MS40OTgsNzcxLjE3NywyOTYuNDksNzYyLjY4NywyOTIuMDYzLDc2Ni4yMDksMjg4LjU0MSw3NjEuNzgyLDI5MS40OTgsNzcxLjE3NyIgZmlsbD0iIzE4MTgxOCIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxO3N0cm9rZS1saW5lam9pbjptaXRlcjtzdHJva2UtbWl0ZXJsaW1pdDoxMDsiLz48L2c+PCEtLWxpbmsgZGVwbG95IHRvIGR5bm8tLT48ZyBjbGFzcz0ibGluayIgZGF0YS1lbnRpdHktMT0iZW50MDAwNiIgZGF0YS1lbnRpdHktMj0iZW50MDAxMSIgaWQ9ImxuazE5IiBkYXRhLXNvdXJjZS1saW5lPSIyNSIgZGF0YS1saW5rLXR5cGU9ImRlcGVuZGVuY3kiPjxwYXRoIGQ9Ik0zOTUuNzU4LDQ3OS44NDcgQzQ4NC4yNDgsNDk5LjQ1NyA1OTcuMjA4LDUzOS42MzcgNTU3LjkyOCw2MTMuMjg3IEM1MTUuMDU4LDY5My42NjcgNDIzLjM0Nyw3NDIuNjg2IDM1OC4zODcsNzY5LjIyNiIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxOyIgZmlsbD0ibm9uZSIgaWQ9ImRlcGxveS10by1keW5vIi8+PHBvbHlnb24gcG9pbnRzPSIzNTMuNzU4LDc3MS4xMTcsMzYzLjYwMiw3NzEuNDE2LDM1OC4zODcsNzY5LjIyNiwzNjAuNTc3LDc2NC4wMSwzNTMuNzU4LDc3MS4xMTciIGZpbGw9IiMxODE4MTgiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTtzdHJva2UtbGluZWpvaW46bWl0ZXI7c3Ryb2tlLW1pdGVybGltaXQ6MTA7Ii8+PHRleHQgeD0iNTU0LjIxOCIgeT0iNjkxLjk5NCIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxMyIgdGV4dExlbmd0aD0iMTYwLjEyNiI+44K544Oi44O844Kv77yIL2xvZ2luIOOBjCAyMDDvvIk8L3RleHQ+PC9nPjw/cGxhbnR1bWwtc3JjIFJMRERZbkQxNEJ0RmhzWmNQMHdwN251eTExSk1FOVltUTQ5cTFJNEdFWkVMSVBERXp6M0phb004aTlEWHFIMHpBMlphOWRrSjFWTWVhZF9KbjdMRi1uVWl4V0lJMU1fSnpRaFVndGZMZXZkY0c0cHZuZkdOTG56X2gydkFLX21xbkpUSVFuMUpwQ3JxWGVfaHlfVWh3VTljLVZRWHY5ZVN0aGpQcFpvRkhiZWd1YnpfZGJ5alZseXpFX1M5cEtXQ09vX1lDZS05X3ZaZlVqeHBvSWpGbzFZODdyNkxvNDBoNldyMThOcjd0QzVpdTM4YjZ5YXFwbVJjaEZXcGN3X2Nkb2dFeHhJRnpQNFNmTEEwcTRXb1c2WmU0RlVyMi1OQ25ORXM2dW1Ydk44SW4zMklnMFRZcDlHSzh1SWduQ09nY3dQamFsU1EycGM3STNDZkNrQTdzc0lvZ1Rfcy15S0s3b2VUYUs2YUc5RHdzNnVVZHRJRk1ldGtTVlpJU1FBSzlMblJLR1NiWF9kTVlmZUtjWkExRGhHWE9QYk00clVaOERkamxTTWZ4YWlyOGlaaFM5Z28zSzRPSUg5RlgySWRxRGl4TjAtMUpySnFpNFNJMTAtaVNyTUlDRXJTOVBsRUZVVVFtelQzT3V1MFkzQ2xQXy1CdVhJdG14U2R6SlBuY3VCRDhudkJrenR6Tml2dTc1WmJXM2VfcVJtV3E3VzFpM09Kcm9tWjVlbVdQYkhGS2laa3pvZEYwQ0NUT1NnbGZib095ajhLYnRRMkdUeFJvbVFxaWdrNkxnMVF3LVh2aEt3aUh6SUF1ODRndTQwcG0wRmpZM0tRSVQ1ZElKMmNBYUZ5S1ZZYXNNczdCbmhGNmlzZHplbWphUGxHc2hTWnVEb2o0WkZ6WEotNkFQVGMtWHRCenhiQ2NDM3psb0R0M213bV9YeTA/PjwvZz48L3N2Zz4=" class="uml" alt="uml diagram" title="" /></p>
+<h2 id="_6">入力<a class="headerlink" href="#_6" title="Permanent link">&para;</a></h2>
 <ul>
-<li>MVP は予約、見積り、経路設計、予定と主要実績による基本追跡を対象とする。</li>
-<li>MVP の貨物種別は一般貨物に限定し、危険物・冷凍貨物・その他特殊貨物は後続段階へ送る。（2026-09-30、human:kakimomokuri）</li>
-<li>本予約前は輸送要求版を自由に更新・取下げ、本予約後から集荷前は営業承認付きで変更・取消し、集荷後は通常処理を禁止して有人例外対応へ送る。（2026-09-30、human:kakimomokuri）</li>
-<li>MVP の本予約は荷主担当者 1 名の承認と営業担当者の BR-01 確認で確定し、荷主内の入力者・承認者分離は後続段階へ送る。（2026-09-30、human:kakimomokuri）</li>
-<li>荷主担当者は予約単位で荷受人を招待・取消しし、到着予定・現在状態・主要実績・最終更新時刻だけを開示する。取消しは既存 session の次回照会へ即時反映する。（2026-09-30、human:kakimomokuri）</li>
-<li>MVP の有人引継ぎは受付番号、担当、優先度、回答期限、次回更新日時、状態、顧客回答履歴を持ち、未受領時は上位の運用責任者へ escalation する。（2026-10-01、human:kakimomokuri）</li>
-<li>見積りは本予約確定の commit 時刻が有効期限より前の場合だけ有効とし、同時刻以後は失効とする。時刻は UTC で保存し、利用者のタイムゾーンと UTC offset を明示して表示する。（2026-10-01、human:kakimomokuri）</li>
-<li>経路候補は到着予定時刻が希望到着期限以前、かつ各接続時間が必要最小接続時間以上の場合に日時制約へ適合する。経路承認の commit 時点と参照外部情報版で判定し、承認後に不適合となった場合は予約を自動取消しせず再設計要とする。（2026-10-01、human:kakimomokuri）</li>
-<li>外部原本の冪等性キーは提供元・原本種別・外部 ID・外部版とする。同一キー・同一 payload は重複、異 payload は隔離し、復旧は停止期間の全原本の分類、件数照合、手動情報との差異確認が完了した時点とする。（2026-10-01、human:kakimomokuri）</li>
-<li>初期パイロットの Must は US-01〜US-04、US-06、US-07、US-09、US-11、US-12、US-14、US-16、US-18、US-20 とする。US-05、US-08、US-13、US-15、US-17 は本格展開前の Should、荷主・有人窓口で代替できる US-10、US-19 は Could とする。（2026-10-01、human:kakimomokuri）</li>
-<li>パイロットは選定航路の一般貨物全件を母集団とし、開始前 4 週間を基準、開始後 4 週間または完了予約 30 件の遅い方を観測期間とする。KPI-01・KPI-02 の改善と重大ガードレール 0 件で継続し、未達は期限付き延長、重大違反は中止とする。（2026-10-01、human:kakimomokuri）</li>
-<li>主要業務フローは WCAG 2.2 AA を目標とし、キーボード操作、フォーカス、ラベル、色非依存、エラー回復を横断契約とする。影響の大きい操作は対象・状態・変更・影響・実行者を示して事前確認する。（2026-10-01、human:kakimomokuri）</li>
-<li>パイロットは事前登録メールアドレス・password・TOTP MFA、5 回失敗時 15 分ロック、無操作 30 分・最長 8 時間の session を用いる。役割は 8 種に固定し、担当企業・案件へ限定する。システム管理者・監査担当者は業務変更不可、採用済み・顧客表示済み実績の訂正は登録者と異なる追跡管理者が承認する。（2026-10-01、human:kakimomokuri）</li>
-<li>失効・置換済み見積り、旧版・再設計要経路、取消済み予約、完了済み追跡の禁止遷移と回復方法は BR-16 の状態 × 操作表を正とする。（2026-10-01、human:kakimomokuri）</li>
-<li>パイロット中の変更・取消し、再設計、外部停止は BR-17 の受付番号付き有人案件で代替する。顧客都合の取消しだけを PV-01 から除外し、再設計・外部停止は母集団に残す。US-10・US-19 は評価対象外とし、Unit 完了判定をパイロット開始と本格展開前に分ける。（2026-10-01、human:kakimomokuri）</li>
-<li>初期情報源は選定した運送会社または港湾の承認済みファイルを手動取込し、1 件も選定・承認されていない場合はパイロットを開始しない。PV-01 は KPI-01 中央値 10% 以上短縮・P90 非悪化、KPI-02 10 ポイント以上改善とし、完了予約は引渡し済みに到達した予約とする。（2026-10-01、human:kakimomokuri）</li>
-<li>荷役イベント自動連携、リアルタイム通知、例外管理、精算は境界を示すが、MVP ストーリーへ先取りしない。</li>
-<li>OQ-01〜OQ-08 の未決事項に依存する数値、権限、外部契約は確定しない。</li>
-<li>受入条件は未決事項を隠さず、判断可能な範囲と承認待ちの範囲を分ける。</li>
+<li><a href="../bolt_15_plan/">Bolt 15 計画</a>、<a href="../bolt_15_report/">Bolt 15 終了報告</a>、<a href="../../../review/cargo-tracker/bolt_15_review_20261006/">Bolt 15 運用成果物レビュー</a></li>
+<li><a href="../../../adr/cargo-tracker/013-heroku-demo-environment/">ADR-013</a>、<a href="../../../adr/cargo-tracker/008-aws-container-platform/">ADR-008</a></li>
+<li><a href="../../../operation/cargo-tracker/heroku_demo_setup/">Heroku デモ環境セットアップ手順書</a></li>
+<li><code>.github/workflows/cargo-tracker-ci.yml</code>、<code>apps/cargo-tracker/Dockerfile</code>、<code>ops/scripts/deploy_demo.js</code></li>
+<li>スキル <code>operating-cicd</code>、<code>operating-review</code></li>
+</ul>
+<h2 id="_7">ステップ計画<a class="headerlink" href="#_7" title="Permanent link">&para;</a></h2>
+<p>各ステップの終わりに push し、CI を確かめる。</p>
+<ul class="task-list">
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>1. 決定を ADR-013 と手順書に反映する案を書き、技術 Issue を立てる</strong>（承認はステップ 3 の承認ゲートとまとめて受ける）</li>
+<li>ADR-013: 「配備」に CI の <code>deploy-demo</code> を足し、手元の <code>deploy:demo</code> は CI が使えないときの手段にする。ガードの約束を CI の仕組み（<code>needs</code>、Environment のブランチの規則）で守ることを書く。ネガティブに長期の API キーを足す。代替案に「自動配備を作らない（Bolt 15 の確認ポイント 10）」を足す</li>
+<li>手順書: 「3. 配備」に CI からの配備を先に書き、手元の配備を後に置く。初回のセットアップに Environment と secret の作り方、キーの更新（期限の前）と失効のさせ方を足す</li>
+<li>インフラストラクチャアーキテクチャの CI/CD の節に、デモ環境の配備を 1 行足す</li>
+<li>GitHub に技術 Issue を立て、Project のフィールドを設定する</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>2. <code>deploy-demo</code> ジョブを書き、静的に検査する</strong></li>
+<li>Red: ジョブを足す前に、ワークフローに <code>deploy-demo</code> がないことと、actionlint（<code>rhysd/actionlint</code> のコンテナ）が今のワークフローで通ることを記録する</li>
+<li><code>on</code> に <code>workflow_dispatch</code> を足す（<code>push</code> の <code>paths</code> は変えない。アプリの変更でだけ配備する）</li>
+<li><code>deploy-demo</code> ジョブ:<ul>
+<li><code>needs: [check, ui]</code>、<code>if: github.ref == 'refs/heads/develop' &amp;&amp; (github.event_name == 'push' || github.event_name == 'workflow_dispatch')</code></li>
+<li><code>environment: { name: demo, url: &lt;デモ環境の URL&gt; }</code></li>
+<li>ジョブの <code>concurrency: { group: cargo-tracker-demo-deploy, cancel-in-progress: false }</code>（手元の配備とは排他にできないため、手順書で「CI の実行中は手元で配備しない」と書く）</li>
+<li><code>docker/setup-buildx-action</code>（v4.4.1、<code>f87e599</code>）、<code>docker/login-action</code>（v4.6.0、<code>dbcb813</code>。<code>registry.heroku.com</code>、ユーザー名 <code>_</code>、パスワードは secret）、<code>docker/build-push-action</code>（v7.4.0、<code>c3c9e26</code>。<code>target: demo</code>、<code>platforms: linux/amd64</code>、<code>provenance: false</code>、<code>sbom: false</code>、<code>outputs: type=image,name=registry.heroku.com/cargo-tracker-mono-demo/web,push=true,oci-mediatypes=false</code>、<code>labels: org.opencontainers.image.revision=${{ github.sha }}</code>、<code>cache-from/to: type=gha,mode=max</code>）。どれも SHA で固定する</li>
+<li>release: <code>curl</code> で <code>PATCH https://api.heroku.com/apps/cargo-tracker-mono-demo/formation</code>（<code>Accept: application/vnd.heroku+json; version=3.docker-releases</code>、<code>updates: [{type: web, docker_image: &lt;build-push-action の imageid&gt;}]</code>）</li>
+<li><code>PATCH /apps/cargo-tracker-mono-demo/config-vars</code> で <code>DEMO_REVISION=${{ github.sha }}</code></li>
+<li>スモーク: <code>/login</code> が 200 になるまで最大 120 秒待つ。来なければジョブを失敗にする</li>
+<li>キーは <code>env</code> で渡し、コマンドの引数やログに出さない。<code>curl</code> は <code>--fail-with-body --silent --show-error</code> にし、応答の本文は出さない</li>
+</ul>
+</li>
+<li>actionlint を通す</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>3. Environment と secret を用意し、最初の CI からの配備を確かめる</strong> 【承認ゲート: 外部連携・セキュリティ】</li>
+<li>AI が <code>gh api</code> で Environment <code>demo</code> を作り、配備のブランチの規則を develop だけにする。読み返して確かめる</li>
+<li>人が API キーを作って登録する（AI はキーの値に触れない）:
+    <code>! heroku authorizations:create -S -d "GitHub Actions cargo-tracker demo deploy" -e 31536000 | gh secret set HEROKU_API_KEY --env demo</code></li>
+<li><code>gh secret list --env demo</code> で名前だけを確かめる</li>
+<li>push して CI を見る: check・ui の後に <code>deploy-demo</code> が動き、<code>deploy:demo:status</code> で <code>DEMO_REVISION</code> が push したコミットになり、R14 がないこと</li>
+<li>手動の実行（<code>gh workflow run cargo-tracker-ci.yml --ref develop</code>）でも配備のジョブが動くこと</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>4. 手順書を仕上げ、ガードが止める場合を確かめる</strong></li>
+<li>develop の外のブランチから <code>workflow_dispatch</code> を実行し、<code>deploy-demo</code> が動かない（<code>if</code> で飛ぶ）ことを確かめる。確かめに使ったブランチは消す</li>
+<li>配備のジョブの時間を記録する（H3）</li>
+<li>手順書・README・索引を実際の結果で仕上げる。<code>operating-docs</code> と <code>apply-okf</code> を行う</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>5. 運用レビューと Bolt 終了報告</strong></li>
+<li><code>operating-review</code> でワークフロー・ADR-013・手順書をレビューし、指摘への対応を終了報告に書く</li>
+<li><code>bolt_16_report.md</code> に仮説 H1〜H3 の結論、各ステップの時刻、所要時間を書く</li>
+<li>リリース計画の W3 に Bolt 16 を足す。技術 Issue をクローズする</li>
+</ul>
+<h3 id="_8">時間の配分と打ち切り<a class="headerlink" href="#_8" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">ステップ</th>
+<th style="text-align: left;">目安</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">1</td>
+<td style="text-align: left;">20 分</td>
+</tr>
+<tr>
+<td style="text-align: left;">2</td>
+<td style="text-align: left;">40 分</td>
+</tr>
+<tr>
+<td style="text-align: left;">3</td>
+<td style="text-align: left;">40 分（人のキーの登録と CI の待ちを除く）</td>
+</tr>
+<tr>
+<td style="text-align: left;">4</td>
+<td style="text-align: left;">25 分</td>
+</tr>
+<tr>
+<td style="text-align: left;">5</td>
+<td style="text-align: left;">40 分</td>
+</tr>
+<tr>
+<td style="text-align: left;">合計</td>
+<td style="text-align: left;">165 分</td>
+</tr>
+</tbody>
+</table>
+<p>3 時間を超えそうなときは、次の順で次の Bolt に回す。</p>
+<ol>
+<li>buildx の GitHub Actions のキャッシュ（H3。毎回すべてをビルドしてもよい）</li>
+<li>develop の外からの <code>workflow_dispatch</code> の確かめ（Environment の規則を API で読み返したことで代える）</li>
+</ol>
+<p><code>needs</code>、Environment のブランチの規則、キーをログに出さないこと、スモークは削らない。</p>
+<h2 id="_9">確認ポイント（計画の承認の場でまとめて確認する）<a class="headerlink" href="#_9" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">#</th>
+<th style="text-align: left;">確認すること</th>
+<th style="text-align: left;">ステップ</th>
+<th style="text-align: left;">理由</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">1</td>
+<td style="text-align: left;">新しい技術 Issue を立て、Milestone は Release 0.1、週は W3、Unit は横断、SP 0 にする。リリース計画の W3 の Bolt 15 の次に Bolt 16 を足す</td>
+<td style="text-align: left;">1、5</td>
+<td style="text-align: left;">計画の置き場（人の決定）</td>
+</tr>
+<tr>
+<td style="text-align: left;">2</td>
+<td style="text-align: left;">配備のきっかけは、develop への push（アプリの変更で CI が動いたとき）で check・ui が緑になったとき、と develop での手動の実行（<code>workflow_dispatch</code>）。設計文書だけの変更（CI の <code>paths</code> の <code>docs/design/**</code>）でも CI が動くので、そのときも配備する（イメージは変わらないが、<code>DEMO_REVISION</code> は新しいコミットになる）</td>
+<td style="text-align: left;">2</td>
+<td style="text-align: left;">人の決定。CI の <code>paths</code> は変えない</td>
+</tr>
+<tr>
+<td style="text-align: left;">3</td>
+<td style="text-align: left;">API キーは Heroku の authorization（期限 1 年、<code>-e 31536000</code>）を人が作り、Environment <code>demo</code> の secret に人が登録する。AI はキーの値を見ない・扱わない。スコープは <code>global</code> のまま（Container Registry への push に要る）。キーの更新は期限の 1 か月前に手順書のコマンドで行い、漏えいの疑いがあれば <code>heroku authorizations:revoke</code> で失効させる</td>
+<td style="text-align: left;">3</td>
+<td style="text-align: left;">セキュリティ。長期のキーを置く（ADR-008 の OIDC の約束は AWS 向け）</td>
+</tr>
+<tr>
+<td style="text-align: left;">4</td>
+<td style="text-align: left;">Environment <code>demo</code> の配備のブランチの規則を develop だけにする。必須のレビュアーは付けない（develop の緑で自動に配備する人の決定のため）</td>
+<td style="text-align: left;">3</td>
+<td style="text-align: left;">セキュリティと人の決定</td>
+</tr>
+<tr>
+<td style="text-align: left;">5</td>
+<td style="text-align: left;">ADR-013 の「配備」を、CI の <code>deploy-demo</code> を主とし、手元の <code>deploy:demo</code> を CI が使えないときの手段にする、と直す（Bolt 15 の確認ポイント 10 を改める）。ADR は承認済みのまま、更新履歴に足す</td>
+<td style="text-align: left;">1</td>
+<td style="text-align: left;">承認済みの ADR の変更</td>
+</tr>
+<tr>
+<td style="text-align: left;">6</td>
+<td style="text-align: left;">CI の配備でも、イメージのラベルと <code>DEMO_REVISION</code> に <code>github.sha</code> を入れる。手元の <code>deploy:demo:status</code> で同じように確かめられる</td>
+<td style="text-align: left;">2</td>
+<td style="text-align: left;">Bolt 15 の約束（R-04）を CI にも</td>
+</tr>
+<tr>
+<td style="text-align: left;">7</td>
+<td style="text-align: left;">Heroku CLI はランナーに入れず、Platform API を <code>curl</code> で呼ぶ（formation の更新、Config Vars）。手元の <code>deploy_demo.js</code> は変えない</td>
+<td style="text-align: left;">2</td>
+<td style="text-align: left;">追加の導入をしない（H2）</td>
+</tr>
+<tr>
+<td style="text-align: left;">8</td>
+<td style="text-align: left;">ワークフローのログは公開で読めるため、キー・Config Vars の値・API の応答の本文をログに出さない。<code>DEMO_REVISION</code> の値（コミットの SHA）だけは出してよい</td>
+<td style="text-align: left;">2</td>
+<td style="text-align: left;">セキュリティ（T-46）</td>
+</tr>
+<tr>
+<td style="text-align: left;">9</td>
+<td style="text-align: left;">配備のジョブは、手元の <code>deploy:demo</code> と排他にできない。手順書に「CI の配備の実行中は手元で配備しない」と書く。CI の <code>concurrency</code>（develop で実行中のものを取り消す）で、配備の途中のジョブが取り消されることがある。そのときは次の push か手動の実行で配備し直す</td>
+<td style="text-align: left;">2、4</td>
+<td style="text-align: left;">運用の約束</td>
+</tr>
+<tr>
+<td style="text-align: left;">10</td>
+<td style="text-align: left;">新しく使う 3 つのアクションは、既存のワークフローの書き方に合わせて SHA で固定し、末尾に版を書く</td>
+<td style="text-align: left;">2</td>
+<td style="text-align: left;">既存の規約（Bolt 15 レビュー R-24）</td>
+</tr>
+<tr>
+<td style="text-align: left;">11</td>
+<td style="text-align: left;">新規ファイルは <code>bolt_16_report.md</code> だけ（計画は本ファイル）。変えるのは <code>cargo-tracker-ci.yml</code>、ADR-013、手順書、インフラストラクチャアーキテクチャ、索引、リリース計画</td>
+<td style="text-align: left;">1〜5</td>
+<td style="text-align: left;">新規ファイルの作成</td>
+</tr>
+<tr>
+<td style="text-align: left;">12</td>
+<td style="text-align: left;">配備の失敗は、GitHub の Actions の失敗の通知だけで知る。失敗したときは前の release のまま動き続ける（Heroku は失敗した release を出さない）</td>
+<td style="text-align: left;">2</td>
+<td style="text-align: left;">運用</td>
+</tr>
+</tbody>
+</table>
+<p>決定（2026-10-07、human:kakimomokuri）: 確認ポイント 1〜12 はすべて上の案で決まった。</p>
+<h2 id="ai">AI の仮定<a class="headerlink" href="#ai" title="Permanent link">&para;</a></h2>
+<ul>
+<li><code>docker/build-push-action</code> の出力 <code>imageid</code> は、Heroku の formation の更新に渡す <code>docker_image</code>（設定の digest、<code>sha256:…</code>）と同じ値である。違えば <code>docker buildx imagetools inspect</code> で取り直す。</li>
+<li>Heroku の Container Registry へのログインは、ユーザー名 <code>_</code>、パスワードに API キーで通る。</li>
+<li><code>ubuntu-latest</code> のランナーには Docker と buildx がある。</li>
+<li>GitHub Actions のキャッシュ（<code>type=gha</code>）は、公開のリポジトリで使える。</li>
+</ul>
+<h2 id="_10">リスクと対策<a class="headerlink" href="#_10" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">リスク</th>
+<th style="text-align: left;">影響</th>
+<th style="text-align: left;">対策</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">API キーの漏えい（ログ、フォークの Pull Request）</td>
+<td style="text-align: left;">人の Heroku のアカウント全体を操作される</td>
+<td style="text-align: left;">Environment <code>demo</code> を develop に限り、Pull Request では配備のジョブを動かさない（<code>if</code>）。キーを <code>env</code> で渡し、出力しない。期限 1 年。漏えいの疑いで失効</td>
+</tr>
+<tr>
+<td style="text-align: left;">CI の時間が長くなる（毎回ビルドして push）</td>
+<td style="text-align: left;">push の後の待ちが増える</td>
+<td style="text-align: left;">配備のジョブは check・ui の後に別のジョブで動くので、check・ui の結果は先に分かる。キャッシュ（H3）</td>
+</tr>
+<tr>
+<td style="text-align: left;">手元の配備と CI の配備が重なる</td>
+<td style="text-align: left;">どちらのコミットが出たか分からなくなる</td>
+<td style="text-align: left;">手順書で手元の配備を「CI が使えないとき」に限る。<code>DEMO_REVISION</code> で確かめる</td>
+</tr>
+<tr>
+<td style="text-align: left;">Platform API の release の形式の誤り</td>
+<td style="text-align: left;">配備のジョブが失敗する</td>
+<td style="text-align: left;">失敗しても前の release のまま。手元の <code>deploy:demo</code> で戻せる</td>
+</tr>
+</tbody>
+</table>
+<h2 id="_11">完了条件<a class="headerlink" href="#_11" title="Permanent link">&para;</a></h2>
+<h3 id="definition-of-done">Definition of Done<a class="headerlink" href="#definition-of-done" title="Permanent link">&para;</a></h3>
+<ul class="task-list">
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> ステップ 1〜5 が完了し、計画・外部連携とセキュリティ（ステップ 3）・終了報告の承認ゲートを人が通した</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> actionlint が通り、develop への push で check・ui の後に <code>deploy-demo</code> が緑になった</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> 配備の後の <code>DEMO_REVISION</code> が push したコミットで、<code>/login</code> が 200、R14 がない</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> 手動の実行で配備でき、develop の外からは配備のジョブが動かない</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> キーの値がリポジトリ・ログ・会話に出ていない。Environment <code>demo</code> が develop に限られている</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> ADR-013 と手順書に、CI からの配備、キーの作り方・更新・失効、手元の配備との関係が書かれている</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> 運用レビューを行い、指摘への対応を終了報告に書いた</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <code>bolt_16_report.md</code> に仮説 H1〜H3 の結論、配備のジョブの時間、所要時間を書いた</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> 技術 Issue をクローズし、リリース計画を更新した</li>
+</ul>
+<h3 id="_12">デモ項目<a class="headerlink" href="#_12" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">#</th>
+<th style="text-align: left;">デモ</th>
+<th style="text-align: left;">確かめること</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">1</td>
+<td style="text-align: left;">develop にアプリの変更を push する</td>
+<td style="text-align: left;">Actions で check・ui の後に <code>deploy-demo</code> が動き、Environment <code>demo</code> の配備の履歴に URL が出る</td>
+</tr>
+<tr>
+<td style="text-align: left;">2</td>
+<td style="text-align: left;"><code>npx gulp deploy:demo:status</code></td>
+<td style="text-align: left;"><code>DEMO_REVISION</code> が push したコミット</td>
+</tr>
+<tr>
+<td style="text-align: left;">3</td>
+<td style="text-align: left;">develop の外のブランチから手動で実行する</td>
+<td style="text-align: left;"><code>deploy-demo</code> が飛ばされる</td>
+</tr>
+</tbody>
+</table>
+<h2 id="_13">更新履歴<a class="headerlink" href="#_13" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">日付</th>
+<th style="text-align: left;">内容</th>
+<th style="text-align: left;">作成</th>
+<th style="text-align: left;">承認</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">2026-10-07</td>
+<td style="text-align: left;">初版（人の依頼で、デモ環境を CI から配備する。きっかけ・認証・置き場は人の決定）</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5</td>
+<td style="text-align: left;">—</td>
+</tr>
+<tr>
+<td style="text-align: left;">2026-10-07</td>
+<td style="text-align: left;">計画を承認。確認ポイント 1〜12 も決まった</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5</td>
+<td style="text-align: left;">human:kakimomokuri</td>
+</tr>
+</tbody>
+</table>
+<h2 id="_14">関連ドキュメント<a class="headerlink" href="#_14" title="Permanent link">&para;</a></h2>
+<ul>
+<li><a href="../release_plan/">リリース計画</a>（W3）</li>
+<li><a href="../bolt_15_plan/">Bolt 15 計画</a>、<a href="../bolt_15_report/">Bolt 15 終了報告</a></li>
+<li><a href="../../../adr/cargo-tracker/013-heroku-demo-environment/">ADR-013 デモ環境</a></li>
+<li><a href="../../../operation/cargo-tracker/heroku_demo_setup/">Heroku デモ環境セットアップ手順書</a></li>
 </ul>
 
 
