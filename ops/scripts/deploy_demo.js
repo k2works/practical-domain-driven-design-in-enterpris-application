@@ -1,7 +1,7 @@
 'use strict';
 
 import path from 'path';
-import { execSync } from 'child_process';
+import { execFileSync, execSync } from 'child_process';
 import { cleanDockerEnv, isDockerAvailable, openUrl } from './shared.js';
 
 // ============================================
@@ -63,6 +63,22 @@ function run(cmd, options = {}) {
  */
 function capture(cmd) {
   return execSync(cmd, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], env: cleanDockerEnv() }).trim();
+}
+
+/**
+ * シェルを通さずにコマンドを実行する（引数の中の記号を解釈させない）。標準出力を文字列で返す
+ * @param {string} file - コマンド
+ * @param {string[]} args - 引数
+ * @param {Object} [options] - execFileSync のオプション（input など）
+ * @returns {string}
+ */
+function execArgs(file, args, options = {}) {
+  return execFileSync(file, args, {
+    encoding: 'utf8',
+    stdio: ['pipe', 'pipe', 'inherit'],
+    env: cleanDockerEnv(),
+    ...options,
+  }).trim();
 }
 
 /**
@@ -293,39 +309,47 @@ export default function (gulp) {
   // キーの値は表示しない。空なら登録しない。期限の 2 週間前を期日にした Issue を立て、前の Issue は閉じる。
   // 古いキーは、新しいキーで配備が通ったことを確かめてから deploy:demo:ci-key:revoke-old で失効させる
   gulp.task('deploy:demo:ci-key', (done) => {
+    // 再入を止める（Bolt 16 で、Issue の本文のバッククォートをシェルが実行し、このタスクが入れ子で動き続けた）
+    if (process.env.DEMO_CI_KEY_RUNNING === '1') {
+      throw new Error('deploy:demo:ci-key が入れ子で呼ばれました。止めます');
+    }
+    process.env.DEMO_CI_KEY_RUNNING = '1';
     requireHerokuLogin();
     const now = new Date();
     const expires = new Date(now.getTime() + CI_KEY_EXPIRES_DAYS * 24 * 60 * 60 * 1000);
     const remind = new Date(expires.getTime() - 14 * 24 * 60 * 60 * 1000);
     const description = `${CI_KEY_DESCRIPTION_PREFIX} ${ymd(now)}`;
-    const token = capture(
-      `heroku authorizations:create -S -d "${description}" -e ${CI_KEY_EXPIRES_DAYS * 24 * 60 * 60}`,
+    // 外部コマンドはすべてシェルを通さずに渡す（Bolt 16 レビュー R-26 をこのタスクで先に行う）
+    const token = execArgs(
+      'heroku',
+      ['authorizations:create', '-S', '-d', description, '-e', String(CI_KEY_EXPIRES_DAYS * 24 * 60 * 60)],
+      { stdio: ['ignore', 'pipe', 'ignore'] },
     );
     if (token.length < 20) {
       throw new Error(`キーが取れませんでした（長さ ${token.length}）。登録しません`);
     }
-    execSync(`gh secret set ${CI_KEY_SECRET} --env ${CI_KEY_ENVIRONMENT} --repo ${REPO}`, {
-      input: token,
-      stdio: ['pipe', 'inherit', 'inherit'],
-    });
+    execArgs('gh', ['secret', 'set', CI_KEY_SECRET, '--env', CI_KEY_ENVIRONMENT, '--repo', REPO], { input: token });
     console.log(`キー「${description}」（長さ ${token.length}、期限 ${ymd(expires)}）を登録しました`);
-    run(`gh secret list --env ${CI_KEY_ENVIRONMENT} --repo ${REPO}`);
+    console.log(execArgs('gh', ['secret', 'list', '--env', CI_KEY_ENVIRONMENT, '--repo', REPO]));
 
-    for (const number of capture(
-      `gh issue list --repo ${REPO} --state open --search "in:title ${CI_KEY_REMINDER_TITLE}" --json number --jq '.[].number'`,
-    )
-      .split('\n')
-      .filter(Boolean)) {
-      run(`gh issue close ${number} --repo ${REPO} --comment "キーを更新したため閉じます（${ymd(now)}）"`);
+    const open = execArgs('gh', [
+      'issue', 'list', '--repo', REPO, '--state', 'open',
+      '--search', `in:title ${CI_KEY_REMINDER_TITLE}`, '--json', 'number', '--jq', '.[].number',
+    ]);
+    for (const number of open.split('\n').filter(Boolean)) {
+      execArgs('gh', ['issue', 'close', number, '--repo', REPO, '--comment', `キーを更新したため閉じます（${ymd(now)}）`]);
+      console.log(`Issue #${number} を閉じました`);
     }
     const body = [
       `デモ環境の CI からの配備の API キー（${description}）の期限は ${ymd(expires)} です。`,
       `${ymd(remind)} までに、リポジトリのルートで \`npx gulp deploy:demo:ci-key\` を実行して更新してください。`,
       '手順: docs/operation/cargo-tracker/heroku_demo_setup.md の「CI からの配備の準備」',
     ].join('\n\n');
-    run(
-      `gh issue create --repo ${REPO} --label technical --title "${CI_KEY_REMINDER_TITLE}（期日 ${ymd(remind)}）" --body "${body}"`,
-    );
+    const url = execArgs('gh', [
+      'issue', 'create', '--repo', REPO, '--label', 'technical',
+      '--title', `${CI_KEY_REMINDER_TITLE}（期日 ${ymd(remind)}）`, '--body', body,
+    ]);
+    console.log(`更新の Issue を立てました: ${url}`);
     console.log('次に、develop で CI を実行して配備が通ることを確かめてから、npx gulp deploy:demo:ci-key:revoke-old を実行してください');
     done();
   });
@@ -343,7 +367,7 @@ export default function (gulp) {
     }
     for (const key of old) {
       console.log(`失効させる: ${key.description}（${key.createdAt}、${key.id}）`);
-      run(`heroku authorizations:revoke ${key.id}`);
+      execArgs('heroku', ['authorizations:revoke', key.id], { stdio: ['ignore', 'inherit', 'inherit'] });
     }
     done();
   });
