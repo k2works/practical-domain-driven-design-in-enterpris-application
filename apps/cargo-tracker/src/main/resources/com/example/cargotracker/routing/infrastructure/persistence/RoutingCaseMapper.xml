@@ -1,0 +1,202 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.cargotracker.routing.infrastructure.persistence.RoutingCaseMapper">
+
+    <resultMap id="routingCaseRow" type="com.example.cargotracker.routing.infrastructure.persistence.RoutingCaseRow">
+        <constructor>
+            <idArg column="id" name="id" javaType="java.util.UUID"/>
+            <arg column="case_number" name="caseNumber" javaType="String"/>
+            <arg column="transport_request_id" name="transportRequestId" javaType="java.util.UUID"/>
+            <arg column="transport_request_number" name="transportRequestNumber" javaType="String"/>
+            <arg column="transport_request_version_no" name="transportRequestVersionNo" javaType="_int"/>
+            <arg column="quotation_id" name="quotationId" javaType="java.util.UUID"/>
+            <arg column="route_policy_via" name="routePolicyVia" javaType="String"/>
+            <arg column="origin_unlocode" name="originUnlocode" javaType="String"/>
+            <arg column="destination_unlocode" name="destinationUnlocode" javaType="String"/>
+            <arg column="arrival_deadline" name="arrivalDeadline" javaType="java.time.OffsetDateTime"/>
+            <arg column="cargo_category" name="cargoCategory" javaType="String"/>
+            <arg column="requested_at" name="requestedAt" javaType="java.time.OffsetDateTime"/>
+            <arg column="version" name="version" javaType="_long"/>
+            <arg column="created_at" name="createdAt" javaType="java.time.OffsetDateTime"/>
+            <arg column="updated_at" name="updatedAt" javaType="java.time.OffsetDateTime"/>
+        </constructor>
+    </resultMap>
+
+    <resultMap id="routeVersionRow" type="com.example.cargotracker.routing.infrastructure.persistence.RouteVersionRow">
+        <constructor>
+            <idArg column="routing_case_id" name="routingCaseId" javaType="java.util.UUID"/>
+            <idArg column="route_version_no" name="routeVersionNo" javaType="_int"/>
+            <arg column="status" name="status" javaType="String"/>
+            <arg column="candidates_evaluated_at" name="candidatesEvaluatedAt" javaType="java.time.OffsetDateTime"/>
+            <arg column="created_at" name="createdAt" javaType="java.time.OffsetDateTime"/>
+        </constructor>
+    </resultMap>
+
+    <resultMap id="routeCandidateRow" type="com.example.cargotracker.routing.infrastructure.persistence.RouteCandidateRow">
+        <constructor>
+            <idArg column="routing_case_id" name="routingCaseId" javaType="java.util.UUID"/>
+            <idArg column="route_version_no" name="routeVersionNo" javaType="_int"/>
+            <idArg column="candidate_no" name="candidateNo" javaType="_int"/>
+            <arg column="conforming" name="conforming" javaType="_boolean"/>
+            <arg column="estimated_arrival_at" name="estimatedArrivalAt" javaType="java.time.OffsetDateTime"/>
+            <arg column="min_connection_slack_minutes" name="minConnectionSlackMinutes" javaType="Integer"/>
+            <arg column="evaluated_at" name="evaluatedAt" javaType="java.time.OffsetDateTime"/>
+            <arg column="oldest_info_acquired_at" name="oldestInfoAcquiredAt" javaType="java.time.OffsetDateTime"/>
+            <arg column="info_insufficient" name="infoInsufficient" javaType="_boolean"/>
+        </constructor>
+    </resultMap>
+
+    <resultMap id="candidateLegRow" type="com.example.cargotracker.routing.infrastructure.persistence.CandidateLegRow">
+        <constructor>
+            <idArg column="routing_case_id" name="routingCaseId" javaType="java.util.UUID"/>
+            <idArg column="route_version_no" name="routeVersionNo" javaType="_int"/>
+            <idArg column="candidate_no" name="candidateNo" javaType="_int"/>
+            <idArg column="leg_no" name="legNo" javaType="_int"/>
+            <arg column="voyage_number" name="voyageNumber" javaType="String"/>
+            <arg column="load_unlocode" name="loadUnlocode" javaType="String"/>
+            <arg column="discharge_unlocode" name="dischargeUnlocode" javaType="String"/>
+            <arg column="departure_at" name="departureAt" javaType="java.time.OffsetDateTime"/>
+            <arg column="arrival_at" name="arrivalAt" javaType="java.time.OffsetDateTime"/>
+            <arg column="info_version" name="infoVersion" javaType="String"/>
+            <arg column="info_acquired_at" name="infoAcquiredAt" javaType="java.time.OffsetDateTime"/>
+            <arg column="executed" name="executed" javaType="_boolean"/>
+        </constructor>
+    </resultMap>
+
+    <resultMap id="exclusionReasonRow" type="com.example.cargotracker.routing.infrastructure.persistence.ExclusionReasonRow">
+        <constructor>
+            <idArg column="routing_case_id" name="routingCaseId" javaType="java.util.UUID"/>
+            <idArg column="route_version_no" name="routeVersionNo" javaType="_int"/>
+            <idArg column="candidate_no" name="candidateNo" javaType="_int"/>
+            <idArg column="reason_no" name="reasonNo" javaType="_int"/>
+            <arg column="reason_code" name="reasonCode" javaType="String"/>
+            <arg column="violated_at" name="violatedAt" javaType="java.time.OffsetDateTime"/>
+            <arg column="threshold" name="threshold" javaType="String"/>
+            <arg column="info_version" name="infoVersion" javaType="String"/>
+        </constructor>
+    </resultMap>
+
+    <resultMap id="routingCaseSummaryRow" type="com.example.cargotracker.routing.infrastructure.persistence.RoutingCaseSummaryRow">
+        <constructor>
+            <idArg column="case_number" name="caseNumber" javaType="String"/>
+            <arg column="transport_request_number" name="transportRequestNumber" javaType="String"/>
+            <arg column="transport_request_version_no" name="transportRequestVersionNo" javaType="_int"/>
+            <arg column="origin_unlocode" name="originUnlocode" javaType="String"/>
+            <arg column="destination_unlocode" name="destinationUnlocode" javaType="String"/>
+            <arg column="arrival_deadline" name="arrivalDeadline" javaType="java.time.OffsetDateTime"/>
+            <arg column="requested_at" name="requestedAt" javaType="java.time.OffsetDateTime"/>
+            <arg column="status" name="status" javaType="String"/>
+        </constructor>
+    </resultMap>
+
+    <insert id="insertRoutingCase">
+        INSERT INTO routing.routing_case
+            (id, case_number, transport_request_id, transport_request_number, transport_request_version_no,
+             quotation_id, route_policy_via, origin_unlocode, destination_unlocode, arrival_deadline, cargo_category,
+             requested_at, confirmed_route_version_no, version, created_at, updated_at)
+        VALUES (#{id}, #{caseNumber}, #{transportRequestId}, #{transportRequestNumber}, #{transportRequestVersionNo},
+                #{quotationId}, #{routePolicyVia}, #{originUnlocode}, #{destinationUnlocode}, #{arrivalDeadline},
+                #{cargoCategory}, #{requestedAt}, NULL, #{version}, #{createdAt}, #{updatedAt})
+    </insert>
+
+    <insert id="insertRouteVersion">
+        INSERT INTO routing.route_version (routing_case_id, route_version_no, status, candidates_evaluated_at, created_at)
+        VALUES (#{routingCaseId}, #{routeVersionNo}, #{status}, #{candidatesEvaluatedAt}, #{createdAt})
+    </insert>
+
+    <insert id="insertCandidate">
+        INSERT INTO routing.route_candidate
+            (routing_case_id, route_version_no, candidate_no, conforming, estimated_arrival_at,
+             min_connection_slack_minutes, evaluated_at, oldest_info_acquired_at, info_insufficient)
+        VALUES (#{routingCaseId}, #{routeVersionNo}, #{candidateNo}, #{conforming}, #{estimatedArrivalAt},
+                #{minConnectionSlackMinutes}, #{evaluatedAt}, #{oldestInfoAcquiredAt}, #{infoInsufficient})
+    </insert>
+
+    <insert id="insertLeg">
+        INSERT INTO routing.candidate_leg
+            (routing_case_id, route_version_no, candidate_no, leg_no, voyage_number, load_unlocode, discharge_unlocode,
+             departure_at, arrival_at, cargo_cutoff_at, doc_cutoff_at, info_version, info_acquired_at, executed)
+        VALUES (#{routingCaseId}, #{routeVersionNo}, #{candidateNo}, #{legNo}, #{voyageNumber}, #{loadUnlocode},
+                #{dischargeUnlocode}, #{departureAt}, #{arrivalAt}, NULL, NULL, #{infoVersion}, #{infoAcquiredAt},
+                #{executed})
+    </insert>
+
+    <insert id="insertExclusionReason">
+        INSERT INTO routing.exclusion_reason
+            (routing_case_id, route_version_no, candidate_no, reason_no, reason_code, violated_at, threshold, info_version)
+        VALUES (#{routingCaseId}, #{routeVersionNo}, #{candidateNo}, #{reasonNo}, #{reasonCode}, #{violatedAt},
+                #{threshold}, #{infoVersion})
+    </insert>
+
+    <!-- 楽観ロック（データモデル、ARCH-HO-01）。読み込んだときの版でなければ 0 件になる -->
+    <update id="touchRoutingCase">
+        UPDATE routing.routing_case SET version = version + 1, updated_at = #{updatedAt}
+         WHERE id = #{id} AND version = #{expectedVersion}
+    </update>
+
+    <update id="updateRouteVersion">
+        UPDATE routing.route_version SET status = #{status}, candidates_evaluated_at = #{candidatesEvaluatedAt}
+         WHERE routing_case_id = #{routingCaseId} AND route_version_no = #{routeVersionNo}
+    </update>
+
+    <delete id="deleteExclusionReasons">
+        DELETE FROM routing.exclusion_reason WHERE routing_case_id = #{routingCaseId} AND route_version_no = #{routeVersionNo}
+    </delete>
+
+    <delete id="deleteLegs">
+        DELETE FROM routing.candidate_leg WHERE routing_case_id = #{routingCaseId} AND route_version_no = #{routeVersionNo}
+    </delete>
+
+    <delete id="deleteCandidates">
+        DELETE FROM routing.route_candidate WHERE routing_case_id = #{routingCaseId} AND route_version_no = #{routeVersionNo}
+    </delete>
+
+    <select id="selectByNumber" resultMap="routingCaseRow">
+        SELECT id, case_number, transport_request_id, transport_request_number, transport_request_version_no,
+               quotation_id, route_policy_via, origin_unlocode, destination_unlocode, arrival_deadline, cargo_category,
+               requested_at, version, created_at, updated_at
+          FROM routing.routing_case
+         WHERE case_number = #{caseNumber}
+    </select>
+
+    <select id="countByTransportRequestVersion" resultType="int">
+        SELECT COUNT(*) FROM routing.routing_case
+         WHERE transport_request_id = #{transportRequestId}
+           AND transport_request_version_no = #{transportRequestVersionNo}
+    </select>
+
+    <select id="selectRouteVersions" resultMap="routeVersionRow">
+        SELECT routing_case_id, route_version_no, status, candidates_evaluated_at, created_at
+          FROM routing.route_version WHERE routing_case_id = #{routingCaseId} ORDER BY route_version_no
+    </select>
+
+    <select id="selectCandidates" resultMap="routeCandidateRow">
+        SELECT routing_case_id, route_version_no, candidate_no, conforming, estimated_arrival_at,
+               min_connection_slack_minutes, evaluated_at, oldest_info_acquired_at, info_insufficient
+          FROM routing.route_candidate WHERE routing_case_id = #{routingCaseId}
+         ORDER BY route_version_no, candidate_no
+    </select>
+
+    <select id="selectLegs" resultMap="candidateLegRow">
+        SELECT routing_case_id, route_version_no, candidate_no, leg_no, voyage_number, load_unlocode,
+               discharge_unlocode, departure_at, arrival_at, info_version, info_acquired_at, executed
+          FROM routing.candidate_leg WHERE routing_case_id = #{routingCaseId}
+         ORDER BY route_version_no, candidate_no, leg_no
+    </select>
+
+    <select id="selectExclusionReasons" resultMap="exclusionReasonRow">
+        SELECT routing_case_id, route_version_no, candidate_no, reason_no, reason_code, violated_at, threshold,
+               info_version
+          FROM routing.exclusion_reason WHERE routing_case_id = #{routingCaseId}
+         ORDER BY route_version_no, candidate_no, reason_no
+    </select>
+
+    <!-- 案件一覧（S-05）。Bolt 17 の案件は経路版 1 だけを持つ。依頼時刻の新しい順、同時刻は案件番号の降順 -->
+    <select id="selectSummaries" resultMap="routingCaseSummaryRow">
+        SELECT c.case_number, c.transport_request_number, c.transport_request_version_no, c.origin_unlocode,
+               c.destination_unlocode, c.arrival_deadline, c.requested_at, v.status
+          FROM routing.routing_case c
+          JOIN routing.route_version v ON v.routing_case_id = c.id AND v.route_version_no = 1
+         ORDER BY c.requested_at DESC, c.case_number DESC
+    </select>
+</mapper>

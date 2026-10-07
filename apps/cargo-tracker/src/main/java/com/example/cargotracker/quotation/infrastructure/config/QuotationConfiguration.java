@@ -1,5 +1,6 @@
 package com.example.cargotracker.quotation.infrastructure.config;
 
+import com.example.cargotracker.quotation.api.RouteConditionQuery;
 import com.example.cargotracker.quotation.application.internal.commandservices.QuotationCommandService;
 import com.example.cargotracker.quotation.application.internal.commandservices.QuotationResponseService;
 import com.example.cargotracker.quotation.application.internal.commandservices.TransportRequestCommandService;
@@ -7,6 +8,7 @@ import com.example.cargotracker.quotation.application.internal.commandservices.T
 import com.example.cargotracker.quotation.application.internal.eventhandlers.QuotationPresentedEventHandler;
 import com.example.cargotracker.quotation.application.internal.eventhandlers.RouteDesignRequestedEventHandler;
 import com.example.cargotracker.quotation.application.internal.queryservices.QuotationQueryService;
+import com.example.cargotracker.quotation.application.internal.queryservices.RouteConditionQueryService;
 import com.example.cargotracker.quotation.application.internal.queryservices.StaffQuotationQueryService;
 import com.example.cargotracker.quotation.application.internal.queryservices.StaffTransportRequestQueryService;
 import com.example.cargotracker.quotation.application.internal.queryservices.TransportRequestQueryService;
@@ -111,6 +113,12 @@ public class QuotationConfiguration {
     @Bean
     QuotationPresentedEventHandler quotationPresentedEventHandler(TransportRequestRepository repository) {
         return new QuotationPresentedEventHandler(repository);
+    }
+
+    /** 見積りの公開 API の経路条件の照会（経路設計が DE-16 を受けて使う。Bolt 17）。 */
+    @Bean
+    RouteConditionQuery routeConditionQuery(TransportRequestRepository repository) {
+        return new RouteConditionQueryService(repository);
     }
 
     @Bean

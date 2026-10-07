@@ -14,9 +14,9 @@ class ModularityTest {
     private final ApplicationModules modules = ApplicationModules.of(CargoTrackerApplication.class);
 
     @Test
-    void 見積りとアクセス監査と共有カーネルがモジュールとして認識される() {
+    void 見積りと経路設計とアクセス監査と共有カーネルがモジュールとして認識される() {
         assertThat(modules.stream().map(module -> module.getIdentifier().toString()))
-                .contains("quotation", "identity", "shared");
+                .contains("quotation", "routing", "identity", "shared");
     }
 
     @Test

@@ -26,5 +26,6 @@ class ModuleDocumentationTest {
         assertThat(output.resolve("components.puml")).exists();
         assertThat(output.resolve("module-quotation.puml")).exists();
         assertThat(output.resolve("module-identity.puml")).exists();
+        assertThat(output.resolve("module-routing.puml")).exists();
     }
 }

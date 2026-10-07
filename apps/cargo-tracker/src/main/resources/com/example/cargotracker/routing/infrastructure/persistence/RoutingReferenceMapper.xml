@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.cargotracker.routing.infrastructure.persistence.RoutingReferenceMapper">
+
+    <resultMap id="voyageRow" type="com.example.cargotracker.routing.infrastructure.persistence.VoyageRow">
+        <constructor>
+            <idArg column="voyage_number" name="voyageNumber" javaType="String"/>
+            <arg column="adopted_info_version" name="adoptedInfoVersion" javaType="String"/>
+            <arg column="acquired_at" name="acquiredAt" javaType="java.time.OffsetDateTime"/>
+        </constructor>
+    </resultMap>
+
+    <resultMap id="portCallRow" type="com.example.cargotracker.routing.infrastructure.persistence.PortCallRow">
+        <constructor>
+            <idArg column="voyage_number" name="voyageNumber" javaType="String"/>
+            <idArg column="call_no" name="callNo" javaType="_int"/>
+            <arg column="port_unlocode" name="portUnlocode" javaType="String"/>
+            <arg column="arrival_at" name="arrivalAt" javaType="java.time.OffsetDateTime"/>
+            <arg column="departure_at" name="departureAt" javaType="java.time.OffsetDateTime"/>
+        </constructor>
+    </resultMap>
+
+    <resultMap id="connectionRuleRow" type="com.example.cargotracker.routing.infrastructure.persistence.ConnectionRuleRow">
+        <constructor>
+            <idArg column="id" name="id" javaType="java.util.UUID"/>
+            <arg column="port_unlocode" name="portUnlocode" javaType="String"/>
+            <arg column="min_connection_minutes" name="minConnectionMinutes" javaType="_int"/>
+            <arg column="valid_from" name="validFrom" javaType="java.time.OffsetDateTime"/>
+            <arg column="valid_to" name="validTo" javaType="java.time.OffsetDateTime"/>
+        </constructor>
+    </resultMap>
+
+    <select id="selectVoyages" resultMap="voyageRow">
+        SELECT voyage_number, adopted_info_version, acquired_at FROM routing.voyage ORDER BY voyage_number
+    </select>
+
+    <select id="selectPortCalls" resultMap="portCallRow">
+        SELECT voyage_number, call_no, port_unlocode, arrival_at, departure_at
+          FROM routing.port_call ORDER BY voyage_number, call_no
+    </select>
+
+    <select id="selectConnectionRules" resultMap="connectionRuleRow">
+        SELECT id, port_unlocode, min_connection_minutes, valid_from, valid_to FROM routing.connection_rule ORDER BY id
+    </select>
+</mapper>

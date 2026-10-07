@@ -15,6 +15,7 @@ import com.example.cargotracker.quotation.application.internal.commandservices.T
 import com.example.cargotracker.quotation.application.internal.eventhandlers.QuotationPresentedEventHandler;
 import com.example.cargotracker.quotation.application.internal.eventhandlers.RouteDesignRequestedEventHandler;
 import com.example.cargotracker.quotation.application.internal.queryservices.QuotationQueryService;
+import com.example.cargotracker.quotation.application.internal.queryservices.RouteConditionQueryService;
 import com.example.cargotracker.quotation.application.internal.queryservices.StaffQuotationQueryService;
 import com.example.cargotracker.quotation.application.internal.queryservices.StaffTransportRequestQueryService;
 import com.example.cargotracker.quotation.application.internal.queryservices.TransportRequestQueryService;
@@ -23,6 +24,14 @@ import com.example.cargotracker.quotation.domain.events.RouteDesignRequested;
 import com.example.cargotracker.quotation.domain.events.TransportRequestSubmitted;
 import com.example.cargotracker.quotation.domain.model.rules.MvpAcceptancePolicy;
 import com.example.cargotracker.quotation.domain.model.rules.RequiredDocumentPolicy;
+import com.example.cargotracker.routing.acceptance.InMemoryConnectionRuleRepository;
+import com.example.cargotracker.routing.acceptance.InMemoryRoutingCaseNumberIssuer;
+import com.example.cargotracker.routing.acceptance.InMemoryRoutingCaseRepository;
+import com.example.cargotracker.routing.acceptance.InMemoryVoyageRepository;
+import com.example.cargotracker.routing.application.internal.commandservices.RoutingCaseCommandService;
+import com.example.cargotracker.routing.application.internal.eventhandlers.RoutingCaseOpeningEventHandler;
+import com.example.cargotracker.routing.application.internal.outboundservices.acl.QuotationRouteConditions;
+import com.example.cargotracker.routing.application.internal.queryservices.RoutingCaseQueryService;
 import com.example.cargotracker.shared.acceptance.DeferredEventDelivery;
 import com.example.cargotracker.shared.acceptance.MutableClock;
 import com.example.cargotracker.shared.acceptance.ScenarioContext;
@@ -93,12 +102,59 @@ public class AcceptanceTestConfiguration {
             return new RouteDesignRequestedEventHandler(repository);
         }
 
+        @Bean
+        InMemoryRoutingCaseRepository routingCaseRepository() {
+            return new InMemoryRoutingCaseRepository();
+        }
+
+        @Bean
+        InMemoryRoutingCaseNumberIssuer routingCaseNumberIssuer() {
+            return new InMemoryRoutingCaseNumberIssuer();
+        }
+
+        @Bean
+        InMemoryVoyageRepository voyageRepository() {
+            return new InMemoryVoyageRepository();
+        }
+
+        @Bean
+        InMemoryConnectionRuleRepository connectionRuleRepository() {
+            return new InMemoryConnectionRuleRepository();
+        }
+
+        /** 経路設計は見積りの公開 API（経路条件の照会）越しに経路条件を得る（Bolt 17）。 */
+        @Bean
+        RoutingCaseOpeningEventHandler routingCaseOpeningEventHandler(
+                InMemoryRoutingCaseRepository repository,
+                InMemoryRoutingCaseNumberIssuer numberIssuer,
+                InMemoryTransportRequestRepository transportRequestRepository) {
+            return new RoutingCaseOpeningEventHandler(
+                    repository,
+                    numberIssuer,
+                    new QuotationRouteConditions(new RouteConditionQueryService(transportRequestRepository)));
+        }
+
+        @Bean
+        RoutingCaseCommandService routingCaseCommandService(
+                InMemoryRoutingCaseRepository repository,
+                InMemoryVoyageRepository voyageRepository,
+                InMemoryConnectionRuleRepository connectionRuleRepository,
+                MutableClock clock) {
+            return new RoutingCaseCommandService(repository, voyageRepository, connectionRuleRepository, clock);
+        }
+
+        @Bean
+        RoutingCaseQueryService routingCaseQueryService(InMemoryRoutingCaseRepository repository) {
+            return new RoutingCaseQueryService(repository);
+        }
+
         /** 購読側を登録した、テスト用の同期の配信。 */
         @Bean
         DeferredEventDelivery eventDelivery(
                 KpiObservationEventHandler kpiObservationEventHandler,
                 QuotationPresentedEventHandler quotationPresentedEventHandler,
-                RouteDesignRequestedEventHandler routeDesignRequestedEventHandler) {
+                RouteDesignRequestedEventHandler routeDesignRequestedEventHandler,
+                RoutingCaseOpeningEventHandler routingCaseOpeningEventHandler) {
             DeferredEventDelivery delivery = new DeferredEventDelivery();
             delivery.subscribe(event -> {
                 if (event instanceof TransportRequestSubmitted submitted) {
@@ -109,6 +165,7 @@ public class AcceptanceTestConfiguration {
                 }
                 if (event instanceof RouteDesignRequested requested) {
                     routeDesignRequestedEventHandler.on(requested);
+                    routingCaseOpeningEventHandler.on(requested);
                 }
             });
             return delivery;

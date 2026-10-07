@@ -5,6 +5,10 @@ import com.example.cargotracker.quotation.acceptance.InMemoryQuotationRepository
 import com.example.cargotracker.quotation.acceptance.InMemoryRequiredDocumentStorage;
 import com.example.cargotracker.quotation.acceptance.InMemoryTransportRequestNumberIssuer;
 import com.example.cargotracker.quotation.acceptance.InMemoryTransportRequestRepository;
+import com.example.cargotracker.routing.acceptance.InMemoryConnectionRuleRepository;
+import com.example.cargotracker.routing.acceptance.InMemoryRoutingCaseNumberIssuer;
+import com.example.cargotracker.routing.acceptance.InMemoryRoutingCaseRepository;
+import com.example.cargotracker.routing.acceptance.InMemoryVoyageRepository;
 import com.example.cargotracker.shared.acceptance.DeferredEventDelivery;
 import com.example.cargotracker.shared.acceptance.MutableClock;
 import io.cucumber.java.Before;
@@ -22,6 +26,10 @@ public class ScenarioReset {
     private final DeferredEventDelivery delivery;
     private final InMemoryRequiredDocumentStorage documentStorage;
     private final InMemoryQuotationRepository quotationRepository;
+    private final InMemoryRoutingCaseRepository routingCaseRepository;
+    private final InMemoryRoutingCaseNumberIssuer routingCaseNumberIssuer;
+    private final InMemoryVoyageRepository voyageRepository;
+    private final InMemoryConnectionRuleRepository connectionRuleRepository;
 
     public ScenarioReset(
             MutableClock clock,
@@ -30,7 +38,11 @@ public class ScenarioReset {
             InMemoryKpiObservationRepository kpiObservationRepository,
             DeferredEventDelivery delivery,
             InMemoryRequiredDocumentStorage documentStorage,
-            InMemoryQuotationRepository quotationRepository) {
+            InMemoryQuotationRepository quotationRepository,
+            InMemoryRoutingCaseRepository routingCaseRepository,
+            InMemoryRoutingCaseNumberIssuer routingCaseNumberIssuer,
+            InMemoryVoyageRepository voyageRepository,
+            InMemoryConnectionRuleRepository connectionRuleRepository) {
         this.clock = clock;
         this.transportRequestRepository = transportRequestRepository;
         this.transportRequestNumberIssuer = transportRequestNumberIssuer;
@@ -38,6 +50,10 @@ public class ScenarioReset {
         this.delivery = delivery;
         this.documentStorage = documentStorage;
         this.quotationRepository = quotationRepository;
+        this.routingCaseRepository = routingCaseRepository;
+        this.routingCaseNumberIssuer = routingCaseNumberIssuer;
+        this.voyageRepository = voyageRepository;
+        this.connectionRuleRepository = connectionRuleRepository;
     }
 
     @Before
@@ -49,5 +65,9 @@ public class ScenarioReset {
         delivery.clear();
         documentStorage.clear();
         quotationRepository.clear();
+        routingCaseRepository.clear();
+        routingCaseNumberIssuer.clear();
+        voyageRepository.clear();
+        connectionRuleRepository.clear();
     }
 }

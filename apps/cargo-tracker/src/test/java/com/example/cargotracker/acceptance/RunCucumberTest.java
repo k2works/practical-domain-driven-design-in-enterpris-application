@@ -22,7 +22,8 @@ import org.junit.platform.suite.api.Suite;
 @ConfigurationParameter(
         key = GLUE_PROPERTY_NAME,
         value = "com.example.cargotracker.acceptance,com.example.cargotracker.shared.acceptance,"
-                + "com.example.cargotracker.quotation.acceptance,com.example.cargotracker.identity.acceptance")
+                + "com.example.cargotracker.quotation.acceptance,com.example.cargotracker.identity.acceptance,"
+                + "com.example.cargotracker.routing.acceptance")
 @ConfigurationParameter(key = FILTER_TAGS_PROPERTY_NAME, value = "not @wip and not @ui")
 @ConfigurationParameter(
         key = PLUGIN_PROPERTY_NAME,
