@@ -364,6 +364,11 @@ public final class RoutingCase {
         return List.copyOf(routeVersions);
     }
 
+    /** いまの経路版を確定できるか（候補提示済みで、確定した経路版がない）。画面の入口と確定の判定が使う。 */
+    public boolean confirmable() {
+        return false;
+    }
+
     /** 確定した経路版（案件に 1 つだけ。R-INV-05）。 */
     public Optional<RouteVersion> confirmedRouteVersion() {
         return routeVersions.stream()

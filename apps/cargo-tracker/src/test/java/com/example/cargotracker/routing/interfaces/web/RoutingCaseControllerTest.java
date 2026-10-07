@@ -298,6 +298,10 @@ class RoutingCaseControllerTest {
                 .andExpect(content().string(Matchers.containsString("確定した経路")))
                 .andExpect(content().string(Matchers.containsString("SGSIN の接続に 4 時間の余裕がある。")))
                 .andExpect(content().string(Matchers.containsString("2026-10-07 14:00 Asia/Tokyo")))
+                // 画面に内部の ID を出さない（D-4。Bolt 19 レビュー）
+                .andExpect(content()
+                        .string(Matchers.not(Matchers.containsString(
+                                TestActors.STAFF_USER.value().toString()))))
                 .andExpect(content().string(Matchers.not(Matchers.containsString("候補を再算出"))))
                 .andExpect(content().string(Matchers.not(Matchers.containsString("この候補で確定へ"))));
     }
@@ -314,7 +318,10 @@ class RoutingCaseControllerTest {
                 .andExpect(content().string(Matchers.containsString("V-201")))
                 .andExpect(content().string(Matchers.containsString("見積有効期限")))
                 .andExpect(content().string(Matchers.containsString("2026-10-08 18:00 Asia/Tokyo")))
-                .andExpect(content().string(Matchers.containsString("maxlength=\"4000\"")))
+                .andExpect(content().string(Matchers.containsString("4,000 文字まで")))
+                .andExpect(content().string(Matchers.not(Matchers.containsString("maxlength"))))
+                .andExpect(content().string(Matchers.containsString("担当営業に伝えてください")))
+                .andExpect(content().string(Matchers.not(Matchers.containsString("見積りに割り当てられ"))))
                 .andExpect(content().string(Matchers.containsString("name=\"candidate\" value=\"1\"")))
                 .andExpect(content().string(Matchers.containsString("name=\"expectedVersion\" value=\"0\"")))
                 .andExpect(content().string(Matchers.containsString("この経路で確定する")));
@@ -348,7 +355,7 @@ class RoutingCaseControllerTest {
                         .param("rationale", "根拠")
                         .param("expectedVersion", "3"))
                 .andExpect(redirectedUrl(SHOW))
-                .andExpect(flash().attribute("result", "候補 1 の経路を確定しました。"));
+                .andExpect(flash().attribute("result", "候補 1 の経路を確定しました。確定したことを担当営業に伝えてください。"));
     }
 
     @Test
@@ -393,6 +400,136 @@ class RoutingCaseControllerTest {
                         .param("expectedVersion", "0"))
                 .andExpect(redirectedUrl(SHOW))
                 .andExpect(flash().attribute("problem", "ほかの経路設計者が先にこの案件を更新しました。最新の候補を確かめてください。"));
+    }
+
+    @Test
+    void 確定した案件と算出の前の案件の確定の画面は開かず比較の画面で理由を示す() throws Exception {
+        when(queryService.findByNumber(NUMBER)).thenReturn(Optional.of(confirmed()));
+
+        mockMvc.perform(get(SHOW + "/confirmation").param("candidate", "1"))
+                .andExpect(redirectedUrl(SHOW))
+                .andExpect(flash().attribute("problem", "この案件の経路はすでに確定しているか、候補をまだ算出していません。"));
+
+        when(queryService.findByNumber(NUMBER)).thenReturn(Optional.of(open()));
+
+        mockMvc.perform(get(SHOW + "/confirmation").param("candidate", "1"))
+                .andExpect(redirectedUrl(SHOW))
+                .andExpect(flash().attribute("problem", "この案件の経路はすでに確定しているか、候補をまだ算出していません。"));
+    }
+
+    @org.junit.jupiter.params.ParameterizedTest(name = "{0} は比較の画面に戻して示す")
+    @org.junit.jupiter.params.provider.EnumSource(
+            value = RouteConfirmationRejectionReason.class,
+            names = {"CANDIDATE_EXCLUDED", "NOT_CONFIRMABLE_STATE", "CANDIDATE_NOT_FOUND"})
+    void 入力で直せない拒否は比較の画面に戻して理由を示す(RouteConfirmationRejectionReason reason) throws Exception {
+        when(commandService.confirm(new ConfirmRouteCommand(NUMBER, 1, "根拠", 0, TestActors.STAFF_USER, true)))
+                .thenReturn(new RouteConfirmationOutcome.Rejected(reason));
+
+        mockMvc.perform(post(SHOW + "/confirmation")
+                        .param("candidate", "1")
+                        .param("rationale", "根拠")
+                        .param("expectedVersion", "0"))
+                .andExpect(redirectedUrl(SHOW))
+                .andExpect(flash().attribute("problem", RoutingCaseController.message(reason)));
+    }
+
+    @org.junit.jupiter.params.ParameterizedTest(name = "{0} は確定の画面で示す")
+    @org.junit.jupiter.params.provider.EnumSource(
+            value = RouteConfirmationRejectionReason.class,
+            names = {"RATIONALE_TOO_LONG", "NOT_ROUTE_DESIGNER", "NO_LONGER_CONFORMING"})
+    void 入力や再算出で直す拒否は確定の画面で示す(RouteConfirmationRejectionReason reason) throws Exception {
+        when(queryService.findByNumber(NUMBER)).thenReturn(Optional.of(calculated()));
+        when(commandService.confirm(new ConfirmRouteCommand(NUMBER, 1, "根拠", 0, TestActors.STAFF_USER, true)))
+                .thenReturn(new RouteConfirmationOutcome.Rejected(reason));
+
+        mockMvc.perform(post(SHOW + "/confirmation")
+                        .param("candidate", "1")
+                        .param("rationale", "根拠")
+                        .param("expectedVersion", "0"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(Matchers.containsString(RoutingCaseController.message(reason))));
+    }
+
+    @Test
+    void 確定の画面を描き直すときに候補がなくなっていたら比較の画面に戻す() throws Exception {
+        when(queryService.findByNumber(NUMBER)).thenReturn(Optional.of(open()));
+        when(commandService.confirm(new ConfirmRouteCommand(NUMBER, 1, "根拠", 0, TestActors.STAFF_USER, true)))
+                .thenReturn(
+                        new RouteConfirmationOutcome.Rejected(RouteConfirmationRejectionReason.NO_LONGER_CONFORMING));
+
+        mockMvc.perform(post(SHOW + "/confirmation")
+                        .param("candidate", "1")
+                        .param("rationale", "根拠")
+                        .param("expectedVersion", "0"))
+                .andExpect(redirectedUrl(SHOW));
+    }
+
+    @Test
+    void ない案件は確定できず404() throws Exception {
+        when(commandService.confirm(new ConfirmRouteCommand(NUMBER, 1, "根拠", 0, TestActors.STAFF_USER, true)))
+                .thenReturn(new RouteConfirmationOutcome.NotFound());
+
+        mockMvc.perform(post(SHOW + "/confirmation")
+                        .param("candidate", "1")
+                        .param("rationale", "根拠")
+                        .param("expectedVersion", "0"))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void 見積りの期限切れの案件は比較と確定の画面で担当営業との相談を示す() throws Exception {
+        when(queryService.findByNumber(NUMBER))
+                .thenReturn(Optional.of(withExpiry(calculated(), "2026-10-07T00:00:00Z")));
+
+        mockMvc.perform(get(SHOW))
+                .andExpect(content().string(Matchers.containsString("見積りの期限切れ")))
+                .andExpect(content().string(Matchers.containsString("担当営業と扱いを相談してください")));
+        mockMvc.perform(get(SHOW + "/confirmation").param("candidate", "1"))
+                .andExpect(content().string(Matchers.containsString("見積りの期限切れ")))
+                .andExpect(content().string(Matchers.containsString("担当営業と扱いを相談してください")));
+    }
+
+    @Test
+    void 期限の前の案件は期限切れと示さない() throws Exception {
+        when(queryService.findByNumber(NUMBER))
+                .thenReturn(Optional.of(withExpiry(calculated(), "2026-10-07T00:01:00Z")));
+
+        mockMvc.perform(get(SHOW)).andExpect(content().string(Matchers.not(Matchers.containsString("見積りの期限切れ"))));
+    }
+
+    @Test
+    void 判断根拠は表示でエスケープする() throws Exception {
+        RoutingCase routingCase = calculated();
+        routingCase.confirm(
+                1,
+                "<script>alert(1)</script>",
+                new RouteApprover(TestActors.STAFF_USER.value(), true),
+                List.of(new ConnectionRule(
+                        UUID.randomUUID(), SINGAPORE, Duration.ofHours(8), at("2026-01-01T00:00:00Z"), null)),
+                at("2026-10-07T05:00:00Z"),
+                new ConstraintEvaluator());
+        when(queryService.findByNumber(NUMBER)).thenReturn(Optional.of(routingCase));
+
+        mockMvc.perform(get(SHOW))
+                .andExpect(content().string(Matchers.containsString("&lt;script&gt;alert(1)&lt;/script&gt;")))
+                .andExpect(content().string(Matchers.not(Matchers.containsString("<script>alert(1)"))));
+    }
+
+    static RoutingCase withExpiry(RoutingCase source, String expiresAt) {
+        return RoutingCase.reconstitute(
+                source.id(),
+                source.number(),
+                source.transportRequestId(),
+                source.transportRequestNumber(),
+                source.transportRequestVersionNo(),
+                source.quotationId(),
+                source.routePolicyVia(),
+                source.specification(),
+                source.requestedAt(),
+                at(expiresAt),
+                source.requestedBy().orElse(null),
+                source.routeVersions(),
+                source.aggregateVersion());
     }
 
     static RoutingCase confirmed() {

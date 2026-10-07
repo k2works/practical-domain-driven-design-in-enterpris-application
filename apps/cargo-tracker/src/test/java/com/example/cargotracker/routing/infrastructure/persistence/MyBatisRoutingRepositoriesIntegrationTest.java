@@ -248,6 +248,103 @@ class MyBatisRoutingRepositoriesIntegrationTest {
     }
 
     @Test
+    void 確定した経路版の根拠と候補を書き換えた集約で更新しても表は変わらない() {
+        RoutingCase routingCase = calculatedAndSaved();
+        RoutingCase loaded = repository.findByNumber(routingCase.number()).orElseThrow();
+        loaded.confirm(1, "元の根拠", APPROVER, rules(), at("2083-10-07T04:00:00Z"), new ConstraintEvaluator());
+        repository.update(loaded, APPROVER.userId());
+        RoutingCase confirmed = repository.findByNumber(routingCase.number()).orElseThrow();
+        RouteVersion original = confirmed.routeVersion();
+        RouteVersion tampered = new RouteVersion(
+                1,
+                RouteVersionStatus.CONFIRMED,
+                original.candidates().subList(0, 1),
+                original.candidatesEvaluatedAt(),
+                original.candidatesFound(),
+                new RouteConfirmation(1, new DecisionRationale("書き換えた根拠"), OPERATOR, at("2083-10-07T05:00:00Z")));
+
+        repository.update(withVersions(confirmed, List.of(tampered)), OPERATOR);
+
+        assertThat(repository.findByNumber(routingCase.number()).orElseThrow().routeVersions())
+                .containsExactly(original);
+    }
+
+    @Test
+    void 経路版の一覧を版ごとに組み立て一覧は最新の経路版の状態を示す() {
+        RoutingCase routingCase = calculatedAndSaved();
+        UUID id = routingCase.id().value();
+        // 版 1 を旧版（確定の記録あり）にし、版 2 を候補提示済みで足す（US-08 の再設計の後の形）
+        jdbc.update(
+                "UPDATE routing.route_version SET status = 'SUPERSEDED', selected_candidate_no = 1, rationale = '旧い根拠',"
+                        + " approved_by = ?, approved_at = TIMESTAMP WITH TIME ZONE '2083-10-07 04:00:00+00'"
+                        + " WHERE routing_case_id = ?",
+                OPERATOR,
+                id);
+        jdbc.update(
+                "INSERT INTO routing.route_version (routing_case_id, route_version_no, status, candidates_evaluated_at,"
+                        + " candidates_found, created_at) VALUES (?, 2, 'CANDIDATES_PRESENTED',"
+                        + " TIMESTAMP WITH TIME ZONE '2083-10-08 00:00:00+00', 0, CURRENT_TIMESTAMP)",
+                id);
+
+        RoutingCase found = repository.findByNumber(routingCase.number()).orElseThrow();
+
+        assertThat(found.routeVersions())
+                .extracting(RouteVersion::routeVersionNo, RouteVersion::status)
+                .containsExactly(
+                        org.assertj.core.groups.Tuple.tuple(1, RouteVersionStatus.SUPERSEDED),
+                        org.assertj.core.groups.Tuple.tuple(2, RouteVersionStatus.CANDIDATES_PRESENTED));
+        assertThat(found.routeVersions().getFirst().candidates())
+                .hasSize(routingCase.routeVersion().candidates().size());
+        assertThat(found.routeVersions().getLast().candidates()).isEmpty();
+        assertThat(repository.findSummaries())
+                .filteredOn(summary -> summary.number().equals(routingCase.number()))
+                .singleElement()
+                .satisfies(summary -> assertThat(summary.status()).isEqualTo(RouteVersionStatus.CANDIDATES_PRESENTED));
+    }
+
+    @Test
+    void 判断根拠は4000文字をコードポイントで保存して読み出せる() {
+        RoutingCase routingCase = calculatedAndSaved();
+        RoutingCase loaded = repository.findByNumber(routingCase.number()).orElseThrow();
+        String rationale = "\uD867\uDE3D".repeat(DecisionRationale.MAX_LENGTH);
+        loaded.confirm(1, rationale, APPROVER, rules(), at("2083-10-07T04:00:00Z"), new ConstraintEvaluator());
+
+        repository.update(loaded, APPROVER.userId());
+
+        assertThat(repository
+                        .findByNumber(routingCase.number())
+                        .orElseThrow()
+                        .routeVersion()
+                        .confirmation())
+                .map(confirmation -> confirmation.rationale().text())
+                .contains(rationale);
+    }
+
+    @Test
+    void 確定した候補は消せない() {
+        RoutingCase routingCase = calculatedAndSaved();
+        RoutingCase loaded = repository.findByNumber(routingCase.number()).orElseThrow();
+        loaded.confirm(1, "根拠", APPROVER, rules(), at("2083-10-07T04:00:00Z"), new ConstraintEvaluator());
+        repository.update(loaded, APPROVER.userId());
+        UUID id = routingCase.id().value();
+        jdbc.update("DELETE FROM routing.exclusion_reason WHERE routing_case_id = ? AND candidate_no = 1", id);
+        jdbc.update("DELETE FROM routing.candidate_leg WHERE routing_case_id = ? AND candidate_no = 1", id);
+
+        assertThatThrownBy(() -> jdbc.update(
+                        "DELETE FROM routing.route_candidate WHERE routing_case_id = ? AND candidate_no = 1", id))
+                .isInstanceOf(DataIntegrityViolationException.class);
+    }
+
+    @Test
+    void 確定した経路版の番号はある経路版だけを指せる() {
+        UUID id = calculatedAndSaved().id().value();
+
+        assertThatThrownBy(() ->
+                        jdbc.update("UPDATE routing.routing_case SET confirmed_route_version_no = 9 WHERE id = ?", id))
+                .isInstanceOf(DataIntegrityViolationException.class);
+    }
+
+    @Test
     void 見つけた候補の数を残し上限で示さなかった候補の数が読み出せる() {
         RoutingCase routingCase = open(UUID.randomUUID(), "2083-10-06T02:00:00Z");
         repository.save(routingCase);
@@ -356,6 +453,23 @@ class MyBatisRoutingRepositoriesIntegrationTest {
 
         assertThat(second.sequence()).isEqualTo(first.sequence() + 1);
         assertThat(second.year()).isEqualTo(2083);
+    }
+
+    private static RoutingCase withVersions(RoutingCase source, List<RouteVersion> versions) {
+        return RoutingCase.reconstitute(
+                source.id(),
+                source.number(),
+                source.transportRequestId(),
+                source.transportRequestNumber(),
+                source.transportRequestVersionNo(),
+                source.quotationId(),
+                source.routePolicyVia(),
+                source.specification(),
+                source.requestedAt(),
+                source.quotationExpiresAt().orElse(null),
+                source.requestedBy().orElse(null),
+                versions,
+                source.aggregateVersion());
     }
 
     private RoutingCase calculatedAndSaved() {

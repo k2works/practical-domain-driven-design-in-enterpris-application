@@ -8,6 +8,7 @@ import com.example.cargotracker.routing.application.internal.commandservices.Rou
 import com.example.cargotracker.routing.application.internal.commandservices.RoutingCaseCommandService;
 import com.example.cargotracker.routing.application.internal.queryservices.RoutingCaseQueryService;
 import com.example.cargotracker.routing.domain.events.RouteConfirmed;
+import com.example.cargotracker.routing.domain.model.aggregates.ConnectionRule;
 import com.example.cargotracker.routing.domain.model.aggregates.RoutingCase;
 import com.example.cargotracker.routing.domain.model.entities.RouteVersion;
 import com.example.cargotracker.routing.domain.model.valueobjects.DecisionRationale;
@@ -16,6 +17,7 @@ import com.example.cargotracker.routing.domain.model.valueobjects.RouteConfirmat
 import com.example.cargotracker.routing.domain.model.valueobjects.RouteVersionStatus;
 import com.example.cargotracker.routing.domain.model.valueobjects.RoutingCaseSummary;
 import com.example.cargotracker.shared.acceptance.DeferredEventDelivery;
+import com.example.cargotracker.shared.domain.Location;
 import com.example.cargotracker.shared.domain.UserId;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import io.cucumber.java.ja.かつ;
@@ -40,21 +42,35 @@ public class RouteConfirmationSteps {
             "経路設計者でない", RouteConfirmationRejectionReason.NOT_ROUTE_DESIGNER,
             "除外の候補", RouteConfirmationRejectionReason.CANDIDATE_EXCLUDED,
             "出発済み", RouteConfirmationRejectionReason.ALREADY_DEPARTED,
-            "確定済み", RouteConfirmationRejectionReason.NOT_CONFIRMABLE_STATE);
+            "確定済み", RouteConfirmationRejectionReason.NOT_CONFIRMABLE_STATE,
+            "条件を満たさなくなった", RouteConfirmationRejectionReason.NO_LONGER_CONFORMING);
 
     private final RoutingCaseCommandService commandService;
     private final RoutingCaseQueryService queryService;
     private final DeferredEventDelivery eventDelivery;
+    private final InMemoryConnectionRuleRepository rules;
     private RouteConfirmationOutcome outcome;
     private Long openedVersion;
 
     public RouteConfirmationSteps(
             RoutingCaseCommandService commandService,
             RoutingCaseQueryService queryService,
-            DeferredEventDelivery eventDelivery) {
+            DeferredEventDelivery eventDelivery,
+            InMemoryConnectionRuleRepository rules) {
         this.commandService = commandService;
         this.queryService = queryService;
         this.eventDelivery = eventDelivery;
+        this.rules = rules;
+    }
+
+    @前提("港 {string} の必要最小接続時間が {string} から {int} 時間になる")
+    public void 必要最小接続時間が変わる(String port, String validFrom, int hours) {
+        rules.add(new ConnectionRule(
+                UUID.randomUUID(),
+                new Location(port),
+                java.time.Duration.ofHours(hours),
+                new UtcInstant(Instant.parse(validFrom)),
+                null));
     }
 
     @前提("経路設計者が案件を開く")

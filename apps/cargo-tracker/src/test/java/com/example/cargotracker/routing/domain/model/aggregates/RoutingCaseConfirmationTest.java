@@ -239,13 +239,11 @@ class RoutingCaseConfirmationTest {
         RoutingCase routingCase = presented();
         routingCase.confirm(1, "根拠", ROUTE_DESIGNER, List.of(SINGAPORE_8H), COMMIT_AT, evaluator);
         List<RouteCandidate> confirmedCandidates = routingCase.routeVersion().candidates();
+        List<Voyage> voyages = List.of(direct("V-NEW", "2026-10-30T00:00:00Z"));
+        List<ConnectionRule> rules = List.of(SINGAPORE_8H);
+        UtcInstant later = minutesAfter(COMMIT_AT, 1);
 
-        assertThatThrownBy(() -> routingCase.calculateCandidates(
-                        List.of(direct("V-NEW", "2026-10-30T00:00:00Z")),
-                        List.of(SINGAPORE_8H),
-                        minutesAfter(COMMIT_AT, 1),
-                        finder,
-                        evaluator))
+        assertThatThrownBy(() -> routingCase.calculateCandidates(voyages, rules, later, finder, evaluator))
                 .isInstanceOf(IllegalStateException.class);
         assertThat(routingCase.routeVersion().candidates()).isEqualTo(confirmedCandidates);
     }
@@ -292,19 +290,28 @@ class RoutingCaseConfirmationTest {
                 presentedVersion.candidatesEvaluatedAt(),
                 new RouteConfirmation(1, new DecisionRationale("根拠"), ROUTE_DESIGNER.userId(), COMMIT_AT));
 
+        RoutingCaseId id = new RoutingCaseId(UUID.randomUUID());
+        RoutingCaseNumber number = new RoutingCaseNumber(2026, 1);
+        UUID transportRequestId = UUID.randomUUID();
+        UUID quotationId = UUID.randomUUID();
+        RouteSpecification specification =
+                new RouteSpecification(TOKYO, ROTTERDAM, RoutingCaseTest.DEADLINE, "GENERAL");
+        UtcInstant requestedAt = at("2026-10-06T02:00:00Z");
+        List<RouteVersion> twoConfirmed = List.of(confirmedV1, withNo(confirmedV1, 2));
+
         assertThatThrownBy(() -> RoutingCase.reconstitute(
-                        new RoutingCaseId(UUID.randomUUID()),
-                        new RoutingCaseNumber(2026, 1),
-                        UUID.randomUUID(),
+                        id,
+                        number,
+                        transportRequestId,
                         "TR-2026-0001",
                         1,
-                        UUID.randomUUID(),
+                        quotationId,
                         List.of(),
-                        new RouteSpecification(TOKYO, ROTTERDAM, RoutingCaseTest.DEADLINE, "GENERAL"),
-                        at("2026-10-06T02:00:00Z"),
+                        specification,
+                        requestedAt,
                         null,
                         null,
-                        List.of(confirmedV1, withNo(confirmedV1, 2)),
+                        twoConfirmed,
                         5))
                 .isInstanceOf(IllegalArgumentException.class);
     }
@@ -314,21 +321,118 @@ class RoutingCaseConfirmationTest {
         RouteVersion presentedVersion = presented().routeVersion();
         RouteConfirmation confirmation =
                 new RouteConfirmation(1, new DecisionRationale("根拠"), ROUTE_DESIGNER.userId(), COMMIT_AT);
+        List<RouteCandidate> candidates = presentedVersion.candidates();
+        UtcInstant evaluatedAt = presentedVersion.candidatesEvaluatedAt();
 
-        assertThatThrownBy(() -> new RouteVersion(
-                        1,
-                        RouteVersionStatus.CONFIRMED,
-                        presentedVersion.candidates(),
-                        presentedVersion.candidatesEvaluatedAt(),
-                        null))
+        assertThatThrownBy(() -> new RouteVersion(1, RouteVersionStatus.CONFIRMED, candidates, evaluatedAt, null))
                 .isInstanceOf(IllegalArgumentException.class);
         assertThatThrownBy(() -> new RouteVersion(
-                        1,
-                        RouteVersionStatus.CANDIDATES_PRESENTED,
-                        presentedVersion.candidates(),
-                        presentedVersion.candidatesEvaluatedAt(),
-                        confirmation))
+                        1, RouteVersionStatus.CANDIDATES_PRESENTED, candidates, evaluatedAt, confirmation))
                 .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void 確定の時刻と同時刻に有効になった厳しい規則で判定し直す() {
+        RoutingCase routingCase = presented();
+        ConnectionRule strictFromCommit =
+                new ConnectionRule(UUID.randomUUID(), SINGAPORE, Duration.ofHours(12), COMMIT_AT, null);
+
+        assertRejected(
+                () -> routingCase.confirm(
+                        2, "根拠", ROUTE_DESIGNER, List.of(SINGAPORE_8H, strictFromCommit), COMMIT_AT, evaluator),
+                RouteConfirmationRejectionReason.NO_LONGER_CONFORMING);
+    }
+
+    @Test
+    void 確定の時刻の1分後に有効になる規則では判定しない() {
+        RoutingCase routingCase = presented();
+        ConnectionRule strictLater = new ConnectionRule(
+                UUID.randomUUID(), SINGAPORE, Duration.ofHours(12), minutesAfter(COMMIT_AT, 1), null);
+
+        routingCase.confirm(2, "根拠", ROUTE_DESIGNER, List.of(SINGAPORE_8H, strictLater), COMMIT_AT, evaluator);
+
+        assertThat(routingCase.routeVersion().status()).isEqualTo(RouteVersionStatus.CONFIRMED);
+    }
+
+    @Test
+    void 規則が確定の時刻に終わり厳しい規則に置き換わっていれば判定し直して不適合() {
+        RoutingCase routingCase = presented();
+        ConnectionRule endsAtCommit = new ConnectionRule(
+                UUID.randomUUID(), SINGAPORE, Duration.ofHours(8), at("2026-01-01T00:00:00Z"), COMMIT_AT);
+        ConnectionRule replacement =
+                new ConnectionRule(UUID.randomUUID(), SINGAPORE, Duration.ofHours(12), COMMIT_AT, null);
+
+        assertRejected(
+                () -> routingCase.confirm(
+                        2, "根拠", ROUTE_DESIGNER, List.of(endsAtCommit, replacement), COMMIT_AT, evaluator),
+                RouteConfirmationRejectionReason.NO_LONGER_CONFORMING);
+    }
+
+    @Test
+    void 判断根拠の文字数はコードポイントで数え前後の空白を除いてから数える() {
+        String surrogate = "\uD867\uDE3D"; // 𩸽（UTF-16 では 2 単位）
+        RoutingCase routingCase = presented();
+
+        routingCase.confirm(
+                1,
+                " " + surrogate.repeat(DecisionRationale.MAX_LENGTH) + "\n",
+                ROUTE_DESIGNER,
+                List.of(SINGAPORE_8H),
+                COMMIT_AT,
+                evaluator);
+
+        assertThat(routingCase.routeVersion().status()).isEqualTo(RouteVersionStatus.CONFIRMED);
+        RoutingCase another = presented();
+        String tooLong = surrogate.repeat(DecisionRationale.MAX_LENGTH + 1);
+        assertRejected(
+                () -> another.confirm(1, tooLong, ROUTE_DESIGNER, List.of(SINGAPORE_8H), COMMIT_AT, evaluator),
+                RouteConfirmationRejectionReason.RATIONALE_TOO_LONG);
+    }
+
+    @Test
+    void 判断根拠の拒否の理由は値オブジェクトが決める() {
+        assertThat(DecisionRationale.rejectionOf(null)).contains(RouteConfirmationRejectionReason.RATIONALE_MISSING);
+        assertThat(DecisionRationale.rejectionOf(" \t")).contains(RouteConfirmationRejectionReason.RATIONALE_MISSING);
+        assertThat(DecisionRationale.rejectionOf("あ".repeat(DecisionRationale.MAX_LENGTH + 1)))
+                .contains(RouteConfirmationRejectionReason.RATIONALE_TOO_LONG);
+        assertThat(DecisionRationale.rejectionOf(" 根拠 ")).isEmpty();
+        assertThat(DecisionRationale.of(" 根拠 ")).isEqualTo(new DecisionRationale("根拠"));
+    }
+
+    @Test
+    void 最初の区間が出発し二つ目の区間がまだなら出発済み() {
+        RoutingCase routingCase = presented();
+
+        assertRejected(
+                () -> routingCase.confirm(
+                        2, "根拠", ROUTE_DESIGNER, List.of(SINGAPORE_8H), minutesAfter(FIRST_DEPARTURE, 1), evaluator),
+                RouteConfirmationRejectionReason.ALREADY_DEPARTED);
+    }
+
+    @Test
+    void 確かめる順は経路設計者と状態と候補と根拠の順() {
+        RoutingCase routingCase = presented();
+        RouteApprover sales = new RouteApprover(UUID.randomUUID(), false);
+
+        assertRejected(
+                () -> routingCase.confirm(3, "", ROUTE_DESIGNER, List.of(SINGAPORE_8H), COMMIT_AT, evaluator),
+                RouteConfirmationRejectionReason.CANDIDATE_EXCLUDED);
+        routingCase.confirm(1, "根拠", ROUTE_DESIGNER, List.of(SINGAPORE_8H), COMMIT_AT, evaluator);
+        assertRejected(
+                () -> routingCase.confirm(1, "根拠", sales, List.of(SINGAPORE_8H), COMMIT_AT, evaluator),
+                RouteConfirmationRejectionReason.NOT_ROUTE_DESIGNER);
+    }
+
+    @Test
+    void 確定できるのは候補提示済みで確定した経路版がないとき() {
+        RoutingCase draft = RoutingCaseTest.open();
+        RoutingCase presented = presented();
+        RoutingCase confirmed = presented();
+        confirmed.confirm(1, "根拠", ROUTE_DESIGNER, List.of(SINGAPORE_8H), COMMIT_AT, evaluator);
+
+        assertThat(draft.confirmable()).isFalse();
+        assertThat(presented.confirmable()).isTrue();
+        assertThat(confirmed.confirmable()).isFalse();
     }
 
     /** 候補 3 件（適合 2、除外 1）を算出した案件。 */
