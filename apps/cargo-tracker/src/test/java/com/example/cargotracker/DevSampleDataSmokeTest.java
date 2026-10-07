@@ -1,0 +1,144 @@
+package com.example.cargotracker;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+import com.example.cargotracker.quotation.domain.model.aggregates.QuotationRepository;
+import com.example.cargotracker.quotation.domain.model.aggregates.TransportRequestNumberIssuer;
+import com.example.cargotracker.quotation.domain.model.aggregates.TransportRequestRepository;
+import com.example.cargotracker.quotation.domain.model.valueobjects.QuotedRequestSummary;
+import com.example.cargotracker.quotation.domain.model.valueobjects.RoutingRequestedSummary;
+import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestNumber;
+import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestSummary;
+import com.example.cargotracker.routing.domain.model.aggregates.ConnectionRuleRepository;
+import com.example.cargotracker.routing.domain.model.aggregates.RoutingCase;
+import com.example.cargotracker.routing.domain.model.aggregates.RoutingCaseNumberIssuer;
+import com.example.cargotracker.routing.domain.model.aggregates.RoutingCaseRepository;
+import com.example.cargotracker.routing.domain.model.aggregates.VoyageRepository;
+import com.example.cargotracker.routing.domain.model.entities.RouteVersion;
+import com.example.cargotracker.routing.domain.model.rules.ConstraintEvaluator;
+import com.example.cargotracker.routing.domain.model.rules.RouteCandidateFinder;
+import com.example.cargotracker.routing.domain.model.valueobjects.RouteVersionStatus;
+import com.example.cargotracker.routing.domain.model.valueobjects.RoutingCaseNumber;
+import com.example.cargotracker.routing.domain.model.valueobjects.RoutingCaseSummary;
+import com.example.cargotracker.shared.domain.CompanyId;
+import com.example.cargotracker.shared.domain.UtcInstant;
+import java.time.Instant;
+import java.util.UUID;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.transaction.annotation.Transactional;
+
+/**
+ * デモ環境のサンプルの業務データ（Bolt 18。`db/dev-data`）。dev プロファイルで起動した初期状態で、荷主・営業・経路設計者の
+ * 照会にサンプルが出ること、算出済みの候補が判定の時刻で算出し直した結果と一致すること、日時が起動した日からの相対で
+ * 先にあること、新しく振る番号がサンプルとぶつからないことを確かめる。
+ */
+@SpringBootTest
+@ActiveProfiles("dev")
+@Transactional
+class DevSampleDataSmokeTest {
+
+    static final CompanyId SHIPPER_A = new CompanyId(UUID.fromString("00000000-0000-0000-0000-000000000001"));
+    static final CompanyId SHIPPER_B = new CompanyId(UUID.fromString("00000000-0000-0000-0000-000000000002"));
+
+    @Autowired
+    TransportRequestRepository transportRequests;
+
+    @Autowired
+    QuotationRepository quotations;
+
+    @Autowired
+    RoutingCaseRepository routingCases;
+
+    @Autowired
+    VoyageRepository voyages;
+
+    @Autowired
+    ConnectionRuleRepository rules;
+
+    @Autowired
+    TransportRequestNumberIssuer transportRequestNumbers;
+
+    @Autowired
+    RoutingCaseNumberIssuer routingCaseNumbers;
+
+    @Test
+    void 荷主は自社のサンプルの見積依頼だけを見る() {
+        assertThat(transportRequests.findSummariesByShipper(SHIPPER_A))
+                .extracting(summary -> summary.number().text())
+                .contains("TR-2026-0902", "TR-2026-0903", "TR-2026-0905")
+                .doesNotContain("TR-2026-0901", "TR-2026-0904");
+        assertThat(transportRequests.findSummariesByShipper(SHIPPER_B))
+                .extracting(summary -> summary.number().text())
+                .contains("TR-2026-0901", "TR-2026-0904")
+                .doesNotContain("TR-2026-0902", "TR-2026-0903", "TR-2026-0905");
+    }
+
+    @Test
+    void 営業の受付一覧にサンプルが状態ごとに出る() {
+        assertThat(transportRequests.findUnderReviewSummaries())
+                .extracting(TransportRequestSummary::number)
+                .contains(number(901));
+        assertThat(transportRequests.findQuotingSummaries())
+                .extracting(TransportRequestSummary::number)
+                .contains(number(902));
+        assertThat(quotations.findLatestOfQuotedRequests())
+                .filteredOn(summary -> summary.number().equals(number(903)))
+                .singleElement()
+                .satisfies(summary -> assertThat(summary.expiresAt().instant()).isAfter(Instant.now()))
+                .extracting(QuotedRequestSummary::quotationNo)
+                .isEqualTo(1);
+        assertThat(quotations.findRoutingRequestedSummaries())
+                .extracting(RoutingRequestedSummary::number)
+                .contains(number(904), number(905));
+    }
+
+    @Test
+    void 経路設計者の案件一覧に算出待ちと算出済みの案件が出る() {
+        assertThat(routingCases.findSummaries())
+                .filteredOn(summary -> summary.number().sequence() >= 901)
+                .extracting(
+                        RoutingCaseSummary::number,
+                        RoutingCaseSummary::transportRequestNumber,
+                        RoutingCaseSummary::status)
+                .contains(
+                        org.assertj.core.groups.Tuple.tuple(
+                                new RoutingCaseNumber(2026, 901), "TR-2026-0904", RouteVersionStatus.DRAFT),
+                        org.assertj.core.groups.Tuple.tuple(
+                                new RoutingCaseNumber(2026, 902),
+                                "TR-2026-0905",
+                                RouteVersionStatus.CANDIDATES_PRESENTED));
+    }
+
+    @Test
+    void 算出済みの候補は判定の時刻で算出し直した結果と一致し希望到着期限は先にある() {
+        RoutingCase seeded =
+                routingCases.findByNumber(new RoutingCaseNumber(2026, 902)).orElseThrow();
+        UtcInstant evaluatedAt = seeded.routeVersion().evaluatedAt().orElseThrow();
+        RoutingCase recalculated =
+                routingCases.findByNumber(new RoutingCaseNumber(2026, 902)).orElseThrow();
+
+        recalculated.calculateCandidates(
+                voyages.findAll(), rules.findAll(), evaluatedAt, new RouteCandidateFinder(), new ConstraintEvaluator());
+
+        RouteVersion expected = recalculated.routeVersion();
+        assertThat(seeded.routeVersion()).isEqualTo(expected);
+        assertThat(expected.candidates()).hasSize(5);
+        assertThat(expected.candidates())
+                .filteredOn(candidate -> candidate.evaluation().conforming())
+                .hasSize(2);
+        assertThat(seeded.specification().arrivalDeadline().instant()).isAfter(Instant.now());
+    }
+
+    @Test
+    void 新しく振る番号はサンプルの番号の後から() {
+        assertThat(transportRequestNumbers.next(2026).sequence()).isGreaterThan(905);
+        assertThat(routingCaseNumbers.next(2026).sequence()).isGreaterThan(902);
+    }
+
+    private static TransportRequestNumber number(int sequence) {
+        return new TransportRequestNumber(2026, sequence);
+    }
+}
