@@ -3,8 +3,10 @@ type: Plan
 title: "Bolt 16 終了報告 - デモ環境への CI からの配備"
 description: "16 回目の Bolt の終了報告。develop の cargo-tracker CI の check・ui が緑になった後に deploy-demo ジョブで Heroku のデモ環境へ自動で配備する仕組み、Environment demo と API キー、3 視点の運用レビューと対応、途中で起きた AI の誤り（キーの登録のコマンドの崩れ、Accept のヘッダー、キーの更新のタスクの再帰）と対処、仮説 H1〜H3 の結論、ふりかえりをまとめる。"
 tags: [development,bolt-report,operation]
-status: draft
+status: stable
 generated: { by: anthropic/claude-opus-5-5, at: 2026-10-07T02:55:00Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-10-07T02:53:59Z }
 ---
 
 # Bolt 16 終了報告 - デモ環境への CI からの配備
@@ -150,6 +152,7 @@ generated: { by: anthropic/claude-opus-5-5, at: 2026-10-07T02:55:00Z }
 | 日付 | 内容 | 作成 | 承認 |
 | :--- | :--- | :--- | :--- |
 | 2026-10-07 | 初版（ステップ 1〜5 の結果、レビューと対応、見つけて直した問題、仮説の結論、KPT） | anthropic/claude-opus-5-5 | — |
+| 2026-10-07 | 承認の議題 1〜5（ADR-013 の改訂と ADR-008 の注記、計画からの変更、使われなかったキーの失効、残ったキーと #40、Try T-47〜T-49）を承認し、Bolt 16 を終えた（人の変更依頼 0） | anthropic/claude-opus-5-5 | human:kakimomokuri |
 
 ## 関連ドキュメント
 

@@ -406,7 +406,7 @@ AI-DLC では **Bolt がイテレーション** である（[AI-DLC 導入ガイ
 **主なタスク**:
 
 - [x] Bolt 15: dev プロファイルによる Heroku のデモ環境（技術タスク、SP 0。2026-10-06 に human:kakimomokuri が W3 の前に置くと決めた）。[Bolt 15 計画](bolt_15_plan.md)（承認済み）、[Bolt 15 終了報告](bolt_15_report.md)（完了、承認済み。ADR-013 を採用。#38 をクローズした。デモ環境 <https://cargo-tracker-mono-demo-883bf0b92807.herokuapp.com/>）、[#38](https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/38)、[ADR-013](../../adr/cargo-tracker/013-heroku-demo-environment.md)（採用）
-- [ ] Bolt 16: デモ環境への CI からの配備（技術タスク、SP 0。2026-10-07 に human:kakimomokuri が W3 の前に置くと決めた）。[Bolt 16 計画](bolt_16_plan.md)（承認済み）、[Bolt 16 終了報告](bolt_16_report.md)（完了、承認待ち）、[#39](https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/39)
+- [x] Bolt 16: デモ環境への CI からの配備（技術タスク、SP 0。2026-10-07 に human:kakimomokuri が W3 の前に置くと決めた）。[Bolt 16 計画](bolt_16_plan.md)（承認済み）、[Bolt 16 終了報告](bolt_16_report.md)（完了、承認済み。#39 をクローズした。キーの更新は #40）、[#39](https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/39)
 - [ ] US-06（AC1〜3、仮の航海データ）、US-07（AC1、AC2）
 - [ ] US-24（AC4 承認、AC5 失効時の拒否）
 - [ ] US-21（AC1 KPI-01 の時刻）

@@ -7,6 +7,7 @@ status: stable
 generated: { by: anthropic/claude-opus-5-5, at: 2026-10-06T09:00:00Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-06T11:19:09Z }
+  - { by: human:kakimomokuri, at: 2026-10-07T02:53:59Z }
 ---
 
 # Heroku デモ環境セットアップ手順書 - cargo-tracker

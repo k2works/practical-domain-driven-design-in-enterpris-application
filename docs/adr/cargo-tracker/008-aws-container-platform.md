@@ -7,6 +7,7 @@ status: stable
 generated: { by: anthropic/claude-opus-5-5, at: 2026-10-01T07:14:57Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T07:29:05Z }
+  - { by: human:kakimomokuri, at: 2026-10-07T02:53:59Z }
 ---
 
 # ADR-008: AWS の ECS Fargate・RDS・S3 で実行する

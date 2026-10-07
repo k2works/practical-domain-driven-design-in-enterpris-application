@@ -8,6 +8,7 @@ generated: { by: anthropic/claude-opus-5-5, at: 2026-10-07T00:54:00Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-07T01:02:10Z }
   - { by: human:kakimomokuri, at: 2026-10-07T01:55:53Z }
+  - { by: human:kakimomokuri, at: 2026-10-07T02:53:59Z }
 ---
 
 # Bolt 16 計画 - デモ環境への CI からの配備
@@ -228,7 +229,7 @@ deploy --> dyno : スモーク（/login が 200）
 
 ### Definition of Done
 
-- [ ] ステップ 1〜5 が完了し、計画・外部連携とセキュリティ（ステップ 3）・終了報告の承認ゲートを人が通した
+- [x] ステップ 1〜5 が完了し、計画・外部連携とセキュリティ（ステップ 3）・終了報告の承認ゲートを人が通した
 - [x] actionlint が通り、develop への push で check・ui の後に `deploy-demo` が緑になった
 - [x] 配備の後の `DEMO_REVISION` が push したコミットで、`/login` が 200、R14 がない
 - [x] 手動の実行で配備でき、develop の外からは配備のジョブが動かない
@@ -236,7 +237,7 @@ deploy --> dyno : スモーク（/login が 200）
 - [x] ADR-013 と手順書に、CI からの配備、キーの作り方・更新・失効、手元の配備との関係が書かれている
 - [x] 運用レビューを行い、指摘への対応を終了報告に書いた
 - [x] `bolt_16_report.md` に仮説 H1〜H3 の結論、配備のジョブの時間、所要時間を書いた
-- [ ] 技術 Issue をクローズし、リリース計画を更新した
+- [x] 技術 Issue（#39）をクローズし、リリース計画を更新した
 
 ### デモ項目
 
@@ -254,6 +255,7 @@ deploy --> dyno : スモーク（/login が 200）
 | 2026-10-07 | 計画を承認。確認ポイント 1〜12 も決まった | anthropic/claude-opus-5-5 | human:kakimomokuri |
 | 2026-10-07 | ステップ 5 の運用レビューの結果と人の決定 D-57〜D-59、レビューの対応の範囲を書いた | anthropic/claude-opus-5-5 | — |
 | 2026-10-07 | レビューの対応の範囲（D-57〜D-59）を承認 | anthropic/claude-opus-5-5 | human:kakimomokuri |
+| 2026-10-07 | ステップ 3〜5 の結果を記録し、終了報告の承認で Bolt を終えた | anthropic/claude-opus-5-5 | human:kakimomokuri |
 
 ## 関連ドキュメント
 
