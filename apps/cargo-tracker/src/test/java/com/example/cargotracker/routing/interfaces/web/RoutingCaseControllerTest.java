@@ -93,6 +93,23 @@ class RoutingCaseControllerTest {
     }
 
     @Test
+    void 候補を算出した案件の状態は確定待ちと示す() throws Exception {
+        when(queryService.listCases())
+                .thenReturn(List.of(new RoutingCaseSummary(
+                        NUMBER,
+                        "TR-2026-0001",
+                        1,
+                        TOKYO,
+                        ROTTERDAM,
+                        DEADLINE,
+                        at("2026-10-06T02:00:00Z"),
+                        RouteVersionStatus.CANDIDATES_PRESENTED)));
+
+        mockMvc.perform(get("/staff/routing-cases"))
+                .andExpect(content().string(Matchers.containsString("候補算出済み（確定待ち）")));
+    }
+
+    @Test
     void 案件がなければその旨を示す() throws Exception {
         when(queryService.listCases()).thenReturn(List.of());
 
@@ -127,9 +144,14 @@ class RoutingCaseControllerTest {
                 .andExpect(content().string(Matchers.containsString("V-201")))
                 .andExpect(content().string(Matchers.containsString("余裕 4 時間")))
                 .andExpect(content().string(Matchers.containsString("不足 4 時間")))
-                .andExpect(content().string(Matchers.containsString("接続不足（必要 8 時間、SGSIN の規則）")))
-                .andExpect(content().string(Matchers.containsString("接続できない（HKHKG の接続時間規則がない）")))
+                // Bolt 17 レビュー D-61: 実際の接続時間と、規則がないことを判定できないと示す。経由港と期限までの余裕を示す
+                .andExpect(content().string(Matchers.containsString("接続不足（SGSIN で接続 4 時間、必要 8 時間、SGSIN の規則）")))
+                .andExpect(content().string(Matchers.containsString("接続を判定できない（HKHKG の接続時間規則が未登録。接続 1 日）")))
                 .andExpect(content().string(Matchers.containsString("期限超過 1 日 12 時間")))
+                .andExpect(content().string(Matchers.containsString("期限まで 2 日")))
+                .andExpect(content().string(Matchers.containsString("SGSIN 積替え")))
+                .andExpect(content().string(Matchers.containsString("直行")))
+                .andExpect(content().string(Matchers.containsString("最も古い情報の取得時刻")))
                 .andExpect(content().string(Matchers.containsString("参照情報版 V-LATE@1")))
                 .andExpect(content().string(Matchers.containsString("2026-10-01 15:10 Asia/Tokyo")))
                 .andExpect(content().string(Matchers.containsString("候補を再算出")));
@@ -148,7 +170,8 @@ class RoutingCaseControllerTest {
 
         mockMvc.perform(get(SHOW))
                 .andExpect(status().isOk())
-                .andExpect(content().string(Matchers.containsString("条件に合う航海が見つかりませんでした")));
+                .andExpect(content().string(Matchers.containsString("条件に合う航海が見つかりませんでした")))
+                .andExpect(content().string(Matchers.containsString("データ責任者")));
     }
 
     @Test
@@ -169,7 +192,8 @@ class RoutingCaseControllerTest {
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl(SHOW))
                 .andExpect(flash().attribute(
-                                "result", "候補を 20 件算出しました（適合 18 件、除外 2 件）。ほかに 2 件の候補があります（到着予定の遅いものを示していません）"));
+                                "result",
+                                "候補を 20 件算出しました（適合 18 件、除外 2 件）。ほかに 2 件の候補があります（適合を先に、到着予定の早い順に 20 件まで示しています）"));
     }
 
     @Test
@@ -179,7 +203,7 @@ class RoutingCaseControllerTest {
 
         mockMvc.perform(post(SHOW + "/candidates"))
                 .andExpect(redirectedUrl(SHOW))
-                .andExpect(flash().attribute("problem", "ほかの経路設計者が先に候補を算出しました。最新の候補を確かめてください"));
+                .andExpect(flash().attribute("problem", "ほかの経路設計者が先に候補を算出しました。最新の候補を確かめてください。"));
     }
 
     @Test

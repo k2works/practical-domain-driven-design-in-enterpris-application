@@ -205,7 +205,7 @@ class MyBatisRoutingRepositoriesIntegrationTest {
     }
 
     @Test
-    void 経路版の状態と除外理由の区分はデータモデルの値だけを受け付ける() {
+    void 経路版の状態はデータモデルの値だけを受け付ける() {
         RoutingCase routingCase = open(UUID.randomUUID(), "2083-10-06T02:00:00Z");
         repository.save(routingCase);
 

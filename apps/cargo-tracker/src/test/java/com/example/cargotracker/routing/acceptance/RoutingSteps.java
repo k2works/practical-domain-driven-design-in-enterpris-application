@@ -132,9 +132,16 @@ public class RoutingSteps {
     public void 除外された候補の理由(DataTable table) {
         Map<String, RouteCandidate> byVoyages = currentCase().routeVersion().candidates().stream()
                 .collect(Collectors.toMap(RoutingSteps::voyagesOf, candidate -> candidate));
+        // 表にない除外の候補がなく、表の候補の理由はそれぞれ 1 つだけ（Bolt 17 レビュー D-63）
+        assertThat(byVoyages.values().stream()
+                        .filter(candidate -> !candidate.evaluation().conforming())
+                        .map(RoutingSteps::voyagesOf))
+                .containsExactlyInAnyOrderElementsOf(
+                        table.asMaps().stream().map(row -> row.get("航海")).toList());
         for (Map<String, String> row : table.asMaps()) {
             RouteCandidate candidate = byVoyages.get(row.get("航海"));
             assertThat(candidate).as(row.get("航海")).isNotNull();
+            assertThat(candidate.evaluation().reasons()).hasSize(1);
             ExclusionReason reason = candidate.evaluation().reasons().getFirst();
             assertThat(reason.code()).isEqualTo(REASONS.get(row.get("理由")));
             assertThat(reason.violatedAt()).isEqualTo(at(row.get("不適合の時刻")));

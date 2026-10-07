@@ -119,6 +119,30 @@ class RouteCandidateFinderTest {
     }
 
     @Test
+    void 目的地を通り過ぎた先の港で積み替えて目的地へ戻る列は列挙しない() {
+        // Bolt 17 レビュー D-60: 目的地に寄った後の港へ運んでから目的地へ戻す候補は、直行に劣り経路設計者を惑わせる
+        Voyage passing = voyage(
+                "V-701",
+                call(TOKYO, null, "2026-10-08T00:00:00Z"),
+                call(ROTTERDAM, "2026-10-28T00:00:00Z", "2026-10-28T12:00:00Z"),
+                call(HONG_KONG, "2026-11-10T00:00:00Z", null));
+        Voyage back = voyage(
+                "V-702", call(HONG_KONG, null, "2026-11-11T00:00:00Z"), call(ROTTERDAM, "2026-11-30T00:00:00Z", null));
+
+        assertThat(finder.find(SPEC, List.of(passing, back), JUDGED_AT))
+                .extracting(legs -> legs.stream().map(Leg::voyageNumber).toList())
+                .containsExactly(List.of("V-701"));
+    }
+
+    @Test
+    void 判定時刻の1分前に出発する区間は列挙しない() {
+        Voyage before = voyage(
+                "V-403", call(TOKYO, null, "2026-10-07T02:59:00Z"), call(ROTTERDAM, "2026-10-30T00:00:00Z", null));
+
+        assertThat(finder.find(SPEC, List.of(before), JUDGED_AT)).isEmpty();
+    }
+
+    @Test
     void 候補は到着予定の早い順に並び同時刻は航海番号の順() {
         Voyage late = voyage(
                 "V-102", call(TOKYO, null, "2026-10-08T00:00:00Z"), call(ROTTERDAM, "2026-10-31T00:00:00Z", null));

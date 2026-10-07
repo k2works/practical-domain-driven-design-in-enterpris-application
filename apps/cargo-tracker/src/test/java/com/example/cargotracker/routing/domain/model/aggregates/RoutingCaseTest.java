@@ -76,10 +76,13 @@ class RoutingCaseTest {
     void 候補は20件までで適合を残し見つけた数を返す() {
         RoutingCase routingCase = open();
         List<Voyage> voyages = new ArrayList<>();
-        for (int i = 0; i < 22; i++) {
-            // 1 本だけ期限超過にして、先に到着する除外より適合が残ることを確かめる
-            String arrival = i == 0 ? "2026-11-03T00:00:00Z" : "2026-10-%02dT00:00:00Z".formatted(10 + i);
-            voyages.add(direct("V-%03d".formatted(i), arrival));
+        // 除外の 2 本は適合より先に到着する（区間 2 で、シンガポールの接続が足りない）。それでも適合が残ることを確かめる
+        // （Bolt 17 レビュー D-63。到着順だけでは除外が残る並び）
+        voyages.add(feeder("V-FEED", "2026-10-09T00:00:00Z"));
+        voyages.add(fromSingapore("V-SHORT-1", "2026-10-09T01:00:00Z", "2026-10-09T12:00:00Z"));
+        voyages.add(fromSingapore("V-SHORT-2", "2026-10-09T02:00:00Z", "2026-10-09T13:00:00Z"));
+        for (int i = 0; i < 20; i++) {
+            voyages.add(direct("V-%03d".formatted(i), "2026-10-%02dT00:00:00Z".formatted(11 + i)));
         }
 
         CandidateCalculation calculation =
@@ -92,6 +95,44 @@ class RoutingCaseTest {
                 .hasSize(20)
                 .allSatisfy(candidate ->
                         assertThat(candidate.evaluation().conforming()).isTrue());
+    }
+
+    @org.junit.jupiter.params.ParameterizedTest(name = "見つけた候補が {0} 件なら {1} 件を残し {2} 件を示さない")
+    @org.junit.jupiter.params.provider.CsvSource({"19, 19, 0", "20, 20, 0", "21, 20, 1"})
+    void 候補の上限は20件(int found, int kept, int omitted) {
+        RoutingCase routingCase = open();
+        List<Voyage> voyages = new ArrayList<>();
+        for (int i = 0; i < found; i++) {
+            voyages.add(direct("V-%03d".formatted(i), "2026-10-%02dT00:00:00Z".formatted(10 + i)));
+        }
+
+        CandidateCalculation calculation =
+                routingCase.calculateCandidates(voyages, RULES, JUDGED_AT, finder, evaluator);
+
+        assertThat(calculation.kept()).isEqualTo(kept);
+        assertThat(calculation.omitted()).isEqualTo(omitted);
+        assertThat(routingCase.routeVersion().candidates()).hasSize(kept);
+    }
+
+    @Test
+    void 候補を算出できない状態の経路版では算出できない() {
+        RoutingCase confirmed = RoutingCase.reconstitute(
+                new RoutingCaseId(UUID.randomUUID()),
+                new RoutingCaseNumber(2026, 1),
+                UUID.randomUUID(),
+                "TR-2026-0001",
+                1,
+                UUID.randomUUID(),
+                List.of(),
+                new RouteSpecification(TOKYO, ROTTERDAM, DEADLINE, "GENERAL"),
+                at("2026-10-06T02:00:00Z"),
+                new com.example.cargotracker.routing.domain.model.entities.RouteVersion(
+                        1, RouteVersionStatus.CONFIRMED, List.of(), JUDGED_AT),
+                3);
+
+        org.assertj.core.api.Assertions.assertThatThrownBy(
+                        () -> confirmed.calculateCandidates(List.of(), RULES, JUDGED_AT, finder, evaluator))
+                .isInstanceOf(IllegalStateException.class);
     }
 
     @Test
@@ -142,6 +183,24 @@ class RoutingCaseTest {
                 List.of(
                         new PortCall(TOKYO, null, at("2026-10-08T00:00:00Z")),
                         new PortCall(ROTTERDAM, at(arrival), null)),
+                number + "@1",
+                at("2026-10-01T06:10:00Z"));
+    }
+
+    static Voyage feeder(String number, String arrivalAtSingapore) {
+        return new Voyage(
+                number,
+                List.of(
+                        new PortCall(TOKYO, null, at("2026-10-08T00:00:00Z")),
+                        new PortCall(SINGAPORE, at(arrivalAtSingapore), null)),
+                number + "@1",
+                at("2026-10-01T06:10:00Z"));
+    }
+
+    static Voyage fromSingapore(String number, String departure, String arrival) {
+        return new Voyage(
+                number,
+                List.of(new PortCall(SINGAPORE, null, at(departure)), new PortCall(ROTTERDAM, at(arrival), null)),
                 number + "@1",
                 at("2026-10-01T06:10:00Z"));
     }
