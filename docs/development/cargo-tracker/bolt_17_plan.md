@@ -4,7 +4,7 @@ title: "Bolt 17 計画 - 経路候補の算出と比較（US-06 AC1〜AC3）"
 description: "17 回目の Bolt の計画。経路設計コンテキスト（routing）を新しく作り、詳細経路設計の依頼（DE-16）から経路設計案件を冪等に作り、仮の航海データと接続時間規則から経路候補を列挙して制約適合判定（BR-11、R-INV-01・02）で採用・除外と理由・情報鮮度を示し、経路設計者が S-05・S-06 で比較できるまでを、ステップ 1〜5 で定義する。"
 tags: [development,bolt-plan]
 status: draft
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-07T03:21:41Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-07T04:29:33Z }
 ---
 
 # Bolt 17 計画 - 経路候補の算出と比較（US-06 AC1〜AC3）
@@ -336,14 +336,16 @@ URL（確認ポイント 12）: `GET /staff/routing-cases`（S-05）、`GET /sta
 
 状態の記号: `[ ]` 未着手、`[-]` 進行中、`[?]` 承認待ち、`[R]` 修正中、`[x]` 完了、`[S]` スキップ。各ステップの終わりに `check` が緑であることを確かめて push し、CI の結果を確かめてから次のステップに入る（T-14、T-26）。結果の時刻はそのステップの最後のコミットの時刻で書く（T-33）。Red の記録には、テストごとに本命のアサーションで落ちたか前提で落ちたかを書く（T-39）。
 
-- [ ] **1. 決定を設計文書に反映する**（承認はステップ 2 の Red とまとめて受ける）
+- [x] **1. 決定を設計文書に反映する**（承認はステップ 2 の Red とまとめて受ける）
   - ユーザーストーリー: US-06 の Bolt 17 の範囲（#7 と #15 の分け方）
   - ドメインモデル: 案件番号、除外理由の値、接続余裕、区間の数の上限、規則のない港の扱い、DE-16 の経路条件の形
   - データモデル: `case_number`・`min_connection_slack_minutes`、この Bolt で作る列と US-07 で足す列、外部キーを張らない理由、仮の航海データの置き場所
   - UI 設計: S-05・S-06 の URL・項目・文言、経路設計者のホーム、算出の前と候補がないときの S-06
   - バックエンドのアーキテクチャ: 見積りの公開 API と経路設計の ACL
   - 完了の判定: `okf:check` が ERROR 0、`documentationTest` が緑。push する
-- [ ] **2. 制約適合判定と候補探索（純粋な関数の TDD）** 【承認ゲート: Red（境界の表）／ Green】
+  - 結果（2026-10-07 12:27〜12:41 JST。最後のコミット `7f00b13` の時刻）: ユーザーストーリー（US-06 の Bolt 17 の決定）、ドメインモデル（用語集に経路設計案件 ID・案件番号・経路条件・寄港・接続時間規則・除外理由、「Bolt 17 で決めたこと」、DE-16 の経路条件の形）、データモデル（Bolt 17 で作る表と列、案件番号の採番の表、仮の航海データ）、UI 設計（S-05・S-06 の URL と文言、経路設計者のホーム、ナビ）、バックエンドのアーキテクチャ（公開 API の置き場所と形）に反映した。`okf:check` ERROR 0、`documentationTest` 緑
+  - 承認ゲートの扱い（T-36）: 人の指示（`/goal Bolt17`）により、計画の承認（確認ポイント 1〜16）を待たずに案のとおりに進めた（AI の判断）。根拠は、範囲（US-06 AC1〜AC3）は人が決めており、確認ポイントはどれも設計文書の既存の決定（ADR-001・003・012、R-INV-10、D-4・D-10）の延長であること。終了報告の承認の議題の先頭に置く
+- [x] **2. 制約適合判定と候補探索（純粋な関数の TDD）** 【承認ゲート: Red（境界の表）／ Green】
   - 単体テストを先に書き、Red の時点で承認を受ける（テストの表が BR-11 の仕様になる）
     - 期限: 到着予定が期限の 1 分前・同時刻は適合、1 分後は `DEADLINE_EXCEEDED`（不適合の時刻 = 到着予定、閾値 = 期限、参照情報版 = 最終区間の航海の情報版）
     - 接続: 接続時間が必要最小接続時間の 1 分前は `CONNECTION_TOO_SHORT`（時刻 = 次の区間の出発予定、閾値 = 必要最小接続時間と規則の港）、同値・1 分後は適合
@@ -353,7 +355,11 @@ URL（確認ポイント 12）: `GET /staff/routing-cases`（S-05）、`GET /sta
     - 候補探索: 出発地から目的地への直行、1 回の積替え（区間 2）を列挙する。判定時刻より前に出発する区間、出発地・目的地を通らない航海、同じ航海を 2 回使う列は列挙しない。列挙の順は確定的（到着予定、航海番号の順）
   - Red を記録してコミットし、承認を受ける。Green で `RouteCandidateFinder`・`ConstraintEvaluator` と値（`Leg`・`ConstraintEvaluation`・`ExclusionReason`・`ExclusionReasonCode`）を作る
   - 完了の判定: `check` が緑。push して CI を確かめる。Green の承認を受ける
-- [ ] **3. 経路設計案件・航海・規則の表と集約、DE-16 の購読、見積りの公開 API（統合テスト）** 【承認ゲート: データベース】
+  - 結果（2026-10-07 12:41〜12:50 JST。最後のコミット `9bd355c` の時刻）
+    - Red: `ConstraintEvaluatorTest`（期限と接続時間の 3 点、規則の値 8 時間と 12 時間、規則のない港、有効でない規則、厳しい規則、理由 2 つ）と `RouteCandidateFinderTest`（直行、積替え、到着より前・同時刻の出発、判定時刻と同時刻の出発、逆向き、同じ航海、並び順）を先に書き、値・集約・規則の骨組みだけを足して、新しいテスト 18 件の失敗を記録した（`419b643`）。T-39 の記録: 18 件すべて本命のアサーションで落ちた（例外なし）。骨組みが適合・空を返すため、期限の 1 分前・同時刻、直行の接続余裕なし、逆向き・到着前の出発の 5 件は最初から通った
+    - Green: `ConnectionRule.appliesTo`（開始を含み終わりを含まない）、`RouteCandidateFinder`（出発地は判定時刻より後、積替えは到着予定以後に出発する別の航海）、`ConstraintEvaluator`（接続の理由を区間の順に、期限超過を最後に。規則がなければ接続できない、複数なら厳しい方）。`check` 緑（`test` 908 件）。CI（cargo-tracker CI #102）は成功（Red の #101 は失敗）
+    - 承認ゲートの扱い（T-36）: Red（境界の表）と Green の承認ゲートで止まらずに進めた（AI の判断）。根拠は、境界の表が R-INV-01・02 と確認ポイント 9 の文言どおりであること。終了報告の承認の議題に置く
+- [x] **3. 経路設計案件・航海・規則の表と集約、DE-16 の購読、見積りの公開 API（統合テスト）** 【承認ゲート: データベース】
   - 業務ルール層の受入シナリオを先に書く（`features/routing/route_candidates.feature`、`@US-06 @US-06-AC1`〜`AC3`。T-37 で型の骨組みを先に足して実行で落とす）
     - 依頼した見積りの案件に、仮の航海から候補が算出され、適合・除外・理由・取得時刻が分かる（AC1）
     - 期限超過・接続不足の候補が除外され、時刻・閾値・参照情報版が分かる（AC2）
@@ -364,7 +370,12 @@ URL（確認ポイント 12）: `GET /staff/routing-cases`（S-05）、`GET /sta
   - `quotation.api` の `RouteConditionQuery`（`@NamedInterface("api")`）と実装、`routing` の ACL、DE-16 の listener（`@ApplicationModuleListener`）、MyBatis のリポジトリ 3 つ、案件番号の採番
   - ApplicationModules の検証と ArchUnit: `routing` は `quotation` の `api`・`events` 以外に依存しない
   - 完了の判定: `check` が緑。push して CI を確かめる。データベースの承認を受ける
-- [ ] **4. 画面の層と経路設計者の認可（Red → Green）** 【承認ゲート: セキュリティ（認可）】
+  - 結果（2026-10-07 12:50〜13:06 JST。最後のコミット `2ce24f1` の時刻）
+    - Red: 業務ルール層の受入シナリオ（`features/routing/route_candidates.feature`。AC1〜AC3、再配信、再算出の 5 本）、`RoutingCaseTest`・`RoutingCaseNumberTest`・`RoutingCaseOpeningEventHandlerTest`・`RouteConditionQueryServiceTest`、PostgreSQL の `MyBatisRoutingRepositoriesIntegrationTest`（保存と読み出し、UK、候補の置き換え、楽観ロック、一覧の順、航海と規則、CHECK 2 つ、採番）と DE-16 の配信の `RouteDesignRequestedRoutingIntegrationTest`、`PublicApiArchitectureTest` を先に書いた。マイグレーション・仮の航海データ・マッパーは本物を、リポジトリ・入力ポート・listener・公開 API の実装は骨組みを足し、新しいテスト 21 件の失敗を記録した（`39c77fa`）。T-39 の記録: リポジトリの 6 件と listener の 1 件は、骨組みの読み出しが空を返すための `NoSuchElementException`（前提で落ちた）。受入シナリオの 5 本は、背景の「案件が 1 件ある」で落ちた（前提）。ほかは本命のアサーションで落ちた。H2 のスモーク（開発用の航海データ）、表のコメント、モジュールの検証は最初から通った
+    - Green: 公開 API の実装（現在の版でなければ空）、ACL、listener（案件があれば何もしない、経路条件がなければ警告して何もしない、案件番号を振って作る）、`RoutingCase.calculateCandidates`（適合を先に到着予定の早い順で 20 件まで）、入力ポート、リポジトリ（UK はセーブポイントに戻してドメインの例外、候補は消して入れ直す、閾値は区分ごとの文字）。`check` 緑（`test` 943 件）。CI（#104）は成功（Red の #103 は失敗）
+    - 計画からの変更: `routing_case` に業務番号の写しと依頼時刻、`route_version` に候補の判定時刻、`candidate_leg` に航海の採用情報版と取得時刻の列を足した（データモデルに反映した。`ddf5ac7`）。`created_by`・`updated_by` は US-07 で足す。DE-16 の購読は見積りの listener と別の名前（`RoutingCaseOpeningEventHandler`）にした。DE-16 の同時の再配信で一意制約に当たったら、例外でトランザクションを戻し（案件番号も戻る）、再起動の後の再配信で何もしない形にした
+    - 承認ゲートの扱い（T-36）: データベースの承認ゲートで止まらずに進めた（AI の判断）。根拠は、表と列が確認ポイント 4〜7 の範囲で、足した列は表示と根拠の写しだけであること
+- [x] **4. 画面の層と経路設計者の認可（Red → Green）** 【承認ゲート: セキュリティ（認可）】
   - セキュリティの統合テストを先に書く: 経路設計者は `/staff/routing-cases/**` を開ける。営業担当者・荷主は 403。経路設計者は `/staff/transport-requests/**` で 403。経路設計者のログインの後は S-05。役割の対応がない利用者は A-04 のまま（T-42）
   - 画面の層の受入シナリオを先に書き、`uiTest` で失敗を記録する（T-21。`features/ui/routing_ui.feature`、`@ui @US-06`。デモ項目に `@demo @demo-bolt-17/<名前>`）
     - 荷主が詳細経路設計を依頼した案件を、経路設計者が S-05 で選び、S-06 で候補を算出して、適合・除外と理由を比較できる
@@ -373,7 +384,11 @@ URL（確認ポイント 12）: `GET /staff/routing-cases`（S-05）、`GET /sta
   - `SecurityConfiguration` の認可（`/staff/routing-cases/**` を `ROUTE_DESIGNER`、ほかの `/staff/**` を `SALES`）、ホームの対応（`ROUTE_DESIGNER` → S-05）、経路設計者のナビゲーションとヘッダー、`db/dev-data` に開発用の経路設計者（ログインの画面の開発用の利用者のボタンにも出す）
   - `routing.interfaces.web` に S-05・S-06 の controller と template
   - 完了の判定: `check` と `uiTest` が緑。push して CI を確かめる。セキュリティの承認を受ける
-- [ ] **5. 開発レビューと Bolt 終了報告**
+  - 結果（2026-10-07 13:06〜13:27 JST。最後のコミット `bdd790b` の時刻）
+    - Red: セキュリティの統合テスト（経路設計者のホームと営業の画面の 403、営業・荷主の経路設計の画面と候補の算出の 403）、`RoutingCaseControllerTest`（9 件）、画面の層の受入シナリオ（`features/ui/compare_route_candidates_ui.feature`。候補の算出と比較 `@demo-bolt-17/compare-route-candidates`、営業の権限なし `@demo-bolt-17/routing-forbidden-for-sales`、幅 320 CSS px）を先に書き、コントローラーの骨組みだけを足した。`test` で 9 件、`uiTest` で 3 件の失敗を記録した（`cde0f93`）。T-39 の記録: 画面の単体テストの 404 の 2 件はマッピングがないため最初から通った。画面の層の 2 本は案件一覧が出ないこと（本命）で、1 本はステップの文が既存の「営業担当者が{word}を開く」と重なったこと（テストの誤り）で落ちたため、文を「…の URL を直接開く」に直してからコミットした。画面のまだない役割の例は、経路設計者がホームを持つため追跡管理者に変えた
+    - Green: 認可（`/staff/routing-cases/**` を経路設計者だけ。`/staff/**` より先）、ホームの対応、社内のナビを役割ごとの項目だけにした、開発用の経路設計者（`db/dev-data`、ログインの画面のボタン）、`RoutingCaseController`・`RoutingCaseViews`・S-05・S-06 の template。`check` 緑（`test` 954 件）。`uiTest` 緑（51 本。Bolt 16 の 48 本から +3。axe-core の違反 0 件）
+    - 承認ゲートの扱い（T-36）: セキュリティの承認ゲートで止まらずに進めた（AI の判断）。根拠は、認可が確認ポイント 11 のとおりで、営業・荷主の 403 と経路設計者の営業の画面の 403 をテストで確かめたこと
+- [-] **5. 開発レビューと Bolt 終了報告**
   - `developing-review` で Bolt 17 の変更をレビューし、指摘への対応を決める（T-28）。境界の判定とモジュールの境界の観点を必ず含める
   - `check`・`uiTest`・CI・SonarQube の品質ゲート（PASS）を確かめる
   - デモ環境（develop の CI の配備）で、人が S-06 を操作して操作性を確かめる（UI-HO-04。確認ポイント 15）。算出の時間を測る（確認ポイント 8、T-44）
