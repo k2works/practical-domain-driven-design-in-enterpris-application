@@ -7,6 +7,7 @@ status: stable
 generated: { by: anthropic/claude-opus-5-5, at: 2026-10-07T00:54:00Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-07T01:02:10Z }
+  - { by: human:kakimomokuri, at: 2026-10-07T01:55:53Z }
 ---
 
 # Bolt 16 計画 - デモ環境への CI からの配備
@@ -151,6 +152,14 @@ deploy --> dyno : スモーク（/login が 200）
     - 手順書の構成図に CI の経路（`deploy-demo`、Environment `demo`、Platform API、スモーク）を足し、流れの図を手元の配備の図とした。配備の所要時間、同じコミットの再配備、キーの登録のコマンドの折り返しの注意、`Password required` のつまずきを足した。README を CI からの配備に直した
 - [ ] **5. 運用レビューと Bolt 終了報告**
   - `operating-review` でワークフロー・ADR-013・手順書をレビューし、指摘への対応を終了報告に書く
+  - レビューの結果（10:55〜11:05 JST）: [Bolt 16 運用成果物レビュー](../../review/cargo-tracker/bolt_16_review_20261007.md)。R-01〜R-23。人の決定 D-57（いまのキーのまま期限を 90 日、更新は Gulp のタスクと期日付きの Issue）、D-58（develop の直接 push は変えず、キーの境界を ADR-013 に書く）、D-59（直す範囲）
+  - レビューの対応（D-59。「この Bolt で直す」）:
+    - ワークフロー: ワークフロー全体の `concurrency` を check・ui のジョブ単位に移し、`deploy-demo` を取り消されないようにする（R-02）。release の前に、`origin/develop` で CI の対象のパスを最後に変えたコミットが `github.sha` でなければ配備を飛ばす（R-06）。スモークは `DEMO_REVISION` が `github.sha`・release が `succeeded`・その版の web の dyno が up・`/login` が 200 を、API の一時の失敗を受け流して待つ（R-07・R-08）。来なければ直前の release に Platform API で戻してジョブを失敗にする（R-01）。キャッシュに `scope=demo`（R-14）、名前と URL を env に寄せる（R-15）、ヘッダーを標準入力から渡す（R-16）
+    - Gulp のタスク `deploy:demo:ci-key`: キーを作り（期限 90 日、説明に年月）、空を拒み、secret に登録し、更新日時を読み返す。古いキーの失効は、新しいキーで配備が通った後に別のタスク `deploy:demo:ci-key:revoke-old` で行う（R-05、D-57）
+    - 期日付きの Issue（キーの更新。期限の 2 週間前）を立てる。いまのキー（期限 1 年）は、タスクで 90 日のキーに作り直す（D-57）
+    - ADR-008 に注記（R-09）。ADR-013 にキーの境界とワークフローのレビュー（D-58）、期限 90 日、スモークと自動の戻し、W10 への引き継ぎ（R-11）。インフラストラクチャアーキテクチャに W10 の構造の引き継ぎ
+    - 手順書: キーの登録・更新・失効をタスクに置き換える、スモークの失敗の振る舞い、再実行の扱い、キャッシュの前提、漏えいの疑いのときの履歴の確かめ、関連ドキュメント（R-01・R-05・R-06・R-17・R-19・R-20）。README（R-18）。運用の索引のコマンドの表（R-19）
+    - W10 に回すもの（R-11・R-21・R-23、release を 1 回にすること、専用のアカウント）は #28 にコメントする
   - `bolt_16_report.md` に仮説 H1〜H3 の結論、各ステップの時刻、所要時間を書く
   - リリース計画の W3 に Bolt 16 を足す。技術 Issue をクローズする
 
@@ -235,6 +244,8 @@ deploy --> dyno : スモーク（/login が 200）
 | :--- | :--- | :--- | :--- |
 | 2026-10-07 | 初版（人の依頼で、デモ環境を CI から配備する。きっかけ・認証・置き場は人の決定） | anthropic/claude-opus-5-5 | — |
 | 2026-10-07 | 計画を承認。確認ポイント 1〜12 も決まった | anthropic/claude-opus-5-5 | human:kakimomokuri |
+| 2026-10-07 | ステップ 5 の運用レビューの結果と人の決定 D-57〜D-59、レビューの対応の範囲を書いた | anthropic/claude-opus-5-5 | — |
+| 2026-10-07 | レビューの対応の範囲（D-57〜D-59）を承認 | anthropic/claude-opus-5-5 | human:kakimomokuri |
 
 ## 関連ドキュメント
 
