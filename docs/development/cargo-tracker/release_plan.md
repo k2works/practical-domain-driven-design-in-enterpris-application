@@ -4,7 +4,7 @@ title: "リリース計画 - cargo-tracker（A 社国際貨物輸送管理シス
 description: "cargo-tracker MVP のリリース計画。1 人 + AI、時間単位の Bolt（= イテレーション）と週次の見直しで、最初の縦の流れ（R0.1）、パイロット準備完了（R1.0）、本格展開前（R1.1）の 3 段階、Unit のエントロピー評価、SP、バッファ、パイロット開始の条件、引継ぎ ID の台帳、業務責任者に確かめる事項の台帳。"
 tags: [development,release-plan]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-07T03:21:41Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-07T05:17:37Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T09:29:53Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:38:26Z }
@@ -410,11 +410,11 @@ AI-DLC では **Bolt がイテレーション** である（[AI-DLC 導入ガイ
 
 - [x] Bolt 15: dev プロファイルによる Heroku のデモ環境（技術タスク、SP 0。2026-10-06 に human:kakimomokuri が W3 の前に置くと決めた）。[Bolt 15 計画](bolt_15_plan.md)（承認済み）、[Bolt 15 終了報告](bolt_15_report.md)（完了、承認済み。ADR-013 を採用。#38 をクローズした。デモ環境 <https://cargo-tracker-mono-demo-883bf0b92807.herokuapp.com/>）、[#38](https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/38)、[ADR-013](../../adr/cargo-tracker/013-heroku-demo-environment.md)（採用）
 - [x] Bolt 16: デモ環境への CI からの配備（技術タスク、SP 0。2026-10-07 に human:kakimomokuri が W3 の前に置くと決めた）。[Bolt 16 計画](bolt_16_plan.md)（承認済み）、[Bolt 16 終了報告](bolt_16_report.md)（完了、承認済み。#39 をクローズした。キーの更新は #40）、[#39](https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/39)
-- [ ] Bolt 17: US-06（AC1〜3、仮の航海データ）。2026-10-07 に human:kakimomokuri が W3 の最初の Bolt の範囲に決めた（AI は AC1 だけの案を推した）。[Bolt 17 計画](bolt_17_plan.md)（承認待ち）、[#7](https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/7)
+- [ ] Bolt 17: US-06（AC1〜3、仮の航海データ）。2026-10-07 に human:kakimomokuri が W3 の最初の Bolt の範囲に決めた（AI は AC1 だけの案を推した）。[Bolt 17 計画](bolt_17_plan.md)、[Bolt 17 終了報告](bolt_17_report.md)（完了、承認待ち。`/goal Bolt17` で承認ゲートを止めずに進めた。#7 をクローズし、#15 にコメントした。SP 3 は終了報告の承認の後に数える）、[#7](https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/7)
 - [ ] US-07（AC1、AC2）
 - [ ] US-24（AC4 承認、AC5 失効時の拒否）
 - [ ] US-21（AC1 KPI-01 の時刻）
-- [ ] 経路候補の比較（S-06）のプロトタイプで操作性を確かめる（UI-HO-04）
+- [ ] 経路候補の比較（S-06）のプロトタイプで操作性を確かめる（UI-HO-04）。Bolt 17 で S-06 を作った（別のプロトタイプは作らない。確認ポイント 15）。デモ環境で人が操作して確かめる（Bolt 17 終了報告の議題 7）
 
 **目標 SP**: 10
 
@@ -559,7 +559,7 @@ Bolt のレビューや終了報告で「業務責任者に確かめる」とし
 | :--- | ---: | ---: | ---: | :--- |
 | W1 | 6 | 6 | 100% | 完了（W1 の期間の前に前倒しで、2026-10-03 に Bolt 1〜8 を終えた。すべて承認済み。US-01（R0.1）・US-02 を完了し、#1・#2・#3・#36 をクローズした。人の変更依頼 0） |
 | W2 | 8 | 7 | 88% | 完了（2026-10-06 に Bolt 9〜14 を終え、2026-10-07 に締めた。US-03 を完了し #4・#37 を、US-18 の一部（2 SP）を完了し #6 をクローズした。US-24 AC1 は Bolt 12 で作り、残りの AC4・AC5 と SP 1 は W3 へ（#5 の週を W3 に移した）。人の変更依頼 0） |
-| W3 | 10 | - | - | 開始準備中（W3 の前に技術タスクの Bolt 15・16 を終えた。SP 0。#38・#39 をクローズした。Bolt 17（US-06 AC1〜AC3）の計画が承認待ち） |
+| W3 | 10 | - | - | 開始準備中（W3 の前に技術タスクの Bolt 15・16 を終えた。SP 0。#38・#39 をクローズした。Bolt 17（US-06 AC1〜AC3、SP 3）を終え、終了報告の承認待ち） |
 | W4 | 11 | - | - | 未着手 |
 | W5 | 8 | - | - | 未着手 |
 | W6 | 13 | - | - | 未着手 |
@@ -648,3 +648,4 @@ xychart-beta
 | 2026-10-06 | Bolt 14 計画の承認を W2 に反映した | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-10-07 | W2 を締めた（7 SP、達成率 88%、US-24 の 1 SP を W3 へ）。実績スケジュールに W2 の Bolt 12〜14 と W3 の前の Bolt 15・16 を足した。GitHub の #5 の週を W3 に移した | anthropic/claude-opus-5-5 |
 | 2026-10-07 | W3 を始め、Bolt 17（US-06 AC1〜AC3）の計画へのリンクを W3 に足した（計画の承認待ち） | anthropic/claude-opus-5-5 |
+| 2026-10-07 | W3 に Bolt 17 終了報告へのリンクを付け、進捗に Bolt 17 の完了を記録した（終了報告の承認待ち）。UI-HO-04 は人がデモ環境で確かめる | anthropic/claude-opus-5-5 |

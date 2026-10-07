@@ -4,7 +4,7 @@ title: "cargo-tracker データモデル"
 description: "cargo-tracker の概念データモデル、スキーマ分割、命名と型の規約（H2 と PostgreSQL の共通部分）、コンテキストごとの論理データモデルと ER 図、版・追記専用・冪等性・イベント配信の表現。"
 tags: [design, data-model]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-07T04:27:45Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-07T05:17:37Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T07:48:17Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:01:37Z }
@@ -363,29 +363,32 @@ entity "routing_case\n経路設計案件" as rc {
   * case_number : VARCHAR(20) <<UK>>
   * transport_request_id : UUID <<REF quotation>>
   * transport_request_version_no : INTEGER
+  * transport_request_number : VARCHAR(20)
   * quotation_id : UUID <<REF quotation>>
   route_policy_via : VARCHAR(200)
   * origin_unlocode : CHAR(5)
   * destination_unlocode : CHAR(5)
   * arrival_deadline : TIMESTAMPTZ
   * cargo_category : VARCHAR(30)
+  * requested_at : TIMESTAMPTZ
   confirmed_route_version_no : INTEGER
   * version : BIGINT
-  * created_at / created_by
-  * updated_at / updated_by
+  * created_at / created_by（created_by は US-07）
+  * updated_at / updated_by（updated_by は US-07）
 }
 entity "route_version\n経路版" as rver {
   * routing_case_id : UUID <<PK,FK>>
   * route_version_no : INTEGER <<PK>>
   --
   * status : VARCHAR(30)
-  previous_route_version_no : INTEGER
-  redesign_cause : VARCHAR(4000)
-  rationale : VARCHAR(4000)
-  decided_by : UUID
-  approved_by : UUID
-  approved_at : TIMESTAMPTZ
-  selected_candidate_no : INTEGER
+  candidates_evaluated_at : TIMESTAMPTZ
+  previous_route_version_no : INTEGER（US-08）
+  redesign_cause : VARCHAR(4000)（US-08）
+  rationale : VARCHAR(4000)（US-07）
+  decided_by : UUID（US-07）
+  approved_by : UUID（US-07）
+  approved_at : TIMESTAMPTZ（US-07）
+  selected_candidate_no : INTEGER（US-07）
   * created_at : TIMESTAMPTZ
 }
 entity "route_candidate\n経路候補" as cand {
@@ -413,6 +416,8 @@ entity "candidate_leg\n区間" as leg {
   * arrival_at : TIMESTAMPTZ
   cargo_cutoff_at : TIMESTAMPTZ
   doc_cutoff_at : TIMESTAMPTZ
+  * info_version : VARCHAR(100)
+  * info_acquired_at : TIMESTAMPTZ
   * executed : BOOLEAN
 }
 entity "exclusion_reason\n除外理由" as ex {
