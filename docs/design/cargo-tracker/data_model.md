@@ -4,7 +4,7 @@ title: "cargo-tracker データモデル"
 description: "cargo-tracker の概念データモデル、スキーマ分割、命名と型の規約（H2 と PostgreSQL の共通部分）、コンテキストごとの論理データモデルと ER 図、版・追記専用・冪等性・イベント配信の表現。"
 tags: [design, data-model]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-06T06:13:27Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-07T03:41:38Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T07:48:17Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:01:37Z }
@@ -360,6 +360,7 @@ skinparam linetype ortho
 entity "routing_case\n経路設計案件" as rc {
   * id : UUID <<PK>>
   --
+  * case_number : VARCHAR(20) <<UK>>
   * transport_request_id : UUID <<REF quotation>>
   * transport_request_version_no : INTEGER
   * quotation_id : UUID <<REF quotation>>
@@ -394,6 +395,7 @@ entity "route_candidate\n経路候補" as cand {
   --
   * conforming : BOOLEAN
   * estimated_arrival_at : TIMESTAMPTZ
+  min_connection_slack_minutes : INTEGER
   * evaluated_at : TIMESTAMPTZ
   oldest_info_acquired_at : TIMESTAMPTZ
   * info_insufficient : BOOLEAN
@@ -480,6 +482,15 @@ riv }o..|| v : 航海番号
 | `candidate_leg` | `executed` は再設計の対象から外す区間を示す | R-INV-08 |
 
 「確定は案件に 1 つ」は PostgreSQL の部分一意インデックスで表せるが、H2 で使えないため、案件のヘッダに `confirmed_route_version_no` を 1 つだけ持つことで表す（命名と型の規約）。
+
+Bolt 17（US-06 AC1〜AC3）で作る範囲（[Bolt 17 計画](../../development/cargo-tracker/bolt_17_plan.md) の確認ポイント 4〜7）:
+
+- `routing` スキーマに、`routing_case`・`route_version`・`route_candidate`・`candidate_leg`・`exclusion_reason`・`voyage`・`port_call`・`connection_rule` と、案件番号の採番の `routing_case_number_counter`（年ごとに 1 行。`quotation.transport_request_number_counter` と同じ形）を作る。`route_version` の判断・承認の列（`rationale`、`decided_by`、`approved_by`、`approved_at`、`selected_candidate_no`）、再設計の列（`previous_route_version_no`、`redesign_cause`）と `referenced_info_version` は、使う Bolt（US-07・US-08）で足す。
+- `routing_case.case_number` は案件番号（`RC-年-連番`。UK）。画面と URL には案件番号だけを出す（D-4）。
+- `route_candidate.min_connection_slack_minutes` は候補の接続余裕（接続時間 − 必要最小接続時間の最小。分）。直行は NULL。`info_insufficient` は AC4（W6）まで常に false。
+- 候補を再算出したら、経路版の候補・区間・除外理由を消して入れ直す（候補は追記専用ではない）。
+- 経路設計の表と見積りの表の間に外部キーは張らない（スキーマの所有。ADR-001）。輸送要求・見積りの ID は、見積りの公開 API とイベントから得た値の写し。
+- 航海・寄港・接続時間規則は、外部原本の取込（US-14、W7）と規則の管理ができるまで、開発環境の `db/dev-data` にだけ入れる仮のデータ（出典 `MANUAL_ENTRY`、情報版 `PROVISIONAL-1`、架空の航海番号）。ステージング・本番では 0 件。
 
 ### 予約（`booking`）
 

@@ -4,7 +4,7 @@ title: "cargo-tracker バックエンドアーキテクチャ"
 description: "cargo-tracker の境界づけられたコンテキスト、コンテキストごとのドメインロジックパターン、パッケージ構成、サガとドメインイベントによる連携（ARCH-HO-01〜03）、受信サービスの方針。"
 tags: [design, architecture, backend]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-03T05:43:59Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-07T03:41:38Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T07:11:12Z }
   - { by: human:kakimomokuri, at: 2026-10-01T07:41:04Z }
@@ -133,6 +133,14 @@ end note
 | 予約 → 見積り（イベントのみ） | B → Q | 公表された言語（ドメインイベント） | 本予約の確定だけを通知し、輸送要求を予約確定済みにする（[ドメインモデル](domain_model.md) DE-07） |
 
 下流のコンテキストは、上流の公開 API を自分の application 層の ACL（腐敗防止層）越しに呼ぶ（第 3 章 `application.internal.outboundservices.acl`）。上流のドメインオブジェクトを自分のドメイン層に持ち込まない。
+
+公開 API の置き場所と形（Bolt 17 で最初の公開 API を作ったときに決めた。[Bolt 17 計画](../../development/cargo-tracker/bolt_17_plan.md) の確認ポイント 2）:
+
+- 上流のコンテキストは、公開 API をコンテキストの直下の `api` パッケージに置き、Spring Modulith の名前付きインターフェース（`@NamedInterface("api")`）にする。中身は照会のインターフェースと、戻り値の record だけ。
+- 戻り値は Java の標準と共有カーネルの型（`Location`、`UtcInstant` など）と文字列だけで表し、上流のドメインの型を持たない（イベントと同じ規則。ArchUnit で確かめる）。
+- 実装は上流の `application.internal.queryservices` に置き、合成ルート（`infrastructure.config`）で公開 API の型の bean として組み立てる。
+- 下流は `application.internal.outboundservices.acl` から呼び、自分のドメインの型に変える。下流のモジュールの `allowedDependencies` に `<上流> :: api` を足す。
+- 最初の公開 API は、見積りの「経路条件の照会」（`quotation.api.RouteConditionQuery`。輸送要求 ID と版番号から、出発地・目的地・希望到着期限・貨物種別を返す）。経路設計が DE-16 を受けて経路設計案件を作るときに呼ぶ。
 
 ### 共有カーネル
 
