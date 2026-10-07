@@ -4,7 +4,7 @@ title: "cargo-tracker ユーザーストーリー"
 description: "cargo-tracker MVP の価値単位のユーザーストーリー、受入条件、上流要件へのトレーサビリティ。"
 tags: [requirements, user-story]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-07T03:41:38Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-07T10:23:34Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T05:20:11Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:01:39Z }
@@ -251,6 +251,13 @@ Bolt 17 の決定（2026-10-07。[Bolt 17 計画](../../development/cargo-tracke
 - Given 旧版または再設計要の経路版、When 再確定または新規予約へ割り当てる、Then 操作は拒否され新しい経路版の作成が要求される。
 
 AI の仮定: US-07 が扱う専門判断は一般貨物の運用例外に限定する。危険物・冷凍貨物・その他特殊貨物の専門家承認は OQ-03 の後続決定まで本ストーリーへ含めない。
+
+決定（2026-10-07、Bolt 19 の開始準備。human:kakimomokuri）:
+
+- US-07 は AC1・AC2（W3、Bolt 19、#8）と AC3〜AC5（W6、#16）に分けて作る。
+- AC1 の「承認 commit 時点で再検証」は、選んだ候補の区間を確定の時刻で有効な接続時間規則と希望到着期限で判定し直し、最初の区間が出発済みなら拒否することとする。情報版の更新による拒否は AC3。
+- AC2 の「専門家権限」は経路設計者の役割（BR-15）とする。判断根拠は前後の空白を除いて 1〜4,000 文字。
+- 経路設計は見積りの有効期限で確定を拒否せず、期限と期限切れを示す。失効した見積りへの割当てと荷主の承認の拒否は US-24 AC4・AC5 で行う（D-42 の経路設計の途中の失効の扱い。経路設計の途中の再見積りは引き続きできない）。
 
 ### US-08 経路を再設計する
 

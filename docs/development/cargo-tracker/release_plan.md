@@ -4,7 +4,7 @@ title: "リリース計画 - cargo-tracker（A 社国際貨物輸送管理シス
 description: "cargo-tracker MVP のリリース計画。1 人 + AI、時間単位の Bolt（= イテレーション）と週次の見直しで、最初の縦の流れ（R0.1）、パイロット準備完了（R1.0）、本格展開前（R1.1）の 3 段階、Unit のエントロピー評価、SP、バッファ、パイロット開始の条件、引継ぎ ID の台帳、業務責任者に確かめる事項の台帳。"
 tags: [development,release-plan]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-07T09:55:02Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-07T10:23:34Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T09:29:53Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:38:26Z }
@@ -412,7 +412,7 @@ AI-DLC では **Bolt がイテレーション** である（[AI-DLC 導入ガイ
 - [x] Bolt 16: デモ環境への CI からの配備（技術タスク、SP 0。2026-10-07 に human:kakimomokuri が W3 の前に置くと決めた）。[Bolt 16 計画](bolt_16_plan.md)（承認済み）、[Bolt 16 終了報告](bolt_16_report.md)（完了、承認済み。#39 をクローズした。キーの更新は #40）、[#39](https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/39)
 - [x] Bolt 17: US-06（AC1〜3、仮の航海データ）。2026-10-07 に human:kakimomokuri が W3 の最初の Bolt の範囲に決めた（AI は AC1 だけの案を推した）。[Bolt 17 計画](bolt_17_plan.md)、[Bolt 17 終了報告](bolt_17_report.md)（完了、2026-10-07 に承認済み。`/goal Bolt17` で承認ゲートを止めずに進め、終了報告の承認でまとめて受けた。#7 をクローズし、#15 にコメントした。SP 3）、[#7](https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/7)
 - [x] Bolt 18: デモ環境のサンプルの業務データ（技術タスク、SP 0。2026-10-07 に human:kakimomokuri が範囲と相対の日時を決め、計画を承認した）。見積依頼 5 件（各状態）と経路設計の案件 2 件（算出待ち・算出済み）を `db/dev-data` に入れ、日時を起動した日からの相対にした。[Bolt 18 計画](bolt_18_plan.md)
-- [ ] US-07（AC1、AC2）。Bolt 19 で行う（2026-10-07 に human:kakimomokuri が、D-64 を含めて W3 の次の Bolt の範囲に決め、Try T-52 もこの Bolt で行うと決めた）。[Bolt 19 計画](bolt_19_plan.md)（承認待ち）、[#8](https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/8)
+- [ ] US-07（AC1、AC2）。Bolt 19 で行う（2026-10-07 に human:kakimomokuri が、D-64 を含めて W3 の次の Bolt の範囲に決め、Try T-52 もこの Bolt で行うと決めた）。[Bolt 19 計画](bolt_19_plan.md)（承認済み）、[#8](https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/8)
 - [ ] US-24（AC4 承認、AC5 失効時の拒否）
 - [ ] US-21（AC1 KPI-01 の時刻）
 - [x] 経路候補の比較（S-06）のプロトタイプで操作性を確かめる（UI-HO-04）。Bolt 17 で S-06 を作った（別のプロトタイプは作らない。確認ポイント 15）。Bolt 18 のサンプルを入れたデモ環境で人が確かめ、2026-10-07 に Bolt 17 終了報告の議題 7 として承認した

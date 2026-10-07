@@ -4,7 +4,9 @@ title: "Bolt 19 計画 - 判断根拠を記録して経路を確定する（US-0
 description: "19 回目の Bolt の計画。経路設計者が S-06 で選んだ適合の候補について、判断根拠を記録し、確定の時刻で再検証して経路版を確定する（US-07 AC1）。根拠・権限の不足と、確定できない候補・状態を拒否する（AC2）。あわせて Bolt 17 レビューの D-64（経路版の一覧、版による競合、一覧の見積有効期限の順）と、Try T-52（ローカルの SonarQube のクラウドの上書きを起動のタスクに組み込む）を行う。"
 tags: [development,bolt-plan]
 status: draft
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-07T09:55:02Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-07T10:23:34Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-10-07T10:21:14Z }
 ---
 
 # Bolt 19 計画 - 判断根拠を記録して経路を確定する（US-07 AC1・AC2）
@@ -19,7 +21,7 @@ generated: { by: anthropic/claude-opus-5-5, at: 2026-10-07T09:55:02Z }
 | GitHub | [#8 [US-07] 専門判断を伴う経路を確定する（R0.1: AC1・AC2）](https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/8)（SP 3）。AC3〜AC5（承認中の情報版の更新、再設計要・旧版）は R1.0 の [#16](https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/16)（W6） |
 | 承認ゲート | U2 の密度（Red・Green ごと）。計画の承認（確認ポイント 1〜12）、確定の規則の Red（拒否の表を仕様として確かめる）、確定の規則の Green、表の変更とイベント（データベース）、S-07 と確定の操作（画面）、開発レビューの判断、終了報告の 7 回 |
 | アプローチ | インサイドアウト（開発戦略の Bolt の規則。既存の集約に振る舞いと表の列を足す Bolt）。集約の確定の規則から入り、表とイベント、最後に画面の層を受入シナリオで駆動する |
-| 範囲の決定 | 2026-10-07 に human:kakimomokuri が、Bolt 19 を US-07 AC1・AC2（D-64 を含む）にし、Try T-52 をこの Bolt で正式化すると決めた |
+| 範囲の決定 | 2026-10-07 に human:kakimomokuri が、Bolt 19 を US-07 AC1・AC2（D-64 を含む）にし、Try T-52 をこの Bolt で正式化すると決め、計画（確認ポイント 1〜12）を承認した（`y`） |
 | 前の Bolt | [Bolt 17 終了報告](bolt_17_report.md)、[Bolt 18 計画](bolt_18_plan.md) |
 
 ## Bolt ゴール
@@ -217,10 +219,11 @@ S07 --> S06 : 戻る
 
 状態の記号: `[ ]` 未着手、`[-]` 進行中、`[?]` 承認待ち、`[R]` 修正中、`[x]` 完了、`[S]` スキップ。各ステップの終わりに `check` が緑であることを確かめて push し、CI の結果を確かめてから次のステップに入る（T-14、T-26）。結果の時刻はそのステップの最後のコミットの時刻で書く（T-33）。Red の記録には、テストごとに本命のアサーションで落ちたか前提で落ちたかを書く（T-39）。
 
-- [ ] **1. 決定を設計文書に反映し、SonarQube の起動のタスクを直す**（承認はステップ 2 の Red とまとめて受ける）
+- [x] **1. 決定を設計文書に反映し、SonarQube の起動のタスクを直す**（承認はステップ 2 の Red とまとめて受ける）
   - ドメインモデル・データモデル・UI 設計（S-05〜S-07）・ユーザーストーリー（US-07 の R0.1 の範囲）に、確認ポイントの決定を書く
   - `ops/scripts/sonar_local.js` の `sonar-local:start`（と `restart`）が、`CLAUDE_CODE_REMOTE=true` のとき `docker-compose.cloud.yml` を重ねて起動する。手順書（`application_development_setup.md` の 9 節）の手作業の `docker compose` をタスクに置き換え、コマンドリファレンス（`docs/operation/cargo-tracker/index.md`）に書く（T-52）
   - 完了の判定: `okf:check` が ERROR 0、`documentationTest` が緑。`npx gulp sonar-local:start` でこの環境の SonarQube が起動する。push する
+  - 結果（2026-10-07 19:15〜19:23 JST）: ドメインモデル（用語集に判断根拠・経路の承認者、「Bolt 19 で決めたこと」、DE-05 の項目）、データモデル（Bolt 19 で足す列と CHECK）、UI 設計（S-07 の URL と文言、S-05・S-06 の変更）、ユーザーストーリー（US-07 の Bolt 19 の決定）に反映した。`sonar_local.js` の `dockerCompose` が、`CLAUDE_CODE_REMOTE=true` で `docker-compose.cloud.yml` を重ねるようにし（`start` だけでなく `stop`・`status`・`logs` も同じ設定ファイルの組で動く）、手順書の 9 節とコマンドリファレンスを直した。`npx gulp sonar-local:start` で起動し、コンテナに上書きの環境変数が入り UP になった。`okf:check` ERROR 0、`documentationTest` 緑
 - [ ] **2. 経路版の一覧と確定の規則（集約の TDD）** 【承認ゲート: Red（拒否の表）／ Green】
   - 単体テストを先に書き、Red を記録する（テストの表が R-INV-03・04・05・06 の仕様になる）
     - 確定: 適合の候補、根拠、経路設計者で確定すると、経路版が確定になり、選んだ候補・根拠・承認者・承認 commit 時刻を持ち、DE-05 が返る。参照情報版は候補の区間の採用情報版
@@ -276,7 +279,7 @@ S07 --> S06 : 戻る
 
 確定の再検証（規則と出発の時刻）、根拠・権限の拒否、確定の後の再算出・再確定の拒否、版による競合、DE-05 の発行は削らない。
 
-## 確認ポイント（計画の承認の場でまとめて確認する。Try T-6）
+## 確認ポイント（2026-10-07 に human:kakimomokuri が承認）
 
 | # | 確認すること | ステップ | 理由 |
 | :--- | :--- | :--- | :--- |
@@ -306,7 +309,8 @@ S07 --> S06 : 戻る
 
 | 日付 | 内容 | 作成 | 承認 |
 | :--- | :--- | :--- | :--- |
-| 2026-10-07 | 初版（範囲は人が決めた。確認ポイント 1〜12 は承認待ち） | anthropic/claude-opus-5-5 | — |
+| 2026-10-07 | 初版（範囲は人が決めた） | anthropic/claude-opus-5-5 | — |
+| 2026-10-07 | 計画（確認ポイント 1〜12）を承認した | anthropic/claude-opus-5-5 | human:kakimomokuri |
 
 ## 関連ドキュメント
 

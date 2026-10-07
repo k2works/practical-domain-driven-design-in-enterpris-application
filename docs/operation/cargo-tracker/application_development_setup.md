@@ -4,7 +4,7 @@ title: "アプリケーション開発環境セットアップ手順書 - cargo-
 description: "cargo-tracker（A 社国際貨物輸送管理システム）を、開発者の PC で起動・テスト・品質チェックするための手順を示す。"
 tags: [operation,playbook,setup]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-06T06:41:11Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-07T10:23:34Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-02T01:37:59Z }
   - { by: human:kakimomokuri, at: 2026-10-02T07:02:38Z }
@@ -177,11 +177,10 @@ Claude Code のクラウドの実行環境では、セッションの開始の�
 | 6 | ルートの `node_modules` がなければ `npm install` する | 文書の検査（`npx gulp okf:check`）に要る |
 | 7 | `vm.max_map_count` を 262144 にする | SonarQube の Elasticsearch が求める |
 
-フックの後は、4 節のコマンドがそのまま動く。SonarQube を使うときは、フックでは起動しないため、次の手順で起動してから 4 節の `sonar-local:check` を実行する。
+フックの後は、4 節のコマンドがそのまま動く。SonarQube を使うときは、フックでは起動しないため、次の手順で起動してから 4 節の `sonar-local:check` を実行する。`sonar-local:*` のタスクは、クラウドの実行環境（`CLAUDE_CODE_REMOTE=true`）では `ops/docker/sonarqube-local/docker-compose.cloud.yml`（起動時チェックを外し Web の heap を 2 GB にする上書き）を自動で重ねる。開発者の PC では重ねない（Bolt 19。T-52）。
 
 ```bash
-cd ops/docker/sonarqube-local
-docker compose -f docker-compose.yml -f docker-compose.cloud.yml up -d   # 起動時チェックを外し Web の heap を 2 GB に
+npx gulp sonar-local:start
 until curl -s localhost:9000/api/system/status | grep -q '"UP"'; do sleep 3; done
 ```
 
@@ -191,5 +190,5 @@ until curl -s localhost:9000/api/system/status | grep -q '"UP"'; do sleep 3; don
 | :--- | :--- |
 | `uiTest` が `Executable doesn't exist at /opt/pw-browsers/chromium_headless_shell-…` で全件失敗する | フックの 5 が動いていない。`CLAUDE_CODE_REMOTE=true .claude/hooks/session-start.sh` を実行する |
 | 統合テストが `Could not find a valid Docker environment` で失敗する | dockerd が止まった。フックをもう一度実行する |
-| SonarQube のコンテナが起動を繰り返す | `docker-compose.cloud.yml` を重ねずに起動した。上の手順で起動し直す |
+| SonarQube のコンテナが起動を繰り返す | `docker-compose.cloud.yml` を重ねずに起動した（`docker compose` を直接使った、または `CLAUDE_CODE_REMOTE` がない）。`npx gulp sonar-local:stop` の後、上の手順で起動し直す |
 

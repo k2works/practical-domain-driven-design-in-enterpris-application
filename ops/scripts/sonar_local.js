@@ -95,7 +95,24 @@ function localExec(command, opts = {}) {
  */
 function dockerCompose(subcommand, opts = {}) {
   const dir = composeDir();
-  localExec(`docker compose -f "${dir}/docker-compose.yml" ${subcommand}`, opts);
+  const files = composeFiles(dir).map((file) => `-f "${file}"`).join(' ');
+  localExec(`docker compose ${files} ${subcommand}`, opts);
+}
+
+/**
+ * docker compose に渡す設定ファイルの一覧。Claude Code のクラウドの実行環境（CLAUDE_CODE_REMOTE=true）では、
+ * Elasticsearch の起動時チェックを外し Web の heap を上げる上書き（docker-compose.cloud.yml）を重ねる
+ * （Bolt 11 の T-34、Bolt 17 の T-52）。開発者の PC では docker-compose.yml だけを使う。
+ * @param {string} dir - docker-compose.yml のディレクトリ
+ * @returns {string[]}
+ */
+function composeFiles(dir) {
+  const files = [path.join(dir, 'docker-compose.yml')];
+  const cloudOverride = path.join(dir, 'docker-compose.cloud.yml');
+  if (process.env.CLAUDE_CODE_REMOTE === 'true' && fs.existsSync(cloudOverride)) {
+    files.push(cloudOverride);
+  }
+  return files;
 }
 
 /**
