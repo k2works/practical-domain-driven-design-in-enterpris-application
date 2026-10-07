@@ -228,7 +228,9 @@ jobs:
           ( umask 077; printf 'Authorization: Bearer %s\n' "${HEROKU_API_KEY}" > "$hdr" )
           base="https://api.heroku.com/apps/${HEROKU_APP}"
           v3='Accept: application/vnd.heroku+json; version=3'
+          docker_releases='Accept: application/vnd.heroku+json; version=3.docker-releases'
           get() { curl --fail --silent --show-error -H @"$hdr" -H "$v3" "${@:2}" "${base}/$1"; }
+          # send <method> <path> <Accept のヘッダー（"Accept: …" の形）> <JSON>
           send() {
             curl --fail --silent --show-error --output /dev/null -X "$1" -H @"$hdr" -H 'Content-Type: application/json' \
               -H "$3" -d "$4" "${base}/$2"
@@ -242,7 +244,7 @@ jobs:
           read -r previous_id previous_version <<< "$previous"
           echo "直前の release: v${previous_version}"
 
-          send PATCH formation 'application/vnd.heroku+json; version=3.docker-releases' \
+          send PATCH formation "$docker_releases" \
             "{\"updates\":[{\"type\":\"web\",\"docker_image\":\"${IMAGE_ID}\"}]}"
           send PATCH config-vars "$v3" "{\"DEMO_REVISION\":\"${REVISION}\"}"
           echo "release した: ${REVISION}"
