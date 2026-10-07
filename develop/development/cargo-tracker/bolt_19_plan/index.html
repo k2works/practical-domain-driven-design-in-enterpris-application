@@ -7842,7 +7842,7 @@
 <li><code>ops/scripts/sonar_local.js</code> の <code>sonar-local:start</code>（と <code>restart</code>）が、<code>CLAUDE_CODE_REMOTE=true</code> のとき <code>docker-compose.cloud.yml</code> を重ねて起動する。手順書（<code>application_development_setup.md</code> の 9 節）の手作業の <code>docker compose</code> をタスクに置き換え、コマンドリファレンス（<code>docs/operation/cargo-tracker/index.md</code>）に書く（T-52）</li>
 <li>完了の判定: <code>okf:check</code> が ERROR 0、<code>documentationTest</code> が緑。<code>npx gulp sonar-local:start</code> でこの環境の SonarQube が起動する。push する</li>
 <li>結果（2026-10-07 19:15〜19:23 JST）: ドメインモデル（用語集に判断根拠・経路の承認者、「Bolt 19 で決めたこと」、DE-05 の項目）、データモデル（Bolt 19 で足す列と CHECK）、UI 設計（S-07 の URL と文言、S-05・S-06 の変更）、ユーザーストーリー（US-07 の Bolt 19 の決定）に反映した。<code>sonar_local.js</code> の <code>dockerCompose</code> が、<code>CLAUDE_CODE_REMOTE=true</code> で <code>docker-compose.cloud.yml</code> を重ねるようにし（<code>start</code> だけでなく <code>stop</code>・<code>status</code>・<code>logs</code> も同じ設定ファイルの組で動く）、手順書の 9 節とコマンドリファレンスを直した。<code>npx gulp sonar-local:start</code> で起動し、コンテナに上書きの環境変数が入り UP になった。<code>okf:check</code> ERROR 0、<code>documentationTest</code> 緑</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>2. 経路版の一覧と確定の規則（集約の TDD）</strong> 【承認ゲート: Red（拒否の表）／ Green】</li>
+<li>[?] <strong>2. 経路版の一覧と確定の規則（集約の TDD）</strong> 【承認ゲート: Red（拒否の表）／ Green】</li>
 <li>単体テストを先に書き、Red を記録する（テストの表が R-INV-03・04・05・06 の仕様になる）<ul>
 <li>確定: 適合の候補、根拠、経路設計者で確定すると、経路版が確定になり、選んだ候補・根拠・承認者・承認 commit 時刻を持ち、DE-05 が返る。参照情報版は候補の区間の採用情報版</li>
 <li>根拠: 空・空白だけは <code>RATIONALE_MISSING</code>、1 文字・4,000 文字は確定、4,001 文字は <code>RATIONALE_MISSING</code>（長すぎる）</li>
@@ -7855,6 +7855,13 @@
 </li>
 <li>Red をコミットし、Green で <code>RoutingCase.confirm</code>・<code>RouteVersion</code> の確定・<code>DecisionRationale</code>・<code>RouteApprover</code>・<code>RouteConfirmationRejected</code>・<code>RouteConfirmed</code> を作る。Bolt 17 のテストは振る舞いを変えずに通す（H2）</li>
 <li>完了の判定: <code>check</code> が緑。push して CI を確かめる</li>
+<li>結果（Red。2026-10-07 19:27 JST。<code>6db18cb</code>）<ul>
+<li><code>RoutingCaseConfirmationTest</code>（24 件）を先に書いた。確定と DE-05 の項目、根拠（空・空白・null、1 文字・4,000 文字・4,001 文字）、経路設計者でない承認者、除外の候補、ない候補（0・4・99）、確定の時刻で有効になった厳しい規則（12 時間）での不適合と同値（10 時間）の適合、最初の区間の出発の 1 分前・同時刻・1 分後、作成中、確定し直し、確定の後の算出、経路版の一覧と最新の経路版だけの書き換え、確定の経路版は案件に 1 つ、確定と確定の記録の対応</li>
+<li>骨組み: <code>RoutingCase.confirm</code>（null を返す）・<code>routeVersions</code>（最新だけ）・<code>confirmedRouteVersion</code>（空）、<code>RouteVersion</code> の確定の記録の成分、<code>DecisionRationale</code>・<code>RouteApprover</code>・<code>RouteConfirmation</code>・<code>RouteConfirmationRejectionReason</code>・<code>RouteConfirmationRejected</code>、<code>routing.domain.events.RouteConfirmed</code>。<code>reconstitute</code> は経路版の一覧を受け取る形に変え、呼び出し 3 か所（MyBatis のリポジトリ、テストのインメモリのリポジトリ、<code>RoutingCaseTest</code> の 1 件）を直した（H2 の数に入れる）</li>
+<li>新しいテスト 24 件の失敗を記録した。T-39 の記録: 22 件は本命のアサーションで落ちた（拒否の例外が出ない、確定にならない、経路版の一覧が 1 つだけ）。「確定した経路版は確定し直せない」「確定した経路版の候補は算出し直せない」の 2 件は、前の確定が骨組みで何もしないために落ちた（前提）。前提のアサーション（候補 3 は除外）は通った。既存の routing のテスト 174 件は通った</li>
+<li>計画からの変更: 根拠が 4,000 文字を超えるときの理由を、<code>RATIONALE_MISSING</code> ではなく <code>RATIONALE_TOO_LONG</code> に分けた（画面の文言を分けるため）。確定の後の算出は、Bolt 17 のとおり <code>IllegalStateException</code> で拒否する（計画の「NOT_CONFIRMABLE_STATE」は確定し直しだけ）</li>
+</ul>
+</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>3. 表の列・リポジトリ・DE-05・入力ポート（統合テスト）</strong> 【承認ゲート: データベース】</li>
 <li>業務ルール層の受入シナリオを先に書く（<code>features/routing/confirm_route.feature</code>、<code>@US-07 @US-07-AC1</code>・<code>AC2</code>）<ul>
 <li>経路設計者が適合の候補を根拠を付けて確定すると、経路版が確定し、根拠・承認者・commit 時刻・参照情報版が記録される（AC1）</li>
