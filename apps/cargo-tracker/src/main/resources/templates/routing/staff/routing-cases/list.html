@@ -15,13 +15,14 @@
     <div th:unless="${#lists.isEmpty(cases)}" class="table-scroll" tabindex="0" role="region"
          aria-labelledby="cases-caption">
     <table class="table">
-        <caption id="cases-caption">詳細経路設計の依頼（依頼の新しい順）</caption>
+        <caption id="cases-caption">詳細経路設計の依頼（見積有効期限の近い順。同じなら依頼の古い順）</caption>
         <thead>
         <tr>
             <th scope="col">案件番号</th>
             <th scope="col">見積依頼</th>
             <th scope="col">出発地 → 目的地</th>
             <th scope="col">希望到着期限</th>
+            <th scope="col">見積有効期限</th>
             <th scope="col">依頼の日時</th>
             <th scope="col">状態</th>
         </tr>
@@ -32,6 +33,10 @@
             <td th:text="${routingCase.transportRequest()}">TR-2026-0001 版 1</td>
             <td th:text="${routingCase.route()}">JPTYO → NLRTM</td>
             <td th:text="${routingCase.arrivalDeadline()}">2026-11-02 09:00 Asia/Tokyo（UTC+09:00）（UTC 2026-11-02 00:00）</td>
+            <td>
+                <span th:text="${routingCase.quotationExpiresAt()}">2026-10-08 18:00 Asia/Tokyo（UTC+09:00）（UTC 2026-10-08 09:00）</span>
+                <strong th:if="${routingCase.quotationExpired()}">（見積りの期限切れ）</strong>
+            </td>
             <td th:text="${routingCase.requestedAt()}">2026-10-06 11:00 Asia/Tokyo（UTC+09:00）（UTC 2026-10-06 02:00）</td>
             <td th:text="${routingCase.status()}">候補の算出待ち</td>
         </tr>

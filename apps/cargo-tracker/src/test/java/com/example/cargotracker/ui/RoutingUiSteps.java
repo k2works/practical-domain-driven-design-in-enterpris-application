@@ -222,12 +222,12 @@ public class RoutingUiSteps {
         page().waitForLoadState();
     }
 
-    @ならば("経路を確定したと示され、直行の航海の候補に確定と判断根拠が示される")
+    @ならば("経路を確定したと示され、確定した経路に判断根拠が示され、直行の航海の候補に確定と示される")
     public void 経路を確定したと示される() {
         assertThat(page().getByRole(AriaRole.STATUS)).containsText("経路を確定しました");
-        Locator confirmed = candidate(voyage("DIRECT"));
-        assertThat(confirmed).containsText("確定した経路");
-        assertThat(confirmed).containsText("直行で期限まで 3 日あり");
+        assertThat(page().getByRole(AriaRole.REGION, new Page.GetByRoleOptions().setName("確定した経路（候補 1）")))
+                .containsText("直行で期限まで 3 日あり");
+        assertThat(candidate(voyage("DIRECT"))).containsText("確定した経路");
         assertThat(page().getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("候補を再算出")))
                 .hasCount(0);
         browser.checkAccessibility();

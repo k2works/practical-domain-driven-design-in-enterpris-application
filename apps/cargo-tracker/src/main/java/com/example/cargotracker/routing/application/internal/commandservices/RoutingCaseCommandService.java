@@ -59,6 +59,9 @@ public class RoutingCaseCommandService {
             return new CandidateCalculationOutcome.NotFound();
         }
         RoutingCase routingCase = found.get();
+        if (routingCase.aggregateVersion() != command.expectedVersion()) {
+            return new CandidateCalculationOutcome.Conflict();
+        }
         CandidateCalculation calculation = routingCase.calculateCandidates(
                 voyageRepository.findAll(),
                 connectionRuleRepository.findAll(),

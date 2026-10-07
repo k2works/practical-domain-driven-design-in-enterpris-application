@@ -5,11 +5,13 @@ import com.example.cargotracker.routing.domain.model.entities.RouteCandidate;
 import com.example.cargotracker.routing.domain.model.entities.RouteVersion;
 import com.example.cargotracker.routing.domain.model.valueobjects.ExclusionReason;
 import com.example.cargotracker.routing.domain.model.valueobjects.Leg;
+import com.example.cargotracker.routing.domain.model.valueobjects.RouteConfirmation;
 import com.example.cargotracker.routing.domain.model.valueobjects.RouteVersionStatus;
 import com.example.cargotracker.routing.domain.model.valueobjects.RoutingCaseSummary;
 import com.example.cargotracker.shared.domain.Location;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import java.time.Duration;
+import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
@@ -19,7 +21,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * 経路設計の画面（S-05・S-06）の表示の値と文言（UI 設計。Bolt 17）。日時は利用者のタイムゾーン（いまは日本時間）を主にし、
+ * 経路設計の画面（S-05・S-06・S-07）の表示の値と文言（UI 設計。Bolt 17・19）。日時は利用者のタイムゾーン（いまは日本時間）を主にし、
  * UTC を併記する（BR-10、共通部品「日時表示」。見積りの画面と同じ形）。
  */
 final class RoutingCaseViews {
@@ -31,6 +33,7 @@ final class RoutingCaseViews {
     private static final DateTimeFormatter UTC_TIME = DateTimeFormatter.ofPattern("uuuu-MM-dd HH:mm");
     private static final String ARROW = " → ";
     private static final String INFO_VERSION = "。参照情報版 ";
+    private static final String NO_EXPIRY = "期限の記録なし";
 
     private RoutingCaseViews() {}
 
@@ -40,6 +43,8 @@ final class RoutingCaseViews {
             String transportRequest,
             String route,
             String arrivalDeadline,
+            String quotationExpiresAt,
+            boolean quotationExpired,
             String requestedAt,
             String status) {}
 
@@ -51,9 +56,27 @@ final class RoutingCaseViews {
             String arrivalDeadline,
             String routePolicy,
             String requestedAt,
+            String quotationExpiresAt,
+            long aggregateVersion,
             boolean calculated,
+            boolean confirmable,
             String evaluatedAt,
+            int omittedCandidates,
+            ConfirmedRouteView confirmedRoute,
             List<CandidateView> candidates) {}
+
+    /** 確定した経路（S-06 の確定の後）。 */
+    record ConfirmedRouteView(int candidateNo, String approvedBy, String approvedAt, String rationale) {}
+
+    /** 経路の確定（S-07）。 */
+    record ConfirmationPage(
+            String number,
+            String transportRequest,
+            String route,
+            String arrivalDeadline,
+            String quotationExpiresAt,
+            long aggregateVersion,
+            CandidateView candidate) {}
 
     /** 候補 1 件。 */
     record CandidateView(
@@ -65,23 +88,33 @@ final class RoutingCaseViews {
             String estimatedArrival,
             String connectionSlack,
             List<String> reasons,
-            String infoAcquiredAt) {}
+            String infoAcquiredAt,
+            boolean confirmable,
+            boolean confirmed) {}
 
     /** 区間 1 つ。 */
     record LegView(String voyageNumber, String route, String departure, String arrival) {}
 
-    static CaseRow row(RoutingCaseSummary summary) {
+    /** 案件一覧の 1 行。見積有効期限を過ぎていれば期限切れと示す（経路設計は期限で確定を拒否しない。Bolt 19）。 */
+    static CaseRow row(RoutingCaseSummary summary, Instant now) {
         return new CaseRow(
                 summary.number().text(),
                 transportRequest(summary.transportRequestNumber(), summary.transportRequestVersionNo()),
                 route(summary.origin(), summary.destination()),
                 dateTime(summary.arrivalDeadline()),
+                summary.expiresAt().map(RoutingCaseViews::dateTime).orElse(NO_EXPIRY),
+                summary.expiresAt()
+                        .map(expiry -> !now.isBefore(expiry.instant()))
+                        .orElse(false),
                 dateTime(summary.requestedAt()),
                 status(summary.status()));
     }
 
     static CaseDetail detail(RoutingCase routingCase) {
         RouteVersion version = routingCase.routeVersion();
+        boolean confirmable = version.status() == RouteVersionStatus.CANDIDATES_PRESENTED;
+        Integer confirmedNo =
+                version.confirmation().map(RouteConfirmation::candidateNo).orElse(null);
         return new CaseDetail(
                 routingCase.number().text(),
                 transportRequest(routingCase.transportRequestNumber(), routingCase.transportRequestVersionNo()),
@@ -95,12 +128,44 @@ final class RoutingCaseViews {
                                 .map(Location::unLocode)
                                 .collect(Collectors.joining("、")),
                 dateTime(routingCase.requestedAt()),
+                expiresAt(routingCase),
+                routingCase.aggregateVersion(),
                 version.status() != RouteVersionStatus.DRAFT,
+                confirmable,
                 version.evaluatedAt().map(RoutingCaseViews::dateTime).orElse(null),
+                version.omittedCandidates(),
+                version.confirmation()
+                        .map(confirmation -> new ConfirmedRouteView(
+                                confirmation.candidateNo(),
+                                "経路設計者（利用者 ID " + confirmation.approvedBy() + "）",
+                                dateTime(confirmation.approvedAt()),
+                                confirmation.rationale().text()))
+                        .orElse(null),
                 version.candidates().stream()
-                        .map(candidate ->
-                                candidate(candidate, routingCase.specification().arrivalDeadline()))
+                        .map(candidate -> candidate(
+                                candidate,
+                                routingCase.specification().arrivalDeadline(),
+                                confirmable,
+                                Integer.valueOf(candidate.candidateNo()).equals(confirmedNo)))
                         .toList());
+    }
+
+    /** 経路の確定（S-07）の画面。 */
+    static ConfirmationPage confirmation(RoutingCase routingCase, RouteCandidate candidate) {
+        return new ConfirmationPage(
+                routingCase.number().text(),
+                transportRequest(routingCase.transportRequestNumber(), routingCase.transportRequestVersionNo()),
+                route(
+                        routingCase.specification().origin(),
+                        routingCase.specification().destination()),
+                dateTime(routingCase.specification().arrivalDeadline()),
+                expiresAt(routingCase),
+                routingCase.aggregateVersion(),
+                candidate(candidate, routingCase.specification().arrivalDeadline(), true, false));
+    }
+
+    private static String expiresAt(RoutingCase routingCase) {
+        return routingCase.quotationExpiresAt().map(RoutingCaseViews::dateTime).orElse(NO_EXPIRY);
     }
 
     static String status(RouteVersionStatus status) {
@@ -109,13 +174,14 @@ final class RoutingCaseViews {
             // 荷主に提示したと誤読されないよう、確定待ちと示す（Bolt 17 レビュー D-61）
             case CANDIDATES_PRESENTED -> "候補算出済み（確定待ち）";
             case EXPERT_REVIEW -> "専門判断待ち";
-            case CONFIRMED -> "確定";
+            case CONFIRMED -> "確定済み";
             case REDESIGN_REQUIRED -> "再設計要";
             case SUPERSEDED -> "旧版";
         };
     }
 
-    private static CandidateView candidate(RouteCandidate candidate, UtcInstant deadline) {
+    private static CandidateView candidate(
+            RouteCandidate candidate, UtcInstant deadline, boolean versionConfirmable, boolean confirmed) {
         boolean conforming = candidate.evaluation().conforming();
         return new CandidateView(
                 candidate.candidateNo(),
@@ -136,7 +202,9 @@ final class RoutingCaseViews {
                         .map(RoutingCaseViews::slack)
                         .orElse("直行（積替えなし）"),
                 reasons(candidate, deadline),
-                dateTime(candidate.oldestInfoAcquiredAt()));
+                dateTime(candidate.oldestInfoAcquiredAt()),
+                versionConfirmable && conforming,
+                confirmed);
     }
 
     /** 経由の要約（直行、または積替えの港）。 */

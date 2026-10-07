@@ -215,7 +215,7 @@ class RoutingCaseControllerTest {
 
         mockMvc.perform(post(SHOW + "/candidates").param("expectedVersion", "0"))
                 .andExpect(redirectedUrl(SHOW))
-                .andExpect(flash().attribute("problem", "ほかの経路設計者が先に候補を算出しました。最新の候補を確かめてください。"));
+                .andExpect(flash().attribute("problem", "ほかの経路設計者が先にこの案件を更新しました。最新の候補を確かめてください。"));
     }
 
     @Test
