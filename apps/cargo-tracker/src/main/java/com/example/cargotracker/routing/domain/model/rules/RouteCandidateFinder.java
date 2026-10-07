@@ -38,14 +38,7 @@ public class RouteCandidateFinder {
                 if (leg.discharge().equals(destination)) {
                     candidates.add(List.of(leg));
                 } else if (!leg.discharge().equals(origin)) {
-                    for (Voyage second : voyages) {
-                        if (second.voyageNumber().equals(first.voyageNumber())) {
-                            continue;
-                        }
-                        legsFrom(second, leg.discharge(), leg.arrivalAt(), true, null).stream()
-                                .filter(next -> next.discharge().equals(destination))
-                                .forEach(next -> candidates.add(List.of(leg, next)));
-                    }
+                    candidates.addAll(transshipments(leg, first, voyages, destination));
                 }
             }
         }
@@ -53,10 +46,20 @@ public class RouteCandidateFinder {
         return List.copyOf(candidates);
     }
 
+    /** 1 区間目の揚地で、別の航海に積み替えて目的地へ着く区間 2 の列。 */
+    private static List<List<Leg>> transshipments(
+            Leg first, Voyage firstVoyage, List<Voyage> voyages, Location destination) {
+        return voyages.stream()
+                .filter(second -> !second.voyageNumber().equals(firstVoyage.voyageNumber()))
+                .flatMap(second -> legsFrom(second, first.discharge(), first.arrivalAt(), true, null).stream())
+                .filter(next -> next.discharge().equals(destination))
+                .map(next -> List.of(first, next))
+                .toList();
+    }
+
     /**
      * 航海が港を出発する寄港から、後の各寄港までの区間。出発地の区間は判定時刻より後（同時刻は出発済みとみなす）に、
-     * 積替えの区間は前の区間の到着予定以後（同時刻を含む）に出発するものだけを取る。途中で {@code passing}（目的地）に寄る区間は
-     * 取らない（目的地を通り過ぎてから積み替えて戻る候補は、直行に劣り比較を惑わせる。Bolt 17 レビュー D-60）。
+     * 積替えの区間は前の区間の到着予定以後（同時刻を含む）に出発するものだけを取る。
      */
     private static List<Leg> legsFrom(
             Voyage voyage, Location port, UtcInstant after, boolean inclusive, Location passing) {
@@ -65,22 +68,34 @@ public class RouteCandidateFinder {
         for (int i = 0; i < calls.size(); i++) {
             PortCall load = calls.get(i);
             if (load.port().equals(port) && departsAfter(load, after, inclusive)) {
-                for (int j = i + 1; j < calls.size(); j++) {
-                    PortCall discharge = calls.get(j);
-                    if (passing != null && calls.get(j - 1).port().equals(passing) && j - 1 > i) {
-                        break;
-                    }
-                    if (discharge.arrivalAt() != null && !discharge.port().equals(port)) {
-                        legs.add(new Leg(
-                                voyage.voyageNumber(),
-                                load.port(),
-                                discharge.port(),
-                                load.departureAt(),
-                                discharge.arrivalAt(),
-                                voyage.adoptedInfoVersion(),
-                                voyage.acquiredAt()));
-                    }
-                }
+                legs.addAll(legsFromCall(voyage, i, passing));
+            }
+        }
+        return legs;
+    }
+
+    /**
+     * 寄港 {@code from} から後の各寄港までの区間。積地と同じ港へは運ばない。途中で {@code passing}（目的地）に寄ったら、
+     * その先の港へは運ばない（目的地を通り過ぎてから積み替えて戻る候補は、直行に劣り比較を惑わせる。Bolt 17 レビュー D-60）。
+     */
+    private static List<Leg> legsFromCall(Voyage voyage, int from, Location passing) {
+        List<PortCall> calls = voyage.portCalls();
+        PortCall load = calls.get(from);
+        List<Leg> legs = new ArrayList<>();
+        for (int j = from + 1; j < calls.size(); j++) {
+            PortCall discharge = calls.get(j);
+            if (discharge.arrivalAt() != null && !discharge.port().equals(load.port())) {
+                legs.add(new Leg(
+                        voyage.voyageNumber(),
+                        load.port(),
+                        discharge.port(),
+                        load.departureAt(),
+                        discharge.arrivalAt(),
+                        voyage.adoptedInfoVersion(),
+                        voyage.acquiredAt()));
+            }
+            if (discharge.port().equals(passing)) {
+                break;
             }
         }
         return legs;

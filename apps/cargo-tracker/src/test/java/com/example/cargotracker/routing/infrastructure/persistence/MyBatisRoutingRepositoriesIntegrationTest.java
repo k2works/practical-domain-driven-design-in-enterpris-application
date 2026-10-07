@@ -15,6 +15,7 @@ import com.example.cargotracker.routing.domain.model.aggregates.Voyage;
 import com.example.cargotracker.routing.domain.model.aggregates.VoyageRepository;
 import com.example.cargotracker.routing.domain.model.rules.ConstraintEvaluator;
 import com.example.cargotracker.routing.domain.model.rules.RouteCandidateFinder;
+import com.example.cargotracker.routing.domain.model.valueobjects.ExclusionReason;
 import com.example.cargotracker.routing.domain.model.valueobjects.ExclusionReasonCode;
 import com.example.cargotracker.routing.domain.model.valueobjects.PortCall;
 import com.example.cargotracker.routing.domain.model.valueobjects.RouteSpecification;
@@ -90,9 +91,9 @@ class MyBatisRoutingRepositoriesIntegrationTest {
     void 同じ輸送要求版の案件は2つ保存できずトランザクションは続けられる() {
         UUID transportRequestId = UUID.randomUUID();
         repository.save(open(transportRequestId, "2083-10-06T02:00:00Z"));
+        RoutingCase duplicate = open(transportRequestId, "2083-10-06T02:00:01Z");
 
-        assertThatThrownBy(() -> repository.save(open(transportRequestId, "2083-10-06T02:00:01Z")))
-                .isInstanceOf(DuplicateRoutingCaseException.class);
+        assertThatThrownBy(() -> repository.save(duplicate)).isInstanceOf(DuplicateRoutingCaseException.class);
         assertThat(repository.existsForTransportRequestVersion(transportRequestId, 1))
                 .isTrue();
     }
@@ -111,7 +112,7 @@ class MyBatisRoutingRepositoriesIntegrationTest {
         assertThat(found.routeVersion()).isEqualTo(loaded.routeVersion());
         assertThat(found.routeVersion().candidates())
                 .flatExtracting(candidate -> candidate.evaluation().reasons())
-                .extracting(reason -> reason.code())
+                .extracting(ExclusionReason::code)
                 .containsExactlyInAnyOrder(
                         ExclusionReasonCode.CONNECTION_TOO_SHORT,
                         ExclusionReasonCode.NOT_CONNECTABLE,
@@ -209,9 +210,10 @@ class MyBatisRoutingRepositoriesIntegrationTest {
         RoutingCase routingCase = open(UUID.randomUUID(), "2083-10-06T02:00:00Z");
         repository.save(routingCase);
 
+        UUID id = routingCase.id().value();
+
         assertThatThrownBy(() -> jdbc.update(
-                        "UPDATE routing.route_version SET status = 'UNKNOWN' WHERE routing_case_id = ?",
-                        routingCase.id().value()))
+                        "UPDATE routing.route_version SET status = 'UNKNOWN' WHERE routing_case_id = ?", id))
                 .isInstanceOf(DataIntegrityViolationException.class);
     }
 
@@ -224,9 +226,10 @@ class MyBatisRoutingRepositoriesIntegrationTest {
                 voyages(), rules(), JUDGED_AT, new RouteCandidateFinder(), new ConstraintEvaluator());
         repository.update(loaded);
 
+        UUID id = routingCase.id().value();
+
         assertThatThrownBy(() -> jdbc.update(
-                        "UPDATE routing.exclusion_reason SET reason_code = 'UNKNOWN' WHERE routing_case_id = ?",
-                        routingCase.id().value()))
+                        "UPDATE routing.exclusion_reason SET reason_code = 'UNKNOWN' WHERE routing_case_id = ?", id))
                 .isInstanceOf(DataIntegrityViolationException.class);
     }
 
