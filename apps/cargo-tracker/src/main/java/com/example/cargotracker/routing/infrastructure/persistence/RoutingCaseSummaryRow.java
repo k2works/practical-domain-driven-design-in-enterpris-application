@@ -13,4 +13,5 @@ public record RoutingCaseSummaryRow(
         String destinationUnlocode,
         OffsetDateTime arrivalDeadline,
         OffsetDateTime requestedAt,
-        String status) {}
+        String status,
+        OffsetDateTime quotationExpiresAt) {}

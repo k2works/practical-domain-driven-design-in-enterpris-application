@@ -25,6 +25,7 @@ class RoutingCaseOpeningEventHandlerTest {
     static final UUID TRANSPORT_REQUEST_ID = UUID.randomUUID();
     static final UUID QUOTATION_ID = UUID.randomUUID();
     static final UtcInstant REQUESTED_AT = new UtcInstant(Instant.parse("2026-10-06T02:00:00Z"));
+    static final UUID REQUESTER = UUID.randomUUID();
     static final UtcInstant DEADLINE = new UtcInstant(Instant.parse("2026-11-02T00:00:00Z"));
     static final RouteConditionView VIEW =
             new RouteConditionView("TR-2026-0001", new Location("JPTYO"), new Location("NLRTM"), DEADLINE, "GENERAL");
@@ -50,6 +51,8 @@ class RoutingCaseOpeningEventHandlerTest {
         assertThat(created.specification())
                 .isEqualTo(new RouteSpecification(new Location("JPTYO"), new Location("NLRTM"), DEADLINE, "GENERAL"));
         assertThat(created.requestedAt()).isEqualTo(REQUESTED_AT);
+        assertThat(created.quotationExpiresAt()).contains(new UtcInstant(Instant.parse("2026-10-08T09:00:00Z")));
+        assertThat(created.requestedBy()).contains(REQUESTER);
         assertThat(created.routeVersion().status()).isEqualTo(RouteVersionStatus.DRAFT);
     }
 
@@ -78,7 +81,7 @@ class RoutingCaseOpeningEventHandlerTest {
                 new UtcInstant(Instant.parse("2026-10-10T00:00:00Z")),
                 new UtcInstant(Instant.parse("2026-10-30T00:00:00Z")),
                 new UtcInstant(Instant.parse("2026-10-08T09:00:00Z")),
-                UUID.randomUUID(),
+                REQUESTER,
                 REQUESTED_AT);
     }
 }

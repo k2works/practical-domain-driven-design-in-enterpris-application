@@ -19,6 +19,8 @@ public record RoutingCaseRow(
         OffsetDateTime arrivalDeadline,
         String cargoCategory,
         OffsetDateTime requestedAt,
+        OffsetDateTime quotationExpiresAt,
+        UUID createdBy,
         long version,
         OffsetDateTime createdAt,
         OffsetDateTime updatedAt) {}

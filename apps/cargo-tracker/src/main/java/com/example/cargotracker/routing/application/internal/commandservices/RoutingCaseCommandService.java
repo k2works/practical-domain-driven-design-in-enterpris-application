@@ -2,14 +2,17 @@ package com.example.cargotracker.routing.application.internal.commandservices;
 
 import com.example.cargotracker.routing.application.internal.commands.CalculateCandidatesCommand;
 import com.example.cargotracker.routing.application.internal.commands.ConfirmRouteCommand;
+import com.example.cargotracker.routing.domain.events.RouteConfirmed;
 import com.example.cargotracker.routing.domain.model.aggregates.ConcurrentRoutingCaseUpdateException;
 import com.example.cargotracker.routing.domain.model.aggregates.ConnectionRuleRepository;
+import com.example.cargotracker.routing.domain.model.aggregates.RouteConfirmationRejected;
 import com.example.cargotracker.routing.domain.model.aggregates.RoutingCase;
 import com.example.cargotracker.routing.domain.model.aggregates.RoutingCaseRepository;
 import com.example.cargotracker.routing.domain.model.aggregates.VoyageRepository;
 import com.example.cargotracker.routing.domain.model.rules.ConstraintEvaluator;
 import com.example.cargotracker.routing.domain.model.rules.RouteCandidateFinder;
 import com.example.cargotracker.routing.domain.model.valueobjects.CandidateCalculation;
+import com.example.cargotracker.routing.domain.model.valueobjects.RouteApprover;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import java.time.Clock;
 import java.util.Optional;
@@ -18,7 +21,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * 経路設計案件の入力ポート（経路設計者が使う。US-06）。トランザクションの境界になる。
+ * 経路設計案件の入力ポート（経路設計者が使う。US-06・US-07）。トランザクションの境界になる。
  * 判定時刻は Clock から得る。航海と接続時間規則を読み込み、候補探索と制約適合判定に渡す（どちらもリポジトリを呼ばない）。
  *
  * <p>{@code @Service} は JIG がユースケースとして読むための印で、部品探索の対象にはしない（CargoTrackerApplication）。
@@ -76,6 +79,33 @@ public class RoutingCaseCommandService {
      */
     @Transactional
     public RouteConfirmationOutcome confirm(ConfirmRouteCommand command) {
-        return new RouteConfirmationOutcome.NotFound();
+        Optional<RoutingCase> found = repository.findByNumber(command.number());
+        if (found.isEmpty()) {
+            return new RouteConfirmationOutcome.NotFound();
+        }
+        RoutingCase routingCase = found.get();
+        if (routingCase.aggregateVersion() != command.expectedVersion()) {
+            return new RouteConfirmationOutcome.Conflict();
+        }
+        RouteConfirmed confirmed;
+        try {
+            confirmed = routingCase.confirm(
+                    command.candidateNo(),
+                    command.rationale(),
+                    new RouteApprover(command.approver().value(), command.routeDesigner()),
+                    connectionRuleRepository.findAll(),
+                    new UtcInstant(clock.instant()),
+                    evaluator);
+        } catch (RouteConfirmationRejected rejected) {
+            return new RouteConfirmationOutcome.Rejected(rejected.reason());
+        }
+        try {
+            repository.update(routingCase, command.approver().value());
+        } catch (ConcurrentRoutingCaseUpdateException _) {
+            return new RouteConfirmationOutcome.Conflict();
+        }
+        eventPublisher.publishEvent(confirmed);
+        return new RouteConfirmationOutcome.Confirmed(
+                routingCase.number(), confirmed.routeVersionNo(), command.candidateNo());
     }
 }

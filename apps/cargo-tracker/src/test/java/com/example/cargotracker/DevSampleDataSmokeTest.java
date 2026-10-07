@@ -110,6 +110,10 @@ class DevSampleDataSmokeTest {
                                 new RoutingCaseNumber(2026, 902),
                                 "TR-2026-0905",
                                 RouteVersionStatus.CANDIDATES_PRESENTED));
+        // DE-16 の写しの見積有効期限が入り、一覧は期限の近い順（Bolt 19）
+        assertThat(routingCases.findSummaries())
+                .filteredOn(summary -> summary.number().sequence() >= 901)
+                .allSatisfy(summary -> assertThat(summary.expiresAt()).isPresent());
     }
 
     @Test

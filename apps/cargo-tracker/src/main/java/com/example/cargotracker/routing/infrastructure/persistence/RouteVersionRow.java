@@ -11,4 +11,9 @@ public record RouteVersionRow(
         int routeVersionNo,
         String status,
         OffsetDateTime candidatesEvaluatedAt,
+        int candidatesFound,
+        Integer selectedCandidateNo,
+        String rationale,
+        UUID approvedBy,
+        OffsetDateTime approvedAt,
         OffsetDateTime createdAt) {}

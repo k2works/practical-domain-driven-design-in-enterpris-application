@@ -7,9 +7,11 @@ import com.example.cargotracker.routing.domain.model.aggregates.RoutingCaseRepos
 import com.example.cargotracker.routing.domain.model.entities.RouteCandidate;
 import com.example.cargotracker.routing.domain.model.entities.RouteVersion;
 import com.example.cargotracker.routing.domain.model.valueobjects.ConstraintEvaluation;
+import com.example.cargotracker.routing.domain.model.valueobjects.DecisionRationale;
 import com.example.cargotracker.routing.domain.model.valueobjects.ExclusionReason;
 import com.example.cargotracker.routing.domain.model.valueobjects.ExclusionReasonCode;
 import com.example.cargotracker.routing.domain.model.valueobjects.Leg;
+import com.example.cargotracker.routing.domain.model.valueobjects.RouteConfirmation;
 import com.example.cargotracker.routing.domain.model.valueobjects.RouteSpecification;
 import com.example.cargotracker.routing.domain.model.valueobjects.RouteVersionStatus;
 import com.example.cargotracker.routing.domain.model.valueobjects.RoutingCaseId;
@@ -36,6 +38,7 @@ import org.springframework.transaction.annotation.Transactional;
 /**
  * 経路設計案件のリポジトリの MyBatis 実装（Bolt 17）。案件・経路版・候補・区間・除外理由の表を組み立てて集約にする。
  * 更新は楽観ロック（集約の版）で照合し、いまの経路版の状態を書き直し、候補・区間・除外理由は消して入れ直す（候補は追記専用ではない）。
+ * 確定した経路版は書き直さず、確定するときは状態と確定の記録だけを書く（Bolt 19。R-INV-06）。
  *
  * <p>除外理由の閾値は 1 つの列に文字で持つ。期限超過は希望到着期限（ISO-8601 の UTC の時点）、接続不足は港と必要最小接続時間
  * （例: {@code SGSIN PT8H}）、接続できないは港。経路方針の経由地は UN/LOCODE のカンマ区切り（見積りと同じ）。
@@ -76,11 +79,25 @@ public class MyBatisRoutingCaseRepository implements RoutingCaseRepository {
     @Override
     public void update(RoutingCase routingCase, UUID operatorId) {
         UUID id = routingCase.id().value();
-        if (mapper.touchRoutingCase(id, routingCase.aggregateVersion(), OffsetDateTime.now(clock)) == 0) {
+        Integer confirmedRouteVersionNo = routingCase
+                .confirmedRouteVersion()
+                .map(RouteVersion::routeVersionNo)
+                .orElse(null);
+        if (mapper.touchRoutingCase(
+                        id,
+                        routingCase.aggregateVersion(),
+                        OffsetDateTime.now(clock),
+                        operatorId,
+                        confirmedRouteVersionNo)
+                == 0) {
             throw new ConcurrentRoutingCaseUpdateException(routingCase.number(), routingCase.aggregateVersion());
         }
         RouteVersion version = routingCase.routeVersion();
-        mapper.updateRouteVersion(toRow(id, version, null));
+        // 確定した経路版は表でも書き直さない（R-INV-06）。確定するときは状態と確定の記録だけを書き、候補はそのまま残す
+        if (mapper.updateRouteVersion(toRow(id, version, null)) == 0
+                || version.status() == RouteVersionStatus.CONFIRMED) {
+            return;
+        }
         mapper.deleteExclusionReasons(id, version.routeVersionNo());
         mapper.deleteLegs(id, version.routeVersionNo());
         mapper.deleteCandidates(id, version.routeVersionNo());
@@ -109,7 +126,7 @@ public class MyBatisRoutingCaseRepository implements RoutingCaseRepository {
                         toUtc(row.arrivalDeadline()),
                         toUtc(row.requestedAt()),
                         RouteVersionStatus.valueOf(row.status()),
-                        null))
+                        row.quotationExpiresAt() == null ? null : toUtc(row.quotationExpiresAt())))
                 .toList();
     }
 
@@ -163,25 +180,12 @@ public class MyBatisRoutingCaseRepository implements RoutingCaseRepository {
 
     private RoutingCase toAggregate(RoutingCaseRow row) {
         UUID id = row.id();
-        RouteVersionRow versionRow = mapper.selectRouteVersions(id).getLast();
-        Map<Integer, List<CandidateLegRow>> legs = mapper.selectLegs(id).stream()
-                .filter(leg -> leg.routeVersionNo() == versionRow.routeVersionNo())
-                .collect(Collectors.groupingBy(CandidateLegRow::candidateNo));
-        Map<Integer, List<ExclusionReasonRow>> reasons = mapper.selectExclusionReasons(id).stream()
-                .filter(reason -> reason.routeVersionNo() == versionRow.routeVersionNo())
-                .collect(Collectors.groupingBy(ExclusionReasonRow::candidateNo));
-        List<RouteCandidate> candidates = mapper.selectCandidates(id).stream()
-                .filter(candidate -> candidate.routeVersionNo() == versionRow.routeVersionNo())
-                .map(candidate -> toCandidate(
-                        candidate,
-                        legs.getOrDefault(candidate.candidateNo(), List.of()),
-                        reasons.getOrDefault(candidate.candidateNo(), List.of())))
+        List<CandidateLegRow> legs = mapper.selectLegs(id);
+        List<ExclusionReasonRow> reasons = mapper.selectExclusionReasons(id);
+        List<RouteCandidateRow> candidates = mapper.selectCandidates(id);
+        List<RouteVersion> versions = mapper.selectRouteVersions(id).stream()
+                .map(versionRow -> toVersion(versionRow, candidates, legs, reasons))
                 .toList();
-        RouteVersion version = new RouteVersion(
-                versionRow.routeVersionNo(),
-                RouteVersionStatus.valueOf(versionRow.status()),
-                candidates,
-                versionRow.candidatesEvaluatedAt() == null ? null : toUtc(versionRow.candidatesEvaluatedAt()));
         return RoutingCase.reconstitute(
                 new RoutingCaseId(id),
                 RoutingCaseNumber.parse(row.caseNumber()),
@@ -200,10 +204,45 @@ public class MyBatisRoutingCaseRepository implements RoutingCaseRepository {
                         toUtc(row.arrivalDeadline()),
                         row.cargoCategory()),
                 toUtc(row.requestedAt()),
-                null,
-                null,
-                List.of(version),
+                row.quotationExpiresAt() == null ? null : toUtc(row.quotationExpiresAt()),
+                row.createdBy(),
+                versions,
                 row.version());
+    }
+
+    private static RouteVersion toVersion(
+            RouteVersionRow versionRow,
+            List<RouteCandidateRow> candidateRows,
+            List<CandidateLegRow> legRows,
+            List<ExclusionReasonRow> reasonRows) {
+        int versionNo = versionRow.routeVersionNo();
+        Map<Integer, List<CandidateLegRow>> legs = legRows.stream()
+                .filter(leg -> leg.routeVersionNo() == versionNo)
+                .collect(Collectors.groupingBy(CandidateLegRow::candidateNo));
+        Map<Integer, List<ExclusionReasonRow>> reasons = reasonRows.stream()
+                .filter(reason -> reason.routeVersionNo() == versionNo)
+                .collect(Collectors.groupingBy(ExclusionReasonRow::candidateNo));
+        List<RouteCandidate> candidates = candidateRows.stream()
+                .filter(candidate -> candidate.routeVersionNo() == versionNo)
+                .map(candidate -> toCandidate(
+                        candidate,
+                        legs.getOrDefault(candidate.candidateNo(), List.of()),
+                        reasons.getOrDefault(candidate.candidateNo(), List.of())))
+                .toList();
+        RouteConfirmation confirmation = versionRow.selectedCandidateNo() == null
+                ? null
+                : new RouteConfirmation(
+                        versionRow.selectedCandidateNo(),
+                        new DecisionRationale(versionRow.rationale()),
+                        versionRow.approvedBy(),
+                        toUtc(versionRow.approvedAt()));
+        return new RouteVersion(
+                versionNo,
+                RouteVersionStatus.valueOf(versionRow.status()),
+                candidates,
+                versionRow.candidatesEvaluatedAt() == null ? null : toUtc(versionRow.candidatesEvaluatedAt()),
+                versionRow.candidatesFound(),
+                confirmation);
     }
 
     private static RouteCandidate toCandidate(
@@ -277,6 +316,11 @@ public class MyBatisRoutingCaseRepository implements RoutingCaseRepository {
                 toOffset(specification.arrivalDeadline()),
                 specification.cargoCategory(),
                 toOffset(routingCase.requestedAt()),
+                routingCase
+                        .quotationExpiresAt()
+                        .map(MyBatisRoutingCaseRepository::toOffset)
+                        .orElse(null),
+                routingCase.requestedBy().orElse(null),
                 routingCase.aggregateVersion(),
                 now,
                 now);
@@ -289,6 +333,15 @@ public class MyBatisRoutingCaseRepository implements RoutingCaseRepository {
                 version.status().name(),
                 version.evaluatedAt()
                         .map(MyBatisRoutingCaseRepository::toOffset)
+                        .orElse(null),
+                version.candidatesFound(),
+                version.confirmation().map(RouteConfirmation::candidateNo).orElse(null),
+                version.confirmation()
+                        .map(confirmation -> confirmation.rationale().text())
+                        .orElse(null),
+                version.confirmation().map(RouteConfirmation::approvedBy).orElse(null),
+                version.confirmation()
+                        .map(confirmation -> toOffset(confirmation.approvedAt()))
                         .orElse(null),
                 createdAt);
     }
