@@ -7473,6 +7473,7 @@
 <li>CI/CD は GitHub Actions で構築する（AGENTS.md）。</li>
 <li>DB のマイグレーションはマイグレーションツールで版管理する（第 3 章 Database Migration）。前のバージョンのアプリと互換のある変更（追加 → 移行 → 削除の段階分け）にし、ローリングデプロイ中も動くようにする。</li>
 <li>本番へのデプロイは人の承認を必須にする（開発ガイド AI-DLC 版「本番環境に関わる操作はすべて確認必須」）。</li>
+<li>デモ環境（Heroku、ADR-013）は、develop の cargo-tracker CI の check・ui が緑になった後に、<code>deploy-demo</code> ジョブが自動で配備する（Bolt 16）。人の承認は要らない（ステージング・本番ではなく、非機能要件の対象にしない）。Heroku の API キーは GitHub の Environment <code>demo</code>（develop だけ）に置く。</li>
 </ul>
 <h2 id="infrastructure-as-code">Infrastructure as Code<a class="headerlink" href="#infrastructure-as-code" title="Permanent link">&para;</a></h2>
 <p>インフラは Terraform でコード化する（<code>operating-provision</code> スキルの前提）。クラウド事業者が決まった後に、環境ごとの構成を IaC で作る。手作業でコンソールから変更しない。</p>

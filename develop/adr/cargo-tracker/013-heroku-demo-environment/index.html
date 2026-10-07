@@ -7284,6 +7284,7 @@
 <p>日付: 2026-10-06</p>
 <h2 id="_1">ステータス<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h2>
 <p>承認（2026-10-06、human:kakimomokuri が Bolt 15 の終了報告の承認で採用した）</p>
+<p>改訂（2026-10-07、Bolt 16）: 配備を CI の <code>deploy-demo</code> ジョブからの自動配備に改めた（人の決定。Bolt 15 の確認ポイント 10「自動配備は作らない」を改める）。手元の <code>deploy:demo</code> は CI が使えないときの手段として残す。</p>
 <h2 id="_2">コンテキスト<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h2>
 <ul>
 <li>これまでの成果は、開発者の PC の <code>./gradlew bootRun</code> と録画でしか見せられない。業務責任者や荷主の代わりの関係者が、自分のブラウザで操作して確かめる場がない。</li>
@@ -7327,11 +7328,15 @@
 </tr>
 <tr>
 <td style="text-align: left;">配備</td>
-<td style="text-align: left;">Gulp のタスク <code>deploy:demo:*</code>（<code>ops/scripts/deploy_demo.js</code>）だけで操作する。<code>deploy:demo</code> は <code>docker buildx build</code>（Docker v2 の manifest）→ <code>docker push</code>（Container Registry）→ <code>heroku container:release</code></td>
+<td style="text-align: left;">主は CI。develop への push（アプリの変更・設計文書の変更で cargo-tracker CI が動いたとき）と develop での手動の実行で、check・ui が緑になった後に <code>deploy-demo</code> ジョブが <code>docker/build-push-action</code>（<code>--target demo</code>、Docker v2 の manifest）で Container Registry に push し、Heroku Platform API で release する。手元の Gulp のタスク <code>deploy:demo</code>（<code>ops/scripts/deploy_demo.js</code>。<code>docker buildx build</code> → <code>docker push</code> → <code>heroku container:release</code>）は、CI が使えないときの手段。CI の配備の実行中は手元で配備しない</td>
+</tr>
+<tr>
+<td style="text-align: left;">CI の認証</td>
+<td style="text-align: left;">Heroku の API キー（authorization、期限 1 年）を人が作り、GitHub の Environment <code>demo</code>（配備のブランチは develop だけ）の secret <code>HEROKU_API_KEY</code> に人が登録する。AI はキーの値を扱わない。期限の 1 か月前に更新し、漏えいの疑いがあれば失効させる</td>
 </tr>
 <tr>
 <td style="text-align: left;">配備のガード</td>
-<td style="text-align: left;">作業ツリーに変更がなく、develop にいて、HEAD が <code>origin/develop</code> に含まれ、アプリを最後に変えたコミットの develop での CI が緑のときだけ、ビルドと push を行う。イメージにコミットの SHA のラベルを付け、release の後に Config Vars の <code>DEMO_REVISION</code> に残す</td>
+<td style="text-align: left;">CI: <code>deploy-demo</code> は <code>needs: [check, ui]</code> で、develop の push と手動の実行のときだけ動き、Environment <code>demo</code> が develop の外からのキーの利用を拒む。手元: 作業ツリーに変更がなく、develop にいて、HEAD が <code>origin/develop</code> に含まれ、アプリを最後に変えたコミットの develop での CI が緑のときだけ、ビルドと push を行う。どちらも、イメージにコミットの SHA のラベルを付け、release の後に Config Vars の <code>DEMO_REVISION</code> に残す。配備の後に <code>/login</code> が 200 になることを確かめる（CI）</td>
 </tr>
 <tr>
 <td style="text-align: left;">データ</td>
@@ -7424,6 +7429,14 @@
 <td style="text-align: left;">デモ用の bootJar（<code>developmentOnly</code> を含む）を別に作る</td>
 <td style="text-align: left;">成果物の jar が 2 種類になり、本番の成果物に H2 を入れない約束が jar の選び方に頼る</td>
 </tr>
+<tr>
+<td style="text-align: left;">自動配備を作らず、手元の <code>deploy:demo</code> だけにする（Bolt 15 の確認ポイント 10）</td>
+<td style="text-align: left;">デモ環境が develop の最新から遅れ、配備が 1 人の手元に頼る。人の決定（2026-10-07）で CI からの自動配備にした</td>
+</tr>
+<tr>
+<td style="text-align: left;">CI で Heroku CLI を入れて <code>heroku container:push</code>・<code>release</code> を使う</td>
+<td style="text-align: left;">ランナー（Ubuntu 24.04）に Heroku CLI がなく、毎回の導入が要る。Platform API で足りる</td>
+</tr>
 </tbody>
 </table>
 <h2 id="_6">影響<a class="headerlink" href="#_6" title="Permanent link">&para;</a></h2>
@@ -7444,6 +7457,8 @@
 <li><code>-Xmx300m</code> は Heroku の dyno だけの値。dyno では JVM が 512 MB の上限を基準にせず、<code>-XX:MaxRAMPercentage</code> で R14 が出た。cgroup の上限が JVM に見える Fargate（W10）では <code>-XX:MaxRAMPercentage</code> を使い、この値を写さない。</li>
 <li>月 5 USD（Eco の定額）が人の Heroku のアカウントに付く。アカウント・費用・停止の手段が 1 人に集まる。</li>
 <li><code>DevLoginGuard</code> の守りは働かない。dev のプロファイルが公開の環境で動くことを、この ADR で認める。</li>
+<li>GitHub に長期の API キー（期限 1 年、<code>global</code> のスコープ）を置く。Heroku は OIDC に対応しないため、ADR-008 の「長期のアクセスキーを置かない」（AWS 向け）と同じ守り方はできない。範囲を Environment <code>demo</code> と develop に限り、期限と失効で補う。漏れると人の Heroku のアカウント全体を操作される。</li>
+<li>develop に push するたびに（アプリと設計文書の変更のとき）デモ環境が再起動し、データが初期状態に戻る。デモの最中は develop に push しない。</li>
 <li><code>runtime</code> のステージに Heroku の都合（<code>PORT</code>、<code>sh -c</code>、<code>EXTRA_CLASSPATH</code>）が残る。W10 で <code>runtime</code> を exec 形式にし、これらを <code>demo</code> に移す（Bolt 15 レビュー R-11）。</li>
 </ul>
 <h2 id="_9">コンプライアンス<a class="headerlink" href="#_9" title="Permanent link">&para;</a></h2>
@@ -7452,12 +7467,14 @@
 <li><code>runtime</code> のステージのイメージは H2 を含まない（dev で起動すると <code>org.h2.Driver</code> で失敗する）。bootJar の AT-06 は変えない。</li>
 <li>dev のプロファイルに H2 Console と devtools を入れない（公開の環境で動くため。入れると任意のコードの実行の経路になる）。</li>
 <li>ステージング・本番の手順書・IaC に、Heroku のデモ環境の設定を混ぜない。</li>
+<li><code>deploy-demo</code> ジョブは Pull Request とフォークでは動かない（<code>if</code> と Environment <code>demo</code> の develop の規則）。キー・Config Vars の値・API の応答の本文をワークフローのログに出さない（リポジトリは公開で、ログもだれでも読める）。</li>
 <li>手順書（<a href="../../../operation/cargo-tracker/heroku_demo_setup/">Heroku デモ環境セットアップ手順書</a>）に、本物のデータを入れない運用、週次の確かめ、止め方・消し方、ロールバックを書く。</li>
 </ul>
 <h2 id="_10">参考資料<a class="headerlink" href="#_10" title="Permanent link">&para;</a></h2>
 <ul>
 <li><a href="../../../development/cargo-tracker/bolt_15_plan/">Bolt 15 計画</a></li>
 <li><a href="../../../review/cargo-tracker/bolt_15_review_20261006/">Bolt 15 運用成果物レビュー</a></li>
+<li><a href="../../../development/cargo-tracker/bolt_16_plan/">Bolt 16 計画</a></li>
 <li><a href="../007-postgresql-mybatis-flyway/">ADR-007 開発環境は H2、本番は PostgreSQL 18</a></li>
 <li><a href="../008-aws-container-platform/">ADR-008 AWS の ECS Fargate・RDS・S3 で実行する</a></li>
 <li><a href="../../../design/cargo-tracker/architecture_infrastructure/">インフラストラクチャアーキテクチャ</a></li>

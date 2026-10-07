@@ -7403,7 +7403,7 @@
 </tr>
 <tr>
 <td style="text-align: left;">GitHub</td>
-<td style="text-align: left;">新しい技術 Issue「[技術] デモ環境への CI からの配備」を立てる（Milestone は Release 0.1、週は W3、Unit は横断、SP 0）</td>
+<td style="text-align: left;"><a href="https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/39">#39 [技術] デモ環境への CI からの配備</a>（Milestone は Release 0.1、週は W3、Unit は横断、SP 0）</td>
 </tr>
 <tr>
 <td style="text-align: left;">承認ゲート</td>
@@ -7549,11 +7549,12 @@
 <h2 id="_7">ステップ計画<a class="headerlink" href="#_7" title="Permanent link">&para;</a></h2>
 <p>各ステップの終わりに push し、CI を確かめる。</p>
 <ul class="task-list">
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>1. 決定を ADR-013 と手順書に反映する案を書き、技術 Issue を立てる</strong>（承認はステップ 3 の承認ゲートとまとめて受ける）</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>1. 決定を ADR-013 と手順書に反映する案を書き、技術 Issue を立てる</strong>（承認はステップ 3 の承認ゲートとまとめて受ける）</li>
 <li>ADR-013: 「配備」に CI の <code>deploy-demo</code> を足し、手元の <code>deploy:demo</code> は CI が使えないときの手段にする。ガードの約束を CI の仕組み（<code>needs</code>、Environment のブランチの規則）で守ることを書く。ネガティブに長期の API キーを足す。代替案に「自動配備を作らない（Bolt 15 の確認ポイント 10）」を足す</li>
 <li>手順書: 「3. 配備」に CI からの配備を先に書き、手元の配備を後に置く。初回のセットアップに Environment と secret の作り方、キーの更新（期限の前）と失効のさせ方を足す</li>
 <li>インフラストラクチャアーキテクチャの CI/CD の節に、デモ環境の配備を 1 行足す</li>
 <li>GitHub に技術 Issue を立て、Project のフィールドを設定する</li>
+<li>結果（09:58〜10:06 JST）: ADR-013 に改訂の注記、配備・CI の認証・配備のガードの行、代替案 2 つ、ネガティブ 2 つ、コンプライアンス 1 つを足した。手順書に CI からの配備（通常）と手元からの配備、Environment と secret の作り方・キーの更新と失効を足した。インフラストラクチャアーキテクチャの CI/CD の節に 1 行足した。<a href="https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/39">#39</a> を立て、Project に Release 0.1・W3・横断・SP 0・In Progress を設定した</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>2. <code>deploy-demo</code> ジョブを書き、静的に検査する</strong></li>
 <li>Red: ジョブを足す前に、ワークフローに <code>deploy-demo</code> がないことと、actionlint（<code>rhysd/actionlint</code> のコンテナ）が今のワークフローで通ることを記録する</li>
 <li><code>on</code> に <code>workflow_dispatch</code> を足す（<code>push</code> の <code>paths</code> は変えない。アプリの変更でだけ配備する）</li>
