@@ -4,7 +4,7 @@ title: "Bolt 19 計画 - 判断根拠を記録して経路を確定する（US-0
 description: "19 回目の Bolt の計画。経路設計者が S-06 で選んだ適合の候補について、判断根拠を記録し、確定の時刻で再検証して経路版を確定する（US-07 AC1）。根拠・権限の不足と、確定できない候補・状態を拒否する（AC2）。あわせて Bolt 17 レビューの D-64（経路版の一覧、版による競合、一覧の見積有効期限の順）と、Try T-52（ローカルの SonarQube のクラウドの上書きを起動のタスクに組み込む）を行う。"
 tags: [development,bolt-plan]
 status: draft
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-07T11:14:47Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-07T12:52:50Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-07T10:21:14Z }
 ---
@@ -245,7 +245,7 @@ S07 --> S06 : 戻る
     - `check` 緑（`test` 996 件）。CI（cargo-tracker CI #113）は check・ui・deploy-demo とも成功（Red の #112 は失敗）。途中で、Checkstyle の循環的複雑度（`RouteVersion` の検証を別のメソッドに分けた）、用語集のテスト（`RouteConfirmation` を用語集に「確定の記録」で足した）、SpotBugs の `CT_CONSTRUCTOR_THROW`（`RouteConfirmationRejected` を final にした）で落ち、直した
     - H1: `ConstraintEvaluator` は変えていない（0 か所）。確定の再検証は判定を確定の時刻で呼び直すだけで作れた
     - H2（途中）: Bolt 17 のテストで書き換えたのは 1 件（`RoutingCaseTest` の算出できない状態の例。経路版の一覧で組み立て、確定の記録を持たない確定は作れなくなったため旧版にした）と、テストのインメモリのリポジトリ 1 か所（経路版の一覧を写す）。ほかの Bolt 17 のテストは変えずに通った
-- [ ] **3. 表の列・リポジトリ・DE-05・入力ポート（統合テスト）** 【承認ゲート: データベース】
+- [x] **3. 表の列・リポジトリ・DE-05・入力ポート（統合テスト）** 【承認ゲート: データベース】
   - 業務ルール層の受入シナリオを先に書く（`features/routing/confirm_route.feature`、`@US-07 @US-07-AC1`・`AC2`）
     - 経路設計者が適合の候補を根拠を付けて確定すると、経路版が確定し、根拠・承認者・commit 時刻・参照情報版が記録される（AC1）
     - 根拠がない・経路設計者でないと確定されず、理由が示される（AC2）
@@ -254,6 +254,11 @@ S07 --> S06 : 戻る
   - `ConfirmRouteCommand`・入力ポート（確定の時刻は `Clock`。承認者は認証の主体と役割から作る）、リポジトリの確定の保存、`routing.domain.events`（`@NamedInterface("events")`。見積りの `quotation.domain.events` と同じ形）に `RouteConfirmed`
   - ApplicationModules の検証: `routing` の依存は増えない（H3）
   - 完了の判定: `check` が緑。push して CI を確かめる
+  - 結果（2026-10-07 21:47〜21:52 JST。Red `31cc382`、Green `3e36589`）
+    - Red: 業務ルール層の受入シナリオ（`features/routing/confirm_route.feature`。AC1 の確定と DE-05、AC2 の根拠の不足・経路設計者でない、除外の候補、出発済み、確定済み、古い版の競合の 7 本）と、PostgreSQL の統合テスト（DE-16 の写しの保存、確定の記録と確定した経路版の番号と操作者、確定した経路版の再更新、見つけた候補の数、確定の記録の CHECK 2 件、一覧の並び）を先に書いた。マイグレーション（`V20261007130000`）は本物を、入力ポートの確定（NotFound を返す）とリポジトリ（新しい列を書かない）は骨組みを足し、12 件の失敗を記録した（`31cc382`）。T-39 の記録: 受入シナリオの 7 本は、入力ポートの骨組みが NotFound を返すため本命のアサーション（結果の型）で落ちた。統合テストの 5 件のうち、確定の 2 件は骨組みのリポジトリが確定の記録を書かずに CHECK（`ck_route_version_confirmed`）に当たって落ち（本命）、3 件は値が残らない・並びが違うことで落ちた（本命）。CHECK の 2 件は最初から通った。途中で、Docker が止まって統合テストが一斉に落ちた（フックで起動し直した）。CHECK のテストを 1 本に 2 つの違反を書いたため、PostgreSQL のトランザクションが 1 つ目で中断されて 2 つ目が別の例外になった（テストの誤り。2 本に分けてからコミットした）
+    - Green: 入力ポート `confirm`（案件がなければ NotFound、版が違えば Conflict、集約の拒否は Rejected、保存の競合は Conflict、保存の後に DE-05 を発行）。リポジトリは、経路版の一覧を読み、更新で確定した経路版の番号と最終更新者を書き、`updateRouteVersion` は作成中・候補提示済みの行だけを書き直す（確定のときは状態と確定の記録だけを書き、候補は書き直さない）。一覧は最新の経路版の状態を、見積有効期限の近い順（NULL は後ろ）、依頼の古い順に返す。DE-16 の購読は見積有効期限と依頼者を写す。`db/dev-data` の `V20261007130900` で Bolt 18 のサンプルの案件に写しを入れた。`check` 緑（`test` 1,009 件）。DE-16 の写しのアサーションを購読のテストと開発用のサンプルのテストに足した
+    - 計画からの変更: `route_version.candidates_found`（見つけた候補の数）を足した（D-64 の「省いた候補の件数を常に示す」のため。ステップ 2 の報告で確認を求めていた列）。`CalculateCandidatesCommand` に操作者を足し（最終更新者のため）、リポジトリの `update` は操作者を受け取る。H3: `routing` の `allowedDependencies` は変えずに済み、ApplicationModules の検証は緑
+    - 承認ゲートの扱い（T-36）: 人の指示（`/goal Bolt19`）により、ステップ 2 の Green とこのステップのデータベースの承認ゲートで止まらずに進めた（AI の判断）。根拠は、列と CHECK が計画の確認ポイント 2・3・8・10 とデータモデルのとおりで、足した列（`candidates_found`）は D-64 の範囲であること。終了報告の承認の議題に置く
 - [ ] **4. S-07 と確定の操作、S-05・S-06 の変更（画面の層の Red → Green）** 【承認ゲート: 画面】
   - 画面の単体テストと画面の層の受入シナリオを先に書き、`uiTest` で失敗を記録する（T-21。`features/ui/confirm_route_ui.feature`、`@ui @US-07`。デモ項目に `@demo @demo-bolt-19/<名前>`）
     - 経路設計者が S-06 の適合の候補から S-07 を開き、根拠を入れて確認の領域で確定すると、S-06 に「経路を確定しました」と確定した候補が示される
