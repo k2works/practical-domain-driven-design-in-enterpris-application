@@ -20,6 +20,13 @@ const IMAGE = `registry.heroku.com/${APP}/web`;
 const CI_WORKFLOW = 'cargo-tracker-ci.yml';
 /** 配備してよいブランチ（ADR-013 の運用の約束） */
 const DEPLOY_BRANCH = 'develop';
+/** CI からの配備の API キー（Bolt 16、ADR-013、D-57） */
+const REPO = 'k2works/practical-domain-driven-design-in-enterpris-application';
+const CI_KEY_SECRET = 'HEROKU_API_KEY';
+const CI_KEY_ENVIRONMENT = 'demo';
+const CI_KEY_DESCRIPTION_PREFIX = 'GitHub Actions cargo-tracker demo deploy';
+const CI_KEY_EXPIRES_DAYS = 90;
+const CI_KEY_REMINDER_TITLE = '[運用] デモ環境の CI の API キーを更新する';
 /** イメージに付けるコミットの SHA のラベル（OCI の注釈） */
 const REVISION_LABEL = 'org.opencontainers.image.revision';
 
@@ -151,6 +158,27 @@ function webUrl() {
   return url;
 }
 
+/**
+ * CI からの配備のキー（説明が CI_KEY_DESCRIPTION_PREFIX で始まる authorization）を、新しい順に返す。
+ * access_token などの値は返さない
+ * @returns {{id: string, description: string, createdAt: string}[]}
+ */
+function ciKeys() {
+  return JSON.parse(capture('heroku authorizations --json'))
+    .filter((a) => (a.description || '').startsWith(CI_KEY_DESCRIPTION_PREFIX))
+    .map((a) => ({ id: a.id, description: a.description, createdAt: a.created_at }))
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+}
+
+/**
+ * 日付を YYYY-MM-DD で返す
+ * @param {Date} date
+ * @returns {string}
+ */
+function ymd(date) {
+  return date.toISOString().slice(0, 10);
+}
+
 // ============================================
 // Gulp タスク
 // ============================================
@@ -261,6 +289,65 @@ export default function (gulp) {
     done();
   });
 
+  // CI からの配備の API キーを作り、Environment demo の secret に登録する（Bolt 16 レビュー R-05、D-57）。
+  // キーの値は表示しない。空なら登録しない。期限の 2 週間前を期日にした Issue を立て、前の Issue は閉じる。
+  // 古いキーは、新しいキーで配備が通ったことを確かめてから deploy:demo:ci-key:revoke-old で失効させる
+  gulp.task('deploy:demo:ci-key', (done) => {
+    requireHerokuLogin();
+    const now = new Date();
+    const expires = new Date(now.getTime() + CI_KEY_EXPIRES_DAYS * 24 * 60 * 60 * 1000);
+    const remind = new Date(expires.getTime() - 14 * 24 * 60 * 60 * 1000);
+    const description = `${CI_KEY_DESCRIPTION_PREFIX} ${ymd(now)}`;
+    const token = capture(
+      `heroku authorizations:create -S -d "${description}" -e ${CI_KEY_EXPIRES_DAYS * 24 * 60 * 60}`,
+    );
+    if (token.length < 20) {
+      throw new Error(`キーが取れませんでした（長さ ${token.length}）。登録しません`);
+    }
+    execSync(`gh secret set ${CI_KEY_SECRET} --env ${CI_KEY_ENVIRONMENT} --repo ${REPO}`, {
+      input: token,
+      stdio: ['pipe', 'inherit', 'inherit'],
+    });
+    console.log(`キー「${description}」（長さ ${token.length}、期限 ${ymd(expires)}）を登録しました`);
+    run(`gh secret list --env ${CI_KEY_ENVIRONMENT} --repo ${REPO}`);
+
+    for (const number of capture(
+      `gh issue list --repo ${REPO} --state open --search "in:title ${CI_KEY_REMINDER_TITLE}" --json number --jq '.[].number'`,
+    )
+      .split('\n')
+      .filter(Boolean)) {
+      run(`gh issue close ${number} --repo ${REPO} --comment "キーを更新したため閉じます（${ymd(now)}）"`);
+    }
+    const body = [
+      `デモ環境の CI からの配備の API キー（${description}）の期限は ${ymd(expires)} です。`,
+      `${ymd(remind)} までに、リポジトリのルートで \`npx gulp deploy:demo:ci-key\` を実行して更新してください。`,
+      '手順: docs/operation/cargo-tracker/heroku_demo_setup.md の「CI からの配備の準備」',
+    ].join('\n\n');
+    run(
+      `gh issue create --repo ${REPO} --label technical --title "${CI_KEY_REMINDER_TITLE}（期日 ${ymd(remind)}）" --body "${body}"`,
+    );
+    console.log('次に、develop で CI を実行して配備が通ることを確かめてから、npx gulp deploy:demo:ci-key:revoke-old を実行してください');
+    done();
+  });
+
+  // 最も新しいもの以外の CI の配備のキーを失効させる。新しいキーで配備が通ったことを確かめてから実行する
+  gulp.task('deploy:demo:ci-key:revoke-old', (done) => {
+    requireHerokuLogin();
+    const [newest, ...old] = ciKeys();
+    if (!newest) {
+      throw new Error('CI の配備のキーがありません');
+    }
+    console.log(`残すキー: ${newest.description}（${newest.createdAt}）`);
+    if (old.length === 0) {
+      console.log('失効させる古いキーはありません');
+    }
+    for (const key of old) {
+      console.log(`失効させる: ${key.description}（${key.createdAt}、${key.id}）`);
+      run(`heroku authorizations:revoke ${key.id}`);
+    }
+    done();
+  });
+
   gulp.task('deploy:demo:help', (done) => {
     console.log(`
 Heroku デモ環境（${APP}、ADR-013）
@@ -276,6 +363,8 @@ Heroku デモ環境（${APP}、ADR-013）
   deploy:demo:open          ブラウザで開く
   deploy:demo:stop          dyno を 0 にして止める
   deploy:demo:start         dyno を 1 にして動かす
+  deploy:demo:ci-key        CI の配備の API キー（期限 ${CI_KEY_EXPIRES_DAYS} 日）を作って secret に登録し、更新の Issue を立てる
+  deploy:demo:ci-key:revoke-old  最も新しいもの以外の CI の配備のキーを失効させる（新しいキーで配備が通った後）
   deploy:demo:help          このヘルプを表示
 
 環境変数（任意）: DEMO_HEROKU_APP、DEMO_HEROKU_REGION、DEMO_HEROKU_DYNO_TYPE、DEMO_JAVA_TOOL_OPTIONS、DEMO_SKIP_GUARD

@@ -26,10 +26,11 @@ on:
 permissions:
   contents: read
 
-concurrency:
-  group: cargo-tracker-ci-${{ github.ref }}
-  # main ではコミットごとの結果を残すため、実行中のものを取り消さない
-  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+# 同じ ref の後の実行が来たら、check・ui を取り消す（ジョブ単位。main ではコミットごとの結果を残すため取り消さない）。
+# deploy-demo はワークフロー全体の取り消しの外に置き、release の途中で取り消されないようにする（Bolt 16 レビュー R-02）
+env:
+  HEROKU_APP: cargo-tracker-mono-demo
+  DEMO_URL: https://cargo-tracker-mono-demo-883bf0b92807.herokuapp.com
 
 defaults:
   run:
@@ -38,6 +39,9 @@ defaults:
 jobs:
   check:
     runs-on: ubuntu-latest
+    concurrency:
+      group: cargo-tracker-ci-${{ github.ref }}-check
+      cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
     timeout-minutes: 20
     steps:
       - name: リポジトリを取得する
@@ -101,6 +105,9 @@ jobs:
     # 画面の層の受入シナリオ（@ui）。Playwright の Chromium と axe-core で、画面の流れとアクセシビリティを確かめる（テスト戦略）
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    concurrency:
+      group: cargo-tracker-ci-${{ github.ref }}-ui
+      cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
     steps:
       - name: リポジトリを取得する
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -139,28 +146,50 @@ jobs:
 
   deploy-demo:
     # デモ環境（Heroku、ADR-013）へ配備する。check・ui が緑の develop のコミットだけを出す（手元の deploy:demo のガードと同じ約束）。
-    # API キーは Environment demo（配備のブランチは develop だけ）の secret に人が置く。キー・Config Vars の値・API の応答の本文はログに出さない
+    # API キーは Environment demo（配備のブランチは develop だけ）の secret に人が置く。キー・Config Vars の値・API の応答の本文はログに出さない。
+    # キーの境界は develop に push できるもの。このジョブの変更は人がレビューする（ADR-013、D-58）
     needs: [check, ui]
     if: github.ref == 'refs/heads/develop' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
     runs-on: ubuntu-latest
     timeout-minutes: 20
     environment:
       name: demo
-      url: https://cargo-tracker-mono-demo-883bf0b92807.herokuapp.com/
+      url: ${{ env.DEMO_URL }}/
+    # 配備どうしは並べて 1 つずつ動かし、途中で取り消さない（後から来たものが待ちを置き換える）
     concurrency:
       group: cargo-tracker-demo-deploy
       cancel-in-progress: false
-    env:
-      HEROKU_APP: cargo-tracker-mono-demo
-      DEMO_URL: https://cargo-tracker-mono-demo-883bf0b92807.herokuapp.com
     steps:
-      - name: リポジトリを取得する
+      - name: リポジトリを取得する（develop との比べに履歴を使う）
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          filter: blob:none
+
+      # 古い実行の再実行で古いコミットを出さない（R-06）。CI の対象のパスを最後に変えたコミットが、
+      # このコミットまでと develop の先頭までで同じときだけ配備する（先頭が文書だけのコミットでも手動の配備はできる）
+      - name: develop の最新の配備の対象か確かめる
+        id: latest
+        working-directory: .
+        run: |
+          set -euo pipefail
+          git fetch --quiet --filter=blob:none origin develop
+          paths=(apps/cargo-tracker docs/design/cargo-tracker .github/workflows/cargo-tracker-ci.yml)
+          mine=$(git log -1 --format=%H "${GITHUB_SHA}" -- "${paths[@]}")
+          latest=$(git log -1 --format=%H origin/develop -- "${paths[@]}")
+          if [ "$mine" = "$latest" ]; then
+            echo 'deploy=true' >> "$GITHUB_OUTPUT"
+          else
+            echo "::warning::develop には、より新しい配備の対象 ${latest:0:8} があります（このコミットまでは ${mine:0:8}）。配備を飛ばします"
+            echo 'deploy=false' >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Docker Buildx を用意する
+        if: steps.latest.outputs.deploy == 'true'
         uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
 
       - name: Heroku の Container Registry にログインする
+        if: steps.latest.outputs.deploy == 'true'
         uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
         with:
           registry: registry.heroku.com
@@ -169,6 +198,7 @@ jobs:
 
       # Heroku の Container Registry は Docker v2 の manifest だけを受けるため、attestation を外し OCI の media type を使わない（ADR-013）
       - name: デモのイメージをビルドして push する
+        if: steps.latest.outputs.deploy == 'true'
         id: build
         uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
         with:
@@ -179,46 +209,60 @@ jobs:
           sbom: false
           labels: org.opencontainers.image.revision=${{ github.sha }}
           outputs: type=image,name=registry.heroku.com/${{ env.HEROKU_APP }}/web,push=true,oci-mediatypes=false
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: type=gha,scope=demo
+          cache-to: type=gha,scope=demo,mode=max
 
-      # Heroku CLI はランナーにないため、Platform API で release する（formation の更新）。続けて動いているコミットを DEMO_REVISION に残す
-      - name: Heroku に release し、DEMO_REVISION を残す
+      # Heroku CLI はランナーにないため、Platform API で release する（formation の更新と DEMO_REVISION）。
+      # その後、自分の release（DEMO_REVISION が github.sha、release が succeeded、その版の web の dyno が up）と /login の 200 を待つ。
+      # 来なければ直前の release に戻してジョブを失敗にする（Eco は preboot がなく、起動に失敗すると落ちたままになるため。R-01・R-07・R-08）
+      - name: Heroku に release し、起動を確かめる（失敗したら直前の release に戻す）
+        if: steps.latest.outputs.deploy == 'true'
         env:
           HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
           IMAGE_ID: ${{ steps.build.outputs.imageid }}
           REVISION: ${{ github.sha }}
         run: |
           set -euo pipefail
-          api() {
-            curl --fail --silent --show-error --output /dev/null -X PATCH "https://api.heroku.com/apps/${HEROKU_APP}/$1" \
-              -H "Authorization: Bearer ${HEROKU_API_KEY}" -H "Content-Type: application/json" -H "Accept: $2" -d "$3"
+          # キーをコマンドの引数に置かない（R-16）。ヘッダーはランナーの一時のファイルから渡す
+          hdr="${RUNNER_TEMP}/heroku-auth"
+          ( umask 077; printf 'Authorization: Bearer %s\n' "${HEROKU_API_KEY}" > "$hdr" )
+          base="https://api.heroku.com/apps/${HEROKU_APP}"
+          v3='Accept: application/vnd.heroku+json; version=3'
+          get() { curl --fail --silent --show-error -H @"$hdr" -H "$v3" "${@:2}" "${base}/$1"; }
+          send() {
+            curl --fail --silent --show-error --output /dev/null -X "$1" -H @"$hdr" -H 'Content-Type: application/json' \
+              -H "$3" -d "$4" "${base}/$2"
           }
-          api formation 'application/vnd.heroku+json; version=3.docker-releases' \
+
+          previous=$(get releases -H 'Range: version ..; order=desc, max=1' | jq -r '.[0] | "\(.id) \(.version)"')
+          if [ -z "$previous" ] || [ "$previous" = 'null null' ]; then
+            echo '::error::直前の release が取れません（API キーとアプリ名を確かめてください）'
+            exit 1
+          fi
+          read -r previous_id previous_version <<< "$previous"
+          echo "直前の release: v${previous_version}"
+
+          send PATCH formation 'application/vnd.heroku+json; version=3.docker-releases' \
             "{\"updates\":[{\"type\":\"web\",\"docker_image\":\"${IMAGE_ID}\"}]}"
-          api config-vars 'application/vnd.heroku+json; version=3' "{\"DEMO_REVISION\":\"${REVISION}\"}"
+          send PATCH config-vars "$v3" "{\"DEMO_REVISION\":\"${REVISION}\"}"
           echo "release した: ${REVISION}"
 
-      # formation の更新はすぐ応答し、新しい dyno が上がるまでは古い dyno が応答する。最新の release の dyno が up になるのを待ってから確かめる
-      - name: 最新の release の dyno が up になり、ログインの画面が開けることを確かめる
-        env:
-          HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
-        run: |
-          set -euo pipefail
-          get() {
-            curl --fail --silent --show-error "https://api.heroku.com/apps/${HEROKU_APP}/$1" \
-              -H "Authorization: Bearer ${HEROKU_API_KEY}" -H 'Accept: application/vnd.heroku+json; version=3' "${@:2}"
-          }
-          latest=$(get releases -H 'Range: version ..; order=desc, max=1' | jq -r '.[0].version')
-          echo "最新の release: v${latest}"
+          state=none; code=000; status=none; version=none; revision=none
           for i in $(seq 1 36); do
-            state=$(get dynos | jq -r --argjson v "$latest" '[.[] | select(.type == "web" and .release.version == $v)][0].state // "none"')
-            code=$(curl --silent --output /dev/null --write-out '%{http_code}' "${DEMO_URL}/login" || true)
-            if [ "$state" = 'up' ] && [ "$code" = '200' ]; then
-              echo "v${latest} の dyno が up で、/login が 200（${i} 回目）"
+            sleep 5
+            # API と HTTP の一時の失敗は受け流し、時間切れで判定する
+            revision=$(get config-vars | jq -r '.DEMO_REVISION // "none"') || revision=error
+            read -r version status <<< "$(get releases -H 'Range: version ..; order=desc, max=1' | jq -r '.[0] | "\(.version) \(.status)"' || echo 'error error')"
+            if [ "$version" != 'error' ]; then
+              state=$(get dynos | jq -r --argjson v "$version" '[.[] | select(.type == "web" and .release.version == $v)][0].state // "none"') || state=error
+            fi
+            code=$(curl --silent --output /dev/null --write-out '%{http_code}' "${DEMO_URL}/login" || echo 000)
+            if [ "$revision" = "$REVISION" ] && [ "$status" = 'succeeded' ] && [ "$state" = 'up' ] && [ "$code" = '200' ]; then
+              echo "v${version} の dyno が up で、/login が 200（${i} 回目）"
               exit 0
             fi
-            sleep 5
           done
-          echo "::error::配備の後 180 秒たっても v${latest} の dyno が up にならないか、/login が 200 になりません（state=${state}、code=${code}。deploy:demo:logs で確かめてください）"
+
+          echo "::error::180 秒たっても起動を確かめられません（release=v${version} ${status}、dyno=${state}、/login=${code}、DEMO_REVISION が一致=$([ "$revision" = "$REVISION" ] && echo yes || echo no)）。v${previous_version} に戻します"
+          send POST releases "$v3" "{\"release\":\"${previous_id}\"}" || echo '::error::自動で戻せませんでした。手順書の「ロールバック」で戻してください'
           exit 1

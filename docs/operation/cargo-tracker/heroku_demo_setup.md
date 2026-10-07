@@ -144,21 +144,30 @@ gh api -X POST repos/k2works/practical-domain-driven-design-in-enterpris-applica
   -f name=develop -f type=branch
 ```
 
-Heroku の API キーは所有者が作り、そのまま secret に登録します。キーの値を画面やファイルに出さないでください。
+Heroku の API キー（期限 90 日）は所有者が Gulp のタスクで作り、そのまま secret に登録します。キーの値は表示されません。
 
 ```bash
-heroku authorizations:create -S -d "GitHub Actions cargo-tracker demo deploy" -e 31536000 \
-  | gh secret set HEROKU_API_KEY --env demo
-gh secret list --env demo        # 名前と更新日だけを確かめる
+npx gulp deploy:demo:ci-key              # キーを作って secret に登録し、更新の Issue を立てる
+gh workflow run cargo-tracker-ci.yml --ref develop   # 新しいキーで配備が通ることを確かめる
+npx gulp deploy:demo:ci-key:revoke-old   # 配備が通った後に、古いキーを失効させる
 ```
 
-上のコマンドは、行末の `\` で 1 つのコマンドにつながっています。チャットや端末から貼ると、折り返しの位置に改行が入って崩れることがあります（Bolt 16 で、`gh secret set` に値が渡らず空の secret が登録され、`deploy-demo` が `Password required` で失敗した）。貼る前に 1 つのコマンドになっていることを確かめ、`gh secret list --env demo` で更新日時が変わったことを確かめてください。
+`deploy:demo:ci-key` は次を行います。
+
+- キーの説明に作った日を入れる（`GitHub Actions cargo-tracker demo deploy YYYY-MM-DD`）
+- キーが空なら登録しない（Bolt 16 で、手で貼ったコマンドが折り返しで崩れ、空の secret が登録されて `deploy-demo` が `Password required` で失敗した）
+- `gh secret list --env demo` で更新日時を表示する
+- 期限の 2 週間前を期日にした Issue「[運用] デモ環境の CI の API キーを更新する（期日 YYYY-MM-DD）」を立て、前の Issue を閉じる
+
+`deploy:demo:ci-key:revoke-old` は、説明が `GitHub Actions cargo-tracker demo deploy` で始まるキーのうち、最も新しいもの以外を失効させます。
 
 | 場面 | すること |
 | :--- | :--- |
-| 期限の 1 か月前（作成から 11 か月） | 上のコマンドで新しいキーを作って登録し直し、`heroku authorizations` で古いキーの ID を確かめて `heroku authorizations:revoke <ID>` で失効させる |
-| 漏えいの疑い | すぐに `heroku authorizations:revoke <ID>` で失効させ、新しいキーを作って登録し直す |
-| デモ環境をやめる | `heroku authorizations:revoke <ID>` と `gh secret delete HEROKU_API_KEY --env demo` |
+| 更新の Issue の期日（期限の 2 週間前） | 上の 3 つのコマンドを順に実行し、Issue が閉じたことを確かめる |
+| 漏えいの疑い | `npx gulp deploy:demo:ci-key` で新しいキーにし、すぐに `npx gulp deploy:demo:ci-key:revoke-old`。Heroku の Dashboard の Activity と `heroku releases -a cargo-tracker-mono-demo` で、覚えのない release や collaborator の変化がないかを確かめる。ほかのアプリも同じアカウントにあるため、それらの Activity も確かめる |
+| デモ環境をやめる | `heroku authorizations` で説明が `GitHub Actions cargo-tracker demo deploy` のキーをすべて `heroku authorizations:revoke <ID>` で失効させ、`gh secret delete HEROKU_API_KEY --env demo` |
+
+キーの境界は「k2works のアカウントで develop に push するもの（人と AI のセッション）」です。develop に push できれば、ワークフローを書き換えてキーを使えます。`.github/workflows/` の変更は人がレビューしてください（ADR-013、D-58）。
 
 ## 3. 配備
 
@@ -175,8 +184,11 @@ npx gulp deploy:demo:status       # DEMO_REVISION が配備したコミットか
 - `deploy-demo` は `needs: [check, ui]` で、develop の push と手動の実行のときだけ動きます。Pull Request と develop の外では動きません。
 - `docker/build-push-action` で `demo` のステージを `linux/amd64`・Docker v2 の manifest（`oci-mediatypes=false`）で作り、ラベルに `github.sha` を付けて push します。
 - Heroku Platform API で formation を更新して release し、Config Vars の `DEMO_REVISION` を `github.sha` にします。
-- 配備の後、最新の release の web の dyno が up になり、`/login` が 200 になるまで最大 180 秒待ちます。来なければジョブを失敗にします。失敗しても、前の release のまま動き続けます。
-- 同じコミットを配備し直しても（手動の実行など）、イメージと `DEMO_REVISION` が変わらないため Heroku は新しい release を作らず、再起動もしません（Bolt 16 で確かめた）。
+- release の前に、CI の対象のパスを最後に変えたコミットが、配備するコミットまでと develop の先頭までで同じかを確かめます。違えば（古い実行を再実行したときなど）警告を出して配備を飛ばします。古いコミットに戻したいときは、develop で `git revert` して push します。
+- 配備のジョブはワークフローの取り消しの外にあり、release の途中で取り消されません。配備どうしは 1 つずつ動き、後から来たものが待ちを置き換えます。
+- 配備の後、`DEMO_REVISION` が配備したコミットで、最新の release が succeeded で、その版の web の dyno が up で、`/login` が 200 になるのを最大 180 秒待ちます。来なければ直前の release に Platform API で戻し、ジョブを失敗にします。Eco には preboot がなく、新しい dyno が起動に失敗すると古い dyno は止まっているため、戻さないとデモが落ちたままになります。戻せなかったときは「ロールバック」の手順で戻します。
+- ログイン・ビルド・push で失敗したときは、release の前なので、前の release のまま動き続けます。
+- 同じコミットを配備し直しても（手動の実行など）、イメージと `DEMO_REVISION` が変わらないため Heroku は新しい release を作らず、再起動もしません（Bolt 16 で確かめた）。これはビルドのキャッシュが当たって同じイメージが再現されるときの話で、キャッシュが追い出されていればイメージが変わり、再起動が起きます。
 - 所要時間は、配備のジョブが 30 秒〜3 分（キャッシュがあれば短い）。push から配備までは、check・ui を含めて 12〜15 分です。
 - develop に push するたびにデモ環境が再起動し、データが初期状態に戻ります。デモの最中は develop に push しないでください。
 - CI の配備の実行中は、手元で配備しないでください（どちらのコミットが出たか分からなくなります）。
@@ -323,7 +335,9 @@ heroku apps:destroy -a cargo-tracker-mono-demo --confirm cargo-tracker-mono-demo
 | `deploy:demo:build` が「CI が緑ではありません」で止まる | アプリの最後の変更の CI が終わっていないか、失敗している。`gh run list --workflow cargo-tracker-ci.yml --branch develop` で確かめ、緑になってから配備する。CI が後の push で取り消された（cancelled）ときは、CI を再実行する |
 | 「develop から配備してください」「HEAD が origin/develop にありません」で止まる | develop に切り替え、push して CI を待ってから配備する |
 | `deploy:demo:push` が「HEAD から作ったものではありません」で止まる | 手元のイメージが古い。`deploy:demo:build` を先に行う（`deploy:demo` なら順に行う） |
-| `deploy-demo` が「Heroku の Container Registry にログインする」で `Password required` | secret `HEROKU_API_KEY` が空。「CI からの配備の準備」のコマンドで登録し直し、失敗した実行を `gh run rerun <ID> --failed` で再実行する |
+| `deploy-demo` が「Heroku の Container Registry にログインする」で `Password required` か `unauthorized` | secret `HEROKU_API_KEY` が空か、キーの期限が切れた。`npx gulp deploy:demo:ci-key` で登録し直し、`gh workflow run cargo-tracker-ci.yml --ref develop` で配備し直す（失敗した実行の再実行は、より新しい配備の対象があると飛ばされる） |
+| `deploy-demo` が「より新しい配備の対象があります」の警告で配備を飛ばした | 古い実行を再実行した。新しい実行の結果を見る。最新を配備し直すときは `gh workflow run cargo-tracker-ci.yml --ref develop` |
+| `deploy-demo` が「起動を確かめられません」で失敗し、直前の release に戻した | 新しいイメージが起動しなかった。`deploy:demo:logs` で原因を確かめ、develop で直して push する |
 | `push に失敗しました` | `heroku container:login` をしていない（Registry の認証は Heroku CLI のログインとは別） |
 | 入れたデータが消えた | 仕様（H2 のインメモリ）。Heroku は dyno を 1 日 1 回以上再起動し、配備とスリープでも初期状態に戻る |
 | 大きな書類の添付が失敗する | Heroku の Router は 30 秒で request を打ち切る。デモでは小さなファイルを使う |
@@ -333,4 +347,5 @@ heroku apps:destroy -a cargo-tracker-mono-demo --confirm cargo-tracker-mono-demo
 - [ADR-013 デモ環境](../../adr/cargo-tracker/013-heroku-demo-environment.md)
 - [アプリケーション開発環境セットアップ手順書](application_development_setup.md)
 - [Bolt 15 計画](../../development/cargo-tracker/bolt_15_plan.md)
+- [Bolt 16 計画](../../development/cargo-tracker/bolt_16_plan.md)
 - [Heroku Container Registry & Runtime](https://devcenter.heroku.com/articles/container-registry-and-runtime)

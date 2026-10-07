@@ -44,8 +44,8 @@ verified:
 | JVM | `-Xmx300m -XX:+UseSerialGC -Xss512k -XX:ReservedCodeCacheSize=64m -XX:MaxMetaspaceSize=192m`（Config Vars の `JAVA_TOOL_OPTIONS`） |
 | イメージ | `apps/cargo-tracker/Dockerfile` の `demo` のステージ（下の「ビルドの構成」） |
 | 配備 | 主は CI。develop への push（アプリの変更・設計文書の変更で cargo-tracker CI が動いたとき）と develop での手動の実行で、check・ui が緑になった後に `deploy-demo` ジョブが `docker/build-push-action`（`--target demo`、Docker v2 の manifest）で Container Registry に push し、Heroku Platform API で release する。手元の Gulp のタスク `deploy:demo`（`ops/scripts/deploy_demo.js`。`docker buildx build` → `docker push` → `heroku container:release`）は、CI が使えないときの手段。CI の配備の実行中は手元で配備しない |
-| CI の認証 | Heroku の API キー（authorization、期限 1 年）を人が作り、GitHub の Environment `demo`（配備のブランチは develop だけ）の secret `HEROKU_API_KEY` に人が登録する。AI はキーの値を扱わない。期限の 1 か月前に更新し、漏えいの疑いがあれば失効させる |
-| 配備のガード | CI: `deploy-demo` は `needs: [check, ui]` で、develop の push と手動の実行のときだけ動き、Environment `demo` が develop の外からのキーの利用を拒む。手元: 作業ツリーに変更がなく、develop にいて、HEAD が `origin/develop` に含まれ、アプリを最後に変えたコミットの develop での CI が緑のときだけ、ビルドと push を行う。どちらも、イメージにコミットの SHA のラベルを付け、release の後に Config Vars の `DEMO_REVISION` に残す。配備の後に `/login` が 200 になることを確かめる（CI） |
+| CI の認証 | Heroku の API キー（authorization、`global`、期限 90 日）を人が `deploy:demo:ci-key` で作り、GitHub の Environment `demo`（配備のブランチは develop だけ）の secret `HEROKU_API_KEY` に登録する。AI はキーの値を扱わない。期限の 2 週間前を期日にした Issue で更新を知らせ、新しいキーで配備が通った後に `deploy:demo:ci-key:revoke-old` で古いキーを失効させる（D-57）。キーの境界は「k2works のアカウントで develop に push するもの（人と AI のセッション）」で、develop に push できればワークフローを書き換えてキーを使える。develop の直接 push の運用は変えず、`.github/workflows/` の変更は人がレビューする（D-58） |
+| 配備のガード | CI: `deploy-demo` は `needs: [check, ui]` で、develop の push と手動の実行のときだけ動き、Environment `demo` が develop の外からのキーの利用を拒む。CI の対象のパスを最後に変えたコミットが、配備するコミットまでと develop の先頭までで同じときだけ配備する（古い実行の再実行で古いコミットを出さない）。配備のジョブはワークフローの取り消しの外に置き、1 つずつ動かす。手元: 作業ツリーに変更がなく、develop にいて、HEAD が `origin/develop` に含まれ、アプリを最後に変えたコミットの develop での CI が緑のときだけ、ビルドと push を行う。どちらも、イメージにコミットの SHA のラベルを付け、release の後に Config Vars の `DEMO_REVISION` に残す。CI は配備の後、`DEMO_REVISION` が配備したコミットで、最新の release が succeeded で、その版の web の dyno が up で、`/login` が 200 になるのを最大 180 秒待ち、来なければ直前の release に戻してジョブを失敗にする |
 | データ | H2 のインメモリと dyno の `/tmp`。dyno の再起動（自動の再起動、配備、スリープ、Config Vars の変更）で `db/dev-data` の初期状態に戻る。永続化しない |
 | アクセス | 制限しない。URL は docs（手順書・README）に書き、だれでも開発用の利用者でログインできる公開のデモとする（D-54） |
 | 稼働 | 常時起動にし、30 分アクセスがなければ Eco のスリープに任せる（D-55） |
@@ -97,8 +97,9 @@ verified:
 - `-Xmx300m` は Heroku の dyno だけの値。dyno では JVM が 512 MB の上限を基準にせず、`-XX:MaxRAMPercentage` で R14 が出た。cgroup の上限が JVM に見える Fargate（W10）では `-XX:MaxRAMPercentage` を使い、この値を写さない。
 - 月 5 USD（Eco の定額）が人の Heroku のアカウントに付く。アカウント・費用・停止の手段が 1 人に集まる。
 - `DevLoginGuard` の守りは働かない。dev のプロファイルが公開の環境で動くことを、この ADR で認める。
-- GitHub に長期の API キー（期限 1 年、`global` のスコープ）を置く。Heroku は OIDC に対応しないため、ADR-008 の「長期のアクセスキーを置かない」（AWS 向け）と同じ守り方はできない。範囲を Environment `demo` と develop に限り、期限と失効で補う。漏れると人の Heroku のアカウント全体を操作される。
+- GitHub に API キー（期限 90 日、`global` のスコープ）を置く。Heroku は OIDC に対応しないため、ADR-008 の「長期のアクセスキーを置かない」（AWS 向け）と同じ守り方はできない。範囲を Environment `demo` と develop に限り、期限と失効で補う。漏れると人の Heroku のアカウント全体を操作される。デモのアプリだけの collaborator にした専用のアカウントのキーにすれば範囲を狭められる（W10 で検討する。D-57）。
 - develop に push するたびに（アプリと設計文書の変更のとき）デモ環境が再起動し、データが初期状態に戻る。デモの最中は develop に push しない。
+- release が 2 段（formation と Config Vars）で、配備のたびに再起動が 2 回起きる。`DEMO_REVISION` をイメージに入れて 1 回にするのは W10 で、配備のジョブを分け、イメージを 1 回だけビルドして昇格させる構造と合わせて行う（Bolt 16 レビュー R-02・R-11）。
 - `runtime` のステージに Heroku の都合（`PORT`、`sh -c`、`EXTRA_CLASSPATH`）が残る。W10 で `runtime` を exec 形式にし、これらを `demo` に移す（Bolt 15 レビュー R-11）。
 
 ## コンプライアンス

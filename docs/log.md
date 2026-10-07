@@ -1,6 +1,11 @@
 # Docs Update Log
 
 ## 2026-10-07
+* **Update**: [008-aws-container-platform](/adr/cargo-tracker/008-aws-container-platform.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [013-heroku-demo-environment](/adr/cargo-tracker/013-heroku-demo-environment.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [heroku_demo_setup](/operation/cargo-tracker/heroku_demo_setup.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [index](/operation/cargo-tracker/index.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_infrastructure](/design/cargo-tracker/architecture_infrastructure.md) を更新（anthropic/claude-opus-5-5）
 * **Verification**: [bolt_16_review_20261007](/review/cargo-tracker/bolt_16_review_20261007.md) を human:kakimomokuri が検証
 * **Creation**: [bolt_16_review_20261007](/review/cargo-tracker/bolt_16_review_20261007.md) を作成（anthropic/claude-opus-5-5）
 * **Verification**: [bolt_16_plan](/development/cargo-tracker/bolt_16_plan.md) を human:kakimomokuri が検証

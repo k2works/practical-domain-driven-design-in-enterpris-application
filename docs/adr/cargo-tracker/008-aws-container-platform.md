@@ -67,7 +67,7 @@ Multi-AZ の要否、バックアップの保持期間、Object Lock の保持�
 ## コンプライアンス
 
 - Terraform で、S3 のバージョニングと Object Lock、RDS の暗号化と自動バックアップが有効であることを確認する。
-- GitHub Actions に長期のアクセスキーを置かず、OIDC で認証していることを確認する。
+- GitHub Actions に長期のアクセスキーを置かず、OIDC で認証していることを確認する（AWS への認証。OIDC に対応しない Heroku のデモ環境の API キーは、ADR-013 の例外として Environment `demo` に置く）。
 
 ## 備考
 
