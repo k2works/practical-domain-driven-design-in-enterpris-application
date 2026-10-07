@@ -34,7 +34,7 @@ public class RouteCandidateFinder {
         Location destination = specification.destination();
         List<List<Leg>> candidates = new ArrayList<>();
         for (Voyage first : voyages) {
-            for (Leg leg : legsFrom(first, origin, judgedAt, false)) {
+            for (Leg leg : legsFrom(first, origin, judgedAt, false, destination)) {
                 if (leg.discharge().equals(destination)) {
                     candidates.add(List.of(leg));
                 } else if (!leg.discharge().equals(origin)) {
@@ -42,7 +42,7 @@ public class RouteCandidateFinder {
                         if (second.voyageNumber().equals(first.voyageNumber())) {
                             continue;
                         }
-                        legsFrom(second, leg.discharge(), leg.arrivalAt(), true).stream()
+                        legsFrom(second, leg.discharge(), leg.arrivalAt(), true, null).stream()
                                 .filter(next -> next.discharge().equals(destination))
                                 .forEach(next -> candidates.add(List.of(leg, next)));
                     }
@@ -55,9 +55,11 @@ public class RouteCandidateFinder {
 
     /**
      * 航海が港を出発する寄港から、後の各寄港までの区間。出発地の区間は判定時刻より後（同時刻は出発済みとみなす）に、
-     * 積替えの区間は前の区間の到着予定以後（同時刻を含む）に出発するものだけを取る。
+     * 積替えの区間は前の区間の到着予定以後（同時刻を含む）に出発するものだけを取る。途中で {@code passing}（目的地）に寄る区間は
+     * 取らない（目的地を通り過ぎてから積み替えて戻る候補は、直行に劣り比較を惑わせる。Bolt 17 レビュー D-60）。
      */
-    private static List<Leg> legsFrom(Voyage voyage, Location port, UtcInstant after, boolean inclusive) {
+    private static List<Leg> legsFrom(
+            Voyage voyage, Location port, UtcInstant after, boolean inclusive, Location passing) {
         List<PortCall> calls = voyage.portCalls();
         List<Leg> legs = new ArrayList<>();
         for (int i = 0; i < calls.size(); i++) {
@@ -65,6 +67,9 @@ public class RouteCandidateFinder {
             if (load.port().equals(port) && departsAfter(load, after, inclusive)) {
                 for (int j = i + 1; j < calls.size(); j++) {
                     PortCall discharge = calls.get(j);
+                    if (passing != null && calls.get(j - 1).port().equals(passing) && j - 1 > i) {
+                        break;
+                    }
                     if (discharge.arrivalAt() != null && !discharge.port().equals(port)) {
                         legs.add(new Leg(
                                 voyage.voyageNumber(),

@@ -36,12 +36,13 @@
     <th:block th:if="${routingCase.calculated()}">
         <h2>経路候補</h2>
         <p>適合を先に、到着予定の早い順に示します。期限と同時刻・必要最小接続時間と同値は適合です。</p>
-        <p th:if="${#lists.isEmpty(routingCase.candidates())}">条件に合う航海が見つかりませんでした。航海の情報を確かめてください。</p>
+        <p th:if="${#lists.isEmpty(routingCase.candidates())}">条件に合う航海が見つかりませんでした。航海の情報の確認をデータ責任者に依頼し、届いたら再算出してください。</p>
+        <p th:if="${!#lists.isEmpty(routingCase.candidates()) and !routingCase.candidates()[0].conforming()}">適合する候補がありません。除外の理由を確かめ、航海の情報や接続時間規則の確認をデータ責任者に依頼してください。</p>
         <article class="route-candidate card mb-3" th:each="candidate : ${routingCase.candidates()}"
                  th:attr="aria-labelledby=|candidate-${candidate.candidateNo()}|">
             <div class="card-body">
                 <h3 class="h5" th:id="|candidate-${candidate.candidateNo()}|">
-                    <span th:text="|候補 ${candidate.candidateNo()}|">候補 1</span>
+                    <span th:text="|候補 ${candidate.candidateNo()}（${candidate.routeSummary()}）|">候補 1（直行）</span>
                     <span th:class="${candidate.conforming()} ? 'badge text-bg-success' : 'badge text-bg-secondary'"
                           th:text="${candidate.conforming()} ? '✓ 適合' : '✕ 除外'">✓ 適合</span>
                 </h3>
@@ -50,7 +51,7 @@
                     <dd class="col-sm-9" th:text="${candidate.estimatedArrival()}">2026-10-30 18:00 Asia/Tokyo（UTC+09:00）（UTC 2026-10-30 09:00）</dd>
                     <dt class="col-sm-3">接続余裕</dt>
                     <dd class="col-sm-9" th:text="${candidate.connectionSlack()}">余裕 4 時間</dd>
-                    <dt class="col-sm-3">情報の取得時刻</dt>
+                    <dt class="col-sm-3">最も古い情報の取得時刻</dt>
                     <dd class="col-sm-9" th:text="${candidate.infoAcquiredAt()}">2026-10-01 15:10 Asia/Tokyo（UTC+09:00）（UTC 2026-10-01 06:10）</dd>
                 </dl>
                 <h4 class="h6">区間</h4>

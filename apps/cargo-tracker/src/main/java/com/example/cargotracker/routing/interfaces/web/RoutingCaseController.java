@@ -30,7 +30,7 @@ public class RoutingCaseController {
     private static final String REDIRECT = "redirect:/staff/routing-cases/";
     private static final String RESULT = "result";
     private static final String PROBLEM = "problem";
-    private static final String CONFLICT_MESSAGE = "ほかの経路設計者が先に候補を算出しました。最新の候補を確かめてください";
+    private static final String CONFLICT_MESSAGE = "ほかの経路設計者が先に候補を算出しました。最新の候補を確かめてください。";
 
     private final RoutingCaseQueryService queryService;
     private final RoutingCaseCommandService commandService;
@@ -84,7 +84,7 @@ public class RoutingCaseController {
         String result = "候補を %d 件算出しました（適合 %d 件、除外 %d 件）"
                 .formatted(calculation.kept(), calculation.conforming(), calculation.excluded());
         return calculation.omitted() > 0
-                ? result + "。ほかに %d 件の候補があります（到着予定の遅いものを示していません）".formatted(calculation.omitted())
+                ? result + "。ほかに %d 件の候補があります（適合を先に、到着予定の早い順に 20 件まで示しています）".formatted(calculation.omitted())
                 : result;
     }
 

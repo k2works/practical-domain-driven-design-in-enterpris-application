@@ -60,6 +60,7 @@ final class RoutingCaseViews {
             int candidateNo,
             boolean conforming,
             String judgement,
+            String routeSummary,
             List<LegView> legs,
             String estimatedArrival,
             String connectionSlack,
@@ -96,13 +97,17 @@ final class RoutingCaseViews {
                 dateTime(routingCase.requestedAt()),
                 version.status() != RouteVersionStatus.DRAFT,
                 version.evaluatedAt().map(RoutingCaseViews::dateTime).orElse(null),
-                version.candidates().stream().map(RoutingCaseViews::candidate).toList());
+                version.candidates().stream()
+                        .map(candidate ->
+                                candidate(candidate, routingCase.specification().arrivalDeadline()))
+                        .toList());
     }
 
     static String status(RouteVersionStatus status) {
         return switch (status) {
             case DRAFT -> "候補の算出待ち";
-            case CANDIDATES_PRESENTED -> "候補提示済み";
+            // 荷主に提示したと誤読されないよう、確定待ちと示す（Bolt 17 レビュー D-61）
+            case CANDIDATES_PRESENTED -> "候補算出済み（確定待ち）";
             case EXPERT_REVIEW -> "専門判断待ち";
             case CONFIRMED -> "確定";
             case REDESIGN_REQUIRED -> "再設計要";
@@ -110,12 +115,13 @@ final class RoutingCaseViews {
         };
     }
 
-    private static CandidateView candidate(RouteCandidate candidate) {
+    private static CandidateView candidate(RouteCandidate candidate, UtcInstant deadline) {
         boolean conforming = candidate.evaluation().conforming();
         return new CandidateView(
                 candidate.candidateNo(),
                 conforming,
                 conforming ? "適合" : "除外",
+                routeSummary(candidate.legs()),
                 candidate.legs().stream()
                         .map(leg -> new LegView(
                                 leg.voyageNumber(),
@@ -129,24 +135,42 @@ final class RoutingCaseViews {
                         .connectionSlack()
                         .map(RoutingCaseViews::slack)
                         .orElse("直行（積替えなし）"),
-                reasons(candidate),
+                reasons(candidate, deadline),
                 dateTime(candidate.oldestInfoAcquiredAt()));
     }
 
-    private static List<String> reasons(RouteCandidate candidate) {
+    /** 経由の要約（直行、または積替えの港）。 */
+    private static String routeSummary(List<Leg> legs) {
+        if (legs.size() == 1) {
+            return "直行";
+        }
+        return legs.subList(0, legs.size() - 1).stream()
+                        .map(leg -> leg.discharge().unLocode())
+                        .collect(Collectors.joining("・"))
+                + " 積替え";
+    }
+
+    /**
+     * 判定の根拠（適合）か除外の理由の文言。適合は期限までの余裕と、使った航海の採用情報版を示す。
+     * 除外は不適合となった時刻・閾値・参照情報版と、接続の理由では実際の接続時間を示す（R-INV-02。Bolt 17 レビュー D-61）。
+     */
+    private static List<String> reasons(RouteCandidate candidate, UtcInstant deadline) {
         List<String> texts = new ArrayList<>();
         for (ExclusionReason reason : candidate.evaluation().reasons()) {
-            texts.add(reason(reason));
+            texts.add(reason(reason, candidate.legs()));
         }
         if (texts.isEmpty()) {
-            Leg last = candidate.legs().getLast();
-            texts.add("期限と接続時間を満たす" + INFO_VERSION + last.infoVersion());
+            texts.add("期限まで "
+                    + duration(Duration.between(
+                            candidate.evaluation().estimatedArrivalAt().instant(), deadline.instant()))
+                    + "（期限と接続時間を満たす）。参照情報版 "
+                    + candidate.legs().stream().map(Leg::infoVersion).distinct().collect(Collectors.joining("、")));
         }
         return texts;
     }
 
     /** 除外の理由の文言。不適合となった時刻・閾値・参照情報版を示す（R-INV-02）。 */
-    static String reason(ExclusionReason reason) {
+    static String reason(ExclusionReason reason, List<Leg> legs) {
         return switch (reason.code()) {
             case DEADLINE_EXCEEDED ->
                 "期限超過 "
@@ -155,15 +179,29 @@ final class RoutingCaseViews {
                         + "（到着予定 " + dateTime(reason.violatedAt()) + "、期限 " + dateTime(reason.deadline()) + "）"
                         + INFO_VERSION + reason.infoVersion();
             case CONNECTION_TOO_SHORT ->
-                "接続不足（必要 " + duration(reason.requiredConnection()) + "、"
-                        + reason.port().unLocode() + " の規則）。次の出発 " + dateTime(reason.violatedAt()) + INFO_VERSION
-                        + reason.infoVersion();
+                "接続不足（" + reason.port().unLocode() + " で接続 " + connection(reason, legs) + "、必要 "
+                        + duration(reason.requiredConnection()) + "、"
+                        + reason.port().unLocode()
+                        + " の規則）。次の出発 " + dateTime(reason.violatedAt()) + INFO_VERSION + reason.infoVersion();
             case NOT_CONNECTABLE ->
-                "接続できない（" + reason.port().unLocode() + " の接続時間規則がない）。次の出発 " + dateTime(reason.violatedAt())
+                "接続を判定できない（" + reason.port().unLocode() + " の接続時間規則が未登録。接続 "
+                        + connection(reason, legs) + "）。次の出発 " + dateTime(reason.violatedAt())
                         + INFO_VERSION + reason.infoVersion();
             case CARGO_NOT_SUPPORTED -> "貨物種別に対応しない" + INFO_VERSION + reason.infoVersion();
             case INFO_INSUFFICIENT -> "情報不足" + INFO_VERSION + reason.infoVersion();
         };
+    }
+
+    /** 接続の理由の実際の接続時間（前の区間の到着予定から、理由の時刻に出発する区間まで）。 */
+    private static String connection(ExclusionReason reason, List<Leg> legs) {
+        for (int i = 1; i < legs.size(); i++) {
+            if (legs.get(i).departureAt().equals(reason.violatedAt())) {
+                return duration(Duration.between(
+                        legs.get(i - 1).arrivalAt().instant(),
+                        legs.get(i).departureAt().instant()));
+            }
+        }
+        return "不明";
     }
 
     /** 接続余裕。負なら不足として示す。 */
