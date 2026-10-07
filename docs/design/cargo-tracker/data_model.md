@@ -4,7 +4,7 @@ title: "cargo-tracker データモデル"
 description: "cargo-tracker の概念データモデル、スキーマ分割、命名と型の規約（H2 と PostgreSQL の共通部分）、コンテキストごとの論理データモデルと ER 図、版・追記専用・冪等性・イベント配信の表現。"
 tags: [design, data-model]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-07T03:41:38Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-07T04:27:45Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T07:48:17Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:01:37Z }
@@ -487,6 +487,7 @@ Bolt 17（US-06 AC1〜AC3）で作る範囲（[Bolt 17 計画](../../development
 
 - `routing` スキーマに、`routing_case`・`route_version`・`route_candidate`・`candidate_leg`・`exclusion_reason`・`voyage`・`port_call`・`connection_rule` と、案件番号の採番の `routing_case_number_counter`（年ごとに 1 行。`quotation.transport_request_number_counter` と同じ形）を作る。`route_version` の判断・承認の列（`rationale`、`decided_by`、`approved_by`、`approved_at`、`selected_candidate_no`）、再設計の列（`previous_route_version_no`、`redesign_cause`）と `referenced_info_version` は、使う Bolt（US-07・US-08）で足す。
 - `routing_case.case_number` は案件番号（`RC-年-連番`。UK）。画面と URL には案件番号だけを出す（D-4）。
+- 実装で足した列（Bolt 17 のステップ 3）: `routing_case.transport_request_number`（業務番号の写し。S-05 で見積依頼を示す）、`routing_case.requested_at`（詳細経路設計の依頼時刻。S-05 の並びと案件番号の年）、`route_version.candidates_evaluated_at`（候補の判定時刻。候補が 0 件でも算出したことを残す）、`candidate_leg.info_version`・`info_acquired_at`（区間を取った航海の採用情報版と取得時刻。理由の参照情報版と情報鮮度に使う）。`routing_case` の `created_by`・`updated_by` は、操作者を残す Bolt（US-07 の確定）で足す。`route_candidate.candidate_no` は 1〜20（候補の上限）、`voyage.source_kind` は出典の種類の 4 値を CHECK で守る。
 - `route_candidate.min_connection_slack_minutes` は候補の接続余裕（接続時間 − 必要最小接続時間の最小。分）。直行は NULL。`info_insufficient` は AC4（W6）まで常に false。
 - 候補を再算出したら、経路版の候補・区間・除外理由を消して入れ直す（候補は追記専用ではない）。
 - 経路設計の表と見積りの表の間に外部キーは張らない（スキーマの所有。ADR-001）。輸送要求・見積りの ID は、見積りの公開 API とイベントから得た値の写し。

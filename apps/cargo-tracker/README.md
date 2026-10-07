@@ -20,8 +20,9 @@ A 社国際貨物輸送管理システム。境界づけられたコンテキス
 | 荷主担当者 | `shipper@dev.cargo-tracker.example` | `dev-password-shipper` | 荷主 A（開発） |
 | 荷主担当者（別の企業） | `shipper-b@dev.cargo-tracker.example` | `dev-password-shipper` | 荷主 B（開発） |
 | 営業担当者 | `sales@dev.cargo-tracker.example` | `dev-password-staff` | A 社（開発） |
+| 経路設計者 | `route-designer@dev.cargo-tracker.example` | `dev-password-staff` | A 社（開発） |
 
-営業の画面を使うときは、ヘッダーの「ログアウト」の後に「営業担当者でログイン（sales@dev.cargo-tracker.example）」を押してください。H2 のコンソールは、ログインと CSRF の守りの外に置くことになるため Bolt 14 で外しました。
+営業の画面を使うときは、ヘッダーの「ログアウト」の後に「営業担当者でログイン（sales@dev.cargo-tracker.example）」を押してください。経路設計の画面（案件一覧・経路候補の比較）は「経路設計者でログイン（route-designer@dev.cargo-tracker.example）」で開きます。開発環境には、東京 → ロッテルダムの架空の航海とシンガポールの接続時間規則（8 時間）が入っています（Bolt 17）。H2 のコンソールは、ログインと CSRF の守りの外に置くことになるため Bolt 14 で外しました。
 
 ## デモ環境（Heroku）
 
