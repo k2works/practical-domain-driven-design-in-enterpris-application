@@ -7559,12 +7559,13 @@
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> 1. 仮の航海データ（<code>V20261007100900</code>）を基準からの相対の日時に書き直す。dev の H2 は毎回空から作るため、適用済みのマイグレーションの書き換えでも検証の不一致は起きない</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> 2. サンプルの業務データの起動のテスト（dev プロファイル）を先に書き、失敗を記録する。続いて <code>db/dev-data</code> に業務データのシードを足す（輸送要求と版、審査記録、見積りと料金明細、KPI 計測記録、経路設計の案件・経路版・候補・区間・除外理由、採番の行）</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> 3. <code>check</code> と <code>uiTest</code> を回し、README の開発用データの節、ADR-013 の「データ」の行、開発の索引とリリース計画を更新して push する</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> 4. デモ環境の配備の後、配備の確かめ（CI の deploy-demo のスモーク）が通ることを確かめる</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> 4. デモ環境の配備の後、配備の確かめ（CI の deploy-demo のスモーク）が通ることを確かめる</li>
 </ul>
 <h3 id="_4">結果<a class="headerlink" href="#_4" title="Permanent link">&para;</a></h3>
 <ul>
-<li>ステップ 1・2（2026-10-07 14:40〜14:55 JST）: 仮の航海データを基準からの相対にし、<code>DevSampleDataSmokeTest</code>（荷主ごとの一覧、営業の受付一覧の各状態、経路設計の案件一覧、算出済みの候補と算出し直した結果の一致、番号の続き）を先に書いた。5 件の失敗を記録した（<code>a97845d</code>。T-39: 算出済みの候補の 1 件は案件がないための <code>NoSuchElementException</code> で前提で落ち、ほかの 4 件は本命のアサーションで落ちた。既存の H2 のスモークは相対の日時の航海データで通った）。続いて <code>V20261007120900__seed_dev_sample_requests.sql</code> を足し、緑にした</li>
+<li>ステップ 1・2（2026-10-07 18:20〜18:35 JST。Red <code>a97845d</code>、Green <code>f0a84aa</code>）: 仮の航海データを基準からの相対にし、<code>DevSampleDataSmokeTest</code>（荷主ごとの一覧、営業の受付一覧の各状態、経路設計の案件一覧、算出済みの候補と算出し直した結果の一致、番号の続き）を先に書いた。5 件の失敗を記録した（<code>a97845d</code>。T-39: 算出済みの候補の 1 件は案件がないための <code>NoSuchElementException</code> で前提で落ち、ほかの 4 件は本命のアサーションで落ちた。既存の H2 のスモークは相対の日時の航海データで通った）。続いて <code>V20261007120900__seed_dev_sample_requests.sql</code> を足し、緑にした</li>
 <li>ステップ 3: <code>check</code> 緑（<code>test</code> 972 件）、<code>uiTest</code> 緑（51 本）。README・ADR-013・開発の索引・リリース計画を更新した</li>
+<li>ステップ 4: push（<code>f0a84aa</code>）の CI #110 が緑で、<code>deploy-demo</code> のジョブ（配備と配備の後のスモーク）も通った。この作業の環境からはデモ環境へ HTTP で届かない（プロキシで遮られる）ため、画面での確認は人に依頼する（Bolt 17 終了報告の議題 7）</li>
 </ul>
 <h2 id="2026-10-07-humankakimomokuri">確認ポイント（2026-10-07 に human:kakimomokuri が承認）<a class="headerlink" href="#2026-10-07-humankakimomokuri" title="Permanent link">&para;</a></h2>
 <table>
@@ -7592,7 +7593,7 @@
 <h2 id="_5">完了条件<a class="headerlink" href="#_5" title="Permanent link">&para;</a></h2>
 <ul class="task-list">
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> dev プロファイルの起動のテストで、各役割の照会にサンプルが出て、RC-2026-0902 の候補が判定の時刻で算出し直した結果と一致する</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <code>check</code> と <code>uiTest</code> が緑。push して CI とデモ環境の配備を確かめた</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <code>check</code> と <code>uiTest</code> が緑。push して CI とデモ環境の配備を確かめた</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> README と ADR-013 にサンプルの業務データを書いた</li>
 </ul>
 <h2 id="_6">更新履歴<a class="headerlink" href="#_6" title="Permanent link">&para;</a></h2>
