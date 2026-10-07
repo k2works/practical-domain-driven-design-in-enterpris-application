@@ -336,6 +336,7 @@ heroku apps:destroy -a cargo-tracker-mono-demo --confirm cargo-tracker-mono-demo
 | 「develop から配備してください」「HEAD が origin/develop にありません」で止まる | develop に切り替え、push して CI を待ってから配備する |
 | `deploy:demo:push` が「HEAD から作ったものではありません」で止まる | 手元のイメージが古い。`deploy:demo:build` を先に行う（`deploy:demo` なら順に行う） |
 | `deploy-demo` が「Heroku の Container Registry にログインする」で `Password required` か `unauthorized` | secret `HEROKU_API_KEY` が空か、キーの期限が切れた。`npx gulp deploy:demo:ci-key` で登録し直し、`gh workflow run cargo-tracker-ci.yml --ref develop` で配備し直す（失敗した実行の再実行は、より新しい配備の対象があると飛ばされる） |
+| 古い実行を再実行したら、古いコミットが配備された | 再実行は、その実行のときのワークフローの定義で動く。最新かを確かめる処理は `213e43a6`（2026-10-07）から入ったので、それより前の実行（`70bb65ea` まで）は再実行しない。develop で `git revert` して push するか、`gh workflow run cargo-tracker-ci.yml --ref develop` で最新を配備し直す |
 | `deploy-demo` が「より新しい配備の対象があります」の警告で配備を飛ばした | 古い実行を再実行した。新しい実行の結果を見る。最新を配備し直すときは `gh workflow run cargo-tracker-ci.yml --ref develop` |
 | `deploy-demo` が「起動を確かめられません」で失敗し、直前の release に戻した | 新しいイメージが起動しなかった。`deploy:demo:logs` で原因を確かめ、develop で直して push する |
 | `push に失敗しました` | `heroku container:login` をしていない（Registry の認証は Heroku CLI のログインとは別） |

@@ -41,7 +41,7 @@ Bolt がイテレーションに当たります。ふりかえりは各 Bolt の
 | 13 | [TOTP と Spring Security 7 の多要素認証のスパイク（TS-01）](bolt_13_plan.md) | [終了報告](bolt_13_report.md) | W2 | 完了 |
 | 14 | [password によるログインと session（US-18 の一部）](bolt_14_plan.md) | [終了報告](bolt_14_report.md) | W2 | 完了 |
 | 15 | [dev プロファイルによる Heroku のデモ環境（技術タスク）](bolt_15_plan.md) | [終了報告](bolt_15_report.md) | W3 | 完了 |
-| 16 | [デモ環境への CI からの配備（技術タスク）](bolt_16_plan.md) | — | W3 | 進行中 |
+| 16 | [デモ環境への CI からの配備（技術タスク）](bolt_16_plan.md) | [終了報告](bolt_16_report.md) | W3 | 完了（承認待ち） |
 
 Bolt を始めるときに行を追加します。
 
