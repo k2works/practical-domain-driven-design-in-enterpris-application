@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="ja" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/staff :: layout(~{::title}, ~{::main}, ~{}, 'routing-cases')}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>経路設計案件一覧 - cargo-tracker</title>
+</head>
+<body>
+<main>
+    <h1>経路設計案件一覧</h1>
+    <!-- S-05（Bolt 17）。荷主が詳細経路設計を依頼した案件を、依頼の新しい順に示す。状態の絞り込みは後の Bolt -->
+    <p th:if="${#lists.isEmpty(cases)}">詳細経路設計の依頼はまだありません。</p>
+    <!-- 狭い画面では表だけを横にスクロールさせ、ページ全体を横にスクロールさせない（WCAG 1.4.10 の表の例外） -->
+    <div th:unless="${#lists.isEmpty(cases)}" class="table-scroll" tabindex="0" role="region"
+         aria-labelledby="cases-caption">
+    <table class="table">
+        <caption id="cases-caption">詳細経路設計の依頼（依頼の新しい順）</caption>
+        <thead>
+        <tr>
+            <th scope="col">案件番号</th>
+            <th scope="col">見積依頼</th>
+            <th scope="col">出発地 → 目的地</th>
+            <th scope="col">希望到着期限</th>
+            <th scope="col">依頼の日時</th>
+            <th scope="col">状態</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="routingCase : ${cases}">
+            <td><a th:href="@{/staff/routing-cases/{number}(number=${routingCase.number()})}" th:text="${routingCase.number()}">RC-2026-0001</a></td>
+            <td th:text="${routingCase.transportRequest()}">TR-2026-0001 版 1</td>
+            <td th:text="${routingCase.route()}">JPTYO → NLRTM</td>
+            <td th:text="${routingCase.arrivalDeadline()}">2026-11-02 09:00 Asia/Tokyo（UTC+09:00）（UTC 2026-11-02 00:00）</td>
+            <td th:text="${routingCase.requestedAt()}">2026-10-06 11:00 Asia/Tokyo（UTC+09:00）（UTC 2026-10-06 02:00）</td>
+            <td th:text="${routingCase.status()}">候補の算出待ち</td>
+        </tr>
+        </tbody>
+    </table>
+    </div>
+</main>
+</body>
+</html>

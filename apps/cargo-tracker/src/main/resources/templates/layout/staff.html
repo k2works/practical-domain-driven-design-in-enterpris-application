@@ -1,7 +1,8 @@
 <!DOCTYPE html>
 <!--/* 社内業務 Web の共通レイアウト（Bolt 8、UI 設計「ナビゲーションとレイアウト」）。画面は次のように使う。
        <html lang="ja" th:replace="~{layout/staff :: layout(~{::title}, ~{::main}, ~{::script}, 'transport-requests')}">（スクリプトがなければ ~{} を渡す）
-       ナビには営業担当者の画面を出し、まだ作っていない画面は準備中の画面へつなぐ（Bolt 14）。ほかの役割の画面はその役割の Bolt で足す */-->
+       ナビには役割ごとの画面を出し（営業担当者は Bolt 14、経路設計者は Bolt 17）、まだ作っていない画面は準備中の画面へつなぐ。
+       ほかの役割の画面はその役割の Bolt で足す */-->
 <html lang="ja" xmlns:th="http://www.thymeleaf.org" th:fragment="layout(title, content, scripts, active)">
 <head>
     <meta charset="UTF-8">
@@ -32,7 +33,9 @@
 <div class="container-fluid">
     <div class="row">
         <nav id="staff-nav" class="col-md-3 col-lg-2 collapse d-md-block app-nav" aria-label="社内業務 Web">
+            <!-- 役割ごとにその役割の画面だけを出す（Bolt 17）。表示の制御は権限の防御ではない（URL を直接開いても A-04） -->
             <ul class="nav flex-column">
+                <th:block th:if="${currentActor != null and currentActor.hasRole(T(com.example.cargotracker.shared.domain.Role).SALES)}">
                 <li class="nav-item">
                     <a class="nav-link" th:classappend="${active == 'transport-requests'} ? 'fw-bold'"
                        th:attr="aria-current=${active == 'transport-requests'} ? 'page' : null"
@@ -47,6 +50,13 @@
                     <a class="nav-link" th:classappend="${active == 'kpi-observations'} ? 'fw-bold'"
                        th:attr="aria-current=${active == 'kpi-observations'} ? 'page' : null"
                        th:href="@{/staff/kpi-observations}">KPI 計測記録</a>
+                </li>
+                </th:block>
+                <li class="nav-item"
+                    th:if="${currentActor != null and currentActor.hasRole(T(com.example.cargotracker.shared.domain.Role).ROUTE_DESIGNER)}">
+                    <a class="nav-link" th:classappend="${active == 'routing-cases'} ? 'fw-bold'"
+                       th:attr="aria-current=${active == 'routing-cases'} ? 'page' : null"
+                       th:href="@{/staff/routing-cases}">経路設計</a>
                 </li>
             </ul>
         </nav>

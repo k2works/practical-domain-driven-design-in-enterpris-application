@@ -95,6 +95,9 @@ public class SecurityConfiguration {
                         .permitAll()
                         .requestMatchers("/customer/**")
                         .hasRole(Role.SHIPPER.name())
+                        // 経路設計の画面は経路設計者だけ。ほかの社内の画面より先に書く（Bolt 17 計画の確認ポイント 11）
+                        .requestMatchers("/staff/routing-cases/**")
+                        .hasRole(Role.ROUTE_DESIGNER.name())
                         .requestMatchers("/staff/**")
                         .hasRole(Role.SALES.name())
                         .anyRequest()

@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="ja" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/staff :: layout(~{::title}, ~{::main}, ~{}, 'routing-cases')}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>経路候補の比較 - cargo-tracker</title>
+</head>
+<body>
+<main>
+    <h1 th:text="|経路候補の比較 ${routingCase.number()}|">経路候補の比較 RC-2026-0001</h1>
+    <!-- S-06（Bolt 17、US-06 AC1〜AC3）。候補は表にせず候補ごとのまとまりで並べ、幅 320 CSS px で横スクロールを出さない。
+         確定・専門判断の操作は US-07 で足す -->
+    <p role="status" th:if="${result}" th:text="${result}">候補を 4 件算出しました（適合 2 件、除外 2 件）</p>
+    <div class="alert alert-warning" role="alert" th:if="${problem}" th:text="${problem}">ほかの経路設計者が先に候補を算出しました</div>
+    <dl class="row">
+        <dt class="col-sm-3">見積依頼</dt>
+        <dd class="col-sm-9" th:text="${routingCase.transportRequest()}">TR-2026-0001 版 1</dd>
+        <dt class="col-sm-3">出発地 → 目的地</dt>
+        <dd class="col-sm-9" th:text="${routingCase.route()}">JPTYO → NLRTM</dd>
+        <dt class="col-sm-3">希望到着期限</dt>
+        <dd class="col-sm-9" th:text="${routingCase.arrivalDeadline()}">2026-11-02 09:00 Asia/Tokyo（UTC+09:00）（UTC 2026-11-02 00:00）</dd>
+        <dt class="col-sm-3">経路方針（参考）</dt>
+        <dd class="col-sm-9" th:text="${routingCase.routePolicy()}">SGSIN</dd>
+        <dt class="col-sm-3">依頼の日時</dt>
+        <dd class="col-sm-9" th:text="${routingCase.requestedAt()}">2026-10-06 11:00 Asia/Tokyo（UTC+09:00）（UTC 2026-10-06 02:00）</dd>
+        <dt class="col-sm-3" th:if="${routingCase.calculated()}">判定時刻</dt>
+        <dd class="col-sm-9" th:if="${routingCase.calculated()}" th:text="${routingCase.evaluatedAt()}">2026-10-07 12:00 Asia/Tokyo（UTC+09:00）（UTC 2026-10-07 03:00）</dd>
+    </dl>
+    <p th:unless="${routingCase.calculated()}">まだ候補を算出していません。航海と接続時間規則から候補を算出してください。</p>
+    <form th:action="@{/staff/routing-cases/{number}/candidates(number=${routingCase.number()})}" method="post" class="mb-3">
+        <button type="submit" class="btn btn-primary"
+                th:text="${routingCase.calculated()} ? '候補を再算出' : '候補を算出'">候補を算出</button>
+    </form>
+
+    <th:block th:if="${routingCase.calculated()}">
+        <h2>経路候補</h2>
+        <p>適合を先に、到着予定の早い順に示します。期限と同時刻・必要最小接続時間と同値は適合です。</p>
+        <p th:if="${#lists.isEmpty(routingCase.candidates())}">条件に合う航海が見つかりませんでした。航海の情報を確かめてください。</p>
+        <article class="route-candidate card mb-3" th:each="candidate : ${routingCase.candidates()}"
+                 th:attr="aria-labelledby=|candidate-${candidate.candidateNo()}|">
+            <div class="card-body">
+                <h3 class="h5" th:id="|candidate-${candidate.candidateNo()}|">
+                    <span th:text="|候補 ${candidate.candidateNo()}|">候補 1</span>
+                    <span th:class="${candidate.conforming()} ? 'badge text-bg-success' : 'badge text-bg-secondary'"
+                          th:text="${candidate.conforming()} ? '✓ 適合' : '✕ 除外'">✓ 適合</span>
+                </h3>
+                <dl class="row mb-2">
+                    <dt class="col-sm-3">到着予定</dt>
+                    <dd class="col-sm-9" th:text="${candidate.estimatedArrival()}">2026-10-30 18:00 Asia/Tokyo（UTC+09:00）（UTC 2026-10-30 09:00）</dd>
+                    <dt class="col-sm-3">接続余裕</dt>
+                    <dd class="col-sm-9" th:text="${candidate.connectionSlack()}">余裕 4 時間</dd>
+                    <dt class="col-sm-3">情報の取得時刻</dt>
+                    <dd class="col-sm-9" th:text="${candidate.infoAcquiredAt()}">2026-10-01 15:10 Asia/Tokyo（UTC+09:00）（UTC 2026-10-01 06:10）</dd>
+                </dl>
+                <h4 class="h6">区間</h4>
+                <ol class="mb-2">
+                    <li th:each="leg : ${candidate.legs()}">
+                        <span th:text="|${leg.voyageNumber()}　${leg.route()}|">V-101　JPTYO → NLRTM</span><br>
+                        <span th:text="|出発予定 ${leg.departure()}|">出発予定 …</span><br>
+                        <span th:text="|到着予定 ${leg.arrival()}|">到着予定 …</span>
+                    </li>
+                </ol>
+                <h4 class="h6" th:text="${candidate.conforming()} ? '判定の根拠' : '除外の理由'">除外の理由</h4>
+                <ul class="mb-0">
+                    <li th:each="reason : ${candidate.reasons()}" th:text="${reason}">期限超過 1 日 12 時間</li>
+                </ul>
+            </div>
+        </article>
+    </th:block>
+    <p><a th:href="@{/staff/routing-cases}">経路設計案件一覧へ戻る</a></p>
+</main>
+</body>
+</html>
