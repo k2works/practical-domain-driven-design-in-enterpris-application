@@ -6,7 +6,7 @@ import java.util.Objects;
 /**
  * 経路の確定を拒否した（US-07 AC2。Bolt 19）。理由を値で持ち、画面が理由ごとの文言を示す。
  */
-public class RouteConfirmationRejected extends RuntimeException {
+public final class RouteConfirmationRejected extends RuntimeException {
 
     private static final long serialVersionUID = 1L;
 

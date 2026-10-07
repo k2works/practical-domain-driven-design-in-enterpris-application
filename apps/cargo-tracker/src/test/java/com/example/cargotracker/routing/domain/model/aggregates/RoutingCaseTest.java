@@ -116,7 +116,7 @@ class RoutingCaseTest {
 
     @Test
     void 候補を算出できない状態の経路版では算出できない() {
-        RoutingCase confirmed = RoutingCase.reconstitute(
+        RoutingCase superseded = RoutingCase.reconstitute(
                 new RoutingCaseId(UUID.randomUUID()),
                 new RoutingCaseNumber(2026, 1),
                 UUID.randomUUID(),
@@ -127,11 +127,11 @@ class RoutingCaseTest {
                 new RouteSpecification(TOKYO, ROTTERDAM, DEADLINE, "GENERAL"),
                 at("2026-10-06T02:00:00Z"),
                 List.of(new com.example.cargotracker.routing.domain.model.entities.RouteVersion(
-                        1, RouteVersionStatus.CONFIRMED, List.of(), JUDGED_AT)),
+                        1, RouteVersionStatus.SUPERSEDED, List.of(), JUDGED_AT)),
                 3);
 
         org.assertj.core.api.Assertions.assertThatThrownBy(
-                        () -> confirmed.calculateCandidates(List.of(), RULES, JUDGED_AT, finder, evaluator))
+                        () -> superseded.calculateCandidates(List.of(), RULES, JUDGED_AT, finder, evaluator))
                 .isInstanceOf(IllegalStateException.class);
     }
 

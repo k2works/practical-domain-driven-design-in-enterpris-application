@@ -7,8 +7,11 @@ import com.example.cargotracker.routing.domain.model.rules.ConstraintEvaluator;
 import com.example.cargotracker.routing.domain.model.rules.RouteCandidateFinder;
 import com.example.cargotracker.routing.domain.model.valueobjects.CandidateCalculation;
 import com.example.cargotracker.routing.domain.model.valueobjects.ConstraintEvaluation;
+import com.example.cargotracker.routing.domain.model.valueobjects.DecisionRationale;
 import com.example.cargotracker.routing.domain.model.valueobjects.Leg;
 import com.example.cargotracker.routing.domain.model.valueobjects.RouteApprover;
+import com.example.cargotracker.routing.domain.model.valueobjects.RouteConfirmation;
+import com.example.cargotracker.routing.domain.model.valueobjects.RouteConfirmationRejectionReason;
 import com.example.cargotracker.routing.domain.model.valueobjects.RouteSpecification;
 import com.example.cargotracker.routing.domain.model.valueobjects.RouteVersionStatus;
 import com.example.cargotracker.routing.domain.model.valueobjects.RoutingCaseId;
@@ -48,7 +51,7 @@ public final class RoutingCase {
     private final RouteSpecification specification;
     private final UtcInstant requestedAt;
     private final long aggregateVersion;
-    private RouteVersion routeVersion;
+    private final List<RouteVersion> routeVersions;
 
     @SuppressWarnings("java:S107") // 保存されている状態から組み立てるため、集約の値をすべて受け取る
     private RoutingCase(
@@ -61,7 +64,7 @@ public final class RoutingCase {
             List<Location> routePolicyVia,
             RouteSpecification specification,
             UtcInstant requestedAt,
-            RouteVersion routeVersion,
+            List<RouteVersion> routeVersions,
             long aggregateVersion) {
         this.id = Objects.requireNonNull(id, "id");
         this.number = Objects.requireNonNull(number, "number");
@@ -75,7 +78,7 @@ public final class RoutingCase {
         this.routePolicyVia = List.copyOf(routePolicyVia);
         this.specification = Objects.requireNonNull(specification, "specification");
         this.requestedAt = Objects.requireNonNull(requestedAt, "requestedAt");
-        this.routeVersion = Objects.requireNonNull(routeVersion, "routeVersion");
+        this.routeVersions = new ArrayList<>(validated(routeVersions));
         this.aggregateVersion = aggregateVersion;
     }
 
@@ -104,7 +107,7 @@ public final class RoutingCase {
                 routePolicyVia,
                 specification,
                 requestedAt,
-                RouteVersion.draft(1),
+                List.of(RouteVersion.draft(1)),
                 INITIAL_AGGREGATE_VERSION);
     }
 
@@ -132,7 +135,7 @@ public final class RoutingCase {
                 routePolicyVia,
                 specification,
                 requestedAt,
-                routeVersions.getLast(),
+                routeVersions,
                 aggregateVersion);
     }
 
@@ -149,6 +152,7 @@ public final class RoutingCase {
             UtcInstant judgedAt,
             RouteCandidateFinder finder,
             ConstraintEvaluator evaluator) {
+        RouteVersion routeVersion = routeVersion();
         RouteVersionStatus status = routeVersion.status();
         if (status != RouteVersionStatus.DRAFT && status != RouteVersionStatus.CANDIDATES_PRESENTED) {
             throw new IllegalStateException("候補を算出できない経路版の状態です: " + status);
@@ -162,8 +166,8 @@ public final class RoutingCase {
             candidates.add(
                     new RouteCandidate(candidates.size() + 1, candidate.legs(), candidate.evaluation(), judgedAt));
         }
-        routeVersion = new RouteVersion(
-                routeVersion.routeVersionNo(), RouteVersionStatus.CANDIDATES_PRESENTED, candidates, judgedAt);
+        replaceLatest(new RouteVersion(
+                routeVersion.routeVersionNo(), RouteVersionStatus.CANDIDATES_PRESENTED, candidates, judgedAt));
         int conforming = (int) candidates.stream()
                 .filter(candidate -> candidate.evaluation().conforming())
                 .count();
@@ -186,7 +190,88 @@ public final class RoutingCase {
             List<ConnectionRule> rules,
             UtcInstant commitAt,
             ConstraintEvaluator evaluator) {
-        return null;
+        if (!approver.routeDesigner()) {
+            throw reject(RouteConfirmationRejectionReason.NOT_ROUTE_DESIGNER, "経路を確定できるのは経路設計者だけです");
+        }
+        RouteVersion routeVersion = routeVersion();
+        if (routeVersion.status() != RouteVersionStatus.CANDIDATES_PRESENTED
+                || confirmedRouteVersion().isPresent()) {
+            throw reject(
+                    RouteConfirmationRejectionReason.NOT_CONFIRMABLE_STATE, "確定できない経路版の状態です: " + routeVersion.status());
+        }
+        RouteCandidate candidate = routeVersion.candidates().stream()
+                .filter(each -> each.candidateNo() == candidateNo)
+                .findFirst()
+                .orElseThrow(() ->
+                        reject(RouteConfirmationRejectionReason.CANDIDATE_NOT_FOUND, "候補 " + candidateNo + " はありません"));
+        if (!candidate.evaluation().conforming()) {
+            throw reject(RouteConfirmationRejectionReason.CANDIDATE_EXCLUDED, "除外の候補は確定できません");
+        }
+        DecisionRationale decisionRationale = rationaleOf(rationale);
+        if (!candidate.legs().getFirst().departureAt().instant().isAfter(commitAt.instant())) {
+            throw reject(RouteConfirmationRejectionReason.ALREADY_DEPARTED, "最初の区間が出発済みです");
+        }
+        if (!evaluator
+                .evaluate(specification, candidate.legs(), rules, commitAt)
+                .conforming()) {
+            throw reject(RouteConfirmationRejectionReason.NO_LONGER_CONFORMING, "確定の時刻で判定し直すと不適合です");
+        }
+        replaceLatest(new RouteVersion(
+                routeVersion.routeVersionNo(),
+                RouteVersionStatus.CONFIRMED,
+                routeVersion.candidates(),
+                routeVersion.candidatesEvaluatedAt(),
+                new RouteConfirmation(candidateNo, decisionRationale, approver.userId(), commitAt)));
+        return new RouteConfirmed(
+                id.value(),
+                number.text(),
+                routeVersion.routeVersionNo(),
+                quotationId,
+                transportRequestId,
+                transportRequestVersionNo,
+                approver.userId(),
+                commitAt,
+                candidate.legs().stream().map(Leg::infoVersion).toList());
+    }
+
+    private static DecisionRationale rationaleOf(String rationale) {
+        if (rationale == null || rationale.isBlank()) {
+            throw reject(RouteConfirmationRejectionReason.RATIONALE_MISSING, "判断根拠を入れてください");
+        }
+        String text = rationale.strip();
+        if (text.codePointCount(0, text.length()) > DecisionRationale.MAX_LENGTH) {
+            throw reject(
+                    RouteConfirmationRejectionReason.RATIONALE_TOO_LONG,
+                    "判断根拠は " + DecisionRationale.MAX_LENGTH + " 文字までです");
+        }
+        return new DecisionRationale(text);
+    }
+
+    private static RouteConfirmationRejected reject(RouteConfirmationRejectionReason reason, String message) {
+        return new RouteConfirmationRejected(reason, message);
+    }
+
+    private void replaceLatest(RouteVersion latest) {
+        routeVersions.set(routeVersions.size() - 1, latest);
+    }
+
+    /** 経路版は 1 つ以上で、経路版番号が 1 から順に並び、確定は 1 つだけ（R-INV-05）。 */
+    private static List<RouteVersion> validated(List<RouteVersion> routeVersions) {
+        if (routeVersions.isEmpty()) {
+            throw new IllegalArgumentException("経路設計案件には経路版が要ります");
+        }
+        for (int i = 0; i < routeVersions.size(); i++) {
+            if (routeVersions.get(i).routeVersionNo() != i + 1) {
+                throw new IllegalArgumentException("経路版番号は 1 から順に並べます: " + routeVersions);
+            }
+        }
+        long confirmed = routeVersions.stream()
+                .filter(version -> version.status() == RouteVersionStatus.CONFIRMED)
+                .count();
+        if (confirmed > 1) {
+            throw new IllegalArgumentException("確定した経路版は案件に 1 つだけです");
+        }
+        return routeVersions;
     }
 
     /** 判定した区間の列（候補番号を振る前）。 */
@@ -239,17 +324,19 @@ public final class RoutingCase {
 
     /** いまの（最新の）経路版。 */
     public RouteVersion routeVersion() {
-        return routeVersion;
+        return routeVersions.getLast();
     }
 
     /** 経路版の一覧（経路版番号の順）。 */
     public List<RouteVersion> routeVersions() {
-        return List.of(routeVersion);
+        return List.copyOf(routeVersions);
     }
 
     /** 確定した経路版（案件に 1 つだけ。R-INV-05）。 */
     public Optional<RouteVersion> confirmedRouteVersion() {
-        return Optional.empty();
+        return routeVersions.stream()
+                .filter(version -> version.status() == RouteVersionStatus.CONFIRMED)
+                .findFirst();
     }
 
     public long aggregateVersion() {
