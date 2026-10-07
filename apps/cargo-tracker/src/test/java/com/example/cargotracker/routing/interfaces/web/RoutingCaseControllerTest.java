@@ -12,16 +12,21 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.example.cargotracker.identity.infrastructure.security.TestActors;
 import com.example.cargotracker.identity.infrastructure.security.WithAuthenticatedActor;
 import com.example.cargotracker.routing.application.internal.commands.CalculateCandidatesCommand;
+import com.example.cargotracker.routing.application.internal.commands.ConfirmRouteCommand;
 import com.example.cargotracker.routing.application.internal.commandservices.CandidateCalculationOutcome;
+import com.example.cargotracker.routing.application.internal.commandservices.RouteConfirmationOutcome;
 import com.example.cargotracker.routing.application.internal.commandservices.RoutingCaseCommandService;
 import com.example.cargotracker.routing.application.internal.queryservices.RoutingCaseQueryService;
 import com.example.cargotracker.routing.domain.model.aggregates.ConnectionRule;
 import com.example.cargotracker.routing.domain.model.aggregates.RoutingCase;
 import com.example.cargotracker.routing.domain.model.aggregates.Voyage;
+import com.example.cargotracker.routing.domain.model.entities.RouteVersion;
 import com.example.cargotracker.routing.domain.model.rules.ConstraintEvaluator;
 import com.example.cargotracker.routing.domain.model.rules.RouteCandidateFinder;
 import com.example.cargotracker.routing.domain.model.valueobjects.CandidateCalculation;
 import com.example.cargotracker.routing.domain.model.valueobjects.PortCall;
+import com.example.cargotracker.routing.domain.model.valueobjects.RouteApprover;
+import com.example.cargotracker.routing.domain.model.valueobjects.RouteConfirmationRejectionReason;
 import com.example.cargotracker.routing.domain.model.valueobjects.RouteSpecification;
 import com.example.cargotracker.routing.domain.model.valueobjects.RouteVersionStatus;
 import com.example.cargotracker.routing.domain.model.valueobjects.RoutingCaseId;
@@ -30,20 +35,24 @@ import com.example.cargotracker.routing.domain.model.valueobjects.RoutingCaseSum
 import com.example.cargotracker.shared.domain.Location;
 import com.example.cargotracker.shared.domain.Role;
 import com.example.cargotracker.shared.domain.UtcInstant;
+import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.context.annotation.Bean;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
-/** S-05 経路設計案件一覧・S-06 経路候補の比較（US-06 AC1〜AC3。Bolt 17）。 */
+/** S-05 経路設計案件一覧・S-06 経路候補の比較・S-07 経路の確定（US-06 AC1〜AC3、US-07 AC1・AC2。Bolt 17・19）。 */
 // 画面の単体テストはコントローラーの振る舞いだけを見る。認証・認可・CSRF はセキュリティの統合テストで確かめる（Bolt 14）
 @WithAuthenticatedActor(Role.ROUTE_DESIGNER)
 @AutoConfigureMockMvc(addFilters = false)
@@ -187,11 +196,11 @@ class RoutingCaseControllerTest {
 
     @Test
     void 候補を算出すると比較の画面に戻り件数を示す() throws Exception {
-        when(commandService.calculateCandidates(new CalculateCandidatesCommand(NUMBER, TestActors.STAFF_USER)))
+        when(commandService.calculateCandidates(new CalculateCandidatesCommand(NUMBER, 0, TestActors.STAFF_USER)))
                 .thenReturn(new CandidateCalculationOutcome.Calculated(
                         NUMBER, new CandidateCalculation(22, 20, 18, at("2026-10-07T03:00:00Z"))));
 
-        mockMvc.perform(post(SHOW + "/candidates"))
+        mockMvc.perform(post(SHOW + "/candidates").param("expectedVersion", "0"))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl(SHOW))
                 .andExpect(flash().attribute(
@@ -201,20 +210,230 @@ class RoutingCaseControllerTest {
 
     @Test
     void ほかの経路設計者が先に算出していたら確かめるよう示す() throws Exception {
-        when(commandService.calculateCandidates(new CalculateCandidatesCommand(NUMBER, TestActors.STAFF_USER)))
+        when(commandService.calculateCandidates(new CalculateCandidatesCommand(NUMBER, 0, TestActors.STAFF_USER)))
                 .thenReturn(new CandidateCalculationOutcome.Conflict());
 
-        mockMvc.perform(post(SHOW + "/candidates"))
+        mockMvc.perform(post(SHOW + "/candidates").param("expectedVersion", "0"))
                 .andExpect(redirectedUrl(SHOW))
                 .andExpect(flash().attribute("problem", "ほかの経路設計者が先に候補を算出しました。最新の候補を確かめてください。"));
     }
 
     @Test
     void ない案件の候補は算出できず404() throws Exception {
-        when(commandService.calculateCandidates(new CalculateCandidatesCommand(NUMBER, TestActors.STAFF_USER)))
+        when(commandService.calculateCandidates(new CalculateCandidatesCommand(NUMBER, 0, TestActors.STAFF_USER)))
                 .thenReturn(new CandidateCalculationOutcome.NotFound());
 
-        mockMvc.perform(post(SHOW + "/candidates")).andExpect(status().isNotFound());
+        mockMvc.perform(post(SHOW + "/candidates").param("expectedVersion", "0"))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void 案件一覧は見積有効期限を示し期限を過ぎた案件は期限切れと示し確定済みの状態を示す() throws Exception {
+        when(queryService.listCases())
+                .thenReturn(List.of(
+                        new RoutingCaseSummary(
+                                NUMBER,
+                                "TR-2026-0001",
+                                1,
+                                TOKYO,
+                                ROTTERDAM,
+                                DEADLINE,
+                                at("2026-10-05T02:00:00Z"),
+                                RouteVersionStatus.CONFIRMED,
+                                at("2026-10-06T09:00:00Z")),
+                        new RoutingCaseSummary(
+                                new RoutingCaseNumber(2026, 89),
+                                "TR-2026-0002",
+                                1,
+                                TOKYO,
+                                ROTTERDAM,
+                                DEADLINE,
+                                at("2026-10-06T02:00:00Z"),
+                                RouteVersionStatus.CANDIDATES_PRESENTED,
+                                null)));
+
+        mockMvc.perform(get("/staff/routing-cases"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(Matchers.containsString("見積有効期限の近い順")))
+                .andExpect(content().string(Matchers.containsString("見積有効期限")))
+                .andExpect(content().string(Matchers.containsString("2026-10-06 18:00 Asia/Tokyo")))
+                .andExpect(content().string(Matchers.containsString("見積りの期限切れ")))
+                .andExpect(content().string(Matchers.containsString("確定済み")))
+                .andExpect(content().string(Matchers.containsString("期限の記録なし")));
+    }
+
+    @Test
+    void 比較の画面は適合の候補にだけ確定への入口を示し算出のフォームに版を持たせる() throws Exception {
+        when(queryService.findByNumber(NUMBER)).thenReturn(Optional.of(calculated()));
+
+        mockMvc.perform(get(SHOW))
+                .andExpect(status().isOk())
+                .andExpect(content().string(Matchers.containsString("href=\"" + SHOW + "/confirmation?candidate=1\"")))
+                .andExpect(content().string(Matchers.not(Matchers.containsString(SHOW + "/confirmation?candidate=2"))))
+                .andExpect(content().string(Matchers.containsString("name=\"expectedVersion\" value=\"0\"")));
+    }
+
+    @Test
+    void 比較の画面は上限で示さなかった候補の数を常に示す() throws Exception {
+        RoutingCase calculated = calculated();
+        RouteVersion version = calculated.routeVersion();
+        RoutingCase withOmitted = reconstitute(new RouteVersion(
+                1,
+                version.status(),
+                version.candidates(),
+                version.candidatesEvaluatedAt(),
+                version.candidates().size() + 2,
+                null));
+        when(queryService.findByNumber(NUMBER)).thenReturn(Optional.of(withOmitted));
+
+        mockMvc.perform(get(SHOW)).andExpect(content().string(Matchers.containsString("ほかに 2 件の候補があります")));
+    }
+
+    @Test
+    void 確定した案件は確定した経路と根拠を示し算出と確定の操作を出さない() throws Exception {
+        when(queryService.findByNumber(NUMBER)).thenReturn(Optional.of(confirmed()));
+
+        mockMvc.perform(get(SHOW))
+                .andExpect(status().isOk())
+                .andExpect(content().string(Matchers.containsString("確定した経路")))
+                .andExpect(content().string(Matchers.containsString("SGSIN の接続に 4 時間の余裕がある。")))
+                .andExpect(content().string(Matchers.containsString("2026-10-07 14:00 Asia/Tokyo")))
+                .andExpect(content().string(Matchers.not(Matchers.containsString("候補を再算出"))))
+                .andExpect(content().string(Matchers.not(Matchers.containsString("この候補で確定へ"))));
+    }
+
+    @Test
+    void 確定の画面は選んだ候補と見積有効期限と判断根拠の入力と確定の操作を示す() throws Exception {
+        when(queryService.findByNumber(NUMBER)).thenReturn(Optional.of(calculated()));
+
+        mockMvc.perform(get(SHOW + "/confirmation").param("candidate", "1"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(Matchers.containsString("経路の確定 RC-2026-0088")))
+                .andExpect(content().string(Matchers.containsString("この経路で確定しますか")))
+                .andExpect(content().string(Matchers.containsString("候補 1（SGSIN 積替え）")))
+                .andExpect(content().string(Matchers.containsString("V-201")))
+                .andExpect(content().string(Matchers.containsString("見積有効期限")))
+                .andExpect(content().string(Matchers.containsString("2026-10-08 18:00 Asia/Tokyo")))
+                .andExpect(content().string(Matchers.containsString("maxlength=\"4000\"")))
+                .andExpect(content().string(Matchers.containsString("name=\"candidate\" value=\"1\"")))
+                .andExpect(content().string(Matchers.containsString("name=\"expectedVersion\" value=\"0\"")))
+                .andExpect(content().string(Matchers.containsString("この経路で確定する")));
+    }
+
+    @Test
+    void 除外の候補の確定の画面は開かず比較の画面で理由を示す() throws Exception {
+        when(queryService.findByNumber(NUMBER)).thenReturn(Optional.of(calculated()));
+
+        mockMvc.perform(get(SHOW + "/confirmation").param("candidate", "2"))
+                .andExpect(redirectedUrl(SHOW))
+                .andExpect(flash().attribute("problem", "除外の候補は確定できません。"));
+    }
+
+    @Test
+    void ない候補とない案件の確定の画面は404() throws Exception {
+        when(queryService.findByNumber(NUMBER)).thenReturn(Optional.of(calculated()));
+
+        mockMvc.perform(get(SHOW + "/confirmation").param("candidate", "99")).andExpect(status().isNotFound());
+        mockMvc.perform(get("/staff/routing-cases/RC-2026-0001/confirmation").param("candidate", "1"))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void 確定すると比較の画面に戻り確定したと示す() throws Exception {
+        when(commandService.confirm(new ConfirmRouteCommand(NUMBER, 1, "根拠", 3, TestActors.STAFF_USER, true)))
+                .thenReturn(new RouteConfirmationOutcome.Confirmed(NUMBER, 1, 1));
+
+        mockMvc.perform(post(SHOW + "/confirmation")
+                        .param("candidate", "1")
+                        .param("rationale", "根拠")
+                        .param("expectedVersion", "3"))
+                .andExpect(redirectedUrl(SHOW))
+                .andExpect(flash().attribute("result", "候補 1 の経路を確定しました。"));
+    }
+
+    @Test
+    void 確定を拒否されたら理由をエラー要約に示し入力を残す() throws Exception {
+        when(queryService.findByNumber(NUMBER)).thenReturn(Optional.of(calculated()));
+        when(commandService.confirm(new ConfirmRouteCommand(NUMBER, 1, "出発の後の根拠", 0, TestActors.STAFF_USER, true)))
+                .thenReturn(new RouteConfirmationOutcome.Rejected(RouteConfirmationRejectionReason.ALREADY_DEPARTED));
+
+        mockMvc.perform(post(SHOW + "/confirmation")
+                        .param("candidate", "1")
+                        .param("rationale", "出発の後の根拠")
+                        .param("expectedVersion", "0"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(Matchers.containsString("id=\"error-summary\"")))
+                .andExpect(content().string(Matchers.containsString("最初の区間の航海がすでに出発しているため確定できません")))
+                .andExpect(content().string(Matchers.containsString(">出発の後の根拠</textarea>")));
+    }
+
+    @Test
+    void 判断根拠がなければ入れるよう示す() throws Exception {
+        when(queryService.findByNumber(NUMBER)).thenReturn(Optional.of(calculated()));
+        when(commandService.confirm(new ConfirmRouteCommand(NUMBER, 1, "", 0, TestActors.STAFF_USER, true)))
+                .thenReturn(new RouteConfirmationOutcome.Rejected(RouteConfirmationRejectionReason.RATIONALE_MISSING));
+
+        mockMvc.perform(post(SHOW + "/confirmation")
+                        .param("candidate", "1")
+                        .param("rationale", "")
+                        .param("expectedVersion", "0"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(Matchers.containsString("判断根拠を入れてください。")))
+                .andExpect(content().string(Matchers.containsString("href=\"#rationale\"")));
+    }
+
+    @Test
+    void 画面を開いた後にほかの経路設計者が更新していたら確かめるよう示す() throws Exception {
+        when(commandService.confirm(new ConfirmRouteCommand(NUMBER, 1, "根拠", 0, TestActors.STAFF_USER, true)))
+                .thenReturn(new RouteConfirmationOutcome.Conflict());
+
+        mockMvc.perform(post(SHOW + "/confirmation")
+                        .param("candidate", "1")
+                        .param("rationale", "根拠")
+                        .param("expectedVersion", "0"))
+                .andExpect(redirectedUrl(SHOW))
+                .andExpect(flash().attribute("problem", "ほかの経路設計者が先にこの案件を更新しました。最新の候補を確かめてください。"));
+    }
+
+    static RoutingCase confirmed() {
+        RoutingCase routingCase = calculated();
+        routingCase.confirm(
+                1,
+                "SGSIN の接続に 4 時間の余裕がある。",
+                new RouteApprover(TestActors.STAFF_USER.value(), true),
+                List.of(new ConnectionRule(
+                        UUID.randomUUID(), SINGAPORE, Duration.ofHours(8), at("2026-01-01T00:00:00Z"), null)),
+                at("2026-10-07T05:00:00Z"),
+                new ConstraintEvaluator());
+        return routingCase;
+    }
+
+    static RoutingCase reconstitute(RouteVersion version) {
+        RoutingCase source = open();
+        return RoutingCase.reconstitute(
+                source.id(),
+                source.number(),
+                source.transportRequestId(),
+                source.transportRequestNumber(),
+                source.transportRequestVersionNo(),
+                source.quotationId(),
+                source.routePolicyVia(),
+                source.specification(),
+                source.requestedAt(),
+                source.quotationExpiresAt().orElse(null),
+                source.requestedBy().orElse(null),
+                List.of(version),
+                0);
+    }
+
+    /** 画面の時計（S-05 の見積りの期限切れの判定）。 */
+    @TestConfiguration
+    static class FixedClock {
+
+        @Bean
+        Clock clock() {
+            return Clock.fixed(Instant.parse("2026-10-07T00:00:00Z"), ZoneOffset.UTC);
+        }
     }
 
     static RoutingCase open() {

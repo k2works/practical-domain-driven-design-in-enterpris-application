@@ -16,7 +16,7 @@ import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 /**
- * 経路設計案件一覧（S-05）と経路候補の比較（S-06）の画面の層のステップ定義（US-06。Bolt 17）。
+ * 経路設計案件一覧（S-05）と経路候補の比較（S-06）、経路の確定（S-07）の画面の層のステップ定義（US-06・US-07。Bolt 17・19）。
  * 案件は、同じシナリオで荷主が提出して詳細経路設計を依頼した見積依頼（{@link UiScenarioState}）のもの。
  * 航海はシナリオごとに一意の航海番号で DB に入れる（画面の層は実際の時計で動くため、2099 年の運航予定にする。
  * 荷主の希望到着期限は 2099-11-02 09:00 JST）。
@@ -24,6 +24,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 public class RoutingUiSteps {
 
     private static final String CALCULATE = "候補を算出";
+    private static final String CONFIRM = "この経路で確定する";
 
     private final BrowserSession browser;
     private final UiScenarioState state;
@@ -56,7 +57,7 @@ public class RoutingUiSteps {
      * 上限（20 件）で切られる（Bolt 17 レビュー D-62）。接続時間規則は同じ値なので残しても判定は変わらない。
      * 案件の候補の区間が航海を参照する外部キーはないため、航海だけを消す（候補は案件ごとに残る）。
      */
-    @io.cucumber.java.After("@US-06 and @ui")
+    @io.cucumber.java.After("(@US-06 or @US-07) and @ui")
     public void シナリオの航海を消す() {
         jdbc.update("DELETE FROM routing.port_call WHERE voyage_number LIKE ?", "UI-" + suffix + "-%");
         jdbc.update("DELETE FROM routing.voyage WHERE voyage_number LIKE ?", "UI-" + suffix + "-%");
@@ -180,6 +181,75 @@ public class RoutingUiSteps {
         }
         assertThat(found).hasCount(1);
         return found;
+    }
+
+    @もし("直行の航海の候補の確定へ進む")
+    public void 直行の候補の確定へ進む() {
+        candidate(voyage("DIRECT"))
+                .getByRole(AriaRole.LINK, new Locator.GetByRoleOptions().setName("この候補で確定へ"))
+                .click();
+        page().waitForURL("**/confirmation?candidate=*");
+        assertThat(page().getByRole(AriaRole.HEADING, new Page.GetByRoleOptions().setLevel(1)))
+                .containsText("経路の確定");
+        assertThat(page().locator("main")).containsText("この経路で確定しますか");
+        assertThat(page().locator("main")).containsText(voyage("DIRECT"));
+        browser.checkAccessibility();
+    }
+
+    @かつ("判断根拠 {string} を入れてキー操作だけで確定する")
+    public void 判断根拠を入れてキー操作だけで確定する(String rationale) {
+        page().getByLabel("判断根拠").fill(rationale);
+        Locator button = page().getByRole(
+                        AriaRole.BUTTON,
+                        new Page.GetByRoleOptions().setName(CONFIRM).setExact(true));
+        page().getByLabel("判断根拠").focus();
+        for (int i = 0; i < 10 && !isFocused(button); i++) {
+            page().keyboard().press("Tab");
+        }
+        if (!isFocused(button)) {
+            throw new AssertionError("キー操作で「" + CONFIRM + "」に届かない");
+        }
+        page().keyboard().press("Enter");
+        page().waitForURL("**/staff/routing-cases/RC-*");
+    }
+
+    @かつ("判断根拠を入れずに確定する")
+    public void 判断根拠を入れずに確定する() {
+        page().getByRole(
+                        AriaRole.BUTTON,
+                        new Page.GetByRoleOptions().setName(CONFIRM).setExact(true))
+                .click();
+        page().waitForLoadState();
+    }
+
+    @ならば("経路を確定したと示され、直行の航海の候補に確定と判断根拠が示される")
+    public void 経路を確定したと示される() {
+        assertThat(page().getByRole(AriaRole.STATUS)).containsText("経路を確定しました");
+        Locator confirmed = candidate(voyage("DIRECT"));
+        assertThat(confirmed).containsText("確定した経路");
+        assertThat(confirmed).containsText("直行で期限まで 3 日あり");
+        assertThat(page().getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("候補を再算出")))
+                .hasCount(0);
+        browser.checkAccessibility();
+    }
+
+    @かつ("案件一覧で案件の状態は {string} と示される")
+    public void 案件一覧の状態(String status) {
+        browser.navigate(baseUrl + "/staff/routing-cases");
+        assertThat(page().getByRole(AriaRole.ROW)
+                        .filter(new Locator.FilterOptions().setHasText(state.transportRequestNumber())))
+                .containsText(status);
+        browser.checkAccessibility();
+    }
+
+    @ならば("判断根拠の誤りがエラー要約に示され、経路はまだ確定していない")
+    public void 判断根拠の誤りが示される() {
+        assertThat(page().locator("#error-summary")).containsText("判断根拠を入れてください");
+        assertThat(page().locator("main")).containsText("この経路で確定しますか");
+        browser.checkAccessibility();
+        page().getByRole(AriaRole.LINK, new Page.GetByRoleOptions().setName("経路候補の比較へ戻る"))
+                .click();
+        assertThat(candidate(voyage("DIRECT"))).not().containsText("確定した経路");
     }
 
     @もし("営業担当者が経路設計の案件一覧の URL を直接開く")

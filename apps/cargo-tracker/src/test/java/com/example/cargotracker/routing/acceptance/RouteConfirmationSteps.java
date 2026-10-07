@@ -64,8 +64,8 @@ public class RouteConfirmationSteps {
 
     @かつ("ほかの経路設計者が候補を算出し直す")
     public void ほかの経路設計者が候補を算出し直す() {
-        commandService.calculateCandidates(
-                new CalculateCandidatesCommand(onlyCase().number(), OTHER_ROUTE_DESIGNER));
+        commandService.calculateCandidates(new CalculateCandidatesCommand(
+                onlyCase().number(), currentCase().aggregateVersion(), OTHER_ROUTE_DESIGNER));
     }
 
     @もし("経路設計者が候補 {int} を判断根拠 {string} で確定する")

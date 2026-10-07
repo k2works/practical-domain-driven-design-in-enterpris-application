@@ -337,13 +337,24 @@ class AuthenticationSecurityIntegrationTest {
     }
 
     @Test
-    void 営業担当者と荷主担当者は経路設計の画面を開けず候補の算出を送れない() throws Exception {
+    void 営業担当者と荷主担当者は経路設計の画面を開けず候補の算出と経路の確定を送れない() throws Exception {
         for (Cookie session : List.of(
                 login(user(staffCompany(), Role.SALES, UserStatus.ACTIVE)), login(shipper(UserStatus.ACTIVE)))) {
             mvc.perform(get("/staff/routing-cases").cookie(session)).andExpect(status().isForbidden());
             mvc.perform(get("/staff/routing-cases/RC-2026-0001").cookie(session))
                     .andExpect(status().isForbidden());
             mvc.perform(post("/staff/routing-cases/RC-2026-0001/candidates")
+                            .cookie(session)
+                            .with(csrf()))
+                    .andExpect(status().isForbidden());
+            // 経路の確定（S-07。Bolt 19）も経路設計者だけ
+            mvc.perform(get("/staff/routing-cases/RC-2026-0001/confirmation?candidate=1")
+                            .cookie(session))
+                    .andExpect(status().isForbidden());
+            mvc.perform(post("/staff/routing-cases/RC-2026-0001/confirmation")
+                            .param("candidate", "1")
+                            .param("rationale", "根拠")
+                            .param("expectedVersion", "0")
                             .cookie(session)
                             .with(csrf()))
                     .andExpect(status().isForbidden());

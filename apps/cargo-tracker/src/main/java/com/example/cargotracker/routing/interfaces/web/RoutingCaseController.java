@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
@@ -65,9 +66,13 @@ public class RoutingCaseController {
     /** 候補を算出・再算出する。結果の件数を S-06 の上部に示す。 */
     @PostMapping("/{number}/candidates")
     public String calculate(
-            @PathVariable String number, AuthenticatedActor actor, RedirectAttributes redirectAttributes) {
+            @PathVariable String number,
+            @RequestParam long expectedVersion,
+            AuthenticatedActor actor,
+            RedirectAttributes redirectAttributes) {
         RoutingCaseNumber caseNumber = parse(number);
-        return switch (commandService.calculateCandidates(new CalculateCandidatesCommand(caseNumber, actor.userId()))) {
+        return switch (commandService.calculateCandidates(
+                new CalculateCandidatesCommand(caseNumber, expectedVersion, actor.userId()))) {
             case CandidateCalculationOutcome.Calculated(
                     RoutingCaseNumber calculated,
                     CandidateCalculation calculation) -> {

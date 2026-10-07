@@ -97,8 +97,10 @@ public class RoutingSteps {
     @もし("経路設計者が案件の候補を算出する")
     public void 経路設計者が案件の候補を算出する() {
         RoutingCaseSummary routingCase = onlyCase();
-        outcome = commandService.calculateCandidates(
-                new CalculateCandidatesCommand(routingCase.number(), ROUTE_DESIGNER));
+        outcome = commandService.calculateCandidates(new CalculateCandidatesCommand(
+                routingCase.number(),
+                queryService.findByNumber(routingCase.number()).orElseThrow().aggregateVersion(),
+                ROUTE_DESIGNER));
     }
 
     @ならば("算出の結果は {int} 件で、適合は {int} 件、除外は {int} 件である")
