@@ -1,5 +1,6 @@
 package com.example.cargotracker.routing.domain.model.aggregates;
 
+import com.example.cargotracker.routing.domain.events.RouteConfirmed;
 import com.example.cargotracker.routing.domain.model.entities.RouteCandidate;
 import com.example.cargotracker.routing.domain.model.entities.RouteVersion;
 import com.example.cargotracker.routing.domain.model.rules.ConstraintEvaluator;
@@ -7,6 +8,7 @@ import com.example.cargotracker.routing.domain.model.rules.RouteCandidateFinder;
 import com.example.cargotracker.routing.domain.model.valueobjects.CandidateCalculation;
 import com.example.cargotracker.routing.domain.model.valueobjects.ConstraintEvaluation;
 import com.example.cargotracker.routing.domain.model.valueobjects.Leg;
+import com.example.cargotracker.routing.domain.model.valueobjects.RouteApprover;
 import com.example.cargotracker.routing.domain.model.valueobjects.RouteSpecification;
 import com.example.cargotracker.routing.domain.model.valueobjects.RouteVersionStatus;
 import com.example.cargotracker.routing.domain.model.valueobjects.RoutingCaseId;
@@ -18,11 +20,13 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 
 /**
  * 経路設計案件。1 つの輸送要求について経路版を作り、確定・再設計する単位（集約ルート）。
  * 荷主の詳細経路設計の依頼（DE-16）を受けて、輸送要求版ごとに 1 つ作る（R-INV-10）。Bolt 17 は経路版 1 の候補の算出まで。
+ * Bolt 19 で経路版の一覧（Bolt 17 レビュー D-64）と確定（US-07 AC1・AC2）を足した。
  *
  * <p>輸送要求・見積りの ID と業務番号は、見積りの公開 API とイベントから得た値の写し（見積りのドメインの型を持たない。ADR-001）。
  */
@@ -116,7 +120,7 @@ public final class RoutingCase {
             List<Location> routePolicyVia,
             RouteSpecification specification,
             UtcInstant requestedAt,
-            RouteVersion routeVersion,
+            List<RouteVersion> routeVersions,
             long aggregateVersion) {
         return new RoutingCase(
                 id,
@@ -128,7 +132,7 @@ public final class RoutingCase {
                 routePolicyVia,
                 specification,
                 requestedAt,
-                routeVersion,
+                routeVersions.getLast(),
                 aggregateVersion);
     }
 
@@ -164,6 +168,25 @@ public final class RoutingCase {
                 .filter(candidate -> candidate.evaluation().conforming())
                 .count();
         return new CandidateCalculation(evaluated.size(), candidates.size(), conforming, judgedAt);
+    }
+
+    /**
+     * 経路を確定する（候補提示済み → 確定。US-07 AC1・AC2）。承認者が経路設計者で、選んだ候補が適合で、判断根拠があることを
+     * 確かめ、確定の時刻（承認 commit 時刻）で有効な接続時間規則と希望到着期限で判定し直す（R-INV-03 の R0.1 の範囲）。
+     * 最初の区間が確定の時刻と同時刻または前に出発するなら拒否する。
+     *
+     * @return DE-05 経路を確定した
+     * @throws RouteConfirmationRejected 確定できない（理由を値で持つ）
+     */
+    @SuppressWarnings("java:S107") // 確定の入力と、再検証に使う規則・判定をすべて受け取る
+    public RouteConfirmed confirm(
+            int candidateNo,
+            String rationale,
+            RouteApprover approver,
+            List<ConnectionRule> rules,
+            UtcInstant commitAt,
+            ConstraintEvaluator evaluator) {
+        return null;
     }
 
     /** 判定した区間の列（候補番号を振る前）。 */
@@ -214,9 +237,19 @@ public final class RoutingCase {
         return requestedAt;
     }
 
-    /** いまの経路版（Bolt 17 は経路版 1 だけ）。 */
+    /** いまの（最新の）経路版。 */
     public RouteVersion routeVersion() {
         return routeVersion;
+    }
+
+    /** 経路版の一覧（経路版番号の順）。 */
+    public List<RouteVersion> routeVersions() {
+        return List.of(routeVersion);
+    }
+
+    /** 確定した経路版（案件に 1 つだけ。R-INV-05）。 */
+    public Optional<RouteVersion> confirmedRouteVersion() {
+        return Optional.empty();
     }
 
     public long aggregateVersion() {

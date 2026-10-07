@@ -199,7 +199,7 @@ public class MyBatisRoutingCaseRepository implements RoutingCaseRepository {
                         toUtc(row.arrivalDeadline()),
                         row.cargoCategory()),
                 toUtc(row.requestedAt()),
-                version,
+                List.of(version),
                 row.version());
     }
 

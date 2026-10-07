@@ -126,8 +126,8 @@ class RoutingCaseTest {
                 List.of(),
                 new RouteSpecification(TOKYO, ROTTERDAM, DEADLINE, "GENERAL"),
                 at("2026-10-06T02:00:00Z"),
-                new com.example.cargotracker.routing.domain.model.entities.RouteVersion(
-                        1, RouteVersionStatus.CONFIRMED, List.of(), JUDGED_AT),
+                List.of(new com.example.cargotracker.routing.domain.model.entities.RouteVersion(
+                        1, RouteVersionStatus.CONFIRMED, List.of(), JUDGED_AT)),
                 3);
 
         org.assertj.core.api.Assertions.assertThatThrownBy(

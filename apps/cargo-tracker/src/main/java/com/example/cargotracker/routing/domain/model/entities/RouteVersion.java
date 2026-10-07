@@ -1,5 +1,6 @@
 package com.example.cargotracker.routing.domain.model.entities;
 
+import com.example.cargotracker.routing.domain.model.valueobjects.RouteConfirmation;
 import com.example.cargotracker.routing.domain.model.valueobjects.RouteVersionStatus;
 import com.example.cargotracker.shared.annotation.ddd.Entity;
 import com.example.cargotracker.shared.domain.UtcInstant;
@@ -9,19 +10,21 @@ import java.util.Optional;
 
 /**
  * 経路版。候補の比較、判断根拠、承認を伴って確定した経路のある版。経路設計案件の中で経路版番号で識別する。
- * Bolt 17 は作成中と候補提示済みだけを持つ。判断・承認は US-07 で足す。
+ * Bolt 17 は作成中と候補提示済み、Bolt 19 で確定（選んだ候補・判断根拠・承認者・承認 commit 時刻）を足した。
  *
  * @param routeVersionNo 経路版番号（案件の中で 1 から）
  * @param status 状態
  * @param candidates 経路候補（候補番号の順）
  * @param candidatesEvaluatedAt 候補の判定時刻（作成中は null）
+ * @param routeConfirmation 確定の記録（確定のときだけ。ほかは null）
  */
 @Entity
 public record RouteVersion(
         int routeVersionNo,
         RouteVersionStatus status,
         List<RouteCandidate> candidates,
-        UtcInstant candidatesEvaluatedAt) {
+        UtcInstant candidatesEvaluatedAt,
+        RouteConfirmation routeConfirmation) {
 
     public RouteVersion {
         if (routeVersionNo < 1) {
@@ -37,9 +40,23 @@ public record RouteVersion(
         }
     }
 
+    /** 確定していない経路版。 */
+    public RouteVersion(
+            int routeVersionNo,
+            RouteVersionStatus status,
+            List<RouteCandidate> candidates,
+            UtcInstant candidatesEvaluatedAt) {
+        this(routeVersionNo, status, candidates, candidatesEvaluatedAt, null);
+    }
+
     /** 作成中の経路版。 */
     public static RouteVersion draft(int routeVersionNo) {
         return new RouteVersion(routeVersionNo, RouteVersionStatus.DRAFT, List.of(), null);
+    }
+
+    /** 確定の記録（確定のときだけ）。 */
+    public Optional<RouteConfirmation> confirmation() {
+        return Optional.ofNullable(routeConfirmation);
     }
 
     /** 候補の判定時刻。 */

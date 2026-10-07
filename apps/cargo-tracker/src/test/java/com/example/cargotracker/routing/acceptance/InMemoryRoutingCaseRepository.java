@@ -94,7 +94,7 @@ public class InMemoryRoutingCaseRepository implements RoutingCaseRepository {
                 source.routePolicyVia(),
                 source.specification(),
                 source.requestedAt(),
-                source.routeVersion(),
+                source.routeVersions(),
                 version);
     }
 }
