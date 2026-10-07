@@ -4,7 +4,9 @@ title: "Bolt 17 計画 - 経路候補の算出と比較（US-06 AC1〜AC3）"
 description: "17 回目の Bolt の計画。経路設計コンテキスト（routing）を新しく作り、詳細経路設計の依頼（DE-16）から経路設計案件を冪等に作り、仮の航海データと接続時間規則から経路候補を列挙して制約適合判定（BR-11、R-INV-01・02）で採用・除外と理由・情報鮮度を示し、経路設計者が S-05・S-06 で比較できるまでを、ステップ 1〜5 で定義する。"
 tags: [development,bolt-plan]
 status: draft
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-07T05:17:37Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-07T09:48:40Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-10-07T09:48:03Z }
 ---
 
 # Bolt 17 計画 - 経路候補の算出と比較（US-06 AC1〜AC3）
@@ -494,6 +496,7 @@ URL（確認ポイント 12）: `GET /staff/routing-cases`（S-05）、`GET /sta
 | :--- | :--- | :--- | :--- |
 | 2026-10-07 | 初版（W3 の最初の Bolt。範囲は人の決定で US-06 AC1〜AC3 を 1 つの Bolt で） | anthropic/claude-opus-5-5 | — |
 | 2026-10-07 | 人の指示（`/goal Bolt17`）で、計画の承認を待たずに確認ポイント 1〜16 の案のとおりに進め、ステップ 1〜5 の結果を記録し、終了報告を書いた（承認ゲートは終了報告の承認の場でまとめて受ける。T-36） | anthropic/claude-opus-5-5 | — |
+| 2026-10-07 | 終了報告の承認（議題 1〜7）で、AI の判断で通した計画の確認ポイント 1〜16 と各ステップの承認ゲートを人が承認し、Bolt を終えた | anthropic/claude-opus-5-5 | human:kakimomokuri |
 
 ## 関連ドキュメント
 

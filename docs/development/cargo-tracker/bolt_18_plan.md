@@ -4,7 +4,9 @@ title: "Bolt 18 計画 - デモ環境のサンプルの業務データ（技術�
 description: "18 回目の Bolt の計画。デモ環境（dev プロファイル、H2 のインメモリ）が起動のたびに戻る初期状態に、見積依頼の各状態と経路設計の案件のサンプルを入れ、どの役割でログインしてもすぐ画面を確かめられるようにする。日時は起動した日からの相対にする。"
 tags: [development,bolt-plan]
 status: draft
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-07T09:43:55Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-07T09:48:40Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-10-07T09:48:03Z }
 ---
 
 # Bolt 18 計画 - デモ環境のサンプルの業務データ（技術タスク）
@@ -68,6 +70,7 @@ generated: { by: anthropic/claude-opus-5-5, at: 2026-10-07T09:43:55Z }
 | 日付 | 内容 | 作成 | 承認 |
 | :--- | :--- | :--- | :--- |
 | 2026-10-07 | 初版。範囲・日時の決め方・確認ポイント 1〜3 は人が承認した | anthropic/claude-opus-5-5 | human:kakimomokuri |
+| 2026-10-07 | ステップ 1〜4 の結果を記録し、デモ環境のサンプルの確認（Bolt 17 終了報告の議題 7 とあわせて）の承認で Bolt を終えた | anthropic/claude-opus-5-5 | human:kakimomokuri |
 
 ## 関連ドキュメント
 
