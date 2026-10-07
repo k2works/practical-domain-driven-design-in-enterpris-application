@@ -3010,6 +3010,41 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../development/cargo-tracker/bolt_16_report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 16 終了報告
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--draft"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -7723,6 +7758,10 @@ npx<span class="w"> </span>gulp<span class="w"> </span>deploy:demo:start<span cl
 <tr>
 <td style="text-align: left;"><code>deploy-demo</code> が「Heroku の Container Registry にログインする」で <code>Password required</code> か <code>unauthorized</code></td>
 <td style="text-align: left;">secret <code>HEROKU_API_KEY</code> が空か、キーの期限が切れた。<code>npx gulp deploy:demo:ci-key</code> で登録し直し、<code>gh workflow run cargo-tracker-ci.yml --ref develop</code> で配備し直す（失敗した実行の再実行は、より新しい配備の対象があると飛ばされる）</td>
+</tr>
+<tr>
+<td style="text-align: left;">古い実行を再実行したら、古いコミットが配備された</td>
+<td style="text-align: left;">再実行は、その実行のときのワークフローの定義で動く。最新かを確かめる処理は <code>213e43a6</code>（2026-10-07）から入ったので、それより前の実行（<code>70bb65ea</code> まで）は再実行しない。develop で <code>git revert</code> して push するか、<code>gh workflow run cargo-tracker-ci.yml --ref develop</code> で最新を配備し直す</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>deploy-demo</code> が「より新しい配備の対象があります」の警告で配備を飛ばした</td>

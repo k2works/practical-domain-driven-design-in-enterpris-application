@@ -6,17 +6,17 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="12 回目の Bolt の終了報告。荷主の詳細経路設計へ進む回答、DE-16 と輸送要求の経路設計中、回答の列と部分一意インデックスの作り直し、C-05・C-04・S-02・S-04 の成果、デモ項目と動画、指標と時間の内訳、仮説 H1〜H3 の結論、開発レビューと対応、承認ゲートを後でまとめて受けた判断、ふりかえりをまとめる。">
+        <meta name="description" content="16 回目の Bolt の終了報告。develop の cargo-tracker CI の check・ui が緑になった後に deploy-demo ジョブで Heroku のデモ環境へ自動で配備する仕組み、Environment demo と API キー、3 視点の運用レビューと対応、途中で起きた AI の誤り（キーの登録のコマンドの崩れ、Accept のヘッダー、キーの更新のタスクの再帰）と対処、仮説 H1〜H3 の結論、ふりかえりをまとめる。">
       
       
         <meta name="author" content="k2works">
       
       
       
-        <link rel="prev" href="../bolt_12_plan/">
+        <link rel="prev" href="../bolt_16_plan/">
       
       
-        <link rel="next" href="../bolt_13_plan/">
+        <link rel="next" href="../../../operation/">
       
       
         
@@ -27,7 +27,7 @@
     
     
       
-        <title>Bolt 12 終了報告 - 詳細経路設計へ進む回答（US-24 AC1） - 実践ドメイン駆動設計 in エンタープライズアプリケーション</title>
+        <title>Bolt 16 終了報告 - デモ環境への CI からの配備 - 実践ドメイン駆動設計 in エンタープライズアプリケーション</title>
       
     
     
@@ -78,7 +78,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#bolt-12-us-24-ac1" class="md-skip">
+        <a href="#bolt-16-ci" class="md-skip">
           Skip to content
         </a>
       
@@ -112,7 +112,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Bolt 12 終了報告 - 詳細経路設計へ進む回答（US-24 AC1）
+              Bolt 16 終了報告 - デモ環境への CI からの配備
             
           </span>
         </div>
@@ -2741,44 +2741,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Bolt 12 終了報告
-  
-
-    
-  </span>
-  
-  
-    
-  
-  
-    <span class="md-status md-status--stable"></span>
-  
-
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../bolt_12_report/" class="md-nav__link">
         
   
   
@@ -2801,264 +2767,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#_1" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        基本情報
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#_2" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        成果
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="成果">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#_3" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        計画からの変更
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#_4" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        見つけて直した問題
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#_5" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        デモ項目の結果
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#_6" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        指標
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="指標">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#t-16" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        時間の内訳（T-16）
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#_7" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        品質ゲート
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#_8" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        仮説の結論
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#_9" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        開発レビューと対応
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#_10" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        判断と学び
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="判断と学び">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#_11" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        設計への反映（反映済み）
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#_12" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        人の決定
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#_13" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        既知の課題
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#bolt-11-try" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Bolt 11 の Try の結果
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#kpt" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        ふりかえり（KPT）
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#_14" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        承認待ちの書き換え
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#bolt" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        次の Bolt
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#_15" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        更新履歴
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#_16" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        関連ドキュメント
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -3313,10 +3021,44 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../bolt_16_report/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 16 終了報告
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--draft"></span>
+  
+
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -3339,6 +3081,231 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        承認の議題（先に確かめてほしいこと）
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        基本情報
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        成果
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="成果">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        見つけて直した問題
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        デモ項目の結果
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_6" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        指標
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="指標">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_7" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        時間の内訳
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_8" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        品質ゲート
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_9" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        仮説の結論
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_10" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        運用レビューと対応
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_11" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        判断と学び
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="判断と学び">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_12" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        人の決定
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#w10-28" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        既知の課題（W10 の運用準備 #28 に持ち込む）
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#kpt" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ふりかえり（KPT）
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#bolt" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        次の Bolt
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_13" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        更新履歴
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_14" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        関連ドキュメント
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -7465,8 +7432,51 @@
   
 
 
-<h1 id="bolt-12-us-24-ac1">Bolt 12 終了報告 - 詳細経路設計へ進む回答（US-24 AC1）<a class="headerlink" href="#bolt-12-us-24-ac1" title="Permanent link">&para;</a></h1>
-<h2 id="_1">基本情報<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h2>
+<h1 id="bolt-16-ci">Bolt 16 終了報告 - デモ環境への CI からの配備<a class="headerlink" href="#bolt-16-ci" title="Permanent link">&para;</a></h1>
+<h2 id="_1">承認の議題（先に確かめてほしいこと）<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">#</th>
+<th style="text-align: left;">確かめてほしいこと</th>
+<th style="text-align: left;">根拠</th>
+<th style="text-align: left;">却下・修正のときに戻す箇所</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">1</td>
+<td style="text-align: left;">ADR-013 の改訂（CI からの自動配備を主にし、手元の <code>deploy:demo</code> を CI が使えないときの手段にする。キーの境界とワークフローのレビュー、期限 90 日）と ADR-008 の注記</td>
+<td style="text-align: left;">計画の確認ポイント 5、D-57・D-58 は承認済み。改訂の中身を確かめてほしい</td>
+<td style="text-align: left;">ADR-013 の「ステータス」の改訂の注記と決定の表</td>
+</tr>
+<tr>
+<td style="text-align: left;">2</td>
+<td style="text-align: left;">計画から変えたこと: ステップ 2 を push せずにステップ 3 の後で push した、スモークを自分の release を待つ形にした、配備をワークフローの取り消しの外に置いた、最新の配備の対象でなければ飛ばす、失敗したら直前の release に戻す</td>
+<td style="text-align: left;">レビュー（D-59）と、ステップ 2 で見つけた問題</td>
+<td style="text-align: left;"><code>.github/workflows/cargo-tracker-ci.yml</code> の <code>deploy-demo</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">3</td>
+<td style="text-align: left;">AI の誤りで、90 日のキーが 7 つ作られた（<code>deploy:demo:ci-key</code> の再帰）。AI が止め、最も新しい 1 つを残して人が失効させた</td>
+<td style="text-align: left;">下の「見つけて直した問題」</td>
+<td style="text-align: left;">—</td>
+</tr>
+<tr>
+<td style="text-align: left;">4</td>
+<td style="text-align: left;">Heroku のアカウントに残る CI のキーは 1 件（2026-10-07 作成、期限 2027-01-05）。更新の Issue <a href="https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/40">#40</a>（期日 2026-12-22）</td>
+<td style="text-align: left;">D-57</td>
+<td style="text-align: left;">—</td>
+</tr>
+<tr>
+<td style="text-align: left;">5</td>
+<td style="text-align: left;">Try T-47〜T-49（下の KPT）</td>
+<td style="text-align: left;">ふりかえり</td>
+<td style="text-align: left;">—</td>
+</tr>
+</tbody>
+</table>
+<h2 id="_2">基本情報<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
 <tr>
@@ -7477,31 +7487,31 @@
 <tbody>
 <tr>
 <td style="text-align: left;">Bolt</td>
-<td style="text-align: left;">第 12 回</td>
+<td style="text-align: left;">第 16 回</td>
 </tr>
 <tr>
 <td style="text-align: left;">期間</td>
-<td style="text-align: left;">2026-10-06 10:07 JST（計画の承認のコミット <code>7fa553b</code>）〜 10:55（本報告の初版）。開始準備は 09:46〜09:49（計画のコミット <code>f849873</code>）</td>
+<td style="text-align: left;">2026-10-07 09:54 JST（計画の初版）〜 11:55（本報告の初版）。計画の承認は 09:57</td>
 </tr>
 <tr>
 <td style="text-align: left;">対象</td>
-<td style="text-align: left;">U1 輸送要求・見積り。US-24 見積りと経路に回答・承認する（AC1 詳細経路設計へ進む）。<a href="https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/5">#5</a>（SP 3。AC4・AC5 は W3 のためクローズしない）</td>
+<td style="text-align: left;">技術タスク（SP 0）。<a href="https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/39">#39 [技術] デモ環境への CI からの配備</a></td>
 </tr>
 <tr>
 <td style="text-align: left;">計画</td>
-<td style="text-align: left;"><a href="../bolt_12_plan/">Bolt 12 計画</a></td>
+<td style="text-align: left;"><a href="../bolt_16_plan/">Bolt 16 計画</a></td>
 </tr>
 <tr>
 <td style="text-align: left;">ゴール</td>
-<td style="text-align: left;">荷主担当者は提示済みで有効な見積りを C-05 で確かめ、詳細経路設計へ進むと回答できる。見積りは詳細設計依頼済みになり、DE-16 が発行され、輸送要求は経路設計中になる。失効・置換済み・回答済みの見積りには回答できず、理由が示される。回答の前・最中・後に荷主と営業が何を見るかが分かる</td>
+<td style="text-align: left;">develop にアプリの変更を push すると、check・ui が緑になった後に <code>deploy-demo</code> がデモ環境へ配備し、<code>DEMO_REVISION</code> が push したコミットになり、ログインの画面が 200 を返す。キーは人だけが扱い、develop の外からは使えない</td>
 </tr>
 <tr>
-<td style="text-align: left;">進め方</td>
-<td style="text-align: left;">U1 の密度。計画の承認（確認ポイント 1〜9）の後、人の指示（<code>/goal Bolt12</code>）で、業務のルール（ステップ 1・2）とスキーマ（ステップ 3）の承認ゲートを止めずに進めた。この 2 つと開発レビューの判断（D-42〜D-44）は、本報告の承認の場でまとめて受ける（D-43）</td>
+<td style="text-align: left;">環境</td>
+<td style="text-align: left;"><a href="https://cargo-tracker-mono-demo-883bf0b92807.herokuapp.com/">https://cargo-tracker-mono-demo-883bf0b92807.herokuapp.com/</a>（release v19、<code>DEMO_REVISION</code> は <code>d49af974</code>）</td>
 </tr>
 </tbody>
 </table>
-<h2 id="_2">成果<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h2>
+<h2 id="_3">成果<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
 <tr>
@@ -7513,80 +7523,66 @@
 </thead>
 <tbody>
 <tr>
-<td style="text-align: left;">1. 決定を設計文書に反映する</td>
-<td style="text-align: left;">完了（人が承認）</td>
-<td style="text-align: left;"><code>0f768b7</code></td>
+<td style="text-align: left;">1. ADR-013・手順書・#39</td>
+<td style="text-align: left;">完了</td>
+<td style="text-align: left;"><code>595d2b3b</code></td>
 <td style="text-align: left;">—</td>
 </tr>
 <tr>
-<td style="text-align: left;">2. 回答の業務のルール</td>
-<td style="text-align: left;">完了（人が承認）</td>
-<td style="text-align: left;"><code>4188c9b</code>（Red）、<code>0515eb1</code>（Green）</td>
-<td style="text-align: left;">1 件</td>
-</tr>
-<tr>
-<td style="text-align: left;">3. 表</td>
-<td style="text-align: left;">完了（人が承認）</td>
-<td style="text-align: left;"><code>83ae352</code>（Red）、<code>48e31d4</code>（Green）</td>
-<td style="text-align: left;">1 件</td>
-</tr>
-<tr>
-<td style="text-align: left;">4. 画面の層</td>
+<td style="text-align: left;">2. <code>deploy-demo</code> と actionlint</td>
 <td style="text-align: left;">完了</td>
-<td style="text-align: left;"><code>dae86f9</code>（Red）、<code>303c7a9</code>（Green）</td>
-<td style="text-align: left;">2 件</td>
+<td style="text-align: left;"><code>1ce566ef</code></td>
+<td style="text-align: left;">古い dyno の 200 でスモークが通ってしまう（設計の見直し）→ 最新の release の dyno を待つ。push すると Environment が規則なしで自動で作られる（設計の見直し）→ push をステップ 3 の後に</td>
 </tr>
 <tr>
-<td style="text-align: left;">5. 開発レビューと終了報告</td>
+<td style="text-align: left;">3. Environment・secret・最初の配備（外部連携・セキュリティの承認ゲート）</td>
 <td style="text-align: left;">完了</td>
-<td style="text-align: left;"><code>44d17d7</code>（SonarQube）、<code>b1cd47c</code>（レビュー）、<code>cace48a</code>（Red）、<code>be3b9d0</code>（Green）、<code>a2ee173</code>（文書）、本報告</td>
-<td style="text-align: left;">1 件（SonarQube の品質ゲートの不合格 1 回）</td>
+<td style="text-align: left;">—</td>
+<td style="text-align: left;">人が貼ったキーの登録のコマンドが端末の折り返しで崩れ、空の secret が登録された（CI の <code>Password required</code>）。2 回目も崩れた（貼った出力）→ AI がスクラッチに置いた短いスクリプトで登録</td>
+</tr>
+<tr>
+<td style="text-align: left;">4. develop の外の確かめと手順書</td>
+<td style="text-align: left;">完了</td>
+<td style="text-align: left;"><code>70bb65ea</code></td>
+<td style="text-align: left;">—</td>
+</tr>
+<tr>
+<td style="text-align: left;">5. 運用レビューと終了報告</td>
+<td style="text-align: left;">本報告</td>
+<td style="text-align: left;"><code>82adf2ef</code>、<code>213e43a6</code>、<code>31681047</code>、<code>d9052b07</code>、<code>d49af974</code></td>
+<td style="text-align: left;">下の「見つけて直した問題」</td>
 </tr>
 </tbody>
 </table>
-<p>打ち切りの線（幅 320 CSS px のシナリオ、S-02 の経路設計中の表、同時の更新の統合テスト）は使わなかった。</p>
-<h3 id="_3">計画からの変更<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h3>
-<ul>
-<li>荷主の回答の入力ポートは <code>QuotationCommandService</code> に足さず、<code>QuotationResponseService</code> に分けた（荷主の入力ポートを社内と分け、必ず荷主企業で絞るため）。</li>
-<li>承認待ちなど荷主に提示していない見積りへの回答は、理由を示す代わりに「見つからない」にした（荷主に見えない見積りのため）。</li>
-<li>DE-16 は DE-03 より先に届いても輸送要求を経路設計中にする（見積り作成中からも変える）。遅れて届いた DE-03 では戻らない。</li>
-<li>S-04 の「依頼者」は名前を出さず、依頼した日時だけを示した（利用者の名前を引く手段が US-16・US-18 までない）。</li>
-<li>開発レビューの判断（D-42、AI の提案のまま）で、経路設計中に失効した見積りの案内を Bolt 11 の文言から分けた（計画の確認ポイント 5 の「表示だけ」は変えず、文言だけ）。</li>
-</ul>
 <h3 id="_4">見つけて直した問題<a class="headerlink" href="#_4" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
 <tr>
-<th style="text-align: left;">ステップ</th>
 <th style="text-align: left;">問題</th>
-<th style="text-align: left;">検出の手段</th>
-<th style="text-align: left;">対応</th>
+<th style="text-align: left;">検出</th>
+<th style="text-align: left;">対処</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td style="text-align: left;">2</td>
-<td style="text-align: left;">書式の検査で止まった</td>
-<td style="text-align: left;">spotless</td>
-<td style="text-align: left;">整形をかけ直した</td>
+<td style="text-align: left;">formation の更新に <code>Accept:</code> を付けず、メディアタイプだけをヘッダーに渡した（AI の誤り）</td>
+<td style="text-align: left;">push の CI の <code>deploy-demo</code> が 400</td>
+<td style="text-align: left;">手元で <code>Accept:</code> なし 400・あり 200 を確かめて直した。release の前の失敗で、デモは動き続けた</td>
 </tr>
 <tr>
-<td style="text-align: left;">3</td>
-<td style="text-align: left;">復元のメソッドの分岐が上限（10）を超えた</td>
-<td style="text-align: left;">checkstyle</td>
-<td style="text-align: left;">null を扱う小さな関数に分けた</td>
+<td style="text-align: left;"><code>deploy:demo:ci-key</code> が、Issue の本文のバッククォートをシェルの文字列に埋め込み、<code>gh issue create</code> のときにシェルが <code>npx gulp deploy:demo:ci-key</code> を実行して再帰した（AI の誤り。レビューの R-26 を W10 に回していた）</td>
+<td style="text-align: left;">人の実行の後、キーが 6 つ増えて Issue がない → AI がプロセスの一覧で入れ子の実行を見つけた</td>
+<td style="text-align: left;">AI がプロセスを止めた。外部コマンドを <code>execFileSync</code> の引数の配列にし、再入を止める守りを足した。最も新しいキーで配備が通ることを確かめ、人が古いキーを失効させた</td>
 </tr>
 <tr>
-<td style="text-align: left;">4</td>
-<td style="text-align: left;">Bolt 11 の C-04 の単体テストが仮の案内の文言を期待していた。画面の層のステップが依頼の案内の文言を実装と違えて期待していた</td>
-<td style="text-align: left;">画面の単体テスト、確認</td>
-<td style="text-align: left;">テストを直した</td>
+<td style="text-align: left;"><code>execArgs</code> が、出力を端末に流すときの <code>null</code> に <code>.trim()</code> を呼んだ（AI の誤り）</td>
+<td style="text-align: left;">人の <code>revoke-old</code> の実行で、1 件目の失効の後に TypeError</td>
+<td style="text-align: left;"><code>null</code> を空文字にした。人が再実行して残りを失効させた</td>
 </tr>
 <tr>
-<td style="text-align: left;">5</td>
-<td style="text-align: left;">新しい Code Smell 3 件（URI の文字列、record パターン、テストのラムダ）</td>
-<td style="text-align: left;">SonarQube（品質ゲートの不合格）</td>
-<td style="text-align: left;">直して PASS</td>
+<td style="text-align: left;">ワークフローの再実行は、その実行のときの定義で動く</td>
+<td style="text-align: left;">古い実行の再実行の確かめ</td>
+<td style="text-align: left;">最新かを確かめる処理が入った <code>213e43a6</code> より前の実行は再実行しない、と手順書に書いた</td>
 </tr>
 </tbody>
 </table>
@@ -7597,31 +7593,36 @@
 <th style="text-align: left;">#</th>
 <th style="text-align: left;">デモ</th>
 <th style="text-align: left;">結果</th>
-<th style="text-align: left;">動画</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td style="text-align: left;">1</td>
-<td style="text-align: left;">荷主が提示済みの見積りに、詳細経路設計へ進むと回答する</td>
-<td style="text-align: left;"><code>@ui</code> で、C-04 → キー操作だけで「見積りに回答する」→ C-05（予約の確定でないこと、辞退・相談と取り消しの連絡先）→「この条件で詳細経路設計へ進む」→ C-04 に「TR-… 見積 1 で詳細経路設計を依頼しました」と「見積 1（詳細経路設計を依頼済み）」、回答の入口なし → 進み具合が「経路設計中（A 社の対応待ち）」→ 営業の S-02 の経路設計中の表から見積り 1 → S-04 は「詳細設計依頼済み」で読み取り専用、提示と再見積りの操作なし、までを確かめた</td>
-<td style="text-align: left;"><a href="../../../assets/demo/bolt-12/request-route-design.webm" target="_blank">request-route-design.webm</a></td>
+<td style="text-align: left;">develop にアプリの変更を push する</td>
+<td style="text-align: left;"><code>70bb65ea</code>・<code>31681047</code> の push で check・ui の後に <code>deploy-demo</code> が動いた（45 秒・35 秒）。Environment <code>demo</code> の配備の履歴に URL が出る</td>
 </tr>
 <tr>
 <td style="text-align: left;">2</td>
-<td style="text-align: left;">有効期限を過ぎた見積りに回答しようとする</td>
-<td style="text-align: left;"><code>@ui</code> で、C-05 を開くと「有効期限を過ぎて失効しています」と示されて C-04 に戻り、回答の入口がないことを確かめた</td>
-<td style="text-align: left;"><a href="../../../assets/demo/bolt-12/expired-response.webm" target="_blank">expired-response.webm</a></td>
+<td style="text-align: left;"><code>npx gulp deploy:demo:status</code></td>
+<td style="text-align: left;"><code>DEMO_REVISION</code> が push・手動の実行のコミット（いまは <code>d49af974</code>）</td>
 </tr>
 <tr>
 <td style="text-align: left;">3</td>
-<td style="text-align: left;"><code>./gradlew uiTest</code></td>
-<td style="text-align: left;">画面の層 41 本（Bolt 11 の 38 本から +3）がすべて通り、axe-core の違反は 0 件</td>
-<td style="text-align: left;">—</td>
+<td style="text-align: left;">develop の外のブランチから手動で実行する</td>
+<td style="text-align: left;"><code>deploy-demo</code> が skipped（<code>if</code>）</td>
+</tr>
+<tr>
+<td style="text-align: left;">追加</td>
+<td style="text-align: left;">古い実行を再実行する</td>
+<td style="text-align: left;">「より新しい配備の対象があります」の警告で配備を飛ばした</td>
+</tr>
+<tr>
+<td style="text-align: left;">追加</td>
+<td style="text-align: left;">同じ develop で手動の実行を 2 つ続ける</td>
+<td style="text-align: left;">前の実行の check・ui が取り消され、<code>deploy-demo</code> は skipped</td>
 </tr>
 </tbody>
 </table>
-<p>動画は録画の後に AI が中身を再生して確かめていない（この環境に動画を読む道具がない）。本報告の承認の場で人が再生して確かめる。<code>demoVideo</code> が過去の Bolt の動画も撮り直したため、Bolt 12 の 2 本だけを残し、過去の分は元に戻した。</p>
 <h2 id="_6">指標<a class="headerlink" href="#_6" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
@@ -7632,328 +7633,194 @@
 </thead>
 <tbody>
 <tr>
-<td style="text-align: left;">承認ゲート</td>
-<td style="text-align: left;">計画と確認ポイント 1〜9 の承認 1 回。ステップ 1〜3 の承認、開発レビューの判断、本報告の承認は、本報告の承認の場でまとめて受ける（D-43）</td>
+<td style="text-align: left;">承認ゲートの通過</td>
+<td style="text-align: left;">4 回（計画、外部連携・セキュリティ、レビューの対応の範囲、終了報告（本報告））</td>
 </tr>
 <tr>
 <td style="text-align: left;">人の変更依頼</td>
 <td style="text-align: left;">0</td>
 </tr>
 <tr>
-<td style="text-align: left;">実行中に AI が直した誤り</td>
-<td style="text-align: left;">5 件（上の表の行の数）</td>
+<td style="text-align: left;">人の作業</td>
+<td style="text-align: left;">キーの登録 3 回（2 回はコマンドの崩れで失敗）、<code>ci-key</code> 1 回、<code>revoke-old</code> 2 回</td>
 </tr>
 <tr>
-<td style="text-align: left;">テスト</td>
-<td style="text-align: left;"><code>test</code> 786 件（Bolt 11 の 737 件から +49。数え方は <code>build/test-results/test</code> の件数の和）。業務ルール層のシナリオ +11（<code>request_route_design.feature</code> 11 件）、画面の層 41 本（+3）。すべて passed</td>
+<td style="text-align: left;"><code>deploy-demo</code> の時間</td>
+<td style="text-align: left;">2 分 41 秒（キャッシュなし）、29〜45 秒（キャッシュあり）</td>
 </tr>
 <tr>
-<td style="text-align: left;">Red の記録</td>
-<td style="text-align: left;">業務ルール層はコンパイルの失敗で Red を確かめた（まだない型を呼ぶ）。表・画面の層・レビューの対応は、実装の前に実行して新しく書いたテストだけが失敗することを記録した（統合テスト 7 件、画面の単体テスト 8 件・uiTest 3 件、レビューの対応 8 件。T-21）</td>
+<td style="text-align: left;">push から配備まで</td>
+<td style="text-align: left;">約 6〜15 分（check・ui を含む。ui が最も長い）</td>
 </tr>
 <tr>
-<td style="text-align: left;">CI</td>
-<td style="text-align: left;">各ステップの push の後に CI の結果を確かめた（T-26）。<code>a2ee173</code>（レビューの対応のコードを含む）まで緑。ステップ 4 の実行は次の push に追い越されて取り消され、それを含む <code>b1cd47c</code> の実行で緑を確かめた</td>
-</tr>
-<tr>
-<td style="text-align: left;">SonarQube</td>
-<td style="text-align: left;">Quality Gate PASS、Bug 0、Vulnerability 0、Code Smell 0、Security Hotspot 0、重複 0.0%、カバレッジ 94.0%</td>
-</tr>
-<tr>
-<td style="text-align: left;">コード</td>
-<td style="text-align: left;">本体の Java 8,363 行、テスト 11,929 行（どちらも <code>cargo-tracker</code> の全体を <code>wc -l</code> で数えた。Bolt 11 の報告の数え方と同じかは確かめていない）</td>
+<td style="text-align: left;">CI のキー</td>
+<td style="text-align: left;">作成 10（使われなかったもの 2・再帰 7・残した 1）、失効 9、残り 1</td>
 </tr>
 </tbody>
 </table>
-<h3 id="t-16">時間の内訳（T-16）<a class="headerlink" href="#t-16" title="Permanent link">&para;</a></h3>
+<h3 id="_7">時間の内訳<a class="headerlink" href="#_7" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
 <tr>
 <th style="text-align: left;">ステップ</th>
-<th style="text-align: right;">AI の実行</th>
-<th style="text-align: left;">開始 〜 完了</th>
-<th style="text-align: right;">前の承認からの待ち</th>
+<th style="text-align: left;">目安</th>
+<th style="text-align: left;">実績</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td style="text-align: left;">開始準備</td>
-<td style="text-align: right;">約 3 分</td>
-<td style="text-align: left;">09:46 〜 09:49（計画のコミット）、計画の承認 10:07</td>
-<td style="text-align: right;">—</td>
-</tr>
-<tr>
 <td style="text-align: left;">1</td>
-<td style="text-align: right;">2 分</td>
-<td style="text-align: left;">10:07 〜 10:09</td>
-<td style="text-align: right;">0 分</td>
+<td style="text-align: left;">20 分</td>
+<td style="text-align: left;">8 分（09:58〜10:06）</td>
 </tr>
 <tr>
 <td style="text-align: left;">2</td>
-<td style="text-align: right;">8 分</td>
-<td style="text-align: left;">10:09 〜 10:17</td>
-<td style="text-align: right;">0 分</td>
+<td style="text-align: left;">40 分</td>
+<td style="text-align: left;">12 分（10:03〜10:15）</td>
 </tr>
 <tr>
 <td style="text-align: left;">3</td>
-<td style="text-align: right;">4 分</td>
-<td style="text-align: left;">10:17 〜 10:21</td>
-<td style="text-align: right;">0 分（承認ゲートを止めずに進めた。D-43）</td>
+<td style="text-align: left;">40 分</td>
+<td style="text-align: left;">22 分（10:16〜10:38。キーの登録のやり直しを含む）</td>
 </tr>
 <tr>
 <td style="text-align: left;">4</td>
-<td style="text-align: right;">12 分</td>
-<td style="text-align: left;">10:21 〜 10:33</td>
-<td style="text-align: right;">0 分</td>
+<td style="text-align: left;">25 分</td>
+<td style="text-align: left;">17 分（10:38〜10:55）</td>
 </tr>
 <tr>
 <td style="text-align: left;">5</td>
-<td style="text-align: right;">約 22 分</td>
-<td style="text-align: left;">10:33 〜 10:55（レビュー 10:33〜10:40、SonarQube 10:35〜10:40、指摘の対応 10:40〜10:48、文書 10:48〜10:50、動画 10:50〜10:52、本報告）</td>
-<td style="text-align: right;">0 分</td>
+<td style="text-align: left;">40 分</td>
+<td style="text-align: left;">60 分（10:55〜11:55。レビューの対応、400 と再帰と TypeError の対処を含む）</td>
 </tr>
 <tr>
 <td style="text-align: left;">合計</td>
-<td style="text-align: right;">約 48 分</td>
-<td style="text-align: left;">10:07 〜 10:55</td>
-<td style="text-align: right;">0 分</td>
+<td style="text-align: left;">165 分</td>
+<td style="text-align: left;">約 120 分（CI の待ちを含む）</td>
 </tr>
 </tbody>
 </table>
-<p>計画の目安（225 分）に対して、AI の実行は約 48 分だった。時刻はコミットの時刻による（T-33）。この環境の時計で、コミットの時刻の間隔が実際の作業の量より短く見える（テストの実行だけで数分かかるステップが 2〜4 分になっている）。時間の内訳は目安として扱う。</p>
-<h2 id="_7">品質ゲート<a class="headerlink" href="#_7" title="Permanent link">&para;</a></h2>
+<h2 id="_8">品質ゲート<a class="headerlink" href="#_8" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
 <tr>
-<th style="text-align: left;">項目</th>
+<th style="text-align: left;">ゲート</th>
 <th style="text-align: left;">結果</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td style="text-align: left;">全テスト</td>
-<td style="text-align: left;"><code>check</code>（786 件）、<code>uiTest</code>（41 シナリオ）、すべて成功</td>
+<td style="text-align: left;">actionlint（<code>rhysd/actionlint:1.7.12</code>）</td>
+<td style="text-align: left;">exit 0</td>
 </tr>
 <tr>
-<td style="text-align: left;">書式・静的解析・本番の依存・カバレッジの閾値・用語集の整合・アーキテクチャテスト</td>
-<td style="text-align: left;">すべて成功</td>
+<td style="text-align: left;">CI（<code>d49af974</code> の手動の実行）</td>
+<td style="text-align: left;">check・ui・<code>deploy-demo</code> が success</td>
 </tr>
 <tr>
-<td style="text-align: left;">CI</td>
-<td style="text-align: left;">緑（<code>a2ee173</code>）</td>
+<td style="text-align: left;">デモ環境</td>
+<td style="text-align: left;">release v19、web の dyno が up、R14 は 0 件</td>
 </tr>
 <tr>
-<td style="text-align: left;">SonarQube の品質ゲート</td>
-<td style="text-align: left;">PASS</td>
+<td style="text-align: left;"><code>okf:check</code></td>
+<td style="text-align: left;">ERROR 0</td>
 </tr>
 <tr>
-<td style="text-align: left;">ユーザーマニュアル</td>
-<td style="text-align: left;">対象外（マニュアルはまだない。認証と主要な画面がそろってから書く）</td>
+<td style="text-align: left;">キーの露出</td>
+<td style="text-align: left;">キーの値はリポジトリ・ログ・会話に出ていない（会話に出たのは長さ 65 だけ）</td>
 </tr>
 </tbody>
 </table>
-<h2 id="_8">仮説の結論<a class="headerlink" href="#_8" title="Permanent link">&para;</a></h2>
+<h2 id="_9">仮説の結論<a class="headerlink" href="#_9" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
 <tr>
 <th style="text-align: left;">#</th>
 <th style="text-align: left;">仮説</th>
 <th style="text-align: left;">結論</th>
-<th style="text-align: left;">根拠</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td style="text-align: left;">H1</td>
-<td style="text-align: left;">回答を見積りの状態遷移として持ち、輸送要求の経路設計中への変更を DE-16 の受け取りにすれば、U2 がなくても AC1 を満たせ、U2 は後で DE-16 を購読するだけで経路設計案件を作れる</td>
-<td style="text-align: left;">成り立った（条件あり）</td>
-<td style="text-align: left;">見積りの更新と輸送要求の更新を別のトランザクションに分け、配信の前は輸送要求が見積提示済みのままであることを受入シナリオで確かめた。DE-16 はドメインの型を持たず、<code>quotation</code> の公開のイベントにある。条件: 購読者がいない間の DE-16 は、US-06 で購読者を足しても再配信されない。US-06 の計画に、見積り ID で冪等な案件の作成と、詳細設計依頼済みで案件のない見積りの取り込みを入れる</td>
+<td style="text-align: left;"><code>needs</code> と Environment <code>demo</code> で、手元のガードと同じ約束を CI だけで守れる</td>
+<td style="text-align: left;"><strong>成り立った（境界は人の側）</strong>。テストを通ったその SHA だけを配備でき、手元より直接的になった。develop の外は <code>if</code> で止まり、Environment の規則は API の読み返しで確かめた（<code>if</code> を外した実行で Environment が拒むことは試していない）。ただし develop に push できれば、ワークフローを書き換えてキーを使える。境界は「k2works のアカウントで develop に push するもの」で、ADR-013 に書いた（D-58）</td>
 </tr>
 <tr>
 <td style="text-align: left;">H2</td>
-<td style="text-align: left;">回答できるかを集約の「回答できない理由(判定時刻)」に置けば、画面と拒否の判定を 1 か所にできる</td>
-<td style="text-align: left;">成り立った</td>
-<td style="text-align: left;">C-04 の入口、C-05 の表示、回答の拒否が <code>responseRejectionAt</code> を写す。レビューで「荷主に見えるか」も集約（<code>isVisibleToShipper</code>）に寄せた</td>
+<td style="text-align: left;">Heroku CLI なしで、<code>docker/build-push-action</code> と Platform API で release できる</td>
+<td style="text-align: left;"><strong>成り立った</strong>。formation の更新と Config Vars の更新、releases・dynos の読み取り、<code>POST releases</code> での戻しで足りた。メディアタイプの指定（<code>Accept:</code>）を誤ると 400</td>
 </tr>
 <tr>
 <td style="text-align: left;">H3</td>
-<td style="text-align: left;">計画で利用者の前・最中・後の見え方を確認ポイントにすれば（T-32）、開発レビューで高・中の行き止まり・誤解の指摘が出ない</td>
-<td style="text-align: left;">成り立たなかった（一部は効いた）</td>
-<td style="text-align: left;">通常の流れ（表の 5 行のうち 4 行）には指摘がなかった。表で「Bolt 11 と同じ文言」とした 1 行（経路設計中の失効）に高 1 件が集まり、中 3 件（S-02 の状態の列、C-05 の予約でないこと、経路設計中の表示のテスト）が出た。表の各行で「その文言を見た利用者が次に何をできるか」まで確かめていなかった</td>
+<td style="text-align: left;">キャッシュがあれば配備のジョブは 5 分以内</td>
+<td style="text-align: left;"><strong>成り立った</strong>。キャッシュありで 29〜45 秒、なしで 2 分 41 秒</td>
 </tr>
 </tbody>
 </table>
-<h2 id="_9">開発レビューと対応<a class="headerlink" href="#_9" title="Permanent link">&para;</a></h2>
-<p>T-28 に従い、本報告の前に Bolt 12 の変更をレビューした（<a href="../../../review/cargo-tracker/bolt_12_review_20261006/">Bolt 12 開発成果物レビュー</a>）。D-44（AI の提案）の範囲で直した。</p>
+<h2 id="_10">運用レビューと対応<a class="headerlink" href="#_10" title="Permanent link">&para;</a></h2>
+<p><a href="../../../review/cargo-tracker/bolt_16_review_20261007/">Bolt 16 運用成果物レビュー</a>（xp-architect・xp-tester・xp-project-manager）。R-01〜R-23、人の決定 D-57〜D-59。</p>
 <table>
 <thead>
 <tr>
-<th style="text-align: left;">#</th>
-<th style="text-align: left;">指摘</th>
 <th style="text-align: left;">対応</th>
+<th style="text-align: left;">指摘</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td style="text-align: left;">R-01</td>
-<td style="text-align: left;">経路設計中に失効した見積りで、荷主に食い違う案内、営業に次の行動がない</td>
-<td style="text-align: left;">荷主には依頼済みのまま進めていることと料金の扱いは担当営業から連絡すること、営業には荷主と経路設計者への連絡を示す（D-42）</td>
+<td style="text-align: left;">この Bolt で直した</td>
+<td style="text-align: left;">R-01（失敗したら直前の release に戻す）、R-02（取り消しの外へ）、R-03（境界を ADR に）、R-04（期限 90 日と Issue #40）、R-05（キーの更新のタスク）、R-06（古いコミットを出さない）、R-07・R-08（スモーク）、R-09（ADR-008 の注記）、R-10（本報告）、R-13〜R-20。R-26（<code>execFileSync</code>）は、キーの更新のタスクで先に行った</td>
 </tr>
 <tr>
-<td style="text-align: left;">R-02・R-03</td>
-<td style="text-align: left;">S-02 の経路設計中の状態の列、C-05 の予約でないこと・取り消しの連絡先</td>
-<td style="text-align: left;">直した</td>
+<td style="text-align: left;">W10 に回した</td>
+<td style="text-align: left;">R-11（配備のジョブを分け、イメージを 1 回だけビルドして昇格させる。release を 1 回にする）、R-21（スモークの単体テスト）、R-23（<code>runtime</code> の検証）、専用の Heroku アカウント（D-57）</td>
 </tr>
 <tr>
-<td style="text-align: left;">R-04・R-05</td>
-<td style="text-align: left;">遅れた DE-03 の誤った警告、状態の列挙の重複</td>
-<td style="text-align: left;">直した</td>
+<td style="text-align: left;">対応しない</td>
+<td style="text-align: left;">R-22（スモークの 2 回目の観測）</td>
 </tr>
 <tr>
-<td style="text-align: left;">R-06〜R-09</td>
-<td style="text-align: left;">文書への反映、配信の前の状態のシナリオ、経路設計中の表示のテスト、ステップの引数</td>
-<td style="text-align: left;">直した</td>
-</tr>
-<tr>
-<td style="text-align: left;">R-10・R-11</td>
-<td style="text-align: left;">回答の種類のドメイン化、<code>ck_quotation_presented</code></td>
-<td style="text-align: left;">AC2、AC4・AC5 の Bolt</td>
-</tr>
-<tr>
-<td style="text-align: left;">R-12</td>
-<td style="text-align: left;">承認ゲートを止めずに進めた</td>
-<td style="text-align: left;">D-43</td>
-</tr>
-<tr>
-<td style="text-align: left;">R-13〜R-27</td>
-<td style="text-align: left;">低</td>
-<td style="text-align: left;">直した（R-17・R-25 は理由を書いて直さない）</td>
+<td style="text-align: left;">終了報告の承認で行う</td>
+<td style="text-align: left;">R-12（ADR-013・手順書の <code>verified</code>）</td>
 </tr>
 </tbody>
 </table>
-<h2 id="_10">判断と学び<a class="headerlink" href="#_10" title="Permanent link">&para;</a></h2>
-<h3 id="_11">設計への反映（反映済み）<a class="headerlink" href="#_11" title="Permanent link">&para;</a></h3>
-<ul>
-<li>ユーザーストーリー（US-24 の Bolt 12 の決定）、ドメインモデル（Q-INV-09・18、荷主の回答、DE-16 の項目と受け取りの条件、状態の述語）、データモデル（<code>ROUTING_REQUESTED</code>、回答の 3 列と CHECK、<code>ux_quotation_active</code> の作り直し）、UI 設計（C-04・C-05・S-02・S-04、荷主の進み具合の経路設計中）</li>
-</ul>
+<h2 id="_11">判断と学び<a class="headerlink" href="#_11" title="Permanent link">&para;</a></h2>
 <h3 id="_12">人の決定<a class="headerlink" href="#_12" title="Permanent link">&para;</a></h3>
 <ul>
-<li>Bolt 12 の範囲（US-24 AC1 だけ）、確認ポイント 1〜9（2026-10-06）</li>
-<li>ステップ 1〜3（業務のルールとスキーマ）、D-42（経路設計中の失効の文言）、D-43（承認ゲートを後でまとめて受けた）、D-44（対応の範囲）、Try T-35〜T-37（2026-10-06、本報告の承認でまとめて決定）</li>
+<li>2026-10-07: develop の CI が緑なら自動で配備する。API キーは Environment <code>demo</code> の secret。Bolt 16 として W3 の前に置く</li>
+<li>2026-10-07: D-57（いまのキーのまま期限 90 日、更新はタスクと Issue）、D-58（develop の直接 push は変えず、境界を ADR に書く）、D-59（直す範囲）</li>
 </ul>
-<h3 id="_13">既知の課題<a class="headerlink" href="#_13" title="Permanent link">&para;</a></h3>
-<table>
-<thead>
-<tr>
-<th style="text-align: left;">課題</th>
-<th style="text-align: left;">影響</th>
-<th style="text-align: left;">扱い</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align: left;">経路設計中に見積りが失効すると、荷主の承認（W3）も本予約（US-04 AC2）もできない</td>
-<td style="text-align: left;">経路設計の途中で業務が止まる</td>
-<td style="text-align: left;">D-42 の文言で案内だけ。業務責任者の D-36-3（有効期限と経路設計にかかる日数）の回答を W3 の経路確定より前にもらい、US-05・US-07 で扱いを決める</td>
-</tr>
-<tr>
-<td style="text-align: left;">購読者がいない間に発行した DE-16 は、US-06 で購読者を足しても再配信されない</td>
-<td style="text-align: left;">US-06 の前に依頼した輸送要求に経路設計案件ができない</td>
-<td style="text-align: left;">US-06 の計画に、見積り ID で冪等な案件の作成と取り込みの手順を入れる（パイロットの前で本番のデータはない）</td>
-</tr>
-<tr>
-<td style="text-align: left;">回答（見積りの集約）と取下げ・条件変更（輸送要求の集約、US-05）の同時の操作</td>
-<td style="text-align: left;">どちらを拒否するかが決まっていない</td>
-<td style="text-align: left;">US-05 の計画の確認ポイントに入れる</td>
-</tr>
-<tr>
-<td style="text-align: left;">回答の種類（PROCEED）をリポジトリが決めている（R-10）、<code>ck_quotation_presented</code> が詳細設計依頼済みを対象にしない（R-11）</td>
-<td style="text-align: left;">AC2・AC4 で直し忘れる</td>
-<td style="text-align: left;">AC2、AC4・AC5 の Bolt の最初に直す</td>
-</tr>
-<tr>
-<td style="text-align: left;">集約の復元の引数（16）、<code>QuotationRejection</code> の操作ごとの分割、画面の <code>View</code> の肥大、イベントの受け取りの重複（R-25）</td>
-<td style="text-align: left;">変更のたびに広く直す</td>
-<td style="text-align: left;">次に触る Bolt の候補</td>
-</tr>
-<tr>
-<td style="text-align: left;">S-04 に依頼者の名前がない</td>
-<td style="text-align: left;">誰が依頼したか営業に分からない</td>
-<td style="text-align: left;">US-18 の後に戻す</td>
-</tr>
-<tr>
-<td style="text-align: left;">実 DB の 2 つのトランザクションでの同時の更新（Bolt 11 R-15）</td>
-<td style="text-align: left;">行のロックの待ちから競合になる経路が未確認</td>
-<td style="text-align: left;">持ち越し</td>
-</tr>
-<tr>
-<td style="text-align: left;">業務責任者に確かめる事項（<a href="../release_plan/#業務責任者に確かめる事項の台帳">台帳</a>）</td>
-<td style="text-align: left;">D-36-3・D-41-3 は US-24 にもかかわる</td>
-<td style="text-align: left;">W2 の間に確かめる</td>
-</tr>
-<tr>
-<td style="text-align: left;">デモの動画を AI が再生して確かめていない</td>
-<td style="text-align: left;">録画が崩れていても気づかない</td>
-<td style="text-align: left;">本報告の承認の場で人が再生する</td>
-</tr>
-</tbody>
-</table>
-<h3 id="bolt-11-try">Bolt 11 の Try の結果<a class="headerlink" href="#bolt-11-try" title="Permanent link">&para;</a></h3>
-<table>
-<thead>
-<tr>
-<th style="text-align: left;">Try</th>
-<th style="text-align: left;">結果</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align: left;">T-32 状態を変える操作では、前・最中・後に利用者がどの画面で何を見て次に何をするかを確認ポイントに入れる</td>
-<td style="text-align: left;">守れた。通常の流れは指摘 0 件。ただし表の 1 行（経路設計中の失効）で、文言を見た利用者が次に何をできるかを確かめなかった（H3）</td>
-</tr>
-<tr>
-<td style="text-align: left;">T-33 ステップの結果の時刻は、そのステップの最後のコミットの時刻で書く</td>
-<td style="text-align: left;">守れた（ステップ 1 の時刻を一度記録の時刻で書き、直した）</td>
-</tr>
-<tr>
-<td style="text-align: left;">T-34 環境の準備をセッションの開始のフックにする</td>
-<td style="text-align: left;">効いた。JDK とブラウザはそろっていた。dockerd は止まっていたため起動し直した。SonarQube は前のセッションのコンテナとトークンが残っていた</td>
-</tr>
-</tbody>
-</table>
+<h3 id="w10-28">既知の課題（W10 の運用準備 #28 に持ち込む）<a class="headerlink" href="#w10-28" title="Permanent link">&para;</a></h3>
+<ul>
+<li>配備のジョブを分け、イメージを 1 回だけビルドして昇格させる。<code>DEMO_REVISION</code> をイメージに入れて release を 1 回にする（R-11）</li>
+<li>スモークを <code>.github/scripts/</code> に出して単体テストを書く（R-21）</li>
+<li>デモの配備のキーを、アプリの collaborator だけの専用の Heroku アカウントのものにする（D-57）</li>
+<li><code>deploy_demo.js</code> のほかのタスクの外部コマンドも <code>execFileSync</code> の配列にする（R-26 の残り）</li>
+</ul>
 <h3 id="kpt">ふりかえり（KPT）<a class="headerlink" href="#kpt" title="Permanent link">&para;</a></h3>
 <ul>
-<li><strong>Keep</strong>:</li>
-<li>表・画面の層・レビューの対応は、実装の前に実行して新しく書いたテストだけが失敗することを記録できた</li>
-<li>DE-16 の到着順（DE-03 より先・後）を、状態遷移と単体テストで先に決めた</li>
-<li>レビューで 5 つの視点が同じ行き止まりを独立に見つけた</li>
-<li><strong>Problem</strong>:</li>
-<li>利用者の見え方の表で、ある行を「前の Bolt と同じ文言」で済ませ、その文言で利用者が実際に動けるかを確かめなかった（H3）</li>
-<li>人の承認ゲート（業務のルール・スキーマ）を止めずに進め、承認を後でまとめて受けることになった（D-43）</li>
-<li>業務ルール層の Red は、今回もまだない型を呼ぶコンパイルの失敗だけで確かめた（Bolt 9・10 R-38 の繰り返し）</li>
-<li><strong>Try</strong>:</li>
-<li>T-35: 利用者の見え方の表の各行で、示す文言を書き、その文言を見た利用者が次に取れる操作が画面か運用にあるかを確かめる。ない行は確認ポイントにする（AI、すぐ）</li>
-<li>T-36: 承認ゲートを止めずに進める指示を受けたときは、ゲートごとに「AI の判断で進めた」ことと根拠を計画の結果に書き、終了報告の承認の議題の先頭に置く（AI、すぐ）</li>
-<li>T-37: 業務ルール層の Red も、型の骨組みだけを先に足して、新しいシナリオが実行で失敗することを記録する（AI、次の Bolt から）</li>
-</ul>
-<h2 id="_14">承認待ちの書き換え<a class="headerlink" href="#_14" title="Permanent link">&para;</a></h2>
-<ul>
-<li>本報告の承認で確かめてほしいもの:</li>
-<li>ステップ 1〜3 の業務のルールとスキーマ。2 つのマイグレーション（<code>V20261006100000</code>・<code>V20261006100100</code>）を含む。</li>
-<li>D-42〜D-44。</li>
-<li><a href="../../../review/cargo-tracker/bolt_12_review_20261006/">Bolt 12 開発成果物レビュー</a> の対応結果。</li>
-<li>設計文書（US-24、ドメインモデル、データモデル、UI 設計）の変更。</li>
-<li>デモの動画 2 本。</li>
-<li>人に確かめたいこと:</li>
-<li>D-42 の文言でよいか。</li>
-<li>Try T-35〜T-37。</li>
+<li>Keep</li>
+<li>push すると Environment が規則なしで自動で作られることに、push の前に気づいて順序を入れ替えた</li>
+<li>古い dyno の 200 にだまされないスモークにし、レビューの後に自分の release と <code>DEMO_REVISION</code> まで確かめる形にした</li>
+<li>再帰に気づいたとき、まずプロセスを止め、残ったキーのうちどれが secret に入っているかを配備で確かめてから、失効の手順に進んだ</li>
+<li>Problem</li>
+<li>人に端末で実行してもらう長いコマンドをチャットに書き、折り返しで 2 回崩れた</li>
+<li>シェルの文字列に人の文章（バッククォートを含む）を埋め込み、タスクが自分自身を再帰で呼んだ。レビューで <code>execFileSync</code> の配列を勧められていたのに、W10 に回していた</li>
+<li>新しい補助関数の <code>null</code> の扱いを、試さずに人に実行してもらった</li>
+<li>formation の更新の呼び出しを、引数の形を変えた後に試さずに push した</li>
+<li>Try</li>
+<li>T-47: 人に実行してもらうコマンドは、1 行で短く収まる形（Gulp のタスクか、置き場所の短いスクリプト）にする。長いパイプを貼ってもらわない（AI、すぐ）</li>
+<li>T-48: 外部コマンドに人の文章や変数を渡すときは、シェルを通さない（<code>execFileSync</code> の引数の配列）。レビューで指摘されたシェルへの埋め込みは後回しにしない（AI、すぐ）</li>
+<li>T-49: 人に実行してもらう前に、外部への作用のない部分（引数の組み立て・戻り値の扱い）を手元で試す。外部 API の呼び出しの形を変えたら、読み取りか冪等な呼び出しで形を確かめてから push する（AI、すぐ）</li>
 </ul>
 <h2 id="bolt">次の Bolt<a class="headerlink" href="#bolt" title="Permanent link">&para;</a></h2>
 <ul>
-<li><strong>Bolt 13</strong>: W2 の残り（US-18 の一部のログインと session、TOTP のスパイク TS-01）から選ぶ</li>
-<li><strong>人が決めること</strong>: Bolt 13 の範囲</li>
+<li>W2 の締め（リリース計画の進捗の更新、GitHub との同期）の後、W3（US-06・US-07 の経路設計、US-24 AC4・AC5、US-21 AC1）。範囲は人が決める。</li>
+<li>2026-12-22 までに #40 でキーを更新する。</li>
 </ul>
-<h2 id="_15">更新履歴<a class="headerlink" href="#_15" title="Permanent link">&para;</a></h2>
+<h2 id="_13">更新履歴<a class="headerlink" href="#_13" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
 <tr>
@@ -7965,24 +7832,20 @@
 </thead>
 <tbody>
 <tr>
-<td style="text-align: left;">2026-10-06</td>
-<td style="text-align: left;">初版</td>
+<td style="text-align: left;">2026-10-07</td>
+<td style="text-align: left;">初版（ステップ 1〜5 の結果、レビューと対応、見つけて直した問題、仮説の結論、KPT）</td>
 <td style="text-align: left;">anthropic/claude-opus-5-5</td>
 <td style="text-align: left;">—</td>
 </tr>
-<tr>
-<td style="text-align: left;">2026-10-06</td>
-<td style="text-align: left;">終了報告と、承認待ちの書き換え（ステップ 1〜3 の業務のルールとスキーマ、D-42〜D-44、レビューの対応結果、設計文書、デモの動画、Try T-35〜T-37）を承認し、Bolt 12 を終えた。#5 は AC4・AC5 の W3 まで開いたまま</td>
-<td style="text-align: left;">anthropic/claude-opus-5-5</td>
-<td style="text-align: left;">human:kakimomokuri</td>
-</tr>
 </tbody>
 </table>
-<h2 id="_16">関連ドキュメント<a class="headerlink" href="#_16" title="Permanent link">&para;</a></h2>
+<h2 id="_14">関連ドキュメント<a class="headerlink" href="#_14" title="Permanent link">&para;</a></h2>
 <ul>
-<li><a href="../bolt_12_plan/">Bolt 12 計画</a></li>
-<li><a href="../../../review/cargo-tracker/bolt_12_review_20261006/">Bolt 12 開発成果物レビュー</a></li>
-<li><a href="../bolt_11_report/">Bolt 11 終了報告</a></li>
+<li><a href="../bolt_16_plan/">Bolt 16 計画</a></li>
+<li><a href="../../../review/cargo-tracker/bolt_16_review_20261007/">Bolt 16 運用成果物レビュー</a></li>
+<li><a href="../../../adr/cargo-tracker/013-heroku-demo-environment/">ADR-013 デモ環境</a>、<a href="../../../adr/cargo-tracker/008-aws-container-platform/">ADR-008</a></li>
+<li><a href="../../../operation/cargo-tracker/heroku_demo_setup/">Heroku デモ環境セットアップ手順書</a></li>
+<li><a href="../bolt_15_report/">Bolt 15 終了報告</a></li>
 </ul>
 
 
