@@ -7864,7 +7864,7 @@
 </li>
 <li>結果（Green。2026-10-07 20:06 JST。<code>2a4e243</code>）<ul>
 <li><code>RoutingCase</code> が経路版の一覧を持ち（経路版番号は 1 から順、確定は 1 つだけ）、算出・確定は最新の経路版だけを置き換える。<code>confirm</code> は、経路設計者 → 状態（候補提示済みで、確定した経路版がない）→ 候補の有無 → 適合 → 根拠（前後の空白を除いて 1〜4,000 文字。文字数はコードポイントで数える）→ 出発（最初の区間の出発予定が確定の時刻より後）→ 確定の時刻で判定し直す、の順に確かめ、DE-05 を返す。<code>RouteVersion</code> は、確定なら確定の記録を持ち、作成中・候補提示済み・要専門家判断は持たない（再設計要・旧版は確定の後の状態なので持てる）。記録の候補は経路版にある。<code>DecisionRationale</code> は自分の値（前後の空白なし、1〜4,000 文字）を確かめる</li>
-<li><code>check</code> 緑（<code>test</code> 996 件）。途中で、Checkstyle の循環的複雑度（<code>RouteVersion</code> の検証を別のメソッドに分けた）、用語集のテスト（<code>RouteConfirmation</code> を用語集に「確定の記録」で足した）、SpotBugs の <code>CT_CONSTRUCTOR_THROW</code>（<code>RouteConfirmationRejected</code> を final にした）で落ち、直した</li>
+<li><code>check</code> 緑（<code>test</code> 996 件）。CI（cargo-tracker CI #113）は check・ui・deploy-demo とも成功（Red の #112 は失敗）。途中で、Checkstyle の循環的複雑度（<code>RouteVersion</code> の検証を別のメソッドに分けた）、用語集のテスト（<code>RouteConfirmation</code> を用語集に「確定の記録」で足した）、SpotBugs の <code>CT_CONSTRUCTOR_THROW</code>（<code>RouteConfirmationRejected</code> を final にした）で落ち、直した</li>
 <li>H1: <code>ConstraintEvaluator</code> は変えていない（0 か所）。確定の再検証は判定を確定の時刻で呼び直すだけで作れた</li>
 <li>H2（途中）: Bolt 17 のテストで書き換えたのは 1 件（<code>RoutingCaseTest</code> の算出できない状態の例。経路版の一覧で組み立て、確定の記録を持たない確定は作れなくなったため旧版にした）と、テストのインメモリのリポジトリ 1 か所（経路版の一覧を写す）。ほかの Bolt 17 のテストは変えずに通った</li>
 </ul>
