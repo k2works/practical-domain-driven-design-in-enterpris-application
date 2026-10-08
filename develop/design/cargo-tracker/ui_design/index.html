@@ -9258,7 +9258,7 @@
 </tr>
 <tr>
 <td style="text-align: left;">日時表示</td>
-<td style="text-align: left;">UTC の値を利用者のタイムゾーンで「年月日 時刻 タイムゾーン（UTC offset）」と表示する。社内の画面で必要な箇所は UTC を括弧で併記する。略称（JST など）は表の中だけに使う</td>
+<td style="text-align: left;">UTC の値を利用者のタイムゾーンで「年月日 時刻 タイムゾーン（UTC offset）」と表示する。社内の画面で必要な箇所は UTC を括弧で併記する。略称（JST など）は表の中だけに使う。タイムゾーンは今は Asia/Tokyo に固定している。期間は画面ごとに次の 3 つの形で示す: 待ち時間（S-02。「2 日 4 時間」「3 時間 20 分」「15 分」。負は 0 分）、接続時間・接続余裕（S-06。日・時間・分のうち 0 でない部分を並べる。「1 日 12 時間」「4 時間 30 分」）、リードタイム・経過時間（S-22。「26 時間 30 分」。日に繰り上げず分未満は切り捨て）。形をそろえるかは日時の短い形とあわせて US-21 の残り（W9）で決める（D-84）。実装は <code>platform.web</code> の <code>DateTimeDisplay</code>・<code>DurationDisplay</code> の 1 か所（Bolt 22、#41）</td>
 <td style="text-align: left;">BR-10、R-30</td>
 </tr>
 <tr>
