@@ -3,6 +3,7 @@ package com.example.cargotracker.quotation.application.internal.queryservices;
 import com.example.cargotracker.quotation.domain.model.aggregates.Quotation;
 import com.example.cargotracker.quotation.domain.model.aggregates.QuotationRepository;
 import com.example.cargotracker.quotation.domain.model.aggregates.TransportRequestRepository;
+import com.example.cargotracker.quotation.domain.model.valueobjects.AwaitingBookingSummary;
 import com.example.cargotracker.quotation.domain.model.valueobjects.QuotedRequestSummary;
 import com.example.cargotracker.quotation.domain.model.valueobjects.RoutingRequestedSummary;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestNumber;
@@ -68,5 +69,11 @@ public class StaffQuotationQueryService {
     @Transactional(readOnly = true)
     public List<RoutingRequestedSummary> findRoutingRequestedSummaries() {
         return quotationRepository.findRoutingRequestedSummaries();
+    }
+
+    /** 受付一覧（S-02）の予約の確定待ちの表。荷主が承認した見積りを有効期限の近い順に返す（US-04、Bolt 20 レビュー D-78。Bolt 23b）。 */
+    @Transactional(readOnly = true)
+    public List<AwaitingBookingSummary> findAwaitingBookingSummaries() {
+        return quotationRepository.findAwaitingBookingSummaries();
     }
 }

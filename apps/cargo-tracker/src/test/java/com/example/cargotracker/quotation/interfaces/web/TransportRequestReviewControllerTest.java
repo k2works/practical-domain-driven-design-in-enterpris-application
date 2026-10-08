@@ -24,6 +24,7 @@ import com.example.cargotracker.quotation.application.internal.queryservices.Doc
 import com.example.cargotracker.quotation.application.internal.queryservices.StaffQuotationQueryService;
 import com.example.cargotracker.quotation.application.internal.queryservices.StaffTransportRequestQueryService;
 import com.example.cargotracker.quotation.domain.model.aggregates.TransportRequest;
+import com.example.cargotracker.quotation.domain.model.valueobjects.AwaitingBookingSummary;
 import com.example.cargotracker.quotation.domain.model.valueobjects.CargoCategory;
 import com.example.cargotracker.quotation.domain.model.valueobjects.DocumentMediaType;
 import com.example.cargotracker.quotation.domain.model.valueobjects.DocumentType;
@@ -168,7 +169,7 @@ class TransportRequestReviewControllerTest {
 
         mockMvc.perform(get("/staff/transport-requests"))
                 .andExpect(status().isOk())
-                .andExpect(content().string(containsString("経路設計中・荷主承認待ち・予約待ちの見積依頼（依頼時刻の古い順）")))
+                .andExpect(content().string(containsString("経路設計中・荷主承認待ちの見積依頼（依頼時刻の古い順）")))
                 .andExpect(content()
                         .string(containsString(
                                 "href=\"/staff/transport-requests/TR-2026-0001/quotations/1\">TR-2026-0001 見積 1</a>")))
@@ -180,7 +181,7 @@ class TransportRequestReviewControllerTest {
     }
 
     @Test
-    void 受付一覧の経路設計中の表に荷主承認待ちと荷主承認済みの見積依頼も状態とともに示す() throws Exception {
+    void 受付一覧の経路設計中の表に荷主承認待ちの見積依頼と経路の確定の時刻を示し未確定は凡例つきの横線にする() throws Exception {
         UtcInstant requestedAt = new UtcInstant(Instant.parse("2026-10-06T00:30:00Z"));
         UtcInstant expiresAt = new UtcInstant(Instant.parse("2099-10-09T09:00:00Z"));
         given(quotationQueryService.findRoutingRequestedSummaries())
@@ -191,27 +192,62 @@ class TransportRequestReviewControllerTest {
                                 QuotationStatus.AWAITING_SHIPPER_APPROVAL,
                                 requestedAt,
                                 expiresAt,
-                                requestedAt),
+                                new UtcInstant(Instant.parse("2026-10-07T05:00:00Z"))),
                         new RoutingRequestedSummary(
                                 new TransportRequestNumber(2026, 2),
                                 1,
-                                QuotationStatus.APPROVED,
+                                QuotationStatus.ROUTING_REQUESTED,
                                 requestedAt,
                                 expiresAt,
-                                requestedAt),
-                        new RoutingRequestedSummary(
-                                new TransportRequestNumber(2026, 3),
-                                1,
-                                QuotationStatus.APPROVED,
-                                requestedAt,
-                                new UtcInstant(Instant.parse("2026-10-05T04:00:00Z")),
-                                requestedAt)));
+                                null)));
 
         mockMvc.perform(get("/staff/transport-requests"))
                 .andExpect(status().isOk())
                 .andExpect(content().string(containsString("<td>荷主承認待ち</td>")))
+                .andExpect(content().string(containsString("<th scope=\"col\">経路の確定</th>")))
+                .andExpect(content()
+                        .string(containsString("2026-10-07 14:00 Asia/Tokyo（UTC+09:00）（UTC 2026-10-07 05:00）")))
+                .andExpect(content().string(containsString("「—」は、まだ経路が確定していないことを示します。")));
+    }
+
+    @Test
+    void 受付一覧の予約の確定待ちに荷主が承認した見積りを有効期限の近い順に示し本予約の確定を開ける() throws Exception {
+        given(quotationQueryService.findAwaitingBookingSummaries())
+                .willReturn(List.of(
+                        new AwaitingBookingSummary(
+                                NUMBER,
+                                1,
+                                "RC-2026-0001",
+                                1,
+                                new UtcInstant(Instant.parse("2026-10-07T06:00:00Z")),
+                                new UtcInstant(Instant.parse("2099-10-09T09:00:00Z"))),
+                        new AwaitingBookingSummary(
+                                new TransportRequestNumber(2026, 3),
+                                1,
+                                "RC-2026-0003",
+                                1,
+                                new UtcInstant(Instant.parse("2026-10-04T06:00:00Z")),
+                                new UtcInstant(Instant.parse("2026-10-05T04:00:00Z")))));
+
+        mockMvc.perform(get("/staff/transport-requests"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("予約の確定待ちの見積り（有効期限の近い順）")))
+                .andExpect(content().string(containsString("RC-2026-0001 版 1")))
+                .andExpect(content()
+                        .string(containsString("2026-10-07 15:00 Asia/Tokyo（UTC+09:00）（UTC 2026-10-07 06:00）")))
                 .andExpect(content().string(containsString("<td>荷主承認済み（予約待ち）</td>")))
-                .andExpect(content().string(containsString("<td>失効（荷主承認済み）</td>")));
+                .andExpect(
+                        content()
+                                .string(
+                                        containsString(
+                                                "href=\"/staff/bookings/new?transportRequest=TR-2026-0001&amp;quotation=1\">TR-2026-0001 見積 1 の本予約の確定へ</a>")))
+                .andExpect(content().string(containsString("<td>失効（荷主承認済み）</td>")))
+                .andExpect(content().string(not(containsString("/staff/bookings/new?transportRequest=TR-2026-0003"))))
+                .andExpect(
+                        content()
+                                .string(
+                                        containsString(
+                                                "href=\"/staff/transport-requests/TR-2026-0003/quotations/1\">TR-2026-0003 見積 1 の再見積りへ</a>")));
     }
 
     @Test
