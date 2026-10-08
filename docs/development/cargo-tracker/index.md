@@ -49,7 +49,7 @@ Bolt がイテレーションに当たります。ふりかえりは各 Bolt の
 | 21 | [KPI-01 の提示時刻とリードタイム（US-21 AC1）](bolt_21_plan.md) | [終了報告](bolt_21_report.md)（[動画](../../assets/demo/bolt-21/kpi-01-lead-time.webm){:target="_blank"}） | W3 | 完了 |
 | 22 | [日時表示・期間表示を platform の Web の部品に集める（#41）](bolt_22_plan.md) | [終了報告](bolt_22_report.md) | W4 | 完了 |
 | 23 | [本予約の確定と失効（US-04 AC1・AC2）](bolt_23_plan.md) | [終了報告](bolt_23_report.md) | W4 | 完了 |
-| 23b | [本予約の確定の画面（US-04 AC1・AC2）](bolt_23b_plan.md) | [終了報告](bolt_23b_report.md)（[動画](../../assets/demo/bolt-23b/confirm-booking.webm){:target="_blank"}） | W4 | 承認待ち |
+| 23b | [本予約の確定の画面（US-04 AC1・AC2）](bolt_23b_plan.md) | [終了報告](bolt_23b_report.md)（[動画](../../assets/demo/bolt-23b/confirm-booking.webm){:target="_blank"}） | W4 | 完了 |
 
 Bolt を始めるときに行を追加します。
 

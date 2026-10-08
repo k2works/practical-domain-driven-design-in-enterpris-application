@@ -4,7 +4,7 @@ title: "Bolt 23b 計画 - 本予約の確定の画面（US-04 AC1・AC2）"
 description: "23b 回目の Bolt の計画。Bolt 23 で業務ルール層まで作った本予約の確定と失効に、S-02 の予約の確定待ちの表、S-09 本予約の確定（画面そのものを確認の領域にする）、S-24 予約の詳細の最小の表示（予約サガは処理中を完了と出さない）を足し、画面の層のシナリオと受入動画で確かめるまでを、ステップ 1〜5 で定義する。"
 tags: [development,bolt-plan]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-08T10:53:15Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-08T11:48:26Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-08T09:39:03Z }
   - { by: human:kakimomokuri, at: 2026-10-08T11:48:07Z }
@@ -224,14 +224,14 @@ S02 --> S04 : 失効（荷主承認済み）の行
 
 ## 完了条件
 
-- [ ] 画面の層の受入シナリオ（`@ui`、`@US-04-AC1`・`@US-04-AC2`）が通り、受入動画を撮った
-- [ ] S-09・S-24 を営業担当者だけが開ける（セキュリティの統合テスト）
-- [ ] S-02 の予約の確定待ちの表が有効期限の近い順に出る（PostgreSQL の統合テスト）
-- [ ] ApplicationModules の検証が緑で、`booking` の依存は増えていない
-- [ ] `check`・`documentationTest`・`uiTest` が緑。push して CI とデモ環境の配備を確かめた
-- [ ] SonarQube の Quality Gate が PASS
-- [ ] UI 設計と設計文書に決定を書き、計画からの変更も設計文書に戻した（T-53）
-- [ ] 開発レビューと終了報告。#10 に画面の結果をコメントした
+- [x] 画面の層の受入シナリオ（`@ui`、`@US-04-AC1`・`@US-04-AC2`）が通り、受入動画を撮った
+- [x] S-09・S-24 を営業担当者だけが開ける（セキュリティの統合テスト）
+- [x] S-02 の予約の確定待ちの表が有効期限の近い順に出る（PostgreSQL の統合テスト）
+- [x] ApplicationModules の検証が緑で、`booking` の依存は増えていない
+- [x] `check`・`documentationTest`・`uiTest` が緑。push して CI とデモ環境の配備を確かめた
+- [x] SonarQube の Quality Gate が PASS
+- [x] UI 設計と設計文書に決定を書き、計画からの変更も設計文書に戻した（T-53）
+- [x] 開発レビューと終了報告。#10 に画面の結果をコメントした
 
 ### デモ項目
 
@@ -241,6 +241,7 @@ S02 --> S04 : 失効（荷主承認済み）の行
 
 | 日付 | 更新内容 | 更新者 |
 | :--- | :--- | :--- |
+| 2026-10-08 | 終了報告を承認し、完了条件をすべて満たした（CI 緑、SonarQube PASS、受入動画） | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-10-08 | ステップ 1〜5 を終え、終了報告を承認待ちにした。完了条件は終了報告の承認の後に閉じる | anthropic/claude-opus-5-5 |
 | 2026-10-08 | 計画（確認ポイントは決定と推奨のまま）を承認した（`/goal Bolt23b`） | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-10-08 | 確認ポイント 4（S-09 は画面そのものを確認の領域にする）、7（S-10 は準備中のまま）、3（見積りの公開 API の照会を業務番号と見積り番号に置き換え、ADR-016 を改訂する）を推奨のとおり決めた | anthropic/claude-opus-5-5、決定 human:kakimomokuri |
