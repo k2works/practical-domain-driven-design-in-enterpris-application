@@ -8955,7 +8955,7 @@
 </tr>
 <tr>
 <td style="text-align: left;">US-04</td>
-<td style="text-align: left;">AC1 確定、AC2 失効、AC4 再送、B-INV-11 重複確定の防止、予約サガ</td>
+<td style="text-align: left;">AC1 確定、AC2 失効、AC4 再送（B-INV-03）、B-INV-11 重複確定の防止、予約サガ</td>
 <td style="text-align: right;">5</td>
 <td style="text-align: right;">3（AC3 不足条件、AC5 特殊貨物）</td>
 </tr>
@@ -8967,7 +8967,7 @@
 </tr>
 <tr>
 <td style="text-align: left;">US-09</td>
-<td style="text-align: left;">AC1 照会（当初の予定と実績の区別）</td>
+<td style="text-align: left;">AC1 照会（現在状態・予定・主要実績・出典・取得時刻）</td>
 <td style="text-align: right;">3</td>
 <td style="text-align: right;">2（AC2 矛盾、AC3 停止中）</td>
 </tr>
@@ -9090,7 +9090,7 @@
 <ul>
 <li>ベロシティは 10 SP / 週（祝日を含む週は 8 SP）を維持する。実績は計画どおりで、暦の上の前倒しは週の目標を上げる根拠にしない</li>
 <li>Release 1.0 の引き直し（10 SP を超える W6・W9 の扱い）は、Release 0.1 を終えた W4 の締めで行う</li>
-<li>W4 の承認ゲートの密度: 新しい集約（予約）・予約サガ・スキーマを作る US-04（Bolt 23・24）は、業務のルールとスキーマのステップごとに止める。それ以外の Bolt は <code>/goal</code> で止めずに進め、終了報告の承認でまとめて受ける</li>
+<li>W4 の承認ゲートの密度: リスク台帳（「Unit の評価」の表）に従う。予約・追跡の Bolt（23〜27）は、U6 の確定・冪等・重複防止と U3 の開示制御を Red・Green ごとに、スキーマと認可をステップごとに止める。<code>/goal</code> で止めずに進めるのは Bolt 22（#41）と Bolt 28（<code>@ui</code> とデモ）だけ（開始準備の横断検証で、最初の案「US-04 だけステップごと」が台帳と食い違うと分かり、決め直した）</li>
 </ul>
 <hr />
 <h2 id="_15">段階的リリース戦略<a class="headerlink" href="#_15" title="Permanent link">&para;</a></h2>
@@ -9435,68 +9435,106 @@
 </ul>
 <h3 id="w42026-10-26-10-30">W4（2026-10-26 〜 10-30）<a class="headerlink" href="#w42026-10-26-10-30" title="Permanent link">&para;</a></h3>
 <p><strong>ゴール</strong>: 本予約の確定から追跡の開始・実績の登録・荷主の照会までが通り、Release 0.1 の縦の流れが完成する。</p>
-<p><strong>局面とアプローチ</strong>: 序盤、アウトサイドイン（<a href="../development_strategy/">開発戦略</a>）。US-04 は新しい集約（予約）を作るが、受入シナリオから内側を導く序盤の既定に従う。外れる Bolt は、Bolt 計画のアプローチの欄に理由を書く（W3 の Try）</p>
-<p><strong>Bolt の分け方</strong>（2026-10-08 に human:kakimomokuri が決定）:</p>
+<p><strong>局面とアプローチ</strong>: 序盤（<a href="../development_strategy/">開発戦略</a>）。開発戦略の「Bolt ごとのアプローチの決め方」の規則を局面の既定より優先する。新しい集約・スキーマを作る Bolt 23（予約）と Bolt 25（追跡）はインサイドアウト、既存の集約に受入条件を足す Bolt 24・26・27 と、縦の流れを束ねる Bolt 28 はアウトサイドイン。外れる Bolt は、Bolt 計画のアプローチの欄に理由を書く（W3 の Try）</p>
+<p><strong>設計の決定</strong>（2026-10-08 に human:kakimomokuri が決定。開始準備の整合性検証の指摘による）:</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">事項</th>
+<th style="text-align: left;">決定</th>
+<th style="text-align: left;">反映</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">予約サガと追跡の開始の依存の向き</td>
+<td style="text-align: left;">ADR-014 と同じ形にする。追跡の listener が DE-07（予約確定）を購読して追跡を開始し、結果を予約の公開 API へ返す。サガの状態は予約に置く。依存は <code>tracking → booking</code> だけで、循環しない</td>
+<td style="text-align: left;">注（設計への反映が必要）: architecture_backend.md の予約サガの図と表（「追跡開始コマンドを送る」）は、予約から追跡への依存になり、ADR-014 と units.md の U3 → U6 と食い違う。Bolt 23 の最初のステップで ADR を書き、設計文書を直す</td>
+</tr>
+<tr>
+<td style="text-align: left;">予約から見積りの確定可否を確かめる方法（Bolt 11 レビュー R-19）</td>
+<td style="text-align: left;">予約が確定の時に、見積りの公開 API（<code>quotation :: api</code>）へ commit 時刻を渡して判定を受ける。判定の規則（BR-10、B-INV-02）は見積りに 1 か所</td>
+<td style="text-align: left;">Bolt 23 の最初のステップで ADR を書く</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Bolt の分け方</strong>（2026-10-08 に human:kakimomokuri が決定。整合性検証の後に、追跡の開始を独立させて 7 Bolt に引き直した）:</p>
 <table>
 <thead>
 <tr>
 <th style="text-align: left;">Bolt</th>
 <th style="text-align: left;">範囲</th>
 <th style="text-align: right;">SP</th>
+<th style="text-align: left;">アプローチ</th>
 <th style="text-align: left;">承認ゲート</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td style="text-align: left;">22</td>
-<td style="text-align: left;">日時表示・期間表示を <code>platform</code> の Web の部品に集める（<a href="https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/41">#41</a>、技術タスク。Bolt 21 終了報告の議題 5）</td>
+<td style="text-align: left;">日時表示・期間表示を <code>platform</code> の Web の部品に集める（<a href="https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/41">#41</a>、技術タスク。Bolt 21 終了報告の議題 5）。確認ポイント: 「コンテキストのコードから <code>platform</code> を参照しない」の規則（architecture_backend.md）と <code>allowedDependencies</code> の改訂、または設定経由（Thymeleaf の式オブジェクトなど）に限る案との比較</td>
 <td style="text-align: right;">0</td>
+<td style="text-align: left;">検証の手段から</td>
 <td style="text-align: left;"><code>/goal</code></td>
 </tr>
 <tr>
 <td style="text-align: left;">23</td>
-<td style="text-align: left;">US-04 AC1 確定、AC2 失効と、予約サガの骨格（<a href="https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/10">#10</a>）</td>
+<td style="text-align: left;">US-04 AC1 確定、AC2 失効（<a href="https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/10">#10</a>）。上の 2 つの ADR と設計文書の修正、<code>booking</code> モジュールと貨物予約・<code>booking_version</code>（追記専用）の新設、推測されにくい追跡番号の発行、予約サガの骨格（状態の永続化）、S-09 の営業担当者の確認（B-INV-01）、DE-07 の listener による見積りの公開 API の呼び出し（輸送要求を予約確定済みにする。ADR-014）、D-78 の S-02 の予約の確定待ちの表（有効期限の近い順）。確認ポイント: 本予約で業務番号を引き継ぐか（Bolt 3 レビュー R-31）</td>
 <td style="text-align: right;">3</td>
-<td style="text-align: left;">業務のルール・スキーマのステップごと</td>
+<td style="text-align: left;">インサイドアウト</td>
+<td style="text-align: left;">Red・Green ごと（確定）、スキーマ</td>
 </tr>
 <tr>
 <td style="text-align: left;">24</td>
-<td style="text-align: left;">US-04 AC4 再送、B-INV-11 重複確定の防止（#10 をクローズする）</td>
+<td style="text-align: left;">US-04 AC4 再送（B-INV-03、<code>processed_command</code>）、B-INV-11 重複確定の防止（<code>booking_version</code> の UK）。D-78 の受入シナリオでの DE-21・DE-04 の再配信</td>
 <td style="text-align: right;">2</td>
-<td style="text-align: left;">業務のルール・スキーマのステップごと</td>
+<td style="text-align: left;">アウトサイドイン</td>
+<td style="text-align: left;">Red・Green ごと（冪等・重複防止）、スキーマ</td>
 </tr>
 <tr>
 <td style="text-align: left;">25</td>
-<td style="text-align: left;">US-12 AC1 登録、AC2 重複（<a href="https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/11">#11</a>）</td>
-<td style="text-align: right;">3</td>
-<td style="text-align: left;"><code>/goal</code></td>
+<td style="text-align: left;">追跡の開始。<code>tracking</code> モジュールと追跡記録（<code>tracking_record</code>・<code>scheduled_leg</code>）の新設、DE-07 の購読で経路版の区間を予定として採用し、予約の公開 API へ結果を返してサガの成功の経路を閉じる（#10 をクローズする）。S-24 の「追跡の開始: 処理中・完了」の表示、追跡管理者のナビ・ホーム・認可（<code>SecurityConfiguration</code>）と <code>db/dev-data</code> の追跡管理者の利用者</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: left;">インサイドアウト</td>
+<td style="text-align: left;">Red・Green ごと、スキーマ・認可</td>
 </tr>
 <tr>
 <td style="text-align: left;">26</td>
-<td style="text-align: left;">US-09 AC1 照会（当初の予定と実績の区別）（<a href="https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/12">#12</a>）</td>
+<td style="text-align: left;">US-12 AC1 登録、AC2 重複（<a href="https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/11">#11</a>）</td>
 <td style="text-align: right;">3</td>
-<td style="text-align: left;"><code>/goal</code></td>
+<td style="text-align: left;">アウトサイドイン</td>
+<td style="text-align: left;">Red・Green ごと（業務のルール）</td>
 </tr>
 <tr>
 <td style="text-align: left;">27</td>
-<td style="text-align: left;">主成功の流れの <code>@ui</code> シナリオと Release 0.1 のデモ</td>
+<td style="text-align: left;">US-09 AC1 照会（現在状態・予定・主要実績・出典・取得時刻。自社に許可された予約に限る BR-07）（<a href="https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/12">#12</a>）</td>
+<td style="text-align: right;">3</td>
+<td style="text-align: left;">アウトサイドイン</td>
+<td style="text-align: left;">Red・Green ごと（開示制御）、認可</td>
+</tr>
+<tr>
+<td style="text-align: left;">28</td>
+<td style="text-align: left;">主成功の流れの <code>@ui</code> シナリオと Release 0.1 のデモ。序盤の完了条件（開発戦略）と Release 0.1 のリリース条件を確かめる</td>
 <td style="text-align: right;">0</td>
+<td style="text-align: left;">アウトサイドイン</td>
 <td style="text-align: left;"><code>/goal</code></td>
 </tr>
 </tbody>
 </table>
-<p>US-04 の SP 5 は、#10 をクローズする Bolt 24 で数える（Bolt 23 と 24 の SP の分け方は目安）。</p>
-<p><strong>W3 の Try の持ち込み</strong>: 各 Bolt 計画の確認ポイントに、T-55（置換は <code>spotlessApply</code> の後のファイルに当てる）、T-61〜T-63（メモリのリポジトリは写しを返す、listener の欠けを「再配信で直るか」で分ける、「N 個目で」の規則は N 個目の計画に入れる）を入れる</p>
+<p>US-04 の SP 5 は、サガの成功の経路を閉じて #10 をクローズする Bolt 25 で数える（Bolt 23・24・25 の SP の分け方は目安）。予約サガの再試行（RTY-02）・有人確認要・有人案件の起票（BR-17）は W4 で作らない。状態の値は Bolt 23 の計画で決め、有人案件の起票は US-20 の W8 に回す</p>
+<p><strong>W3 の Try の持ち込み</strong>: 各 Bolt 計画の確認ポイントに、T-54（コンテキストの間のイベントを足すときは購読する側の依存が循環しないか）、T-55（置換は <code>spotlessApply</code> の後のファイルに当てる）、T-57（状態の列挙に値を足すときはその状態を見る判定を洗い出す）、T-58（listener と公開 API には業務の拒否と警告のログの経路の単体テストを Red に入れる）、T-61〜T-63（メモリのリポジトリは写しを返す、listener の欠けを「再配信で直るか」で分ける、「N 個目で」の規則は N 個目の計画に入れる）を入れる。W3 の Problem の Windows で手順書のタスクが動かない件は、<code>sonar-local:scan</code> を Bolt 21 で直した。<code>documentationTest</code> は、Windows の作業ツリーで作業する Bolt で確かめる</p>
+<p><strong>Living Documentation</strong>（開発戦略の「完了条件への組み込み」）: 新しい <code>booking</code>・<code>tracking</code> モジュールで、<code>package-info</code> の <code>allowedDependencies</code>（<code>booking</code> → 見積り・経路設計の <code>api</code>・<code>events</code>、<code>tracking</code> → 予約の <code>api</code>・<code>events</code>）、ModularityTest のモジュール名、用語集の整合テスト、<code>DomainEventSerializationContractTest</code> への DE-07 などの追加、<code>afterMigrate</code> の権限と追記専用の印、貨物予約・追跡記録の <code>@CoreConcept</code> をそろえる</p>
 <p><strong>デモ項目</strong>: 本予約の確定（重複確定の防止を含む）から追跡の開始・実績の登録・荷主の照会まで（Release 0.1 のデモ）。<code>@US-04</code>、<code>@US-12</code>、<code>@US-09</code>、<code>@ui</code> の主成功シナリオ</p>
 <p><strong>ユーザーマニュアル</strong>: W4 の Bolt では作業を持たない。Release 0.1 の縦の流れがそろう W4 の完了の後に、<code>docs/manual</code> を作る（2026-10-08 に human:kakimomokuri が決定。<code>creating-manual</code>）</p>
 <p><strong>主なタスク</strong>:</p>
 <ul class="task-list">
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> Bolt 22: 日時表示・期間表示を <code>platform</code> の Web の部品に集める（技術タスク、SP 0。W4 の最初の Bolt）。<a href="https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/41">#41</a></li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> Bolt 23・24: US-04（AC1、AC2、AC4、B-INV-11）と予約サガ</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> Bolt 25・26: US-12（AC1、AC2）、US-09（AC1）</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> Bolt 27: 主成功の流れの <code>@ui</code> シナリオ</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> Bolt 23・24: US-04（AC1、AC2、AC4、B-INV-03、B-INV-11）と予約サガの骨格、2 つの ADR</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> Bolt 25: 追跡の開始とサガの成功の経路</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> Bolt 26・27: US-12（AC1、AC2）、US-09（AC1）</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> Bolt 28: 主成功の流れの <code>@ui</code> シナリオと Release 0.1 のデモ</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> ベロシティと承認ゲートの密度の見直し（W4 の開始時。「ベロシティ検証計画」）</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> Release 1.0 の計画の引き直し（W4 の締め）</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> W4 の締め: Release 1.0 の計画の引き直し、Release 0.1 の実績による Release 1.0 の承認ゲートの密度の決め直し、Release 0.1 のリリース完了報告書</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> ユーザーマニュアル（<code>docs/manual</code>）の作成（W4 の完了の後）</li>
 </ul>
 <p><strong>目標 SP</strong>: 11</p>
@@ -10040,7 +10078,7 @@
 <td style="text-align: right;">11</td>
 <td style="text-align: right;">-</td>
 <td style="text-align: right;">-</td>
-<td style="text-align: left;">準備中（最初の Bolt は日時表示・期間表示の集約。SP 0）</td>
+<td style="text-align: left;">計画済み（Bolt 22〜28。最初の Bolt は日時表示・期間表示の集約。SP 0）</td>
 </tr>
 <tr>
 <td style="text-align: left;">W5</td>
@@ -10422,6 +10460,11 @@
 <td style="text-align: left;">2026-10-08</td>
 <td style="text-align: left;">W3 を締めた（11 SP、達成率 110%、W1〜W3 の累計 24 SP）。実績スケジュールに Bolt 15〜21 を、W3 の結果にふりかえりを書いた。W4 の最初の Bolt に日時表示・期間表示の集約（SP 0）を足した</td>
 <td style="text-align: left;">anthropic/claude-opus-5-5</td>
+</tr>
+<tr>
+<td style="text-align: left;">2026-10-08</td>
+<td style="text-align: left;">W4 の開始準備: W4 の開始時のベロシティと承認ゲートの密度の見直しを書いた。整合性検証（計画と設計、横断）の指摘で、予約サガの依存の向き・R-19 の 2 つの設計の決定を記録し、追跡の開始を独立させて Bolt 22〜28 に引き直し、承認ゲートをリスク台帳に合わせた。マニュアルは W4 の完了の後に作る</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5、決定 human:kakimomokuri</td>
 </tr>
 </tbody>
 </table>
