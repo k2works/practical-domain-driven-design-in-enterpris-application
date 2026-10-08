@@ -47,6 +47,8 @@ AI-DLC で守ること：
 | 第 2 章 Cargo Tracker のドメインモデル | `docs/article/02-cargo-domain-model.md` | ドメインモデル設計、データモデル設計 |
 | 第 3 章 Spring Platform × モジュラーモノリス | `docs/article/03-spring-modular-monolith.md` | 技術スタック選定、バックエンド実装 |
 
+パッケージの置き場所（`application.sagas`・`domain.model.aggregates` など）はこのガイドラインに従います。層の規則（ArchUnit）がガイドラインの置き場所を拒否したときは、置き場所を動かして規則に合わせず、規則の例外を設計の判断として人に諮ります（Bolt 23 で予約サガをドメイン層に動かし、指摘された）。
+
 ## Skills 体系
 
 `.claude/skills/` に定義された Skills がタスクに応じて自動発動します。詳細な指示は各スキルの SKILL.md を参照してください。

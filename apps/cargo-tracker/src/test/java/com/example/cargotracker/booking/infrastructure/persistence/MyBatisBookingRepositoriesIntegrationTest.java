@@ -4,11 +4,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.example.cargotracker.TestcontainersConfiguration;
+import com.example.cargotracker.booking.application.sagas.BookingSaga;
+import com.example.cargotracker.booking.application.sagas.BookingSagaStatus;
 import com.example.cargotracker.booking.domain.model.BookingFixture;
 import com.example.cargotracker.booking.domain.model.aggregates.Booking;
 import com.example.cargotracker.booking.domain.model.aggregates.DuplicateBookingException;
-import com.example.cargotracker.booking.domain.model.sagas.BookingSaga;
-import com.example.cargotracker.booking.domain.model.sagas.BookingSagaStatus;
 import com.example.cargotracker.booking.domain.model.valueobjects.BookingId;
 import com.example.cargotracker.booking.domain.model.valueobjects.BookingTerms;
 import com.example.cargotracker.booking.domain.model.valueobjects.TrackingNumber;

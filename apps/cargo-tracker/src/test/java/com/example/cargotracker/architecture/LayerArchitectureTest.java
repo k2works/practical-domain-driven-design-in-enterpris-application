@@ -10,6 +10,7 @@ import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 import static com.tngtech.archunit.library.Architectures.layeredArchitecture;
 
+import com.example.cargotracker.shared.annotation.ddd.Saga;
 import com.tngtech.archunit.base.DescribedPredicate;
 import com.tngtech.archunit.core.domain.JavaClass;
 import com.tngtech.archunit.core.importer.ImportOption;
@@ -68,6 +69,11 @@ class LayerArchitectureTest {
             .whereLayer("infrastructure")
             .mayNotBeAccessedByAnyLayer();
 
+    /**
+     * 合成ルートの外の infrastructure は application に依存しない（D-5）。例外はサガの状態の永続化で、永続化の実装
+     * （{@code infrastructure.persistence}）だけが {@code application.sagas} のサガとリポジトリ（送信ポート）を参照してよい。
+     * サガはアプリケーション層に置く（開発ガイドライン第 3 章、ADR-015。Bolt 23 の人の指摘）。
+     */
     @ArchTest
     static final ArchRule 合成ルートの外のinfrastructureはapplicationに依存しない = noClasses()
             .that()
@@ -75,8 +81,24 @@ class LayerArchitectureTest {
             .and()
             .resideOutsideOfPackage("..infrastructure.config..")
             .should()
+            .dependOnClassesThat(
+                    resideInAPackage("..application..").and(not(resideInAPackage("..application.sagas.."))))
+            .because("サガの状態の永続化だけを例外にする（D-5、ADR-015）");
+
+    @ArchTest
+    static final ArchRule サガの状態はinfrastructureの永続化の実装からだけ参照される = noClasses()
+            .that()
+            .resideInAPackage("..infrastructure..")
+            .and()
+            .resideOutsideOfPackages("..infrastructure.config..", "..infrastructure.persistence..")
+            .should()
             .dependOnClassesThat()
-            .resideInAPackage("..application..");
+            .resideInAPackage("..application.sagas..");
+
+    /** サガは業務の流れ（Business Flows）をアプリケーション層で進める（開発ガイドライン第 1 章・第 3 章の {@code application.sagas}）。 */
+    @ArchTest
+    static final ArchRule サガはアプリケーション層のsagasに置く =
+            classes().that().areAnnotatedWith(Saga.class).should().resideInAPackage("..application.sagas..");
 
     /** 合成ルートが、アダプターや業務の処理の逃げ場にならないようにする。 */
     @ArchTest

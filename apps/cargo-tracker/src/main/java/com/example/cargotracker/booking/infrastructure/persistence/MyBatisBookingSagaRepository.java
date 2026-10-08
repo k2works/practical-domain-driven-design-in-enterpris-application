@@ -1,9 +1,9 @@
 package com.example.cargotracker.booking.infrastructure.persistence;
 
-import com.example.cargotracker.booking.domain.model.sagas.BookingSaga;
-import com.example.cargotracker.booking.domain.model.sagas.BookingSagaRepository;
-import com.example.cargotracker.booking.domain.model.sagas.BookingSagaStatus;
-import com.example.cargotracker.booking.domain.model.sagas.BookingSagaStep;
+import com.example.cargotracker.booking.application.sagas.BookingSaga;
+import com.example.cargotracker.booking.application.sagas.BookingSagaRepository;
+import com.example.cargotracker.booking.application.sagas.BookingSagaStatus;
+import com.example.cargotracker.booking.application.sagas.BookingSagaStep;
 import com.example.cargotracker.booking.domain.model.valueobjects.BookingId;
 import com.example.cargotracker.booking.domain.model.valueobjects.TrackingNumber;
 import com.example.cargotracker.shared.domain.UtcInstant;

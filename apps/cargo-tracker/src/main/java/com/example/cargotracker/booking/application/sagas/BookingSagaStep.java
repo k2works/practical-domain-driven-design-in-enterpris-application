@@ -1,4 +1,4 @@
-package com.example.cargotracker.booking.domain.model.sagas;
+package com.example.cargotracker.booking.application.sagas;
 
 /**
  * 予約サガの段階。MVP は追跡の開始だけ（ADR-015）。

@@ -4,7 +4,7 @@ title: "Bolt 23 計画 - 本予約の確定と失効（US-04 AC1・AC2）"
 description: "23 回目の Bolt の計画。予約サガと追跡の開始（ADR-003 の改訂）、予約から見積りの確定可否の問い合わせを ADR に決め、booking モジュールと貨物予約・予約版・予約サガの表を新設して、本予約の確定（US-04 AC1）と失効の拒否（AC2）を業務ルール層の受入シナリオまで作り、DE-07 で輸送要求を予約確定済みにするまでを、ステップ 1〜6 で定義する。画面（S-09・S-24・S-02）は Bolt 23b。"
 tags: [development,bolt-plan]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-08T08:52:17Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-08T09:09:48Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-08T07:44:34Z }
 ---
@@ -271,7 +271,7 @@ b ||--o| s
   - 完了の判定: `check` 緑
   - 結果（2026-10-08）: `BookingCommandService`（営業担当者の役割、commit 時刻、見積りの照会、確定条件、追跡番号、保存、予約サガ、DE-07）、`QuotationBookability`（腐敗防止層）、`MyBatisBookingRepository`・`MyBatisBookingSagaRepository`・`BookingMapper.xml`、`RandomTrackingNumberIssuer`、`BookingConfiguration`。業務ルール層の受入シナリオ `features/booking/confirm_booking.feature` 7 本（1 分前の確定、同時刻・1 分後の失効、未承認、営業担当者の確認なし、同じ見積りの二度目、カスタマーサポート）、リポジトリの統合テスト 3 件、追跡番号の発行の単体テスト 3 件
     - 計画からの変更 1: 見積りの公開 API の照会（`BookableQuotationQuery`、`Quotation.bookingRejectionAt`、境界の 3 点の単体テスト、`QuotationRejection.NOT_APPROVED`）を、確定サービスが使うためステップ 5 からこのステップに前倒しした。T-57 で `QuotationRejection` を網羅する `switch`（`StaffQuotationController`・`QuotationResponseController`）に値を足した
-    - 計画からの変更 2: 予約サガの状態とリポジトリを `application.sagas` ではなく `domain.model.sagas` に置いた。合成ルートの外の `infrastructure` は `application` に依存できない（D-5。`LayerArchitectureTest` が拒否した）ため。サガを進める処理（Bolt 25・W8）は `application.sagas` に置く。architecture_backend.md を直した
+    - 計画からの変更 2（取り消した）: 予約サガの状態とリポジトリを、層の規則 D-5（合成ルートの外の `infrastructure` は `application` に依存しない）に合わせて `domain.model.sagas` に置いた。終了報告の後に人から「開発ガイドライン（第 3 章の `application.sagas`）と違う」と指摘され、`application.sagas` に戻し、D-5 に「永続化の実装だけが `application.sagas` を参照してよい」例外と「サガはアプリケーション層の sagas に置く」規則を足した（2026-10-08）
     - 計画からの変更 3: 業務ルール層のステップ定義が見積りの ID を得られるよう、テスト用の配信（`DeferredEventDelivery`）にシナリオの始めからの発行の履歴を足し、見積りの公表された言語（DE-21・DE-04）から ID を得る（AT-05）。受入シナリオのグルーに `booking.acceptance` を足した
     - 規律の逸脱: ステップ 3 と同じく、受入シナリオを書く前に確定サービスを書いた。受入シナリオの Red は「ステップが未定義」と「見つからない見積り」（ステップ定義の誤り）で、業務の失敗としての Red は確かめていない。終了報告の Problem に置く
     - 承認ゲートの扱い（T-36）: Red・Green の承認ゲートで止まらずに進めた（AI の判断）。根拠は、受入シナリオが US-04 AC1・AC2 と test_strategy.md の境界の 3 点のとおりであること

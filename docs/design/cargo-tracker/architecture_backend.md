@@ -4,7 +4,7 @@ title: "cargo-tracker バックエンドアーキテクチャ"
 description: "cargo-tracker の境界づけられたコンテキスト、コンテキストごとのドメインロジックパターン、パッケージ構成、サガとドメインイベントによる連携（ARCH-HO-01〜03）、受信サービスの方針。"
 tags: [design, architecture, backend]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-08T08:52:17Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-08T09:09:48Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T07:11:12Z }
   - { by: human:kakimomokuri, at: 2026-10-01T07:41:04Z }
@@ -359,7 +359,7 @@ end note
 | 要素 | 方式 |
 | :--- | :--- |
 | 状態 | サガごとに「処理中・完了・失敗・有人確認要」を予約の `booking_saga` に永続化する。後続が完了するまで、画面に成功と表示しない |
-| 置き場所 | サガを始めるコンテキストに置く。予約サガは予約コンテキストに置く。状態とリポジトリ（送信ポート）は `domain.model.sagas`、サガを進める処理（後続の結果の受け取り、滞留の検出）は `application.sagas`（第 3 章）。合成ルートの外の `infrastructure` は `application` に依存できない（D-5）ため、リポジトリの実装が参照する状態はドメイン層に置く（Bolt 23） |
+| 置き場所 | サガを始めるコンテキストに置く。予約サガは予約コンテキストに置く。状態・リポジトリ（送信ポート）とサガを進める処理（後続の結果の受け取り、滞留の検出）は、どれもアプリケーション層の `application.sagas` に置く（第 1 章の Business Flows → Sagas、第 3 章のパッケージ構成）。層の規則 D-5（合成ルートの外の `infrastructure` は `application` に依存しない）の例外として、永続化の実装（`infrastructure.persistence`）だけが `application.sagas` を参照してよい。`LayerArchitectureTest` の「サガはアプリケーション層の sagas に置く」と D-5 の規則で守る（Bolt 23。初めは D-5 に合わせて状態をドメイン層に置いたが、開発ガイドラインと食い違うと人に指摘され、2026-10-08 に直した） |
 | 後続の起動 | 追跡の listener が DE-07 を購読する。予約は追跡に依存しない（ADR-015） |
 | 再処理 | 追跡の開始は予約 ID で冪等にし、技術の失敗はイベントの再配信（RTY-01）でやり直す。予約サガは処理中の滞留を定期処理で見て、有人確認要にする |
 | 見えない失敗 | 予約の DE-07 の listener が見積りに予約確定済みを通知し、業務の理由で受け付けられなかった（`NotBooked`）ときは警告のログだけで、予約サガの状態は変えない（予約サガが待つのは追跡の開始）。監視（OBS）で警告のログの件数を見る（Bolt 23 レビュー） |

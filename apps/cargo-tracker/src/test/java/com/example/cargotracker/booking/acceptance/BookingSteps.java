@@ -6,10 +6,10 @@ import com.example.cargotracker.booking.application.internal.commands.ConfirmBoo
 import com.example.cargotracker.booking.application.internal.commandservices.BookingCommandService;
 import com.example.cargotracker.booking.application.internal.commandservices.BookingConfirmationOutcome;
 import com.example.cargotracker.booking.application.internal.outboundservices.acl.QuotationUnavailability;
+import com.example.cargotracker.booking.application.sagas.BookingSagaStatus;
 import com.example.cargotracker.booking.domain.events.BookingConfirmed;
 import com.example.cargotracker.booking.domain.model.aggregates.Booking;
 import com.example.cargotracker.booking.domain.model.entities.BookingVersion;
-import com.example.cargotracker.booking.domain.model.sagas.BookingSagaStatus;
 import com.example.cargotracker.quotation.domain.events.QuotationApprovedByShipper;
 import com.example.cargotracker.quotation.domain.events.QuotationRouteAssigned;
 import com.example.cargotracker.shared.acceptance.DeferredEventDelivery;

@@ -4,7 +4,7 @@ title: "Bolt 23 終了報告 - 本予約の確定と失効（US-04 AC1・AC2、#
 description: "23 回目の Bolt の終了報告。新設の booking モジュールで本予約の確定（確定条件、追跡番号、予約版、commit 時刻、予約サガの処理中、DE-07）と失効（BR-10）を業務ルール層まで作り、見積りの公開 API で輸送要求を予約確定済みにした。/goal で止まらなかった承認ゲート（スキーマを含む）、開発レビューの対応（DE-04 より先に DE-07 が届く不具合ほか）、計画からの変更、既知の課題を記録する。"
 tags: [development,bolt-report]
 status: draft
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-08T09:03:26Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-08T09:09:48Z }
 ---
 
 # Bolt 23 終了報告 - 本予約の確定と失効（US-04 AC1・AC2、#10）
@@ -22,6 +22,7 @@ generated: { by: anthropic/claude-opus-5-5, at: 2026-10-08T09:03:26Z }
 | 5 | **H3 の結論の訂正**: 計画のときは「DE-04 と DE-07 は同じ輸送要求を並行に更新しない」としたが、開発レビュー H-1 で、荷主の承認の直後（DE-04 の配信の前）に確定できると分かった。`markBooked` を「先の状態へだけ進める」に直し、並行の更新は共通の部品の読み直しで解く | 下の「仮説の結論」と「開発レビュー」 | `TransportRequest.markBooked` |
 | 6 | 開発レビューの対応の範囲。直したもの 15 件、後に回したもの 6 件（下の「開発レビュー」） | 状態のずれ（H-1）、スキーマの直し（M-2・A-2）、誤った結果（M-1）、検証の穴（L-3〜L-6）は、この Bolt の目的そのものなので直した。Bolt 24・25・W6・W8 で作る振る舞いに要る決定は既知の課題にした | 開発レビュー |
 | 7 | #10 は開いたまま、AC1・AC2 の業務ルール層までの結果をコメントする（クローズは Bolt 25） | 計画どおり。画面（S-09・S-24・S-02 の予約の確定待ちの表）と `@ui`・受入動画は Bolt 23b | [#10](https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/10) |
+| 8 | **人の指摘で直した**: 予約サガを `domain.model.sagas` に置いていたのは開発ガイドライン（第 3 章の `application.sagas`）と違う。`application.sagas` に戻し、層の規則 D-5 に「永続化の実装（`infrastructure.persistence`）だけが `application.sagas` を参照してよい」例外を足した。配置は ArchUnit の「サガはアプリケーション層の sagas に置く」で守る | AI は D-5 の規則が拒否したとき、ガイドラインを確かめずに置き場所を変えた。規則とガイドラインが食い違うときは、規則の例外を設計の判断として人に諮るべきだった（Try T-68） | `LayerArchitectureTest`、`booking/application/sagas` |
 
 ## 基本情報
 
@@ -49,7 +50,7 @@ generated: { by: anthropic/claude-opus-5-5, at: 2026-10-08T09:03:26Z }
 ### 作ったもの
 
 - `booking` モジュール（`allowedDependencies = {"shared", "quotation :: api", "platform :: web"}`）
-  - ドメイン: 貨物予約 `Booking`（確定、DE-07 `BookingConfirmed`）、予約版 `BookingVersion`、予約 ID・追跡番号（`CT` と紛らわしい文字を除いた 12 桁、約 59 bit）・確定条件・予約条件、予約サガ `BookingSaga`（処理中で始める。状態とリポジトリは `domain.model.sagas`）
+  - ドメイン: 貨物予約 `Booking`（確定、DE-07 `BookingConfirmed`）、予約版 `BookingVersion`、予約 ID・追跡番号（`CT` と紛らわしい文字を除いた 12 桁、約 59 bit）・確定条件・予約条件、予約サガ `BookingSaga`（処理中で始める。状態とリポジトリは開発ガイドラインのとおり `application.sagas`）
   - アプリケーション: 確定サービス `BookingCommandService`（営業担当者の役割 → commit 時刻 → 見積りの照会 → 確定条件 → 追跡番号 → 保存 → 予約サガ → DE-07）、腐敗防止層 `QuotationBookability`・`QuotationBookingNotifications`、DE-07 の listener
   - インフラ: MyBatis のリポジトリ 2 つ（見積り ID の UK の違反だけを「すでに予約がある」にする）、追跡番号の発行（存在を確かめて引き直す。上限 3 回）
 - 見積り: 公開 API `BookableQuotationQuery`（commit 時刻で確定に使えるか。判定は `Quotation.bookingRejectionAt` の 1 か所）と `BookingNotification`（輸送要求を予約確定済みにする。冪等）、輸送要求の `BOOKED`（社内「予約確定済み」、荷主「予約確定済み（追跡の開始の準備中）」）
@@ -137,6 +138,7 @@ generated: { by: anthropic/claude-opus-5-5, at: 2026-10-08T09:03:26Z }
   - スキーマの承認ゲートを止まらずに進め、開発レビューで 2 か所を書き直した。人が見ていれば先に気づけた可能性がある
 - Try
   - T-66: 状態を進める listener を足すときは、「前提にした状態より前に届く」場合を単体テストの表に入れる（ほかの `mark*` と同じ「先の状態へだけ進める」を既定にする）（AI、次の Bolt から）
+  - T-68: 層の規則（ArchUnit）が開発ガイドライン（`docs/article` の第 1〜3 章）の置き場所を拒否したときは、置き場所を動かさずに規則の例外を設計の判断として人に諮る。決めた置き場所は ArchUnit の規則で固定する（AI、次の Bolt から。CLAUDE.md に反映）
   - T-67: `/goal` で止まらずに進めるときも、スキーマ（確認必須）のステップは止める。止めないなら、その前に開発レビューのアーキテクトの観点をスキーマだけにかける（AI、次の Bolt から）
 
 ## 次の Bolt
@@ -147,6 +149,7 @@ Bolt 23b: 本予約の画面（S-09 確定、S-24、S-02 の予約の確定待�
 
 | 日付 | 更新内容 | 更新者 |
 | :--- | :--- | :--- |
+| 2026-10-08 | 人の指摘（予約サガの置き場所が開発ガイドラインと違う）で `application.sagas` に戻し、議題 8 と Try T-68 を足した | anthropic/claude-opus-5-5、指摘 human:kakimomokuri |
 | 2026-10-08 | 初版（ステップ 1〜6 の結果、開発レビュー、品質ゲート、既知の課題、承認の議題 1〜7、Try T-66・T-67） | anthropic/claude-opus-5-5 |
 
 ## 関連ドキュメント

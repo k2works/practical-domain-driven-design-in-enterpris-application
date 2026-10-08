@@ -1,4 +1,4 @@
-package com.example.cargotracker.booking.domain.model.sagas;
+package com.example.cargotracker.booking.application.sagas;
 
 import com.example.cargotracker.booking.domain.model.valueobjects.BookingId;
 import com.example.cargotracker.booking.domain.model.valueobjects.TrackingNumber;

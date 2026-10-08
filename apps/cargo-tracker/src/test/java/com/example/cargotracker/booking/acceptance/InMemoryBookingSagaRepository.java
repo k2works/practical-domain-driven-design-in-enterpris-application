@@ -1,7 +1,7 @@
 package com.example.cargotracker.booking.acceptance;
 
-import com.example.cargotracker.booking.domain.model.sagas.BookingSaga;
-import com.example.cargotracker.booking.domain.model.sagas.BookingSagaRepository;
+import com.example.cargotracker.booking.application.sagas.BookingSaga;
+import com.example.cargotracker.booking.application.sagas.BookingSagaRepository;
 import com.example.cargotracker.booking.domain.model.valueobjects.BookingId;
 import java.util.LinkedHashMap;
 import java.util.Map;

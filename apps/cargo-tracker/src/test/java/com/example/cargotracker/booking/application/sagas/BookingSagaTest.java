@@ -1,4 +1,4 @@
-package com.example.cargotracker.booking.domain.model.sagas;
+package com.example.cargotracker.booking.application.sagas;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

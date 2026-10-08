@@ -7,10 +7,10 @@ import com.example.cargotracker.booking.acceptance.InMemoryBookingSagaRepository
 import com.example.cargotracker.booking.application.internal.commands.ConfirmBookingCommand;
 import com.example.cargotracker.booking.application.internal.outboundservices.acl.QuotationBookability;
 import com.example.cargotracker.booking.application.internal.outboundservices.acl.QuotationUnavailability;
+import com.example.cargotracker.booking.application.sagas.BookingSagaStatus;
 import com.example.cargotracker.booking.domain.events.BookingConfirmed;
 import com.example.cargotracker.booking.domain.model.BookingFixture;
 import com.example.cargotracker.booking.domain.model.aggregates.Booking;
-import com.example.cargotracker.booking.domain.model.sagas.BookingSagaStatus;
 import com.example.cargotracker.booking.domain.model.valueobjects.BookingCondition;
 import com.example.cargotracker.quotation.api.BookableQuotationRequest;
 import com.example.cargotracker.quotation.api.BookableQuotationResult;
