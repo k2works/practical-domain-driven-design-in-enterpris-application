@@ -3540,7 +3540,7 @@
     
   
   
-    <span class="md-status md-status--draft"></span>
+    <span class="md-status md-status--stable"></span>
   
 
   
@@ -3565,7 +3565,7 @@
     
   
   
-    <span class="md-status md-status--draft"></span>
+    <span class="md-status md-status--stable"></span>
   
 
   
@@ -8232,6 +8232,10 @@
 <td style="text-align: left;">計画の承認（確認ポイント 1〜12）、見積りの公開 API の変更（モジュールの境界）、確定の画面の Red・Green、認可、開発レビューの判断、終了報告</td>
 </tr>
 <tr>
+<td style="text-align: left;">承認ゲートの扱い</td>
+<td style="text-align: left;">人の指示（<code>/goal Bolt23b</code>、2026-10-08）により、計画を承認し、承認ゲートで止まらずに進める。止まらなかったゲートごとに根拠を書き、終了報告の承認の議題に置く（T-36）。表の変更はないので T-67（スキーマのステップは止める）は当たらない。表の変更が要るとわかったら止める</td>
+</tr>
+<tr>
 <td style="text-align: left;">アプローチ</td>
 <td style="text-align: left;">アウトサイドイン（開発戦略の「Bolt ごとのアプローチの決め方」の「既存の集約に受入条件を足す」。新しい集約・表はない）。画面の層の受入シナリオ → 画面（コントローラーとテンプレート）→ アプリケーション（照会）→ 見積りの公開 API の順</td>
 </tr>
@@ -8591,6 +8595,16 @@
 </tr>
 </thead>
 <tbody>
+<tr>
+<td style="text-align: left;">2026-10-08</td>
+<td style="text-align: left;">計画（確認ポイントは決定と推奨のまま）を承認した（<code>/goal Bolt23b</code>）</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5、承認 human:kakimomokuri</td>
+</tr>
+<tr>
+<td style="text-align: left;">2026-10-08</td>
+<td style="text-align: left;">確認ポイント 4（S-09 は画面そのものを確認の領域にする）、7（S-10 は準備中のまま）、3（見積りの公開 API の照会を業務番号と見積り番号に置き換え、ADR-016 を改訂する）を推奨のとおり決めた</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5、決定 human:kakimomokuri</td>
+</tr>
 <tr>
 <td style="text-align: left;">2026-10-08</td>
 <td style="text-align: left;">開始準備の整合性検証の指摘 8 件を反映した（DE-07 の非同期と S-02 の行、画面の層の失効の手段、ADR-016 の改訂、変更の影響範囲、確定済みの判定、経路の確定の時刻、S-24 の画面一覧の行）</td>
