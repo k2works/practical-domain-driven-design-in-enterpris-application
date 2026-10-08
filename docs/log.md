@@ -2,6 +2,7 @@
 
 ## 2026-10-08
 * **Update**: [bolt_21_plan](/development/cargo-tracker/bolt_21_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_21_plan](/development/cargo-tracker/bolt_21_plan.md) を更新（anthropic/claude-opus-5-5）
 * **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
 * **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
 * **Update**: [bolt_20_report](/development/cargo-tracker/bolt_20_report.md) を更新（anthropic/claude-opus-5-5）
