@@ -4,7 +4,7 @@ title: "Bolt 23 計画 - 本予約の確定と失効（US-04 AC1・AC2）"
 description: "23 回目の Bolt の計画。予約サガと追跡の開始（ADR-003 の改訂）、予約から見積りの確定可否の問い合わせを ADR に決め、booking モジュールと貨物予約・予約版・予約サガの表を新設して、本予約の確定（US-04 AC1）と失効の拒否（AC2）を業務ルール層の受入シナリオまで作り、DE-07 で輸送要求を予約確定済みにするまでを、ステップ 1〜6 で定義する。画面（S-09・S-24・S-02）は Bolt 23b。"
 tags: [development,bolt-plan]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-08T07:44:34Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-08T07:48:01Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-08T07:44:34Z }
 ---
@@ -232,7 +232,7 @@ b ||--o| s
 
 状態の記号: `[ ]` 未着手、`[-]` 進行中、`[?]` 承認待ち、`[x]` 完了。各ステップの終わりに `check` が緑であることを確かめ、Green と同じ push にまとめて CI を確かめる（T-26、T-65）。
 
-- [ ] **1. ADR-015・ADR-016 と設計文書** 【承認ゲート: アーキテクチャ】
+- [x] **1. ADR-015・ADR-016 と設計文書** 【承認ゲート: アーキテクチャ】
   - ADR-015 予約サガと追跡の開始（ADR-003 の決定 3 と補足の決定「再試行の担い手」を改訂する）: 追跡の listener が DE-07 を購読して追跡を開始し、結果を予約の公開 API で返す。依存は `tracking → booking` だけ。サガの状態（処理中・完了・失敗・有人確認要）は予約のサガ 1 か所に置く。追跡の開始の再試行はイベントの再配信（RTY-01）と追跡の側の冪等で担い、予約のサガは処理中の滞留時間を見て有人確認要にする（W8）
   - ADR-016 予約から見積りの確定可否: 予約は確定のトランザクションの中で、保存の直前に `Clock` から取った時刻を commit 時刻とし、同じ値で見積りの公開 API に照会し、`committed_at` に記録する（判定と記録を同じ値にする）。判定（Q-INV-06・BR-10）は見積りの 1 か所。確定に要る写しを戻り値で受け、確定の後に見積りへ問い合わせ直さない（B-INV-08）
   - 設計文書を直す:
@@ -245,6 +245,9 @@ b ||--o| s
     - ui_design.md の遷移の「S-01 から」を「S-02 から」（S-09 の URL の行は Bolt 23b）
     - W4 の計画の Living Documentation の「`booking` → 経路設計の `api`」を「見積りの `api`」に（確認ポイント 7）
   - 完了の判定: `okf:check` ERROR 0、`documentationTest` 緑
+  - 結果（2026-10-08）: ADR-015・ADR-016 を書き、ADR-003（決定 3・再試行の担い手・ステータス・改訂の経緯）、ADR の索引、mkdocs、non_functional.md（RTY-02 を「処理中の滞留の上限」に、OBS-04）、architecture_backend.md（再試行の担い手、予約サガの節と図）、domain_model.md（ADR の表、用語集に確定条件・予約サガ、B-INV-02 の注記、B-INV-06 の注記、DE-07 の payload と購読者、業務の流れの図と表）、data_model.md（`booking.transport_request_number`、索引、追跡番号の形式、業務番号の写し）、test_strategy.md（US-04 の Gherkin の例のタグと境界）、ui_design.md（S-01 を作るまでは S-02 から）を直した。`okf:check` ERROR 0、`documentationTest` 緑
+    - 計画からの追加: 検証で見つかった食い違い 2 件に注記を入れた。DE-09・DE-10（予約が追跡のイベントを購読する形）は ADR-015 の依存の向きと循環するので、US-12 の残り（W7）で ADR-014 の形にそろえる。B-INV-06（予約が追跡の公開 API を同期で確かめる）は US-05（W11）で決め直す
+    - 承認ゲートの扱い（T-36）: アーキテクチャの承認ゲートで止まらずに進めた（AI の判断）。根拠は、ADR-015・016 の決定が W4 の開始準備と Bolt 23 の開始準備で人が決めた形のとおりであること。終了報告の承認の議題に置く
 - [ ] **2. booking スキーマ（統合テスト）** 【承認ゲート: データベース】
   - 統合テスト（PostgreSQL）を先に書く: `booking`・`booking_version`・`booking_saga` の CHECK、追跡番号の UK、`quotation_id` の UK、`booking_saga.booking_id` の UK、`booking_version` の UPDATE・DELETE の拒否（追記専用）、表と列のコメント
   - マイグレーション（`common`・`{vendor}`）、`afterMigrate__grant_app_user.sql`（PostgreSQL）、`AppendOnlyGrantIntegrationTest`・`SchemaCommentIntegrationTest` のスキーマの一覧

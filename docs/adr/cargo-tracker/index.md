@@ -8,7 +8,7 @@ cargo-tracker プロジェクトの ADR ドキュメントです。
 | :--- | :--- | :--- |
 | [ADR-001](./001-modular-monolith.md) | モジュラーモノリスを採用する | 承認済み |
 | [ADR-002](./002-domain-logic-pattern-per-context.md) | ドメインロジックのパターンを境界づけられたコンテキストごとに選ぶ | 承認済み |
-| [ADR-003](./003-inter-context-integration.md) | コンテキスト間は冪等コマンド・永続化したドメインイベント・オーケストレーション型のサガで連携する | 承認済み |
+| [ADR-003](./003-inter-context-integration.md) | コンテキスト間は冪等コマンド・永続化したドメインイベント・オーケストレーション型のサガで連携する | 承認済み（決定 3 は ADR-015 で改訂） |
 | [ADR-004](./004-external-data-ingestion.md) | 外部原本は Inbox・隔離・照合の 3 段で取り込む | 承認済み |
 | [ADR-005](./005-server-side-rendering.md) | 画面はサーバーサイドレンダリングとハイパーメディアで提供する | 承認済み |
 | [ADR-006](./006-java-spring-boot-platform.md) | Java 25 LTS・Spring Boot 4.1・Spring Modulith でアプリケーションを構築する | 承認済み |
@@ -20,6 +20,8 @@ cargo-tracker プロジェクトの ADR ドキュメントです。
 | [ADR-012](./012-authentication-principal-and-session.md) | 認証の主体は共有カーネルの型にし、password の段を Spring Security の form login と Spring Session JDBC で作る | 承認済み |
 | [ADR-013](./013-heroku-demo-environment.md) | 関係者が触って確かめるデモ環境は、dev プロファイルのまま Heroku の Eco dyno で動かす | 承認済み |
 | [ADR-014](./014-downstream-to-upstream-notification.md) | 下流から上流への通知は、下流の listener が上流の公開 API を呼んで行う | 承認済み |
+| [ADR-015](./015-booking-saga-starts-tracking-by-event.md) | 予約サガは状態を予約に持ち、追跡の開始は追跡が DE-07 を購読して行う（ADR-003 を改訂） | 承認済み（文面は Bolt 23 の終了報告で確かめる） |
+| [ADR-016](./016-booking-checks-quotation-at-commit-time.md) | 予約は commit 時刻を渡して見積りの公開 API で確定に使えるかを確かめる | 承認済み（文面は Bolt 23 の終了報告で確かめる） |
 
 ## 補足
 
