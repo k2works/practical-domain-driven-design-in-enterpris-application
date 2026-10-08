@@ -4,7 +4,7 @@ title: "Bolt 22 計画 - 日時表示・期間表示を platform の Web の部�
 description: "22 回目の Bolt の計画。見積り・経路設計・アクセス監査の 3 つのモジュールに写されている日時表示と期間表示を、振る舞いを変えずに platform の Web の部品 1 か所に集める技術タスク（SP 0）を、ステップ 1〜5 で定義する。"
 tags: [development,bolt-plan]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-08T05:45:29Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-08T08:07:08Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-08T05:45:29Z }
 ---
@@ -75,35 +75,45 @@ verified:
 ```plantuml
 @startuml
 package "platform" {
-  package "web（@NamedInterface）" as pw {
+  package "platform.web（名前付きインターフェース web）" {
     class DateTimeDisplay <<表示の部品>> {
-      + {static} customer(UtcInstant): String
-      + {static} staff(UtcInstant): String
+      + {static} ZONE : ZoneId
+      + {static} customer(Instant) : String
+      + {static} staff(Instant) : String
     }
     class DurationDisplay <<表示の部品>> {
-      + {static} waiting(Duration): String
-      + {static} connection(Duration): String
-      + {static} hoursAndMinutes(Duration): String
+      + {static} waiting(Duration) : String
+      + {static} connection(Duration) : String
+      + {static} hoursAndMinutes(Duration) : String
     }
   }
-  package "mybatis" {
+  package "platform.mybatis" {
+    class UuidTypeHandler
   }
 }
-package "shared" {
-  class UtcInstant
+package "quotation.interfaces.web" {
+  class TransportRequestLabels
+  class TransportRequestFormConverter
 }
-package "quotation" as q
-package "routing" as r
-package "identity" as i
+package "routing.interfaces.web" {
+  class RoutingCaseViews
+}
+package "identity.interfaces.web" {
+  class KpiObservationView
+}
 
-pw ..> UtcInstant
-q ..> pw : interfaces.web
-r ..> pw : interfaces.web
-i ..> pw : interfaces.web
+TransportRequestLabels ..> DateTimeDisplay
+TransportRequestLabels ..> DurationDisplay
+TransportRequestFormConverter ..> DateTimeDisplay : ZONE
+RoutingCaseViews ..> DateTimeDisplay
+RoutingCaseViews ..> DurationDisplay
+KpiObservationView ..> DateTimeDisplay
+KpiObservationView ..> DurationDisplay
+note bottom of UuidTypeHandler : 設定（mybatis.type-handlers-package）を通してだけ使う
 @enduml
 ```
 
-部品の名前は案（確認ポイント 3）。`platform` は `shared` だけに依存し、業務の型（見積り・経路など）を参照しない。
+部品は `java.time.Instant` を受け、`platform` は `java..` だけに依存する（共有カーネルの `UtcInstant` にも依存しない。終了報告の議題 2）。業務の型（見積り・経路など）は参照しない。コンテキストからは画面の層（`interfaces.web`）だけが参照する。
 
 ### 状態遷移・データモデル・画面遷移
 
@@ -219,6 +229,7 @@ Bolt 22 の作業中、SonarQube のコンテナが CPU を使っている間に
 | 2026-10-08 | 初版作成 | anthropic/claude-opus-5-5 |
 | 2026-10-08 | 計画（確認ポイント 1〜8 は推奨のまま）を承認した | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-10-08 | 割り込み（見積りの listener の楽観ロックの競合）の原因・調査・決定・ステップを足した（案 (a) を 4 つの listener に、承認済み） | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
+| 2026-10-08 | 「モジュールの依存」の図が PlantUML の構文の誤りで描けなかったのを直し、実装に合わせた（部品は `Instant` を受け、画面の層から参照する）。human:kakimomokuri の指摘 | anthropic/claude-opus-5-5 |
 
 ## 関連ドキュメント
 
