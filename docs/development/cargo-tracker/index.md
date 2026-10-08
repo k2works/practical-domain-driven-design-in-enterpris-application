@@ -45,6 +45,7 @@ Bolt がイテレーションに当たります。ふりかえりは各 Bolt の
 | 17 | [経路候補の算出と比較（US-06 AC1〜AC3）](bolt_17_plan.md) | [終了報告](bolt_17_report.md)（[動画](../../assets/demo/bolt-17/compare-route-candidates.webm)） | W3 | 完了 |
 | 18 | [デモ環境のサンプルの業務データ（技術タスク）](bolt_18_plan.md) | — | W3 | 完了 |
 | 19 | [判断根拠を記録して経路を確定する（US-07 AC1・AC2）](bolt_19_plan.md) | [終了報告](bolt_19_report.md)（[動画](../../assets/demo/bolt-19/confirm-route.webm){:target="_blank"}） | W3 | 完了 |
+| 20 | [確定した経路の割当てと荷主の承認（US-24 AC4・AC5）](bolt_20_plan.md) | — | W3 | 計画済み（承認待ち） |
 
 Bolt を始めるときに行を追加します。
 
