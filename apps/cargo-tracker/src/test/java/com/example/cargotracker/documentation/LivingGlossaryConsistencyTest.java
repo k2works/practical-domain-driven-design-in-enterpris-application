@@ -103,7 +103,8 @@ class LivingGlossaryConsistencyTest {
         if (!Files.exists(source)) {
             return null;
         }
-        String text = Files.readString(source);
+        // Windows の作業ツリーでは改行が CRLF になるため、LF にそろえてから正規表現を当てる
+        String text = Files.readString(source).replace("\r\n", "\n");
         Matcher declaration = Pattern.compile(
                         "\\b(class|record|enum|interface)\\s+" + Pattern.quote(javaClass.getSimpleName()) + "\\b")
                 .matcher(text);

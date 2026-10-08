@@ -4,7 +4,7 @@ title: "cargo-tracker ユーザーストーリー"
 description: "cargo-tracker MVP の価値単位のユーザーストーリー、受入条件、上流要件へのトレーサビリティ。"
 tags: [requirements, user-story]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-08T01:28:12Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-08T03:53:20Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T05:20:11Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:01:39Z }
@@ -570,6 +570,8 @@ Bolt 14 の決定（2026-10-06、human:kakimomokuri。[Bolt 14 計画](../../dev
 - Given パイロット開始前 4 週間の基準値、When 現行業務の記録から算出して登録する、Then 基準値・算出方法・登録者が記録され、パイロット中の値と並べて示される。
 
 決定（2026-10-02 の D-3）: KPI-01 の開始時刻は、輸送要求の版 1 を最初に提出した時刻とする。差戻し・再提出・新しい版で戻さない。
+
+決定（2026-10-08、Bolt 21。D-11）: KPI-01 の終点は、その輸送要求で最初に提示した見積りの提示時刻とする。荷主の条件変更・再見積りで出し直しても変えない。リードタイムは暦の経過時間とし、営業時間に換算しない。誤りで取り消した見積りを数えない規則は、見積りの取消しを作るときに足す。
 
 AI の仮定: KPI の照会者は BR-15 の固定役割のうち監査担当者とした。プロダクト責任者が利用者となる場合の役割は OQ-07 の残項目で扱う。
 
