@@ -16,7 +16,7 @@
         <link rel="prev" href="../bolt_19_report/">
       
       
-        <link rel="next" href="../../../operation/">
+        <link rel="next" href="../bolt_20_report/">
       
       
         
@@ -3533,6 +3533,41 @@
   
 </nav>
       
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../bolt_20_report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 20 終了報告
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--draft"></span>
+  
+
+  
+
+      </a>
     </li>
   
 
@@ -8132,10 +8167,14 @@
 <li>承認ゲートの扱い（T-36）: 画面の承認ゲートで止まらずに進めた（AI の判断）。根拠は、文言と構成が計画の確認ポイント 7〜10 と UI 設計の C-17・C-04・S-02 の行のとおりであること</li>
 </ul>
 </li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>5. 開発レビューと終了報告</strong></li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>5. 開発レビューと終了報告</strong></li>
 <li><code>developing-review</code>（連携の向き・冪等・期限の境界・荷主の画面の文言を観点に含める）、SonarQube（<code>sonar-local:start</code>）、デモの動画（過去の Bolt の動画は元に戻す）、<code>bolt_20_report.md</code>、#5 の AC4・AC5 にチェックを付けてクローズ（R0.1 の範囲。AC2・AC3 は W9 の新しい Issue か #5 の残りとして扱う。確認ポイント 1）</li>
 <li>デモ環境で、人が RC-2026-0902 を確定し、荷主 A（TR-2026-0905）で承認する流れを確かめる</li>
 <li>終了報告の承認の後、人が <code>DEMO_BOLT=bolt-20 DEMO_ISSUE=5 npx gulp issue:attach-demo</code> で受入動画を #5 に添付する（gh v2.99.0 以上。運用のコマンドリファレンスの「Issue への受入動画の添付」）</li>
+<li>結果（2026-10-08 11:17〜11:55 JST）: 5 つの視点でレビューし（<a href="../../../review/cargo-tracker/bolt_20_review_20261008/">レビュー</a>。高 7・中 19・低 17）、D-73〜D-77 をこの Bolt で直した（Red <code>497c150</code>、Green <code>28c9e74</code>）。欠陥は 1 件（遅れて届いた DE-03・DE-16 の偽の警告）。D-78 は後の Bolt に回した。SonarQube は Bug 1・Code Smell 2 を直して PASS（<code>02a84bf</code>）。デモ項目の 1 本を録画した（過去の Bolt の動画は元に戻した。<code>27b15ec</code>）。#5 をクローズした（AC2・AC3 は既存の #26 のため、確認ポイント 1 の新しい Issue は作らなかった）。<a href="../bolt_20_report/">Bolt 20 終了報告</a> を書いた<ul>
+<li>承認ゲートの扱い（T-36）: 開発レビューの判断で止まらずに進めた（AI の判断）。終了報告の承認の議題に置く</li>
+</ul>
+</li>
 </ul>
 <h3 id="_10">時間の配分と打ち切り<a class="headerlink" href="#_10" title="Permanent link">&para;</a></h3>
 <table>
@@ -8293,6 +8332,12 @@
 <tr>
 <td style="text-align: left;">2026-10-08</td>
 <td style="text-align: left;">人の指示（<code>/goal Bolt20</code>）により、計画の承認ゲートで止まらずに確認ポイント 1〜12 を推奨のまま採って進めた（AI の判断。T-36。終了報告の承認の議題に置く）</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5</td>
+<td style="text-align: left;">—</td>
+</tr>
+<tr>
+<td style="text-align: left;">2026-10-08</td>
+<td style="text-align: left;">ステップ 1〜5 の結果を記録した（終了報告の承認待ち）</td>
 <td style="text-align: left;">anthropic/claude-opus-5-5</td>
 <td style="text-align: left;">—</td>
 </tr>

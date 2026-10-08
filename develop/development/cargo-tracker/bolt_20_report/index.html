@@ -6,17 +6,17 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="ARCH-HO-01・ARCH-HO-02 を満たすため、冪等なコマンドと期待版、永続化して再配信できるドメインイベント、オーケストレーション型の予約サガを採用する決定。">
+        <meta name="description" content="20 回目の Bolt の終了報告。ADR-014（下流から上流への通知は下流の listener が上流の公開 API を呼ぶ）、見積りの経路版の割当て（DE-21）と荷主の承認（DE-04）、輸送要求の荷主承認待ち・予約待ち、公開 API の経路の割当てと経路設計の DE-05 の listener、割り当てた経路の写しの表、C-17 と C-04・S-02・S-06・S-07、5 視点の開発レビューと対応（D-73〜D-78）、品質ゲート、デモ項目と動画、仮説 H1〜H3 の結論、承認ゲートを後でまとめて受ける議題、ふりかえりをまとめる。">
       
       
         <meta name="author" content="k2works">
       
       
       
-        <link rel="prev" href="../002-domain-logic-pattern-per-context/">
+        <link rel="prev" href="../bolt_20_plan/">
       
       
-        <link rel="next" href="../004-external-data-ingestion/">
+        <link rel="next" href="../../../operation/">
       
       
         
@@ -27,7 +27,7 @@
     
     
       
-        <title>ADR-003: コンテキスト間は冪等コマンド・永続化したドメインイベント・オーケストレーション型のサガで連携する - 実践ドメイン駆動設計 in エンタープライズアプリケーション</title>
+        <title>Bolt 20 終了報告 - 確定した経路の割当てと荷主の承認（US-24 AC4・AC5） - 実践ドメイン駆動設計 in エンタープライズアプリケーション</title>
       
     
     
@@ -78,7 +78,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#adr-003" class="md-skip">
+        <a href="#bolt-20-us-24-ac4ac5" class="md-skip">
           Skip to content
         </a>
       
@@ -112,7 +112,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              ADR-003: コンテキスト間は冪等コマンド・永続化したドメインイベント・オーケストレーション型のサガで連携する
+              Bolt 20 終了報告 - 確定した経路の割当てと荷主の承認（US-24 AC4・AC5）
             
           </span>
         </div>
@@ -276,11 +276,13 @@
   
   
   
+    
+  
   
     
     
-      <li class="md-tabs__item">
-        <a href="../../../development/" class="md-tabs__link">
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../../" class="md-tabs__link">
           
   
   
@@ -336,13 +338,11 @@
   
   
   
-    
-  
   
     
     
-      <li class="md-tabs__item md-tabs__item--active">
-        <a href="../../" class="md-tabs__link">
+      <li class="md-tabs__item">
+        <a href="../../../adr/" class="md-tabs__link">
           
   
   
@@ -1647,24 +1647,29 @@
       
   
   
+    
   
   
+  
     
     
     
     
-      
-      
-    
-    
-    <li class="md-nav__item md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" checked>
         
           
-          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="">
             
   
   
@@ -1682,7 +1687,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_5">
             <span class="md-nav__icon md-icon"></span>
             
@@ -1700,7 +1705,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../development/" class="md-nav__link">
+      <a href="../../" class="md-nav__link">
         
   
   
@@ -1725,6 +1730,8 @@
                 
   
   
+    
+  
   
   
     
@@ -1735,11 +1742,11 @@
       
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_2" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_2" checked>
         
           
           <label class="md-nav__link" for="__nav_5_2" id="__nav_5_2_label" tabindex="0">
@@ -1760,7 +1767,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_2_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_2_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_5_2">
             <span class="md-nav__icon md-icon"></span>
             
@@ -1778,7 +1785,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../development/cargo-tracker/" class="md-nav__link">
+      <a href="../" class="md-nav__link">
         
   
   
@@ -1806,7 +1813,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../development/cargo-tracker/release_plan/" class="md-nav__link">
+      <a href="../release_plan/" class="md-nav__link">
         
   
   
@@ -1841,7 +1848,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../development/cargo-tracker/development_strategy/" class="md-nav__link">
+      <a href="../development_strategy/" class="md-nav__link">
         
   
   
@@ -1932,7 +1939,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../development/cargo-tracker/bolt_01_plan/" class="md-nav__link">
+      <a href="../bolt_01_plan/" class="md-nav__link">
         
   
   
@@ -1967,7 +1974,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../development/cargo-tracker/bolt_01_report/" class="md-nav__link">
+      <a href="../bolt_01_report/" class="md-nav__link">
         
   
   
@@ -2002,7 +2009,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../development/cargo-tracker/bolt_02_plan/" class="md-nav__link">
+      <a href="../bolt_02_plan/" class="md-nav__link">
         
   
   
@@ -2037,7 +2044,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../development/cargo-tracker/bolt_02_report/" class="md-nav__link">
+      <a href="../bolt_02_report/" class="md-nav__link">
         
   
   
@@ -2072,7 +2079,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../development/cargo-tracker/bolt_03_plan/" class="md-nav__link">
+      <a href="../bolt_03_plan/" class="md-nav__link">
         
   
   
@@ -2107,7 +2114,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../development/cargo-tracker/bolt_03_report/" class="md-nav__link">
+      <a href="../bolt_03_report/" class="md-nav__link">
         
   
   
@@ -2142,7 +2149,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../development/cargo-tracker/bolt_04_plan/" class="md-nav__link">
+      <a href="../bolt_04_plan/" class="md-nav__link">
         
   
   
@@ -2177,7 +2184,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../development/cargo-tracker/bolt_04_report/" class="md-nav__link">
+      <a href="../bolt_04_report/" class="md-nav__link">
         
   
   
@@ -2212,7 +2219,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../development/cargo-tracker/bolt_05_plan/" class="md-nav__link">
+      <a href="../bolt_05_plan/" class="md-nav__link">
         
   
   
@@ -2247,7 +2254,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../development/cargo-tracker/bolt_05_report/" class="md-nav__link">
+      <a href="../bolt_05_report/" class="md-nav__link">
         
   
   
@@ -2282,7 +2289,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../development/cargo-tracker/bolt_06_plan/" class="md-nav__link">
+      <a href="../bolt_06_plan/" class="md-nav__link">
         
   
   
@@ -2317,7 +2324,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../development/cargo-tracker/bolt_06_report/" class="md-nav__link">
+      <a href="../bolt_06_report/" class="md-nav__link">
         
   
   
@@ -2352,7 +2359,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../development/cargo-tracker/bolt_07_plan/" class="md-nav__link">
+      <a href="../bolt_07_plan/" class="md-nav__link">
         
   
   
@@ -2387,7 +2394,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../development/cargo-tracker/bolt_07_report/" class="md-nav__link">
+      <a href="../bolt_07_report/" class="md-nav__link">
         
   
   
@@ -2422,7 +2429,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../development/cargo-tracker/bolt_08_plan/" class="md-nav__link">
+      <a href="../bolt_08_plan/" class="md-nav__link">
         
   
   
@@ -2457,7 +2464,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../development/cargo-tracker/bolt_08_report/" class="md-nav__link">
+      <a href="../bolt_08_report/" class="md-nav__link">
         
   
   
@@ -2492,7 +2499,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../development/cargo-tracker/bolt_09_plan/" class="md-nav__link">
+      <a href="../bolt_09_plan/" class="md-nav__link">
         
   
   
@@ -2527,7 +2534,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../development/cargo-tracker/bolt_09_report/" class="md-nav__link">
+      <a href="../bolt_09_report/" class="md-nav__link">
         
   
   
@@ -2562,7 +2569,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../development/cargo-tracker/bolt_10_plan/" class="md-nav__link">
+      <a href="../bolt_10_plan/" class="md-nav__link">
         
   
   
@@ -2597,7 +2604,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../development/cargo-tracker/bolt_10_report/" class="md-nav__link">
+      <a href="../bolt_10_report/" class="md-nav__link">
         
   
   
@@ -2632,7 +2639,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../development/cargo-tracker/bolt_11_plan/" class="md-nav__link">
+      <a href="../bolt_11_plan/" class="md-nav__link">
         
   
   
@@ -2667,7 +2674,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../development/cargo-tracker/bolt_11_report/" class="md-nav__link">
+      <a href="../bolt_11_report/" class="md-nav__link">
         
   
   
@@ -2702,7 +2709,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../development/cargo-tracker/bolt_12_plan/" class="md-nav__link">
+      <a href="../bolt_12_plan/" class="md-nav__link">
         
   
   
@@ -2737,7 +2744,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../development/cargo-tracker/bolt_12_report/" class="md-nav__link">
+      <a href="../bolt_12_report/" class="md-nav__link">
         
   
   
@@ -2772,7 +2779,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../development/cargo-tracker/bolt_13_plan/" class="md-nav__link">
+      <a href="../bolt_13_plan/" class="md-nav__link">
         
   
   
@@ -2807,7 +2814,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../development/cargo-tracker/bolt_13_report/" class="md-nav__link">
+      <a href="../bolt_13_report/" class="md-nav__link">
         
   
   
@@ -2842,7 +2849,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../development/cargo-tracker/bolt_14_plan/" class="md-nav__link">
+      <a href="../bolt_14_plan/" class="md-nav__link">
         
   
   
@@ -2877,7 +2884,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../development/cargo-tracker/bolt_14_report/" class="md-nav__link">
+      <a href="../bolt_14_report/" class="md-nav__link">
         
   
   
@@ -2912,7 +2919,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../development/cargo-tracker/bolt_15_plan/" class="md-nav__link">
+      <a href="../bolt_15_plan/" class="md-nav__link">
         
   
   
@@ -2947,7 +2954,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../development/cargo-tracker/bolt_15_report/" class="md-nav__link">
+      <a href="../bolt_15_report/" class="md-nav__link">
         
   
   
@@ -2982,7 +2989,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../development/cargo-tracker/bolt_16_plan/" class="md-nav__link">
+      <a href="../bolt_16_plan/" class="md-nav__link">
         
   
   
@@ -3017,7 +3024,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../development/cargo-tracker/bolt_16_report/" class="md-nav__link">
+      <a href="../bolt_16_report/" class="md-nav__link">
         
   
   
@@ -3052,7 +3059,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../development/cargo-tracker/bolt_17_plan/" class="md-nav__link">
+      <a href="../bolt_17_plan/" class="md-nav__link">
         
   
   
@@ -3087,7 +3094,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../development/cargo-tracker/bolt_17_report/" class="md-nav__link">
+      <a href="../bolt_17_report/" class="md-nav__link">
         
   
   
@@ -3122,7 +3129,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../development/cargo-tracker/bolt_18_plan/" class="md-nav__link">
+      <a href="../bolt_18_plan/" class="md-nav__link">
         
   
   
@@ -3157,7 +3164,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../development/cargo-tracker/bolt_19_plan/" class="md-nav__link">
+      <a href="../bolt_19_plan/" class="md-nav__link">
         
   
   
@@ -3192,7 +3199,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../development/cargo-tracker/bolt_19_report/" class="md-nav__link">
+      <a href="../bolt_19_report/" class="md-nav__link">
         
   
   
@@ -3227,7 +3234,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../development/cargo-tracker/bolt_20_plan/" class="md-nav__link">
+      <a href="../bolt_20_plan/" class="md-nav__link">
         
   
   
@@ -3259,10 +3266,44 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../../../development/cargo-tracker/bolt_20_report/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 20 終了報告
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--draft"></span>
+  
+
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -3285,6 +3326,231 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#t-36" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        承認の議題（T-36。先に確かめてほしいこと）
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        基本情報
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        成果
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="成果">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ステップの結果
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        作ったもの
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        デモ項目
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_6" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        指標
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="指標">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_7" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        時間の内訳
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_8" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        品質ゲート
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_9" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        仮説の結論
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_10" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        判断と学び
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="判断と学び">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_11" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        人の決定
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bolt" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        既知の課題（後の Bolt に持ち込む）
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#kpt" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ふりかえり（KPT）
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#bolt_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        次の Bolt
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_12" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        更新履歴
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_13" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        関連ドキュメント
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -4386,29 +4652,24 @@
       
   
   
-    
   
   
-  
     
     
     
     
       
-        
-        
-      
       
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_8" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_8" >
         
           
-          <label class="md-nav__link" for="__nav_8" id="__nav_8_label" tabindex="">
+          <label class="md-nav__link" for="__nav_8" id="__nav_8_label" tabindex="0">
             
   
   
@@ -4426,7 +4687,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_8">
             <span class="md-nav__icon md-icon"></span>
             
@@ -4444,7 +4705,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../" class="md-nav__link">
+      <a href="../../../adr/" class="md-nav__link">
         
   
   
@@ -4469,8 +4730,6 @@
                 
   
   
-    
-  
   
   
     
@@ -4481,11 +4740,11 @@
       
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_8_2" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_8_2" >
         
           
           <label class="md-nav__link" for="__nav_8_2" id="__nav_8_2_label" tabindex="0">
@@ -4506,7 +4765,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_8_2_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_8_2_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_8_2">
             <span class="md-nav__icon md-icon"></span>
             
@@ -4524,7 +4783,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../" class="md-nav__link">
+      <a href="../../../adr/cargo-tracker/" class="md-nav__link">
         
   
   
@@ -4552,7 +4811,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../001-modular-monolith/" class="md-nav__link">
+      <a href="../../../adr/cargo-tracker/001-modular-monolith/" class="md-nav__link">
         
   
   
@@ -4587,7 +4846,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../002-domain-logic-pattern-per-context/" class="md-nav__link">
+      <a href="../../../adr/cargo-tracker/002-domain-logic-pattern-per-context/" class="md-nav__link">
         
   
   
@@ -4619,44 +4878,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ADR-003 コンテキスト間連携
-  
-
-    
-  </span>
-  
-  
-    
-  
-  
-    <span class="md-status md-status--stable"></span>
-  
-
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../../../adr/cargo-tracker/003-inter-context-integration/" class="md-nav__link">
         
   
   
@@ -4679,170 +4904,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#_1" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        ステータス
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#_2" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        コンテキスト
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#_3" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        決定
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="決定">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#2026-10-01" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        補足の決定（2026-10-01 の分析成果物レビューで追加）
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#2026-10-02-humankakimomokuri-d-1" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        補足の決定（2026-10-02 に human:kakimomokuri が承認した D-1 で追加）
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#_4" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        代替案
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#_5" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        影響
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="影響">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#_6" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        ポジティブ
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#_7" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        ネガティブ
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#_8" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        コンプライアンス
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#_9" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        改訂の経緯
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#_10" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        備考
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -4855,7 +4916,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../004-external-data-ingestion/" class="md-nav__link">
+      <a href="../../../adr/cargo-tracker/004-external-data-ingestion/" class="md-nav__link">
         
   
   
@@ -4890,7 +4951,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../005-server-side-rendering/" class="md-nav__link">
+      <a href="../../../adr/cargo-tracker/005-server-side-rendering/" class="md-nav__link">
         
   
   
@@ -4925,7 +4986,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../006-java-spring-boot-platform/" class="md-nav__link">
+      <a href="../../../adr/cargo-tracker/006-java-spring-boot-platform/" class="md-nav__link">
         
   
   
@@ -4960,7 +5021,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../007-postgresql-mybatis-flyway/" class="md-nav__link">
+      <a href="../../../adr/cargo-tracker/007-postgresql-mybatis-flyway/" class="md-nav__link">
         
   
   
@@ -4995,7 +5056,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../008-aws-container-platform/" class="md-nav__link">
+      <a href="../../../adr/cargo-tracker/008-aws-container-platform/" class="md-nav__link">
         
   
   
@@ -5030,7 +5091,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../009-bdd-cucumber/" class="md-nav__link">
+      <a href="../../../adr/cargo-tracker/009-bdd-cucumber/" class="md-nav__link">
         
   
   
@@ -5065,7 +5126,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../010-required-document-storage-transaction/" class="md-nav__link">
+      <a href="../../../adr/cargo-tracker/010-required-document-storage-transaction/" class="md-nav__link">
         
   
   
@@ -5100,7 +5161,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../011-mfa-totp/" class="md-nav__link">
+      <a href="../../../adr/cargo-tracker/011-mfa-totp/" class="md-nav__link">
         
   
   
@@ -5135,7 +5196,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../012-authentication-principal-and-session/" class="md-nav__link">
+      <a href="../../../adr/cargo-tracker/012-authentication-principal-and-session/" class="md-nav__link">
         
   
   
@@ -5170,7 +5231,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../013-heroku-demo-environment/" class="md-nav__link">
+      <a href="../../../adr/cargo-tracker/013-heroku-demo-environment/" class="md-nav__link">
         
   
   
@@ -5205,7 +5266,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../014-downstream-to-upstream-notification/" class="md-nav__link">
+      <a href="../../../adr/cargo-tracker/014-downstream-to-upstream-notification/" class="md-nav__link">
         
   
   
@@ -7756,158 +7817,374 @@
   
 
 
-<h1 id="adr-003">ADR-003: コンテキスト間は冪等コマンド・永続化したドメインイベント・オーケストレーション型のサガで連携する<a class="headerlink" href="#adr-003" title="Permanent link">&para;</a></h1>
-<p>コンテキストをまたぐ処理を、分散トランザクションなしに安全に再実行できる形にする。</p>
-<p>日付: 2026-10-01</p>
-<h2 id="_1">ステータス<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h2>
-<p>承認済み</p>
-<h2 id="_2">コンテキスト<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h2>
-<ul>
-<li>ARCH-HO-01: Unit 間の変更コマンドは command ID、対象 ID、期待版を持つ。同じ command の再実行は同じ結果を返し、期待版の不一致は上書きせず競合とする。</li>
-<li>ARCH-HO-02: Unit をまたぐ処理は完了・処理中・失敗・有人確認要を区別し、後続が未完了の状態を成功と表示せず、安全に再処理できる情報を残す。</li>
-<li>PV-01 は重複予約が 1 件でも出たらパイロット中止とする。</li>
-<li>BR-17 は、変更・取消し、再設計、外部停止が起きたら自動処理を止め、有人案件へ引き継ぐとする。</li>
-<li>開発ガイドライン第 3 章は、BC 間の非同期通知をアプリケーションイベントの発行と、コミット後（AFTER_COMMIT）の購読で行う。発行元がロールバックしたときに購読側が動かないことは保証されるが、コミット後・購読前にプロセスが止まるとイベントは失われる。第 3 章もこの取りこぼしをメトリクスで数えて気づく、としている。</li>
-<li>第 1 章・第 2 章は、複数コンテキストをまたぐ業務の流れをサガとしてモデル化し、コレオグラフィ型とオーケストレーション型があるとしている。第 3 章のモノリス実装ではサガを使っていない。</li>
-</ul>
-<h2 id="_3">決定<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h2>
-<p><strong>コンテキスト間の連携を次の 3 つの仕組みで行う。</strong></p>
-<ol>
-<li><strong>冪等コマンドと期待版</strong>: 変更コマンドに <code>commandId</code> と <code>expectedVersion</code> を持たせる。各コンテキストは処理済みコマンドを記録し、同じ <code>commandId</code> には同じ結果を返す。集約の版を楽観ロックに使う。</li>
-<li><strong>永続化したドメインイベント</strong>: 第 3 章と同じくアプリケーションイベントとして発行する。購読は Spring Modulith の <code>@ApplicationModuleListener</code>（発行元のコミット後に、非同期で、購読側の新しいトランザクションで処理する）で行う。発行したイベントと配信の完了状態を発行元と同じトランザクションで保存し、未完了の配信を起動時と定期処理でやり直す（Transactional Outbox と同じ効果）。再配信の定期処理は ShedLock で 1 インスタンスに限る。受信側は冪等に処理し、イベントが持つ発行元の集約の版より古いものは適用しない。</li>
-<li><strong>オーケストレーション型のサガ</strong>: 複数コンテキストにまたがる業務の流れ（MVP では予約サガ: 予約確定 → 追跡開始）は、状態（処理中・完了・失敗・有人確認要）を永続化したサガが中央で進める。MVP では自動補償をせず、進められないときは BR-17 の有人案件を起票する。</li>
-</ol>
-<p>再試行の回数・間隔・timeout の値は非機能要件（RTY-01〜03）で決める。実装方式は Spring Modulith のイベント発行記録とする（ADR-006）。</p>
-<h3 id="2026-10-01">補足の決定（2026-10-01 の分析成果物レビューで追加）<a class="headerlink" href="#2026-10-01" title="Permanent link">&para;</a></h3>
+<h1 id="bolt-20-us-24-ac4ac5">Bolt 20 終了報告 - 確定した経路の割当てと荷主の承認（US-24 AC4・AC5）<a class="headerlink" href="#bolt-20-us-24-ac4ac5" title="Permanent link">&para;</a></h1>
+<h2 id="t-36">承認の議題（T-36。先に確かめてほしいこと）<a class="headerlink" href="#t-36" title="Permanent link">&para;</a></h2>
+<p>人の指示（<code>/goal Bolt20</code>）により、計画の承認から終了報告の前まで、すべての承認ゲートで止まらずに進めた。止まらなかったゲートごとの判断を、ここでまとめて確かめてほしい。</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">#</th>
+<th style="text-align: left;">確かめてほしいこと</th>
+<th style="text-align: left;">AI の判断の根拠</th>
+<th style="text-align: left;">見る場所</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">1</td>
+<td style="text-align: left;">計画の確認ポイント 1〜12 を推奨のまま採った</td>
+<td style="text-align: left;">範囲（US-24 AC4・AC5）と D-71 の形は人が決めていた。確認ポイントはその形から導いた細部</td>
+<td style="text-align: left;"><a href="../bolt_20_plan/">Bolt 20 計画</a></td>
+</tr>
+<tr>
+<td style="text-align: left;">2</td>
+<td style="text-align: left;">ADR-014 の文面（下流から上流への通知。DE-05・DE-06・DE-07 に適用、イベントの発行の仕方の基準、技術の失敗は起動のときの再配信）。ステータスは「提案」にしてある。承認なら <code>stable</code> にする</td>
+<td style="text-align: left;">D-71 で人が採った推奨の形をそのまま書いた。レビューで、再配信が起動のときだけであることを書き直した（D-77）</td>
+<td style="text-align: left;"><a href="../../../adr/cargo-tracker/014-downstream-to-upstream-notification/">ADR-014</a></td>
+</tr>
+<tr>
+<td style="text-align: left;">3</td>
+<td style="text-align: left;">ステップ 2〜4 の Red・Green と、データベース・モジュールの境界・画面のゲート</td>
+<td style="text-align: left;">列・CHECK・表・公開 API・画面の文言は、計画の設計とデータモデル・UI 設計・ADR-014 のとおり。計画からの変更（C-17、輸送要求の状態の値、C-17 の補足の文言）は設計文書に戻した（T-53）</td>
+<td style="text-align: left;">計画の各ステップの結果</td>
+</tr>
+<tr>
+<td style="text-align: left;">4</td>
+<td style="text-align: left;">開発レビューの判断 D-73〜D-77 を直し、D-78 を後に回した</td>
+<td style="text-align: left;">欠陥（遅れて届いたイベントの偽の警告）と荷主の画面の矛盾（承認の後の失効）はこの Bolt で直した</td>
+<td style="text-align: left;"><a href="../../../review/cargo-tracker/bolt_20_review_20261008/">Bolt 20 のレビュー</a></td>
+</tr>
+<tr>
+<td style="text-align: left;">5</td>
+<td style="text-align: left;">荷主と営業の画面の文言（C-17 の「承認は本予約の確定ではありません」「有効期限（…）までに承認してください」、C-04 の承認の前後と失効の案内、S-02 の「経路設計中・荷主承認待ち・予約待ち」、S-07 の「確定した経路は見積りに割り当てられ、荷主の承認に進みます」、荷主の画面の状態の表示名）</td>
+<td style="text-align: left;">UI 設計の C-17 の行と、利用者代表・テクニカルライターのレビュー</td>
+<td style="text-align: left;">UI 設計、テンプレート、動画</td>
+</tr>
+<tr>
+<td style="text-align: left;">6</td>
+<td style="text-align: left;">期限を過ぎた詳細設計依頼済みの見積りにも割り当て、承認で失効として拒否する（荷主承認待ちのまま新しい見積りの依頼を案内する）</td>
+<td style="text-align: left;">計画の確認ポイント 3。レビューで出口がないと指摘があり、出口（経路設計の途中の再見積り）は US-05・US-08 で決めると記録した</td>
+<td style="text-align: left;">レビューの矛盾事項 2</td>
+</tr>
+<tr>
+<td style="text-align: left;">7</td>
+<td style="text-align: left;">#5 をクローズした（R0.1 の範囲。AC2・AC3 は既存の #26。計画の確認ポイント 1 の「新しい Issue」は作らなかった）</td>
+<td style="text-align: left;">#26 がすでにあった</td>
+<td style="text-align: left;"><a href="https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/5">#5</a></td>
+</tr>
+<tr>
+<td style="text-align: left;">8</td>
+<td style="text-align: left;">デモの動画は Bolt 20 の 1 本だけを足し、<code>demoVideo</code> が撮り直した過去の Bolt の動画は元に戻した。承認の後、人が <code>DEMO_BOLT=bolt-20 DEMO_ISSUE=5 npx gulp issue:attach-demo</code> で #5 に添付する</td>
+<td style="text-align: left;">過去の画面のうち変えたのは S-02 の見出しと S-07・S-06 の文言だけ</td>
+<td style="text-align: left;"><code>docs/assets/demo/bolt-20/</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">9</td>
+<td style="text-align: left;">人に確かめてほしいこと: デモ環境で経路設計者として RC-2026-0902 を確定し、荷主 A で TR-2026-0905 の見積りと経路を承認する</td>
+<td style="text-align: left;">AI はデモ環境に届かない（Bolt 18 で確かめた）</td>
+<td style="text-align: left;">—</td>
+</tr>
+</tbody>
+</table>
+<h2 id="_1">基本情報<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
 <tr>
 <th style="text-align: left;">項目</th>
-<th style="text-align: left;">決定</th>
-<th style="text-align: left;">理由</th>
+<th style="text-align: left;">内容</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td style="text-align: left;">購読方式</td>
-<td style="text-align: left;"><code>@ApplicationModuleListener</code> を使い、同期の <code>@TransactionalEventListener(AFTER_COMMIT)</code> は使わない</td>
-<td style="text-align: left;">同期の AFTER_COMMIT では、購読側の書き込みがコミットされない</td>
+<td style="text-align: left;">Bolt</td>
+<td style="text-align: left;">第 20 回</td>
 </tr>
 <tr>
-<td style="text-align: left;">再試行の担い手</td>
-<td style="text-align: left;">イベントの配信の失敗はイベント発行記録の再配信が担う。予約サガの業務上の再試行は、サガがコマンドで直接呼ぶ</td>
-<td style="text-align: left;">同じ処理を 2 つの仕組みで再試行すると、回数と監視の閾値が食い違う</td>
+<td style="text-align: left;">期間</td>
+<td style="text-align: left;">2026-10-08 10:10 JST（計画のコミット <code>14b9174</code>）〜 11:55 頃（本報告の初版）</td>
 </tr>
 <tr>
-<td style="text-align: left;">複数インスタンスの排他</td>
-<td style="text-align: left;">再配信と予約サガの再試行の定期処理は ShedLock で 1 インスタンスに限る</td>
-<td style="text-align: left;">Spring Modulith は再配信の排他を提供しない</td>
+<td style="text-align: left;">対象</td>
+<td style="text-align: left;">U1 見積り。US-24 見積りと経路に回答・承認する（AC4・AC5）。<a href="https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/5">#5</a>（R0.1 の残り）。Bolt 19 レビュー D-71</td>
 </tr>
 <tr>
-<td style="text-align: left;">イベントの型</td>
-<td style="text-align: left;">各コンテキストの <code>events</code> パッケージに置き、移動しない</td>
-<td style="text-align: left;">イベント発行記録は型を完全修飾クラス名で保存するため、移動すると未完了のイベントを復元できない</td>
+<td style="text-align: left;">計画</td>
+<td style="text-align: left;"><a href="../bolt_20_plan/">Bolt 20 計画</a></td>
 </tr>
 <tr>
-<td style="text-align: left;">有人確認要の見え方</td>
-<td style="text-align: left;">予約サガの状態を業務ホームの一覧の正とし、有人案件の起票はそれに追加して行う</td>
-<td style="text-align: left;">追跡の開始と同じ原因で起票も失敗しうる</td>
+<td style="text-align: left;">ゴール</td>
+<td style="text-align: left;">経路設計者が経路を確定すると、経路設計の中の listener が見積りの公開 API で依頼元の見積りに経路版を割り当て、見積りと輸送要求が荷主承認待ちになる。荷主担当者が C-17 で見積りと確定した経路を確かめて承認すると、承認が記録され輸送要求は予約待ちになる。失効・置換済みの見積りへの承認は拒否される</td>
+</tr>
+<tr>
+<td style="text-align: left;">進め方</td>
+<td style="text-align: left;"><code>/goal Bolt20</code> で承認ゲートを止めずに進めた（上の議題）</td>
 </tr>
 </tbody>
 </table>
-<h3 id="2026-10-02-humankakimomokuri-d-1">補足の決定（2026-10-02 に human:kakimomokuri が承認した D-1 で追加）<a class="headerlink" href="#2026-10-02-humankakimomokuri-d-1" title="Permanent link">&para;</a></h3>
+<h2 id="_2">成果<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h2>
+<h3 id="_3">ステップの結果<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">ステップ</th>
+<th style="text-align: left;">状態</th>
+<th style="text-align: left;">コミット</th>
+<th style="text-align: left;">途中で起きたこと</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">1. ADR-014 と設計文書</td>
+<td style="text-align: left;">完了（議題 2）</td>
+<td style="text-align: left;"><code>75bef43</code></td>
+<td style="text-align: left;">UI 設計では承認の画面が C-17 だった（計画は C-05 と書いていた）。輸送要求の状態の値はデータモデルの既存の値に合わせた</td>
+</tr>
+<tr>
+<td style="text-align: left;">2. 見積りと輸送要求の規則</td>
+<td style="text-align: left;">完了（議題 3）</td>
+<td style="text-align: left;"><code>7d019bd</code>（Red）、<code>8bab034</code>（Green）</td>
+<td style="text-align: left;">社内の拒否の文言の分岐が Checkstyle の循環的複雑度を超えた</td>
+</tr>
+<tr>
+<td style="text-align: left;">3. 表・公開 API・listener</td>
+<td style="text-align: left;">完了（議題 3）</td>
+<td style="text-align: left;"><code>8faa42f</code>（Red）、<code>b3ac216</code>（Green）</td>
+<td style="text-align: left;">業務ルール層の組み立てで、発行する部品と購読する部品が互いに依存した（購読の登録を別の部品に分けた）。既存の CHECK のテストが「まだ使わない状態」に APPROVED を使っていた</td>
+</tr>
+<tr>
+<td style="text-align: left;">4. C-17・C-04・S-02・S-06・S-07</td>
+<td style="text-align: left;">完了（議題 3・5）</td>
+<td style="text-align: left;"><code>4c1c096</code>（Red）、<code>77ffb33</code>（Green）</td>
+<td style="text-align: left;">Bolt 19 の画面の層のステップが候補の番号を決め打ちしていて、このシナリオの航海で落ちた（テストの誤り）。新しいステップの文が既存のステップと重なった（テストの誤り）</td>
+</tr>
+<tr>
+<td style="text-align: left;">5. 開発レビューと終了報告</td>
+<td style="text-align: left;">完了（議題 4・6〜9）</td>
+<td style="text-align: left;"><code>497c150</code>（Red）、<code>28c9e74</code>（Green）、<code>02a84bf</code>（SonarQube）、<code>27b15ec</code>（動画）、本報告</td>
+<td style="text-align: left;">テンプレートの SpEL で null の文字列に <code>and</code> を使って画面が壊れた（直した）。SonarQube の Bug 1・Code Smell 2</td>
+</tr>
+</tbody>
+</table>
+<h3 id="_4">作ったもの<a class="headerlink" href="#_4" title="Permanent link">&para;</a></h3>
+<ul>
+<li>決定: ADR-014（下流から上流への通知は、下流の listener が上流の公開 API の冪等な操作を呼ぶ）</li>
+<li>ドメイン: <code>Quotation.assignRoute</code>・<code>approveByShipper</code>・<code>approvalRejectionAt</code>、<code>QuotationStatus</code> の荷主承認待ち・承認済みと <code>isRoutingStarted</code>、<code>AssignedRoute</code>・<code>AssignedRouteLeg</code>・<code>ShipperApproval</code>・<code>RouteAssignmentResult</code>、DE-21 <code>QuotationRouteAssigned</code>・DE-04 <code>QuotationApprovedByShipper</code>、<code>TransportRequest.markAwaitingApproval</code>・<code>markReadyToBook</code>・<code>hasReached</code>（見積りのイベントで先へだけ進める並び）</li>
+<li>公開 API と連携: <code>quotation.api.RouteAssignment</code>（引数・結果の record、理由の定数）と <code>RouteAssignmentService</code>、経路設計の DE-05 の listener <code>QuotationRouteAssignmentEventHandler</code> と ACL <code>QuotationRouteAssignments</code>、見積りの DE-21・DE-04 の listener、荷主の承認の入力ポート</li>
+<li>永続化: マイグレーション 2 本（経路版の参照・荷主承認の列と CHECK、<code>assigned_route_leg</code>、部分一意インデックス）、リポジトリ（区間の写し、ID での読み出し）、S-02 の読み取りモデルの状態</li>
+<li>画面: C-17（見積りと経路の承認）、割り当てた経路の断片、C-04（確定した経路と承認の入口、承認済み、承認の前後の失効）、S-02（荷主承認待ち・予約待ち）、S-04 の案内、S-07・S-06 の文言</li>
+<li>運用: <code>issue:attach-demo</code> の本文の録画のコマンドを実在の形に直した</li>
+</ul>
+<h3 id="_5">デモ項目<a class="headerlink" href="#_5" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">デモ項目</th>
+<th style="text-align: left;">受入条件</th>
+<th style="text-align: left;">動画</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">荷主がキー操作だけで確定した経路と見積りを確かめて承認する</td>
+<td style="text-align: left;">US-24 AC4</td>
+<td style="text-align: left;"><a href="../../../assets/demo/bolt-20/approve-quotation-and-route.webm" target="_blank">approve-quotation-and-route.webm</a></td>
+</tr>
+</tbody>
+</table>
+<p>動画は AI が再生して確かめていない。本報告の承認の場で人が再生して確かめる。</p>
+<h2 id="_6">指標<a class="headerlink" href="#_6" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">指標</th>
+<th style="text-align: left;">値</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">SP</td>
+<td style="text-align: left;">1（US-24 の R0.1 の残り。#5 をクローズした）</td>
+</tr>
+<tr>
+<td style="text-align: left;">テスト</td>
+<td style="text-align: left;"><code>test</code> 1,116 件（Bolt 19 の 1,049 件から +67）、<code>uiTest</code> 56 本（+2）</td>
+</tr>
+<tr>
+<td style="text-align: left;">承認ゲート</td>
+<td style="text-align: left;">9（計画、ステップ 1、ステップ 2 の Red・Green、ステップ 3、ステップ 4、開発レビューの判断、終了報告）。AI の判断で通したのは 8（T-36）、終了報告は承認待ち</td>
+</tr>
+<tr>
+<td style="text-align: left;">人の変更依頼</td>
+<td style="text-align: left;">0（本報告の時点）</td>
+</tr>
+<tr>
+<td style="text-align: left;">CI</td>
+<td style="text-align: left;">ステップ 1（#120）・2（#121）・3（#122）・4（#123）は成功。レビュー対応（#124）は次の push で取り消され、#125 で確かめる（本報告の時点で実行中）</td>
+</tr>
+</tbody>
+</table>
+<h3 id="_7">時間の内訳<a class="headerlink" href="#_7" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">ステップ</th>
+<th style="text-align: left;">目安</th>
+<th style="text-align: left;">実際</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">1</td>
+<td style="text-align: left;">40 分</td>
+<td style="text-align: left;">約 18 分（10:10〜10:28）</td>
+</tr>
+<tr>
+<td style="text-align: left;">2</td>
+<td style="text-align: left;">50 分</td>
+<td style="text-align: left;">約 9 分（10:28〜10:37）</td>
+</tr>
+<tr>
+<td style="text-align: left;">3</td>
+<td style="text-align: left;">70 分</td>
+<td style="text-align: left;">約 12 分（10:37〜10:49）</td>
+</tr>
+<tr>
+<td style="text-align: left;">4</td>
+<td style="text-align: left;">60 分</td>
+<td style="text-align: left;">約 28 分（10:49〜11:17。<code>uiTest</code> 3 回）</td>
+</tr>
+<tr>
+<td style="text-align: left;">5</td>
+<td style="text-align: left;">50 分</td>
+<td style="text-align: left;">約 38 分（11:17〜11:55。レビュー、対応、SonarQube、動画、本報告）</td>
+</tr>
+<tr>
+<td style="text-align: left;">合計</td>
+<td style="text-align: left;">270 分</td>
+<td style="text-align: left;">約 105 分</td>
+</tr>
+</tbody>
+</table>
+<p>打ち切った項目はない。</p>
+<h2 id="_8">品質ゲート<a class="headerlink" href="#_8" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
 <tr>
 <th style="text-align: left;">項目</th>
-<th style="text-align: left;">決定</th>
-<th style="text-align: left;">理由</th>
+<th style="text-align: left;">結果</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td style="text-align: left;">イベントの表し方</td>
-<td style="text-align: left;">ドメインイベントは、注釈 <code>@DomainEvent</code> を付けた record で表す。共有カーネルに <code>DomainEvent</code> インターフェース（<code>occurredAt</code>）を置かない</td>
-<td style="text-align: left;">一律の発生時刻は、業務の語彙の時刻（提出時刻・提示時刻）と二重になる。技術上の発生時刻と ID は、Spring Modulith のイベント発行記録（<code>publication_date</code>、<code>id</code>）が持っている</td>
+<td style="text-align: left;"><code>./gradlew check</code></td>
+<td style="text-align: left;">緑（1,116 件、SpotBugs・Checkstyle・spotless・<code>documentationTest</code>）</td>
 </tr>
 <tr>
-<td style="text-align: left;">型の保証</td>
-<td style="text-align: left;">注釈では型を保証できないため、ArchUnit で両方向に固定する。<code>@DomainEvent</code> の付いたクラスは <code>domain.events</code> の record であり、<code>domain.events</code> のトップレベルのクラスは <code>@DomainEvent</code> の付いた record である</td>
-<td style="text-align: left;">注釈の付け忘れと置き場所の誤りを機械で検出する</td>
+<td style="text-align: left;"><code>./gradlew uiTest</code></td>
+<td style="text-align: left;">緑（56 本、axe-core の違反 0 件）</td>
 </tr>
 <tr>
-<td style="text-align: left;">業務キー</td>
-<td style="text-align: left;">各イベントは、受信側の冪等性のキーになる業務キーを持つ（DE-01 なら輸送要求 ID と版番号）</td>
-<td style="text-align: left;">共通のイベント ID を持たないため、受信側は業務キーで重複を吸収する</td>
+<td style="text-align: left;">モジュールの境界</td>
+<td style="text-align: left;"><code>routing</code> の <code>allowedDependencies</code> は変えていない（<code>shared</code>・<code>quotation :: events</code>・<code>quotation :: api</code>）。見積りは経路設計に依存しない（ArchUnit）。ApplicationModules の検証が緑</td>
 </tr>
 <tr>
-<td style="text-align: left;">持てる型</td>
-<td style="text-align: left;">イベントは Java の標準と共有カーネルの型だけを持つ。イベント専用の値は record の入れ子にする</td>
-<td style="text-align: left;">イベントの形は保存される契約であり、ドメインモデルのリファクタリングで保存済みのイベントを壊さない</td>
+<td style="text-align: left;">SonarQube</td>
+<td style="text-align: left;">Quality Gate PASS（<code>sonar-local:start</code>）。最初の走査で Bug 1（<code>Optional</code> の読み出し）・Code Smell 2 を直して、未解決のイシュー 0、カバレッジ 93.8%</td>
+</tr>
+<tr>
+<td style="text-align: left;">OKF</td>
+<td style="text-align: left;"><code>okf:check</code> ERROR 0</td>
 </tr>
 </tbody>
 </table>
-<h3 id="_4">代替案<a class="headerlink" href="#_4" title="Permanent link">&para;</a></h3>
+<h2 id="_9">仮説の結論<a class="headerlink" href="#_9" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
 <tr>
-<th style="text-align: left;">案</th>
-<th style="text-align: left;">却下理由</th>
+<th style="text-align: left;">#</th>
+<th style="text-align: left;">仮説</th>
+<th style="text-align: left;">結論</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td style="text-align: left;">第 3 章のとおり AFTER_COMMIT の購読だけにする</td>
-<td style="text-align: left;">コミット後・購読前にプロセスが止まるとイベントが失われ、ARCH-HO-02 の「安全な再処理」と PV-01 を満たせない。同期の AFTER_COMMIT では購読側の書き込みもコミットされない</td>
+<td style="text-align: left;">H1</td>
+<td style="text-align: left;">下流から上流への通知を「下流の listener が上流の公開 API を呼ぶ」形にすれば、依存は <code>routing → quotation :: api</code> のままで、DE-06・DE-07 も同じ形で足せる</td>
+<td style="text-align: left;">成り立った。<code>routing</code> の依存は増えず、見積りは経路設計を参照しない（ApplicationModules と ArchUnit）。ただし公開 API に「操作」が入り、理由の契約・不正な依頼の扱い・再配信の時期（起動のとき）を決める必要があった（D-75・D-77）</td>
 </tr>
 <tr>
-<td style="text-align: left;">1 つのトランザクションで複数コンテキストを更新する</td>
-<td style="text-align: left;">同じ DB なので技術的には可能だが、コンテキストが互いのテーブルに触れることになり ADR-001 の境界が崩れる</td>
+<td style="text-align: left;">H2</td>
+<td style="text-align: left;">割当ての時に経路の情報を写せば、見積りは経路設計に問い合わせずに C-17 を描ける</td>
+<td style="text-align: left;">成り立った。C-04・C-17 は見積りの写し（案件番号・経路版・確定の時刻・区間）だけで描いている。写しを後で書き直す（W6 の経路版の差し替え）規則は D-78</td>
 </tr>
 <tr>
-<td style="text-align: left;">メッセージブローカーを導入する</td>
-<td style="text-align: left;">MVP は単一プロセスで足りる。第 3 章も Messaging Integration は分散構成（第 4 章）で導入するとしている</td>
-</tr>
-<tr>
-<td style="text-align: left;">コレオグラフィ型のサガにする</td>
-<td style="text-align: left;">予約サガは「完了・処理中・有人確認要」を 1 か所で判断して画面に示す必要がある。状態が各コンテキストに散ると判断できない</td>
-</tr>
-<tr>
-<td style="text-align: left;">Saga で自動補償する</td>
-<td style="text-align: left;">補償の業務規則（変更費用・期限）が未決（OQ-04）。BR-17 は有人対応を求めている</td>
+<td style="text-align: left;">H3</td>
+<td style="text-align: left;">割当てを冪等にすれば、DE-05 の再配信は再配信だけで済む</td>
+<td style="text-align: left;">成り立った。受入シナリオ（再配信）と統合テストが通った。ただし、輸送要求の側では、新しい状態を足したことで既存の listener の「済んでいるか」の判定が古くなり、遅れて届いたイベントで偽の警告が出ていた（D-73。<code>hasReached</code> にそろえた）</td>
 </tr>
 </tbody>
 </table>
-<h2 id="_5">影響<a class="headerlink" href="#_5" title="Permanent link">&para;</a></h2>
-<h3 id="_6">ポジティブ<a class="headerlink" href="#_6" title="Permanent link">&para;</a></h3>
+<h2 id="_10">判断と学び<a class="headerlink" href="#_10" title="Permanent link">&para;</a></h2>
+<h3 id="_11">人の決定<a class="headerlink" href="#_11" title="Permanent link">&para;</a></h3>
 <ul>
-<li>二重送信・再送があっても重複予約・二重登録が起きない。</li>
-<li>途中で失敗しても、どこまで完了したかが記録に残り、再処理できる。</li>
-<li>第 4 章（EDA）・第 5 章（CQRS/ES）へ移るときも、イベントとサガの契約はそのまま使える。</li>
+<li>2026-10-08: Bolt 20 は US-24 AC4・AC5。D-71 は AI の推奨の形（Bolt 19 終了報告の承認）</li>
+<li>2026-10-08: <code>/goal Bolt20</code>（承認ゲートで止まらずに Bolt を終えるまで進める）</li>
 </ul>
-<h3 id="_7">ネガティブ<a class="headerlink" href="#_7" title="Permanent link">&para;</a></h3>
+<h3 id="bolt">既知の課題（後の Bolt に持ち込む）<a class="headerlink" href="#bolt" title="Permanent link">&para;</a></h3>
 <ul>
-<li>イベントの反映は結果整合になる。画面は「処理中」を正しく表示する必要がある。</li>
-<li>処理済みコマンド・イベントの配信記録・サガの状態を保存する表が増える。保持期間と掃除の方針が要る。</li>
-<li>未完了の配信や「処理中」で止まったサガを監視する必要がある。</li>
+<li>未完了のイベントの発行の定期の再配信と監視（W10）。いまは起動のときだけ</li>
+<li>区間の写しを割当ての後に書き直さない規則の置き場所（W6 の経路版の差し替えの前に）、再設計要・旧版の経路版の承認の拒否（W6）</li>
+<li>S-02 の有効期限の近い順・割当て時刻・承認時刻と予約の確定待ちの表（US-04）、C-17 の輸送条件の要約、港名、承認者の名前（D-72 と同じ）</li>
+<li>期限を過ぎて割り当てた見積りの出口（経路設計の途中の再見積り。US-05・US-08）</li>
+<li>そのほか D-78 の一覧</li>
 </ul>
-<h2 id="_8">コンプライアンス<a class="headerlink" href="#_8" title="Permanent link">&para;</a></h2>
+<h3 id="kpt">ふりかえり（KPT）<a class="headerlink" href="#kpt" title="Permanent link">&para;</a></h3>
 <ul>
-<li>同じ <code>commandId</code> を 2 回送っても結果が 1 つになることを統合テストで確認する。</li>
-<li>イベントの購読前にアプリケーションを止めて再起動しても、イベントが失われず二重処理もされないことを統合テストで確認する。</li>
-<li>可観測性で、未完了の配信件数と滞留時間、止まったサガの件数を監視する。</li>
-<li>完了していない配信は、起動のときに配り直す（<code>spring.modulith.events.republish-outstanding-events-on-restart=true</code>。2026-10-05、Bolt 10）。再起動しない間の定期の再配信は運用準備（W10、#28）で入れる。</li>
+<li>Keep</li>
+<li>ADR を最初に書き、依存の向きを ArchUnit で固定してから実装したので、連携の形でやり直しがなかった</li>
+<li>計画の設計と UI 設計の食い違い（C-05 と C-17、状態の値）をステップ 1 で見つけ、設計文書の側に合わせた</li>
+<li>レビューの指摘への対応も Red → Green で進め、欠陥をテストで再現してから直した</li>
+<li>Problem</li>
+<li>状態を足したとき、既存の listener の「済んでいるか」の判定を見直さず、偽の警告を残した（レビューで見つかった）</li>
+<li>新しい listener・公開 API の実装・入力ポートの単体テストを書かず、受入と統合のテストに頼った（警告のログの経路を確かめていなかった）</li>
+<li>画面の層のテストが、同じアプリケーションで動くほかのシナリオのデータ（航海）に影響される書き方になっていた（Bolt 19 のステップ）</li>
+<li>Thymeleaf の SpEL で null の文字列に <code>and</code> を使い、画面の単体テストで 10 件が落ちた</li>
+<li>Try</li>
+<li>T-57: 状態の列挙に値を足すときは、その状態を見るすべての判定（listener の「済んでいるか」、SQL の IN、画面の表示名）を grep で洗い出し、計画の確認ポイントにする（AI、次の Bolt から）</li>
+<li>T-58: listener と公開 API の実装を足すときは、受入テストとは別に、業務の拒否と警告のログの経路の単体テストを Red に入れる（AI、次の Bolt から）</li>
+<li>T-59: 画面の層のステップは、ほかのシナリオが足したデータで変わる値（候補の番号・件数）を決め打ちしない（AI、すぐ）</li>
+<li>T-60: テンプレートの条件で値の有無を見るときは <code>!= null</code> を書く（文字列を真偽に使わない）（AI、すぐ）</li>
 </ul>
-<h2 id="_9">改訂の経緯<a class="headerlink" href="#_9" title="Permanent link">&para;</a></h2>
+<h2 id="bolt_1">次の Bolt<a class="headerlink" href="#bolt_1" title="Permanent link">&para;</a></h2>
 <ul>
-<li>2026-10-02: ドメインイベントの表し方（D-1）を補足の決定に追加した。Bolt 2 で実装した規則（<code>DomainEventArchitectureTest</code>）を human:kakimomokuri が承認した。</li>
-<li>2026-10-05: DE-03 の受け取りが集約の状態を変えるため、起動のときの再配信を有効にした（Bolt 9・10 レビュー R-03、D-32。human:kakimomokuri が決定）。定期の再配信は W10。</li>
+<li>本報告の承認の後、人が受入動画を #5 に添付する（議題 8）。<code>BOLT_ISSUES</code> に <code>bolt-20: 5</code> を足す</li>
+<li>W3 の残りの計画（リリース計画）に従い、次の Bolt の範囲は人が決める。候補は US-04 本予約の確定（承認済みの見積りを使う。D-78 の予約の確定待ちの表と有効期限の近い順を含む）</li>
 </ul>
-<h2 id="_10">備考<a class="headerlink" href="#_10" title="Permanent link">&para;</a></h2>
+<h2 id="_12">更新履歴<a class="headerlink" href="#_12" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">日付</th>
+<th style="text-align: left;">内容</th>
+<th style="text-align: left;">作成</th>
+<th style="text-align: left;">承認</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">2026-10-08</td>
+<td style="text-align: left;">初版（ステップ 1〜5 の結果、開発レビュー D-73〜D-78、品質ゲート、デモ項目と動画、仮説の結論、承認の議題 1〜9、Try T-57〜T-60）</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5</td>
+<td style="text-align: left;">—</td>
+</tr>
+</tbody>
+</table>
+<h2 id="_13">関連ドキュメント<a class="headerlink" href="#_13" title="Permanent link">&para;</a></h2>
 <ul>
-<li>著者: anthropic/claude-opus-5-5（AI の提案。human:kakimomokuri が 2026-10-01 に承認）</li>
-<li>関連文書: <a href="../../../design/cargo-tracker/architecture_backend/">バックエンドアーキテクチャ</a>、<a href="../../../article/02-cargo-domain-model/">第 2 章</a>、<a href="../../../article/03-spring-modular-monolith/">第 3 章</a></li>
-<li>関連 ADR: ADR-001、ADR-004</li>
+<li><a href="../bolt_20_plan/">Bolt 20 計画</a></li>
+<li><a href="../../../review/cargo-tracker/bolt_20_review_20261008/">Bolt 20 開発成果物レビュー</a></li>
+<li><a href="../../../adr/cargo-tracker/014-downstream-to-upstream-notification/">ADR-014</a></li>
+<li><a href="../bolt_19_report/">Bolt 19 終了報告</a></li>
 </ul>
 
 
