@@ -3,8 +3,10 @@ type: Report
 title: "Bolt 23 終了報告 - 本予約の確定と失効（US-04 AC1・AC2、#10）"
 description: "23 回目の Bolt の終了報告。新設の booking モジュールで本予約の確定（確定条件、追跡番号、予約版、commit 時刻、予約サガの処理中、DE-07）と失効（BR-10）を業務ルール層まで作り、見積りの公開 API で輸送要求を予約確定済みにした。/goal で止まらなかった承認ゲート（スキーマを含む）、開発レビューの対応（DE-04 より先に DE-07 が届く不具合ほか）、計画からの変更、既知の課題を記録する。"
 tags: [development,bolt-report]
-status: draft
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-08T09:09:48Z }
+status: stable
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-08T09:18:56Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-10-08T09:20:00Z }
 ---
 
 # Bolt 23 終了報告 - 本予約の確定と失効（US-04 AC1・AC2、#10）
@@ -66,7 +68,7 @@ generated: { by: anthropic/claude-opus-5-5, at: 2026-10-08T09:09:48Z }
 | :--- | :--- |
 | テスト | `test` 1,278 件（Bolt 22 の 1,210 件から +68）、`uiTest` 59 本（変わらず。画面は Bolt 23b）、`documentationTest` 1 件 |
 | 承認ゲートの通過 | 計画の承認 1 回、終了報告（本報告）。途中のゲート 4 つは止まらなかった（議題 1〜4） |
-| 人の変更依頼 | 0（本報告の時点） |
+| 人の変更依頼 | 1（予約サガの置き場所。議題 8） |
 | リードタイム | 約 2 時間 20 分（計画の承認から本報告まで。テストと SonarQube の待ち時間を含む） |
 
 ## 品質ゲート
@@ -149,6 +151,7 @@ Bolt 23b: 本予約の画面（S-09 確定、S-24、S-02 の予約の確定待�
 
 | 日付 | 更新内容 | 更新者 |
 | :--- | :--- | :--- |
+| 2026-10-08 | 承認の議題 1〜8（スキーマ、D-5 の例外を含む）を承認し、Bolt 23 を終えた（人の変更依頼 1: 予約サガの置き場所）。CI（run 144〜146）は緑 | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-10-08 | 人の指摘（予約サガの置き場所が開発ガイドラインと違う）で `application.sagas` に戻し、議題 8 と Try T-68 を足した | anthropic/claude-opus-5-5、指摘 human:kakimomokuri |
 | 2026-10-08 | 初版（ステップ 1〜6 の結果、開発レビュー、品質ゲート、既知の課題、承認の議題 1〜7、Try T-66・T-67） | anthropic/claude-opus-5-5 |
 

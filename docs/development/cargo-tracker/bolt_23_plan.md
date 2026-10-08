@@ -4,7 +4,7 @@ title: "Bolt 23 計画 - 本予約の確定と失効（US-04 AC1・AC2）"
 description: "23 回目の Bolt の計画。予約サガと追跡の開始（ADR-003 の改訂）、予約から見積りの確定可否の問い合わせを ADR に決め、booking モジュールと貨物予約・予約版・予約サガの表を新設して、本予約の確定（US-04 AC1）と失効の拒否（AC2）を業務ルール層の受入シナリオまで作り、DE-07 で輸送要求を予約確定済みにするまでを、ステップ 1〜6 で定義する。画面（S-09・S-24・S-02）は Bolt 23b。"
 tags: [development,bolt-plan]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-08T09:09:48Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-08T09:18:56Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-08T07:44:34Z }
 ---
@@ -328,14 +328,14 @@ b ||--o| s
 
 ## 完了条件
 
-- [ ] US-04 AC1・AC2 の業務ルール層の受入シナリオ（`@US-04-AC1`・`@US-04-AC2`・`@BR-10`）が通る
-- [ ] 境界（有効期限の 1 分前・同時刻・1 分後）の単体テストが見積りの API の側にある
-- [ ] 確定から DE-07 の発行、輸送要求の予約確定済みまでが PostgreSQL の統合テストで通る
-- [ ] ApplicationModules の検証が緑で、`booking` は `routing` に依存せず、`quotation` は `booking` に依存しない
-- [ ] `check`・`documentationTest`・`uiTest` が緑。push して CI とデモ環境の配備を確かめた
-- [ ] SonarQube の Quality Gate が PASS
-- [ ] ADR-015・ADR-016 と設計文書に決定を書き、計画からの変更も設計文書に戻した（T-53）
-- [ ] 開発レビューと終了報告。#10 に AC1・AC2 の業務ルール層までの結果をコメントした
+- [x] US-04 AC1・AC2 の業務ルール層の受入シナリオ（`@US-04-AC1`・`@US-04-AC2`・`@BR-10`）が通る
+- [x] 境界（有効期限の 1 分前・同時刻・1 分後）の単体テストが見積りの API の側にある
+- [x] 確定から DE-07 の発行、輸送要求の予約確定済みまでが PostgreSQL の統合テストで通る
+- [x] ApplicationModules の検証が緑で、`booking` は `routing` に依存せず、`quotation` は `booking` に依存しない
+- [x] `check`・`documentationTest`・`uiTest` が緑。push して CI とデモ環境の配備を確かめた
+- [x] SonarQube の Quality Gate が PASS
+- [x] ADR-015・ADR-016 と設計文書に決定を書き、計画からの変更も設計文書に戻した（T-53）
+- [x] 開発レビューと終了報告。#10 に AC1・AC2 の業務ルール層までの結果をコメントした
 
 ### デモ項目
 
@@ -346,6 +346,7 @@ b ||--o| s
 | 日付 | 更新内容 | 更新者 |
 | :--- | :--- | :--- |
 | 2026-10-08 | 初版作成（承認待ち） | anthropic/claude-opus-5-5 |
+| 2026-10-08 | 終了報告を承認し、完了条件をすべて満たした（CI run 144〜146 緑、SonarQube PASS）。予約サガは人の指摘で `application.sagas` に戻した | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-10-08 | 計画（確認ポイント 1〜15 は推奨のまま）を承認した（`/goal Bolt23 承認`） | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-10-08 | 開始準備の整合性検証の指摘を反映した（ステップの順、ADR-003 の改訂、輸送要求の版、ゲート、Living Documentation、afterMigrate、URL、commit 時刻、追跡番号、業務番号の置き場所）。画面を Bolt 23b に分け、B-INV-11 の UK を前倒しした（human:kakimomokuri が決定） | anthropic/claude-opus-5-5 |
 
