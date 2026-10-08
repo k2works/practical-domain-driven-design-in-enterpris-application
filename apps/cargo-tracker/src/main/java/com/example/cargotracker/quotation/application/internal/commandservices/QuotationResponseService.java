@@ -15,7 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * 荷主の見積りへの回答を受け付ける入力ポート（US-24。荷主担当者が使う）。トランザクションの境界になる。
+ * 荷主の見積りへの回答と、見積りと経路の承認を受け付ける入力ポート（US-24。荷主担当者が使う）。トランザクションの境界になる。
  * 社内の {@link QuotationCommandService} と分け、照会は必ず荷主企業で絞る（Q-INV-08。Bolt 4 R-02 と同じ考え方）。
  * 1 つのトランザクションでは見積りの集約だけを更新し、輸送要求の経路設計中への変更は DE-16 を受けて別のトランザクションで行う。
  *
@@ -78,6 +78,27 @@ public class QuotationResponseService {
      */
     @Transactional
     public ShipperApprovalOutcome approve(ApproveQuotationCommand command) {
-        return new ShipperApprovalOutcome.NotFound();
+        Optional<Quotation> found = transportRequestRepository
+                .findByNumber(command.number(), command.shipperCompanyId())
+                .flatMap(request ->
+                        quotationRepository.findByTransportRequestIdAndNo(request.id(), command.quotationNo()))
+                .filter(Quotation::isVisibleToShipper);
+        if (found.isEmpty()) {
+            return new ShipperApprovalOutcome.NotFound();
+        }
+        Quotation quotation = found.get();
+        Optional<QuotationRejection> rejection =
+                quotation.approveByShipper(command.approver(), new UtcInstant(clock.instant()));
+        if (rejection.isPresent()) {
+            return new ShipperApprovalOutcome.Rejected(rejection.get());
+        }
+        try {
+            quotationRepository.update(quotation);
+        } catch (ConcurrentQuotationUpdateException _) {
+            return new ShipperApprovalOutcome.Conflict();
+        }
+        quotation.domainEvents().forEach(eventPublisher::publishEvent);
+        quotation.clearDomainEvents();
+        return new ShipperApprovalOutcome.Approved(command.number(), command.quotationNo());
     }
 }

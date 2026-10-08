@@ -1,6 +1,9 @@
 package com.example.cargotracker.routing.application.internal.outboundservices.acl;
 
 import com.example.cargotracker.quotation.api.RouteAssignment;
+import com.example.cargotracker.quotation.api.RouteAssignmentLeg;
+import com.example.cargotracker.quotation.api.RouteAssignmentReceipt;
+import com.example.cargotracker.quotation.api.RouteAssignmentRequest;
 import com.example.cargotracker.routing.domain.model.valueobjects.Leg;
 import com.example.cargotracker.routing.domain.model.valueobjects.RoutingCaseNumber;
 import com.example.cargotracker.shared.domain.UtcInstant;
@@ -27,6 +30,18 @@ public class QuotationRouteAssignments {
      */
     public Optional<String> assign(
             UUID quotationId, RoutingCaseNumber number, int routeVersionNo, UtcInstant confirmedAt, List<Leg> legs) {
-        return Optional.of("NOT_IMPLEMENTED");
+        RouteAssignmentReceipt receipt = routeAssignment.assign(new RouteAssignmentRequest(
+                quotationId,
+                number.text(),
+                routeVersionNo,
+                confirmedAt,
+                legs.stream()
+                        .map(leg -> new RouteAssignmentLeg(
+                                leg.voyageNumber(), leg.load(), leg.discharge(), leg.departureAt(), leg.arrivalAt()))
+                        .toList()));
+        return switch (receipt) {
+            case RouteAssignmentReceipt.Assigned _, RouteAssignmentReceipt.AlreadyAssigned _ -> Optional.empty();
+            case RouteAssignmentReceipt.NotAssigned(String reason) -> Optional.of(reason);
+        };
     }
 }

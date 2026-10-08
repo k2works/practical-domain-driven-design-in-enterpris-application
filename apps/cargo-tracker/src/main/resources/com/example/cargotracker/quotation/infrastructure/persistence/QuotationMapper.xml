@@ -22,6 +22,11 @@
             <arg column="shipper_response" name="shipperResponse" javaType="String"/>
             <arg column="responded_by" name="respondedBy" javaType="java.util.UUID"/>
             <arg column="responded_at" name="respondedAt" javaType="java.time.OffsetDateTime"/>
+            <arg column="routing_case_number" name="routingCaseNumber" javaType="String"/>
+            <arg column="route_version_no" name="routeVersionNo" javaType="Integer"/>
+            <arg column="route_confirmed_at" name="routeConfirmedAt" javaType="java.time.OffsetDateTime"/>
+            <arg column="shipper_approved_by" name="shipperApprovedBy" javaType="java.util.UUID"/>
+            <arg column="shipper_approved_at" name="shipperApprovedAt" javaType="java.time.OffsetDateTime"/>
             <arg column="version" name="version" javaType="_long"/>
         </constructor>
     </resultMap>
@@ -42,11 +47,13 @@
             (id, transport_request_id, quotation_no, transport_request_version_no, status, expires_at, total_amount,
              currency, route_policy_via, route_policy_departure_at, route_policy_arrival_at, internal_approved_by,
              internal_approved_at, presented_at, replaced_by_quotation_id, shipper_response, responded_by, responded_at,
+             routing_case_number, route_version_no, route_confirmed_at, shipper_approved_by, shipper_approved_at,
              version)
         VALUES (#{id}, #{transportRequestId}, #{quotationNo}, #{transportRequestVersionNo}, #{status}, #{expiresAt},
                 #{totalAmount}, #{currency}, #{routePolicyVia}, #{routePolicyDepartureAt}, #{routePolicyArrivalAt},
                 #{internalApprovedBy}, #{internalApprovedAt}, #{presentedAt}, #{replacedByQuotationId},
-                #{shipperResponse}, #{respondedBy}, #{respondedAt}, #{version})
+                #{shipperResponse}, #{respondedBy}, #{respondedAt}, #{routingCaseNumber}, #{routeVersionNo},
+                #{routeConfirmedAt}, #{shipperApprovedBy}, #{shipperApprovedAt}, #{version})
     </insert>
 
     <insert id="insertPricingLine">
@@ -65,7 +72,10 @@
                internal_approved_by = #{row.internalApprovedBy}, internal_approved_at = #{row.internalApprovedAt},
                presented_at = #{row.presentedAt}, replaced_by_quotation_id = #{row.replacedByQuotationId},
                shipper_response = #{row.shipperResponse}, responded_by = #{row.respondedBy},
-               responded_at = #{row.respondedAt}, version = version + 1
+               responded_at = #{row.respondedAt}, routing_case_number = #{row.routingCaseNumber},
+               route_version_no = #{row.routeVersionNo}, route_confirmed_at = #{row.routeConfirmedAt},
+               shipper_approved_by = #{row.shipperApprovedBy}, shipper_approved_at = #{row.shipperApprovedAt},
+               version = version + 1
          WHERE id = #{row.id} AND version = #{expectedVersion}
     </update>
 
@@ -73,10 +83,53 @@
         SELECT id, transport_request_id, quotation_no, transport_request_version_no, status, expires_at, total_amount,
                currency, route_policy_via, route_policy_departure_at, route_policy_arrival_at, internal_approved_by,
                internal_approved_at, presented_at, replaced_by_quotation_id, shipper_response, responded_by,
-               responded_at, version
+               responded_at, routing_case_number, route_version_no, route_confirmed_at, shipper_approved_by,
+               shipper_approved_at, version
           FROM quotation.quotation
          WHERE transport_request_id = #{transportRequestId}
          ORDER BY quotation_no
+    </select>
+
+    <select id="selectById" resultMap="quotationRow">
+        SELECT id, transport_request_id, quotation_no, transport_request_version_no, status, expires_at, total_amount,
+               currency, route_policy_via, route_policy_departure_at, route_policy_arrival_at, internal_approved_by,
+               internal_approved_at, presented_at, replaced_by_quotation_id, shipper_response, responded_by,
+               responded_at, routing_case_number, route_version_no, route_confirmed_at, shipper_approved_by,
+               shipper_approved_at, version
+          FROM quotation.quotation
+         WHERE id = #{id}
+    </select>
+
+    <resultMap id="assignedRouteLegRow" type="com.example.cargotracker.quotation.infrastructure.persistence.AssignedRouteLegRow">
+        <constructor>
+            <idArg column="quotation_id" name="quotationId" javaType="java.util.UUID"/>
+            <idArg column="leg_no" name="legNo" javaType="_int"/>
+            <arg column="voyage_number" name="voyageNumber" javaType="String"/>
+            <arg column="load_unlocode" name="loadUnlocode" javaType="String"/>
+            <arg column="discharge_unlocode" name="dischargeUnlocode" javaType="String"/>
+            <arg column="departure_at" name="departureAt" javaType="java.time.OffsetDateTime"/>
+            <arg column="arrival_at" name="arrivalAt" javaType="java.time.OffsetDateTime"/>
+        </constructor>
+    </resultMap>
+
+    <insert id="insertAssignedRouteLeg">
+        INSERT INTO quotation.assigned_route_leg
+            (quotation_id, leg_no, voyage_number, load_unlocode, discharge_unlocode, departure_at, arrival_at)
+        VALUES (#{quotationId}, #{legNo}, #{voyageNumber}, #{loadUnlocode}, #{dischargeUnlocode}, #{departureAt},
+                #{arrivalAt})
+    </insert>
+
+    <select id="countAssignedRouteLegs" resultType="_int">
+        SELECT COUNT(*) FROM quotation.assigned_route_leg WHERE quotation_id = #{quotationId}
+    </select>
+
+    <select id="selectAssignedRouteLegsByTransportRequestId" resultMap="assignedRouteLegRow">
+        SELECT l.quotation_id, l.leg_no, l.voyage_number, l.load_unlocode, l.discharge_unlocode, l.departure_at,
+               l.arrival_at
+          FROM quotation.assigned_route_leg l
+          JOIN quotation.quotation q ON q.id = l.quotation_id
+         WHERE q.transport_request_id = #{transportRequestId}
+         ORDER BY l.quotation_id, l.leg_no
     </select>
 
     <resultMap id="quotedRequestSummaryRow" type="com.example.cargotracker.quotation.infrastructure.persistence.QuotedRequestSummaryRow">

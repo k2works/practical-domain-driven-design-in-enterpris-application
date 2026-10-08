@@ -3,8 +3,15 @@ package com.example.cargotracker.quotation.application.internal.commandservices;
 import com.example.cargotracker.quotation.api.RouteAssignment;
 import com.example.cargotracker.quotation.api.RouteAssignmentReceipt;
 import com.example.cargotracker.quotation.api.RouteAssignmentRequest;
+import com.example.cargotracker.quotation.domain.model.aggregates.Quotation;
 import com.example.cargotracker.quotation.domain.model.aggregates.QuotationRepository;
+import com.example.cargotracker.quotation.domain.model.valueobjects.AssignedRoute;
+import com.example.cargotracker.quotation.domain.model.valueobjects.AssignedRouteLeg;
+import com.example.cargotracker.quotation.domain.model.valueobjects.QuotationId;
+import com.example.cargotracker.quotation.domain.model.valueobjects.RouteAssignmentResult;
+import com.example.cargotracker.shared.domain.UtcInstant;
 import java.time.Clock;
+import java.util.Optional;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,6 +40,34 @@ public class RouteAssignmentService implements RouteAssignment {
     @Override
     @Transactional
     public RouteAssignmentReceipt assign(RouteAssignmentRequest request) {
-        return new RouteAssignmentReceipt.NotAssigned(RouteAssignmentReceipt.NotAssigned.QUOTATION_NOT_FOUND);
+        Optional<Quotation> found = quotationRepository.findById(new QuotationId(request.quotationId()));
+        if (found.isEmpty()) {
+            return new RouteAssignmentReceipt.NotAssigned(RouteAssignmentReceipt.NotAssigned.QUOTATION_NOT_FOUND);
+        }
+        Quotation quotation = found.get();
+        RouteAssignmentResult result = quotation.assignRoute(toAssignedRoute(request), new UtcInstant(clock.instant()));
+        return switch (result) {
+            case ASSIGNED -> {
+                // 競合（ConcurrentQuotationUpdateException）は listener のトランザクションごと戻し、DE-05 の再配信でやり直す
+                quotationRepository.update(quotation);
+                quotation.domainEvents().forEach(eventPublisher::publishEvent);
+                quotation.clearDomainEvents();
+                yield new RouteAssignmentReceipt.Assigned();
+            }
+            case ALREADY_ASSIGNED -> new RouteAssignmentReceipt.AlreadyAssigned();
+            case ANOTHER_ROUTE_VERSION_ASSIGNED, NOT_ROUTING_REQUESTED, RETIRED ->
+                new RouteAssignmentReceipt.NotAssigned(result.name());
+        };
+    }
+
+    private static AssignedRoute toAssignedRoute(RouteAssignmentRequest request) {
+        return new AssignedRoute(
+                request.routingCaseNumber(),
+                request.routeVersionNo(),
+                request.confirmedAt(),
+                request.legs().stream()
+                        .map(leg -> new AssignedRouteLeg(
+                                leg.voyageNumber(), leg.load(), leg.discharge(), leg.departureAt(), leg.arrivalAt()))
+                        .toList());
     }
 }

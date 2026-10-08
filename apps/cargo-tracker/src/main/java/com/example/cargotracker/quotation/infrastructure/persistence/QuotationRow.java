@@ -26,4 +26,9 @@ public record QuotationRow(
         String shipperResponse,
         UUID respondedBy,
         OffsetDateTime respondedAt,
+        String routingCaseNumber,
+        Integer routeVersionNo,
+        OffsetDateTime routeConfirmedAt,
+        UUID shipperApprovedBy,
+        OffsetDateTime shipperApprovedAt,
         long version) {}

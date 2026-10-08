@@ -4,6 +4,8 @@ import com.example.cargotracker.quotation.domain.model.aggregates.ConcurrentQuot
 import com.example.cargotracker.quotation.domain.model.aggregates.DuplicateQuotationException;
 import com.example.cargotracker.quotation.domain.model.aggregates.Quotation;
 import com.example.cargotracker.quotation.domain.model.aggregates.QuotationRepository;
+import com.example.cargotracker.quotation.domain.model.valueobjects.AssignedRoute;
+import com.example.cargotracker.quotation.domain.model.valueobjects.AssignedRouteLeg;
 import com.example.cargotracker.quotation.domain.model.valueobjects.Currency;
 import com.example.cargotracker.quotation.domain.model.valueobjects.PricingBasis;
 import com.example.cargotracker.quotation.domain.model.valueobjects.PricingLine;
@@ -13,6 +15,7 @@ import com.example.cargotracker.quotation.domain.model.valueobjects.QuotationSta
 import com.example.cargotracker.quotation.domain.model.valueobjects.QuotedRequestSummary;
 import com.example.cargotracker.quotation.domain.model.valueobjects.RoutePolicy;
 import com.example.cargotracker.quotation.domain.model.valueobjects.RoutingRequestedSummary;
+import com.example.cargotracker.quotation.domain.model.valueobjects.ShipperApproval;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestId;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestNumber;
 import com.example.cargotracker.shared.domain.Location;
@@ -34,7 +37,7 @@ import org.springframework.transaction.annotation.Transactional;
 /**
  * 見積りのリポジトリの MyBatis 実装。見積りと料金明細の表を組み立てて集約にする（Bolt 10）。
  * 更新は楽観ロック（集約の版）で照合する。料金明細は保存（新規）のときだけ書く（算出し直しは Bolt 10 で入れない）。
- * 経路方針の主な経由地は、UN/LOCODE のカンマ区切りで 1 つの列に持つ（データモデル）。
+ * 経路方針の主な経由地は、UN/LOCODE のカンマ区切りで 1 つの列に持つ（データモデル）。割り当てた経路の区間は別の表に持つ（Bolt 20）。
  */
 @Repository
 public class MyBatisQuotationRepository implements QuotationRepository {
@@ -75,6 +78,9 @@ public class MyBatisQuotationRepository implements QuotationRepository {
         });
     }
 
+    /**
+     * 見積りを更新する。割り当てた経路の区間は、割当ての後に変えないため、まだ書いていないときだけ書く（Bolt 20）。
+     */
     @Override
     public void update(Quotation quotation) {
         int updated =
@@ -82,6 +88,22 @@ public class MyBatisQuotationRepository implements QuotationRepository {
         if (updated == 0) {
             throw new ConcurrentQuotationUpdateException(quotation.id(), quotation.aggregateVersion());
         }
+        quotation.assignedRoute().ifPresent(route -> {
+            if (mapper.countAssignedRouteLegs(quotation.id().value()) > 0) {
+                return;
+            }
+            for (int i = 0; i < route.legs().size(); i++) {
+                AssignedRouteLeg leg = route.legs().get(i);
+                mapper.insertAssignedRouteLeg(new AssignedRouteLegRow(
+                        quotation.id().value(),
+                        i + 1,
+                        leg.voyageNumber(),
+                        leg.load().unLocode(),
+                        leg.discharge().unLocode(),
+                        toOffset(leg.departureAt()),
+                        toOffset(leg.arrivalAt())));
+            }
+        });
     }
 
     @Override
@@ -89,8 +111,12 @@ public class MyBatisQuotationRepository implements QuotationRepository {
         Map<UUID, List<PricingLineRow>> lines =
                 mapper.selectPricingLinesByTransportRequestId(transportRequestId.value()).stream()
                         .collect(Collectors.groupingBy(PricingLineRow::quotationId));
+        Map<UUID, List<AssignedRouteLegRow>> legs =
+                mapper.selectAssignedRouteLegsByTransportRequestId(transportRequestId.value()).stream()
+                        .collect(Collectors.groupingBy(AssignedRouteLegRow::quotationId));
         return mapper.selectByTransportRequestId(transportRequestId.value()).stream()
-                .map(row -> toAggregate(row, lines.getOrDefault(row.id(), List.of())))
+                .map(row -> toAggregate(
+                        row, lines.getOrDefault(row.id(), List.of()), legs.getOrDefault(row.id(), List.of())))
                 .toList();
     }
 
@@ -118,7 +144,10 @@ public class MyBatisQuotationRepository implements QuotationRepository {
 
     @Override
     public Optional<Quotation> findById(QuotationId id) {
-        return Optional.empty();
+        return Optional.ofNullable(mapper.selectById(id.value()))
+                .flatMap(row -> findByTransportRequestId(new TransportRequestId(row.transportRequestId())).stream()
+                        .filter(quotation -> quotation.id().equals(id))
+                        .findFirst());
     }
 
     @Override
@@ -162,10 +191,24 @@ public class MyBatisQuotationRepository implements QuotationRepository {
                         .respondedAt()
                         .map(MyBatisQuotationRepository::toOffset)
                         .orElse(null),
+                quotation.assignedRoute().map(AssignedRoute::routingCaseNumber).orElse(null),
+                quotation.assignedRoute().map(AssignedRoute::routeVersionNo).orElse(null),
+                quotation
+                        .assignedRoute()
+                        .map(route -> toOffset(route.confirmedAt()))
+                        .orElse(null),
+                quotation
+                        .shipperApproval()
+                        .map(approval -> approval.approvedBy().value())
+                        .orElse(null),
+                quotation
+                        .shipperApproval()
+                        .map(approval -> toOffset(approval.approvedAt()))
+                        .orElse(null),
                 version);
     }
 
-    private static Quotation toAggregate(QuotationRow row, List<PricingLineRow> lines) {
+    private static Quotation toAggregate(QuotationRow row, List<PricingLineRow> lines, List<AssignedRouteLegRow> legs) {
         PricingBasis basis = row.currency() == null || lines.isEmpty()
                 ? null
                 : new PricingBasis(
@@ -194,9 +237,29 @@ public class MyBatisQuotationRepository implements QuotationRepository {
                 row.replacedByQuotationId() == null ? null : new QuotationId(row.replacedByQuotationId()),
                 userIdOrNull(row.respondedBy()),
                 utcOrNull(row.respondedAt()),
-                null,
-                null,
+                assignedRoute(row, legs),
+                row.shipperApprovedBy() == null
+                        ? null
+                        : new ShipperApproval(new UserId(row.shipperApprovedBy()), toUtc(row.shipperApprovedAt())),
                 row.version());
+    }
+
+    private static AssignedRoute assignedRoute(QuotationRow row, List<AssignedRouteLegRow> legs) {
+        if (row.routingCaseNumber() == null) {
+            return null;
+        }
+        return new AssignedRoute(
+                row.routingCaseNumber(),
+                row.routeVersionNo(),
+                toUtc(row.routeConfirmedAt()),
+                legs.stream()
+                        .map(leg -> new AssignedRouteLeg(
+                                leg.voyageNumber(),
+                                new Location(leg.loadUnlocode().strip()),
+                                new Location(leg.dischargeUnlocode().strip()),
+                                toUtc(leg.departureAt()),
+                                toUtc(leg.arrivalAt())))
+                        .toList());
     }
 
     private static List<Location> via(String value) {
