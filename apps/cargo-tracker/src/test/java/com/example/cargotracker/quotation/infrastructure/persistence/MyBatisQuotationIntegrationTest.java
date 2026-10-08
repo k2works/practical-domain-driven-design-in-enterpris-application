@@ -12,6 +12,7 @@ import com.example.cargotracker.quotation.domain.model.aggregates.TransportReque
 import com.example.cargotracker.quotation.domain.model.aggregates.TransportRequestRepository;
 import com.example.cargotracker.quotation.domain.model.valueobjects.AssignedRoute;
 import com.example.cargotracker.quotation.domain.model.valueobjects.AssignedRouteLeg;
+import com.example.cargotracker.quotation.domain.model.valueobjects.AwaitingBookingSummary;
 import com.example.cargotracker.quotation.domain.model.valueobjects.Currency;
 import com.example.cargotracker.quotation.domain.model.valueobjects.PricingLine;
 import com.example.cargotracker.quotation.domain.model.valueobjects.QuotationFixture;
@@ -499,13 +500,15 @@ class MyBatisQuotationIntegrationTest {
                                 1,
                                 QuotationStatus.ROUTING_REQUESTED,
                                 earlierAt,
-                                QuotationFixture.EXPIRES_AT),
+                                QuotationFixture.EXPIRES_AT,
+                                null),
                         new RoutingRequestedSummary(
                                 new TransportRequestNumber(2082, 21),
                                 1,
                                 QuotationStatus.ROUTING_REQUESTED,
                                 laterAt,
-                                QuotationFixture.EXPIRES_AT));
+                                QuotationFixture.EXPIRES_AT,
+                                null));
     }
 
     private void respond(TransportRequestId transportRequestId, UtcInstant at) {
@@ -643,7 +646,7 @@ class MyBatisQuotationIntegrationTest {
     }
 
     @Test
-    void 経路設計中の表には荷主承認待ちと予約待ちの見積依頼も状態とともに返す() {
+    void 経路設計中の表には荷主承認待ちの見積依頼も状態とともに返し荷主が承認した見積りは予約の確定待ちに移す() {
         TransportRequestId awaiting = transportRequest(29);
         TransportRequestId approved = transportRequest(30);
         for (TransportRequestId id : List.of(awaiting, approved)) {
@@ -665,6 +668,83 @@ class MyBatisQuotationIntegrationTest {
         assertThat(repository.findRoutingRequestedSummaries())
                 .filteredOn(summary -> summary.number().year() == 2082)
                 .extracting(summary -> summary.number().sequence() + ":" + summary.status())
-                .containsExactlyInAnyOrder("29:AWAITING_SHIPPER_APPROVAL", "30:APPROVED");
+                .containsExactly("29:AWAITING_SHIPPER_APPROVAL");
+        assertThat(repository.findAwaitingBookingSummaries())
+                .filteredOn(summary -> summary.number().year() == 2082)
+                .extracting(summary -> summary.number().sequence())
+                .contains(30);
+    }
+
+    // 受付一覧（S-02）の予約の確定待ちの表（US-04、Bolt 20 レビュー D-78。Bolt 23b）
+
+    private static final UtcInstant SHIPPER_APPROVED_AT = new UtcInstant(Instant.parse("2082-01-07T06:00:00Z"));
+
+    private void approved(TransportRequestId transportRequestId) {
+        awaitingApproval(transportRequestId);
+        Quotation quotation =
+                repository.findByTransportRequestIdAndNo(transportRequestId, 1).orElseThrow();
+        quotation.approveByShipper(SHIPPER_USER, SHIPPER_APPROVED_AT);
+        repository.update(quotation);
+    }
+
+    private void advanceTransportRequest(TransportRequestId transportRequestId, TransportRequestStatus target) {
+        TransportRequest request =
+                transportRequests.findById(transportRequestId).orElseThrow();
+        request.approve(1, STAFF, "根拠", NOW);
+        request.markRoutingRequested(1);
+        request.markAwaitingApproval(1);
+        if (target == TransportRequestStatus.READY_TO_BOOK) {
+            request.markReadyToBook(1);
+        } else if (target == TransportRequestStatus.BOOKED) {
+            request.markBooked(1);
+        }
+        transportRequests.update(request);
+    }
+
+    @Test
+    void 予約の確定待ちは荷主が承認した見積りを有効期限の近い順に並べ予約確定済みの輸送要求を出さない() {
+        TransportRequestId notYetDelivered = transportRequest(31);
+        approved(notYetDelivered);
+        advanceTransportRequest(notYetDelivered, TransportRequestStatus.AWAITING_APPROVAL);
+        TransportRequestId readyToBook = transportRequest(32);
+        approved(readyToBook);
+        advanceTransportRequest(readyToBook, TransportRequestStatus.READY_TO_BOOK);
+        UtcInstant sooner = new UtcInstant(Instant.parse("2099-10-01T00:00:00Z"));
+        jdbc.update(
+                "UPDATE quotation.quotation SET expires_at = ? WHERE transport_request_id = ?",
+                java.sql.Timestamp.from(sooner.instant()),
+                readyToBook.value());
+        TransportRequestId booked = transportRequest(33);
+        approved(booked);
+        advanceTransportRequest(booked, TransportRequestStatus.BOOKED);
+        TransportRequestId awaiting = transportRequest(34);
+        awaitingApproval(awaiting);
+        advanceTransportRequest(awaiting, TransportRequestStatus.AWAITING_APPROVAL);
+
+        assertThat(repository.findAwaitingBookingSummaries())
+                .as("DE-04 の配信を待たずに見積りの承認済みを正にする。有効期限の近い順")
+                .filteredOn(summary -> summary.number().year() == 2082)
+                .containsExactly(
+                        new AwaitingBookingSummary(
+                                new TransportRequestNumber(2082, 32),
+                                1,
+                                "RC-2082-0001",
+                                1,
+                                SHIPPER_APPROVED_AT,
+                                sooner),
+                        new AwaitingBookingSummary(
+                                new TransportRequestNumber(2082, 31),
+                                1,
+                                "RC-2082-0001",
+                                1,
+                                SHIPPER_APPROVED_AT,
+                                QuotationFixture.EXPIRES_AT));
+        assertThat(repository.findRoutingRequestedSummaries())
+                .as("承認済みは予約の確定待ちの表に移し、荷主承認待ちは経路の確定の時刻を持つ")
+                .filteredOn(summary ->
+                        summary.number().year() == 2082 && summary.number().sequence() >= 31)
+                .extracting(RoutingRequestedSummary::number, RoutingRequestedSummary::routeConfirmedAt)
+                .containsExactly(
+                        org.assertj.core.groups.Tuple.tuple(new TransportRequestNumber(2082, 34), CONFIRMED_AT));
     }
 }

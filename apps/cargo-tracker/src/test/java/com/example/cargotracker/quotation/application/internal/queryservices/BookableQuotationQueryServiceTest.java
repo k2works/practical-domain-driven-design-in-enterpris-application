@@ -21,8 +21,8 @@ import java.util.UUID;
 import org.junit.jupiter.api.Test;
 
 /**
- * 見積りの公開 API の予約確定に使える見積りの照会（ADR-016、Q-INV-06。Bolt 23）。commit 時刻で判定し、使えるなら確定に要る写しを、
- * 使えないなら理由を返す。境界の 3 点は集約の単体テスト（QuotationShipperApprovalTest）で確かめる。
+ * 見積りの公開 API の予約確定に使える見積りの照会（ADR-016、Q-INV-06。Bolt 23）。業務番号と見積り番号で引き（画面の URL に内部の
+ * ID を出さない D-4。Bolt 23b）、commit 時刻で判定し、使えるなら確定に要る写しを、使えないなら理由を返す。境界の 3 点は集約の単体テスト（QuotationShipperApprovalTest）で確かめる。
  */
 class BookableQuotationQueryServiceTest {
 
@@ -41,7 +41,7 @@ class BookableQuotationQueryServiceTest {
         Quotation quotation = approved(request);
 
         BookableQuotationResult result =
-                service.find(new BookableQuotationRequest(quotation.id().value(), at("2099-10-08T08:59:00Z")));
+                service.find(new BookableQuotationRequest("TR-2026-0007", 1, at("2099-10-08T08:59:00Z")));
 
         assertThat(result)
                 .isEqualTo(new BookableQuotationResult.Bookable(
@@ -57,6 +57,7 @@ class BookableQuotationQueryServiceTest {
                         "GENERAL",
                         "GENERAL / PALLET × 12 / 8400.000 kg / 32.500 m3",
                         SHIPPER_USER.value(),
+                        at("2026-10-07T06:00:00Z"),
                         QuotationFixture.EXPIRES_AT));
     }
 
@@ -64,18 +65,26 @@ class BookableQuotationQueryServiceTest {
     void 有効期限と同時刻の見積りは失効を返す() {
         Quotation quotation = approved(submitted());
 
-        assertThat(service.find(new BookableQuotationRequest(quotation.id().value(), at("2099-10-08T09:00:00Z"))))
+        assertThat(service.find(new BookableQuotationRequest("TR-2026-0007", 1, at("2099-10-08T09:00:00Z"))))
                 .isEqualTo(new BookableQuotationResult.NotBookable(BookableQuotationResult.NotBookable.EXPIRED));
     }
 
     @Test
     void 承認済みでない見積りと見つからない見積りは使えない理由を返す() {
-        TransportRequest request = submitted();
-        Quotation presented = presented(request);
+        presented(submitted());
 
-        assertThat(service.find(new BookableQuotationRequest(presented.id().value(), now())))
+        assertThat(service.find(new BookableQuotationRequest("TR-2026-0007", 1, now())))
                 .isEqualTo(new BookableQuotationResult.NotBookable(BookableQuotationResult.NotBookable.NOT_APPROVED));
-        assertThat(service.find(new BookableQuotationRequest(UUID.randomUUID(), now())))
+        assertThat(service.find(new BookableQuotationRequest("TR-2026-0007", 2, now())))
+                .as("見積り番号がない")
+                .isEqualTo(new BookableQuotationResult.NotBookable(
+                        BookableQuotationResult.NotBookable.QUOTATION_NOT_FOUND));
+        assertThat(service.find(new BookableQuotationRequest("TR-2026-0099", 1, now())))
+                .as("業務番号がない")
+                .isEqualTo(new BookableQuotationResult.NotBookable(
+                        BookableQuotationResult.NotBookable.QUOTATION_NOT_FOUND));
+        assertThat(service.find(new BookableQuotationRequest("TR-XXXX", 1, now())))
+                .as("業務番号の形でない")
                 .isEqualTo(new BookableQuotationResult.NotBookable(
                         BookableQuotationResult.NotBookable.QUOTATION_NOT_FOUND));
     }

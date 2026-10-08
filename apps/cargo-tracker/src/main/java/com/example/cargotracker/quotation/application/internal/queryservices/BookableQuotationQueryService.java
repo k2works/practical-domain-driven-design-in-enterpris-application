@@ -10,10 +10,10 @@ import com.example.cargotracker.quotation.domain.model.aggregates.TransportReque
 import com.example.cargotracker.quotation.domain.model.entities.TransportRequestVersion;
 import com.example.cargotracker.quotation.domain.model.valueobjects.AssignedRoute;
 import com.example.cargotracker.quotation.domain.model.valueobjects.Cargo;
-import com.example.cargotracker.quotation.domain.model.valueobjects.QuotationId;
 import com.example.cargotracker.quotation.domain.model.valueobjects.QuotationRejection;
 import com.example.cargotracker.quotation.domain.model.valueobjects.ShipmentTerms;
 import com.example.cargotracker.quotation.domain.model.valueobjects.ShipperApproval;
+import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestNumber;
 import java.util.Optional;
 import org.springframework.stereotype.Service;
 
@@ -38,7 +38,7 @@ public class BookableQuotationQueryService implements BookableQuotationQuery {
 
     @Override
     public BookableQuotationResult find(BookableQuotationRequest request) {
-        Optional<Quotation> found = quotationRepository.findById(new QuotationId(request.quotationId()));
+        Optional<Quotation> found = findByNumber(request.transportRequestNumber(), request.quotationNo());
         if (found.isEmpty()) {
             return notBookable(BookableQuotationResult.NotBookable.QUOTATION_NOT_FOUND);
         }
@@ -55,6 +55,19 @@ public class BookableQuotationQueryService implements BookableQuotationQuery {
             return notBookable(BookableQuotationResult.NotBookable.NOT_APPROVED);
         }
         return bookable(quotation, transportRequest.get());
+    }
+
+    /** 業務番号と見積り番号で見積りを引く（D-4。Bolt 23b）。業務番号の形でなければ見つからない。 */
+    private Optional<Quotation> findByNumber(String transportRequestNumber, int quotationNo) {
+        TransportRequestNumber number;
+        try {
+            number = TransportRequestNumber.parse(transportRequestNumber);
+        } catch (IllegalArgumentException e) {
+            return Optional.empty();
+        }
+        return transportRequestRepository
+                .findByNumberForStaff(number)
+                .flatMap(request -> quotationRepository.findByTransportRequestIdAndNo(request.id(), quotationNo));
     }
 
     private static BookableQuotationResult bookable(Quotation quotation, TransportRequest request) {
@@ -75,6 +88,7 @@ public class BookableQuotationQueryService implements BookableQuotationQuery {
                 terms.cargo().category().name(),
                 summary(terms.cargo()),
                 approval.approvedBy().value(),
+                approval.approvedAt(),
                 quotation.expiry().orElseThrow().expiresAt());
     }
 

@@ -6,6 +6,7 @@ import com.example.cargotracker.quotation.domain.model.aggregates.Quotation;
 import com.example.cargotracker.quotation.domain.model.aggregates.QuotationRepository;
 import com.example.cargotracker.quotation.domain.model.valueobjects.AssignedRoute;
 import com.example.cargotracker.quotation.domain.model.valueobjects.AssignedRouteLeg;
+import com.example.cargotracker.quotation.domain.model.valueobjects.AwaitingBookingSummary;
 import com.example.cargotracker.quotation.domain.model.valueobjects.Currency;
 import com.example.cargotracker.quotation.domain.model.valueobjects.PricingBasis;
 import com.example.cargotracker.quotation.domain.model.valueobjects.PricingLine;
@@ -128,6 +129,20 @@ public class MyBatisQuotationRepository implements QuotationRepository {
                         row.quotationNo(),
                         QuotationStatus.valueOf(row.status()),
                         toUtc(row.respondedAt()),
+                        toUtc(row.expiresAt()),
+                        row.routeConfirmedAt() == null ? null : toUtc(row.routeConfirmedAt())))
+                .toList();
+    }
+
+    @Override
+    public List<AwaitingBookingSummary> findAwaitingBookingSummaries() {
+        return mapper.selectAwaitingBooking().stream()
+                .map(row -> new AwaitingBookingSummary(
+                        TransportRequestNumber.parse(row.requestNumber()),
+                        row.quotationNo(),
+                        row.routingCaseNumber(),
+                        row.routeVersionNo(),
+                        toUtc(row.shipperApprovedAt()),
                         toUtc(row.expiresAt())))
                 .toList();
     }

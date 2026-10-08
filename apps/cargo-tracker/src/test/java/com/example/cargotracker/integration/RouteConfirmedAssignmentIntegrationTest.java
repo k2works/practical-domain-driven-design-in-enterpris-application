@@ -178,8 +178,8 @@ class RouteConfirmedAssignmentIntegrationTest {
 
     /** 本予約を確定すると、DE-07 の配信が完了して輸送要求は予約確定済みになり、予約サガは処理中で追跡の開始を待つ（Bolt 23）。 */
     private void confirmBookingAndAwaitBooked(TransportRequestNumber number, UUID transportRequestId) {
-        BookingConfirmationOutcome booked = bookingCommandService.confirm(new ConfirmBookingCommand(
-                staffQuotationQueryService.find(number, 1).orElseThrow().id().value(), SALES, true));
+        BookingConfirmationOutcome booked =
+                bookingCommandService.confirm(new ConfirmBookingCommand(number.text(), 1, SALES, true));
         assertThat(booked).isInstanceOf(BookingConfirmationOutcome.Confirmed.class);
         awaitTransportRequestStatus(number, TransportRequestStatus.BOOKED);
         await().atMost(TIMEOUT)

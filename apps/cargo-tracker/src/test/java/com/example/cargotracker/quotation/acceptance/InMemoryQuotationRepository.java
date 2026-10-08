@@ -4,6 +4,7 @@ import com.example.cargotracker.quotation.domain.model.aggregates.ConcurrentQuot
 import com.example.cargotracker.quotation.domain.model.aggregates.DuplicateQuotationException;
 import com.example.cargotracker.quotation.domain.model.aggregates.Quotation;
 import com.example.cargotracker.quotation.domain.model.aggregates.QuotationRepository;
+import com.example.cargotracker.quotation.domain.model.valueobjects.AwaitingBookingSummary;
 import com.example.cargotracker.quotation.domain.model.valueobjects.QuotationId;
 import com.example.cargotracker.quotation.domain.model.valueobjects.QuotedRequestSummary;
 import com.example.cargotracker.quotation.domain.model.valueobjects.RoutingRequestedSummary;
@@ -84,6 +85,11 @@ public class InMemoryQuotationRepository implements QuotationRepository {
     @Override
     public List<RoutingRequestedSummary> findRoutingRequestedSummaries() {
         throw new UnsupportedOperationException("経路設計中の一覧は業務ルール層で使わない");
+    }
+
+    @Override
+    public List<AwaitingBookingSummary> findAwaitingBookingSummaries() {
+        throw new UnsupportedOperationException("予約の確定待ちの一覧は業務ルール層で使わない");
     }
 
     public void clear() {

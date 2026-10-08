@@ -64,7 +64,9 @@ class BookingCommandServiceTest {
         BookingConfirmationOutcome outcome = service.confirm(command(Role.SALES, true));
 
         assertThat(outcome).isEqualTo(new BookingConfirmationOutcome.Confirmed(BookingFixture.TRACKING_NUMBER));
-        assertThat(queries).extracting(BookableQuotationRequest::committedAt).containsExactly(new UtcInstant(NOW));
+        assertThat(queries)
+                .containsExactly(new BookableQuotationRequest("TR-2026-0001", 1, new UtcInstant(NOW)))
+                .as("業務番号と見積り番号で、commit 時刻を渡して照会する（ADR-016、D-4）");
         Booking booking = repository.findAll().getFirst();
         assertThat(booking.currentVersion().committedAt()).isEqualTo(new UtcInstant(NOW));
         assertThat(sagaRepository.findByBookingId(booking.id()).orElseThrow().status())
@@ -108,7 +110,8 @@ class BookingCommandServiceTest {
 
     private static ConfirmBookingCommand command(Role role, boolean staffConfirmed) {
         return new ConfirmBookingCommand(
-                BookingFixture.QUOTATION,
+                "TR-2026-0001",
+                1,
                 new AuthenticatedActor(new UserId(BookingFixture.SALES), A_COMPANY, Set.of(role), "担当", "A 社"),
                 staffConfirmed);
     }
@@ -128,6 +131,7 @@ class BookingCommandServiceTest {
                 terms.cargoCategory(),
                 cargoSummary,
                 terms.shipperApproverId(),
+                new UtcInstant(NOW.minusSeconds(3600)),
                 new UtcInstant(NOW.plusSeconds(3600)));
     }
 }

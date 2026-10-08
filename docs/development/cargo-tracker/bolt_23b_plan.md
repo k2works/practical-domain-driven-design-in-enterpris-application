@@ -155,12 +155,19 @@ S02 --> S04 : 失効（荷主承認済み）の行
   - 完了の判定: `okf:check` ERROR 0、`documentationTest` 緑
   - 結果（2026-10-08）: ui_design.md（画面一覧の S-24、URL の表に S-09・S-24 の行、S-02 の予約の確定待ちの表と経路の確定の時刻、S-09 の図と説明を「画面そのものを確認の領域」に）、ADR-016（照会の鍵を業務番号と見積り番号に、結果に荷主の承認時刻、改訂の経緯）、architecture_backend.md（予約が使う見積りの公開 API）、release_plan.md の Bolt 23b の行を直した。`okf:check` ERROR 0、`documentationTest` 緑、図の構文を PlantUML で確かめた
     - 承認ゲートの扱い（T-36）: 画面の設計の承認ゲートで止まらずに進めた（AI の判断）。根拠は、決めた形が計画の確認ポイント 2〜9 と人の決定（3・4・7）のとおりであること
-- [ ] **2. 見積りの公開 API と S-02 の読み取りモデル（単体・統合テスト）** 【承認ゲート: モジュールの境界】
+- [x] **2. 見積りの公開 API と S-02 の読み取りモデル（単体・統合テスト）** 【承認ゲート: モジュールの境界】
   - 単体テストを先に書く: 業務番号と見積り番号で引ける（見つからない・番号の形でない）、結果に荷主の承認時刻。確定のコマンドを業務番号と見積り番号で受ける
   - 影響範囲: `BookableQuotationRequest`・`BookableQuotationResult`・`BookableQuotationQueryService` とそのテスト、予約の `QuotationBookability.check`、`ConfirmBookingCommand`・`BookingCommandService`・`BookingCommandServiceTest`、受入シナリオの `BookingSteps`、`RouteConfirmedAssignmentIntegrationTest`
   - 予約の照会 `BookingQueryService` に、見積り（`booking.quotation_id`）の予約がすでにあるかを足す（S-09 を開いたときの確定済みの判定。確認ポイント 6）
   - 統合テスト（PostgreSQL）を先に書く: S-02 の予約の確定待ちの表（承認済みだけ、有効期限の近い順、予約確定済みの輸送要求は出ない、荷主承認待ちの輸送要求でも見積りが承認済みなら出る）、経路設計中・荷主承認待ちの表の経路の確定の時刻（詳細設計依頼済みは NULL）
   - 完了の判定: `check` 緑
+  - 結果（2026-10-08）
+    - Red: 照会の単体テストを業務番号と見積り番号の形に書き換え（見積り番号がない・業務番号がない・業務番号の形でない、結果に荷主の承認時刻）、確定のコマンドを業務番号と見積り番号で受ける形に（`BookingCommandServiceTest`・`BookingSteps`・`RouteConfirmedAssignmentIntegrationTest`）、S-02 の予約の確定待ちの PostgreSQL の統合テストを先に書いた。骨組み（照会は常に「見つからない」、予約の確定待ちは空の一覧、経路の確定の時刻は null）で 11 件の失敗を確かめた（照会の単体 3、業務ルール層の受入シナリオ 6、統合 2。どれも本命のアサーション）
+    - Green: `BookableQuotationQueryService` を業務番号と見積り番号で引く形に（形でない業務番号は見つからない）、結果に荷主の承認時刻、`QuotationBookability`・`ConfirmBookingCommand`・`BookingCommandService`、読み取りモデル `AwaitingBookingSummary` と SQL（`selectAwaitingBooking`。見積りの承認済み、輸送要求が予約確定済みでない、有効期限の近い順）、経路設計中・荷主承認待ちの表の経路の確定の時刻と承認済みの除外
+    - 仕様の変更で期待を直した既存のテスト: 「経路設計中の表に予約待ちも返す」（Bolt 20）を「荷主が承認した見積りは予約の確定待ちに移す」に
+    - 計画からの変更: 予約の照会の「見積りの予約がすでにあるか」は、使う画面と一緒にステップ 3 で足す
+    - `check` 緑
+    - 承認ゲートの扱い（T-36）: モジュールの境界の承認ゲートで止まらずに進めた（AI の判断）。根拠は、公開 API の変更が人の決定（確認ポイント 3）と ADR-016 の改訂のとおりで、`booking` の依存は変わらず ModularityTest が緑であること
 - [ ] **3. S-09・S-24（画面の単体テストと認可）** 【承認ゲート: Red／Green（確定の画面）、認可】
   - 画面の単体テストを先に書く（`@WebMvcTest` の形は既存の画面にそろえる）: S-09 の表示（確定条件の表、参考の判定の文言、確認の領域）、確定 → S-24 への PRG と文言、確定条件の欠け（エラー要約、チェックを外したとき）、確定できない見積り（失効・置換済み・未承認・見つからない・確定済み）は S-02 に戻して理由、S-24 の表示（処理中を完了と出さない）、ない追跡番号は 404
   - セキュリティの統合テスト: 営業担当者だけが S-09・S-24 を開ける（荷主・経路設計者は A-04）。CSRF

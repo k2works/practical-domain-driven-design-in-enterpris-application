@@ -1,5 +1,6 @@
 package com.example.cargotracker.quotation.domain.model.aggregates;
 
+import com.example.cargotracker.quotation.domain.model.valueobjects.AwaitingBookingSummary;
 import com.example.cargotracker.quotation.domain.model.valueobjects.QuotationId;
 import com.example.cargotracker.quotation.domain.model.valueobjects.QuotedRequestSummary;
 import com.example.cargotracker.quotation.domain.model.valueobjects.RoutingRequestedSummary;
@@ -41,6 +42,9 @@ public interface QuotationRepository {
      * 社内の照会で、荷主企業で絞らない。
      */
     List<RoutingRequestedSummary> findRoutingRequestedSummaries();
+
+    /** 予約の確定待ち（荷主が承認した見積り。輸送要求が予約確定済みでないもの）を有効期限の近い順に（S-02。Bolt 23b）。 */
+    List<AwaitingBookingSummary> findAwaitingBookingSummaries();
 
     /** 見積りを ID で探す（経路の割当て。経路設計は依頼元の見積り ID を持つ。Bolt 20）。 */
     Optional<Quotation> findById(QuotationId id);

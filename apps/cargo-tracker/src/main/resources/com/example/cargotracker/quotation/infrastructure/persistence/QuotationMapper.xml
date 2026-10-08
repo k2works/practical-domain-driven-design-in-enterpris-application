@@ -161,18 +161,42 @@
             <arg column="status" name="status" javaType="String"/>
             <arg column="responded_at" name="respondedAt" javaType="java.time.OffsetDateTime"/>
             <arg column="expires_at" name="expiresAt" javaType="java.time.OffsetDateTime"/>
+            <arg column="route_confirmed_at" name="routeConfirmedAt" javaType="java.time.OffsetDateTime"/>
         </constructor>
     </resultMap>
 
-    <!-- 経路設計中・荷主承認待ち・予約待ちの見積依頼の、詳細設計依頼済み・荷主承認待ち・承認済みの見積り（受付一覧 S-02。Bolt 12・20）。
-         依頼時刻の古い順 -->
+    <!-- 経路設計中・荷主承認待ちの見積依頼の、詳細設計依頼済み・荷主承認待ちの見積り（受付一覧 S-02。Bolt 12・20）。依頼時刻の古い順。
+         荷主が承認した見積りは予約の確定待ちの表に移した（Bolt 23b） -->
     <select id="selectRoutingRequested" resultMap="routingRequestedSummaryRow">
-        SELECT r.request_number, q.quotation_no, q.status, q.responded_at, q.expires_at
+        SELECT r.request_number, q.quotation_no, q.status, q.responded_at, q.expires_at, q.route_confirmed_at
           FROM quotation.transport_request r
           JOIN quotation.quotation q ON q.transport_request_id = r.id
-         WHERE r.status IN ('ROUTING', 'AWAITING_APPROVAL', 'READY_TO_BOOK')
-           AND q.status IN ('ROUTING_REQUESTED', 'AWAITING_SHIPPER_APPROVAL', 'APPROVED')
+         WHERE r.status IN ('ROUTING', 'AWAITING_APPROVAL')
+           AND q.status IN ('ROUTING_REQUESTED', 'AWAITING_SHIPPER_APPROVAL')
          ORDER BY q.responded_at, r.request_number
+    </select>
+
+    <resultMap id="awaitingBookingSummaryRow" type="com.example.cargotracker.quotation.infrastructure.persistence.AwaitingBookingSummaryRow">
+        <constructor>
+            <arg column="request_number" name="requestNumber" javaType="String"/>
+            <arg column="quotation_no" name="quotationNo" javaType="_int"/>
+            <arg column="routing_case_number" name="routingCaseNumber" javaType="String"/>
+            <arg column="route_version_no" name="routeVersionNo" javaType="_int"/>
+            <arg column="shipper_approved_at" name="shipperApprovedAt" javaType="java.time.OffsetDateTime"/>
+            <arg column="expires_at" name="expiresAt" javaType="java.time.OffsetDateTime"/>
+        </constructor>
+    </resultMap>
+
+    <!-- 予約の確定待ちの見積り（受付一覧 S-02。US-04、Bolt 20 レビュー D-78。Bolt 23b）。見積りの承認済みを正にし、輸送要求の予約待ちへの
+         更新（DE-04 の配信）を待たない。予約確定済みの輸送要求は出さない。有効期限の近い順 -->
+    <select id="selectAwaitingBooking" resultMap="awaitingBookingSummaryRow">
+        SELECT r.request_number, q.quotation_no, q.routing_case_number, q.route_version_no, q.shipper_approved_at,
+               q.expires_at
+          FROM quotation.transport_request r
+          JOIN quotation.quotation q ON q.transport_request_id = r.id
+         WHERE r.status IN ('AWAITING_APPROVAL', 'READY_TO_BOOK')
+           AND q.status = 'APPROVED'
+         ORDER BY q.expires_at, r.request_number
     </select>
 
     <select id="selectPricingLinesByTransportRequestId" resultMap="pricingLineRow">

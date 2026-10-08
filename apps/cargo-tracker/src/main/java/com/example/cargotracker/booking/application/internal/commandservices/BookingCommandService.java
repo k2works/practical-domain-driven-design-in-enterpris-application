@@ -64,7 +64,7 @@ public class BookingCommandService {
         }
         UtcInstant committedAt = new UtcInstant(clock.instant());
         BookingTerms terms;
-        switch (quotations.check(command.quotationId(), committedAt)) {
+        switch (quotations.check(command.transportRequestNumber(), command.quotationNo(), committedAt)) {
             case QuotationBookability.Result.Unavailable(QuotationUnavailability reason) -> {
                 return reason == QuotationUnavailability.EXPIRED
                         ? new BookingConfirmationOutcome.Expired()

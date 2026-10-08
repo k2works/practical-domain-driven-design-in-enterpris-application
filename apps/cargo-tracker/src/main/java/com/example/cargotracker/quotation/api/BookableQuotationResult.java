@@ -25,6 +25,7 @@ public sealed interface BookableQuotationResult {
      * @param cargoCategory 貨物種別の名前（GENERAL など）
      * @param cargoSummary 貨物の要約（種別・荷姿・個数・総重量・容積）
      * @param shipperApproverId 承認した荷主担当者の利用者 ID
+     * @param shipperApprovedAt 荷主の承認時刻（S-09 の確定条件の表に示す。Bolt 23b）
      * @param expiresAt 見積有効期限
      */
     record Bookable(
@@ -40,6 +41,7 @@ public sealed interface BookableQuotationResult {
             String cargoCategory,
             String cargoSummary,
             UUID shipperApproverId,
+            UtcInstant shipperApprovedAt,
             UtcInstant expiresAt)
             implements BookableQuotationResult {
 
@@ -53,6 +55,7 @@ public sealed interface BookableQuotationResult {
             Objects.requireNonNull(cargoCategory, "cargoCategory");
             Objects.requireNonNull(cargoSummary, "cargoSummary");
             Objects.requireNonNull(shipperApproverId, "shipperApproverId");
+            Objects.requireNonNull(shipperApprovedAt, "shipperApprovedAt");
             Objects.requireNonNull(expiresAt, "expiresAt");
         }
     }

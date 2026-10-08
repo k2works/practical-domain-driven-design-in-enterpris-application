@@ -156,13 +156,15 @@ class TransportRequestReviewControllerTest {
                                 1,
                                 QuotationStatus.ROUTING_REQUESTED,
                                 new UtcInstant(Instant.parse("2026-10-06T00:30:00Z")),
-                                new UtcInstant(Instant.parse("2099-10-09T09:00:00Z"))),
+                                new UtcInstant(Instant.parse("2099-10-09T09:00:00Z")),
+                                null),
                         new RoutingRequestedSummary(
                                 new TransportRequestNumber(2026, 2),
                                 1,
                                 QuotationStatus.ROUTING_REQUESTED,
                                 new UtcInstant(Instant.parse("2026-10-06T00:40:00Z")),
-                                new UtcInstant(Instant.parse("2026-10-05T04:00:00Z")))));
+                                new UtcInstant(Instant.parse("2026-10-05T04:00:00Z")),
+                                null)));
 
         mockMvc.perform(get("/staff/transport-requests"))
                 .andExpect(status().isOk())
@@ -184,19 +186,26 @@ class TransportRequestReviewControllerTest {
         given(quotationQueryService.findRoutingRequestedSummaries())
                 .willReturn(List.of(
                         new RoutingRequestedSummary(
-                                NUMBER, 1, QuotationStatus.AWAITING_SHIPPER_APPROVAL, requestedAt, expiresAt),
+                                NUMBER,
+                                1,
+                                QuotationStatus.AWAITING_SHIPPER_APPROVAL,
+                                requestedAt,
+                                expiresAt,
+                                requestedAt),
                         new RoutingRequestedSummary(
                                 new TransportRequestNumber(2026, 2),
                                 1,
                                 QuotationStatus.APPROVED,
                                 requestedAt,
-                                expiresAt),
+                                expiresAt,
+                                requestedAt),
                         new RoutingRequestedSummary(
                                 new TransportRequestNumber(2026, 3),
                                 1,
                                 QuotationStatus.APPROVED,
                                 requestedAt,
-                                new UtcInstant(Instant.parse("2026-10-05T04:00:00Z")))));
+                                new UtcInstant(Instant.parse("2026-10-05T04:00:00Z")),
+                                requestedAt)));
 
         mockMvc.perform(get("/staff/transport-requests"))
                 .andExpect(status().isOk())

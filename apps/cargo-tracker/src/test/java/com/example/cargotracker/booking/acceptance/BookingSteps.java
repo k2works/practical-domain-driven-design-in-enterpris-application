@@ -10,8 +10,6 @@ import com.example.cargotracker.booking.application.sagas.BookingSagaStatus;
 import com.example.cargotracker.booking.domain.events.BookingConfirmed;
 import com.example.cargotracker.booking.domain.model.aggregates.Booking;
 import com.example.cargotracker.booking.domain.model.entities.BookingVersion;
-import com.example.cargotracker.quotation.domain.events.QuotationApprovedByShipper;
-import com.example.cargotracker.quotation.domain.events.QuotationRouteAssigned;
 import com.example.cargotracker.shared.acceptance.DeferredEventDelivery;
 import com.example.cargotracker.shared.acceptance.ScenarioContext;
 import com.example.cargotracker.shared.domain.AuthenticatedActor;
@@ -26,8 +24,8 @@ import java.util.Set;
 import java.util.UUID;
 
 /**
- * 本予約の確定（US-04 AC1・AC2、BR-01、BR-10、B-INV-01・10、DE-07）のステップ定義。予約の入力ポートだけを呼び、予約に使う見積りの
- * ID は見積りの公表された言語（DE-04 荷主が承認した）から得る（AT-05）。
+ * 本予約の確定（US-04 AC1・AC2、BR-01、BR-10、B-INV-01・10、DE-07）のステップ定義。予約の入力ポートだけを呼び、見積りはシナリオの
+ * 輸送要求の業務番号と見積り番号で指す（画面と同じ。D-4、Bolt 23b）。
  */
 public class BookingSteps {
 
@@ -58,17 +56,20 @@ public class BookingSteps {
 
     @もし("営業担当者が見積り {int} の確定条件を確認して本予約を確定する")
     public void 確定条件を確認して確定する(int quotationNo) {
-        lastOutcome = commandService.confirm(new ConfirmBookingCommand(approvedQuotation(quotationNo), SALES, true));
+        lastOutcome = commandService.confirm(
+                new ConfirmBookingCommand(context.transportRequestNumber(), quotationNo, SALES, true));
     }
 
     @もし("営業担当者が見積り {int} の確定条件を確認せずに本予約を確定する")
     public void 確認せずに確定する(int quotationNo) {
-        lastOutcome = commandService.confirm(new ConfirmBookingCommand(approvedQuotation(quotationNo), SALES, false));
+        lastOutcome = commandService.confirm(
+                new ConfirmBookingCommand(context.transportRequestNumber(), quotationNo, SALES, false));
     }
 
     @もし("カスタマーサポートが見積り {int} の本予約を確定する")
     public void カスタマーサポートが確定する(int quotationNo) {
-        lastOutcome = commandService.confirm(new ConfirmBookingCommand(approvedQuotation(quotationNo), SUPPORT, true));
+        lastOutcome = commandService.confirm(
+                new ConfirmBookingCommand(context.transportRequestNumber(), quotationNo, SUPPORT, true));
     }
 
     @ならば("本予約の結果は {string} である")
@@ -132,28 +133,6 @@ public class BookingSteps {
         assertThat(lastOutcome).isInstanceOf(BookingConfirmationOutcome.Confirmed.class);
         return bookings.findByTrackingNumber(((BookingConfirmationOutcome.Confirmed) lastOutcome).trackingNumber())
                 .orElseThrow();
-    }
-
-    /**
-     * このシナリオの輸送要求の見積り番号の見積りの ID。見積りの公表された言語（DE-21 経路版を割り当てた、DE-04 荷主が承認した）から得る
-     * （AT-05）。ほかのシナリオの見積りを拾わないよう輸送要求で絞り、見つからなければ前提の誤りとして失敗させる（Bolt 23 レビュー L-5）。
-     */
-    private UUID approvedQuotation(int quotationNo) {
-        UUID transportRequestId = context.transportRequestId();
-        return delivery.history().stream()
-                .<UUID>mapMulti((event, ids) -> {
-                    if (event instanceof QuotationApprovedByShipper approved
-                            && approved.transportRequestId().equals(transportRequestId)
-                            && approved.quotationNo() == quotationNo) {
-                        ids.accept(approved.quotationId());
-                    } else if (event instanceof QuotationRouteAssigned assigned
-                            && assigned.transportRequestId().equals(transportRequestId)
-                            && assigned.quotationNo() == quotationNo) {
-                        ids.accept(assigned.quotationId());
-                    }
-                })
-                .reduce((first, second) -> second)
-                .orElseThrow(() -> new IllegalStateException("見積り " + quotationNo + " の経路の割り当ても荷主の承認もない"));
     }
 
     private static AuthenticatedActor actor(String userId, Role role, String name) {

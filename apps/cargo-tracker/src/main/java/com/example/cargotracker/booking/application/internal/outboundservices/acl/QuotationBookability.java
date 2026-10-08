@@ -6,7 +6,6 @@ import com.example.cargotracker.quotation.api.BookableQuotationRequest;
 import com.example.cargotracker.quotation.api.BookableQuotationResult;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import java.util.Objects;
-import java.util.UUID;
 
 /**
  * 見積りの公開 API（予約確定に使える見積りの照会）を呼び、予約の予約条件か使えない理由に変える腐敗防止層（ADR-016。Bolt 23）。
@@ -23,12 +22,13 @@ public class QuotationBookability {
     /**
      * 見積りが commit 時刻に本予約の確定に使えるかを確かめる。
      *
-     * @param quotationId 見積り ID
+     * @param transportRequestNumber 見積りの業務番号
+     * @param quotationNo 見積り番号
      * @param committedAt commit 時刻（判定と記録に同じ値を使う）
      * @return 使えるなら予約条件、使えないなら理由
      */
-    public Result check(UUID quotationId, UtcInstant committedAt) {
-        return switch (query.find(new BookableQuotationRequest(quotationId, committedAt))) {
+    public Result check(String transportRequestNumber, int quotationNo, UtcInstant committedAt) {
+        return switch (query.find(new BookableQuotationRequest(transportRequestNumber, quotationNo, committedAt))) {
             case BookableQuotationResult.Bookable bookable -> new Result.Bookable(toTerms(bookable));
             case BookableQuotationResult.NotBookable notBookable ->
                 new Result.Unavailable(toUnavailability(notBookable.reason()));
