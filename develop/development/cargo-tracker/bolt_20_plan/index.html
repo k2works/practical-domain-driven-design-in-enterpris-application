@@ -8056,7 +8056,7 @@
 <li>承認ゲートの扱い（T-36）: アーキテクチャの承認ゲートで止まらずに進めた（AI の判断）。根拠は、ADR-014 の決定が D-71 で人が採った推奨の形のとおりであること。終了報告の承認の議題に置く</li>
 </ul>
 </li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>2. 見積りと輸送要求の規則（集約の TDD）</strong> 【承認ゲート: Red／Green】</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>2. 見積りと輸送要求の規則（集約の TDD）</strong> 【承認ゲート: Red／Green】</li>
 <li>単体テストを先に書く<ul>
 <li>割当て: 詳細設計依頼済みに割り当てると荷主承認待ちになり、割り当てた経路を持ち、DE-21 が返る。同じ経路版の割当ては何もしない（冪等）。別の経路版の割当ては拒否（R0.1 は経路版 1 だけ。再設計は US-08）。置換済み・作成中などへの割当ては拒否。失効（有効期限を過ぎた）でも割り当てる（確認ポイント 3）</li>
 <li>承認: 荷主承認待ちで、承認時刻が有効期限の 1 分前は承認、同時刻・1 分後は失効で拒否（T-38）。他社の荷主は拒否（Q-INV-08）。置換済み・詳細設計依頼済み（未割当て）・承認済みは拒否。承認者・承認時刻・承認した経路版が記録され、DE-04 が返る</li>
@@ -8064,6 +8064,14 @@
 </ul>
 </li>
 <li>完了の判定: <code>check</code> 緑。push して CI を確かめる</li>
+<li>結果（2026-10-08 10:32〜10:37 JST。Red <code>7d019bd</code>、Green <code>8bab034</code>）<ul>
+<li>Red: 見積りの割当て（荷主承認待ち・DE-21、同じ経路版の冪等、承認済みへの同じ経路版、別の経路版、詳細設計依頼済みでない・置換済み・失効、期限の後の割当て）と承認（承認済み・DE-04、期限の 1 分前／同時刻／1 分後、割当ての前・置換済み・失効・承認済み、再見積りできない、時刻で失効し数える）、輸送要求の荷主承認待ち・予約待ち（冪等・現在の版・遅れたイベント）、割り当てた経路の値を先に書いた。骨組みは、状態・拒否・割当ての結果の値、割り当てた経路・区間・荷主承認の値、DE-21・DE-04、集約の操作（割り当てない・承認しない）。15 件の失敗を記録した。T-39 の記録: 14 件は本命のアサーション（割当ての結果・承認の理由・状態を変えたか）で落ちた。「荷主承認待ちと承認済みの見積りは再見積りできない」は骨組みが割り当てないため状態の確認（前提）で落ちた。「荷主承認待ちと承認済みの見積りは有効期限と同時刻から失効」は、骨組みでは詳細設計依頼済みのまま同じ結果になるため最初から通った（前提が成り立たない空振り。Green で荷主承認待ちになって意味を持つ）。値オブジェクトのテストは最初から通った</li>
+<li>Green: <code>Quotation.assignRoute</code>・<code>approveByShipper</code>・<code>approvalRejectionAt</code>、<code>QuotationStatus.isRoutingStarted</code>（荷主承認待ち・承認済みも時刻で失効し、再見積りできない）、<code>TransportRequest.markAwaitingApproval</code>・<code>markReadyToBook</code>。輸送要求は、見積りのイベントで進める状態の並びで先へだけ進める判定にそろえ、既存の DE-03・DE-16 の受け取りも同じ判定にした（振る舞いは変えない）。画面の状態の表示名と拒否の文言は、列挙の網羅のために足した（画面の確かめはステップ 4）。社内の拒否の文言の分岐が Checkstyle の循環的複雑度を超えたため、荷主の承認の 2 つの理由を 1 つの文言にまとめた</li>
+<li>計画からの変更: 他社の荷主の拒否（Q-INV-08）は、見積りが荷主企業を持たないため集約ではなく、荷主企業で絞った照会を通すアプリケーション層で確かめる（ステップ 3・4 のテスト）</li>
+<li><code>check</code> 緑（<code>test</code> 1,068 件）</li>
+<li>承認ゲートの扱い（T-36）: Red と Green の承認ゲートで止まらずに進めた（AI の判断）。根拠は、テストの表が計画の確認ポイント 3・4・7 と Q-INV-07・10 のとおりであること</li>
+</ul>
+</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>3. 表・公開 API・経路設計の listener・イベントの購読（統合テスト）</strong> 【承認ゲート: データベース・モジュールの境界】</li>
 <li>業務ルール層の受入シナリオを先に書く（<code>features/quotation/approve_quotation_and_route.feature</code>、<code>@US-24-AC4</code>・<code>AC5</code>）: 経路設計者が確定すると見積りが荷主承認待ちになり、荷主が承認すると承認済み・輸送要求が予約待ちになる。有効期限と同時刻の承認は失効で拒否。DE-05 の再配信で割当ては重複しない</li>
 <li>統合テスト（PostgreSQL）を先に書く: 見積りの列と区間の表の保存と読み出し、CHECK、状態の値。DE-05 の確定から割当てまでを、イベントの発行の記録を経て非同期に通す（Bolt 17 の DE-16 と同じ形）</li>
