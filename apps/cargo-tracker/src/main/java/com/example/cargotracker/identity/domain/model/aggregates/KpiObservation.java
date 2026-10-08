@@ -73,12 +73,22 @@ public final class KpiObservation {
     }
 
     /**
-     * 見積りの提示（DE-03）を記録する。
+     * 見積りの提示（DE-03）を記録する。最初の提示時刻はいちばん早い提示時刻とし、再見積りの提示（遅い時刻）では変えず、
+     * 届く順が入れ替わって早い時刻が後から届いたときだけ書き換える（KPI-INV-01、D-11）。
      *
      * @return 最初の提示時刻を変えたら true
+     * @throws IllegalArgumentException 提示時刻が提出時刻より前のとき（KPI-INV-03）
      */
     public boolean recordPresentation(UtcInstant presentedAt) {
-        return false;
+        Objects.requireNonNull(presentedAt, "presentedAt");
+        if (presentedAt.instant().isBefore(submittedAt.instant())) {
+            throw new IllegalArgumentException("提示時刻が提出時刻より前: 提出 " + submittedAt + "、提示 " + presentedAt);
+        }
+        if (firstPresentedAt != null && !presentedAt.instant().isBefore(firstPresentedAt.instant())) {
+            return false;
+        }
+        firstPresentedAt = presentedAt;
+        return true;
     }
 
     /** 最初の提示時刻。まだ提示していなければ空。 */
@@ -88,6 +98,6 @@ public final class KpiObservation {
 
     /** KPI-01 のリードタイム（提出時刻から最初の提示時刻までの暦の経過時間）。まだ提示していなければ空。 */
     public Optional<Duration> leadTime() {
-        return Optional.empty();
+        return firstPresentedAt().map(presentedAt -> Duration.between(submittedAt.instant(), presentedAt.instant()));
     }
 }

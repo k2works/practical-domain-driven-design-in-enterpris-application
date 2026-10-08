@@ -23,7 +23,12 @@ public class InMemoryKpiObservationRepository implements KpiObservationRepositor
 
     @Override
     public void saveFirstPresentation(KpiObservation observation) {
-        // 骨組み（Bolt 21 ステップ 2 の Red）
+        observation
+                .firstPresentedAt()
+                .ifPresent(presentedAt -> store.computeIfPresent(observation.transportRequestId(), (id, stored) -> {
+                    stored.recordPresentation(presentedAt);
+                    return stored;
+                }));
     }
 
     @Override
