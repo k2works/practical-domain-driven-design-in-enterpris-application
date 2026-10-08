@@ -8451,11 +8451,19 @@
 <li>承認ゲートの扱い（T-36）: モジュールの境界の承認ゲートで止まらずに進めた（AI の判断）。根拠は、公開 API の変更が人の決定（確認ポイント 3）と ADR-016 の改訂のとおりで、<code>booking</code> の依存は変わらず ModularityTest が緑であること</li>
 </ul>
 </li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>3. S-09・S-24（画面の単体テストと認可）</strong> 【承認ゲート: Red／Green（確定の画面）、認可】</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>3. S-09・S-24（画面の単体テストと認可）</strong> 【承認ゲート: Red／Green（確定の画面）、認可】</li>
 <li>画面の単体テストを先に書く（<code>@WebMvcTest</code> の形は既存の画面にそろえる）: S-09 の表示（確定条件の表、参考の判定の文言、確認の領域）、確定 → S-24 への PRG と文言、確定条件の欠け（エラー要約、チェックを外したとき）、確定できない見積り（失効・置換済み・未承認・見つからない・確定済み）は S-02 に戻して理由、S-24 の表示（処理中を完了と出さない）、ない追跡番号は 404</li>
 <li>セキュリティの統合テスト: 営業担当者だけが S-09・S-24 を開ける（荷主・経路設計者は A-04）。CSRF</li>
 <li><code>booking.interfaces.web</code>（コントローラーとテンプレート）、<code>BookingQueryService</code>、<code>PlaceholderController</code> の営業の <code>bookings</code> は S-10 の準備中のまま残す（確認ポイント 7）</li>
 <li>完了の判定: <code>check</code> 緑</li>
+<li>結果（2026-10-08）<ul>
+<li>Red: 画面の単体テスト（<code>BookingControllerTest</code> 10 件。S-09 の表示・貨物の欠け・確定に使えない見積りと確定済みの戻り先・見つからない見積り・確定と PRG・確認なしのエラー要約・送ったときの失効と確定済み・業務番号の形、S-24 の表示と処理中・ない追跡番号）、予約の照会の単体テスト（<code>BookingQueryServiceTest</code> 4 件）、見積りの予約の有無の統合テスト、セキュリティの統合テスト（荷主・経路設計者は開けず送れない、CSRF）を先に書いた。骨組み（照会は常に「見つからない」、予約の有無は常に false、ハンドラーのないコントローラー）で 13 件の失敗を確かめた。T-39 の記録: 12 件は本命のアサーションで落ちた。CSRF の 1 件はトークンなしで送っていて 302 になった（テストの誤り。既存の形の「誤ったトークン」に直した）。404 のテスト 2 件とセキュリティの 403 は、骨組みでも通った（ハンドラーがない・認可のフィルターが覆う。Green でも通ることを確かめた）</li>
+<li>Green: <code>BookingQueryService</code>（開いた時刻で見積りの公開 API に照会し、確定済みは <code>booking.quotation_id</code> で判定。予約の詳細は予約と予約サガの状態）、<code>BookingRepository.existsByQuotationId</code> と SQL、腐敗防止層の結果に荷主の承認時刻と有効期限、<code>BookingController</code>（<code>/staff/bookings/new</code>・<code>POST /staff/bookings</code>・<code>/staff/bookings/{追跡番号}</code>）と <code>BookingViews</code>、テンプレート <code>booking/staff/bookings/new.html</code>・<code>show.html</code></li>
+<li>計画からの変更: 見つからない見積りは S-02 に戻さず 404 にした（C-17 など既存の画面と同じ）。確定サービスの <code>Forbidden</code> は 403（認可のフィルターが先に止める）</li>
+<li><code>check</code>・<code>documentationTest</code> 緑</li>
+<li>承認ゲートの扱い（T-36）: Red・Green（確定の画面）と認可の承認ゲートで止まらずに進めた（AI の判断）。根拠は、文言と構成が UI 設計の S-09・S-24 の行（ステップ 1）のとおりで、認可は既存の <code>/staff/**</code> の規則のままセキュリティの統合テストで確かめたこと</li>
+</ul>
+</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>4. S-02 の表と画面の層のシナリオ</strong> 【承認ゲート: 画面】</li>
 <li>画面の層の受入シナリオを先に書く（<code>features/ui/confirm_booking_ui.feature</code>、<code>@US-04-AC1</code>・<code>@US-04-AC2</code>、デモ項目 <code>@demo @demo-bolt-23b/confirm-booking</code>）: 荷主の承認の後、営業担当者が S-02 の予約の確定待ちの表から S-09 を開き、キー操作だけで確認して確定 → S-24 に追跡番号と「追跡の開始: 処理中」。S-02 から行が消える（DE-07 の配信を待つので、開き直しながら待つ）。失効（荷主承認済み）の行は確定の入口を出さない。幅 320 CSS px。axe-core 0 件</li>
 <li>S-02 のテンプレートと読み取りモデル、<code>TransportRequestLabels</code> の <code>BOOKED</code> の確かめ</li>
