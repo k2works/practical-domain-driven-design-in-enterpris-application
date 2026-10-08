@@ -9060,6 +9060,38 @@
 <li>最初の Bolt（ウォーキングスケルトン）で AI の出力の品質を確かめて承認ゲートの密度を決め、Release 0.1（W1〜W4）の実績で Release 1.0 の密度を決め直す。</li>
 <li>3 週後に、Release 1.0 の計画（W5〜W10）をベロシティの実績で引き直す。</li>
 </ul>
+<p><strong>W4 の開始時の見直し</strong>（2026-10-08 に human:kakimomokuri が決定）:</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">指標</th>
+<th style="text-align: left;">W1〜W3 の実績</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">完了 SP</td>
+<td style="text-align: left;">24 SP（計画 24 SP。W1 6、W2 7、W3 11）</td>
+</tr>
+<tr>
+<td style="text-align: left;">Bolt</td>
+<td style="text-align: left;">21 本（SP 0 の技術タスクの Bolt 6 本を含む）。暦では 2026-10-01〜10-08 の約 6 営業日</td>
+</tr>
+<tr>
+<td style="text-align: left;">人の変更依頼</td>
+<td style="text-align: left;">1（Bolt 15 のアプリ名）。ほかは判断・追加の依頼として数えた</td>
+</tr>
+<tr>
+<td style="text-align: left;">リードタイム</td>
+<td style="text-align: left;">記録のある Bolt で約 47 分（Bolt 2）〜 4 時間 36 分（Bolt 4。ステップごとの承認ゲートの待ちを含む）</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li>ベロシティは 10 SP / 週（祝日を含む週は 8 SP）を維持する。実績は計画どおりで、暦の上の前倒しは週の目標を上げる根拠にしない</li>
+<li>Release 1.0 の引き直し（10 SP を超える W6・W9 の扱い）は、Release 0.1 を終えた W4 の締めで行う</li>
+<li>W4 の承認ゲートの密度: 新しい集約（予約）・予約サガ・スキーマを作る US-04（Bolt 23・24）は、業務のルールとスキーマのステップごとに止める。それ以外の Bolt は <code>/goal</code> で止めずに進め、終了報告の承認でまとめて受ける</li>
+</ul>
 <hr />
 <h2 id="_15">段階的リリース戦略<a class="headerlink" href="#_15" title="Permanent link">&para;</a></h2>
 <h3 id="_16">リリーススケジュール<a class="headerlink" href="#_16" title="Permanent link">&para;</a></h3>
@@ -9403,13 +9435,68 @@
 </ul>
 <h3 id="w42026-10-26-10-30">W4（2026-10-26 〜 10-30）<a class="headerlink" href="#w42026-10-26-10-30" title="Permanent link">&para;</a></h3>
 <p><strong>ゴール</strong>: 本予約の確定から追跡の開始・実績の登録・荷主の照会までが通り、Release 0.1 の縦の流れが完成する。</p>
+<p><strong>局面とアプローチ</strong>: 序盤、アウトサイドイン（<a href="../development_strategy/">開発戦略</a>）。US-04 は新しい集約（予約）を作るが、受入シナリオから内側を導く序盤の既定に従う。外れる Bolt は、Bolt 計画のアプローチの欄に理由を書く（W3 の Try）</p>
+<p><strong>Bolt の分け方</strong>（2026-10-08 に human:kakimomokuri が決定）:</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Bolt</th>
+<th style="text-align: left;">範囲</th>
+<th style="text-align: right;">SP</th>
+<th style="text-align: left;">承認ゲート</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">22</td>
+<td style="text-align: left;">日時表示・期間表示を <code>platform</code> の Web の部品に集める（<a href="https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/41">#41</a>、技術タスク。Bolt 21 終了報告の議題 5）</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: left;"><code>/goal</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">23</td>
+<td style="text-align: left;">US-04 AC1 確定、AC2 失効と、予約サガの骨格（<a href="https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/10">#10</a>）</td>
+<td style="text-align: right;">3</td>
+<td style="text-align: left;">業務のルール・スキーマのステップごと</td>
+</tr>
+<tr>
+<td style="text-align: left;">24</td>
+<td style="text-align: left;">US-04 AC4 再送、B-INV-11 重複確定の防止（#10 をクローズする）</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: left;">業務のルール・スキーマのステップごと</td>
+</tr>
+<tr>
+<td style="text-align: left;">25</td>
+<td style="text-align: left;">US-12 AC1 登録、AC2 重複（<a href="https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/11">#11</a>）</td>
+<td style="text-align: right;">3</td>
+<td style="text-align: left;"><code>/goal</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">26</td>
+<td style="text-align: left;">US-09 AC1 照会（当初の予定と実績の区別）（<a href="https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/12">#12</a>）</td>
+<td style="text-align: right;">3</td>
+<td style="text-align: left;"><code>/goal</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">27</td>
+<td style="text-align: left;">主成功の流れの <code>@ui</code> シナリオと Release 0.1 のデモ</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: left;"><code>/goal</code></td>
+</tr>
+</tbody>
+</table>
+<p>US-04 の SP 5 は、#10 をクローズする Bolt 24 で数える（Bolt 23 と 24 の SP の分け方は目安）。</p>
+<p><strong>W3 の Try の持ち込み</strong>: 各 Bolt 計画の確認ポイントに、T-55（置換は <code>spotlessApply</code> の後のファイルに当てる）、T-61〜T-63（メモリのリポジトリは写しを返す、listener の欠けを「再配信で直るか」で分ける、「N 個目で」の規則は N 個目の計画に入れる）を入れる</p>
+<p><strong>デモ項目</strong>: 本予約の確定（重複確定の防止を含む）から追跡の開始・実績の登録・荷主の照会まで（Release 0.1 のデモ）。<code>@US-04</code>、<code>@US-12</code>、<code>@US-09</code>、<code>@ui</code> の主成功シナリオ</p>
+<p><strong>ユーザーマニュアル</strong>: <code>docs/manual</code> はまだ無いため、W4 では更新の作業を持たない</p>
 <p><strong>主なタスク</strong>:</p>
 <ul class="task-list">
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> 日時表示・期間表示を <code>platform</code> の Web の部品に集める（技術タスク、SP 0。Bolt 21 終了報告の議題 5。W4 の最初の Bolt）。<a href="https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/41">#41</a></li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> US-04（AC1、AC2、AC4、B-INV-11）と予約サガ</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> US-12（AC1、AC2）、US-09（AC1）</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> 主成功の流れの <code>@ui</code> シナリオ</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> ベロシティの見直しと Release 1.0 の計画の引き直し</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> Bolt 22: 日時表示・期間表示を <code>platform</code> の Web の部品に集める（技術タスク、SP 0。W4 の最初の Bolt）。<a href="https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/41">#41</a></li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> Bolt 23・24: US-04（AC1、AC2、AC4、B-INV-11）と予約サガ</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> Bolt 25・26: US-12（AC1、AC2）、US-09（AC1）</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> Bolt 27: 主成功の流れの <code>@ui</code> シナリオ</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> ベロシティと承認ゲートの密度の見直し（W4 の開始時。「ベロシティ検証計画」）</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> Release 1.0 の計画の引き直し（W4 の締め）</li>
 </ul>
 <p><strong>目標 SP</strong>: 11</p>
 <h3 id="w5w10release-10">W5〜W10（Release 1.0）<a class="headerlink" href="#w5w10release-10" title="Permanent link">&para;</a></h3>
