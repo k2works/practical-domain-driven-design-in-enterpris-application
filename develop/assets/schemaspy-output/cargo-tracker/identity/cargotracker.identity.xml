@@ -72,6 +72,7 @@
          <column autoUpdated="false" defaultValue="null" digits="6" id="2" name="submitted_at" nullable="false" remarks="提出時刻（KPI-01 の開始）" size="35" type="timestamptz" typeCode="93"/>
          <column autoUpdated="false" defaultValue="false" digits="0" id="3" name="excluded" nullable="false" remarks="集計からの除外" size="1" type="bool" typeCode="-7"/>
          <column autoUpdated="false" defaultValue="null" digits="0" id="4" name="transport_request_number" nullable="true" remarks="業務番号" size="20" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="5" name="first_presented_at" nullable="true" remarks="最初の提示時刻" size="35" type="timestamptz" typeCode="93"/>
          <primaryKey column="transport_request_id" sequenceNumberInPK="1"/>
          <index name="pk_kpi_observation" unique="true">
             <column ascending="true" name="transport_request_id"/>
@@ -79,6 +80,7 @@
          <index name="ix_kpi_observation_submitted_at" unique="false">
             <column ascending="true" name="submitted_at"/>
          </index>
+         <checkConstraint constraint="((first_presented_at IS NULL) OR (first_presented_at &gt;= submitted_at))" name="ck_kpi_observation_first_presented_at"/>
       </table>
       <table name="user_role" remarks="利用者の役割" schema="identity" type="TABLE">
          <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="user_id" nullable="false" remarks="利用者 ID" size="2147483647" type="uuid" typeCode="1111">
