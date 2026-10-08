@@ -4,7 +4,7 @@ title: "Bolt 21 計画 - KPI-01 の提示時刻とリードタイム（US-21 AC1
 description: "21 回目の Bolt の計画。見積りの提示（DE-03）をアクセス・監査で購読し、KPI 計測記録に最初の提示時刻を記録して、輸送要求ごとの KPI-01 のリードタイムを求める（US-21 AC1）。S-22 の前身の画面に提示時刻とリードタイムを示すまでを、ステップ 1〜5 で定義する。"
 tags: [development,bolt-plan]
 status: draft
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-08T03:53:20Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-08T04:04:38Z }
 ---
 
 # Bolt 21 計画 - KPI-01 の提示時刻とリードタイム（US-21 AC1）
@@ -187,7 +187,7 @@ KPI計測記録 --> 業務ホーム : ナビ
     - 計画からの変更: `documentationTest` が変更の前から Windows の作業ツリーで落ちていた（ソースの改行が CRLF で、Javadoc を探す正規表現の `
 ` に一致しない。CI の Linux では通る）。`LivingGlossaryConsistencyTest` でソースの改行を LF にそろえてから正規表現を当てるようにした
     - 承認ゲートの扱い（T-36）: 計画の確認ポイントの反映の承認ゲートで止まらずに進めた（AI の判断）。根拠は、書いた決定が確認ポイント 2・3・4・11 の推奨のとおりであること。D-11 は人が決める事項なので、終了報告の承認の議題に置く
-- [ ] **2. 業務ルール層の受入シナリオから集約の規則へ（アウトサイドイン）** 【承認ゲート: Red／Green】
+- [x] **2. 業務ルール層の受入シナリオから集約の規則へ（アウトサイドイン）** 【承認ゲート: Red／Green】
   - 業務ルール層の受入シナリオを先に書き、Undefined を確かめる（`features/identity/kpi_01_lead_time.feature`、`@US-21-AC1`）: 荷主が提出し、営業担当者が見積りを提示すると、KPI 計測記録に提出時刻と最初の提示時刻が UTC で記録され、リードタイムが求まる。再見積りで 2 回目の提示があっても最初の提示時刻は変わらない。DE-03 の再配信で記録は変わらない。リポジトリはテスト用のメモリ（`InMemoryKpiObservationRepository`）を使う（ウォーキングスケルトンと同じ）
   - ステップ定義から listener の `on(QuotationPresented)` を呼んで Red にし、内側へ下りる
     - listener の単体テスト（T-58）: 提出の記録がないときの DE-03 は警告のログを残して例外を投げ、発行の記録を未完了のまま残す（確認ポイント 4）。提出時刻より前の提示時刻も同じ
@@ -195,11 +195,22 @@ KPI計測記録 --> 業務ホーム : ナビ
   - ウォーキングスケルトンのシナリオ（`walking_skeleton.feature`）は今のまま残す（提出の記録だけを見る）
   - ApplicationModules の検証: `identity` の依存は増えない（H1）。見積りのコードに差分がない
   - 完了の判定: `check` 緑（受入シナリオが通る）。push して CI を確かめる
-- [ ] **3. 表（データ）と非同期の配信（統合テスト）** 【承認ゲート: データベース】
+  - 結果（2026-10-08 12:56〜12:59 JST。Red `36a1c800`、Green `af6ce736`）
+    - Red: 受入シナリオ 4 本を書き、新しいステップだけが Undefined になることを確かめた。ステップ定義（最初の提示時刻、リードタイム、未提示）と、受入テストの配信で DE-03 を KPI の listener にも配る配線を足し、骨組み（`recordPresentation` は何もしない、`leadTime` は空、listener と `saveFirstPresentation` は何もしない）を置いた。15 件の失敗を記録した。T-39 の記録: 受入シナリオ 3 本、listener 5 件、集約 6 件は本命のアサーション（最初の提示時刻・リードタイム・例外・警告のログ）で落ちた。集約の「同じ提示がもう一度届いても何も変えない」は、骨組みでは最初の記録ができないため前提（最初の提示時刻があること）で落ちた。「見積りを提示するまではリードタイムを求めない」は骨組みでも通った（空振り。Green の後も意味を持つ境界として残す）
+    - Green: `KpiObservation.recordPresentation`（いちばん早い提示時刻を持ち、提出時刻より前は `IllegalArgumentException`）と `leadTime`、listener の `on(QuotationPresented)`（記録がない・提出時刻より前は警告のログを残して `IllegalStateException`）、テスト用のメモリのリポジトリの `saveFirstPresentation`
+    - 計画からの変更: ステップ 2 の Green の push は、MyBatis の `saveFirstPresentation` ができるステップ 3 とまとめた（ステップ 2 だけでは本番の listener が骨組みの保存を呼ぶため）
+    - 承認ゲートの扱い（T-36）: Red と Green の承認ゲートで止まらずに進めた（AI の判断）。根拠は、テストの表が計画の確認ポイント 2・3・4・11 のとおりであること
+- [x] **3. 表（データ）と非同期の配信（統合テスト）** 【承認ゲート: データベース】
   - リポジトリの契約テスト（`KpiObservationRepositoryContract`）に、提示の記録（未提示・遅い・早い・同じ時刻）を足して Red にする（メモリと MyBatis の両方に効く）
   - 統合テスト（PostgreSQL）を先に書く: 列の保存と読み出し、CHECK、条件付きの更新。DE-03 から記録までを、イベントの発行の記録を経て非同期に通す（自分で作った輸送要求の ID だけを見る。D-78）
   - マイグレーション、MyBatis の更新
   - 完了の判定: `check` 緑。push して CI を確かめる
+  - 結果（2026-10-08 13:01〜。Red `687c4eb7`、Green は下のコミット）
+    - Red: 契約テストに 5 件（保存と読み出し、未提示、遅い時刻、早い時刻、記録のない輸送要求）、MyBatis の統合テストに表の制約（提出時刻より前）、DE-03 の配信の統合テストに KPI 計測記録の最初の提示時刻を足した。メモリの実装は最初から通り、MyBatis の 5 件が骨組みの `UnsupportedOperationException` で落ちた（本命は保存の振る舞い。表の制約のテストは列がないための前提で落ちた）
+    - Green: マイグレーション `V20261008130000__add_kpi_first_presented_at.sql`（`first_presented_at`、`ck_kpi_observation_first_presented_at`、日本語のコメント）、マッパーの条件付きの更新 `updateFirstPresentedAtIfEarlier`、行と `reconstitute` に最初の提示時刻を足した
+    - H1: 見積りのコードと `identity` の依存の宣言に差分がない（`git diff`）。ApplicationModules の検証は緑
+    - `check` 緑（`test` 1,150 件）
+    - 承認ゲートの扱い（T-36）: データベースの承認ゲートで止まらずに進めた（AI の判断）。根拠は、列・制約・更新の条件が計画のデータモデルの節と確認ポイント 11 のとおりで、既存の行は NULL のまま使えること
 - [ ] **4. S-22 の前身の画面** 【承認ゲート: 画面】
   - 画面の層の受入シナリオを先に書く（`features/ui/kpi_observations_ui.feature`、`@ui @US-21-AC1`）: 営業担当者が KPI 計測記録を開くと、提示済みの輸送要求の行に提出時刻・最初の提示時刻・リードタイムが、未提示の行に「未提示」が示される。行の数と順番は決め打ちしない（T-59）。axe-core の違反 0 件、幅 320 CSS px で横に流れない
   - コントローラーの単体テスト、表示の値（`KpiObservationView`）、テンプレート（`!= null`。T-60）
