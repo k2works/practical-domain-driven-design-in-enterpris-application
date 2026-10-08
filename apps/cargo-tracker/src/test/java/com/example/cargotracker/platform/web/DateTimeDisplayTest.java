@@ -38,8 +38,7 @@ class DateTimeDisplayTest {
                 "2026-10-05T15:00:00Z | 2026-10-06 00:00 Asia/Tokyo（UTC+09:00）（UTC 2026-10-05 15:00）",
                 "2026-12-31T15:00:00Z | 2027-01-01 00:00 Asia/Tokyo（UTC+09:00）（UTC 2026-12-31 15:00）"
             })
-    void 社内の画面は利用者のタイムゾーンを主にしUTCを併記し日付をまたいでもそれぞれの日付を示す(
-            String instant, String expected) {
+    void 社内の画面は利用者のタイムゾーンを主にしUTCを併記し日付をまたいでもそれぞれの日付を示す(String instant, String expected) {
         assertThat(DateTimeDisplay.staff(Instant.parse(instant))).isEqualTo(expected);
     }
 }
