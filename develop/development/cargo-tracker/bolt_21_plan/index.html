@@ -16,7 +16,7 @@
         <link rel="prev" href="../bolt_20_report/">
       
       
-        <link rel="next" href="../../../operation/">
+        <link rel="next" href="../bolt_21_report/">
       
       
         
@@ -3625,6 +3625,41 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../bolt_21_report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 21 終了報告
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--draft"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -4692,6 +4727,41 @@
   
   
     <span class="md-status md-status--stable"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../review/cargo-tracker/bolt_21_review_20261008/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 21 開発成果物レビュー（2026-10-08）
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--draft"></span>
   
 
   
@@ -8206,11 +8276,15 @@
 <li>承認ゲートの扱い（T-36）: 画面の承認ゲートで止まらずに進めた（AI の判断）。根拠は、列と表示が計画の画面遷移の節と UI 設計の S-22 の前身の記述のとおりであること。画面の確かめは終了報告の議題に置く</li>
 </ul>
 </li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>5. デモ環境・開発レビュー・終了報告</strong> 【承認ゲート: 開発レビューの判断、終了報告】</li>
+<li>[?] <strong>5. デモ環境・開発レビュー・終了報告</strong> 【承認ゲート: 開発レビューの判断、終了報告】</li>
 <li>デモ環境のサンプル（<code>db/dev-data</code>）の提示済みの輸送要求に、最初の提示時刻を入れる（確認ポイント 8）</li>
 <li>デモ項目（完了条件の表）を <code>./gradlew demoVideo</code> で録画する</li>
 <li>5 視点の開発レビュー、SonarQube の Quality Gate、デモ項目と動画、終了報告。#9 をクローズし、リリース計画の W3 を締める準備をする</li>
 <li>完了の判定: 終了報告の承認</li>
+<li>結果（2026-10-08 13:20〜13:55 JST）: デモのサンプル（<code>7097c244</code>）、5 視点の開発レビューと対応（Red <code>3a0769a4</code>、Green <code>f1dcec45</code>、文書 <code>b552b276</code>。D-79〜D-84）、SonarQube の対応（<code>7985ba25</code>）、運用のタスク <code>sonar-local:scan</code> の Windows 対応（<code>4d63c275</code>）、動画 2 本、<a href="../bolt_21_report/">終了報告</a>。#9 をクローズした。終了報告の承認待ち<ul>
+<li>承認ゲートの扱い（T-36）: 開発レビューの判断の承認ゲートで止まらずに進めた（AI の判断）。根拠は、高の指摘のうち欠陥とテストの抜けは直し、置き場所の判断が要るもの（D-84）は人に回したこと。終了報告の議題 4〜7 に置く</li>
+</ul>
+</li>
 </ul>
 <h3 id="_10">時間の配分と打ち切り<a class="headerlink" href="#_10" title="Permanent link">&para;</a></h3>
 <table>
@@ -8340,13 +8414,13 @@
 </table>
 <h2 id="_11">完了条件<a class="headerlink" href="#_11" title="Permanent link">&para;</a></h2>
 <ul class="task-list">
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> US-21 AC1 の受入シナリオ（業務ルール層・画面の層）が通る</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> DE-03 から最初の提示時刻の記録までが PostgreSQL の統合テストで通り、再配信と順序の入れ替わりで記録が変わらない</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> ApplicationModules の検証が緑で、<code>identity</code> の依存が増えていない</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <code>check</code> と <code>uiTest</code> が緑。push して CI とデモ環境の配備を確かめた</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> SonarQube の Quality Gate が PASS</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> 設計文書に決定を書き、計画からの変更も設計文書に戻した（T-53）</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> 開発レビューと終了報告を書き、#9 をクローズした</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> US-21 AC1 の受入シナリオ（業務ルール層・画面の層）が通る</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> DE-03 から最初の提示時刻の記録までが PostgreSQL の統合テストで通り、再配信と順序の入れ替わりで記録が変わらない</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> ApplicationModules の検証が緑で、<code>identity</code> の依存が増えていない</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <code>check</code> と <code>uiTest</code> が緑。push して CI とデモ環境の配備を確かめた</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> SonarQube の Quality Gate が PASS</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> 設計文書に決定を書き、計画からの変更も設計文書に戻した（T-53）</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> 開発レビューと終了報告を書き、#9 をクローズした</li>
 </ul>
 <p>ユーザーマニュアル（<code>docs/manual</code>）はまだ無いため、この Bolt では更新の作業を持たない。</p>
 <h3 id="_12">デモ項目<a class="headerlink" href="#_12" title="Permanent link">&para;</a></h3>
@@ -8391,6 +8465,12 @@
 <tr>
 <td style="text-align: left;">2026-10-08</td>
 <td style="text-align: left;">開始準備のステップ 3・4（計画の整合性検証・設計の横断検証）の結果で直した。アプローチを開発戦略のとおりアウトサイドインにしてステップ 2・3 を組み替え、データモデルとの差（提示時刻の書き換え）を注と確認ポイント 11 に、戦略と Bolt 19・20 のずれを確認ポイント 12 にした。CHECK の名前、画面遷移図、デモ項目、D-78 の引き継ぎを足した</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5</td>
+<td style="text-align: left;">—</td>
+</tr>
+<tr>
+<td style="text-align: left;">2026-10-08</td>
+<td style="text-align: left;">ステップ 5 の結果を記録し、完了条件を満たした（終了報告の承認待ち）</td>
 <td style="text-align: left;">anthropic/claude-opus-5-5</td>
 <td style="text-align: left;">—</td>
 </tr>
