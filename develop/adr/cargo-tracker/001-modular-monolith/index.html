@@ -3395,6 +3395,41 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../development/cargo-tracker/bolt_22_report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 22 終了報告
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--draft"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -7938,9 +7973,11 @@
 <li>アーキテクチャテストで、モジュール間の依存が公開 API とイベントだけであることを検査する。</li>
 <li>各モジュールのマッパーの SQL が自スキーマ以外の表を参照していないことを、CI のテストで検査する。</li>
 <li>モジュールの中の層の依存（AT-02）は、<code>infrastructure.config</code>（合成ルート）だけを例外とする（2026-10-02 に human:kakimomokuri が承認した D-5。<a href="../../../design/cargo-tracker/architecture_backend/">バックエンドアーキテクチャ</a> のパッケージ構成を参照）。</li>
+<li>公開 API とイベントのほかに依存してよいのは、技術の表示の部品 <code>platform :: web</code>（日時表示・期間表示）だけとする。コンテキストの画面の層（<code>interfaces.web</code>）からだけ参照でき、業務の型と規則は置かない（Bolt 22、#41。開発レビュー D-84）。</li>
 </ul>
 <h2 id="_9">改訂の経緯<a class="headerlink" href="#_9" title="Permanent link">&para;</a></h2>
 <ul>
+<li>2026-10-08: コンプライアンスに <code>platform :: web</code> の例外を足した。日時表示・期間表示の写しが 3 つのモジュールにでき、共有カーネルを表示の関心で変えずに 1 か所に集めるため（Bolt 22 の開発レビュー）。</li>
 <li>2026-10-01: 初版は「モジュールごとに DB 利用者を分け、他スキーマへの権限を与えない」としていた。データモデル設計で、Spring Boot で 6 つの DB 利用者を使うにはモジュールごとに接続プールと MyBatis の設定を分ける必要があり MVP には重いことが分かった。human:kakimomokuri の判断により、DB 利用者は 1 つにし、スキーマ境界は SQL の静的検査で守る方式に改めた。追記専用の表（監査記録・受信記録・版の表）から UPDATE・DELETE の権限を外す保護は、DB 利用者が 1 つでも表単位で行えるため維持する（<a href="../../../design/cargo-tracker/data_model/">データモデル</a>）。</li>
 </ul>
 <h2 id="_10">備考<a class="headerlink" href="#_10" title="Permanent link">&para;</a></h2>

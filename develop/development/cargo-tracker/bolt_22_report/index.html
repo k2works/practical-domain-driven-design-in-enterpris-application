@@ -6,17 +6,17 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="5 回目の Bolt の終了報告。審査の確定・差戻し・古い版の拒否、審査記録と楽観ロック、受付一覧と審査の画面の成果、デモ項目、指標と時間の内訳、仮説 H1〜H3 の結論、見つけて直した問題、既知の課題、ふりかえりをまとめる。">
+        <meta name="description" content="22 回目の Bolt の終了報告。見積り・経路設計・アクセス監査の日時表示・期間表示の写しを、画面の文字列を変えずに platform :: web の部品に集め、写しの再発を ArchUnit で止めた。開発レビューの対応、品質ゲート、計画からの変更、既知の課題（DE-03 と DE-16 の listener の競合）と承認の議題を記録する。">
       
       
         <meta name="author" content="k2works">
       
       
       
-        <link rel="prev" href="../bolt_05_plan/">
+        <link rel="prev" href="../bolt_22_plan/">
       
       
-        <link rel="next" href="../bolt_06_plan/">
+        <link rel="next" href="../../../operation/">
       
       
         
@@ -27,7 +27,7 @@
     
     
       
-        <title>Bolt 5 終了報告 - 輸送条件の審査と差戻し（US-02） - 実践ドメイン駆動設計 in エンタープライズアプリケーション</title>
+        <title>Bolt 22 終了報告 - 日時表示・期間表示を platform の Web の部品に集める（#41） - 実践ドメイン駆動設計 in エンタープライズアプリケーション</title>
       
     
     
@@ -78,7 +78,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#bolt-5-us-02" class="md-skip">
+        <a href="#bolt-22-platform-web-41" class="md-skip">
           Skip to content
         </a>
       
@@ -112,7 +112,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Bolt 5 終了報告 - 輸送条件の審査と差戻し（US-02）
+              Bolt 22 終了報告 - 日時表示・期間表示を platform の Web の部品に集める（#41）
             
           </span>
         </div>
@@ -2251,44 +2251,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Bolt 5 終了報告
-  
-
-    
-  </span>
-  
-  
-    
-  
-  
-    <span class="md-status md-status--stable"></span>
-  
-
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../bolt_05_report/" class="md-nav__link">
         
   
   
@@ -2311,242 +2277,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#_1" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        基本情報
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#_2" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        成果
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="成果">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#3" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        見つけて直した問題（ステップ 3）
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#_3" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        デモ項目の結果
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#_4" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        指標
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="指標">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#t-16" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        時間の内訳（T-16）
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#_5" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        品質ゲート
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#_6" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        仮説の結論
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#_7" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        判断と学び
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="判断と学び">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#_8" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        設計への反映（反映済み）
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#_9" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        既知の課題
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#bolt-4-try" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Bolt 4 の Try の結果
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#kpt" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        ふりかえり（KPT）
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#_10" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        レビューとクローズ
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#_11" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        承認待ちの書き換え
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#bolt" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        次の Bolt
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#_12" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        更新履歴
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#_13" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        関連ドキュメント
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -3676,10 +3406,44 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../bolt_22_report/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 22 終了報告
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--draft"></span>
+  
+
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -3702,6 +3466,214 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#t-36" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        承認の議題（T-36。先に確かめてほしいこと）
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        基本情報
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        成果
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="成果">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ステップの結果
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        作ったもの
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        デモ項目
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_6" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        指標
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_7" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        品質ゲート
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_8" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        仮説の結論
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_9" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        開発レビュー
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_10" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        判断と学び
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="判断と学び">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#bolt" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        既知の課題（後の Bolt に持ち込む）
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#kpt" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ふりかえり（KPT）
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#bolt_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        次の Bolt
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_11" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        更新履歴
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_12" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        関連ドキュメント
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -8003,7 +7975,75 @@
   
 
 
-<h1 id="bolt-5-us-02">Bolt 5 終了報告 - 輸送条件の審査と差戻し（US-02）<a class="headerlink" href="#bolt-5-us-02" title="Permanent link">&para;</a></h1>
+<h1 id="bolt-22-platform-web-41">Bolt 22 終了報告 - 日時表示・期間表示を platform の Web の部品に集める（#41）<a class="headerlink" href="#bolt-22-platform-web-41" title="Permanent link">&para;</a></h1>
+<h2 id="t-36">承認の議題（T-36。先に確かめてほしいこと）<a class="headerlink" href="#t-36" title="Permanent link">&para;</a></h2>
+<p>W4 の計画どおり <code>/goal</code> で、計画の承認から終了報告の前まで、承認ゲートで止まらずに進めた。止まらなかったゲートごとの判断を次に置く。</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">#</th>
+<th style="text-align: left;">確かめてほしいこと</th>
+<th style="text-align: left;">AI の判断の根拠</th>
+<th style="text-align: left;">見る場所</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">1</td>
+<td style="text-align: left;">ステップ 1〜4 を計画どおり進めた（特性テスト → 部品 → 置き換え → 設計文書）</td>
+<td style="text-align: left;">画面の文字列は変えていない。<code>test</code>・<code>uiTest</code>・<code>documentationTest</code> は期待の文字列を変えずに通った</td>
+<td style="text-align: left;">ステップの結果</td>
+</tr>
+<tr>
+<td style="text-align: left;">2</td>
+<td style="text-align: left;"><strong>計画からの変更 1</strong>: 部品は <code>UtcInstant</code> でなく <code>java.time.Instant</code> を受ける</td>
+<td style="text-align: left;">既存の ArchUnit の規則「platform は <code>java..</code> だけに依存する」を保ち、<code>platform</code> を <code>shared</code> に依存させないため。各モジュールに <code>UtcInstant</code> を <code>Instant</code> に直す 1 行のメソッドを残した</td>
+<td style="text-align: left;"><code>platform/web/DateTimeDisplay.java</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">3</td>
+<td style="text-align: left;"><strong>計画からの変更 2</strong>: 確認ポイント 7 の規則を「<code>DateTimeFormatter</code> を使えない」から「書式はフォームの変換（<code>*FormConverter</code>）だけ、タイムゾーンは部品の <code>ZONE</code> だけ」に絞った</td>
+<td style="text-align: left;">見積りのフォームの変換が入力の解釈に <code>DateTimeFormatter</code> を使っており、計画の形では入力の解釈まで禁じてしまう。フォームの変換のタイムゾーンも部品の <code>ZONE</code> に寄せた（利用者ごとのタイムゾーンを入れるときに直す場所が 1 つになる）</td>
+<td style="text-align: left;"><code>LayerArchitectureTest</code> の <code>画面の層は日時表示の写しを持たない</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">4</td>
+<td style="text-align: left;"><strong>構造の変更</strong>: <code>routing</code>・<code>identity</code> の <code>allowedDependencies</code> に <code>platform :: web</code> を足し、<code>quotation</code> に <code>allowedDependencies = {"shared", "platform :: web"}</code> を新しく宣言した</td>
+<td style="text-align: left;"><code>quotation</code> は宣言がなく、どのモジュールの公開部分にも暗黙に依存できた（開発レビュー A-2）。上流なので、ADR-014 の「上流は下流に依存しない」を宣言でも固定した。ModularityTest は通る</td>
+<td style="text-align: left;">各 <code>package-info.java</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">5</td>
+<td style="text-align: left;"><strong>ADR を書かず、ADR-001 のコンプライアンスに例外を 1 行足した</strong>（確認ポイント 2 は「書かない」。開発レビュー A-1）</td>
+<td style="text-align: left;">ADR-001 は「モジュール間の依存は公開 API とイベントだけ」と書いており、<code>platform :: web</code> はどちらでもない。新しい ADR にするほどの決定ではないが、W4 以降のすべてのモジュールが宣言する依存先なので、ADR-001 に記録した</td>
+<td style="text-align: left;"><a href="../../../adr/cargo-tracker/001-modular-monolith/">ADR-001</a> のコンプライアンスと改訂の経緯</td>
+</tr>
+<tr>
+<td style="text-align: left;">6</td>
+<td style="text-align: left;">開発レビューの対応の範囲（下の「開発レビュー」）。直したもの 10 件、後に回したもの 3 件</td>
+<td style="text-align: left;">写しの再発を止める規則の穴（<code>ZoneId.systemDefault</code> など）と、特性テストの境界の不足は、この Bolt の目的そのものなので直した。振る舞いを変えるもの（負の期間の扱い）と、まだ使わない拡張（<code>ZoneId</code> を受けるオーバーロード）は後に回した</td>
+<td style="text-align: left;">開発レビュー</td>
+</tr>
+<tr>
+<td style="text-align: left;">7</td>
+<td style="text-align: left;"><strong>既知の課題（この Bolt の変更とは関係ない）</strong>: 見積りの DE-03 と DE-16 の listener が同じ輸送要求を並行して更新し、DE-16 の側が楽観ロックの競合で失敗することがある。失敗した発行は起動し直すまで再配信されない</td>
+<td style="text-align: left;">SonarQube の走査で <code>RouteDesignRequestedRoutingIntegrationTest</code> が 1 回失敗し、ログから原因を特定した（下の「既知の課題」）。Bolt 12 からある競合で、この Bolt の範囲外。別のタスクとして提案した</td>
+<td style="text-align: left;">既知の課題</td>
+</tr>
+<tr>
+<td style="text-align: left;">8</td>
+<td style="text-align: left;">step 2 のコミット（<code>780d6a5</code>）は、写しを禁じる規則を Red のまま push したので、CI の <code>check</code> が赤になった（<code>deploy-demo</code> は走らず、デモ環境は変わっていない）。次の push（<code>ad20122</code>）で緑に戻した</td>
+<td style="text-align: left;">ローカルでは同じコミットの失敗はこの規則の 1 件だけだった。CI のログの末尾からは原因を確かめられていない</td>
+<td style="text-align: left;">CI の実行 37734340317</td>
+</tr>
+<tr>
+<td style="text-align: left;">9</td>
+<td style="text-align: left;">#41 をクローズする</td>
+<td style="text-align: left;">完了条件をすべて満たした</td>
+<td style="text-align: left;"><a href="https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/41">#41</a></td>
+</tr>
+</tbody>
+</table>
 <h2 id="_1">基本情報<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
@@ -8015,144 +8055,80 @@
 <tbody>
 <tr>
 <td style="text-align: left;">Bolt</td>
-<td style="text-align: left;">第 5 回</td>
+<td style="text-align: left;">第 22 回</td>
 </tr>
 <tr>
 <td style="text-align: left;">期間</td>
-<td style="text-align: left;">2026-10-02 20:47 JST（計画の承認のコミット <code>f5994ad</code>）〜 終了報告のコミット。下の「時間の内訳」のとおり、AI の実行時間と承認の待ち時間を分けて記録した（Try T-16）</td>
+<td style="text-align: left;">2026-10-08 14:45 JST（計画の承認 <code>75f681a</code>）〜 15:30 JST（本報告）</td>
 </tr>
 <tr>
 <td style="text-align: left;">対象</td>
-<td style="text-align: left;">U1 輸送要求・見積り。US-02 輸送条件を審査する（AC1・AC2・AC3）</td>
-</tr>
-<tr>
-<td style="text-align: left;">計画</td>
-<td style="text-align: left;"><a href="../bolt_05_plan/">Bolt 5 計画</a></td>
+<td style="text-align: left;"><code>platform.web</code>（新設）、<code>quotation</code>・<code>routing</code>・<code>identity</code> の <code>interfaces.web</code></td>
 </tr>
 <tr>
 <td style="text-align: left;">GitHub</td>
-<td style="text-align: left;"><a href="https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/3">#3 [US-02] 輸送条件を審査する</a>。AC1〜AC3 がそろったため、クローズで閉じる</td>
+<td style="text-align: left;"><a href="https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/41">#41</a>（SP 0）</td>
 </tr>
 <tr>
-<td style="text-align: left;">ゴール</td>
-<td style="text-align: left;">営業担当者が受付一覧（S-02）から審査中の見積依頼を選び、審査（S-03）で確定または理由を付けて差し戻せる。審査記録に判断者・時刻・根拠が残り、古い版の確定は拒否される</td>
-</tr>
-<tr>
-<td style="text-align: left;">進め方</td>
-<td style="text-align: left;">計画と確認ポイント 1〜6 の承認の後、ステップ 1・2a・2b・3 ごとに承認ゲートを通した。各ステップの終わりに <code>check</code> を緑にして push した（Try T-14）</td>
+<td style="text-align: left;">計画</td>
+<td style="text-align: left;"><a href="../bolt_22_plan/">Bolt 22 計画</a></td>
 </tr>
 </tbody>
 </table>
 <h2 id="_2">成果<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h2>
+<h3 id="_3">ステップの結果<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
 <tr>
 <th style="text-align: left;">ステップ</th>
-<th style="text-align: left;">状態</th>
-<th style="text-align: left;">コミット</th>
-<th style="text-align: left;">誤りの検出と修正（検出の手段）</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align: left;">1. 決定を設計文書に反映する</td>
-<td style="text-align: left;">完了</td>
-<td style="text-align: left;"><code>0714926</code></td>
-<td style="text-align: left;">—</td>
-</tr>
-<tr>
-<td style="text-align: left;">2a. 集約と永続化（インサイドアウト）</td>
-<td style="text-align: left;">完了</td>
-<td style="text-align: left;"><code>4cb42de</code></td>
-<td style="text-align: left;">状態の値を足したため、荷主の完了画面の状態の表示名の分岐が足りなかった（コンパイルエラー）</td>
-</tr>
-<tr>
-<td style="text-align: left;">2b. 審査のユースケース（業務ルール層）</td>
-<td style="text-align: left;">完了</td>
-<td style="text-align: left;"><code>6d86110</code></td>
-<td style="text-align: left;">同じ文言を 2 つの注釈で受けるとステップが重複する（Cucumber の規則を書く段階で気づいた）</td>
-</tr>
-<tr>
-<td style="text-align: left;">3. 営業の画面</td>
-<td style="text-align: left;">完了</td>
-<td style="text-align: left;"><code>1cc0b58</code>、<code>60c19b2</code></td>
-<td style="text-align: left;">次の 5 件（下の「見つけて直した問題」）。画面の層の Red の集計で、重複（ambiguous）を通ったものとして数えていた</td>
-</tr>
-<tr>
-<td style="text-align: left;">4. 検証と終了報告</td>
-<td style="text-align: left;">完了（2026-10-02 に人が承認。変更依頼 0）</td>
-<td style="text-align: left;"><code>1cd3d89</code>、本報告</td>
-<td style="text-align: left;">SonarQube の品質ゲートが、変数名 <code>record</code>（制限付きの識別子）の指摘 9 件で不合格。<code>reviewRecord</code> に改めた</td>
-</tr>
-</tbody>
-</table>
-<p>打ち切りの線（画面に固有の条件のシナリオを次の Bolt へ）は使わなかった。</p>
-<h3 id="3">見つけて直した問題（ステップ 3）<a class="headerlink" href="#3" title="Permanent link">&para;</a></h3>
-<table>
-<thead>
-<tr>
-<th style="text-align: left;">問題</th>
-<th style="text-align: left;">検出の手段</th>
-<th style="text-align: left;">対応</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align: left;">審査の結果をフラッシュ属性で渡した最初のリダイレクトの URL に <code>;jsessionid=...</code> が付き、セッション ID が履歴やログに漏れうる</td>
-<td style="text-align: left;">画面の層の待ち時間切れを、アプリを起動してリダイレクト先を確かめて特定した</td>
-<td style="text-align: left;">セッションの追跡を Cookie だけにした（<code>server.servlet.session.tracking-modes=cookie</code>）</td>
-</tr>
-<tr>
-<td style="text-align: left;">受付一覧の表が、幅 320 CSS px でページ全体を横にスクロールさせた</td>
-<td style="text-align: left;">画面の層（320 CSS px）</td>
-<td style="text-align: left;">表だけを横スクロールさせる囲み（フォーカスでき、名前を持つ）に入れた</td>
-</tr>
-<tr>
-<td style="text-align: left;">入口の一覧の縦に並べたリンクが、Linux では押せる範囲が 24 CSS px に届かない（WCAG 2.2 の 2.5.8）</td>
-<td style="text-align: left;">CI の <code>ui</code> ジョブ（手元の macOS では通った。CI の成果物の axe-core の結果で特定）</td>
-<td style="text-align: left;">リンクの高さを 24 px 以上にし、間隔を取った</td>
-</tr>
-<tr>
-<td style="text-align: left;">Playwright の正規表現で Java の <code>Pattern.quote</code>（<code>\Q...\E</code>）を使った</td>
-<td style="text-align: left;">画面の層</td>
-<td style="text-align: left;">正規表現はブラウザ（JavaScript）で評価されるため、文字列で比べた</td>
-</tr>
-<tr>
-<td style="text-align: left;">汎用のステップ「営業担当者が{画面}を開く」と、明示のステップが同じ文言に一致した</td>
-<td style="text-align: left;">画面の層（ambiguous）</td>
-<td style="text-align: left;">明示のステップを外した</td>
-</tr>
-</tbody>
-</table>
-<h3 id="_3">デモ項目の結果<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h3>
-<table>
-<thead>
-<tr>
-<th style="text-align: left;">#</th>
-<th style="text-align: left;">デモ</th>
 <th style="text-align: left;">結果</th>
+<th style="text-align: left;">コミット</th>
+<th style="text-align: left;">備考</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td style="text-align: left;">1</td>
-<td style="text-align: left;">見積依頼を提出し、受付一覧から審査を確定する</td>
-<td style="text-align: left;"><code>@ui</code> で、提出した見積依頼が受付一覧に出て、キー操作だけで確定すると一覧から消え、「TR-2026-0001 版 1 の審査を確定しました」が示されることを確かめた。手元の <code>bootRun</code> でも、確定のリダイレクトを確かめた</td>
+<td style="text-align: left;">1. 特性テスト（Red）</td>
+<td style="text-align: left;">完了</td>
+<td style="text-align: left;"><code>22847b2</code>、<code>ba3cf57</code></td>
+<td style="text-align: left;">部品がないのでコンパイルで失敗することを確かめた</td>
 </tr>
 <tr>
-<td style="text-align: left;">2</td>
-<td style="text-align: left;">理由を付けて差し戻す</td>
-<td style="text-align: left;">業務ルール層（下書きになり、理由と不足事項が残る）と統合テスト（審査記録が保存される）で確かめた。理由がないときのエラー要約は <code>@ui</code> で確かめた</td>
+<td style="text-align: left;">2. 部品と依存の宣言（Green）</td>
+<td style="text-align: left;">完了</td>
+<td style="text-align: left;"><code>780d6a5</code></td>
+<td style="text-align: left;">部品の表のテストは Green。写しを禁じる規則は、3 つの写し（各 4 件）を検出して Red</td>
 </tr>
 <tr>
-<td style="text-align: left;">3</td>
-<td style="text-align: left;"><code>./gradlew uiTest</code></td>
-<td style="text-align: left;">画面の層 11 本（うち審査 4 本）が通り、axe-core の違反は 0 件</td>
+<td style="text-align: left;">3. 写しの置き換え（Refactor）</td>
+<td style="text-align: left;">完了</td>
+<td style="text-align: left;"><code>a0db349</code></td>
+<td style="text-align: left;">画面の文字列は変えていない</td>
+</tr>
+<tr>
+<td style="text-align: left;">4. 設計文書</td>
+<td style="text-align: left;">完了</td>
+<td style="text-align: left;"><code>ad20122</code></td>
+<td style="text-align: left;">architecture_backend.md の <code>platform</code> の規則、ui_design.md の日時表示に期間の 3 つの形</td>
+</tr>
+<tr>
+<td style="text-align: left;">5. 開発レビューと終了報告</td>
+<td style="text-align: left;">完了</td>
+<td style="text-align: left;"><code>32a53af</code>、本報告</td>
+<td style="text-align: left;">開発レビュー（プログラマー・アーキテクト）、SonarQube</td>
 </tr>
 </tbody>
 </table>
-<p>デモの動画（2026-10-05 にいまのコードで撮った。その Bolt で作った機能のいまの振る舞いを示す）: <a href="../../../assets/demo/bolt-05/approve.webm" target="_blank">approve</a>、<a href="../../../assets/demo/bolt-05/send-back-error.webm" target="_blank">send-back-error</a></p>
-<h2 id="_4">指標<a class="headerlink" href="#_4" title="Permanent link">&para;</a></h2>
+<h3 id="_4">作ったもの<a class="headerlink" href="#_4" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>platform.web.DateTimeDisplay</code>（<code>ZONE</code>、<code>customer</code>、<code>staff</code>）と <code>platform.web.DurationDisplay</code>（<code>waiting</code>、<code>connection</code>、<code>hoursAndMinutes</code>）。名前付きインターフェース <code>platform :: web</code></li>
+<li>部品の表のテスト（<code>DateTimeDisplayTest</code>、<code>DurationDisplayTest</code>。境界と、負の期間のいまの値を特性として固定）</li>
+<li>ArchUnit の規則: <code>platformの表示の部品は画面の層からだけ参照される</code>、<code>画面の層は日時表示の写しを持たない</code>（<code>DateTimeFormatter</code> はフォームの変換だけ、<code>ZoneId.of</code>・<code>ZoneId.systemDefault</code>・<code>ZoneOffset.of*</code> を画面の層で呼ばない）。規則が <code>ZoneOffset.ofHours</code> と <code>ZoneId.systemDefault</code> を検出することを、一時的に写しを入れて確かめた</li>
+<li><code>KpiObservationViewTest</code> を、書式のテストから「リードタイムと未提示の経過時間はどちらか一方だけを示す」のテストに書き直した</li>
+</ul>
+<h3 id="_5">デモ項目<a class="headerlink" href="#_5" title="Permanent link">&para;</a></h3>
+<p>画面の振る舞いは変わらない。S-02・S-06・S-22 の日時と期間の表示が前と同じであることは、画面の層のシナリオ（<code>uiTest</code>）の通過で示した。受入動画は撮らない（計画どおり）。</p>
+<h2 id="_6">指標<a class="headerlink" href="#_6" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
 <tr>
@@ -8162,302 +8138,211 @@
 </thead>
 <tbody>
 <tr>
-<td style="text-align: left;">承認ゲート</td>
-<td style="text-align: left;">計画と確認ポイント 1〜6 の承認 1 回、ステップ 1・2a・2b・3 の承認 4 回。ステップ 4 は本報告の承認で受けた</td>
+<td style="text-align: left;">テスト</td>
+<td style="text-align: left;"><code>test</code> 1,210 件（Bolt 21 の 1,174 件から +36。部品の表の行と規則）、<code>uiTest</code> 59 本（変わらず）、<code>documentationTest</code> 1 件</td>
+</tr>
+<tr>
+<td style="text-align: left;">承認ゲートの通過</td>
+<td style="text-align: left;">計画の承認 1 回、終了報告（本報告）</td>
 </tr>
 <tr>
 <td style="text-align: left;">人の変更依頼</td>
-<td style="text-align: left;">0</td>
+<td style="text-align: left;">0（本報告の時点）</td>
 </tr>
 <tr>
-<td style="text-align: left;">実行中に AI が直した誤り</td>
-<td style="text-align: left;">9（人に示す前に、テスト・CI・静的解析・SonarQube で見つけて直したもの。Checkstyle の <code>default</code> の指摘と、Red の集計の誤りは含めない。表示名の分岐 1、ステップの重複 2、URL のセッション ID 1、表の横スクロール 1、target-size 1、正規表現 1、SonarQube の指摘 1、時刻の記録の誤り 1）</td>
-</tr>
-<tr>
-<td style="text-align: left;">テスト</td>
-<td style="text-align: left;"><code>test</code> 273 件（Bolt 4 の 235 件から 38 件増えた）。業務ルール層のシナリオは 38 本（Bolt 4 の 26 本と、審査の 7 本など）。<code>uiTest</code> の画面の層 11 本（Bolt 4 の 7 本から +4）。すべて成功</td>
-</tr>
-<tr>
-<td style="text-align: left;">CI</td>
-<td style="text-align: left;"><code>60c19b2</code> は <code>check</code> 2 分 14 秒、<code>ui</code> 3 分 15 秒で緑。ステップ 3 の最初の push（<code>1cc0b58</code>）は <code>ui</code> が target-size で赤になり、同じステップの中で直した</td>
-</tr>
-<tr>
-<td style="text-align: left;">SonarQube</td>
-<td style="text-align: left;">Quality Gate PASS（コマンドの成否で判定。終了コード 0）、Bug 0、Vulnerability 0、Code Smell 0、Security Hotspot 0、重複 0.6%、カバレッジ 95.9%</td>
-</tr>
-<tr>
-<td style="text-align: left;">コード</td>
-<td style="text-align: left;">本体 3,108 行（Bolt 4 の 2,086 行から +1,022）、テスト 4,550 行（3,286 行から +1,264）</td>
+<td style="text-align: left;">リードタイム</td>
+<td style="text-align: left;">約 45 分（計画の承認から本報告まで。テストと SonarQube の待ち時間を含む）</td>
 </tr>
 </tbody>
 </table>
-<h3 id="t-16">時間の内訳（T-16）<a class="headerlink" href="#t-16" title="Permanent link">&para;</a></h3>
+<h2 id="_7">品質ゲート<a class="headerlink" href="#_7" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
 <tr>
-<th style="text-align: left;">ステップ</th>
-<th style="text-align: right;">AI の実行</th>
-<th style="text-align: left;">開始 〜 完了</th>
-<th style="text-align: right;">前の承認からの待ち</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align: left;">1</td>
-<td style="text-align: right;">2 分</td>
-<td style="text-align: left;">20:47 〜 20:49</td>
-<td style="text-align: right;">0 分（計画の承認の直後）</td>
-</tr>
-<tr>
-<td style="text-align: left;">2a</td>
-<td style="text-align: right;">11 分</td>
-<td style="text-align: left;">20:51 〜 21:02</td>
-<td style="text-align: right;">2 分</td>
-</tr>
-<tr>
-<td style="text-align: left;">2b</td>
-<td style="text-align: right;">5 分</td>
-<td style="text-align: left;">21:06 〜 21:11</td>
-<td style="text-align: right;">4 分</td>
-</tr>
-<tr>
-<td style="text-align: left;">3</td>
-<td style="text-align: right;">33 分</td>
-<td style="text-align: left;">21:47 〜 22:20</td>
-<td style="text-align: right;">36 分</td>
-</tr>
-<tr>
-<td style="text-align: left;">4</td>
-<td style="text-align: right;">16 分</td>
-<td style="text-align: left;">22:25 〜 22:41（終了報告のコミット）</td>
-<td style="text-align: right;">5 分</td>
-</tr>
-<tr>
-<td style="text-align: left;">合計</td>
-<td style="text-align: right;">67 分</td>
-<td style="text-align: left;">20:47 〜 22:41（経過 1 時間 54 分）</td>
-<td style="text-align: right;">47 分</td>
-</tr>
-</tbody>
-</table>
-<p>計画の目安（240 分。承認の待ちを含む値）に対して、経過は 1 時間 54 分、AI の実行は 67 分だった（時刻は各ステップの結果に <code>date</code> で記録した値と、コミットの時刻による。Bolt 5 レビュー R-17 で数え直した）。ステップ 2b と 3 の間の 36 分には、人が開始準備のスキルをもう一度呼んだ確認のやり取りを含む。</p>
-<h2 id="_5">品質ゲート<a class="headerlink" href="#_5" title="Permanent link">&para;</a></h2>
-<table>
-<thead>
-<tr>
-<th style="text-align: left;">項目</th>
+<th style="text-align: left;">ゲート</th>
 <th style="text-align: left;">結果</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td style="text-align: left;">全テスト</td>
-<td style="text-align: left;"><code>check</code>（273 件）、<code>uiTest</code>（11 シナリオ）、すべて成功</td>
+<td style="text-align: left;"><code>test</code>・<code>documentationTest</code></td>
+<td style="text-align: left;">通過（1,210 件・1 件）</td>
 </tr>
 <tr>
-<td style="text-align: left;">書式・静的解析・本番の依存・カバレッジの閾値・用語集の整合</td>
-<td style="text-align: left;">すべて成功（Checkstyle の <code>switch</code> 文の <code>default</code> の指摘を、ステップ 3 の中で直した）</td>
+<td style="text-align: left;"><code>uiTest</code>（axe-core を含む）</td>
+<td style="text-align: left;">通過（59 本）</td>
 </tr>
 <tr>
-<td style="text-align: left;">CI</td>
-<td style="text-align: left;">緑（最新のコード <code>1cd3d89</code>、<code>check</code> 2 分 13 秒・<code>ui</code> 2 分 22 秒）</td>
+<td style="text-align: left;">ModularityTest・ArchUnit</td>
+<td style="text-align: left;">通過</td>
 </tr>
 <tr>
-<td style="text-align: left;">SonarQube の品質ゲート</td>
-<td style="text-align: left;">PASS</td>
+<td style="text-align: left;">Spotless</td>
+<td style="text-align: left;">通過</td>
 </tr>
 <tr>
-<td style="text-align: left;">ユーザーマニュアル</td>
-<td style="text-align: left;">対象外（マニュアルはまだない。画面は UI の骨格（#36）の前の仮の画面）</td>
+<td style="text-align: left;">SonarQube（ローカル）</td>
+<td style="text-align: left;">品質ゲート PASS。指摘 1 件（<code>DateTimeDisplayTest</code> の S3415、引数の順）を直した。走査は 3 回目で通った（1 回目は上の既知の課題のテストの失敗、2 回目は <code>jacocoTestReport</code> の失敗で、2 回目の原因は確かめられていない。単独で動かした <code>jacocoTestReport</code> と 3 回目の走査は通った）</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>okf:check</code></td>
+<td style="text-align: left;">ERROR 0</td>
 </tr>
 </tbody>
 </table>
-<h2 id="_6">仮説の結論<a class="headerlink" href="#_6" title="Permanent link">&para;</a></h2>
+<h2 id="_8">仮説の結論<a class="headerlink" href="#_8" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
 <tr>
 <th style="text-align: left;">#</th>
 <th style="text-align: left;">仮説</th>
 <th style="text-align: left;">結論</th>
-<th style="text-align: left;">根拠</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td style="text-align: left;">H1</td>
-<td style="text-align: left;">審査の対象の版番号をコマンドに持たせ、集約の現在の版番号と照合すれば、古い版の審査の確定を集約の規則だけで拒否できる</td>
-<td style="text-align: left;">成り立った</td>
-<td style="text-align: left;">集約の単体テストと業務ルール層の <code>@US-02-AC3</code> で、差戻し・再提出で版 2 ができた後の版 1 の確定・差戻しが「古い版」として拒否され、最新の版番号が返ることを確かめた。ARCH-HO-01 の期待版（集約の <code>version</code>）は、同時の更新を楽観ロックで 1 人だけ成功させる別の仕組みとして入れた</td>
+<td style="text-align: left;"><code>platform :: web</code> を名前付きインターフェースにすれば、<code>shared</code> を変えずに 3 つのモジュールから使える</td>
+<td style="text-align: left;">成り立った。<code>allowedDependencies</code> に足すだけで ModularityTest が通り、<code>shared</code> に差分はない</td>
 </tr>
 <tr>
 <td style="text-align: left;">H2</td>
-<td style="text-align: left;">状態を変える集約の保存を、楽観ロック付きの UPDATE と審査記録の INSERT で、H2 と PostgreSQL に共通の SQL で書ける</td>
-<td style="text-align: left;">成り立った</td>
-<td style="text-align: left;"><code>UPDATE ... WHERE version = ?</code> と <code>INSERT ... SELECT ... WHERE NOT EXISTS</code> で書き、PostgreSQL の統合テストと H2 のスモークで確かめた。同じ集約の版を 2 つ読んで更新すると、後の更新が競合で失敗した（R-27）</td>
-</tr>
-<tr>
-<td style="text-align: left;">H3</td>
-<td style="text-align: left;">ステップの区切りを「終わりに <code>check</code> が緑になる単位」にすれば、どのステップの終わりにも push できる（T-14）</td>
-<td style="text-align: left;">成り立った（課題あり）</td>
-<td style="text-align: left;">ステップ 1・2a・2b・3 の終わりに <code>check</code> を緑にして push できた。ただしステップ 3 では、手元の macOS で緑だった <code>ui</code> が CI（Linux）で赤になり、同じステップの中で直した</td>
+<td style="text-align: left;">3 つの期間の形を部品に名前の付いた形として持てば、振る舞いを変えずに集められる</td>
+<td style="text-align: left;">成り立った。既存のテストの期待の文字列を 1 つも変えずに通った</td>
 </tr>
 </tbody>
 </table>
-<h2 id="_7">判断と学び<a class="headerlink" href="#_7" title="Permanent link">&para;</a></h2>
-<h3 id="_8">設計への反映（反映済み）<a class="headerlink" href="#_8" title="Permanent link">&para;</a></h3>
+<h2 id="_9">開発レビュー<a class="headerlink" href="#_9" title="Permanent link">&para;</a></h2>
+<p>プログラマー（テスターの観点を含む）とアーキテクトの 2 つの観点で行った。重大度「高」はなかった。</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">#</th>
+<th style="text-align: left;">指摘</th>
+<th style="text-align: left;">重大度</th>
+<th style="text-align: left;">対応</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">P-1 / A-4</td>
+<td style="text-align: left;">写しを禁じる規則が <code>ZoneId.systemDefault()</code>・<code>ZoneOffset.of*</code>・<code>ZoneId.of</code> のほかの形を見逃す。Javadoc が期間まで守らせるように読める</td>
+<td style="text-align: left;">中</td>
+<td style="text-align: left;">直した（規則を広げ、Javadoc を「日時の書式とタイムゾーンを守らせる。期間の写しはレビューで見る」に）</td>
+</tr>
+<tr>
+<td style="text-align: left;">P-2</td>
+<td style="text-align: left;">負の期間の境界が特性テストにない（<code>connection(-PT1H30M)</code> は「-30 分」、<code>hoursAndMinutes(-PT90M)</code> は「-1 時間 -30 分」）</td>
+<td style="text-align: left;">中</td>
+<td style="text-align: left;">いまの値を特性として表に固定した。負を拒む・0 に丸めるは振る舞いの変更なので後に回す（W9 の期間の形の決定とあわせる）</td>
+</tr>
+<tr>
+<td style="text-align: left;">P-3</td>
+<td style="text-align: left;">表の境界の不足（1 時間以上で秒がある、1 日以上で分が消える、48 時間など）</td>
+<td style="text-align: left;">低</td>
+<td style="text-align: left;">直した</td>
+</tr>
+<tr>
+<td style="text-align: left;">P-4</td>
+<td style="text-align: left;"><code>KpiObservationViewTest</code> を消すと、リードタイムと経過時間の排他を単体で確かめられない</td>
+<td style="text-align: left;">低</td>
+<td style="text-align: left;">直した（<code>from</code> のテスト 2 本）</td>
+</tr>
+<tr>
+<td style="text-align: left;">P-5 / P-6</td>
+<td style="text-align: left;">呼び出しが 1 か所だけのアダプタ（<code>elapsed</code>、Kpi の <code>staffDateTime</code>）と <code>RoutingCaseViews.duration</code> は不要</td>
+<td style="text-align: left;">低</td>
+<td style="text-align: left;">直した（インライン化）。<code>customerDateTime</code> はメソッド参照で 4 か所から使うので残した</td>
+</tr>
+<tr>
+<td style="text-align: left;">P-7</td>
+<td style="text-align: left;"><code>DurationDisplay</code> の Javadoc の言葉</td>
+<td style="text-align: left;">低</td>
+<td style="text-align: left;">直した</td>
+</tr>
+<tr>
+<td style="text-align: left;">A-1</td>
+<td style="text-align: left;">ADR-001 のコンプライアンスと食い違う</td>
+<td style="text-align: left;">中</td>
+<td style="text-align: left;">直した（議題 5）</td>
+</tr>
+<tr>
+<td style="text-align: left;">A-2</td>
+<td style="text-align: left;"><code>quotation</code> が依存を宣言していない</td>
+<td style="text-align: left;">中</td>
+<td style="text-align: left;">直した（議題 4）</td>
+</tr>
+<tr>
+<td style="text-align: left;">A-3</td>
+<td style="text-align: left;">タイムゾーンが static 定数で、利用者ごとのタイムゾーンを入れるときに呼び出し元すべてが変わる。<code>QuotationFormConverter</code> は別名の <code>CUSTOMER_ZONE</code> を経由している</td>
+<td style="text-align: left;">中</td>
+<td style="text-align: left;">別名の経由は直した（<code>DateTimeDisplay.ZONE</code> を直接使う）。<code>ZoneId</code> を受けるオーバーロードは、まだ使う所がないので作らない（利用者ごとのタイムゾーンを入れる Bolt で、画面の層が認証の主体から <code>ZoneId</code> を解決して渡す形にする）</td>
+</tr>
+<tr>
+<td style="text-align: left;">A-5</td>
+<td style="text-align: left;">採番のタイムゾーン（業務番号の年の区切り）と表示のタイムゾーンの区別が書かれていない</td>
+<td style="text-align: left;">低</td>
+<td style="text-align: left;">直した（architecture_backend.md）</td>
+</tr>
+<tr>
+<td style="text-align: left;">A-6</td>
+<td style="text-align: left;"><code>platform/package-info.java</code> の Javadoc が古い</td>
+<td style="text-align: left;">低</td>
+<td style="text-align: left;">直した</td>
+</tr>
+<tr>
+<td style="text-align: left;">A-7</td>
+<td style="text-align: left;">Spring Modulith の生成図に、3 つのコンテキストから <code>platform</code> への矢印が新しく出る</td>
+<td style="text-align: left;">低</td>
+<td style="text-align: left;">想定どおり（本報告に記録）</td>
+</tr>
+</tbody>
+</table>
+<h2 id="_10">判断と学び<a class="headerlink" href="#_10" title="Permanent link">&para;</a></h2>
+<h3 id="bolt">既知の課題（後の Bolt に持ち込む）<a class="headerlink" href="#bolt" title="Permanent link">&para;</a></h3>
 <ul>
-<li>ドメインモデル: 審査記録・審査の判断の用語、集約の操作（再提出・確定・差戻し）、Q-INV-04 の照合、Q-INV-14・15、DE-02（判断時刻、判断は文字列）、社内用の照会</li>
-<li>データモデル: <code>review_record</code>（判断の制約、追記専用）、楽観ロックの更新</li>
-<li>ユーザーストーリー・UI 設計・要件定義: US-02 の決定、S-02・S-03 の URL と振る舞い、見積り作成中の状態</li>
-<li>実装の取り決め: 楽観ロックの競合はドメインの例外 <code>ConcurrentTransportRequestUpdateException</code>（リポジトリのポートを技術の例外に依存させない）。セッションの追跡は Cookie だけ</li>
+<li><strong>DE-03 と DE-16 の listener の競合</strong>: <code>QuotationPresentedEventHandler</code>（見積提示済みにする）と <code>RouteDesignRequestedEventHandler</code>（経路設計中にする）は、どちらもコミット後に非同期・新しいトランザクションで同じ輸送要求を更新する。提示の直後に詳細経路設計を依頼すると、DE-16 の側が <code>ConcurrentTransportRequestUpdateException</code> で失敗し、発行の記録は未完了のまま残る。いまは起動し直したときだけ再配信される（定期の再配信は W10。ADR-014）。SonarQube のコンテナで CPU が混んだ走査の中で、<code>RouteDesignRequestedRoutingIntegrationTest</code> が 1 回失敗して分かった。Bolt 12 からある競合で、この Bolt の変更とは関係ない。直し方（競合したときの読み直しと再試行、受理の条件の見直し、定期の再配信の前倒し）を決めるタスクを提案した。US-04 の DE-07 の listener（Bolt 23）も同じ輸送要求を更新するので、Bolt 23 の計画の確認ポイントにする</li>
+<li>W4 の予約・追跡のモジュール（Bolt 23・25）は、<code>package-info</code> で最初から <code>allowedDependencies</code> に <code>"shared"</code>・<code>"platform :: web"</code> と上流の <code>api</code>・<code>events</code> を明示する。荷主の画面（C-10 など）は <code>DateTimeDisplay.customer</code>、社内の画面（S-09・S-13・S-24）は <code>staff</code> を使い、新しい期間の形は ui_design.md の 3 つの形のどれかに当てはめる（開発レビュー A-3 の影響の欄）</li>
 </ul>
-<h3 id="_9">既知の課題<a class="headerlink" href="#_9" title="Permanent link">&para;</a></h3>
-<table>
-<thead>
-<tr>
-<th style="text-align: left;">課題</th>
-<th style="text-align: left;">影響</th>
-<th style="text-align: left;">扱い</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align: left;">荷主が差戻し理由を見て直し、版 2 を出し直す画面（C-04、C-03 の編集）がない</td>
-<td style="text-align: left;">再提出は業務ルール層でしか使えない</td>
-<td style="text-align: left;">次の Bolt で作る（再提出の入力ポートはそのまま使える）</td>
-</tr>
-<tr>
-<td style="text-align: left;"><code>/staff/**</code> に認証がない</td>
-<td style="text-align: left;">社内の画面を誰でも開ける</td>
-<td style="text-align: left;">ローカルの開発環境だけで動かす。US-18 で認証を入れる（手順書に書いた）</td>
-</tr>
-<tr>
-<td style="text-align: left;">受付一覧と審査画面は、輸送要求ごとに審査記録を別の SQL で読む（N+1）</td>
-<td style="text-align: left;">一覧の件数が多いと遅くなる</td>
-<td style="text-align: left;">MVP の件数では問題にならない。運用準備（W10）の性能テストで確かめる</td>
-</tr>
-<tr>
-<td style="text-align: left;">ARCH-HO-01 の <code>commandId</code>（二重送信の吸収）と、競合の差分の表示がない</td>
-<td style="text-align: left;">二重送信で同じ審査が 2 回試みられうる（2 回目は審査中でないとして拒否される）</td>
-<td style="text-align: left;">後の Bolt</td>
-</tr>
-<tr>
-<td style="text-align: left;">画面のスタイル（押せる範囲、表の横スクロール）を画面ごとにインラインで書いた</td>
-<td style="text-align: left;">共通の部品がない</td>
-<td style="text-align: left;">UI の骨格（#36）で共通の CSS に移す</td>
-</tr>
-<tr>
-<td style="text-align: left;">支援技術（VoiceOver）による手動確認</td>
-<td style="text-align: left;">Bolt 4 から継続</td>
-<td style="text-align: left;">人の作業として残る</td>
-</tr>
-</tbody>
-</table>
-<h3 id="bolt-4-try">Bolt 4 の Try の結果<a class="headerlink" href="#bolt-4-try" title="Permanent link">&para;</a></h3>
-<table>
-<thead>
-<tr>
-<th style="text-align: left;">Try</th>
-<th style="text-align: left;">結果</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align: left;">T-14 ステップの区切りは、終わりに <code>check</code> が緑になる単位にする</td>
-<td style="text-align: left;">実施した。ステップ 2 を 2a・2b に分け、どのステップの終わりにも push できた（H3）</td>
-</tr>
-<tr>
-<td style="text-align: left;">T-15 マイグレーションを書いたら、先に H2 のスモークを回す。ASCII 以外の設定値の文字コードを確かめる</td>
-<td style="text-align: left;">実施した。H2 のスモークは最初から通った。新しい設定値は ASCII だけだった</td>
-</tr>
-<tr>
-<td style="text-align: left;">T-16 ステップの開始と完了を時刻で残し、待ちと実行を分けて測る</td>
-<td style="text-align: left;">実施した（上の「時間の内訳」）。ステップ 2b の完了時刻を誤って書き、後で直した</td>
-</tr>
-<tr>
-<td style="text-align: left;">T-17 <code>cd</code> には絶対パスを使う</td>
-<td style="text-align: left;">おおむね守った</td>
-</tr>
-</tbody>
-</table>
 <h3 id="kpt">ふりかえり（KPT）<a class="headerlink" href="#kpt" title="Permanent link">&para;</a></h3>
 <ul>
-<li><strong>Keep</strong>:</li>
-<li>開始準備の検証で「ステップ 2 の詰め込みすぎ」を見つけ、2a・2b に分けたことで、各ステップの終わりに <code>check</code> を緑にできた</li>
-<li>失敗の画面とアプリの起動で原因を確かめてから直した（URL のセッション ID は、テストの待ち時間切れから見つけた安全上の問題だった）</li>
-<li>CI だけの失敗を、CI の成果物（axe-core の結果）で特定した</li>
-<li><strong>Problem</strong>:</li>
-<li>手元（macOS）と CI（Linux）の文字の描画の違いで、手元の <code>uiTest</code> が緑でも CI が赤になった</li>
-<li>テストの結果の集計で、ambiguous を通ったものとして数え、Red の確認を一度誤った</li>
-<li>時刻の記録を、実際の時刻を確かめずに書いた</li>
-<li><strong>Try</strong>:</li>
-<li>T-18: 画面の押せる範囲（24 CSS px）と横スクロールに効くスタイルは、画面ごとでなく UI の骨格（#36）の共通の CSS で決める（AI、#36 の Bolt）</li>
-<li>T-19: テストの結果を集計するときは、<code>passed</code> 以外の状態（<code>failed</code>・<code>ambiguous</code>・<code>undefined</code>・<code>skipped</code>）をすべて数える（AI、すぐ）</li>
-<li>T-20: 計画に書く時刻は、<code>date</code> で確かめた値だけを書く（AI、すぐ）</li>
+<li>Keep</li>
+<li>特性テストを先に書き、部品を作ってから置き換えたので、画面の文字列を変えずに集められた</li>
+<li>写しを禁じる規則を Red で先に入れ、3 つの写しを検出することを確かめてから置き換えた。規則を広げたあとも、一時的に写しを入れて検出を確かめた</li>
+<li>Problem</li>
+<li>計画の確認ポイント 7 の規則を、既存のコード（フォームの変換）を grep せずに書いた。実装で初めて食い違いに気づいた</li>
+<li>Red の規則を含むコミットを push し、CI の <code>check</code> を 1 回赤にした</li>
+<li>置き換えで <code>ArrayList</code> の import まで消し、1 回コンパイルに失敗した</li>
+<li>Try</li>
+<li>T-64: ArchUnit の禁止の規則を計画に書くときは、禁じる型・呼び出しをコードで grep し、正当な使い道（入力の解釈など）がないか確かめてから書く（AI、次の Bolt から）</li>
+<li>T-65: Red のテストだけのコミットは push してよいが、既存の CI を赤にする Red（規則・アーキテクチャテスト）は、Green と同じ push にまとめる（AI、次の Bolt から）</li>
 </ul>
-<h2 id="_10">レビューとクローズ<a class="headerlink" href="#_10" title="Permanent link">&para;</a></h2>
-<p><a href="../../../review/cargo-tracker/bolt_05_review_20261002/">Bolt 5 開発成果物レビュー</a> の指摘を、クローズの前に直した（R-01〜R-21。詳細はレビューの「対応結果」）。主なものは次のとおり。</p>
-<ul>
-<li><strong>判断の取り違え（R-01）</strong>: 審査の POST で、<code>APPROVED</code> 以外の値がすべて差戻しになっていた。判断を解釈し、知らない値やないときは 400 にした</li>
-<li><strong>1 つの版に判断は 1 つ（R-02）</strong>: 楽観ロックだけで守っていた規則を、審査記録の一意制約で DB でも守る</li>
-<li><strong>審査記録の書き戻しと並び（R-03）</strong>: 更新のたびに全件を書き戻していた。新しい審査記録だけを追加し、版番号の順に返す</li>
-<li><strong>本当の同時実行（R-04）</strong>: 楽観ロックのテストが 1 つのトランザクションの中で順に更新していた。別々のトランザクションを同時に動かして確かめた</li>
-<li><strong>受付一覧（R-05・R-09・R-13）</strong>: 差し戻して出し直した版が最後に回っていた。集約を組み立てない読み取りモデルにし、最初の提出時刻の古い順に並べ、貨物種別と待っている時間を出した</li>
-<li><strong>審査の履歴（R-06・R-11）</strong>: 版 2 の審査で前の判断が見えなかった。審査記録の履歴を示し、古い版で拒否したら根拠・理由を空にする</li>
-<li><strong>CSRF のつなぎ（D-21）</strong>: Cookie に <code>SameSite=Lax</code> を付けた。Spring Security の CSRF の防御と認証は US-18</li>
-</ul>
-<p>対応の後も、<code>check</code>（285 件）、<code>uiTest</code>（11 シナリオ）、CI、SonarQube の品質ゲート（PASS）は緑。GitHub の #3 は、AC1〜AC3 がそろったため閉じた。業務責任者に確かめる事項（D-24: 差戻しの荷主への知らせ方、出し直しの期限、不足事項の形、仮の営業担当者の記録と監査）は、レビューの「人の判断事項」に記録した。</p>
-<h2 id="_11">承認待ちの書き換え<a class="headerlink" href="#_11" title="Permanent link">&para;</a></h2>
-<p>この Bolt で、承認済み（<code>stable</code>）の次の文書の本文を書き換えた。決定の中身は計画と各ステップの承認で人が確かめた。</p>
-<ul>
-<li>決定の反映: <code>domain_model.md</code>、<code>data_model.md</code>、<code>user_story.md</code>、<code>ui_design.md</code>、<code>requirements_definition.md</code></li>
-<li>運用の文書: <code>docs/operation/cargo-tracker/application_development_setup.md</code></li>
-<li>計画: <code>bolt_05_plan.md</code>（各ステップの結果と時刻）、<code>release_plan.md</code>（W1 の Bolt 5 のリンク）</li>
-</ul>
-<h2 id="bolt">次の Bolt<a class="headerlink" href="#bolt" title="Permanent link">&para;</a></h2>
-<ul>
-<li><strong>W1 の残り</strong>: 荷主の再提出の画面（C-04 見積依頼の詳細で差戻し理由を見て、C-03 の編集で版 2 を出し直す）、US-01 AC2 の必要書類、#36（UI の骨格と段階入力）</li>
-<li><strong>人が決めること</strong>: 次の Bolt をどれにするか。必要書類の Bolt の前には D-20（見積りの段階で必須か任意か、形式と容量、閲覧できる人、複製で再提出させるか）</li>
-<li><strong>ゲート密度</strong>: 5 回の Bolt で、人の変更依頼は 0 件だった。AI の誤りは、テストと CI と SonarQube で実行中に見つかっている。業務のルールに関わらないステップ（画面の層の小さな修正など）の承認ゲートをまとめるかを、人が判断する</li>
-</ul>
-<h2 id="_12">更新履歴<a class="headerlink" href="#_12" title="Permanent link">&para;</a></h2>
+<h2 id="bolt_1">次の Bolt<a class="headerlink" href="#bolt_1" title="Permanent link">&para;</a></h2>
+<p>Bolt 23: US-04 AC1 確定・AC2 失効（#10）。W4 の計画のとおり、最初のステップで 2 つの ADR（予約サガと追跡の開始の依存の向き、予約から見積りの確定可否の問い合わせ）を書き、architecture_backend.md の予約サガの図を直す。インサイドアウトで、確定は Red・Green ごと、スキーマはステップごとに止める。上の既知の課題（listener の競合）を確認ポイントにする。</p>
+<h2 id="_11">更新履歴<a class="headerlink" href="#_11" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
 <tr>
 <th style="text-align: left;">日付</th>
-<th style="text-align: left;">内容</th>
-<th style="text-align: left;">作成</th>
-<th style="text-align: left;">承認</th>
+<th style="text-align: left;">更新内容</th>
+<th style="text-align: left;">更新者</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td style="text-align: left;">2026-10-02</td>
-<td style="text-align: left;">初版</td>
+<td style="text-align: left;">2026-10-08</td>
+<td style="text-align: left;">初版（ステップ 1〜5 の結果、開発レビュー、品質ゲート、既知の課題、承認の議題 1〜9、Try T-64・T-65）</td>
 <td style="text-align: left;">anthropic/claude-opus-5-5</td>
-<td style="text-align: left;">—</td>
-</tr>
-<tr>
-<td style="text-align: left;">2026-10-02</td>
-<td style="text-align: left;">終了報告と、承認待ちの書き換え（ドメインモデル・データモデル・ユーザーストーリー・UI 設計・要件定義・手順書・計画・リリース計画）を承認</td>
-<td style="text-align: left;">anthropic/claude-opus-5-5</td>
-<td style="text-align: left;">human:kakimomokuri</td>
-</tr>
-<tr>
-<td style="text-align: left;">2026-10-03</td>
-<td style="text-align: left;">レビューの対応（レビューとクローズ）を承認し、Bolt 5 をクローズした</td>
-<td style="text-align: left;">anthropic/claude-opus-5-5</td>
-<td style="text-align: left;">human:kakimomokuri</td>
 </tr>
 </tbody>
 </table>
-<h2 id="_13">関連ドキュメント<a class="headerlink" href="#_13" title="Permanent link">&para;</a></h2>
+<h2 id="_12">関連ドキュメント<a class="headerlink" href="#_12" title="Permanent link">&para;</a></h2>
 <ul>
-<li><a href="../bolt_05_plan/">Bolt 5 計画</a></li>
-<li><a href="../release_plan/">リリース計画</a>（W1）</li>
-<li><a href="../bolt_04_report/">Bolt 4 終了報告</a>、<a href="../../../review/cargo-tracker/bolt_04_review_20261002/">Bolt 4 開発成果物レビュー</a></li>
-<li><a href="../../../design/cargo-tracker/domain_model/">ドメインモデル</a>、<a href="../../../design/cargo-tracker/data_model/">データモデル</a>、<a href="../../../design/cargo-tracker/ui_design/">UI 設計</a>、<a href="../../../requirements/cargo-tracker/user_story/">ユーザーストーリー</a></li>
-<li><a href="../../../operation/cargo-tracker/application_development_setup/">アプリケーション開発環境セットアップ手順書</a></li>
+<li><a href="../bolt_22_plan/">Bolt 22 計画</a></li>
+<li><a href="../release_plan/">リリース計画</a>（W4）</li>
+<li><a href="../../../adr/cargo-tracker/001-modular-monolith/">ADR-001</a></li>
+<li><a href="../../../design/cargo-tracker/architecture_backend/">バックエンドアーキテクチャ</a></li>
+<li><a href="../../../design/cargo-tracker/ui_design/">UI 設計</a></li>
 </ul>
 
 
