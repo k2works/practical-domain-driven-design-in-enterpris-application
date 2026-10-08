@@ -281,7 +281,7 @@ class BookingControllerTest {
                 .andExpect(content().string(containsString("処理中（追跡の開始を待っています）")))
                 .andExpect(content().string(containsString("確定時刻")))
                 .andExpect(content().string(not(containsString("commit 時刻"))))
-                .andExpect(content().string(containsString("完了したらこの画面に表示します。画面を更新して確かめてください。")))
+                .andExpect(content().string(containsString("追跡の開始が完了したらこの画面に表示します。画面を更新して確かめてください。")))
                 .andExpect(content().string(not(containsString(">完了<"))))
                 .andExpect(
                         content().string(not(containsString(booking.id().value().toString()))));
