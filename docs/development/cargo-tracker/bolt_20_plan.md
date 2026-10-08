@@ -4,7 +4,7 @@ title: "Bolt 20 計画 - 確定した経路の割当てと荷主の承認（US-2
 description: "20 回目の Bolt の計画。経路設計の確定（DE-05）を経路設計の中の listener で受け、見積りの公開 API で依頼元の見積りに経路版を割り当てる（D-71、ADR-014）。荷主担当者が見積りと確定した経路を確かめて承認し（US-24 AC4）、失効・置換済みの見積りへの承認を拒否する（AC5）までを、ステップ 1〜5 で定義する。"
 tags: [development,bolt-plan]
 status: draft
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-08T02:47:55Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-08T02:51:16Z }
 ---
 
 # Bolt 20 計画 - 確定した経路の割当てと荷主の承認（US-24 AC4・AC5）
@@ -295,13 +295,13 @@ C05A --> C04 : 戻る
 
 ## 完了条件
 
-- [ ] US-24 AC4・AC5 の受入シナリオ（業務ルール層・画面の層）が通る
-- [ ] DE-05 の確定から割当て・承認・輸送要求の予約待ちまでが PostgreSQL の統合テストで通る
-- [ ] ApplicationModules の検証が緑で、`quotation` は `routing` に依存しない
-- [ ] `check` と `uiTest` が緑。push して CI とデモ環境の配備を確かめた
-- [ ] SonarQube の Quality Gate が PASS
-- [ ] ADR-014 と設計文書に決定を書き、計画からの変更も設計文書に戻した（T-53）
-- [ ] 開発レビューと終了報告を書き、#5 をクローズした
+- [x] US-24 AC4・AC5 の受入シナリオ（業務ルール層・画面の層）が通る
+- [x] DE-05 の確定から割当て・承認・輸送要求の予約待ちまでが PostgreSQL の統合テストで通る
+- [x] ApplicationModules の検証が緑で、`quotation` は `routing` に依存しない
+- [x] `check` と `uiTest` が緑。push して CI とデモ環境の配備を確かめた（#125。デモ環境での操作の確かめは人に依頼した）
+- [x] SonarQube の Quality Gate が PASS
+- [x] ADR-014 と設計文書に決定を書き、計画からの変更も設計文書に戻した（T-53）
+- [x] 開発レビューと終了報告を書き、#5 をクローズした
 
 ## 更新履歴
 
