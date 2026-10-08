@@ -293,16 +293,16 @@
                                 </thead>
                                 <tbody>
                                 <tr>
-                                    <td>ck_pricing_line_no</td>
-                                    <td>((line_no &gt;&#61; 1) AND (line_no &lt;&#61; 10))</td>
+                                    <td>ck_pricing_line_amount</td>
+                                    <td>(amount &gt; (0)::numeric)</td>
                                 </tr>
                                 <tr>
                                     <td>ck_pricing_line_currency</td>
                                     <td>(currency &#61; ANY (ARRAY[&#39;USD&#39;::bpchar, &#39;EUR&#39;::bpchar, &#39;JPY&#39;::bpchar]))</td>
                                 </tr>
                                 <tr>
-                                    <td>ck_pricing_line_amount</td>
-                                    <td>(amount &gt; (0)::numeric)</td>
+                                    <td>ck_pricing_line_no</td>
+                                    <td>((line_no &gt;&#61; 1) AND (line_no &lt;&#61; 10))</td>
                                 </tr>
                                 </tbody>
                             </table>
