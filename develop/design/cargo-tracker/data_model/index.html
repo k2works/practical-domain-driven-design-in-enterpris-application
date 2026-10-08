@@ -8381,7 +8381,7 @@
 </tr>
 <tr>
 <td style="text-align: left;"><code>kpi_observation</code></td>
-<td style="text-align: left;">輸送要求ごとに 1 行。DE-01 で作り、DE-03 で最初の提示時刻だけを記録する（2 回目以降の提示では更新しない）。<code>transport_request_number</code> は DE-01 の表示用の業務番号の写しで、社内の一覧に UUID の代わりに出す（Bolt 4）。Bolt 4 より前の DE-01 は業務番号を持たないため null を許す</td>
+<td style="text-align: left;">輸送要求ごとに 1 行。DE-01 で作り、DE-03 で最初の提示時刻を記録する。2 回目以降の提示では、届いた提示時刻のほうが早いとき（届く順の入れ替わり）だけ書き換える条件付きの更新にする（Bolt 21。KPI-INV-01）。<code>ck_kpi_observation_first_presented_at</code> で最初の提示時刻が提出時刻より前にならないことを確かめる（KPI-INV-03）。<code>transport_request_number</code> は DE-01 の表示用の業務番号の写しで、社内の一覧に UUID の代わりに出す（Bolt 4）。Bolt 4 より前の DE-01 は業務番号を持たないため null を許す</td>
 <td style="text-align: left;">KPI-INV-01</td>
 </tr>
 <tr>
