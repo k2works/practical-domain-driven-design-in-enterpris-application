@@ -38,6 +38,7 @@ import com.example.cargotracker.routing.domain.model.valueobjects.RoutingCaseSum
 import com.example.cargotracker.shared.domain.CompanyId;
 import com.example.cargotracker.shared.domain.UserId;
 import java.time.Duration;
+import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -110,7 +111,7 @@ class RouteConfirmedAssignmentIntegrationTest {
                                         summary.transportRequestNumber().equals(number.text()))
                                 .map(RoutingCaseSummary::number)
                                 .findFirst(),
-                        found -> found.isPresent())
+                        Optional::isPresent)
                 .orElseThrow();
         String voyageNumber = directVoyage();
 

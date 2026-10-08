@@ -42,12 +42,17 @@ class AssignedRouteTest {
     @Test
     void 区間のない経路と経路版番号0と到着が出発より後でない区間は作れない() {
         UtcInstant confirmedAt = at("2026-10-08T02:00:00Z");
+        List<AssignedRouteLeg> noLegs = List.of();
+        List<AssignedRouteLeg> oneLeg = List.of(first);
 
-        assertThatThrownBy(() -> new AssignedRoute("RC-2026-0001", 1, confirmedAt, List.of()))
+        assertThatThrownBy(() -> new AssignedRoute("RC-2026-0001", 1, confirmedAt, noLegs))
                 .isInstanceOf(IllegalArgumentException.class);
-        assertThatThrownBy(() -> new AssignedRoute("RC-2026-0001", 0, confirmedAt, List.of(first)))
+        assertThatThrownBy(() -> new AssignedRoute("RC-2026-0001", 0, confirmedAt, oneLeg))
                 .isInstanceOf(IllegalArgumentException.class);
-        assertThatThrownBy(() -> leg("V-381", "JPTYO", "SGSIN", "2099-10-12T03:00:00Z", "2099-10-12T03:00:00Z"))
+        Location tokyo = new Location("JPTYO");
+        Location singapore = new Location("SGSIN");
+        UtcInstant departure = at("2099-10-12T03:00:00Z");
+        assertThatThrownBy(() -> new AssignedRouteLeg("V-381", tokyo, singapore, departure, departure))
                 .isInstanceOf(IllegalArgumentException.class);
     }
 

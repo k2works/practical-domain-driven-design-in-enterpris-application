@@ -37,8 +37,9 @@ public class QuotationRouteAssignmentEventHandler {
 
     @ApplicationModuleListener
     public void on(RouteConfirmed event) {
-        Optional<RoutingCase> found = repository.findByNumber(RoutingCaseNumber.parse(event.caseNumber()));
-        Optional<RouteCandidate> confirmed = found.flatMap(routingCase -> confirmedCandidate(routingCase, event));
+        RoutingCaseNumber number = RoutingCaseNumber.parse(event.caseNumber());
+        Optional<RouteCandidate> confirmed =
+                repository.findByNumber(number).flatMap(routingCase -> confirmedCandidate(routingCase, event));
         if (confirmed.isEmpty()) {
             LOG.warn(
                     "DE-05 の確定した候補が見つからないため見積りに割り当てなかった: 案件 {}、経路版 {}、見積り {}",
@@ -50,7 +51,7 @@ public class QuotationRouteAssignmentEventHandler {
         routeAssignments
                 .assign(
                         event.quotationId(),
-                        found.get().number(),
+                        number,
                         event.routeVersionNo(),
                         event.approvedAt(),
                         confirmed.get().legs())
