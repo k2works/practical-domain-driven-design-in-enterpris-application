@@ -4,7 +4,7 @@ title: "Bolt 20 計画 - 確定した経路の割当てと荷主の承認（US-2
 description: "20 回目の Bolt の計画。経路設計の確定（DE-05）を経路設計の中の listener で受け、見積りの公開 API で依頼元の見積りに経路版を割り当てる（D-71、ADR-014）。荷主担当者が見積りと確定した経路を確かめて承認し（US-24 AC4）、失効・置換済みの見積りへの承認を拒否する（AC5）までを、ステップ 1〜5 で定義する。"
 tags: [development,bolt-plan]
 status: draft
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-08T01:37:44Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-08T01:49:49Z }
 ---
 
 # Bolt 20 計画 - 確定した経路の割当てと荷主の承認（US-24 AC4・AC5）
@@ -230,12 +230,18 @@ C05A --> C04 : 戻る
     - 計画からの変更: 他社の荷主の拒否（Q-INV-08）は、見積りが荷主企業を持たないため集約ではなく、荷主企業で絞った照会を通すアプリケーション層で確かめる（ステップ 3・4 のテスト）
     - `check` 緑（`test` 1,068 件）
     - 承認ゲートの扱い（T-36）: Red と Green の承認ゲートで止まらずに進めた（AI の判断）。根拠は、テストの表が計画の確認ポイント 3・4・7 と Q-INV-07・10 のとおりであること
-- [ ] **3. 表・公開 API・経路設計の listener・イベントの購読（統合テスト）** 【承認ゲート: データベース・モジュールの境界】
+- [x] **3. 表・公開 API・経路設計の listener・イベントの購読（統合テスト）** 【承認ゲート: データベース・モジュールの境界】
   - 業務ルール層の受入シナリオを先に書く（`features/quotation/approve_quotation_and_route.feature`、`@US-24-AC4`・`AC5`）: 経路設計者が確定すると見積りが荷主承認待ちになり、荷主が承認すると承認済み・輸送要求が予約待ちになる。有効期限と同時刻の承認は失効で拒否。DE-05 の再配信で割当ては重複しない
   - 統合テスト（PostgreSQL）を先に書く: 見積りの列と区間の表の保存と読み出し、CHECK、状態の値。DE-05 の確定から割当てまでを、イベントの発行の記録を経て非同期に通す（Bolt 17 の DE-16 と同じ形）
   - マイグレーション、`quotation.api.RouteAssignment`（`@NamedInterface("api")`）と実装、経路設計の listener と ACL、DE-21・DE-04 の listener（見積りの中）、入力ポート（荷主の承認）
   - ApplicationModules の検証と ArchUnit: `quotation` は `routing` に依存しない。`routing` の依存は増えない（H1・H2）
   - 完了の判定: `check` 緑。push して CI を確かめる
+  - 結果（2026-10-08 10:46〜10:50 JST。Red `8faa42f`、Green は次のコミット）
+    - Red: 業務ルール層の受入シナリオ（`features/quotation/approve_quotation_and_route.feature`。割当てと荷主承認待ち、DE-05 の再配信、承認と予約待ち、期限の 3 点、割当ての前、承認済み、他社の 10 本）、PostgreSQL の統合テスト（割り当てた経路と区間・荷主承認の保存、ID での読み出し、部分一意インデックス、CHECK 3 件、輸送要求の新しい状態）、DE-05 から予約待ちまでの非同期の統合テスト（`RouteConfirmedAssignmentIntegrationTest`。実行ごとに別の航海番号の直行の航海を入れて算出・確定する）、ArchUnit（見積りは経路設計に依存しない）を先に書いた。マイグレーションは本物、ほかは骨組み。13 件の失敗を記録した。T-39 の記録: 受入シナリオの 8 本は、骨組みの割当てが何もしない（荷主承認待ちにならない）か、骨組みの承認の入力ポートが「見つからない」を返すため本命のアサーションで落ちた。PostgreSQL の 3 件は、骨組みのリポジトリが経路版の列を書かずに CHECK（`ck_quotation_route_assigned`）に当たって落ちた（本命）。非同期の統合テストは割当てが起きず本命で落ちた。既存の CHECK のテスト 1 件は「まだ使わない状態」に APPROVED を使っていたため落ちた（仕様の変更。見積りにない値に直した）。他社のシナリオ、CHECK の 3 件、ない ID、ArchUnit、輸送要求の新しい状態の保存は最初から通った（他社は骨組みが「見つからない」を返すため空振り。Green でも通ることを確かめた）
+    - Green: `RouteAssignmentService`（公開 API の実装。見積りを ID で読み、割り当てたら保存して DE-21 を発行する。競合の例外は listener のトランザクションごと戻して再配信に任せる）、経路設計の `QuotationRouteAssignmentEventHandler`（DE-05 の経路版の確定の記録の候補の区間を ACL で渡す。割り当てなかった理由は警告のログ）、見積りの DE-21・DE-04 の listener、荷主の承認の入力ポート（`QuotationResponseService.approve`。荷主企業で絞った照会、提示した見積りだけ）、MyBatis の列と区間の表（区間は割当ての後に書き直さない）。業務ルール層の組み立ては、発行する部品（公開 API の実装）と購読する部品が互いに依存するため、購読の登録を別の部品（`EventSubscriptions`）に分けた
+    - 計画からの変更: 輸送要求の状態の値はデータモデルの CHECK に初めからあったため、マイグレーションで足さなかった（データモデルの記述を直した）
+    - `check` 緑（`test` 1,087 件）。ApplicationModules の検証は緑で、`routing` の `allowedDependencies` は変えていない（H1）。見積りのコードは経路設計を参照しない（ArchUnit。H2）。再配信のシナリオが通った（H3）
+    - 承認ゲートの扱い（T-36）: データベース・モジュールの境界の承認ゲートで止まらずに進めた（AI の判断）。根拠は、列・CHECK・表がデータモデルとこの計画の設計のとおりで、公開 API の形がバックエンドアーキテクチャと ADR-014 のとおりであること
 - [ ] **4. C-05 の承認・C-04・S-02・S-06・S-07（画面の層）** 【承認ゲート: 画面】
   - 画面の単体テストと画面の層の受入シナリオを先に書く（`features/ui/approve_quotation_and_route_ui.feature`、デモ項目 `@demo-bolt-20/approve-quotation-and-route`）: 荷主が依頼 → 経路設計者が算出・確定 → 荷主が C-04 から承認の画面を開いてキー操作だけで承認 → C-04 が予約待ち。幅 320 CSS px。axe-core 0 件。営業・経路設計者は承認の画面を開けない
   - 完了の判定: `check` と `uiTest` 緑。push して CI を確かめる
