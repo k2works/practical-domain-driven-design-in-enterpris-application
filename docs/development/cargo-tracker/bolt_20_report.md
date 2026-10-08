@@ -4,7 +4,7 @@ title: "Bolt 20 終了報告 - 確定した経路の割当てと荷主の承認�
 description: "20 回目の Bolt の終了報告。ADR-014（下流から上流への通知は下流の listener が上流の公開 API を呼ぶ）、見積りの経路版の割当て（DE-21）と荷主の承認（DE-04）、輸送要求の荷主承認待ち・予約待ち、公開 API の経路の割当てと経路設計の DE-05 の listener、割り当てた経路の写しの表、C-17 と C-04・S-02・S-06・S-07、5 視点の開発レビューと対応（D-73〜D-78）、品質ゲート、デモ項目と動画、仮説 H1〜H3 の結論、承認ゲートを後でまとめて受ける議題、ふりかえりをまとめる。"
 tags: [development,bolt-report]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-08T02:55:56Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-08T03:01:42Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-08T02:55:56Z }
 ---
@@ -154,6 +154,7 @@ AI は動画（19.5 秒）を 1 秒ごとのフレームで通して確かめた
 | :--- | :--- | :--- | :--- |
 | 2026-10-08 | 初版（ステップ 1〜5 の結果、開発レビュー D-73〜D-78、品質ゲート、デモ項目と動画、仮説の結論、承認の議題 1〜9、Try T-57〜T-60） | anthropic/claude-opus-5-5 | — |
 | 2026-10-08 | 承認の議題 1〜9 を承認し、Bolt 20 を終えた（人の変更依頼 0）。デモ環境での確かめと C-17 のスクリーンリーダーによる確認は人が行う | anthropic/claude-opus-5-5 | human:kakimomokuri |
+| 2026-10-08 | 人が受入動画を #5 に添付した（[コメント](https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/5#issuecomment-6051261460)、`issue-attach-demo:bolt-20` の目印つき）。デモ環境での確かめと C-17 のスクリーンリーダーによる確認は未記録 | anthropic/claude-opus-5-5 | human:kakimomokuri |
 
 ## 関連ドキュメント
 
