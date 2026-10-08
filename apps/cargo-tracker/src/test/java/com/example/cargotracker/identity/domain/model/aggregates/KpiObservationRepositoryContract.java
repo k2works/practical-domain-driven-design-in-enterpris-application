@@ -85,4 +85,79 @@ public abstract class KpiObservationRepositoryContract {
                 .filteredOn(id -> id.equals(older) || id.equals(newer))
                 .containsExactly(newer, older);
     }
+
+    private static UtcInstant at(String instant) {
+        return new UtcInstant(Instant.parse(instant));
+    }
+
+    /** 保存した記録を読み出し、提示を記録して最初の提示時刻を保存する（listener と同じ流れ）。 */
+    private void presentAt(UUID transportRequestId, String presentedAt) {
+        KpiObservation found =
+                repository().findByTransportRequestId(transportRequestId).orElseThrow();
+        found.recordPresentation(at(presentedAt));
+        repository().saveFirstPresentation(found);
+    }
+
+    @Test
+    void 最初の提示時刻を保存して読み出せる() {
+        UUID transportRequestId = UUID.randomUUID();
+        repository().save(submittedAt(transportRequestId, "2026-10-05T01:00:00Z"));
+
+        presentAt(transportRequestId, "2026-10-05T04:30:00Z");
+
+        assertThat(repository().findByTransportRequestId(transportRequestId))
+                .hasValueSatisfying(
+                        found -> assertThat(found.firstPresentedAt()).hasValue(at("2026-10-05T04:30:00Z")));
+    }
+
+    @Test
+    void 提示していない記録の最初の提示時刻は空のまま読み出せる() {
+        UUID transportRequestId = UUID.randomUUID();
+        repository().save(submittedAt(transportRequestId, "2026-10-05T01:00:00Z"));
+
+        assertThat(repository().findByTransportRequestId(transportRequestId))
+                .hasValueSatisfying(
+                        found -> assertThat(found.firstPresentedAt()).isEmpty());
+    }
+
+    @Test
+    void 保存されている時刻より遅い提示時刻を保存しても変わらない() {
+        UUID transportRequestId = UUID.randomUUID();
+        repository().save(submittedAt(transportRequestId, "2026-10-05T01:00:00Z"));
+        presentAt(transportRequestId, "2026-10-05T04:30:00Z");
+        KpiObservation stale = submittedAt(transportRequestId, "2026-10-05T01:00:00Z");
+        stale.recordPresentation(at("2026-10-06T01:00:00Z"));
+
+        repository().saveFirstPresentation(stale);
+
+        assertThat(repository().findByTransportRequestId(transportRequestId))
+                .hasValueSatisfying(
+                        found -> assertThat(found.firstPresentedAt()).hasValue(at("2026-10-05T04:30:00Z")));
+    }
+
+    @Test
+    void 保存されている時刻より早い提示時刻を保存すると書き換わる() {
+        UUID transportRequestId = UUID.randomUUID();
+        repository().save(submittedAt(transportRequestId, "2026-10-05T01:00:00Z"));
+        presentAt(transportRequestId, "2026-10-06T01:00:00Z");
+        KpiObservation stale = submittedAt(transportRequestId, "2026-10-05T01:00:00Z");
+        stale.recordPresentation(at("2026-10-05T04:30:00Z"));
+
+        repository().saveFirstPresentation(stale);
+
+        assertThat(repository().findByTransportRequestId(transportRequestId))
+                .hasValueSatisfying(
+                        found -> assertThat(found.firstPresentedAt()).hasValue(at("2026-10-05T04:30:00Z")));
+    }
+
+    @Test
+    void 記録のない輸送要求の提示時刻を保存しても記録はできない() {
+        UUID transportRequestId = UUID.randomUUID();
+        KpiObservation notSaved = submittedAt(transportRequestId, "2026-10-05T01:00:00Z");
+        notSaved.recordPresentation(at("2026-10-05T04:30:00Z"));
+
+        repository().saveFirstPresentation(notSaved);
+
+        assertThat(repository().findByTransportRequestId(transportRequestId)).isEmpty();
+    }
 }

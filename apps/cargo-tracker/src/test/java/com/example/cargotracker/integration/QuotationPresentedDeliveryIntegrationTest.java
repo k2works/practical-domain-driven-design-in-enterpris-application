@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 
 import com.example.cargotracker.TestcontainersConfiguration;
+import com.example.cargotracker.identity.application.internal.queryservices.KpiObservationQueryService;
 import com.example.cargotracker.quotation.application.internal.commands.ApproveTransportRequestCommand;
 import com.example.cargotracker.quotation.application.internal.commands.CalculateQuotationCommand;
 import com.example.cargotracker.quotation.application.internal.commands.PresentQuotationCommand;
@@ -35,6 +36,7 @@ import org.springframework.modulith.events.EventPublication;
 /**
  * DE-03 の配信を PostgreSQL 18 で確かめる（ADR-003、Bolt 10 の H1）。
  * 見積りの提示のコミット後に、イベント発行記録を経て非同期に購読され、別のトランザクションで輸送要求が見積提示済みになる。
+ * アクセス・監査も同じイベントを購読し、KPI 計測記録に最初の提示時刻を記録する（Bolt 21）。
  * このテストはコミットするため、待つ条件はこのテストで提出した輸送要求に限る。
  */
 @SpringBootTest
@@ -55,6 +57,9 @@ class QuotationPresentedDeliveryIntegrationTest {
 
     @Autowired
     StaffTransportRequestQueryService staffQueryService;
+
+    @Autowired
+    KpiObservationQueryService kpiObservationQueryService;
 
     @Autowired
     CompletedEventPublications completedEventPublications;
@@ -85,5 +90,30 @@ class QuotationPresentedDeliveryIntegrationTest {
                         .map(QuotationPresented.class::cast)
                         .extracting(QuotationPresented::transportRequestId)
                         .contains(submitted.transportRequestId().value()));
+    }
+
+    @Test
+    void 見積りを提示するとKPI計測記録に最初の提示時刻が非同期に記録されリードタイムが求まる() {
+        SubmissionOutcome.Submitted submitted =
+                (SubmissionOutcome.Submitted) transportRequestCommandService.submit(new SubmitTransportRequestCommand(
+                        new CompanyId(UUID.randomUUID()), STAFF, ShipmentTermsFixture.completeInput()));
+        TransportRequestNumber number = submitted.number();
+        UUID transportRequestId = submitted.transportRequestId().value();
+        reviewService.approve(new ApproveTransportRequestCommand(number, 1, STAFF, "根拠"));
+        quotationCommandService.calculate(new CalculateQuotationCommand(number, QuotationFixture.completeInput()));
+        await().atMost(TIMEOUT)
+                .untilAsserted(() -> assertThat(kpiObservationQueryService.findByTransportRequestId(transportRequestId))
+                        .isPresent());
+
+        quotationCommandService.present(new PresentQuotationCommand(number, 1, STAFF));
+
+        await().atMost(TIMEOUT)
+                .untilAsserted(() -> assertThat(kpiObservationQueryService.findByTransportRequestId(transportRequestId))
+                        .hasValueSatisfying(observation -> {
+                            assertThat(observation.firstPresentedAt()).isPresent();
+                            assertThat(observation.leadTime())
+                                    .hasValueSatisfying(
+                                            leadTime -> assertThat(leadTime).isGreaterThanOrEqualTo(Duration.ZERO));
+                        }));
     }
 }
