@@ -3,8 +3,10 @@ type: Report
 title: "Bolt 22 終了報告 - 日時表示・期間表示を platform の Web の部品に集める（#41）"
 description: "22 回目の Bolt の終了報告。見積り・経路設計・アクセス監査の日時表示・期間表示の写しを、画面の文字列を変えずに platform :: web の部品に集め、写しの再発を ArchUnit で止めた。開発レビューの対応、品質ゲート、計画からの変更、既知の課題（DE-03 と DE-16 の listener の競合）と承認の議題、割り込み（DE-03 と DE-16 の listener の競合の修正）を記録する。"
 tags: [development,bolt-report]
-status: draft
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-08T06:50:20Z }
+status: stable
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-08T07:10:26Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-10-08T07:10:26Z }
 ---
 
 # Bolt 22 終了報告 - 日時表示・期間表示を platform の Web の部品に集める（#41）
@@ -136,6 +138,7 @@ Bolt 23: US-04 AC1 確定・AC2 失効（#10）。W4 の計画のとおり、最
 | :--- | :--- | :--- |
 | 2026-10-08 | 初版（ステップ 1〜5 の結果、開発レビュー、品質ゲート、既知の課題、承認の議題 1〜9、Try T-64・T-65） | anthropic/claude-opus-5-5 |
 | 2026-10-08 | 割り込み（DE-03 と DE-16 の listener の競合）の対応を議題 7 と既知の課題に書き、DE-05 の割り当てと KPI 計測の listener を既知の課題に足した | anthropic/claude-opus-5-5 |
+| 2026-10-08 | 承認の議題 1〜9 と割り込みの対応を承認し、Bolt 22 を終えた（人の変更依頼 0）。#41 をクローズした | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 
 ## 関連ドキュメント
 
