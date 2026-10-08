@@ -72,7 +72,8 @@ function demoScenarios(bolt) {
       scenarios.set(demo.split('/')[1], {
         scenario,
         criteria: tags.filter((tag) => /^@US-\d+(-AC\d+)?$/.test(tag)).map((tag) => tag.slice(1)),
-        feature: file,
+        // コメントの本文は OS によらず / 区切りにする
+        feature: file.split(path.sep).join('/'),
       });
     });
   }
