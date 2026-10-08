@@ -4,7 +4,7 @@ title: "Bolt 21 終了報告 - KPI-01 の提示時刻とリードタイム（US-
 description: "21 回目の Bolt の終了報告。DE-03 をアクセス・監査で購読し KPI 計測記録に最初の提示時刻（いちばん早い提示時刻）を記録して KPI-01 のリードタイムを求め、S-22 の前身の画面に示した。5 視点の開発レビューと対応（D-79〜D-84）、品質ゲート、デモ項目と動画、仮説 H1・H2 の結論、承認ゲートを後でまとめて受ける議題、ふりかえりをまとめる。"
 tags: [development,bolt-report]
 status: draft
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-08T04:59:24Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-08T05:03:28Z }
 ---
 
 # Bolt 21 終了報告 - KPI-01 の提示時刻とリードタイム（US-21 AC1）
@@ -144,7 +144,7 @@ AI は Playwright に同梱の ffmpeg（`ms-playwright/ffmpeg-1011`）で動画�
 
 ## 次の Bolt
 
-- 本報告の承認の後、人が受入動画を #9 に添付し、`BOLT_ISSUES` に `bolt-21: 9` を足す（議題 10）
+- 人の指示で、受入動画 2 本を #9 に添付した（2026-10-08 14:03、`DEMO_BOLT=bolt-21 DEMO_ISSUE=9 npx gulp issue:attach-demo`。[コメント](https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/9#issuecomment-6052679393)）。`issue:attach-demo:all` では、これまでの Bolt はすべて添付済みで飛ばされた。`BOLT_ISSUES` への `bolt-21: 9` の追加は、決まりどおり本報告の承認の後に行う（議題 10）
 - W3 を締める（リリース計画の進捗と実績スケジュール、GitHub の同期、W3 のふりかえり）
 - W4 の最初の Bolt の範囲は人が決める。候補は議題 5 の日時表示の集約と、US-04 本予約の確定（D-78 の予約の確定待ちの表を含む）
 
