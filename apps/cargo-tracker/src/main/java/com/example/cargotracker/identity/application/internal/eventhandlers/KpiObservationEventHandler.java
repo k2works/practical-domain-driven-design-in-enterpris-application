@@ -2,6 +2,7 @@ package com.example.cargotracker.identity.application.internal.eventhandlers;
 
 import com.example.cargotracker.identity.domain.model.aggregates.KpiObservation;
 import com.example.cargotracker.identity.domain.model.aggregates.KpiObservationRepository;
+import com.example.cargotracker.quotation.domain.events.QuotationPresented;
 import com.example.cargotracker.quotation.domain.events.TransportRequestSubmitted;
 import org.springframework.modulith.events.ApplicationModuleListener;
 import org.springframework.stereotype.Service;
@@ -33,5 +34,13 @@ public class KpiObservationEventHandler {
                 event.transportRequestNumber(),
                 event.shipperCompanyId(),
                 event.submittedAt()));
+    }
+
+    /**
+     * DE-03 見積りを提示した を受けて、KPI-01 の終点として最初の提示時刻を記録する（KPI-INV-01。Bolt 21）。
+     */
+    @ApplicationModuleListener
+    public void on(QuotationPresented event) {
+        // 骨組み（Bolt 21 ステップ 2 の Red）
     }
 }

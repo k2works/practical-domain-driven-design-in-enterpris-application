@@ -206,7 +206,10 @@ public class AcceptanceTestConfiguration {
             delivery.subscribe(event -> {
                 switch (event) {
                     case TransportRequestSubmitted submitted -> kpiObservationEventHandler.on(submitted);
-                    case QuotationPresented presented -> quotationPresentedEventHandler.on(presented);
+                    case QuotationPresented presented -> {
+                        quotationPresentedEventHandler.on(presented);
+                        kpiObservationEventHandler.on(presented);
+                    }
                     case RouteDesignRequested requested -> {
                         routeDesignRequestedEventHandler.on(requested);
                         routingCaseOpeningEventHandler.on(requested);

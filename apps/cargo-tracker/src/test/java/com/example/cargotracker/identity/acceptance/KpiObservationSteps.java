@@ -6,6 +6,7 @@ import com.example.cargotracker.identity.application.internal.queryservices.KpiO
 import com.example.cargotracker.shared.acceptance.ScenarioContext;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import io.cucumber.java.ja.ならば;
+import java.time.Duration;
 import java.time.Instant;
 
 /**
@@ -33,5 +34,28 @@ public class KpiObservationSteps {
         assertThat(queryService.findByTransportRequestId(context.transportRequestId()))
                 .hasValueSatisfying(observation ->
                         assertThat(observation.transportRequestNumber()).isEqualTo(transportRequestNumber));
+    }
+
+    @ならば("KPI 計測記録にその輸送要求の最初の提示時刻 {string} が記録される")
+    public void KPI計測記録に最初の提示時刻が記録される(String firstPresentedAt) {
+        assertThat(queryService.findByTransportRequestId(context.transportRequestId()))
+                .hasValueSatisfying(observation -> assertThat(observation.firstPresentedAt())
+                        .hasValue(new UtcInstant(Instant.parse(firstPresentedAt))));
+    }
+
+    @ならば("KPI 計測記録のその輸送要求の KPI-01 リードタイムは {int} 時間 {int} 分である")
+    public void KPI01リードタイム(int hours, int minutes) {
+        assertThat(queryService.findByTransportRequestId(context.transportRequestId()))
+                .hasValueSatisfying(observation -> assertThat(observation.leadTime())
+                        .hasValue(Duration.ofHours(hours).plusMinutes(minutes)));
+    }
+
+    @ならば("KPI 計測記録のその輸送要求は未提示でリードタイムは求まらない")
+    public void 未提示でリードタイムは求まらない() {
+        assertThat(queryService.findByTransportRequestId(context.transportRequestId()))
+                .hasValueSatisfying(observation -> {
+                    assertThat(observation.firstPresentedAt()).isEmpty();
+                    assertThat(observation.leadTime()).isEmpty();
+                });
     }
 }

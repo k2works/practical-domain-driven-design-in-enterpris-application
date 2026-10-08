@@ -32,6 +32,11 @@ public class MyBatisKpiObservationRepository implements KpiObservationRepository
     }
 
     @Override
+    public void saveFirstPresentation(KpiObservation observation) {
+        throw new UnsupportedOperationException("Bolt 21 ステップ 3 で作る");
+    }
+
+    @Override
     public Optional<KpiObservation> findByTransportRequestId(UUID transportRequestId) {
         return mapper.selectByTransportRequestId(transportRequestId).map(MyBatisKpiObservationRepository::toAggregate);
     }

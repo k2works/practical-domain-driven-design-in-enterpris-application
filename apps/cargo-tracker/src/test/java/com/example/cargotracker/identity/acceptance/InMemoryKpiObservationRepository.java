@@ -22,6 +22,11 @@ public class InMemoryKpiObservationRepository implements KpiObservationRepositor
     }
 
     @Override
+    public void saveFirstPresentation(KpiObservation observation) {
+        // 骨組み（Bolt 21 ステップ 2 の Red）
+    }
+
+    @Override
     public Optional<KpiObservation> findByTransportRequestId(UUID transportRequestId) {
         return Optional.ofNullable(store.get(transportRequestId));
     }
