@@ -4,7 +4,7 @@ title: "リリース計画 - cargo-tracker（A 社国際貨物輸送管理シス
 description: "cargo-tracker MVP のリリース計画。1 人 + AI、時間単位の Bolt（= イテレーション）と週次の見直しで、最初の縦の流れ（R0.1）、パイロット準備完了（R1.0）、本格展開前（R1.1）の 3 段階、Unit のエントロピー評価、SP、バッファ、パイロット開始の条件、引継ぎ ID の台帳、業務責任者に確かめる事項の台帳。"
 tags: [development,release-plan]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-08T00:59:52Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-08T03:02:57Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T09:29:53Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:38:26Z }
@@ -413,7 +413,7 @@ AI-DLC では **Bolt がイテレーション** である（[AI-DLC 導入ガイ
 - [x] Bolt 17: US-06（AC1〜3、仮の航海データ）。2026-10-07 に human:kakimomokuri が W3 の最初の Bolt の範囲に決めた（AI は AC1 だけの案を推した）。[Bolt 17 計画](bolt_17_plan.md)、[Bolt 17 終了報告](bolt_17_report.md)（完了、2026-10-07 に承認済み。`/goal Bolt17` で承認ゲートを止めずに進め、終了報告の承認でまとめて受けた。#7 をクローズし、#15 にコメントした。SP 3）、[#7](https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/7)
 - [x] Bolt 18: デモ環境のサンプルの業務データ（技術タスク、SP 0。2026-10-07 に human:kakimomokuri が範囲と相対の日時を決め、計画を承認した）。見積依頼 5 件（各状態）と経路設計の案件 2 件（算出待ち・算出済み）を `db/dev-data` に入れ、日時を起動した日からの相対にした。[Bolt 18 計画](bolt_18_plan.md)
 - [x] US-07（AC1、AC2）。Bolt 19 で行う（2026-10-07 に human:kakimomokuri が、D-64 を含めて W3 の次の Bolt の範囲に決め、Try T-52 もこの Bolt で行うと決めた）。[Bolt 19 計画](bolt_19_plan.md)（承認済み）、[Bolt 19 終了報告](bolt_19_report.md)（完了、2026-10-08 に承認済み。`/goal Bolt19` でステップ 2 の Green から後の承認ゲートを止めずに進め、終了報告の承認でまとめて受けた。#8 をクローズし、#16 にコメントした。SP 3。DE-05 の購読は経路設計の中に置き見積りの公開 API を呼ぶ形（D-71）で、US-24 AC4 の前に ADR に書く）、[#8](https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/8)
-- [ ] US-24（AC4 承認、AC5 失効時の拒否）。Bolt 20 で行う（2026-10-08 に human:kakimomokuri が W3 の次の Bolt の範囲に決めた。D-71 の形で DE-05 を経路設計の listener から見積りの公開 API へ渡す。ADR-014）。[Bolt 20 計画](bolt_20_plan.md)（承認待ち）、[#5](https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/5)
+- [x] US-24（AC4 承認、AC5 失効時の拒否）。Bolt 20 で行う（2026-10-08 に human:kakimomokuri が W3 の次の Bolt の範囲に決めた。D-71 の形で DE-05 を経路設計の listener から見積りの公開 API へ渡す。ADR-014）。[Bolt 20 計画](bolt_20_plan.md)（承認済み）、[Bolt 20 終了報告](bolt_20_report.md)（完了、2026-10-08 に承認済み。`/goal Bolt20` で承認ゲートを止めずに進め、終了報告の承認でまとめて受けた。[ADR-014](../../adr/cargo-tracker/014-downstream-to-upstream-notification.md) を採用。#5 をクローズし、受入動画を添付した。SP 1（US-24 の R0.1 の残り）。AC5 の再設計要・旧版の経路版の拒否は W6（US-08、DE-06）。デモ環境での確かめと C-17 のスクリーンリーダーによる確認は人が行う）、[#5](https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/5)
 - [ ] US-21（AC1 KPI-01 の時刻）
 - [x] 経路候補の比較（S-06）のプロトタイプで操作性を確かめる（UI-HO-04）。Bolt 17 で S-06 を作った（別のプロトタイプは作らない。確認ポイント 15）。Bolt 18 のサンプルを入れたデモ環境で人が確かめ、2026-10-07 に Bolt 17 終了報告の議題 7 として承認した
 
@@ -560,7 +560,7 @@ Bolt のレビューや終了報告で「業務責任者に確かめる」とし
 | :--- | ---: | ---: | ---: | :--- |
 | W1 | 6 | 6 | 100% | 完了（W1 の期間の前に前倒しで、2026-10-03 に Bolt 1〜8 を終えた。すべて承認済み。US-01（R0.1）・US-02 を完了し、#1・#2・#3・#36 をクローズした。人の変更依頼 0） |
 | W2 | 8 | 7 | 88% | 完了（2026-10-06 に Bolt 9〜14 を終え、2026-10-07 に締めた。US-03 を完了し #4・#37 を、US-18 の一部（2 SP）を完了し #6 をクローズした。US-24 AC1 は Bolt 12 で作り、残りの AC4・AC5 と SP 1 は W3 へ（#5 の週を W3 に移した）。人の変更依頼 0） |
-| W3 | 10 | - | - | 進行中（W3 の前に技術タスクの Bolt 15・16 を終えた。SP 0。#38・#39 をクローズした。Bolt 17（US-06 AC1〜AC3、SP 3）を終え承認済み。Bolt 18（デモ環境のサンプル、SP 0）を終えた。Bolt 19（US-07 AC1・AC2、SP 3）を終え承認済み。完了 6 SP） |
+| W3 | 10 | - | - | 進行中（W3 の前に技術タスクの Bolt 15・16 を終えた。SP 0。#38・#39 をクローズした。Bolt 17（US-06 AC1〜AC3、SP 3）を終え承認済み。Bolt 18（デモ環境のサンプル、SP 0）を終えた。Bolt 19（US-07 AC1・AC2、SP 3）を終え承認済み。Bolt 20（US-24 AC4・AC5、SP 1）を終え承認済みで、#5 をクローズした。完了 7 SP。残りは US-21 AC1（KPI-01 の時刻）） |
 | W4 | 11 | - | - | 未着手 |
 | W5 | 8 | - | - | 未着手 |
 | W6 | 13 | - | - | 未着手 |
@@ -596,7 +596,7 @@ xychart-beta
 | Issue | #1〜#37。Release 0.1 と 1.0 にまたがる 9 ストーリーは受入条件の範囲ごとに 2 件に分けた。技術タスクは #1（開発基盤とウォーキングスケルトン、2026-10-02 にクローズ）、#36（UI の骨格と見積依頼の段階入力のプロトタイプ、#1 から分けた）、#28（運用準備）、#37（Bolt 6〜8 レビューの返済、W2） |
 | Label | `user-story`、`technical` |
 
-週のフィールドは 1 つの値しか持てないため、US-24 の R0.1 分（#5）は W2、US-16（#14）は W5 に置いた（計画では次の週にまたがる）。
+週のフィールドは 1 つの値しか持てないため、US-24 の R0.1 分（#5）は W2、US-16（#14）は W5 に置いた（計画では次の週にまたがる）。#5 は 2026-10-07 に W3 に移し、2026-10-08 に Bolt 20 でクローズした。
 
 ## 次のステップ
 
@@ -656,3 +656,4 @@ xychart-beta
 | 2026-10-07 | W3 に Bolt 19 終了報告へのリンクを付け、US-07 AC1・AC2 の完了を記録した（終了報告の承認待ち） | anthropic/claude-opus-5-5 |
 | 2026-10-08 | Bolt 19 終了報告の承認（議題 1〜7、D-71 は推奨の形を採る）を記録した | anthropic/claude-opus-5-5 |
 | 2026-10-08 | W3 の US-24 AC4・AC5 に Bolt 20 の計画へのリンクを付けた（計画の承認待ち） | anthropic/claude-opus-5-5 |
+| 2026-10-08 | Bolt 20（US-24 AC4・AC5、SP 1）の完了と終了報告の承認を記録した。W3 の完了は 7 SP（残りは US-21 AC1）。ADR-014 を採用した | anthropic/claude-opus-5-5 |
