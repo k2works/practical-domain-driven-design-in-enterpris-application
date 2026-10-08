@@ -3251,7 +3251,7 @@
     
   
   
-    <span class="md-status md-status--draft"></span>
+    <span class="md-status md-status--stable"></span>
   
 
   
@@ -3295,7 +3295,7 @@
     
   
   
-    <span class="md-status md-status--draft"></span>
+    <span class="md-status md-status--stable"></span>
   
 
   
@@ -3320,7 +3320,7 @@
     
   
   
-    <span class="md-status md-status--draft"></span>
+    <span class="md-status md-status--stable"></span>
   
 
   
@@ -4622,7 +4622,7 @@
     
   
   
-    <span class="md-status md-status--draft"></span>
+    <span class="md-status md-status--stable"></span>
   
 
   
@@ -5283,7 +5283,7 @@
     
   
   
-    <span class="md-status md-status--draft"></span>
+    <span class="md-status md-status--stable"></span>
   
 
   
@@ -7880,8 +7880,8 @@
 </tr>
 <tr>
 <td style="text-align: left;">9</td>
-<td style="text-align: left;">人に確かめてほしいこと: デモ環境で経路設計者として RC-2026-0902 を確定し、荷主 A で TR-2026-0905 の見積りと経路を承認する</td>
-<td style="text-align: left;">AI はデモ環境に届かない（Bolt 18 で確かめた）</td>
+<td style="text-align: left;">人に確かめてほしいこと: デモ環境で経路設計者として RC-2026-0902 を確定し、荷主 A で TR-2026-0905 の見積りと経路を承認する。あわせて、C-17 をスクリーンリーダーで操作して #5 の完了の定義の手動の確認を記録する</td>
+<td style="text-align: left;">デモ環境はセッションのネットワークの方針で接続が拒否される。同じ dev プロファイルとサンプルのデータで手元に起動して、同じ流れが通ることは AI が確かめた（デモ項目の節）</td>
 <td style="text-align: left;">—</td>
 </tr>
 </tbody>
@@ -7991,7 +7991,8 @@
 </tr>
 </tbody>
 </table>
-<p>AI は動画（19.5 秒）からフレームを取り出して、S-07 の「確定した経路は見積りに割り当てられ、荷主の承認に進みます。」、C-04 の「見積りと経路の承認待ち（お客様の対応待ち）」、C-17 の見出しと見積り、承認の後の C-04 の「…の見積りと経路を承認しました。担当営業が本予約を確定します。」と状態「予約待ち（A 社の対応待ち）」が映っていることを確かめた。通しの再生（キー操作の流れ）は本報告の承認の場で人が確かめる。</p>
+<p>AI は動画（19.5 秒）を 1 秒ごとのフレームで通して確かめた。提出 → 見積りの算出と提示 → 回答 → 経路設計者の算出と S-07 の確定（「確定した経路は見積りに割り当てられ、荷主の承認に進みます。」）→ C-04 の「見積りと経路の承認待ち（お客様の対応待ち）」→ C-17 → 承認の後の C-04（「…の見積りと経路を承認しました。担当営業が本予約を確定します。」、状態「予約待ち（A 社の対応待ち）」）の順に映っている。キー操作の細部（フォーカスの移り）は、<code>uiTest</code> のキー操作のステップが確かめている。</p>
+<p>デモ環境（Heroku）は、このセッションのネットワークの方針で接続が拒否される（connect_rejected）。代わりに、デモ環境と同じ dev プロファイルとサンプルのデータ（<code>db/dev-data</code>）で手元にアプリケーションを起動し、ブラウザで、経路設計者として RC-2026-0902 の候補 1 を確定し、荷主 A として TR-2026-0905 の見積りと経路を C-17 で承認した。S-06 の結果の文言、C-04 の状態の移り（見積りと経路の承認待ち → 予約待ち）、C-17 の確定した経路（RC-2026-0902 経路版 1、DEMO-101、到着予定）、S-02 の「荷主承認済み（予約待ち）」を確かめた（2026-10-08）。デモ環境そのものでの確かめは人に依頼する（議題 9）。支援技術（スクリーンリーダー）による手動の確認はこのセッションではできず、#5 の完了の定義のその項目は未確認のまま残す（axe-core の自動検査は 0 件）。</p>
 <h2 id="_6">指標<a class="headerlink" href="#_6" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
@@ -8127,6 +8128,7 @@
 <h2 id="_10">判断と学び<a class="headerlink" href="#_10" title="Permanent link">&para;</a></h2>
 <h3 id="_11">人の決定<a class="headerlink" href="#_11" title="Permanent link">&para;</a></h3>
 <ul>
+<li>2026-10-08: 終了報告の議題 1〜9 を承認した（AI の判断で通した計画・ステップ 1〜4・開発レビューの承認ゲート、ADR-014 の文面、D-73〜D-78、荷主と営業の画面の文言、期限の後の割当て、#5 のクローズ、デモの動画）。デモ環境での確かめと、C-17 のスクリーンリーダーによる手動の確認は、人が行う（議題 9）</li>
 <li>2026-10-08: Bolt 20 は US-24 AC4・AC5。D-71 は AI の推奨の形（Bolt 19 終了報告の承認）</li>
 <li>2026-10-08: <code>/goal Bolt20</code>（承認ゲートで止まらずに Bolt を終えるまで進める）</li>
 </ul>
@@ -8176,6 +8178,12 @@
 <td style="text-align: left;">初版（ステップ 1〜5 の結果、開発レビュー D-73〜D-78、品質ゲート、デモ項目と動画、仮説の結論、承認の議題 1〜9、Try T-57〜T-60）</td>
 <td style="text-align: left;">anthropic/claude-opus-5-5</td>
 <td style="text-align: left;">—</td>
+</tr>
+<tr>
+<td style="text-align: left;">2026-10-08</td>
+<td style="text-align: left;">承認の議題 1〜9 を承認し、Bolt 20 を終えた（人の変更依頼 0）。デモ環境での確かめと C-17 のスクリーンリーダーによる確認は人が行う</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5</td>
+<td style="text-align: left;">human:kakimomokuri</td>
 </tr>
 </tbody>
 </table>
