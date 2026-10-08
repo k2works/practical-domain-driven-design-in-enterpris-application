@@ -3,8 +3,10 @@ type: Report
 title: "Bolt 23b 終了報告 - 本予約の確定の画面（US-04 AC1・AC2、#10）"
 description: "23b 回目の Bolt の終了報告。S-02 の予約の確定待ちの表、S-09 本予約の確定（画面そのものを確認の領域にする）、S-24 予約の詳細の最小の表示を作り、見積りの公開 API の照会を業務番号と見積り番号に改めた（ADR-016 の改訂）。/goal で止まらなかった承認ゲート、開発レビューの対応（承認の後に失効した見積りの再見積りの行き止まりほか）、既知の課題を記録する。"
 tags: [development,bolt-report]
-status: draft
+status: stable
 generated: { by: anthropic/claude-opus-5-5, at: 2026-10-08T10:52:10Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-10-08T11:48:07Z }
 ---
 
 # Bolt 23b 終了報告 - 本予約の確定の画面（US-04 AC1・AC2、#10）

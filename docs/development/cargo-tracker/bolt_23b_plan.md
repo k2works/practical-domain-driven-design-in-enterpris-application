@@ -7,6 +7,7 @@ status: stable
 generated: { by: anthropic/claude-opus-5-5, at: 2026-10-08T10:53:15Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-08T09:39:03Z }
+  - { by: human:kakimomokuri, at: 2026-10-08T11:48:07Z }
 ---
 
 # Bolt 23b 計画 - 本予約の確定の画面（US-04 AC1・AC2）
