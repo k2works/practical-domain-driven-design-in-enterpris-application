@@ -184,6 +184,20 @@ Bolt 22 の作業中、SonarQube のコンテナが CPU を使っている間に
 | I-2 | 読み直しの部品（Green・Refactor） | `eventhandlers` に輸送要求を進める部品を作り、4 つの listener をその呼び出しにする。ログの文面と水準は変えない |
 | I-3 | 確認と記録 | `./gradlew test`・`./gradlew uiTest`。判断を本計画に書き、終了報告の既知の課題・割り込みに載せる |
 
+### 結果（2026-10-08）
+
+| 項目 | 結果 |
+| :--- | :--- |
+| I-1 Red | 単体 5 件と統合 1 件が、`ConcurrentTransportRequestUpdateException`（上限の件は「3 回のはずが 1 回」）で失敗することを確かめた |
+| I-2 Green | `TransportRequestProgression`（`eventhandlers` の中、パッケージの外に出さない）を作り、4 つの listener をその呼び出しにした。ログの文面と水準は変えていない |
+| 確認 | `./gradlew test`（1207 件）・`./gradlew uiTest`（118 件）・`documentationTest`・`spotlessCheck`・`spotbugsMain`・`okf:check` が通る。`RouteDesignRequestedRoutingIntegrationTest` も通る |
+| 設計文書 | [バックエンドアーキテクチャ](../../design/cargo-tracker/architecture_backend.md) の「ドメインイベントの配信」に「購読側の楽観ロックの競合」の取り決めを足した（RTY-01 の「同じ処理を 2 つの仕組みで再試行しない」と矛盾しないことを書く） |
+
+### 終了報告に載せること
+
+- 割り込みとして: 上の原因・決定・結果。
+- 既知の課題として: DE-05 の割り当て（見積りの楽観ロックの競合を再配信に任せている）、KPI 計測の listener の届き順への依存（DE-01 より先に DE-03 が届くと例外）。どちらも未完了の発行は起動のときまで再配信されない（定期の再配信は W10。ADR-014）。
+
 ## 完了条件
 
 - [ ] 部品の表のテスト（特性テスト）が通り、境界の行がある
