@@ -60,7 +60,9 @@ public class QuotationSteps {
             "提示済み", QuotationStatus.PRESENTED,
             "失効", QuotationStatus.EXPIRED,
             "置換済み", QuotationStatus.REPLACED,
-            "詳細設計依頼済み", QuotationStatus.ROUTING_REQUESTED);
+            "詳細設計依頼済み", QuotationStatus.ROUTING_REQUESTED,
+            "荷主承認待ち", QuotationStatus.AWAITING_SHIPPER_APPROVAL,
+            "承認済み", QuotationStatus.APPROVED);
 
     private static final Map<String, Item> ITEMS = Map.of(
             "料金明細", Item.PRICING_LINES,

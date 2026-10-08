@@ -55,7 +55,9 @@ public class TransportRequestReviewSteps {
             "審査中", TransportRequestStatus.UNDER_REVIEW,
             "見積り作成中", TransportRequestStatus.QUOTING,
             "見積提示済み", TransportRequestStatus.QUOTED,
-            "経路設計中", TransportRequestStatus.ROUTING);
+            "経路設計中", TransportRequestStatus.ROUTING,
+            "荷主承認待ち", TransportRequestStatus.AWAITING_APPROVAL,
+            "予約待ち", TransportRequestStatus.READY_TO_BOOK);
 
     /** 再提出の検証の誤りの呼び名（このシナリオで使うものだけ。提出の誤りは TransportRequestSteps で網羅する）。 */
     private static final Map<String, Item> ITEMS = Map.of("目的地", Item.DESTINATION);

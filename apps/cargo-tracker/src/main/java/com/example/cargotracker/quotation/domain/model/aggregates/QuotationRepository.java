@@ -1,5 +1,6 @@
 package com.example.cargotracker.quotation.domain.model.aggregates;
 
+import com.example.cargotracker.quotation.domain.model.valueobjects.QuotationId;
 import com.example.cargotracker.quotation.domain.model.valueobjects.QuotedRequestSummary;
 import com.example.cargotracker.quotation.domain.model.valueobjects.RoutingRequestedSummary;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestId;
@@ -40,6 +41,9 @@ public interface QuotationRepository {
      * 社内の照会で、荷主企業で絞らない。
      */
     List<RoutingRequestedSummary> findRoutingRequestedSummaries();
+
+    /** 見積りを ID で探す（経路の割当て。経路設計は依頼元の見積り ID を持つ。Bolt 20）。 */
+    Optional<Quotation> findById(QuotationId id);
 
     /** 輸送要求の見積りを見積り番号で探す。 */
     Optional<Quotation> findByTransportRequestIdAndNo(TransportRequestId transportRequestId, int quotationNo);

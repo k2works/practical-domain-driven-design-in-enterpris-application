@@ -1,11 +1,15 @@
 package com.example.cargotracker.quotation.infrastructure.config;
 
+import com.example.cargotracker.quotation.api.RouteAssignment;
 import com.example.cargotracker.quotation.api.RouteConditionQuery;
 import com.example.cargotracker.quotation.application.internal.commandservices.QuotationCommandService;
 import com.example.cargotracker.quotation.application.internal.commandservices.QuotationResponseService;
+import com.example.cargotracker.quotation.application.internal.commandservices.RouteAssignmentService;
 import com.example.cargotracker.quotation.application.internal.commandservices.TransportRequestCommandService;
 import com.example.cargotracker.quotation.application.internal.commandservices.TransportRequestReviewService;
+import com.example.cargotracker.quotation.application.internal.eventhandlers.QuotationApprovedByShipperEventHandler;
 import com.example.cargotracker.quotation.application.internal.eventhandlers.QuotationPresentedEventHandler;
+import com.example.cargotracker.quotation.application.internal.eventhandlers.QuotationRouteAssignedEventHandler;
 import com.example.cargotracker.quotation.application.internal.eventhandlers.RouteDesignRequestedEventHandler;
 import com.example.cargotracker.quotation.application.internal.queryservices.QuotationQueryService;
 import com.example.cargotracker.quotation.application.internal.queryservices.RouteConditionQueryService;
@@ -119,6 +123,26 @@ public class QuotationConfiguration {
     @Bean
     RouteConditionQuery routeConditionQuery(TransportRequestRepository repository) {
         return new RouteConditionQueryService(repository);
+    }
+
+    /** 見積りの公開 API の経路の割当て（経路設計が DE-05 を受けて使う。ADR-014。Bolt 20）。 */
+    @Bean
+    RouteAssignment routeAssignment(
+            QuotationRepository quotationRepository, ApplicationEventPublisher eventPublisher, Clock clock) {
+        return new RouteAssignmentService(quotationRepository, eventPublisher, clock);
+    }
+
+    /** DE-21 を受けて輸送要求を荷主承認待ちにする（別のトランザクション。Bolt 20）。 */
+    @Bean
+    QuotationRouteAssignedEventHandler quotationRouteAssignedEventHandler(TransportRequestRepository repository) {
+        return new QuotationRouteAssignedEventHandler(repository);
+    }
+
+    /** DE-04 を受けて輸送要求を予約待ちにする（別のトランザクション。Bolt 20）。 */
+    @Bean
+    QuotationApprovedByShipperEventHandler quotationApprovedByShipperEventHandler(
+            TransportRequestRepository repository) {
+        return new QuotationApprovedByShipperEventHandler(repository);
     }
 
     @Bean

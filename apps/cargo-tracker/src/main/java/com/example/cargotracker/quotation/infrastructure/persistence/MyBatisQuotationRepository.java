@@ -117,6 +117,11 @@ public class MyBatisQuotationRepository implements QuotationRepository {
     }
 
     @Override
+    public Optional<Quotation> findById(QuotationId id) {
+        return Optional.empty();
+    }
+
+    @Override
     public Optional<Quotation> findByTransportRequestIdAndNo(TransportRequestId transportRequestId, int quotationNo) {
         return findByTransportRequestId(transportRequestId).stream()
                 .filter(quotation -> quotation.quotationNo() == quotationNo)

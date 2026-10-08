@@ -10,16 +10,21 @@ import com.example.cargotracker.quotation.acceptance.InMemoryTransportRequestRep
 import com.example.cargotracker.quotation.acceptance.RequiredDocumentAttachments;
 import com.example.cargotracker.quotation.application.internal.commandservices.QuotationCommandService;
 import com.example.cargotracker.quotation.application.internal.commandservices.QuotationResponseService;
+import com.example.cargotracker.quotation.application.internal.commandservices.RouteAssignmentService;
 import com.example.cargotracker.quotation.application.internal.commandservices.TransportRequestCommandService;
 import com.example.cargotracker.quotation.application.internal.commandservices.TransportRequestReviewService;
+import com.example.cargotracker.quotation.application.internal.eventhandlers.QuotationApprovedByShipperEventHandler;
 import com.example.cargotracker.quotation.application.internal.eventhandlers.QuotationPresentedEventHandler;
+import com.example.cargotracker.quotation.application.internal.eventhandlers.QuotationRouteAssignedEventHandler;
 import com.example.cargotracker.quotation.application.internal.eventhandlers.RouteDesignRequestedEventHandler;
 import com.example.cargotracker.quotation.application.internal.queryservices.QuotationQueryService;
 import com.example.cargotracker.quotation.application.internal.queryservices.RouteConditionQueryService;
 import com.example.cargotracker.quotation.application.internal.queryservices.StaffQuotationQueryService;
 import com.example.cargotracker.quotation.application.internal.queryservices.StaffTransportRequestQueryService;
 import com.example.cargotracker.quotation.application.internal.queryservices.TransportRequestQueryService;
+import com.example.cargotracker.quotation.domain.events.QuotationApprovedByShipper;
 import com.example.cargotracker.quotation.domain.events.QuotationPresented;
+import com.example.cargotracker.quotation.domain.events.QuotationRouteAssigned;
 import com.example.cargotracker.quotation.domain.events.RouteDesignRequested;
 import com.example.cargotracker.quotation.domain.events.TransportRequestSubmitted;
 import com.example.cargotracker.quotation.domain.model.rules.MvpAcceptancePolicy;
@@ -29,9 +34,12 @@ import com.example.cargotracker.routing.acceptance.InMemoryRoutingCaseNumberIssu
 import com.example.cargotracker.routing.acceptance.InMemoryRoutingCaseRepository;
 import com.example.cargotracker.routing.acceptance.InMemoryVoyageRepository;
 import com.example.cargotracker.routing.application.internal.commandservices.RoutingCaseCommandService;
+import com.example.cargotracker.routing.application.internal.eventhandlers.QuotationRouteAssignmentEventHandler;
 import com.example.cargotracker.routing.application.internal.eventhandlers.RoutingCaseOpeningEventHandler;
+import com.example.cargotracker.routing.application.internal.outboundservices.acl.QuotationRouteAssignments;
 import com.example.cargotracker.routing.application.internal.outboundservices.acl.QuotationRouteConditions;
 import com.example.cargotracker.routing.application.internal.queryservices.RoutingCaseQueryService;
+import com.example.cargotracker.routing.domain.events.RouteConfirmed;
 import com.example.cargotracker.shared.acceptance.DeferredEventDelivery;
 import com.example.cargotracker.shared.acceptance.MutableClock;
 import com.example.cargotracker.shared.acceptance.ScenarioContext;
@@ -150,27 +158,68 @@ public class AcceptanceTestConfiguration {
             return new RoutingCaseQueryService(repository);
         }
 
-        /** 購読側を登録した、テスト用の同期の配信。 */
+        /** テスト用の同期の配信。購読側は {@link EventSubscriptions} が登録する（発行する部品と購読する部品が互いに依存するため）。 */
         @Bean
-        DeferredEventDelivery eventDelivery(
+        DeferredEventDelivery eventDelivery() {
+            return new DeferredEventDelivery();
+        }
+
+        /** 経路の割当て（見積りの公開 API。ADR-014。Bolt 20）。 */
+        @Bean
+        RouteAssignmentService routeAssignment(
+                InMemoryQuotationRepository quotationRepository,
+                DeferredEventDelivery eventDelivery,
+                MutableClock clock) {
+            return new RouteAssignmentService(quotationRepository, eventDelivery, clock);
+        }
+
+        /** 経路設計は DE-05 を受けて見積りの公開 API（経路の割当て）を呼ぶ（Bolt 20）。 */
+        @Bean
+        QuotationRouteAssignmentEventHandler quotationRouteAssignmentEventHandler(
+                InMemoryRoutingCaseRepository repository, RouteAssignmentService routeAssignment) {
+            return new QuotationRouteAssignmentEventHandler(repository, new QuotationRouteAssignments(routeAssignment));
+        }
+
+        @Bean
+        QuotationRouteAssignedEventHandler quotationRouteAssignedEventHandler(
+                InMemoryTransportRequestRepository repository) {
+            return new QuotationRouteAssignedEventHandler(repository);
+        }
+
+        @Bean
+        QuotationApprovedByShipperEventHandler quotationApprovedByShipperEventHandler(
+                InMemoryTransportRequestRepository repository) {
+            return new QuotationApprovedByShipperEventHandler(repository);
+        }
+
+        /** 購読側を配信に登録する。 */
+        @Bean
+        EventSubscriptions eventSubscriptions(
+                DeferredEventDelivery delivery,
                 KpiObservationEventHandler kpiObservationEventHandler,
                 QuotationPresentedEventHandler quotationPresentedEventHandler,
                 RouteDesignRequestedEventHandler routeDesignRequestedEventHandler,
-                RoutingCaseOpeningEventHandler routingCaseOpeningEventHandler) {
-            DeferredEventDelivery delivery = new DeferredEventDelivery();
+                RoutingCaseOpeningEventHandler routingCaseOpeningEventHandler,
+                QuotationRouteAssignmentEventHandler quotationRouteAssignmentEventHandler,
+                QuotationRouteAssignedEventHandler quotationRouteAssignedEventHandler,
+                QuotationApprovedByShipperEventHandler quotationApprovedByShipperEventHandler) {
             delivery.subscribe(event -> {
-                if (event instanceof TransportRequestSubmitted submitted) {
-                    kpiObservationEventHandler.on(submitted);
-                }
-                if (event instanceof QuotationPresented presented) {
-                    quotationPresentedEventHandler.on(presented);
-                }
-                if (event instanceof RouteDesignRequested requested) {
-                    routeDesignRequestedEventHandler.on(requested);
-                    routingCaseOpeningEventHandler.on(requested);
+                switch (event) {
+                    case TransportRequestSubmitted submitted -> kpiObservationEventHandler.on(submitted);
+                    case QuotationPresented presented -> quotationPresentedEventHandler.on(presented);
+                    case RouteDesignRequested requested -> {
+                        routeDesignRequestedEventHandler.on(requested);
+                        routingCaseOpeningEventHandler.on(requested);
+                    }
+                    case RouteConfirmed confirmed -> quotationRouteAssignmentEventHandler.on(confirmed);
+                    case QuotationRouteAssigned assigned -> quotationRouteAssignedEventHandler.on(assigned);
+                    case QuotationApprovedByShipper approved -> quotationApprovedByShipperEventHandler.on(approved);
+                    default -> {
+                        // 購読者のないイベント
+                    }
                 }
             });
-            return delivery;
+            return new EventSubscriptions();
         }
 
         @Bean
@@ -247,4 +296,7 @@ public class AcceptanceTestConfiguration {
             return new StaffTransportRequestQueryService(repository, documentStorage);
         }
     }
+
+    /** 購読側を配信に登録したことを表す印（{@link Components#eventSubscriptions}）。 */
+    static final class EventSubscriptions {}
 }

@@ -1,8 +1,11 @@
 package com.example.cargotracker.architecture;
 
+import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.example.cargotracker.CargoTrackerApplication;
+import com.tngtech.archunit.core.importer.ClassFileImporter;
+import com.tngtech.archunit.core.importer.ImportOption;
 import org.junit.jupiter.api.Test;
 import org.springframework.modulith.core.ApplicationModules;
 
@@ -22,5 +25,22 @@ class ModularityTest {
     @Test
     void モジュール間の依存が境界を守っている() {
         modules.verify();
+    }
+
+    /**
+     * 下流から上流への通知は下流の listener が上流の公開 API を呼んで行い、上流は下流に依存しない（ADR-014。Bolt 20）。
+     * 見積りは経路設計の型（イベントを含む）を参照しない。
+     */
+    @Test
+    void 見積りは経路設計に依存しない() {
+        noClasses()
+                .that()
+                .resideInAPackage("com.example.cargotracker.quotation..")
+                .should()
+                .dependOnClassesThat()
+                .resideInAPackage("com.example.cargotracker.routing..")
+                .check(new ClassFileImporter()
+                        .withImportOption(ImportOption.Predefined.DO_NOT_INCLUDE_TESTS)
+                        .importPackages("com.example.cargotracker"));
     }
 }

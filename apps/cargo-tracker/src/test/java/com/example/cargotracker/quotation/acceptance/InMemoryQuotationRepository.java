@@ -63,6 +63,11 @@ public class InMemoryQuotationRepository implements QuotationRepository {
     }
 
     @Override
+    public Optional<Quotation> findById(QuotationId id) {
+        return Optional.ofNullable(store.get(id)).map(quotation -> snapshot(quotation, quotation.aggregateVersion()));
+    }
+
+    @Override
     public Optional<Quotation> findByTransportRequestIdAndNo(TransportRequestId transportRequestId, int quotationNo) {
         return findByTransportRequestId(transportRequestId).stream()
                 .filter(quotation -> quotation.quotationNo() == quotationNo)

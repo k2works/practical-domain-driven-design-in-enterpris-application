@@ -1,5 +1,6 @@
 package com.example.cargotracker.quotation.application.internal.commandservices;
 
+import com.example.cargotracker.quotation.application.internal.commands.ApproveQuotationCommand;
 import com.example.cargotracker.quotation.application.internal.commands.RequestRouteDesignCommand;
 import com.example.cargotracker.quotation.domain.model.aggregates.ConcurrentQuotationUpdateException;
 import com.example.cargotracker.quotation.domain.model.aggregates.Quotation;
@@ -69,5 +70,14 @@ public class QuotationResponseService {
         quotation.domainEvents().forEach(eventPublisher::publishEvent);
         quotation.clearDomainEvents();
         return new RouteDesignRequestOutcome.Requested(command.number(), command.quotationNo());
+    }
+
+    /**
+     * 見積りと割り当てた経路を承認する（荷主承認待ち → 承認済み。US-24 AC4・AC5、Q-INV-07・10）。承認時刻は Clock から得て、
+     * 保存と同じトランザクションで DE-04 を発行する。荷主企業で絞った照会を通し、他社の見積りは見つからない扱いにする（Q-INV-08）。
+     */
+    @Transactional
+    public ShipperApprovalOutcome approve(ApproveQuotationCommand command) {
+        return new ShipperApprovalOutcome.NotFound();
     }
 }

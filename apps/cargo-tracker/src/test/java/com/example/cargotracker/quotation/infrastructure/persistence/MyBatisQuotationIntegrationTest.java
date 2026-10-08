@@ -10,6 +10,8 @@ import com.example.cargotracker.quotation.domain.model.aggregates.Quotation;
 import com.example.cargotracker.quotation.domain.model.aggregates.QuotationRepository;
 import com.example.cargotracker.quotation.domain.model.aggregates.TransportRequest;
 import com.example.cargotracker.quotation.domain.model.aggregates.TransportRequestRepository;
+import com.example.cargotracker.quotation.domain.model.valueobjects.AssignedRoute;
+import com.example.cargotracker.quotation.domain.model.valueobjects.AssignedRouteLeg;
 import com.example.cargotracker.quotation.domain.model.valueobjects.Currency;
 import com.example.cargotracker.quotation.domain.model.valueobjects.PricingLine;
 import com.example.cargotracker.quotation.domain.model.valueobjects.QuotationFixture;
@@ -19,6 +21,7 @@ import com.example.cargotracker.quotation.domain.model.valueobjects.QuotationSta
 import com.example.cargotracker.quotation.domain.model.valueobjects.QuotedRequestSummary;
 import com.example.cargotracker.quotation.domain.model.valueobjects.RoutingRequestedSummary;
 import com.example.cargotracker.quotation.domain.model.valueobjects.ShipmentTermsFixture;
+import com.example.cargotracker.quotation.domain.model.valueobjects.ShipperApproval;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestId;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestNumber;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestStatus;
@@ -202,7 +205,7 @@ class MyBatisQuotationIntegrationTest {
         "PENDING_APPROVAL, , 100.00, USD, ck_quotation_calculated", // 承認待ちなのに有効期限がない
         "PENDING_APPROVAL, 2082-01-08T09:00:00Z, , USD, ck_quotation_calculated", // 承認待ちなのに合計がない
         "PENDING_APPROVAL, 2082-01-08T09:00:00Z, 100.00, GBP, ck_quotation_currency", // 通貨が候補にない
-        "APPROVED, 2082-01-08T09:00:00Z, 100.00, USD, ck_quotation_status" // まだ使わない状態（荷主の承認は US-24 AC4）
+        "BOOKED, 2082-01-08T09:00:00Z, 100.00, USD, ck_quotation_status" // 見積りの状態にない値（荷主の承認済みは Bolt 20 で足した）
     })
     void 承認待ち以後の必須の列と通貨と状態はCHECK制約で守る(
             String status, String expiresAt, String totalAmount, String currency, String constraint) {
@@ -502,5 +505,132 @@ class MyBatisQuotationIntegrationTest {
                 repository.findByTransportRequestIdAndNo(transportRequestId, 1).orElseThrow();
         quotation.requestRouteDesign(RESPONDENT, at);
         repository.update(quotation);
+    }
+
+    // 経路版の割当てと荷主の承認（Bolt 20、R-INV-11、Q-INV-10）
+
+    private static final UserId SHIPPER_USER = new UserId(UUID.randomUUID());
+    private static final UtcInstant CONFIRMED_AT = new UtcInstant(Instant.parse("2082-01-07T05:00:00Z"));
+    private static final AssignedRoute ROUTE = new AssignedRoute(
+            "RC-2082-0001",
+            1,
+            CONFIRMED_AT,
+            List.of(
+                    new AssignedRouteLeg(
+                            "V-201",
+                            new Location("JPTYO"),
+                            new Location("SGSIN"),
+                            new UtcInstant(Instant.parse("2099-10-10T00:00:00Z")),
+                            new UtcInstant(Instant.parse("2099-10-20T00:00:00Z"))),
+                    new AssignedRouteLeg(
+                            "V-301",
+                            new Location("SGSIN"),
+                            new Location("NLRTM"),
+                            new UtcInstant(Instant.parse("2099-10-20T12:00:00Z")),
+                            new UtcInstant(Instant.parse("2099-10-31T00:00:00Z")))));
+
+    private Quotation awaitingApproval(TransportRequestId transportRequestId) {
+        routingRequested(transportRequestId);
+        Quotation quotation =
+                repository.findByTransportRequestIdAndNo(transportRequestId, 1).orElseThrow();
+        quotation.assignRoute(ROUTE, CONFIRMED_AT);
+        repository.update(quotation);
+        return quotation;
+    }
+
+    @Test
+    void 荷主承認待ちの見積りは割り当てた経路と区間とともに保存しIDでも読み出せる() {
+        TransportRequestId transportRequestId = transportRequest(24);
+        Quotation quotation = awaitingApproval(transportRequestId);
+
+        assertThat(repository.findById(quotation.id())).hasValueSatisfying(found -> {
+            assertThat(found.status()).isEqualTo(QuotationStatus.AWAITING_SHIPPER_APPROVAL);
+            assertThat(found.assignedRoute()).contains(ROUTE);
+            assertThat(found.shipperApproval()).isEmpty();
+        });
+        assertThat(jdbc.queryForObject(
+                        "SELECT COUNT(*) FROM quotation.assigned_route_leg WHERE quotation_id = ?",
+                        Integer.class,
+                        quotation.id().value()))
+                .isEqualTo(2);
+    }
+
+    @Test
+    void 承認済みの見積りは承認者と承認時刻とともに保存し区間は重ねて書かない() {
+        TransportRequestId transportRequestId = transportRequest(25);
+        awaitingApproval(transportRequestId);
+        Quotation quotation =
+                repository.findByTransportRequestIdAndNo(transportRequestId, 1).orElseThrow();
+        UtcInstant approvedAt = new UtcInstant(Instant.parse("2082-01-07T06:00:00Z"));
+        quotation.approveByShipper(SHIPPER_USER, approvedAt);
+
+        repository.update(quotation);
+
+        assertThat(repository.findById(quotation.id())).hasValueSatisfying(found -> {
+            assertThat(found.status()).isEqualTo(QuotationStatus.APPROVED);
+            assertThat(found.shipperApproval()).contains(new ShipperApproval(SHIPPER_USER, approvedAt));
+            assertThat(found.assignedRoute()).contains(ROUTE);
+        });
+        assertThat(jdbc.queryForObject(
+                        "SELECT COUNT(*) FROM quotation.assigned_route_leg WHERE quotation_id = ?",
+                        Integer.class,
+                        quotation.id().value()))
+                .isEqualTo(2);
+    }
+
+    @Test
+    void 荷主承認待ちと承認済みの見積りも1つだけの数に入る() {
+        TransportRequestId transportRequestId = transportRequest(26);
+        awaitingApproval(transportRequestId);
+        Quotation second = calculated(transportRequestId, 2);
+
+        assertThatThrownBy(() -> repository.save(second)).isInstanceOf(DuplicateQuotationException.class);
+    }
+
+    @Test
+    void ない見積りのIDでは見つからない() {
+        assertThat(repository.findById(new QuotationId(UUID.randomUUID()))).isEmpty();
+    }
+
+    /** PostgreSQL は制約違反でトランザクションを中断するため、違反ごとに別のテストにする。 */
+    @ParameterizedTest
+    @CsvSource({
+        "AWAITING_SHIPPER_APPROVAL, , , ck_quotation_route_assigned", // 荷主承認待ちなのに経路版がない
+        "ROUTING_REQUESTED, RC-2082-0001, , ck_quotation_route_assigned", // 経路版の列がそろっていない
+        "APPROVED, RC-2082-0001, 1, ck_quotation_shipper_approved" // 承認済みなのに荷主承認がない
+    })
+    void 経路版の参照と荷主承認の列はそろって値を持ち状態に応じて必須をCHECK制約で守る(
+            String status, String caseNumber, Integer versionNo, String constraint) {
+        TransportRequestId transportRequestId = transportRequest(27);
+        Quotation target = routingRequested(transportRequestId);
+        String update = "UPDATE quotation.quotation SET status = ?, routing_case_number = ?, route_version_no = ?,"
+                + " route_confirmed_at = CASE WHEN ? THEN responded_at END WHERE id = ?";
+        boolean confirmedAt = versionNo != null;
+        UUID targetId = target.id().value();
+
+        assertThatThrownBy(() -> jdbc.update(update, status, caseNumber, versionNo, confirmedAt, targetId))
+                .isInstanceOf(DataIntegrityViolationException.class)
+                .hasMessageContaining(constraint);
+    }
+
+    @Test
+    void 輸送要求は荷主承認待ちと予約待ちで保存できる() {
+        TransportRequestId transportRequestId = transportRequest(28);
+        TransportRequest request =
+                transportRequests.findById(transportRequestId).orElseThrow();
+        request.approve(1, STAFF, "根拠", NOW);
+        request.markRoutingRequested(1);
+        request.markAwaitingApproval(1);
+        transportRequests.update(request);
+        assertThat(transportRequests.findById(transportRequestId).orElseThrow().status())
+                .isEqualTo(TransportRequestStatus.AWAITING_APPROVAL);
+
+        TransportRequest awaiting =
+                transportRequests.findById(transportRequestId).orElseThrow();
+        awaiting.markReadyToBook(1);
+        transportRequests.update(awaiting);
+
+        assertThat(transportRequests.findById(transportRequestId).orElseThrow().status())
+                .isEqualTo(TransportRequestStatus.READY_TO_BOOK);
     }
 }
