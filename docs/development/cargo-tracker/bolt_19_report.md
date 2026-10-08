@@ -3,8 +3,10 @@ type: Plan
 title: "Bolt 19 終了報告 - 判断根拠を記録して経路を確定する（US-07 AC1・AC2）"
 description: "19 回目の Bolt の終了報告。経路設計案件の経路版の一覧、確定の時刻で判定し直す経路の確定と拒否の理由、確定の記録の列と外部キー、DE-05 の発行、S-07 と S-05・S-06 の変更、sonar-local のタスクのクラウドの上書き、5 視点の開発レビューと対応（D-67〜D-72）、品質ゲート、デモ項目と動画、仮説 H1〜H3 の結論、承認ゲートを後でまとめて受ける議題、ふりかえりをまとめる。"
 tags: [development,bolt-report]
-status: draft
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-07T14:02:32Z }
+status: stable
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-08T00:53:38Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-10-08T00:53:18Z }
 ---
 
 # Bolt 19 終了報告 - 判断根拠を記録して経路を確定する（US-07 AC1・AC2）
@@ -108,6 +110,8 @@ generated: { by: anthropic/claude-opus-5-5, at: 2026-10-07T14:02:32Z }
 
 ### 人の決定
 
+- 2026-10-08: 終了報告の議題 1〜7 を承認した。D-71 は AI の推奨の形（経路設計の中に DE-05 の購読側を置き、見積りの公開 API に割当てのポートを足して呼ぶ。依存は `routing → quotation` のまま）を採る。US-24 AC4 の Bolt の開始準備で ADR に書く
+
 - 2026-10-07: Bolt 19 は US-07 AC1・AC2（D-64 を含む）。T-52 をこの Bolt で正式化する
 - 2026-10-07: 計画（確認ポイント 1〜12）、ステップ 1、ステップ 2 の Red を承認した
 - 2026-10-07: `/goal Bolt19`（承認ゲートで止まらずに Bolt を終えるまで進める）
@@ -145,6 +149,7 @@ generated: { by: anthropic/claude-opus-5-5, at: 2026-10-07T14:02:32Z }
 | 日付 | 内容 | 作成 | 承認 |
 | :--- | :--- | :--- | :--- |
 | 2026-10-07 | 初版（ステップ 1〜5 の結果、開発レビュー D-67〜D-72、品質ゲート、デモ項目と動画、仮説の結論、承認の議題 1〜7、Try T-53〜T-56） | anthropic/claude-opus-5-5 | — |
+| 2026-10-08 | 承認の議題 1〜7（AI の判断で通したステップ 2 の Green・ステップ 3・ステップ 4 の承認ゲート、開発レビューの対応 D-67〜D-70、議題 5 の D-71 は AI の推奨（経路設計の中に DE-05 の購読側を置き、見積りの公開 API に割当てのポートを足して呼ぶ）を採る、デモの動画、デモ環境での確定の確認）を承認し、Bolt 19 を終えた（人の変更依頼 0） | anthropic/claude-opus-5-5 | human:kakimomokuri |
 
 ## 関連ドキュメント
 
