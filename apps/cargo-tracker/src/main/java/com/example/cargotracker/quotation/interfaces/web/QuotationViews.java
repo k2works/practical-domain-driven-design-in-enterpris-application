@@ -1,6 +1,7 @@
 package com.example.cargotracker.quotation.interfaces.web;
 
 import com.example.cargotracker.quotation.domain.model.aggregates.Quotation;
+import com.example.cargotracker.quotation.domain.model.valueobjects.AssignedRoute;
 import com.example.cargotracker.quotation.domain.model.valueobjects.PricingBasis;
 import com.example.cargotracker.quotation.domain.model.valueobjects.QuotationExpiry;
 import com.example.cargotracker.quotation.domain.model.valueobjects.QuotationStatus;
@@ -48,7 +49,7 @@ final class QuotationViews {
             case PRESENTED -> "提示済み";
             case ROUTING_REQUESTED -> "詳細設計依頼済み";
             case AWAITING_SHIPPER_APPROVAL -> "荷主承認待ち";
-            case APPROVED -> "荷主承認済み";
+            case APPROVED -> "荷主承認済み（予約待ち）";
             case EXPIRED -> "失効";
             case REPLACED -> "置換済み";
         };
@@ -92,8 +93,31 @@ final class QuotationViews {
                 replaced,
                 expired,
                 quotation.responseRejectionAt(now).isEmpty(),
+                quotation.status().isRoutingStarted(),
                 quotation.status() == QuotationStatus.ROUTING_REQUESTED,
-                quotation.respondedAt().map(dateTime).orElse(null));
+                quotation.respondedAt().map(dateTime).orElse(null),
+                quotation.assignedRoute().map(route -> route(route, dateTime)).orElse(null),
+                quotation.status() == QuotationStatus.AWAITING_SHIPPER_APPROVAL,
+                quotation.approvalRejectionAt(now).isEmpty(),
+                quotation
+                        .shipperApproval()
+                        .map(approval -> dateTime.apply(approval.approvedAt()))
+                        .orElse(null));
+    }
+
+    /** 割り当てた経路の表示（Bolt 20）。 */
+    static RouteView route(AssignedRoute route, Function<UtcInstant, String> dateTime) {
+        return new RouteView(
+                route.routingCaseNumber() + " 経路版 " + route.routeVersionNo(),
+                dateTime.apply(route.confirmedAt()),
+                route.legs().stream()
+                        .map(leg -> new LegView(
+                                leg.voyageNumber(),
+                                leg.load().unLocode() + " → " + leg.discharge().unLocode(),
+                                dateTime.apply(leg.departureAt()),
+                                dateTime.apply(leg.arrivalAt())))
+                        .toList(),
+                dateTime.apply(route.arrivalAt()));
     }
 
     /** 状態の表示名。失効していれば「失効」、荷主に見せる置換済みは「新しい見積りに置き換え」（D-37）。 */
@@ -104,8 +128,21 @@ final class QuotationViews {
         if (status == QuotationStatus.REPLACED && audience == Audience.CUSTOMER) {
             return "新しい見積りに置き換え";
         }
-        if (status == QuotationStatus.ROUTING_REQUESTED && audience == Audience.CUSTOMER) {
-            return "詳細経路設計を依頼済み";
+        if (audience == Audience.CUSTOMER) {
+            switch (status) {
+                case ROUTING_REQUESTED -> {
+                    return "詳細経路設計を依頼済み";
+                }
+                case AWAITING_SHIPPER_APPROVAL -> {
+                    return "見積りと経路の承認待ち";
+                }
+                case APPROVED -> {
+                    return "承認済み";
+                }
+                default -> {
+                    // 社内と同じ表示名
+                }
+            }
         }
         return status(status);
     }
@@ -133,8 +170,13 @@ final class QuotationViews {
      * @param replaced 置換済みか（荷主には新しい見積りを準備中と案内する。D-37）
      * @param expired 表示する時刻で失効しているか（失効を記録したものを含む）
      * @param respondable 荷主が回答できるか（提示済みで、失効していない。Bolt 12）
-     * @param routingRequested 詳細設計依頼済みか（Bolt 12）
+     * @param routingRequested 荷主が詳細経路設計を依頼した後か（詳細設計依頼済み・荷主承認待ち・承認済み。Bolt 12・20）
+     * @param routingInProgress 詳細設計依頼済み（経路設計の途中）か（Bolt 20）
      * @param respondedAt 回答時刻（荷主が回答していなければ null）
+     * @param route 割り当てた経路（割り当てていなければ null。Bolt 20）
+     * @param awaitingApproval 荷主承認待ちか（Bolt 20）
+     * @param approvable 荷主が承認できるか（荷主承認待ちで、失効していない。Bolt 20）
+     * @param approvedAt 荷主の承認時刻（承認していなければ null。Bolt 20）
      */
     record View(
             int quotationNo,
@@ -153,7 +195,32 @@ final class QuotationViews {
             boolean expired,
             boolean respondable,
             boolean routingRequested,
-            String respondedAt) {}
+            boolean routingInProgress,
+            String respondedAt,
+            RouteView route,
+            boolean awaitingApproval,
+            boolean approvable,
+            String approvedAt) {}
+
+    /**
+     * 割り当てた経路の表示（Bolt 20）。
+     *
+     * @param label 案件番号と経路版（例: RC-2026-0001 経路版 1）
+     * @param confirmedAt 経路を確定した日時
+     * @param legs 区間
+     * @param arrivalAt 到着予定（最後の区間の到着予定）
+     */
+    record RouteView(String label, String confirmedAt, List<LegView> legs, String arrivalAt) {}
+
+    /**
+     * 割り当てた区間の表示（Bolt 20）。
+     *
+     * @param voyageNumber 航海番号
+     * @param ports 積地 → 揚地
+     * @param departureAt 出発予定
+     * @param arrivalAt 到着予定
+     */
+    record LegView(String voyageNumber, String ports, String departureAt, String arrivalAt) {}
 
     /**
      * 料金明細の 1 行の表示。

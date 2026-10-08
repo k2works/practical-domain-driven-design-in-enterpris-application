@@ -158,18 +158,20 @@
         <constructor>
             <arg column="request_number" name="requestNumber" javaType="String"/>
             <arg column="quotation_no" name="quotationNo" javaType="_int"/>
+            <arg column="status" name="status" javaType="String"/>
             <arg column="responded_at" name="respondedAt" javaType="java.time.OffsetDateTime"/>
             <arg column="expires_at" name="expiresAt" javaType="java.time.OffsetDateTime"/>
         </constructor>
     </resultMap>
 
-    <!-- 経路設計中の見積依頼の、詳細設計依頼済みの見積り（受付一覧 S-02。Bolt 12）。依頼時刻の古い順 -->
+    <!-- 経路設計中・荷主承認待ち・予約待ちの見積依頼の、詳細設計依頼済み・荷主承認待ち・承認済みの見積り（受付一覧 S-02。Bolt 12・20）。
+         依頼時刻の古い順 -->
     <select id="selectRoutingRequested" resultMap="routingRequestedSummaryRow">
-        SELECT r.request_number, q.quotation_no, q.responded_at, q.expires_at
+        SELECT r.request_number, q.quotation_no, q.status, q.responded_at, q.expires_at
           FROM quotation.transport_request r
           JOIN quotation.quotation q ON q.transport_request_id = r.id
-         WHERE r.status = 'ROUTING'
-           AND q.status = 'ROUTING_REQUESTED'
+         WHERE r.status IN ('ROUTING', 'AWAITING_APPROVAL', 'READY_TO_BOOK')
+           AND q.status IN ('ROUTING_REQUESTED', 'AWAITING_SHIPPER_APPROVAL', 'APPROVED')
          ORDER BY q.responded_at, r.request_number
     </select>
 

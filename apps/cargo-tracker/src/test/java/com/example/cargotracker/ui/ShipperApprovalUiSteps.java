@@ -82,7 +82,7 @@ public class ShipperApprovalUiSteps {
         page().waitForURL("**/customer/transport-requests/" + state.transportRequestNumber());
     }
 
-    @もし("荷主が見積りと経路の承認を開く")
+    @もし("荷主が承認の画面で見積りと経路を確かめる")
     public void 承認を開く() {
         browser.navigate(detailUrl() + "/quotations/1/approval");
         assertThat(page().locator("main")).containsText("この見積りと経路で承認しますか");

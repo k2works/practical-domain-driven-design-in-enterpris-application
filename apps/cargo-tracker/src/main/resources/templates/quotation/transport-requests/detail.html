@@ -45,8 +45,11 @@
              しかたを示す（Bolt 11 レビュー R-01・R-03・R-35、D-37）。回答の画面は US-24 */-->
         <p th:if="${quotation.replaced()}" class="alert alert-info">この見積りは読み取り専用です。担当営業が新しい見積りを準備しています。提示されるまでお待ちください。</p>
         <!--/* 経路設計中に失効した見積りは、依頼済みのまま進めていると示し、新しい見積りの依頼を求めない（Bolt 12 レビュー R-01、D-42） */-->
-        <p th:if="${quotation.expired() and quotation.routingRequested()}" class="alert alert-warning"
+        <p th:if="${quotation.expired() and quotation.routingInProgress()}" class="alert alert-warning"
            th:text="|有効期限（${quotation.expiresAt()}）を過ぎました。詳細経路設計は依頼済みのまま進めています。料金の扱いは担当営業からご連絡します。|">有効期限（2026-10-05 21:00 Asia/Tokyo（UTC+09:00））を過ぎました。詳細経路設計は依頼済みのまま進めています。料金の扱いは担当営業からご連絡します。</p>
+        <!--/* 荷主承認待ちで失効したら承認の入口を出さず、新しい見積りの依頼を案内する（US-24 AC5。Bolt 20） */-->
+        <p th:if="${quotation.expired() and quotation.awaitingApproval()}" class="alert alert-warning"
+           th:text="|有効期限（${quotation.expiresAt()}）を過ぎたため承認できません。新しい見積りは担当営業にご依頼ください。|">有効期限（2026-10-05 21:00 Asia/Tokyo（UTC+09:00））を過ぎたため承認できません。新しい見積りは担当営業にご依頼ください。</p>
         <p th:if="${quotation.expired() and !quotation.routingRequested()}" class="alert alert-warning"
            th:text="|有効期限（${quotation.expiresAt()}）を過ぎたため、この見積りは使えません（読み取り専用）。新しい見積りは担当営業にご依頼ください。|">有効期限（2026-10-05 21:00 Asia/Tokyo（UTC+09:00））を過ぎたため、この見積りは使えません（読み取り専用）。新しい見積りは担当営業にご依頼ください。</p>
         <div th:replace="~{quotation/fragments/quotation :: details(${quotation})}"></div>
@@ -54,6 +57,13 @@
         <p th:if="${quotation.respondable()}"><a th:href="@{/customer/transport-requests/{number}/quotations/{no}/response(number=${number},no=${quotation.quotationNo()})}">見積りに回答する</a></p>
         <p th:if="${quotation.routingRequested()}"
            th:text="|${quotation.respondedAt()}にこの見積りで詳細経路設計を依頼しました。|">2026-10-06 09:30 Asia/Tokyo（UTC+09:00）にこの見積りで詳細経路設計を依頼しました。</p>
+        <!--/* 確定した経路と承認（C-17、US-24 AC4。Bolt 20）。荷主承認待ちで有効なときだけ承認の入口を出し、承認済みなら承認の日時を示す */-->
+        <th:block th:if="${quotation.route()}">
+            <div th:replace="~{quotation/fragments/assigned-route :: route(${quotation.route()}, 3)}"></div>
+        </th:block>
+        <p th:if="${quotation.approvable()}"><a th:href="@{/customer/transport-requests/{number}/quotations/{no}/approval(number=${number},no=${quotation.quotationNo()})}">見積りと経路を確かめて承認へ</a></p>
+        <p th:if="${quotation.approvedAt()}"
+           th:text="|${quotation.approvedAt()}にこの見積りと経路を承認しました。担当営業が本予約を確定します。確定したらご連絡します。|">2026-10-07 15:00 Asia/Tokyo（UTC+09:00）にこの見積りと経路を承認しました。担当営業が本予約を確定します。確定したらご連絡します。</p>
         <th:block th:unless="${#lists.isEmpty(previousQuotations)}">
             <h3>以前の見積り（読み取り専用）</h3>
             <details th:each="previous : ${previousQuotations}">

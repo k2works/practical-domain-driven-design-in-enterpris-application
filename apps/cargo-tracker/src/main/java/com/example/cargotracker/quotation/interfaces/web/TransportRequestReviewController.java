@@ -8,7 +8,6 @@ import com.example.cargotracker.quotation.application.internal.queryservices.Sta
 import com.example.cargotracker.quotation.application.internal.queryservices.StaffTransportRequestQueryService;
 import com.example.cargotracker.quotation.domain.model.aggregates.TransportRequest;
 import com.example.cargotracker.quotation.domain.model.entities.ReviewRecord;
-import com.example.cargotracker.quotation.domain.model.valueobjects.QuotationStatus;
 import com.example.cargotracker.quotation.domain.model.valueobjects.ReviewDecision;
 import com.example.cargotracker.quotation.domain.model.valueobjects.ReviewRejection;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestNumber;
@@ -89,7 +88,8 @@ public class TransportRequestReviewController {
                                 QuotationViews.effectiveStatus(summary.status(), summary.expiresAt(), now),
                                 TransportRequestLabels.staffDateTime(summary.expiresAt())))
                         .toList());
-        // 経路設計中（Bolt 12、US-24 AC1）。荷主が詳細経路設計を依頼した見積りを依頼時刻の古い順に示し、見積り（S-04）を開ける
+        // 経路設計中（Bolt 12、US-24 AC1）。荷主が詳細経路設計を依頼した見積りを依頼時刻の古い順に示し、見積り（S-04）を開ける。
+        // Bolt 20 から荷主承認待ち・荷主承認済み（予約待ち）も並べる
         model.addAttribute(
                 "routingRequests",
                 quotationQueryService.findRoutingRequestedSummaries().stream()
@@ -97,8 +97,7 @@ public class TransportRequestReviewController {
                                 QuotationViews.label(summary.number(), summary.quotationNo()),
                                 "/staff/transport-requests/" + summary.number().text() + "/quotations/"
                                         + summary.quotationNo(),
-                                QuotationViews.effectiveStatus(
-                                        QuotationStatus.ROUTING_REQUESTED, summary.expiresAt(), now),
+                                QuotationViews.effectiveStatus(summary.status(), summary.expiresAt(), now),
                                 TransportRequestLabels.staffDateTime(summary.requestedAt()),
                                 TransportRequestLabels.staffDateTime(summary.expiresAt())))
                         .toList());

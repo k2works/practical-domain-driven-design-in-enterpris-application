@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<!--/* 割り当てた経路の断片（荷主の C-04 と C-17 で共通。US-24 AC4。Bolt 20）。経路設計が確定して見積りに割り当てた経路版の写しを示す */-->
+<html lang="ja" xmlns:th="http://www.thymeleaf.org">
+<body>
+<div th:fragment="route(route, headingLevel)">
+    <h3 th:if="${headingLevel == 3}" th:text="|確定した経路（${route.label()}）|">確定した経路（RC-2026-0001 経路版 1）</h3>
+    <h2 th:if="${headingLevel == 2}" th:text="|確定した経路（${route.label()}）|">確定した経路（RC-2026-0001 経路版 1）</h2>
+    <dl>
+        <dt>確定の日時</dt>
+        <dd th:text="${route.confirmedAt()}">2026-10-07 14:00 Asia/Tokyo（UTC+09:00）</dd>
+        <dt>到着予定</dt>
+        <dd th:text="${route.arrivalAt()}">2026-10-31 09:00 Asia/Tokyo（UTC+09:00）</dd>
+    </dl>
+    <div class="table-scroll" tabindex="0" role="region" th:aria-label="|確定した経路の区間（${route.label()}）|">
+    <table class="table">
+        <thead>
+        <tr>
+            <th scope="col">航海</th>
+            <th scope="col">積地 → 揚地</th>
+            <th scope="col">出発予定</th>
+            <th scope="col">到着予定</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="leg : ${route.legs()}">
+            <td th:text="${leg.voyageNumber()}">V-201</td>
+            <td th:text="${leg.ports()}">JPTYO → SGSIN</td>
+            <td th:text="${leg.departureAt()}">2026-10-10 09:00 Asia/Tokyo（UTC+09:00）</td>
+            <td th:text="${leg.arrivalAt()}">2026-10-20 09:00 Asia/Tokyo（UTC+09:00）</td>
+        </tr>
+        </tbody>
+    </table>
+    </div>
+</div>
+</body>
+</html>

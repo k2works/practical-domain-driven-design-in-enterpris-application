@@ -157,7 +157,7 @@ public class RoutingCaseController {
         return switch (outcome) {
             case RouteConfirmationOutcome.Confirmed confirmed -> {
                 redirectAttributes.addFlashAttribute(
-                        RESULT, "候補 %d の経路を確定しました。確定したことを担当営業に伝えてください。".formatted(confirmed.candidateNo()));
+                        RESULT, "候補 %d の経路を確定しました。確定した経路は見積りに割り当てられ、荷主の承認に進みます。".formatted(confirmed.candidateNo()));
                 yield REDIRECT + confirmed.number().text();
             }
             case RouteConfirmationOutcome.Conflict() -> {

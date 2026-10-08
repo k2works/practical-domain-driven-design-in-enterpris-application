@@ -126,7 +126,7 @@ public class MyBatisQuotationRepository implements QuotationRepository {
                 .map(row -> new RoutingRequestedSummary(
                         TransportRequestNumber.parse(row.requestNumber()),
                         row.quotationNo(),
-                        QuotationStatus.ROUTING_REQUESTED,
+                        QuotationStatus.valueOf(row.status()),
                         toUtc(row.respondedAt()),
                         toUtc(row.expiresAt())))
                 .toList();

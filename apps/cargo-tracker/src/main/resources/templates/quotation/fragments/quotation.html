@@ -37,7 +37,7 @@
         <dt>概算の到着</dt>
         <dd th:text="${quotation.arrivalAt()}">2026-10-30 18:00 Asia/Tokyo（UTC+09:00）</dd>
     </dl>
-    <p>詳細な経路は、経路設計者の承認後に確定します。</p>
+    <p th:unless="${quotation.route()}">詳細な経路は、経路設計者の承認後に確定します。</p>
 </div>
 </body>
 </html>

@@ -59,7 +59,7 @@
     </section>
     <h2 class="h4">この経路で確定しますか</h2>
     <p>確定すると、確定の時刻の接続時間規則で候補を判定し直します。確定した後は候補を算出し直せません。</p>
-    <p>確定した経路を見積りに割り当てて荷主の承認に進む仕組みは準備中です。確定したら、確定したことを担当営業に伝えてください。</p>
+    <p>確定した経路は見積りに割り当てられ、荷主の承認に進みます。</p>
     <form th:action="@{/staff/routing-cases/{number}/confirmation(number=${page.number()})}" method="post">
         <input type="hidden" name="candidate" th:value="${page.candidate().candidateNo()}">
         <input type="hidden" name="expectedVersion" th:value="${page.aggregateVersion()}">

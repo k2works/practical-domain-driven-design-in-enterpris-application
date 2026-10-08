@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="ja" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/customer :: layout(~{::title}, ~{::main}, ~{}, 'transport-requests')}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="|見積りと経路の承認 ${quotationLabel} - cargo-tracker|">見積りと経路の承認 TR-2026-0001 見積 1 - cargo-tracker</title>
+</head>
+<body>
+<main>
+    <h1 th:text="|見積りと経路の承認 ${quotationLabel}|">見積りと経路の承認 TR-2026-0001 見積 1</h1>
+    <!--/* C-17（Bolt 20、US-24 AC4・AC5）。料金・有効期限と確定した経路を確かめて承認する。画面そのものが確認の領域（BR-13。
+         C-05・S-07 と同じく別のダイアログは挟まない）。搬入締切・書類締切は本予約（US-04）で決まるため示さない。
+         開発の注記は荷主のブラウザに届かないパーサーレベルのコメントにする（Bolt 12 レビュー R-18） */-->
+    <dl>
+        <dt>状態</dt>
+        <dd>見積りと経路の承認待ち</dd>
+    </dl>
+    <h2>見積り</h2>
+    <div th:replace="~{quotation/fragments/quotation :: details(${quotation})}"></div>
+    <div th:replace="~{quotation/fragments/assigned-route :: route(${quotation.route()}, 2)}"></div>
+    <h2>この見積りと経路で承認しますか</h2>
+    <p>承認は本予約の確定ではありません。承認の後、担当営業が本予約を確定します。</p>
+    <form th:action="@{/customer/transport-requests/{number}/quotations/{no}/approval(number=${number},no=${quotation.quotationNo()})}"
+          method="post">
+        <button type="submit" class="btn btn-primary">この見積りと経路で承認する</button>
+    </form>
+    <p>条件を見直したい場合は、承認せずに業務番号を添えて担当営業にご連絡ください。</p>
+    <p><a th:href="@{/customer/transport-requests/{number}(number=${number})}">見積依頼の詳細へ戻る</a></p>
+</main>
+</body>
+</html>

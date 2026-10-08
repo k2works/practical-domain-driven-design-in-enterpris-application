@@ -346,7 +346,7 @@ public class StaffQuotationController {
         if (quotation.status() == QuotationStatus.EXPIRED) {
             return expiresAt + "を過ぎて失効しました。この見積りは読み取り専用です。";
         }
-        if (quotation.status() == QuotationStatus.ROUTING_REQUESTED) {
+        if (quotation.status().isRoutingStarted()) {
             return expiresAt + "を過ぎたため、この見積りは使えません。荷主が詳細経路設計を依頼済みのため、再見積りはできません。"
                     + "荷主と経路設計者に連絡し、扱いを決めてください（経路設計の途中の再見積りは今後の更新で入れます）。";
         }
@@ -359,7 +359,7 @@ public class StaffQuotationController {
      * 依頼者の名前は、利用者の管理（US-16・US-18）ができるまで出さない。
      */
     private static String routingRequestedNotice(Quotation quotation, UtcInstant now) {
-        if (quotation.status() != QuotationStatus.ROUTING_REQUESTED || quotation.isExpiredAt(now)) {
+        if (!quotation.status().isRoutingStarted() || quotation.isExpiredAt(now)) {
             return null;
         }
         return "荷主が "
