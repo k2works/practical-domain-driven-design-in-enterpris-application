@@ -116,7 +116,7 @@ function commentBody(bolt, videos, scenarios) {
   const lines = [
     `## Bolt ${number} の受入動画（デモ項目）`,
     '',
-    `画面の層の受入シナリオ（\`@demo-${bolt}/…\`）を \`./gradlew demoVideo -PdemoBolt=${bolt}\` で録画したもの。`,
+    `画面の層の受入シナリオ（\`@demo-${bolt}/…\`）を \`./gradlew demoVideo\` で録画したもの。`,
     '',
   ];
   for (const video of videos) {
@@ -166,7 +166,7 @@ function attach(bolt, issue, dryRun) {
   }
   const dir = path.join(DEMO_DIR, bolt);
   if (!fs.existsSync(dir)) {
-    throw new Error(`${path.relative(process.cwd(), dir)} がありません。先に ./gradlew demoVideo -PdemoBolt=${bolt} で録画してください`);
+    throw new Error(`${path.relative(process.cwd(), dir)} がありません。先に ./gradlew demoVideo で録画してください`);
   }
   const videos = fs
     .readdirSync(dir)
