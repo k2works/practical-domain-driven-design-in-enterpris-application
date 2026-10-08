@@ -120,4 +120,23 @@ class RouteDesignRequestedEventHandlerTest {
             assertThat(event.getFormattedMessage()).contains(missing.toString());
         });
     }
+
+    @Test
+    void 荷主承認待ちや予約待ちに進んだ後に遅れて届いた依頼は輸送要求を変えずログも残さない() {
+        TransportRequest request = quoted();
+        TransportRequest found = repository.findById(request.id()).orElseThrow();
+        found.markRoutingRequested(1);
+        found.markAwaitingApproval(1);
+        repository.update(found);
+
+        handler.on(requested(request.id().value(), 1));
+        TransportRequest ready = repository.findById(request.id()).orElseThrow();
+        ready.markReadyToBook(1);
+        repository.update(ready);
+        handler.on(requested(request.id().value(), 1));
+
+        assertThat(repository.findById(request.id()).orElseThrow().status())
+                .isEqualTo(TransportRequestStatus.READY_TO_BOOK);
+        assertThat(logs.list).isEmpty();
+    }
 }

@@ -188,4 +188,20 @@ class TransportRequestTest {
         assertThat(quoted.markAwaitingApproval(1)).as("DE-16 より先に DE-21 が届いた").isTrue();
         assertThat(quoted.status()).isEqualTo(TransportRequestStatus.AWAITING_APPROVAL);
     }
+
+    @Test
+    void 同じ版でその状態まで進んだかを問い合わせられる() {
+        TransportRequest request = TransportRequest.submit(id, number, shipper, terms, submitter, now);
+        request.approve(1, submitter, "根拠", now);
+        request.markRoutingRequested(1);
+        request.markAwaitingApproval(1);
+
+        assertThat(request.hasReached(TransportRequestStatus.QUOTED, 1)).isTrue();
+        assertThat(request.hasReached(TransportRequestStatus.AWAITING_APPROVAL, 1))
+                .isTrue();
+        assertThat(request.hasReached(TransportRequestStatus.READY_TO_BOOK, 1)).isFalse();
+        assertThat(request.hasReached(TransportRequestStatus.AWAITING_APPROVAL, 2))
+                .as("版が違えば進んでいない")
+                .isFalse();
+    }
 }

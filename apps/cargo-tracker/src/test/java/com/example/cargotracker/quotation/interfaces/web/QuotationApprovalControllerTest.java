@@ -109,6 +109,7 @@ class QuotationApprovalControllerTest {
                 .andExpect(content().string(containsString("SGSIN → NLRTM")))
                 .andExpect(content().string(containsString("2099-10-31 09:00 Asia/Tokyo（UTC+09:00）")))
                 .andExpect(content().string(containsString("この見積りと経路で承認しますか")))
+                .andExpect(content().string(containsString("有効期限（2099-10-08 18:00 Asia/Tokyo（UTC+09:00））までに承認してください。")))
                 .andExpect(content().string(containsString("承認は本予約の確定ではありません。承認の後、担当営業が本予約を確定します。")))
                 .andExpect(content().string(containsString("この見積りと経路で承認する</button>")))
                 .andExpect(content().string(not(containsString("<!-- C-17"))));

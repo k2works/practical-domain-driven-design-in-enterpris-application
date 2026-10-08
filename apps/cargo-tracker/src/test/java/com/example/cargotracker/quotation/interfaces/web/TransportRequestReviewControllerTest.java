@@ -166,7 +166,7 @@ class TransportRequestReviewControllerTest {
 
         mockMvc.perform(get("/staff/transport-requests"))
                 .andExpect(status().isOk())
-                .andExpect(content().string(containsString("経路設計中の見積依頼（依頼時刻の古い順）")))
+                .andExpect(content().string(containsString("経路設計中・荷主承認待ち・予約待ちの見積依頼（依頼時刻の古い順）")))
                 .andExpect(content()
                         .string(containsString(
                                 "href=\"/staff/transport-requests/TR-2026-0001/quotations/1\">TR-2026-0001 見積 1</a>")))
@@ -190,12 +190,19 @@ class TransportRequestReviewControllerTest {
                                 1,
                                 QuotationStatus.APPROVED,
                                 requestedAt,
-                                expiresAt)));
+                                expiresAt),
+                        new RoutingRequestedSummary(
+                                new TransportRequestNumber(2026, 3),
+                                1,
+                                QuotationStatus.APPROVED,
+                                requestedAt,
+                                new UtcInstant(Instant.parse("2026-10-05T04:00:00Z")))));
 
         mockMvc.perform(get("/staff/transport-requests"))
                 .andExpect(status().isOk())
                 .andExpect(content().string(containsString("<td>荷主承認待ち</td>")))
-                .andExpect(content().string(containsString("<td>荷主承認済み（予約待ち）</td>")));
+                .andExpect(content().string(containsString("<td>荷主承認済み（予約待ち）</td>")))
+                .andExpect(content().string(containsString("<td>失効（荷主承認済み）</td>")));
     }
 
     @Test

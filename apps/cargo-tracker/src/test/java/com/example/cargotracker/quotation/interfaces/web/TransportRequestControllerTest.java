@@ -523,6 +523,34 @@ class TransportRequestControllerTest {
     }
 
     @Test
+    void 承認の後に失効した見積りは本予約の扱いを担当営業から連絡すると示す() throws Exception {
+        TransportRequest request = underReviewWithInvoice();
+        given(queryService.findByNumber(NUMBER, SHIPPER)).willReturn(Optional.of(request));
+        Quotation quotation = Quotation.create(new QuotationId(UUID.randomUUID()), request.id(), 1, 1);
+        UtcInstant at = new UtcInstant(Instant.parse("2026-10-05T04:00:00Z"));
+        quotation.calculate(
+                new QuotationInput(
+                        QuotationFixture.completeInput().lines(),
+                        QuotationFixture.completeInput().currency(),
+                        new UtcInstant(Instant.parse("2026-10-05T12:00:00Z")),
+                        QuotationFixture.completeInput().via(),
+                        QuotationFixture.completeInput().departureAt(),
+                        QuotationFixture.completeInput().arrivalAt()),
+                at);
+        quotation.presentInternally(new UserId(UUID.randomUUID()), at);
+        quotation.requestRouteDesign(USER, new UtcInstant(Instant.parse("2026-10-05T05:00:00Z")));
+        quotation.assignRoute(QuotationFixture.assignedRoute(), new UtcInstant(Instant.parse("2026-10-05T06:00:00Z")));
+        quotation.approveByShipper(USER, new UtcInstant(Instant.parse("2026-10-05T07:00:00Z")));
+        given(quotationQueryService.findVisible(NUMBER, SHIPPER)).willReturn(List.of(quotation));
+
+        mockMvc.perform(get("/customer/transport-requests/TR-2026-0001"))
+                .andExpect(content()
+                        .string(containsString(
+                                "承認の後に有効期限（2026-10-05 21:00 Asia/Tokyo（UTC+09:00））を過ぎました。本予約の扱いは担当営業からご連絡します。")))
+                .andExpect(content().string(not(containsString("確定したらご連絡します"))));
+    }
+
+    @Test
     void 置換済みの見積りは新しい見積りの準備中と示し依頼の案内と回答の案内は出さない() throws Exception {
         TransportRequest request = underReviewWithInvoice();
         given(queryService.findByNumber(NUMBER, SHIPPER)).willReturn(Optional.of(request));

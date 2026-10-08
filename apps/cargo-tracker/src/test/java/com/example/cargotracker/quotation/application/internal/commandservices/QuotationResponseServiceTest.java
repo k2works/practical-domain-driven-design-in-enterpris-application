@@ -4,7 +4,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.example.cargotracker.quotation.acceptance.InMemoryQuotationRepository;
 import com.example.cargotracker.quotation.acceptance.InMemoryTransportRequestRepository;
+import com.example.cargotracker.quotation.application.internal.commands.ApproveQuotationCommand;
 import com.example.cargotracker.quotation.application.internal.commands.RequestRouteDesignCommand;
+import com.example.cargotracker.quotation.domain.events.QuotationApprovedByShipper;
 import com.example.cargotracker.quotation.domain.events.RouteDesignRequested;
 import com.example.cargotracker.quotation.domain.model.aggregates.ConcurrentQuotationUpdateException;
 import com.example.cargotracker.quotation.domain.model.aggregates.Quotation;
@@ -141,6 +143,69 @@ class QuotationResponseServiceTest {
 
         assertThat(racingService.requestRouteDesign(command(SHIPPER)))
                 .isEqualTo(new RouteDesignRequestOutcome.Conflict());
+        assertThat(published).isEmpty();
+    }
+
+    // 荷主の承認（US-24 AC4・AC5、Q-INV-07・08・10、DE-04。Bolt 20）
+
+    private Quotation awaitingApproval(TransportRequestId requestId, InMemoryQuotationRepository repository) {
+        Quotation quotation = Quotation.create(new QuotationId(UUID.randomUUID()), requestId, 1, 1);
+        quotation.calculate(QuotationFixture.completeInput(), new UtcInstant(NOW.minusSeconds(1800)));
+        quotation.presentInternally(STAFF, new UtcInstant(NOW.minusSeconds(900)));
+        quotation.requestRouteDesign(RESPONDENT, new UtcInstant(NOW.minusSeconds(600)));
+        quotation.assignRoute(QuotationFixture.assignedRoute(), new UtcInstant(NOW.minusSeconds(300)));
+        quotation.clearDomainEvents();
+        repository.save(quotation);
+        return quotation;
+    }
+
+    private ApproveQuotationCommand approval(CompanyId shipper) {
+        return new ApproveQuotationCommand(NUMBER, 1, shipper, RESPONDENT);
+    }
+
+    @Test
+    void 荷主承認待ちの見積りを承認すると承認済みで保存しDE04を発行する() {
+        TransportRequestId requestId = quotedRequest();
+        awaitingApproval(requestId, quotations);
+
+        assertThat(service.approve(approval(SHIPPER))).isEqualTo(new ShipperApprovalOutcome.Approved(NUMBER, 1));
+
+        assertThat(quotations
+                        .findByTransportRequestIdAndNo(requestId, 1)
+                        .orElseThrow()
+                        .status())
+                .isEqualTo(QuotationStatus.APPROVED);
+        assertThat(published).singleElement().isInstanceOf(QuotationApprovedByShipper.class);
+    }
+
+    @Test
+    void 他社の見積依頼とない番号は見つからず割当ての前は拒否する() {
+        TransportRequestId requestId = quotedRequest();
+        saveQuotation(requestId, true);
+
+        assertThat(service.approve(approval(new CompanyId(UUID.randomUUID()))))
+                .isEqualTo(new ShipperApprovalOutcome.NotFound());
+        assertThat(service.approve(new ApproveQuotationCommand(NUMBER, 9, SHIPPER, RESPONDENT)))
+                .isEqualTo(new ShipperApprovalOutcome.NotFound());
+        assertThat(service.approve(approval(SHIPPER)))
+                .isEqualTo(new ShipperApprovalOutcome.Rejected(QuotationRejection.NOT_AWAITING_SHIPPER_APPROVAL));
+        assertThat(published).isEmpty();
+    }
+
+    @Test
+    void 同時に更新されたときは承認を受け付けずイベントも発行しない() {
+        TransportRequestId requestId = quotedRequest();
+        InMemoryQuotationRepository racing = new InMemoryQuotationRepository() {
+            @Override
+            public void update(Quotation quotation) {
+                throw new ConcurrentQuotationUpdateException(quotation.id(), quotation.aggregateVersion());
+            }
+        };
+        awaitingApproval(requestId, racing);
+        QuotationResponseService racingService = new QuotationResponseService(
+                transportRequests, racing, published::add, Clock.fixed(NOW, ZoneOffset.UTC));
+
+        assertThat(racingService.approve(approval(SHIPPER))).isEqualTo(new ShipperApprovalOutcome.Conflict());
         assertThat(published).isEmpty();
     }
 }

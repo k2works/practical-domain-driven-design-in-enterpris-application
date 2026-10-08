@@ -149,4 +149,19 @@ class QuotationPresentedEventHandlerTest {
         assertThat(repository.findById(request.id()).orElseThrow().status()).isEqualTo(TransportRequestStatus.ROUTING);
         assertThat(logs.list).isEmpty();
     }
+
+    @Test
+    void 荷主承認待ちに進んだ後に遅れて届いた提示は輸送要求を変えずログも残さない() {
+        TransportRequest request = quoting();
+        TransportRequest found = repository.findById(request.id()).orElseThrow();
+        found.markRoutingRequested(1);
+        found.markAwaitingApproval(1);
+        repository.update(found);
+
+        handler.on(presented(request));
+
+        assertThat(repository.findById(request.id()).orElseThrow().status())
+                .isEqualTo(TransportRequestStatus.AWAITING_APPROVAL);
+        assertThat(logs.list).isEmpty();
+    }
 }
