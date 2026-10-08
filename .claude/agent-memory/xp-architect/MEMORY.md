@@ -3,3 +3,4 @@
 - [Bolt 3 レビューの指摘](project_bolt3_review.md) — Flyway と実行時の DB 利用者の未分離、REVOKE の fail-open、CI の paths、E2E のステージング移行
 - [Bolt 4 レビューの指摘](project_bolt4_review.md) — 採番の REQUIRES_NEW と接続枯渇、連番 URL の他社参照、null 許容の二重基準
 - [Bolt 5 レビューの指摘](project_bolt5_review.md) — 審査記録の UNIQUE、update の全件 INSERT、N+1、社内照会の取り違え防止、CSRF
+- [Bolt 21 レビューの指摘](project_bolt21_review.md) — listener 例外の毒メッセージ化、日時書式の 3 重の写し、アプローチ規則の軸
