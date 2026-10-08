@@ -7675,6 +7675,10 @@ Gradle のタスクは <code>apps/cargo-tracker</code> で、Gulp のタスク�
 <td style="text-align: left;"><code>DEMO_BOLT=bolt-19 DEMO_ISSUE=8 npx gulp issue:attach-demo</code></td>
 <td style="text-align: left;">Bolt のデモ項目の動画を、受入の証跡として Issue のコメントに添付する（下の「Issue への受入動画の添付」）</td>
 </tr>
+<tr>
+<td style="text-align: left;"><code>npx gulp issue:attach-demo:all</code></td>
+<td style="text-align: left;">これまでの Bolt の動画を、下の添付先の表のとおりにまとめて添付する（添付済みの Bolt は飛ばす）</td>
+</tr>
 </tbody>
 </table>
 <h3 id="issue">Issue への受入動画の添付<a class="headerlink" href="#issue" title="Permanent link">&para;</a></h3>
@@ -7682,12 +7686,14 @@ Gradle のタスクは <code>apps/cargo-tracker</code> で、Gulp のタスク�
 <ul>
 <li>前提: gh v2.99.0 以上で、リポジトリに書き込める権限で <code>gh auth login</code> 済みであること。Claude Code のクラウドの実行環境の gh は版が古く認証もないため、添付は開発者の PC で行う</li>
 <li>先に <code>DEMO_DRY_RUN=1</code> を付けて、本文と添付する動画を確かめる。アップロードは取り消せない（コメントは消せるが、アップロードした動画の URL は残る）</li>
-<li>終了報告の承認の後に、その Bolt の動画を 1 回だけ添付する（同じ Bolt を 2 回実行すると、同じ動画のコメントが 2 つになる）</li>
+<li>終了報告の承認の後に、その Bolt の動画を添付する。コメントの末尾に目印（<code>&lt;!-- issue-attach-demo:&lt;Bolt&gt; --&gt;</code>）を置き、同じ Issue に同じ Bolt の目印のコメントがあれば添付しない（2 回実行しても重ならない）</li>
 </ul>
 <div class="highlight"><pre><span></span><code><span class="nv">DEMO_BOLT</span><span class="o">=</span>bolt-19<span class="w"> </span><span class="nv">DEMO_ISSUE</span><span class="o">=</span><span class="m">8</span><span class="w"> </span><span class="nv">DEMO_DRY_RUN</span><span class="o">=</span><span class="m">1</span><span class="w"> </span>npx<span class="w"> </span>gulp<span class="w"> </span>issue:attach-demo<span class="w">   </span><span class="c1"># 本文と添付を確かめる</span>
 <span class="nv">DEMO_BOLT</span><span class="o">=</span>bolt-19<span class="w"> </span><span class="nv">DEMO_ISSUE</span><span class="o">=</span><span class="m">8</span><span class="w"> </span>npx<span class="w"> </span>gulp<span class="w"> </span>issue:attach-demo<span class="w">                  </span><span class="c1"># 添付する</span>
+<span class="nv">DEMO_DRY_RUN</span><span class="o">=</span><span class="m">1</span><span class="w"> </span>npx<span class="w"> </span>gulp<span class="w"> </span>issue:attach-demo:all<span class="w">                               </span><span class="c1"># これまでの Bolt をまとめて確かめる</span>
+npx<span class="w"> </span>gulp<span class="w"> </span>issue:attach-demo:all<span class="w">                                              </span><span class="c1"># これまでの Bolt をまとめて添付する</span>
 </code></pre></div>
-<p>これまでの Bolt の動画の添付先（各 Bolt の計画の Issue 欄のうち R0.1 の Issue）:</p>
+<p>これまでの Bolt の動画の添付先（各 Bolt の計画の Issue 欄のうち R0.1 の Issue。<code>ops/scripts/issue_demo.js</code> の <code>BOLT_ISSUES</code> と同じにする。新しい Bolt は終了報告の承認の後に両方に足す）:</p>
 <table>
 <thead>
 <tr>
