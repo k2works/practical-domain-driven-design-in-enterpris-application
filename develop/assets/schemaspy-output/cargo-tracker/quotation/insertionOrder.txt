@@ -1,6 +1,7 @@
 transport_request
 transport_request_version
 quotation
+assigned_route_leg
 pricing_line
 required_document
 review_record

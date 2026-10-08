@@ -3,7 +3,7 @@
     <head>
         <meta charset="utf-8">
         <meta http-equiv="X-UA-Compatible" content="IE=edge">
-        <title>pricing_line - cargotracker.quotation</title>
+        <title>assigned_route_leg - cargotracker.quotation</title>
         <!-- Tell the browser to be responsive to screen width -->
         <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
         <link rel="icon" type="image/png" sizes="16x16" href="../favicon.png">
@@ -73,7 +73,7 @@
             <div class="content-wrapper">
                 <!-- Content Header (Page header) -->
                 <section class="content-header">
-                    <h1>pricing_line</h1><p><span id="recordNumber">-1</span> rows</p><br />
+                    <h1>assigned_route_leg</h1><p><span id="recordNumber">-1</span> rows</p><br />
                     <div class="box box-primary">
                         <div class="box-header with-border">
                             <i class="fa fa-file-text-o"></i>
@@ -84,7 +84,7 @@
                             </div>
                         </div><!-- /.box-header -->
                         <div class="box-body clearfix">
-                            <p>料金明細</p>
+                            <p>割り当てた区間</p>
                         </div><!-- /.box-body -->
                     </div>
                 </section>
@@ -135,8 +135,8 @@
                                     <td>
                                         <table border='0' cellspacing='0' cellpadding='0'>
                                             <tr>
-                                                <td title="pricing_line.quotation_id references quotation.id via fk_pricing_line_quotation"><a href='quotation.html'>quotation</a><span class='relatedKey'>.id</span></td>
-                                                <td class="constraint detail">fk_pricing_line_quotation</td>
+                                                <td title="assigned_route_leg.quotation_id references quotation.id via fk_assigned_route_leg_quotation"><a href='quotation.html'>quotation</a><span class='relatedKey'>.id</span></td>
+                                                <td class="constraint detail">fk_assigned_route_leg_quotation</td>
                                                 <td class="constraint detail"><span title='Restrict delete:&#10;Parent cannot be deleted if children exist'>R</span></td>
                                             </tr>
                                         </table>
@@ -144,7 +144,7 @@
                                     <td><p>見積り ID</p></td>
                                 </tr>
                                 <tr>
-                                    <td class='primaryKey' title='Primary Key'><i class='icon ion-key iconkey' style='padding-left: 5px;'></i><span id="line_no">line_no</span></td>
+                                    <td class='primaryKey' title='Primary Key'><i class='icon ion-key iconkey' style='padding-left: 5px;'></i><span id="leg_no">leg_no</span></td>
                                     <td>int4</td>
                                     <td>10</td>
                                     <td title=''></td>
@@ -158,12 +158,12 @@
                                         <table border='0' cellspacing='0' cellpadding='0'>
                                         </table>
                                     </td>
-                                    <td><p>明細の番号</p></td>
+                                    <td><p>区間番号</p></td>
                                 </tr>
                                 <tr>
-                                    <td><span id="description">description</span></td>
+                                    <td><span id="voyage_number">voyage_number</span></td>
                                     <td>varchar</td>
-                                    <td>200</td>
+                                    <td>30</td>
                                     <td title=''></td>
                                     <td title=''></td>
                                     <td>null</td>
@@ -175,29 +175,12 @@
                                         <table border='0' cellspacing='0' cellpadding='0'>
                                         </table>
                                     </td>
-                                    <td><p>内容</p></td>
+                                    <td><p>航海番号</p></td>
                                 </tr>
                                 <tr>
-                                    <td><span id="amount">amount</span></td>
-                                    <td>numeric</td>
-                                    <td>15,2</td>
-                                    <td title=''></td>
-                                    <td title=''></td>
-                                    <td>null</td>
-                                    <td>
-                                        <table border='0' cellspacing='0' cellpadding='0'>
-                                        </table>
-                                    </td>
-                                    <td>
-                                        <table border='0' cellspacing='0' cellpadding='0'>
-                                        </table>
-                                    </td>
-                                    <td><p>金額</p></td>
-                                </tr>
-                                <tr>
-                                    <td><span id="currency">currency</span></td>
+                                    <td><span id="load_unlocode">load_unlocode</span></td>
                                     <td>bpchar</td>
-                                    <td>3</td>
+                                    <td>5</td>
                                     <td title=''></td>
                                     <td title=''></td>
                                     <td>null</td>
@@ -209,13 +192,13 @@
                                         <table border='0' cellspacing='0' cellpadding='0'>
                                         </table>
                                     </td>
-                                    <td><p>通貨</p></td>
+                                    <td><p>積地</p></td>
                                 </tr>
                                 <tr>
-                                    <td><span id="contract_reference">contract_reference</span></td>
-                                    <td>varchar</td>
-                                    <td>200</td>
-                                    <td title='nullable'>√</td>
+                                    <td><span id="discharge_unlocode">discharge_unlocode</span></td>
+                                    <td>bpchar</td>
+                                    <td>5</td>
+                                    <td title=''></td>
                                     <td title=''></td>
                                     <td>null</td>
                                     <td>
@@ -226,7 +209,41 @@
                                         <table border='0' cellspacing='0' cellpadding='0'>
                                         </table>
                                     </td>
-                                    <td><p>参照した契約条件</p></td>
+                                    <td><p>揚地</p></td>
+                                </tr>
+                                <tr>
+                                    <td><span id="departure_at">departure_at</span></td>
+                                    <td>timestamptz</td>
+                                    <td>35,6</td>
+                                    <td title=''></td>
+                                    <td title=''></td>
+                                    <td>null</td>
+                                    <td>
+                                        <table border='0' cellspacing='0' cellpadding='0'>
+                                        </table>
+                                    </td>
+                                    <td>
+                                        <table border='0' cellspacing='0' cellpadding='0'>
+                                        </table>
+                                    </td>
+                                    <td><p>出発予定</p></td>
+                                </tr>
+                                <tr>
+                                    <td><span id="arrival_at">arrival_at</span></td>
+                                    <td>timestamptz</td>
+                                    <td>35,6</td>
+                                    <td title=''></td>
+                                    <td title=''></td>
+                                    <td>null</td>
+                                    <td>
+                                        <table border='0' cellspacing='0' cellpadding='0'>
+                                        </table>
+                                    </td>
+                                    <td>
+                                        <table border='0' cellspacing='0' cellpadding='0'>
+                                        </table>
+                                    </td>
+                                    <td><p>到着予定</p></td>
                                 </tr>
                                 </tbody>
                             </table>
@@ -259,10 +276,10 @@
                                 </thead>
                                 <tbody>
                                 <tr>
-                                    <td class='primaryKey' title='Primary Key'><i class='icon ion-key iconkey'></i> pk_pricing_line</td>
+                                    <td class='primaryKey' title='Primary Key'><i class='icon ion-key iconkey'></i> pk_assigned_route_leg</td>
                                     <td>Primary key</td>
                                     <td><span title='Ascending'>Asc</span>/<span title='Ascending'>Asc</span></td>
-                                    <td>quotation_id + line_no</td>
+                                    <td>quotation_id + leg_no</td>
                                 </tr>
                                 </tbody>
                             </table>
@@ -293,16 +310,12 @@
                                 </thead>
                                 <tbody>
                                 <tr>
-                                    <td>ck_pricing_line_currency</td>
-                                    <td>(currency &#61; ANY (ARRAY[&#39;USD&#39;::bpchar, &#39;EUR&#39;::bpchar, &#39;JPY&#39;::bpchar]))</td>
+                                    <td>ck_assigned_route_leg_no</td>
+                                    <td>(leg_no &gt;&#61; 1)</td>
                                 </tr>
                                 <tr>
-                                    <td>ck_pricing_line_no</td>
-                                    <td>((line_no &gt;&#61; 1) AND (line_no &lt;&#61; 10))</td>
-                                </tr>
-                                <tr>
-                                    <td>ck_pricing_line_amount</td>
-                                    <td>(amount &gt; (0)::numeric)</td>
+                                    <td>ck_assigned_route_leg_arrival</td>
+                                    <td>(arrival_at &gt; departure_at)</td>
                                 </tr>
                                 </tbody>
                             </table>
@@ -327,11 +340,11 @@
                                 <div class="tab-content no-padding">
                                     <div class="chart tab-pane active" id="oneDegreeImg-chart" style="position: relative; overflow-x:auto;">
                                         
-                                        <a name='diagram'><object type="image/svg+xml" id="oneDegreeImg" data="../diagrams/tables/pricing_line.1degree.svg" class="diagram" border="0" align="left"></object></a>
+                                        <a name='diagram'><object type="image/svg+xml" id="oneDegreeImg" data="../diagrams/tables/assigned_route_leg.1degree.svg" class="diagram" border="0" align="left"></object></a>
                                     </div>
                                     <div class="chart tab-pane " id="twodegreesDegreeImg-chart" style="position: relative; overflow-x:auto;">
                                         
-                                        <a name='diagram'><object type="image/svg+xml" id="twodegreesDegreeImg" data="../diagrams/tables/pricing_line.2degrees.svg" class="diagram" border="0" align="left"></object></a>
+                                        <a name='diagram'><object type="image/svg+xml" id="twodegreesDegreeImg" data="../diagrams/tables/assigned_route_leg.2degrees.svg" class="diagram" border="0" align="left"></object></a>
                                     </div>
                                 </div>
                             </div>

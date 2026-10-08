@@ -1,6 +1,25 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <database name="cargotracker" schema="quotation" type="PostgreSQL - 18.6 (Debian 18.6-1.pgdg13+2)">
    <tables>
+      <table name="assigned_route_leg" remarks="割り当てた区間" schema="quotation" type="TABLE">
+         <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="quotation_id" nullable="false" remarks="見積り ID" size="2147483647" type="uuid" typeCode="1111">
+            <parent column="id" foreignKey="fk_assigned_route_leg_quotation" implied="false" onDeleteCascade="false" schema="quotation" table="quotation"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="leg_no" nullable="false" remarks="区間番号" size="10" type="int4" typeCode="4"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="2" name="voyage_number" nullable="false" remarks="航海番号" size="30" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="3" name="load_unlocode" nullable="false" remarks="積地" size="5" type="bpchar" typeCode="1"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="4" name="discharge_unlocode" nullable="false" remarks="揚地" size="5" type="bpchar" typeCode="1"/>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="5" name="departure_at" nullable="false" remarks="出発予定" size="35" type="timestamptz" typeCode="93"/>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="6" name="arrival_at" nullable="false" remarks="到着予定" size="35" type="timestamptz" typeCode="93"/>
+         <primaryKey column="quotation_id" sequenceNumberInPK="1"/>
+         <primaryKey column="leg_no" sequenceNumberInPK="2"/>
+         <index name="pk_assigned_route_leg" unique="true">
+            <column ascending="true" name="quotation_id"/>
+            <column ascending="true" name="leg_no"/>
+         </index>
+         <checkConstraint constraint="(arrival_at &gt; departure_at)" name="ck_assigned_route_leg_arrival"/>
+         <checkConstraint constraint="(leg_no &gt;= 1)" name="ck_assigned_route_leg_no"/>
+      </table>
       <table name="pricing_line" remarks="料金明細" schema="quotation" type="TABLE">
          <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="quotation_id" nullable="false" remarks="見積り ID" size="2147483647" type="uuid" typeCode="1111">
             <parent column="id" foreignKey="fk_pricing_line_quotation" implied="false" onDeleteCascade="false" schema="quotation" table="quotation"/>
@@ -22,6 +41,7 @@
       </table>
       <table name="quotation" remarks="見積り" schema="quotation" type="TABLE">
          <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="id" nullable="false" remarks="見積り ID" size="2147483647" type="uuid" typeCode="1111">
+            <child column="quotation_id" foreignKey="fk_assigned_route_leg_quotation" implied="false" onDeleteCascade="false" schema="quotation" table="assigned_route_leg"/>
             <child column="quotation_id" foreignKey="fk_pricing_line_quotation" implied="false" onDeleteCascade="false" schema="quotation" table="pricing_line"/>
             <child column="replaced_by_quotation_id" foreignKey="fk_quotation_replaced_by" implied="false" onDeleteCascade="false" schema="quotation" table="quotation"/>
          </column>
@@ -49,6 +69,11 @@
          <column autoUpdated="false" defaultValue="null" digits="0" id="16" name="shipper_response" nullable="true" remarks="荷主の回答（PROCEED: 詳細経路設計へ進む）" size="30" type="varchar" typeCode="12"/>
          <column autoUpdated="false" defaultValue="null" digits="0" id="17" name="responded_by" nullable="true" remarks="回答者" size="2147483647" type="uuid" typeCode="1111"/>
          <column autoUpdated="false" defaultValue="null" digits="6" id="18" name="responded_at" nullable="true" remarks="回答時刻（詳細経路設計の依頼時刻）" size="35" type="timestamptz" typeCode="93"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="19" name="routing_case_number" nullable="true" remarks="割り当てた経路の案件番号" size="20" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="20" name="route_version_no" nullable="true" remarks="割り当てた経路版番号" size="10" type="int4" typeCode="4"/>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="21" name="route_confirmed_at" nullable="true" remarks="割り当てた経路の確定の時刻（写し）" size="35" type="timestamptz" typeCode="93"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="22" name="shipper_approved_by" nullable="true" remarks="荷主承認の承認者" size="2147483647" type="uuid" typeCode="1111"/>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="23" name="shipper_approved_at" nullable="true" remarks="荷主承認の承認時刻" size="35" type="timestamptz" typeCode="93"/>
          <primaryKey column="id" sequenceNumberInPK="1"/>
          <index name="pk_quotation" unique="true">
             <column ascending="true" name="id"/>
@@ -70,9 +95,11 @@
          <checkConstraint constraint="(((status)::text &lt;&gt; 'PRESENTED'::text) OR ((presented_at IS NOT NULL) AND (internal_approved_by IS NOT NULL) AND (internal_approved_at IS NOT NULL)))" name="ck_quotation_presented"/>
          <checkConstraint constraint="((((status)::text = 'REPLACED'::text) AND (replaced_by_quotation_id IS NOT NULL)) OR (((status)::text &lt;&gt; 'REPLACED'::text) AND (replaced_by_quotation_id IS NULL)))" name="ck_quotation_replaced"/>
          <checkConstraint constraint="((((shipper_response IS NULL) AND (responded_by IS NULL) AND (responded_at IS NULL)) OR ((shipper_response IS NOT NULL) AND (responded_by IS NOT NULL) AND (responded_at IS NOT NULL))) AND (((status)::text &lt;&gt; 'ROUTING_REQUESTED'::text) OR (shipper_response IS NOT NULL)))" name="ck_quotation_responded"/>
+         <checkConstraint constraint="((((routing_case_number IS NULL) AND (route_version_no IS NULL) AND (route_confirmed_at IS NULL)) OR ((routing_case_number IS NOT NULL) AND (route_version_no &gt;= 1) AND (route_confirmed_at IS NOT NULL))) AND (((status)::text &lt;&gt; ALL ((ARRAY['AWAITING_SHIPPER_APPROVAL'::character varying, 'APPROVED'::character varying])::text[])) OR (routing_case_number IS NOT NULL)))" name="ck_quotation_route_assigned"/>
          <checkConstraint constraint="(route_policy_arrival_at &gt; route_policy_departure_at)" name="ck_quotation_route_policy_dates"/>
+         <checkConstraint constraint="((((shipper_approved_by IS NULL) AND (shipper_approved_at IS NULL)) OR ((shipper_approved_by IS NOT NULL) AND (shipper_approved_at IS NOT NULL) AND (routing_case_number IS NOT NULL))) AND (((status)::text &lt;&gt; 'APPROVED'::text) OR (shipper_approved_by IS NOT NULL)))" name="ck_quotation_shipper_approved"/>
          <checkConstraint constraint="((shipper_response)::text = 'PROCEED'::text)" name="ck_quotation_shipper_response"/>
-         <checkConstraint constraint="((status)::text = ANY ((ARRAY['DRAFT'::character varying, 'PENDING_APPROVAL'::character varying, 'PRESENTED'::character varying, 'ROUTING_REQUESTED'::character varying, 'EXPIRED'::character varying, 'REPLACED'::character varying])::text[]))" name="ck_quotation_status"/>
+         <checkConstraint constraint="((status)::text = ANY ((ARRAY['DRAFT'::character varying, 'PENDING_APPROVAL'::character varying, 'PRESENTED'::character varying, 'ROUTING_REQUESTED'::character varying, 'AWAITING_SHIPPER_APPROVAL'::character varying, 'APPROVED'::character varying, 'EXPIRED'::character varying, 'REPLACED'::character varying])::text[]))" name="ck_quotation_status"/>
          <checkConstraint constraint="(total_amount &gt; (0)::numeric)" name="ck_quotation_total_amount"/>
       </table>
       <table name="required_document" remarks="必要書類 [append-only]" schema="quotation" type="TABLE">
