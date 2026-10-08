@@ -1,5 +1,7 @@
 package com.example.cargotracker.routing.interfaces.web;
 
+import com.example.cargotracker.platform.web.DateTimeDisplay;
+import com.example.cargotracker.platform.web.DurationDisplay;
 import com.example.cargotracker.routing.domain.model.aggregates.RoutingCase;
 import com.example.cargotracker.routing.domain.model.entities.RouteCandidate;
 import com.example.cargotracker.routing.domain.model.entities.RouteVersion;
@@ -12,25 +14,16 @@ import com.example.cargotracker.shared.domain.Location;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import java.time.Duration;
 import java.time.Instant;
-import java.time.ZoneId;
-import java.time.ZoneOffset;
-import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
 /**
  * 経路設計の画面（S-05・S-06・S-07）の表示の値と文言（UI 設計。Bolt 17・19）。日時は利用者のタイムゾーン（いまは日本時間）を主にし、
- * UTC を併記する（BR-10、共通部品「日時表示」。見積りの画面と同じ形）。
+ * UTC を併記する（BR-10、共通部品「日時表示」。platform の Web の部品を使う。Bolt 22）。
  */
 final class RoutingCaseViews {
 
-    /** 画面のタイムゾーン。利用者ごとの設定は後の Bolt で入れる（BR-10）。 */
-    private static final ZoneId DISPLAY_ZONE = ZoneId.of("Asia/Tokyo");
-
-    private static final DateTimeFormatter DATE_TIME = DateTimeFormatter.ofPattern("uuuu-MM-dd HH:mm VV（'UTC'xxx）");
-    private static final DateTimeFormatter UTC_TIME = DateTimeFormatter.ofPattern("uuuu-MM-dd HH:mm");
     private static final String ARROW = " → ";
     private static final String INFO_VERSION = "。参照情報版 ";
     private static final String NO_EXPIRY = "期限の記録なし";
@@ -290,28 +283,14 @@ final class RoutingCaseViews {
         return slack.isNegative() ? "不足 " + duration(slack.negated()) : "余裕 " + duration(slack);
     }
 
-    /** 期間の文言（例: 1 日 12 時間、4 時間、4 時間 30 分、0 分）。 */
+    /** 期間の文言（例: 1 日 12 時間、4 時間、4 時間 30 分、0 分）。platform の部品の接続時間の形（Bolt 22）。 */
     static String duration(Duration duration) {
-        long days = duration.toDays();
-        int hours = duration.toHoursPart();
-        int minutes = duration.toMinutesPart();
-        List<String> parts = new ArrayList<>();
-        if (days > 0) {
-            parts.add(days + " 日");
-        }
-        if (hours > 0) {
-            parts.add(hours + " 時間");
-        }
-        if (minutes > 0 || parts.isEmpty()) {
-            parts.add(minutes + " 分");
-        }
-        return String.join(" ", parts);
+        return DurationDisplay.connection(duration);
     }
 
-    /** 社内の画面の日時。利用者のタイムゾーンを主にし、UTC を括弧で併記する。 */
+    /** 社内の画面の日時。利用者のタイムゾーンを主にし、UTC を括弧で併記する（platform の部品。Bolt 22）。 */
     static String dateTime(UtcInstant instant) {
-        return DATE_TIME.format(ZonedDateTime.ofInstant(instant.instant(), DISPLAY_ZONE)) + "（UTC "
-                + UTC_TIME.format(instant.instant().atOffset(ZoneOffset.UTC)) + "）";
+        return DateTimeDisplay.staff(instant.instant());
     }
 
     private static String transportRequest(String number, int versionNo) {

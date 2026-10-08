@@ -1,5 +1,6 @@
 package com.example.cargotracker.quotation.interfaces.web;
 
+import com.example.cargotracker.platform.web.DateTimeDisplay;
 import com.example.cargotracker.quotation.domain.model.valueobjects.Cargo;
 import com.example.cargotracker.quotation.domain.model.valueobjects.CargoCategory;
 import com.example.cargotracker.quotation.domain.model.valueobjects.PackageType;
@@ -28,8 +29,8 @@ import org.springframework.validation.BindingResult;
  */
 final class TransportRequestFormConverter {
 
-    /** 荷主の画面のタイムゾーン（画面の共通の表示と同じ）。 */
-    static final ZoneId CUSTOMER_ZONE = TransportRequestLabels.DISPLAY_ZONE;
+    /** 荷主の画面のタイムゾーン（日時表示の部品と同じ。Bolt 22）。 */
+    static final ZoneId CUSTOMER_ZONE = DateTimeDisplay.ZONE;
 
     static final String DEADLINE_PATTERN = "uuuu-MM-dd HH:mm";
 

@@ -1,5 +1,7 @@
 package com.example.cargotracker.quotation.interfaces.web;
 
+import com.example.cargotracker.platform.web.DateTimeDisplay;
+import com.example.cargotracker.platform.web.DurationDisplay;
 import com.example.cargotracker.quotation.domain.model.valueobjects.CargoCategory;
 import com.example.cargotracker.quotation.domain.model.valueobjects.PackageType;
 import com.example.cargotracker.quotation.domain.model.valueobjects.ReviewDecision;
@@ -7,24 +9,12 @@ import com.example.cargotracker.quotation.domain.model.valueobjects.TransportReq
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestStatus;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import java.time.Duration;
-import java.time.ZoneId;
-import java.time.ZoneOffset;
-import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 /**
  * 見積依頼の画面（荷主の C-02・C-03・C-04、社内の S-02・S-03）で共通に使う表示名と日時の書式。
  */
 final class TransportRequestLabels {
-
-    /** 画面のタイムゾーン。利用者ごとの設定は US-18 以降で入れる（BR-10）。 */
-    static final ZoneId DISPLAY_ZONE = ZoneId.of("Asia/Tokyo");
-
-    /** 日時表示の共通部品（UI 設計）: 「年月日 時刻 タイムゾーン（UTC offset）」。 */
-    private static final DateTimeFormatter DATE_TIME = DateTimeFormatter.ofPattern("uuuu-MM-dd HH:mm VV（'UTC'xxx）");
-
-    private static final DateTimeFormatter UTC_TIME = DateTimeFormatter.ofPattern("uuuu-MM-dd HH:mm");
 
     static final List<Option> CARGO_CATEGORIES = List.of(
             new Option(CargoCategory.GENERAL.name(), "一般"),
@@ -40,15 +30,14 @@ final class TransportRequestLabels {
 
     private TransportRequestLabels() {}
 
-    /** 荷主の画面の日時（例: 2026-10-05 10:00 Asia/Tokyo（UTC+09:00））。 */
+    /** 荷主の画面の日時（例: 2026-10-05 10:00 Asia/Tokyo（UTC+09:00））。platform の部品（Bolt 22）。 */
     static String customerDateTime(UtcInstant instant) {
-        return DATE_TIME.format(ZonedDateTime.ofInstant(instant.instant(), DISPLAY_ZONE));
+        return DateTimeDisplay.customer(instant.instant());
     }
 
-    /** 社内の画面の日時。利用者のタイムゾーンを主にし、UTC を括弧で併記する（UI 設計の共通部品「日時表示」）。 */
+    /** 社内の画面の日時。利用者のタイムゾーンを主にし、UTC を括弧で併記する（UI 設計の共通部品「日時表示」。Bolt 22）。 */
     static String staffDateTime(UtcInstant instant) {
-        return customerDateTime(instant) + "（UTC "
-                + UTC_TIME.format(instant.instant().atOffset(ZoneOffset.UTC)) + "）";
+        return DateTimeDisplay.staff(instant.instant());
     }
 
     /**
@@ -104,19 +93,9 @@ final class TransportRequestLabels {
         };
     }
 
-    /** 待っている時間（例: 3 時間 20 分、2 日 4 時間）。受付一覧で、待たせている長さを示す。 */
+    /** 待っている時間（例: 3 時間 20 分、2 日 4 時間）。受付一覧で、待たせている長さを示す（platform の部品。Bolt 22）。 */
     static String elapsed(Duration duration) {
-        long minutes = Math.max(0, duration.toMinutes());
-        long days = minutes / (24 * 60);
-        long hours = minutes % (24 * 60) / 60;
-        long restMinutes = minutes % 60;
-        if (days > 0) {
-            return days + " 日 " + hours + " 時間";
-        }
-        if (hours > 0) {
-            return hours + " 時間 " + restMinutes + " 分";
-        }
-        return restMinutes + " 分";
+        return DurationDisplay.waiting(duration);
     }
 
     static String cargoCategory(CargoCategory category) {
