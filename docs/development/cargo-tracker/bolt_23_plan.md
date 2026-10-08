@@ -3,8 +3,10 @@ type: Plan
 title: "Bolt 23 計画 - 本予約の確定と失効（US-04 AC1・AC2）"
 description: "23 回目の Bolt の計画。予約サガと追跡の開始（ADR-003 の改訂）、予約から見積りの確定可否の問い合わせを ADR に決め、booking モジュールと貨物予約・予約版・予約サガの表を新設して、本予約の確定（US-04 AC1）と失効の拒否（AC2）を業務ルール層の受入シナリオまで作り、DE-07 で輸送要求を予約確定済みにするまでを、ステップ 1〜6 で定義する。画面（S-09・S-24・S-02）は Bolt 23b。"
 tags: [development,bolt-plan]
-status: draft
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-08T07:36:44Z }
+status: stable
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-08T07:44:34Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-10-08T07:44:34Z }
 ---
 
 # Bolt 23 計画 - 本予約の確定と失効（US-04 AC1・AC2）
@@ -17,7 +19,8 @@ generated: { by: anthropic/claude-opus-5-5, at: 2026-10-08T07:36:44Z }
 | 予定 | W4（2026-10-26 の週。前倒しで 2026-10-08 から）、作業 2.5〜3 時間（承認ゲートの待ち時間を除く） |
 | 対象 | U6 予約管理（新設の `booking` モジュール）と、U1 見積りの公開 API・輸送要求の予約確定済み |
 | GitHub | [#10 [US-04] 予約を確定する（R0.1: AC1・AC2・AC4・重複確定の防止）](https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/10)（SP 5 は #10 をクローズする Bolt 25 で数える） |
-| 承認ゲート | 計画の承認（確認ポイント 1〜15）、ADR（アーキテクチャ）、スキーマ（データベース）、確定の規則の Red・Green（U6 の密度）、確定サービスの Red・Green、見積りの公開 API と listener（モジュールの境界）、開発レビューの判断、終了報告。W4 の計画どおり `/goal` は使わない |
+| 承認ゲート | 計画の承認（確認ポイント 1〜15）、ADR（アーキテクチャ）、スキーマ（データベース）、確定の規則の Red・Green（U6 の密度）、確定サービスの Red・Green、見積りの公開 API と listener（モジュールの境界）、開発レビューの判断、終了報告 |
+| 承認ゲートの扱い | 人の指示（`/goal Bolt23 承認`、2026-10-08）により、計画を承認し、承認ゲートで止まらずに進める。W4 の計画はリスク台帳に従い Bolt 23 を止める Bolt としていたが、人が `/goal` を選んだ。止まらなかったゲートごとに根拠を書き、終了報告の承認の議題に置く（T-36） |
 | アプローチ | インサイドアウト（開発戦略の「Bolt ごとのアプローチの決め方」の「新しい集約・新しいスキーマを作る」）。データ（表）→ ドメイン（集約）→ アプリケーション（確定サービスと業務ルール層の受入シナリオ）→ 見積りとの連携（公開 API と listener）の順に、層の境界を承認ゲートにする。画面は Bolt 23b |
 | 範囲の決定 | W4 の計画の Bolt 23 の行。2026-10-08 に human:kakimomokuri が、画面（S-09・S-24・S-02）を Bolt 23b に分け、B-INV-11 の UK だけをこの Bolt に前倒しすると決めた（開始準備の整合性検証の後） |
 | 前の Bolt | [Bolt 22 終了報告](bolt_22_report.md) |
@@ -317,6 +320,7 @@ b ||--o| s
 | 日付 | 更新内容 | 更新者 |
 | :--- | :--- | :--- |
 | 2026-10-08 | 初版作成（承認待ち） | anthropic/claude-opus-5-5 |
+| 2026-10-08 | 計画（確認ポイント 1〜15 は推奨のまま）を承認した（`/goal Bolt23 承認`） | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-10-08 | 開始準備の整合性検証の指摘を反映した（ステップの順、ADR-003 の改訂、輸送要求の版、ゲート、Living Documentation、afterMigrate、URL、commit 時刻、追跡番号、業務番号の置き場所）。画面を Bolt 23b に分け、B-INV-11 の UK を前倒しした（human:kakimomokuri が決定） | anthropic/claude-opus-5-5 |
 
 ## 関連ドキュメント

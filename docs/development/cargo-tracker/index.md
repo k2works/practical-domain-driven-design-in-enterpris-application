@@ -48,7 +48,7 @@ Bolt がイテレーションに当たります。ふりかえりは各 Bolt の
 | 20 | [確定した経路の割当てと荷主の承認（US-24 AC4・AC5）](bolt_20_plan.md) | [終了報告](bolt_20_report.md)（[動画](../../assets/demo/bolt-20/approve-quotation-and-route.webm){:target="_blank"}） | W3 | 完了 |
 | 21 | [KPI-01 の提示時刻とリードタイム（US-21 AC1）](bolt_21_plan.md) | [終了報告](bolt_21_report.md)（[動画](../../assets/demo/bolt-21/kpi-01-lead-time.webm){:target="_blank"}） | W3 | 完了 |
 | 22 | [日時表示・期間表示を platform の Web の部品に集める（#41）](bolt_22_plan.md) | [終了報告](bolt_22_report.md) | W4 | 完了 |
-| 23 | [本予約の確定と失効（US-04 AC1・AC2）](bolt_23_plan.md) | — | W4 | 計画（承認待ち） |
+| 23 | [本予約の確定と失効（US-04 AC1・AC2）](bolt_23_plan.md) | — | W4 | 進行中 |
 
 Bolt を始めるときに行を追加します。
 
