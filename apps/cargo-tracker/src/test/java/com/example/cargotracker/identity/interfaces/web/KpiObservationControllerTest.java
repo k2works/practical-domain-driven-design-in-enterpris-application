@@ -33,7 +33,7 @@ class KpiObservationControllerTest {
     KpiObservationQueryService queryService;
 
     @Test
-    void KPI計測記録の一覧に業務番号と提出時刻をUTCオフセット付きで表示し内部のIDを出さない() throws Exception {
+    void KPI計測記録の一覧に業務番号と提出時刻を日時表示の共通部品で表示し内部のIDを出さない() throws Exception {
         UUID transportRequestId = UUID.fromString("11111111-1111-1111-1111-111111111111");
         given(queryService.findAll())
                 .willReturn(List.of(KpiObservation.recordSubmission(
@@ -46,7 +46,8 @@ class KpiObservationControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(content().string(containsString("TR-2026-0001")))
                 .andExpect(content().string(not(containsString(transportRequestId.toString()))))
-                .andExpect(content().string(containsString("2026-10-05 13:04:05 +00:00")));
+                .andExpect(content()
+                        .string(containsString("2026-10-05 22:04 Asia/Tokyo（UTC+09:00）（UTC 2026-10-05 13:04）")));
     }
 
     @Test
@@ -70,5 +71,37 @@ class KpiObservationControllerTest {
         mockMvc.perform(get("/staff/kpi-observations"))
                 .andExpect(status().isOk())
                 .andExpect(content().string(containsString("まだ記録はありません。")));
+    }
+
+    @Test
+    void 提示済みの記録は最初の提示時刻とKPI01リードタイムを時間と分で表示する() throws Exception {
+        KpiObservation observation = KpiObservation.recordSubmission(
+                UUID.randomUUID(),
+                "TR-2026-0001",
+                new CompanyId(UUID.randomUUID()),
+                new UtcInstant(Instant.parse("2026-10-05T01:00:00Z")));
+        observation.recordPresentation(new UtcInstant(Instant.parse("2026-10-06T03:30:59Z")));
+        given(queryService.findAll()).willReturn(List.of(observation));
+
+        mockMvc.perform(get("/staff/kpi-observations"))
+                .andExpect(status().isOk())
+                .andExpect(content()
+                        .string(containsString("2026-10-06 12:30 Asia/Tokyo（UTC+09:00）（UTC 2026-10-06 03:30）")))
+                .andExpect(content().string(containsString("26 時間 30 分")));
+    }
+
+    @Test
+    void 未提示の記録は未提示と示しリードタイムを算出しない() throws Exception {
+        given(queryService.findAll())
+                .willReturn(List.of(KpiObservation.recordSubmission(
+                        UUID.randomUUID(),
+                        "TR-2026-0001",
+                        new CompanyId(UUID.randomUUID()),
+                        new UtcInstant(Instant.parse("2026-10-05T01:00:00Z")))));
+
+        mockMvc.perform(get("/staff/kpi-observations"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString(">未提示<")))
+                .andExpect(content().string(containsString("未提示のため算出しない")));
     }
 }

@@ -22,4 +22,9 @@ public record KpiObservationView(String transportRequestNumber, String submitted
                 observation.transportRequestNumber() == null ? NO_NUMBER : observation.transportRequestNumber(),
                 UTC_WITH_OFFSET.format(observation.submittedAt().instant()));
     }
+
+    /** KPI-01 リードタイムの表示。骨組み（Bolt 21 ステップ 4 の Red）。 */
+    static String leadTime(java.time.Duration leadTime) {
+        return "";
+    }
 }
