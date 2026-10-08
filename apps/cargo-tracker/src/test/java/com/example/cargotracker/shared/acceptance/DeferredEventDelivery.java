@@ -13,6 +13,7 @@ import org.springframework.context.ApplicationEventPublisher;
 public class DeferredEventDelivery implements ApplicationEventPublisher {
 
     private final List<Object> published = new ArrayList<>();
+    private final List<Object> history = new ArrayList<>();
     private final List<Consumer<Object>> subscribers = new ArrayList<>();
     private List<Object> lastDelivered = List.of();
 
@@ -23,6 +24,7 @@ public class DeferredEventDelivery implements ApplicationEventPublisher {
     @Override
     public void publishEvent(Object event) {
         published.add(event);
+        history.add(event);
     }
 
     /**
@@ -45,8 +47,14 @@ public class DeferredEventDelivery implements ApplicationEventPublisher {
         return List.copyOf(published);
     }
 
+    /** シナリオの始めから発行されたイベント（配信したものを含む。発行の順）。他のコンテキストの公表された言語から値を得るのに使う。 */
+    public List<Object> history() {
+        return List.copyOf(history);
+    }
+
     public void clear() {
         published.clear();
+        history.clear();
         lastDelivered = List.of();
     }
 }

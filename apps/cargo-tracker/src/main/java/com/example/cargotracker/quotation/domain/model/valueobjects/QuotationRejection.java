@@ -23,5 +23,7 @@ public enum QuotationRejection {
     /** 荷主承認待ちでない見積りを荷主が承認しようとした（経路版の割当ての前など。Q-INV-10。Bolt 20）。 */
     NOT_AWAITING_SHIPPER_APPROVAL,
     /** 見積りが承認済み（Q-INV-10。二重送信など。Bolt 20）。 */
-    ALREADY_APPROVED
+    ALREADY_APPROVED,
+    /** 見積りが荷主の承認済みでないため、予約確定に使えない（Q-INV-06。Bolt 23）。 */
+    NOT_APPROVED
 }

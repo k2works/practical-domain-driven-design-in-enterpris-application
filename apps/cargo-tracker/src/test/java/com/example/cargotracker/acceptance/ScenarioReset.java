@@ -1,5 +1,7 @@
 package com.example.cargotracker.acceptance;
 
+import com.example.cargotracker.booking.acceptance.InMemoryBookingRepository;
+import com.example.cargotracker.booking.acceptance.InMemoryBookingSagaRepository;
 import com.example.cargotracker.identity.acceptance.InMemoryKpiObservationRepository;
 import com.example.cargotracker.quotation.acceptance.InMemoryQuotationRepository;
 import com.example.cargotracker.quotation.acceptance.InMemoryRequiredDocumentStorage;
@@ -30,6 +32,8 @@ public class ScenarioReset {
     private final InMemoryRoutingCaseNumberIssuer routingCaseNumberIssuer;
     private final InMemoryVoyageRepository voyageRepository;
     private final InMemoryConnectionRuleRepository connectionRuleRepository;
+    private final InMemoryBookingRepository bookingRepository;
+    private final InMemoryBookingSagaRepository bookingSagaRepository;
 
     public ScenarioReset(
             MutableClock clock,
@@ -42,7 +46,9 @@ public class ScenarioReset {
             InMemoryRoutingCaseRepository routingCaseRepository,
             InMemoryRoutingCaseNumberIssuer routingCaseNumberIssuer,
             InMemoryVoyageRepository voyageRepository,
-            InMemoryConnectionRuleRepository connectionRuleRepository) {
+            InMemoryConnectionRuleRepository connectionRuleRepository,
+            InMemoryBookingRepository bookingRepository,
+            InMemoryBookingSagaRepository bookingSagaRepository) {
         this.clock = clock;
         this.transportRequestRepository = transportRequestRepository;
         this.transportRequestNumberIssuer = transportRequestNumberIssuer;
@@ -54,6 +60,8 @@ public class ScenarioReset {
         this.routingCaseNumberIssuer = routingCaseNumberIssuer;
         this.voyageRepository = voyageRepository;
         this.connectionRuleRepository = connectionRuleRepository;
+        this.bookingRepository = bookingRepository;
+        this.bookingSagaRepository = bookingSagaRepository;
     }
 
     @Before
@@ -69,5 +77,7 @@ public class ScenarioReset {
         routingCaseNumberIssuer.clear();
         voyageRepository.clear();
         connectionRuleRepository.clear();
+        bookingRepository.clear();
+        bookingSagaRepository.clear();
     }
 }

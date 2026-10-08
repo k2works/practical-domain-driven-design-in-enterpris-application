@@ -4,7 +4,7 @@ title: "Bolt 23 計画 - 本予約の確定と失効（US-04 AC1・AC2）"
 description: "23 回目の Bolt の計画。予約サガと追跡の開始（ADR-003 の改訂）、予約から見積りの確定可否の問い合わせを ADR に決め、booking モジュールと貨物予約・予約版・予約サガの表を新設して、本予約の確定（US-04 AC1）と失効の拒否（AC2）を業務ルール層の受入シナリオまで作り、DE-07 で輸送要求を予約確定済みにするまでを、ステップ 1〜6 で定義する。画面（S-09・S-24・S-02）は Bolt 23b。"
 tags: [development,bolt-plan]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-08T07:48:01Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-08T08:28:31Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-08T07:44:34Z }
 ---
@@ -248,18 +248,32 @@ b ||--o| s
   - 結果（2026-10-08）: ADR-015・ADR-016 を書き、ADR-003（決定 3・再試行の担い手・ステータス・改訂の経緯）、ADR の索引、mkdocs、non_functional.md（RTY-02 を「処理中の滞留の上限」に、OBS-04）、architecture_backend.md（再試行の担い手、予約サガの節と図）、domain_model.md（ADR の表、用語集に確定条件・予約サガ、B-INV-02 の注記、B-INV-06 の注記、DE-07 の payload と購読者、業務の流れの図と表）、data_model.md（`booking.transport_request_number`、索引、追跡番号の形式、業務番号の写し）、test_strategy.md（US-04 の Gherkin の例のタグと境界）、ui_design.md（S-01 を作るまでは S-02 から）を直した。`okf:check` ERROR 0、`documentationTest` 緑
     - 計画からの追加: 検証で見つかった食い違い 2 件に注記を入れた。DE-09・DE-10（予約が追跡のイベントを購読する形）は ADR-015 の依存の向きと循環するので、US-12 の残り（W7）で ADR-014 の形にそろえる。B-INV-06（予約が追跡の公開 API を同期で確かめる）は US-05（W11）で決め直す
     - 承認ゲートの扱い（T-36）: アーキテクチャの承認ゲートで止まらずに進めた（AI の判断）。根拠は、ADR-015・016 の決定が W4 の開始準備と Bolt 23 の開始準備で人が決めた形のとおりであること。終了報告の承認の議題に置く
-- [ ] **2. booking スキーマ（統合テスト）** 【承認ゲート: データベース】
+- [x] **2. booking スキーマ（統合テスト）** 【承認ゲート: データベース】
   - 統合テスト（PostgreSQL）を先に書く: `booking`・`booking_version`・`booking_saga` の CHECK、追跡番号の UK、`quotation_id` の UK、`booking_saga.booking_id` の UK、`booking_version` の UPDATE・DELETE の拒否（追記専用）、表と列のコメント
   - マイグレーション（`common`・`{vendor}`）、`afterMigrate__grant_app_user.sql`（PostgreSQL）、`AppendOnlyGrantIntegrationTest`・`SchemaCommentIntegrationTest` のスキーマの一覧
   - 完了の判定: `check` 緑
-- [ ] **3. 貨物予約の規則（集約の TDD）** 【承認ゲート: Red／Green（確定）】
+  - 結果（2026-10-08）: Red（`booking.booking` がない）を確かめ、`V20261008150000__create_booking.sql`（`common`。H2 でも通る）と `afterMigrate` の GRANT のスキーマに `booking` を足して Green。`BookingSchemaIntegrationTest` 7 件、`AppendOnlyGrantIntegrationTest` に予約版の追記専用の 1 件、`SchemaCommentIntegrationTest` に `booking`
+    - 計画からの変更: 予約版の経路版を、設計の `routing_case_id`（UUID）ではなく案件番号 `routing_case_number`（VARCHAR(20)）で持つ。見積りは割り当てた経路を案件番号で持ち（Bolt 20、D-4）、予約はその写しを使う（ADR-016）ため。data_model.md を直した
+    - 作業中の出来事: コンテナの Docker のデーモンが止まっていて、Testcontainers の統合テストが動かなかった。`dockerd` を起動し直して続けた
+    - 承認ゲートの扱い（T-36）: データベースの承認ゲートで止まらずに進めた（AI の判断）。根拠は、表と制約が data_model.md の `booking` スキーマのとおりであること（変更は上の 1 件）
+- [x] **3. 貨物予約の規則（集約の TDD）** 【承認ゲート: Red／Green（確定）】
   - 単体テストを先に書く: 5 条件がそろうと確定し、予約版 1・追跡番号・業務番号・commit 時刻・確定者を持ち、DE-07（輸送要求の版と発行元の版を含む）が返る。条件が 1 つでも欠けると確定しない（欠けた条件を結果に持つ）。確定条件の不足条件。追跡番号の形式。予約サガは「処理中」で始まる
   - `package-info`（`allowedDependencies = {"shared", "platform :: web", "quotation :: api"}`）、`@AggregateRoot` などの注釈、`@Saga`
   - 完了の判定: `check` 緑
-- [ ] **4. 確定サービスとリポジトリ（業務ルール層の受入シナリオ）** 【承認ゲート: Red／Green（確定）】
+  - 結果（2026-10-08）: `Booking`（確定、DE-07）、`BookingVersion`、`BookingId`・`TrackingNumber`（形式と乱数からの生成）・`BookingConditions`（不足条件）・`BookingTerms`（予約条件。見積りの写し）、`BookingConfirmed`（DE-07）、`BookingSaga`（処理中で始める）と送信ポート（`BookingRepository`、`TrackingNumberIssuer`、`BookingSagaRepository`）。単体テスト 17 件。用語集に予約 ID・予約条件を足し、`documentationTest` 緑
+    - 計画からの変更: 確定条件が欠けたときは、経路設計の確定（`RouteConfirmationRejected`）と同じく例外（`BookingConfirmationRejected`）で欠けた条件を示す
+    - 規律の逸脱: テストを書いた後、Red（クラスがないためコンパイルで失敗する）を実行して確かめる前に実装を書いた。終了報告の Problem に置く
+    - 承認ゲートの扱い（T-36）: Red・Green の承認ゲートで止まらずに進めた（AI の判断）。根拠は、テストの表が B-INV-01・08、DE-07 の payload（ステップ 1 で直した domain_model.md）のとおりであること
+- [x] **4. 確定サービスとリポジトリ（業務ルール層の受入シナリオ）** 【承認ゲート: Red／Green（確定）】
   - 業務ルール層の受入シナリオを先に書く（`features/booking/confirm_booking.feature`。`@US-04-AC1`・`@US-04-AC2`・`@BR-10`）: 確定、期限の 1 分前・同時刻・1 分後、未承認の見積り、カスタマーサポートの拒否（B-INV-10）。見積りの前提は見積りの公開 API を通して作る（業務ルール層のステップ定義は他のコンテキストの公開 API だけを使う）
   - 確定サービス（commit 時刻は ADR-016 のとおり）、追跡番号の発行（発行の前に存在を確かめて引き直す。上限 3 回。UK の違反は確定の失敗）、MyBatis のマッパー、リポジトリ（期待版で保存）
   - 完了の判定: `check` 緑
+  - 結果（2026-10-08）: `BookingCommandService`（営業担当者の役割、commit 時刻、見積りの照会、確定条件、追跡番号、保存、予約サガ、DE-07）、`QuotationBookability`（腐敗防止層）、`MyBatisBookingRepository`・`MyBatisBookingSagaRepository`・`BookingMapper.xml`、`RandomTrackingNumberIssuer`、`BookingConfiguration`。業務ルール層の受入シナリオ `features/booking/confirm_booking.feature` 7 本（1 分前の確定、同時刻・1 分後の失効、未承認、営業担当者の確認なし、同じ見積りの二度目、カスタマーサポート）、リポジトリの統合テスト 3 件、追跡番号の発行の単体テスト 3 件
+    - 計画からの変更 1: 見積りの公開 API の照会（`BookableQuotationQuery`、`Quotation.bookingRejectionAt`、境界の 3 点の単体テスト、`QuotationRejection.NOT_APPROVED`）を、確定サービスが使うためステップ 5 からこのステップに前倒しした。T-57 で `QuotationRejection` を網羅する `switch`（`StaffQuotationController`・`QuotationResponseController`）に値を足した
+    - 計画からの変更 2: 予約サガの状態とリポジトリを `application.sagas` ではなく `domain.model.sagas` に置いた。合成ルートの外の `infrastructure` は `application` に依存できない（D-5。`LayerArchitectureTest` が拒否した）ため。サガを進める処理（Bolt 25・W8）は `application.sagas` に置く。architecture_backend.md を直した
+    - 計画からの変更 3: 業務ルール層のステップ定義が見積りの ID を得られるよう、テスト用の配信（`DeferredEventDelivery`）にシナリオの始めからの発行の履歴を足し、見積りの公表された言語（DE-21・DE-04）から ID を得る（AT-05）。受入シナリオのグルーに `booking.acceptance` を足した
+    - 規律の逸脱: ステップ 3 と同じく、受入シナリオを書く前に確定サービスを書いた。受入シナリオの Red は「ステップが未定義」と「見つからない見積り」（ステップ定義の誤り）で、業務の失敗としての Red は確かめていない。終了報告の Problem に置く
+    - 承認ゲートの扱い（T-36）: Red・Green の承認ゲートで止まらずに進めた（AI の判断）。根拠は、受入シナリオが US-04 AC1・AC2 と test_strategy.md の境界の 3 点のとおりであること
 - [ ] **5. 見積りの公開 API・輸送要求の予約確定済み・DE-07 の listener** 【承認ゲート: Red／Green、モジュールの境界】
   - 単体テストを先に書く: 確定に使えるかの判定の境界（有効期限の 1 分前は使える、同時刻・1 分後は失効。T-38）、未承認・置換済み・見つからない。輸送要求の予約待ち → 予約確定済み（冪等。予約待ちでないときは警告のログ。T-58）
   - `quotation.api` に照会と通知の受け口を足し、実装を見積りの `application.internal.commandservices` に置く。輸送要求を進める処理は Bolt 22 の割り込みの部品を使う（確認ポイント 8）。`quotation.api` の `package-info` の説明（「照会だけ」）を直す

@@ -11,6 +11,7 @@ import com.example.cargotracker.quotation.application.internal.eventhandlers.Quo
 import com.example.cargotracker.quotation.application.internal.eventhandlers.QuotationPresentedEventHandler;
 import com.example.cargotracker.quotation.application.internal.eventhandlers.QuotationRouteAssignedEventHandler;
 import com.example.cargotracker.quotation.application.internal.eventhandlers.RouteDesignRequestedEventHandler;
+import com.example.cargotracker.quotation.application.internal.queryservices.BookableQuotationQueryService;
 import com.example.cargotracker.quotation.application.internal.queryservices.QuotationQueryService;
 import com.example.cargotracker.quotation.application.internal.queryservices.RouteConditionQueryService;
 import com.example.cargotracker.quotation.application.internal.queryservices.StaffQuotationQueryService;
@@ -123,6 +124,13 @@ public class QuotationConfiguration {
     @Bean
     RouteConditionQuery routeConditionQuery(TransportRequestRepository repository) {
         return new RouteConditionQueryService(repository);
+    }
+
+    /** 見積りの公開 API の予約確定に使える見積りの照会（予約が本予約の確定で使う。ADR-016。Bolt 23）。 */
+    @Bean
+    BookableQuotationQueryService bookableQuotationQuery(
+            QuotationRepository quotationRepository, TransportRequestRepository transportRequestRepository) {
+        return new BookableQuotationQueryService(quotationRepository, transportRequestRepository);
     }
 
     /** 見積りの公開 API の経路の割当て（経路設計が DE-05 を受けて使う。ADR-014。Bolt 20）。 */

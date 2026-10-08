@@ -4,7 +4,7 @@ title: "cargo-tracker バックエンドアーキテクチャ"
 description: "cargo-tracker の境界づけられたコンテキスト、コンテキストごとのドメインロジックパターン、パッケージ構成、サガとドメインイベントによる連携（ARCH-HO-01〜03）、受信サービスの方針。"
 tags: [design, architecture, backend]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-08T07:48:01Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-08T08:28:31Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T07:11:12Z }
   - { by: human:kakimomokuri, at: 2026-10-01T07:41:04Z }
@@ -359,7 +359,7 @@ end note
 | 要素 | 方式 |
 | :--- | :--- |
 | 状態 | サガごとに「処理中・完了・失敗・有人確認要」を予約の `booking_saga` に永続化する。後続が完了するまで、画面に成功と表示しない |
-| 置き場所 | サガを始めるコンテキストの `application.sagas`（第 3 章）に置く。予約サガは予約コンテキストに置く |
+| 置き場所 | サガを始めるコンテキストに置く。予約サガは予約コンテキストに置く。状態とリポジトリ（送信ポート）は `domain.model.sagas`、サガを進める処理（後続の結果の受け取り、滞留の検出）は `application.sagas`（第 3 章）。合成ルートの外の `infrastructure` は `application` に依存できない（D-5）ため、リポジトリの実装が参照する状態はドメイン層に置く（Bolt 23） |
 | 後続の起動 | 追跡の listener が DE-07 を購読する。予約は追跡に依存しない（ADR-015） |
 | 再処理 | 追跡の開始は予約 ID で冪等にし、技術の失敗はイベントの再配信（RTY-01）でやり直す。予約サガは処理中の滞留を定期処理で見て、有人確認要にする |
 | 補償 | MVP では自動補償をしない。進められない場合は BR-17 に従って有人案件へ引き継ぐ |

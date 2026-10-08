@@ -438,6 +438,28 @@ public final class Quotation {
         };
     }
 
+    /**
+     * commit 時刻に予約確定に使えないなら、その理由（Q-INV-06、BR-10、ADR-016。Bolt 23）。置換済み・失効の記録を先に見て、
+     * 次に commit 時刻での失効（有効期限と同時刻以後）、最後に荷主の承認済みかを見る。予約は commit 時刻を渡して公開 API で問い合わせる。
+     *
+     * @param committedAt 予約確定の commit 時刻
+     * @return 使えない理由（使えるなら空）
+     */
+    public Optional<QuotationRejection> bookingRejectionAt(UtcInstant committedAt) {
+        Objects.requireNonNull(committedAt, "committedAt");
+        Optional<QuotationRejection> retired = retiredRejection();
+        if (retired.isPresent()) {
+            return retired;
+        }
+        if (isExpiredAt(committedAt)) {
+            return Optional.of(QuotationRejection.EXPIRED);
+        }
+        if (status != QuotationStatus.APPROVED) {
+            return Optional.of(QuotationRejection.NOT_APPROVED);
+        }
+        return Optional.empty();
+    }
+
     /** 荷主に見えるか（提示した見積りだけ。承認待ちと、提示する前に置き換えた見積りは見えない。Q-INV-08。Bolt 12 レビュー R-19）。 */
     public boolean isVisibleToShipper() {
         return presentedAt != null;

@@ -4,7 +4,7 @@ title: "cargo-tracker ドメインモデル"
 description: "cargo-tracker の業務領域の分類、ユビキタス言語、7 つの境界づけられたコンテキスト（通知を含む）の集約・エンティティ・値オブジェクト・ドメインルール、コマンド・クエリ・イベント、予約サガ。"
 tags: [design, domain-model, ddd]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-08T07:48:01Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-08T08:28:31Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T07:41:04Z }
   - { by: human:kakimomokuri, at: 2026-10-01T07:48:17Z }
@@ -144,6 +144,8 @@ quadrantChart
 | 貨物予約 | Booking | 本予約で確定した輸送の契約。予約版と追跡番号を持つ | 予約 |
 | 予約版 | BookingVersion | 貨物予約のある時点の合意内容（見積り、経路版、貨物）。変更は新しい版になる | 予約 |
 | 追跡番号 | TrackingNumber | 顧客が追跡を照会するための推測されにくい番号。本予約時に発行する | 予約（照会は追跡） |
+| 予約 ID | BookingId | 貨物予約を識別する、システムが発行する不透明な値。画面と URL には追跡番号を出す（Bolt 23） | 予約 |
+| 予約条件 | BookingTerms | 本予約の確定の時点で見積りの公開 API から写した、輸送要求・見積り・経路版・荷受人・貨物・荷主承認の値。予約版はこの写しを持ち、確定の後に見積りへ問い合わせ直さない（ADR-016。Bolt 23） | 予約 |
 | 確定条件 | BookingConditions | 本予約の確定に要る 5 条件（有効な見積り、必須貨物情報、荷主担当者 1 名の承認、承認済み経路版、営業担当者による確認）。欠けた条件を不足条件として返す（BR-01） | 予約 |
 | 予約サガ | BookingSaga | 本予約の確定から追跡の開始までの状態（処理中・完了・失敗・有人確認要）を持つ。後続の追跡の開始は追跡が DE-07 を購読して行う（ADR-015） | 予約 |
 | 輸送段階 | TransportPhase | 集荷前、集荷後、完了。変更・取消しの可否を決める（BR-04） | 予約 |

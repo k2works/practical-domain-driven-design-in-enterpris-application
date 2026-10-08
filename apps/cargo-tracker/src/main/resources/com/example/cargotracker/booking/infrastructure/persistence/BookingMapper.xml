@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.cargotracker.booking.infrastructure.persistence.BookingMapper">
+
+    <resultMap id="bookingRow" type="com.example.cargotracker.booking.infrastructure.persistence.BookingRow">
+        <constructor>
+            <idArg column="id" name="id" javaType="java.util.UUID"/>
+            <arg column="tracking_number" name="trackingNumber" javaType="String"/>
+            <arg column="transport_request_number" name="transportRequestNumber" javaType="String"/>
+            <arg column="shipper_company_id" name="shipperCompanyId" javaType="java.util.UUID"/>
+            <arg column="status" name="status" javaType="String"/>
+            <arg column="transport_phase" name="transportPhase" javaType="String"/>
+            <arg column="current_version_no" name="currentVersionNo" javaType="_int"/>
+            <arg column="version" name="version" javaType="_long"/>
+            <arg column="created_at" name="createdAt" javaType="java.time.OffsetDateTime"/>
+            <arg column="created_by" name="createdBy" javaType="java.util.UUID"/>
+            <arg column="updated_at" name="updatedAt" javaType="java.time.OffsetDateTime"/>
+            <arg column="updated_by" name="updatedBy" javaType="java.util.UUID"/>
+        </constructor>
+    </resultMap>
+
+    <resultMap id="bookingVersionRow" type="com.example.cargotracker.booking.infrastructure.persistence.BookingVersionRow">
+        <constructor>
+            <idArg column="booking_id" name="bookingId" javaType="java.util.UUID"/>
+            <idArg column="booking_version_no" name="bookingVersionNo" javaType="_int"/>
+            <arg column="transport_request_id" name="transportRequestId" javaType="java.util.UUID"/>
+            <arg column="transport_request_version_no" name="transportRequestVersionNo" javaType="_int"/>
+            <arg column="quotation_id" name="quotationId" javaType="java.util.UUID"/>
+            <arg column="routing_case_number" name="routingCaseNumber" javaType="String"/>
+            <arg column="route_version_no" name="routeVersionNo" javaType="_int"/>
+            <arg column="consignee_company_id" name="consigneeCompanyId" javaType="java.util.UUID"/>
+            <arg column="cargo_category" name="cargoCategory" javaType="String"/>
+            <arg column="cargo_summary" name="cargoSummary" javaType="String"/>
+            <arg column="shipper_approver_id" name="shipperApproverId" javaType="java.util.UUID"/>
+            <arg column="confirmed_by" name="confirmedBy" javaType="java.util.UUID"/>
+            <arg column="committed_at" name="committedAt" javaType="java.time.OffsetDateTime"/>
+        </constructor>
+    </resultMap>
+
+    <resultMap id="bookingSagaRow" type="com.example.cargotracker.booking.infrastructure.persistence.BookingSagaRow">
+        <constructor>
+            <idArg column="id" name="id" javaType="java.util.UUID"/>
+            <arg column="booking_id" name="bookingId" javaType="java.util.UUID"/>
+            <arg column="tracking_number" name="trackingNumber" javaType="String"/>
+            <arg column="status" name="status" javaType="String"/>
+            <arg column="current_step" name="currentStep" javaType="String"/>
+            <arg column="attempts" name="attempts" javaType="_int"/>
+            <arg column="started_at" name="startedAt" javaType="java.time.OffsetDateTime"/>
+            <arg column="updated_at" name="updatedAt" javaType="java.time.OffsetDateTime"/>
+            <arg column="version" name="version" javaType="_long"/>
+        </constructor>
+    </resultMap>
+
+    <insert id="insertBooking">
+        INSERT INTO booking.booking
+            (id, tracking_number, transport_request_number, shipper_company_id, status, transport_phase,
+             current_version_no, version, created_at, created_by, updated_at, updated_by)
+        VALUES
+            (#{id}, #{trackingNumber}, #{transportRequestNumber}, #{shipperCompanyId}, #{status}, #{transportPhase},
+             #{currentVersionNo}, #{version}, #{createdAt}, #{createdBy}, #{updatedAt}, #{updatedBy})
+    </insert>
+
+    <insert id="insertBookingVersion">
+        INSERT INTO booking.booking_version
+            (booking_id, booking_version_no, transport_request_id, transport_request_version_no, quotation_id,
+             routing_case_number, route_version_no, consignee_company_id, cargo_category, cargo_summary,
+             shipper_approver_id, confirmed_by, committed_at)
+        VALUES
+            (#{bookingId}, #{bookingVersionNo}, #{transportRequestId}, #{transportRequestVersionNo}, #{quotationId},
+             #{routingCaseNumber}, #{routeVersionNo}, #{consigneeCompanyId}, #{cargoCategory}, #{cargoSummary},
+             #{shipperApproverId}, #{confirmedBy}, #{committedAt})
+    </insert>
+
+    <insert id="insertBookingSaga">
+        INSERT INTO booking.booking_saga
+            (id, booking_id, tracking_number, status, current_step, attempts, started_at, updated_at, version)
+        VALUES
+            (#{id}, #{bookingId}, #{trackingNumber}, #{status}, #{currentStep}, #{attempts}, #{startedAt},
+             #{updatedAt}, #{version})
+    </insert>
+
+    <select id="findBookingByTrackingNumber" resultMap="bookingRow">
+        SELECT id, tracking_number, transport_request_number, shipper_company_id, status, transport_phase,
+               current_version_no, version, created_at, created_by, updated_at, updated_by
+          FROM booking.booking
+         WHERE tracking_number = #{trackingNumber}
+    </select>
+
+    <select id="findVersions" resultMap="bookingVersionRow">
+        SELECT booking_id, booking_version_no, transport_request_id, transport_request_version_no, quotation_id,
+               routing_case_number, route_version_no, consignee_company_id, cargo_category, cargo_summary,
+               shipper_approver_id, confirmed_by, committed_at
+          FROM booking.booking_version
+         WHERE booking_id = #{bookingId}
+         ORDER BY booking_version_no
+    </select>
+
+    <select id="existsByTrackingNumber" resultType="boolean">
+        SELECT COUNT(*) > 0 FROM booking.booking WHERE tracking_number = #{trackingNumber}
+    </select>
+
+    <select id="findSagaByBookingId" resultMap="bookingSagaRow">
+        SELECT id, booking_id, tracking_number, status, current_step, attempts, started_at, updated_at, version
+          FROM booking.booking_saga
+         WHERE booking_id = #{bookingId}
+    </select>
+</mapper>

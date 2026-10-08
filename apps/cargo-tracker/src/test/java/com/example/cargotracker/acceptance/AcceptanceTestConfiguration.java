@@ -1,5 +1,10 @@
 package com.example.cargotracker.acceptance;
 
+import com.example.cargotracker.booking.acceptance.InMemoryBookingRepository;
+import com.example.cargotracker.booking.acceptance.InMemoryBookingSagaRepository;
+import com.example.cargotracker.booking.application.internal.commandservices.BookingCommandService;
+import com.example.cargotracker.booking.application.internal.outboundservices.acl.QuotationBookability;
+import com.example.cargotracker.booking.infrastructure.persistence.RandomTrackingNumberIssuer;
 import com.example.cargotracker.identity.acceptance.InMemoryKpiObservationRepository;
 import com.example.cargotracker.identity.application.internal.eventhandlers.KpiObservationEventHandler;
 import com.example.cargotracker.identity.application.internal.queryservices.KpiObservationQueryService;
@@ -17,6 +22,7 @@ import com.example.cargotracker.quotation.application.internal.eventhandlers.Quo
 import com.example.cargotracker.quotation.application.internal.eventhandlers.QuotationPresentedEventHandler;
 import com.example.cargotracker.quotation.application.internal.eventhandlers.QuotationRouteAssignedEventHandler;
 import com.example.cargotracker.quotation.application.internal.eventhandlers.RouteDesignRequestedEventHandler;
+import com.example.cargotracker.quotation.application.internal.queryservices.BookableQuotationQueryService;
 import com.example.cargotracker.quotation.application.internal.queryservices.QuotationQueryService;
 import com.example.cargotracker.quotation.application.internal.queryservices.RouteConditionQueryService;
 import com.example.cargotracker.quotation.application.internal.queryservices.StaffQuotationQueryService;
@@ -44,6 +50,7 @@ import com.example.cargotracker.shared.acceptance.DeferredEventDelivery;
 import com.example.cargotracker.shared.acceptance.MutableClock;
 import com.example.cargotracker.shared.acceptance.ScenarioContext;
 import io.cucumber.spring.CucumberContextConfiguration;
+import java.util.Random;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
@@ -156,6 +163,35 @@ public class AcceptanceTestConfiguration {
         @Bean
         RoutingCaseQueryService routingCaseQueryService(InMemoryRoutingCaseRepository repository) {
             return new RoutingCaseQueryService(repository);
+        }
+
+        @Bean
+        InMemoryBookingRepository bookingRepository() {
+            return new InMemoryBookingRepository();
+        }
+
+        @Bean
+        InMemoryBookingSagaRepository bookingSagaRepository() {
+            return new InMemoryBookingSagaRepository();
+        }
+
+        /** 予約は見積りの公開 API（予約確定に使える見積りの照会）越しに予約条件を得る（ADR-016。Bolt 23）。 */
+        @Bean
+        BookingCommandService bookingCommandService(
+                InMemoryBookingRepository bookingRepository,
+                InMemoryBookingSagaRepository bookingSagaRepository,
+                InMemoryQuotationRepository quotationRepository,
+                InMemoryTransportRequestRepository transportRequestRepository,
+                DeferredEventDelivery eventDelivery,
+                MutableClock clock) {
+            return new BookingCommandService(
+                    bookingRepository,
+                    bookingSagaRepository,
+                    new RandomTrackingNumberIssuer(bookingRepository, new Random(23)),
+                    new QuotationBookability(
+                            new BookableQuotationQueryService(quotationRepository, transportRequestRepository)),
+                    eventDelivery,
+                    clock);
         }
 
         /** テスト用の同期の配信。購読側は {@link EventSubscriptions} が登録する（発行する部品と購読する部品が互いに依存するため）。 */

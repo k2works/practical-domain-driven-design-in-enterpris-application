@@ -132,7 +132,8 @@ public class QuotationResponseController {
                     OUTDATED_VERSION,
                     NOT_PRESENTED,
                     NOT_AWAITING_SHIPPER_APPROVAL,
-                    ALREADY_APPROVED -> subject + " には回答できません。担当営業にご連絡ください";
+                    ALREADY_APPROVED,
+                    NOT_APPROVED -> subject + " には回答できません。担当営業にご連絡ください";
         };
     }
 

@@ -217,6 +217,32 @@ class QuotationShipperApprovalTest {
         }
     }
 
+    // 予約確定に使えるか（Q-INV-06、BR-10、ADR-016。Bolt 23）
+
+    @ParameterizedTest
+    @CsvSource({"2099-10-08T08:59:00Z, true", "2099-10-08T09:00:00Z, false", "2099-10-08T09:01:00Z, false"})
+    void 承認済みの見積りはcommit時刻が有効期限の1分前なら予約確定に使え同時刻と1分後は失効(String committedAt, boolean bookable) {
+        Quotation approved = awaitingApproval();
+        approved.approveByShipper(shipperUser, now);
+
+        assertThat(approved.bookingRejectionAt(at(committedAt)))
+                .isEqualTo(bookable ? Optional.empty() : Optional.of(QuotationRejection.EXPIRED));
+    }
+
+    @Test
+    void 承認済みでない見積りと置換済み失効の見積りは予約確定に使えない() {
+        Quotation awaiting = awaitingApproval();
+        Quotation replaced = presented();
+        replaced.replaceWith(new QuotationId(UUID.randomUUID()), now);
+        Quotation expired = presented();
+        expired.replaceWith(new QuotationId(UUID.randomUUID()), at("2099-10-09T00:00:00Z"));
+
+        assertThat(awaiting.bookingRejectionAt(now)).contains(QuotationRejection.NOT_APPROVED);
+        assertThat(routingRequested().bookingRejectionAt(now)).contains(QuotationRejection.NOT_APPROVED);
+        assertThat(replaced.bookingRejectionAt(now)).contains(QuotationRejection.REPLACED);
+        assertThat(expired.bookingRejectionAt(now)).contains(QuotationRejection.EXPIRED);
+    }
+
     private Quotation pendingApproval() {
         Quotation quotation = Quotation.create(id, transportRequestId, 1, 1);
         quotation.calculate(QuotationFixture.completeInput(), at("2026-10-05T04:00:00Z"));

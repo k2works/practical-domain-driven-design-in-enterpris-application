@@ -1,6 +1,9 @@
 # Docs Update Log
 
 ## 2026-10-08
+* **Update**: [bolt_23_plan](/development/cargo-tracker/bolt_23_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
 * **Update**: [bolt_22_plan](/development/cargo-tracker/bolt_22_plan.md) を更新（anthropic/claude-opus-5-5）
 * **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
 * **Update**: [016-booking-checks-quotation-at-commit-time](/adr/cargo-tracker/016-booking-checks-quotation-at-commit-time.md) を更新（anthropic/claude-opus-5-5）
