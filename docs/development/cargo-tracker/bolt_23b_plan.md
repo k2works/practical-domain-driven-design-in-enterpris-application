@@ -3,8 +3,10 @@ type: Plan
 title: "Bolt 23b 計画 - 本予約の確定の画面（US-04 AC1・AC2）"
 description: "23b 回目の Bolt の計画。Bolt 23 で業務ルール層まで作った本予約の確定と失効に、S-02 の予約の確定待ちの表、S-09 本予約の確定（画面そのものを確認の領域にする）、S-24 予約の詳細の最小の表示（予約サガは処理中を完了と出さない）を足し、画面の層のシナリオと受入動画で確かめるまでを、ステップ 1〜5 で定義する。"
 tags: [development,bolt-plan]
-status: draft
+status: stable
 generated: { by: anthropic/claude-opus-5-5, at: 2026-10-08T09:37:03Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-10-08T09:39:03Z }
 ---
 
 # Bolt 23b 計画 - 本予約の確定の画面（US-04 AC1・AC2）
@@ -18,6 +20,7 @@ generated: { by: anthropic/claude-opus-5-5, at: 2026-10-08T09:37:03Z }
 | 対象 | U6 予約管理の画面（`booking.interfaces.web`）、U1 見積りの S-02 と公開 API |
 | GitHub | [#10 [US-04] 予約を確定する](https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/10)（SP 0。US-04 の SP 5 は #10 をクローズする Bolt 25 で数える） |
 | 承認ゲート | 計画の承認（確認ポイント 1〜12）、見積りの公開 API の変更（モジュールの境界）、確定の画面の Red・Green、認可、開発レビューの判断、終了報告 |
+| 承認ゲートの扱い | 人の指示（`/goal Bolt23b`、2026-10-08）により、計画を承認し、承認ゲートで止まらずに進める。止まらなかったゲートごとに根拠を書き、終了報告の承認の議題に置く（T-36）。表の変更はないので T-67（スキーマのステップは止める）は当たらない。表の変更が要るとわかったら止める |
 | アプローチ | アウトサイドイン（開発戦略の「Bolt ごとのアプローチの決め方」の「既存の集約に受入条件を足す」。新しい集約・表はない）。画面の層の受入シナリオ → 画面（コントローラーとテンプレート）→ アプリケーション（照会）→ 見積りの公開 API の順 |
 | 前の Bolt | [Bolt 23 終了報告](bolt_23_report.md) |
 
@@ -214,6 +217,7 @@ S02 --> S04 : 失効（荷主承認済み）の行
 
 | 日付 | 更新内容 | 更新者 |
 | :--- | :--- | :--- |
+| 2026-10-08 | 計画（確認ポイントは決定と推奨のまま）を承認した（`/goal Bolt23b`） | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-10-08 | 確認ポイント 4（S-09 は画面そのものを確認の領域にする）、7（S-10 は準備中のまま）、3（見積りの公開 API の照会を業務番号と見積り番号に置き換え、ADR-016 を改訂する）を推奨のとおり決めた | anthropic/claude-opus-5-5、決定 human:kakimomokuri |
 | 2026-10-08 | 開始準備の整合性検証の指摘 8 件を反映した（DE-07 の非同期と S-02 の行、画面の層の失効の手段、ADR-016 の改訂、変更の影響範囲、確定済みの判定、経路の確定の時刻、S-24 の画面一覧の行） | anthropic/claude-opus-5-5 |
 | 2026-10-08 | 初版作成（承認待ち） | anthropic/claude-opus-5-5 |

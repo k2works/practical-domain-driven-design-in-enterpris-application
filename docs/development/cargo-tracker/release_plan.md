@@ -492,7 +492,7 @@ US-04 の SP 5 は、サガの成功の経路を閉じて #10 をクローズす
 **主なタスク**:
 
 - [x] Bolt 22: 日時表示・期間表示を `platform` の Web の部品に集める（技術タスク、SP 0。W4 の最初の Bolt）。[Bolt 22 計画](bolt_22_plan.md)（承認済み）、[Bolt 22 終了報告](bolt_22_report.md)（完了、2026-10-08 に承認済み。#41 をクローズした。割り込みで見積りの listener の楽観ロックの競合を直した（#42））、[#41](https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/41)
-- [ ] Bolt 23・23b・24: US-04（AC1、AC2、AC4、B-INV-03、B-INV-11）と予約サガの骨格、2 つの ADR。画面は Bolt 23b。[Bolt 23 計画](bolt_23_plan.md)（承認済み。`/goal` で進めた）、[Bolt 23 終了報告](bolt_23_report.md)（完了、2026-10-08 に承認済み。スキーマと D-5 の例外を含む。#10 は Bolt 25 まで開いたまま）、[Bolt 23b 計画](bolt_23b_plan.md)（承認待ち）
+- [ ] Bolt 23・23b・24: US-04（AC1、AC2、AC4、B-INV-03、B-INV-11）と予約サガの骨格、2 つの ADR。画面は Bolt 23b。[Bolt 23 計画](bolt_23_plan.md)（承認済み。`/goal` で進めた）、[Bolt 23 終了報告](bolt_23_report.md)（完了、2026-10-08 に承認済み。スキーマと D-5 の例外を含む。#10 は Bolt 25 まで開いたまま）、[Bolt 23b 計画](bolt_23b_plan.md)（承認済み。`/goal` で進める）
 - [ ] Bolt 25: 追跡の開始とサガの成功の経路
 - [ ] Bolt 26・27: US-12（AC1、AC2）、US-09（AC1）
 - [ ] Bolt 28: 主成功の流れの `@ui` シナリオと Release 0.1 のデモ
