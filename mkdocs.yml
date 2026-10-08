@@ -151,6 +151,7 @@ nav:
           - Bolt 22 終了報告: development/cargo-tracker/bolt_22_report.md
           - Bolt 23 計画: development/cargo-tracker/bolt_23_plan.md
           - Bolt 23 終了報告: development/cargo-tracker/bolt_23_report.md
+          - Bolt 23b 計画: development/cargo-tracker/bolt_23b_plan.md
   - 運用:
       - 概要: operation/index.md
       - cargo-tracker:
