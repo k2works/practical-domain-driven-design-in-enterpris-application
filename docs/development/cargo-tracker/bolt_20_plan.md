@@ -3,8 +3,10 @@ type: Plan
 title: "Bolt 20 計画 - 確定した経路の割当てと荷主の承認（US-24 AC4・AC5）"
 description: "20 回目の Bolt の計画。経路設計の確定（DE-05）を経路設計の中の listener で受け、見積りの公開 API で依頼元の見積りに経路版を割り当てる（D-71、ADR-014）。荷主担当者が見積りと確定した経路を確かめて承認し（US-24 AC4）、失効・置換済みの見積りへの承認を拒否する（AC5）までを、ステップ 1〜5 で定義する。"
 tags: [development,bolt-plan]
-status: draft
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-08T02:51:16Z }
+status: stable
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-08T02:55:56Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-10-08T02:55:56Z }
 ---
 
 # Bolt 20 計画 - 確定した経路の割当てと荷主の承認（US-24 AC4・AC5）
@@ -310,6 +312,7 @@ C05A --> C04 : 戻る
 | 2026-10-08 | 初版（範囲は人が決めた。確認ポイント 1〜12 は承認待ち） | anthropic/claude-opus-5-5 | — |
 | 2026-10-08 | 人の指示（`/goal Bolt20`）により、計画の承認ゲートで止まらずに確認ポイント 1〜12 を推奨のまま採って進めた（AI の判断。T-36。終了報告の承認の議題に置く） | anthropic/claude-opus-5-5 | — |
 | 2026-10-08 | ステップ 1〜5 の結果を記録した（終了報告の承認待ち） | anthropic/claude-opus-5-5 | — |
+| 2026-10-08 | 終了報告の承認で、AI の判断で通した承認ゲート（計画の確認ポイント 1〜12 を含む）と Bolt を承認した | anthropic/claude-opus-5-5 | human:kakimomokuri |
 
 ## 関連ドキュメント
 

@@ -3,8 +3,10 @@ type: ADR
 title: "ADR-014: 下流から上流への通知は、下流の listener が上流の公開 API を呼んで行う"
 description: "経路設計の確定（DE-05）を見積りが購読するとモジュールの依存が循環する（Bolt 19 レビュー D-71）ため、下流のコンテキストが自分のイベントを listener で受け、上流の公開 API（api の名前付きインターフェース）の冪等な操作を呼ぶ形に決める。DE-05・DE-06・DE-07 に適用し、イベントの発行の仕方の基準もそろえる。"
 tags: [adr, architecture, integration]
-status: draft
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-08T02:36:04Z }
+status: stable
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-08T02:55:56Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-10-08T02:55:56Z }
 ---
 
 # ADR-014: 下流から上流への通知は、下流の listener が上流の公開 API を呼んで行う
@@ -15,7 +17,7 @@ generated: { by: anthropic/claude-opus-5-5, at: 2026-10-08T02:36:04Z }
 
 ## ステータス
 
-提案（方針は 2026-10-08 に human:kakimomokuri が Bolt 19 終了報告の承認で D-71 の AI の推奨の形を採った。ADR の文面は Bolt 20 で書き、人の確認は Bolt 20 の終了報告の承認で受ける）
+承認（方針は 2026-10-08 に human:kakimomokuri が Bolt 19 終了報告の承認で D-71 の AI の推奨の形を採った。文面は 2026-10-08 に Bolt 20 の終了報告の承認で承認した）
 
 ## コンテキスト
 
