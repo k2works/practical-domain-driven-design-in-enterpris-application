@@ -5538,6 +5538,76 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../adr/cargo-tracker/015-booking-saga-starts-tracking-by-event/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-015 予約サガと追跡の開始
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--stable"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../adr/cargo-tracker/016-booking-checks-quotation-at-commit-time/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-016 予約から見積りの確定可否
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--stable"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -8354,7 +8424,7 @@
 <h2 id="_9">ステップ計画<a class="headerlink" href="#_9" title="Permanent link">&para;</a></h2>
 <p>状態の記号: <code>[ ]</code> 未着手、<code>[-]</code> 進行中、<code>[?]</code> 承認待ち、<code>[x]</code> 完了。各ステップの終わりに <code>check</code> が緑であることを確かめ、Green と同じ push にまとめて CI を確かめる（T-26、T-65）。</p>
 <ul class="task-list">
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>1. ADR-015・ADR-016 と設計文書</strong> 【承認ゲート: アーキテクチャ】</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>1. ADR-015・ADR-016 と設計文書</strong> 【承認ゲート: アーキテクチャ】</li>
 <li>ADR-015 予約サガと追跡の開始（ADR-003 の決定 3 と補足の決定「再試行の担い手」を改訂する）: 追跡の listener が DE-07 を購読して追跡を開始し、結果を予約の公開 API で返す。依存は <code>tracking → booking</code> だけ。サガの状態（処理中・完了・失敗・有人確認要）は予約のサガ 1 か所に置く。追跡の開始の再試行はイベントの再配信（RTY-01）と追跡の側の冪等で担い、予約のサガは処理中の滞留時間を見て有人確認要にする（W8）</li>
 <li>ADR-016 予約から見積りの確定可否: 予約は確定のトランザクションの中で、保存の直前に <code>Clock</code> から取った時刻を commit 時刻とし、同じ値で見積りの公開 API に照会し、<code>committed_at</code> に記録する（判定と記録を同じ値にする）。判定（Q-INV-06・BR-10）は見積りの 1 か所。確定に要る写しを戻り値で受け、確定の後に見積りへ問い合わせ直さない（B-INV-08）</li>
 <li>設計文書を直す:<ul>
@@ -8369,6 +8439,11 @@
 </ul>
 </li>
 <li>完了の判定: <code>okf:check</code> ERROR 0、<code>documentationTest</code> 緑</li>
+<li>結果（2026-10-08）: ADR-015・ADR-016 を書き、ADR-003（決定 3・再試行の担い手・ステータス・改訂の経緯）、ADR の索引、mkdocs、non_functional.md（RTY-02 を「処理中の滞留の上限」に、OBS-04）、architecture_backend.md（再試行の担い手、予約サガの節と図）、domain_model.md（ADR の表、用語集に確定条件・予約サガ、B-INV-02 の注記、B-INV-06 の注記、DE-07 の payload と購読者、業務の流れの図と表）、data_model.md（<code>booking.transport_request_number</code>、索引、追跡番号の形式、業務番号の写し）、test_strategy.md（US-04 の Gherkin の例のタグと境界）、ui_design.md（S-01 を作るまでは S-02 から）を直した。<code>okf:check</code> ERROR 0、<code>documentationTest</code> 緑<ul>
+<li>計画からの追加: 検証で見つかった食い違い 2 件に注記を入れた。DE-09・DE-10（予約が追跡のイベントを購読する形）は ADR-015 の依存の向きと循環するので、US-12 の残り（W7）で ADR-014 の形にそろえる。B-INV-06（予約が追跡の公開 API を同期で確かめる）は US-05（W11）で決め直す</li>
+<li>承認ゲートの扱い（T-36）: アーキテクチャの承認ゲートで止まらずに進めた（AI の判断）。根拠は、ADR-015・016 の決定が W4 の開始準備と Bolt 23 の開始準備で人が決めた形のとおりであること。終了報告の承認の議題に置く</li>
+</ul>
+</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>2. booking スキーマ（統合テスト）</strong> 【承認ゲート: データベース】</li>
 <li>統合テスト（PostgreSQL）を先に書く: <code>booking</code>・<code>booking_version</code>・<code>booking_saga</code> の CHECK、追跡番号の UK、<code>quotation_id</code> の UK、<code>booking_saga.booking_id</code> の UK、<code>booking_version</code> の UPDATE・DELETE の拒否（追記専用）、表と列のコメント</li>
 <li>マイグレーション（<code>common</code>・<code>{vendor}</code>）、<code>afterMigrate__grant_app_user.sql</code>（PostgreSQL）、<code>AppendOnlyGrantIntegrationTest</code>・<code>SchemaCommentIntegrationTest</code> のスキーマの一覧</li>

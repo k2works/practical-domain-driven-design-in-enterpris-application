@@ -5802,6 +5802,76 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../adr/cargo-tracker/015-booking-saga-starts-tracking-by-event/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-015 予約サガと追跡の開始
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--stable"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../adr/cargo-tracker/016-booking-checks-quotation-at-commit-time/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-016 予約から見積りの確定可否
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--stable"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -9453,7 +9523,7 @@
 <li>荷主担当者が C-05 で見積りと経路方針を確認し、詳細経路設計へ進むと回答する（辞退・相談も選べる）。</li>
 <li>経路設計者が S-06 で候補を比較し、S-07 で経路を確定する。経路版が見積りに割り当てられ、荷主へメールで知らせる。</li>
 <li>荷主担当者が C-17 で見積りと承認済み経路・締切を確認し、確認の領域を経て承認する。</li>
-<li>営業担当者が S-01 の最上位に出た「荷主承認済み」から S-09 を開き、確認の領域を経て本予約を確定する。</li>
+<li>営業担当者が S-01 の最上位に出た「荷主承認済み」から S-09 を開き、確認の領域を経て本予約を確定する（S-01 を作るまでは、S-02 の予約の確定待ちの表から開く。Bolt 23b）。</li>
 <li>S-24 の予約の詳細に追跡番号と「追跡の開始: 処理中」を表示する。予約サガが完了したら「完了」に更新し、通知領域で知らせる。荷主へ本予約の確定をメールで知らせる。</li>
 </ol>
 <p>C-04 には、各段階の進み具合と「いま誰の対応待ちか」を表示し、荷主が状況を問い合わせずに分かるようにする。</p>

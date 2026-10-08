@@ -5609,6 +5609,76 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../adr/cargo-tracker/015-booking-saga-starts-tracking-by-event/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-015 予約サガと追跡の開始
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--stable"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../adr/cargo-tracker/016-booking-checks-quotation-at-commit-time/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-016 予約から見積りの確定可否
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--stable"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -8513,8 +8583,8 @@
 </tr>
 <tr>
 <td style="text-align: left;">RTY-02</td>
-<td style="text-align: left;">予約サガの再試行</td>
-<td style="text-align: left;">1 分、2 分、4 分、8 分、16 分の間隔で最大 5 回（合計 約 31 分）。それでも進まなければ有人確認要にして有人案件の起票を依頼する。予約サガの再試行はサガが担い、イベントの再配信（RTY-01）とは重ねない（ADR-003）</td>
+<td style="text-align: left;">予約サガの処理中の滞留の上限</td>
+<td style="text-align: left;">本予約の確定から 約 31 分（初版の再試行 1、2、4、8、16 分の合計）たっても予約サガが完了しなければ、有人確認要にして有人案件の起票を依頼する。後続（追跡の開始）の再試行はイベントの再配信（RTY-01）が担い、予約サガは別の再試行を持たない（ADR-015。初版は「予約サガの再試行はサガが担う」で、2026-10-08 に改訂）</td>
 <td style="text-align: left;">提案</td>
 </tr>
 <tr>
@@ -9146,10 +9216,10 @@
 </tr>
 <tr>
 <td style="text-align: left;">OBS-04</td>
-<td style="text-align: left;">予約サガの有人確認要（RTY-02 の上限に達した）</td>
+<td style="text-align: left;">予約サガの有人確認要（RTY-02 の滞留の上限に達した）</td>
 <td style="text-align: left;">1 件以上</td>
 <td style="text-align: left;">—</td>
-<td style="text-align: left;">提案（正常な再試行の間は鳴らさない）</td>
+<td style="text-align: left;">提案（処理中の間は鳴らさない。原因の手がかりは追跡の側のイベントの発行の記録の未完了の件数。ADR-015）</td>
 </tr>
 <tr>
 <td style="text-align: left;">OBS-05</td>

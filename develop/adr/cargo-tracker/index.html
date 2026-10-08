@@ -5314,6 +5314,76 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="015-booking-saga-starts-tracking-by-event/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-015 予約サガと追跡の開始
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--stable"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="016-booking-checks-quotation-at-commit-time/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-016 予約から見積りの確定可否
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--stable"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -7862,7 +7932,7 @@
 <tr>
 <td style="text-align: left;"><a href="003-inter-context-integration/">ADR-003</a></td>
 <td style="text-align: left;">コンテキスト間は冪等コマンド・永続化したドメインイベント・オーケストレーション型のサガで連携する</td>
-<td style="text-align: left;">承認済み</td>
+<td style="text-align: left;">承認済み（決定 3 は ADR-015 で改訂）</td>
 </tr>
 <tr>
 <td style="text-align: left;"><a href="004-external-data-ingestion/">ADR-004</a></td>
@@ -7918,6 +7988,16 @@
 <td style="text-align: left;"><a href="014-downstream-to-upstream-notification/">ADR-014</a></td>
 <td style="text-align: left;">下流から上流への通知は、下流の listener が上流の公開 API を呼んで行う</td>
 <td style="text-align: left;">承認済み</td>
+</tr>
+<tr>
+<td style="text-align: left;"><a href="015-booking-saga-starts-tracking-by-event/">ADR-015</a></td>
+<td style="text-align: left;">予約サガは状態を予約に持ち、追跡の開始は追跡が DE-07 を購読して行う（ADR-003 を改訂）</td>
+<td style="text-align: left;">承認済み（文面は Bolt 23 の終了報告で確かめる）</td>
+</tr>
+<tr>
+<td style="text-align: left;"><a href="016-booking-checks-quotation-at-commit-time/">ADR-016</a></td>
+<td style="text-align: left;">予約は commit 時刻を渡して見積りの公開 API で確定に使えるかを確かめる</td>
+<td style="text-align: left;">承認済み（文面は Bolt 23 の終了報告で確かめる）</td>
 </tr>
 </tbody>
 </table>

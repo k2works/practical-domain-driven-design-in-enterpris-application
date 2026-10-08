@@ -5443,6 +5443,76 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../015-booking-saga-starts-tracking-by-event/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-015 予約サガと追跡の開始
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--stable"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../016-booking-checks-quotation-at-commit-time/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-016 予約から見積りの確定可否
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--stable"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -7970,7 +8040,7 @@
 <p>コンテキストをまたぐ処理を、分散トランザクションなしに安全に再実行できる形にする。</p>
 <p>日付: 2026-10-01</p>
 <h2 id="_1">ステータス<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h2>
-<p>承認済み</p>
+<p>承認済み（決定 3 と補足の決定「再試行の担い手」は 2026-10-08 に ADR-015 で改訂）</p>
 <h2 id="_2">コンテキスト<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h2>
 <ul>
 <li>ARCH-HO-01: Unit 間の変更コマンドは command ID、対象 ID、期待版を持つ。同じ command の再実行は同じ結果を返し、期待版の不一致は上書きせず競合とする。</li>
@@ -7985,7 +8055,7 @@
 <ol>
 <li><strong>冪等コマンドと期待版</strong>: 変更コマンドに <code>commandId</code> と <code>expectedVersion</code> を持たせる。各コンテキストは処理済みコマンドを記録し、同じ <code>commandId</code> には同じ結果を返す。集約の版を楽観ロックに使う。</li>
 <li><strong>永続化したドメインイベント</strong>: 第 3 章と同じくアプリケーションイベントとして発行する。購読は Spring Modulith の <code>@ApplicationModuleListener</code>（発行元のコミット後に、非同期で、購読側の新しいトランザクションで処理する）で行う。発行したイベントと配信の完了状態を発行元と同じトランザクションで保存し、未完了の配信を起動時と定期処理でやり直す（Transactional Outbox と同じ効果）。再配信の定期処理は ShedLock で 1 インスタンスに限る。受信側は冪等に処理し、イベントが持つ発行元の集約の版より古いものは適用しない。</li>
-<li><strong>オーケストレーション型のサガ</strong>: 複数コンテキストにまたがる業務の流れ（MVP では予約サガ: 予約確定 → 追跡開始）は、状態（処理中・完了・失敗・有人確認要）を永続化したサガが中央で進める。MVP では自動補償をせず、進められないときは BR-17 の有人案件を起票する。</li>
+<li><strong>オーケストレーション型のサガ</strong>: 複数コンテキストにまたがる業務の流れ（MVP では予約サガ: 予約確定 → 追跡開始）は、状態（処理中・完了・失敗・有人確認要）を永続化したサガが中央で進める。MVP では自動補償をせず、進められないときは BR-17 の有人案件を起票する。（2026-10-08 に <a href="../015-booking-saga-starts-tracking-by-event/">ADR-015</a> で改訂: サガは状態を中央で持ち、後続の追跡の開始は追跡が DE-07 を購読して行う。予約は追跡に依存しない）</li>
 </ol>
 <p>再試行の回数・間隔・timeout の値は非機能要件（RTY-01〜03）で決める。実装方式は Spring Modulith のイベント発行記録とする（ADR-006）。</p>
 <h3 id="2026-10-01">補足の決定（2026-10-01 の分析成果物レビューで追加）<a class="headerlink" href="#2026-10-01" title="Permanent link">&para;</a></h3>
@@ -8005,7 +8075,7 @@
 </tr>
 <tr>
 <td style="text-align: left;">再試行の担い手</td>
-<td style="text-align: left;">イベントの配信の失敗はイベント発行記録の再配信が担う。予約サガの業務上の再試行は、サガがコマンドで直接呼ぶ</td>
+<td style="text-align: left;">イベントの配信の失敗はイベント発行記録の再配信が担う。予約サガの後続（追跡の開始）の再試行もイベントの再配信が担い、予約サガは処理中の滞留で有人確認要にする（2026-10-08 に ADR-015 で改訂。初版は「予約サガの業務上の再試行は、サガがコマンドで直接呼ぶ」）</td>
 <td style="text-align: left;">同じ処理を 2 つの仕組みで再試行すると、回数と監視の閾値が食い違う</td>
 </tr>
 <tr>
@@ -8111,6 +8181,7 @@
 <h2 id="_9">改訂の経緯<a class="headerlink" href="#_9" title="Permanent link">&para;</a></h2>
 <ul>
 <li>2026-10-02: ドメインイベントの表し方（D-1）を補足の決定に追加した。Bolt 2 で実装した規則（<code>DomainEventArchitectureTest</code>）を human:kakimomokuri が承認した。</li>
+<li>2026-10-08: 決定 3 と補足の決定「再試行の担い手」を ADR-015 で改訂した。予約サガが追跡の公開 API を呼ぶと、予約（上流）が追跡（下流）に依存して ADR-014 と Unit の依存の向きに反するため（W4 の開始準備の整合性検証。human:kakimomokuri が決定）。状態はサガの 1 か所に残すので、コレオグラフィ型を退けた理由は保つ。</li>
 <li>2026-10-05: DE-03 の受け取りが集約の状態を変えるため、起動のときの再配信を有効にした（Bolt 9・10 レビュー R-03、D-32。human:kakimomokuri が決定）。定期の再配信は W10。</li>
 </ul>
 <h2 id="_10">備考<a class="headerlink" href="#_10" title="Permanent link">&para;</a></h2>
