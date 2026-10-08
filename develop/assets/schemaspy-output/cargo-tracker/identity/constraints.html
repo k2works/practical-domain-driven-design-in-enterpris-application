@@ -189,14 +189,14 @@
                                         <td>((role)::text &#61; ANY ((ARRAY[&#39;SHIPPER&#39;::character varying, &#39;SALES&#39;::character varying, &#39;ROUTE_DESIGNER&#39;::character varying, &#39;TRACKING_MANAGER&#39;::character varying, &#39;DATA_STEWARD&#39;::character varying, &#39;CUSTOMER_SUPPORT&#39;::character varying, &#39;SYSTEM_ADMIN&#39;::character varying, &#39;AUDITOR&#39;::character varying])::text[]))</td>
                                     </tr>
                                     <tr>
-                                        <td><a href='tables/kpi_observation.html'>kpi_observation</a></td>
-                                        <td>ck_kpi_observation_first_presented_at</td>
-                                        <td>((first_presented_at IS NULL) OR (first_presented_at &gt;&#61; submitted_at))</td>
-                                    </tr>
-                                    <tr>
                                         <td><a href='tables/company.html'>company</a></td>
                                         <td>ck_company_kind</td>
                                         <td>((kind)::text &#61; ANY ((ARRAY[&#39;SHIPPER&#39;::character varying, &#39;CONSIGNEE&#39;::character varying, &#39;OPERATOR&#39;::character varying])::text[]))</td>
+                                    </tr>
+                                    <tr>
+                                        <td><a href='tables/kpi_observation.html'>kpi_observation</a></td>
+                                        <td>ck_kpi_observation_first_presented_at</td>
+                                        <td>((first_presented_at IS NULL) OR (first_presented_at &gt;&#61; submitted_at))</td>
                                     </tr>
                                 </tbody>
                             </table>
