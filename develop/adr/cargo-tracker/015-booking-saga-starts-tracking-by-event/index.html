@@ -8065,7 +8065,7 @@
 </tr>
 <tr>
 <td style="text-align: left;">サガの状態</td>
-<td style="text-align: left;">予約の予約サガ（状態とリポジトリは <code>domain.model.sagas</code>、進める処理は <code>application.sagas</code>。層の規則 D-5 による）が、処理中・完了・失敗・有人確認要を <code>booking_saga</code> に永続化する。本予約の確定と同じトランザクションで「処理中」を作る。画面は予約サガの状態だけを見て、処理中を完了と表示しない</td>
+<td style="text-align: left;">予約の <code>application.sagas</code> の予約サガ（状態・リポジトリ・進める処理。開発ガイドライン第 3 章。永続化の実装からの参照は層の規則 D-5 の例外）が、処理中・完了・失敗・有人確認要を <code>booking_saga</code> に永続化する。本予約の確定と同じトランザクションで「処理中」を作る。画面は予約サガの状態だけを見て、処理中を完了と表示しない</td>
 </tr>
 <tr>
 <td style="text-align: left;">追跡の開始</td>

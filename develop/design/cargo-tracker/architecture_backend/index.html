@@ -8701,7 +8701,7 @@
 </tr>
 <tr>
 <td style="text-align: left;">置き場所</td>
-<td style="text-align: left;">サガを始めるコンテキストに置く。予約サガは予約コンテキストに置く。状態とリポジトリ（送信ポート）は <code>domain.model.sagas</code>、サガを進める処理（後続の結果の受け取り、滞留の検出）は <code>application.sagas</code>（第 3 章）。合成ルートの外の <code>infrastructure</code> は <code>application</code> に依存できない（D-5）ため、リポジトリの実装が参照する状態はドメイン層に置く（Bolt 23）</td>
+<td style="text-align: left;">サガを始めるコンテキストに置く。予約サガは予約コンテキストに置く。状態・リポジトリ（送信ポート）とサガを進める処理（後続の結果の受け取り、滞留の検出）は、どれもアプリケーション層の <code>application.sagas</code> に置く（第 1 章の Business Flows → Sagas、第 3 章のパッケージ構成）。層の規則 D-5（合成ルートの外の <code>infrastructure</code> は <code>application</code> に依存しない）の例外として、永続化の実装（<code>infrastructure.persistence</code>）だけが <code>application.sagas</code> を参照してよい。<code>LayerArchitectureTest</code> の「サガはアプリケーション層の sagas に置く」と D-5 の規則で守る（Bolt 23。初めは D-5 に合わせて状態をドメイン層に置いたが、開発ガイドラインと食い違うと人に指摘され、2026-10-08 に直した）</td>
 </tr>
 <tr>
 <td style="text-align: left;">後続の起動</td>
