@@ -4102,7 +4102,7 @@
     
   
   
-    <span class="md-status md-status--draft"></span>
+    <span class="md-status md-status--stable"></span>
   
 
   
@@ -9598,7 +9598,7 @@
 <p><strong>ユーザーマニュアル</strong>: W4 の Bolt では作業を持たない。Release 0.1 の縦の流れがそろう W4 の完了の後に、<code>docs/manual</code> を作る（2026-10-08 に human:kakimomokuri が決定。<code>creating-manual</code>）</p>
 <p><strong>主なタスク</strong>:</p>
 <ul class="task-list">
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> Bolt 22: 日時表示・期間表示を <code>platform</code> の Web の部品に集める（技術タスク、SP 0。W4 の最初の Bolt）。<a href="../bolt_22_plan/">Bolt 22 計画</a>（承認済み）、<a href="../bolt_22_report/">Bolt 22 終了報告</a>（終了報告の承認待ち。DE-03 と DE-16 の listener の競合を既知の課題として記録）、<a href="https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/41">#41</a></li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Bolt 22: 日時表示・期間表示を <code>platform</code> の Web の部品に集める（技術タスク、SP 0。W4 の最初の Bolt）。<a href="../bolt_22_plan/">Bolt 22 計画</a>（承認済み）、<a href="../bolt_22_report/">Bolt 22 終了報告</a>（完了、2026-10-08 に承認済み。#41 をクローズした。割り込みで見積りの listener の楽観ロックの競合を直した（#42））、<a href="https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/41">#41</a></li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> Bolt 23・24: US-04（AC1、AC2、AC4、B-INV-03、B-INV-11）と予約サガの骨格、2 つの ADR</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> Bolt 25: 追跡の開始とサガの成功の経路</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> Bolt 26・27: US-12（AC1、AC2）、US-09（AC1）</li>
@@ -10148,7 +10148,7 @@
 <td style="text-align: right;">11</td>
 <td style="text-align: right;">-</td>
 <td style="text-align: right;">-</td>
-<td style="text-align: left;">計画済み（Bolt 22〜28。最初の Bolt は日時表示・期間表示の集約。SP 0）</td>
+<td style="text-align: left;">進行中（Bolt 22 を終えた。SP 0。#41・#42 をクローズした）</td>
 </tr>
 <tr>
 <td style="text-align: left;">W5</td>
@@ -10535,6 +10535,11 @@
 <td style="text-align: left;">2026-10-08</td>
 <td style="text-align: left;">W4 の開始準備: W4 の開始時のベロシティと承認ゲートの密度の見直しを書いた。整合性検証（計画と設計、横断）の指摘で、予約サガの依存の向き・R-19 の 2 つの設計の決定を記録し、追跡の開始を独立させて Bolt 22〜28 に引き直し、承認ゲートをリスク台帳に合わせた。マニュアルは W4 の完了の後に作る</td>
 <td style="text-align: left;">anthropic/claude-opus-5-5、決定 human:kakimomokuri</td>
+</tr>
+<tr>
+<td style="text-align: left;">2026-10-08</td>
+<td style="text-align: left;">Bolt 22 終了報告の承認（議題 1〜9）を記録し、Bolt 22 を終えた。#41 をクローズした。割り込み（見積りの listener の楽観ロックの競合、#42）を Bolt 22 の中で直した</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5、承認 human:kakimomokuri</td>
 </tr>
 </tbody>
 </table>
