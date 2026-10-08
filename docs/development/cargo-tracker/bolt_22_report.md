@@ -1,10 +1,10 @@
 ---
 type: Report
 title: "Bolt 22 終了報告 - 日時表示・期間表示を platform の Web の部品に集める（#41）"
-description: "22 回目の Bolt の終了報告。見積り・経路設計・アクセス監査の日時表示・期間表示の写しを、画面の文字列を変えずに platform :: web の部品に集め、写しの再発を ArchUnit で止めた。開発レビューの対応、品質ゲート、計画からの変更、既知の課題（DE-03 と DE-16 の listener の競合）と承認の議題を記録する。"
+description: "22 回目の Bolt の終了報告。見積り・経路設計・アクセス監査の日時表示・期間表示の写しを、画面の文字列を変えずに platform :: web の部品に集め、写しの再発を ArchUnit で止めた。開発レビューの対応、品質ゲート、計画からの変更、既知の課題（DE-03 と DE-16 の listener の競合）と承認の議題、割り込み（DE-03 と DE-16 の listener の競合の修正）を記録する。"
 tags: [development,bolt-report]
 status: draft
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-08T06:24:11Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-08T06:50:20Z }
 ---
 
 # Bolt 22 終了報告 - 日時表示・期間表示を platform の Web の部品に集める（#41）
@@ -21,7 +21,7 @@ W4 の計画どおり `/goal` で、計画の承認から終了報告の前ま�
 | 4 | **構造の変更**: `routing`・`identity` の `allowedDependencies` に `platform :: web` を足し、`quotation` に `allowedDependencies = {"shared", "platform :: web"}` を新しく宣言した | `quotation` は宣言がなく、どのモジュールの公開部分にも暗黙に依存できた（開発レビュー A-2）。上流なので、ADR-014 の「上流は下流に依存しない」を宣言でも固定した。ModularityTest は通る | 各 `package-info.java` |
 | 5 | **ADR を書かず、ADR-001 のコンプライアンスに例外を 1 行足した**（確認ポイント 2 は「書かない」。開発レビュー A-1） | ADR-001 は「モジュール間の依存は公開 API とイベントだけ」と書いており、`platform :: web` はどちらでもない。新しい ADR にするほどの決定ではないが、W4 以降のすべてのモジュールが宣言する依存先なので、ADR-001 に記録した | [ADR-001](../../adr/cargo-tracker/001-modular-monolith.md) のコンプライアンスと改訂の経緯 |
 | 6 | 開発レビューの対応の範囲（下の「開発レビュー」）。直したもの 10 件、後に回したもの 3 件 | 写しの再発を止める規則の穴（`ZoneId.systemDefault` など）と、特性テストの境界の不足は、この Bolt の目的そのものなので直した。振る舞いを変えるもの（負の期間の扱い）と、まだ使わない拡張（`ZoneId` を受けるオーバーロード）は後に回した | 開発レビュー |
-| 7 | **既知の課題（この Bolt の変更とは関係ない）**: 見積りの DE-03 と DE-16 の listener が同じ輸送要求を並行して更新し、DE-16 の側が楽観ロックの競合で失敗することがある。失敗した発行は起動し直すまで再配信されない | SonarQube の走査で `RouteDesignRequestedRoutingIntegrationTest` が 1 回失敗し、ログから原因を特定した（下の「既知の課題」）。Bolt 12 からある競合で、この Bolt の範囲外。別のタスクとして提案した | 既知の課題 |
+| 7 | **既知の課題（この Bolt の変更とは関係ない）**: 見積りの DE-03 と DE-16 の listener が同じ輸送要求を並行して更新し、DE-16 の側が楽観ロックの競合で失敗することがある。失敗した発行は起動し直すまで再配信されない | SonarQube の走査で `RouteDesignRequestedRoutingIntegrationTest` が 1 回失敗し、ログから原因を特定した（下の「既知の課題」）。Bolt 12 からある競合。この Bolt の割り込みとして、競合したら listener の中で読み直してやり直す（上限 3 回。案 (a)）形で直し、同じ形の DE-21 と DE-04 にも同じ部品をかけた（2026-10-08、human:kakimomokuri が承認） | [計画の割り込みの節](bolt_22_plan.md)、`TransportRequestProgression` |
 | 8 | ステップ 1 の特性テスト（`ba3cf57`。部品がないのでコンパイルで失敗）とステップ 2（`780d6a5`。写しを禁じる規則が Red）を Red のまま push したので、CI の `check` が 2 回赤になった（`deploy-demo` は走らず、デモ環境は変わっていない）。次の push（`ad20122`）で緑に戻した | ローカルでは、それぞれの失敗は想定した Red だけだった。CI のログの末尾からは原因を確かめられていない。Try T-65 | CI の実行 37734340317 ほか |
 | 9 | #41 をクローズする | 完了条件をすべて満たした | [#41](https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/41) |
 
@@ -108,7 +108,9 @@ W4 の計画どおり `/goal` で、計画の承認から終了報告の前ま�
 
 ### 既知の課題（後の Bolt に持ち込む）
 
-- **DE-03 と DE-16 の listener の競合**: `QuotationPresentedEventHandler`（見積提示済みにする）と `RouteDesignRequestedEventHandler`（経路設計中にする）は、どちらもコミット後に非同期・新しいトランザクションで同じ輸送要求を更新する。提示の直後に詳細経路設計を依頼すると、DE-16 の側が `ConcurrentTransportRequestUpdateException` で失敗し、発行の記録は未完了のまま残る。いまは起動し直したときだけ再配信される（定期の再配信は W10。ADR-014）。SonarQube のコンテナで CPU が混んだ走査の中で、`RouteDesignRequestedRoutingIntegrationTest` が 1 回失敗して分かった。Bolt 12 からある競合で、この Bolt の変更とは関係ない。直し方（競合したときの読み直しと再試行、受理の条件の見直し、定期の再配信の前倒し）を決めるタスクを提案した。US-04 の DE-07 の listener（Bolt 23）も同じ輸送要求を更新するので、Bolt 23 の計画の確認ポイントにする
+- **DE-03 と DE-16 の listener の競合（割り込みで対応済み）**: `QuotationPresentedEventHandler`（見積提示済みにする）と `RouteDesignRequestedEventHandler`（経路設計中にする）は、どちらもコミット後に非同期・新しいトランザクションで同じ輸送要求を更新し、後の側が `ConcurrentTransportRequestUpdateException` で失敗して発行の記録が未完了に残っていた。SonarQube のコンテナで CPU が混んだ走査の中で、`RouteDesignRequestedRoutingIntegrationTest` が 1 回失敗して分かった。届き順は原因ではなく（`markRoutingRequested` は見積り作成中からも受け付ける）、同じ版を読んだ 2 つの更新が原因だった。割り込みで、`eventhandlers` の共通の部品 `TransportRequestProgression` が競合したら同じトランザクションで読み直してやり直す（上限 3 回、超えたら例外で再配信に任せる）ようにし、輸送要求を進める 4 つの listener（DE-03・DE-16・DE-21・DE-04）にかけた。再現テストは単体 5 件と PostgreSQL の統合 1 件。US-04 の DE-07 の listener（Bolt 23）も同じ輸送要求を更新するので、同じ部品を使うことを Bolt 23 の計画の確認ポイントにする
+- **DE-05 の割り当ての競合（未対応）**: `QuotationRouteAssignmentEventHandler` が呼ぶ `RouteAssignmentService` は、見積りの楽観ロックの競合を再配信に任せている。競り合う更新は営業担当者の再見積りくらいでまれ。起動し直すまで再配信されない（定期の再配信は W10。ADR-014）
+- **KPI 計測の listener の届き順への依存（未対応）**: `KpiObservationEventHandler` は DE-01 の記録より先に DE-03 が届くと例外にする。提出から提示まで人の審査と見積りが入るため実際には起きにくい。上と同じく、起動し直すまで再配信されない
 - W4 の予約・追跡のモジュール（Bolt 23・25）は、`package-info` で最初から `allowedDependencies` に `"shared"`・`"platform :: web"` と上流の `api`・`events` を明示する。荷主の画面（C-10 など）は `DateTimeDisplay.customer`、社内の画面（S-09・S-13・S-24）は `staff` を使い、新しい期間の形は ui_design.md の 3 つの形のどれかに当てはめる（開発レビュー A-3 の影響の欄）
 
 ### ふりかえり（KPT）
@@ -126,13 +128,14 @@ W4 の計画どおり `/goal` で、計画の承認から終了報告の前ま�
 
 ## 次の Bolt
 
-Bolt 23: US-04 AC1 確定・AC2 失効（#10）。W4 の計画のとおり、最初のステップで 2 つの ADR（予約サガと追跡の開始の依存の向き、予約から見積りの確定可否の問い合わせ）を書き、architecture_backend.md の予約サガの図を直す。インサイドアウトで、確定は Red・Green ごと、スキーマはステップごとに止める。上の既知の課題（listener の競合）を確認ポイントにする。
+Bolt 23: US-04 AC1 確定・AC2 失効（#10）。W4 の計画のとおり、最初のステップで 2 つの ADR（予約サガと追跡の開始の依存の向き、予約から見積りの確定可否の問い合わせ）を書き、architecture_backend.md の予約サガの図を直す。インサイドアウトで、確定は Red・Green ごと、スキーマはステップごとに止める。上の既知の課題（DE-07 の listener に `TransportRequestProgression` を使う）を確認ポイントにする。
 
 ## 更新履歴
 
 | 日付 | 更新内容 | 更新者 |
 | :--- | :--- | :--- |
 | 2026-10-08 | 初版（ステップ 1〜5 の結果、開発レビュー、品質ゲート、既知の課題、承認の議題 1〜9、Try T-64・T-65） | anthropic/claude-opus-5-5 |
+| 2026-10-08 | 割り込み（DE-03 と DE-16 の listener の競合）の対応を議題 7 と既知の課題に書き、DE-05 の割り当てと KPI 計測の listener を既知の課題に足した | anthropic/claude-opus-5-5 |
 
 ## 関連ドキュメント
 
