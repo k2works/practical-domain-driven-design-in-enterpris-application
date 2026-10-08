@@ -1,5 +1,7 @@
 package com.example.cargotracker.architecture;
 
+import static com.tngtech.archunit.base.DescribedPredicate.not;
+import static com.tngtech.archunit.core.domain.JavaClass.Predicates.resideInAPackage;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 import static com.tngtech.archunit.library.Architectures.layeredArchitecture;
@@ -10,6 +12,8 @@ import com.tngtech.archunit.core.importer.ImportOption;
 import com.tngtech.archunit.junit.AnalyzeClasses;
 import com.tngtech.archunit.junit.ArchTest;
 import com.tngtech.archunit.lang.ArchRule;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.stereotype.Controller;
@@ -125,14 +129,41 @@ class LayerArchitectureTest {
                     "org.mybatis..",
                     "jakarta.servlet..");
 
-    /** platform の部品は設定を通してだけ使う。コンテキストのコードから参照しない（バックエンドアーキテクチャ）。 */
+    /**
+     * platform の部品は設定を通してだけ使う。コンテキストのコードから参照しない（バックエンドアーキテクチャ）。
+     * 例外は画面の表示の部品（platform.web）で、次の規則のとおり画面の層からだけ参照できる（Bolt 22）。
+     */
     @ArchTest
     static final ArchRule platformはほかから参照されない = noClasses()
             .that()
             .resideOutsideOfPackage("..platform..")
             .should()
+            .dependOnClassesThat(resideInAPackage("..platform..").and(not(resideInAPackage("..platform.web.."))));
+
+    /** 画面の表示の部品（platform.web）は、コンテキストの画面の層（interfaces.web）からだけ参照する（Bolt 22、#41）。 */
+    @ArchTest
+    static final ArchRule platformの表示の部品は画面の層からだけ参照される = noClasses()
+            .that()
+            .resideOutsideOfPackages("..platform..", "..interfaces.web..")
+            .should()
             .dependOnClassesThat()
-            .resideInAPackage("..platform..");
+            .resideInAPackage("..platform.web..");
+
+    /**
+     * 日時表示・期間表示は platform.web の部品を使い、画面の層に写しを作らない（Bolt 22、#41。Bolt 21 の Try T-63）。
+     * 書式（DateTimeFormatter）を持ってよいのは、入力を解釈するフォームの変換だけ。タイムゾーンは部品の {@code ZONE} を使う。
+     */
+    @ArchTest
+    static final ArchRule 画面の層は日時表示の写しを持たない = noClasses()
+            .that()
+            .resideInAPackage("..interfaces.web..")
+            .and()
+            .haveSimpleNameNotEndingWith("FormConverter")
+            .should()
+            .dependOnClassesThat()
+            .areAssignableTo(DateTimeFormatter.class)
+            .orShould()
+            .callMethod(ZoneId.class, "of", String.class);
 
     /** platform は技術の部品だけを置き、コンテキストの型に依存しない。 */
     @ArchTest
