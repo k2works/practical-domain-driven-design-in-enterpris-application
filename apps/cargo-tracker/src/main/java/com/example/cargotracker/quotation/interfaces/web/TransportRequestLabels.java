@@ -1,14 +1,12 @@
 package com.example.cargotracker.quotation.interfaces.web;
 
 import com.example.cargotracker.platform.web.DateTimeDisplay;
-import com.example.cargotracker.platform.web.DurationDisplay;
 import com.example.cargotracker.quotation.domain.model.valueobjects.CargoCategory;
 import com.example.cargotracker.quotation.domain.model.valueobjects.PackageType;
 import com.example.cargotracker.quotation.domain.model.valueobjects.ReviewDecision;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestNumber;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestStatus;
 import com.example.cargotracker.shared.domain.UtcInstant;
-import java.time.Duration;
 import java.util.List;
 
 /**
@@ -91,11 +89,6 @@ final class TransportRequestLabels {
             case APPROVED -> "充足（審査を確定）";
             case SENT_BACK -> "差戻し";
         };
-    }
-
-    /** 待っている時間（例: 3 時間 20 分、2 日 4 時間）。受付一覧で、待たせている長さを示す（platform の部品。Bolt 22）。 */
-    static String elapsed(Duration duration) {
-        return DurationDisplay.waiting(duration);
     }
 
     static String cargoCategory(CargoCategory category) {

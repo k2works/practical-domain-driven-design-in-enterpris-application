@@ -1,7 +1,11 @@
 package com.example.cargotracker.architecture;
 
 import static com.tngtech.archunit.base.DescribedPredicate.not;
+import static com.tngtech.archunit.core.domain.JavaCall.Predicates.target;
+import static com.tngtech.archunit.core.domain.JavaClass.Predicates.assignableTo;
 import static com.tngtech.archunit.core.domain.JavaClass.Predicates.resideInAPackage;
+import static com.tngtech.archunit.core.domain.properties.HasName.Predicates.nameMatching;
+import static com.tngtech.archunit.core.domain.properties.HasOwner.Predicates.With.owner;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 import static com.tngtech.archunit.library.Architectures.layeredArchitecture;
@@ -150,8 +154,11 @@ class LayerArchitectureTest {
             .resideInAPackage("..platform.web..");
 
     /**
-     * 日時表示・期間表示は platform.web の部品を使い、画面の層に写しを作らない（Bolt 22、#41。Bolt 21 の Try T-63）。
-     * 書式（DateTimeFormatter）を持ってよいのは、入力を解釈するフォームの変換だけ。タイムゾーンは部品の {@code ZONE} を使う。
+     * 日時表示は platform.web の部品を使い、画面の層に写しを作らない（Bolt 22、#41。Bolt 21 の Try T-63）。この規則が守らせるのは
+     * 日時の書式とタイムゾーンで、期間の写し（「時間」「分」の文言の組み立て）は開発レビューで見る。
+     * 書式（DateTimeFormatter）を持ってよいのは、入力を解釈するフォームの変換（名前が FormConverter で終わる）だけ。
+     * タイムゾーンは部品の {@code ZONE} を使い、{@code ZoneId.of}・{@code ZoneId.systemDefault}・{@code ZoneOffset.of*} を
+     * 画面の層で呼ばない（サーバーのタイムゾーンに依存する事故を防ぐ。Bolt 22 レビュー）。
      */
     @ArchTest
     static final ArchRule 画面の層は日時表示の写しを持たない = noClasses()
@@ -163,7 +170,7 @@ class LayerArchitectureTest {
             .dependOnClassesThat()
             .areAssignableTo(DateTimeFormatter.class)
             .orShould()
-            .callMethod(ZoneId.class, "of", String.class);
+            .callMethodWhere(target(owner(assignableTo(ZoneId.class))).and(target(nameMatching("of.*|systemDefault"))));
 
     /** platform は技術の部品だけを置き、コンテキストの型に依存しない。 */
     @ArchTest

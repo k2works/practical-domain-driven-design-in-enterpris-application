@@ -4,7 +4,7 @@ title: "ADR-001: モジュラーモノリスを採用する"
 description: "cargo-tracker のバックエンドを、境界づけられたコンテキストごとのモジュールを持つ 1 つのデプロイ単位として構築する決定。"
 tags: [adr, architecture]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-01T23:28:04Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-08T06:23:54Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T07:11:13Z }
   - { by: human:kakimomokuri, at: 2026-10-01T07:48:16Z }
@@ -68,9 +68,11 @@ verified:
 - アーキテクチャテストで、モジュール間の依存が公開 API とイベントだけであることを検査する。
 - 各モジュールのマッパーの SQL が自スキーマ以外の表を参照していないことを、CI のテストで検査する。
 - モジュールの中の層の依存（AT-02）は、`infrastructure.config`（合成ルート）だけを例外とする（2026-10-02 に human:kakimomokuri が承認した D-5。[バックエンドアーキテクチャ](../../design/cargo-tracker/architecture_backend.md) のパッケージ構成を参照）。
+- 公開 API とイベントのほかに依存してよいのは、技術の表示の部品 `platform :: web`（日時表示・期間表示）だけとする。コンテキストの画面の層（`interfaces.web`）からだけ参照でき、業務の型と規則は置かない（Bolt 22、#41。開発レビュー D-84）。
 
 ## 改訂の経緯
 
+- 2026-10-08: コンプライアンスに `platform :: web` の例外を足した。日時表示・期間表示の写しが 3 つのモジュールにでき、共有カーネルを表示の関心で変えずに 1 か所に集めるため（Bolt 22 の開発レビュー）。
 - 2026-10-01: 初版は「モジュールごとに DB 利用者を分け、他スキーマへの権限を与えない」としていた。データモデル設計で、Spring Boot で 6 つの DB 利用者を使うにはモジュールごとに接続プールと MyBatis の設定を分ける必要があり MVP には重いことが分かった。human:kakimomokuri の判断により、DB 利用者は 1 つにし、スキーマ境界は SQL の静的検査で守る方式に改めた。追記専用の表（監査記録・受信記録・版の表）から UPDATE・DELETE の権限を外す保護は、DB 利用者が 1 つでも表単位で行えるため維持する（[データモデル](../../design/cargo-tracker/data_model.md)）。
 
 ## 備考
