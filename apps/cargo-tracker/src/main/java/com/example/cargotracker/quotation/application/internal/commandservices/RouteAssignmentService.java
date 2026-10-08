@@ -45,7 +45,14 @@ public class RouteAssignmentService implements RouteAssignment {
             return new RouteAssignmentReceipt.NotAssigned(RouteAssignmentReceipt.NotAssigned.QUOTATION_NOT_FOUND);
         }
         Quotation quotation = found.get();
-        RouteAssignmentResult result = quotation.assignRoute(toAssignedRoute(request), new UtcInstant(clock.instant()));
+        AssignedRoute route;
+        try {
+            route = toAssignedRoute(request);
+        } catch (IllegalArgumentException _) {
+            // 不正な依頼は再配信しても変わらないため、例外にして listener を戻さず、理由で返す（Bolt 20 レビュー）
+            return new RouteAssignmentReceipt.NotAssigned(RouteAssignmentReceipt.NotAssigned.INVALID_REQUEST);
+        }
+        RouteAssignmentResult result = quotation.assignRoute(route, new UtcInstant(clock.instant()));
         return switch (result) {
             case ASSIGNED -> {
                 // 競合（ConcurrentQuotationUpdateException）は listener のトランザクションごと戻し、DE-05 の再配信でやり直す
@@ -55,8 +62,13 @@ public class RouteAssignmentService implements RouteAssignment {
                 yield new RouteAssignmentReceipt.Assigned();
             }
             case ALREADY_ASSIGNED -> new RouteAssignmentReceipt.AlreadyAssigned();
-            case ANOTHER_ROUTE_VERSION_ASSIGNED, NOT_ROUTING_REQUESTED, RETIRED ->
-                new RouteAssignmentReceipt.NotAssigned(result.name());
+            // 公開 API の理由は、ドメインの値の名前ではなく公開 API の定数で返す（Bolt 20 レビュー）
+            case ANOTHER_ROUTE_VERSION_ASSIGNED ->
+                new RouteAssignmentReceipt.NotAssigned(
+                        RouteAssignmentReceipt.NotAssigned.ANOTHER_ROUTE_VERSION_ASSIGNED);
+            case NOT_ROUTING_REQUESTED ->
+                new RouteAssignmentReceipt.NotAssigned(RouteAssignmentReceipt.NotAssigned.NOT_ROUTING_REQUESTED);
+            case RETIRED -> new RouteAssignmentReceipt.NotAssigned(RouteAssignmentReceipt.NotAssigned.RETIRED);
         };
     }
 

@@ -20,6 +20,7 @@
     <div th:replace="~{quotation/fragments/quotation :: details(${quotation})}"></div>
     <div th:replace="~{quotation/fragments/assigned-route :: route(${quotation.route()}, 2)}"></div>
     <h2>この見積りと経路で承認しますか</h2>
+    <p th:text="|有効期限（${quotation.expiresAt()}）までに承認してください。|">有効期限（2026-10-08 18:00 Asia/Tokyo（UTC+09:00））までに承認してください。</p>
     <p>承認は本予約の確定ではありません。承認の後、担当営業が本予約を確定します。</p>
     <form th:action="@{/customer/transport-requests/{number}/quotations/{no}/approval(number=${number},no=${quotation.quotationNo()})}"
           method="post">

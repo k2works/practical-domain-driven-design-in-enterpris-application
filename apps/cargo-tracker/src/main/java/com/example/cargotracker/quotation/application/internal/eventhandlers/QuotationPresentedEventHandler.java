@@ -42,7 +42,7 @@ public class QuotationPresentedEventHandler {
         TransportRequest request = found.get();
         if (request.markQuotationPresented(event.transportRequestVersionNo())) {
             repository.update(request);
-        } else if (!isAlreadyQuotedForVersion(request, event)) {
+        } else if (!request.hasReached(TransportRequestStatus.QUOTED, event.transportRequestVersionNo())) {
             LOG.warn(
                     "DE-03 で輸送要求を見積提示済みにしなかった: 輸送要求 {}、見積り {} の版 {}、現在の版 {}、状態 {}",
                     event.transportRequestId(),
@@ -51,14 +51,5 @@ public class QuotationPresentedEventHandler {
                     request.currentVersion().versionNo(),
                     request.status());
         }
-    }
-
-    /**
-     * 同じ版で見積提示済み（DE-03 の再配信か、再見積りの後の新しい見積りの提示。Bolt 11 レビュー R-25）か、同じ版で経路設計中
-     * （DE-16 が先に届いた後の DE-03。Bolt 12 レビュー R-04）。どれも変えなくてよい。
-     */
-    private static boolean isAlreadyQuotedForVersion(TransportRequest request, QuotationPresented event) {
-        return (request.status() == TransportRequestStatus.QUOTED || request.status() == TransportRequestStatus.ROUTING)
-                && request.currentVersion().versionNo() == event.transportRequestVersionNo();
     }
 }

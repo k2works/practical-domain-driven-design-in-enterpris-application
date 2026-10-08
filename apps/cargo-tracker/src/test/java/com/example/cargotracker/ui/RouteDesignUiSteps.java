@@ -96,7 +96,8 @@ public class RouteDesignUiSteps {
     /** 経路設計中の表は DE-16 を受けた輸送要求の状態の更新（非同期）を待つため、行が出るまで開き直す。 */
     @もし("営業担当者が受付一覧の経路設計中から提出した見積依頼の見積り {int} を開く")
     public void 経路設計中から開く(int quotationNo) {
-        Locator row = page().getByRole(AriaRole.REGION, new Page.GetByRoleOptions().setName("経路設計中の見積依頼（依頼時刻の古い順）"))
+        Locator row = page().getByRole(
+                        AriaRole.REGION, new Page.GetByRoleOptions().setName("経路設計中・荷主承認待ち・予約待ちの見積依頼（依頼時刻の古い順）"))
                 .getByRole(AriaRole.LINK, new Locator.GetByRoleOptions().setName(number() + " 見積 " + quotationNo));
         for (int i = 0; i < 20; i++) {
             browser.navigate(baseUrl + "/staff/transport-requests");

@@ -172,6 +172,7 @@ nav:
           - Bolt 16 運用成果物レビュー（2026-10-07）: review/cargo-tracker/bolt_16_review_20261007.md
           - Bolt 17 開発成果物レビュー（2026-10-07）: review/cargo-tracker/bolt_17_review_20261007.md
           - Bolt 19 開発成果物レビュー（2026-10-07）: review/cargo-tracker/bolt_19_review_20261007.md
+          - Bolt 20 開発成果物レビュー（2026-10-08）: review/cargo-tracker/bolt_20_review_20261008.md
   - ADR:
       - 概要: adr/index.md
       - cargo-tracker:

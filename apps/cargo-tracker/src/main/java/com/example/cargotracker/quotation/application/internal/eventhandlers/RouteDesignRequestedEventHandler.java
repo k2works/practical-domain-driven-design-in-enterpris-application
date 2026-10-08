@@ -41,7 +41,7 @@ public class RouteDesignRequestedEventHandler {
         TransportRequest request = found.get();
         if (request.markRoutingRequested(event.transportRequestVersionNo())) {
             repository.update(request);
-        } else if (!isAlreadyRoutingForVersion(request, event)) {
+        } else if (!request.hasReached(TransportRequestStatus.ROUTING, event.transportRequestVersionNo())) {
             LOG.warn(
                     "DE-16 で輸送要求を経路設計中にしなかった: 輸送要求 {}、見積り {} の版 {}、現在の版 {}、状態 {}",
                     event.transportRequestId(),
@@ -50,11 +50,5 @@ public class RouteDesignRequestedEventHandler {
                     request.currentVersion().versionNo(),
                     request.status());
         }
-    }
-
-    /** 同じ版で経路設計中（DE-16 の再配信。変えなくてよい）。 */
-    private static boolean isAlreadyRoutingForVersion(TransportRequest request, RouteDesignRequested event) {
-        return request.status() == TransportRequestStatus.ROUTING
-                && request.currentVersion().versionNo() == event.transportRequestVersionNo();
     }
 }

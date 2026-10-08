@@ -13,10 +13,5 @@ public enum RouteAssignmentResult {
     /** 見積りが詳細設計依頼済みでない（作成中・承認待ち・提示済み）。 */
     NOT_ROUTING_REQUESTED,
     /** 見積りが置換済み・失効（記録）。 */
-    RETIRED;
-
-    /** 割り当てた状態にあるか（割り当てたか、すでに同じ経路版を割り当てていた）。 */
-    public boolean isAssigned() {
-        return this == ASSIGNED || this == ALREADY_ASSIGNED;
-    }
+    RETIRED
 }

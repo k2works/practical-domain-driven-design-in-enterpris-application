@@ -39,6 +39,10 @@ final class QuotationViews {
     /** 表示する時刻で失効していれば「失効」、そうでなければ保存されている状態の表示名（社内の受付一覧 S-02 で使う）。 */
     static String effectiveStatus(QuotationStatus status, UtcInstant expiresAt, UtcInstant now) {
         boolean expired = status.expiresByTime() && !new QuotationExpiry(expiresAt).isValidAt(now);
+        if (expired && status == QuotationStatus.APPROVED) {
+            // 荷主が承認した事実を消さない（Bolt 20 レビュー）
+            return status(QuotationStatus.EXPIRED) + "（荷主承認済み）";
+        }
         return status(expired ? QuotationStatus.EXPIRED : status);
     }
 
@@ -170,7 +174,7 @@ final class QuotationViews {
      * @param replaced 置換済みか（荷主には新しい見積りを準備中と案内する。D-37）
      * @param expired 表示する時刻で失効しているか（失効を記録したものを含む）
      * @param respondable 荷主が回答できるか（提示済みで、失効していない。Bolt 12）
-     * @param routingRequested 荷主が詳細経路設計を依頼した後か（詳細設計依頼済み・荷主承認待ち・承認済み。Bolt 12・20）
+     * @param routingStarted 荷主が詳細経路設計を依頼した後か（詳細設計依頼済み・荷主承認待ち・承認済み。Bolt 12・20）
      * @param routingInProgress 詳細設計依頼済み（経路設計の途中）か（Bolt 20）
      * @param respondedAt 回答時刻（荷主が回答していなければ null）
      * @param route 割り当てた経路（割り当てていなければ null。Bolt 20）
@@ -194,7 +198,7 @@ final class QuotationViews {
             boolean replaced,
             boolean expired,
             boolean respondable,
-            boolean routingRequested,
+            boolean routingStarted,
             boolean routingInProgress,
             String respondedAt,
             RouteView route,

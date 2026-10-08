@@ -118,7 +118,8 @@ public class QuotationApprovalController {
                 switch (reason) {
                     case EXPIRED -> subject + " は有効期限を過ぎたため承認できません。新しい見積りは担当営業にご依頼ください";
                     case REPLACED -> subject + " は新しい見積りに置き換えられたため承認できません。見積依頼の詳細で最新の状況をご確認ください";
-                    default -> subject + " はまだ承認できる見積りではありません。経路が確定したら承認できます";
+                    case NOT_AWAITING_SHIPPER_APPROVAL -> subject + " はまだ承認できる見積りではありません。経路が確定したら承認できます";
+                    default -> subject + " は承認できません。担当営業にご連絡ください";
                 };
         return redirectToDetail(number, PROBLEM, message, redirectAttributes);
     }

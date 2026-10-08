@@ -222,7 +222,8 @@ public final class TransportRequest {
      * 見積りのイベントの再配信や、遅れて届いたイベントを、状態を変えずに受け流してよいかの判定に使う。
      */
     public boolean hasReached(TransportRequestStatus target, int versionNo) {
-        return false;
+        return versionNo == currentVersion.versionNo()
+                && QUOTATION_PROGRESSION.indexOf(status) >= QUOTATION_PROGRESSION.indexOf(target);
     }
 
     /**

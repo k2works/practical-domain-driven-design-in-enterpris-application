@@ -101,13 +101,13 @@
     </table>
     </div>
     <!-- 経路設計中（Bolt 12、US-24 AC1）。荷主が詳細経路設計を依頼した見積りを依頼時刻の古い順に示し、見積り（S-04）を開ける。
-         経路設計者の案件一覧（S-05）は US-06 -->
-    <h2>経路設計中</h2>
-    <p th:if="${#lists.isEmpty(routingRequests)}">経路設計中の見積依頼はありません。</p>
+         経路設計者の案件一覧（S-05）は US-06。Bolt 20 から荷主承認待ち・予約待ちも並べる（予約の確定待ちの表は US-04） -->
+    <h2>経路設計中・荷主承認待ち・予約待ち</h2>
+    <p th:if="${#lists.isEmpty(routingRequests)}">経路設計中・荷主承認待ち・予約待ちの見積依頼はありません。</p>
     <div th:unless="${#lists.isEmpty(routingRequests)}" class="table-scroll" tabindex="0" role="region"
          aria-labelledby="routing-caption">
     <table class="table">
-        <caption id="routing-caption">経路設計中の見積依頼（依頼時刻の古い順）</caption>
+        <caption id="routing-caption">経路設計中・荷主承認待ち・予約待ちの見積依頼（依頼時刻の古い順）</caption>
         <thead>
         <tr>
             <th scope="col">見積り</th>

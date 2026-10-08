@@ -41,7 +41,7 @@ public class QuotationApprovedByShipperEventHandler {
         TransportRequest request = found.get();
         if (request.markReadyToBook(event.transportRequestVersionNo())) {
             repository.update(request);
-        } else if (!isAlreadyDone(request, event)) {
+        } else if (!request.hasReached(TransportRequestStatus.READY_TO_BOOK, event.transportRequestVersionNo())) {
             LOG.warn(
                     "DE-04 で輸送要求を予約待ちにしなかった: 輸送要求 {}、見積り {} の版 {}、現在の版 {}、状態 {}",
                     event.transportRequestId(),
@@ -50,11 +50,5 @@ public class QuotationApprovedByShipperEventHandler {
                     request.currentVersion().versionNo(),
                     request.status());
         }
-    }
-
-    /** 同じ版で予約待ち（DE-04 の再配信）。変えなくてよい。 */
-    private static boolean isAlreadyDone(TransportRequest request, QuotationApprovedByShipper event) {
-        return (request.status() == TransportRequestStatus.READY_TO_BOOK)
-                && request.currentVersion().versionNo() == event.transportRequestVersionNo();
     }
 }

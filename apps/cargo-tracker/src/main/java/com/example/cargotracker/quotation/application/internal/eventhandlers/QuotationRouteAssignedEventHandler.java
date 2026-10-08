@@ -41,7 +41,7 @@ public class QuotationRouteAssignedEventHandler {
         TransportRequest request = found.get();
         if (request.markAwaitingApproval(event.transportRequestVersionNo())) {
             repository.update(request);
-        } else if (!isAlreadyDone(request, event)) {
+        } else if (!request.hasReached(TransportRequestStatus.AWAITING_APPROVAL, event.transportRequestVersionNo())) {
             LOG.warn(
                     "DE-21 で輸送要求を荷主承認待ちにしなかった: 輸送要求 {}、見積り {} の版 {}、現在の版 {}、状態 {}",
                     event.transportRequestId(),
@@ -50,12 +50,5 @@ public class QuotationRouteAssignedEventHandler {
                     request.currentVersion().versionNo(),
                     request.status());
         }
-    }
-
-    /** 同じ版で荷主承認待ちか予約待ち（DE-21 の再配信か、DE-04 が先に届いた後の DE-21）。変えなくてよい。 */
-    private static boolean isAlreadyDone(TransportRequest request, QuotationRouteAssigned event) {
-        return (request.status() == TransportRequestStatus.AWAITING_APPROVAL
-                        || request.status() == TransportRequestStatus.READY_TO_BOOK)
-                && request.currentVersion().versionNo() == event.transportRequestVersionNo();
     }
 }
