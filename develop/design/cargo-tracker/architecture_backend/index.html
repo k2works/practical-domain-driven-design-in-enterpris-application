@@ -8666,7 +8666,7 @@
 </tr>
 <tr>
 <td style="text-align: left;">置き場所</td>
-<td style="text-align: left;">サガを始めるコンテキストの <code>application.sagas</code>（第 3 章）に置く。予約サガは予約コンテキストに置く</td>
+<td style="text-align: left;">サガを始めるコンテキストに置く。予約サガは予約コンテキストに置く。状態とリポジトリ（送信ポート）は <code>domain.model.sagas</code>、サガを進める処理（後続の結果の受け取り、滞留の検出）は <code>application.sagas</code>（第 3 章）。合成ルートの外の <code>infrastructure</code> は <code>application</code> に依存できない（D-5）ため、リポジトリの実装が参照する状態はドメイン層に置く（Bolt 23）</td>
 </tr>
 <tr>
 <td style="text-align: left;">後続の起動</td>

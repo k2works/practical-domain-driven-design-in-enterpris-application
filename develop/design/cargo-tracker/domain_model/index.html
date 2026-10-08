@@ -8765,6 +8765,18 @@
 <td style="text-align: left;">予約（照会は追跡）</td>
 </tr>
 <tr>
+<td style="text-align: left;">予約 ID</td>
+<td style="text-align: left;">BookingId</td>
+<td style="text-align: left;">貨物予約を識別する、システムが発行する不透明な値。画面と URL には追跡番号を出す（Bolt 23）</td>
+<td style="text-align: left;">予約</td>
+</tr>
+<tr>
+<td style="text-align: left;">予約条件</td>
+<td style="text-align: left;">BookingTerms</td>
+<td style="text-align: left;">本予約の確定の時点で見積りの公開 API から写した、輸送要求・見積り・経路版・荷受人・貨物・荷主承認の値。予約版はこの写しを持ち、確定の後に見積りへ問い合わせ直さない（ADR-016。Bolt 23）</td>
+<td style="text-align: left;">予約</td>
+</tr>
+<tr>
 <td style="text-align: left;">確定条件</td>
 <td style="text-align: left;">BookingConditions</td>
 <td style="text-align: left;">本予約の確定に要る 5 条件（有効な見積り、必須貨物情報、荷主担当者 1 名の承認、承認済み経路版、営業担当者による確認）。欠けた条件を不足条件として返す（BR-01）</td>
