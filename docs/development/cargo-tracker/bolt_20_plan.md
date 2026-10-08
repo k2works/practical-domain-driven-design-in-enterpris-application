@@ -4,7 +4,7 @@ title: "Bolt 20 計画 - 確定した経路の割当てと荷主の承認（US-2
 description: "20 回目の Bolt の計画。経路設計の確定（DE-05）を経路設計の中の listener で受け、見積りの公開 API で依頼元の見積りに経路版を割り当てる（D-71、ADR-014）。荷主担当者が見積りと確定した経路を確かめて承認し（US-24 AC4）、失効・置換済みの見積りへの承認を拒否する（AC5）までを、ステップ 1〜5 で定義する。"
 tags: [development,bolt-plan]
 status: draft
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-08T00:59:52Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-08T01:10:07Z }
 ---
 
 # Bolt 20 計画 - 確定した経路の割当てと荷主の承認（US-24 AC4・AC5）
@@ -231,6 +231,7 @@ C05A --> C04 : 戻る
 - [ ] **5. 開発レビューと終了報告**
   - `developing-review`（連携の向き・冪等・期限の境界・荷主の画面の文言を観点に含める）、SonarQube（`sonar-local:start`）、デモの動画（過去の Bolt の動画は元に戻す）、`bolt_20_report.md`、#5 の AC4・AC5 にチェックを付けてクローズ（R0.1 の範囲。AC2・AC3 は W9 の新しい Issue か #5 の残りとして扱う。確認ポイント 1）
   - デモ環境で、人が RC-2026-0902 を確定し、荷主 A（TR-2026-0905）で承認する流れを確かめる
+  - 終了報告の承認の後、人が `DEMO_BOLT=bolt-20 DEMO_ISSUE=5 npx gulp issue:attach-demo` で受入動画を #5 に添付する（gh v2.99.0 以上。運用のコマンドリファレンスの「Issue への受入動画の添付」）
 
 ### 時間の配分と打ち切り
 
