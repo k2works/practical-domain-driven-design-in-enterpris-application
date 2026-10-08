@@ -4,7 +4,7 @@ title: "リリース計画 - cargo-tracker（A 社国際貨物輸送管理シス
 description: "cargo-tracker MVP のリリース計画。1 人 + AI、時間単位の Bolt（= イテレーション）と週次の見直しで、最初の縦の流れ（R0.1）、パイロット準備完了（R1.0）、本格展開前（R1.1）の 3 段階、Unit のエントロピー評価、SP、バッファ、パイロット開始の条件、引継ぎ ID の台帳、業務責任者に確かめる事項の台帳。"
 tags: [development,release-plan]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-08T03:36:39Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-08T04:57:51Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T09:29:53Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:38:26Z }
@@ -414,7 +414,7 @@ AI-DLC では **Bolt がイテレーション** である（[AI-DLC 導入ガイ
 - [x] Bolt 18: デモ環境のサンプルの業務データ（技術タスク、SP 0。2026-10-07 に human:kakimomokuri が範囲と相対の日時を決め、計画を承認した）。見積依頼 5 件（各状態）と経路設計の案件 2 件（算出待ち・算出済み）を `db/dev-data` に入れ、日時を起動した日からの相対にした。終了報告は作らず、計画の結果欄に記録し、Bolt 17 終了報告の議題 7 とあわせて承認した。[Bolt 18 計画](bolt_18_plan.md)
 - [x] US-07（AC1、AC2）。Bolt 19 で行う（2026-10-07 に human:kakimomokuri が、D-64 を含めて W3 の次の Bolt の範囲に決め、Try T-52 もこの Bolt で行うと決めた）。[Bolt 19 計画](bolt_19_plan.md)（承認済み）、[Bolt 19 終了報告](bolt_19_report.md)（完了、2026-10-08 に承認済み。`/goal Bolt19` でステップ 2 の Green から後の承認ゲートを止めずに進め、終了報告の承認でまとめて受けた。#8 をクローズし、#16 にコメントした。SP 3。DE-05 の購読は経路設計の中に置き見積りの公開 API を呼ぶ形（D-71）で、US-24 AC4 の前に ADR に書く）、[#8](https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/8)
 - [x] US-24（AC4 承認、AC5 失効時の拒否）。Bolt 20 で行う（2026-10-08 に human:kakimomokuri が W3 の次の Bolt の範囲に決めた。D-71 の形で DE-05 を経路設計の listener から見積りの公開 API へ渡す。ADR-014）。[Bolt 20 計画](bolt_20_plan.md)（承認済み）、[Bolt 20 終了報告](bolt_20_report.md)（完了、2026-10-08 に承認済み。`/goal Bolt20` で承認ゲートを止めずに進め、終了報告の承認でまとめて受けた。[ADR-014](../../adr/cargo-tracker/014-downstream-to-upstream-notification.md) を採用。#5 をクローズし、受入動画を添付した。SP 3（US-24 の R0.1 の全体。AC1 は Bolt 12 で作り、#5 のクローズで数えた）。AC5 の再設計要・旧版の経路版の拒否は W6（US-08、DE-06）。デモ環境での確かめと C-17 のスクリーンリーダーによる確認は人が行う）、[#5](https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/5)
-- [ ] US-21（AC1 KPI-01 の時刻）。Bolt 21 で行う（W3 の残り）。[Bolt 21 計画](bolt_21_plan.md)（計画の承認待ち）、[#9](https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/9)
+- [x] US-21（AC1 KPI-01 の時刻）。Bolt 21 で行う（W3 の残り）。[Bolt 21 計画](bolt_21_plan.md)、[Bolt 21 終了報告](bolt_21_report.md)（完了、終了報告の承認待ち。`/goal Bolt21` で承認ゲートを止めずに進め、D-11 は AI が推奨の形を採った。#9 をクローズした。SP 2。日時表示の集約・開発戦略の規則の見直し・未完了の発行の監視の前倒しは人の判断）、[#9](https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/9)
 - [x] 経路候補の比較（S-06）のプロトタイプで操作性を確かめる（UI-HO-04）。Bolt 17 で S-06 を作った（別のプロトタイプは作らない。確認ポイント 15）。Bolt 18 のサンプルを入れたデモ環境で人が確かめ、2026-10-07 に Bolt 17 終了報告の議題 7 として承認した
 
 **目標 SP**: 10
@@ -560,7 +560,7 @@ Bolt のレビューや終了報告で「業務責任者に確かめる」とし
 | :--- | ---: | ---: | ---: | :--- |
 | W1 | 6 | 6 | 100% | 完了（W1 の期間の前に前倒しで、2026-10-03 に Bolt 1〜8 を終えた。すべて承認済み。US-01（R0.1）・US-02 を完了し、#1・#2・#3・#36 をクローズした。人の変更依頼 0） |
 | W2 | 8 | 7 | 88% | 完了（2026-10-06 に Bolt 9〜14 を終え、2026-10-07 に締めた。US-03 を完了し #4・#37 を、US-18 の一部（2 SP）を完了し #6 をクローズした。US-24 AC1 は Bolt 12 で作り、残りの AC4・AC5 と US-24 の R0.1 の SP 3 は W3 へ（#5 の週を W3 に移した）。人の変更依頼 0） |
-| W3 | 10 | - | - | 進行中（W3 の前に技術タスクの Bolt 15・16 を終えた。SP 0。#38・#39 をクローズした。Bolt 17（US-06 AC1〜AC3、SP 3）を終え承認済み。Bolt 18（デモ環境のサンプル、SP 0）を終えた。Bolt 19（US-07 AC1・AC2、SP 3）を終え承認済み。Bolt 20（US-24 AC4・AC5）を終え承認済みで、#5 をクローズし、US-24 の R0.1 の SP 3（AC1 は Bolt 12）を数えた。完了 9 SP。残りは US-21 AC1（KPI-01 の時刻）で、Bolt 21 の計画を作った（承認待ち）） |
+| W3 | 10 | - | - | 進行中（W3 の前に技術タスクの Bolt 15・16 を終えた。SP 0。#38・#39 をクローズした。Bolt 17（US-06 AC1〜AC3、SP 3）を終え承認済み。Bolt 18（デモ環境のサンプル、SP 0）を終えた。Bolt 19（US-07 AC1・AC2、SP 3）を終え承認済み。Bolt 20（US-24 AC4・AC5）を終え承認済みで、#5 をクローズし、US-24 の R0.1 の SP 3（AC1 は Bolt 12）を数えた。完了 9 SP。Bolt 21（US-21 AC1、SP 2）を終え、#9 をクローズした（終了報告の承認待ち）。承認されれば W3 は 11 SP で、残りのタスクはない） |
 | W4 | 11 | - | - | 未着手 |
 | W5 | 8 | - | - | 未着手 |
 | W6 | 13 | - | - | 未着手 |
@@ -659,3 +659,4 @@ xychart-beta
 | 2026-10-08 | Bolt 20（US-24 AC4・AC5、SP 1）の完了と終了報告の承認を記録した。W3 の完了は 7 SP（残りは US-21 AC1）。ADR-014 を採用した | anthropic/claude-opus-5-5 |
 | 2026-10-08 | US-24 の R0.1 の SP を 1 から 3 に数え直した（W2 の計画分 1 と W3 の計画分 2 の合計。#5 をクローズした W3 で数える）。W3 の完了は 9 SP、累計 22 SP、R0.1 の残り 13 SP。Bolt 18 は終了報告を作らず、計画の結果欄と Bolt 17 終了報告の議題 7 で承認したことを W3 に書いた | anthropic/claude-opus-5-5 |
 | 2026-10-08 | W3 の US-21 AC1 に Bolt 21 の計画へのリンクを付けた（計画の承認待ち） | anthropic/claude-opus-5-5 |
+| 2026-10-08 | Bolt 21（US-21 AC1、SP 2）の完了を記録した（終了報告の承認待ち）。#9 をクローズした | anthropic/claude-opus-5-5 |
