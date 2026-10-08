@@ -2,6 +2,7 @@ package com.example.cargotracker;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.example.cargotracker.identity.domain.model.aggregates.KpiObservationRepository;
 import com.example.cargotracker.quotation.domain.model.aggregates.QuotationRepository;
 import com.example.cargotracker.quotation.domain.model.aggregates.TransportRequestNumberIssuer;
 import com.example.cargotracker.quotation.domain.model.aggregates.TransportRequestRepository;
@@ -47,6 +48,9 @@ class DevSampleDataSmokeTest {
     TransportRequestRepository transportRequests;
 
     @Autowired
+    KpiObservationRepository kpiObservations;
+
+    @Autowired
     QuotationRepository quotations;
 
     @Autowired
@@ -74,6 +78,20 @@ class DevSampleDataSmokeTest {
                 .extracting(summary -> summary.number().text())
                 .contains("TR-2026-0901", "TR-2026-0904")
                 .doesNotContain("TR-2026-0902", "TR-2026-0903", "TR-2026-0905");
+    }
+
+    @Test
+    void 見積りを提示したサンプルはKPI計測記録に最初の提示時刻とリードタイムを持ち未提示のサンプルは持たない() {
+        // Bolt 21。提示済み・詳細経路設計へ進んだ見積依頼（0903〜0905）は提示時刻を持ち、審査中・見積り作成中（0901・0902）は持たない
+        assertThat(kpiObservations.findAll())
+                .filteredOn(observation -> observation.transportRequestNumber() != null
+                        && observation.transportRequestNumber().compareTo("TR-2026-0901") >= 0)
+                .hasSize(5)
+                .allSatisfy(observation -> {
+                    boolean presented = observation.transportRequestNumber().compareTo("TR-2026-0903") >= 0;
+                    assertThat(observation.firstPresentedAt().isPresent()).isEqualTo(presented);
+                    assertThat(observation.leadTime().isPresent()).isEqualTo(presented);
+                });
     }
 
     @Test
