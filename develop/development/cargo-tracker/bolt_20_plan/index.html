@@ -8032,6 +8032,7 @@
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>5. 開発レビューと終了報告</strong></li>
 <li><code>developing-review</code>（連携の向き・冪等・期限の境界・荷主の画面の文言を観点に含める）、SonarQube（<code>sonar-local:start</code>）、デモの動画（過去の Bolt の動画は元に戻す）、<code>bolt_20_report.md</code>、#5 の AC4・AC5 にチェックを付けてクローズ（R0.1 の範囲。AC2・AC3 は W9 の新しい Issue か #5 の残りとして扱う。確認ポイント 1）</li>
 <li>デモ環境で、人が RC-2026-0902 を確定し、荷主 A（TR-2026-0905）で承認する流れを確かめる</li>
+<li>終了報告の承認の後、人が <code>DEMO_BOLT=bolt-20 DEMO_ISSUE=5 npx gulp issue:attach-demo</code> で受入動画を #5 に添付する（gh v2.99.0 以上。運用のコマンドリファレンスの「Issue への受入動画の添付」）</li>
 </ul>
 <h3 id="_10">時間の配分と打ち切り<a class="headerlink" href="#_10" title="Permanent link">&para;</a></h3>
 <table>
