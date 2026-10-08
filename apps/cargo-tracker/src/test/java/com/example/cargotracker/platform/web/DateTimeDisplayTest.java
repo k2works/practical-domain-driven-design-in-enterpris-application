@@ -3,7 +3,6 @@ package com.example.cargotracker.platform.web;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.Instant;
-import java.time.ZoneId;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
@@ -13,7 +12,7 @@ class DateTimeDisplayTest {
 
     @Test
     void 表示のタイムゾーンは日本時間に固定する() {
-        assertThat(DateTimeDisplay.ZONE).isEqualTo(ZoneId.of("Asia/Tokyo"));
+        assertThat(DateTimeDisplay.ZONE).hasToString("Asia/Tokyo");
     }
 
     @ParameterizedTest

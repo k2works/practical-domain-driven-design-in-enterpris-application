@@ -4,7 +4,7 @@ title: "リリース計画 - cargo-tracker（A 社国際貨物輸送管理シス
 description: "cargo-tracker MVP のリリース計画。1 人 + AI、時間単位の Bolt（= イテレーション）と週次の見直しで、最初の縦の流れ（R0.1）、パイロット準備完了（R1.0）、本格展開前（R1.1）の 3 段階、Unit のエントロピー評価、SP、バッファ、パイロット開始の条件、引継ぎ ID の台帳、業務責任者に確かめる事項の台帳。"
 tags: [development,release-plan]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-08T05:45:29Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-08T06:23:41Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T09:29:53Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:38:26Z }
@@ -490,7 +490,7 @@ US-04 の SP 5 は、サガの成功の経路を閉じて #10 をクローズす
 
 **主なタスク**:
 
-- [ ] Bolt 22: 日時表示・期間表示を `platform` の Web の部品に集める（技術タスク、SP 0。W4 の最初の Bolt）。[Bolt 22 計画](bolt_22_plan.md)（承認済み）、[#41](https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/41)
+- [ ] Bolt 22: 日時表示・期間表示を `platform` の Web の部品に集める（技術タスク、SP 0。W4 の最初の Bolt）。[Bolt 22 計画](bolt_22_plan.md)（承認済み）、[Bolt 22 終了報告](bolt_22_report.md)（終了報告の承認待ち。DE-03 と DE-16 の listener の競合を既知の課題として記録）、[#41](https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/41)
 - [ ] Bolt 23・24: US-04（AC1、AC2、AC4、B-INV-03、B-INV-11）と予約サガの骨格、2 つの ADR
 - [ ] Bolt 25: 追跡の開始とサガの成功の経路
 - [ ] Bolt 26・27: US-12（AC1、AC2）、US-09（AC1）
