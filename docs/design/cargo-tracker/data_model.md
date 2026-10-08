@@ -4,7 +4,7 @@ title: "cargo-tracker データモデル"
 description: "cargo-tracker の概念データモデル、スキーマ分割、命名と型の規約（H2 と PostgreSQL の共通部分）、コンテキストごとの論理データモデルと ER 図、版・追記専用・冪等性・イベント配信の表現。"
 tags: [design, data-model]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-07T13:53:28Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-08T01:28:12Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T07:48:17Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:01:37Z }
@@ -307,8 +307,9 @@ entity "quotation\n見積り" as q {
   responded_by : UUID
   responded_at : TIMESTAMPTZ
   decline_reason : VARCHAR(4000)
-  routing_case_id : UUID <<REF routing>>
+  routing_case_number : VARCHAR(20) <<REF routing>>
   route_version_no : INTEGER
+  route_confirmed_at : TIMESTAMPTZ
   shipper_approved_by : UUID
   shipper_approved_at : TIMESTAMPTZ
   replaced_by_quotation_id : UUID <<FK>>
@@ -325,26 +326,37 @@ entity "pricing_line\n料金明細" as pl {
   * currency : CHAR(3)
   contract_reference : VARCHAR(200)
 }
+entity "assigned_route_leg\n割り当てた区間" as arl {
+  * quotation_id : UUID <<PK,FK>>
+  * leg_no : INTEGER <<PK>>
+  --
+  * voyage_number : VARCHAR(30)
+  * load_unlocode : CHAR(5)
+  * discharge_unlocode : CHAR(5)
+  * departure_at : TIMESTAMPTZ
+  * arrival_at : TIMESTAMPTZ
+}
 tr ||--|{ trv
 tr ||--o| trd
 trv ||--o{ doc
 tr ||--o{ rv
 trv ||--o{ q
 q ||--|{ pl
+q ||--o{ arl
 q |o--o| q : 置換
 @enduml
 ```
 
 | 表 | 主な制約 | 対応する不変条件 |
 | :--- | :--- | :--- |
-| `transport_request` | `status` IN（`DRAFT`、`UNDER_REVIEW`、`QUOTING`、`QUOTED`、`ROUTING`、`AWAITING_APPROVAL`、`READY_TO_BOOK`、`BOOKED`、`WITHDRAWN`） | 輸送要求の状態遷移 |
+| `transport_request` | `status` IN（`DRAFT`、`UNDER_REVIEW`、`QUOTING`、`QUOTED`、`ROUTING`、`AWAITING_APPROVAL`、`READY_TO_BOOK`、`BOOKED`、`WITHDRAWN`）。Bolt 20 で荷主承認待ち（`AWAITING_APPROVAL`）と予約待ち（`READY_TO_BOOK`）を CHECK に足す | 輸送要求の状態遷移 |
 | `transport_request`（業務番号） | `request_number` に一意制約（`uk_transport_request_number`）。`TR-年-年ごとの連番` の表記をそのまま入れる。画面と通知には業務番号だけを出す（D-4、D-10） | Q-INV-13 |
 | `transport_request_number_counter` | 年ごとに 1 行。`number_year` は業務番号の年（`year` は H2 の予約語のため使わない）。`last_no` はその年に最後に振った連番。追記専用ではない（行を更新する） | Q-INV-13 |
 | `transport_request_draft` | 輸送要求ごとに 1 行。提出時に内容を版の表へ INSERT する。`copied_from_request_id` は複製元 | Q-INV-03、Q-INV-11 |
 | `transport_request_version` | `cargo_category` IN（`GENERAL`、`DANGEROUS`、`REEFER`、`OTHER_SPECIAL`）。提出した版だけを INSERT し、更新しない（追記専用の印 `COMMENT ON TABLE ... IS '輸送要求版 [append-only]'` を付ける）。版 1 の `submitted_at` が KPI-01 の開始時刻（D-3） | Q-INV-02、Q-INV-03、US-21 |
 | `review_record` | （`transport_request_id`、`version_no`）→ `transport_request_version` の FK。（`transport_request_id`、`version_no`）に一意制約（1 つの版に判断は 1 つ。差し戻すと新しい版ができるため。Bolt 5 レビュー R-02）。`decision` IN（`APPROVED`、`SENT_BACK`）。`rationale` は確定の根拠と差戻しの理由の両方を入れる（判断で読み分ける）。追記専用の印を付ける | Q-INV-04、Q-INV-14 |
 | `required_document` | 主キー（`transport_request_id`、`version_no`、`document_no`）。（`transport_request_id`、`version_no`）→ `transport_request_version` の FK。`document_type` IN（`COMMERCIAL_INVOICE`、`PACKING_LIST`、`OTHER`）。`media_type` IN（`PDF`、`PNG`、`JPEG`）。`size_bytes` は 1 以上 10,485,760 以下。`sha256` は中身の SHA-256 の 16 進 64 文字。`file_name` は画面に出すだけに使い、`object_key` は `quotation/{輸送要求 ID}/{UUID}`（ファイル名を使わない）。出し直しでは、引き継ぐ書類は前の版の行と同じ `object_key` で新しい版に INSERT し（ファイルを複製しない）、差し替えた種類は新しい `object_key` の行にする。前の版の行は変えない。新しい版の `document_no` は 1 から振り直す。行は新しい版を作るとき（提出・出し直し）だけ INSERT し、審査の確定・差戻しの保存では書かない（2026-10-05 の D-25。Bolt 9。Bolt 6〜8 レビュー R-07）。追記専用の印を付ける（2026-10-03 に承認、Bolt 7） | Q-INV-16、US-01 |
-| `quotation` | UK（`transport_request_id`、`quotation_no`）。`quotation_no` は輸送要求の中で 1 から振り、画面と URL に出す（内部の ID を出さない。Bolt 10）。`expires_at`・`total_amount`・`currency`・`route_policy_via`・`route_policy_departure_at`・`route_policy_arrival_at` は作成中（`DRAFT`）の見積りを保存するため NULL を許し、承認待ち以後は NOT NULL を CHECK で守る。`currency` IN（`USD`、`EUR`、`JPY`）。`route_policy_via` は UN/LOCODE のカンマ区切り（0〜5 件、空は経由地なし）。`status` IN（`DRAFT`、`PENDING_APPROVAL`、`PRESENTED`、`ROUTING_REQUESTED`、`AWAITING_SHIPPER_APPROVAL`、`APPROVED`、`EXPIRED`、`REPLACED`）。Bolt 10 は `DRAFT`・`PENDING_APPROVAL`・`PRESENTED` の値と、提示までに使う列だけで表を作り、ほかの値と列（荷主の回答・経路版・荷主承認・置換）は使う Bolt で足す（2026-10-05 の決定）。Bolt 10 の画面は作成と算出を 1 つの操作にしているため、作成中（`DRAFT`）の見積りはまだ表に入らない（入力に誤りがあれば見積りを保存しない）。作成中を保存するのは、作成中のまま保存する操作か、承認待ちからの差戻しを入れる Bolt から（Bolt 9・10 レビュー R-15）。Bolt 11 で `status` に `EXPIRED`・`REPLACED` を足し、`replaced_by_quotation_id`（`quotation.id` への FK、NULL 可。再見積りは旧版を先に更新し新しい見積りを後に保存するため、PostgreSQL では `DEFERRABLE INITIALLY DEFERRED` でコミットの時に確かめる。H2 は遅延の FK を作れないため置かない）と `ck_quotation_replaced`（置換済みのときだけ値を持つ: `(status = 'REPLACED') = (replaced_by_quotation_id IS NOT NULL)`）を足す。Q-INV-18 は PostgreSQL の部分一意インデックス `ux_quotation_active`（`transport_request_id`、`status` IN（`DRAFT`、`PENDING_APPROVAL`、`PRESENTED`））でも守り、違反は「見積りがすでにある」として値で返す。H2 は部分インデックスを作れないため、このインデックスと置換先の FK は `postgresql` のマイグレーション（`V20261005170100`）だけに置く（`event_publication` と同じく DB ごとのフォルダ）。`internal_approved_at` と `presented_at` は、社内承認して提示するが 1 つの操作なので同じ値（Bolt 9・10 レビュー R-14。COMMENT にも書いた）。失効・置換の時刻の列は作らない（監査記録は US-17）（2026-10-05 の決定）。マイグレーション `V20261005130000__create_quotation.sql` は、（`transport_request_id`、`transport_request_version_no`）→ `transport_request_version` の FK、承認待ち以後の必須（`ck_quotation_calculated`）、提示済みの承認者と提示時刻（`ck_quotation_presented`）、到着は出発より後の CHECK を持つ。ER 図の `created_at`・`updated_at` などの監査の列は、ほかの業務の表と同じく作っていない（監査記録は US-17 で決める）`shipper_response` IN（`PROCEED`、`DECLINED`）。`presented_at` は KPI-01 の終了時刻。荷主の承認時は `routing_case_id`・`route_version_no` が NOT NULL（アプリケーションで検証）。Bolt 12 で `status` に `ROUTING_REQUESTED` を、荷主の回答の `shipper_response`（CHECK IN（`PROCEED`）。`DECLINED` は辞退（US-24 AC2）で足す）・`responded_by`・`responded_at` を足す。回答の 3 列はそろって NULL かそろって値を持ち、`ROUTING_REQUESTED` なら値を持つ（`ck_quotation_responded`）。`ux_quotation_active` は `ROUTING_REQUESTED` も数えるよう作り直す（2026-10-06 の決定）。`decline_reason`・`routing_case_id`・`route_version_no`・`shipper_approved_by`・`shipper_approved_at` は使う Bolt で足す | Q-INV-05〜10、US-21 |
+| `quotation` | UK（`transport_request_id`、`quotation_no`）。`quotation_no` は輸送要求の中で 1 から振り、画面と URL に出す（内部の ID を出さない。Bolt 10）。`expires_at`・`total_amount`・`currency`・`route_policy_via`・`route_policy_departure_at`・`route_policy_arrival_at` は作成中（`DRAFT`）の見積りを保存するため NULL を許し、承認待ち以後は NOT NULL を CHECK で守る。`currency` IN（`USD`、`EUR`、`JPY`）。`route_policy_via` は UN/LOCODE のカンマ区切り（0〜5 件、空は経由地なし）。`status` IN（`DRAFT`、`PENDING_APPROVAL`、`PRESENTED`、`ROUTING_REQUESTED`、`AWAITING_SHIPPER_APPROVAL`、`APPROVED`、`EXPIRED`、`REPLACED`）。Bolt 10 は `DRAFT`・`PENDING_APPROVAL`・`PRESENTED` の値と、提示までに使う列だけで表を作り、ほかの値と列（荷主の回答・経路版・荷主承認・置換）は使う Bolt で足す（2026-10-05 の決定）。Bolt 10 の画面は作成と算出を 1 つの操作にしているため、作成中（`DRAFT`）の見積りはまだ表に入らない（入力に誤りがあれば見積りを保存しない）。作成中を保存するのは、作成中のまま保存する操作か、承認待ちからの差戻しを入れる Bolt から（Bolt 9・10 レビュー R-15）。Bolt 11 で `status` に `EXPIRED`・`REPLACED` を足し、`replaced_by_quotation_id`（`quotation.id` への FK、NULL 可。再見積りは旧版を先に更新し新しい見積りを後に保存するため、PostgreSQL では `DEFERRABLE INITIALLY DEFERRED` でコミットの時に確かめる。H2 は遅延の FK を作れないため置かない）と `ck_quotation_replaced`（置換済みのときだけ値を持つ: `(status = 'REPLACED') = (replaced_by_quotation_id IS NOT NULL)`）を足す。Q-INV-18 は PostgreSQL の部分一意インデックス `ux_quotation_active`（`transport_request_id`、`status` IN（`DRAFT`、`PENDING_APPROVAL`、`PRESENTED`））でも守り、違反は「見積りがすでにある」として値で返す。H2 は部分インデックスを作れないため、このインデックスと置換先の FK は `postgresql` のマイグレーション（`V20261005170100`）だけに置く（`event_publication` と同じく DB ごとのフォルダ）。`internal_approved_at` と `presented_at` は、社内承認して提示するが 1 つの操作なので同じ値（Bolt 9・10 レビュー R-14。COMMENT にも書いた）。失効・置換の時刻の列は作らない（監査記録は US-17）（2026-10-05 の決定）。マイグレーション `V20261005130000__create_quotation.sql` は、（`transport_request_id`、`transport_request_version_no`）→ `transport_request_version` の FK、承認待ち以後の必須（`ck_quotation_calculated`）、提示済みの承認者と提示時刻（`ck_quotation_presented`）、到着は出発より後の CHECK を持つ。ER 図の `created_at`・`updated_at` などの監査の列は、ほかの業務の表と同じく作っていない（監査記録は US-17 で決める）`shipper_response` IN（`PROCEED`、`DECLINED`）。`presented_at` は KPI-01 の終了時刻。荷主の承認時は `routing_case_id`・`route_version_no` が NOT NULL（アプリケーションで検証）。Bolt 12 で `status` に `ROUTING_REQUESTED` を、荷主の回答の `shipper_response`（CHECK IN（`PROCEED`）。`DECLINED` は辞退（US-24 AC2）で足す）・`responded_by`・`responded_at` を足す。回答の 3 列はそろって NULL かそろって値を持ち、`ROUTING_REQUESTED` なら値を持つ（`ck_quotation_responded`）。`ux_quotation_active` は `ROUTING_REQUESTED` も数えるよう作り直す（2026-10-06 の決定）。`decline_reason` は辞退（US-24 AC2）で足す。Bolt 20（US-24 AC4・AC5）で `status` の `AWAITING_SHIPPER_APPROVAL`・`APPROVED` を使い始め、経路版の参照 `routing_case_number`（案件番号。画面と URL に内部の ID を出さないため、ER 図の当初の `routing_case_id` を案件番号に変えた。D-4）・`route_version_no`・`route_confirmed_at`（確定の時刻の写し）と、荷主承認の `shipper_approved_by`・`shipper_approved_at` を足す。経路版の参照の 3 列はそろって NULL かそろって値を持ち、荷主承認待ち・承認済みなら値を持つ（`ck_quotation_route_assigned`）。荷主承認の 2 列はそろって NULL かそろって値を持ち、承認済みなら値を持つ（`ck_quotation_shipper_approved`）。経路設計の表に外部キーは張らない（スキーマの所有。ADR-001）。割り当てた経路の区間は `assigned_route_leg`（見積り ID と区間番号 1 から。到着は出発より後）に写し、荷主の承認の画面（C-05）は経路設計に問い合わせない（ADR-014）。`ux_quotation_active` は `AWAITING_SHIPPER_APPROVAL`・`APPROVED` も数えるよう作り直す | Q-INV-05〜10、US-21 |
 | `pricing_line` | 主キー（`quotation_id`、`line_no`）。`line_no` は 1〜10。`amount` は 0 より大きい（NUMERIC(15,2)）。`currency` は見積りの `currency` と同じ値（アプリケーションで守る）。見積りを算出し直すときは明細を入れ替える（Bolt 10 は算出し直しを入れない） | Q-INV-17、US-03 |
 
 見積りの「失効」は、有効期限を過ぎたときに状態を書き換えるのではなく、判定時刻と `expires_at` の比較で決める（Q-INV-06）。`status` の `EXPIRED` は、期限切れを確かめた結果として残す。Bolt 11 では、再見積りのときに有効期限を過ぎていた旧版にだけ記録する（定期処理での記録は入れない。2026-10-05 の決定）。予約確定の判定は常に `expires_at` で行う。

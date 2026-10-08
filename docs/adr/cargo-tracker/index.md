@@ -19,6 +19,7 @@ cargo-tracker プロジェクトの ADR ドキュメントです。
 | [ADR-011](./011-mfa-totp.md) | 多要素認証は Spring Security 7 の要素の権限で組み、TOTP は java-otp で作る | 提案（W5 の US-18 の計画で採否を決める） |
 | [ADR-012](./012-authentication-principal-and-session.md) | 認証の主体は共有カーネルの型にし、password の段を Spring Security の form login と Spring Session JDBC で作る | 承認済み |
 | [ADR-013](./013-heroku-demo-environment.md) | 関係者が触って確かめるデモ環境は、dev プロファイルのまま Heroku の Eco dyno で動かす | 承認済み |
+| [ADR-014](./014-downstream-to-upstream-notification.md) | 下流から上流への通知は、下流の listener が上流の公開 API を呼んで行う | 承認済み（D-71。文面は Bolt 20） |
 
 ## 補足
 

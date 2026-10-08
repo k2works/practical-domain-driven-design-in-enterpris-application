@@ -4,7 +4,7 @@ title: "cargo-tracker バックエンドアーキテクチャ"
 description: "cargo-tracker の境界づけられたコンテキスト、コンテキストごとのドメインロジックパターン、パッケージ構成、サガとドメインイベントによる連携（ARCH-HO-01〜03）、受信サービスの方針。"
 tags: [design, architecture, backend]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-07T03:41:38Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-08T01:28:12Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T07:11:12Z }
   - { by: human:kakimomokuri, at: 2026-10-01T07:41:04Z }
@@ -130,7 +130,8 @@ end note
 | アクセス・監査 → 全体 | IA → 全体 | 公開ホスト | 認証方式・監査方式を業務規則へ埋め込まない |
 | 共有カーネル | 全業務コンテキスト | 共有カーネル（第 3 章） | 業務の意味を持たない基本型だけに限る |
 | 追跡 → 予約（イベントのみ） | T → B | 公表された言語（ドメインイベント） | 集荷実績の採用と引渡しの確認だけを通知する。予約は追跡の公開 API・内部に依存しない（[ドメインモデル](domain_model.md) DE-09、DE-10。第 2 章で Booking が Cargo Handled を購読するのと同じ） |
-| 予約 → 見積り（イベントのみ） | B → Q | 公表された言語（ドメインイベント） | 本予約の確定だけを通知し、輸送要求を予約確定済みにする（[ドメインモデル](domain_model.md) DE-07） |
+| 予約 → 見積り（下流から上流への通知） | B → Q | 下流の listener が上流の公開 API を呼ぶ（[ADR-014](../../adr/cargo-tracker/014-downstream-to-upstream-notification.md)） | 本予約の確定（DE-07）を予約の listener が受け、見積りの公開 API で輸送要求を予約確定済みにする（W4） |
+| 経路設計 → 見積り（下流から上流への通知） | R → Q | 下流の listener が上流の公開 API を呼ぶ（ADR-014） | 経路の確定（DE-05）を経路設計の listener が受け、見積りの公開 API（経路の割当て）で依頼元の見積りに経路版を割り当てる（Bolt 20）。見積りは経路設計のイベントを購読しない |
 
 下流のコンテキストは、上流の公開 API を自分の application 層の ACL（腐敗防止層）越しに呼ぶ（第 3 章 `application.internal.outboundservices.acl`）。上流のドメインオブジェクトを自分のドメイン層に持ち込まない。
 
@@ -140,6 +141,7 @@ end note
 - 戻り値は Java の標準と共有カーネルの型（`Location`、`UtcInstant` など）と文字列だけで表し、上流のドメインの型を持たない（イベントと同じ規則。ArchUnit で確かめる）。
 - 実装は上流の `application.internal.queryservices` に置き、合成ルート（`infrastructure.config`）で公開 API の型の bean として組み立てる。
 - 下流は `application.internal.outboundservices.acl` から呼び、自分のドメインの型に変える。下流のモジュールの `allowedDependencies` に `<上流> :: api` を足す。
+- 下流から上流への通知（ADR-014）では、上流の公開 API に冪等な操作のインターフェースを置き、実装は上流の `application.internal.commandservices` に置く。業務の拒否は戻り値の値で返す。最初の操作は、見積りの「経路の割当て」（`quotation.api.RouteAssignment`。案件番号・経路版番号・確定の時刻・区間を受け、依頼元の見積りに割り当てる。Bolt 20）。
 - 最初の公開 API は、見積りの「経路条件の照会」（`quotation.api.RouteConditionQuery`。輸送要求 ID と版番号から、出発地・目的地・希望到着期限・貨物種別を返す）。経路設計が DE-16 を受けて経路設計案件を作るときに呼ぶ。
 
 ### 共有カーネル
