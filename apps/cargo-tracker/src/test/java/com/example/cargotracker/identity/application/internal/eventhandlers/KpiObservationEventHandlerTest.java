@@ -93,9 +93,9 @@ class KpiObservationEventHandlerTest {
     @Test
     void 提出の記録がないDE03は警告のログを残して例外を投げ再配信を待つ() {
         UUID transportRequestId = UUID.randomUUID();
+        QuotationPresented event = presented(transportRequestId, "2026-10-05T04:30:00Z");
 
-        assertThatThrownBy(() -> handler.on(presented(transportRequestId, "2026-10-05T04:30:00Z")))
-                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> handler.on(event)).isInstanceOf(IllegalStateException.class);
 
         assertThat(repository.findByTransportRequestId(transportRequestId)).isEmpty();
         assertThat(logs.list).singleElement().satisfies(log -> {

@@ -3,6 +3,7 @@ package com.example.cargotracker;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.example.cargotracker.identity.domain.model.aggregates.KpiObservationRepository;
+import com.example.cargotracker.quotation.domain.model.aggregates.Quotation;
 import com.example.cargotracker.quotation.domain.model.aggregates.QuotationRepository;
 import com.example.cargotracker.quotation.domain.model.aggregates.TransportRequestNumberIssuer;
 import com.example.cargotracker.quotation.domain.model.aggregates.TransportRequestRepository;
@@ -101,7 +102,7 @@ class DevSampleDataSmokeTest {
                                 .isEqualTo(quotations
                                         .findByTransportRequestIdAndNo(
                                                 new TransportRequestId(observation.transportRequestId()), 1)
-                                        .flatMap(quotation -> quotation.presentedAt()));
+                                        .flatMap(Quotation::presentedAt));
                     } else {
                         assertThat(observation.firstPresentedAt()).isEmpty();
                     }

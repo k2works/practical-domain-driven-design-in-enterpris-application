@@ -75,8 +75,9 @@ class KpiObservationTest {
     @Test
     void 提出時刻より前の提示は拒否する() {
         KpiObservation observation = submittedAt("2026-10-05T01:00:00Z");
+        UtcInstant beforeSubmission = at("2026-10-05T00:59:59Z");
 
-        assertThatThrownBy(() -> observation.recordPresentation(at("2026-10-05T00:59:59Z")))
+        assertThatThrownBy(() -> observation.recordPresentation(beforeSubmission))
                 .isInstanceOf(IllegalArgumentException.class);
         assertThat(observation.firstPresentedAt()).isEmpty();
     }
