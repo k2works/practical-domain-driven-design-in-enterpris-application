@@ -320,8 +320,8 @@ class RoutingCaseControllerTest {
                 .andExpect(content().string(Matchers.containsString("2026-10-08 18:00 Asia/Tokyo")))
                 .andExpect(content().string(Matchers.containsString("4,000 文字まで")))
                 .andExpect(content().string(Matchers.not(Matchers.containsString("maxlength"))))
-                .andExpect(content().string(Matchers.containsString("担当営業に伝えてください")))
-                .andExpect(content().string(Matchers.not(Matchers.containsString("見積りに割り当てられ"))))
+                .andExpect(content().string(Matchers.containsString("確定した経路は見積りに割り当てられ、荷主の承認に進みます。")))
+                .andExpect(content().string(Matchers.not(Matchers.containsString("準備中"))))
                 .andExpect(content().string(Matchers.containsString("name=\"candidate\" value=\"1\"")))
                 .andExpect(content().string(Matchers.containsString("name=\"expectedVersion\" value=\"0\"")))
                 .andExpect(content().string(Matchers.containsString("この経路で確定する")));
@@ -355,7 +355,7 @@ class RoutingCaseControllerTest {
                         .param("rationale", "根拠")
                         .param("expectedVersion", "3"))
                 .andExpect(redirectedUrl(SHOW))
-                .andExpect(flash().attribute("result", "候補 1 の経路を確定しました。確定したことを担当営業に伝えてください。"));
+                .andExpect(flash().attribute("result", "候補 1 の経路を確定しました。確定した経路は見積りに割り当てられ、荷主の承認に進みます。"));
     }
 
     @Test

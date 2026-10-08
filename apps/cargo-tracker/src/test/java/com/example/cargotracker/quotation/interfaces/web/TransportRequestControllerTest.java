@@ -448,6 +448,80 @@ class TransportRequestControllerTest {
                 .andExpect(content().string(not(containsString("/response"))));
     }
 
+    /** 経路版を割り当てた見積り（荷主承認待ち。有効期限 2099-10-08T09:00:00Z。Bolt 20）。 */
+    private static Quotation awaitingApproval(TransportRequestId transportRequestId) {
+        Quotation quotation = Quotation.create(new QuotationId(UUID.randomUUID()), transportRequestId, 1, 1);
+        UtcInstant at = new UtcInstant(Instant.parse("2026-10-05T04:00:00Z"));
+        quotation.calculate(QuotationFixture.completeInput(), at);
+        quotation.presentInternally(new UserId(UUID.randomUUID()), at);
+        quotation.requestRouteDesign(USER, new UtcInstant(Instant.parse("2026-10-06T00:30:00Z")));
+        quotation.assignRoute(QuotationFixture.assignedRoute(), new UtcInstant(Instant.parse("2026-10-07T05:01:00Z")));
+        quotation.clearDomainEvents();
+        return quotation;
+    }
+
+    @Test
+    void 経路版を割り当てた見積りは確定した経路と承認への入口を示す() throws Exception {
+        TransportRequest request = underReviewWithInvoice();
+        given(queryService.findByNumber(NUMBER, SHIPPER)).willReturn(Optional.of(request));
+        given(quotationQueryService.findVisible(NUMBER, SHIPPER)).willReturn(List.of(awaitingApproval(request.id())));
+
+        mockMvc.perform(get("/customer/transport-requests/TR-2026-0001"))
+                .andExpect(content().string(containsString("見積 1（見積りと経路の承認待ち）")))
+                .andExpect(content().string(containsString("確定した経路（RC-2026-0001 経路版 1）")))
+                .andExpect(content().string(containsString("JPTYO → SGSIN")))
+                .andExpect(
+                        content()
+                                .string(
+                                        containsString(
+                                                "<a href=\"/customer/transport-requests/TR-2026-0001/quotations/1/approval\">見積りと経路を確かめて承認へ</a>")))
+                .andExpect(content().string(not(containsString("/response"))));
+    }
+
+    @Test
+    void 承認した見積りは承認の日時と担当営業が本予約を確定する旨を示し承認の入口を出さない() throws Exception {
+        TransportRequest request = underReviewWithInvoice();
+        given(queryService.findByNumber(NUMBER, SHIPPER)).willReturn(Optional.of(request));
+        Quotation quotation = awaitingApproval(request.id());
+        quotation.approveByShipper(USER, new UtcInstant(Instant.parse("2026-10-07T06:00:00Z")));
+        given(quotationQueryService.findVisible(NUMBER, SHIPPER)).willReturn(List.of(quotation));
+
+        mockMvc.perform(get("/customer/transport-requests/TR-2026-0001"))
+                .andExpect(content().string(containsString("見積 1（承認済み）")))
+                .andExpect(content()
+                        .string(containsString(
+                                "2026-10-07 15:00 Asia/Tokyo（UTC+09:00）にこの見積りと経路を承認しました。担当営業が本予約を確定します。確定したらご連絡します。")))
+                .andExpect(content().string(not(containsString("/approval"))));
+    }
+
+    @Test
+    void 承認の前に失効した見積りは承認の入口を出さず新しい見積りの依頼を案内する() throws Exception {
+        TransportRequest request = underReviewWithInvoice();
+        given(queryService.findByNumber(NUMBER, SHIPPER)).willReturn(Optional.of(request));
+        Quotation quotation = Quotation.create(new QuotationId(UUID.randomUUID()), request.id(), 1, 1);
+        UtcInstant at = new UtcInstant(Instant.parse("2026-10-05T04:00:00Z"));
+        quotation.calculate(
+                new QuotationInput(
+                        QuotationFixture.completeInput().lines(),
+                        QuotationFixture.completeInput().currency(),
+                        new UtcInstant(Instant.parse("2026-10-05T12:00:00Z")),
+                        QuotationFixture.completeInput().via(),
+                        QuotationFixture.completeInput().departureAt(),
+                        QuotationFixture.completeInput().arrivalAt()),
+                at);
+        quotation.presentInternally(new UserId(UUID.randomUUID()), at);
+        quotation.requestRouteDesign(USER, new UtcInstant(Instant.parse("2026-10-05T05:00:00Z")));
+        quotation.assignRoute(QuotationFixture.assignedRoute(), new UtcInstant(Instant.parse("2026-10-05T13:00:00Z")));
+        given(quotationQueryService.findVisible(NUMBER, SHIPPER)).willReturn(List.of(quotation));
+
+        mockMvc.perform(get("/customer/transport-requests/TR-2026-0001"))
+                .andExpect(content()
+                        .string(containsString(
+                                "有効期限（2026-10-05 21:00 Asia/Tokyo（UTC+09:00））を過ぎたため承認できません。新しい見積りは担当営業にご依頼ください。")))
+                .andExpect(content().string(not(containsString("/approval"))))
+                .andExpect(content().string(not(containsString("詳細経路設計は依頼済みのまま進めています"))));
+    }
+
     @Test
     void 置換済みの見積りは新しい見積りの準備中と示し依頼の案内と回答の案内は出さない() throws Exception {
         TransportRequest request = underReviewWithInvoice();

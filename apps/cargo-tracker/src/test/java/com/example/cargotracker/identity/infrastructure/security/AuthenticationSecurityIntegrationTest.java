@@ -389,6 +389,21 @@ class AuthenticationSecurityIntegrationTest {
     }
 
     @Test
+    void 営業担当者と経路設計者は見積りと経路の承認の画面を開けずPOSTも送れない() throws Exception {
+        for (Role role : List.of(Role.SALES, Role.ROUTE_DESIGNER)) {
+            Cookie session = login(user(staffCompany(), role, UserStatus.ACTIVE));
+
+            mvc.perform(get("/customer/transport-requests/TR-2026-0001/quotations/1/approval")
+                            .cookie(session))
+                    .andExpect(status().isForbidden());
+            mvc.perform(post("/customer/transport-requests/TR-2026-0001/quotations/1/approval")
+                            .cookie(session)
+                            .with(csrf()))
+                    .andExpect(status().isForbidden());
+        }
+    }
+
+    @Test
     void CSRFのトークンが誤った見積りの提示は拒否する() throws Exception {
         Cookie session = login(user(staffCompany(), Role.SALES, UserStatus.ACTIVE));
 

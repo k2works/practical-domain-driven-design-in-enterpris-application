@@ -154,11 +154,13 @@ class TransportRequestReviewControllerTest {
                         new RoutingRequestedSummary(
                                 NUMBER,
                                 1,
+                                QuotationStatus.ROUTING_REQUESTED,
                                 new UtcInstant(Instant.parse("2026-10-06T00:30:00Z")),
                                 new UtcInstant(Instant.parse("2099-10-09T09:00:00Z"))),
                         new RoutingRequestedSummary(
                                 new TransportRequestNumber(2026, 2),
                                 1,
+                                QuotationStatus.ROUTING_REQUESTED,
                                 new UtcInstant(Instant.parse("2026-10-06T00:40:00Z")),
                                 new UtcInstant(Instant.parse("2026-10-05T04:00:00Z")))));
 
@@ -173,6 +175,27 @@ class TransportRequestReviewControllerTest {
                 .andExpect(content().string(containsString("2099-10-09 18:00 Asia/Tokyo（UTC+09:00）")))
                 .andExpect(content().string(containsString("<td>詳細設計依頼済み</td>")))
                 .andExpect(content().string(containsString("<td>失効</td>")));
+    }
+
+    @Test
+    void 受付一覧の経路設計中の表に荷主承認待ちと荷主承認済みの見積依頼も状態とともに示す() throws Exception {
+        UtcInstant requestedAt = new UtcInstant(Instant.parse("2026-10-06T00:30:00Z"));
+        UtcInstant expiresAt = new UtcInstant(Instant.parse("2099-10-09T09:00:00Z"));
+        given(quotationQueryService.findRoutingRequestedSummaries())
+                .willReturn(List.of(
+                        new RoutingRequestedSummary(
+                                NUMBER, 1, QuotationStatus.AWAITING_SHIPPER_APPROVAL, requestedAt, expiresAt),
+                        new RoutingRequestedSummary(
+                                new TransportRequestNumber(2026, 2),
+                                1,
+                                QuotationStatus.APPROVED,
+                                requestedAt,
+                                expiresAt)));
+
+        mockMvc.perform(get("/staff/transport-requests"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("<td>荷主承認待ち</td>")))
+                .andExpect(content().string(containsString("<td>荷主承認済み（予約待ち）</td>")));
     }
 
     @Test

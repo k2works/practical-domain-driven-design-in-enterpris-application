@@ -25,4 +25,25 @@ public final class QuotationFixture {
                 new UtcInstant(Instant.parse("2099-10-10T00:00:00Z")),
                 new UtcInstant(Instant.parse("2099-10-30T09:00:00Z")));
     }
+
+    /** 割り当てた経路の見本（RC-2026-0001 経路版 1。東京 → シンガポール → ロッテルダム。Bolt 20）。 */
+    public static AssignedRoute assignedRoute() {
+        return new AssignedRoute(
+                "RC-2026-0001",
+                1,
+                new UtcInstant(Instant.parse("2026-10-07T05:00:00Z")),
+                List.of(
+                        new AssignedRouteLeg(
+                                "V-201",
+                                new Location("JPTYO"),
+                                new Location("SGSIN"),
+                                new UtcInstant(Instant.parse("2099-10-10T00:00:00Z")),
+                                new UtcInstant(Instant.parse("2099-10-20T00:00:00Z"))),
+                        new AssignedRouteLeg(
+                                "V-301",
+                                new Location("SGSIN"),
+                                new Location("NLRTM"),
+                                new UtcInstant(Instant.parse("2099-10-20T12:00:00Z")),
+                                new UtcInstant(Instant.parse("2099-10-31T00:00:00Z")))));
+    }
 }

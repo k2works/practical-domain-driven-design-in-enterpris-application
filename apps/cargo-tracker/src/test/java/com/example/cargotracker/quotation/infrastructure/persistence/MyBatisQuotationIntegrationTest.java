@@ -495,9 +495,17 @@ class MyBatisQuotationIntegrationTest {
                 .filteredOn(summary -> summary.number().year() == 2082)
                 .containsExactly(
                         new RoutingRequestedSummary(
-                                new TransportRequestNumber(2082, 22), 1, earlierAt, QuotationFixture.EXPIRES_AT),
+                                new TransportRequestNumber(2082, 22),
+                                1,
+                                QuotationStatus.ROUTING_REQUESTED,
+                                earlierAt,
+                                QuotationFixture.EXPIRES_AT),
                         new RoutingRequestedSummary(
-                                new TransportRequestNumber(2082, 21), 1, laterAt, QuotationFixture.EXPIRES_AT));
+                                new TransportRequestNumber(2082, 21),
+                                1,
+                                QuotationStatus.ROUTING_REQUESTED,
+                                laterAt,
+                                QuotationFixture.EXPIRES_AT));
     }
 
     private void respond(TransportRequestId transportRequestId, UtcInstant at) {
@@ -632,5 +640,31 @@ class MyBatisQuotationIntegrationTest {
 
         assertThat(transportRequests.findById(transportRequestId).orElseThrow().status())
                 .isEqualTo(TransportRequestStatus.READY_TO_BOOK);
+    }
+
+    @Test
+    void 経路設計中の表には荷主承認待ちと予約待ちの見積依頼も状態とともに返す() {
+        TransportRequestId awaiting = transportRequest(29);
+        TransportRequestId approved = transportRequest(30);
+        for (TransportRequestId id : List.of(awaiting, approved)) {
+            TransportRequest request = transportRequests.findById(id).orElseThrow();
+            request.approve(1, STAFF, "根拠", NOW);
+            request.markRoutingRequested(1);
+            request.markAwaitingApproval(1);
+            transportRequests.update(request);
+            awaitingApproval(id);
+        }
+        Quotation toApprove =
+                repository.findByTransportRequestIdAndNo(approved, 1).orElseThrow();
+        toApprove.approveByShipper(SHIPPER_USER, CONFIRMED_AT);
+        repository.update(toApprove);
+        TransportRequest ready = transportRequests.findById(approved).orElseThrow();
+        ready.markReadyToBook(1);
+        transportRequests.update(ready);
+
+        assertThat(repository.findRoutingRequestedSummaries())
+                .filteredOn(summary -> summary.number().year() == 2082)
+                .extracting(summary -> summary.number().sequence() + ":" + summary.status())
+                .containsExactlyInAnyOrder("29:AWAITING_SHIPPER_APPROVAL", "30:APPROVED");
     }
 }

@@ -11,6 +11,7 @@ import io.cucumber.java.ja.ならば;
 import io.cucumber.java.ja.もし;
 import io.cucumber.java.ja.前提;
 import java.util.UUID;
+import java.util.regex.Pattern;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -225,7 +226,10 @@ public class RoutingUiSteps {
     @ならば("経路を確定したと示され、確定した経路に判断根拠が示され、直行の航海の候補に確定と示される")
     public void 経路を確定したと示される() {
         assertThat(page().getByRole(AriaRole.STATUS)).containsText("経路を確定しました");
-        assertThat(page().getByRole(AriaRole.REGION, new Page.GetByRoleOptions().setName("確定した経路（候補 1）")))
+        // 候補の番号は、ほかのシナリオが足した航海で変わるため問わない（画面の層のシナリオは同じアプリケーションで動く）
+        assertThat(page().getByRole(
+                                AriaRole.REGION,
+                                new Page.GetByRoleOptions().setName(Pattern.compile("^確定した経路（候補 \\d+）$"))))
                 .containsText("直行で期限まで 3 日あり");
         assertThat(candidate(voyage("DIRECT"))).containsText("確定した経路");
         assertThat(page().getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("候補を再算出")))
