@@ -9110,7 +9110,7 @@
 </tr>
 <tr>
 <td style="text-align: left;">W3</td>
-<td style="text-align: left;">2026-10-06 〜（W3 の期間の前に前倒し）。W3 の前に Bolt 15（dev プロファイルによる Heroku のデモ環境。SP 0、ADR-013）と Bolt 16（デモ環境への CI からの配備。SP 0）を終えた</td>
+<td style="text-align: left;">2026-10-06 〜 2026-10-08（W3 の期間の前に前倒し）。Bolt 15（dev プロファイルによる Heroku のデモ環境。SP 0、ADR-013）、Bolt 16（デモ環境への CI からの配備。SP 0）、Bolt 17（US-06 AC1〜AC3）、Bolt 18（デモ環境のサンプル。SP 0）、Bolt 19（US-07 AC1・AC2）、Bolt 20（US-24 AC4・AC5、ADR-014）、Bolt 21（US-21 AC1）。11 SP（US-06 3、US-07 3、US-24 3、US-21 2）。W1〜W3 の累計は 24 SP（計画も 24 SP）</td>
 </tr>
 </tbody>
 </table>
@@ -9383,10 +9383,29 @@
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> 経路候補の比較（S-06）のプロトタイプで操作性を確かめる（UI-HO-04）。Bolt 17 で S-06 を作った（別のプロトタイプは作らない。確認ポイント 15）。Bolt 18 のサンプルを入れたデモ環境で人が確かめ、2026-10-07 に Bolt 17 終了報告の議題 7 として承認した</li>
 </ul>
 <p><strong>目標 SP</strong>: 10</p>
+<p><strong>結果</strong>（2026-10-08 に締めた）: 11 SP（US-06 3、US-07 3、US-24 3、US-21 2）。達成率 110%（US-24 の R0.1 の 3 SP のうち W2 の計画分 1 を W3 で数えたため）。Bolt 15〜21 を、W3 の期間（10-19〜10-23）の前の 2026-10-06〜10-08 に終えた。Bolt 17・19・20・21 は <code>/goal</code> で承認ゲートを止めずに進め、終了報告の承認でまとめて受けた。人の変更依頼 0。W3 のタスクに残りはない。#5・#7・#8・#9・#38・#39 をクローズした</p>
+<p><strong>ふりかえり</strong>（Bolt 15〜21 の終了報告の KPT をまとめた）:</p>
+<ul>
+<li>Keep</li>
+<li>連携の形を ADR（ADR-013・ADR-014）で先に決め、依存の向きを ArchUnit と ApplicationModules で固定してから実装したので、連携の形でやり直しがなかった</li>
+<li>開発レビューを各 Bolt の終了報告の前に行い、欠陥（Bolt 20 の偽の警告、Bolt 21 の毒入りのメッセージ）をテストで再現してから直した</li>
+<li>デモ環境（Bolt 15・16・18）ができ、画面の層のシナリオの動画と合わせて、人が流れを確かめられるようになった</li>
+<li>Problem</li>
+<li>計画で決めた規則を、その規則が効く場面で守らなかった（Bolt 19・20 の開発戦略のアプローチの表、Bolt 21 の確認ポイント 7 の「3 つ目で集める」）</li>
+<li>テストが本物の振る舞いを守っていなかった（Bolt 20 の listener の単体テストがない、Bolt 21 のメモリのリポジトリが実体を返す）</li>
+<li>置換のスクリプトを整形の前の文字列に当てて失敗した（Bolt 21。Bolt 19 の T-55 を守らなかった）</li>
+<li>Windows の作業ツリーで、手順書のタスク（<code>sonar-local:scan</code>）と <code>documentationTest</code> が動かなかった</li>
+<li>Try（W4 に持ち込む）</li>
+<li>開発戦略の表から外れるときは、計画のアプローチの欄に理由を書く（Bolt 21 終了報告の議題 6。開始準備の横断検証で突き合わせる）</li>
+<li>T-61〜T-63（Bolt 21）: メモリのリポジトリは写しを返す、listener の欠けを「再配信で直るか」で分ける、「N 個目で」の規則は N 個目の計画に入れる</li>
+<li>T-55 を改めて守る（置換は <code>spotlessApply</code> の後のファイルに当てる）</li>
+<li>W4 の開始時に、W1〜W3 の実績（24 SP、Bolt 21 本、人の変更依頼 0）でベロシティと承認ゲートの密度を見直す（本計画の「ベロシティ検証計画」）</li>
+</ul>
 <h3 id="w42026-10-26-10-30">W4（2026-10-26 〜 10-30）<a class="headerlink" href="#w42026-10-26-10-30" title="Permanent link">&para;</a></h3>
 <p><strong>ゴール</strong>: 本予約の確定から追跡の開始・実績の登録・荷主の照会までが通り、Release 0.1 の縦の流れが完成する。</p>
 <p><strong>主なタスク</strong>:</p>
 <ul class="task-list">
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> 日時表示・期間表示を <code>platform</code> の Web の部品に集める（技術タスク、SP 0。Bolt 21 終了報告の議題 5。W4 の最初の Bolt）。<a href="https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/41">#41</a></li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> US-04（AC1、AC2、AC4、B-INV-11）と予約サガ</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> US-12（AC1、AC2）、US-09（AC1）</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> 主成功の流れの <code>@ui</code> シナリオ</li>
@@ -9924,16 +9943,16 @@
 <tr>
 <td style="text-align: left;">W3</td>
 <td style="text-align: right;">10</td>
-<td style="text-align: right;">-</td>
-<td style="text-align: right;">-</td>
-<td style="text-align: left;">進行中（W3 の前に技術タスクの Bolt 15・16 を終えた。SP 0。#38・#39 をクローズした。Bolt 17（US-06 AC1〜AC3、SP 3）を終え承認済み。Bolt 18（デモ環境のサンプル、SP 0）を終えた。Bolt 19（US-07 AC1・AC2、SP 3）を終え承認済み。Bolt 20（US-24 AC4・AC5）を終え承認済みで、#5 をクローズし、US-24 の R0.1 の SP 3（AC1 は Bolt 12）を数えた。完了 9 SP。Bolt 21（US-21 AC1、SP 2）を終え承認済みで、#9 をクローズした。完了 11 SP。W3 の残りのタスクはない）</td>
+<td style="text-align: right;">11</td>
+<td style="text-align: right;">110%</td>
+<td style="text-align: left;">完了（2026-10-06〜10-08 に Bolt 15〜21 を終え、2026-10-08 に締めた。US-06 AC1〜AC3（#7）、US-07 AC1・AC2（#8）、US-24 の R0.1（#5）、US-21 AC1（#9）を完了し、技術タスクの #38・#39 をクローズした。US-24 の R0.1 の 3 SP は #5 をクローズした W3 で数えた。人の変更依頼 0）</td>
 </tr>
 <tr>
 <td style="text-align: left;">W4</td>
 <td style="text-align: right;">11</td>
 <td style="text-align: right;">-</td>
 <td style="text-align: right;">-</td>
-<td style="text-align: left;">未着手</td>
+<td style="text-align: left;">準備中（最初の Bolt は日時表示・期間表示の集約。SP 0）</td>
 </tr>
 <tr>
 <td style="text-align: left;">W5</td>
@@ -10310,6 +10329,11 @@
 <td style="text-align: left;">2026-10-08</td>
 <td style="text-align: left;">Bolt 21 終了報告の承認（議題 1〜12）を記録した。W3 の完了は 11 SP。W9 に未完了の発行の件数を確かめる手段を前倒しした（議題 7）</td>
 <td style="text-align: left;">anthropic/claude-opus-5-5、承認 human:kakimomokuri</td>
+</tr>
+<tr>
+<td style="text-align: left;">2026-10-08</td>
+<td style="text-align: left;">W3 を締めた（11 SP、達成率 110%、W1〜W3 の累計 24 SP）。実績スケジュールに Bolt 15〜21 を、W3 の結果にふりかえりを書いた。W4 の最初の Bolt に日時表示・期間表示の集約（SP 0）を足した</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5</td>
 </tr>
 </tbody>
 </table>
