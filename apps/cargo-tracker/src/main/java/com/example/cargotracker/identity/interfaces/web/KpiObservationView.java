@@ -35,7 +35,7 @@ public record KpiObservationView(
                         .firstPresentedAt()
                         .map(KpiObservationView::staffDateTime)
                         .orElse(null),
-                observation.leadTime().map(KpiObservationView::leadTime).orElse(null));
+                observation.leadTime().map(KpiObservationView::formatDuration).orElse(null));
     }
 
     /** 社内の画面の日時（例: 2026-10-05 10:00 Asia/Tokyo（UTC+09:00）（UTC 2026-10-05 01:00））。 */
@@ -45,7 +45,7 @@ public record KpiObservationView(
     }
 
     /** KPI-01 リードタイムの表示。時間と分で示し、分未満は切り捨てる（Bolt 21 の確認ポイント 3）。 */
-    static String leadTime(Duration leadTime) {
+    static String formatDuration(Duration leadTime) {
         return leadTime.toHours() + " 時間 " + leadTime.toMinutesPart() + " 分";
     }
 }

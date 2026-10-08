@@ -8,6 +8,7 @@ import com.example.cargotracker.quotation.domain.model.aggregates.TransportReque
 import com.example.cargotracker.quotation.domain.model.aggregates.TransportRequestRepository;
 import com.example.cargotracker.quotation.domain.model.valueobjects.QuotedRequestSummary;
 import com.example.cargotracker.quotation.domain.model.valueobjects.RoutingRequestedSummary;
+import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestId;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestNumber;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestSummary;
 import com.example.cargotracker.routing.domain.model.aggregates.ConnectionRuleRepository;
@@ -82,15 +83,28 @@ class DevSampleDataSmokeTest {
 
     @Test
     void 見積りを提示したサンプルはKPI計測記録に最初の提示時刻とリードタイムを持ち未提示のサンプルは持たない() {
-        // Bolt 21。提示済み・詳細経路設計へ進んだ見積依頼（0903〜0905）は提示時刻を持ち、審査中・見積り作成中（0901・0902）は持たない
+        // Bolt 21。提示済み・詳細経路設計へ進んだ見積依頼（0903〜0905）は見積りの提示時刻を持ち、審査中・見積り作成中（0901・0902）は持たない
+        java.util.Map<String, Boolean> presented = java.util.Map.of(
+                "TR-2026-0901", false,
+                "TR-2026-0902", false,
+                "TR-2026-0903", true,
+                "TR-2026-0904", true,
+                "TR-2026-0905", true);
         assertThat(kpiObservations.findAll())
-                .filteredOn(observation -> observation.transportRequestNumber() != null
-                        && observation.transportRequestNumber().compareTo("TR-2026-0901") >= 0)
-                .hasSize(5)
+                .filteredOn(observation -> presented.containsKey(observation.transportRequestNumber()))
+                .hasSize(presented.size())
                 .allSatisfy(observation -> {
-                    boolean presented = observation.transportRequestNumber().compareTo("TR-2026-0903") >= 0;
-                    assertThat(observation.firstPresentedAt().isPresent()).isEqualTo(presented);
-                    assertThat(observation.leadTime().isPresent()).isEqualTo(presented);
+                    boolean expected = presented.get(observation.transportRequestNumber());
+                    assertThat(observation.leadTime().isPresent()).isEqualTo(expected);
+                    if (expected) {
+                        assertThat(observation.firstPresentedAt())
+                                .isEqualTo(quotations
+                                        .findByTransportRequestIdAndNo(
+                                                new TransportRequestId(observation.transportRequestId()), 1)
+                                        .flatMap(quotation -> quotation.presentedAt()));
+                    } else {
+                        assertThat(observation.firstPresentedAt()).isEmpty();
+                    }
                 });
     }
 

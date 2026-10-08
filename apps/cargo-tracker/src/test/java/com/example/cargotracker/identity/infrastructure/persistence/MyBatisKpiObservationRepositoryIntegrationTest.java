@@ -39,10 +39,10 @@ class MyBatisKpiObservationRepositoryIntegrationTest extends KpiObservationRepos
         CompanyId shipper = new CompanyId(UUID.randomUUID());
         repository.save(KpiObservation.recordSubmission(
                 transportRequestId, "TR-2026-0001", shipper, new UtcInstant(Instant.parse("2026-10-05T01:00:00Z"))));
-        // 保存されているものより早い提出時刻を持つ写し。集約の規則は通るが、表の提出時刻より前の提示時刻になる
+        // 保存されているものより早い提出時刻を持つ写し。集約の規則は通るが、表の提出時刻の 1 秒前の提示時刻になる
         KpiObservation stale = KpiObservation.recordSubmission(
-                transportRequestId, "TR-2026-0001", shipper, new UtcInstant(Instant.parse("2026-10-04T01:00:00Z")));
-        stale.recordPresentation(new UtcInstant(Instant.parse("2026-10-04T02:00:00Z")));
+                transportRequestId, "TR-2026-0001", shipper, new UtcInstant(Instant.parse("2026-10-05T00:59:58Z")));
+        stale.recordPresentation(new UtcInstant(Instant.parse("2026-10-05T00:59:59Z")));
 
         assertThatThrownBy(() -> repository.saveFirstPresentation(stale))
                 .isInstanceOf(DataIntegrityViolationException.class);

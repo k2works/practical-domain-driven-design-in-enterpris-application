@@ -11,20 +11,36 @@ import com.example.cargotracker.identity.application.internal.queryservices.KpiO
 import com.example.cargotracker.identity.domain.model.aggregates.KpiObservation;
 import com.example.cargotracker.shared.domain.CompanyId;
 import com.example.cargotracker.shared.domain.UtcInstant;
+import java.time.Clock;
 import java.time.Instant;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Import;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 // 画面の単体テストはコントローラーの振る舞いだけを見る。認証・認可・CSRF はセキュリティの統合テストで確かめる（Bolt 14）
 @AutoConfigureMockMvc(addFilters = false)
 @WebMvcTest(controllers = KpiObservationController.class)
+@Import(KpiObservationControllerTest.FixedClock.class)
 class KpiObservationControllerTest {
+
+    /** 一覧を開いた時刻（未提示の行の、提出からの経過時間の基準）。 */
+    @TestConfiguration(proxyBeanMethods = false)
+    static class FixedClock {
+
+        @Bean
+        Clock clock() {
+            return Clock.fixed(Instant.parse("2026-10-06T06:00:59Z"), ZoneOffset.UTC);
+        }
+    }
 
     @Autowired
     MockMvc mockMvc;
@@ -101,7 +117,8 @@ class KpiObservationControllerTest {
 
         mockMvc.perform(get("/staff/kpi-observations"))
                 .andExpect(status().isOk())
-                .andExpect(content().string(containsString(">未提示<")))
-                .andExpect(content().string(containsString("未提示のため算出しない")));
+                .andExpect(content().string(containsString("未提示（提出から 29 時間 0 分）")))
+                .andExpect(content().string(containsString("算出しない")))
+                .andExpect(content().string(containsString("「—」は、まだ提示していないため算出していないことを示します。")));
     }
 }

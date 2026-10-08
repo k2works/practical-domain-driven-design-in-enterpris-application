@@ -111,4 +111,12 @@ class KpiObservationTest {
         assertThat(observation.recordPresentation(at("2026-10-05T04:30:00Z"))).isFalse();
         assertThat(observation.firstPresentedAt()).hasValue(at("2026-10-05T04:30:00Z"));
     }
+
+    @Test
+    void 提出時刻より前の提示時刻かを問い合わせられる() {
+        KpiObservation observation = submittedAt("2026-10-05T01:00:00Z");
+
+        assertThat(observation.precedesSubmission(at("2026-10-05T00:59:59Z"))).isTrue();
+        assertThat(observation.precedesSubmission(at("2026-10-05T01:00:00Z"))).isFalse();
+    }
 }

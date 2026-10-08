@@ -160,4 +160,45 @@ public abstract class KpiObservationRepositoryContract {
 
         assertThat(repository().findByTransportRequestId(transportRequestId)).isEmpty();
     }
+
+    @Test
+    void 保存されている時刻と同じ提示時刻を保存しても変わらない() {
+        UUID transportRequestId = UUID.randomUUID();
+        repository().save(submittedAt(transportRequestId, "2026-10-05T01:00:00Z"));
+        presentAt(transportRequestId, "2026-10-05T04:30:00Z");
+
+        presentAt(transportRequestId, "2026-10-05T04:30:00Z");
+
+        assertThat(repository().findByTransportRequestId(transportRequestId))
+                .hasValueSatisfying(
+                        found -> assertThat(found.firstPresentedAt()).hasValue(at("2026-10-05T04:30:00Z")));
+    }
+
+    @Test
+    void 提出時刻と同時刻の最初の提示時刻を保存できる() {
+        UUID transportRequestId = UUID.randomUUID();
+        repository().save(submittedAt(transportRequestId, "2026-10-05T01:00:00Z"));
+
+        presentAt(transportRequestId, "2026-10-05T01:00:00Z");
+
+        assertThat(repository().findByTransportRequestId(transportRequestId)).hasValueSatisfying(found -> {
+            assertThat(found.firstPresentedAt()).hasValue(at("2026-10-05T01:00:00Z"));
+            assertThat(found.leadTime()).hasValue(java.time.Duration.ZERO);
+        });
+    }
+
+    @Test
+    void 読み出した記録を変えても保存するまでは保存されている記録は変わらない() {
+        UUID transportRequestId = UUID.randomUUID();
+        repository().save(submittedAt(transportRequestId, "2026-10-05T01:00:00Z"));
+
+        repository()
+                .findByTransportRequestId(transportRequestId)
+                .orElseThrow()
+                .recordPresentation(at("2026-10-05T04:30:00Z"));
+
+        assertThat(repository().findByTransportRequestId(transportRequestId))
+                .hasValueSatisfying(
+                        found -> assertThat(found.firstPresentedAt()).isEmpty());
+    }
 }

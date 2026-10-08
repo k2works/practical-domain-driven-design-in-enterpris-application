@@ -5,6 +5,8 @@ import static org.awaitility.Awaitility.await;
 
 import com.example.cargotracker.TestcontainersConfiguration;
 import com.example.cargotracker.identity.application.internal.queryservices.KpiObservationQueryService;
+import com.example.cargotracker.identity.domain.model.aggregates.KpiObservation;
+import com.example.cargotracker.identity.domain.model.aggregates.KpiObservationRepository;
 import com.example.cargotracker.quotation.application.internal.commands.ApproveTransportRequestCommand;
 import com.example.cargotracker.quotation.application.internal.commands.CalculateQuotationCommand;
 import com.example.cargotracker.quotation.application.internal.commands.PresentQuotationCommand;
@@ -16,6 +18,7 @@ import com.example.cargotracker.quotation.application.internal.commandservices.R
 import com.example.cargotracker.quotation.application.internal.commandservices.SubmissionOutcome;
 import com.example.cargotracker.quotation.application.internal.commandservices.TransportRequestCommandService;
 import com.example.cargotracker.quotation.application.internal.commandservices.TransportRequestReviewService;
+import com.example.cargotracker.quotation.application.internal.queryservices.StaffQuotationQueryService;
 import com.example.cargotracker.quotation.application.internal.queryservices.StaffTransportRequestQueryService;
 import com.example.cargotracker.quotation.domain.events.QuotationPresented;
 import com.example.cargotracker.quotation.domain.model.valueobjects.QuotationFixture;
@@ -24,14 +27,22 @@ import com.example.cargotracker.quotation.domain.model.valueobjects.TransportReq
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestStatus;
 import com.example.cargotracker.shared.domain.CompanyId;
 import com.example.cargotracker.shared.domain.UserId;
+import com.example.cargotracker.shared.domain.UtcInstant;
 import java.time.Duration;
+import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Import;
 import org.springframework.modulith.events.CompletedEventPublications;
 import org.springframework.modulith.events.EventPublication;
+import org.springframework.modulith.events.IncompleteEventPublications;
+import org.springframework.modulith.events.core.EventPublicationRepository;
+import org.springframework.modulith.events.core.TargetEventPublication;
+import org.springframework.transaction.support.TransactionTemplate;
 
 /**
  * DE-03 の配信を PostgreSQL 18 で確かめる（ADR-003、Bolt 10 の H1）。
@@ -63,6 +74,24 @@ class QuotationPresentedDeliveryIntegrationTest {
 
     @Autowired
     CompletedEventPublications completedEventPublications;
+
+    @Autowired
+    StaffQuotationQueryService staffQuotationQueryService;
+
+    @Autowired
+    KpiObservationRepository kpiObservationRepository;
+
+    @Autowired
+    ApplicationEventPublisher events;
+
+    @Autowired
+    TransactionTemplate transactionTemplate;
+
+    @Autowired
+    IncompleteEventPublications incompleteEventPublications;
+
+    @Autowired
+    EventPublicationRepository eventPublicationRepository;
 
     @Test
     void 見積りを提示するとイベントが非同期に配信され輸送要求が見積提示済みになり配信が完了する() {
@@ -110,10 +139,65 @@ class QuotationPresentedDeliveryIntegrationTest {
         await().atMost(TIMEOUT)
                 .untilAsserted(() -> assertThat(kpiObservationQueryService.findByTransportRequestId(transportRequestId))
                         .hasValueSatisfying(observation -> {
-                            assertThat(observation.firstPresentedAt()).isPresent();
+                            UtcInstant presentedAt = presentedAtOf(number);
+                            assertThat(observation.firstPresentedAt()).hasValue(presentedAt);
                             assertThat(observation.leadTime())
-                                    .hasValueSatisfying(
-                                            leadTime -> assertThat(leadTime).isGreaterThanOrEqualTo(Duration.ZERO));
+                                    .hasValue(Duration.between(
+                                            observation.submittedAt().instant(), presentedAt.instant()));
                         }));
+    }
+
+    /** 見積り 1 の提示時刻（KPI 計測記録の最初の提示時刻と照らし合わせる）。 */
+    private UtcInstant presentedAtOf(TransportRequestNumber number) {
+        return staffQuotationQueryService
+                .find(number, 1)
+                .orElseThrow()
+                .presentedAt()
+                .orElseThrow();
+    }
+
+    @Test
+    void 提出の記録がないまま届いたDE03は発行の記録が未完了のまま残り再配信で記録できる() {
+        UUID transportRequestId = UUID.randomUUID();
+        UtcInstant presentedAt = new UtcInstant(Instant.parse("2026-10-05T04:30:00Z"));
+        transactionTemplate.executeWithoutResult(status -> events.publishEvent(new QuotationPresented(
+                UUID.randomUUID(),
+                1,
+                transportRequestId,
+                1,
+                presentedAt,
+                List.of(),
+                presentedAt,
+                presentedAt,
+                presentedAt)));
+        // 最初の配信は提出の記録がないため失敗し、発行の記録が失敗（未完了）のまま残る
+        await().atMost(TIMEOUT)
+                .untilAsserted(() ->
+                        assertThat(failedKpiPublications(transportRequestId)).isNotEmpty());
+
+        transactionTemplate.executeWithoutResult(
+                status -> kpiObservationRepository.save(KpiObservation.recordSubmission(
+                        transportRequestId,
+                        "TR-2026-9999",
+                        new CompanyId(UUID.randomUUID()),
+                        new UtcInstant(Instant.parse("2026-10-05T01:00:00Z")))));
+        incompleteEventPublications.resubmitIncompletePublications(
+                publication -> publication.getEvent() instanceof QuotationPresented presented
+                        && presented.transportRequestId().equals(transportRequestId));
+
+        await().atMost(TIMEOUT)
+                .untilAsserted(() -> assertThat(kpiObservationQueryService.findByTransportRequestId(transportRequestId))
+                        .hasValueSatisfying(observation ->
+                                assertThat(observation.firstPresentedAt()).hasValue(presentedAt)));
+    }
+
+    /** KPI の listener への、この輸送要求の DE-03 の発行の記録のうち、失敗したもの。 */
+    private List<TargetEventPublication> failedKpiPublications(UUID transportRequestId) {
+        return eventPublicationRepository.findByStatus(EventPublication.Status.FAILED).stream()
+                .filter(publication -> publication.getEvent() instanceof QuotationPresented presented
+                        && presented.transportRequestId().equals(transportRequestId))
+                .filter(publication ->
+                        publication.getTargetIdentifier().getValue().contains("KpiObservationEventHandler"))
+                .toList();
     }
 }

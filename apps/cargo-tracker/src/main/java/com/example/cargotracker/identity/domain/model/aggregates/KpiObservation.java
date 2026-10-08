@@ -104,4 +104,9 @@ public final class KpiObservation {
     public Optional<Duration> leadTime() {
         return firstPresentedAt().map(presentedAt -> Duration.between(submittedAt.instant(), presentedAt.instant()));
     }
+
+    /** 提示時刻が提出時刻より前か。骨組み（Bolt 21 の開発レビューの Red）。 */
+    public boolean precedesSubmission(UtcInstant presentedAt) {
+        return false;
+    }
 }

@@ -28,6 +28,9 @@ public class KpiObservationUiSteps {
 
     private static final Pattern LEAD_TIME = Pattern.compile("^\\d+ 時間 \\d+ 分$");
 
+    /** 未提示の行（例: 未提示（提出から 52 時間 10 分））。 */
+    private static final Pattern NOT_PRESENTED = Pattern.compile("^未提示（提出から \\d+ 時間 \\d+ 分）$");
+
     private final BrowserSession browser;
     private final UiScenarioState state;
     private final String baseUrl;
@@ -55,8 +58,8 @@ public class KpiObservationUiSteps {
     @ならば("KPI 計測記録の提出した見積依頼の行に提出時刻と最初の提示時刻と KPI-01 リードタイムが表示される")
     public void 提示済みの行が表示される() {
         // DE-01・DE-03 の購読は非同期のため、行に提示時刻が出るまで読み直す
-        Locator row = rowWhen(cells ->
-                cells.count() == 4 && !"未提示".equals(cells.nth(2).innerText().strip()));
+        Locator row = rowWhen(
+                cells -> cells.count() == 4 && !cells.nth(2).innerText().strip().startsWith("未提示"));
         assertThat(row.locator("td").nth(1)).hasText(STAFF_DATE_TIME);
         assertThat(row.locator("td").nth(2)).hasText(STAFF_DATE_TIME);
         assertThat(row.locator("td").nth(3)).hasText(LEAD_TIME);
@@ -67,8 +70,8 @@ public class KpiObservationUiSteps {
     public void 未提示の行が表示される() {
         Locator row = rowWhen(cells -> cells.count() == 4);
         assertThat(row.locator("td").nth(1)).hasText(STAFF_DATE_TIME);
-        assertThat(row.locator("td").nth(2)).hasText("未提示");
-        assertThat(row.locator("td").nth(3)).containsText("未提示のため算出しない");
+        assertThat(row.locator("td").nth(2)).hasText(NOT_PRESENTED);
+        assertThat(row.locator("td").nth(3)).containsText("算出しない");
         browser.checkAccessibility();
     }
 

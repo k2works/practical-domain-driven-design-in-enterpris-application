@@ -100,23 +100,27 @@ class KpiObservationEventHandlerTest {
         assertThat(repository.findByTransportRequestId(transportRequestId)).isEmpty();
         assertThat(logs.list).singleElement().satisfies(log -> {
             assertThat(log.getLevel()).isEqualTo(Level.WARN);
-            assertThat(log.getFormattedMessage()).contains(transportRequestId.toString());
+            assertThat(log.getFormattedMessage())
+                    .contains(transportRequestId.toString())
+                    .contains("提出の記録がない");
         });
     }
 
     @Test
-    void 提出時刻より前の提示時刻のDE03は警告のログを残して例外を投げ記録を変えない() {
+    void 提出時刻より前の提示時刻のDE03は再配信しても直らないためERRORのログを残して捨て記録を変えない() {
         UUID transportRequestId = submitted("2026-10-05T01:00:00Z");
 
-        assertThatThrownBy(() -> handler.on(presented(transportRequestId, "2026-10-05T00:59:59Z")))
-                .isInstanceOf(IllegalStateException.class);
+        handler.on(presented(transportRequestId, "2026-10-05T00:59:59Z"));
 
         assertThat(repository.findByTransportRequestId(transportRequestId))
                 .hasValueSatisfying(observation ->
                         assertThat(observation.firstPresentedAt()).isEmpty());
-        assertThat(logs.list)
-                .singleElement()
-                .satisfies(log -> assertThat(log.getLevel()).isEqualTo(Level.WARN));
+        assertThat(logs.list).singleElement().satisfies(log -> {
+            assertThat(log.getLevel()).isEqualTo(Level.ERROR);
+            assertThat(log.getFormattedMessage())
+                    .contains(transportRequestId.toString())
+                    .contains("提出時刻より前");
+        });
     }
 
     @Test
