@@ -4,7 +4,7 @@ title: "ADR-001: モジュラーモノリスを採用する"
 description: "cargo-tracker のバックエンドを、境界づけられたコンテキストごとのモジュールを持つ 1 つのデプロイ単位として構築する決定。"
 tags: [adr, architecture]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-01T23:28:04Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-08T06:23:54Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T07:11:13Z }
   - { by: human:kakimomokuri, at: 2026-10-01T07:48:16Z }
