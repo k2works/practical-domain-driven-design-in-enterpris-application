@@ -5200,6 +5200,41 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../adr/cargo-tracker/014-downstream-to-upstream-notification/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-014 下流から上流への通知
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--draft"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -7997,10 +8032,16 @@
 <td style="text-align: left;">集荷実績の採用と引渡しの確認だけを通知する。予約は追跡の公開 API・内部に依存しない（<a href="../domain_model/">ドメインモデル</a> DE-09、DE-10。第 2 章で Booking が Cargo Handled を購読するのと同じ）</td>
 </tr>
 <tr>
-<td style="text-align: left;">予約 → 見積り（イベントのみ）</td>
+<td style="text-align: left;">予約 → 見積り（下流から上流への通知）</td>
 <td style="text-align: left;">B → Q</td>
-<td style="text-align: left;">公表された言語（ドメインイベント）</td>
-<td style="text-align: left;">本予約の確定だけを通知し、輸送要求を予約確定済みにする（<a href="../domain_model/">ドメインモデル</a> DE-07）</td>
+<td style="text-align: left;">下流の listener が上流の公開 API を呼ぶ（<a href="../../../adr/cargo-tracker/014-downstream-to-upstream-notification/">ADR-014</a>）</td>
+<td style="text-align: left;">本予約の確定（DE-07）を予約の listener が受け、見積りの公開 API で輸送要求を予約確定済みにする（W4）</td>
+</tr>
+<tr>
+<td style="text-align: left;">経路設計 → 見積り（下流から上流への通知）</td>
+<td style="text-align: left;">R → Q</td>
+<td style="text-align: left;">下流の listener が上流の公開 API を呼ぶ（ADR-014）</td>
+<td style="text-align: left;">経路の確定（DE-05）を経路設計の listener が受け、見積りの公開 API（経路の割当て）で依頼元の見積りに経路版を割り当てる（Bolt 20）。見積りは経路設計のイベントを購読しない</td>
 </tr>
 </tbody>
 </table>
@@ -8011,6 +8052,7 @@
 <li>戻り値は Java の標準と共有カーネルの型（<code>Location</code>、<code>UtcInstant</code> など）と文字列だけで表し、上流のドメインの型を持たない（イベントと同じ規則。ArchUnit で確かめる）。</li>
 <li>実装は上流の <code>application.internal.queryservices</code> に置き、合成ルート（<code>infrastructure.config</code>）で公開 API の型の bean として組み立てる。</li>
 <li>下流は <code>application.internal.outboundservices.acl</code> から呼び、自分のドメインの型に変える。下流のモジュールの <code>allowedDependencies</code> に <code>&lt;上流&gt; :: api</code> を足す。</li>
+<li>下流から上流への通知（ADR-014）では、上流の公開 API に冪等な操作のインターフェースを置き、実装は上流の <code>application.internal.commandservices</code> に置く。業務の拒否は戻り値の値で返す。最初の操作は、見積りの「経路の割当て」（<code>quotation.api.RouteAssignment</code>。案件番号・経路版番号・確定の時刻・区間を受け、依頼元の見積りに割り当てる。Bolt 20）。</li>
 <li>最初の公開 API は、見積りの「経路条件の照会」（<code>quotation.api.RouteConditionQuery</code>。輸送要求 ID と版番号から、出発地・目的地・希望到着期限・貨物種別を返す）。経路設計が DE-16 を受けて経路設計案件を作るときに呼ぶ。</li>
 </ul>
 <h3 id="_6">共有カーネル<a class="headerlink" href="#_6" title="Permanent link">&para;</a></h3>
