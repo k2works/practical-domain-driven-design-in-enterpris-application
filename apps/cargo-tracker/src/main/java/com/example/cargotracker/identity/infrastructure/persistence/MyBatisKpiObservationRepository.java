@@ -24,16 +24,12 @@ public class MyBatisKpiObservationRepository implements KpiObservationRepository
 
     @Override
     public void save(KpiObservation observation) {
-        mapper.insertIfAbsent(new KpiObservationRow(
-                observation.transportRequestId(),
-                observation.transportRequestNumber(),
-                observation.shipperCompanyId().value(),
-                observation.submittedAt().instant().atOffset(ZoneOffset.UTC)));
+        mapper.insertIfAbsent(toRow(observation));
     }
 
     @Override
     public void saveFirstPresentation(KpiObservation observation) {
-        throw new UnsupportedOperationException("Bolt 21 ステップ 3 で作る");
+        mapper.updateFirstPresentedAtIfEarlier(toRow(observation));
     }
 
     @Override
@@ -48,11 +44,26 @@ public class MyBatisKpiObservationRepository implements KpiObservationRepository
                 .toList();
     }
 
+    private static KpiObservationRow toRow(KpiObservation observation) {
+        return new KpiObservationRow(
+                observation.transportRequestId(),
+                observation.transportRequestNumber(),
+                observation.shipperCompanyId().value(),
+                observation.submittedAt().instant().atOffset(ZoneOffset.UTC),
+                observation
+                        .firstPresentedAt()
+                        .map(presentedAt -> presentedAt.instant().atOffset(ZoneOffset.UTC))
+                        .orElse(null));
+    }
+
     private static KpiObservation toAggregate(KpiObservationRow row) {
         return KpiObservation.reconstitute(
                 row.transportRequestId(),
                 row.transportRequestNumber(),
                 new CompanyId(row.shipperCompanyId()),
-                new UtcInstant(row.submittedAt().toInstant()));
+                new UtcInstant(row.submittedAt().toInstant()),
+                row.firstPresentedAt() == null
+                        ? null
+                        : new UtcInstant(row.firstPresentedAt().toInstant()));
     }
 }

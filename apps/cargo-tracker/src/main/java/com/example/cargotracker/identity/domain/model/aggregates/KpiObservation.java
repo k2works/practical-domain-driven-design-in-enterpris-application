@@ -26,11 +26,13 @@ public final class KpiObservation {
             UUID transportRequestId,
             String transportRequestNumber,
             CompanyId shipperCompanyId,
-            UtcInstant submittedAt) {
+            UtcInstant submittedAt,
+            UtcInstant firstPresentedAt) {
         this.transportRequestId = Objects.requireNonNull(transportRequestId, "transportRequestId");
         this.transportRequestNumber = transportRequestNumber;
         this.shipperCompanyId = Objects.requireNonNull(shipperCompanyId, "shipperCompanyId");
         this.submittedAt = Objects.requireNonNull(submittedAt, "submittedAt");
+        this.firstPresentedAt = firstPresentedAt;
     }
 
     /**
@@ -41,18 +43,20 @@ public final class KpiObservation {
             String transportRequestNumber,
             CompanyId shipperCompanyId,
             UtcInstant submittedAt) {
-        return new KpiObservation(transportRequestId, transportRequestNumber, shipperCompanyId, submittedAt);
+        return new KpiObservation(transportRequestId, transportRequestNumber, shipperCompanyId, submittedAt, null);
     }
 
     /**
-     * 保存されている状態から KPI 計測記録を組み立てる（リポジトリが使う）。
+     * 保存されている状態から KPI 計測記録を組み立てる（リポジトリが使う）。最初の提示時刻は、まだ提示していなければ null。
      */
     public static KpiObservation reconstitute(
             UUID transportRequestId,
             String transportRequestNumber,
             CompanyId shipperCompanyId,
-            UtcInstant submittedAt) {
-        return new KpiObservation(transportRequestId, transportRequestNumber, shipperCompanyId, submittedAt);
+            UtcInstant submittedAt,
+            UtcInstant firstPresentedAt) {
+        return new KpiObservation(
+                transportRequestId, transportRequestNumber, shipperCompanyId, submittedAt, firstPresentedAt);
     }
 
     public UUID transportRequestId() {

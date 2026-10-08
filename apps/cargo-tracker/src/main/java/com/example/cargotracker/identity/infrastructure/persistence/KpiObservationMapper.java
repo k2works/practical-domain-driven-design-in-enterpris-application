@@ -13,6 +13,9 @@ public interface KpiObservationMapper {
 
     void insertIfAbsent(KpiObservationRow row);
 
+    /** 最初の提示時刻がないか、渡した時刻のほうが早いときだけ書く（KPI-INV-01。Bolt 21）。 */
+    void updateFirstPresentedAtIfEarlier(KpiObservationRow row);
+
     Optional<KpiObservationRow> selectByTransportRequestId(UUID transportRequestId);
 
     List<KpiObservationRow> selectAll();
