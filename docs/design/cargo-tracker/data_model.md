@@ -4,7 +4,7 @@ title: "cargo-tracker データモデル"
 description: "cargo-tracker の概念データモデル、スキーマ分割、命名と型の規約（H2 と PostgreSQL の共通部分）、コンテキストごとの論理データモデルと ER 図、版・追記専用・冪等性・イベント配信の表現。"
 tags: [design, data-model]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-08T07:48:01Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-08T07:56:18Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T07:48:17Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:01:37Z }
@@ -539,7 +539,7 @@ entity "booking_version\n予約版" as bv {
   * transport_request_id : UUID <<REF quotation>>
   * transport_request_version_no : INTEGER
   * quotation_id : UUID <<REF quotation>>
-  * routing_case_id : UUID <<REF routing>>
+  * routing_case_number : VARCHAR(20) <<REF quotation>>
   * route_version_no : INTEGER
   * consignee_company_id : UUID <<REF identity>>
   * cargo_category : VARCHAR(30)
@@ -1159,6 +1159,7 @@ src/main/resources/db/
 - **荷受人**: 輸送条件に荷受人企業を加えた（UC-01 の記録項目、IA-INV-05 の判定に必要）。ドメインモデルにも同じ修正を入れた。
 - **金額の通貨**: 見積りは 1 つの通貨で表すと仮定した。複数通貨の混在が必要かは営業責任者に確認する。
 - **追跡番号の形式**: `VARCHAR(20)`。`CT` と、紛らわしい文字（0・O・1・I・L）を除いた英大文字・数字 12 桁（`SecureRandom`）の 14 文字（約 59 bit）とした（Bolt 23）。業務番号や連番から推測できない（BR-07）。
+- **経路版の写し**: 予約版は経路版を案件番号と経路版番号で持つ（`routing_case_number`）。予約は経路設計に問い合わせず、見積りが割り当てた経路の写し（案件番号で持つ）を使うため（ADR-016。Bolt 23 で案件 ID から改めた）。
 - **業務番号の写し**: 本予約で輸送要求の業務番号を貨物予約（`booking.transport_request_number`）に写して持つ。予約版が変わっても変わらないので予約版ではなく貨物予約に置く。社内の画面と照会で業務番号から予約をたどる（D-4、Bolt 3 レビュー R-31。Bolt 23）。
 - **外部原本の個人情報と保持**: 外部原本のファイルは荷受人の担当者名などの個人情報を含みうる。Object Lock（コンプライアンスモード）の 7 年の間は削除できないため、取引の証跡として保持期間の満了まで残し、満了後に PRV-06 に従って削除する。保持期間中の利用は採否の照合と監査に限る（要確認: 管理・コンプライアンス責任者）。
 - **保持期間を過ぎた記録の削除**: 追記専用の表はアプリケーションの DB 利用者では削除できないため、年次の削除（`retention:purge`）はマイグレーション用の DB 利用者で、承認を得て実行する（運用要件）。

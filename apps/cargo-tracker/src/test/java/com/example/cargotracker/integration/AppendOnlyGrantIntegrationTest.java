@@ -36,7 +36,8 @@ class AppendOnlyGrantIntegrationTest {
             "quotation.transport_request_version",
             "quotation.review_record",
             "quotation.required_document",
-            "identity.audit_record");
+            "identity.audit_record",
+            "booking.booking_version");
 
     private static final String APP_PASSWORD = "cargo_tracker_app_test";
     private static final String INSUFFICIENT_PRIVILEGE = "42501";
@@ -155,6 +156,53 @@ class AppendOnlyGrantIntegrationTest {
         assertInsufficientPrivilege("DELETE FROM quotation.review_record WHERE transport_request_id = ?");
     }
 
+    @Test
+    void アプリケーション利用者は予約版を追加できるが更新も削除もできない() throws SQLException {
+        UUID bookingId = UUID.randomUUID();
+        Timestamp now = Timestamp.from(Instant.parse("2026-10-08T09:00:00Z"));
+        try (Connection connection = connectAsApplicationUser()) {
+            try (PreparedStatement booking = connection.prepareStatement("INSERT INTO booking.booking"
+                    + " (id, tracking_number, transport_request_number, shipper_company_id, status, transport_phase,"
+                    + " current_version_no, version, created_at, created_by, updated_at, updated_by)"
+                    + " VALUES (?, ?, 'TR-2026-0001', ?, 'CONFIRMED', 'BEFORE_PICKUP', 1, 0, ?, ?, ?, ?)")) {
+                UUID user = UUID.randomUUID();
+                booking.setObject(1, bookingId);
+                booking.setString(
+                        2,
+                        "CT"
+                                + bookingId
+                                        .toString()
+                                        .replace("-", "")
+                                        .substring(0, 12)
+                                        .toUpperCase());
+                booking.setObject(3, UUID.randomUUID());
+                booking.setTimestamp(4, now);
+                booking.setObject(5, user);
+                booking.setTimestamp(6, now);
+                booking.setObject(7, user);
+                assertThat(booking.executeUpdate()).isEqualTo(1);
+            }
+            try (PreparedStatement version = connection.prepareStatement("INSERT INTO booking.booking_version"
+                    + " (booking_id, booking_version_no, transport_request_id, transport_request_version_no,"
+                    + " quotation_id, routing_case_number, route_version_no, consignee_company_id, cargo_category,"
+                    + " cargo_summary, shipper_approver_id, confirmed_by, committed_at)"
+                    + " VALUES (?, 1, ?, 1, ?, ?, 1, ?, 'GENERAL', '一般貨物', ?, ?, ?)")) {
+                version.setObject(1, bookingId);
+                version.setObject(2, transportRequestId);
+                version.setObject(3, UUID.randomUUID());
+                version.setString(4, "RC-2026-0001");
+                version.setObject(5, UUID.randomUUID());
+                version.setObject(6, UUID.randomUUID());
+                version.setObject(7, UUID.randomUUID());
+                version.setTimestamp(8, now);
+                assertThat(version.executeUpdate()).isEqualTo(1);
+            }
+        }
+        assertInsufficientPrivilege(
+                "UPDATE booking.booking_version SET cargo_summary = '書き換え' WHERE transport_request_id = ?");
+        assertInsufficientPrivilege("DELETE FROM booking.booking_version WHERE transport_request_id = ?");
+    }
+
     private void assertInsufficientPrivilege(String sql) throws SQLException {
         try (Connection connection = connectAsApplicationUser();
                 PreparedStatement statement = connection.prepareStatement(sql)) {
@@ -174,7 +222,7 @@ class AppendOnlyGrantIntegrationTest {
 
     private Set<String> tablesWithoutUpdatePrivilege(Connection connection) throws SQLException {
         try (PreparedStatement statement = connection.prepareStatement("SELECT table_schema || '.' || table_name"
-                + " FROM information_schema.tables WHERE table_schema IN ('quotation', 'identity', 'platform')"
+                + " FROM information_schema.tables WHERE table_schema IN ('quotation', 'identity', 'platform', 'booking')"
                 + " AND table_type = 'BASE TABLE'"
                 + " AND NOT has_table_privilege(?, table_schema || '.' || table_name, 'UPDATE')")) {
             statement.setString(1, appUser);
