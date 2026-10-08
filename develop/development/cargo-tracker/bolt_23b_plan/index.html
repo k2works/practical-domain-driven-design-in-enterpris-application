@@ -8464,10 +8464,18 @@
 <li>承認ゲートの扱い（T-36）: Red・Green（確定の画面）と認可の承認ゲートで止まらずに進めた（AI の判断）。根拠は、文言と構成が UI 設計の S-09・S-24 の行（ステップ 1）のとおりで、認可は既存の <code>/staff/**</code> の規則のままセキュリティの統合テストで確かめたこと</li>
 </ul>
 </li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>4. S-02 の表と画面の層のシナリオ</strong> 【承認ゲート: 画面】</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>4. S-02 の表と画面の層のシナリオ</strong> 【承認ゲート: 画面】</li>
 <li>画面の層の受入シナリオを先に書く（<code>features/ui/confirm_booking_ui.feature</code>、<code>@US-04-AC1</code>・<code>@US-04-AC2</code>、デモ項目 <code>@demo @demo-bolt-23b/confirm-booking</code>）: 荷主の承認の後、営業担当者が S-02 の予約の確定待ちの表から S-09 を開き、キー操作だけで確認して確定 → S-24 に追跡番号と「追跡の開始: 処理中」。S-02 から行が消える（DE-07 の配信を待つので、開き直しながら待つ）。失効（荷主承認済み）の行は確定の入口を出さない。幅 320 CSS px。axe-core 0 件</li>
 <li>S-02 のテンプレートと読み取りモデル、<code>TransportRequestLabels</code> の <code>BOOKED</code> の確かめ</li>
 <li>完了の判定: <code>check</code> と <code>uiTest</code> 緑</li>
+<li>結果（2026-10-08）<ul>
+<li>Red: S-02 の画面の単体テスト（予約の確定待ちの表と本予約の確定・再見積りの入口、経路設計中・荷主承認待ちの表の経路の確定の時刻と凡例）と、画面の層の受入シナリオ <code>features/ui/confirm_booking_ui.feature</code>（確定 <code>@demo-bolt-23b/confirm-booking</code>、開いた後の失効、幅 320 CSS px）を先に書いた。単体 3 件（表がない・表の名前が違う）と画面の層 3 本（S-02 に予約の確定待ちの表がない）が本命で落ちることを確かめた。既存の画面の層の 59 本は通った</li>
+<li>Green: <code>TransportRequestReviewController</code> の予約の確定待ちの行（有効期限の前は S-09、失効は S-04 の再見積り）と経路の確定の時刻、<code>list.html</code> の 2 つの表。S-09 へは URL だけでつなぎ、見積りのコードは予約に依存しない</li>
+<li>仕様の変更で直した既存のテスト: Bolt 20 の S-02 の単体テストと画面の層のステップの表の名前（「経路設計中・荷主承認待ち・予約待ち」→「経路設計中・荷主承認待ち」）</li>
+<li><code>check</code> 緑、<code>uiTest</code> 緑（62 本）</li>
+<li>承認ゲートの扱い（T-36）: 画面の承認ゲートで止まらずに進めた（AI の判断）。根拠は、表と文言が UI 設計の S-02 の行（ステップ 1）のとおりであること</li>
+</ul>
+</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>5. 開発レビューと終了報告</strong> 【承認ゲート: 開発レビューの判断、終了報告】</li>
 <li><code>developing-review</code>（プログラマー・テスター・アーキテクト・インタラクションデザイナー・ユーザー代表）、SonarQube、受入動画（<code>./gradlew demoVideo</code>。過去の Bolt の動画は元に戻す）、<code>bolt_23b_report.md</code>。#10 に画面の結果をコメントする（クローズは Bolt 25）</li>
 </ul>
