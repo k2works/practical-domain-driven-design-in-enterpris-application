@@ -193,7 +193,7 @@ Bolt 22 の作業中、SonarQube のコンテナが CPU を使っている間に
 | 確認 | `./gradlew test`（1207 件）・`./gradlew uiTest`（118 件）・`documentationTest`・`spotlessCheck`・`spotbugsMain`・`okf:check` が通る。`RouteDesignRequestedRoutingIntegrationTest` も通る |
 | 設計文書 | [バックエンドアーキテクチャ](../../design/cargo-tracker/architecture_backend.md) の「ドメインイベントの配信」に「購読側の楽観ロックの競合」の取り決めを足した（RTY-01 の「同じ処理を 2 つの仕組みで再試行しない」と矛盾しないことを書く） |
 
-### 終了報告に載せること
+### 終了報告に載せること（[Bolt 22 終了報告](bolt_22_report.md) の議題 7 と既知の課題に反映済み）
 
 - 割り込みとして: 上の原因・決定・結果。
 - 既知の課題として: DE-05 の割り当て（見積りの楽観ロックの競合を再配信に任せている）、KPI 計測の listener の届き順への依存（DE-01 より先に DE-03 が届くと例外）。どちらも未完了の発行は起動のときまで再配信されない（定期の再配信は W10。ADR-014）。
