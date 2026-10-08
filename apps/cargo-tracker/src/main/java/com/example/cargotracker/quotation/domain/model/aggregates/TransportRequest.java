@@ -30,6 +30,14 @@ import java.util.UUID;
 @AggregateRoot
 public final class TransportRequest {
 
+    /** 見積りのイベントで進める状態の並び（{@link #isBefore}）。 */
+    private static final List<TransportRequestStatus> QUOTATION_PROGRESSION = List.of(
+            TransportRequestStatus.QUOTING,
+            TransportRequestStatus.QUOTED,
+            TransportRequestStatus.ROUTING,
+            TransportRequestStatus.AWAITING_APPROVAL,
+            TransportRequestStatus.READY_TO_BOOK);
+
     private static final int FIRST_VERSION_NO = 1;
 
     /** 根拠・理由・不足事項の文字数の上限（Q-INV-14、データモデルの VARCHAR(4000)）。文字（コードポイント）で数える（D-22）。 */
@@ -158,7 +166,7 @@ public final class TransportRequest {
      * @return 状態を変えたら true
      */
     public boolean markQuotationPresented(int quotedVersionNo) {
-        if (status != TransportRequestStatus.QUOTING || quotedVersionNo != currentVersion.versionNo()) {
+        if (!isBefore(TransportRequestStatus.QUOTED) || quotedVersionNo != currentVersion.versionNo()) {
             return false;
         }
         status = TransportRequestStatus.QUOTED;
@@ -174,8 +182,7 @@ public final class TransportRequest {
      * @return 状態を変えたら true（すでに経路設計中なら false。冪等）
      */
     public boolean markRoutingRequested(int quotedVersionNo) {
-        if ((status != TransportRequestStatus.QUOTING && status != TransportRequestStatus.QUOTED)
-                || quotedVersionNo != currentVersion.versionNo()) {
+        if (!isBefore(TransportRequestStatus.ROUTING) || quotedVersionNo != currentVersion.versionNo()) {
             return false;
         }
         status = TransportRequestStatus.ROUTING;
@@ -189,7 +196,11 @@ public final class TransportRequest {
      * @return 状態を変えたら true
      */
     public boolean markAwaitingApproval(int quotedVersionNo) {
-        return false;
+        if (!isBefore(TransportRequestStatus.AWAITING_APPROVAL) || quotedVersionNo != currentVersion.versionNo()) {
+            return false;
+        }
+        status = TransportRequestStatus.AWAITING_APPROVAL;
+        return true;
     }
 
     /**
@@ -199,7 +210,21 @@ public final class TransportRequest {
      * @return 状態を変えたら true
      */
     public boolean markReadyToBook(int quotedVersionNo) {
-        return false;
+        if (!isBefore(TransportRequestStatus.READY_TO_BOOK) || quotedVersionNo != currentVersion.versionNo()) {
+            return false;
+        }
+        status = TransportRequestStatus.READY_TO_BOOK;
+        return true;
+    }
+
+    /**
+     * 見積りのイベントで進める状態の並び（見積り作成中 → 見積提示済み → 経路設計中 → 荷主承認待ち → 予約待ち）で、いまの状態が
+     * {@code target} より前か。見積りのイベントは別のトランザクションで届き順が入れ替わり得るため、先の状態へだけ進め、戻さない
+     * （DE-16 と DE-03 と同じ。Bolt 12 レビュー R-04）。審査中・下書きは並びの外で、進めない。
+     */
+    private boolean isBefore(TransportRequestStatus target) {
+        int current = QUOTATION_PROGRESSION.indexOf(status);
+        return current >= 0 && current < QUOTATION_PROGRESSION.indexOf(target);
     }
 
     /**

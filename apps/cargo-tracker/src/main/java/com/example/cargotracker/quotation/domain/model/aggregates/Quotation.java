@@ -1,6 +1,8 @@
 package com.example.cargotracker.quotation.domain.model.aggregates;
 
+import com.example.cargotracker.quotation.domain.events.QuotationApprovedByShipper;
 import com.example.cargotracker.quotation.domain.events.QuotationPresented;
+import com.example.cargotracker.quotation.domain.events.QuotationRouteAssigned;
 import com.example.cargotracker.quotation.domain.events.RouteDesignRequested;
 import com.example.cargotracker.quotation.domain.model.valueobjects.AssignedRoute;
 import com.example.cargotracker.quotation.domain.model.valueobjects.PricingBasis;
@@ -26,7 +28,8 @@ import java.util.Optional;
 /**
  * 見積り。審査済みの輸送要求版に対する料金根拠・有効期限・経路方針の提示（US-03。集約ルート）。
  * 作成中 → 承認待ち（算出する。Q-INV-05・17）→ 提示済み（社内承認して提示する。DE-03）→ 詳細設計依頼済み（荷主が詳細経路設計へ
- * 進むと回答する。DE-16。Bolt 12）の順に進む。
+ * 進むと回答する。DE-16。Bolt 12）→ 荷主承認待ち（経路設計が確定した経路版を割り当てる。DE-21）→ 承認済み（荷主が承認する。DE-04。
+ * Bolt 20）の順に進む。
  * 承認待ち・提示済みの見積りは、再見積りで置換済み（有効期限を過ぎていれば失効）になる（Q-INV-07。Bolt 11）。
  * 失効は状態を書き換えずに判定時刻で決める（{@link #isExpiredAt}）。
  *
@@ -304,7 +307,30 @@ public final class Quotation {
     public RouteAssignmentResult assignRoute(AssignedRoute route, UtcInstant at) {
         Objects.requireNonNull(route, "route");
         Objects.requireNonNull(at, "at");
-        return RouteAssignmentResult.NOT_ROUTING_REQUESTED;
+        RouteAssignmentResult result =
+                switch (status) {
+                    case ROUTING_REQUESTED -> RouteAssignmentResult.ASSIGNED;
+                    case AWAITING_SHIPPER_APPROVAL, APPROVED ->
+                        assignedRoute.isSameVersionAs(route)
+                                ? RouteAssignmentResult.ALREADY_ASSIGNED
+                                : RouteAssignmentResult.ANOTHER_ROUTE_VERSION_ASSIGNED;
+                    case EXPIRED, REPLACED -> RouteAssignmentResult.RETIRED;
+                    case DRAFT, PENDING_APPROVAL, PRESENTED -> RouteAssignmentResult.NOT_ROUTING_REQUESTED;
+                };
+        if (result != RouteAssignmentResult.ASSIGNED) {
+            return result;
+        }
+        assignedRoute = route;
+        status = QuotationStatus.AWAITING_SHIPPER_APPROVAL;
+        domainEvents.add(new QuotationRouteAssigned(
+                id.value(),
+                quotationNo,
+                transportRequestId.value(),
+                transportRequestVersionNo,
+                route.routingCaseNumber(),
+                route.routeVersionNo(),
+                at));
+        return result;
     }
 
     /**
@@ -316,17 +342,47 @@ public final class Quotation {
      */
     public Optional<QuotationRejection> approveByShipper(UserId approver, UtcInstant at) {
         Objects.requireNonNull(approver, "approver");
-        return approvalRejectionAt(at);
+        Optional<QuotationRejection> rejection = approvalRejectionAt(at);
+        if (rejection.isPresent()) {
+            return rejection;
+        }
+        shipperApproval = new ShipperApproval(approver, at);
+        status = QuotationStatus.APPROVED;
+        domainEvents.add(new QuotationApprovedByShipper(
+                id.value(),
+                quotationNo,
+                transportRequestId.value(),
+                transportRequestVersionNo,
+                assignedRoute.routingCaseNumber(),
+                assignedRoute.routeVersionNo(),
+                approver.value(),
+                at));
+        return Optional.empty();
     }
 
     /**
-     * 判定時刻に荷主が承認できないなら、その理由（Q-INV-07・10。Bolt 20）。画面の操作の出し分けもこれを使う。
+     * 判定時刻に荷主が承認できないなら、その理由（Q-INV-07・10。Bolt 20）。置換済み・失効の記録を先に見て、承認済みなら
+     * 期限を過ぎていても承認済みとして示し（二重送信の結果を誤らせない）、そうでなければ判定時刻で失効か、荷主承認待ちでないかを返す。
+     * 再設計要・旧版の経路版の判定は W6（US-08、DE-06）で足す。画面の操作の出し分けもこれを使う。
      *
      * @return 承認できない理由（承認できるなら空）
      */
     public Optional<QuotationRejection> approvalRejectionAt(UtcInstant at) {
         Objects.requireNonNull(at, "at");
-        return Optional.of(QuotationRejection.NOT_AWAITING_SHIPPER_APPROVAL);
+        Optional<QuotationRejection> retired = retiredRejection();
+        if (retired.isPresent()) {
+            return retired;
+        }
+        if (status == QuotationStatus.APPROVED) {
+            return Optional.of(QuotationRejection.ALREADY_APPROVED);
+        }
+        if (isExpiredAt(at)) {
+            return Optional.of(QuotationRejection.EXPIRED);
+        }
+        if (status != QuotationStatus.AWAITING_SHIPPER_APPROVAL) {
+            return Optional.of(QuotationRejection.NOT_AWAITING_SHIPPER_APPROVAL);
+        }
+        return Optional.empty();
     }
 
     /**
@@ -367,7 +423,7 @@ public final class Quotation {
      * @return 再見積りできない理由（再見積りできるなら空）
      */
     public Optional<QuotationRejection> requoteRejection() {
-        if (status == QuotationStatus.ROUTING_REQUESTED) {
+        if (status.isRoutingStarted()) {
             return Optional.of(QuotationRejection.ROUTING_REQUESTED);
         }
         return retiredRejection();

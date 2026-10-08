@@ -23,9 +23,17 @@ public enum QuotationStatus {
     /** 置換済み（再見積りで新しい見積りに置き換えた。終わりの状態）。 */
     REPLACED;
 
-    /** 判定時刻で失効し得るか（承認待ち・提示済み・詳細設計依頼済み。Q-INV-07）。状態を足すときはここだけを直す（Bolt 12 レビュー R-05）。 */
+    /**
+     * 判定時刻で失効し得るか（承認待ち・提示済み・詳細設計依頼済み・荷主承認待ち・承認済み。Q-INV-06・07）。状態を足すときはここだけを直す
+     * （Bolt 12 レビュー R-05）。
+     */
     public boolean expiresByTime() {
-        return this == PENDING_APPROVAL || this == PRESENTED || this == ROUTING_REQUESTED;
+        return this == PENDING_APPROVAL || this == PRESENTED || isRoutingStarted();
+    }
+
+    /** 荷主が詳細経路設計を依頼した後か（詳細設計依頼済み・荷主承認待ち・承認済み）。経路設計の途中から後は再見積りできない（Bolt 12・20）。 */
+    public boolean isRoutingStarted() {
+        return this == ROUTING_REQUESTED || this == AWAITING_SHIPPER_APPROVAL || this == APPROVED;
     }
 
     /** 1 つの輸送要求に 1 つだけの見積りに数えるか（作成中と、判定時刻で失効し得る状態。Q-INV-18）。DB の部分一意インデックスと合わせる。 */

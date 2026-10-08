@@ -327,8 +327,7 @@ public class StaffQuotationController {
             case OUTDATED_VERSION -> subject + " は輸送要求の古い版に対する見積りのため、再見積りできません";
             case NOT_PRESENTED -> subject + " は荷主に提示していません";
             case ROUTING_REQUESTED -> subject + " は荷主が詳細経路設計を依頼済みのため、再見積りできません";
-            case NOT_AWAITING_SHIPPER_APPROVAL -> subject + " は荷主承認待ちではありません";
-            case ALREADY_APPROVED -> subject + " は荷主が承認済みです";
+            case NOT_AWAITING_SHIPPER_APPROVAL, ALREADY_APPROVED -> subject + " は荷主の承認の段階にあるため、この操作はできません";
         };
     }
 
