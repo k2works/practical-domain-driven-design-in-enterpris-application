@@ -4,7 +4,6 @@ import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.not;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -90,7 +89,7 @@ class BookingControllerTest {
                 .andExpect(content().string(containsString("この表示は開いた時刻での確認です。有効期限の判定は確定の時刻で行い、期限と同時刻以後は確定できません。")))
                 .andExpect(content().string(containsString("本予約を確定しますか")))
                 .andExpect(content().string(containsString("本予約を確定し、追跡番号を発行します")))
-                .andExpect(content().string(containsString("確定の後の変更・取消しは申請で行います（申請の画面は準備中です）")))
+                .andExpect(content().string(containsString("集荷前なら変更・取消しを申請できます（申請の画面は準備中です）")))
                 .andExpect(content().string(containsString("name=\"staffConfirmed\"")))
                 .andExpect(content().string(containsString("本予約を確定する")))
                 .andExpect(content().string(not(containsString(BookingFixture.QUOTATION.toString()))))
@@ -121,7 +120,7 @@ class BookingControllerTest {
     void 確定に使えない見積りと確定済みの見積りは開くと受付一覧に戻して理由を示す() throws Exception {
         String subject = "TR-2026-0001 見積 1";
         for (var entry : List.of(
-                new Object[] {QuotationUnavailability.EXPIRED, subject + " は有効期限を過ぎたため本予約を確定できません。再見積りしてください。"},
+                new Object[] {QuotationUnavailability.EXPIRED, subject + " は有効期限を過ぎたため本予約を確定できません。再見積りが必要です。"},
                 new Object[] {
                     QuotationUnavailability.REPLACED, subject + " は新しい見積りに置き換えられたため本予約を確定できません。最新の見積りを確かめてください。"
                 },
@@ -186,8 +185,38 @@ class BookingControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(content().string(containsString("本予約を確定できませんでした")))
                 .andExpect(content().string(containsString("href=\"#staffConfirmed\"")))
-                .andExpect(content().string(containsString("契約条件と照合したことを確かめて、チェックを入れてください。")))
+                .andExpect(content().string(containsString("営業担当者の確認: 契約条件と照合したことを確かめて、チェックを入れてください。")))
+                .andExpect(content().string(containsString("aria-describedby=\"staffConfirmed-error\"")))
                 .andExpect(content().string(containsString("aria-invalid=\"true\"")));
+    }
+
+    @Test
+    void 貨物の要約がないまま送ると確定せずにエラー要約で必須貨物情報が欠けていると示す() throws Exception {
+        BookingTerms base = BookingFixture.terms();
+        BookingTerms noCargo = new BookingTerms(
+                base.transportRequestId(),
+                base.transportRequestVersionNo(),
+                base.transportRequestNumber(),
+                base.quotationId(),
+                base.shipperCompanyId(),
+                base.consigneeCompanyId(),
+                base.routingCaseNumber(),
+                base.routeVersionNo(),
+                base.cargoCategory(),
+                " ",
+                base.shipperApproverId());
+        given(commandService.confirm(any()))
+                .willReturn(new BookingConfirmationOutcome.MissingConditions(List.of(BookingCondition.REQUIRED_CARGO)));
+        given(queryService.confirmation("TR-2026-0001", 1)).willReturn(available(noCargo));
+
+        mockMvc.perform(post("/staff/bookings")
+                        .param("transportRequest", "TR-2026-0001")
+                        .param("quotation", "1")
+                        .param("staffConfirmed", "true"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("本予約を確定できませんでした")))
+                .andExpect(content().string(containsString("必須貨物情報: 貨物の要約がありません。見積依頼の貨物を確かめてください。")))
+                .andExpect(content().string(not(containsString("営業担当者の確認: 契約条件と照合したことを"))));
     }
 
     @Test
@@ -199,7 +228,7 @@ class BookingControllerTest {
                         .param("quotation", "1")
                         .param("staffConfirmed", "true"))
                 .andExpect(redirectedUrl(RECEPTION))
-                .andExpect(flash().attribute("problem", "TR-2026-0001 見積 1 は有効期限を過ぎたため本予約を確定できません。再見積りしてください。"));
+                .andExpect(flash().attribute("problem", "TR-2026-0001 見積 1 は有効期限を過ぎたため本予約を確定できません。再見積りが必要です。"));
 
         given(commandService.confirm(any())).willReturn(new BookingConfirmationOutcome.AlreadyBooked());
 
@@ -212,12 +241,16 @@ class BookingControllerTest {
     }
 
     @Test
-    void 業務番号の形でない見積りは開いても送っても404にする() throws Exception {
+    void 業務番号の形でない見積りは見積りの公開APIが見つからないと返すので開いても送っても404にする() throws Exception {
+        given(queryService.confirmation("XX", 1))
+                .willReturn(new BookingConfirmationPage.Unavailable(QuotationUnavailability.NOT_FOUND));
+        given(commandService.confirm(any()))
+                .willReturn(new BookingConfirmationOutcome.QuotationUnavailable(QuotationUnavailability.NOT_FOUND));
+
         mockMvc.perform(get("/staff/bookings/new?transportRequest=XX&quotation=1"))
                 .andExpect(status().isNotFound());
         mockMvc.perform(post("/staff/bookings").param("transportRequest", "XX").param("quotation", "1"))
                 .andExpect(status().isNotFound());
-        verify(commandService, never()).confirm(any());
     }
 
     // S-24 予約の詳細
@@ -246,7 +279,10 @@ class BookingControllerTest {
                 .andExpect(content().string(containsString("RC-2026-0001 版 1")))
                 .andExpect(content().string(containsString("一般貨物 パレット 10 個 1,200 kg")))
                 .andExpect(content().string(containsString("処理中（追跡の開始を待っています）")))
-                .andExpect(content().string(not(containsString("完了"))))
+                .andExpect(content().string(containsString("確定時刻")))
+                .andExpect(content().string(not(containsString("commit 時刻"))))
+                .andExpect(content().string(containsString("完了したらこの画面に表示します。画面を更新して確かめてください。")))
+                .andExpect(content().string(not(containsString(">完了<"))))
                 .andExpect(
                         content().string(not(containsString(booking.id().value().toString()))));
     }

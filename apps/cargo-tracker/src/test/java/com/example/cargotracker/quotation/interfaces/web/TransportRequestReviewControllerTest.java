@@ -227,7 +227,14 @@ class TransportRequestReviewControllerTest {
                                 "RC-2026-0003",
                                 1,
                                 new UtcInstant(Instant.parse("2026-10-04T06:00:00Z")),
-                                new UtcInstant(Instant.parse("2026-10-05T04:00:00Z")))));
+                                new UtcInstant(Instant.parse("2026-10-05T04:20:00Z"))),
+                        new AwaitingBookingSummary(
+                                new TransportRequestNumber(2026, 4),
+                                1,
+                                "RC-2026-0004",
+                                1,
+                                new UtcInstant(Instant.parse("2026-10-04T06:00:00Z")),
+                                new UtcInstant(Instant.parse("2026-10-05T04:20:01Z")))));
 
         mockMvc.perform(get("/staff/transport-requests"))
                 .andExpect(status().isOk())
@@ -247,7 +254,16 @@ class TransportRequestReviewControllerTest {
                         content()
                                 .string(
                                         containsString(
-                                                "href=\"/staff/transport-requests/TR-2026-0003/quotations/1\">TR-2026-0003 見積 1 の再見積りへ</a>")));
+                                                "href=\"/staff/transport-requests/TR-2026-0003/quotations/1\">TR-2026-0003 見積 1 の見積りを開く</a>")))
+                // 有効期限と同時刻は失効、1 秒前は確定できる（T-38）
+                .andExpect(
+                        content()
+                                .string(
+                                        containsString(
+                                                "href=\"/staff/bookings/new?transportRequest=TR-2026-0004&amp;quotation=1\">TR-2026-0004 見積 1 の本予約の確定へ</a>")))
+                .andExpect(content()
+                        .string(containsString(
+                                "失効（荷主承認済み）の見積りは本予約を確定できません。荷主の承認の後に失効した見積りの再見積りは、まだ画面で操作できません。扱いは担当者で相談してください。")));
     }
 
     @Test

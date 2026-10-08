@@ -692,7 +692,9 @@ class MyBatisQuotationIntegrationTest {
                 transportRequests.findById(transportRequestId).orElseThrow();
         request.approve(1, STAFF, "根拠", NOW);
         request.markRoutingRequested(1);
-        request.markAwaitingApproval(1);
+        if (target != TransportRequestStatus.ROUTING) {
+            request.markAwaitingApproval(1);
+        }
         if (target == TransportRequestStatus.READY_TO_BOOK) {
             request.markReadyToBook(1);
         } else if (target == TransportRequestStatus.BOOKED) {
@@ -705,7 +707,7 @@ class MyBatisQuotationIntegrationTest {
     void 予約の確定待ちは荷主が承認した見積りを有効期限の近い順に並べ予約確定済みの輸送要求を出さない() {
         TransportRequestId notYetDelivered = transportRequest(31);
         approved(notYetDelivered);
-        advanceTransportRequest(notYetDelivered, TransportRequestStatus.AWAITING_APPROVAL);
+        advanceTransportRequest(notYetDelivered, TransportRequestStatus.ROUTING);
         TransportRequestId readyToBook = transportRequest(32);
         approved(readyToBook);
         advanceTransportRequest(readyToBook, TransportRequestStatus.READY_TO_BOOK);
@@ -722,7 +724,7 @@ class MyBatisQuotationIntegrationTest {
         advanceTransportRequest(awaiting, TransportRequestStatus.AWAITING_APPROVAL);
 
         assertThat(repository.findAwaitingBookingSummaries())
-                .as("DE-04 の配信を待たずに見積りの承認済みを正にする。有効期限の近い順")
+                .as("DE-21・DE-04 の配信を待たずに見積りの承認済みを正にする（輸送要求が経路設計中のままでも出す）。有効期限の近い順")
                 .filteredOn(summary -> summary.number().year() == 2082)
                 .containsExactly(
                         new AwaitingBookingSummary(

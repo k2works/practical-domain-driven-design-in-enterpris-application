@@ -62,7 +62,7 @@ public class BookableQuotationQueryService implements BookableQuotationQuery {
         TransportRequestNumber number;
         try {
             number = TransportRequestNumber.parse(transportRequestNumber);
-        } catch (IllegalArgumentException e) {
+        } catch (IllegalArgumentException _) {
             return Optional.empty();
         }
         return transportRequestRepository

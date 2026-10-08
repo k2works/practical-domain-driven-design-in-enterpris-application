@@ -4,7 +4,7 @@ title: "cargo-tracker バックエンドアーキテクチャ"
 description: "cargo-tracker の境界づけられたコンテキスト、コンテキストごとのドメインロジックパターン、パッケージ構成、サガとドメインイベントによる連携（ARCH-HO-01〜03）、受信サービスの方針。"
 tags: [design, architecture, backend]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-08T09:40:21Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-08T10:28:50Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T07:11:12Z }
   - { by: human:kakimomokuri, at: 2026-10-01T07:41:04Z }
@@ -246,6 +246,7 @@ package "<context>" {
 [web\nコントローラー・画面] --> [internal.queryservices]
 [internal.commandservices] --> [model.aggregates]
 [internal.commandservices] --> [internal.outboundservices.acl\n他コンテキストの公開 API 呼び出し]
+[internal.queryservices] --> [internal.outboundservices.acl\n他コンテキストの公開 API 呼び出し]
 [persistence\nリポジトリ実装] ..> [model.aggregates]
 @enduml
 ```

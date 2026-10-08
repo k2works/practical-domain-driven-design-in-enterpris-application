@@ -120,7 +120,7 @@ public class BookingUiSteps {
         assertThat(awaitingRow(quotationNo)
                         .getByRole(
                                 AriaRole.LINK,
-                                new Locator.GetByRoleOptions().setName(subject(quotationNo) + " の再見積りへ")))
+                                new Locator.GetByRoleOptions().setName(subject(quotationNo) + " の見積りを開く")))
                 .hasCount(1);
         browser.checkAccessibility();
     }

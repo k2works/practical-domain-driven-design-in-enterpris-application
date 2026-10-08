@@ -14,7 +14,8 @@
     <div id="error-summary" th:if="${page.hasErrors()}" tabindex="-1" role="alert" aria-labelledby="error-summary-title">
         <h2 id="error-summary-title">本予約を確定できませんでした</h2>
         <ul>
-            <li><a href="#staffConfirmed">契約条件と照合したことを確かめて、チェックを入れてください。</a></li>
+            <li th:if="${page.cargoRejected()}">必須貨物情報: 貨物の要約がありません。見積依頼の貨物を確かめてください。</li>
+            <li th:if="${page.staffConfirmationMissing()}"><a href="#staffConfirmed">営業担当者の確認: 契約条件と照合したことを確かめて、チェックを入れてください。</a></li>
         </ul>
     </div>
     <h2 class="h4">確定条件（BR-01）</h2>
@@ -63,15 +64,17 @@
                 <dt class="col-sm-3">影響</dt>
                 <dd class="col-sm-9">確定の後の変更・取消しは申請と営業の承認が必要になります</dd>
                 <dt class="col-sm-3">回復手段</dt>
-                <dd class="col-sm-9">確定の後の変更・取消しは申請で行います（申請の画面は準備中です）</dd>
+                <dd class="col-sm-9">集荷前なら変更・取消しを申請できます（申請の画面は準備中です）</dd>
             </dl>
             <form th:action="@{/staff/bookings}" method="post">
                 <input type="hidden" name="transportRequest" th:value="${page.transportRequestNumber()}">
                 <input type="hidden" name="quotation" th:value="${page.quotationNo()}">
                 <div class="form-check mb-3">
                     <input class="form-check-input" type="checkbox" id="staffConfirmed" name="staffConfirmed" value="true"
-                           aria-required="true" th:attr="aria-invalid=${page.staffConfirmationMissing()} ? 'true' : null">
+                           aria-required="true"
+                           th:attr="aria-invalid=${page.staffConfirmationMissing()} ? 'true' : null,aria-describedby=${page.staffConfirmationMissing()} ? 'staffConfirmed-error' : null">
                     <label class="form-check-label" for="staffConfirmed">契約条件と照合した（営業担当者の確認）</label>
+                    <p id="staffConfirmed-error" class="form-text text-danger" th:if="${page.staffConfirmationMissing()}">契約条件と照合したことを確かめて、チェックを入れてください。</p>
                 </div>
                 <button type="submit" class="btn btn-primary">本予約を確定する</button>
             </form>

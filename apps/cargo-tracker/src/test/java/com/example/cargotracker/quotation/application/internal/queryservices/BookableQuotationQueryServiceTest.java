@@ -63,7 +63,7 @@ class BookableQuotationQueryServiceTest {
 
     @Test
     void 有効期限と同時刻の見積りは失効を返す() {
-        Quotation quotation = approved(submitted());
+        approved(submitted());
 
         assertThat(service.find(new BookableQuotationRequest("TR-2026-0007", 1, at("2099-10-08T09:00:00Z"))))
                 .isEqualTo(new BookableQuotationResult.NotBookable(BookableQuotationResult.NotBookable.EXPIRED));

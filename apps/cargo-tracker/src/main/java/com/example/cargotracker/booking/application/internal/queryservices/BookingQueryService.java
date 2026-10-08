@@ -4,6 +4,7 @@ import com.example.cargotracker.booking.application.internal.outboundservices.ac
 import com.example.cargotracker.booking.application.internal.outboundservices.acl.QuotationUnavailability;
 import com.example.cargotracker.booking.application.sagas.BookingSagaRepository;
 import com.example.cargotracker.booking.domain.model.aggregates.BookingRepository;
+import com.example.cargotracker.booking.domain.model.valueobjects.BookingTerms;
 import com.example.cargotracker.booking.domain.model.valueobjects.TrackingNumber;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import java.time.Clock;
@@ -46,11 +47,13 @@ public class BookingQueryService {
         return switch (quotations.check(transportRequestNumber, quotationNo, now)) {
             case QuotationBookability.Result.Unavailable(QuotationUnavailability reason) ->
                 new BookingConfirmationPage.Unavailable(reason);
-            case QuotationBookability.Result.Bookable bookable ->
-                repository.existsByQuotationId(bookable.terms().quotationId())
+            case QuotationBookability.Result.Bookable(
+                    BookingTerms terms,
+                    UtcInstant shipperApprovedAt,
+                    UtcInstant expiresAt) ->
+                repository.existsByQuotationId(terms.quotationId())
                         ? new BookingConfirmationPage.AlreadyBooked()
-                        : new BookingConfirmationPage.Available(
-                                bookable.terms(), bookable.shipperApprovedAt(), bookable.expiresAt());
+                        : new BookingConfirmationPage.Available(terms, shipperApprovedAt, expiresAt);
         };
     }
 
@@ -63,7 +66,8 @@ public class BookingQueryService {
                         booking,
                         sagaRepository
                                 .findByBookingId(booking.id())
-                                .orElseThrow()
+                                .orElseThrow(() -> new IllegalStateException(
+                                        "貨物予約に予約サガがない（本予約の確定と同じトランザクションで作る。ADR-015）: " + booking.id()))
                                 .status()));
     }
 }

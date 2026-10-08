@@ -27,7 +27,7 @@ final class BookingViews {
     static Optional<TrackingNumber> parseTrackingNumber(String text) {
         try {
             return Optional.of(new TrackingNumber(text));
-        } catch (IllegalArgumentException e) {
+        } catch (IllegalArgumentException _) {
             return Optional.empty();
         }
     }
@@ -43,6 +43,7 @@ final class BookingViews {
      * @param shipperApprovedAt 荷主の承認時刻
      * @param route 承認済み経路版（案件番号と経路版）
      * @param cargoMissing 必須貨物情報が欠けているか
+     * @param cargoRejected 送ったときに必須貨物情報が欠けていて確定しなかったか
      * @param staffConfirmationMissing 送ったときに営業担当者の確認がなかったか
      */
     record ConfirmationView(
@@ -54,11 +55,12 @@ final class BookingViews {
             String shipperApprovedAt,
             String route,
             boolean cargoMissing,
+            boolean cargoRejected,
             boolean staffConfirmationMissing) {
 
         /** エラー要約を出すか（送ったときに確定条件が欠けていた）。 */
         public boolean hasErrors() {
-            return staffConfirmationMissing;
+            return cargoRejected || staffConfirmationMissing;
         }
     }
 
@@ -78,6 +80,7 @@ final class BookingViews {
                 staff(page.shipperApprovedAt()),
                 route(terms),
                 cargoMissing,
+                missing.contains(BookingCondition.REQUIRED_CARGO),
                 missing.contains(BookingCondition.STAFF_CONFIRMATION));
     }
 
@@ -88,10 +91,11 @@ final class BookingViews {
      * @param transportRequestNumber 業務番号
      * @param status 状態の表示名
      * @param versionNo 予約版の番号
-     * @param committedAt commit 時刻
+     * @param committedAt 確定時刻（業務上の commit 時刻。ADR-016）
      * @param route 経路（案件番号と経路版）
      * @param cargoSummary 貨物の要約
      * @param trackingStart 追跡の開始（予約サガの状態）
+     * @param trackingStartPending 追跡の開始が処理中か（完了の知らせ方を案内する）
      */
     record DetailView(
             String trackingNumber,
@@ -101,7 +105,8 @@ final class BookingViews {
             String committedAt,
             String route,
             String cargoSummary,
-            String trackingStart) {}
+            String trackingStart,
+            boolean trackingStartPending) {}
 
     static DetailView detail(BookingDetail detail) {
         Booking booking = detail.booking();
@@ -114,7 +119,8 @@ final class BookingViews {
                 staff(version.committedAt()),
                 route(version.terms()),
                 version.terms().cargoSummary(),
-                trackingStart(detail.sagaStatus()));
+                trackingStart(detail.sagaStatus()),
+                detail.sagaStatus() == BookingSagaStatus.IN_PROGRESS);
     }
 
     /** 追跡の開始の表示。処理中を完了と示さない（ADR-015）。完了は Bolt 25、失敗・有人確認要は W8 で起きる。 */

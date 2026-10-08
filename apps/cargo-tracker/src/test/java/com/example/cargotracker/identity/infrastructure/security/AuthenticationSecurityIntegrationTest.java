@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -421,6 +422,15 @@ class AuthenticationSecurityIntegrationTest {
                             .with(csrf()))
                     .andExpect(status().isForbidden());
         }
+    }
+
+    @Test
+    void 営業担当者はナビの予約を開くと準備中の画面になる() throws Exception {
+        Cookie session = login(user(staffCompany(), Role.SALES, UserStatus.ACTIVE));
+
+        mvc.perform(get("/staff/bookings").cookie(session))
+                .andExpect(status().isOk())
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("この画面は準備中です")));
     }
 
     @Test

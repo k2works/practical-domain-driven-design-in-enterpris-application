@@ -10,7 +10,6 @@ import com.example.cargotracker.booking.domain.model.valueobjects.BookingConditi
 import com.example.cargotracker.booking.domain.model.valueobjects.TrackingNumber;
 import com.example.cargotracker.shared.domain.AuthenticatedActor;
 import java.util.List;
-import java.util.regex.Pattern;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -36,8 +35,6 @@ public class BookingController {
     private static final String DETAIL_VIEW = "booking/staff/bookings/show";
     private static final String PROBLEM = "problem";
     private static final String RESULT = "result";
-    /** 業務番号の形（見積りの {@code TransportRequestNumber} の表記。予約は見積りのドメインを参照しないので形だけを確かめる）。 */
-    private static final Pattern TRANSPORT_REQUEST_NUMBER = Pattern.compile("TR-\\d{4}-\\d{4,}");
 
     private final BookingCommandService commandService;
     private final BookingQueryService queryService;
@@ -54,7 +51,6 @@ public class BookingController {
             @RequestParam("quotation") int quotationNo,
             Model model,
             RedirectAttributes redirectAttributes) {
-        requireNumber(transportRequestNumber);
         return showConfirmation(transportRequestNumber, quotationNo, List.of(), model, redirectAttributes);
     }
 
@@ -67,7 +63,6 @@ public class BookingController {
             AuthenticatedActor actor,
             Model model,
             RedirectAttributes redirectAttributes) {
-        requireNumber(transportRequestNumber);
         BookingConfirmationOutcome outcome = commandService.confirm(
                 new ConfirmBookingCommand(transportRequestNumber, quotationNo, actor, staffConfirmed));
         String subject = BookingViews.subject(transportRequestNumber, quotationNo);
@@ -117,12 +112,15 @@ public class BookingController {
         };
     }
 
-    /** 確定に使えない見積りを受付一覧に戻して理由を示す。見つからない見積りは 404（ほかの画面と同じ）。 */
+    /**
+     * 確定に使えない見積りを受付一覧に戻して理由を示す。見つからない見積り（業務番号の形でない番号を含む。形の判定は見積りの公開 API に
+     * 任せ、予約に業務番号の形の写しを持たない）は 404（ほかの画面と同じ）。
+     */
     private static String unavailable(
             String subject, QuotationUnavailability reason, RedirectAttributes redirectAttributes) {
         String message =
                 switch (reason) {
-                    case EXPIRED -> subject + " は有効期限を過ぎたため本予約を確定できません。再見積りしてください。";
+                    case EXPIRED -> subject + " は有効期限を過ぎたため本予約を確定できません。再見積りが必要です。";
                     case REPLACED -> subject + " は新しい見積りに置き換えられたため本予約を確定できません。最新の見積りを確かめてください。";
                     case NOT_APPROVED -> subject + " は荷主の承認がまだのため本予約を確定できません。";
                     case NOT_FOUND -> throw notFound();
@@ -135,12 +133,6 @@ public class BookingController {
     private static String alreadyBooked(String subject, RedirectAttributes redirectAttributes) {
         redirectAttributes.addFlashAttribute(RESULT, subject + " はすでに本予約を確定しています。");
         return RECEPTION;
-    }
-
-    private static void requireNumber(String transportRequestNumber) {
-        if (!TRANSPORT_REQUEST_NUMBER.matcher(transportRequestNumber).matches()) {
-            throw notFound();
-        }
     }
 
     private static ResponseStatusException notFound() {

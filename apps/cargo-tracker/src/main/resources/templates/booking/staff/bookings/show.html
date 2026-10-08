@@ -19,11 +19,14 @@
         <dt class="col-sm-3">状態</dt>
         <dd class="col-sm-9" th:text="${booking.status()}">確定済み</dd>
         <dt class="col-sm-3">追跡の開始</dt>
-        <dd class="col-sm-9" th:text="${booking.trackingStart()}">処理中（追跡の開始を待っています）</dd>
+        <dd class="col-sm-9">
+            <span th:text="${booking.trackingStart()}">処理中（追跡の開始を待っています）</span>
+            <span th:if="${booking.trackingStartPending()}">完了したらこの画面に表示します。画面を更新して確かめてください。</span>
+        </dd>
     </dl>
     <h2 class="h4" th:text="|予約版 ${booking.versionNo()}|">予約版 1</h2>
     <dl class="row">
-        <dt class="col-sm-3">commit 時刻</dt>
+        <dt class="col-sm-3">確定時刻</dt>
         <dd class="col-sm-9" th:text="${booking.committedAt()}">2026-10-08 09:30 Asia/Tokyo（UTC+09:00）（UTC 2026-10-08 00:30）</dd>
         <dt class="col-sm-3">経路</dt>
         <dd class="col-sm-9" th:text="${booking.route()}">RC-2026-0001 版 1</dd>

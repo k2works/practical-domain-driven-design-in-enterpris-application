@@ -65,8 +65,8 @@ class BookingCommandServiceTest {
 
         assertThat(outcome).isEqualTo(new BookingConfirmationOutcome.Confirmed(BookingFixture.TRACKING_NUMBER));
         assertThat(queries)
-                .containsExactly(new BookableQuotationRequest("TR-2026-0001", 1, new UtcInstant(NOW)))
-                .as("業務番号と見積り番号で、commit 時刻を渡して照会する（ADR-016、D-4）");
+                .as("業務番号と見積り番号で、commit 時刻を渡して照会する（ADR-016、D-4）")
+                .containsExactly(new BookableQuotationRequest("TR-2026-0001", 1, new UtcInstant(NOW)));
         Booking booking = repository.findAll().getFirst();
         assertThat(booking.currentVersion().committedAt()).isEqualTo(new UtcInstant(NOW));
         assertThat(sagaRepository.findByBookingId(booking.id()).orElseThrow().status())

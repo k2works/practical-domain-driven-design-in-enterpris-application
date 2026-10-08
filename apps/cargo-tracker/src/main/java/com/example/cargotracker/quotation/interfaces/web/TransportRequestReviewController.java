@@ -20,6 +20,7 @@ import com.example.cargotracker.shared.domain.UserId;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import java.time.Clock;
 import java.time.Duration;
+import java.util.List;
 import java.util.Map;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -43,6 +44,8 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 public class TransportRequestReviewController {
 
     private static final String LIST_VIEW = "quotation/staff/transport-requests/list";
+    private static final String STAFF_TRANSPORT_REQUESTS = "/staff/transport-requests/";
+    private static final String QUOTATIONS = "/quotations/";
     private static final String REVIEW_VIEW = "quotation/staff/transport-requests/review";
 
     /** 審査の入力の項目のキーから、エラー要約に出す表示名への対応。 */
@@ -86,8 +89,7 @@ public class TransportRequestReviewController {
                 quotationQueryService.findQuotedSummaries().stream()
                         .map(summary -> new QuotedRow(
                                 QuotationViews.label(summary.number(), summary.quotationNo()),
-                                "/staff/transport-requests/" + summary.number().text() + "/quotations/"
-                                        + summary.quotationNo(),
+                                STAFF_TRANSPORT_REQUESTS + summary.number().text() + QUOTATIONS + summary.quotationNo(),
                                 QuotationViews.effectiveStatus(summary.status(), summary.expiresAt(), now),
                                 TransportRequestLabels.staffDateTime(summary.expiresAt())))
                         .toList());
@@ -98,8 +100,7 @@ public class TransportRequestReviewController {
                 quotationQueryService.findRoutingRequestedSummaries().stream()
                         .map(summary -> new RoutingRow(
                                 QuotationViews.label(summary.number(), summary.quotationNo()),
-                                "/staff/transport-requests/" + summary.number().text() + "/quotations/"
-                                        + summary.quotationNo(),
+                                STAFF_TRANSPORT_REQUESTS + summary.number().text() + QUOTATIONS + summary.quotationNo(),
                                 QuotationViews.effectiveStatus(summary.status(), summary.expiresAt(), now),
                                 TransportRequestLabels.staffDateTime(summary.requestedAt()),
                                 summary.routeConfirmedAt() == null
@@ -109,11 +110,11 @@ public class TransportRequestReviewController {
                         .toList());
         // 予約の確定待ち（US-04、D-78。Bolt 23b）。荷主が承認した見積りを有効期限の近い順に示す。有効期限の前は本予約の確定（S-09。
         // 予約の画面。URL だけでつなぎ、予約のコードには依存しない）を、失効した見積りは再見積り（S-04）を開ける
-        model.addAttribute(
-                "awaitingBookings",
-                quotationQueryService.findAwaitingBookingSummaries().stream()
-                        .map(summary -> awaitingBookingRow(summary, now))
-                        .toList());
+        List<AwaitingBookingRow> awaitingBookings = quotationQueryService.findAwaitingBookingSummaries().stream()
+                .map(summary -> awaitingBookingRow(summary, now))
+                .toList();
+        model.addAttribute("awaitingBookings", awaitingBookings);
+        model.addAttribute("anyAwaitingExpired", awaitingBookings.stream().anyMatch(AwaitingBookingRow::expired));
         return LIST_VIEW;
     }
 
@@ -353,8 +354,8 @@ public class TransportRequestReviewController {
      * @param status 状態（表示する時刻で失効していれば「失効（荷主承認済み）」）
      * @param shipperApprovedAt 荷主の承認時刻（社内の日時）
      * @param expiresAt 有効期限（社内の日時）
-     * @param expired 失効しているか（本予約の確定の入口を出さず、再見積りへ）
-     * @param actionPath 本予約の確定（S-09）または再見積り（S-04）のパス
+     * @param expired 失効しているか（本予約の確定の入口を出さず、見積り（S-04）を開く）
+     * @param actionPath 本予約の確定（S-09）または見積り（S-04）のパス
      * @param actionLabel 操作のリンクの名前
      */
     public record AwaitingBookingRow(
@@ -369,9 +370,9 @@ public class TransportRequestReviewController {
 
     private static AwaitingBookingRow awaitingBookingRow(AwaitingBookingSummary summary, UtcInstant now) {
         String label = QuotationViews.label(summary.number(), summary.quotationNo());
-        boolean expired = !now.instant().isBefore(summary.expiresAt().instant());
+        boolean expired = QuotationViews.isExpired(QuotationStatus.APPROVED, summary.expiresAt(), now);
         String actionPath = expired
-                ? "/staff/transport-requests/" + summary.number().text() + "/quotations/" + summary.quotationNo()
+                ? STAFF_TRANSPORT_REQUESTS + summary.number().text() + QUOTATIONS + summary.quotationNo()
                 : "/staff/bookings/new?transportRequest=" + summary.number().text() + "&quotation="
                         + summary.quotationNo();
         return new AwaitingBookingRow(
@@ -382,7 +383,7 @@ public class TransportRequestReviewController {
                 TransportRequestLabels.staffDateTime(summary.expiresAt()),
                 expired,
                 actionPath,
-                label + (expired ? " の再見積りへ" : " の本予約の確定へ"));
+                label + (expired ? " の見積りを開く" : " の本予約の確定へ"));
     }
 
     /**

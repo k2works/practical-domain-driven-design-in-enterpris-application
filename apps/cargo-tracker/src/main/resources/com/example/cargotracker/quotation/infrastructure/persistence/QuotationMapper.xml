@@ -187,14 +187,14 @@
         </constructor>
     </resultMap>
 
-    <!-- 予約の確定待ちの見積り（受付一覧 S-02。US-04、Bolt 20 レビュー D-78。Bolt 23b）。見積りの承認済みを正にし、輸送要求の予約待ちへの
-         更新（DE-04 の配信）を待たない。予約確定済みの輸送要求は出さない。有効期限の近い順 -->
+    <!-- 予約の確定待ちの見積り（受付一覧 S-02。US-04、Bolt 20 レビュー D-78。Bolt 23b）。見積りの承認済みを正にし、輸送要求の荷主承認待ち・
+         予約待ちへの更新（DE-21・DE-04 の配信）を待たない（経路設計中のままでも出す）。予約確定済みの輸送要求は出さない。有効期限の近い順 -->
     <select id="selectAwaitingBooking" resultMap="awaitingBookingSummaryRow">
         SELECT r.request_number, q.quotation_no, q.routing_case_number, q.route_version_no, q.shipper_approved_at,
                q.expires_at
           FROM quotation.transport_request r
           JOIN quotation.quotation q ON q.transport_request_id = r.id
-         WHERE r.status IN ('AWAITING_APPROVAL', 'READY_TO_BOOK')
+         WHERE r.status IN ('ROUTING', 'AWAITING_APPROVAL', 'READY_TO_BOOK')
            AND q.status = 'APPROVED'
          ORDER BY q.expires_at, r.request_number
     </select>

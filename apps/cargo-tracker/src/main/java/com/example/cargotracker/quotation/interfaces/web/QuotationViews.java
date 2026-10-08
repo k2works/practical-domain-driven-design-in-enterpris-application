@@ -38,12 +38,17 @@ final class QuotationViews {
 
     /** 表示する時刻で失効していれば「失効」、そうでなければ保存されている状態の表示名（社内の受付一覧 S-02 で使う）。 */
     static String effectiveStatus(QuotationStatus status, UtcInstant expiresAt, UtcInstant now) {
-        boolean expired = status.expiresByTime() && !new QuotationExpiry(expiresAt).isValidAt(now);
+        boolean expired = isExpired(status, expiresAt, now);
         if (expired && status == QuotationStatus.APPROVED) {
             // 荷主が承認した事実を消さない（Bolt 20 レビュー）
             return status(QuotationStatus.EXPIRED) + "（荷主承認済み）";
         }
         return status(expired ? QuotationStatus.EXPIRED : status);
+    }
+
+    /** 表示する時刻で失効しているか（有効期限と同時刻以後。Q-INV-06）。S-02 の状態の表示名と、予約の確定待ちの入口の判定で共有する。 */
+    static boolean isExpired(QuotationStatus status, UtcInstant expiresAt, UtcInstant now) {
+        return status.expiresByTime() && !new QuotationExpiry(expiresAt).isValidAt(now);
     }
 
     static String status(QuotationStatus status) {
