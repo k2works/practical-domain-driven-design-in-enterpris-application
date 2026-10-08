@@ -131,9 +131,9 @@ class TransportRequestEventHandlersConflictTest {
         AlwaysConflictingRepository conflicting = new AlwaysConflictingRepository(store);
         RouteDesignRequestedEventHandler routeDesign = new RouteDesignRequestedEventHandler(conflicting);
 
-        assertThatThrownBy(
-                        () -> routeDesign.on(routeDesignRequested(request.id().value())))
-                .isInstanceOf(ConcurrentTransportRequestUpdateException.class);
+        var event = routeDesignRequested(request.id().value());
+
+        assertThatThrownBy(() -> routeDesign.on(event)).isInstanceOf(ConcurrentTransportRequestUpdateException.class);
         assertThat(conflicting.updates).isEqualTo(3);
         assertThat(statusOf(request)).isEqualTo(TransportRequestStatus.QUOTING);
     }

@@ -4,7 +4,7 @@ title: "Bolt 23 終了報告 - 本予約の確定と失効（US-04 AC1・AC2、#
 description: "23 回目の Bolt の終了報告。新設の booking モジュールで本予約の確定（確定条件、追跡番号、予約版、commit 時刻、予約サガの処理中、DE-07）と失効（BR-10）を業務ルール層まで作り、見積りの公開 API で輸送要求を予約確定済みにした。/goal で止まらなかった承認ゲート（スキーマを含む）、開発レビューの対応（DE-04 より先に DE-07 が届く不具合ほか）、計画からの変更、既知の課題を記録する。"
 tags: [development,bolt-report]
 status: draft
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-08T08:52:17Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-08T09:03:26Z }
 ---
 
 # Bolt 23 終了報告 - 本予約の確定と失効（US-04 AC1・AC2、#10）
@@ -44,7 +44,7 @@ generated: { by: anthropic/claude-opus-5-5, at: 2026-10-08T08:52:17Z }
 | 3. 貨物予約の規則 | 完了 | `b3d9ef3` | Red の確認の前に実装を書いた |
 | 4. 確定サービスとリポジトリ | 完了 | `b3d9ef3` | 見積りの照会をステップ 5 から前倒しした。Red の確認の前に実装を書いた |
 | 5. 見積りの公開 API・予約確定済み・DE-07 の listener | 完了 | `6c2571f` | `TransportRequestProgression` を共通の場所に移し、結果を返す |
-| 6. 開発レビューと終了報告 | 完了 | 本報告と同じ push | 開発レビュー（プログラマー・テスター・アーキテクト）、SonarQube |
+| 6. 開発レビューと終了報告 | 完了 | `ea07876`、本報告 | 開発レビュー（プログラマー・テスター・アーキテクト）、SonarQube |
 
 ### 作ったもの
 
@@ -63,20 +63,20 @@ generated: { by: anthropic/claude-opus-5-5, at: 2026-10-08T08:52:17Z }
 
 | 指標 | 値 |
 | :--- | :--- |
-| テスト | `test` 1,278 件（Bolt 22 の 1,210 件から +68）、`uiTest` {{UI}} 本、`documentationTest` 1 件 |
+| テスト | `test` 1,278 件（Bolt 22 の 1,210 件から +68）、`uiTest` 59 本（変わらず。画面は Bolt 23b）、`documentationTest` 1 件 |
 | 承認ゲートの通過 | 計画の承認 1 回、終了報告（本報告）。途中のゲート 4 つは止まらなかった（議題 1〜4） |
 | 人の変更依頼 | 0（本報告の時点） |
-| リードタイム | {{LT}}（計画の承認から本報告まで。テストと SonarQube の待ち時間を含む） |
+| リードタイム | 約 2 時間 20 分（計画の承認から本報告まで。テストと SonarQube の待ち時間を含む） |
 
 ## 品質ゲート
 
 | ゲート | 結果 |
 | :--- | :--- |
 | `test`・`documentationTest` | 通過（1,278 件・1 件） |
-| `uiTest`（axe-core を含む） | {{UIR}} |
+| `uiTest`（axe-core を含む） | 通過（59 本） |
 | ModularityTest・ArchUnit | 通過 |
 | Spotless・Checkstyle・SpotBugs | 通過 |
-| SonarQube（ローカル） | {{SONAR}} |
+| SonarQube（ローカル） | 品質ゲート PASS（新しいコードのカバレッジ 96.3%、重複 0%）。1 回目の走査で新しい指摘 5 件（空の `application.sagas` パッケージ、浮いた Javadoc、例外を投げ得る呼び出しが 2 つあるラムダ 2 件、統合テストの assert の数）が出たので直して 2 回目で通った |
 | `okf:check` | ERROR 0 |
 
 ## 仮説の結論

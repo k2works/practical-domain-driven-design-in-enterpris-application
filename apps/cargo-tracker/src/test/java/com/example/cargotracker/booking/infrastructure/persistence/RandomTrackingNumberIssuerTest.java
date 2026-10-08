@@ -38,8 +38,9 @@ class RandomTrackingNumberIssuerTest {
     void 三回引いても使われていない番号がなければ失敗する() {
         Existing allUsed = new Existing(null);
 
-        assertThatThrownBy(() -> new RandomTrackingNumberIssuer(allUsed, new Random(3)).issue())
-                .isInstanceOf(IllegalStateException.class);
+        RandomTrackingNumberIssuer issuer = new RandomTrackingNumberIssuer(allUsed, new Random(3));
+
+        assertThatThrownBy(issuer::issue).isInstanceOf(IllegalStateException.class);
         assertThat(allUsed.asked.get()).isEqualTo(RandomTrackingNumberIssuer.MAX_ATTEMPTS);
     }
 

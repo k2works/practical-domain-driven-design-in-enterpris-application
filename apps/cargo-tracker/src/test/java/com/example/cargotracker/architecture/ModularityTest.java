@@ -27,10 +27,6 @@ class ModularityTest {
         modules.verify();
     }
 
-    /**
-     * 下流から上流への通知は下流の listener が上流の公開 API を呼んで行い、上流は下流に依存しない（ADR-014。Bolt 20）。
-     * 見積りは経路設計の型（イベントを含む）を参照しない。
-     */
     /** 予約は見積りの下流で、見積りは予約の型（イベントを含む）を参照しない（ADR-014。Bolt 23。Bolt 20 レビュー D-78 の一般化）。 */
     @Test
     void 見積りは予約に依存しない() {
@@ -59,6 +55,10 @@ class ModularityTest {
                         .importPackages("com.example.cargotracker"));
     }
 
+    /**
+     * 下流から上流への通知は下流の listener が上流の公開 API を呼んで行い、上流は下流に依存しない（ADR-014。Bolt 20）。
+     * 見積りは経路設計の型（イベントを含む）を参照しない。
+     */
     @Test
     void 見積りは経路設計に依存しない() {
         noClasses()

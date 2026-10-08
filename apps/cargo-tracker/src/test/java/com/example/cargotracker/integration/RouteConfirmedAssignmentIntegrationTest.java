@@ -149,18 +149,12 @@ class RouteConfirmedAssignmentIntegrationTest {
                                                 assertThat(leg.voyageNumber()).isEqualTo(voyageNumber));
                             });
                         }));
-        await().atMost(TIMEOUT)
-                .untilAsserted(() -> assertThat(staffTransportRequestQueryService.findByNumber(number))
-                        .hasValueSatisfying(request ->
-                                assertThat(request.status()).isEqualTo(TransportRequestStatus.AWAITING_APPROVAL)));
+        awaitTransportRequestStatus(number, TransportRequestStatus.AWAITING_APPROVAL);
 
         assertThat(quotationResponseService.approve(new ApproveQuotationCommand(number, 1, shipper, SHIPPER_USER)))
                 .isEqualTo(new ShipperApprovalOutcome.Approved(number, 1));
 
-        await().atMost(TIMEOUT)
-                .untilAsserted(() -> assertThat(staffTransportRequestQueryService.findByNumber(number))
-                        .hasValueSatisfying(request ->
-                                assertThat(request.status()).isEqualTo(TransportRequestStatus.READY_TO_BOOK)));
+        awaitTransportRequestStatus(number, TransportRequestStatus.READY_TO_BOOK);
         // DE-05（経路設計の listener）・DE-21・DE-04 の配信は、どれも完了する
         await().atMost(TIMEOUT)
                 .untilAsserted(() -> assertThat(completedEventPublications.findAll())
@@ -179,19 +173,19 @@ class RouteConfirmedAssignmentIntegrationTest {
                         })
                         .hasSize(3));
 
+        confirmBookingAndAwaitBooked(number, submitted.transportRequestId().value());
+    }
+
+    /** 本予約を確定すると、DE-07 の配信が完了して輸送要求は予約確定済みになり、予約サガは処理中で追跡の開始を待つ（Bolt 23）。 */
+    private void confirmBookingAndAwaitBooked(TransportRequestNumber number, UUID transportRequestId) {
         BookingConfirmationOutcome booked = bookingCommandService.confirm(new ConfirmBookingCommand(
                 staffQuotationQueryService.find(number, 1).orElseThrow().id().value(), SALES, true));
         assertThat(booked).isInstanceOf(BookingConfirmationOutcome.Confirmed.class);
-        await().atMost(TIMEOUT)
-                .untilAsserted(() -> assertThat(staffTransportRequestQueryService.findByNumber(number))
-                        .hasValueSatisfying(
-                                request -> assertThat(request.status()).isEqualTo(TransportRequestStatus.BOOKED)));
+        awaitTransportRequestStatus(number, TransportRequestStatus.BOOKED);
         await().atMost(TIMEOUT)
                 .untilAsserted(() -> assertThat(completedEventPublications.findAll())
                         .filteredOn(publication -> publication.getEvent() instanceof BookingConfirmed confirmed
-                                && confirmed
-                                        .transportRequestId()
-                                        .equals(submitted.transportRequestId().value()))
+                                && confirmed.transportRequestId().equals(transportRequestId))
                         .hasSize(1));
         assertThat(jdbc.queryForObject(
                         "SELECT s.status FROM booking.booking_saga s JOIN booking.booking b ON b.id = s.booking_id"
@@ -201,6 +195,13 @@ class RouteConfirmedAssignmentIntegrationTest {
                                 .trackingNumber()
                                 .value()))
                 .isEqualTo("IN_PROGRESS");
+    }
+
+    private void awaitTransportRequestStatus(TransportRequestNumber number, TransportRequestStatus status) {
+        await().atMost(TIMEOUT)
+                .untilAsserted(() -> assertThat(staffTransportRequestQueryService.findByNumber(number))
+                        .hasValueSatisfying(
+                                request -> assertThat(request.status()).isEqualTo(status)));
     }
 
     private long aggregateVersion(RoutingCaseNumber caseNumber) {
