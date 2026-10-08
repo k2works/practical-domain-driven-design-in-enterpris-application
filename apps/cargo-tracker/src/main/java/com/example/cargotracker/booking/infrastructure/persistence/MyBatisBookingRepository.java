@@ -92,6 +92,11 @@ public class MyBatisBookingRepository implements BookingRepository {
         return mapper.existsByTrackingNumber(trackingNumber.value());
     }
 
+    @Override
+    public boolean existsByQuotationId(UUID quotationId) {
+        return mapper.existsByQuotationId(quotationId);
+    }
+
     private Booking toBooking(BookingRow row) {
         List<BookingVersion> versions = mapper.findVersions(row.id()).stream()
                 .map(version -> toVersion(row, version))

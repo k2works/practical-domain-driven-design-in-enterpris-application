@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="ja" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/staff :: layout(~{::title}, ~{::main}, ~{}, 'bookings')}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="|予約の詳細 ${booking.trackingNumber()} - cargo-tracker|">予約の詳細 CTABCDEFGH2345 - cargo-tracker</title>
+</head>
+<body>
+<main>
+    <h1 th:text="|予約の詳細 ${booking.trackingNumber()}|">予約の詳細 CTABCDEFGH2345</h1>
+    <!--/* S-24（Bolt 23b の最小の表示）。予約サガが処理中なら完了と示さない（ADR-015）。変更・取消申請は US-05（W11） */-->
+    <p role="status" th:if="${result}" th:text="${result}">TR-2026-0001 見積 1 で本予約を確定しました。</p>
+    <dl class="row">
+        <dt class="col-sm-3">追跡番号</dt>
+        <dd class="col-sm-9" th:text="${booking.trackingNumber()}">CTABCDEFGH2345</dd>
+        <dt class="col-sm-3">業務番号</dt>
+        <dd class="col-sm-9" th:text="${booking.transportRequestNumber()}">TR-2026-0001</dd>
+        <dt class="col-sm-3">状態</dt>
+        <dd class="col-sm-9" th:text="${booking.status()}">確定済み</dd>
+        <dt class="col-sm-3">追跡の開始</dt>
+        <dd class="col-sm-9" th:text="${booking.trackingStart()}">処理中（追跡の開始を待っています）</dd>
+    </dl>
+    <h2 class="h4" th:text="|予約版 ${booking.versionNo()}|">予約版 1</h2>
+    <dl class="row">
+        <dt class="col-sm-3">commit 時刻</dt>
+        <dd class="col-sm-9" th:text="${booking.committedAt()}">2026-10-08 09:30 Asia/Tokyo（UTC+09:00）（UTC 2026-10-08 00:30）</dd>
+        <dt class="col-sm-3">経路</dt>
+        <dd class="col-sm-9" th:text="${booking.route()}">RC-2026-0001 版 1</dd>
+        <dt class="col-sm-3">貨物</dt>
+        <dd class="col-sm-9" th:text="${booking.cargoSummary()}">GENERAL / PALLET × 12 / 8400.000 kg / 32.500 m3</dd>
+    </dl>
+    <p><a th:href="@{/staff/transport-requests}">見積依頼の受付一覧へ戻る</a></p>
+</main>
+</body>
+</html>

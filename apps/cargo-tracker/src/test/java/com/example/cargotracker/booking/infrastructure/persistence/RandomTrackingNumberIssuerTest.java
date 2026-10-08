@@ -69,5 +69,10 @@ class RandomTrackingNumberIssuerTest {
             asked.incrementAndGet();
             return used == null || used.contains(trackingNumber.value());
         }
+
+        @Override
+        public boolean existsByQuotationId(UUID quotationId) {
+            return false;
+        }
     }
 }

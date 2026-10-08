@@ -54,6 +54,10 @@ class MyBatisBookingRepositoriesIntegrationTest {
         assertThat(repository.existsByTrackingNumber(booking.trackingNumber())).isTrue();
         assertThat(repository.existsByTrackingNumber(TrackingNumber.generate(random)))
                 .isFalse();
+        assertThat(repository.existsByQuotationId(
+                        booking.currentVersion().terms().quotationId()))
+                .isTrue();
+        assertThat(repository.existsByQuotationId(UUID.randomUUID())).isFalse();
     }
 
     @Test

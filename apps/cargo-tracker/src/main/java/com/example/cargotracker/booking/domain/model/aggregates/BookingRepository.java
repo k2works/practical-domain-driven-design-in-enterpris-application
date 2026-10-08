@@ -22,4 +22,7 @@ public interface BookingRepository {
 
     /** 追跡番号がすでに使われているか（発行の前に確かめる）。 */
     boolean existsByTrackingNumber(TrackingNumber trackingNumber);
+
+    /** 見積りの貨物予約がすでにあるか（S-09 を開いたときの確定済みの判定。B-INV-11。Bolt 23b）。 */
+    boolean existsByQuotationId(UUID quotationId);
 }

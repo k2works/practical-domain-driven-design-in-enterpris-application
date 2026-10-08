@@ -404,6 +404,39 @@ class AuthenticationSecurityIntegrationTest {
     }
 
     @Test
+    void 荷主担当者と経路設計者は本予約の確定と予約の詳細を開けずPOSTも送れない() throws Exception {
+        for (Role role : List.of(Role.SHIPPER, Role.ROUTE_DESIGNER)) {
+            Cookie session =
+                    login(user(role == Role.SHIPPER ? shipperCompany : staffCompany(), role, UserStatus.ACTIVE));
+
+            mvc.perform(get("/staff/bookings/new?transportRequest=TR-2026-0001&quotation=1")
+                            .cookie(session))
+                    .andExpect(status().isForbidden());
+            mvc.perform(get("/staff/bookings/CTABCDEFGH2345").cookie(session)).andExpect(status().isForbidden());
+            mvc.perform(post("/staff/bookings")
+                            .param("transportRequest", "TR-2026-0001")
+                            .param("quotation", "1")
+                            .param("staffConfirmed", "true")
+                            .cookie(session)
+                            .with(csrf()))
+                    .andExpect(status().isForbidden());
+        }
+    }
+
+    @Test
+    void CSRFのトークンが誤った本予約の確定は拒否する() throws Exception {
+        Cookie session = login(user(staffCompany(), Role.SALES, UserStatus.ACTIVE));
+
+        mvc.perform(post("/staff/bookings")
+                        .param("transportRequest", "TR-2026-0001")
+                        .param("quotation", "1")
+                        .param("staffConfirmed", "true")
+                        .cookie(session)
+                        .with(csrf().useInvalidToken()))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
     void CSRFのトークンが誤った見積りの提示は拒否する() throws Exception {
         Cookie session = login(user(staffCompany(), Role.SALES, UserStatus.ACTIVE));
 

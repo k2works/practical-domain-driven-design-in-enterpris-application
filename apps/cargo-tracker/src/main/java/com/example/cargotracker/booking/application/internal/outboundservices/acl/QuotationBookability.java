@@ -29,7 +29,8 @@ public class QuotationBookability {
      */
     public Result check(String transportRequestNumber, int quotationNo, UtcInstant committedAt) {
         return switch (query.find(new BookableQuotationRequest(transportRequestNumber, quotationNo, committedAt))) {
-            case BookableQuotationResult.Bookable bookable -> new Result.Bookable(toTerms(bookable));
+            case BookableQuotationResult.Bookable bookable ->
+                new Result.Bookable(toTerms(bookable), bookable.shipperApprovedAt(), bookable.expiresAt());
             case BookableQuotationResult.NotBookable notBookable ->
                 new Result.Unavailable(toUnavailability(notBookable.reason()));
         };
@@ -66,11 +67,15 @@ public class QuotationBookability {
          * 使える。
          *
          * @param terms 予約条件（見積りの写し）
+         * @param shipperApprovedAt 荷主の承認時刻（S-09 の確定条件の表に示す。Bolt 23b）
+         * @param expiresAt 見積りの有効期限（S-09 に示す）
          */
-        record Bookable(BookingTerms terms) implements Result {
+        record Bookable(BookingTerms terms, UtcInstant shipperApprovedAt, UtcInstant expiresAt) implements Result {
 
             public Bookable {
                 Objects.requireNonNull(terms, "terms");
+                Objects.requireNonNull(shipperApprovedAt, "shipperApprovedAt");
+                Objects.requireNonNull(expiresAt, "expiresAt");
             }
         }
 

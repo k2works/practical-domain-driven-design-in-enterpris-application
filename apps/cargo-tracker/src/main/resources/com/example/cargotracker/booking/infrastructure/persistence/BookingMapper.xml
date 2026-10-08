@@ -99,6 +99,11 @@
         SELECT COUNT(*) > 0 FROM booking.booking WHERE tracking_number = #{trackingNumber}
     </select>
 
+    <!-- 見積りの貨物予約がすでにあるか（S-09 を開いたときの確定済みの判定。B-INV-11 の UK uk_booking_quotation。Bolt 23b） -->
+    <select id="existsByQuotationId" resultType="boolean">
+        SELECT COUNT(*) > 0 FROM booking.booking WHERE quotation_id = #{quotationId}
+    </select>
+
     <select id="findSagaByBookingId" resultMap="bookingSagaRow">
         SELECT id, booking_id, tracking_number, status, current_step, started_at, updated_at, version
           FROM booking.booking_saga

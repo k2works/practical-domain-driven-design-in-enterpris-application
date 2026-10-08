@@ -4,6 +4,7 @@ import com.example.cargotracker.booking.application.internal.commandservices.Boo
 import com.example.cargotracker.booking.application.internal.eventhandlers.BookingConfirmedEventHandler;
 import com.example.cargotracker.booking.application.internal.outboundservices.acl.QuotationBookability;
 import com.example.cargotracker.booking.application.internal.outboundservices.acl.QuotationBookingNotifications;
+import com.example.cargotracker.booking.application.internal.queryservices.BookingQueryService;
 import com.example.cargotracker.booking.application.sagas.BookingSagaRepository;
 import com.example.cargotracker.booking.domain.model.aggregates.BookingRepository;
 import com.example.cargotracker.booking.domain.model.aggregates.TrackingNumberIssuer;
@@ -56,5 +57,14 @@ public class BookingConfiguration {
             Clock clock) {
         return new BookingCommandService(
                 repository, sagaRepository, trackingNumberIssuer, quotationBookability, eventPublisher, clock);
+    }
+
+    @Bean
+    BookingQueryService bookingQueryService(
+            BookingRepository repository,
+            BookingSagaRepository sagaRepository,
+            QuotationBookability quotationBookability,
+            Clock clock) {
+        return new BookingQueryService(repository, sagaRepository, quotationBookability, clock);
     }
 }

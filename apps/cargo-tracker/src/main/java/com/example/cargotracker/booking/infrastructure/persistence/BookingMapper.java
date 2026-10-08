@@ -25,5 +25,7 @@ public interface BookingMapper {
 
     boolean existsByTrackingNumber(@Param("trackingNumber") String trackingNumber);
 
+    boolean existsByQuotationId(@Param("quotationId") UUID quotationId);
+
     Optional<BookingSagaRow> findSagaByBookingId(@Param("bookingId") UUID bookingId);
 }

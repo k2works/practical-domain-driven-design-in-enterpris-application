@@ -70,7 +70,7 @@ public class BookingCommandService {
                         ? new BookingConfirmationOutcome.Expired()
                         : new BookingConfirmationOutcome.QuotationUnavailable(reason);
             }
-            case QuotationBookability.Result.Bookable(BookingTerms bookable) -> terms = bookable;
+            case QuotationBookability.Result.Bookable bookable -> terms = bookable.terms();
         }
         // 有効な見積り・荷主の承認・承認済み経路版は、見積りが確定に使えると判定した時点でそろっている（ADR-016）
         BookingConditions conditions =

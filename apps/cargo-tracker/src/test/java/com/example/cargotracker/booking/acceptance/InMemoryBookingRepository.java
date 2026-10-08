@@ -44,6 +44,12 @@ public class InMemoryBookingRepository implements BookingRepository {
         return byTrackingNumber.containsKey(trackingNumber.value());
     }
 
+    @Override
+    public synchronized boolean existsByQuotationId(UUID quotationId) {
+        return byTrackingNumber.values().stream()
+                .anyMatch(saved -> saved.currentVersion().terms().quotationId().equals(quotationId));
+    }
+
     public synchronized List<Booking> findAll() {
         return new ArrayList<>(byTrackingNumber.values());
     }

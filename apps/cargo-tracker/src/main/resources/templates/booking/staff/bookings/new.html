@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="ja" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/staff :: layout(~{::title}, ~{::main}, ~{}, 'transport-requests')}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="|本予約の確定 ${page.subject()} - cargo-tracker|">本予約の確定 TR-2026-0001 見積 1 - cargo-tracker</title>
+</head>
+<body>
+<main>
+    <h1 th:text="|本予約の確定 ${page.subject()}|">本予約の確定 TR-2026-0001 見積 1</h1>
+    <!--/* S-09（Bolt 23b、US-04 AC1・AC2）。画面そのものが確認の領域（BR-13。C-17・S-07 と同じく別のダイアログは挟まない）。
+         開いたときの判定は参考で、確定の可否は送ったときの照会（commit 時刻）で決まる（ADR-016） */-->
+    <div id="error-summary" th:if="${page.hasErrors()}" tabindex="-1" role="alert" aria-labelledby="error-summary-title">
+        <h2 id="error-summary-title">本予約を確定できませんでした</h2>
+        <ul>
+            <li><a href="#staffConfirmed">契約条件と照合したことを確かめて、チェックを入れてください。</a></li>
+        </ul>
+    </div>
+    <h2 class="h4">確定条件（BR-01）</h2>
+    <table class="table">
+        <thead>
+        <tr>
+            <th scope="col">確定条件</th>
+            <th scope="col">状態</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+            <th scope="row">有効な見積り</th>
+            <td th:text="|承認済み・有効期限 ${page.expiresAt()}|">承認済み・有効期限 2026-10-08 18:00 Asia/Tokyo（UTC+09:00）（UTC 2026-10-08 09:00）</td>
+        </tr>
+        <tr>
+            <th scope="row">必須貨物情報</th>
+            <td>
+                <span th:if="${page.cargoMissing()}"><strong>欠けています</strong>: 貨物の要約がありません。見積依頼の貨物を確かめてください。</span>
+                <span th:unless="${page.cargoMissing()}" th:text="${page.cargoSummary()}">GENERAL / PALLET × 12 / 8400.000 kg / 32.500 m3</span>
+            </td>
+        </tr>
+        <tr>
+            <th scope="row">荷主担当者の承認</th>
+            <td th:text="|承認済み ${page.shipperApprovedAt()}|">承認済み 2026-10-04 15:20 Asia/Tokyo（UTC+09:00）（UTC 2026-10-04 06:20）</td>
+        </tr>
+        <tr>
+            <th scope="row">承認済み経路版</th>
+            <td th:text="${page.route()}">RC-2026-0001 版 1</td>
+        </tr>
+        <tr>
+            <th scope="row">営業担当者の確認</th>
+            <td>下のチェックで示します</td>
+        </tr>
+        </tbody>
+    </table>
+    <p>この表示は開いた時刻での確認です。有効期限の判定は確定の時刻で行い、期限と同時刻以後は確定できません。</p>
+    <section class="card mb-3" aria-labelledby="confirmation-title">
+        <div class="card-body">
+            <h2 class="h4" id="confirmation-title">本予約を確定しますか</h2>
+            <dl class="row">
+                <dt class="col-sm-3">対象</dt>
+                <dd class="col-sm-9" th:text="|見積依頼 ${page.subject()}|">見積依頼 TR-2026-0001 見積 1</dd>
+                <dt class="col-sm-3">変更内容</dt>
+                <dd class="col-sm-9">本予約を確定し、追跡番号を発行します</dd>
+                <dt class="col-sm-3">影響</dt>
+                <dd class="col-sm-9">確定の後の変更・取消しは申請と営業の承認が必要になります</dd>
+                <dt class="col-sm-3">回復手段</dt>
+                <dd class="col-sm-9">確定の後の変更・取消しは申請で行います（申請の画面は準備中です）</dd>
+            </dl>
+            <form th:action="@{/staff/bookings}" method="post">
+                <input type="hidden" name="transportRequest" th:value="${page.transportRequestNumber()}">
+                <input type="hidden" name="quotation" th:value="${page.quotationNo()}">
+                <div class="form-check mb-3">
+                    <input class="form-check-input" type="checkbox" id="staffConfirmed" name="staffConfirmed" value="true"
+                           aria-required="true" th:attr="aria-invalid=${page.staffConfirmationMissing()} ? 'true' : null">
+                    <label class="form-check-label" for="staffConfirmed">契約条件と照合した（営業担当者の確認）</label>
+                </div>
+                <button type="submit" class="btn btn-primary">本予約を確定する</button>
+            </form>
+        </div>
+    </section>
+    <p><a th:href="@{/staff/transport-requests}">見積依頼の受付一覧へ戻る</a></p>
+</main>
+</body>
+</html>
