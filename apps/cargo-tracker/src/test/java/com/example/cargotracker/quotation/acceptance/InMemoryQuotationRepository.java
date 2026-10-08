@@ -100,6 +100,8 @@ public class InMemoryQuotationRepository implements QuotationRepository {
                 quotation.replacedBy().orElse(null),
                 quotation.respondedBy().orElse(null),
                 quotation.respondedAt().orElse(null),
+                quotation.assignedRoute().orElse(null),
+                quotation.shipperApproval().orElse(null),
                 aggregateVersion);
     }
 }

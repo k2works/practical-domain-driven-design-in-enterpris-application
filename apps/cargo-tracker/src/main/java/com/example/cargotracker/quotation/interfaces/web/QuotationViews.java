@@ -47,6 +47,8 @@ final class QuotationViews {
             case PENDING_APPROVAL -> "承認待ち";
             case PRESENTED -> "提示済み";
             case ROUTING_REQUESTED -> "詳細設計依頼済み";
+            case AWAITING_SHIPPER_APPROVAL -> "荷主承認待ち";
+            case APPROVED -> "荷主承認済み";
             case EXPIRED -> "失効";
             case REPLACED -> "置換済み";
         };

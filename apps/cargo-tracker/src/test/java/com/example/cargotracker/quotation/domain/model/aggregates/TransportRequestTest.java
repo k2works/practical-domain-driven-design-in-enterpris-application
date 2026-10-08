@@ -140,4 +140,52 @@ class TransportRequestTest {
         assertThat(request.markRoutingRequested(1)).isTrue();
         assertThat(request.status()).isEqualTo(TransportRequestStatus.ROUTING);
     }
+
+    @Test
+    void 経路設計中の現在の版に経路版が割り当てられると荷主承認待ちになりほかでは変わらない() {
+        TransportRequest request = TransportRequest.submit(id, number, shipper, terms, submitter, now);
+
+        assertThat(request.markAwaitingApproval(1)).as("審査中では変えない").isFalse();
+        request.approve(1, submitter, "根拠", now);
+        request.markQuotationPresented(1);
+        request.markRoutingRequested(1);
+        assertThat(request.markAwaitingApproval(2)).as("現在の版でなければ変えない").isFalse();
+        assertThat(request.markAwaitingApproval(1)).isTrue();
+        assertThat(request.status()).isEqualTo(TransportRequestStatus.AWAITING_APPROVAL);
+        assertThat(request.markAwaitingApproval(1)).as("2 回目は変えない（冪等）").isFalse();
+        assertThat(request.markRoutingRequested(1)).as("遅れて届いた DE-16 では戻らない").isFalse();
+        assertThat(request.markQuotationPresented(1)).as("遅れて届いた DE-03 では戻らない").isFalse();
+    }
+
+    @Test
+    void 荷主承認待ちの現在の版で荷主が承認すると予約待ちになりほかでは変わらない() {
+        TransportRequest request = TransportRequest.submit(id, number, shipper, terms, submitter, now);
+
+        assertThat(request.markReadyToBook(1)).as("審査中では変えない").isFalse();
+        request.approve(1, submitter, "根拠", now);
+        request.markQuotationPresented(1);
+        request.markRoutingRequested(1);
+        request.markAwaitingApproval(1);
+        assertThat(request.markReadyToBook(2)).as("現在の版でなければ変えない").isFalse();
+        assertThat(request.markReadyToBook(1)).isTrue();
+        assertThat(request.status()).isEqualTo(TransportRequestStatus.READY_TO_BOOK);
+        assertThat(request.markReadyToBook(1)).as("2 回目は変えない（冪等）").isFalse();
+        assertThat(request.markAwaitingApproval(1)).as("遅れて届いた DE-21 では戻らない").isFalse();
+    }
+
+    @Test
+    void 先のイベントが遅れても経路設計中から荷主承認待ちと予約待ちに進む() {
+        TransportRequest routing = TransportRequest.submit(id, number, shipper, terms, submitter, now);
+        routing.approve(1, submitter, "根拠", now);
+        routing.markRoutingRequested(1);
+        TransportRequest quoted = TransportRequest.submit(
+                new TransportRequestId(UUID.randomUUID()), number, shipper, terms, submitter, now);
+        quoted.approve(1, submitter, "根拠", now);
+        quoted.markQuotationPresented(1);
+
+        assertThat(routing.markReadyToBook(1)).as("DE-21 より先に DE-04 が届いた").isTrue();
+        assertThat(routing.status()).isEqualTo(TransportRequestStatus.READY_TO_BOOK);
+        assertThat(quoted.markAwaitingApproval(1)).as("DE-16 より先に DE-21 が届いた").isTrue();
+        assertThat(quoted.status()).isEqualTo(TransportRequestStatus.AWAITING_APPROVAL);
+    }
 }

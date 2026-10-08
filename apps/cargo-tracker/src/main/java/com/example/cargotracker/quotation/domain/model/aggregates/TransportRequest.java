@@ -183,6 +183,26 @@ public final class TransportRequest {
     }
 
     /**
+     * 経路版が見積りに割り当てられたことを受けて、荷主承認待ちにする（DE-21 の受け取り。US-24 AC4。Bolt 20）。
+     *
+     * @param quotedVersionNo 見積りの対象の版番号
+     * @return 状態を変えたら true
+     */
+    public boolean markAwaitingApproval(int quotedVersionNo) {
+        return false;
+    }
+
+    /**
+     * 荷主が見積りと経路を承認したことを受けて、予約待ちにする（DE-04 の受け取り。US-24 AC4。Bolt 20）。
+     *
+     * @param quotedVersionNo 見積りの対象の版番号
+     * @return 状態を変えたら true
+     */
+    public boolean markReadyToBook(int quotedVersionNo) {
+        return false;
+    }
+
+    /**
      * 再提出できるかを確かめる（Q-INV-15）。書類の中身を保存する前に確かめ、受け付けない再提出でファイルを残さないために使う。
      *
      * @return 受け付けない理由（再提出できるなら空）

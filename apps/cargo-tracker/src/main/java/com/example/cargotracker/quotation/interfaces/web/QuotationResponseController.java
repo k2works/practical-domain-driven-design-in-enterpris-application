@@ -126,8 +126,13 @@ public class QuotationResponseController {
             case EXPIRED -> subject + " は有効期限を過ぎて失効しています。新しい見積りは担当営業にご依頼ください";
             case REPLACED -> subject + " は新しい見積りに置き換えられました。見積依頼の詳細で最新の状況をご確認ください";
             case ROUTING_REQUESTED -> subject + " ですでに詳細経路設計を依頼しています";
-            case TRANSPORT_REQUEST_NOT_QUOTING, ALREADY_QUOTED, NOT_PENDING_APPROVAL, OUTDATED_VERSION, NOT_PRESENTED ->
-                subject + " には回答できません。担当営業にご連絡ください";
+            case TRANSPORT_REQUEST_NOT_QUOTING,
+                    ALREADY_QUOTED,
+                    NOT_PENDING_APPROVAL,
+                    OUTDATED_VERSION,
+                    NOT_PRESENTED,
+                    NOT_AWAITING_SHIPPER_APPROVAL,
+                    ALREADY_APPROVED -> subject + " には回答できません。担当営業にご連絡ください";
         };
     }
 

@@ -19,5 +19,9 @@ public enum QuotationRejection {
     /** 荷主に提示していない見積りに回答しようとした（Q-INV-09。Bolt 12）。 */
     NOT_PRESENTED,
     /** 見積りが詳細設計依頼済み（回答済み。Q-INV-09。経路設計の途中の再見積りは US-05・US-07 で決める。Bolt 12）。 */
-    ROUTING_REQUESTED
+    ROUTING_REQUESTED,
+    /** 荷主承認待ちでない見積りを荷主が承認しようとした（経路版の割当ての前など。Q-INV-10。Bolt 20）。 */
+    NOT_AWAITING_SHIPPER_APPROVAL,
+    /** 見積りが承認済み（Q-INV-10。二重送信など。Bolt 20）。 */
+    ALREADY_APPROVED
 }

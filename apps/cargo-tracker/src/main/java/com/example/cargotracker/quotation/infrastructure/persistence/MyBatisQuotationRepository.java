@@ -189,6 +189,8 @@ public class MyBatisQuotationRepository implements QuotationRepository {
                 row.replacedByQuotationId() == null ? null : new QuotationId(row.replacedByQuotationId()),
                 userIdOrNull(row.respondedBy()),
                 utcOrNull(row.respondedAt()),
+                null,
+                null,
                 row.version());
     }
 

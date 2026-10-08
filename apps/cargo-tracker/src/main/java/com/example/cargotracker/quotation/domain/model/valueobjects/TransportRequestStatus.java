@@ -13,5 +13,9 @@ public enum TransportRequestStatus {
     /** 見積提示済み（見積りと経路方針を提示した後。DE-03 を受けて変える。Bolt 10）。 */
     QUOTED,
     /** 経路設計中（荷主が詳細経路設計を依頼した後。DE-16 を受けて変える。Bolt 12）。 */
-    ROUTING
+    ROUTING,
+    /** 荷主承認待ち（経路版を見積りに割り当てた後。DE-21 を受けて変える。Bolt 20）。 */
+    AWAITING_APPROVAL,
+    /** 予約待ち（荷主が見積りと経路を承認した後。DE-04 を受けて変える。本予約の確定は US-04。Bolt 20）。 */
+    READY_TO_BOOK
 }

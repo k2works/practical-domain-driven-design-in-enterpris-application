@@ -2,6 +2,7 @@ package com.example.cargotracker.quotation.domain.model.aggregates;
 
 import com.example.cargotracker.quotation.domain.events.QuotationPresented;
 import com.example.cargotracker.quotation.domain.events.RouteDesignRequested;
+import com.example.cargotracker.quotation.domain.model.valueobjects.AssignedRoute;
 import com.example.cargotracker.quotation.domain.model.valueobjects.PricingBasis;
 import com.example.cargotracker.quotation.domain.model.valueobjects.QuotationExpiry;
 import com.example.cargotracker.quotation.domain.model.valueobjects.QuotationId;
@@ -9,7 +10,9 @@ import com.example.cargotracker.quotation.domain.model.valueobjects.QuotationInp
 import com.example.cargotracker.quotation.domain.model.valueobjects.QuotationRejection;
 import com.example.cargotracker.quotation.domain.model.valueobjects.QuotationStatus;
 import com.example.cargotracker.quotation.domain.model.valueobjects.QuotationViolations;
+import com.example.cargotracker.quotation.domain.model.valueobjects.RouteAssignmentResult;
 import com.example.cargotracker.quotation.domain.model.valueobjects.RoutePolicy;
+import com.example.cargotracker.quotation.domain.model.valueobjects.ShipperApproval;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestId;
 import com.example.cargotracker.shared.annotation.ddd.AggregateRoot;
 import com.example.cargotracker.shared.domain.Location;
@@ -50,6 +53,8 @@ public final class Quotation {
     private QuotationId replacedBy;
     private UserId respondedBy;
     private UtcInstant respondedAt;
+    private AssignedRoute assignedRoute;
+    private ShipperApproval shipperApproval;
 
     @SuppressWarnings("java:S107") // 保存されている状態から組み立てるため、集約の値をすべて受け取る
     private Quotation(
@@ -66,6 +71,8 @@ public final class Quotation {
             QuotationId replacedBy,
             UserId respondedBy,
             UtcInstant respondedAt,
+            AssignedRoute assignedRoute,
+            ShipperApproval shipperApproval,
             long aggregateVersion) {
         this.id = Objects.requireNonNull(id, "id");
         this.transportRequestId = Objects.requireNonNull(transportRequestId, "transportRequestId");
@@ -83,6 +90,8 @@ public final class Quotation {
         this.replacedBy = replacedBy;
         this.respondedBy = respondedBy;
         this.respondedAt = respondedAt;
+        this.assignedRoute = assignedRoute;
+        this.shipperApproval = shipperApproval;
         this.aggregateVersion = aggregateVersion;
     }
 
@@ -100,6 +109,8 @@ public final class Quotation {
                 quotationNo,
                 transportRequestVersionNo,
                 QuotationStatus.DRAFT,
+                null,
+                null,
                 null,
                 null,
                 null,
@@ -127,6 +138,8 @@ public final class Quotation {
             QuotationId replacedBy,
             UserId respondedBy,
             UtcInstant respondedAt,
+            AssignedRoute assignedRoute,
+            ShipperApproval shipperApproval,
             long aggregateVersion) {
         return new Quotation(
                 id,
@@ -142,6 +155,8 @@ public final class Quotation {
                 replacedBy,
                 respondedBy,
                 respondedAt,
+                assignedRoute,
+                shipperApproval,
                 aggregateVersion);
     }
 
@@ -273,9 +288,45 @@ public final class Quotation {
         }
         return switch (status) {
             case PRESENTED -> Optional.empty();
-            case ROUTING_REQUESTED -> Optional.of(QuotationRejection.ROUTING_REQUESTED);
+            case ROUTING_REQUESTED, AWAITING_SHIPPER_APPROVAL, APPROVED ->
+                Optional.of(QuotationRejection.ROUTING_REQUESTED);
             case DRAFT, PENDING_APPROVAL, EXPIRED, REPLACED -> Optional.of(QuotationRejection.NOT_PRESENTED);
         };
+    }
+
+    /**
+     * 経路設計が確定した経路版を割り当てる（詳細設計依頼済み → 荷主承認待ち。R-INV-11、ADR-014。Bolt 20）。
+     *
+     * @param route 割り当てる経路（経路版の写し）
+     * @param at 割当て時刻
+     * @return 割当ての結果
+     */
+    public RouteAssignmentResult assignRoute(AssignedRoute route, UtcInstant at) {
+        Objects.requireNonNull(route, "route");
+        Objects.requireNonNull(at, "at");
+        return RouteAssignmentResult.NOT_ROUTING_REQUESTED;
+    }
+
+    /**
+     * 荷主が見積りと割り当てた経路を承認する（荷主承認待ち → 承認済み。US-24 AC4・AC5、Q-INV-07・10。Bolt 20）。
+     *
+     * @param approver 承認した荷主担当者
+     * @param at 承認時刻（判定時刻）
+     * @return 受け付けなかった理由（受け付けたら空）
+     */
+    public Optional<QuotationRejection> approveByShipper(UserId approver, UtcInstant at) {
+        Objects.requireNonNull(approver, "approver");
+        return approvalRejectionAt(at);
+    }
+
+    /**
+     * 判定時刻に荷主が承認できないなら、その理由（Q-INV-07・10。Bolt 20）。画面の操作の出し分けもこれを使う。
+     *
+     * @return 承認できない理由（承認できるなら空）
+     */
+    public Optional<QuotationRejection> approvalRejectionAt(UtcInstant at) {
+        Objects.requireNonNull(at, "at");
+        return Optional.of(QuotationRejection.NOT_AWAITING_SHIPPER_APPROVAL);
     }
 
     /**
@@ -326,7 +377,8 @@ public final class Quotation {
         return switch (status) {
             case EXPIRED -> Optional.of(QuotationRejection.EXPIRED);
             case REPLACED -> Optional.of(QuotationRejection.REPLACED);
-            case DRAFT, PENDING_APPROVAL, PRESENTED, ROUTING_REQUESTED -> Optional.empty();
+            case DRAFT, PENDING_APPROVAL, PRESENTED, ROUTING_REQUESTED, AWAITING_SHIPPER_APPROVAL, APPROVED ->
+                Optional.empty();
         };
     }
 
@@ -395,6 +447,16 @@ public final class Quotation {
     /** 回答時刻（荷主が回答したとき）。 */
     public Optional<UtcInstant> respondedAt() {
         return Optional.ofNullable(respondedAt);
+    }
+
+    /** 割り当てた経路（荷主承認待ち・承認済みのとき）。 */
+    public Optional<AssignedRoute> assignedRoute() {
+        return Optional.ofNullable(assignedRoute);
+    }
+
+    /** 荷主承認（承認済みのとき）。 */
+    public Optional<ShipperApproval> shipperApproval() {
+        return Optional.ofNullable(shipperApproval);
     }
 
     /** 楽観ロックの版（読み込んだときの集約の版）。リポジトリが更新のときに照合する。 */
