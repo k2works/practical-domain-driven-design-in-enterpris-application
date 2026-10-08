@@ -68,6 +68,17 @@ class MyBatisBookingRepositoriesIntegrationTest {
     }
 
     @Test
+    void 追跡番号の重なりは同じ見積りの予約と区別して技術の失敗にする() {
+        Booking first = confirmed(terms(UUID.randomUUID()));
+        repository.save(first, BookingFixture.SALES);
+
+        Booking collided = confirmed(terms(UUID.randomUUID()), first.trackingNumber());
+        assertThatThrownBy(() -> repository.save(collided, BookingFixture.SALES))
+                .isInstanceOf(IllegalStateException.class)
+                .isNotInstanceOf(DuplicateBookingException.class);
+    }
+
+    @Test
     void 予約サガを処理中で保存し予約IDで読み出す() {
         Booking booking = confirmed(terms(UUID.randomUUID()));
         repository.save(booking, BookingFixture.SALES);
@@ -83,11 +94,15 @@ class MyBatisBookingRepositoriesIntegrationTest {
     }
 
     private Booking confirmed(BookingTerms terms) {
+        return confirmed(terms, TrackingNumber.generate(random));
+    }
+
+    private static Booking confirmed(BookingTerms terms, TrackingNumber trackingNumber) {
         return Booking.confirm(
                         new BookingId(UUID.randomUUID()),
                         BookingFixture.allConditions(),
                         terms,
-                        TrackingNumber.generate(random),
+                        trackingNumber,
                         BookingFixture.SALES,
                         COMMITTED_AT)
                 .booking();

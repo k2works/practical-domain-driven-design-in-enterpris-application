@@ -12,7 +12,6 @@ public record BookingSagaRow(
         String trackingNumber,
         String status,
         String currentStep,
-        int attempts,
         OffsetDateTime startedAt,
         OffsetDateTime updatedAt,
         long version) {}

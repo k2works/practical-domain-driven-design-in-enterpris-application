@@ -162,9 +162,9 @@ class AppendOnlyGrantIntegrationTest {
         Timestamp now = Timestamp.from(Instant.parse("2026-10-08T09:00:00Z"));
         try (Connection connection = connectAsApplicationUser()) {
             try (PreparedStatement booking = connection.prepareStatement("INSERT INTO booking.booking"
-                    + " (id, tracking_number, transport_request_number, shipper_company_id, status, transport_phase,"
-                    + " current_version_no, version, created_at, created_by, updated_at, updated_by)"
-                    + " VALUES (?, ?, 'TR-2026-0001', ?, 'CONFIRMED', 'BEFORE_PICKUP', 1, 0, ?, ?, ?, ?)")) {
+                    + " (id, tracking_number, transport_request_number, quotation_id, shipper_company_id, status,"
+                    + " transport_phase, current_version_no, version, created_at, created_by, updated_at, updated_by)"
+                    + " VALUES (?, ?, 'TR-2026-0001', ?, ?, 'CONFIRMED', 'BEFORE_PICKUP', 1, 0, ?, ?, ?, ?)")) {
                 UUID user = UUID.randomUUID();
                 booking.setObject(1, bookingId);
                 booking.setString(
@@ -176,10 +176,11 @@ class AppendOnlyGrantIntegrationTest {
                                         .substring(0, 12)
                                         .toUpperCase());
                 booking.setObject(3, UUID.randomUUID());
-                booking.setTimestamp(4, now);
-                booking.setObject(5, user);
-                booking.setTimestamp(6, now);
-                booking.setObject(7, user);
+                booking.setObject(4, UUID.randomUUID());
+                booking.setTimestamp(5, now);
+                booking.setObject(6, user);
+                booking.setTimestamp(7, now);
+                booking.setObject(8, user);
                 assertThat(booking.executeUpdate()).isEqualTo(1);
             }
             try (PreparedStatement version = connection.prepareStatement("INSERT INTO booking.booking_version"

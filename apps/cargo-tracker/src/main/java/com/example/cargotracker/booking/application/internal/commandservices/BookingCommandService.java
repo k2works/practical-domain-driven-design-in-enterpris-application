@@ -75,6 +75,10 @@ public class BookingCommandService {
         // 有効な見積り・荷主の承認・承認済み経路版は、見積りが確定に使えると判定した時点でそろっている（ADR-016）
         BookingConditions conditions =
                 new BookingConditions(true, !terms.cargoSummary().isBlank(), true, true, command.staffConfirmed());
+        // 追跡番号は発行のたびに DB を照会するため、条件が欠けていれば発行の前に返す（Bolt 23 レビュー L-1）
+        if (!conditions.missing().isEmpty()) {
+            return new BookingConfirmationOutcome.MissingConditions(conditions.missing());
+        }
         UUID operator = command.operator().userId().value();
         TrackingNumber trackingNumber = trackingNumberIssuer.issue();
         BookingConfirmation confirmation;

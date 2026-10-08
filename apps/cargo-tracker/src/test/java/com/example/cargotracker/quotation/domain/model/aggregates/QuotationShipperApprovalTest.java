@@ -220,8 +220,13 @@ class QuotationShipperApprovalTest {
     // 予約確定に使えるか（Q-INV-06、BR-10、ADR-016。Bolt 23）
 
     @ParameterizedTest
-    @CsvSource({"2099-10-08T08:59:00Z, true", "2099-10-08T09:00:00Z, false", "2099-10-08T09:01:00Z, false"})
-    void 承認済みの見積りはcommit時刻が有効期限の1分前なら予約確定に使え同時刻と1分後は失効(String committedAt, boolean bookable) {
+    @CsvSource({
+        "2099-10-08T08:59:00Z, true",
+        "2099-10-08T08:59:59.999999Z, true",
+        "2099-10-08T09:00:00Z, false",
+        "2099-10-08T09:01:00Z, false"
+    })
+    void 承認済みの見積りはcommit時刻が有効期限の1分前と1マイクロ秒前なら予約確定に使え同時刻と1分後は失効(String committedAt, boolean bookable) {
         Quotation approved = awaitingApproval();
         approved.approveByShipper(shipperUser, now);
 

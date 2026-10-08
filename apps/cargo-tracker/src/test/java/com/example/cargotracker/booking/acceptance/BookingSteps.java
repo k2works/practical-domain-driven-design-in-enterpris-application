@@ -13,6 +13,7 @@ import com.example.cargotracker.booking.domain.model.sagas.BookingSagaStatus;
 import com.example.cargotracker.quotation.domain.events.QuotationApprovedByShipper;
 import com.example.cargotracker.quotation.domain.events.QuotationRouteAssigned;
 import com.example.cargotracker.shared.acceptance.DeferredEventDelivery;
+import com.example.cargotracker.shared.acceptance.ScenarioContext;
 import com.example.cargotracker.shared.domain.AuthenticatedActor;
 import com.example.cargotracker.shared.domain.CompanyId;
 import com.example.cargotracker.shared.domain.Role;
@@ -39,17 +40,20 @@ public class BookingSteps {
     private final InMemoryBookingRepository bookings;
     private final InMemoryBookingSagaRepository sagas;
     private final DeferredEventDelivery delivery;
+    private final ScenarioContext context;
     private BookingConfirmationOutcome lastOutcome;
 
     public BookingSteps(
             BookingCommandService commandService,
             InMemoryBookingRepository bookings,
             InMemoryBookingSagaRepository sagas,
-            DeferredEventDelivery delivery) {
+            DeferredEventDelivery delivery,
+            ScenarioContext context) {
         this.commandService = commandService;
         this.bookings = bookings;
         this.sagas = sagas;
         this.delivery = delivery;
+        this.context = context;
     }
 
     @もし("営業担当者が見積り {int} の確定条件を確認して本予約を確定する")
@@ -99,9 +103,14 @@ public class BookingSteps {
 
     @ならば("予約サガは {string} で追跡の開始を待つ")
     public void 予約サガの状態(String status) {
-        assertThat(status).isEqualTo("処理中");
+        BookingSagaStatus expected =
+                switch (status) {
+                    case "処理中" -> BookingSagaStatus.IN_PROGRESS;
+                    case "完了" -> BookingSagaStatus.COMPLETED;
+                    default -> throw new IllegalArgumentException("未知の予約サガの状態: " + status);
+                };
         assertThat(sagas.findByBookingId(confirmedBooking().id()))
-                .hasValueSatisfying(saga -> assertThat(saga.status()).isEqualTo(BookingSagaStatus.IN_PROGRESS));
+                .hasValueSatisfying(saga -> assertThat(saga.status()).isEqualTo(expected));
     }
 
     @ならば("本予約を確定したイベントが {int} 回だけ発行されている")
@@ -126,21 +135,25 @@ public class BookingSteps {
     }
 
     /**
-     * 見積り番号の見積りの ID。見積りの公表された言語（DE-21 経路版を割り当てた、DE-04 荷主が承認した）から得る（AT-05）。
-     * どちらも発行されていなければ乱数の ID（見つからない見積り）。
+     * このシナリオの輸送要求の見積り番号の見積りの ID。見積りの公表された言語（DE-21 経路版を割り当てた、DE-04 荷主が承認した）から得る
+     * （AT-05）。ほかのシナリオの見積りを拾わないよう輸送要求で絞り、見つからなければ前提の誤りとして失敗させる（Bolt 23 レビュー L-5）。
      */
     private UUID approvedQuotation(int quotationNo) {
+        UUID transportRequestId = context.transportRequestId();
         return delivery.history().stream()
                 .<UUID>mapMulti((event, ids) -> {
-                    if (event instanceof QuotationApprovedByShipper approved && approved.quotationNo() == quotationNo) {
+                    if (event instanceof QuotationApprovedByShipper approved
+                            && approved.transportRequestId().equals(transportRequestId)
+                            && approved.quotationNo() == quotationNo) {
                         ids.accept(approved.quotationId());
                     } else if (event instanceof QuotationRouteAssigned assigned
+                            && assigned.transportRequestId().equals(transportRequestId)
                             && assigned.quotationNo() == quotationNo) {
                         ids.accept(assigned.quotationId());
                     }
                 })
                 .reduce((first, second) -> second)
-                .orElseGet(UUID::randomUUID);
+                .orElseThrow(() -> new IllegalStateException("見積り " + quotationNo + " の経路の割り当ても荷主の承認もない"));
     }
 
     private static AuthenticatedActor actor(String userId, Role role, String name) {

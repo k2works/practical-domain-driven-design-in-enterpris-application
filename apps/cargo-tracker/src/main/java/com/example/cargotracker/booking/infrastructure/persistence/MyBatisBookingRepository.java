@@ -15,6 +15,7 @@ import java.time.Clock;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.dao.DuplicateKeyException;
@@ -37,9 +38,13 @@ public class MyBatisBookingRepository implements BookingRepository {
         this.clock = clock;
     }
 
+    /** 1 つの見積りから予約は 1 件（B-INV-11）を守る UK の名前。DB によって大文字・小文字が変わるため、区別せずに探す。 */
+    private static final String QUOTATION_UNIQUE_KEY = "uk_booking_quotation";
+
     /**
-     * 確定した貨物予約を予約版とあわせて追加する。追跡番号・見積り ID の UK に違反したら、セーブポイントに戻してドメインの例外にする
-     * （PostgreSQL は制約違反でトランザクションを中断するため。経路設計案件の保存と同じ）。
+     * 確定した貨物予約を予約版とあわせて追加する。見積り ID の UK に違反したら、セーブポイントに戻してドメインの例外にする
+     * （PostgreSQL は制約違反でトランザクションを中断するため。経路設計案件の保存と同じ）。追跡番号の重なりは発行で避けており
+     * （{@code RandomTrackingNumberIssuer}）、それでも重なったら技術の失敗として返す（Bolt 23 レビュー M-1）。
      */
     @Override
     @Transactional(propagation = Propagation.NESTED)
@@ -50,6 +55,7 @@ public class MyBatisBookingRepository implements BookingRepository {
                     booking.id().value(),
                     booking.trackingNumber().value(),
                     booking.transportRequestNumber(),
+                    booking.currentVersion().terms().quotationId(),
                     booking.shipperCompanyId().value(),
                     booking.status().name(),
                     booking.transportPhase().name(),
@@ -63,11 +69,17 @@ public class MyBatisBookingRepository implements BookingRepository {
                 mapper.insertBookingVersion(toRow(booking.id(), version));
             }
         } catch (DuplicateKeyException e) {
-            throw new DuplicateBookingException(
-                    "同じ見積りの予約がすでにあるか、追跡番号が重なった: "
-                            + booking.currentVersion().terms().quotationId(),
-                    e);
+            if (violates(e, QUOTATION_UNIQUE_KEY)) {
+                throw new DuplicateBookingException(
+                        "同じ見積りの予約がすでにある: " + booking.currentVersion().terms().quotationId(), e);
+            }
+            throw new IllegalStateException("貨物予約の一意制約に違反した（追跡番号の重なりなど）: " + booking.id(), e);
         }
+    }
+
+    private static boolean violates(DuplicateKeyException e, String constraint) {
+        String message = e.getMostSpecificCause().getMessage();
+        return message != null && message.toLowerCase(Locale.ROOT).contains(constraint);
     }
 
     @Override

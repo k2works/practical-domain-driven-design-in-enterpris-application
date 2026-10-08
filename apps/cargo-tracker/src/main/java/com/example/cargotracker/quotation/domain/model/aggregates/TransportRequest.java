@@ -220,13 +220,14 @@ public final class TransportRequest {
 
     /**
      * 本予約を確定したことを受けて、予約確定済みにする（予約の DE-07 の listener が見積りの公開 API で呼ぶ。US-04 AC1。Bolt 23）。
-     * 予約待ちのときだけ進める（本予約は予約待ちの見積りからだけ確定する。ADR-016）。
+     * 見積りのイベントで進める状態の並びで予約確定済みより前なら進める。本予約は荷主が承認した見積りからだけ確定するが（ADR-016）、
+     * 荷主の承認の DE-04 の配信より DE-07 が先に届くと輸送要求はまだ荷主承認待ちにあるため、予約待ちに限らない（Bolt 23 レビュー H-1）。
      *
      * @param quotedVersionNo 見積りの対象の版番号
      * @return 状態を変えたら true
      */
     public boolean markBooked(int quotedVersionNo) {
-        if (status != TransportRequestStatus.READY_TO_BOOK || quotedVersionNo != currentVersion.versionNo()) {
+        if (!isBefore(TransportRequestStatus.BOOKED) || quotedVersionNo != currentVersion.versionNo()) {
             return false;
         }
         status = TransportRequestStatus.BOOKED;

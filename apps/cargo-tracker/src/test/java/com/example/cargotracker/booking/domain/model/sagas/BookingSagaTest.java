@@ -23,7 +23,6 @@ class BookingSagaTest {
         assertThat(saga.trackingNumber()).isEqualTo(BookingFixture.TRACKING_NUMBER);
         assertThat(saga.status()).isEqualTo(BookingSagaStatus.IN_PROGRESS);
         assertThat(saga.currentStep()).isEqualTo(BookingSagaStep.START_TRACKING);
-        assertThat(saga.attempts()).isZero();
         assertThat(saga.startedAt()).isEqualTo(startedAt);
         assertThat(saga.isCompleted()).isFalse();
     }

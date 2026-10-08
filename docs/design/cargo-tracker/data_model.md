@@ -4,7 +4,7 @@ title: "cargo-tracker データモデル"
 description: "cargo-tracker の概念データモデル、スキーマ分割、命名と型の規約（H2 と PostgreSQL の共通部分）、コンテキストごとの論理データモデルと ER 図、版・追記専用・冪等性・イベント配信の表現。"
 tags: [design, data-model]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-08T07:56:18Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-08T08:52:17Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T07:48:17Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:01:37Z }
@@ -524,6 +524,7 @@ entity "booking\n貨物予約" as b {
   --
   * tracking_number : VARCHAR(20) <<UK>>
   * transport_request_number : VARCHAR(20) <<REF quotation>>
+  * quotation_id : UUID <<REF quotation, UK>>
   * shipper_company_id : UUID <<REF identity>>
   * status : VARCHAR(30)
   * transport_phase : VARCHAR(30)
@@ -569,9 +570,6 @@ entity "booking_saga\n予約サガ" as saga {
   * tracking_number : VARCHAR(20)
   * status : VARCHAR(30)
   * current_step : VARCHAR(50)
-  * attempts : INTEGER
-  next_retry_at : TIMESTAMPTZ
-  last_error : VARCHAR(4000)
   service_case_number : VARCHAR(20)
   * started_at : TIMESTAMPTZ
   * updated_at : TIMESTAMPTZ
@@ -585,9 +583,9 @@ b ||--o| saga
 
 | 表 | 主な制約 | 対応する不変条件 |
 | :--- | :--- | :--- |
-| `booking` | `tracking_number` は一意。`status` IN（`CONFIRMED`、`AMENDMENT_PENDING`、`CANCELLATION_PENDING`、`AMENDING`、`CANCELLED`、`IN_TRANSIT`、`COMPLETED`）。`transport_phase` IN（`BEFORE_PICKUP`、`AFTER_PICKUP`、`COMPLETED`） | B-INV-06、B-INV-07 |
-| `booking_version` | 予約確定時の見積り・経路版・荷受人・貨物の写しと、確定者・commit 時刻。UK（`quotation_id`）で、1 つの見積りから 2 件目の予約を作れない（別のコマンド ID による同時確定でも片方が一意制約で失敗する） | B-INV-01、B-INV-08、B-INV-11 |
-| `booking_saga` | 予約ごとに 1 つ。`status` IN（`IN_PROGRESS`、`COMPLETED`、`FAILED`、`NEEDS_HUMAN`） | ARCH-HO-02 |
+| `booking` | `tracking_number` は一意。UK（`quotation_id`）で、1 つの見積りから 2 件目の予約を作れない（別のコマンド ID による同時確定でも片方が一意制約で失敗する。予約版ではなく貨物予約に置くのは、変更の承認で予約版を足しても同じ見積りの写しを持てるようにするため。Bolt 23 レビュー）。`status` IN（`CONFIRMED`、`AMENDMENT_PENDING`、`CANCELLATION_PENDING`、`AMENDING`、`CANCELLED`、`IN_TRANSIT`、`COMPLETED`）。`transport_phase` IN（`BEFORE_PICKUP`、`AFTER_PICKUP`、`COMPLETED`） | B-INV-06、B-INV-07、B-INV-11 |
+| `booking_version` | 予約確定時の見積り・経路版・荷受人・貨物の写しと、確定者・commit 時刻 | B-INV-01、B-INV-08 |
+| `booking_saga` | 予約ごとに 1 つ。`status` IN（`IN_PROGRESS`、`COMPLETED`、`FAILED`、`NEEDS_HUMAN`）。再試行の回数・次の時刻・最後の誤りは持たない（追跡の開始の再試行はイベントの再配信が担う。ADR-015）。有人確認要の判定は処理中の滞留（`started_at`）で行う | ARCH-HO-02 |
 | `processed_command` | 本予約確定のコマンド ID を記録し、再送には既存の予約 ID と追跡番号を返す | B-INV-03 |
 
 `booking_version.cargo_summary` は予約確定時の貨物の写しで、見積りの内部情報（料金明細）は複製しない（units.md「見積り内部情報を予約へ複製しない」）。
@@ -607,7 +605,7 @@ entity "tracking_record\n追跡記録" as trk {
   * shipper_company_id : UUID <<REF identity>>
   * consignee_company_id : UUID <<REF identity>>
   * booking_status : VARCHAR(30)
-  routing_case_id : UUID <<REF routing>>
+  routing_case_number : VARCHAR(20) <<REF routing>>
   route_version_no : INTEGER
   * current_status : VARCHAR(30)
   status_basis_milestone_no : INTEGER
@@ -1071,7 +1069,7 @@ ds ||--o{ ff
 | :--- | :--- | :--- |
 | `event_publication`（と完了済みの保管表） | Spring Modulith（JDBC） | イベント発行記録。発行と同じトランザクションで記録し、購読の完了を記録する。未完了のものを再配信する（ADR-003） |
 | `spring_session`、`spring_session_attributes` | Spring Session JDBC | 複数インスタンス間で共有する session |
-| `shedlock` | ShedLock | 定期処理（再配信、予約サガの再試行、日次の処理）を 1 インスタンスに限るためのロック |
+| `shedlock` | ShedLock | 定期処理（再配信、予約サガの滞留の判定、日次の処理）を 1 インスタンスに限るためのロック |
 
 `spring_session` と `spring_session_attributes` は Bolt 14 で作る（`principal_name` はログインのメールアドレスを入れるため 320 文字に広げた。Spring Session JDBC の DDL を `platform` スキーマに置く。無操作 30 分の期限は session の `MAX_INACTIVE_INTERVAL`（`spring.session.timeout`）、発行から 8 時間の上限は session の属性に置いた認証時刻で判定する）。表の定義はフレームワークの提供する DDL に従う。DDL は DB ごとに違うため、Flyway の `db/migration/{vendor}/` に H2 用と PostgreSQL 用を分けて置く（ADR-007）。完了したイベント発行記録は 30 日（RET-05）で削除する。
 
@@ -1114,7 +1112,7 @@ src/main/resources/db/
 | `routing.routing_case` | （`transport_request_id`） | 輸送要求から経路設計案件 |
 | `routing.referenced_info_version` | （`voyage_number`） | 航海の更新で再評価する確定済み経路版の検索（DE-12） |
 | `booking.booking` | `tracking_number`（一意）、（`shipper_company_id`、`status`）、（`transport_request_number`） | 追跡番号での照会、荷主の予約一覧、業務番号から予約をたどる社内の照会（Bolt 23、R-31） |
-| `booking.booking_saga` | （`status`、`next_retry_at`） | 再試行の対象 |
+| `booking.booking_saga` | （`status`、`started_at`） | 処理中の滞留の判定（RTY-02、OBS-04） |
 | `tracking.tracking_record` | （`shipper_company_id`）、（`consignee_company_id`） | 荷主・荷受人の照会 |
 | `tracking.service_case` | （`status`、`receive_due_at`） | 受領期限を過ぎた案件（escalation） |
 | `identity.access_grant` | （`booking_id`、`consignee_company_id`、`status`） | 参照許可の確認（request ごと） |

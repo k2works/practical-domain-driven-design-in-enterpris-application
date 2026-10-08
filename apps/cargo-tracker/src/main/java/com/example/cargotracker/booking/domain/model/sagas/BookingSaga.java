@@ -22,7 +22,6 @@ public final class BookingSaga {
     private final TrackingNumber trackingNumber;
     private final BookingSagaStatus status;
     private final BookingSagaStep currentStep;
-    private final int attempts;
     private final UtcInstant startedAt;
     private final long version;
 
@@ -32,7 +31,6 @@ public final class BookingSaga {
             TrackingNumber trackingNumber,
             BookingSagaStatus status,
             BookingSagaStep currentStep,
-            int attempts,
             UtcInstant startedAt,
             long version) {
         this.id = Objects.requireNonNull(id, "id");
@@ -40,7 +38,6 @@ public final class BookingSaga {
         this.trackingNumber = Objects.requireNonNull(trackingNumber, "trackingNumber");
         this.status = Objects.requireNonNull(status, "status");
         this.currentStep = Objects.requireNonNull(currentStep, "currentStep");
-        this.attempts = attempts;
         this.startedAt = Objects.requireNonNull(startedAt, "startedAt");
         this.version = version;
     }
@@ -53,7 +50,6 @@ public final class BookingSaga {
                 trackingNumber,
                 BookingSagaStatus.IN_PROGRESS,
                 BookingSagaStep.START_TRACKING,
-                0,
                 startedAt,
                 INITIAL_VERSION);
     }
@@ -65,10 +61,9 @@ public final class BookingSaga {
             TrackingNumber trackingNumber,
             BookingSagaStatus status,
             BookingSagaStep currentStep,
-            int attempts,
             UtcInstant startedAt,
             long version) {
-        return new BookingSaga(id, bookingId, trackingNumber, status, currentStep, attempts, startedAt, version);
+        return new BookingSaga(id, bookingId, trackingNumber, status, currentStep, startedAt, version);
     }
 
     public UUID id() {
@@ -89,10 +84,6 @@ public final class BookingSaga {
 
     public BookingSagaStep currentStep() {
         return currentStep;
-    }
-
-    public int attempts() {
-        return attempts;
     }
 
     public UtcInstant startedAt() {

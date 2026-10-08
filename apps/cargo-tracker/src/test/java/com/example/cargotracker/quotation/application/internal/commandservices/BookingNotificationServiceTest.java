@@ -41,7 +41,16 @@ class BookingNotificationServiceTest {
     }
 
     @Test
-    void 予約待ちでない輸送要求と見つからない輸送要求は理由で返す() {
+    void 荷主の承認の配信より先に届いても荷主承認待ちの輸送要求を予約確定済みにする() {
+        TransportRequest request = awaitingApproval();
+
+        assertThat(service.notifyBooked(request(request.id().value(), 1)))
+                .isEqualTo(new BookingNotificationReceipt.Booked());
+        assertThat(repository.findById(request.id()).orElseThrow().status()).isEqualTo(TransportRequestStatus.BOOKED);
+    }
+
+    @Test
+    void 見積りの手前の輸送要求と見つからない輸送要求は理由で返す() {
         TransportRequest request = submitted();
 
         assertThat(service.notifyBooked(request(request.id().value(), 1)))
@@ -70,12 +79,23 @@ class BookingNotificationServiceTest {
         return request;
     }
 
-    private TransportRequest readyToBook() {
+    private TransportRequest awaitingApproval() {
+        TransportRequest request = advanceToAwaitingApproval();
+        repository.update(request);
+        return request;
+    }
+
+    private TransportRequest advanceToAwaitingApproval() {
         TransportRequest request = submitted();
         request.approve(1, STAFF, "根拠", NOW);
         request.markQuotationPresented(1);
         request.markRoutingRequested(1);
         request.markAwaitingApproval(1);
+        return request;
+    }
+
+    private TransportRequest readyToBook() {
+        TransportRequest request = advanceToAwaitingApproval();
         request.markReadyToBook(1);
         repository.update(request);
         return request;

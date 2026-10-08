@@ -35,7 +35,6 @@ public class MyBatisBookingSagaRepository implements BookingSagaRepository {
                 saga.trackingNumber().value(),
                 saga.status().name(),
                 saga.currentStep().name(),
-                saga.attempts(),
                 saga.startedAt().instant().atOffset(ZoneOffset.UTC),
                 OffsetDateTime.now(clock),
                 saga.version()));
@@ -50,7 +49,6 @@ public class MyBatisBookingSagaRepository implements BookingSagaRepository {
                         new TrackingNumber(row.trackingNumber()),
                         BookingSagaStatus.valueOf(row.status()),
                         BookingSagaStep.valueOf(row.currentStep()),
-                        row.attempts(),
                         new UtcInstant(row.startedAt().toInstant()),
                         row.version()));
     }

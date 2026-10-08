@@ -181,7 +181,6 @@ class TransportRequestTest {
         request.markRoutingRequested(1);
         request.markAwaitingApproval(1);
 
-        assertThat(request.markBooked(1)).as("荷主承認待ちでは変えない").isFalse();
         request.markReadyToBook(1);
         assertThat(request.markBooked(2)).as("現在の版でなければ変えない").isFalse();
         assertThat(request.markBooked(1)).isTrue();
@@ -189,6 +188,20 @@ class TransportRequestTest {
         assertThat(request.markBooked(1)).as("2 回目は変えない（冪等）").isFalse();
         assertThat(request.markReadyToBook(1)).as("遅れて届いた DE-04 では戻らない").isFalse();
         assertThat(request.hasReached(TransportRequestStatus.READY_TO_BOOK, 1)).isTrue();
+    }
+
+    @Test
+    void 荷主の承認より先に本予約の確定が届いても予約確定済みに進み遅れた承認では戻らない() {
+        TransportRequest request = TransportRequest.submit(id, number, shipper, terms, submitter, now);
+        assertThat(request.markBooked(1)).as("審査中では変えない").isFalse();
+        request.approve(1, submitter, "根拠", now);
+        request.markQuotationPresented(1);
+        request.markRoutingRequested(1);
+        request.markAwaitingApproval(1);
+
+        assertThat(request.markBooked(1)).as("DE-04 より先に DE-07 が届いた").isTrue();
+        assertThat(request.status()).isEqualTo(TransportRequestStatus.BOOKED);
+        assertThat(request.markReadyToBook(1)).as("遅れて届いた DE-04 では戻らない").isFalse();
     }
 
     @Test

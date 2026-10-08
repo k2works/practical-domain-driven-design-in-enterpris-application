@@ -8,6 +8,7 @@ CREATE TABLE booking.booking (
     id                       UUID                     NOT NULL,
     tracking_number          VARCHAR(20)              NOT NULL,
     transport_request_number VARCHAR(20)              NOT NULL,
+    quotation_id             UUID                     NOT NULL,
     shipper_company_id       UUID                     NOT NULL,
     status                   VARCHAR(30)              NOT NULL,
     transport_phase          VARCHAR(30)              NOT NULL,
@@ -19,6 +20,8 @@ CREATE TABLE booking.booking (
     updated_by               UUID                     NOT NULL,
     CONSTRAINT pk_booking PRIMARY KEY (id),
     CONSTRAINT uk_booking_tracking_number UNIQUE (tracking_number),
+    -- B-INV-11: 1 つの見積りから貨物予約は 1 件。予約版は変更（US-05）で同じ見積りの版 2 を作るため、貨物予約に置く
+    CONSTRAINT uk_booking_quotation UNIQUE (quotation_id),
     CONSTRAINT ck_booking_status CHECK (status IN (
         'CONFIRMED', 'AMENDMENT_PENDING', 'CANCELLATION_PENDING', 'AMENDING', 'CANCELLED', 'IN_TRANSIT', 'COMPLETED')),
     CONSTRAINT ck_booking_transport_phase CHECK (transport_phase IN ('BEFORE_PICKUP', 'AFTER_PICKUP', 'COMPLETED')),
@@ -45,7 +48,6 @@ CREATE TABLE booking.booking_version (
     committed_at                 TIMESTAMP WITH TIME ZONE NOT NULL,
     CONSTRAINT pk_booking_version PRIMARY KEY (booking_id, booking_version_no),
     CONSTRAINT fk_booking_version_booking FOREIGN KEY (booking_id) REFERENCES booking.booking (id),
-    CONSTRAINT uk_booking_version_quotation UNIQUE (quotation_id),
     CONSTRAINT ck_booking_version_no CHECK (booking_version_no >= 1),
     CONSTRAINT ck_booking_version_request_version_no CHECK (transport_request_version_no >= 1),
     CONSTRAINT ck_booking_version_route_version_no CHECK (route_version_no >= 1)
@@ -57,9 +59,6 @@ CREATE TABLE booking.booking_saga (
     tracking_number     VARCHAR(20)              NOT NULL,
     status              VARCHAR(30)              NOT NULL,
     current_step        VARCHAR(50)              NOT NULL,
-    attempts            INTEGER                  NOT NULL,
-    next_retry_at       TIMESTAMP WITH TIME ZONE,
-    last_error          VARCHAR(4000),
     service_case_number VARCHAR(20),
     started_at          TIMESTAMP WITH TIME ZONE NOT NULL,
     updated_at          TIMESTAMP WITH TIME ZONE NOT NULL,
@@ -67,16 +66,17 @@ CREATE TABLE booking.booking_saga (
     CONSTRAINT pk_booking_saga PRIMARY KEY (id),
     CONSTRAINT fk_booking_saga_booking FOREIGN KEY (booking_id) REFERENCES booking.booking (id),
     CONSTRAINT uk_booking_saga_booking UNIQUE (booking_id),
-    CONSTRAINT ck_booking_saga_status CHECK (status IN ('IN_PROGRESS', 'COMPLETED', 'FAILED', 'NEEDS_HUMAN')),
-    CONSTRAINT ck_booking_saga_attempts CHECK (attempts >= 0)
+    CONSTRAINT ck_booking_saga_status CHECK (status IN ('IN_PROGRESS', 'COMPLETED', 'FAILED', 'NEEDS_HUMAN'))
 );
 
-CREATE INDEX ix_booking_saga_status_retry ON booking.booking_saga (status, next_retry_at);
+-- 予約サガは後続（追跡の開始）を呼ばず、再試行の列を持たない（ADR-015）。処理中の滞留を開始日時で見つける（W8）
+CREATE INDEX ix_booking_saga_status_started ON booking.booking_saga (status, started_at);
 
 COMMENT ON TABLE booking.booking IS '貨物予約';
 COMMENT ON COLUMN booking.booking.id IS '予約 ID';
 COMMENT ON COLUMN booking.booking.tracking_number IS '追跡番号';
 COMMENT ON COLUMN booking.booking.transport_request_number IS '業務番号（見積りの写し）';
+COMMENT ON COLUMN booking.booking.quotation_id IS '見積り ID（予約に使った見積り。見積りの写し）';
 COMMENT ON COLUMN booking.booking.shipper_company_id IS '荷主企業 ID';
 COMMENT ON COLUMN booking.booking.status IS '状態';
 COMMENT ON COLUMN booking.booking.transport_phase IS '輸送段階';
@@ -108,9 +108,6 @@ COMMENT ON COLUMN booking.booking_saga.booking_id IS '予約 ID';
 COMMENT ON COLUMN booking.booking_saga.tracking_number IS '追跡番号';
 COMMENT ON COLUMN booking.booking_saga.status IS '状態';
 COMMENT ON COLUMN booking.booking_saga.current_step IS '現在の段階';
-COMMENT ON COLUMN booking.booking_saga.attempts IS '試行回数';
-COMMENT ON COLUMN booking.booking_saga.next_retry_at IS '次の再試行の日時';
-COMMENT ON COLUMN booking.booking_saga.last_error IS '最後の失敗の理由';
 COMMENT ON COLUMN booking.booking_saga.service_case_number IS '有人案件番号';
 COMMENT ON COLUMN booking.booking_saga.started_at IS '開始日時';
 COMMENT ON COLUMN booking.booking_saga.updated_at IS '更新日時';

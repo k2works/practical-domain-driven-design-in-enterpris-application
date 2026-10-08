@@ -24,9 +24,12 @@ public class InMemoryBookingRepository implements BookingRepository {
         UUID quotationId = booking.currentVersion().terms().quotationId();
         boolean sameQuotation = byTrackingNumber.values().stream()
                 .anyMatch(saved -> saved.currentVersion().terms().quotationId().equals(quotationId));
-        if (sameQuotation
-                || byTrackingNumber.containsKey(booking.trackingNumber().value())) {
+        if (sameQuotation) {
             throw new DuplicateBookingException("同じ見積りの予約がすでにある: " + quotationId, null);
+        }
+        if (byTrackingNumber.containsKey(booking.trackingNumber().value())) {
+            throw new IllegalStateException(
+                    "追跡番号が重なった: " + booking.trackingNumber().value());
         }
         byTrackingNumber.put(booking.trackingNumber().value(), booking);
     }

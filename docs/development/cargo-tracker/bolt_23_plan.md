@@ -4,7 +4,7 @@ title: "Bolt 23 計画 - 本予約の確定と失効（US-04 AC1・AC2）"
 description: "23 回目の Bolt の計画。予約サガと追跡の開始（ADR-003 の改訂）、予約から見積りの確定可否の問い合わせを ADR に決め、booking モジュールと貨物予約・予約版・予約サガの表を新設して、本予約の確定（US-04 AC1）と失効の拒否（AC2）を業務ルール層の受入シナリオまで作り、DE-07 で輸送要求を予約確定済みにするまでを、ステップ 1〜6 で定義する。画面（S-09・S-24・S-02）は Bolt 23b。"
 tags: [development,bolt-plan]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-08T08:35:13Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-08T08:52:17Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-08T07:44:34Z }
 ---
@@ -190,6 +190,7 @@ entity "booking.booking" as b {
   --
   * tracking_number : VARCHAR(20) <<UK>>
   * transport_request_number : VARCHAR(20)
+  * quotation_id : UUID <<UK>>
   * shipper_company_id : UUID
   * status : VARCHAR (CONFIRMED…)
   * transport_phase : VARCHAR (BEFORE_PICKUP…)
@@ -202,8 +203,8 @@ entity "booking.booking_version" as bv <<append-only>> {
   * booking_version_no : INT <<PK>>
   --
   * transport_request_id / transport_request_version_no
-  * quotation_id : UUID <<UK>>
-  * routing_case_id / route_version_no
+  * quotation_id : UUID
+  * routing_case_number / route_version_no
   * consignee_company_id / cargo_category / cargo_summary
   * shipper_approver_id / confirmed_by
   * committed_at : TIMESTAMPTZ
@@ -214,7 +215,7 @@ entity "booking.booking_saga" as s {
   * booking_id : UUID <<UK>>
   * tracking_number
   * status : IN_PROGRESS / COMPLETED / FAILED / NEEDS_HUMAN
-  * current_step / attempts / next_retry_at / last_error / service_case_number
+  * current_step / service_case_number / started_at
   * version : BIGINT
 }
 b ||--|{ bv
@@ -222,7 +223,7 @@ b ||--o| s
 @enduml
 ```
 
-列と制約は [データモデル](../../design/cargo-tracker/data_model.md) の `booking` スキーマのとおり。足すのは `booking.transport_request_number`（確認ポイント 6）と、その索引。`booking_version.quotation_id` の UK はこの Bolt に入れる。Flyway の `common`・`{vendor}` の置き方は既存のスキーマにそろえる。
+列と制約は [データモデル](../../design/cargo-tracker/data_model.md) の `booking` スキーマのとおり。足すのは `booking.transport_request_number`（確認ポイント 6）と、その索引。B-INV-11 の見積り ID の UK はこの Bolt に入れる（開発レビューで予約版から貨物予約の `booking.quotation_id` に移した。下のステップ 6）。Flyway の `common`・`{vendor}` の置き方は既存のスキーマにそろえる。
 
 ### 画面遷移
 
@@ -285,9 +286,12 @@ b ||--o| s
     - T-57 の洗い出し: `TransportRequestLabels` の 3 つの `switch` に `BOOKED` を足した（社内「予約確定済み」、荷主「予約確定済み（追跡の開始の準備中）」と案内）。S-02 の `IN`（`QuotationMapper.xml`）には足さない（予約確定済みは受付一覧の進行中の表から外す。予約の確定待ちの表は Bolt 23b）
     - 計画からの変更: `TransportRequestProgression` を `application.internal` に移して公開し、進めた結果（`Result`）を返すようにした（公開 API の受付の結果に使う）。4 つの listener は結果を使わない
     - H3 の結論: DE-07 は予約待ちの輸送要求だけを進め、予約待ちにするのは DE-04 だけで、DE-04 の再配信は書き込まないため、DE-04 と DE-07 の受け口は同じ輸送要求を並行に更新しない。並行の統合テストは作らなかった（競合したときは共通の部品が読み直す）
+      - 開発レビューで訂正（H-1）: 荷主の承認の直後、DE-04 の配信より先に確定できるため、DE-07 は荷主承認待ちの輸送要求にも届く。そのとき予約待ちだけを進める形では輸送要求が予約待ちで止まった。`markBooked` をほかの `mark*` と同じ「先の状態へだけ進める」に直し、DE-04 と DE-07 は同じ輸送要求を並行に更新し得る形になった。競合は共通の部品が読み直して解く（Bolt 22 の割り込みと同じ）
     - 承認ゲートの扱い（T-36）: Red・Green とモジュールの境界の承認ゲートで止まらずに進めた（AI の判断）。根拠は、公開 API の形が ADR-014（Bolt 20 の経路の割当てと同じ）のとおりで、ModularityTest が依存の向きを確かめていること
-- [ ] **6. 開発レビューと終了報告** 【承認ゲート: 開発レビューの判断、終了報告】
+- [x] **6. 開発レビューと終了報告** 【承認ゲート: 開発レビューの判断、終了報告】
   - `developing-review`（プログラマー・テスター・アーキテクト）、SonarQube、終了報告。デモは業務ルール層のシナリオの通過で示し、受入動画は Bolt 23b で撮る。#10 は Bolt 25 まで開いたまま、終わった受入条件にコメントする
+  - 結果（2026-10-08）: 開発レビュー（プログラマー・テスター、アーキテクト）の指摘 21 件のうち 15 件を直した。主なもの: DE-04 の配信より先に DE-07 が届くと輸送要求が予約待ちで止まる（H-1。`markBooked` を先の状態へだけ進める形に）、B-INV-11 の UK を予約版から貨物予約の `booking.quotation_id` に移す（M-2・A-4）、予約サガの再試行の列を消し索引を `(status, started_at)` に（A-2）、追跡番号の重なりを技術の失敗に分ける（M-1）、確定条件を追跡番号の発行の前に判定（L-1）、`BookingCommandServiceTest`（L-3）、ADR-015・016 と設計文書の直し。残りは [Bolt 23 終了報告](bolt_23_report.md) の既知の課題
+    - 承認ゲートの扱い（T-36）: 開発レビューの判断のゲートで止まらずに進めた（AI の判断）。終了報告の承認の議題に置く。スキーマの直し（UK の移動、列の削除）は、永続化された DB がまだないため push 前のマイグレーションを書き直した
 
 ### 時間の配分と打ち切り
 

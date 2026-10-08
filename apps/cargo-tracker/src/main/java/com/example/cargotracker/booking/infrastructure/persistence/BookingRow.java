@@ -10,6 +10,7 @@ public record BookingRow(
         UUID id,
         String trackingNumber,
         String transportRequestNumber,
+        UUID quotationId,
         UUID shipperCompanyId,
         String status,
         String transportPhase,

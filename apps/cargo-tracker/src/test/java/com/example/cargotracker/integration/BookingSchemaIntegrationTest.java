@@ -58,10 +58,9 @@ class BookingSchemaIntegrationTest {
     @Test
     void 一つの見積りから予約は一件だけ() throws SQLException {
         UUID quotationId = UUID.randomUUID();
-        insertVersion(insertBooking(newTrackingNumber(), "CONFIRMED"), 1, quotationId);
-        UUID other = insertBooking(newTrackingNumber(), "CONFIRMED");
+        insertBooking(newTrackingNumber(), quotationId, "CONFIRMED");
 
-        assertViolation(() -> insertVersion(other, 1, quotationId), UNIQUE_VIOLATION);
+        assertViolation(() -> insertBooking(newTrackingNumber(), quotationId, "CONFIRMED"), UNIQUE_VIOLATION);
     }
 
     @Test
@@ -97,21 +96,26 @@ class BookingSchemaIntegrationTest {
     }
 
     private UUID insertBooking(String trackingNumber, String status) throws SQLException {
+        return insertBooking(trackingNumber, UUID.randomUUID(), status);
+    }
+
+    private UUID insertBooking(String trackingNumber, UUID quotationId, String status) throws SQLException {
         UUID id = UUID.randomUUID();
         try (Connection connection = dataSource.getConnection();
                 PreparedStatement statement = connection.prepareStatement("INSERT INTO booking.booking"
-                        + " (id, tracking_number, transport_request_number, shipper_company_id, status,"
+                        + " (id, tracking_number, transport_request_number, quotation_id, shipper_company_id, status,"
                         + " transport_phase, current_version_no, version, created_at, created_by, updated_at, updated_by)"
-                        + " VALUES (?, ?, 'TR-2026-0001', ?, ?, 'BEFORE_PICKUP', 1, 0, ?, ?, ?, ?)")) {
+                        + " VALUES (?, ?, 'TR-2026-0001', ?, ?, ?, 'BEFORE_PICKUP', 1, 0, ?, ?, ?, ?)")) {
             UUID user = UUID.randomUUID();
             statement.setObject(1, id);
             statement.setString(2, trackingNumber);
-            statement.setObject(3, UUID.randomUUID());
-            statement.setString(4, status);
-            statement.setTimestamp(5, NOW);
-            statement.setObject(6, user);
-            statement.setTimestamp(7, NOW);
-            statement.setObject(8, user);
+            statement.setObject(3, quotationId);
+            statement.setObject(4, UUID.randomUUID());
+            statement.setString(5, status);
+            statement.setTimestamp(6, NOW);
+            statement.setObject(7, user);
+            statement.setTimestamp(8, NOW);
+            statement.setObject(9, user);
             statement.executeUpdate();
         }
         return id;
@@ -140,8 +144,8 @@ class BookingSchemaIntegrationTest {
     private void insertSaga(UUID bookingId, String status) throws SQLException {
         try (Connection connection = dataSource.getConnection();
                 PreparedStatement statement = connection.prepareStatement("INSERT INTO booking.booking_saga"
-                        + " (id, booking_id, tracking_number, status, current_step, attempts, started_at, updated_at,"
-                        + " version) VALUES (?, ?, 'CT0000000000', ?, 'START_TRACKING', 0, ?, ?, 0)")) {
+                        + " (id, booking_id, tracking_number, status, current_step, started_at, updated_at, version)"
+                        + " VALUES (?, ?, 'CT0000000000', ?, 'START_TRACKING', ?, ?, 0)")) {
             statement.setObject(1, UUID.randomUUID());
             statement.setObject(2, bookingId);
             statement.setString(3, status);
