@@ -3830,6 +3830,41 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../development/cargo-tracker/bolt_23_report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 23 終了報告
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--draft"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -8893,7 +8928,7 @@ src/test/java/.../shared/acceptance/      共通ステップ（ログイン、�
 </tr>
 <tr>
 <td style="text-align: left;">重複確定の防止</td>
-<td style="text-align: left;">同じ見積りから、別のコマンド ID・別の利用者で同時に本予約を確定しても、予約版の見積り ID の一意制約で 1 件になる（B-INV-11）</td>
+<td style="text-align: left;">同じ見積りから、別のコマンド ID・別の利用者で同時に本予約を確定しても、貨物予約の見積り ID の一意制約で 1 件になる（B-INV-11）</td>
 </tr>
 <tr>
 <td style="text-align: left;">受信側の冪等性</td>
@@ -8909,7 +8944,7 @@ src/test/java/.../shared/acceptance/      共通ステップ（ログイン、�
 </tr>
 <tr>
 <td style="text-align: left;">予約サガ</td>
-<td style="text-align: left;">追跡の開始が失敗したとき、再試行が記録され、5 回目の失敗で有人確認要へ移る（RTY-02 の境界）。有人確認要の間、画面は処理中を成功と表示しない</td>
+<td style="text-align: left;">処理中のまま RTY-02 の時間を超えたものが有人確認要へ移る（境界の前後）。追跡の開始の技術の失敗はイベントの再配信が担い、予約サガは再試行を記録しない（ADR-015）。有人確認要の間、画面は処理中を成功と表示しない</td>
 </tr>
 <tr>
 <td style="text-align: left;">外部原本の取込</td>
@@ -9107,7 +9142,7 @@ src/test/java/.../shared/acceptance/      共通ステップ（ログイン、�
 <td style="text-align: left;">パイロット開始前、大きな変更のたび</td>
 </tr>
 <tr>
-<td style="text-align: left;">RTY-01〜03（再配信、予約サガの再試行）</td>
+<td style="text-align: left;">RTY-01〜03（再配信、予約サガの滞留の判定）</td>
 <td style="text-align: left;">統合テスト（Clock を固定した境界）</td>
 <td style="text-align: left;">CI で毎回</td>
 </tr>

@@ -3465,6 +3465,41 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../development/cargo-tracker/bolt_23_report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 23 終了報告
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--draft"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -8077,7 +8112,8 @@
 </ul>
 <h3 id="_7">ネガティブ<a class="headerlink" href="#_7" title="Permanent link">&para;</a></h3>
 <ul>
-<li>照会と予約の保存は別のコンテキストの表を読むが、同じトランザクションの中で行うので、照会の直後に見積りが置換されると、置換の前の見積りで確定し得る。置換は営業担当者の再見積りで、確定と同時に起きるのはまれ。B-INV-11（1 つの見積りから予約は 1 件）は UK で守る。置換との競合を厳密に防ぐ必要が出たら、見積りの版を照会の結果に含めて確定で期待版として渡す。</li>
+<li>照会は見積りの行を読むだけでロックしないため、照会と予約の保存の間に、別のトランザクションで見積りが置換される（再見積り）か、経路の再設計要（DE-06。W6）で承認・確定を止められると、止める前の見積りで確定し得る。置換は営業担当者の操作で、確定と同時に起きるのはまれ。B-INV-11（1 つの見積りから予約は 1 件）は貨物予約の UK で守る。</li>
+<li>DE-06 との競合を厳密に防ぐ方法（照会で見積りの行を <code>FOR SHARE</code> で読む、または見積りの版を照会の結果に含めて確定で期待版として渡す）は、DE-06 を作る W6 で決める（Bolt 23 の既知の課題）。</li>
 </ul>
 <h2 id="_8">コンプライアンス<a class="headerlink" href="#_8" title="Permanent link">&para;</a></h2>
 <ul>

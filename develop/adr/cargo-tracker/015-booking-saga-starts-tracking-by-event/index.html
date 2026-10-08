@@ -3465,6 +3465,41 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../development/cargo-tracker/bolt_23_report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 23 終了報告
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--draft"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -8030,7 +8065,7 @@
 </tr>
 <tr>
 <td style="text-align: left;">サガの状態</td>
-<td style="text-align: left;">予約の <code>application.sagas</code> の予約サガが、処理中・完了・失敗・有人確認要を <code>booking_saga</code> に永続化する。本予約の確定と同じトランザクションで「処理中」を作る。画面は予約サガの状態だけを見て、処理中を完了と表示しない</td>
+<td style="text-align: left;">予約の予約サガ（状態とリポジトリは <code>domain.model.sagas</code>、進める処理は <code>application.sagas</code>。層の規則 D-5 による）が、処理中・完了・失敗・有人確認要を <code>booking_saga</code> に永続化する。本予約の確定と同じトランザクションで「処理中」を作る。画面は予約サガの状態だけを見て、処理中を完了と表示しない</td>
 </tr>
 <tr>
 <td style="text-align: left;">追跡の開始</td>
@@ -8046,7 +8081,7 @@
 </tr>
 <tr>
 <td style="text-align: left;">有人確認要</td>
-<td style="text-align: left;">予約サガは、処理中のまま一定時間を超えたもの（RTY-02 の値で決める）を定期処理で有人確認要にし、BR-17 の有人案件の起票を依頼する。定期処理は ShedLock で 1 インスタンスに限る（ADR-003）。作るのは W8（US-20）と W10（定期の再配信）</td>
+<td style="text-align: left;">予約サガは、処理中のまま一定時間を超えたもの（RTY-02 の値で決める）を定期処理で有人確認要にし、BR-17 の有人案件の起票を依頼する。起票の依頼は、予約が発行するイベントを追跡（またはサービス案件を持つコンテキスト）が購読する形にし、予約から下流を呼ばない。追跡が業務の理由で開始できないときは、追跡が自分で有人案件を起票し、結果を予約の公開 API で返す。定期処理は ShedLock で 1 インスタンスに限る（ADR-003）。作るのは W8（US-20）と W10（定期の再配信）</td>
 </tr>
 <tr>
 <td style="text-align: left;">ADR-003 の改訂</td>
@@ -8092,6 +8127,7 @@
 <h2 id="_8">コンプライアンス<a class="headerlink" href="#_8" title="Permanent link">&para;</a></h2>
 <ul>
 <li>ModularityTest で <code>booking</code> が <code>tracking</code> に依存しないことを確かめる（<code>tracking</code> を作る Bolt 25 から）。</li>
+<li>追跡の開始の結果を返す予約の公開 API（<code>booking :: api</code>、<code>@NamedInterface("api")</code>）は Bolt 25 で作る。追跡記録に要る荷主・荷受人の企業 ID と予定の区間の取得元（DE-07 に足すか、<code>booking :: api</code> の照会か、見積りの割り当てた経路の写しか）も Bolt 25 で決める（Bolt 23 レビュー）。</li>
 <li>予約サガの状態の遷移は予約の中の単体テストで、追跡の開始から予約サガの完了までは PostgreSQL の統合テストで確かめる（Bolt 25）。</li>
 </ul>
 <h2 id="_9">関連ドキュメント<a class="headerlink" href="#_9" title="Permanent link">&para;</a></h2>
