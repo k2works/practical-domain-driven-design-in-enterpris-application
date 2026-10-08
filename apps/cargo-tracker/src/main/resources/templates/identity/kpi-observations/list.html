@@ -26,13 +26,14 @@
                 <td th:text="${observation.transportRequestNumber}">TR-2026-0001</td>
                 <td th:text="${observation.submittedAt}">2026-10-05 10:00 Asia/Tokyo（UTC+09:00）（UTC 2026-10-05 01:00）</td>
                 <td th:if="${observation.firstPresentedAt != null}" th:text="${observation.firstPresentedAt}">2026-10-05 13:30 Asia/Tokyo（UTC+09:00）（UTC 2026-10-05 04:30）</td>
-                <td th:unless="${observation.firstPresentedAt != null}">未提示</td>
+                <td th:unless="${observation.firstPresentedAt != null}" th:text="|未提示（提出から ${observation.elapsedSinceSubmission}）|">未提示（提出から 52 時間 10 分）</td>
                 <td th:if="${observation.leadTime != null}" th:text="${observation.leadTime}">3 時間 30 分</td>
-                <td th:unless="${observation.leadTime != null}"><span aria-hidden="true">—</span><span class="visually-hidden">未提示のため算出しない</span></td>
+                <td th:unless="${observation.leadTime != null}"><span aria-hidden="true">—</span><span class="visually-hidden">算出しない</span></td>
             </tr>
             </tbody>
         </table>
     </div>
+    <p th:unless="${#lists.isEmpty(observations)}" class="form-text">「—」は、まだ提示していないため算出していないことを示します。リードタイムと経過時間は暦の経過時間（夜間・休日を含む）です。</p>
 </main>
 </body>
 </html>

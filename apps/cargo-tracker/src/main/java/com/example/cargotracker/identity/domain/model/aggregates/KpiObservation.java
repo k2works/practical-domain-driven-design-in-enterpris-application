@@ -79,14 +79,16 @@ public final class KpiObservation {
     /**
      * 見積りの提示（DE-03）を記録する。最初の提示時刻はいちばん早い提示時刻とし、再見積りの提示（遅い時刻）では変えず、
      * 届く順が入れ替わって早い時刻が後から届いたときだけ書き換える（KPI-INV-01、D-11）。
+     * 並行する 2 件の DE-03 でも早い時刻が残ることは、リポジトリの条件付きの保存（SQL の条件）が守る。ここを変えたらそちらもそろえる。
      *
      * @return 最初の提示時刻を変えたら true
      * @throws IllegalArgumentException 提示時刻が提出時刻より前のとき（KPI-INV-03）
      */
     public boolean recordPresentation(UtcInstant presentedAt) {
         Objects.requireNonNull(presentedAt, "presentedAt");
-        if (presentedAt.instant().isBefore(submittedAt.instant())) {
-            throw new IllegalArgumentException("提示時刻が提出時刻より前: 提出 " + submittedAt + "、提示 " + presentedAt);
+        if (precedesSubmission(presentedAt)) {
+            throw new IllegalArgumentException(
+                    "提示時刻が提出時刻より前: 提出 " + submittedAt.instant() + "、提示 " + presentedAt.instant());
         }
         if (firstPresentedAt != null && !presentedAt.instant().isBefore(firstPresentedAt.instant())) {
             return false;
@@ -105,8 +107,10 @@ public final class KpiObservation {
         return firstPresentedAt().map(presentedAt -> Duration.between(submittedAt.instant(), presentedAt.instant()));
     }
 
-    /** 提示時刻が提出時刻より前か。骨組み（Bolt 21 の開発レビューの Red）。 */
+    /**
+     * 提示時刻が提出時刻より前か（KPI-INV-03 に反するか）。提示を記録する前に問い合わせ、例外を使わずに分ける（Bolt 21 の開発レビュー D-79）。
+     */
     public boolean precedesSubmission(UtcInstant presentedAt) {
-        return false;
+        return presentedAt.instant().isBefore(submittedAt.instant());
     }
 }
