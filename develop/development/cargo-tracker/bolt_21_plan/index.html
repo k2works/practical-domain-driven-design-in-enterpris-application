@@ -6,17 +6,17 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="9 回目の Bolt（W2 の最初）の終了報告。出し直しでの必要書類の種類ごとの差し替え（D-25）と、Bolt 6〜8 レビューの改善提案の返済の成果、デモ項目、指標と時間の内訳、仮説 H1〜H3 の結論、見つけて直した問題、既知の課題、ふりかえりをまとめる。">
+        <meta name="description" content="21 回目の Bolt の計画。見積りの提示（DE-03）をアクセス・監査で購読し、KPI 計測記録に最初の提示時刻を記録して、輸送要求ごとの KPI-01 のリードタイムを求める（US-21 AC1）。S-22 の前身の画面に提示時刻とリードタイムを示すまでを、ステップ 1〜5 で定義する。">
       
       
         <meta name="author" content="k2works">
       
       
       
-        <link rel="prev" href="../bolt_09_plan/">
+        <link rel="prev" href="../bolt_20_report/">
       
       
-        <link rel="next" href="../bolt_10_plan/">
+        <link rel="next" href="../../../operation/">
       
       
         
@@ -27,7 +27,7 @@
     
     
       
-        <title>Bolt 9 終了報告 - Bolt 6〜8 レビューの返済（書類の差し替えと改善提案） - 実践ドメイン駆動設計 in エンタープライズアプリケーション</title>
+        <title>Bolt 21 計画 - KPI-01 の提示時刻とリードタイム（US-21 AC1） - 実践ドメイン駆動設計 in エンタープライズアプリケーション</title>
       
     
     
@@ -78,7 +78,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#bolt-9-bolt-68" class="md-skip">
+        <a href="#bolt-21-kpi-01-us-21-ac1" class="md-skip">
           Skip to content
         </a>
       
@@ -112,7 +112,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Bolt 9 終了報告 - Bolt 6〜8 レビューの返済（書類の差し替えと改善提案）
+              Bolt 21 計画 - KPI-01 の提示時刻とリードタイム（US-21 AC1）
             
           </span>
         </div>
@@ -2531,44 +2531,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Bolt 9 終了報告
-  
-
-    
-  </span>
-  
-  
-    
-  
-  
-    <span class="md-status md-status--stable"></span>
-  
-
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../bolt_09_report/" class="md-nav__link">
         
   
   
@@ -2591,253 +2557,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#_1" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        基本情報
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#_2" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        成果
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="成果">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#_3" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        計画からの変更
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#_4" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        見つけて直した問題
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#_5" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        デモ項目の結果
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#_6" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        指標
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="指標">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#t-16" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        時間の内訳（T-16）
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#_7" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        品質ゲート
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#_8" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        仮説の結論
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#_9" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        判断と学び
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="判断と学び">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#_10" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        設計への反映（反映済み）
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#_11" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        人の決定
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#_12" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        既知の課題
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#bolt-8-try" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Bolt 8 の Try の結果
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#kpt" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        ふりかえり（KPT）
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#_13" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        承認待ちの書き換え
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#bolt" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        次の Bolt
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#_14" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        更新履歴
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#_15" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        関連ドキュメント
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -3582,10 +3301,44 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../bolt_21_plan/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 21 計画
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--draft"></span>
+  
+
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -3608,6 +3361,248 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        基本情報
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#bolt" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bolt ゴール
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Bolt ゴール">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        確かめたい仮説
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#bolt_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ふりかえりと前の Bolt からの引き継ぎ
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        スコープ
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="スコープ">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#try-t-1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        設計の約束（Try T-1）
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        入れるもの・入れないもの
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#bolt_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        設計（この Bolt の範囲）
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="設計（この Bolt の範囲）">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ドメインモデル
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_6" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        状態遷移
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_7" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        データモデル
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_8" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        画面遷移
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_9" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ステップ計画
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="ステップ計画">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_10" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        時間の配分と打ち切り
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#try-t-6" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        確認ポイント（計画の承認の場でまとめて確認する。Try T-6）
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_11" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        完了条件
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_12" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        更新履歴
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_13" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        関連ドキュメント
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -7874,7 +7869,7 @@
   
 
 
-<h1 id="bolt-9-bolt-68">Bolt 9 終了報告 - Bolt 6〜8 レビューの返済（書類の差し替えと改善提案）<a class="headerlink" href="#bolt-9-bolt-68" title="Permanent link">&para;</a></h1>
+<h1 id="bolt-21-kpi-01-us-21-ac1">Bolt 21 計画 - KPI-01 の提示時刻とリードタイム（US-21 AC1）<a class="headerlink" href="#bolt-21-kpi-01-us-21-ac1" title="Permanent link">&para;</a></h1>
 <h2 id="_1">基本情報<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
@@ -7886,426 +7881,400 @@
 <tbody>
 <tr>
 <td style="text-align: left;">Bolt</td>
-<td style="text-align: left;">第 9 回（W2 の最初の Bolt）</td>
+<td style="text-align: left;">第 21 回</td>
 </tr>
 <tr>
-<td style="text-align: left;">期間</td>
-<td style="text-align: left;">2026-10-05 09:54 JST（計画の承認のコミット <code>271d9d8</code>）〜 11:48（終了報告の初版のコミット <code>50765c1</code>）。終了報告の承認は 12:42（<code>d733948</code>。Bolt 9・10 レビュー R-23）。開始準備（W2 の開始準備と計画の作成）は 〜 09:49（計画のコミット <code>ff4fdea</code>）</td>
+<td style="text-align: left;">予定</td>
+<td style="text-align: left;">W3（2026-10-19 の週。前倒しで 2026-10-08 から）、3〜3.5 時間</td>
 </tr>
 <tr>
 <td style="text-align: left;">対象</td>
-<td style="text-align: left;">技術タスク <a href="https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/37">#37</a>（SP 0）。<a href="../../../review/cargo-tracker/bolt_06-08_review_20261003/">Bolt 6〜8 開発成果物レビュー</a> の R-01（D-25）と「修正」の改善提案</td>
+<td style="text-align: left;">U4 アクセス・監査の KPI 計測（US-21 AC1 KPI-01 の 2 時刻）と、U1 見積りの DE-03 の購読</td>
 </tr>
 <tr>
-<td style="text-align: left;">計画</td>
-<td style="text-align: left;"><a href="../bolt_09_plan/">Bolt 9 計画</a></td>
+<td style="text-align: left;">GitHub</td>
+<td style="text-align: left;"><a href="https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/9">#9 [US-21] パイロットの KPI を計測する（R0.1: AC1 KPI-01 の時刻）</a>（SP 2）。AC2〜AC5（KPI-02、週次の照会、基準値）は W9 の #24</td>
 </tr>
-<tr>
-<td style="text-align: left;">ゴール</td>
-<td style="text-align: left;">荷主は出し直しで、引き継いだ書類を種類ごとに選び直して差し替えられる。前の版の書類の行は変わらない。Bolt 6〜8 のレビューで「修正」とした指摘を片付ける</td>
-</tr>
-<tr>
-<td style="text-align: left;">進め方</td>
-<td style="text-align: left;">U1 の密度（業務のルール・セキュリティのステップは毎回、それ以外はまとめる）。承認ゲートは、計画（確認ポイント 1〜5）、ステップ 1・2（業務のルールとセキュリティ）、本報告（ステップ 3〜5）の 3 回</td>
-</tr>
-</tbody>
-</table>
-<h2 id="_2">成果<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h2>
-<table>
-<thead>
-<tr>
-<th style="text-align: left;">ステップ</th>
-<th style="text-align: left;">状態</th>
-<th style="text-align: left;">コミット</th>
-<th style="text-align: left;">誤りの検出と修正（検出の手段）</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align: left;">1. 決定を設計文書に反映する</td>
-<td style="text-align: left;">完了</td>
-<td style="text-align: left;"><code>acf3a91</code></td>
-<td style="text-align: left;">—</td>
-</tr>
-<tr>
-<td style="text-align: left;">2. 書類の差し替えと書類の規則の整理</td>
-<td style="text-align: left;">完了（2026-10-05 に人が承認）</td>
-<td style="text-align: left;"><code>b17a662</code>（Red）、<code>e2b07a2</code>（Green）</td>
-<td style="text-align: left;">2 件（下の「見つけて直した問題」）</td>
-</tr>
-<tr>
-<td style="text-align: left;">3. 永続化とテストの補強</td>
-<td style="text-align: left;">完了</td>
-<td style="text-align: left;"><code>23cd5c2</code></td>
-<td style="text-align: left;">0 件</td>
-</tr>
-<tr>
-<td style="text-align: left;">4. 画面の層</td>
-<td style="text-align: left;">完了</td>
-<td style="text-align: left;"><code>2f28636</code>、<code>64dd5fd</code>、<code>a2e1041</code></td>
-<td style="text-align: left;">4 件</td>
-</tr>
-<tr>
-<td style="text-align: left;">5. 検証と終了報告</td>
-<td style="text-align: left;">完了（2026-10-05 に人が承認。変更依頼 0）</td>
-<td style="text-align: left;"><code>f286877</code>、本報告</td>
-<td style="text-align: left;">SonarQube の品質ゲートの不合格 1 回（4 件を直して PASS）</td>
-</tr>
-</tbody>
-</table>
-<p>打ち切りの線（重要度「低」のリファクタリング、R-12・R-13、R-23・R-24・R-32・R-33 の文言）は使わなかった。レビューの改善提案のうち「修正」としたものは、すべてこの Bolt で片付けた（<a href="../../../review/cargo-tracker/bolt_06-08_review_20261003/">対応結果</a>）。</p>
-<h3 id="_3">計画からの変更<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h3>
-<ul>
-<li>新しい版の書類は、引き継ぐ書類（前の版の順）の後ろに、選んだ書類（選んだ順）を並べ、書類番号を 1 から振る。AI が決め、ステップ 2 の承認で人が承認した。</li>
-<li>前の版の書類が見つからないこと（R-19）は、ステップ 3 の統合テストでなく、ステップ 2 の集約の単体テストと業務ルール層のシナリオで確かめた。</li>
-<li>R-03・R-32 は、画面の層のシナリオでなく画面の単体テストで確かめた（描いた HTML の <code>class</code> と文言で足りる）。</li>
-<li>R-32 は「なし」でなく、すでに使っていた「（なし）」にそろえ、空文字も「（なし）」にした。</li>
-<li>R-35 は、multipart の上限の超過がコントローラーを決める前に起きるため、<code>@ControllerAdvice(assignableTypes)</code> では絞れなかった。要求のパスが荷主の見積依頼のコントローラーの割り当ての下のときだけ案内を返す形にした。</li>
-</ul>
-<h3 id="_4">見つけて直した問題<a class="headerlink" href="#_4" title="Permanent link">&para;</a></h3>
-<table>
-<thead>
-<tr>
-<th style="text-align: left;">ステップ</th>
-<th style="text-align: left;">問題</th>
-<th style="text-align: left;">検出の手段</th>
-<th style="text-align: left;">対応</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align: left;">2</td>
-<td style="text-align: left;">新しいシナリオの 1 つが、新しい規則でも前の規則でも同じ結果になり、差を確かめられなかった</td>
-<td style="text-align: left;">実装の前のシナリオの見直し</td>
-<td style="text-align: left;">前の規則では件数を超える形（その他を 2 件から 3 件に選び直す）に直した</td>
-</tr>
-<tr>
-<td style="text-align: left;">2</td>
-<td style="text-align: left;">書式</td>
-<td style="text-align: left;">Spotless</td>
-<td style="text-align: left;"><code>spotlessApply</code></td>
-</tr>
-<tr>
-<td style="text-align: left;">4</td>
-<td style="text-align: left;">413 のテストの要求に <code>Accept: text/html</code> がなく、案内の画面でなく JSON が返った</td>
-<td style="text-align: left;">統合テスト</td>
-<td style="text-align: left;">ブラウザと同じ見出しを付けた</td>
-</tr>
-<tr>
-<td style="text-align: left;">4</td>
-<td style="text-align: left;"><code>resolve-lazily</code> で multipart の解析を遅らせても、案内に届かず既定のエラーページになった</td>
-<td style="text-align: left;">統合テスト</td>
-<td style="text-align: left;">設定を戻し、要求のパスで絞る形にした</td>
-</tr>
-<tr>
-<td style="text-align: left;">4</td>
-<td style="text-align: left;"><code>getOriginalFilename()</code> の戻り値の null を確かめていない</td>
-<td style="text-align: left;">SpotBugs</td>
-<td style="text-align: left;">選んだファイル名を 1 回だけ取り出す <code>selectedName</code> にまとめた</td>
-</tr>
-<tr>
-<td style="text-align: left;">4</td>
-<td style="text-align: left;">書式</td>
-<td style="text-align: left;">Spotless</td>
-<td style="text-align: left;"><code>spotlessApply</code></td>
-</tr>
-<tr>
-<td style="text-align: left;">5</td>
-<td style="text-align: left;"><code>Optional</code> を確かめずに取り出す（Bug）、413 の案内のパスの決め打ち、スキーマのコメントのテストのアサーション 2 件（Code Smell）</td>
-<td style="text-align: left;">SonarQube</td>
-<td style="text-align: left;"><code>ifPresent</code>、コントローラーの <code>@RequestMapping</code> からパスを読む、アサーションを連結した</td>
-</tr>
-</tbody>
-</table>
-<h3 id="_5">デモ項目の結果<a class="headerlink" href="#_5" title="Permanent link">&para;</a></h3>
-<table>
-<thead>
-<tr>
-<th style="text-align: left;">#</th>
-<th style="text-align: left;">デモ</th>
-<th style="text-align: left;">結果</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align: left;">1</td>
-<td style="text-align: left;">商業送り状と梱包明細を添付して提出し、差し戻して、商業送り状だけを選び直して出し直す</td>
-<td style="text-align: left;">業務ルール層と画面の層のシナリオで、版 2 に引き継いだ梱包明細と新しい商業送り状が並ぶことを確かめた。版 1 の行が変わらないことは統合テストで確かめた。<code>bootRun</code> での確認は承認の場で人が行う</td>
-</tr>
-<tr>
-<td style="text-align: left;">2</td>
-<td style="text-align: left;">形式の誤ったファイルを選んで提出する</td>
-<td style="text-align: left;"><code>@ui</code> で、エラー要約に「商業送り状: PDF・PNG・JPEG のファイルを選び直してください」（表示名は 1 回）が出ることを確かめた</td>
-</tr>
-<tr>
-<td style="text-align: left;">3</td>
-<td style="text-align: left;">改行を含む不足事項で差し戻す</td>
-<td style="text-align: left;">画面の単体テストで、C-04 と S-03 が改行を保つ <code>app-preline</code> で描くことを確かめた</td>
-</tr>
-<tr>
-<td style="text-align: left;">4</td>
-<td style="text-align: left;"><code>./gradlew uiTest</code></td>
-<td style="text-align: left;">画面の層 30 本（Bolt 8 の 28 本から +2）がすべて通り、axe-core の違反は 0 件</td>
-</tr>
-</tbody>
-</table>
-<p>デモの動画（2026-10-05 にいまのコードで撮った。その Bolt で作った機能のいまの振る舞いを示す）: <a href="../../../assets/demo/bolt-09/replace-documents.webm" target="_blank">replace-documents</a>、<a href="../../../assets/demo/bolt-09/wrong-format.webm" target="_blank">wrong-format</a>、<a href="../../../assets/demo/bolt-09/reselect-documents.webm" target="_blank">reselect-documents</a></p>
-<h2 id="_6">指標<a class="headerlink" href="#_6" title="Permanent link">&para;</a></h2>
-<table>
-<thead>
-<tr>
-<th style="text-align: left;">指標</th>
-<th style="text-align: left;">値</th>
-</tr>
-</thead>
-<tbody>
 <tr>
 <td style="text-align: left;">承認ゲート</td>
-<td style="text-align: left;">計画と確認ポイント 1〜5 の承認 1 回、ステップ 1・2 の承認 1 回、本報告の承認 1 回</td>
+<td style="text-align: left;">計画の承認（確認ポイント 1〜10）、KPI 計測記録の規則の Red・Green、表の変更（データベース）、S-22 の前身の画面、開発レビューの判断、終了報告</td>
 </tr>
 <tr>
-<td style="text-align: left;">人の変更依頼</td>
-<td style="text-align: left;">0</td>
+<td style="text-align: left;">アプローチ</td>
+<td style="text-align: left;">インサイドアウト（ウォーキングスケルトンの集約に振る舞いと表の列を足す Bolt）。集約の規則から入り、表と listener、最後に画面の層を受入シナリオで駆動する</td>
 </tr>
 <tr>
-<td style="text-align: left;">実行中に AI が直した誤り</td>
-<td style="text-align: left;">7 件（上の表の行の数）</td>
+<td style="text-align: left;">範囲の決定</td>
+<td style="text-align: left;">リリース計画の W3 の残り（US-21 AC1）。2026-10-08 に human:kakimomokuri が Bolt 21 の計画を作るよう指示した</td>
 </tr>
 <tr>
-<td style="text-align: left;">テスト</td>
-<td style="text-align: left;"><code>test</code> 435 件（Bolt 8 の 403 件から +32）。業務ルール層のシナリオ 49 件、画面の層 30 本。すべて passed（failed・ambiguous・undefined・skipped 0）</td>
-</tr>
-<tr>
-<td style="text-align: left;">Red の記録</td>
-<td style="text-align: left;">業務ルール層は Red のシナリオを先にコミットした（<code>b17a662</code>。新しい 2 件だけが失敗）。単体テストはコンパイルの失敗（ステップ 2 で 16 件、ステップ 3 で 6 件）と実行時の失敗（ステップ 3 で R-07 の 1 件、ステップ 4 で画面の単体テスト 5 件、413 の 1 件）、画面の層は実装の前の <code>uiTest</code> で 3 件の失敗を記録した（T-21、R-38）</td>
-</tr>
-<tr>
-<td style="text-align: left;">CI</td>
-<td style="text-align: left;">最後のコミット <code>f286877</code> で 2 つのジョブ（<code>check</code>・<code>ui</code>）とも緑。<code>23cd5c2</code> の <code>ui</code> で 1 件が時間切れ（下の「既知の課題」）</td>
-</tr>
-<tr>
-<td style="text-align: left;">SonarQube</td>
-<td style="text-align: left;">Quality Gate PASS（<code>sonar-local:check</code> の終了コード 0）、Bug 0、Vulnerability 0、Code Smell 0、Security Hotspot 0、重複 0.0%、カバレッジ 95.1%</td>
-</tr>
-<tr>
-<td style="text-align: left;">コード</td>
-<td style="text-align: left;">本体の Java 4,932 行（Bolt 8 の 4,510 行から +422。Bolt 8 の後の注釈・package-info の追加を含む）、テスト 7,543 行（6,842 行から +701）</td>
+<td style="text-align: left;">前の Bolt</td>
+<td style="text-align: left;"><a href="../bolt_20_report/">Bolt 20 終了報告</a></td>
 </tr>
 </tbody>
 </table>
-<h3 id="t-16">時間の内訳（T-16）<a class="headerlink" href="#t-16" title="Permanent link">&para;</a></h3>
-<table>
-<thead>
-<tr>
-<th style="text-align: left;">ステップ</th>
-<th style="text-align: right;">AI の実行</th>
-<th style="text-align: left;">開始 〜 完了</th>
-<th style="text-align: right;">前の承認からの待ち</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align: left;">開始準備</td>
-<td style="text-align: right;">不明（開始の時刻を記録していない）</td>
-<td style="text-align: left;">〜 09:49（計画のコミット）、計画の承認 09:54</td>
-<td style="text-align: right;">—</td>
-</tr>
-<tr>
-<td style="text-align: left;">1</td>
-<td style="text-align: right;">4 分</td>
-<td style="text-align: left;">09:54 〜 09:58</td>
-<td style="text-align: right;">0 分（計画の承認の直後）</td>
-</tr>
-<tr>
-<td style="text-align: left;">2</td>
-<td style="text-align: right;">15 分</td>
-<td style="text-align: left;">09:58 〜 10:13</td>
-<td style="text-align: right;">0 分（ステップ 1 とまとめて承認）</td>
-</tr>
-<tr>
-<td style="text-align: left;">3</td>
-<td style="text-align: right;">7 分</td>
-<td style="text-align: left;">10:50 〜 10:57</td>
-<td style="text-align: right;">37 分（ステップ 1・2 の承認待ち）</td>
-</tr>
-<tr>
-<td style="text-align: left;">4</td>
-<td style="text-align: right;">32 分</td>
-<td style="text-align: left;">10:57 〜 11:29</td>
-<td style="text-align: right;">0 分（本報告とまとめて承認）</td>
-</tr>
-<tr>
-<td style="text-align: left;">5</td>
-<td style="text-align: right;">約 18 分</td>
-<td style="text-align: left;">11:30 〜 11:48（本報告の初版）</td>
-<td style="text-align: right;">0 分</td>
-</tr>
-<tr>
-<td style="text-align: left;">合計</td>
-<td style="text-align: right;">約 76 分</td>
-<td style="text-align: left;">09:54 〜 11:48</td>
-<td style="text-align: right;">37 分</td>
-</tr>
-</tbody>
-</table>
-<p>計画の目安（240 分）に対して、AI の実行は約 76 分だった。時刻はコミットの時刻と、同じコマンドの中で <code>date</code> を実行した値による（T-24・T-25）。</p>
-<h2 id="_7">品質ゲート<a class="headerlink" href="#_7" title="Permanent link">&para;</a></h2>
-<table>
-<thead>
-<tr>
-<th style="text-align: left;">項目</th>
-<th style="text-align: left;">結果</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align: left;">全テスト</td>
-<td style="text-align: left;"><code>check</code>（435 件）、<code>uiTest</code>（30 シナリオ）、すべて成功</td>
-</tr>
-<tr>
-<td style="text-align: left;">書式・静的解析・本番の依存・カバレッジの閾値・用語集の整合・アーキテクチャテスト</td>
-<td style="text-align: left;">すべて成功（ArchUnit に R-16 の規則を足した）</td>
-</tr>
-<tr>
-<td style="text-align: left;">CI</td>
-<td style="text-align: left;">緑（<code>f286877</code>: <code>check</code> 2 分 9 秒、<code>ui</code> 2 分 49 秒）</td>
-</tr>
-<tr>
-<td style="text-align: left;">SonarQube の品質ゲート</td>
-<td style="text-align: left;">PASS</td>
-</tr>
-<tr>
-<td style="text-align: left;">ユーザーマニュアル</td>
-<td style="text-align: left;">対象外（マニュアルはまだない。認証と主要な画面がそろってから書く）</td>
-</tr>
-</tbody>
-</table>
-<h2 id="_8">仮説の結論<a class="headerlink" href="#_8" title="Permanent link">&para;</a></h2>
+<h2 id="bolt">Bolt ゴール<a class="headerlink" href="#bolt" title="Permanent link">&para;</a></h2>
+<p>見積りが荷主に提示されると（DE-03）、アクセス・監査の listener が KPI 計測記録にその輸送要求の最初の提示時刻を UTC で記録する。再見積りで 2 回目以降の提示があっても、最初の提示時刻は変わらない。KPI 計測記録は、版 1 の提出時刻（Bolt 1 で記録済み）と最初の提示時刻から、輸送要求ごとの KPI-01 のリードタイムを求める。社内の KPI 計測記録の画面（S-22 の前身）に、業務番号・提出時刻・最初の提示時刻・リードタイムが示される。</p>
+<h3 id="_2">確かめたい仮説<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
 <tr>
 <th style="text-align: left;">#</th>
 <th style="text-align: left;">仮説</th>
-<th style="text-align: left;">結論</th>
-<th style="text-align: left;">根拠</th>
+<th style="text-align: left;">この Bolt で分かること</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td style="text-align: left;">H1</td>
-<td style="text-align: left;">差し替えを「新しい版の書類の一覧を作り直す」こととして扱えば、版 1 の行を変えずに（追記専用のまま）差し替えられる</td>
-<td style="text-align: left;">成り立った</td>
-<td style="text-align: left;">統合テスト「出し直しで差し替えた種類は新しいキーの行になり版 1 の行は変わらない」が通った。表と列は変えていない</td>
+<td style="text-align: left;">KPI の計測は、見積りの公表された言語（DE-01・DE-03）を購読するだけで作れる。見積りの側は変えない</td>
+<td style="text-align: left;"><code>identity</code> の <code>allowedDependencies</code>（<code>shared</code>、<code>quotation :: events</code>）を変えずに済むこと。見積りのコードに差分がないこと</td>
 </tr>
 <tr>
 <td style="text-align: left;">H2</td>
-<td style="text-align: left;">書類の行の追加を「新しい版のときだけ」にしても、提出・出し直し・審査の保存の経路を壊さない</td>
-<td style="text-align: left;">成り立った</td>
-<td style="text-align: left;">集約が「読み込んだ後に作った版」（<code>newVersion()</code>）を持ち、リポジトリはそのときだけ書く。提出（<code>save</code>）・出し直し・差戻しの経路は統合テストで、審査の確定は既存の統合テストで確かめた。前の <code>IfAbsent</code> では審査の保存でも書類の行を書いていたことを、Red で確かめた</td>
-</tr>
-<tr>
-<td style="text-align: left;">H3</td>
-<td style="text-align: left;">レビューの改善提案の約 30 件を、1 つの Bolt（4 時間以内）で片付けられる</td>
-<td style="text-align: left;">成り立った</td>
-<td style="text-align: left;">AI の実行は約 76 分、承認待ちを含めて約 2 時間。打ち切りの線は使わなかった。ただし、1 つの Bolt で 30 件をまとめて直すと、どの指摘をどのコミットで直したかの追跡に表が要った（レビューの対応結果）</td>
+<td style="text-align: left;">最初の提示時刻を「まだ無いか、届いた時刻のほうが早いときだけ書く」条件付きの更新にすれば、DE-03 の再配信と順序の入れ替わりは、受信側の冪等性だけで済む</td>
+<td style="text-align: left;">再配信と順序の入れ替わりのテストが通ること</td>
 </tr>
 </tbody>
 </table>
-<h2 id="_9">判断と学び<a class="headerlink" href="#_9" title="Permanent link">&para;</a></h2>
-<h3 id="_10">設計への反映（反映済み）<a class="headerlink" href="#_10" title="Permanent link">&para;</a></h3>
-<ul>
-<li>ユーザーストーリー（US-01 の D-20 の決定に、種類ごとの差し替え）、ドメインモデル（Q-INV-16、輸送要求の <code>書類を探す</code>）、データモデル（差し替えの行、新しい版のときだけ INSERT）、UI 設計（C-03 の行、書類の取得の行、エラー要約の例）</li>
-<li><a href="../../../adr/cargo-tracker/010-required-document-storage-transaction/">ADR-010</a>（必要書類の保存とトランザクション。D-26）</li>
-<li>リリース計画（パイロット開始の条件に D-27・D-31、W2 に Bolt 9）、手順書（C-03 の形、件数、ADR-010、D-27）</li>
-</ul>
-<h3 id="_11">人の決定<a class="headerlink" href="#_11" title="Permanent link">&para;</a></h3>
-<ul>
-<li>W2 の最初の Bolt をレビューの返済にする（D-25）。D-26・D-27・D-31 は AI の提案どおり（2026-10-05、human:kakimomokuri）</li>
-<li>確認ポイント 1〜5（種類ごとの差し替え、ADR-010、#37、<code>findById</code> の削除、W2 の目標 SP は 8 のまま）</li>
-<li>新しい版の書類の並び（引き継ぐ書類の後ろに選んだ書類、書類番号は 1 から）</li>
-</ul>
-<h3 id="_12">既知の課題<a class="headerlink" href="#_12" title="Permanent link">&para;</a></h3>
+<h2 id="bolt_1">ふりかえりと前の Bolt からの引き継ぎ<a class="headerlink" href="#bolt_1" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
 <tr>
-<th style="text-align: left;">課題</th>
-<th style="text-align: left;">影響</th>
-<th style="text-align: left;">扱い</th>
+<th style="text-align: left;">入力</th>
+<th style="text-align: left;">内容</th>
+<th style="text-align: left;">この Bolt での扱い</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td style="text-align: left;"><code>23cd5c2</code> の CI で、画面の層の「キー操作で商業送り状を選んで提出する」が時間切れで失敗した。その後のコミットとローカルでは通っている</td>
-<td style="text-align: left;">ファイルの選択を Space で開く待ち（<code>waitForFileChooser</code>）が不安定なら、CI が偶然に赤くなる</td>
-<td style="text-align: left;">次に起きたら、Playwright の記録（trace）を残して原因を調べる。続けて起きるなら手順を見直す</td>
+<td style="text-align: left;">リリース計画（W3）</td>
+<td style="text-align: left;">残りは US-21 AC1（KPI-01 の時刻）</td>
+<td style="text-align: left;">スコープ</td>
 </tr>
 <tr>
-<td style="text-align: left;">書類以外の誤りの文言にも表示名が入っている（例: エラー要約の「出発地: 出発地を入力してください」）</td>
-<td style="text-align: left;">エラー要約で表示名が二重に読める</td>
-<td style="text-align: left;">R-04 は書類の文言に絞った。ほかの文言も外すかは人に確かめる（入力欄の下の文言だけを読む人には表示名があるほうが分かりやすい面もある）</td>
+<td style="text-align: left;">Bolt 3 レビュー D-11</td>
+<td style="text-align: left;">KPI-01 の終点の「有効な」の定義。推奨は「誤りで取り消した見積りは数えない。荷主の条件変更で出し直した見積りは最初の提示を終点のまま」。ドメインモデルの KPI-INV-01 は「人が決める」のまま</td>
+<td style="text-align: left;">確認ポイント 2 で決める</td>
 </tr>
 <tr>
-<td style="text-align: left;">60 MB を超える送信は、今も接続がリセットされる</td>
-<td style="text-align: left;">利用者に分かりにくい誤りになる</td>
-<td style="text-align: left;">読み捨てる量を上限の少し上に絞ったため（大きな送信を読み続けない）。運用準備（W10）でロードバランサーの上限とあわせて決める</td>
+<td style="text-align: left;">UI 設計（S-22 の前身）</td>
+<td style="text-align: left;">日時を UTC だけで示している。利用者のタイムゾーンを主にし UTC を併記する共通部品は「US-21 の Bolt で適用する」</td>
+<td style="text-align: left;">ステップ 4 で適用する</td>
 </tr>
 <tr>
-<td style="text-align: left;">受け付けた書類をサーバーで保持して、誤りの再表示で引き継ぐ（R-02 の残り）</td>
-<td style="text-align: left;">誤りのたびに選び直す</td>
-<td style="text-align: left;">R1.0 の下書きの保存とあわせて決める</td>
+<td style="text-align: left;">データモデル（<code>kpi_observation</code>）</td>
+<td style="text-align: left;">DE-03 で最初の提示時刻だけを記録する（2 回目以降は更新しない）。<code>first_presented_at</code> は未作成</td>
+<td style="text-align: left;">ステップ 3 で列を足す</td>
 </tr>
 <tr>
-<td style="text-align: left;">R-21・R-22</td>
-<td style="text-align: left;">S-03 で引き継いだ書類と足した書類を区別しない、出し直した後に前の差戻しを C-04 に残さない</td>
-<td style="text-align: left;">後の Bolt</td>
+<td style="text-align: left;">Try T-57（Bolt 20）</td>
+<td style="text-align: left;">状態の列挙に値を足すときは、その状態を見る判定を洗い出す</td>
+<td style="text-align: left;">この Bolt は状態の列挙に値を足さない（確認ポイント 9）</td>
 </tr>
 <tr>
-<td style="text-align: left;">D-28・D-29（業務責任者に確かめる）、D-30（段階入力を荷主で確かめ直す場）</td>
-<td style="text-align: left;">未決</td>
-<td style="text-align: left;">D-28・D-29 は W2 の間、D-30 は W9 まで</td>
+<td style="text-align: left;">Try T-58（Bolt 20）</td>
+<td style="text-align: left;">listener を足すときは、受入テストとは別に、拒否と警告のログの経路の単体テストを Red に入れる</td>
+<td style="text-align: left;">ステップ 3（提出の記録がない DE-03 の経路）</td>
+</tr>
+<tr>
+<td style="text-align: left;">Try T-59（Bolt 20）</td>
+<td style="text-align: left;">画面の層のステップは、ほかのシナリオが足したデータで変わる値を決め打ちしない</td>
+<td style="text-align: left;">ステップ 4（一覧の行の数・順番を決め打ちしない）</td>
+</tr>
+<tr>
+<td style="text-align: left;">Try T-60（Bolt 20）</td>
+<td style="text-align: left;">テンプレートで値の有無を見るときは <code>!= null</code> を書く</td>
+<td style="text-align: left;">ステップ 4（未提示の行）</td>
+</tr>
+<tr>
+<td style="text-align: left;">Try T-53〜T-56・T-50・T-51・T-38・T-39・T-41・T-42・T-26・T-33・T-28・T-31・T-21・T-36・R-38</td>
+<td style="text-align: left;">これまでのとおり</td>
+<td style="text-align: left;">全ステップ</td>
 </tr>
 </tbody>
 </table>
-<h3 id="bolt-8-try">Bolt 8 の Try の結果<a class="headerlink" href="#bolt-8-try" title="Permanent link">&para;</a></h3>
+<h2 id="_3">スコープ<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h2>
+<h3 id="try-t-1">設計の約束（Try T-1）<a class="headerlink" href="#try-t-1" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
 <tr>
-<th style="text-align: left;">Try</th>
-<th style="text-align: left;">結果</th>
+<th style="text-align: left;">設計の約束</th>
+<th style="text-align: left;">出典</th>
+<th style="text-align: left;">この Bolt</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td style="text-align: left;">T-25 ステップの開始のときに、最初のコマンドで <code>date</code> を実行して開始時刻を残す</td>
-<td style="text-align: left;">ステップ 1〜5 は守れた。開始準備（W2 の開始準備）の開始時刻は残さなかった</td>
+<td style="text-align: left;">KPI-INV-01 KPI-01 は、版 1 を最初に提出した時刻と、最初の有効な見積り・経路方針の提示時刻から求める。差戻し・再提出・新しい版で開始時刻を戻さない（D-3）</td>
+<td style="text-align: left;">ドメインモデル</td>
+<td style="text-align: left;">入れる。「有効な」は確認ポイント 2</td>
+</tr>
+<tr>
+<td style="text-align: left;">Q-INV-05 見積りの提示した時刻を記録する（KPI-01）</td>
+<td style="text-align: left;">ドメインモデル</td>
+<td style="text-align: left;">見積りの側は済み（Bolt 10、DE-03 の <code>presentedAt</code>）。この Bolt は購読するだけ</td>
+</tr>
+<tr>
+<td style="text-align: left;">DE-03 の購読者に KPI 計測（KPI-01 の終了時刻）</td>
+<td style="text-align: left;">ドメインモデル</td>
+<td style="text-align: left;">入れる</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>kpi_observation</code> は DE-01 で作り、DE-03 で最初の提示時刻だけを記録する</td>
+<td style="text-align: left;">データモデル</td>
+<td style="text-align: left;">入れる</td>
+</tr>
+<tr>
+<td style="text-align: left;">時刻は UTC で記録する</td>
+<td style="text-align: left;">US-21 AC1</td>
+<td style="text-align: left;">入れる（<code>UtcInstant</code>、<code>TIMESTAMP WITH TIME ZONE</code>）</td>
+</tr>
+<tr>
+<td style="text-align: left;">日時表示の共通部品（利用者のタイムゾーンを主にし UTC を併記）</td>
+<td style="text-align: left;">UI 設計</td>
+<td style="text-align: left;">S-22 の前身に入れる</td>
+</tr>
+<tr>
+<td style="text-align: left;">PV-01 の除外（訓練データ、顧客都合の取消し）</td>
+<td style="text-align: left;">KPI-INV-01</td>
+<td style="text-align: left;">入れない（W9。確認ポイント 6）</td>
 </tr>
 </tbody>
 </table>
-<h3 id="kpt">ふりかえり（KPT）<a class="headerlink" href="#kpt" title="Permanent link">&para;</a></h3>
+<h3 id="_4">入れるもの・入れないもの<a class="headerlink" href="#_4" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">入れる</th>
+<th style="text-align: left;">入れない（後の Bolt）</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>KpiObservation</code> の最初の提示時刻の記録と KPI-01 のリードタイム</td>
+<td style="text-align: left;">KPI-02 と照会記録（AC2・AC3、W9）</td>
+</tr>
+<tr>
+<td style="text-align: left;">DE-03 の listener（アクセス・監査の中）</td>
+<td style="text-align: left;">週次の中央値・90 パーセンタイルと母集団の絞り込み（AC4、W9）</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>kpi_observation.first_presented_at</code> の列</td>
+<td style="text-align: left;">基準値の登録（AC5、<code>kpi_baseline</code>、<code>kpi:baseline:register</code>、W9）</td>
+</tr>
+<tr>
+<td style="text-align: left;">S-22 の前身の画面に、最初の提示時刻・リードタイムと日時表示の共通部品</td>
+<td style="text-align: left;">PV-01 の除外の操作（<code>excluded</code> の入力）</td>
+</tr>
+<tr>
+<td style="text-align: left;">デモ環境のサンプルの提示時刻</td>
+<td style="text-align: left;">S-22 の監査担当者への認可（確認ポイント 5）</td>
+</tr>
+</tbody>
+</table>
+<h2 id="bolt_2">設計（この Bolt の範囲）<a class="headerlink" href="#bolt_2" title="Permanent link">&para;</a></h2>
+<h3 id="_5">ドメインモデル<a class="headerlink" href="#_5" title="Permanent link">&para;</a></h3>
+<p><img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB2ZXJzaW9uPSIxLjEiIGRhdGEtZGlhZ3JhbS10eXBlPSJDTEFTUyIgc3R5bGU9IndpZHRoOjgxMHB4O2hlaWdodDo0NjFweDtiYWNrZ3JvdW5kOiNGRkZGRkY7IiB3aWR0aD0iODEwcHgiIGhlaWdodD0iNDYxcHgiIHZpZXdCb3g9IjAgMCA4MTAgNDYxIiB6b29tQW5kUGFuPSJtYWduaWZ5IiBwcmVzZXJ2ZUFzcGVjdFJhdGlvPSJub25lIiBjb250ZW50U3R5bGVUeXBlPSJ0ZXh0L2NzcyI+PD9wbGFudHVtbCAxLjIwMjYuOD8+PGRlZnMvPjxnIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBsZW5ndGhBZGp1c3Q9InNwYWNpbmciPjxnIGNsYXNzPSJ0aXRsZSIgZGF0YS1zb3VyY2UtbGluZT0iMSI+PHRleHQgeD0iMjQ3Ljk2MiIgeT0iMjIuOTk1IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE0IiB0ZXh0TGVuZ3RoPSIzMDcuMDc2IiBmb250LXdlaWdodD0iNzAwIj5Cb2x0IDIxIOOBruevhOWbsu+8iOOCouOCr+OCu+OCueODu+ebo+afu+OBriBLUEkg6KiI5ris77yJPC90ZXh0PjwvZz48IS0tY2x1c3RlciDopovnqY3jgorvvIjlhazooajjgZXjgozjgZ/oqIDoqp7vvIktLT48ZyBjbGFzcz0iY2x1c3RlciIgZGF0YS1xdWFsaWZpZWQtbmFtZT0iLi4uLi4uLi4uLi4uIiBpZD0iZW50MDAwMSIgZGF0YS1zb3VyY2UtbGluZT0iMyI+PHBhdGggZD0iTTMxNi41LDIzMy41OTcgTDQ4NS40OTksMjMzLjU5NyBBMy43NSwzLjc1IDAgMCAxIDQ4Ny45OTksMjM2LjA5NyBMNDk0Ljk5OSwyNTUuODk0IEw3OTIuNSwyNTUuODk0IEEyLjUsMi41IDAgMCAxIDc5NSwyNTguMzk0IEw3OTUsNDE5Ljg0NyBBMi41LDIuNSAwIDAgMSA3OTIuNSw0MjIuMzQ3IEwzMTYuNSw0MjIuMzQ3IEEyLjUsMi41IDAgMCAxIDMxNCw0MTkuODQ3IEwzMTQsMjM2LjA5NyBBMi41LDIuNSAwIDAgMSAzMTYuNSwyMzMuNTk3IiBzdHlsZT0ic3Ryb2tlOiMwMDA7c3Ryb2tlLXdpZHRoOjEuNTsiIGZpbGw9Im5vbmUiLz48bGluZSB4MT0iMzE0IiB5MT0iMjU1Ljg5NCIgeDI9IjQ5NC45OTkiIHkyPSIyNTUuODk0IiBzdHlsZT0ic3Ryb2tlOiMwMDA7c3Ryb2tlLXdpZHRoOjEuNTsiLz48dGV4dCB4PSIzMTgiIHk9IjI0OC41OTIiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTQiIHRleHRMZW5ndGg9IjE2Ny45OTkiIGZvbnQtd2VpZ2h0PSI3MDAiPuimi+epjeOCiu+8iOWFrOihqOOBleOCjOOBn+iogOiqnu+8iTwvdGV4dD48L2c+PCEtLWNsdXN0ZXIg44Ki44Kv44K744K544O755uj5p+7LS0+PGcgY2xhc3M9ImNsdXN0ZXIiIGRhdGEtcXVhbGlmaWVkLW5hbWU9Ii4uLi4uLi4iIGlkPSJlbnQwMDA0IiBkYXRhLXNvdXJjZS1saW5lPSIxOCI+PHBhdGggZD0iTTguNSw0My4yOTcgTDEwNy41LDQzLjI5NyBBMy43NSwzLjc1IDAgMCAxIDExMCw0NS43OTcgTDExNyw2NS41OTQgTDI4Ny41LDY1LjU5NCBBMi41LDIuNSAwIDAgMSAyOTAsNjguMDk0IEwyOTAsNDQ0LjI5NyBBMi41LDIuNSAwIDAgMSAyODcuNSw0NDYuNzk3IEw4LjUsNDQ2Ljc5NyBBMi41LDIuNSAwIDAgMSA2LDQ0NC4yOTcgTDYsNDUuNzk3IEEyLjUsMi41IDAgMCAxIDguNSw0My4yOTciIHN0eWxlPSJzdHJva2U6IzAwMDtzdHJva2Utd2lkdGg6MS41OyIgZmlsbD0ibm9uZSIvPjxsaW5lIHgxPSI2IiB5MT0iNjUuNTk0IiB4Mj0iMTE3IiB5Mj0iNjUuNTk0IiBzdHlsZT0ic3Ryb2tlOiMwMDA7c3Ryb2tlLXdpZHRoOjEuNTsiLz48dGV4dCB4PSIxMCIgeT0iNTguMjkyIiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE0IiB0ZXh0TGVuZ3RoPSI5OCIgZm9udC13ZWlnaHQ9IjcwMCI+44Ki44Kv44K744K544O755uj5p+7PC90ZXh0PjwvZz48IS0tY2xhc3MgVHJhbnNwb3J0UmVxdWVzdFN1Ym1pdHRlZC0tPjxnIGNsYXNzPSJlbnRpdHkiIGRhdGEtcXVhbGlmaWVkLW5hbWU9Ii4uLi4uLi4uLi4uLi5UcmFuc3BvcnRSZXF1ZXN0U3VibWl0dGVkIiBpZD0iZW50MDAwMiIgZGF0YS1zb3VyY2UtbGluZT0iNCI+PHJlY3QgeD0iMzMwLjA1IiB5PSIyNjguNTk3IiB3aWR0aD0iMjI5LjkiIGhlaWdodD0iMTM3Ljc1IiBmaWxsPSIjRjFGMUYxIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjAuNTsiIHJ4PSIyLjUiIHJ5PSIyLjUiLz48ZWxsaXBzZSBjeD0iMzQ1LjA1IiBjeT0iMjg4LjczIiByeD0iMTEiIHJ5PSIxMSIgZmlsbD0iI0FERDFCMiIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxOyIvPjxwYXRoIGQ9Ik0zNDguMDE5LDI5NC4zNyBRMzQ3LjQ0MSwyOTQuNjY3IDM0Ni44LDI5NC44MDggUTM0Ni4xNTksMjk0Ljk2NCAzNDUuNDU2LDI5NC45NjQgUTM0Mi45NTYsMjk0Ljk2NCAzNDEuNjI4LDI5My4zMjMgUTM0MC4zMTYsMjkxLjY2NyAzNDAuMzE2LDI4OC41NDIgUTM0MC4zMTYsMjg1LjQxNyAzNDEuNjI4LDI4My43NjEgUTM0Mi45NTYsMjgyLjEwNSAzNDUuNDU2LDI4Mi4xMDUgUTM0Ni4xNTksMjgyLjEwNSAzNDYuOCwyODIuMjYxIFEzNDcuNDU2LDI4Mi40MTcgMzQ4LjAxOSwyODIuNzE0IEwzNDguMDE5LDI4NS40MzMgUTM0Ny4zOTQsMjg0Ljg1NSAzNDYuOCwyODQuNTg5IFEzNDYuMjA2LDI4NC4zMDggMzQ1LjU4MSwyODQuMzA4IFEzNDQuMjM4LDI4NC4zMDggMzQzLjU1LDI4NS4zODYgUTM0Mi44NjMsMjg2LjQ0OCAzNDIuODYzLDI4OC41NDIgUTM0Mi44NjMsMjkwLjYzNiAzNDMuNTUsMjkxLjcxNCBRMzQ0LjIzOCwyOTIuNzc3IDM0NS41ODEsMjkyLjc3NyBRMzQ2LjIwNiwyOTIuNzc3IDM0Ni44LDI5Mi41MTEgUTM0Ny4zOTQsMjkyLjIzIDM0OC4wMTksMjkxLjY1MiBMMzQ4LjAxOSwyOTQuMzcgWiAiIGZpbGw9IiMwMDAiLz48dGV4dCB4PSI0MTAuMTg4IiB5PSIyODQuNzM2IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjEyIiB0ZXh0TGVuZ3RoPSI5NS42MjUiIGZvbnQtc3R5bGU9Iml0YWxpYyI+wqtEb21haW5FdmVudMK7PC90ZXh0Pjx0ZXh0IHg9IjM1OS4wNSIgeT0iMzAwLjU2MSIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxNCIgdGV4dExlbmd0aD0iMTk3LjkiPlRyYW5zcG9ydFJlcXVlc3RTdWJtaXR0ZWQ8L3RleHQ+PGxpbmUgeDE9IjMzMS4wNSIgeTE9IjMwOC44NjMiIHgyPSI1NTguOTUiIHkyPSIzMDguODYzIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjAuNTsiLz48dGV4dCB4PSIzMzYuMDUiIHk9IjMyNS44NTgiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTQiIHRleHRMZW5ndGg9IjQyLjQ5MiI+REUtMDE8L3RleHQ+PHRleHQgeD0iMzM2LjA1IiB5PSIzNDIuMTU0IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE0IiB0ZXh0TGVuZ3RoPSIxMzUuMjAxIj50cmFuc3BvcnRSZXF1ZXN0SWQ8L3RleHQ+PHRleHQgeD0iMzM2LjA1IiB5PSIzNTguNDUxIiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE0IiB0ZXh0TGVuZ3RoPSIxNzguNDI1Ij50cmFuc3BvcnRSZXF1ZXN0TnVtYmVyPC90ZXh0Pjx0ZXh0IHg9IjMzNi4wNSIgeT0iMzc0Ljc0OCIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxNCIgdGV4dExlbmd0aD0iMTMxLjgxNyI+c2hpcHBlckNvbXBhbnlJZDwvdGV4dD48dGV4dCB4PSIzMzYuMDUiIHk9IjM5MS4wNDUiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTQiIHRleHRMZW5ndGg9IjE3MS45MDMiPnN1Ym1pdHRlZEF0IDogVXRjSW5zdGFudDwvdGV4dD48bGluZSB4MT0iMzMxLjA1IiB5MT0iMzk4LjM0NyIgeDI9IjU1OC45NSIgeTI9IjM5OC4zNDciIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MC41OyIvPjwvZz48IS0tY2xhc3MgUXVvdGF0aW9uUHJlc2VudGVkLS0+PGcgY2xhc3M9ImVudGl0eSIgZGF0YS1xdWFsaWZpZWQtbmFtZT0iLi4uLi4uLi4uLi4uLlF1b3RhdGlvblByZXNlbnRlZCIgaWQ9ImVudDAwMDMiIGRhdGEtc291cmNlLWxpbmU9IjExIj48cmVjdCB4PSI1OTUuMDciIHk9IjI4NC44OTciIHdpZHRoPSIxODMuODY5IiBoZWlnaHQ9IjEwNS4xNTYiIGZpbGw9IiNGMUYxRjEiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MC41OyIgcng9IjIuNSIgcnk9IjIuNSIvPjxlbGxpcHNlIGN4PSI2MTUuNDQ1IiBjeT0iMzA1LjAzIiByeD0iMTEiIHJ5PSIxMSIgZmlsbD0iI0FERDFCMiIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxOyIvPjxwYXRoIGQ9Ik02MTguNDE0LDMxMC42NyBRNjE3LjgzNiwzMTAuOTY3IDYxNy4xOTUsMzExLjEwOCBRNjE2LjU1NCwzMTEuMjY0IDYxNS44NTEsMzExLjI2NCBRNjEzLjM1MSwzMTEuMjY0IDYxMi4wMjMsMzA5LjYyMyBRNjEwLjcxMSwzMDcuOTY3IDYxMC43MTEsMzA0Ljg0MiBRNjEwLjcxMSwzMDEuNzE3IDYxMi4wMjMsMzAwLjA2MSBRNjEzLjM1MSwyOTguNDA1IDYxNS44NTEsMjk4LjQwNSBRNjE2LjU1NCwyOTguNDA1IDYxNy4xOTUsMjk4LjU2MSBRNjE3Ljg1MSwyOTguNzE3IDYxOC40MTQsMjk5LjAxNCBMNjE4LjQxNCwzMDEuNzMzIFE2MTcuNzg5LDMwMS4xNTUgNjE3LjE5NSwzMDAuODg5IFE2MTYuNjAxLDMwMC42MDggNjE1Ljk3NiwzMDAuNjA4IFE2MTQuNjMyLDMwMC42MDggNjEzLjk0NSwzMDEuNjg2IFE2MTMuMjU3LDMwMi43NDggNjEzLjI1NywzMDQuODQyIFE2MTMuMjU3LDMwNi45MzYgNjEzLjk0NSwzMDguMDE0IFE2MTQuNjMyLDMwOS4wNzcgNjE1Ljk3NiwzMDkuMDc3IFE2MTYuNjAxLDMwOS4wNzcgNjE3LjE5NSwzMDguODExIFE2MTcuNzg5LDMwOC41MyA2MTguNDE0LDMwNy45NTIgTDYxOC40MTQsMzEwLjY3IFogIiBmaWxsPSIjMDAwIi8+PHRleHQgeD0iNjUyLjc4OSIgeT0iMzAxLjAzNiIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxMiIgdGV4dExlbmd0aD0iOTUuNjI1IiBmb250LXN0eWxlPSJpdGFsaWMiPsKrRG9tYWluRXZlbnTCuzwvdGV4dD48dGV4dCB4PSI2MzAuNjM5IiB5PSIzMTYuODYxIiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE0IiB0ZXh0TGVuZ3RoPSIxMzkuOTI1Ij5RdW90YXRpb25QcmVzZW50ZWQ8L3RleHQ+PGxpbmUgeDE9IjU5Ni4wNyIgeTE9IjMyNS4xNjMiIHgyPSI3NzcuOTM5IiB5Mj0iMzI1LjE2MyIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDowLjU7Ii8+PHRleHQgeD0iNjAxLjA3IiB5PSIzNDIuMTU4IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE0IiB0ZXh0TGVuZ3RoPSI0Mi40OTIiPkRFLTAzPC90ZXh0Pjx0ZXh0IHg9IjYwMS4wNyIgeT0iMzU4LjQ1NCIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxNCIgdGV4dExlbmd0aD0iMTM1LjIwMSI+dHJhbnNwb3J0UmVxdWVzdElkPC90ZXh0Pjx0ZXh0IHg9IjYwMS4wNyIgeT0iMzc0Ljc1MSIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxNCIgdGV4dExlbmd0aD0iMTcxLjg2OSI+cHJlc2VudGVkQXQgOiBVdGNJbnN0YW50PC90ZXh0PjxsaW5lIHgxPSI1OTYuMDciIHkxPSIzODIuMDUzIiB4Mj0iNzc3LjkzOSIgeTI9IjM4Mi4wNTMiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MC41OyIvPjwvZz48IS0tY2xhc3MgS3BpT2JzZXJ2YXRpb24tLT48ZyBjbGFzcz0iZW50aXR5IiBkYXRhLXF1YWxpZmllZC1uYW1lPSIuLi4uLi4uLktwaU9ic2VydmF0aW9uIiBpZD0iZW50MDAwNSIgZGF0YS1zb3VyY2UtbGluZT0iMTkiPjxyZWN0IHg9IjIxLjU2IiB5PSIyNDQuMTU3IiB3aWR0aD0iMjUyLjg3MSIgaGVpZ2h0PSIxODYuNjQxIiBmaWxsPSIjRjFGMUYxIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjAuNTsiIHJ4PSIyLjUiIHJ5PSIyLjUiLz48ZWxsaXBzZSBjeD0iOTAuMTQyIiBjeT0iMjY0LjI5IiByeD0iMTEiIHJ5PSIxMSIgZmlsbD0iI0FERDFCMiIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxOyIvPjxwYXRoIGQ9Ik05My4xMSwyNjkuOTMgUTkyLjUzMiwyNzAuMjI3IDkxLjg5MiwyNzAuMzY4IFE5MS4yNTEsMjcwLjUyNCA5MC41NDgsMjcwLjUyNCBRODguMDQ4LDI3MC41MjQgODYuNzIsMjY4Ljg4MyBRODUuNDA3LDI2Ny4yMjcgODUuNDA3LDI2NC4xMDIgUTg1LjQwNywyNjAuOTc3IDg2LjcyLDI1OS4zMjEgUTg4LjA0OCwyNTcuNjY1IDkwLjU0OCwyNTcuNjY1IFE5MS4yNTEsMjU3LjY2NSA5MS44OTIsMjU3LjgyMSBROTIuNTQ4LDI1Ny45NzcgOTMuMTEsMjU4LjI3NCBMOTMuMTEsMjYwLjk5MyBROTIuNDg1LDI2MC40MTUgOTEuODkyLDI2MC4xNDkgUTkxLjI5OCwyNTkuODY4IDkwLjY3MywyNTkuODY4IFE4OS4zMjksMjU5Ljg2OCA4OC42NDIsMjYwLjk0NiBRODcuOTU0LDI2Mi4wMDggODcuOTU0LDI2NC4xMDIgUTg3Ljk1NCwyNjYuMTk2IDg4LjY0MiwyNjcuMjc0IFE4OS4zMjksMjY4LjMzNyA5MC42NzMsMjY4LjMzNyBROTEuMjk4LDI2OC4zMzcgOTEuODkyLDI2OC4wNzEgUTkyLjQ4NSwyNjcuNzkgOTMuMTEsMjY3LjIxMiBMOTMuMTEsMjY5LjkzIFogIiBmaWxsPSIjMDAwIi8+PHRleHQgeD0iMTExLjYzMSIgeT0iMjYwLjI5NiIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxMiIgdGV4dExlbmd0aD0iMTA1LjIyOSIgZm9udC1zdHlsZT0iaXRhbGljIj7Cq0FnZ3JlZ2F0ZVJvb3TCuzwvdGV4dD48dGV4dCB4PSIxMTAuNjQyIiB5PSIyNzYuMTIxIiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE0IiB0ZXh0TGVuZ3RoPSIxMDcuMjA4Ij5LcGlPYnNlcnZhdGlvbjwvdGV4dD48bGluZSB4MT0iMjIuNTYiIHkxPSIyODQuNDIzIiB4Mj0iMjczLjQzMSIgeTI9IjI4NC40MjMiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MC41OyIvPjx0ZXh0IHg9IjI3LjU2IiB5PSIzMDEuNDE4IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE0IiB0ZXh0TGVuZ3RoPSIxMzUuMjAxIj50cmFuc3BvcnRSZXF1ZXN0SWQ8L3RleHQ+PHRleHQgeD0iMjcuNTYiIHk9IjMxNy43MTQiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTQiIHRleHRMZW5ndGg9IjE3OC40MjUiPnRyYW5zcG9ydFJlcXVlc3ROdW1iZXI8L3RleHQ+PHRleHQgeD0iMjcuNTYiIHk9IjMzNC4wMTEiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTQiIHRleHRMZW5ndGg9IjEzMS44MTciPnNoaXBwZXJDb21wYW55SWQ8L3RleHQ+PHRleHQgeD0iMjcuNTYiIHk9IjM1MC4zMDgiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTQiIHRleHRMZW5ndGg9IjE3MS45MDMiPnN1Ym1pdHRlZEF0IDogVXRjSW5zdGFudDwvdGV4dD48dGV4dCB4PSIyNy41NiIgeT0iMzY2LjYwNSIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxNCIgdGV4dExlbmd0aD0iMjQwLjg3MSI+Zmlyc3RQcmVzZW50ZWRBdCA6IFV0Y0luc3RhbnQgWzAuLjFdPC90ZXh0PjxsaW5lIHgxPSIyMi41NiIgeTE9IjM3My45MDciIHgyPSIyNzMuNDMxIiB5Mj0iMzczLjkwNyIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxOyIvPjx0ZXh0IHg9IjI3LjU2IiB5PSIzOTAuOTAyIiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE0IiB0ZXh0TGVuZ3RoPSIxMzYuMjg4Ij5yZWNvcmRTdWJtaXNzaW9uKCk8L3RleHQ+PHRleHQgeD0iMjcuNTYiIHk9IjQwNy4xOTkiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTQiIHRleHRMZW5ndGg9IjIzMC43NjgiPnJlY29yZFByZXNlbnRhdGlvbihwcmVzZW50ZWRBdCk8L3RleHQ+PHRleHQgeD0iMjcuNTYiIHk9IjQyMy40OTYiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTQiIHRleHRMZW5ndGg9IjIzMi42NjEiPmxlYWRUaW1lKCkgOiBPcHRpb25hbCZsdDtEdXJhdGlvbj48L3RleHQ+PC9nPjwhLS1jbGFzcyBLcGlPYnNlcnZhdGlvbkV2ZW50SGFuZGxlci0tPjxnIGNsYXNzPSJlbnRpdHkiIGRhdGEtcXVhbGlmaWVkLW5hbWU9Ii4uLi4uLi4uS3BpT2JzZXJ2YXRpb25FdmVudEhhbmRsZXIiIGlkPSJlbnQwMDA2IiBkYXRhLXNvdXJjZS1saW5lPSIzMCI+PHJlY3QgeD0iMzUuODciIHk9Ijc4LjI5NyIgd2lkdGg9IjIzOC4yNjMiIGhlaWdodD0iODguODU5IiBmaWxsPSIjRjFGMUYxIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjAuNTsiIHJ4PSIyLjUiIHJ5PSIyLjUiLz48ZWxsaXBzZSBjeD0iNTIuNTkiIGN5PSI5OC40MyIgcng9IjExIiByeT0iMTEiIGZpbGw9IiNBREQxQjIiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTsiLz48cGF0aCBkPSJNNTUuNTU5LDEwNC4wNyBRNTQuOTgxLDEwNC4zNjcgNTQuMzQsMTA0LjUwOCBRNTMuNywxMDQuNjY0IDUyLjk5NywxMDQuNjY0IFE1MC40OTcsMTA0LjY2NCA0OS4xNjksMTAzLjAyMyBRNDcuODU2LDEwMS4zNjcgNDcuODU2LDk4LjI0MiBRNDcuODU2LDk1LjExNyA0OS4xNjksOTMuNDYxIFE1MC40OTcsOTEuODA1IDUyLjk5Nyw5MS44MDUgUTUzLjcsOTEuODA1IDU0LjM0LDkxLjk2MSBRNTQuOTk3LDkyLjExNyA1NS41NTksOTIuNDE0IEw1NS41NTksOTUuMTMzIFE1NC45MzQsOTQuNTU1IDU0LjM0LDk0LjI4OSBRNTMuNzQ3LDk0LjAwOCA1My4xMjIsOTQuMDA4IFE1MS43NzgsOTQuMDA4IDUxLjA5LDk1LjA4NiBRNTAuNDAzLDk2LjE0OCA1MC40MDMsOTguMjQyIFE1MC40MDMsMTAwLjMzNiA1MS4wOSwxMDEuNDE0IFE1MS43NzgsMTAyLjQ3NyA1My4xMjIsMTAyLjQ3NyBRNTMuNzQ3LDEwMi40NzcgNTQuMzQsMTAyLjIxMSBRNTQuOTM0LDEwMS45MyA1NS41NTksMTAxLjM1MiBMNTUuNTU5LDEwNC4wNyBaICIgZmlsbD0iIzAwMCIvPjx0ZXh0IHg9IjEzOC42NzYiIHk9Ijk0LjQzNiIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxMiIgdGV4dExlbmd0aD0iNTkuMDMzIiBmb250LXN0eWxlPSJpdGFsaWMiPsKrU2VydmljZcK7PC90ZXh0Pjx0ZXh0IHg9IjY2Ljk3MyIgeT0iMTEwLjI2MSIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxNCIgdGV4dExlbmd0aD0iMjAyLjQzOSI+S3BpT2JzZXJ2YXRpb25FdmVudEhhbmRsZXI8L3RleHQ+PGxpbmUgeDE9IjM2Ljg3IiB5MT0iMTE4LjU2MyIgeDI9IjI3My4xMzMiIHkyPSIxMTguNTYzIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjAuNTsiLz48bGluZSB4MT0iMzYuODciIHkxPSIxMjYuNTYzIiB4Mj0iMjczLjEzMyIgeTI9IjEyNi41NjMiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MC41OyIvPjx0ZXh0IHg9IjQxLjg3IiB5PSIxNDMuNTU4IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE0IiB0ZXh0TGVuZ3RoPSIyMjYuMjYzIj5vbihUcmFuc3BvcnRSZXF1ZXN0U3VibWl0dGVkKTwvdGV4dD48dGV4dCB4PSI0MS44NyIgeT0iMTU5Ljg1NCIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxNCIgdGV4dExlbmd0aD0iMTY4LjI4NyI+b24oUXVvdGF0aW9uUHJlc2VudGVkKTwvdGV4dD48L2c+PCEtLWxpbmsgS3BpT2JzZXJ2YXRpb25FdmVudEhhbmRsZXIgdG8gVHJhbnNwb3J0UmVxdWVzdFN1Ym1pdHRlZC0tPjxnIGNsYXNzPSJsaW5rIiBkYXRhLWVudGl0eS0xPSJlbnQwMDA2IiBkYXRhLWVudGl0eS0yPSJlbnQwMDAyIiBpZD0ibG5rNyIgZGF0YS1zb3VyY2UtbGluZT0iMzYiIGRhdGEtbGluay10eXBlPSJkZXBlbmRlbmN5Ij48cGF0aCBkPSJNMjE0Ljc0LDE2Ny41NDcgQzI1NC4yOCwxOTYuNTU3IDMwMi45MTksMjMyLjIzOSAzNDcuODk5LDI2NS4yMzkiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTtzdHJva2UtZGFzaGFycmF5OjcsNzsiIGZpbGw9Im5vbmUiIGlkPSJLcGlPYnNlcnZhdGlvbkV2ZW50SGFuZGxlci10by1UcmFuc3BvcnRSZXF1ZXN0U3VibWl0dGVkIiBjb2RlTGluZT0iMzYiLz48cG9seWdvbiBwb2ludHM9IjM1MS45MywyNjguMTk3LDM0Ny4wNCwyNTkuNjQ4LDM0Ny44OTksMjY1LjIzOSwzNDIuMzA3LDI2Ni4wOTgsMzUxLjkzLDI2OC4xOTciIGZpbGw9IiMxODE4MTgiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTtzdHJva2UtbGluZWpvaW46bWl0ZXI7c3Ryb2tlLW1pdGVybGltaXQ6MTA7Ii8+PHRleHQgeD0iMjc1LjAzIiB5PSIyMTAuMjI0IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjEzIiB0ZXh0TGVuZ3RoPSIyNiI+6LO86KqtPC90ZXh0PjwvZz48IS0tbGluayBLcGlPYnNlcnZhdGlvbkV2ZW50SGFuZGxlciB0byBRdW90YXRpb25QcmVzZW50ZWQtLT48ZyBjbGFzcz0ibGluayIgZGF0YS1lbnRpdHktMT0iZW50MDAwNiIgZGF0YS1lbnRpdHktMj0iZW50MDAwMyIgaWQ9ImxuazgiIGRhdGEtc291cmNlLWxpbmU9IjM3IiBkYXRhLWxpbmstdHlwZT0iZGVwZW5kZW5jeSI+PHBhdGggZD0iTTI3NC4yLDEzNC44MjcgQzM2Mi40MywxNDcuMTA3IDQ4My4xLDE3Mi42OTcgNTc3LDIyNS41OTcgQzYwMy4zNCwyNDAuNDQ3IDYyNC4yNjEsMjU5LjY2NSA2NDMuMjYxLDI4MC44NDUiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTtzdHJva2UtZGFzaGFycmF5OjcsNzsiIGZpbGw9Im5vbmUiIGlkPSJLcGlPYnNlcnZhdGlvbkV2ZW50SGFuZGxlci10by1RdW90YXRpb25QcmVzZW50ZWQiIGNvZGVMaW5lPSIzNyIvPjxwb2x5Z29uIHBvaW50cz0iNjQ2LjYsMjg0LjU2Nyw2NDMuNTY4LDI3NS4xOTYsNjQzLjI2MSwyODAuODQ1LDYzNy42MTMsMjgwLjUzOSw2NDYuNiwyODQuNTY3IiBmaWxsPSIjMTgxODE4IiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjE7c3Ryb2tlLWxpbmVqb2luOm1pdGVyO3N0cm9rZS1taXRlcmxpbWl0OjEwOyIvPjx0ZXh0IHg9IjU0Ni44OSIgeT0iMjEwLjIyNCIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxMyIgdGV4dExlbmd0aD0iMTUwLjg0NiI+6LO86Kqt77yI44GT44GuIEJvbHQg44Gn6Laz44GZ77yJPC90ZXh0PjwvZz48IS0tbGluayBLcGlPYnNlcnZhdGlvbkV2ZW50SGFuZGxlciB0byBLcGlPYnNlcnZhdGlvbi0tPjxnIGNsYXNzPSJsaW5rIiBkYXRhLWVudGl0eS0xPSJlbnQwMDA2IiBkYXRhLWVudGl0eS0yPSJlbnQwMDA1IiBpZD0ibG5rOSIgZGF0YS1zb3VyY2UtbGluZT0iMzgiIGRhdGEtbGluay10eXBlPSJkZXBlbmRlbmN5Ij48cGF0aCBkPSJNMTUzLjU2LDE2Ny41NDcgQzE1Mi44MywxODkuNjg3IDE1Mi4wODYsMjEyLjQ0IDE1MS4yMDYsMjM5IiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjE7IiBmaWxsPSJub25lIiBpZD0iS3BpT2JzZXJ2YXRpb25FdmVudEhhbmRsZXItdG8tS3BpT2JzZXJ2YXRpb24iIGNvZGVMaW5lPSIzOCIvPjxwb2x5Z29uIHBvaW50cz0iMTUxLjA0LDI0My45OTcsMTU1LjMzNiwyMzUuMTM0LDE1MS4yMDYsMjM5LDE0Ny4zNCwyMzQuODY5LDE1MS4wNCwyNDMuOTk3IiBmaWxsPSIjMTgxODE4IiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjE7c3Ryb2tlLWxpbmVqb2luOm1pdGVyO3N0cm9rZS1taXRlcmxpbWl0OjEwOyIvPjwvZz48P3BsYW50dW1sLXNyYyBqTEREUW5IMTRCdHRoc1hvc1pkQ2FaTXRpMG40RC0wSUlET2FkWUk3dGZib1JQb1BkZEpOMTg4NGQ1NFhZTmVBRUtaMGU4QWs4SGVtOENoa2xzY0lkTGwtR2RlY2tvUGNGcG52eE54bHJRak5MU1pIMXRmTi00WmxMQVhFbGxURU5mdVRfQlplUmtscWVxdkZURGhId01femVqQ3gtN0gtczM0MGtqMmVxd296VlZ4aC1BQXhHcVo0dEFVaTFOR2ctX293el9NakpkU0QtVXBMU1ZRWGhQRHpkUnhIb003TVZmdVRsSlZtQVZnQ2szdkpZZ3ZBNWdmOEk1bzZ6SFdLaGlKRFcyRTJId2xMY1dXTzMtU3Q4NEo3Q09wUWwzclQ4TllCS1ZVNmRYUlplMGNJZzJTeVlhM1U0cTc0bWFzM0ttRm5FUUlwejI2d3pMMFgydjVpelRxeVkwS292MjlpSTUyY3g1V1JDd0RpSDBGSWlGcE1aTzE2OWRnVG80QjRidmVBdjRQWG5ESVZReEthajFaMmlYMU4zbHY3MTgtdkxEV09xbTV6RDVxa0x6UThSSEM5aGYxVUNJUWJaQzZJck5fZ1NtbE5mSGpITUNHN3ZndG8wNGdNNExzQVNXM3BneExPNWJaZEpfZl9UcnU0VmYtNWRXX0lmQjFZdGhhQkhWLWNtRFl6aVZCVnVKYlFMcUVPS0E5U1RZUGl1b3BESmhsUHFSVF9BT3BPZTA0ckZ3UGFCcC1UdWl2cXlZTnhVUWdKVF9kdko1MnJSVVRNQ2ZTMD8+PC9nPjwvc3ZnPg==" class="uml" alt="uml diagram" title="" /></p>
 <ul>
-<li><strong>Keep</strong>:</li>
-<li>業務ルール層の Red のシナリオを先にコミットし、Red を確かめたことを履歴に残せた（R-38）</li>
-<li>前の規則でも通ってしまうシナリオに、実装の前に気づいて直せた</li>
-<li>413 の経路を実際のポートで確かめたことで、MockMvc では見えない接続のリセットと、<code>resolve-lazily</code> が効かないことが分かった</li>
-<li><strong>Problem</strong>:</li>
-<li>ステップ 3 の CI の失敗（<code>23cd5c2</code>）に、ステップ 5 まで気づかなかった。push の後に CI の結果を確かめずに次のステップへ進んだ</li>
-<li>Bolt 6〜8 で開発レビューを省いた結果、30 件を超える指摘を 1 つの Bolt でまとめて返済することになった</li>
-<li><strong>Try</strong>:</li>
-<li>T-26: push した後、次のステップに入る前に CI の結果を確かめる。赤ければ先に直す（AI、すぐ）</li>
-<li>T-27: 開始準備でも、最初のコマンドで <code>date</code> を実行して開始時刻を残す（AI、すぐ）</li>
-<li>T-28: 開発レビューは Bolt ごとの終了報告の前に行い、省くときは理由を終了報告に書く（人に確かめたい。開発戦略に足すか）</li>
+<li><code>recordPresentation(presentedAt)</code>: 最初の提示時刻がまだ無いか、届いた提示時刻のほうが早いときだけ書く。提出時刻より前の提示時刻は拒否する（あり得ない順序。確認ポイント 4）</li>
+<li><code>leadTime()</code>: 最初の提示時刻があるときだけ、提出時刻からの経過時間を返す。単位の換算と丸めは画面の側で行う（確認ポイント 3）</li>
 </ul>
-<h2 id="_13">承認待ちの書き換え<a class="headerlink" href="#_13" title="Permanent link">&para;</a></h2>
+<h3 id="_6">状態遷移<a class="headerlink" href="#_6" title="Permanent link">&para;</a></h3>
+<p>KPI 計測記録は状態の列挙を持たない（最初の提示時刻の有無だけ）。状態遷移図は省く。</p>
+<h3 id="_7">データモデル<a class="headerlink" href="#_7" title="Permanent link">&para;</a></h3>
+<p><img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB2ZXJzaW9uPSIxLjEiIGRhdGEtZGlhZ3JhbS10eXBlPSJDTEFTUyIgc3R5bGU9IndpZHRoOjQxM3B4O2hlaWdodDoxNzZweDtiYWNrZ3JvdW5kOiNGRkZGRkY7IiB3aWR0aD0iNDEzcHgiIGhlaWdodD0iMTc2cHgiIHZpZXdCb3g9IjAgMCA0MTMgMTc2IiB6b29tQW5kUGFuPSJtYWduaWZ5IiBwcmVzZXJ2ZUFzcGVjdFJhdGlvPSJub25lIiBjb250ZW50U3R5bGVUeXBlPSJ0ZXh0L2NzcyI+PD9wbGFudHVtbCAxLjIwMjYuOD8+PGRlZnMvPjxnIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBsZW5ndGhBZGp1c3Q9InNwYWNpbmciPjwhLS1jbGFzcyBrby0tPjxnIGNsYXNzPSJlbnRpdHkiIGRhdGEtcXVhbGlmaWVkLW5hbWU9ImtvIiBpZD0iZW50MDAwMSIgZGF0YS1zb3VyY2UtbGluZT0iMSI+PHJlY3QgeD0iNyIgeT0iNyIgd2lkdGg9IjM5My4zODMiIGhlaWdodD0iMTU2LjM3NSIgZmlsbD0iI0YxRjFGMSIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDowLjU7IiByeD0iMi41IiByeT0iMi41Ii8+PGVsbGlwc2UgY3g9IjExNS4xNjgiIGN5PSIyOC4yOTciIHJ4PSIxMSIgcnk9IjExIiBmaWxsPSIjQUREMUIyIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjE7Ii8+PHBhdGggZD0iTTExOS4yNzgsMzQuMjk3IEwxMTEuNTU5LDM0LjI5NyBMMTExLjU1OSwyMS45MDYgTDExOS4yNzgsMjEuOTA2IEwxMTkuMjc4LDI0LjA2MyBMMTE0LjAxMiwyNC4wNjMgTDExNC4wMTIsMjYuNzM0IEwxMTguNzc4LDI2LjczNCBMMTE4Ljc3OCwyOC44OTEgTDExNC4wMTIsMjguODkxIEwxMTQuMDEyLDMyLjE0MSBMMTE5LjI3OCwzMi4xNDEgTDExOS4yNzgsMzQuMjk3IFogIiBmaWxsPSIjMDAwIi8+PHRleHQgeD0iMTM1LjY2OCIgeT0iMjQuOTk1IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE0IiB0ZXh0TGVuZ3RoPSIxNjguNTQ3Ij5pZGVudGl0eS5rcGlfb2JzZXJ2YXRpb248L3RleHQ+PHRleHQgeD0iMTc4Ljg0MSIgeT0iNDEuMjkyIiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE0IiB0ZXh0TGVuZ3RoPSI4Mi4yMDIiPktQSSDoqIjmuKzoqJjpjLI8L3RleHQ+PGxpbmUgeDE9IjgiIHkxPSI0OS41OTQiIHgyPSIzOTkuMzgzIiB5Mj0iNDkuNTk0IiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjAuNTsiLz48ZyBkYXRhLXZpc2liaWxpdHktbW9kaWZpZXI9IklFX01BTkRBVE9SWSI+PGVsbGlwc2UgY3g9IjE4IiBjeT0iNjMuMjQyIiByeD0iMyIgcnk9IjMiIGZpbGw9IiMwMDAiIHN0eWxlPSJzdHJva2U6IzAwMDtzdHJva2Utd2lkdGg6MTsiLz48L2c+PHRleHQgeD0iMjciIHk9IjY2LjU4OSIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxNCIgdGV4dExlbmd0aD0iMjMzLjIxNSI+dHJhbnNwb3J0X3JlcXVlc3RfaWQgOiBVVUlEIMKrUEvCuzwvdGV4dD48bGluZSB4MT0iOCIgeTE9IjczLjg5MSIgeDI9IjM5OS4zODMiIHkyPSI3My44OTEiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTsiLz48dGV4dCB4PSIyNyIgeT0iOTAuODg2IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE0IiB0ZXh0TGVuZ3RoPSIyOTcuNjk4Ij50cmFuc3BvcnRfcmVxdWVzdF9udW1iZXIgOiBWQVJDSEFSKDIwKTwvdGV4dD48ZyBkYXRhLXZpc2liaWxpdHktbW9kaWZpZXI9IklFX01BTkRBVE9SWSI+PGVsbGlwc2UgY3g9IjE4IiBjeT0iMTAzLjgzNiIgcng9IjMiIHJ5PSIzIiBmaWxsPSIjMDAwIiBzdHlsZT0ic3Ryb2tlOiMwMDA7c3Ryb2tlLXdpZHRoOjE7Ii8+PC9nPjx0ZXh0IHg9IjI3IiB5PSIxMDcuMTgzIiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE0IiB0ZXh0TGVuZ3RoPSIxOTIuNTIxIj5zaGlwcGVyX2NvbXBhbnlfaWQgOiBVVUlEPC90ZXh0PjxnIGRhdGEtdmlzaWJpbGl0eS1tb2RpZmllcj0iSUVfTUFOREFUT1JZIj48ZWxsaXBzZSBjeD0iMTgiIGN5PSIxMjAuMTMzIiByeD0iMyIgcnk9IjMiIGZpbGw9IiMwMDAiIHN0eWxlPSJzdHJva2U6IzAwMDtzdHJva2Utd2lkdGg6MTsiLz48L2c+PHRleHQgeD0iMjciIHk9IjEyMy40NzkiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTQiIHRleHRMZW5ndGg9IjIwNS4wMyI+c3VibWl0dGVkX2F0IDogVElNRVNUQU1QVFo8L3RleHQ+PHRleHQgeD0iMjciIHk9IjEzOS43NzYiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTQiIHRleHRMZW5ndGg9IjM2Ny4zODMiPmZpcnN0X3ByZXNlbnRlZF9hdCA6IFRJTUVTVEFNUFRaIMKr44GT44GuIEJvbHQg44Gn6Laz44GZwrs8L3RleHQ+PGcgZGF0YS12aXNpYmlsaXR5LW1vZGlmaWVyPSJJRV9NQU5EQVRPUlkiPjxlbGxpcHNlIGN4PSIxOCIgY3k9IjE1Mi43MjciIHJ4PSIzIiByeT0iMyIgZmlsbD0iIzAwMCIgc3R5bGU9InN0cm9rZTojMDAwO3N0cm9rZS13aWR0aDoxOyIvPjwvZz48dGV4dCB4PSIyNyIgeT0iMTU2LjA3MyIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxNCIgdGV4dExlbmd0aD0iMTQ1LjcwMSI+ZXhjbHVkZWQgOiBCT09MRUFOPC90ZXh0PjwvZz48P3BsYW50dW1sLXNyYyBJeXFob0lvZkw1M0FKNGE1aV9JbzJwQlp5dkVBS3VsQTRhaW95X0RZeWhtM0YxTFVoRVh1amNGRFluS3BObFBpS2I5OEI1UjhwYlVldmo5SUEyYkFwMmlrbzJ5Z1lJekFCSW5EQkl3OXBxbkhpNTg4M1ZMcUtSMm4yVjJzaS1GSXJVTjJMOUxOY2ZrS01XSEs2VU9PdkVwWDZBSFhQQTA5REF1dTh4RVc4QktlRlphX2pvMG5objlYNjRZa0QyYXRpd0dhRElLLWlHR2U2a0Jmd25lU3VrV1I0MUI1YlBQUDEzSXBlMllyNkVXN0IwZzBKZGRTRUZibnVwZTVmX29TNGVON1pTalZSRGx5azc0Y3E3TFEyZ2FMb0pjYkFRYVdjdnB5X05yUzdWc3VRVzQwPz48L2c+PC9zdmc+" class="uml" alt="uml diagram" title="" /></p>
 <ul>
-<li>本報告の承認で確かめてほしいもの: <code>bolt_09_plan.md</code>（ステップ 3〜5 の結果）、<code>bolt_06-08_review_20261003.md</code>（対応結果）、<code>release_plan.md</code>（W2 の Bolt 9）、<code>ui_design.md</code>（エラー要約の例の文言）</li>
-<li>人に確かめたいこと: 既知の課題の「書類以外の誤りの文言の表示名」、Try T-28</li>
+<li>マイグレーション（<code>common</code>）で <code>first_presented_at</code> を NULL を許す列として足し、日本語のコメントを付ける。CHECK（<code>first_presented_at IS NULL OR first_presented_at &gt;= submitted_at</code>）を足す</li>
+<li>記録は <code>UPDATE ... SET first_presented_at = #{presentedAt} WHERE transport_request_id = #{id} AND (first_presented_at IS NULL OR first_presented_at &gt; #{presentedAt})</code> の条件付きの更新にする（H2・PostgreSQL の両方で動く形。ADR-007）</li>
+<li><code>exclusion_reason</code>・<code>excluded_by</code> は PV-01 の除外を作る W9 で足す（データモデルのとおり）</li>
 </ul>
-<h2 id="bolt">次の Bolt<a class="headerlink" href="#bolt" title="Permanent link">&para;</a></h2>
-<ul>
-<li><strong>W2</strong>: US-03（根拠付き見積り）から。Bolt 10 として計画を作る。あわせて US-24 の AC1、US-18 の一部（password によるログインと session）、TOTP のスパイク（TS-01）</li>
-<li><strong>人が決めること</strong>: 本報告の承認、#37 のクローズ、Bolt 10 の範囲（US-03 の 5 つの受入条件を 1 つの Bolt にするか、提示（AC1〜3）と失効・置換（AC4〜5）に分けるか）</li>
+<h3 id="_8">画面遷移<a class="headerlink" href="#_8" title="Permanent link">&para;</a></h3>
+<p>画面遷移は変わらない（社内のナビの「KPI 計測記録」→ <code>GET /staff/kpi-observations</code>）。一覧の列だけを変える。</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">列</th>
+<th style="text-align: left;">内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">業務番号</td>
+<td style="text-align: left;">今のまま（業務番号のない古い記録は「（業務番号なし）」）</td>
+</tr>
+<tr>
+<td style="text-align: left;">提出時刻</td>
+<td style="text-align: left;">日時表示の共通部品（例: 2026-10-05 10:00 Asia/Tokyo（UTC+09:00）（UTC 2026-10-05 01:00））</td>
+</tr>
+<tr>
+<td style="text-align: left;">最初の提示時刻</td>
+<td style="text-align: left;">同じ部品。未提示は「未提示」</td>
+</tr>
+<tr>
+<td style="text-align: left;">KPI-01 リードタイム</td>
+<td style="text-align: left;">時間と分（例: 26 時間 30 分）。未提示は「—」と、読み上げ用に「未提示のため算出しない」</td>
+</tr>
+</tbody>
+</table>
+<p>表の見出しに <code>scope="col"</code> を付け、caption を「輸送要求ごとの KPI-01 の時刻とリードタイム」にする。</p>
+<h2 id="_9">ステップ計画<a class="headerlink" href="#_9" title="Permanent link">&para;</a></h2>
+<p>状態の記号: <code>[ ]</code> 未着手、<code>[-]</code> 進行中、<code>[?]</code> 承認待ち、<code>[x]</code> 完了。各ステップの終わりに <code>check</code> が緑であることを確かめて push し、CI の結果を確かめてから次のステップに入る（T-14、T-26）。結果の時刻はそのステップの最後のコミットの時刻（T-33）。Red の記録には本命・前提・テストの誤りを書く（T-39）。Green の完了の判定に、計画からの変更を設計文書に反映したかを含める（T-53）。</p>
+<ul class="task-list">
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>1. 設計文書</strong> 【承認ゲート: 計画の確認ポイントの反映】</li>
+<li>ドメインモデル（KPI-INV-01 の「有効な」の決定、DE-03 の購読者）、データモデル（<code>first_presented_at</code> の CHECK と条件付きの更新）、UI 設計（S-22 の前身の列）、ユーザーストーリー（US-21 の Bolt 21 の決定）に、確認ポイントの決定を書く</li>
+<li>完了の判定: <code>okf:check</code> ERROR 0、<code>documentationTest</code> 緑。push する</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>2. KPI 計測記録の規則（集約の TDD）</strong> 【承認ゲート: Red／Green】</li>
+<li>単体テストを先に書く<ul>
+<li>提示の記録: 未提示に記録すると最初の提示時刻になる。より遅い提示時刻は無視する（再見積り）。より早い提示時刻は書き換える（順序の入れ替わり）。同じ時刻は何もしない（再配信）。提出時刻より前の提示時刻は拒否する。提出時刻と同時刻は受け付ける（T-38 の境界）</li>
+<li>リードタイム: 未提示は空。提出の 1 分後・26 時間 30 分後の提示で、その経過時間を返す。版 2 の提出（DE-01 の 2 回目）は開始時刻を変えない（D-3。既存のテストを確かめる）</li>
 </ul>
-<h2 id="_14">更新履歴<a class="headerlink" href="#_14" title="Permanent link">&para;</a></h2>
+</li>
+<li>完了の判定: <code>check</code> 緑。push して CI を確かめる</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>3. 表・listener（統合テスト）</strong> 【承認ゲート: データベース】</li>
+<li>業務ルール層の受入シナリオを先に書く（<code>features/identity/kpi_01_lead_time.feature</code>、<code>@US-21-AC1</code>）: 荷主が提出し、営業担当者が見積りを提示すると、KPI 計測記録に提出時刻と最初の提示時刻が UTC で記録され、リードタイムが求まる。再見積りで 2 回目の提示があっても最初の提示時刻は変わらない。DE-03 の再配信で記録は変わらない</li>
+<li>ウォーキングスケルトンのシナリオ（<code>walking_skeleton.feature</code>）は今のまま残す（提出の記録だけを見る）</li>
+<li>統合テスト（PostgreSQL）を先に書く: 列の保存と読み出し、CHECK、条件付きの更新（未提示・遅い・早い・同じ時刻）。DE-03 から記録までを、イベントの発行の記録を経て非同期に通す</li>
+<li>listener の単体テスト（T-58）: 提出の記録がないときの DE-03 は警告のログを残して例外を投げ、発行の記録を未完了のまま残す（確認ポイント 4）。提出時刻より前の提示時刻も同じ</li>
+<li>マイグレーション、リポジトリの契約テストと実装（MyBatis・テスト用のメモリ）、listener</li>
+<li>ApplicationModules の検証: <code>identity</code> の依存は増えない（H1）。見積りのコードに差分がない</li>
+<li>完了の判定: <code>check</code> 緑。push して CI を確かめる</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>4. S-22 の前身の画面</strong> 【承認ゲート: 画面】</li>
+<li>画面の層の受入シナリオを先に書く（<code>features/ui/kpi_observations_ui.feature</code>、<code>@ui @US-21-AC1</code>）: 営業担当者が KPI 計測記録を開くと、提示済みの輸送要求の行に提出時刻・最初の提示時刻・リードタイムが、未提示の行に「未提示」が示される。行の数と順番は決め打ちしない（T-59）。axe-core の違反 0 件、幅 320 CSS px で横に流れない</li>
+<li>コントローラーの単体テスト、表示の値（<code>KpiObservationView</code>）、テンプレート（<code>!= null</code>。T-60）</li>
+<li>日時表示は、<code>identity</code> から見積りの画面の部品（<code>TransportRequestLabels</code>）を参照しないよう、同じ書式を <code>identity.interfaces.web</code> に置くか <code>shared</code> に移す（確認ポイント 7）</li>
+<li>完了の判定: <code>check</code>・<code>uiTest</code> 緑。push して CI とデモ環境の配備を確かめる</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>5. デモ環境・開発レビュー・終了報告</strong> 【承認ゲート: 開発レビューの判断、終了報告】</li>
+<li>デモ環境のサンプル（<code>db/dev-data</code>）の提示済みの輸送要求に、最初の提示時刻を入れる（確認ポイント 8）</li>
+<li>5 視点の開発レビュー、SonarQube の Quality Gate、デモ項目と動画、終了報告。#9 をクローズし、リリース計画の W3 を締める準備をする</li>
+<li>完了の判定: 終了報告の承認</li>
+</ul>
+<h3 id="_10">時間の配分と打ち切り<a class="headerlink" href="#_10" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">ステップ</th>
+<th style="text-align: left;">目安</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">1</td>
+<td style="text-align: left;">20 分</td>
+</tr>
+<tr>
+<td style="text-align: left;">2</td>
+<td style="text-align: left;">30 分</td>
+</tr>
+<tr>
+<td style="text-align: left;">3</td>
+<td style="text-align: left;">60 分</td>
+</tr>
+<tr>
+<td style="text-align: left;">4</td>
+<td style="text-align: left;">50 分</td>
+</tr>
+<tr>
+<td style="text-align: left;">5</td>
+<td style="text-align: left;">50 分</td>
+</tr>
+<tr>
+<td style="text-align: left;">合計</td>
+<td style="text-align: left;">210 分</td>
+</tr>
+</tbody>
+</table>
+<p>半日を超えそうなときは、次の順で次の Bolt に回す。</p>
+<ol>
+<li>幅 320 CSS px のシナリオ（キー操作と axe-core は残す）</li>
+<li>デモ環境のサンプルの提示時刻</li>
+</ol>
+<p>最初の提示時刻の冪等と順序の入れ替わり、提出の記録がないときの扱い、リードタイムの算出は削らない。</p>
+<h2 id="try-t-6">確認ポイント（計画の承認の場でまとめて確認する。Try T-6）<a class="headerlink" href="#try-t-6" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">#</th>
+<th style="text-align: left;">確認すること</th>
+<th style="text-align: left;">ステップ</th>
+<th style="text-align: left;">理由</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">1</td>
+<td style="text-align: left;">#9 は AC1 が済むのでクローズし、US-21 の R0.1 の 2 SP を W3 で数える。W3 は 11 SP（計画 10 SP）で締める</td>
+<td style="text-align: left;">5</td>
+<td style="text-align: left;">受入条件の範囲</td>
+</tr>
+<tr>
+<td style="text-align: left;">2</td>
+<td style="text-align: left;">D-11 を推奨のとおりに決める: KPI-01 の終点は、その輸送要求で最初に提示した見積りの DE-03 の提示時刻。荷主の条件変更・再見積りで出し直しても最初の提示を終点のままにする。「誤りで取り消した見積り」を数えない規則は、見積りの取消しの操作がまだ無いため、取消しを作るときに足す（ドメインモデルに注で書く）</td>
+<td style="text-align: left;">1、2</td>
+<td style="text-align: left;">KPI-INV-01 の「人が決める」を閉じる</td>
+</tr>
+<tr>
+<td style="text-align: left;">3</td>
+<td style="text-align: left;">リードタイムは暦の経過時間（営業日・営業時間に換算しない）で、画面には時間と分で示す（分未満は切り捨て）。週次の中央値・90 パーセンタイルの単位は W9 で決める</td>
+<td style="text-align: left;">2、4</td>
+<td style="text-align: left;">KPI-01 の算式に営業時間の定めがない。D-28 で対応待ちを含めて測ると決めた</td>
+</tr>
+<tr>
+<td style="text-align: left;">4</td>
+<td style="text-align: left;">提出の記録がないまま DE-03 が届いたとき（DE-01 の処理の遅れ・失敗）は、警告のログを残して例外を投げ、イベントの発行の記録を未完了のまま残す（起動のときの再配信で記録できる。ADR-014 の再配信と同じ）。提出時刻より前の提示時刻も同じ扱い</td>
+<td style="text-align: left;">2、3</td>
+<td style="text-align: left;">記録を黙って捨てると KPI-01 の母集団が欠ける</td>
+</tr>
+<tr>
+<td style="text-align: left;">5</td>
+<td style="text-align: left;">S-22 の監査担当者への認可は、この Bolt では入れない。KPI 計測記録の画面は今のまま営業担当者（<code>/staff/**</code>）が見る。監査担当者の利用者・認可と S-22 の本体（週次の値）は W9 の US-21 の残りで作る</td>
+<td style="text-align: left;">4</td>
+<td style="text-align: left;">範囲。認可の変更はセキュリティの承認ゲートで、監査担当者の利用者もまだいない</td>
+</tr>
+<tr>
+<td style="text-align: left;">6</td>
+<td style="text-align: left;">PV-01 の除外（<code>excluded</code> の操作、除外の理由・判断者の列）は W9</td>
+<td style="text-align: left;">3</td>
+<td style="text-align: left;">範囲</td>
+</tr>
+<tr>
+<td style="text-align: left;">7</td>
+<td style="text-align: left;">日時表示の書式は <code>identity</code> の画面の中に置き、見積りの画面の部品を参照しない（モジュールの境界）。同じ書式が 3 つ目のモジュールで要るようになったら <code>shared</code> に移す</td>
+<td style="text-align: left;">4</td>
+<td style="text-align: left;"><code>identity</code> は <code>quotation :: events</code> にしか依存できない</td>
+</tr>
+<tr>
+<td style="text-align: left;">8</td>
+<td style="text-align: left;">デモ環境のサンプルは、Bolt 18 の提示済み以降の状態の輸送要求に、相対の日時で最初の提示時刻を入れる。行は足さない</td>
+<td style="text-align: left;">5</td>
+<td style="text-align: left;">デモ環境で KPI-01 を確かめられるように</td>
+</tr>
+<tr>
+<td style="text-align: left;">9</td>
+<td style="text-align: left;">状態の列挙に値を足さないので、T-57 の洗い出しは要らない</td>
+<td style="text-align: left;">—</td>
+<td style="text-align: left;">Try T-57</td>
+</tr>
+<tr>
+<td style="text-align: left;">10</td>
+<td style="text-align: left;">見積りの DE-03 の中身は変えない（<code>presentedAt</code> と <code>transportRequestId</code> だけを使う）</td>
+<td style="text-align: left;">3</td>
+<td style="text-align: left;">H1</td>
+</tr>
+</tbody>
+</table>
+<h2 id="_11">完了条件<a class="headerlink" href="#_11" title="Permanent link">&para;</a></h2>
+<ul class="task-list">
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> US-21 AC1 の受入シナリオ（業務ルール層・画面の層）が通る</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> DE-03 から最初の提示時刻の記録までが PostgreSQL の統合テストで通り、再配信と順序の入れ替わりで記録が変わらない</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> ApplicationModules の検証が緑で、<code>identity</code> の依存が増えていない</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <code>check</code> と <code>uiTest</code> が緑。push して CI とデモ環境の配備を確かめた</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> SonarQube の Quality Gate が PASS</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> 設計文書に決定を書き、計画からの変更も設計文書に戻した（T-53）</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> 開発レビューと終了報告を書き、#9 をクローズした</li>
+</ul>
+<p>ユーザーマニュアル（<code>docs/manual</code>）はまだ無いため、この Bolt では更新の作業を持たない。</p>
+<h2 id="_12">更新履歴<a class="headerlink" href="#_12" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
 <tr>
@@ -8317,26 +8286,23 @@
 </thead>
 <tbody>
 <tr>
-<td style="text-align: left;">2026-10-05</td>
-<td style="text-align: left;">初版</td>
+<td style="text-align: left;">2026-10-08</td>
+<td style="text-align: left;">初版（範囲はリリース計画の W3 の残り。確認ポイント 1〜10 は承認待ち）</td>
 <td style="text-align: left;">anthropic/claude-opus-5-5</td>
 <td style="text-align: left;">—</td>
 </tr>
-<tr>
-<td style="text-align: left;">2026-10-05</td>
-<td style="text-align: left;">終了報告と、承認待ちの書き換え（計画・レビューの対応結果・リリース計画・UI 設計）を承認し、Bolt 9 を終えた。#37 をクローズした</td>
-<td style="text-align: left;">anthropic/claude-opus-5-5</td>
-<td style="text-align: left;">human:kakimomokuri</td>
-</tr>
 </tbody>
 </table>
-<h2 id="_15">関連ドキュメント<a class="headerlink" href="#_15" title="Permanent link">&para;</a></h2>
+<h2 id="_13">関連ドキュメント<a class="headerlink" href="#_13" title="Permanent link">&para;</a></h2>
 <ul>
-<li><a href="../bolt_09_plan/">Bolt 9 計画</a></li>
-<li><a href="../../../review/cargo-tracker/bolt_06-08_review_20261003/">Bolt 6〜8 開発成果物レビュー</a></li>
-<li><a href="../release_plan/">リリース計画</a>（W2）</li>
-<li><a href="../bolt_08_report/">Bolt 8 終了報告</a></li>
-<li><a href="../../../adr/cargo-tracker/010-required-document-storage-transaction/">ADR-010</a></li>
+<li><a href="../bolt_20_report/">Bolt 20 終了報告</a>（Try T-57〜T-60）</li>
+<li><a href="../bolt_01_plan/">Bolt 1 計画</a>（ウォーキングスケルトン、KPI 計測記録の提出時刻）</li>
+<li><a href="../../../review/cargo-tracker/bolt_03_review_20261002/">Bolt 3 開発レビュー</a>（R-20、D-11）</li>
+<li><a href="../../../design/cargo-tracker/domain_model/">ドメインモデル</a>（KPI-INV-01、DE-03）</li>
+<li><a href="../../../design/cargo-tracker/data_model/">データモデル</a>（<code>kpi_observation</code>）</li>
+<li><a href="../../../design/cargo-tracker/ui_design/">UI 設計</a>（S-22）</li>
+<li><a href="../../../requirements/cargo-tracker/user_story/">ユーザーストーリー</a>（US-21）</li>
+<li><a href="../release_plan/">リリース計画</a></li>
 </ul>
 
 
