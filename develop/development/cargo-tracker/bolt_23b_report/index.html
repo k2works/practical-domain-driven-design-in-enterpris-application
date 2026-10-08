@@ -8558,7 +8558,7 @@
 <ul>
 <li><strong>Bolt 24</strong>: 確定済みの判定（処理済みコマンドか既存の予約の照合）を見積りの照会より前に置き、確定済みの通知に既存の追跡番号と S-24 への導線を付ける（AC4）。S-09 のフォームにコマンド ID を足す</li>
 <li><strong>Bolt 25</strong>: S-24 の「追跡の開始: 完了」を人が確かめる入口（S-10 の最小の一覧か、S-02 の結果からの導線）を決める。<code>booking :: api</code> と予約サガの遷移</li>
-<li><strong>人の判断</strong>: 承認の後に失効した見積りの再見積り（議題 5）</li>
+<li><strong>人の判断（未決）</strong>: 承認の後に失効した見積りの再見積りの規則（議題 5。画面の暫定の案内は承認済み）。Bolt 24 の開始準備で扱いを確かめる</li>
 <li><strong>社内の画面の共通の部品</strong>: エラー要約へのフォーカス（S-07・S-09）</li>
 </ul>
 <h3 id="kpt">ふりかえり（KPT）<a class="headerlink" href="#kpt" title="Permanent link">&para;</a></h3>
@@ -8587,6 +8587,11 @@
 </tr>
 </thead>
 <tbody>
+<tr>
+<td style="text-align: left;">2026-10-08</td>
+<td style="text-align: left;">承認の議題 1〜7 を承認し、Bolt 23b を終えた（人の変更依頼 0）。議題 5 は画面の暫定の案内を承認し、承認の後に失効した見積りの再見積りの規則の判断は未決のまま次の計画（Bolt 24 の開始準備）で確かめる</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5、承認 human:kakimomokuri</td>
+</tr>
 <tr>
 <td style="text-align: left;">2026-10-08</td>
 <td style="text-align: left;">初版（ステップ 1〜5 の結果、開発レビュー、品質ゲート、既知の課題、承認の議題 1〜7、Try T-69・T-70）</td>
