@@ -5534,6 +5534,17 @@
   <a href="#_9" class="md-nav__link">
     <span class="md-ellipsis">
       
+        改訂の経緯
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_10" class="md-nav__link">
+    <span class="md-ellipsis">
+      
         関連ドキュメント
       
     </span>
@@ -8100,7 +8111,7 @@
 </tr>
 <tr>
 <td style="text-align: left;">照会</td>
-<td style="text-align: left;">見積りの公開 API（<code>quotation :: api</code>）に、見積り ID と commit 時刻を渡す。見積りが承認済みで commit 時刻が有効期限より前のときだけ、確定に要る写し（輸送要求 ID・版、業務番号、荷主企業、荷受人、貨物区分・要約、荷主承認者、割り当てた経路版）を返す。それ以外は理由（失効・未承認・置換済み・見つからない）を値で返す（ADR-014 の「業務の拒否は結果の値で返す」）</td>
+<td style="text-align: left;">見積りの公開 API（<code>quotation :: api</code>）に、業務番号と見積り番号と commit 時刻を渡す（2026-10-08 の Bolt 23b で見積り ID から改めた。画面の URL に内部の ID を出さない D-4 のため。呼び出し元は予約だけ）。見積りが承認済みで commit 時刻が有効期限より前のときだけ、確定に要る写し（輸送要求 ID・版、業務番号、見積り ID、荷主企業、荷受人、貨物区分・要約、荷主承認者と承認時刻、割り当てた経路版）を返す。それ以外は理由（失効・未承認・置換済み・見つからない）を値で返す（ADR-014 の「業務の拒否は結果の値で返す」）</td>
 </tr>
 <tr>
 <td style="text-align: left;">commit 時刻</td>
@@ -8155,7 +8166,11 @@
 <li>見積りの API の単体テストで、境界の 3 点（1 分前・同時刻・1 分後）を確かめる。</li>
 <li>ArchUnit と ModularityTest で、<code>booking</code> が <code>routing</code> に依存しないこと、予約のコードが見積りの有効期限を比較しないことを確かめる。</li>
 </ul>
-<h2 id="_9">関連ドキュメント<a class="headerlink" href="#_9" title="Permanent link">&para;</a></h2>
+<h2 id="_9">改訂の経緯<a class="headerlink" href="#_9" title="Permanent link">&para;</a></h2>
+<ul>
+<li>2026-10-08: Bolt 23b で、照会の鍵を見積り ID から業務番号と見積り番号に改め、結果に荷主の承認時刻を足した。S-09 を業務番号と見積り番号で開き、画面の URL に内部の ID を出さないため（D-4。human:kakimomokuri が決定）</li>
+</ul>
+<h2 id="_10">関連ドキュメント<a class="headerlink" href="#_10" title="Permanent link">&para;</a></h2>
 <ul>
 <li><a href="../014-downstream-to-upstream-notification/">ADR-014</a></li>
 <li><a href="../015-booking-saga-starts-tracking-by-event/">ADR-015</a></li>
