@@ -4,7 +4,7 @@ title: "Bolt 23b 計画 - 本予約の確定の画面（US-04 AC1・AC2）"
 description: "23b 回目の Bolt の計画。Bolt 23 で業務ルール層まで作った本予約の確定と失効に、S-02 の予約の確定待ちの表、S-09 本予約の確定（画面そのものを確認の領域にする）、S-24 予約の詳細の最小の表示（予約サガは処理中を完了と出さない）を足し、画面の層のシナリオと受入動画で確かめるまでを、ステップ 1〜5 で定義する。"
 tags: [development,bolt-plan]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-08T09:37:03Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-08T09:40:21Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-08T09:39:03Z }
 ---
@@ -147,12 +147,14 @@ S02 --> S04 : 失効（荷主承認済み）の行
 
 状態の記号: `[ ]` 未着手、`[-]` 進行中、`[?]` 承認待ち、`[x]` 完了。各ステップの終わりに `check` が緑であることを確かめ、Green と同じ push にまとめて CI を確かめる（T-26、T-65）。Red は実行して失敗を確かめてから実装する（Bolt 23 の Problem）。
 
-- [ ] **1. UI 設計と設計文書** 【承認ゲート: 画面の設計】
+- [x] **1. UI 設計と設計文書** 【承認ゲート: 画面の設計】
   - ui_design.md の URL の表に S-09・S-24 の行を足し、S-02 の行に予約の確定待ちの表を書く。S-09 の節を「画面そのものを確認の領域にする」形に直す（確認ポイント 4）
   - ui_design.md の画面一覧の S-24 の行に US-04 と「最小の表示（Bolt 23b）」を足す
   - architecture_backend.md の見積りの公開 API の操作（業務番号と見積り番号での照会、荷主の承認時刻）。ADR-016 の決定の「照会」の行を「見積り ID」から「業務番号と見積り番号」に置き換え、改訂の経緯に書く（確認ポイント 3）
   - release_plan.md の Bolt 23b の行の「割当て時刻」を「経路の確定の時刻」に直す（確認ポイント 2）
   - 完了の判定: `okf:check` ERROR 0、`documentationTest` 緑
+  - 結果（2026-10-08）: ui_design.md（画面一覧の S-24、URL の表に S-09・S-24 の行、S-02 の予約の確定待ちの表と経路の確定の時刻、S-09 の図と説明を「画面そのものを確認の領域」に）、ADR-016（照会の鍵を業務番号と見積り番号に、結果に荷主の承認時刻、改訂の経緯）、architecture_backend.md（予約が使う見積りの公開 API）、release_plan.md の Bolt 23b の行を直した。`okf:check` ERROR 0、`documentationTest` 緑、図の構文を PlantUML で確かめた
+    - 承認ゲートの扱い（T-36）: 画面の設計の承認ゲートで止まらずに進めた（AI の判断）。根拠は、決めた形が計画の確認ポイント 2〜9 と人の決定（3・4・7）のとおりであること
 - [ ] **2. 見積りの公開 API と S-02 の読み取りモデル（単体・統合テスト）** 【承認ゲート: モジュールの境界】
   - 単体テストを先に書く: 業務番号と見積り番号で引ける（見つからない・番号の形でない）、結果に荷主の承認時刻。確定のコマンドを業務番号と見積り番号で受ける
   - 影響範囲: `BookableQuotationRequest`・`BookableQuotationResult`・`BookableQuotationQueryService` とそのテスト、予約の `QuotationBookability.check`、`ConfirmBookingCommand`・`BookingCommandService`・`BookingCommandServiceTest`、受入シナリオの `BookingSteps`、`RouteConfirmedAssignmentIntegrationTest`

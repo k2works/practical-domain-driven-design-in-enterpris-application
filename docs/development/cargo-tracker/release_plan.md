@@ -4,7 +4,7 @@ title: "リリース計画 - cargo-tracker（A 社国際貨物輸送管理シス
 description: "cargo-tracker MVP のリリース計画。1 人 + AI、時間単位の Bolt（= イテレーション）と週次の見直しで、最初の縦の流れ（R0.1）、パイロット準備完了（R1.0）、本格展開前（R1.1）の 3 段階、Unit のエントロピー評価、SP、バッファ、パイロット開始の条件、引継ぎ ID の台帳、業務責任者に確かめる事項の台帳。"
 tags: [development,release-plan]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-08T09:37:03Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-08T09:40:21Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T09:29:53Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:38:26Z }
@@ -472,7 +472,7 @@ AI-DLC では **Bolt がイテレーション** である（[AI-DLC 導入ガイ
 | :--- | :--- | ---: | :--- | :--- |
 | 22 | 日時表示・期間表示を `platform` の Web の部品に集める（[#41](https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/41)、技術タスク。Bolt 21 終了報告の議題 5）。確認ポイント: 「コンテキストのコードから `platform` を参照しない」の規則（architecture_backend.md）と `allowedDependencies` の改訂、または設定経由（Thymeleaf の式オブジェクトなど）に限る案との比較 | 0 | 検証の手段から | `/goal` |
 | 23 | US-04 AC1 確定、AC2 失効（[#10](https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/10)）の業務ルール層まで。ADR-015（予約サガと追跡の開始。ADR-003 の改訂）・ADR-016（予約から見積りの確定可否）と設計文書の修正、`booking` モジュールと貨物予約・`booking_version`（追記専用）、`quotation_id` の UK の前倒し・`booking_saga` の新設、推測されにくい追跡番号の発行、予約サガの骨格（処理中）、確定サービス、見積りの公開 API と DE-07 の listener（輸送要求を予約確定済みにする。ADR-014）。業務番号は貨物予約に写しを持つ（R-31）。[Bolt 23 計画](bolt_23_plan.md) | 3 | インサイドアウト | Red・Green ごと（確定）、スキーマ、モジュールの境界 |
-| 23b | US-04 AC1・AC2 の画面。S-09 本予約の確定（確定条件の表と営業担当者の確認）、S-24 予約の詳細の最小の表示（追跡番号・予約版・commit 時刻・予約サガの「処理中」）、D-78 の S-02 の予約の確定待ちの表（割当て時刻・承認時刻の列、有効期限の近い順）、`@ui` と受入動画（2026-10-08 に human:kakimomokuri が Bolt 23 から分けた） | 0 | アウトサイドイン | Red・Green ごと（確定の画面）、認可 |
+| 23b | US-04 AC1・AC2 の画面。S-09 本予約の確定（確定条件の表と営業担当者の確認）、S-24 予約の詳細の最小の表示（追跡番号・予約版・commit 時刻・予約サガの「処理中」）、D-78 の S-02 の予約の確定待ちの表（承認時刻の列、有効期限の近い順。割当て時刻は経路の確定の時刻で代える）、`@ui` と受入動画（2026-10-08 に human:kakimomokuri が Bolt 23 から分けた） | 0 | アウトサイドイン | Red・Green ごと（確定の画面）、認可 |
 | 24 | US-04 AC4 再送（B-INV-03、`processed_command`）、B-INV-11 重複確定の防止（UK は Bolt 23 に前倒しし、開発レビューで貨物予約の `booking.quotation_id` に置いた。重複の確定に既存の追跡番号を返す振る舞い）。D-78 の受入シナリオでの DE-21・DE-04 の再配信 | 2 | アウトサイドイン | Red・Green ごと（冪等・重複防止）、スキーマ |
 | 25 | 追跡の開始。`tracking` モジュールと追跡記録（`tracking_record`・`scheduled_leg`）の新設、DE-07 の購読で経路版の区間を予定として採用し、予約の公開 API へ結果を返してサガの成功の経路を閉じる（#10 をクローズする）。S-24 の「追跡の開始: 処理中・完了」の表示、追跡管理者のナビ・ホーム・認可（`SecurityConfiguration`）と `db/dev-data` の追跡管理者の利用者 | 0 | インサイドアウト | Red・Green ごと、スキーマ・認可 |
 | 26 | US-12 AC1 登録、AC2 重複（[#11](https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/11)） | 3 | アウトサイドイン | Red・Green ごと（業務のルール） |

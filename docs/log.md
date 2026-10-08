@@ -1,6 +1,15 @@
 # Docs Update Log
 
 ## 2026-10-08
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_23b_plan](/development/cargo-tracker/bolt_23b_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [016-booking-checks-quotation-at-commit-time](/adr/cargo-tracker/016-booking-checks-quotation-at-commit-time.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [016-booking-checks-quotation-at-commit-time](/adr/cargo-tracker/016-booking-checks-quotation-at-commit-time.md) を更新（anthropic/claude-opus-5-5）
 * **Verification**: [bolt_23b_plan](/development/cargo-tracker/bolt_23b_plan.md) を human:kakimomokuri が検証
 * **Update**: [bolt_23b_plan](/development/cargo-tracker/bolt_23b_plan.md) を更新（anthropic/claude-opus-5-5）
 * **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
