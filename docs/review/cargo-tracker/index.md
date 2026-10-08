@@ -36,3 +36,4 @@ cargo-tracker プロジェクトのレビュードキュメントです。
 
 - 実ドキュメントを追加したら、この一覧を更新します。
 - どのレビューも 5 つの XP 視点（プログラマー・テスター・アーキテクト・テクニカルライター・ユーザー代表など）の統合レビューです。
+* [cargo-tracker Bolt 21 開発成果物レビュー（2026-10-08）](./bolt_21_review_20261008.md) - US-21 AC1 の KPI-01 の最初の提示時刻とリードタイム（Bolt 21）を、xp-programmer・xp-tester・xp-architect・xp-technical-writer・xp-user-representative の 5 視点でレビューした結果と対応（D-79〜D-84）。
