@@ -311,7 +311,10 @@ function runScan(project, token, hostUrl) {
       // check ではなく test jacocoTestReport を先に動かす（静的解析や閾値で check が失敗しても、解析の結果を見られるように）。
       // sonar.qualitygate.wait で、サーバーの解析の反映を待ってから品質ゲートを判定し、不合格ならスキャンを失敗させる。
       // トークンはコマンドラインに載せず、環境変数 SONAR_TOKEN で渡す（プロセスの一覧から見えないように）
-      const gradle = fs.existsSync(path.join(cwd, 'gradlew')) ? './gradlew' : 'gradle';
+      // Windows の cmd.exe は ./gradlew を実行できないため gradlew.bat を使う（design_docs.js と同じ）。
+      // 今のディレクトリを探さない設定（NoDefaultCurrentDirectoryInExePath）でも動くよう、.\ を付ける
+      const wrapper = process.platform === 'win32' ? '.\\gradlew.bat' : './gradlew';
+      const gradle = fs.existsSync(path.join(cwd, 'gradlew')) ? wrapper : 'gradle';
       execSync(
         `${gradle} test jacocoTestReport sonar ` +
         `-Dsonar.projectKey=${project.projectKey} ` +
