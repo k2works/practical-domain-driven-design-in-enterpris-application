@@ -4,7 +4,7 @@ title: "リリース計画 - cargo-tracker（A 社国際貨物輸送管理シス
 description: "cargo-tracker MVP のリリース計画。1 人 + AI、時間単位の Bolt（= イテレーション）と週次の見直しで、最初の縦の流れ（R0.1）、パイロット準備完了（R1.0）、本格展開前（R1.1）の 3 段階、Unit のエントロピー評価、SP、バッファ、パイロット開始の条件、引継ぎ ID の台帳、業務責任者に確かめる事項の台帳。"
 tags: [development,release-plan]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-08T07:28:58Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-08T07:36:44Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T09:29:53Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:38:26Z }
@@ -471,8 +471,9 @@ AI-DLC では **Bolt がイテレーション** である（[AI-DLC 導入ガイ
 | Bolt | 範囲 | SP | アプローチ | 承認ゲート |
 | :--- | :--- | ---: | :--- | :--- |
 | 22 | 日時表示・期間表示を `platform` の Web の部品に集める（[#41](https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/41)、技術タスク。Bolt 21 終了報告の議題 5）。確認ポイント: 「コンテキストのコードから `platform` を参照しない」の規則（architecture_backend.md）と `allowedDependencies` の改訂、または設定経由（Thymeleaf の式オブジェクトなど）に限る案との比較 | 0 | 検証の手段から | `/goal` |
-| 23 | US-04 AC1 確定、AC2 失効（[#10](https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/10)）。上の 2 つの ADR と設計文書の修正、`booking` モジュールと貨物予約・`booking_version`（追記専用）の新設、推測されにくい追跡番号の発行、予約サガの骨格（状態の永続化）、S-09 の営業担当者の確認（B-INV-01）、DE-07 の listener による見積りの公開 API の呼び出し（輸送要求を予約確定済みにする。ADR-014）、D-78 の S-02 の予約の確定待ちの表（有効期限の近い順）。確認ポイント: 本予約で業務番号を引き継ぐか（Bolt 3 レビュー R-31） | 3 | インサイドアウト | Red・Green ごと（確定）、スキーマ |
-| 24 | US-04 AC4 再送（B-INV-03、`processed_command`）、B-INV-11 重複確定の防止（`booking_version` の UK）。D-78 の受入シナリオでの DE-21・DE-04 の再配信 | 2 | アウトサイドイン | Red・Green ごと（冪等・重複防止）、スキーマ |
+| 23 | US-04 AC1 確定、AC2 失効（[#10](https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/10)）の業務ルール層まで。ADR-015（予約サガと追跡の開始。ADR-003 の改訂）・ADR-016（予約から見積りの確定可否）と設計文書の修正、`booking` モジュールと貨物予約・`booking_version`（追記専用、`quotation_id` の UK を前倒し）・`booking_saga` の新設、推測されにくい追跡番号の発行、予約サガの骨格（処理中）、確定サービス、見積りの公開 API と DE-07 の listener（輸送要求を予約確定済みにする。ADR-014）。業務番号は貨物予約に写しを持つ（R-31）。[Bolt 23 計画](bolt_23_plan.md) | 3 | インサイドアウト | Red・Green ごと（確定）、スキーマ、モジュールの境界 |
+| 23b | US-04 AC1・AC2 の画面。S-09 本予約の確定（確定条件の表と営業担当者の確認）、S-24 予約の詳細の最小の表示（追跡番号・予約版・commit 時刻・予約サガの「処理中」）、D-78 の S-02 の予約の確定待ちの表（割当て時刻・承認時刻の列、有効期限の近い順）、`@ui` と受入動画（2026-10-08 に human:kakimomokuri が Bolt 23 から分けた） | 0 | アウトサイドイン | Red・Green ごと（確定の画面）、認可 |
+| 24 | US-04 AC4 再送（B-INV-03、`processed_command`）、B-INV-11 重複確定の防止（`booking_version` の UK は Bolt 23 に前倒し。重複の確定に既存の追跡番号を返す振る舞い）。D-78 の受入シナリオでの DE-21・DE-04 の再配信 | 2 | アウトサイドイン | Red・Green ごと（冪等・重複防止）、スキーマ |
 | 25 | 追跡の開始。`tracking` モジュールと追跡記録（`tracking_record`・`scheduled_leg`）の新設、DE-07 の購読で経路版の区間を予定として採用し、予約の公開 API へ結果を返してサガの成功の経路を閉じる（#10 をクローズする）。S-24 の「追跡の開始: 処理中・完了」の表示、追跡管理者のナビ・ホーム・認可（`SecurityConfiguration`）と `db/dev-data` の追跡管理者の利用者 | 0 | インサイドアウト | Red・Green ごと、スキーマ・認可 |
 | 26 | US-12 AC1 登録、AC2 重複（[#11](https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/11)） | 3 | アウトサイドイン | Red・Green ごと（業務のルール） |
 | 27 | US-09 AC1 照会（現在状態・予定・主要実績・出典・取得時刻。自社に許可された予約に限る BR-07）（[#12](https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/12)） | 3 | アウトサイドイン | Red・Green ごと（開示制御）、認可 |
@@ -482,7 +483,7 @@ US-04 の SP 5 は、サガの成功の経路を閉じて #10 をクローズす
 
 **W3 の Try の持ち込み**: 各 Bolt 計画の確認ポイントに、T-54（コンテキストの間のイベントを足すときは購読する側の依存が循環しないか）、T-55（置換は `spotlessApply` の後のファイルに当てる）、T-57（状態の列挙に値を足すときはその状態を見る判定を洗い出す）、T-58（listener と公開 API には業務の拒否と警告のログの経路の単体テストを Red に入れる）、T-61〜T-63（メモリのリポジトリは写しを返す、listener の欠けを「再配信で直るか」で分ける、「N 個目で」の規則は N 個目の計画に入れる）を入れる。W3 の Problem の Windows で手順書のタスクが動かない件は、`sonar-local:scan` を Bolt 21 で直した。`documentationTest` は、Windows の作業ツリーで作業する Bolt で確かめる
 
-**Living Documentation**（開発戦略の「完了条件への組み込み」）: 新しい `booking`・`tracking` モジュールで、`package-info` の `allowedDependencies`（`booking` → 見積り・経路設計の `api`・`events`、`tracking` → 予約の `api`・`events`）、ModularityTest のモジュール名、用語集の整合テスト、`DomainEventSerializationContractTest` への DE-07 などの追加、`afterMigrate` の権限と追記専用の印、貨物予約・追跡記録の `@CoreConcept` をそろえる
+**Living Documentation**（開発戦略の「完了条件への組み込み」）: 新しい `booking`・`tracking` モジュールで、`package-info` の `allowedDependencies`（`booking` → 見積りの `api`（経路版は見積りが割り当てた経路の写しで確かめる。Bolt 23 計画の確認ポイント 7）、`tracking` → 予約の `api`・`events`）、ModularityTest のモジュール名、用語集の整合テスト、`DomainEventSerializationContractTest` への DE-07 などの追加、`afterMigrate` の権限と追記専用の印、貨物予約・追跡記録の `@CoreConcept` をそろえる
 
 **デモ項目**: 本予約の確定（重複確定の防止を含む）から追跡の開始・実績の登録・荷主の照会まで（Release 0.1 のデモ）。`@US-04`、`@US-12`、`@US-09`、`@ui` の主成功シナリオ
 
@@ -491,7 +492,7 @@ US-04 の SP 5 は、サガの成功の経路を閉じて #10 をクローズす
 **主なタスク**:
 
 - [x] Bolt 22: 日時表示・期間表示を `platform` の Web の部品に集める（技術タスク、SP 0。W4 の最初の Bolt）。[Bolt 22 計画](bolt_22_plan.md)（承認済み）、[Bolt 22 終了報告](bolt_22_report.md)（完了、2026-10-08 に承認済み。#41 をクローズした。割り込みで見積りの listener の楽観ロックの競合を直した（#42））、[#41](https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/41)
-- [ ] Bolt 23・24: US-04（AC1、AC2、AC4、B-INV-03、B-INV-11）と予約サガの骨格、2 つの ADR。[Bolt 23 計画](bolt_23_plan.md)（承認待ち）
+- [ ] Bolt 23・23b・24: US-04（AC1、AC2、AC4、B-INV-03、B-INV-11）と予約サガの骨格、2 つの ADR。画面は Bolt 23b。[Bolt 23 計画](bolt_23_plan.md)（承認待ち）
 - [ ] Bolt 25: 追跡の開始とサガの成功の経路
 - [ ] Bolt 26・27: US-12（AC1、AC2）、US-09（AC1）
 - [ ] Bolt 28: 主成功の流れの `@ui` シナリオと Release 0.1 のデモ
@@ -733,3 +734,4 @@ xychart-beta
 | 2026-10-08 | W3 を締めた（11 SP、達成率 110%、W1〜W3 の累計 24 SP）。実績スケジュールに Bolt 15〜21 を、W3 の結果にふりかえりを書いた。W4 の最初の Bolt に日時表示・期間表示の集約（SP 0）を足した | anthropic/claude-opus-5-5 |
 | 2026-10-08 | W4 の開始準備: W4 の開始時のベロシティと承認ゲートの密度の見直しを書いた。整合性検証（計画と設計、横断）の指摘で、予約サガの依存の向き・R-19 の 2 つの設計の決定を記録し、追跡の開始を独立させて Bolt 22〜28 に引き直し、承認ゲートをリスク台帳に合わせた。マニュアルは W4 の完了の後に作る | anthropic/claude-opus-5-5、決定 human:kakimomokuri |
 | 2026-10-08 | Bolt 22 終了報告の承認（議題 1〜9）を記録し、Bolt 22 を終えた。#41 をクローズした。割り込み（見積りの listener の楽観ロックの競合、#42）を Bolt 22 の中で直した | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
+| 2026-10-08 | Bolt 23 の開始準備: 整合性検証の指摘で、画面（S-09・S-24・S-02）を Bolt 23b に分け、B-INV-11 の UK を Bolt 23 に前倒しし、予約サガは ADR-003 を改訂すると決めた。`booking` の依存を見積りの `api` だけにした | anthropic/claude-opus-5-5、決定 human:kakimomokuri |
