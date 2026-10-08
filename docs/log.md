@@ -3,6 +3,7 @@
 ## 2026-10-08
 * **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
 * **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
 * **Verification**: [user_story](/requirements/cargo-tracker/user_story.md) を human:kakimomokuri が検証
 * **Verification**: [domain_model](/design/cargo-tracker/domain_model.md) を human:kakimomokuri が検証
 * **Verification**: [development_strategy](/development/cargo-tracker/development_strategy.md) を human:kakimomokuri が検証
