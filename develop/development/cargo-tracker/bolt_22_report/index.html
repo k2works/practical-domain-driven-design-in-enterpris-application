@@ -8032,9 +8032,9 @@
 </tr>
 <tr>
 <td style="text-align: left;">8</td>
-<td style="text-align: left;">step 2 のコミット（<code>780d6a5</code>）は、写しを禁じる規則を Red のまま push したので、CI の <code>check</code> が赤になった（<code>deploy-demo</code> は走らず、デモ環境は変わっていない）。次の push（<code>ad20122</code>）で緑に戻した</td>
-<td style="text-align: left;">ローカルでは同じコミットの失敗はこの規則の 1 件だけだった。CI のログの末尾からは原因を確かめられていない</td>
-<td style="text-align: left;">CI の実行 37734340317</td>
+<td style="text-align: left;">ステップ 1 の特性テスト（<code>ba3cf57</code>。部品がないのでコンパイルで失敗）とステップ 2（<code>780d6a5</code>。写しを禁じる規則が Red）を Red のまま push したので、CI の <code>check</code> が 2 回赤になった（<code>deploy-demo</code> は走らず、デモ環境は変わっていない）。次の push（<code>ad20122</code>）で緑に戻した</td>
+<td style="text-align: left;">ローカルでは、それぞれの失敗は想定した Red だけだった。CI のログの末尾からは原因を確かめられていない。Try T-65</td>
+<td style="text-align: left;">CI の実行 37734340317 ほか</td>
 </tr>
 <tr>
 <td style="text-align: left;">9</td>
@@ -8311,11 +8311,11 @@
 <li>写しを禁じる規則を Red で先に入れ、3 つの写しを検出することを確かめてから置き換えた。規則を広げたあとも、一時的に写しを入れて検出を確かめた</li>
 <li>Problem</li>
 <li>計画の確認ポイント 7 の規則を、既存のコード（フォームの変換）を grep せずに書いた。実装で初めて食い違いに気づいた</li>
-<li>Red の規則を含むコミットを push し、CI の <code>check</code> を 1 回赤にした</li>
+<li>Red のコミットを 2 回 push し、CI の <code>check</code> を 2 回赤にした</li>
 <li>置き換えで <code>ArrayList</code> の import まで消し、1 回コンパイルに失敗した</li>
 <li>Try</li>
 <li>T-64: ArchUnit の禁止の規則を計画に書くときは、禁じる型・呼び出しをコードで grep し、正当な使い道（入力の解釈など）がないか確かめてから書く（AI、次の Bolt から）</li>
-<li>T-65: Red のテストだけのコミットは push してよいが、既存の CI を赤にする Red（規則・アーキテクチャテスト）は、Green と同じ push にまとめる（AI、次の Bolt から）</li>
+<li>T-65: CI を赤にする Red（テストのコンパイルの失敗、規則・アーキテクチャテスト）のコミットは、ローカルにためて Green と同じ push にまとめる（AI、次の Bolt から）</li>
 </ul>
 <h2 id="bolt_1">次の Bolt<a class="headerlink" href="#bolt_1" title="Permanent link">&para;</a></h2>
 <p>Bolt 23: US-04 AC1 確定・AC2 失効（#10）。W4 の計画のとおり、最初のステップで 2 つの ADR（予約サガと追跡の開始の依存の向き、予約から見積りの確定可否の問い合わせ）を書き、architecture_backend.md の予約サガの図を直す。インサイドアウトで、確定は Red・Green ごと、スキーマはステップごとに止める。上の既知の課題（listener の競合）を確認ポイントにする。</p>
