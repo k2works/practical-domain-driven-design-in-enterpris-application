@@ -3,8 +3,10 @@ type: Plan
 title: "Bolt 22 計画 - 日時表示・期間表示を platform の Web の部品に集める（#41）"
 description: "22 回目の Bolt の計画。見積り・経路設計・アクセス監査の 3 つのモジュールに写されている日時表示と期間表示を、振る舞いを変えずに platform の Web の部品 1 か所に集める技術タスク（SP 0）を、ステップ 1〜5 で定義する。"
 tags: [development,bolt-plan]
-status: draft
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-08T05:44:03Z }
+status: stable
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-08T05:45:29Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-10-08T05:45:29Z }
 ---
 
 # Bolt 22 計画 - 日時表示・期間表示を platform の Web の部品に集める（#41）
@@ -158,7 +160,8 @@ i ..> pw : interfaces.web
 
 | 日付 | 更新内容 | 更新者 |
 | :--- | :--- | :--- |
-| 2026-10-08 | 初版作成（承認待ち） | anthropic/claude-opus-5-5 |
+| 2026-10-08 | 初版作成 | anthropic/claude-opus-5-5 |
+| 2026-10-08 | 計画（確認ポイント 1〜8 は推奨のまま）を承認した | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 
 ## 関連ドキュメント
 
