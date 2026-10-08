@@ -34,6 +34,7 @@ Gradle のタスクは `apps/cargo-tracker` で、Gulp のタスクはリポジ�
 | `npx gulp deploy:demo` | CI が使えないときに、手元からデモ環境へ配備する |
 | `npx gulp deploy:demo:ci-key` | CI の配備の API キー（期限 90 日）を更新する。`deploy:demo:ci-key:revoke-old` で古いキーを失効させる |
 | `DEMO_BOLT=bolt-19 DEMO_ISSUE=8 npx gulp issue:attach-demo` | Bolt のデモ項目の動画を、受入の証跡として Issue のコメントに添付する（下の「Issue への受入動画の添付」） |
+| `npx gulp issue:attach-demo:all` | これまでの Bolt の動画を、下の添付先の表のとおりにまとめて添付する（添付済みの Bolt は飛ばす） |
 
 ### Issue への受入動画の添付
 
@@ -41,14 +42,16 @@ Bolt のデモ項目（画面の層の受入シナリオの `@demo-<Bolt>/<名�
 
 - 前提: gh v2.99.0 以上で、リポジトリに書き込める権限で `gh auth login` 済みであること。Claude Code のクラウドの実行環境の gh は版が古く認証もないため、添付は開発者の PC で行う
 - 先に `DEMO_DRY_RUN=1` を付けて、本文と添付する動画を確かめる。アップロードは取り消せない（コメントは消せるが、アップロードした動画の URL は残る）
-- 終了報告の承認の後に、その Bolt の動画を 1 回だけ添付する（同じ Bolt を 2 回実行すると、同じ動画のコメントが 2 つになる）
+- 終了報告の承認の後に、その Bolt の動画を添付する。コメントの末尾に目印（`<!-- issue-attach-demo:<Bolt> -->`）を置き、同じ Issue に同じ Bolt の目印のコメントがあれば添付しない（2 回実行しても重ならない）
 
 ```bash
 DEMO_BOLT=bolt-19 DEMO_ISSUE=8 DEMO_DRY_RUN=1 npx gulp issue:attach-demo   # 本文と添付を確かめる
 DEMO_BOLT=bolt-19 DEMO_ISSUE=8 npx gulp issue:attach-demo                  # 添付する
+DEMO_DRY_RUN=1 npx gulp issue:attach-demo:all                               # これまでの Bolt をまとめて確かめる
+npx gulp issue:attach-demo:all                                              # これまでの Bolt をまとめて添付する
 ```
 
-これまでの Bolt の動画の添付先（各 Bolt の計画の Issue 欄のうち R0.1 の Issue）:
+これまでの Bolt の動画の添付先（各 Bolt の計画の Issue 欄のうち R0.1 の Issue。`ops/scripts/issue_demo.js` の `BOLT_ISSUES` と同じにする。新しい Bolt は終了報告の承認の後に両方に足す）:
 
 | Bolt | Issue | Bolt | Issue |
 | :--- | :--- | :--- | :--- |
