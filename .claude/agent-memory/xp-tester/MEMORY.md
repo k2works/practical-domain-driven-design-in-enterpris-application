@@ -5,3 +5,4 @@
 - [Bolt 9〜10 見積り・差し替えテストのレビュー](project_bolt9_10_quotation_tests.md) — 金額上限なし、算出と提示が同時刻、期限切れ提示、出し直し違反の受入シナリオ消失（2026-10-05）
 - [Bolt 11 失効・置換テストのレビュー](project_bolt11_expire_replace_tests.md) — 荷主側の失効表示なし、提示前置換の非表示未検証、UI の実時計と DB 直書き、ロールバック未検証（2026-10-05）
 - [Bolt 15 Heroku デモ環境の運用レビュー](project_bolt15_heroku_demo_review.md) — ガードが build だけ・ブランチ未確認、イメージの自動検証なし、ロールバックなし、ADR の旧タスク名（2026-10-06）
+- [Bolt 20 割当て・荷主承認テストのレビュー](project_bolt20_shipper_approval_tests.md) — 新 listener 3 つの単体テストなし、DE-03・16 の偽警告、承認済みの失効表示、コミットする統合テストの航海の残り（2026-10-08）
