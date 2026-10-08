@@ -1,5 +1,6 @@
 package com.example.cargotracker.quotation.interfaces.web;
 
+import com.example.cargotracker.platform.web.DurationDisplay;
 import com.example.cargotracker.quotation.application.internal.commands.ApproveTransportRequestCommand;
 import com.example.cargotracker.quotation.application.internal.commands.SendBackTransportRequestCommand;
 import com.example.cargotracker.quotation.application.internal.commandservices.ReviewOutcome;
@@ -246,7 +247,7 @@ public class TransportRequestReviewController {
                 summary.number().text(),
                 summary.versionNo(),
                 TransportRequestLabels.staffDateTime(summary.firstSubmittedAt()),
-                TransportRequestLabels.elapsed(
+                DurationDisplay.waiting(
                         Duration.between(summary.firstSubmittedAt().instant(), clock.instant())),
                 summary.origin().unLocode() + " → " + summary.destination().unLocode(),
                 TransportRequestLabels.staffDateTime(summary.arrivalDeadline()),

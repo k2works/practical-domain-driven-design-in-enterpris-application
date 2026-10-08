@@ -5,14 +5,14 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * 期間表示の共通部品（UI 設計の共通部品「日時表示」）。画面ごとに 3 つの形がある。見積り・経路設計・アクセス監査の写しを、
+ * 期間表示の部品（UI 設計の共通部品「日時表示」の節の期間の形）。画面ごとに 3 つの形がある。見積り・経路設計・アクセス監査の写しを、
  * 振る舞いを変えずに集めた（Bolt 22、#41）。形をそろえるかは US-21 の残り（W9）で決める（D-84）。
  */
 public final class DurationDisplay {
 
     private DurationDisplay() {}
 
-    /** 受付一覧（S-02）の待ち時間（例: 3 時間 20 分、2 日 4 時間、15 分）。負は 0 分にする。 */
+    /** 受付一覧（S-02）の待ち時間（例: 3 時間 20 分、2 日 4 時間、15 分）。分未満は切り捨て、負は 0 分にする。 */
     public static String waiting(Duration duration) {
         long minutes = Math.max(0, duration.toMinutes());
         long days = minutes / (24 * 60);

@@ -30,19 +30,16 @@ public record KpiObservationView(
     static KpiObservationView from(KpiObservation observation, Instant now) {
         return new KpiObservationView(
                 observation.transportRequestNumber() == null ? NO_NUMBER : observation.transportRequestNumber(),
-                staffDateTime(observation.submittedAt()),
+                DateTimeDisplay.staff(observation.submittedAt().instant()),
                 observation
                         .firstPresentedAt()
-                        .map(KpiObservationView::staffDateTime)
+                        .map(UtcInstant::instant)
+                        .map(DateTimeDisplay::staff)
                         .orElse(null),
                 observation.leadTime().map(DurationDisplay::hoursAndMinutes).orElse(null),
                 observation.firstPresentedAt().isPresent()
                         ? null
                         : DurationDisplay.hoursAndMinutes(
                                 Duration.between(observation.submittedAt().instant(), now)));
-    }
-
-    private static String staffDateTime(UtcInstant instant) {
-        return DateTimeDisplay.staff(instant.instant());
     }
 }

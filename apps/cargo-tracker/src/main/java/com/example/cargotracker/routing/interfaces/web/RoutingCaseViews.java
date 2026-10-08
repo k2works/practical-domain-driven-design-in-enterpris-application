@@ -235,7 +235,7 @@ final class RoutingCaseViews {
         }
         if (texts.isEmpty()) {
             texts.add("期限まで "
-                    + duration(Duration.between(
+                    + DurationDisplay.connection(Duration.between(
                             candidate.evaluation().estimatedArrivalAt().instant(), deadline.instant()))
                     + "（期限と接続時間を満たす）。参照情報版 "
                     + candidate.legs().stream().map(Leg::infoVersion).distinct().collect(Collectors.joining("、")));
@@ -248,13 +248,13 @@ final class RoutingCaseViews {
         return switch (reason.code()) {
             case DEADLINE_EXCEEDED ->
                 "期限超過 "
-                        + duration(Duration.between(
+                        + DurationDisplay.connection(Duration.between(
                                 reason.deadline().instant(), reason.violatedAt().instant()))
                         + "（到着予定 " + dateTime(reason.violatedAt()) + "、期限 " + dateTime(reason.deadline()) + "）"
                         + INFO_VERSION + reason.infoVersion();
             case CONNECTION_TOO_SHORT ->
                 "接続不足（" + reason.port().unLocode() + " で接続 " + connection(reason, legs) + "、必要 "
-                        + duration(reason.requiredConnection()) + "、"
+                        + DurationDisplay.connection(reason.requiredConnection()) + "、"
                         + reason.port().unLocode()
                         + " の規則）。次の出発 " + dateTime(reason.violatedAt()) + INFO_VERSION + reason.infoVersion();
             case NOT_CONNECTABLE ->
@@ -270,7 +270,7 @@ final class RoutingCaseViews {
     private static String connection(ExclusionReason reason, List<Leg> legs) {
         for (int i = 1; i < legs.size(); i++) {
             if (legs.get(i).departureAt().equals(reason.violatedAt())) {
-                return duration(Duration.between(
+                return DurationDisplay.connection(Duration.between(
                         legs.get(i - 1).arrivalAt().instant(),
                         legs.get(i).departureAt().instant()));
             }
@@ -280,12 +280,9 @@ final class RoutingCaseViews {
 
     /** 接続余裕。負なら不足として示す。 */
     static String slack(Duration slack) {
-        return slack.isNegative() ? "不足 " + duration(slack.negated()) : "余裕 " + duration(slack);
-    }
-
-    /** 期間の文言（例: 1 日 12 時間、4 時間、4 時間 30 分、0 分）。platform の部品の接続時間の形（Bolt 22）。 */
-    static String duration(Duration duration) {
-        return DurationDisplay.connection(duration);
+        return slack.isNegative()
+                ? "不足 " + DurationDisplay.connection(slack.negated())
+                : "余裕 " + DurationDisplay.connection(slack);
     }
 
     /** 社内の画面の日時。利用者のタイムゾーンを主にし、UTC を括弧で併記する（platform の部品。Bolt 22）。 */

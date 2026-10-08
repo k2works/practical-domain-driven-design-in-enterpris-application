@@ -1,5 +1,6 @@
 package com.example.cargotracker.quotation.interfaces.web;
 
+import com.example.cargotracker.platform.web.DateTimeDisplay;
 import com.example.cargotracker.quotation.domain.model.aggregates.Quotation;
 import com.example.cargotracker.quotation.domain.model.valueobjects.Currency;
 import com.example.cargotracker.quotation.domain.model.valueobjects.PricingBasis;
@@ -123,10 +124,8 @@ final class QuotationFormConverter {
         form.setExpiresAt("");
         RoutePolicy policy = quotation.routePolicy().orElseThrow();
         form.setVia(policy.via().stream().map(Location::unLocode).collect(Collectors.joining(", ")));
-        form.setDepartureAt(FORM_DATE_TIME.format(
-                policy.departureAt().instant().atZone(TransportRequestFormConverter.CUSTOMER_ZONE)));
-        form.setArrivalAt(FORM_DATE_TIME.format(
-                policy.arrivalAt().instant().atZone(TransportRequestFormConverter.CUSTOMER_ZONE)));
+        form.setDepartureAt(FORM_DATE_TIME.format(policy.departureAt().instant().atZone(DateTimeDisplay.ZONE)));
+        form.setArrivalAt(FORM_DATE_TIME.format(policy.arrivalAt().instant().atZone(DateTimeDisplay.ZONE)));
         return form;
     }
 }
