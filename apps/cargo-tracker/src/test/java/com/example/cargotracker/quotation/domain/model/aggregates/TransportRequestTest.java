@@ -174,6 +174,24 @@ class TransportRequestTest {
     }
 
     @Test
+    void 予約待ちの現在の版で本予約を確定すると予約確定済みになりほかでは変わらない() {
+        TransportRequest request = TransportRequest.submit(id, number, shipper, terms, submitter, now);
+        request.approve(1, submitter, "根拠", now);
+        request.markQuotationPresented(1);
+        request.markRoutingRequested(1);
+        request.markAwaitingApproval(1);
+
+        assertThat(request.markBooked(1)).as("荷主承認待ちでは変えない").isFalse();
+        request.markReadyToBook(1);
+        assertThat(request.markBooked(2)).as("現在の版でなければ変えない").isFalse();
+        assertThat(request.markBooked(1)).isTrue();
+        assertThat(request.status()).isEqualTo(TransportRequestStatus.BOOKED);
+        assertThat(request.markBooked(1)).as("2 回目は変えない（冪等）").isFalse();
+        assertThat(request.markReadyToBook(1)).as("遅れて届いた DE-04 では戻らない").isFalse();
+        assertThat(request.hasReached(TransportRequestStatus.READY_TO_BOOK, 1)).isTrue();
+    }
+
+    @Test
     void 先のイベントが遅れても経路設計中から荷主承認待ちと予約待ちに進む() {
         TransportRequest routing = TransportRequest.submit(id, number, shipper, terms, submitter, now);
         routing.approve(1, submitter, "根拠", now);

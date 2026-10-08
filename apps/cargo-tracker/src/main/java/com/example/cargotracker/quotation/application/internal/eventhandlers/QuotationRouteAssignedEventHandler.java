@@ -1,5 +1,6 @@
 package com.example.cargotracker.quotation.application.internal.eventhandlers;
 
+import com.example.cargotracker.quotation.application.internal.TransportRequestProgression;
 import com.example.cargotracker.quotation.domain.events.QuotationRouteAssigned;
 import com.example.cargotracker.quotation.domain.model.aggregates.TransportRequest;
 import com.example.cargotracker.quotation.domain.model.aggregates.TransportRequestRepository;

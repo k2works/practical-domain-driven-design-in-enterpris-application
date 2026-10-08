@@ -36,7 +36,8 @@ public final class TransportRequest {
             TransportRequestStatus.QUOTED,
             TransportRequestStatus.ROUTING,
             TransportRequestStatus.AWAITING_APPROVAL,
-            TransportRequestStatus.READY_TO_BOOK);
+            TransportRequestStatus.READY_TO_BOOK,
+            TransportRequestStatus.BOOKED);
 
     private static final int FIRST_VERSION_NO = 1;
 
@@ -218,6 +219,21 @@ public final class TransportRequest {
     }
 
     /**
+     * 本予約を確定したことを受けて、予約確定済みにする（予約の DE-07 の listener が見積りの公開 API で呼ぶ。US-04 AC1。Bolt 23）。
+     * 予約待ちのときだけ進める（本予約は予約待ちの見積りからだけ確定する。ADR-016）。
+     *
+     * @param quotedVersionNo 見積りの対象の版番号
+     * @return 状態を変えたら true
+     */
+    public boolean markBooked(int quotedVersionNo) {
+        if (status != TransportRequestStatus.READY_TO_BOOK || quotedVersionNo != currentVersion.versionNo()) {
+            return false;
+        }
+        status = TransportRequestStatus.BOOKED;
+        return true;
+    }
+
+    /**
      * 現在の版が {@code versionNo} で、見積りのイベントで進める状態の並びで {@code target} まで進んでいるか（Bolt 20 レビュー）。
      * 見積りのイベントの再配信や、遅れて届いたイベントを、状態を変えずに受け流してよいかの判定に使う。
      */
@@ -227,7 +243,7 @@ public final class TransportRequest {
     }
 
     /**
-     * 見積りのイベントで進める状態の並び（見積り作成中 → 見積提示済み → 経路設計中 → 荷主承認待ち → 予約待ち）で、いまの状態が
+     * 見積りのイベントで進める状態の並び（見積り作成中 → 見積提示済み → 経路設計中 → 荷主承認待ち → 予約待ち → 予約確定済み）で、いまの状態が
      * {@code target} より前か。見積りのイベントは別のトランザクションで届き順が入れ替わり得るため、先の状態へだけ進め、戻さない
      * （DE-16 と DE-03 と同じ。Bolt 12 レビュー R-04）。審査中・下書きは並びの外で、進めない。
      */

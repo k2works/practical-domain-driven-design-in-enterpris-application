@@ -4,7 +4,7 @@ title: "Bolt 23 計画 - 本予約の確定と失効（US-04 AC1・AC2）"
 description: "23 回目の Bolt の計画。予約サガと追跡の開始（ADR-003 の改訂）、予約から見積りの確定可否の問い合わせを ADR に決め、booking モジュールと貨物予約・予約版・予約サガの表を新設して、本予約の確定（US-04 AC1）と失効の拒否（AC2）を業務ルール層の受入シナリオまで作り、DE-07 で輸送要求を予約確定済みにするまでを、ステップ 1〜6 で定義する。画面（S-09・S-24・S-02）は Bolt 23b。"
 tags: [development,bolt-plan]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-08T08:28:31Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-08T08:35:13Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-08T07:44:34Z }
 ---
@@ -274,13 +274,18 @@ b ||--o| s
     - 計画からの変更 3: 業務ルール層のステップ定義が見積りの ID を得られるよう、テスト用の配信（`DeferredEventDelivery`）にシナリオの始めからの発行の履歴を足し、見積りの公表された言語（DE-21・DE-04）から ID を得る（AT-05）。受入シナリオのグルーに `booking.acceptance` を足した
     - 規律の逸脱: ステップ 3 と同じく、受入シナリオを書く前に確定サービスを書いた。受入シナリオの Red は「ステップが未定義」と「見つからない見積り」（ステップ定義の誤り）で、業務の失敗としての Red は確かめていない。終了報告の Problem に置く
     - 承認ゲートの扱い（T-36）: Red・Green の承認ゲートで止まらずに進めた（AI の判断）。根拠は、受入シナリオが US-04 AC1・AC2 と test_strategy.md の境界の 3 点のとおりであること
-- [ ] **5. 見積りの公開 API・輸送要求の予約確定済み・DE-07 の listener** 【承認ゲート: Red／Green、モジュールの境界】
+- [x] **5. 見積りの公開 API・輸送要求の予約確定済み・DE-07 の listener** 【承認ゲート: Red／Green、モジュールの境界】
   - 単体テストを先に書く: 確定に使えるかの判定の境界（有効期限の 1 分前は使える、同時刻・1 分後は失効。T-38）、未承認・置換済み・見つからない。輸送要求の予約待ち → 予約確定済み（冪等。予約待ちでないときは警告のログ。T-58）
   - `quotation.api` に照会と通知の受け口を足し、実装を見積りの `application.internal.commandservices` に置く。輸送要求を進める処理は Bolt 22 の割り込みの部品を使う（確認ポイント 8）。`quotation.api` の `package-info` の説明（「照会だけ」）を直す
   - 予約の `application.internal.eventhandlers` に DE-07 の listener と `outboundservices.acl`
   - 統合テスト（PostgreSQL）: 確定から DE-07 の発行、輸送要求の予約確定済みまで。DE-04 と DE-07 の受け口の並行（H3）
   - ArchUnit: 「上流は下流に依存しない」を見積りと予約の組にも一般化する（D-78。T-64 で既存の依存を grep してから書く）。ModularityTest と `ModuleDocumentationTest` のモジュール名に `booking`、`DomainEventSerializationContractTest` に DE-07
   - 完了の判定: `check` と `documentationTest` が緑
+  - 結果（2026-10-08）: 単体テスト（`TransportRequestTest` の予約確定済み、`BookingNotificationServiceTest`、`BookingConfirmedEventHandlerTest`）と DE-07 の直列化の契約、ModularityTest（`booking` の認識、見積りは予約に依存しない、予約は経路設計に依存しない）、`ModuleDocumentationTest`（`module-booking.puml`）を先に書き、コンパイルの失敗で Red を確かめてから実装した。`TransportRequestStatus.BOOKED` と `TransportRequest.markBooked`、公開 API `BookingNotification`（`…Request`・`…Receipt`）と `BookingNotificationService`、予約の `BookingConfirmedEventHandler` と `QuotationBookingNotifications`。受入シナリオに「配信されると輸送要求は予約確定済みになる」を足し、統合テスト（`RouteConfirmedAssignmentIntegrationTest`）を本予約の確定・予約確定済み・DE-07 の配信の完了・予約サガの処理中まで延ばした。`check` 緑（`test` 1,270 件）
+    - T-57 の洗い出し: `TransportRequestLabels` の 3 つの `switch` に `BOOKED` を足した（社内「予約確定済み」、荷主「予約確定済み（追跡の開始の準備中）」と案内）。S-02 の `IN`（`QuotationMapper.xml`）には足さない（予約確定済みは受付一覧の進行中の表から外す。予約の確定待ちの表は Bolt 23b）
+    - 計画からの変更: `TransportRequestProgression` を `application.internal` に移して公開し、進めた結果（`Result`）を返すようにした（公開 API の受付の結果に使う）。4 つの listener は結果を使わない
+    - H3 の結論: DE-07 は予約待ちの輸送要求だけを進め、予約待ちにするのは DE-04 だけで、DE-04 の再配信は書き込まないため、DE-04 と DE-07 の受け口は同じ輸送要求を並行に更新しない。並行の統合テストは作らなかった（競合したときは共通の部品が読み直す）
+    - 承認ゲートの扱い（T-36）: Red・Green とモジュールの境界の承認ゲートで止まらずに進めた（AI の判断）。根拠は、公開 API の形が ADR-014（Bolt 20 の経路の割当てと同じ）のとおりで、ModularityTest が依存の向きを確かめていること
 - [ ] **6. 開発レビューと終了報告** 【承認ゲート: 開発レビューの判断、終了報告】
   - `developing-review`（プログラマー・テスター・アーキテクト）、SonarQube、終了報告。デモは業務ルール層のシナリオの通過で示し、受入動画は Bolt 23b で撮る。#10 は Bolt 25 まで開いたまま、終わった受入条件にコメントする
 

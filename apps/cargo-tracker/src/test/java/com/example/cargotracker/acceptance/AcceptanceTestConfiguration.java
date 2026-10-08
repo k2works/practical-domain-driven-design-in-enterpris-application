@@ -3,7 +3,10 @@ package com.example.cargotracker.acceptance;
 import com.example.cargotracker.booking.acceptance.InMemoryBookingRepository;
 import com.example.cargotracker.booking.acceptance.InMemoryBookingSagaRepository;
 import com.example.cargotracker.booking.application.internal.commandservices.BookingCommandService;
+import com.example.cargotracker.booking.application.internal.eventhandlers.BookingConfirmedEventHandler;
 import com.example.cargotracker.booking.application.internal.outboundservices.acl.QuotationBookability;
+import com.example.cargotracker.booking.application.internal.outboundservices.acl.QuotationBookingNotifications;
+import com.example.cargotracker.booking.domain.events.BookingConfirmed;
 import com.example.cargotracker.booking.infrastructure.persistence.RandomTrackingNumberIssuer;
 import com.example.cargotracker.identity.acceptance.InMemoryKpiObservationRepository;
 import com.example.cargotracker.identity.application.internal.eventhandlers.KpiObservationEventHandler;
@@ -13,6 +16,7 @@ import com.example.cargotracker.quotation.acceptance.InMemoryRequiredDocumentSto
 import com.example.cargotracker.quotation.acceptance.InMemoryTransportRequestNumberIssuer;
 import com.example.cargotracker.quotation.acceptance.InMemoryTransportRequestRepository;
 import com.example.cargotracker.quotation.acceptance.RequiredDocumentAttachments;
+import com.example.cargotracker.quotation.application.internal.commandservices.BookingNotificationService;
 import com.example.cargotracker.quotation.application.internal.commandservices.QuotationCommandService;
 import com.example.cargotracker.quotation.application.internal.commandservices.QuotationResponseService;
 import com.example.cargotracker.quotation.application.internal.commandservices.RouteAssignmentService;
@@ -194,6 +198,13 @@ public class AcceptanceTestConfiguration {
                     clock);
         }
 
+        /** 予約は DE-07 を受けて見積りの公開 API（予約確定済みの通知）を呼ぶ（ADR-014。Bolt 23）。 */
+        @Bean
+        BookingConfirmedEventHandler bookingConfirmedEventHandler(InMemoryTransportRequestRepository repository) {
+            return new BookingConfirmedEventHandler(
+                    new QuotationBookingNotifications(new BookingNotificationService(repository)));
+        }
+
         /** テスト用の同期の配信。購読側は {@link EventSubscriptions} が登録する（発行する部品と購読する部品が互いに依存するため）。 */
         @Bean
         DeferredEventDelivery eventDelivery() {
@@ -238,7 +249,8 @@ public class AcceptanceTestConfiguration {
                 RoutingCaseOpeningEventHandler routingCaseOpeningEventHandler,
                 QuotationRouteAssignmentEventHandler quotationRouteAssignmentEventHandler,
                 QuotationRouteAssignedEventHandler quotationRouteAssignedEventHandler,
-                QuotationApprovedByShipperEventHandler quotationApprovedByShipperEventHandler) {
+                QuotationApprovedByShipperEventHandler quotationApprovedByShipperEventHandler,
+                BookingConfirmedEventHandler bookingConfirmedEventHandler) {
             delivery.subscribe(event -> {
                 switch (event) {
                     case TransportRequestSubmitted submitted -> kpiObservationEventHandler.on(submitted);
@@ -253,6 +265,7 @@ public class AcceptanceTestConfiguration {
                     case RouteConfirmed confirmed -> quotationRouteAssignmentEventHandler.on(confirmed);
                     case QuotationRouteAssigned assigned -> quotationRouteAssignedEventHandler.on(assigned);
                     case QuotationApprovedByShipper approved -> quotationApprovedByShipperEventHandler.on(approved);
+                    case BookingConfirmed confirmed -> bookingConfirmedEventHandler.on(confirmed);
                     default -> {
                         // 購読者のないイベント
                     }

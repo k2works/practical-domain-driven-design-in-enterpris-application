@@ -3,6 +3,7 @@ package com.example.cargotracker.integration;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.example.cargotracker.TestcontainersConfiguration;
+import com.example.cargotracker.booking.domain.events.BookingConfirmed;
 import com.example.cargotracker.quotation.domain.events.TransportRequestReviewed;
 import com.example.cargotracker.quotation.domain.events.TransportRequestSubmitted;
 import com.example.cargotracker.shared.domain.CompanyId;
@@ -65,6 +66,27 @@ class DomainEventSerializationContractTest {
             new UserId(UUID.fromString("00000000-0000-0000-0000-000000000301")),
             new UtcInstant(Instant.parse("2026-10-05T03:00:00.123456Z")));
 
+    /** DE-07 本予約を確定した（Bolt 23）。追跡が購読する公表された言語（ADR-015）。 */
+    private static final String BOOKING_CONFIRMED_V1 = """
+            {"bookingId":"22222222-2222-2222-2222-222222222222","bookingVersionNo":1,\
+            "trackingNumber":"CTABCDEFGH2345","quotationId":"33333333-3333-3333-3333-333333333333",\
+            "transportRequestId":"11111111-1111-1111-1111-111111111111","transportRequestVersionNo":1,\
+            "transportRequestNumber":"TR-2026-0001","routingCaseNumber":"RC-2026-0001","routeVersionNo":1,\
+            "committedAt":{"instant":"2026-10-08T08:59:00.123456Z"},"aggregateVersion":0}""";
+
+    private static final BookingConfirmed BOOKING_CONFIRMED = new BookingConfirmed(
+            UUID.fromString("22222222-2222-2222-2222-222222222222"),
+            1,
+            "CTABCDEFGH2345",
+            UUID.fromString("33333333-3333-3333-3333-333333333333"),
+            UUID.fromString("11111111-1111-1111-1111-111111111111"),
+            1,
+            "TR-2026-0001",
+            "RC-2026-0001",
+            1,
+            new UtcInstant(Instant.parse("2026-10-08T08:59:00.123456Z")),
+            0);
+
     @Autowired
     EventSerializer serializer;
 
@@ -94,5 +116,16 @@ class DomainEventSerializationContractTest {
     @Test
     void DE02のJSONの形が変わっていない() {
         assertThat(serializer.serialize(REVIEWED_V1)).isEqualTo(TRANSPORT_REQUEST_REVIEWED_V1);
+    }
+
+    @Test
+    void 保存済みのDE07のJSONから復元できる() {
+        assertThat(serializer.deserialize(BOOKING_CONFIRMED_V1, BookingConfirmed.class))
+                .isEqualTo(BOOKING_CONFIRMED);
+    }
+
+    @Test
+    void DE07のJSONの形が変わっていない() {
+        assertThat(serializer.serialize(BOOKING_CONFIRMED)).isEqualTo(BOOKING_CONFIRMED_V1);
     }
 }

@@ -2,6 +2,7 @@ package com.example.cargotracker.quotation.infrastructure.config;
 
 import com.example.cargotracker.quotation.api.RouteAssignment;
 import com.example.cargotracker.quotation.api.RouteConditionQuery;
+import com.example.cargotracker.quotation.application.internal.commandservices.BookingNotificationService;
 import com.example.cargotracker.quotation.application.internal.commandservices.QuotationCommandService;
 import com.example.cargotracker.quotation.application.internal.commandservices.QuotationResponseService;
 import com.example.cargotracker.quotation.application.internal.commandservices.RouteAssignmentService;
@@ -124,6 +125,12 @@ public class QuotationConfiguration {
     @Bean
     RouteConditionQuery routeConditionQuery(TransportRequestRepository repository) {
         return new RouteConditionQueryService(repository);
+    }
+
+    /** 見積りの公開 API の予約確定済みの通知（予約が DE-07 を受けて使う。ADR-014。Bolt 23）。 */
+    @Bean
+    BookingNotificationService bookingNotification(TransportRequestRepository transportRequestRepository) {
+        return new BookingNotificationService(transportRequestRepository);
     }
 
     /** 見積りの公開 API の予約確定に使える見積りの照会（予約が本予約の確定で使う。ADR-016。Bolt 23）。 */

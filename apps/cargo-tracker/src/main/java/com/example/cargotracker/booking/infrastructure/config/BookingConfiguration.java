@@ -1,12 +1,15 @@
 package com.example.cargotracker.booking.infrastructure.config;
 
 import com.example.cargotracker.booking.application.internal.commandservices.BookingCommandService;
+import com.example.cargotracker.booking.application.internal.eventhandlers.BookingConfirmedEventHandler;
 import com.example.cargotracker.booking.application.internal.outboundservices.acl.QuotationBookability;
+import com.example.cargotracker.booking.application.internal.outboundservices.acl.QuotationBookingNotifications;
 import com.example.cargotracker.booking.domain.model.aggregates.BookingRepository;
 import com.example.cargotracker.booking.domain.model.aggregates.TrackingNumberIssuer;
 import com.example.cargotracker.booking.domain.model.sagas.BookingSagaRepository;
 import com.example.cargotracker.booking.infrastructure.persistence.RandomTrackingNumberIssuer;
 import com.example.cargotracker.quotation.api.BookableQuotationQuery;
+import com.example.cargotracker.quotation.api.BookingNotification;
 import java.security.SecureRandom;
 import java.time.Clock;
 import org.springframework.context.ApplicationEventPublisher;
@@ -29,6 +32,18 @@ public class BookingConfiguration {
     @Bean
     TrackingNumberIssuer trackingNumberIssuer(BookingRepository repository) {
         return new RandomTrackingNumberIssuer(repository, new SecureRandom());
+    }
+
+    /** 見積りの公開 API（予約確定済みの通知）を呼ぶ腐敗防止層（ADR-014）。 */
+    @Bean
+    QuotationBookingNotifications quotationBookingNotifications(BookingNotification bookingNotification) {
+        return new QuotationBookingNotifications(bookingNotification);
+    }
+
+    /** DE-07 を受けて輸送要求を予約確定済みにする（Spring Modulith のイベントの記録を経て、別のトランザクションで動く）。 */
+    @Bean
+    BookingConfirmedEventHandler bookingConfirmedEventHandler(QuotationBookingNotifications notifications) {
+        return new BookingConfirmedEventHandler(notifications);
     }
 
     @Bean

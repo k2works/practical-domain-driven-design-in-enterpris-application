@@ -17,5 +17,7 @@ public enum TransportRequestStatus {
     /** 荷主承認待ち（経路版を見積りに割り当てた後。DE-21 を受けて変える。Bolt 20）。 */
     AWAITING_APPROVAL,
     /** 予約待ち（荷主が見積りと経路を承認した後。DE-04 を受けて変える。本予約の確定は US-04。Bolt 20）。 */
-    READY_TO_BOOK
+    READY_TO_BOOK,
+    /** 予約確定済み（本予約を確定した後。予約の DE-07 の listener が見積りの公開 API で変える。ADR-014。Bolt 23）。 */
+    BOOKED
 }

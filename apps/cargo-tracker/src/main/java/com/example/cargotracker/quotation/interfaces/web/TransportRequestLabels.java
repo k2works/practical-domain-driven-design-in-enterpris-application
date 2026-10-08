@@ -51,6 +51,7 @@ final class TransportRequestLabels {
             case ROUTING -> "経路設計中（A 社の対応待ち）";
             case AWAITING_APPROVAL -> "見積りと経路の承認待ち（お客様の対応待ち）";
             case READY_TO_BOOK -> "予約待ち（A 社の対応待ち）";
+            case BOOKED -> "予約確定済み（追跡の開始の準備中）";
         };
     }
 
@@ -64,6 +65,7 @@ final class TransportRequestLabels {
             case ROUTING -> "経路設計者が詳細な経路を設計しています。承認の準備ができたら担当営業からご連絡します。";
             case AWAITING_APPROVAL -> "経路が確定しました。見積りと経路を確かめて承認してください。";
             case READY_TO_BOOK -> "見積りと経路を承認いただきました。担当営業が本予約を確定します。確定したらご連絡します。";
+            case BOOKED -> "本予約を確定しました。追跡の準備ができたら、追跡番号で輸送の状況を照会できます。";
         };
     }
 
@@ -76,6 +78,7 @@ final class TransportRequestLabels {
             case ROUTING -> "経路設計中";
             case AWAITING_APPROVAL -> "荷主承認待ち";
             case READY_TO_BOOK -> "荷主承認済み（予約待ち）";
+            case BOOKED -> "予約確定済み";
         };
     }
 

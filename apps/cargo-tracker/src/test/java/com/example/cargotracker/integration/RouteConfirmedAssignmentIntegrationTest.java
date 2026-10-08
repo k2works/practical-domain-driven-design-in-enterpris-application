@@ -4,6 +4,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 
 import com.example.cargotracker.TestcontainersConfiguration;
+import com.example.cargotracker.booking.application.internal.commands.ConfirmBookingCommand;
+import com.example.cargotracker.booking.application.internal.commandservices.BookingCommandService;
+import com.example.cargotracker.booking.application.internal.commandservices.BookingConfirmationOutcome;
+import com.example.cargotracker.booking.domain.events.BookingConfirmed;
 import com.example.cargotracker.quotation.application.internal.commands.ApproveQuotationCommand;
 import com.example.cargotracker.quotation.application.internal.commands.ApproveTransportRequestCommand;
 import com.example.cargotracker.quotation.application.internal.commands.CalculateQuotationCommand;
@@ -35,10 +39,13 @@ import com.example.cargotracker.routing.domain.events.RouteConfirmed;
 import com.example.cargotracker.routing.domain.model.aggregates.RoutingCaseRepository;
 import com.example.cargotracker.routing.domain.model.valueobjects.RoutingCaseNumber;
 import com.example.cargotracker.routing.domain.model.valueobjects.RoutingCaseSummary;
+import com.example.cargotracker.shared.domain.AuthenticatedActor;
 import com.example.cargotracker.shared.domain.CompanyId;
+import com.example.cargotracker.shared.domain.Role;
 import com.example.cargotracker.shared.domain.UserId;
 import java.time.Duration;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -48,7 +55,8 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.modulith.events.CompletedEventPublications;
 
 /**
- * 経路の確定（DE-05）から見積りへの割当て（ADR-014）、輸送要求の荷主承認待ち（DE-21）、荷主の承認と予約待ち（DE-04）までを、
+ * 経路の確定（DE-05）から見積りへの割当て（ADR-014）、輸送要求の荷主承認待ち（DE-21）、荷主の承認と予約待ち（DE-04）、本予約の確定と
+ * 輸送要求の予約確定済み（DE-07。Bolt 23）までを、
  * PostgreSQL 18 とイベント発行記録を経た非同期の配信で確かめる（US-24 AC4、R-INV-11。Bolt 20）。
  * このテストはコミットするため、航海は実行ごとに別の航海番号にし、待つ条件はこのテストで提出した輸送要求に限る。
  */
@@ -60,6 +68,8 @@ class RouteConfirmedAssignmentIntegrationTest {
     private static final UserId STAFF = new UserId(UUID.randomUUID());
     private static final UserId SHIPPER_USER = new UserId(UUID.randomUUID());
     private static final UserId ROUTE_DESIGNER = new UserId(UUID.randomUUID());
+    private static final AuthenticatedActor SALES = new AuthenticatedActor(
+            new UserId(UUID.randomUUID()), new CompanyId(UUID.randomUUID()), Set.of(Role.SALES), "佐藤", "A 社");
 
     @Autowired
     TransportRequestCommandService transportRequestCommandService;
@@ -92,10 +102,13 @@ class RouteConfirmedAssignmentIntegrationTest {
     CompletedEventPublications completedEventPublications;
 
     @Autowired
+    BookingCommandService bookingCommandService;
+
+    @Autowired
     JdbcTemplate jdbc;
 
     @Test
-    void 経路を確定すると見積りに割り当てられ荷主が承認すると輸送要求は予約待ちになる() {
+    void 経路を確定すると見積りに割り当てられ荷主が承認すると予約待ちになり本予約を確定すると予約確定済みになる() {
         CompanyId shipper = new CompanyId(UUID.randomUUID());
         SubmissionOutcome.Submitted submitted = (SubmissionOutcome.Submitted) transportRequestCommandService.submit(
                 new SubmitTransportRequestCommand(shipper, SHIPPER_USER, ShipmentTermsFixture.completeInput()));
@@ -165,6 +178,29 @@ class RouteConfirmedAssignmentIntegrationTest {
                             default -> false;
                         })
                         .hasSize(3));
+
+        BookingConfirmationOutcome booked = bookingCommandService.confirm(new ConfirmBookingCommand(
+                staffQuotationQueryService.find(number, 1).orElseThrow().id().value(), SALES, true));
+        assertThat(booked).isInstanceOf(BookingConfirmationOutcome.Confirmed.class);
+        await().atMost(TIMEOUT)
+                .untilAsserted(() -> assertThat(staffTransportRequestQueryService.findByNumber(number))
+                        .hasValueSatisfying(
+                                request -> assertThat(request.status()).isEqualTo(TransportRequestStatus.BOOKED)));
+        await().atMost(TIMEOUT)
+                .untilAsserted(() -> assertThat(completedEventPublications.findAll())
+                        .filteredOn(publication -> publication.getEvent() instanceof BookingConfirmed confirmed
+                                && confirmed
+                                        .transportRequestId()
+                                        .equals(submitted.transportRequestId().value()))
+                        .hasSize(1));
+        assertThat(jdbc.queryForObject(
+                        "SELECT s.status FROM booking.booking_saga s JOIN booking.booking b ON b.id = s.booking_id"
+                                + " WHERE b.tracking_number = ?",
+                        String.class,
+                        ((BookingConfirmationOutcome.Confirmed) booked)
+                                .trackingNumber()
+                                .value()))
+                .isEqualTo("IN_PROGRESS");
     }
 
     private long aggregateVersion(RoutingCaseNumber caseNumber) {
