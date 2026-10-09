@@ -4,7 +4,7 @@ title: "Bolt 25b 計画 - S-10 予約一覧の最小の表示（S-24 へ戻る�
 description: "25b 回目の Bolt の計画。営業のナビの「予約」の準備中の画面を S-10 予約一覧の最小の表示（追跡番号・見積り・確定時刻・追跡の開始、新しい順）に置き換え、確定の後に S-24 へ戻れるようにするまでを、画面の層の受入シナリオ・照会・永続化の順に、ステップ 1〜4 で定義する。"
 tags: [development,bolt-plan]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-09T09:38:13Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-09T09:52:06Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-09T07:58:31Z }
 ---
@@ -250,7 +250,7 @@ S09 --> S24 : 確定（PRG）
 - [x] `check`・`documentationTest`・`uiTest` が緑。push して CI とデモ環境の配備を確かめた
 - [x] SonarQube の Quality Gate が PASS
 - [x] 設計文書（ui_design.md、domain_model.md、data_model.md。ステップ 4 の一覧）に決定を書いた（T-53）
-- [ ] 開発レビューと終了報告。承認の後に受入動画の添付先を足した
+- [x] 開発レビューと終了報告。承認の後に受入動画の添付先を足した
 
 ### デモ項目
 
@@ -260,6 +260,7 @@ S09 --> S24 : 確定（PRG）
 
 | 日付 | 更新内容 | 更新者 |
 | :--- | :--- | :--- |
+| 2026-10-09 | 終了報告を承認し、完了条件をすべて満たした（CI 緑、SonarQube PASS、受入動画） | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-10-09 | 計画を承認した（確認ポイントはすべて推奨のとおり） | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-10-09 | 開始準備の整合性検証（計画と設計 19 件、横断 17 件）の指摘を反映した（読み取りモデルの引き方を 2 本の照会に、「失敗」の表示、壊れる既存のテスト、設計文書の範囲、シナリオの置き場所とタグ、caption と列名、同じ時刻の並び、予約サガのない予約、状態遷移の図、Try の扱い） | anthropic/claude-opus-5-5 |
 | 2026-10-09 | 初版作成（承認待ち） | anthropic/claude-opus-5-5 |
