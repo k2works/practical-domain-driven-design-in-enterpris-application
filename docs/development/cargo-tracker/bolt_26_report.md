@@ -3,6 +3,7 @@ type: Report
 title: "Bolt 26 終了報告 - 追跡管理者の入口（S-11 追跡一覧・S-12 追跡の詳細の最小の表示）"
 description: "26 回目の Bolt の終了報告。追跡管理者の開発用の利用者・認可・ホーム・ナビを足し、S-11 追跡一覧と S-12 追跡の詳細の最小の表示（予定と現在状態）を作って、US-12 主要実績の登録（Bolt 26b）の入口を用意した。/goal で止まらなかった承認ゲート、確認ポイントの決定、開発レビューの対応、既知の課題を記録する。"
 tags: [development,bolt-report]
+status: stable
 generated: { by: anthropic/claude-opus-5-5, at: 2026-10-09T12:30:43Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-09T12:30:43Z }

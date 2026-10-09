@@ -3,6 +3,7 @@ type: Plan
 title: "Bolt 26 計画 - 追跡管理者の入口（S-11 追跡一覧・S-12 追跡の詳細の最小の表示）"
 description: "26 回目の Bolt の計画。追跡管理者の開発用の利用者・認可・ホーム・ナビを足し、S-11 追跡一覧と S-12 追跡の詳細の最小の表示（予定と現在状態）を作って、US-12 主要実績の登録（Bolt 26b）の入口を用意するまでを、認可・画面の層の受入シナリオ・画面と照会・永続化の順に、ステップ 1〜5 で定義する。"
 tags: [development,bolt-plan]
+status: stable
 generated: { by: anthropic/claude-opus-5-5, at: 2026-10-09T12:30:43Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-09T12:30:43Z }
