@@ -8612,17 +8612,26 @@
 <li>承認ゲートの扱い（T-36）: 設計文書・モジュールの境界・新しい注釈のゲートで止まらずに進めた（AI の判断）。根拠は、書いた内容が計画の確認ポイントの決定（2026-10-09、human:kakimomokuri）のとおりであること</li>
 </ul>
 </li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>2. スキーマと追跡記録の永続化（統合テスト）</strong> 【承認ゲート: スキーマ（必ず止める。T-67）】</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>2. スキーマと追跡記録の永続化（統合テスト）</strong> 【承認ゲート: スキーマ（必ず止める。T-67）】</li>
 <li>AT-04 の検査を先に書く（確認ポイント 18）: マッパーの XML の SQL が自分のスキーマ（と <code>platform</code> の許可された表）以外を参照しない。既存のマッパーで通ること、他のスキーマを参照する見本で落ちることを確かめる。test_strategy.md の AT-04 の行と ADR-001 のコンプライアンスを「実装済み」に直す</li>
 <li>マイグレーション（<code>tracking</code> スキーマ、<code>tracking_record</code>・<code>scheduled_leg</code>）と <code>afterMigrate</code> の GRANT の一覧。マイグレーションの SQL を見せて止める</li>
 <li>PostgreSQL の統合テストを先に書く: 追跡記録と予定区間の保存と取得、予約 ID の一意制約、区間の CHECK、業務のスキーマの GRANT の漏れの検査（DB のスキーマから導く）</li>
 <li>行の型・マッパーの XML の結果の対応と INSERT・SELECT の列を同じステップでそろえ、コンテキストを読み込むテストを 1 本流す（T-71）</li>
 <li>完了の判定: <code>check</code> 緑</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>3. 追跡記録の集約と予定（単体テスト）</strong> 【承認ゲート: Red／Green（追跡の開始）】</li>
+<li>状況（2026-10-09）: マイグレーション <code>V20261009130000__create_tracking.sql</code> の下書きと、<code>afterMigrate</code> の GRANT の一覧への <code>tracking</code> の追加を書き、スキーマの承認ゲートで止めた（T-67）。AT-04 はステップ 1 で入れた</li>
+<li>承認: 人が <code>y</code> で承認した（2026-10-09。停止フックの指摘の末尾に <code>y</code> が付いて届いたものを承認として受け取った。Bolt 24 と同じ形。終了報告の議題に置く）。承認を待つ間、停止フックは同じ指摘を 10 回あまり繰り返したが、承認がないまま進めなかった（T-67）</li>
+<li>結果（2026-10-09）<ul>
+<li>Red: 業務のスキーマの GRANT の漏れの検査（DB のスキーマから導く）を先に書き、GRANT の変更を外した状態で <code>tracking.tracking_record</code>・<code>tracking.scheduled_leg</code> が読めないことで落ちることを確かめた。追跡記録のリポジトリの統合テスト（保存と取得、ない予約 ID、予約 ID の一意、区間の CHECK、状態の CHECK）を先に書き、骨組みで 3 件が落ちることを確かめた。予約サガの期待版の更新の統合テスト 2 件は、ステップ 4 の前半で実装済みだったので最初から通った（T-39 の記録）</li>
+<li>Green: <code>TrackingRecordRow</code>・<code>ScheduledLegRow</code>・<code>TrackingRecordMapper</code>（XML の結果の対応と INSERT・SELECT の列を同じステップでそろえた。T-71）・<code>MyBatisTrackingRecordRepository</code>。状態の CHECK は、PostgreSQL では 1 つ目の違反でトランザクションが中断するため、テストを 2 つに分けた</li>
+<li><code>AppendOnlyGrantIntegrationTest</code> の名指しのスキーマの一覧（<code>routing</code> が漏れていた）を、DB のスキーマから導く形に直した</li>
+</ul>
+</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>3. 追跡記録の集約と予定（単体テスト）</strong> 【承認ゲート: Red／Green（追跡の開始）】</li>
 <li>単体テストを先に書く: 予定区間（到着は出発の後）、予定（1 件以上、区間番号は列の順、揚地と積地のつながり）、追跡記録の開始（予約状態は確定、現在状態は集荷予定、当初の到着予定と最新の見込みは最後の区間の到着予定、DE-22 を 1 回発行）、追跡番号の形</li>
 <li><code>TrackingRecord</code>（<code>@AggregateRoot</code>・<code>@CoreConcept</code>）、<code>Schedule</code>・<code>ScheduledLeg</code>・<code>TrackingNumber</code>（<code>@ValueObject</code>）、<code>TrackingStatus</code>・<code>TrackedBookingStatus</code>、DE-22、<code>TrackingRecordRepository</code>、MyBatis の実装、メモリの実装（写しを返す。T-61）。貨物予約に <code>@CoreConcept</code> を足す</li>
 <li>完了の判定: <code>check</code> 緑、用語集の整合テスト緑</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>4. DE-07 の購読、経路設計と予約の公開 API、予約サガの完了</strong> 【承認ゲート: モジュールの境界、Red／Green（サガの遷移・冪等）】</li>
+<li>途中経過（2026-10-09。スキーマの承認を待つ間に、DB を使わない部分だけ進めた）: 単体テストを先に書き、骨組みで 14 件が本命のアサーションで落ちることを確かめてから、追跡記録・予定・予定区間・追跡番号・追跡状態・追跡の予約状態・DE-22・追跡記録リポジトリを作った（<code>e7ea499</code>）。貨物予約に <code>@CoreConcept</code> を付けた（ステップ 1）。MyBatis の実装はスキーマの承認の後</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>4. DE-07 の購読、経路設計と予約の公開 API、予約サガの完了</strong> 【承認ゲート: モジュールの境界、Red／Green（サガの遷移・冪等）】</li>
 <li>単体テストを先に書く: DE-07 の listener（経路設計の公開 API の区間で追跡記録を作る、同じ予約の再配信は作らない、経路版が見つからない・区間が不正・企業 ID が null は警告のログで開始しない。T-58）、DE-22 の listener（予約の公開 API を呼ぶ、<code>NotCompleted</code> は警告のログ）、予約サガの完了（処理中 → 完了、完了済みは何もしない）、予約の公開 API（予約サガがなければ警告のログと <code>NotCompleted(SAGA_NOT_FOUND)</code>）、経路設計の公開 API（確定した経路版の区間を区間の順に返す、ない経路版は空）</li>
 <li>DE-07 に荷主・荷受人の企業 ID（null 可）を足す。<code>DomainEventSerializationContractTest</code> に、Bolt 23・24 の形の JSON（企業 ID なし）から null として復元できるテストと DE-22 を足す。H2 の発行記録の 4,000 文字に収まることを確かめる</li>
 <li>予約サガの期待版の UPDATE をマッパーと統合テストに足す（T-71）</li>
@@ -8630,11 +8639,26 @@
 <li>PostgreSQL の統合テスト: 確定から追跡の開始・予約サガの完了まで（イベントの発行の記録の完了を待つ）、DE-07・DE-22 の再配信で追跡記録・予定区間・予約サガの版が変わらない（仮説 H2）</li>
 <li>公開 API は <code>booking.interfaces.api</code>・<code>routing.interfaces.api</code> に置く（確認ポイント 16）。層の規則の例外（確認ポイント 21）は、人の承認の後に、追跡の ACL が他のコンテキストの公開 API を参照するところで先に Red を確かめてから足す</li>
 <li>完了の判定: <code>check</code> 緑、ModularityTest・ArchUnit・PublicApiArchitectureTest 緑</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>5. S-24 の「追跡の開始: 完了」と文言、画面の層のシナリオ</strong> 【承認ゲート: 画面】</li>
+<li>途中経過（2026-10-09。DB を使わない部分。<code>0b129c5</code>）<ul>
+<li>Red → Green: DE-07 の企業 ID（予約の単体テスト 1 件）、予約サガの完了と予約サガの入力ポート（5 件）、予約の公開 API のアダプター（2 件）、経路設計の公開 API のアダプター（1 件。ほかの 4 件は空を返す見張り）、追跡の 2 つの listener（8 件）。どれも本命のアサーションで落ちることを確かめた</li>
+<li>層の規則: 追跡の腐敗防止層が <code>booking.interfaces.api</code> を参照したところで LayerArchitectureTest が落ちることを確かめてから、腐敗防止層から他のコンテキストの <code>interfaces.api</code> を参照してよい例外を足した（確認ポイント 21）。PublicApiArchitectureTest の対象に <code>*.interfaces.api</code> を足した</li>
+<li>計画からの変更: 公開 API の実装（インバウンドアダプター）は <code>&lt;コンテキスト&gt;.interfaces.api.internal</code> に置き、部品探索で拾う（画面のコントローラーと同じ。組み立ての infrastructure.config は interfaces を参照できないため）。経路設計の「確定した経路版の確定の記録の候補」を経路設計案件の操作にし、DE-05 の listener も同じ操作を使うようにした</li>
+<li>契約テスト: Bolt 23・24 の形の DE-07 の JSON から企業 ID を null として復元すること、企業 ID のある形、DE-22 の形、DE-07 の JSON が 4,000 文字に収まることを確かめた</li>
+<li>組み立て: <code>TrackingConfiguration</code>（2 つの腐敗防止層と 2 つの listener）。合成ルートが他のコンテキストの <code>interfaces.api</code> を腐敗防止層に渡すところで LayerArchitectureTest が落ちることを確かめ、層の規則の例外の対象を合成ルート（<code>infrastructure.config</code>）にも広げた（計画からの変更。確認ポイント 21 の決定の範囲を、腐敗防止層に公開 API を渡す合成ルートまで広げた）</li>
+<li>PostgreSQL の統合テスト: <code>RouteConfirmedAssignmentIntegrationTest</code> を延ばし、本予約の確定 → 追跡記録（予定区間・企業 ID・集荷予定）→ DE-22 の配信の完了 → 予約サガの完了を確かめた。DE-07・DE-22 を配信し直しても、追跡記録・予定区間の件数と予約サガの版が変わらないことを確かめた（仮説 H2）。実装の後に書いたので Red は確かめていない（T-39 の記録）</li>
+<li>業務ルール層の受入シナリオ: <code>confirm_booking.feature</code> に <code>@ADR-015 @T-INV-11 @T-INV-12 @DE-07 @DE-22</code> の 1 本（確定 → 追跡記録 → 予約サガの完了 → DE-22 の再配信）を足し、Bolt 24 の 2 回配信のシナリオに追跡記録が 1 件であることを足した。受入の配線にメモリの追跡記録リポジトリと、DE-07・DE-22 を追跡の listener へ同期で配る組み直しを足した。実装の後に書いたので Red は確かめていない（T-39 の記録）。業務ルール層の受入シナリオ 120 本が通った</li>
+<li><code>check</code>・<code>documentationTest</code> 緑</li>
+</ul>
+</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>5. S-24 の「追跡の開始: 完了」と文言、画面の層のシナリオ</strong> 【承認ゲート: 画面】</li>
 <li>画面の層のシナリオと画面の単体テストを先に書き、骨組みで落ちることを確かめる（T-72）: 確定の後に S-24 を開き直すと「追跡の開始: 完了」が出る（デモ項目 <code>@demo @demo-bolt-25/start-tracking</code>。イベントの発行の記録の完了を待ってから開き直す）。キー操作だけ、幅 320 CSS px、axe-core 0 件</li>
 <li>既存の画面の層のシナリオ（<code>features/ui/confirm_booking_ui.feature</code>）は、確定の直後の S-24 を「処理中」と確かめている。追跡の開始が非同期で先に終わりうるので、期待を「処理中または完了（完了と出すのは予約サガが完了のときだけ）」に直す。処理中の表示は画面の単体テストで決定的に確かめる（確認ポイント 20）</li>
 <li>結果のお知らせから「追跡の開始を待っています」を外す（Bolt 24 の既知の課題）</li>
 <li>完了の判定: <code>check</code> と <code>uiTest</code> 緑</li>
+<li>結果（2026-10-09）: 確定のお知らせから「追跡の開始を待っています。」を外した（画面の単体テストの Red 1 件 → Green）。S-24 の完了の表示と、処理中のときだけ出す更新の案内は、Bolt 23b の画面にすでにあり、完了の画面の単体テストは最初から通った（見張りのテスト）。画面の層のシナリオ（既存の 2 本の期待を「処理中または完了」に、新しいデモ項目 <code>@demo @demo-bolt-25/start-tracking</code>）を画面の実装と同じステップで先に書いたが、追跡の永続化の前に <code>uiTest</code> を流しておらず、骨組みでの Red は確かめていない（T-72 の記録）。最初の <code>uiTest</code> で 3 本が落ちた: Playwright は Java の正規表現をブラウザーの JavaScript の正規表現に変えて照合するため、<code>Pattern.quote</code> の <code>\Q…\E</code> が効かなかった。メタ文字を自分でエスケープする形に直し、<code>uiTest</code> 65 本が通った<ul>
+<li>承認ゲートの扱い（T-36）: 画面のゲートで止まらずに進めた（AI の判断）。根拠は、文言が UI 設計の S-09・S-24 の行（ステップ 1）のとおりであること</li>
+</ul>
+</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>6. 開発レビューと終了報告</strong> 【承認ゲート: 開発レビューの判断、終了報告】</li>
 <li><code>developing-review</code>（プログラマー・テスター・アーキテクト・インタラクションデザイナー・ユーザー代表）。SonarQube（<code>sonar-local:check</code>）、受入動画（<code>./gradlew demoVideo</code>。過去の Bolt の動画は元に戻す）、<code>bolt_25_report.md</code></li>
 <li>
