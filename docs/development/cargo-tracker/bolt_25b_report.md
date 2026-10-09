@@ -4,7 +4,7 @@ title: "Bolt 25b 終了報告 - S-10 予約一覧の最小の表示（S-24 へ�
 description: "25b 回目の Bolt の終了報告。営業のナビの「予約」の準備中の画面を S-10 予約一覧の最小の表示に置き換え、確定の後に S-24 へ戻れるようにした。予約の要約と予約サガの状態を 2 本の照会で引き、追跡の開始の表示を UI 設計の共通部品にそろえた。/goal で止まらなかった承認ゲート、開発レビューの対応、人に諮る論点、既知の課題を記録する。"
 tags: [development,bolt-report]
 status: draft
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-09T09:38:13Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-09T09:49:54Z }
 ---
 
 # Bolt 25b 終了報告 - S-10 予約一覧の最小の表示（S-24 へ戻る入口）
@@ -67,6 +67,7 @@ generated: { by: anthropic/claude-opus-5-5, at: 2026-10-09T09:38:13Z }
 | `check`・`documentationTest` | 通過 |
 | `uiTest`（axe-core を含む） | 通過（67 本） |
 | ModularityTest・ArchUnit・AT-04 | 通過 |
+| CI（check・ui・デモ環境への配備） | 通過（`2f91a46`、`aeb6ed5`） |
 | SonarQube（ローカル） | 品質ゲート PASS（新しいコードのカバレッジ 96.7%、重複 0.2%、新しい指摘 0 件）。最初は新しい指摘 1 件（開発用ログインの定数と欄の名前の紛らわしさ。S1845）で FAIL だったので直した |
 | `okf:check` | ERROR 0 |
 
