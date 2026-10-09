@@ -8216,8 +8216,12 @@ Gradle のタスクは <code>apps/cargo-tracker</code> で、Gulp のタスク�
 <td style="text-align: left;">ローカルの SonarQube を起動する（クラウドの実行環境では上書きを自動で重ねる）</td>
 </tr>
 <tr>
+<td style="text-align: left;"><code>npx gulp sonar-local:profile</code></td>
+<td style="text-align: left;">品質プロファイルを <code>sonarqube.config.json</code> のとおりにそろえる（User Token が要る）</td>
+</tr>
+<tr>
 <td style="text-align: left;"><code>npx gulp sonar-local:check</code></td>
-<td style="text-align: left;">SonarQube でスキャンして品質ゲートを判定する</td>
+<td style="text-align: left;">品質プロファイルをそろえ、SonarQube でスキャンして品質ゲートを判定する</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>npx gulp deploy:demo:status</code></td>

@@ -8295,20 +8295,20 @@
 <tr>
 <td style="text-align: left;">5</td>
 <td style="text-align: left;"><strong>人の判断が要る（A-1）</strong>: マイグレーションが既存の予約の見積り番号を <code>quotation.quotation</code> から 1 回だけ読んで埋めた。ADR-001 の「他モジュールの表を参照しない」の例外にあたる。data_model.md の約束（「<code>db/dev-data</code> の開発用のシードはほかのコンテキストの表から写してよい。本番のマイグレーションでは読まない」）にも反する（ステップ 6 の作業中に気づいた）</td>
-<td style="text-align: left;">外部キーは張らず、読むのはマイグレーションの 1 回だけ。既存の予約はデモ環境（Bolt 23 以後）にしかない。代わりの案は「デモのデータを作り直す前提で埋めない」「埋め込みを手順書の 1 回のタスクにする」。ADR-001 に例外として書くかを決めてほしい</td>
-<td style="text-align: left;">開発レビュー A-1</td>
+<td style="text-align: left;">外部キーは張らず、読むのはマイグレーションの 1 回だけ。既存の予約はデモ環境（Bolt 23 以後）にしかない。代わりの案は「デモのデータを作り直す前提で埋めない」「埋め込みを手順書の 1 回のタスクにする」。ADR-001 に例外として書くかを決めてほしい。<strong>決定（2026-10-09、human:kakimomokuri）: AI の判断を採用</strong>。マイグレーションは残し、ADR-001 のコンプライアンスに条件つきの例外（写しの列を足すときの 1 回の埋め込みだけ、読むだけ、外部キーなし、マッパーには広げない）を書き、data_model.md の約束も合わせた</td>
+<td style="text-align: left;">開発レビュー A-1、<a href="../../../adr/cargo-tracker/001-modular-monolith/">ADR-001</a></td>
 </tr>
 <tr>
 <td style="text-align: left;">6</td>
 <td style="text-align: left;"><strong>人の判断が要る（A-2）</strong>: 処理済みコマンドに追記専用の印を付け、DELETE の権限を外した。一方、運用要件 RET-06 は「処理済みコマンドを 90 日で削除する」</td>
-<td style="text-align: left;">データモデルの「追記専用」の方針に合わせた。削除の定期処理はまだない（W10 の運用準備）。(a) UPDATE だけを外す印を足す、(b) 掃除は運用の DB 利用者で行うと運用要件に書く、のどちらにするかを決めてほしい。90 日を過ぎた再送は「最初の結果」ではなく「すでに予約に使われています」になる</td>
-<td style="text-align: left;">開発レビュー A-2</td>
+<td style="text-align: left;">データモデルの「追記専用」の方針に合わせた。削除の定期処理はまだない（W10 の運用準備）。(a) UPDATE だけを外す印を足す、(b) 掃除は運用の DB 利用者で行うと運用要件に書く、のどちらにするかを決めてほしい。90 日を過ぎた再送は「最初の結果」ではなく「すでに予約に使われています」になる。<strong>決定（2026-10-09、human:kakimomokuri）: AI の判断を採用</strong>。追記専用のまま残し、削除は運用の DB 利用者で行う定期処理にする（(b)）と RET-06・運用要件に書いた。90 日を過ぎた再送の振る舞いを B-INV-03 に書いた</td>
+<td style="text-align: left;">開発レビュー A-2、非機能要件 RET-06</td>
 </tr>
 <tr>
 <td style="text-align: left;">7</td>
 <td style="text-align: left;"><strong>設定の判断が要る</strong>: SonarQube の品質ゲートは、新しい指摘 24 件（S8445「static の import を後ろに」）で FAIL。Spotless の整形（static を先に置く）と正反対の規則で、前の Bolt のファイルにも出ている。品質プロファイルで S8445 を外すか、整形の規則を変えるかを決めてほしい</td>
-<td style="text-align: left;">ほかの新しい指摘はすべて直した。整形と食い違う規則をコードで直すと、Spotless が元に戻す</td>
-<td style="text-align: left;">品質ゲート</td>
+<td style="text-align: left;">ほかの新しい指摘はすべて直した。整形と食い違う規則をコードで直すと、Spotless が元に戻す。<strong>決定（2026-10-09、human:kakimomokuri）: 品質プロファイルから外す</strong>。<code>sonar-local:profile</code>（<code>sonarqube.config.json</code> の「cargo-tracker way」。Sonar way を継承して S8445 だけを外す）を正式なタスクにして手順書に書き、品質ゲートは PASS になった</td>
+<td style="text-align: left;">品質ゲート、手順書</td>
 </tr>
 <tr>
 <td style="text-align: left;">8</td>
@@ -8486,7 +8486,7 @@
 </tr>
 <tr>
 <td style="text-align: left;">SonarQube（ローカル）</td>
-<td style="text-align: left;">品質ゲート <strong>FAIL</strong>（新しいコードのカバレッジ 94.8%、重複 0%、新しい指摘 24 件はすべて S8445「static の import を後ろに」。Spotless の整形と正反対の規則で、前の Bolt のファイルにも出ている。議題 7）。ほかの新しい指摘（ラムダの中の呼び出し 3 件、不要な <code>throws</code> 2 件）は直した</td>
+<td style="text-align: left;">品質ゲート PASS（新しいコードのカバレッジ 94.8%、重複 0%、新しい指摘 0 件）。最初は新しい指摘 24 件（すべて S8445。Spotless の整形と正反対の規則）で FAIL だったので、人の決定で品質プロファイルから外した（議題 7）。ほかの新しい指摘（ラムダの中の呼び出し 3 件、不要な <code>throws</code> 2 件）は直した</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>okf:check</code></td>
@@ -8532,13 +8532,13 @@
 <td style="text-align: left;">A-1</td>
 <td style="text-align: left;">マイグレーションが見積りの表を読む（ADR-001 の例外）に記録がない</td>
 <td style="text-align: left;">高</td>
-<td style="text-align: left;">議題 5 で人に諮る</td>
+<td style="text-align: left;">人に諮り、ADR-001 に条件つきの例外として書いた（議題 5）</td>
 </tr>
 <tr>
 <td style="text-align: left;">A-2</td>
 <td style="text-align: left;">追記専用の印と RET-06 の 90 日の削除が矛盾する</td>
 <td style="text-align: left;">高</td>
-<td style="text-align: left;">議題 6 で人に諮る</td>
+<td style="text-align: left;">人に諮り、削除は運用の DB 利用者で行うと RET-06・運用要件に書いた（議題 6）</td>
 </tr>
 <tr>
 <td style="text-align: left;">A-10</td>
@@ -8678,7 +8678,8 @@
 <h3 id="bolt">既知の課題（後の Bolt に持ち込む）<a class="headerlink" href="#bolt" title="Permanent link">&para;</a></h3>
 <ul>
 <li><strong>Bolt 25</strong>: 送り直しの文言「追跡の開始を待っています」は、追跡の開始が完了した後の再送では事実と合わなくなる（確認ポイント 9）。S-24 に後から戻る入口（S-10 の最小の一覧か導線）。<code>afterMigrate</code> の権限の付与の一覧に <code>tracking</code> を足す（A-11）</li>
-<li><strong>人の判断（未決）</strong>: A-1（ADR-001 の例外）、A-2（追記専用と RET-06）、SonarQube の S8445、D-85（承認の後に失効した見積りの再見積り。W6 の開始準備）</li>
+<li><strong>人の判断（未決）</strong>: D-85（承認の後に失効した見積りの再見積り。W6 の開始準備）</li>
+<li><strong>運用（W10）</strong>: 処理済みコマンドの 90 日の削除を、運用の DB 利用者で行う正式なタスクにする（RET-06）</li>
 <li><strong>エラーの画面</strong>: 400・404 の業務の画面（U-3、Bolt 23b の P-7）</li>
 <li><strong>AT-04</strong>: マッパーの SQL が自スキーマだけを参照する検査（A-10）</li>
 <li><strong>社内の画面の共通の部品</strong>: お知らせとリンクのまとまり、フラッシュ属性の名前、エラー要約とお知らせへのフォーカス（A-6・U-2、Bolt 23b の U-3）</li>
@@ -8711,6 +8712,11 @@
 </tr>
 </thead>
 <tbody>
+<tr>
+<td style="text-align: left;">2026-10-09</td>
+<td style="text-align: left;">議題 5・6・7 の決定を記録した（A-1・A-2 は AI の判断を採用、S8445 は品質プロファイルから外して品質ゲートが PASS）。ステップ 6（デモ環境の見本）を足した</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5、決定 human:kakimomokuri</td>
+</tr>
 <tr>
 <td style="text-align: left;">2026-10-09</td>
 <td style="text-align: left;">初版（ステップ 1〜5 の結果、開発レビュー、品質ゲート、既知の課題、承認の議題 1〜9、Try T-71〜T-73）</td>

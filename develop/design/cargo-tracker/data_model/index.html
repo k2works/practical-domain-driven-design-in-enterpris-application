@@ -8821,7 +8821,7 @@
 <li><code>audit_record</code> は <code>id</code>・<code>occurred_at</code>・<code>actor_user_id</code>・<code>actor_company_id</code>・<code>action</code>・<code>result</code>・<code>reason</code>・<code>correlation_id</code> を作り、追記だけにする（<code>[append-only]</code>）。<code>action</code> はログインの成功・失敗・ログアウト（<code>LOGIN_SUCCEEDED</code>・<code>LOGIN_FAILED</code>・<code>LOGOUT</code>）、<code>reason</code> は失敗の理由（<code>BAD_CREDENTIALS</code>・<code>UNKNOWN_USER</code>・<code>SUSPENDED</code>・<code>COMPANY_INACTIVE</code>）。存在しないメールアドレスでの失敗は、操作者を空にして記録し、メールアドレスは残さない。権限外のアクセスの試行の記録は US-16 の Bolt で足す。対象・変更前後・承認・出典・<code>event_id</code> の列は使う Bolt で足す。</li>
 <li><code>user_assignment</code>・<code>access_grant</code>・<code>kpi_baseline</code> は使う Bolt（US-16・US-19・US-21）で作る。</li>
 <li>既存の表の <code>shipper_company_id</code>・<code>consignee_company_id</code>・<code>submitted_by</code> などには外部キーを張らない。仮の荷受人の企業（US-16 の企業マスターまで設定にある）を表に持たないため、企業マスターで決める。</li>
-<li><code>db/dev-data/</code> の開発用のシードは、スキーマの所有（ADR-001）の例外として、ほかのコンテキストの表から写してよい（例: Bolt 21 の KPI 計測記録の最初の提示時刻を <code>quotation.quotation</code> から写す）。本番のマイグレーションとアプリケーションのコードでは、ほかのコンテキストの表を読まない。</li>
+<li><code>db/dev-data/</code> の開発用のシードは、スキーマの所有（ADR-001）の例外として、ほかのコンテキストの表から写してよい（例: Bolt 21 の KPI 計測記録の最初の提示時刻を <code>quotation.quotation</code> から写す）。本番のマイグレーションとアプリケーションのコードでは、ほかのコンテキストの表を読まない。ただし、写しの列を足すマイグレーションが既存の行を 1 回だけ埋めるときは、ADR-001 のコンプライアンスの例外として読んでよい（Bolt 24。<code>booking.booking.quotation_no</code>）。</li>
 <li>開発用の企業と利用者は <code>db/dev-data/</code> に置き、<code>dev</code> のときだけ Flyway の場所に足す。共通・ベンダーの場所に置かない（ADR-011 の決定 3）。</li>
 <li>Bolt 14 の認可はログインの時点の役割で行う。request ごとに <code>app_user</code>・<code>user_role</code> を確かめるのは、権限の取消し（US-18 AC6）とあわせて W5 で入れる。</li>
 </ul>

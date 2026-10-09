@@ -9226,7 +9226,7 @@
 <td style="text-align: left;">90 日</td>
 <td style="text-align: left;">削除</td>
 <td style="text-align: left;">提案</td>
-<td style="text-align: left;">再送が起こりうる期間を十分に覆う</td>
+<td style="text-align: left;">再送が起こりうる期間を十分に覆う。表は追記専用（アプリケーションの DB 利用者は UPDATE・DELETE できない）なので、削除は運用の DB 利用者（マイグレーションを流す利用者）で行う定期処理にする（Bolt 24 の開発レビュー A-2。AI の判断を human:kakimomokuri が採用）。90 日を過ぎた後の同じコマンド ID の再送は、最初の結果（S-24）ではなく「すでに予約に使われています」（S-02）になる</td>
 </tr>
 <tr>
 <td style="text-align: left;">RET-07</td>
