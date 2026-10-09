@@ -4141,6 +4141,41 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../development/cargo-tracker/bolt_25_report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 25 終了報告
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--draft"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -10288,7 +10323,7 @@
 <td style="text-align: left;">DE-07</td>
 <td style="text-align: left;">本予約を確定した</td>
 <td style="text-align: left;">予約</td>
-<td style="text-align: left;">予約 ID、予約版番号、追跡番号、見積り ID、輸送要求 ID・版、経路版、commit 時刻、発行元の集約の版、荷主・荷受人の企業 ID（Bolt 25 で足した。null 可。予約条件の写しから。区間は載せず、追跡が経路設計の公開 API で引く）</td>
+<td style="text-align: left;">予約 ID、予約版番号、追跡番号、見積り ID、輸送要求 ID・版、経路版、commit 時刻、発行元の集約の版、荷主・荷受人の企業 ID（Bolt 25 で足した。null 可。予約条件の写しから。区間は載せず、追跡が経路設計の公開 API で引く。null 可にしたのは Bolt 23・24 に発行した形を読むためで、発行の記録の未完了と保存期間（RET-05 の 30 日）にその形が残らなくなったら null 不可にする。Bolt 25 レビュー A-8）</td>
 <td style="text-align: left;">追跡: 経路設計の公開 API で区間を引いて追跡を開始し、DE-22 を発行する（ADR-015。Bolt 25）。予約の listener: 見積りの公開 API で輸送要求を予約確定済みにする（ADR-014。Bolt 23）。通知（本予約の確定）</td>
 <td style="text-align: left;">EV-03</td>
 </tr>

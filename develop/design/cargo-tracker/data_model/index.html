@@ -4001,6 +4001,41 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../development/cargo-tracker/bolt_25_report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 25 終了報告
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--draft"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -8742,7 +8777,7 @@
 </tr>
 <tr>
 <td style="text-align: left;"><code>booking_saga</code></td>
-<td style="text-align: left;">予約ごとに 1 つ。<code>status</code> IN（<code>IN_PROGRESS</code>、<code>COMPLETED</code>、<code>FAILED</code>、<code>NEEDS_HUMAN</code>）。完了は <code>status</code> と <code>updated_at</code>（完了の時刻を兼ねる）を期待版（<code>version</code>）で更新し、完了時刻の列は持たない。<code>current_step</code> は完了の後も <code>START_TRACKING</code> のまま（Bolt 25）。再試行の回数・次の時刻・最後の誤りは持たない（追跡の開始の再試行はイベントの再配信が担う。ADR-015）。有人確認要の判定は処理中の滞留（<code>started_at</code>）で行う</td>
+<td style="text-align: left;">予約ごとに 1 つ。<code>status</code> IN（<code>IN_PROGRESS</code>、<code>COMPLETED</code>、<code>FAILED</code>、<code>NEEDS_HUMAN</code>）。完了は <code>status</code> と <code>updated_at</code>（完了の時刻を兼ねる。予約が通知を受けた時刻で、追跡を開始した時刻ではない。Bolt 25 レビュー A-6）を期待版（<code>version</code>）で更新し、完了時刻の列は持たない。<code>current_step</code> は完了の後も <code>START_TRACKING</code> のまま（Bolt 25）。再試行の回数・次の時刻・最後の誤りは持たない（追跡の開始の再試行はイベントの再配信が担う。ADR-015）。有人確認要の判定は処理中の滞留（<code>started_at</code>）で行う</td>
 <td style="text-align: left;">ARCH-HO-02</td>
 </tr>
 <tr>

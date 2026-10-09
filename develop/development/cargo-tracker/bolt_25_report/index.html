@@ -6,17 +6,17 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="20 回目の Bolt の終了報告。ADR-014（下流から上流への通知は下流の listener が上流の公開 API を呼ぶ）、見積りの経路版の割当て（DE-21）と荷主の承認（DE-04）、輸送要求の荷主承認待ち・予約待ち、公開 API の経路の割当てと経路設計の DE-05 の listener、割り当てた経路の写しの表、C-17 と C-04・S-02・S-06・S-07、5 視点の開発レビューと対応（D-73〜D-78）、品質ゲート、デモ項目と動画、仮説 H1〜H3 の結論、承認ゲートを後でまとめて受ける議題、ふりかえりをまとめる。">
+        <meta name="description" content="25 回目の Bolt の終了報告。tracking モジュールと追跡記録を新設し、追跡が DE-07 を受けて経路設計の公開 API から確定した経路版の区間を予定として採用し、DE-22 を挟んだ別のトランザクションで予約の公開 API に返して予約サガを完了にした。公開 API は人の指示で interfaces.api に置いた。/goal で止まらなかった承認ゲート、スキーマの承認、開発レビューの対応、人に諮る設計の判断、既知の課題を記録する。">
       
       
         <meta name="author" content="k2works">
       
       
       
-        <link rel="prev" href="../bolt_20_plan/">
+        <link rel="prev" href="../bolt_25_plan/">
       
       
-        <link rel="next" href="../bolt_21_plan/">
+        <link rel="next" href="../../../operation/">
       
       
         
@@ -27,7 +27,7 @@
     
     
       
-        <title>Bolt 20 終了報告 - 確定した経路の割当てと荷主の承認（US-24 AC4・AC5） - 実践ドメイン駆動設計 in エンタープライズアプリケーション</title>
+        <title>Bolt 25 終了報告 - 追跡の開始と予約サガの成功の経路（US-04、ADR-015、#10） - 実践ドメイン駆動設計 in エンタープライズアプリケーション</title>
       
     
     
@@ -78,7 +78,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#bolt-20-us-24-ac4ac5" class="md-skip">
+        <a href="#bolt-25-us-04adr-01510" class="md-skip">
           Skip to content
         </a>
       
@@ -112,7 +112,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Bolt 20 終了報告 - 確定した経路の割当てと荷主の承認（US-24 AC4・AC5）
+              Bolt 25 終了報告 - 追跡の開始と予約サガの成功の経路（US-04、ADR-015、#10）
             
           </span>
         </div>
@@ -3266,44 +3266,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Bolt 20 終了報告
-  
-
-    
-  </span>
-  
-  
-    
-  
-  
-    <span class="md-status md-status--stable"></span>
-  
-
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../bolt_20_report/" class="md-nav__link">
         
   
   
@@ -3326,231 +3292,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#t-36" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        承認の議題（T-36。先に確かめてほしいこと）
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#_1" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        基本情報
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#_2" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        成果
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="成果">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#_3" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        ステップの結果
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#_4" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        作ったもの
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#_5" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        デモ項目
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#_6" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        指標
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="指標">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#_7" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        時間の内訳
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#_8" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        品質ゲート
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#_9" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        仮説の結論
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#_10" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        判断と学び
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="判断と学び">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#_11" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        人の決定
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#bolt" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        既知の課題（後の Bolt に持ち込む）
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#kpt" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        ふりかえり（KPT）
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#bolt_1" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        次の Bolt
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#_12" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        更新履歴
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#_13" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        関連ドキュメント
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -3945,10 +3686,44 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../bolt_25_report/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 25 終了報告
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--draft"></span>
+  
+
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -3971,6 +3746,225 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#t-36" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        承認の議題（T-36。先に確かめてほしいこと）
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        基本情報
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        成果
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="成果">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ステップの結果
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        作ったもの
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        デモ項目
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_6" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        指標
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_7" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        品質ゲート
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_8" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        仮説の結論
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_9" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        開発レビュー
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_10" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        判断と学び
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="判断と学び">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#t-39-red" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T-39 の記録（Red を確かめなかったテスト）
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bolt" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        既知の課題（後の Bolt に持ち込む）
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#kpt" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ふりかえり（KPT）
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#bolt_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        次の Bolt
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_11" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        更新履歴
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_12" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        関連ドキュメント
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -8342,9 +8336,9 @@
   
 
 
-<h1 id="bolt-20-us-24-ac4ac5">Bolt 20 終了報告 - 確定した経路の割当てと荷主の承認（US-24 AC4・AC5）<a class="headerlink" href="#bolt-20-us-24-ac4ac5" title="Permanent link">&para;</a></h1>
+<h1 id="bolt-25-us-04adr-01510">Bolt 25 終了報告 - 追跡の開始と予約サガの成功の経路（US-04、ADR-015、#10）<a class="headerlink" href="#bolt-25-us-04adr-01510" title="Permanent link">&para;</a></h1>
 <h2 id="t-36">承認の議題（T-36。先に確かめてほしいこと）<a class="headerlink" href="#t-36" title="Permanent link">&para;</a></h2>
-<p>人の指示（<code>/goal Bolt20</code>）により、計画の承認から終了報告の前まで、すべての承認ゲートで止まらずに進めた。止まらなかったゲートごとの判断を、ここでまとめて確かめてほしい。</p>
+<p>人の指示（<code>/goal Bolt25</code>）により、計画の承認から終了報告の前まで、スキーマを除く承認ゲートで止まらずに進めた。止まらなかったゲートごとの判断と、人の判断が要る設計の論点を次に置く。</p>
 <table>
 <thead>
 <tr>
@@ -8357,57 +8351,57 @@
 <tbody>
 <tr>
 <td style="text-align: left;">1</td>
-<td style="text-align: left;">計画の確認ポイント 1〜12 を推奨のまま採った</td>
-<td style="text-align: left;">範囲（US-24 AC4・AC5）と D-71 の形は人が決めていた。確認ポイントはその形から導いた細部</td>
-<td style="text-align: left;"><a href="../bolt_20_plan/">Bolt 20 計画</a></td>
+<td style="text-align: left;"><strong>計画の verify</strong>: 計画は確認ポイントへの回答（2026-10-09）と <code>/goal Bolt25</code> を承認として進めた。計画の verify（<code>okf_apply.py verify --by human:kakimomokuri</code>）は人の名前で検証を記録する操作のため実行していない</td>
+<td style="text-align: left;">Bolt 23b・24 と同じ</td>
+<td style="text-align: left;"><a href="../bolt_25_plan/">Bolt 25 計画</a></td>
 </tr>
 <tr>
 <td style="text-align: left;">2</td>
-<td style="text-align: left;">ADR-014 の文面（下流から上流への通知。DE-05・DE-06・DE-07 に適用、イベントの発行の仕方の基準、技術の失敗は起動のときの再配信）。ステータスは「提案」にしてある。承認なら <code>stable</code> にする</td>
-<td style="text-align: left;">D-71 で人が採った推奨の形をそのまま書いた。レビューで、再配信が起動のときだけであることを書き直した（D-77）</td>
-<td style="text-align: left;"><a href="../../../adr/cargo-tracker/014-downstream-to-upstream-notification/">ADR-014</a></td>
+<td style="text-align: left;"><strong>スキーマの承認</strong>（ステップ 2。T-67 のとおり止めた）: 停止フックの指摘の末尾に <code>y</code> が付いて届いたものを、マイグレーションの承認として受け取って進めた。人の入力として正しかったか確かめてほしい。承認を待つ間、停止フックは同じ指摘を 10 回あまり繰り返したが、承認がないまま進めなかった</td>
+<td style="text-align: left;">Bolt 24 の議題 2 と同じ形で、Bolt 24 では人が承認として認めた</td>
+<td style="text-align: left;"><code>V20261009130000__create_tracking.sql</code>、<code>afterMigrate__grant_app_user.sql</code></td>
 </tr>
 <tr>
 <td style="text-align: left;">3</td>
-<td style="text-align: left;">ステップ 2〜4 の Red・Green と、データベース・モジュールの境界・画面のゲート</td>
-<td style="text-align: left;">列・CHECK・表・公開 API・画面の文言は、計画の設計とデータモデル・UI 設計・ADR-014 のとおり。計画からの変更（C-17、輸送要求の状態の値、C-17 の補足の文言）は設計文書に戻した（T-53）</td>
-<td style="text-align: left;">計画の各ステップの結果</td>
+<td style="text-align: left;"><strong>設計文書・モジュールの境界・新しい注釈・Red／Green・画面のゲート</strong>（ステップ 1・3・4・5）</td>
+<td style="text-align: left;">どれも計画の確認ポイントの決定（2026-10-09、human:kakimomokuri）と設計文書のとおり。Red を確かめなかったテストは下の「T-39 の記録」に書いた</td>
+<td style="text-align: left;">計画のステップ 1〜5 の結果</td>
 </tr>
 <tr>
 <td style="text-align: left;">4</td>
-<td style="text-align: left;">開発レビューの判断 D-73〜D-77 を直し、D-78 を後に回した</td>
-<td style="text-align: left;">欠陥（遅れて届いたイベントの偽の警告）と荷主の画面の矛盾（承認の後の失効）はこの Bolt で直した</td>
-<td style="text-align: left;"><a href="../../../review/cargo-tracker/bolt_20_review_20261008/">Bolt 20 のレビュー</a></td>
+<td style="text-align: left;"><strong>計画からの変更（人の判断が要る）: 層の規則の例外を合成ルートにも広げた</strong>。確認ポイント 21 の決定は「腐敗防止層から他のコンテキストの <code>interfaces.api</code> を参照してよい」だった。合成ルート（<code>infrastructure.config</code>）が公開 API の bean を腐敗防止層に渡すところで規則が落ちたため、例外の対象に合成ルートを足した（開発レビュー A-3）。代わりの案は、(b) 例外を「呼ぶ側と呼ばれる側の最上位パッケージが異なる」に絞る、(c) 「他のコンテキストの <code>interfaces.api</code> の型をコンストラクタの引数に持つのは腐敗防止層だけ」の見張りの規則を足す</td>
+<td style="text-align: left;">応用の部品（腐敗防止層）は部品探索の対象外なので、合成ルートが組み立てるしかない。見積りの公開 API を使う予約・経路設計の合成ルートも同じ形（<code>quotation.api</code> は層の規則の外なので規則に当たらなかった）</td>
+<td style="text-align: left;"><code>LayerArchitectureTest</code>、architecture_backend.md「公開 API の置き場所と形」</td>
 </tr>
 <tr>
 <td style="text-align: left;">5</td>
-<td style="text-align: left;">荷主と営業の画面の文言（C-17 の「承認は本予約の確定ではありません」「有効期限（…）までに承認してください」、C-04 の承認の前後と失効の案内、S-02 の「経路設計中・荷主承認待ち・予約待ち」、S-07 の「確定した経路は見積りに割り当てられ、荷主の承認に進みます」、荷主の画面の状態の表示名）</td>
-<td style="text-align: left;">UI 設計の C-17 の行と、利用者代表・テクニカルライターのレビュー</td>
-<td style="text-align: left;">UI 設計、テンプレート、動画</td>
+<td style="text-align: left;"><strong>計画からの変更</strong>: 公開 API の実装（インバウンドアダプター）は <code>&lt;コンテキスト&gt;.interfaces.api.internal</code> に置き、部品探索で拾う（画面のコントローラーと同じ）。「アダプターは誰からも型で参照しない」見張りの規則を足した（開発レビュー A-4）</td>
+<td style="text-align: left;">合成ルートは層の規則で interfaces の実装を参照できない。名前付きインターフェースが子のパッケージを含むかに左右されないため</td>
+<td style="text-align: left;">architecture_backend.md、<code>LayerArchitectureTest</code></td>
 </tr>
 <tr>
 <td style="text-align: left;">6</td>
-<td style="text-align: left;">期限を過ぎた詳細設計依頼済みの見積りにも割り当て、承認で失効として拒否する（荷主承認待ちのまま新しい見積りの依頼を案内する）</td>
-<td style="text-align: left;">計画の確認ポイント 3。レビューで出口がないと指摘があり、出口（経路設計の途中の再見積り）は US-05・US-08 で決めると記録した</td>
-<td style="text-align: left;">レビューの矛盾事項 2</td>
+<td style="text-align: left;"><strong>人の判断が要る（A-1）</strong>: 予約サガが失敗・有人確認要（W8）のときに遅れて届いた追跡の開始の結果は、例外にせず <code>NotCompleted(SAGA_NOT_IN_PROGRESS)</code> を返し、状態を変えない形にした。代わりの案は、(b) 有人確認要 → 完了の遷移を業務として認める（遅れて成功した場合）</td>
+<td style="text-align: left;">例外にすると、再配信しても直らない失敗が配信の記録に残り続ける（Bolt 21 の毒入りのメッセージと同じ型）。業務の判断（有人確認要の後に完了にしてよいか）は W8 で有人確認要を作るときに決め直せる</td>
+<td style="text-align: left;"><code>BookingSagaCommandService</code>、ADR-015</td>
 </tr>
 <tr>
 <td style="text-align: left;">7</td>
-<td style="text-align: left;">#5 をクローズした（R0.1 の範囲。AC2・AC3 は既存の #26。計画の確認ポイント 1 の「新しい Issue」は作らなかった）</td>
-<td style="text-align: left;">#26 がすでにあった</td>
-<td style="text-align: left;"><a href="https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/5">#5</a></td>
+<td style="text-align: left;"><strong>既知の制約（記録）</strong>: Bolt 25 の前に確定した予約は、追跡の listener ができる前に DE-07 の配信を終えているので、追跡の開始が起きない（再配信の対象もない）。デモ環境は再起動のたびに初期状態に戻る（手順書）ので、Bolt 25 の配備の再起動で Bolt 23・24 の予約は残らない。ステージング・本番はまだない（W10）。本番の運用が始まった後に同じことを起こさないよう、W8 で有人確認要を作るときに「予約 ID を指定して追跡の開始を起こし直す管理用の操作」を要るかどうか決める（開発レビューの懸念）</td>
+<td style="text-align: left;">手順書の「再起動すると…開発用の企業と利用者だけになります」</td>
+<td style="text-align: left;">手順書 heroku_demo_setup.md、計画の確認ポイント 19</td>
 </tr>
 <tr>
 <td style="text-align: left;">8</td>
-<td style="text-align: left;">デモの動画は Bolt 20 の 1 本だけを足し、<code>demoVideo</code> が撮り直した過去の Bolt の動画は元に戻した。承認の後、人が <code>DEMO_BOLT=bolt-20 DEMO_ISSUE=5 npx gulp issue:attach-demo</code> で #5 に添付する</td>
-<td style="text-align: left;">過去の画面のうち変えたのは S-02 の見出しと S-07・S-06 の文言だけ</td>
-<td style="text-align: left;"><code>docs/assets/demo/bolt-20/</code></td>
+<td style="text-align: left;">開発レビューの対応の範囲（下の「開発レビュー」）</td>
+<td style="text-align: left;">正しさ（例外が listener とサービスから漏れる 2 経路）、テストの補強、文言、契約の Javadoc は直した</td>
+<td style="text-align: left;">開発レビュー</td>
 </tr>
 <tr>
 <td style="text-align: left;">9</td>
-<td style="text-align: left;">人に確かめてほしいこと: デモ環境で経路設計者として RC-2026-0902 を確定し、荷主 A で TR-2026-0905 の見積りと経路を承認する。あわせて、C-17 をスクリーンリーダーで操作して #5 の完了の定義の手動の確認を記録する</td>
-<td style="text-align: left;">デモ環境はセッションのネットワークの方針で接続が拒否される。同じ dev プロファイルとサンプルのデータで手元に起動して、同じ流れが通ることは AI が確かめた（デモ項目の節）</td>
-<td style="text-align: left;">—</td>
+<td style="text-align: left;">#10 は終了報告の承認の後にクローズし、US-04 の AC3・AC5（W6）の Issue を新しく作る</td>
+<td style="text-align: left;">計画の確認ポイント 14</td>
+<td style="text-align: left;"><a href="https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/10">#10</a></td>
 </tr>
 </tbody>
 </table>
@@ -8422,27 +8416,23 @@
 <tbody>
 <tr>
 <td style="text-align: left;">Bolt</td>
-<td style="text-align: left;">第 20 回</td>
+<td style="text-align: left;">第 25 回</td>
 </tr>
 <tr>
 <td style="text-align: left;">期間</td>
-<td style="text-align: left;">2026-10-08 10:10 JST（計画のコミット <code>14b9174</code>）〜 11:55 頃（本報告の初版）</td>
+<td style="text-align: left;">2026-10-09 13:31 JST（計画の初版 <code>4252c28</code>）〜 本報告</td>
 </tr>
 <tr>
 <td style="text-align: left;">対象</td>
-<td style="text-align: left;">U1 見積り。US-24 見積りと経路に回答・承認する（AC4・AC5）。<a href="https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/5">#5</a>（R0.1 の残り）。Bolt 19 レビュー D-71</td>
+<td style="text-align: left;">新しい <code>tracking</code>（追跡記録、DE-07・DE-22 の listener）、<code>booking</code>（<code>booking.interfaces.api</code>、予約サガの完了、DE-07 の属性、S-09・S-24 の文言）、<code>routing</code>（<code>routing.interfaces.api</code>）</td>
+</tr>
+<tr>
+<td style="text-align: left;">GitHub</td>
+<td style="text-align: left;"><a href="https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/10">#10</a>（US-04 の SP 5 をこの Bolt で数える）</td>
 </tr>
 <tr>
 <td style="text-align: left;">計画</td>
-<td style="text-align: left;"><a href="../bolt_20_plan/">Bolt 20 計画</a></td>
-</tr>
-<tr>
-<td style="text-align: left;">ゴール</td>
-<td style="text-align: left;">経路設計者が経路を確定すると、経路設計の中の listener が見積りの公開 API で依頼元の見積りに経路版を割り当て、見積りと輸送要求が荷主承認待ちになる。荷主担当者が C-17 で見積りと確定した経路を確かめて承認すると、承認が記録され輸送要求は予約待ちになる。失効・置換済みの見積りへの承認は拒否される</td>
-</tr>
-<tr>
-<td style="text-align: left;">進め方</td>
-<td style="text-align: left;"><code>/goal Bolt20</code> で承認ゲートを止めずに進めた（上の議題）</td>
+<td style="text-align: left;"><a href="../bolt_25_plan/">Bolt 25 計画</a></td>
 </tr>
 </tbody>
 </table>
@@ -8452,72 +8442,74 @@
 <thead>
 <tr>
 <th style="text-align: left;">ステップ</th>
-<th style="text-align: left;">状態</th>
+<th style="text-align: left;">結果</th>
 <th style="text-align: left;">コミット</th>
-<th style="text-align: left;">途中で起きたこと</th>
+<th style="text-align: left;">備考</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td style="text-align: left;">1. ADR-014 と設計文書</td>
-<td style="text-align: left;">完了（議題 2）</td>
-<td style="text-align: left;"><code>75bef43</code></td>
-<td style="text-align: left;">UI 設計では承認の画面が C-17 だった（計画は C-05 と書いていた）。輸送要求の状態の値はデータモデルの既存の値に合わせた</td>
+<td style="text-align: left;">1. 設計文書とモジュールの骨組み</td>
+<td style="text-align: left;">完了</td>
+<td style="text-align: left;"><code>d5517af</code></td>
+<td style="text-align: left;">ADR-015 の依存の向きの改訂、AT-04、<code>@CoreConcept</code></td>
 </tr>
 <tr>
-<td style="text-align: left;">2. 見積りと輸送要求の規則</td>
-<td style="text-align: left;">完了（議題 3）</td>
-<td style="text-align: left;"><code>7d019bd</code>（Red）、<code>8bab034</code>（Green）</td>
-<td style="text-align: left;">社内の拒否の文言の分岐が Checkstyle の循環的複雑度を超えた</td>
+<td style="text-align: left;">2. スキーマと永続化</td>
+<td style="text-align: left;">完了</td>
+<td style="text-align: left;"><code>8ae0012</code></td>
+<td style="text-align: left;">人の承認（<code>y</code>）の後。GRANT の漏れの検査を DB のスキーマから導く形に</td>
 </tr>
 <tr>
-<td style="text-align: left;">3. 表・公開 API・listener</td>
-<td style="text-align: left;">完了（議題 3）</td>
-<td style="text-align: left;"><code>8faa42f</code>（Red）、<code>b3ac216</code>（Green）</td>
-<td style="text-align: left;">業務ルール層の組み立てで、発行する部品と購読する部品が互いに依存した（購読の登録を別の部品に分けた）。既存の CHECK のテストが「まだ使わない状態」に APPROVED を使っていた</td>
+<td style="text-align: left;">3. 追跡記録の集約と予定</td>
+<td style="text-align: left;">完了</td>
+<td style="text-align: left;"><code>e7ea499</code></td>
+<td style="text-align: left;">Red 14 件 → Green</td>
 </tr>
 <tr>
-<td style="text-align: left;">4. C-17・C-04・S-02・S-06・S-07</td>
-<td style="text-align: left;">完了（議題 3・5）</td>
-<td style="text-align: left;"><code>4c1c096</code>（Red）、<code>77ffb33</code>（Green）</td>
-<td style="text-align: left;">Bolt 19 の画面の層のステップが候補の番号を決め打ちしていて、このシナリオの航海で落ちた（テストの誤り）。新しいステップの文が既存のステップと重なった（テストの誤り）</td>
+<td style="text-align: left;">4. DE-07 の購読と 2 つの公開 API、予約サガの完了</td>
+<td style="text-align: left;">完了</td>
+<td style="text-align: left;"><code>0b129c5</code>、<code>8ae0012</code></td>
+<td style="text-align: left;">層の規則の例外。確定から予約サガの完了までの統合テスト</td>
 </tr>
 <tr>
-<td style="text-align: left;">5. 開発レビューと終了報告</td>
-<td style="text-align: left;">完了（議題 4・6〜9）</td>
-<td style="text-align: left;"><code>497c150</code>（Red）、<code>28c9e74</code>（Green）、<code>02a84bf</code>（SonarQube）、<code>27b15ec</code>（動画）、本報告</td>
-<td style="text-align: left;">テンプレートの SpEL で null の文字列に <code>and</code> を使って画面が壊れた（直した）。SonarQube の Bug 1・Code Smell 2</td>
+<td style="text-align: left;">5. S-24 と文言、画面の層</td>
+<td style="text-align: left;">完了</td>
+<td style="text-align: left;"><code>469502d</code>、<code>8ae0012</code></td>
+<td style="text-align: left;">デモ項目 <code>@demo-bolt-25/start-tracking</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">6. 開発レビューと終了報告</td>
+<td style="text-align: left;">完了</td>
+<td style="text-align: left;">本報告のコミット</td>
+<td style="text-align: left;">3 つの観点のレビュー、SonarQube、受入動画</td>
 </tr>
 </tbody>
 </table>
 <h3 id="_4">作ったもの<a class="headerlink" href="#_4" title="Permanent link">&para;</a></h3>
 <ul>
-<li>決定: ADR-014（下流から上流への通知は、下流の listener が上流の公開 API の冪等な操作を呼ぶ）</li>
-<li>ドメイン: <code>Quotation.assignRoute</code>・<code>approveByShipper</code>・<code>approvalRejectionAt</code>、<code>QuotationStatus</code> の荷主承認待ち・承認済みと <code>isRoutingStarted</code>、<code>AssignedRoute</code>・<code>AssignedRouteLeg</code>・<code>ShipperApproval</code>・<code>RouteAssignmentResult</code>、DE-21 <code>QuotationRouteAssigned</code>・DE-04 <code>QuotationApprovedByShipper</code>、<code>TransportRequest.markAwaitingApproval</code>・<code>markReadyToBook</code>・<code>hasReached</code>（見積りのイベントで先へだけ進める並び）</li>
-<li>公開 API と連携: <code>quotation.api.RouteAssignment</code>（引数・結果の record、理由の定数）と <code>RouteAssignmentService</code>、経路設計の DE-05 の listener <code>QuotationRouteAssignmentEventHandler</code> と ACL <code>QuotationRouteAssignments</code>、見積りの DE-21・DE-04 の listener、荷主の承認の入力ポート</li>
-<li>永続化: マイグレーション 2 本（経路版の参照・荷主承認の列と CHECK、<code>assigned_route_leg</code>、部分一意インデックス）、リポジトリ（区間の写し、ID での読み出し）、S-02 の読み取りモデルの状態</li>
-<li>画面: C-17（見積りと経路の承認）、割り当てた経路の断片、C-04（確定した経路と承認の入口、承認済み、承認の前後の失効）、S-02（荷主承認待ち・予約待ち）、S-04 の案内、S-07・S-06 の文言</li>
-<li>運用: <code>issue:attach-demo</code> の本文の録画のコマンドを実在の形に直した</li>
+<li><code>tracking</code> モジュール: 追跡記録（<code>TrackingRecord</code>、<code>@CoreConcept</code>）・予定・予定区間・追跡番号（コンテキスト固有）・追跡状態・追跡の予約状態、DE-22 追跡を開始した、<code>tracking</code> スキーマ（<code>tracking_record</code>・<code>scheduled_leg</code>）と MyBatis の実装</li>
+<li>追跡の開始: DE-07 の listener が経路設計の公開 API（<code>routing.interfaces.api.RouteVersionLegQuery</code>）から確定した経路版の区間を引いて予定として採用し、追跡記録の保存と同じトランザクションで DE-22 を発行する。DE-22 の listener が予約の公開 API（<code>booking.interfaces.api.TrackingStartNotification</code>）で予約サガを完了にする（別のトランザクション。ADR-014 の形）</li>
+<li>冪等: 追跡記録は予約 ID で一意（<code>uk_tracking_record_booking</code>）。予約サガは処理中のときだけ期待版で完了にする。予約の値の写しや区間が規則に合わない DE-07、処理中でない予約サガへの通知は、例外にせず警告のログで終える</li>
+<li>DE-07 に荷主・荷受人の企業 ID（null 可）。区間は載せない（payload を小さく保つ）</li>
+<li>S-09 の確定のお知らせから「追跡の開始を待っています。」を外し、S-24 に「追跡の開始: 完了」。処理中のときだけ、自動では変わらないことと開き直すリンクと問い合わせ先を示す</li>
+<li>検査: AT-04（マッパーの SQL が自分のスキーマだけを参照する）、「予約・経路設計は追跡に依存しない」、公開 API の形の検査を <code>interfaces.api</code> に、アダプターを誰も型で参照しない、業務のスキーマの GRANT の漏れ</li>
 </ul>
 <h3 id="_5">デモ項目<a class="headerlink" href="#_5" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
 <tr>
 <th style="text-align: left;">デモ項目</th>
-<th style="text-align: left;">受入条件</th>
 <th style="text-align: left;">動画</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td style="text-align: left;">荷主がキー操作だけで確定した経路と見積りを確かめて承認する</td>
-<td style="text-align: left;">US-24 AC4</td>
-<td style="text-align: left;"><a href="../../../assets/demo/bolt-20/approve-quotation-and-route.webm" target="_blank">approve-quotation-and-route.webm</a></td>
+<td style="text-align: left;">営業担当者が本予約を確定し、予約の詳細を更新すると追跡の開始が完了と出る（<code>@demo-bolt-25/start-tracking</code>）</td>
+<td style="text-align: left;"><a href="../../../assets/demo/bolt-25/start-tracking.webm" target="_blank">動画</a></td>
 </tr>
 </tbody>
 </table>
-<p>AI は動画（19.5 秒）を 1 秒ごとのフレームで通して確かめた。提出 → 見積りの算出と提示 → 回答 → 経路設計者の算出と S-07 の確定（「確定した経路は見積りに割り当てられ、荷主の承認に進みます。」）→ C-04 の「見積りと経路の承認待ち（お客様の対応待ち）」→ C-17 → 承認の後の C-04（「…の見積りと経路を承認しました。担当営業が本予約を確定します。」、状態「予約待ち（A 社の対応待ち）」）の順に映っている。キー操作の細部（フォーカスの移り）は、<code>uiTest</code> のキー操作のステップが確かめている。</p>
-<p>デモ環境（Heroku）は、このセッションのネットワークの方針で接続が拒否される（connect_rejected）。代わりに、デモ環境と同じ dev プロファイルとサンプルのデータ（<code>db/dev-data</code>）で手元にアプリケーションを起動し、ブラウザで、経路設計者として RC-2026-0902 の候補 1 を確定し、荷主 A として TR-2026-0905 の見積りと経路を C-17 で承認した。S-06 の結果の文言、C-04 の状態の移り（見積りと経路の承認待ち → 予約待ち）、C-17 の確定した経路（RC-2026-0902 経路版 1、DEMO-101、到着予定）、S-02 の「荷主承認済み（予約待ち）」を確かめた（2026-10-08）。デモ環境そのものでの確かめは人に依頼する（議題 9）。支援技術（スクリーンリーダー）による手動の確認はこのセッションではできず、#5 の完了の定義のその項目は未確認のまま残す（axe-core の自動検査は 0 件）。</p>
 <h2 id="_6">指標<a class="headerlink" href="#_6" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
@@ -8528,102 +8520,63 @@
 </thead>
 <tbody>
 <tr>
-<td style="text-align: left;">SP</td>
-<td style="text-align: left;">3（US-24 の R0.1 の全体。AC1 は Bolt 12 で作り、#5 のクローズで数えた）</td>
-</tr>
-<tr>
 <td style="text-align: left;">テスト</td>
-<td style="text-align: left;"><code>test</code> 1,116 件（Bolt 19 の 1,049 件から +67）、<code>uiTest</code> 56 本（+2）</td>
+<td style="text-align: left;"><code>test</code> 1,407 件（Bolt 24 の 1,338 件から +69。単体・統合・業務ルール層の受入シナリオ 120 本・アーキテクチャ）、<code>uiTest</code> 65 本（+1）、<code>documentationTest</code> 1 件</td>
 </tr>
 <tr>
-<td style="text-align: left;">承認ゲート</td>
-<td style="text-align: left;">9（計画、ステップ 1、ステップ 2 の Red・Green、ステップ 3、ステップ 4、開発レビューの判断、終了報告）。AI の判断で通したのは 8（T-36）、終了報告は承認待ち</td>
+<td style="text-align: left;">承認ゲートの通過</td>
+<td style="text-align: left;">計画（確認ポイントへの回答と <code>/goal Bolt25</code>）、スキーマの承認 1 回（<code>y</code>）、終了報告（本報告）。途中のゲートは止まらなかった（議題 3）</td>
 </tr>
 <tr>
 <td style="text-align: left;">人の変更依頼</td>
-<td style="text-align: left;">0（本報告の時点）</td>
+<td style="text-align: left;">1（公開 API の置き場所を開発ガイドに合わせる。2026-10-09、開始準備の途中。CLAUDE.md とメモリに反映した）</td>
 </tr>
 <tr>
-<td style="text-align: left;">CI</td>
-<td style="text-align: left;">ステップ 1（#120）・2（#121）・3（#122）・4（#123）は成功。レビュー対応（#124）は次の push で取り消され、#125（SonarQube の対応まで）で check・ui・deploy-demo とも成功し、デモ環境へ配備した</td>
-</tr>
-</tbody>
-</table>
-<h3 id="_7">時間の内訳<a class="headerlink" href="#_7" title="Permanent link">&para;</a></h3>
-<table>
-<thead>
-<tr>
-<th style="text-align: left;">ステップ</th>
-<th style="text-align: left;">目安</th>
-<th style="text-align: left;">実際</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align: left;">1</td>
-<td style="text-align: left;">40 分</td>
-<td style="text-align: left;">約 18 分（10:10〜10:28）</td>
-</tr>
-<tr>
-<td style="text-align: left;">2</td>
-<td style="text-align: left;">50 分</td>
-<td style="text-align: left;">約 9 分（10:28〜10:37）</td>
-</tr>
-<tr>
-<td style="text-align: left;">3</td>
-<td style="text-align: left;">70 分</td>
-<td style="text-align: left;">約 12 分（10:37〜10:49）</td>
-</tr>
-<tr>
-<td style="text-align: left;">4</td>
-<td style="text-align: left;">60 分</td>
-<td style="text-align: left;">約 28 分（10:49〜11:17。<code>uiTest</code> 3 回）</td>
-</tr>
-<tr>
-<td style="text-align: left;">5</td>
-<td style="text-align: left;">50 分</td>
-<td style="text-align: left;">約 38 分（11:17〜11:55。レビュー、対応、SonarQube、動画、本報告）</td>
-</tr>
-<tr>
-<td style="text-align: left;">合計</td>
-<td style="text-align: left;">270 分</td>
-<td style="text-align: left;">約 105 分</td>
+<td style="text-align: left;">リードタイム</td>
+<td style="text-align: left;">約 2 時間半（計画の初版 13:31 から本報告まで。スキーマの承認待ちの時間を含む）</td>
 </tr>
 </tbody>
 </table>
-<p>打ち切った項目はない。</p>
-<h2 id="_8">品質ゲート<a class="headerlink" href="#_8" title="Permanent link">&para;</a></h2>
+<h2 id="_7">品質ゲート<a class="headerlink" href="#_7" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
 <tr>
-<th style="text-align: left;">項目</th>
+<th style="text-align: left;">ゲート</th>
 <th style="text-align: left;">結果</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td style="text-align: left;"><code>./gradlew check</code></td>
-<td style="text-align: left;">緑（1,116 件、SpotBugs・Checkstyle・spotless・<code>documentationTest</code>）</td>
+<td style="text-align: left;"><code>test</code>・<code>documentationTest</code></td>
+<td style="text-align: left;">通過</td>
 </tr>
 <tr>
-<td style="text-align: left;"><code>./gradlew uiTest</code></td>
-<td style="text-align: left;">緑（56 本、axe-core の違反 0 件）</td>
+<td style="text-align: left;"><code>uiTest</code>（axe-core を含む）</td>
+<td style="text-align: left;">通過（65 本）</td>
 </tr>
 <tr>
-<td style="text-align: left;">モジュールの境界</td>
-<td style="text-align: left;"><code>routing</code> の <code>allowedDependencies</code> は変えていない（<code>shared</code>・<code>quotation :: events</code>・<code>quotation :: api</code>）。見積りは経路設計に依存しない（ArchUnit）。ApplicationModules の検証が緑</td>
+<td style="text-align: left;">ModularityTest・ArchUnit</td>
+<td style="text-align: left;">通過。<code>booking</code>・<code>routing</code> は <code>tracking</code> に依存しない</td>
 </tr>
 <tr>
-<td style="text-align: left;">SonarQube</td>
-<td style="text-align: left;">Quality Gate PASS（<code>sonar-local:start</code>）。最初の走査で Bug 1（<code>Optional</code> の読み出し）・Code Smell 2 を直して、未解決のイシュー 0、カバレッジ 93.8%</td>
+<td style="text-align: left;">Spotless・Checkstyle・SpotBugs</td>
+<td style="text-align: left;">通過</td>
 </tr>
 <tr>
-<td style="text-align: left;">OKF</td>
-<td style="text-align: left;"><code>okf:check</code> ERROR 0</td>
+<td style="text-align: left;">CI（check・ui・デモ環境への配備）</td>
+<td style="text-align: left;">本報告のコミットで確かめる</td>
+</tr>
+<tr>
+<td style="text-align: left;">SonarQube（ローカル）</td>
+<td style="text-align: left;">品質ゲート PASS（新しいコードのカバレッジ 96.2%、重複 0%、新しい指摘 0 件）。最初は新しい指摘 29 件で FAIL（変数名 <code>record</code>、ラムダの中の 2 つの呼び出し、使わない変数、メソッド参照、引数の多さ）。どれも直した（引数の多さは前例どおり理由を添えて抑止した）</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>okf:check</code></td>
+<td style="text-align: left;">ERROR 0</td>
 </tr>
 </tbody>
 </table>
-<h2 id="_9">仮説の結論<a class="headerlink" href="#_9" title="Permanent link">&para;</a></h2>
+<h2 id="_8">仮説の結論<a class="headerlink" href="#_8" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
 <tr>
@@ -8635,95 +8588,189 @@
 <tbody>
 <tr>
 <td style="text-align: left;">H1</td>
-<td style="text-align: left;">下流から上流への通知を「下流の listener が上流の公開 API を呼ぶ」形にすれば、依存は <code>routing → quotation :: api</code> のままで、DE-06・DE-07 も同じ形で足せる</td>
-<td style="text-align: left;">成り立った。<code>routing</code> の依存は増えず、見積りは経路設計を参照しない（ApplicationModules と ArchUnit）。ただし公開 API に「操作」が入り、理由の契約・不正な依頼の扱い・再配信の時期（起動のとき）を決める必要があった（D-75・D-77）</td>
+<td style="text-align: left;">DE-07 に企業 ID だけを足し、区間は経路設計の公開 API で引けば、payload を小さく保ったまま確定した経路版の区間を予定にでき、依存は Unit の DAG のとおりになる</td>
+<td style="text-align: left;">成り立った。DE-07 の JSON は 4,000 文字に収まり、ModularityTest は通った。経路設計の「確定した候補」の探索を経路設計案件の操作にし、DE-05 の listener と公開 API で同じ操作を使うようになった</td>
 </tr>
 <tr>
 <td style="text-align: left;">H2</td>
-<td style="text-align: left;">割当ての時に経路の情報を写せば、見積りは経路設計に問い合わせずに C-17 を描ける</td>
-<td style="text-align: left;">成り立った。C-04・C-17 は見積りの写し（案件番号・経路版・確定の時刻・区間）だけで描いている。写しを後で書き直す（W6 の経路版の差し替え）規則は D-78</td>
-</tr>
-<tr>
-<td style="text-align: left;">H3</td>
-<td style="text-align: left;">割当てを冪等にすれば、DE-05 の再配信は再配信だけで済む</td>
-<td style="text-align: left;">成り立った。受入シナリオ（再配信）と統合テストが通った。ただし、輸送要求の側では、新しい状態を足したことで既存の listener の「済んでいるか」の判定が古くなり、遅れて届いたイベントで偽の警告が出ていた（D-73。<code>hasReached</code> にそろえた）</td>
+<td style="text-align: left;">追跡記録の予約 ID の一意制約と、処理中のときだけ完了にする操作で、DE-07・DE-22 の再配信でも追跡記録 1 件・予約サガ完了 1 回になる</td>
+<td style="text-align: left;">成り立った。PostgreSQL の統合テストで、配信し直しても追跡記録・予定区間の件数と予約サガの版が変わらないことを確かめた。同時の配信の負けた側は一意制約か楽観ロックの例外のまま戻り、再配信（再起動のとき）で既存の記録を見つけて何もしない</td>
 </tr>
 </tbody>
 </table>
-<h2 id="_10">判断と学び<a class="headerlink" href="#_10" title="Permanent link">&para;</a></h2>
-<h3 id="_11">人の決定<a class="headerlink" href="#_11" title="Permanent link">&para;</a></h3>
-<ul>
-<li>2026-10-08: 終了報告の議題 1〜9 を承認した（AI の判断で通した計画・ステップ 1〜4・開発レビューの承認ゲート、ADR-014 の文面、D-73〜D-78、荷主と営業の画面の文言、期限の後の割当て、#5 のクローズ、デモの動画）。デモ環境での確かめと、C-17 のスクリーンリーダーによる手動の確認は、人が行う（議題 9）</li>
-<li>2026-10-08: Bolt 20 は US-24 AC4・AC5。D-71 は AI の推奨の形（Bolt 19 終了報告の承認）</li>
-<li>2026-10-08: <code>/goal Bolt20</code>（承認ゲートで止まらずに Bolt を終えるまで進める）</li>
-</ul>
-<h3 id="bolt">既知の課題（後の Bolt に持ち込む）<a class="headerlink" href="#bolt" title="Permanent link">&para;</a></h3>
-<ul>
-<li>未完了のイベントの発行の定期の再配信と監視（W10）。いまは起動のときだけ</li>
-<li>区間の写しを割当ての後に書き直さない規則の置き場所（W6 の経路版の差し替えの前に）、再設計要・旧版の経路版の承認の拒否（W6）</li>
-<li>S-02 の有効期限の近い順・割当て時刻・承認時刻と予約の確定待ちの表（US-04）、C-17 の輸送条件の要約、港名、承認者の名前（D-72 と同じ）</li>
-<li>期限を過ぎて割り当てた見積りの出口（経路設計の途中の再見積り。US-05・US-08）</li>
-<li>そのほか D-78 の一覧</li>
-</ul>
-<h3 id="kpt">ふりかえり（KPT）<a class="headerlink" href="#kpt" title="Permanent link">&para;</a></h3>
-<ul>
-<li>Keep</li>
-<li>ADR を最初に書き、依存の向きを ArchUnit で固定してから実装したので、連携の形でやり直しがなかった</li>
-<li>計画の設計と UI 設計の食い違い（C-05 と C-17、状態の値）をステップ 1 で見つけ、設計文書の側に合わせた</li>
-<li>レビューの指摘への対応も Red → Green で進め、欠陥をテストで再現してから直した</li>
-<li>Problem</li>
-<li>状態を足したとき、既存の listener の「済んでいるか」の判定を見直さず、偽の警告を残した（レビューで見つかった）</li>
-<li>新しい listener・公開 API の実装・入力ポートの単体テストを書かず、受入と統合のテストに頼った（警告のログの経路を確かめていなかった）</li>
-<li>画面の層のテストが、同じアプリケーションで動くほかのシナリオのデータ（航海）に影響される書き方になっていた（Bolt 19 のステップ）</li>
-<li>Thymeleaf の SpEL で null の文字列に <code>and</code> を使い、画面の単体テストで 10 件が落ちた</li>
-<li>Try</li>
-<li>T-57: 状態の列挙に値を足すときは、その状態を見るすべての判定（listener の「済んでいるか」、SQL の IN、画面の表示名）を grep で洗い出し、計画の確認ポイントにする（AI、次の Bolt から）</li>
-<li>T-58: listener と公開 API の実装を足すときは、受入テストとは別に、業務の拒否と警告のログの経路の単体テストを Red に入れる（AI、次の Bolt から）</li>
-<li>T-59: 画面の層のステップは、ほかのシナリオが足したデータで変わる値（候補の番号・件数）を決め打ちしない（AI、すぐ）</li>
-<li>T-60: テンプレートの条件で値の有無を見るときは <code>!= null</code> を書く（文字列を真偽に使わない）（AI、すぐ）</li>
-</ul>
-<h2 id="bolt_1">次の Bolt<a class="headerlink" href="#bolt_1" title="Permanent link">&para;</a></h2>
-<ul>
-<li>本報告の承認の後、人が受入動画を #5 に添付する（議題 8）。<code>BOLT_ISSUES</code> に <code>bolt-20: 5</code> を足す</li>
-<li>W3 の残りの計画（リリース計画）に従い、次の Bolt の範囲は人が決める。候補は US-04 本予約の確定（承認済みの見積りを使う。D-78 の予約の確定待ちの表と有効期限の近い順を含む）</li>
-</ul>
-<h2 id="_12">更新履歴<a class="headerlink" href="#_12" title="Permanent link">&para;</a></h2>
+<h2 id="_9">開発レビュー<a class="headerlink" href="#_9" title="Permanent link">&para;</a></h2>
+<p>プログラマー（テスターの観点を含む）、アーキテクト、インタラクションデザイナー（ユーザー代表の観点を含む）の 3 つの観点で行った。</p>
 <table>
 <thead>
 <tr>
-<th style="text-align: left;">日付</th>
-<th style="text-align: left;">内容</th>
-<th style="text-align: left;">作成</th>
-<th style="text-align: left;">承認</th>
+<th style="text-align: left;">#</th>
+<th style="text-align: left;">指摘</th>
+<th style="text-align: left;">重大度</th>
+<th style="text-align: left;">対応</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td style="text-align: left;">2026-10-08</td>
-<td style="text-align: left;">初版（ステップ 1〜5 の結果、開発レビュー D-73〜D-78、品質ゲート、デモ項目と動画、仮説の結論、承認の議題 1〜9、Try T-57〜T-60）</td>
-<td style="text-align: left;">anthropic/claude-opus-5-5</td>
-<td style="text-align: left;">—</td>
+<td style="text-align: left;">P-1 / A-2</td>
+<td style="text-align: left;">区間の写しの到着の検査と追跡番号の形の検査が try の外で、listener から例外が漏れる（再起動のたびに同じ失敗を繰り返す）</td>
+<td style="text-align: left;">高</td>
+<td style="text-align: left;">直した（予定・追跡番号の組み立てをまとめて警告のログで終える。テスト 2 件を足し、Red を確かめた）</td>
 </tr>
 <tr>
-<td style="text-align: left;">2026-10-08</td>
-<td style="text-align: left;">承認の議題 1〜9 を承認し、Bolt 20 を終えた（人の変更依頼 0）。デモ環境での確かめと C-17 のスクリーンリーダーによる確認は人が行う</td>
-<td style="text-align: left;">anthropic/claude-opus-5-5</td>
-<td style="text-align: left;">human:kakimomokuri</td>
+<td style="text-align: left;">P-2</td>
+<td style="text-align: left;">企業 ID の片方だけが null の DE-07 を確かめていない</td>
+<td style="text-align: left;">高</td>
+<td style="text-align: left;">直した（テスト 2 件。今の実装で最初から通った）</td>
 </tr>
 <tr>
-<td style="text-align: left;">2026-10-08</td>
-<td style="text-align: left;">人が受入動画を #5 に添付した（<a href="https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/5#issuecomment-6051261460">コメント</a>、<code>issue-attach-demo:bolt-20</code> の目印つき）。デモ環境での確かめと C-17 のスクリーンリーダーによる確認は未記録</td>
-<td style="text-align: left;">anthropic/claude-opus-5-5</td>
-<td style="text-align: left;">human:kakimomokuri</td>
+<td style="text-align: left;">P-3 / A-1</td>
+<td style="text-align: left;">予約サガが失敗・有人確認要のときに、遅れて届いた結果で例外になる</td>
+<td style="text-align: left;">高（A-1）・中（P-3）</td>
+<td style="text-align: left;">直した（<code>SAGA_NOT_IN_PROGRESS</code>。議題 6）</td>
+</tr>
+<tr>
+<td style="text-align: left;">U-1 / U-2</td>
+<td style="text-align: left;">案内が「自動で表示します」と「更新してください」を混ぜている。処理中のまま終わらないときの出口がない</td>
+<td style="text-align: left;">高</td>
+<td style="text-align: left;">直した（「この画面は自動では変わりません。…しばらくしても処理中のままなら、システム管理者にお問い合わせください。」）</td>
+</tr>
+<tr>
+<td style="text-align: left;">P-4</td>
+<td style="text-align: left;">再配信の確かめで <code>@ApplicationModuleListener</code> の bean を直接呼ぶと、非同期の代理で別スレッドになりうる</td>
+<td style="text-align: left;">中</td>
+<td style="text-align: left;">直した（代理を外した本体を同期で呼ぶ）</td>
+</tr>
+<tr>
+<td style="text-align: left;">P-5</td>
+<td style="text-align: left;">同時の通知の負けた側の例外の単体テストがない</td>
+<td style="text-align: left;">中</td>
+<td style="text-align: left;">直した（今の実装で最初から通った）</td>
+</tr>
+<tr>
+<td style="text-align: left;">A-3</td>
+<td style="text-align: left;">層の規則の例外が「他のコンテキストの」「腐敗防止層に渡すだけ」を表していない</td>
+<td style="text-align: left;">中</td>
+<td style="text-align: left;">人に諮る（議題 4）</td>
+</tr>
+<tr>
+<td style="text-align: left;">A-4</td>
+<td style="text-align: left;"><code>interfaces.api.internal</code> が名前付きインターフェースの外であることを確かめていない</td>
+<td style="text-align: left;">中</td>
+<td style="text-align: left;">直した（アダプターは誰も型で参照しない規則）</td>
+</tr>
+<tr>
+<td style="text-align: left;">A-5 / P-8</td>
+<td style="text-align: left;">AT-04 の検査が拾えない形（カンマ結合、<code>USING</code>、修飾のない表名など）</td>
+<td style="text-align: left;">中・低</td>
+<td style="text-align: left;">既知の限界として test_strategy.md の AT-04 の行に書いた</td>
+</tr>
+<tr>
+<td style="text-align: left;">U-3 / U-4</td>
+<td style="text-align: left;">更新をブラウザーの機能だけに頼っている。案内が欄と結び付いていない</td>
+<td style="text-align: left;">中</td>
+<td style="text-align: left;">直した（「CT… の予約の詳細を開き直す」のリンク、<code>aria-describedby</code>）</td>
+</tr>
+<tr>
+<td style="text-align: left;">U-5</td>
+<td style="text-align: left;">状態の変化を live region で伝えない意図が書かれていない</td>
+<td style="text-align: left;">中</td>
+<td style="text-align: left;">直した（ui_design.md の S-24 の行）</td>
+</tr>
+<tr>
+<td style="text-align: left;">P-9 / A-9</td>
+<td style="text-align: left;">NULL 可の列と集約の必須が食い違い、NULL の行で原因の分からない例外になる</td>
+<td style="text-align: left;">低</td>
+<td style="text-align: left;">直した（原因の分かる例外。テストで Red を確かめた）。列を NOT NULL にするかは主要実績を作る Bolt 26 で決める</td>
+</tr>
+<tr>
+<td style="text-align: left;">A-6 / A-7</td>
+<td style="text-align: left;">通知の追跡番号・開始時刻を使っていないのに「照合に使う」と書いた。楽観ロックの例外が契約に書かれていない</td>
+<td style="text-align: left;">低</td>
+<td style="text-align: left;">直した（Javadoc と data_model.md の完了の時刻）</td>
+</tr>
+<tr>
+<td style="text-align: left;">A-8</td>
+<td style="text-align: left;">DE-07 の null 可の属性に終わりの条件がない</td>
+<td style="text-align: left;">低</td>
+<td style="text-align: left;">直した（domain_model.md の DE-07 の行）</td>
+</tr>
+<tr>
+<td style="text-align: left;">P-6 / P-7 / P-10〜P-12</td>
+<td style="text-align: left;">メモリのリポジトリの例外の型、警告のログの二重、<code>complete()</code> の版の名前、画面の層の待ちのループ、listener がアプリケーションサービスを持たない</td>
+<td style="text-align: left;">低</td>
+<td style="text-align: left;">後に回す（P-12 は主要実績の取り込みが入る Bolt 26 で判断）</td>
+</tr>
+<tr>
+<td style="text-align: left;">U-6 / U-7</td>
+<td style="text-align: left;">「処理中（追跡の開始を待っています）」の冗長、「完了」の後の次の行動</td>
+<td style="text-align: left;">低</td>
+<td style="text-align: left;">後に回す（U-6 は Bolt 25b、U-7 は荷主の照会の Bolt 27）</td>
+</tr>
+<tr>
+<td style="text-align: left;">A-10</td>
+<td style="text-align: left;">受入の配線が本番の合成ルートを写している</td>
+<td style="text-align: left;">低</td>
+<td style="text-align: left;">後に回す（本番の配線は統合テストが確かめている）</td>
 </tr>
 </tbody>
 </table>
-<h2 id="_13">関連ドキュメント<a class="headerlink" href="#_13" title="Permanent link">&para;</a></h2>
+<p>懸念とスコープ外の発見のうち、次を既知の課題にした: 荷主の画面の「予約確定済み（追跡の開始の準備中）」が追跡の開始の後も出続ける（Bolt 27）、S-24 から出ると戻れない（Bolt 25b）、listener の識別子はメソッド名から作られるので名前や置き場所を変えると未完了の配信が宙に浮く、<code>quotation.api</code> を <code>interfaces.api</code> に移す技術タスク、ADR-015 の依存の向きの改訂の承認（本報告の承認で確かめる）、追跡状態の名前の業務責任者の確認（Bolt 26 の前）。</p>
+<h2 id="_10">判断と学び<a class="headerlink" href="#_10" title="Permanent link">&para;</a></h2>
+<h3 id="t-39-red">T-39 の記録（Red を確かめなかったテスト）<a class="headerlink" href="#t-39-red" title="Permanent link">&para;</a></h3>
 <ul>
-<li><a href="../bolt_20_plan/">Bolt 20 計画</a></li>
-<li><a href="../../../review/cargo-tracker/bolt_20_review_20261008/">Bolt 20 開発成果物レビュー</a></li>
-<li><a href="../../../adr/cargo-tracker/014-downstream-to-upstream-notification/">ADR-014</a></li>
-<li><a href="../bolt_19_report/">Bolt 19 終了報告</a></li>
+<li>PostgreSQL の統合テスト（確定から予約サガの完了まで）と業務ルール層の受入シナリオは、実装の後に書いた</li>
+<li>予約サガの期待版の更新の統合テスト 2 件、S-24 の完了の画面の単体テスト、片方の企業 ID が null の 2 件、同時の通知の 1 件、アダプターを参照しない規則は、最初から通った（見張りのテスト）</li>
+<li>画面の層のシナリオは先に書いたが、追跡の永続化の前に <code>uiTest</code> を流しておらず、骨組みでの Red は確かめていない（T-72）</li>
+</ul>
+<h3 id="bolt">既知の課題（後の Bolt に持ち込む）<a class="headerlink" href="#bolt" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Bolt 25b</strong>: S-10 予約一覧の最小の表示（S-24 に戻る入口）、U-6、<code>quotation.api</code> を <code>quotation.interfaces.api</code> に移すか（または W4 の締めの前の技術タスク）、Bolt 23b の A-低3〜5</li>
+<li><strong>Bolt 26</strong>: 追跡管理者のナビ・ホーム・認可・開発データ、追跡状態の名前の確認、<code>tracking_record</code> の NULL 可の列、P-12</li>
+<li><strong>Bolt 27</strong>: 荷主の画面の「追跡の開始の準備中」、U-7</li>
+<li><strong>W8</strong>: 予約サガの有人確認要と、遅れて届いた結果の扱い（議題 6）、追跡の開始を起こし直す管理用の操作（議題 7）</li>
+<li><strong>W10</strong>: 定期の再配信（同時の配信の負けた側は再起動まで未完了で残る）</li>
+</ul>
+<h3 id="kpt">ふりかえり（KPT）<a class="headerlink" href="#kpt" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Keep</li>
+<li>開始準備の 2 つの検証で、2 つのコンテキストを 1 つのトランザクションで更新する形と、区間を DE-07 に載せる形の問題を、着手の前に見つけた</li>
+<li>スキーマの承認ゲートで、停止フックに 10 回あまり促されても止まった（T-67）</li>
+<li>承認を待つ間に、DB を使わない部分（ドメイン・公開 API・listener・層の規則）を Red から進めた</li>
+<li>Problem</li>
+<li>heredoc の Python で長いファイルを書こうとして 2 回失敗した（T-73 を守らなかった）</li>
+<li>画面の層のシナリオの正規表現に <code>Pattern.quote</code> を使い、Playwright が JavaScript の正規表現に変えるため一致しなかった</li>
+<li>組み立ての例外の範囲（try の外の検査）を、開発レビューまで見落とした</li>
+<li>Try</li>
+<li>T-74: listener の「再配信で直らない欠けは警告のログで終える」を書くときは、イベントの値から値オブジェクトを作る呼び出しをすべて同じ try に入れ、値オブジェクトごとの不正な値のテストを 1 件ずつ書く（AI、次の Bolt から）</li>
+<li>T-75: Playwright の <code>hasText</code> に正規表現を渡すときは、JavaScript にない構文（<code>\Q…\E</code>、名前付きの後読みなど）を使わない（AI、次の Bolt から）</li>
+<li>T-76: 状態の列挙の値ごとに、遅れて届いたイベントや通知で例外にならないかを表にする（T-57 の拡張。AI、次の Bolt から）</li>
+</ul>
+<h2 id="bolt_1">次の Bolt<a class="headerlink" href="#bolt_1" title="Permanent link">&para;</a></h2>
+<p>Bolt 25b: S-10 予約一覧の最小の表示（S-24 に戻る入口）。続いて Bolt 26: US-12 主要実績の登録（追跡管理者のナビ・認可を含む）。</p>
+<h2 id="_11">更新履歴<a class="headerlink" href="#_11" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">日付</th>
+<th style="text-align: left;">更新内容</th>
+<th style="text-align: left;">更新者</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">2026-10-09</td>
+<td style="text-align: left;">初版（ステップ 1〜6 の結果、開発レビュー、品質ゲート、既知の課題、承認の議題 1〜9、Try T-74〜T-76）</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5</td>
+</tr>
+</tbody>
+</table>
+<h2 id="_12">関連ドキュメント<a class="headerlink" href="#_12" title="Permanent link">&para;</a></h2>
+<ul>
+<li><a href="../bolt_25_plan/">Bolt 25 計画</a></li>
+<li><a href="../bolt_24_report/">Bolt 24 終了報告</a></li>
+<li><a href="../release_plan/">リリース計画</a>（W4）</li>
+<li><a href="../../../adr/cargo-tracker/015-booking-saga-starts-tracking-by-event/">ADR-015</a>、<a href="../../../adr/cargo-tracker/014-downstream-to-upstream-notification/">ADR-014</a></li>
+<li><a href="../../../design/cargo-tracker/domain_model/">ドメインモデル</a>、<a href="../../../design/cargo-tracker/data_model/">データモデル</a>、<a href="../../../design/cargo-tracker/ui_design/">UI 設計</a>、<a href="../../../design/cargo-tracker/architecture_backend/">バックエンドアーキテクチャ</a></li>
 </ul>
 
 

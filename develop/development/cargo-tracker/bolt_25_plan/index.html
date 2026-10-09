@@ -16,7 +16,7 @@
         <link rel="prev" href="../bolt_24_report/">
       
       
-        <link rel="next" href="../../../operation/">
+        <link rel="next" href="../bolt_25_report/">
       
       
         
@@ -3892,6 +3892,41 @@
   
 </nav>
       
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../bolt_25_report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 25 終了報告
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--draft"></span>
+  
+
+  
+
+      </a>
     </li>
   
 
@@ -8659,13 +8694,17 @@
 <li>承認ゲートの扱い（T-36）: 画面のゲートで止まらずに進めた（AI の判断）。根拠は、文言が UI 設計の S-09・S-24 の行（ステップ 1）のとおりであること</li>
 </ul>
 </li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>6. 開発レビューと終了報告</strong> 【承認ゲート: 開発レビューの判断、終了報告】</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>6. 開発レビューと終了報告</strong> 【承認ゲート: 開発レビューの判断、終了報告】</li>
 <li><code>developing-review</code>（プログラマー・テスター・アーキテクト・インタラクションデザイナー・ユーザー代表）。SonarQube（<code>sonar-local:check</code>）、受入動画（<code>./gradlew demoVideo</code>。過去の Bolt の動画は元に戻す）、<code>bolt_25_report.md</code></li>
 <li>
 <h1 id="10-us-04-ac3ac5w6-issue-opsscriptsissue_demojs-bolt_issues-bolt-25-10">10 に結果をコメントし、終了報告の承認の後にクローズする。US-04 の AC3・AC5（W6）の Issue を新しく作る。受入動画の添付先（<code>ops/scripts/issue_demo.js</code> の <code>BOLT_ISSUES</code> と手順書の表）に <code>bolt-25 → #10</code> を足す<a class="headerlink" href="#10-us-04-ac3ac5w6-issue-opsscriptsissue_demojs-bolt_issues-bolt-25-10" title="Permanent link">&para;</a></h1>
 </li>
 <li>デモ環境の配備の前に手順書を読む（T-56）。Bolt 23・24 で確定済みのデモ環境の予約は処理中のまま残ることを、終了報告と手順書の見本の一覧に書く（確認ポイント 19）</li>
 <li>開発レビューの対応の後も push の前に <code>uiTest</code> を流す（T-70）</li>
+<li>結果（2026-10-09）: 3 つの観点でレビューし、高 6 件（P-1・P-2・A-1・U-1・U-2 ほか）を含む指摘を直し、層の規則の例外を合成ルートまで広げたこと（A-3）を人に諮る議題にした（<a href="../bolt_25_report/">Bolt 25 終了報告</a> の開発レビュー）。SonarQube は新しい指摘 29 件で FAIL だったので直し、PASS になった。直した後に <code>check</code>・<code>documentationTest</code>・<code>uiTest</code>（65 本）を流してから push した（T-70）。受入動画 <code>bolt-25/start-tracking.webm</code> を撮った<ul>
+<li>承認ゲートの扱い（T-36）: 開発レビューの判断で止まらずに進めた（AI の判断）。終了報告の承認の議題に置く</li>
+</ul>
+</li>
 </ul>
 <h3 id="_10">時間の配分と打ち切り<a class="headerlink" href="#_10" title="Permanent link">&para;</a></h3>
 <table>
@@ -8838,7 +8877,7 @@
 <td style="text-align: left;">19</td>
 <td style="text-align: left;">Bolt 23・24 で確定済みの予約（デモ環境）</td>
 <td style="text-align: left;">6</td>
-<td style="text-align: left;">追跡の listener ができる前に DE-07 を配信し終えているので、予約サガは処理中のまま残る。この Bolt では扱わず（W8 の処理中の滞留の有人確認要が拾う）、デモは見本（TR-2026-0906・0907）で新しく確定した予約で見せる。終了報告と手順書に書く</td>
+<td style="text-align: left;">（結果: デモ環境は再起動のたびに初期状態に戻るので、Bolt 25 の配備で残らない。終了報告の議題 7）追跡の listener ができる前に DE-07 を配信し終えているので、予約サガは処理中のまま残る。この Bolt では扱わず（W8 の処理中の滞留の有人確認要が拾う）、デモは見本（TR-2026-0906・0907）で新しく確定した予約で見せる。終了報告と手順書に書く</td>
 </tr>
 <tr>
 <td style="text-align: left;">20</td>

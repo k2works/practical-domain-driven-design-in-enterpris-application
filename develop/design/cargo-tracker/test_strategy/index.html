@@ -4040,6 +4040,41 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../development/cargo-tracker/bolt_25_report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 25 終了報告
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--draft"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -9073,7 +9108,7 @@ src/test/java/.../shared/acceptance/      共通ステップ（ログイン、�
 <tr>
 <td style="text-align: left;">AT-04</td>
 <td style="text-align: left;">各コンテキストのマッパーの SQL は自分のスキーマ（と <code>platform</code> の許可された表）以外を参照しない</td>
-<td style="text-align: left;">マッパー XML を読む独自のテスト</td>
+<td style="text-align: left;">マッパー XML を読む独自のテスト（<code>MapperSchemaArchitectureTest</code>。Bolt 25 で実装。既知の限界: <code>FROM</code>・<code>JOIN</code>・<code>INTO</code>・<code>UPDATE</code> の直後の <code>スキーマ.表</code> だけを見るので、カンマ結合の 2 つ目の表、<code>USING</code>、修飾のない表名、引用符付きの識別子、Java の注釈の SQL（今は使っていない）は拾わない。検査するスキーマの一覧は手で保つ。Bolt 25 レビュー A-5）</td>
 <td style="text-align: left;">ADR-001（改訂）、データモデル</td>
 </tr>
 <tr>
