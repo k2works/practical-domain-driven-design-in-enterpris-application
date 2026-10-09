@@ -11,6 +11,7 @@ import com.example.cargotracker.booking.domain.model.BookingFixture;
 import com.example.cargotracker.booking.domain.model.aggregates.Booking;
 import com.example.cargotracker.booking.domain.model.aggregates.DuplicateBookingException;
 import com.example.cargotracker.booking.domain.model.valueobjects.BookingId;
+import com.example.cargotracker.booking.domain.model.valueobjects.BookingSummary;
 import com.example.cargotracker.booking.domain.model.valueobjects.BookingTerms;
 import com.example.cargotracker.booking.domain.model.valueobjects.ProcessedCommand;
 import com.example.cargotracker.booking.domain.model.valueobjects.TrackingNumber;
@@ -18,7 +19,9 @@ import com.example.cargotracker.shared.domain.CommandId;
 import com.example.cargotracker.shared.domain.UserId;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import java.time.Instant;
+import java.util.Map;
 import java.util.Random;
+import java.util.Set;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -198,6 +201,62 @@ class MyBatisBookingRepositoriesIntegrationTest {
                         BookingFixture.SALES,
                         COMMITTED_AT)
                 .booking();
+    }
+
+    /**
+     * S-10 予約一覧（Bolt 25b）。予約の要約を確定時刻（予約版 1）の新しい順、同じ時刻なら追跡番号の順に上限まで返す。ほかのテストが
+     * コミットした予約もあるので、このテストの予約は遠い先の確定時刻にして一覧の先頭に来るようにする。
+     */
+    @Test
+    void 予約の要約を確定時刻の新しい順に上限まで返す() {
+        Booking oldest = savedAt("2099-12-01T00:00:00Z", new TrackingNumber("CTZZZZZZZZZZZ2"));
+        Booking sameTimeLater = savedAt("2099-12-02T00:00:00Z", new TrackingNumber("CTZZZZZZZZZZZ4"));
+        Booking sameTimeFirst = savedAt("2099-12-02T00:00:00Z", new TrackingNumber("CTZZZZZZZZZZZ3"));
+
+        assertThat(repository.findRecentSummaries(3))
+                .containsExactly(
+                        summary(sameTimeFirst, "2099-12-02T00:00:00Z"),
+                        summary(sameTimeLater, "2099-12-02T00:00:00Z"),
+                        summary(oldest, "2099-12-01T00:00:00Z"));
+        assertThat(repository.findRecentSummaries(1)).containsExactly(summary(sameTimeFirst, "2099-12-02T00:00:00Z"));
+    }
+
+    @Test
+    void 予約サガの状態を予約IDの集合でまとめて返す() {
+        Booking inProgress = savedAt("2099-11-01T00:00:00Z", TrackingNumber.generate(random));
+        Booking completed = savedAt("2099-11-02T00:00:00Z", TrackingNumber.generate(random));
+        sagaRepository.update(
+                sagaRepository.findByBookingId(completed.id()).orElseThrow().complete());
+        BookingId unknown = new BookingId(UUID.randomUUID());
+
+        assertThat(sagaRepository.findStatusesByBookingIds(Set.of(inProgress.id(), completed.id(), unknown)))
+                .containsExactlyInAnyOrderEntriesOf(Map.of(
+                        inProgress.id(), BookingSagaStatus.IN_PROGRESS, completed.id(), BookingSagaStatus.COMPLETED));
+        assertThat(sagaRepository.findStatusesByBookingIds(Set.of())).isEmpty();
+    }
+
+    private Booking savedAt(String committedAt, TrackingNumber trackingNumber) {
+        UtcInstant at = new UtcInstant(Instant.parse(committedAt));
+        Booking booking = Booking.confirm(
+                        new BookingId(UUID.randomUUID()),
+                        BookingFixture.allConditions(),
+                        terms(UUID.randomUUID()),
+                        trackingNumber,
+                        BookingFixture.SALES,
+                        at)
+                .booking();
+        repository.save(booking, BookingFixture.SALES, BookingFixture.processedCommand(booking));
+        sagaRepository.save(BookingSaga.start(booking.id(), booking.trackingNumber(), at));
+        return booking;
+    }
+
+    private static BookingSummary summary(Booking booking, String committedAt) {
+        return new BookingSummary(
+                booking.id(),
+                booking.trackingNumber(),
+                booking.transportRequestNumber(),
+                booking.quotationNo(),
+                new UtcInstant(Instant.parse(committedAt)));
     }
 
     /** 見積り ID ごとに新しい業務番号（業務番号と見積り番号の一意制約に当たらないように。2082 年はほかのテストと重ならない）。 */

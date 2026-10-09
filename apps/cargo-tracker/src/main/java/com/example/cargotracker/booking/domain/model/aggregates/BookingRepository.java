@@ -1,8 +1,10 @@
 package com.example.cargotracker.booking.domain.model.aggregates;
 
+import com.example.cargotracker.booking.domain.model.valueobjects.BookingSummary;
 import com.example.cargotracker.booking.domain.model.valueobjects.ProcessedCommand;
 import com.example.cargotracker.booking.domain.model.valueobjects.TrackingNumber;
 import com.example.cargotracker.shared.domain.CommandId;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -30,6 +32,14 @@ public interface BookingRepository {
     Optional<TrackingNumber> findTrackingNumber(String transportRequestNumber, int quotationNo);
 
     Optional<Booking> findByTrackingNumber(TrackingNumber trackingNumber);
+
+    /**
+     * 確定した予約の要約を、確定時刻（予約版 1 の commit 時刻）の新しい順（同じ時刻なら追跡番号の順）に上限まで返す（S-10。Bolt 25b）。
+     *
+     * @param limit 上限の件数
+     * @return 予約の要約
+     */
+    List<BookingSummary> findRecentSummaries(int limit);
 
     /** 追跡番号がすでに使われているか（発行の前に確かめる）。 */
     boolean existsByTrackingNumber(TrackingNumber trackingNumber);

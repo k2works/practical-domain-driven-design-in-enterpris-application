@@ -16,7 +16,9 @@ import com.example.cargotracker.booking.domain.model.BookingFixture;
 import com.example.cargotracker.booking.domain.model.valueobjects.BookingId;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import java.time.Instant;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -143,6 +145,11 @@ class BookingSagaCommandServiceTest {
             @Override
             public void update(BookingSaga saga) {
                 sagaRepository.update(saga);
+            }
+
+            @Override
+            public Map<BookingId, BookingSagaStatus> findStatusesByBookingIds(Set<BookingId> bookingIds) {
+                return sagaRepository.findStatusesByBookingIds(bookingIds);
             }
         });
 

@@ -3,12 +3,18 @@ package com.example.cargotracker.booking.application.internal.queryservices;
 import com.example.cargotracker.booking.application.internal.outboundservices.acl.QuotationBookability;
 import com.example.cargotracker.booking.application.internal.outboundservices.acl.QuotationUnavailability;
 import com.example.cargotracker.booking.application.sagas.BookingSagaRepository;
+import com.example.cargotracker.booking.application.sagas.BookingSagaStatus;
 import com.example.cargotracker.booking.domain.model.aggregates.BookingRepository;
+import com.example.cargotracker.booking.domain.model.valueobjects.BookingId;
+import com.example.cargotracker.booking.domain.model.valueobjects.BookingSummary;
 import com.example.cargotracker.booking.domain.model.valueobjects.BookingTerms;
 import com.example.cargotracker.booking.domain.model.valueobjects.TrackingNumber;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import java.time.Clock;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,6 +26,9 @@ import org.springframework.transaction.annotation.Transactional;
  */
 @Service
 public class BookingQueryService {
+
+    /** S-10 予約一覧の上限の件数（Bolt 25b。ページ送りは W11）。 */
+    private static final int RECENT_LIMIT = 50;
 
     private final BookingRepository repository;
     private final BookingSagaRepository sagaRepository;
@@ -73,9 +82,27 @@ public class BookingQueryService {
                                 .status()));
     }
 
-    /** 予約一覧（S-10。骨組み。Bolt 25b）。 */
+    /**
+     * 予約一覧（S-10 の最小の表示。Bolt 25b）。確定時刻の新しい順に上限まで返し、上限を超えたかを示す。予約の要約と予約サガの状態を
+     * それぞれ 1 回の照会で引く（行ごとに照会しない）。予約があれば予約サガは同じトランザクションで作られている（ADR-015）。
+     */
     @Transactional(readOnly = true)
     public RecentBookings recent() {
-        return new RecentBookings(java.util.List.of(), false);
+        List<BookingSummary> found = repository.findRecentSummaries(RECENT_LIMIT + 1);
+        List<BookingSummary> shown = found.subList(0, Math.min(found.size(), RECENT_LIMIT));
+        Map<BookingId, BookingSagaStatus> statuses = sagaRepository.findStatusesByBookingIds(
+                shown.stream().map(BookingSummary::bookingId).collect(Collectors.toSet()));
+        List<RecentBookings.Row> rows = shown.stream()
+                .map(summary -> new RecentBookings.Row(
+                        summary.trackingNumber(),
+                        summary.transportRequestNumber(),
+                        summary.quotationNo(),
+                        summary.committedAt(),
+                        Optional.ofNullable(statuses.get(summary.bookingId()))
+                                .orElseThrow(
+                                        () -> new IllegalStateException("貨物予約に予約サガがない（本予約の確定と同じトランザクションで作る。ADR-015）: "
+                                                + summary.bookingId().value()))))
+                .toList();
+        return new RecentBookings(rows, found.size() > RECENT_LIMIT);
     }
 }

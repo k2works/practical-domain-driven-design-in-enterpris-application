@@ -11,7 +11,10 @@ import com.example.cargotracker.shared.domain.UtcInstant;
 import java.time.Clock;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 import org.springframework.stereotype.Repository;
 
 /**
@@ -53,6 +56,20 @@ public class MyBatisBookingSagaRepository implements BookingSagaRepository {
                 == 0) {
             throw new ConcurrentBookingSagaUpdateException(saga.bookingId(), saga.version());
         }
+    }
+
+    @Override
+    public Map<BookingId, BookingSagaStatus> findStatusesByBookingIds(Set<BookingId> bookingIds) {
+        if (bookingIds.isEmpty()) {
+            // IN () は SQL の誤りになるので照会しない
+            return Map.of();
+        }
+        return mapper
+                .findSagaStatusesByBookingIds(
+                        bookingIds.stream().map(BookingId::value).toList())
+                .stream()
+                .collect(Collectors.toUnmodifiableMap(
+                        row -> new BookingId(row.bookingId()), row -> BookingSagaStatus.valueOf(row.status())));
     }
 
     @Override

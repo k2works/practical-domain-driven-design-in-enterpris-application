@@ -1,6 +1,7 @@
 package com.example.cargotracker.booking.infrastructure.persistence;
 
 import java.time.OffsetDateTime;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -42,4 +43,10 @@ public interface BookingMapper {
     Optional<ProcessedCommandRow> findProcessedCommand(@Param("commandId") UUID commandId);
 
     Optional<BookingSagaRow> findSagaByBookingId(@Param("bookingId") UUID bookingId);
+
+    /** 予約の要約を確定時刻（予約版 1）の新しい順、同じ時刻なら追跡番号の順に上限まで引く（S-10。Bolt 25b）。 */
+    List<BookingSummaryRow> findRecentSummaries(@Param("limit") int limit);
+
+    /** 予約 ID の集合の予約サガの状態を 1 回で引く（S-10。Bolt 25b）。 */
+    List<BookingSagaStatusRow> findSagaStatusesByBookingIds(@Param("bookingIds") Collection<UUID> bookingIds);
 }

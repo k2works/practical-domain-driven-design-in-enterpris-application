@@ -144,4 +144,37 @@
           FROM booking.booking_saga
          WHERE booking_id = #{bookingId}
     </select>
+
+    <resultMap id="bookingSummaryRow" type="com.example.cargotracker.booking.infrastructure.persistence.BookingSummaryRow">
+        <constructor>
+            <idArg column="id" name="id" javaType="java.util.UUID"/>
+            <arg column="tracking_number" name="trackingNumber" javaType="String"/>
+            <arg column="transport_request_number" name="transportRequestNumber" javaType="String"/>
+            <arg column="quotation_no" name="quotationNo" javaType="_int"/>
+            <arg column="committed_at" name="committedAt" javaType="java.time.OffsetDateTime"/>
+        </constructor>
+    </resultMap>
+
+    <resultMap id="bookingSagaStatusRow" type="com.example.cargotracker.booking.infrastructure.persistence.BookingSagaStatusRow">
+        <constructor>
+            <idArg column="booking_id" name="bookingId" javaType="java.util.UUID"/>
+            <arg column="status" name="status" javaType="String"/>
+        </constructor>
+    </resultMap>
+
+    <!-- S-10 予約一覧（Bolt 25b）。確定時刻は予約版 1 の commit 時刻（最初の確定の時刻） -->
+    <select id="findRecentSummaries" resultMap="bookingSummaryRow">
+        SELECT b.id, b.tracking_number, b.transport_request_number, b.quotation_no, v.committed_at
+          FROM booking.booking b
+          JOIN booking.booking_version v ON v.booking_id = b.id AND v.booking_version_no = 1
+         ORDER BY v.committed_at DESC, b.tracking_number
+         LIMIT #{limit}
+    </select>
+
+    <select id="findSagaStatusesByBookingIds" resultMap="bookingSagaStatusRow">
+        SELECT booking_id, status
+          FROM booking.booking_saga
+         WHERE booking_id IN
+        <foreach item="bookingId" collection="bookingIds" open="(" separator="," close=")">#{bookingId}</foreach>
+    </select>
 </mapper>

@@ -2,11 +2,13 @@ package com.example.cargotracker.booking.acceptance;
 
 import com.example.cargotracker.booking.application.sagas.BookingSaga;
 import com.example.cargotracker.booking.application.sagas.BookingSagaRepository;
+import com.example.cargotracker.booking.application.sagas.BookingSagaStatus;
 import com.example.cargotracker.booking.application.sagas.ConcurrentBookingSagaUpdateException;
 import com.example.cargotracker.booking.domain.model.valueobjects.BookingId;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 /** メモリ上の予約サガのリポジトリ（業務ルール層の受入シナリオ）。予約サガは不変なので保存したインスタンスを返す（T-61）。 */
 public class InMemoryBookingSagaRepository implements BookingSagaRepository {
@@ -42,6 +44,18 @@ public class InMemoryBookingSagaRepository implements BookingSagaRepository {
                         saga.currentStep(),
                         saga.startedAt(),
                         saga.version() + 1));
+    }
+
+    @Override
+    public synchronized Map<BookingId, BookingSagaStatus> findStatusesByBookingIds(Set<BookingId> bookingIds) {
+        Map<BookingId, BookingSagaStatus> statuses = new LinkedHashMap<>();
+        bookingIds.forEach(id -> {
+            BookingSaga saga = byBookingId.get(id);
+            if (saga != null) {
+                statuses.put(id, saga.status());
+            }
+        });
+        return Map.copyOf(statuses);
     }
 
     public synchronized void clear() {

@@ -3,10 +3,12 @@ package com.example.cargotracker.booking.acceptance;
 import com.example.cargotracker.booking.domain.model.aggregates.Booking;
 import com.example.cargotracker.booking.domain.model.aggregates.BookingRepository;
 import com.example.cargotracker.booking.domain.model.aggregates.DuplicateBookingException;
+import com.example.cargotracker.booking.domain.model.valueobjects.BookingSummary;
 import com.example.cargotracker.booking.domain.model.valueobjects.ProcessedCommand;
 import com.example.cargotracker.booking.domain.model.valueobjects.TrackingNumber;
 import com.example.cargotracker.shared.domain.CommandId;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -69,6 +71,24 @@ public class InMemoryBookingRepository implements BookingRepository {
     @Override
     public synchronized boolean existsByTrackingNumber(TrackingNumber trackingNumber) {
         return byTrackingNumber.containsKey(trackingNumber.value());
+    }
+
+    /** 確定時刻（予約版 1）の新しい順、同じ時刻なら追跡番号の順に、上限までの要約の写しを返す（MyBatis の実装と同じ。T-61）。 */
+    @Override
+    public synchronized List<BookingSummary> findRecentSummaries(int limit) {
+        return byTrackingNumber.values().stream()
+                .map(booking -> new BookingSummary(
+                        booking.id(),
+                        booking.trackingNumber(),
+                        booking.transportRequestNumber(),
+                        booking.quotationNo(),
+                        booking.versions().getFirst().committedAt()))
+                .sorted(Comparator.comparing((BookingSummary summary) ->
+                                summary.committedAt().instant())
+                        .reversed()
+                        .thenComparing(summary -> summary.trackingNumber().value()))
+                .limit(limit)
+                .toList();
     }
 
     public synchronized List<Booking> findAll() {

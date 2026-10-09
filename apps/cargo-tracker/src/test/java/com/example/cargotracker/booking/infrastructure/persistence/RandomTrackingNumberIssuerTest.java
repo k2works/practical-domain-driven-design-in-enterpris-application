@@ -5,9 +5,11 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.example.cargotracker.booking.domain.model.aggregates.Booking;
 import com.example.cargotracker.booking.domain.model.aggregates.BookingRepository;
+import com.example.cargotracker.booking.domain.model.valueobjects.BookingSummary;
 import com.example.cargotracker.booking.domain.model.valueobjects.ProcessedCommand;
 import com.example.cargotracker.booking.domain.model.valueobjects.TrackingNumber;
 import com.example.cargotracker.shared.domain.CommandId;
+import java.util.List;
 import java.util.Optional;
 import java.util.Random;
 import java.util.Set;
@@ -75,6 +77,11 @@ class RandomTrackingNumberIssuerTest {
         @Override
         public Optional<ProcessedCommand> findProcessedCommand(CommandId commandId) {
             return Optional.empty();
+        }
+
+        @Override
+        public List<BookingSummary> findRecentSummaries(int limit) {
+            return List.of();
         }
 
         @Override

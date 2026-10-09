@@ -6,6 +6,7 @@ import com.example.cargotracker.booking.domain.model.aggregates.DuplicateBooking
 import com.example.cargotracker.booking.domain.model.entities.BookingVersion;
 import com.example.cargotracker.booking.domain.model.valueobjects.BookingId;
 import com.example.cargotracker.booking.domain.model.valueobjects.BookingStatus;
+import com.example.cargotracker.booking.domain.model.valueobjects.BookingSummary;
 import com.example.cargotracker.booking.domain.model.valueobjects.BookingTerms;
 import com.example.cargotracker.booking.domain.model.valueobjects.ProcessedCommand;
 import com.example.cargotracker.booking.domain.model.valueobjects.TrackingNumber;
@@ -93,6 +94,18 @@ public class MyBatisBookingRepository implements BookingRepository {
     private static boolean violates(DuplicateKeyException e, String constraint) {
         String message = e.getMostSpecificCause().getMessage();
         return message != null && message.toLowerCase(Locale.ROOT).contains(constraint);
+    }
+
+    @Override
+    public List<BookingSummary> findRecentSummaries(int limit) {
+        return mapper.findRecentSummaries(limit).stream()
+                .map(row -> new BookingSummary(
+                        new BookingId(row.id()),
+                        new TrackingNumber(row.trackingNumber()),
+                        row.transportRequestNumber(),
+                        row.quotationNo(),
+                        new UtcInstant(row.committedAt().toInstant())))
+                .toList();
     }
 
     @Override
