@@ -1,8 +1,10 @@
-package com.example.cargotracker.identity.devlogin;
+package com.example.cargotracker.identity.infrastructure.devlogin;
 
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import com.example.cargotracker.identity.devlogin.DevLoginGuard;
+import com.example.cargotracker.identity.devlogin.DevLoginProperties;
 import com.example.cargotracker.shared.domain.Role;
 import java.util.List;
 import org.junit.jupiter.api.Test;
