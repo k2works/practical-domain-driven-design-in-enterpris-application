@@ -4393,6 +4393,41 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../bolt_25b_plan/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 25b 計画
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--draft"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -9855,7 +9890,7 @@
 </ul>
 <h3 id="w42026-10-26-10-30">W4（2026-10-26 〜 10-30）<a class="headerlink" href="#w42026-10-26-10-30" title="Permanent link">&para;</a></h3>
 <p><strong>ゴール</strong>: 本予約の確定から追跡の開始・実績の登録・荷主の照会までが通り、Release 0.1 の縦の流れが完成する。</p>
-<p><strong>局面とアプローチ</strong>: 序盤（<a href="../development_strategy/">開発戦略</a>）。開発戦略の「Bolt ごとのアプローチの決め方」の規則を局面の既定より優先する。新しい集約・スキーマを作る Bolt 23（予約）と Bolt 25（追跡）はインサイドアウト、既存の集約に受入条件を足す Bolt 24・26・27 と、縦の流れを束ねる Bolt 28 はアウトサイドイン。外れる Bolt は、Bolt 計画のアプローチの欄に理由を書く（W3 の Try）</p>
+<p><strong>局面とアプローチ</strong>: 序盤（<a href="../development_strategy/">開発戦略</a>）。開発戦略の「Bolt ごとのアプローチの決め方」の規則を局面の既定より優先する。新しい集約・スキーマを作る Bolt 23（予約）と Bolt 25（追跡）はインサイドアウト、既存の集約に受入条件を足す Bolt 23b・24・25b・26・27 と、縦の流れを束ねる Bolt 28 はアウトサイドイン。外れる Bolt は、Bolt 計画のアプローチの欄に理由を書く（W3 の Try）</p>
 <p><strong>設計の決定</strong>（2026-10-08 に human:kakimomokuri が決定。開始準備の整合性検証の指摘による）:</p>
 <table>
 <thead>
@@ -9878,7 +9913,7 @@
 </tr>
 </tbody>
 </table>
-<p><strong>Bolt の分け方</strong>（2026-10-08 に human:kakimomokuri が決定。整合性検証の後に、追跡の開始を独立させて 7 Bolt に引き直した）:</p>
+<p><strong>Bolt の分け方</strong>（2026-10-08 に human:kakimomokuri が決定。整合性検証の後に、追跡の開始を独立させて 7 Bolt に引き直した。その後に Bolt 23b・25b を分けて 9 Bolt になった）:</p>
 <table>
 <thead>
 <tr>
@@ -9930,7 +9965,7 @@
 <td style="text-align: left;">S-10 予約一覧の最小の表示（追跡番号・業務番号・見積り・確定時刻・追跡の開始、新しい順。営業のナビの「予約」を有効にし、確定の後に S-24 へ戻れるようにする。Bolt 23b の U-1。読み取りモデルの置き場所（Bolt 23b の A-低3〜5）を諮る）（2026-10-09 に human:kakimomokuri が Bolt 25 から分けた）</td>
 <td style="text-align: right;">0</td>
 <td style="text-align: left;">アウトサイドイン</td>
-<td style="text-align: left;">Red・Green ごと（画面）</td>
+<td style="text-align: left;">画面、Red・Green ごと（照会）</td>
 </tr>
 <tr>
 <td style="text-align: left;">26</td>
@@ -9965,7 +10000,7 @@
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Bolt 22: 日時表示・期間表示を <code>platform</code> の Web の部品に集める（技術タスク、SP 0。W4 の最初の Bolt）。<a href="../bolt_22_plan/">Bolt 22 計画</a>（承認済み）、<a href="../bolt_22_report/">Bolt 22 終了報告</a>（完了、2026-10-08 に承認済み。#41 をクローズした。割り込みで見積りの listener の楽観ロックの競合を直した（#42））、<a href="https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/41">#41</a></li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Bolt 23・23b・24: US-04（AC1、AC2、AC4、B-INV-03、B-INV-11）と予約サガの骨格、2 つの ADR。画面は Bolt 23b。<a href="../bolt_23_plan/">Bolt 23 計画</a>（承認済み。<code>/goal</code> で進めた）、<a href="../bolt_23_report/">Bolt 23 終了報告</a>（完了、2026-10-08 に承認済み。スキーマと D-5 の例外を含む。#10 は Bolt 25 まで開いたまま）、<a href="../bolt_23b_plan/">Bolt 23b 計画</a>（承認済み。<code>/goal</code> で進めた）、<a href="../bolt_23b_report/">Bolt 23b 終了報告</a>（完了、2026-10-08 に承認済み。承認の後に失効した見積りの再見積りの規則は未決）、<a href="../bolt_24_plan/">Bolt 24 計画</a>（<code>/goal</code> で進めた）、<a href="../bolt_24_report/">Bolt 24 終了報告</a>（完了、2026-10-09 に承認済み。ADR-001 にマイグレーションの埋め込みの例外、RET-06 の削除は運用の DB 利用者、SonarQube の S8445 は品質プロファイルから外した）</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Bolt 25: 追跡の開始とサガの成功の経路。<a href="../bolt_25_plan/">Bolt 25 計画</a>（<code>/goal</code> で進めた）、<a href="../bolt_25_report/">Bolt 25 終了報告</a>（完了、2026-10-09 に承認済み。公開 API を <code>&lt;コンテキスト&gt;.interfaces.api</code> にそろえ、見積りの公開 API も移した。層の規則の例外は腐敗防止層と合成ルート。#10 をクローズし、US-04 の AC3・AC5 は <a href="https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/43">#43</a>（W6）にした）</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> Bolt 25b: S-10 予約一覧の最小の表示（S-24 へ戻る入口）</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> Bolt 25b: S-10 予約一覧の最小の表示（S-24 へ戻る入口）。<a href="../bolt_25b_plan/">Bolt 25b 計画</a>（承認待ち）</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> Bolt 26・27: US-12（AC1、AC2）、US-09（AC1）</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> Bolt 28: 主成功の流れの <code>@ui</code> シナリオと Release 0.1 のデモ</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> ベロシティと承認ゲートの密度の見直し（W4 の開始時。「ベロシティ検証計画」）</li>
