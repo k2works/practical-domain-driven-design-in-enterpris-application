@@ -1,6 +1,15 @@
 # Docs Update Log
 
 ## 2026-10-09
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_25_report](/development/cargo-tracker/bolt_25_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_25_plan](/development/cargo-tracker/bolt_25_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [015-booking-saga-starts-tracking-by-event](/adr/cargo-tracker/015-booking-saga-starts-tracking-by-event.md) を human:kakimomokuri が検証
+* **Verification**: [bolt_25_report](/development/cargo-tracker/bolt_25_report.md) を human:kakimomokuri が検証
+* **Verification**: [bolt_25_plan](/development/cargo-tracker/bolt_25_plan.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_25_report](/development/cargo-tracker/bolt_25_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_25_plan](/development/cargo-tracker/bolt_25_plan.md) を更新（anthropic/claude-opus-5-5）
 * **Update**: [bolt_25_report](/development/cargo-tracker/bolt_25_report.md) を更新（anthropic/claude-opus-5-5）
 * **Update**: [bolt_25_plan](/development/cargo-tracker/bolt_25_plan.md) を更新（anthropic/claude-opus-5-5）
 * **Update**: [bolt_25_report](/development/cargo-tracker/bolt_25_report.md) を更新（anthropic/claude-opus-5-5）

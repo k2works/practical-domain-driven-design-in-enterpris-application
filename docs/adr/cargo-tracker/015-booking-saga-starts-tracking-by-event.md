@@ -5,6 +5,8 @@ description: "予約サガが追跡の公開 API を呼ぶと、予約（上流�
 tags: [adr, architecture, integration, saga]
 status: stable
 generated: { by: anthropic/claude-opus-5-5, at: 2026-10-09T04:48:46Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-10-09T07:03:02Z }
 ---
 
 # ADR-015: 予約サガは状態を予約に持ち、追跡の開始は追跡が DE-07 を購読して行う

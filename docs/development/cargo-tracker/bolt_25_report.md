@@ -3,8 +3,10 @@ type: Report
 title: "Bolt 25 終了報告 - 追跡の開始と予約サガの成功の経路（US-04、ADR-015、#10）"
 description: "25 回目の Bolt の終了報告。tracking モジュールと追跡記録を新設し、追跡が DE-07 を受けて経路設計の公開 API から確定した経路版の区間を予定として採用し、DE-22 を挟んだ別のトランザクションで予約の公開 API に返して予約サガを完了にした。公開 API は人の指示で interfaces.api に置いた。/goal で止まらなかった承認ゲート、スキーマの承認、開発レビューの対応、人に諮る設計の判断、既知の課題を記録する。"
 tags: [development,bolt-report]
-status: draft
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-09T07:00:22Z }
+status: stable
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-09T07:04:08Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-10-09T07:03:02Z }
 ---
 
 # Bolt 25 終了報告 - 追跡の開始と予約サガの成功の経路（US-04、ADR-015、#10）
@@ -158,6 +160,7 @@ Bolt 25b: S-10 予約一覧の最小の表示（S-24 に戻る入口）。続い
 
 | 日付 | 更新内容 | 更新者 |
 | :--- | :--- | :--- |
+| 2026-10-09 | 承認の議題 1〜9（7b を含む）を承認し、Bolt 25 を終えた。議題 2 のスキーマの承認（`y`）、議題 4 の合成ルートへの層の規則の例外、議題 6 の処理中でない予約サガへの結果の扱い、ADR-015 の依存の向きの改訂も承認された。#10 をクローズし、US-04 の AC3・AC5 を #43（Release 1.0、W6）にした。受入動画の添付先に bolt-25 → #10 を足した | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-10-09 | 人の指示で、公開 API の置き場所の規則を足し、見積りの公開 API を `quotation.interfaces.api` に移した（議題 7b） | anthropic/claude-opus-5-5、指示 human:kakimomokuri |
 | 2026-10-09 | 初版（ステップ 1〜6 の結果、開発レビュー、品質ゲート、既知の課題、承認の議題 1〜9、Try T-74〜T-76） | anthropic/claude-opus-5-5 |
 

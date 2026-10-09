@@ -3,8 +3,10 @@ type: Plan
 title: "Bolt 25 計画 - 追跡の開始と予約サガの成功の経路（US-04、ADR-015、#10）"
 description: "25 回目の Bolt の計画。tracking モジュールと追跡記録（tracking_record・scheduled_leg）を新設し、追跡の listener が DE-07 を購読して経路設計の公開 API から確定した経路版の区間を引いて予定として採用し、追跡を開始したイベントを受けた別のトランザクションで予約の公開 API へ結果を返して予約サガを完了にし、S-24 に「追跡の開始: 完了」を示して #10 をクローズするまでを、データ・ドメイン・アプリケーション・画面の順に、ステップ 1〜6 で定義する。"
 tags: [development,bolt-plan]
-status: draft
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-09T07:00:22Z }
+status: stable
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-09T07:04:08Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-10-09T07:03:02Z }
 ---
 
 # Bolt 25 計画 - 追跡の開始と予約サガの成功の経路（US-04、ADR-015、#10）
@@ -389,7 +391,7 @@ ui_design.md の業務シナリオ（「予約サガが完了したら『完了�
 - [x] `check`・`documentationTest`・`uiTest` が緑。push して CI とデモ環境の配備を確かめた
 - [x] SonarQube の Quality Gate が PASS
 - [x] 設計文書に決定を書き、計画からの変更も設計文書に戻した（T-53）
-- [ ] 開発レビューと終了報告。#10 に結果をコメントし（済み）、承認の後にクローズした。AC3・AC5 の Issue を作った
+- [x] 開発レビューと終了報告。#10 に結果をコメントし、承認の後にクローズした。AC3・AC5 の Issue を作った
 
 ### デモ項目
 
@@ -399,6 +401,7 @@ ui_design.md の業務シナリオ（「予約サガが完了したら『完了�
 
 | 日付 | 更新内容 | 更新者 |
 | :--- | :--- | :--- |
+| 2026-10-09 | 終了報告を承認し、完了条件をすべて満たした（CI 緑、SonarQube PASS、受入動画、#10 のクローズ）。終了報告の後に、人の指示で見積りの公開 API も `quotation.interfaces.api` に移した | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-10-09 | `/goal Bolt25` の指示で、承認ゲートで止まらずに進めることにした（スキーマは止める。計画の verify は人が行う） | anthropic/claude-opus-5-5 |
 | 2026-10-09 | 確認ポイントの回答を反映した（1〜3 は推奨のまま、`@CoreConcept` は作る、AT-04 は Bolt 25 に入れる。回答は計画の承認ではない） | anthropic/claude-opus-5-5、回答 human:kakimomokuri |
 | 2026-10-09 | 人の指示「公開 API の配置は開発ガイドに準拠して interfaces 以下に配置する」を反映した（`booking.interfaces.api`・`routing.interfaces.api`、層の規則の例外を確認ポイント 21 に） | anthropic/claude-opus-5-5、指示 human:kakimomokuri |
