@@ -4134,6 +4134,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../development/cargo-tracker/bolt_26_report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 26 終了報告
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -8899,7 +8927,7 @@
 <tbody>
 <tr>
 <td style="text-align: left;"><code>tracking_record</code></td>
-<td style="text-align: left;"><code>current_status</code> は主要実績から導出した結果の保存（照会のため）。導出の正は集約のロジック。<code>original_eta</code>（確定した経路版の到着予定）と <code>latest_eta</code>（最新の見込み）を別に持つ。<code>procedure_stage</code> は通関等の手続き中の段階。UK（<code>booking_id</code>）<code>uk_tracking_record_booking</code>: 予約 1 件に追跡記録 1 件で、DE-07 の再配信の冪等の正（T-INV-11。Bolt 25）。<code>booking_status</code> IN（<code>CONFIRMED</code>、<code>CANCELLED</code>、<code>COMPLETED</code>）（<code>ck_tracking_record_booking_status</code>）。<code>current_status</code> IN（<code>BOOKED</code>、<code>PICKUP_SCHEDULED</code>、<code>PICKED_UP</code>、<code>RECEIVED_AT_ORIGIN</code>、<code>IN_TRANSIT</code>、<code>TRANSSHIPPING</code>、<code>ARRIVED_AT_DESTINATION</code>、<code>READY_FOR_DELIVERY</code>、<code>DELIVERED</code>、<code>UNDER_REVIEW</code>）（<code>ck_tracking_record_current_status</code>。ドメインモデルの追跡状態）。実績に関わる列（<code>status_basis_milestone_no</code>、<code>under_review_reason</code>、<code>procedure_stage</code>、<code>last_acquired_at</code>）と経路版・到着予定の 4 列は NULL 可で作る（Bolt 25 の追跡の開始では経路版と到着予定に必ず値を入れる）。監査用の列の <code>created_by</code>・<code>updated_by</code> は持たない（行はイベントの購読でシステムが作る。共通の規約の例外）</td>
+<td style="text-align: left;"><code>current_status</code> は主要実績から導出した結果の保存（照会のため）。導出の正は集約のロジック。<code>original_eta</code>（確定した経路版の到着予定）と <code>latest_eta</code>（最新の見込み）を別に持つ。<code>procedure_stage</code> は通関等の手続き中の段階。UK（<code>booking_id</code>）<code>uk_tracking_record_booking</code>: 予約 1 件に追跡記録 1 件で、DE-07 の再配信の冪等の正（T-INV-11。Bolt 25）。<code>booking_status</code> IN（<code>CONFIRMED</code>、<code>CANCELLED</code>、<code>COMPLETED</code>）（<code>ck_tracking_record_booking_status</code>）。<code>current_status</code> IN（<code>BOOKED</code>、<code>PICKUP_SCHEDULED</code>、<code>PICKED_UP</code>、<code>RECEIVED_AT_ORIGIN</code>、<code>IN_TRANSIT</code>、<code>TRANSSHIPPING</code>、<code>ARRIVED_AT_DESTINATION</code>、<code>READY_FOR_DELIVERY</code>、<code>DELIVERED</code>、<code>UNDER_REVIEW</code>）（<code>ck_tracking_record_current_status</code>。ドメインモデルの追跡状態）。実績に関わる列（<code>status_basis_milestone_no</code>、<code>under_review_reason</code>、<code>procedure_stage</code>、<code>last_acquired_at</code>）と経路版・到着予定の 4 列は NULL 可で作る（Bolt 25 の追跡の開始では経路版と到着予定に必ず値を入れる）。監査用の列の <code>created_by</code>・<code>updated_by</code> は持たない（行はイベントの購読でシステムが作る。共通の規約の例外）。<code>created_at</code> は追跡の開始時刻で、S-11 追跡一覧はその新しい順（同じ時刻なら <code>tracking_number</code> の順）に引く（Bolt 26）</td>
 <td style="text-align: left;">T-INV-08、T-INV-10、T-INV-11</td>
 </tr>
 <tr>
@@ -9192,7 +9220,7 @@
 <tr>
 <td style="text-align: left;"><code>tracking.tracking_record</code></td>
 <td style="text-align: left;">（<code>shipper_company_id</code>）、（<code>consignee_company_id</code>）</td>
-<td style="text-align: left;">荷主・荷受人の照会（照会を作る Bolt 27 で足す。<code>booking_id</code> は一意制約が索引を兼ねる）</td>
+<td style="text-align: left;">荷主・荷受人の照会（照会を作る Bolt 27 で足す。<code>booking_id</code> は一意制約が索引を兼ねる）。S-11 の追跡の開始時刻（<code>created_at</code>）の並びの索引は、R0.1 では追跡記録が数十件なので足さない（一覧の絞り込みとページ送りを作る W7 以後に決める。Bolt 26）</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>tracking.service_case</code></td>

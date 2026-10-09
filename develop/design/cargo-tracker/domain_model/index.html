@@ -4274,6 +4274,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../development/cargo-tracker/bolt_26_report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 26 終了報告
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -9170,7 +9198,7 @@
 <tr>
 <td style="text-align: left;">追跡状態</td>
 <td style="text-align: left;">TrackingStatus</td>
-<td style="text-align: left;">追跡記録の現在状態の値。予約確定 <code>BOOKED</code>、集荷予定 <code>PICKUP_SCHEDULED</code>、集荷済み <code>PICKED_UP</code>、出発地搬入済み <code>RECEIVED_AT_ORIGIN</code>、輸送中 <code>IN_TRANSIT</code>、積替え中 <code>TRANSSHIPPING</code>、目的地到着 <code>ARRIVED_AT_DESTINATION</code>、引渡し可能 <code>READY_FOR_DELIVERY</code>、引渡し済み <code>DELIVERED</code>、確認中 <code>UNDER_REVIEW</code>（要件定義の追跡状態モデル。状態名は業務責任者の確認前の候補。Bolt 25 は予定を採用した直後の集荷予定だけを使う）</td>
+<td style="text-align: left;">追跡記録の現在状態の値。予約確定 <code>BOOKED</code>、集荷予定 <code>PICKUP_SCHEDULED</code>、集荷済み <code>PICKED_UP</code>、出発地搬入済み <code>RECEIVED_AT_ORIGIN</code>、輸送中 <code>IN_TRANSIT</code>、積替え中 <code>TRANSSHIPPING</code>、目的地到着 <code>ARRIVED_AT_DESTINATION</code>、引渡し可能 <code>READY_FOR_DELIVERY</code>、引渡し済み <code>DELIVERED</code>、確認中 <code>UNDER_REVIEW</code>（要件定義の追跡状態モデル。状態名は業務責任者の確認前の候補。Bolt 25 は予定を採用した直後の集荷予定だけを使う。画面の表示名は日本語の名前のまま。Bolt 26 で S-11・S-12 に出し、確認は Bolt 26 の終了報告の議題に置いた）</td>
 <td style="text-align: left;">追跡</td>
 </tr>
 <tr>
@@ -10586,7 +10614,7 @@
 <tr>
 <td style="text-align: left;">追跡</td>
 <td style="text-align: left;">追跡記録・有人案件・照会記録・営業日カレンダーのリポジトリ</td>
-<td style="text-align: left;">追跡番号で取得、予約 ID で追跡記録を取得（T-INV-11。Bolt 25）、期待版で保存、期限を過ぎた未受領案件を取得、荷主企業の問い合わせを取得</td>
+<td style="text-align: left;">追跡番号で取得（S-12。Bolt 26）、予約 ID で追跡記録を取得（T-INV-11。Bolt 25）、追跡記録の要約（<code>TrackingRecordSummary</code>）を追跡の開始時刻の新しい順に上限まで取得（S-11。集約を組み立てない。Bolt 26）、期待版で保存、期限を過ぎた未受領案件を取得、荷主企業の問い合わせを取得</td>
 </tr>
 <tr>
 <td style="text-align: left;">通知</td>
