@@ -1,4 +1,4 @@
-package com.example.cargotracker.quotation.api;
+package com.example.cargotracker.quotation.interfaces.api;
 
 /**
  * 予約確定済みの通知（見積りの公開 API の操作。ADR-014、DE-07。Bolt 23）。予約が本予約を確定した（DE-07）ことを予約の listener が

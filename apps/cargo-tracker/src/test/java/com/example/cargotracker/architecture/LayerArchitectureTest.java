@@ -71,7 +71,7 @@ class LayerArchitectureTest {
             .mayNotBeAccessedByAnyLayer()
             // 他のコンテキストの公開 API（開発ガイドライン第 3 章のインターフェース層の <コンテキスト>.interfaces.api）は、呼ぶ側の腐敗防止層と、
             // 公開 API を腐敗防止層に渡す合成ルートからだけ参照してよい（Bolt 25 の人の決定。公開 API の型はインターフェースと record で、
-            // 実装は interfaces.api.internal に置く）
+            // 実装は interfaces.api.internal に置く。見積りの公開 API も 2026-10-09 に移した）
             .ignoreDependency(
                     resideInAnyPackage("..application.internal.outboundservices.acl..", "..infrastructure.config.."),
                     resideInAPackage("com.example.cargotracker.*.interfaces.api"));

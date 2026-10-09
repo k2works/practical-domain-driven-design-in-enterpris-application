@@ -1,13 +1,14 @@
-package com.example.cargotracker.quotation.application.internal.queryservices;
+package com.example.cargotracker.quotation.interfaces.api.internal;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.example.cargotracker.quotation.acceptance.InMemoryTransportRequestRepository;
-import com.example.cargotracker.quotation.api.RouteConditionView;
+import com.example.cargotracker.quotation.application.internal.queryservices.RouteConditionQueryService;
 import com.example.cargotracker.quotation.domain.model.aggregates.TransportRequest;
 import com.example.cargotracker.quotation.domain.model.valueobjects.ShipmentTermsFixture;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestId;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestNumber;
+import com.example.cargotracker.quotation.interfaces.api.RouteConditionView;
 import com.example.cargotracker.shared.domain.CompanyId;
 import com.example.cargotracker.shared.domain.Location;
 import com.example.cargotracker.shared.domain.UserId;
@@ -17,10 +18,11 @@ import java.util.UUID;
 import org.junit.jupiter.api.Test;
 
 /** 見積りの公開 API の経路条件の照会（Bolt 17）。 */
-class RouteConditionQueryServiceTest {
+class RouteConditionQueryAdapterTest {
 
     private final InMemoryTransportRequestRepository repository = new InMemoryTransportRequestRepository();
-    private final RouteConditionQueryService service = new RouteConditionQueryService(repository);
+    private final RouteConditionQueryAdapter service =
+            new RouteConditionQueryAdapter(new RouteConditionQueryService(repository));
 
     @Test
     void 輸送要求の現在の版の経路条件と業務番号を返す() {

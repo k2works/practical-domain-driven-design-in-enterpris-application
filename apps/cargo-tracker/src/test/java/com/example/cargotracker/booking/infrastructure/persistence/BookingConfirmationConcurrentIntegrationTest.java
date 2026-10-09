@@ -10,7 +10,7 @@ import com.example.cargotracker.booking.application.internal.outboundservices.ac
 import com.example.cargotracker.booking.domain.model.BookingFixture;
 import com.example.cargotracker.booking.domain.model.valueobjects.BookingTerms;
 import com.example.cargotracker.booking.domain.model.valueobjects.TrackingNumber;
-import com.example.cargotracker.quotation.api.BookableQuotationResult;
+import com.example.cargotracker.quotation.interfaces.api.BookableQuotationResult;
 import com.example.cargotracker.shared.domain.AuthenticatedActor;
 import com.example.cargotracker.shared.domain.CommandId;
 import com.example.cargotracker.shared.domain.CompanyId;

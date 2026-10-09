@@ -5,8 +5,8 @@ import static org.assertj.core.api.Assertions.assertThatCode;
 
 import com.example.cargotracker.booking.application.internal.outboundservices.acl.QuotationBookingNotifications;
 import com.example.cargotracker.booking.domain.events.BookingConfirmed;
-import com.example.cargotracker.quotation.api.BookingNotificationReceipt;
-import com.example.cargotracker.quotation.api.BookingNotificationRequest;
+import com.example.cargotracker.quotation.interfaces.api.BookingNotificationReceipt;
+import com.example.cargotracker.quotation.interfaces.api.BookingNotificationRequest;
 import com.example.cargotracker.shared.domain.CompanyId;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import java.time.Instant;

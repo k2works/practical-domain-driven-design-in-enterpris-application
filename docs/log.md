@@ -2,6 +2,10 @@
 
 ## 2026-10-09
 * **Update**: [bolt_25_report](/development/cargo-tracker/bolt_25_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [014-downstream-to-upstream-notification](/adr/cargo-tracker/014-downstream-to-upstream-notification.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_25_report](/development/cargo-tracker/bolt_25_report.md) を更新（anthropic/claude-opus-5-5）
 * **Update**: [heroku_demo_setup](/operation/cargo-tracker/heroku_demo_setup.md) を更新（anthropic/claude-opus-5-5）
 * **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
 * **Update**: [bolt_25_plan](/development/cargo-tracker/bolt_25_plan.md) を更新（anthropic/claude-opus-5-5）

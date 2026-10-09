@@ -1,4 +1,4 @@
-package com.example.cargotracker.quotation.api;
+package com.example.cargotracker.quotation.interfaces.api;
 
 /**
  * 経路の割当て（見積りの公開 API の操作。ADR-014、R-INV-11。Bolt 20）。経路設計が経路を確定した（DE-05）ことを経路設計の

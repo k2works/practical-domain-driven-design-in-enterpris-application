@@ -21,8 +21,8 @@ import com.example.cargotracker.booking.domain.model.valueobjects.BookingConditi
 import com.example.cargotracker.booking.domain.model.valueobjects.BookingId;
 import com.example.cargotracker.booking.domain.model.valueobjects.ProcessedCommand;
 import com.example.cargotracker.booking.domain.model.valueobjects.TrackingNumber;
-import com.example.cargotracker.quotation.api.BookableQuotationRequest;
-import com.example.cargotracker.quotation.api.BookableQuotationResult;
+import com.example.cargotracker.quotation.interfaces.api.BookableQuotationRequest;
+import com.example.cargotracker.quotation.interfaces.api.BookableQuotationResult;
 import com.example.cargotracker.shared.domain.AuthenticatedActor;
 import com.example.cargotracker.shared.domain.CommandId;
 import com.example.cargotracker.shared.domain.CompanyId;

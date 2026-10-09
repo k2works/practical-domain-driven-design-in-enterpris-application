@@ -1,4 +1,4 @@
-package com.example.cargotracker.quotation.api;
+package com.example.cargotracker.quotation.interfaces.api;
 
 /**
  * 予約確定に使える見積りの照会（見積りの公開 API。ADR-016、Q-INV-06。Bolt 23）。予約が本予約の確定のトランザクションの中で、

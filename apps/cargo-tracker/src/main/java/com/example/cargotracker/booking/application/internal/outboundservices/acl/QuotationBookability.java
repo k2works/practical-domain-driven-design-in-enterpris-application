@@ -1,9 +1,9 @@
 package com.example.cargotracker.booking.application.internal.outboundservices.acl;
 
 import com.example.cargotracker.booking.domain.model.valueobjects.BookingTerms;
-import com.example.cargotracker.quotation.api.BookableQuotationQuery;
-import com.example.cargotracker.quotation.api.BookableQuotationRequest;
-import com.example.cargotracker.quotation.api.BookableQuotationResult;
+import com.example.cargotracker.quotation.interfaces.api.BookableQuotationQuery;
+import com.example.cargotracker.quotation.interfaces.api.BookableQuotationRequest;
+import com.example.cargotracker.quotation.interfaces.api.BookableQuotationResult;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import java.util.Objects;
 

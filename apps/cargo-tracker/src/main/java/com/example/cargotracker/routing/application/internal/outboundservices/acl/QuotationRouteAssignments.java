@@ -1,9 +1,9 @@
 package com.example.cargotracker.routing.application.internal.outboundservices.acl;
 
-import com.example.cargotracker.quotation.api.RouteAssignment;
-import com.example.cargotracker.quotation.api.RouteAssignmentLeg;
-import com.example.cargotracker.quotation.api.RouteAssignmentReceipt;
-import com.example.cargotracker.quotation.api.RouteAssignmentRequest;
+import com.example.cargotracker.quotation.interfaces.api.RouteAssignment;
+import com.example.cargotracker.quotation.interfaces.api.RouteAssignmentLeg;
+import com.example.cargotracker.quotation.interfaces.api.RouteAssignmentReceipt;
+import com.example.cargotracker.quotation.interfaces.api.RouteAssignmentRequest;
 import com.example.cargotracker.routing.domain.model.valueobjects.Leg;
 import com.example.cargotracker.routing.domain.model.valueobjects.RoutingCaseNumber;
 import com.example.cargotracker.shared.domain.UtcInstant;

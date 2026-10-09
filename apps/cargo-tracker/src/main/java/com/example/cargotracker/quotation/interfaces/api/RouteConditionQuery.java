@@ -1,4 +1,4 @@
-package com.example.cargotracker.quotation.api;
+package com.example.cargotracker.quotation.interfaces.api;
 
 import java.util.Optional;
 import java.util.UUID;

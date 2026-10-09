@@ -1,15 +1,16 @@
-package com.example.cargotracker.quotation.application.internal.commandservices;
+package com.example.cargotracker.quotation.interfaces.api.internal;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.example.cargotracker.quotation.acceptance.InMemoryTransportRequestRepository;
-import com.example.cargotracker.quotation.api.BookingNotificationReceipt;
-import com.example.cargotracker.quotation.api.BookingNotificationRequest;
+import com.example.cargotracker.quotation.application.internal.commandservices.BookingNotificationService;
 import com.example.cargotracker.quotation.domain.model.aggregates.TransportRequest;
 import com.example.cargotracker.quotation.domain.model.valueobjects.ShipmentTermsFixture;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestId;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestNumber;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestStatus;
+import com.example.cargotracker.quotation.interfaces.api.BookingNotificationReceipt;
+import com.example.cargotracker.quotation.interfaces.api.BookingNotificationRequest;
 import com.example.cargotracker.shared.domain.CompanyId;
 import com.example.cargotracker.shared.domain.UserId;
 import com.example.cargotracker.shared.domain.UtcInstant;
@@ -21,13 +22,14 @@ import org.junit.jupiter.api.Test;
  * 見積りの公開 API の予約確定済みの通知（ADR-014、DE-07。Bolt 23）。予約の DE-07 の listener が呼び、輸送要求を予約確定済みにする。
  * 冪等で、業務の理由で進めないときは例外にせず結果で返す（T-58）。
  */
-class BookingNotificationServiceTest {
+class BookingNotificationAdapterTest {
 
     private static final UserId STAFF = new UserId(UUID.randomUUID());
     private static final UtcInstant NOW = new UtcInstant(Instant.parse("2026-10-05T01:00:00Z"));
 
     private final InMemoryTransportRequestRepository repository = new InMemoryTransportRequestRepository();
-    private final BookingNotificationService service = new BookingNotificationService(repository);
+    private final BookingNotificationAdapter service =
+            new BookingNotificationAdapter(new BookingNotificationService(repository));
 
     @Test
     void 予約待ちの輸送要求を予約確定済みにし二度目は何もしない() {

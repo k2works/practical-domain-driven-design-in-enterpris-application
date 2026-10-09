@@ -41,6 +41,10 @@ import com.example.cargotracker.quotation.domain.events.RouteDesignRequested;
 import com.example.cargotracker.quotation.domain.events.TransportRequestSubmitted;
 import com.example.cargotracker.quotation.domain.model.rules.MvpAcceptancePolicy;
 import com.example.cargotracker.quotation.domain.model.rules.RequiredDocumentPolicy;
+import com.example.cargotracker.quotation.interfaces.api.internal.BookableQuotationQueryAdapter;
+import com.example.cargotracker.quotation.interfaces.api.internal.BookingNotificationAdapter;
+import com.example.cargotracker.quotation.interfaces.api.internal.RouteAssignmentAdapter;
+import com.example.cargotracker.quotation.interfaces.api.internal.RouteConditionQueryAdapter;
 import com.example.cargotracker.routing.acceptance.InMemoryConnectionRuleRepository;
 import com.example.cargotracker.routing.acceptance.InMemoryRoutingCaseNumberIssuer;
 import com.example.cargotracker.routing.acceptance.InMemoryRoutingCaseRepository;
@@ -159,7 +163,8 @@ public class AcceptanceTestConfiguration {
             return new RoutingCaseOpeningEventHandler(
                     repository,
                     numberIssuer,
-                    new QuotationRouteConditions(new RouteConditionQueryService(transportRequestRepository)));
+                    new QuotationRouteConditions(new RouteConditionQueryAdapter(
+                            new RouteConditionQueryService(transportRequestRepository))));
         }
 
         @Bean
@@ -201,8 +206,8 @@ public class AcceptanceTestConfiguration {
                     bookingRepository,
                     bookingSagaRepository,
                     new RandomTrackingNumberIssuer(bookingRepository, new Random(23)),
-                    new QuotationBookability(
-                            new BookableQuotationQueryService(quotationRepository, transportRequestRepository)),
+                    new QuotationBookability(new BookableQuotationQueryAdapter(
+                            new BookableQuotationQueryService(quotationRepository, transportRequestRepository))),
                     eventDelivery,
                     clock);
         }
@@ -210,8 +215,8 @@ public class AcceptanceTestConfiguration {
         /** 予約は DE-07 を受けて見積りの公開 API（予約確定済みの通知）を呼ぶ（ADR-014。Bolt 23）。 */
         @Bean
         BookingConfirmedEventHandler bookingConfirmedEventHandler(InMemoryTransportRequestRepository repository) {
-            return new BookingConfirmedEventHandler(
-                    new QuotationBookingNotifications(new BookingNotificationService(repository)));
+            return new BookingConfirmedEventHandler(new QuotationBookingNotifications(
+                    new BookingNotificationAdapter(new BookingNotificationService(repository))));
         }
 
         @Bean
@@ -260,7 +265,8 @@ public class AcceptanceTestConfiguration {
         @Bean
         QuotationRouteAssignmentEventHandler quotationRouteAssignmentEventHandler(
                 InMemoryRoutingCaseRepository repository, RouteAssignmentService routeAssignment) {
-            return new QuotationRouteAssignmentEventHandler(repository, new QuotationRouteAssignments(routeAssignment));
+            return new QuotationRouteAssignmentEventHandler(
+                    repository, new QuotationRouteAssignments(new RouteAssignmentAdapter(routeAssignment)));
         }
 
         @Bean

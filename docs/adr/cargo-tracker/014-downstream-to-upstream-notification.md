@@ -4,7 +4,7 @@ title: "ADR-014: 下流から上流への通知は、下流の listener が上�
 description: "経路設計の確定（DE-05）を見積りが購読するとモジュールの依存が循環する（Bolt 19 レビュー D-71）ため、下流のコンテキストが自分のイベントを listener で受け、上流の公開 API（api の名前付きインターフェース）の冪等な操作を呼ぶ形に決める。DE-05・DE-06・DE-07 に適用し、イベントの発行の仕方の基準もそろえる。"
 tags: [adr, architecture, integration]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-09T04:48:46Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-09T06:48:59Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-08T02:55:56Z }
 ---
@@ -36,7 +36,7 @@ verified:
 | :--- | :--- |
 | 依存の向き | 下流 → 上流のまま（例: `routing → quotation :: api`）。上流の `allowedDependencies` に下流を足さない |
 | 呼ぶ側 | 下流の `application.internal.eventhandlers` の listener（`@ApplicationModuleListener`）が自分のイベントを受け、`application.internal.outboundservices.acl` の部品を経て上流の公開 API を呼ぶ。listener は発行元のコミットの後に、非同期で、新しいトランザクションで動く。配信の信頼性は下流のイベントの発行の記録が担う（ADR-003） |
-| 呼ばれる側 | 上流の公開 API のパッケージに操作のインターフェースと引数・戻り値の record を置く（照会と同じ置き場所と型の規則。Bolt 25 からは `<コンテキスト>.interfaces.api` に置き、そこのアダプターが業務の処理に委ねる。見積りの `quotation.api` は移すまでの例外。バックエンドアーキテクチャ「公開 API の置き場所と形」）。業務の処理は上流の `application.internal.commandservices` に置き、上流の集約を 1 つ更新する。上流の集約のイベントは、上流の中で発行して上流の中で購読する |
+| 呼ばれる側 | 上流の公開 API のパッケージに操作のインターフェースと引数・戻り値の record を置く（照会と同じ置き場所と型の規則。Bolt 25 からは `<コンテキスト>.interfaces.api` に置き、そこのアダプターが業務の処理に委ねる。見積りの公開 API も 2026-10-09 に `quotation.interfaces.api` へ移した。バックエンドアーキテクチャ「公開 API の置き場所と形」）。業務の処理は上流の `application.internal.commandservices` に置き、上流の集約を 1 つ更新する。上流の集約のイベントは、上流の中で発行して上流の中で購読する |
 | 冪等 | 上流の操作は冪等にする。同じ業務キー（例: 案件番号と経路版番号）の再実行は何もせず、同じ結果を返す。下流の再配信はそのまま上流の再実行になる |
 | 業務の拒否 | 上流が業務の理由で受け付けない（例: 置換済みの見積り）ときは、例外にせず結果の値で返す。下流の listener は警告のログを残して終える（下流の確定は戻さない。結果整合。DE-16 の listener と同じ） |
 | 技術の失敗 | 上流の操作が例外を投げたら、listener のトランザクションごと戻り、発行の記録は未完了のまま残る。いまの設定（`spring.modulith.events.republish-outstanding-events-on-restart=true`）では、未完了の発行はアプリケーションの起動のときに再配信される。起動を待たずに定期で再配信する仕組みと未完了の件数の監視は、運用準備（W10）で入れる（Bolt 20 レビュー）。再配信しても変わらない不正な依頼（区間がないなど）は、例外にせず業務の拒否と同じく理由で返す |

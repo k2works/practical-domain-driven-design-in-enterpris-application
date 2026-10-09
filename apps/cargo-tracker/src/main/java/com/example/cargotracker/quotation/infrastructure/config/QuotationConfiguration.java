@@ -1,7 +1,5 @@
 package com.example.cargotracker.quotation.infrastructure.config;
 
-import com.example.cargotracker.quotation.api.RouteAssignment;
-import com.example.cargotracker.quotation.api.RouteConditionQuery;
 import com.example.cargotracker.quotation.application.internal.commandservices.BookingNotificationService;
 import com.example.cargotracker.quotation.application.internal.commandservices.QuotationCommandService;
 import com.example.cargotracker.quotation.application.internal.commandservices.QuotationResponseService;
@@ -121,28 +119,28 @@ public class QuotationConfiguration {
         return new QuotationPresentedEventHandler(repository);
     }
 
-    /** 見積りの公開 API の経路条件の照会（経路設計が DE-16 を受けて使う。Bolt 17）。 */
+    /** 経路条件の照会の入力ポート（見積りの公開 API のアダプターが委ねる。経路設計が DE-16 を受けて使う。Bolt 17）。 */
     @Bean
-    RouteConditionQuery routeConditionQuery(TransportRequestRepository repository) {
+    RouteConditionQueryService routeConditionQueryService(TransportRequestRepository repository) {
         return new RouteConditionQueryService(repository);
     }
 
-    /** 見積りの公開 API の予約確定済みの通知（予約が DE-07 を受けて使う。ADR-014。Bolt 23）。 */
+    /** 予約確定済みの通知の入力ポート（見積りの公開 API のアダプターが委ねる。予約が DE-07 を受けて使う。ADR-014。Bolt 23）。 */
     @Bean
-    BookingNotificationService bookingNotification(TransportRequestRepository transportRequestRepository) {
+    BookingNotificationService bookingNotificationService(TransportRequestRepository transportRequestRepository) {
         return new BookingNotificationService(transportRequestRepository);
     }
 
-    /** 見積りの公開 API の予約確定に使える見積りの照会（予約が本予約の確定で使う。ADR-016。Bolt 23）。 */
+    /** 予約確定に使える見積りの照会の入力ポート（見積りの公開 API のアダプターが委ねる。予約が本予約の確定で使う。ADR-016。Bolt 23）。 */
     @Bean
-    BookableQuotationQueryService bookableQuotationQuery(
+    BookableQuotationQueryService bookableQuotationQueryService(
             QuotationRepository quotationRepository, TransportRequestRepository transportRequestRepository) {
         return new BookableQuotationQueryService(quotationRepository, transportRequestRepository);
     }
 
-    /** 見積りの公開 API の経路の割当て（経路設計が DE-05 を受けて使う。ADR-014。Bolt 20）。 */
+    /** 経路の割当ての入力ポート（見積りの公開 API のアダプターが委ねる。経路設計が DE-05 を受けて使う。ADR-014。Bolt 20）。 */
     @Bean
-    RouteAssignment routeAssignment(
+    RouteAssignmentService routeAssignmentService(
             QuotationRepository quotationRepository, ApplicationEventPublisher eventPublisher, Clock clock) {
         return new RouteAssignmentService(quotationRepository, eventPublisher, clock);
     }

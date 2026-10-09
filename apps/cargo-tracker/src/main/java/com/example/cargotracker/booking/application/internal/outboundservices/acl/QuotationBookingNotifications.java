@@ -1,8 +1,8 @@
 package com.example.cargotracker.booking.application.internal.outboundservices.acl;
 
-import com.example.cargotracker.quotation.api.BookingNotification;
-import com.example.cargotracker.quotation.api.BookingNotificationReceipt;
-import com.example.cargotracker.quotation.api.BookingNotificationRequest;
+import com.example.cargotracker.quotation.interfaces.api.BookingNotification;
+import com.example.cargotracker.quotation.interfaces.api.BookingNotificationReceipt;
+import com.example.cargotracker.quotation.interfaces.api.BookingNotificationRequest;
 import java.util.UUID;
 
 /**

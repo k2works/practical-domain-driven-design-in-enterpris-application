@@ -2,8 +2,8 @@ package com.example.cargotracker.routing.application.internal.eventhandlers;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.example.cargotracker.quotation.api.RouteConditionView;
 import com.example.cargotracker.quotation.domain.events.RouteDesignRequested;
+import com.example.cargotracker.quotation.interfaces.api.RouteConditionView;
 import com.example.cargotracker.routing.acceptance.InMemoryRoutingCaseNumberIssuer;
 import com.example.cargotracker.routing.acceptance.InMemoryRoutingCaseRepository;
 import com.example.cargotracker.routing.application.internal.outboundservices.acl.QuotationRouteConditions;

@@ -1,6 +1,6 @@
 package com.example.cargotracker.routing.application.internal.outboundservices.acl;
 
-import com.example.cargotracker.quotation.api.RouteConditionQuery;
+import com.example.cargotracker.quotation.interfaces.api.RouteConditionQuery;
 import com.example.cargotracker.routing.domain.model.valueobjects.RouteSpecification;
 import java.util.Optional;
 import java.util.UUID;

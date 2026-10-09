@@ -1,17 +1,18 @@
-package com.example.cargotracker.quotation.application.internal.commandservices;
+package com.example.cargotracker.quotation.interfaces.api.internal;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.example.cargotracker.quotation.acceptance.InMemoryQuotationRepository;
-import com.example.cargotracker.quotation.api.RouteAssignmentLeg;
-import com.example.cargotracker.quotation.api.RouteAssignmentReceipt;
-import com.example.cargotracker.quotation.api.RouteAssignmentRequest;
+import com.example.cargotracker.quotation.application.internal.commandservices.RouteAssignmentService;
 import com.example.cargotracker.quotation.domain.events.QuotationRouteAssigned;
 import com.example.cargotracker.quotation.domain.model.aggregates.Quotation;
 import com.example.cargotracker.quotation.domain.model.valueobjects.QuotationFixture;
 import com.example.cargotracker.quotation.domain.model.valueobjects.QuotationId;
 import com.example.cargotracker.quotation.domain.model.valueobjects.QuotationStatus;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestId;
+import com.example.cargotracker.quotation.interfaces.api.RouteAssignmentLeg;
+import com.example.cargotracker.quotation.interfaces.api.RouteAssignmentReceipt;
+import com.example.cargotracker.quotation.interfaces.api.RouteAssignmentRequest;
 import com.example.cargotracker.shared.domain.Location;
 import com.example.cargotracker.shared.domain.UserId;
 import com.example.cargotracker.shared.domain.UtcInstant;
@@ -24,15 +25,15 @@ import java.util.UUID;
 import org.junit.jupiter.api.Test;
 
 /** 見積りの公開 API の経路の割当て（ADR-014、R-INV-11。Bolt 20）。 */
-class RouteAssignmentServiceTest {
+class RouteAssignmentAdapterTest {
 
     private static final Instant NOW = Instant.parse("2026-10-07T05:01:00Z");
     private static final UserId STAFF = new UserId(UUID.randomUUID());
 
     private final InMemoryQuotationRepository quotations = new InMemoryQuotationRepository();
     private final List<Object> published = new ArrayList<>();
-    private final RouteAssignmentService service =
-            new RouteAssignmentService(quotations, published::add, Clock.fixed(NOW, ZoneOffset.UTC));
+    private final RouteAssignmentAdapter service = new RouteAssignmentAdapter(
+            new RouteAssignmentService(quotations, published::add, Clock.fixed(NOW, ZoneOffset.UTC)));
 
     private Quotation presented() {
         Quotation quotation =

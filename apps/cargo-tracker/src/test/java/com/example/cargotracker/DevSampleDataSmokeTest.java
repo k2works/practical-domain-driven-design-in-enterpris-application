@@ -7,9 +7,6 @@ import com.example.cargotracker.booking.application.internal.commandservices.Boo
 import com.example.cargotracker.booking.application.internal.commandservices.BookingConfirmationOutcome;
 import com.example.cargotracker.booking.domain.model.valueobjects.TrackingNumber;
 import com.example.cargotracker.identity.domain.model.aggregates.KpiObservationRepository;
-import com.example.cargotracker.quotation.api.BookableQuotationQuery;
-import com.example.cargotracker.quotation.api.BookableQuotationRequest;
-import com.example.cargotracker.quotation.api.BookableQuotationResult;
 import com.example.cargotracker.quotation.domain.model.aggregates.Quotation;
 import com.example.cargotracker.quotation.domain.model.aggregates.QuotationRepository;
 import com.example.cargotracker.quotation.domain.model.aggregates.TransportRequestNumberIssuer;
@@ -20,6 +17,9 @@ import com.example.cargotracker.quotation.domain.model.valueobjects.RoutingReque
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestId;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestNumber;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestSummary;
+import com.example.cargotracker.quotation.interfaces.api.BookableQuotationQuery;
+import com.example.cargotracker.quotation.interfaces.api.BookableQuotationRequest;
+import com.example.cargotracker.quotation.interfaces.api.BookableQuotationResult;
 import com.example.cargotracker.routing.domain.model.aggregates.ConnectionRuleRepository;
 import com.example.cargotracker.routing.domain.model.aggregates.RoutingCase;
 import com.example.cargotracker.routing.domain.model.aggregates.RoutingCaseNumberIssuer;

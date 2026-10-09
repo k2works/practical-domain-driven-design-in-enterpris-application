@@ -1,11 +1,10 @@
-package com.example.cargotracker.quotation.application.internal.queryservices;
+package com.example.cargotracker.quotation.interfaces.api.internal;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.example.cargotracker.quotation.acceptance.InMemoryQuotationRepository;
 import com.example.cargotracker.quotation.acceptance.InMemoryTransportRequestRepository;
-import com.example.cargotracker.quotation.api.BookableQuotationRequest;
-import com.example.cargotracker.quotation.api.BookableQuotationResult;
+import com.example.cargotracker.quotation.application.internal.queryservices.BookableQuotationQueryService;
 import com.example.cargotracker.quotation.domain.model.aggregates.Quotation;
 import com.example.cargotracker.quotation.domain.model.aggregates.TransportRequest;
 import com.example.cargotracker.quotation.domain.model.valueobjects.QuotationFixture;
@@ -13,6 +12,8 @@ import com.example.cargotracker.quotation.domain.model.valueobjects.QuotationId;
 import com.example.cargotracker.quotation.domain.model.valueobjects.ShipmentTermsFixture;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestId;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestNumber;
+import com.example.cargotracker.quotation.interfaces.api.BookableQuotationRequest;
+import com.example.cargotracker.quotation.interfaces.api.BookableQuotationResult;
 import com.example.cargotracker.shared.domain.CompanyId;
 import com.example.cargotracker.shared.domain.UserId;
 import com.example.cargotracker.shared.domain.UtcInstant;
@@ -24,7 +25,7 @@ import org.junit.jupiter.api.Test;
  * 見積りの公開 API の予約確定に使える見積りの照会（ADR-016、Q-INV-06。Bolt 23）。業務番号と見積り番号で引き（画面の URL に内部の
  * ID を出さない D-4。Bolt 23b）、commit 時刻で判定し、使えるなら確定に要る写しを、使えないなら理由を返す。境界の 3 点は集約の単体テスト（QuotationShipperApprovalTest）で確かめる。
  */
-class BookableQuotationQueryServiceTest {
+class BookableQuotationQueryAdapterTest {
 
     private static final CompanyId SHIPPER = new CompanyId(UUID.fromString("00000000-0000-0000-0000-000000000101"));
     private static final UserId SALES = new UserId(UUID.randomUUID());
@@ -32,8 +33,8 @@ class BookableQuotationQueryServiceTest {
 
     private final InMemoryTransportRequestRepository transportRequests = new InMemoryTransportRequestRepository();
     private final InMemoryQuotationRepository quotations = new InMemoryQuotationRepository();
-    private final BookableQuotationQueryService service =
-            new BookableQuotationQueryService(quotations, transportRequests);
+    private final BookableQuotationQueryAdapter service =
+            new BookableQuotationQueryAdapter(new BookableQuotationQueryService(quotations, transportRequests));
 
     @Test
     void 承認済みでcommit時刻が有効期限より前の見積りは確定に要る写しを返す() {

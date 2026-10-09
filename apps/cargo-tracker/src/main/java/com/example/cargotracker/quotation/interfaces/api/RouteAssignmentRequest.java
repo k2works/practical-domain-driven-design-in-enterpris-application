@@ -1,4 +1,4 @@
-package com.example.cargotracker.quotation.api;
+package com.example.cargotracker.quotation.interfaces.api;
 
 import com.example.cargotracker.shared.domain.UtcInstant;
 import java.util.List;

@@ -1,7 +1,7 @@
 package com.example.cargotracker.routing.infrastructure.config;
 
-import com.example.cargotracker.quotation.api.RouteAssignment;
-import com.example.cargotracker.quotation.api.RouteConditionQuery;
+import com.example.cargotracker.quotation.interfaces.api.RouteAssignment;
+import com.example.cargotracker.quotation.interfaces.api.RouteConditionQuery;
 import com.example.cargotracker.routing.application.internal.commandservices.RoutingCaseCommandService;
 import com.example.cargotracker.routing.application.internal.eventhandlers.QuotationRouteAssignmentEventHandler;
 import com.example.cargotracker.routing.application.internal.eventhandlers.RoutingCaseOpeningEventHandler;
