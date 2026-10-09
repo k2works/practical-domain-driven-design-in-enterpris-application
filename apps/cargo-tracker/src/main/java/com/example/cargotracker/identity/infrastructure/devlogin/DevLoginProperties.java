@@ -1,4 +1,4 @@
-package com.example.cargotracker.identity.devlogin;
+package com.example.cargotracker.identity.infrastructure.devlogin;
 
 import com.example.cargotracker.shared.domain.Role;
 import java.util.List;

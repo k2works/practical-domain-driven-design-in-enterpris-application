@@ -1,7 +1,7 @@
 package com.example.cargotracker.identity.infrastructure.config;
 
-import com.example.cargotracker.identity.devlogin.DevLoginGuard;
-import com.example.cargotracker.identity.devlogin.DevLoginProperties;
+import com.example.cargotracker.identity.infrastructure.devlogin.DevLoginGuard;
+import com.example.cargotracker.identity.infrastructure.devlogin.DevLoginProperties;
 import org.springframework.boot.flyway.autoconfigure.FlywayConfigurationCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

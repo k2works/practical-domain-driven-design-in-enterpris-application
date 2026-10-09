@@ -1,4 +1,4 @@
-package com.example.cargotracker.identity.devlogin;
+package com.example.cargotracker.identity.infrastructure.devlogin;
 
 import org.springframework.core.env.Environment;
 import org.springframework.core.env.Profiles;
