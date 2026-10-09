@@ -159,7 +159,7 @@ class BookingControllerTest {
     }
 
     @Test
-    void 確定すると予約の詳細へ移り追跡番号と追跡の開始を待っていることを示す() throws Exception {
+    void 確定すると予約の詳細へ移り追跡番号を示し追跡の開始の状態はお知らせに書かない() throws Exception {
         given(commandService.confirm(any()))
                 .willReturn(new BookingConfirmationOutcome.Confirmed(BookingFixture.TRACKING_NUMBER));
 
@@ -169,8 +169,7 @@ class BookingControllerTest {
                         .param("quotation", "1")
                         .param("staffConfirmed", "true"))
                 .andExpect(redirectedUrl("/staff/bookings/CTABCDEFGH2345"))
-                .andExpect(flash().attribute(
-                                "result", "TR-2026-0001 見積 1 で本予約を確定しました。追跡番号は CTABCDEFGH2345 です。追跡の開始を待っています。"));
+                .andExpect(flash().attribute("result", "TR-2026-0001 見積 1 で本予約を確定しました。追跡番号は CTABCDEFGH2345 です。"));
 
         ArgumentCaptor<ConfirmBookingCommand> command = ArgumentCaptor.forClass(ConfirmBookingCommand.class);
         verify(commandService).confirm(command.capture());
@@ -378,6 +377,27 @@ class BookingControllerTest {
                 .andExpect(content().string(not(containsString(">完了<"))))
                 .andExpect(
                         content().string(not(containsString(booking.id().value().toString()))));
+    }
+
+    /** 予約サガが完了したら「追跡の開始: 完了」を示し、更新の案内は出さない（ADR-015、T-69。Bolt 25）。 */
+    @Test
+    void 予約の詳細に追跡の開始が完了したことを示し更新の案内は出さない() throws Exception {
+        Booking booking = Booking.confirm(
+                        new BookingId(UUID.randomUUID()),
+                        BookingFixture.allConditions(),
+                        BookingFixture.terms(),
+                        BookingFixture.TRACKING_NUMBER,
+                        BookingFixture.SALES,
+                        new UtcInstant(Instant.parse("2026-10-08T00:30:00Z")))
+                .booking();
+        given(queryService.detail(BookingFixture.TRACKING_NUMBER))
+                .willReturn(Optional.of(new BookingDetail(booking, BookingSagaStatus.COMPLETED)));
+
+        mockMvc.perform(get("/staff/bookings/CTABCDEFGH2345"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString(">完了<")))
+                .andExpect(content().string(not(containsString("処理中"))))
+                .andExpect(content().string(not(containsString("画面を更新して確かめてください"))));
     }
 
     @Test

@@ -77,7 +77,7 @@ public class BookingController {
         return switch (outcome) {
             case BookingConfirmationOutcome.Confirmed(TrackingNumber trackingNumber) -> {
                 redirectAttributes.addFlashAttribute(
-                        RESULT, subject + " で本予約を確定しました。追跡番号は " + trackingNumber.value() + " です。追跡の開始を待っています。");
+                        RESULT, subject + " で本予約を確定しました。追跡番号は " + trackingNumber.value() + " です。");
                 yield "redirect:/staff/bookings/" + trackingNumber.value();
             }
             case BookingConfirmationOutcome.MissingConditions(List<BookingCondition> missing) ->

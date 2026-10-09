@@ -15,6 +15,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.regex.Pattern;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.web.server.LocalServerPort;
 
@@ -96,14 +97,39 @@ public class BookingUiSteps {
         page().waitForURL(url -> !url.contains("/staff/bookings/new"));
     }
 
-    @ならば("予約の詳細に本予約を確定したことと追跡番号が示され、追跡の開始が {string} である")
-    public void 予約の詳細が示される(String trackingStart) {
+    /**
+     * 追跡の開始は DE-07 を受けた追跡の listener が非同期で進めるので、確定の直後の表示は処理中か完了のどちらか（Bolt 25）。処理中の表示は
+     * 画面の単体テストで確かめる。
+     */
+    @ならば("予約の詳細に本予約を確定したことと追跡番号が示され、追跡の開始が {string} か {string} である")
+    public void 予約の詳細が示される(String inProgress, String completed) {
         page().waitForURL("**/staff/bookings/CT*");
         assertThat(page().getByRole(AriaRole.STATUS)).containsText(subject(1) + " で本予約を確定しました。追跡番号は CT");
-        assertThat(definition("追跡番号")).hasText(java.util.regex.Pattern.compile("CT[A-HJKMNP-Z2-9]{12}"));
+        assertThat(definition("追跡番号")).hasText(Pattern.compile("CT[A-HJKMNP-Z2-9]{12}"));
         assertThat(definition("業務番号")).hasText(state.transportRequestNumber());
         assertThat(definition("状態")).hasText("確定済み");
-        assertThat(definition("追跡の開始")).hasText(trackingStart);
+        assertThat(definition("追跡の開始"))
+                .hasText(Pattern.compile("^(" + Pattern.quote(inProgress) + "|" + Pattern.quote(completed) + ")$"));
+        browser.checkAccessibility();
+    }
+
+    /** 予約サガの完了は DE-07 と DE-22 の 2 つの非同期の処理の後なので、完了と出るまで開き直す（ADR-015。Bolt 25）。 */
+    @もし("予約の詳細を更新して追跡の開始が完了するのを待つ")
+    public void 追跡の開始の完了を待つ() {
+        String url = page().url();
+        for (int i = 0; i < 20; i++) {
+            if ("完了".equals(definition("追跡の開始").textContent().strip())) {
+                break;
+            }
+            page().waitForTimeout(500);
+            browser.navigate(url);
+        }
+    }
+
+    @ならば("予約の詳細の追跡の開始が {string} で、画面の更新の案内は出ない")
+    public void 追跡の開始が完了と出る(String completed) {
+        assertThat(definition("追跡の開始")).hasText(completed);
+        assertThat(page().getByText("画面を更新して確かめてください")).hasCount(0);
         browser.checkAccessibility();
     }
 
