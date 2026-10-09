@@ -58,7 +58,7 @@ public class RoutingUiSteps {
      * 上限（20 件）で切られる（Bolt 17 レビュー D-62）。接続時間規則は同じ値なので残しても判定は変わらない。
      * 案件の候補の区間が航海を参照する外部キーはないため、航海だけを消す（候補は案件ごとに残る）。
      */
-    @io.cucumber.java.After("(@US-06 or @US-07) and @ui")
+    @io.cucumber.java.After("(@US-06 or @US-07 or @US-12) and @ui")
     public void シナリオの航海を消す() {
         jdbc.update("DELETE FROM routing.port_call WHERE voyage_number LIKE ?", "UI-" + suffix + "-%");
         jdbc.update("DELETE FROM routing.voyage WHERE voyage_number LIKE ?", "UI-" + suffix + "-%");

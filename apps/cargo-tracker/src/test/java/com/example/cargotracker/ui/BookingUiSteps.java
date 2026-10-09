@@ -122,10 +122,14 @@ public class BookingUiSteps {
         return text.replaceAll("[.*+?^${}()|\\[\\]\\\\]", "\\\\$0");
     }
 
-    /** 予約サガの完了は DE-07 と DE-22 の 2 つの非同期の処理の後なので、完了と出るまで開き直す（ADR-015。Bolt 25）。 */
+    /**
+     * 予約サガの完了は DE-07 と DE-22 の 2 つの非同期の処理の後なので、完了と出るまで開き直す（ADR-015。Bolt 25）。追跡番号は追跡管理者の
+     * ステップが使うので控える（Bolt 26）。
+     */
     @もし("予約の詳細を更新して追跡の開始が完了するのを待つ")
     public void 追跡の開始の完了を待つ() {
         String url = page().url();
+        state.trackingNumber(definition("追跡番号").textContent().strip());
         for (int i = 0; i < 20; i++) {
             if ("完了".equals(definition("追跡の開始").textContent().strip())) {
                 break;
