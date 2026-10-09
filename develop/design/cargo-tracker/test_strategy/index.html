@@ -9029,7 +9029,7 @@ src/test/java/.../shared/acceptance/      共通ステップ（ログイン、�
 </tr>
 <tr>
 <td style="text-align: left;">冪等性</td>
-<td style="text-align: left;">同じ <code>commandId</code> を同時に 2 回送っても、処理済みコマンドの一意制約で 1 件になる。同じ <code>commandId</code> で内容（payload のハッシュ）が違えば衝突として拒否する。一意制約違反の後は、同じトランザクションで続けずに読み直す（ADR-007）</td>
+<td style="text-align: left;">同じ <code>commandId</code> を同時に 2 回送っても 1 件になる（本予約の確定では、同じ見積りなので貨物予約の一意制約が先に当たる）。同じ <code>commandId</code> で内容（payload のハッシュ）が違えば衝突として拒否する（同時に送られて処理済みコマンドの主キーで負けた側も衝突にする）。一意制約の違反は保存をセーブポイントに戻し、同じトランザクションで勝った側の結果を読み直す（Bolt 24。<code>BookingConfirmationConcurrentIntegrationTest</code>）</td>
 </tr>
 <tr>
 <td style="text-align: left;">重複確定の防止</td>

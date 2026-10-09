@@ -8743,6 +8743,10 @@
 <td style="text-align: left;">コンテキストごとに処理済みコマンドを記録し、同じ <code>commandId</code> には同じ結果を返す。同じ <code>commandId</code> で内容が違う場合は衝突として拒否する</td>
 </tr>
 <tr>
+<td style="text-align: left;">処理済みコマンドの置き場所</td>
+<td style="text-align: left;">処理済みコマンドは各コンテキストの集約のリポジトリ（domain）の操作にし、集約と同じ保存の呼び出しで記録する。application にポートを置かない（層の規則 D-5。例外は <code>application.sagas</code> だけ）。最初の実装は予約（Bolt 24。<code>ProcessedCommand</code>、<code>BookingRepository</code>）。2 つ目のコンテキストで使うときに、コマンド ID・種類・照合値と照合の判定を <code>shared.domain</code> に抽出するかを ADR で決める（Bolt 24 レビュー A-3）</td>
+</tr>
+<tr>
 <td style="text-align: left;">期待版の照合</td>
 <td style="text-align: left;">集約の版を楽観ロックに使う。<code>expectedVersion</code> が現在版と違えば変更せず、競合として最新版の再読込または再承認を求める</td>
 </tr>
