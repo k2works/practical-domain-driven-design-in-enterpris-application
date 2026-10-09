@@ -4,7 +4,7 @@ title: "cargo-tracker Unit 定義"
 description: "cargo-tracker の Unit 境界、依存 DAG、ユースケースとユーザーストーリーの対応関係。"
 tags: [requirements, unit]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-01T08:41:32Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-09T04:48:46Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T05:20:11Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:01:39Z }
@@ -72,7 +72,7 @@ DAG としての契約順序は、依存先を先に並べると `U4・U5 → U1
 | U6 | U2 | 本予約に利用可能な承認済み経路版 | 経路算出方法を U6 に漏らさない |
 | U6 | U4 | 本人確認済み session、確定・変更・取消し権限、予約証跡 | 認証・監査の方式を予約規則へ埋め込まない |
 | U3 | U6 | 予約識別、追跡番号、開示関係 | 見積り内部情報を追跡へ公開しない |
-| U3 | U2 | 有効な経路予定と版 | 候補計算の内部過程を追跡へ公開しない |
+| U3 | U2 | 有効な経路予定と版（経路設計の公開 API `routing :: api` の経路版の区間の照会。案件番号と経路版番号で、確定した経路版の区間を返す。Bolt 25） | 候補計算の内部過程を追跡へ公開しない |
 | U3 | U5 | 出典・発生時刻・取得時刻付き主要実績 | 未検証原本を現在状態へ直接反映しない |
 | U3 | U4 | 本人確認済み session、企業・役割・荷受人開示範囲、照会・訂正証跡 | 開示判定を表示処理へ埋め込まない |
 | U5 | U4 | 本人確認済み session、データ採否権限、手動入力・復旧照合の証跡 | 外部障害時も認証・権限と記録を迂回しない |

@@ -1,6 +1,27 @@
 # Docs Update Log
 
 ## 2026-10-09
+* **Update**: [user_story](/requirements/cargo-tracker/user_story.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [units](/requirements/cargo-tracker/units.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_25_plan](/development/cargo-tracker/bolt_25_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [015-booking-saga-starts-tracking-by-event](/adr/cargo-tracker/015-booking-saga-starts-tracking-by-event.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [014-downstream-to-upstream-notification](/adr/cargo-tracker/014-downstream-to-upstream-notification.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [user_story](/requirements/cargo-tracker/user_story.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [units](/requirements/cargo-tracker/units.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [015-booking-saga-starts-tracking-by-event](/adr/cargo-tracker/015-booking-saga-starts-tracking-by-event.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [014-downstream-to-upstream-notification](/adr/cargo-tracker/014-downstream-to-upstream-notification.md) を更新（anthropic/claude-opus-5-5）
 * **Update**: [bolt_25_plan](/development/cargo-tracker/bolt_25_plan.md) を更新（anthropic/claude-opus-5-5）
 * **Update**: [bolt_25_plan](/development/cargo-tracker/bolt_25_plan.md) を更新（anthropic/claude-opus-5-5）
 * **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）

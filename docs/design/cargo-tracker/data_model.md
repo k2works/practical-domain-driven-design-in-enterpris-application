@@ -4,7 +4,7 @@ title: "cargo-tracker データモデル"
 description: "cargo-tracker の概念データモデル、スキーマ分割、命名と型の規約（H2 と PostgreSQL の共通部分）、コンテキストごとの論理データモデルと ER 図、版・追記専用・冪等性・イベント配信の表現。"
 tags: [design, data-model]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-09T03:58:29Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-09T04:48:46Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T07:48:17Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:01:37Z }
@@ -595,7 +595,7 @@ entity "processed_command\n処理済みコマンド" as pc {
 | :--- | :--- | :--- |
 | `booking` | `tracking_number` は一意。UK（`quotation_id`）で、1 つの見積りから 2 件目の予約を作れない（別のコマンド ID による同時確定でも片方が一意制約で失敗する。予約版ではなく貨物予約に置くのは、変更の承認で予約版を足しても同じ見積りの写しを持てるようにするため。Bolt 23 レビュー）。`status` IN（`CONFIRMED`、`AMENDMENT_PENDING`、`CANCELLATION_PENDING`、`AMENDING`、`CANCELLED`、`IN_TRANSIT`、`COMPLETED`）。`transport_phase` IN（`BEFORE_PICKUP`、`AFTER_PICKUP`、`COMPLETED`）。UK（`transport_request_number`、`quotation_no`）: 見積り番号は見積りの写し（業務番号と同じ。R-31）で、見積りの公開 API に照会する前に同じ見積りの予約を引く（失効・置換の後は見積り ID が返らないため。Bolt 24）。B-INV-11 の正は見積り ID の UK で、業務番号と見積り番号の UK は同じ事実を業務の鍵で引くための索引を兼ねる（どちらに違反しても同じ見積りの予約として扱う） | B-INV-06、B-INV-07、B-INV-11 |
 | `booking_version` | 予約確定時の見積り・経路版・荷受人・貨物の写しと、確定者・commit 時刻 | B-INV-01、B-INV-08 |
-| `booking_saga` | 予約ごとに 1 つ。`status` IN（`IN_PROGRESS`、`COMPLETED`、`FAILED`、`NEEDS_HUMAN`）。再試行の回数・次の時刻・最後の誤りは持たない（追跡の開始の再試行はイベントの再配信が担う。ADR-015）。有人確認要の判定は処理中の滞留（`started_at`）で行う | ARCH-HO-02 |
+| `booking_saga` | 予約ごとに 1 つ。`status` IN（`IN_PROGRESS`、`COMPLETED`、`FAILED`、`NEEDS_HUMAN`）。完了は `status` と `updated_at`（完了の時刻を兼ねる）を期待版（`version`）で更新し、完了時刻の列は持たない。`current_step` は完了の後も `START_TRACKING` のまま（Bolt 25）。再試行の回数・次の時刻・最後の誤りは持たない（追跡の開始の再試行はイベントの再配信が担う。ADR-015）。有人確認要の判定は処理中の滞留（`started_at`）で行う | ARCH-HO-02 |
 | `processed_command` | 本予約確定のコマンド ID を記録し、再送には既存の予約 ID と追跡番号を返す。確定に成功したときだけ、貨物予約と同じトランザクションで INSERT する。`command_type` は `ConfirmBooking`、`payload_hash` は業務番号・見積り番号・操作者の利用者 ID の SHA-256、`result_ref` は「予約 ID:追跡番号」、`processed_at` は commit 時刻。追記専用。同じコマンド ID の同時の確定は、同じ見積りなので処理済みコマンドの主キーより先に貨物予約の UK（`quotation_id`）で片方が負ける。負けた側は貨物予約の保存をセーブポイントに戻し（トランザクションは中断しない）、同じトランザクションで処理済みコマンド → 同じ見積りの予約の順に引き直し、最初の結果か既存の追跡番号を返す（Bolt 24） | B-INV-03、B-INV-11 |
 
 `booking_version.cargo_summary` は予約確定時の貨物の写しで、見積りの内部情報（料金明細）は複製しない（units.md「見積り内部情報を予約へ複製しない」）。
@@ -611,7 +611,7 @@ skinparam linetype ortho
 entity "tracking_record\n追跡記録" as trk {
   * tracking_number : VARCHAR(20) <<PK>>
   --
-  * booking_id : UUID <<REF booking>>
+  * booking_id : UUID <<UK, REF booking>>
   * shipper_company_id : UUID <<REF identity>>
   * consignee_company_id : UUID <<REF identity>>
   * booking_status : VARCHAR(30)
@@ -756,7 +756,8 @@ sc ||--o{ sca
 
 | 表 | 主な制約 | 対応する不変条件 |
 | :--- | :--- | :--- |
-| `tracking_record` | `current_status` は主要実績から導出した結果の保存（照会のため）。導出の正は集約のロジック。`original_eta`（確定した経路版の到着予定）と `latest_eta`（最新の見込み）を別に持つ。`procedure_stage` は通関等の手続き中の段階 | T-INV-08、T-INV-10 |
+| `tracking_record` | `current_status` は主要実績から導出した結果の保存（照会のため）。導出の正は集約のロジック。`original_eta`（確定した経路版の到着予定）と `latest_eta`（最新の見込み）を別に持つ。`procedure_stage` は通関等の手続き中の段階。UK（`booking_id`）`uk_tracking_record_booking`: 予約 1 件に追跡記録 1 件で、DE-07 の再配信の冪等の正（T-INV-11。Bolt 25）。`booking_status` IN（`CONFIRMED`、`CANCELLED`、`COMPLETED`）（`ck_tracking_record_booking_status`）。`current_status` IN（`BOOKED`、`PICKUP_SCHEDULED`、`PICKED_UP`、`RECEIVED_AT_ORIGIN`、`IN_TRANSIT`、`TRANSSHIPPING`、`ARRIVED_AT_DESTINATION`、`READY_FOR_DELIVERY`、`DELIVERED`、`UNDER_REVIEW`）（`ck_tracking_record_current_status`。ドメインモデルの追跡状態）。実績に関わる列（`status_basis_milestone_no`、`under_review_reason`、`procedure_stage`、`last_acquired_at`）と経路版・到着予定の 4 列は NULL 可で作る（Bolt 25 の追跡の開始では経路版と到着予定に必ず値を入れる）。監査用の列の `created_by`・`updated_by` は持たない（行はイベントの購読でシステムが作る。共通の規約の例外） | T-INV-08、T-INV-10、T-INV-11 |
+| `scheduled_leg` | 主キー（`tracking_number`、`leg_no`）。`leg_no >= 1`（`ck_scheduled_leg_no`）、`arrival_at > departure_at`（`ck_scheduled_leg_arrival`。見積りの `assigned_route_leg` と同じ）。値は経路設計の公開 API が返す確定した経路版の区間（Bolt 25） | T-INV-12 |
 | `milestone` | UK（`tracking_number`、`source_kind`、`source_ref`）。`state` IN（`DRAFT`、`ADOPTED`、`UNDER_REVIEW`、`RETAINED_ONLY`）。DELETE の権限なし | T-INV-01〜03、T-INV-05 |
 | `correction` | `status` IN（`PENDING_APPROVAL`、`APPLIED`、`REJECTED`）。`approved_by` は `registered_by` と異なる（`CHECK`） | T-INV-06 |
 | `service_case` | `kind` IN（`CUSTOMER_INQUIRY`、`QUOTATION_CONSULTATION`、`AMENDMENT`、`REDESIGN`、`EXTERNAL_OUTAGE`、`REJECTED_MILESTONE`、`SAGA_FAILURE`）。`status` IN（`RECEIVED`、`ESCALATED`、`IN_PROGRESS`、`ANSWERED`、`CLOSED`、`DUPLICATE_CLOSED`）。`shipper_company_id` で荷主の照会範囲を限る。`acknowledged_at` は営業時間外の優先度高の自動受付の時刻 | SC-INV-01〜05 |
@@ -1123,7 +1124,7 @@ src/main/resources/db/
 | `routing.referenced_info_version` | （`voyage_number`） | 航海の更新で再評価する確定済み経路版の検索（DE-12） |
 | `booking.booking` | `tracking_number`（一意）、（`shipper_company_id`、`status`）、（`transport_request_number`）、（`transport_request_number`、`quotation_no`）（一意） | 追跡番号での照会、荷主の予約一覧、業務番号から予約をたどる社内の照会（Bolt 23、R-31）、見積りの照会の前に同じ見積りの予約を引く（Bolt 24） |
 | `booking.booking_saga` | （`status`、`started_at`） | 処理中の滞留の判定（RTY-02、OBS-04） |
-| `tracking.tracking_record` | （`shipper_company_id`）、（`consignee_company_id`） | 荷主・荷受人の照会 |
+| `tracking.tracking_record` | （`shipper_company_id`）、（`consignee_company_id`） | 荷主・荷受人の照会（照会を作る Bolt 27 で足す。`booking_id` は一意制約が索引を兼ねる） |
 | `tracking.service_case` | （`status`、`receive_due_at`） | 受領期限を過ぎた案件（escalation） |
 | `identity.access_grant` | （`booking_id`、`consignee_company_id`、`status`） | 参照許可の確認（request ごと） |
 | `identity.audit_record` | （`target_type`、`target_id`、`occurred_at`）、（`actor_user_id`、`occurred_at`） | 監査証跡の照会（US-17） |

@@ -10,6 +10,7 @@ import com.example.cargotracker.booking.domain.model.valueobjects.BookingTerms;
 import com.example.cargotracker.booking.domain.model.valueobjects.TrackingNumber;
 import com.example.cargotracker.booking.domain.model.valueobjects.TransportPhase;
 import com.example.cargotracker.shared.annotation.ddd.AggregateRoot;
+import com.example.cargotracker.shared.annotation.ddd.CoreConcept;
 import com.example.cargotracker.shared.domain.CompanyId;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import java.util.Comparator;
@@ -23,6 +24,7 @@ import java.util.UUID;
  * 見積りの有効性（commit 時刻での失効）は見積りが判定し、その結果を確定条件の「有効な見積り」として受け取る（ADR-016）。
  */
 @AggregateRoot
+@CoreConcept
 public final class Booking {
 
     private static final long INITIAL_AGGREGATE_VERSION = 0;

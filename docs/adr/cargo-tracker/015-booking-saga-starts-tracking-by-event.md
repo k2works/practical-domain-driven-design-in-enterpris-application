@@ -4,7 +4,7 @@ title: "ADR-015: 予約サガは状態を予約に持ち、追跡の開始は追
 description: "予約サガが追跡の公開 API を呼ぶと、予約（上流）が追跡（下流）に依存して ADR-014 と Unit の依存の向きに反する。追跡の listener が DE-07 を購読して追跡を開始し、結果を予約の公開 API で返す形に決め、ADR-003 の決定 3（オーケストレーション型のサガ）と再試行の担い手を改訂する。"
 tags: [adr, architecture, integration, saga]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-08T09:09:48Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-09T04:48:46Z }
 ---
 
 # ADR-015: 予約サガは状態を予約に持ち、追跡の開始は追跡が DE-07 を購読して行う
@@ -28,9 +28,9 @@ generated: { by: anthropic/claude-opus-5-5, at: 2026-10-08T09:09:48Z }
 
 | 要素 | 決定 |
 | :--- | :--- |
-| 依存の向き | `tracking → booking`（`api`・`events`）だけ。予約は追跡に依存しない |
+| 依存の向き | `tracking → booking`（`api`・`events`）と `tracking → routing`（`api`。経路版の区間。Unit の依存 U3 → U2）。予約と経路設計は追跡に依存しない（Bolt 25 の開始準備で改訂。当初は「`tracking → booking` だけ」） |
 | サガの状態 | 予約の `application.sagas` の予約サガ（状態・リポジトリ・進める処理。開発ガイドライン第 3 章。永続化の実装からの参照は層の規則 D-5 の例外）が、処理中・完了・失敗・有人確認要を `booking_saga` に永続化する。本予約の確定と同じトランザクションで「処理中」を作る。画面は予約サガの状態だけを見て、処理中を完了と表示しない |
-| 追跡の開始 | 追跡の `application.internal.eventhandlers` の listener が DE-07 を受け、追跡を開始する（追跡記録を作り、経路版の区間を予定として採用する）。開始の結果（開始した・業務の理由で開始できない）を予約の公開 API（`booking :: api`）で返し、予約サガを完了または失敗にする |
+| 追跡の開始 | 追跡の `application.internal.eventhandlers` の listener が DE-07 を受け、経路設計の公開 API（`routing :: api`）で確定した経路版の区間を引いて追跡を開始する（追跡記録を作り、区間を予定として採用し、同じトランザクションで DE-22 追跡を開始した を発行する）。DE-22 を受けた追跡の別の listener が、開始の結果（開始した・業務の理由で開始できない）を予約の公開 API（`booking :: api`）で返し、予約サガを完了または失敗にする。2 つのコンテキストの集約を 1 つのトランザクションで更新しない（ADR-014 の形） |
 | 冪等 | 追跡の開始は予約 ID で冪等にする（同じ予約の DE-07 の再配信は何もしない）。予約の公開 API も、同じ予約の同じ結果の再通知は何もしない |
 | 再試行 | 追跡の開始の技術の失敗は、イベントの発行の記録の再配信（RTY-01）が担う。予約サガは追跡を呼ばないので、別の再試行の仕組みを持たない（同じ処理を 2 つの仕組みで再試行しない、という ADR-003 の補足の決定の理由は保つ） |
 | 有人確認要 | 予約サガは、処理中のまま一定時間を超えたもの（RTY-02 の値で決める）を定期処理で有人確認要にし、BR-17 の有人案件の起票を依頼する。起票の依頼は、予約が発行するイベントを追跡（またはサービス案件を持つコンテキスト）が購読する形にし、予約から下流を呼ばない。追跡が業務の理由で開始できないときは、追跡が自分で有人案件を起票し、結果を予約の公開 API で返す。定期処理は ShedLock で 1 インスタンスに限る（ADR-003）。作るのは W8（US-20）と W10（定期の再配信） |
@@ -59,8 +59,10 @@ generated: { by: anthropic/claude-opus-5-5, at: 2026-10-08T09:09:48Z }
 
 ## コンプライアンス
 
-- ModularityTest で `booking` が `tracking` に依存しないことを確かめる（`tracking` を作る Bolt 25 から）。
-- 追跡の開始の結果を返す予約の公開 API（`booking :: api`、`@NamedInterface("api")`）は Bolt 25 で作る。追跡記録に要る荷主・荷受人の企業 ID と予定の区間の取得元（DE-07 に足すか、`booking :: api` の照会か、見積りの割り当てた経路の写しか）も Bolt 25 で決める（Bolt 23 レビュー）。
+- ModularityTest で `booking`・`routing` が `tracking` に依存しないことを確かめる（`tracking` を作る Bolt 25 から）。
+- 追跡の開始の結果を返す予約の公開 API（`booking :: api`、`@NamedInterface("api")`）は Bolt 25 で作る。置き場所は `booking.interfaces.api`（開発ガイドライン第 3 章のインターフェース層。2026-10-09 の人の指示）。操作は `TrackingStartNotification.notifyStarted(TrackingStartNotificationRequest(予約 ID, 追跡番号, 開始時刻))` で、結果は sealed interface と record の `TrackingStartNotificationReceipt`（`Completed`・`AlreadyCompleted`・`NotCompleted(reason)`、理由の定数 `SAGA_NOT_FOUND`）。予約 ID で冪等で、処理中の予約サガだけを完了にするので、コマンド ID と期待版（ARCH-HO-01）は持たない。業務の理由で開始できない結果は W8 で足す。
+- 追跡記録に要る値の取得元（Bolt 25 で決めた。2026-10-09、human:kakimomokuri）: 荷主・荷受人の企業 ID は DE-07 に足す（予約条件の写しから。null 可。小さな属性）。予定の区間は、追跡が経路設計の公開 API（`routing :: api`、`routing.interfaces.api`）で案件番号と経路版番号から引く。経路版は不変なので、確定した区間と同じ。DE-07 に区間を載せる案は、payload を小さく保つ規則（バックエンドアーキテクチャ）と H2 の発行記録の 4,000 文字の上限に当たるため採らない。`booking :: api` で照会する案は、予約に区間の写しを持たせることになるため採らない。
+- 予約サガの完了は `booking_saga` の状態と `updated_at`（完了の時刻を兼ねる）を期待版で更新する。完了時刻の列は足さない。
 - 予約サガの状態の遷移は予約の中の単体テストで、追跡の開始から予約サガの完了までは PostgreSQL の統合テストで確かめる（Bolt 25）。
 
 ## 関連ドキュメント

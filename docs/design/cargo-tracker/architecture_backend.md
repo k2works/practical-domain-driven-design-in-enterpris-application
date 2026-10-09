@@ -4,7 +4,7 @@ title: "cargo-tracker バックエンドアーキテクチャ"
 description: "cargo-tracker の境界づけられたコンテキスト、コンテキストごとのドメインロジックパターン、パッケージ構成、サガとドメインイベントによる連携（ARCH-HO-01〜03）、受信サービスの方針。"
 tags: [design, architecture, backend]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-09T03:02:52Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-09T04:48:46Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T07:11:12Z }
   - { by: human:kakimomokuri, at: 2026-10-01T07:41:04Z }
@@ -123,13 +123,13 @@ end note
 | 見積り → 経路設計 | Q → R | 顧客-供給者 | 見積り計算の内部過程を経路設計に漏らさない |
 | 見積り → 予約 | Q → B | 顧客-供給者 | 見積りの内部情報を予約へ複製せず、見積り ID・版・有効期限だけを渡す |
 | 経路設計 → 予約 | R → B | 顧客-供給者 | 経路算出方法を予約に漏らさない |
-| 予約 → 追跡 | B → T | 顧客-供給者 | 見積りの内部情報を追跡へ公開しない |
-| 経路設計 → 追跡 | R → T | 顧客-供給者 | 候補計算の内部過程を追跡へ公開しない |
+| 予約 → 追跡 | B → T | 顧客-供給者 | 見積りの内部情報を追跡へ公開しない。追跡は DE-07（荷主・荷受人の企業 ID を含む）を購読し、結果を `booking :: api` で返す（ADR-015。Bolt 25） |
+| 経路設計 → 追跡 | R → T | 顧客-供給者 | 候補計算の内部過程を追跡へ公開しない。追跡は `routing :: api` で確定した経路版の区間を引く（Bolt 25） |
 | 外部データ → 経路設計・追跡 | X → R、T | 公開ホスト + 公表された言語 | 未検証の原本を採用値として渡さない |
 | 外部 → 外部データ | EXT → X | 腐敗防止層 | 提供元の形式を経路規則へ直接漏らさない |
 | アクセス・監査 → 全体 | IA → 全体 | 公開ホスト | 認証方式・監査方式を業務規則へ埋め込まない |
 | 共有カーネル | 全業務コンテキスト | 共有カーネル（第 3 章） | 業務の意味を持たない基本型だけに限る |
-| 追跡 → 予約（イベントのみ） | T → B | 公表された言語（ドメインイベント） | 集荷実績の採用と引渡しの確認だけを通知する。予約は追跡の公開 API・内部に依存しない（[ドメインモデル](domain_model.md) DE-09、DE-10。第 2 章で Booking が Cargo Handled を購読するのと同じ）。注: 予約が追跡のイベントを購読すると `booking → tracking :: events` が加わり、ADR-015 の依存の向き（`tracking → booking` だけ）と循環する。DE-09・DE-10 は ADR-014 の形（追跡の listener が予約の公開 API を呼ぶ）にそろえ、US-12 の残り（W7）の Bolt で直す |
+| 追跡 → 予約（イベントのみ） | T → B | 公表された言語（ドメインイベント） | 集荷実績の採用と引渡しの確認だけを通知する。予約は追跡の公開 API・内部に依存しない（[ドメインモデル](domain_model.md) DE-09、DE-10。第 2 章で Booking が Cargo Handled を購読するのと同じ）。注: 予約が追跡のイベントを購読すると `booking → tracking :: events` が加わり、ADR-015 の依存の向き（`tracking → booking`・`routing`）と循環する。DE-09・DE-10 は ADR-014 の形（追跡の listener が予約の公開 API を呼ぶ）にそろえ、US-12 の残り（W7）の Bolt で直す |
 | 予約 → 見積り（下流から上流への通知） | B → Q | 下流の listener が上流の公開 API を呼ぶ（[ADR-014](../../adr/cargo-tracker/014-downstream-to-upstream-notification.md)） | 本予約の確定（DE-07）を予約の listener が受け、見積りの公開 API で輸送要求を予約確定済みにする（W4） |
 | 経路設計 → 見積り（下流から上流への通知） | R → Q | 下流の listener が上流の公開 API を呼ぶ（ADR-014） | 経路の確定（DE-05）を経路設計の listener が受け、見積りの公開 API（経路の割当て）で依頼元の見積りに経路版を割り当てる（Bolt 20）。見積りは経路設計のイベントを購読しない |
 
@@ -137,13 +137,14 @@ end note
 
 公開 API の置き場所と形（Bolt 17 で最初の公開 API を作ったときに決めた。[Bolt 17 計画](../../development/cargo-tracker/bolt_17_plan.md) の確認ポイント 2）:
 
-- 上流のコンテキストは、公開 API をコンテキストの直下の `api` パッケージに置き、Spring Modulith の名前付きインターフェース（`@NamedInterface("api")`）にする。中身は照会のインターフェースと、戻り値の record だけ。
+- 上流のコンテキストは、公開 API を `<コンテキスト>.interfaces.api` パッケージに置き、Spring Modulith の名前付きインターフェース（`@NamedInterface("api")`）にする。開発ガイドライン第 3 章のインターフェース層（「プロトコルで分類した全てのインバウンドサービス」）に当たるため（2026-10-09、Bolt 25 の開始準備の人の指示）。中身は照会・操作のインターフェースと、引数・戻り値の record と、それを実装するインバウンドアダプター（アプリケーションサービスに委ねるだけ）。既存の見積りの公開 API（`quotation.api`、実装は `application.internal.queryservices`・`commandservices`）は、`quotation.interfaces.api` に移す技術タスクまでの例外として残す
 - 戻り値は Java の標準と共有カーネルの型（`Location`、`UtcInstant` など）と文字列だけで表し、上流のドメインの型を持たない（イベントと同じ規則。ArchUnit で確かめる）。
-- 実装は上流の `application.internal.queryservices` に置き、合成ルート（`infrastructure.config`）で公開 API の型の bean として組み立てる。
-- 下流は `application.internal.outboundservices.acl` から呼び、自分のドメインの型に変える。下流のモジュールの `allowedDependencies` に `<上流> :: api` を足す。
-- 下流から上流への通知（ADR-014）では、上流の公開 API に冪等な操作のインターフェースを置き、実装は上流の `application.internal.commandservices` に置く。業務の拒否は戻り値の値で返す。最初の操作は、見積りの「経路の割当て」（`quotation.api.RouteAssignment`。案件番号・経路版番号・確定の時刻・区間を受け、依頼元の見積りに割り当てる。Bolt 20）。
+- 業務の処理は上流の `application.internal.queryservices`（照会）・`commandservices`（操作）に置き、`interfaces.api` のアダプターから呼ぶ（interfaces → application の向き）。合成ルート（`infrastructure.config`）で公開 API の型の bean として組み立てる
+- 下流は `application.internal.outboundservices.acl` から呼び、自分のドメインの型に変える。下流のモジュールの `allowedDependencies` に `<上流> :: api` を足す。層の規則（`LayerArchitectureTest` の「interfaces はどの層からも参照されない」）の例外として、他のコンテキストの `application.internal.outboundservices.acl` だけが `..interfaces.api..` を参照してよい。公開 API の形の検査（`PublicApiArchitectureTest`）は `*.api` と `*.interfaces.api` の両方を対象にする（Bolt 25。2026-10-09 に human:kakimomokuri が決定）
+- 下流から上流への通知（ADR-014）では、上流の公開 API に冪等な操作のインターフェースを置き、業務の処理は上流の `application.internal.commandservices` に置く。業務の拒否は戻り値の値で返す。最初の操作は、見積りの「経路の割当て」（`quotation.api.RouteAssignment`。案件番号・経路版番号・確定の時刻・区間を受け、依頼元の見積りに割り当てる。Bolt 20）。
 - 最初の公開 API は、見積りの「経路条件の照会」（`quotation.api.RouteConditionQuery`。輸送要求 ID と版番号から、出発地・目的地・希望到着期限・貨物種別を返す）。経路設計が DE-16 を受けて経路設計案件を作るときに呼ぶ。
 - 予約が使う見積りの公開 API（Bolt 23・23b）: 確定に使えるかの照会（`BookableQuotationQuery`。業務番号・見積り番号・commit 時刻から、確定に要る写しか使えない理由を返す。ADR-016）と、予約確定済みの通知（`BookingNotification`。ADR-014）。
+- 追跡が使う公開 API（Bolt 25。ADR-015）: 経路設計の経路版の区間の照会（`routing.interfaces.api.RouteVersionLegQuery`。案件番号と経路版番号から、確定した経路版の区間を区間の順に返す。ない経路版は空）と、予約の追跡の開始の通知（`booking.interfaces.api.TrackingStartNotification`。予約 ID・追跡番号・開始時刻を受け、処理中の予約サガを完了にする。結果は `Completed`・`AlreadyCompleted`・`NotCompleted(reason)`）。
 
 ### 共有カーネル
 
@@ -313,7 +314,7 @@ Bolt 1 の実装で次を決めた。
 
 | 取り決め | 内容 |
 | :--- | :--- |
-| 再試行の担い手 | イベントの配信の失敗（購読側の例外）はイベント発行記録の再配信が担う（RTY-01）。予約サガの後続（追跡の開始）は、追跡の listener が DE-07 を購読して行い、その再試行もイベントの再配信が担う。予約サガは追跡を呼ばず、処理中の滞留を見て有人確認要にする（ADR-015。ADR-003 の初版の「サガがコマンドとして直接呼ぶ」を改訂） |
+| 再試行の担い手 | イベントの配信の失敗（購読側の例外）はイベント発行記録の再配信が担う（RTY-01）。予約サガの後続（追跡の開始）は、追跡の listener が DE-07 を購読して行い（結果は DE-22 を受けた追跡の別の listener が返す）、その再試行もイベントの再配信が担う。予約サガは追跡を呼ばず、処理中の滞留を見て有人確認要にする（ADR-015。ADR-003 の初版の「サガがコマンドとして直接呼ぶ」を改訂） |
 | 受信側の冪等性 | 購読側は、イベントの ID か業務キーの一意制約で重複を吸収する（例: 経路設計案件は輸送要求版ごとに 1 つ） |
 | 購読側の楽観ロックの競合 | 複数の listener が同じ集約を並行して更新し得るとき（例: 輸送要求を進める DE-03 と DE-16、DE-21 と DE-04）、保存が楽観ロックの競合で失敗したら、同じトランザクションで読み直して冪等な操作をやり直す（上限 3 回）。配信の失敗の再試行ではなく、読み込みの古さを解消するもので、上限を超えたら例外にして再配信（RTY-01）に任せる（Bolt 22 の割り込み） |
 | 順序 | イベントは発行元の集約の版を持ち、購読側は記録済みの版より古いイベントを適用しない（ドメインモデル B-INV-12） |
@@ -324,7 +325,7 @@ Bolt 1 の実装で次を決めた。
 
 ### ARCH-HO-02 部分成功とサガ
 
-複数コンテキストにまたがる業務の流れは、第 1 章・第 2 章のサガとしてモデル化する。MVP では、第 2 章の Booking Saga に当たる **予約サガ** を、状態を予約の 1 か所に持つサガとして作る。後続の追跡の開始は、予約が追跡を呼ぶのではなく、追跡が DE-07（本予約を確定した）を購読して行い、結果を予約の公開 API で返す（[ADR-015](../../adr/cargo-tracker/015-booking-saga-starts-tracking-by-event.md)。ADR-003 の決定 3 を改訂した）。依存は `tracking → booking` だけで、予約は追跡に依存しない（ADR-014、Unit の依存 U3 → U6）。
+複数コンテキストにまたがる業務の流れは、第 1 章・第 2 章のサガとしてモデル化する。MVP では、第 2 章の Booking Saga に当たる **予約サガ** を、状態を予約の 1 か所に持つサガとして作る。後続の追跡の開始は、予約が追跡を呼ぶのではなく、追跡が DE-07（本予約を確定した）を購読して行い、追跡を開始したイベント（DE-22）を受けた追跡の別の listener が、結果を予約の公開 API で返す（[ADR-015](../../adr/cargo-tracker/015-booking-saga-starts-tracking-by-event.md)。ADR-003 の決定 3 を改訂した）。2 つのコンテキストの集約を 1 つのトランザクションで更新しない（ADR-014 の形）。依存は `tracking → booking`（`events`・`api`）と `tracking → routing`（`api`。経路版の区間）で、予約と経路設計は追跡に依存しない（ADR-014、Unit の依存 U3 → U6・U3 → U2。Bolt 25）。
 
 ```plantuml
 @startuml
@@ -341,11 +342,11 @@ start
 :予約サガの状態 = 処理中\n（確定と同じトランザクション）;
 :DE-07 本予約を確定した を発行;
 |追跡|
-:DE-07 を購読し、追跡を開始する\n（予約 ID で冪等）;
-:結果を予約の公開 API で返す;
+:DE-07 を購読し、経路設計の公開 API で\n確定した経路版の区間を引いて追跡を開始する\n（予約 ID で冪等。DE-22 追跡を開始した を発行）;
+:DE-22 を購読し、結果を予約の公開 API で返す\n（別のトランザクション）;
 |予約|
 if (追跡を開始できた?) then (はい)
-  :予約サガの状態 = 完了;
+  :予約サガの状態 = 完了\n（処理中のときだけ。期待版で更新）;
   stop
 else (業務の理由で開始できない)
   :予約サガの状態 = 失敗 → 有人確認要;
@@ -362,8 +363,9 @@ end note
 | 要素 | 方式 |
 | :--- | :--- |
 | 状態 | サガごとに「処理中・完了・失敗・有人確認要」を予約の `booking_saga` に永続化する。後続が完了するまで、画面に成功と表示しない |
-| 置き場所 | サガを始めるコンテキストに置く。予約サガは予約コンテキストに置く。状態・リポジトリ（送信ポート）とサガを進める処理（後続の結果の受け取り、滞留の検出）は、どれもアプリケーション層の `application.sagas` に置く（第 1 章の Business Flows → Sagas、第 3 章のパッケージ構成）。層の規則 D-5（合成ルートの外の `infrastructure` は `application` に依存しない）の例外として、永続化の実装（`infrastructure.persistence`）だけが `application.sagas` を参照してよい。`LayerArchitectureTest` の「サガはアプリケーション層の sagas に置く」と D-5 の規則で守る（Bolt 23。初めは D-5 に合わせて状態をドメイン層に置いたが、開発ガイドラインと食い違うと人に指摘され、2026-10-08 に直した） |
+| 置き場所 | サガを始めるコンテキストに置く。予約サガは予約コンテキストに置く。状態・リポジトリ（送信ポート）と状態を進める操作（完了にする、滞留の検出）は、アプリケーション層の `application.sagas` に置く。後続の結果を公開 API で受け取るアプリケーションサービスは `application.internal.commandservices` に置く（公開 API の実装の置き場所。Bolt 25）（第 1 章の Business Flows → Sagas、第 3 章のパッケージ構成）。層の規則 D-5（合成ルートの外の `infrastructure` は `application` に依存しない）の例外として、永続化の実装（`infrastructure.persistence`）だけが `application.sagas` を参照してよい。`LayerArchitectureTest` の「サガはアプリケーション層の sagas に置く」と D-5 の規則で守る（Bolt 23。初めは D-5 に合わせて状態をドメイン層に置いたが、開発ガイドラインと食い違うと人に指摘され、2026-10-08 に直した） |
 | 後続の起動 | 追跡の listener が DE-07 を購読する。予約は追跡に依存しない（ADR-015） |
+| 結果の受け取り | 予約の公開 API（`booking.interfaces.api.TrackingStartNotification`）のアダプターが `application.internal.commandservices` のアプリケーションサービスを呼び、予約サガのリポジトリで読んで「完了にする」を呼ぶ。完了は状態と `updated_at`（完了の時刻を兼ねる）の期待版の更新で、完了時刻の列は持たない。`current_step` は `START_TRACKING` のまま（Bolt 25） |
 | 再処理 | 追跡の開始は予約 ID で冪等にし、技術の失敗はイベントの再配信（RTY-01）でやり直す。予約サガは処理中の滞留を定期処理で見て、有人確認要にする |
 | 見えない失敗 | 予約の DE-07 の listener が見積りに予約確定済みを通知し、業務の理由で受け付けられなかった（`NotBooked`）ときは警告のログだけで、予約サガの状態は変えない（予約サガが待つのは追跡の開始）。監視（OBS）で警告のログの件数を見る（Bolt 23 レビュー） |
 | 補償 | MVP では自動補償をしない。進められない場合は BR-17 に従って有人案件へ引き継ぐ |

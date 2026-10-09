@@ -4,7 +4,7 @@ title: "Bolt 25 計画 - 追跡の開始と予約サガの成功の経路（US-0
 description: "25 回目の Bolt の計画。tracking モジュールと追跡記録（tracking_record・scheduled_leg）を新設し、追跡の listener が DE-07 を購読して経路設計の公開 API から確定した経路版の区間を引いて予定として採用し、追跡を開始したイベントを受けた別のトランザクションで予約の公開 API へ結果を返して予約サガを完了にし、S-24 に「追跡の開始: 完了」を示して #10 をクローズするまでを、データ・ドメイン・アプリケーション・画面の順に、ステップ 1〜6 で定義する。"
 tags: [development,bolt-plan]
 status: draft
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-09T04:37:10Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-09T04:48:46Z }
 ---
 
 # Bolt 25 計画 - 追跡の開始と予約サガの成功の経路（US-04、ADR-015、#10）
@@ -277,7 +277,7 @@ ui_design.md の業務シナリオ（「予約サガが完了したら『完了�
 
 状態の記号: `[ ]` 未着手、`[-]` 進行中、`[?]` 承認待ち、`[x]` 完了。各ステップの終わりに `check` が緑であることを確かめ、Green と同じ push にまとめて CI を確かめる（T-26、T-65）。Red は実行して本命のアサーションで失敗することを確かめてから実装する（T-39）。
 
-- [ ] **1. 設計文書とモジュールの骨組み** 【承認ゲート: 設計文書、モジュールの境界、新しい注釈】
+- [x] **1. 設計文書とモジュールの骨組み** 【承認ゲート: 設計文書、モジュールの境界、新しい注釈】
   - ADR-015: 決定の「依存の向き」を `tracking → booking（events・api）、routing（api）` に改め、コンプライアンスに決定を書く（企業 ID は DE-07、区間は `routing :: api`、DE-22 を挟んで別のトランザクションで返す、`booking :: api` の操作）。ADR-015 の改訂として扱う（確認ポイント 2・11）
   - domain_model.md: 用語集に「予定｜Schedule」「予定区間｜ScheduledLeg」、追跡番号の行の所属に「追跡（コンテキスト固有の値オブジェクト）」、区間の行の「写しは追跡」を予定区間に合わせる。現在状態と予約状態の型（enum の定義行。`TrackingStatus`、`TrackedBookingStatus`）。追跡記録の集約の図に荷受人企業 ID・予定区間、予定の経路版の「案件 ID」を「案件番号」に（Bolt 23 の A-6 の取りこぼし）。T-INV-08 に予定の採用の例外の注、T-INV-11・T-INV-12。イベント一覧に DE-07 の属性（荷主・荷受人の企業 ID）と DE-22（追跡を開始した）。リポジトリの表（予約 ID で取得）
   - data_model.md: `tracking_record` の `uk_tracking_record_booking`、`booking_status`・`current_status` の値、監査列の例外、索引は Bolt 27
@@ -290,6 +290,10 @@ ui_design.md の業務シナリオ（「予約サガが完了したら『完了�
   - `@CoreConcept` の注釈（新しいファイル）の作り方を決める（確認ポイント 17）
   - `tracking` の `package-info`（`allowedDependencies = {"shared", "booking :: events", "booking :: api", "routing :: api"}`）。ModularityTest のモジュール名に `tracking` を足すアサーションを先に書き、`tracking` がないので落ちることを確かめる（Red）。「`booking`・`routing` は `tracking` に依存しない」の規則は、既存の `noClasses()` の形で最初から通る見張りのテストとして書く（T-39 の記録に分けて書く）
   - 完了の判定: `okf:check` ERROR 0、`documentationTest` 緑、図の構文を PlantUML で確かめる
+  - 結果（2026-10-09）: ADR-015（依存の向きの改訂、DE-22、公開 API の操作）、ADR-014（呼ばれる側の置き場所）、architecture_backend.md（公開 API は `interfaces.api`、層の規則の例外、予約サガ）、domain_model.md（用語集、追跡記録の図、T-INV-08 の注・T-INV-11・T-INV-12、DE-07・DE-22）、data_model.md、units.md、ui_design.md、test_strategy.md、user_story.md、release_plan.md の W4 を書いた。`tracking` の `package-info`、`booking.interfaces.api`・`routing.interfaces.api` の `package-info`（`@NamedInterface("api")`。`allowedDependencies` の名前の解決に要った）、`@CoreConcept`（貨物予約に付けた）。AT-04 の `MapperSchemaArchitectureTest` はステップ 2 から前倒しした（スキーマに依存しないため）
+    - Red: ModularityTest のモジュール名の `tracking` で落ちることを確かめた。「予約と経路設計は追跡に依存しない」は見張りのテストで最初から通る（T-39 の記録）。AT-04 は判定を空にして見本の 2 件が落ちることを確かめ、既存のマッパーに違反は 0 件だった
+    - `check`・`documentationTest` 緑、`okf:check` ERROR 0、図の構文を PlantUML で確かめた
+    - 承認ゲートの扱い（T-36）: 設計文書・モジュールの境界・新しい注釈のゲートで止まらずに進めた（AI の判断）。根拠は、書いた内容が計画の確認ポイントの決定（2026-10-09、human:kakimomokuri）のとおりであること
 - [ ] **2. スキーマと追跡記録の永続化（統合テスト）** 【承認ゲート: スキーマ（必ず止める。T-67）】
   - AT-04 の検査を先に書く（確認ポイント 18）: マッパーの XML の SQL が自分のスキーマ（と `platform` の許可された表）以外を参照しない。既存のマッパーで通ること、他のスキーマを参照する見本で落ちることを確かめる。test_strategy.md の AT-04 の行と ADR-001 のコンプライアンスを「実装済み」に直す
   - マイグレーション（`tracking` スキーマ、`tracking_record`・`scheduled_leg`）と `afterMigrate` の GRANT の一覧。マイグレーションの SQL を見せて止める

@@ -4,7 +4,7 @@ title: "cargo-tracker ユーザーストーリー"
 description: "cargo-tracker MVP の価値単位のユーザーストーリー、受入条件、上流要件へのトレーサビリティ。"
 tags: [requirements, user-story]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-08T05:07:41Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-09T04:48:46Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T05:20:11Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:01:39Z }
@@ -196,6 +196,11 @@ MVP の決定: 荷主の承認は荷主担当者 1 名で足りる（BR-01）。
 - Given 危険物・冷凍貨物・その他特殊貨物を含む輸送要求、When 本予約を確定する、Then 確定は拒否され MVP 対象外であることと手動窓口が示される。
 
 MVP の決定: 荷主内の入力者・承認者は分離せず、荷主担当者 1 名の承認を受入条件とする。荷主内の職務分離は後続段階で再検討する。
+
+決定（2026-10-09、Bolt 25 の開始準備。human:kakimomokuri）:
+
+- ストーリーの目的「追跡可能な輸送を開始する」は、本予約の確定から追跡の開始（追跡記録を作り、確定した経路版の区間を予定として採用する）を経て予約サガが完了するまでを R0.1 の範囲とする（ADR-015。Bolt 25）。受入条件は変えず、受入シナリオは `@ADR-015 @T-INV-11` のタグで `features/booking/confirm_booking.feature` に置く。
+- #10 は R0.1 の範囲（AC1・AC2・AC4・重複確定の防止）でクローズし、AC3（不足条件）・AC5（特殊貨物）（W6）は新しい Issue にする（US-24 の前例）。
 
 ### US-05 予約を変更・取消しする
 

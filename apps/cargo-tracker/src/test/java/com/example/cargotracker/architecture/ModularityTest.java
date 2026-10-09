@@ -17,9 +17,9 @@ class ModularityTest {
     private final ApplicationModules modules = ApplicationModules.of(CargoTrackerApplication.class);
 
     @Test
-    void 見積りと経路設計とアクセス監査と共有カーネルがモジュールとして認識される() {
+    void 見積りと経路設計とアクセス監査と予約と追跡と共有カーネルがモジュールとして認識される() {
         assertThat(modules.stream().map(module -> module.getIdentifier().toString()))
-                .contains("quotation", "routing", "identity", "booking", "shared");
+                .contains("quotation", "routing", "identity", "booking", "tracking", "shared");
     }
 
     @Test
@@ -67,6 +67,23 @@ class ModularityTest {
                 .should()
                 .dependOnClassesThat()
                 .resideInAPackage("com.example.cargotracker.routing..")
+                .check(new ClassFileImporter()
+                        .withImportOption(ImportOption.Predefined.DO_NOT_INCLUDE_TESTS)
+                        .importPackages("com.example.cargotracker"));
+    }
+
+    /**
+     * 追跡は予約・経路設計の下流で、予約と経路設計は追跡の型（イベントを含む）を参照しない。追跡の開始は追跡が DE-07 を購読して行い、
+     * 結果を予約の公開 API で返す（ADR-015。Bolt 25）。{@code allowedDependencies} だけでは相手の宣言を書き換えれば通るため、型の依存でも確かめる。
+     */
+    @Test
+    void 予約と経路設計は追跡に依存しない() {
+        noClasses()
+                .that()
+                .resideInAnyPackage("com.example.cargotracker.booking..", "com.example.cargotracker.routing..")
+                .should()
+                .dependOnClassesThat()
+                .resideInAPackage("com.example.cargotracker.tracking..")
                 .check(new ClassFileImporter()
                         .withImportOption(ImportOption.Predefined.DO_NOT_INCLUDE_TESTS)
                         .importPackages("com.example.cargotracker"));
