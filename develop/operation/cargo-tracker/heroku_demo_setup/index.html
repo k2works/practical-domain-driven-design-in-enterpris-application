@@ -8540,6 +8540,62 @@ npx<span class="w"> </span>gulp<span class="w"> </span>deploy:demo:open<span cla
 <div class="highlight"><pre><span></span><code>npx<span class="w"> </span>gulp<span class="w"> </span>deploy:demo:restart<span class="w">  </span><span class="c1"># データを db/dev-data の初期状態に戻す</span>
 npx<span class="w"> </span>gulp<span class="w"> </span>deploy:demo:open
 </code></pre></div>
+<p>初期状態には、どの役割でログインしてもすぐ画面を確かめられるサンプルの見積依頼があります（<code>db/dev-data</code>）。</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">業務番号</th>
+<th style="text-align: left;">荷主</th>
+<th style="text-align: left;">状態</th>
+<th style="text-align: left;">デモで確かめられること</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">TR-2026-0901</td>
+<td style="text-align: left;">荷主 B</td>
+<td style="text-align: left;">審査中</td>
+<td style="text-align: left;">営業の審査（S-03）</td>
+</tr>
+<tr>
+<td style="text-align: left;">TR-2026-0902</td>
+<td style="text-align: left;">荷主 A</td>
+<td style="text-align: left;">見積り作成中</td>
+<td style="text-align: left;">見積りの算出と提示（S-04）</td>
+</tr>
+<tr>
+<td style="text-align: left;">TR-2026-0903</td>
+<td style="text-align: left;">荷主 A</td>
+<td style="text-align: left;">見積提示済み（見積 1）</td>
+<td style="text-align: left;">荷主の回答（C-05）</td>
+</tr>
+<tr>
+<td style="text-align: left;">TR-2026-0904</td>
+<td style="text-align: left;">荷主 B</td>
+<td style="text-align: left;">経路設計中（RC-2026-0901、候補の算出待ち）</td>
+<td style="text-align: left;">経路設計者の候補の算出（S-06）</td>
+</tr>
+<tr>
+<td style="text-align: left;">TR-2026-0905</td>
+<td style="text-align: left;">荷主 A</td>
+<td style="text-align: left;">経路設計中（RC-2026-0902、候補算出済み）</td>
+<td style="text-align: left;">経路の確定（S-07）</td>
+</tr>
+<tr>
+<td style="text-align: left;">TR-2026-0906</td>
+<td style="text-align: left;">荷主 A</td>
+<td style="text-align: left;">予約待ち（見積 1 を荷主が承認、RC-2026-0903 確定済み）</td>
+<td style="text-align: left;">営業担当者が S-02 の予約の確定待ちから本予約を確定する（S-09・S-24）。確定の後に同じ画面から送り直すと同じ追跡番号、確定の前に開いておいた別のタブから送ると「すでに予約に使われています」と既存の予約への導線（Bolt 24）</td>
+</tr>
+<tr>
+<td style="text-align: left;">TR-2026-0907</td>
+<td style="text-align: left;">荷主 B</td>
+<td style="text-align: left;">予約待ち（見積 1 を荷主が承認、RC-2026-0904 確定済み）</td>
+<td style="text-align: left;">同上。0906 で確かめた後にもう一度確かめるときに使う</td>
+</tr>
+</tbody>
+</table>
+<p>本予約を確定すると、DE-07 の配信の後に S-02 の予約の確定待ちから行が消えます。もう一度試すときは <code>deploy:demo:restart</code> で初期状態に戻します。</p>
 <ul>
 <li>再起動すると、それまでに入れた輸送要求・見積り・添付した書類は消え、開発用の企業と利用者だけになります。起動は 5 秒前後です。</li>
 <li>Eco dyno は 30 分アクセスがないとスリープします。スリープからの最初のアクセスは、起動を待つため遅くなります（再起動の起動は 5 秒前後。スリープからの時間は Bolt 15 では未計測で、計測の 30 分の間に関係者のアクセスがありスリープしなかった）。デモの数分前に一度開いておきます。</li>

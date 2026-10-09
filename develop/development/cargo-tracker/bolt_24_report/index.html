@@ -8294,7 +8294,7 @@
 </tr>
 <tr>
 <td style="text-align: left;">5</td>
-<td style="text-align: left;"><strong>人の判断が要る（A-1）</strong>: マイグレーションが既存の予約の見積り番号を <code>quotation.quotation</code> から 1 回だけ読んで埋めた。ADR-001 の「他モジュールの表を参照しない」の例外にあたる</td>
+<td style="text-align: left;"><strong>人の判断が要る（A-1）</strong>: マイグレーションが既存の予約の見積り番号を <code>quotation.quotation</code> から 1 回だけ読んで埋めた。ADR-001 の「他モジュールの表を参照しない」の例外にあたる。data_model.md の約束（「<code>db/dev-data</code> の開発用のシードはほかのコンテキストの表から写してよい。本番のマイグレーションでは読まない」）にも反する（ステップ 6 の作業中に気づいた）</td>
 <td style="text-align: left;">外部キーは張らず、読むのはマイグレーションの 1 回だけ。既存の予約はデモ環境（Bolt 23 以後）にしかない。代わりの案は「デモのデータを作り直す前提で埋めない」「埋め込みを手順書の 1 回のタスクにする」。ADR-001 に例外として書くかを決めてほしい</td>
 <td style="text-align: left;">開発レビュー A-1</td>
 </tr>
@@ -8396,6 +8396,12 @@
 <td style="text-align: left;">完了</td>
 <td style="text-align: left;">本報告のコミット</td>
 <td style="text-align: left;">3 つの観点のレビュー、SonarQube、受入動画</td>
+</tr>
+<tr>
+<td style="text-align: left;">6. デモ環境の見本（人の指示で足した）</td>
+<td style="text-align: left;">完了</td>
+<td style="text-align: left;">本報告の更新のコミット</td>
+<td style="text-align: left;">荷主が承認した見積依頼 2 件（TR-2026-0906・0907）。デモ環境で S-02 から確定・送り直し・別の確定を確かめられる</td>
 </tr>
 </tbody>
 </table>

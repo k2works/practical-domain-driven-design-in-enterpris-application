@@ -8648,8 +8648,25 @@
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>5. 開発レビューと終了報告</strong> 【承認ゲート: 開発レビューの判断、終了報告】</li>
 <li><code>developing-review</code>（プログラマー・テスター・アーキテクト・インタラクションデザイナー・ユーザー代表）、SonarQube、受入動画（<code>./gradlew demoVideo</code>。過去の Bolt の動画は元に戻す）、<code>bolt_24_report.md</code>。#10 に結果をコメントする（クローズは Bolt 25）</li>
 <li>開発レビューの対応の後も push の前に <code>uiTest</code> を流す（T-70）</li>
-<li>結果（2026-10-09）: 3 つの観点でレビューし、19 件を直し、高 2 件（A-1 ADR-001 の例外、A-2 追記専用と RET-06）を人に諮り、残りを既知の課題にした（<a href="../bolt_24_report/">Bolt 24 終了報告</a> の開発レビュー）。直した後に <code>check</code>・<code>documentationTest</code>・<code>uiTest</code> を流してから push した（T-70）。SonarQube は S8445 の 24 件で FAIL（議題 7）。受入動画 <code>bolt-24/resend-booking.webm</code> を撮った（過去の Bolt の動画は元に戻した）<ul>
+<li>
+<p>結果（2026-10-09）: 3 つの観点でレビューし、19 件を直し、高 2 件（A-1 ADR-001 の例外、A-2 追記専用と RET-06）を人に諮り、残りを既知の課題にした（<a href="../bolt_24_report/">Bolt 24 終了報告</a> の開発レビュー）。直した後に <code>check</code>・<code>documentationTest</code>・<code>uiTest</code> を流してから push した（T-70）。SonarQube は S8445 の 24 件で FAIL（議題 7）。受入動画 <code>bolt-24/resend-booking.webm</code> を撮った（過去の Bolt の動画は元に戻した）</p>
+<ul>
 <li>承認ゲートの扱い（T-36）: 開発レビューの判断で止まらずに進めた（AI の判断）。終了報告の承認の議題に置く</li>
+</ul>
+</li>
+<li class="task-list-item">
+<p><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>6. デモ環境の見本（人の指示で足した。2026-10-09）</strong> 【承認ゲート: データ（dev のシードだけ）】</p>
+</li>
+<li>人の指示「デモ環境でも同様のシードで確認できるようにする」による。受入シナリオの背景と同じ「経路を確定して荷主が承認した見積り」を、デモ環境のシード（<code>db/dev-data</code>、dev のときだけ。ステージング・本番には入れない）に足し、デモ環境で S-02 の予約の確定待ちから本予約の確定・送り直し・同じ見積りの別の確定を、毎回の経路設計と承認なしに確かめられるようにする</li>
+<li>見本: TR-2026-0906（荷主 A）・TR-2026-0907（荷主 B）。どちらも見積 1 が荷主の承認済み（有効期限は起動した日の 5 日後）、経路は RC-2026-0903・0904 の直行の候補（DEMO-101）を確定した経路版 1。輸送要求は予約待ち。業務番号と案件番号の採番は見本の続きから</li>
+<li><code>DevSampleDataSmokeTest</code> を先に書く: 予約の確定待ちに 2 件が有効期限の近い順に出る、見本の見積りは見積りの公開 API で確定に使える、見本で本予約を確定すると送り直しは同じ追跡番号・別のコマンド ID は既存の追跡番号、経路設計者の案件一覧に確定済みの 2 件、新しく振る番号は見本の後から</li>
+<li>完了の判定: <code>check</code> 緑、push してデモ環境で S-02 に 2 件が出ることを確かめる</li>
+<li>結果（2026-10-09）<ul>
+<li>Red: <code>DevSampleDataSmokeTest</code> に 3 件（予約の確定待ちに 2 件が有効期限の近い順、見積りの公開 API で確定に使える、見本で確定すると送り直しは同じ追跡番号・別のコマンド ID は既存の追跡番号）を足し、2 件（経路設計者の案件一覧の確定済み 2 件、番号は見本の後から）を直して、5 件が見本がないために落ちることを確かめた</li>
+<li>Green: <code>db/dev-data/V20261009110900__seed_dev_sample_awaiting_booking.sql</code>（TR-2026-0906・0907、RC-2026-0903・0904）。経路設計の案件の確定した経路版と、経路版の選んだ候補は外部キーで参照するので、案件・経路版・候補を入れた後に確定の値を UPDATE で入れる（最初は順序を誤り、マイグレーションが外部キーで落ちた）</li>
+<li>手順書 <code>heroku_demo_setup.md</code> の「デモの前に」に、見本の一覧とデモで確かめられることを書いた</li>
+<li><code>check</code>・<code>uiTest</code> 緑</li>
+<li>承認ゲートの扱い（T-36）: データ（dev のシードだけ）のゲートで止まらずに進めた。根拠は、人の指示によること、ステージング・本番に入らない場所（<code>db/dev-data</code>、<code>DevDataLocationTest</code>）であること</li>
 </ul>
 </li>
 </ul>
