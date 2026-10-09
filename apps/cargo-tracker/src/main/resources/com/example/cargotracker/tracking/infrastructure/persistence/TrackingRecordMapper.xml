@@ -32,6 +32,15 @@
         </constructor>
     </resultMap>
 
+    <resultMap id="trackingRecordSummaryRow" type="com.example.cargotracker.tracking.infrastructure.persistence.TrackingRecordSummaryRow">
+        <constructor>
+            <idArg column="tracking_number" name="trackingNumber" javaType="String"/>
+            <arg column="current_status" name="currentStatus" javaType="String"/>
+            <arg column="original_eta" name="originalEta" javaType="java.time.OffsetDateTime"/>
+            <arg column="created_at" name="createdAt" javaType="java.time.OffsetDateTime"/>
+        </constructor>
+    </resultMap>
+
     <insert id="insertTrackingRecord">
         INSERT INTO tracking.tracking_record
             (tracking_number, booking_id, shipper_company_id, consignee_company_id, booking_status, routing_case_number,
@@ -55,6 +64,22 @@
                route_version_no, current_status, original_eta, latest_eta, version, created_at, updated_at
           FROM tracking.tracking_record
          WHERE booking_id = #{bookingId}
+    </select>
+
+    <select id="findTrackingRecordByTrackingNumber" resultMap="trackingRecordRow">
+        SELECT tracking_number, booking_id, shipper_company_id, consignee_company_id, booking_status, routing_case_number,
+               route_version_no, current_status, original_eta, latest_eta, version, created_at, updated_at
+          FROM tracking.tracking_record
+         WHERE tracking_number = #{trackingNumber}
+    </select>
+
+    <!-- S-11 追跡一覧（Bolt 26）。追跡の開始時刻は作成時刻。同じ時刻は追跡番号の順で、追跡番号は英大文字と数字だけなので、DB の照合順序でも
+         メモリの実装（String.compareTo の文字コード順）と同じ並びになる（予約一覧と同じ） -->
+    <select id="findRecentSummaries" resultMap="trackingRecordSummaryRow">
+        SELECT tracking_number, current_status, original_eta, created_at
+          FROM tracking.tracking_record
+         ORDER BY created_at DESC, tracking_number
+         LIMIT #{limit}
     </select>
 
     <select id="findScheduledLegs" resultMap="scheduledLegRow">

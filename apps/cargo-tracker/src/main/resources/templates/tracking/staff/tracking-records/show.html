@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="ja" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/staff :: layout(~{::title}, ~{::main}, ~{}, 'tracking-records')}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="|追跡の詳細 ${trackingRecord.trackingNumber()} - cargo-tracker|">追跡の詳細 CTABCDEFGH2345 - cargo-tracker</title>
+</head>
+<body>
+<main>
+    <h1 th:text="|追跡の詳細 ${trackingRecord.trackingNumber()}|">追跡の詳細 CTABCDEFGH2345</h1>
+    <!--/* S-12 の最小の表示（Bolt 26）。主要実績の一覧と登録（S-13）は Bolt 26b、訂正履歴・顧客への表示・有人案件のタブは後の Bolt。
+           予定と実績を混同しない（T-INV-08）ので、予定区間と主要実績は別の見出しに分ける */-->
+    <dl class="row">
+        <dt class="col-sm-3">追跡番号</dt>
+        <dd class="col-sm-9" th:text="${trackingRecord.trackingNumber()}">CTABCDEFGH2345</dd>
+        <dt class="col-sm-3">現在状態</dt>
+        <dd class="col-sm-9" th:text="${trackingRecord.status()}">集荷予定</dd>
+        <dt class="col-sm-3">当初の到着予定</dt>
+        <dd class="col-sm-9" th:text="${trackingRecord.originalEta()}">2026-11-15 09:00 Asia/Tokyo（UTC+09:00）（UTC 2026-11-15 00:00）</dd>
+        <dt class="col-sm-3">最新の到着見込み</dt>
+        <dd class="col-sm-9" th:text="${trackingRecord.latestEta()}">2026-11-15 09:00 Asia/Tokyo（UTC+09:00）（UTC 2026-11-15 00:00）</dd>
+        <dt class="col-sm-3">経路</dt>
+        <dd class="col-sm-9" th:text="${trackingRecord.route()}">RC-2026-0001 版 1</dd>
+    </dl>
+    <!--/* 予定区間は時系列の並びなので、表でなく順序付きのリストにする（UI 設計の共通部品「画面幅」。Bolt 26 計画の確認ポイント 15） */-->
+    <h2 class="h4" id="schedule-heading">予定区間</h2>
+    <ol aria-labelledby="schedule-heading" class="list-unstyled">
+        <li th:each="leg : ${trackingRecord.legs()}" class="mb-2">
+            <span th:text="${leg.summary()}">区間 1　航海 V100　JPTYO → KRPUS</span><br>
+            <span th:text="|出発予定 ${leg.departureAt()}|">出発予定 2026-11-01 09:00 Asia/Tokyo（UTC+09:00）（UTC 2026-11-01 00:00）</span><br>
+            <span th:text="|到着予定 ${leg.arrivalAt()}|">到着予定 2026-11-03 09:00 Asia/Tokyo（UTC+09:00）（UTC 2026-11-03 00:00）</span>
+        </li>
+    </ol>
+    <h2 class="h4">主要実績</h2>
+    <p>主要実績はまだありません。</p>
+    <p><a th:href="@{/staff/tracking-records}">追跡一覧</a></p>
+</main>
+</body>
+</html>

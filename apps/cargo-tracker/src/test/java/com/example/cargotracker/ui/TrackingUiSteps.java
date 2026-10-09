@@ -92,7 +92,7 @@ public class TrackingUiSteps {
         page().locator("body").focus();
         tabUntilFocused(page().getByRole(
                         AriaRole.LINK,
-                        new Page.GetByRoleOptions().setName("追跡一覧へ戻る").setExact(true)));
+                        new Page.GetByRoleOptions().setName("追跡一覧").setExact(true)));
         page().keyboard().press("Enter");
         page().waitForURL("**/staff/tracking-records");
     }

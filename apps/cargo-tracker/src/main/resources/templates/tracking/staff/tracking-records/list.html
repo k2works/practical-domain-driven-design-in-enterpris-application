@@ -9,6 +9,32 @@
 <body>
 <main>
     <h1>追跡一覧</h1>
+    <!--/* S-11 の最小の表示（Bolt 26）。絞り込み（確認中・鮮度超過・訂正承認待ち）は W7 以後 */-->
+    <p th:if="${#lists.isEmpty(trackingRecords)}">追跡中の貨物はまだありません。</p>
+    <p th:if="${truncated}" th:text="|新しい ${limit} 件だけを示しています。|">新しい 50 件だけを示しています。</p>
+    <div th:unless="${#lists.isEmpty(trackingRecords)}" class="table-scroll" tabindex="0" role="region"
+         aria-labelledby="tracking-records-caption">
+        <table class="table">
+            <caption id="tracking-records-caption">追跡記録（追跡の開始時刻の新しい順）</caption>
+            <thead>
+            <tr>
+                <th scope="col">追跡番号</th>
+                <th scope="col">現在状態</th>
+                <th scope="col">当初の到着予定</th>
+                <th scope="col">追跡の開始時刻</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="trackingRecord : ${trackingRecords}">
+                <td><a th:href="@{/staff/tracking-records/{trackingNumber}(trackingNumber=${trackingRecord.trackingNumber()})}"
+                       th:text="${trackingRecord.trackingNumber()}">CTABCDEFGH2345</a></td>
+                <td th:text="${trackingRecord.status()}">集荷予定</td>
+                <td th:text="${trackingRecord.originalEta()}">2026-11-15 09:00 Asia/Tokyo（UTC+09:00）（UTC 2026-11-15 00:00）</td>
+                <td th:text="${trackingRecord.startedAt()}">2026-10-26 10:00 Asia/Tokyo（UTC+09:00）（UTC 2026-10-26 01:00）</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
 </main>
 </body>
 </html>

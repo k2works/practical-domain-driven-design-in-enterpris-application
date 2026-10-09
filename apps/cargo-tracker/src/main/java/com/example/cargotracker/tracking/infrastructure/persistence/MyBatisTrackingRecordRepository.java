@@ -9,6 +9,7 @@ import com.example.cargotracker.tracking.domain.model.valueobjects.Schedule;
 import com.example.cargotracker.tracking.domain.model.valueobjects.ScheduledLeg;
 import com.example.cargotracker.tracking.domain.model.valueobjects.TrackedBookingStatus;
 import com.example.cargotracker.tracking.domain.model.valueobjects.TrackingNumber;
+import com.example.cargotracker.tracking.domain.model.valueobjects.TrackingRecordSummary;
 import com.example.cargotracker.tracking.domain.model.valueobjects.TrackingStatus;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
@@ -105,5 +106,29 @@ public class MyBatisTrackingRecordRepository implements TrackingRecordRepository
 
     private static UtcInstant utc(OffsetDateTime value) {
         return new UtcInstant(value.toInstant());
+    }
+
+    @Override
+    public Optional<TrackingRecord> findByTrackingNumber(TrackingNumber trackingNumber) {
+        return mapper.findTrackingRecordByTrackingNumber(trackingNumber.value()).map(this::toRecord);
+    }
+
+    @Override
+    public List<TrackingRecordSummary> findRecentSummaries(int limit) {
+        return mapper.findRecentSummaries(limit).stream()
+                .map(MyBatisTrackingRecordRepository::toSummary)
+                .toList();
+    }
+
+    private static TrackingRecordSummary toSummary(TrackingRecordSummaryRow row) {
+        // 集約の組み立てと同じく、表では NULL 可の当初の到着予定がない行は原因の分かる例外にする（Bolt 25 レビュー P-9）
+        if (row.originalEta() == null) {
+            throw new IllegalStateException("追跡記録 " + row.trackingNumber() + " に当初の到着予定がありません（追跡の開始では必ず入れる）");
+        }
+        return new TrackingRecordSummary(
+                new TrackingNumber(row.trackingNumber()),
+                TrackingStatus.valueOf(row.currentStatus()),
+                utc(row.originalEta()),
+                utc(row.createdAt()));
     }
 }

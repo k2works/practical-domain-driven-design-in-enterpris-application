@@ -6,6 +6,7 @@ import com.example.cargotracker.tracking.application.internal.eventhandlers.Book
 import com.example.cargotracker.tracking.application.internal.eventhandlers.TrackingStartEventHandler;
 import com.example.cargotracker.tracking.application.internal.outboundservices.acl.BookingTrackingStarts;
 import com.example.cargotracker.tracking.application.internal.outboundservices.acl.RoutingScheduledLegs;
+import com.example.cargotracker.tracking.application.internal.queryservices.TrackingRecordQueryService;
 import com.example.cargotracker.tracking.domain.model.aggregates.TrackingRecordRepository;
 import java.time.Clock;
 import org.springframework.context.ApplicationEventPublisher;
@@ -14,6 +15,7 @@ import org.springframework.context.annotation.Configuration;
 
 /**
  * 追跡コンテキストの組み立て。腐敗防止層に経路設計と予約の公開 API をつなぎ、DE-07・DE-22 の listener を組み立てる（ADR-015。Bolt 25）。
+ * 追跡記録の照会（S-11・S-12）も組み立てる（Bolt 26）。
  */
 @Configuration(proxyBeanMethods = false)
 public class TrackingConfiguration {
@@ -45,5 +47,11 @@ public class TrackingConfiguration {
     BookingTrackingStartNotificationEventHandler bookingTrackingStartNotificationEventHandler(
             BookingTrackingStarts trackingStarts) {
         return new BookingTrackingStartNotificationEventHandler(trackingStarts);
+    }
+
+    /** 追跡記録の照会（S-11 追跡一覧、S-12 追跡の詳細。Bolt 26）。 */
+    @Bean
+    TrackingRecordQueryService trackingRecordQueryService(TrackingRecordRepository repository) {
+        return new TrackingRecordQueryService(repository);
     }
 }

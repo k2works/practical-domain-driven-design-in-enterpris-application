@@ -9,6 +9,8 @@ import com.example.cargotracker.shared.domain.UtcInstant;
 import com.example.cargotracker.tracking.domain.model.TrackingFixture;
 import com.example.cargotracker.tracking.domain.model.aggregates.TrackingRecord;
 import com.example.cargotracker.tracking.domain.model.valueobjects.TrackingNumber;
+import com.example.cargotracker.tracking.domain.model.valueobjects.TrackingRecordSummary;
+import com.example.cargotracker.tracking.domain.model.valueobjects.TrackingStatus;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.Random;
@@ -140,6 +142,80 @@ class MyBatisTrackingRecordRepositoryIntegrationTest {
         assertThatThrownBy(() -> repository.findByBookingId(bookingId))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining(trackingNumber);
+    }
+
+    // S-11・S-12 の照会（Bolt 26）。共有の DB にほかの追跡記録があっても先頭に来るよう、追跡の開始時刻を遠い先にする
+
+    @Test
+    void 追跡番号で追跡記録を予定区間とあわせて読み出しない追跡番号は空() {
+        TrackingRecord trackingRecord = started(UUID.randomUUID(), trackingNumber());
+        repository.save(trackingRecord);
+
+        TrackingRecord found =
+                repository.findByTrackingNumber(trackingRecord.trackingNumber()).orElseThrow();
+
+        assertThat(found.bookingId()).isEqualTo(trackingRecord.bookingId());
+        assertThat(found.schedule()).isEqualTo(trackingRecord.schedule());
+        assertThat(found.startedAt()).isEqualTo(trackingRecord.startedAt());
+        assertThat(repository.findByTrackingNumber(trackingNumber())).isEmpty();
+    }
+
+    @Test
+    void 要約は追跡の開始時刻の新しい順で同じ時刻は追跡番号の順に上限まで返す() {
+        TrackingRecord oldest = save("2099-01-01T00:00:00Z", trackingNumber());
+        TrackingRecord middle = save("2099-01-02T00:00:00Z", trackingNumber());
+        TrackingRecord sameTimeB = save("2099-01-03T00:00:00Z", new TrackingNumber("CTBBBBBBBBBBBB"));
+        TrackingRecord sameTimeA = save("2099-01-03T00:00:00Z", new TrackingNumber("CTAAAAAAAAAAAA"));
+
+        assertThat(repository.findRecentSummaries(4))
+                .extracting(TrackingRecordSummary::trackingNumber)
+                .containsExactly(
+                        sameTimeA.trackingNumber(),
+                        sameTimeB.trackingNumber(),
+                        middle.trackingNumber(),
+                        oldest.trackingNumber());
+        assertThat(repository.findRecentSummaries(2))
+                .extracting(TrackingRecordSummary::trackingNumber)
+                .containsExactly(sameTimeA.trackingNumber(), sameTimeB.trackingNumber());
+        assertThat(repository.findRecentSummaries(1).getFirst())
+                .isEqualTo(new TrackingRecordSummary(
+                        sameTimeA.trackingNumber(),
+                        TrackingStatus.PICKUP_SCHEDULED,
+                        sameTimeA.originalEta(),
+                        sameTimeA.startedAt()));
+    }
+
+    /** 要約でも、当初の到着予定のない行は原因の分かる例外にする（集約の組み立てと同じ。Bolt 26 計画の確認ポイント 13）。 */
+    @Test
+    void 当初の到着予定のない行の要約は原因の分かる例外にする() {
+        String trackingNumber = trackingNumber().value();
+        jdbc.update(
+                "INSERT INTO tracking.tracking_record (tracking_number, booking_id, shipper_company_id,"
+                        + " consignee_company_id, booking_status, current_status, version, created_at, updated_at)"
+                        + " VALUES (?, ?, ?, ?, 'CONFIRMED', 'PICKUP_SCHEDULED', 0, ?, ?)",
+                trackingNumber,
+                UUID.randomUUID(),
+                UUID.randomUUID(),
+                UUID.randomUUID(),
+                Timestamp.from(Instant.parse("2099-12-31T00:00:00Z")),
+                Timestamp.from(Instant.parse("2099-12-31T00:00:00Z")));
+
+        assertThatThrownBy(() -> repository.findRecentSummaries(1))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining(trackingNumber);
+    }
+
+    private TrackingRecord save(String startedAt, TrackingNumber trackingNumber) {
+        TrackingRecord trackingRecord = TrackingRecord.start(
+                        trackingNumber,
+                        UUID.randomUUID(),
+                        new CompanyId(UUID.randomUUID()),
+                        new CompanyId(UUID.randomUUID()),
+                        TrackingFixture.schedule(),
+                        new UtcInstant(Instant.parse(startedAt)))
+                .trackingRecord();
+        repository.save(trackingRecord);
+        return trackingRecord;
     }
 
     private static TrackingRecord started(UUID bookingId, TrackingNumber trackingNumber) {

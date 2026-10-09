@@ -252,16 +252,27 @@ S12 --> S11 : 追跡一覧へ戻る
     - `register_milestone_ui.feature` に 2 本（`@demo-bolt-26/tracking-records`、幅 320 CSS px）を書いた。確定と追跡の開始の待ちは背景に入れた（2 本とも同じ前提のため）。追跡番号は、追跡の開始の完了を待つステップで `UiScenarioState` に控え、追跡管理者のステップ（`TrackingUiSteps`。新設）が使う。航海を消すフックの条件に `@US-12` を足した
     - Red: `@US-12` に絞って `uiTest` を流し（環境変数 `CUCUMBER_FILTER_TAGS`）、2 本が本命のアサーション（追跡一覧の表の先頭の行の追跡番号のリンクがない）で落ちることを確かめた（T-72）。ログインとホームの移動は通った
     - 承認ゲートの扱い（T-36）: 画面のゲートで止まらずに進めた（AI の判断）。根拠は、画面の構成と文言が計画の S-11・S-12 の表のとおりであること
-- [ ] **3. 画面（S-11・S-12）と照会（単体テスト）** 【承認ゲート: モジュールの境界、Red／Green（照会）】
+- [x] **3. 画面（S-11・S-12）と照会（単体テスト）** 【承認ゲート: モジュールの境界、Red／Green（照会）】
   - 画面の単体テストを先に書き、実装の前に流して Red を確かめる（Bolt 25b の Problem）: S-11 の列と並び・追跡記録がない・50 件を超えた、追跡状態の 10 個の表示名（T-57・T-76）、S-12 の現在状態・到着予定・経路版・予定区間のリスト・「主要実績はまだありません。」・戻るリンク、存在しない追跡番号と形式の誤った追跡番号は 404
   - 照会のサービスの単体テストを先に書く: 要約を上限 51 件で 1 回引き（仮説 H1）、50 件を超えるかと上限を返す、ちょうど 50 件は超えていない、0 件は空（Bolt 25b のレビュー P-1・P-5 を最初から入れる）、詳細は追跡番号で引く。メモリのリポジトリは新しい順で写しを返す（T-61）
   - `tracking` の `package-info` の `allowedDependencies` に `platform :: web` を足し、Javadoc の依存先の説明を直す（確認ポイント 12。モジュールの境界のゲート）
   - `TrackingRecordSummary`、`TrackingRecordRepository.findRecentSummaries`・`findByTrackingNumber`、`TrackingRecordQueryService`、`RecentTrackingRecords`、`TrackingRecordController`（`tracking.interfaces.web`）、`TrackingRecordViews`（追跡状態の表示名、日時の表示）、`tracking/staff/tracking-records/list.html`・`show.html`、新しいパッケージの `package-info.java`（`tracking.interfaces`・`tracking.interfaces.web`・`tracking.application.internal.queryservices`。開発ガイドの層の名前と役割の言葉）、`TrackingConfiguration` の組み立て、テストのメモリのリポジトリ
   - 完了の判定: `check` 緑（ModularityTest・ArchUnit を含む）、T-53
-- [ ] **4. 永続化（PostgreSQL の統合テスト）** 【承認ゲート: Red／Green（照会）】
+  - 結果（2026-10-09）
+    - Red: 照会のサービスの単体テスト 6 件（新しい順、1 回の照会（仮説 H1）、上限 50 件と超えたこと、ちょうど 50 件、0 件、追跡番号での詳細）と画面の単体テスト 17 件（S-11 の列と並び・ない・上限を超えた、追跡状態の 10 個の表示名、S-12 の表示、ない追跡番号と形式の誤りの 404）を、型の骨組み（照会は空を返す）で実装の前に流し、19 件が本命のアサーションで落ちることを確かめた（Bolt 25b の Problem を直した）。0 件と 404 の 2 件は骨組みでも通る見張りのテスト
+    - Green: `TrackingRecordSummary`、リポジトリの 2 つの照会の口、`TrackingRecordQueryService`、`RecentTrackingRecords`（行は要約をそのまま使う）、`TrackingRecordController`、`TrackingRecordViews`、`list.html`・`show.html`、`tracking.application.internal.queryservices` の package-info、組み立て、メモリのリポジトリの照会。`tracking` の `allowedDependencies` に `platform :: web` を足した
+    - 追跡状態の表示名の `switch` が循環的複雑度の上限（10）を超えたので、`EnumMap` の表にした（10 個の値の網羅は画面の単体テストで守る）
+    - 計画からの変更: S-12 の戻るリンクの名前を「追跡一覧へ戻る」から「追跡一覧」にした（Bolt 25b のレビュー U-2 で S-24 を行き先の名前にしたのにそろえる。S-12 は Bolt 26b 以後に入口が増える）。経路版の表記は S-24 と同じ「RC-2026-0001 版 1」、S-12 の見出しは「追跡の詳細 追跡番号」（S-24 と同じ形）
+    - `check` はこのステップの範囲で緑（PostgreSQL のセキュリティの統合テスト 2 件は、ステップ 4 のマッパーの骨組みに当たって落ちたので、ステップ 4 と一緒に確かめた）
+    - 承認ゲートの扱い（T-36）: モジュールの境界と Red／Green（照会）のゲートで止まらずに進めた（AI の判断）。根拠は、`platform :: web` の依存が確認ポイント 12 の推奨（予約・経路設計と同じ形で、`interfaces.web` からだけ使う）のとおりで、ModularityTest・ArchUnit が通ったこと
+- [x] **4. 永続化（PostgreSQL の統合テスト）** 【承認ゲート: Red／Green（照会）】
   - 統合テストを先に書く: 追跡の開始時刻の新しい順（同じ時刻は追跡番号の順）、上限、`original_eta` が NULL の行は原因の分かる例外、追跡番号で追跡記録と予定区間を引く、ない追跡番号は空
   - マッパーの `findRecentSummaries`・`findByTrackingNumber`（Bolt 25 の組み立ての select を使えるなら使う。T-71 のとおり行の型と結果の対応を同じステップでそろえる。AT-04 の自スキーマの検査を通す）
   - 完了の判定: `check`・`uiTest` 緑（ステップ 2 のシナリオが通る）、T-53
+  - 結果（2026-10-09）
+    - 統合テスト 3 件（追跡番号で予定区間とあわせて読む・ない追跡番号は空、追跡の開始時刻の新しい順・同じ時刻は追跡番号の順・上限、当初の到着予定のない行は原因の分かる例外）を先に書いた。Red は骨組みの未実装の例外で落ち、本命のアサーションではなかった（T-39 の記録）
+    - マッパーの `findTrackingRecordByTrackingNumber`・`findRecentSummaries`（追跡記録の表だけの 1 本）と、行の型 `TrackingRecordSummaryRow`・結果の対応を同じステップでそろえた（T-71）。AT-04 の検査は通った
+    - `check` 緑、`uiTest` 69 本が緑（ステップ 2 の新しい 2 本を含む）
 - [ ] **5. 開発レビューと終了報告** 【承認ゲート: 開発レビューの判断、終了報告】
   - `developing-review`（プログラマー（テスター・アーキテクトの観点を含む）とインタラクションデザイナー（ユーザー代表の観点を含む）の 2 つの観点。Bolt 25b と同じ）、SonarQube（`sonar-local:check`）、受入動画（`./gradlew demoVideo`。過去の Bolt の動画は元に戻す）、`bolt_26_report.md`
   - 設計文書（T-53）: ui_design.md（URL の表に S-11・S-12 の行を新設、ホーム・A-01・A-04 の行と A-01 の節の開発用の利用者の本文に追跡管理者、社内のナビの項目に「追跡: 追跡管理者（Bolt 26）」とナビの実装の段落、画面一覧の S-11・S-12 の Bolt 26 の範囲、社内業務 Web（追跡）の画面遷移図に S-12 → S-11 の戻り、S-12 の画面イメージの下に「Bolt 26 の最小の表示は予約の業務番号とタブを出さない」の注、共通部品「画面幅」に予定区間のリストの扱い）、domain_model.md（リポジトリの表の追跡の行に要約の照会だけを足す（追跡番号での取得は既にある）、追跡状態の表示名の確認の結果）、data_model.md（`tracking_record` の行に `created_at` を追跡の開始時刻として S-11 の並びに使う注、索引の表に追跡の開始時刻の索引は足さない注）、test_strategy.md（US-12 の `@ui` を ○）、release_plan.md（W4 の Living Documentation の `tracking` の依存先に `platform :: web`）
