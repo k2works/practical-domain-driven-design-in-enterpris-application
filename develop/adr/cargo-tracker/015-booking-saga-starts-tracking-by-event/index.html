@@ -8236,7 +8236,7 @@
 <tbody>
 <tr>
 <td style="text-align: left;">依存の向き</td>
-<td style="text-align: left;"><code>tracking → booking</code>（<code>api</code>・<code>events</code>）だけ。予約は追跡に依存しない</td>
+<td style="text-align: left;"><code>tracking → booking</code>（<code>api</code>・<code>events</code>）と <code>tracking → routing</code>（<code>api</code>。経路版の区間。Unit の依存 U3 → U2）。予約と経路設計は追跡に依存しない（Bolt 25 の開始準備で改訂。当初は「<code>tracking → booking</code> だけ」）</td>
 </tr>
 <tr>
 <td style="text-align: left;">サガの状態</td>
@@ -8244,7 +8244,7 @@
 </tr>
 <tr>
 <td style="text-align: left;">追跡の開始</td>
-<td style="text-align: left;">追跡の <code>application.internal.eventhandlers</code> の listener が DE-07 を受け、追跡を開始する（追跡記録を作り、経路版の区間を予定として採用する）。開始の結果（開始した・業務の理由で開始できない）を予約の公開 API（<code>booking :: api</code>）で返し、予約サガを完了または失敗にする</td>
+<td style="text-align: left;">追跡の <code>application.internal.eventhandlers</code> の listener が DE-07 を受け、経路設計の公開 API（<code>routing :: api</code>）で確定した経路版の区間を引いて追跡を開始する（追跡記録を作り、区間を予定として採用し、同じトランザクションで DE-22 追跡を開始した を発行する）。DE-22 を受けた追跡の別の listener が、開始の結果（開始した・業務の理由で開始できない）を予約の公開 API（<code>booking :: api</code>）で返し、予約サガを完了または失敗にする。2 つのコンテキストの集約を 1 つのトランザクションで更新しない（ADR-014 の形）</td>
 </tr>
 <tr>
 <td style="text-align: left;">冪等</td>
@@ -8301,8 +8301,10 @@
 </ul>
 <h2 id="_8">コンプライアンス<a class="headerlink" href="#_8" title="Permanent link">&para;</a></h2>
 <ul>
-<li>ModularityTest で <code>booking</code> が <code>tracking</code> に依存しないことを確かめる（<code>tracking</code> を作る Bolt 25 から）。</li>
-<li>追跡の開始の結果を返す予約の公開 API（<code>booking :: api</code>、<code>@NamedInterface("api")</code>）は Bolt 25 で作る。追跡記録に要る荷主・荷受人の企業 ID と予定の区間の取得元（DE-07 に足すか、<code>booking :: api</code> の照会か、見積りの割り当てた経路の写しか）も Bolt 25 で決める（Bolt 23 レビュー）。</li>
+<li>ModularityTest で <code>booking</code>・<code>routing</code> が <code>tracking</code> に依存しないことを確かめる（<code>tracking</code> を作る Bolt 25 から）。</li>
+<li>追跡の開始の結果を返す予約の公開 API（<code>booking :: api</code>、<code>@NamedInterface("api")</code>）は Bolt 25 で作る。置き場所は <code>booking.interfaces.api</code>（開発ガイドライン第 3 章のインターフェース層。2026-10-09 の人の指示）。操作は <code>TrackingStartNotification.notifyStarted(TrackingStartNotificationRequest(予約 ID, 追跡番号, 開始時刻))</code> で、結果は sealed interface と record の <code>TrackingStartNotificationReceipt</code>（<code>Completed</code>・<code>AlreadyCompleted</code>・<code>NotCompleted(reason)</code>、理由の定数 <code>SAGA_NOT_FOUND</code>）。予約 ID で冪等で、処理中の予約サガだけを完了にするので、コマンド ID と期待版（ARCH-HO-01）は持たない。業務の理由で開始できない結果は W8 で足す。</li>
+<li>追跡記録に要る値の取得元（Bolt 25 で決めた。2026-10-09、human:kakimomokuri）: 荷主・荷受人の企業 ID は DE-07 に足す（予約条件の写しから。null 可。小さな属性）。予定の区間は、追跡が経路設計の公開 API（<code>routing :: api</code>、<code>routing.interfaces.api</code>）で案件番号と経路版番号から引く。経路版は不変なので、確定した区間と同じ。DE-07 に区間を載せる案は、payload を小さく保つ規則（バックエンドアーキテクチャ）と H2 の発行記録の 4,000 文字の上限に当たるため採らない。<code>booking :: api</code> で照会する案は、予約に区間の写しを持たせることになるため採らない。</li>
+<li>予約サガの完了は <code>booking_saga</code> の状態と <code>updated_at</code>（完了の時刻を兼ねる）を期待版で更新する。完了時刻の列は足さない。</li>
 <li>予約サガの状態の遷移は予約の中の単体テストで、追跡の開始から予約サガの完了までは PostgreSQL の統合テストで確かめる（Bolt 25）。</li>
 </ul>
 <h2 id="_9">関連ドキュメント<a class="headerlink" href="#_9" title="Permanent link">&para;</a></h2>
