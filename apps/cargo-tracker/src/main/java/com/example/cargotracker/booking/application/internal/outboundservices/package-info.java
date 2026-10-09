@@ -1,4 +1,4 @@
 /**
- * 送信先のサービス。他のコンテキストの公開 API を呼ぶ部品。
+ * アウトバウンドサービス。予約コンテキストが他の境界づけられたコンテキストを呼び出す部品。
  */
 package com.example.cargotracker.booking.application.internal.outboundservices;

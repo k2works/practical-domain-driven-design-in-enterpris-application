@@ -1,4 +1,4 @@
 /**
- * コマンド。経路設計コンテキストの入力ポートに渡す操作の値。
+ * コマンド。経路設計コンテキストのユースケースへの入力。
  */
 package com.example.cargotracker.routing.application.internal.commands;

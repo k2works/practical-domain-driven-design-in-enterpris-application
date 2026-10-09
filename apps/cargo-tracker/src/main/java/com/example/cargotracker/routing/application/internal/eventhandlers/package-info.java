@@ -1,4 +1,4 @@
 /**
- * イベントの購読。経路設計コンテキストが他のコンテキストのドメインイベントを受けて動く入力ポート。
+ * イベントハンドラー。経路設計コンテキストが購読するドメインイベントの処理。
  */
 package com.example.cargotracker.routing.application.internal.eventhandlers;

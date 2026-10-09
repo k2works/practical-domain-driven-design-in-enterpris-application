@@ -1,4 +1,4 @@
 /**
- * コマンド。予約の入力ポートが受け取る変更の要求。
+ * コマンド。予約コンテキストのユースケースへの入力。
  */
 package com.example.cargotracker.booking.application.internal.commands;

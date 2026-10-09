@@ -1,4 +1,4 @@
 /**
- * 追跡のドメイン層。Java の標準と共有カーネルと注釈の語彙にだけ依存する。
+ * ドメイン層。追跡コンテキストのドメインモデル。フレームワークに依存しない（ADR-001）。
  */
 package com.example.cargotracker.tracking.domain;

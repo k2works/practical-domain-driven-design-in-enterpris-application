@@ -1,4 +1,4 @@
 /**
- * 予約のドメイン層。Java の標準と共有カーネルと注釈の語彙にだけ依存する。
+ * ドメイン層。予約コンテキストのドメインモデル。フレームワークに依存しない（ADR-001）。
  */
 package com.example.cargotracker.booking.domain;

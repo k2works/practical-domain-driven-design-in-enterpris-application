@@ -1,4 +1,4 @@
 /**
- * 永続化。追跡の表（`tracking` スキーマ）の MyBatis のマッパーとリポジトリの実装。
+ * 永続化。追跡コンテキストのリポジトリの MyBatis による実装（ADR-007。スキーマ `tracking`）。
  */
 package com.example.cargotracker.tracking.infrastructure.persistence;
