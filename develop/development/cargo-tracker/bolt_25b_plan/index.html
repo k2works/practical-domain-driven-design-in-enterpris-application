@@ -8438,6 +8438,10 @@
 <td style="text-align: left;">Issue なし（Bolt 23b の開発レビュー U-1（高）を返す画面の補い。SP 0。受入動画は #10 に添付する。US-05 の S-10 の本体（変更・取消申請の状況）は W11）</td>
 </tr>
 <tr>
+<td style="text-align: left;">承認ゲートの扱い</td>
+<td style="text-align: left;">人の指示（<code>/goal Bolt 25b</code>、2026-10-09。ステップ 1 の画面のゲートの後）により、承認ゲートで止まらずに進める。止まらなかったゲートごとに根拠を書き、終了報告の承認の議題に置く（T-36）</td>
+</tr>
+<tr>
 <td style="text-align: left;">承認ゲート</td>
 <td style="text-align: left;">計画の承認（確認ポイント 1〜12）、画面、Red／Green ごと（照会）、開発レビューの判断、終了報告。スキーマは変えないので、スキーマのゲートはない</td>
 </tr>
@@ -8611,21 +8615,37 @@
 <h2 id="_9">ステップ計画<a class="headerlink" href="#_9" title="Permanent link">&para;</a></h2>
 <p>状態の記号: <code>[ ]</code> 未着手、<code>[-]</code> 進行中、<code>[?]</code> 承認待ち、<code>[x]</code> 完了。各ステップの終わりに <code>check</code> が緑であることを確かめ、Green と同じ push にまとめて CI を確かめる（T-26、T-65）。Red は実行して本命のアサーションで失敗することを確かめてから実装する（T-39）。</p>
 <ul class="task-list">
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>1. 画面の層の受入シナリオと画面（S-10・S-24）</strong> 【承認ゲート: 画面】</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>1. 画面の層の受入シナリオと画面（S-10・S-24）</strong> 【承認ゲート: 画面】</li>
 <li>画面の層の受入シナリオを先に書く（T-72）: <code>features/ui/confirm_booking_ui.feature</code>（機能のタグは <code>@ui @US-04 @must</code> のまま）に 1 本を足す（<code>@demo @demo-bolt-25b/booking-list @US-04-AC1</code>。背景と <code>BookingUiSteps</code> の確定のステップを再利用する）。営業担当者が本予約を確定し、受付一覧へ戻ってから営業のナビの「予約」を開くと、確定した予約が一覧の先頭に出て、ナビの「予約」が現在の項目として示される（<code>LayoutUiSteps</code> の既存のステップ）。追跡番号のリンクで S-24 を開け、S-24 の「予約一覧へ戻る」で S-10 に戻る。キー操作だけ、幅 320 CSS px、axe-core 0 件</li>
 <li>画面の骨組み（S-10 の見出しだけ）で <code>uiTest</code> のこのシナリオを流し、本命のアサーション（一覧の行）で落ちることを確かめる（T-72 の Red を確かめる時点）</li>
 <li>画面の単体テストを先に書く: 一覧の列と並び、追跡の開始の 4 つの状態の表示（T-57）、予約がないときの文言、50 件を超えたときの文言、S-24 の戻るリンクと「処理中」</li>
 <li>既存のテストを直す: <code>AuthenticationSecurityIntegrationTest</code> の「営業担当者はナビの予約を開くと準備中の画面になる」を S-10 の 200（見出し「予約一覧」）に、荷主・経路設計者の <code>GET /staff/bookings</code> は 403 であることを足す。画面の層・画面の単体テストの「処理中（追跡の開始を待っています）」の期待を「処理中」に</li>
 <li><code>BookingController</code> に <code>GET /staff/bookings</code>、<code>list.html</code>、<code>PlaceholderController</code> の営業の画面の処理と表を消す</li>
 <li>完了の判定: <code>check</code> 緑（画面の層はステップ 3 の後に緑）</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>2. 一覧の照会（単体テスト）</strong> 【承認ゲート: Red／Green（照会）】</li>
+<li>結果（2026-10-09）<ul>
+<li>Red: 画面の層のシナリオ 2 本（予約一覧から予約の詳細を開き直す <code>@demo-bolt-25b/booking-list</code>、幅 320 CSS px）を <code>confirm_booking_ui.feature</code> に先に書き、S-10 の骨組み（見出しだけ）で <code>uiTest</code> を流して、本命のアサーション（予約一覧の表がない）で落ちることを確かめた（T-72）。幅 320 CSS px のシナリオは、狭い幅ではナビがメニューのボタンに畳まれるのにメニューを開いていなかったので、既存のステップ「メニューのボタンを押す」を足した（シナリオの誤り）。画面の単体テスト 8 件（一覧の列と並び、予約がない、50 件を超えた、追跡の開始の 4 つの状態、S-24 の戻るリンクと「処理中」）は、実装を書いた後に実装を外して流し、レスポンスの中身のアサーションで落ちることを確かめた（T-39。Gradle が画面の層の実行で使えない間に実装まで進めたため）</li>
+<li>Green: <code>BookingController</code> の <code>GET /staff/bookings</code>、<code>BookingViews.list</code>、<code>list.html</code>（caption「確定した予約（確定時刻の新しい順）」、横スクロールの囲み）、S-24 の「予約一覧へ戻る」と「処理中」、追跡の開始の表示を UI 設計の共通部品にそろえた（失敗は「処理中」）。<code>PlaceholderController</code> の営業の画面の処理と表を消した。セキュリティの統合テストを、営業担当者は S-10 の 200、荷主と経路設計者は 403 に直した</li>
+<li>照会（<code>BookingQueryService.recent</code>）はステップ 2 までの骨組み（空を返す）。画面の層の新しいシナリオはステップ 3 の後に緑になるので、push はステップ 3 と一緒にする</li>
+<li><code>check</code> 緑</li>
+<li>承認ゲートの扱い（T-36）: 人の指示（<code>/goal Bolt 25b</code>、2026-10-09）により、画面のゲートで止まらずに進めた（AI の判断）。根拠は、画面の構成と文言が計画の確認ポイントの決定（2026-10-09 承認）のとおりであること</li>
+</ul>
+</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>2. 一覧の照会（単体テスト）</strong> 【承認ゲート: Red／Green（照会）】</li>
 <li>単体テストを先に書く: 照会のサービスが要約を上限 51 件で 1 回、予約サガの状態を IN で 1 回引き、50 件を超えるかを返す（仮説 H1）。予約サガのない予約は例外。メモリのリポジトリは新しい順で写しを返す（T-61）</li>
 <li><code>BookingSummary</code>、<code>BookingRepository.findRecentSummaries</code>、<code>BookingSagaRepository.findStatusesByBookingIds</code>、<code>BookingQueryService.recent</code>、メモリの実装（<code>InMemoryBookingRepository</code>・<code>InMemoryBookingSagaRepository</code>）、<code>RandomTrackingNumberIssuerTest</code> の仮の実装、受入の配線</li>
 <li>完了の判定: <code>check</code> 緑</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>3. 永続化（PostgreSQL の統合テスト）</strong> 【承認ゲート: Red／Green（照会）】</li>
+<li>結果（2026-10-09）: 照会のサービスの単体テスト 4 件（新しい順と予約サガの状態、上限 50 件と超えたこと、要約と状態をそれぞれ 1 回の照会で引く（仮説 H1）、予約サガのない予約は例外）を先に書き、骨組み（空を返す）で 4 件が本命のアサーションで落ちることを確かめてから実装した。予約サガのリポジトリを使う既存の単体テストの仮の実装にも照会を足した。受入の配線は既存のメモリのリポジトリのままで変更は要らなかった<ul>
+<li>承認ゲートの扱い（T-36）: Red／Green（照会）のゲートで止まらずに進めた（AI の判断）。根拠は、置き場所と引き方が確認ポイント 2 の決定のとおりであること</li>
+</ul>
+</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>3. 永続化（PostgreSQL の統合テスト）</strong> 【承認ゲート: Red／Green（照会）】</li>
 <li>統合テストを先に書く: 新しい順（同じ時刻は追跡番号の順）、上限、予約版 1 の確定時刻、予約サガの状態の IN</li>
 <li>マッパーの <code>findRecentSummaries</code>・<code>findSagaStatusesByBookingIds</code>（T-71 のとおり行の型と結果の対応を同じステップでそろえる。AT-04 の自スキーマの検査を通す）</li>
 <li>完了の判定: <code>check</code>・<code>uiTest</code> 緑</li>
+<li>結果（2026-10-09）: 統合テスト 2 件（確定時刻の新しい順・同じ時刻は追跡番号の順・上限、予約サガの状態の IN と空の集合）を先に書いた。Red は骨組みの未実装の例外で落ち、本命のアサーションではなかった（T-39 の記録）。マッパーの <code>findRecentSummaries</code>（貨物予約と予約版 1 の 1 本の SELECT）・<code>findSagaStatusesByBookingIds</code>（IN の 1 本。空の集合は照会しない）と行の型・結果の対応を同じステップでそろえた（T-71）。AT-04 の検査は通った。<code>check</code> 緑、<code>uiTest</code> 67 本緑（新しい 2 本を含む）<ul>
+<li>統合テストの実行で、私のコマンドの誤り（移動の先の誤りと、結果のファイルがないときに <code>grep</code> が標準入力を待ち続けた）で 10 分止まった（Problem）</li>
+</ul>
+</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>4. 開発レビューと終了報告</strong> 【承認ゲート: 開発レビューの判断、終了報告】</li>
 <li><code>developing-review</code>（プログラマー・テスター・アーキテクト・インタラクションデザイナー・ユーザー代表）、SonarQube（<code>sonar-local:check</code>）、受入動画（<code>./gradlew demoVideo</code>。過去の Bolt の動画は元に戻す）、<code>bolt_25b_report.md</code></li>
 <li>設計文書: ui_design.md（URL の表に S-10 の行を新設、画面一覧の S-10 の対応に US-04、社内業務 Web の画面遷移図に S-10 と S-24 → S-10 とナビ → S-10、S-24 の行の「処理中」と戻る導線、準備中の画面の行、共通部品「処理中表示」の失敗の扱い、共通部品「画面幅」の表の扱いを横スクロールの囲みにそろえる注）、domain_model.md（リポジトリの表の予約の行に要約の照会、予約サガのリポジトリの照会、予約の本文に一覧の読み取りモデルの説明）、data_model.md（索引の表に確定時刻の索引は W11 で決める注）（T-53）</li>
