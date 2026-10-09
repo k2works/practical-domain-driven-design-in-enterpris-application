@@ -3764,6 +3764,41 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="bolt_24_report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 24 終了報告
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--draft"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -8362,9 +8397,9 @@
 <tr>
 <td style="text-align: left;">24</td>
 <td style="text-align: left;"><a href="bolt_24_plan/">本予約の確定の再送と重複確定の防止（US-04 AC4）</a></td>
-<td style="text-align: left;">—</td>
+<td style="text-align: left;"><a href="bolt_24_report/">終了報告</a>（<a href="../../assets/demo/bolt-24/resend-booking.webm" target="_blank">動画</a>）</td>
 <td style="text-align: left;">W4</td>
-<td style="text-align: left;">進行中</td>
+<td style="text-align: left;">終了報告の承認待ち</td>
 </tr>
 </tbody>
 </table>
@@ -8651,6 +8686,7 @@
 <li>実ドキュメントを追加したら、この一覧を更新します。</li>
 <li>週の実績は <a href="release_plan/">リリース計画</a> の進捗状況を正とします。</li>
 <li><a href="bolt_23b_report/">Bolt 23b 終了報告 - 本予約の確定の画面（US-04 AC1・AC2、#10）</a> - 23b 回目の Bolt の終了報告。S-02 の予約の確定待ちの表、S-09 本予約の確定（画面そのものを確認の領域にする）、S-24 予約の詳細の最小の表示を作り、見積りの公開 API の照会を業務番号と見積り番号に改めた（ADR-016 の改訂）。/goal で止まらなかった承認ゲート、開発レビューの対応（承認の後に失効した見積りの再見積りの行き止まりほか）、既知の課題を記録する。</li>
+<li><a href="bolt_24_report/">Bolt 24 終了報告 - 本予約の確定の再送と重複確定の防止（US-04 AC4、B-INV-03・B-INV-11、#10）</a> - 24 回目の Bolt の終了報告。本予約の確定にコマンド ID と処理済みコマンドを足し、同じ要求の再送には最初の結果を、同じ見積りの別の確定には既存の追跡番号を返し、確定済みの判定を見積りの照会より前に置いた。/goal で止まらなかった承認ゲート、スキーマの承認、開発レビューの対応、人に諮る設計の判断（ADR-001 の例外、追記専用と保持期間）、既知の課題を記録する。</li>
 </ul>
 
 
