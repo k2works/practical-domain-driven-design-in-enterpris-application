@@ -4,7 +4,7 @@ title: "Bolt 25 終了報告 - 追跡の開始と予約サガの成功の経路�
 description: "25 回目の Bolt の終了報告。tracking モジュールと追跡記録を新設し、追跡が DE-07 を受けて経路設計の公開 API から確定した経路版の区間を予定として採用し、DE-22 を挟んだ別のトランザクションで予約の公開 API に返して予約サガを完了にした。公開 API は人の指示で interfaces.api に置いた。/goal で止まらなかった承認ゲート、スキーマの承認、開発レビューの対応、人に諮る設計の判断、既知の課題を記録する。"
 tags: [development,bolt-report]
 status: draft
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-09T06:48:59Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-09T07:00:22Z }
 ---
 
 # Bolt 25 終了報告 - 追跡の開始と予約サガの成功の経路（US-04、ADR-015、#10）
@@ -81,7 +81,7 @@ generated: { by: anthropic/claude-opus-5-5, at: 2026-10-09T06:48:59Z }
 | `uiTest`（axe-core を含む） | 通過（65 本）。見積りの公開 API を移した後の 1 回目で、見積依頼の必要書類の添付のシナリオ（`attach_required_documents_ui.feature`）がファイルの選択の待ちの 30 秒で 1 回落ち、流し直すと通った（今回の変更と関わらない画面の揺れ。既知の課題） |
 | ModularityTest・ArchUnit | 通過。`booking`・`routing` は `tracking` に依存しない |
 | Spotless・Checkstyle・SpotBugs | 通過 |
-| CI（check・ui・デモ環境への配備） | 本報告のコミットで確かめる |
+| CI（check・ui・デモ環境への配備） | 通過（`8ae0012`、`ee57ac7`、`3eaa869`）。マイグレーションはデモ環境でも流れた |
 | SonarQube（ローカル） | 品質ゲート PASS（新しいコードのカバレッジ 96.2%、重複 0%、新しい指摘 0 件）。最初は新しい指摘 29 件で FAIL（変数名 `record`、ラムダの中の 2 つの呼び出し、使わない変数、メソッド参照、引数の多さ）。どれも直した（引数の多さは前例どおり理由を添えて抑止した） |
 | `okf:check` | ERROR 0 |
 

@@ -4,7 +4,7 @@ title: "Bolt 25 計画 - 追跡の開始と予約サガの成功の経路（US-0
 description: "25 回目の Bolt の計画。tracking モジュールと追跡記録（tracking_record・scheduled_leg）を新設し、追跡の listener が DE-07 を購読して経路設計の公開 API から確定した経路版の区間を引いて予定として採用し、追跡を開始したイベントを受けた別のトランザクションで予約の公開 API へ結果を返して予約サガを完了にし、S-24 に「追跡の開始: 完了」を示して #10 をクローズするまでを、データ・ドメイン・アプリケーション・画面の順に、ステップ 1〜6 で定義する。"
 tags: [development,bolt-plan]
 status: draft
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-09T06:08:07Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-09T07:00:22Z }
 ---
 
 # Bolt 25 計画 - 追跡の開始と予約サガの成功の経路（US-04、ADR-015、#10）
@@ -382,14 +382,14 @@ ui_design.md の業務シナリオ（「予約サガが完了したら『完了�
 
 ## 完了条件
 
-- [ ] 追跡記録の単体テスト、業務ルール層の受入シナリオ（確定から追跡の開始まで、DE-07 の再配信）が通る
-- [ ] PostgreSQL の統合テストで、本予約の確定から追跡の開始・予約サガの完了までが通り、DE-07・DE-22 の再配信で追跡記録・予約サガが変わらない
-- [ ] ApplicationModules の検証と ArchUnit が緑で、`booking`・`routing` は `tracking` に依存しない
-- [ ] 画面の層の受入シナリオ（S-24 の「追跡の開始: 完了」）が通り、受入動画を撮った
-- [ ] `check`・`documentationTest`・`uiTest` が緑。push して CI とデモ環境の配備を確かめた
-- [ ] SonarQube の Quality Gate が PASS
-- [ ] 設計文書に決定を書き、計画からの変更も設計文書に戻した（T-53）
-- [ ] 開発レビューと終了報告。#10 に結果をコメントし、承認の後にクローズした。AC3・AC5 の Issue を作った
+- [x] 追跡記録の単体テスト、業務ルール層の受入シナリオ（確定から追跡の開始まで、DE-07 の再配信）が通る
+- [x] PostgreSQL の統合テストで、本予約の確定から追跡の開始・予約サガの完了までが通り、DE-07・DE-22 の再配信で追跡記録・予約サガが変わらない
+- [x] ApplicationModules の検証と ArchUnit が緑で、`booking`・`routing` は `tracking` に依存しない
+- [x] 画面の層の受入シナリオ（S-24 の「追跡の開始: 完了」）が通り、受入動画を撮った
+- [x] `check`・`documentationTest`・`uiTest` が緑。push して CI とデモ環境の配備を確かめた
+- [x] SonarQube の Quality Gate が PASS
+- [x] 設計文書に決定を書き、計画からの変更も設計文書に戻した（T-53）
+- [ ] 開発レビューと終了報告。#10 に結果をコメントし（済み）、承認の後にクローズした。AC3・AC5 の Issue を作った
 
 ### デモ項目
 
