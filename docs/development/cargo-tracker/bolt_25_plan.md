@@ -4,7 +4,7 @@ title: "Bolt 25 計画 - 追跡の開始と予約サガの成功の経路（US-0
 description: "25 回目の Bolt の計画。tracking モジュールと追跡記録（tracking_record・scheduled_leg）を新設し、追跡の listener が DE-07 を購読して経路設計の公開 API から確定した経路版の区間を引いて予定として採用し、追跡を開始したイベントを受けた別のトランザクションで予約の公開 API へ結果を返して予約サガを完了にし、S-24 に「追跡の開始: 完了」を示して #10 をクローズするまでを、データ・ドメイン・アプリケーション・画面の順に、ステップ 1〜6 で定義する。"
 tags: [development,bolt-plan]
 status: draft
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-09T04:31:15Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-09T04:37:10Z }
 ---
 
 # Bolt 25 計画 - 追跡の開始と予約サガの成功の経路（US-04、ADR-015、#10）
@@ -14,7 +14,7 @@ generated: { by: anthropic/claude-opus-5-5, at: 2026-10-09T04:31:15Z }
 | 項目 | 内容 |
 | :--- | :--- |
 | Bolt | 第 25 回 |
-| 予定 | W4（2026-10-26 の週。前倒しで 2026-10-09 から）、作業 3.5〜4 時間（承認ゲートの待ち時間を除く） |
+| 予定 | W4（2026-10-26 の週。前倒しで 2026-10-09 から）、作業 4〜4.5 時間（承認ゲートの待ち時間を除く。AT-04 を入れたため半日に近い。ステップ 4 の打ち切りで分ける） |
 | 対象 | U3 基本追跡（新しい `tracking` モジュール、追跡記録の集約、DE-07 の listener、DE-22 追跡を開始した）、U6 予約管理（`booking :: api` の新設、予約サガの完了、S-24、DE-07 の属性）、U2 経路設計（`routing :: api` の新設。経路版の区間の照会） |
 | GitHub | [#10 [US-04] 予約を確定する](https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/10)（US-04 の SP 5 をこの Bolt で数え、#10 の R0.1 の範囲（AC1・AC2・AC4・重複確定の防止）をクローズする。残りの AC3・AC5（W6）は新しい Issue にする。US-24 の前例。確認ポイント 14） |
 | 承認ゲート | 計画の承認（確認ポイント 1〜21）、設計文書（ADR-015 のコンプライアンスの決定）、スキーマ（`tracking` スキーマの新設。必ず止める。T-67）、モジュールの境界（`booking :: api`・`routing :: api` の新設、`tracking` の `allowedDependencies`、DE-07 の属性の追加、DE-22 の新設）、新しい注釈（`@CoreConcept`）、Red／Green（追跡の開始・サガの遷移・冪等）、画面（S-24）、開発レビューの判断、終了報告 |
@@ -42,7 +42,7 @@ generated: { by: anthropic/claude-opus-5-5, at: 2026-10-09T04:31:15Z }
 | Bolt 23b の A-低3〜5 | 読み取りモデルが集約を包む、照会の結果の型が 3 段、一覧の読み取りモデルがドメイン層に増える（投影や照会専用のポートを ADR で諮る） | 入れない。S-10 の一覧を作る Bolt 25b で諮る |
 | Bolt 24 の既知の課題（Bolt 25） | 送り直しの文言「追跡の開始を待っています」は、追跡の開始が完了した後の再送では事実と合わない | ステップ 5（確認ポイント 7） |
 | Bolt 24 の A-11 | `afterMigrate` の権限の付与のスキーマの一覧に `tracking` を足す | ステップ 2（確認ポイント 6） |
-| Bolt 24 の A-10（高、スコープ外） | AT-04（マッパーの SQL が自スキーマだけを参照する検査）が未実装。この Bolt で `tracking` のマッパーが増える | 入れない（確認ポイント 18）。新しいマッパーは自スキーマだけを参照することを開発レビューで確かめる |
+| Bolt 24 の A-10（高、スコープ外） | AT-04（マッパーの SQL が自スキーマだけを参照する検査）が未実装。この Bolt で `tracking` のマッパーが増える | 入れる（確認ポイント 18。2026-10-09 の決定）。ステップ 2 で、新しい `tracking` のマッパーを足す前に検査を書く |
 | Bolt 24 の確認ポイント 15・W4 の Living Documentation | 貨物予約と追跡記録の `@CoreConcept`、`tracking` の `package-info` の `allowedDependencies`、ModularityTest のモジュール名、用語集の整合テスト、`DomainEventSerializationContractTest` | ステップ 1・3・4。`@CoreConcept` の注釈はまだないので、作り方を人に諮る（確認ポイント 17） |
 | Bolt 24 の Try T-71 | 行の型（`*Row`）に列を足したら、同じステップでマッパーの XML の結果の対応と INSERT・SELECT の列もそろえ、コンテキストを読み込むテストを 1 本流す | ステップ 2（追跡記録）、ステップ 4（予約サガの期待版の UPDATE） |
 | Bolt 24 の Try T-72 | 画面の層のシナリオは、画面の単体テストと同じステップで先に書き、骨組みで落ちることを確かめる | ステップ 5 |
@@ -71,7 +71,7 @@ generated: { by: anthropic/claude-opus-5-5, at: 2026-10-09T04:31:15Z }
 | `tracking` スキーマの `tracking_record`・`scheduled_leg`、`afterMigrate` の権限の一覧に `tracking` | `milestone`・`correction`・`service_case` などほかの `tracking` の表、荷主・荷受人の索引（照会の Bolt 27） |
 | DE-07 の購読、追跡の開始、DE-22、`booking :: api`（追跡の開始の結果）、予約サガの完了、`routing :: api`（経路版の区間） | 追跡の開始の失敗と有人確認要（W8）、定期の再配信（W10）。Bolt 23・24 で確定済みの予約（デモ環境）の追跡の開始（確認ポイント 19） |
 | S-24 の「追跡の開始: 完了」、送り直しの文言の見直し | S-10 予約一覧の最小の表示（Bolt 25b に分ける案を推奨。確認ポイント 8）、S-12 追跡の詳細（Bolt 26 以後）、S-24 の自動の更新と通知領域 |
-| 業務ルール層の受入シナリオ（確定から追跡の開始まで、DE-07 の再配信）、PostgreSQL の統合テスト（確定から予約サガの完了まで）、S-24 の画面の層のシナリオ | 荷主の照会（US-09 の Bolt 27）、AT-04（確認ポイント 18） |
+| 業務ルール層の受入シナリオ（確定から追跡の開始まで、DE-07 の再配信）、PostgreSQL の統合テスト（確定から予約サガの完了まで）、S-24 の画面の層のシナリオ | 荷主の照会（US-09 の Bolt 27） |
 
 ## 設計（この Bolt の範囲）
 
@@ -290,6 +290,7 @@ ui_design.md の業務シナリオ（「予約サガが完了したら『完了�
   - `tracking` の `package-info`（`allowedDependencies = {"shared", "booking :: events", "booking :: api", "routing :: api"}`）。ModularityTest のモジュール名に `tracking` を足すアサーションを先に書き、`tracking` がないので落ちることを確かめる（Red）。「`booking`・`routing` は `tracking` に依存しない」の規則は、既存の `noClasses()` の形で最初から通る見張りのテストとして書く（T-39 の記録に分けて書く）
   - 完了の判定: `okf:check` ERROR 0、`documentationTest` 緑、図の構文を PlantUML で確かめる
 - [ ] **2. スキーマと追跡記録の永続化（統合テスト）** 【承認ゲート: スキーマ（必ず止める。T-67）】
+  - AT-04 の検査を先に書く（確認ポイント 18）: マッパーの XML の SQL が自分のスキーマ（と `platform` の許可された表）以外を参照しない。既存のマッパーで通ること、他のスキーマを参照する見本で落ちることを確かめる。test_strategy.md の AT-04 の行と ADR-001 のコンプライアンスを「実装済み」に直す
   - マイグレーション（`tracking` スキーマ、`tracking_record`・`scheduled_leg`）と `afterMigrate` の GRANT の一覧。マイグレーションの SQL を見せて止める
   - PostgreSQL の統合テストを先に書く: 追跡記録と予定区間の保存と取得、予約 ID の一意制約、区間の CHECK、業務のスキーマの GRANT の漏れの検査（DB のスキーマから導く）
   - 行の型・マッパーの XML の結果の対応と INSERT・SELECT の列を同じステップでそろえ、コンテキストを読み込むテストを 1 本流す（T-71）
@@ -312,7 +313,7 @@ ui_design.md の業務シナリオ（「予約サガが完了したら『完了�
   - 結果のお知らせから「追跡の開始を待っています」を外す（Bolt 24 の既知の課題）
   - 完了の判定: `check` と `uiTest` 緑
 - [ ] **6. 開発レビューと終了報告** 【承認ゲート: 開発レビューの判断、終了報告】
-  - `developing-review`（プログラマー・テスター・アーキテクト・インタラクションデザイナー・ユーザー代表）。新しいマッパーが自スキーマだけを参照することを確かめる（AT-04 の代わり）。SonarQube（`sonar-local:check`）、受入動画（`./gradlew demoVideo`。過去の Bolt の動画は元に戻す）、`bolt_25_report.md`
+  - `developing-review`（プログラマー・テスター・アーキテクト・インタラクションデザイナー・ユーザー代表）。SonarQube（`sonar-local:check`）、受入動画（`./gradlew demoVideo`。過去の Bolt の動画は元に戻す）、`bolt_25_report.md`
   - #10 に結果をコメントし、終了報告の承認の後にクローズする。US-04 の AC3・AC5（W6）の Issue を新しく作る。受入動画の添付先（`ops/scripts/issue_demo.js` の `BOLT_ISSUES` と手順書の表）に `bolt-25 → #10` を足す
   - デモ環境の配備の前に手順書を読む（T-56）。Bolt 23・24 で確定済みのデモ環境の予約は処理中のまま残ることを、終了報告と手順書の見本の一覧に書く（確認ポイント 19）
   - 開発レビューの対応の後も push の前に `uiTest` を流す（T-70）
@@ -322,7 +323,7 @@ ui_design.md の業務シナリオ（「予約サガが完了したら『完了�
 | # | 目安 | 打ち切り |
 | :--- | :--- | :--- |
 | 1 | 35 分 | — |
-| 2 | 35 分 | — |
+| 2 | 55 分 | AT-04 の検査で既存のマッパーに違反が見つかったら、直さずに一覧を書いて人に諮る（ADR-001 の例外か直すか） |
 | 3 | 35 分 | — |
 | 4 | 70 分 | 経路設計の公開 API と DE-07 の属性の追加が 25 分を超えたら、そこで区切ってステップ 4a として分け、計画を直す。イベントの発行の記録の完了を待つ統合テストが不安定なら、1 回の再実行で決めず原因を書いて止める |
 | 5 | 25 分 | — |
@@ -333,24 +334,24 @@ ui_design.md の業務シナリオ（「予約サガが完了したら『完了�
 | # | 確認すること | ステップ | 推奨 |
 | :--- | :--- | :--- | :--- |
 | 1 | アプローチ | 全体 | インサイドアウト（新しい集約・新しいスキーマ）。release_plan の W4 の表のとおり |
-| 2 | **追跡記録に要る値の取得元**（ADR-015 のコンプライアンス。ADR-015 の改訂） | 1・4 | 荷主・荷受人の企業 ID は DE-07 に足し（小さな属性、null 可）、区間は追跡が `routing :: api`（新設。案件番号と経路版番号で、確定した経路版の区間を返す）で引く。Unit の依存 U3 → U2「有効な経路予定と版」のとおりで、経路版は不変なので確定した区間と同じ。ADR-015 の「依存は `tracking → booking` だけ」を改める。代わりの案は、(b) DE-07 に区間を載せる（architecture_backend.md の「payload を小さく保つ」の規則の例外になり、H2 の発行記録の 4,000 文字の上限に区間の数が当たる。見積りの公開 API の照会の結果に区間を足すことにもなる）、(c) 追跡が `booking :: api` で照会する（予約に区間の写しを持たせることになる） |
+| 2 | **追跡記録に要る値の取得元**（ADR-015 のコンプライアンス。ADR-015 の改訂） | 1・4 | **決定（2026-10-09、human:kakimomokuri）: 推奨のとおり**。荷主・荷受人の企業 ID は DE-07 に足し（小さな属性、null 可）、区間は追跡が `routing :: api`（新設。案件番号と経路版番号で、確定した経路版の区間を返す）で引く。Unit の依存 U3 → U2「有効な経路予定と版」のとおりで、経路版は不変なので確定した区間と同じ。ADR-015 の「依存は `tracking → booking` だけ」を改める。代わりの案は、(b) DE-07 に区間を載せる（architecture_backend.md の「payload を小さく保つ」の規則の例外になり、H2 の発行記録の 4,000 文字の上限に区間の数が当たる。見積りの公開 API の照会の結果に区間を足すことにもなる）、(c) 追跡が `booking :: api` で照会する（予約に区間の写しを持たせることになる） |
 | 3 | `tracking` の `allowedDependencies` | 1 | `{"shared", "booking :: events", "booking :: api", "routing :: api"}`。見積り・`platform :: web` には依存しない（この Bolt では追跡の画面を作らない） |
 | 4 | 「予約・経路設計は追跡に依存しない」の確かめ方 | 1 | ModularityTest に既存の `noClasses()` の形で足す。`allowedDependencies` だけでは、相手の宣言を書き換えれば通るため |
 | 5 | **`booking :: api` の操作と結果** | 1・4 | `TrackingStartNotification.notifyStarted(TrackingStartNotificationRequest(予約 ID, 追跡番号, 開始時刻))` → `TrackingStartNotificationReceipt`（sealed interface と record の `Completed`・`AlreadyCompleted`・`NotCompleted(reason)`、理由の定数 `SAGA_NOT_FOUND`）。見積りの `BookingNotification`・`BookingNotificationReceipt` と同じ形（公開 API はインターフェースか record。PublicApiArchitectureTest）。コマンド ID・期待版（ARCH-HO-01）は持たない（予約 ID で冪等で、処理中のときだけ完了にする）。業務の理由で開始できない結果（有人案件の起票）は W8 で足す |
 | 6 | **スキーマ** | 2 | `tracking` スキーマに `tracking_record`・`scheduled_leg` の 2 つだけ。data_model.md の列のとおりで、実績に関わる列は NULL 可。予約 ID の一意制約を足す。`afterMigrate` の GRANT の一覧に `tracking` を足し、業務のスキーマの GRANT の漏れを、DB のスキーマから導く統合テストで捕まえる（Bolt 24 の A-11） |
 | 7 | 送り直しの文言 | 5 | 確定の結果のお知らせから「追跡の開始を待っています。」を外す。追跡の開始の状態は S-24 の欄（処理中・完了）が示す。送り直しのときも事実と合う |
-| 8 | **S-24 に後から戻る入口**（Bolt 23b の U-1、高） | 1 | この Bolt に入れず、Bolt 25b（S-10 予約一覧の最小の表示: 追跡番号・業務番号・見積り・確定時刻・追跡の開始、新しい順、営業のナビの「予約」を有効にする。アウトサイドイン、SP 0。Bolt 23b の A-低3〜5 の読み取りモデルの諮りも）に分ける。Bolt 25 は新しいモジュール・スキーマ・2 つの公開 API で 3.5〜4 時間の見込みのため（半日を超える Bolt は分ける）。代わりの案は、(b) Bolt 25 に入れる（半日に近づく）、(c) W11 の S-10（US-05）まで待ち、デモは確定の直後の S-24 で見せる |
-| 9 | **追跡管理者のナビ・ホーム・認可と追跡管理者の開発データ**（release_plan の Bolt 25 の範囲） | 1 | Bolt 26（US-12 実績の登録。追跡管理者が最初に画面を使う Bolt）に移す。Bolt 25 は追跡管理者の画面を作らず、認可の対象がないため。release_plan の W4 の表を直す。Bolt 26 は主要実績の表・S-12・S-13・ナビ・認可・開発データで半日を超えるおそれがあるので、Bolt 26 の開始準備で分け方を決める |
+| 8 | **S-24 に後から戻る入口**（Bolt 23b の U-1、高） | 1 | **決定（2026-10-09、human:kakimomokuri）: 推奨のとおり**。この Bolt に入れず、Bolt 25b（S-10 予約一覧の最小の表示: 追跡番号・業務番号・見積り・確定時刻・追跡の開始、新しい順、営業のナビの「予約」を有効にする。アウトサイドイン、SP 0。Bolt 23b の A-低3〜5 の読み取りモデルの諮りも）に分ける。Bolt 25 は新しいモジュール・スキーマ・2 つの公開 API で 3.5〜4 時間の見込みのため（半日を超える Bolt は分ける）。代わりの案は、(b) Bolt 25 に入れる（半日に近づく）、(c) W11 の S-10（US-05）まで待ち、デモは確定の直後の S-24 で見せる |
+| 9 | **追跡管理者のナビ・ホーム・認可と追跡管理者の開発データ**（release_plan の Bolt 25 の範囲） | 1 | **決定（2026-10-09、human:kakimomokuri）: 推奨のとおり**。Bolt 26（US-12 実績の登録。追跡管理者が最初に画面を使う Bolt）に移す。Bolt 25 は追跡管理者の画面を作らず、認可の対象がないため。release_plan の W4 の表を直す。Bolt 26 は主要実績の表・S-12・S-13・ナビ・認可・開発データで半日を超えるおそれがあるので、Bolt 26 の開始準備で分け方を決める |
 | 10 | 前提にした状態より前に届く場合・同時の場合（T-66） | 4 | 状態遷移の節の表のとおり |
-| 11 | **追跡の開始と予約サガの完了のトランザクション** | 1・4 | 分ける。追跡記録の保存と DE-22 の発行を 1 つのトランザクションで行い、DE-22 を受けた追跡の別の listener が予約の公開 API を呼ぶ（ADR-014 の形。ADR-014 が退けた「1 つのトランザクションで 2 つのコンテキストの集約を更新する」を避ける）。代わりの案は、(b) DE-07 の listener の 1 つのトランザクションで追跡記録の保存と予約サガの完了を行う（イベントが 1 つ少ないが、ADR-014 との違いを ADR-015 に書いて例外にすることになる） |
+| 11 | **追跡の開始と予約サガの完了のトランザクション** | 1・4 | **決定（2026-10-09、human:kakimomokuri）: 推奨のとおり**。分ける。追跡記録の保存と DE-22 の発行を 1 つのトランザクションで行い、DE-22 を受けた追跡の別の listener が予約の公開 API を呼ぶ（ADR-014 の形。ADR-014 が退けた「1 つのトランザクションで 2 つのコンテキストの集約を更新する」を避ける）。代わりの案は、(b) DE-07 の listener の 1 つのトランザクションで追跡記録の保存と予約サガの完了を行う（イベントが 1 つ少ないが、ADR-014 との違いを ADR-015 に書いて例外にすることになる） |
 | 12 | 受入条件とタグ | 1・4 | US-04 の受入条件は変えない（AC1 の Then は予約版・追跡番号・commit 時刻）。追跡の開始はストーリーの目的（追跡可能な輸送を開始する）と ADR-015 の約束なので、受入シナリオは `@ADR-015 @T-INV-11` で `features/booking/confirm_booking.feature` に置く（test_strategy の置き場所）。user_story.md の US-04 の決定に R0.1 の範囲として書く |
 | 13 | 承認ゲート | 全体 | 上の「基本情報」のとおり各ゲートで止める。`/goal` で進める指示があっても、ステップ 2（スキーマ）は止める（T-67） |
 | 14 | SP と #10 | 1・6 | US-04 の SP 5 をこの Bolt で数える（release_plan の W4 の表の SP を直す）。終了報告の承認の後に #10 をクローズし、AC3（不足条件）・AC5（特殊貨物）の W6 の Issue を新しく作る（US-24 の前例）。W4 の残りは US-12（3）、US-09（3） |
 | 15 | ユーザーマニュアル | — | W4 の完了の後（W4 の計画） |
 | 16 | **公開 API の置き場所**（人の指示、2026-10-09: 「公開 API の配置は開発ガイドに準拠して interfaces 以下に配置する」） | 1・4 | 開発ガイドライン第 3 章のインターフェース層（「プロトコルで分類した全てのインバウンドサービス」）に従い、新しい公開 API は `booking.interfaces.api`・`routing.interfaces.api`（`@NamedInterface("api")`。名前付きインターフェースの名前は `api` のままなので、`allowedDependencies` の `booking :: api`・`routing :: api` は変えない）に置く。公開 API の型（インターフェースと record）と、それを実装するインバウンドアダプター（アプリケーションサービスに委ねるだけ）を同じパッケージに置く（interfaces → application の向き）。予約の側のアプリケーションサービスは `booking.application.internal.commandservices` に置き、予約サガのリポジトリで読んで「完了にする」を呼ぶ。見積りの公開 API（`quotation.api`、実装は `application.internal.commandservices`）は今の置き場所のまま残し、移すかは確認ポイント 21 で決める |
-| 21 | **層の規則の例外**（CLAUDE.md の規則: 層の規則がガイドラインの置き場所を拒否したら、規則の例外を人に諮る） | 1・4 | 今の層の規則は、ガイドラインの置き場所を 2 か所で拒否する。(1) `LayerArchitectureTest` の「interfaces はどの層からも参照されない」は、追跡の ACL（`tracking.application.internal.outboundservices.acl`）が `booking.interfaces.api`・`routing.interfaces.api` を参照するのを拒否する。(2) `PublicApiArchitectureTest` は公開 API を `*.api` だけとして検査する。推奨は、(1) に「他のコンテキストの `application.internal.outboundservices.acl` は `..interfaces.api..` を参照してよい」の例外を 1 つ足し（D-5 と同じく理由を `because` に書く）、(2) の対象に `*.interfaces.api..` を足す。どちらも規則を書く前に対象を grep して正当な使い道を確かめる（T-64）。見積りの `quotation.api` を `quotation.interfaces.api` に移すのは別の技術タスク（Bolt 25b か W4 の締めの前）にし、移すまでは 2 つの置き場所を規則で許す。architecture_backend.md の「公開 API の置き場所と形」と ADR-014 の実装の置き場所の記述を直す |
-| 17 | **`@CoreConcept` の注釈**（新しいファイル） | 1・3 | `shared/annotation/ddd/CoreConcept.java` を新しく作り、追跡記録と貨物予約に付ける。JIG の用語集で中核の概念として示す使い道だけにし、テストでは検査しない。代わりの案は、W4 の Living Documentation から外し、JIG の設定で集約ルートを中核として扱う |
-| 18 | AT-04（Bolt 24 の A-10、高、スコープ外） | — | この Bolt では入れず、新しいマッパーの SQL が自スキーマだけを参照することを開発レビューで確かめる。AT-04 は W4 の締めの前の技術タスクにするか、Bolt 25b に入れるかを決めてほしい |
+| 21 | **層の規則の例外**（CLAUDE.md の規則: 層の規則がガイドラインの置き場所を拒否したら、規則の例外を人に諮る） | 1・4 | **決定（2026-10-09、human:kakimomokuri）: 推奨のとおり**。今の層の規則は、ガイドラインの置き場所を 2 か所で拒否する。(1) `LayerArchitectureTest` の「interfaces はどの層からも参照されない」は、追跡の ACL（`tracking.application.internal.outboundservices.acl`）が `booking.interfaces.api`・`routing.interfaces.api` を参照するのを拒否する。(2) `PublicApiArchitectureTest` は公開 API を `*.api` だけとして検査する。推奨は、(1) に「他のコンテキストの `application.internal.outboundservices.acl` は `..interfaces.api..` を参照してよい」の例外を 1 つ足し（D-5 と同じく理由を `because` に書く）、(2) の対象に `*.interfaces.api..` を足す。どちらも規則を書く前に対象を grep して正当な使い道を確かめる（T-64）。見積りの `quotation.api` を `quotation.interfaces.api` に移すのは別の技術タスク（Bolt 25b か W4 の締めの前）にし、移すまでは 2 つの置き場所を規則で許す。architecture_backend.md の「公開 API の置き場所と形」と ADR-014 の実装の置き場所の記述を直す |
+| 17 | **`@CoreConcept` の注釈**（新しいファイル） | 1・3 | **決定（2026-10-09、human:kakimomokuri）: 作る**。`shared/annotation/ddd/CoreConcept.java` を新しく作り、追跡記録と貨物予約に付ける。JIG の用語集で中核の概念として示す使い道だけにし、テストでは検査しない。代わりの案は、W4 の Living Documentation から外し、JIG の設定で集約ルートを中核として扱う |
+| 18 | AT-04（Bolt 24 の A-10） | 2 | **決定（2026-10-09、human:kakimomokuri）: Bolt 25 に入れる**。マッパーの XML を読み、各コンテキストの SQL が自分のスキーマ（と `platform` の許可された表）以外を参照しないことを検査するテスト（test_strategy の AT-04）。新しい `tracking` のマッパーを足す前に書き、既存のマッパーで通ることを確かめる（見張りのテスト。Red は、他のスキーマを参照する SQL の見本で落ちることで確かめる） |
 | 19 | Bolt 23・24 で確定済みの予約（デモ環境） | 6 | 追跡の listener ができる前に DE-07 を配信し終えているので、予約サガは処理中のまま残る。この Bolt では扱わず（W8 の処理中の滞留の有人確認要が拾う）、デモは見本（TR-2026-0906・0907）で新しく確定した予約で見せる。終了報告と手順書に書く |
 | 20 | 既存の画面の層のシナリオの「処理中」 | 5 | 期待を「処理中または完了」に直し、処理中の表示は画面の単体テストで確かめる。代わりの案は、画面の層のテストで追跡の listener を止める設定を足す（本物の流れから外れる） |
 
@@ -373,6 +374,7 @@ ui_design.md の業務シナリオ（「予約サガが完了したら『完了�
 
 | 日付 | 更新内容 | 更新者 |
 | :--- | :--- | :--- |
+| 2026-10-09 | 確認ポイントの回答を反映した（1〜3 は推奨のまま、`@CoreConcept` は作る、AT-04 は Bolt 25 に入れる。回答は計画の承認ではない） | anthropic/claude-opus-5-5、回答 human:kakimomokuri |
 | 2026-10-09 | 人の指示「公開 API の配置は開発ガイドに準拠して interfaces 以下に配置する」を反映した（`booking.interfaces.api`・`routing.interfaces.api`、層の規則の例外を確認ポイント 21 に） | anthropic/claude-opus-5-5、指示 human:kakimomokuri |
 | 2026-10-09 | 開始準備の整合性検証（計画と設計 27 件、横断 19 件）の指摘を反映した（2 つのコンテキストを 1 つのトランザクションで更新しない DE-22、区間は `routing :: api`、既存の画面の層のシナリオの「処理中」、公開 API の受領の型、ACL、listener の名前、予約サガの UPDATE と完了の時刻、`@CoreConcept`、受入条件とタグ、release_plan の Bolt 25・25b・26、#10 の残りの Issue、デモ環境の既存の予約、GRANT の検査、AT-04） | anthropic/claude-opus-5-5 |
 | 2026-10-09 | 初版作成（承認待ち） | anthropic/claude-opus-5-5 |
