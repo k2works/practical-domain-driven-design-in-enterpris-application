@@ -4,7 +4,7 @@ title: "アプリケーション開発環境セットアップ手順書 - cargo-
 description: "cargo-tracker（A 社国際貨物輸送管理システム）を、開発者の PC で起動・テスト・品質チェックするための手順を示す。"
 tags: [operation,playbook,setup]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-07T10:23:34Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-09T03:58:29Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-02T01:37:59Z }
   - { by: human:kakimomokuri, at: 2026-10-02T07:02:38Z }
@@ -106,9 +106,12 @@ SonarQube の品質ゲートは、リポジトリのルートで次を実行す�
 
 ```bash
 npx gulp sonar-local:status   # 起動しているか
-npx gulp sonar-local:check    # スキャンして Quality Gate を判定する（不合格なら失敗で終わる）
+npx gulp sonar-local:profile  # 品質プロファイルを sonarqube.config.json のとおりにそろえる（check が先に流す）
+npx gulp sonar-local:check    # プロファイルをそろえ、スキャンして Quality Gate を判定する（不合格なら失敗で終わる）
 npx gulp sonar-local:issues   # 指摘の一覧
 ```
+
+品質プロファイルは、`sonarqube.config.json` の `qualityProfiles` に書いた「cargo-tracker way」（Sonar way を継承し、整形の規則と正反対の `java:S8445` だけを外す。2026-10-09 に human:kakimomokuri が決定、Bolt 24）を、`sonar-local:profile` が作り、cargo-tracker に割り当てる。何度流しても同じ状態になる。品質プロファイルを変えるので、`SONAR_TOKEN` は **User Token**（管理者の利用者のもの）にする。解析用のトークン（Global・Project Analysis Token）では HTTP 403（Insufficient privileges）になる。外す規則を足すときは、`deactivateRules` に規則と理由を書く。
 
 ## 5. 生成物の場所
 

@@ -29,7 +29,8 @@ Gradle のタスクは `apps/cargo-tracker` で、Gulp のタスクはリポジ�
 | `npx gulp docs:generate` | ER 図（SchemaSpy）と JIG を生成する |
 | `npx gulp docs:build` | 生成ドキュメントを作ってからドキュメントサイトをビルドする |
 | `npx gulp sonar-local:start` | ローカルの SonarQube を起動する（クラウドの実行環境では上書きを自動で重ねる） |
-| `npx gulp sonar-local:check` | SonarQube でスキャンして品質ゲートを判定する |
+| `npx gulp sonar-local:profile` | 品質プロファイルを `sonarqube.config.json` のとおりにそろえる（User Token が要る） |
+| `npx gulp sonar-local:check` | 品質プロファイルをそろえ、SonarQube でスキャンして品質ゲートを判定する |
 | `npx gulp deploy:demo:status` | Heroku のデモ環境の状態と動いているコミット（配備は develop の CI が自動で行う。[Heroku デモ環境セットアップ手順書](heroku_demo_setup.md)） |
 | `npx gulp deploy:demo` | CI が使えないときに、手元からデモ環境へ配備する |
 | `npx gulp deploy:demo:ci-key` | CI の配備の API キー（期限 90 日）を更新する。`deploy:demo:ci-key:revoke-old` で古いキーを失効させる |

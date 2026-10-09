@@ -266,6 +266,70 @@ function sonarApi(apiPath, params = {}) {
 }
 
 /**
+ * SonarQube API を POST で呼び出す（品質プロファイルの変更など）
+ * @param {string} apiPath - API パス（例: /api/qualityprofiles/create）
+ * @param {Object} [params] - フォームのパラメータ
+ * @returns {Object|null} レスポンス JSON（本文がなければ null）
+ */
+function sonarApiPost(apiPath, params = {}) {
+  const token = requireSonarToken();
+  const auth = Buffer.from(`${token}:`).toString('base64');
+  const body = new URLSearchParams(params).toString();
+  const result = execSync(
+    `curl -sf -X POST -H "Authorization: Basic ${auth}" -d "${body}" "${sonarHostUrl()}${apiPath}"`,
+    { encoding: 'utf8', stdio: ['pipe', 'pipe', 'pipe'], shell: true, env: cleanDockerEnv() },
+  );
+  return result.trim() ? JSON.parse(result) : null;
+}
+
+/**
+ * 品質プロファイルの定義を取得（sonarqube.config.json の qualityProfiles。なければ空）
+ *
+ * フォーマット:
+ * {
+ *   "qualityProfiles": [
+ *     { "language": "java", "name": "my way", "parent": "Sonar way",
+ *       "deactivateRules": [{ "rule": "java:S8445", "reason": "整形の規則と正反対のため" }] }
+ *   ]
+ * }
+ *
+ * 親を継承した子のプロファイルを作り、外す規則だけを無効にして、projects のすべてに割り当てる。
+ */
+function loadQualityProfiles() {
+  const configPath = path.join(process.cwd(), 'sonarqube.config.json');
+  if (!fs.existsSync(configPath)) {
+    return [];
+  }
+  return JSON.parse(fs.readFileSync(configPath, 'utf8')).qualityProfiles || [];
+}
+
+/**
+ * 品質プロファイルを定義どおりにそろえる（何度流しても同じ結果になる）
+ * @param {Object} profile - 品質プロファイルの定義
+ */
+function applyQualityProfile(profile) {
+  const { language, name, parent } = profile;
+  const found = sonarApi('/api/qualityprofiles/search', { language, qualityProfile: name }).profiles || [];
+  let key = found.length > 0 ? found[0].key : null;
+  if (!key) {
+    key = sonarApiPost('/api/qualityprofiles/create', { language, name }).profile.key;
+    console.log(`  作成: ${language} / ${name}`);
+  }
+  if (parent) {
+    sonarApiPost('/api/qualityprofiles/change_parent', { language, qualityProfile: name, parentQualityProfile: parent });
+    console.log(`  親: ${parent}`);
+  }
+  for (const { rule, reason } of profile.deactivateRules || []) {
+    sonarApiPost('/api/qualityprofiles/deactivate_rule', { key, rule });
+    console.log(`  無効にした規則: ${rule}${reason ? `（${reason}）` : ''}`);
+  }
+  for (const project of loadProjects()) {
+    sonarApiPost('/api/qualityprofiles/add_project', { language, qualityProfile: name, project: project.projectKey });
+    console.log(`  割り当て: ${project.projectKey}`);
+  }
+}
+
+/**
  * SonarQube トークンの検証
  * @returns {string} トークン
  */
@@ -696,7 +760,25 @@ export default function (gulp) {
   });
 
   // スキャン → Quality Gate 確認の一連フロー
-  gulp.task('sonar-local:check', gulp.series('sonar-local:scan', 'sonar-local:gate'));
+  // 品質プロファイルを sonarqube.config.json の qualityProfiles のとおりにそろえる（定義がなければ何もしない）
+  gulp.task('sonar-local:profile', (done) => {
+    try {
+      const profiles = loadQualityProfiles();
+      if (profiles.length === 0) {
+        console.log('品質プロファイルの定義（qualityProfiles）がないので、既定のプロファイルのまま使います。');
+        done();
+        return;
+      }
+      console.log('=== 品質プロファイルをそろえる ===');
+      profiles.forEach(applyQualityProfile);
+      done();
+    } catch (error) {
+      done(error);
+    }
+  });
+
+  // 品質プロファイルをそろえてからスキャンし、Quality Gate を判定する
+  gulp.task('sonar-local:check', gulp.series('sonar-local:profile', 'sonar-local:scan', 'sonar-local:gate'));
 
   // ──────────────────────────────────────────────
   // ヘルプ

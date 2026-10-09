@@ -7,5 +7,18 @@
       "scanType": "gradle",
       "srcDir": "apps/cargo-tracker"
     }
+  ],
+  "qualityProfiles": [
+    {
+      "language": "java",
+      "name": "cargo-tracker way",
+      "parent": "Sonar way",
+      "deactivateRules": [
+        {
+          "rule": "java:S8445",
+          "reason": "Spotless（palantir-java-format）は static の import を先に置くので、整形と正反対になる。2026-10-09 に human:kakimomokuri が決定（Bolt 24）"
+        }
+      ]
+    }
   ]
 }

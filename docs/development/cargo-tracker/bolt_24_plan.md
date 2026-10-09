@@ -4,7 +4,7 @@ title: "Bolt 24 計画 - 本予約の確定の再送と重複確定の防止（U
 description: "24 回目の Bolt の計画。本予約の確定にコマンド ID と処理済みコマンドの表を足し、同じ要求の再送には最初の結果（既存の追跡番号）を返し、同じ見積りの別の確定には既存の予約を示すまでを、業務ルール層の受入シナリオ・スキーマ・S-09 の画面の順に、ステップ 1〜5 で定義する。"
 tags: [development,bolt-plan]
 status: draft
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-09T03:38:45Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-09T03:58:29Z }
 ---
 
 # Bolt 24 計画 - 本予約の確定の再送と重複確定の防止（US-04 AC4、B-INV-03・B-INV-11）
@@ -345,7 +345,7 @@ S09 --> S02 : 同じ commandId で内容が違う（衝突の警告）
 - [x] 画面の層の受入シナリオ（`@ui`、`@US-04-AC4`）が通り、受入動画を撮った
 - [x] ApplicationModules の検証と ArchUnit が緑で、`booking` の依存と層の規則は変わっていない
 - [x] `check`・`documentationTest`・`uiTest` が緑。push して CI とデモ環境の配備を確かめた
-- [ ] SonarQube の Quality Gate が PASS（S8445 の 24 件で FAIL。終了報告の議題 7 で人に諮る）
+- [x] SonarQube の Quality Gate が PASS（S8445 の 24 件で FAIL だったので、人の決定で品質プロファイルから外し PASS にした）
 - [x] 設計文書に決定を書き、計画からの変更も設計文書に戻した（T-53）。台帳に D-85
 - [ ] 開発レビューと終了報告。#10 に結果をコメントした（終了報告は承認待ち。#10 にはコメントした）
 

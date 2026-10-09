@@ -1,6 +1,14 @@
 # Docs Update Log
 
 ## 2026-10-09
+* **Update**: [application_development_setup](/operation/cargo-tracker/application_development_setup.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_24_report](/development/cargo-tracker/bolt_24_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_24_plan](/development/cargo-tracker/bolt_24_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [operation](/design/cargo-tracker/operation.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [non_functional](/design/cargo-tracker/non_functional.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [001-modular-monolith](/adr/cargo-tracker/001-modular-monolith.md) を更新（anthropic/claude-opus-5-5）
 * **Update**: [heroku_demo_setup](/operation/cargo-tracker/heroku_demo_setup.md) を更新（anthropic/claude-opus-5-5）
 * **Update**: [bolt_24_report](/development/cargo-tracker/bolt_24_report.md) を更新（anthropic/claude-opus-5-5）
 * **Update**: [bolt_24_plan](/development/cargo-tracker/bolt_24_plan.md) を更新（anthropic/claude-opus-5-5）
