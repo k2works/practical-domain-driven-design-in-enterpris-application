@@ -19,24 +19,24 @@ class TrackingRecordTest {
 
     @Test
     void 予定を採用して追跡を始めると現在状態は集荷予定で予約は確定() {
-        TrackingRecord record = start().record();
+        TrackingRecord trackingRecord = start().trackingRecord();
 
-        assertThat(record.trackingNumber()).isEqualTo(TRACKING_NUMBER);
-        assertThat(record.bookingId()).isEqualTo(BOOKING_ID);
-        assertThat(record.shipperCompanyId()).isEqualTo(SHIPPER);
-        assertThat(record.consigneeCompanyId()).isEqualTo(CONSIGNEE);
-        assertThat(record.bookingStatus()).isEqualTo(TrackedBookingStatus.CONFIRMED);
-        assertThat(record.currentStatus()).isEqualTo(TrackingStatus.PICKUP_SCHEDULED);
-        assertThat(record.schedule()).isEqualTo(schedule());
-        assertThat(record.startedAt()).isEqualTo(STARTED_AT);
+        assertThat(trackingRecord.trackingNumber()).isEqualTo(TRACKING_NUMBER);
+        assertThat(trackingRecord.bookingId()).isEqualTo(BOOKING_ID);
+        assertThat(trackingRecord.shipperCompanyId()).isEqualTo(SHIPPER);
+        assertThat(trackingRecord.consigneeCompanyId()).isEqualTo(CONSIGNEE);
+        assertThat(trackingRecord.bookingStatus()).isEqualTo(TrackedBookingStatus.CONFIRMED);
+        assertThat(trackingRecord.currentStatus()).isEqualTo(TrackingStatus.PICKUP_SCHEDULED);
+        assertThat(trackingRecord.schedule()).isEqualTo(schedule());
+        assertThat(trackingRecord.startedAt()).isEqualTo(STARTED_AT);
     }
 
     @Test
     void 当初の到着予定と最新の見込みは最後の区間の到着予定で始まる() {
-        TrackingRecord record = start().record();
+        TrackingRecord trackingRecord = start().trackingRecord();
 
-        assertThat(record.originalEta()).isEqualTo(at("2026-11-15T00:00:00Z"));
-        assertThat(record.latestEta()).isEqualTo(at("2026-11-15T00:00:00Z"));
+        assertThat(trackingRecord.originalEta()).isEqualTo(at("2026-11-15T00:00:00Z"));
+        assertThat(trackingRecord.latestEta()).isEqualTo(at("2026-11-15T00:00:00Z"));
     }
 
     @Test
@@ -48,7 +48,7 @@ class TrackingRecordTest {
                         TRACKING_NUMBER.value(),
                         BOOKING_ID,
                         STARTED_AT,
-                        start.record().aggregateVersion()));
+                        start.trackingRecord().aggregateVersion()));
     }
 
     private static TrackingStart start() {

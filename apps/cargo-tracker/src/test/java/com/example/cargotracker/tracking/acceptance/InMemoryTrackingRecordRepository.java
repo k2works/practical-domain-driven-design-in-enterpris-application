@@ -17,13 +17,13 @@ public class InMemoryTrackingRecordRepository implements TrackingRecordRepositor
     private final Map<UUID, TrackingRecord> byBookingId = new LinkedHashMap<>();
 
     @Override
-    public synchronized void save(TrackingRecord record) {
+    public synchronized void save(TrackingRecord trackingRecord) {
         boolean sameTrackingNumber = byBookingId.values().stream()
-                .anyMatch(saved -> saved.trackingNumber().equals(record.trackingNumber()));
-        if (byBookingId.containsKey(record.bookingId()) || sameTrackingNumber) {
-            throw new IllegalStateException("予約ごとに追跡記録は 1 件: " + record.bookingId());
+                .anyMatch(saved -> saved.trackingNumber().equals(trackingRecord.trackingNumber()));
+        if (byBookingId.containsKey(trackingRecord.bookingId()) || sameTrackingNumber) {
+            throw new IllegalStateException("予約ごとに追跡記録は 1 件: " + trackingRecord.bookingId());
         }
-        byBookingId.put(record.bookingId(), record);
+        byBookingId.put(trackingRecord.bookingId(), trackingRecord);
     }
 
     @Override

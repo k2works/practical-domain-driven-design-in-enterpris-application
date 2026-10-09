@@ -102,6 +102,19 @@ class LayerArchitectureTest {
             .dependOnClassesThat()
             .resideInAPackage("..application.sagas..");
 
+    /**
+     * 公開 API の実装（インバウンドアダプター。{@code interfaces.api.internal}）は部品探索で拾い、型では誰からも参照しない。他のコンテキストは
+     * 公開 API のインターフェース（{@code interfaces.api}）だけに依存する。Spring Modulith の名前付きインターフェースが子のパッケージを
+     * 含むかどうかに左右されずに、アダプターへの直接の依存を止める（Bolt 25 レビュー A-4）。
+     */
+    @ArchTest
+    static final ArchRule 公開APIの実装はほかのクラスから参照されない = noClasses()
+            .that()
+            .resideOutsideOfPackage("..interfaces.api.internal..")
+            .should()
+            .dependOnClassesThat()
+            .resideInAPackage("..interfaces.api.internal..");
+
     /** サガは業務の流れ（Business Flows）をアプリケーション層で進める（開発ガイドライン第 1 章・第 3 章の {@code application.sagas}）。 */
     @ArchTest
     static final ArchRule サガはアプリケーション層のsagasに置く =

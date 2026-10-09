@@ -137,7 +137,7 @@ public class BookingUiSteps {
     @ならば("予約の詳細の追跡の開始が {string} で、画面の更新の案内は出ない")
     public void 追跡の開始が完了と出る(String completed) {
         assertThat(definition("追跡の開始")).hasText(completed);
-        assertThat(page().getByText("画面を更新して確かめてください")).hasCount(0);
+        assertThat(page().getByText("この画面は自動では変わりません")).hasCount(0);
         browser.checkAccessibility();
     }
 

@@ -9,5 +9,7 @@ public enum TrackingStartOutcome {
     /** すでに完了していた（同じ結果の再通知。何もしない）。 */
     ALREADY_COMPLETED,
     /** 予約サガがない（再配信で直らない欠け）。 */
-    SAGA_NOT_FOUND
+    SAGA_NOT_FOUND,
+    /** 予約サガが処理中でも完了でもない（失敗・有人確認要。W8）。遅れて届いた結果で状態を変えない（Bolt 25 レビュー A-1）。 */
+    SAGA_NOT_IN_PROGRESS
 }

@@ -30,8 +30,8 @@ public class BookingTrackingStarts {
         TrackingStartNotificationReceipt receipt = trackingStartNotification.notifyStarted(
                 new TrackingStartNotificationRequest(bookingId, trackingNumber, startedAt));
         return switch (receipt) {
-            case TrackingStartNotificationReceipt.Completed completed -> Optional.empty();
-            case TrackingStartNotificationReceipt.AlreadyCompleted alreadyCompleted -> Optional.empty();
+            case TrackingStartNotificationReceipt.Completed _, TrackingStartNotificationReceipt.AlreadyCompleted _ ->
+                Optional.empty();
             case TrackingStartNotificationReceipt.NotCompleted notCompleted -> Optional.of(notCompleted.reason());
         };
     }

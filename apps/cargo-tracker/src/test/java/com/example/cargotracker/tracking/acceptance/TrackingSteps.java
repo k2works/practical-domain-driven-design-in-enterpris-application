@@ -22,21 +22,21 @@ public class TrackingSteps {
     @ならば("本予約の追跡記録が {int} 件でき、予定は経路版 {string} 版 {int} の区間 {string} である")
     public void 追跡記録ができる(int count, String routingCaseNumber, int routeVersionNo, String voyages) {
         assertThat(trackingRecords.all()).hasSize(count);
-        TrackingRecord record = trackingRecords.all().getFirst();
-        assertThat(record.schedule().routingCaseNumber()).isEqualTo(routingCaseNumber);
-        assertThat(record.schedule().routeVersionNo()).isEqualTo(routeVersionNo);
-        assertThat(record.schedule().legs())
+        TrackingRecord trackingRecord = trackingRecords.all().getFirst();
+        assertThat(trackingRecord.schedule().routingCaseNumber()).isEqualTo(routingCaseNumber);
+        assertThat(trackingRecord.schedule().routeVersionNo()).isEqualTo(routeVersionNo);
+        assertThat(trackingRecord.schedule().legs())
                 .extracting(ScheduledLeg::voyageNumber)
                 .containsExactlyElementsOf(Arrays.asList(voyages.split(",")));
     }
 
     @ならば("追跡の現在状態は {string} で、当初の到着予定と最新の見込みは {string} である")
     public void 現在状態と到着予定(String status, String eta) {
-        TrackingRecord record = trackingRecords.all().getFirst();
-        assertThat(record.currentStatus()).isEqualTo(status(status));
+        TrackingRecord trackingRecord = trackingRecords.all().getFirst();
+        assertThat(trackingRecord.currentStatus()).isEqualTo(status(status));
         UtcInstant expected = new UtcInstant(Instant.parse(eta));
-        assertThat(record.originalEta()).isEqualTo(expected);
-        assertThat(record.latestEta()).isEqualTo(expected);
+        assertThat(trackingRecord.originalEta()).isEqualTo(expected);
+        assertThat(trackingRecord.latestEta()).isEqualTo(expected);
     }
 
     @ならば("本予約の追跡記録は {int} 件だけある")

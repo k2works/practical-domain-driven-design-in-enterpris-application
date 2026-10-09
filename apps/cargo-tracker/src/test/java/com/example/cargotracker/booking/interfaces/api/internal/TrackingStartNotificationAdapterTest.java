@@ -54,6 +54,25 @@ class TrackingStartNotificationAdapterTest {
                         TrackingStartNotificationReceipt.NotCompleted.SAGA_NOT_FOUND));
     }
 
+    @Test
+    void 処理中でない予約サガなら理由を付けて完了にしなかったを返す() {
+        BookingId bookingId = new BookingId(UUID.randomUUID());
+        BookingSaga started = BookingSaga.start(
+                bookingId, BookingFixture.TRACKING_NUMBER, new UtcInstant(Instant.parse("2026-10-08T08:59:00Z")));
+        sagaRepository.save(BookingSaga.reconstitute(
+                started.id(),
+                bookingId,
+                started.trackingNumber(),
+                BookingSagaStatus.NEEDS_HUMAN,
+                started.currentStep(),
+                started.startedAt(),
+                started.version()));
+
+        assertThat(adapter.notifyStarted(request(bookingId)))
+                .isEqualTo(new TrackingStartNotificationReceipt.NotCompleted(
+                        TrackingStartNotificationReceipt.NotCompleted.SAGA_NOT_IN_PROGRESS));
+    }
+
     private BookingId startedSaga() {
         BookingId bookingId = new BookingId(UUID.randomUUID());
         sagaRepository.save(BookingSaga.start(

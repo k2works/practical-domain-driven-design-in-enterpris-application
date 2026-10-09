@@ -31,6 +31,9 @@ public class TrackingStartNotificationAdapter implements TrackingStartNotificati
             case SAGA_NOT_FOUND ->
                 new TrackingStartNotificationReceipt.NotCompleted(
                         TrackingStartNotificationReceipt.NotCompleted.SAGA_NOT_FOUND);
+            case SAGA_NOT_IN_PROGRESS ->
+                new TrackingStartNotificationReceipt.NotCompleted(
+                        TrackingStartNotificationReceipt.NotCompleted.SAGA_NOT_IN_PROGRESS);
         };
     }
 }

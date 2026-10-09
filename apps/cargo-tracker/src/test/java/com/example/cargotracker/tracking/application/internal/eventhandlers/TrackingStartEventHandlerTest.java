@@ -15,6 +15,7 @@ import com.example.cargotracker.tracking.acceptance.InMemoryTrackingRecordReposi
 import com.example.cargotracker.tracking.application.internal.outboundservices.acl.RoutingScheduledLegs;
 import com.example.cargotracker.tracking.domain.events.TrackingStarted;
 import com.example.cargotracker.tracking.domain.model.aggregates.TrackingRecord;
+import com.example.cargotracker.tracking.domain.model.valueobjects.ScheduledLeg;
 import com.example.cargotracker.tracking.domain.model.valueobjects.TrackingStatus;
 import java.time.Clock;
 import java.time.Instant;
@@ -75,17 +76,18 @@ class TrackingStartEventHandlerTest {
         handler.on(event);
 
         assertThat(queried).containsExactly("RC-2026-0001#1");
-        TrackingRecord record = repository.findByBookingId(event.bookingId()).orElseThrow();
-        assertThat(record.trackingNumber().value()).isEqualTo("CTABCDEFGH2345");
-        assertThat(record.shipperCompanyId()).isEqualTo(SHIPPER);
-        assertThat(record.consigneeCompanyId()).isEqualTo(CONSIGNEE);
-        assertThat(record.currentStatus()).isEqualTo(TrackingStatus.PICKUP_SCHEDULED);
-        assertThat(record.schedule().routingCaseNumber()).isEqualTo("RC-2026-0001");
-        assertThat(record.schedule().routeVersionNo()).isEqualTo(1);
-        assertThat(record.schedule().legs())
-                .extracting(scheduledLeg -> scheduledLeg.voyageNumber())
+        TrackingRecord trackingRecord =
+                repository.findByBookingId(event.bookingId()).orElseThrow();
+        assertThat(trackingRecord.trackingNumber().value()).isEqualTo("CTABCDEFGH2345");
+        assertThat(trackingRecord.shipperCompanyId()).isEqualTo(SHIPPER);
+        assertThat(trackingRecord.consigneeCompanyId()).isEqualTo(CONSIGNEE);
+        assertThat(trackingRecord.currentStatus()).isEqualTo(TrackingStatus.PICKUP_SCHEDULED);
+        assertThat(trackingRecord.schedule().routingCaseNumber()).isEqualTo("RC-2026-0001");
+        assertThat(trackingRecord.schedule().routeVersionNo()).isEqualTo(1);
+        assertThat(trackingRecord.schedule().legs())
+                .extracting(ScheduledLeg::voyageNumber)
                 .containsExactly("V100", "V200");
-        assertThat(record.startedAt().instant()).isEqualTo(NOW);
+        assertThat(trackingRecord.startedAt().instant()).isEqualTo(NOW);
         assertThat(published)
                 .containsExactly(new TrackingStarted("CTABCDEFGH2345", event.bookingId(), new UtcInstant(NOW), 0));
         assertThat(logs.list).isEmpty();
@@ -139,6 +141,70 @@ class TrackingStartEventHandlerTest {
         assertThat(published).isEmpty();
         assertThat(queried).isEmpty();
         assertWarned(event.bookingId().toString(), "企業 ID");
+    }
+
+    /** 片方だけ企業 ID のない DE-07 も開始しない（Bolt 25 レビュー P-2。|| と && の取り違えを見逃さない）。 */
+    @Test
+    void 荷主の企業IDだけがないDE07は警告のログを残して開始しない() {
+        BookingConfirmed event = event(null, CONSIGNEE);
+
+        handler.on(event);
+
+        assertThat(repository.all()).isEmpty();
+        assertThat(published).isEmpty();
+        assertWarned(event.bookingId().toString(), "企業 ID");
+    }
+
+    @Test
+    void 荷受人の企業IDだけがないDE07は警告のログを残して開始しない() {
+        BookingConfirmed event = event(SHIPPER, null);
+
+        handler.on(event);
+
+        assertThat(repository.all()).isEmpty();
+        assertThat(published).isEmpty();
+        assertWarned(event.bookingId().toString(), "企業 ID");
+    }
+
+    /** 区間の写しの検査（到着は出発の後）も、例外にせず警告のログで開始しない（Bolt 25 レビュー P-1・A-2。T-62）。 */
+    @Test
+    void 到着予定が出発予定と同時刻の区間なら警告のログを残して開始しない() {
+        legs = List.of(leg("V100", "JPTYO", "KRPUS", "2026-11-03T00:00:00Z", "2026-11-03T00:00:00Z"));
+        BookingConfirmed event = event(SHIPPER, CONSIGNEE);
+
+        handler.on(event);
+
+        assertThat(repository.all()).isEmpty();
+        assertThat(published).isEmpty();
+        assertWarned(event.bookingId().toString(), "V100");
+    }
+
+    @Test
+    void 追跡番号の形でないDE07は警告のログを残して開始しない() {
+        BookingConfirmed event = withTrackingNumber(event(SHIPPER, CONSIGNEE), "CT-NOT-A-NUMBER");
+
+        handler.on(event);
+
+        assertThat(repository.all()).isEmpty();
+        assertThat(published).isEmpty();
+        assertWarned(event.bookingId().toString(), "CT-NOT-A-NUMBER");
+    }
+
+    private static BookingConfirmed withTrackingNumber(BookingConfirmed event, String trackingNumber) {
+        return new BookingConfirmed(
+                event.bookingId(),
+                event.bookingVersionNo(),
+                trackingNumber,
+                event.quotationId(),
+                event.transportRequestId(),
+                event.transportRequestVersionNo(),
+                event.transportRequestNumber(),
+                event.routingCaseNumber(),
+                event.routeVersionNo(),
+                event.committedAt(),
+                event.aggregateVersion(),
+                event.shipperCompanyId(),
+                event.consigneeCompanyId());
     }
 
     private void assertWarned(String... fragments) {

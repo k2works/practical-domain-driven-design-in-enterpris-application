@@ -4,7 +4,7 @@ title: "リリース計画 - cargo-tracker（A 社国際貨物輸送管理シス
 description: "cargo-tracker MVP のリリース計画。1 人 + AI、時間単位の Bolt（= イテレーション）と週次の見直しで、最初の縦の流れ（R0.1）、パイロット準備完了（R1.0）、本格展開前（R1.1）の 3 段階、Unit のエントロピー評価、SP、バッファ、パイロット開始の条件、引継ぎ ID の台帳、業務責任者に確かめる事項の台帳。"
 tags: [development,release-plan]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-09T04:48:46Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-09T06:08:07Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T09:29:53Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:38:26Z }
@@ -494,7 +494,7 @@ US-04 の SP 5 は、サガの成功の経路を閉じて #10 をクローズす
 
 - [x] Bolt 22: 日時表示・期間表示を `platform` の Web の部品に集める（技術タスク、SP 0。W4 の最初の Bolt）。[Bolt 22 計画](bolt_22_plan.md)（承認済み）、[Bolt 22 終了報告](bolt_22_report.md)（完了、2026-10-08 に承認済み。#41 をクローズした。割り込みで見積りの listener の楽観ロックの競合を直した（#42））、[#41](https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/41)
 - [x] Bolt 23・23b・24: US-04（AC1、AC2、AC4、B-INV-03、B-INV-11）と予約サガの骨格、2 つの ADR。画面は Bolt 23b。[Bolt 23 計画](bolt_23_plan.md)（承認済み。`/goal` で進めた）、[Bolt 23 終了報告](bolt_23_report.md)（完了、2026-10-08 に承認済み。スキーマと D-5 の例外を含む。#10 は Bolt 25 まで開いたまま）、[Bolt 23b 計画](bolt_23b_plan.md)（承認済み。`/goal` で進めた）、[Bolt 23b 終了報告](bolt_23b_report.md)（完了、2026-10-08 に承認済み。承認の後に失効した見積りの再見積りの規則は未決）、[Bolt 24 計画](bolt_24_plan.md)（`/goal` で進めた）、[Bolt 24 終了報告](bolt_24_report.md)（完了、2026-10-09 に承認済み。ADR-001 にマイグレーションの埋め込みの例外、RET-06 の削除は運用の DB 利用者、SonarQube の S8445 は品質プロファイルから外した）
-- [ ] Bolt 25: 追跡の開始とサガの成功の経路。[Bolt 25 計画](bolt_25_plan.md)（`/goal` で進めている）
+- [ ] Bolt 25: 追跡の開始とサガの成功の経路。[Bolt 25 計画](bolt_25_plan.md)（`/goal` で進めた）、[Bolt 25 終了報告](bolt_25_report.md)（承認待ち）
 - [ ] Bolt 25b: S-10 予約一覧の最小の表示（S-24 へ戻る入口）
 - [ ] Bolt 26・27: US-12（AC1、AC2）、US-09（AC1）
 - [ ] Bolt 28: 主成功の流れの `@ui` シナリオと Release 0.1 のデモ

@@ -11,7 +11,8 @@ public interface TrackingStartNotification {
      * 追跡を開始したことを通知する。
      *
      * @param request 通知の内容
-     * @return 受領の結果
+     * @return 受領の結果。業務の理由で完了にしなかったときも例外にせず {@code NotCompleted} で返す
+     * @throws RuntimeException 同時の通知で予約サガの楽観ロックが競合したとき（呼ぶ側は例外のまま戻し、再配信に任せる。Bolt 25 レビュー A-7）
      */
     TrackingStartNotificationReceipt notifyStarted(TrackingStartNotificationRequest request);
 }

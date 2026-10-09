@@ -23,6 +23,9 @@ public sealed interface TrackingStartNotificationReceipt {
         /** 予約サガがない。 */
         public static final String SAGA_NOT_FOUND = "SAGA_NOT_FOUND";
 
+        /** 予約サガが処理中でも完了でもない（失敗・有人確認要）。遅れて届いた結果で状態を変えない。 */
+        public static final String SAGA_NOT_IN_PROGRESS = "SAGA_NOT_IN_PROGRESS";
+
         public NotCompleted {
             Objects.requireNonNull(reason, "reason");
         }

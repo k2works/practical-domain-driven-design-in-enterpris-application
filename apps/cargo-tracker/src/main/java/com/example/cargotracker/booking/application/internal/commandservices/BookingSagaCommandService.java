@@ -2,6 +2,7 @@ package com.example.cargotracker.booking.application.internal.commandservices;
 
 import com.example.cargotracker.booking.application.sagas.BookingSaga;
 import com.example.cargotracker.booking.application.sagas.BookingSagaRepository;
+import com.example.cargotracker.booking.application.sagas.BookingSagaStatus;
 import com.example.cargotracker.booking.domain.model.valueobjects.BookingId;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import java.util.Objects;
@@ -49,6 +50,11 @@ public class BookingSagaCommandService {
         BookingSaga saga = found.get();
         if (saga.isCompleted()) {
             return TrackingStartOutcome.ALREADY_COMPLETED;
+        }
+        if (saga.status() != BookingSagaStatus.IN_PROGRESS) {
+            // 失敗・有人確認要（W8）に遅れて届いた結果。状態を変えず、再配信で直らないので例外にしない（Bolt 25 レビュー A-1。T-62）
+            LOG.warn("追跡の開始の結果を受けたが、予約サガが処理中でないため完了にしなかった: 予約 {}、状態 {}", bookingId.value(), saga.status());
+            return TrackingStartOutcome.SAGA_NOT_IN_PROGRESS;
         }
         sagaRepository.update(saga.complete());
         return TrackingStartOutcome.COMPLETED;

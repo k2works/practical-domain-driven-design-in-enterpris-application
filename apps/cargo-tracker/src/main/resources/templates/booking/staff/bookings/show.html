@@ -19,9 +19,15 @@
         <dt class="col-sm-3">状態</dt>
         <dd class="col-sm-9" th:text="${booking.status()}">確定済み</dd>
         <dt class="col-sm-3">追跡の開始</dt>
-        <dd class="col-sm-9" th:text="${booking.trackingStart()}">処理中（追跡の開始を待っています）</dd>
+        <dd class="col-sm-9" th:text="${booking.trackingStart()}"
+            th:attr="aria-describedby=${booking.trackingStartPending()} ? 'tracking-start-hint' : null">処理中（追跡の開始を待っています）</dd>
     </dl>
-    <p th:if="${booking.trackingStartPending()}">追跡の開始が完了したらこの画面に表示します。画面を更新して確かめてください。</p>
+    <!--/* 自動の更新と通知領域は作らない（Bolt 25）。状態の変化は画面の更新と欄で伝える */-->
+    <div id="tracking-start-hint" th:if="${booking.trackingStartPending()}">
+        <p>この画面は自動では変わりません。画面を更新するか、下のリンクから開き直して確かめてください。しばらくしても処理中のままなら、システム管理者にお問い合わせください。</p>
+        <p><a th:href="@{/staff/bookings/{trackingNumber}(trackingNumber=${booking.trackingNumber()})}"
+              th:text="|${booking.trackingNumber()} の予約の詳細を開き直す|">CTABCDEFGH2345 の予約の詳細を開き直す</a></p>
+    </div>
     <h2 class="h4" th:text="|予約版 ${booking.versionNo()}|">予約版 1</h2>
     <dl class="row">
         <dt class="col-sm-3">確定時刻</dt>

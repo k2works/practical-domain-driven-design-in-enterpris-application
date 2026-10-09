@@ -373,7 +373,14 @@ class BookingControllerTest {
                 .andExpect(content().string(containsString("処理中（追跡の開始を待っています）")))
                 .andExpect(content().string(containsString("確定時刻")))
                 .andExpect(content().string(not(containsString("commit 時刻"))))
-                .andExpect(content().string(containsString("追跡の開始が完了したらこの画面に表示します。画面を更新して確かめてください。")))
+                // 自動では変わらないことと、処理中のまま終わらないときの問い合わせ先を示す（Bolt 25 レビュー U-1・U-2）
+                .andExpect(content().string(containsString("この画面は自動では変わりません。画面を更新するか、下のリンクから開き直して確かめてください。")))
+                .andExpect(content().string(containsString("しばらくしても処理中のままなら、システム管理者にお問い合わせください。")))
+                // 更新の操作をブラウザーの機能だけに頼らない（U-3）。案内を「追跡の開始」の欄に結び付ける（U-4）
+                .andExpect(content()
+                        .string(containsString(
+                                "<a href=\"/staff/bookings/CTABCDEFGH2345\">CTABCDEFGH2345 の予約の詳細を開き直す</a>")))
+                .andExpect(content().string(containsString("aria-describedby=\"tracking-start-hint\"")))
                 .andExpect(content().string(not(containsString(">完了<"))))
                 .andExpect(
                         content().string(not(containsString(booking.id().value().toString()))));
@@ -397,7 +404,8 @@ class BookingControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(content().string(containsString(">完了<")))
                 .andExpect(content().string(not(containsString("処理中"))))
-                .andExpect(content().string(not(containsString("画面を更新して確かめてください"))));
+                .andExpect(content().string(not(containsString("この画面は自動では変わりません"))))
+                .andExpect(content().string(not(containsString("開き直す"))));
     }
 
     @Test

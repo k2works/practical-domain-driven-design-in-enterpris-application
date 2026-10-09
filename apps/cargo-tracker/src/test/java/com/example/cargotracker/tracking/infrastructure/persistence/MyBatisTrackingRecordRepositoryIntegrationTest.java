@@ -40,26 +40,27 @@ class MyBatisTrackingRecordRepositoryIntegrationTest {
 
     @Test
     void 追跡を開始した追跡記録を予定区間とあわせて保存し予約IDで読み出す() {
-        TrackingRecord record = started(UUID.randomUUID(), trackingNumber());
+        TrackingRecord trackingRecord = started(UUID.randomUUID(), trackingNumber());
 
-        repository.save(record);
+        repository.save(trackingRecord);
 
-        TrackingRecord found = repository.findByBookingId(record.bookingId()).orElseThrow();
-        assertThat(found.trackingNumber()).isEqualTo(record.trackingNumber());
-        assertThat(found.bookingId()).isEqualTo(record.bookingId());
-        assertThat(found.shipperCompanyId()).isEqualTo(record.shipperCompanyId());
-        assertThat(found.consigneeCompanyId()).isEqualTo(record.consigneeCompanyId());
-        assertThat(found.bookingStatus()).isEqualTo(record.bookingStatus());
-        assertThat(found.currentStatus()).isEqualTo(record.currentStatus());
-        assertThat(found.schedule()).isEqualTo(record.schedule());
-        assertThat(found.originalEta()).isEqualTo(record.originalEta());
-        assertThat(found.latestEta()).isEqualTo(record.latestEta());
-        assertThat(found.startedAt()).isEqualTo(record.startedAt());
-        assertThat(found.aggregateVersion()).isEqualTo(record.aggregateVersion());
+        TrackingRecord found =
+                repository.findByBookingId(trackingRecord.bookingId()).orElseThrow();
+        assertThat(found.trackingNumber()).isEqualTo(trackingRecord.trackingNumber());
+        assertThat(found.bookingId()).isEqualTo(trackingRecord.bookingId());
+        assertThat(found.shipperCompanyId()).isEqualTo(trackingRecord.shipperCompanyId());
+        assertThat(found.consigneeCompanyId()).isEqualTo(trackingRecord.consigneeCompanyId());
+        assertThat(found.bookingStatus()).isEqualTo(trackingRecord.bookingStatus());
+        assertThat(found.currentStatus()).isEqualTo(trackingRecord.currentStatus());
+        assertThat(found.schedule()).isEqualTo(trackingRecord.schedule());
+        assertThat(found.originalEta()).isEqualTo(trackingRecord.originalEta());
+        assertThat(found.latestEta()).isEqualTo(trackingRecord.latestEta());
+        assertThat(found.startedAt()).isEqualTo(trackingRecord.startedAt());
+        assertThat(found.aggregateVersion()).isEqualTo(trackingRecord.aggregateVersion());
         assertThat(jdbc.queryForList(
                         "SELECT leg_no FROM tracking.scheduled_leg WHERE tracking_number = ? ORDER BY leg_no",
                         Integer.class,
-                        record.trackingNumber().value()))
+                        trackingRecord.trackingNumber().value()))
                 .containsExactly(1, 2);
     }
 
@@ -72,21 +73,22 @@ class MyBatisTrackingRecordRepositoryIntegrationTest {
     void 同じ予約の追跡記録は二件目を保存できない() {
         UUID bookingId = UUID.randomUUID();
         repository.save(started(bookingId, trackingNumber()));
+        TrackingRecord second = started(bookingId, trackingNumber());
 
-        assertThatThrownBy(() -> repository.save(started(bookingId, trackingNumber())))
-                .isInstanceOf(DataIntegrityViolationException.class);
+        assertThatThrownBy(() -> repository.save(second)).isInstanceOf(DataIntegrityViolationException.class);
     }
 
     @Test
     void 予定区間の到着予定は出発予定より後でなければならない() {
-        TrackingRecord record = started(UUID.randomUUID(), trackingNumber());
-        repository.save(record);
+        TrackingRecord trackingRecord = started(UUID.randomUUID(), trackingNumber());
+        repository.save(trackingRecord);
         Timestamp at = Timestamp.from(Instant.parse("2026-11-20T00:00:00Z"));
+        String trackingNumber = trackingRecord.trackingNumber().value();
 
         assertThatThrownBy(() -> jdbc.update(
                         "INSERT INTO tracking.scheduled_leg (tracking_number, leg_no, voyage_number, load_unlocode,"
                                 + " discharge_unlocode, departure_at, arrival_at) VALUES (?, 3, 'V300', 'USLAX', 'USNYC', ?, ?)",
-                        record.trackingNumber().value(),
+                        trackingNumber,
                         at,
                         at))
                 .isInstanceOf(DataIntegrityViolationException.class);
@@ -94,24 +96,50 @@ class MyBatisTrackingRecordRepositoryIntegrationTest {
 
     @Test
     void 現在状態は決めた値だけ() {
-        TrackingRecord record = started(UUID.randomUUID(), trackingNumber());
-        repository.save(record);
+        TrackingRecord trackingRecord = started(UUID.randomUUID(), trackingNumber());
+        repository.save(trackingRecord);
+
+        String trackingNumber = trackingRecord.trackingNumber().value();
 
         assertThatThrownBy(() -> jdbc.update(
                         "UPDATE tracking.tracking_record SET current_status = 'LOST' WHERE tracking_number = ?",
-                        record.trackingNumber().value()))
+                        trackingNumber))
                 .isInstanceOf(DataIntegrityViolationException.class);
     }
 
     @Test
     void 予約状態は決めた値だけ() {
-        TrackingRecord record = started(UUID.randomUUID(), trackingNumber());
-        repository.save(record);
+        TrackingRecord trackingRecord = started(UUID.randomUUID(), trackingNumber());
+        repository.save(trackingRecord);
+
+        String trackingNumber = trackingRecord.trackingNumber().value();
 
         assertThatThrownBy(() -> jdbc.update(
                         "UPDATE tracking.tracking_record SET booking_status = 'AMENDING' WHERE tracking_number = ?",
-                        record.trackingNumber().value()))
+                        trackingNumber))
                 .isInstanceOf(DataIntegrityViolationException.class);
+    }
+
+    /**
+     * 表では経路版と到着予定の列が NULL 可（data_model.md）だが、追跡記録は予定と到着予定を必ず持つ。NULL の行は、原因の分かる例外に
+     * する（自動の unboxing の NPE にしない。Bolt 25 レビュー P-9・A-9）。
+     */
+    @Test
+    void 予定の経路版のない行は原因の分かる例外にする() {
+        UUID bookingId = UUID.randomUUID();
+        String trackingNumber = trackingNumber().value();
+        jdbc.update(
+                "INSERT INTO tracking.tracking_record (tracking_number, booking_id, shipper_company_id,"
+                        + " consignee_company_id, booking_status, current_status, version, created_at, updated_at)"
+                        + " VALUES (?, ?, ?, ?, 'CONFIRMED', 'PICKUP_SCHEDULED', 0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)",
+                trackingNumber,
+                bookingId,
+                UUID.randomUUID(),
+                UUID.randomUUID());
+
+        assertThatThrownBy(() -> repository.findByBookingId(bookingId))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining(trackingNumber);
     }
 
     private static TrackingRecord started(UUID bookingId, TrackingNumber trackingNumber) {
@@ -122,7 +150,7 @@ class MyBatisTrackingRecordRepositoryIntegrationTest {
                         new CompanyId(UUID.randomUUID()),
                         TrackingFixture.schedule(),
                         STARTED_AT)
-                .record();
+                .trackingRecord();
     }
 
     private TrackingNumber trackingNumber() {

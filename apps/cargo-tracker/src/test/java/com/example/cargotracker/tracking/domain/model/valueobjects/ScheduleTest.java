@@ -30,7 +30,9 @@ class ScheduleTest {
 
     @Test
     void 区間がない予定は作れない() {
-        assertThatThrownBy(() -> new Schedule("RC-2026-0001", 1, List.of()))
+        List<ScheduledLeg> none = List.of();
+
+        assertThatThrownBy(() -> new Schedule("RC-2026-0001", 1, none))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("区間");
     }
@@ -59,8 +61,9 @@ class ScheduleTest {
 
     @Test
     void 経路版番号は1から() {
-        assertThatThrownBy(() -> new Schedule("RC-2026-0001", 0, twoLegs()))
-                .isInstanceOf(IllegalArgumentException.class);
+        List<ScheduledLeg> legs = twoLegs();
+
+        assertThatThrownBy(() -> new Schedule("RC-2026-0001", 0, legs)).isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test

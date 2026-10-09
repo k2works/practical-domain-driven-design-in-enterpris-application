@@ -32,22 +32,22 @@ public class MyBatisTrackingRecordRepository implements TrackingRecordRepository
     }
 
     @Override
-    public void save(TrackingRecord record) {
-        String trackingNumber = record.trackingNumber().value();
-        OffsetDateTime startedAt = offset(record.startedAt());
-        Schedule schedule = record.schedule();
+    public void save(TrackingRecord trackingRecord) {
+        String trackingNumber = trackingRecord.trackingNumber().value();
+        OffsetDateTime startedAt = offset(trackingRecord.startedAt());
+        Schedule schedule = trackingRecord.schedule();
         mapper.insertTrackingRecord(new TrackingRecordRow(
                 trackingNumber,
-                record.bookingId(),
-                record.shipperCompanyId().value(),
-                record.consigneeCompanyId().value(),
-                record.bookingStatus().name(),
+                trackingRecord.bookingId(),
+                trackingRecord.shipperCompanyId().value(),
+                trackingRecord.consigneeCompanyId().value(),
+                trackingRecord.bookingStatus().name(),
                 schedule.routingCaseNumber(),
                 schedule.routeVersionNo(),
-                record.currentStatus().name(),
-                offset(record.originalEta()),
-                offset(record.latestEta()),
-                record.aggregateVersion(),
+                trackingRecord.currentStatus().name(),
+                offset(trackingRecord.originalEta()),
+                offset(trackingRecord.latestEta()),
+                trackingRecord.aggregateVersion(),
                 startedAt,
                 startedAt));
         List<ScheduledLeg> legs = schedule.legs();
@@ -70,6 +70,13 @@ public class MyBatisTrackingRecordRepository implements TrackingRecordRepository
     }
 
     private TrackingRecord toRecord(TrackingRecordRow row) {
+        // 表では経路版と到着予定の列が NULL 可（実績の列と同じく後の Bolt の場面のため）だが、追跡記録は予定と到着予定を必ず持つ
+        if (row.routingCaseNumber() == null
+                || row.routeVersionNo() == null
+                || row.originalEta() == null
+                || row.latestEta() == null) {
+            throw new IllegalStateException("追跡記録 " + row.trackingNumber() + " に予定の経路版または到着予定がありません（追跡の開始では必ず入れる）");
+        }
         List<ScheduledLeg> legs = mapper.findScheduledLegs(row.trackingNumber()).stream()
                 .map(leg -> new ScheduledLeg(
                         leg.voyageNumber(),

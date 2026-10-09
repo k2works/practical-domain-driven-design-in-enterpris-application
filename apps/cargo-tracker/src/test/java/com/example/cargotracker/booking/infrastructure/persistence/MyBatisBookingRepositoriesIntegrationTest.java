@@ -180,9 +180,9 @@ class MyBatisBookingRepositoriesIntegrationTest {
         sagaRepository.save(BookingSaga.start(booking.id(), booking.trackingNumber(), COMMITTED_AT));
         BookingSaga started = sagaRepository.findByBookingId(booking.id()).orElseThrow();
         sagaRepository.update(started.complete());
+        BookingSaga stale = started.complete();
 
-        assertThatThrownBy(() -> sagaRepository.update(started.complete()))
-                .isInstanceOf(ConcurrentBookingSagaUpdateException.class);
+        assertThatThrownBy(() -> sagaRepository.update(stale)).isInstanceOf(ConcurrentBookingSagaUpdateException.class);
     }
 
     private Booking confirmed(BookingTerms terms) {

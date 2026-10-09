@@ -57,6 +57,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.modulith.events.CompletedEventPublications;
+import org.springframework.modulith.events.EventPublication;
+import org.springframework.test.util.AopTestUtils;
 
 /**
  * 経路の確定（DE-05）から見積りへの割当て（ADR-014）、輸送要求の荷主承認待ち（DE-21）、荷主の承認と予約待ち（DE-04）、本予約の確定と
@@ -203,7 +205,7 @@ class RouteConfirmedAssignmentIntegrationTest {
                 .untilAsserted(() -> assertThat(sagaStatus(trackingNumber)).isEqualTo("COMPLETED"));
 
         BookingConfirmed confirmed = completedEventPublications.findAll().stream()
-                .map(publication -> publication.getEvent())
+                .map(EventPublication::getEvent)
                 .filter(event -> event instanceof BookingConfirmed bookingConfirmed
                         && bookingConfirmed.transportRequestId().equals(transportRequestId))
                 .map(BookingConfirmed.class::cast)
@@ -237,14 +239,19 @@ class RouteConfirmedAssignmentIntegrationTest {
         long sagaVersion = sagaVersion(trackingNumber);
 
         TrackingStarted started = completedEventPublications.findAll().stream()
-                .map(publication -> publication.getEvent())
+                .map(EventPublication::getEvent)
                 .filter(event -> event instanceof TrackingStarted trackingStarted
                         && trackingStarted.bookingId().equals(confirmed.bookingId()))
                 .map(TrackingStarted.class::cast)
                 .findFirst()
                 .orElseThrow();
-        trackingStartEventHandler.on(confirmed);
-        bookingTrackingStartNotificationEventHandler.on(started);
+        // @ApplicationModuleListener は @Async を含むので、代理を通すと別スレッドで動き、下のアサーションが処理を待たない。
+        // 再配信は代理を外した本体を同期で呼んで確かめる（Bolt 25 レビュー P-4）
+        AopTestUtils.<TrackingStartEventHandler>getUltimateTargetObject(trackingStartEventHandler)
+                .on(confirmed);
+        AopTestUtils.<BookingTrackingStartNotificationEventHandler>getUltimateTargetObject(
+                        bookingTrackingStartNotificationEventHandler)
+                .on(started);
 
         assertThat(jdbc.queryForObject(
                         "SELECT count(*) FROM tracking.tracking_record WHERE booking_id = ?",

@@ -35,6 +35,7 @@ public final class TrackingRecord {
     private final UtcInstant startedAt;
     private final long aggregateVersion;
 
+    @SuppressWarnings("java:S107") // 保存されている状態から組み立てるため、集約の値をすべて受け取る
     private TrackingRecord(
             TrackingNumber trackingNumber,
             UUID bookingId,
@@ -79,7 +80,7 @@ public final class TrackingRecord {
             Schedule schedule,
             UtcInstant startedAt) {
         Objects.requireNonNull(schedule, "schedule");
-        TrackingRecord record = new TrackingRecord(
+        TrackingRecord trackingRecord = new TrackingRecord(
                 trackingNumber,
                 bookingId,
                 shipperCompanyId,
@@ -92,10 +93,12 @@ public final class TrackingRecord {
                 startedAt,
                 INITIAL_AGGREGATE_VERSION);
         return new TrackingStart(
-                record, new TrackingStarted(trackingNumber.value(), bookingId, startedAt, record.aggregateVersion));
+                trackingRecord,
+                new TrackingStarted(trackingNumber.value(), bookingId, startedAt, trackingRecord.aggregateVersion));
     }
 
     /** 保存されている状態から組み立てる（リポジトリが使う）。 */
+    @SuppressWarnings("java:S107") // 保存されている状態から組み立てるため、集約の値をすべて受け取る
     public static TrackingRecord reconstitute(
             TrackingNumber trackingNumber,
             UUID bookingId,

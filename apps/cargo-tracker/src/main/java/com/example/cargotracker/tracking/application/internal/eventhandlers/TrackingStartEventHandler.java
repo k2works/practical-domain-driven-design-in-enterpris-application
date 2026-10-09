@@ -60,35 +60,35 @@ public class TrackingStartEventHandler {
             LOG.warn("DE-07 に荷主・荷受人の企業 ID がないため追跡を開始しなかった: 予約 {}、追跡番号 {}", event.bookingId(), event.trackingNumber());
             return;
         }
-        List<ScheduledLeg> legs = scheduledLegs.confirmedLegsOf(event.routingCaseNumber(), event.routeVersionNo());
-        if (legs.isEmpty()) {
-            LOG.warn(
-                    "確定した経路版の区間がないため追跡を開始しなかった: 予約 {}、追跡番号 {}、案件 {}、経路版 {}",
-                    event.bookingId(),
-                    event.trackingNumber(),
-                    event.routingCaseNumber(),
-                    event.routeVersionNo());
-            return;
-        }
-        Schedule schedule;
+        TrackingStart start;
         try {
-            schedule = new Schedule(event.routingCaseNumber(), event.routeVersionNo(), legs);
-        } catch (IllegalArgumentException invalidSchedule) {
+            List<ScheduledLeg> legs = scheduledLegs.confirmedLegsOf(event.routingCaseNumber(), event.routeVersionNo());
+            if (legs.isEmpty()) {
+                LOG.warn(
+                        "確定した経路版の区間がないため追跡を開始しなかった: 予約 {}、追跡番号 {}、案件 {}、経路版 {}",
+                        event.bookingId(),
+                        event.trackingNumber(),
+                        event.routingCaseNumber(),
+                        event.routeVersionNo());
+                return;
+            }
+            start = TrackingRecord.start(
+                    new TrackingNumber(event.trackingNumber()),
+                    event.bookingId(),
+                    event.shipperCompanyId(),
+                    event.consigneeCompanyId(),
+                    new Schedule(event.routingCaseNumber(), event.routeVersionNo(), legs),
+                    new UtcInstant(clock.instant()));
+        } catch (IllegalArgumentException invalid) {
+            // 区間の写し・予定・追跡番号の検査（T-INV-12）。再配信しても直らないので、例外にせず警告のログで終える（T-62。Bolt 25 レビュー P-1）
             LOG.warn(
-                    "確定した経路版の区間が予定の規則に合わないため追跡を開始しなかった: 予約 {}、追跡番号 {}、理由 {}",
+                    "DE-07 の値が追跡の規則に合わないため追跡を開始しなかった: 予約 {}、追跡番号 {}、理由 {}",
                     event.bookingId(),
                     event.trackingNumber(),
-                    invalidSchedule.getMessage());
+                    invalid.getMessage());
             return;
         }
-        TrackingStart start = TrackingRecord.start(
-                new TrackingNumber(event.trackingNumber()),
-                event.bookingId(),
-                event.shipperCompanyId(),
-                event.consigneeCompanyId(),
-                schedule,
-                new UtcInstant(clock.instant()));
-        repository.save(start.record());
+        repository.save(start.trackingRecord());
         eventPublisher.publishEvent(start.event());
     }
 }

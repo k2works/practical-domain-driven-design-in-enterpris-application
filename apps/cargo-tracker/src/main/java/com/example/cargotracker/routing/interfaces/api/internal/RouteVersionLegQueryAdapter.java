@@ -25,7 +25,7 @@ public class RouteVersionLegQueryAdapter implements RouteVersionLegQuery {
         RoutingCaseNumber number;
         try {
             number = RoutingCaseNumber.parse(routingCaseNumber);
-        } catch (IllegalArgumentException notACaseNumber) {
+        } catch (IllegalArgumentException _) {
             return List.of();
         }
         return queryService.confirmedLegs(number, routeVersionNo).stream()
