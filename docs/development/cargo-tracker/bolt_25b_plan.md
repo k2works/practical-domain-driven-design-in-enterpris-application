@@ -183,13 +183,18 @@ S09 --> S24 : 確定（PRG）
 
 状態の記号: `[ ]` 未着手、`[-]` 進行中、`[?]` 承認待ち、`[x]` 完了。各ステップの終わりに `check` が緑であることを確かめ、Green と同じ push にまとめて CI を確かめる（T-26、T-65）。Red は実行して本命のアサーションで失敗することを確かめてから実装する（T-39）。
 
-- [ ] **1. 画面の層の受入シナリオと画面（S-10・S-24）** 【承認ゲート: 画面】
+- [?] **1. 画面の層の受入シナリオと画面（S-10・S-24）** 【承認ゲート: 画面】
   - 画面の層の受入シナリオを先に書く（T-72）: `features/ui/confirm_booking_ui.feature`（機能のタグは `@ui @US-04 @must` のまま）に 1 本を足す（`@demo @demo-bolt-25b/booking-list @US-04-AC1`。背景と `BookingUiSteps` の確定のステップを再利用する）。営業担当者が本予約を確定し、受付一覧へ戻ってから営業のナビの「予約」を開くと、確定した予約が一覧の先頭に出て、ナビの「予約」が現在の項目として示される（`LayoutUiSteps` の既存のステップ）。追跡番号のリンクで S-24 を開け、S-24 の「予約一覧へ戻る」で S-10 に戻る。キー操作だけ、幅 320 CSS px、axe-core 0 件
   - 画面の骨組み（S-10 の見出しだけ）で `uiTest` のこのシナリオを流し、本命のアサーション（一覧の行）で落ちることを確かめる（T-72 の Red を確かめる時点）
   - 画面の単体テストを先に書く: 一覧の列と並び、追跡の開始の 4 つの状態の表示（T-57）、予約がないときの文言、50 件を超えたときの文言、S-24 の戻るリンクと「処理中」
   - 既存のテストを直す: `AuthenticationSecurityIntegrationTest` の「営業担当者はナビの予約を開くと準備中の画面になる」を S-10 の 200（見出し「予約一覧」）に、荷主・経路設計者の `GET /staff/bookings` は 403 であることを足す。画面の層・画面の単体テストの「処理中（追跡の開始を待っています）」の期待を「処理中」に
   - `BookingController` に `GET /staff/bookings`、`list.html`、`PlaceholderController` の営業の画面の処理と表を消す
   - 完了の判定: `check` 緑（画面の層はステップ 3 の後に緑）
+  - 結果（2026-10-09）
+    - Red: 画面の層のシナリオ 2 本（予約一覧から予約の詳細を開き直す `@demo-bolt-25b/booking-list`、幅 320 CSS px）を `confirm_booking_ui.feature` に先に書き、S-10 の骨組み（見出しだけ）で `uiTest` を流して、本命のアサーション（予約一覧の表がない）で落ちることを確かめた（T-72）。幅 320 CSS px のシナリオは、狭い幅ではナビがメニューのボタンに畳まれるのにメニューを開いていなかったので、既存のステップ「メニューのボタンを押す」を足した（シナリオの誤り）。画面の単体テスト 8 件（一覧の列と並び、予約がない、50 件を超えた、追跡の開始の 4 つの状態、S-24 の戻るリンクと「処理中」）は、実装を書いた後に実装を外して流し、レスポンスの中身のアサーションで落ちることを確かめた（T-39。Gradle が画面の層の実行で使えない間に実装まで進めたため）
+    - Green: `BookingController` の `GET /staff/bookings`、`BookingViews.list`、`list.html`（caption「確定した予約（確定時刻の新しい順）」、横スクロールの囲み）、S-24 の「予約一覧へ戻る」と「処理中」、追跡の開始の表示を UI 設計の共通部品にそろえた（失敗は「処理中」）。`PlaceholderController` の営業の画面の処理と表を消した。セキュリティの統合テストを、営業担当者は S-10 の 200、荷主と経路設計者は 403 に直した
+    - 照会（`BookingQueryService.recent`）はステップ 2 までの骨組み（空を返す）。画面の層の新しいシナリオはステップ 3 の後に緑になるので、push はステップ 3 と一緒にする
+    - `check` 緑
 - [ ] **2. 一覧の照会（単体テスト）** 【承認ゲート: Red／Green（照会）】
   - 単体テストを先に書く: 照会のサービスが要約を上限 51 件で 1 回、予約サガの状態を IN で 1 回引き、50 件を超えるかを返す（仮説 H1）。予約サガのない予約は例外。メモリのリポジトリは新しい順で写しを返す（T-61）
   - `BookingSummary`、`BookingRepository.findRecentSummaries`、`BookingSagaRepository.findStatusesByBookingIds`、`BookingQueryService.recent`、メモリの実装（`InMemoryBookingRepository`・`InMemoryBookingSagaRepository`）、`RandomTrackingNumberIssuerTest` の仮の実装、受入の配線

@@ -20,17 +20,9 @@ public class PlaceholderController {
     private static final Map<String, String> CUSTOMER_SCREENS =
             Map.of("bookings", "予約", "tracking", "追跡の照会", "inquiries", "問い合わせ", "notifications", "通知");
 
-    /** 営業担当者の準備中の画面。 */
-    private static final Map<String, String> STAFF_SCREENS = Map.of("bookings", "予約");
-
     @GetMapping("/customer/{screen:bookings|tracking|inquiries|notifications}")
     public String customer(@PathVariable String screen, Model model) {
         return show("layout/customer", screen, CUSTOMER_SCREENS, model);
-    }
-
-    @GetMapping("/staff/{screen:bookings}")
-    public String staff(@PathVariable String screen, Model model) {
-        return show("layout/staff", screen, STAFF_SCREENS, model);
     }
 
     private static String show(String layout, String screen, Map<String, String> screens, Model model) {

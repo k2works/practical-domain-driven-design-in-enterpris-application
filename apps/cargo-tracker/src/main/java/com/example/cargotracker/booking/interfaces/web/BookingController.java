@@ -6,6 +6,7 @@ import com.example.cargotracker.booking.application.internal.commandservices.Boo
 import com.example.cargotracker.booking.application.internal.outboundservices.acl.QuotationUnavailability;
 import com.example.cargotracker.booking.application.internal.queryservices.BookingConfirmationPage;
 import com.example.cargotracker.booking.application.internal.queryservices.BookingQueryService;
+import com.example.cargotracker.booking.application.internal.queryservices.RecentBookings;
 import com.example.cargotracker.booking.domain.model.valueobjects.BookingCondition;
 import com.example.cargotracker.booking.domain.model.valueobjects.TrackingNumber;
 import com.example.cargotracker.shared.domain.AuthenticatedActor;
@@ -36,6 +37,7 @@ public class BookingController {
     private static final String RECEPTION = "redirect:/staff/transport-requests";
     private static final String CONFIRMATION_VIEW = "booking/staff/bookings/new";
     private static final String DETAIL_VIEW = "booking/staff/bookings/show";
+    private static final String LIST_VIEW = "booking/staff/bookings/list";
     private static final String PROBLEM = "problem";
     private static final String RESULT = "result";
     private static final String RESULT_LINK_HREF = "resultLinkHref";
@@ -47,6 +49,18 @@ public class BookingController {
     public BookingController(BookingCommandService commandService, BookingQueryService queryService) {
         this.commandService = commandService;
         this.queryService = queryService;
+    }
+
+    /**
+     * 予約一覧（S-10 の最小の表示。Bolt 25b）。確定した予約を確定時刻の新しい順に上限まで示し、追跡番号から S-24 を開ける。
+     * 絞り込み・ページ送り・変更・取消申請の状況は US-05（W11）。
+     */
+    @GetMapping
+    public String list(Model model) {
+        RecentBookings recent = queryService.recent();
+        model.addAttribute("bookings", BookingViews.list(recent));
+        model.addAttribute("truncated", recent.truncated());
+        return LIST_VIEW;
     }
 
     /** 本予約の確定の画面（S-09）。確定に使えない見積りと確定済みは、受付一覧に戻して理由を示す。 */

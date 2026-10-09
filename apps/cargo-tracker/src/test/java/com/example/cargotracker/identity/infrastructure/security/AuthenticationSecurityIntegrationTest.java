@@ -405,7 +405,7 @@ class AuthenticationSecurityIntegrationTest {
     }
 
     @Test
-    void 荷主担当者と経路設計者は本予約の確定と予約の詳細を開けずPOSTも送れない() throws Exception {
+    void 荷主担当者と経路設計者は本予約の確定と予約の詳細と予約一覧を開けずPOSTも送れない() throws Exception {
         for (Role role : List.of(Role.SHIPPER, Role.ROUTE_DESIGNER)) {
             Cookie session =
                     login(user(role == Role.SHIPPER ? shipperCompany : staffCompany(), role, UserStatus.ACTIVE));
@@ -414,6 +414,7 @@ class AuthenticationSecurityIntegrationTest {
                             .cookie(session))
                     .andExpect(status().isForbidden());
             mvc.perform(get("/staff/bookings/CTABCDEFGH2345").cookie(session)).andExpect(status().isForbidden());
+            mvc.perform(get("/staff/bookings").cookie(session)).andExpect(status().isForbidden());
             mvc.perform(post("/staff/bookings")
                             .param("commandId", "00000000-0000-0000-0000-0000000000c1")
                             .param("transportRequest", "TR-2026-0001")
@@ -426,12 +427,15 @@ class AuthenticationSecurityIntegrationTest {
     }
 
     @Test
-    void 営業担当者はナビの予約を開くと準備中の画面になる() throws Exception {
+    void 営業担当者はナビの予約を開くと予約一覧になる() throws Exception {
         Cookie session = login(user(staffCompany(), Role.SALES, UserStatus.ACTIVE));
 
+        // 準備中の画面を S-10 予約一覧の最小の表示に置き換えた（Bolt 25b）
         mvc.perform(get("/staff/bookings").cookie(session))
                 .andExpect(status().isOk())
-                .andExpect(content().string(org.hamcrest.Matchers.containsString("この画面は準備中です")));
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("<h1>予約一覧</h1>")))
+                .andExpect(content()
+                        .string(org.hamcrest.Matchers.not(org.hamcrest.Matchers.containsString("この画面は準備中です"))));
     }
 
     @Test

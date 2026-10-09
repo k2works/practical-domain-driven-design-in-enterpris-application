@@ -20,6 +20,7 @@ import com.example.cargotracker.booking.application.internal.outboundservices.ac
 import com.example.cargotracker.booking.application.internal.queryservices.BookingConfirmationPage;
 import com.example.cargotracker.booking.application.internal.queryservices.BookingDetail;
 import com.example.cargotracker.booking.application.internal.queryservices.BookingQueryService;
+import com.example.cargotracker.booking.application.internal.queryservices.RecentBookings;
 import com.example.cargotracker.booking.application.sagas.BookingSagaStatus;
 import com.example.cargotracker.booking.domain.model.BookingFixture;
 import com.example.cargotracker.booking.domain.model.aggregates.Booking;
@@ -370,7 +371,10 @@ class BookingControllerTest {
                         .string(containsString("2026-10-08 09:30 Asia/Tokyo（UTC+09:00）（UTC 2026-10-08 00:30）")))
                 .andExpect(content().string(containsString("RC-2026-0001 版 1")))
                 .andExpect(content().string(containsString("一般貨物 パレット 10 個 1,200 kg")))
-                .andExpect(content().string(containsString("処理中（追跡の開始を待っています）")))
+                // 欄の名前「追跡の開始」と重ならないよう「処理中」だけにする（Bolt 25 レビュー U-6。Bolt 25b）
+                .andExpect(content().string(containsString(">処理中<")))
+                .andExpect(content().string(not(containsString("追跡の開始を待っています"))))
+                .andExpect(content().string(containsString("<a href=\"/staff/bookings\">予約一覧へ戻る</a>")))
                 .andExpect(content().string(containsString("確定時刻")))
                 .andExpect(content().string(not(containsString("commit 時刻"))))
                 // 自動では変わらないことと、処理中のまま終わらないときの問い合わせ先を示す（Bolt 25 レビュー U-1・U-2）
@@ -406,6 +410,105 @@ class BookingControllerTest {
                 .andExpect(content().string(not(containsString("処理中"))))
                 .andExpect(content().string(not(containsString("この画面は自動では変わりません"))))
                 .andExpect(content().string(not(containsString("開き直す"))));
+    }
+
+    /** S-10 予約一覧の最小の表示（Bolt 25b）。確定時刻の新しい順で、追跡番号から S-24 を開ける。 */
+    @Test
+    void 予約一覧に追跡番号と見積りと確定時刻と追跡の開始を新しい順に示す() throws Exception {
+        given(queryService.recent())
+                .willReturn(new RecentBookings(
+                        List.of(
+                                recent(
+                                        "CTABCDEFGH2345",
+                                        "TR-2026-0002",
+                                        1,
+                                        "2026-10-08T00:30:00Z",
+                                        BookingSagaStatus.COMPLETED),
+                                recent(
+                                        "CTBCDEFGHJ2345",
+                                        "TR-2026-0001",
+                                        2,
+                                        "2026-10-07T00:30:00Z",
+                                        BookingSagaStatus.IN_PROGRESS)),
+                        false));
+
+        String html = mockMvc.perform(get("/staff/bookings"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("<h1>予約一覧</h1>")))
+                .andExpect(content().string(containsString("確定した予約（確定時刻の新しい順）")))
+                .andExpect(content()
+                        .string(containsString("<a href=\"/staff/bookings/CTABCDEFGH2345\">CTABCDEFGH2345</a>")))
+                .andExpect(content().string(containsString("TR-2026-0002 見積 1")))
+                .andExpect(content()
+                        .string(containsString("2026-10-08 09:30 Asia/Tokyo（UTC+09:00）（UTC 2026-10-08 00:30）")))
+                .andExpect(content().string(containsString(">完了<")))
+                .andExpect(content().string(containsString(">処理中<")))
+                .andExpect(content().string(not(containsString("新しい 50 件だけを示しています"))))
+                .andExpect(content().string(not(containsString("確定した予約はまだありません"))))
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+        org.assertj.core.api.Assertions.assertThat(html.indexOf("CTABCDEFGH2345"))
+                .isLessThan(html.indexOf("CTBCDEFGHJ2345"));
+    }
+
+    @Test
+    void 予約がなければその旨を示す() throws Exception {
+        given(queryService.recent()).willReturn(new RecentBookings(List.of(), false));
+
+        mockMvc.perform(get("/staff/bookings"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("確定した予約はまだありません。")))
+                .andExpect(content().string(not(containsString("<table"))));
+    }
+
+    @Test
+    void 上限を超えたら新しい50件だけを示していることを示す() throws Exception {
+        given(queryService.recent())
+                .willReturn(new RecentBookings(
+                        List.of(recent(
+                                "CTABCDEFGH2345",
+                                "TR-2026-0001",
+                                1,
+                                "2026-10-08T00:30:00Z",
+                                BookingSagaStatus.IN_PROGRESS)),
+                        true));
+
+        mockMvc.perform(get("/staff/bookings"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("新しい 50 件だけを示しています。")));
+    }
+
+    /** 追跡の開始の表示は UI 設計の共通部品「処理中表示」にそろえる。失敗は処理中のまま示す（Bolt 25b の確認ポイント 6。T-57）。 */
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.CsvSource({
+        "IN_PROGRESS, 処理中",
+        "COMPLETED, 完了",
+        "FAILED, 処理中",
+        "NEEDS_HUMAN, 有人確認要（担当者が確認します）"
+    })
+    void 予約一覧の追跡の開始は予約サガの状態ごとに処理中表示の言葉で示す(BookingSagaStatus status, String label) throws Exception {
+        given(queryService.recent())
+                .willReturn(new RecentBookings(
+                        List.of(recent("CTABCDEFGH2345", "TR-2026-0001", 1, "2026-10-08T00:30:00Z", status)), false));
+
+        mockMvc.perform(get("/staff/bookings"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString(">" + label + "<")));
+    }
+
+    private static RecentBookings.Row recent(
+            String trackingNumber,
+            String transportRequestNumber,
+            int quotationNo,
+            String committedAt,
+            BookingSagaStatus status) {
+        return new RecentBookings.Row(
+                new TrackingNumber(trackingNumber),
+                transportRequestNumber,
+                quotationNo,
+                new UtcInstant(Instant.parse(committedAt)),
+                status);
     }
 
     @Test

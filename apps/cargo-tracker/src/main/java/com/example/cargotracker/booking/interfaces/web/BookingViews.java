@@ -2,6 +2,7 @@ package com.example.cargotracker.booking.interfaces.web;
 
 import com.example.cargotracker.booking.application.internal.queryservices.BookingConfirmationPage;
 import com.example.cargotracker.booking.application.internal.queryservices.BookingDetail;
+import com.example.cargotracker.booking.application.internal.queryservices.RecentBookings;
 import com.example.cargotracker.booking.application.sagas.BookingSagaStatus;
 import com.example.cargotracker.booking.domain.model.aggregates.Booking;
 import com.example.cargotracker.booking.domain.model.entities.BookingVersion;
@@ -123,14 +124,36 @@ final class BookingViews {
                 detail.sagaStatus() == BookingSagaStatus.IN_PROGRESS);
     }
 
-    /** 追跡の開始の表示。処理中を完了と示さない（ADR-015）。完了は Bolt 25、失敗・有人確認要は W8 で起きる。 */
+    /**
+     * 追跡の開始の表示。UI 設計の共通部品「処理中表示」の言葉（処理中・完了・有人確認要）で示し、処理中を完了と示さない（ADR-015）。
+     * 失敗は「処理中」のまま示し、有人確認要で受付番号を示す（UI 設計。Bolt 25b の確認ポイント 6）。失敗・有人確認要は W8 で起きる。
+     */
     static String trackingStart(BookingSagaStatus status) {
         return switch (status) {
-            case IN_PROGRESS -> "処理中（追跡の開始を待っています）";
+            case IN_PROGRESS, FAILED -> "処理中";
             case COMPLETED -> "完了";
-            case FAILED -> "失敗（担当者が確認します）";
             case NEEDS_HUMAN -> "有人確認要（担当者が確認します）";
         };
+    }
+
+    /**
+     * S-10 予約一覧の 1 行の表示（Bolt 25b）。
+     *
+     * @param trackingNumber 追跡番号
+     * @param quotation 見積りの表記（業務番号と見積り番号）
+     * @param committedAt 確定時刻（最初の確定の時刻）
+     * @param trackingStart 追跡の開始
+     */
+    record ListRow(String trackingNumber, String quotation, String committedAt, String trackingStart) {}
+
+    static List<ListRow> list(RecentBookings recent) {
+        return recent.rows().stream()
+                .map(row -> new ListRow(
+                        row.trackingNumber().value(),
+                        subject(row.transportRequestNumber(), row.quotationNo()),
+                        staff(row.committedAt()),
+                        trackingStart(row.sagaStatus())))
+                .toList();
     }
 
     static String status(BookingStatus status) {

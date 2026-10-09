@@ -20,7 +20,7 @@
         <dd class="col-sm-9" th:text="${booking.status()}">確定済み</dd>
         <dt class="col-sm-3">追跡の開始</dt>
         <dd class="col-sm-9" th:text="${booking.trackingStart()}"
-            th:attr="aria-describedby=${booking.trackingStartPending()} ? 'tracking-start-hint' : null">処理中（追跡の開始を待っています）</dd>
+            th:attr="aria-describedby=${booking.trackingStartPending()} ? 'tracking-start-hint' : null">処理中</dd>
     </dl>
     <!--/* 自動の更新と通知領域は作らない（Bolt 25）。状態の変化は画面の更新と欄で伝える */-->
     <div id="tracking-start-hint" th:if="${booking.trackingStartPending()}">
@@ -37,6 +37,7 @@
         <dt class="col-sm-3">貨物</dt>
         <dd class="col-sm-9" th:text="${booking.cargoSummary()}">GENERAL / PALLET × 12 / 8400.000 kg / 32.500 m3</dd>
     </dl>
+    <p><a th:href="@{/staff/bookings}">予約一覧へ戻る</a></p>
     <p><a th:href="@{/staff/transport-requests}">見積依頼の受付一覧へ戻る</a></p>
 </main>
 </body>

@@ -37,6 +37,7 @@ public class BookingUiSteps {
     private Map<String, String> savedForm;
     private String firstTrackingNumber;
     private String otherTabTrackingNumber;
+    private String confirmedTrackingNumber;
 
     public BookingUiSteps(
             BrowserSession browser,
@@ -232,6 +233,63 @@ public class BookingUiSteps {
         assertThat(definition("追跡番号")).hasText(otherTabTrackingNumber);
         assertThat(definition("業務番号")).hasText(state.transportRequestNumber());
         browser.checkAccessibility();
+    }
+
+    /** 確定の直後の S-24 の追跡番号を控えてから、受付一覧へ戻る（S-24 から離れた後に S-10 で開き直すため。Bolt 25b）。 */
+    @もし("キー操作だけで予約の詳細から見積依頼の受付一覧へ戻る")
+    public void 予約の詳細から受付一覧へ戻る() {
+        page().waitForURL("**/staff/bookings/CT*");
+        confirmedTrackingNumber = definition("追跡番号").textContent().strip();
+        page().locator("body").focus();
+        tabUntilFocused(page().getByRole(
+                        AriaRole.LINK,
+                        new Page.GetByRoleOptions().setName("見積依頼の受付一覧へ戻る").setExact(true)));
+        page().keyboard().press("Enter");
+        page().waitForURL("**/staff/transport-requests");
+    }
+
+    @ならば("予約一覧の先頭に確定した予約が見積り {int} と追跡の開始とともに示される")
+    public void 予約一覧の先頭に確定した予約が示される(int quotationNo) {
+        assertThat(page().getByRole(AriaRole.HEADING, new Page.GetByRoleOptions().setName("予約一覧")))
+                .isVisible();
+        Locator firstRow = bookingList().locator("tbody tr").first();
+        assertThat(firstRow.getByRole(AriaRole.LINK, new Locator.GetByRoleOptions().setName(confirmedTrackingNumber)))
+                .isVisible();
+        assertThat(firstRow).containsText(subject(quotationNo));
+        assertThat(firstRow.locator("td").last()).hasText(Pattern.compile("^(処理中|完了)$"));
+        browser.checkAccessibility();
+    }
+
+    @もし("キー操作だけで予約一覧の先頭の予約の詳細を開く")
+    public void 予約一覧から予約の詳細を開く() {
+        page().locator("body").focus();
+        tabUntilFocused(bookingList()
+                .locator("tbody tr")
+                .first()
+                .getByRole(AriaRole.LINK, new Locator.GetByRoleOptions().setName(confirmedTrackingNumber)));
+        page().keyboard().press("Enter");
+        page().waitForURL("**/staff/bookings/" + confirmedTrackingNumber);
+    }
+
+    @ならば("確定した予約の詳細が示される")
+    public void 確定した予約の詳細が示される() {
+        assertThat(definition("追跡番号")).hasText(confirmedTrackingNumber);
+        assertThat(definition("業務番号")).hasText(state.transportRequestNumber());
+        browser.checkAccessibility();
+    }
+
+    @もし("キー操作だけで予約の詳細から予約一覧へ戻る")
+    public void 予約の詳細から予約一覧へ戻る() {
+        page().locator("body").focus();
+        tabUntilFocused(page().getByRole(
+                        AriaRole.LINK,
+                        new Page.GetByRoleOptions().setName("予約一覧へ戻る").setExact(true)));
+        page().keyboard().press("Enter");
+        page().waitForURL("**/staff/bookings");
+    }
+
+    private Locator bookingList() {
+        return page().getByRole(AriaRole.TABLE, new Page.GetByRoleOptions().setName("確定した予約（確定時刻の新しい順）"));
     }
 
     private Locator detailLink() {

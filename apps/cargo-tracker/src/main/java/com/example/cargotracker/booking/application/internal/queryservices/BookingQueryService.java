@@ -72,4 +72,10 @@ public class BookingQueryService {
                                         "貨物予約に予約サガがない（本予約の確定と同じトランザクションで作る。ADR-015）: " + booking.id()))
                                 .status()));
     }
+
+    /** 予約一覧（S-10。骨組み。Bolt 25b）。 */
+    @Transactional(readOnly = true)
+    public RecentBookings recent() {
+        return new RecentBookings(java.util.List.of(), false);
+    }
 }
