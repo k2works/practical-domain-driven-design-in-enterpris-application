@@ -4,7 +4,7 @@ title: "Bolt 25b 終了報告 - S-10 予約一覧の最小の表示（S-24 へ�
 description: "25b 回目の Bolt の終了報告。営業のナビの「予約」の準備中の画面を S-10 予約一覧の最小の表示に置き換え、確定の後に S-24 へ戻れるようにした。予約の要約と予約サガの状態を 2 本の照会で引き、追跡の開始の表示を UI 設計の共通部品にそろえた。/goal で止まらなかった承認ゲート、開発レビューの対応、人に諮る論点、既知の課題を記録する。"
 tags: [development,bolt-report]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-09T09:52:06Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-09T12:22:42Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-09T09:52:07Z }
 ---
@@ -118,7 +118,7 @@ verified:
   - 画面の単体テストの Red を、実装の後に確かめた
   - 開発レビューの対応で足したテスト（ちょうど 50 件、0 件、失敗の S-24 の案内）は、実装を直した後に書いたので、Red を確かめたのは失敗の案内だけではない（T-39 の記録）
 - Try
-  - T-77: シェルで結果のファイルを `grep` に渡すときは、ファイルがあることを確かめるか `</dev/null` を付け、長い処理には `timeout` を付ける（AI、次の Bolt から）
+  - T-77: シェルで結果のファイルを `grep` に渡すときは、ファイルがあることを確かめるか、標準入力を `/dev/null` につなぎ、長い処理には `timeout` を付ける（AI、次の Bolt から）
   - T-78: 置換のスクリプトは、`spotlessApply` の後のファイルを読んでから書く（T-55 の再確認。AI、次の Bolt から）
 
 ## 次の Bolt
