@@ -8772,10 +8772,10 @@ src/test/java/.../shared/acceptance/      共通ステップ（ログイン、�
 </tr>
 <tr>
 <td style="text-align: left;">B-INV-03（同じコマンド ID の冪等性）</td>
-<td style="text-align: left;">—</td>
-<td style="text-align: left;">○</td>
+<td style="text-align: left;">○（判定の順序、内容の照合、拒否は記録しない）</td>
+<td style="text-align: left;">○（確定の後に失効しても最初の結果）</td>
 <td style="text-align: left;">○（同時送信で 1 件、同じ ID で内容が違えば衝突）</td>
-<td style="text-align: left;">二重送信（<code>@ui</code>）</td>
+<td style="text-align: left;">二重送信（<code>@ui</code>。戻る → 再送で同じ追跡番号）</td>
 </tr>
 <tr>
 <td style="text-align: left;">B-INV-04〜05（特殊貨物、旧版）</td>
@@ -8808,9 +8808,9 @@ src/test/java/.../shared/acceptance/      共通ステップ（ログイン、�
 <tr>
 <td style="text-align: left;">B-INV-11（1 つの見積りから予約は 1 件）</td>
 <td style="text-align: left;">—</td>
-<td style="text-align: left;">○</td>
-<td style="text-align: left;">○（別のコマンド ID・別の利用者で同時に確定しても 1 件）</td>
-<td style="text-align: left;">—</td>
+<td style="text-align: left;">○（既存の追跡番号を返す。確定の後に失効しても同じ）</td>
+<td style="text-align: left;">○（別のコマンド ID・別の利用者で同時に確定しても 1 件。負けた側も既存の追跡番号）</td>
+<td style="text-align: left;">同じ見積りの予約があるお知らせと S-24 への導線（<code>@ui</code>。Bolt 24）</td>
 </tr>
 <tr>
 <td style="text-align: left;">B-INV-12（古い版のイベントを適用しない）</td>

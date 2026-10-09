@@ -8929,6 +8929,18 @@
 <td style="text-align: left;">予約</td>
 </tr>
 <tr>
+<td style="text-align: left;">処理済みコマンド</td>
+<td style="text-align: left;">ProcessedCommand</td>
+<td style="text-align: left;">本予約の確定に成功したコマンドの記録。コマンド ID、内容の照合値（業務番号・見積り番号・操作者）、予約 ID と追跡番号、処理時刻を持つ。貨物予約と同じトランザクションで記録し、拒否した要求は記録しない（B-INV-03。Bolt 24）</td>
+<td style="text-align: left;">予約</td>
+</tr>
+<tr>
+<td style="text-align: left;">再送</td>
+<td style="text-align: left;">—</td>
+<td style="text-align: left;">同じコマンド ID・同じ内容の確定の要求をもう一度受けること。最初の結果（同じ追跡番号）を返す。同じコマンド ID で内容が違う要求は衝突として拒否する（B-INV-03。Bolt 24）</td>
+<td style="text-align: left;">予約</td>
+</tr>
+<tr>
 <td style="text-align: left;">輸送段階</td>
 <td style="text-align: left;">TransportPhase</td>
 <td style="text-align: left;">集荷前、集荷後、完了。変更・取消しの可否を決める（BR-04）</td>
@@ -9109,6 +9121,12 @@
 <td style="text-align: left;">共有カーネル</td>
 </tr>
 <tr>
+<td style="text-align: left;">コマンド ID</td>
+<td style="text-align: left;">CommandId</td>
+<td style="text-align: left;">変更コマンドを識別する値（UUID）。同じコマンド ID の再送を見分ける（ARCH-HO-01）。画面はフォームを開くたびに新しいコマンド ID を発行し、隠し項目で送る（Bolt 24）</td>
+<td style="text-align: left;">共有カーネル</td>
+</tr>
+<tr>
 <td style="text-align: left;">企業 ID</td>
 <td style="text-align: left;">CompanyId</td>
 <td style="text-align: left;">荷主・荷受人・A 社などの企業を識別する値</td>
@@ -9154,6 +9172,10 @@
 <tr>
 <td style="text-align: left;">出典</td>
 <td style="text-align: left;">種類（外部原本・現場記録・社内確認・手動入力）、参照、取得時刻を必須とする</td>
+</tr>
+<tr>
+<td style="text-align: left;">コマンド ID</td>
+<td style="text-align: left;">UUID を必須とする（null 不可）</td>
 </tr>
 </tbody>
 </table>
@@ -9526,7 +9548,7 @@
 </tr>
 <tr>
 <td style="text-align: left;">B-INV-03</td>
-<td style="text-align: left;">同じコマンド ID の確定要求は予約を重複生成せず、既存の追跡番号を返す</td>
+<td style="text-align: left;">同じコマンド ID の確定要求は予約を重複生成せず、既存の追跡番号を返す。同じコマンド ID で内容（業務番号・見積り番号・操作者）が違えば衝突として拒否する。確定に成功した要求だけを処理済みコマンドに記録する（Bolt 24）</td>
 <td style="text-align: left;">US-04、PV-01</td>
 </tr>
 <tr>
@@ -9566,7 +9588,7 @@
 </tr>
 <tr>
 <td style="text-align: left;">B-INV-11</td>
-<td style="text-align: left;">1 つの見積りから確定できる貨物予約は 1 件だけ。別のコマンド ID・別の利用者による同時の確定でも 2 件目は拒否する（予約版の見積り ID の一意制約）</td>
+<td style="text-align: left;">1 つの見積りから確定できる貨物予約は 1 件だけ。別のコマンド ID・別の利用者による同時の確定でも 2 件目は拒否し、既存の追跡番号を示す（貨物予約の見積り ID の一意制約。予約版ではなく貨物予約に置く。Bolt 23 レビュー）</td>
 <td style="text-align: left;">PV-01（重複予約 0 件）、US-04</td>
 </tr>
 <tr>
@@ -9594,6 +9616,11 @@
 <td style="text-align: left;">追跡番号の発行</td>
 <td style="text-align: left;">TrackingNumberIssuer</td>
 <td style="text-align: left;">推測されにくい一意な追跡番号を発行する（ファクトリ）</td>
+</tr>
+<tr>
+<td style="text-align: left;">確定の判定の順序</td>
+<td style="text-align: left;">BookingCommandService</td>
+<td style="text-align: left;">役割（B-INV-10）→ 処理済みコマンド（B-INV-03。内容が同じなら最初の結果、違えば衝突）→ 業務番号と見積り番号で引いた同じ見積りの貨物予約（B-INV-11。既存の追跡番号）→ 見積りの公開 API の照会（commit 時刻。B-INV-02・05）→ 確定条件（B-INV-01）の順に判定する。確定の後に見積りが失効・置換されても、再送と同じ見積りの確定は失効にしない。同時の確定で一意制約に負けた側は、保存をセーブポイントに戻し、同じトランザクションで読み直して同じ結果を返す（Bolt 24）</td>
 </tr>
 </tbody>
 </table>
@@ -10309,7 +10336,7 @@
 <tr>
 <td style="text-align: left;">予約</td>
 <td style="text-align: left;">貨物予約リポジトリ</td>
-<td style="text-align: left;">ID・追跡番号で取得、コマンド ID で確定結果を取得、期待版で保存</td>
+<td style="text-align: left;">ID・追跡番号で取得、コマンド ID で確定結果（処理済みコマンド）を取得、業務番号と見積り番号で追跡番号を取得、処理済みコマンドを貨物予約と同じトランザクションで記録、期待版で保存（Bolt 24）</td>
 </tr>
 <tr>
 <td style="text-align: left;">追跡</td>
