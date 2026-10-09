@@ -42,6 +42,8 @@ const BOLT_ISSUES = {
   'bolt-19': 8,
   'bolt-20': 5,
   'bolt-21': 9,
+  'bolt-23b': 10,
+  'bolt-24': 10,
 };
 
 /** 添付したコメントの目印。同じ Bolt を同じ Issue に 2 回添付しない。 */
@@ -160,8 +162,9 @@ function alreadyAttached(bolt, issue) {
  * @returns {string} 結果（attached・skipped・dry-run）
  */
 function attach(bolt, issue, dryRun) {
-  if (!/^bolt-\d+$/.test(bolt || '')) {
-    throw new Error('DEMO_BOLT に Bolt を bolt-19 の形で指定してください');
+  // 分けた Bolt は末尾に英小文字を 1 つ付ける（例: bolt-23b。Bolt 23 から画面を分けた）
+  if (!/^bolt-\d+[a-z]?$/.test(bolt || '')) {
+    throw new Error('DEMO_BOLT に Bolt を bolt-19（分けた Bolt は bolt-23b）の形で指定してください');
   }
   if (!/^\d+$/.test(String(issue || ''))) {
     throw new Error('DEMO_ISSUE に Issue の番号を指定してください');
