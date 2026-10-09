@@ -6,17 +6,17 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="4 回目の Bolt の終了報告。業務番号の採番、提出の検証とエラー要約、画面と KPI 一覧から UUID を消した成果、デモ項目、指標、仮説 H1〜H3 の結論、既知の課題、ふりかえり、承認待ちの書き換えをまとめる。">
+        <meta name="description" content="25b 回目の Bolt の終了報告。営業のナビの「予約」の準備中の画面を S-10 予約一覧の最小の表示に置き換え、確定の後に S-24 へ戻れるようにした。予約の要約と予約サガの状態を 2 本の照会で引き、追跡の開始の表示を UI 設計の共通部品にそろえた。/goal で止まらなかった承認ゲート、開発レビューの対応、人に諮る論点、既知の課題を記録する。">
       
       
         <meta name="author" content="k2works">
       
       
       
-        <link rel="prev" href="../bolt_04_plan/">
+        <link rel="prev" href="../bolt_25b_plan/">
       
       
-        <link rel="next" href="../bolt_05_plan/">
+        <link rel="next" href="../../../operation/">
       
       
         
@@ -27,7 +27,7 @@
     
     
       
-        <title>Bolt 4 終了報告 - 業務番号と必須条件の検証（US-01 AC1・AC2・AC4） - 実践ドメイン駆動設計 in エンタープライズアプリケーション</title>
+        <title>Bolt 25b 終了報告 - S-10 予約一覧の最小の表示（S-24 へ戻る入口） - 実践ドメイン駆動設計 in エンタープライズアプリケーション</title>
       
     
     
@@ -78,7 +78,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#bolt-4-us-01-ac1ac2ac4" class="md-skip">
+        <a href="#bolt-25b-s-10-s-24" class="md-skip">
           Skip to content
         </a>
       
@@ -112,7 +112,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Bolt 4 終了報告 - 業務番号と必須条件の検証（US-01 AC1・AC2・AC4）
+              Bolt 25b 終了報告 - S-10 予約一覧の最小の表示（S-24 へ戻る入口）
             
           </span>
         </div>
@@ -2181,44 +2181,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Bolt 4 終了報告
-  
-
-    
-  </span>
-  
-  
-    
-  
-  
-    <span class="md-status md-status--stable"></span>
-  
-
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../bolt_04_report/" class="md-nav__link">
         
   
   
@@ -2241,214 +2207,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#_1" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        基本情報
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#_2" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        成果
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="成果">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#_3" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        デモ項目の結果
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#_4" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        指標
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#_5" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        品質ゲート
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#_6" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        仮説の結論
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#_7" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        判断と学び
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="判断と学び">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#_8" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        設計への反映（反映済み）
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#_9" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        既知の課題
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#bolt-3-try" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Bolt 3 の Try の結果
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#kpt" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        ふりかえり（KPT）
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#_10" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        レビューとクローズ
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#_11" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        承認待ちの書き換え
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#bolt" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        次の Bolt
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#_12" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        更新履歴
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#_13" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        関連ドキュメント
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -3998,10 +3756,44 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../bolt_25b_report/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 25b 終了報告
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--draft"></span>
+  
+
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -4024,6 +3816,181 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#t-36" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        承認の議題（T-36。先に確かめてほしいこと）
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        基本情報
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        成果
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="成果">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ステップの結果
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        作ったもの
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        デモ項目
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_6" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        指標
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_7" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        品質ゲート
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_8" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        仮説の結論
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_9" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        開発レビュー
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_10" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        判断と学び
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="判断と学び">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#bolt" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        既知の課題（後の Bolt に持ち込む）
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#kpt" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ふりかえり（KPT）
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -8395,7 +8362,39 @@
   
 
 
-<h1 id="bolt-4-us-01-ac1ac2ac4">Bolt 4 終了報告 - 業務番号と必須条件の検証（US-01 AC1・AC2・AC4）<a class="headerlink" href="#bolt-4-us-01-ac1ac2ac4" title="Permanent link">&para;</a></h1>
+<h1 id="bolt-25b-s-10-s-24">Bolt 25b 終了報告 - S-10 予約一覧の最小の表示（S-24 へ戻る入口）<a class="headerlink" href="#bolt-25b-s-10-s-24" title="Permanent link">&para;</a></h1>
+<h2 id="t-36">承認の議題（T-36。先に確かめてほしいこと）<a class="headerlink" href="#t-36" title="Permanent link">&para;</a></h2>
+<p>計画は人が承認した（2026-10-09）。ステップ 1 の画面のゲートの後に、人の指示（<code>/goal Bolt 25b</code>）で承認ゲートで止まらずに進めた。</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">#</th>
+<th style="text-align: left;">確かめてほしいこと</th>
+<th style="text-align: left;">AI の判断の根拠</th>
+<th style="text-align: left;">見る場所</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">1</td>
+<td style="text-align: left;"><strong>画面・Red／Green（照会）・開発レビューの判断のゲート</strong>（ステップ 1〜4）</td>
+<td style="text-align: left;">画面の構成と文言、照会の置き場所と引き方は、計画の確認ポイントの決定（2026-10-09 承認）のとおり</td>
+<td style="text-align: left;">計画のステップ 1〜4 の結果</td>
+</tr>
+<tr>
+<td style="text-align: left;">2</td>
+<td style="text-align: left;"><strong>人の判断が要る（U-3）</strong>: 幅 320 CSS px では、確定時刻の列（「2026-10-08 09:30 Asia/Tokyo（UTC+09:00）（UTC 2026-10-08 00:30）」）が折り返して行が高くなり、一覧を目で追いにくい。横スクロールは出ない。(a) 一覧の行だけ短い表記（「2026-10-08 09:30」）にし、S-24 で完全な表記を示す（社内の日時表示の部品に短い表記を足す。UI 設計の日時表示の決まりを変える）、(b) 今のまま（社内の画面の日時の表記は 1 つ）、のどちらにするかを決めてほしい</td>
+<td style="text-align: left;">日時表示の部品は Bolt 22 で <code>platform</code> に集めた共通の部品で、変えると社内の画面すべてに及ぶので、この Bolt では変えなかった</td>
+<td style="text-align: left;"><code>list.html</code>、ui_design.md の日時表示</td>
+</tr>
+<tr>
+<td style="text-align: left;">3</td>
+<td style="text-align: left;">計画からの変更: 画面の単体テストの Red は、実装を書いた後に実装を外して確かめた（Gradle が画面の層の実行で使えない間に実装まで進めたため。T-39 の記録）</td>
+<td style="text-align: left;">テストは実装の前に書いていた</td>
+<td style="text-align: left;">計画のステップ 1 の結果</td>
+</tr>
+</tbody>
+</table>
 <h2 id="_1">基本情報<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
@@ -8407,118 +8406,86 @@
 <tbody>
 <tr>
 <td style="text-align: left;">Bolt</td>
-<td style="text-align: left;">第 4 回</td>
+<td style="text-align: left;">第 25b 回（Bolt 25 から分けた）</td>
 </tr>
 <tr>
 <td style="text-align: left;">期間</td>
-<td style="text-align: left;">2026-10-02 11:19 JST（計画の承認のコミット <code>207ecfc</code>）〜 15:55 JST（終了報告のコミット <code>474972a</code>）、4 時間 36 分。この時間には、ステップごとの承認ゲート 5 回と、途中の人の判断 1 回の待ち時間を含む。AI の実行時間だけを分けては測っていない</td>
+<td style="text-align: left;">2026-10-09（計画の初版 <code>5609016</code>）〜 本報告</td>
 </tr>
 <tr>
 <td style="text-align: left;">対象</td>
-<td style="text-align: left;">U1 輸送要求・見積り。US-01 輸送条件を提出する（R0.1: AC1・AC2・AC4）。AC2 のうち必要書類は次の Bolt</td>
-</tr>
-<tr>
-<td style="text-align: left;">計画</td>
-<td style="text-align: left;"><a href="../bolt_04_plan/">Bolt 4 計画</a></td>
+<td style="text-align: left;"><code>booking</code>（S-10・S-24、貨物予約リポジトリと予約サガのリポジトリの照会）、<code>identity</code>（準備中の画面の営業の処理を消した）</td>
 </tr>
 <tr>
 <td style="text-align: left;">GitHub</td>
-<td style="text-align: left;"><a href="https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/2">#2 [US-01] 輸送条件を提出する（R0.1: AC1・AC2・AC4）</a>。AC2 の必要書類が残るため閉じない</td>
+<td style="text-align: left;">Issue なし（SP 0。Bolt 23b の開発レビュー U-1 を返した）。受入動画は #10 に添付する</td>
 </tr>
 <tr>
-<td style="text-align: left;">ゴール</td>
-<td style="text-align: left;">必須条件（荷受人、出発地、目的地、希望到着期限、貨物）を入れた見積依頼を提出すると業務番号 <code>TR-年-連番</code> が振られて画面に示され、不足・誤り・特殊貨物は理由と直し方を示して受け付けない。荷主の画面と社内の KPI 計測記録の一覧から UUID を消す</td>
-</tr>
-<tr>
-<td style="text-align: left;">進め方</td>
-<td style="text-align: left;">計画と確認ポイント 1〜5 の承認の後、ステップごとに承認ゲートを通した（標準の密度）。ステップ 5 の途中で、選択の欄の部品を人が決めた</td>
+<td style="text-align: left;">計画</td>
+<td style="text-align: left;"><a href="../bolt_25b_plan/">Bolt 25b 計画</a></td>
 </tr>
 </tbody>
 </table>
 <h2 id="_2">成果<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h2>
+<h3 id="_3">ステップの結果<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
 <tr>
 <th style="text-align: left;">ステップ</th>
-<th style="text-align: left;">状態</th>
+<th style="text-align: left;">結果</th>
 <th style="text-align: left;">コミット</th>
-<th style="text-align: left;">誤りの検出と修正（検出の手段）</th>
+<th style="text-align: left;">備考</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td style="text-align: left;">1. 決定を設計文書に反映する</td>
+<td style="text-align: left;">1. 画面の層の受入シナリオと画面</td>
 <td style="text-align: left;">完了</td>
-<td style="text-align: left;"><code>3c7cc38</code></td>
-<td style="text-align: left;">承認した計画の採番の手順（同じトランザクションで INSERT し、一意制約の違反ならやり直す）は、PostgreSQL ではトランザクションが使えなくなるため成り立たないと分かった。年の行を別のトランザクションで用意する手順に直した（設計文書を書く段階での見直し）</td>
+<td style="text-align: left;"><code>30cb16e</code></td>
+<td style="text-align: left;">画面の層のシナリオ 2 本を先に書き、骨組みで Red</td>
 </tr>
 <tr>
-<td style="text-align: left;">2. 受入シナリオを書く（Red）</td>
+<td style="text-align: left;">2. 一覧の照会</td>
 <td style="text-align: left;">完了</td>
-<td style="text-align: left;"><code>eb950f6</code></td>
-<td style="text-align: left;">Red はアサーションでなく、まだない入力ポートを呼ぶコンパイルエラーになった。開発戦略の序盤のワークフローに合わせて、完了の判定を読み替えた</td>
+<td style="text-align: left;"><code>2f91a46</code></td>
+<td style="text-align: left;">Red 4 件 → Green</td>
 </tr>
 <tr>
-<td style="text-align: left;">3. アプリケーションとドメイン</td>
+<td style="text-align: left;">3. 永続化</td>
 <td style="text-align: left;">完了</td>
-<td style="text-align: left;"><code>ffa7bff</code></td>
-<td style="text-align: left;">テストのメソッド名の「・」が識別子に使えずコンパイルエラー。DE-01 に足す業務番号を、イベントの進化の規則（null を許す部品の追加だけ）に合わせ、KPI 計測記録の列も null を許すように変えた（人が承認）</td>
+<td style="text-align: left;"><code>2f91a46</code></td>
+<td style="text-align: left;">照会は 2 本（要約と予約サガの状態）</td>
 </tr>
 <tr>
-<td style="text-align: left;">4. 永続化と採番</td>
+<td style="text-align: left;">4. 開発レビューと終了報告</td>
 <td style="text-align: left;">完了</td>
-<td style="text-align: left;"><code>87ea1db</code></td>
-<td style="text-align: left;">採番の表の <code>year</code> が H2 の予約語でマイグレーションが失敗した（H2 のスモーク）。共有のコンテナで、ほかのテストが確定した <code>TR-2026-0001</code> と番号がぶつかった（統合テスト。テストごとに年を分けた）</td>
-</tr>
-<tr>
-<td style="text-align: left;">5. 画面</td>
-<td style="text-align: left;">完了</td>
-<td style="text-align: left;"><code>473ec0e</code></td>
-<td style="text-align: left;">選択の欄の ↓ キーが macOS の Chromium では値を変えなかった（<code>@ui</code>。人の決定でラジオボタンにした）。<code>application.properties</code> が ISO-8859-1 で読まれ、仮の荷受人の名前が文字化けした（<code>@ui</code> の失敗画面）。MockMvc の <code>param</code> が値を足していた（Web テスト）。Playwright が <code>aria-disabled</code> のボタンのクリックを待ち続けた、送信の途中で axe-core を注入しようとした（<code>@ui</code>）</td>
-</tr>
-<tr>
-<td style="text-align: left;">6. 検証と終了報告</td>
-<td style="text-align: left;">完了（2026-10-02 に人が承認。変更依頼 0）</td>
-<td style="text-align: left;"><code>bbe23d0</code>、本報告</td>
-<td style="text-align: left;">SonarQube の品質ゲートが新しいコードの指摘 5 件で不合格。直した後も、整形ツール（record のパターンの <code>_</code> を読めない）と SonarQube（型付きの <code>_</code> を不要と指摘）がぶつかり、さらに 2 回直した</td>
+<td style="text-align: left;">本報告のコミット</td>
+<td style="text-align: left;">2 つの観点のレビュー、SonarQube、受入動画</td>
 </tr>
 </tbody>
 </table>
-<p>打ち切りの線（画面に固有の <code>@ui</code> 2 本を次の Bolt へ）は使わなかった。</p>
-<h3 id="_3">デモ項目の結果<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h3>
+<h3 id="_4">作ったもの<a class="headerlink" href="#_4" title="Permanent link">&para;</a></h3>
+<ul>
+<li>S-10 予約一覧の最小の表示（<code>GET /staff/bookings</code>）: 確定した予約を確定時刻の新しい順（同じ時刻は追跡番号の順）に最大 50 件。追跡番号・見積り・確定時刻・追跡の開始。予約がないとき・50 件を超えたときの文言。営業のナビの「予約」の準備中の画面を置き換えた</li>
+<li>S-24: 「予約一覧」「見積依頼の受付一覧」へのリンク（来た道によらない行き先の名前）。追跡の開始は「処理中」「完了」「有人確認要（担当者が確認します）」で、失敗は「処理中」と示し、更新の案内を出す（UI 設計の共通部品「処理中表示」）</li>
+<li>照会: 予約の要約（<code>BookingSummary</code>。予約の表だけ）を新しい順に上限まで、予約サガの状態を予約 ID の集合でまとめて引く（2 本。N+1 にしない）</li>
+</ul>
+<h3 id="_5">デモ項目<a class="headerlink" href="#_5" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
 <tr>
-<th style="text-align: left;">#</th>
-<th style="text-align: left;">デモ</th>
-<th style="text-align: left;">結果</th>
+<th style="text-align: left;">デモ項目</th>
+<th style="text-align: left;">動画</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td style="text-align: left;">1</td>
-<td style="text-align: left;"><code>bootRun</code> で見積依頼を提出する</td>
-<td style="text-align: left;">手順書どおり H2 で起動し、2 回の提出が <code>TR-2026-0001</code>、<code>TR-2026-0002</code> の完了画面にリダイレクトされた。完了画面に <code>TR-2026-0001 版 1</code>、審査中、<code>Asia/Tokyo（UTC+09:00）</code> の提出時刻が出て、KPI 計測記録の一覧に両方の業務番号が出た</td>
-</tr>
-<tr>
-<td style="text-align: left;">2</td>
-<td style="text-align: left;">出発地と目的地を同じにし、希望到着期限を空にして提出する</td>
-<td style="text-align: left;"><code>@ui</code> で、エラー要約にフォーカスが移り 2 件が示され、入力が残り、要約のリンクから目的地へ移って直し提出できることを確かめた。<strong>支援技術（VoiceOver）による手動確認は人の作業として残っている</strong></td>
-</tr>
-<tr>
-<td style="text-align: left;">3</td>
-<td style="text-align: left;">貨物種別を冷凍にする</td>
-<td style="text-align: left;"><code>@ui</code> で、対象外と営業窓口への相談が示され、提出ボタンが <code>aria-disabled</code> で理由が関連付き、押してもエラー要約に貨物種別の誤りが出て提出されないことを確かめた</td>
-</tr>
-<tr>
-<td style="text-align: left;">4</td>
-<td style="text-align: left;"><code>./gradlew uiTest</code></td>
-<td style="text-align: left;">画面の層のシナリオ 5 本が通り、axe-core の違反は 0 件</td>
+<td style="text-align: left;">営業担当者が本予約を確定し、受付一覧へ戻ってから営業のナビの「予約」を開くと、確定した予約が一覧の先頭に出て、追跡番号のリンクで S-24 を開ける（<code>@demo-bolt-25b/booking-list</code>）</td>
+<td style="text-align: left;"><a href="../../../assets/demo/bolt-25b/booking-list.webm" target="_blank">動画</a></td>
 </tr>
 </tbody>
 </table>
-<p>デモの動画（2026-10-05 にいまのコードで撮った。その Bolt で作った機能のいまの振る舞いを示す）: <a href="../../../assets/demo/bolt-04/submit-with-number.webm" target="_blank">submit-with-number</a>、<a href="../../../assets/demo/bolt-04/error-summary.webm" target="_blank">error-summary</a>、<a href="../../../assets/demo/bolt-04/special-cargo.webm" target="_blank">special-cargo</a></p>
-<h2 id="_4">指標<a class="headerlink" href="#_4" title="Permanent link">&para;</a></h2>
+<h2 id="_6">指標<a class="headerlink" href="#_6" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
 <tr>
@@ -8528,276 +8495,167 @@
 </thead>
 <tbody>
 <tr>
-<td style="text-align: left;">承認ゲート</td>
-<td style="text-align: left;">計画と確認ポイント 1〜5 の承認 1 回、ステップ 1〜5 の承認 5 回。途中の人の判断 1 回（選択の欄をラジオボタンにする）。ステップ 6 は本報告の承認で受けた</td>
+<td style="text-align: left;">テスト</td>
+<td style="text-align: left;"><code>uiTest</code> 67 本（+2）。照会のサービスの単体テスト 6 件・画面の単体テスト 9 件・統合テスト 2 件を足した</td>
+</tr>
+<tr>
+<td style="text-align: left;">承認ゲートの通過</td>
+<td style="text-align: left;">計画の承認 1 回（人）、画面のゲートの手前まで。以後は <code>/goal</code> で止まらなかった（議題 1）</td>
 </tr>
 <tr>
 <td style="text-align: left;">人の変更依頼</td>
-<td style="text-align: left;">0（計画からの変更は、ステップ 3 の KPI 計測記録の列と、ステップ 5 のラジオボタンの 2 件。どちらも AI が理由を示して人が承認・決定した）</td>
-</tr>
-<tr>
-<td style="text-align: left;">実行中に AI が直した誤り</td>
-<td style="text-align: left;">11（設計の手順 1、コンパイル 1、H2 の予約語 1、テストの番号の衝突 1、OS の差 1、文字コード 1、テストの書き方 2、axe-core の検査の時期 1、SonarQube の指摘と整形ツールの衝突 2）</td>
-</tr>
-<tr>
-<td style="text-align: left;">リードタイム</td>
-<td style="text-align: left;">4 時間 36 分（承認の待ちを含む。Bolt 4 レビュー R-12 で数え直した）。計画の目安 230 分を超えたかは、待ち時間を分けて測っていないため判断できない</td>
-</tr>
-<tr>
-<td style="text-align: left;">CI</td>
-<td style="text-align: left;">ステップ 5（<code>473ec0e</code>）は <code>check</code> 2 分 0 秒、<code>ui</code> 2 分 16 秒、ステップ 6 の修正（<code>bbe23d0</code>）は <code>check</code> 1 分 41 秒、<code>ui</code> 2 分 19 秒で緑。ステップ 3・4 はビルドが通らない間（ステップ 3）と <code>ui</code> が赤になる間（ステップ 4）push を止めた</td>
-</tr>
-<tr>
-<td style="text-align: left;">テスト</td>
-<td style="text-align: left;"><code>test</code> 154 件（Bolt 3 の 74 件から +80。業務ルール層のシナリオ 26 本を含む）、<code>documentationTest</code> 1 件、<code>uiTest</code> の画面の層のシナリオ 5 本。すべて成功</td>
-</tr>
-<tr>
-<td style="text-align: left;">SonarQube</td>
-<td style="text-align: left;">Quality Gate PASS（コマンドの成否で判定。終了コード 0）、Bug 0、Vulnerability 0、Code Smell 0、Security Hotspot 0、重複 0.9%、カバレッジ 95.9%</td>
-</tr>
-<tr>
-<td style="text-align: left;">コード</td>
-<td style="text-align: left;">本体 2,086 行（Bolt 3 の 1,096 行から +990）、テスト 3,286 行（1,905 行から +1,381）</td>
+<td style="text-align: left;">0（この Bolt の範囲。並行して、人の指示で開発用ログインの守りの置き場所と package-info の説明を直した）</td>
 </tr>
 </tbody>
 </table>
-<h2 id="_5">品質ゲート<a class="headerlink" href="#_5" title="Permanent link">&para;</a></h2>
+<h2 id="_7">品質ゲート<a class="headerlink" href="#_7" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
 <tr>
-<th style="text-align: left;">項目</th>
+<th style="text-align: left;">ゲート</th>
 <th style="text-align: left;">結果</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td style="text-align: left;">全テスト</td>
-<td style="text-align: left;"><code>check</code>（154 件）、<code>uiTest</code>（5 シナリオ）、すべて成功</td>
+<td style="text-align: left;"><code>check</code>・<code>documentationTest</code></td>
+<td style="text-align: left;">通過</td>
 </tr>
 <tr>
-<td style="text-align: left;">書式・静的解析・本番の依存・カバレッジの閾値・用語集の整合</td>
-<td style="text-align: left;">すべて成功</td>
+<td style="text-align: left;"><code>uiTest</code>（axe-core を含む）</td>
+<td style="text-align: left;">通過（67 本）</td>
 </tr>
 <tr>
-<td style="text-align: left;">CI</td>
-<td style="text-align: left;">緑（<code>check</code>・<code>ui</code>、最新のコード <code>bbe23d0</code>）</td>
+<td style="text-align: left;">ModularityTest・ArchUnit・AT-04</td>
+<td style="text-align: left;">通過</td>
 </tr>
 <tr>
-<td style="text-align: left;">SonarQube の品質ゲート</td>
-<td style="text-align: left;">PASS（コマンドの成否で判定）</td>
+<td style="text-align: left;">SonarQube（ローカル）</td>
+<td style="text-align: left;">品質ゲート PASS（新しいコードのカバレッジ 96.7%、重複 0.2%、新しい指摘 0 件）。最初は新しい指摘 1 件（開発用ログインの定数と欄の名前の紛らわしさ。S1845）で FAIL だったので直した</td>
 </tr>
 <tr>
-<td style="text-align: left;">ユーザーマニュアル</td>
-<td style="text-align: left;">対象外（マニュアルはまだない。画面は UI の骨格（#36）の前の仮の画面）</td>
+<td style="text-align: left;"><code>okf:check</code></td>
+<td style="text-align: left;">ERROR 0</td>
 </tr>
 </tbody>
 </table>
-<h2 id="_6">仮説の結論<a class="headerlink" href="#_6" title="Permanent link">&para;</a></h2>
+<h2 id="_8">仮説の結論<a class="headerlink" href="#_8" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
 <tr>
 <th style="text-align: left;">#</th>
 <th style="text-align: left;">仮説</th>
 <th style="text-align: left;">結論</th>
-<th style="text-align: left;">根拠</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td style="text-align: left;">H1</td>
-<td style="text-align: left;">年ごとのカウンター表を H2 と PostgreSQL の共通の SQL で更新すれば、同時に提出しても業務番号が重複も欠番もせずに振られる</td>
-<td style="text-align: left;">成り立った（手順を直して）</td>
-<td style="text-align: left;">年の最初の採番を 8 スレッドで同時に行っても 1〜8 が重複なく振られ、ロールバックしても欠番が出なかった（3 回続けて通った）。ただし、計画の「同じトランザクションで INSERT して違反ならやり直す」手順は PostgreSQL では成り立たず、年の行を別のトランザクションで用意する手順にした</td>
-</tr>
-<tr>
-<td style="text-align: left;">H2</td>
-<td style="text-align: left;">提出の検証の結果をドメインの戻り値で表せば、画面のエラー要約と業務ルール層の受入シナリオが同じ規則を共有できる</td>
-<td style="text-align: left;">成り立った</td>
-<td style="text-align: left;">ドメインは項目と理由の種類だけを返し、業務ルール層のシナリオはそれを、画面の層は文言を確かめた。形式の誤り（UN/LOCODE・日時・数値）は画面の層に残した。形式の誤りがあると業務の規則の違反は出さないため、2 段階で直す場合がある（既知の課題）</td>
-</tr>
-<tr>
-<td style="text-align: left;">H3</td>
-<td style="text-align: left;">受入条件の番号を付けた業務ルール層のシナリオを外側のループにし、画面の層は主成功と画面に固有の条件だけにする構成で、業務のストーリーが回る</td>
-<td style="text-align: left;">成り立った</td>
-<td style="text-align: left;">業務ルール層 26 本（<code>@US-01-AC1</code>・<code>AC2</code>・<code>AC4</code>）と画面の層 5 本で、受入条件を両方の層に重ねずに済んだ。画面の層は実際の時計で動くため、業務番号の値は決め打ちせず、形式と画面の間で同じであることを確かめた</td>
+<td style="text-align: left;">一覧は予約の要約と予約サガの状態の 2 本の照会で引け、N+1 にならない</td>
+<td style="text-align: left;">成り立った。照会のサービスの単体テストで、予約が 3 件でも要約と状態の照会がそれぞれ 1 回であることを確かめた。マッパーの一覧の select は 2 つ</td>
 </tr>
 </tbody>
 </table>
-<h2 id="_7">判断と学び<a class="headerlink" href="#_7" title="Permanent link">&para;</a></h2>
-<h3 id="_8">設計への反映（反映済み）<a class="headerlink" href="#_8" title="Permanent link">&para;</a></h3>
+<h2 id="_9">開発レビュー<a class="headerlink" href="#_9" title="Permanent link">&para;</a></h2>
+<p>プログラマー（テスター・アーキテクトの観点を含む）とインタラクションデザイナー（ユーザー代表の観点を含む）の 2 つの観点で行った（時間を詰めるため、Bolt 25 の 3 つの観点をまとめた）。</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">#</th>
+<th style="text-align: left;">指摘</th>
+<th style="text-align: left;">重大度</th>
+<th style="text-align: left;">対応</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">P-1</td>
+<td style="text-align: left;">上限ちょうど 50 件の境界のテストがない。51 件で最も古い予約が含まれないことを確かめていない</td>
+<td style="text-align: left;">中</td>
+<td style="text-align: left;">直した（今の実装で最初から通った）</td>
+</tr>
+<tr>
+<td style="text-align: left;">P-2</td>
+<td style="text-align: left;">上限の 50 が定数とテンプレートに重なる</td>
+<td style="text-align: left;">中</td>
+<td style="text-align: left;">直した（照会の結果に上限を持たせ、文言に差し込む）</td>
+</tr>
+<tr>
+<td style="text-align: left;">P-3</td>
+<td style="text-align: left;">失敗を「処理中」と示すのに、S-24 の更新の案内が出ない</td>
+<td style="text-align: left;">中</td>
+<td style="text-align: left;">直した（失敗も案内を出す）</td>
+</tr>
+<tr>
+<td style="text-align: left;">U-2</td>
+<td style="text-align: left;">S-24 の「予約一覧へ戻る」は、確定の直後には来た道と合わない</td>
+<td style="text-align: left;">中</td>
+<td style="text-align: left;">直した（「予約一覧」「見積依頼の受付一覧」）</td>
+</tr>
+<tr>
+<td style="text-align: left;">U-1</td>
+<td style="text-align: left;">配下の画面（S-24）のナビの <code>aria-current="page"</code> は、押すと別のページへ移る</td>
+<td style="text-align: left;">中</td>
+<td style="text-align: left;">後に回す（営業のナビの全体にかかわる。既知の課題）</td>
+</tr>
+<tr>
+<td style="text-align: left;">U-3</td>
+<td style="text-align: left;">幅 320 CSS px で確定時刻の列が読みにくい</td>
+<td style="text-align: left;">中</td>
+<td style="text-align: left;">人に諮る（議題 2）</td>
+</tr>
+<tr>
+<td style="text-align: left;">P-4</td>
+<td style="text-align: left;">予約サガがないときの例外の文言が 2 か所</td>
+<td style="text-align: left;">低</td>
+<td style="text-align: left;">直した</td>
+</tr>
+<tr>
+<td style="text-align: left;">P-5</td>
+<td style="text-align: left;">予約 0 件の照会のサービスの単体テストがない</td>
+<td style="text-align: left;">低</td>
+<td style="text-align: left;">直した</td>
+</tr>
+<tr>
+<td style="text-align: left;">P-6</td>
+<td style="text-align: left;">追跡番号の副キーの並びの前提（文字コード順）がコードにない</td>
+<td style="text-align: left;">低</td>
+<td style="text-align: left;">直した（マッパーに注記）</td>
+</tr>
+<tr>
+<td style="text-align: left;">U-4</td>
+<td style="text-align: left;">予約がないときの次の行動がない</td>
+<td style="text-align: left;">低</td>
+<td style="text-align: left;">直した（受付一覧の「予約の確定待ち」から確定できる案内とリンク）</td>
+</tr>
+<tr>
+<td style="text-align: left;">P-7 / U-5 / U-6</td>
+<td style="text-align: left;">上限の事前条件、51 件目より古い予約の探し方、有人確認要の受付番号</td>
+<td style="text-align: left;">低</td>
+<td style="text-align: left;">後に回す（U-5 は W11、U-6 は W8）</td>
+</tr>
+</tbody>
+</table>
+<h2 id="_10">判断と学び<a class="headerlink" href="#_10" title="Permanent link">&para;</a></h2>
+<h3 id="bolt">既知の課題（後の Bolt に持ち込む）<a class="headerlink" href="#bolt" title="Permanent link">&para;</a></h3>
 <ul>
-<li>D-10: ドメインモデルの用語集（業務番号、業務番号の採番、輸送条件の入力、提出の検証結果、貨物、荷姿）、Q-INV-12（期限の境界と数量の値）、Q-INV-13（業務番号を変えない・重複させない）、DE-01 の表示用の業務番号</li>
-<li>データモデル: 業務番号の列と一意制約、年ごとの採番の表（<code>number_year</code>。<code>year</code> は H2 の予約語）と採番の手順、KPI 計測記録の業務番号の列（null を許す）</li>
-<li>ユーザーストーリー: US-01 の決定（D-10、期限の境界、AC2 をこの Bolt でどう読むか）</li>
-<li>UI 設計: C-03 の Bolt 4 の形（1 画面、ラジオボタン、希望到着期限のテキスト入力）、完了画面の URL のキーを業務番号にすること</li>
-<li>手順書: 完了画面の UUID の負債の記述を消し、仮の荷受人の設定を書いた</li>
-<li>前提の違い（R-09）: マイグレーションは「既存の行はない」前提で列を <code>NOT NULL</code> で足した（行があるのはローカルの H2 と Testcontainers だけで、どちらも起動のたびに作り直す。作り直しの手順は要らない）。一方、DE-01 と KPI 計測記録の業務番号は、イベントの進化の規則に従い「業務番号のない古いイベントがある」前提で null を許す。後者は、発行記録に残った未完了のイベントを再配信する場合に備えるためである</li>
+<li><strong>W11（S-10 の本体）</strong>: 絞り込み・ページ送り（51 件目より古い予約）、荷主での探し方、取消の後の「確定した予約」の定義と並び、確定時刻の索引、読み取りモデルの置き場所（<code>valueobjects</code> の外に分けるか、ADR にするか）</li>
+<li><strong>W8</strong>: 失敗・有人確認要の表示（受付番号、一覧では「有人確認要」だけにする）。失敗は W8 まで「処理中」と見える</li>
+<li><strong>社内の画面の共通の部品</strong>: 配下の画面のナビの <code>aria-current</code>（U-1）</li>
+<li><strong>画面の層の前提</strong>: 「一覧の先頭に確定した予約」は、シナリオを逐次に実行し、確定時刻が実時間で増えることを前提にしている（並列にすると壊れる）</li>
 </ul>
-<h3 id="_9">既知の課題<a class="headerlink" href="#_9" title="Permanent link">&para;</a></h3>
-<table>
-<thead>
-<tr>
-<th style="text-align: left;">課題</th>
-<th style="text-align: left;">影響</th>
-<th style="text-align: left;">扱い</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align: left;">AC2 の必要書類がまだない（Q-INV-01 の一部）</td>
-<td style="text-align: left;">#2 を閉じられない。AC2 は完了していない</td>
-<td style="text-align: left;">次の Bolt で、ファイルの保存（ローカルのファイルシステムのアダプター）と合わせて入れる</td>
-</tr>
-<tr>
-<td style="text-align: left;">受入条件の数との照合（テスト戦略、Bolt 2 R-17）がまだない</td>
-<td style="text-align: left;">受入条件のシナリオの抜けを機械で検出できない</td>
-<td style="text-align: left;">次の Bolt。必要書類を入れて AC2 を完了させるときに入れる</td>
-</tr>
-<tr>
-<td style="text-align: left;">形式の誤りがあると、業務の規則の違反は出さない</td>
-<td style="text-align: left;">形式を直した後に、別の誤りが出ることがある（2 段階）</td>
-<td style="text-align: left;">様子を見る。段階入力（#36）を作るときに見直す</td>
-</tr>
-<tr>
-<td style="text-align: left;">完了画面は業務番号を知っていれば開ける</td>
-<td style="text-align: left;">他社の輸送要求の状態が見えうる（認証がないため、いまは全員が同じ仮の荷主）</td>
-<td style="text-align: left;">US-18（認証）と US-01 AC3（別企業の拒否）の Bolt で確かめる。計画の確認ポイント 5 で承認済み</td>
-</tr>
-<tr>
-<td style="text-align: left;">年の最初の提出では、採番の行を作るために別のトランザクション（もう 1 本の接続）を使う</td>
-<td style="text-align: left;">接続の数が少ない環境で、年の最初の提出が待たされうる</td>
-<td style="text-align: left;">運用準備（W10）の性能テストで確かめる</td>
-</tr>
-<tr>
-<td style="text-align: left;">社内の KPI 計測記録の一覧が UTC だけを表示する</td>
-<td style="text-align: left;">BR-10 と違う（Bolt 3 から継続）</td>
-<td style="text-align: left;">S-22 の本実装で直す</td>
-</tr>
-<tr>
-<td style="text-align: left;">荷受人は設定の仮の一覧（3 社）</td>
-<td style="text-align: left;">実在の荷受人を選べない</td>
-<td style="text-align: left;">US-16（利用者と権限の管理）の Bolt で企業マスターに置き換える</td>
-</tr>
-<tr>
-<td style="text-align: left;">支援技術（VoiceOver）による手動確認</td>
-<td style="text-align: left;">自動の検査（axe-core）では読み上げの順や内容を確かめられない</td>
-<td style="text-align: left;">人がデモ 2 で確かめる（DoD）</td>
-</tr>
-</tbody>
-</table>
-<h3 id="bolt-3-try">Bolt 3 の Try の結果<a class="headerlink" href="#bolt-3-try" title="Permanent link">&para;</a></h3>
-<table>
-<thead>
-<tr>
-<th style="text-align: left;">Try</th>
-<th style="text-align: left;">結果</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align: left;">T-8 品質ゲートを足したら不合格の入力で失敗することを確かめる</td>
-<td style="text-align: left;">実施した。業務番号の一意制約が同じ番号の 2 件目を拒否することを統合テストで確かめた</td>
-</tr>
-<tr>
-<td style="text-align: left;">T-10 設計文書やソースを読むテストを足したら Gradle のタスクの入力に宣言する</td>
-<td style="text-align: left;">対象なし（新しくそうしたテストは足していない）</td>
-</tr>
-<tr>
-<td style="text-align: left;">T-11 検証のコマンドを <code>&amp;&amp;</code> でつなぐとき <code>grep -c</code> を途中に置かない</td>
-<td style="text-align: left;">守った。ただし別の形の誤り（<code>cd</code> の相対パスの誤りで、SonarQube の判定をリポジトリの外で走らせた）が 1 回あった</td>
-</tr>
-<tr>
-<td style="text-align: left;">T-12 権限や設定の保護を足したら、最小の権限で確かめる</td>
-<td style="text-align: left;">実施した。アプリケーション利用者で採番の表を作って更新できることを統合テストで確かめた</td>
-</tr>
-<tr>
-<td style="text-align: left;">T-13 終了報告の時刻は計画の承認と報告のコミットを根拠にする</td>
-<td style="text-align: left;">実施した。ただし承認の待ち時間を分けられないことが分かった</td>
-</tr>
-</tbody>
-</table>
 <h3 id="kpt">ふりかえり（KPT）<a class="headerlink" href="#kpt" title="Permanent link">&para;</a></h3>
 <ul>
-<li><strong>Keep</strong>:</li>
-<li>開始準備の 2 つの検証（詳細・横断）で、重大度「高」の 3 件（イベントにドメインの型を入れる、SQL の方言を分ける、KPI 一覧の UUID）を実装の前に直せた</li>
-<li>ドメインが「項目と理由の種類」だけを返し、文言を画面の層に置いたので、業務ルール層と画面の層のシナリオがそれぞれの関心だけを確かめられた</li>
-<li>画面の部品の選び方（select かラジオボタンか）を、AI が決めずに人に選択肢と理由を示して決めてもらった</li>
-<li><strong>Problem</strong>:</li>
-<li>ステップ 3 で型を変えたため、ステップ 4 まで <code>check</code> が赤、ステップ 5 まで <code>ui</code> が赤になり、2 つのステップの間 push できなかった</li>
-<li>環境の差（H2 の予約語、<code>.properties</code> の文字コード、macOS と Linux の select のキー操作、PostgreSQL のトランザクション中の制約違反）が、実装の後半で次々に見つかった</li>
-<li>承認の待ち時間が報告の時間に混ざり、計画の目安（230 分）と比べられなかった</li>
-<li><strong>Try</strong>:</li>
-<li>T-14: ステップの区切りは、終わりに <code>check</code> が緑になる単位にする。型の変更が層をまたぐときは、永続化の型合わせと SQL を同じステップに入れるか、ステップの順を内側から外側にする（AI、次の Bolt の計画）</li>
-<li>T-15: マイグレーションを書いたら、統合テストより先に H2 のスモークを回す。設定値に ASCII 以外の文字を入れるときは <code>.properties</code> の文字コードを確かめる（AI、すぐ）</li>
-<li>T-16: ステップの開始と完了をコミットのメッセージか計画に時刻で残し、承認の待ち時間と AI の実行時間を分けて測る（AI、次の Bolt）</li>
-<li>T-17: コマンドの <code>cd</code> には絶対パスを使う（AI、すぐ）</li>
-</ul>
-<h2 id="_10">レビューとクローズ<a class="headerlink" href="#_10" title="Permanent link">&para;</a></h2>
-<p><a href="../../../review/cargo-tracker/bolt_04_review_20261002/">Bolt 4 開発成果物レビュー</a> の指摘を、クローズの前に直した（R-01〜R-24。詳細はレビューの「対応結果」）。主なものは次のとおり。</p>
-<ul>
-<li><strong>時計に依存するテスト（R-01）</strong>: 実際の時計で動くテストが固定の期限 <code>2026-11-02</code> の見本を使い、その日を過ぎると落ちる状態だった。見本の期限を 2099 年にした</li>
-<li><strong>他社の番号の照会（R-02）</strong>: 完了画面は業務番号（連番）を URL のキーにしたのに荷主企業で絞っていなかった。リポジトリから画面まで荷主企業で絞り、他社の番号は見つからない（404）ようにした。認証（US-18）では主体を差し替えるだけで済む</li>
-<li><strong>採番の接続の枯渇（R-03、D-13）</strong>: 起動時に今年と来年の年の行を用意し、接続のプールの大きさ（10）を超える 16 本の同時の採番でも止まらないことを確かめた。提出の中の別のトランザクションは、年をまたいで動き続けた場合の予備として残した</li>
-<li><strong>検証と変換の時間的結合（R-04）</strong>: 輸送条件の入力の検証が、輸送条件か違反のどちらかを返す形にした</li>
-<li><strong>文言の網羅（R-06）</strong>: 項目と理由のすべての組で文言を確かめるテストを足し、特殊貨物の文言が「直し方」で終わっていない（「（手動窓口）」で終わる）ことを見つけて直した</li>
-</ul>
-<p>対応の後も、<code>check</code>（235 件）、<code>uiTest</code>（5 シナリオ）、CI（<code>a348f15</code>、<code>check</code>・<code>ui</code>）、SonarQube の品質ゲート（PASS、指摘 0 件、カバレッジ 98.1%）は緑。GitHub の #2 は、AC2 の必要書類が残るため開いたまま In Progress にし、進み具合をコメントした。</p>
-<p>業務責任者に確かめる事項（D-14〜D-20）は、レビューの「人の判断事項」に記録した。必要書類の Bolt の計画の前に、少なくとも D-20（必要書類の扱い）を決める必要がある。</p>
-<h2 id="_11">承認待ちの書き換え<a class="headerlink" href="#_11" title="Permanent link">&para;</a></h2>
-<p>この Bolt で、承認済み（<code>stable</code>）の次の文書の本文を書き換えた。決定の中身は計画と各ステップの承認で人が確かめたが、文言はまとめて確かめてもらう必要がある。</p>
-<ul>
-<li>決定の反映: <code>domain_model.md</code>、<code>data_model.md</code>、<code>user_story.md</code>、<code>ui_design.md</code></li>
-<li>運用の文書: <code>docs/operation/cargo-tracker/application_development_setup.md</code></li>
-<li>計画: <code>bolt_04_plan.md</code>（各ステップの結果と計画からの変更の記録）、<code>release_plan.md</code>（W1 の Bolt 4 のリンク）</li>
-</ul>
-<h2 id="bolt">次の Bolt<a class="headerlink" href="#bolt" title="Permanent link">&para;</a></h2>
-<ul>
-<li><strong>W1 の残り</strong>: US-01 AC2 の必要書類、US-02（審査・差戻し）、#36（UI の骨格と C-03 の段階入力のプロトタイプ）</li>
-<li><strong>必要書類の Bolt の前に人が決めること</strong></li>
-<li>必須とする書類の種類（商業送り状は必須か、梱包明細はどうするか）</li>
-<li>受け付けるファイルの形式とサイズの上限</li>
-<li>US-02 の判断者を仮の利用者で記録するか（Bolt 3 から継続）</li>
-<li><strong>必要書類の Bolt で入れるもの</strong>: ファイルの保存（ローカルのファイルシステムのアダプター、本番は S3）、受入条件の数との照合（Bolt 2 R-17）、T-14〜T-17</li>
-<li><strong>#36 の時期</strong>: 段階入力を入れる前に、必要書類の入力欄を 1 画面の形のまま足すか、#36 を先に行うかを人が判断する</li>
-</ul>
-<h2 id="_12">更新履歴<a class="headerlink" href="#_12" title="Permanent link">&para;</a></h2>
-<table>
-<thead>
-<tr>
-<th style="text-align: left;">日付</th>
-<th style="text-align: left;">内容</th>
-<th style="text-align: left;">作成</th>
-<th style="text-align: left;">承認</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align: left;">2026-10-02</td>
-<td style="text-align: left;">初版</td>
-<td style="text-align: left;">anthropic/claude-opus-5-5</td>
-<td style="text-align: left;">—</td>
-</tr>
-<tr>
-<td style="text-align: left;">2026-10-02</td>
-<td style="text-align: left;">終了報告と、承認待ちの書き換え（ドメインモデル・データモデル・ユーザーストーリー・UI 設計・手順書・計画・リリース計画）を承認</td>
-<td style="text-align: left;">anthropic/claude-opus-5-5</td>
-<td style="text-align: left;">human:kakimomokuri</td>
-</tr>
-<tr>
-<td style="text-align: left;">2026-10-02</td>
-<td style="text-align: left;">レビューの対応（レビューとクローズ）を承認し、Bolt 4 をクローズした。ルートの入口の一覧の追加（<code>d01edbc</code>）を含む</td>
-<td style="text-align: left;">anthropic/claude-opus-5-5</td>
-<td style="text-align: left;">human:kakimomokuri</td>
-</tr>
-</tbody>
-</table>
-<h2 id="_13">関連ドキュメント<a class="headerlink" href="#_13" title="Permanent link">&para;</a></h2>
-<ul>
-<li><a href="../bolt_04_plan/">Bolt 4 計画</a></li>
-<li><a href="../release_plan/">リリース計画</a>（W1）</li>
-<li><a href="../bolt_03_report/">Bolt 3 終了報告</a></li>
-<li><a href="../../../design/cargo-tracker/domain_model/">ドメインモデル</a>、<a href="../../../design/cargo-tracker/data_model/">データモデル</a>、<a href="../../../design/cargo-tracker/ui_design/">UI 設計</a>、<a href="../../../requirements/cargo-tracker/user_story/">ユーザーストーリー</a></li>
-<li><a href="../../../operation/cargo-tracker/application_development_setup/">アプリケーション開発環境セットアップ手順書</a></li>
+<li>Keep</li>
+<li>開始準備の 2 つの検証で、推奨の置き場所の根拠（「前例のとおり」）が前例と違うことを見つけ、型を保てる 2 本の照会に改めた</li>
+<li>画面の層のシナリオを先に書き、骨組みで本命のアサーションで落ちることを確かめた（T-72 を守れた）</li>
+<li>Problem</li>
+<li>統合テストを流すコマンドで、移動の先を誤り、結果のファイルがないときに <code>grep</code> が標準入力を待ち続けて 10 分止まった（人に「遅すぎる」と指摘された）</li>
+<li>Spotless の整形の後のコードに合わせずに置換のスクリプトを書き、2 回当て直した（T-55 を守らなかった）</li>
+<li>画面の単体テストの Red を、実装の後に確かめた</li>
+<li>開発レビューの対応で足したテスト（ちょうど 50 件、0 件、失敗の S-24 の案内）は、実装を直した後に書いたので、Red を確かめたのは失敗の案内だけではない（T-39 の記録）</li>
+<li>Try</li>
+<li>T-77: シェルで結果のファイルを <code>grep</code> に渡すときは、ファイルがあることを確かめるか `</li>
 </ul>
 
 

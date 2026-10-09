@@ -4071,6 +4071,41 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../development/cargo-tracker/bolt_25b_report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 25b 終了報告
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--draft"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -9119,7 +9154,7 @@
 <tr>
 <td style="text-align: left;"><code>booking.booking</code></td>
 <td style="text-align: left;"><code>tracking_number</code>（一意）、（<code>shipper_company_id</code>、<code>status</code>）、（<code>transport_request_number</code>）、（<code>transport_request_number</code>、<code>quotation_no</code>）（一意）</td>
-<td style="text-align: left;">追跡番号での照会、荷主の予約一覧、業務番号から予約をたどる社内の照会（Bolt 23、R-31）、見積りの照会の前に同じ見積りの予約を引く（Bolt 24）</td>
+<td style="text-align: left;">追跡番号での照会、荷主の予約一覧、業務番号から予約をたどる社内の照会（Bolt 23、R-31）、見積りの照会の前に同じ見積りの予約を引く（Bolt 24）。S-10 予約一覧（Bolt 25b）は予約版 1 の <code>committed_at</code> の新しい順に引くが、R0.1 では予約が数十件なので索引を足さない（確定時刻の索引は W11 の一覧の本体で決める）</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>booking.booking_saga</code></td>
