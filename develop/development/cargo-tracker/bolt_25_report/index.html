@@ -8370,7 +8370,7 @@
 <tr>
 <td style="text-align: left;">4</td>
 <td style="text-align: left;"><strong>計画からの変更（人の判断が要る）: 層の規則の例外を合成ルートにも広げた</strong>。確認ポイント 21 の決定は「腐敗防止層から他のコンテキストの <code>interfaces.api</code> を参照してよい」だった。合成ルート（<code>infrastructure.config</code>）が公開 API の bean を腐敗防止層に渡すところで規則が落ちたため、例外の対象に合成ルートを足した（開発レビュー A-3）。代わりの案は、(b) 例外を「呼ぶ側と呼ばれる側の最上位パッケージが異なる」に絞る、(c) 「他のコンテキストの <code>interfaces.api</code> の型をコンストラクタの引数に持つのは腐敗防止層だけ」の見張りの規則を足す</td>
-<td style="text-align: left;">応用の部品（腐敗防止層）は部品探索の対象外なので、合成ルートが組み立てるしかない。見積りの公開 API を使う予約・経路設計の合成ルートも同じ形（<code>quotation.api</code> は層の規則の外なので規則に当たらなかった）</td>
+<td style="text-align: left;">応用の部品（腐敗防止層）は部品探索の対象外なので、合成ルートが組み立てるしかない。見積りの公開 API を使う予約・経路設計の合成ルートも同じ形（<code>quotation.interfaces.api</code> は層の規則の外なので規則に当たらなかった）</td>
 <td style="text-align: left;"><code>LayerArchitectureTest</code>、architecture_backend.md「公開 API の置き場所と形」</td>
 </tr>
 <tr>
@@ -8390,6 +8390,12 @@
 <td style="text-align: left;"><strong>既知の制約（記録）</strong>: Bolt 25 の前に確定した予約は、追跡の listener ができる前に DE-07 の配信を終えているので、追跡の開始が起きない（再配信の対象もない）。デモ環境は再起動のたびに初期状態に戻る（手順書）ので、Bolt 25 の配備の再起動で Bolt 23・24 の予約は残らない。ステージング・本番はまだない（W10）。本番の運用が始まった後に同じことを起こさないよう、W8 で有人確認要を作るときに「予約 ID を指定して追跡の開始を起こし直す管理用の操作」を要るかどうか決める（開発レビューの懸念）</td>
 <td style="text-align: left;">手順書の「再起動すると…開発用の企業と利用者だけになります」</td>
 <td style="text-align: left;">手順書 heroku_demo_setup.md、計画の確認ポイント 19</td>
+</tr>
+<tr>
+<td style="text-align: left;">7b</td>
+<td style="text-align: left;"><strong>人の指示による変更（終了報告の後、2026-10-09）</strong>: 「api は interfaces 以下に配置するルールを追加して quotation にも適用する」により、公開 API を <code>&lt;コンテキスト&gt;.interfaces.api</code> 以外に置かない規則（<code>PublicApiArchitectureTest</code>）を足し、見積りの <code>quotation.api</code> を <code>quotation.interfaces.api</code> に移した。見積りの 4 つのアプリケーションサービスは公開 API を実装するのをやめ、アプリケーションやドメインの型で結果を返す。公開 API の型への変換は <code>quotation.interfaces.api.internal</code> のアダプターが担う。既存のサービスのテストは、アダプター越しに同じアサーションで確かめる形に移した</td>
+<td style="text-align: left;">層の規則（アプリケーション層はインターフェース層を参照しない）のため、予約・経路設計と同じ形にした。名前付きインターフェースの名前は <code>api</code> のままなので、予約・経路設計の <code>allowedDependencies</code> は変わらない</td>
+<td style="text-align: left;"><code>PublicApiArchitectureTest</code>、<code>quotation.interfaces.api.internal</code>、architecture_backend.md</td>
 </tr>
 <tr>
 <td style="text-align: left;">8</td>
@@ -8529,7 +8535,7 @@
 </tr>
 <tr>
 <td style="text-align: left;">人の変更依頼</td>
-<td style="text-align: left;">1（公開 API の置き場所を開発ガイドに合わせる。2026-10-09、開始準備の途中。CLAUDE.md とメモリに反映した）</td>
+<td style="text-align: left;">2（公開 API の置き場所を開発ガイドに合わせる。2026-10-09、開始準備の途中。規則を足して見積りにも適用する。2026-10-09、終了報告の後。どちらも CLAUDE.md とメモリに反映した）</td>
 </tr>
 <tr>
 <td style="text-align: left;">リードタイム</td>
@@ -8552,7 +8558,7 @@
 </tr>
 <tr>
 <td style="text-align: left;"><code>uiTest</code>（axe-core を含む）</td>
-<td style="text-align: left;">通過（65 本）</td>
+<td style="text-align: left;">通過（65 本）。見積りの公開 API を移した後の 1 回目で、見積依頼の必要書類の添付のシナリオ（<code>attach_required_documents_ui.feature</code>）がファイルの選択の待ちの 30 秒で 1 回落ち、流し直すと通った（今回の変更と関わらない画面の揺れ。既知の課題）</td>
 </tr>
 <tr>
 <td style="text-align: left;">ModularityTest・ArchUnit</td>
@@ -8714,7 +8720,7 @@
 </tr>
 </tbody>
 </table>
-<p>懸念とスコープ外の発見のうち、次を既知の課題にした: 荷主の画面の「予約確定済み（追跡の開始の準備中）」が追跡の開始の後も出続ける（Bolt 27）、S-24 から出ると戻れない（Bolt 25b）、listener の識別子はメソッド名から作られるので名前や置き場所を変えると未完了の配信が宙に浮く、<code>quotation.api</code> を <code>interfaces.api</code> に移す技術タスク、ADR-015 の依存の向きの改訂の承認（本報告の承認で確かめる）、追跡状態の名前の業務責任者の確認（Bolt 26 の前）。</p>
+<p>懸念とスコープ外の発見のうち、次を既知の課題にした: 荷主の画面の「予約確定済み（追跡の開始の準備中）」が追跡の開始の後も出続ける（Bolt 27）、S-24 から出ると戻れない（Bolt 25b）、listener の識別子はメソッド名から作られるので名前や置き場所を変えると未完了の配信が宙に浮く、ADR-015 の依存の向きの改訂の承認（本報告の承認で確かめる）、追跡状態の名前の業務責任者の確認（Bolt 26 の前）。</p>
 <h2 id="_10">判断と学び<a class="headerlink" href="#_10" title="Permanent link">&para;</a></h2>
 <h3 id="t-39-red">T-39 の記録（Red を確かめなかったテスト）<a class="headerlink" href="#t-39-red" title="Permanent link">&para;</a></h3>
 <ul>
@@ -8724,11 +8730,12 @@
 </ul>
 <h3 id="bolt">既知の課題（後の Bolt に持ち込む）<a class="headerlink" href="#bolt" title="Permanent link">&para;</a></h3>
 <ul>
-<li><strong>Bolt 25b</strong>: S-10 予約一覧の最小の表示（S-24 に戻る入口）、U-6、<code>quotation.api</code> を <code>quotation.interfaces.api</code> に移すか（または W4 の締めの前の技術タスク）、Bolt 23b の A-低3〜5</li>
+<li><strong>Bolt 25b</strong>: S-10 予約一覧の最小の表示（S-24 に戻る入口）、U-6、Bolt 23b の A-低3〜5</li>
 <li><strong>Bolt 26</strong>: 追跡管理者のナビ・ホーム・認可・開発データ、追跡状態の名前の確認、<code>tracking_record</code> の NULL 可の列、P-12</li>
 <li><strong>Bolt 27</strong>: 荷主の画面の「追跡の開始の準備中」、U-7</li>
 <li><strong>W8</strong>: 予約サガの有人確認要と、遅れて届いた結果の扱い（議題 6）、追跡の開始を起こし直す管理用の操作（議題 7）</li>
 <li><strong>W10</strong>: 定期の再配信（同時の配信の負けた側は再起動まで未完了で残る）</li>
+<li><strong>画面の層の揺れ</strong>: 必要書類の添付のシナリオのファイルの選択の待ちが、まれに 30 秒を超える</li>
 </ul>
 <h3 id="kpt">ふりかえり（KPT）<a class="headerlink" href="#kpt" title="Permanent link">&para;</a></h3>
 <ul>
@@ -8757,6 +8764,11 @@
 </tr>
 </thead>
 <tbody>
+<tr>
+<td style="text-align: left;">2026-10-09</td>
+<td style="text-align: left;">人の指示で、公開 API の置き場所の規則を足し、見積りの公開 API を <code>quotation.interfaces.api</code> に移した（議題 7b）</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5、指示 human:kakimomokuri</td>
+</tr>
 <tr>
 <td style="text-align: left;">2026-10-09</td>
 <td style="text-align: left;">初版（ステップ 1〜6 の結果、開発レビュー、品質ゲート、既知の課題、承認の議題 1〜9、Try T-74〜T-76）</td>

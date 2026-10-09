@@ -8293,7 +8293,7 @@
 </tr>
 <tr>
 <td style="text-align: left;">呼ばれる側</td>
-<td style="text-align: left;">上流の公開 API のパッケージに操作のインターフェースと引数・戻り値の record を置く（照会と同じ置き場所と型の規則。Bolt 25 からは <code>&lt;コンテキスト&gt;.interfaces.api</code> に置き、そこのアダプターが業務の処理に委ねる。見積りの <code>quotation.api</code> は移すまでの例外。バックエンドアーキテクチャ「公開 API の置き場所と形」）。業務の処理は上流の <code>application.internal.commandservices</code> に置き、上流の集約を 1 つ更新する。上流の集約のイベントは、上流の中で発行して上流の中で購読する</td>
+<td style="text-align: left;">上流の公開 API のパッケージに操作のインターフェースと引数・戻り値の record を置く（照会と同じ置き場所と型の規則。Bolt 25 からは <code>&lt;コンテキスト&gt;.interfaces.api</code> に置き、そこのアダプターが業務の処理に委ねる。見積りの公開 API も 2026-10-09 に <code>quotation.interfaces.api</code> へ移した。バックエンドアーキテクチャ「公開 API の置き場所と形」）。業務の処理は上流の <code>application.internal.commandservices</code> に置き、上流の集約を 1 つ更新する。上流の集約のイベントは、上流の中で発行して上流の中で購読する</td>
 </tr>
 <tr>
 <td style="text-align: left;">冪等</td>
