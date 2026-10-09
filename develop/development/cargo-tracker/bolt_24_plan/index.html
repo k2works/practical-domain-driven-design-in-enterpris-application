@@ -3610,7 +3610,7 @@
     
   
   
-    <span class="md-status md-status--draft"></span>
+    <span class="md-status md-status--stable"></span>
   
 
   
@@ -3635,7 +3635,7 @@
     
   
   
-    <span class="md-status md-status--draft"></span>
+    <span class="md-status md-status--stable"></span>
   
 
   
@@ -3929,7 +3929,7 @@
     
   
   
-    <span class="md-status md-status--draft"></span>
+    <span class="md-status md-status--stable"></span>
   
 
   
@@ -8825,7 +8825,7 @@
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <code>check</code>・<code>documentationTest</code>・<code>uiTest</code> が緑。push して CI とデモ環境の配備を確かめた</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> SonarQube の Quality Gate が PASS（S8445 の 24 件で FAIL だったので、人の決定で品質プロファイルから外し PASS にした）</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> 設計文書に決定を書き、計画からの変更も設計文書に戻した（T-53）。台帳に D-85</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> 開発レビューと終了報告。#10 に結果をコメントした（終了報告は承認待ち。#10 にはコメントした）</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> 開発レビューと終了報告。#10 に結果をコメントした（終了報告は 2026-10-09 に承認済み）</li>
 </ul>
 <h3 id="_12">デモ項目<a class="headerlink" href="#_12" title="Permanent link">&para;</a></h3>
 <p>営業担当者が本予約を確定した後にブラウザーで戻って同じフォームを送り直すと、同じ追跡番号の S-24 が出る。確定の前に開いておいた別のタブから送ると、既存の予約の追跡番号と S-24 への導線が出る（<code>@demo @demo-bolt-24/resend-booking</code>）。</p>
@@ -8839,6 +8839,11 @@
 </tr>
 </thead>
 <tbody>
+<tr>
+<td style="text-align: left;">2026-10-09</td>
+<td style="text-align: left;">終了報告を承認し、完了条件をすべて満たした（CI 緑、SonarQube PASS、受入動画、デモ環境の見本）</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5、承認 human:kakimomokuri</td>
+</tr>
 <tr>
 <td style="text-align: left;">2026-10-09</td>
 <td style="text-align: left;">ステップ 1〜5 を終え、終了報告を承認待ちにした。SonarQube の品質ゲートと終了報告の承認の完了条件は開いたまま</td>
