@@ -10,7 +10,7 @@
 <main>
     <h1>追跡一覧</h1>
     <!--/* S-11 の最小の表示（Bolt 26）。絞り込み（確認中・鮮度超過・訂正承認待ち）は W7 以後 */-->
-    <p th:if="${#lists.isEmpty(trackingRecords)}">追跡中の貨物はまだありません。</p>
+    <p th:if="${#lists.isEmpty(trackingRecords)}">追跡記録はまだありません。営業担当者が本予約を確定すると、追跡が始まった貨物がここに出ます。</p>
     <p th:if="${truncated}" th:text="|新しい ${limit} 件だけを示しています。|">新しい 50 件だけを示しています。</p>
     <div th:unless="${#lists.isEmpty(trackingRecords)}" class="table-scroll" tabindex="0" role="region"
          aria-labelledby="tracking-records-caption">

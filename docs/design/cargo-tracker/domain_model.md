@@ -4,7 +4,7 @@ title: "cargo-tracker ドメインモデル"
 description: "cargo-tracker の業務領域の分類、ユビキタス言語、7 つの境界づけられたコンテキスト（通知を含む）の集約・エンティティ・値オブジェクト・ドメインルール、コマンド・クエリ・イベント、予約サガ。"
 tags: [design, domain-model, ddd]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-09T09:38:13Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-09T11:27:19Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T07:41:04Z }
   - { by: human:kakimomokuri, at: 2026-10-01T07:48:17Z }
@@ -154,7 +154,7 @@ quadrantChart
 | 追跡記録 | TrackingRecord | 1 つの追跡番号の予定と主要実績、現在状態 | 追跡 |
 | 予定 | Schedule | 追跡が採用した確定した経路版（案件番号・経路版番号）と予定区間の列。実績とは混同しない（T-INV-08。Bolt 25） | 追跡 |
 | 予定区間 | ScheduledLeg | 予定の 1 区間。航海番号、積地、揚地、出発予定、到着予定。区間番号は列の順に 1 から（T-INV-12。Bolt 25） | 追跡 |
-| 追跡状態 | TrackingStatus | 追跡記録の現在状態の値。予約確定 `BOOKED`、集荷予定 `PICKUP_SCHEDULED`、集荷済み `PICKED_UP`、出発地搬入済み `RECEIVED_AT_ORIGIN`、輸送中 `IN_TRANSIT`、積替え中 `TRANSSHIPPING`、目的地到着 `ARRIVED_AT_DESTINATION`、引渡し可能 `READY_FOR_DELIVERY`、引渡し済み `DELIVERED`、確認中 `UNDER_REVIEW`（要件定義の追跡状態モデル。状態名は業務責任者の確認前の候補。Bolt 25 は予定を採用した直後の集荷予定だけを使う） | 追跡 |
+| 追跡状態 | TrackingStatus | 追跡記録の現在状態の値。予約確定 `BOOKED`、集荷予定 `PICKUP_SCHEDULED`、集荷済み `PICKED_UP`、出発地搬入済み `RECEIVED_AT_ORIGIN`、輸送中 `IN_TRANSIT`、積替え中 `TRANSSHIPPING`、目的地到着 `ARRIVED_AT_DESTINATION`、引渡し可能 `READY_FOR_DELIVERY`、引渡し済み `DELIVERED`、確認中 `UNDER_REVIEW`（要件定義の追跡状態モデル。状態名は業務責任者の確認前の候補。Bolt 25 は予定を採用した直後の集荷予定だけを使う。画面の表示名は日本語の名前のまま。Bolt 26 で S-11・S-12 に出し、確認は Bolt 26 の終了報告の議題に置いた） | 追跡 |
 | 追跡の予約状態 | TrackedBookingStatus | 追跡記録が持つ予約の状態の写し。確定 `CONFIRMED`、取消済み `CANCELLED`、完了 `COMPLETED`（T-INV-04・T-INV-05 の判定に使う。Bolt 25） | 追跡 |
 | 主要実績 | Milestone | 出典と発生時刻を伴う、集荷・搬入・出発・到着などの事実 | 追跡 |
 | 出典 | Source | 実績や採用値の根拠（外部原本、現場記録、社内確認、手動入力） | 共有カーネル |
@@ -1187,7 +1187,7 @@ stop
 | 見積り | 輸送要求リポジトリ、見積りリポジトリ | ID で取得、期待版で保存、輸送要求の有効な見積りを取得 |
 | 経路設計 | 経路設計案件リポジトリ、航海リポジトリ、接続時間規則リポジトリ | ID で取得、期待版で保存、航海番号を参照する確定済み経路版の案件を取得 |
 | 予約 | 貨物予約リポジトリ | ID・追跡番号で取得、コマンド ID で確定結果（処理済みコマンド）を取得、業務番号と見積り番号で追跡番号を取得、処理済みコマンドを貨物予約と同じトランザクションで記録、期待版で保存（Bolt 24。確定した予約の要約（`BookingSummary`）を確定時刻の新しい順に上限まで取得（S-10。集約を組み立てない。予約サガの状態は予約サガのリポジトリから予約 ID の集合でまとめて取得。Bolt 25b）） |
-| 追跡 | 追跡記録・有人案件・照会記録・営業日カレンダーのリポジトリ | 追跡番号で取得、予約 ID で追跡記録を取得（T-INV-11。Bolt 25）、期待版で保存、期限を過ぎた未受領案件を取得、荷主企業の問い合わせを取得 |
+| 追跡 | 追跡記録・有人案件・照会記録・営業日カレンダーのリポジトリ | 追跡番号で取得（S-12。Bolt 26）、予約 ID で追跡記録を取得（T-INV-11。Bolt 25）、追跡記録の要約（`TrackingRecordSummary`）を追跡の開始時刻の新しい順に上限まで取得（S-11。集約を組み立てない。Bolt 26）、期待版で保存、期限を過ぎた未受領案件を取得、荷主企業の問い合わせを取得 |
 | 通知 | 通知リポジトリ | イベント ID と宛先で既存の通知を取得（N-INV-02） |
 | アクセス・監査 | 企業・利用者・参照許可リポジトリ、監査記録リポジトリ（追記のみ）、KPI 計測記録リポジトリ | ID・メールアドレスで取得、予約と荷受人で有効な許可を取得 |
 

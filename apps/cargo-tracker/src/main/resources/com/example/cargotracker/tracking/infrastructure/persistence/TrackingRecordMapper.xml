@@ -41,6 +41,12 @@
         </constructor>
     </resultMap>
 
+    <!-- 追跡記録の列（予約 ID と追跡番号の 2 つの select で使う。列を足すときに片方だけ直さないため。Bolt 26 レビュー P-5） -->
+    <sql id="trackingRecordColumns">
+        tracking_number, booking_id, shipper_company_id, consignee_company_id, booking_status, routing_case_number,
+        route_version_no, current_status, original_eta, latest_eta, version, created_at, updated_at
+    </sql>
+
     <insert id="insertTrackingRecord">
         INSERT INTO tracking.tracking_record
             (tracking_number, booking_id, shipper_company_id, consignee_company_id, booking_status, routing_case_number,
@@ -60,15 +66,13 @@
     </insert>
 
     <select id="findTrackingRecordByBookingId" resultMap="trackingRecordRow">
-        SELECT tracking_number, booking_id, shipper_company_id, consignee_company_id, booking_status, routing_case_number,
-               route_version_no, current_status, original_eta, latest_eta, version, created_at, updated_at
+        SELECT <include refid="trackingRecordColumns"/>
           FROM tracking.tracking_record
          WHERE booking_id = #{bookingId}
     </select>
 
     <select id="findTrackingRecordByTrackingNumber" resultMap="trackingRecordRow">
-        SELECT tracking_number, booking_id, shipper_company_id, consignee_company_id, booking_status, routing_case_number,
-               route_version_no, current_status, original_eta, latest_eta, version, created_at, updated_at
+        SELECT <include refid="trackingRecordColumns"/>
           FROM tracking.tracking_record
          WHERE tracking_number = #{trackingNumber}
     </select>

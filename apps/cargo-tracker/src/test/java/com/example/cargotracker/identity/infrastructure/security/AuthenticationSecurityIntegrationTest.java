@@ -176,7 +176,8 @@ class AuthenticationSecurityIntegrationTest {
 
     @Test
     void 社内のナビは役割の画面だけを出す() throws Exception {
-        // 表示の制御は権限の防御ではない（URL を直接開いても A-04）。開発戦略のナビの骨格の確かめ（Bolt 26）
+        // 表示の制御は権限の防御ではない（URL を直接開いても A-04）。開発戦略のナビの骨格の確かめ（Bolt 26）。
+        // ナビのリンクは 1 行で書く前提で、現在の項目は aria-current が href の後に付くので、属性の順によらずに探す
         Map<Role, String> homes = Map.of(
                 Role.SALES, "/staff/transport-requests",
                 Role.ROUTE_DESIGNER, "/staff/routing-cases",
@@ -184,10 +185,11 @@ class AuthenticationSecurityIntegrationTest {
         Map<String, String> items = Map.of(
                 "/staff/transport-requests", "見積依頼",
                 "/staff/bookings", "予約",
+                "/staff/kpi-observations", "KPI 計測記録",
                 "/staff/routing-cases", "経路設計",
                 "/staff/tracking-records", "追跡");
         Map<Role, Set<String>> shown = Map.of(
-                Role.SALES, Set.of("/staff/transport-requests", "/staff/bookings"),
+                Role.SALES, Set.of("/staff/transport-requests", "/staff/bookings", "/staff/kpi-observations"),
                 Role.ROUTE_DESIGNER, Set.of("/staff/routing-cases"),
                 Role.TRACKING_MANAGER, Set.of("/staff/tracking-records"));
         for (Map.Entry<Role, String> home : homes.entrySet()) {
@@ -198,7 +200,6 @@ class AuthenticationSecurityIntegrationTest {
                     .getResponse()
                     .getContentAsString();
             for (Map.Entry<String, String> item : items.entrySet()) {
-                // 現在の項目は aria-current が href の後に付くので、属性の順によらずに探す
                 String link = "href=\"" + item.getKey() + "\"[^>]*>" + item.getValue() + "</a>";
                 if (shown.get(home.getKey()).contains(item.getKey())) {
                     assertThat(page)

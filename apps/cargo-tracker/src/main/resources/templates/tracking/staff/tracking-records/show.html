@@ -25,9 +25,9 @@
     </dl>
     <!--/* 予定区間は時系列の並びなので、表でなく順序付きのリストにする（UI 設計の共通部品「画面幅」。Bolt 26 計画の確認ポイント 15） */-->
     <h2 class="h4" id="schedule-heading">予定区間</h2>
-    <ol aria-labelledby="schedule-heading" class="list-unstyled">
+    <ol aria-labelledby="schedule-heading">
         <li th:each="leg : ${trackingRecord.legs()}" class="mb-2">
-            <span th:text="${leg.summary()}">区間 1　航海 V100　JPTYO → KRPUS</span><br>
+            <span th:text="${leg.summary()}">区間 1、航海 V100、JPTYO → KRPUS</span><br>
             <span th:text="|出発予定 ${leg.departureAt()}|">出発予定 2026-11-01 09:00 Asia/Tokyo（UTC+09:00）（UTC 2026-11-01 00:00）</span><br>
             <span th:text="|到着予定 ${leg.arrivalAt()}|">到着予定 2026-11-03 09:00 Asia/Tokyo（UTC+09:00）（UTC 2026-11-03 00:00）</span>
         </li>

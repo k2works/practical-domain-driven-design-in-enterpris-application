@@ -19,7 +19,8 @@ final class TrackingRecordViews {
 
     /**
      * 追跡状態の表示名（ドメインモデルの追跡状態の候補の名前。業務責任者の確認前。Bolt 26 計画の確認ポイント 6）。荷主の照会（US-09）も
-     * 同じ名前を使う。10 個の値を表に置く（switch では循環的複雑度の上限を超えるため）。すべての値があることは画面の単体テストで確かめる。
+     * 同じ名前を使う。10 個の値を表に置く（switch では循環的複雑度の上限を超えるため）。表にない値は例外にし、すべての値に表示名があることを画面の単体テストで
+     * 確かめる（値を足したときの抜けを拾う。Bolt 26 レビュー P-1）。
      */
     private static final Map<TrackingStatus, String> STATUS_NAMES = new EnumMap<>(Map.of(
             TrackingStatus.BOOKED, "予約確定",
@@ -44,7 +45,11 @@ final class TrackingRecordViews {
     }
 
     static String status(TrackingStatus status) {
-        return STATUS_NAMES.get(status);
+        String name = STATUS_NAMES.get(status);
+        if (name == null) {
+            throw new IllegalStateException("追跡状態の表示名がありません: " + status);
+        }
+        return name;
     }
 
     /**
@@ -110,7 +115,7 @@ final class TrackingRecordViews {
 
     private static LegView leg(int legNo, ScheduledLeg leg) {
         return new LegView(
-                "区間 " + legNo + "　航海 " + leg.voyageNumber() + "　" + leg.load().unLocode() + " → "
+                "区間 " + legNo + "、航海 " + leg.voyageNumber() + "、" + leg.load().unLocode() + " → "
                         + leg.discharge().unLocode(),
                 staff(leg.departureAt()),
                 staff(leg.arrivalAt()));

@@ -166,23 +166,26 @@ class MyBatisTrackingRecordRepositoryIntegrationTest {
         TrackingRecord middle = save("2099-01-02T00:00:00Z", trackingNumber());
         TrackingRecord sameTimeB = save("2099-01-03T00:00:00Z", new TrackingNumber("CTBBBBBBBBBBBB"));
         TrackingRecord sameTimeA = save("2099-01-03T00:00:00Z", new TrackingNumber("CTAAAAAAAAAAAA"));
+        // 数字と英字の比較でも、DB の照合順序がメモリの実装（文字コード順。数字が先）と同じ並びになる（Bolt 26 レビュー P-2）
+        TrackingRecord sameTimeDigit = save("2099-01-03T00:00:00Z", new TrackingNumber("CT222222222222"));
 
-        assertThat(repository.findRecentSummaries(4))
+        assertThat(repository.findRecentSummaries(5))
                 .extracting(TrackingRecordSummary::trackingNumber)
                 .containsExactly(
+                        sameTimeDigit.trackingNumber(),
                         sameTimeA.trackingNumber(),
                         sameTimeB.trackingNumber(),
                         middle.trackingNumber(),
                         oldest.trackingNumber());
         assertThat(repository.findRecentSummaries(2))
                 .extracting(TrackingRecordSummary::trackingNumber)
-                .containsExactly(sameTimeA.trackingNumber(), sameTimeB.trackingNumber());
+                .containsExactly(sameTimeDigit.trackingNumber(), sameTimeA.trackingNumber());
         assertThat(repository.findRecentSummaries(1).getFirst())
                 .isEqualTo(new TrackingRecordSummary(
-                        sameTimeA.trackingNumber(),
+                        sameTimeDigit.trackingNumber(),
                         TrackingStatus.PICKUP_SCHEDULED,
-                        sameTimeA.originalEta(),
-                        sameTimeA.startedAt()));
+                        sameTimeDigit.originalEta(),
+                        sameTimeDigit.startedAt()));
     }
 
     /** 要約でも、当初の到着予定のない行は原因の分かる例外にする（集約の組み立てと同じ。Bolt 26 計画の確認ポイント 13）。 */

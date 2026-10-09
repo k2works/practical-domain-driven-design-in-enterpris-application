@@ -69,7 +69,8 @@ public class UiUsers {
             case SHIPPER -> "荷主 太郎";
             case ROUTE_DESIGNER -> "経路 設計";
             case TRACKING_MANAGER -> "追跡 管理";
-            default -> "営業 一郎";
+            case SALES -> "営業 一郎";
+            default -> throw new IllegalArgumentException("画面の層のテストの利用者を用意していない役割です: " + role);
         };
     }
 

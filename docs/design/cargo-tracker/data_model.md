@@ -4,7 +4,7 @@ title: "cargo-tracker データモデル"
 description: "cargo-tracker の概念データモデル、スキーマ分割、命名と型の規約（H2 と PostgreSQL の共通部分）、コンテキストごとの論理データモデルと ER 図、版・追記専用・冪等性・イベント配信の表現。"
 tags: [design, data-model]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-09T09:38:13Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-09T11:27:19Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T07:48:17Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:01:37Z }
@@ -756,7 +756,7 @@ sc ||--o{ sca
 
 | 表 | 主な制約 | 対応する不変条件 |
 | :--- | :--- | :--- |
-| `tracking_record` | `current_status` は主要実績から導出した結果の保存（照会のため）。導出の正は集約のロジック。`original_eta`（確定した経路版の到着予定）と `latest_eta`（最新の見込み）を別に持つ。`procedure_stage` は通関等の手続き中の段階。UK（`booking_id`）`uk_tracking_record_booking`: 予約 1 件に追跡記録 1 件で、DE-07 の再配信の冪等の正（T-INV-11。Bolt 25）。`booking_status` IN（`CONFIRMED`、`CANCELLED`、`COMPLETED`）（`ck_tracking_record_booking_status`）。`current_status` IN（`BOOKED`、`PICKUP_SCHEDULED`、`PICKED_UP`、`RECEIVED_AT_ORIGIN`、`IN_TRANSIT`、`TRANSSHIPPING`、`ARRIVED_AT_DESTINATION`、`READY_FOR_DELIVERY`、`DELIVERED`、`UNDER_REVIEW`）（`ck_tracking_record_current_status`。ドメインモデルの追跡状態）。実績に関わる列（`status_basis_milestone_no`、`under_review_reason`、`procedure_stage`、`last_acquired_at`）と経路版・到着予定の 4 列は NULL 可で作る（Bolt 25 の追跡の開始では経路版と到着予定に必ず値を入れる）。監査用の列の `created_by`・`updated_by` は持たない（行はイベントの購読でシステムが作る。共通の規約の例外） | T-INV-08、T-INV-10、T-INV-11 |
+| `tracking_record` | `current_status` は主要実績から導出した結果の保存（照会のため）。導出の正は集約のロジック。`original_eta`（確定した経路版の到着予定）と `latest_eta`（最新の見込み）を別に持つ。`procedure_stage` は通関等の手続き中の段階。UK（`booking_id`）`uk_tracking_record_booking`: 予約 1 件に追跡記録 1 件で、DE-07 の再配信の冪等の正（T-INV-11。Bolt 25）。`booking_status` IN（`CONFIRMED`、`CANCELLED`、`COMPLETED`）（`ck_tracking_record_booking_status`）。`current_status` IN（`BOOKED`、`PICKUP_SCHEDULED`、`PICKED_UP`、`RECEIVED_AT_ORIGIN`、`IN_TRANSIT`、`TRANSSHIPPING`、`ARRIVED_AT_DESTINATION`、`READY_FOR_DELIVERY`、`DELIVERED`、`UNDER_REVIEW`）（`ck_tracking_record_current_status`。ドメインモデルの追跡状態）。実績に関わる列（`status_basis_milestone_no`、`under_review_reason`、`procedure_stage`、`last_acquired_at`）と経路版・到着予定の 4 列は NULL 可で作る（Bolt 25 の追跡の開始では経路版と到着予定に必ず値を入れる）。監査用の列の `created_by`・`updated_by` は持たない（行はイベントの購読でシステムが作る。共通の規約の例外）。`created_at` は追跡の開始時刻で、S-11 追跡一覧はその新しい順（同じ時刻なら `tracking_number` の順）に引く（Bolt 26） | T-INV-08、T-INV-10、T-INV-11 |
 | `scheduled_leg` | 主キー（`tracking_number`、`leg_no`）。`leg_no >= 1`（`ck_scheduled_leg_no`）、`arrival_at > departure_at`（`ck_scheduled_leg_arrival`。見積りの `assigned_route_leg` と同じ）。値は経路設計の公開 API が返す確定した経路版の区間（Bolt 25） | T-INV-12 |
 | `milestone` | UK（`tracking_number`、`source_kind`、`source_ref`）。`state` IN（`DRAFT`、`ADOPTED`、`UNDER_REVIEW`、`RETAINED_ONLY`）。DELETE の権限なし | T-INV-01〜03、T-INV-05 |
 | `correction` | `status` IN（`PENDING_APPROVAL`、`APPLIED`、`REJECTED`）。`approved_by` は `registered_by` と異なる（`CHECK`） | T-INV-06 |
@@ -1124,7 +1124,7 @@ src/main/resources/db/
 | `routing.referenced_info_version` | （`voyage_number`） | 航海の更新で再評価する確定済み経路版の検索（DE-12） |
 | `booking.booking` | `tracking_number`（一意）、（`shipper_company_id`、`status`）、（`transport_request_number`）、（`transport_request_number`、`quotation_no`）（一意） | 追跡番号での照会、荷主の予約一覧、業務番号から予約をたどる社内の照会（Bolt 23、R-31）、見積りの照会の前に同じ見積りの予約を引く（Bolt 24）。S-10 予約一覧（Bolt 25b）は予約版 1 の `committed_at` の新しい順に引くが、R0.1 では予約が数十件なので索引を足さない（確定時刻の索引は W11 の一覧の本体で決める） |
 | `booking.booking_saga` | （`status`、`started_at`） | 処理中の滞留の判定（RTY-02、OBS-04） |
-| `tracking.tracking_record` | （`shipper_company_id`）、（`consignee_company_id`） | 荷主・荷受人の照会（照会を作る Bolt 27 で足す。`booking_id` は一意制約が索引を兼ねる） |
+| `tracking.tracking_record` | （`shipper_company_id`）、（`consignee_company_id`） | 荷主・荷受人の照会（照会を作る Bolt 27 で足す。`booking_id` は一意制約が索引を兼ねる）。S-11 の追跡の開始時刻（`created_at`）の並びの索引は、R0.1 では追跡記録が数十件なので足さない（一覧の絞り込みとページ送りを作る W7 以後に決める。Bolt 26） |
 | `tracking.service_case` | （`status`、`receive_due_at`） | 受領期限を過ぎた案件（escalation） |
 | `identity.access_grant` | （`booking_id`、`consignee_company_id`、`status`） | 参照許可の確認（request ごと） |
 | `identity.audit_record` | （`target_type`、`target_id`、`occurred_at`）、（`actor_user_id`、`occurred_at`） | 監査証跡の照会（US-17） |

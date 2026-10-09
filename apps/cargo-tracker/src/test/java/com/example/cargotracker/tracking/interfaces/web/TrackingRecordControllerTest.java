@@ -1,6 +1,7 @@
 package com.example.cargotracker.tracking.interfaces.web;
 
 import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.matchesPattern;
 import static org.hamcrest.Matchers.not;
 import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -22,6 +23,7 @@ import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
@@ -93,8 +95,7 @@ class TrackingRecordControllerTest {
                         .string(containsString("2026-11-15 09:00 Asia/Tokyo（UTC+09:00）（UTC 2026-11-15 00:00）")))
                 .andExpect(content()
                         .string(containsString("2026-10-26 10:00 Asia/Tokyo（UTC+09:00）（UTC 2026-10-26 01:00）")))
-                .andExpect(content()
-                        .string(org.hamcrest.Matchers.matchesPattern("(?s).*CTBBBBBBBBBBBB.*CTABCDEFGH2345.*")))
+                .andExpect(content().string(matchesPattern("(?s).*CTBBBBBBBBBBBB.*CTABCDEFGH2345.*")))
                 .andExpect(content().string(not(containsString("新しい 50 件だけを示しています。"))));
     }
 
@@ -104,7 +105,7 @@ class TrackingRecordControllerTest {
 
         mockMvc.perform(get(LIST))
                 .andExpect(status().isOk())
-                .andExpect(content().string(containsString("追跡中の貨物はまだありません。")))
+                .andExpect(content().string(containsString("追跡記録はまだありません。営業担当者が本予約を確定すると、追跡が始まった貨物がここに出ます。")))
                 .andExpect(content().string(not(containsString("<table"))));
     }
 
@@ -143,6 +144,14 @@ class TrackingRecordControllerTest {
                 .andExpect(content().string(containsString("<dd class=\"col-sm-9\">" + displayName + "</dd>")));
     }
 
+    /** 追跡状態に値を足したときに表示名の抜けを拾う（`@CsvSource` の表だけでは拾えない。Bolt 26 レビュー P-1）。 */
+    @ParameterizedTest
+    @EnumSource(TrackingStatus.class)
+    void すべての追跡状態に表示名がある(TrackingStatus status) {
+        org.assertj.core.api.Assertions.assertThat(TrackingRecordViews.status(status))
+                .isNotBlank();
+    }
+
     // S-12 追跡の詳細
 
     @Test
@@ -161,8 +170,8 @@ class TrackingRecordControllerTest {
                         .string(containsString("2026-11-16 12:00 Asia/Tokyo（UTC+09:00）（UTC 2026-11-16 03:00）")))
                 .andExpect(content().string(containsString("<dd class=\"col-sm-9\">RC-2026-0001 版 1</dd>")))
                 .andExpect(content().string(containsString("<ol aria-labelledby=\"schedule-heading\"")))
-                .andExpect(content().string(containsString("区間 1　航海 V100　JPTYO → KRPUS")))
-                .andExpect(content().string(containsString("区間 2　航海 V200　KRPUS → USLAX")))
+                .andExpect(content().string(containsString("区間 1、航海 V100、JPTYO → KRPUS")))
+                .andExpect(content().string(containsString("区間 2、航海 V200、KRPUS → USLAX")))
                 .andExpect(content()
                         .string(containsString("出発予定 2026-11-04 09:00 Asia/Tokyo（UTC+09:00）（UTC 2026-11-04 00:00）")))
                 .andExpect(content()

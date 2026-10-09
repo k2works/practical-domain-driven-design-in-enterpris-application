@@ -4,7 +4,7 @@ title: "cargo-tracker テスト戦略"
 description: "cargo-tracker のテスト形状、テストレベルと責務、BDD（Cucumber）のシナリオ階層とタグ規約、不変条件・ユーザーストーリーとテストの対応、カバレッジ目標、CI での実行。"
 tags: [design, test-strategy, bdd]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-09T06:08:07Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-09T11:27:19Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T08:12:04Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:01:38Z }
@@ -458,7 +458,7 @@ Cucumber の実行結果（HTML・JSON）を CI の成果物として保存し�
 | US-20 照会・業務例外を回答・終結まで追跡する | Must | 8 | tracking/ | ○ |
 | US-22 重要な変化を荷主へ通知する | Must | 4 | notification/ | ○ |
 | US-23 自分の問い合わせを追跡する | Must | 4 | tracking/ | ○ |
-| US-12 主要実績を登録する | Must | 5 | tracking/ | — |
+| US-12 主要実績を登録する | Must | 5 | tracking/ | ○ |
 | US-13 主要実績を訂正する | Should | 6 | tracking/ | ○ |
 | US-14 外部原本を安全に取り込む | Must | 5 | external_data/ | ○ |
 | US-15 外部連携停止から復旧する | Should | 4 | external_data/ | — |

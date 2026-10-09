@@ -22,6 +22,9 @@ public class UiScenarioState {
     }
 
     public String trackingNumber() {
+        if (trackingNumber == null) {
+            throw new IllegalStateException("追跡番号がありません。先に「予約の詳細を更新して追跡の開始が完了するのを待つ」を通してください");
+        }
         return trackingNumber;
     }
 
