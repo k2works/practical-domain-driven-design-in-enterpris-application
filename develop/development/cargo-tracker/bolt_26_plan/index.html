@@ -8305,6 +8305,10 @@
 <td style="text-align: left;"><a href="https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/11">#11</a>（US-12）の前提。SP 0（US-12 の SP 3 は AC1・AC2 を作る Bolt 26b で数え、#11 は 26b で閉じる）。受入動画は #11 に添付する</td>
 </tr>
 <tr>
+<td style="text-align: left;">承認ゲートの扱い</td>
+<td style="text-align: left;">人の指示（<code>/goal Bolt26</code>、2026-10-09。計画の初版の報告の後）により、計画を推奨のとおり進め、承認ゲートで止まらずに進める。止まらなかったゲートごとに根拠を書き、確認ポイントの決定とあわせて終了報告の承認の議題に置く（T-36）。計画の人の検証（<code>verify</code>）は終了報告の承認のときに行う</td>
+</tr>
+<tr>
 <td style="text-align: left;">承認ゲート</td>
 <td style="text-align: left;">計画の承認（確認ポイント 1〜15）、認可（ステップ 1）、モジュールの境界（<code>platform :: web</code>。ステップ 3）、画面、Red／Green ごと（照会）、開発レビューの判断、終了報告。ゲートの密度は release_plan の W4 の決定（「スキーマと認可をステップごとに止める」）に従う。U4 の行の「認証・認可は Red・Green ごと」より W4 の決定を優先する（W4 の開始準備で決め直したため）。スキーマは変えないので、スキーマのゲートはない（<code>db/dev-data</code> の利用者の追加は開発環境だけの初期データで、スキーマを変えない）</td>
 </tr>
