@@ -4,7 +4,7 @@ title: "cargo-tracker テスト戦略"
 description: "cargo-tracker のテスト形状、テストレベルと責務、BDD（Cucumber）のシナリオ階層とタグ規約、不変条件・ユーザーストーリーとテストの対応、カバレッジ目標、CI での実行。"
 tags: [design, test-strategy, bdd]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-09T01:36:35Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-09T03:02:52Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T08:12:04Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:01:38Z }
@@ -287,7 +287,7 @@ CI で毎回実行する。
 | マイグレーション | すべての DDL が PostgreSQL 18 と H2 の両方に適用できる（ADR-007）。CHECK 制約・一意制約が効く |
 | マッパー | 集約の保存と復元が一致する。期待版が違う更新は 0 件になる |
 | 追記専用の保護 | アプリケーションの DB 利用者で、監査記録・受信記録・版の表を UPDATE・DELETE できない（PostgreSQL のみ） |
-| 冪等性 | 同じ `commandId` を同時に 2 回送っても、処理済みコマンドの一意制約で 1 件になる。同じ `commandId` で内容（payload のハッシュ）が違えば衝突として拒否する。一意制約違反の後は、同じトランザクションで続けずに読み直す（ADR-007） |
+| 冪等性 | 同じ `commandId` を同時に 2 回送っても 1 件になる（本予約の確定では、同じ見積りなので貨物予約の一意制約が先に当たる）。同じ `commandId` で内容（payload のハッシュ）が違えば衝突として拒否する（同時に送られて処理済みコマンドの主キーで負けた側も衝突にする）。一意制約の違反は保存をセーブポイントに戻し、同じトランザクションで勝った側の結果を読み直す（Bolt 24。`BookingConfirmationConcurrentIntegrationTest`） |
 | 重複確定の防止 | 同じ見積りから、別のコマンド ID・別の利用者で同時に本予約を確定しても、貨物予約の見積り ID の一意制約で 1 件になる（B-INV-11） |
 | 受信側の冪等性 | DE-16・DE-07・DE-13 などを 2 回配信しても、購読側の処理は 1 回分になる（R-INV-10、N-INV-02） |
 | イベントの順序 | 同じ集約のイベントを逆の順序で配信しても、古い版のものは適用されない（B-INV-12） |

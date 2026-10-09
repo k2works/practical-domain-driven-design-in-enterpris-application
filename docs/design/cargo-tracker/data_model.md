@@ -4,7 +4,7 @@ title: "cargo-tracker データモデル"
 description: "cargo-tracker の概念データモデル、スキーマ分割、命名と型の規約（H2 と PostgreSQL の共通部分）、コンテキストごとの論理データモデルと ER 図、版・追記専用・冪等性・イベント配信の表現。"
 tags: [design, data-model]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-09T01:49:54Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-09T03:02:52Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T07:48:17Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:01:37Z }
@@ -593,7 +593,7 @@ entity "processed_command\n処理済みコマンド" as pc {
 
 | 表 | 主な制約 | 対応する不変条件 |
 | :--- | :--- | :--- |
-| `booking` | `tracking_number` は一意。UK（`quotation_id`）で、1 つの見積りから 2 件目の予約を作れない（別のコマンド ID による同時確定でも片方が一意制約で失敗する。予約版ではなく貨物予約に置くのは、変更の承認で予約版を足しても同じ見積りの写しを持てるようにするため。Bolt 23 レビュー）。`status` IN（`CONFIRMED`、`AMENDMENT_PENDING`、`CANCELLATION_PENDING`、`AMENDING`、`CANCELLED`、`IN_TRANSIT`、`COMPLETED`）。`transport_phase` IN（`BEFORE_PICKUP`、`AFTER_PICKUP`、`COMPLETED`）。UK（`transport_request_number`、`quotation_no`）: 見積り番号は見積りの写し（業務番号と同じ。R-31）で、見積りの公開 API に照会する前に同じ見積りの予約を引く（失効・置換の後は見積り ID が返らないため。Bolt 24） | B-INV-06、B-INV-07、B-INV-11 |
+| `booking` | `tracking_number` は一意。UK（`quotation_id`）で、1 つの見積りから 2 件目の予約を作れない（別のコマンド ID による同時確定でも片方が一意制約で失敗する。予約版ではなく貨物予約に置くのは、変更の承認で予約版を足しても同じ見積りの写しを持てるようにするため。Bolt 23 レビュー）。`status` IN（`CONFIRMED`、`AMENDMENT_PENDING`、`CANCELLATION_PENDING`、`AMENDING`、`CANCELLED`、`IN_TRANSIT`、`COMPLETED`）。`transport_phase` IN（`BEFORE_PICKUP`、`AFTER_PICKUP`、`COMPLETED`）。UK（`transport_request_number`、`quotation_no`）: 見積り番号は見積りの写し（業務番号と同じ。R-31）で、見積りの公開 API に照会する前に同じ見積りの予約を引く（失効・置換の後は見積り ID が返らないため。Bolt 24）。B-INV-11 の正は見積り ID の UK で、業務番号と見積り番号の UK は同じ事実を業務の鍵で引くための索引を兼ねる（どちらに違反しても同じ見積りの予約として扱う） | B-INV-06、B-INV-07、B-INV-11 |
 | `booking_version` | 予約確定時の見積り・経路版・荷受人・貨物の写しと、確定者・commit 時刻 | B-INV-01、B-INV-08 |
 | `booking_saga` | 予約ごとに 1 つ。`status` IN（`IN_PROGRESS`、`COMPLETED`、`FAILED`、`NEEDS_HUMAN`）。再試行の回数・次の時刻・最後の誤りは持たない（追跡の開始の再試行はイベントの再配信が担う。ADR-015）。有人確認要の判定は処理中の滞留（`started_at`）で行う | ARCH-HO-02 |
 | `processed_command` | 本予約確定のコマンド ID を記録し、再送には既存の予約 ID と追跡番号を返す。確定に成功したときだけ、貨物予約と同じトランザクションで INSERT する。`command_type` は `ConfirmBooking`、`payload_hash` は業務番号・見積り番号・操作者の利用者 ID の SHA-256、`result_ref` は「予約 ID:追跡番号」、`processed_at` は commit 時刻。追記専用。同じコマンド ID の同時の確定は、同じ見積りなので処理済みコマンドの主キーより先に貨物予約の UK（`quotation_id`）で片方が負ける。負けた側は貨物予約の保存をセーブポイントに戻し（トランザクションは中断しない）、同じトランザクションで処理済みコマンド → 同じ見積りの予約の順に引き直し、最初の結果か既存の追跡番号を返す（Bolt 24） | B-INV-03、B-INV-11 |

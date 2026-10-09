@@ -114,7 +114,12 @@ public class BookingCommandService {
                             trackingNumber,
                             committedAt));
         } catch (DuplicateBookingException e) {
-            // 同時の確定に負けた。保存はセーブポイントに戻っているので、同じトランザクションで勝った側の結果を読み直す（Bolt 24、H2）
+            // 同時の確定に負けた。保存はセーブポイントに戻っているので、同じトランザクションで勝った側の結果を読み直す（Bolt 24 の仮説 H2）
+            LOG.info(
+                    "同時の本予約の確定に負けたので、勝った側の結果を読み直す: {} 見積 {} commandId={}",
+                    command.transportRequestNumber(),
+                    command.quotationNo(),
+                    command.commandId().value());
             return alreadySettled(command)
                     .orElseThrow(() -> new IllegalStateException(
                             "同じ見積りの一意制約に違反したのに、同じ見積りの予約が見つからない: " + command.transportRequestNumber() + " 見積 "
@@ -133,17 +138,21 @@ public class BookingCommandService {
     private Optional<BookingConfirmationOutcome> alreadySettled(ConfirmBookingCommand command) {
         Optional<ProcessedCommand> processed = repository.findProcessedCommand(command.commandId());
         if (processed.isPresent()) {
-            String payloadHash = ProcessedCommand.confirmBookingPayloadHash(
-                    command.transportRequestNumber(),
-                    command.quotationNo(),
-                    command.operator().userId());
-            if (processed.get().sameContentAs(payloadHash)) {
+            if (processed
+                    .get()
+                    .isSameConfirmation(
+                            command.transportRequestNumber(),
+                            command.quotationNo(),
+                            command.operator().userId())) {
                 return Optional.of(
                         new BookingConfirmationOutcome.Confirmed(processed.get().trackingNumber()));
             }
             LOG.warn(
-                    "同じコマンド ID で内容の違う本予約の確定を拒否した（衝突。B-INV-03）: commandId={}",
-                    command.commandId().value());
+                    "同じコマンド ID で内容の違う本予約の確定を拒否した（衝突。B-INV-03）: {} 見積 {} commandId={} operator={}",
+                    command.transportRequestNumber(),
+                    command.quotationNo(),
+                    command.commandId().value(),
+                    command.operator().userId().value());
             return Optional.of(new BookingConfirmationOutcome.CommandConflict());
         }
         return repository

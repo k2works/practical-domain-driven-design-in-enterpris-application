@@ -21,6 +21,7 @@ import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
@@ -67,7 +68,7 @@ class BookingConfirmationConcurrentIntegrationTest {
     private final Random random = new Random();
 
     @Test
-    void 同じコマンドIDで同時に確定すると予約も処理済みコマンドも1件で両方が同じ追跡番号を返す() throws Exception {
+    void 同じコマンドIDで同時に確定すると予約も処理済みコマンドも1件で両方が同じ追跡番号を返す() {
         BookingTerms terms = uniqueTerms();
         CommandId commandId = CommandId.random();
         UUID sales = UUID.randomUUID();
@@ -80,10 +81,30 @@ class BookingConfirmationConcurrentIntegrationTest {
         assertThat(trackingNumbers(outcomes)).as("負けた側も最初の結果を返す").hasSize(1);
         assertThat(countBookings(terms)).isEqualTo(1);
         assertThat(countProcessedCommands(commandId)).isEqualTo(1);
+        assertThat(countVersionsAndSagas(terms)).as("負けた側の予約版と予約サガはセーブポイントで戻る").containsExactly(1, 1);
     }
 
     @Test
-    void 別のコマンドIDと別の営業担当者で同時に確定すると予約は1件で負けた側は既存の追跡番号を返す() throws Exception {
+    void 同じコマンドIDで別の見積りを同時に確定すると予約は1件で負けた側は衝突になる() {
+        BookingTerms first = uniqueTerms();
+        BookingTerms second = uniqueTerms();
+        CommandId commandId = CommandId.random();
+        UUID sales = UUID.randomUUID();
+
+        List<BookingConfirmationOutcome> outcomes = confirmConcurrently(
+                Map.of(first.transportRequestNumber(), first, second.transportRequestNumber(), second),
+                List.of(command(commandId, first, sales), command(commandId, second, sales)));
+
+        assertThat(outcomes)
+                .extracting(Object::getClass)
+                .containsExactlyInAnyOrder(
+                        BookingConfirmationOutcome.Confirmed.class, BookingConfirmationOutcome.CommandConflict.class);
+        assertThat(countBookings(first) + countBookings(second)).isEqualTo(1);
+        assertThat(countProcessedCommands(commandId)).isEqualTo(1);
+    }
+
+    @Test
+    void 別のコマンドIDと別の営業担当者で同時に確定すると予約は1件で負けた側は既存の追跡番号を返す() {
         BookingTerms terms = uniqueTerms();
 
         List<BookingConfirmationOutcome> outcomes = confirmConcurrently(
@@ -98,11 +119,18 @@ class BookingConfirmationConcurrentIntegrationTest {
                         BookingConfirmationOutcome.Confirmed.class, BookingConfirmationOutcome.AlreadyBooked.class);
         assertThat(trackingNumbers(outcomes)).as("負けた側は勝った側の追跡番号を返す").hasSize(1);
         assertThat(countBookings(terms)).isEqualTo(1);
+        assertThat(countVersionsAndSagas(terms)).containsExactly(1, 1);
     }
 
     /** 2 つの確定を別々のスレッドとトランザクションで、見積りの照会の中でそろえてから進める。 */
     private List<BookingConfirmationOutcome> confirmConcurrently(
             BookingTerms terms, List<ConfirmBookingCommand> commands) {
+        return confirmConcurrently(Map.of(terms.transportRequestNumber(), terms), commands);
+    }
+
+    /** 業務番号ごとの見積りを返す見積りの公開 API で確定する。 */
+    private List<BookingConfirmationOutcome> confirmConcurrently(
+            Map<String, BookingTerms> termsByNumber, List<ConfirmBookingCommand> commands) {
         CountDownLatch bothChecked = new CountDownLatch(commands.size());
         BookingCommandService service = new BookingCommandService(
                 repository,
@@ -111,7 +139,7 @@ class BookingConfirmationConcurrentIntegrationTest {
                 new QuotationBookability(request -> {
                     bothChecked.countDown();
                     awaitQuietly(bothChecked);
-                    return bookable(terms);
+                    return bookable(termsByNumber.get(request.transportRequestNumber()));
                 }),
                 event -> {},
                 Clock.fixed(NOW, ZoneOffset.UTC));
@@ -144,6 +172,19 @@ class BookingConfirmationConcurrentIntegrationTest {
     private int countBookings(BookingTerms terms) {
         return jdbcTemplate.queryForObject(
                 "SELECT COUNT(*) FROM booking.booking WHERE quotation_id = ?", Integer.class, terms.quotationId());
+    }
+
+    private List<Integer> countVersionsAndSagas(BookingTerms terms) {
+        return List.of(
+                jdbcTemplate.queryForObject(
+                        "SELECT COUNT(*) FROM booking.booking_version WHERE quotation_id = ?",
+                        Integer.class,
+                        terms.quotationId()),
+                jdbcTemplate.queryForObject(
+                        "SELECT COUNT(*) FROM booking.booking_saga s JOIN booking.booking b ON b.id = s.booking_id"
+                                + " WHERE b.quotation_id = ?",
+                        Integer.class,
+                        terms.quotationId()));
     }
 
     private int countProcessedCommands(CommandId commandId) {

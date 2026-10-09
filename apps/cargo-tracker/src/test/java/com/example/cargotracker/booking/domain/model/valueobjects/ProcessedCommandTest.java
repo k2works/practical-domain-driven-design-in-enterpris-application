@@ -46,6 +46,14 @@ class ProcessedCommandTest {
     }
 
     @Test
+    void 本予約の確定の内容が同じかを業務番号と見積り番号と操作者で答える() {
+        assertThat(processed.isSameConfirmation("TR-2026-0001", 1, SALES)).isTrue();
+        assertThat(processed.isSameConfirmation("TR-2026-0001", 2, SALES)).isFalse();
+        assertThat(processed.isSameConfirmation("TR-2026-0001", 1, new UserId(UUID.randomUUID())))
+                .isFalse();
+    }
+
+    @Test
     void 業務番号と見積り番号の区切りで別の内容が同じ照合値にならない() {
         assertThat(ProcessedCommand.confirmBookingPayloadHash("TR-2026-00011", 1, SALES))
                 .isNotEqualTo(ProcessedCommand.confirmBookingPayloadHash("TR-2026-0001", 11, SALES));

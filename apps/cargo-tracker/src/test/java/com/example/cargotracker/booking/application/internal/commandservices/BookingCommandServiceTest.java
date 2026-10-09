@@ -1,6 +1,7 @@
 package com.example.cargotracker.booking.application.internal.commandservices;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
@@ -17,6 +18,7 @@ import com.example.cargotracker.booking.domain.model.BookingFixture;
 import com.example.cargotracker.booking.domain.model.aggregates.Booking;
 import com.example.cargotracker.booking.domain.model.aggregates.DuplicateBookingException;
 import com.example.cargotracker.booking.domain.model.valueobjects.BookingCondition;
+import com.example.cargotracker.booking.domain.model.valueobjects.BookingId;
 import com.example.cargotracker.booking.domain.model.valueobjects.ProcessedCommand;
 import com.example.cargotracker.booking.domain.model.valueobjects.TrackingNumber;
 import com.example.cargotracker.quotation.api.BookableQuotationRequest;
@@ -163,7 +165,10 @@ class BookingCommandServiceTest {
         assertThat(repository.findAll()).hasSize(1);
         assertThat(logs.list).singleElement().satisfies(event -> {
             assertThat(event.getLevel()).isEqualTo(Level.WARN);
-            assertThat(event.getFormattedMessage()).contains(commandId.value().toString());
+            assertThat(event.getFormattedMessage())
+                    .contains(commandId.value().toString())
+                    .contains("TR-2026-0001")
+                    .contains("見積 1");
         });
     }
 
@@ -233,6 +238,87 @@ class BookingCommandServiceTest {
         assertThat(serviceWith(racing).confirm(command(CommandId.random(), BookingFixture.SALES, Role.SALES, true)))
                 .isEqualTo(new BookingConfirmationOutcome.AlreadyBooked(winner));
         assertThat(published).isEmpty();
+    }
+
+    @Test
+    void 同時の確定で同じコマンドIDの確定に負けたら読み直して最初の追跡番号を返す() {
+        CommandId commandId = CommandId.random();
+        TrackingNumber winner = new TrackingNumber("CTWNNERABCDEFG");
+        InMemoryBookingRepository racing = new InMemoryBookingRepository() {
+            private boolean firstLookup = true;
+
+            @Override
+            public synchronized Optional<ProcessedCommand> findProcessedCommand(CommandId id) {
+                // 1 回目の照会の後に、同じコマンド ID の確定が先に保存した状態を作る
+                if (firstLookup) {
+                    firstLookup = false;
+                    return Optional.empty();
+                }
+                return Optional.of(ProcessedCommand.confirmBooking(
+                        id,
+                        "TR-2026-0001",
+                        1,
+                        new UserId(BookingFixture.SALES),
+                        new BookingId(UUID.randomUUID()),
+                        winner,
+                        new UtcInstant(NOW)));
+            }
+
+            @Override
+            public synchronized void save(Booking booking, UUID operator, ProcessedCommand processedCommand) {
+                throw new DuplicateBookingException("同じ見積りの予約がすでにある", null);
+            }
+        };
+
+        assertThat(serviceWith(racing).confirm(command(commandId, BookingFixture.SALES, Role.SALES, true)))
+                .isEqualTo(new BookingConfirmationOutcome.Confirmed(winner));
+        assertThat(published).isEmpty();
+    }
+
+    @Test
+    void 一意制約に負けたのに読み直しで何も見つからなければ技術の失敗にする() {
+        InMemoryBookingRepository broken = new InMemoryBookingRepository() {
+            @Override
+            public synchronized void save(Booking booking, UUID operator, ProcessedCommand processedCommand) {
+                throw new DuplicateBookingException("同じ見積りの予約がすでにある", null);
+            }
+        };
+
+        BookingCommandService brokenService = serviceWith(broken);
+        ConfirmBookingCommand command = command(CommandId.random(), BookingFixture.SALES, Role.SALES, true);
+        assertThatThrownBy(() -> brokenService.confirm(command))
+                .isInstanceOf(IllegalStateException.class)
+                .hasCauseInstanceOf(DuplicateBookingException.class);
+    }
+
+    @Test
+    void 同時の確定に負けて読み直したことを情報のログに残す() {
+        TrackingNumber winner = new TrackingNumber("CTWNNERABCDEFG");
+        InMemoryBookingRepository racing = new InMemoryBookingRepository() {
+            private boolean firstLookup = true;
+
+            @Override
+            public synchronized Optional<TrackingNumber> findTrackingNumber(
+                    String transportRequestNumber, int quotationNo) {
+                if (firstLookup) {
+                    firstLookup = false;
+                    return Optional.empty();
+                }
+                return Optional.of(winner);
+            }
+
+            @Override
+            public synchronized void save(Booking booking, UUID operator, ProcessedCommand processedCommand) {
+                throw new DuplicateBookingException("同じ見積りの予約がすでにある", null);
+            }
+        };
+
+        serviceWith(racing).confirm(command(CommandId.random(), BookingFixture.SALES, Role.SALES, true));
+
+        assertThat(logs.list).singleElement().satisfies(event -> {
+            assertThat(event.getLevel()).isEqualTo(Level.INFO);
+            assertThat(event.getFormattedMessage()).contains("TR-2026-0001").contains("見積 1");
+        });
     }
 
     private static ConfirmBookingCommand command(Role role, boolean staffConfirmed) {

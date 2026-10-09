@@ -60,7 +60,7 @@ class BookingControllerTest {
     private static final String NEW = "/staff/bookings/new?transportRequest=TR-2026-0001&quotation=1";
     private static final String RECEPTION = "/staff/transport-requests";
     private static final String COMMAND_ID = "00000000-0000-0000-0000-0000000000c1";
-    private static final String ALREADY_BOOKED = "TR-2026-0001 見積 1 は既に予約に使われています（追跡番号 CTABCDEFGH2345）。";
+    private static final String ALREADY_BOOKED = "TR-2026-0001 見積 1 はすでに予約に使われています（追跡番号 CTABCDEFGH2345）。";
     private static final UtcInstant APPROVED_AT = new UtcInstant(Instant.parse("2026-10-04T06:20:00Z"));
     private static final UtcInstant EXPIRES_AT = new UtcInstant(Instant.parse("2099-10-08T09:00:00Z"));
 
@@ -147,7 +147,7 @@ class BookingControllerTest {
                 .andExpect(redirectedUrl(RECEPTION))
                 .andExpect(flash().attribute("result", ALREADY_BOOKED))
                 .andExpect(flash().attribute("resultLinkHref", "/staff/bookings/CTABCDEFGH2345"))
-                .andExpect(flash().attribute("resultLinkLabel", "予約の詳細を開く"));
+                .andExpect(flash().attribute("resultLinkLabel", "CTABCDEFGH2345 の予約の詳細を開く"));
     }
 
     @Test
@@ -227,7 +227,8 @@ class BookingControllerTest {
                         .param("quotation", "1")
                         .param("staffConfirmed", "true"))
                 .andExpect(redirectedUrl(RECEPTION))
-                .andExpect(flash().attribute("problem", "この操作はすでに別の内容で受け付けています。開き直してください。"));
+                .andExpect(flash().attribute(
+                                "problem", "TR-2026-0001 見積 1 は確定していません。この操作はすでに別の内容で受け付けています。受付一覧から開き直してください。"));
     }
 
     @Test
@@ -326,7 +327,7 @@ class BookingControllerTest {
                 .andExpect(redirectedUrl(RECEPTION))
                 .andExpect(flash().attribute("result", ALREADY_BOOKED))
                 .andExpect(flash().attribute("resultLinkHref", "/staff/bookings/CTABCDEFGH2345"))
-                .andExpect(flash().attribute("resultLinkLabel", "予約の詳細を開く"));
+                .andExpect(flash().attribute("resultLinkLabel", "CTABCDEFGH2345 の予約の詳細を開く"));
     }
 
     @Test

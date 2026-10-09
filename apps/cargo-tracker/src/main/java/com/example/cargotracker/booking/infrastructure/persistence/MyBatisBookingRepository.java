@@ -41,11 +41,12 @@ public class MyBatisBookingRepository implements BookingRepository {
     }
 
     /**
-     * 1 つの見積りから予約は 1 件（B-INV-11）を守る UK の名前（見積り ID、業務番号と見積り番号。Bolt 24）。DB によって大文字・小文字が
-     * 変わるため、区別せずに探す。
+     * 同時の確定の決着を示す一意制約の名前。1 つの見積りから予約は 1 件（B-INV-11。見積り ID、業務番号と見積り番号）と、同じコマンド ID の
+     * 確定は 1 回（B-INV-03。処理済みコマンドの主キー。同じコマンド ID で別の見積りを同時に送ったとき。Bolt 24 レビュー P-1）。
+     * DB によって大文字・小文字が変わるため、区別せずに探す。
      */
-    private static final List<String> SAME_QUOTATION_UNIQUE_KEYS =
-            List.of("uk_booking_quotation", "uk_booking_transport_request_quotation");
+    private static final List<String> SETTLED_UNIQUE_KEYS =
+            List.of("uk_booking_quotation", "uk_booking_transport_request_quotation", "pk_processed_command");
 
     private static final String CONFIRM_BOOKING = "ConfirmBooking";
     private static final String RESULT_REF_SEPARATOR = ":";
@@ -81,11 +82,11 @@ public class MyBatisBookingRepository implements BookingRepository {
             }
             mapper.insertProcessedCommand(toRow(processedCommand));
         } catch (DuplicateKeyException e) {
-            if (SAME_QUOTATION_UNIQUE_KEYS.stream().anyMatch(key -> violates(e, key))) {
+            if (SETTLED_UNIQUE_KEYS.stream().anyMatch(key -> violates(e, key))) {
                 throw new DuplicateBookingException(
-                        "同じ見積りの予約がすでにある: " + booking.currentVersion().terms().quotationId(), e);
+                        "同時の確定がすでに決着している（同じ見積りの予約か、同じコマンド ID の確定）: " + processedCommand.commandId(), e);
             }
-            throw new IllegalStateException("貨物予約の一意制約に違反した（追跡番号・コマンド ID の重なりなど）: " + booking.id(), e);
+            throw new IllegalStateException("貨物予約の一意制約に違反した（追跡番号の重なりなど）: " + booking.id(), e);
         }
     }
 
@@ -126,7 +127,11 @@ public class MyBatisBookingRepository implements BookingRepository {
     }
 
     private static ProcessedCommand toProcessedCommand(ProcessedCommandRow row) {
-        String[] result = row.resultRef().split(RESULT_REF_SEPARATOR, 2);
+        String[] result =
+                row.resultRef() == null ? new String[0] : row.resultRef().split(RESULT_REF_SEPARATOR, 2);
+        if (result.length != 2) {
+            throw new IllegalStateException("処理済みコマンドの結果の参照が「予約 ID:追跡番号」の形でない: commandId=" + row.commandId());
+        }
         return new ProcessedCommand(
                 new CommandId(row.commandId()),
                 row.payloadHash(),

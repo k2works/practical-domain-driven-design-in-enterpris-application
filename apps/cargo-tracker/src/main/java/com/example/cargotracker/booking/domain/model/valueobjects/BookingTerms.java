@@ -47,7 +47,10 @@ public record BookingTerms(
         Objects.requireNonNull(cargoCategory, "cargoCategory");
         Objects.requireNonNull(cargoSummary, "cargoSummary");
         Objects.requireNonNull(shipperApproverId, "shipperApproverId");
-        if (transportRequestVersionNo < 1 || quotationNo < 1 || routeVersionNo < 1) {
+        if (quotationNo < 1) {
+            throw new IllegalArgumentException("見積り番号は 1 以上です: " + quotationNo);
+        }
+        if (transportRequestVersionNo < 1 || routeVersionNo < 1) {
             throw new IllegalArgumentException("版番号は 1 以上です");
         }
     }

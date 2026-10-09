@@ -90,7 +90,8 @@ public class BookingController {
                 alreadyBooked(subject, trackingNumber, redirectAttributes);
             case BookingConfirmationOutcome.CommandConflict _ -> {
                 // 正しい画面の操作では起きない（開くたびに新しいコマンド ID）。確定サービスが警告のログを残す
-                redirectAttributes.addFlashAttribute(PROBLEM, "この操作はすでに別の内容で受け付けています。開き直してください。");
+                redirectAttributes.addFlashAttribute(
+                        PROBLEM, subject + " は確定していません。この操作はすでに別の内容で受け付けています。受付一覧から開き直してください。");
                 yield RECEPTION;
             }
             case BookingConfirmationOutcome.Forbidden _ -> throw new ResponseStatusException(HttpStatus.FORBIDDEN);
@@ -152,9 +153,10 @@ public class BookingController {
      */
     private static String alreadyBooked(
             String subject, TrackingNumber trackingNumber, RedirectAttributes redirectAttributes) {
-        redirectAttributes.addFlashAttribute(RESULT, subject + " は既に予約に使われています（追跡番号 " + trackingNumber.value() + "）。");
+        redirectAttributes.addFlashAttribute(RESULT, subject + " はすでに予約に使われています（追跡番号 " + trackingNumber.value() + "）。");
         redirectAttributes.addFlashAttribute(RESULT_LINK_HREF, "/staff/bookings/" + trackingNumber.value());
-        redirectAttributes.addFlashAttribute(RESULT_LINK_LABEL, "予約の詳細を開く");
+        // リンクの名前だけで何の予約か分かるように、追跡番号を入れる（WCAG 2.4.4。Bolt 24 レビュー U-1）
+        redirectAttributes.addFlashAttribute(RESULT_LINK_LABEL, trackingNumber.value() + " の予約の詳細を開く");
         return RECEPTION;
     }
 

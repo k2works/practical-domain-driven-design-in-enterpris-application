@@ -176,11 +176,11 @@ public class BookingUiSteps {
         otherTabTrackingNumber = path.substring(path.lastIndexOf('/') + 1);
     }
 
-    @ならば("受付一覧に見積り {int} は既に予約に使われていることと別のタブで確定した予約の追跡番号が示される")
+    @ならば("受付一覧に見積り {int} はすでに予約に使われていることと別のタブで確定した予約の追跡番号が示される")
     public void 既に予約に使われていると示される(int quotationNo) {
         page().waitForURL("**/staff/transport-requests");
         assertThat(page().getByRole(AriaRole.STATUS))
-                .hasText(subject(quotationNo) + " は既に予約に使われています（追跡番号 " + otherTabTrackingNumber + "）。");
+                .hasText(subject(quotationNo) + " はすでに予約に使われています（追跡番号 " + otherTabTrackingNumber + "）。");
         assertThat(detailLink()).isVisible();
         browser.checkAccessibility();
     }
@@ -201,7 +201,8 @@ public class BookingUiSteps {
     }
 
     private Locator detailLink() {
-        return page().getByRole(AriaRole.LINK, new Page.GetByRoleOptions().setName("予約の詳細を開く"));
+        return page().getByRole(
+                        AriaRole.LINK, new Page.GetByRoleOptions().setName(otherTabTrackingNumber + " の予約の詳細を開く"));
     }
 
     /** S-09 のフォームの隠し項目と CSRF のトークン。営業担当者の確認は送る値として入れる。 */

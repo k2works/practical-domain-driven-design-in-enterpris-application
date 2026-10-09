@@ -129,6 +129,7 @@
         SELECT command_id, command_type, payload_hash, result_ref, processed_at
           FROM booking.processed_command
          WHERE command_id = #{commandId}
+           AND command_type = 'ConfirmBooking'
     </select>
 
     <select id="findSagaByBookingId" resultMap="bookingSagaRow">

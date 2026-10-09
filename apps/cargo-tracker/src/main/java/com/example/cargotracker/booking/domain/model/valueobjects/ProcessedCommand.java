@@ -71,6 +71,11 @@ public record ProcessedCommand(
         }
     }
 
+    /** 同じ本予約の確定か（業務番号・見積り番号・操作者が同じか）。 */
+    public boolean isSameConfirmation(String transportRequestNumber, int quotationNo, UserId operator) {
+        return sameContentAs(confirmBookingPayloadHash(transportRequestNumber, quotationNo, operator));
+    }
+
     /** 同じ内容のコマンドか。 */
     public boolean sameContentAs(String otherPayloadHash) {
         return payloadHash.equals(otherPayloadHash);

@@ -4,7 +4,7 @@ title: "cargo-tracker バックエンドアーキテクチャ"
 description: "cargo-tracker の境界づけられたコンテキスト、コンテキストごとのドメインロジックパターン、パッケージ構成、サガとドメインイベントによる連携（ARCH-HO-01〜03）、受信サービスの方針。"
 tags: [design, architecture, backend]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-08T10:28:50Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-09T03:02:52Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T07:11:12Z }
   - { by: human:kakimomokuri, at: 2026-10-01T07:41:04Z }
@@ -301,6 +301,7 @@ Bolt 1 の実装で次を決めた。
 | :--- | :--- |
 | コマンドの形 | すべての変更コマンドは `commandId`、対象 ID、`expectedVersion` を持つ |
 | 冪等性 | コンテキストごとに処理済みコマンドを記録し、同じ `commandId` には同じ結果を返す。同じ `commandId` で内容が違う場合は衝突として拒否する |
+| 処理済みコマンドの置き場所 | 処理済みコマンドは各コンテキストの集約のリポジトリ（domain）の操作にし、集約と同じ保存の呼び出しで記録する。application にポートを置かない（層の規則 D-5。例外は `application.sagas` だけ）。最初の実装は予約（Bolt 24。`ProcessedCommand`、`BookingRepository`）。2 つ目のコンテキストで使うときに、コマンド ID・種類・照合値と照合の判定を `shared.domain` に抽出するかを ADR で決める（Bolt 24 レビュー A-3） |
 | 期待版の照合 | 集約の版を楽観ロックに使う。`expectedVersion` が現在版と違えば変更せず、競合として最新版の再読込または再承認を求める |
 | 配送保証 | コンテキスト内のコマンドは同期のメソッド呼び出しで処理する。ドメインイベントはコミット後に「少なくとも 1 回」配信し、受信側の冪等性で重複を吸収する |
 

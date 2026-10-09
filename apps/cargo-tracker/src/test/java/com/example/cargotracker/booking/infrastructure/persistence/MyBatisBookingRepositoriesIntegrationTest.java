@@ -94,7 +94,7 @@ class MyBatisBookingRepositoriesIntegrationTest {
     }
 
     @Test
-    void 処理済みコマンドのコマンドIDの重なりは同じ見積りの予約と区別して技術の失敗にする() {
+    void 処理済みコマンドのコマンドIDの重なりは同時の確定の決着として扱い別の見積りの予約も記録しない() {
         Booking first = confirmed(terms(UUID.randomUUID()));
         ProcessedCommand processed = BookingFixture.processedCommand(first);
         repository.save(first, BookingFixture.SALES, processed);
@@ -109,8 +109,11 @@ class MyBatisBookingRepositoriesIntegrationTest {
                 other.trackingNumber(),
                 COMMITTED_AT);
         assertThatThrownBy(() -> repository.save(other, BookingFixture.SALES, sameCommandId))
-                .isInstanceOf(IllegalStateException.class)
-                .isNotInstanceOf(DuplicateBookingException.class);
+                .as("同じコマンド ID で別の見積りを送った衝突。呼び出し側が読み直して衝突を返す（Bolt 24 レビュー P-1）")
+                .isInstanceOf(DuplicateBookingException.class);
+        assertThat(repository.findTrackingNumber(other.transportRequestNumber(), other.quotationNo()))
+                .as("貨物予約の保存もセーブポイントで戻る")
+                .isEmpty();
     }
 
     @Test
@@ -120,7 +123,8 @@ class MyBatisBookingRepositoriesIntegrationTest {
         repository.save(first, BookingFixture.SALES, BookingFixture.processedCommand(first));
 
         Booking second = confirmed(terms(quotationId));
-        assertThatThrownBy(() -> repository.save(second, BookingFixture.SALES, BookingFixture.processedCommand(second)))
+        ProcessedCommand secondCommand = BookingFixture.processedCommand(second);
+        assertThatThrownBy(() -> repository.save(second, BookingFixture.SALES, secondCommand))
                 .isInstanceOf(DuplicateBookingException.class);
         assertThat(repository.findByTrackingNumber(second.trackingNumber())).isEmpty();
     }
@@ -131,8 +135,8 @@ class MyBatisBookingRepositoriesIntegrationTest {
         repository.save(first, BookingFixture.SALES, BookingFixture.processedCommand(first));
 
         Booking collided = confirmed(terms(UUID.randomUUID()), first.trackingNumber());
-        assertThatThrownBy(() ->
-                        repository.save(collided, BookingFixture.SALES, BookingFixture.processedCommand(collided)))
+        ProcessedCommand collidedCommand = BookingFixture.processedCommand(collided);
+        assertThatThrownBy(() -> repository.save(collided, BookingFixture.SALES, collidedCommand))
                 .isInstanceOf(IllegalStateException.class)
                 .isNotInstanceOf(DuplicateBookingException.class);
     }
