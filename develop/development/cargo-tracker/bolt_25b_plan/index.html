@@ -3750,7 +3750,7 @@
     
   
   
-    <span class="md-status md-status--draft"></span>
+    <span class="md-status md-status--stable"></span>
   
 
   
@@ -3775,7 +3775,7 @@
     
   
   
-    <span class="md-status md-status--draft"></span>
+    <span class="md-status md-status--stable"></span>
   
 
   
@@ -8685,7 +8685,7 @@
 <td style="text-align: left;">2</td>
 <td style="text-align: left;"><strong>一覧の読み取りモデルの置き場所と引き方</strong>（Bolt 23b の A-低5。開始準備の検証の指摘）</td>
 <td style="text-align: left;">2・3</td>
-<td style="text-align: left;">予約の要約（<code>booking.domain.model.valueobjects.BookingSummary</code>。予約 ID・追跡番号・業務番号・見積り番号・確定時刻）は予約の表だけから <code>BookingRepository.findRecentSummaries</code> で引き、予約サガの状態は照会のサービスが <code>BookingSagaRepository.findStatusesByBookingIds</code> で件数の上限の中の IN で引く（SELECT は 2 本、N+1 にしない）。ドメイン層の一覧の読み取りモデルの前例（5 つ。どれも自分の集約の表だけを結ぶ）と同じ形で、予約サガの状態は型（<code>BookingSagaStatus</code>）のまま扱え、層の規則の例外も要らない（永続化の実装から <code>application.sagas</code> を参照するのは既存の例外の中）。照会のサービスは画面の行の値と「50 件を超えたか」だけを返し、同じ形の型を 3 段に重ねない（A-低4）。ADR は書かない（前例の形に収まるため）。代わりの案は、(b) 1 本の SELECT で予約サガまで結び、状態を文字列で <code>BookingSummary</code> に持つ（集約の外を結ぶ最初の読み取りモデルになり、状態の型を失う）、(c) 照会専用のポート（層の規則 D-5 の例外を足す）、(d) 予約サガのリポジトリに一覧の照会を置く（予約の一覧を予約サガが持つことになる）</td>
+<td style="text-align: left;"><strong>決定（2026-10-09、human:kakimomokuri）: 推奨のとおり</strong>。予約の要約（<code>booking.domain.model.valueobjects.BookingSummary</code>。予約 ID・追跡番号・業務番号・見積り番号・確定時刻）は予約の表だけから <code>BookingRepository.findRecentSummaries</code> で引き、予約サガの状態は照会のサービスが <code>BookingSagaRepository.findStatusesByBookingIds</code> で件数の上限の中の IN で引く（SELECT は 2 本、N+1 にしない）。ドメイン層の一覧の読み取りモデルの前例（5 つ。どれも自分の集約の表だけを結ぶ）と同じ形で、予約サガの状態は型（<code>BookingSagaStatus</code>）のまま扱え、層の規則の例外も要らない（永続化の実装から <code>application.sagas</code> を参照するのは既存の例外の中）。照会のサービスは画面の行の値と「50 件を超えたか」だけを返し、同じ形の型を 3 段に重ねない（A-低4）。ADR は書かない（前例の形に収まるため）。代わりの案は、(b) 1 本の SELECT で予約サガまで結び、状態を文字列で <code>BookingSummary</code> に持つ（集約の外を結ぶ最初の読み取りモデルになり、状態の型を失う）、(c) 照会専用のポート（層の規則 D-5 の例外を足す）、(d) 予約サガのリポジトリに一覧の照会を置く（予約の一覧を予約サガが持つことになる）</td>
 </tr>
 <tr>
 <td style="text-align: left;">3</td>
@@ -8709,7 +8709,7 @@
 <td style="text-align: left;">6</td>
 <td style="text-align: left;"><strong>「失敗」の表示</strong>（開始準備の検証の指摘。UI 設計とコードの食い違い）</td>
 <td style="text-align: left;">1</td>
-<td style="text-align: left;">UI 設計の共通部品「処理中表示」（表示は処理中・完了・有人確認要の 3 つ。非同期処理の遅れ・失敗は「処理中」のまま示し、有人確認要で受付番号を示す）にそろえ、<code>FAILED</code> は「処理中」と示す（今のコードの「失敗（担当者が確認します）」を直す）。<code>FAILED</code> は W8 まで起きない。代わりの案は、コードのまま「失敗」を示し、UI 設計を直す</td>
+<td style="text-align: left;"><strong>決定（2026-10-09、human:kakimomokuri）: 推奨のとおり</strong>。UI 設計の共通部品「処理中表示」（表示は処理中・完了・有人確認要の 3 つ。非同期処理の遅れ・失敗は「処理中」のまま示し、有人確認要で受付番号を示す）にそろえ、<code>FAILED</code> は「処理中」と示す（今のコードの「失敗（担当者が確認します）」を直す）。<code>FAILED</code> は W8 まで起きない。代わりの案は、コードのまま「失敗」を示し、UI 設計を直す</td>
 </tr>
 <tr>
 <td style="text-align: left;">7</td>
@@ -8770,6 +8770,11 @@
 </tr>
 </thead>
 <tbody>
+<tr>
+<td style="text-align: left;">2026-10-09</td>
+<td style="text-align: left;">計画を承認した（確認ポイントはすべて推奨のとおり）</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5、承認 human:kakimomokuri</td>
+</tr>
 <tr>
 <td style="text-align: left;">2026-10-09</td>
 <td style="text-align: left;">開始準備の整合性検証（計画と設計 19 件、横断 17 件）の指摘を反映した（読み取りモデルの引き方を 2 本の照会に、「失敗」の表示、壊れる既存のテスト、設計文書の範囲、シナリオの置き場所とタグ、caption と列名、同じ時刻の並び、予約サガのない予約、状態遷移の図、Try の扱い）</td>
