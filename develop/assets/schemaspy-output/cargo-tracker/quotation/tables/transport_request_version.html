@@ -442,20 +442,20 @@
                                 </thead>
                                 <tbody>
                                 <tr>
-                                    <td>ck_transport_request_version_quantities</td>
-                                    <td>((package_count &gt;&#61; 1) AND (gross_weight_kg &gt; (0)::numeric) AND (volume_m3 &gt; (0)::numeric))</td>
+                                    <td>ck_transport_request_version_route</td>
+                                    <td>(origin_unlocode &lt;&gt; destination_unlocode)</td>
                                 </tr>
                                 <tr>
                                     <td>ck_transport_request_version_cargo_category</td>
                                     <td>((cargo_category)::text &#61; ANY ((ARRAY[&#39;GENERAL&#39;::character varying, &#39;DANGEROUS&#39;::character varying, &#39;REEFER&#39;::character varying, &#39;OTHER_SPECIAL&#39;::character varying])::text[]))</td>
                                 </tr>
                                 <tr>
-                                    <td>ck_transport_request_version_package_type</td>
-                                    <td>((package_type)::text &#61; ANY ((ARRAY[&#39;PALLET&#39;::character varying, &#39;CARTON&#39;::character varying, &#39;CRATE&#39;::character varying, &#39;OTHER&#39;::character varying])::text[]))</td>
+                                    <td>ck_transport_request_version_quantities</td>
+                                    <td>((package_count &gt;&#61; 1) AND (gross_weight_kg &gt; (0)::numeric) AND (volume_m3 &gt; (0)::numeric))</td>
                                 </tr>
                                 <tr>
-                                    <td>ck_transport_request_version_route</td>
-                                    <td>(origin_unlocode &lt;&gt; destination_unlocode)</td>
+                                    <td>ck_transport_request_version_package_type</td>
+                                    <td>((package_type)::text &#61; ANY ((ARRAY[&#39;PALLET&#39;::character varying, &#39;CARTON&#39;::character varying, &#39;CRATE&#39;::character varying, &#39;OTHER&#39;::character varying])::text[]))</td>
                                 </tr>
                                 </tbody>
                             </table>
