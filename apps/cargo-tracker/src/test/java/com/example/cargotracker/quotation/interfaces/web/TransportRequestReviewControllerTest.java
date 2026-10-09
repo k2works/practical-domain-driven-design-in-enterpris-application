@@ -303,6 +303,21 @@ class TransportRequestReviewControllerTest {
     }
 
     @Test
+    void 結果のお知らせに添えたリンクはお知らせの文の外に示す() throws Exception {
+        given(queryService.findUnderReview()).willReturn(List.of());
+
+        mockMvc.perform(get("/staff/transport-requests")
+                        .flashAttr("result", "TR-2026-0001 見積 1 は既に予約に使われています（追跡番号 CTABCDEFGH2345）。")
+                        .flashAttr("resultLinkHref", "/staff/bookings/CTABCDEFGH2345")
+                        .flashAttr("resultLinkLabel", "予約の詳細を開く"))
+                .andExpect(status().isOk())
+                .andExpect(content()
+                        .string(containsString(
+                                "<p role=\"status\">TR-2026-0001 見積 1 は既に予約に使われています（追跡番号 CTABCDEFGH2345）。</p>")))
+                .andExpect(content().string(containsString("<a href=\"/staff/bookings/CTABCDEFGH2345\">予約の詳細を開く</a>")));
+    }
+
+    @Test
     void 審査画面に輸送条件と版と確定と差戻しのフォームを示し対象の版番号を隠し項目で持つ() throws Exception {
         given(queryService.findByNumber(NUMBER)).willReturn(Optional.of(underReview()));
 

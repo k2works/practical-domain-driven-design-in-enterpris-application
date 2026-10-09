@@ -4,6 +4,7 @@ import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.not;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -28,12 +29,15 @@ import com.example.cargotracker.booking.domain.model.valueobjects.BookingTerms;
 import com.example.cargotracker.booking.domain.model.valueobjects.TrackingNumber;
 import com.example.cargotracker.identity.infrastructure.security.TestActors;
 import com.example.cargotracker.identity.infrastructure.security.WithAuthenticatedActor;
+import com.example.cargotracker.shared.domain.CommandId;
 import com.example.cargotracker.shared.domain.Role;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,8 +47,9 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 /**
- * S-09 本予約の確定と S-24 予約の詳細（US-04 AC1・AC2。Bolt 23b）。S-09 は画面そのものが確認の領域（BR-13）。開いたときの判定は
- * 参考で、確定の可否は送ったときの照会（commit 時刻）で決まる（ADR-016）。URL に内部の ID を出さない（D-4）。
+ * S-09 本予約の確定と S-24 予約の詳細（US-04 AC1・AC2・AC4。Bolt 23b・24）。S-09 は画面そのものが確認の領域（BR-13）。開いたときの
+ * 判定は参考で、確定の可否は送ったときの照会（commit 時刻）で決まる（ADR-016）。URL に内部の ID を出さない（D-4）。開くたびに
+ * コマンド ID を発行し、同じコマンド ID の再送には最初の結果を返す（B-INV-03）。
  */
 // 画面の単体テストはコントローラーの振る舞いだけを見る。認証・認可・CSRF はセキュリティの統合テストで確かめる（Bolt 14）
 @WithAuthenticatedActor(Role.SALES)
@@ -54,6 +59,8 @@ class BookingControllerTest {
 
     private static final String NEW = "/staff/bookings/new?transportRequest=TR-2026-0001&quotation=1";
     private static final String RECEPTION = "/staff/transport-requests";
+    private static final String COMMAND_ID = "00000000-0000-0000-0000-0000000000c1";
+    private static final String ALREADY_BOOKED = "TR-2026-0001 見積 1 は既に予約に使われています（追跡番号 CTABCDEFGH2345）。";
     private static final UtcInstant APPROVED_AT = new UtcInstant(Instant.parse("2026-10-04T06:20:00Z"));
     private static final UtcInstant EXPIRES_AT = new UtcInstant(Instant.parse("2099-10-08T09:00:00Z"));
 
@@ -138,7 +145,9 @@ class BookingControllerTest {
 
         mockMvc.perform(get(NEW))
                 .andExpect(redirectedUrl(RECEPTION))
-                .andExpect(flash().attribute("result", subject + " はすでに本予約を確定しています。"));
+                .andExpect(flash().attribute("result", ALREADY_BOOKED))
+                .andExpect(flash().attribute("resultLinkHref", "/staff/bookings/CTABCDEFGH2345"))
+                .andExpect(flash().attribute("resultLinkLabel", "予約の詳細を開く"));
     }
 
     @Test
@@ -155,6 +164,7 @@ class BookingControllerTest {
                 .willReturn(new BookingConfirmationOutcome.Confirmed(BookingFixture.TRACKING_NUMBER));
 
         mockMvc.perform(post("/staff/bookings")
+                        .param("commandId", COMMAND_ID)
                         .param("transportRequest", "TR-2026-0001")
                         .param("quotation", "1")
                         .param("staffConfirmed", "true"))
@@ -172,6 +182,75 @@ class BookingControllerTest {
                 .containsExactly("TR-2026-0001", 1, true);
         org.assertj.core.api.Assertions.assertThat(command.getValue().operator().userId())
                 .isEqualTo(TestActors.STAFF_USER);
+        org.assertj.core.api.Assertions.assertThat(command.getValue().commandId())
+                .isEqualTo(new CommandId(UUID.fromString(COMMAND_ID)));
+    }
+
+    @Test
+    void 確定の画面は開くたびに新しいコマンドIDを隠し項目に入れる() throws Exception {
+        given(queryService.confirmation("TR-2026-0001", 1)).willReturn(available(BookingFixture.terms()));
+
+        String first = mockMvc.perform(get(NEW)).andReturn().getResponse().getContentAsString();
+        String second = mockMvc.perform(get(NEW)).andReturn().getResponse().getContentAsString();
+
+        org.assertj.core.api.Assertions.assertThat(hiddenCommandId(first))
+                .isNotNull()
+                .isNotEqualTo(hiddenCommandId(second));
+    }
+
+    @Test
+    void 確定条件が欠けて確定の画面に戻るときは送ったコマンドIDを隠し項目に残す() throws Exception {
+        given(commandService.confirm(any()))
+                .willReturn(
+                        new BookingConfirmationOutcome.MissingConditions(List.of(BookingCondition.STAFF_CONFIRMATION)));
+        given(queryService.confirmation("TR-2026-0001", 1)).willReturn(available(BookingFixture.terms()));
+
+        String body = mockMvc.perform(post("/staff/bookings")
+                        .param("commandId", COMMAND_ID)
+                        .param("transportRequest", "TR-2026-0001")
+                        .param("quotation", "1"))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        org.assertj.core.api.Assertions.assertThat(hiddenCommandId(body)).isEqualTo(COMMAND_ID);
+    }
+
+    @Test
+    void 同じコマンドIDで内容が違う確定は受付一覧に戻して開き直しを促す() throws Exception {
+        given(commandService.confirm(any())).willReturn(new BookingConfirmationOutcome.CommandConflict());
+
+        mockMvc.perform(post("/staff/bookings")
+                        .param("commandId", COMMAND_ID)
+                        .param("transportRequest", "TR-2026-0001")
+                        .param("quotation", "1")
+                        .param("staffConfirmed", "true"))
+                .andExpect(redirectedUrl(RECEPTION))
+                .andExpect(flash().attribute("problem", "この操作はすでに別の内容で受け付けています。開き直してください。"));
+    }
+
+    @Test
+    void コマンドIDが欠けているか形でない送信は400にして確定しない() throws Exception {
+        mockMvc.perform(post("/staff/bookings")
+                        .param("transportRequest", "TR-2026-0001")
+                        .param("quotation", "1")
+                        .param("staffConfirmed", "true"))
+                .andExpect(status().isBadRequest());
+        mockMvc.perform(post("/staff/bookings")
+                        .param("commandId", "not-a-uuid")
+                        .param("transportRequest", "TR-2026-0001")
+                        .param("quotation", "1")
+                        .param("staffConfirmed", "true"))
+                .andExpect(status().isBadRequest());
+
+        verify(commandService, never()).confirm(any());
+    }
+
+    private static String hiddenCommandId(String html) {
+        Matcher matcher =
+                Pattern.compile("name=\"commandId\" value=\"([^\"]+)\"").matcher(html);
+        return matcher.find() ? matcher.group(1) : null;
     }
 
     @Test
@@ -182,6 +261,7 @@ class BookingControllerTest {
         given(queryService.confirmation("TR-2026-0001", 1)).willReturn(available(BookingFixture.terms()));
 
         mockMvc.perform(post("/staff/bookings")
+                        .param("commandId", COMMAND_ID)
                         .param("transportRequest", "TR-2026-0001")
                         .param("quotation", "1"))
                 .andExpect(status().isOk())
@@ -213,6 +293,7 @@ class BookingControllerTest {
         given(queryService.confirmation("TR-2026-0001", 1)).willReturn(available(noCargo));
 
         mockMvc.perform(post("/staff/bookings")
+                        .param("commandId", COMMAND_ID)
                         .param("transportRequest", "TR-2026-0001")
                         .param("quotation", "1")
                         .param("staffConfirmed", "true"))
@@ -227,6 +308,7 @@ class BookingControllerTest {
         given(commandService.confirm(any())).willReturn(new BookingConfirmationOutcome.Expired());
 
         mockMvc.perform(post("/staff/bookings")
+                        .param("commandId", COMMAND_ID)
                         .param("transportRequest", "TR-2026-0001")
                         .param("quotation", "1")
                         .param("staffConfirmed", "true"))
@@ -237,11 +319,14 @@ class BookingControllerTest {
                 .willReturn(new BookingConfirmationOutcome.AlreadyBooked(BookingFixture.TRACKING_NUMBER));
 
         mockMvc.perform(post("/staff/bookings")
+                        .param("commandId", COMMAND_ID)
                         .param("transportRequest", "TR-2026-0001")
                         .param("quotation", "1")
                         .param("staffConfirmed", "true"))
                 .andExpect(redirectedUrl(RECEPTION))
-                .andExpect(flash().attribute("result", "TR-2026-0001 見積 1 はすでに本予約を確定しています。"));
+                .andExpect(flash().attribute("result", ALREADY_BOOKED))
+                .andExpect(flash().attribute("resultLinkHref", "/staff/bookings/CTABCDEFGH2345"))
+                .andExpect(flash().attribute("resultLinkLabel", "予約の詳細を開く"));
     }
 
     @Test
@@ -253,7 +338,10 @@ class BookingControllerTest {
 
         mockMvc.perform(get("/staff/bookings/new?transportRequest=XX&quotation=1"))
                 .andExpect(status().isNotFound());
-        mockMvc.perform(post("/staff/bookings").param("transportRequest", "XX").param("quotation", "1"))
+        mockMvc.perform(post("/staff/bookings")
+                        .param("commandId", COMMAND_ID)
+                        .param("transportRequest", "XX")
+                        .param("quotation", "1"))
                 .andExpect(status().isNotFound());
     }
 

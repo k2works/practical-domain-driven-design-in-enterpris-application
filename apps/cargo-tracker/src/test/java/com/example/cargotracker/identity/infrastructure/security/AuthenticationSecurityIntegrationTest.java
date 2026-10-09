@@ -415,6 +415,7 @@ class AuthenticationSecurityIntegrationTest {
                     .andExpect(status().isForbidden());
             mvc.perform(get("/staff/bookings/CTABCDEFGH2345").cookie(session)).andExpect(status().isForbidden());
             mvc.perform(post("/staff/bookings")
+                            .param("commandId", "00000000-0000-0000-0000-0000000000c1")
                             .param("transportRequest", "TR-2026-0001")
                             .param("quotation", "1")
                             .param("staffConfirmed", "true")
@@ -438,6 +439,7 @@ class AuthenticationSecurityIntegrationTest {
         Cookie session = login(user(staffCompany(), Role.SALES, UserStatus.ACTIVE));
 
         mvc.perform(post("/staff/bookings")
+                        .param("commandId", "00000000-0000-0000-0000-0000000000c1")
                         .param("transportRequest", "TR-2026-0001")
                         .param("quotation", "1")
                         .param("staffConfirmed", "true")

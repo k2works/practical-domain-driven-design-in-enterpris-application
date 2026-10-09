@@ -67,6 +67,7 @@
                 <dd class="col-sm-9">集荷前なら変更・取消しを申請できます（申請の画面は準備中です）</dd>
             </dl>
             <form th:action="@{/staff/bookings}" method="post">
+                <input type="hidden" name="commandId" th:value="${commandId}">
                 <input type="hidden" name="transportRequest" th:value="${page.transportRequestNumber()}">
                 <input type="hidden" name="quotation" th:value="${page.quotationNo()}">
                 <div class="form-check mb-3">
