@@ -4,7 +4,7 @@ title: "Bolt 24 計画 - 本予約の確定の再送と重複確定の防止（U
 description: "24 回目の Bolt の計画。本予約の確定にコマンド ID と処理済みコマンドの表を足し、同じ要求の再送には最初の結果（既存の追跡番号）を返し、同じ見積りの別の確定には既存の予約を示すまでを、業務ルール層の受入シナリオ・スキーマ・S-09 の画面の順に、ステップ 1〜5 で定義する。"
 tags: [development,bolt-plan]
 status: draft
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-09T01:55:48Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-09T02:30:10Z }
 ---
 
 # Bolt 24 計画 - 本予約の確定の再送と重複確定の防止（US-04 AC4、B-INV-03・B-INV-11）
@@ -266,12 +266,18 @@ S09 --> S02 : 同じ commandId で内容が違う（衝突の警告）
     - 画面（`BookingController`）はステップ 4 までの仮で、送ったときにコマンド ID を発行し、衝突は 409 にしている
     - 単体テスト・業務ルール層の受入シナリオ・ArchUnit・ModularityTest・用語集の整合テスト・`documentationTest` は緑。PostgreSQL の実装（`MyBatisBookingRepository` の 2 つの照会）はステップ 3 なので、DB を使う統合テストと画面の層は赤のまま。push はステップ 3 の Green と一緒にする（T-65）
     - 承認ゲートの扱い（T-36）: Red／Green（冪等・重複防止）の承認ゲートで止まらずに進めた（AI の判断）。根拠は、判定の順序と結果が設計文書（ステップ 1）と確認ポイント 3〜5・9・10 のとおりであること
-- [?] **3. スキーマと永続化（統合テスト）** 【承認ゲート: スキーマ（必ず止める。T-67）、Red／Green（冪等・重複防止）】
+- [x] **3. スキーマと永続化（統合テスト）** 【承認ゲート: スキーマ（必ず止める。T-67）、Red／Green（冪等・重複防止）】
   - マイグレーション（`processed_command` の新設と `quotation_no` の追加・既存の行の埋め込み）。マイグレーションの SQL を見せて止める
   - PostgreSQL の統合テストを先に書く: 処理済みコマンドの記録と取得、業務番号と見積り番号で予約を引く、追記専用（`AppendOnlyGrantIntegrationTest` の `APPEND_ONLY_TABLES` に `booking.processed_command` を足す）、同じコマンド ID で内容が違えば衝突、同じコマンド ID の同時の確定で予約 1 件・処理済みコマンド 1 件・両方が同じ追跡番号、別のコマンド ID の同時の確定で予約 1 件・負けた側は `AlreadyBooked(既存の追跡番号)`（H2）
   - MyBatis の実装、確定サービスの負けた側の読み直し（セーブポイントに戻した後の同じトランザクションの読み取り。確認ポイント 6）
   - 完了の判定: `check` 緑、ModularityTest・ArchUnit 緑（層の規則を変えていない）
   - 状況（2026-10-09）: マイグレーション `V20261009100000__add_booking_processed_command.sql` の下書きを書き、スキーマの承認ゲートで止めた（T-67）。既存の行の見積り番号は、見積りの表から 1 回だけ埋める（H2 と PostgreSQL の両方で流れる相関副問合せ）
+  - 承認: 人が `y` で承認した（2026-10-09。停止フックの指摘の末尾に `y` が付いて届いたものを承認として受け取った。終了報告の議題に置く）
+  - 結果（2026-10-09）
+    - Red: PostgreSQL の統合テスト（処理済みコマンドの記録と取得、業務番号と見積り番号での照会、同じ見積りの 2 件目では処理済みコマンドも記録せずトランザクションは続けて使える、コマンド ID の重なりは技術の失敗）、同時の確定の統合テスト `BookingConfirmationConcurrentIntegrationTest`（同じコマンド ID・別のコマンド ID。2 つのトランザクションを見積りの照会の中でラッチでそろえる）、追記専用の一覧に `booking.processed_command` を先に書いた。最初はステップ 2 で `BookingRow` に足した見積り番号をマッパーの結果の対応に足していなかったため、コンテキストの読み込みで落ちた（本命のアサーションではない）。列の対応だけを直して流し直し、骨組みの未実装（`UnsupportedOperationException`）とコマンド ID の重なりのアサーションで 7 件が落ちることを確かめた（T-39 の記録。本命のアサーションで落ちたのは 1 件）
+    - Green: `ProcessedCommandRow`、マッパーの `insertProcessedCommand`・`findProcessedCommand`・`findTrackingNumber`（`existsByQuotationId` は消した）、`MyBatisBookingRepository` の処理済みコマンドの保存と取得、同じ見積りの UK を 2 つ（見積り ID、業務番号と見積り番号）とも同じ見積りの予約の例外にする
+    - 表を直接使う既存のテスト（`AppendOnlyGrantIntegrationTest`、`BookingSchemaIntegrationTest`）の INSERT に見積り番号を足し、業務番号をテストごとに変えた。スキーマのテストに業務番号と見積り番号の一意、見積り番号は 1 から、処理済みコマンドの一意とコマンドの種類を足した
+    - 同時実行のテストを `--rerun` で 3 回流して、3 回とも緑だった。`check` 緑
 - [-] **4. S-09 の再送と同じ見積りの予約の表示、画面の層のシナリオ** 【承認ゲート: 画面、Red／Green（冪等・重複防止）】
   - 画面の単体テストを先に書く: S-09 の隠し項目、再送で S-24 へ、同じ見積りの予約（開いたとき・送ったとき）は S-02 に追跡番号と「予約の詳細を開く」、衝突、`commandId` の欠け・形の誤りは 400
   - 画面の層の受入シナリオを先に書く（`features/ui/confirm_booking_ui.feature`、`@US-04-AC4`、デモ項目 `@demo @demo-bolt-24/resend-booking`）: 確定の後にブラウザーで戻って同じフォームを送り直すと、同じ追跡番号の S-24 が出て予約は 1 件。同じ営業担当者が確定の前に開いておいた別のタブの S-09（別のコマンド ID）から送ると、同じ見積りの予約があるお知らせが出て、「予約の詳細を開く」で S-24 まで進む（T-69。開発データの営業担当者は 1 名なので、別の利用者は業務ルール層と統合テストで確かめる。確認ポイント 11）。キー操作だけ、幅 320 CSS px、axe-core 0 件

@@ -40,13 +40,21 @@ public class MyBatisBookingRepository implements BookingRepository {
         this.clock = clock;
     }
 
-    /** 1 つの見積りから予約は 1 件（B-INV-11）を守る UK の名前。DB によって大文字・小文字が変わるため、区別せずに探す。 */
-    private static final String QUOTATION_UNIQUE_KEY = "uk_booking_quotation";
+    /**
+     * 1 つの見積りから予約は 1 件（B-INV-11）を守る UK の名前（見積り ID、業務番号と見積り番号。Bolt 24）。DB によって大文字・小文字が
+     * 変わるため、区別せずに探す。
+     */
+    private static final List<String> SAME_QUOTATION_UNIQUE_KEYS =
+            List.of("uk_booking_quotation", "uk_booking_transport_request_quotation");
+
+    private static final String CONFIRM_BOOKING = "ConfirmBooking";
+    private static final String RESULT_REF_SEPARATOR = ":";
 
     /**
-     * 確定した貨物予約を予約版とあわせて追加する。見積り ID の UK に違反したら、セーブポイントに戻してドメインの例外にする
-     * （PostgreSQL は制約違反でトランザクションを中断するため。経路設計案件の保存と同じ）。追跡番号の重なりは発行で避けており
-     * （{@code RandomTrackingNumberIssuer}）、それでも重なったら技術の失敗として返す（Bolt 23 レビュー M-1）。
+     * 確定した貨物予約を予約版と処理済みコマンドとあわせて追加する。同じ見積りの UK（見積り ID、業務番号と見積り番号）に違反したら、
+     * セーブポイントに戻してドメインの例外にする（PostgreSQL は制約違反でトランザクションを中断するため。経路設計案件の保存と同じ）。
+     * 呼び出し側は同じトランザクションで勝った側の結果を読み直せる（Bolt 24）。追跡番号とコマンド ID の重なりは発行で避けており
+     * （{@code RandomTrackingNumberIssuer}、画面が開くたびに発行する UUID）、それでも重なったら技術の失敗として返す（Bolt 23 レビュー M-1）。
      */
     @Override
     @Transactional(propagation = Propagation.NESTED)
@@ -71,12 +79,13 @@ public class MyBatisBookingRepository implements BookingRepository {
             for (BookingVersion version : booking.versions()) {
                 mapper.insertBookingVersion(toRow(booking.id(), version));
             }
+            mapper.insertProcessedCommand(toRow(processedCommand));
         } catch (DuplicateKeyException e) {
-            if (violates(e, QUOTATION_UNIQUE_KEY)) {
+            if (SAME_QUOTATION_UNIQUE_KEYS.stream().anyMatch(key -> violates(e, key))) {
                 throw new DuplicateBookingException(
                         "同じ見積りの予約がすでにある: " + booking.currentVersion().terms().quotationId(), e);
             }
-            throw new IllegalStateException("貨物予約の一意制約に違反した（追跡番号の重なりなど）: " + booking.id(), e);
+            throw new IllegalStateException("貨物予約の一意制約に違反した（追跡番号・コマンド ID の重なりなど）: " + booking.id(), e);
         }
     }
 
@@ -97,12 +106,33 @@ public class MyBatisBookingRepository implements BookingRepository {
 
     @Override
     public Optional<ProcessedCommand> findProcessedCommand(CommandId commandId) {
-        throw new UnsupportedOperationException("Bolt 24 ステップ 3");
+        return mapper.findProcessedCommand(commandId.value()).map(MyBatisBookingRepository::toProcessedCommand);
     }
 
     @Override
     public Optional<TrackingNumber> findTrackingNumber(String transportRequestNumber, int quotationNo) {
-        throw new UnsupportedOperationException("Bolt 24 ステップ 3");
+        return mapper.findTrackingNumber(transportRequestNumber, quotationNo).map(TrackingNumber::new);
+    }
+
+    private static ProcessedCommandRow toRow(ProcessedCommand processed) {
+        return new ProcessedCommandRow(
+                processed.commandId().value(),
+                CONFIRM_BOOKING,
+                processed.payloadHash(),
+                processed.bookingId().value()
+                        + RESULT_REF_SEPARATOR
+                        + processed.trackingNumber().value(),
+                processed.processedAt().instant().atOffset(ZoneOffset.UTC));
+    }
+
+    private static ProcessedCommand toProcessedCommand(ProcessedCommandRow row) {
+        String[] result = row.resultRef().split(RESULT_REF_SEPARATOR, 2);
+        return new ProcessedCommand(
+                new CommandId(row.commandId()),
+                row.payloadHash(),
+                new BookingId(UUID.fromString(result[0])),
+                new TrackingNumber(result[1]),
+                new UtcInstant(row.processedAt().toInstant()));
     }
 
     private Booking toBooking(BookingRow row) {

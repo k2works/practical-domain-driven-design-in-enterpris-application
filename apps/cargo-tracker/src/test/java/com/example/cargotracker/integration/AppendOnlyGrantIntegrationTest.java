@@ -37,7 +37,8 @@ class AppendOnlyGrantIntegrationTest {
             "quotation.review_record",
             "quotation.required_document",
             "identity.audit_record",
-            "booking.booking_version");
+            "booking.booking_version",
+            "booking.processed_command");
 
     private static final String APP_PASSWORD = "cargo_tracker_app_test";
     private static final String INSUFFICIENT_PRIVILEGE = "42501";
@@ -162,25 +163,22 @@ class AppendOnlyGrantIntegrationTest {
         Timestamp now = Timestamp.from(Instant.parse("2026-10-08T09:00:00Z"));
         try (Connection connection = connectAsApplicationUser()) {
             try (PreparedStatement booking = connection.prepareStatement("INSERT INTO booking.booking"
-                    + " (id, tracking_number, transport_request_number, quotation_id, shipper_company_id, status,"
-                    + " transport_phase, current_version_no, version, created_at, created_by, updated_at, updated_by)"
-                    + " VALUES (?, ?, 'TR-2026-0001', ?, ?, 'CONFIRMED', 'BEFORE_PICKUP', 1, 0, ?, ?, ?, ?)")) {
+                    + " (id, tracking_number, transport_request_number, quotation_no, quotation_id, shipper_company_id,"
+                    + " status, transport_phase, current_version_no, version, created_at, created_by, updated_at,"
+                    + " updated_by)"
+                    + " VALUES (?, ?, ?, 1, ?, ?, 'CONFIRMED', 'BEFORE_PICKUP', 1, 0, ?, ?, ?, ?)")) {
                 UUID user = UUID.randomUUID();
+                String bookingKey = bookingId.toString().replace("-", "").toUpperCase();
                 booking.setObject(1, bookingId);
-                booking.setString(
-                        2,
-                        "CT"
-                                + bookingId
-                                        .toString()
-                                        .replace("-", "")
-                                        .substring(0, 12)
-                                        .toUpperCase());
-                booking.setObject(3, UUID.randomUUID());
+                booking.setString(2, "CT" + bookingKey.substring(0, 12));
+                // 業務番号と見積り番号の一意制約（Bolt 24）に当たらないよう、業務番号は予約 ID から作る
+                booking.setString(3, "TR-" + bookingKey.substring(0, 12));
                 booking.setObject(4, UUID.randomUUID());
-                booking.setTimestamp(5, now);
-                booking.setObject(6, user);
-                booking.setTimestamp(7, now);
-                booking.setObject(8, user);
+                booking.setObject(5, UUID.randomUUID());
+                booking.setTimestamp(6, now);
+                booking.setObject(7, user);
+                booking.setTimestamp(8, now);
+                booking.setObject(9, user);
                 assertThat(booking.executeUpdate()).isEqualTo(1);
             }
             try (PreparedStatement version = connection.prepareStatement("INSERT INTO booking.booking_version"

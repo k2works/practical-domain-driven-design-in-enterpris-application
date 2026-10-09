@@ -11,7 +11,10 @@ import com.example.cargotracker.booking.domain.model.aggregates.Booking;
 import com.example.cargotracker.booking.domain.model.aggregates.DuplicateBookingException;
 import com.example.cargotracker.booking.domain.model.valueobjects.BookingId;
 import com.example.cargotracker.booking.domain.model.valueobjects.BookingTerms;
+import com.example.cargotracker.booking.domain.model.valueobjects.ProcessedCommand;
 import com.example.cargotracker.booking.domain.model.valueobjects.TrackingNumber;
+import com.example.cargotracker.shared.domain.CommandId;
+import com.example.cargotracker.shared.domain.UserId;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import java.time.Instant;
 import java.util.Random;
@@ -22,7 +25,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.transaction.annotation.Transactional;
 
-/** 貨物予約と予約サガのリポジトリ（PostgreSQL。Bolt 23）。 */
+/** 貨物予約と予約サガのリポジトリ（PostgreSQL。Bolt 23）。処理済みコマンドと業務番号・見積り番号での照会（Bolt 24）。 */
 @SpringBootTest
 @Import(TestcontainersConfiguration.class)
 @Transactional
@@ -50,12 +53,64 @@ class MyBatisBookingRepositoriesIntegrationTest {
         assertThat(found.status()).isEqualTo(booking.status());
         assertThat(found.transportPhase()).isEqualTo(booking.transportPhase());
         assertThat(found.versions()).isEqualTo(booking.versions());
-        assertThat(found.transportRequestNumber()).isEqualTo("TR-2026-0001");
+        assertThat(found.transportRequestNumber()).isEqualTo(booking.transportRequestNumber());
         assertThat(repository.existsByTrackingNumber(booking.trackingNumber())).isTrue();
         assertThat(repository.existsByTrackingNumber(TrackingNumber.generate(random)))
                 .isFalse();
+        assertThat(found.quotationNo()).isEqualTo(booking.quotationNo());
         assertThat(repository.findTrackingNumber(booking.transportRequestNumber(), booking.quotationNo()))
                 .contains(booking.trackingNumber());
+        assertThat(repository.findTrackingNumber(booking.transportRequestNumber(), booking.quotationNo() + 1))
+                .isEmpty();
+    }
+
+    @Test
+    void 処理済みコマンドを貨物予約と一緒に保存しコマンドIDで読み出す() {
+        Booking booking = confirmed(terms(UUID.randomUUID()));
+        ProcessedCommand processed = BookingFixture.processedCommand(booking);
+
+        repository.save(booking, BookingFixture.SALES, processed);
+
+        assertThat(repository.findProcessedCommand(processed.commandId())).contains(processed);
+        assertThat(repository.findProcessedCommand(CommandId.random())).isEmpty();
+    }
+
+    @Test
+    void 同じ見積りの二件目では処理済みコマンドも記録せずトランザクションは続けて使える() {
+        UUID quotationId = UUID.randomUUID();
+        Booking first = confirmed(terms(quotationId));
+        repository.save(first, BookingFixture.SALES, BookingFixture.processedCommand(first));
+        Booking second = confirmed(terms(quotationId, first.transportRequestNumber()));
+        ProcessedCommand secondCommand = BookingFixture.processedCommand(second);
+
+        assertThatThrownBy(() -> repository.save(second, BookingFixture.SALES, secondCommand))
+                .isInstanceOf(DuplicateBookingException.class);
+
+        assertThat(repository.findProcessedCommand(secondCommand.commandId()))
+                .as("セーブポイントに戻り、同じトランザクションで読み直せる（Bolt 24、H2）")
+                .isEmpty();
+        assertThat(repository.findTrackingNumber(first.transportRequestNumber(), first.quotationNo()))
+                .contains(first.trackingNumber());
+    }
+
+    @Test
+    void 処理済みコマンドのコマンドIDの重なりは同じ見積りの予約と区別して技術の失敗にする() {
+        Booking first = confirmed(terms(UUID.randomUUID()));
+        ProcessedCommand processed = BookingFixture.processedCommand(first);
+        repository.save(first, BookingFixture.SALES, processed);
+
+        Booking other = confirmed(terms(UUID.randomUUID()));
+        ProcessedCommand sameCommandId = ProcessedCommand.confirmBooking(
+                processed.commandId(),
+                other.transportRequestNumber(),
+                other.quotationNo(),
+                new UserId(BookingFixture.SALES),
+                other.id(),
+                other.trackingNumber(),
+                COMMITTED_AT);
+        assertThatThrownBy(() -> repository.save(other, BookingFixture.SALES, sameCommandId))
+                .isInstanceOf(IllegalStateException.class)
+                .isNotInstanceOf(DuplicateBookingException.class);
     }
 
     @Test
@@ -112,12 +167,17 @@ class MyBatisBookingRepositoriesIntegrationTest {
                 .booking();
     }
 
-    private static BookingTerms terms(UUID quotationId) {
+    /** 見積り ID ごとに新しい業務番号（業務番号と見積り番号の一意制約に当たらないように。2082 年はほかのテストと重ならない）。 */
+    private BookingTerms terms(UUID quotationId) {
+        return terms(quotationId, "TR-2082-" + (100000 + random.nextInt(900000)));
+    }
+
+    private static BookingTerms terms(UUID quotationId, String transportRequestNumber) {
         BookingTerms base = BookingFixture.terms();
         return new BookingTerms(
                 base.transportRequestId(),
                 base.transportRequestVersionNo(),
-                base.transportRequestNumber(),
+                transportRequestNumber,
                 quotationId,
                 base.quotationNo(),
                 base.shipperCompanyId(),

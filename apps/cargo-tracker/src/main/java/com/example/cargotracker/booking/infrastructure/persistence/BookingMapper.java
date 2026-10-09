@@ -7,7 +7,7 @@ import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
 /**
- * 貨物予約・予約版・予約サガの表の MyBatis マッパー。SQL は同じパッケージの BookingMapper.xml に置き、H2 と PostgreSQL の
+ * 貨物予約・予約版・予約サガ・処理済みコマンドの表の MyBatis マッパー。SQL は同じパッケージの BookingMapper.xml に置き、H2 と PostgreSQL の
  * 共通の構文で書く（ADR-007）。
  */
 @Mapper
@@ -19,13 +19,18 @@ public interface BookingMapper {
 
     void insertBookingSaga(BookingSagaRow row);
 
+    void insertProcessedCommand(ProcessedCommandRow row);
+
     Optional<BookingRow> findBookingByTrackingNumber(@Param("trackingNumber") String trackingNumber);
 
     List<BookingVersionRow> findVersions(@Param("bookingId") UUID bookingId);
 
     boolean existsByTrackingNumber(@Param("trackingNumber") String trackingNumber);
 
-    boolean existsByQuotationId(@Param("quotationId") UUID quotationId);
+    Optional<String> findTrackingNumber(
+            @Param("transportRequestNumber") String transportRequestNumber, @Param("quotationNo") int quotationNo);
+
+    Optional<ProcessedCommandRow> findProcessedCommand(@Param("commandId") UUID commandId);
 
     Optional<BookingSagaRow> findSagaByBookingId(@Param("bookingId") UUID bookingId);
 }

@@ -95,30 +95,87 @@ class BookingSchemaIntegrationTest {
                 + UUID.randomUUID().toString().replace("-", "").substring(0, 12).toUpperCase();
     }
 
+    @Test
+    void 一つの業務番号と見積り番号から予約は一件だけ() throws SQLException {
+        String transportRequestNumber = newTransportRequestNumber();
+        insertBooking(newTrackingNumber(), UUID.randomUUID(), transportRequestNumber, 1, "CONFIRMED");
+
+        assertViolation(
+                () -> insertBooking(newTrackingNumber(), UUID.randomUUID(), transportRequestNumber, 1, "CONFIRMED"),
+                UNIQUE_VIOLATION);
+        insertBooking(newTrackingNumber(), UUID.randomUUID(), transportRequestNumber, 2, "CONFIRMED");
+    }
+
+    @Test
+    void 見積り番号は1から() {
+        assertViolation(
+                () -> insertBooking(
+                        newTrackingNumber(), UUID.randomUUID(), newTransportRequestNumber(), 0, "CONFIRMED"),
+                CHECK_VIOLATION);
+    }
+
+    @Test
+    void 処理済みコマンドのコマンドIDは一意でコマンドの種類は決めた値だけ() throws SQLException {
+        UUID commandId = UUID.randomUUID();
+        insertProcessedCommand(commandId, "ConfirmBooking");
+
+        assertViolation(() -> insertProcessedCommand(commandId, "ConfirmBooking"), UNIQUE_VIOLATION);
+        assertViolation(() -> insertProcessedCommand(UUID.randomUUID(), "SubmitTransportRequest"), CHECK_VIOLATION);
+    }
+
+    /** 業務番号と見積り番号の一意制約（Bolt 24）に当たらないよう、テストごとに新しい業務番号にする。 */
+    private static String newTransportRequestNumber() {
+        return "TR-"
+                + UUID.randomUUID().toString().replace("-", "").substring(0, 12).toUpperCase();
+    }
+
     private UUID insertBooking(String trackingNumber, String status) throws SQLException {
         return insertBooking(trackingNumber, UUID.randomUUID(), status);
     }
 
     private UUID insertBooking(String trackingNumber, UUID quotationId, String status) throws SQLException {
+        return insertBooking(trackingNumber, quotationId, newTransportRequestNumber(), 1, status);
+    }
+
+    private UUID insertBooking(
+            String trackingNumber, UUID quotationId, String transportRequestNumber, int quotationNo, String status)
+            throws SQLException {
         UUID id = UUID.randomUUID();
         try (Connection connection = dataSource.getConnection();
                 PreparedStatement statement = connection.prepareStatement("INSERT INTO booking.booking"
-                        + " (id, tracking_number, transport_request_number, quotation_id, shipper_company_id, status,"
-                        + " transport_phase, current_version_no, version, created_at, created_by, updated_at, updated_by)"
-                        + " VALUES (?, ?, 'TR-2026-0001', ?, ?, ?, 'BEFORE_PICKUP', 1, 0, ?, ?, ?, ?)")) {
+                        + " (id, tracking_number, transport_request_number, quotation_no, quotation_id,"
+                        + " shipper_company_id, status, transport_phase, current_version_no, version, created_at,"
+                        + " created_by, updated_at, updated_by)"
+                        + " VALUES (?, ?, ?, ?, ?, ?, ?, 'BEFORE_PICKUP', 1, 0, ?, ?, ?, ?)")) {
             UUID user = UUID.randomUUID();
             statement.setObject(1, id);
             statement.setString(2, trackingNumber);
-            statement.setObject(3, quotationId);
-            statement.setObject(4, UUID.randomUUID());
-            statement.setString(5, status);
-            statement.setTimestamp(6, NOW);
-            statement.setObject(7, user);
+            statement.setString(3, transportRequestNumber);
+            statement.setInt(4, quotationNo);
+            statement.setObject(5, quotationId);
+            statement.setObject(6, UUID.randomUUID());
+            statement.setString(7, status);
             statement.setTimestamp(8, NOW);
             statement.setObject(9, user);
+            statement.setTimestamp(10, NOW);
+            statement.setObject(11, user);
             statement.executeUpdate();
         }
         return id;
+    }
+
+    private void insertProcessedCommand(UUID commandId, String commandType) throws SQLException {
+        try (Connection connection = dataSource.getConnection();
+                PreparedStatement statement = connection.prepareStatement(
+                        "INSERT INTO booking.processed_command"
+                                + " (command_id, command_type, payload_hash, result_ref, processed_at) VALUES (?, ?, ?, ?, ?)")) {
+            statement.setObject(1, commandId);
+            statement.setString(2, commandType);
+            statement.setString(3, "0".repeat(64));
+            statement.setString(4, UUID.randomUUID() + ":CTABCDEFGH2345");
+            statement.setTimestamp(5, NOW);
+            statement.executeUpdate();
+        }
     }
 
     private void insertVersion(UUID bookingId, int versionNo, UUID quotationId) throws SQLException {

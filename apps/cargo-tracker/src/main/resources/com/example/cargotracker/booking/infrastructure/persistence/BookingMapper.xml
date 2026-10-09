@@ -7,6 +7,7 @@
             <idArg column="id" name="id" javaType="java.util.UUID"/>
             <arg column="tracking_number" name="trackingNumber" javaType="String"/>
             <arg column="transport_request_number" name="transportRequestNumber" javaType="String"/>
+            <arg column="quotation_no" name="quotationNo" javaType="_int"/>
             <arg column="quotation_id" name="quotationId" javaType="java.util.UUID"/>
             <arg column="shipper_company_id" name="shipperCompanyId" javaType="java.util.UUID"/>
             <arg column="status" name="status" javaType="String"/>
@@ -53,10 +54,10 @@
 
     <insert id="insertBooking">
         INSERT INTO booking.booking
-            (id, tracking_number, transport_request_number, quotation_id, shipper_company_id, status, transport_phase,
-             current_version_no, version, created_at, created_by, updated_at, updated_by)
+            (id, tracking_number, transport_request_number, quotation_no, quotation_id, shipper_company_id, status,
+             transport_phase, current_version_no, version, created_at, created_by, updated_at, updated_by)
         VALUES
-            (#{id}, #{trackingNumber}, #{transportRequestNumber}, #{quotationId}, #{shipperCompanyId}, #{status}, #{transportPhase},
+            (#{id}, #{trackingNumber}, #{transportRequestNumber}, #{quotationNo}, #{quotationId}, #{shipperCompanyId}, #{status}, #{transportPhase},
              #{currentVersionNo}, #{version}, #{createdAt}, #{createdBy}, #{updatedAt}, #{updatedBy})
     </insert>
 
@@ -71,6 +72,22 @@
              #{shipperApproverId}, #{confirmedBy}, #{committedAt})
     </insert>
 
+    <resultMap id="processedCommandRow" type="com.example.cargotracker.booking.infrastructure.persistence.ProcessedCommandRow">
+        <constructor>
+            <idArg column="command_id" name="commandId" javaType="java.util.UUID"/>
+            <arg column="command_type" name="commandType" javaType="String"/>
+            <arg column="payload_hash" name="payloadHash" javaType="String"/>
+            <arg column="result_ref" name="resultRef" javaType="String"/>
+            <arg column="processed_at" name="processedAt" javaType="java.time.OffsetDateTime"/>
+        </constructor>
+    </resultMap>
+
+    <!-- 処理済みコマンド（B-INV-03。Bolt 24）。貨物予約と同じトランザクションで追加する。追記専用 -->
+    <insert id="insertProcessedCommand">
+        INSERT INTO booking.processed_command (command_id, command_type, payload_hash, result_ref, processed_at)
+        VALUES (#{commandId}, #{commandType}, #{payloadHash}, #{resultRef}, #{processedAt})
+    </insert>
+
     <insert id="insertBookingSaga">
         INSERT INTO booking.booking_saga
             (id, booking_id, tracking_number, status, current_step, started_at, updated_at, version)
@@ -80,8 +97,8 @@
     </insert>
 
     <select id="findBookingByTrackingNumber" resultMap="bookingRow">
-        SELECT id, tracking_number, transport_request_number, quotation_id, shipper_company_id, status, transport_phase,
-               current_version_no, version, created_at, created_by, updated_at, updated_by
+        SELECT id, tracking_number, transport_request_number, quotation_no, quotation_id, shipper_company_id, status,
+               transport_phase, current_version_no, version, created_at, created_by, updated_at, updated_by
           FROM booking.booking
          WHERE tracking_number = #{trackingNumber}
     </select>
@@ -99,9 +116,19 @@
         SELECT COUNT(*) > 0 FROM booking.booking WHERE tracking_number = #{trackingNumber}
     </select>
 
-    <!-- 見積りの貨物予約がすでにあるか（S-09 を開いたときの確定済みの判定。B-INV-11 の UK uk_booking_quotation。Bolt 23b） -->
-    <select id="existsByQuotationId" resultType="boolean">
-        SELECT COUNT(*) > 0 FROM booking.booking WHERE quotation_id = #{quotationId}
+    <!-- 業務番号と見積り番号で同じ見積りの貨物予約の追跡番号を引く（見積りの照会より前の確定済みの判定。B-INV-11 の
+         UK uk_booking_transport_request_quotation。Bolt 24） -->
+    <select id="findTrackingNumber" resultType="String">
+        SELECT tracking_number
+          FROM booking.booking
+         WHERE transport_request_number = #{transportRequestNumber}
+           AND quotation_no = #{quotationNo}
+    </select>
+
+    <select id="findProcessedCommand" resultMap="processedCommandRow">
+        SELECT command_id, command_type, payload_hash, result_ref, processed_at
+          FROM booking.processed_command
+         WHERE command_id = #{commandId}
     </select>
 
     <select id="findSagaByBookingId" resultMap="bookingSagaRow">
