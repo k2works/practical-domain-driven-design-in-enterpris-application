@@ -53,7 +53,7 @@ Bolt がイテレーションに当たります。ふりかえりは各 Bolt の
 | 24 | [本予約の確定の再送と重複確定の防止（US-04 AC4）](bolt_24_plan.md) | [終了報告](bolt_24_report.md)（[動画](../../assets/demo/bolt-24/resend-booking.webm){:target="_blank"}） | W4 | 完了 |
 | 25 | [追跡の開始と予約サガの成功の経路（US-04、#10）](bolt_25_plan.md) | [終了報告](bolt_25_report.md)（[動画](../../assets/demo/bolt-25/start-tracking.webm){:target="_blank"}） | W4 | 完了 |
 | 25b | [S-10 予約一覧の最小の表示（S-24 へ戻る入口）](bolt_25b_plan.md) | [終了報告](bolt_25b_report.md)（[動画](../../assets/demo/bolt-25b/booking-list.webm){:target="_blank"}） | W4 | 完了 |
-| 26 | [追跡管理者の入口（S-11 追跡一覧・S-12 追跡の詳細の最小の表示）](bolt_26_plan.md) | [終了報告](bolt_26_report.md)（[動画](../../assets/demo/bolt-26/tracking-records.webm){:target="_blank"}） | W4 | 終了報告の承認待ち |
+| 26 | [追跡管理者の入口（S-11 追跡一覧・S-12 追跡の詳細の最小の表示）](bolt_26_plan.md) | [終了報告](bolt_26_report.md)（[動画](../../assets/demo/bolt-26/tracking-records.webm){:target="_blank"}） | W4 | 完了 |
 
 Bolt を始めるときに行を追加します。
 

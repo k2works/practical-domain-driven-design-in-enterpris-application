@@ -3,7 +3,9 @@ type: Plan
 title: "Bolt 26 計画 - 追跡管理者の入口（S-11 追跡一覧・S-12 追跡の詳細の最小の表示）"
 description: "26 回目の Bolt の計画。追跡管理者の開発用の利用者・認可・ホーム・ナビを足し、S-11 追跡一覧と S-12 追跡の詳細の最小の表示（予定と現在状態）を作って、US-12 主要実績の登録（Bolt 26b）の入口を用意するまでを、認可・画面の層の受入シナリオ・画面と照会・永続化の順に、ステップ 1〜5 で定義する。"
 tags: [development,bolt-plan]
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-09T12:22:42Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-09T12:30:43Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-10-09T12:30:43Z }
 ---
 
 # Bolt 26 計画 - 追跡管理者の入口（S-11 追跡一覧・S-12 追跡の詳細の最小の表示）
@@ -313,13 +315,13 @@ S12 --> S11 : 追跡一覧へ戻る
 
 ## 完了条件
 
-- [ ] 画面の層の受入シナリオ（`@demo-bolt-26/tracking-records`）が通り、受入動画を撮った
-- [ ] セキュリティの統合テストで、追跡管理者のホームと、役割ごとの 403 とナビの表示を確かめた
-- [ ] 照会のサービスの単体テストで、一覧が 1 本の照会で引けることを確かめ（仮説 H1）、PostgreSQL の統合テストで並びと上限を確かめた
-- [ ] `check`・`documentationTest`・`uiTest` が緑。push して CI とデモ環境の配備を確かめた
-- [ ] SonarQube の Quality Gate が PASS
-- [ ] 設計文書（ui_design.md、domain_model.md、data_model.md、test_strategy.md、release_plan.md。ステップ 5 の一覧）に決定を書いた（T-53）
-- [ ] 開発レビューと終了報告。承認の後に受入動画の添付先を足した
+- [x] 画面の層の受入シナリオ（`@demo-bolt-26/tracking-records`）が通り、受入動画を撮った
+- [x] セキュリティの統合テストで、追跡管理者のホームと、役割ごとの 403 とナビの表示を確かめた
+- [x] 照会のサービスの単体テストで、一覧が 1 本の照会で引けることを確かめ（仮説 H1）、PostgreSQL の統合テストで並びと上限を確かめた
+- [x] `check`・`documentationTest`・`uiTest` が緑。push して CI とデモ環境の配備を確かめた
+- [x] SonarQube の Quality Gate が PASS
+- [x] 設計文書（ui_design.md、domain_model.md、data_model.md、test_strategy.md、release_plan.md。ステップ 5 の一覧）に決定を書いた（T-53）
+- [x] 開発レビューと終了報告。承認の後に受入動画の添付先を足した
 
 ### デモ項目
 
@@ -329,6 +331,7 @@ S12 --> S11 : 追跡一覧へ戻る
 
 | 日付 | 更新内容 | 更新者 |
 | :--- | :--- | :--- |
+| 2026-10-09 | 終了報告を承認し、確認ポイント 1〜15 の決定（推奨のとおり）と止まらなかった承認ゲートを事後に承認した。完了条件をすべて満たした（CI 緑、SonarQube PASS、受入動画を #11 に添付） | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-10-09 | 人の指示（`/goal Bolt26`）で推奨のとおり進める。ステップ 1 を終えた | anthropic/claude-opus-5-5、指示 human:kakimomokuri |
 | 2026-10-09 | 開始準備の整合性検証（計画と設計 19 件、横断 20 件）の指摘を反映した（壊れる既存のテスト、認可を先にするステップの順、追跡の開始の待ち、`platform :: web` の依存、予定区間の形、ナビの表示のテスト、テストの部品、列名「追跡の開始時刻」、NULL の行、形式の誤りの 404、名前を前例にそろえる、状態遷移の図、設計文書の範囲、26b の打ち切りの順、Try の取りこぼし） | anthropic/claude-opus-5-5 |
 | 2026-10-09 | 初版作成（承認待ち） | anthropic/claude-opus-5-5 |

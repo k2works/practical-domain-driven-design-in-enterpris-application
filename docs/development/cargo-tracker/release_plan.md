@@ -4,7 +4,7 @@ title: "リリース計画 - cargo-tracker（A 社国際貨物輸送管理シス
 description: "cargo-tracker MVP のリリース計画。1 人 + AI、時間単位の Bolt（= イテレーション）と週次の見直しで、最初の縦の流れ（R0.1）、パイロット準備完了（R1.0）、本格展開前（R1.1）の 3 段階、Unit のエントロピー評価、SP、バッファ、パイロット開始の条件、引継ぎ ID の台帳、業務責任者に確かめる事項の台帳。"
 tags: [development,release-plan]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-09T11:27:19Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-09T12:30:43Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T09:29:53Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:38:26Z }
@@ -476,7 +476,7 @@ AI-DLC では **Bolt がイテレーション** である（[AI-DLC 導入ガイ
 | 24 | US-04 AC4 再送（B-INV-03、`processed_command`）、B-INV-11 重複確定の防止（UK は Bolt 23 に前倒しし、開発レビューで貨物予約の `booking.quotation_id` に置いた。重複の確定に既存の追跡番号を返す振る舞い）。D-78 の受入シナリオでの DE-21・DE-04 の再配信。[Bolt 24 計画](bolt_24_plan.md) | 0 | アウトサイドイン | Red・Green ごと（冪等・重複防止）、スキーマ |
 | 25 | 追跡の開始。`tracking` モジュールと追跡記録（`tracking_record`・`scheduled_leg`）の新設、DE-07 の購読で経路設計の公開 API（`routing :: api`。新設）から確定した経路版の区間を引いて予定として採用し、DE-22（追跡を開始した）を受けた別のトランザクションで予約の公開 API（`booking :: api`。新設。公開 API は `<コンテキスト>.interfaces.api`）へ結果を返してサガの成功の経路を閉じる（#10 をクローズする）。S-24 の「追跡の開始: 処理中・完了」の表示、AT-04（マッパーの SQL の自スキーマの検査。Bolt 24 の A-10）、`@CoreConcept`（2026-10-09 に human:kakimomokuri が決定）。追跡管理者のナビ・ホーム・認可と開発データは Bolt 26 に移した（Bolt 25 は追跡管理者の画面を作らないため。2026-10-09 に決定）。[Bolt 25 計画](bolt_25_plan.md) | 5 | インサイドアウト | Red・Green ごと、スキーマ、モジュールの境界 |
 | 25b | S-10 予約一覧の最小の表示（追跡番号・業務番号・見積り・確定時刻・追跡の開始、新しい順。営業のナビの「予約」を有効にし、確定の後に S-24 へ戻れるようにする。Bolt 23b の U-1。読み取りモデルの置き場所（Bolt 23b の A-低3〜5）を諮る）（2026-10-09 に human:kakimomokuri が Bolt 25 から分けた） | 0 | アウトサイドイン | 画面、Red・Green ごと（照会） |
-| 26 | 追跡管理者の入口。開発用の利用者（`db/dev-data`）・認可（`SecurityConfiguration`）・ホーム・ナビの「追跡」（Bolt 25 から移した）と、S-11 追跡一覧・S-12 追跡の詳細の最小の表示（予定と現在状態）。[Bolt 26 計画](bolt_26_plan.md)（開始準備で 26・26b に分ける案。`/goal` で推奨のとおり進めた）、[Bolt 26 終了報告](bolt_26_report.md)（承認待ち） | 0 | アウトサイドイン | 認可、モジュールの境界、画面、Red・Green ごと（照会） |
+| 26 | 追跡管理者の入口。開発用の利用者（`db/dev-data`）・認可（`SecurityConfiguration`）・ホーム・ナビの「追跡」（Bolt 25 から移した）と、S-11 追跡一覧・S-12 追跡の詳細の最小の表示（予定と現在状態）。[Bolt 26 計画](bolt_26_plan.md)（開始準備で 26・26b に分ける案。`/goal` で推奨のとおり進めた）、[Bolt 26 終了報告](bolt_26_report.md)（完了、2026-10-09 に承認済み） | 0 | アウトサイドイン | 認可、モジュールの境界、画面、Red・Green ごと（照会） |
 | 26b | US-12 AC1 登録、AC2 重複（[#11](https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/11)）。主要実績の表（`tracking.milestone`）と `tracking_record` の NULL 可の列の見直し、出典（共有カーネル）、主要実績と現在状態の導出、S-13 の登録と S-12 の主要実績の一覧。4 時間を超えると見えたら、AC2 の画面と NULL 可の列の見直しを 26c に回す | 3 | アウトサイドイン | スキーマ、Red・Green ごと（業務のルール） |
 | 27 | US-09 AC1 照会（現在状態・予定・主要実績・出典・取得時刻。自社に許可された予約に限る BR-07）（[#12](https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/12)） | 3 | アウトサイドイン | Red・Green ごと（開示制御）、認可 |
 | 28 | 主成功の流れの `@ui` シナリオと Release 0.1 のデモ。序盤の完了条件（開発戦略）と Release 0.1 のリリース条件を確かめる | 0 | アウトサイドイン | `/goal` |
@@ -497,7 +497,8 @@ US-04 の SP 5 は、サガの成功の経路を閉じて #10 をクローズす
 - [x] Bolt 23・23b・24: US-04（AC1、AC2、AC4、B-INV-03、B-INV-11）と予約サガの骨格、2 つの ADR。画面は Bolt 23b。[Bolt 23 計画](bolt_23_plan.md)（承認済み。`/goal` で進めた）、[Bolt 23 終了報告](bolt_23_report.md)（完了、2026-10-08 に承認済み。スキーマと D-5 の例外を含む。#10 は Bolt 25 まで開いたまま）、[Bolt 23b 計画](bolt_23b_plan.md)（承認済み。`/goal` で進めた）、[Bolt 23b 終了報告](bolt_23b_report.md)（完了、2026-10-08 に承認済み。承認の後に失効した見積りの再見積りの規則は未決）、[Bolt 24 計画](bolt_24_plan.md)（`/goal` で進めた）、[Bolt 24 終了報告](bolt_24_report.md)（完了、2026-10-09 に承認済み。ADR-001 にマイグレーションの埋め込みの例外、RET-06 の削除は運用の DB 利用者、SonarQube の S8445 は品質プロファイルから外した）
 - [x] Bolt 25: 追跡の開始とサガの成功の経路。[Bolt 25 計画](bolt_25_plan.md)（`/goal` で進めた）、[Bolt 25 終了報告](bolt_25_report.md)（完了、2026-10-09 に承認済み。公開 API を `<コンテキスト>.interfaces.api` にそろえ、見積りの公開 API も移した。層の規則の例外は腐敗防止層と合成ルート。#10 をクローズし、US-04 の AC3・AC5 は [#43](https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/43)（W6）にした）
 - [x] Bolt 25b: S-10 予約一覧の最小の表示（S-24 へ戻る入口）。[Bolt 25b 計画](bolt_25b_plan.md)（承認済み）、[Bolt 25b 終了報告](bolt_25b_report.md)（完了、2026-10-09 に承認済み。幅 320 CSS px の確定時刻の表記は未決）
-- [ ] Bolt 26・26b・27: 追跡管理者の入口、US-12（AC1、AC2）、US-09（AC1）。[Bolt 26 計画](bolt_26_plan.md)、[Bolt 26 終了報告](bolt_26_report.md)（承認待ち）
+- [x] Bolt 26: 追跡管理者の入口と S-11・S-12 の最小の表示。[Bolt 26 計画](bolt_26_plan.md)（`/goal` で進めた）、[Bolt 26 終了報告](bolt_26_report.md)（完了、2026-10-09 に承認済み。認可のゲートと `platform :: web` の依存は事後に承認された）
+- [ ] Bolt 26b・27: US-12（AC1、AC2）、US-09（AC1）
 - [ ] Bolt 28: 主成功の流れの `@ui` シナリオと Release 0.1 のデモ
 - [x] ベロシティと承認ゲートの密度の見直し（W4 の開始時。「ベロシティ検証計画」）
 - [ ] W4 の締め: Release 1.0 の計画の引き直し、Release 0.1 の実績による Release 1.0 の承認ゲートの密度の決め直し、Release 0.1 のリリース完了報告書
