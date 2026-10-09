@@ -1,6 +1,7 @@
 package com.example.cargotracker.booking.infrastructure.config;
 
 import com.example.cargotracker.booking.application.internal.commandservices.BookingCommandService;
+import com.example.cargotracker.booking.application.internal.commandservices.BookingSagaCommandService;
 import com.example.cargotracker.booking.application.internal.eventhandlers.BookingConfirmedEventHandler;
 import com.example.cargotracker.booking.application.internal.outboundservices.acl.QuotationBookability;
 import com.example.cargotracker.booking.application.internal.outboundservices.acl.QuotationBookingNotifications;
@@ -57,6 +58,12 @@ public class BookingConfiguration {
             Clock clock) {
         return new BookingCommandService(
                 repository, sagaRepository, trackingNumberIssuer, quotationBookability, eventPublisher, clock);
+    }
+
+    /** 追跡の開始の結果で予約サガを完了にする入力ポート。予約の公開 API のインバウンドアダプターが委ねる（ADR-015。Bolt 25）。 */
+    @Bean
+    BookingSagaCommandService bookingSagaCommandService(BookingSagaRepository sagaRepository) {
+        return new BookingSagaCommandService(sagaRepository);
     }
 
     @Bean

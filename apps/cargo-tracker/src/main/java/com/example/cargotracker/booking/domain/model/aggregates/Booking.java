@@ -103,7 +103,9 @@ public final class Booking {
                         terms.routingCaseNumber(),
                         terms.routeVersionNo(),
                         committedAt,
-                        INITIAL_AGGREGATE_VERSION));
+                        INITIAL_AGGREGATE_VERSION,
+                        terms.shipperCompanyId(),
+                        terms.consigneeCompanyId()));
     }
 
     /**

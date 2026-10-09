@@ -67,7 +67,12 @@ class LayerArchitectureTest {
             .whereLayer("domain")
             .mayOnlyBeAccessedByLayers("interfaces", "application", "infrastructure")
             .whereLayer("infrastructure")
-            .mayNotBeAccessedByAnyLayer();
+            .mayNotBeAccessedByAnyLayer()
+            // 他のコンテキストの公開 API（開発ガイドライン第 3 章のインターフェース層の <コンテキスト>.interfaces.api）は、呼ぶ側の腐敗防止層
+            // からだけ参照してよい（Bolt 25 の人の決定。公開 API の型はインターフェースと record で、実装は interfaces.api.internal に置く）
+            .ignoreDependency(
+                    resideInAPackage("..application.internal.outboundservices.acl.."),
+                    resideInAPackage("com.example.cargotracker.*.interfaces.api"));
 
     /**
      * 合成ルートの外の infrastructure は application に依存しない（D-5）。例外はサガの状態の永続化で、永続化の実装

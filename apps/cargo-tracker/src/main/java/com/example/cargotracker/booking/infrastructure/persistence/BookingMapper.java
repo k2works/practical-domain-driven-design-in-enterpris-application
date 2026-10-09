@@ -1,5 +1,6 @@
 package com.example.cargotracker.booking.infrastructure.persistence;
 
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -18,6 +19,14 @@ public interface BookingMapper {
     void insertBookingVersion(BookingVersionRow row);
 
     void insertBookingSaga(BookingSagaRow row);
+
+    /** 予約サガの状態を期待版で更新し、版を 1 進める（Bolt 25）。更新した行の数（0 なら楽観ロックの競合）。 */
+    int updateBookingSaga(
+            @Param("id") UUID id,
+            @Param("status") String status,
+            @Param("currentStep") String currentStep,
+            @Param("updatedAt") OffsetDateTime updatedAt,
+            @Param("expectedVersion") long expectedVersion);
 
     void insertProcessedCommand(ProcessedCommandRow row);
 

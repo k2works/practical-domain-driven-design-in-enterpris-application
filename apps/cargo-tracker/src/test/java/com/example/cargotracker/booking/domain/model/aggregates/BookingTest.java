@@ -63,7 +63,9 @@ class BookingTest {
                         "RC-2026-0001",
                         1,
                         COMMITTED_AT,
-                        0));
+                        0,
+                        terms().shipperCompanyId(),
+                        terms().consigneeCompanyId()));
     }
 
     @Test

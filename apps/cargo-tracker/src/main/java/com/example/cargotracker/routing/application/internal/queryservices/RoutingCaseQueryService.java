@@ -2,6 +2,8 @@ package com.example.cargotracker.routing.application.internal.queryservices;
 
 import com.example.cargotracker.routing.domain.model.aggregates.RoutingCase;
 import com.example.cargotracker.routing.domain.model.aggregates.RoutingCaseRepository;
+import com.example.cargotracker.routing.domain.model.entities.RouteCandidate;
+import com.example.cargotracker.routing.domain.model.valueobjects.Leg;
 import com.example.cargotracker.routing.domain.model.valueobjects.RoutingCaseNumber;
 import com.example.cargotracker.routing.domain.model.valueobjects.RoutingCaseSummary;
 import java.util.List;
@@ -31,5 +33,18 @@ public class RoutingCaseQueryService {
     /** 案件と、いまの経路版の候補（S-06）。 */
     public Optional<RoutingCase> findByNumber(RoutingCaseNumber number) {
         return repository.findByNumber(number);
+    }
+
+    /**
+     * 確定した経路版の区間を区間の順に返す（経路設計の公開 API が委ねる。追跡の予定。ADR-015。Bolt 25）。
+     *
+     * @return 区間の列。案件・経路版がない、または確定していない経路版なら空
+     */
+    public List<Leg> confirmedLegs(RoutingCaseNumber number, int routeVersionNo) {
+        return repository
+                .findByNumber(number)
+                .flatMap(routingCase -> routingCase.confirmedCandidateOf(routeVersionNo))
+                .map(RouteCandidate::legs)
+                .orElse(List.of());
     }
 }

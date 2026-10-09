@@ -2,6 +2,7 @@ package com.example.cargotracker.booking.acceptance;
 
 import com.example.cargotracker.booking.application.sagas.BookingSaga;
 import com.example.cargotracker.booking.application.sagas.BookingSagaRepository;
+import com.example.cargotracker.booking.application.sagas.ConcurrentBookingSagaUpdateException;
 import com.example.cargotracker.booking.domain.model.valueobjects.BookingId;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -22,6 +23,25 @@ public class InMemoryBookingSagaRepository implements BookingSagaRepository {
     @Override
     public synchronized Optional<BookingSaga> findByBookingId(BookingId bookingId) {
         return Optional.ofNullable(byBookingId.get(bookingId));
+    }
+
+    /** 期待版で更新し、版を 1 進めた写しを保存する（MyBatis の実装と同じ。T-61）。 */
+    @Override
+    public synchronized void update(BookingSaga saga) {
+        BookingSaga current = byBookingId.get(saga.bookingId());
+        if (current == null || current.version() != saga.version()) {
+            throw new ConcurrentBookingSagaUpdateException(saga.bookingId(), saga.version());
+        }
+        byBookingId.put(
+                saga.bookingId(),
+                BookingSaga.reconstitute(
+                        saga.id(),
+                        saga.bookingId(),
+                        saga.trackingNumber(),
+                        saga.status(),
+                        saga.currentStep(),
+                        saga.startedAt(),
+                        saga.version() + 1));
     }
 
     public synchronized void clear() {

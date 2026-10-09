@@ -2,7 +2,6 @@ package com.example.cargotracker.routing.application.internal.eventhandlers;
 
 import com.example.cargotracker.routing.application.internal.outboundservices.acl.QuotationRouteAssignments;
 import com.example.cargotracker.routing.domain.events.RouteConfirmed;
-import com.example.cargotracker.routing.domain.model.aggregates.RoutingCase;
 import com.example.cargotracker.routing.domain.model.aggregates.RoutingCaseRepository;
 import com.example.cargotracker.routing.domain.model.entities.RouteCandidate;
 import com.example.cargotracker.routing.domain.model.valueobjects.RoutingCaseNumber;
@@ -38,8 +37,9 @@ public class QuotationRouteAssignmentEventHandler {
     @ApplicationModuleListener
     public void on(RouteConfirmed event) {
         RoutingCaseNumber number = RoutingCaseNumber.parse(event.caseNumber());
-        Optional<RouteCandidate> confirmed =
-                repository.findByNumber(number).flatMap(routingCase -> confirmedCandidate(routingCase, event));
+        Optional<RouteCandidate> confirmed = repository
+                .findByNumber(number)
+                .flatMap(routingCase -> routingCase.confirmedCandidateOf(event.routeVersionNo()));
         if (confirmed.isEmpty()) {
             LOG.warn(
                     "DE-05 の確定した候補が見つからないため見積りに割り当てなかった: 案件 {}、経路版 {}、見積り {}",
@@ -61,16 +61,5 @@ public class QuotationRouteAssignmentEventHandler {
                         event.routeVersionNo(),
                         event.quotationId(),
                         reason));
-    }
-
-    /** DE-05 の経路版の、確定の記録の候補。 */
-    private static Optional<RouteCandidate> confirmedCandidate(RoutingCase routingCase, RouteConfirmed event) {
-        return routingCase.routeVersions().stream()
-                .filter(version -> version.routeVersionNo() == event.routeVersionNo())
-                .findFirst()
-                .flatMap(version -> version.confirmation()
-                        .flatMap(confirmation -> version.candidates().stream()
-                                .filter(candidate -> candidate.candidateNo() == confirmation.candidateNo())
-                                .findFirst()));
     }
 }

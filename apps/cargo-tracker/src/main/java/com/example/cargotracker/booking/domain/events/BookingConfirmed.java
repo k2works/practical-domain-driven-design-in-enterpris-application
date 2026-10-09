@@ -1,6 +1,7 @@
 package com.example.cargotracker.booking.domain.events;
 
 import com.example.cargotracker.shared.annotation.ddd.DomainEvent;
+import com.example.cargotracker.shared.domain.CompanyId;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import java.util.UUID;
 
@@ -19,6 +20,8 @@ import java.util.UUID;
  * @param routeVersionNo 承認済み経路版の番号
  * @param committedAt commit 時刻
  * @param aggregateVersion 発行元の集約の版（B-INV-12）
+ * @param shipperCompanyId 荷主企業 ID（追跡記録に要る値。Bolt 25 から。Bolt 23・24 に発行したものは null）
+ * @param consigneeCompanyId 荷受人企業 ID（同上）
  */
 @DomainEvent
 public record BookingConfirmed(
@@ -32,4 +35,6 @@ public record BookingConfirmed(
         String routingCaseNumber,
         int routeVersionNo,
         UtcInstant committedAt,
-        long aggregateVersion) {}
+        long aggregateVersion,
+        CompanyId shipperCompanyId,
+        CompanyId consigneeCompanyId) {}

@@ -96,6 +96,13 @@
              #{updatedAt}, #{version})
     </insert>
 
+    <update id="updateBookingSaga">
+        UPDATE booking.booking_saga
+           SET status = #{status}, current_step = #{currentStep}, updated_at = #{updatedAt}, version = version + 1
+         WHERE id = #{id}
+           AND version = #{expectedVersion}
+    </update>
+
     <select id="findBookingByTrackingNumber" resultMap="bookingRow">
         SELECT id, tracking_number, transport_request_number, quotation_no, quotation_id, shipper_company_id, status,
                transport_phase, current_version_no, version, created_at, created_by, updated_at, updated_by

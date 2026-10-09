@@ -94,6 +94,21 @@ public final class BookingSaga {
         return version;
     }
 
+    /**
+     * 追跡の開始の結果「開始した」で完了にする（ADR-015。Bolt 25）。処理中のときだけ完了にでき、版はリポジトリが期待版で更新するときに進める。
+     * 段階は追跡の開始の 1 つだけなので、段階は変えず状態で完了を示す。
+     *
+     * @return 完了した予約サガ
+     * @throws IllegalStateException 処理中でないとき（完了済みかどうかは呼ぶ側が先に確かめる）
+     */
+    public BookingSaga complete() {
+        if (status != BookingSagaStatus.IN_PROGRESS) {
+            throw new IllegalStateException("処理中でない予約サガは完了にできません: " + bookingId.value() + "、" + status);
+        }
+        return new BookingSaga(
+                id, bookingId, trackingNumber, BookingSagaStatus.COMPLETED, currentStep, startedAt, version);
+    }
+
     /** 後続が完了したか。処理中を完了と表示しないために画面が使う。 */
     public boolean isCompleted() {
         return status == BookingSagaStatus.COMPLETED;

@@ -9,6 +9,7 @@ import com.example.cargotracker.quotation.domain.events.TransportRequestSubmitte
 import com.example.cargotracker.shared.domain.CompanyId;
 import com.example.cargotracker.shared.domain.UserId;
 import com.example.cargotracker.shared.domain.UtcInstant;
+import com.example.cargotracker.tracking.domain.events.TrackingStarted;
 import java.time.Instant;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
@@ -74,6 +75,7 @@ class DomainEventSerializationContractTest {
             "transportRequestNumber":"TR-2026-0001","routingCaseNumber":"RC-2026-0001","routeVersionNo":1,\
             "committedAt":{"instant":"2026-10-08T08:59:00.123456Z"},"aggregateVersion":0}""";
 
+    /** 荷主・荷受人の企業 ID のない Bolt 23・24 の DE-07 は、企業 ID を null として復元する（追跡は警告のログで開始しない。Bolt 25）。 */
     private static final BookingConfirmed BOOKING_CONFIRMED = new BookingConfirmed(
             UUID.fromString("22222222-2222-2222-2222-222222222222"),
             1,
@@ -85,6 +87,44 @@ class DomainEventSerializationContractTest {
             "RC-2026-0001",
             1,
             new UtcInstant(Instant.parse("2026-10-08T08:59:00.123456Z")),
+            0,
+            null,
+            null);
+
+    /** DE-07 に荷主・荷受人の企業 ID を足した形（Bolt 25。追跡記録に要る値。区間は追跡が経路設計の公開 API で引く。ADR-015）。 */
+    private static final String BOOKING_CONFIRMED_V2 = """
+            {"bookingId":"22222222-2222-2222-2222-222222222222","bookingVersionNo":1,\
+            "trackingNumber":"CTABCDEFGH2345","quotationId":"33333333-3333-3333-3333-333333333333",\
+            "transportRequestId":"11111111-1111-1111-1111-111111111111","transportRequestVersionNo":1,\
+            "transportRequestNumber":"TR-2026-0001","routingCaseNumber":"RC-2026-0001","routeVersionNo":1,\
+            "committedAt":{"instant":"2026-10-08T08:59:00.123456Z"},"aggregateVersion":0,\
+            "shipperCompanyId":{"value":"44444444-4444-4444-4444-444444444444"},\
+            "consigneeCompanyId":{"value":"55555555-5555-5555-5555-555555555555"}}""";
+
+    private static final BookingConfirmed BOOKING_CONFIRMED_WITH_COMPANIES = new BookingConfirmed(
+            UUID.fromString("22222222-2222-2222-2222-222222222222"),
+            1,
+            "CTABCDEFGH2345",
+            UUID.fromString("33333333-3333-3333-3333-333333333333"),
+            UUID.fromString("11111111-1111-1111-1111-111111111111"),
+            1,
+            "TR-2026-0001",
+            "RC-2026-0001",
+            1,
+            new UtcInstant(Instant.parse("2026-10-08T08:59:00.123456Z")),
+            0,
+            new CompanyId(UUID.fromString("44444444-4444-4444-4444-444444444444")),
+            new CompanyId(UUID.fromString("55555555-5555-5555-5555-555555555555")));
+
+    /** DE-22 追跡を開始した（Bolt 25）。追跡の中だけで購読する。 */
+    private static final String TRACKING_STARTED_V1 = """
+            {"trackingNumber":"CTABCDEFGH2345","bookingId":"22222222-2222-2222-2222-222222222222",\
+            "startedAt":{"instant":"2026-10-08T09:00:00.123456Z"},"aggregateVersion":0}""";
+
+    private static final TrackingStarted TRACKING_STARTED = new TrackingStarted(
+            "CTABCDEFGH2345",
+            UUID.fromString("22222222-2222-2222-2222-222222222222"),
+            new UtcInstant(Instant.parse("2026-10-08T09:00:00.123456Z")),
             0);
 
     @Autowired
@@ -125,7 +165,30 @@ class DomainEventSerializationContractTest {
     }
 
     @Test
+    void 企業IDのある保存済みのDE07のJSONから復元できる() {
+        assertThat(serializer.deserialize(BOOKING_CONFIRMED_V2, BookingConfirmed.class))
+                .isEqualTo(BOOKING_CONFIRMED_WITH_COMPANIES);
+    }
+
+    @Test
     void DE07のJSONの形が変わっていない() {
-        assertThat(serializer.serialize(BOOKING_CONFIRMED)).isEqualTo(BOOKING_CONFIRMED_V1);
+        assertThat(serializer.serialize(BOOKING_CONFIRMED_WITH_COMPANIES)).isEqualTo(BOOKING_CONFIRMED_V2);
+    }
+
+    @Test
+    void DE07のJSONはH2の発行記録の列の4000文字に収まる() {
+        assertThat(serializer.serialize(BOOKING_CONFIRMED_WITH_COMPANIES).toString())
+                .hasSizeLessThan(4000);
+    }
+
+    @Test
+    void 保存済みのDE22のJSONから復元できる() {
+        assertThat(serializer.deserialize(TRACKING_STARTED_V1, TrackingStarted.class))
+                .isEqualTo(TRACKING_STARTED);
+    }
+
+    @Test
+    void DE22のJSONの形が変わっていない() {
+        assertThat(serializer.serialize(TRACKING_STARTED)).isEqualTo(TRACKING_STARTED_V1);
     }
 }

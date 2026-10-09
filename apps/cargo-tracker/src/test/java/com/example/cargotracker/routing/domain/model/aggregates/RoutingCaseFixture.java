@@ -18,6 +18,18 @@ public final class RoutingCaseFixture {
      */
     public record Confirmed(RoutingCase routingCase, RouteConfirmed event) {}
 
+    /** 直行の航海 V-EARLY の候補を算出し、まだ確定していない案件（RC-2026-0001 経路版 1。Bolt 25）。 */
+    public static RoutingCase calculated() {
+        RoutingCase routingCase = RoutingCaseTest.open();
+        routingCase.calculateCandidates(
+                List.of(RoutingCaseTest.direct("V-EARLY", "2026-10-29T00:00:00Z")),
+                List.of(RoutingCaseConfirmationTest.SINGAPORE_8H),
+                RoutingCaseConfirmationTest.JUDGED_AT,
+                new RouteCandidateFinder(),
+                new ConstraintEvaluator());
+        return routingCase;
+    }
+
     public static Confirmed confirmed() {
         RoutingCase routingCase = RoutingCaseTest.open();
         ConstraintEvaluator evaluator = new ConstraintEvaluator();

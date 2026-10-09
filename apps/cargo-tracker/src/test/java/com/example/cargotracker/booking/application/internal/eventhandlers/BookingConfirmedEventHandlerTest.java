@@ -7,6 +7,7 @@ import com.example.cargotracker.booking.application.internal.outboundservices.ac
 import com.example.cargotracker.booking.domain.events.BookingConfirmed;
 import com.example.cargotracker.quotation.api.BookingNotificationReceipt;
 import com.example.cargotracker.quotation.api.BookingNotificationRequest;
+import com.example.cargotracker.shared.domain.CompanyId;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -31,7 +32,9 @@ class BookingConfirmedEventHandlerTest {
             "RC-2026-0001",
             1,
             new UtcInstant(Instant.parse("2026-10-08T08:59:00Z")),
-            0);
+            0,
+            new CompanyId(UUID.randomUUID()),
+            new CompanyId(UUID.randomUUID()));
 
     private final List<BookingNotificationRequest> requests = new ArrayList<>();
 
