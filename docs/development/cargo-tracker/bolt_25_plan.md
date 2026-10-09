@@ -18,6 +18,7 @@ generated: { by: anthropic/claude-opus-5-5, at: 2026-10-09T04:37:10Z }
 | 対象 | U3 基本追跡（新しい `tracking` モジュール、追跡記録の集約、DE-07 の listener、DE-22 追跡を開始した）、U6 予約管理（`booking :: api` の新設、予約サガの完了、S-24、DE-07 の属性）、U2 経路設計（`routing :: api` の新設。経路版の区間の照会） |
 | GitHub | [#10 [US-04] 予約を確定する](https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/10)（US-04 の SP 5 をこの Bolt で数え、#10 の R0.1 の範囲（AC1・AC2・AC4・重複確定の防止）をクローズする。残りの AC3・AC5（W6）は新しい Issue にする。US-24 の前例。確認ポイント 14） |
 | 承認ゲート | 計画の承認（確認ポイント 1〜21）、設計文書（ADR-015 のコンプライアンスの決定）、スキーマ（`tracking` スキーマの新設。必ず止める。T-67）、モジュールの境界（`booking :: api`・`routing :: api` の新設、`tracking` の `allowedDependencies`、DE-07 の属性の追加、DE-22 の新設）、新しい注釈（`@CoreConcept`）、Red／Green（追跡の開始・サガの遷移・冪等）、画面（S-24）、開発レビューの判断、終了報告 |
+| 承認ゲートの扱い | 人の指示（`/goal Bolt25`、2026-10-09）により、承認ゲートで止まらずに進める。止まらなかったゲートごとに根拠を書き、終了報告の承認の議題に置く（T-36）。ただしスキーマのステップ 2 は、マイグレーションを見せて止める（T-67）。計画の verify は人が行う |
 | アプローチ | インサイドアウト（開発戦略の「Bolt ごとのアプローチの決め方」の「新しい集約・新しいスキーマを作る」。release_plan の W4 の表のとおり）。`tracking` スキーマと追跡記録の集約から作り、listener と公開 API、最後に S-24 の表示と受入シナリオ |
 | 前の Bolt | [Bolt 24 終了報告](bolt_24_report.md) |
 
@@ -374,6 +375,7 @@ ui_design.md の業務シナリオ（「予約サガが完了したら『完了�
 
 | 日付 | 更新内容 | 更新者 |
 | :--- | :--- | :--- |
+| 2026-10-09 | `/goal Bolt25` の指示で、承認ゲートで止まらずに進めることにした（スキーマは止める。計画の verify は人が行う） | anthropic/claude-opus-5-5 |
 | 2026-10-09 | 確認ポイントの回答を反映した（1〜3 は推奨のまま、`@CoreConcept` は作る、AT-04 は Bolt 25 に入れる。回答は計画の承認ではない） | anthropic/claude-opus-5-5、回答 human:kakimomokuri |
 | 2026-10-09 | 人の指示「公開 API の配置は開発ガイドに準拠して interfaces 以下に配置する」を反映した（`booking.interfaces.api`・`routing.interfaces.api`、層の規則の例外を確認ポイント 21 に） | anthropic/claude-opus-5-5、指示 human:kakimomokuri |
 | 2026-10-09 | 開始準備の整合性検証（計画と設計 27 件、横断 19 件）の指摘を反映した（2 つのコンテキストを 1 つのトランザクションで更新しない DE-22、区間は `routing :: api`、既存の画面の層のシナリオの「処理中」、公開 API の受領の型、ACL、listener の名前、予約サガの UPDATE と完了の時刻、`@CoreConcept`、受入条件とタグ、release_plan の Bolt 25・25b・26、#10 の残りの Issue、デモ環境の既存の予約、GRANT の検査、AT-04） | anthropic/claude-opus-5-5 |
