@@ -6,6 +6,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import com.example.cargotracker.TestcontainersConfiguration;
 import com.example.cargotracker.booking.application.sagas.BookingSaga;
 import com.example.cargotracker.booking.application.sagas.BookingSagaStatus;
+import com.example.cargotracker.booking.application.sagas.ConcurrentBookingSagaUpdateException;
 import com.example.cargotracker.booking.domain.model.BookingFixture;
 import com.example.cargotracker.booking.domain.model.aggregates.Booking;
 import com.example.cargotracker.booking.domain.model.aggregates.DuplicateBookingException;
@@ -154,6 +155,34 @@ class MyBatisBookingRepositoriesIntegrationTest {
         assertThat(found.status()).isEqualTo(BookingSagaStatus.IN_PROGRESS);
         assertThat(found.trackingNumber()).isEqualTo(booking.trackingNumber());
         assertThat(found.startedAt()).isEqualTo(COMMITTED_AT);
+    }
+
+    /** 予約サガの完了は期待版で更新し、版を 1 進める（ARCH-HO-01。Bolt 25）。 */
+    @Test
+    void 予約サガを期待版で完了にし版を進める() {
+        Booking booking = confirmed(terms(UUID.randomUUID()));
+        repository.save(booking, BookingFixture.SALES, BookingFixture.processedCommand(booking));
+        sagaRepository.save(BookingSaga.start(booking.id(), booking.trackingNumber(), COMMITTED_AT));
+        BookingSaga started = sagaRepository.findByBookingId(booking.id()).orElseThrow();
+
+        sagaRepository.update(started.complete());
+
+        BookingSaga found = sagaRepository.findByBookingId(booking.id()).orElseThrow();
+        assertThat(found.status()).isEqualTo(BookingSagaStatus.COMPLETED);
+        assertThat(found.version()).isEqualTo(started.version() + 1);
+        assertThat(found.startedAt()).isEqualTo(COMMITTED_AT);
+    }
+
+    @Test
+    void 読んだ後にほかの更新が先に保存された予約サガは更新しない() {
+        Booking booking = confirmed(terms(UUID.randomUUID()));
+        repository.save(booking, BookingFixture.SALES, BookingFixture.processedCommand(booking));
+        sagaRepository.save(BookingSaga.start(booking.id(), booking.trackingNumber(), COMMITTED_AT));
+        BookingSaga started = sagaRepository.findByBookingId(booking.id()).orElseThrow();
+        sagaRepository.update(started.complete());
+
+        assertThatThrownBy(() -> sagaRepository.update(started.complete()))
+                .isInstanceOf(ConcurrentBookingSagaUpdateException.class);
     }
 
     private Booking confirmed(BookingTerms terms) {

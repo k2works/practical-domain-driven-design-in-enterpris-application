@@ -131,6 +131,11 @@ public class BookingSteps {
                 .hasValueSatisfying(saga -> assertThat(saga.status()).isEqualTo(expected));
     }
 
+    @ならば("予約サガは {string} になる")
+    public void 予約サガが進む(String status) {
+        予約サガの状態(status);
+    }
+
     @ならば("本予約を確定したイベントが {int} 回だけ発行されている")
     public void 確定したイベントの回数(int times) {
         assertThat(delivery.published())

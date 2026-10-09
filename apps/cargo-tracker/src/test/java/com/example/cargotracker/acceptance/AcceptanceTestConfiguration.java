@@ -3,11 +3,13 @@ package com.example.cargotracker.acceptance;
 import com.example.cargotracker.booking.acceptance.InMemoryBookingRepository;
 import com.example.cargotracker.booking.acceptance.InMemoryBookingSagaRepository;
 import com.example.cargotracker.booking.application.internal.commandservices.BookingCommandService;
+import com.example.cargotracker.booking.application.internal.commandservices.BookingSagaCommandService;
 import com.example.cargotracker.booking.application.internal.eventhandlers.BookingConfirmedEventHandler;
 import com.example.cargotracker.booking.application.internal.outboundservices.acl.QuotationBookability;
 import com.example.cargotracker.booking.application.internal.outboundservices.acl.QuotationBookingNotifications;
 import com.example.cargotracker.booking.domain.events.BookingConfirmed;
 import com.example.cargotracker.booking.infrastructure.persistence.RandomTrackingNumberIssuer;
+import com.example.cargotracker.booking.interfaces.api.internal.TrackingStartNotificationAdapter;
 import com.example.cargotracker.identity.acceptance.InMemoryKpiObservationRepository;
 import com.example.cargotracker.identity.application.internal.eventhandlers.KpiObservationEventHandler;
 import com.example.cargotracker.identity.application.internal.queryservices.KpiObservationQueryService;
@@ -50,9 +52,16 @@ import com.example.cargotracker.routing.application.internal.outboundservices.ac
 import com.example.cargotracker.routing.application.internal.outboundservices.acl.QuotationRouteConditions;
 import com.example.cargotracker.routing.application.internal.queryservices.RoutingCaseQueryService;
 import com.example.cargotracker.routing.domain.events.RouteConfirmed;
+import com.example.cargotracker.routing.interfaces.api.internal.RouteVersionLegQueryAdapter;
 import com.example.cargotracker.shared.acceptance.DeferredEventDelivery;
 import com.example.cargotracker.shared.acceptance.MutableClock;
 import com.example.cargotracker.shared.acceptance.ScenarioContext;
+import com.example.cargotracker.tracking.acceptance.InMemoryTrackingRecordRepository;
+import com.example.cargotracker.tracking.application.internal.eventhandlers.BookingTrackingStartNotificationEventHandler;
+import com.example.cargotracker.tracking.application.internal.eventhandlers.TrackingStartEventHandler;
+import com.example.cargotracker.tracking.application.internal.outboundservices.acl.BookingTrackingStarts;
+import com.example.cargotracker.tracking.application.internal.outboundservices.acl.RoutingScheduledLegs;
+import com.example.cargotracker.tracking.domain.events.TrackingStarted;
 import io.cucumber.spring.CucumberContextConfiguration;
 import java.util.Random;
 import org.springframework.boot.test.context.TestConfiguration;
@@ -205,6 +214,33 @@ public class AcceptanceTestConfiguration {
                     new QuotationBookingNotifications(new BookingNotificationService(repository)));
         }
 
+        @Bean
+        InMemoryTrackingRecordRepository trackingRecordRepository() {
+            return new InMemoryTrackingRecordRepository();
+        }
+
+        /** 追跡は DE-07 を受け、経路設計の公開 API から確定した経路版の区間を引いて追跡を開始する（ADR-015。Bolt 25）。 */
+        @Bean
+        TrackingStartEventHandler trackingStartEventHandler(
+                InMemoryTrackingRecordRepository repository,
+                RoutingCaseQueryService routingCaseQueryService,
+                DeferredEventDelivery eventDelivery,
+                MutableClock clock) {
+            return new TrackingStartEventHandler(
+                    repository,
+                    new RoutingScheduledLegs(new RouteVersionLegQueryAdapter(routingCaseQueryService)),
+                    eventDelivery,
+                    clock);
+        }
+
+        /** 追跡は DE-22 を受けて予約の公開 API で予約サガを完了にする（ADR-014・015。Bolt 25）。 */
+        @Bean
+        BookingTrackingStartNotificationEventHandler bookingTrackingStartNotificationEventHandler(
+                InMemoryBookingSagaRepository bookingSagaRepository) {
+            return new BookingTrackingStartNotificationEventHandler(new BookingTrackingStarts(
+                    new TrackingStartNotificationAdapter(new BookingSagaCommandService(bookingSagaRepository))));
+        }
+
         /** テスト用の同期の配信。購読側は {@link EventSubscriptions} が登録する（発行する部品と購読する部品が互いに依存するため）。 */
         @Bean
         DeferredEventDelivery eventDelivery() {
@@ -250,7 +286,9 @@ public class AcceptanceTestConfiguration {
                 QuotationRouteAssignmentEventHandler quotationRouteAssignmentEventHandler,
                 QuotationRouteAssignedEventHandler quotationRouteAssignedEventHandler,
                 QuotationApprovedByShipperEventHandler quotationApprovedByShipperEventHandler,
-                BookingConfirmedEventHandler bookingConfirmedEventHandler) {
+                BookingConfirmedEventHandler bookingConfirmedEventHandler,
+                TrackingStartEventHandler trackingStartEventHandler,
+                BookingTrackingStartNotificationEventHandler bookingTrackingStartNotificationEventHandler) {
             delivery.subscribe(event -> {
                 switch (event) {
                     case TransportRequestSubmitted submitted -> kpiObservationEventHandler.on(submitted);
@@ -265,7 +303,11 @@ public class AcceptanceTestConfiguration {
                     case RouteConfirmed confirmed -> quotationRouteAssignmentEventHandler.on(confirmed);
                     case QuotationRouteAssigned assigned -> quotationRouteAssignedEventHandler.on(assigned);
                     case QuotationApprovedByShipper approved -> quotationApprovedByShipperEventHandler.on(approved);
-                    case BookingConfirmed confirmed -> bookingConfirmedEventHandler.on(confirmed);
+                    case BookingConfirmed confirmed -> {
+                        bookingConfirmedEventHandler.on(confirmed);
+                        trackingStartEventHandler.on(confirmed);
+                    }
+                    case TrackingStarted started -> bookingTrackingStartNotificationEventHandler.on(started);
                     default -> {
                         // 購読者のないイベント
                     }

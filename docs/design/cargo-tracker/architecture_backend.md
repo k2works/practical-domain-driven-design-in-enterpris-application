@@ -4,7 +4,7 @@ title: "cargo-tracker バックエンドアーキテクチャ"
 description: "cargo-tracker の境界づけられたコンテキスト、コンテキストごとのドメインロジックパターン、パッケージ構成、サガとドメインイベントによる連携（ARCH-HO-01〜03）、受信サービスの方針。"
 tags: [design, architecture, backend]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-09T04:48:46Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-09T05:42:00Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T07:11:12Z }
   - { by: human:kakimomokuri, at: 2026-10-01T07:41:04Z }
@@ -137,10 +137,10 @@ end note
 
 公開 API の置き場所と形（Bolt 17 で最初の公開 API を作ったときに決めた。[Bolt 17 計画](../../development/cargo-tracker/bolt_17_plan.md) の確認ポイント 2）:
 
-- 上流のコンテキストは、公開 API を `<コンテキスト>.interfaces.api` パッケージに置き、Spring Modulith の名前付きインターフェース（`@NamedInterface("api")`）にする。開発ガイドライン第 3 章のインターフェース層（「プロトコルで分類した全てのインバウンドサービス」）に当たるため（2026-10-09、Bolt 25 の開始準備の人の指示）。中身は照会・操作のインターフェースと、引数・戻り値の record と、それを実装するインバウンドアダプター（アプリケーションサービスに委ねるだけ）。既存の見積りの公開 API（`quotation.api`、実装は `application.internal.queryservices`・`commandservices`）は、`quotation.interfaces.api` に移す技術タスクまでの例外として残す
+- 上流のコンテキストは、公開 API を `<コンテキスト>.interfaces.api` パッケージに置き、Spring Modulith の名前付きインターフェース（`@NamedInterface("api")`）にする。開発ガイドライン第 3 章のインターフェース層（「プロトコルで分類した全てのインバウンドサービス」）に当たるため（2026-10-09、Bolt 25 の開始準備の人の指示）。中身は照会・操作のインターフェースと、引数・戻り値の record だけ。それを実装するインバウンドアダプター（アプリケーションサービスに委ねるだけ）は `<コンテキスト>.interfaces.api.internal` に置き、名前付きインターフェースには含めない（Bolt 25 の実装で決めた）。既存の見積りの公開 API（`quotation.api`、実装は `application.internal.queryservices`・`commandservices`）は、`quotation.interfaces.api` に移す技術タスクまでの例外として残す
 - 戻り値は Java の標準と共有カーネルの型（`Location`、`UtcInstant` など）と文字列だけで表し、上流のドメインの型を持たない（イベントと同じ規則。ArchUnit で確かめる）。
-- 業務の処理は上流の `application.internal.queryservices`（照会）・`commandservices`（操作）に置き、`interfaces.api` のアダプターから呼ぶ（interfaces → application の向き）。合成ルート（`infrastructure.config`）で公開 API の型の bean として組み立てる
-- 下流は `application.internal.outboundservices.acl` から呼び、自分のドメインの型に変える。下流のモジュールの `allowedDependencies` に `<上流> :: api` を足す。層の規則（`LayerArchitectureTest` の「interfaces はどの層からも参照されない」）の例外として、他のコンテキストの `application.internal.outboundservices.acl` だけが `..interfaces.api..` を参照してよい。公開 API の形の検査（`PublicApiArchitectureTest`）は `*.api` と `*.interfaces.api` の両方を対象にする（Bolt 25。2026-10-09 に human:kakimomokuri が決定）
+- 業務の処理は上流の `application.internal.queryservices`（照会）・`commandservices`（操作）に置き、`interfaces.api.internal` のアダプターから呼ぶ（interfaces → application の向き）。アダプターは画面のコントローラーと同じく部品探索で拾う（`@Component`。合成ルートの `infrastructure.config` は層の規則で interfaces の実装を参照できないため。Bolt 25）
+- 下流は `application.internal.outboundservices.acl` から呼び、自分のドメインの型に変える。下流のモジュールの `allowedDependencies` に `<上流> :: api` を足す。層の規則（`LayerArchitectureTest` の「interfaces はどの層からも参照されない」）の例外として、他のコンテキストの `application.internal.outboundservices.acl` と、公開 API を腐敗防止層に渡す合成ルート（`infrastructure.config`）だけが `<コンテキスト>.interfaces.api` を参照してよい（合成ルートは Bolt 25 の実装で足した）。公開 API の形の検査（`PublicApiArchitectureTest`）は `*.api` と `*.interfaces.api` の両方を対象にする（Bolt 25。2026-10-09 に human:kakimomokuri が決定）
 - 下流から上流への通知（ADR-014）では、上流の公開 API に冪等な操作のインターフェースを置き、業務の処理は上流の `application.internal.commandservices` に置く。業務の拒否は戻り値の値で返す。最初の操作は、見積りの「経路の割当て」（`quotation.api.RouteAssignment`。案件番号・経路版番号・確定の時刻・区間を受け、依頼元の見積りに割り当てる。Bolt 20）。
 - 最初の公開 API は、見積りの「経路条件の照会」（`quotation.api.RouteConditionQuery`。輸送要求 ID と版番号から、出発地・目的地・希望到着期限・貨物種別を返す）。経路設計が DE-16 を受けて経路設計案件を作るときに呼ぶ。
 - 予約が使う見積りの公開 API（Bolt 23・23b）: 確定に使えるかの照会（`BookableQuotationQuery`。業務番号・見積り番号・commit 時刻から、確定に要る写しか使えない理由を返す。ADR-016）と、予約確定済みの通知（`BookingNotification`。ADR-014）。

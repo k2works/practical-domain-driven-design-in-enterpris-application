@@ -40,6 +40,10 @@ class AppendOnlyGrantIntegrationTest {
             "booking.booking_version",
             "booking.processed_command");
 
+    /** PostgreSQL のシステムのスキーマと、Flyway の履歴を置く public を除いたスキーマ（業務のスキーマと platform）。 */
+    private static final String APPLICATION_SCHEMAS =
+            "table_schema NOT IN ('pg_catalog', 'information_schema', 'public') AND table_schema NOT LIKE 'pg\\_%'";
+
     private static final String APP_PASSWORD = "cargo_tracker_app_test";
     private static final String INSUFFICIENT_PRIVILEGE = "42501";
 
@@ -91,6 +95,22 @@ class AppendOnlyGrantIntegrationTest {
         try (Connection connection = dataSource.getConnection()) {
             assertThat(appendOnlyMarkedTables(connection)).isEqualTo(APPEND_ONLY_TABLES);
             assertThat(tablesWithoutUpdatePrivilege(connection)).isEqualTo(APPEND_ONLY_TABLES);
+        }
+    }
+
+    /**
+     * 業務のスキーマを足したときに afterMigrate の GRANT の一覧に足し忘れると、アプリが権限不足で失敗する（Bolt 24 の A-11）。スキーマの一覧を
+     * 名指しにせず、DB にあるスキーマ（PostgreSQL のシステムのスキーマを除く）のすべての表を、アプリケーション利用者が読めることを確かめる。
+     */
+    @Test
+    void 業務のスキーマのすべての表をアプリケーション利用者が読める() throws SQLException {
+        try (Connection connection = dataSource.getConnection();
+                PreparedStatement statement = connection.prepareStatement("SELECT table_schema || '.' || table_name"
+                        + " FROM information_schema.tables WHERE " + APPLICATION_SCHEMAS
+                        + " AND table_type = 'BASE TABLE'"
+                        + " AND NOT has_table_privilege(?, table_schema || '.' || table_name, 'SELECT')")) {
+            statement.setString(1, appUser);
+            assertThat(collect(statement.executeQuery())).isEmpty();
         }
     }
 
@@ -221,7 +241,7 @@ class AppendOnlyGrantIntegrationTest {
 
     private Set<String> tablesWithoutUpdatePrivilege(Connection connection) throws SQLException {
         try (PreparedStatement statement = connection.prepareStatement("SELECT table_schema || '.' || table_name"
-                + " FROM information_schema.tables WHERE table_schema IN ('quotation', 'identity', 'platform', 'booking')"
+                + " FROM information_schema.tables WHERE " + APPLICATION_SCHEMAS
                 + " AND table_type = 'BASE TABLE'"
                 + " AND NOT has_table_privilege(?, table_schema || '.' || table_name, 'UPDATE')")) {
             statement.setString(1, appUser);

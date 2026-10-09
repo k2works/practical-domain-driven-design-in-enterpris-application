@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.cargotracker.tracking.infrastructure.persistence.TrackingRecordMapper">
+
+    <resultMap id="trackingRecordRow" type="com.example.cargotracker.tracking.infrastructure.persistence.TrackingRecordRow">
+        <constructor>
+            <idArg column="tracking_number" name="trackingNumber" javaType="String"/>
+            <arg column="booking_id" name="bookingId" javaType="java.util.UUID"/>
+            <arg column="shipper_company_id" name="shipperCompanyId" javaType="java.util.UUID"/>
+            <arg column="consignee_company_id" name="consigneeCompanyId" javaType="java.util.UUID"/>
+            <arg column="booking_status" name="bookingStatus" javaType="String"/>
+            <arg column="routing_case_number" name="routingCaseNumber" javaType="String"/>
+            <arg column="route_version_no" name="routeVersionNo" javaType="java.lang.Integer"/>
+            <arg column="current_status" name="currentStatus" javaType="String"/>
+            <arg column="original_eta" name="originalEta" javaType="java.time.OffsetDateTime"/>
+            <arg column="latest_eta" name="latestEta" javaType="java.time.OffsetDateTime"/>
+            <arg column="version" name="version" javaType="_long"/>
+            <arg column="created_at" name="createdAt" javaType="java.time.OffsetDateTime"/>
+            <arg column="updated_at" name="updatedAt" javaType="java.time.OffsetDateTime"/>
+        </constructor>
+    </resultMap>
+
+    <resultMap id="scheduledLegRow" type="com.example.cargotracker.tracking.infrastructure.persistence.ScheduledLegRow">
+        <constructor>
+            <idArg column="tracking_number" name="trackingNumber" javaType="String"/>
+            <idArg column="leg_no" name="legNo" javaType="_int"/>
+            <arg column="voyage_number" name="voyageNumber" javaType="String"/>
+            <arg column="load_unlocode" name="loadUnlocode" javaType="String"/>
+            <arg column="discharge_unlocode" name="dischargeUnlocode" javaType="String"/>
+            <arg column="departure_at" name="departureAt" javaType="java.time.OffsetDateTime"/>
+            <arg column="arrival_at" name="arrivalAt" javaType="java.time.OffsetDateTime"/>
+        </constructor>
+    </resultMap>
+
+    <insert id="insertTrackingRecord">
+        INSERT INTO tracking.tracking_record
+            (tracking_number, booking_id, shipper_company_id, consignee_company_id, booking_status, routing_case_number,
+             route_version_no, current_status, original_eta, latest_eta, version, created_at, updated_at)
+        VALUES
+            (#{trackingNumber}, #{bookingId}, #{shipperCompanyId}, #{consigneeCompanyId}, #{bookingStatus},
+             #{routingCaseNumber}, #{routeVersionNo}, #{currentStatus}, #{originalEta}, #{latestEta}, #{version},
+             #{createdAt}, #{updatedAt})
+    </insert>
+
+    <insert id="insertScheduledLeg">
+        INSERT INTO tracking.scheduled_leg
+            (tracking_number, leg_no, voyage_number, load_unlocode, discharge_unlocode, departure_at, arrival_at)
+        VALUES
+            (#{trackingNumber}, #{legNo}, #{voyageNumber}, #{loadUnlocode}, #{dischargeUnlocode}, #{departureAt},
+             #{arrivalAt})
+    </insert>
+
+    <select id="findTrackingRecordByBookingId" resultMap="trackingRecordRow">
+        SELECT tracking_number, booking_id, shipper_company_id, consignee_company_id, booking_status, routing_case_number,
+               route_version_no, current_status, original_eta, latest_eta, version, created_at, updated_at
+          FROM tracking.tracking_record
+         WHERE booking_id = #{bookingId}
+    </select>
+
+    <select id="findScheduledLegs" resultMap="scheduledLegRow">
+        SELECT tracking_number, leg_no, voyage_number, load_unlocode, discharge_unlocode, departure_at, arrival_at
+          FROM tracking.scheduled_leg
+         WHERE tracking_number = #{trackingNumber}
+         ORDER BY leg_no
+    </select>
+</mapper>

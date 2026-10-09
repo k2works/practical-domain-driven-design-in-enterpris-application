@@ -4,6 +4,7 @@ import static com.tngtech.archunit.base.DescribedPredicate.not;
 import static com.tngtech.archunit.core.domain.JavaCall.Predicates.target;
 import static com.tngtech.archunit.core.domain.JavaClass.Predicates.assignableTo;
 import static com.tngtech.archunit.core.domain.JavaClass.Predicates.resideInAPackage;
+import static com.tngtech.archunit.core.domain.JavaClass.Predicates.resideInAnyPackage;
 import static com.tngtech.archunit.core.domain.properties.HasName.Predicates.nameMatching;
 import static com.tngtech.archunit.core.domain.properties.HasOwner.Predicates.With.owner;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes;
@@ -68,10 +69,11 @@ class LayerArchitectureTest {
             .mayOnlyBeAccessedByLayers("interfaces", "application", "infrastructure")
             .whereLayer("infrastructure")
             .mayNotBeAccessedByAnyLayer()
-            // 他のコンテキストの公開 API（開発ガイドライン第 3 章のインターフェース層の <コンテキスト>.interfaces.api）は、呼ぶ側の腐敗防止層
-            // からだけ参照してよい（Bolt 25 の人の決定。公開 API の型はインターフェースと record で、実装は interfaces.api.internal に置く）
+            // 他のコンテキストの公開 API（開発ガイドライン第 3 章のインターフェース層の <コンテキスト>.interfaces.api）は、呼ぶ側の腐敗防止層と、
+            // 公開 API を腐敗防止層に渡す合成ルートからだけ参照してよい（Bolt 25 の人の決定。公開 API の型はインターフェースと record で、
+            // 実装は interfaces.api.internal に置く）
             .ignoreDependency(
-                    resideInAPackage("..application.internal.outboundservices.acl.."),
+                    resideInAnyPackage("..application.internal.outboundservices.acl..", "..infrastructure.config.."),
                     resideInAPackage("com.example.cargotracker.*.interfaces.api"));
 
     /**

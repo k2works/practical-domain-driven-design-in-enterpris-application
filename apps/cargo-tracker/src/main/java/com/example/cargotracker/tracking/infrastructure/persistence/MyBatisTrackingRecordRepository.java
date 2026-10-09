@@ -1,0 +1,102 @@
+package com.example.cargotracker.tracking.infrastructure.persistence;
+
+import com.example.cargotracker.shared.domain.CompanyId;
+import com.example.cargotracker.shared.domain.Location;
+import com.example.cargotracker.shared.domain.UtcInstant;
+import com.example.cargotracker.tracking.domain.model.aggregates.TrackingRecord;
+import com.example.cargotracker.tracking.domain.model.aggregates.TrackingRecordRepository;
+import com.example.cargotracker.tracking.domain.model.valueobjects.Schedule;
+import com.example.cargotracker.tracking.domain.model.valueobjects.ScheduledLeg;
+import com.example.cargotracker.tracking.domain.model.valueobjects.TrackedBookingStatus;
+import com.example.cargotracker.tracking.domain.model.valueobjects.TrackingNumber;
+import com.example.cargotracker.tracking.domain.model.valueobjects.TrackingStatus;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+import org.springframework.stereotype.Repository;
+
+/**
+ * 追跡記録のリポジトリの MyBatis 実装（ADR-015、T-INV-11。Bolt 25）。追跡記録と予定区間を同じトランザクションで追加する。予約 ID の
+ * 一意制約（{@code uk_tracking_record_booking}）の違反は、そのまま例外にする（同時の DE-07 の負けた側。トランザクションを戻し、再配信で
+ * 既存の追跡記録を見つけて何もしない）。作成時刻は追跡を開始した時刻。
+ */
+@Repository
+public class MyBatisTrackingRecordRepository implements TrackingRecordRepository {
+
+    private final TrackingRecordMapper mapper;
+
+    public MyBatisTrackingRecordRepository(TrackingRecordMapper mapper) {
+        this.mapper = mapper;
+    }
+
+    @Override
+    public void save(TrackingRecord record) {
+        String trackingNumber = record.trackingNumber().value();
+        OffsetDateTime startedAt = offset(record.startedAt());
+        Schedule schedule = record.schedule();
+        mapper.insertTrackingRecord(new TrackingRecordRow(
+                trackingNumber,
+                record.bookingId(),
+                record.shipperCompanyId().value(),
+                record.consigneeCompanyId().value(),
+                record.bookingStatus().name(),
+                schedule.routingCaseNumber(),
+                schedule.routeVersionNo(),
+                record.currentStatus().name(),
+                offset(record.originalEta()),
+                offset(record.latestEta()),
+                record.aggregateVersion(),
+                startedAt,
+                startedAt));
+        List<ScheduledLeg> legs = schedule.legs();
+        for (int i = 0; i < legs.size(); i++) {
+            ScheduledLeg leg = legs.get(i);
+            mapper.insertScheduledLeg(new ScheduledLegRow(
+                    trackingNumber,
+                    i + 1,
+                    leg.voyageNumber(),
+                    leg.load().unLocode(),
+                    leg.discharge().unLocode(),
+                    offset(leg.departureAt()),
+                    offset(leg.arrivalAt())));
+        }
+    }
+
+    @Override
+    public Optional<TrackingRecord> findByBookingId(UUID bookingId) {
+        return mapper.findTrackingRecordByBookingId(bookingId).map(this::toRecord);
+    }
+
+    private TrackingRecord toRecord(TrackingRecordRow row) {
+        List<ScheduledLeg> legs = mapper.findScheduledLegs(row.trackingNumber()).stream()
+                .map(leg -> new ScheduledLeg(
+                        leg.voyageNumber(),
+                        new Location(leg.loadUnlocode()),
+                        new Location(leg.dischargeUnlocode()),
+                        utc(leg.departureAt()),
+                        utc(leg.arrivalAt())))
+                .toList();
+        return TrackingRecord.reconstitute(
+                new TrackingNumber(row.trackingNumber()),
+                row.bookingId(),
+                new CompanyId(row.shipperCompanyId()),
+                new CompanyId(row.consigneeCompanyId()),
+                TrackedBookingStatus.valueOf(row.bookingStatus()),
+                new Schedule(row.routingCaseNumber(), row.routeVersionNo(), legs),
+                TrackingStatus.valueOf(row.currentStatus()),
+                utc(row.originalEta()),
+                utc(row.latestEta()),
+                utc(row.createdAt()),
+                row.version());
+    }
+
+    private static OffsetDateTime offset(UtcInstant instant) {
+        return instant.instant().atOffset(ZoneOffset.UTC);
+    }
+
+    private static UtcInstant utc(OffsetDateTime value) {
+        return new UtcInstant(value.toInstant());
+    }
+}

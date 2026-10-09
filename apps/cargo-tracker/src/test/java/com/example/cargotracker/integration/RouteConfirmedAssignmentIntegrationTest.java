@@ -44,6 +44,9 @@ import com.example.cargotracker.shared.domain.CommandId;
 import com.example.cargotracker.shared.domain.CompanyId;
 import com.example.cargotracker.shared.domain.Role;
 import com.example.cargotracker.shared.domain.UserId;
+import com.example.cargotracker.tracking.application.internal.eventhandlers.BookingTrackingStartNotificationEventHandler;
+import com.example.cargotracker.tracking.application.internal.eventhandlers.TrackingStartEventHandler;
+import com.example.cargotracker.tracking.domain.events.TrackingStarted;
 import java.time.Duration;
 import java.util.Optional;
 import java.util.Set;
@@ -57,7 +60,7 @@ import org.springframework.modulith.events.CompletedEventPublications;
 
 /**
  * 経路の確定（DE-05）から見積りへの割当て（ADR-014）、輸送要求の荷主承認待ち（DE-21）、荷主の承認と予約待ち（DE-04）、本予約の確定と
- * 輸送要求の予約確定済み（DE-07。Bolt 23）までを、
+ * 輸送要求の予約確定済み（DE-07。Bolt 23）、追跡の開始と予約サガの完了（DE-07・DE-22。Bolt 25）までを、
  * PostgreSQL 18 とイベント発行記録を経た非同期の配信で確かめる（US-24 AC4、R-INV-11。Bolt 20）。
  * このテストはコミットするため、航海は実行ごとに別の航海番号にし、待つ条件はこのテストで提出した輸送要求に限る。
  */
@@ -104,6 +107,12 @@ class RouteConfirmedAssignmentIntegrationTest {
 
     @Autowired
     BookingCommandService bookingCommandService;
+
+    @Autowired
+    TrackingStartEventHandler trackingStartEventHandler;
+
+    @Autowired
+    BookingTrackingStartNotificationEventHandler bookingTrackingStartNotificationEventHandler;
 
     @Autowired
     JdbcTemplate jdbc;
@@ -174,28 +183,97 @@ class RouteConfirmedAssignmentIntegrationTest {
                         })
                         .hasSize(3));
 
-        confirmBookingAndAwaitBooked(number, submitted.transportRequestId().value());
+        confirmBookingAndAwaitBooked(number, submitted.transportRequestId().value(), voyageNumber);
     }
 
-    /** 本予約を確定すると、DE-07 の配信が完了して輸送要求は予約確定済みになり、予約サガは処理中で追跡の開始を待つ（Bolt 23）。 */
-    private void confirmBookingAndAwaitBooked(TransportRequestNumber number, UUID transportRequestId) {
+    /**
+     * 本予約を確定すると、DE-07 の配信が完了して輸送要求は予約確定済みになる（Bolt 23）。追跡が DE-07 を受けて確定した経路版の区間を
+     * 予定として採用した追跡記録を作り、DE-22 を受けた別のトランザクションで予約サガが完了になる（ADR-015。Bolt 25）。
+     * DE-07・DE-22 を配信し直しても、追跡記録・予定区間・予約サガは変わらない（T-INV-11、仮説 H2）。
+     */
+    private void confirmBookingAndAwaitBooked(
+            TransportRequestNumber number, UUID transportRequestId, String voyageNumber) {
         BookingConfirmationOutcome booked = bookingCommandService.confirm(
                 new ConfirmBookingCommand(CommandId.random(), number.text(), 1, SALES, true));
         assertThat(booked).isInstanceOf(BookingConfirmationOutcome.Confirmed.class);
+        String trackingNumber =
+                ((BookingConfirmationOutcome.Confirmed) booked).trackingNumber().value();
         awaitTransportRequestStatus(number, TransportRequestStatus.BOOKED);
         await().atMost(TIMEOUT)
+                .untilAsserted(() -> assertThat(sagaStatus(trackingNumber)).isEqualTo("COMPLETED"));
+
+        BookingConfirmed confirmed = completedEventPublications.findAll().stream()
+                .map(publication -> publication.getEvent())
+                .filter(event -> event instanceof BookingConfirmed bookingConfirmed
+                        && bookingConfirmed.transportRequestId().equals(transportRequestId))
+                .map(BookingConfirmed.class::cast)
+                .findFirst()
+                .orElseThrow();
+        assertThat(confirmed.shipperCompanyId()).isNotNull();
+        assertThat(confirmed.consigneeCompanyId()).isNotNull();
+        await().atMost(TIMEOUT)
                 .untilAsserted(() -> assertThat(completedEventPublications.findAll())
-                        .filteredOn(publication -> publication.getEvent() instanceof BookingConfirmed confirmed
-                                && confirmed.transportRequestId().equals(transportRequestId))
+                        .filteredOn(publication -> publication.getEvent() instanceof TrackingStarted started
+                                && started.bookingId().equals(confirmed.bookingId()))
                         .hasSize(1));
-        assertThat(jdbc.queryForObject(
-                        "SELECT s.status FROM booking.booking_saga s JOIN booking.booking b ON b.id = s.booking_id"
-                                + " WHERE b.tracking_number = ?",
+        assertThat(jdbc.queryForMap(
+                        "SELECT booking_id, shipper_company_id, consignee_company_id, booking_status, current_status,"
+                                + " routing_case_number, route_version_no FROM tracking.tracking_record WHERE tracking_number = ?",
+                        trackingNumber))
+                .containsEntry("booking_id", confirmed.bookingId())
+                .containsEntry(
+                        "shipper_company_id", confirmed.shipperCompanyId().value())
+                .containsEntry(
+                        "consignee_company_id", confirmed.consigneeCompanyId().value())
+                .containsEntry("booking_status", "CONFIRMED")
+                .containsEntry("current_status", "PICKUP_SCHEDULED")
+                .containsEntry("routing_case_number", confirmed.routingCaseNumber())
+                .containsEntry("route_version_no", 1);
+        assertThat(jdbc.queryForList(
+                        "SELECT voyage_number FROM tracking.scheduled_leg WHERE tracking_number = ? ORDER BY leg_no",
                         String.class,
-                        ((BookingConfirmationOutcome.Confirmed) booked)
-                                .trackingNumber()
-                                .value()))
-                .isEqualTo("IN_PROGRESS");
+                        trackingNumber))
+                .containsExactly(voyageNumber);
+        long sagaVersion = sagaVersion(trackingNumber);
+
+        TrackingStarted started = completedEventPublications.findAll().stream()
+                .map(publication -> publication.getEvent())
+                .filter(event -> event instanceof TrackingStarted trackingStarted
+                        && trackingStarted.bookingId().equals(confirmed.bookingId()))
+                .map(TrackingStarted.class::cast)
+                .findFirst()
+                .orElseThrow();
+        trackingStartEventHandler.on(confirmed);
+        bookingTrackingStartNotificationEventHandler.on(started);
+
+        assertThat(jdbc.queryForObject(
+                        "SELECT count(*) FROM tracking.tracking_record WHERE booking_id = ?",
+                        Integer.class,
+                        confirmed.bookingId()))
+                .isEqualTo(1);
+        assertThat(jdbc.queryForObject(
+                        "SELECT count(*) FROM tracking.scheduled_leg WHERE tracking_number = ?",
+                        Integer.class,
+                        trackingNumber))
+                .isEqualTo(1);
+        assertThat(sagaStatus(trackingNumber)).isEqualTo("COMPLETED");
+        assertThat(sagaVersion(trackingNumber)).isEqualTo(sagaVersion);
+    }
+
+    private String sagaStatus(String trackingNumber) {
+        return jdbc.queryForObject(
+                "SELECT s.status FROM booking.booking_saga s JOIN booking.booking b ON b.id = s.booking_id"
+                        + " WHERE b.tracking_number = ?",
+                String.class,
+                trackingNumber);
+    }
+
+    private long sagaVersion(String trackingNumber) {
+        return jdbc.queryForObject(
+                "SELECT s.version FROM booking.booking_saga s JOIN booking.booking b ON b.id = s.booking_id"
+                        + " WHERE b.tracking_number = ?",
+                Long.class,
+                trackingNumber);
     }
 
     private void awaitTransportRequestStatus(TransportRequestNumber number, TransportRequestStatus status) {

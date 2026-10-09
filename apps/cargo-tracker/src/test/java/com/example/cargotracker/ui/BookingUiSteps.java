@@ -109,8 +109,16 @@ public class BookingUiSteps {
         assertThat(definition("業務番号")).hasText(state.transportRequestNumber());
         assertThat(definition("状態")).hasText("確定済み");
         assertThat(definition("追跡の開始"))
-                .hasText(Pattern.compile("^(" + Pattern.quote(inProgress) + "|" + Pattern.quote(completed) + ")$"));
+                .hasText(Pattern.compile("^(" + literal(inProgress) + "|" + literal(completed) + ")$"));
         browser.checkAccessibility();
+    }
+
+    /**
+     * 正規表現のメタ文字だけをエスケープする。Playwright は Java の正規表現をブラウザーの JavaScript の正規表現に変えて照合するため、
+     * JavaScript にない {@code Pattern.quote} の {@code \Q…\E} は使えない（Bolt 25）。
+     */
+    private static String literal(String text) {
+        return text.replaceAll("[.*+?^${}()|\\[\\]\\\\]", "\\\\$0");
     }
 
     /** 予約サガの完了は DE-07 と DE-22 の 2 つの非同期の処理の後なので、完了と出るまで開き直す（ADR-015。Bolt 25）。 */

@@ -13,6 +13,7 @@ import com.example.cargotracker.routing.acceptance.InMemoryRoutingCaseRepository
 import com.example.cargotracker.routing.acceptance.InMemoryVoyageRepository;
 import com.example.cargotracker.shared.acceptance.DeferredEventDelivery;
 import com.example.cargotracker.shared.acceptance.MutableClock;
+import com.example.cargotracker.tracking.acceptance.InMemoryTrackingRecordRepository;
 import io.cucumber.java.Before;
 import java.time.Instant;
 
@@ -34,6 +35,7 @@ public class ScenarioReset {
     private final InMemoryConnectionRuleRepository connectionRuleRepository;
     private final InMemoryBookingRepository bookingRepository;
     private final InMemoryBookingSagaRepository bookingSagaRepository;
+    private final InMemoryTrackingRecordRepository trackingRecordRepository;
 
     public ScenarioReset(
             MutableClock clock,
@@ -48,7 +50,8 @@ public class ScenarioReset {
             InMemoryVoyageRepository voyageRepository,
             InMemoryConnectionRuleRepository connectionRuleRepository,
             InMemoryBookingRepository bookingRepository,
-            InMemoryBookingSagaRepository bookingSagaRepository) {
+            InMemoryBookingSagaRepository bookingSagaRepository,
+            InMemoryTrackingRecordRepository trackingRecordRepository) {
         this.clock = clock;
         this.transportRequestRepository = transportRequestRepository;
         this.transportRequestNumberIssuer = transportRequestNumberIssuer;
@@ -62,6 +65,7 @@ public class ScenarioReset {
         this.connectionRuleRepository = connectionRuleRepository;
         this.bookingRepository = bookingRepository;
         this.bookingSagaRepository = bookingSagaRepository;
+        this.trackingRecordRepository = trackingRecordRepository;
     }
 
     @Before
@@ -79,5 +83,6 @@ public class ScenarioReset {
         connectionRuleRepository.clear();
         bookingRepository.clear();
         bookingSagaRepository.clear();
+        trackingRecordRepository.clear();
     }
 }
