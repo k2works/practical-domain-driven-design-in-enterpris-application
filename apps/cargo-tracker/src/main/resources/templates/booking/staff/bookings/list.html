@@ -10,8 +10,8 @@
 <main>
     <h1>予約一覧</h1>
     <!--/* S-10 の最小の表示（Bolt 25b）。絞り込み・ページ送り・変更・取消申請の状況は US-05（W11） */-->
-    <p th:if="${#lists.isEmpty(bookings)}">確定した予約はまだありません。</p>
-    <p th:if="${truncated}">新しい 50 件だけを示しています。</p>
+    <p th:if="${#lists.isEmpty(bookings)}">確定した予約はまだありません。本予約は<a th:href="@{/staff/transport-requests}">見積依頼の受付一覧</a>の「予約の確定待ち」から確定できます。</p>
+    <p th:if="${truncated}" th:text="|新しい ${limit} 件だけを示しています。|">新しい 50 件だけを示しています。</p>
     <div th:unless="${#lists.isEmpty(bookings)}" class="table-scroll" tabindex="0" role="region"
          aria-labelledby="bookings-caption">
         <table class="table">

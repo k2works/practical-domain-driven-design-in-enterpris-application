@@ -77,8 +77,7 @@ public class BookingQueryService {
                         booking,
                         sagaRepository
                                 .findByBookingId(booking.id())
-                                .orElseThrow(() -> new IllegalStateException(
-                                        "貨物予約に予約サガがない（本予約の確定と同じトランザクションで作る。ADR-015）: " + booking.id()))
+                                .orElseThrow(() -> missingSaga(booking.id()))
                                 .status()));
     }
 
@@ -99,10 +98,13 @@ public class BookingQueryService {
                         summary.quotationNo(),
                         summary.committedAt(),
                         Optional.ofNullable(statuses.get(summary.bookingId()))
-                                .orElseThrow(
-                                        () -> new IllegalStateException("貨物予約に予約サガがない（本予約の確定と同じトランザクションで作る。ADR-015）: "
-                                                + summary.bookingId().value()))))
+                                .orElseThrow(() -> missingSaga(summary.bookingId()))))
                 .toList();
-        return new RecentBookings(rows, found.size() > RECENT_LIMIT);
+        return new RecentBookings(rows, found.size() > RECENT_LIMIT, RECENT_LIMIT);
+    }
+
+    /** 貨物予約があれば予約サガは同じトランザクションで作られている（ADR-015）。ないのは不変条件の違反。 */
+    private static IllegalStateException missingSaga(BookingId bookingId) {
+        return new IllegalStateException("貨物予約に予約サガがない（本予約の確定と同じトランザクションで作る。ADR-015）: " + bookingId.value());
     }
 }

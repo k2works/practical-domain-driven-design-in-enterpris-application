@@ -162,7 +162,8 @@
         </constructor>
     </resultMap>
 
-    <!-- S-10 予約一覧（Bolt 25b）。確定時刻は予約版 1 の commit 時刻（最初の確定の時刻） -->
+    <!-- S-10 予約一覧（Bolt 25b）。確定時刻は予約版 1 の commit 時刻（最初の確定の時刻）。同じ時刻は追跡番号の順で、追跡番号は英大文字と
+         数字だけなので、DB の照合順序でもメモリの実装（String.compareTo の文字コード順）と同じ並びになる -->
     <select id="findRecentSummaries" resultMap="bookingSummaryRow">
         SELECT b.id, b.tracking_number, b.transport_request_number, b.quotation_no, v.committed_at
           FROM booking.booking b

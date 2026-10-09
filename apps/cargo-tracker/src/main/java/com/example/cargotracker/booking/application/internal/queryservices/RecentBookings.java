@@ -11,9 +11,10 @@ import java.util.Objects;
  * 同じ形の型を重ねない（Bolt 23b の A-低4）。
  *
  * @param rows 確定時刻の新しい順の行（上限まで）
- * @param truncated 上限を超える予約があったか（画面に「新しい 50 件だけを示しています」と示す）
+ * @param truncated 上限を超える予約があったか（画面に「新しい N 件だけを示しています」と示す）
+ * @param limit 上限の件数（画面の文言に使う。上限の値を 1 か所に置く。Bolt 25b レビュー P-2）
  */
-public record RecentBookings(List<Row> rows, boolean truncated) {
+public record RecentBookings(List<Row> rows, boolean truncated, int limit) {
 
     public RecentBookings {
         rows = List.copyOf(Objects.requireNonNull(rows, "rows"));

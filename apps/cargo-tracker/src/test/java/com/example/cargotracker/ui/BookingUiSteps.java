@@ -243,7 +243,7 @@ public class BookingUiSteps {
         page().locator("body").focus();
         tabUntilFocused(page().getByRole(
                         AriaRole.LINK,
-                        new Page.GetByRoleOptions().setName("見積依頼の受付一覧へ戻る").setExact(true)));
+                        new Page.GetByRoleOptions().setName("見積依頼の受付一覧").setExact(true)));
         page().keyboard().press("Enter");
         page().waitForURL("**/staff/transport-requests");
     }
@@ -283,7 +283,7 @@ public class BookingUiSteps {
         page().locator("body").focus();
         tabUntilFocused(page().getByRole(
                         AriaRole.LINK,
-                        new Page.GetByRoleOptions().setName("予約一覧へ戻る").setExact(true)));
+                        new Page.GetByRoleOptions().setName("予約一覧").setExact(true)));
         page().keyboard().press("Enter");
         page().waitForURL("**/staff/bookings");
     }

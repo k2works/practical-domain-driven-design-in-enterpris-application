@@ -4,7 +4,7 @@ title: "cargo-tracker データモデル"
 description: "cargo-tracker の概念データモデル、スキーマ分割、命名と型の規約（H2 と PostgreSQL の共通部分）、コンテキストごとの論理データモデルと ER 図、版・追記専用・冪等性・イベント配信の表現。"
 tags: [design, data-model]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-09T06:08:07Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-09T09:38:13Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T07:48:17Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:01:37Z }
@@ -1122,7 +1122,7 @@ src/main/resources/db/
 | `quotation.quotation` | （`transport_request_id`、`status`） | 輸送要求の有効な見積り |
 | `routing.routing_case` | （`transport_request_id`） | 輸送要求から経路設計案件 |
 | `routing.referenced_info_version` | （`voyage_number`） | 航海の更新で再評価する確定済み経路版の検索（DE-12） |
-| `booking.booking` | `tracking_number`（一意）、（`shipper_company_id`、`status`）、（`transport_request_number`）、（`transport_request_number`、`quotation_no`）（一意） | 追跡番号での照会、荷主の予約一覧、業務番号から予約をたどる社内の照会（Bolt 23、R-31）、見積りの照会の前に同じ見積りの予約を引く（Bolt 24） |
+| `booking.booking` | `tracking_number`（一意）、（`shipper_company_id`、`status`）、（`transport_request_number`）、（`transport_request_number`、`quotation_no`）（一意） | 追跡番号での照会、荷主の予約一覧、業務番号から予約をたどる社内の照会（Bolt 23、R-31）、見積りの照会の前に同じ見積りの予約を引く（Bolt 24）。S-10 予約一覧（Bolt 25b）は予約版 1 の `committed_at` の新しい順に引くが、R0.1 では予約が数十件なので索引を足さない（確定時刻の索引は W11 の一覧の本体で決める） |
 | `booking.booking_saga` | （`status`、`started_at`） | 処理中の滞留の判定（RTY-02、OBS-04） |
 | `tracking.tracking_record` | （`shipper_company_id`）、（`consignee_company_id`） | 荷主・荷受人の照会（照会を作る Bolt 27 で足す。`booking_id` は一意制約が索引を兼ねる） |
 | `tracking.service_case` | （`status`、`receive_due_at`） | 受領期限を過ぎた案件（escalation） |

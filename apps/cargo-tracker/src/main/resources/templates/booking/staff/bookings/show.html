@@ -37,8 +37,9 @@
         <dt class="col-sm-3">貨物</dt>
         <dd class="col-sm-9" th:text="${booking.cargoSummary()}">GENERAL / PALLET × 12 / 8400.000 kg / 32.500 m3</dd>
     </dl>
-    <p><a th:href="@{/staff/bookings}">予約一覧へ戻る</a></p>
-    <p><a th:href="@{/staff/transport-requests}">見積依頼の受付一覧へ戻る</a></p>
+    <!--/* S-24 は確定・予約一覧など入口が複数あるので、来た道によらない行き先の名前にする（Bolt 25b レビュー U-2） */-->
+    <p><a th:href="@{/staff/bookings}">予約一覧</a></p>
+    <p><a th:href="@{/staff/transport-requests}">見積依頼の受付一覧</a></p>
 </main>
 </body>
 </html>

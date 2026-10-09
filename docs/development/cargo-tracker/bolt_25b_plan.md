@@ -4,7 +4,7 @@ title: "Bolt 25b 計画 - S-10 予約一覧の最小の表示（S-24 へ戻る�
 description: "25b 回目の Bolt の計画。営業のナビの「予約」の準備中の画面を S-10 予約一覧の最小の表示（追跡番号・見積り・確定時刻・追跡の開始、新しい順）に置き換え、確定の後に S-24 へ戻れるようにするまでを、画面の層の受入シナリオ・照会・永続化の順に、ステップ 1〜4 で定義する。"
 tags: [development,bolt-plan]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-09T09:17:16Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-09T09:38:13Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-09T07:58:31Z }
 ---
@@ -209,11 +209,13 @@ S09 --> S24 : 確定（PRG）
   - 完了の判定: `check`・`uiTest` 緑
   - 結果（2026-10-09）: 統合テスト 2 件（確定時刻の新しい順・同じ時刻は追跡番号の順・上限、予約サガの状態の IN と空の集合）を先に書いた。Red は骨組みの未実装の例外で落ち、本命のアサーションではなかった（T-39 の記録）。マッパーの `findRecentSummaries`（貨物予約と予約版 1 の 1 本の SELECT）・`findSagaStatusesByBookingIds`（IN の 1 本。空の集合は照会しない）と行の型・結果の対応を同じステップでそろえた（T-71）。AT-04 の検査は通った。`check` 緑、`uiTest` 67 本緑（新しい 2 本を含む）
     - 統合テストの実行で、私のコマンドの誤り（移動の先の誤りと、結果のファイルがないときに `grep` が標準入力を待ち続けた）で 10 分止まった（Problem）
-- [ ] **4. 開発レビューと終了報告** 【承認ゲート: 開発レビューの判断、終了報告】
+- [x] **4. 開発レビューと終了報告** 【承認ゲート: 開発レビューの判断、終了報告】
   - `developing-review`（プログラマー・テスター・アーキテクト・インタラクションデザイナー・ユーザー代表）、SonarQube（`sonar-local:check`）、受入動画（`./gradlew demoVideo`。過去の Bolt の動画は元に戻す）、`bolt_25b_report.md`
   - 設計文書: ui_design.md（URL の表に S-10 の行を新設、画面一覧の S-10 の対応に US-04、社内業務 Web の画面遷移図に S-10 と S-24 → S-10 とナビ → S-10、S-24 の行の「処理中」と戻る導線、準備中の画面の行、共通部品「処理中表示」の失敗の扱い、共通部品「画面幅」の表の扱いを横スクロールの囲みにそろえる注）、domain_model.md（リポジトリの表の予約の行に要約の照会、予約サガのリポジトリの照会、予約の本文に一覧の読み取りモデルの説明）、data_model.md（索引の表に確定時刻の索引は W11 で決める注）（T-53）
   - 終了報告の承認の後に、受入動画の添付先（`ops/scripts/issue_demo.js` の `BOLT_ISSUES` と手順書の表）に `bolt-25b → #10` を足す
   - 開発レビューの対応の後も push の前に `uiTest` を流す（T-70）
+  - 結果（2026-10-09）: 2 つの観点でレビューし、中 4 件・低 4 件を直し、U-3（幅 320 CSS px の確定時刻）を人に諮る議題にした（[Bolt 25b 終了報告](bolt_25b_report.md)）。設計文書（ui_design.md・domain_model.md・data_model.md）を書いた。SonarQube は新しい指摘 1 件で FAIL だったので直し、PASS になった。直した後に `check`・`uiTest`（67 本）を流した（T-70）
+    - 承認ゲートの扱い（T-36）: 開発レビューの判断で止まらずに進めた（AI の判断）。終了報告の承認の議題に置く
 
 ### 時間の配分と打ち切り
 
@@ -243,11 +245,11 @@ S09 --> S24 : 確定（PRG）
 
 ## 完了条件
 
-- [ ] 画面の層の受入シナリオ（`@demo-bolt-25b/booking-list`）が通り、受入動画を撮った
-- [ ] 照会のサービスの単体テストで、一覧が 2 本の照会で引けることを確かめ（仮説 H1）、PostgreSQL の統合テストで並びと上限を確かめた
-- [ ] `check`・`documentationTest`・`uiTest` が緑。push して CI とデモ環境の配備を確かめた
-- [ ] SonarQube の Quality Gate が PASS
-- [ ] 設計文書（ui_design.md、domain_model.md、data_model.md。ステップ 4 の一覧）に決定を書いた（T-53）
+- [x] 画面の層の受入シナリオ（`@demo-bolt-25b/booking-list`）が通り、受入動画を撮った
+- [x] 照会のサービスの単体テストで、一覧が 2 本の照会で引けることを確かめ（仮説 H1）、PostgreSQL の統合テストで並びと上限を確かめた
+- [x] `check`・`documentationTest`・`uiTest` が緑。push して CI とデモ環境の配備を確かめた
+- [x] SonarQube の Quality Gate が PASS
+- [x] 設計文書（ui_design.md、domain_model.md、data_model.md。ステップ 4 の一覧）に決定を書いた（T-53）
 - [ ] 開発レビューと終了報告。承認の後に受入動画の添付先を足した
 
 ### デモ項目

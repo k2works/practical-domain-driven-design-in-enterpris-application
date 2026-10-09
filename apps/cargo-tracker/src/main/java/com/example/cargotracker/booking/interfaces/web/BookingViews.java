@@ -121,7 +121,7 @@ final class BookingViews {
                 route(version.terms()),
                 version.terms().cargoSummary(),
                 trackingStart(detail.sagaStatus()),
-                detail.sagaStatus() == BookingSagaStatus.IN_PROGRESS);
+                trackingStartPending(detail.sagaStatus()));
     }
 
     /**
@@ -134,6 +134,11 @@ final class BookingViews {
             case COMPLETED -> "完了";
             case NEEDS_HUMAN -> "有人確認要（担当者が確認します）";
         };
+    }
+
+    /** 追跡の開始を「処理中」と示すか（失敗も処理中と示す）。S-24 は処理中のときだけ更新の案内を出す（Bolt 25b レビュー P-3）。 */
+    static boolean trackingStartPending(BookingSagaStatus status) {
+        return status == BookingSagaStatus.IN_PROGRESS || status == BookingSagaStatus.FAILED;
     }
 
     /**

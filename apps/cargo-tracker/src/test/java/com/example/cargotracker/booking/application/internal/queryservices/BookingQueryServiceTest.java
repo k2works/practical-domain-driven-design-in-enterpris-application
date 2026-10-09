@@ -125,7 +125,32 @@ class BookingQueryServiceTest {
 
         assertThat(recent.rows()).hasSize(50);
         assertThat(recent.truncated()).isTrue();
+        assertThat(recent.limit()).isEqualTo(50);
         assertThat(recent.rows().getFirst().transportRequestNumber()).isEqualTo("TR-2026-0051");
+        assertThat(recent.rows())
+                .extracting(RecentBookings.Row::transportRequestNumber)
+                .doesNotContain("TR-2026-0001");
+    }
+
+    /** 上限ちょうどは超えていない（off-by-one の境界。Bolt 25b レビュー P-1）。 */
+    @Test
+    void 予約一覧はちょうど50件なら上限を超えたと示さない() {
+        for (int i = 1; i <= 50; i++) {
+            booked(i, Instant.parse("2026-10-01T00:00:00Z").plusSeconds(i * 60L).toString());
+        }
+
+        RecentBookings recent = service.recent();
+
+        assertThat(recent.rows()).hasSize(50);
+        assertThat(recent.truncated()).isFalse();
+    }
+
+    @Test
+    void 予約がなければ空の一覧を返す() {
+        RecentBookings recent = service.recent();
+
+        assertThat(recent.rows()).isEmpty();
+        assertThat(recent.truncated()).isFalse();
     }
 
     /** 予約の要約と予約サガの状態を、それぞれ 1 回の照会で引く（行ごとに照会しない。仮説 H1）。 */

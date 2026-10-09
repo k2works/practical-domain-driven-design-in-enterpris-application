@@ -60,6 +60,7 @@ public class BookingController {
         RecentBookings recent = queryService.recent();
         model.addAttribute("bookings", BookingViews.list(recent));
         model.addAttribute("truncated", recent.truncated());
+        model.addAttribute("limit", recent.limit());
         return LIST_VIEW;
     }
 

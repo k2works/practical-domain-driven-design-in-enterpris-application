@@ -22,7 +22,7 @@ import org.springframework.stereotype.Component;
 @Profile("dev")
 public final class DevLoginPrefill {
 
-    private static final String ACCOUNTS = "cargotracker.dev-login.accounts";
+    private static final String ACCOUNTS_PROPERTY = "cargotracker.dev-login.accounts";
 
     private final List<Account> accounts;
 
@@ -43,7 +43,7 @@ public final class DevLoginPrefill {
 
     private static List<Account> boundAccounts(Environment environment) {
         List<Account> bound = Binder.get(environment)
-                .bind(ACCOUNTS, Bindable.listOf(Account.class))
+                .bind(ACCOUNTS_PROPERTY, Bindable.listOf(Account.class))
                 .orElseGet(List::of);
         return Objects.requireNonNullElse(bound, List.of());
     }
