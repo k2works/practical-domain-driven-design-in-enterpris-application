@@ -50,7 +50,7 @@ Bolt がイテレーションに当たります。ふりかえりは各 Bolt の
 | 22 | [日時表示・期間表示を platform の Web の部品に集める（#41）](bolt_22_plan.md) | [終了報告](bolt_22_report.md) | W4 | 完了 |
 | 23 | [本予約の確定と失効（US-04 AC1・AC2）](bolt_23_plan.md) | [終了報告](bolt_23_report.md) | W4 | 完了 |
 | 23b | [本予約の確定の画面（US-04 AC1・AC2）](bolt_23b_plan.md) | [終了報告](bolt_23b_report.md)（[動画](../../assets/demo/bolt-23b/confirm-booking.webm){:target="_blank"}） | W4 | 完了 |
-| 24 | [本予約の確定の再送と重複確定の防止（US-04 AC4）](bolt_24_plan.md) | — | W4 | 計画済み（承認待ち） |
+| 24 | [本予約の確定の再送と重複確定の防止（US-04 AC4）](bolt_24_plan.md) | — | W4 | 進行中 |
 
 Bolt を始めるときに行を追加します。
 
