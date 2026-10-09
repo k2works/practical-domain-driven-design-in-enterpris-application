@@ -3,8 +3,10 @@ type: Plan
 title: "Bolt 24 計画 - 本予約の確定の再送と重複確定の防止（US-04 AC4、B-INV-03・B-INV-11）"
 description: "24 回目の Bolt の計画。本予約の確定にコマンド ID と処理済みコマンドの表を足し、同じ要求の再送には最初の結果（既存の追跡番号）を返し、同じ見積りの別の確定には既存の予約を示すまでを、業務ルール層の受入シナリオ・スキーマ・S-09 の画面の順に、ステップ 1〜5 で定義する。"
 tags: [development,bolt-plan]
-status: draft
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-09T03:58:29Z }
+status: stable
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-09T04:02:49Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-10-09T04:02:20Z }
 ---
 
 # Bolt 24 計画 - 本予約の確定の再送と重複確定の防止（US-04 AC4、B-INV-03・B-INV-11）
@@ -347,7 +349,7 @@ S09 --> S02 : 同じ commandId で内容が違う（衝突の警告）
 - [x] `check`・`documentationTest`・`uiTest` が緑。push して CI とデモ環境の配備を確かめた
 - [x] SonarQube の Quality Gate が PASS（S8445 の 24 件で FAIL だったので、人の決定で品質プロファイルから外し PASS にした）
 - [x] 設計文書に決定を書き、計画からの変更も設計文書に戻した（T-53）。台帳に D-85
-- [ ] 開発レビューと終了報告。#10 に結果をコメントした（終了報告は承認待ち。#10 にはコメントした）
+- [x] 開発レビューと終了報告。#10 に結果をコメントした（終了報告は 2026-10-09 に承認済み）
 
 ### デモ項目
 
@@ -357,6 +359,7 @@ S09 --> S02 : 同じ commandId で内容が違う（衝突の警告）
 
 | 日付 | 更新内容 | 更新者 |
 | :--- | :--- | :--- |
+| 2026-10-09 | 終了報告を承認し、完了条件をすべて満たした（CI 緑、SonarQube PASS、受入動画、デモ環境の見本） | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-10-09 | ステップ 1〜5 を終え、終了報告を承認待ちにした。SonarQube の品質ゲートと終了報告の承認の完了条件は開いたまま | anthropic/claude-opus-5-5 |
 | 2026-10-09 | `/goal Bolt24` の指示で、確認ポイントを推奨のまま進めることにした（計画の verify は人が行う） | anthropic/claude-opus-5-5 |
 | 2026-10-09 | 開始準備の整合性検証（計画と設計 14 件、横断 16 件）の指摘を反映した（同じ見積りの予約を引く鍵、処理済みコマンドの置き場所と層の規則、用語集、ER 図と判定の順序の図、衝突の HTTP、お知らせの文言、議題 5 を回す週の根拠、台帳 D-85、追記専用の一覧、型の名前での洗い出し） | anthropic/claude-opus-5-5 |

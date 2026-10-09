@@ -10,6 +10,7 @@ verified:
   - { by: human:kakimomokuri, at: 2026-10-01T07:48:16Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:01:35Z }
   - { by: human:kakimomokuri, at: 2026-10-02T01:37:43Z }
+  - { by: human:kakimomokuri, at: 2026-10-09T04:02:20Z }
 ---
 
 # ADR-001: モジュラーモノリスを採用する

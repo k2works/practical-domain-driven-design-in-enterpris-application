@@ -3,8 +3,10 @@ type: Report
 title: "Bolt 24 終了報告 - 本予約の確定の再送と重複確定の防止（US-04 AC4、B-INV-03・B-INV-11、#10）"
 description: "24 回目の Bolt の終了報告。本予約の確定にコマンド ID と処理済みコマンドを足し、同じ要求の再送には最初の結果を、同じ見積りの別の確定には既存の追跡番号を返し、確定済みの判定を見積りの照会より前に置いた。/goal で止まらなかった承認ゲート、スキーマの承認、開発レビューの対応、人に諮る設計の判断（ADR-001 の例外、追記専用と保持期間）、既知の課題を記録する。"
 tags: [development,bolt-report]
-status: draft
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-09T03:58:29Z }
+status: stable
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-09T04:02:49Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-10-09T04:02:20Z }
 ---
 
 # Bolt 24 終了報告 - 本予約の確定の再送と重複確定の防止（US-04 AC4、B-INV-03・B-INV-11、#10）
@@ -156,6 +158,7 @@ Bolt 25: 追跡の開始とサガの成功の経路（`tracking` モジュール
 
 | 日付 | 更新内容 | 更新者 |
 | :--- | :--- | :--- |
+| 2026-10-09 | 承認の議題 1〜9 を承認し、Bolt 24 を終えた（人の変更依頼 0）。議題 2 のスキーマの承認（`y`）と、議題 4 の計画からの変更も承認された | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-10-09 | 議題 5・6・7 の決定を記録した（A-1・A-2 は AI の判断を採用、S8445 は品質プロファイルから外して品質ゲートが PASS）。ステップ 6（デモ環境の見本）を足した | anthropic/claude-opus-5-5、決定 human:kakimomokuri |
 | 2026-10-09 | 初版（ステップ 1〜5 の結果、開発レビュー、品質ゲート、既知の課題、承認の議題 1〜9、Try T-71〜T-73） | anthropic/claude-opus-5-5 |
 
