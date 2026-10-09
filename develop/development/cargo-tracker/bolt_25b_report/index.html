@@ -3987,6 +3987,39 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#bolt_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        次の Bolt
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_11" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        更新履歴
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_12" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        関連ドキュメント
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -8716,7 +8749,39 @@
 <li>画面の単体テストの Red を、実装の後に確かめた</li>
 <li>開発レビューの対応で足したテスト（ちょうど 50 件、0 件、失敗の S-24 の案内）は、実装を直した後に書いたので、Red を確かめたのは失敗の案内だけではない（T-39 の記録）</li>
 <li>Try</li>
-<li>T-77: シェルで結果のファイルを <code>grep</code> に渡すときは、ファイルがあることを確かめるか `</li>
+<li>T-77: シェルで結果のファイルを <code>grep</code> に渡すときは、ファイルがあることを確かめるか、標準入力を <code>/dev/null</code> につなぎ、長い処理には <code>timeout</code> を付ける（AI、次の Bolt から）</li>
+<li>T-78: 置換のスクリプトは、<code>spotlessApply</code> の後のファイルを読んでから書く（T-55 の再確認。AI、次の Bolt から）</li>
+</ul>
+<h2 id="bolt_1">次の Bolt<a class="headerlink" href="#bolt_1" title="Permanent link">&para;</a></h2>
+<p>Bolt 26: US-12 主要実績の登録（追跡管理者のナビ・ホーム・認可・開発データを含む。半日を超えるおそれがあるので、開始準備で分け方を決める）。</p>
+<h2 id="_11">更新履歴<a class="headerlink" href="#_11" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">日付</th>
+<th style="text-align: left;">更新内容</th>
+<th style="text-align: left;">更新者</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">2026-10-09</td>
+<td style="text-align: left;">承認の議題 1・3 を承認し、Bolt 25b を終えた（停止フックの指摘の末尾に「承認」が付いて届いたものを承認として受け取った。Bolt 24・25 と同じ形）。議題 2（幅 320 CSS px の確定時刻の表記）は判断を受けていないので今のまま（社内の画面の日時の表記は 1 つ）とし、既知の課題（未決）にした。受入動画の添付先に bolt-25b → #10 を足した</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5、承認 human:kakimomokuri</td>
+</tr>
+<tr>
+<td style="text-align: left;">2026-10-09</td>
+<td style="text-align: left;">初版（ステップ 1〜4 の結果、開発レビュー、品質ゲート、既知の課題、承認の議題 1〜3、Try T-77・T-78）</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5</td>
+</tr>
+</tbody>
+</table>
+<h2 id="_12">関連ドキュメント<a class="headerlink" href="#_12" title="Permanent link">&para;</a></h2>
+<ul>
+<li><a href="../bolt_25b_plan/">Bolt 25b 計画</a></li>
+<li><a href="../bolt_25_report/">Bolt 25 終了報告</a>、<a href="../bolt_23b_report/">Bolt 23b 終了報告</a></li>
+<li><a href="../../../design/cargo-tracker/ui_design/">UI 設計</a>（S-10、S-24、共通部品）</li>
+<li><a href="../../../design/cargo-tracker/domain_model/">ドメインモデル</a>、<a href="../../../design/cargo-tracker/data_model/">データモデル</a></li>
 </ul>
 
 
