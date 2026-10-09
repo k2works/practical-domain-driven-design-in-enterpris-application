@@ -13,6 +13,7 @@ import java.util.UUID;
  * @param transportRequestVersionNo 輸送要求の版番号
  * @param transportRequestNumber 業務番号の表記
  * @param quotationId 見積り ID
+ * @param quotationNo 見積り番号（輸送要求の中で 1 から。業務番号と見積り番号で同じ見積りの予約を引く。Bolt 24）
  * @param shipperCompanyId 荷主企業 ID
  * @param consigneeCompanyId 荷受人企業 ID
  * @param routingCaseNumber 承認済み経路版の案件番号の表記
@@ -27,6 +28,7 @@ public record BookingTerms(
         int transportRequestVersionNo,
         String transportRequestNumber,
         UUID quotationId,
+        int quotationNo,
         CompanyId shipperCompanyId,
         CompanyId consigneeCompanyId,
         String routingCaseNumber,
@@ -45,7 +47,7 @@ public record BookingTerms(
         Objects.requireNonNull(cargoCategory, "cargoCategory");
         Objects.requireNonNull(cargoSummary, "cargoSummary");
         Objects.requireNonNull(shipperApproverId, "shipperApproverId");
-        if (transportRequestVersionNo < 1 || routeVersionNo < 1) {
+        if (transportRequestVersionNo < 1 || quotationNo < 1 || routeVersionNo < 1) {
             throw new IllegalArgumentException("版番号は 1 以上です");
         }
     }

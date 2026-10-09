@@ -40,6 +40,7 @@ import com.example.cargotracker.routing.domain.model.aggregates.RoutingCaseRepos
 import com.example.cargotracker.routing.domain.model.valueobjects.RoutingCaseNumber;
 import com.example.cargotracker.routing.domain.model.valueobjects.RoutingCaseSummary;
 import com.example.cargotracker.shared.domain.AuthenticatedActor;
+import com.example.cargotracker.shared.domain.CommandId;
 import com.example.cargotracker.shared.domain.CompanyId;
 import com.example.cargotracker.shared.domain.Role;
 import com.example.cargotracker.shared.domain.UserId;
@@ -178,8 +179,8 @@ class RouteConfirmedAssignmentIntegrationTest {
 
     /** 本予約を確定すると、DE-07 の配信が完了して輸送要求は予約確定済みになり、予約サガは処理中で追跡の開始を待つ（Bolt 23）。 */
     private void confirmBookingAndAwaitBooked(TransportRequestNumber number, UUID transportRequestId) {
-        BookingConfirmationOutcome booked =
-                bookingCommandService.confirm(new ConfirmBookingCommand(number.text(), 1, SALES, true));
+        BookingConfirmationOutcome booked = bookingCommandService.confirm(
+                new ConfirmBookingCommand(CommandId.random(), number.text(), 1, SALES, true));
         assertThat(booked).isInstanceOf(BookingConfirmationOutcome.Confirmed.class);
         awaitTransportRequestStatus(number, TransportRequestStatus.BOOKED);
         await().atMost(TIMEOUT)

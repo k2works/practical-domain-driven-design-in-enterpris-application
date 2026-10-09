@@ -42,7 +42,7 @@ class MyBatisBookingRepositoriesIntegrationTest {
     void 確定した貨物予約を予約版とあわせて保存し追跡番号で読み出す() {
         Booking booking = confirmed(terms(UUID.randomUUID()));
 
-        repository.save(booking, BookingFixture.SALES);
+        repository.save(booking, BookingFixture.SALES, BookingFixture.processedCommand(booking));
 
         Booking found =
                 repository.findByTrackingNumber(booking.trackingNumber()).orElseThrow();
@@ -54,19 +54,18 @@ class MyBatisBookingRepositoriesIntegrationTest {
         assertThat(repository.existsByTrackingNumber(booking.trackingNumber())).isTrue();
         assertThat(repository.existsByTrackingNumber(TrackingNumber.generate(random)))
                 .isFalse();
-        assertThat(repository.existsByQuotationId(
-                        booking.currentVersion().terms().quotationId()))
-                .isTrue();
-        assertThat(repository.existsByQuotationId(UUID.randomUUID())).isFalse();
+        assertThat(repository.findTrackingNumber(booking.transportRequestNumber(), booking.quotationNo()))
+                .contains(booking.trackingNumber());
     }
 
     @Test
     void 同じ見積りの二件目の予約はドメインの例外になる() {
         UUID quotationId = UUID.randomUUID();
-        repository.save(confirmed(terms(quotationId)), BookingFixture.SALES);
+        Booking first = confirmed(terms(quotationId));
+        repository.save(first, BookingFixture.SALES, BookingFixture.processedCommand(first));
 
         Booking second = confirmed(terms(quotationId));
-        assertThatThrownBy(() -> repository.save(second, BookingFixture.SALES))
+        assertThatThrownBy(() -> repository.save(second, BookingFixture.SALES, BookingFixture.processedCommand(second)))
                 .isInstanceOf(DuplicateBookingException.class);
         assertThat(repository.findByTrackingNumber(second.trackingNumber())).isEmpty();
     }
@@ -74,10 +73,11 @@ class MyBatisBookingRepositoriesIntegrationTest {
     @Test
     void 追跡番号の重なりは同じ見積りの予約と区別して技術の失敗にする() {
         Booking first = confirmed(terms(UUID.randomUUID()));
-        repository.save(first, BookingFixture.SALES);
+        repository.save(first, BookingFixture.SALES, BookingFixture.processedCommand(first));
 
         Booking collided = confirmed(terms(UUID.randomUUID()), first.trackingNumber());
-        assertThatThrownBy(() -> repository.save(collided, BookingFixture.SALES))
+        assertThatThrownBy(() ->
+                        repository.save(collided, BookingFixture.SALES, BookingFixture.processedCommand(collided)))
                 .isInstanceOf(IllegalStateException.class)
                 .isNotInstanceOf(DuplicateBookingException.class);
     }
@@ -85,7 +85,7 @@ class MyBatisBookingRepositoriesIntegrationTest {
     @Test
     void 予約サガを処理中で保存し予約IDで読み出す() {
         Booking booking = confirmed(terms(UUID.randomUUID()));
-        repository.save(booking, BookingFixture.SALES);
+        repository.save(booking, BookingFixture.SALES, BookingFixture.processedCommand(booking));
         BookingSaga saga = BookingSaga.start(booking.id(), booking.trackingNumber(), COMMITTED_AT);
 
         sagaRepository.save(saga);
@@ -119,6 +119,7 @@ class MyBatisBookingRepositoriesIntegrationTest {
                 base.transportRequestVersionNo(),
                 base.transportRequestNumber(),
                 quotationId,
+                base.quotationNo(),
                 base.shipperCompanyId(),
                 base.consigneeCompanyId(),
                 base.routingCaseNumber(),

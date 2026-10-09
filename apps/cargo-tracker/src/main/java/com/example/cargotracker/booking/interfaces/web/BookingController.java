@@ -9,6 +9,7 @@ import com.example.cargotracker.booking.application.internal.queryservices.Booki
 import com.example.cargotracker.booking.domain.model.valueobjects.BookingCondition;
 import com.example.cargotracker.booking.domain.model.valueobjects.TrackingNumber;
 import com.example.cargotracker.shared.domain.AuthenticatedActor;
+import com.example.cargotracker.shared.domain.CommandId;
 import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
@@ -63,8 +64,8 @@ public class BookingController {
             AuthenticatedActor actor,
             Model model,
             RedirectAttributes redirectAttributes) {
-        BookingConfirmationOutcome outcome = commandService.confirm(
-                new ConfirmBookingCommand(transportRequestNumber, quotationNo, actor, staffConfirmed));
+        BookingConfirmationOutcome outcome = commandService.confirm(new ConfirmBookingCommand(
+                CommandId.random(), transportRequestNumber, quotationNo, actor, staffConfirmed));
         String subject = BookingViews.subject(transportRequestNumber, quotationNo);
         return switch (outcome) {
             case BookingConfirmationOutcome.Confirmed(TrackingNumber trackingNumber) -> {
@@ -79,6 +80,7 @@ public class BookingController {
             case BookingConfirmationOutcome.QuotationUnavailable(QuotationUnavailability reason) ->
                 unavailable(subject, reason, redirectAttributes);
             case BookingConfirmationOutcome.AlreadyBooked _ -> alreadyBooked(subject, redirectAttributes);
+            case BookingConfirmationOutcome.CommandConflict _ -> throw new ResponseStatusException(HttpStatus.CONFLICT);
             case BookingConfirmationOutcome.Forbidden _ -> throw new ResponseStatusException(HttpStatus.FORBIDDEN);
         };
     }

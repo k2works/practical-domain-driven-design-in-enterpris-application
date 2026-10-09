@@ -1,9 +1,13 @@
 package com.example.cargotracker.booking.domain.model;
 
+import com.example.cargotracker.booking.domain.model.aggregates.Booking;
 import com.example.cargotracker.booking.domain.model.valueobjects.BookingConditions;
 import com.example.cargotracker.booking.domain.model.valueobjects.BookingTerms;
+import com.example.cargotracker.booking.domain.model.valueobjects.ProcessedCommand;
 import com.example.cargotracker.booking.domain.model.valueobjects.TrackingNumber;
+import com.example.cargotracker.shared.domain.CommandId;
 import com.example.cargotracker.shared.domain.CompanyId;
+import com.example.cargotracker.shared.domain.UserId;
 import java.util.UUID;
 
 /** 予約の単体テストの値。 */
@@ -25,6 +29,7 @@ public final class BookingFixture {
                 2,
                 "TR-2026-0001",
                 QUOTATION,
+                1,
                 new CompanyId(SHIPPER_COMPANY),
                 new CompanyId(CONSIGNEE_COMPANY),
                 "RC-2026-0001",
@@ -32,6 +37,18 @@ public final class BookingFixture {
                 "GENERAL",
                 "一般貨物 パレット 10 個 1,200 kg",
                 SHIPPER_APPROVER);
+    }
+
+    /** 貨物予約と一緒に保存する処理済みコマンド（新しいコマンド ID）。 */
+    public static ProcessedCommand processedCommand(Booking booking) {
+        return ProcessedCommand.confirmBooking(
+                CommandId.random(),
+                booking.transportRequestNumber(),
+                booking.quotationNo(),
+                new UserId(booking.currentVersion().confirmedBy()),
+                booking.id(),
+                booking.trackingNumber(),
+                booking.currentVersion().committedAt());
     }
 
     public static BookingConditions allConditions() {

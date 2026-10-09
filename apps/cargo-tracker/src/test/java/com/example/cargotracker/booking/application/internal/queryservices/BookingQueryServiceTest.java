@@ -63,17 +63,21 @@ class BookingQueryServiceTest {
     }
 
     @Test
-    void 予約がすでにある見積りは確定済みを返す() {
+    void 同じ見積りの予約があれば見積りを照会せずに既存の追跡番号を返す() {
         Booking booking = confirmed();
-        bookings.save(booking, BookingFixture.SALES);
+        bookings.save(booking, BookingFixture.SALES, BookingFixture.processedCommand(booking));
+        quotation = new BookableQuotationResult.NotBookable(BookableQuotationResult.NotBookable.EXPIRED);
 
-        assertThat(service.confirmation("TR-2026-0001", 1)).isEqualTo(new BookingConfirmationPage.AlreadyBooked());
+        assertThat(service.confirmation("TR-2026-0001", 1))
+                .as("確定の後に見積りが失効しても、失効でなく同じ見積りの予約があると示す（Bolt 24、H1）")
+                .isEqualTo(new BookingConfirmationPage.AlreadyBooked(BookingFixture.TRACKING_NUMBER));
+        assertThat(queries).isEmpty();
     }
 
     @Test
     void 予約の詳細は予約と予約サガの状態を返しない追跡番号は空() {
         Booking booking = confirmed();
-        bookings.save(booking, BookingFixture.SALES);
+        bookings.save(booking, BookingFixture.SALES, BookingFixture.processedCommand(booking));
         sagas.save(BookingSaga.start(booking.id(), booking.trackingNumber(), new UtcInstant(NOW)));
 
         assertThat(service.detail(booking.trackingNumber()))

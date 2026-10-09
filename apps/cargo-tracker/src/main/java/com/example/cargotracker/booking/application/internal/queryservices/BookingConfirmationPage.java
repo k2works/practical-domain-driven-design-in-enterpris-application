@@ -2,6 +2,7 @@ package com.example.cargotracker.booking.application.internal.queryservices;
 
 import com.example.cargotracker.booking.application.internal.outboundservices.acl.QuotationUnavailability;
 import com.example.cargotracker.booking.domain.model.valueobjects.BookingTerms;
+import com.example.cargotracker.booking.domain.model.valueobjects.TrackingNumber;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import java.util.Objects;
 
@@ -40,6 +41,15 @@ public sealed interface BookingConfirmationPage {
         }
     }
 
-    /** 見積りの貨物予約がすでにある（B-INV-11。既存の追跡番号を示すのは AC4 の Bolt 24）。 */
-    record AlreadyBooked() implements BookingConfirmationPage {}
+    /**
+     * 同じ見積りの貨物予約がすでにある（B-INV-11。Bolt 24）。見積りの照会より前に判定する。
+     *
+     * @param trackingNumber 既存の予約の追跡番号
+     */
+    record AlreadyBooked(TrackingNumber trackingNumber) implements BookingConfirmationPage {
+
+        public AlreadyBooked {
+            Objects.requireNonNull(trackingNumber, "trackingNumber");
+        }
+    }
 }

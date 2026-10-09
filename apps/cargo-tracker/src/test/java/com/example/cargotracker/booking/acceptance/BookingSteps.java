@@ -10,22 +10,27 @@ import com.example.cargotracker.booking.application.sagas.BookingSagaStatus;
 import com.example.cargotracker.booking.domain.events.BookingConfirmed;
 import com.example.cargotracker.booking.domain.model.aggregates.Booking;
 import com.example.cargotracker.booking.domain.model.entities.BookingVersion;
+import com.example.cargotracker.booking.domain.model.valueobjects.TrackingNumber;
 import com.example.cargotracker.shared.acceptance.DeferredEventDelivery;
 import com.example.cargotracker.shared.acceptance.ScenarioContext;
 import com.example.cargotracker.shared.domain.AuthenticatedActor;
+import com.example.cargotracker.shared.domain.CommandId;
 import com.example.cargotracker.shared.domain.CompanyId;
 import com.example.cargotracker.shared.domain.Role;
 import com.example.cargotracker.shared.domain.UserId;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import io.cucumber.java.ja.ならば;
 import io.cucumber.java.ja.もし;
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
 /**
- * 本予約の確定（US-04 AC1・AC2、BR-01、BR-10、B-INV-01・10、DE-07）のステップ定義。予約の入力ポートだけを呼び、見積りはシナリオの
- * 輸送要求の業務番号と見積り番号で指す（画面と同じ。D-4、Bolt 23b）。
+ * 本予約の確定（US-04 AC1・AC2・AC4、BR-01、BR-10、B-INV-01・03・10・11、DE-07）のステップ定義。予約の入力ポートだけを呼び、見積りは
+ * シナリオの輸送要求の業務番号と見積り番号で指す（画面と同じ。D-4、Bolt 23b）。コマンド ID を名指ししないステップは、画面を開き直したときと
+ * 同じく確定のたびに新しいコマンド ID を使う。名指しした ID（"cmd-001" など）は、名前から決まる UUID にする（Bolt 24）。
  */
 public class BookingSteps {
 
@@ -33,6 +38,8 @@ public class BookingSteps {
     private static final AuthenticatedActor SALES = actor("00000000-0000-0000-0000-000000000201", Role.SALES, "佐藤");
     private static final AuthenticatedActor SUPPORT =
             actor("00000000-0000-0000-0000-000000000202", Role.CUSTOMER_SUPPORT, "鈴木");
+    private static final Map<String, AuthenticatedActor> SALES_STAFF =
+            Map.of("佐藤", SALES, "田中", actor("00000000-0000-0000-0000-000000000203", Role.SALES, "田中"));
 
     private final BookingCommandService commandService;
     private final InMemoryBookingRepository bookings;
@@ -40,6 +47,7 @@ public class BookingSteps {
     private final DeferredEventDelivery delivery;
     private final ScenarioContext context;
     private BookingConfirmationOutcome lastOutcome;
+    private TrackingNumber firstTrackingNumber;
 
     public BookingSteps(
             BookingCommandService commandService,
@@ -56,20 +64,27 @@ public class BookingSteps {
 
     @もし("営業担当者が見積り {int} の確定条件を確認して本予約を確定する")
     public void 確定条件を確認して確定する(int quotationNo) {
-        lastOutcome = commandService.confirm(
-                new ConfirmBookingCommand(context.transportRequestNumber(), quotationNo, SALES, true));
+        confirm(CommandId.random(), quotationNo, SALES, true);
+    }
+
+    @もし("営業担当者がコマンド {string} で見積り {int} の確定条件を確認して本予約を確定する")
+    public void コマンドを名指しして確定する(String commandName, int quotationNo) {
+        confirm(named(commandName), quotationNo, SALES, true);
+    }
+
+    @もし("営業担当者 {string} がコマンド {string} で見積り {int} の確定条件を確認して本予約を確定する")
+    public void 営業担当者とコマンドを名指しして確定する(String salesName, String commandName, int quotationNo) {
+        confirm(named(commandName), quotationNo, SALES_STAFF.get(salesName), true);
     }
 
     @もし("営業担当者が見積り {int} の確定条件を確認せずに本予約を確定する")
     public void 確認せずに確定する(int quotationNo) {
-        lastOutcome = commandService.confirm(
-                new ConfirmBookingCommand(context.transportRequestNumber(), quotationNo, SALES, false));
+        confirm(CommandId.random(), quotationNo, SALES, false);
     }
 
     @もし("カスタマーサポートが見積り {int} の本予約を確定する")
     public void カスタマーサポートが確定する(int quotationNo) {
-        lastOutcome = commandService.confirm(
-                new ConfirmBookingCommand(context.transportRequestNumber(), quotationNo, SUPPORT, true));
+        confirm(CommandId.random(), quotationNo, SUPPORT, true);
     }
 
     @ならば("本予約の結果は {string} である")
@@ -84,6 +99,8 @@ public class BookingSteps {
             case "確定条件が足りない" ->
                 assertThat(lastOutcome).isInstanceOf(BookingConfirmationOutcome.MissingConditions.class);
             case "すでに予約がある" -> assertThat(lastOutcome).isInstanceOf(BookingConfirmationOutcome.AlreadyBooked.class);
+            case "同じコマンドで内容が違う" ->
+                assertThat(lastOutcome).isInstanceOf(BookingConfirmationOutcome.CommandConflict.class);
             case "確定する権限がない" -> assertThat(lastOutcome).isInstanceOf(BookingConfirmationOutcome.Forbidden.class);
             default -> throw new IllegalArgumentException("未知の結果: " + result);
         }
@@ -123,6 +140,22 @@ public class BookingSteps {
                         .isEqualTo(confirmedBooking().trackingNumber().value()));
     }
 
+    @ならば("最初の確定と同じ追跡番号が返される")
+    public void 最初の確定と同じ追跡番号() {
+        TrackingNumber returned =
+                switch (lastOutcome) {
+                    case BookingConfirmationOutcome.Confirmed(TrackingNumber trackingNumber) -> trackingNumber;
+                    case BookingConfirmationOutcome.AlreadyBooked(TrackingNumber trackingNumber) -> trackingNumber;
+                    default -> throw new AssertionError("追跡番号を返す結果ではない: " + lastOutcome);
+                };
+        assertThat(returned).isEqualTo(firstTrackingNumber);
+    }
+
+    @ならば("予約は {int} 件だけ記録されている")
+    public void 予約の件数(int count) {
+        assertThat(bookings.findAll()).hasSize(count);
+    }
+
     @ならば("予約は記録されていない")
     public void 予約は記録されていない() {
         assertThat(bookings.findAll()).isEmpty();
@@ -133,6 +166,18 @@ public class BookingSteps {
         assertThat(lastOutcome).isInstanceOf(BookingConfirmationOutcome.Confirmed.class);
         return bookings.findByTrackingNumber(((BookingConfirmationOutcome.Confirmed) lastOutcome).trackingNumber())
                 .orElseThrow();
+    }
+
+    private void confirm(CommandId commandId, int quotationNo, AuthenticatedActor operator, boolean staffConfirmed) {
+        lastOutcome = commandService.confirm(new ConfirmBookingCommand(
+                commandId, context.transportRequestNumber(), quotationNo, operator, staffConfirmed));
+        if (firstTrackingNumber == null && lastOutcome instanceof BookingConfirmationOutcome.Confirmed confirmed) {
+            firstTrackingNumber = confirmed.trackingNumber();
+        }
+    }
+
+    private static CommandId named(String commandName) {
+        return new CommandId(UUID.nameUUIDFromBytes(commandName.getBytes(StandardCharsets.UTF_8)));
     }
 
     private static AuthenticatedActor actor(String userId, Role role, String name) {

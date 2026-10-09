@@ -148,6 +148,11 @@ public final class Booking {
         return versions.getFirst().terms().transportRequestNumber();
     }
 
+    /** 見積り番号（業務番号と見積り番号で同じ見積りの予約を引く。Bolt 24）。 */
+    public int quotationNo() {
+        return versions.getFirst().terms().quotationNo();
+    }
+
     /** 荷主企業 ID。 */
     public CompanyId shipperCompanyId() {
         return versions.getFirst().terms().shipperCompanyId();

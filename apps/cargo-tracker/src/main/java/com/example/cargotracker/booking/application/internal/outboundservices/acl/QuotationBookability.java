@@ -42,6 +42,7 @@ public class QuotationBookability {
                 bookable.transportRequestVersionNo(),
                 bookable.transportRequestNumber(),
                 bookable.quotationId(),
+                bookable.quotationNo(),
                 bookable.shipperCompanyId(),
                 bookable.consigneeCompanyId(),
                 bookable.routingCaseNumber(),

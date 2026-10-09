@@ -12,7 +12,7 @@ import java.util.Objects;
 public sealed interface BookingConfirmationOutcome {
 
     /**
-     * 確定した。予約サガは処理中で、追跡の開始を待つ（ADR-015）。
+     * 確定した。予約サガは処理中で、追跡の開始を待つ（ADR-015）。同じコマンド ID の再送にも最初の結果としてこれを返す（B-INV-03）。
      *
      * @param trackingNumber 発行した追跡番号
      */
@@ -50,8 +50,20 @@ public sealed interface BookingConfirmationOutcome {
         }
     }
 
-    /** 同じ見積りの予約がすでにある（B-INV-11）。既存の追跡番号を返す振る舞いは Bolt 24（B-INV-03）。 */
-    record AlreadyBooked() implements BookingConfirmationOutcome {}
+    /**
+     * 同じ見積りの予約がすでにある（別のコマンド ID・別の利用者の確定。B-INV-11。Bolt 24）。
+     *
+     * @param trackingNumber 既存の予約の追跡番号
+     */
+    record AlreadyBooked(TrackingNumber trackingNumber) implements BookingConfirmationOutcome {
+
+        public AlreadyBooked {
+            Objects.requireNonNull(trackingNumber, "trackingNumber");
+        }
+    }
+
+    /** 同じコマンド ID で内容（業務番号・見積り番号・操作者）が違う（衝突。B-INV-03。Bolt 24）。 */
+    record CommandConflict() implements BookingConfirmationOutcome {}
 
     /** 営業担当者でない（B-INV-10。カスタマーサポートは確定できない）。 */
     record Forbidden() implements BookingConfirmationOutcome {}

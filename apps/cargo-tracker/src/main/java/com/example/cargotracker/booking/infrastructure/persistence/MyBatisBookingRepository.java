@@ -7,8 +7,10 @@ import com.example.cargotracker.booking.domain.model.entities.BookingVersion;
 import com.example.cargotracker.booking.domain.model.valueobjects.BookingId;
 import com.example.cargotracker.booking.domain.model.valueobjects.BookingStatus;
 import com.example.cargotracker.booking.domain.model.valueobjects.BookingTerms;
+import com.example.cargotracker.booking.domain.model.valueobjects.ProcessedCommand;
 import com.example.cargotracker.booking.domain.model.valueobjects.TrackingNumber;
 import com.example.cargotracker.booking.domain.model.valueobjects.TransportPhase;
+import com.example.cargotracker.shared.domain.CommandId;
 import com.example.cargotracker.shared.domain.CompanyId;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import java.time.Clock;
@@ -48,13 +50,14 @@ public class MyBatisBookingRepository implements BookingRepository {
      */
     @Override
     @Transactional(propagation = Propagation.NESTED)
-    public void save(Booking booking, UUID operator) {
+    public void save(Booking booking, UUID operator, ProcessedCommand processedCommand) {
         OffsetDateTime now = OffsetDateTime.now(clock);
         try {
             mapper.insertBooking(new BookingRow(
                     booking.id().value(),
                     booking.trackingNumber().value(),
                     booking.transportRequestNumber(),
+                    booking.quotationNo(),
                     booking.currentVersion().terms().quotationId(),
                     booking.shipperCompanyId().value(),
                     booking.status().name(),
@@ -93,8 +96,13 @@ public class MyBatisBookingRepository implements BookingRepository {
     }
 
     @Override
-    public boolean existsByQuotationId(UUID quotationId) {
-        return mapper.existsByQuotationId(quotationId);
+    public Optional<ProcessedCommand> findProcessedCommand(CommandId commandId) {
+        throw new UnsupportedOperationException("Bolt 24 ステップ 3");
+    }
+
+    @Override
+    public Optional<TrackingNumber> findTrackingNumber(String transportRequestNumber, int quotationNo) {
+        throw new UnsupportedOperationException("Bolt 24 ステップ 3");
     }
 
     private Booking toBooking(BookingRow row) {
@@ -118,6 +126,7 @@ public class MyBatisBookingRepository implements BookingRepository {
                         row.transportRequestVersionNo(),
                         booking.transportRequestNumber(),
                         row.quotationId(),
+                        booking.quotationNo(),
                         new CompanyId(booking.shipperCompanyId()),
                         new CompanyId(row.consigneeCompanyId()),
                         row.routingCaseNumber(),

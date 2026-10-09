@@ -104,6 +104,7 @@ class BookingControllerTest {
                 base.transportRequestVersionNo(),
                 base.transportRequestNumber(),
                 base.quotationId(),
+                base.quotationNo(),
                 base.shipperCompanyId(),
                 base.consigneeCompanyId(),
                 base.routingCaseNumber(),
@@ -132,7 +133,8 @@ class BookingControllerTest {
                     .andExpect(redirectedUrl(RECEPTION))
                     .andExpect(flash().attribute("problem", entry[1]));
         }
-        given(queryService.confirmation("TR-2026-0001", 1)).willReturn(new BookingConfirmationPage.AlreadyBooked());
+        given(queryService.confirmation("TR-2026-0001", 1))
+                .willReturn(new BookingConfirmationPage.AlreadyBooked(BookingFixture.TRACKING_NUMBER));
 
         mockMvc.perform(get(NEW))
                 .andExpect(redirectedUrl(RECEPTION))
@@ -198,6 +200,7 @@ class BookingControllerTest {
                 base.transportRequestVersionNo(),
                 base.transportRequestNumber(),
                 base.quotationId(),
+                base.quotationNo(),
                 base.shipperCompanyId(),
                 base.consigneeCompanyId(),
                 base.routingCaseNumber(),
@@ -230,7 +233,8 @@ class BookingControllerTest {
                 .andExpect(redirectedUrl(RECEPTION))
                 .andExpect(flash().attribute("problem", "TR-2026-0001 見積 1 は有効期限を過ぎたため本予約を確定できません。再見積りが必要です。"));
 
-        given(commandService.confirm(any())).willReturn(new BookingConfirmationOutcome.AlreadyBooked());
+        given(commandService.confirm(any()))
+                .willReturn(new BookingConfirmationOutcome.AlreadyBooked(BookingFixture.TRACKING_NUMBER));
 
         mockMvc.perform(post("/staff/bookings")
                         .param("transportRequest", "TR-2026-0001")
