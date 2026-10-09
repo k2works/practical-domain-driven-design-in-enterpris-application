@@ -2,11 +2,19 @@ package com.example.cargotracker;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.example.cargotracker.booking.application.internal.commands.ConfirmBookingCommand;
+import com.example.cargotracker.booking.application.internal.commandservices.BookingCommandService;
+import com.example.cargotracker.booking.application.internal.commandservices.BookingConfirmationOutcome;
+import com.example.cargotracker.booking.domain.model.valueobjects.TrackingNumber;
 import com.example.cargotracker.identity.domain.model.aggregates.KpiObservationRepository;
+import com.example.cargotracker.quotation.api.BookableQuotationQuery;
+import com.example.cargotracker.quotation.api.BookableQuotationRequest;
+import com.example.cargotracker.quotation.api.BookableQuotationResult;
 import com.example.cargotracker.quotation.domain.model.aggregates.Quotation;
 import com.example.cargotracker.quotation.domain.model.aggregates.QuotationRepository;
 import com.example.cargotracker.quotation.domain.model.aggregates.TransportRequestNumberIssuer;
 import com.example.cargotracker.quotation.domain.model.aggregates.TransportRequestRepository;
+import com.example.cargotracker.quotation.domain.model.valueobjects.AwaitingBookingSummary;
 import com.example.cargotracker.quotation.domain.model.valueobjects.QuotedRequestSummary;
 import com.example.cargotracker.quotation.domain.model.valueobjects.RoutingRequestedSummary;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestId;
@@ -23,9 +31,14 @@ import com.example.cargotracker.routing.domain.model.rules.RouteCandidateFinder;
 import com.example.cargotracker.routing.domain.model.valueobjects.RouteVersionStatus;
 import com.example.cargotracker.routing.domain.model.valueobjects.RoutingCaseNumber;
 import com.example.cargotracker.routing.domain.model.valueobjects.RoutingCaseSummary;
+import com.example.cargotracker.shared.domain.AuthenticatedActor;
+import com.example.cargotracker.shared.domain.CommandId;
 import com.example.cargotracker.shared.domain.CompanyId;
+import com.example.cargotracker.shared.domain.Role;
+import com.example.cargotracker.shared.domain.UserId;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import java.time.Instant;
+import java.util.Set;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,7 +49,8 @@ import org.springframework.transaction.annotation.Transactional;
 /**
  * デモ環境のサンプルの業務データ（Bolt 18。`db/dev-data`）。dev プロファイルで起動した初期状態で、荷主・営業・経路設計者の
  * 照会にサンプルが出ること、算出済みの候補が判定の時刻で算出し直した結果と一致すること、日時が起動した日からの相対で
- * 先にあること、新しく振る番号がサンプルとぶつからないことを確かめる。
+ * 先にあること、新しく振る番号がサンプルとぶつからないことを確かめる。荷主が承認した見積り（予約の確定待ち）の見本で、本予約の
+ * 確定・送り直し・同じ見積りの別の確定をデモ環境で確かめられること（Bolt 24）も確かめる。
  */
 @SpringBootTest
 @ActiveProfiles("dev")
@@ -69,6 +83,19 @@ class DevSampleDataSmokeTest {
 
     @Autowired
     RoutingCaseNumberIssuer routingCaseNumbers;
+
+    @Autowired
+    BookableQuotationQuery bookableQuotations;
+
+    @Autowired
+    BookingCommandService bookingCommandService;
+
+    static final AuthenticatedActor SALES = new AuthenticatedActor(
+            new UserId(UUID.fromString("00000000-0000-0000-0000-000000000301")),
+            new CompanyId(UUID.fromString("00000000-0000-0000-0000-000000000003")),
+            Set.of(Role.SALES),
+            "営業 一郎（開発）",
+            "A 社（開発）");
 
     @Test
     void 荷主は自社のサンプルの見積依頼だけを見る() {
@@ -142,11 +169,16 @@ class DevSampleDataSmokeTest {
                         org.assertj.core.groups.Tuple.tuple(
                                 new RoutingCaseNumber(2026, 902),
                                 "TR-2026-0905",
-                                RouteVersionStatus.CANDIDATES_PRESENTED));
+                                RouteVersionStatus.CANDIDATES_PRESENTED),
+                        // 荷主が承認した見積りの見本の案件は、直行の候補を確定した経路版 1（Bolt 24）
+                        org.assertj.core.groups.Tuple.tuple(
+                                new RoutingCaseNumber(2026, 903), "TR-2026-0906", RouteVersionStatus.CONFIRMED),
+                        org.assertj.core.groups.Tuple.tuple(
+                                new RoutingCaseNumber(2026, 904), "TR-2026-0907", RouteVersionStatus.CONFIRMED));
         // DE-16 の写しの見積有効期限が入り、一覧は期限の近い順（Bolt 19）
         assertThat(routingCases.findSummaries())
                 .filteredOn(summary -> summary.number().sequence() >= 901)
-                .hasSize(2)
+                .hasSize(4)
                 .allSatisfy(summary -> assertThat(summary.expiresAt()).isPresent());
     }
 
@@ -171,9 +203,46 @@ class DevSampleDataSmokeTest {
     }
 
     @Test
+    void 営業の受付一覧の予約の確定待ちに荷主が承認した見本が有効期限の近い順に出る() {
+        assertThat(quotations.findAwaitingBookingSummaries())
+                .filteredOn(summary -> summary.number().sequence() >= 901)
+                .extracting(AwaitingBookingSummary::number, AwaitingBookingSummary::quotationNo)
+                .containsExactly(
+                        org.assertj.core.groups.Tuple.tuple(number(906), 1),
+                        org.assertj.core.groups.Tuple.tuple(number(907), 1));
+        assertThat(quotations.findAwaitingBookingSummaries())
+                .filteredOn(summary -> summary.number().sequence() >= 901)
+                .allSatisfy(summary -> assertThat(summary.expiresAt().instant()).isAfter(Instant.now()));
+    }
+
+    @Test
+    void 荷主が承認した見本は見積りの公開APIで本予約の確定に使える() {
+        for (String number : java.util.List.of("TR-2026-0906", "TR-2026-0907")) {
+            assertThat(bookableQuotations.find(new BookableQuotationRequest(number, 1, new UtcInstant(Instant.now()))))
+                    .as(number)
+                    .isInstanceOf(BookableQuotationResult.Bookable.class);
+        }
+    }
+
+    @Test
+    void 見本で本予約を確定すると送り直しは同じ追跡番号で別のコマンドIDは既存の追跡番号になる() {
+        CommandId commandId = CommandId.random();
+        BookingConfirmationOutcome first =
+                bookingCommandService.confirm(new ConfirmBookingCommand(commandId, "TR-2026-0906", 1, SALES, true));
+        assertThat(first).isInstanceOf(BookingConfirmationOutcome.Confirmed.class);
+        TrackingNumber trackingNumber = ((BookingConfirmationOutcome.Confirmed) first).trackingNumber();
+
+        assertThat(bookingCommandService.confirm(new ConfirmBookingCommand(commandId, "TR-2026-0906", 1, SALES, true)))
+                .isEqualTo(new BookingConfirmationOutcome.Confirmed(trackingNumber));
+        assertThat(bookingCommandService.confirm(
+                        new ConfirmBookingCommand(CommandId.random(), "TR-2026-0906", 1, SALES, true)))
+                .isEqualTo(new BookingConfirmationOutcome.AlreadyBooked(trackingNumber));
+    }
+
+    @Test
     void 新しく振る番号はサンプルの番号の後から() {
-        assertThat(transportRequestNumbers.next(2026).sequence()).isGreaterThan(905);
-        assertThat(routingCaseNumbers.next(2026).sequence()).isGreaterThan(902);
+        assertThat(transportRequestNumbers.next(2026).sequence()).isGreaterThan(907);
+        assertThat(routingCaseNumbers.next(2026).sequence()).isGreaterThan(904);
     }
 
     private static TransportRequestNumber number(int sequence) {
