@@ -140,12 +140,77 @@ class AuthenticationSecurityIntegrationTest {
 
     @Test
     void 画面のまだない役割の利用者はログインできてもホームは権限なしになり行き先が循環しない() throws Exception {
-        // 経路設計者は Bolt 17 でホームを持った。画面のまだない役割の例を追跡管理者にした
-        Cookie session = login(user(staffCompany(), Role.TRACKING_MANAGER, UserStatus.ACTIVE));
+        // 経路設計者は Bolt 17、追跡管理者は Bolt 26 でホームを持った。画面のまだない役割の例をデータ責任者にした
+        Cookie session = login(user(staffCompany(), Role.DATA_STEWARD, UserStatus.ACTIVE));
 
         mvc.perform(get("/").cookie(session)).andExpect(status().isForbidden());
         mvc.perform(get("/staff/transport-requests").cookie(session)).andExpect(status().isForbidden());
         mvc.perform(get("/staff/routing-cases").cookie(session)).andExpect(status().isForbidden());
+        mvc.perform(get("/staff/tracking-records").cookie(session)).andExpect(status().isForbidden());
+    }
+
+    @Test
+    void 追跡管理者はログインすると追跡一覧へ移りほかの役割の画面は開けない() throws Exception {
+        Cookie session = login(user(staffCompany(), Role.TRACKING_MANAGER, UserStatus.ACTIVE));
+
+        mvc.perform(get("/").cookie(session)).andExpect(redirectedUrl("/staff/tracking-records"));
+        mvc.perform(get("/staff/tracking-records").cookie(session)).andExpect(status().isOk());
+        mvc.perform(get("/staff/transport-requests").cookie(session)).andExpect(status().isForbidden());
+        mvc.perform(get("/staff/bookings").cookie(session)).andExpect(status().isForbidden());
+        mvc.perform(get("/staff/kpi-observations").cookie(session)).andExpect(status().isForbidden());
+        mvc.perform(get("/staff/routing-cases").cookie(session)).andExpect(status().isForbidden());
+        mvc.perform(get("/customer/transport-requests").cookie(session)).andExpect(status().isForbidden());
+    }
+
+    @Test
+    void 荷主担当者と営業担当者と経路設計者は追跡の画面を開けない() throws Exception {
+        for (Role role : List.of(Role.SHIPPER, Role.SALES, Role.ROUTE_DESIGNER)) {
+            Cookie session =
+                    login(user(role == Role.SHIPPER ? shipperCompany : staffCompany(), role, UserStatus.ACTIVE));
+
+            mvc.perform(get("/staff/tracking-records").cookie(session)).andExpect(status().isForbidden());
+            mvc.perform(get("/staff/tracking-records/CTABCDEFGH2345").cookie(session))
+                    .andExpect(status().isForbidden());
+        }
+    }
+
+    @Test
+    void 社内のナビは役割の画面だけを出す() throws Exception {
+        // 表示の制御は権限の防御ではない（URL を直接開いても A-04）。開発戦略のナビの骨格の確かめ（Bolt 26）
+        Map<Role, String> homes = Map.of(
+                Role.SALES, "/staff/transport-requests",
+                Role.ROUTE_DESIGNER, "/staff/routing-cases",
+                Role.TRACKING_MANAGER, "/staff/tracking-records");
+        Map<String, String> items = Map.of(
+                "/staff/transport-requests", "見積依頼",
+                "/staff/bookings", "予約",
+                "/staff/routing-cases", "経路設計",
+                "/staff/tracking-records", "追跡");
+        Map<Role, Set<String>> shown = Map.of(
+                Role.SALES, Set.of("/staff/transport-requests", "/staff/bookings"),
+                Role.ROUTE_DESIGNER, Set.of("/staff/routing-cases"),
+                Role.TRACKING_MANAGER, Set.of("/staff/tracking-records"));
+        for (Map.Entry<Role, String> home : homes.entrySet()) {
+            Cookie session = login(user(staffCompany(), home.getKey(), UserStatus.ACTIVE));
+            String page = mvc.perform(get(home.getValue()).cookie(session))
+                    .andExpect(status().isOk())
+                    .andReturn()
+                    .getResponse()
+                    .getContentAsString();
+            for (Map.Entry<String, String> item : items.entrySet()) {
+                // 現在の項目は aria-current が href の後に付くので、属性の順によらずに探す
+                String link = "href=\"" + item.getKey() + "\"[^>]*>" + item.getValue() + "</a>";
+                if (shown.get(home.getKey()).contains(item.getKey())) {
+                    assertThat(page)
+                            .as("%s のナビの %s", home.getKey(), item.getValue())
+                            .containsPattern(link);
+                } else {
+                    assertThat(page)
+                            .as("%s のナビの %s", home.getKey(), item.getValue())
+                            .doesNotContainPattern(link);
+                }
+            }
+        }
     }
 
     @Test

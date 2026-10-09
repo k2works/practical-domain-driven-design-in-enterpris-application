@@ -86,7 +86,7 @@ class H2DevProfileSmokeTest extends KpiObservationRepositoryContract {
     }
 
     @Test
-    void devでは開発用の荷主2人と営業1人が入っている() {
+    void devでは開発用の荷主2人と営業1人と追跡管理者1人が入っている() {
         assertThat(users.findByEmail(EmailAddress.of("shipper@dev.cargo-tracker.example")))
                 .hasValueSatisfying(user -> {
                     assertThat(user.id().value()).hasToString("00000000-0000-0000-0000-000000000101");
@@ -100,6 +100,12 @@ class H2DevProfileSmokeTest extends KpiObservationRepositoryContract {
                 .hasValueSatisfying(user -> {
                     assertThat(user.id().value()).hasToString("00000000-0000-0000-0000-000000000301");
                     assertThat(user.roles()).containsExactly(Role.SALES);
+                });
+        assertThat(users.findByEmail(EmailAddress.of("tracking-manager@dev.cargo-tracker.example")))
+                .hasValueSatisfying(user -> {
+                    assertThat(user.id().value()).hasToString("00000000-0000-0000-0000-000000000303");
+                    assertThat(user.companyId().value()).hasToString("00000000-0000-0000-0000-000000000003");
+                    assertThat(user.roles()).containsExactly(Role.TRACKING_MANAGER);
                 });
     }
 }

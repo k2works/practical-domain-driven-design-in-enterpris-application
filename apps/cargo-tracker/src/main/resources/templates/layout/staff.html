@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!--/* 社内業務 Web の共通レイアウト（Bolt 8、UI 設計「ナビゲーションとレイアウト」）。画面は次のように使う。
        <html lang="ja" th:replace="~{layout/staff :: layout(~{::title}, ~{::main}, ~{::script}, 'transport-requests')}">（スクリプトがなければ ~{} を渡す）
-       ナビには役割ごとの画面を出し（営業担当者は Bolt 14、経路設計者は Bolt 17）、まだ作っていない画面は準備中の画面へつなぐ。
+       ナビには役割ごとの画面を出し（営業担当者は Bolt 14、経路設計者は Bolt 17、追跡管理者は Bolt 26）、まだ作っていない画面は準備中の画面へつなぐ。
        ほかの役割の画面はその役割の Bolt で足す */-->
 <html lang="ja" xmlns:th="http://www.thymeleaf.org" th:fragment="layout(title, content, scripts, active)">
 <head>
@@ -57,6 +57,12 @@
                     <a class="nav-link" th:classappend="${active == 'routing-cases'} ? 'fw-bold'"
                        th:attr="aria-current=${active == 'routing-cases'} ? 'page' : null"
                        th:href="@{/staff/routing-cases}">経路設計</a>
+                </li>
+                <li class="nav-item"
+                    th:if="${currentActor != null and currentActor.hasRole(T(com.example.cargotracker.shared.domain.Role).TRACKING_MANAGER)}">
+                    <a class="nav-link" th:classappend="${active == 'tracking-records'} ? 'fw-bold'"
+                       th:attr="aria-current=${active == 'tracking-records'} ? 'page' : null"
+                       th:href="@{/staff/tracking-records}">追跡</a>
                 </li>
             </ul>
         </nav>

@@ -30,7 +30,8 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
  *
  * <ul>
  *   <li>form login（A-01 {@code /login}）。利用停止・無効な企業は password の照合の後に拒否し、どの失敗も同じ応答にする（AC2・AC4）
- *   <li>荷主の画面（{@code /customer/**}）は荷主担当者、社内の画面（{@code /staff/**}）は営業担当者。ログインの時点の役割で判定する
+ *   <li>荷主の画面（{@code /customer/**}）は荷主担当者、社内の画面（{@code /staff/**}）は営業担当者。経路設計（{@code /staff/routing-cases/**}）は
+ *       経路設計者、追跡（{@code /staff/tracking-records/**}）は追跡管理者。ログインの時点の役割で判定する
  *       （request ごとに DB で確かめるのは W5。ADR-012）
  *   <li>session の固定化の防止（ログインで session ID を付け替える。既定）、CSRF の同期トークン（既定）
  *   <li>無操作 30 分（Spring Session の期限）と発行から 8 時間（{@link SessionLifetimeFilter}）。失効したら A-03
@@ -98,6 +99,9 @@ public class SecurityConfiguration {
                         // 経路設計の画面は経路設計者だけ。ほかの社内の画面より先に書く（Bolt 17 計画の確認ポイント 11）
                         .requestMatchers("/staff/routing-cases/**")
                         .hasRole(Role.ROUTE_DESIGNER.name())
+                        // 追跡の画面は追跡管理者だけ（Bolt 26 計画の確認ポイント 4。カスタマーサポートの照会は W8）
+                        .requestMatchers("/staff/tracking-records/**")
+                        .hasRole(Role.TRACKING_MANAGER.name())
                         .requestMatchers("/staff/**")
                         .hasRole(Role.SALES.name())
                         .anyRequest()

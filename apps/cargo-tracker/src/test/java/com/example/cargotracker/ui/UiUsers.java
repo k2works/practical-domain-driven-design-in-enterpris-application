@@ -57,11 +57,20 @@ public class UiUsers {
                 new UserId(UUID.randomUUID()),
                 company.id(),
                 EmailAddress.of(email),
-                shipper ? "荷主 太郎" : role == Role.ROUTE_DESIGNER ? "経路 設計" : "営業 一郎",
+                displayName(role),
                 passwordEncoder.encode(PASSWORD),
                 UserStatus.ACTIVE,
                 Set.of(role)));
         return new Credentials(email, PASSWORD);
+    }
+
+    private static String displayName(Role role) {
+        return switch (role) {
+            case SHIPPER -> "荷主 太郎";
+            case ROUTE_DESIGNER -> "経路 設計";
+            case TRACKING_MANAGER -> "追跡 管理";
+            default -> "営業 一郎";
+        };
     }
 
     /** ログインに使う値。 */

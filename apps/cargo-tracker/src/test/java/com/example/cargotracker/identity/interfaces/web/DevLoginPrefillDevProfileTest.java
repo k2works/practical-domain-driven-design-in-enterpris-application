@@ -41,7 +41,21 @@ class DevLoginPrefillDevProfileTest {
                 .andExpect(content().string(containsString("開発用の利用者でログイン")))
                 .andExpect(content().string(containsString("荷主担当者でログイン（shipper@dev.cargo-tracker.example）")))
                 .andExpect(content().string(containsString("荷主担当者でログイン（shipper-b@dev.cargo-tracker.example）")))
-                .andExpect(content().string(containsString("営業担当者でログイン（sales@dev.cargo-tracker.example）")));
+                .andExpect(content().string(containsString("営業担当者でログイン（sales@dev.cargo-tracker.example）")))
+                .andExpect(content().string(containsString("追跡管理者でログイン（tracking-manager@dev.cargo-tracker.example）")));
+    }
+
+    @Test
+    void 追跡管理者の開発用の利用者を選ぶと追跡一覧へ移る() throws Exception {
+        MvcResult login = mvc.perform(post("/login")
+                        .param("username", "tracking-manager@dev.cargo-tracker.example")
+                        .param("password", "dev-password-staff")
+                        .with(csrf()))
+                .andExpect(redirectedUrl("/"))
+                .andReturn();
+        Cookie session = login.getResponse().getCookie("SESSION");
+
+        mvc.perform(get("/").cookie(session)).andExpect(redirectedUrl("/staff/tracking-records"));
     }
 
     @Test
