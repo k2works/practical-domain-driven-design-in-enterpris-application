@@ -9252,13 +9252,31 @@
 <tr>
 <td style="text-align: left;">主要実績</td>
 <td style="text-align: left;">Milestone</td>
-<td style="text-align: left;">出典と発生時刻を伴う、集荷・搬入・出発・到着などの事実</td>
+<td style="text-align: left;">出典と発生時刻を伴う、集荷・搬入・出発・積替・到着・引渡しの事実。追跡記録の中で実績番号（1 から）で識別する。追跡管理者が登録した実績は採用（Bolt 26b）</td>
+<td style="text-align: left;">追跡</td>
+</tr>
+<tr>
+<td style="text-align: left;">実績の種類</td>
+<td style="text-align: left;">MilestoneKind</td>
+<td style="text-align: left;">集荷 <code>PICKUP</code>、搬入 <code>RECEIPT_AT_ORIGIN</code>、出発 <code>DEPARTURE</code>（積替港からの出発を含む）、積替 <code>TRANSSHIPMENT</code>（積替港到着）、到着 <code>ARRIVAL</code>、引渡し <code>DELIVERY</code>（Bolt 26b）</td>
+<td style="text-align: left;">追跡</td>
+</tr>
+<tr>
+<td style="text-align: left;">実績の状態</td>
+<td style="text-align: left;">MilestoneState</td>
+<td style="text-align: left;">下書き <code>DRAFT</code>、採用 <code>ADOPTED</code>、確認中 <code>UNDER_REVIEW</code>、保持のみ <code>RETAINED_ONLY</code>。現在状態の導出には採用だけを入れる（T-INV-08。Bolt 26b）</td>
 <td style="text-align: left;">追跡</td>
 </tr>
 <tr>
 <td style="text-align: left;">出典</td>
 <td style="text-align: left;">Source</td>
-<td style="text-align: left;">実績や採用値の根拠（外部原本、現場記録、社内確認、手動入力）</td>
+<td style="text-align: left;">実績や採用値の根拠。種類・参照（1〜200 文字）・取得時刻を持つ。同じ追跡記録で種類と参照が同じなら同じ出典識別子（T-INV-02。Bolt 26b）</td>
+<td style="text-align: left;">共有カーネル</td>
+</tr>
+<tr>
+<td style="text-align: left;">出典の種類</td>
+<td style="text-align: left;">SourceKind</td>
+<td style="text-align: left;">外部原本 <code>EXTERNAL_RECORD</code>、現場記録 <code>FIELD_RECORD</code>、社内確認 <code>INTERNAL_CHECK</code>、手動入力 <code>MANUAL_ENTRY</code>（航海の出典の種類と同じ値。Bolt 26b）</td>
 <td style="text-align: left;">共有カーネル</td>
 </tr>
 <tr>
