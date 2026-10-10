@@ -10400,7 +10400,7 @@
 <p><strong>W3 の Try の持ち込み</strong>: 各 Bolt 計画の確認ポイントに、T-54（コンテキストの間のイベントを足すときは購読する側の依存が循環しないか）、T-55（置換は <code>spotlessApply</code> の後のファイルに当てる）、T-57（状態の列挙に値を足すときはその状態を見る判定を洗い出す）、T-58（listener と公開 API には業務の拒否と警告のログの経路の単体テストを Red に入れる）、T-61〜T-63（メモリのリポジトリは写しを返す、listener の欠けを「再配信で直るか」で分ける、「N 個目で」の規則は N 個目の計画に入れる）を入れる。W3 の Problem の Windows で手順書のタスクが動かない件は、<code>sonar-local:scan</code> を Bolt 21 で直した。<code>documentationTest</code> は、Windows の作業ツリーで作業する Bolt で確かめる</p>
 <p><strong>Living Documentation</strong>（開発戦略の「完了条件への組み込み」）: 新しい <code>booking</code>・<code>tracking</code> モジュールで、<code>package-info</code> の <code>allowedDependencies</code>（<code>booking</code> → 見積りの <code>api</code>（経路版は見積りが割り当てた経路の写しで確かめる。Bolt 23 計画の確認ポイント 7）、<code>tracking</code> → 予約の <code>api</code>・<code>events</code>、経路設計の <code>api</code>（Bolt 25）、<code>platform :: web</code>（画面の日時表示の部品。Bolt 26 で社内の画面、Bolt 27 で荷主の画面 C-10 でも使う））、ModularityTest のモジュール名、用語集の整合テスト、<code>DomainEventSerializationContractTest</code> への DE-07 などの追加、<code>afterMigrate</code> の権限と追記専用の印（Bolt 26b で DELETE だけを外す印 <code>[no-delete]</code> を足した）、貨物予約・追跡記録の <code>@CoreConcept</code> をそろえる</p>
 <p><strong>デモ項目</strong>: 本予約の確定（重複確定の防止を含む）から追跡の開始・実績の登録・荷主の照会まで（Release 0.1 のデモ）。<code>@US-04</code>、<code>@US-12</code>、<code>@US-09</code>、<code>@ui</code> の主成功シナリオ</p>
-<p><strong>ユーザーマニュアル</strong>: W4 の Bolt では作業を持たない。Release 0.1 の縦の流れがそろう W4 の完了の後に、<code>docs/manual</code> を作る（2026-10-08 に human:kakimomokuri が決定。<code>creating-manual</code>）</p>
+<p><strong>ユーザーマニュアル</strong>: Bolt 28（主成功の流れの <code>@ui</code> シナリオと Release 0.1 のデモ）の次に、<code>docs/manual</code> を作る（2026-10-08 に human:kakimomokuri が決定。<code>creating-manual</code>。2026-10-10 に human:kakimomokuri が時期を「W4 の完了の後」から「Bolt 28 の次」に改めた。Release 0.1 の縦の流れがそろった時点で画面を撮る）</p>
 <p><strong>主なタスク</strong>:</p>
 <ul class="task-list">
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Bolt 22: 日時表示・期間表示を <code>platform</code> の Web の部品に集める（技術タスク、SP 0。W4 の最初の Bolt）。<a href="../bolt_22_plan/">Bolt 22 計画</a>（承認済み）、<a href="../bolt_22_report/">Bolt 22 終了報告</a>（完了、2026-10-08 に承認済み。#41 をクローズした。割り込みで見積りの listener の楽観ロックの競合を直した（#42））、<a href="https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/41">#41</a></li>
@@ -10412,9 +10412,9 @@
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Bolt 27: US-09（AC1）。<a href="../bolt_27_plan/">Bolt 27 計画</a>（<code>/goal</code> で進めた）、<a href="../bolt_27_report/">Bolt 27 終了報告</a>（完了、2026-10-10 に承認済み。#12 をクローズして SP 3 を数えた。他社・存在しない追跡番号の 404 は C-10 の案内にし、区切りの付いた追跡番号を受け付ける（開発レビューの判断））</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Bolt 27b: C-06 予約一覧の最小の表示（荷主。Bolt 27 の終了報告の承認の場で足した）。<a href="../bolt_27b_plan/">Bolt 27b 計画</a>（承認済み）、<a href="../bolt_27b_report/">Bolt 27b 終了報告</a>（完了、2026-10-10 に承認済み。SP 0。受入動画は #10 に添付した）</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> Bolt 28: 主成功の流れの <code>@ui</code> シナリオと Release 0.1 のデモ</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> ユーザーマニュアル（<code>docs/manual</code>）の作成（Bolt 28 の次。2026-10-10 に human:kakimomokuri が決定）</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> ベロシティと承認ゲートの密度の見直し（W4 の開始時。「ベロシティ検証計画」）</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> W4 の締め: Release 1.0 の計画の引き直し、Release 0.1 の実績による Release 1.0 の承認ゲートの密度の決め直し、Release 0.1 のリリース完了報告書</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> ユーザーマニュアル（<code>docs/manual</code>）の作成（W4 の完了の後）</li>
 </ul>
 <p><strong>目標 SP</strong>: 11</p>
 <h3 id="w5w10release-10">W5〜W10（Release 1.0）<a class="headerlink" href="#w5w10release-10" title="Permanent link">&para;</a></h3>
@@ -11368,6 +11368,11 @@
 <td style="text-align: left;">2026-10-09</td>
 <td style="text-align: left;">Bolt 24 終了報告の承認（議題 1〜9）を記録し、Bolt 24 を終えた。台帳に D-85（承認の後に失効した見積りの再見積りの規則）を足した</td>
 <td style="text-align: left;">anthropic/claude-opus-5-5、承認 human:kakimomokuri</td>
+</tr>
+<tr>
+<td style="text-align: left;">2026-10-10</td>
+<td style="text-align: left;">Bolt 27・27b を終えた（#12 をクローズして US-09 の R0.1 の SP 3 を数えた。27b は承認の場の指摘で足した C-06 予約一覧、SP 0）。ユーザーマニュアル（<code>docs/manual</code>）の作成の時期を、人の指示で「W4 の完了の後」から「Bolt 28 の次」に改めた</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5、指示 human:kakimomokuri</td>
 </tr>
 </tbody>
 </table>
