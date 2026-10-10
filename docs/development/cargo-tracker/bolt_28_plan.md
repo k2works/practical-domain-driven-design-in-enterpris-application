@@ -3,8 +3,10 @@ type: Plan
 title: "Bolt 28 計画 - 主成功の流れの `@ui` シナリオと Release 0.1 のデモ"
 description: "28 回目の Bolt の計画。一般貨物 1 件が提出から本予約・追跡の開始・実績の登録・荷主の予約一覧と照会まで画面で縦に通り KPI-01 の 2 時刻が残る主成功の流れの @ui シナリオ、Release 0.1 の受入条件とシナリオの照合、リリース条件と序盤の完了条件の確認、社内デモを、ステップ 1〜4 で定義する。"
 tags: [development,bolt-plan]
-status: draft
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-10T08:10:06Z }
+status: stable
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-10T08:14:19Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-10-10T08:14:19Z }
 ---
 
 # Bolt 28 計画 - 主成功の流れの `@ui` シナリオと Release 0.1 のデモ
@@ -16,7 +18,7 @@ generated: { by: anthropic/claude-opus-5-5, at: 2026-10-10T08:10:06Z }
 | Bolt | 第 28 回（W4 の最後の Bolt。Release 0.1 の締めの Bolt） |
 | 予定 | W4（2026-10-26 の週。前倒しで 2026-10-10 から）、作業 2.5〜3.5 時間（承認ゲートと社内デモの待ち時間を除く） |
 | 対象 | 横断（画面の層の主成功の流れ、受入条件とシナリオの照合、Release 0.1 のリリース条件の確認、社内デモ） |
-| GitHub | Issue を 1 件作る（確認ポイント 2。題名「[技術] 主成功の流れの @ui シナリオと Release 0.1 のデモ」、ラベル `technical`、マイルストーン「Release 0.1 最初の縦の流れ」、W4、SP 0。#36〜#41 の前例）。受入動画を添付し、社内デモの結果をコメントして閉じる |
+| GitHub | [#44](https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/44)（確認ポイント 2。題名「[技術] 主成功の流れの @ui シナリオと Release 0.1 のデモ」、ラベル `technical`、マイルストーン「Release 0.1 最初の縦の流れ」、W4、SP 0。#36〜#41 の前例）。受入動画を添付し、社内デモの結果をコメントして閉じる |
 | 承認ゲート | 計画の承認（確認ポイント 1〜13）、社内デモ（人が流れを確かめる。Release 0.1 のリリース条件）、終了報告。release_plan の W4 の決定（「`/goal` で止めずに進めるのは Bolt 22 と Bolt 28（`@ui` とデモ）だけ」）に従い、ステップ 1〜3 のゲートは止めずに進め、根拠を終了報告の議題に置く（T-36）。スキーマと認可は変えない |
 | アプローチ | アウトサイドイン（開発戦略の序盤の最後の手順「主成功の流れの `@ui` シナリオを通す」「Release 0.1 のデモ」）。新しい業務の振る舞いは作らない |
 | 前の Bolt | [Bolt 27b 終了報告](bolt_27b_report.md)、[Bolt 27 終了報告](bolt_27_report.md) |
@@ -314,6 +316,7 @@ KPI 計測記録（S-22 の前身の仮の画面）は、US-21 では監査担�
 
 | 日付 | 更新内容 | 更新者 |
 | :--- | :--- | :--- |
+| 2026-10-10 | 計画を承認した（確認ポイントはすべて推奨のとおり。照合はこの Bolt で作る、Issue を作る、社内デモはデモ環境）。#44 を作り、Project の週 W4・SP 0・In Progress を設定した | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-10-10 | 開始準備の整合性検証（計画と設計 13 件、横断 13 件）の指摘を反映した。主な修正は次のとおり。<br>- イベントの番号と向き（詳細経路設計は DE-16、予約が見積りの公開 API に依存、KPI-01 は DE-01・DE-03）。<br>- 状態遷移を予約確定済みまで延ばし、見積りの状態を足した。<br>- 主成功の流れが通る表の ER 図を足した。<br>- 画面の名前と S-04・S-22・S-02 の経由。<br>- 照合の範囲（重複確定の防止 `@B-INV-11`、US-18 は #6 の AC2 だけで前倒し分は移し先を注に）。<br>- `documentationTest` の入力に test_strategy.md と features を足す。<br>- 後片付けのフックの条件（`@US-04` の既存の漏れと主成功の流れ）。<br>- タグ `@main-flow` を規約に足し、`@release-0.1` をやめた。<br>- キー操作だけを主張しないことの書き分け。<br>- 設計文書の反映を開発レビューの前に。<br>- Issue の題名・ラベル・マイルストーン。<br>- 生成物を確かめるワークフローの書き分け。 | anthropic/claude-opus-5-5 |
 | 2026-10-10 | 初版作成（承認待ち） | anthropic/claude-opus-5-5 |
 
