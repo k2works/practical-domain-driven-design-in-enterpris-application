@@ -43,7 +43,7 @@ services:
     command: >-
       -t pgsql11 -host postgres -port 5432 -db cargotracker
       -u cargotracker -p cargotracker
-      -schemas identity,quotation,platform
+      -schemas ${SCHEMASPY_SCHEMAS:?ER 図の対象のスキーマは gulp schemaspy:generate が渡す（ops/scripts/design_docs.js の schemas）}
       -vizjs
     depends_on:
       postgres:

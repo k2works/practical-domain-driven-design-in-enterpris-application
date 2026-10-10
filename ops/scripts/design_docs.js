@@ -19,8 +19,9 @@ const SUBSYSTEMS = [
     composeFile: path.join('apps', 'cargo-tracker', 'docker-compose.yml'),
     dbName: 'cargotracker',
     dbUser: 'cargotracker',
-    // 業務のスキーマ（データモデルのスキーマ分割）。サブシステムの docker-compose.yml の schemaspy の -schemas と合わせる
-    schemas: ['identity', 'quotation', 'platform'],
+    // 業務のスキーマ（データモデルのスキーマ分割）。ER 図の対象の一覧はここだけに書き、Compose の schemaspy へは環境変数
+    // SCHEMASPY_SCHEMAS で渡す。スキーマを足したらここに足す（足し忘れは schemaspy:generate がマイグレーションの後に検出する）
+    schemas: ['identity', 'quotation', 'routing', 'booking', 'tracking', 'platform'],
   },
 ];
 
@@ -45,7 +46,8 @@ function jigOutputDir(sys) {
  * @param {object} [options] - execSync のオプション
  */
 function dockerCompose(sys, args, options = {}) {
-  return execSync(`docker compose -f "${sys.composeFile}" ${args}`, { stdio: 'inherit', env: cleanDockerEnv(), ...options });
+  const env = { ...cleanDockerEnv(), SCHEMASPY_SCHEMAS: sys.schemas.join(',') };
+  return execSync(`docker compose -f "${sys.composeFile}" ${args}`, { stdio: 'inherit', env, ...options });
 }
 
 /**
@@ -62,6 +64,25 @@ function countTables(sys) {
     { stdio: ['ignore', 'pipe', 'inherit'] },
   );
   return Number.parseInt(String(out).trim(), 10) || 0;
+}
+
+/**
+ * マイグレーションの後の DB にあって、ER 図の対象の一覧（sys.schemas）にない業務のスキーマを返す。
+ * PostgreSQL のシステムのスキーマと、Flyway の履歴を置く public は除く（権限の統合テストの「業務のスキーマ」と同じ範囲）
+ * @param {object} sys - サブシステム
+ * @returns {string[]}
+ */
+function missingSchemas(sys) {
+  const sql = "SELECT nspname FROM pg_namespace WHERE nspname NOT IN ('information_schema', 'public') AND left(nspname, 3) <> 'pg_' ORDER BY nspname";
+  const out = dockerCompose(
+    sys,
+    `exec -T postgres psql -U ${sys.dbUser} -d ${sys.dbName} -tAc "${sql}"`,
+    { stdio: ['ignore', 'pipe', 'inherit'] },
+  );
+  return String(out)
+    .split(/\r?\n/)
+    .map((s) => s.trim())
+    .filter((s) => s && !sys.schemas.includes(s));
 }
 
 /**
@@ -123,6 +144,11 @@ export default function (gulp) {
             throw new Error(`マイグレーションの後も業務のスキーマ（${sys.schemas.join(', ')}）に表がありません`);
           }
           console.log(`  業務のスキーマの表の数: ${tableCount}`);
+          // スキーマを足したときに一覧への追加が漏れると、ER 図からそのスキーマが黙って抜ける（routing・booking・tracking が抜けていた）
+          const missing = missingSchemas(sys);
+          if (missing.length > 0) {
+            throw new Error(`ER 図の対象の一覧にない業務のスキーマがあります: ${missing.join(', ')}（design_docs.js の schemas に足してください）`);
+          }
 
           dockerCompose(sys, 'run --rm schemaspy');
         } finally {
