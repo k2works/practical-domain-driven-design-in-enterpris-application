@@ -16,7 +16,7 @@
         <link rel="prev" href="../bolt_27b_report/">
       
       
-        <link rel="next" href="../../../operation/">
+        <link rel="next" href="../bolt_28_report/">
       
       
         
@@ -4376,90 +4376,47 @@
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="ステップ計画">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#_10" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        時間の配分と打ち切り
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#try-t-6" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        確認ポイント（計画の承認の場でまとめて確認する。Try T-6）
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#_11" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        完了条件
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="完了条件">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#_12" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        デモ項目
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#_13" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        更新履歴
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#_14" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        関連ドキュメント
-      
-    </span>
-  </a>
-  
 </li>
       
     </ul>
   
 </nav>
       
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../bolt_28_report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 28 終了報告
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--draft"></span>
+  
+
+  
+
+      </a>
     </li>
   
 
@@ -9067,6 +9024,15 @@
 <li>デモの台本（デモ環境の URL、役割ごとの利用者、主成功の流れの手順と見るところ。KPI 計測記録は前身の仮の画面を営業担当者で見ること）を終了報告に置き、人がデモ環境で流れを確かめる（Release 0.1 のリリース条件。社内デモの結果を記録する）</li>
 <li>T-87 の技術タスクの Issue を起票する（Release 1.0 のマイルストーン、ラベル <code>technical</code>、週は W4 の締めで人が決める）</li>
 <li><code>bolt_28_report.md</code>。終了報告の承認の後に、受入動画の添付先（<code>ops/scripts/issue_demo.js</code> の <code>BOLT_ISSUES</code> と手順書の表）に <code>bolt-28 → 新しい Issue</code> を足して添付し、社内デモの結果をコメントして Issue を閉じる</li>
+<li>結果（2026-10-10。社内デモの待ち）<ul>
+<li>設計文書を開発レビューの依頼の前に反映した（test_strategy.md の主要フローの行と US-21 の <code>@ui</code> の欄）</li>
+<li>2 つの観点でレビューした（プログラマー: 必須 3・推奨 2・任意 3、テクニカルライター: 必須 5・推奨 5・任意 3）。照合を Cucumber の解析器で Pickle にして数える形に直し（<code>io.cucumber:gherkin</code> を明示の依存に）、表の行の読み落としを失敗にし、解析と検出の単体テストを足した。後片付けのフックは、<code>@US-24</code> の漏れも見つかったので、タグの列挙をやめて航海を入れたシナリオだけを消す形にした。AT-05 に公開 API の実装の禁止と判定の単体テストを足した。主成功の流れに追跡一覧の先頭の確かめを足した。台本を実際の画面の文言と入力値で書き直した</li>
+<li>
+<h1 id="45t-87sonarqube-passcheckuitest80-0t-70-bolt">45（T-87）を起票した。SonarQube PASS。<code>check</code>・<code>uiTest</code>（80 本、失敗 0）を対応の後にも流した（T-70）。受入動画を撮った（過去の Bolt の動画は元に戻した）<a class="headerlink" href="#45t-87sonarqube-passcheckuitest80-0t-70-bolt" title="Permanent link">&para;</a></h1>
+</li>
+<li>承認ゲートの扱い（T-36）: 開発レビューの判断は止まらずに進めた（release_plan の W4 の決定）。社内デモと終了報告で止める</li>
+</ul>
+</li>
 </ul>
 <h3 id="_10">時間の配分と打ち切り<a class="headerlink" href="#_10" title="Permanent link">&para;</a></h3>
 <table>

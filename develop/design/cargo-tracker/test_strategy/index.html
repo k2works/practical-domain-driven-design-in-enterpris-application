@@ -4547,6 +4547,41 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../development/cargo-tracker/bolt_28_report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 28 終了報告
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--draft"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -9167,7 +9202,7 @@
 </tr>
 <tr>
 <td style="text-align: left;"><code>@main-flow</code></td>
-<td style="text-align: left;">主成功の流れ（一般貨物 1 件が提出から追跡の照会まで画面で縦に通る。Bolt 28）。流れの通しを確かめる機能で、<code>@US-nn</code> を付けない例外（前例は <code>layout_ui.feature</code>）</td>
+<td style="text-align: left;">主成功の流れ（Bolt 28）。<code>@US-nn</code> を付けない例外（前例は <code>layout_ui.feature</code>。理由は「Release 0.1 の受入条件」の注）</td>
 <td style="text-align: left;">—</td>
 </tr>
 <tr>
@@ -9590,7 +9625,7 @@ src/test/java/.../shared/acceptance/      共通ステップ（ログイン、�
 </tr>
 <tr>
 <td style="text-align: left;">AT-05</td>
-<td style="text-align: left;">業務のルールの層のステップ定義（<code>&lt;コンテキスト&gt;.acceptance</code>）は、自分のコンテキストのアプリケーション層・ドメイン層と共有カーネル、他のコンテキストの公開 API にだけ依存し、自分のインフラストラクチャ層・画面と他のコンテキストの内部に依存しない（入力ポートのほか、コマンドの組み立てと結果の確かめにドメインの値オブジェクト・集約を使うことは認める。画面の層のステップ定義は対象外）</td>
+<td style="text-align: left;">業務のルールの層のステップ定義（<code>&lt;コンテキスト&gt;.acceptance</code>）は、自分のコンテキストのアプリケーション層・ドメイン層と共有カーネル、他のコンテキストの公開 API にだけ依存し、自分のインフラストラクチャ層・画面・公開 API の実装（<code>interfaces.api.internal</code>）と他のコンテキストの内部（ドメインイベントを含む）に依存しない（入力ポートのほか、コマンドの組み立てと結果の確かめにドメインの値オブジェクト・集約を使うことは認める。画面の層のステップ定義と、受入テストの組み立て（<code>acceptance</code>・<code>shared.acceptance</code>。メモリのリポジトリや公開 API の実装をつなぐのが役目）は対象外）</td>
 <td style="text-align: left;">ArchUnit（<code>AcceptanceStepArchitectureTest</code>。Bolt 28 で、Bolt 2 から後に回していたものを実態に合わせて作った）</td>
 <td style="text-align: left;">本書 BDD</td>
 </tr>
@@ -9743,8 +9778,8 @@ src/test/java/.../shared/acceptance/      共通ステップ（ログイン、�
 <tbody>
 <tr>
 <td style="text-align: left;">見積依頼から本予約まで</td>
-<td style="text-align: left;">荷主の提出 → 審査 → 見積りと経路方針の提示 → 荷主が詳細経路設計へ進む → 経路確定 → 荷主の承認 → 本予約確定 → 追跡開始の表示。各段階のメール通知（受けるだけのコンテナで確認）</td>
-<td style="text-align: left;">US-01〜04、US-06〜07、US-22、US-24</td>
+<td style="text-align: left;">荷主の提出 → 審査 → 見積りと経路方針の提示 → 荷主が詳細経路設計へ進む → 経路確定 → 荷主の承認 → 本予約確定 → 追跡開始の表示。各段階のメール通知（受けるだけのコンテナで確認）。Release 0.1 の主成功の流れ（<code>main_flow_ui.feature</code>、<code>@main-flow</code>。Bolt 28）は、メール通知（US-22、Release 1.0）を含まず、追跡管理者の実績の登録・荷主の予約一覧と追跡の照会・KPI 計測記録の KPI-01 の 2 時刻まで進む</td>
+<td style="text-align: left;">US-01〜04、US-06〜07、US-22、US-24。Release 0.1 の主成功の流れは US-09・US-12・US-21 も通る</td>
 </tr>
 <tr>
 <td style="text-align: left;">見積りの辞退・相談</td>
@@ -10182,7 +10217,7 @@ src/test/java/.../shared/acceptance/      共通ステップ（ログイン、�
 <td style="text-align: left;">Must</td>
 <td style="text-align: center;">5</td>
 <td style="text-align: left;">identity/</td>
-<td style="text-align: center;">—</td>
+<td style="text-align: center;">○（<code>kpi_observations_ui.feature</code>。S-22 の前身の KPI 計測記録）</td>
 </tr>
 <tr>
 <td style="text-align: left;">横断受入条件（BR-13、WCAG 2.2.1）</td>
@@ -10347,7 +10382,7 @@ src/test/java/.../shared/acceptance/      共通ステップ（ログイン、�
 </tr>
 </tbody>
 </table>
-<p>注: US-18 は Release 0.1 の #6 の AC2 だけを照合に入れる。Bolt 14 で Release 1.0 の #13 から前倒しした AC1 の password と session の部分・AC4・AC5 は、セキュリティの統合テストなどに移した（<code>AuthenticationSecurityIntegrationTest</code>・<code>SessionLifetimeFilterTest</code>・<code>UserTest</code>・<code>AuditRecordTest</code>）。Release 1.0 の表で扱う。主成功の流れ（<code>main_flow_ui.feature</code>、<code>@main-flow</code>）は流れの通しを確かめるシナリオで、受入条件のタグを付けない（照合の数に入れない）。</p>
+<p>注: US-18 は Release 0.1 の #6 の AC2 だけを照合に入れる。Bolt 14 で Release 1.0 の #13 から前倒しした AC1 の password と session の部分・AC4・AC5 は、セキュリティの統合テストなどに移した（<code>AuthenticationSecurityIntegrationTest</code>・<code>SessionLifetimeFilterTest</code>・<code>UserTest</code>・<code>AuditRecordTest</code>）。Release 1.0 の表で扱う。主成功の流れ（<code>main_flow_ui.feature</code>、<code>@main-flow</code>）は流れの通しを確かめるシナリオで、受入条件のタグを付けない（照合の数に入れない）。照合は Cucumber の解析器で Feature を Pickle にし、機能・ルール・シナリオ・例のタグを継承した結果で数え、<code>@wip</code> の Pickle を除く。画面の層のシナリオは逐次に実行する（並行実行を有効にしない。「一覧の先頭」を確かめるシナリオがあるため）。</p>
 <h2 id="_18">後続工程への引継ぎ<a class="headerlink" href="#_18" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
