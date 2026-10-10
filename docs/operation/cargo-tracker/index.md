@@ -62,7 +62,7 @@ npx gulp issue:attach-demo:all                                              # �
 | bolt-09 | #37（Bolt 6〜8 レビューの返済） | bolt-17 | #7（US-06） |
 | bolt-19 | #8（US-07） | bolt-20 | #5（US-24） |
 | bolt-21 | #9（US-21） | bolt-23b・bolt-24・bolt-25・bolt-25b | #10（US-04） |
-| bolt-26 | #11（US-12） | | |
+| bolt-26・bolt-26c | #11（US-12） | | |
 
 ### インフラ
 
