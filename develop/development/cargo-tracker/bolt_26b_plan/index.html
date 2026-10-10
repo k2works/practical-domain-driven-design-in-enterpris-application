@@ -16,7 +16,7 @@
         <link rel="prev" href="../bolt_26_report/">
       
       
-        <link rel="next" href="../../../operation/">
+        <link rel="next" href="../bolt_26b_report/">
       
       
         
@@ -4177,6 +4177,34 @@
   
 </nav>
       
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../bolt_26b_report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 26b 終了報告
+  
+
+    
+  </span>
+  
+  
+
+      </a>
     </li>
   
 
@@ -8800,7 +8828,7 @@
 <li>承認ゲートの扱い（T-36）: スキーマのゲートは止まって人の判断を受けた。Red／Green のゲートは止まらずに進めた（AI の判断。根拠は、保存の形が確認ポイント 6・12 の推奨と前例のとおりであること）</li>
 </ul>
 </li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>5. 開発レビューと終了報告</strong> 【承認ゲート: 開発レビューの判断、終了報告】</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>5. 開発レビューと終了報告</strong> 【承認ゲート: 開発レビューの判断、終了報告】</li>
 <li><code>developing-review</code>（プログラマー（テスター・アーキテクトの観点を含む）の観点。画面を変えないので、インタラクションデザイナーの観点は置かない）、SonarQube（<code>sonar-local:check</code>）、<code>bolt_26b_report.md</code>。受入動画は撮らない（画面がない。Bolt 23 と同じ）</li>
 <li>設計文書（T-53）<ul>
 <li>domain_model.md: 用語集に出典の種類・実績の種類・実績の状態の行、追跡記録の操作「実績を登録する」の Bolt 26b の範囲（手動で登録した実績は採用、同じ出典は既存を返す）、状態遷移の図の改訂（目的地到着 → 引渡し済みの R0.1 の直結、積替・出発の実績の名前）、実績の種類と追跡状態の対応、未来の発生時刻の拒否の規則、<code>CurrentStatusDeriver</code> の導出の規則、リポジトリの表の <code>update</code></li>
@@ -8811,6 +8839,11 @@
 </ul>
 </li>
 <li>開発レビューの対応の後も push の前に <code>uiTest</code> を流す（T-70）</li>
+<li>結果（2026-10-10）: プログラマーの観点でレビューし、マージの前に直すべき欠陥はなかった。中 2 件・低 3 件を直し、低 7 件を後に回した（<a href="../bolt_26b_report/">Bolt 26b 終了報告</a>）。SonarQube は新しい指摘で 2 回 FAIL になり、直して PASS になった。設計文書（domain_model.md・data_model.md・architecture_backend.md・test_strategy.md・release_plan.md）を書いた。直した後に <code>check</code>・<code>documentationTest</code>・<code>uiTest</code> を流した（T-70・T-79）<ul>
+<li>計画の誤りの訂正: ステップ 4 の結果の「件数で選ぶと取りこぼす」は誤り（レビュー P-3）。正しい理由は終了報告の議題 4</li>
+<li>承認ゲートの扱い（T-36）: 開発レビューの判断で止まらずに進めた（AI の判断）。終了報告の承認の議題に置く</li>
+</ul>
+</li>
 </ul>
 <h3 id="_10">時間の配分と打ち切り<a class="headerlink" href="#_10" title="Permanent link">&para;</a></h3>
 <table>
@@ -8954,13 +8987,13 @@
 </table>
 <h2 id="_11">完了条件<a class="headerlink" href="#_11" title="Permanent link">&para;</a></h2>
 <ul class="task-list">
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> 業務のルールの層の受入シナリオ（<code>@US-12-AC1</code>・<code>@US-12-AC2</code>）が通る</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> ドメインの単体テストで、種類ごとの導出、同じ出典の既存の実績、登録の前の追跡記録が変わらないこと（仮説 H1）を確かめた</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> PostgreSQL の統合テストで、一意制約・DELETE の権限なし・楽観ロック・表と列のコメントを確かめた</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <code>check</code>・<code>documentationTest</code>・<code>uiTest</code> が緑。push して CI とデモ環境の配備を確かめた</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> SonarQube の Quality Gate が PASS</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> 設計文書（ステップ 5 の一覧）に決定を書いた（T-53）</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> 開発レビューと終了報告</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> 業務のルールの層の受入シナリオ（<code>@US-12-AC1</code>・<code>@US-12-AC2</code>）が通る</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> ドメインの単体テストで、種類ごとの導出、同じ出典の既存の実績、登録の前の追跡記録が変わらないこと（仮説 H1）を確かめた</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> PostgreSQL の統合テストで、一意制約・DELETE の権限なし・楽観ロック・表と列のコメントを確かめた</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <code>check</code>・<code>documentationTest</code>・<code>uiTest</code> が緑。push して CI とデモ環境の配備を確かめた</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> SonarQube の Quality Gate が PASS</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> 設計文書（ステップ 5 の一覧）に決定を書いた（T-53）</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> 開発レビューと終了報告</li>
 </ul>
 <h3 id="_12">デモ項目<a class="headerlink" href="#_12" title="Permanent link">&para;</a></h3>
 <p>画面がないのでデモの動画は撮らない。終了報告に、業務のルールの層のシナリオの結果（AC1 で現在状態が集荷済みになる、AC2 で既存の実績が返る）を載せる。</p>

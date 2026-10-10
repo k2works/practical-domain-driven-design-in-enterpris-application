@@ -4204,6 +4204,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../development/cargo-tracker/bolt_26b_report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 26b 終了報告
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -8969,7 +8997,7 @@
 <tbody>
 <tr>
 <td style="text-align: left;"><code>tracking_record</code></td>
-<td style="text-align: left;"><code>current_status</code> は主要実績から導出した結果の保存（照会のため）。導出の正は集約のロジック。<code>original_eta</code>（確定した経路版の到着予定）と <code>latest_eta</code>（最新の見込み）を別に持つ。<code>procedure_stage</code> は通関等の手続き中の段階。UK（<code>booking_id</code>）<code>uk_tracking_record_booking</code>: 予約 1 件に追跡記録 1 件で、DE-07 の再配信の冪等の正（T-INV-11。Bolt 25）。<code>booking_status</code> IN（<code>CONFIRMED</code>、<code>CANCELLED</code>、<code>COMPLETED</code>）（<code>ck_tracking_record_booking_status</code>）。<code>current_status</code> IN（<code>BOOKED</code>、<code>PICKUP_SCHEDULED</code>、<code>PICKED_UP</code>、<code>RECEIVED_AT_ORIGIN</code>、<code>IN_TRANSIT</code>、<code>TRANSSHIPPING</code>、<code>ARRIVED_AT_DESTINATION</code>、<code>READY_FOR_DELIVERY</code>、<code>DELIVERED</code>、<code>UNDER_REVIEW</code>）（<code>ck_tracking_record_current_status</code>。ドメインモデルの追跡状態）。実績に関わる列（<code>status_basis_milestone_no</code>、<code>under_review_reason</code>、<code>procedure_stage</code>、<code>last_acquired_at</code>）と経路版・到着予定の 4 列は NULL 可で作る（Bolt 25 の追跡の開始では経路版と到着予定に必ず値を入れる）。監査用の列の <code>created_by</code>・<code>updated_by</code> は持たない（行はイベントの購読でシステムが作る。共通の規約の例外）。<code>created_at</code> は追跡の開始時刻で、S-11 追跡一覧はその新しい順（同じ時刻なら <code>tracking_number</code> の順）に引く（Bolt 26）</td>
+<td style="text-align: left;"><code>current_status</code> は主要実績から導出した結果の保存（照会のため）。導出の正は集約のロジック。<code>original_eta</code>（確定した経路版の到着予定）と <code>latest_eta</code>（最新の見込み）を別に持つ。<code>procedure_stage</code> は通関等の手続き中の段階。UK（<code>booking_id</code>）<code>uk_tracking_record_booking</code>: 予約 1 件に追跡記録 1 件で、DE-07 の再配信の冪等の正（T-INV-11。Bolt 25）。<code>booking_status</code> IN（<code>CONFIRMED</code>、<code>CANCELLED</code>、<code>COMPLETED</code>）（<code>ck_tracking_record_booking_status</code>）。<code>current_status</code> IN（<code>BOOKED</code>、<code>PICKUP_SCHEDULED</code>、<code>PICKED_UP</code>、<code>RECEIVED_AT_ORIGIN</code>、<code>IN_TRANSIT</code>、<code>TRANSSHIPPING</code>、<code>ARRIVED_AT_DESTINATION</code>、<code>READY_FOR_DELIVERY</code>、<code>DELIVERED</code>、<code>UNDER_REVIEW</code>）（<code>ck_tracking_record_current_status</code>。ドメインモデルの追跡状態）。実績に関わる列（<code>status_basis_milestone_no</code>、<code>under_review_reason</code>、<code>procedure_stage</code>、<code>last_acquired_at</code>）と経路版・到着予定の 4 列は NULL 可で作る（Bolt 25 の追跡の開始では経路版と到着予定に必ず値を入れる）。監査用の列の <code>created_by</code>・<code>updated_by</code> は持たない（行はイベントの購読でシステムが作る。共通の規約の例外）。<code>created_at</code> は追跡の開始時刻で、S-11 追跡一覧はその新しい順（同じ時刻なら <code>tracking_number</code> の順）に引く（Bolt 26）。主要実績の登録（Bolt 26b）は <code>current_status</code>・<code>status_basis_milestone_no</code>・<code>version</code>・<code>updated_at</code> だけを UPDATE し（<code>WHERE version = 読み込んだ版</code>）、経路版・到着予定・<code>last_acquired_at</code> は書かない（到着見込みと鮮度は W7）。<code>status_basis_milestone_no</code> から <code>milestone</code> への外部キーは張らない（UPDATE を INSERT より先に行うため。張るかは Bolt 26c のスキーマのゲートで決める）</td>
 <td style="text-align: left;">T-INV-08、T-INV-10、T-INV-11</td>
 </tr>
 <tr>
@@ -8979,7 +9007,7 @@
 </tr>
 <tr>
 <td style="text-align: left;"><code>milestone</code></td>
-<td style="text-align: left;">UK（<code>tracking_number</code>、<code>source_kind</code>、<code>source_ref</code>）。<code>state</code> IN（<code>DRAFT</code>、<code>ADOPTED</code>、<code>UNDER_REVIEW</code>、<code>RETAINED_ONLY</code>）。DELETE の権限なし</td>
+<td style="text-align: left;">UK（<code>tracking_number</code>、<code>source_kind</code>、<code>source_ref</code>）<code>uk_milestone_source</code>。<code>kind</code> IN（<code>PICKUP</code>、<code>RECEIPT_AT_ORIGIN</code>、<code>DEPARTURE</code>、<code>TRANSSHIPMENT</code>、<code>ARRIVAL</code>、<code>DELIVERY</code>）。<code>source_kind</code> は航海と同じ 4 値。<code>state</code> IN（<code>DRAFT</code>、<code>ADOPTED</code>、<code>UNDER_REVIEW</code>、<code>RETAINED_ONLY</code>）。DELETE の権限なし（表の印 <code>[no-delete]</code>）。Bolt 26b は使う列だけで作った（<code>revised_by</code>・<code>revised_at</code> は下書きの修正の W7、<code>shown_to_customer</code> は顧客への表示の US-11・US-13 で足す）。実績は追跡記録の <code>update</code> で、まだ表にない実績番号だけを INSERT する</td>
 <td style="text-align: left;">T-INV-01〜03、T-INV-05</td>
 </tr>
 <tr>
@@ -9206,7 +9234,7 @@
 </tr>
 <tr>
 <td style="text-align: left;">追記専用の印</td>
-<td style="text-align: left;">追記専用の表には、作るマイグレーションで表のコメントの日本語名の後ろに印を付ける（<code>COMMENT ON TABLE ... IS '&lt;日本語名&gt; [append-only]'</code>。2026-10-03 に <code>'append-only'</code> だけの形から変えた）。PostgreSQL の <code>afterMigrate</code> のコールバックは、コメントが <code>[append-only]</code> で終わる表からアプリケーション利用者の UPDATE・DELETE を外す（名指しにしないので、書き忘れで保護が黙って外れない）。印の付け忘れは、権限の統合テストが設計の一覧との一致で検出する（Bolt 3 レビュー R-02）</td>
+<td style="text-align: left;">追記専用の表には、作るマイグレーションで表のコメントの日本語名の後ろに印を付ける（<code>COMMENT ON TABLE ... IS '&lt;日本語名&gt; [append-only]'</code>。2026-10-03 に <code>'append-only'</code> だけの形から変えた）。PostgreSQL の <code>afterMigrate</code> のコールバックは、コメントが <code>[append-only]</code> で終わる表からアプリケーション利用者の UPDATE・DELETE を外す（名指しにしないので、書き忘れで保護が黙って外れない）。印の付け忘れは、権限の統合テストが設計の一覧との一致で検出する（Bolt 3 レビュー R-02）。状態などを UPDATE するが行を消してはならない表（<code>tracking.milestone</code>）は、印 <code>[no-delete]</code> を付け、<code>afterMigrate</code> が DELETE だけを外す（Bolt 26b。権限の統合テストの <code>NO_DELETE_TABLES</code>）</td>
 </tr>
 <tr>
 <td style="text-align: left;">スキーマの自動初期化</td>
