@@ -10918,7 +10918,7 @@
 <tr>
 <td style="text-align: left;">予約</td>
 <td style="text-align: left;">貨物予約リポジトリ</td>
-<td style="text-align: left;">ID・追跡番号で取得、コマンド ID で確定結果（処理済みコマンド）を取得、業務番号と見積り番号で追跡番号を取得、処理済みコマンドを貨物予約と同じトランザクションで記録、期待版で保存（Bolt 24。確定した予約の要約（<code>BookingSummary</code>）を確定時刻の新しい順に上限まで取得（S-10。集約を組み立てない。予約サガの状態は予約サガのリポジトリから予約 ID の集合でまとめて取得。Bolt 25b））</td>
+<td style="text-align: left;">ID・追跡番号で取得、コマンド ID で確定結果（処理済みコマンド）を取得、業務番号と見積り番号で追跡番号を取得、処理済みコマンドを貨物予約と同じトランザクションで記録、期待版で保存（Bolt 24。確定した予約の要約（<code>BookingSummary</code>）を確定時刻の新しい順に上限まで取得（S-10。集約を組み立てない。予約サガの状態は予約サガのリポジトリから予約 ID の集合でまとめて取得。Bolt 25b）。荷主企業の予約の要約を同じ並びで上限まで取得（C-06。他社の予約は返さない。BR-07。荷主用の照会のサービス <code>CustomerBookingQueryService</code> が使い、画面は企業を比べない。追跡の荷主の照会と同じ形。Bolt 27b））</td>
 </tr>
 <tr>
 <td style="text-align: left;">追跡</td>

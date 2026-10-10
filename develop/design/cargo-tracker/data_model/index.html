@@ -9469,7 +9469,7 @@
 <tr>
 <td style="text-align: left;"><code>booking.booking</code></td>
 <td style="text-align: left;"><code>tracking_number</code>（一意）、（<code>shipper_company_id</code>、<code>status</code>）、（<code>transport_request_number</code>）、（<code>transport_request_number</code>、<code>quotation_no</code>）（一意）</td>
-<td style="text-align: left;">追跡番号での照会、荷主の予約一覧、業務番号から予約をたどる社内の照会（Bolt 23、R-31）、見積りの照会の前に同じ見積りの予約を引く（Bolt 24）。S-10 予約一覧（Bolt 25b）は予約版 1 の <code>committed_at</code> の新しい順に引くが、R0.1 では予約が数十件なので索引を足さない（確定時刻の索引は W11 の一覧の本体で決める）</td>
+<td style="text-align: left;">追跡番号での照会、荷主の予約一覧、業務番号から予約をたどる社内の照会（Bolt 23、R-31）、見積りの照会の前に同じ見積りの予約を引く（Bolt 24）。S-10 予約一覧（Bolt 25b）は予約版 1 の <code>committed_at</code> の新しい順に引くが、R0.1 では予約が数十件なので索引を足さない（確定時刻の索引は W11 の一覧の本体で決める）。C-06 予約一覧（荷主。Bolt 27b）は（<code>shipper_company_id</code>、<code>status</code>）の索引 <code>ix_booking_shipper_status</code> で荷主企業を絞り、索引は足さない</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>booking.booking_saga</code></td>
