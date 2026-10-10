@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>1 章 業務フロー | cargo-tracker ユーザーマニュアル</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="manual-header">
+    <a class="manual-home" href="index.html">cargo-tracker ユーザーマニュアル</a>
+  </header>
+  <main class="manual-content">
+    <a class="manual-nav-link" href="index.html">← マニュアル目次</a>
+    <h1 id="1-章-業務フロー">1 章 業務フロー</h1>
+<p>一般貨物 1 件が、荷主の見積依頼から追跡の照会まで進む流れ（WF-1）です。各工程で使う画面の章を示します。</p>
+<h2 id="wf-1-見積依頼から追跡の照会まで">WF-1 見積依頼から追跡の照会まで</h2>
+<p class="plantuml"><img src="http://www.plantuml.com/plantuml/svg/ZP39Ji9G58RtVGhUGTpWXbSnaQW9Wu6oOz5R1SiK2AA6GG67CaanWBI10WzpUWTMVGL3BvegQjpU_zplVF_nnyJ3g1WF1OK4o-kMCIVP95vSCIcP49n8y34rIxjvQtctRfeWbwn5dIX5GBU0L58euiiPe0h8sGCX7143dkZfyOdey-nvQByf9F3Db3mFNCplD3piaiRyWx1DGSxiBg9FdujsLLqVKH_NxkcWp8TjKs7TCPsyqhSSquUiCs0T1P2nbaOWIxQP_ghjvThkOSxdBu0qB5NOOnta4XcMcNdEzUZ336lL_-brjYYvHD8hril_T3tlRzSZzHThfj391SWbzz9DpTM2wIrwtSC5VPDMPgoLSmecjf7MeiKKvrZ6dAa8K0zh3MeiRLDPrr8ihmFg0UhQPjeXpDUvqH-bk8bbI4nj0-hmBO0qccnRPXLGcsQcP8ouAg0io6YdwRxJD2P6pWH_87mK3mNV0G00" alt="PlantUML 図" loading="lazy"></p><table>
+<thead>
+<tr>
+<th align="left">#</th>
+<th align="left">工程</th>
+<th align="left">担当</th>
+<th align="left">見積依頼の状態（荷主の画面の表示）</th>
+<th align="left">章</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left">1</td>
+<td align="left">見積依頼を作成して提出する</td>
+<td align="left">荷主担当者</td>
+<td align="left">審査中（A 社の対応待ち）</td>
+<td align="left"><a href="03-%E8%A6%8B%E7%A9%8D%E4%BE%9D%E9%A0%BC.html">3 章</a></td>
+</tr>
+<tr>
+<td align="left">2</td>
+<td align="left">見積依頼を審査し、見積りを作成して提示する</td>
+<td align="left">営業担当者</td>
+<td align="left">見積り作成中（A 社の対応待ち）→ 見積提示済み（お客様の対応待ち）</td>
+<td align="left">追加予定</td>
+</tr>
+<tr>
+<td align="left">3</td>
+<td align="left">見積りに回答する（この条件で詳細経路設計へ進む）</td>
+<td align="left">荷主担当者</td>
+<td align="left">経路設計中（A 社の対応待ち）</td>
+<td align="left"><a href="04-%E8%A6%8B%E7%A9%8D%E3%82%8A%E3%81%B8%E3%81%AE%E5%9B%9E%E7%AD%94%E3%81%A8%E6%89%BF%E8%AA%8D.html#41-%E8%A6%8B%E7%A9%8D%E3%82%8A%E3%81%B8%E3%81%AE%E5%9B%9E%E7%AD%94">4.1</a></td>
+</tr>
+<tr>
+<td align="left">4</td>
+<td align="left">経路の候補を比較して確定する</td>
+<td align="left">経路設計者</td>
+<td align="left">見積りと経路の承認待ち（お客様の対応待ち）</td>
+<td align="left">追加予定</td>
+</tr>
+<tr>
+<td align="left">5</td>
+<td align="left">見積りと経路を承認する</td>
+<td align="left">荷主担当者</td>
+<td align="left">予約待ち（A 社の対応待ち）</td>
+<td align="left"><a href="04-%E8%A6%8B%E7%A9%8D%E3%82%8A%E3%81%B8%E3%81%AE%E5%9B%9E%E7%AD%94%E3%81%A8%E6%89%BF%E8%AA%8D.html#42-%E8%A6%8B%E7%A9%8D%E3%82%8A%E3%81%A8%E7%B5%8C%E8%B7%AF%E3%81%AE%E6%89%BF%E8%AA%8D">4.2</a></td>
+</tr>
+<tr>
+<td align="left">6</td>
+<td align="left">本予約を確定する</td>
+<td align="left">営業担当者</td>
+<td align="left">予約確定済み</td>
+<td align="left">追加予定</td>
+</tr>
+<tr>
+<td align="left">7</td>
+<td align="left">主要な実績（集荷など）を登録する</td>
+<td align="left">追跡管理者</td>
+<td align="left">—</td>
+<td align="left">追加予定</td>
+</tr>
+<tr>
+<td align="left">8</td>
+<td align="left">予約と追跡の状況を確かめる</td>
+<td align="left">荷主担当者</td>
+<td align="left">—</td>
+<td align="left"><a href="05-%E4%BA%88%E7%B4%84%E4%B8%80%E8%A6%A7%E3%81%A8%E8%BF%BD%E8%B7%A1%E3%81%AE%E7%85%A7%E4%BC%9A.html">5 章</a></td>
+</tr>
+</tbody></table>
+<h2 id="注意補足">注意・補足</h2>
+<ul>
+<li>見積依頼の状態の括弧の中は、いま誰の対応を待っているかを示します。「お客様の対応待ち」のときは、荷主担当者の操作で次の工程へ進みます</li>
+<li>見積りへの回答は予約の確定ではありません。経路が決まった後に、あらためて見積りと経路を確かめて承認します。承認も予約の確定ではなく、承認の後に担当営業が本予約を確定します</li>
+<li>危険物・冷凍貨物などの特殊な貨物は、Release 0.1 では扱いません。見積依頼の作成の画面に示される手動の窓口へご連絡ください</li>
+<li>見積依頼の差戻し（営業担当者が直しを求めたとき）は、<a href="03-%E8%A6%8B%E7%A9%8D%E4%BE%9D%E9%A0%BC.html#33-%E8%A6%8B%E7%A9%8D%E4%BE%9D%E9%A0%BC%E3%81%AE%E8%A9%B3%E7%B4%B0">3.3 見積依頼の詳細</a> の注意・補足を見てください</li>
+</ul>
+
+    <a class="manual-nav-link" href="index.html">← マニュアル目次</a>
+  </main>
+  <footer class="manual-footer">cargo-tracker ユーザーマニュアル</footer>
+</body>
+</html>

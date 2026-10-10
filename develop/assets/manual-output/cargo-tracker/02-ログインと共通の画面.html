@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>2 章 ログインと共通の画面 | cargo-tracker ユーザーマニュアル</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="manual-header">
+    <a class="manual-home" href="index.html">cargo-tracker ユーザーマニュアル</a>
+  </header>
+  <main class="manual-content">
+    <a class="manual-nav-link" href="index.html">← マニュアル目次</a>
+    <h1 id="2-章-ログインと共通の画面">2 章 ログインと共通の画面</h1>
+<p>cargo-tracker にログインする手順と、どの役割でも共通の画面（画面の構成、権限がない画面、もう一度ログインする画面）を説明します。本章は <a href="01-%E6%A5%AD%E5%8B%99%E3%83%95%E3%83%AD%E3%83%BC.html#wf-1-%E8%A6%8B%E7%A9%8D%E4%BE%9D%E9%A0%BC%E3%81%8B%E3%82%89%E8%BF%BD%E8%B7%A1%E3%81%AE%E7%85%A7%E4%BC%9A%E3%81%BE%E3%81%A7">WF-1</a> のすべての工程の前提です。</p>
+<p>画面の開き方: ブラウザで cargo-tracker の URL を開きます。ログインしていなければ、ログインの画面が開きます。</p>
+<table>
+<thead>
+<tr>
+<th align="left">画面</th>
+<th align="left">役割</th>
+<th align="left">節</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left">ログイン</td>
+<td align="left">メールアドレスと password でログインする</td>
+<td align="left"><a href="#21-%E3%83%AD%E3%82%B0%E3%82%A4%E3%83%B3">2.1</a></td>
+</tr>
+<tr>
+<td align="left">画面の構成</td>
+<td align="left">ヘッダー・ナビゲーション・窓口の案内</td>
+<td align="left"><a href="#22-%E7%94%BB%E9%9D%A2%E3%81%AE%E6%A7%8B%E6%88%90">2.2</a></td>
+</tr>
+<tr>
+<td align="left">権限がありません</td>
+<td align="left">役割にない画面を開いたときに示される</td>
+<td align="left"><a href="#23-%E6%A8%A9%E9%99%90%E3%81%8C%E3%81%82%E3%82%8A%E3%81%BE%E3%81%9B%E3%82%93">2.3</a></td>
+</tr>
+<tr>
+<td align="left">もう一度ログインしてください</td>
+<td align="left">一定時間が過ぎてログアウトしたときに示される</td>
+<td align="left"><a href="#24-%E3%82%82%E3%81%86%E4%B8%80%E5%BA%A6%E3%83%AD%E3%82%B0%E3%82%A4%E3%83%B3%E3%81%97%E3%81%A6%E3%81%8F%E3%81%A0%E3%81%95%E3%81%84">2.4</a></td>
+</tr>
+</tbody></table>
+<h2 id="21-ログイン">2.1 ログイン</h2>
+<h3 id="この画面でできること">この画面でできること</h3>
+<ul>
+<li>メールアドレスと password で cargo-tracker にログインします。ログインすると、役割ごとの最初の画面（ホーム）が開きます</li>
+</ul>
+<h3 id="画面の開き方">画面の開き方</h3>
+<ul>
+<li>cargo-tracker の URL を開きます（URL: <code>/login</code>）</li>
+</ul>
+<h3 id="画面の説明">画面の説明</h3>
+<p><img src="assets/02-login.png" alt="ログイン"></p>
+<table>
+<thead>
+<tr>
+<th align="left">#</th>
+<th align="left">項目</th>
+<th align="left">説明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left">①</td>
+<td align="left">メールアドレス</td>
+<td align="left">利用者として登録されたメールアドレス</td>
+</tr>
+<tr>
+<td align="left">②</td>
+<td align="left">password</td>
+<td align="left">利用者の password</td>
+</tr>
+<tr>
+<td align="left">③</td>
+<td align="left">「ログイン」</td>
+<td align="left">入力した内容でログインします</td>
+</tr>
+</tbody></table>
+<h3 id="操作手順">操作手順</h3>
+<ol>
+<li>「メールアドレス」と「password」を入力します</li>
+<li>「ログイン」をクリックします</li>
+<li>役割ごとのホームが開きます。荷主担当者は見積依頼の一覧、営業担当者は見積依頼の受付一覧が開きます</li>
+</ol>
+<h3 id="注意補足">注意・補足</h3>
+<ul>
+<li>メールアドレスか password が違うと、「メールアドレスまたは password が正しくありません。」と示されます。どちらが違うかは示しません</li>
+<li>ログインできない場合は、荷主の方は担当営業に、社内の方はシステム管理者にお問い合わせください</li>
+<li>画面の右上の「ログアウト」をクリックするとログアウトし、ログインの画面に「ログアウトしました。」と示されます</li>
+</ul>
+<h2 id="22-画面の構成">2.2 画面の構成</h2>
+<h3 id="この画面でできること">この画面でできること</h3>
+<ul>
+<li>ログインした後の画面は、どれも同じ構成です。ナビゲーションから、役割で使える画面を開きます</li>
+</ul>
+<h3 id="画面の開き方">画面の開き方</h3>
+<ul>
+<li>ログインした後のすべての画面</li>
+</ul>
+<h3 id="画面の説明">画面の説明</h3>
+<p><img src="assets/03-request-list.png" alt="画面の構成（荷主担当者の見積依頼の一覧）"></p>
+<table>
+<thead>
+<tr>
+<th align="left">#</th>
+<th align="left">項目</th>
+<th align="left">説明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left">①</td>
+<td align="left">ヘッダー</td>
+<td align="left">左に「cargo-tracker」、右にログインしている利用者（会社名と名前）と「ログアウト」</td>
+</tr>
+<tr>
+<td align="left">②</td>
+<td align="left">ナビゲーション</td>
+<td align="left">役割で使える画面の一覧。いま開いている画面の項目が強調されます</td>
+</tr>
+<tr>
+<td align="left">③</td>
+<td align="left">メインの領域</td>
+<td align="left">画面ごとの内容</td>
+</tr>
+<tr>
+<td align="left">④</td>
+<td align="left">窓口の案内</td>
+<td align="left">画面の下の「お困りのときは: カスタマーサポート 平日 09:00〜18:00（Asia/Tokyo）」</td>
+</tr>
+</tbody></table>
+<p>荷主担当者のナビゲーションの項目は次のとおりです。</p>
+<table>
+<thead>
+<tr>
+<th align="left">項目</th>
+<th align="left">開く画面</th>
+<th align="left">章</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left">見積依頼</td>
+<td align="left">見積依頼の一覧</td>
+<td align="left"><a href="03-%E8%A6%8B%E7%A9%8D%E4%BE%9D%E9%A0%BC.html">3 章</a></td>
+</tr>
+<tr>
+<td align="left">予約</td>
+<td align="left">予約一覧</td>
+<td align="left"><a href="05-%E4%BA%88%E7%B4%84%E4%B8%80%E8%A6%A7%E3%81%A8%E8%BF%BD%E8%B7%A1%E3%81%AE%E7%85%A7%E4%BC%9A.html#51-%E4%BA%88%E7%B4%84%E4%B8%80%E8%A6%A7">5.1</a></td>
+</tr>
+<tr>
+<td align="left">追跡の照会</td>
+<td align="left">追跡の照会</td>
+<td align="left"><a href="05-%E4%BA%88%E7%B4%84%E4%B8%80%E8%A6%A7%E3%81%A8%E8%BF%BD%E8%B7%A1%E3%81%AE%E7%85%A7%E4%BC%9A.html#52-%E8%BF%BD%E8%B7%A1%E3%81%AE%E7%85%A7%E4%BC%9A">5.2</a></td>
+</tr>
+<tr>
+<td align="left">問い合わせ</td>
+<td align="left">（準備中）</td>
+<td align="left">—</td>
+</tr>
+<tr>
+<td align="left">通知</td>
+<td align="left">（準備中）</td>
+<td align="left">—</td>
+</tr>
+</tbody></table>
+<h3 id="操作手順">操作手順</h3>
+<ol>
+<li>ナビゲーションの項目をクリックすると、その画面が開きます</li>
+<li>画面の幅が狭いときは、ナビゲーションがメニューのボタンにまとまります。ボタンを押すと項目が開きます</li>
+</ol>
+<h3 id="注意補足">注意・補足</h3>
+<ul>
+<li>「問い合わせ」「通知」は、まだ作っていない画面です。開くと「この画面は準備中です」と示されます。使えるようになるまでは、担当営業にご連絡ください</li>
+</ul>
+<h2 id="23-権限がありません">2.3 権限がありません</h2>
+<h3 id="この画面でできること">この画面でできること</h3>
+<ul>
+<li>役割にない画面（荷主担当者が社内の画面を開いたときなど）を開くと示されます。操作はできません</li>
+</ul>
+<h3 id="画面の開き方">画面の開き方</h3>
+<ul>
+<li>役割にない画面の URL を直接開いたときに示されます</li>
+</ul>
+<h3 id="画面の説明">画面の説明</h3>
+<p><img src="assets/02-forbidden.png" alt="権限がありません"></p>
+<table>
+<thead>
+<tr>
+<th align="left">#</th>
+<th align="left">項目</th>
+<th align="left">説明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left">①</td>
+<td align="left">メッセージ</td>
+<td align="left">「この画面を表示する権限がありません。」と、問い合わせ先</td>
+</tr>
+<tr>
+<td align="left">②</td>
+<td align="left">「ホームへ戻る」</td>
+<td align="left">役割ごとのホームへ戻ります</td>
+</tr>
+</tbody></table>
+<h3 id="操作手順">操作手順</h3>
+<ol>
+<li>「ホームへ戻る」をクリックします</li>
+</ol>
+<h3 id="注意補足">注意・補足</h3>
+<ul>
+<li>自分の役割で使う画面なのにこの画面が示される場合は、荷主の方は担当営業に、社内の方はシステム管理者にお問い合わせください</li>
+</ul>
+<h2 id="24-もう一度ログインしてください">2.4 もう一度ログインしてください</h2>
+<h3 id="この画面でできること">この画面でできること</h3>
+<ul>
+<li>一定時間操作がなかったとき、またはログインから 8 時間を過ぎたときに、ログアウトして示されます</li>
+</ul>
+<h3 id="画面の開き方">画面の開き方</h3>
+<ul>
+<li>ログアウトした後に画面を操作すると示されます（URL: <code>/session-expired</code>）</li>
+</ul>
+<h3 id="画面の説明">画面の説明</h3>
+<p><img src="assets/02-session-expired.png" alt="もう一度ログインしてください"></p>
+<table>
+<thead>
+<tr>
+<th align="left">#</th>
+<th align="left">項目</th>
+<th align="left">説明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left">①</td>
+<td align="left">メッセージ</td>
+<td align="left">ログアウトした理由と、ログインすると開いていた画面に戻ること</td>
+</tr>
+<tr>
+<td align="left">②</td>
+<td align="left">「ログインへ」</td>
+<td align="left">ログインの画面を開きます</td>
+</tr>
+</tbody></table>
+<h3 id="操作手順">操作手順</h3>
+<ol>
+<li>「ログインへ」をクリックします</li>
+<li><a href="#21-%E3%83%AD%E3%82%B0%E3%82%A4%E3%83%B3">2.1 ログイン</a> の手順でログインします。開いていた画面に戻ります</li>
+</ol>
+<h3 id="注意補足">注意・補足</h3>
+<ul>
+<li>送信していない入力は保存されていません。ログインし直した後に、もう一度入力してください</li>
+<li>操作がないままの時間は 30 分まで、ログインしてからの時間は 8 時間までです</li>
+<li>繰り返しログアウトされる場合は、荷主の方は担当営業に、社内の方はシステム管理者にお問い合わせください</li>
+</ul>
+
+    <a class="manual-nav-link" href="index.html">← マニュアル目次</a>
+  </main>
+  <footer class="manual-footer">cargo-tracker ユーザーマニュアル</footer>
+</body>
+</html>

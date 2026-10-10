@@ -1,0 +1,24 @@
+:root { --fg: #24292f; --muted: #57606a; --border: #d0d7de; --accent: #1a237e; --bg-soft: #f6f8fa; }
+* { box-sizing: border-box; }
+body { margin: 0; color: var(--fg); font-family: -apple-system, "Segoe UI", "Hiragino Kaku Gothic ProN", Meiryo, sans-serif; line-height: 1.8; background: #fff; }
+.manual-header { display: flex; justify-content: space-between; align-items: center; gap: 1rem; padding: 0.75rem 1.5rem; background: var(--accent); color: #fff; position: sticky; top: 0; }
+.manual-header a { color: #fff; text-decoration: none; }
+.manual-home { font-weight: bold; }
+.manual-portal { font-size: 0.85rem; opacity: 0.9; }
+.manual-content { max-width: 900px; margin: 0 auto; padding: 2rem 1.5rem 4rem; }
+.manual-nav-link { display: inline-block; margin: 0.5rem 0; color: var(--accent); text-decoration: none; font-size: 0.9rem; }
+.manual-content h1 { font-size: 1.8rem; border-bottom: 2px solid var(--border); padding-bottom: 0.3rem; }
+.manual-content h2 { font-size: 1.4rem; border-bottom: 1px solid var(--border); padding-bottom: 0.3rem; margin-top: 2.5rem; }
+.manual-content h3 { font-size: 1.15rem; margin-top: 2rem; }
+.manual-content h4 { font-size: 1rem; color: var(--muted); }
+.manual-content a { color: #0969da; }
+.manual-content table { border-collapse: collapse; width: 100%; margin: 1rem 0; font-size: 0.95rem; }
+.manual-content th, .manual-content td { border: 1px solid var(--border); padding: 0.4rem 0.6rem; text-align: left; }
+.manual-content th { background: var(--bg-soft); }
+.manual-content code { background: var(--bg-soft); padding: 0.1rem 0.3rem; border-radius: 4px; font-size: 0.9em; }
+.manual-content pre { background: var(--bg-soft); padding: 1rem; border-radius: 6px; overflow-x: auto; }
+.manual-content pre code { background: none; padding: 0; }
+.manual-content blockquote { margin: 1rem 0; padding: 0.5rem 1rem; border-left: 4px solid var(--border); background: var(--bg-soft); color: var(--muted); }
+.manual-content img { max-width: 100%; height: auto; border: 1px solid var(--border); border-radius: 4px; }
+.manual-content .plantuml img { border: none; }
+.manual-footer { text-align: center; padding: 1.5rem; font-size: 0.8rem; color: var(--muted); border-top: 1px solid var(--border); }

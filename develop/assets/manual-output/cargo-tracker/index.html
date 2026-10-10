@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>cargo-tracker ユーザーマニュアル | cargo-tracker ユーザーマニュアル</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="manual-header">
+    <a class="manual-home" href="index.html">cargo-tracker ユーザーマニュアル</a>
+  </header>
+  <main class="manual-content">
+    
+    <h1 id="cargo-tracker-ユーザーマニュアル">cargo-tracker ユーザーマニュアル</h1>
+<p>cargo-tracker（国際貨物の見積りから予約・追跡までを扱うシステム）を使う業務担当者のための手引きです。画面の前に座った担当者が、その場で手を動かせることを目的にしています。</p>
+<p>本マニュアルは Release 0.1（最初の縦の流れ）の画面を対象にしています。まだ作っていない画面（「この画面は準備中です」と示される画面）は載せていません。</p>
+<h2 id="章の構成">章の構成</h2>
+<p>章は、役割ごとのナビゲーションの並びに沿っています。業務の順序は <a href="01-%E6%A5%AD%E5%8B%99%E3%83%95%E3%83%AD%E3%83%BC.html">1 章 業務フロー</a> が示し、各章はそこから参照されます。</p>
+<table>
+<thead>
+<tr>
+<th align="left">章</th>
+<th align="left">内容</th>
+<th align="left">主に使う人</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left"><a href="00-%E3%81%AF%E3%81%98%E3%82%81%E3%81%AB.html">はじめに</a></td>
+<td align="left">読み方、表記の決まり、動作環境</td>
+<td align="left">全員</td>
+</tr>
+<tr>
+<td align="left"><a href="01-%E6%A5%AD%E5%8B%99%E3%83%95%E3%83%AD%E3%83%BC.html">1 章 業務フロー</a></td>
+<td align="left">見積依頼から追跡の照会までの流れと、各章への入口</td>
+<td align="left">全員</td>
+</tr>
+<tr>
+<td align="left"><a href="02-%E3%83%AD%E3%82%B0%E3%82%A4%E3%83%B3%E3%81%A8%E5%85%B1%E9%80%9A%E3%81%AE%E7%94%BB%E9%9D%A2.html">2 章 ログインと共通の画面</a></td>
+<td align="left">ログイン、画面の構成とナビゲーション、権限がない画面、再ログイン</td>
+<td align="left">全員</td>
+</tr>
+<tr>
+<td align="left"><a href="03-%E8%A6%8B%E7%A9%8D%E4%BE%9D%E9%A0%BC.html">3 章 見積依頼</a></td>
+<td align="left">見積依頼の作成と提出、一覧、詳細</td>
+<td align="left">荷主担当者</td>
+</tr>
+<tr>
+<td align="left"><a href="04-%E8%A6%8B%E7%A9%8D%E3%82%8A%E3%81%B8%E3%81%AE%E5%9B%9E%E7%AD%94%E3%81%A8%E6%89%BF%E8%AA%8D.html">4 章 見積りへの回答と承認</a></td>
+<td align="left">見積りへの回答（詳細経路設計へ進む）、見積りと経路の承認</td>
+<td align="left">荷主担当者</td>
+</tr>
+<tr>
+<td align="left"><a href="05-%E4%BA%88%E7%B4%84%E4%B8%80%E8%A6%A7%E3%81%A8%E8%BF%BD%E8%B7%A1%E3%81%AE%E7%85%A7%E4%BC%9A.html">5 章 予約一覧と追跡の照会</a></td>
+<td align="left">自社の予約の一覧、貨物の追跡の照会</td>
+<td align="left">荷主担当者</td>
+</tr>
+</tbody></table>
+<p>社内の担当者（営業担当者・経路設計者・追跡管理者）の章は、続けて追加します。</p>
+<h2 id="執筆の決まり執筆者向け">執筆の決まり（執筆者向け）</h2>
+<h3 id="節のテンプレート">節のテンプレート</h3>
+<p>画面ごとに 1 節を立て、次の順で書きます。読者が実際に迷う順序です。</p>
+<ol>
+<li>この画面でできること（業務上の目的）</li>
+<li>画面の開き方（ナビゲーションと URL）</li>
+<li>画面の説明（キャプチャと、丸数字の項目の表。丸数字は画面の上から順）</li>
+<li>操作手順（番号付き。クリックする対象は「」で囲む）</li>
+<li>注意・補足（業務ルール上の注意、エラーのときの対処、関連する画面）</li>
+</ol>
+<p>各章の冒頭には、章で何をするか、対応する業務フローへのリンク、画面の開き方、画面の一覧を置きます。</p>
+<h3 id="画面のキャプチャ">画面のキャプチャ</h3>
+<p>キャプチャは手作業で置かず、画面の層のテストで自動で撮ります。</p>
+<pre><code class="language-bash">cd apps/cargo-tracker
+./gradlew manualScreenshots
+</code></pre>
+<ul>
+<li>撮影の手順は <code>apps/cargo-tracker/src/test/resources/features/ui/manual_screenshots.feature</code>（<code>@manual</code>）にあります。新しい画面を撮るときは、ここに「画面 &quot;…&quot; を開く」「画面を &quot;…&quot; として撮る」の手順を足します</li>
+<li>本番と同じ設定（開発用の利用者の欄がない）で撮り、データはテストが作るダミーです。実在の企業・人の情報は写りません</li>
+<li>ファイル名は <code>&lt;章番号&gt;-&lt;英字の名前&gt;.png</code> です。航海番号や追跡番号などはテストのたびに変わるので、撮り直すと値が変わります</li>
+</ul>
+<h3 id="html-のマニュアル">HTML のマニュアル</h3>
+<p>このマニュアルは、ER 図・JIG と同じくドキュメントサイトに HTML としても載ります（<code>npx gulp manual:build</code>。<code>npx gulp docs:generate</code> にも含まれます）。出力先は <code>docs/assets/manual-output/cargo-tracker/</code> です。</p>
+<h3 id="章を足したとき">章を足したとき</h3>
+<p>本ページの章の表、<a href="00-%E3%81%AF%E3%81%98%E3%82%81%E3%81%AB.html">はじめに</a> の全体の構成、<code>mkdocs.yml</code> のナビゲーションの 3 か所をそろえます。</p>
+
+    
+  </main>
+  <footer class="manual-footer">cargo-tracker ユーザーマニュアル</footer>
+</body>
+</html>

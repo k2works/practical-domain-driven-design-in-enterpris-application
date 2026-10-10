@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>4 章 見積りへの回答と承認 | cargo-tracker ユーザーマニュアル</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="manual-header">
+    <a class="manual-home" href="index.html">cargo-tracker ユーザーマニュアル</a>
+  </header>
+  <main class="manual-content">
+    <a class="manual-nav-link" href="index.html">← マニュアル目次</a>
+    <h1 id="4-章-見積りへの回答と承認">4 章 見積りへの回答と承認</h1>
+<p>営業担当者が提示した見積りに、荷主担当者が回答し、経路が決まった後に見積りと経路を承認する画面です。本章は <a href="01-%E6%A5%AD%E5%8B%99%E3%83%95%E3%83%AD%E3%83%BC.html#wf-1-%E8%A6%8B%E7%A9%8D%E4%BE%9D%E9%A0%BC%E3%81%8B%E3%82%89%E8%BF%BD%E8%B7%A1%E3%81%AE%E7%85%A7%E4%BC%9A%E3%81%BE%E3%81%A7">WF-1</a> の工程 3（見積りに回答する）と工程 5（見積りと経路を承認する）に対応します。</p>
+<p>画面の開き方: ナビゲーションの「見積依頼」→ 見積依頼の一覧の業務番号 → 見積依頼の詳細の「見積り」の節。</p>
+<table>
+<thead>
+<tr>
+<th align="left">画面</th>
+<th align="left">役割</th>
+<th align="left">節</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left">見積りへの回答</td>
+<td align="left">料金根拠と経路方針を確かめ、詳細経路設計へ進む</td>
+<td align="left"><a href="#41-%E8%A6%8B%E7%A9%8D%E3%82%8A%E3%81%B8%E3%81%AE%E5%9B%9E%E7%AD%94">4.1</a></td>
+</tr>
+<tr>
+<td align="left">見積りと経路の承認</td>
+<td align="left">確定した経路を確かめ、見積りと経路を承認する</td>
+<td align="left"><a href="#42-%E8%A6%8B%E7%A9%8D%E3%82%8A%E3%81%A8%E7%B5%8C%E8%B7%AF%E3%81%AE%E6%89%BF%E8%AA%8D">4.2</a></td>
+</tr>
+</tbody></table>
+<p>回答の後の経路の設計は経路設計者が、承認の後の本予約の確定は担当営業が行います。</p>
+<h2 id="41-見積りへの回答">4.1 見積りへの回答</h2>
+<h3 id="この画面でできること">この画面でできること</h3>
+<ul>
+<li>提示された見積り（料金根拠・合計・有効期限・経路方針）を確かめ、この条件で詳細経路設計へ進むと回答します</li>
+</ul>
+<h3 id="画面の開き方">画面の開き方</h3>
+<ul>
+<li>見積依頼の詳細の「見積りに回答する」（URL: <code>/customer/transport-requests/{業務番号}/quotations/{見積り番号}/response</code>）</li>
+</ul>
+<p>見積りが提示されると、見積依頼の詳細は次のように「見積り」の節が加わり、状態が「見積提示済み（お客様の対応待ち）」になります。</p>
+<p><img src="assets/04-request-detail-quoted.png" alt="見積依頼の詳細（見積りが提示された後）"></p>
+<h3 id="画面の説明">画面の説明</h3>
+<p><img src="assets/04-response.png" alt="見積りへの回答"></p>
+<table>
+<thead>
+<tr>
+<th align="left">#</th>
+<th align="left">項目</th>
+<th align="left">説明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left">①</td>
+<td align="left">状態</td>
+<td align="left">「提示済み（回答待ち）」</td>
+</tr>
+<tr>
+<td align="left">②</td>
+<td align="left">料金根拠</td>
+<td align="left">明細ごとの内容・金額・参照した契約条件</td>
+</tr>
+<tr>
+<td align="left">③</td>
+<td align="left">合計・有効期限</td>
+<td align="left">有効期限までに回答してください</td>
+</tr>
+<tr>
+<td align="left">④</td>
+<td align="left">経路方針</td>
+<td align="left">主な経由地、概算の出発と到着。詳細な経路は経路設計者の承認の後に確定します</td>
+</tr>
+<tr>
+<td align="left">⑤</td>
+<td align="left">「この条件で詳細経路設計へ進む」</td>
+<td align="left">回答します</td>
+</tr>
+<tr>
+<td align="left">⑥</td>
+<td align="left">「見積依頼の詳細へ戻る」</td>
+<td align="left">回答せずに戻ります</td>
+</tr>
+</tbody></table>
+<h3 id="操作手順">操作手順</h3>
+<ol>
+<li>料金根拠・合計・有効期限・経路方針を確かめます</li>
+<li>「この条件で詳細経路設計へ進む」をクリックします</li>
+<li>見積依頼の詳細に戻り、状態が「経路設計中（A 社の対応待ち）」になります</li>
+</ol>
+<p><img src="assets/04-request-detail-routing.png" alt="見積依頼の詳細（回答した後）"></p>
+<h3 id="注意補足">注意・補足</h3>
+<ul>
+<li>この回答は予約の確定ではありません。経路が決まったら、あらためて見積りと経路を確かめて承認していただきます（<a href="#42-%E8%A6%8B%E7%A9%8D%E3%82%8A%E3%81%A8%E7%B5%8C%E8%B7%AF%E3%81%AE%E6%89%BF%E8%AA%8D">4.2</a>）</li>
+<li>辞退や条件の相談は担当営業にご連絡ください</li>
+<li>回答を取り消したい場合は、業務番号を添えて担当営業にご連絡ください</li>
+<li>有効期限を過ぎた見積りには回答できません。担当営業が新しい見積りを用意します</li>
+</ul>
+<h2 id="42-見積りと経路の承認">4.2 見積りと経路の承認</h2>
+<h3 id="この画面でできること">この画面でできること</h3>
+<ul>
+<li>経路設計者が確定した経路（航海・積地と揚地・出発予定・到着予定）と見積りを確かめて承認します</li>
+</ul>
+<h3 id="画面の開き方">画面の開き方</h3>
+<ul>
+<li>見積依頼の詳細の「見積りと経路を確かめて承認へ」（URL: <code>/customer/transport-requests/{業務番号}/quotations/{見積り番号}/approval</code>）</li>
+</ul>
+<p>経路が確定すると、見積依頼の詳細の状態が「見積りと経路の承認待ち（お客様の対応待ち）」になり、確定した経路が示されます。</p>
+<p><img src="assets/04-request-detail-awaiting-approval.png" alt="見積依頼の詳細（経路が確定した後）"></p>
+<h3 id="画面の説明">画面の説明</h3>
+<p><img src="assets/04-approval.png" alt="見積りと経路の承認"></p>
+<table>
+<thead>
+<tr>
+<th align="left">#</th>
+<th align="left">項目</th>
+<th align="left">説明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left">①</td>
+<td align="left">状態</td>
+<td align="left">「見積りと経路の承認待ち」</td>
+</tr>
+<tr>
+<td align="left">②</td>
+<td align="left">見積り</td>
+<td align="left">料金根拠・合計・有効期限・経路方針（回答のときと同じ内容）</td>
+</tr>
+<tr>
+<td align="left">③</td>
+<td align="left">確定した経路</td>
+<td align="left">経路の番号と版、確定の日時、到着予定、区間ごとの航海・積地 → 揚地・出発予定・到着予定</td>
+</tr>
+<tr>
+<td align="left">④</td>
+<td align="left">「この見積りと経路で承認する」</td>
+<td align="left">承認します。有効期限までに承認してください</td>
+</tr>
+<tr>
+<td align="left">⑤</td>
+<td align="left">「見積依頼の詳細へ戻る」</td>
+<td align="left">承認せずに戻ります</td>
+</tr>
+</tbody></table>
+<h3 id="操作手順">操作手順</h3>
+<ol>
+<li>見積りと確定した経路を確かめます</li>
+<li>「この見積りと経路で承認する」をクリックします</li>
+<li>見積依頼の詳細に戻り、状態が「予約待ち（A 社の対応待ち）」になります</li>
+</ol>
+<p><img src="assets/04-request-detail-approved.png" alt="見積依頼の詳細（承認した後）"></p>
+<h3 id="注意補足">注意・補足</h3>
+<ul>
+<li>承認は本予約の確定ではありません。承認の後、担当営業が本予約を確定します。確定すると、予約一覧（<a href="05-%E4%BA%88%E7%B4%84%E4%B8%80%E8%A6%A7%E3%81%A8%E8%BF%BD%E8%B7%A1%E3%81%AE%E7%85%A7%E4%BC%9A.html#51-%E4%BA%88%E7%B4%84%E4%B8%80%E8%A6%A7">5.1</a>）に出ます</li>
+<li>条件を見直したい場合は、承認せずに業務番号を添えて担当営業にご連絡ください</li>
+<li>経路は経路設計者が確定してから届きます。見積依頼の詳細に確定した経路が出ていないときは、少し待ってから画面を開き直してください</li>
+<li>有効期限を過ぎた見積りは承認できません。担当営業が新しい見積りを用意します</li>
+</ul>
+
+    <a class="manual-nav-link" href="index.html">← マニュアル目次</a>
+  </main>
+  <footer class="manual-footer">cargo-tracker ユーザーマニュアル</footer>
+</body>
+</html>

@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>5 章 予約一覧と追跡の照会 | cargo-tracker ユーザーマニュアル</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="manual-header">
+    <a class="manual-home" href="index.html">cargo-tracker ユーザーマニュアル</a>
+  </header>
+  <main class="manual-content">
+    <a class="manual-nav-link" href="index.html">← マニュアル目次</a>
+    <h1 id="5-章-予約一覧と追跡の照会">5 章 予約一覧と追跡の照会</h1>
+<p>担当営業が本予約を確定した後に、荷主担当者が自社の予約と貨物の輸送の状況を確かめる画面です。本章は <a href="01-%E6%A5%AD%E5%8B%99%E3%83%95%E3%83%AD%E3%83%BC.html#wf-1-%E8%A6%8B%E7%A9%8D%E4%BE%9D%E9%A0%BC%E3%81%8B%E3%82%89%E8%BF%BD%E8%B7%A1%E3%81%AE%E7%85%A7%E4%BC%9A%E3%81%BE%E3%81%A7">WF-1</a> の工程 8（予約と追跡の状況を確かめる）に対応します。</p>
+<p>画面の開き方: ナビゲーションの「予約」（URL: <code>/customer/bookings</code>）、ナビゲーションの「追跡の照会」（URL: <code>/customer/tracking-records</code>）。</p>
+<table>
+<thead>
+<tr>
+<th align="left">画面</th>
+<th align="left">役割</th>
+<th align="left">節</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left">予約一覧</td>
+<td align="left">自社の本予約と追跡の状況を確かめる</td>
+<td align="left"><a href="#51-%E4%BA%88%E7%B4%84%E4%B8%80%E8%A6%A7">5.1</a></td>
+</tr>
+<tr>
+<td align="left">追跡の照会</td>
+<td align="left">追跡番号で照会する、自社の追跡中の貨物を一覧する</td>
+<td align="left"><a href="#52-%E8%BF%BD%E8%B7%A1%E3%81%AE%E7%85%A7%E4%BC%9A">5.2</a></td>
+</tr>
+<tr>
+<td align="left">照会の結果</td>
+<td align="left">現在の状態・到着の予定と見込み・予定区間・主要な実績を確かめる</td>
+<td align="left"><a href="#53-%E7%85%A7%E4%BC%9A%E3%81%AE%E7%B5%90%E6%9E%9C">5.3</a></td>
+</tr>
+</tbody></table>
+<p>予約の変更・取消しの申請と予約の詳細は、Release 0.1 ではまだありません。担当営業にご連絡ください。</p>
+<h2 id="51-予約一覧">5.1 予約一覧</h2>
+<h3 id="この画面でできること">この画面でできること</h3>
+<ul>
+<li>自社の確定した本予約を、確定した時刻の新しい順に確かめます。追跡が始まった予約は、追跡番号から照会の結果を開けます</li>
+</ul>
+<h3 id="画面の開き方">画面の開き方</h3>
+<ul>
+<li>ナビゲーションの「予約」（URL: <code>/customer/bookings</code>）</li>
+</ul>
+<h3 id="画面の説明">画面の説明</h3>
+<p><img src="assets/05-bookings.png" alt="予約一覧"></p>
+<table>
+<thead>
+<tr>
+<th align="left">#</th>
+<th align="left">項目</th>
+<th align="left">説明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left">①</td>
+<td align="left">案内</td>
+<td align="left">追跡番号から照会を開けること、追跡の開始待ちはしばらくすると追跡中に変わること</td>
+</tr>
+<tr>
+<td align="left">②</td>
+<td align="left">追跡番号</td>
+<td align="left">貨物の追跡番号（CT…）。追跡中ならクリックで照会の結果が開きます</td>
+</tr>
+<tr>
+<td align="left">③</td>
+<td align="left">見積依頼</td>
+<td align="left">業務番号と見積り番号。業務番号をクリックすると見積依頼の詳細が開きます</td>
+</tr>
+<tr>
+<td align="left">④</td>
+<td align="left">確定時刻</td>
+<td align="left">本予約を最初に確定した日時</td>
+</tr>
+<tr>
+<td align="left">⑤</td>
+<td align="left">追跡の状況</td>
+<td align="left">「追跡中」「追跡の開始待ち」「追跡の開始待ち（担当営業が確認します）」</td>
+</tr>
+</tbody></table>
+<h3 id="操作手順">操作手順</h3>
+<ol>
+<li>確かめたい予約の追跡番号をクリックします。照会の結果（<a href="#53-%E7%85%A7%E4%BC%9A%E3%81%AE%E7%B5%90%E6%9E%9C">5.3</a>）が開きます</li>
+<li>見積りの内容を確かめたいときは、見積依頼の業務番号をクリックします</li>
+</ol>
+<h3 id="注意補足">注意・補足</h3>
+<ul>
+<li>一覧に出るのは自社の予約だけです。新しい 50 件まで示します。それより前の予約は、追跡番号を入れて追跡の照会で確かめてください</li>
+<li>確定した直後は「追跡の開始待ち」で、追跡番号はまだクリックできません。しばらくして画面を開き直すと「追跡中」に変わります</li>
+<li>「追跡の開始待ち（担当営業が確認します）」のときは、担当営業が状況を確かめています</li>
+<li>予約がなければ「確定した予約はまだありません。担当営業が本予約を確定すると、ここに出ます。」と示されます</li>
+</ul>
+<h2 id="52-追跡の照会">5.2 追跡の照会</h2>
+<h3 id="この画面でできること">この画面でできること</h3>
+<ul>
+<li>追跡番号を入れて貨物を照会します。自社の追跡中の貨物の一覧から選ぶこともできます</li>
+</ul>
+<h3 id="画面の開き方">画面の開き方</h3>
+<ul>
+<li>ナビゲーションの「追跡の照会」（URL: <code>/customer/tracking-records</code>）</li>
+</ul>
+<h3 id="画面の説明">画面の説明</h3>
+<p><img src="assets/05-tracking-list.png" alt="追跡の照会"></p>
+<table>
+<thead>
+<tr>
+<th align="left">#</th>
+<th align="left">項目</th>
+<th align="left">説明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left">①</td>
+<td align="left">追跡番号</td>
+<td align="left">照会する追跡番号を入れます（例: CTABCDEFGH2345）</td>
+</tr>
+<tr>
+<td align="left">②</td>
+<td align="left">「照会する」</td>
+<td align="left">入れた追跡番号で照会の結果を開きます</td>
+</tr>
+<tr>
+<td align="left">③</td>
+<td align="left">自社の貨物</td>
+<td align="left">自社の追跡中の貨物の一覧（追跡番号・現在の状態・最新の到着見込み）。本予約の確定の新しい順</td>
+</tr>
+</tbody></table>
+<h3 id="操作手順">操作手順</h3>
+<ol>
+<li>「追跡番号」に追跡番号を入れて「照会する」をクリックします。または、自社の貨物の一覧の追跡番号をクリックします</li>
+<li>照会の結果（<a href="#53-%E7%85%A7%E4%BC%9A%E3%81%AE%E7%B5%90%E6%9E%9C">5.3</a>）が開きます</li>
+</ol>
+<h3 id="注意補足">注意・補足</h3>
+<ul>
+<li>追跡番号は大文字・小文字を区別しません。電話やメールで区切って伝えられた番号（ハイフンや空白を含む）もそのまま入れられます</li>
+<li>追跡番号の形が違うと「CT で始まる 14 文字で入力してください。英字の I・L・O と数字の 0・1 は使いません（例: CTABCDEFGH2345）」と示されます</li>
+<li>一覧は新しい 50 件まで示します。それより前の貨物は、追跡番号を入れて照会してください</li>
+</ul>
+<h2 id="53-照会の結果">5.3 照会の結果</h2>
+<h3 id="この画面でできること">この画面でできること</h3>
+<ul>
+<li>貨物の現在の状態、当初の到着予定と最新の到着見込み、予定の区間、主要な実績（集荷など）と出典を確かめます</li>
+</ul>
+<h3 id="画面の開き方">画面の開き方</h3>
+<ul>
+<li>追跡の照会の「照会する」、自社の貨物の一覧の追跡番号、予約一覧の追跡番号（URL: <code>/customer/tracking-records/{追跡番号}</code>）</li>
+</ul>
+<h3 id="画面の説明">画面の説明</h3>
+<p><img src="assets/05-tracking-result.png" alt="照会の結果"></p>
+<table>
+<thead>
+<tr>
+<th align="left">#</th>
+<th align="left">項目</th>
+<th align="left">説明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left">①</td>
+<td align="left">追跡番号・現在の状態</td>
+<td align="left">例: 「集荷済み」</td>
+</tr>
+<tr>
+<td align="left">②</td>
+<td align="left">当初の到着予定・最新の到着見込み</td>
+<td align="left">予約したときの到着予定と、いまの見込み</td>
+</tr>
+<tr>
+<td align="left">③</td>
+<td align="left">予定</td>
+<td align="left">区間ごとの航海・積地から揚地・出発予定・到着予定</td>
+</tr>
+<tr>
+<td align="left">④</td>
+<td align="left">主要実績</td>
+<td align="left">集荷などの実績を発生した時刻の順に示します。発生した日時・出典（現場記録など）・出典を取得した日時</td>
+</tr>
+<tr>
+<td align="left">⑤</td>
+<td align="left">「追跡の照会へ戻る」</td>
+<td align="left">追跡の照会に戻ります</td>
+</tr>
+</tbody></table>
+<h3 id="操作手順">操作手順</h3>
+<ol>
+<li>現在の状態と到着の見込みを確かめます</li>
+<li>主要実績で、いつ・どこで何が起きたかと、その情報の出典を確かめます</li>
+</ol>
+<h3 id="注意補足">注意・補足</h3>
+<ul>
+<li>主要実績がまだなければ「主要実績はまだありません。」と示されます</li>
+<li>見つからない追跡番号、または自社の貨物でない追跡番号を開くと、次の画面が示されます。追跡番号に誤りがないか確かめてください</li>
+</ul>
+<p><img src="assets/05-tracking-not-found.png" alt="追跡番号が見つかりません"></p>
+
+    <a class="manual-nav-link" href="index.html">← マニュアル目次</a>
+  </main>
+  <footer class="manual-footer">cargo-tracker ユーザーマニュアル</footer>
+</body>
+</html>
