@@ -161,6 +161,10 @@ tasks.register('documentationTest', Test) {
 	inputs.dir('src/main/java').withPropertyName('mainSources').withPathSensitivity(PathSensitivity.RELATIVE)
 	inputs.file('../../docs/design/cargo-tracker/domain_model.md').withPropertyName('domainModel').withPathSensitivity(PathSensitivity.RELATIVE)
 	systemProperty 'cargotracker.domain-model', file('../../docs/design/cargo-tracker/domain_model.md').absolutePath
+	// 受入条件とシナリオの照合（Bolt 28）。表とタグを変えたら照合し直す
+	inputs.file('../../docs/design/cargo-tracker/test_strategy.md').withPropertyName('testStrategy').withPathSensitivity(PathSensitivity.RELATIVE)
+	inputs.dir('src/test/resources/features').withPropertyName('features').withPathSensitivity(PathSensitivity.RELATIVE)
+	systemProperty 'cargotracker.test-strategy', file('../../docs/design/cargo-tracker/test_strategy.md').absolutePath
 }
 
 tasks.named('check') {

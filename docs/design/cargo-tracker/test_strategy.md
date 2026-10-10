@@ -123,6 +123,7 @@ stop
 | `@<不変条件 ID>` | ドメインモデルの不変条件 | `@B-INV-03` |
 | `@must`・`@should`・`@could` | ストーリーの優先度（Feature に付ける） | `@must` |
 | `@ui` | 画面を通す階層 | — |
+| `@main-flow` | 主成功の流れ（一般貨物 1 件が提出から追跡の照会まで画面で縦に通る。Bolt 28）。流れの通しを確かめる機能で、`@US-nn` を付けない例外（前例は `layout_ui.feature`） | — |
 | `@wip` | 作業中。CI の必須の実行から外す | — |
 | `@golden` | Golden dataset による経路の検証 | — |
 
@@ -279,7 +280,7 @@ CI で毎回実行する。
 | AT-02 | 依存は `interfaces` → `application` → `domain` ← `infrastructure` の向きに限る | ArchUnit | バックエンドアーキテクチャ |
 | AT-03 | モジュール（コンテキスト）間の依存は公開 API とドメインイベントだけ | Spring Modulith `ApplicationModules.verify()` | ADR-001 |
 | AT-04 | 各コンテキストのマッパーの SQL は自分のスキーマ（と `platform` の許可された表）以外を参照しない | マッパー XML を読む独自のテスト（`MapperSchemaArchitectureTest`。Bolt 25 で実装。既知の限界: `FROM`・`JOIN`・`INTO`・`UPDATE` の直後の `スキーマ.表` だけを見るので、カンマ結合の 2 つ目の表、`USING`、修飾のない表名、引用符付きの識別子、Java の注釈の SQL（今は使っていない）は拾わない。検査するスキーマの一覧は手で保つ。Bolt 25 レビュー A-5） | ADR-001（改訂）、データモデル |
-| AT-05 | ステップ定義は自分のコンテキストの入力ポートと公開 API だけを呼ぶ | ArchUnit | 本書 BDD |
+| AT-05 | 業務のルールの層のステップ定義（`<コンテキスト>.acceptance`）は、自分のコンテキストのアプリケーション層・ドメイン層と共有カーネル、他のコンテキストの公開 API にだけ依存し、自分のインフラストラクチャ層・画面と他のコンテキストの内部に依存しない（入力ポートのほか、コマンドの組み立てと結果の確かめにドメインの値オブジェクト・集約を使うことは認める。画面の層のステップ定義は対象外） | ArchUnit（`AcceptanceStepArchitectureTest`。Bolt 28 で、Bolt 2 から後に回していたものを実態に合わせて作った） | 本書 BDD |
 | AT-06 | 本番の実行クラスパスに H2・Hibernate ORM・JPA が含まれない | Gradle のビルド検査 | ADR-007 |
 
 ## 統合テスト
@@ -470,6 +471,43 @@ Cucumber の実行結果（HTML・JSON）を CI の成果物として保存し�
 | 横断受入条件（BR-13、WCAG 2.2.1） | — | 7 | 各 `@ui` とアクセシビリティテスト | ○ |
 
 合計で受入条件は 120 件（横断の 7 件と Golden dataset を除く）、`@ui` が 15 フロー前後になる見込みである。
+
+### Release 0.1 の受入条件
+
+Release 0.1 の範囲（Release 0.1 のマイルストーンの Issue の題名の範囲）の受入条件と、それを確かめるシナリオのタグ。`AcceptanceCriteriaCoverageTest`（`documentationTest`）が、各行のタグに `@wip` でないシナリオがあることを照合する（Bolt 28。Bolt 2 レビュー R-17）。Release 1.0 では、Must の全受入条件の表を足して照合を広げる。
+
+| ストーリー | 受入条件 | 確かめるもの |
+| :--- | :--- | :--- |
+| US-01 | AC1 | `@US-01-AC1` |
+| US-01 | AC2 | `@US-01-AC2` |
+| US-01 | AC4 | `@US-01-AC4` |
+| US-02 | AC1 | `@US-02-AC1` |
+| US-02 | AC2 | `@US-02-AC2` |
+| US-02 | AC3 | `@US-02-AC3` |
+| US-03 | AC1 | `@US-03-AC1` |
+| US-03 | AC2 | `@US-03-AC2` |
+| US-03 | AC3 | `@US-03-AC3` |
+| US-03 | AC4 | `@US-03-AC4` |
+| US-03 | AC5 | `@US-03-AC5` |
+| US-24 | AC1 | `@US-24-AC1` |
+| US-24 | AC4 | `@US-24-AC4` |
+| US-24 | AC5 | `@US-24-AC5` |
+| US-06 | AC1 | `@US-06-AC1` |
+| US-06 | AC2 | `@US-06-AC2` |
+| US-06 | AC3 | `@US-06-AC3` |
+| US-07 | AC1 | `@US-07-AC1` |
+| US-07 | AC2 | `@US-07-AC2` |
+| US-21 | AC1 | `@US-21-AC1` |
+| US-04 | AC1 | `@US-04-AC1` |
+| US-04 | AC2 | `@US-04-AC2` |
+| US-04 | AC4 | `@US-04-AC4` |
+| US-04 | 重複確定の防止 | `@B-INV-11` |
+| US-12 | AC1 | `@US-12-AC1` |
+| US-12 | AC2 | `@US-12-AC2` |
+| US-09 | AC1 | `@US-09-AC1` |
+| US-18 | AC2 | `@US-18-AC2` |
+
+注: US-18 は Release 0.1 の #6 の AC2 だけを照合に入れる。Bolt 14 で Release 1.0 の #13 から前倒しした AC1 の password と session の部分・AC4・AC5 は、セキュリティの統合テストなどに移した（`AuthenticationSecurityIntegrationTest`・`SessionLifetimeFilterTest`・`UserTest`・`AuditRecordTest`）。Release 1.0 の表で扱う。主成功の流れ（`main_flow_ui.feature`、`@main-flow`）は流れの通しを確かめるシナリオで、受入条件のタグを付けない（照合の数に入れない）。
 
 ## 後続工程への引継ぎ
 

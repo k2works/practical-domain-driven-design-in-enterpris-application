@@ -56,9 +56,10 @@ public class RoutingUiSteps {
     /**
      * シナリオで入れた航海を消す。航海は DB をシナリオの間で共有するため、残すとほかのシナリオの航海とつながって候補が増え、
      * 上限（20 件）で切られる（Bolt 17 レビュー D-62）。接続時間規則は同じ値なので残しても判定は変わらない。
-     * 案件の候補の区間が航海を参照する外部キーはないため、航海だけを消す（候補は案件ごとに残る）。
+     * 案件の候補の区間が航海を参照する外部キーはないため、航海だけを消す（候補は案件ごとに残る）。航海を作る手順を持つ画面の層の機能は
+     * すべて条件に入れる（Bolt 28 で、予約の `@US-04` の漏れと主成功の流れ `@main-flow` を足した）。
      */
-    @io.cucumber.java.After("(@US-06 or @US-07 or @US-12 or @US-09) and @ui")
+    @io.cucumber.java.After("(@US-04 or @US-06 or @US-07 or @US-12 or @US-09 or @main-flow) and @ui")
     public void シナリオの航海を消す() {
         jdbc.update("DELETE FROM routing.port_call WHERE voyage_number LIKE ?", "UI-" + suffix + "-%");
         jdbc.update("DELETE FROM routing.voyage WHERE voyage_number LIKE ?", "UI-" + suffix + "-%");
