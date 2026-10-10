@@ -4100,7 +4100,7 @@
     
   
   
-    <span class="md-status md-status--draft"></span>
+    <span class="md-status md-status--stable"></span>
   
 
   
@@ -4125,7 +4125,7 @@
     
   
   
-    <span class="md-status md-status--draft"></span>
+    <span class="md-status md-status--stable"></span>
   
 
   
@@ -9156,6 +9156,11 @@
 </tr>
 </thead>
 <tbody>
+<tr>
+<td style="text-align: left;">2026-10-10</td>
+<td style="text-align: left;">計画を承認した（確認ポイントはすべて推奨のとおり。確認必須の認可（確認ポイント 8）は事前に判断を受けた。T-80）</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5、承認 human:kakimomokuri</td>
+</tr>
 <tr>
 <td style="text-align: left;">2026-10-10</td>
 <td style="text-align: left;">開始準備の整合性検証（計画と設計 12 件、横断 11 件）の指摘を反映した。主な修正は次のとおり。<br>- 準備中の画面: <code>login_ui.feature</code> の準備中のシナリオの項目を直す、<code>@GetMapping</code> の正規表現からも外す。<br>- 追跡の列の語: 「準備中」をやめ「追跡の開始待ち」に。<br>- 上限の判定: <code>RecentBookings</code> に寄せて重ねない。<br>- BC の独立: リンクは URL の文字列、<code>allowedDependencies</code> は変えない。<br>- 画面の層: デモと幅 320 CSS px のシナリオを分ける、荷主に切り替えるステップ。<br>- 社内の識別子: 型の部品名の見張りのテスト。<br>- 確認ポイント 15（見積依頼の列とリンクの名前）・16（C-10 からの戻り）を足した。<br>- 引き継ぎ: Bolt 25b の確定時刻の表記（未決）。<br>- 設計文書の反映の一覧（処理中表示、予約の節、索引、Javadoc）。<br>- 承認ゲートと局面の列挙は開始準備の同期で release_plan を直す。</td>
