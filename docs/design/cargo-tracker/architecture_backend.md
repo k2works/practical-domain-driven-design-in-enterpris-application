@@ -4,7 +4,7 @@ title: "cargo-tracker バックエンドアーキテクチャ"
 description: "cargo-tracker の境界づけられたコンテキスト、コンテキストごとのドメインロジックパターン、パッケージ構成、サガとドメインイベントによる連携（ARCH-HO-01〜03）、受信サービスの方針。"
 tags: [design, architecture, backend]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-09T06:48:59Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-10T01:10:33Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T07:11:12Z }
   - { by: human:kakimomokuri, at: 2026-10-01T07:41:04Z }
@@ -155,6 +155,7 @@ end note
 | UTC 時点 | UTC で保存し、表示時に利用者のタイムゾーンと UTC offset を付ける（BR-10） |
 | コマンド ID、集約の版 | ARCH-HO-01 の冪等性と期待版の照合に使う |
 | 場所 | UN/LOCODE による場所の識別（インセプションデッキ ガイディングプリンシプル） |
+| 出典 | 実績や採用値の根拠（種類・参照・取得時刻）。種類は外部原本・現場記録・社内確認・手動入力の 4 値（航海の出典の種類と同じ）。業務の判断（採否・重複）は各コンテキストが持つ（ドメインモデルの共有カーネルで設計済み。Bolt 26b で追跡の主要実績に使い始めた。DE-13（W7）でイベントの契約に入る） |
 | 業務 ID の基底 | 予約 ID、追跡番号などの不透明な識別子の基底型 |
 
 ## ドメインロジックパターンの選択

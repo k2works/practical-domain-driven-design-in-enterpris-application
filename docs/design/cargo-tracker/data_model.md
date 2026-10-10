@@ -4,7 +4,7 @@ title: "cargo-tracker データモデル"
 description: "cargo-tracker の概念データモデル、スキーマ分割、命名と型の規約（H2 と PostgreSQL の共通部分）、コンテキストごとの論理データモデルと ER 図、版・追記専用・冪等性・イベント配信の表現。"
 tags: [design, data-model]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-09T11:27:19Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-10T01:10:33Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T07:48:17Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:01:37Z }
@@ -756,9 +756,9 @@ sc ||--o{ sca
 
 | 表 | 主な制約 | 対応する不変条件 |
 | :--- | :--- | :--- |
-| `tracking_record` | `current_status` は主要実績から導出した結果の保存（照会のため）。導出の正は集約のロジック。`original_eta`（確定した経路版の到着予定）と `latest_eta`（最新の見込み）を別に持つ。`procedure_stage` は通関等の手続き中の段階。UK（`booking_id`）`uk_tracking_record_booking`: 予約 1 件に追跡記録 1 件で、DE-07 の再配信の冪等の正（T-INV-11。Bolt 25）。`booking_status` IN（`CONFIRMED`、`CANCELLED`、`COMPLETED`）（`ck_tracking_record_booking_status`）。`current_status` IN（`BOOKED`、`PICKUP_SCHEDULED`、`PICKED_UP`、`RECEIVED_AT_ORIGIN`、`IN_TRANSIT`、`TRANSSHIPPING`、`ARRIVED_AT_DESTINATION`、`READY_FOR_DELIVERY`、`DELIVERED`、`UNDER_REVIEW`）（`ck_tracking_record_current_status`。ドメインモデルの追跡状態）。実績に関わる列（`status_basis_milestone_no`、`under_review_reason`、`procedure_stage`、`last_acquired_at`）と経路版・到着予定の 4 列は NULL 可で作る（Bolt 25 の追跡の開始では経路版と到着予定に必ず値を入れる）。監査用の列の `created_by`・`updated_by` は持たない（行はイベントの購読でシステムが作る。共通の規約の例外）。`created_at` は追跡の開始時刻で、S-11 追跡一覧はその新しい順（同じ時刻なら `tracking_number` の順）に引く（Bolt 26） | T-INV-08、T-INV-10、T-INV-11 |
+| `tracking_record` | `current_status` は主要実績から導出した結果の保存（照会のため）。導出の正は集約のロジック。`original_eta`（確定した経路版の到着予定）と `latest_eta`（最新の見込み）を別に持つ。`procedure_stage` は通関等の手続き中の段階。UK（`booking_id`）`uk_tracking_record_booking`: 予約 1 件に追跡記録 1 件で、DE-07 の再配信の冪等の正（T-INV-11。Bolt 25）。`booking_status` IN（`CONFIRMED`、`CANCELLED`、`COMPLETED`）（`ck_tracking_record_booking_status`）。`current_status` IN（`BOOKED`、`PICKUP_SCHEDULED`、`PICKED_UP`、`RECEIVED_AT_ORIGIN`、`IN_TRANSIT`、`TRANSSHIPPING`、`ARRIVED_AT_DESTINATION`、`READY_FOR_DELIVERY`、`DELIVERED`、`UNDER_REVIEW`）（`ck_tracking_record_current_status`。ドメインモデルの追跡状態）。実績に関わる列（`status_basis_milestone_no`、`under_review_reason`、`procedure_stage`、`last_acquired_at`）と経路版・到着予定の 4 列は NULL 可で作る（Bolt 25 の追跡の開始では経路版と到着予定に必ず値を入れる）。監査用の列の `created_by`・`updated_by` は持たない（行はイベントの購読でシステムが作る。共通の規約の例外）。`created_at` は追跡の開始時刻で、S-11 追跡一覧はその新しい順（同じ時刻なら `tracking_number` の順）に引く（Bolt 26）。主要実績の登録（Bolt 26b）は `current_status`・`status_basis_milestone_no`・`version`・`updated_at` だけを UPDATE し（`WHERE version = 読み込んだ版`）、経路版・到着予定・`last_acquired_at` は書かない（到着見込みと鮮度は W7）。`status_basis_milestone_no` から `milestone` への外部キーは張らない（UPDATE を INSERT より先に行うため。張るかは Bolt 26c のスキーマのゲートで決める） | T-INV-08、T-INV-10、T-INV-11 |
 | `scheduled_leg` | 主キー（`tracking_number`、`leg_no`）。`leg_no >= 1`（`ck_scheduled_leg_no`）、`arrival_at > departure_at`（`ck_scheduled_leg_arrival`。見積りの `assigned_route_leg` と同じ）。値は経路設計の公開 API が返す確定した経路版の区間（Bolt 25） | T-INV-12 |
-| `milestone` | UK（`tracking_number`、`source_kind`、`source_ref`）。`state` IN（`DRAFT`、`ADOPTED`、`UNDER_REVIEW`、`RETAINED_ONLY`）。DELETE の権限なし | T-INV-01〜03、T-INV-05 |
+| `milestone` | UK（`tracking_number`、`source_kind`、`source_ref`）`uk_milestone_source`。`kind` IN（`PICKUP`、`RECEIPT_AT_ORIGIN`、`DEPARTURE`、`TRANSSHIPMENT`、`ARRIVAL`、`DELIVERY`）。`source_kind` は航海と同じ 4 値。`state` IN（`DRAFT`、`ADOPTED`、`UNDER_REVIEW`、`RETAINED_ONLY`）。DELETE の権限なし（表の印 `[no-delete]`）。Bolt 26b は使う列だけで作った（`revised_by`・`revised_at` は下書きの修正の W7、`shown_to_customer` は顧客への表示の US-11・US-13 で足す）。実績は追跡記録の `update` で、まだ表にない実績番号だけを INSERT する | T-INV-01〜03、T-INV-05 |
 | `correction` | `status` IN（`PENDING_APPROVAL`、`APPLIED`、`REJECTED`）。`approved_by` は `registered_by` と異なる（`CHECK`） | T-INV-06 |
 | `service_case` | `kind` IN（`CUSTOMER_INQUIRY`、`QUOTATION_CONSULTATION`、`AMENDMENT`、`REDESIGN`、`EXTERNAL_OUTAGE`、`REJECTED_MILESTONE`、`SAGA_FAILURE`）。`status` IN（`RECEIVED`、`ESCALATED`、`IN_PROGRESS`、`ANSWERED`、`CLOSED`、`DUPLICATE_CLOSED`）。`shipper_company_id` で荷主の照会範囲を限る。`acknowledged_at` は営業時間外の優先度高の自動受付の時刻 | SC-INV-01〜05 |
 | `inquiry_record` | `channel` IN（`WEB_SELF`、`WEB_INQUIRY`、`PHONE`、`EMAIL`）。`inquirer_kind` IN（`SHIPPER`、`CONSIGNEE`）。`escalated` は有人対応へ移ったか | IR-INV-01〜02、KPI-02 |
@@ -1108,7 +1108,7 @@ src/main/resources/db/
 | 権限 | 権限の付与と剥奪は PostgreSQL 用の `afterMigrate` のコールバックで行い、表の作成と同じ配備で反映する。新しい表を足したら、同じ変更でコールバックも更新する |
 | 後方互換 | ローリングデプロイのため、列の削除・名前の変更は「追加 → 移行 → 削除」に分ける（インフラ設計） |
 | 日本語名のコメント | 業務の表と列には、作るマイグレーションで日本語名のコメント（`COMMENT ON TABLE`・`COMMENT ON COLUMN`）を付ける。表の日本語名は本書の ER 図、列の日本語名はドメインモデルの用語集に合わせる。ER 図（SchemaSpy）に日本語名が出る。付け忘れは PostgreSQL の統合テスト（`SchemaCommentIntegrationTest`）が検出する（2026-10-03、human:kakimomokuri） |
-| 追記専用の印 | 追記専用の表には、作るマイグレーションで表のコメントの日本語名の後ろに印を付ける（`COMMENT ON TABLE ... IS '<日本語名> [append-only]'`。2026-10-03 に `'append-only'` だけの形から変えた）。PostgreSQL の `afterMigrate` のコールバックは、コメントが ` [append-only]` で終わる表からアプリケーション利用者の UPDATE・DELETE を外す（名指しにしないので、書き忘れで保護が黙って外れない）。印の付け忘れは、権限の統合テストが設計の一覧との一致で検出する（Bolt 3 レビュー R-02） |
+| 追記専用の印 | 追記専用の表には、作るマイグレーションで表のコメントの日本語名の後ろに印を付ける（`COMMENT ON TABLE ... IS '<日本語名> [append-only]'`。2026-10-03 に `'append-only'` だけの形から変えた）。PostgreSQL の `afterMigrate` のコールバックは、コメントが ` [append-only]` で終わる表からアプリケーション利用者の UPDATE・DELETE を外す（名指しにしないので、書き忘れで保護が黙って外れない）。印の付け忘れは、権限の統合テストが設計の一覧との一致で検出する（Bolt 3 レビュー R-02）。状態などを UPDATE するが行を消してはならない表（`tracking.milestone`）は、印 ` [no-delete]` を付け、`afterMigrate` が DELETE だけを外す（Bolt 26b。権限の統合テストの `NO_DELETE_TABLES`） |
 | スキーマの自動初期化 | 使わない。スキーマと表は Flyway だけが作る（Spring Modulith の `spring.modulith.events.jdbc.schema-initialization.enabled=false`。将来の Spring Session なども同じ）。既定権限（`ALTER DEFAULT PRIVILEGES`）も使わない。Flyway 以外で作られた表に UPDATE・DELETE が付くのを防ぐ。連番（SEQUENCE、IDENTITY）を使う表を足したら、コールバックに `USAGE ON ALL SEQUENCES` の付与を足す（Bolt 3 レビュー R-25） |
 | 凍結の時点 | 最初にステージングへ配置したマイグレーションは書き換えない。それまでは Bolt で使う列だけを作り、後の Bolt で足す。凍結の後に `NOT NULL` の列を足すときは、既定値付きで追加するか「追加 → 移行 → 制約」の 3 段にする。状態の `CHECK` 制約は、状態を足すたびに作り直す（Bolt 1 レビュー R-37） |
 

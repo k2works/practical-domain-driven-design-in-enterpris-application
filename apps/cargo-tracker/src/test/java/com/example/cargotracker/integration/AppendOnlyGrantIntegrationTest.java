@@ -119,7 +119,9 @@ class AppendOnlyGrantIntegrationTest {
         String trackingNumber = "CT"
                 + UUID.randomUUID().toString().replace("-", "").substring(0, 12).toUpperCase();
         Timestamp now = Timestamp.from(Instant.parse("2026-11-01T03:00:00Z"));
+        // 消せない行を共有の DB に残さないよう、1 つのトランザクションで確かめて最後に戻す（Bolt 26b レビュー P-5）
         try (Connection connection = connectAsApplicationUser()) {
+            connection.setAutoCommit(false);
             try (PreparedStatement trackingRecord = connection.prepareStatement("INSERT INTO tracking.tracking_record"
                     + " (tracking_number, booking_id, shipper_company_id, consignee_company_id, booking_status,"
                     + " current_status, version, created_at, updated_at)"
@@ -156,6 +158,7 @@ class AppendOnlyGrantIntegrationTest {
                                 SQLException.class,
                                 e -> assertThat(e.getSQLState()).isEqualTo(INSUFFICIENT_PRIVILEGE));
             }
+            connection.rollback();
         }
     }
 

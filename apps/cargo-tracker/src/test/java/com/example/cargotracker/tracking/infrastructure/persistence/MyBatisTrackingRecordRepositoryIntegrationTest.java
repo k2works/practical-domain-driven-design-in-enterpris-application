@@ -290,6 +290,14 @@ class MyBatisTrackingRecordRepositoryIntegrationTest {
 
         assertThatThrownBy(() -> repository.update(registered))
                 .isInstanceOf(ConcurrentTrackingRecordUpdateException.class);
+        // 先に書いた追跡記録の UPDATE も、セーブポイントに戻って元のまま（版・現在状態・根拠の実績番号）
+        assertThat(jdbc.queryForMap(
+                        "SELECT version, current_status, status_basis_milestone_no FROM tracking.tracking_record"
+                                + " WHERE tracking_number = ?",
+                        saved.trackingNumber().value()))
+                .containsEntry("version", 0L)
+                .containsEntry("current_status", "PICKUP_SCHEDULED")
+                .containsEntry("status_basis_milestone_no", null);
     }
 
     // PostgreSQL は制約違反でトランザクションを中断するので、制約ごとに 1 つのテストにする

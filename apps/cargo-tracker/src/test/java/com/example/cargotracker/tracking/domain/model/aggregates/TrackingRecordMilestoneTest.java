@@ -10,6 +10,7 @@ import static com.example.cargotracker.tracking.domain.model.TrackingFixture.sch
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import com.example.cargotracker.shared.domain.CompanyId;
 import com.example.cargotracker.shared.domain.Location;
 import com.example.cargotracker.shared.domain.Source;
 import com.example.cargotracker.shared.domain.SourceKind;
@@ -19,7 +20,11 @@ import com.example.cargotracker.tracking.domain.model.entities.Milestone;
 import com.example.cargotracker.tracking.domain.model.valueobjects.MilestoneKind;
 import com.example.cargotracker.tracking.domain.model.valueobjects.MilestoneRejectionReason;
 import com.example.cargotracker.tracking.domain.model.valueobjects.MilestoneState;
+import com.example.cargotracker.tracking.domain.model.valueobjects.Schedule;
+import com.example.cargotracker.tracking.domain.model.valueobjects.TrackedBookingStatus;
+import com.example.cargotracker.tracking.domain.model.valueobjects.TrackingNumber;
 import com.example.cargotracker.tracking.domain.model.valueobjects.TrackingStatus;
+import java.util.List;
 import java.util.OptionalInt;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
@@ -142,6 +147,62 @@ class TrackingRecordMilestoneTest {
                         MilestoneRegistrationRejected.class,
                         rejected ->
                                 assertThat(rejected.reason()).isEqualTo(MilestoneRejectionReason.OCCURRED_IN_FUTURE));
+    }
+
+    @Test
+    void 同じ出典の実績があれば発生時刻が未来でも拒否せず既存の実績を返す() {
+        TrackingRecord registered = started()
+                .registerMilestone(
+                        MilestoneKind.PICKUP, tokyo(), at("2026-11-01T02:30:00Z"), source("F-118"), REGISTRANT, NOW)
+                .trackingRecord();
+
+        MilestoneRegistration again = registered.registerMilestone(
+                MilestoneKind.PICKUP, tokyo(), at("2026-11-01T03:00:01Z"), source("F-118"), REGISTRANT, NOW);
+
+        assertThat(again.alreadyRegistered()).isTrue();
+        assertThat(again.milestone().milestoneNo()).isEqualTo(1);
+    }
+
+    @Test
+    void 実績番号が1からの連番でない追跡記録は組み立てられない() {
+        TrackingRecord trackingRecord = started();
+        TrackingNumber trackingNumber = trackingRecord.trackingNumber();
+        UUID bookingId = trackingRecord.bookingId();
+        CompanyId shipper = trackingRecord.shipperCompanyId();
+        CompanyId consignee = trackingRecord.consigneeCompanyId();
+        TrackedBookingStatus bookingStatus = trackingRecord.bookingStatus();
+        Schedule schedule = trackingRecord.schedule();
+        UtcInstant originalEta = trackingRecord.originalEta();
+        UtcInstant latestEta = trackingRecord.latestEta();
+        UtcInstant startedAt = trackingRecord.startedAt();
+        OptionalInt basis = OptionalInt.of(2);
+        Milestone second = new Milestone(
+                2,
+                MilestoneKind.PICKUP,
+                tokyo(),
+                at("2026-11-01T02:30:00Z"),
+                source("F-118"),
+                MilestoneState.ADOPTED,
+                REGISTRANT,
+                NOW);
+        List<Milestone> milestones = List.of(second);
+
+        assertThatThrownBy(() -> TrackingRecord.reconstitute(
+                        trackingNumber,
+                        bookingId,
+                        shipper,
+                        consignee,
+                        bookingStatus,
+                        schedule,
+                        TrackingStatus.PICKED_UP,
+                        basis,
+                        milestones,
+                        originalEta,
+                        latestEta,
+                        startedAt,
+                        1))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("連番");
     }
 
     private static TrackingRecord started() {

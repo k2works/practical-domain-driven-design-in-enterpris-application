@@ -162,6 +162,7 @@ nav:
           - Bolt 26 計画: development/cargo-tracker/bolt_26_plan.md
           - Bolt 26 終了報告: development/cargo-tracker/bolt_26_report.md
           - Bolt 26b 計画: development/cargo-tracker/bolt_26b_plan.md
+          - Bolt 26b 終了報告: development/cargo-tracker/bolt_26b_report.md
   - 運用:
       - 概要: operation/index.md
       - cargo-tracker:

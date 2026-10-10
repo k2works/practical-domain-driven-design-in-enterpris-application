@@ -28,7 +28,9 @@ class SourceTest {
 
     @Test
     void 参照が201文字なら拒否する() {
-        assertThatThrownBy(() -> new Source(SourceKind.MANUAL_ENTRY, "a".repeat(201), ACQUIRED_AT))
+        String reference = "a".repeat(201);
+
+        assertThatThrownBy(() -> new Source(SourceKind.MANUAL_ENTRY, reference, ACQUIRED_AT))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("200 文字");
     }

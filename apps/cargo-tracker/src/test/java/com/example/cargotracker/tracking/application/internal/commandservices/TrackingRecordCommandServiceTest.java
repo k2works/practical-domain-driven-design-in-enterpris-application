@@ -140,6 +140,14 @@ class TrackingRecordCommandServiceTest {
                 .isEmpty();
     }
 
+    @Test
+    void 画面を開いたときの版と違っても発生時刻が未来なら拒否の理由を返す() {
+        MilestoneRegistrationOutcome outcome = service.registerMilestone(command(7, "F-118", "2026-11-01T03:00:01Z"));
+
+        assertThat(outcome)
+                .isEqualTo(new MilestoneRegistrationOutcome.Rejected(MilestoneRejectionReason.OCCURRED_IN_FUTURE));
+    }
+
     private static RegisterMilestoneCommand command(long expectedVersion, String reference, String occurredAt) {
         return new RegisterMilestoneCommand(
                 TRACKING_NUMBER,

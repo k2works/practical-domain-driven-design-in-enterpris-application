@@ -114,7 +114,7 @@ public class MyBatisTrackingRecordRepository implements TrackingRecordRepository
                     mapper.insertMilestone(toRow(trackingNumber, milestone));
                 }
             }
-        } catch (DuplicateKeyException e) {
+        } catch (DuplicateKeyException _) {
             throw new ConcurrentTrackingRecordUpdateException(
                     trackingRecord.trackingNumber(), trackingRecord.aggregateVersion());
         }
