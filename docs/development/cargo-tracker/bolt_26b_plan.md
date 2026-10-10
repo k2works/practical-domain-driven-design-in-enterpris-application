@@ -3,7 +3,7 @@ type: Plan
 title: "Bolt 26b 計画 - 主要実績の登録の業務のルールと永続化（US-12 AC1・AC2）"
 description: "26b 回目の Bolt の計画。出典（共有カーネル）、主要実績、現在状態の導出、重複の出典の既存の記録を返す規則、主要実績の登録のコマンドサービス、tracking.milestone の表と永続化を、業務のルールの層の受入シナリオ・アプリケーション・ドメイン・永続化の順に、ステップ 1〜5 で定義する。S-13 の登録と S-12 の主要実績の一覧（画面）と tracking_record の NULL 可の列の見直しは Bolt 26c に分ける案。"
 tags: [development,bolt-plan]
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-10T01:10:33Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-10T01:29:42Z }
 ---
 
 # Bolt 26b 計画 - 主要実績の登録の業務のルールと永続化（US-12 AC1・AC2）
@@ -335,6 +335,7 @@ end note
 
 | 日付 | 更新内容 | 更新者 |
 | :--- | :--- | :--- |
+| 2026-10-10 | 終了報告を承認し、確認ポイントの決定（推奨のとおり。3・4 はステップ 4 で人が決定）と止まらなかった承認ゲートを事後に承認した。完了条件をすべて満たした（CI 緑、SonarQube PASS） | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-10-10 | 人の指示（`/goal Bolt26b`）で推奨のとおり進める。スキーマのゲート（ステップ 4）は T-80 により止まって判断を仰ぐ | anthropic/claude-opus-5-5、指示 human:kakimomokuri |
 | 2026-10-10 | 開始準備の整合性検証（計画と設計 14 件、横断 19 件）の指摘を反映した。主な修正は次のとおり。<br>- 範囲: 業務のルールと画面で分け、業務のルールの層のシナリオを足した。<br>- 出典の種類の値: 既存の CHECK にそろえた。<br>- 置き場所と名前: `entities`・`rules`・`TrackingRecordCommandService`・Outcome。<br>- 版: SQL で増やす。<br>- 使う列だけを作る。<br>- 状態遷移: 図の改訂を設計への反映にした。<br>- `[no-delete]` の一覧と表・列のコメント。<br>- 設計文書の反映先: architecture_backend.md。 | anthropic/claude-opus-5-5 |
 | 2026-10-10 | 初版作成（承認待ち） | anthropic/claude-opus-5-5 |
