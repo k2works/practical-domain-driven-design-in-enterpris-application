@@ -3,7 +3,10 @@ type: Plan
 title: "Bolt 26b 計画 - 主要実績の登録の業務のルールと永続化（US-12 AC1・AC2）"
 description: "26b 回目の Bolt の計画。出典（共有カーネル）、主要実績、現在状態の導出、重複の出典の既存の記録を返す規則、主要実績の登録のコマンドサービス、tracking.milestone の表と永続化を、業務のルールの層の受入シナリオ・アプリケーション・ドメイン・永続化の順に、ステップ 1〜5 で定義する。S-13 の登録と S-12 の主要実績の一覧（画面）と tracking_record の NULL 可の列の見直しは Bolt 26c に分ける案。"
 tags: [development,bolt-plan]
+status: stable
 generated: { by: anthropic/claude-opus-5-5, at: 2026-10-10T01:29:42Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-10-10T01:29:43Z }
 ---
 
 # Bolt 26b 計画 - 主要実績の登録の業務のルールと永続化（US-12 AC1・AC2）
