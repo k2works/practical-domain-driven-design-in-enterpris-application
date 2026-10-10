@@ -31,3 +31,4 @@ npm-debug.log*
 # 生成した設計ドキュメント（npx gulp docs:generate。CI の公開で毎回作る）
 docs/assets/schemaspy-output/
 docs/assets/jig-output/
+docs/assets/manual-output/

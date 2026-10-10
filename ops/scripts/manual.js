@@ -7,14 +7,21 @@ import plantumlEncoder from 'plantuml-encoder';
 
 /** 変換元（ユーザーマニュアルの Markdown）. */
 const SRC_DIR = path.join(process.cwd(), 'docs', 'manual');
-/** 変換先（静的マニュアルサイト）. */
-const OUT_DIR = path.join(process.cwd(), 'apps', 'manual');
+/**
+ * 変換先（静的マニュアルサイト）。JIG・ER 図（SchemaSpy）と同じく docs/assets の下に出し（Git に入れない）、
+ * MkDocs のサイトからリンクする（docs:generate で作る。2026-10-10 の人の指示）。`.env` の MANUAL_OUT_DIR で上書きできる.
+ */
+const OUT_DIR = process.env.MANUAL_OUT_DIR
+  ? path.resolve(process.env.MANUAL_OUT_DIR)
+  : path.join(process.cwd(), 'docs', 'assets', 'manual-output', 'cargo-tracker');
 /** PlantUML レンダリングサーバ（mkdocs と同じ既定値）. */
 const PLANTUML_SERVER = (
   process.env.PLANTUML_SERVER_URL || 'http://www.plantuml.com/plantuml'
 ).replace(/\/$/, '');
+/** 先頭の YAML フロントマター（`---` で囲んだ行）. */
+const FRONT_MATTER = /^---\r?\n[\s\S]*?\r?\n---\r?\n/;
 /** マニュアルのサイトタイトル（`.env` の MANUAL_TITLE で上書きする）. */
-const MANUAL_TITLE = process.env.MANUAL_TITLE || 'ユーザーマニュアル';
+const MANUAL_TITLE = process.env.MANUAL_TITLE || 'cargo-tracker ユーザーマニュアル';
 /** フッターの著作権表示（未設定なら出力しない。`.env` の MANUAL_COPYRIGHT で指定する）. */
 const MANUAL_COPYRIGHT = process.env.MANUAL_COPYRIGHT || '';
 /** 上位ポータルへの戻り先（未設定ならヘッダーにリンクを出さない）. */
@@ -35,6 +42,15 @@ function slugify(text) {
     .replace(/\./g, '')
     .replace(/\s+/g, '-')
     .toLowerCase();
+}
+
+/**
+ * 先頭の YAML フロントマター（OKF の type・title など）を除く。HTML の本文には出さない.
+ * @param {string} md Markdown 本文
+ * @returns {string} フロントマターを除いた Markdown
+ */
+function stripFrontMatter(md) {
+  return md.replace(FRONT_MATTER, '');
 }
 
 /**
@@ -141,7 +157,7 @@ body { margin: 0; color: var(--fg); font-family: -apple-system, "Segoe UI", "Hir
 `;
 
 /**
- * docs/manual の Markdown を HTML へ変換し apps/manual へ出力する Gulp タスクを登録する.
+ * docs/manual の Markdown を HTML へ変換し docs/assets/manual-output/cargo-tracker へ出力する Gulp タスクを登録する.
  * @param {import('gulp').Gulp} gulp Gulp インスタンス
  */
 export default function (gulp) {
@@ -175,7 +191,7 @@ export default function (gulp) {
 
       let converted = 0;
       for (const mdFile of mdFiles) {
-        const raw = fs.readFileSync(path.join(SRC_DIR, mdFile), 'utf8');
+        const raw = stripFrontMatter(fs.readFileSync(path.join(SRC_DIR, mdFile), 'utf8'));
         const titleMatch = raw.match(/^#\s+(.+)$/m);
         const title = titleMatch ? titleMatch[1].trim() : path.basename(mdFile, '.md');
 

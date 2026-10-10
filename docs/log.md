@@ -1,6 +1,13 @@
 # Docs Update Log
 
 ## 2026-10-10
+* **Creation**: [05-予約一覧と追跡の照会](/manual/05-予約一覧と追跡の照会.md) を作成（anthropic/claude-opus-5-5）
+* **Creation**: [04-見積りへの回答と承認](/manual/04-見積りへの回答と承認.md) を作成（anthropic/claude-opus-5-5）
+* **Creation**: [03-見積依頼](/manual/03-見積依頼.md) を作成（anthropic/claude-opus-5-5）
+* **Creation**: [02-ログインと共通の画面](/manual/02-ログインと共通の画面.md) を作成（anthropic/claude-opus-5-5）
+* **Creation**: [01-業務フロー](/manual/01-業務フロー.md) を作成（anthropic/claude-opus-5-5）
+* **Creation**: [00-はじめに](/manual/00-はじめに.md) を作成（anthropic/claude-opus-5-5）
+* **Update**: [application_development_setup](/operation/cargo-tracker/application_development_setup.md) を更新（anthropic/claude-opus-5-5）
 * **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
 * **Update**: [development_strategy](/development/cargo-tracker/development_strategy.md) を更新（anthropic/claude-opus-5-5）
 * **Update**: [bolt_28_report](/development/cargo-tracker/bolt_28_report.md) を更新（anthropic/claude-opus-5-5）

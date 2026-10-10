@@ -4,7 +4,7 @@ title: "アプリケーション開発環境セットアップ手順書 - cargo-
 description: "cargo-tracker（A 社国際貨物輸送管理システム）を、開発者の PC で起動・テスト・品質チェックするための手順を示す。"
 tags: [operation,playbook,setup]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-09T03:58:29Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-10T09:48:46Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-02T01:37:59Z }
   - { by: human:kakimomokuri, at: 2026-10-02T07:02:38Z }
@@ -125,6 +125,8 @@ npx gulp sonar-local:issues   # 指摘の一覧
 | Spring Modulith のモジュール図 | `build/spring-modulith-docs/` | `test`（`ModuleDocumentationTest`。`check` でも動く） |
 | ドキュメントサイトに載せる ER 図（SchemaSpy） | リポジトリのルートの `docs/assets/schemaspy-output/cargo-tracker/index.html` | リポジトリのルートで `npx gulp schemaspy:generate`（Docker が要る。約 2 分） |
 | ドキュメントサイトに載せる JIG | リポジトリのルートの `docs/assets/jig-output/cargo-tracker/index.html` | リポジトリのルートで `npx gulp jig:generate`（`jigReports` の出力を写す） |
+| ドキュメントサイトに載せるユーザーマニュアル（HTML） | リポジトリのルートの `docs/assets/manual-output/cargo-tracker/index.html` | リポジトリのルートで `npx gulp manual:build`（`docs/manual` の Markdown を変換。`docs:generate` にも入る） |
+| ユーザーマニュアルの画面のキャプチャ | `docs/manual/assets/*.png`（Git に入れる） | `apps/cargo-tracker` で `./gradlew manualScreenshots`（`@manual` のシナリオ。手作業で PNG を置かない） |
 
 ER 図は、`apps/cargo-tracker/docker-compose.yml` の使い捨ての PostgreSQL 18.6 にアプリと同じ Flyway のマイグレーションを当て、SchemaSpy で作る。`npx gulp docs:generate` で ER 図と JIG をまとめて作り、`npx gulp docs:build` で続けてドキュメントサイトを作る。公開サイトのビルド（`.github/workflows/mkdocs.yml`）も同じタスクを使う。`main` は GitHub Pages のルート、`develop` は `develop/` に公開し、同時デプロイは直列化する。
 

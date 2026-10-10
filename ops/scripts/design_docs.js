@@ -216,7 +216,8 @@ export default function (gulp) {
   // ドキュメントのビルドへの組み込み
   // ──────────────────────────────────────────────
 
-  gulp.task('docs:generate', gulp.series('schemaspy:generate', 'jig:generate'));
+  // ユーザーマニュアルの HTML（manual:build。manual.js で登録する）も、ER 図・JIG と同じく生成してサイトからリンクする
+  gulp.task('docs:generate', gulp.series('schemaspy:generate', 'jig:generate', 'manual:build'));
 
   // mkdocs:build は mkdocs.js で登録する。gulpfile.js で mkdocs.js を先に読み込むこと
   gulp.task('docs:build', gulp.series('docs:generate', 'mkdocs:build'));

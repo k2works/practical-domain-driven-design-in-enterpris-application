@@ -106,6 +106,7 @@ nav:
           - 開発戦略: development/cargo-tracker/development_strategy.md
           - ER 図（SchemaSpy）: assets/schemaspy-output/cargo-tracker/index.html
           - JIG: assets/jig-output/cargo-tracker/index.html
+          - ユーザーマニュアル（HTML）: assets/manual-output/cargo-tracker/index.html
           - Bolt 1 計画: development/cargo-tracker/bolt_01_plan.md
           - Bolt 1 終了報告: development/cargo-tracker/bolt_01_report.md
           - Bolt 2 計画: development/cargo-tracker/bolt_02_plan.md
@@ -171,6 +172,15 @@ nav:
           - Bolt 27b 終了報告: development/cargo-tracker/bolt_27b_report.md
           - Bolt 28 計画: development/cargo-tracker/bolt_28_plan.md
           - Bolt 28 終了報告: development/cargo-tracker/bolt_28_report.md
+  - ユーザーマニュアル:
+      - 概要: manual/index.md
+      - はじめに: manual/00-はじめに.md
+      - 1 章 業務フロー: manual/01-業務フロー.md
+      - 2 章 ログインと共通の画面: manual/02-ログインと共通の画面.md
+      - 3 章 見積依頼: manual/03-見積依頼.md
+      - 4 章 見積りへの回答と承認: manual/04-見積りへの回答と承認.md
+      - 5 章 予約一覧と追跡の照会: manual/05-予約一覧と追跡の照会.md
+      - HTML 版: assets/manual-output/cargo-tracker/index.html
   - 運用:
       - 概要: operation/index.md
       - cargo-tracker:

@@ -119,9 +119,28 @@ tasks.register('uiTest', Test) {
 	classpath = sourceSets.test.runtimeClasspath
 	useJUnitPlatform {
 		includeTags 'ui'
+		// ユーザーマニュアルの撮影（@manual）は manualScreenshots で動かす
+		excludeTags 'manual'
 		excludeEngines 'archunit'
 	}
 	shouldRunAfter 'test'
+}
+
+// ユーザーマニュアルの画面のキャプチャ（docs/manual/assets/*.png）。@manual の画面の層のシナリオだけを動かし、本番と同じプロファイル
+// （開発用の利用者の欄なし）とシナリオが作るダミーのデータで撮る。手作業で PNG を置かない（creating-manual）。check に入れない
+tasks.register('manualScreenshots', Test) {
+	group = 'documentation'
+	description = 'ユーザーマニュアルの画面のキャプチャ（@manual）を撮り、docs/manual/assets に置く'
+	testClassesDirs = sourceSets.test.output.classesDirs
+	classpath = sourceSets.test.runtimeClasspath
+	useJUnitPlatform {
+		includeTags 'manual'
+		excludeEngines 'archunit'
+	}
+	def screenshotDir = file('../../docs/manual/assets')
+	systemProperty 'cargotracker.manual.screenshot-dir', screenshotDir.absolutePath
+	outputs.dir(screenshotDir).withPropertyName('manualScreenshots')
+	outputs.upToDateWhen { false }
 }
 
 // デモ項目の動画（Bolt 10 から）。画面の層のシナリオのうち @demo の印のものだけを動かし、Playwright で録画して

@@ -19,6 +19,7 @@ cargo-tracker プロジェクトの開発ドキュメントです。
 | :--- | :--- | :--- |
 | [ER 図（SchemaSpy）](../../assets/schemaspy-output/cargo-tracker/index.html){:target="_blank"} | identity・quotation・platform のスキーマの ER 図と表定義 | Flyway のマイグレーション |
 | [JIG](../../assets/jig-output/cargo-tracker/index.html){:target="_blank"} | 用語集、パッケージ関連、業務ルール一覧 | `./gradlew jigReports` |
+| [ユーザーマニュアル（HTML）](../../assets/manual-output/cargo-tracker/index.html){:target="_blank"} | 業務担当者向けの画面の操作の手引き（`docs/manual` の Markdown を変換） | `npx gulp manual:build`（画面のキャプチャは `./gradlew manualScreenshots`） |
 
 ### Bolt 計画
 

@@ -158,7 +158,7 @@ Skills 一覧は [CLAUDE.md の Skills 体系](CLAUDE.md#skills-体系) を参�
   npx gulp manual:build
   ```
 
-生成された HTML は `apps/manual/` に出力されます。サイトタイトル・著作権表示・ポータルへの戻りリンクは `.env` の `MANUAL_TITLE` / `MANUAL_COPYRIGHT` / `MANUAL_PORTAL_URL` で設定できます。
+生成された HTML は `docs/assets/manual-output/cargo-tracker/` に出力され、ER 図・JIG と同じくドキュメントサイトからリンクされます（`npx gulp docs:generate` でも作られます）。サイトタイトル・著作権表示・ポータルへの戻りリンクは `.env` の `MANUAL_TITLE` / `MANUAL_COPYRIGHT` / `MANUAL_PORTAL_URL` で設定できます。
 
 ##### 作業履歴（ジャーナル）タスク
 
