@@ -4,7 +4,7 @@ title: "リリース計画 - cargo-tracker（A 社国際貨物輸送管理シス
 description: "cargo-tracker MVP のリリース計画。1 人 + AI、時間単位の Bolt（= イテレーション）と週次の見直しで、最初の縦の流れ（R0.1）、パイロット準備完了（R1.0）、本格展開前（R1.1）の 3 段階、Unit のエントロピー評価、SP、バッファ、パイロット開始の条件、引継ぎ ID の台帳、業務責任者に確かめる事項の台帳。"
 tags: [development,release-plan]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-10T09:26:40Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-10T10:16:07Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T09:29:53Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:38:26Z }
@@ -504,7 +504,7 @@ US-04 の SP 5 は、サガの成功の経路を閉じて #10 をクローズす
 - [x] Bolt 27: US-09（AC1）。[Bolt 27 計画](bolt_27_plan.md)（`/goal` で進めた）、[Bolt 27 終了報告](bolt_27_report.md)（完了、2026-10-10 に承認済み。#12 をクローズして SP 3 を数えた。他社・存在しない追跡番号の 404 は C-10 の案内にし、区切りの付いた追跡番号を受け付ける（開発レビューの判断））
 - [x] Bolt 27b: C-06 予約一覧の最小の表示（荷主。Bolt 27 の終了報告の承認の場で足した）。[Bolt 27b 計画](bolt_27b_plan.md)（承認済み）、[Bolt 27b 終了報告](bolt_27b_report.md)（完了、2026-10-10 に承認済み。SP 0。受入動画は #10 に添付した）
 - [x] Bolt 28: 主成功の流れの `@ui` シナリオと Release 0.1 のデモ。[Bolt 28 計画](bolt_28_plan.md)、[Bolt 28 終了報告](bolt_28_report.md)（完了、2026-10-10 に承認済み。社内デモで流れを確かめ、Release 0.1 のリリース条件をすべて満たした。受入条件の照合と AT-05 を作った。#44 をクローズ、T-87 は #45）
-- [ ] ユーザーマニュアル（`docs/manual`）の作成（Bolt 28 の次。2026-10-10 に human:kakimomokuri が決定）
+- [x] ユーザーマニュアル（`docs/manual`）の作成（Bolt 28 の次。2026-10-10 に human:kakimomokuri が決定）。はじめに・業務フロー・2〜10 章・用語集・トラブルシューティングの 14 ページと、`./gradlew manualScreenshots` で撮るキャプチャ 35 枚。HTML は ER 図・JIG と同じく `docs/assets/manual-output/cargo-tracker/` に出してサイトからリンクした（人の指示）。テクニカルライターのレビューの画面側の指摘（本予約の確定の「確定条件（BR-01）」と「GENERAL / PALLET」、KPI 計測記録の「輸送要求ごと」、経路候補の「参照情報版 UI-…@1」、見積りへの回答の案内の重複、追跡の開始の後も荷主の状態が「（追跡の開始の準備中）」のまま、受付一覧などの「入口の一覧へ戻る」がホームに移るだけ）は W4 の締めで扱いを決める。サイト（mkdocs）は日本語の見出しにアンカーを作らないので、マニュアルの節へのリンクはサイトではページの先頭に飛ぶ（HTML 版は節に飛ぶ）
 - [ ] ウォーキングスケルトンのガイドツアーの記事（`docs/article` に追加。`creating-article`）の作成（ユーザーマニュアルの次。2026-10-10 に human:kakimomokuri が決定）
 - [x] ベロシティと承認ゲートの密度の見直し（W4 の開始時。「ベロシティ検証計画」）
 - [ ] W4 の締め: Release 1.0 の計画の引き直し、Release 0.1 の実績による Release 1.0 の承認ゲートの密度の決め直し、Release 0.1 のリリース完了報告書
@@ -749,3 +749,4 @@ xychart-beta
 | 2026-10-10 | Bolt 27・27b を終えた（#12 をクローズして US-09 の R0.1 の SP 3 を数えた。27b は承認の場の指摘で足した C-06 予約一覧、SP 0）。ユーザーマニュアル（`docs/manual`）の作成の時期を、人の指示で「W4 の完了の後」から「Bolt 28 の次」に改めた | anthropic/claude-opus-5-5、指示 human:kakimomokuri |
 | 2026-10-10 | ユーザーマニュアルの次に、ウォーキングスケルトンのガイドツアーの記事（`docs/article`）を作るタスクを W4 に足した | anthropic/claude-opus-5-5、指示 human:kakimomokuri |
 | 2026-10-10 | Bolt 28 を終えた。社内デモで流れを確かめ、Release 0.1 のリリース条件にすべてチェックを付けた。#44 をクローズ、T-87 の技術タスクを #45（Release 1.0）として起票した | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
+| 2026-10-10 | ユーザーマニュアル（`docs/manual`）を作成した。HTML を ER 図・JIG と同じくサイトに載せた。画面側の課題を W4 の締めの扱いに記録した | anthropic/claude-opus-5-5、指示 human:kakimomokuri |
