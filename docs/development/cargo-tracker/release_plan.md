@@ -4,7 +4,7 @@ title: "リリース計画 - cargo-tracker（A 社国際貨物輸送管理シス
 description: "cargo-tracker MVP のリリース計画。1 人 + AI、時間単位の Bolt（= イテレーション）と週次の見直しで、最初の縦の流れ（R0.1）、パイロット準備完了（R1.0）、本格展開前（R1.1）の 3 段階、Unit のエントロピー評価、SP、バッファ、パイロット開始の条件、引継ぎ ID の台帳、業務責任者に確かめる事項の台帳。"
 tags: [development,release-plan]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-10T07:42:49Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-10T07:56:47Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T09:29:53Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:38:26Z }
@@ -491,7 +491,7 @@ US-04 の SP 5 は、サガの成功の経路を閉じて #10 をクローズす
 
 **デモ項目**: 本予約の確定（重複確定の防止を含む）から追跡の開始・実績の登録・荷主の照会まで（Release 0.1 のデモ）。`@US-04`、`@US-12`、`@US-09`、`@ui` の主成功シナリオ
 
-**ユーザーマニュアル**: W4 の Bolt では作業を持たない。Release 0.1 の縦の流れがそろう W4 の完了の後に、`docs/manual` を作る（2026-10-08 に human:kakimomokuri が決定。`creating-manual`）
+**ユーザーマニュアル**: Bolt 28（主成功の流れの `@ui` シナリオと Release 0.1 のデモ）の次に、`docs/manual` を作る（2026-10-08 に human:kakimomokuri が決定。`creating-manual`。2026-10-10 に human:kakimomokuri が時期を「W4 の完了の後」から「Bolt 28 の次」に改めた。Release 0.1 の縦の流れがそろった時点で画面を撮る）
 
 **主なタスク**:
 
@@ -504,9 +504,9 @@ US-04 の SP 5 は、サガの成功の経路を閉じて #10 をクローズす
 - [x] Bolt 27: US-09（AC1）。[Bolt 27 計画](bolt_27_plan.md)（`/goal` で進めた）、[Bolt 27 終了報告](bolt_27_report.md)（完了、2026-10-10 に承認済み。#12 をクローズして SP 3 を数えた。他社・存在しない追跡番号の 404 は C-10 の案内にし、区切りの付いた追跡番号を受け付ける（開発レビューの判断））
 - [x] Bolt 27b: C-06 予約一覧の最小の表示（荷主。Bolt 27 の終了報告の承認の場で足した）。[Bolt 27b 計画](bolt_27b_plan.md)（承認済み）、[Bolt 27b 終了報告](bolt_27b_report.md)（完了、2026-10-10 に承認済み。SP 0。受入動画は #10 に添付した）
 - [ ] Bolt 28: 主成功の流れの `@ui` シナリオと Release 0.1 のデモ
+- [ ] ユーザーマニュアル（`docs/manual`）の作成（Bolt 28 の次。2026-10-10 に human:kakimomokuri が決定）
 - [x] ベロシティと承認ゲートの密度の見直し（W4 の開始時。「ベロシティ検証計画」）
 - [ ] W4 の締め: Release 1.0 の計画の引き直し、Release 0.1 の実績による Release 1.0 の承認ゲートの密度の決め直し、Release 0.1 のリリース完了報告書
-- [ ] ユーザーマニュアル（`docs/manual`）の作成（W4 の完了の後）
 
 **目標 SP**: 11
 
@@ -745,3 +745,4 @@ xychart-beta
 | 2026-10-08 | Bolt 22 終了報告の承認（議題 1〜9）を記録し、Bolt 22 を終えた。#41 をクローズした。割り込み（見積りの listener の楽観ロックの競合、#42）を Bolt 22 の中で直した | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-10-08 | Bolt 23 の開始準備: 整合性検証の指摘で、画面（S-09・S-24・S-02）を Bolt 23b に分け、B-INV-11 の UK を Bolt 23 に前倒しし、予約サガは ADR-003 を改訂すると決めた。`booking` の依存を見積りの `api` だけにした | anthropic/claude-opus-5-5、決定 human:kakimomokuri |
 | 2026-10-09 | Bolt 24 終了報告の承認（議題 1〜9）を記録し、Bolt 24 を終えた。台帳に D-85（承認の後に失効した見積りの再見積りの規則）を足した | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
+| 2026-10-10 | Bolt 27・27b を終えた（#12 をクローズして US-09 の R0.1 の SP 3 を数えた。27b は承認の場の指摘で足した C-06 予約一覧、SP 0）。ユーザーマニュアル（`docs/manual`）の作成の時期を、人の指示で「W4 の完了の後」から「Bolt 28 の次」に改めた | anthropic/claude-opus-5-5、指示 human:kakimomokuri |
