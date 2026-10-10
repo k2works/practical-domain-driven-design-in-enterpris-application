@@ -479,14 +479,14 @@ AI-DLC では **Bolt がイテレーション** である（[AI-DLC 導入ガイ
 | 26 | 追跡管理者の入口。開発用の利用者（`db/dev-data`）・認可（`SecurityConfiguration`）・ホーム・ナビの「追跡」（Bolt 25 から移した）と、S-11 追跡一覧・S-12 追跡の詳細の最小の表示（予定と現在状態）。[Bolt 26 計画](bolt_26_plan.md)（開始準備で 26・26b に分ける案。`/goal` で推奨のとおり進めた）、[Bolt 26 終了報告](bolt_26_report.md)（完了、2026-10-09 に承認済み） | 0 | アウトサイドイン | 認可、モジュールの境界、画面、Red・Green ごと（照会） |
 | 26b | US-12 AC1 登録・AC2 重複の業務のルールと永続化（[#11](https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/11)）。出典（共有カーネル）、主要実績、現在状態の導出、同じ出典の既存の実績を返す規則、主要実績の表（`tracking.milestone`）。業務のルールの層の受入シナリオ。開始準備で 4 時間を超えると見え、業務のルールと画面で分ける案にした（Bolt 23・23b と同じ）。[Bolt 26b 計画](bolt_26b_plan.md)（`/goal` で進めた。スキーマのゲートは止まって人の判断を受けた）、[Bolt 26b 終了報告](bolt_26b_report.md)（完了、2026-10-10 に承認済み） | 0 | アウトサイドイン | スキーマ、Red・Green ごと（業務のルール） |
 | 26c | US-12 の画面。S-13 の登録、S-12 の主要実績の一覧、AC2 の既存の記録の表示、画面の層のシナリオと受入動画、`tracking_record` の NULL 可の列の見直しと根拠の実績番号の外部キー、Bolt 26 の画面の既知の課題（U-4「→」の読み上げ、U-6、予定と実績の並べ方）。#11 を閉じる。[Bolt 26c 計画](bolt_26c_plan.md)（2026-10-10 に承認済み。`/goal` で進めた）、[Bolt 26c 終了報告](bolt_26c_report.md)（完了、2026-10-10 に承認済み。#11 をクローズした） | 3 | アウトサイドイン | 画面、スキーマ、Red・Green ごと（入力の検証） |
-| 27 | US-09 AC1 照会（現在状態・予定・主要実績・出典・取得時刻。自社に許可された予約に限る BR-07）（[#12](https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/12)）。[Bolt 27 計画](bolt_27_plan.md)（承認待ち） | 3 | アウトサイドイン | Red・Green ごと（開示制御）、認可 |
+| 27 | US-09 AC1 照会（現在状態・予定・主要実績・出典・取得時刻。自社に許可された予約に限る BR-07）（[#12](https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/12)）。[Bolt 27 計画](bolt_27_plan.md)（`/goal` で進めた） | 3 | アウトサイドイン | Red・Green ごと（開示制御）、認可、スキーマ（索引） |
 | 28 | 主成功の流れの `@ui` シナリオと Release 0.1 のデモ。序盤の完了条件（開発戦略）と Release 0.1 のリリース条件を確かめる | 0 | アウトサイドイン | `/goal` |
 
 US-04 の SP 5 は、サガの成功の経路を閉じて #10 をクローズする Bolt 25 で数える（Bolt 23・24・25 の SP の分け方は目安だったので、表は Bolt 25 に 5 を寄せた。2026-10-09）。予約サガの再試行（RTY-02）・有人確認要・有人案件の起票（BR-17）は W4 で作らない。状態の値は Bolt 23 の計画で決め、有人案件の起票は US-20 の W8 に回す
 
 **W3 の Try の持ち込み**: 各 Bolt 計画の確認ポイントに、T-54（コンテキストの間のイベントを足すときは購読する側の依存が循環しないか）、T-55（置換は `spotlessApply` の後のファイルに当てる）、T-57（状態の列挙に値を足すときはその状態を見る判定を洗い出す）、T-58（listener と公開 API には業務の拒否と警告のログの経路の単体テストを Red に入れる）、T-61〜T-63（メモリのリポジトリは写しを返す、listener の欠けを「再配信で直るか」で分ける、「N 個目で」の規則は N 個目の計画に入れる）を入れる。W3 の Problem の Windows で手順書のタスクが動かない件は、`sonar-local:scan` を Bolt 21 で直した。`documentationTest` は、Windows の作業ツリーで作業する Bolt で確かめる
 
-**Living Documentation**（開発戦略の「完了条件への組み込み」）: 新しい `booking`・`tracking` モジュールで、`package-info` の `allowedDependencies`（`booking` → 見積りの `api`（経路版は見積りが割り当てた経路の写しで確かめる。Bolt 23 計画の確認ポイント 7）、`tracking` → 予約の `api`・`events`、経路設計の `api`（Bolt 25）、`platform :: web`（社内の画面の日時表示の部品。Bolt 26））、ModularityTest のモジュール名、用語集の整合テスト、`DomainEventSerializationContractTest` への DE-07 などの追加、`afterMigrate` の権限と追記専用の印（Bolt 26b で DELETE だけを外す印 `[no-delete]` を足した）、貨物予約・追跡記録の `@CoreConcept` をそろえる
+**Living Documentation**（開発戦略の「完了条件への組み込み」）: 新しい `booking`・`tracking` モジュールで、`package-info` の `allowedDependencies`（`booking` → 見積りの `api`（経路版は見積りが割り当てた経路の写しで確かめる。Bolt 23 計画の確認ポイント 7）、`tracking` → 予約の `api`・`events`、経路設計の `api`（Bolt 25）、`platform :: web`（画面の日時表示の部品。Bolt 26 で社内の画面、Bolt 27 で荷主の画面 C-10 でも使う））、ModularityTest のモジュール名、用語集の整合テスト、`DomainEventSerializationContractTest` への DE-07 などの追加、`afterMigrate` の権限と追記専用の印（Bolt 26b で DELETE だけを外す印 `[no-delete]` を足した）、貨物予約・追跡記録の `@CoreConcept` をそろえる
 
 **デモ項目**: 本予約の確定（重複確定の防止を含む）から追跡の開始・実績の登録・荷主の照会まで（Release 0.1 のデモ）。`@US-04`、`@US-12`、`@US-09`、`@ui` の主成功シナリオ
 
@@ -516,7 +516,7 @@ US-04 の SP 5 は、サガの成功の経路を閉じて #10 をクローズす
 | W6 | 11-09 〜 11-13 | 経路設計・予約の完成 | US-16 残り、US-06 残り（5）、US-07 残り（2）、US-04 残り（3） | 13 |
 | W7 | 11-16 〜 11-20 | 外部原本の取込 | US-14（8）、US-12 残り（2） | 10 |
 | W8 | 11-23 〜 11-27（11-23 祝日） | 有人対応と問い合わせ | US-11（3）、US-20（5） | 8 |
-| W9 | 11-30 〜 12-04 | 通知・KPI・残りの受入条件 | US-23（3）、US-22（3）、US-21 残り（3）、US-01 残り（2）、US-24 残り（2）、US-09 残り（2）。KPI の計測の前に、未完了の発行の件数を確かめる手段（W10 から前倒し。Bolt 21 終了報告の議題 7） | 15 |
+| W9 | 11-30 〜 12-04 | 通知・KPI・残りの受入条件 | US-23（3）、US-22（3）、US-21 残り（3）、US-01 残り（2）、US-24 残り（2）、US-09 残り（2）。W9 より前の荷主の照会は照会記録（IR-INV-01）がないので KPI-02 の分母に入らない（Bolt 27）。KPI の計測の前に、未完了の発行の件数を確かめる手段（W10 から前倒し。Bolt 21 終了報告の議題 7） | 15 |
 | W10 | 12-07 〜 12-11 | 運用準備 | AWS 環境（Terraform）、CI/CD、監視、運用タスクとランブック、必要書類の S3 の保存とウイルスの検査（Bolt 7）、性能テスト（負荷テストのツールの選定 TS-05、R-36）、時点復旧の訓練、Spring Boot 4.2 への追従（公開済みなら） | 0（技術タスク） |
 
 W6 と W9 は 10 SP を超えるため、W4 の見直しで、W5・W8 の祝日の週との入れ替えや、Release 1.1 への繰り下げを判断する。

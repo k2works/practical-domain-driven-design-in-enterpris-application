@@ -196,6 +196,19 @@ public class MyBatisTrackingRecordRepository implements TrackingRecordRepository
     }
 
     @Override
+    public Optional<TrackingRecord> findByTrackingNumber(TrackingNumber trackingNumber, CompanyId shipperCompanyId) {
+        return mapper.findTrackingRecordByTrackingNumberAndShipper(trackingNumber.value(), shipperCompanyId.value())
+                .map(this::toRecord);
+    }
+
+    @Override
+    public List<TrackingRecordSummary> findRecentSummariesByShipper(CompanyId shipperCompanyId, int limit) {
+        return mapper.findRecentSummariesByShipper(shipperCompanyId.value(), limit).stream()
+                .map(MyBatisTrackingRecordRepository::toSummary)
+                .toList();
+    }
+
+    @Override
     public List<TrackingRecordSummary> findRecentSummaries(int limit) {
         return mapper.findRecentSummaries(limit).stream()
                 .map(MyBatisTrackingRecordRepository::toSummary)
@@ -207,6 +220,7 @@ public class MyBatisTrackingRecordRepository implements TrackingRecordRepository
                 new TrackingNumber(row.trackingNumber()),
                 TrackingStatus.valueOf(row.currentStatus()),
                 utc(row.originalEta()),
+                utc(row.latestEta()),
                 utc(row.createdAt()));
     }
 }

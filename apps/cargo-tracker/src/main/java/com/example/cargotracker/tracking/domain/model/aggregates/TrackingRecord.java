@@ -10,6 +10,8 @@ import com.example.cargotracker.shared.domain.UtcInstant;
 import com.example.cargotracker.tracking.domain.events.TrackingStarted;
 import com.example.cargotracker.tracking.domain.model.entities.Milestone;
 import com.example.cargotracker.tracking.domain.model.rules.CurrentStatusDeriver;
+import com.example.cargotracker.tracking.domain.model.valueobjects.CustomerMilestone;
+import com.example.cargotracker.tracking.domain.model.valueobjects.CustomerTrackingView;
 import com.example.cargotracker.tracking.domain.model.valueobjects.DerivedStatus;
 import com.example.cargotracker.tracking.domain.model.valueobjects.MilestoneKind;
 import com.example.cargotracker.tracking.domain.model.valueobjects.MilestoneRejectionReason;
@@ -19,6 +21,7 @@ import com.example.cargotracker.tracking.domain.model.valueobjects.TrackedBookin
 import com.example.cargotracker.tracking.domain.model.valueobjects.TrackingNumber;
 import com.example.cargotracker.tracking.domain.model.valueobjects.TrackingStatus;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -214,6 +217,24 @@ public final class TrackingRecord {
                 startedAt,
                 aggregateVersion);
         return new MilestoneRegistration(trackingRecord, milestone, false);
+    }
+
+    /**
+     * 荷主向けに表示する（ドメインモデルの「顧客向けに表示する(開示範囲) : 照会結果」の荷主の分。BR-07、T-INV-08・09。Bolt 27）。
+     * 主要実績は採用済みだけを発生時刻の順（同じ時刻なら登録の順）に、荷主に見せてよい項目だけで示す。経路版などの社内の識別子は含めない。
+     * 開示範囲（荷主・荷受人）で項目を分けるのは荷受人の照会（US-10）で足す。
+     */
+    public CustomerTrackingView customerView() {
+        List<CustomerMilestone> adopted = milestones.stream()
+                .filter(milestone -> milestone.state() == MilestoneState.ADOPTED)
+                .sorted(Comparator.comparing(
+                                (Milestone milestone) -> milestone.occurredAt().instant())
+                        .thenComparingInt(Milestone::milestoneNo))
+                .map(milestone -> new CustomerMilestone(
+                        milestone.kind(), milestone.location(), milestone.occurredAt(), milestone.source()))
+                .toList();
+        return new CustomerTrackingView(
+                trackingNumber, currentStatus, originalEta, latestEta, schedule.legs(), adopted);
     }
 
     /** 同じ出典識別子（出典の種類と参照）の実績（T-INV-02）。取得時刻は識別子に含めない。 */

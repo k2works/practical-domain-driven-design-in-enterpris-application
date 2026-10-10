@@ -17,4 +17,15 @@ public record RecentTrackingRecords(List<TrackingRecordSummary> rows, boolean tr
     public RecentTrackingRecords {
         rows = List.copyOf(Objects.requireNonNull(rows, "rows"));
     }
+
+    /**
+     * 上限より 1 件多く引いた要約から、上限までの行と上限を超えたかを作る（S-11 と C-10 で同じ。Bolt 27）。
+     *
+     * @param found 上限より 1 件多く引いた要約（新しい順）
+     * @param limit 上限の件数
+     * @return 照会の結果
+     */
+    public static RecentTrackingRecords of(List<TrackingRecordSummary> found, int limit) {
+        return new RecentTrackingRecords(found.subList(0, Math.min(found.size(), limit)), found.size() > limit, limit);
+    }
 }

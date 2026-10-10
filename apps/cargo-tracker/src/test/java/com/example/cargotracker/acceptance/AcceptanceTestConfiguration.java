@@ -66,6 +66,7 @@ import com.example.cargotracker.tracking.application.internal.eventhandlers.Book
 import com.example.cargotracker.tracking.application.internal.eventhandlers.TrackingStartEventHandler;
 import com.example.cargotracker.tracking.application.internal.outboundservices.acl.BookingTrackingStarts;
 import com.example.cargotracker.tracking.application.internal.outboundservices.acl.RoutingScheduledLegs;
+import com.example.cargotracker.tracking.application.internal.queryservices.CustomerTrackingQueryService;
 import com.example.cargotracker.tracking.domain.events.TrackingStarted;
 import io.cucumber.spring.CucumberContextConfiguration;
 import java.util.Random;
@@ -237,6 +238,12 @@ public class AcceptanceTestConfiguration {
                     new RoutingScheduledLegs(new RouteVersionLegQueryAdapter(routingCaseQueryService)),
                     eventDelivery,
                     clock);
+        }
+
+        /** 荷主の追跡の照会（US-09。Bolt 27）。 */
+        @Bean
+        CustomerTrackingQueryService customerTrackingQueryService(InMemoryTrackingRecordRepository repository) {
+            return new CustomerTrackingQueryService(repository);
         }
 
         /** 追跡管理者が主要実績を登録する（US-12。Bolt 26b）。 */

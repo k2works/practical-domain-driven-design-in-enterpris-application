@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="ja" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/customer :: layout(~{::title}, ~{::main}, ~{::script}, 'tracking-records')}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="${#fields.hasErrors('${trackingNumberForm.*}')} ? '入力内容に誤りがあります - 追跡の照会 - cargo-tracker' : '追跡の照会 - cargo-tracker'">追跡の照会 - cargo-tracker</title>
+    <!--/* 送信の失敗のときにエラー要約へフォーカスを移す（見積依頼・S-13 と同じ） */-->
+    <script th:src="@{/js/transport-request-form.js}" defer></script>
+</head>
+<body>
+<main>
+    <h1>追跡の照会</h1>
+    <!--/* C-10（Bolt 27、US-09 AC1）。自社の追跡記録の一覧と追跡番号の入力。他社の追跡記録は出さない（BR-07） */-->
+    <h2 class="h4" id="search-heading">追跡番号で照会する</h2>
+    <form th:action="@{/customer/tracking-records}" th:object="${trackingNumberForm}" method="get" novalidate
+          role="search" aria-labelledby="search-heading">
+        <div id="error-summary" th:if="${#fields.hasErrors('*')}" tabindex="-1" role="alert"
+             aria-labelledby="error-summary-title">
+            <h2 id="error-summary-title" th:text="|入力内容に ${#fields.errors('*').size()} 件の誤りがあります|">入力内容に 1 件の誤りがあります</h2>
+            <ul>
+                <li th:each="error : ${#fields.detailedErrors('*')}">
+                    <a th:href="|#${error.fieldName}|" th:text="|追跡番号: ${error.message}|">追跡番号: 入力してください</a>
+                </li>
+            </ul>
+        </div>
+        <div>
+            <label for="trackingNumber">追跡番号</label>
+            <p id="trackingNumber-hint">例: CTABCDEFGH2345</p>
+            <input id="trackingNumber" type="text" class="form-control" th:field="*{trackingNumber}" autocomplete="off"
+                   autocapitalize="characters" spellcheck="false"
+                   th:attr="aria-invalid=${#fields.hasErrors('trackingNumber')},aria-describedby=${#fields.hasErrors('trackingNumber')} ? 'trackingNumber-hint trackingNumber-error' : 'trackingNumber-hint'">
+            <p id="trackingNumber-error" th:if="${#fields.hasErrors('trackingNumber')}" th:errors="*{trackingNumber}"></p>
+        </div>
+        <p><button type="submit" class="btn btn-primary">照会する</button></p>
+    </form>
+    <h2 class="h4" id="tracking-records-heading">自社の貨物</h2>
+    <p th:if="${#lists.isEmpty(trackingRecords)}">追跡中の貨物はまだありません。担当営業が本予約を確定すると、ここに出ます。</p>
+    <p th:if="${truncated}" th:text="|新しい ${limit} 件だけを示しています。それより前の貨物は、追跡番号を入れて照会してください。|">新しい 50 件だけを示しています。それより前の貨物は、追跡番号を入れて照会してください。</p>
+    <div th:unless="${#lists.isEmpty(trackingRecords)}" class="table-scroll" tabindex="0" role="region"
+         aria-labelledby="tracking-records-caption">
+        <table class="table">
+            <caption id="tracking-records-caption">追跡中の貨物（本予約の確定の新しい順）</caption>
+            <thead>
+            <tr>
+                <th scope="col">追跡番号</th>
+                <th scope="col">現在の状態</th>
+                <th scope="col">最新の到着見込み</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="trackingRecord : ${trackingRecords}">
+                <td><a th:href="@{/customer/tracking-records/{trackingNumber}(trackingNumber=${trackingRecord.trackingNumber()})}"
+                       th:text="${trackingRecord.trackingNumber()}">CTABCDEFGH2345</a></td>
+                <td th:text="${trackingRecord.status()}">集荷済み</td>
+                <td th:text="${trackingRecord.latestEta()}">2026-11-16 12:00 Asia/Tokyo（UTC+09:00）</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</main>
+</body>
+</html>

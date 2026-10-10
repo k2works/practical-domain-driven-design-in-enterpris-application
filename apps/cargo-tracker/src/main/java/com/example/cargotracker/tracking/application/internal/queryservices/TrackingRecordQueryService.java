@@ -34,8 +34,7 @@ public class TrackingRecordQueryService {
     @Transactional(readOnly = true)
     public RecentTrackingRecords recent() {
         List<TrackingRecordSummary> found = repository.findRecentSummaries(RECENT_LIMIT + 1);
-        return new RecentTrackingRecords(
-                found.subList(0, Math.min(found.size(), RECENT_LIMIT)), found.size() > RECENT_LIMIT, RECENT_LIMIT);
+        return RecentTrackingRecords.of(found, RECENT_LIMIT);
     }
 
     /** 追跡の詳細（S-12）。追跡記録を予定区間とあわせて返す。 */

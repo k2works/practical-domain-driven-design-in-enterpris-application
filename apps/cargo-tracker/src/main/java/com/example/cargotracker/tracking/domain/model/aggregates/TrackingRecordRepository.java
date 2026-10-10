@@ -1,5 +1,6 @@
 package com.example.cargotracker.tracking.domain.model.aggregates;
 
+import com.example.cargotracker.shared.domain.CompanyId;
 import com.example.cargotracker.tracking.domain.model.valueobjects.TrackingNumber;
 import com.example.cargotracker.tracking.domain.model.valueobjects.TrackingRecordSummary;
 import java.util.List;
@@ -29,6 +30,19 @@ public interface TrackingRecordRepository {
 
     /** 追跡番号で追跡記録を予定区間とあわせて取得する（S-12。Bolt 26）。 */
     Optional<TrackingRecord> findByTrackingNumber(TrackingNumber trackingNumber);
+
+    /**
+     * 荷主企業の追跡記録を追跡番号で取得する（C-10。荷主企業で絞り、他社の追跡記録は存在しないのと同じく空。BR-07。Bolt 27）。荷主の
+     * 照会はこちらだけを使い、荷主企業で絞らない {@link #findByTrackingNumber(TrackingNumber)} は使わない。
+     */
+    Optional<TrackingRecord> findByTrackingNumber(TrackingNumber trackingNumber, CompanyId shipperCompanyId);
+
+    /**
+     * 荷主企業の追跡記録の要約を、追跡の開始時刻の新しい順（同じ時刻なら追跡番号の順）に上限まで取得する（C-10。BR-07。Bolt 27）。
+     *
+     * @param limit 上限の件数（1 以上）
+     */
+    List<TrackingRecordSummary> findRecentSummariesByShipper(CompanyId shipperCompanyId, int limit);
 
     /**
      * 追跡記録の要約を、追跡の開始時刻の新しい順（同じ時刻なら追跡番号の順）に上限まで取得する（S-11。集約を組み立てない。Bolt 26）。

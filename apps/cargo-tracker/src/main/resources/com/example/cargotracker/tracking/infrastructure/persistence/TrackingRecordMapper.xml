@@ -54,6 +54,7 @@
             <idArg column="tracking_number" name="trackingNumber" javaType="String"/>
             <arg column="current_status" name="currentStatus" javaType="String"/>
             <arg column="original_eta" name="originalEta" javaType="java.time.OffsetDateTime"/>
+            <arg column="latest_eta" name="latestEta" javaType="java.time.OffsetDateTime"/>
             <arg column="created_at" name="createdAt" javaType="java.time.OffsetDateTime"/>
         </constructor>
     </resultMap>
@@ -117,11 +118,28 @@
          WHERE tracking_number = #{trackingNumber}
     </select>
 
+    <!-- C-10 照会の結果（Bolt 27）。追跡番号と荷主企業で絞り、他社の追跡記録は存在しないのと同じく返さない（BR-07） -->
+    <select id="findTrackingRecordByTrackingNumberAndShipper" resultMap="trackingRecordRow">
+        SELECT <include refid="trackingRecordColumns"/>
+          FROM tracking.tracking_record
+         WHERE tracking_number = #{trackingNumber}
+           AND shipper_company_id = #{shipperCompanyId}
+    </select>
+
     <!-- S-11 追跡一覧（Bolt 26）。追跡の開始時刻は作成時刻。同じ時刻は追跡番号の順で、追跡番号は英大文字と数字だけなので、DB の照合順序でも
          メモリの実装（String.compareTo の文字コード順）と同じ並びになる（予約一覧と同じ） -->
     <select id="findRecentSummaries" resultMap="trackingRecordSummaryRow">
-        SELECT tracking_number, current_status, original_eta, created_at
+        SELECT tracking_number, current_status, original_eta, latest_eta, created_at
           FROM tracking.tracking_record
+         ORDER BY created_at DESC, tracking_number
+         LIMIT #{limit}
+    </select>
+
+    <!-- C-10 追跡の照会の一覧（Bolt 27）。荷主企業で絞る（BR-07）。並びと上限は S-11 と同じ。索引 ix_tracking_record_shipper -->
+    <select id="findRecentSummariesByShipper" resultMap="trackingRecordSummaryRow">
+        SELECT tracking_number, current_status, original_eta, latest_eta, created_at
+          FROM tracking.tracking_record
+         WHERE shipper_company_id = #{shipperCompanyId}
          ORDER BY created_at DESC, tracking_number
          LIMIT #{limit}
     </select>

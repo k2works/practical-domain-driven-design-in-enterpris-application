@@ -8,7 +8,12 @@ import java.time.OffsetDateTime;
  * @param trackingNumber 追跡番号
  * @param currentStatus 現在状態
  * @param originalEta 当初の到着予定
+ * @param latestEta 最新の到着見込み（Bolt 27）
  * @param createdAt 作成時刻（追跡の開始時刻）
  */
 public record TrackingRecordSummaryRow(
-        String trackingNumber, String currentStatus, OffsetDateTime originalEta, OffsetDateTime createdAt) {}
+        String trackingNumber,
+        String currentStatus,
+        OffsetDateTime originalEta,
+        OffsetDateTime latestEta,
+        OffsetDateTime createdAt) {}

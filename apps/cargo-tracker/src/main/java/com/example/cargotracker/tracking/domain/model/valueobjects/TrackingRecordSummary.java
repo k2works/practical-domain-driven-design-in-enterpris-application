@@ -10,15 +10,21 @@ import java.util.Objects;
  * @param trackingNumber 追跡番号
  * @param currentStatus 現在状態
  * @param originalEta 当初の到着予定（確定した経路版。T-INV-10）
+ * @param latestEta 最新の到着見込み（T-INV-10。荷主の一覧 C-10 に示す。Bolt 27）
  * @param startedAt 追跡の開始時刻
  */
 public record TrackingRecordSummary(
-        TrackingNumber trackingNumber, TrackingStatus currentStatus, UtcInstant originalEta, UtcInstant startedAt) {
+        TrackingNumber trackingNumber,
+        TrackingStatus currentStatus,
+        UtcInstant originalEta,
+        UtcInstant latestEta,
+        UtcInstant startedAt) {
 
     public TrackingRecordSummary {
         Objects.requireNonNull(trackingNumber, "trackingNumber");
         Objects.requireNonNull(currentStatus, "currentStatus");
         Objects.requireNonNull(originalEta, "originalEta");
+        Objects.requireNonNull(latestEta, "latestEta");
         Objects.requireNonNull(startedAt, "startedAt");
     }
 }

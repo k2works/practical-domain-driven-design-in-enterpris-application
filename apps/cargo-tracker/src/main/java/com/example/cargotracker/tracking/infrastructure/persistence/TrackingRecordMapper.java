@@ -34,6 +34,14 @@ public interface TrackingRecordMapper {
 
     Optional<TrackingRecordRow> findTrackingRecordByTrackingNumber(@Param("trackingNumber") String trackingNumber);
 
+    /** C-10 照会の結果（Bolt 27）。追跡番号と荷主企業で絞る。 */
+    Optional<TrackingRecordRow> findTrackingRecordByTrackingNumberAndShipper(
+            @Param("trackingNumber") String trackingNumber, @Param("shipperCompanyId") UUID shipperCompanyId);
+
+    /** C-10 追跡の照会の一覧（Bolt 27）。荷主企業で絞り、追跡の開始時刻の新しい順（同じ時刻なら追跡番号の順）に上限まで。 */
+    List<TrackingRecordSummaryRow> findRecentSummariesByShipper(
+            @Param("shipperCompanyId") UUID shipperCompanyId, @Param("limit") int limit);
+
     /** S-11 追跡一覧（Bolt 26）。追跡の開始時刻の新しい順（同じ時刻なら追跡番号の順）に上限まで。 */
     List<TrackingRecordSummaryRow> findRecentSummaries(@Param("limit") int limit);
 

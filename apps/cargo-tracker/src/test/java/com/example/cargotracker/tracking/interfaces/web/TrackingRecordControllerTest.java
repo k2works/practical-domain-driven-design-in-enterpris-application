@@ -65,6 +65,7 @@ class TrackingRecordControllerTest {
                 new TrackingNumber(trackingNumber),
                 status,
                 TrackingFixture.at("2026-11-15T00:00:00Z"),
+                TrackingFixture.at("2026-11-16T03:00:00Z"),
                 TrackingFixture.at("2026-10-26T01:00:00Z"));
     }
 

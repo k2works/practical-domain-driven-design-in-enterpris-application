@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="ja" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/customer :: layout(~{::title}, ~{::main}, ~{}, 'tracking-records')}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="|追跡の照会 ${trackingRecord.trackingNumber()} - cargo-tracker|">追跡の照会 CTABCDEFGH2345 - cargo-tracker</title>
+</head>
+<body>
+<main>
+    <h1 th:text="|追跡の照会 ${trackingRecord.trackingNumber()}|">追跡の照会 CTABCDEFGH2345</h1>
+    <!--/* C-10 の照会の結果（Bolt 27、US-09 AC1）。荷主の開示範囲だけを示す（BR-07、T-INV-09）。経路版・実績番号・実績の状態は出さない。
+           予定と実績は見出しと語（「出発予定」「発生」）で分け、色に頼らない（T-INV-08、BR-13）。矛盾・確認中（AC2）・停止中（AC3）は R1.0 */-->
+    <dl class="row">
+        <dt class="col-sm-3">追跡番号</dt>
+        <dd class="col-sm-9" th:text="${trackingRecord.trackingNumber()}">CTABCDEFGH2345</dd>
+        <dt class="col-sm-3">現在の状態</dt>
+        <dd class="col-sm-9" th:text="${trackingRecord.status()}">集荷済み</dd>
+        <dt class="col-sm-3">当初の到着予定</dt>
+        <dd class="col-sm-9" th:text="${trackingRecord.originalEta()}">2026-11-15 09:00 Asia/Tokyo（UTC+09:00）</dd>
+        <dt class="col-sm-3">最新の到着見込み</dt>
+        <dd class="col-sm-9" th:text="${trackingRecord.latestEta()}">2026-11-16 12:00 Asia/Tokyo（UTC+09:00）</dd>
+    </dl>
+    <h2 class="h4" id="schedule-heading">予定</h2>
+    <ol aria-labelledby="schedule-heading">
+        <li th:each="leg : ${trackingRecord.legs()}" class="mb-2">
+            <span th:text="${leg.summary()}">区間 1、航海 V100、JPTYO から KRPUS</span><br>
+            <span th:text="|出発予定 ${leg.departureAt()}|">出発予定 2026-11-01 09:00 Asia/Tokyo（UTC+09:00）</span><br>
+            <span th:text="|到着予定 ${leg.arrivalAt()}|">到着予定 2026-11-03 09:00 Asia/Tokyo（UTC+09:00）</span>
+        </li>
+    </ol>
+    <h2 class="h4" id="milestones-heading">主要実績</h2>
+    <p th:if="${#lists.isEmpty(trackingRecord.milestones())}">主要実績はまだありません。</p>
+    <p th:unless="${#lists.isEmpty(trackingRecord.milestones())}">発生時刻の順に示します。</p>
+    <ul th:unless="${#lists.isEmpty(trackingRecord.milestones())}" aria-labelledby="milestones-heading">
+        <li th:each="milestone : ${trackingRecord.milestones()}" class="mb-2">
+            <span th:text="${milestone.summary()}">集荷、JPTYO</span><br>
+            <span th:text="|発生 ${milestone.occurredAt()}|">発生 2026-11-01 11:30 Asia/Tokyo（UTC+09:00）</span><br>
+            <span th:text="|出典 ${milestone.source()}|">出典 現場記録 F-118</span><br>
+            <span th:text="|取得 ${milestone.acquiredAt()}|">取得 2026-11-01 12:00 Asia/Tokyo（UTC+09:00）</span>
+        </li>
+    </ul>
+    <p><a th:href="@{/customer/tracking-records}">追跡の照会へ戻る</a></p>
+</main>
+</body>
+</html>

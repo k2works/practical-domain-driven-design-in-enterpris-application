@@ -2,6 +2,7 @@ package com.example.cargotracker.tracking.application.internal.queryservices;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.example.cargotracker.shared.domain.CompanyId;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import com.example.cargotracker.tracking.acceptance.InMemoryTrackingRecordRepository;
 import com.example.cargotracker.tracking.domain.model.TrackingFixture;
@@ -41,6 +42,7 @@ class TrackingRecordQueryServiceTest {
                 .isEqualTo(new TrackingRecordSummary(
                         newer.trackingNumber(),
                         TrackingStatus.PICKUP_SCHEDULED,
+                        TrackingFixture.at("2026-11-15T00:00:00Z"),
                         TrackingFixture.at("2026-11-15T00:00:00Z"),
                         TrackingFixture.at("2026-10-26T02:00:00Z")));
     }
@@ -157,6 +159,19 @@ class TrackingRecordQueryServiceTest {
         public Optional<TrackingRecord> findByTrackingNumber(TrackingNumber trackingNumber) {
             detailQueries++;
             return delegate.findByTrackingNumber(trackingNumber);
+        }
+
+        @Override
+        public Optional<TrackingRecord> findByTrackingNumber(
+                TrackingNumber trackingNumber, CompanyId shipperCompanyId) {
+            detailQueries++;
+            return delegate.findByTrackingNumber(trackingNumber, shipperCompanyId);
+        }
+
+        @Override
+        public List<TrackingRecordSummary> findRecentSummariesByShipper(CompanyId shipperCompanyId, int limit) {
+            summaryQueries++;
+            return delegate.findRecentSummariesByShipper(shipperCompanyId, limit);
         }
 
         @Override

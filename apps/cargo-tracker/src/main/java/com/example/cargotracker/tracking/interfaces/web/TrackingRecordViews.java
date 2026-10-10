@@ -6,6 +6,8 @@ import com.example.cargotracker.shared.domain.UtcInstant;
 import com.example.cargotracker.tracking.application.internal.queryservices.RecentTrackingRecords;
 import com.example.cargotracker.tracking.domain.model.aggregates.TrackingRecord;
 import com.example.cargotracker.tracking.domain.model.entities.Milestone;
+import com.example.cargotracker.tracking.domain.model.valueobjects.CustomerMilestone;
+import com.example.cargotracker.tracking.domain.model.valueobjects.CustomerTrackingView;
 import com.example.cargotracker.tracking.domain.model.valueobjects.MilestoneKind;
 import com.example.cargotracker.tracking.domain.model.valueobjects.MilestoneState;
 import com.example.cargotracker.tracking.domain.model.valueobjects.Schedule;
@@ -17,6 +19,7 @@ import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Function;
 import java.util.stream.IntStream;
 
 /** S-11・S-12・S-13 の表示の値（社内の画面の日時は利用者のタイムゾーンと UTC を併記する。Bolt 22・26・26c）。 */
@@ -159,16 +162,13 @@ final class TrackingRecordViews {
 
     static DetailView detail(TrackingRecord trackingRecord) {
         Schedule schedule = trackingRecord.schedule();
-        List<ScheduledLeg> legs = schedule.legs();
         return new DetailView(
                 trackingRecord.trackingNumber().value(),
                 status(trackingRecord.currentStatus()),
                 staff(trackingRecord.originalEta()),
                 staff(trackingRecord.latestEta()),
                 schedule.routingCaseNumber() + " 版 " + schedule.routeVersionNo(),
-                IntStream.range(0, legs.size())
-                        .mapToObj(i -> leg(i + 1, legs.get(i)))
-                        .toList(),
+                legs(schedule.legs(), TrackingRecordViews::staff),
                 trackingRecord.milestones().stream()
                         .sorted(Comparator.comparing((Milestone milestone) ->
                                         milestone.occurredAt().instant())
@@ -177,13 +177,23 @@ final class TrackingRecordViews {
                         .toList());
     }
 
-    /** 区間の表記は「→」でなく「から」にする（スクリーンリーダーが「右矢印」と読むため。Bolt 26 の U-4。Bolt 26c）。 */
-    private static LegView leg(int legNo, ScheduledLeg leg) {
-        return new LegView(
-                "区間 " + legNo + "、航海 " + leg.voyageNumber() + "、" + leg.load().unLocode() + " から "
-                        + leg.discharge().unLocode(),
-                staff(leg.departureAt()),
-                staff(leg.arrivalAt()));
+    /**
+     * 予定区間の項目（S-12 と C-10 で同じ。日時の書式だけが社内と荷主で違う。Bolt 27）。区間の表記は「→」でなく「から」にする
+     * （スクリーンリーダーが「右矢印」と読むため。Bolt 26 の U-4。Bolt 26c）。
+     */
+    private static List<LegView> legs(List<ScheduledLeg> legs, Function<UtcInstant, String> dateTime) {
+        return IntStream.range(0, legs.size())
+                .mapToObj(i -> new LegView(
+                        legSummary(i + 1, legs.get(i)),
+                        dateTime.apply(legs.get(i).departureAt()),
+                        dateTime.apply(legs.get(i).arrivalAt())))
+                .toList();
+    }
+
+    /** 区間の表記（S-12 と C-10 で同じ）。 */
+    private static String legSummary(int legNo, ScheduledLeg leg) {
+        return "区間 " + legNo + "、航海 " + leg.voyageNumber() + "、" + leg.load().unLocode() + " から "
+                + leg.discharge().unLocode();
     }
 
     private static MilestoneView milestone(Milestone milestone) {
@@ -204,6 +214,78 @@ final class TrackingRecordViews {
     private static String source(Milestone milestone) {
         return sourceLabel(milestone.source().kind(), milestone.source().reference()) + "（取得 "
                 + staff(milestone.source().acquiredAt()) + "）";
+    }
+
+    // C-10 追跡の照会（荷主。Bolt 27）。日時は荷主の日時表示（UTC を併記しない）、経路版・実績番号・実績の状態は出さない
+
+    /**
+     * C-10 の一覧の 1 行。
+     *
+     * @param trackingNumber 追跡番号
+     * @param status 現在状態の表示名
+     * @param latestEta 最新の到着見込み
+     */
+    record CustomerRow(String trackingNumber, String status, String latestEta) {}
+
+    static List<CustomerRow> customerList(RecentTrackingRecords recent) {
+        return recent.rows().stream()
+                .map(summary -> new CustomerRow(
+                        summary.trackingNumber().value(),
+                        status(summary.currentStatus()),
+                        customer(summary.latestEta())))
+                .toList();
+    }
+
+    /**
+     * C-10 の照会の結果。
+     *
+     * @param trackingNumber 追跡番号
+     * @param status 現在状態の表示名
+     * @param originalEta 当初の到着予定
+     * @param latestEta 最新の到着見込み
+     * @param legs 予定区間（区間の順）
+     * @param milestones 採用済みの主要実績（発生時刻の順）
+     */
+    record CustomerDetailView(
+            String trackingNumber,
+            String status,
+            String originalEta,
+            String latestEta,
+            List<LegView> legs,
+            List<CustomerMilestoneView> milestones) {}
+
+    /**
+     * C-10 の主要実績の 1 項目。
+     *
+     * @param summary 種類・場所
+     * @param occurredAt 発生時刻
+     * @param source 出典（種類・参照）
+     * @param acquiredAt 出典の取得時刻（出典と行を分け、括弧を重ねない。Bolt 27 の開発レビュー）
+     */
+    record CustomerMilestoneView(String summary, String occurredAt, String source, String acquiredAt) {}
+
+    static CustomerDetailView customerDetail(CustomerTrackingView view) {
+        return new CustomerDetailView(
+                view.trackingNumber().value(),
+                status(view.currentStatus()),
+                customer(view.originalEta()),
+                customer(view.latestEta()),
+                legs(view.legs(), TrackingRecordViews::customer),
+                view.milestones().stream()
+                        .map(TrackingRecordViews::customerMilestone)
+                        .toList());
+    }
+
+    private static CustomerMilestoneView customerMilestone(CustomerMilestone milestone) {
+        return new CustomerMilestoneView(
+                kind(milestone.kind()) + "、" + milestone.location().unLocode(),
+                customer(milestone.occurredAt()),
+                sourceLabel(milestone.source().kind(), milestone.source().reference()),
+                customer(milestone.source().acquiredAt()));
+    }
+
+    private static String customer(UtcInstant instant) {
+        return DateTimeDisplay.customer(instant.instant());
     }
 
     private static String staff(UtcInstant instant) {

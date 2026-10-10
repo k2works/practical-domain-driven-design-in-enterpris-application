@@ -7,6 +7,7 @@ import com.example.cargotracker.tracking.application.internal.eventhandlers.Book
 import com.example.cargotracker.tracking.application.internal.eventhandlers.TrackingStartEventHandler;
 import com.example.cargotracker.tracking.application.internal.outboundservices.acl.BookingTrackingStarts;
 import com.example.cargotracker.tracking.application.internal.outboundservices.acl.RoutingScheduledLegs;
+import com.example.cargotracker.tracking.application.internal.queryservices.CustomerTrackingQueryService;
 import com.example.cargotracker.tracking.application.internal.queryservices.TrackingRecordQueryService;
 import com.example.cargotracker.tracking.domain.model.aggregates.TrackingRecordRepository;
 import java.time.Clock;
@@ -60,5 +61,11 @@ public class TrackingConfiguration {
     @Bean
     TrackingRecordQueryService trackingRecordQueryService(TrackingRecordRepository repository) {
         return new TrackingRecordQueryService(repository);
+    }
+
+    /** 荷主の追跡の照会（C-10。社内の照会と分ける。Bolt 27）。 */
+    @Bean
+    CustomerTrackingQueryService customerTrackingQueryService(TrackingRecordRepository repository) {
+        return new CustomerTrackingQueryService(repository);
     }
 }

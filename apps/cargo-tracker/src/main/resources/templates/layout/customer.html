@@ -39,7 +39,7 @@
                        th:attr="aria-current=${active == 'transport-requests'} ? 'page' : null"
                        th:href="@{/customer/transport-requests}">見積依頼</a>
                 </li>
-                <li class="nav-item" th:each="item : ${ {'bookings:予約', 'tracking:追跡の照会', 'inquiries:問い合わせ', 'notifications:通知'} }"
+                <li class="nav-item" th:each="item : ${ {'bookings:予約', 'tracking-records:追跡の照会', 'inquiries:問い合わせ', 'notifications:通知'} }"
                     th:with="key=${#strings.substringBefore(item, ':')}, label=${#strings.substringAfter(item, ':')}">
                     <a class="nav-link" th:classappend="${active == key} ? 'fw-bold'"
                        th:attr="aria-current=${active == key} ? 'page' : null"

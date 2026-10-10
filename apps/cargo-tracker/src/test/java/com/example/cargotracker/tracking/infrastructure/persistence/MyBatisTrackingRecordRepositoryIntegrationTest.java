@@ -174,6 +174,7 @@ class MyBatisTrackingRecordRepositoryIntegrationTest {
                         sameTimeDigit.trackingNumber(),
                         TrackingStatus.PICKUP_SCHEDULED,
                         sameTimeDigit.originalEta(),
+                        sameTimeDigit.latestEta(),
                         sameTimeDigit.startedAt()));
     }
 
@@ -225,6 +226,75 @@ class MyBatisTrackingRecordRepositoryIntegrationTest {
                         .orElseThrow()
                         .statusBasisMilestoneNo())
                 .isEqualTo(OptionalInt.of(1));
+    }
+
+    // 荷主の照会（C-10。BR-07。Bolt 27）
+
+    @Test
+    void 追跡番号と荷主企業で引くと自社の追跡記録だけを主要実績とあわせて読み出し他社は空() {
+        TrackingRecord saved = started(UUID.randomUUID(), trackingNumber());
+        repository.save(saved);
+        repository.update(register(saved, MilestoneKind.PICKUP, "2026-11-01T02:30:00Z", "F-118"));
+
+        TrackingRecord found = repository
+                .findByTrackingNumber(saved.trackingNumber(), saved.shipperCompanyId())
+                .orElseThrow();
+        assertThat(found.milestones()).hasSize(1);
+        assertThat(found.schedule()).isEqualTo(saved.schedule());
+        assertThat(repository.findByTrackingNumber(saved.trackingNumber(), new CompanyId(UUID.randomUUID())))
+                .isEmpty();
+    }
+
+    @Test
+    void 荷主企業の要約は自社の追跡記録だけを新しい順に上限まで返し最新の到着見込みを持つ() {
+        CompanyId shipper = new CompanyId(UUID.randomUUID());
+        TrackingRecord older = saveFor(shipper, "2099-01-01T00:00:00Z");
+        TrackingRecord newer = saveFor(shipper, "2099-01-02T00:00:00Z");
+        saveFor(new CompanyId(UUID.randomUUID()), "2099-01-03T00:00:00Z");
+
+        assertThat(repository.findRecentSummariesByShipper(shipper, 10))
+                .extracting(TrackingRecordSummary::trackingNumber)
+                .containsExactly(newer.trackingNumber(), older.trackingNumber());
+        assertThat(repository.findRecentSummariesByShipper(shipper, 1)).hasSize(1);
+        assertThat(repository
+                        .findRecentSummariesByShipper(shipper, 1)
+                        .getFirst()
+                        .latestEta())
+                .isEqualTo(newer.latestEta());
+    }
+
+    @Test
+    void 荷受人の企業で荷主の口を引いても追跡記録は出ない() {
+        // 荷主の口は荷主企業だけで絞る。荷受人の照会（US-10）は開示範囲が違うので別の口で作る（BR-07。Bolt 27 の開発レビュー）
+        TrackingRecord saved = started(UUID.randomUUID(), trackingNumber());
+        repository.save(saved);
+
+        assertThat(repository.findByTrackingNumber(saved.trackingNumber(), saved.consigneeCompanyId()))
+                .isEmpty();
+        assertThat(repository.findRecentSummariesByShipper(saved.consigneeCompanyId(), 10))
+                .isEmpty();
+    }
+
+    @Test
+    void 荷主の一覧の索引がある() {
+        assertThat(jdbc.queryForList(
+                        "SELECT indexdef FROM pg_indexes WHERE schemaname = 'tracking' AND indexname = 'ix_tracking_record_shipper'",
+                        String.class))
+                .singleElement(org.assertj.core.api.InstanceOfAssertFactories.STRING)
+                .contains("(shipper_company_id, created_at)");
+    }
+
+    private TrackingRecord saveFor(CompanyId shipper, String startedAt) {
+        TrackingRecord trackingRecord = TrackingRecord.start(
+                        trackingNumber(),
+                        UUID.randomUUID(),
+                        shipper,
+                        new CompanyId(UUID.randomUUID()),
+                        TrackingFixture.schedule(),
+                        new UtcInstant(Instant.parse(startedAt)))
+                .trackingRecord();
+        repository.save(trackingRecord);
+        return trackingRecord;
     }
 
     // 主要実績（US-12 AC1・AC2、T-INV-01・T-INV-02。Bolt 26b）

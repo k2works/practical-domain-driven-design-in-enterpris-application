@@ -1,5 +1,6 @@
 package com.example.cargotracker.tracking.acceptance;
 
+import com.example.cargotracker.shared.domain.CompanyId;
 import com.example.cargotracker.tracking.domain.model.aggregates.ConcurrentTrackingRecordUpdateException;
 import com.example.cargotracker.tracking.domain.model.aggregates.TrackingRecord;
 import com.example.cargotracker.tracking.domain.model.aggregates.TrackingRecordRepository;
@@ -11,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Stream;
 
 /**
  * メモリ上の追跡記録のリポジトリ（業務ルール層の受入シナリオと単体テスト。Bolt 25）。追跡記録は不変なので保存したインスタンスを返す（T-61）。
@@ -71,17 +73,42 @@ public class InMemoryTrackingRecordRepository implements TrackingRecordRepositor
                 .findFirst();
     }
 
+    /** PostgreSQL の照会と同じく、荷主企業で絞る（他社は空。Bolt 27）。 */
+    @Override
+    public synchronized Optional<TrackingRecord> findByTrackingNumber(
+            TrackingNumber trackingNumber, CompanyId shipperCompanyId) {
+        return findByTrackingNumber(trackingNumber)
+                .filter(saved -> saved.shipperCompanyId().equals(shipperCompanyId));
+    }
+
+    /** PostgreSQL の照会と同じく、荷主企業で絞って追跡の開始時刻の新しい順に上限まで返す（Bolt 27）。 */
+    @Override
+    public synchronized List<TrackingRecordSummary> findRecentSummariesByShipper(
+            CompanyId shipperCompanyId, int limit) {
+        return summaries(
+                byBookingId.values().stream()
+                        .filter(saved -> saved.shipperCompanyId().equals(shipperCompanyId)),
+                limit);
+    }
+
     /** PostgreSQL の照会と同じく、追跡の開始時刻の新しい順（同じ時刻なら追跡番号の順）に上限まで返す（Bolt 26）。 */
     @Override
     public synchronized List<TrackingRecordSummary> findRecentSummaries(int limit) {
-        return byBookingId.values().stream()
-                .sorted(Comparator.comparing(
+        return summaries(byBookingId.values().stream(), limit);
+    }
+
+    private static List<TrackingRecordSummary> summaries(Stream<TrackingRecord> records, int limit) {
+        return records.sorted(Comparator.comparing(
                                 (TrackingRecord saved) -> saved.startedAt().instant())
                         .reversed()
                         .thenComparing(saved -> saved.trackingNumber().value()))
                 .limit(limit)
                 .map(saved -> new TrackingRecordSummary(
-                        saved.trackingNumber(), saved.currentStatus(), saved.originalEta(), saved.startedAt()))
+                        saved.trackingNumber(),
+                        saved.currentStatus(),
+                        saved.originalEta(),
+                        saved.latestEta(),
+                        saved.startedAt()))
                 .toList();
     }
 

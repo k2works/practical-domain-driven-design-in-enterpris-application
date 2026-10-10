@@ -21,6 +21,10 @@ import com.example.cargotracker.shared.acceptance.MutableClock;
 import com.example.cargotracker.shared.domain.CompanyId;
 import com.example.cargotracker.shared.domain.Role;
 import com.example.cargotracker.shared.domain.UserId;
+import com.example.cargotracker.tracking.domain.model.TrackingFixture;
+import com.example.cargotracker.tracking.domain.model.aggregates.TrackingRecord;
+import com.example.cargotracker.tracking.domain.model.aggregates.TrackingRecordRepository;
+import com.example.cargotracker.tracking.domain.model.valueobjects.TrackingNumber;
 import jakarta.servlet.http.Cookie;
 import java.time.Clock;
 import java.time.Duration;
@@ -84,6 +88,9 @@ class AuthenticationSecurityIntegrationTest {
 
     @Autowired
     Clock clock;
+
+    @Autowired
+    TrackingRecordRepository trackingRecords;
 
     private Company shipperCompany;
 
@@ -496,6 +503,66 @@ class AuthenticationSecurityIntegrationTest {
                             .param("staffConfirmed", "true")
                             .cookie(session)
                             .with(csrf()))
+                    .andExpect(status().isForbidden());
+        }
+    }
+
+    @Test
+    void 荷主担当者はナビの追跡の照会を開くとC10になり準備中の画面ではない() throws Exception {
+        Cookie session = login(user(shipperCompany, Role.SHIPPER, UserStatus.ACTIVE));
+
+        // 準備中の画面を C-10 追跡の照会に置き換えた（Bolt 27）。ナビの「追跡の照会」は C-10 を指し、現在の項目になる
+        String page = mvc.perform(get("/customer/tracking-records").cookie(session))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+        assertThat(page)
+                .contains("<h1>追跡の照会</h1>")
+                .doesNotContain("この画面は準備中です")
+                // 属性の順によらずに探す（Bolt 26 のナビの表示のテストと同じ）
+                .containsPattern(
+                        "<a(?=[^>]*href=\"/customer/tracking-records\")(?=[^>]*aria-current=\"page\")[^>]*>追跡の照会</a>");
+        mvc.perform(get("/customer/tracking").cookie(session)).andExpect(status().isNotFound());
+    }
+
+    @Test
+    void 荷主担当者が他社や存在しない形式の誤った追跡番号を開くとどれも同じ404の案内になる() throws Exception {
+        Cookie session = login(user(shipperCompany, Role.SHIPPER, UserStatus.ACTIVE));
+        TrackingNumber otherShippers = new TrackingNumber("CTSECVRTYXHR27");
+        trackingRecords.save(TrackingRecord.start(
+                        otherShippers,
+                        UUID.randomUUID(),
+                        new CompanyId(UUID.randomUUID()),
+                        new CompanyId(UUID.randomUUID()),
+                        TrackingFixture.schedule(),
+                        TrackingFixture.STARTED_AT)
+                .trackingRecord());
+
+        // フィルターと実際のエラー処理を通して、状態と本文が同じことを確かめる（BR-07。Bolt 27 の開発レビュー）。
+        // CSRF のトークンは要求ごとに変わるので除いて比べる
+        String other = notFoundBody(session, otherShippers.value());
+        assertThat(other).contains("<h1>追跡番号が見つかりません</h1>");
+        assertThat(notFoundBody(session, "CTZZZZZZZZZZZZ")).isEqualTo(other);
+        assertThat(notFoundBody(session, "not-a-tracking-number")).isEqualTo(other);
+    }
+
+    private String notFoundBody(Cookie session, String trackingNumber) throws Exception {
+        return mvc.perform(get("/customer/tracking-records/" + trackingNumber).cookie(session))
+                .andExpect(status().isNotFound())
+                .andReturn()
+                .getResponse()
+                .getContentAsString()
+                .replaceAll("name=\"_csrf\" value=\"[^\"]*\"", "name=\"_csrf\"");
+    }
+
+    @Test
+    void 社内の役割は荷主の追跡の照会を開けない() throws Exception {
+        for (Role role : List.of(Role.SALES, Role.ROUTE_DESIGNER, Role.TRACKING_MANAGER)) {
+            Cookie session = login(user(staffCompany(), role, UserStatus.ACTIVE));
+
+            mvc.perform(get("/customer/tracking-records").cookie(session)).andExpect(status().isForbidden());
+            mvc.perform(get("/customer/tracking-records/CTABCDEFGH2345").cookie(session))
                     .andExpect(status().isForbidden());
         }
     }
