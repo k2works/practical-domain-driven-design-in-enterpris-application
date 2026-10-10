@@ -25,7 +25,7 @@ import java.util.stream.Collectors;
 public record RecentBookings(List<Row> rows, boolean truncated, int limit) {
 
     /** 一覧の上限の件数（S-10 と C-06 で同じ。絞り込みとページ送りは W11）。 */
-    public static final int LIMIT = 50;
+    private static final int MAX_ROWS = 50;
 
     public RecentBookings {
         rows = List.copyOf(Objects.requireNonNull(rows, "rows"));
@@ -44,8 +44,8 @@ public record RecentBookings(List<Row> rows, boolean truncated, int limit) {
     public static RecentBookings of(
             IntFunction<List<BookingSummary>> summaries,
             Function<Set<BookingId>, Map<BookingId, BookingSagaStatus>> sagaStatuses) {
-        List<BookingSummary> found = summaries.apply(LIMIT + 1);
-        List<BookingSummary> shown = found.subList(0, Math.min(found.size(), LIMIT));
+        List<BookingSummary> found = summaries.apply(MAX_ROWS + 1);
+        List<BookingSummary> shown = found.subList(0, Math.min(found.size(), MAX_ROWS));
         Map<BookingId, BookingSagaStatus> statuses =
                 sagaStatuses.apply(shown.stream().map(BookingSummary::bookingId).collect(Collectors.toSet()));
         List<Row> rows = shown.stream()
@@ -57,7 +57,7 @@ public record RecentBookings(List<Row> rows, boolean truncated, int limit) {
                         Optional.ofNullable(statuses.get(summary.bookingId()))
                                 .orElseThrow(() -> missingSaga(summary.bookingId()))))
                 .toList();
-        return new RecentBookings(rows, found.size() > LIMIT, LIMIT);
+        return new RecentBookings(rows, found.size() > MAX_ROWS, MAX_ROWS);
     }
 
     /** 貨物予約があれば予約サガは同じトランザクションで作られている（ADR-015）。ないのは不変条件の違反。 */
