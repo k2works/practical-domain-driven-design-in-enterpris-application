@@ -81,6 +81,10 @@
          <index name="pk_tracking_record" unique="true">
             <column ascending="true" name="tracking_number"/>
          </index>
+         <index name="ix_tracking_record_shipper" unique="false">
+            <column ascending="true" name="shipper_company_id"/>
+            <column ascending="true" name="created_at"/>
+         </index>
          <index name="uk_tracking_record_booking" unique="true">
             <column ascending="true" name="booking_id"/>
          </index>

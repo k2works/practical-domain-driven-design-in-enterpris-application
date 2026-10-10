@@ -9401,8 +9401,8 @@
 </tr>
 <tr>
 <td style="text-align: left;"><code>tracking.tracking_record</code></td>
-<td style="text-align: left;">（<code>shipper_company_id</code>）、（<code>consignee_company_id</code>）</td>
-<td style="text-align: left;">荷主・荷受人の照会（照会を作る Bolt 27 で足す。<code>booking_id</code> は一意制約が索引を兼ねる）。S-11 の追跡の開始時刻（<code>created_at</code>）の並びの索引は、R0.1 では追跡記録が数十件なので足さない（一覧の絞り込みとページ送りを作る W7 以後に決める。Bolt 26）</td>
+<td style="text-align: left;"><code>ix_tracking_record_shipper</code>（<code>shipper_company_id</code>、<code>created_at</code>）、（<code>consignee_company_id</code>）</td>
+<td style="text-align: left;">荷主の照会（C-10。Bolt 27 で足した。荷主企業で絞って追跡の開始時刻の新しい順に並べる一覧のため、並びの列を含めた複合の索引にした）・荷受人の照会（荷受人の照会を作る US-10・R1.1 で足す）。<code>booking_id</code> は一意制約が索引を兼ねる。S-11 の追跡の開始時刻（<code>created_at</code>）の並びの索引は、R0.1 では追跡記録が数十件なので足さない（一覧の絞り込みとページ送りを作る W7 以後に決める。Bolt 26）</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>tracking.service_case</code></td>

@@ -10263,10 +10263,10 @@
 </tr>
 <tr>
 <td style="text-align: left;">27</td>
-<td style="text-align: left;">US-09 AC1 照会（現在状態・予定・主要実績・出典・取得時刻。自社に許可された予約に限る BR-07）（<a href="https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/12">#12</a>）。<a href="../bolt_27_plan/">Bolt 27 計画</a>（承認待ち）</td>
+<td style="text-align: left;">US-09 AC1 照会（現在状態・予定・主要実績・出典・取得時刻。自社に許可された予約に限る BR-07）（<a href="https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/12">#12</a>）。<a href="../bolt_27_plan/">Bolt 27 計画</a>（<code>/goal</code> で進めた）</td>
 <td style="text-align: right;">3</td>
 <td style="text-align: left;">アウトサイドイン</td>
-<td style="text-align: left;">Red・Green ごと（開示制御）、認可</td>
+<td style="text-align: left;">Red・Green ごと（開示制御）、認可、スキーマ（索引）</td>
 </tr>
 <tr>
 <td style="text-align: left;">28</td>
@@ -10279,7 +10279,7 @@
 </table>
 <p>US-04 の SP 5 は、サガの成功の経路を閉じて #10 をクローズする Bolt 25 で数える（Bolt 23・24・25 の SP の分け方は目安だったので、表は Bolt 25 に 5 を寄せた。2026-10-09）。予約サガの再試行（RTY-02）・有人確認要・有人案件の起票（BR-17）は W4 で作らない。状態の値は Bolt 23 の計画で決め、有人案件の起票は US-20 の W8 に回す</p>
 <p><strong>W3 の Try の持ち込み</strong>: 各 Bolt 計画の確認ポイントに、T-54（コンテキストの間のイベントを足すときは購読する側の依存が循環しないか）、T-55（置換は <code>spotlessApply</code> の後のファイルに当てる）、T-57（状態の列挙に値を足すときはその状態を見る判定を洗い出す）、T-58（listener と公開 API には業務の拒否と警告のログの経路の単体テストを Red に入れる）、T-61〜T-63（メモリのリポジトリは写しを返す、listener の欠けを「再配信で直るか」で分ける、「N 個目で」の規則は N 個目の計画に入れる）を入れる。W3 の Problem の Windows で手順書のタスクが動かない件は、<code>sonar-local:scan</code> を Bolt 21 で直した。<code>documentationTest</code> は、Windows の作業ツリーで作業する Bolt で確かめる</p>
-<p><strong>Living Documentation</strong>（開発戦略の「完了条件への組み込み」）: 新しい <code>booking</code>・<code>tracking</code> モジュールで、<code>package-info</code> の <code>allowedDependencies</code>（<code>booking</code> → 見積りの <code>api</code>（経路版は見積りが割り当てた経路の写しで確かめる。Bolt 23 計画の確認ポイント 7）、<code>tracking</code> → 予約の <code>api</code>・<code>events</code>、経路設計の <code>api</code>（Bolt 25）、<code>platform :: web</code>（社内の画面の日時表示の部品。Bolt 26））、ModularityTest のモジュール名、用語集の整合テスト、<code>DomainEventSerializationContractTest</code> への DE-07 などの追加、<code>afterMigrate</code> の権限と追記専用の印（Bolt 26b で DELETE だけを外す印 <code>[no-delete]</code> を足した）、貨物予約・追跡記録の <code>@CoreConcept</code> をそろえる</p>
+<p><strong>Living Documentation</strong>（開発戦略の「完了条件への組み込み」）: 新しい <code>booking</code>・<code>tracking</code> モジュールで、<code>package-info</code> の <code>allowedDependencies</code>（<code>booking</code> → 見積りの <code>api</code>（経路版は見積りが割り当てた経路の写しで確かめる。Bolt 23 計画の確認ポイント 7）、<code>tracking</code> → 予約の <code>api</code>・<code>events</code>、経路設計の <code>api</code>（Bolt 25）、<code>platform :: web</code>（画面の日時表示の部品。Bolt 26 で社内の画面、Bolt 27 で荷主の画面 C-10 でも使う））、ModularityTest のモジュール名、用語集の整合テスト、<code>DomainEventSerializationContractTest</code> への DE-07 などの追加、<code>afterMigrate</code> の権限と追記専用の印（Bolt 26b で DELETE だけを外す印 <code>[no-delete]</code> を足した）、貨物予約・追跡記録の <code>@CoreConcept</code> をそろえる</p>
 <p><strong>デモ項目</strong>: 本予約の確定（重複確定の防止を含む）から追跡の開始・実績の登録・荷主の照会まで（Release 0.1 のデモ）。<code>@US-04</code>、<code>@US-12</code>、<code>@US-09</code>、<code>@ui</code> の主成功シナリオ</p>
 <p><strong>ユーザーマニュアル</strong>: W4 の Bolt では作業を持たない。Release 0.1 の縦の流れがそろう W4 の完了の後に、<code>docs/manual</code> を作る（2026-10-08 に human:kakimomokuri が決定。<code>creating-manual</code>）</p>
 <p><strong>主なタスク</strong>:</p>
@@ -10341,7 +10341,7 @@
 <td style="text-align: left;">W9</td>
 <td style="text-align: left;">11-30 〜 12-04</td>
 <td style="text-align: left;">通知・KPI・残りの受入条件</td>
-<td style="text-align: left;">US-23（3）、US-22（3）、US-21 残り（3）、US-01 残り（2）、US-24 残り（2）、US-09 残り（2）。KPI の計測の前に、未完了の発行の件数を確かめる手段（W10 から前倒し。Bolt 21 終了報告の議題 7）</td>
+<td style="text-align: left;">US-23（3）、US-22（3）、US-21 残り（3）、US-01 残り（2）、US-24 残り（2）、US-09 残り（2）。W9 より前の荷主の照会は照会記録（IR-INV-01）がないので KPI-02 の分母に入らない（Bolt 27）。KPI の計測の前に、未完了の発行の件数を確かめる手段（W10 から前倒し。Bolt 21 終了報告の議題 7）</td>
 <td style="text-align: right;">15</td>
 </tr>
 <tr>

@@ -9420,6 +9420,18 @@
 <td style="text-align: left;">共有カーネル</td>
 </tr>
 <tr>
+<td style="text-align: left;">荷主向けの追跡の照会結果</td>
+<td style="text-align: left;">CustomerTrackingView</td>
+<td style="text-align: left;">追跡記録を荷主の開示範囲に絞った照会結果。現在状態・当初の到着予定・最新の到着見込み・予定区間・採用済みの主要実績だけを持ち、経路版などの社内の識別子を持たない（顧客向けに表示する(開示範囲) の荷主の分。BR-07、T-INV-09。Bolt 27）</td>
+<td style="text-align: left;">追跡</td>
+</tr>
+<tr>
+<td style="text-align: left;">荷主向けの主要実績</td>
+<td style="text-align: left;">CustomerMilestone</td>
+<td style="text-align: left;">荷主に見せてよい項目（種類・場所・発生時刻・出典）だけを持つ主要実績の写し。実績番号・状態・登録者を持たない（Bolt 27）</td>
+<td style="text-align: left;">追跡</td>
+</tr>
+<tr>
 <td style="text-align: left;">確認中</td>
 <td style="text-align: left;">UnderReview</td>
 <td style="text-align: left;">順序逆転・矛盾・鮮度超過のため、現在状態に反映せず保留している状態（BR-06）</td>
@@ -10123,6 +10135,13 @@
 </tbody>
 </table>
 <p>第 2 章の TrackingActivity が HandlingEvent の列を持つのと同じく、追跡記録が主要実績の列を持ち、現在状態を集約の中で導出する（ADR-002）。</p>
+<p>荷主の追跡の照会（US-09 AC1。Bolt 27）は次のとおり。</p>
+<ul>
+<li>追跡記録の操作「顧客向けに表示する」のうち、Bolt 27 は荷主の分だけを <code>customerView()</code> として作る。照会結果 <code>CustomerTrackingView</code> は現在状態・当初の到着予定・最新の到着見込み・予定区間と、採用済みの主要実績（<code>CustomerMilestone</code>: 種類・場所・発生時刻・出典。発生時刻の順、同じ時刻は実績番号の順）だけを持つ。経路版・実績番号・実績の状態・登録者は持たない（T-INV-09 の荷主の範囲）</li>
+<li>照会者の立場で項目を切り替える開示範囲（<code>DisclosureScope</code>）は、立場が 2 つになる荷受人の照会（US-10・R1.1）で作る。いまは荷主しかいないので、引数を持たない操作にした</li>
+<li>自社の追跡記録だけを照会することは、荷主用の照会のサービス（<code>CustomerTrackingQueryService</code>）がリポジトリの荷主企業で絞る口を使って守る（BR-07）。他社の追跡番号は存在しない番号と同じに扱う</li>
+<li>照会記録（IR-INV-01）は W9 で作るので、それまでの荷主の照会は照会記録に残らず、KPI-02 の分母に入らない。顧客への表示の可否（<code>shown_to_customer</code>）は確認中（US-11）と訂正（US-13）で足す。いまは採用済みの実績をすべて示す</li>
+</ul>
 <p>主要実績の登録（US-12 AC1・AC2。Bolt 26b）は次のとおり。</p>
 <ul>
 <li>追跡管理者が登録した実績は採用（<code>ADOPTED</code>）にし、現在状態の導出に入れる。下書き（<code>DRAFT</code>）は外部原本の取込（DE-13、W7）で作る実績に使う。BR-05 の二者確認は訂正（T-INV-06）にかかり、登録にはかからない</li>
@@ -10827,7 +10846,7 @@
 <tr>
 <td style="text-align: left;">追跡</td>
 <td style="text-align: left;">追跡記録・有人案件・照会記録・営業日カレンダーのリポジトリ</td>
-<td style="text-align: left;">追跡番号で取得（S-12。Bolt 26）、予約 ID で追跡記録を取得（T-INV-11。Bolt 25）、追跡記録の要約（<code>TrackingRecordSummary</code>）を追跡の開始時刻の新しい順に上限まで取得（S-11。集約を組み立てない。Bolt 26）、期待版で保存（追跡記録の <code>update</code>。まだ表にない主要実績を追加し、現在状態と根拠の実績番号を書き直して版を増やす。Bolt 26b）、期限を過ぎた未受領案件を取得、荷主企業の問い合わせを取得</td>
+<td style="text-align: left;">追跡番号で取得（S-12。Bolt 26）、予約 ID で追跡記録を取得（T-INV-11。Bolt 25）、追跡記録の要約（<code>TrackingRecordSummary</code>。最新の到着見込みを含む）を追跡の開始時刻の新しい順に上限まで取得（S-11。集約を組み立てない。Bolt 26）、荷主企業の追跡記録の要約を同じ順に上限まで取得・追跡番号と荷主企業で追跡記録を取得（C-10。他社の追跡記録は存在しないのと同じく空。BR-07。Bolt 27）、期待版で保存（追跡記録の <code>update</code>。まだ表にない主要実績を追加し、現在状態と根拠の実績番号を書き直して版を増やす。Bolt 26b）、期限を過ぎた未受領案件を取得、荷主企業の問い合わせを取得</td>
 </tr>
 <tr>
 <td style="text-align: left;">通知</td>

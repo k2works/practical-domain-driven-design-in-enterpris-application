@@ -171,7 +171,7 @@
                                     <td><p>予約 ID（写し）</p></td>
                                 </tr>
                                 <tr>
-                                    <td><span id="shipper_company_id">shipper_company_id</span></td>
+                                    <td class='indexedColumn' title='Indexed'><i class='fa fa-sitemap fa-rotate-120' style='padding-right: 5px;'></i><span id="shipper_company_id">shipper_company_id</span></td>
                                     <td>uuid</td>
                                     <td>2147483647</td>
                                     <td title=''></td>
@@ -397,7 +397,7 @@
                                     <td><p>版</p></td>
                                 </tr>
                                 <tr>
-                                    <td><span id="created_at">created_at</span></td>
+                                    <td class='indexedColumn' title='Indexed'><i class='fa fa-sitemap fa-rotate-120' style='padding-right: 5px;'></i><span id="created_at">created_at</span></td>
                                     <td>timestamptz</td>
                                     <td>35,6</td>
                                     <td title=''></td>
@@ -467,6 +467,12 @@
                                     <td>tracking_number</td>
                                 </tr>
                                 <tr>
+                                    <td title='Indexed'>ix_tracking_record_shipper</td>
+                                    <td>Performance</td>
+                                    <td><span title='Ascending'>Asc</span>/<span title='Ascending'>Asc</span></td>
+                                    <td>shipper_company_id + created_at</td>
+                                </tr>
+                                <tr>
                                     <td class='uniqueKey' title='Unique Key'><i class='icon ion-key iconkey'></i> uk_tracking_record_booking</td>
                                     <td>Must be unique</td>
                                     <td><span title='Ascending'>Asc</span></td>
@@ -501,16 +507,16 @@
                                 </thead>
                                 <tbody>
                                 <tr>
-                                    <td>ck_tracking_record_current_status</td>
-                                    <td>((current_status)::text &#61; ANY ((ARRAY[&#39;BOOKED&#39;::character varying, &#39;PICKUP_SCHEDULED&#39;::character varying, &#39;PICKED_UP&#39;::character varying, &#39;RECEIVED_AT_ORIGIN&#39;::character varying, &#39;IN_TRANSIT&#39;::character varying, &#39;TRANSSHIPPING&#39;::character varying, &#39;ARRIVED_AT_DESTINATION&#39;::character varying, &#39;READY_FOR_DELIVERY&#39;::character varying, &#39;DELIVERED&#39;::character varying, &#39;UNDER_REVIEW&#39;::character varying])::text[]))</td>
-                                </tr>
-                                <tr>
                                     <td>ck_tracking_record_booking_status</td>
                                     <td>((booking_status)::text &#61; ANY ((ARRAY[&#39;CONFIRMED&#39;::character varying, &#39;CANCELLED&#39;::character varying, &#39;COMPLETED&#39;::character varying])::text[]))</td>
                                 </tr>
                                 <tr>
                                     <td>ck_tracking_record_route_version</td>
                                     <td>(((routing_case_number IS NULL) AND (route_version_no IS NULL)) OR ((routing_case_number IS NOT NULL) AND (route_version_no &gt;&#61; 1)))</td>
+                                </tr>
+                                <tr>
+                                    <td>ck_tracking_record_current_status</td>
+                                    <td>((current_status)::text &#61; ANY ((ARRAY[&#39;BOOKED&#39;::character varying, &#39;PICKUP_SCHEDULED&#39;::character varying, &#39;PICKED_UP&#39;::character varying, &#39;RECEIVED_AT_ORIGIN&#39;::character varying, &#39;IN_TRANSIT&#39;::character varying, &#39;TRANSSHIPPING&#39;::character varying, &#39;ARRIVED_AT_DESTINATION&#39;::character varying, &#39;READY_FOR_DELIVERY&#39;::character varying, &#39;DELIVERED&#39;::character varying, &#39;UNDER_REVIEW&#39;::character varying])::text[]))</td>
                                 </tr>
                                 </tbody>
                             </table>

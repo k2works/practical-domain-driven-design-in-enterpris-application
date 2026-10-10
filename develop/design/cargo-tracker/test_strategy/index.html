@@ -9248,10 +9248,10 @@ src/test/java/.../shared/acceptance/      共通ステップ（ログイン、�
 </tr>
 <tr>
 <td style="text-align: left;">T-INV-08〜10（予定と実績の区別、開示範囲、当初の予定と最新の見込み）</td>
-<td style="text-align: left;">○（Bolt 26b: 現在状態の導出の規則。種類ごと、発生時刻の順、同じ時刻、採用済みだけ）</td>
-<td style="text-align: left;">○</td>
-<td style="text-align: left;">—</td>
-<td style="text-align: left;">○（顧客向け HTML の開示テスト）</td>
+<td style="text-align: left;">○（Bolt 26b: 現在状態の導出の規則。種類ごと、発生時刻の順、同じ時刻、採用済みだけ。Bolt 27: 荷主向けの照会結果は採用済みの実績だけで社内の識別子を持たない、荷主の照会のサービスは他社の追跡記録を返さない）</td>
+<td style="text-align: left;">○（Bolt 27: <code>@US-09-AC1</code>、他社の照会 <code>@BR-07 @T-INV-09</code>、自社だけの一覧 <code>@BR-07</code>。画面の層の <code>@ui @US-09-AC1</code>。荷受人の立場は R1.1）</td>
+<td style="text-align: left;">○（Bolt 27: 荷主企業で絞る照会と索引）</td>
+<td style="text-align: left;">○（顧客向け HTML の開示テスト。Bolt 27: 他社・存在しない・形式の誤りの追跡番号は同じ 404 で本文も同じ、経路版の案件番号・実績番号・UTC の併記が出ない。荷受人の開示範囲は R1.1）</td>
 </tr>
 <tr>
 <td style="text-align: left;">T-INV-11（追跡記録は予約 1 件に 1 件）</td>
@@ -9584,7 +9584,7 @@ src/test/java/.../shared/acceptance/      共通ステップ（ログイン、�
 </tr>
 <tr>
 <td style="text-align: left;">追跡の照会</td>
-<td style="text-align: left;">荷主の照会（確認中の表示を含む）、荷受人の照会（開示範囲）</td>
+<td style="text-align: left;">荷主の照会（確認中の表示を含む）、荷受人の照会（開示範囲）。Bolt 27 は荷主の一覧から結果を開いて戻るまで（<code>@demo-bolt-27/query-tracking</code>）。確認中の表示は R1.0、照会記録（IR-INV-01）は W9</td>
 <td style="text-align: left;">US-09、US-10</td>
 </tr>
 <tr>

@@ -63,6 +63,7 @@
 <polygon fill="#ffffff" stroke="transparent" points="212.2817,-387.2 212.2817,-409.2 426.2817,-409.2 426.2817,-387.2 212.2817,-387.2"/>
 <polygon fill="none" stroke="#000000" points="212.2817,-387.2 212.2817,-409.2 426.2817,-409.2 426.2817,-387.2 212.2817,-387.2"/>
 <text text-anchor="start" x="232.2817" y="-394.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">booking_id</text>
+<polygon fill="#ffffff" stroke="transparent" points="212.2817,-365.2 212.2817,-387.2 426.2817,-387.2 426.2817,-365.2 212.2817,-365.2"/>
 <polygon fill="none" stroke="#000000" points="212.2817,-365.2 212.2817,-387.2 426.2817,-387.2 426.2817,-365.2 212.2817,-365.2"/>
 <text text-anchor="start" x="232.2817" y="-372.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">shipper_company_id</text>
 <polygon fill="none" stroke="#000000" points="212.2817,-343.2 212.2817,-365.2 426.2817,-365.2 426.2817,-343.2 212.2817,-343.2"/>
@@ -90,6 +91,7 @@
 <text text-anchor="start" x="232.2817" y="-130.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">last_acquired_at</text>
 <polygon fill="none" stroke="#000000" points="212.2817,-101.2 212.2817,-123.2 426.2817,-123.2 426.2817,-101.2 212.2817,-101.2"/>
 <text text-anchor="start" x="232.2817" y="-108.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">version</text>
+<polygon fill="#ffffff" stroke="transparent" points="212.2817,-79.2 212.2817,-101.2 426.2817,-101.2 426.2817,-79.2 212.2817,-79.2"/>
 <polygon fill="none" stroke="#000000" points="212.2817,-79.2 212.2817,-101.2 426.2817,-101.2 426.2817,-79.2 212.2817,-79.2"/>
 <text text-anchor="start" x="232.2817" y="-86.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">created_at</text>
 <polygon fill="none" stroke="#000000" points="212.2817,-57.2 212.2817,-79.2 426.2817,-79.2 426.2817,-57.2 212.2817,-57.2"/>
