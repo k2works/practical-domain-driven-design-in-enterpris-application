@@ -4872,7 +4872,7 @@
     
   
   
-    <span class="md-status md-status--draft"></span>
+    <span class="md-status md-status--stable"></span>
   
 
   
@@ -10068,11 +10068,11 @@
 </ul>
 <p><strong>リリース条件</strong>:</p>
 <ul class="task-list">
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> Release 0.1 の範囲の受入シナリオがすべて通る</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> 主成功の流れの <code>@ui</code> シナリオ 1 本が通る</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> アーキテクチャテスト（AT-01〜06）が通る</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> H2 で起動でき、PostgreSQL の統合テストが通る</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> 社内デモで human:kakimomokuri が流れを確認する</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Release 0.1 の範囲の受入シナリオがすべて通る（Bolt 28 で確かめた）</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> 主成功の流れの <code>@ui</code> シナリオ 1 本が通る（Bolt 28 で確かめた）</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> アーキテクチャテスト（AT-01〜06）が通る（Bolt 28 で確かめた）</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> H2 で起動でき、PostgreSQL の統合テストが通る（Bolt 28 で確かめた）</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> 社内デモで human:kakimomokuri が流れを確認する（2026-10-10、デモ環境。<a href="../bolt_28_report/">Bolt 28 終了報告</a>）</li>
 </ul>
 <h4 id="release-10w10">Release 1.0（W10 完了）: パイロット準備完了<a class="headerlink" href="#release-10w10" title="Permanent link">&para;</a></h4>
 <p><strong>目標</strong>: Must の 17 ストーリーの全受入条件と運用準備をそろえ、パイロットを開始できる状態にする。</p>
@@ -10459,7 +10459,7 @@
 </tr>
 <tr>
 <td style="text-align: left;">28</td>
-<td style="text-align: left;">主成功の流れの <code>@ui</code> シナリオと Release 0.1 のデモ。序盤の完了条件（開発戦略）と Release 0.1 のリリース条件を確かめる。受入条件とシナリオの照合（Bolt 2 レビュー R-17 の持ち越し）を作る。<a href="../bolt_28_plan/">Bolt 28 計画</a>（承認済み。<a href="https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/44">#44</a>）</td>
+<td style="text-align: left;">主成功の流れの <code>@ui</code> シナリオと Release 0.1 のデモ。序盤の完了条件（開発戦略）と Release 0.1 のリリース条件を確かめる。受入条件とシナリオの照合（Bolt 2 レビュー R-17 の持ち越し）を作る。<a href="../bolt_28_plan/">Bolt 28 計画</a>（承認済み）、<a href="../bolt_28_report/">Bolt 28 終了報告</a>（完了、2026-10-10 に承認済み。<a href="https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/44">#44</a>）</td>
 <td style="text-align: right;">0</td>
 <td style="text-align: left;">アウトサイドイン</td>
 <td style="text-align: left;"><code>/goal</code></td>
@@ -10481,7 +10481,7 @@
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Bolt 26b・26c: US-12（AC1、AC2）。<a href="../bolt_26c_plan/">Bolt 26c 計画</a>、<a href="../bolt_26c_report/">Bolt 26c 終了報告</a>（完了、2026-10-10 に承認済み。#11 をクローズして SP 3 を数えた）。<a href="../bolt_26b_plan/">Bolt 26b 計画</a>、<a href="../bolt_26b_report/">Bolt 26b 終了報告</a>（26b は業務のルールと永続化。完了、2026-10-10 に承認済み。26c は画面）</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Bolt 27: US-09（AC1）。<a href="../bolt_27_plan/">Bolt 27 計画</a>（<code>/goal</code> で進めた）、<a href="../bolt_27_report/">Bolt 27 終了報告</a>（完了、2026-10-10 に承認済み。#12 をクローズして SP 3 を数えた。他社・存在しない追跡番号の 404 は C-10 の案内にし、区切りの付いた追跡番号を受け付ける（開発レビューの判断））</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Bolt 27b: C-06 予約一覧の最小の表示（荷主。Bolt 27 の終了報告の承認の場で足した）。<a href="../bolt_27b_plan/">Bolt 27b 計画</a>（承認済み）、<a href="../bolt_27b_report/">Bolt 27b 終了報告</a>（完了、2026-10-10 に承認済み。SP 0。受入動画は #10 に添付した）</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> Bolt 28: 主成功の流れの <code>@ui</code> シナリオと Release 0.1 のデモ。<a href="../bolt_28_plan/">Bolt 28 計画</a>（承認済み。<a href="https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/44">#44</a>）</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Bolt 28: 主成功の流れの <code>@ui</code> シナリオと Release 0.1 のデモ。<a href="../bolt_28_plan/">Bolt 28 計画</a>、<a href="../bolt_28_report/">Bolt 28 終了報告</a>（完了、2026-10-10 に承認済み。社内デモで流れを確かめ、Release 0.1 のリリース条件をすべて満たした。受入条件の照合と AT-05 を作った。#44 をクローズ、T-87 は #45）</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> ユーザーマニュアル（<code>docs/manual</code>）の作成（Bolt 28 の次。2026-10-10 に human:kakimomokuri が決定）</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> ウォーキングスケルトンのガイドツアーの記事（<code>docs/article</code> に追加。<code>creating-article</code>）の作成（ユーザーマニュアルの次。2026-10-10 に human:kakimomokuri が決定）</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> ベロシティと承認ゲートの密度の見直し（W4 の開始時。「ベロシティ検証計画」）</li>
@@ -11037,7 +11037,7 @@
 <td style="text-align: right;">11</td>
 <td style="text-align: right;">11</td>
 <td style="text-align: right;">-</td>
-<td style="text-align: left;">進行中（Bolt 22・23・23b・24・25・25b・26・26b・26c・27・27b を終えた。US-09 の R0.1 を完了し、#12 をクローズして SP 3 を数えた。US-12 の R0.1 を完了し、#11 をクローズして SP 3 を数えた。US-04 の R0.1 を完了し、#10 をクローズして SP 5 を数えた。#41・#42 をクローズした。人の変更依頼 3（公開 API の置き場所 2、Bolt 27 の承認の場の荷主の予約一覧 1））</td>
+<td style="text-align: left;">進行中（Bolt 22・23・23b・24・25・25b・26・26b・26c・27・27b・28 を終えた。Release 0.1 のリリース条件をすべて満たした（Bolt 28）。US-09 の R0.1 を完了し、#12 をクローズして SP 3 を数えた。US-12 の R0.1 を完了し、#11 をクローズして SP 3 を数えた。US-04 の R0.1 を完了し、#10 をクローズして SP 5 を数えた。#41・#42 をクローズした。人の変更依頼 3（公開 API の置き場所 2、Bolt 27 の承認の場の荷主の予約一覧 1））</td>
 </tr>
 <tr>
 <td style="text-align: left;">W5</td>
@@ -11449,6 +11449,11 @@
 <td style="text-align: left;">2026-10-10</td>
 <td style="text-align: left;">ユーザーマニュアルの次に、ウォーキングスケルトンのガイドツアーの記事（<code>docs/article</code>）を作るタスクを W4 に足した</td>
 <td style="text-align: left;">anthropic/claude-opus-5-5、指示 human:kakimomokuri</td>
+</tr>
+<tr>
+<td style="text-align: left;">2026-10-10</td>
+<td style="text-align: left;">Bolt 28 を終えた。社内デモで流れを確かめ、Release 0.1 のリリース条件にすべてチェックを付けた。#44 をクローズ、T-87 の技術タスクを #45（Release 1.0）として起票した</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5、承認 human:kakimomokuri</td>
 </tr>
 </tbody>
 </table>

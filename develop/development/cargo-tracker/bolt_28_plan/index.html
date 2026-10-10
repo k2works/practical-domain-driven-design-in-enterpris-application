@@ -4411,7 +4411,7 @@
     
   
   
-    <span class="md-status md-status--draft"></span>
+    <span class="md-status md-status--stable"></span>
   
 
   
@@ -9018,13 +9018,13 @@
 <li>リリース条件と序盤の完了条件の根拠の表は終了報告に置く</li>
 </ul>
 </li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>4. 社内デモと終了報告</strong> 【承認ゲート: 社内デモ、終了報告】</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>4. 社内デモと終了報告</strong> 【承認ゲート: 社内デモ、終了報告】</li>
 <li>設計文書（T-53。開発レビューの依頼より先に反映する。Bolt 27b の Problem）: test_strategy.md（Release 0.1 の受入条件の表、タグの規約に <code>@main-flow</code>（主成功の流れ。<code>@US-nn</code> を付けない例外。前例は <code>layout_ui.feature</code>）、<code>@ui</code> の主要フローの「見積依頼から本予約まで」の行に Bolt 28 の主成功の流れ（Release 0.1 はメール通知（US-22）を含まない。照会と KPI まで進む）と対応に US-09・US-12・US-21、US-21 の <code>@ui</code> の欄（<code>kpi_observations_ui.feature</code> がある））、development_strategy.md（序盤の完了条件のチェック）、release_plan.md（Release 0.1 のリリース条件のチェック、W4 の 28 の行と進捗）</li>
 <li>開発レビュー（<code>developing-review</code>。プログラマー（照合のテストとステップ定義。テスター・アーキテクトの観点を含む）とテクニカルライター（デモの台本、シナリオの読みやすさ））、SonarQube（<code>sonar-local:check</code>）、受入動画（<code>./gradlew demoVideo</code>。過去の Bolt の動画は元に戻す）</li>
 <li>デモの台本（デモ環境の URL、役割ごとの利用者、主成功の流れの手順と見るところ。KPI 計測記録は前身の仮の画面を営業担当者で見ること）を終了報告に置き、人がデモ環境で流れを確かめる（Release 0.1 のリリース条件。社内デモの結果を記録する）</li>
 <li>T-87 の技術タスクの Issue を起票する（Release 1.0 のマイルストーン、ラベル <code>technical</code>、週は W4 の締めで人が決める）</li>
 <li><code>bolt_28_report.md</code>。終了報告の承認の後に、受入動画の添付先（<code>ops/scripts/issue_demo.js</code> の <code>BOLT_ISSUES</code> と手順書の表）に <code>bolt-28 → 新しい Issue</code> を足して添付し、社内デモの結果をコメントして Issue を閉じる</li>
-<li>結果（2026-10-10。社内デモの待ち）<ul>
+<li>結果（2026-10-10）<ul>
 <li>設計文書を開発レビューの依頼の前に反映した（test_strategy.md の主要フローの行と US-21 の <code>@ui</code> の欄）</li>
 <li>2 つの観点でレビューした（プログラマー: 必須 3・推奨 2・任意 3、テクニカルライター: 必須 5・推奨 5・任意 3）。照合を Cucumber の解析器で Pickle にして数える形に直し（<code>io.cucumber:gherkin</code> を明示の依存に）、表の行の読み落としを失敗にし、解析と検出の単体テストを足した。後片付けのフックは、<code>@US-24</code> の漏れも見つかったので、タグの列挙をやめて航海を入れたシナリオだけを消す形にした。AT-05 に公開 API の実装の禁止と判定の単体テストを足した。主成功の流れに追跡一覧の先頭の確かめを足した。台本を実際の画面の文言と入力値で書き直した</li>
 <li>
@@ -9159,14 +9159,14 @@
 </table>
 <h2 id="_11">完了条件<a class="headerlink" href="#_11" title="Permanent link">&para;</a></h2>
 <ul class="task-list">
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> 主成功の流れの <code>@ui</code> シナリオ（<code>@demo-bolt-28/main-flow</code>）が通り、受入動画を撮った</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> Release 0.1 の受入条件とシナリオの照合のテストが <code>documentationTest</code> で通る（表が空でないことも確かめる）</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <code>check</code>・<code>uiTest</code> が緑。push して CI とデモ環境の配備を確かめた</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> Release 0.1 のリリース条件と序盤の完了条件の各項目に根拠を示した</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> 社内デモで human:kakimomokuri が流れを確かめた</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> SonarQube の Quality Gate が PASS</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> 設計文書（ステップ 4 の一覧）に決定を書いた（T-53）</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> 開発レビューと終了報告。承認の後に受入動画を Issue に添付し、社内デモの結果をコメントして閉じた</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> 主成功の流れの <code>@ui</code> シナリオ（<code>@demo-bolt-28/main-flow</code>）が通り、受入動画を撮った</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Release 0.1 の受入条件とシナリオの照合のテストが <code>documentationTest</code> で通る（表が空でないことも確かめる）</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <code>check</code>・<code>uiTest</code> が緑。push して CI とデモ環境の配備を確かめた</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Release 0.1 のリリース条件と序盤の完了条件の各項目に根拠を示した</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> 社内デモで human:kakimomokuri が流れを確かめた</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> SonarQube の Quality Gate が PASS</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> 設計文書（ステップ 4 の一覧）に決定を書いた（T-53）</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> 開発レビューと終了報告。承認の後に受入動画を Issue に添付し、社内デモの結果をコメントして閉じた</li>
 </ul>
 <h3 id="_12">デモ項目<a class="headerlink" href="#_12" title="Permanent link">&para;</a></h3>
 <p>一般貨物 1 件が、荷主の提出から営業の審査と見積りの提示・経路設計者の経路の確定・荷主の承認・本予約の確定・追跡の開始・実績の登録を経て、荷主の予約一覧と追跡の照会まで画面で縦に通り、KPI 計測記録に KPI-01 の 2 時刻が残る（<code>@demo @demo-bolt-28/main-flow</code>。Release 0.1 のデモ）。</p>
@@ -9180,6 +9180,11 @@
 </tr>
 </thead>
 <tbody>
+<tr>
+<td style="text-align: left;">2026-10-10</td>
+<td style="text-align: left;">社内デモで流れを確かめ（問題なし）、終了報告を承認し、完了条件をすべて満たした</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5、承認 human:kakimomokuri</td>
+</tr>
 <tr>
 <td style="text-align: left;">2026-10-10</td>
 <td style="text-align: left;">計画を承認した（確認ポイントはすべて推奨のとおり。照合はこの Bolt で作る、Issue を作る、社内デモはデモ環境）。#44 を作り、Project の週 W4・SP 0・In Progress を設定した</td>
