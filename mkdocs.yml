@@ -180,6 +180,13 @@ nav:
       - 3 章 見積依頼: manual/03-見積依頼.md
       - 4 章 見積りへの回答と承認: manual/04-見積りへの回答と承認.md
       - 5 章 予約一覧と追跡の照会: manual/05-予約一覧と追跡の照会.md
+      - 6 章 受付一覧と審査と見積り: manual/06-受付一覧と審査と見積り.md
+      - 7 章 本予約の確定と予約一覧: manual/07-本予約の確定と予約一覧.md
+      - 8 章 経路設計: manual/08-経路設計.md
+      - 9 章 追跡管理: manual/09-追跡管理.md
+      - 10 章 KPI 計測記録: manual/10-KPI計測記録.md
+      - 付録 A 用語集: manual/用語集.md
+      - 付録 B トラブルシューティング: manual/付録B-トラブルシューティング.md
       - HTML 版: assets/manual-output/cargo-tracker/index.html
   - 運用:
       - 概要: operation/index.md
