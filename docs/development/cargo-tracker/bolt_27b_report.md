@@ -3,8 +3,10 @@ type: Report
 title: "Bolt 27b 終了報告 - C-06 予約一覧の最小の表示（荷主）"
 description: "27b 回目の Bolt の終了報告。荷主のナビの「予約」の準備中の画面を C-06 予約一覧の最小の表示（自社の本予約の追跡番号・見積依頼・確定時刻・追跡の状況、新しい順）に置き換え、追跡が始まっていれば C-10 の照会の結果へ、業務番号から C-04 へつないだ結果。開発レビューの対応、品質ゲート、既知の課題、承認の議題を記す。"
 tags: [development,bolt-report]
-status: draft
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-10T07:26:06Z }
+status: stable
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-10T07:42:49Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-10-10T07:42:37Z }
 ---
 
 # Bolt 27b 終了報告 - C-06 予約一覧の最小の表示（荷主）
@@ -70,10 +72,10 @@ generated: { by: anthropic/claude-opus-5-5, at: 2026-10-10T07:26:06Z }
 | :--- | :--- |
 | `check`（ModularityTest・ArchUnit・AT-04・Checkstyle・SpotBugs を含む）・`documentationTest` | 通過 |
 | `uiTest`（axe-core を含む） | 通過（実行時間のある方の XML で 79 本、失敗 0。T-79。開発レビューの対応の後にも流した。T-70） |
-| CI（check・ui・デモ環境への配備） | `6731d69` は通過 |
+| CI（check・ui・デモ環境への配備） | `6731d69`・`1a3fefb` は通過 |
 | SonarQube（ローカル） | 品質ゲート PASS（新しいコードのカバレッジ 97.5%、重複 0.14%、新しい指摘 0 件）。途中で新しい指摘 1 件で FAIL だったので直した（議題 4） |
 | `okf:check` | ERROR 0 |
-| 支援技術による手動確認 | 人が行う（議題 5） |
+| 支援技術による手動確認 | 通過（2026-10-10、human:kakimomokuri。スクリーンリーダーで C-06 の表とリンクを操作し、問題なし） |
 
 ## 仮説の結論
 
@@ -131,6 +133,7 @@ Bolt 28: 主成功の流れの `@ui` シナリオと Release 0.1 のデモ（W4 
 
 | 日付 | 更新内容 | 更新者 |
 | :--- | :--- | :--- |
+| 2026-10-10 | 終了報告を承認した。議題 1〜4 を事後に承認した。支援技術による手動確認は問題なし（議題 5） | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-10-10 | 初版（ステップ 1〜5 の結果、開発レビュー、品質ゲート、既知の課題、承認の議題 1〜5、Try T-87・T-88） | anthropic/claude-opus-5-5 |
 
 ## 関連ドキュメント
