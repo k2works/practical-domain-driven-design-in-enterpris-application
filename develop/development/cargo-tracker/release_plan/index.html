@@ -4533,6 +4533,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../bolt_26b_plan/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 26b 計画
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -10081,10 +10109,17 @@
 </tr>
 <tr>
 <td style="text-align: left;">26b</td>
-<td style="text-align: left;">US-12 AC1 登録、AC2 重複（<a href="https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/11">#11</a>）。主要実績の表（<code>tracking.milestone</code>）と <code>tracking_record</code> の NULL 可の列の見直し、出典（共有カーネル）、主要実績と現在状態の導出、S-13 の登録と S-12 の主要実績の一覧。4 時間を超えると見えたら、AC2 の画面と NULL 可の列の見直しを 26c に回す</td>
-<td style="text-align: right;">3</td>
+<td style="text-align: left;">US-12 AC1 登録・AC2 重複の業務のルールと永続化（<a href="https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/11">#11</a>）。出典（共有カーネル）、主要実績、現在状態の導出、同じ出典の既存の実績を返す規則、主要実績の表（<code>tracking.milestone</code>）。業務のルールの層の受入シナリオ。開始準備で 4 時間を超えると見え、業務のルールと画面で分ける案にした（Bolt 23・23b と同じ）。<a href="../bolt_26b_plan/">Bolt 26b 計画</a>（承認待ち）</td>
+<td style="text-align: right;">0</td>
 <td style="text-align: left;">アウトサイドイン</td>
 <td style="text-align: left;">スキーマ、Red・Green ごと（業務のルール）</td>
+</tr>
+<tr>
+<td style="text-align: left;">26c</td>
+<td style="text-align: left;">US-12 の画面。S-13 の登録、S-12 の主要実績の一覧、AC2 の既存の記録の表示、画面の層のシナリオと受入動画、<code>tracking_record</code> の NULL 可の列の見直し、Bolt 26 の画面の既知の課題（U-4・U-6、予定と実績の並べ方）。#11 を閉じる</td>
+<td style="text-align: right;">3</td>
+<td style="text-align: left;">アウトサイドイン</td>
+<td style="text-align: left;">画面、スキーマ、Red・Green ごと（入力の検証）</td>
 </tr>
 <tr>
 <td style="text-align: left;">27</td>
@@ -10114,7 +10149,7 @@
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Bolt 25: 追跡の開始とサガの成功の経路。<a href="../bolt_25_plan/">Bolt 25 計画</a>（<code>/goal</code> で進めた）、<a href="../bolt_25_report/">Bolt 25 終了報告</a>（完了、2026-10-09 に承認済み。公開 API を <code>&lt;コンテキスト&gt;.interfaces.api</code> にそろえ、見積りの公開 API も移した。層の規則の例外は腐敗防止層と合成ルート。#10 をクローズし、US-04 の AC3・AC5 は <a href="https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/43">#43</a>（W6）にした）</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Bolt 25b: S-10 予約一覧の最小の表示（S-24 へ戻る入口）。<a href="../bolt_25b_plan/">Bolt 25b 計画</a>（承認済み）、<a href="../bolt_25b_report/">Bolt 25b 終了報告</a>（完了、2026-10-09 に承認済み。幅 320 CSS px の確定時刻の表記は未決）</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Bolt 26: 追跡管理者の入口と S-11・S-12 の最小の表示。<a href="../bolt_26_plan/">Bolt 26 計画</a>（<code>/goal</code> で進めた）、<a href="../bolt_26_report/">Bolt 26 終了報告</a>（完了、2026-10-09 に承認済み。認可のゲートと <code>platform :: web</code> の依存は事後に承認された）</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> Bolt 26b・27: US-12（AC1、AC2）、US-09（AC1）</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> Bolt 26b・26c・27: US-12（AC1、AC2）、US-09（AC1）。<a href="../bolt_26b_plan/">Bolt 26b 計画</a>（承認待ち。業務のルールと永続化、26c は画面）</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> Bolt 28: 主成功の流れの <code>@ui</code> シナリオと Release 0.1 のデモ</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> ベロシティと承認ゲートの密度の見直し（W4 の開始時。「ベロシティ検証計画」）</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> W4 の締め: Release 1.0 の計画の引き直し、Release 0.1 の実績による Release 1.0 の承認ゲートの密度の決め直し、Release 0.1 のリリース完了報告書</li>

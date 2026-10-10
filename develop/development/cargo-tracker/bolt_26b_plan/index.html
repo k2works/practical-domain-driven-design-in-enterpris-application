@@ -6,17 +6,17 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="13 回目の Bolt の計画。TOTP ライブラリの候補の比較と、Spring Security 7 の多要素認証で password の後に TOTP を求める 2 段階のログインを、本体と分けたスパイクの学習テストで確かめ、ADR 011 の案と技術スタックに結論を残すまでを、ステップ 1〜5 で定義する。">
+        <meta name="description" content="26b 回目の Bolt の計画。出典（共有カーネル）、主要実績、現在状態の導出、重複の出典の既存の記録を返す規則、主要実績の登録のコマンドサービス、tracking.milestone の表と永続化を、業務のルールの層の受入シナリオ・アプリケーション・ドメイン・永続化の順に、ステップ 1〜5 で定義する。S-13 の登録と S-12 の主要実績の一覧（画面）と tracking_record の NULL 可の列の見直しは Bolt 26c に分ける案。">
       
       
         <meta name="author" content="k2works">
       
       
       
-        <link rel="prev" href="../bolt_12_report/">
+        <link rel="prev" href="../bolt_26_report/">
       
       
-        <link rel="next" href="../bolt_13_report/">
+        <link rel="next" href="../../../operation/">
       
       
         
@@ -27,7 +27,7 @@
     
     
       
-        <title>Bolt 13 計画 - TOTP と Spring Security 7 の多要素認証のスパイク（TS-01） - 実践ドメイン駆動設計 in エンタープライズアプリケーション</title>
+        <title>Bolt 26b 計画 - 主要実績の登録の業務のルールと永続化（US-12 AC1・AC2） - 実践ドメイン駆動設計 in エンタープライズアプリケーション</title>
       
     
     
@@ -78,7 +78,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#bolt-13-totp-spring-security-7-ts-01" class="md-skip">
+        <a href="#bolt-26b-us-12-ac1ac2" class="md-skip">
           Skip to content
         </a>
       
@@ -112,7 +112,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Bolt 13 計画 - TOTP と Spring Security 7 の多要素認証のスパイク（TS-01）
+              Bolt 26b 計画 - 主要実績の登録の業務のルールと永続化（US-12 AC1・AC2）
             
           </span>
         </div>
@@ -2776,44 +2776,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Bolt 13 計画
-  
-
-    
-  </span>
-  
-  
-    
-  
-  
-    <span class="md-status md-status--stable"></span>
-  
-
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../bolt_13_plan/" class="md-nav__link">
         
   
   
@@ -2836,287 +2802,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#_1" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        基本情報
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#bolt" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Bolt ゴール
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Bolt ゴール">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#_2" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        確かめたい仮説
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#bolt_1" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        ふりかえりと前の Bolt からの引き継ぎ
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#_3" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        スコープ
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="スコープ">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#_4" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        入れるもの・入れないもの
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#bolt_2" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        設計（この Bolt の範囲）
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#_5" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        開始準備の検証
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="開始準備の検証">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#validating-iteration-plan" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        詳細の整合（validating-iteration-plan）
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#validating-design" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        横断の整合（validating-design）
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#_6" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        入力
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#_7" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        ステップ計画
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="ステップ計画">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#_8" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        時間の配分と打ち切り
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#try-t-6" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        確認ポイント（計画の承認の場でまとめて確認する。Try T-6）
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#ai" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        AI の仮定
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#_9" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        リスクと対策
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#_10" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        完了条件
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="完了条件">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#definition-of-done" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Definition of Done
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#_11" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        デモ項目
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#_12" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        更新履歴
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#_13" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        関連ドキュメント
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -4176,10 +3861,37 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../bolt_26b_plan/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 26b 計画
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -4195,6 +3907,276 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        基本情報
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#bolt" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bolt ゴール
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Bolt ゴール">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        確かめたい仮説
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#bolt_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ふりかえりと前の Bolt からの引き継ぎ
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        スコープ
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="スコープ">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#try-t-1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        設計の約束（Try T-1）
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        入れるもの・入れないもの
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#bolt_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        設計（この Bolt の範囲）
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="設計（この Bolt の範囲）">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ドメインモデル
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_6" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        状態遷移
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_7" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        データモデル
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_8" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        画面遷移
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_9" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ステップ計画
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="ステップ計画">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_10" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        時間の配分と打ち切り
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#try-t-6" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        確認ポイント（計画の承認の場でまとめて確認する。Try T-6）
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_11" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        完了条件
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="完了条件">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_12" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        デモ項目
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_13" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ユーザーマニュアル
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_14" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        更新履歴
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_15" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        関連ドキュメント
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -8566,7 +8548,7 @@
   
 
 
-<h1 id="bolt-13-totp-spring-security-7-ts-01">Bolt 13 計画 - TOTP と Spring Security 7 の多要素認証のスパイク（TS-01）<a class="headerlink" href="#bolt-13-totp-spring-security-7-ts-01" title="Permanent link">&para;</a></h1>
+<h1 id="bolt-26b-us-12-ac1ac2">Bolt 26b 計画 - 主要実績の登録の業務のルールと永続化（US-12 AC1・AC2）<a class="headerlink" href="#bolt-26b-us-12-ac1ac2" title="Permanent link">&para;</a></h1>
 <h2 id="_1">基本情報<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
@@ -8578,45 +8560,40 @@
 <tbody>
 <tr>
 <td style="text-align: left;">Bolt</td>
-<td style="text-align: left;">第 13 回</td>
+<td style="text-align: left;">第 26b 回（release_plan の Bolt 26b を 26b（業務のルールと永続化）と 26c（画面）に分ける案。確認ポイント 1。Bolt 23・23b と同じ分け方）</td>
 </tr>
 <tr>
 <td style="text-align: left;">予定</td>
-<td style="text-align: left;">W2（2026-10-12 の週。前倒しで 2026-10-06 から）、2〜3 時間（スパイクの時間箱）</td>
+<td style="text-align: left;">W4（2026-10-26 の週。前倒しで 2026-10-10 から）、作業 2.5〜3 時間（承認ゲートの待ち時間を除く。時間の配分の表の合計 170 分）</td>
 </tr>
 <tr>
 <td style="text-align: left;">対象</td>
-<td style="text-align: left;">U4 アクセス・監査。技術的なスパイク TS-01（TOTP ライブラリの決定と、Spring Security 7 の多要素認証との統合方法）。US-18 本人として認証される（W5 で実装）の前提を決める</td>
+<td style="text-align: left;">U3 追跡（主要実績の登録、現在状態の導出、重複の出典の扱い、<code>tracking.milestone</code> の表と永続化）、共有カーネル（出典）</td>
 </tr>
 <tr>
 <td style="text-align: left;">GitHub</td>
-<td style="text-align: left;">ストーリーの Issue はない（スパイクは SP を持たない）。US-18 の Issue（<a href="https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/6">#6</a> R0.1 の password とセッション、<a href="https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/13">#13</a> R1.0 の TOTP・ロック・失効・再設定）のうち、#13 に終了報告の後に結論をコメントする（確認ポイント 6）</td>
+<td style="text-align: left;"><a href="https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/11">#11</a>（US-12 R0.1: AC1・AC2）。US-12 の SP 3 は、画面の層のシナリオがそろって #11 を閉じる Bolt 26c で数える（確認ポイント 1）。この Bolt は SP 0</td>
+</tr>
+<tr>
+<td style="text-align: left;">承認ゲートの扱い</td>
+<td style="text-align: left;">Try T-80 に従い、CLAUDE.md の「確認必須」に当たるゲート（この Bolt ではスキーマ）は、計画の承認の場で人の判断を受ける（確認ポイント 3・4）。ここで判断を受けていない確認必須のゲートは、<code>/goal</code> の指示があっても止まる</td>
 </tr>
 <tr>
 <td style="text-align: left;">承認ゲート</td>
-<td style="text-align: left;">計画の承認（確認ポイント 1〜6）、方式の決定（ステップ 4 の ADR の案）、終了報告の 3 回</td>
+<td style="text-align: left;">計画の承認（確認ポイント 1〜15）、業務のルールの層のシナリオ（ステップ 1）、Red／Green ごと（業務のルール。ステップ 2・3）、スキーマ（ステップ 4）、開発レビューの判断、終了報告。release_plan の W4 の決定（「スキーマと認可をステップごとに止める」）と、Bolt 26b の行の「スキーマ、Red・Green ごと（業務のルール）」に従う。認可と画面は変えないので、そのゲートはない</td>
 </tr>
 <tr>
 <td style="text-align: left;">アプローチ</td>
-<td style="text-align: left;">学習テストで確かめる。アプリケーションの本体（<code>apps/cargo-tracker</code>）は変えず、別の Gradle プロジェクトで、同じ Spring Boot の版の上に最小の構成を作る。結論は ADR の案と技術スタックに残す</td>
-</tr>
-<tr>
-<td style="text-align: left;">範囲の決定</td>
-<td style="text-align: left;">2026-10-06 に human:kakimomokuri が W2 の残りから TS-01 だけを選んだ。US-18 の一部（password によるログインと session）は後の Bolt</td>
+<td style="text-align: left;">アウトサイドイン（開発戦略の「Bolt ごとのアプローチの決め方」の「既存の集約に受入条件を足す」）。既存の <code>tracking</code> スキーマに表を 1 つ足すのは「新しい集約・スキーマを作る」に当たらない（Bolt 24 の計画の解釈と同じ）。業務のルールの層の受入シナリオ → アプリケーション → ドメイン → 永続化（スキーマはこのステップ。Bolt 24 と同じ）の順</td>
 </tr>
 <tr>
 <td style="text-align: left;">前の Bolt</td>
-<td style="text-align: left;"><a href="../bolt_12_report/">Bolt 12 終了報告</a></td>
+<td style="text-align: left;"><a href="../bolt_26_report/">Bolt 26 終了報告</a></td>
 </tr>
 </tbody>
 </table>
 <h2 id="bolt">Bolt ゴール<a class="headerlink" href="#bolt" title="Permanent link">&para;</a></h2>
-<p>US-18（W5）の実装に入る前に、次の 3 つを動くコードで確かめ、ADR の案として人が選べる形にする。</p>
-<ol>
-<li>TOTP の生成・検証をどのライブラリ（または JDK だけの実装）で行うか。</li>
-<li>Spring Security 7 の多要素認証の仕組みで、「password の後に TOTP」の 2 段階のログインをどう組むか。</li>
-<li>US-18 と SEC-04〜10 の要求のうち、方式の選び方を左右するもの（同じコードの再利用の拒否、5 回の失敗でのロック、回復コード、無操作 30 分・最長 8 時間の session）を、その方式で満たせるか。</li>
-</ol>
+<p>追跡管理者が追跡記録に、出典（種類・参照・取得時刻）と発生時刻を伴う主要実績を登録すると、実績が採用済みとして保存され、現在状態が採用済みの実績から導出し直される（集荷なら「集荷済み」）（AC1）。同じ出典識別子（出典の種類と参照）の実績を再び登録すると、新しい実績を作らず、既存の実績を返す（AC2 の業務のルール。既存の記録を画面に示すのは Bolt 26c）。これを業務のルールの層の受入シナリオ（<code>@US-12-AC1</code>・<code>@US-12-AC2</code>）、ドメインの単体テスト、PostgreSQL の統合テスト（一意制約・DELETE の権限なし・楽観ロック）で確かめる。</p>
 <h3 id="_2">確かめたい仮説<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
@@ -8629,18 +8606,13 @@
 <tbody>
 <tr>
 <td style="text-align: left;">H1</td>
-<td style="text-align: left;">Spring Security 7 の多要素認証の仕組み（要素ごとの権限）を使えば、独自のフィルターの連鎖を書かずに、password の認証の後に TOTP の認証を求め、両方がそろうまで業務の画面を開かせない構成を作れる</td>
-<td style="text-align: left;">認証の流れを枠組みに任せられるか。US-18 の実装の量</td>
+<td style="text-align: left;">集約を不変のまま、実績の登録が新しい追跡記録と登録した実績を返す形で書ける。保存は <code>update(追跡記録)</code> の 1 本（新しい実績の INSERT と、版を SQL で増やす追跡記録の UPDATE）で済み、メモリのリポジトリの写し（Bolt 26 の P-6）は要らない</td>
+<td style="text-align: left;">ドメインの単体テストで、登録の前の追跡記録が変わらないこと。PostgreSQL の統合テストで、古い版での保存が競合になること</td>
 </tr>
 <tr>
 <td style="text-align: left;">H2</td>
-<td style="text-align: left;">TOTP の検証は小さな部品で、外部のライブラリに頼らなくても RFC 6238 の試験ベクトルで正しさを確かめられる。保守されていないライブラリに依存するより、JDK の HMAC で実装するか、保守されている小さなライブラリを使う方が安全</td>
-<td style="text-align: left;">ライブラリの選定。依存の数と保守の状態</td>
-</tr>
-<tr>
-<td style="text-align: left;">H3</td>
-<td style="text-align: left;">同じコードの再利用の拒否と、5 回の失敗でのロックは、TOTP の検証の外（アプリケーション側の記録）で持つ必要がある</td>
-<td style="text-align: left;">US-18 の表とドメインモデルに何が要るか</td>
+<td style="text-align: left;">現在状態の導出を、ドメインの規則のクラス 1 つ（採用済みの実績のうち発生時刻が最も新しいものの種類 → 追跡状態）に閉じ込められる。W7 の確認中（AC3）・保持のみ（AC5）は、この規則に入力を足すだけで済む</td>
+<td style="text-align: left;">規則の単体テストの表（種類ごとの導出、実績がないときは予定のまま）と、W7 の計画での追加の形</td>
 </tr>
 </tbody>
 </table>
@@ -8655,48 +8627,81 @@
 </thead>
 <tbody>
 <tr>
-<td style="text-align: left;">人の決定（2026-10-06）</td>
-<td style="text-align: left;">Bolt 13 は TS-01 だけ</td>
-<td style="text-align: left;">スコープ</td>
+<td style="text-align: left;">Bolt 26 の確認ポイント 1</td>
+<td style="text-align: left;">26b が 4 時間を超えると見えたら、AC2 の画面と NULL 可の列の見直しを 26c に回す</td>
+<td style="text-align: left;">見積りは、業務のルールの層のシナリオを入れると 5 時間を超える。release_plan の字句（AC2 の画面だけを回す）に従っても 4 時間半になる。そのため、業務のルール（AC1・AC2）と画面（S-13・S-12、AC2 の画面を含む）で分ける（確認ポイント 1）</td>
 </tr>
 <tr>
-<td style="text-align: left;">リスク台帳（リリース計画）</td>
-<td style="text-align: left;">TOTP と Spring Security 7 の統合が想定より難しい（中・中）。W2 でスパイクし、W5 の前に方式を決める</td>
-<td style="text-align: left;">この Bolt の目的</td>
+<td style="text-align: left;">Bolt 26 の既知の課題（Bolt 26b）</td>
+<td style="text-align: left;"><code>tracking_record</code> の NULL 可の列（経路版・到着予定の 4 列）</td>
+<td style="text-align: left;">Bolt 26c に回す（確認ポイント 1）。この Bolt の UPDATE はその 4 列を書かない</td>
 </tr>
 <tr>
-<td style="text-align: left;">技術スタック TS-01</td>
-<td style="text-align: left;">TOTP ライブラリは候補（<code>dev.samstevens.totp</code>）を挙げただけで評価していない</td>
-<td style="text-align: left;">ステップ 2</td>
+<td style="text-align: left;">Bolt 26 の既知の課題（Bolt 26b）</td>
+<td style="text-align: left;">予定と実績の並べ方（Bolt 26 の確認ポイント 15 の決め直し）、U-3 一覧の到着の列、U-4「→」の読み上げ、U-6 戻るリンクの位置</td>
+<td style="text-align: left;">画面の課題なので Bolt 26c に回す。U-3 は最新の到着見込みを動かす W7（この Bolt は <code>latest_eta</code> を動かさない）</td>
 </tr>
 <tr>
-<td style="text-align: left;">Try T-35（Bolt 12）</td>
-<td style="text-align: left;">利用者の見え方の表の各行で、示す文言と次に取れる操作を確かめる</td>
-<td style="text-align: left;">画面を本体に作らないため対象外。ただし ADR の案に、US-18 の画面の流れ（password → TOTP → 初回の登録）で利用者が次に取れる操作を書く</td>
+<td style="text-align: left;">Bolt 26 の既知の課題（社内の画面の共通の部品・UI 設計との食い違い）</td>
+<td style="text-align: left;">配下の画面のナビの <code>aria-current</code>、幅 320 CSS px の日時の表記、場所の表記（UN/LOCODE だけ）</td>
+<td style="text-align: left;">画面を作らないので扱わない。Bolt 26c の計画の入力にする</td>
 </tr>
 <tr>
-<td style="text-align: left;">Try T-36（Bolt 12）</td>
-<td style="text-align: left;">承認ゲートを止めずに進める指示を受けたら、ゲートごとに判断と根拠を書き、終了報告の議題の先頭に置く</td>
-<td style="text-align: left;">指示があったときに守る</td>
+<td style="text-align: left;">Bolt 26 の P-6</td>
+<td style="text-align: left;">メモリのリポジトリの写し（26b で集約が可変になる）</td>
+<td style="text-align: left;">集約を不変のまま保つ（確認ポイント 6、仮説 H1）。写しは要らなくなり、T-61 の前提のまま</td>
 </tr>
 <tr>
-<td style="text-align: left;">Try T-37（Bolt 12）</td>
-<td style="text-align: left;">業務ルール層の Red も、型の骨組みを先に足して実行で失敗を記録する</td>
-<td style="text-align: left;">学習テストでも、骨組み（空の実装）を先に置き、試験ベクトルのテストが実行で失敗することを記録する</td>
+<td style="text-align: left;">Bolt 25 の P-12</td>
+<td style="text-align: left;">listener がアプリケーションサービスを持たない</td>
+<td style="text-align: left;">主要実績の登録のコマンドサービス（<code>TrackingRecordCommandService</code>）を作る。既存の DE-07 の listener は変えない（確認ポイント 8）</td>
 </tr>
 <tr>
-<td style="text-align: left;">Try T-26・T-33（Bolt 9・11）</td>
-<td style="text-align: left;">push の後に CI を確かめる。時刻は最後のコミットの時刻</td>
-<td style="text-align: left;">全ステップ。開始準備は 11:53 JST に開始</td>
+<td style="text-align: left;">Bolt 26 の Try T-79</td>
+<td style="text-align: left;">画面の層のテストの結果の数え方</td>
+<td style="text-align: left;">この Bolt は画面の層のテストを足さない。ステップ 5 で <code>uiTest</code> の全体を流すときに数え方を守る</td>
 </tr>
 <tr>
-<td style="text-align: left;">Bolt 12 の既知の課題</td>
-<td style="text-align: left;">経路設計中の失効（D-36-3）、DE-16 の取り込み（US-06）、US-05 との競合</td>
-<td style="text-align: left;">この Bolt では扱わない</td>
+<td style="text-align: left;">Bolt 26 の Try T-80</td>
+<td style="text-align: left;">確認必須のゲートは計画の承認の場で人の判断を受ける</td>
+<td style="text-align: left;">基本情報の「承認ゲートの扱い」。スキーマの判断を確認ポイント 3・4 に置く</td>
+</tr>
+<tr>
+<td style="text-align: left;">Try T-29</td>
+<td style="text-align: left;">列の上限の境界をテストする</td>
+<td style="text-align: left;">出典の参照の 200 文字ちょうどと 201 文字（ステップ 3）</td>
+</tr>
+<tr>
+<td style="text-align: left;">Try T-37・T-39</td>
+<td style="text-align: left;">型の骨組みで Red を確かめる、Red は本命のアサーション</td>
+<td style="text-align: left;">ステップ 1〜4</td>
+</tr>
+<tr>
+<td style="text-align: left;">Try T-53・T-57・T-61・T-70・T-71・T-73・T-77・T-78</td>
+<td style="text-align: left;">設計文書への反映、状態の列挙の判定の洗い出し、写し、push の前の <code>uiTest</code>、行の型とマッパー、エスケープを含む編集、<code>/dev/null</code>・<code>timeout</code>、<code>spotlessApply</code> の後に読む</td>
+<td style="text-align: left;">T-57: 実績の種類（6 個）ごとの導出を網羅する。ほかは全ステップ</td>
+</tr>
+<tr>
+<td style="text-align: left;">Try T-50・T-59</td>
+<td style="text-align: left;">共有 DB の画面の層のテストのデータ</td>
+<td style="text-align: left;">この Bolt は画面の層のテストを足さない。Bolt 26c で扱う</td>
 </tr>
 </tbody>
 </table>
 <h2 id="_3">スコープ<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h2>
+<h3 id="try-t-1">設計の約束（Try T-1）<a class="headerlink" href="#try-t-1" title="Permanent link">&para;</a></h3>
+<ul>
+<li>出典（<code>Source</code>）と出典の種類（<code>SourceKind</code>）を共有カーネル（<code>shared.domain</code>）に足す。出典の種類の値は、既存の <code>routing.voyage</code> の CHECK（<code>ck_voyage_source_kind</code>）と同じ 4 値（<code>EXTERNAL_RECORD</code> 外部原本、<code>FIELD_RECORD</code> 現場記録、<code>INTERNAL_CHECK</code> 社内確認、<code>MANUAL_ENTRY</code> 手動入力）。出典は種類・参照（1〜200 文字）・取得時刻を必須とする（ドメインモデルの共有カーネルの不変条件）。航海の出典の列を共有カーネルの型に移すことは、この Bolt ではしない</li>
+<li>主要実績（<code>Milestone</code>）は追跡記録の集約の中のエンティティで、<code>tracking.domain.model.entities</code> に置く（第 3 章のドメイン層。前例 <code>BookingVersion</code>・<code>RouteVersion</code>）。実績番号は追跡記録の中で 1 から振る</li>
+<li>追跡管理者が登録した実績は採用済み（<code>ADOPTED</code>）で保存する。下書き（<code>DRAFT</code>）は外部原本の取込（DE-13、W7）で使う（確認ポイント 5）</li>
+<li>現在状態は採用済みの実績から導出する（T-INV-08）。導出は <code>tracking.domain.model.rules</code> の規則のクラス（<code>CurrentStatusDeriver</code>。ドメインモデルの名前、<code>@DomainRule</code>）に置き、集約が使う（確認ポイント 7）</li>
+<li>同じ出典識別子（<code>source_kind</code>・<code>source_ref</code>）の実績があれば、集約は新しい実績を作らず既存の実績を返す（T-INV-02）。表の一意制約 <code>uk_milestone_source</code> で守る（同時の登録は一意制約の違反になり、競合として扱う）</li>
+<li>発生時刻が登録時刻より後（未来）の実績は拒否する（ドメインの規則として足す。設計への反映が必要。確認ポイント 7）</li>
+<li>集約は不変のまま。版はドメインで増やさず、更新の SQL（<code>version = version + 1 WHERE version = #{expectedVersion}</code>）で増やす（前例 <code>QuotationMapper.xml</code>）。競合は <code>ConcurrentTrackingRecordUpdateException</code></li>
+<li>コマンドサービスは業務の拒否を sealed の結果（<code>MilestoneRegistrationOutcome</code>）で返す（architecture_backend.md の「業務の拒否は戻り値の値で返す」。前例 <code>BookingConfirmationOutcome</code>）</li>
+<li>ドメインイベントは発行しない。DE-09 は ADR-014 の形に直す W7 の Bolt で、DE-18 は確認中が起きる W7 で足す（確認ポイント 10）。新しいイベントがないので、<code>DomainEventSerializationContractTest</code> は変えない。<code>tracking</code> の <code>allowedDependencies</code> も変えない（<code>shared</code> は既存）</li>
+<li><code>latest_eta</code>・<code>last_acquired_at</code> は動かさない（到着見込みと鮮度は W7。確認ポイント 3）</li>
+</ul>
 <h3 id="_4">入れるもの・入れないもの<a class="headerlink" href="#_4" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
@@ -8707,229 +8712,116 @@
 </thead>
 <tbody>
 <tr>
-<td style="text-align: left;">別の Gradle プロジェクト <code>spikes/ts-01-totp/</code>（本体の build と CI に含めない）</td>
-<td style="text-align: left;"><code>apps/cargo-tracker</code> の変更（US-18、W2 の残りと W5）</td>
+<td style="text-align: left;">業務のルールの層の受入シナリオ（<code>features/tracking/register_milestone.feature</code>、<code>@US-12-AC1</code>・<code>@US-12-AC2</code>）</td>
+<td style="text-align: left;">画面の層のシナリオ（<code>@ui</code>）と受入動画（Bolt 26c）</td>
 </tr>
 <tr>
-<td style="text-align: left;">TOTP の候補の比較（RFC 6238 の試験ベクトル、許す時間のずれ、保守・ライセンス・依存）</td>
-<td style="text-align: left;">本番の利用者の表、password の再設定、メール</td>
+<td style="text-align: left;">出典・出典の種類（共有カーネル）、主要実績、実績の種類、実績の状態、現在状態の導出の規則、未来の発生時刻の拒否、同じ出典の既存の実績を返す規則</td>
+<td style="text-align: left;">下書きの修正・採用（W7）、訂正（US-13）、時系列の矛盾の確認中（AC3）、取消済みの拒否（AC4）、完了後の保持のみ（AC5）（W7）、到着見込み・鮮度の更新（W7）</td>
 </tr>
 <tr>
-<td style="text-align: left;">Spring Security 7 の多要素認証で、password → TOTP の 2 段階のログインの最小の構成（MockMvc の学習テスト）</td>
-<td style="text-align: left;">画面の作り込み、アクセシビリティ、マニュアル</td>
+<td style="text-align: left;"><code>TrackingRecordCommandService.registerMilestone</code>、<code>RegisterMilestoneCommand</code>、<code>MilestoneRegistrationOutcome</code></td>
+<td style="text-align: left;">DE-09・DE-18 の発行（W7）、監査記録（US-17）</td>
 </tr>
 <tr>
-<td style="text-align: left;">同じコードの再利用の拒否、失敗の数え方、回復コード、session の時間の制限を満たせるかの確認（できる範囲。時間箱を超えたら結論を「未確認」と書く）</td>
-<td style="text-align: left;">監査記録（US-17）、ロックの解除の運用</td>
-</tr>
-<tr>
-<td style="text-align: left;">開発環境だけでログインの画面を入力済みにする仕組み（<code>dev</code> プロファイルの設定があるときだけ。既定では入力済みにならない）の確認（人の決定。2026-10-06）</td>
-<td style="text-align: left;">本体の開発用の利用者の投入（US-18 の Bolt）</td>
-</tr>
-<tr>
-<td style="text-align: left;">ADR の案（011。状態は「提案」）、技術スタックの TS-01 の更新</td>
-<td style="text-align: left;">ADR の確定（W5 の US-18 の計画で、人が採否を決める）</td>
+<td style="text-align: left;"><code>tracking.milestone</code> の表（UK、CHECK、DELETE の権限なし）、<code>TrackingRecordRepository.update</code>、マッパー</td>
+<td style="text-align: left;"><code>tracking_record</code> の NULL 可の列の見直し、S-13 の登録・S-12 の主要実績の一覧・AC2 の既存の記録の表示（Bolt 26c）、<code>correction</code> の表（US-13）</td>
 </tr>
 </tbody>
 </table>
-<h3 id="bolt_2">設計（この Bolt の範囲）<a class="headerlink" href="#bolt_2" title="Permanent link">&para;</a></h3>
-<p>本体のドメインモデル・表・画面は変えない。スパイクで確かめる構成を図にする。</p>
-<p><img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB2ZXJzaW9uPSIxLjEiIGRhdGEtZGlhZ3JhbS10eXBlPSJTRVFVRU5DRSIgc3R5bGU9IndpZHRoOjEyMDRweDtoZWlnaHQ6NDM3cHg7YmFja2dyb3VuZDojRkZGRkZGOyIgd2lkdGg9IjEyMDRweCIgaGVpZ2h0PSI0MzdweCIgdmlld0JveD0iMCAwIDEyMDQgNDM3IiB6b29tQW5kUGFuPSJtYWduaWZ5IiBwcmVzZXJ2ZUFzcGVjdFJhdGlvPSJub25lIiBjb250ZW50U3R5bGVUeXBlPSJ0ZXh0L2NzcyI+PD9wbGFudHVtbCAxLjIwMjYuOD8+PGRlZnMvPjxnIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBsZW5ndGhBZGp1c3Q9InNwYWNpbmciPjxnIGNsYXNzPSJ0aXRsZSIgZGF0YS1zb3VyY2UtbGluZT0iMSI+PHRleHQgeD0iNDg1LjQwNyIgeT0iMjcuOTk1IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE0IiB0ZXh0TGVuZ3RoPSIyMzEuNzk5IiBmb250LXdlaWdodD0iNzAwIj5UUy0wMSDjgafnorrjgYvjgoHjgovmp4vmiJDvvIjjgrnjg5HjgqTjgq/vvIk8L3RleHQ+PC9nPjxnPjx0aXRsZT4uLi48L3RpdGxlPjxyZWN0IHg9IjMwLjUiIHk9IjEyNS44OTEiIHdpZHRoPSI4IiBoZWlnaHQ9IjIyMS45MyIgZmlsbD0iIzAwMCIgZmlsbC1vcGFjaXR5PSIwIi8+PGxpbmUgeDE9IjM0IiB5MT0iMTI1Ljg5MSIgeDI9IjM0IiB5Mj0iMzQ3LjgyIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjAuNTtzdHJva2UtZGFzaGFycmF5OjUsNTsiLz48L2c+PGc+PHRpdGxlPi4uLi4uLi4uPC90aXRsZT48cmVjdCB4PSIzNjcuNTc5IiB5PSIxMjUuODkxIiB3aWR0aD0iOCIgaGVpZ2h0PSIyMjEuOTMiIGZpbGw9IiMwMDAiIGZpbGwtb3BhY2l0eT0iMCIvPjxsaW5lIHgxPSIzNzEuMDc5IiB5MT0iMTI1Ljg5MSIgeDI9IjM3MS4wNzkiIHkyPSIzNDcuODIiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MC41O3N0cm9rZS1kYXNoYXJyYXk6NSw1OyIvPjwvZz48Zz48dGl0bGU+VE9UUCAuLi48L3RpdGxlPjxyZWN0IHg9IjU1NC4wMTgiIHk9IjEyNS44OTEiIHdpZHRoPSI4IiBoZWlnaHQ9IjIyMS45MyIgZmlsbD0iIzAwMCIgZmlsbC1vcGFjaXR5PSIwIi8+PGxpbmUgeDE9IjU1Ny41MTgiIHkxPSIxMjUuODkxIiB4Mj0iNTU3LjUxOCIgeTI9IjM0Ny44MiIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDowLjU7c3Ryb2tlLWRhc2hhcnJheTo1LDU7Ii8+PC9nPjxnPjx0aXRsZT5UT1RQIC4uLjwvdGl0bGU+PHJlY3QgeD0iNzk0Ljc4NSIgeT0iMTI1Ljg5MSIgd2lkdGg9IjgiIGhlaWdodD0iMjIxLjkzIiBmaWxsPSIjMDAwIiBmaWxsLW9wYWNpdHk9IjAiLz48bGluZSB4MT0iNzk4LjI4NSIgeTE9IjEyNS44OTEiIHgyPSI3OTguMjg1IiB5Mj0iMzQ3LjgyIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjAuNTtzdHJva2UtZGFzaGFycmF5OjUsNTsiLz48L2c+PGc+PHRpdGxlPi4uLi4uLi4uLi4uLjwvdGl0bGU+PHJlY3QgeD0iMTAwOS4xMTMiIHk9IjEyNS44OTEiIHdpZHRoPSI4IiBoZWlnaHQ9IjIyMS45MyIgZmlsbD0iIzAwMCIgZmlsbC1vcGFjaXR5PSIwIi8+PGxpbmUgeDE9IjEwMTIuNjEzIiB5MT0iMTI1Ljg5MSIgeDI9IjEwMTIuNjEzIiB5Mj0iMzQ3LjgyIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjAuNTtzdHJva2UtZGFzaGFycmF5OjUsNTsiLz48L2c+PGc+PHRpdGxlPi4uLi4uPC90aXRsZT48cmVjdCB4PSIxMTQ4LjExMyIgeT0iMTI1Ljg5MSIgd2lkdGg9IjgiIGhlaWdodD0iMjIxLjkzIiBmaWxsPSIjMDAwIiBmaWxsLW9wYWNpdHk9IjAiLz48bGluZSB4MT0iMTE1MS42MTMiIHkxPSIxMjUuODkxIiB4Mj0iMTE1MS42MTMiIHkyPSIzNDcuODIiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MC41O3N0cm9rZS1kYXNoYXJyYXk6NSw1OyIvPjwvZz48dGV4dCB4PSIxMCIgeT0iMTIyLjU4OSIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxNCIgdGV4dExlbmd0aD0iNDIiPuWIqeeUqOiAhTwvdGV4dD48ZWxsaXBzZSBjeD0iMzQiIGN5PSI1OC4wOTQiIHJ4PSI4IiByeT0iOCIgZmlsbD0iI0UyRTJGMCIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDowLjU7Ii8+PHBhdGggZD0iTTM0LDY2LjA5NCBMMzQsOTMuMDk0IE0yMSw3NC4wOTQgTDQ3LDc0LjA5NCBNMzQsOTMuMDk0IEwyMSwxMDguMDk0IE0zNCw5My4wOTQgTDQ3LDEwOC4wOTQiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MC41OyIgZmlsbD0ibm9uZSIvPjxyZWN0IHg9IjMwOC4wNzkiIHk9Ijc4LjI5NyIgd2lkdGg9IjEyNiIgaGVpZ2h0PSI0Ni41OTQiIGZpbGw9IiNFMkUyRjAiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MC41OyIgcng9IjIuNSIgcnk9IjIuNSIvPjx0ZXh0IHg9IjMxNS4wNzkiIHk9Ijk4LjI5MiIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxNCIgdGV4dExlbmd0aD0iMTEyIj7jg5Xjgqnjg7zjg6Djg63jgrDjgqTjg7M8L3RleHQ+PHRleHQgeD0iMzMyLjI2MSIgeT0iMTE0LjU4OSIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxNCIgdGV4dExlbmd0aD0iNzcuNjM2Ij4ocGFzc3dvcmQpPC90ZXh0PjxyZWN0IHg9IjQ0NC4wNzkiIHk9IjYyIiB3aWR0aD0iMjI2Ljg3OCIgaGVpZ2h0PSI2Mi44OTEiIGZpbGw9IiNFMkUyRjAiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MC41OyIgcng9IjIuNSIgcnk9IjIuNSIvPjx0ZXh0IHg9IjUxNi4wMSIgeT0iODEuOTk1IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE0IiB0ZXh0TGVuZ3RoPSI4My4wMTUiPlRPVFAg44Gu56K66KqNPC90ZXh0Pjx0ZXh0IHg9IjQ1MS4wNzkiIHk9Ijk4LjI5MiIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxNCIgdGV4dExlbmd0aD0iMjEyLjg3OCI+KOeLrOiHquOBriBBdXRoZW50aWNhdGlvblByb3ZpZGVyPC90ZXh0Pjx0ZXh0IHg9IjQ5MS43ODciIHk9IjExNC41ODkiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTQiIHRleHRMZW5ndGg9IjEzMS40NjEiPuOBvuOBn+OBr+aeoOe1hOOBv+OBrumDqOWTgSk8L3RleHQ+PHJlY3QgeD0iNjgwLjk1NyIgeT0iNzguMjk3IiB3aWR0aD0iMjM0LjY1NyIgaGVpZ2h0PSI0Ni41OTQiIGZpbGw9IiNFMkUyRjAiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MC41OyIgcng9IjIuNSIgcnk9IjIuNSIvPjx0ZXh0IHg9Ijc1Ni43NzciIHk9Ijk4LjI5MiIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxNCIgdGV4dExlbmd0aD0iODMuMDE1Ij5UT1RQIOOBruaknOiovDwvdGV4dD48dGV4dCB4PSI2ODcuOTU3IiB5PSIxMTQuNTg5IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE0IiB0ZXh0TGVuZ3RoPSIyMjAuNjU3Ij4o5YCZ6KOcOiDjg6njgqTjg5bjg6njg6ogLyBKREsg44GuIEhNQUMpPC90ZXh0Pjx0ZXh0IHg9IjkyNS42MTMiIHk9IjEwNi4yOTIiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTQiIHRleHRMZW5ndGg9IjE2Ny45OTkiPuS9v+OBo+OBn+OCs+ODvOODieOBqOWkseaVl+OBruiomOmMsjwvdGV4dD48dGV4dCB4PSI5NDEuMTUxIiB5PSIxMjIuNTg5IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE0IiB0ZXh0TGVuZ3RoPSIxMzYuOTIzIj4o44Oh44Oi44Oq44CC5pys5L2T44Gn44Gv6KGoKTwvdGV4dD48cGF0aCBkPSJNOTk0LjYxMyw1Ny4yOTcgQzk5NC42MTMsNDcuMjk3IDEwMTIuNjEzLDQ3LjI5NyAxMDEyLjYxMyw0Ny4yOTcgQzEwMTIuNjEzLDQ3LjI5NyAxMDMwLjYxMyw0Ny4yOTcgMTAzMC42MTMsNTcuMjk3IEwxMDMwLjYxMyw4My4yOTcgQzEwMzAuNjEzLDkzLjI5NyAxMDEyLjYxMyw5My4yOTcgMTAxMi42MTMsOTMuMjk3IEMxMDEyLjYxMyw5My4yOTcgOTk0LjYxMyw5My4yOTcgOTk0LjYxMyw4My4yOTcgTDk5NC42MTMsNTcuMjk3IiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjAuNTsiIGZpbGw9IiNFMkUyRjAiLz48cGF0aCBkPSJNOTk0LjYxMyw1Ny4yOTcgQzk5NC42MTMsNjcuMjk3IDEwMTIuNjEzLDY3LjI5NyAxMDEyLjYxMyw2Ny4yOTcgQzEwMTIuNjEzLDY3LjI5NyAxMDMwLjYxMyw2Ny4yOTcgMTAzMC42MTMsNTcuMjk3IiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjAuNTsiIGZpbGw9Im5vbmUiLz48cmVjdCB4PSIxMTA5LjYxMyIgeT0iOTQuNTk0IiB3aWR0aD0iODQiIGhlaWdodD0iMzAuMjk3IiBmaWxsPSIjRTJFMkYwIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjAuNTsiIHJ4PSIyLjUiIHJ5PSIyLjUiLz48dGV4dCB4PSIxMTE2LjYxMyIgeT0iMTE0LjU4OSIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxNCIgdGV4dExlbmd0aD0iNzAiPualreWLmeOBrueUu+mdojwvdGV4dD48dGV4dCB4PSIxMCIgeT0iMzYwLjgxNSIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxNCIgdGV4dExlbmd0aD0iNDIiPuWIqeeUqOiAhTwvdGV4dD48ZWxsaXBzZSBjeD0iMzQiIGN5PSIzNzIuNjE3IiByeD0iOCIgcnk9IjgiIGZpbGw9IiNFMkUyRjAiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MC41OyIvPjxwYXRoIGQ9Ik0zNCwzODAuNjE3IEwzNCw0MDcuNjE3IE0yMSwzODguNjE3IEw0NywzODguNjE3IE0zNCw0MDcuNjE3IEwyMSw0MjIuNjE3IE0zNCw0MDcuNjE3IEw0Nyw0MjIuNjE3IiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjAuNTsiIGZpbGw9Im5vbmUiLz48cmVjdCB4PSIzMDguMDc5IiB5PSIzNDcuODIiIHdpZHRoPSIxMjYiIGhlaWdodD0iNDYuNTk0IiBmaWxsPSIjRTJFMkYwIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjAuNTsiIHJ4PSIyLjUiIHJ5PSIyLjUiLz48dGV4dCB4PSIzMTUuMDc5IiB5PSIzNjcuODE1IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE0IiB0ZXh0TGVuZ3RoPSIxMTIiPuODleOCqeODvOODoOODreOCsOOCpOODszwvdGV4dD48dGV4dCB4PSIzMzIuMjYxIiB5PSIzODQuMTEyIiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE0IiB0ZXh0TGVuZ3RoPSI3Ny42MzYiPihwYXNzd29yZCk8L3RleHQ+PHJlY3QgeD0iNDQ0LjA3OSIgeT0iMzQ3LjgyIiB3aWR0aD0iMjI2Ljg3OCIgaGVpZ2h0PSI2Mi44OTEiIGZpbGw9IiNFMkUyRjAiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MC41OyIgcng9IjIuNSIgcnk9IjIuNSIvPjx0ZXh0IHg9IjUxNi4wMSIgeT0iMzY3LjgxNSIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxNCIgdGV4dExlbmd0aD0iODMuMDE1Ij5UT1RQIOOBrueiuuiqjTwvdGV4dD48dGV4dCB4PSI0NTEuMDc5IiB5PSIzODQuMTEyIiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE0IiB0ZXh0TGVuZ3RoPSIyMTIuODc4Ij4o54us6Ieq44GuIEF1dGhlbnRpY2F0aW9uUHJvdmlkZXI8L3RleHQ+PHRleHQgeD0iNDkxLjc4NyIgeT0iNDAwLjQwOSIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxNCIgdGV4dExlbmd0aD0iMTMxLjQ2MSI+44G+44Gf44Gv5p6g57WE44G/44Gu6YOo5ZOBKTwvdGV4dD48cmVjdCB4PSI2ODAuOTU3IiB5PSIzNDcuODIiIHdpZHRoPSIyMzQuNjU3IiBoZWlnaHQ9IjQ2LjU5NCIgZmlsbD0iI0UyRTJGMCIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDowLjU7IiByeD0iMi41IiByeT0iMi41Ii8+PHRleHQgeD0iNzU2Ljc3NyIgeT0iMzY3LjgxNSIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxNCIgdGV4dExlbmd0aD0iODMuMDE1Ij5UT1RQIOOBruaknOiovDwvdGV4dD48dGV4dCB4PSI2ODcuOTU3IiB5PSIzODQuMTEyIiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE0IiB0ZXh0TGVuZ3RoPSIyMjAuNjU3Ij4o5YCZ6KOcOiDjg6njgqTjg5bjg6njg6ogLyBKREsg44GuIEhNQUMpPC90ZXh0Pjx0ZXh0IHg9IjkyNS42MTMiIHk9IjM2MC44MTUiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTQiIHRleHRMZW5ndGg9IjE2Ny45OTkiPuS9v+OBo+OBn+OCs+ODvOODieOBqOWkseaVl+OBruiomOmMsjwvdGV4dD48dGV4dCB4PSI5NDEuMTUxIiB5PSIzNzcuMTEyIiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE0IiB0ZXh0TGVuZ3RoPSIxMzYuOTIzIj4o44Oh44Oi44Oq44CC5pys5L2T44Gn44Gv6KGoKTwvdGV4dD48cGF0aCBkPSJNOTk0LjYxMywzOTAuNDE0IEM5OTQuNjEzLDM4MC40MTQgMTAxMi42MTMsMzgwLjQxNCAxMDEyLjYxMywzODAuNDE0IEMxMDEyLjYxMywzODAuNDE0IDEwMzAuNjEzLDM4MC40MTQgMTAzMC42MTMsMzkwLjQxNCBMMTAzMC42MTMsNDE2LjQxNCBDMTAzMC42MTMsNDI2LjQxNCAxMDEyLjYxMyw0MjYuNDE0IDEwMTIuNjEzLDQyNi40MTQgQzEwMTIuNjEzLDQyNi40MTQgOTk0LjYxMyw0MjYuNDE0IDk5NC42MTMsNDE2LjQxNCBMOTk0LjYxMywzOTAuNDE0IiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjAuNTsiIGZpbGw9IiNFMkUyRjAiLz48cGF0aCBkPSJNOTk0LjYxMywzOTAuNDE0IEM5OTQuNjEzLDQwMC40MTQgMTAxMi42MTMsNDAwLjQxNCAxMDEyLjYxMyw0MDAuNDE0IEMxMDEyLjYxMyw0MDAuNDE0IDEwMzAuNjEzLDQwMC40MTQgMTAzMC42MTMsMzkwLjQxNCIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDowLjU7IiBmaWxsPSJub25lIi8+PHJlY3QgeD0iMTEwOS42MTMiIHk9IjM0Ny44MiIgd2lkdGg9Ijg0IiBoZWlnaHQ9IjMwLjI5NyIgZmlsbD0iI0UyRTJGMCIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDowLjU7IiByeD0iMi41IiByeT0iMi41Ii8+PHRleHQgeD0iMTExNi42MTMiIHk9IjM2Ny44MTUiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTQiIHRleHRMZW5ndGg9IjcwIj7mpa3li5njga7nlLvpnaI8L3RleHQ+PHBvbHlnb24gcG9pbnRzPSIzNTkuMDc5LDE1MS4wMjMsMzY5LjA3OSwxNTUuMDIzLDM1OS4wNzksMTU5LjAyMywzNjMuMDc5LDE1NS4wMjMiIGZpbGw9IiMxODE4MTgiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTtzdHJva2UtbGluZWpvaW46bWl0ZXI7c3Ryb2tlLW1pdGVybGltaXQ6MTA7Ii8+PGxpbmUgeDE9IjM0IiB5MT0iMTU1LjAyMyIgeDI9IjM2NS4wNzkiIHkyPSIxNTUuMDIzIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjE7Ii8+PHRleHQgeD0iNDEiIHk9IjE0OS45NTgiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTMiIHRleHRMZW5ndGg9IjE3MC4wNzkiPuODoeODvOODq+OCouODieODrOOCueOBqCBwYXNzd29yZDwvdGV4dD48cG9seWdvbiBwb2ludHM9IjQ1LDE4MC4xNTYsMzUsMTg0LjE1Niw0NSwxODguMTU2LDQxLDE4NC4xNTYiIGZpbGw9IiMxODE4MTgiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTtzdHJva2UtbGluZWpvaW46bWl0ZXI7c3Ryb2tlLW1pdGVybGltaXQ6MTA7Ii8+PGxpbmUgeDE9IjM5IiB5MT0iMTg0LjE1NiIgeDI9IjM3MC4wNzkiIHkyPSIxODQuMTU2IiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjE7c3Ryb2tlLWRhc2hhcnJheToyLDI7Ii8+PHRleHQgeD0iNTEiIHk9IjE3OS4wOSIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxMyIgdGV4dExlbmd0aD0iMzEzLjA3OSI+cGFzc3dvcmQg44Gu6KaB57Sg44Gu5qip6ZmQ44CC5qWt5YuZ44Gu55S76Z2i44Gv44G+44Gg6ZaL44GR44Gq44GEPC90ZXh0Pjxwb2x5Z29uIHBvaW50cz0iNTQ1LjUxOCwyMDkuMjg5LDU1NS41MTgsMjEzLjI4OSw1NDUuNTE4LDIxNy4yODksNTQ5LjUxOCwyMTMuMjg5IiBmaWxsPSIjMTgxODE4IiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjE7c3Ryb2tlLWxpbmVqb2luOm1pdGVyO3N0cm9rZS1taXRlcmxpbWl0OjEwOyIvPjxsaW5lIHgxPSIzNCIgeTE9IjIxMy4yODkiIHgyPSI1NTEuNTE4IiB5Mj0iMjEzLjI4OSIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxOyIvPjx0ZXh0IHg9IjQxIiB5PSIyMDguMjIzIiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjEzIiB0ZXh0TGVuZ3RoPSI4MC42MjIiPlRPVFAg44GuIDYg5qGBPC90ZXh0Pjxwb2x5Z29uIHBvaW50cz0iNzg2LjI4NSwyMzguNDIyLDc5Ni4yODUsMjQyLjQyMiw3ODYuMjg1LDI0Ni40MjIsNzkwLjI4NSwyNDIuNDIyIiBmaWxsPSIjMTgxODE4IiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjE7c3Ryb2tlLWxpbmVqb2luOm1pdGVyO3N0cm9rZS1taXRlcmxpbWl0OjEwOyIvPjxsaW5lIHgxPSI1NTcuNTE4IiB5MT0iMjQyLjQyMiIgeDI9Ijc5Mi4yODUiIHkyPSIyNDIuNDIyIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjE7Ii8+PHRleHQgeD0iNTY0LjUxOCIgeT0iMjM3LjM1NiIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxMyIgdGV4dExlbmd0aD0iMTcyLjUzNiI+5qSc6Ki877yI5YmN5b6MIDEg44Gk44Gu5pmC6ZaT44Gu56qT77yJPC90ZXh0Pjxwb2x5Z29uIHBvaW50cz0iMTAwMC42MTMsMjY3LjU1NSwxMDEwLjYxMywyNzEuNTU1LDEwMDAuNjEzLDI3NS41NTUsMTAwNC42MTMsMjcxLjU1NSIgZmlsbD0iIzE4MTgxOCIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxO3N0cm9rZS1saW5lam9pbjptaXRlcjtzdHJva2UtbWl0ZXJsaW1pdDoxMDsiLz48bGluZSB4MT0iNTU3LjUxOCIgeTE9IjI3MS41NTUiIHgyPSIxMDA2LjYxMyIgeTI9IjI3MS41NTUiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTsiLz48dGV4dCB4PSI1NjQuNTE4IiB5PSIyNjYuNDg5IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjEzIiB0ZXh0TGVuZ3RoPSIxNjkiPuWGjeWIqeeUqOOBp+OBquOBhOOBi+ODu+WkseaVl+OBruWbnuaVsDwvdGV4dD48cG9seWdvbiBwb2ludHM9IjQ1LDI5Ni42ODgsMzUsMzAwLjY4OCw0NSwzMDQuNjg4LDQxLDMwMC42ODgiIGZpbGw9IiMxODE4MTgiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTtzdHJva2UtbGluZWpvaW46bWl0ZXI7c3Ryb2tlLW1pdGVybGltaXQ6MTA7Ii8+PGxpbmUgeDE9IjM5IiB5MT0iMzAwLjY4OCIgeDI9IjU1Ni41MTgiIHkyPSIzMDAuNjg4IiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjE7c3Ryb2tlLWRhc2hhcnJheToyLDI7Ii8+PHRleHQgeD0iNTEiIHk9IjI5NS42MjIiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTMiIHRleHRMZW5ndGg9IjExNi4wODYiPlRPVFAg44Gu6KaB57Sg44Gu5qip6ZmQPC90ZXh0Pjxwb2x5Z29uIHBvaW50cz0iMTEzOS42MTMsMzI1LjgyLDExNDkuNjEzLDMyOS44MiwxMTM5LjYxMywzMzMuODIsMTE0My42MTMsMzI5LjgyIiBmaWxsPSIjMTgxODE4IiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjE7c3Ryb2tlLWxpbmVqb2luOm1pdGVyO3N0cm9rZS1taXRlcmxpbWl0OjEwOyIvPjxsaW5lIHgxPSIzNCIgeTE9IjMyOS44MiIgeDI9IjExNDUuNjEzIiB5Mj0iMzI5LjgyIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjE7Ii8+PHRleHQgeD0iNDEiIHk9IjMyNC43NTQiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTMiIHRleHRMZW5ndGg9IjIzOC4zODYiPuS4oeaWueOBruimgee0oOOBjOOBneOCjeOBo+OBnyBzZXNzaW9uIOOBp+mWi+OBkeOCizwvdGV4dD48P3BsYW50dW1sLXNyYyBSTEIxUlg5SDVEdEZMem9tcVdNblJib3VDNmJycU1ZQ2YwdlRUSkVNSUlHbkc5WEhqeHB0Z2E4NmFaT0tBZjVNZTZXN2ZCUFFKUW9iek1Da0N5b2ktV2xVRXJFQzY3U2xELVZTUy12dm55eFFwcXBHN29TTlJXQUFXc2RsOW1lN2ZLM2YtMFVFTnp3eTc5VEhkZ0JRR2piN1VOR3ZoY1o2a2ZxbFdiU1VKQlZUZUZHQTMwbElNaTRlc2pkclJDNzhzUDEwckswdkczTDZySzVyWUZBT3NVZmFCTlVqTzVaTW90bW5TcHQxbERHeUp0LWFmeVo2UHg4SDM2azRkWmdadUNzRzloM3V0N3ZndldYZ3NEYnlCYk5DbHlYY3BFOVEzaUs1WWxTZVpsb3pwbEp4MWVmVlgwd0x3ekw1QkE3X055QmxqbUR0SjE5VWdITmlqc3kzZ2E1YWlpYUZET0dSU0ZfVTBxUjJ5aUY1a182a0xJclpzQ09KbXA4WENKYWRmTnRNYllWSGZIS0toalZfdVpUc1kxSXVSeUZnTHJnRmdla2dIbWtuOUZ0c1E3OVVmdlo5UmoxcnV2cWh5X3h5M3VVVXEtOENqaV8ydEx1NE1UQklhQm0zQU0yTnRLWmk0eWVVSXdlSF91dm1PUFFoYmU4YU9URTRkT3R1WUUyWmM3eGh5RHRrODZuamlmYnY4UjhLSFRhOWNtd0FCSElLLWFRaWd6RWtNTW5tMl9va3E3SVVoejh5WmY1QXViTGd0YUtMazRMemJjZDlpNWRkeFNDd1RvT1loMTMxVXJzQmNuRjVtMjlTRTdOczlwZGx0UHhWRTZSMnJIYXB3TnpFWUJxajRNM29lLWl0Sl96Mkw1N2llZ3A1dG1FTVFMYks2UXh0ck10SS1HcTA/PjwvZz48L3N2Zz4=" class="uml" alt="uml diagram" title="" /></p>
-<p><img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB2ZXJzaW9uPSIxLjEiIGRhdGEtZGlhZ3JhbS10eXBlPSJTVEFURSIgc3R5bGU9IndpZHRoOjcwMHB4O2hlaWdodDo0NDJweDtiYWNrZ3JvdW5kOiNGRkZGRkY7IiB3aWR0aD0iNzAwcHgiIGhlaWdodD0iNDQycHgiIHZpZXdCb3g9IjAgMCA3MDAgNDQyIiB6b29tQW5kUGFuPSJtYWduaWZ5IiBwcmVzZXJ2ZUFzcGVjdFJhdGlvPSJub25lIiBjb250ZW50U3R5bGVUeXBlPSJ0ZXh0L2NzcyI+PD9wbGFudHVtbCAxLjIwMjYuOD8+PGRlZnMvPjxnIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBsZW5ndGhBZGp1c3Q9InNwYWNpbmciPjxnIGNsYXNzPSJ0aXRsZSIgZGF0YS1zb3VyY2UtbGluZT0iMSI+PHRleHQgeD0iMjIwLjgxMyIgeT0iMjIuOTk1IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE0IiB0ZXh0TGVuZ3RoPSIyNTEuOTk5IiBmb250LXdlaWdodD0iNzAwIj7oqo3oqLzjga7nirbmhYvvvIjjgrnjg5HjgqTjgq/jgafnorrjgYvjgoHjgovnr4Tlm7LvvIk8L3RleHQ+PC9nPjxnIGNsYXNzPSJzdGFydF9lbnRpdHkiIGRhdGEtcXVhbGlmaWVkLW5hbWU9Ii5zdGFydC4iIGlkPSJlbnQwMDAxIiBkYXRhLXNvdXJjZS1saW5lPSIyIj48ZWxsaXBzZSBjeD0iMzE0LjAzIiBjeT0iNTMuMjk3IiByeD0iMTAiIHJ5PSIxMCIgZmlsbD0iIzIyMiIgc3R5bGU9InN0cm9rZTojMjIyO3N0cm9rZS13aWR0aDoxOyIvPjwvZz48ZyBjbGFzcz0iZW50aXR5IiBkYXRhLXF1YWxpZmllZC1uYW1lPSIuLi4iIGlkPSJlbnQwMDAyIiBkYXRhLXNvdXJjZS1saW5lPSIyIj48cmVjdCB4PSIyODMuMDMiIHk9IjEyNC4yOTciIHdpZHRoPSI2MiIgaGVpZ2h0PSI1MCIgZmlsbD0iI0YxRjFGMSIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDowLjU7IiByeD0iMTIuNSIgcnk9IjEyLjUiLz48bGluZSB4MT0iMjgzLjAzIiB5MT0iMTUwLjU5NCIgeDI9IjM0NS4wMyIgeTI9IjE1MC41OTQiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MC41OyIvPjx0ZXh0IHg9IjI5My4wMyIgeT0iMTQyLjI5MiIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxNCIgdGV4dExlbmd0aD0iNDIiPuacquiqjeiovDwvdGV4dD48L2c+PGcgY2xhc3M9ImVudGl0eSIgZGF0YS1xdWFsaWZpZWQtbmFtZT0icGFzc3dvcmQuLi4uIiBpZD0iZW50MDAwNCIgZGF0YS1zb3VyY2UtbGluZT0iMyI+PHJlY3QgeD0iMjQyLjY4IiB5PSIyNTEuMjk3IiB3aWR0aD0iMTQyLjcxMiIgaGVpZ2h0PSI1MCIgZmlsbD0iI0YxRjFGMSIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDowLjU7IiByeD0iMTIuNSIgcnk9IjEyLjUiLz48bGluZSB4MT0iMjQyLjY4IiB5MT0iMjc3LjU5NCIgeDI9IjM4NS4zOTIiIHkyPSIyNzcuNTk0IiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjAuNTsiLz48dGV4dCB4PSIyNTIuNjgiIHk9IjI2OS4yOTIiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTQiIHRleHRMZW5ndGg9IjEyMi43MTIiPnBhc3N3b3Jk56K66KqN5riI44G/PC90ZXh0PjwvZz48ZyBjbGFzcz0iZW50aXR5IiBkYXRhLXF1YWxpZmllZC1uYW1lPSIuLi4uLi4iIGlkPSJlbnQwMDA2IiBkYXRhLXNvdXJjZS1saW5lPSI0Ij48cmVjdCB4PSIxMTQuMDMiIHk9IjM3OC4yOTciIHdpZHRoPSIxMDQiIGhlaWdodD0iNTAiIGZpbGw9IiNGMUYxRjEiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MC41OyIgcng9IjEyLjUiIHJ5PSIxMi41Ii8+PGxpbmUgeDE9IjExNC4wMyIgeTE9IjQwNC41OTQiIHgyPSIyMTguMDMiIHkyPSI0MDQuNTk0IiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjAuNTsiLz48dGV4dCB4PSIxMjQuMDMiIHk9IjM5Ni4yOTIiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTQiIHRleHRMZW5ndGg9Ijg0Ij7mnKzkurrnorroqo3muIjjgb88L3RleHQ+PC9nPjxnIGNsYXNzPSJlbnRpdHkiIGRhdGEtcXVhbGlmaWVkLW5hbWU9Ii4uLiIgaWQ9ImVudDAwMDkiIGRhdGEtc291cmNlLWxpbmU9IjYiPjxyZWN0IHg9IjUxNi4wMyIgeT0iMzc4LjI5NyIgd2lkdGg9IjYyIiBoZWlnaHQ9IjUwIiBmaWxsPSIjRjFGMUYxIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjAuNTsiIHJ4PSIxMi41IiByeT0iMTIuNSIvPjxsaW5lIHgxPSI1MTYuMDMiIHkxPSI0MDQuNTk0IiB4Mj0iNTc4LjAzIiB5Mj0iNDA0LjU5NCIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDowLjU7Ii8+PHRleHQgeD0iNTI2LjAzIiB5PSIzOTYuMjkyIiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE0IiB0ZXh0TGVuZ3RoPSI0MiI+44Ot44OD44KvPC90ZXh0PjwvZz48IS0tbGluayAqc3RhcnQqIHRvIOacquiqjeiovC0tPjxnIGNsYXNzPSJsaW5rIiBkYXRhLWVudGl0eS0xPSJlbnQwMDAxIiBkYXRhLWVudGl0eS0yPSJlbnQwMDAyIiBpZD0ibG5rMyIgZGF0YS1zb3VyY2UtbGluZT0iMiIgZGF0YS1saW5rLXR5cGU9ImRlcGVuZGVuY3kiPjxwYXRoIGQ9Ik0zMTQuMDMsNjMuNjU3IEMzMTQuMDMsNzcuNTg3IDMxNC4wMyw5OS4yNDcgMzE0LjAzLDExOC45NDciIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTsiIGZpbGw9Im5vbmUiIGlkPSIqc3RhcnQqLXRvLeacquiqjeiovCIvPjxwb2x5Z29uIHBvaW50cz0iMzE0LjAzLDEyMy45NDcsMzE4LjAzLDExNC45NDcsMzE0LjAzLDExOC45NDcsMzEwLjAzLDExNC45NDcsMzE0LjAzLDEyMy45NDciIGZpbGw9IiMxODE4MTgiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTtzdHJva2UtbGluZWpvaW46bWl0ZXI7c3Ryb2tlLW1pdGVybGltaXQ6MTA7Ii8+PC9nPjwhLS1saW5rIOacquiqjeiovCB0byBwYXNzd29yZOeiuuiqjea4iOOBvy0tPjxnIGNsYXNzPSJsaW5rIiBkYXRhLWVudGl0eS0xPSJlbnQwMDAyIiBkYXRhLWVudGl0eS0yPSJlbnQwMDA0IiBpZD0ibG5rNSIgZGF0YS1zb3VyY2UtbGluZT0iMyIgZGF0YS1saW5rLXR5cGU9ImRlcGVuZGVuY3kiPjxwYXRoIGQ9Ik0zMTQuMDMsMTc0LjY5NyBDMzE0LjAzLDE5Ni43MTcgMzE0LjAzLDIyMy45NTcgMzE0LjAzLDI0NS45NTciIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTsiIGZpbGw9Im5vbmUiIGlkPSLmnKroqo3oqLwtdG8tcGFzc3dvcmTnorroqo3muIjjgb8iLz48cG9seWdvbiBwb2ludHM9IjMxNC4wMywyNTAuOTU3LDMxOC4wMywyNDEuOTU3LDMxNC4wMywyNDUuOTU3LDMxMC4wMywyNDEuOTU3LDMxNC4wMywyNTAuOTU3IiBmaWxsPSIjMTgxODE4IiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjE7c3Ryb2tlLWxpbmVqb2luOm1pdGVyO3N0cm9rZS1taXRlcmxpbWl0OjEwOyIvPjx0ZXh0IHg9IjMxNS4wMyIgeT0iMjE3LjM2NCIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxMyIgdGV4dExlbmd0aD0iMTE4LjA3OSI+cGFzc3dvcmQg44GM5q2j44GX44GEPC90ZXh0PjwvZz48IS0tbGluayBwYXNzd29yZOeiuuiqjea4iOOBvyB0byDmnKzkurrnorroqo3muIjjgb8tLT48ZyBjbGFzcz0ibGluayIgZGF0YS1lbnRpdHktMT0iZW50MDAwNCIgZGF0YS1lbnRpdHktMj0iZW50MDAwNiIgaWQ9ImxuazciIGRhdGEtc291cmNlLWxpbmU9IjQiIGRhdGEtbGluay10eXBlPSJkZXBlbmRlbmN5Ij48cGF0aCBkPSJNMjQ1LjIxLDMwMS43NzcgQzIyOS43MywzMDkuNTI3IDIxNC4yOSwzMTkuMjg3IDIwMi4wMywzMzEuMjk3IEMxODguODEsMzQ0LjI1NyAxODEuMzYxLDM1OC40NDMgMTc1LjU2MSwzNzMuNDYzIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjE7IiBmaWxsPSJub25lIiBpZD0icGFzc3dvcmTnorroqo3muIjjgb8tdG8t5pys5Lq656K66KqN5riI44G/Ii8+PHBvbHlnb24gcG9pbnRzPSIxNzMuNzYsMzc4LjEyNywxODAuNzM0LDM3MS4xNzIsMTc1LjU2MSwzNzMuNDYzLDE3My4yNzEsMzY4LjI5LDE3My43NiwzNzguMTI3IiBmaWxsPSIjMTgxODE4IiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjE7c3Ryb2tlLWxpbmVqb2luOm1pdGVyO3N0cm9rZS1taXRlcmxpbWl0OjEwOyIvPjx0ZXh0IHg9IjIwMy4wMyIgeT0iMzQ0LjM2NCIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxMyIgdGV4dExlbmd0aD0iMTgxLjA4NiI+VE9UUCDjgYzmraPjgZfjgY/jgIHlho3liKnnlKjjgafjgarjgYQ8L3RleHQ+PC9nPjwhLS1saW5rIHBhc3N3b3Jk56K66KqN5riI44G/IHRvIHBhc3N3b3Jk56K66KqN5riI44G/LS0+PGcgY2xhc3M9ImxpbmsiIGRhdGEtZW50aXR5LTE9ImVudDAwMDQiIGRhdGEtZW50aXR5LTI9ImVudDAwMDQiIGlkPSJsbms4IiBkYXRhLXNvdXJjZS1saW5lPSI1IiBkYXRhLWxpbmstdHlwZT0iZGVwZW5kZW5jeSI+PHBhdGggZD0iTTM4NS44NiwyNjQuNDY3IEM0MDUuNDUsMjY1LjA2NyA0MjAuMzksMjY5LjAwNyA0MjAuMzksMjc2LjI5NyBDNDIwLjM5LDI4My41ODcgNDEwLjQ0OCwyODcuMzc0IDM5MC44NTgsMjg3Ljk3NCIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxOyIgZmlsbD0ibm9uZSIgaWQ9InBhc3N3b3Jk56K66KqN5riI44G/LXRvLXBhc3N3b3Jk56K66KqN5riI44G/Ii8+PHBvbHlnb24gcG9pbnRzPSIzODUuODYsMjg4LjEyNywzOTQuOTc4LDI5MS44NDksMzkwLjg1OCwyODcuOTc0LDM5NC43MzMsMjgzLjg1MywzODUuODYsMjg4LjEyNyIgZmlsbD0iIzE4MTgxOCIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxO3N0cm9rZS1saW5lam9pbjptaXRlcjtzdHJva2UtbWl0ZXJsaW1pdDoxMDsiLz48dGV4dCB4PSI0MjYuMzkiIHk9IjI4MC44NjQiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTMiIHRleHRMZW5ndGg9IjE4MS4wODYiPlRPVFAg44GM6Kqk44KK77yI5aSx5pWX44KS5pWw44GI44KL77yJPC90ZXh0PjwvZz48IS0tbGluayBwYXNzd29yZOeiuuiqjea4iOOBvyB0byDjg63jg4Pjgq8tLT48ZyBjbGFzcz0ibGluayIgZGF0YS1lbnRpdHktMT0iZW50MDAwNCIgZGF0YS1lbnRpdHktMj0iZW50MDAwOSIgaWQ9ImxuazEwIiBkYXRhLXNvdXJjZS1saW5lPSI2IiBkYXRhLWxpbmstdHlwZT0iZGVwZW5kZW5jeSI+PHBhdGggZD0iTTM1OS41MSwzMDEuNjk3IEM0MDUuNiwzMjYuNDE3IDQ3MS4yNjQsMzYxLjY0MyA1MTEuNDI0LDM4My4xOTMiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTsiIGZpbGw9Im5vbmUiIGlkPSJwYXNzd29yZOeiuuiqjea4iOOBvy10by3jg63jg4Pjgq8iLz48cG9seWdvbiBwb2ludHM9IjUxNS44MywzODUuNTU3LDUwOS43OTEsMzc3Ljc3Nyw1MTEuNDI0LDM4My4xOTMsNTA2LjAwOCwzODQuODI2LDUxNS44MywzODUuNTU3IiBmaWxsPSIjMTgxODE4IiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjE7c3Ryb2tlLWxpbmVqb2luOm1pdGVyO3N0cm9rZS1taXRlcmxpbWl0OjEwOyIvPjx0ZXh0IHg9IjQ0NS40OCIgeT0iMzQ0LjM2NCIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxMyIgdGV4dExlbmd0aD0iOTAuNDAzIj41IOWbnumAo+e2muOBruWkseaVlzwvdGV4dD48L2c+PCEtLWxpbmsg5pys5Lq656K66KqN5riI44G/IHRvIOacquiqjeiovC0tPjxnIGNsYXNzPSJsaW5rIiBkYXRhLWVudGl0eS0xPSJlbnQwMDA2IiBkYXRhLWVudGl0eS0yPSJlbnQwMDAyIiBpZD0ibG5rMTEiIGRhdGEtc291cmNlLWxpbmU9IjciIGRhdGEtbGluay10eXBlPSJkZXBlbmRlbmN5Ij48cGF0aCBkPSJNMTIwLjA5LDM3OC4wMTcgQzcxLjQ3LDM0OS4wNjcgNiwyOTguNjI3IDM5LjAzLDI1MS4yOTcgQzk1LjM3LDE3MC41OTcgMjE4LjY1NywxNTQuNDU2IDI3Ny45NDcsMTUxLjI1NiIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxOyIgZmlsbD0ibm9uZSIgaWQ9IuacrOS6uueiuuiqjea4iOOBvy10by3mnKroqo3oqLwiLz48cG9seWdvbiBwb2ludHM9IjI4Mi45NCwxNTAuOTg3LDI3My43MzgsMTQ3LjQ3OCwyNzcuOTQ3LDE1MS4yNTYsMjc0LjE2OSwxNTUuNDY2LDI4Mi45NCwxNTAuOTg3IiBmaWxsPSIjMTgxODE4IiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjE7c3Ryb2tlLWxpbmVqb2luOm1pdGVyO3N0cm9rZS1taXRlcmxpbWl0OjEwOyIvPjx0ZXh0IHg9IjQwLjAzIiB5PSIyODAuODY0IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjEzIiB0ZXh0TGVuZ3RoPSIxODQuMzQyIj7nhKHmk43kvZwgMzAg5YiG44O755m66KGM44GL44KJIDgg5pmC6ZaTPC90ZXh0PjwvZz48IS0tbGluayDjg63jg4Pjgq8gdG8g5pyq6KqN6Ki8LS0+PGcgY2xhc3M9ImxpbmsiIGRhdGEtZW50aXR5LTE9ImVudDAwMDkiIGRhdGEtZW50aXR5LTI9ImVudDAwMDIiIGlkPSJsbmsxMiIgZGF0YS1zb3VyY2UtbGluZT0iOCIgZGF0YS1saW5rLXR5cGU9ImRlcGVuZGVuY3kiPjxwYXRoIGQ9Ik01NzIuNDcsMzc3Ljk0NyBDNjAxLjk3LDM0Ni42OTcgNjQzLjA3LDI5MS43MDcgNjE0LjAzLDI1MS4yOTcgQzU1MS4xOCwxNjMuODE3IDQxMy43MTksMTUxLjE3OCAzNTAuMzg5LDE1MC4wMTgiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTsiIGZpbGw9Im5vbmUiIGlkPSLjg63jg4Pjgq8tdG8t5pyq6KqN6Ki8Ii8+PHBvbHlnb24gcG9pbnRzPSIzNDUuMzksMTQ5LjkyNywzNTQuMzE1LDE1NC4wOTEsMzUwLjM4OSwxNTAuMDE4LDM1NC40NjIsMTQ2LjA5MiwzNDUuMzksMTQ5LjkyNyIgZmlsbD0iIzE4MTgxOCIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxO3N0cm9rZS1saW5lam9pbjptaXRlcjtzdHJva2UtbWl0ZXJsaW1pdDoxMDsiLz48dGV4dCB4PSI2MjQuOTUiIHk9IjI4MC44NjQiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTMiIHRleHRMZW5ndGg9IjU5LjY3NCI+MTUg5YiG44Gu5b6MPC90ZXh0PjwvZz48P3BsYW50dW1sLXNyYyBWUDcxSVc5SDU4UnR6b2RrRVgyQTRBOTVocjBCVHo0WWc0S0c1MmNxelRteG9VWkM0NktjZldJY2Ewc2ZySzlnY2tmWFpsVlVTVUtoVDllWEF6NXNidl94Vi1WeV95ZGp2VlB0VVVIeEtJVDR3OWRJRzl5dXV6MTZ5T0JvMzRLUkhIX1hyam00MjB1QUdFNk9sZ05nSi1FbW8zT05qZFdnalNQcm1xeThSRkFBelNGalJGUnV1Nlk3dEFKZ1BubFhXd3pFUDh4V3djdUJlT2ZXaVBjVjRfaHpDMFljNjlkcnBDUGxfb2RjR0hLeVBULVBZbXVqWkUzXzJ2c3BzWlNzeVlidVlOZkd4S1RUZ1E4dXJ2SzcxQWg1LUdlLTV1a29ZcjlJUHlIQVNyTV83a0xSUGQxNXBJT1dEWUZDZG1SOVB3b2NCZGwzam1QVk5rSkFCZzF5RFJLV1FoaG4xT2Z5WFVrUTY1c01zUy1tUVNISUVaUklyN1Z0NG0wMD8+PC9nPjwvc3ZnPg==" class="uml" alt="uml diagram" title="" /></p>
-<blockquote>
-<p>ER 図と画面遷移図は、本体の表と画面を変えないため載せない。US-18 の Bolt で、利用者・TOTP の秘密・回復コード・使ったコードの記録の表と、A-01（ログイン）・TOTP の入力・登録の画面を設計する。</p>
-</blockquote>
-<h2 id="_5">開始準備の検証<a class="headerlink" href="#_5" title="Permanent link">&para;</a></h2>
-<h3 id="validating-iteration-plan">詳細の整合（<code>validating-iteration-plan</code>）<a class="headerlink" href="#validating-iteration-plan" title="Permanent link">&para;</a></h3>
-<table>
-<thead>
-<tr>
-<th style="text-align: left;">対象</th>
-<th style="text-align: left;">見つけたこと</th>
-<th style="text-align: left;">対応</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align: left;">ユーザーストーリー（US-18）</td>
-<td style="text-align: left;">AC1（password と TOTP で 30 分・8 時間の session）、AC3（5 回の失敗で 15 分のロック）、AC7（初回の TOTP の登録と回復コード）、AC9（回復コード）が方式を左右する</td>
-<td style="text-align: left;">ステップ 2〜3 の確認の項目にした</td>
-</tr>
-<tr>
-<td style="text-align: left;">非機能要件（SEC-04〜10）</td>
-<td style="text-align: left;">SEC-07（Argon2id または bcrypt）、SEC-09（回復コード 10 個）、SEC-10（再登録）。いずれも「提案」の状態</td>
-<td style="text-align: left;">SEC-07・SEC-09 は確かめる。SEC-10 は運用の手順なので扱わない</td>
-</tr>
-<tr>
-<td style="text-align: left;">技術スタック</td>
-<td style="text-align: left;">多要素認証の行が「未定」、TS-01 が「最初の Bolt」と書いてある（実際は W2）</td>
-<td style="text-align: left;">ステップ 4 で更新する</td>
-</tr>
-<tr>
-<td style="text-align: left;">アーキテクチャ</td>
-<td style="text-align: left;">認証の成功・失敗・ロックは Spring Security のイベントから同期で監査記録に書く（IA-INV-08）。アクセス・監査は「単純なモデル」で、認証の仕組みは実績のある部品に任せる</td>
-<td style="text-align: left;">ADR の案に、イベントの出どころ（どの部品が失敗を知るか）を書く</td>
-</tr>
-<tr>
-<td style="text-align: left;">識別子と命名</td>
-<td style="text-align: left;">TS-01、US-18、SEC-04〜10、IA-INV-08、ADR の番号 011 は既存と重ならない</td>
-<td style="text-align: left;">—</td>
-</tr>
-</tbody>
-</table>
-<h3 id="validating-design">横断の整合（<code>validating-design</code>）<a class="headerlink" href="#validating-design" title="Permanent link">&para;</a></h3>
-<table>
-<thead>
-<tr>
-<th style="text-align: left;">軸</th>
-<th style="text-align: left;">見つけたこと</th>
-<th style="text-align: left;">対応</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align: left;">A 開発戦略</td>
-<td style="text-align: left;">W5（中盤）で TOTP・ロック・session を実装する。W2 はスパイクだけ</td>
-<td style="text-align: left;">本体を変えない</td>
-</tr>
-<tr>
-<td style="text-align: left;">B 設計トピック</td>
-<td style="text-align: left;">新しいライブラリは外部連携に当たり、採用は確認必須（CLAUDE.md）</td>
-<td style="text-align: left;">スパイクの依存はスパイクのプロジェクトだけに置く。本体への採用は ADR の承認の後（W5）</td>
-</tr>
-<tr>
-<td style="text-align: left;">C 過去の計画との連続性</td>
-<td style="text-align: left;">認証までは仮の主体（<code>ProvisionalActorProperties</code>）。US-18 の Bolt で置き換える</td>
-<td style="text-align: left;">変えない。ADR の案に置き換えの順を書く</td>
-</tr>
-<tr>
-<td style="text-align: left;">C BC の独立性</td>
-<td style="text-align: left;">認証はアクセス・監査（<code>identity</code>）に置き、ほかのコンテキストは認証方式を知らない（公開ホスト）</td>
-<td style="text-align: left;">ADR の案で、TOTP の部品を <code>identity</code> の <code>infrastructure</code> に置く前提を書く</td>
-</tr>
-</tbody>
-</table>
-<h2 id="_6">入力<a class="headerlink" href="#_6" title="Permanent link">&para;</a></h2>
-<table>
-<thead>
-<tr>
-<th style="text-align: left;">成果物</th>
-<th style="text-align: left;">パス</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align: left;">ユーザーストーリー（US-18）</td>
-<td style="text-align: left;"><code>docs/requirements/cargo-tracker/user_story.md</code></td>
-</tr>
-<tr>
-<td style="text-align: left;">非機能要件（SEC-04〜10）</td>
-<td style="text-align: left;"><code>docs/design/cargo-tracker/non_functional.md</code></td>
-</tr>
-<tr>
-<td style="text-align: left;">技術スタック（多要素認証、TS-01）</td>
-<td style="text-align: left;"><code>docs/design/cargo-tracker/tech_stack.md</code></td>
-</tr>
-<tr>
-<td style="text-align: left;">アーキテクチャ（アクセス・監査、IA-INV-08）</td>
-<td style="text-align: left;"><code>docs/design/cargo-tracker/architecture_backend.md</code>、<code>docs/design/cargo-tracker/domain_model.md</code></td>
-</tr>
-<tr>
-<td style="text-align: left;">ADR の一覧</td>
-<td style="text-align: left;"><code>docs/adr/cargo-tracker/</code></td>
-</tr>
-</tbody>
-</table>
-<h2 id="_7">ステップ計画<a class="headerlink" href="#_7" title="Permanent link">&para;</a></h2>
-<p>状態の記号: <code>[ ]</code> 未着手、<code>[-]</code> 進行中、<code>[?]</code> 承認待ち、<code>[x]</code> 完了。スパイクのプロジェクトは本体の CI の対象外だが、文書の push の後に CI を確かめる（T-26）。結果の時刻は、そのステップの最後のコミットの時刻で書く（T-33）。</p>
+<h2 id="bolt_2">設計（この Bolt の範囲）<a class="headerlink" href="#bolt_2" title="Permanent link">&para;</a></h2>
+<h3 id="_5">ドメインモデル<a class="headerlink" href="#_5" title="Permanent link">&para;</a></h3>
+<p><img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB2ZXJzaW9uPSIxLjEiIGRhdGEtZGlhZ3JhbS10eXBlPSJDTEFTUyIgc3R5bGU9IndpZHRoOjE0MDNweDtoZWlnaHQ6MTE2N3B4O2JhY2tncm91bmQ6I0ZGRkZGRjsiIHdpZHRoPSIxNDAzcHgiIGhlaWdodD0iMTE2N3B4IiB2aWV3Qm94PSIwIDAgMTQwMyAxMTY3IiB6b29tQW5kUGFuPSJtYWduaWZ5IiBwcmVzZXJ2ZUFzcGVjdFJhdGlvPSJub25lIiBjb250ZW50U3R5bGVUeXBlPSJ0ZXh0L2NzcyI+PD9wbGFudHVtbCAxLjIwMjYuOD8+PGRlZnMvPjxnIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBsZW5ndGhBZGp1c3Q9InNwYWNpbmciPjxnIGNsYXNzPSJ0aXRsZSIgZGF0YS1zb3VyY2UtbGluZT0iMSI+PHRleHQgeD0iNjM0LjQ4NCIgeT0iMjIuOTk1IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE0IiB0ZXh0TGVuZ3RoPSIxMjcuMDMyIiBmb250LXdlaWdodD0iNzAwIj5Cb2x0IDI2YiDjgafotrPjgZnlnos8L3RleHQ+PC9nPjwhLS1jbHVzdGVyIHNoYXJlZC0tPjxnIGNsYXNzPSJjbHVzdGVyIiBkYXRhLXF1YWxpZmllZC1uYW1lPSJzaGFyZWQiIGlkPSJlbnQwMDAzIiBkYXRhLXNvdXJjZS1saW5lPSIzIj48cGF0aCBkPSJNMTA5OC41LDY0Ni42ODcgTDExNTMuNjY4LDY0Ni42ODcgQTMuNzUsMy43NSAwIDAgMSAxMTU2LjE2OCw2NDkuMTg3IEwxMTYzLjE2OCw2NjguOTg0IEwxMzg1LjUsNjY4Ljk4NCBBMi41LDIuNSAwIDAgMSAxMzg4LDY3MS40ODQgTDEzODgsMTE0OS44MzcgQTIuNSwyLjUgMCAwIDEgMTM4NS41LDExNTIuMzM3IEwxMDk4LjUsMTE1Mi4zMzcgQTIuNSwyLjUgMCAwIDEgMTA5NiwxMTQ5LjgzNyBMMTA5Niw2NDkuMTg3IEEyLjUsMi41IDAgMCAxIDEwOTguNSw2NDYuNjg3IiBzdHlsZT0ic3Ryb2tlOiMwMDA7c3Ryb2tlLXdpZHRoOjEuNTsiIGZpbGw9Im5vbmUiLz48bGluZSB4MT0iMTA5NiIgeTE9IjY2OC45ODQiIHgyPSIxMTYzLjE2OCIgeTI9IjY2OC45ODQiIHN0eWxlPSJzdHJva2U6IzAwMDtzdHJva2Utd2lkdGg6MS41OyIvPjx0ZXh0IHg9IjExMDAiIHk9IjY2MS42ODIiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTQiIHRleHRMZW5ndGg9IjU0LjE2OCIgZm9udC13ZWlnaHQ9IjcwMCI+c2hhcmVkPC90ZXh0PjwvZz48IS0tY2x1c3RlciBkb21haW4tLT48ZyBjbGFzcz0iY2x1c3RlciIgZGF0YS1xdWFsaWZpZWQtbmFtZT0ic2hhcmVkLmRvbWFpbiIgaWQ9ImVudDAwMDEiIGRhdGEtc291cmNlLWxpbmU9IjIiPjxwYXRoIGQ9Ik0xMTIyLjUsNjg5LjY4NyBMMTE4MS45NCw2ODkuNjg3IEEzLjc1LDMuNzUgMCAwIDEgMTE4NC40NCw2OTIuMTg3IEwxMTkxLjQ0LDcxMS45ODQgTDEzNjEuNSw3MTEuOTg0IEEyLjUsMi41IDAgMCAxIDEzNjQsNzE0LjQ4NCBMMTM2NCwxMTI1LjgzNyBBMi41LDIuNSAwIDAgMSAxMzYxLjUsMTEyOC4zMzcgTDExMjIuNSwxMTI4LjMzNyBBMi41LDIuNSAwIDAgMSAxMTIwLDExMjUuODM3IEwxMTIwLDY5Mi4xODcgQTIuNSwyLjUgMCAwIDEgMTEyMi41LDY4OS42ODciIHN0eWxlPSJzdHJva2U6IzAwMDtzdHJva2Utd2lkdGg6MS41OyIgZmlsbD0ibm9uZSIvPjxsaW5lIHgxPSIxMTIwIiB5MT0iNzExLjk4NCIgeDI9IjExOTEuNDQiIHkyPSI3MTEuOTg0IiBzdHlsZT0ic3Ryb2tlOiMwMDA7c3Ryb2tlLXdpZHRoOjEuNTsiLz48dGV4dCB4PSIxMTI0IiB5PSI3MDQuNjgyIiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE0IiB0ZXh0TGVuZ3RoPSI1OC40NCIgZm9udC13ZWlnaHQ9IjcwMCI+ZG9tYWluPC90ZXh0PjwvZz48IS0tY2x1c3RlciB0cmFja2luZy0tPjxnIGNsYXNzPSJjbHVzdGVyIiBkYXRhLXF1YWxpZmllZC1uYW1lPSJ0cmFja2luZyIgaWQ9ImVudDAwMDciIGRhdGEtc291cmNlLWxpbmU9IjE2Ij48cGF0aCBkPSJNOC41LDQzLjI5NyBMNzQuOTQsNDMuMjk3IEEzLjc1LDMuNzUgMCAwIDEgNzcuNDQsNDUuNzk3IEw4NC40NCw2NS41OTQgTDEwNjkuNSw2NS41OTQgQTIuNSwyLjUgMCAwIDEgMTA3Miw2OC4wOTQgTDEwNzIsOTU2LjA4NyBBMi41LDIuNSAwIDAgMSAxMDY5LjUsOTU4LjU4NyBMOC41LDk1OC41ODcgQTIuNSwyLjUgMCAwIDEgNiw5NTYuMDg3IEw2LDQ1Ljc5NyBBMi41LDIuNSAwIDAgMSA4LjUsNDMuMjk3IiBzdHlsZT0ic3Ryb2tlOiMwMDA7c3Ryb2tlLXdpZHRoOjEuNTsiIGZpbGw9Im5vbmUiLz48bGluZSB4MT0iNiIgeTE9IjY1LjU5NCIgeDI9Ijg0LjQ0IiB5Mj0iNjUuNTk0IiBzdHlsZT0ic3Ryb2tlOiMwMDA7c3Ryb2tlLXdpZHRoOjEuNTsiLz48dGV4dCB4PSIxMCIgeT0iNTguMjkyIiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE0IiB0ZXh0TGVuZ3RoPSI2NS40NCIgZm9udC13ZWlnaHQ9IjcwMCI+dHJhY2tpbmc8L3RleHQ+PC9nPjwhLS1jbHVzdGVyIGRvbWFpbi0tPjxnIGNsYXNzPSJjbHVzdGVyIiBkYXRhLXF1YWxpZmllZC1uYW1lPSJ0cmFja2luZy5kb21haW4iIGlkPSJlbnQwMDA4IiBkYXRhLXNvdXJjZS1saW5lPSIxNiI+PHBhdGggZD0iTTMyLjUsODYuMjk3IEw5MS45NCw4Ni4yOTcgQTMuNzUsMy43NSAwIDAgMSA5NC40NCw4OC43OTcgTDEwMS40NCwxMDguNTk0IEwxMDQ1LjUsMTA4LjU5NCBBMi41LDIuNSAwIDAgMSAxMDQ4LDExMS4wOTQgTDEwNDgsOTMyLjA4NyBBMi41LDIuNSAwIDAgMSAxMDQ1LjUsOTM0LjU4NyBMMzIuNSw5MzQuNTg3IEEyLjUsMi41IDAgMCAxIDMwLDkzMi4wODcgTDMwLDg4Ljc5NyBBMi41LDIuNSAwIDAgMSAzMi41LDg2LjI5NyIgc3R5bGU9InN0cm9rZTojMDAwO3N0cm9rZS13aWR0aDoxLjU7IiBmaWxsPSJub25lIi8+PGxpbmUgeDE9IjMwIiB5MT0iMTA4LjU5NCIgeDI9IjEwMS40NCIgeTI9IjEwOC41OTQiIHN0eWxlPSJzdHJva2U6IzAwMDtzdHJva2Utd2lkdGg6MS41OyIvPjx0ZXh0IHg9IjM0IiB5PSIxMDEuMjkyIiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE0IiB0ZXh0TGVuZ3RoPSI1OC40NCIgZm9udC13ZWlnaHQ9IjcwMCI+ZG9tYWluPC90ZXh0PjwvZz48IS0tY2x1c3RlciBtb2RlbC0tPjxnIGNsYXNzPSJjbHVzdGVyIiBkYXRhLXF1YWxpZmllZC1uYW1lPSJ0cmFja2luZy5kb21haW4ubW9kZWwiIGlkPSJlbnQwMDA5IiBkYXRhLXNvdXJjZS1saW5lPSIxNiI+PHBhdGggZD0iTTU2LjUsMTI5LjI5NyBMMTA2LjAyMSwxMjkuMjk3IEEzLjc1LDMuNzUgMCAwIDEgMTA4LjUyMSwxMzEuNzk3IEwxMTUuNTIxLDE1MS41OTQgTDEwMjEuNSwxNTEuNTk0IEEyLjUsMi41IDAgMCAxIDEwMjQsMTU0LjA5NCBMMTAyNCw5MDguMDg3IEEyLjUsMi41IDAgMCAxIDEwMjEuNSw5MTAuNTg3IEw1Ni41LDkxMC41ODcgQTIuNSwyLjUgMCAwIDEgNTQsOTA4LjA4NyBMNTQsMTMxLjc5NyBBMi41LDIuNSAwIDAgMSA1Ni41LDEyOS4yOTciIHN0eWxlPSJzdHJva2U6IzAwMDtzdHJva2Utd2lkdGg6MS41OyIgZmlsbD0ibm9uZSIvPjxsaW5lIHgxPSI1NCIgeTE9IjE1MS41OTQiIHgyPSIxMTUuNTIxIiB5Mj0iMTUxLjU5NCIgc3R5bGU9InN0cm9rZTojMDAwO3N0cm9rZS13aWR0aDoxLjU7Ii8+PHRleHQgeD0iNTgiIHk9IjE0NC4yOTIiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTQiIHRleHRMZW5ndGg9IjQ4LjUyMSIgZm9udC13ZWlnaHQ9IjcwMCI+bW9kZWw8L3RleHQ+PC9nPjwhLS1jbHVzdGVyIGFnZ3JlZ2F0ZXMtLT48ZyBjbGFzcz0iY2x1c3RlciIgZGF0YS1xdWFsaWZpZWQtbmFtZT0idHJhY2tpbmcuZG9tYWluLm1vZGVsLmFnZ3JlZ2F0ZXMiIGlkPSJlbnQwMDA1IiBkYXRhLXNvdXJjZS1saW5lPSIxNSI+PHBhdGggZD0iTTgwLjUsMTcyLjI5NyBMMTcxLjM3OSwxNzIuMjk3IEEzLjc1LDMuNzUgMCAwIDEgMTczLjg3OSwxNzQuNzk3IEwxODAuODc5LDE5NC41OTQgTDk5Ny41LDE5NC41OTQgQTIuNSwyLjUgMCAwIDEgMTAwMCwxOTcuMDk0IEwxMDAwLDM0Mi4yNDcgQTIuNSwyLjUgMCAwIDEgOTk3LjUsMzQ0Ljc0NyBMODAuNSwzNDQuNzQ3IEEyLjUsMi41IDAgMCAxIDc4LDM0Mi4yNDcgTDc4LDE3NC43OTcgQTIuNSwyLjUgMCAwIDEgODAuNSwxNzIuMjk3IiBzdHlsZT0ic3Ryb2tlOiMwMDA7c3Ryb2tlLXdpZHRoOjEuNTsiIGZpbGw9Im5vbmUiLz48bGluZSB4MT0iNzgiIHkxPSIxOTQuNTk0IiB4Mj0iMTgwLjg3OSIgeTI9IjE5NC41OTQiIHN0eWxlPSJzdHJva2U6IzAwMDtzdHJva2Utd2lkdGg6MS41OyIvPjx0ZXh0IHg9IjgyIiB5PSIxODcuMjkyIiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE0IiB0ZXh0TGVuZ3RoPSI4OS44NzkiIGZvbnQtd2VpZ2h0PSI3MDAiPmFnZ3JlZ2F0ZXM8L3RleHQ+PC9nPjwhLS1jbHVzdGVyIGVudGl0aWVzLS0+PGcgY2xhc3M9ImNsdXN0ZXIiIGRhdGEtcXVhbGlmaWVkLW5hbWU9InRyYWNraW5nLmRvbWFpbi5tb2RlbC5lbnRpdGllcyIgaWQ9ImVudDAwMTEiIGRhdGEtc291cmNlLWxpbmU9IjI3Ij48cGF0aCBkPSJNMjkwLjUsMzY4Ljc0NyBMMzUxLjc3MiwzNjguNzQ3IEEzLjc1LDMuNzUgMCAwIDEgMzU0LjI3MiwzNzEuMjQ3IEwzNjEuMjcyLDM5MS4wNDQgTDQ4Ny41LDM5MS4wNDQgQTIuNSwyLjUgMCAwIDEgNDkwLDM5My41NDQgTDQ5MCw2MjAuMTg3IEEyLjUsMi41IDAgMCAxIDQ4Ny41LDYyMi42ODcgTDI5MC41LDYyMi42ODcgQTIuNSwyLjUgMCAwIDEgMjg4LDYyMC4xODcgTDI4OCwzNzEuMjQ3IEEyLjUsMi41IDAgMCAxIDI5MC41LDM2OC43NDciIHN0eWxlPSJzdHJva2U6IzAwMDtzdHJva2Utd2lkdGg6MS41OyIgZmlsbD0ibm9uZSIvPjxsaW5lIHgxPSIyODgiIHkxPSIzOTEuMDQ0IiB4Mj0iMzYxLjI3MiIgeTI9IjM5MS4wNDQiIHN0eWxlPSJzdHJva2U6IzAwMDtzdHJva2Utd2lkdGg6MS41OyIvPjx0ZXh0IHg9IjI5MiIgeT0iMzgzLjc0MiIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxNCIgdGV4dExlbmd0aD0iNjAuMjcyIiBmb250LXdlaWdodD0iNzAwIj5lbnRpdGllczwvdGV4dD48L2c+PCEtLWNsdXN0ZXIgdmFsdWVvYmplY3RzLS0+PGcgY2xhc3M9ImNsdXN0ZXIiIGRhdGEtcXVhbGlmaWVkLW5hbWU9InRyYWNraW5nLmRvbWFpbi5tb2RlbC52YWx1ZW9iamVjdHMiIGlkPSJlbnQwMDEzIiBkYXRhLXNvdXJjZS1saW5lPSIzOSI+PHBhdGggZD0iTTE4MS41LDY2NS4yNDcgTDI4Mi41OTIsNjY1LjI0NyBBMy43NSwzLjc1IDAgMCAxIDI4NS4wOTIsNjY3Ljc0NyBMMjkyLjA5Miw2ODcuNTQ0IEw2MTcuNSw2ODcuNTQ0IEEyLjUsMi41IDAgMCAxIDYyMCw2OTAuMDQ0IEw2MjAsODg0LjA4NyBBMi41LDIuNSAwIDAgMSA2MTcuNSw4ODYuNTg3IEwxODEuNSw4ODYuNTg3IEEyLjUsMi41IDAgMCAxIDE3OSw4ODQuMDg3IEwxNzksNjY3Ljc0NyBBMi41LDIuNSAwIDAgMSAxODEuNSw2NjUuMjQ3IiBzdHlsZT0ic3Ryb2tlOiMwMDA7c3Ryb2tlLXdpZHRoOjEuNTsiIGZpbGw9Im5vbmUiLz48bGluZSB4MT0iMTc5IiB5MT0iNjg3LjU0NCIgeDI9IjI5Mi4wOTIiIHkyPSI2ODcuNTQ0IiBzdHlsZT0ic3Ryb2tlOiMwMDA7c3Ryb2tlLXdpZHRoOjEuNTsiLz48dGV4dCB4PSIxODMiIHk9IjY4MC4yNDIiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTQiIHRleHRMZW5ndGg9IjEwMC4wOTIiIGZvbnQtd2VpZ2h0PSI3MDAiPnZhbHVlb2JqZWN0czwvdGV4dD48L2c+PCEtLWNsdXN0ZXIgcnVsZXMtLT48ZyBjbGFzcz0iY2x1c3RlciIgZGF0YS1xdWFsaWZpZWQtbmFtZT0idHJhY2tpbmcuZG9tYWluLm1vZGVsLnJ1bGVzIiBpZD0iZW50MDAxNiIgZGF0YS1zb3VyY2UtbGluZT0iNTUiPjxwYXRoIGQ9Ik01MTYuNSw0MzMuOTM3IEw1NTYuOTk4LDQzMy45MzcgQTMuNzUsMy43NSAwIDAgMSA1NTkuNDk4LDQzNi40MzcgTDU2Ni40OTgsNDU2LjIzNCBMOTk3LjUsNDU2LjIzNCBBMi41LDIuNSAwIDAgMSAxMDAwLDQ1OC43MzQgTDEwMDAsNTU0Ljk5NyBBMi41LDIuNSAwIDAgMSA5OTcuNSw1NTcuNDk3IEw1MTYuNSw1NTcuNDk3IEEyLjUsMi41IDAgMCAxIDUxNCw1NTQuOTk3IEw1MTQsNDM2LjQzNyBBMi41LDIuNSAwIDAgMSA1MTYuNSw0MzMuOTM3IiBzdHlsZT0ic3Ryb2tlOiMwMDA7c3Ryb2tlLXdpZHRoOjEuNTsiIGZpbGw9Im5vbmUiLz48bGluZSB4MT0iNTE0IiB5MT0iNDU2LjIzNCIgeDI9IjU2Ni40OTgiIHkyPSI0NTYuMjM0IiBzdHlsZT0ic3Ryb2tlOiMwMDA7c3Ryb2tlLXdpZHRoOjEuNTsiLz48dGV4dCB4PSI1MTgiIHk9IjQ0OC45MzIiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTQiIHRleHRMZW5ndGg9IjM5LjQ5OCIgZm9udC13ZWlnaHQ9IjcwMCI+cnVsZXM8L3RleHQ+PC9nPjwhLS1jbGFzcyBTcmMtLT48ZyBjbGFzcz0iZW50aXR5IiBkYXRhLXF1YWxpZmllZC1uYW1lPSJzaGFyZWQuZG9tYWluLlNyYyIgaWQ9ImVudDAwMDIiIGRhdGEtc291cmNlLWxpbmU9IjMiPjxyZWN0IHg9IjExMzcuMjYiIHk9IjcyNC42ODciIHdpZHRoPSIyMDUuNDc3IiBoZWlnaHQ9IjEyMS40NTMiIGZpbGw9IiNGMUYxRjEiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MC41OyIgcng9IjIuNSIgcnk9IjIuNSIvPjxlbGxpcHNlIGN4PSIxMTcxLjUxNyIgY3k9Ijc1Mi45NjgiIHJ4PSIxMSIgcnk9IjExIiBmaWxsPSIjQUREMUIyIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjE7Ii8+PHBhdGggZD0iTTExNzQuNDg1LDc1OC42MDkgUTExNzMuOTA3LDc1OC45MDYgMTE3My4yNjcsNzU5LjA0NiBRMTE3Mi42MjYsNzU5LjIwMyAxMTcxLjkyMyw3NTkuMjAzIFExMTY5LjQyMyw3NTkuMjAzIDExNjguMDk1LDc1Ny41NjIgUTExNjYuNzgyLDc1NS45MDYgMTE2Ni43ODIsNzUyLjc4MSBRMTE2Ni43ODIsNzQ5LjY1NiAxMTY4LjA5NSw3NDcuOTk5IFExMTY5LjQyMyw3NDYuMzQzIDExNzEuOTIzLDc0Ni4zNDMgUTExNzIuNjI2LDc0Ni4zNDMgMTE3My4yNjcsNzQ2LjQ5OSBRMTE3My45MjMsNzQ2LjY1NiAxMTc0LjQ4NSw3NDYuOTUzIEwxMTc0LjQ4NSw3NDkuNjcxIFExMTczLjg2LDc0OS4wOTMgMTE3My4yNjcsNzQ4LjgyOCBRMTE3Mi42NzMsNzQ4LjU0NiAxMTcyLjA0OCw3NDguNTQ2IFExMTcwLjcwNCw3NDguNTQ2IDExNzAuMDE3LDc0OS42MjQgUTExNjkuMzI5LDc1MC42ODcgMTE2OS4zMjksNzUyLjc4MSBRMTE2OS4zMjksNzU0Ljg3NCAxMTcwLjAxNyw3NTUuOTUzIFExMTcwLjcwNCw3NTcuMDE1IDExNzIuMDQ4LDc1Ny4wMTUgUTExNzIuNjczLDc1Ny4wMTUgMTE3My4yNjcsNzU2Ljc0OSBRMTE3My44Niw3NTYuNDY4IDExNzQuNDg1LDc1NS44OSBMMTE3NC40ODUsNzU4LjYwOSBaICIgZmlsbD0iIzAwMCIvPjx0ZXh0IHg9IjExODcuNzk2IiB5PSI3NDAuODI2IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjEyIiB0ZXh0TGVuZ3RoPSIxMzQuNjg1IiBmb250LXN0eWxlPSJpdGFsaWMiPsKr5YCk44Kq44OW44K444Kn44Kv44OI44CC6Laz44GZwrs8L3RleHQ+PHRleHQgeD0iMTI0MS4xMzgiIHk9Ijc1Ni42NTEiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTQiIHRleHRMZW5ndGg9IjI4Ij7lh7rlhbg8L3RleHQ+PHRleHQgeD0iMTIyNS40OCIgeT0iNzcyLjk0OCIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxNCIgdGV4dExlbmd0aD0iNTkuMzE1Ij4oU291cmNlKTwvdGV4dD48bGluZSB4MT0iMTEzOC4yNiIgeTE9Ijc4MS4yNDkiIHgyPSIxMzQxLjczNyIgeTI9Ijc4MS4yNDkiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MC41OyIvPjx0ZXh0IHg9IjExNDMuMjYiIHk9Ijc5OC4yNDQiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTQiIHRleHRMZW5ndGg9IjEyMC44MzkiPueorumhniA6IFNvdXJjZUtpbmQ8L3RleHQ+PHRleHQgeD0iMTE0My4yNiIgeT0iODE0LjU0MSIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxNCIgdGV4dExlbmd0aD0iMTkzLjQ3NyI+5Y+C54WnIDogU3RyaW5n77yIMeOAnDIwMCDmloflrZfvvIk8L3RleHQ+PHRleHQgeD0iMTE0My4yNiIgeT0iODMwLjgzOCIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxNCIgdGV4dExlbmd0aD0iMTQxLjc3NyI+5Y+W5b6X5pmC5Yi7IDogVXRjSW5zdGFudDwvdGV4dD48bGluZSB4MT0iMTEzOC4yNiIgeTE9IjgzOC4xNCIgeDI9IjEzNDEuNzM3IiB5Mj0iODM4LjE0IiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjAuNTsiLz48L2c+PCEtLWNsYXNzIFNLLS0+PGcgY2xhc3M9ImVudGl0eSIgZGF0YS1xdWFsaWZpZWQtbmFtZT0ic2hhcmVkLmRvbWFpbi5TSyIgaWQ9ImVudDAwMDQiIGRhdGEtc291cmNlLWxpbmU9IjgiPjxyZWN0IHg9IjExMzUuNjMiIHk9Ijk3NC41ODciIHdpZHRoPSIyMTIuNzM3IiBoZWlnaHQ9IjEzNy43NSIgZmlsbD0iI0YxRjFGMSIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDowLjU7IiByeD0iMi41IiByeT0iMi41Ii8+PGVsbGlwc2UgY3g9IjExOTIuNjc2IiBjeT0iMTAwMi44NjgiIHJ4PSIxMSIgcnk9IjExIiBmaWxsPSIjRUI5MzdGIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjE7Ii8+PHBhdGggZD0iTTExOTYuNzg1LDEwMDguODY4IEwxMTg5LjA2NiwxMDA4Ljg2OCBMMTE4OS4wNjYsOTk2LjQ3OCBMMTE5Ni43ODUsOTk2LjQ3OCBMMTE5Ni43ODUsOTk4LjYzNCBMMTE5MS41Miw5OTguNjM0IEwxMTkxLjUyLDEwMDEuMzA2IEwxMTk2LjI4NSwxMDAxLjMwNiBMMTE5Ni4yODUsMTAwMy40NjIgTDExOTEuNTIsMTAwMy40NjIgTDExOTEuNTIsMTAwNi43MTIgTDExOTYuNzg1LDEwMDYuNzEyIEwxMTk2Ljc4NSwxMDA4Ljg2OCBaICIgZmlsbD0iIzAwMCIvPjx0ZXh0IHg9IjEyMzguOTA3IiB5PSI5OTAuNzI2IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjEyIiB0ZXh0TGVuZ3RoPSIzOC42ODQiIGZvbnQtc3R5bGU9Iml0YWxpYyI+wqvotrPjgZnCuzwvdGV4dD48dGV4dCB4PSIxMjIzLjI0OSIgeT0iMTAwNi41NTEiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTQiIHRleHRMZW5ndGg9IjcwIj7lh7rlhbjjga7nqK7poZ48L3RleHQ+PHRleHQgeD0iMTIxMy4xNzYiIHk9IjEwMjIuODQ4IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE0IiB0ZXh0TGVuZ3RoPSI5MC4xNDYiPihTb3VyY2VLaW5kKTwvdGV4dD48bGluZSB4MT0iMTEzNi42MyIgeTE9IjEwMzEuMTQ5IiB4Mj0iMTM0Ny4zNjciIHkyPSIxMDMxLjE0OSIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDowLjU7Ii8+PHRleHQgeD0iMTE0MS42MyIgeT0iMTA0OC4xNDQiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTQiIHRleHRMZW5ndGg9IjIwMC43MzciPkVYVEVSTkFMX1JFQ09SRCDlpJbpg6jljp/mnKw8L3RleHQ+PHRleHQgeD0iMTE0MS42MyIgeT0iMTA2NC40NDEiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTQiIHRleHRMZW5ndGg9IjE2Ni45MzMiPkZJRUxEX1JFQ09SRCDnj77loLToqJjpjLI8L3RleHQ+PHRleHQgeD0iMTE0MS42MyIgeT0iMTA4MC43MzgiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTQiIHRleHRMZW5ndGg9IjE4NS4xMzEiPklOVEVSTkFMX0NIRUNLIOekvuWGheeiuuiqjTwvdGV4dD48dGV4dCB4PSIxMTQxLjYzIiB5PSIxMDk3LjAzNSIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxNCIgdGV4dExlbmd0aD0iMTczLjM1MiI+TUFOVUFMX0VOVFJZIOaJi+WLleWFpeWKmzwvdGV4dD48bGluZSB4MT0iMTEzNi42MyIgeTE9IjExMDQuMzM3IiB4Mj0iMTM0Ny4zNjciIHkyPSIxMTA0LjMzNyIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDowLjU7Ii8+PC9nPjwhLS1jbGFzcyBUUi0tPjxnIGNsYXNzPSJlbnRpdHkiIGRhdGEtcXVhbGlmaWVkLW5hbWU9InRyYWNraW5nLmRvbWFpbi5tb2RlbC5hZ2dyZWdhdGVzLlRSIiBpZD0iZW50MDAwNiIgZGF0YS1zb3VyY2UtbGluZT0iMTYiPjxyZWN0IHg9Ijk0LjUiIHk9IjIwNy4yOTciIHdpZHRoPSI2NjMuMDA2IiBoZWlnaHQ9IjEyMS40NTMiIGZpbGw9IiNGMUYxRjEiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MC41OyIgcng9IjIuNSIgcnk9IjIuNSIvPjxlbGxpcHNlIGN4PSIzNTkuMDYyIiBjeT0iMjM1LjU3OCIgcng9IjExIiByeT0iMTEiIGZpbGw9IiNBREQxQjIiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTsiLz48cGF0aCBkPSJNMzYyLjAzMSwyNDEuMjE5IFEzNjEuNDUzLDI0MS41MTYgMzYwLjgxMiwyNDEuNjU2IFEzNjAuMTcxLDI0MS44MTMgMzU5LjQ2OCwyNDEuODEzIFEzNTYuOTY4LDI0MS44MTMgMzU1LjY0LDI0MC4xNzIgUTM1NC4zMjgsMjM4LjUxNiAzNTQuMzI4LDIzNS4zOTEgUTM1NC4zMjgsMjMyLjI2NiAzNTUuNjQsMjMwLjYwOSBRMzU2Ljk2OCwyMjguOTUzIDM1OS40NjgsMjI4Ljk1MyBRMzYwLjE3MSwyMjguOTUzIDM2MC44MTIsMjI5LjEwOSBRMzYxLjQ2OCwyMjkuMjY2IDM2Mi4wMzEsMjI5LjU2MyBMMzYyLjAzMSwyMzIuMjgxIFEzNjEuNDA2LDIzMS43MDMgMzYwLjgxMiwyMzEuNDM4IFEzNjAuMjE4LDIzMS4xNTYgMzU5LjU5MywyMzEuMTU2IFEzNTguMjUsMjMxLjE1NiAzNTcuNTYyLDIzMi4yMzQgUTM1Ni44NzUsMjMzLjI5NyAzNTYuODc1LDIzNS4zOTEgUTM1Ni44NzUsMjM3LjQ4NCAzNTcuNTYyLDIzOC41NjMgUTM1OC4yNSwyMzkuNjI1IDM1OS41OTMsMjM5LjYyNSBRMzYwLjIxOCwyMzkuNjI1IDM2MC44MTIsMjM5LjM1OSBRMzYxLjQwNiwyMzkuMDc4IDM2Mi4wMzEsMjM4LjUgTDM2Mi4wMzEsMjQxLjIxOSBaICIgZmlsbD0iIzAwMCIvPjx0ZXh0IHg9IjM3Ny41NjIiIHk9IjIyMy40MzYiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTIiIHRleHRMZW5ndGg9IjEyOS4zODEiIGZvbnQtc3R5bGU9Iml0YWxpYyI+wqvpm4bntITjg6vjg7zjg4jjgIJCb2x0IDI1wrs8L3RleHQ+PHRleHQgeD0iNDE0LjI1MyIgeT0iMjM5LjI2MSIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxNCIgdGV4dExlbmd0aD0iNTYiPui/vei3oeiomOmMsjwvdGV4dD48dGV4dCB4PSIzODEuOTk3IiB5PSIyNTUuNTU4IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE0IiB0ZXh0TGVuZ3RoPSIxMjAuNTExIj4oVHJhY2tpbmdSZWNvcmQpPC90ZXh0PjxsaW5lIHgxPSI5NS41IiB5MT0iMjYzLjg1OSIgeDI9Ijc1Ni41MDYiIHkyPSIyNjMuODU5IiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjAuNTsiLz48dGV4dCB4PSIxMDAuNSIgeT0iMjgwLjg1NCIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxNCIgdGV4dExlbmd0aD0iMjY4Ljg1NyI+5Li76KaB5a6f57i+44Gu5YiXIDogTGlzdCZsdDtNaWxlc3RvbmU+77yI6Laz44GZ77yJPC90ZXh0Pjx0ZXh0IHg9IjEwMC41IiB5PSIyOTcuMTUxIiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE0IiB0ZXh0TGVuZ3RoPSIxNTMuOTk5Ij7moLnmi6Djga7lrp/nuL7nlarlj7fvvIjotrPjgZnvvIk8L3RleHQ+PGxpbmUgeDE9Ijk1LjUiIHkxPSIzMDQuNDUzIiB4Mj0iNzU2LjUwNiIgeTI9IjMwNC40NTMiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MC41OyIvPjxnIGRhdGEtdmlzaWJpbGl0eS1tb2RpZmllcj0iUFVCTElDX01FVEhPRCI+PGVsbGlwc2UgY3g9IjEwNS41IiBjeT0iMzE4LjEwMiIgcng9IjMiIHJ5PSIzIiBmaWxsPSIjODRCRTg0IiBzdHlsZT0ic3Ryb2tlOiMwMzgwNDg7c3Ryb2tlLXdpZHRoOjE7Ii8+PC9nPjx0ZXh0IHg9IjExNC41IiB5PSIzMjEuNDQ4IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE0IiB0ZXh0TGVuZ3RoPSI2MzcuMDA2Ij5yZWdpc3Rlck1pbGVzdG9uZSjnqK7poZ4sIOWgtOaJgCwg55m655Sf5pmC5Yi7LCDlh7rlhbgsIOeZu+mMsuiAhSwg55m76Yyy5pmC5Yi7KSA6IE1pbGVzdG9uZVJlZ2lzdHJhdGlvbu+8iOi2s+OBme+8iTwvdGV4dD48L2c+PCEtLWNsYXNzIE1SLS0+PGcgY2xhc3M9ImVudGl0eSIgZGF0YS1xdWFsaWZpZWQtbmFtZT0idHJhY2tpbmcuZG9tYWluLm1vZGVsLmFnZ3JlZ2F0ZXMuTVIiIGlkPSJlbnQwMDEwIiBkYXRhLXNvdXJjZS1saW5lPSIyMSI+PHJlY3QgeD0iNzkyLjQiIHk9IjIxNS40NDciIHdpZHRoPSIxOTEuMjA0IiBoZWlnaHQ9IjEwNS4xNTYiIGZpbGw9IiNGMUYxRjEiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MC41OyIgcng9IjIuNSIgcnk9IjIuNSIvPjxlbGxpcHNlIGN4PSI4MTAuNDgiIGN5PSIyMzUuNTgiIHJ4PSIxMSIgcnk9IjExIiBmaWxsPSIjQUREMUIyIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjE7Ii8+PHBhdGggZD0iTTgxMy40NDksMjQxLjIyIFE4MTIuODcxLDI0MS41MTcgODEyLjIzLDI0MS42NTggUTgxMS41ODksMjQxLjgxNCA4MTAuODg2LDI0MS44MTQgUTgwOC4zODYsMjQxLjgxNCA4MDcuMDU4LDI0MC4xNzMgUTgwNS43NDYsMjM4LjUxNyA4MDUuNzQ2LDIzNS4zOTIgUTgwNS43NDYsMjMyLjI2NyA4MDcuMDU4LDIzMC42MTEgUTgwOC4zODYsMjI4Ljk1NSA4MTAuODg2LDIyOC45NTUgUTgxMS41ODksMjI4Ljk1NSA4MTIuMjMsMjI5LjExMSBRODEyLjg4NiwyMjkuMjY3IDgxMy40NDksMjI5LjU2NCBMODEzLjQ0OSwyMzIuMjgzIFE4MTIuODI0LDIzMS43MDUgODEyLjIzLDIzMS40MzkgUTgxMS42MzYsMjMxLjE1OCA4MTEuMDExLDIzMS4xNTggUTgwOS42NjgsMjMxLjE1OCA4MDguOTgsMjMyLjIzNiBRODA4LjI5MywyMzMuMjk4IDgwOC4yOTMsMjM1LjM5MiBRODA4LjI5MywyMzcuNDg2IDgwOC45OCwyMzguNTY0IFE4MDkuNjY4LDIzOS42MjcgODExLjAxMSwyMzkuNjI3IFE4MTEuNjM2LDIzOS42MjcgODEyLjIzLDIzOS4zNjEgUTgxMi44MjQsMjM5LjA4IDgxMy40NDksMjM4LjUwMiBMODEzLjQ0OSwyNDEuMjIgWiAiIGZpbGw9IiMwMDAiLz48dGV4dCB4PSI4NTYuNTk5IiB5PSIyMzEuNTg2IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjEyIiB0ZXh0TGVuZ3RoPSI4OS40OTEiIGZvbnQtc3R5bGU9Iml0YWxpYyI+wqtyZWNvcmTjgILotrPjgZnCuzwvdGV4dD48dGV4dCB4PSI4MjUuMTY0IiB5PSIyNDcuNDExIiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE0IiB0ZXh0TGVuZ3RoPSIxNTIuMzU5Ij5NaWxlc3RvbmVSZWdpc3RyYXRpb248L3RleHQ+PGxpbmUgeDE9Ijc5My40IiB5MT0iMjU1LjcxMiIgeDI9Ijk4Mi42MDQiIHkyPSIyNTUuNzEyIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjAuNTsiLz48dGV4dCB4PSI3OTguNCIgeT0iMjcyLjcwOCIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxNCIgdGV4dExlbmd0aD0iMTc5LjIwNCI+6L+96Leh6KiY6YyyIDogVHJhY2tpbmdSZWNvcmQ8L3RleHQ+PHRleHQgeD0iNzk4LjQiIHk9IjI4OS4wMDQiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTQiIHRleHRMZW5ndGg9IjEwOC45MjQiPuWun+e4viA6IE1pbGVzdG9uZTwvdGV4dD48dGV4dCB4PSI3OTguNCIgeT0iMzA1LjMwMSIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxNCIgdGV4dExlbmd0aD0iMTExLjU5Ij7ml6LlrZjjgYsgOiBib29sZWFuPC90ZXh0PjxsaW5lIHgxPSI3OTMuNCIgeTE9IjMxMi42MDMiIHgyPSI5ODIuNjA0IiB5Mj0iMzEyLjYwMyIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDowLjU7Ii8+PC9nPjwhLS1jbGFzcyBNLS0+PGcgY2xhc3M9ImVudGl0eSIgZGF0YS1xdWFsaWZpZWQtbmFtZT0idHJhY2tpbmcuZG9tYWluLm1vZGVsLmVudGl0aWVzLk0iIGlkPSJlbnQwMDEyIiBkYXRhLXNvdXJjZS1saW5lPSIyOCI+PHJlY3QgeD0iMzA0LjM5IiB5PSI0MDMuNzQ3IiB3aWR0aD0iMTY5LjIyNiIgaGVpZ2h0PSIyMDIuOTM4IiBmaWxsPSIjRjFGMUYxIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjAuNTsiIHJ4PSIyLjUiIHJ5PSIyLjUiLz48ZWxsaXBzZSBjeD0iMzI3LjczNCIgY3k9IjQzMi4wMjgiIHJ4PSIxMSIgcnk9IjExIiBmaWxsPSIjQUREMUIyIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjE7Ii8+PHBhdGggZD0iTTMzMC43MDIsNDM3LjY2OSBRMzMwLjEyNCw0MzcuOTY2IDMyOS40ODQsNDM4LjEwNiBRMzI4Ljg0Myw0MzguMjYyIDMyOC4xNCw0MzguMjYyIFEzMjUuNjQsNDM4LjI2MiAzMjQuMzEyLDQzNi42MjIgUTMyMi45OTksNDM0Ljk2NiAzMjIuOTk5LDQzMS44NDEgUTMyMi45OTksNDI4LjcxNiAzMjQuMzEyLDQyNy4wNTkgUTMyNS42NCw0MjUuNDAzIDMyOC4xNCw0MjUuNDAzIFEzMjguODQzLDQyNS40MDMgMzI5LjQ4NCw0MjUuNTU5IFEzMzAuMTQsNDI1LjcxNiAzMzAuNzAyLDQyNi4wMTIgTDMzMC43MDIsNDI4LjczMSBRMzMwLjA3Nyw0MjguMTUzIDMyOS40ODQsNDI3Ljg4NyBRMzI4Ljg5LDQyNy42MDYgMzI4LjI2NSw0MjcuNjA2IFEzMjYuOTIxLDQyNy42MDYgMzI2LjIzNCw0MjguNjg0IFEzMjUuNTQ2LDQyOS43NDcgMzI1LjU0Niw0MzEuODQxIFEzMjUuNTQ2LDQzMy45MzQgMzI2LjIzNCw0MzUuMDEyIFEzMjYuOTIxLDQzNi4wNzUgMzI4LjI2NSw0MzYuMDc1IFEzMjguODksNDM2LjA3NSAzMjkuNDg0LDQzNS44MDkgUTMzMC4wNzcsNDM1LjUyOCAzMzAuNzAyLDQzNC45NSBMMzMwLjcwMiw0MzcuNjY5IFogIiBmaWxsPSIjMDAwIi8+PHRleHQgeD0iMzQxLjU4OCIgeT0iNDE5Ljg4NiIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxMiIgdGV4dExlbmd0aD0iMTIyLjY4NCIgZm9udC1zdHlsZT0iaXRhbGljIj7Cq+OCqOODs+ODhuOCo+ODhuOCo+OAgui2s+OBmcK7PC90ZXh0Pjx0ZXh0IHg9IjM3NC45MyIgeT0iNDM1LjcxMSIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxNCIgdGV4dExlbmd0aD0iNTYiPuS4u+imgeWun+e4vjwvdGV4dD48dGV4dCB4PSIzNjMuODE1IiB5PSI0NTIuMDA4IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE0IiB0ZXh0TGVuZ3RoPSI3OC4yMyI+KE1pbGVzdG9uZSk8L3RleHQ+PGxpbmUgeDE9IjMwNS4zOSIgeTE9IjQ2MC4zMDkiIHgyPSI0NzIuNjE2IiB5Mj0iNDYwLjMwOSIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDowLjU7Ii8+PHRleHQgeD0iMzEwLjM5IiB5PSI0NzcuMzA0IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE0IiB0ZXh0TGVuZ3RoPSIxNTcuMjI2Ij7lrp/nuL7nlarlj7cgOiBpbnTvvIgxIOOBi+OCie+8iTwvdGV4dD48dGV4dCB4PSIzMTAuMzkiIHk9IjQ5My42MDEiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTQiIHRleHRMZW5ndGg9IjEzOS43NTQiPueorumhniA6IE1pbGVzdG9uZUtpbmQ8L3RleHQ+PHRleHQgeD0iMzEwLjM5IiB5PSI1MDkuODk4IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE0IiB0ZXh0TGVuZ3RoPSIxMDEuMDc2Ij7loLTmiYAgOiBMb2NhdGlvbjwvdGV4dD48dGV4dCB4PSIzMTAuMzkiIHk9IjUyNi4xOTUiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTQiIHRleHRMZW5ndGg9IjE0MS43NzciPueZuueUn+aZguWIuyA6IFV0Y0luc3RhbnQ8L3RleHQ+PHRleHQgeD0iMzEwLjM5IiB5PSI1NDIuNDkyIiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE0IiB0ZXh0TGVuZ3RoPSI5MC4wMDkiPuWHuuWFuCA6IFNvdXJjZTwvdGV4dD48dGV4dCB4PSIzMTAuMzkiIHk9IjU1OC43ODkiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTQiIHRleHRMZW5ndGg9IjE0NS45ODEiPueKtuaFiyA6IE1pbGVzdG9uZVN0YXRlPC90ZXh0Pjx0ZXh0IHg9IjMxMC4zOSIgeT0iNTc1LjA4NiIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxNCIgdGV4dExlbmd0aD0iMTAwLjU0MyI+55m76Yyy6ICFIDogVXNlcklkPC90ZXh0Pjx0ZXh0IHg9IjMxMC4zOSIgeT0iNTkxLjM4MyIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxNCIgdGV4dExlbmd0aD0iMTQxLjc3NyI+55m76Yyy5pmC5Yi7IDogVXRjSW5zdGFudDwvdGV4dD48bGluZSB4MT0iMzA1LjM5IiB5MT0iNTk4LjY4NCIgeDI9IjQ3Mi42MTYiIHkyPSI1OTguNjg0IiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjAuNTsiLz48L2c+PCEtLWNsYXNzIE1LLS0+PGcgY2xhc3M9ImVudGl0eSIgZGF0YS1xdWFsaWZpZWQtbmFtZT0idHJhY2tpbmcuZG9tYWluLm1vZGVsLnZhbHVlb2JqZWN0cy5NSyIgaWQ9ImVudDAwMTQiIGRhdGEtc291cmNlLWxpbmU9IjQwIj48cmVjdCB4PSIxOTUuMzkiIHk9IjcwMC4yNDciIHdpZHRoPSIxODUuMjIzIiBoZWlnaHQ9IjE3MC4zNDQiIGZpbGw9IiNGMUYxRjEiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MC41OyIgcng9IjIuNSIgcnk9IjIuNSIvPjxlbGxpcHNlIGN4PSIyMzAuMjYzIiBjeT0iNzI4LjUyOCIgcng9IjExIiByeT0iMTEiIGZpbGw9IiNFQjkzN0YiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTsiLz48cGF0aCBkPSJNMjM0LjM3Miw3MzQuNTI4IEwyMjYuNjU0LDczNC41MjggTDIyNi42NTQsNzIyLjEzOCBMMjM0LjM3Miw3MjIuMTM4IEwyMzQuMzcyLDcyNC4yOTQgTDIyOS4xMDcsNzI0LjI5NCBMMjI5LjEwNyw3MjYuOTY2IEwyMzMuODcyLDcyNi45NjYgTDIzMy44NzIsNzI5LjEyMiBMMjI5LjEwNyw3MjkuMTIyIEwyMjkuMTA3LDczMi4zNzIgTDIzNC4zNzIsNzMyLjM3MiBMMjM0LjM3Miw3MzQuNTI4IFogIiBmaWxsPSIjMDAwIi8+PHRleHQgeD0iMjgzLjg2NyIgeT0iNzE2LjM4NiIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxMiIgdGV4dExlbmd0aD0iMzguNjg0IiBmb250LXN0eWxlPSJpdGFsaWMiPsKr6Laz44GZwrs8L3RleHQ+PHRleHQgeD0iMjY4LjIxIiB5PSI3MzIuMjExIiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE0IiB0ZXh0TGVuZ3RoPSI3MCI+5a6f57i+44Gu56iu6aGePC90ZXh0Pjx0ZXh0IHg9IjI0OC42NzkiIHk9Ijc0OC41MDgiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTQiIHRleHRMZW5ndGg9IjEwOS4wNjEiPihNaWxlc3RvbmVLaW5kKTwvdGV4dD48bGluZSB4MT0iMTk2LjM5IiB5MT0iNzU2LjgwOSIgeDI9IjM3OS42MTMiIHkyPSI3NTYuODA5IiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjAuNTsiLz48dGV4dCB4PSIyMDEuMzkiIHk9Ijc3My44MDQiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTQiIHRleHRMZW5ndGg9IjgyLjY2NyI+UElDS1VQIOmbhuiNtzwvdGV4dD48dGV4dCB4PSIyMDEuMzkiIHk9Ijc5MC4xMDEiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTQiIHRleHRMZW5ndGg9IjE3My4yMjMiPlJFQ0VJUFRfQVRfT1JJR0lOIOaQrOWFpTwvdGV4dD48dGV4dCB4PSIyMDEuMzkiIHk9IjgwNi4zOTgiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTQiIHRleHRMZW5ndGg9IjExNy4xOTUiPkRFUEFSVFVSRSDlh7rnmbo8L3RleHQ+PHRleHQgeD0iMjAxLjM5IiB5PSI4MjIuNjk1IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE0IiB0ZXh0TGVuZ3RoPSIxNTEuNiI+VFJBTlNTSElQTUVOVCDnqY3mm788L3RleHQ+PHRleHQgeD0iMjAxLjM5IiB5PSI4MzguOTkyIiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE0IiB0ZXh0TGVuZ3RoPSI5Mi41NjUiPkFSUklWQUwg5Yiw552APC90ZXh0Pjx0ZXh0IHg9IjIwMS4zOSIgeT0iODU1LjI4OSIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxNCIgdGV4dExlbmd0aD0iMTE0LjcwNyI+REVMSVZFUlkg5byV5rih44GXPC90ZXh0PjxsaW5lIHgxPSIxOTYuMzkiIHkxPSI4NjIuNTkxIiB4Mj0iMzc5LjYxMyIgeTI9Ijg2Mi41OTEiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MC41OyIvPjwvZz48IS0tY2xhc3MgTVMtLT48ZyBjbGFzcz0iZW50aXR5IiBkYXRhLXF1YWxpZmllZC1uYW1lPSJ0cmFja2luZy5kb21haW4ubW9kZWwudmFsdWVvYmplY3RzLk1TIiBpZD0iZW50MDAxNSIgZGF0YS1zb3VyY2UtbGluZT0iNDgiPjxyZWN0IHg9IjQxNS44OSIgeT0iNzE2LjUzNyIgd2lkdGg9IjE4OC4yMjMiIGhlaWdodD0iMTM3Ljc1IiBmaWxsPSIjRjFGMUYxIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjAuNTsiIHJ4PSIyLjUiIHJ5PSIyLjUiLz48ZWxsaXBzZSBjeD0iNDQ5LjMxMSIgY3k9Ijc0NC44MTgiIHJ4PSIxMSIgcnk9IjExIiBmaWxsPSIjRUI5MzdGIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjE7Ii8+PHBhdGggZD0iTTQ1My40Miw3NTAuODE4IEw0NDUuNzAyLDc1MC44MTggTDQ0NS43MDIsNzM4LjQyOCBMNDUzLjQyLDczOC40MjggTDQ1My40Miw3NDAuNTg0IEw0NDguMTU1LDc0MC41ODQgTDQ0OC4xNTUsNzQzLjI1NiBMNDUyLjkyLDc0My4yNTYgTDQ1Mi45Miw3NDUuNDEyIEw0NDguMTU1LDc0NS40MTIgTDQ0OC4xNTUsNzQ4LjY2MiBMNDUzLjQyLDc0OC42NjIgTDQ1My40Miw3NTAuODE4IFogIiBmaWxsPSIjMDAwIi8+PHRleHQgeD0iNTA1LjcwNyIgeT0iNzMyLjY3NiIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxMiIgdGV4dExlbmd0aD0iMzguNjg0IiBmb250LXN0eWxlPSJpdGFsaWMiPsKr6Laz44GZwrs8L3RleHQ+PHRleHQgeD0iNDkwLjA0OSIgeT0iNzQ4LjUwMSIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxNCIgdGV4dExlbmd0aD0iNzAiPuWun+e4vuOBrueKtuaFizwvdGV4dD48dGV4dCB4PSI0NjcuNDA0IiB5PSI3NjQuNzk4IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE0IiB0ZXh0TGVuZ3RoPSIxMTUuMjg4Ij4oTWlsZXN0b25lU3RhdGUpPC90ZXh0PjxsaW5lIHgxPSI0MTYuODkiIHkxPSI3NzMuMDk5IiB4Mj0iNjAzLjExMyIgeTI9Ijc3My4wOTkiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MC41OyIvPjx0ZXh0IHg9IjQyMS44OSIgeT0iNzkwLjA5NCIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxNCIgdGV4dExlbmd0aD0iOTMuMTM5Ij5EUkFGVCDkuIvmm7jjgY08L3RleHQ+PHRleHQgeD0iNDIxLjg5IiB5PSI4MDYuMzkxIiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE0IiB0ZXh0TGVuZ3RoPSIxMDAuNDQ3Ij5BRE9QVEVEIOaOoeeUqDwvdGV4dD48dGV4dCB4PSI0MjEuODkiIHk9IjgyMi42ODgiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTQiIHRleHRMZW5ndGg9IjE1OC40OTEiPlVOREVSX1JFVklFVyDnorroqo3kuK08L3RleHQ+PHRleHQgeD0iNDIxLjg5IiB5PSI4MzguOTg1IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE0IiB0ZXh0TGVuZ3RoPSIxNzYuMjIzIj5SRVRBSU5FRF9PTkxZIOS/neaMgeOBruOBvzwvdGV4dD48bGluZSB4MT0iNDE2Ljg5IiB5MT0iODQ2LjI4NyIgeDI9IjYwMy4xMTMiIHkyPSI4NDYuMjg3IiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjAuNTsiLz48L2c+PCEtLWNsYXNzIEQtLT48ZyBjbGFzcz0iZW50aXR5IiBkYXRhLXF1YWxpZmllZC1uYW1lPSJ0cmFja2luZy5kb21haW4ubW9kZWwucnVsZXMuRCIgaWQ9ImVudDAwMTciIGRhdGEtc291cmNlLWxpbmU9IjU2Ij48cmVjdCB4PSI1MzAuMjYiIHk9IjQ2OC45MzciIHdpZHRoPSI0NTMuNDg0IiBoZWlnaHQ9IjcyLjU2MyIgZmlsbD0iI0YxRjFGMSIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDowLjU7IiByeD0iMi41IiByeT0iMi41Ii8+PGVsbGlwc2UgY3g9IjY3OC4wMzIiIGN5PSI0ODkuMDciIHJ4PSIxMSIgcnk9IjExIiBmaWxsPSIjQUREMUIyIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjE7Ii8+PHBhdGggZD0iTTY4MSw0OTQuNzEgUTY4MC40MjIsNDk1LjAwNyA2NzkuNzgyLDQ5NS4xNDggUTY3OS4xNDEsNDk1LjMwNCA2NzguNDM4LDQ5NS4zMDQgUTY3NS45MzgsNDk1LjMwNCA2NzQuNjEsNDkzLjY2MyBRNjczLjI5Nyw0OTIuMDA3IDY3My4yOTcsNDg4Ljg4MiBRNjczLjI5Nyw0ODUuNzU3IDY3NC42MSw0ODQuMTAxIFE2NzUuOTM4LDQ4Mi40NDUgNjc4LjQzOCw0ODIuNDQ1IFE2NzkuMTQxLDQ4Mi40NDUgNjc5Ljc4Miw0ODIuNjAxIFE2ODAuNDM4LDQ4Mi43NTcgNjgxLDQ4My4wNTQgTDY4MSw0ODUuNzczIFE2ODAuMzc1LDQ4NS4xOTUgNjc5Ljc4Miw0ODQuOTI5IFE2NzkuMTg4LDQ4NC42NDggNjc4LjU2Myw0ODQuNjQ4IFE2NzcuMjE5LDQ4NC42NDggNjc2LjUzMiw0ODUuNzI2IFE2NzUuODQ0LDQ4Ni43ODggNjc1Ljg0NCw0ODguODgyIFE2NzUuODQ0LDQ5MC45NzYgNjc2LjUzMiw0OTIuMDU0IFE2NzcuMjE5LDQ5My4xMTcgNjc4LjU2Myw0OTMuMTE3IFE2NzkuMTg4LDQ5My4xMTcgNjc5Ljc4Miw0OTIuODUxIFE2ODAuMzc1LDQ5Mi41NyA2ODEsNDkxLjk5MiBMNjgxLDQ5NC43MSBaICIgZmlsbD0iIzAwMCIvPjx0ZXh0IHg9IjcwNS4yOTgiIHk9IjQ4NS4wNzYiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTIiIHRleHRMZW5ndGg9IjEzNS45MDgiIGZvbnQtc3R5bGU9Iml0YWxpYyI+wqtARG9tYWluUnVsZeOAgui2s+OBmcK7PC90ZXh0Pjx0ZXh0IHg9IjY5OC41MzIiIHk9IjUwMC45MDEiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTQiIHRleHRMZW5ndGg9IjE0OS40NCI+Q3VycmVudFN0YXR1c0Rlcml2ZXI8L3RleHQ+PGxpbmUgeDE9IjUzMS4yNiIgeTE9IjUwOS4yMDMiIHgyPSI5ODIuNzQ0IiB5Mj0iNTA5LjIwMyIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDowLjU7Ii8+PGxpbmUgeDE9IjUzMS4yNiIgeTE9IjUxNy4yMDMiIHgyPSI5ODIuNzQ0IiB5Mj0iNTE3LjIwMyIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDowLjU7Ii8+PGcgZGF0YS12aXNpYmlsaXR5LW1vZGlmaWVyPSJQVUJMSUNfTUVUSE9EIj48ZWxsaXBzZSBjeD0iNTQxLjI2IiBjeT0iNTMwLjg1MSIgcng9IjMiIHJ5PSIzIiBmaWxsPSIjODRCRTg0IiBzdHlsZT0ic3Ryb2tlOiMwMzgwNDg7c3Ryb2tlLXdpZHRoOjE7Ii8+PC9nPjx0ZXh0IHg9IjU1MC4yNiIgeT0iNTM0LjE5OCIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxNCIgdGV4dExlbmd0aD0iNDI3LjQ4NCI+ZGVyaXZlKOS6iOWumuOBq+OCiOOCi+eKtuaFiywg5Li76KaB5a6f57i+44Gu5YiXKSA6IOePvuWcqOeKtuaFi+OBqOagueaLoOOBruWun+e4vueVquWPtzwvdGV4dD48L2c+PCEtLXJldmVyc2UgbGluayBUUiB0byBNLS0+PGcgY2xhc3M9ImxpbmsiIGRhdGEtZW50aXR5LTE9ImVudDAwMDYiIGRhdGEtZW50aXR5LTI9ImVudDAwMTIiIGlkPSJsbmsxOCIgZGF0YS1zb3VyY2UtbGluZT0iNjAiIGRhdGEtbGluay10eXBlPSJjb21wb3NpdGlvbiI+PHBhdGggZD0iTTQxNC43MDIsMzQwLjg0MSBDNDExLjE0MiwzNjMuNDMxIDQwOC44NywzNzcuOTM3IDQwNC44OCw0MDMuMjU3IiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjE7IiBmaWxsPSJub25lIiBpZD0iVFItYmFja3RvLU0iIGNvZGVMaW5lPSI2MCIvPjxwb2x5Z29uIHBvaW50cz0iNDE2LjU3LDMyOC45ODcsNDExLjY4NSwzMzQuMjkxLDQxNC43MDIsMzQwLjg0MSw0MTkuNTg3LDMzNS41MzYsNDE2LjU3LDMyOC45ODciIGZpbGw9IiMxODE4MTgiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTtzdHJva2UtbGluZWpvaW46bWl0ZXI7c3Ryb2tlLW1pdGVybGltaXQ6MTA7Ii8+PHRleHQgeD0iMzgyLjE4OSIgeT0iMzkyLjYzMiIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxMyIgdGV4dExlbmd0aD0iMjMuMDM2Ij4wLi4qPC90ZXh0PjwvZz48IS0tbGluayBUUiB0byBELS0+PGcgY2xhc3M9ImxpbmsiIGRhdGEtZW50aXR5LTE9ImVudDAwMDYiIGRhdGEtZW50aXR5LTI9ImVudDAwMTciIGlkPSJsbmsxOSIgZGF0YS1zb3VyY2UtbGluZT0iNjEiIGRhdGEtbGluay10eXBlPSJkZXBlbmRlbmN5Ij48cGF0aCBkPSJNNTEwLjM4LDMyOC45ODcgQzU3Mi40NCwzNzMuMDc3IDY1MC42MzQsNDI4LjY0MSA3MDIuNjk0LDQ2NS42MzEiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTtzdHJva2UtZGFzaGFycmF5OjcsNzsiIGZpbGw9Im5vbmUiIGlkPSJUUi10by1EIiBjb2RlTGluZT0iNjEiLz48cG9seWdvbiBwb2ludHM9IjcwNi43Nyw0NjguNTI3LDcwMS43NSw0NjAuMDUzLDcwMi42OTQsNDY1LjYzMSw2OTcuMTE3LDQ2Ni41NzUsNzA2Ljc3LDQ2OC41MjciIGZpbGw9IiMxODE4MTgiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTtzdHJva2UtbGluZWpvaW46bWl0ZXI7c3Ryb2tlLW1pdGVybGltaXQ6MTA7Ii8+PC9nPjwhLS1saW5rIE0gdG8gU3JjLS0+PGcgY2xhc3M9ImxpbmsiIGRhdGEtZW50aXR5LTE9ImVudDAwMTIiIGRhdGEtZW50aXR5LTI9ImVudDAwMDIiIGlkPSJsbmsyMCIgZGF0YS1zb3VyY2UtbGluZT0iNjIiIGRhdGEtbGluay10eXBlPSJkZXBlbmRlbmN5Ij48cGF0aCBkPSJNNDczLjc3LDYwNS4zMjcgQzQ4Ni4yOSw2MTUuMzM3IDQ5OS44LDYyNC4xODcgNTE0LDYzMC42ODcgQzUzNS40OCw2NDAuNTE3IDU5Ni42NSw2MzUuMDg3IDYyMCw2MzguNjg3IEM4MDQuMjcsNjY3LjExNyAxMDA5Ljk3LDcxOS45OTggMTEzMi4yMSw3NTMuNjg4IiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjE7IiBmaWxsPSJub25lIiBpZD0iTS10by1TcmMiIGNvZGVMaW5lPSI2MiIvPjxwb2x5Z29uIHBvaW50cz0iMTEzNy4wMyw3NTUuMDE3LDExMjkuNDE2LDc0OC43NjksMTEzMi4yMSw3NTMuNjg4LDExMjcuMjkxLDc1Ni40ODIsMTEzNy4wMyw3NTUuMDE3IiBmaWxsPSIjMTgxODE4IiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjE7c3Ryb2tlLWxpbmVqb2luOm1pdGVyO3N0cm9rZS1taXRlcmxpbWl0OjEwOyIvPjwvZz48IS0tbGluayBNIHRvIE1LLS0+PGcgY2xhc3M9ImxpbmsiIGRhdGEtZW50aXR5LTE9ImVudDAwMTIiIGRhdGEtZW50aXR5LTI9ImVudDAwMTQiIGlkPSJsbmsyMSIgZGF0YS1zb3VyY2UtbGluZT0iNjMiIGRhdGEtbGluay10eXBlPSJkZXBlbmRlbmN5Ij48cGF0aCBkPSJNMzUyLjM5LDYwNy4wNDcgQzM0MS4zMyw2MzcuNTI3IDMzMS4wMDcsNjY1Ljk1NyAzMjAuMzY3LDY5NS4yNTciIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTsiIGZpbGw9Im5vbmUiIGlkPSJNLXRvLU1LIiBjb2RlTGluZT0iNjMiLz48cG9seWdvbiBwb2ludHM9IjMxOC42Niw2OTkuOTU3LDMyNS40OTIsNjkyLjg2MywzMjAuMzY3LDY5NS4yNTcsMzE3Ljk3Miw2OTAuMTMyLDMxOC42Niw2OTkuOTU3IiBmaWxsPSIjMTgxODE4IiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjE7c3Ryb2tlLWxpbmVqb2luOm1pdGVyO3N0cm9rZS1taXRlcmxpbWl0OjEwOyIvPjwvZz48IS0tbGluayBNIHRvIE1TLS0+PGcgY2xhc3M9ImxpbmsiIGRhdGEtZW50aXR5LTE9ImVudDAwMTIiIGRhdGEtZW50aXR5LTI9ImVudDAwMTUiIGlkPSJsbmsyMiIgZGF0YS1zb3VyY2UtbGluZT0iNjQiIGRhdGEtbGluay10eXBlPSJkZXBlbmRlbmN5Ij48cGF0aCBkPSJNNDMyLjg1LDYwNy4wNDcgQzQ0OC42MSw2NDMuMjc3IDQ2NC4wMTYsNjc4LjY4MiA0NzguMjg2LDcxMS41MDIiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTsiIGZpbGw9Im5vbmUiIGlkPSJNLXRvLU1TIiBjb2RlTGluZT0iNjQiLz48cG9seWdvbiBwb2ludHM9IjQ4MC4yOCw3MTYuMDg3LDQ4MC4zNiw3MDYuMjM4LDQ3OC4yODYsNzExLjUwMiw0NzMuMDIzLDcwOS40MjgsNDgwLjI4LDcxNi4wODciIGZpbGw9IiMxODE4MTgiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTtzdHJva2UtbGluZWpvaW46bWl0ZXI7c3Ryb2tlLW1pdGVybGltaXQ6MTA7Ii8+PC9nPjwhLS1saW5rIFNyYyB0byBTSy0tPjxnIGNsYXNzPSJsaW5rIiBkYXRhLWVudGl0eS0xPSJlbnQwMDAyIiBkYXRhLWVudGl0eS0yPSJlbnQwMDA0IiBpZD0ibG5rMjMiIGRhdGEtc291cmNlLWxpbmU9IjY1IiBkYXRhLWxpbmstdHlwZT0iZGVwZW5kZW5jeSI+PHBhdGggZD0iTTEyNDAuNDcsODQ2LjQ0NyBDMTI0MC43Nyw4ODQuNzI3IDEyNDEuMTIxLDkyOS40MzcgMTI0MS40MzEsOTY5LjIxNyIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxOyIgZmlsbD0ibm9uZSIgaWQ9IlNyYy10by1TSyIgY29kZUxpbmU9IjY1Ii8+PHBvbHlnb24gcG9pbnRzPSIxMjQxLjQ3LDk3NC4yMTcsMTI0NS40LDk2NS4xODYsMTI0MS40MzEsOTY5LjIxNywxMjM3LjQsOTY1LjI0OCwxMjQxLjQ3LDk3NC4yMTciIGZpbGw9IiMxODE4MTgiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTtzdHJva2UtbGluZWpvaW46bWl0ZXI7c3Ryb2tlLW1pdGVybGltaXQ6MTA7Ii8+PC9nPjw/cGxhbnR1bWwtc3JjIFpMTlZKempNNTd3X1Z5TExkY1dCNFFrcUZLbWVjWFV4Z3ZLVkg4eDNMY2FJQ2VjTFVHbHNQM2p6Y1AxWVB3NlhBTUtGWFBIMTJ0SGlQQkltUVFyQTFXcC1jOWpoWHdWLTJwbC1hVEprQWdxbHFTc3p2dnB4ZFUteHR4NmZjM0tQVnd4TEo3cHBhbUxDaDhGWHd2VjRzZ0hGRS1YeGdWb1RMOUxubWxYNnFrTEFpZzhqSWVnUW0zLVdTYXFvMzlvV3pxdmZnXy1yRWI3S3dkZlBsZlIwYWU2QlVYZEZwRDM2Rmg0RklORTNzN3JZN24zeDN6OWlhdU9UTDQtYmU4WlJFeHhRVXVlX25LNXNIYjRoWUF4UFJrbDBzcERySFFzLUVNel9IMWhSRHdVZGlSRG5abnZydHZvbEdDbTZsVVd3Y3BQamRxNWFvSXBwZ2M1QWdlY01hQXBNNXFVdVk3S1NOMzQ2dzVxSFdpbTBuV1dNeFlrSDRfOUNUYnhXcWhDMlktZC1uYk1wSG5fa0VEaWxxMnNVb3hBWjR0VmpXa3ctNmxPVU5wdHUyXzd2QzJyemNxamRpQmpfR1BUUnhoRkp1VTRnb1o3djRmbm1VTDZ1V3ZzTDNrc2lxelFsekZ1TW01bndvd3NmbW1mUTNUYkRCY2VMa1BRS2diTFRoYWdjUjRKZTdieC1DcHBQMnd3NmRpR21LdjNCY1h4czlHaEdyek5NaWxsZ0h6OXlKZmhkMFVrMWxYX3hoR3h3UHlGVkI3Z3l1X09sVzJCUXhXQTlNU0ttUHQ5QUpKUENKUExKbTdqMFppVXRpX2t0cXpkckdscVNUX3NHaGZ0NDhjdlcwMGlMUDdyU09ZQVdWWDgzTVN2QU9uQXhjd1ZrZXZyMERUWnI1VjlzcHcyUE9RQ3JNV08xcm0zSWs5Sldyek9iS3o3S3NCTEI4c0JVNi1ocGFWRnVxN3MydWV5bG9ZTFM1a1NJMVByNkdJMmQtdW1VRklQTTF0T05EQXFjSS1nNzIyY2hmYzhnQ0hjWjBlMkN1b2kyMU5DMGNEV3pxZG45Y2lsNF9ZTnlaTzZGMlc1bTVETnFaMEJjeEgxeG5NRGNSQXJueVMxVGxYUVV0NWhQdm1YNUxPYnhBTDFleDR4YXRkX2pqM2hIYWFLSnRZU1FBLVliNnhCRUxyMUtvTlNELWgtNHRQTGdUTGJSLTVPa2NwdmZlUUQ3cHROaXc1WGQ4Tk5sY0JoMGZwRWIwV094MzVURjRGWU51bWxZRjJGRXBtaHk1dG1VRXAtejA0U1liWWltV2JXSUVFekwwWTU4NTlYeWlOWVJCLUowbERaelZUTlBrYUlDOEYxcEoxUkp6Zl9rYW1PYVBWYXYzZm5EcHpVVF9Yd25rYy1kcG5ZaEpyYUtncXpQMkJPTzF5aUFwMnFIM19lVFBtaWNyb2ZZc0RjMm9CN09VUlpkRmtnWEtmeGIxOVgxU3BwdDlHdWNwQTFfMTRzOTM5X2RzRmRQVkZPRTdibS1TSHZPUzNFbkJaLTRReHJVWXh0Q1Q1dE51UzV3QUVpNkEtbEFOTGR0bVJBMHpKRk1KbktXOV91UVItMkE3cGVuRTZ0SnV2LTl6UHBPUk05dFdsT2R5Tnk3WmNUbFJ1dmt6dThPT2xOVUVzSnk3YzJhTlAtUW1lZGZQRjl3MGtVeV95YmEyaENlWHdVY0tqeGQ5YnBiQ2dENTROYVY4VnlxeW95MD8+PC9nPjwvc3ZnPg==" class="uml" alt="uml diagram" title="" /></p>
+<ul>
+<li><code>Milestone</code> は <code>@Entity</code>、<code>Source</code> は <code>@ValueObject</code> を付ける。Javadoc は「主要実績」「出典」で始める（用語集の整合テストは注釈の付いた型を見る）</li>
+<li>enum（<code>SourceKind</code>・<code>MilestoneKind</code>・<code>MilestoneState</code>）は、<code>TrackingStatus</code> の前例どおり注釈を付けず、用語集には行を足す（確認ポイント 14）</li>
+<li>アプリケーション層: <code>tracking.application.internal.commandservices.TrackingRecordCommandService</code>（<code>@Service</code>、<code>registerMilestone</code>）、<code>tracking.application.internal.commands.RegisterMilestoneCommand</code>（<code>@Command</code>）、<code>MilestoneRegistrationOutcome</code>（sealed: <code>Registered</code>（実績番号・現在状態）、<code>AlreadyRegistered</code>（既存の実績番号。AC2）、<code>NotFound</code>、<code>Conflict</code>）</li>
+</ul>
+<h3 id="_6">状態遷移<a class="headerlink" href="#_6" title="Permanent link">&para;</a></h3>
+<p>この Bolt で起きる遷移は実線、W7 以後は破線。R0.1 の決定は次の 2 つで、どちらもドメインモデルの状態遷移の図への反映が必要（確認ポイント 7）。</p>
+<ul>
+<li>目的地到着から、引渡しの実績で引渡し済みへ直接進める（引渡し可能は作らない）</li>
+<li>積替港での到着は「積替」の実績、積替港からの出発は「出発」の実績として登録する</li>
+</ul>
+<p><img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB2ZXJzaW9uPSIxLjEiIGRhdGEtZGlhZ3JhbS10eXBlPSJTVEFURSIgc3R5bGU9IndpZHRoOjg1N3B4O2hlaWdodDo5NjZweDtiYWNrZ3JvdW5kOiNGRkZGRkY7IiB3aWR0aD0iODU3cHgiIGhlaWdodD0iOTY2cHgiIHZpZXdCb3g9IjAgMCA4NTcgOTY2IiB6b29tQW5kUGFuPSJtYWduaWZ5IiBwcmVzZXJ2ZUFzcGVjdFJhdGlvPSJub25lIiBjb250ZW50U3R5bGVUeXBlPSJ0ZXh0L2NzcyI+PD9wbGFudHVtbCAxLjIwMjYuOD8+PGRlZnMvPjxnIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBsZW5ndGhBZGp1c3Q9InNwYWNpbmciPjxnIGNsYXNzPSJ0aXRsZSIgZGF0YS1zb3VyY2UtbGluZT0iMSI+PHRleHQgeD0iMjg0Ljc3OCIgeT0iMjIuOTk1IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE0IiB0ZXh0TGVuZ3RoPSIyODEuMDMxIiBmb250LXdlaWdodD0iNzAwIj7ov73ot6HnirbmhYvvvIhCb2x0IDI2YiDjgafotbfjgY3jgovpgbfnp7vjga/lrp/nt5rvvIk8L3RleHQ+PC9nPjxnIGNsYXNzPSJlbnRpdHkiIGRhdGEtcXVhbGlmaWVkLW5hbWU9IlBTIiBpZD0iZW50MDAwMSIgZGF0YS1zb3VyY2UtbGluZT0iMiI+PHJlY3QgeD0iNjAxLjQyIiB5PSIxNDAuMjk3IiB3aWR0aD0iNzYiIGhlaWdodD0iNTAiIGZpbGw9IiNGMUYxRjEiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MC41OyIgcng9IjEyLjUiIHJ5PSIxMi41Ii8+PGxpbmUgeDE9IjYwMS40MiIgeTE9IjE2Ni41OTQiIHgyPSI2NzcuNDIiIHkyPSIxNjYuNTk0IiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjAuNTsiLz48dGV4dCB4PSI2MTEuNDIiIHk9IjE1OC4yOTIiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTQiIHRleHRMZW5ndGg9IjU2Ij7pm4bojbfkuojlrpo8L3RleHQ+PC9nPjxnIGNsYXNzPSJlbnRpdHkiIGRhdGEtcXVhbGlmaWVkLW5hbWU9IlBVIiBpZD0iZW50MDAwMiIgZGF0YS1zb3VyY2UtbGluZT0iMyI+PHJlY3QgeD0iNTQyLjQyIiB5PSIyNjcuMjk3IiB3aWR0aD0iNzYiIGhlaWdodD0iNTAiIGZpbGw9IiNGMUYxRjEiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MC41OyIgcng9IjEyLjUiIHJ5PSIxMi41Ii8+PGxpbmUgeDE9IjU0Mi40MiIgeTE9IjI5My41OTQiIHgyPSI2MTguNDIiIHkyPSIyOTMuNTk0IiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjAuNTsiLz48dGV4dCB4PSI1NTIuNDIiIHk9IjI4NS4yOTIiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTQiIHRleHRMZW5ndGg9IjU2Ij7pm4bojbfmuIjjgb88L3RleHQ+PC9nPjxnIGNsYXNzPSJlbnRpdHkiIGRhdGEtcXVhbGlmaWVkLW5hbWU9IlJPIiBpZD0iZW50MDAwMyIgZGF0YS1zb3VyY2UtbGluZT0iNCI+PHJlY3QgeD0iNDc1LjQyIiB5PSIzOTQuMjk3IiB3aWR0aD0iMTE4IiBoZWlnaHQ9IjUwIiBmaWxsPSIjRjFGMUYxIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjAuNTsiIHJ4PSIxMi41IiByeT0iMTIuNSIvPjxsaW5lIHgxPSI0NzUuNDIiIHkxPSI0MjAuNTk0IiB4Mj0iNTkzLjQyIiB5Mj0iNDIwLjU5NCIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDowLjU7Ii8+PHRleHQgeD0iNDg1LjQyIiB5PSI0MTIuMjkyIiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE0IiB0ZXh0TGVuZ3RoPSI5OCI+5Ye655m65Zyw5pCs5YWl5riI44G/PC90ZXh0PjwvZz48ZyBjbGFzcz0iZW50aXR5IiBkYXRhLXF1YWxpZmllZC1uYW1lPSJJVCIgaWQ9ImVudDAwMDQiIGRhdGEtc291cmNlLWxpbmU9IjUiPjxyZWN0IHg9IjM5Ny40MiIgeT0iNTIxLjI5NyIgd2lkdGg9IjYyIiBoZWlnaHQ9IjUwIiBmaWxsPSIjRjFGMUYxIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjAuNTsiIHJ4PSIxMi41IiByeT0iMTIuNSIvPjxsaW5lIHgxPSIzOTcuNDIiIHkxPSI1NDcuNTk0IiB4Mj0iNDU5LjQyIiB5Mj0iNTQ3LjU5NCIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDowLjU7Ii8+PHRleHQgeD0iNDA3LjQyIiB5PSI1MzkuMjkyIiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE0IiB0ZXh0TGVuZ3RoPSI0MiI+6Ly46YCB5LitPC90ZXh0PjwvZz48ZyBjbGFzcz0iZW50aXR5IiBkYXRhLXF1YWxpZmllZC1uYW1lPSJUUyIgaWQ9ImVudDAwMDUiIGRhdGEtc291cmNlLWxpbmU9IjYiPjxyZWN0IHg9IjkzLjQyIiB5PSI2NDguMjk3IiB3aWR0aD0iNzYiIGhlaWdodD0iNTAiIGZpbGw9IiNGMUYxRjEiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MC41OyIgcng9IjEyLjUiIHJ5PSIxMi41Ii8+PGxpbmUgeDE9IjkzLjQyIiB5MT0iNjc0LjU5NCIgeDI9IjE2OS40MiIgeTI9IjY3NC41OTQiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MC41OyIvPjx0ZXh0IHg9IjEwMy40MiIgeT0iNjY2LjI5MiIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxNCIgdGV4dExlbmd0aD0iNTYiPuepjeabv+OBiOS4rTwvdGV4dD48L2c+PGcgY2xhc3M9ImVudGl0eSIgZGF0YS1xdWFsaWZpZWQtbmFtZT0iQUQiIGlkPSJlbnQwMDA2IiBkYXRhLXNvdXJjZS1saW5lPSI3Ij48cmVjdCB4PSIzODMuNDIiIHk9IjY0OC4yOTciIHdpZHRoPSI5MCIgaGVpZ2h0PSI1MCIgZmlsbD0iI0YxRjFGMSIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDowLjU7IiByeD0iMTIuNSIgcnk9IjEyLjUiLz48bGluZSB4MT0iMzgzLjQyIiB5MT0iNjc0LjU5NCIgeDI9IjQ3My40MiIgeTI9IjY3NC41OTQiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MC41OyIvPjx0ZXh0IHg9IjM5My40MiIgeT0iNjY2LjI5MiIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxNCIgdGV4dExlbmd0aD0iNzAiPuebrueahOWcsOWIsOedgDwvdGV4dD48L2c+PGcgY2xhc3M9ImVudGl0eSIgZGF0YS1xdWFsaWZpZWQtbmFtZT0iUkQiIGlkPSJlbnQwMDA3IiBkYXRhLXNvdXJjZS1saW5lPSI4Ij48cmVjdCB4PSIzMjUuNDIiIHk9Ijc3NS4yOTciIHdpZHRoPSI5MCIgaGVpZ2h0PSI1MCIgZmlsbD0iI0YxRjFGMSIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDowLjU7IiByeD0iMTIuNSIgcnk9IjEyLjUiLz48bGluZSB4MT0iMzI1LjQyIiB5MT0iODAxLjU5NCIgeDI9IjQxNS40MiIgeTI9IjgwMS41OTQiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MC41OyIvPjx0ZXh0IHg9IjMzNS40MiIgeT0iNzkzLjI5MiIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxNCIgdGV4dExlbmd0aD0iNzAiPuW8lea4oeOBl+WPr+iDvTwvdGV4dD48L2c+PGcgY2xhc3M9ImVudGl0eSIgZGF0YS1xdWFsaWZpZWQtbmFtZT0iRCIgaWQ9ImVudDAwMDgiIGRhdGEtc291cmNlLWxpbmU9IjkiPjxyZWN0IHg9IjQyNi40MiIgeT0iOTAyLjI5NyIgd2lkdGg9IjkwIiBoZWlnaHQ9IjUwIiBmaWxsPSIjRjFGMUYxIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjAuNTsiIHJ4PSIxMi41IiByeT0iMTIuNSIvPjxsaW5lIHgxPSI0MjYuNDIiIHkxPSI5MjguNTk0IiB4Mj0iNTE2LjQyIiB5Mj0iOTI4LjU5NCIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDowLjU7Ii8+PHRleHQgeD0iNDM2LjQyIiB5PSI5MjAuMjkyIiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE0IiB0ZXh0TGVuZ3RoPSI3MCI+5byV5rih44GX5riI44G/PC90ZXh0PjwvZz48ZyBjbGFzcz0iZW50aXR5IiBkYXRhLXF1YWxpZmllZC1uYW1lPSJVUiIgaWQ9ImVudDAwMDkiIGRhdGEtc291cmNlLWxpbmU9IjEwIj48cmVjdCB4PSI1ODcuNDIiIHk9IjY0OC4yOTciIHdpZHRoPSI2MiIgaGVpZ2h0PSI1MCIgZmlsbD0iI0YxRjFGMSIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDowLjU7IiByeD0iMTIuNSIgcnk9IjEyLjUiLz48bGluZSB4MT0iNTg3LjQyIiB5MT0iNjc0LjU5NCIgeDI9IjY0OS40MiIgeTI9IjY3NC41OTQiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MC41OyIvPjx0ZXh0IHg9IjU5Ny40MiIgeT0iNjY2LjI5MiIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxNCIgdGV4dExlbmd0aD0iNDIiPueiuuiqjeS4rTwvdGV4dD48L2c+PGcgY2xhc3M9InN0YXJ0X2VudGl0eSIgZGF0YS1xdWFsaWZpZWQtbmFtZT0iLnN0YXJ0LiIgaWQ9ImVudDAwMTAiIGRhdGEtc291cmNlLWxpbmU9IjExIj48ZWxsaXBzZSBjeD0iNjM5LjQyIiBjeT0iNTMuMjk3IiByeD0iMTAiIHJ5PSIxMCIgZmlsbD0iIzIyMiIgc3R5bGU9InN0cm9rZTojMjIyO3N0cm9rZS13aWR0aDoxOyIvPjwvZz48IS0tbGluayAqc3RhcnQqIHRvIFBTLS0+PGcgY2xhc3M9ImxpbmsiIGRhdGEtZW50aXR5LTE9ImVudDAwMTAiIGRhdGEtZW50aXR5LTI9ImVudDAwMDEiIGlkPSJsbmsxMSIgZGF0YS1zb3VyY2UtbGluZT0iMTEiIGRhdGEtbGluay10eXBlPSJkZXBlbmRlbmN5Ij48cGF0aCBkPSJNNjM5LjQyLDYzLjY3NyBDNjM5LjQyLDgwLjQwNyA2MzkuNDIsMTEwLjg4NyA2MzkuNDIsMTM0LjkyNyIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxOyIgZmlsbD0ibm9uZSIgaWQ9IipzdGFydCotdG8tUFMiLz48cG9seWdvbiBwb2ludHM9IjYzOS40MiwxMzkuOTI3LDY0My40MiwxMzAuOTI3LDYzOS40MiwxMzQuOTI3LDYzNS40MiwxMzAuOTI3LDYzOS40MiwxMzkuOTI3IiBmaWxsPSIjMTgxODE4IiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjE7c3Ryb2tlLWxpbmVqb2luOm1pdGVyO3N0cm9rZS1taXRlcmxpbWl0OjEwOyIvPjx0ZXh0IHg9IjY0MC40MiIgeT0iMTA2LjM2NCIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxMyIgdGV4dExlbmd0aD0iMTYzLjI1NiI+5LqI5a6a44KS5o6h55So44GZ44KL77yIQm9sdCAyNe+8iTwvdGV4dD48L2c+PCEtLWxpbmsgUFMgdG8gUFUtLT48ZyBjbGFzcz0ibGluayIgZGF0YS1lbnRpdHktMT0iZW50MDAwMSIgZGF0YS1lbnRpdHktMj0iZW50MDAwMiIgaWQ9ImxuazEyIiBkYXRhLXNvdXJjZS1saW5lPSIxMiIgZGF0YS1saW5rLXR5cGU9ImRlcGVuZGVuY3kiPjxwYXRoIGQ9Ik02MjIuNDgsMTkwLjYzNyBDNjE2LjYxLDE5OS42OTcgNjEwLjI5LDIxMC4yMjcgNjA1LjQyLDIyMC4yOTcgQzU5OC4xNCwyMzUuMzU3IDU5My4zOTksMjQ4LjM0IDU4OC45NjksMjYyLjMzIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjE7IiBmaWxsPSJub25lIiBpZD0iUFMtdG8tUFUiLz48cG9seWdvbiBwb2ludHM9IjU4Ny40NiwyNjcuMDk3LDU5My45OSwyNTkuNzI0LDU4OC45NjksMjYyLjMzLDU4Ni4zNjQsMjU3LjMwOSw1ODcuNDYsMjY3LjA5NyIgZmlsbD0iIzE4MTgxOCIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxO3N0cm9rZS1saW5lam9pbjptaXRlcjtzdHJva2UtbWl0ZXJsaW1pdDoxMDsiLz48dGV4dCB4PSI2MDYuNDIiIHk9IjIzMy4zNjQiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTMiIHRleHRMZW5ndGg9IjY1Ij7pm4bojbfjga7lrp/nuL48L3RleHQ+PC9nPjwhLS1saW5rIFBVIHRvIFJPLS0+PGcgY2xhc3M9ImxpbmsiIGRhdGEtZW50aXR5LTE9ImVudDAwMDIiIGRhdGEtZW50aXR5LTI9ImVudDAwMDMiIGlkPSJsbmsxMyIgZGF0YS1zb3VyY2UtbGluZT0iMTMiIGRhdGEtbGluay10eXBlPSJkZXBlbmRlbmN5Ij48cGF0aCBkPSJNNTcxLjQ0LDMxNy42OTcgQzU2My4zNCwzMzkuNzE3IDU1My4xOTYsMzY3LjI2NCA1NDUuMTA2LDM4OS4yNjQiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTsiIGZpbGw9Im5vbmUiIGlkPSJQVS10by1STyIvPjxwb2x5Z29uIHBvaW50cz0iNTQzLjM4LDM5My45NTcsNTUwLjI0LDM4Ni44OSw1NDUuMTA2LDM4OS4yNjQsNTQyLjczMiwzODQuMTI5LDU0My4zOCwzOTMuOTU3IiBmaWxsPSIjMTgxODE4IiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjE7c3Ryb2tlLWxpbmVqb2luOm1pdGVyO3N0cm9rZS1taXRlcmxpbWl0OjEwOyIvPjx0ZXh0IHg9IjU2MS4xNyIgeT0iMzYwLjM2NCIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxMyIgdGV4dExlbmd0aD0iNjUiPuaQrOWFpeOBruWun+e4vjwvdGV4dD48L2c+PCEtLWxpbmsgUk8gdG8gSVQtLT48ZyBjbGFzcz0ibGluayIgZGF0YS1lbnRpdHktMT0iZW50MDAwMyIgZGF0YS1lbnRpdHktMj0iZW50MDAwNCIgaWQ9ImxuazE0IiBkYXRhLXNvdXJjZS1saW5lPSIxNCIgZGF0YS1saW5rLXR5cGU9ImRlcGVuZGVuY3kiPjxwYXRoIGQ9Ik01MTMuNzMsNDQ0LjY5NyBDNDk1LjA1LDQ2Ni43MTcgNDcwLjk1NCw0OTUuMTQ0IDQ1Mi4yOTQsNTE3LjE0NCIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxOyIgZmlsbD0ibm9uZSIgaWQ9IlJPLXRvLUlUIi8+PHBvbHlnb24gcG9pbnRzPSI0NDkuMDYsNTIwLjk1Nyw0NTcuOTMyLDUxNi42ODEsNDUyLjI5NCw1MTcuMTQ0LDQ1MS44MzEsNTExLjUwNiw0NDkuMDYsNTIwLjk1NyIgZmlsbD0iIzE4MTgxOCIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxO3N0cm9rZS1saW5lam9pbjptaXRlcjtzdHJva2UtbWl0ZXJsaW1pdDoxMDsiLz48dGV4dCB4PSI0ODguNzciIHk9IjQ4Ny4zNjQiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTMiIHRleHRMZW5ndGg9IjY1Ij7lh7rnmbrjga7lrp/nuL48L3RleHQ+PC9nPjwhLS1saW5rIElUIHRvIFRTLS0+PGcgY2xhc3M9ImxpbmsiIGRhdGEtZW50aXR5LTE9ImVudDAwMDQiIGRhdGEtZW50aXR5LTI9ImVudDAwMDUiIGlkPSJsbmsxNSIgZGF0YS1zb3VyY2UtbGluZT0iMTUiIGRhdGEtbGluay10eXBlPSJkZXBlbmRlbmN5Ij48cGF0aCBkPSJNMzk3LjA2LDU0OS4yMDcgQzMwNy4xOSw1NTQuOTg3IDUzLjYsNTczLjYyNyAyOS40Miw2MDEuMjk3IEM2LDYyOC4xMDcgNTAuMzc2LDY0OC4zMjggODguMjc2LDY2MC40MDgiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTsiIGZpbGw9Im5vbmUiIGlkPSJJVC10by1UUyIvPjxwb2x5Z29uIHBvaW50cz0iOTMuMDQsNjYxLjkyNyw4NS42OCw2NTUuMzgzLDg4LjI3Niw2NjAuNDA4LDgzLjI1LDY2My4wMDUsOTMuMDQsNjYxLjkyNyIgZmlsbD0iIzE4MTgxOCIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxO3N0cm9rZS1saW5lam9pbjptaXRlcjtzdHJva2UtbWl0ZXJsaW1pdDoxMDsiLz48dGV4dCB4PSIzMC40MiIgeT0iNjE0LjM2NCIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxMyIgdGV4dExlbmd0aD0iMTU2Ij7nqY3mm7/jga7lrp/nuL7vvIjnqY3mm7/muK/liLDnnYDvvIk8L3RleHQ+PC9nPjwhLS1saW5rIFRTIHRvIElULS0+PGcgY2xhc3M9ImxpbmsiIGRhdGEtZW50aXR5LTE9ImVudDAwMDUiIGRhdGEtZW50aXR5LTI9ImVudDAwMDQiIGlkPSJsbmsxNiIgZGF0YS1zb3VyY2UtbGluZT0iMTYiIGRhdGEtbGluay10eXBlPSJkZXBlbmRlbmN5Ij48cGF0aCBkPSJNMTY5LjkxLDY0OC4zMjcgQzE5NC44MSw2MzMuNDg3IDIyOC4yOCw2MTQuNzU3IDI1OS40Miw2MDEuMjk3IEMzMDYuMDcsNTgxLjEzNyAzNTcuOTYyLDU2NS44MzUgMzkyLjM5Miw1NTYuNTc1IiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjE7IiBmaWxsPSJub25lIiBpZD0iVFMtdG8tSVQiLz48cG9seWdvbiBwb2ludHM9IjM5Ny4yMiw1NTUuMjc3LDM4Ny40OSw1NTMuNzUyLDM5Mi4zOTIsNTU2LjU3NSwzODkuNTY4LDU2MS40NzcsMzk3LjIyLDU1NS4yNzciIGZpbGw9IiMxODE4MTgiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTtzdHJva2UtbGluZWpvaW46bWl0ZXI7c3Ryb2tlLW1pdGVybGltaXQ6MTA7Ii8+PHRleHQgeD0iMjYwLjQyIiB5PSI2MTQuMzY0IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjEzIiB0ZXh0TGVuZ3RoPSIxNTYiPuWHuueZuuOBruWun+e4vu+8iOepjeabv+a4r+WHuueZuu+8iTwvdGV4dD48L2c+PCEtLWxpbmsgSVQgdG8gQUQtLT48ZyBjbGFzcz0ibGluayIgZGF0YS1lbnRpdHktMT0iZW50MDAwNCIgZGF0YS1lbnRpdHktMj0iZW50MDAwNiIgaWQ9ImxuazE3IiBkYXRhLXNvdXJjZS1saW5lPSIxNyIgZGF0YS1saW5rLXR5cGU9ImRlcGVuZGVuY3kiPjxwYXRoIGQ9Ik00MjYuNTUsNTcxLjYwNyBDNDI1LjcxLDU4NS4zMTcgNDI0Ljk5LDYwMi43NTcgNDI1LjQyLDYxOC4yOTcgQzQyNS42OSw2MjcuOTY3IDQyNS45MzksNjMzLjYwNSA0MjYuNDc5LDY0Mi44NTUiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTsiIGZpbGw9Im5vbmUiIGlkPSJJVC10by1BRCIvPjxwb2x5Z29uIHBvaW50cz0iNDI2Ljc3LDY0Ny44NDcsNDMwLjIzOSw2MzguNjI5LDQyNi40NzksNjQyLjg1NSw0MjIuMjUyLDYzOS4wOTUsNDI2Ljc3LDY0Ny44NDciIGZpbGw9IiMxODE4MTgiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTtzdHJva2UtbGluZWpvaW46bWl0ZXI7c3Ryb2tlLW1pdGVybGltaXQ6MTA7Ii8+PHRleHQgeD0iNDI2LjQyIiB5PSI2MTQuMzY0IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjEzIiB0ZXh0TGVuZ3RoPSI2NSI+5Yiw552A44Gu5a6f57i+PC90ZXh0PjwvZz48IS0tbGluayBBRCB0byBELS0+PGcgY2xhc3M9ImxpbmsiIGRhdGEtZW50aXR5LTE9ImVudDAwMDYiIGRhdGEtZW50aXR5LTI9ImVudDAwMDgiIGlkPSJsbmsxOCIgZGF0YS1zb3VyY2UtbGluZT0iMTgiIGRhdGEtbGluay10eXBlPSJkZXBlbmRlbmN5Ij48cGF0aCBkPSJNNDczLjg0LDY4MS45MzcgQzUwMC43Niw2ODkuMDU3IDUzMi43Nyw3MDIuNjI3IDU0OS40Miw3MjguMjk3IEM1NjguMDUsNzU3LjAxNyA2NDAuMjYsNjYxLjY4NyA1MjguNDIsODcyLjI5NyBDNTIyLjU0LDg4My4zNzcgNTE3LjIwNCw4OTAuMDg2IDUwOC4wNzQsODk4LjQ2NiIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxOyIgZmlsbD0ibm9uZSIgaWQ9IkFELXRvLUQiLz48cG9seWdvbiBwb2ludHM9IjUwNC4zOSw5MDEuODQ3LDUxMy43MjUsODk4LjcwOCw1MDguMDc0LDg5OC40NjYsNTA4LjMxNiw4OTIuODE0LDUwNC4zOSw5MDEuODQ3IiBmaWxsPSIjMTgxODE4IiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjE7c3Ryb2tlLWxpbmVqb2luOm1pdGVyO3N0cm9rZS1taXRlcmxpbWl0OjEwOyIvPjx0ZXh0IHg9IjU3Ny44OCIgeT0iODA0Ljg2NCIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxMyIgdGV4dExlbmd0aD0iMjYzLjcwNyI+5byV5rih44GX44Gu5a6f57i+77yIUjAuMeOAguioreioiOOBuOOBruWPjeaYoOOBjOW/heimge+8iTwvdGV4dD48L2c+PCEtLWxpbmsgQUQgdG8gUkQtLT48ZyBjbGFzcz0ibGluayIgZGF0YS1lbnRpdHktMT0iZW50MDAwNiIgZGF0YS1lbnRpdHktMj0iZW50MDAwNyIgaWQ9ImxuazE5IiBkYXRhLXNvdXJjZS1saW5lPSIxOSIgZGF0YS1saW5rLXR5cGU9ImRlcGVuZGVuY3kiPjxwYXRoIGQ9Ik0zODMuMTYsNjc3Ljg1NyBDMzQ5LjUxLDY4My4xNDcgMzA1LjcyLDY5Ni4xOTcgMjgzLjQyLDcyOC4yOTcgQzI2Ny41Nyw3NTEuMTE3IDI5MS43NTIsNzY4LjQ5NCAzMjAuMzYyLDc4MS4yMjQiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTtzdHJva2UtZGFzaGFycmF5OjcsNzsiIGZpbGw9Im5vbmUiIGlkPSJBRC10by1SRCIvPjxwb2x5Z29uIHBvaW50cz0iMzI0LjkzLDc4My4yNTcsMzE4LjMzMyw3NzUuOTQ0LDMyMC4zNjIsNzgxLjIyNCwzMTUuMDgxLDc4My4yNTMsMzI0LjkzLDc4My4yNTciIGZpbGw9IiMxODE4MTgiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTtzdHJva2UtbGluZWpvaW46bWl0ZXI7c3Ryb2tlLW1pdGVybGltaXQ6MTA7Ii8+PHRleHQgeD0iMjg0LjQyIiB5PSI3NDEuMzY0IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjEzIiB0ZXh0TGVuZ3RoPSIyNjAiPuiNt+mZjeOCjeOBl+ODu+mAmumWouetieWujOS6hu+8iOWun+e4vuOBrueorumhnuOBjOOBquOBhO+8iTwvdGV4dD48L2c+PCEtLWxpbmsgUkQgdG8gRC0tPjxnIGNsYXNzPSJsaW5rIiBkYXRhLWVudGl0eS0xPSJlbnQwMDA3IiBkYXRhLWVudGl0eS0yPSJlbnQwMDA4IiBpZD0ibG5rMjAiIGRhdGEtc291cmNlLWxpbmU9IjIwIiBkYXRhLWxpbmstdHlwZT0iZGVwZW5kZW5jeSI+PHBhdGggZD0iTTM5MC4xMyw4MjUuNjk3IEM0MDcuOTMsODQ3LjcxNyA0MzAuODM3LDg3Ni4wNjggNDQ4LjYxNyw4OTguMDY4IiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjE7c3Ryb2tlLWRhc2hhcnJheTo3LDc7IiBmaWxsPSJub25lIiBpZD0iUkQtdG8tRCIvPjxwb2x5Z29uIHBvaW50cz0iNDUxLjc2LDkwMS45NTcsNDQ5LjIxNCw4OTIuNDQzLDQ0OC42MTcsODk4LjA2OCw0NDIuOTkyLDg5Ny40NzEsNDUxLjc2LDkwMS45NTciIGZpbGw9IiMxODE4MTgiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTtzdHJva2UtbGluZWpvaW46bWl0ZXI7c3Ryb2tlLW1pdGVybGltaXQ6MTA7Ii8+PHRleHQgeD0iNDI3Ljk3IiB5PSI4NjguMzY0IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjEzIiB0ZXh0TGVuZ3RoPSI5MSI+5Y+X6aCY56K66KqN44Gu5a6f57i+PC90ZXh0PjwvZz48IS0tbGluayBQUyB0byBVUi0tPjxnIGNsYXNzPSJsaW5rIiBkYXRhLWVudGl0eS0xPSJlbnQwMDAxIiBkYXRhLWVudGl0eS0yPSJlbnQwMDA5IiBpZD0ibG5rMjEiIGRhdGEtc291cmNlLWxpbmU9IjIxIiBkYXRhLWxpbmstdHlwZT0iZGVwZW5kZW5jeSI+PHBhdGggZD0iTTY1OC43NCwxOTAuNTU3IEM2NzUuOTUsMjE0LjY1NyA2OTguNDIsMjUzLjM3NyA2OTguNDIsMjkxLjI5NyBDNjk4LjQyLDI5MS4yOTcgNjk4LjQyLDI5MS4yOTcgNjk4LjQyLDU0Ny4yOTcgQzY5OC40Miw1ODAuMzM3IDY5My45OSw1OTAuMzE3IDY3Ni40Miw2MTguMjk3IEM2NjkuNCw2MjkuNDc3IDY2My4yMDcsNjM2LjUzNCA2NTMuNTY3LDY0NS4xNTQiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTtzdHJva2UtZGFzaGFycmF5OjcsNzsiIGZpbGw9Im5vbmUiIGlkPSJQUy10by1VUiIvPjxwb2x5Z29uIHBvaW50cz0iNjQ5Ljg0LDY0OC40ODcsNjU5LjIxNSw2NDUuNDcsNjUzLjU2Nyw2NDUuMTU0LDY1My44ODMsNjM5LjUwNiw2NDkuODQsNjQ4LjQ4NyIgZmlsbD0iIzE4MTgxOCIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxO3N0cm9rZS1saW5lam9pbjptaXRlcjtzdHJva2UtbWl0ZXJsaW1pdDoxMDsiLz48dGV4dCB4PSI2OTkuNDIiIHk9IjQyMy44NjQiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTMiIHRleHRMZW5ndGg9IjEzOC4xMjUiPumghuW6j+mAhui7ouODu+efm+ebvu+8iFc377yJPC90ZXh0PjwvZz48IS0tbGluayBJVCB0byBVUi0tPjxnIGNsYXNzPSJsaW5rIiBkYXRhLWVudGl0eS0xPSJlbnQwMDA0IiBkYXRhLWVudGl0eS0yPSJlbnQwMDA5IiBpZD0ibG5rMjIiIGRhdGEtc291cmNlLWxpbmU9IjIyIiBkYXRhLWxpbmstdHlwZT0iZGVwZW5kZW5jeSI+PHBhdGggZD0iTTQ1OS42MSw1NjkuMDQ3IEM0ODAuMTYsNTgzLjI2NyA1MDcuNzMsNjAyLjEyNyA1MzIuNDIsNjE4LjI5NyBDNTUwLjQxLDYzMC4wNzcgNTY2LjU0Myw2NDAuMjU4IDU4Mi45NDMsNjUwLjQ0OCIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxO3N0cm9rZS1kYXNoYXJyYXk6Nyw3OyIgZmlsbD0ibm9uZSIgaWQ9IklULXRvLVVSIi8+PHBvbHlnb24gcG9pbnRzPSI1ODcuMTksNjUzLjA4Nyw1ODEuNjU3LDY0NC45MzksNTgyLjk0Myw2NTAuNDQ4LDU3Ny40MzQsNjUxLjczNSw1ODcuMTksNjUzLjA4NyIgZmlsbD0iIzE4MTgxOCIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxO3N0cm9rZS1saW5lam9pbjptaXRlcjtzdHJva2UtbWl0ZXJsaW1pdDoxMDsiLz48dGV4dCB4PSI1MzMuNDIiIHk9IjYxNC4zNjQiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTMiIHRleHRMZW5ndGg9IjEzOC4xMjUiPumghuW6j+mAhui7ouODu+efm+ebvu+8iFc377yJPC90ZXh0PjwvZz48P3BsYW50dW1sLXNyYyBiUEJESmpqMDU4TnRVT2VIb3FmS0tBYjV3Vzg5bjhPTGJVRTgxTThISEFITUdjOEhGdTBkYURHS3Q1R0xWdWJmeW9ESEtqR3VSNWZSSmNXVVBaQVVjSE1scTdpekUzLWdNQjB6dHh0ZHQzY3N6UzdRQW4wdmw5VDFJdHB3NHZVRjdtUkV3bHdVSEx3enNJNkN0aVpWMFFDa0FucWg2ZVlSRmdDenhaVDRLN3lPNzZNQUxqdWdhM2RiTFFHUloyQTctX0t2YVktSVR6YlA1OFNFZXFFRFNZZFk3b0RIWV9aTE5WcGI1b3pWSnlxTzYtY0M3OEpBZmdFbWMtWmhQZ2dCZHN4aTNIYnJLY0lFNHVOZFlfZVhzN0JkSmRvcDR4Z29EV3VUZENMWFl6NEJOa3Q5V3RpVHpwLVRFY09DSEprSWpzdVFjM0NvTW8tc29WcHlDaG9NbDJOd3pRcHFEVnhTNGdTVEhjakdzUlpBcnpXTXAyTlpFSFpObEozZ092ZFh0bW84bzhtRE9CZ0YyR0NIc1JlOUo5U3NPSTBZQ182NGo5SDcxazVRWVNFVXhXQUZDQkRGY2lxaTkwV043WERNcmQwWGlQY2FXdVdpR01icnF0UjZtaWo1UGZUYWZvaXhLNlk4aEVoNmJxcjZKX1ltQjd6R0o0Mk5oVHJ5eU5yWFRuaXhHM2llSHpOV2h0Rkh5UTJseEJld1J1bGs0VlRGSGI0NWg3SzY2OGdFaHJoVm1QM0hNcU9GcVQyT0RLcEVncndldmdOLVg1RWpQc1M2U21QLWNNUTVIckxiTHNJXzNTY1l1R2FGdHhBdmJCUm5oOHJfPz48L2c+PC9zdmc+" class="uml" alt="uml diagram" title="" /></p>
+<h3 id="_7">データモデル<a class="headerlink" href="#_7" title="Permanent link">&para;</a></h3>
+<p><img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB2ZXJzaW9uPSIxLjEiIGRhdGEtZGlhZ3JhbS10eXBlPSJDTEFTUyIgc3R5bGU9IndpZHRoOjc2MHB4O2hlaWdodDo2MTBweDtiYWNrZ3JvdW5kOiNGRkZGRkY7IiB3aWR0aD0iNzYwcHgiIGhlaWdodD0iNjEwcHgiIHZpZXdCb3g9IjAgMCA3NjAgNjEwIiB6b29tQW5kUGFuPSJtYWduaWZ5IiBwcmVzZXJ2ZUFzcGVjdFJhdGlvPSJub25lIiBjb250ZW50U3R5bGVUeXBlPSJ0ZXh0L2NzcyI+PD9wbGFudHVtbCAxLjIwMjYuOD8+PGRlZnMvPjxnIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBsZW5ndGhBZGp1c3Q9InNwYWNpbmciPjxnIGNsYXNzPSJ0aXRsZSIgZGF0YS1zb3VyY2UtbGluZT0iMSI+PHRleHQgeD0iMjcxLjIxMSIgeT0iMjIuOTk1IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE0IiB0ZXh0TGVuZ3RoPSIyMTEuMDMyIiBmb250LXdlaWdodD0iNzAwIj5Cb2x0IDI2YiDjgafotrPjgZnooajjgajmm7TmlrDjgZnjgovliJc8L3RleHQ+PC9nPjwhLS1jbGFzcyB0LS0+PGcgY2xhc3M9ImVudGl0eSIgZGF0YS1xdWFsaWZpZWQtbmFtZT0idCIgaWQ9ImVudDAwMDEiIGRhdGEtc291cmNlLWxpbmU9IjMiPjxyZWN0IHg9IjE1MS4yMSIgeT0iNDQuMjk3IiB3aWR0aD0iNDQ5LjAzNCIgaGVpZ2h0PSIxMjMuNzgxIiBmaWxsPSIjRjFGMUYxIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjAuNTsiIHJ4PSIyLjUiIHJ5PSIyLjUiLz48dGV4dCB4PSIyOTAuMDg3IiB5PSI2Mi4yOTIiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTQiIHRleHRMZW5ndGg9IjE3MS4yODEiPnRyYWNraW5nLnRyYWNraW5nX3JlY29yZDwvdGV4dD48bGluZSB4MT0iMTUyLjIxIiB5MT0iNzAuNTk0IiB4Mj0iNTk5LjI0NCIgeTI9IjcwLjU5NCIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDowLjU7Ii8+PGcgZGF0YS12aXNpYmlsaXR5LW1vZGlmaWVyPSJJRV9NQU5EQVRPUlkiPjxlbGxpcHNlIGN4PSIxNjIuMjEiIGN5PSI4NC4yNDIiIHJ4PSIzIiByeT0iMyIgZmlsbD0iIzAwMCIgc3R5bGU9InN0cm9rZTojMDAwO3N0cm9rZS13aWR0aDoxOyIvPjwvZz48dGV4dCB4PSIxNzEuMjEiIHk9Ijg3LjU4OSIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxNCIgdGV4dExlbmd0aD0iMTU4LjEyMiI+dHJhY2tpbmdfbnVtYmVyIMKrUEvCuzwvdGV4dD48ZyBkYXRhLXZpc2liaWxpdHktbW9kaWZpZXI9IklFX01BTkRBVE9SWSI+PGVsbGlwc2UgY3g9IjE2Mi4yMSIgY3k9IjEwMC41MzkiIHJ4PSIzIiByeT0iMyIgZmlsbD0iIzAwMCIgc3R5bGU9InN0cm9rZTojMDAwO3N0cm9rZS13aWR0aDoxOyIvPjwvZz48dGV4dCB4PSIxNzEuMjEiIHk9IjEwMy44ODYiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTQiIHRleHRMZW5ndGg9IjI2OS4wNzUiPmN1cnJlbnRfc3RhdHVz77yI5bCO5Ye644Gu57WQ5p6c44KS5pu444GN55u044GZ77yJPC90ZXh0Pjx0ZXh0IHg9IjE3MS4yMSIgeT0iMTIwLjE4MyIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxNCIgdGV4dExlbmd0aD0iNDIzLjAzNCI+c3RhdHVzX2Jhc2lzX21pbGVzdG9uZV9ub++8iE5VTEwg5Y+v44CC5qC55oug44Gu5a6f57i+55Wq5Y+344KS5pu444GP77yJPC90ZXh0PjxnIGRhdGEtdmlzaWJpbGl0eS1tb2RpZmllcj0iSUVfTUFOREFUT1JZIj48ZWxsaXBzZSBjeD0iMTYyLjIxIiBjeT0iMTMzLjEzMyIgcng9IjMiIHJ5PSIzIiBmaWxsPSIjMDAwIiBzdHlsZT0ic3Ryb2tlOiMwMDA7c3Ryb2tlLXdpZHRoOjE7Ii8+PC9nPjx0ZXh0IHg9IjE3MS4yMSIgeT0iMTM2LjQ3OSIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxNCIgdGV4dExlbmd0aD0iMzY5LjM4NiI+dmVyc2lvbu+8iFNRTCDjgacgMSDlopfjgoTjgZnjgIJXSEVSRSB2ZXJzaW9uID0g5pyf5b6F54mI77yJPC90ZXh0PjxnIGRhdGEtdmlzaWJpbGl0eS1tb2RpZmllcj0iSUVfTUFOREFUT1JZIj48ZWxsaXBzZSBjeD0iMTYyLjIxIiBjeT0iMTQ5LjQzIiByeD0iMyIgcnk9IjMiIGZpbGw9IiMwMDAiIHN0eWxlPSJzdHJva2U6IzAwMDtzdHJva2Utd2lkdGg6MTsiLz48L2c+PHRleHQgeD0iMTcxLjIxIiB5PSIxNTIuNzc2IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE0IiB0ZXh0TGVuZ3RoPSI3OS4yODMiPnVwZGF0ZWRfYXQ8L3RleHQ+PGxpbmUgeDE9IjE1Mi4yMSIgeTE9IjE2MC4wNzgiIHgyPSI1OTkuMjQ0IiB5Mj0iMTYwLjA3OCIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDowLjU7Ii8+PC9nPjwhLS1jbGFzcyBtLS0+PGcgY2xhc3M9ImVudGl0eSIgZGF0YS1xdWFsaWZpZWQtbmFtZT0ibSIgaWQ9ImVudDAwMDIiIGRhdGEtc291cmNlLWxpbmU9IjEwIj48cmVjdCB4PSIyNTkuODQiIHk9IjIyOC4wNzciIHdpZHRoPSIyMzEuNzY5IiBoZWlnaHQ9IjIyMS41NjMiIGZpbGw9IiNGMUYxRjEiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MC41OyIgcng9IjIuNSIgcnk9IjIuNSIvPjx0ZXh0IHg9IjI4Mi40MjgiIHk9IjI0Ni4wNzIiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTQiIHRleHRMZW5ndGg9IjE4Ni41OTQiPnRyYWNraW5nLm1pbGVzdG9uZe+8iOi2s+OBme+8iTwvdGV4dD48bGluZSB4MT0iMjYwLjg0IiB5MT0iMjU0LjM3NCIgeDI9IjQ5MC42MDkiIHkyPSIyNTQuMzc0IiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjAuNTsiLz48ZyBkYXRhLXZpc2liaWxpdHktbW9kaWZpZXI9IklFX01BTkRBVE9SWSI+PGVsbGlwc2UgY3g9IjI3MC44NCIgY3k9IjI2OC4wMjIiIHJ4PSIzIiByeT0iMyIgZmlsbD0iIzAwMCIgc3R5bGU9InN0cm9rZTojMDAwO3N0cm9rZS13aWR0aDoxOyIvPjwvZz48dGV4dCB4PSIyNzkuODQiIHk9IjI3MS4zNjkiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTQiIHRleHRMZW5ndGg9IjE3OS44MDYiPnRyYWNraW5nX251bWJlciDCq1BLLEZLwrs8L3RleHQ+PGcgZGF0YS12aXNpYmlsaXR5LW1vZGlmaWVyPSJJRV9NQU5EQVRPUlkiPjxlbGxpcHNlIGN4PSIyNzAuODQiIGN5PSIyODQuMzE5IiByeD0iMyIgcnk9IjMiIGZpbGw9IiMwMDAiIHN0eWxlPSJzdHJva2U6IzAwMDtzdHJva2Utd2lkdGg6MTsiLz48L2c+PHRleHQgeD0iMjc5Ljg0IiB5PSIyODcuNjY2IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE0IiB0ZXh0TGVuZ3RoPSIxMzIuNTA4Ij5taWxlc3RvbmVfbm8gwqtQS8K7PC90ZXh0PjxnIGRhdGEtdmlzaWJpbGl0eS1tb2RpZmllcj0iSUVfTUFOREFUT1JZIj48ZWxsaXBzZSBjeD0iMjcwLjg0IiBjeT0iMzAwLjYxNiIgcng9IjMiIHJ5PSIzIiBmaWxsPSIjMDAwIiBzdHlsZT0ic3Ryb2tlOiMwMDA7c3Ryb2tlLXdpZHRoOjE7Ii8+PC9nPjx0ZXh0IHg9IjI3OS44NCIgeT0iMzAzLjk2MyIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxNCIgdGV4dExlbmd0aD0iMTk1LjgxNSI+b2NjdXJyZWRfYXQgOiBUSU1FU1RBTVBUWjwvdGV4dD48ZyBkYXRhLXZpc2liaWxpdHktbW9kaWZpZXI9IklFX01BTkRBVE9SWSI+PGVsbGlwc2UgY3g9IjI3MC44NCIgY3k9IjMxNi45MTMiIHJ4PSIzIiByeT0iMyIgZmlsbD0iIzAwMCIgc3R5bGU9InN0cm9rZTojMDAwO3N0cm9rZS13aWR0aDoxOyIvPjwvZz48dGV4dCB4PSIyNzkuODQiIHk9IjMyMC4yNTkiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTQiIHRleHRMZW5ndGg9IjE5NS4xNTIiPmFjcXVpcmVkX2F0IDogVElNRVNUQU1QVFo8L3RleHQ+PGcgZGF0YS12aXNpYmlsaXR5LW1vZGlmaWVyPSJJRV9NQU5EQVRPUlkiPjxlbGxpcHNlIGN4PSIyNzAuODQiIGN5PSIzMzMuMjEiIHJ4PSIzIiByeT0iMyIgZmlsbD0iIzAwMCIgc3R5bGU9InN0cm9rZTojMDAwO3N0cm9rZS13aWR0aDoxOyIvPjwvZz48dGV4dCB4PSIyNzkuODQiIHk9IjMzNi41NTYiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTQiIHRleHRMZW5ndGg9IjE0NC45OSI+cmVnaXN0ZXJlZF9ieSA6IFVVSUQ8L3RleHQ+PGcgZGF0YS12aXNpYmlsaXR5LW1vZGlmaWVyPSJJRV9NQU5EQVRPUlkiPjxlbGxpcHNlIGN4PSIyNzAuODQiIGN5PSIzNDkuNTA3IiByeD0iMyIgcnk9IjMiIGZpbGw9IiMwMDAiIHN0eWxlPSJzdHJva2U6IzAwMDtzdHJva2Utd2lkdGg6MTsiLz48L2c+PHRleHQgeD0iMjc5Ljg0IiB5PSIzNTIuODUzIiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE0IiB0ZXh0TGVuZ3RoPSIyMDUuNzY5Ij5yZWdpc3RlcmVkX2F0IDogVElNRVNUQU1QVFo8L3RleHQ+PGxpbmUgeDE9IjI2MC44NCIgeTE9IjM2MC4xNTUiIHgyPSI0OTAuNjA5IiB5Mj0iMzYwLjE1NSIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDowLjU7Ii8+PGcgZGF0YS12aXNpYmlsaXR5LW1vZGlmaWVyPSJJRV9NQU5EQVRPUlkiPjxlbGxpcHNlIGN4PSIyNzAuODQiIGN5PSIzNzMuODAzIiByeD0iMyIgcnk9IjMiIGZpbGw9IiMwMDAiIHN0eWxlPSJzdHJva2U6IzAwMDtzdHJva2Utd2lkdGg6MTsiLz48L2c+PHRleHQgeD0iMjc5Ljg0IiB5PSIzNzcuMTUiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTQiIHRleHRMZW5ndGg9IjE0MC42MDIiPmtpbmQgOiBWQVJDSEFSKDMwKTwvdGV4dD48ZyBkYXRhLXZpc2liaWxpdHktbW9kaWZpZXI9IklFX01BTkRBVE9SWSI+PGVsbGlwc2UgY3g9IjI3MC44NCIgY3k9IjM5MC4xIiByeD0iMyIgcnk9IjMiIGZpbGw9IiMwMDAiIHN0eWxlPSJzdHJva2U6IzAwMDtzdHJva2Utd2lkdGg6MTsiLz48L2c+PHRleHQgeD0iMjc5Ljg0IiB5PSIzOTMuNDQ3IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE0IiB0ZXh0TGVuZ3RoPSIxOTkuNTY4Ij5sb2NhdGlvbl91bmxvY29kZSA6IENIQVIoNSk8L3RleHQ+PGcgZGF0YS12aXNpYmlsaXR5LW1vZGlmaWVyPSJJRV9NQU5EQVRPUlkiPjxlbGxpcHNlIGN4PSIyNzAuODQiIGN5PSI0MDYuMzk3IiByeD0iMyIgcnk9IjMiIGZpbGw9IiMwMDAiIHN0eWxlPSJzdHJva2U6IzAwMDtzdHJva2Utd2lkdGg6MTsiLz48L2c+PHRleHQgeD0iMjc5Ljg0IiB5PSI0MDkuNzQ0IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE0IiB0ZXh0TGVuZ3RoPSIxOTQuNCI+c291cmNlX2tpbmQgOiBWQVJDSEFSKDMwKTwvdGV4dD48ZyBkYXRhLXZpc2liaWxpdHktbW9kaWZpZXI9IklFX01BTkRBVE9SWSI+PGVsbGlwc2UgY3g9IjI3MC44NCIgY3k9IjQyMi42OTQiIHJ4PSIzIiByeT0iMyIgZmlsbD0iIzAwMCIgc3R5bGU9InN0cm9rZTojMDAwO3N0cm9rZS13aWR0aDoxOyIvPjwvZz48dGV4dCB4PSIyNzkuODQiIHk9IjQyNi4wNDEiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTQiIHRleHRMZW5ndGg9IjE5Mi44NDkiPnNvdXJjZV9yZWYgOiBWQVJDSEFSKDIwMCk8L3RleHQ+PGcgZGF0YS12aXNpYmlsaXR5LW1vZGlmaWVyPSJJRV9NQU5EQVRPUlkiPjxlbGxpcHNlIGN4PSIyNzAuODQiIGN5PSI0MzguOTkxIiByeD0iMyIgcnk9IjMiIGZpbGw9IiMwMDAiIHN0eWxlPSJzdHJva2U6IzAwMDtzdHJva2Utd2lkdGg6MTsiLz48L2c+PHRleHQgeD0iMjc5Ljg0IiB5PSI0NDIuMzM4IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE0IiB0ZXh0TGVuZ3RoPSIxNDYuMzEiPnN0YXRlIDogVkFSQ0hBUigzMCk8L3RleHQ+PC9nPjxnIGNsYXNzPSJlbnRpdHkiIGRhdGEtcXVhbGlmaWVkLW5hbWU9IkdNTjQiIGlkPSJlbnQwMDA1IiBkYXRhLXNvdXJjZS1saW5lPSIyNSI+PHBhdGggZD0iTTYsNTA5LjY0NyBMNiw1OTUuMzExIEEwLDAgMCAwIDAgNiw1OTUuMzExIEw3NDUuNDUzLDU5NS4zMTEgQTAsMCAwIDAgMCA3NDUuNDUzLDU5NS4zMTEgTDc0NS40NTMsNTE5LjY0NyBMNzM1LjQ1Myw1MDkuNjQ3IEwzNzkuNzMsNTA5LjY0NyBMMzc1LjczLDQ1MC4wMDcgTDM3MS43Myw1MDkuNjQ3IEw2LDUwOS42NDcgQTAsMCAwIDAgMCA2LDUwOS42NDciIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MC41OyIgZmlsbD0iI0ZFRkZERCIvPjxwYXRoIGQ9Ik03MzUuNDUzLDUwOS42NDcgTDczNS40NTMsNTE5LjY0NyBMNzQ1LjQ1Myw1MTkuNjQ3IEw3MzUuNDUzLDUwOS42NDciIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MC41OyIgZmlsbD0iI0ZFRkZERCIvPjx0ZXh0IHg9IjEyIiB5PSI1MjYuNzE0IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjEzIiB0ZXh0TGVuZ3RoPSI1MzQuOTQyIj5VS++8iHRyYWNraW5nX251bWJlciwgc291cmNlX2tpbmQsIHNvdXJjZV9yZWbvvIl1a19taWxlc3RvbmVfc291cmNl77yIVC1JTlYtMDLvvIk8L3RleHQ+PHRleHQgeD0iMTIiIHk9IjU0MS44NDciIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTMiIHRleHRMZW5ndGg9IjcxOC40NTMiPkNIRUNLOiBraW5k77yINiDlgKTvvInjgIFzb3VyY2Vfa2luZO+8iDQg5YCk44CCY2tfdm95YWdlX3NvdXJjZV9raW5kIOOBqOWQjOOBmO+8ieOAgXN0YXRl77yINCDlgKTvvInjgIFtaWxlc3RvbmVfbm8gPj0gMTwvdGV4dD48dGV4dCB4PSIxMiIgeT0iNTU2Ljk3OSIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxMyIgdGV4dExlbmd0aD0iMzM2LjExNSI+6KGo44Gu44Kz44Oh44Oz44OI44CM5Li76KaB5a6f57i+IFtuby1kZWxldGVd44CN44CB5YWo5YiX44Gu44Kz44Oh44Oz44OIPC90ZXh0Pjx0ZXh0IHg9IjEyIiB5PSI1NzIuMTEyIiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjEzIiB0ZXh0TGVuZ3RoPSI2MDAuODk1Ij5Qb3N0Z3JlU1FMIOOBp+OBryBERUxFVEUg44Gu5qip6ZmQ44KS5aSW44GZ77yI54q25oWL44Go5LiL5pu444GN5YaF5a6544GvIFVQREFURSDjgZnjgovjga7jgafov73oqJjlsILnlKjjgafjga/jgarjgYTvvIk8L3RleHQ+PHRleHQgeD0iMTIiIHk9IjU4Ny4yNDUiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTMiIHRleHRMZW5ndGg9IjU3Mi41NTkiPnJldmlzZWRfYnnjg7tyZXZpc2VkX2F077yIVzfvvInjgaggc2hvd25fdG9fY3VzdG9tZXLvvIhVUy0xMeODu1VTLTEz77yJ44Gv5L2/44GGIEJvbHQg44Gn6Laz44GZPC90ZXh0PjwvZz48IS0tbGluayB0IHRvIG0tLT48ZyBjbGFzcz0ibGluayIgZGF0YS1lbnRpdHktMT0iZW50MDAwMSIgZGF0YS1lbnRpdHktMj0iZW50MDAwMiIgaWQ9ImxuazMiIGRhdGEtc291cmNlLWxpbmU9IjIzIiBkYXRhLWxpbmstdHlwZT0iY3Jvd2Zvb3QiPjxwYXRoIGQ9Ik0zNzUuNzMsMTc2LjM5NyBDMzc1LjczLDE5NC42ODcgMzc1LjczLDE4OS4zMTcgMzc1LjczLDIwOS43MzciIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTsiIGZpbGw9Im5vbmUiIGlkPSJ0LW0iIGNvZGVMaW5lPSIyMyIvPjxsaW5lIHgxPSIzNzEuNzMiIHkxPSIxNzIuMzk3IiB4Mj0iMzc5LjczIiB5Mj0iMTcyLjM5NyIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxOyIvPjxsaW5lIHgxPSIzNzEuNzMiIHkxPSIxNzUuMzk3IiB4Mj0iMzc5LjczIiB5Mj0iMTc1LjM5NyIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxOyIvPjxsaW5lIHgxPSIzNzUuNzMiIHkxPSIxNzYuMzk3IiB4Mj0iMzc1LjczIiB5Mj0iMTY4LjM5NyIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxOyIvPjxsaW5lIHgxPSIzNzUuNzMiIHkxPSIyMTkuNzM3IiB4Mj0iMzgxLjczIiB5Mj0iMjI3LjczNyIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxOyIvPjxsaW5lIHgxPSIzNzUuNzMiIHkxPSIyMTkuNzM3IiB4Mj0iMzY5LjczIiB5Mj0iMjI3LjczNyIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxOyIvPjxsaW5lIHgxPSIzNzUuNzMiIHkxPSIyMTkuNzM3IiB4Mj0iMzc1LjczIiB5Mj0iMjI3LjczNyIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxOyIvPjxlbGxpcHNlIGN4PSIzNzUuNzMiIGN5PSIyMTMuNzM3IiByeD0iNCIgcnk9IjQiIGZpbGw9Im5vbmUiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTsiLz48L2c+PD9wbGFudHVtbC1zcmMgVExIVEpuRDE1N3RWTnA3WElHYXI1MUdKMFlHTFFZMEtLZzY1SDZDc3MtckdEaEd4a1prQjhLM0lCSElCMUk1Ni1HWDRtMTJqRjFHSTQ4anktNkU2dFFyRl8wTmx4NThpODIteEVfVkNFTmxsY05rN0FaSTlxSEVJZkFZWEFPUU8tUXJ5a0NfQ3JWOU1XUGE1VS10ME5qZzM5U2xhaFRvb0NBcDRDUDhMSkt2WTBRaktlTUVlWGNnSUZBQWVZR1VMM3I3M0NqN1lES1pJNEtOWkdZc3dHYkdaNVNDUVFjYTlUeFVyMEkwUmNXT3dlYXViUWtXTjlwYmh4eHRyelhTcFl5d0ZIVmxwRWlqeWlEVEFwOW50cld1V1l1a0pNUzdSQWlPYU5UNzViOUI0RVlLZzViSzJ4RHZlQThJaVhMc01wallSSHRQLTR1SWl1ZVBKRWRDLXhMV0JGb2pvMnJvZTVlcllKTFU4MmlKLVBvNVVFbDhad3lpb29xcHBZakVQbVN2V054Mm8yeEtZVXR0M0VpaXdpcGNGUmhvQUluSjdIT2FBYXhWVGs0ZUR2M3JCV1VMd2FoaEpheGdkZFl0TFBWcXAydFI3S0pDUTJGSXJUbVJ3eFpOTXR1VFdhaVdJWFZINEd1TEYwaVZKWjVwdTRLVTl4M2hDU3VIdWZBaWRzMXk5ejhHWnBtN0pZUTc5TUZvbHdZTWN1UTRnZ0E3VW5JSnZqUTdTZkdjN1dzLWZRSllYdzFIcEpjbUNxNllxZy1Edy05UktmNDNIbjhKRkh5UEhJYjA5WUNPOGZJSTVvMTA0ZWpyV3dXcTN3d2VCZ2drZzA2bXRIZ2V3bktEMDhFQmh3WHRtckpWbXFzcGwzQlB0RHhpTTB6QTRoRkdzWDVkUWgxODV1MjQ3ZTNGYTRONktaNGM5WWZoZDhXb0NqSlo3cDlMQkFaVVpHbDkycm13c2hITnYxTlZFWVlvcHB3UXNzMUd5U29telRydXdCZHlybFN2NUJySllZLUNhZmxXYkl5LTNZOUtqbTJwVU8wYlhlakU0WFl5eGNQY3hnMkNPMmFRMmkyaFFYVXpfTFhVWC13dGo5UlNIU3l3eEdwa1JYdUpGSXRibG1nb1BoNUt5dWhuZWsyRld5bFpLeXpfMGRWM3hqNW5PaVZPb3BpVTJmeXhDN01QRVMtaXFGQWhleGo2b2dVRkFHZ0JtYXk3N2w2Z3BXRkhYeWFPTEFINWIwd2ZGT0d0MFFCX0Z4bVM2VnBVdy10UkZKdHlwU3lReFpBdWs4ZllpRUU4VHkxUzA/PjwvZz48L3N2Zz4=" class="uml" alt="uml diagram" title="" /></p>
+<ul>
+<li>マイグレーションは <code>db/migration/common/V20261010HHMMSS__create_tracking_milestone.sql</code>（方言によらない DDL）</li>
+<li><code>afterMigrate__grant_app_user.sql</code> に、表のコメントが <code>[no-delete]</code> の表から DELETE だけを外す規則を足す（<code>[append-only]</code> と同じく名指ししない。確認ポイント 4）。<code>AppendOnlyGrantIntegrationTest</code> に設計の一覧 <code>NO_DELETE_TABLES</code>（<code>tracking.milestone</code>）を足し、印・権限と一致することを確かめる</li>
+<li>更新は <code>update(TrackingRecord)</code> の 1 本。新しい実績だけを INSERT し、<code>tracking_record</code> の <code>current_status</code>・<code>status_basis_milestone_no</code>・<code>version</code>・<code>updated_at</code> を UPDATE する。0 行なら <code>ConcurrentTrackingRecordUpdateException</code>。<code>uk_milestone_source</code> の違反も競合として扱う（同じ出典の同時の登録）</li>
+</ul>
+<h3 id="_8">画面遷移<a class="headerlink" href="#_8" title="Permanent link">&para;</a></h3>
+<p>この Bolt では画面を作らない（S-13 の登録と S-12 の主要実績の一覧は Bolt 26c）。</p>
+<h2 id="_9">ステップ計画<a class="headerlink" href="#_9" title="Permanent link">&para;</a></h2>
+<p>状態の記号: <code>[ ]</code> 未着手、<code>[-]</code> 進行中、<code>[?]</code> 承認待ち、<code>[x]</code> 完了。各ステップの終わりに <code>check</code> が緑であることと、計画からの変更を設計文書に反映したこと（T-53）を確かめ、Green と同じ push にまとめて CI を確かめる（T-26、T-65）。Red は型の骨組みで実行し、本命のアサーションで失敗することを確かめてから実装する（T-37、T-39）。</p>
 <ul class="task-list">
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>1. スパイクのプロジェクトを作る</strong></li>
-<li><code>spikes/ts-01-totp/</code>（独立した Gradle プロジェクト。Spring Boot 4.1.1、<code>spring-boot-starter-security</code>・<code>webmvc</code>・テスト）。本体の Gradle wrapper で動かす。README に目的・動かし方・捨てる時期（US-18 の実装の後に消す）を書く</li>
-<li>完了の判定: 空のテストが通る。本体の <code>check</code> に影響しない</li>
-<li>結果（2026-10-06 12:25〜12:26。コミット <code>da3d761</code>）: <code>spikes/ts-01-totp/</code>（Spring Boot 4.1.1、Spring Security 7.1.1）を作り、README に目的・動かし方・消す時期を書いた。Gradle のキャッシュを誤ってコミットに含めたため、<code>.gitignore</code> を足して push の前に直した</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>2. TOTP の候補を比べる（学習テスト）</strong></li>
-<li>候補: (a) JDK の HMAC だけの実装（RFC 6238 の手順）、(b) <code>com.eatthepath:java-otp</code>（2026-08 に 1.0.0）、(c) <code>dev.samstevens.totp</code>（1.7.1、2020 年が最後）</li>
-<li>RFC 6238 の付録 B の試験ベクトル（SHA-1、8 桁）を、骨組みを先に置いて実行で失敗させてから通す（T-37）。6 桁・30 秒・前後 1 つの窓での検証、秘密の生成（Base32）、登録用の <code>otpauth://</code> URI の組み立て</li>
-<li>比べる観点: 正しさ（試験ベクトル）、保守（最後の公開）、ライセンス、推移的な依存、QR の画像の要否、API の分かりやすさ</li>
-<li>完了の判定: 比較の表を書ける</li>
-<li>結果（2026-10-06 12:26〜12:27。最後のコミット <code>b09e3fd</code>）: (a) の骨組みを置き、RFC 6238 の試験ベクトルの 7 件だけが実行で失敗することを記録してから実装した（<code>fcb1030</code>。T-37）。(b) <code>java-otp</code>（MIT、依存なし、2026-08）と (c) <code>dev.samstevens.totp</code>（POM にライセンスの記載なし、<code>commons-codec</code>・ZXing に依存、2020-11）はどちらも試験ベクトルを満たした。比較の表は ADR-011</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>3. Spring Security 7 の多要素認証で 2 段階のログインを組む（学習テスト）</strong></li>
-<li>password の認証の後は TOTP の入力の画面だけを開け、業務の画面（仮の <code>/staff</code>）は開けない</li>
-<li>TOTP が正しければ業務の画面を開ける。誤り・同じ時間の窓のコードの再利用は拒否する</li>
-<li>5 回連続の失敗でロックする（失敗をどこで数えられるか。Spring Security のイベントで分かるか）</li>
-<li>回復コード（1 回だけ使える）で TOTP の代わりにできるか</li>
-<li>session の無操作 30 分（<code>server.servlet.session.timeout</code>）と、発行から 8 時間の上限を、どの部品で守れるか（時間箱を超えたら「未確認」）</li>
-<li>password のハッシュは <code>DelegatingPasswordEncoder</code> の既定と Argon2id を確かめる（SEC-07）</li>
-<li>開発環境の入力済み（人の決定。2026-10-06）: <code>dev</code> プロファイルの設定（例: <code>cargotracker.dev-login.*</code>）があるときだけ、ログインの画面にメールアドレスと password が入った状態で出る。設定がないとき（既定）は空で出る。確認ポイント 7 の A-02 の扱いも確かめる</li>
-<li>完了の判定: MockMvc の学習テストが、上の振る舞いを確かめて通る。確かめられなかった項目は理由を書く</li>
-<li>結果（2026-10-06 12:28〜12:32。最後のコミット <code>7c02540</code>）<ul>
-<li>Red: 2 段階のログインの学習テスト 9 件を、password だけのフォームログインの骨組みの上で書いた（<code>2dfe45d</code>）。開発環境の入力済みと password の保存の学習テストも書いた（<code>8ba68bf</code>）</li>
-<li>Red の事実（レビュー K-07 で訂正。<code>8ba68bf</code> で 28 件中 9 件が失敗）: 2 段階のログインの 9 件のうち 7 件が失敗し、2 件（未認証で業務の画面を開く、password を経ずに TOTP だけを送る）は枠組みの既定で骨組みの上でも通った。失敗した 7 件のうち 4 件（8 時間、ロック、回復コード、正しい TOTP）は前提の段階（ログインできない）で落ち、本命のアサーションは Red を見ていない。開発環境の入力済みは 2 件が失敗した。<code>SessionTimeoutTest</code> は Green のコミットで足し、Red を経ていない</li>
-<li>Green（Green で、4 件の期待値を <code>/login/totp</code> から <code>factor.type</code>・<code>factor.reason</code> の付いた URL に書き換えた）: <code>@EnableMultiFactorAuthentication</code>（<code>FACTOR_PASSWORD</code>・<code>FACTOR_TOTP</code>）、TOTP の認証フィルター（<code>mfaEnabled</code>）と provider、足りない要素の画面へ導く <code>DelegatingMissingAuthorityAccessDeniedHandler</code>、失敗のイベントでの数え方とロック、再利用の拒否、回復コード、最長 8 時間のフィルター、無操作 30 分の設定、<code>dev</code> プロファイルだけの入力済み（<code>7c02540</code>）</li>
-<li>分かったこと: 結果のトークンの型が <code>toBuilder()</code> を宣言していないと、password の要素が合わさらず置き換わる（調べて直した）。足りない要素の画面へは <code>factor.type</code>・<code>factor.reason</code> が付く。Argon2id は Bouncy Castle が要る。要素の権限の発行時刻はシステムの時計で決まる</li>
-<li>学習テスト 29 件がすべて通る（候補の比較 13、2 段階のログイン 9、開発環境の入力済み 3、password の保存 2、session の期限 1、準備 1）</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>1. 業務のルールの層の受入シナリオ</strong> 【承認ゲート: シナリオ】</li>
+<li><code>features/tracking/register_milestone.feature</code>（新設。機能のタグは <code>@US-12 @must</code>）を先に書く: (a) <code>@US-12-AC1</code>: 追跡を開始した追跡記録に、集荷・JPTYO・発生時刻・出典（現場記録、参照 F-118）を登録すると、実績 1 が採用済みで保存され、現在状態が集荷済みになる。(b) <code>@US-12-AC2 @T-INV-02</code>: 同じ出典の種類と参照で再び登録すると、実績は 1 件のままで、既存の実績 1 が返る</li>
+<li>ステップ定義は <code>tracking/acceptance</code> に足す（メモリのリポジトリ。既存の <code>TrackingSteps</code> の形）</li>
+<li>型の骨組み（<code>TrackingRecordCommandService.registerMilestone</code> は未実装の例外）で流し、本命のアサーションで落ちることを確かめる</li>
+<li>完了の判定: シナリオが本命のアサーションで落ちる、T-53</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>2. 主要実績の登録のコマンドサービス</strong> 【承認ゲート: Red／Green（業務のルール）】</li>
+<li>単体テストを先に書く（メモリのリポジトリ）: 追跡番号で引いて登録し、<code>update</code> で保存する（<code>Registered</code> と現在状態）。同じ出典の 2 件目は <code>AlreadyRegistered</code>（既存の実績番号）で保存しない。ない追跡番号は <code>NotFound</code>。<code>ConcurrentTrackingRecordUpdateException</code> は <code>Conflict</code></li>
+<li><code>TrackingRecordCommandService</code>、<code>RegisterMilestoneCommand</code>、<code>MilestoneRegistrationOutcome</code>、<code>TrackingRecordRepository.update</code>、<code>ConcurrentTrackingRecordUpdateException</code>、メモリのリポジトリの <code>update</code>（期待版の検査。不変なので写しは要らない）、<code>TrackingConfiguration</code> の組み立て</li>
+<li>完了の判定: <code>check</code> 緑（ArchUnit の <code>@Service</code>・<code>@Command</code> の規則を含む）、ステップ 1 のシナリオはドメインの骨組みで落ちたまま、T-53</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>3. 出典と主要実績、現在状態の導出（ドメイン）</strong> 【承認ゲート: Red／Green（業務のルール）】</li>
+<li>単体テストを先に書く: <code>Source</code> の必須（種類・参照・取得時刻）と参照の 200 文字ちょうど・201 文字（T-29）、空白だけの参照。<code>registerMilestone</code> で実績番号が 1 から増える、登録の前の追跡記録は変わらない（仮説 H1）、同じ出典の既存の実績を返す（T-INV-02）、発生時刻が登録時刻より後は拒否・同時刻は受け付ける（境界）。<code>CurrentStatusDeriver</code>: 種類 6 個ごとの導出（T-57）、実績がないときは集荷予定のまま、登録の順と発生時刻の順が違うときは発生時刻が最も新しい実績で導出、採用済みでない実績は導出に入れない、根拠の実績番号</li>
+<li><code>Source</code>・<code>SourceKind</code>（<code>shared.domain</code>）、<code>Milestone</code>（<code>entities</code>）、<code>MilestoneKind</code>、<code>MilestoneState</code>、<code>MilestoneRegistration</code>、<code>CurrentStatusDeriver</code>（<code>rules</code>）、<code>TrackingRecord</code> の主要実績の列・根拠の実績番号・<code>reconstitute</code> の引数</li>
+<li>完了の判定: <code>check</code> 緑（用語集の整合テストを含む）、ステップ 1 のシナリオが通る、T-53</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>4. スキーマと永続化（PostgreSQL の統合テスト）</strong> 【承認ゲート: スキーマ、Red／Green（業務のルール）】</li>
+<li>統合テストを先に書く: 主要実績を INSERT し、追跡記録の現在状態・根拠の実績番号・版を UPDATE する。追跡番号で読むと主要実績が実績番号の順で戻る。古い版での <code>update</code> は <code>ConcurrentTrackingRecordUpdateException</code>。同じ追跡番号・出典の種類・参照の 2 件目は一意制約の違反を競合にする。CHECK（種類・出典の種類・状態）。アプリケーションの DB 利用者は <code>tracking.milestone</code> を DELETE できない・UPDATE はできる（<code>AppendOnlyGrantIntegrationTest</code> の <code>NO_DELETE_TABLES</code>）。表と列のコメント（<code>SchemaCommentIntegrationTest</code>）</li>
+<li>マイグレーション（<code>common</code>。表と全列のコメント）、<code>afterMigrate</code> の <code>[no-delete]</code> の規則と冒頭の注釈、マッパーの <code>insertMilestone</code>・<code>updateTrackingRecord</code>・<code>findMilestones</code>（<code>findTrackingRecordByTrackingNumber</code>・<code>findByBookingId</code> の組み立てに主要実績を足す）、行の型 <code>MilestoneRow</code> と結果の対応（T-71）。AT-04 の自スキーマの検査を通す</li>
+<li>完了の判定: <code>check</code> 緑（H2 の起動とマイグレーションを含む）、<code>uiTest</code> の全体が緑（既存の画面が壊れていない。T-79 で数える）、T-53</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>5. 開発レビューと終了報告</strong> 【承認ゲート: 開発レビューの判断、終了報告】</li>
+<li><code>developing-review</code>（プログラマー（テスター・アーキテクトの観点を含む）の観点。画面を変えないので、インタラクションデザイナーの観点は置かない）、SonarQube（<code>sonar-local:check</code>）、<code>bolt_26b_report.md</code>。受入動画は撮らない（画面がない。Bolt 23 と同じ）</li>
+<li>設計文書（T-53）<ul>
+<li>domain_model.md: 用語集に出典の種類・実績の種類・実績の状態の行、追跡記録の操作「実績を登録する」の Bolt 26b の範囲（手動で登録した実績は採用、同じ出典は既存を返す）、状態遷移の図の改訂（目的地到着 → 引渡し済みの R0.1 の直結、積替・出発の実績の名前）、実績の種類と追跡状態の対応、未来の発生時刻の拒否の規則、<code>CurrentStatusDeriver</code> の導出の規則、リポジトリの表の <code>update</code></li>
+<li>data_model.md: <code>milestone</code> の Bolt 26b の列（使う列だけ。後の列の Bolt）、追記専用の表の節に <code>[no-delete]</code> の印と規則（L1111 あたり）、<code>tracking_record</code> の UPDATE の列の注</li>
+<li>architecture_backend.md: 共有カーネルの表に出典・出典の種類を足す（ドメインモデルで設計済みなので ADR は要らない）</li>
+<li>test_strategy.md: US-12 の AC1・AC2 の業務のルールの層</li>
+<li>release_plan.md: W4 の表の 26b・26c の行、Living Documentation（新しいイベントなし、依存の変更なし）</li>
 </ul>
 </li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>4. 結論を ADR の案と技術スタックに書く</strong> 【承認ゲート: 方式の決定】</li>
-<li><code>docs/adr/cargo-tracker/011-mfa-totp.md</code>（状態: 提案）: 背景、選択肢（ライブラリの候補、枠組みの使い方）、決定の案、影響（US-18 の表・画面・ドメインモデルに要るもの、監査記録のイベントの出どころ、仮の主体の置き換えの順）、未確認の項目</li>
-<li>技術スタックの多要素認証の行と TS-01 の行、リスク台帳の行を更新する</li>
-<li>完了の判定: <code>okf:check</code> が ERROR 0。push して CI を確かめる。人が方式の案を選ぶ</li>
-<li>結果（2026-10-06）: <a href="../../../adr/cargo-tracker/011-mfa-totp/">ADR-011</a>（提案）を書き、技術スタックの多要素認証の行と TS-01、リスク台帳と引継ぎ、ADR の索引と mkdocs を更新した（リスク台帳は誤って影響度を下げていたため、ステップ 5 で発生確率を中から低に直した。レビュー R-13）</li>
-<li>承認ゲートの扱い（T-36）: 人の指示（<code>/goal Bolt13</code>）により、方式の決定の承認ゲートで止まらずにステップ 5 へ進めた（AI の判断）。根拠は、ADR-011 が「提案」の状態で、採否は W5 の US-18 の計画で人が決めること（確認ポイント 4）。本体のコードと依存は変えていない。終了報告の承認の議題の先頭に置く</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>5. レビューと Bolt 終了報告</strong></li>
-<li>スパイクの規模に合わせ、xp-architect と xp-tester の 2 つの視点で、ADR の案と学習テストをレビューする（T-28 の縮小版。確認ポイント 5）</li>
-<li><code>bolt_13_report.md</code> を書く（仮説 H1〜H3 の結論、比較の表、未確認の項目、時刻）</li>
-<li>US-18 の Issue #13 に結論をコメントする（確認ポイント 6）</li>
-<li>結果（2026-10-06 12:34〜。最後のコミットは本計画の更新のコミット）<ul>
-<li><a href="../../../review/cargo-tracker/bolt_13_review_20261006/">Bolt 13 のレビュー</a>: 改善提案は高 7・中 11・低 5、懸念 8、スコープ外 4。高は、期限切れの session に TOTP を送って 8 時間延ばせる迂回、TOTP の段で session の ID が変わらない、入力済みの守りが 1 層だけ、ロックと 8 時間の境界のテストがない、ADR が採る java-otp が流れで動いていない、<code>identity</code> への置き方がない</li>
-<li>スパイクで直した: Red <code>8eef0c7</code>（57 件中 5 件が失敗）、Green <code>0616c67</code>（57 件すべてが通る）。ADR-011 に決定 3（入力済みの 5 つの層）・決定 4（置き方と置き換えの順）、原子的な更新、未確認の項目、W5 で人が決める論点、コンプライアンスを足した</li>
-<li>判断 D-45〜D-48 は、<code>/goal Bolt13</code> により AI の判断で進めた（T-36）。終了報告の承認の議題に置く</li>
-<li><a href="../bolt_13_report/">Bolt 13 終了報告</a> を書き、#13 に結論をコメントした</li>
+<li>開発レビューの対応の後も push の前に <code>uiTest</code> を流す（T-70）</li>
 </ul>
-</li>
-</ul>
-<h3 id="_8">時間の配分と打ち切り<a class="headerlink" href="#_8" title="Permanent link">&para;</a></h3>
+<h3 id="_10">時間の配分と打ち切り<a class="headerlink" href="#_10" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
 <tr>
-<th style="text-align: left;">ステップ</th>
+<th style="text-align: left;">#</th>
 <th style="text-align: left;">目安</th>
+<th style="text-align: left;">打ち切り</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td style="text-align: left;">1</td>
-<td style="text-align: left;">15 分</td>
+<td style="text-align: left;">20 分</td>
+<td style="text-align: left;">削らない（受入条件のシナリオ）</td>
 </tr>
 <tr>
 <td style="text-align: left;">2</td>
-<td style="text-align: left;">40 分</td>
+<td style="text-align: left;">25 分</td>
+<td style="text-align: left;">—</td>
 </tr>
 <tr>
 <td style="text-align: left;">3</td>
-<td style="text-align: left;">60 分</td>
+<td style="text-align: left;">50 分</td>
+<td style="text-align: left;">削らない（導出の規則と重複の規則）</td>
 </tr>
 <tr>
 <td style="text-align: left;">4</td>
-<td style="text-align: left;">30 分</td>
+<td style="text-align: left;">45 分</td>
+<td style="text-align: left;">削らない（スキーマと DELETE の権限）</td>
 </tr>
 <tr>
 <td style="text-align: left;">5</td>
 <td style="text-align: left;">30 分</td>
-</tr>
-<tr>
-<td style="text-align: left;">合計</td>
-<td style="text-align: left;">175 分</td>
+<td style="text-align: left;">レビューの低の指摘は既知の課題に回す</td>
 </tr>
 </tbody>
 </table>
-<p>3 時間を超えそうなときは、次の順で「未確認」として ADR の案に残す（スパイクは時間箱で止める）。</p>
-<ol>
-<li>session の発行から 8 時間の上限</li>
-<li>回復コード</li>
-<li>候補 (c) の比較（保守されていない理由だけで外す）</li>
-</ol>
-<p>2 段階のログイン（H1）と TOTP の検証の正しさ（H2）は削らない。</p>
 <h2 id="try-t-6">確認ポイント（計画の承認の場でまとめて確認する。Try T-6）<a class="headerlink" href="#try-t-6" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
@@ -8937,170 +8829,148 @@
 <th style="text-align: left;">#</th>
 <th style="text-align: left;">確認すること</th>
 <th style="text-align: left;">ステップ</th>
-<th style="text-align: left;">理由</th>
+<th style="text-align: left;">推奨</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td style="text-align: left;">1</td>
-<td style="text-align: left;">スパイクのコードは <code>spikes/ts-01-totp/</code> に独立した Gradle プロジェクトとして置き、コミットする（結論の根拠として残す）。本体の build・CI・SonarQube の対象にしない。US-18 の実装が終わったら消す</td>
-<td style="text-align: left;">1</td>
-<td style="text-align: left;">新しいディレクトリ（構造の変更）。代わりの案（スクラッチパッドで動かしてコミットしない）は、ADR の根拠を後から再現できない</td>
+<td style="text-align: left;"><strong>Bolt 26b の分け方</strong>（release_plan の「4 時間を超えると見えたら、AC2 の画面と NULL 可の列の見直しを 26c に回す」）</td>
+<td style="text-align: left;">全体</td>
+<td style="text-align: left;"><strong>業務のルールと画面で分ける</strong>。理由は、業務のルールの層のシナリオ（テスト戦略の「受入条件の数だけ」）を入れると全体は 5 時間を超え、release_plan の字句どおりに AC2 の画面だけを回しても 26b が 4 時間半になるため。Bolt 23（業務のルール）・23b（画面）と同じ分け方。<br>- Bolt 26b（この計画、SP 0、2.5〜3 時間）: AC1・AC2 の業務のルール、スキーマ、永続化。<br>- Bolt 26c（SP 3、3〜3.5 時間）: S-13 の登録、S-12 の主要実績の一覧、AC2 の既存の記録の表示、画面の層のシナリオと受入動画、<code>tracking_record</code> の NULL 可の 4 列の NOT NULL 化（スキーマのゲート）、Bolt 26 の画面の既知の課題（U-3 を除く U-4・U-6、予定と実績の並べ方）。26c で #11 を閉じ、SP 3 を数える。<br>代わりの案は 2 つ。(b) release_plan の字句どおり（26b に S-13・S-12 の AC1 の画面まで入れ、AC2 の画面と NULL 可の列だけを 26c へ。26b は 4 時間半）。(c) 分けずに 1 つの Bolt（5 時間超。半日を超える）</td>
 </tr>
 <tr>
 <td style="text-align: left;">2</td>
-<td style="text-align: left;">スパイクでは、候補のライブラリと <code>spring-boot-starter-security</code> をスパイクのプロジェクトだけに入れる。本体への採用は、ADR を承認した後の US-18 の Bolt で行う</td>
-<td style="text-align: left;">1〜3</td>
-<td style="text-align: left;">外部ライブラリの導入は確認必須。スパイクでの試用と本体への採用を分ける</td>
+<td style="text-align: left;">アプローチと順序</td>
+<td style="text-align: left;">全体</td>
+<td style="text-align: left;">アウトサイドイン。既存のスキーマに表を足すのは「新しいスキーマ」に当たらない（Bolt 24 の解釈）。業務のルールの層のシナリオ → アプリケーション → ドメイン → 永続化（スキーマを含む）。Bolt 24 と同じ</td>
 </tr>
 <tr>
 <td style="text-align: left;">3</td>
-<td style="text-align: left;">候補は (a) JDK の HMAC だけの実装、(b) <code>java-otp</code>、(c) <code>dev.samstevens.totp</code> の 3 つにする（<code>googleauth</code> は 2020 年が最後で (c) と同じ理由で外す）</td>
-<td style="text-align: left;">2</td>
-<td style="text-align: left;">比べる範囲</td>
+<td style="text-align: left;"><strong>スキーマ（T-80。確認必須）</strong></td>
+<td style="text-align: left;">4</td>
+<td style="text-align: left;"><code>tracking.milestone</code> を、データモデルの ER 図の列のうち、この Bolt で使う列だけで作る。作るのは <code>tracking_number</code>、<code>milestone_no</code>、<code>kind</code>、<code>location_unlocode</code>、<code>occurred_at</code>、<code>source_kind</code>、<code>source_ref</code>、<code>acquired_at</code>、<code>state</code>、<code>registered_by</code>、<code>registered_at</code>。凍結までは使う列だけを作る規約（data_model.md）に従う。<code>revised_by</code>・<code>revised_at</code> は下書きの修正（W7）、<code>shown_to_customer</code> は顧客への表示（US-11・US-13）で足す。UK は <code>uk_milestone_source</code>（<code>tracking_number</code>、<code>source_kind</code>、<code>source_ref</code>）。<code>tracking_record</code> は列を変えず、<code>current_status</code>・<code>status_basis_milestone_no</code>・<code>version</code>・<code>updated_at</code> を UPDATE する。<code>last_acquired_at</code> は鮮度を扱う W7 まで書かない。荷主の照会（Bolt 27）の取得時刻は、実績ごとの出典の取得時刻で示す</td>
 </tr>
 <tr>
 <td style="text-align: left;">4</td>
-<td style="text-align: left;">ADR は 011 として「提案」の状態で書き、W5 の US-18 の計画の承認で「承認」にする。この Bolt では技術スタックの TS-01 を「スパイク済み（ADR 011 の案）」に更新する</td>
+<td style="text-align: left;"><strong>DELETE の権限の外し方（T-80。確認必須）</strong></td>
 <td style="text-align: left;">4</td>
-<td style="text-align: left;">方式の確定は、実装の Bolt で人が決める</td>
+<td style="text-align: left;">表のコメントに <code>[no-delete]</code> を付け、<code>afterMigrate</code> で DELETE だけを外す規則を足す（<code>[append-only]</code> と同じく、名指しせずに印で選ぶ）。根拠は、データモデルの追記専用の表の <code>tracking.milestone</code> の行（INSERT、SELECT、状態と下書き内容の UPDATE。DELETE の権限を外す）。代わりの案は、<code>afterMigrate</code> で <code>tracking.milestone</code> を名指しして REVOKE する（印の仕組みと分かれる）</td>
 </tr>
 <tr>
 <td style="text-align: left;">5</td>
-<td style="text-align: left;">本体のコードを変えないため、開発レビューは 5 つの視点でなく xp-architect と xp-tester の 2 つにし、デモの動画と SonarQube は対象外にする。学習テストの実行の結果を終了報告に載せる</td>
-<td style="text-align: left;">5</td>
-<td style="text-align: left;">スパイクの規模に合わせる</td>
+<td style="text-align: left;">登録した実績の状態</td>
+<td style="text-align: left;">3</td>
+<td style="text-align: left;">追跡管理者が登録した実績は採用（<code>ADOPTED</code>）にし、現在状態の導出に入れる。BR-05 の二者確認は訂正（T-INV-06）にかかる規則で、登録にはかからない。「採用前の下書き」（T-INV-07）は外部原本の取込（DE-13 の「主要実績を登録する（下書き）」、W7）で作る実績に使う。domain_model.md の「実績を登録する」に「手動で登録した実績は採用」を書く</td>
 </tr>
 <tr>
 <td style="text-align: left;">6</td>
-<td style="text-align: left;">US-18 の Issue は #6（R0.1）と #13（R1.0。W5）。結論を #13 にコメントする。どちらも状態は変えない</td>
-<td style="text-align: left;">5</td>
-<td style="text-align: left;">GitHub の同期</td>
+<td style="text-align: left;">集約を不変のまま保つか（Bolt 26 の P-6）</td>
+<td style="text-align: left;">2・3</td>
+<td style="text-align: left;">不変のまま。<code>registerMilestone</code> は新しい追跡記録と実績（<code>MilestoneRegistration</code>）を返す（<code>TrackingRecord.start</code> が <code>TrackingStart</code> を返すのと同じ形）。版はドメインで増やさず SQL で増やす（前例）。メモリのリポジトリの写しは要らない</td>
 </tr>
 <tr>
 <td style="text-align: left;">7</td>
-<td style="text-align: left;">開発環境のログインの入力済み（人の決定。2026-10-06）の範囲。A-01 は <code>dev</code> プロファイルの設定があるときだけ、開発用の利用者のメールアドレスと password を入力済みにする。A-02（TOTP）は、開発用の利用者に固定の TOTP の秘密を持たせ、<code>dev</code> プロファイルだけで現在のコードを入力済みにする案を AI は勧める（TOTP を飛ばす案は、開発と本番で認証の流れが変わり、2 段階のログインを開発環境で確かめられなくなるため採らない）。既定の設定で入力済みにならないことを学習テストで確かめ、ADR 011 の案に書く</td>
-<td style="text-align: left;">3、4</td>
-<td style="text-align: left;">セキュリティ（認証）。開発環境の設定が本番に漏れないことを守る</td>
+<td style="text-align: left;"><strong>現在状態の導出の規則と実績の種類</strong>（業務責任者として確かめてほしい）</td>
+<td style="text-align: left;">3</td>
+<td style="text-align: left;"><br>- 種類はドメインモデルの 6 個（集荷・搬入・出発・積替・到着・引渡し）。<br>- 導出は「発生時刻が最も新しい採用済みの実績の種類に対応する状態」。対応は、集荷 → 集荷済み、搬入 → 出発地搬入済み、出発 → 輸送中、積替 → 積替え中、到着 → 目的地到着、引渡し → 引渡し済み。<br>- 積替港での到着は「積替」、積替港からの出発は「出発」として登録する（場所では判定しない）。<br>- R0.1 では、目的地到着から引渡しの実績で引渡し済みへ直接進める。引渡し可能（荷降ろし・通関等完了）は、その実績の種類と手続き中の段階（<code>procedure_stage</code>）を作る Bolt で足す。<br>- 時系列に反する実績は、この Bolt では発生時刻の順で導出するだけで、確認中にしない（AC3、W7）。<br>- 発生時刻が登録時刻より後の実績は拒否する。<br>- 導出は <code>tracking.domain.model.rules.CurrentStatusDeriver</code>（ドメインモデルの名前、<code>@DomainRule</code>）に置く。<br>以上のうち、状態遷移の図と規則は domain_model.md への反映が必要</td>
+</tr>
+<tr>
+<td style="text-align: left;">8</td>
+<td style="text-align: left;"><strong>コマンドサービスの名前と結果の形</strong>（Bolt 25 の P-12）</td>
+<td style="text-align: left;">2</td>
+<td style="text-align: left;"><code>TrackingRecordCommandService.registerMilestone</code>（集約の名前。前例 <code>BookingCommandService</code>・<code>RoutingCaseCommandService</code>、対の <code>TrackingRecordQueryService</code>）。コマンドは <code>tracking.application.internal.commands.RegisterMilestoneCommand</code>（<code>@Command</code>）。業務の拒否は sealed の <code>MilestoneRegistrationOutcome</code>（<code>Registered</code>・<code>AlreadyRegistered</code>・<code>NotFound</code>・<code>Conflict</code>）で返す（前例 <code>BookingConfirmationOutcome</code>）。既存の DE-07 の listener は変えない（P-12 の listener 側は、listener を触る W7 の DE-09 の Bolt で見直す）</td>
+</tr>
+<tr>
+<td style="text-align: left;">9</td>
+<td style="text-align: left;">認可</td>
+<td style="text-align: left;">—</td>
+<td style="text-align: left;">変えない（画面を作らない。S-13 は Bolt 26c で <code>/staff/tracking-records/**</code> の規則の内側に作る）</td>
+</tr>
+<tr>
+<td style="text-align: left;">10</td>
+<td style="text-align: left;">ドメインイベント</td>
+<td style="text-align: left;">2・3</td>
+<td style="text-align: left;">発行しない。DE-09（集荷実績を採用した）は予約の購読が依存の循環になるため、ADR-014 の形に直す W7 の Bolt で足す（architecture_backend.md の注）。DE-18（確認中になった）は確認中が起きる W7。出典の型は DE-13（W7）でイベントの契約に入る（そのとき <code>DomainEventSerializationContractTest</code> に足す）</td>
+</tr>
+<tr>
+<td style="text-align: left;">11</td>
+<td style="text-align: left;">主要実績を読む順</td>
+<td style="text-align: left;">4</td>
+<td style="text-align: left;">追跡記録の組み立てでは実績番号の順に読む（集約の中の列の順）。画面の並び（発生時刻の順）は Bolt 26c で決める</td>
+</tr>
+<tr>
+<td style="text-align: left;">12</td>
+<td style="text-align: left;">同じ出典の同時の登録</td>
+<td style="text-align: left;">2・4</td>
+<td style="text-align: left;">一意制約の違反を競合（<code>Conflict</code>）にする。利用者が再び登録すると、集約の規則で既存の実績が返る（AC2）</td>
+</tr>
+<tr>
+<td style="text-align: left;">13</td>
+<td style="text-align: left;">荷主の照会（Bolt 27）への影響</td>
+<td style="text-align: left;">—</td>
+<td style="text-align: left;">登録で現在状態が変わると、荷主の照会（Bolt 27）に出る。登録した実績を荷主に見せるかどうか（<code>shown_to_customer</code>、T-INV-09）は Bolt 27 の計画で決める。この Bolt は荷主の画面を変えない</td>
+</tr>
+<tr>
+<td style="text-align: left;">14</td>
+<td style="text-align: left;">用語集</td>
+<td style="text-align: left;">3</td>
+<td style="text-align: left;">出典の種類（SourceKind）、実績の種類（MilestoneKind）、実績の状態（MilestoneState）を domain_model.md の用語集に足す。テストは注釈の付いた型（<code>Milestone</code>・<code>Source</code>）だけを見るが、enum も業務の言葉なので用語集に載せる（<code>TrackingStatus</code> と同じ）</td>
+</tr>
+<tr>
+<td style="text-align: left;">15</td>
+<td style="text-align: left;">出典の取得時刻</td>
+<td style="text-align: left;">2</td>
+<td style="text-align: left;">コマンドで受け取る（呼び出し元が決める）。Bolt 26c の S-13 では登録時刻を渡す案を、26c の計画で決める。外部原本の取込（W7）は受信記録の受信時刻を渡す</td>
 </tr>
 </tbody>
 </table>
-<p>決定（2026-10-06、human:kakimomokuri）: 確認ポイント 1〜7 はすべて上の案で決まった。</p>
-<h2 id="ai">AI の仮定<a class="headerlink" href="#ai" title="Permanent link">&para;</a></h2>
-<ul>
-<li>Spring Boot 4.1.1 が管理する Spring Security の版（7 系）を使う。マイルストーンの版（7.2.0-M2）は使わない。</li>
-<li>スパイクは、本体の Gradle wrapper（<code>apps/cargo-tracker/gradlew -p spikes/ts-01-totp</code>）で動かす。</li>
-<li>時間の窓の検証は、テストで固定の時計を使う。</li>
-</ul>
-<h2 id="_9">リスクと対策<a class="headerlink" href="#_9" title="Permanent link">&para;</a></h2>
-<table>
-<thead>
-<tr>
-<th style="text-align: left;">リスク</th>
-<th style="text-align: left;">影響</th>
-<th style="text-align: left;">対策</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align: left;">Spring Security 7 の多要素認証の API が想定と違う、または資料が少ない</td>
-<td style="text-align: left;">H1 が確かめられない</td>
-<td style="text-align: left;">依存の jar の API を直接読む。独自の段階のフィルターで組む代わりの案も、ADR の選択肢に書く</td>
-</tr>
-<tr>
-<td style="text-align: left;">Maven Central から候補を取れない（ネットワークの方針）</td>
-<td style="text-align: left;">候補を比べられない</td>
-<td style="text-align: left;">取れない候補は「未確認」とし、JDK の実装と比べる</td>
-</tr>
-<tr>
-<td style="text-align: left;">スパイクのコードが本体に混ざる</td>
-<td style="text-align: left;">確かめていない依存が本番に入る</td>
-<td style="text-align: left;">別のプロジェクトにし、本体の <code>settings.gradle</code> に含めない</td>
-</tr>
-<tr>
-<td style="text-align: left;">時間箱を超える</td>
-<td style="text-align: left;">Bolt が半日を超える</td>
-<td style="text-align: left;">打ち切りの順を決めた</td>
-</tr>
-</tbody>
-</table>
-<h2 id="_10">完了条件<a class="headerlink" href="#_10" title="Permanent link">&para;</a></h2>
-<h3 id="definition-of-done">Definition of Done<a class="headerlink" href="#definition-of-done" title="Permanent link">&para;</a></h3>
+<h2 id="_11">完了条件<a class="headerlink" href="#_11" title="Permanent link">&para;</a></h2>
 <ul class="task-list">
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> ステップ 1〜5 が完了し、計画・方式の決定・終了報告の承認ゲートを人が通した（方式の決定のゲートとレビューの判断は、終了報告の承認の場でまとめて通した。T-36）</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> スパイクの学習テストが通り、実行の結果を終了報告に載せた</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> TOTP の候補の比較の表と、2 段階のログインの構成を、ADR 011 の案に書いた</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> 技術スタックの TS-01 とリスク台帳を更新した</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> 本体の <code>check</code> と CI が緑のまま（本体のコードを変えていない）</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> US-18 の Issue に結論をコメントした</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> ユーザーマニュアルは更新しない（本体の画面を変えない）</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> 業務のルールの層の受入シナリオ（<code>@US-12-AC1</code>・<code>@US-12-AC2</code>）が通る</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> ドメインの単体テストで、種類ごとの導出、同じ出典の既存の実績、登録の前の追跡記録が変わらないこと（仮説 H1）を確かめた</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> PostgreSQL の統合テストで、一意制約・DELETE の権限なし・楽観ロック・表と列のコメントを確かめた</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <code>check</code>・<code>documentationTest</code>・<code>uiTest</code> が緑。push して CI とデモ環境の配備を確かめた</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> SonarQube の Quality Gate が PASS</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> 設計文書（ステップ 5 の一覧）に決定を書いた（T-53）</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> 開発レビューと終了報告</li>
 </ul>
-<h3 id="_11">デモ項目<a class="headerlink" href="#_11" title="Permanent link">&para;</a></h3>
-<table>
-<thead>
-<tr>
-<th style="text-align: left;">#</th>
-<th style="text-align: left;">デモ</th>
-<th style="text-align: left;">確かめること</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align: left;">1</td>
-<td style="text-align: left;">スパイクの学習テストを実行する</td>
-<td style="text-align: left;">RFC 6238 の試験ベクトル、2 段階のログイン（password だけでは業務の画面を開けない）、再利用の拒否、失敗の数え方が通る</td>
-</tr>
-</tbody>
-</table>
-<h2 id="_12">更新履歴<a class="headerlink" href="#_12" title="Permanent link">&para;</a></h2>
+<h3 id="_12">デモ項目<a class="headerlink" href="#_12" title="Permanent link">&para;</a></h3>
+<p>画面がないのでデモの動画は撮らない。終了報告に、業務のルールの層のシナリオの結果（AC1 で現在状態が集荷済みになる、AC2 で既存の実績が返る）を載せる。</p>
+<h3 id="_13">ユーザーマニュアル<a class="headerlink" href="#_13" title="Permanent link">&para;</a></h3>
+<p>この Bolt では作らない（画面がない。W4 の完了の後に <code>docs/manual</code> を作る。2026-10-08 の決定）。</p>
+<h2 id="_14">更新履歴<a class="headerlink" href="#_14" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
 <tr>
 <th style="text-align: left;">日付</th>
-<th style="text-align: left;">内容</th>
-<th style="text-align: left;">作成</th>
-<th style="text-align: left;">承認</th>
+<th style="text-align: left;">更新内容</th>
+<th style="text-align: left;">更新者</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td style="text-align: left;">2026-10-06</td>
-<td style="text-align: left;">初版（Bolt 12 終了報告の次の Bolt。範囲は人の決定で TS-01 だけ）</td>
+<td style="text-align: left;">2026-10-10</td>
+<td style="text-align: left;">開始準備の整合性検証（計画と設計 14 件、横断 19 件）の指摘を反映した。主な修正は次のとおり。<br>- 範囲: 業務のルールと画面で分け、業務のルールの層のシナリオを足した。<br>- 出典の種類の値: 既存の CHECK にそろえた。<br>- 置き場所と名前: <code>entities</code>・<code>rules</code>・<code>TrackingRecordCommandService</code>・Outcome。<br>- 版: SQL で増やす。<br>- 使う列だけを作る。<br>- 状態遷移: 図の改訂を設計への反映にした。<br>- <code>[no-delete]</code> の一覧と表・列のコメント。<br>- 設計文書の反映先: architecture_backend.md。</td>
 <td style="text-align: left;">anthropic/claude-opus-5-5</td>
-<td style="text-align: left;">—</td>
 </tr>
 <tr>
-<td style="text-align: left;">2026-10-06</td>
-<td style="text-align: left;">人の決定（開発環境ではログインの画面を入力済みにする）をスコープ・ステップ 3・確認ポイント 7 に足した</td>
+<td style="text-align: left;">2026-10-10</td>
+<td style="text-align: left;">初版作成（承認待ち）</td>
 <td style="text-align: left;">anthropic/claude-opus-5-5</td>
-<td style="text-align: left;">human:kakimomokuri（決定）</td>
-</tr>
-<tr>
-<td style="text-align: left;">2026-10-06</td>
-<td style="text-align: left;">計画を承認。確認ポイント 1〜7（スパイクの置き場所、依存の入れ方、候補、ADR 011 の扱い、レビューの縮小、Issue のコメント、開発環境のログインの入力済み）も決まった（Try T-6）</td>
-<td style="text-align: left;">anthropic/claude-opus-5-5</td>
-<td style="text-align: left;">human:kakimomokuri</td>
-</tr>
-<tr>
-<td style="text-align: left;">2026-10-06</td>
-<td style="text-align: left;">ステップ 3 の Red の記録を事実に直し（レビュー K-07）、ステップ 4・5 の結果を書いた</td>
-<td style="text-align: left;">anthropic/claude-opus-5-5</td>
-<td style="text-align: left;">—</td>
-</tr>
-<tr>
-<td style="text-align: left;">2026-10-06</td>
-<td style="text-align: left;">方式の決定（ステップ 4。ADR-011 は「提案」のまま）、レビューの判断（D-45〜D-48）、終了報告の承認をまとめて通し、Bolt を終えた（人の変更依頼 0）。#6・#13 の状態は変えていない</td>
-<td style="text-align: left;">anthropic/claude-opus-5-5</td>
-<td style="text-align: left;">human:kakimomokuri</td>
 </tr>
 </tbody>
 </table>
-<h2 id="_13">関連ドキュメント<a class="headerlink" href="#_13" title="Permanent link">&para;</a></h2>
+<h2 id="_15">関連ドキュメント<a class="headerlink" href="#_15" title="Permanent link">&para;</a></h2>
 <ul>
-<li><a href="../release_plan/">リリース計画</a>（W2、リスク台帳）</li>
+<li><a href="../release_plan/">リリース計画</a>（W4）</li>
+<li><a href="../bolt_26_plan/">Bolt 26 計画</a>、<a href="../bolt_26_report/">Bolt 26 終了報告</a>、<a href="../bolt_23_plan/">Bolt 23 計画</a>・<a href="../bolt_24_plan/">Bolt 24 計画</a>（業務のルールと画面の分け方、スキーマを永続化のステップに置く前例）</li>
+<li><a href="../../../requirements/cargo-tracker/user_story/">ユーザーストーリー</a>（US-12）</li>
+<li><a href="../../../design/cargo-tracker/domain_model/">ドメインモデル</a>（追跡、共有カーネル、T-INV-01〜08）</li>
+<li><a href="../../../design/cargo-tracker/data_model/">データモデル</a>（<code>tracking</code>、追記専用）</li>
+<li><a href="../../../design/cargo-tracker/architecture_backend/">アーキテクチャ（バックエンド）</a>（共有カーネル、DE-09 の注）</li>
+<li><a href="../../../design/cargo-tracker/test_strategy/">テスト戦略</a>（US-12）</li>
 <li><a href="../development_strategy/">開発戦略</a></li>
-<li><a href="../bolt_12_report/">Bolt 12 終了報告</a></li>
-<li><a href="../../../requirements/cargo-tracker/user_story/">ユーザーストーリー</a>（US-18）、<a href="../../../design/cargo-tracker/non_functional/">非機能要件</a>（SEC-04〜10）、<a href="../../../design/cargo-tracker/tech_stack/">技術スタック</a>（TS-01）</li>
 </ul>
 
 
