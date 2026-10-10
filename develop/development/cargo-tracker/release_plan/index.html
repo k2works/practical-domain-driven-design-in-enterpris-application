@@ -4931,6 +4931,41 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../release_report-0_1/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Release 0.1 リリース完了報告書
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--draft"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -10115,6 +10150,7 @@
 </tr>
 </tbody>
 </table>
+<p>Release 1.0 の承認ゲートの密度は、Release 0.1 の実績で W4 の締めに決め直した（「ベロシティ検証計画」の「W4 の締めの見直し」）。上の表の「密」は、Release 1.0 では計画の承認の場の確認ポイントと終了報告の承認で受け、ステップごとに止めるのは認証の完成（U4、W5）と外部原本の取込（U5、W7）に限る。</p>
 <h3 id="_7">スコープ・深さ・テスト戦略<a class="headerlink" href="#_7" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
@@ -10653,6 +10689,38 @@
 <li>Release 1.0 の引き直し（10 SP を超える W6・W9 の扱い）は、Release 0.1 を終えた W4 の締めで行う</li>
 <li>W4 の承認ゲートの密度: リスク台帳（「Unit の評価」の表）に従う。予約・追跡の Bolt（23〜27）は、U6 の確定・冪等・重複防止と U3 の開示制御を Red・Green ごとに、スキーマと認可をステップごとに止める。<code>/goal</code> で止めずに進めるのは Bolt 22（#41）と Bolt 28（<code>@ui</code> とデモ）だけ（開始準備の横断検証で、最初の案「US-04 だけステップごと」が台帳と食い違うと分かり、決め直した）</li>
 </ul>
+<p><strong>W4 の締めの見直し</strong>（2026-10-10 に human:kakimomokuri が決定。Release 0.1 の実績による）:</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">指標</th>
+<th style="text-align: left;">Release 0.1（W1〜W4）の実績</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">完了 SP</td>
+<td style="text-align: left;">35 SP（計画 35 SP。W1 6、W2 7、W3 11、W4 11）</td>
+</tr>
+<tr>
+<td style="text-align: left;">Bolt</td>
+<td style="text-align: left;">33 本（W1 8、W2 6、W3 7、W4 12。W4 は 23b・25b・26b・26c・27b を分けて半日以内に収めた）。暦では 2026-10-01〜10-10 の 9 稼働日で、計画（W1〜W4 の 19 営業日）より約 2 週早い</td>
+</tr>
+<tr>
+<td style="text-align: left;">人の変更依頼</td>
+<td style="text-align: left;">4（W1〜W3 の 1、W4 の 3: 予約サガの置き場所、公開 API の置き場所と見積りへの適用）と範囲の追加 1（Bolt 27b の荷主の予約一覧）</td>
+</tr>
+<tr>
+<td style="text-align: left;">承認ゲート</td>
+<td style="text-align: left;">W4 の 12 本はすべて、<code>/goal</code> や人の指示で途中のゲートの全部か一部を止めずに進め、終了報告の承認でまとめて受けた。手順の逸脱（Red を確かめる前の実装、確認必須のゲートの AI の判断での通過）は終了報告と開発レビューで拾え、T-67・T-80 の後は確認必須のゲートを守れた</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li>Release 1.0 の計画: 範囲と日付（Release 1.0 は 2026-12-11）は変えない。US-04 の残り（3 SP、#43）を W6 から W5 に前倒しして W6 を 10 SP にする。W5（祝日の週で 11 SP）と W9（15 SP）の超過は、Release 0.1 を計画より約 2 週早く終えた余裕で吸収し、週ごとの見直しで確かめる。吸収できないと見えたら「バッファ消費ルール」に従う</li>
+<li>Release 1.0 の承認ゲートの密度: 既定は計画の承認と終了報告の承認で止める。確認必須（スキーマ・認可・外部連携・セキュリティ）は計画の承認の場で確認ポイントとして判断を受ける（T-80）。ただし、リスクの高い認証の完成（W5、US-18 の残り。セキュリティ）と外部原本の取込（W7、US-14）は、ステップごとに止める</li>
+<li>Release 0.1 の負債: 画面の層のステップ定義のキー操作の部品（#45、T-87）と、マニュアルの作成で見つけた画面の文言と表示の課題（#46）を、W5 の最初の Bolt で返す（ともに SP 0）</li>
+</ul>
 <hr />
 <h2 id="_15">段階的リリース戦略<a class="headerlink" href="#_15" title="Permanent link">&para;</a></h2>
 <h3 id="_16">リリーススケジュール<a class="headerlink" href="#_16" title="Permanent link">&para;</a></h3>
@@ -10705,6 +10773,10 @@
 <td style="text-align: left;">W3</td>
 <td style="text-align: left;">2026-10-06 〜 2026-10-08（W3 の期間の前に前倒し）。Bolt 15（dev プロファイルによる Heroku のデモ環境。SP 0、ADR-013）、Bolt 16（デモ環境への CI からの配備。SP 0）、Bolt 17（US-06 AC1〜AC3）、Bolt 18（デモ環境のサンプル。SP 0）、Bolt 19（US-07 AC1・AC2）、Bolt 20（US-24 AC4・AC5、ADR-014）、Bolt 21（US-21 AC1）。11 SP（US-06 3、US-07 3、US-24 3、US-21 2）。W1〜W3 の累計は 24 SP（計画も 24 SP）</td>
 </tr>
+<tr>
+<td style="text-align: left;">W4</td>
+<td style="text-align: left;">2026-10-08 〜 2026-10-10（W4 の期間の前に前倒し）。Bolt 22（日時表示・期間表示の集約。SP 0）、Bolt 23・23b・24（US-04 の確定・失効・再送・重複確定の防止と画面、ADR-015・ADR-016）、Bolt 25（追跡の開始と予約サガの成功の経路）、Bolt 25b（S-10 予約一覧）、Bolt 26（追跡管理者の入口）、Bolt 26b・26c（US-12 AC1・AC2）、Bolt 27（US-09 AC1）、Bolt 27b（C-06 荷主の予約一覧）、Bolt 28（主成功の流れの <code>@ui</code> シナリオと Release 0.1 のデモ）。11 SP（US-04 5、US-12 3、US-09 3）。W1〜W4 の累計は 35 SP（計画も 35 SP）。Release 0.1 を 2026-10-10 に終えた（計画は 10-30）。続けてユーザーマニュアルとウォーキングスケルトンのガイドツアーの記事を作った</td>
+</tr>
 </tbody>
 </table>
 <h3 id="_19">リリース内容<a class="headerlink" href="#_19" title="Permanent link">&para;</a></h3>
@@ -10725,6 +10797,7 @@
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> H2 で起動でき、PostgreSQL の統合テストが通る（Bolt 28 で確かめた）</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> 社内デモで human:kakimomokuri が流れを確認する（2026-10-10、デモ環境。<a href="../bolt_28_report/">Bolt 28 終了報告</a>）</li>
 </ul>
+<p><strong>完了</strong>: 2026-10-10（計画は 2026-10-30）。35 SP。<a href="../release_report-0_1/">Release 0.1 リリース完了報告書</a></p>
 <h4 id="release-10w10">Release 1.0（W10 完了）: パイロット準備完了<a class="headerlink" href="#release-10w10" title="Permanent link">&para;</a></h4>
 <p><strong>目標</strong>: Must の 17 ストーリーの全受入条件と運用準備をそろえ、パイロットを開始できる状態にする。</p>
 <p><strong>含まれる機能</strong>:</p>
@@ -11136,9 +11209,27 @@
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> ユーザーマニュアル（<code>docs/manual</code>）の作成（Bolt 28 の次。2026-10-10 に human:kakimomokuri が決定）。はじめに・業務フロー・2〜10 章・用語集・トラブルシューティングの 14 ページと、<code>./gradlew manualScreenshots</code> で撮るキャプチャ 35 枚。HTML は ER 図・JIG と同じく <code>docs/assets/manual-output/cargo-tracker/</code> に出してサイトからリンクした（人の指示）。テクニカルライターのレビューの画面側の指摘（本予約の確定の「確定条件（BR-01）」と「GENERAL / PALLET」、KPI 計測記録の「輸送要求ごと」、経路候補の「参照情報版 UI-…@1」、見積りへの回答の案内の重複、追跡の開始の後も荷主の状態が「（追跡の開始の準備中）」のまま、受付一覧などの「入口の一覧へ戻る」がホームに移るだけ）は W4 の締めで扱いを決める。サイト（mkdocs）は日本語の見出しにアンカーを作らないので、マニュアルの節へのリンクはサイトではページの先頭に飛ぶ（HTML 版は節に飛ぶ）</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> ウォーキングスケルトンのガイドツアーの記事（<code>docs/article</code> に追加。<code>creating-article</code>）の作成（ユーザーマニュアルの次。2026-10-10 に human:kakimomokuri が決定）。<a href="../../../article/walking-skeleton-tour/">ウォーキングスケルトンのガイドツアー</a>（開発ガイドラインとは別の記事。人の指示）。停留所ごとに実際のコードを写し、抜粋の全行がソースに実在することを機械で確かめた</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> ベロシティと承認ゲートの密度の見直し（W4 の開始時。「ベロシティ検証計画」）</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> W4 の締め: Release 1.0 の計画の引き直し、Release 0.1 の実績による Release 1.0 の承認ゲートの密度の決め直し、Release 0.1 のリリース完了報告書</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> W4 の締め: Release 1.0 の計画の引き直し、Release 0.1 の実績による Release 1.0 の承認ゲートの密度の決め直し、Release 0.1 のリリース完了報告書（2026-10-10 に human:kakimomokuri が決定。「ベロシティ検証計画」の「W4 の締めの見直し」、<a href="../release_report-0_1/">Release 0.1 リリース完了報告書</a>）。マニュアルの画面側の課題は <a href="https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/46">#46</a> にし、#45 とあわせて W5 の最初の Bolt にした</li>
 </ul>
 <p><strong>目標 SP</strong>: 11</p>
+<p><strong>結果</strong>（2026-10-10 に締めた）: 11 SP（US-04 5、US-12 3、US-09 3）。達成率 100%。Bolt 22〜28（23b・25b・26b・26c・27b を含む 12 本）を、W4 の期間（10-26〜10-30）の前の 2026-10-08〜10-10 に終えた。Release 0.1 の 35 SP をすべて終え、Bolt 28 の社内デモでリリース条件を満たした。人の変更依頼 3 と範囲の追加 1（Bolt 27b）。#10・#11・#12・#41・#44 をクローズし、GitHub の Release 0.1 のマイルストーン（18 件すべてクローズ）を閉じた。開いている持ち越しは #45・#46（技術タスク、W5）と、US-04 の Release 1.0 の範囲の #43（W6 から W5 に前倒し）</p>
+<p><strong>ふりかえり</strong>（Bolt 22〜28 の終了報告の KPT をまとめた）:</p>
+<ul>
+<li>Keep</li>
+<li>開始準備の 2 つの検証（計画と設計、横断）で、依存の循環（Bolt 23）、層の規則との衝突（Bolt 24・25）、壊れる既存のテスト（Bolt 26・27b）、範囲の取りこぼし（Bolt 26c）を着手の前に見つけ、Bolt を分けて半日以内に収めた</li>
+<li>確認必須のゲート（スキーマ・認可）を、T-67・T-80 で途中で止めるか計画の承認の場で判断を受けるようになり、Bolt 24 から後は守れた</li>
+<li>Bolt ごとに画面の層のシナリオを先に書いてきたので、主成功の流れをステップ定義を足さずに組めた（Bolt 28）</li>
+<li>Problem</li>
+<li>Red を確かめる前に実装を書く逸脱が続いた（Bolt 23・24・25b・26c・27）。骨組みが本命のアサーション以外で落ちる、骨組みで最初から通るテストもあった（Bolt 26b・27b）</li>
+<li>heredoc と置換のスクリプトの失敗が繰り返した（T-55・T-73・T-78 を守らなかった。Bolt 23b〜26b）</li>
+<li>Bolt 2 から持ち越した 2 つ（R-17 の照合、AT-05）が、移し先を決めたまま 20 以上の Bolt で実装されなかった（Bolt 28）</li>
+<li>マニュアルを書いて初めて、画面に実装の語や業務ルールの番号が出ていること、状態の表示が実際と食い違うことに気づいた（#46）</li>
+<li>Try（W5 に持ち込む）</li>
+<li>T-83・T-88: 骨組みや待ち方を直したら骨組みのまま流し、本命のアサーションで落ちることを確かめる。骨組みで最初から通るテストは計画に「見張り」と書く</li>
+<li>T-89: 後に回したものは Issue にし、週の見直しで開いている持ち越しを数える（W4 の締めの時点で #45・#46 の 2 件）</li>
+<li>T-90: 画面を作る Bolt の開発レビューに、マニュアルを書く立場の観点（画面に実装の語や業務ルールの番号が出ていないか、状態の表示が実際と合うか）を入れる（AI、W5 から）</li>
+<li>Release 1.0 の承認ゲートの密度は「W4 の締めの見直し」のとおり（既定は計画と終了報告、認証の完成と外部原本の取込はステップごと）</li>
+</ul>
 <h3 id="w5w10release-10">W5〜W10（Release 1.0）<a class="headerlink" href="#w5w10release-10" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
@@ -11154,16 +11245,16 @@
 <tr>
 <td style="text-align: left;">W5</td>
 <td style="text-align: left;">11-02 〜 11-06（11-03 祝日）</td>
-<td style="text-align: left;">認証の完成と利用者管理</td>
-<td style="text-align: left;">US-18 残り（6）、US-16（5）の一部</td>
-<td style="text-align: right;">8</td>
+<td style="text-align: left;">Release 0.1 の負債の返済、認証の完成と利用者管理、予約の完成</td>
+<td style="text-align: left;">最初の Bolt で #45・#46（技術タスク、SP 0）。US-18 残り（6）、US-16（5）の一部、US-04 残り（3。#43。W4 の締めで W6 から前倒し）</td>
+<td style="text-align: right;">11</td>
 </tr>
 <tr>
 <td style="text-align: left;">W6</td>
 <td style="text-align: left;">11-09 〜 11-13</td>
-<td style="text-align: left;">経路設計・予約の完成</td>
-<td style="text-align: left;">US-16 残り、US-06 残り（5）、US-07 残り（2）、US-04 残り（3）</td>
-<td style="text-align: right;">13</td>
+<td style="text-align: left;">経路設計の完成</td>
+<td style="text-align: left;">US-16 残り、US-06 残り（5）、US-07 残り（2）</td>
+<td style="text-align: right;">10</td>
 </tr>
 <tr>
 <td style="text-align: left;">W7</td>
@@ -11195,7 +11286,7 @@
 </tr>
 </tbody>
 </table>
-<p>W6 と W9 は 10 SP を超えるため、W4 の見直しで、W5・W8 の祝日の週との入れ替えや、Release 1.1 への繰り下げを判断する。</p>
+<p>W4 の締め（2026-10-10 に human:kakimomokuri が決定）で、範囲と日付は変えず、US-04 の残りを W6 から W5 に前倒しした。W5（11 SP）と W9（15 SP）の超過は、Release 0.1 を約 2 週早く終えた余裕で吸収し、週ごとの見直しで確かめる（「ベロシティ検証計画」の「W4 の締めの見直し」）。</p>
 <h3 id="w11w14release-11">W11〜W14（Release 1.1）<a class="headerlink" href="#w11w14release-11" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
@@ -11457,7 +11548,7 @@
 <td style="text-align: left;">再見積りできない（<code>Quotation.requoteRejection</code> のまま）。S-02 は「荷主の承認の後に失効した見積りの再見積りは、まだ画面で操作できません。扱いは担当者で相談してください。」と案内する（Bolt 23b の暫定の案内）</td>
 <td style="text-align: left;">US-03、US-04、US-24、ドメインモデル（見積りの再見積りの規則）、UI 設計（S-02・S-04）</td>
 <td style="text-align: left;"><a href="../bolt_23b_report/">Bolt 23b 終了報告</a> 議題 5、<a href="../bolt_24_plan/">Bolt 24 計画</a> 確認ポイント 14</td>
-<td style="text-align: left;">W6 の開始準備（2026-11-09）</td>
+<td style="text-align: left;">W5 の開始準備（2026-11-02。#43 を W5 に前倒ししたため。W4 の締め）</td>
 <td style="text-align: left;">未決</td>
 </tr>
 </tbody>
@@ -11630,11 +11721,11 @@
 <tbody>
 <tr>
 <td style="text-align: left;">ベロシティ</td>
-<td style="text-align: left;">10 SP / 週（W4 で見直す）</td>
+<td style="text-align: left;">10 SP / 週（祝日の週は 8 SP）。Release 0.1 の実績は平均 8.75 SP / 週（計画どおり）。W4 の締めで維持した</td>
 </tr>
 <tr>
 <td style="text-align: left;">承認ゲートの通過数・変更依頼の数</td>
-<td style="text-align: left;">記録し、W4 で基準を決める</td>
+<td style="text-align: left;">記録する。Release 1.0 の承認ゲートの密度は W4 の締めで決めた（「ベロシティ検証計画」）</td>
 </tr>
 <tr>
 <td style="text-align: left;">Bolt のリードタイム</td>
@@ -11687,19 +11778,19 @@
 <td style="text-align: left;">W4</td>
 <td style="text-align: right;">11</td>
 <td style="text-align: right;">11</td>
-<td style="text-align: right;">-</td>
-<td style="text-align: left;">進行中（Bolt 22・23・23b・24・25・25b・26・26b・26c・27・27b・28 を終えた。Release 0.1 のリリース条件をすべて満たした（Bolt 28）。US-09 の R0.1 を完了し、#12 をクローズして SP 3 を数えた。US-12 の R0.1 を完了し、#11 をクローズして SP 3 を数えた。US-04 の R0.1 を完了し、#10 をクローズして SP 5 を数えた。#41・#42 をクローズした。人の変更依頼 3（公開 API の置き場所 2、Bolt 27 の承認の場の荷主の予約一覧 1））</td>
+<td style="text-align: right;">100%</td>
+<td style="text-align: left;">完了（2026-10-08〜10-10 に終え、2026-10-10 に締めた。Bolt 22・23・23b・24・25・25b・26・26b・26c・27・27b・28 を終えた。Release 0.1 のリリース条件をすべて満たした（Bolt 28）。US-09 の R0.1 を完了し、#12 をクローズして SP 3 を数えた。US-12 の R0.1 を完了し、#11 をクローズして SP 3 を数えた。US-04 の R0.1 を完了し、#10 をクローズして SP 5 を数えた。#41・#42 をクローズした。人の変更依頼 3（予約サガの置き場所 1、公開 API の置き場所 2）と範囲の追加 1（Bolt 27 の承認の場の荷主の予約一覧）。Release 0.1 の 35 SP を終え、マイルストーンを閉じた）</td>
 </tr>
 <tr>
 <td style="text-align: left;">W5</td>
-<td style="text-align: right;">8</td>
+<td style="text-align: right;">11</td>
 <td style="text-align: right;">-</td>
 <td style="text-align: right;">-</td>
-<td style="text-align: left;">未着手</td>
+<td style="text-align: left;">未着手（W4 の締めで US-04 の残り 3 を W6 から前倒し。最初の Bolt で #45・#46）</td>
 </tr>
 <tr>
 <td style="text-align: left;">W6</td>
-<td style="text-align: right;">13</td>
+<td style="text-align: right;">10</td>
 <td style="text-align: right;">-</td>
 <td style="text-align: right;">-</td>
 <td style="text-align: left;">未着手</td>
@@ -11767,7 +11858,7 @@
     title "リリースバーンダウン（計画）"
     x-axis ["開始", "W1", "W2", "W3", "W4", "W5", "W6", "W7", "W8", "W9", "W10", "W11", "W12", "W13", "W14"]
     y-axis "残 SP" 0 --&gt; 130
-    line [126, 120, 112, 102, 91, 83, 70, 60, 52, 37, 37, 26, 16, 8, 0]</code></pre>
+    line [126, 120, 112, 102, 91, 80, 70, 60, 52, 37, 37, 26, 16, 8, 0]</code></pre>
 <hr />
 <h2 id="github">GitHub との同期<a class="headerlink" href="#github" title="Permanent link">&para;</a></h2>
 <p>本計画を正とし、GitHub は同期先とする（2026-10-01 に初回同期）。</p>
@@ -12115,6 +12206,11 @@
 <td style="text-align: left;">2026-10-10</td>
 <td style="text-align: left;">ウォーキングスケルトンのガイドツアーの記事を作成した（開発ガイドラインとは別の記事）</td>
 <td style="text-align: left;">anthropic/claude-opus-5-5、指示 human:kakimomokuri</td>
+</tr>
+<tr>
+<td style="text-align: left;">2026-10-10</td>
+<td style="text-align: left;">W4 を締めた（11 SP、達成率 100%、Release 0.1 の 35 SP を完了）。W4 の結果とふりかえり、実績スケジュール、Release 0.1 リリース完了報告書を書いた。Release 1.0 の計画を引き直し（US-04 の残りを W5 に前倒し、W5 11・W6 10 SP、超過は前倒しの余裕で吸収）、承認ゲートの密度を決め直した。#46（画面側の課題）を起票し、#45・#46・#43 を W5 にした。D-85 の期限を W5 の開始準備にした。GitHub の Release 0.1 のマイルストーンを閉じた</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5、決定 human:kakimomokuri</td>
 </tr>
 </tbody>
 </table>

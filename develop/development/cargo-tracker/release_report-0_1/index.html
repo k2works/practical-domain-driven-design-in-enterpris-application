@@ -6,35 +6,35 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="本ドキュメントは、{プロジェクト名}のアプリケーション開発環境をセットアップする手順を説明します。">
+        <meta name="description" content="Release 0.1（最初の縦の流れ、W1〜W4）のリリース完了報告書。35 SP を 33 本の Bolt と 9 稼働日で終えた計画と実績の差異、コミットと品質の指標、主要な成果物、Release 0.1 のふりかえりと Release 1.0 への引き継ぎ（計画の引き直しと承認ゲートの密度）を記す。">
       
       
         <meta name="author" content="k2works">
       
       
       
-        <link rel="prev" href="../%E3%83%AA%E3%83%AA%E3%83%BC%E3%82%B9%E5%AE%8C%E4%BA%86%E5%A0%B1%E5%91%8A%E6%9B%B8/">
+        <link rel="prev" href="../bolt_28_report/">
       
       
-        <link rel="next" href="../%E9%96%8B%E7%99%BA%E7%92%B0%E5%A2%83%E3%82%BB%E3%83%83%E3%83%88%E3%82%A2%E3%83%83%E3%83%97%E6%89%8B%E9%A0%86%E6%9B%B8/">
+        <link rel="next" href="../../../manual/">
       
       
         
       
       
-      <link rel="icon" href="../../assets/images/favicon.png">
+      <link rel="icon" href="../../../assets/images/favicon.png">
       <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
     
     
       
-        <title>アプリケーション開発環境セットアップ手順書 - 実践ドメイン駆動設計 in エンタープライズアプリケーション</title>
+        <title>リリース完了報告書 0.1 - cargo-tracker（A 社国際貨物輸送管理システム） - 実践ドメイン駆動設計 in エンタープライズアプリケーション</title>
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.ec1eaa64.min.css">
       
         
-        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+        <link rel="stylesheet" href="../../../assets/stylesheets/palette.ab4e12ef.min.css">
       
       
 
@@ -53,9 +53,9 @@
       
     
     
-      <link rel="stylesheet" href="../../assets/css/extra.css">
+      <link rel="stylesheet" href="../../../assets/css/extra.css">
     
-    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
 
@@ -78,7 +78,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#_1" class="md-skip">
+        <a href="#01-cargo-trackera" class="md-skip">
           Skip to content
         </a>
       
@@ -92,7 +92,7 @@
 
 <header class="md-header" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href="../.." title="実践ドメイン駆動設計 in エンタープライズアプリケーション" class="md-header__button md-logo" aria-label="実践ドメイン駆動設計 in エンタープライズアプリケーション" data-md-component="logo">
+    <a href="../../.." title="実践ドメイン駆動設計 in エンタープライズアプリケーション" class="md-header__button md-logo" aria-label="実践ドメイン駆動設計 in エンタープライズアプリケーション" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -112,7 +112,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              アプリケーション開発環境セットアップ手順書
+              リリース完了報告書 0.1 - cargo-tracker（A 社国際貨物輸送管理システム）
             
           </span>
         </div>
@@ -199,7 +199,7 @@
   
   
     <li class="md-tabs__item">
-      <a href="../.." class="md-tabs__link">
+      <a href="../../.." class="md-tabs__link">
         
   
   
@@ -220,7 +220,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../strategy/" class="md-tabs__link">
+        <a href="../../../strategy/" class="md-tabs__link">
           
   
   
@@ -240,7 +240,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../requirements/" class="md-tabs__link">
+        <a href="../../../requirements/" class="md-tabs__link">
           
   
   
@@ -260,7 +260,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../design/" class="md-tabs__link">
+        <a href="../../../design/" class="md-tabs__link">
           
   
   
@@ -276,11 +276,13 @@
   
   
   
+    
+  
   
     
     
-      <li class="md-tabs__item">
-        <a href="../../development/" class="md-tabs__link">
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../../" class="md-tabs__link">
           
   
   
@@ -300,7 +302,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../manual/" class="md-tabs__link">
+        <a href="../../../manual/" class="md-tabs__link">
           
   
   
@@ -320,7 +322,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../operation/" class="md-tabs__link">
+        <a href="../../../operation/" class="md-tabs__link">
           
   
   
@@ -340,7 +342,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../review/" class="md-tabs__link">
+        <a href="../../../review/" class="md-tabs__link">
           
   
   
@@ -360,7 +362,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../adr/" class="md-tabs__link">
+        <a href="../../../adr/" class="md-tabs__link">
           
   
   
@@ -380,7 +382,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../article/" class="md-tabs__link">
+        <a href="../../../article/" class="md-tabs__link">
           
   
   
@@ -400,7 +402,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../reference/" class="md-tabs__link">
+        <a href="../../../reference/" class="md-tabs__link">
           
   
   
@@ -416,13 +418,11 @@
   
   
   
-    
-  
   
     
     
-      <li class="md-tabs__item md-tabs__item--active">
-        <a href="../" class="md-tabs__link">
+      <li class="md-tabs__item">
+        <a href="../../../template/" class="md-tabs__link">
           
   
   
@@ -458,7 +458,7 @@
 
 <nav class="md-nav md-nav--primary md-nav--lifted md-nav--integrated" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href="../.." title="実践ドメイン駆動設計 in エンタープライズアプリケーション" class="md-nav__button md-logo" aria-label="実践ドメイン駆動設計 in エンタープライズアプリケーション" data-md-component="logo">
+    <a href="../../.." title="実践ドメイン駆動設計 in エンタープライズアプリケーション" class="md-nav__button md-logo" aria-label="実践ドメイン駆動設計 in エンタープライズアプリケーション" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -488,7 +488,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../.." class="md-nav__link">
+      <a href="../../.." class="md-nav__link">
         
   
   
@@ -565,7 +565,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../strategy/" class="md-nav__link">
+      <a href="../../../strategy/" class="md-nav__link">
         
   
   
@@ -593,7 +593,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../strategy/business_case/" class="md-nav__link">
+      <a href="../../../strategy/business_case/" class="md-nav__link">
         
   
   
@@ -628,7 +628,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../strategy/business_strategy/" class="md-nav__link">
+      <a href="../../../strategy/business_strategy/" class="md-nav__link">
         
   
   
@@ -663,7 +663,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../strategy/business_architecture/" class="md-nav__link">
+      <a href="../../../strategy/business_architecture/" class="md-nav__link">
         
   
   
@@ -698,7 +698,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../strategy/inception-deck/" class="md-nav__link">
+      <a href="../../../strategy/inception-deck/" class="md-nav__link">
         
   
   
@@ -733,7 +733,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../strategy/BMC.svg" class="md-nav__link">
+      <a href="../../../strategy/BMC.svg" class="md-nav__link">
         
   
   
@@ -818,7 +818,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../requirements/" class="md-nav__link">
+      <a href="../../../requirements/" class="md-nav__link">
         
   
   
@@ -896,7 +896,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../requirements/cargo-tracker/" class="md-nav__link">
+      <a href="../../../requirements/cargo-tracker/" class="md-nav__link">
         
   
   
@@ -924,7 +924,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../requirements/cargo-tracker/requirements_definition/" class="md-nav__link">
+      <a href="../../../requirements/cargo-tracker/requirements_definition/" class="md-nav__link">
         
   
   
@@ -959,7 +959,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../requirements/cargo-tracker/business_usecase/" class="md-nav__link">
+      <a href="../../../requirements/cargo-tracker/business_usecase/" class="md-nav__link">
         
   
   
@@ -994,7 +994,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../requirements/cargo-tracker/system_usecase/" class="md-nav__link">
+      <a href="../../../requirements/cargo-tracker/system_usecase/" class="md-nav__link">
         
   
   
@@ -1029,7 +1029,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../requirements/cargo-tracker/user_story/" class="md-nav__link">
+      <a href="../../../requirements/cargo-tracker/user_story/" class="md-nav__link">
         
   
   
@@ -1064,7 +1064,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../requirements/cargo-tracker/units/" class="md-nav__link">
+      <a href="../../../requirements/cargo-tracker/units/" class="md-nav__link">
         
   
   
@@ -1099,7 +1099,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../requirements/cargo-tracker/usecase_plan/" class="md-nav__link">
+      <a href="../../../requirements/cargo-tracker/usecase_plan/" class="md-nav__link">
         
   
   
@@ -1199,7 +1199,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../design/" class="md-nav__link">
+      <a href="../../../design/" class="md-nav__link">
         
   
   
@@ -1277,7 +1277,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../design/cargo-tracker/" class="md-nav__link">
+      <a href="../../../design/cargo-tracker/" class="md-nav__link">
         
   
   
@@ -1305,7 +1305,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../design/cargo-tracker/architecture_backend/" class="md-nav__link">
+      <a href="../../../design/cargo-tracker/architecture_backend/" class="md-nav__link">
         
   
   
@@ -1340,7 +1340,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../design/cargo-tracker/architecture_frontend/" class="md-nav__link">
+      <a href="../../../design/cargo-tracker/architecture_frontend/" class="md-nav__link">
         
   
   
@@ -1375,7 +1375,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../design/cargo-tracker/architecture_infrastructure/" class="md-nav__link">
+      <a href="../../../design/cargo-tracker/architecture_infrastructure/" class="md-nav__link">
         
   
   
@@ -1410,7 +1410,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../design/cargo-tracker/tech_stack/" class="md-nav__link">
+      <a href="../../../design/cargo-tracker/tech_stack/" class="md-nav__link">
         
   
   
@@ -1445,7 +1445,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../design/cargo-tracker/domain_model/" class="md-nav__link">
+      <a href="../../../design/cargo-tracker/domain_model/" class="md-nav__link">
         
   
   
@@ -1480,7 +1480,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../design/cargo-tracker/data_model/" class="md-nav__link">
+      <a href="../../../design/cargo-tracker/data_model/" class="md-nav__link">
         
   
   
@@ -1515,7 +1515,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../design/cargo-tracker/ui_design/" class="md-nav__link">
+      <a href="../../../design/cargo-tracker/ui_design/" class="md-nav__link">
         
   
   
@@ -1550,7 +1550,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../design/cargo-tracker/test_strategy/" class="md-nav__link">
+      <a href="../../../design/cargo-tracker/test_strategy/" class="md-nav__link">
         
   
   
@@ -1585,7 +1585,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../design/cargo-tracker/non_functional/" class="md-nav__link">
+      <a href="../../../design/cargo-tracker/non_functional/" class="md-nav__link">
         
   
   
@@ -1620,7 +1620,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../design/cargo-tracker/operation/" class="md-nav__link">
+      <a href="../../../design/cargo-tracker/operation/" class="md-nav__link">
         
   
   
@@ -1667,24 +1667,29 @@
       
   
   
+    
   
   
+  
     
     
     
     
-      
-      
-    
-    
-    <li class="md-nav__item md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" checked>
         
           
-          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="">
             
   
   
@@ -1702,7 +1707,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_5">
             <span class="md-nav__icon md-icon"></span>
             
@@ -1720,7 +1725,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../development/" class="md-nav__link">
+      <a href="../../" class="md-nav__link">
         
   
   
@@ -1745,6 +1750,8 @@
                 
   
   
+    
+  
   
   
     
@@ -1755,11 +1762,11 @@
       
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_2" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_2" checked>
         
           
           <label class="md-nav__link" for="__nav_5_2" id="__nav_5_2_label" tabindex="0">
@@ -1780,7 +1787,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_2_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_2_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_5_2">
             <span class="md-nav__icon md-icon"></span>
             
@@ -1798,7 +1805,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../development/cargo-tracker/" class="md-nav__link">
+      <a href="../" class="md-nav__link">
         
   
   
@@ -1826,7 +1833,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../development/cargo-tracker/release_plan/" class="md-nav__link">
+      <a href="../release_plan/" class="md-nav__link">
         
   
   
@@ -1861,7 +1868,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../development/cargo-tracker/development_strategy/" class="md-nav__link">
+      <a href="../development_strategy/" class="md-nav__link">
         
   
   
@@ -1896,7 +1903,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../assets/schemaspy-output/cargo-tracker/" class="md-nav__link">
+      <a href="../../../assets/schemaspy-output/cargo-tracker/" class="md-nav__link">
         
   
   
@@ -1924,7 +1931,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../assets/jig-output/cargo-tracker/" class="md-nav__link">
+      <a href="../../../assets/jig-output/cargo-tracker/" class="md-nav__link">
         
   
   
@@ -1952,7 +1959,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../assets/manual-output/cargo-tracker/" class="md-nav__link">
+      <a href="../../../assets/manual-output/cargo-tracker/" class="md-nav__link">
         
   
   
@@ -1980,7 +1987,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../development/cargo-tracker/bolt_01_plan/" class="md-nav__link">
+      <a href="../bolt_01_plan/" class="md-nav__link">
         
   
   
@@ -2015,7 +2022,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../development/cargo-tracker/bolt_01_report/" class="md-nav__link">
+      <a href="../bolt_01_report/" class="md-nav__link">
         
   
   
@@ -2050,7 +2057,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../development/cargo-tracker/bolt_02_plan/" class="md-nav__link">
+      <a href="../bolt_02_plan/" class="md-nav__link">
         
   
   
@@ -2085,7 +2092,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../development/cargo-tracker/bolt_02_report/" class="md-nav__link">
+      <a href="../bolt_02_report/" class="md-nav__link">
         
   
   
@@ -2120,7 +2127,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../development/cargo-tracker/bolt_03_plan/" class="md-nav__link">
+      <a href="../bolt_03_plan/" class="md-nav__link">
         
   
   
@@ -2155,7 +2162,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../development/cargo-tracker/bolt_03_report/" class="md-nav__link">
+      <a href="../bolt_03_report/" class="md-nav__link">
         
   
   
@@ -2190,7 +2197,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../development/cargo-tracker/bolt_04_plan/" class="md-nav__link">
+      <a href="../bolt_04_plan/" class="md-nav__link">
         
   
   
@@ -2225,7 +2232,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../development/cargo-tracker/bolt_04_report/" class="md-nav__link">
+      <a href="../bolt_04_report/" class="md-nav__link">
         
   
   
@@ -2260,7 +2267,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../development/cargo-tracker/bolt_05_plan/" class="md-nav__link">
+      <a href="../bolt_05_plan/" class="md-nav__link">
         
   
   
@@ -2295,7 +2302,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../development/cargo-tracker/bolt_05_report/" class="md-nav__link">
+      <a href="../bolt_05_report/" class="md-nav__link">
         
   
   
@@ -2330,7 +2337,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../development/cargo-tracker/bolt_06_plan/" class="md-nav__link">
+      <a href="../bolt_06_plan/" class="md-nav__link">
         
   
   
@@ -2365,7 +2372,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../development/cargo-tracker/bolt_06_report/" class="md-nav__link">
+      <a href="../bolt_06_report/" class="md-nav__link">
         
   
   
@@ -2400,7 +2407,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../development/cargo-tracker/bolt_07_plan/" class="md-nav__link">
+      <a href="../bolt_07_plan/" class="md-nav__link">
         
   
   
@@ -2435,7 +2442,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../development/cargo-tracker/bolt_07_report/" class="md-nav__link">
+      <a href="../bolt_07_report/" class="md-nav__link">
         
   
   
@@ -2470,7 +2477,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../development/cargo-tracker/bolt_08_plan/" class="md-nav__link">
+      <a href="../bolt_08_plan/" class="md-nav__link">
         
   
   
@@ -2505,7 +2512,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../development/cargo-tracker/bolt_08_report/" class="md-nav__link">
+      <a href="../bolt_08_report/" class="md-nav__link">
         
   
   
@@ -2540,7 +2547,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../development/cargo-tracker/bolt_09_plan/" class="md-nav__link">
+      <a href="../bolt_09_plan/" class="md-nav__link">
         
   
   
@@ -2575,7 +2582,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../development/cargo-tracker/bolt_09_report/" class="md-nav__link">
+      <a href="../bolt_09_report/" class="md-nav__link">
         
   
   
@@ -2610,7 +2617,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../development/cargo-tracker/bolt_10_plan/" class="md-nav__link">
+      <a href="../bolt_10_plan/" class="md-nav__link">
         
   
   
@@ -2645,7 +2652,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../development/cargo-tracker/bolt_10_report/" class="md-nav__link">
+      <a href="../bolt_10_report/" class="md-nav__link">
         
   
   
@@ -2680,7 +2687,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../development/cargo-tracker/bolt_11_plan/" class="md-nav__link">
+      <a href="../bolt_11_plan/" class="md-nav__link">
         
   
   
@@ -2715,7 +2722,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../development/cargo-tracker/bolt_11_report/" class="md-nav__link">
+      <a href="../bolt_11_report/" class="md-nav__link">
         
   
   
@@ -2750,7 +2757,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../development/cargo-tracker/bolt_12_plan/" class="md-nav__link">
+      <a href="../bolt_12_plan/" class="md-nav__link">
         
   
   
@@ -2785,7 +2792,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../development/cargo-tracker/bolt_12_report/" class="md-nav__link">
+      <a href="../bolt_12_report/" class="md-nav__link">
         
   
   
@@ -2820,7 +2827,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../development/cargo-tracker/bolt_13_plan/" class="md-nav__link">
+      <a href="../bolt_13_plan/" class="md-nav__link">
         
   
   
@@ -2855,7 +2862,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../development/cargo-tracker/bolt_13_report/" class="md-nav__link">
+      <a href="../bolt_13_report/" class="md-nav__link">
         
   
   
@@ -2890,7 +2897,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../development/cargo-tracker/bolt_14_plan/" class="md-nav__link">
+      <a href="../bolt_14_plan/" class="md-nav__link">
         
   
   
@@ -2925,7 +2932,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../development/cargo-tracker/bolt_14_report/" class="md-nav__link">
+      <a href="../bolt_14_report/" class="md-nav__link">
         
   
   
@@ -2960,7 +2967,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../development/cargo-tracker/bolt_15_plan/" class="md-nav__link">
+      <a href="../bolt_15_plan/" class="md-nav__link">
         
   
   
@@ -2995,7 +3002,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../development/cargo-tracker/bolt_15_report/" class="md-nav__link">
+      <a href="../bolt_15_report/" class="md-nav__link">
         
   
   
@@ -3030,7 +3037,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../development/cargo-tracker/bolt_16_plan/" class="md-nav__link">
+      <a href="../bolt_16_plan/" class="md-nav__link">
         
   
   
@@ -3065,7 +3072,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../development/cargo-tracker/bolt_16_report/" class="md-nav__link">
+      <a href="../bolt_16_report/" class="md-nav__link">
         
   
   
@@ -3100,7 +3107,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../development/cargo-tracker/bolt_17_plan/" class="md-nav__link">
+      <a href="../bolt_17_plan/" class="md-nav__link">
         
   
   
@@ -3135,7 +3142,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../development/cargo-tracker/bolt_17_report/" class="md-nav__link">
+      <a href="../bolt_17_report/" class="md-nav__link">
         
   
   
@@ -3170,7 +3177,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../development/cargo-tracker/bolt_18_plan/" class="md-nav__link">
+      <a href="../bolt_18_plan/" class="md-nav__link">
         
   
   
@@ -3205,7 +3212,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../development/cargo-tracker/bolt_19_plan/" class="md-nav__link">
+      <a href="../bolt_19_plan/" class="md-nav__link">
         
   
   
@@ -3240,7 +3247,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../development/cargo-tracker/bolt_19_report/" class="md-nav__link">
+      <a href="../bolt_19_report/" class="md-nav__link">
         
   
   
@@ -3275,7 +3282,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../development/cargo-tracker/bolt_20_plan/" class="md-nav__link">
+      <a href="../bolt_20_plan/" class="md-nav__link">
         
   
   
@@ -3310,7 +3317,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../development/cargo-tracker/bolt_20_report/" class="md-nav__link">
+      <a href="../bolt_20_report/" class="md-nav__link">
         
   
   
@@ -3345,7 +3352,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../development/cargo-tracker/bolt_21_plan/" class="md-nav__link">
+      <a href="../bolt_21_plan/" class="md-nav__link">
         
   
   
@@ -3380,7 +3387,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../development/cargo-tracker/bolt_21_report/" class="md-nav__link">
+      <a href="../bolt_21_report/" class="md-nav__link">
         
   
   
@@ -3415,7 +3422,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../development/cargo-tracker/bolt_22_plan/" class="md-nav__link">
+      <a href="../bolt_22_plan/" class="md-nav__link">
         
   
   
@@ -3450,7 +3457,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../development/cargo-tracker/bolt_22_report/" class="md-nav__link">
+      <a href="../bolt_22_report/" class="md-nav__link">
         
   
   
@@ -3485,7 +3492,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../development/cargo-tracker/bolt_23_plan/" class="md-nav__link">
+      <a href="../bolt_23_plan/" class="md-nav__link">
         
   
   
@@ -3520,7 +3527,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../development/cargo-tracker/bolt_23_report/" class="md-nav__link">
+      <a href="../bolt_23_report/" class="md-nav__link">
         
   
   
@@ -3555,7 +3562,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../development/cargo-tracker/bolt_23b_plan/" class="md-nav__link">
+      <a href="../bolt_23b_plan/" class="md-nav__link">
         
   
   
@@ -3590,7 +3597,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../development/cargo-tracker/bolt_23b_report/" class="md-nav__link">
+      <a href="../bolt_23b_report/" class="md-nav__link">
         
   
   
@@ -3625,7 +3632,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../development/cargo-tracker/bolt_24_plan/" class="md-nav__link">
+      <a href="../bolt_24_plan/" class="md-nav__link">
         
   
   
@@ -3660,7 +3667,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../development/cargo-tracker/bolt_24_report/" class="md-nav__link">
+      <a href="../bolt_24_report/" class="md-nav__link">
         
   
   
@@ -3695,7 +3702,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../development/cargo-tracker/bolt_25_plan/" class="md-nav__link">
+      <a href="../bolt_25_plan/" class="md-nav__link">
         
   
   
@@ -3730,7 +3737,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../development/cargo-tracker/bolt_25_report/" class="md-nav__link">
+      <a href="../bolt_25_report/" class="md-nav__link">
         
   
   
@@ -3765,7 +3772,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../development/cargo-tracker/bolt_25b_plan/" class="md-nav__link">
+      <a href="../bolt_25b_plan/" class="md-nav__link">
         
   
   
@@ -3800,7 +3807,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../development/cargo-tracker/bolt_25b_report/" class="md-nav__link">
+      <a href="../bolt_25b_report/" class="md-nav__link">
         
   
   
@@ -3835,7 +3842,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../development/cargo-tracker/bolt_26_plan/" class="md-nav__link">
+      <a href="../bolt_26_plan/" class="md-nav__link">
         
   
   
@@ -3870,7 +3877,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../development/cargo-tracker/bolt_26_report/" class="md-nav__link">
+      <a href="../bolt_26_report/" class="md-nav__link">
         
   
   
@@ -3905,7 +3912,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../development/cargo-tracker/bolt_26b_plan/" class="md-nav__link">
+      <a href="../bolt_26b_plan/" class="md-nav__link">
         
   
   
@@ -3940,7 +3947,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../development/cargo-tracker/bolt_26b_report/" class="md-nav__link">
+      <a href="../bolt_26b_report/" class="md-nav__link">
         
   
   
@@ -3975,7 +3982,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../development/cargo-tracker/bolt_26c_plan/" class="md-nav__link">
+      <a href="../bolt_26c_plan/" class="md-nav__link">
         
   
   
@@ -4010,7 +4017,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../development/cargo-tracker/bolt_26c_report/" class="md-nav__link">
+      <a href="../bolt_26c_report/" class="md-nav__link">
         
   
   
@@ -4045,7 +4052,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../development/cargo-tracker/bolt_27_plan/" class="md-nav__link">
+      <a href="../bolt_27_plan/" class="md-nav__link">
         
   
   
@@ -4080,7 +4087,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../development/cargo-tracker/bolt_27_report/" class="md-nav__link">
+      <a href="../bolt_27_report/" class="md-nav__link">
         
   
   
@@ -4115,7 +4122,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../development/cargo-tracker/bolt_27b_plan/" class="md-nav__link">
+      <a href="../bolt_27b_plan/" class="md-nav__link">
         
   
   
@@ -4150,7 +4157,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../development/cargo-tracker/bolt_27b_report/" class="md-nav__link">
+      <a href="../bolt_27b_report/" class="md-nav__link">
         
   
   
@@ -4185,7 +4192,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../development/cargo-tracker/bolt_28_plan/" class="md-nav__link">
+      <a href="../bolt_28_plan/" class="md-nav__link">
         
   
   
@@ -4220,7 +4227,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../development/cargo-tracker/bolt_28_report/" class="md-nav__link">
+      <a href="../bolt_28_report/" class="md-nav__link">
         
   
   
@@ -4252,10 +4259,44 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../../development/cargo-tracker/release_report-0_1/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Release 0.1 リリース完了報告書
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--draft"></span>
+  
+
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -4278,6 +4319,392 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        概要
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        プロジェクトサマリー
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        計画と実績の差異分析
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="計画と実績の差異分析">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        週ごとの達成状況
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ストーリーごとの達成状況
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_6" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        リリースバーンダウン
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#vs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        計画日程 vs 実績日数の差異分析
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="計画日程 vs 実績日数の差異分析">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_7" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        週ごとの日程比較
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_8" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        工期短縮の可視化
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#vs_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        計画 vs 実績ガントチャート
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="計画 vs 実績ガントチャート">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_9" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        当初計画スケジュール
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_10" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        実績スケジュール
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_11" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        サマリー
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_12" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        差異分析
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_13" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        工期短縮の要因分析
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_14" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        コミットログ分析
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="コミットログ分析">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_15" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        コミットプリフィックス別内訳
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_16" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        コミットプリフィックス別パイチャート
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_17" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        分析
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_18" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        品質メトリクス
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="品質メトリクス">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#release-01-bolt-28" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        テストと品質ゲート（Release 0.1 の時点。Bolt 28）
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_19" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ベロシティ
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_20" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        承認ゲートと変更依頼
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_21" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        リリース履歴
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_22" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        主要な成果物
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="主要な成果物">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_23" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        実装した主要機能
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_24" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        技術的成果
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#release-01" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ふりかえり（Release 0.1）
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#release-10" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Release 1.0 への引き継ぎ
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_25" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        関連ドキュメント
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -4355,7 +4782,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/" class="md-nav__link">
+      <a href="../../../manual/" class="md-nav__link">
         
   
   
@@ -4383,7 +4810,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/00-%E3%81%AF%E3%81%98%E3%82%81%E3%81%AB/" class="md-nav__link">
+      <a href="../../../manual/00-%E3%81%AF%E3%81%98%E3%82%81%E3%81%AB/" class="md-nav__link">
         
   
   
@@ -4418,7 +4845,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/01-%E6%A5%AD%E5%8B%99%E3%83%95%E3%83%AD%E3%83%BC/" class="md-nav__link">
+      <a href="../../../manual/01-%E6%A5%AD%E5%8B%99%E3%83%95%E3%83%AD%E3%83%BC/" class="md-nav__link">
         
   
   
@@ -4453,7 +4880,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/02-%E3%83%AD%E3%82%B0%E3%82%A4%E3%83%B3%E3%81%A8%E5%85%B1%E9%80%9A%E3%81%AE%E7%94%BB%E9%9D%A2/" class="md-nav__link">
+      <a href="../../../manual/02-%E3%83%AD%E3%82%B0%E3%82%A4%E3%83%B3%E3%81%A8%E5%85%B1%E9%80%9A%E3%81%AE%E7%94%BB%E9%9D%A2/" class="md-nav__link">
         
   
   
@@ -4488,7 +4915,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/03-%E8%A6%8B%E7%A9%8D%E4%BE%9D%E9%A0%BC/" class="md-nav__link">
+      <a href="../../../manual/03-%E8%A6%8B%E7%A9%8D%E4%BE%9D%E9%A0%BC/" class="md-nav__link">
         
   
   
@@ -4523,7 +4950,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/04-%E8%A6%8B%E7%A9%8D%E3%82%8A%E3%81%B8%E3%81%AE%E5%9B%9E%E7%AD%94%E3%81%A8%E6%89%BF%E8%AA%8D/" class="md-nav__link">
+      <a href="../../../manual/04-%E8%A6%8B%E7%A9%8D%E3%82%8A%E3%81%B8%E3%81%AE%E5%9B%9E%E7%AD%94%E3%81%A8%E6%89%BF%E8%AA%8D/" class="md-nav__link">
         
   
   
@@ -4558,7 +4985,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/05-%E4%BA%88%E7%B4%84%E4%B8%80%E8%A6%A7%E3%81%A8%E8%BF%BD%E8%B7%A1%E3%81%AE%E7%85%A7%E4%BC%9A/" class="md-nav__link">
+      <a href="../../../manual/05-%E4%BA%88%E7%B4%84%E4%B8%80%E8%A6%A7%E3%81%A8%E8%BF%BD%E8%B7%A1%E3%81%AE%E7%85%A7%E4%BC%9A/" class="md-nav__link">
         
   
   
@@ -4593,7 +5020,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/06-%E5%8F%97%E4%BB%98%E4%B8%80%E8%A6%A7%E3%81%A8%E5%AF%A9%E6%9F%BB%E3%81%A8%E8%A6%8B%E7%A9%8D%E3%82%8A/" class="md-nav__link">
+      <a href="../../../manual/06-%E5%8F%97%E4%BB%98%E4%B8%80%E8%A6%A7%E3%81%A8%E5%AF%A9%E6%9F%BB%E3%81%A8%E8%A6%8B%E7%A9%8D%E3%82%8A/" class="md-nav__link">
         
   
   
@@ -4628,7 +5055,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/07-%E6%9C%AC%E4%BA%88%E7%B4%84%E3%81%AE%E7%A2%BA%E5%AE%9A%E3%81%A8%E4%BA%88%E7%B4%84%E4%B8%80%E8%A6%A7/" class="md-nav__link">
+      <a href="../../../manual/07-%E6%9C%AC%E4%BA%88%E7%B4%84%E3%81%AE%E7%A2%BA%E5%AE%9A%E3%81%A8%E4%BA%88%E7%B4%84%E4%B8%80%E8%A6%A7/" class="md-nav__link">
         
   
   
@@ -4663,7 +5090,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/08-%E7%B5%8C%E8%B7%AF%E8%A8%AD%E8%A8%88/" class="md-nav__link">
+      <a href="../../../manual/08-%E7%B5%8C%E8%B7%AF%E8%A8%AD%E8%A8%88/" class="md-nav__link">
         
   
   
@@ -4698,7 +5125,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/09-%E8%BF%BD%E8%B7%A1%E7%AE%A1%E7%90%86/" class="md-nav__link">
+      <a href="../../../manual/09-%E8%BF%BD%E8%B7%A1%E7%AE%A1%E7%90%86/" class="md-nav__link">
         
   
   
@@ -4733,7 +5160,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/10-KPI%E8%A8%88%E6%B8%AC%E8%A8%98%E9%8C%B2/" class="md-nav__link">
+      <a href="../../../manual/10-KPI%E8%A8%88%E6%B8%AC%E8%A8%98%E9%8C%B2/" class="md-nav__link">
         
   
   
@@ -4768,7 +5195,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/%E7%94%A8%E8%AA%9E%E9%9B%86/" class="md-nav__link">
+      <a href="../../../manual/%E7%94%A8%E8%AA%9E%E9%9B%86/" class="md-nav__link">
         
   
   
@@ -4803,7 +5230,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/%E4%BB%98%E9%8C%B2B-%E3%83%88%E3%83%A9%E3%83%96%E3%83%AB%E3%82%B7%E3%83%A5%E3%83%BC%E3%83%86%E3%82%A3%E3%83%B3%E3%82%B0/" class="md-nav__link">
+      <a href="../../../manual/%E4%BB%98%E9%8C%B2B-%E3%83%88%E3%83%A9%E3%83%96%E3%83%AB%E3%82%B7%E3%83%A5%E3%83%BC%E3%83%86%E3%82%A3%E3%83%B3%E3%82%B0/" class="md-nav__link">
         
   
   
@@ -4838,7 +5265,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../assets/manual-output/cargo-tracker/" class="md-nav__link">
+      <a href="../../../assets/manual-output/cargo-tracker/" class="md-nav__link">
         
   
   
@@ -4923,7 +5350,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../operation/" class="md-nav__link">
+      <a href="../../../operation/" class="md-nav__link">
         
   
   
@@ -5001,7 +5428,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../operation/cargo-tracker/" class="md-nav__link">
+      <a href="../../../operation/cargo-tracker/" class="md-nav__link">
         
   
   
@@ -5029,7 +5456,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../operation/cargo-tracker/application_development_setup/" class="md-nav__link">
+      <a href="../../../operation/cargo-tracker/application_development_setup/" class="md-nav__link">
         
   
   
@@ -5064,7 +5491,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../operation/cargo-tracker/heroku_demo_setup/" class="md-nav__link">
+      <a href="../../../operation/cargo-tracker/heroku_demo_setup/" class="md-nav__link">
         
   
   
@@ -5164,7 +5591,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../review/" class="md-nav__link">
+      <a href="../../../review/" class="md-nav__link">
         
   
   
@@ -5192,7 +5619,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../review/%E6%88%A6%E7%95%A5%E6%88%90%E6%9E%9C%E7%89%A9_review_20260929/" class="md-nav__link">
+      <a href="../../../review/%E6%88%A6%E7%95%A5%E6%88%90%E6%9E%9C%E7%89%A9_review_20260929/" class="md-nav__link">
         
   
   
@@ -5277,7 +5704,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../review/cargo-tracker/" class="md-nav__link">
+      <a href="../../../review/cargo-tracker/" class="md-nav__link">
         
   
   
@@ -5305,7 +5732,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../review/cargo-tracker/usecases_review_20260930/" class="md-nav__link">
+      <a href="../../../review/cargo-tracker/usecases_review_20260930/" class="md-nav__link">
         
   
   
@@ -5340,7 +5767,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../review/cargo-tracker/analysis_review_20261001/" class="md-nav__link">
+      <a href="../../../review/cargo-tracker/analysis_review_20261001/" class="md-nav__link">
         
   
   
@@ -5375,7 +5802,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../review/cargo-tracker/bolt_01_review_20261001/" class="md-nav__link">
+      <a href="../../../review/cargo-tracker/bolt_01_review_20261001/" class="md-nav__link">
         
   
   
@@ -5410,7 +5837,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../review/cargo-tracker/bolt_02_review_20261002/" class="md-nav__link">
+      <a href="../../../review/cargo-tracker/bolt_02_review_20261002/" class="md-nav__link">
         
   
   
@@ -5445,7 +5872,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../review/cargo-tracker/bolt_03_review_20261002/" class="md-nav__link">
+      <a href="../../../review/cargo-tracker/bolt_03_review_20261002/" class="md-nav__link">
         
   
   
@@ -5480,7 +5907,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../review/cargo-tracker/bolt_04_review_20261002/" class="md-nav__link">
+      <a href="../../../review/cargo-tracker/bolt_04_review_20261002/" class="md-nav__link">
         
   
   
@@ -5515,7 +5942,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../review/cargo-tracker/bolt_05_review_20261002/" class="md-nav__link">
+      <a href="../../../review/cargo-tracker/bolt_05_review_20261002/" class="md-nav__link">
         
   
   
@@ -5550,7 +5977,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../review/cargo-tracker/bolt_06-08_review_20261003/" class="md-nav__link">
+      <a href="../../../review/cargo-tracker/bolt_06-08_review_20261003/" class="md-nav__link">
         
   
   
@@ -5585,7 +6012,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../review/cargo-tracker/bolt_09-10_review_20261005/" class="md-nav__link">
+      <a href="../../../review/cargo-tracker/bolt_09-10_review_20261005/" class="md-nav__link">
         
   
   
@@ -5620,7 +6047,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../review/cargo-tracker/bolt_11_review_20261005/" class="md-nav__link">
+      <a href="../../../review/cargo-tracker/bolt_11_review_20261005/" class="md-nav__link">
         
   
   
@@ -5655,7 +6082,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../review/cargo-tracker/bolt_12_review_20261006/" class="md-nav__link">
+      <a href="../../../review/cargo-tracker/bolt_12_review_20261006/" class="md-nav__link">
         
   
   
@@ -5690,7 +6117,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../review/cargo-tracker/bolt_13_review_20261006/" class="md-nav__link">
+      <a href="../../../review/cargo-tracker/bolt_13_review_20261006/" class="md-nav__link">
         
   
   
@@ -5725,7 +6152,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../review/cargo-tracker/bolt_14_review_20261006/" class="md-nav__link">
+      <a href="../../../review/cargo-tracker/bolt_14_review_20261006/" class="md-nav__link">
         
   
   
@@ -5760,7 +6187,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../review/cargo-tracker/bolt_15_review_20261006/" class="md-nav__link">
+      <a href="../../../review/cargo-tracker/bolt_15_review_20261006/" class="md-nav__link">
         
   
   
@@ -5795,7 +6222,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../review/cargo-tracker/bolt_16_review_20261007/" class="md-nav__link">
+      <a href="../../../review/cargo-tracker/bolt_16_review_20261007/" class="md-nav__link">
         
   
   
@@ -5830,7 +6257,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../review/cargo-tracker/bolt_17_review_20261007/" class="md-nav__link">
+      <a href="../../../review/cargo-tracker/bolt_17_review_20261007/" class="md-nav__link">
         
   
   
@@ -5865,7 +6292,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../review/cargo-tracker/bolt_19_review_20261007/" class="md-nav__link">
+      <a href="../../../review/cargo-tracker/bolt_19_review_20261007/" class="md-nav__link">
         
   
   
@@ -5900,7 +6327,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../review/cargo-tracker/bolt_20_review_20261008/" class="md-nav__link">
+      <a href="../../../review/cargo-tracker/bolt_20_review_20261008/" class="md-nav__link">
         
   
   
@@ -5935,7 +6362,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../review/cargo-tracker/bolt_21_review_20261008/" class="md-nav__link">
+      <a href="../../../review/cargo-tracker/bolt_21_review_20261008/" class="md-nav__link">
         
   
   
@@ -6035,7 +6462,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../adr/" class="md-nav__link">
+      <a href="../../../adr/" class="md-nav__link">
         
   
   
@@ -6113,7 +6540,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../adr/cargo-tracker/" class="md-nav__link">
+      <a href="../../../adr/cargo-tracker/" class="md-nav__link">
         
   
   
@@ -6141,7 +6568,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../adr/cargo-tracker/001-modular-monolith/" class="md-nav__link">
+      <a href="../../../adr/cargo-tracker/001-modular-monolith/" class="md-nav__link">
         
   
   
@@ -6176,7 +6603,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../adr/cargo-tracker/002-domain-logic-pattern-per-context/" class="md-nav__link">
+      <a href="../../../adr/cargo-tracker/002-domain-logic-pattern-per-context/" class="md-nav__link">
         
   
   
@@ -6211,7 +6638,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../adr/cargo-tracker/003-inter-context-integration/" class="md-nav__link">
+      <a href="../../../adr/cargo-tracker/003-inter-context-integration/" class="md-nav__link">
         
   
   
@@ -6246,7 +6673,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../adr/cargo-tracker/004-external-data-ingestion/" class="md-nav__link">
+      <a href="../../../adr/cargo-tracker/004-external-data-ingestion/" class="md-nav__link">
         
   
   
@@ -6281,7 +6708,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../adr/cargo-tracker/005-server-side-rendering/" class="md-nav__link">
+      <a href="../../../adr/cargo-tracker/005-server-side-rendering/" class="md-nav__link">
         
   
   
@@ -6316,7 +6743,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../adr/cargo-tracker/006-java-spring-boot-platform/" class="md-nav__link">
+      <a href="../../../adr/cargo-tracker/006-java-spring-boot-platform/" class="md-nav__link">
         
   
   
@@ -6351,7 +6778,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../adr/cargo-tracker/007-postgresql-mybatis-flyway/" class="md-nav__link">
+      <a href="../../../adr/cargo-tracker/007-postgresql-mybatis-flyway/" class="md-nav__link">
         
   
   
@@ -6386,7 +6813,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../adr/cargo-tracker/008-aws-container-platform/" class="md-nav__link">
+      <a href="../../../adr/cargo-tracker/008-aws-container-platform/" class="md-nav__link">
         
   
   
@@ -6421,7 +6848,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../adr/cargo-tracker/009-bdd-cucumber/" class="md-nav__link">
+      <a href="../../../adr/cargo-tracker/009-bdd-cucumber/" class="md-nav__link">
         
   
   
@@ -6456,7 +6883,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../adr/cargo-tracker/010-required-document-storage-transaction/" class="md-nav__link">
+      <a href="../../../adr/cargo-tracker/010-required-document-storage-transaction/" class="md-nav__link">
         
   
   
@@ -6491,7 +6918,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../adr/cargo-tracker/011-mfa-totp/" class="md-nav__link">
+      <a href="../../../adr/cargo-tracker/011-mfa-totp/" class="md-nav__link">
         
   
   
@@ -6526,7 +6953,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../adr/cargo-tracker/012-authentication-principal-and-session/" class="md-nav__link">
+      <a href="../../../adr/cargo-tracker/012-authentication-principal-and-session/" class="md-nav__link">
         
   
   
@@ -6561,7 +6988,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../adr/cargo-tracker/013-heroku-demo-environment/" class="md-nav__link">
+      <a href="../../../adr/cargo-tracker/013-heroku-demo-environment/" class="md-nav__link">
         
   
   
@@ -6596,7 +7023,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../adr/cargo-tracker/014-downstream-to-upstream-notification/" class="md-nav__link">
+      <a href="../../../adr/cargo-tracker/014-downstream-to-upstream-notification/" class="md-nav__link">
         
   
   
@@ -6631,7 +7058,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../adr/cargo-tracker/015-booking-saga-starts-tracking-by-event/" class="md-nav__link">
+      <a href="../../../adr/cargo-tracker/015-booking-saga-starts-tracking-by-event/" class="md-nav__link">
         
   
   
@@ -6666,7 +7093,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../adr/cargo-tracker/016-booking-checks-quotation-at-commit-time/" class="md-nav__link">
+      <a href="../../../adr/cargo-tracker/016-booking-checks-quotation-at-commit-time/" class="md-nav__link">
         
   
   
@@ -6766,7 +7193,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../article/" class="md-nav__link">
+      <a href="../../../article/" class="md-nav__link">
         
   
   
@@ -6794,7 +7221,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../article/01-ddd-fundamentals/" class="md-nav__link">
+      <a href="../../../article/01-ddd-fundamentals/" class="md-nav__link">
         
   
   
@@ -6829,7 +7256,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../article/02-cargo-domain-model/" class="md-nav__link">
+      <a href="../../../article/02-cargo-domain-model/" class="md-nav__link">
         
   
   
@@ -6864,7 +7291,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../article/03-spring-modular-monolith/" class="md-nav__link">
+      <a href="../../../article/03-spring-modular-monolith/" class="md-nav__link">
         
   
   
@@ -6899,7 +7326,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../article/walking-skeleton-tour/" class="md-nav__link">
+      <a href="../../../article/walking-skeleton-tour/" class="md-nav__link">
         
   
   
@@ -6991,7 +7418,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/" class="md-nav__link">
+      <a href="../../../reference/" class="md-nav__link">
         
   
   
@@ -7019,7 +7446,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/%E3%82%88%E3%81%84%E3%82%BD%E3%83%95%E3%83%88%E3%82%A6%E3%82%A7%E3%82%A2%E3%81%A8%E3%81%AF/" class="md-nav__link">
+      <a href="../../../reference/%E3%82%88%E3%81%84%E3%82%BD%E3%83%95%E3%83%88%E3%82%A6%E3%82%A7%E3%82%A2%E3%81%A8%E3%81%AF/" class="md-nav__link">
         
   
   
@@ -7054,7 +7481,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/%E3%83%AD%E3%82%B8%E3%82%AB%E3%83%AB%E3%82%B7%E3%83%B3%E3%82%AD%E3%83%B3%E3%82%B0/" class="md-nav__link">
+      <a href="../../../reference/%E3%83%AD%E3%82%B8%E3%82%AB%E3%83%AB%E3%82%B7%E3%83%B3%E3%82%AD%E3%83%B3%E3%82%B0/" class="md-nav__link">
         
   
   
@@ -7089,7 +7516,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/%E9%96%8B%E7%99%BA%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
+      <a href="../../../reference/%E9%96%8B%E7%99%BA%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
         
   
   
@@ -7124,7 +7551,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/%E9%96%8B%E7%99%BA%E3%82%AC%E3%82%A4%E3%83%89_AI-DLC%E7%89%88/" class="md-nav__link">
+      <a href="../../../reference/%E9%96%8B%E7%99%BA%E3%82%AC%E3%82%A4%E3%83%89_AI-DLC%E7%89%88/" class="md-nav__link">
         
   
   
@@ -7159,7 +7586,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/AI-DLC%E5%B0%8E%E5%85%A5%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
+      <a href="../../../reference/AI-DLC%E5%B0%8E%E5%85%A5%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
         
   
   
@@ -7194,7 +7621,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/AI-DLC%E7%94%A8%E8%AA%9E%E9%9B%86/" class="md-nav__link">
+      <a href="../../../reference/AI-DLC%E7%94%A8%E8%AA%9E%E9%9B%86/" class="md-nav__link">
         
   
   
@@ -7229,7 +7656,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/%E3%83%89%E3%82%AD%E3%83%A5%E3%83%A1%E3%83%B3%E3%83%88%E6%A7%8B%E6%88%90%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
+      <a href="../../../reference/%E3%83%89%E3%82%AD%E3%83%A5%E3%83%A1%E3%83%B3%E3%83%88%E6%A7%8B%E6%88%90%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
         
   
   
@@ -7264,7 +7691,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/LivingDocumentation%E5%B0%8E%E5%85%A5%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
+      <a href="../../../reference/LivingDocumentation%E5%B0%8E%E5%85%A5%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
         
   
   
@@ -7299,7 +7726,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/%E3%82%A2%E3%83%8E%E3%83%86%E3%83%BC%E3%82%B7%E3%83%A7%E3%83%B3%E5%B0%8E%E5%85%A5%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
+      <a href="../../../reference/%E3%82%A2%E3%83%8E%E3%83%86%E3%83%BC%E3%82%B7%E3%83%A7%E3%83%B3%E5%B0%8E%E5%85%A5%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
         
   
   
@@ -7334,7 +7761,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/%E3%83%80%E3%82%A4%E3%83%8A%E3%83%9F%E3%83%83%E3%82%AF%E3%82%AD%E3%83%A5%E3%83%AC%E3%83%BC%E3%82%B7%E3%83%A7%E3%83%B3%E5%B0%8E%E5%85%A5%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
+      <a href="../../../reference/%E3%83%80%E3%82%A4%E3%83%8A%E3%83%9F%E3%83%83%E3%82%AF%E3%82%AD%E3%83%A5%E3%83%AC%E3%83%BC%E3%82%B7%E3%83%A7%E3%83%B3%E5%B0%8E%E5%85%A5%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
         
   
   
@@ -7369,7 +7796,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/%E3%82%AC%E3%82%A4%E3%83%89%E3%83%84%E3%82%A2%E3%83%BC%E3%83%BB%E3%82%B5%E3%82%A4%E3%83%88%E3%82%B7%E3%83%BC%E3%82%A4%E3%83%B3%E3%82%B0%E5%B0%8E%E5%85%A5%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
+      <a href="../../../reference/%E3%82%AC%E3%82%A4%E3%83%89%E3%83%84%E3%82%A2%E3%83%BC%E3%83%BB%E3%82%B5%E3%82%A4%E3%83%88%E3%82%B7%E3%83%BC%E3%82%A4%E3%83%B3%E3%82%B0%E5%B0%8E%E5%85%A5%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
         
   
   
@@ -7404,7 +7831,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/OKF%E5%B0%8E%E5%85%A5%E3%82%AC%E3%82%A4%E3%83%89_V0.2/" class="md-nav__link">
+      <a href="../../../reference/OKF%E5%B0%8E%E5%85%A5%E3%82%AC%E3%82%A4%E3%83%89_V0.2/" class="md-nav__link">
         
   
   
@@ -7439,7 +7866,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/%E7%B5%8C%E5%96%B6%E6%88%A6%E7%95%A5%E5%88%86%E6%9E%90%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
+      <a href="../../../reference/%E7%B5%8C%E5%96%B6%E6%88%A6%E7%95%A5%E5%88%86%E6%9E%90%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
         
   
   
@@ -7474,7 +7901,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/%E3%83%93%E3%82%B8%E3%83%8D%E3%82%B9%E3%82%A2%E3%83%BC%E3%82%AD%E3%83%86%E3%82%AF%E3%83%81%E3%83%A3%E5%88%86%E6%9E%90%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
+      <a href="../../../reference/%E3%83%93%E3%82%B8%E3%83%8D%E3%82%B9%E3%82%A2%E3%83%BC%E3%82%AD%E3%83%86%E3%82%AF%E3%83%81%E3%83%A3%E5%88%86%E6%9E%90%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
         
   
   
@@ -7509,7 +7936,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/%E8%A6%81%E4%BB%B6%E5%AE%9A%E7%BE%A9%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
+      <a href="../../../reference/%E8%A6%81%E4%BB%B6%E5%AE%9A%E7%BE%A9%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
         
   
   
@@ -7544,7 +7971,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/%E3%83%A6%E3%83%BC%E3%82%B9%E3%82%B1%E3%83%BC%E3%82%B9%E4%BD%9C%E6%88%90%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
+      <a href="../../../reference/%E3%83%A6%E3%83%BC%E3%82%B9%E3%82%B1%E3%83%BC%E3%82%B9%E4%BD%9C%E6%88%90%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
         
   
   
@@ -7579,7 +8006,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/%E3%83%A6%E3%83%BC%E3%82%B9%E3%82%B1%E3%83%BC%E3%82%B9%E4%BD%9C%E6%88%90%E3%82%AC%E3%82%A4%E3%83%89_AI-DLC%E7%89%88/" class="md-nav__link">
+      <a href="../../../reference/%E3%83%A6%E3%83%BC%E3%82%B9%E3%82%B1%E3%83%BC%E3%82%B9%E4%BD%9C%E6%88%90%E3%82%AC%E3%82%A4%E3%83%89_AI-DLC%E7%89%88/" class="md-nav__link">
         
   
   
@@ -7614,7 +8041,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/%E3%82%A2%E3%83%BC%E3%82%AD%E3%83%86%E3%82%AF%E3%83%81%E3%83%A3%E8%A8%AD%E8%A8%88%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
+      <a href="../../../reference/%E3%82%A2%E3%83%BC%E3%82%AD%E3%83%86%E3%82%AF%E3%83%81%E3%83%A3%E8%A8%AD%E8%A8%88%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
         
   
   
@@ -7649,7 +8076,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/%E3%83%87%E3%83%BC%E3%82%BF%E3%83%A2%E3%83%87%E3%83%AB%E8%A8%AD%E8%A8%88%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
+      <a href="../../../reference/%E3%83%87%E3%83%BC%E3%82%BF%E3%83%A2%E3%83%87%E3%83%AB%E8%A8%AD%E8%A8%88%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
         
   
   
@@ -7684,7 +8111,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/%E3%83%89%E3%83%A1%E3%82%A4%E3%83%B3%E3%83%A2%E3%83%87%E3%83%AB%E8%A8%AD%E8%A8%88%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
+      <a href="../../../reference/%E3%83%89%E3%83%A1%E3%82%A4%E3%83%B3%E3%83%A2%E3%83%87%E3%83%AB%E8%A8%AD%E8%A8%88%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
         
   
   
@@ -7719,7 +8146,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/UI%E8%A8%AD%E8%A8%88%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
+      <a href="../../../reference/UI%E8%A8%AD%E8%A8%88%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
         
   
   
@@ -7754,7 +8181,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/%E3%83%86%E3%82%B9%E3%83%88%E6%88%A6%E7%95%A5%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
+      <a href="../../../reference/%E3%83%86%E3%82%B9%E3%83%88%E6%88%A6%E7%95%A5%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
         
   
   
@@ -7789,7 +8216,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/%E9%9D%9E%E6%A9%9F%E8%83%BD%E8%A6%81%E4%BB%B6%E5%AE%9A%E7%BE%A9%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
+      <a href="../../../reference/%E9%9D%9E%E6%A9%9F%E8%83%BD%E8%A6%81%E4%BB%B6%E5%AE%9A%E7%BE%A9%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
         
   
   
@@ -7824,7 +8251,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/%E9%81%8B%E7%94%A8%E8%A6%81%E4%BB%B6%E5%AE%9A%E7%BE%A9%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
+      <a href="../../../reference/%E9%81%8B%E7%94%A8%E8%A6%81%E4%BB%B6%E5%AE%9A%E7%BE%A9%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
         
   
   
@@ -7859,7 +8286,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/%E3%82%A4%E3%83%B3%E3%83%95%E3%83%A9%E8%A8%AD%E8%A8%88%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
+      <a href="../../../reference/%E3%82%A4%E3%83%B3%E3%83%95%E3%83%A9%E8%A8%AD%E8%A8%88%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
         
   
   
@@ -7894,7 +8321,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/%E3%82%B3%E3%83%BC%E3%83%87%E3%82%A3%E3%83%B3%E3%82%B0%E3%81%A8%E3%83%86%E3%82%B9%E3%83%88%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
+      <a href="../../../reference/%E3%82%B3%E3%83%BC%E3%83%87%E3%82%A3%E3%83%B3%E3%82%B0%E3%81%A8%E3%83%86%E3%82%B9%E3%83%88%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
         
   
   
@@ -7929,7 +8356,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/%E3%82%B3%E3%83%BC%E3%83%87%E3%82%A3%E3%83%B3%E3%82%B0%E3%81%A8%E3%83%86%E3%82%B9%E3%83%88%E3%82%AC%E3%82%A4%E3%83%89_AI-DLC%E7%89%88/" class="md-nav__link">
+      <a href="../../../reference/%E3%82%B3%E3%83%BC%E3%83%87%E3%82%A3%E3%83%B3%E3%82%B0%E3%81%A8%E3%83%86%E3%82%B9%E3%83%88%E3%82%AC%E3%82%A4%E3%83%89_AI-DLC%E7%89%88/" class="md-nav__link">
         
   
   
@@ -7964,7 +8391,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/BDD%E5%B0%8E%E5%85%A5%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
+      <a href="../../../reference/BDD%E5%B0%8E%E5%85%A5%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
         
   
   
@@ -7999,7 +8426,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/%E3%82%A8%E3%82%AF%E3%82%B9%E3%83%88%E3%83%AA%E3%83%BC%E3%83%A0%E3%83%97%E3%83%AD%E3%82%B0%E3%83%A9%E3%83%9F%E3%83%B3%E3%82%B0/" class="md-nav__link">
+      <a href="../../../reference/%E3%82%A8%E3%82%AF%E3%82%B9%E3%83%88%E3%83%AA%E3%83%BC%E3%83%A0%E3%83%97%E3%83%AD%E3%82%B0%E3%83%A9%E3%83%9F%E3%83%B3%E3%82%B0/" class="md-nav__link">
         
   
   
@@ -8034,7 +8461,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/%E3%83%AA%E3%83%AA%E3%83%BC%E3%82%B9%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
+      <a href="../../../reference/%E3%83%AA%E3%83%AA%E3%83%BC%E3%82%B9%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
         
   
   
@@ -8069,7 +8496,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/%E3%83%AA%E3%83%AA%E3%83%BC%E3%82%B9%E3%83%BB%E3%82%A4%E3%83%86%E3%83%AC%E3%83%BC%E3%82%B7%E3%83%A7%E3%83%B3%E8%A8%88%E7%94%BB%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
+      <a href="../../../reference/%E3%83%AA%E3%83%AA%E3%83%BC%E3%82%B9%E3%83%BB%E3%82%A4%E3%83%86%E3%83%AC%E3%83%BC%E3%82%B7%E3%83%A7%E3%83%B3%E8%A8%88%E7%94%BB%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
         
   
   
@@ -8104,7 +8531,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/%E3%83%AA%E3%83%AA%E3%83%BC%E3%82%B9%E3%83%BB%E3%82%A4%E3%83%86%E3%83%AC%E3%83%BC%E3%82%B7%E3%83%A7%E3%83%B3%E8%A8%88%E7%94%BB%E3%82%AC%E3%82%A4%E3%83%89_AI-DLC%E7%89%88/" class="md-nav__link">
+      <a href="../../../reference/%E3%83%AA%E3%83%AA%E3%83%BC%E3%82%B9%E3%83%BB%E3%82%A4%E3%83%86%E3%83%AC%E3%83%BC%E3%82%B7%E3%83%A7%E3%83%B3%E8%A8%88%E7%94%BB%E3%82%AC%E3%82%A4%E3%83%89_AI-DLC%E7%89%88/" class="md-nav__link">
         
   
   
@@ -8139,7 +8566,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/%E7%92%B0%E5%A2%83%E5%A4%89%E6%95%B0%E7%AE%A1%E7%90%86%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
+      <a href="../../../reference/%E7%92%B0%E5%A2%83%E5%A4%89%E6%95%B0%E7%AE%A1%E7%90%86%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
         
   
   
@@ -8174,7 +8601,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/%E8%A8%80%E8%AA%9E%E5%88%A5%E9%96%8B%E7%99%BA%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
+      <a href="../../../reference/%E8%A8%80%E8%AA%9E%E5%88%A5%E9%96%8B%E7%99%BA%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
         
   
   
@@ -8209,7 +8636,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/Java%E3%82%A2%E3%83%97%E3%83%AA%E3%82%B1%E3%83%BC%E3%82%B7%E3%83%A7%E3%83%B3%E7%92%B0%E5%A2%83%E6%A7%8B%E7%AF%89%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
+      <a href="../../../reference/Java%E3%82%A2%E3%83%97%E3%83%AA%E3%82%B1%E3%83%BC%E3%82%B7%E3%83%A7%E3%83%B3%E7%92%B0%E5%A2%83%E6%A7%8B%E7%AF%89%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
         
   
   
@@ -8244,7 +8671,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/TypeScript%E3%82%A2%E3%83%97%E3%83%AA%E3%82%B1%E3%83%BC%E3%82%B7%E3%83%A7%E3%83%B3%E7%92%B0%E5%A2%83%E6%A7%8B%E7%AF%89%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
+      <a href="../../../reference/TypeScript%E3%82%A2%E3%83%97%E3%83%AA%E3%82%B1%E3%83%BC%E3%82%B7%E3%83%A7%E3%83%B3%E7%92%B0%E5%A2%83%E6%A7%8B%E7%AF%89%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
         
   
   
@@ -8279,7 +8706,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/%E9%81%8B%E7%94%A8%E3%82%B9%E3%82%AF%E3%83%AA%E3%83%97%E3%83%88%E4%BD%9C%E6%88%90%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
+      <a href="../../../reference/%E9%81%8B%E7%94%A8%E3%82%B9%E3%82%AF%E3%83%AA%E3%83%97%E3%83%88%E4%BD%9C%E6%88%90%E3%82%AC%E3%82%A4%E3%83%89/" class="md-nav__link">
         
   
   
@@ -8314,7 +8741,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/CodexCLIMCP%E3%82%A2%E3%83%97%E3%83%AA%E3%82%B1%E3%83%BC%E3%82%B7%E3%83%A7%E3%83%B3%E9%96%8B%E7%99%BA%E3%83%95%E3%83%AD%E3%83%BC/" class="md-nav__link">
+      <a href="../../../reference/CodexCLIMCP%E3%82%A2%E3%83%97%E3%83%AA%E3%82%B1%E3%83%BC%E3%82%B7%E3%83%A7%E3%83%B3%E9%96%8B%E7%99%BA%E3%83%95%E3%83%AD%E3%83%BC/" class="md-nav__link">
         
   
   
@@ -8349,7 +8776,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/CodexCLIMCP%E3%82%B5%E3%83%BC%E3%83%90%E3%83%BC%E8%A8%AD%E5%AE%9A%E6%89%8B%E9%A0%86/" class="md-nav__link">
+      <a href="../../../reference/CodexCLIMCP%E3%82%B5%E3%83%BC%E3%83%90%E3%83%BC%E8%A8%AD%E5%AE%9A%E6%89%8B%E9%A0%86/" class="md-nav__link">
         
   
   
@@ -8384,7 +8811,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/SonarQube%E3%83%AD%E3%83%BC%E3%82%AB%E3%83%AB%E7%92%B0%E5%A2%83%E3%82%BB%E3%83%83%E3%83%88%E3%82%A2%E3%83%83%E3%83%97%E6%89%8B%E9%A0%86%E6%9B%B8/" class="md-nav__link">
+      <a href="../../../reference/SonarQube%E3%83%AD%E3%83%BC%E3%82%AB%E3%83%AB%E7%92%B0%E5%A2%83%E3%82%BB%E3%83%83%E3%83%88%E3%82%A2%E3%83%83%E3%83%97%E6%89%8B%E9%A0%86%E6%9B%B8/" class="md-nav__link">
         
   
   
@@ -8419,7 +8846,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/Vim%E6%93%8D%E4%BD%9C%E3%83%9E%E3%83%8B%E3%83%A5%E3%82%A2%E3%83%AB/" class="md-nav__link">
+      <a href="../../../reference/Vim%E6%93%8D%E4%BD%9C%E3%83%9E%E3%83%8B%E3%83%A5%E3%82%A2%E3%83%AB/" class="md-nav__link">
         
   
   
@@ -8454,7 +8881,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/%E4%BC%81%E6%A5%AD%E7%B5%8C%E5%96%B6%E8%AB%96/" class="md-nav__link">
+      <a href="../../../reference/%E4%BC%81%E6%A5%AD%E7%B5%8C%E5%96%B6%E8%AB%96/" class="md-nav__link">
         
   
   
@@ -8489,7 +8916,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/%E9%81%8B%E5%96%B6%E7%AE%A1%E7%90%86/" class="md-nav__link">
+      <a href="../../../reference/%E9%81%8B%E5%96%B6%E7%AE%A1%E7%90%86/" class="md-nav__link">
         
   
   
@@ -8528,29 +8955,24 @@
       
   
   
-    
   
   
-  
     
     
     
     
       
-        
-        
-      
       
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_12" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_12" >
         
           
-          <label class="md-nav__link" for="__nav_12" id="__nav_12_label" tabindex="">
+          <label class="md-nav__link" for="__nav_12" id="__nav_12_label" tabindex="0">
             
   
   
@@ -8568,7 +8990,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_12_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_12_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_12">
             <span class="md-nav__icon md-icon"></span>
             
@@ -8586,7 +9008,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../" class="md-nav__link">
+      <a href="../../../template/" class="md-nav__link">
         
   
   
@@ -8614,7 +9036,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../%E3%81%BE%E3%81%9A%E3%81%93%E3%82%8C%E3%82%92%E8%AA%AD%E3%82%82%E3%81%86%E3%83%AA%E3%82%B9%E3%83%88/" class="md-nav__link">
+      <a href="../../../template/%E3%81%BE%E3%81%9A%E3%81%93%E3%82%8C%E3%82%92%E8%AA%AD%E3%82%82%E3%81%86%E3%83%AA%E3%82%B9%E3%83%88/" class="md-nav__link">
         
   
   
@@ -8649,7 +9071,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../%E3%83%93%E3%82%B8%E3%83%8D%E3%82%B9%E3%82%A2%E3%83%BC%E3%82%AD%E3%83%86%E3%82%AF%E3%83%81%E3%83%A3/" class="md-nav__link">
+      <a href="../../../template/%E3%83%93%E3%82%B8%E3%83%8D%E3%82%B9%E3%82%A2%E3%83%BC%E3%82%AD%E3%83%86%E3%82%AF%E3%83%81%E3%83%A3/" class="md-nav__link">
         
   
   
@@ -8684,7 +9106,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../%E8%A6%81%E4%BB%B6%E5%AE%9A%E7%BE%A9/" class="md-nav__link">
+      <a href="../../../template/%E8%A6%81%E4%BB%B6%E5%AE%9A%E7%BE%A9/" class="md-nav__link">
         
   
   
@@ -8719,7 +9141,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../%E5%AE%8C%E5%85%A8%E5%BD%A2%E5%BC%8F%E3%81%AE%E3%83%A6%E3%83%BC%E3%82%B9%E3%82%B1%E3%83%BC%E3%82%B9/" class="md-nav__link">
+      <a href="../../../template/%E5%AE%8C%E5%85%A8%E5%BD%A2%E5%BC%8F%E3%81%AE%E3%83%A6%E3%83%BC%E3%82%B9%E3%82%B1%E3%83%BC%E3%82%B9/" class="md-nav__link">
         
   
   
@@ -8754,7 +9176,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../%E8%A8%AD%E8%A8%88/" class="md-nav__link">
+      <a href="../../../template/%E8%A8%AD%E8%A8%88/" class="md-nav__link">
         
   
   
@@ -8789,7 +9211,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../ADR/" class="md-nav__link">
+      <a href="../../../template/ADR/" class="md-nav__link">
         
   
   
@@ -8824,7 +9246,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../%E3%82%A4%E3%83%B3%E3%82%BB%E3%83%97%E3%82%B7%E3%83%A7%E3%83%B3%E3%83%87%E3%83%83%E3%82%AD/" class="md-nav__link">
+      <a href="../../../template/%E3%82%A4%E3%83%B3%E3%82%BB%E3%83%97%E3%82%B7%E3%83%A7%E3%83%B3%E3%83%87%E3%83%83%E3%82%AD/" class="md-nav__link">
         
   
   
@@ -8859,7 +9281,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../%E3%82%A4%E3%83%86%E3%83%AC%E3%83%BC%E3%82%B7%E3%83%A7%E3%83%B3%E8%A8%88%E7%94%BB/" class="md-nav__link">
+      <a href="../../../template/%E3%82%A4%E3%83%86%E3%83%AC%E3%83%BC%E3%82%B7%E3%83%A7%E3%83%B3%E8%A8%88%E7%94%BB/" class="md-nav__link">
         
   
   
@@ -8894,7 +9316,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../%E3%82%A4%E3%83%86%E3%83%AC%E3%83%BC%E3%82%B7%E3%83%A7%E3%83%B3%E5%AE%8C%E4%BA%86%E5%A0%B1%E5%91%8A%E6%9B%B8/" class="md-nav__link">
+      <a href="../../../template/%E3%82%A4%E3%83%86%E3%83%AC%E3%83%BC%E3%82%B7%E3%83%A7%E3%83%B3%E5%AE%8C%E4%BA%86%E5%A0%B1%E5%91%8A%E6%9B%B8/" class="md-nav__link">
         
   
   
@@ -8929,7 +9351,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../%E3%83%AA%E3%83%AA%E3%83%BC%E3%82%B9%E8%A8%88%E7%94%BB/" class="md-nav__link">
+      <a href="../../../template/%E3%83%AA%E3%83%AA%E3%83%BC%E3%82%B9%E8%A8%88%E7%94%BB/" class="md-nav__link">
         
   
   
@@ -8964,7 +9386,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../%E3%83%AA%E3%83%AA%E3%83%BC%E3%82%B9%E5%AE%8C%E4%BA%86%E5%A0%B1%E5%91%8A%E6%9B%B8/" class="md-nav__link">
+      <a href="../../../template/%E3%83%AA%E3%83%AA%E3%83%BC%E3%82%B9%E5%AE%8C%E4%BA%86%E5%A0%B1%E5%91%8A%E6%9B%B8/" class="md-nav__link">
         
   
   
@@ -8996,44 +9418,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    アプリケーション開発環境セットアップ手順書
-  
-
-    
-  </span>
-  
-  
-    
-  
-  
-    <span class="md-status md-status--stable"></span>
-  
-
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../../../template/%E3%82%A2%E3%83%97%E3%83%AA%E3%82%B1%E3%83%BC%E3%82%B7%E3%83%A7%E3%83%B3%E9%96%8B%E7%99%BA%E7%92%B0%E5%A2%83%E3%82%BB%E3%83%83%E3%83%88%E3%82%A2%E3%83%83%E3%83%97%E6%89%8B%E9%A0%86%E6%9B%B8/" class="md-nav__link">
         
   
   
@@ -9056,676 +9444,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#_2" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        概要
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#1" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        1. 前提条件
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="1. 前提条件">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#_3" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        {言語ランタイム}のインストール
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#docker" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Docker のインストール
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#nodejs" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Node.js のインストール
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#2" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        2. プロジェクトの取得
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="2. プロジェクトの取得">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#_4" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        リポジトリのクローン
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#nodejs_1" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Node.js 依存パッケージのインストール
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#3" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        3. サブシステム一覧
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#4" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        4. 技術スタック
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="4. 技術スタック">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#_5" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        バックエンド
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#_6" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        フロントエンド
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#_7" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        インフラストラクチャ
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#5" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        5. プロファイル構成
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="5. プロファイル構成">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#default" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        default プロファイル（推奨：日常開発）
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#product" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        product プロファイル（本番互換）
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#6" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        6. 開発サーバーの起動
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="6. 開発サーバーの起動">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#_8" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        タスクランナー経由（推奨）
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#_9" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        ビルドツール直接実行
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#_10" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        アクセス確認
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#7-docker-compose" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        7. Docker Compose のセットアップ
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="7. Docker Compose のセットアップ">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#_11" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        データベースコンテナの起動
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#docker-compose" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Docker Compose の便利なコマンド
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#8" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        8. テストの実行
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="8. テストの実行">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#_12" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        全テスト実行
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#_13" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        テストの種類
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#_14" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        テストカバレッジ
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#9" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        9. コード品質管理
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="9. コード品質管理">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#_15" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        静的コード解析ツール
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#_16" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        品質チェックの実行
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#_17" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        コード複雑度の基準
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#_18" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        レポートの確認
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#10" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        10. ディレクトリ構造
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#11" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        11. 命名規則
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#12-git" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        12. Git 規約
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="12. Git 規約">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#_19" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        コミットメッセージ
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#_20" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        スコープ
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#git-hookshusky-lint-staged" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Git Hooks（Husky + lint-staged）
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Git Hooks（Husky + lint-staged）">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#_21" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        セットアップ
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#pre-commit" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        pre-commit フック
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#_22" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        フックをスキップする場合
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#13" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        13. セットアップの確認
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="13. セットアップの確認">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#_23" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        アクセス確認
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#14-cicd" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        14. CI/CD
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="14. CI/CD">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#_24" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        ワークフロー一覧
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#backend-ci" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Backend CI
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#docker-image-publish" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Docker Image Publish
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#_25" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        トラブルシューティング
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="トラブルシューティング">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#1_1" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        {問題タイトル 1}
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#2_1" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        {問題タイトル 2}
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#pre-commit_1" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        pre-commit フックが失敗する場合
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#_26" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        関連ドキュメント
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -9738,7 +9456,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../%E9%96%8B%E7%99%BA%E7%92%B0%E5%A2%83%E3%82%BB%E3%83%83%E3%83%88%E3%82%A2%E3%83%83%E3%83%97%E6%89%8B%E9%A0%86%E6%9B%B8/" class="md-nav__link">
+      <a href="../../../template/%E9%96%8B%E7%99%BA%E7%92%B0%E5%A2%83%E3%82%BB%E3%83%83%E3%83%88%E3%82%A2%E3%83%83%E3%83%97%E6%89%8B%E9%A0%86%E6%9B%B8/" class="md-nav__link">
         
   
   
@@ -9773,7 +9491,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../AWS%E3%82%B9%E3%83%86%E3%83%BC%E3%82%B8%E3%83%B3%E3%82%B0%E7%92%B0%E5%A2%83%E3%82%BB%E3%83%83%E3%83%88%E3%82%A2%E3%83%83%E3%83%97%E6%89%8B%E9%A0%86%E6%9B%B8/" class="md-nav__link">
+      <a href="../../../template/AWS%E3%82%B9%E3%83%86%E3%83%BC%E3%82%B8%E3%83%B3%E3%82%B0%E7%92%B0%E5%A2%83%E3%82%BB%E3%83%83%E3%83%88%E3%82%A2%E3%83%83%E3%83%97%E6%89%8B%E9%A0%86%E6%9B%B8/" class="md-nav__link">
         
   
   
@@ -9808,7 +9526,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../AWS%E3%83%97%E3%83%AD%E3%83%80%E3%82%AF%E3%82%B7%E3%83%A7%E3%83%B3%E7%92%B0%E5%A2%83%E3%82%BB%E3%83%83%E3%83%88%E3%82%A2%E3%83%83%E3%83%97%E6%89%8B%E9%A0%86%E6%9B%B8/" class="md-nav__link">
+      <a href="../../../template/AWS%E3%83%97%E3%83%AD%E3%83%80%E3%82%AF%E3%82%B7%E3%83%A7%E3%83%B3%E7%92%B0%E5%A2%83%E3%82%BB%E3%83%83%E3%83%88%E3%82%A2%E3%83%83%E3%83%97%E6%89%8B%E9%A0%86%E6%9B%B8/" class="md-nav__link">
         
   
   
@@ -9843,7 +9561,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../%E4%BC%81%E6%A5%AD%E5%88%86%E6%9E%90/" class="md-nav__link">
+      <a href="../../../template/%E4%BC%81%E6%A5%AD%E5%88%86%E6%9E%90/" class="md-nav__link">
         
   
   
@@ -9878,7 +9596,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../%E4%BA%8B%E4%BE%8B%E5%88%86%E6%9E%90/" class="md-nav__link">
+      <a href="../../../template/%E4%BA%8B%E4%BE%8B%E5%88%86%E6%9E%90/" class="md-nav__link">
         
   
   
@@ -9913,7 +9631,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../README.md" class="md-nav__link">
+      <a href="../../../template/README.md" class="md-nav__link">
         
   
   
@@ -9961,778 +9679,713 @@
   
 
 
-<h1 id="_1">アプリケーション開発環境セットアップ手順書<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h1>
-<h2 id="_2">概要<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h2>
-<p>本ドキュメントは、{プロジェクト名}のアプリケーション開発環境をセットアップする手順を説明します。</p>
-<p>テスト駆動開発（TDD）のゴールは <strong>動作するきれいなコード</strong> です。それを実現するためには <a href="https://t-wada.hatenablog.jp/entry/clean-code-that-works">ソフトウェア開発の三種の神器</a> が必要です。</p>
-<blockquote>
-<p>今日のソフトウェア開発の世界において絶対になければならない 3 つの技術的な柱があります。
-三本柱と言ったり、三種の神器と言ったりしていますが、それらは</p>
-<ul>
-<li>バージョン管理</li>
-<li>テスティング</li>
-<li>自動化</li>
+<h1 id="01-cargo-trackera">リリース完了報告書 0.1 - cargo-tracker（A 社国際貨物輸送管理システム）<a class="headerlink" href="#01-cargo-trackera" title="Permanent link">&para;</a></h1>
+<p><strong>報告書作成日</strong>: 2026-10-10</p>
+<h2 id="_1">概要<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h2>
+<p>cargo-tracker Release 0.1（最初の縦の流れ）のリリース完了報告書です。4 週（W1〜W4）、33 本の Bolt で、計画した 35 SP をすべて終えました。一般貨物 1 件が、荷主の提出から営業の審査・見積りの提示・経路の確定・荷主の承認・本予約の確定・追跡の開始・実績の登録を経て、荷主の追跡の照会まで画面で縦に通り、KPI-01 の 2 時刻が記録されます。リリース条件は Bolt 28 の社内デモで human:kakimomokuri が確かめました。</p>
+<p>Release 0.1 はパイロットに出すリリースではなく、縦の流れと AI の出力の品質を確かめ、Release 1.0 の計画と承認ゲートの密度を決め直すためのリリースです。本番環境（AWS）への配備は Release 1.0（W10）で行い、Release 0.1 はデモ環境（Heroku、dev プロファイル）で確かめました。git のタグと CHANGELOG はまだ運用していないので、本報告書の数値は <a href="../release_plan/">リリース計画</a>・各 Bolt の終了報告・git log から集めました。</p>
+<hr />
+<h2 id="_2">プロジェクトサマリー<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">項目</th>
+<th style="text-align: left;">値</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong>期間</strong></td>
+<td style="text-align: left;">2026-10-01 〜 2026-10-10（9 稼働日。計画は W1〜W4 の 2026-10-05 〜 2026-10-30、19 営業日）</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>週（計画の単位）</strong></td>
+<td style="text-align: left;">4（W1〜W4）</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Bolt（イテレーション）</strong></td>
+<td style="text-align: left;">33 本（W1 8、W2 6、W3 7、W4 12）</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>ストーリーポイント</strong></td>
+<td style="text-align: left;">35 SP（計画 35 SP）</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>ユーザーストーリー</strong></td>
+<td style="text-align: left;">11 件（Release 0.1 の範囲の受入条件 28 件）</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>コミット数</strong></td>
+<td style="text-align: left;">477（<code>apps/cargo-tracker</code> と cargo-tracker の要件・設計・開発・ADR・マニュアル・CI。マージを除く）</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>テスト</strong></td>
+<td style="text-align: left;"><code>check</code> 1602 件、画面の層のシナリオ（<code>uiTest</code>）80 本。失敗 0（Bolt 28）</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>ADR</strong></td>
+<td style="text-align: left;">16 件（ADR-001〜016）</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="_3">計画と実績の差異分析<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h2>
+<h3 id="_4">週ごとの達成状況<a class="headerlink" href="#_4" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">週</th>
+<th style="text-align: left;">ゴール</th>
+<th style="text-align: right;">計画 SP</th>
+<th style="text-align: right;">実績 SP</th>
+<th style="text-align: right;">達成率</th>
+<th style="text-align: left;">差異</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">W1</td>
+<td style="text-align: left;">開発基盤・提出と審査</td>
+<td style="text-align: right;">6</td>
+<td style="text-align: right;">6</td>
+<td style="text-align: right;">100%</td>
+<td style="text-align: left;">なし</td>
+</tr>
+<tr>
+<td style="text-align: left;">W2</td>
+<td style="text-align: left;">見積り・荷主の回答・ログイン</td>
+<td style="text-align: right;">8</td>
+<td style="text-align: right;">7</td>
+<td style="text-align: right;">88%</td>
+<td style="text-align: left;">US-24 の R0.1 の 3 SP のうち W2 の計画分 1 を、#5 をクローズした W3 で数えた</td>
+</tr>
+<tr>
+<td style="text-align: left;">W3</td>
+<td style="text-align: left;">経路設計・荷主の承認・KPI-01</td>
+<td style="text-align: right;">10</td>
+<td style="text-align: right;">11</td>
+<td style="text-align: right;">110%</td>
+<td style="text-align: left;">W2 から 1 SP</td>
+</tr>
+<tr>
+<td style="text-align: left;">W4</td>
+<td style="text-align: left;">本予約・追跡開始・実績・照会</td>
+<td style="text-align: right;">11</td>
+<td style="text-align: right;">11</td>
+<td style="text-align: right;">100%</td>
+<td style="text-align: left;">なし</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>合計</strong></td>
+<td style="text-align: left;"></td>
+<td style="text-align: right;"><strong>35</strong></td>
+<td style="text-align: right;"><strong>35</strong></td>
+<td style="text-align: right;"><strong>100%</strong></td>
+<td style="text-align: left;"><strong>0</strong></td>
+</tr>
+</tbody>
+</table>
+<h3 id="_5">ストーリーごとの達成状況<a class="headerlink" href="#_5" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">ID</th>
+<th style="text-align: left;">Release 0.1 で通した受入条件</th>
+<th style="text-align: right;">SP</th>
+<th style="text-align: left;">週</th>
+<th style="text-align: right;">残り（Release 1.0）</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">US-01</td>
+<td style="text-align: left;">AC1 提出、AC2 不足項目、AC4 特殊貨物の拒否</td>
+<td style="text-align: right;">3</td>
+<td style="text-align: left;">W1</td>
+<td style="text-align: right;">2</td>
+</tr>
+<tr>
+<td style="text-align: left;">US-02</td>
+<td style="text-align: left;">全受入条件</td>
+<td style="text-align: right;">3</td>
+<td style="text-align: left;">W1</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr>
+<td style="text-align: left;">US-03</td>
+<td style="text-align: left;">全受入条件（BR-10 の境界を含む）</td>
+<td style="text-align: right;">5</td>
+<td style="text-align: left;">W2</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr>
+<td style="text-align: left;">US-18</td>
+<td style="text-align: left;">password によるログインと session</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: left;">W2</td>
+<td style="text-align: right;">6</td>
+</tr>
+<tr>
+<td style="text-align: left;">US-06</td>
+<td style="text-align: left;">AC1 候補の比較、AC2〜3 の境界（仮の航海データ）</td>
+<td style="text-align: right;">3</td>
+<td style="text-align: left;">W3</td>
+<td style="text-align: right;">5</td>
+</tr>
+<tr>
+<td style="text-align: left;">US-07</td>
+<td style="text-align: left;">AC1 確定、AC2 根拠・権限の不足</td>
+<td style="text-align: right;">3</td>
+<td style="text-align: left;">W3</td>
+<td style="text-align: right;">2</td>
+</tr>
+<tr>
+<td style="text-align: left;">US-24</td>
+<td style="text-align: left;">AC1 詳細経路設計へ進む、AC4 承認、AC5 失効時の拒否</td>
+<td style="text-align: right;">3</td>
+<td style="text-align: left;">W3</td>
+<td style="text-align: right;">2</td>
+</tr>
+<tr>
+<td style="text-align: left;">US-21</td>
+<td style="text-align: left;">AC1 KPI-01 の 2 時刻の記録</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: left;">W3</td>
+<td style="text-align: right;">3</td>
+</tr>
+<tr>
+<td style="text-align: left;">US-04</td>
+<td style="text-align: left;">AC1 確定、AC2 失効、AC4 再送、重複確定の防止、予約サガ</td>
+<td style="text-align: right;">5</td>
+<td style="text-align: left;">W4</td>
+<td style="text-align: right;">3</td>
+</tr>
+<tr>
+<td style="text-align: left;">US-12</td>
+<td style="text-align: left;">AC1 登録、AC2 重複</td>
+<td style="text-align: right;">3</td>
+<td style="text-align: left;">W4</td>
+<td style="text-align: right;">2</td>
+</tr>
+<tr>
+<td style="text-align: left;">US-09</td>
+<td style="text-align: left;">AC1 照会</td>
+<td style="text-align: right;">3</td>
+<td style="text-align: left;">W4</td>
+<td style="text-align: right;">2</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>合計</strong></td>
+<td style="text-align: left;"></td>
+<td style="text-align: right;"><strong>35</strong></td>
+<td style="text-align: left;"></td>
+<td style="text-align: right;"><strong>27</strong></td>
+</tr>
+</tbody>
+</table>
+<h3 id="_6">リリースバーンダウン<a class="headerlink" href="#_6" title="Permanent link">&para;</a></h3>
+<pre class="mermaid"><code>xychart-beta
+    title "Release 0.1 のバーンダウン（計画 vs 実績）"
+    x-axis ["開始", "W1", "W2", "W3", "W4"]
+    y-axis "残 SP" 0 --&gt; 35
+    line "計画" [35, 29, 21, 11, 0]
+    line "実績" [35, 29, 22, 11, 0]</code></pre>
+<p><strong>分析結果</strong>: 実績は計画にほぼ重なりました。W2 の 1 SP の遅れは、ストーリーの SP をクローズした週で数える約束（US-24 の R0.1 の 3 SP）によるもので、作業の遅れではありません。SP は週の計画（10 SP / 週、祝日の週は 8 SP）のとおりに消化し、暦の上の前倒しは週の目標を上げる根拠にしませんでした（W4 の開始時の決定）。</p>
+<hr />
+<h2 id="vs">計画日程 vs 実績日数の差異分析<a class="headerlink" href="#vs" title="Permanent link">&para;</a></h2>
+<h3 id="_7">週ごとの日程比較<a class="headerlink" href="#_7" title="Permanent link">&para;</a></h3>
+<p>各週の作業は、計画の期間より前に前倒しで行いました。実績の期間が重なる日（10-06・10-08）は、前の週の締めと次の週の最初の Bolt を同じ日に行った日です。</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">週</th>
+<th style="text-align: left;">計画期間</th>
+<th style="text-align: right;">計画日数</th>
+<th style="text-align: left;">実績期間</th>
+<th style="text-align: right;">実績日数</th>
+<th style="text-align: right;">短縮日数</th>
+<th style="text-align: right;">短縮率</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">W1</td>
+<td style="text-align: left;">10-05 〜 10-09</td>
+<td style="text-align: right;">5 日</td>
+<td style="text-align: left;">10-01 〜 10-03</td>
+<td style="text-align: right;"><strong>3 日</strong></td>
+<td style="text-align: right;">2 日</td>
+<td style="text-align: right;">40%</td>
+</tr>
+<tr>
+<td style="text-align: left;">W2</td>
+<td style="text-align: left;">10-12 〜 10-16（10-12 祝日）</td>
+<td style="text-align: right;">4 日</td>
+<td style="text-align: left;">10-05 〜 10-06</td>
+<td style="text-align: right;"><strong>2 日</strong></td>
+<td style="text-align: right;">2 日</td>
+<td style="text-align: right;">50%</td>
+</tr>
+<tr>
+<td style="text-align: left;">W3</td>
+<td style="text-align: left;">10-19 〜 10-23</td>
+<td style="text-align: right;">5 日</td>
+<td style="text-align: left;">10-06 〜 10-08</td>
+<td style="text-align: right;"><strong>3 日</strong></td>
+<td style="text-align: right;">2 日</td>
+<td style="text-align: right;">40%</td>
+</tr>
+<tr>
+<td style="text-align: left;">W4</td>
+<td style="text-align: left;">10-26 〜 10-30</td>
+<td style="text-align: right;">5 日</td>
+<td style="text-align: left;">10-08 〜 10-10</td>
+<td style="text-align: right;"><strong>3 日</strong></td>
+<td style="text-align: right;">2 日</td>
+<td style="text-align: right;">40%</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>合計</strong></td>
+<td style="text-align: left;"><strong>10-05 〜 10-30</strong></td>
+<td style="text-align: right;"><strong>19 日</strong></td>
+<td style="text-align: left;"><strong>10-01 〜 10-10</strong></td>
+<td style="text-align: right;"><strong>9 日</strong>（重なりを除く）</td>
+<td style="text-align: right;"><strong>10 日</strong></td>
+<td style="text-align: right;"><strong>52.6%</strong></td>
+</tr>
+</tbody>
+</table>
+<h3 id="_8">工期短縮の可視化<a class="headerlink" href="#_8" title="Permanent link">&para;</a></h3>
+<pre class="mermaid"><code>xychart-beta
+    title "計画日数 vs 実績日数"
+    x-axis ["W1", "W2", "W3", "W4"]
+    y-axis "日数" 0 --&gt; 6
+    bar "計画" [5, 4, 5, 5]
+    bar "実績" [3, 2, 3, 3]</code></pre>
+<h3 id="vs_1">計画 vs 実績ガントチャート<a class="headerlink" href="#vs_1" title="Permanent link">&para;</a></h3>
+<h4 id="_9">当初計画スケジュール<a class="headerlink" href="#_9" title="Permanent link">&para;</a></h4>
+<pre class="mermaid"><code>gantt
+    title 当初計画スケジュール
+    dateFormat  YYYY-MM-DD
+
+    section Release 0.1
+    W1 開発基盤・提出と審査          :p1, 2026-10-05, 5d
+    W2 見積り・荷主の回答・ログイン   :p2, 2026-10-12, 5d
+    W3 経路設計・荷主の承認・KPI-01   :p3, 2026-10-19, 5d
+    W4 本予約・追跡開始・実績・照会   :p4, 2026-10-26, 5d
+    Release 0.1                       :milestone, pm1, 2026-10-30, 0d</code></pre>
+<h4 id="_10">実績スケジュール<a class="headerlink" href="#_10" title="Permanent link">&para;</a></h4>
+<pre class="mermaid"><code>gantt
+    title 実績スケジュール
+    dateFormat  YYYY-MM-DD
+
+    section Release 0.1
+    W1 Bolt 1〜8（3 日）    :done, a1, 2026-10-01, 3d
+    W2 Bolt 9〜14（2 日）   :done, a2, 2026-10-05, 2d
+    W3 Bolt 15〜21（3 日）  :done, a3, 2026-10-06, 3d
+    W4 Bolt 22〜28（3 日）  :done, a4, 2026-10-08, 3d
+    Release 0.1             :milestone, m1, 2026-10-10, 0d</code></pre>
+<h3 id="_11">サマリー<a class="headerlink" href="#_11" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">指標</th>
+<th style="text-align: left;">値</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong>計画総日数</strong></td>
+<td style="text-align: left;">19 日</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>実績総日数</strong></td>
+<td style="text-align: left;">9 日</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>短縮日数</strong></td>
+<td style="text-align: left;">10 日</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>短縮率</strong></td>
+<td style="text-align: left;"><strong>52.6%</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>効率倍率</strong></td>
+<td style="text-align: left;"><strong>2.1 倍</strong></td>
+</tr>
+</tbody>
+</table>
+<h3 id="_12">差異分析<a class="headerlink" href="#_12" title="Permanent link">&para;</a></h3>
+<ol>
+<li>SP は計画どおり（35 / 35）で、短縮したのは暦の日数です。1 日に 2〜4 本の Bolt を回す想定（リリース計画の「リソース」）に対し、実績は 1 日に約 3.7 本（33 本 / 9 日）でした</li>
+<li>W4 は Bolt が 12 本と最も多く、5 本（23b・25b・26b・26c・27b）は開始準備の検証で半日を超えると見えて分けた Bolt です。分けても SP は増えず、Bolt の数が増えました</li>
+<li>人の変更依頼は Release 0.1 全体で 4 件と範囲の追加 1 件でした。承認ゲートの待ちを短くした（<code>/goal</code> で途中のゲートを止めずに進め、終了報告でまとめて受けた）ことが日数の短縮に効いた一方、手順の逸脱を終了報告で拾う形になりました</li>
+</ol>
+<h3 id="_13">工期短縮の要因分析<a class="headerlink" href="#_13" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">要因</th>
+<th style="text-align: left;">説明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">ウォーキングスケルトン</td>
+<td style="text-align: left;">Bolt 1 ですべての統合点（画面 → application → domain → DB → イベント → 別のコンテキスト → 画面）を通したので、以後の Bolt は骨格に受入条件を足す作業になった</td>
+</tr>
+<tr>
+<td style="text-align: left;">開始準備の 2 つの検証</td>
+<td style="text-align: left;">計画と設計の突き合わせと横断の検証で、依存の循環・層の規則との衝突・壊れる既存のテストを着手の前に見つけ、手戻りを減らした</td>
+</tr>
+<tr>
+<td style="text-align: left;">承認ゲートの密度</td>
+<td style="text-align: left;">Release 0.1 の途中から、多くの Bolt を <code>/goal</code> で途中のゲートを止めずに進め、終了報告の承認でまとめて受けた。確認必須（スキーマ・認可）は T-67・T-80 で計画の場か途中で判断を受けた</td>
+</tr>
+<tr>
+<td style="text-align: left;">画面の層のシナリオを先に書く</td>
+<td style="text-align: left;">Bolt ごとにシナリオとステップ定義をそろえてきたので、Bolt 28 で主成功の流れを、ステップ定義を足さずに組めた</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="_14">コミットログ分析<a class="headerlink" href="#_14" title="Permanent link">&para;</a></h2>
+<h3 id="_15">コミットプリフィックス別内訳<a class="headerlink" href="#_15" title="Permanent link">&para;</a></h3>
+<p>2026-10-01〜10-10 の、<code>apps/cargo-tracker</code>、<code>docs/{requirements,design,development,adr}/cargo-tracker</code>、<code>docs/manual</code>、cargo-tracker の CI のコミット（マージを除く）。</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">プリフィックス</th>
+<th style="text-align: right;">件数</th>
+<th style="text-align: right;">割合</th>
+<th style="text-align: left;">説明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">docs</td>
+<td style="text-align: right;">275</td>
+<td style="text-align: right;">57.7%</td>
+<td style="text-align: left;">計画・終了報告・設計・ADR・マニュアル</td>
+</tr>
+<tr>
+<td style="text-align: left;">feat</td>
+<td style="text-align: right;">78</td>
+<td style="text-align: right;">16.4%</td>
+<td style="text-align: left;">新機能</td>
+</tr>
+<tr>
+<td style="text-align: left;">test</td>
+<td style="text-align: right;">58</td>
+<td style="text-align: right;">12.2%</td>
+<td style="text-align: left;">テスト（Red のコミットを含む）</td>
+</tr>
+<tr>
+<td style="text-align: left;">fix</td>
+<td style="text-align: right;">39</td>
+<td style="text-align: right;">8.2%</td>
+<td style="text-align: left;">修正</td>
+</tr>
+<tr>
+<td style="text-align: left;">refactor</td>
+<td style="text-align: right;">13</td>
+<td style="text-align: right;">2.7%</td>
+<td style="text-align: left;">リファクタリング</td>
+</tr>
+<tr>
+<td style="text-align: left;">chore</td>
+<td style="text-align: right;">5</td>
+<td style="text-align: right;">1.0%</td>
+<td style="text-align: left;">保守</td>
+</tr>
+<tr>
+<td style="text-align: left;">build・ci・style</td>
+<td style="text-align: right;">9</td>
+<td style="text-align: right;">1.9%</td>
+<td style="text-align: left;">ビルド・CI・整形</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>合計</strong></td>
+<td style="text-align: right;"><strong>477</strong></td>
+<td style="text-align: right;"><strong>100%</strong></td>
+<td style="text-align: left;"></td>
+</tr>
+</tbody>
+</table>
+<h3 id="_16">コミットプリフィックス別パイチャート<a class="headerlink" href="#_16" title="Permanent link">&para;</a></h3>
+<pre class="mermaid"><code>pie showData
+    title "コミットプリフィックス別内訳"
+    "docs" : 275
+    "feat" : 78
+    "test" : 58
+    "fix" : 39
+    "refactor" : 13
+    "chore" : 5
+    "build・ci・style" : 9</code></pre>
+<h3 id="_17">分析<a class="headerlink" href="#_17" title="Permanent link">&para;</a></h3>
+<ol>
+<li>docs が 6 割近くを占めます。AI-DLC の「成果物は契約であり、コンテキストである」に従い、Bolt ごとに計画と終了報告を書き、設計文書を実装と同じ Bolt で直したためです</li>
+<li>feat と test がほぼ 4 対 3 です。TDD の Red（<code>test:</code>）と Green（<code>feat:</code>）をコミットで分けた Bolt が多いことを示します</li>
+<li>fix の 39 件の多くは、開発レビューの指摘への対応です。開発レビューを各 Bolt の終了報告の前に行い、欠陥をテストで再現してから直しました</li>
+</ol>
+<hr />
+<h2 id="_18">品質メトリクス<a class="headerlink" href="#_18" title="Permanent link">&para;</a></h2>
+<h3 id="release-01-bolt-28">テストと品質ゲート（Release 0.1 の時点。Bolt 28）<a class="headerlink" href="#release-01-bolt-28" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">指標</th>
+<th style="text-align: left;">結果</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>check</code>（単体・統合・業務のルールの層の受入シナリオ・アーキテクチャテスト・<code>documentationTest</code>）</td>
+<td style="text-align: left;">1602 件、失敗 0</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>uiTest</code>（画面の層のシナリオ。Playwright・axe-core）</td>
+<td style="text-align: left;">80 本、失敗 0</td>
+</tr>
+<tr>
+<td style="text-align: left;">受入条件とシナリオの照合（<code>AcceptanceCriteriaCoverageTest</code>）</td>
+<td style="text-align: left;">Release 0.1 の 28 件すべてに <code>@wip</code> でないシナリオがある</td>
+</tr>
+<tr>
+<td style="text-align: left;">アーキテクチャテスト AT-01〜06</td>
+<td style="text-align: left;">すべて通過（AT-05 は Bolt 28 で作った）</td>
+</tr>
+<tr>
+<td style="text-align: left;">SonarQube（ローカル）</td>
+<td style="text-align: left;">品質ゲート PASS（新しいコードのカバレッジ 97.5%、重複 0.14%、新しい指摘 0 件）</td>
+</tr>
+<tr>
+<td style="text-align: left;">CI（check・画面の層・デモ環境への配備）</td>
+<td style="text-align: left;">通過</td>
+</tr>
+<tr>
+<td style="text-align: left;">OKF（<code>okf:check</code>）</td>
+<td style="text-align: left;">ERROR 0</td>
+</tr>
+</tbody>
+</table>
+<h3 id="_19">ベロシティ<a class="headerlink" href="#_19" title="Permanent link">&para;</a></h3>
+<pre class="mermaid"><code>xychart-beta
+    title "週ごとのベロシティ"
+    x-axis ["W1", "W2", "W3", "W4"]
+    y-axis "完了したストーリーポイント" 0 --&gt; 12
+    bar [6, 7, 11, 11]
+    line "平均（8.75 SP）" [8.75, 8.75, 8.75, 8.75]</code></pre>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">項目</th>
+<th style="text-align: left;">値</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">平均ベロシティ</td>
+<td style="text-align: left;">8.75 SP / 週</td>
+</tr>
+<tr>
+<td style="text-align: left;">最大ベロシティ</td>
+<td style="text-align: left;">11 SP（W3・W4）</td>
+</tr>
+<tr>
+<td style="text-align: left;">最小ベロシティ</td>
+<td style="text-align: left;">6 SP（W1。開発基盤の Bolt を含む）</td>
+</tr>
+</tbody>
+</table>
+<h3 id="_20">承認ゲートと変更依頼<a class="headerlink" href="#_20" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">指標</th>
+<th style="text-align: left;">値</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">人の変更依頼</td>
+<td style="text-align: left;">4（Bolt 15 のアプリ名、Bolt 23 の予約サガの置き場所、Bolt 25 の公開 API の置き場所と見積りへの適用）と範囲の追加 1（Bolt 27b の荷主の予約一覧）</td>
+</tr>
+<tr>
+<td style="text-align: left;">Bolt のリードタイム</td>
+<td style="text-align: left;">記録のある Bolt で約 45 分（Bolt 22）〜 4 時間 36 分（Bolt 4）</td>
+</tr>
+<tr>
+<td style="text-align: left;">手順の逸脱</td>
+<td style="text-align: left;">Red を確かめる前の実装（Bolt 23・24・25b・26c・27）、確認必須のゲートの AI の判断での通過（Bolt 23 のスキーマ、Bolt 26 の認可）。いずれも終了報告で記録し、Try（T-67・T-80・T-83・T-88）にした</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="_21">リリース履歴<a class="headerlink" href="#_21" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">リリース</th>
+<th style="text-align: left;">含まれる週</th>
+<th style="text-align: left;">リリース日</th>
+<th style="text-align: right;">SP</th>
+<th style="text-align: left;">状態</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">Release 0.1 最初の縦の流れ</td>
+<td style="text-align: left;">W1〜W4</td>
+<td style="text-align: left;">2026-10-10（計画 10-30）</td>
+<td style="text-align: right;">35</td>
+<td style="text-align: left;">完了</td>
+</tr>
+<tr>
+<td style="text-align: left;">Release 1.0 パイロット準備完了</td>
+<td style="text-align: left;">W5〜W10</td>
+<td style="text-align: left;">2026-12-11（計画）</td>
+<td style="text-align: right;">54</td>
+<td style="text-align: left;">未着手</td>
+</tr>
+<tr>
+<td style="text-align: left;">Release 1.1 本格展開前</td>
+<td style="text-align: left;">W11〜W14</td>
+<td style="text-align: left;">2027-01-15（計画）</td>
+<td style="text-align: right;">37</td>
+<td style="text-align: left;">未着手</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="_22">主要な成果物<a class="headerlink" href="#_22" title="Permanent link">&para;</a></h2>
+<h3 id="_23">実装した主要機能<a class="headerlink" href="#_23" title="Permanent link">&para;</a></h3>
+<ol>
+<li><strong>見積依頼の提出と審査</strong>（W1）<ul>
+<li>業務番号の発行、必須条件の検証と不足項目の提示、特殊貨物の拒否、必要書類（US-01）</li>
+<li>輸送条件の審査と差戻し、荷主の再提出（US-02）</li>
 </ul>
-<p>の 3 つです。</p>
-<p>— https://t-wada.hatenablog.jp/entry/clean-code-that-works</p>
-</blockquote>
-<hr />
-<h2 id="1">1. 前提条件<a class="headerlink" href="#1" title="Permanent link">&para;</a></h2>
-<p>以下のツールがインストールされていることを確認してください。</p>
-<table>
-<thead>
-<tr>
-<th>ツール</th>
-<th>バージョン</th>
-<th>確認コマンド</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>{言語ランタイム}</td>
-<td>{バージョン}</td>
-<td><code>{確認コマンド}</code></td>
-</tr>
-<tr>
-<td>{ビルドツール}</td>
-<td>{バージョン}</td>
-<td><code>{確認コマンド}</code></td>
-</tr>
-<tr>
-<td>Docker</td>
-<td>最新</td>
-<td><code>docker -v</code></td>
-</tr>
-<tr>
-<td>Docker Compose</td>
-<td>v2.x</td>
-<td><code>docker compose version</code></td>
-</tr>
-<tr>
-<td>Git</td>
-<td>最新</td>
-<td><code>git -v</code></td>
-</tr>
-<tr>
-<td>Node.js</td>
-<td>v22.x LTS</td>
-<td><code>node -v</code></td>
-</tr>
-<tr>
-<td>npm</td>
-<td>v10.x</td>
-<td><code>npm -v</code></td>
-</tr>
-</tbody>
-</table>
-<h3 id="_3">{言語ランタイム}のインストール<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h3>
-<p>{言語ランタイム}をインストールします。バージョン管理ツールを使用すると複数バージョンの管理が容易です。</p>
-<div class="highlight"><pre><span></span><code><span class="c1"># バージョン管理ツールでインストール</span>
-<span class="o">{</span>インストールコマンド<span class="o">}</span>
-
-<span class="c1"># バージョン確認</span>
-<span class="o">{</span>確認コマンド<span class="o">}</span>
-</code></pre></div>
-<p>公式サイトから直接ダウンロードする場合：</p>
-<ul>
-<li>{公式サイト URL}</li>
+</li>
+<li><strong>見積りの提示と荷主の回答</strong>（W2）<ul>
+<li>見積りの算出・社内承認・提示、失効と再見積りによる置換（US-03）</li>
+<li>荷主の「詳細経路設計へ進む」の回答（US-24 AC1）</li>
+<li>password によるログインと session（US-18 の一部）</li>
 </ul>
-<h3 id="docker">Docker のインストール<a class="headerlink" href="#docker" title="Permanent link">&para;</a></h3>
-<p>Docker Desktop をインストールします。</p>
-<ul>
-<li><strong>Windows</strong>: https://docs.docker.com/desktop/install/windows-install/</li>
-<li><strong>macOS</strong>: https://docs.docker.com/desktop/install/mac-install/</li>
+</li>
+<li><strong>経路の設計と荷主の承認</strong>（W3）<ul>
+<li>経路候補の算出と比較、除外の理由（US-06。仮の航海データ）</li>
+<li>経路の確定と根拠・権限の検証（US-07）</li>
+<li>荷主の見積りと経路の承認、失効時の拒否（US-24 AC4・AC5、ADR-014）</li>
+<li>KPI-01 の 2 時刻の記録と KPI 計測記録の画面（US-21 AC1）</li>
 </ul>
-<div class="highlight"><pre><span></span><code><span class="c1"># バージョン確認</span>
-docker<span class="w"> </span>-v
-
-docker<span class="w"> </span>compose<span class="w"> </span>version
-</code></pre></div>
-<h3 id="nodejs">Node.js のインストール<a class="headerlink" href="#nodejs" title="Permanent link">&para;</a></h3>
-<p>コミット前の品質チェック（husky + lint-staged）に Node.js が必要です。</p>
-<ul>
-<li>https://nodejs.org/</li>
+</li>
+<li><strong>本予約・追跡・照会</strong>（W4）<ul>
+<li>本予約の確定と失効の拒否、再送の冪等と重複確定の防止、予約サガ（US-04。ADR-015・ADR-016）</li>
+<li>追跡の開始（予約確定のイベントを追跡が購読し、結果を予約の公開 API へ返す）</li>
+<li>主要実績の登録と重複の扱い（US-12）</li>
+<li>荷主の追跡の照会と予約一覧（US-09 AC1、C-06）</li>
 </ul>
-<div class="highlight"><pre><span></span><code><span class="c1"># バージョン確認</span>
-node<span class="w"> </span>-v
-
-npm<span class="w"> </span>-v
-</code></pre></div>
-<hr />
-<h2 id="2">2. プロジェクトの取得<a class="headerlink" href="#2" title="Permanent link">&para;</a></h2>
-<h3 id="_4">リポジトリのクローン<a class="headerlink" href="#_4" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code>git<span class="w"> </span>clone<span class="w"> </span><span class="o">{</span>リポジトリ<span class="w"> </span>URL<span class="o">}</span>
-<span class="nb">cd</span><span class="w"> </span><span class="o">{</span>プロジェクトディレクトリ<span class="o">}</span>
-</code></pre></div>
-<h3 id="nodejs_1">Node.js 依存パッケージのインストール<a class="headerlink" href="#nodejs_1" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code>npm<span class="w"> </span>install
-</code></pre></div>
-<blockquote>
-<p><strong>Note</strong>: husky（Git Hooks）が <code>prepare</code> スクリプトで自動的にセットアップされます。</p>
-</blockquote>
-<hr />
-<h2 id="3">3. サブシステム一覧<a class="headerlink" href="#3" title="Permanent link">&para;</a></h2>
-<p>{プロジェクト名}は以下のサブシステムで構成されています。</p>
+</li>
+</ol>
+<h3 id="_24">技術的成果<a class="headerlink" href="#_24" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
 <tr>
-<th>システム</th>
-<th>ディレクトリ</th>
-<th>説明</th>
-<th>ポート (DB / App)</th>
+<th style="text-align: left;">成果</th>
+<th style="text-align: left;">内容</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>{システム名}</td>
-<td><code>{ディレクトリ}</code></td>
-<td>{説明}</td>
-<td App="App" ポート="ポート">{DB ポート} /</td>
+<td style="text-align: left;">モジュラーモノリス</td>
+<td style="text-align: left;">Spring Modulith で、見積り・経路設計・予約・追跡・アクセス監査・<code>platform</code> をモジュールに分け、依存の向きを <code>allowedDependencies</code> と ModularityTest で固定した。コンテキストの公開 API は <code>&lt;コンテキスト&gt;.interfaces.api</code> に置いた</td>
+</tr>
+<tr>
+<td style="text-align: left;">イベントによる連携</td>
+<td style="text-align: left;">コンテキストの間はドメインイベントでつなぎ、イベント発行記録（<code>event_publication</code>）で配信の失敗を残して再配信する。購読は冪等にした</td>
+</tr>
+<tr>
+<td style="text-align: left;">二重ループの受入テスト</td>
+<td style="text-align: left;">業務のルールの層（Cucumber とメモリのリポジトリ）と画面の層（Playwright・axe-core）の 2 層。受入条件とシナリオの照合を機械で行う</td>
+</tr>
+<tr>
+<td style="text-align: left;">アーキテクチャテスト</td>
+<td style="text-align: left;">AT-01〜06（ArchUnit、Spring Modulith、マッパーの SQL のスキーマの検査、ステップ定義の依存、本番の依存に H2 を含まない）</td>
+</tr>
+<tr>
+<td style="text-align: left;">生きたドキュメント</td>
+<td style="text-align: left;">JIG・Spring Modulith の文書・SchemaSpy の ER 図を CI で生成し、設計ドキュメントのサイトに載せた</td>
+</tr>
+<tr>
+<td style="text-align: left;">デモ環境</td>
+<td style="text-align: left;">Heroku の dev プロファイル（ADR-013）。CI から配備し、サンプルの業務データを相対の日時で入れた</td>
+</tr>
+<tr>
+<td style="text-align: left;">ユーザーマニュアル</td>
+<td style="text-align: left;"><code>docs/manual</code>（14 ページ、キャプチャ 35 枚を <code>./gradlew manualScreenshots</code> で撮る）と HTML 版</td>
+</tr>
+<tr>
+<td style="text-align: left;">記事</td>
+<td style="text-align: left;"><a href="../../../article/walking-skeleton-tour/">ウォーキングスケルトンのガイドツアー</a></td>
 </tr>
 </tbody>
 </table>
 <hr />
-<h2 id="4">4. 技術スタック<a class="headerlink" href="#4" title="Permanent link">&para;</a></h2>
-<h3 id="_5">バックエンド<a class="headerlink" href="#_5" title="Permanent link">&para;</a></h3>
-<table>
-<thead>
-<tr>
-<th>カテゴリ</th>
-<th>技術</th>
-<th>バージョン</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>言語</td>
-<td>{言語}</td>
-<td>{バージョン}</td>
-</tr>
-<tr>
-<td>フレームワーク</td>
-<td>{フレームワーク}</td>
-<td>{バージョン}</td>
-</tr>
-<tr>
-<td>ビルドツール</td>
-<td>{ビルドツール}</td>
-<td>{バージョン}</td>
-</tr>
-<tr>
-<td>ORM</td>
-<td>{ORM}</td>
-<td>{バージョン}</td>
-</tr>
-<tr>
-<td>データベース</td>
-<td>{データベース}</td>
-<td>{バージョン}</td>
-</tr>
-<tr>
-<td>マイグレーション</td>
-<td>{マイグレーションツール}</td>
-<td>-</td>
-</tr>
-<tr>
-<td>テスト</td>
-<td>{テストフレームワーク}</td>
-<td>{バージョン}</td>
-</tr>
-<tr>
-<td>品質管理</td>
-<td>{品質管理ツール}</td>
-<td>-</td>
-</tr>
-</tbody>
-</table>
-<h3 id="_6">フロントエンド<a class="headerlink" href="#_6" title="Permanent link">&para;</a></h3>
-<table>
-<thead>
-<tr>
-<th>カテゴリ</th>
-<th>技術</th>
-<th>バージョン</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>言語</td>
-<td>{言語}</td>
-<td>{バージョン}</td>
-</tr>
-<tr>
-<td>フレームワーク</td>
-<td>{フレームワーク}</td>
-<td>{バージョン}</td>
-</tr>
-<tr>
-<td>CSS</td>
-<td>{CSS フレームワーク}</td>
-<td>{バージョン}</td>
-</tr>
-</tbody>
-</table>
-<h3 id="_7">インフラストラクチャ<a class="headerlink" href="#_7" title="Permanent link">&para;</a></h3>
-<table>
-<thead>
-<tr>
-<th>カテゴリ</th>
-<th>技術</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>コンテナ</td>
-<td>Docker / Docker Compose</td>
-</tr>
-<tr>
-<td>CI/CD</td>
-<td>{CI/CD ツール}</td>
-</tr>
-</tbody>
-</table>
-<hr />
-<h2 id="5">5. プロファイル構成<a class="headerlink" href="#5" title="Permanent link">&para;</a></h2>
-<p>開発効率を高めるため、複数のプロファイルを使い分けます。</p>
-<table>
-<thead>
-<tr>
-<th>プロファイル</th>
-<th>データベース</th>
-<th>Docker</th>
-<th>用途</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>default</td>
-<td>{開発用 DB}（インメモリ等）</td>
-<td>不要</td>
-<td>日常開発・即座起動</td>
-</tr>
-<tr>
-<td>product</td>
-<td>{本番用 DB}</td>
-<td>必要</td>
-<td>本番互換テスト</td>
-</tr>
-</tbody>
-</table>
-<h3 id="default">default プロファイル（推奨：日常開発）<a class="headerlink" href="#default" title="Permanent link">&para;</a></h3>
-<p>Docker なしで即座に起動できます。</p>
-<div class="highlight"><pre><span></span><code><span class="nb">cd</span><span class="w"> </span><span class="o">{</span>バックエンドディレクトリ<span class="o">}</span>
-<span class="o">{</span>起動コマンド<span class="o">}</span>
-</code></pre></div>
-<h3 id="product">product プロファイル（本番互換）<a class="headerlink" href="#product" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><span class="c1"># データベースコンテナを起動</span>
-<span class="nb">cd</span><span class="w"> </span><span class="o">{</span>サブシステムディレクトリ<span class="o">}</span>
-docker<span class="w"> </span>compose<span class="w"> </span>up<span class="w"> </span>-d<span class="w"> </span><span class="o">{</span>DB<span class="w"> </span>サービス名<span class="o">}</span>
-
-<span class="c1"># product プロファイルで起動</span>
-<span class="nb">cd</span><span class="w"> </span><span class="o">{</span>バックエンドディレクトリ<span class="o">}</span>
-<span class="o">{</span>product<span class="w"> </span>起動コマンド<span class="o">}</span>
-</code></pre></div>
-<hr />
-<h2 id="6">6. 開発サーバーの起動<a class="headerlink" href="#6" title="Permanent link">&para;</a></h2>
-<h3 id="_8">タスクランナー経由（推奨）<a class="headerlink" href="#_8" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><span class="c1"># 開発サーバー起動（default プロファイル）</span>
-<span class="o">{</span>タスクランナーコマンド<span class="o">}</span>
-
-<span class="c1"># TDD モード（テスト自動再実行）</span>
-<span class="o">{</span>TDD<span class="w"> </span>コマンド<span class="o">}</span>
-
-<span class="c1"># タスク一覧を表示</span>
-<span class="o">{</span>ヘルプコマンド<span class="o">}</span>
-</code></pre></div>
-<h3 id="_9">ビルドツール直接実行<a class="headerlink" href="#_9" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><span class="nb">cd</span><span class="w"> </span><span class="o">{</span>バックエンドディレクトリ<span class="o">}</span>
-
-<span class="c1"># default プロファイルで起動</span>
-<span class="o">{</span>起動コマンド<span class="o">}</span>
-
-<span class="c1"># TDD モード（テストを常に再実行）</span>
-<span class="o">{</span>TDD<span class="w"> </span>コマンド<span class="o">}</span>
-</code></pre></div>
-<h3 id="_10">アクセス確認<a class="headerlink" href="#_10" title="Permanent link">&para;</a></h3>
-<table>
-<thead>
-<tr>
-<th>サービス</th>
-<th>URL</th>
-<th>説明</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>アプリケーション</td>
-<td>http://localhost:{ポート}</td>
-<td>メインアプリケーション</td>
-</tr>
-<tr>
-<td>API ドキュメント</td>
-<td>http://localhost:{ポート}/{パス}</td>
-<td>API ドキュメント</td>
-</tr>
-<tr>
-<td>DB 管理ツール</td>
-<td>http://localhost:{ポート}/{パス}</td>
-<td>データベース管理（default プロファイル）</td>
-</tr>
-<tr>
-<td>ヘルスチェック</td>
-<td>http://localhost:{ポート}/{パス}</td>
-<td>ヘルスチェック</td>
-</tr>
-</tbody>
-</table>
-<hr />
-<h2 id="7-docker-compose">7. Docker Compose のセットアップ<a class="headerlink" href="#7-docker-compose" title="Permanent link">&para;</a></h2>
-<h3 id="_11">データベースコンテナの起動<a class="headerlink" href="#_11" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><span class="nb">cd</span><span class="w"> </span><span class="o">{</span>サブシステムディレクトリ<span class="o">}</span>
-
-<span class="c1"># データベースを起動</span>
-docker<span class="w"> </span>compose<span class="w"> </span>up<span class="w"> </span>-d<span class="w"> </span><span class="o">{</span>DB<span class="w"> </span>サービス名<span class="o">}</span>
-
-<span class="c1"># コンテナの状態確認</span>
-docker<span class="w"> </span>compose<span class="w"> </span>ps
-</code></pre></div>
-<h3 id="docker-compose">Docker Compose の便利なコマンド<a class="headerlink" href="#docker-compose" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><span class="c1"># データベースを起動</span>
-docker<span class="w"> </span>compose<span class="w"> </span>up<span class="w"> </span>-d<span class="w"> </span><span class="o">{</span>DB<span class="w"> </span>サービス名<span class="o">}</span>
-
-<span class="c1"># コンテナの停止と削除</span>
-docker<span class="w"> </span>compose<span class="w"> </span>down
-
-<span class="c1"># ログを確認</span>
-docker<span class="w"> </span>compose<span class="w"> </span>logs<span class="w"> </span>-f<span class="w"> </span><span class="o">{</span>DB<span class="w"> </span>サービス名<span class="o">}</span>
-
-<span class="c1"># データベースに接続</span>
-docker<span class="w"> </span>compose<span class="w"> </span><span class="nb">exec</span><span class="w"> </span><span class="o">{</span>DB<span class="w"> </span>サービス名<span class="o">}</span><span class="w"> </span><span class="o">{</span>DB<span class="w"> </span>クライアントコマンド<span class="o">}</span>
-</code></pre></div>
-<hr />
-<h2 id="8">8. テストの実行<a class="headerlink" href="#8" title="Permanent link">&para;</a></h2>
-<h3 id="_12">全テスト実行<a class="headerlink" href="#_12" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><span class="nb">cd</span><span class="w"> </span><span class="o">{</span>バックエンドディレクトリ<span class="o">}</span>
-
-<span class="c1"># テスト実行（カバレッジレポート付き）</span>
-<span class="o">{</span>テスト実行コマンド<span class="o">}</span>
-</code></pre></div>
-<h3 id="_13">テストの種類<a class="headerlink" href="#_13" title="Permanent link">&para;</a></h3>
-<table>
-<thead>
-<tr>
-<th>テスト種別</th>
-<th>ツール</th>
-<th>説明</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>単体テスト</td>
-<td>{テストフレームワーク}</td>
-<td>ドメインロジックのテスト</td>
-</tr>
-<tr>
-<td>統合テスト</td>
-<td>{統合テストツール}</td>
-<td>データベースを使用したテスト</td>
-</tr>
-<tr>
-<td>アーキテクチャテスト</td>
-<td>{アーキテクチャテストツール}</td>
-<td>レイヤー依存関係検証</td>
-</tr>
-</tbody>
-</table>
-<h3 id="_14">テストカバレッジ<a class="headerlink" href="#_14" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><span class="c1"># テストを実行してカバレッジレポートを生成</span>
-<span class="o">{</span>カバレッジコマンド<span class="o">}</span>
-
-<span class="c1"># レポートの表示</span>
-<span class="c1"># {レポートパス}</span>
-</code></pre></div>
-<hr />
-<h2 id="9">9. コード品質管理<a class="headerlink" href="#9" title="Permanent link">&para;</a></h2>
-<h3 id="_15">静的コード解析ツール<a class="headerlink" href="#_15" title="Permanent link">&para;</a></h3>
-<table>
-<thead>
-<tr>
-<th>ツール</th>
-<th>目的</th>
-<th>コマンド</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>{リンター}</td>
-<td>コーディング規約の検証</td>
-<td><code>{コマンド}</code></td>
-</tr>
-<tr>
-<td>{バグ検出ツール}</td>
-<td>バグパターン検出</td>
-<td><code>{コマンド}</code></td>
-</tr>
-<tr>
-<td>{カバレッジツール}</td>
-<td>テストカバレッジ</td>
-<td><code>{コマンド}</code></td>
-</tr>
-</tbody>
-</table>
-<h3 id="_16">品質チェックの実行<a class="headerlink" href="#_16" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><span class="nb">cd</span><span class="w"> </span><span class="o">{</span>バックエンドディレクトリ<span class="o">}</span>
-
-<span class="c1"># 品質チェックのみ</span>
-<span class="o">{</span>品質チェックコマンド<span class="o">}</span>
-
-<span class="c1"># すべてのテストと品質チェック</span>
-<span class="o">{</span>フルチェックコマンド<span class="o">}</span>
-</code></pre></div>
-<h3 id="_17">コード複雑度の基準<a class="headerlink" href="#_17" title="Permanent link">&para;</a></h3>
-<table>
-<thead>
-<tr>
-<th>指標</th>
-<th>閾値</th>
-<th>説明</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>循環的複雑度</td>
-<td>10</td>
-<td>分岐・ループの複雑さ</td>
-</tr>
-<tr>
-<td>ファイルサイズ</td>
-<td>500 行</td>
-<td>1 ファイルの最大行数</td>
-</tr>
-<tr>
-<td>メソッドサイズ</td>
-<td>150 行</td>
-<td>1 メソッドの最大行数</td>
-</tr>
-<tr>
-<td>パラメータ数</td>
-<td>7</td>
-<td>メソッドの最大パラメータ数</td>
-</tr>
-</tbody>
-</table>
-<h3 id="_18">レポートの確認<a class="headerlink" href="#_18" title="Permanent link">&para;</a></h3>
-<p>品質チェック後、以下のディレクトリにレポートが生成されます。</p>
-<table>
-<thead>
-<tr>
-<th>ツール</th>
-<th>レポートパス</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>{リンター}</td>
-<td><code>{レポートパス}</code></td>
-</tr>
-<tr>
-<td>{バグ検出ツール}</td>
-<td><code>{レポートパス}</code></td>
-</tr>
-<tr>
-<td>{カバレッジツール}</td>
-<td><code>{レポートパス}</code></td>
-</tr>
-<tr>
-<td>テスト結果</td>
-<td><code>{レポートパス}</code></td>
-</tr>
-</tbody>
-</table>
-<hr />
-<h2 id="10">10. ディレクトリ構造<a class="headerlink" href="#10" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code>{プロジェクト名}/
-├── .husky/                          # Git Hooks (Husky)
-│   └── pre-commit                   # コミット前品質チェック
-├── apps/
-│   └── {サブシステム}/
-│       ├── backend/
-│       │   ├── {ビルド設定ファイル}
-│       │   ├── Dockerfile
-│       │   ├── config/              # 品質管理ツール設定
-│       │   └── src/
-│       │       ├── main/
-│       │       │   ├── {ソースディレクトリ}/
-│       │       │   │   ├── domain/            # ドメイン層
-│       │       │   │   ├── application/       # アプリケーション層
-│       │       │   │   └── infrastructure/    # インフラストラクチャ層
-│       │       │   └── resources/
-│       │       │       ├── {設定ファイル}
-│       │       │       └── db/migration/      # マイグレーション
-│       │       └── test/
-│       └── docker-compose.yml
-├── docs/                            # ドキュメント
-├── ops/                             # 運用スクリプト
-└── package.json                     # Node.js 依存関係（husky, lint-staged）
-</code></pre></div>
-<hr />
-<h2 id="11">11. 命名規則<a class="headerlink" href="#11" title="Permanent link">&para;</a></h2>
-<p>プロジェクトの命名規則を定義します。</p>
-<table>
-<thead>
-<tr>
-<th>要素</th>
-<th>規則</th>
-<th>例</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>テーブル名</td>
-<td>{規則}</td>
-<td><code>{例}</code></td>
-</tr>
-<tr>
-<td>カラム名</td>
-<td>{規則}</td>
-<td><code>{例}</code></td>
-</tr>
-<tr>
-<td>クラス名</td>
-<td>{規則}</td>
-<td><code>{例}</code></td>
-</tr>
-<tr>
-<td>フィールド名</td>
-<td>{規則}</td>
-<td><code>{例}</code></td>
-</tr>
-</tbody>
-</table>
-<hr />
-<h2 id="12-git">12. Git 規約<a class="headerlink" href="#12-git" title="Permanent link">&para;</a></h2>
-<h3 id="_19">コミットメッセージ<a class="headerlink" href="#_19" title="Permanent link">&para;</a></h3>
-<p><a href="https://www.conventionalcommits.org/ja/">Conventional Commits</a> に従います。</p>
-<table>
-<thead>
-<tr>
-<th>タイプ</th>
-<th>説明</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>feat</code></td>
-<td>新機能</td>
-</tr>
-<tr>
-<td><code>fix</code></td>
-<td>バグ修正</td>
-</tr>
-<tr>
-<td><code>docs</code></td>
-<td>ドキュメントのみの変更</td>
-</tr>
-<tr>
-<td><code>style</code></td>
-<td>コードの意味に影響しない変更</td>
-</tr>
-<tr>
-<td><code>refactor</code></td>
-<td>バグ修正でも機能追加でもないコード変更</td>
-</tr>
-<tr>
-<td><code>perf</code></td>
-<td>パフォーマンス改善</td>
-</tr>
-<tr>
-<td><code>test</code></td>
-<td>テストの追加・修正</td>
-</tr>
-<tr>
-<td><code>chore</code></td>
-<td>ビルドプロセス・補助ツールの変更</td>
-</tr>
-</tbody>
-</table>
-<h3 id="_20">スコープ<a class="headerlink" href="#_20" title="Permanent link">&para;</a></h3>
-<p>サブシステムを示すスコープを使用します。</p>
-<div class="highlight"><pre><span></span><code>feat({スコープ}): {変更内容}
-fix({スコープ}): {変更内容}
-docs: {変更内容}
-</code></pre></div>
-<h3 id="git-hookshusky-lint-staged">Git Hooks（Husky + lint-staged）<a class="headerlink" href="#git-hookshusky-lint-staged" title="Permanent link">&para;</a></h3>
-<p>コミット時に自動で品質チェックが実行されます。</p>
-<h4 id="_21">セットアップ<a class="headerlink" href="#_21" title="Permanent link">&para;</a></h4>
-<p><code>npm install</code> 実行時に Husky は自動的にセットアップされます（<code>prepare</code> スクリプト）。</p>
-<div class="highlight"><pre><span></span><code><span class="c1"># 手動でセットアップする場合</span>
-npx<span class="w"> </span>husky<span class="w"> </span>init
-</code></pre></div>
-<h4 id="pre-commit">pre-commit フック<a class="headerlink" href="#pre-commit" title="Permanent link">&para;</a></h4>
-<p>ソースファイルに変更がある場合、以下のチェックが自動実行されます。</p>
-<table>
-<thead>
-<tr>
-<th>ツール</th>
-<th>目的</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>{リンター}</td>
-<td>コーディング規約の検証</td>
-</tr>
-<tr>
-<td>{バグ検出ツール}</td>
-<td>バグパターン検出</td>
-</tr>
-</tbody>
-</table>
-<p>いずれかのチェックが失敗すると、コミットがブロックされます。</p>
-<h4 id="_22">フックをスキップする場合<a class="headerlink" href="#_22" title="Permanent link">&para;</a></h4>
-<p>緊急時にフックをスキップしてコミットする場合（非推奨）：</p>
-<div class="highlight"><pre><span></span><code>git<span class="w"> </span>commit<span class="w"> </span>--no-verify<span class="w"> </span>-m<span class="w"> </span><span class="s2">"メッセージ"</span>
-</code></pre></div>
-<blockquote>
-<p><strong>Warning</strong>: フックのスキップは緊急時のみ使用してください。品質チェックを通過しないコードはチームに影響を与える可能性があります。</p>
-</blockquote>
-<hr />
-<h2 id="13">13. セットアップの確認<a class="headerlink" href="#13" title="Permanent link">&para;</a></h2>
-<p>すべてのセットアップが完了したら、以下のコマンドで動作確認を行います。</p>
-<div class="highlight"><pre><span></span><code><span class="c1"># 1. Node.js 依存パッケージのインストール</span>
-npm<span class="w"> </span>install
-
-<span class="c1"># 2. ビルド確認</span>
-<span class="nb">cd</span><span class="w"> </span><span class="o">{</span>バックエンドディレクトリ<span class="o">}</span>
-<span class="o">{</span>ビルドコマンド<span class="o">}</span>
-
-<span class="c1"># 3. テスト実行</span>
-<span class="o">{</span>テスト実行コマンド<span class="o">}</span>
-
-<span class="c1"># 4. 品質チェック</span>
-<span class="o">{</span>品質チェックコマンド<span class="o">}</span>
-
-<span class="c1"># 5. 開発サーバー起動（default プロファイル）</span>
-<span class="o">{</span>起動コマンド<span class="o">}</span>
-</code></pre></div>
-<h3 id="_23">アクセス確認<a class="headerlink" href="#_23" title="Permanent link">&para;</a></h3>
-<table>
-<thead>
-<tr>
-<th>サービス</th>
-<th>URL</th>
-<th>説明</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>アプリケーション</td>
-<td>http://localhost:{ポート}</td>
-<td>メインアプリケーション</td>
-</tr>
-<tr>
-<td>API ドキュメント</td>
-<td>http://localhost:{ポート}/{パス}</td>
-<td>API ドキュメント</td>
-</tr>
-<tr>
-<td>DB 管理ツール</td>
-<td>http://localhost:{ポート}/{パス}</td>
-<td>データベース管理ツール</td>
-</tr>
-<tr>
-<td>ヘルスチェック</td>
-<td>http://localhost:{ポート}/{パス}</td>
-<td>ヘルスチェック</td>
-</tr>
-</tbody>
-</table>
-<hr />
-<h2 id="14-cicd">14. CI/CD<a class="headerlink" href="#14-cicd" title="Permanent link">&para;</a></h2>
-<p>CI/CD による継続的インテグレーション・デプロイを設定しています。</p>
-<h3 id="_24">ワークフロー一覧<a class="headerlink" href="#_24" title="Permanent link">&para;</a></h3>
-<table>
-<thead>
-<tr>
-<th>ワークフロー</th>
-<th>ファイル</th>
-<th>トリガー</th>
-<th>説明</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Backend CI</td>
-<td><code>{ワークフローファイル}</code></td>
-<td><code>{トリガーパス}</code> 変更時</td>
-<td>品質チェック・テスト・ビルド</td>
-</tr>
-<tr>
-<td>Docker Publish</td>
-<td><code>{ワークフローファイル}</code></td>
-<td>タグ push / 手動実行</td>
-<td>イメージを Registry に公開</td>
-</tr>
-<tr>
-<td>Docs Deploy</td>
-<td><code>{ワークフローファイル}</code></td>
-<td>main ブランチ push</td>
-<td>ドキュメントをデプロイ</td>
-</tr>
-</tbody>
-</table>
-<h3 id="backend-ci">Backend CI<a class="headerlink" href="#backend-ci" title="Permanent link">&para;</a></h3>
-<p>バックエンドの変更時に自動実行されます。</p>
-<div class="highlight"><pre><span></span><code>実行内容:
-
-  1. 環境セットアップ
-  2. キャッシュ復元
-  3. 品質チェック（リンター、バグ検出）
-  4. テスト実行（単体・統合・アーキテクチャ）
-  5. カバレッジレポート生成
-  6. ビルド（成果物生成）
-  7. レポートアップロード
-</code></pre></div>
-<h3 id="docker-image-publish">Docker Image Publish<a class="headerlink" href="#docker-image-publish" title="Permanent link">&para;</a></h3>
-<p>タグ push 時または手動実行時に、Docker イメージをビルドして Registry に公開します。</p>
-<div class="highlight"><pre><span></span><code><span class="c1"># 手動実行</span>
-<span class="o">{</span>手動実行コマンド<span class="o">}</span>
-
-<span class="c1"># タグによる自動実行</span>
-git<span class="w"> </span>tag<span class="w"> </span>v1.0.0
-git<span class="w"> </span>push<span class="w"> </span>origin<span class="w"> </span>v1.0.0
-
-<span class="c1"># イメージの取得</span>
-docker<span class="w"> </span>pull<span class="w"> </span><span class="o">{</span>レジストリ<span class="o">}</span>/<span class="o">{</span>イメージ名<span class="o">}</span>:latest
-</code></pre></div>
-<hr />
-<h2 id="_25">トラブルシューティング<a class="headerlink" href="#_25" title="Permanent link">&para;</a></h2>
-<h3 id="1_1">{問題タイトル 1}<a class="headerlink" href="#1_1" title="Permanent link">&para;</a></h3>
-<p><strong>問題</strong>: {問題の説明}</p>
-<div class="highlight"><pre><span></span><code>{エラーメッセージ}
-</code></pre></div>
-<p><strong>解決策</strong>: {解決策の説明}</p>
-<div class="highlight"><pre><span></span><code><span class="o">{</span>解決コマンド<span class="o">}</span>
-</code></pre></div>
-<h3 id="2_1">{問題タイトル 2}<a class="headerlink" href="#2_1" title="Permanent link">&para;</a></h3>
-<p><strong>問題</strong>: {問題の説明}</p>
-<p><strong>解決策</strong>: {解決策の説明}</p>
-<div class="highlight"><pre><span></span><code><span class="o">{</span>解決コマンド<span class="o">}</span>
-</code></pre></div>
-<h3 id="pre-commit_1">pre-commit フックが失敗する場合<a class="headerlink" href="#pre-commit_1" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><span class="nb">cd</span><span class="w"> </span><span class="o">{</span>バックエンドディレクトリ<span class="o">}</span>
-
-<span class="c1"># 品質チェックを手動実行してエラーを確認</span>
-<span class="o">{</span>品質チェックコマンド<span class="o">}</span>
-
-<span class="c1"># エラーを修正してから再度コミット</span>
-</code></pre></div>
-<hr />
-<h2 id="_26">関連ドキュメント<a class="headerlink" href="#_26" title="Permanent link">&para;</a></h2>
+<h2 id="release-01">ふりかえり（Release 0.1）<a class="headerlink" href="#release-01" title="Permanent link">&para;</a></h2>
+<p>週ごとのふりかえりはリリース計画の各週の「ふりかえり」に書いた。Release 0.1 全体で見ると次のとおりです。</p>
 <ul>
-<li>{関連ドキュメント 1}</li>
-<li>{関連ドキュメント 2}</li>
-<li>{関連ドキュメント 3}</li>
+<li>Keep</li>
+<li>ウォーキングスケルトンを最初の Bolt にし、すべての統合点を先に通したこと</li>
+<li>開始準備の 2 つの検証で、着手の前に設計の食い違いを見つけ、Bolt を分けて半日以内に収めたこと</li>
+<li>連携の形を ADR で先に決め、依存の向きを機械で固定してから実装したこと</li>
+<li>Problem</li>
+<li>TDD の手順（Red を確かめてから実装する）からの逸脱が、Try にしても繰り返した</li>
+<li>持ち越しを Issue にせず移し先だけを決めたので、Bolt 2 の 2 つが Bolt 28 まで残った</li>
+<li>画面の語の問題（実装の語・業務ルールの番号）は、マニュアルを書くまで見つからなかった</li>
+<li>Try（Release 1.0 に持ち込む）</li>
+<li>承認ゲートの密度は、既定を計画と終了報告の承認にし、確認必須は計画の承認の場で判断を受ける。認証の完成（W5）と外部原本の取込（W7）はステップごとに止める</li>
+<li>後に回したものは Issue にし、週の見直しで開いている持ち越しを数える（T-89）</li>
+<li>画面を作る Bolt の開発レビューに、マニュアルを書く立場の観点を入れる（T-90）</li>
+<li>Release 0.1 の負債（#45・#46）を W5 の最初の Bolt で返す</li>
+</ul>
+<h2 id="release-10">Release 1.0 への引き継ぎ<a class="headerlink" href="#release-10" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">事項</th>
+<th style="text-align: left;">扱い</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">計画の引き直し</td>
+<td style="text-align: left;">範囲と日付（2026-12-11）は変えない。US-04 の残り（#43）を W6 から W5 に前倒しし、W5 11・W6 10 SP にした。W5 と W9（15 SP）の超過は、Release 0.1 を約 2 週早く終えた余裕で吸収する</td>
+</tr>
+<tr>
+<td style="text-align: left;">承認ゲートの密度</td>
+<td style="text-align: left;">上の Try のとおり（<a href="../release_plan/">リリース計画</a>の「W4 の締めの見直し」）</td>
+</tr>
+<tr>
+<td style="text-align: left;">Release 0.1 の負債</td>
+<td style="text-align: left;"><a href="https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/45">#45</a>（画面の層のステップ定義のキー操作の部品）、<a href="https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/46">#46</a>（マニュアルの作成で見つけた画面の文言と表示の課題）。W5 の最初の Bolt</td>
+</tr>
+<tr>
+<td style="text-align: left;">未決の業務判断</td>
+<td style="text-align: left;">D-85（承認の後に失効した見積りの再見積りの規則）。W5 の開始準備で決める</td>
+</tr>
+<tr>
+<td style="text-align: left;">パイロット開始の条件</td>
+<td style="text-align: left;">Golden dataset（TST-02）と必要最小接続時間（DM-05）を W6 の前に業務責任者から受け取る（リリース計画の「パイロット開始の条件」）</td>
+</tr>
+</tbody>
+</table>
+<h2 id="_25">関連ドキュメント<a class="headerlink" href="#_25" title="Permanent link">&para;</a></h2>
+<ul>
+<li><a href="../release_plan/">リリース計画</a></li>
+<li><a href="../development_strategy/">開発戦略</a></li>
+<li><a href="../bolt_28_report/">Bolt 28 終了報告</a>（Release 0.1 のリリース条件の根拠と社内デモ）</li>
+<li><a href="../../../manual/">ユーザーマニュアル</a></li>
 </ul>
 
 
@@ -10799,16 +10452,16 @@ docker<span class="w"> </span>pull<span class="w"> </span><span class="o">{</spa
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "toc.integrate", "search.suggest", "search.highlight"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.tabs", "toc.integrate", "search.suggest", "search.highlight"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      <script src="../../../assets/javascripts/bundle.d7400e89.min.js"></script>
       
         <script src="https://cdn.jsdelivr.net/npm/mermaid@11.17.2/dist/mermaid.min.js"></script>
       
-        <script src="../../assets/js/extra.js"></script>
+        <script src="../../../assets/js/extra.js"></script>
       
-        <script src="../../assets/js/mathjax.js"></script>
+        <script src="../../../assets/js/mathjax.js"></script>
       
         <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
       
