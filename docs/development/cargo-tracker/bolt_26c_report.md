@@ -3,7 +3,7 @@ type: Report
 title: "Bolt 26c 終了報告 - 主要実績の登録の画面（US-12 AC1・AC2。S-13 の登録と S-12 の主要実績の一覧）"
 description: "26c 回目の Bolt の終了報告。S-13 主要実績の登録、S-12 の主要実績の一覧と登録の結果、AC2 の既存の記録の表示、区間の表記の「→」の読み上げ、tracking_record の 4 列の NOT NULL 化と根拠の実績番号の外部キーを作り、US-12 の R0.1 を終えた。/goal で止まらなかった承認ゲート、確認ポイントの決定、開発レビューの対応、既知の課題を記録する。"
 tags: [development,bolt-report]
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-10T02:54:00Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-10T03:06:15Z }
 ---
 
 # Bolt 26c 終了報告 - 主要実績の登録の画面（US-12 AC1・AC2。S-13 の登録と S-12 の主要実績の一覧）
@@ -68,7 +68,7 @@ generated: { by: anthropic/claude-opus-5-5, at: 2026-10-10T02:54:00Z }
 | :--- | :--- |
 | `check`（ModularityTest・ArchUnit・AT-04・Checkstyle・SpotBugs を含む）・`documentationTest` | 通過。レビューの対応の途中で SpotBugs が `switch` の record のパターンの使われない成分（`var _`）を指摘したので、成分を使う形に直した |
 | `uiTest`（axe-core を含む） | 通過（実行時間のある方の XML で 73 本、失敗 0。T-79。開発レビューの対応の後にも流した。T-70） |
-| CI（check・ui・デモ環境への配備） | `a1ebde4` は落ちた（議題 3）。`63310e5` 以後は本報告の push で確かめる |
+| CI（check・ui・デモ環境への配備） | `a1ebde4` は落ちた（議題 3）。`63310e5`・`29fbc58` は通過 |
 | SonarQube（ローカル） | 品質ゲート PASS（新しいコードのカバレッジ 97.3%、重複 0.16%、新しい指摘 0 件）。途中で新しい指摘（リダイレクトの URI の定数、record のパターン、同じ文言の繰り返し）で FAIL になり、直した |
 | `okf:check` | ERROR 0 |
 
