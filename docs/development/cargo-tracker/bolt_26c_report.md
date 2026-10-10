@@ -4,7 +4,7 @@ title: "Bolt 26c 終了報告 - 主要実績の登録の画面（US-12 AC1・AC2
 description: "26c 回目の Bolt の終了報告。S-13 主要実績の登録、S-12 の主要実績の一覧と登録の結果、AC2 の既存の記録の表示、区間の表記の「→」の読み上げ、tracking_record の 4 列の NOT NULL 化と根拠の実績番号の外部キーを作り、US-12 の R0.1 を終えた。/goal で止まらなかった承認ゲート、確認ポイントの決定、開発レビューの対応、既知の課題を記録する。"
 tags: [development,bolt-report]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-10T03:18:08Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-10T03:32:40Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-10T03:12:53Z }
 ---
@@ -74,7 +74,7 @@ verified:
 | CI（check・ui・デモ環境への配備） | `a1ebde4` は落ちた（議題 3）。`63310e5`・`29fbc58` は通過 |
 | SonarQube（ローカル） | 品質ゲート PASS（新しいコードのカバレッジ 97.3%、重複 0.16%、新しい指摘 0 件）。途中で新しい指摘（リダイレクトの URI の定数、record のパターン、同じ文言の繰り返し）で FAIL になり、直した |
 | `okf:check` | ERROR 0 |
-| 支援技術による手動確認（#11 の完了の定義） | 実施済み（2026-10-10 に human:kakimomokuri が回答。結果の詳細は記録なし） |
+| 支援技術による手動確認（#11 の完了の定義） | 通過（2026-10-10、human:kakimomokuri。NVDA（Windows）で S-13 の登録・エラー要約と S-12 の主要実績の一覧・結果の通知を操作し、問題なし） |
 
 ## 仮説の結論
 
@@ -138,7 +138,7 @@ Bolt 27: US-09 AC1 荷主が輸送状態を照会する（現在状態・予定�
 
 | 日付 | 更新内容 | 更新者 |
 | :--- | :--- | :--- |
-| 2026-10-10 | 支援技術による手動確認は実施済み（human:kakimomokuri の回答）と記録した | anthropic/claude-opus-5-5、回答 human:kakimomokuri |
+| 2026-10-10 | 支援技術による手動確認の結果（NVDA で問題なし。human:kakimomokuri の回答）を記録した | anthropic/claude-opus-5-5、回答 human:kakimomokuri |
 | 2026-10-10 | 終了報告を承認した。議題 1〜5（AI の判断で通した承認ゲート、レビューを受けて変えた文言、手順の誤り、「→」の範囲、支援技術による手動確認）を事後に承認した。受入動画を #11 に添付し、#11 に結果をコメントして閉じた | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-10-10 | 初版（ステップ 1〜4 の結果、開発レビュー、品質ゲート、既知の課題、承認の議題 1〜5、Try T-83・T-84） | anthropic/claude-opus-5-5 |
 
