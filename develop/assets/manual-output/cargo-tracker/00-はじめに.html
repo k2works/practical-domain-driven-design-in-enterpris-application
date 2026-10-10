@@ -10,9 +10,31 @@
   <header class="manual-header">
     <a class="manual-home" href="index.html">cargo-tracker ユーザーマニュアル</a>
   </header>
-  <main class="manual-content">
-    <a class="manual-nav-link" href="index.html">← マニュアル目次</a>
-    <h1 id="はじめに">はじめに</h1>
+  <div class="manual-layout">
+    <nav class="manual-sidenav" aria-label="マニュアルの目次">
+      <details open>
+        <summary>目次</summary>
+        <ul>
+        <li><a href="index.html">概要</a></li>
+        <li><a href="00-%E3%81%AF%E3%81%98%E3%82%81%E3%81%AB.html" aria-current="page">はじめに</a><ul class="manual-sidenav-sections"><li><a href="#%E3%81%93%E3%81%AE%E3%83%9E%E3%83%8B%E3%83%A5%E3%82%A2%E3%83%AB%E3%81%AB%E3%81%A4%E3%81%84%E3%81%A6">このマニュアルについて</a></li><li><a href="#%E5%88%A9%E7%94%A8%E8%80%85%E3%81%AE%E5%BD%B9%E5%89%B2">利用者の役割</a></li><li><a href="#%E5%85%A8%E4%BD%93%E3%81%AE%E6%A7%8B%E6%88%90">全体の構成</a></li><li><a href="#%E8%A1%A8%E8%A8%98%E3%81%AE%E6%B1%BA%E3%81%BE%E3%82%8A">表記の決まり</a></li><li><a href="#%E5%8B%95%E4%BD%9C%E7%92%B0%E5%A2%83">動作環境</a></li><li><a href="#%E5%9B%B0%E3%81%A3%E3%81%9F%E3%81%A8%E3%81%8D%E3%81%AF">困ったときは</a></li></ul></li>
+        <li><a href="01-%E6%A5%AD%E5%8B%99%E3%83%95%E3%83%AD%E3%83%BC.html">1 章 業務フロー</a></li>
+        <li><a href="02-%E3%83%AD%E3%82%B0%E3%82%A4%E3%83%B3%E3%81%A8%E5%85%B1%E9%80%9A%E3%81%AE%E7%94%BB%E9%9D%A2.html">2 章 ログインと共通の画面</a></li>
+        <li><a href="03-%E8%A6%8B%E7%A9%8D%E4%BE%9D%E9%A0%BC.html">3 章 見積依頼</a></li>
+        <li><a href="04-%E8%A6%8B%E7%A9%8D%E3%82%8A%E3%81%B8%E3%81%AE%E5%9B%9E%E7%AD%94%E3%81%A8%E6%89%BF%E8%AA%8D.html">4 章 見積りへの回答と承認</a></li>
+        <li><a href="05-%E4%BA%88%E7%B4%84%E4%B8%80%E8%A6%A7%E3%81%A8%E8%BF%BD%E8%B7%A1%E3%81%AE%E7%85%A7%E4%BC%9A.html">5 章 予約一覧と追跡の照会</a></li>
+        <li><a href="06-%E5%8F%97%E4%BB%98%E4%B8%80%E8%A6%A7%E3%81%A8%E5%AF%A9%E6%9F%BB%E3%81%A8%E8%A6%8B%E7%A9%8D%E3%82%8A.html">6 章 受付一覧と審査と見積り</a></li>
+        <li><a href="07-%E6%9C%AC%E4%BA%88%E7%B4%84%E3%81%AE%E7%A2%BA%E5%AE%9A%E3%81%A8%E4%BA%88%E7%B4%84%E4%B8%80%E8%A6%A7.html">7 章 本予約の確定と予約一覧</a></li>
+        <li><a href="08-%E7%B5%8C%E8%B7%AF%E8%A8%AD%E8%A8%88.html">8 章 経路設計</a></li>
+        <li><a href="09-%E8%BF%BD%E8%B7%A1%E7%AE%A1%E7%90%86.html">9 章 追跡管理</a></li>
+        <li><a href="10-KPI%E8%A8%88%E6%B8%AC%E8%A8%98%E9%8C%B2.html">10 章 KPI 計測記録</a></li>
+        <li><a href="%E7%94%A8%E8%AA%9E%E9%9B%86.html">付録 A 用語集</a></li>
+        <li><a href="%E4%BB%98%E9%8C%B2B-%E3%83%88%E3%83%A9%E3%83%96%E3%83%AB%E3%82%B7%E3%83%A5%E3%83%BC%E3%83%86%E3%82%A3%E3%83%B3%E3%82%B0.html">付録 B トラブルシューティング</a></li>
+        </ul>
+      </details>
+    </nav>
+    <main class="manual-content">
+      <a class="manual-nav-link" href="index.html">← マニュアル目次</a>
+      <h1 id="はじめに">はじめに</h1>
 <h2 id="このマニュアルについて">このマニュアルについて</h2>
 <p>cargo-tracker は、荷主（貨物を送る会社）からの見積依頼を受け付け、見積りと経路を提示し、本予約を確定し、貨物の輸送を追跡するためのシステムです。このマニュアルは、cargo-tracker を使う業務担当者のための操作の手引きです。</p>
 <p>どの画面をいつ使うかは、まず <a href="01-%E6%A5%AD%E5%8B%99%E3%83%95%E3%83%AD%E3%83%BC.html">1 章 業務フロー</a> で確かめてください。各章は、業務フローの工程から参照されます。</p>
@@ -147,8 +169,15 @@
 <h2 id="困ったときは">困ったときは</h2>
 <p>荷主の画面の下に、カスタマーサポートの窓口（平日 09:00〜18:00 Asia/Tokyo）が示されます。荷主の方は担当営業に、社内の方はシステム管理者にお問い合わせください。お問い合わせの際は、画面に示された業務番号（TR-…）や追跡番号（CT…）をお伝えください。</p>
 
-    <a class="manual-nav-link" href="index.html">← マニュアル目次</a>
-  </main>
+      <a class="manual-nav-link" href="index.html">← マニュアル目次</a>
+    </main>
+  </div>
   <footer class="manual-footer">cargo-tracker ユーザーマニュアル</footer>
+  <script>
+    // 画面の幅が狭いときは、目次を閉じた状態で始める（本文を先に見せる。「目次」で開ける）
+    if (window.matchMedia('(max-width: 900px)').matches) {
+      document.querySelectorAll('.manual-sidenav details').forEach((d) => d.removeAttribute('open'));
+    }
+  </script>
 </body>
 </html>
