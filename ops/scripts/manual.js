@@ -96,7 +96,7 @@ function injectHeadingIds(html) {
  * @param {boolean} isIndex 目次ページかどうか
  * @returns {string} 完全な HTML ドキュメント
  */
-function pageTemplate(title, bodyHtml, isIndex) {
+function pageTemplate(title, bodyHtml, isIndex, sideNav) {
   const tocLink = isIndex
     ? ''
     : '<a class="manual-nav-link" href="index.html">← マニュアル目次</a>';
@@ -118,15 +118,99 @@ function pageTemplate(title, bodyHtml, isIndex) {
   <header class="manual-header">
     <a class="manual-home" href="index.html">${MANUAL_TITLE}</a>${portalLink}
   </header>
-  <main class="manual-content">
-    ${tocLink}
-    ${bodyHtml}
-    ${tocLink}
-  </main>
+  <div class="manual-layout">
+    ${sideNav}
+    <main class="manual-content">
+      ${tocLink}
+      ${bodyHtml}
+      ${tocLink}
+    </main>
+  </div>
   <footer class="manual-footer">${footer}</footer>
+  <script>
+    // 画面の幅が狭いときは、目次を閉じた状態で始める（本文を先に見せる。「目次」で開ける）
+    if (window.matchMedia('(max-width: 900px)').matches) {
+      document.querySelectorAll('.manual-sidenav details').forEach((d) => d.removeAttribute('open'));
+    }
+  </script>
 </body>
 </html>
 `;
+}
+
+/**
+ * HTML の特殊文字をエスケープする.
+ * @param {string} text 文字列
+ * @returns {string} エスケープした文字列
+ */
+function escapeHtml(text) {
+  return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+/**
+ * ページの並びを決める。目次（index）を先頭に、番号で始まる章を番号の順に、残り（付録など）をタイトルの順に並べる.
+ * @param {{file: string, title: string}[]} pages ページ
+ * @returns {{file: string, title: string}[]} 並べたページ
+ */
+function orderPages(pages) {
+  const rank = (page) => {
+    if (page.file === 'index.md') return 0;
+    return /^\d/.test(page.file) ? 1 : 2;
+  };
+  return [...pages].sort((a, b) => {
+    const byRank = rank(a) - rank(b);
+    if (byRank !== 0) return byRank;
+    return rank(a) === 1 ? a.file.localeCompare(b.file) : a.title.localeCompare(b.title, 'ja');
+  });
+}
+
+/**
+ * 本文の h2 見出し（id とテキスト）を取り出す。サイドナビで開いているページの節に使う.
+ * @param {string} html 見出しに id を付けた本文 HTML
+ * @returns {{id: string, text: string}[]} 節
+ */
+function sectionsOf(html) {
+  const sections = [];
+  const pattern = /<h2 id="([^"]+)">([\s\S]*?)<\/h2>/g;
+  let match;
+  while ((match = pattern.exec(html)) !== null) {
+    sections.push({ id: match[1], text: match[2].replace(/<[^>]+>/g, '') });
+  }
+  return sections;
+}
+
+/**
+ * サイドナビ（全ページの目次）。開いているページは aria-current で示し、その節を下に並べる。
+ * 画面の幅が狭いときは本文の上に置き、details で開閉できる（狭いときは閉じた状態で始める）.
+ * @param {{file: string, title: string}[]} pages 並べたページ
+ * @param {string} currentFile 開いているページの Markdown のファイル名
+ * @param {{id: string, text: string}[]} sections 開いているページの節
+ * @returns {string} サイドナビの HTML
+ */
+function sideNavigation(pages, currentFile, sections) {
+  const items = pages
+    .map((page) => {
+      const href = encodeURI(path.basename(page.file, '.md') + '.html');
+      const label = escapeHtml(page.file === 'index.md' ? '概要' : page.title);
+      if (page.file !== currentFile) {
+        return `<li><a href="${href}">${label}</a></li>`;
+      }
+      const sub = sections.length
+        ? `<ul class="manual-sidenav-sections">${sections
+            .map((section) => `<li><a href="#${encodeURI(section.id)}">${escapeHtml(section.text)}</a></li>`)
+            .join('')}</ul>`
+        : '';
+      return `<li><a href="${href}" aria-current="page">${label}</a>${sub}</li>`;
+    })
+    .join('\n        ');
+  return `<nav class="manual-sidenav" aria-label="マニュアルの目次">
+      <details open>
+        <summary>目次</summary>
+        <ul>
+        ${items}
+        </ul>
+      </details>
+    </nav>`;
 }
 
 /** 生成する CSS（読みやすさ重視のシンプルなスタイル）. */
@@ -137,7 +221,22 @@ body { margin: 0; color: var(--fg); font-family: -apple-system, "Segoe UI", "Hir
 .manual-header a { color: #fff; text-decoration: none; }
 .manual-home { font-weight: bold; }
 .manual-portal { font-size: 0.85rem; opacity: 0.9; }
-.manual-content { max-width: 900px; margin: 0 auto; padding: 2rem 1.5rem 4rem; }
+.manual-layout { display: flex; align-items: flex-start; max-width: 1240px; margin: 0 auto; }
+.manual-sidenav { flex: 0 0 260px; position: sticky; top: 3.2rem; max-height: calc(100vh - 3.2rem); overflow-y: auto; padding: 1.5rem 0.5rem 2rem 1rem; border-right: 1px solid var(--border); font-size: 0.9rem; line-height: 1.6; }
+.manual-sidenav summary { display: none; }
+.manual-sidenav ul { list-style: none; margin: 0; padding: 0; }
+.manual-sidenav li { margin: 0.15rem 0; }
+.manual-sidenav a { display: block; padding: 0.2rem 0.5rem; border-radius: 4px; color: var(--fg); text-decoration: none; }
+.manual-sidenav a:hover, .manual-sidenav a:focus-visible { background: var(--bg-soft); text-decoration: underline; }
+.manual-sidenav a[aria-current="page"] { background: var(--accent); color: #fff; font-weight: bold; }
+.manual-sidenav-sections { margin: 0.2rem 0 0.4rem 0.75rem !important; border-left: 2px solid var(--border); }
+.manual-sidenav-sections a { color: var(--muted); font-size: 0.85rem; }
+.manual-content { flex: 1 1 auto; min-width: 0; max-width: 900px; margin: 0 auto; padding: 2rem 1.5rem 4rem; }
+@media (max-width: 900px) {
+  .manual-layout { display: block; }
+  .manual-sidenav { position: static; max-height: none; border-right: none; border-bottom: 1px solid var(--border); padding: 0.75rem 1rem; }
+  .manual-sidenav summary { display: list-item; cursor: pointer; font-weight: bold; padding: 0.25rem 0; }
+}
 .manual-nav-link { display: inline-block; margin: 0.5rem 0; color: var(--accent); text-decoration: none; font-size: 0.9rem; }
 .manual-content h1 { font-size: 1.8rem; border-bottom: 2px solid var(--border); padding-bottom: 0.3rem; }
 .manual-content h2 { font-size: 1.4rem; border-bottom: 1px solid var(--border); padding-bottom: 0.3rem; margin-top: 2.5rem; }
@@ -189,16 +288,22 @@ export default function (gulp) {
         .filter((f) => f.endsWith('.md'))
         .sort();
 
-      let converted = 0;
-      for (const mdFile of mdFiles) {
+      // サイドナビのため、先に全ページのタイトルと本文を読む
+      const pages = mdFiles.map((mdFile) => {
         const raw = stripFrontMatter(fs.readFileSync(path.join(SRC_DIR, mdFile), 'utf8'));
         const titleMatch = raw.match(/^#\s+(.+)$/m);
         const title = titleMatch ? titleMatch[1].trim() : path.basename(mdFile, '.md');
+        return { file: mdFile, title, raw };
+      });
+      const ordered = orderPages(pages);
 
-        const bodyHtml = injectHeadingIds(rewriteLinks(marked.parse(renderPlantuml(raw))));
-        const isIndex = mdFile === 'index.md';
-        const outName = path.basename(mdFile, '.md') + '.html';
-        fs.writeFileSync(path.join(OUT_DIR, outName), pageTemplate(title, bodyHtml, isIndex), 'utf8');
+      let converted = 0;
+      for (const page of pages) {
+        const bodyHtml = injectHeadingIds(rewriteLinks(marked.parse(renderPlantuml(page.raw))));
+        const isIndex = page.file === 'index.md';
+        const outName = path.basename(page.file, '.md') + '.html';
+        const sideNav = sideNavigation(ordered, page.file, sectionsOf(bodyHtml));
+        fs.writeFileSync(path.join(OUT_DIR, outName), pageTemplate(page.title, bodyHtml, isIndex, sideNav), 'utf8');
         converted += 1;
       }
 
