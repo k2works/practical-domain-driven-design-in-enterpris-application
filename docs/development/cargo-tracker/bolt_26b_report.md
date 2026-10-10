@@ -3,7 +3,7 @@ type: Report
 title: "Bolt 26b 終了報告 - 主要実績の登録の業務のルールと永続化（US-12 AC1・AC2）"
 description: "26b 回目の Bolt の終了報告。出典（共有カーネル）、主要実績、現在状態の導出の規則、同じ出典の既存の実績を返す規則、主要実績の登録のコマンドサービス、tracking.milestone の表と永続化を作った。/goal で止まらなかった承認ゲート、止まって判断を受けたスキーマのゲート、確認ポイントの決定、開発レビューの対応、既知の課題を記録する。"
 tags: [development,bolt-report]
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-10T01:10:33Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-10T01:27:27Z }
 ---
 
 # Bolt 26b 終了報告 - 主要実績の登録の業務のルールと永続化（US-12 AC1・AC2）
@@ -66,7 +66,7 @@ generated: { by: anthropic/claude-opus-5-5, at: 2026-10-10T01:10:33Z }
 | :--- | :--- |
 | `check`（ModularityTest・ArchUnit・AT-04・Checkstyle を含む）・`documentationTest` | 通過 |
 | `uiTest`（axe-core を含む） | 通過（実行時間のある方の XML で 69 本、失敗 0。T-79。開発レビューの対応の後にも流した。T-70） |
-| CI（check・ui・デモ環境への配備） | 通過（`53369e8`）。`1f25028` 以後は本報告の push で確かめる |
+| CI（check・ui・デモ環境への配備） | 通過（`53369e8`、`1f25028`、`50e2f57`） |
 | SonarQube（ローカル） | 品質ゲート PASS（新しいコードのカバレッジ 97.0%、重複 0.17%、新しい指摘 0 件）。最初は新しい指摘 2 件（例外の変数を名前のないパターンに、テストの lambda の呼び出しを 1 つに）で FAIL、直した後にレビューの対応で足したテストの lambda で 1 件 FAIL になり、直した |
 | `okf:check` | ERROR 0 |
 
