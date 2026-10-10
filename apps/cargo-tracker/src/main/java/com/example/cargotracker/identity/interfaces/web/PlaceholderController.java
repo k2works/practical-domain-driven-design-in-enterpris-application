@@ -16,11 +16,10 @@ import org.springframework.web.server.ResponseStatusException;
 @Controller
 public class PlaceholderController {
 
-    /** 荷主担当者の準備中の画面（URL の名前と画面の名前）。追跡の照会は C-10 に置き換えた（Bolt 27）。 */
-    private static final Map<String, String> CUSTOMER_SCREENS =
-            Map.of("bookings", "予約", "inquiries", "問い合わせ", "notifications", "通知");
+    /** 荷主担当者の準備中の画面（URL の名前と画面の名前）。追跡の照会は C-10（Bolt 27）、予約は C-06（Bolt 27b）に置き換えた。 */
+    private static final Map<String, String> CUSTOMER_SCREENS = Map.of("inquiries", "問い合わせ", "notifications", "通知");
 
-    @GetMapping("/customer/{screen:bookings|inquiries|notifications}")
+    @GetMapping("/customer/{screen:inquiries|notifications}")
     public String customer(@PathVariable String screen, Model model) {
         return show("layout/customer", screen, CUSTOMER_SCREENS, model);
     }

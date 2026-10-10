@@ -22,7 +22,12 @@ final class BookingViews {
 
     /** 見積りの表記（例: TR-2026-0001 見積 1）。 */
     static String subject(String transportRequestNumber, int quotationNo) {
-        return transportRequestNumber + " 見積 " + quotationNo;
+        return transportRequestNumber + " " + quotation(quotationNo);
+    }
+
+    /** 見積りの表記（「見積 1」。S-10・S-24 の件名と C-06 の見積依頼の列で同じ）。 */
+    static String quotation(int quotationNo) {
+        return "見積 " + quotationNo;
     }
 
     static Optional<TrackingNumber> parseTrackingNumber(String text) {
@@ -159,6 +164,56 @@ final class BookingViews {
                         staff(row.committedAt()),
                         trackingStart(row.sagaStatus())))
                 .toList();
+    }
+
+    // C-06 予約一覧（荷主。Bolt 27b）。日時は荷主の日時表示（UTC を併記しない）、予約サガの状態は荷主の語で示す
+
+    /**
+     * C-06 予約一覧の 1 行の表示。
+     *
+     * @param trackingNumber 追跡番号
+     * @param tracked 追跡が始まっているか（追跡番号を C-10 の照会の結果へのリンクにする）
+     * @param transportRequestNumber 業務番号（C-04 へのリンクにする）
+     * @param quotation 見積りの表記（「見積 1」）
+     * @param committedAt 確定時刻（最初の確定の時刻）
+     * @param tracking 追跡の表示
+     */
+    record CustomerListRow(
+            String trackingNumber,
+            boolean tracked,
+            String transportRequestNumber,
+            String quotation,
+            String committedAt,
+            String tracking) {}
+
+    static List<CustomerListRow> customerList(RecentBookings recent) {
+        return recent.rows().stream()
+                .map(row -> new CustomerListRow(
+                        row.trackingNumber().value(),
+                        tracked(row.sagaStatus()),
+                        row.transportRequestNumber(),
+                        quotation(row.quotationNo()),
+                        DateTimeDisplay.customer(row.committedAt().instant()),
+                        customerTracking(row.sagaStatus())))
+                .toList();
+    }
+
+    /**
+     * 荷主に示す追跡の表示（確認ポイント 4）。社内の「追跡の開始」（処理中・完了・有人確認要）を、貨物の側の状態として荷主の語で示す。
+     * 失敗は共通部品「処理中表示」と同じく利用者には開始待ちと示し、有人確認要は人が確認することを示す。「準備中」は準備中の画面の語なので
+     * 使わない。
+     */
+    static String customerTracking(BookingSagaStatus status) {
+        return switch (status) {
+            case IN_PROGRESS, FAILED -> "追跡の開始待ち";
+            case COMPLETED -> "追跡中";
+            case NEEDS_HUMAN -> "追跡の開始待ち（担当営業が確認します）";
+        };
+    }
+
+    /** 追跡が始まっているか（荷主の一覧で追跡番号を C-10 の照会の結果へのリンクにする）。予約サガの完了だけ。 */
+    static boolean tracked(BookingSagaStatus status) {
+        return status == BookingSagaStatus.COMPLETED;
     }
 
     static String status(BookingStatus status) {

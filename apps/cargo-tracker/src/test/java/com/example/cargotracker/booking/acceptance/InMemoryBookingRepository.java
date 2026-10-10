@@ -7,6 +7,7 @@ import com.example.cargotracker.booking.domain.model.valueobjects.BookingSummary
 import com.example.cargotracker.booking.domain.model.valueobjects.ProcessedCommand;
 import com.example.cargotracker.booking.domain.model.valueobjects.TrackingNumber;
 import com.example.cargotracker.shared.domain.CommandId;
+import com.example.cargotracker.shared.domain.CompanyId;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
@@ -73,10 +74,25 @@ public class InMemoryBookingRepository implements BookingRepository {
         return byTrackingNumber.containsKey(trackingNumber.value());
     }
 
+    /** 荷主企業の予約だけを、S-10 と同じ並びで上限まで返す（C-06。MyBatis の実装と同じく荷主企業で絞る。Bolt 27b）。 */
+    @Override
+    public synchronized List<BookingSummary> findRecentSummariesByShipper(CompanyId shipperCompanyId, int limit) {
+        return summaries(
+                byTrackingNumber.values().stream()
+                        .filter(booking -> booking.shipperCompanyId().equals(shipperCompanyId))
+                        .toList(),
+                limit);
+    }
+
     /** 確定時刻（予約版 1）の新しい順、同じ時刻なら追跡番号の順に、上限までの要約の写しを返す（MyBatis の実装と同じ。T-61）。 */
     @Override
     public synchronized List<BookingSummary> findRecentSummaries(int limit) {
-        return byTrackingNumber.values().stream()
+        return summaries(List.copyOf(byTrackingNumber.values()), limit);
+    }
+
+    /** 確定時刻の新しい順（同じ時刻なら追跡番号の順）に上限まで。値の写しを返す（T-61）。 */
+    private static List<BookingSummary> summaries(List<Booking> found, int limit) {
+        return found.stream()
                 .map(booking -> new BookingSummary(
                         booking.id(),
                         booking.trackingNumber(),

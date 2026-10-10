@@ -35,6 +35,8 @@ import java.util.Set;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
@@ -554,6 +556,33 @@ class AuthenticationSecurityIntegrationTest {
                 .getResponse()
                 .getContentAsString()
                 .replaceAll("name=\"_csrf\" value=\"[^\"]*\"", "name=\"_csrf\"");
+    }
+
+    @Test
+    void 荷主担当者はナビの予約を開くとC06になり準備中の画面ではない() throws Exception {
+        Cookie session = login(user(shipperCompany, Role.SHIPPER, UserStatus.ACTIVE));
+
+        // 準備中の画面を C-06 予約一覧に置き換えた（Bolt 27b）。ナビの「予約」は C-06 を指し、現在の項目になる
+        String page = mvc.perform(get("/customer/bookings").cookie(session))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+        assertThat(page)
+                .contains("<h1>予約一覧</h1>")
+                .doesNotContain("この画面は準備中です")
+                .containsPattern("<a(?=[^>]*href=\"/customer/bookings\")(?=[^>]*aria-current=\"page\")[^>]*>予約</a>");
+    }
+
+    /** 役割ごとに分けて、最初の失敗で残りの役割を隠さない（Bolt 27b の開発レビュー）。 */
+    @ParameterizedTest
+    @EnumSource(
+            value = Role.class,
+            names = {"SALES", "ROUTE_DESIGNER", "TRACKING_MANAGER"})
+    void 社内の役割は荷主の予約一覧を開けない(Role role) throws Exception {
+        Cookie session = login(user(staffCompany(), role, UserStatus.ACTIVE));
+
+        mvc.perform(get("/customer/bookings").cookie(session)).andExpect(status().isForbidden());
     }
 
     @Test

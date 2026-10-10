@@ -9,6 +9,7 @@ import com.example.cargotracker.booking.domain.model.valueobjects.BookingSummary
 import com.example.cargotracker.booking.domain.model.valueobjects.ProcessedCommand;
 import com.example.cargotracker.booking.domain.model.valueobjects.TrackingNumber;
 import com.example.cargotracker.shared.domain.CommandId;
+import com.example.cargotracker.shared.domain.CompanyId;
 import java.util.List;
 import java.util.Optional;
 import java.util.Random;
@@ -81,6 +82,11 @@ class RandomTrackingNumberIssuerTest {
 
         @Override
         public List<BookingSummary> findRecentSummaries(int limit) {
+            return List.of();
+        }
+
+        @Override
+        public List<BookingSummary> findRecentSummariesByShipper(CompanyId shipperCompanyId, int limit) {
             return List.of();
         }
 

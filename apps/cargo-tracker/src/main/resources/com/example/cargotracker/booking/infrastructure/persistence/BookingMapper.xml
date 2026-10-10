@@ -172,6 +172,16 @@
          LIMIT #{limit}
     </select>
 
+    <!-- C-06 予約一覧（荷主。Bolt 27b）。荷主企業で絞る（BR-07）。並びと上限は S-10 と同じ。索引 ix_booking_shipper_status -->
+    <select id="findRecentSummariesByShipper" resultMap="bookingSummaryRow">
+        SELECT b.id, b.tracking_number, b.transport_request_number, b.quotation_no, v.committed_at
+          FROM booking.booking b
+          JOIN booking.booking_version v ON v.booking_id = b.id AND v.booking_version_no = 1
+         WHERE b.shipper_company_id = #{shipperCompanyId}
+         ORDER BY v.committed_at DESC, b.tracking_number
+         LIMIT #{limit}
+    </select>
+
     <select id="findSagaStatusesByBookingIds" resultMap="bookingSagaStatusRow">
         SELECT booking_id, status
           FROM booking.booking_saga

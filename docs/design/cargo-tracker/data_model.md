@@ -1122,7 +1122,7 @@ src/main/resources/db/
 | `quotation.quotation` | （`transport_request_id`、`status`） | 輸送要求の有効な見積り |
 | `routing.routing_case` | （`transport_request_id`） | 輸送要求から経路設計案件 |
 | `routing.referenced_info_version` | （`voyage_number`） | 航海の更新で再評価する確定済み経路版の検索（DE-12） |
-| `booking.booking` | `tracking_number`（一意）、（`shipper_company_id`、`status`）、（`transport_request_number`）、（`transport_request_number`、`quotation_no`）（一意） | 追跡番号での照会、荷主の予約一覧、業務番号から予約をたどる社内の照会（Bolt 23、R-31）、見積りの照会の前に同じ見積りの予約を引く（Bolt 24）。S-10 予約一覧（Bolt 25b）は予約版 1 の `committed_at` の新しい順に引くが、R0.1 では予約が数十件なので索引を足さない（確定時刻の索引は W11 の一覧の本体で決める） |
+| `booking.booking` | `tracking_number`（一意）、（`shipper_company_id`、`status`）、（`transport_request_number`）、（`transport_request_number`、`quotation_no`）（一意） | 追跡番号での照会、荷主の予約一覧、業務番号から予約をたどる社内の照会（Bolt 23、R-31）、見積りの照会の前に同じ見積りの予約を引く（Bolt 24）。S-10 予約一覧（Bolt 25b）は予約版 1 の `committed_at` の新しい順に引くが、R0.1 では予約が数十件なので索引を足さない（確定時刻の索引は W11 の一覧の本体で決める）。C-06 予約一覧（荷主。Bolt 27b）は（`shipper_company_id`、`status`）の索引 `ix_booking_shipper_status` で荷主企業を絞り、索引は足さない |
 | `booking.booking_saga` | （`status`、`started_at`） | 処理中の滞留の判定（RTY-02、OBS-04） |
 | `tracking.tracking_record` | `ix_tracking_record_shipper`（`shipper_company_id`、`created_at`）、（`consignee_company_id`） | 荷主の照会（C-10。Bolt 27 で足した。荷主企業で絞って追跡の開始時刻の新しい順に並べる一覧のため、並びの列を含めた複合の索引にした）・荷受人の照会（荷受人の照会を作る US-10・R1.1 で足す）。`booking_id` は一意制約が索引を兼ねる。S-11 の追跡の開始時刻（`created_at`）の並びの索引は、R0.1 では追跡記録が数十件なので足さない（一覧の絞り込みとページ送りを作る W7 以後に決める。Bolt 26） |
 | `tracking.service_case` | （`status`、`receive_due_at`） | 受領期限を過ぎた案件（escalation） |

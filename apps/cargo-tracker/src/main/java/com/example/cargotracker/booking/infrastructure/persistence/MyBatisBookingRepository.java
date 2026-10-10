@@ -97,15 +97,26 @@ public class MyBatisBookingRepository implements BookingRepository {
     }
 
     @Override
+    public List<BookingSummary> findRecentSummariesByShipper(CompanyId shipperCompanyId, int limit) {
+        return mapper.findRecentSummariesByShipper(shipperCompanyId.value(), limit).stream()
+                .map(MyBatisBookingRepository::toSummary)
+                .toList();
+    }
+
+    @Override
     public List<BookingSummary> findRecentSummaries(int limit) {
         return mapper.findRecentSummaries(limit).stream()
-                .map(row -> new BookingSummary(
-                        new BookingId(row.id()),
-                        new TrackingNumber(row.trackingNumber()),
-                        row.transportRequestNumber(),
-                        row.quotationNo(),
-                        new UtcInstant(row.committedAt().toInstant())))
+                .map(MyBatisBookingRepository::toSummary)
                 .toList();
+    }
+
+    private static BookingSummary toSummary(BookingSummaryRow row) {
+        return new BookingSummary(
+                new BookingId(row.id()),
+                new TrackingNumber(row.trackingNumber()),
+                row.transportRequestNumber(),
+                row.quotationNo(),
+                new UtcInstant(row.committedAt().toInstant()));
     }
 
     @Override

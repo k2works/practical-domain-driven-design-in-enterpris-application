@@ -6,6 +6,7 @@ import com.example.cargotracker.booking.application.internal.eventhandlers.Booki
 import com.example.cargotracker.booking.application.internal.outboundservices.acl.QuotationBookability;
 import com.example.cargotracker.booking.application.internal.outboundservices.acl.QuotationBookingNotifications;
 import com.example.cargotracker.booking.application.internal.queryservices.BookingQueryService;
+import com.example.cargotracker.booking.application.internal.queryservices.CustomerBookingQueryService;
 import com.example.cargotracker.booking.application.sagas.BookingSagaRepository;
 import com.example.cargotracker.booking.domain.model.aggregates.BookingRepository;
 import com.example.cargotracker.booking.domain.model.aggregates.TrackingNumberIssuer;
@@ -73,5 +74,12 @@ public class BookingConfiguration {
             QuotationBookability quotationBookability,
             Clock clock) {
         return new BookingQueryService(repository, sagaRepository, quotationBookability, clock);
+    }
+
+    /** 荷主の予約の照会（C-06。荷主企業で絞る。BR-07。Bolt 27b）。 */
+    @Bean
+    CustomerBookingQueryService customerBookingQueryService(
+            BookingRepository repository, BookingSagaRepository sagaRepository) {
+        return new CustomerBookingQueryService(repository, sagaRepository);
     }
 }

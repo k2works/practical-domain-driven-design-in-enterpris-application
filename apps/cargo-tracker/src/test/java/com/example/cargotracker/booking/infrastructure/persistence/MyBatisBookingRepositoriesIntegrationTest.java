@@ -16,6 +16,7 @@ import com.example.cargotracker.booking.domain.model.valueobjects.BookingTerms;
 import com.example.cargotracker.booking.domain.model.valueobjects.ProcessedCommand;
 import com.example.cargotracker.booking.domain.model.valueobjects.TrackingNumber;
 import com.example.cargotracker.shared.domain.CommandId;
+import com.example.cargotracker.shared.domain.CompanyId;
 import com.example.cargotracker.shared.domain.UserId;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import java.time.Instant;
@@ -221,6 +222,26 @@ class MyBatisBookingRepositoriesIntegrationTest {
         assertThat(repository.findRecentSummaries(1)).containsExactly(summary(sameTimeFirst, "2099-12-02T00:00:00Z"));
     }
 
+    /** C-06 予約一覧（荷主。BR-07。Bolt 27b）。荷主企業の予約だけを、S-10 と同じ並びで上限まで返す。他社の予約は出さない。 */
+    @Test
+    void 荷主企業の予約の要約だけを確定時刻の新しい順に上限まで返す() {
+        CompanyId shipper = new CompanyId(UUID.randomUUID());
+        Booking older = savedAt("2099-10-01T00:00:00Z", TrackingNumber.generate(random), shipper);
+        Booking sameTimeLater = savedAt("2099-10-02T00:00:00Z", new TrackingNumber("CTYYYYYYYYYYY4"), shipper);
+        Booking sameTimeFirst = savedAt("2099-10-02T00:00:00Z", new TrackingNumber("CTYYYYYYYYYYY3"), shipper);
+        savedAt("2099-10-03T00:00:00Z", TrackingNumber.generate(random), new CompanyId(UUID.randomUUID()));
+
+        assertThat(repository.findRecentSummariesByShipper(shipper, 10))
+                .containsExactly(
+                        summary(sameTimeFirst, "2099-10-02T00:00:00Z"),
+                        summary(sameTimeLater, "2099-10-02T00:00:00Z"),
+                        summary(older, "2099-10-01T00:00:00Z"));
+        assertThat(repository.findRecentSummariesByShipper(shipper, 1))
+                .containsExactly(summary(sameTimeFirst, "2099-10-02T00:00:00Z"));
+        assertThat(repository.findRecentSummariesByShipper(new CompanyId(UUID.randomUUID()), 10))
+                .isEmpty();
+    }
+
     @Test
     void 予約サガの状態を予約IDの集合でまとめて返す() {
         Booking inProgress = savedAt("2099-11-01T00:00:00Z", TrackingNumber.generate(random));
@@ -236,11 +257,15 @@ class MyBatisBookingRepositoriesIntegrationTest {
     }
 
     private Booking savedAt(String committedAt, TrackingNumber trackingNumber) {
+        return savedAt(committedAt, trackingNumber, BookingFixture.terms().shipperCompanyId());
+    }
+
+    private Booking savedAt(String committedAt, TrackingNumber trackingNumber, CompanyId shipper) {
         UtcInstant at = new UtcInstant(Instant.parse(committedAt));
         Booking booking = Booking.confirm(
                         new BookingId(UUID.randomUUID()),
                         BookingFixture.allConditions(),
-                        terms(UUID.randomUUID()),
+                        terms(UUID.randomUUID(), shipper),
                         trackingNumber,
                         BookingFixture.SALES,
                         at)
@@ -261,10 +286,18 @@ class MyBatisBookingRepositoriesIntegrationTest {
 
     /** 見積り ID ごとに新しい業務番号（業務番号と見積り番号の一意制約に当たらないように。2082 年はほかのテストと重ならない）。 */
     private BookingTerms terms(UUID quotationId) {
-        return terms(quotationId, "TR-2082-" + (100000 + random.nextInt(900000)));
+        return terms(quotationId, BookingFixture.terms().shipperCompanyId());
+    }
+
+    private BookingTerms terms(UUID quotationId, CompanyId shipper) {
+        return terms(quotationId, "TR-2082-" + (100000 + random.nextInt(900000)), shipper);
     }
 
     private static BookingTerms terms(UUID quotationId, String transportRequestNumber) {
+        return terms(quotationId, transportRequestNumber, BookingFixture.terms().shipperCompanyId());
+    }
+
+    private static BookingTerms terms(UUID quotationId, String transportRequestNumber, CompanyId shipper) {
         BookingTerms base = BookingFixture.terms();
         return new BookingTerms(
                 base.transportRequestId(),
@@ -272,7 +305,7 @@ class MyBatisBookingRepositoriesIntegrationTest {
                 transportRequestNumber,
                 quotationId,
                 base.quotationNo(),
-                base.shipperCompanyId(),
+                shipper,
                 base.consigneeCompanyId(),
                 base.routingCaseNumber(),
                 base.routeVersionNo(),
