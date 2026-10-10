@@ -8876,10 +8876,18 @@
 <li>承認ゲートの扱い（T-36）: 画面・Red／Green（入力の検証）のゲートで止まらずに進めた（AI の判断）。根拠は、文言と行き先が確認ポイント 6〜14 のとおりであること</li>
 </ul>
 </li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>3. <code>tracking_record</code> の NULL 可の列と根拠の実績番号の外部キー</strong> 【承認ゲート: スキーマ】</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>3. <code>tracking_record</code> の NULL 可の列と根拠の実績番号の外部キー</strong> 【承認ゲート: スキーマ】</li>
 <li>統合テストを先に書く: 経路版の 2 列・到着予定の 2 列は NULL を入れられない、根拠の実績番号はない実績を指せない（PostgreSQL。コミットのときに検査される DEFERRABLE なので、テストのトランザクションの中で <code>SET CONSTRAINTS ALL IMMEDIATE</code> で確かめる）。変更の前に流し、本命のアサーション（NULL を入れても・ない実績を指しても例外にならない）で落ちることを確かめる（T-81）</li>
 <li>マイグレーション 2 つ、リポジトリの NULL の行の例外の除去（組み立てと要約）と、それを確かめていた統合テストの書き換え、権限のテスト（<code>AppendOnlyGrantIntegrationTest</code>）で入れる追跡記録の行に 4 列の値を足す</li>
 <li>完了の判定: <code>check</code>・<code>uiTest</code> 緑、T-53</li>
+<li>結果（2026-10-10）<ul>
+<li>統合テストを先に書いた: 経路版の 2 列・到着予定の 2 列は NULL を入れられない（列ごとに 1 件）、根拠の実績番号はない主要実績を指せない（<code>SET CONSTRAINTS ALL IMMEDIATE</code>）、登録した主要実績は指せる。NULL の行を例外にすることを確かめていた 2 件のテストは、表で守るようになったので消した。Red: 移行の前に流し、5 件が本命のアサーション（例外にならない）で落ちた（T-81 のとおり）</li>
+<li>マイグレーション <code>common/V20261010120000__tracking_record_not_null.sql</code>（1 列ずつ）と <code>postgresql/V20261010120100__add_tracking_record_status_basis_fk.sql</code>（DEFERRABLE INITIALLY DEFERRED）、リポジトリの NULL の行の例外の除去、権限のテストで入れる追跡記録の行に 4 列の値を足した</li>
+<li>手順の誤り: ステップ 1・2 のコミット（<code>a1ebde4</code>）に、まだ移行のないステップ 3 のテストの書き換えを含めて push した。その CI は落ちる見込みで、ステップ 3 の push で直す（ふりかえりの議題）</li>
+<li><code>check</code> 緑。<code>uiTest</code> は実行時間のある方の XML で 73 本が通り、失敗 0（T-79）</li>
+<li>承認ゲートの扱い（T-36）: スキーマのゲートは、確認ポイント 3・4 を計画の承認で人が決めてあるので止まらずに進めた（T-80）</li>
+</ul>
+</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>4. 開発レビューと終了報告</strong> 【承認ゲート: 開発レビューの判断、終了報告】</li>
 <li><code>developing-review</code>（プログラマー（テスター・アーキテクトの観点を含む）とインタラクションデザイナー（ユーザー代表の観点を含む）の 2 つの観点）、SonarQube（<code>sonar-local:check</code>）、受入動画（<code>./gradlew demoVideo</code>。過去の Bolt の動画は元に戻す）、<code>bolt_26c_report.md</code></li>
 <li>設計文書（T-53）<ul>
