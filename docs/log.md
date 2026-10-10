@@ -1,6 +1,8 @@
 # Docs Update Log
 
 ## 2026-10-10
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Creation**: [release_report-0_1](/development/cargo-tracker/release_report-0_1.md) を作成（anthropic/claude-opus-5-5）
 * **Update**: [walking-skeleton-tour](/article/walking-skeleton-tour.md) を更新（anthropic/claude-opus-5-5）
 * **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
 * **Update**: [walking-skeleton-tour](/article/walking-skeleton-tour.md) を更新（anthropic/claude-opus-5-5）
