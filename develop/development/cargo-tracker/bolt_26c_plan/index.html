@@ -8660,7 +8660,7 @@
 </tr>
 <tr>
 <td style="text-align: left;">承認ゲートの扱い</td>
-<td style="text-align: left;">Try T-80 に従い、確認必須のゲート（この Bolt ではスキーマ）は計画の承認の場で人の判断を受ける（確認ポイント 3・4）。ここで判断を受けていないゲートは、<code>/goal</code> の指示があっても止まる</td>
+<td style="text-align: left;">人の指示（<code>/goal Bolt26c</code>、2026-10-10。計画の承認の後）により、承認ゲートで止まらずに進める。止まらなかったゲートごとに根拠を書き、終了報告の承認の議題に置く（T-36）。確認必須のスキーマ（確認ポイント 3・4）は計画の承認で人の判断を受けてあるので、T-80 に照らしても止まらずに進める。Try T-80 に従い、確認必須のゲート（この Bolt ではスキーマ）は計画の承認の場で人の判断を受ける（確認ポイント 3・4）。ここで判断を受けていないゲートは、<code>/goal</code> の指示があっても止まる</td>
 </tr>
 <tr>
 <td style="text-align: left;">承認ゲート</td>
@@ -8853,15 +8853,29 @@
 <h2 id="_9">ステップ計画<a class="headerlink" href="#_9" title="Permanent link">&para;</a></h2>
 <p>状態の記号: <code>[ ]</code> 未着手、<code>[-]</code> 進行中、<code>[?]</code> 承認待ち、<code>[x]</code> 完了。各ステップの終わりに <code>check</code> が緑であることと、計画からの変更を設計文書に反映したこと（T-53）を確かめ、Green と同じ push にまとめて CI を確かめる（T-26、T-65）。Red は実行して本命のアサーションで失敗することを確かめてから実装する（T-39）。</p>
 <ul class="task-list">
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>1. 画面の層の受入シナリオ</strong> 【承認ゲート: 画面】</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>1. 画面の層の受入シナリオ</strong> 【承認ゲート: 画面】</li>
 <li><code>features/ui/register_milestone_ui.feature</code> に足す（T-72）。説明文の古い記述（「この Bolt のシナリオは受入条件のタグを付けない」「主要実績の登録（S-13）と重複の扱いは Bolt 26b で足す」）を書き換える: (a) <code>@US-12-AC1 @demo @demo-bolt-26c/register-milestone</code>: 追跡管理者が S-12 の「実績を登録」で S-13 を開き、集荷・JPTYO・発生時刻・現場記録・参照を入れて登録すると、S-12 に「実績 1 を登録しました。」、主要実績の一覧に「実績 1、集荷、JPTYO」、現在状態「集荷済み」。S-11 に戻ると先頭の行の現在状態が「集荷済み」。(b) <code>@US-12-AC2</code>: 同じ出典の種類と参照で再び登録すると、S-12 に既存の実績を示す結果と「実績 1 を一覧で見る」が出て、主要実績は 1 件のまま。(c) 入力の誤り（場所の形式・参照なし）でエラー要約にフォーカスが移り、入力値が残る。(d) 幅 320 CSS px で S-13 と S-12 の主要実績が横スクロールなしで読める。キー操作だけ、axe-core 0 件。正規表現に JavaScript にない構文を使わない（T-75）</li>
 <li>骨組み（S-12 に「実績を登録」のリンク、S-13 は見出しだけ）で <code>uiTest</code> を流し、本命のアサーション（登録の結果・主要実績の一覧）で落ちることを確かめる。絞り込みが効いたかは実行の件数で確かめる（T-79）</li>
 <li>完了の判定: シナリオが本命のアサーションで落ちる、T-53</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>2. 画面（S-13・S-12）と「→」の読み上げ</strong> 【承認ゲート: 画面、Red／Green（入力の検証）】</li>
+<li>結果（2026-10-10）<ul>
+<li><code>register_milestone_ui.feature</code> に 4 本（<code>@US-12-AC1 @demo @demo-bolt-26c/register-milestone</code>、<code>@US-12-AC2</code>、入力の誤り、幅 320 CSS px）を足し、説明文の古い記述を書き換えた。ステップ定義は <code>TrackingUiSteps</code> に足した（ラジオボタンは Tab でグループに入って矢印キーで選ぶ）</li>
+<li>Red: 骨組み（S-12 の「実績を登録」、S-13 は入力欄だけで送っても登録しない）で <code>uiTest</code> を流し、新しい 4 本が落ちた。ただし落ちた場所は本命のアサーションではなく、登録の直後のアクセシビリティの検査（axe の注入の失敗。POST の後の移動の途中で検査していた）だった。行き先の URL に移り終わるのを待つ形に直したが、骨組みで流し直さずにステップ 2 の実装へ進んだ（T-39 からの逸脱。ふりかえりの議題）</li>
+<li>承認ゲートの扱い（T-36）: 画面のゲートで止まらずに進めた（AI の判断）。根拠は、シナリオが計画の (a)〜(d) と S-12・S-13 の表のとおりであること</li>
+</ul>
+</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>2. 画面（S-13・S-12）と「→」の読み上げ</strong> 【承認ゲート: 画面、Red／Green（入力の検証）】</li>
 <li>画面の単体テストを先に書き、実装の前に流して Red を確かめる: S-13 の項目とラベルと説明、種類 6 個・出典の種類 3 個（画面で選べるもの）の表示名、隠し項目の版、入力の誤り（必須、場所の形式、場所の小文字と前後の空白は直して送る、日時の形式・存在しない日付、参照の 200 文字・201 文字（T-29）、参照の前後の空白を除いた値で送る、選択肢にない値）、結果ごとの行き先と文言（<code>Registered</code>・<code>AlreadyRegistered</code>・<code>Rejected</code>・<code>NotFound</code>・<code>Conflict</code>）、ない追跡番号と形式の誤りの 404、S-12 の主要実績のリスト（発生時刻の順、出典の種類 4 個と実績の状態 4 個の表示名（T-57）、<code>id</code>）、空のときの案内、「実績を登録」のリンク、S-12・S-06 の区間の表記と S-05 の列名に「→」がないこと</li>
 <li>セキュリティの統合テストに、ほかの役割は S-13 の GET・POST が 403 の例を足す（確認ポイント 9）</li>
 <li><code>MilestoneForm</code>、<code>MilestoneFormConverter</code>、<code>TrackingRecordController</code> の 2 つの口、<code>TrackingRecordViews</code> の主要実績の表示と区間の表記、<code>tracking/staff/milestones/new.html</code>（<code>transport-request-form.js</code> でエラー要約へフォーカス）、<code>show.html</code> の主要実績と結果、経路設計の <code>RoutingCaseViews</code> の区間の表記と S-05 の列名</li>
 <li>完了の判定: <code>check</code> 緑、<code>uiTest</code> でステップ 1 のシナリオが通る、T-53</li>
+<li>結果（2026-10-10）<ul>
+<li>Red: 画面の単体テスト（S-13 の 24 件、S-12 の主要実績・結果・表示名の 18 件、経路設計の一覧の「→」）を骨組み（表示名は空を返す、登録の口は何もしない）で流し、本命のアサーションで落ちることを確かめた</li>
+<li>Green: <code>MilestoneForm</code>、<code>MilestoneFormConverter</code>（日時は <code>DateTimeDisplay.ZONE</code>、場所は見積依頼と同じ規則、参照は前後の空白を除く、出典の種類は 3 つ）、<code>TrackingRecordController</code> の 2 つの口（結果ごとの文言と行き先。業務の分岐を持たない。仮説 H1）、<code>TrackingRecordViews</code> の表示名（実績の種類・出典の種類・実績の状態の表）と主要実績の項目（発生時刻の順）、<code>tracking/staff/milestones/new.html</code>、<code>show.html</code> の主要実績と結果、経路設計の <code>RoutingCaseViews</code> の「から」と 3 つの画面の「出発地・目的地」</li>
+<li>計画からの変更: 日時の形式の誤りの文言を見積依頼の前例（「2026-11-01 11:30 の形（日本時間）で入力してください」）にそろえた。セキュリティの統合テストの S-13 の 403 は、認可の規則を変えないので最初から通る見張りのテスト</li>
+<li><code>check</code> 緑。<code>uiTest</code> は実行時間のある方の XML で 73 本（+4）が通り、失敗 0（T-79）</li>
+<li>承認ゲートの扱い（T-36）: 画面・Red／Green（入力の検証）のゲートで止まらずに進めた（AI の判断）。根拠は、文言と行き先が確認ポイント 6〜14 のとおりであること</li>
+</ul>
+</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>3. <code>tracking_record</code> の NULL 可の列と根拠の実績番号の外部キー</strong> 【承認ゲート: スキーマ】</li>
 <li>統合テストを先に書く: 経路版の 2 列・到着予定の 2 列は NULL を入れられない、根拠の実績番号はない実績を指せない（PostgreSQL。コミットのときに検査される DEFERRABLE なので、テストのトランザクションの中で <code>SET CONSTRAINTS ALL IMMEDIATE</code> で確かめる）。変更の前に流し、本命のアサーション（NULL を入れても・ない実績を指しても例外にならない）で落ちることを確かめる（T-81）</li>
 <li>マイグレーション 2 つ、リポジトリの NULL の行の例外の除去（組み立てと要約）と、それを確かめていた統合テストの書き換え、権限のテスト（<code>AppendOnlyGrantIntegrationTest</code>）で入れる追跡記録の行に 4 列の値を足す</li>
