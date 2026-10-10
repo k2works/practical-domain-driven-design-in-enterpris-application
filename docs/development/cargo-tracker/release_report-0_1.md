@@ -3,8 +3,10 @@ type: Report
 title: "リリース完了報告書 0.1 - cargo-tracker（A 社国際貨物輸送管理システム）"
 description: "Release 0.1（最初の縦の流れ、W1〜W4）のリリース完了報告書。35 SP を 33 本の Bolt と 9 稼働日で終えた計画と実績の差異、コミットと品質の指標、主要な成果物、Release 0.1 のふりかえりと Release 1.0 への引き継ぎ（計画の引き直しと承認ゲートの密度）を記す。"
 tags: [development,release-report]
-status: draft
+status: stable
 generated: { by: anthropic/claude-opus-5-5, at: 2026-10-10T11:32:28Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-10-10T12:17:50Z }
 ---
 
 # リリース完了報告書 0.1 - cargo-tracker（A 社国際貨物輸送管理システム）
