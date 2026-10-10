@@ -16,7 +16,7 @@ generated: { by: anthropic/claude-opus-5-5, at: 2026-10-10T00:24:34Z }
 | 予定 | W4（2026-10-26 の週。前倒しで 2026-10-10 から）、作業 2.5〜3 時間（承認ゲートの待ち時間を除く。時間の配分の表の合計 170 分） |
 | 対象 | U3 追跡（主要実績の登録、現在状態の導出、重複の出典の扱い、`tracking.milestone` の表と永続化）、共有カーネル（出典） |
 | GitHub | [#11](https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/11)（US-12 R0.1: AC1・AC2）。US-12 の SP 3 は、画面の層のシナリオがそろって #11 を閉じる Bolt 26c で数える（確認ポイント 1）。この Bolt は SP 0 |
-| 承認ゲートの扱い | Try T-80 に従い、CLAUDE.md の「確認必須」に当たるゲート（この Bolt ではスキーマ）は、計画の承認の場で人の判断を受ける（確認ポイント 3・4）。ここで判断を受けていない確認必須のゲートは、`/goal` の指示があっても止まる |
+| 承認ゲートの扱い | 人の指示（`/goal Bolt26b`、2026-10-10。計画の報告の後）により、計画を推奨のとおり進め、承認ゲートで止まらずに進める。止まらなかったゲートごとに根拠を書き、確認ポイントの決定とあわせて終了報告の承認の議題に置く（T-36）。計画の人の検証（`verify`）は終了報告の承認のときに行う。ただし Try T-80 に従い、CLAUDE.md の「確認必須」に当たるゲート（この Bolt ではスキーマ）は、計画の承認の場で人の判断を受ける（確認ポイント 3・4）。ここで判断を受けていない確認必須のゲートは、`/goal` の指示があっても止まる |
 | 承認ゲート | 計画の承認（確認ポイント 1〜15）、業務のルールの層のシナリオ（ステップ 1）、Red／Green ごと（業務のルール。ステップ 2・3）、スキーマ（ステップ 4）、開発レビューの判断、終了報告。release_plan の W4 の決定（「スキーマと認可をステップごとに止める」）と、Bolt 26b の行の「スキーマ、Red・Green ごと（業務のルール）」に従う。認可と画面は変えないので、そのゲートはない |
 | アプローチ | アウトサイドイン（開発戦略の「Bolt ごとのアプローチの決め方」の「既存の集約に受入条件を足す」）。既存の `tracking` スキーマに表を 1 つ足すのは「新しい集約・スキーマを作る」に当たらない（Bolt 24 の計画の解釈と同じ）。業務のルールの層の受入シナリオ → アプリケーション → ドメイン → 永続化（スキーマはこのステップ。Bolt 24 と同じ）の順 |
 | 前の Bolt | [Bolt 26 終了報告](bolt_26_report.md) |
@@ -234,19 +234,31 @@ end note
 
 状態の記号: `[ ]` 未着手、`[-]` 進行中、`[?]` 承認待ち、`[x]` 完了。各ステップの終わりに `check` が緑であることと、計画からの変更を設計文書に反映したこと（T-53）を確かめ、Green と同じ push にまとめて CI を確かめる（T-26、T-65）。Red は型の骨組みで実行し、本命のアサーションで失敗することを確かめてから実装する（T-37、T-39）。
 
-- [ ] **1. 業務のルールの層の受入シナリオ** 【承認ゲート: シナリオ】
+- [x] **1. 業務のルールの層の受入シナリオ** 【承認ゲート: シナリオ】
   - `features/tracking/register_milestone.feature`（新設。機能のタグは `@US-12 @must`）を先に書く: (a) `@US-12-AC1`: 追跡を開始した追跡記録に、集荷・JPTYO・発生時刻・出典（現場記録、参照 F-118）を登録すると、実績 1 が採用済みで保存され、現在状態が集荷済みになる。(b) `@US-12-AC2 @T-INV-02`: 同じ出典の種類と参照で再び登録すると、実績は 1 件のままで、既存の実績 1 が返る
   - ステップ定義は `tracking/acceptance` に足す（メモリのリポジトリ。既存の `TrackingSteps` の形）
   - 型の骨組み（`TrackingRecordCommandService.registerMilestone` は未実装の例外）で流し、本命のアサーションで落ちることを確かめる
   - 完了の判定: シナリオが本命のアサーションで落ちる、T-53
-- [ ] **2. 主要実績の登録のコマンドサービス** 【承認ゲート: Red／Green（業務のルール）】
+  - 結果（2026-10-10）
+    - `register_milestone.feature` に 2 本（`@US-12-AC1`・`@US-12-AC2`）、ステップ定義 `MilestoneSteps`（背景で `TrackingRecord.start` の追跡記録を置く）、受入テストの組み立てにコマンドサービスを足した
+    - Red: コマンドサービスの骨組み（`NotFound` を返す）で流し、2 本が本命のアサーション（結果が `Registered`・`AlreadyRegistered` でない）で落ちることを確かめた。最初の実行では、同じ文に `@前提` と `@もし` を付けて定義が二重になり、既存の予約のシナリオ 3 本も巻き込んで落ちた（Cucumber はキーワードを区別しない）。注釈を 1 つにして直した
+    - 承認ゲートの扱い（T-36）: シナリオのゲートで止まらずに進めた（AI の判断）。根拠は、シナリオが受入条件 AC1・AC2 の文のとおりで、計画のステップ 1 の (a)・(b) のとおりであること
+- [x] **2. 主要実績の登録のコマンドサービス** 【承認ゲート: Red／Green（業務のルール）】
   - 単体テストを先に書く（メモリのリポジトリ）: 追跡番号で引いて登録し、`update` で保存する（`Registered` と現在状態）。同じ出典の 2 件目は `AlreadyRegistered`（既存の実績番号）で保存しない。ない追跡番号は `NotFound`。`ConcurrentTrackingRecordUpdateException` は `Conflict`
   - `TrackingRecordCommandService`、`RegisterMilestoneCommand`、`MilestoneRegistrationOutcome`、`TrackingRecordRepository.update`、`ConcurrentTrackingRecordUpdateException`、メモリのリポジトリの `update`（期待版の検査。不変なので写しは要らない）、`TrackingConfiguration` の組み立て
   - 完了の判定: `check` 緑（ArchUnit の `@Service`・`@Command` の規則を含む）、ステップ 1 のシナリオはドメインの骨組みで落ちたまま、T-53
-- [ ] **3. 出典と主要実績、現在状態の導出（ドメイン）** 【承認ゲート: Red／Green（業務のルール）】
+  - 結果（2026-10-10）: 成功の経路はステップ 3 の集約の振る舞いがないと Green にならないので、ステップ 2・3 の単体テストを先にまとめて書き、型の骨組みで 23 件が本命のアサーションで落ちることを確かめてから、2・3 をまとめて実装した（計画からの変更。見張りのテスト（見つからない・200 文字ちょうど・発生時刻と登録時刻が同時刻など）は骨組みでも通った）
+    - `TrackingRecordCommandService`、`RegisterMilestoneCommand`（`expectedVersion` を持つ。経路設計の前例と同じく画面を開いたときの版）、`MilestoneRegistrationOutcome`（計画の 4 つに、未来の発生時刻の `Rejected` を足した）、`TrackingRecordRepository.update`、`ConcurrentTrackingRecordUpdateException`、メモリのリポジトリの `update`（期待版の検査、版を増やして組み立て直す）。同じ出典の判定を版の照合より先に置き、二重送信にも既存の実績を返す
+    - 承認ゲートの扱い（T-36）: Red／Green のゲートで止まらずに進めた（AI の判断）。根拠は、結果の形と名前が確認ポイント 8 の推奨のとおりであること
+- [x] **3. 出典と主要実績、現在状態の導出（ドメイン）** 【承認ゲート: Red／Green（業務のルール）】
   - 単体テストを先に書く: `Source` の必須（種類・参照・取得時刻）と参照の 200 文字ちょうど・201 文字（T-29）、空白だけの参照。`registerMilestone` で実績番号が 1 から増える、登録の前の追跡記録は変わらない（仮説 H1）、同じ出典の既存の実績を返す（T-INV-02）、発生時刻が登録時刻より後は拒否・同時刻は受け付ける（境界）。`CurrentStatusDeriver`: 種類 6 個ごとの導出（T-57）、実績がないときは集荷予定のまま、登録の順と発生時刻の順が違うときは発生時刻が最も新しい実績で導出、採用済みでない実績は導出に入れない、根拠の実績番号
   - `Source`・`SourceKind`（`shared.domain`）、`Milestone`（`entities`）、`MilestoneKind`、`MilestoneState`、`MilestoneRegistration`、`CurrentStatusDeriver`（`rules`）、`TrackingRecord` の主要実績の列・根拠の実績番号・`reconstitute` の引数
   - 完了の判定: `check` 緑（用語集の整合テストを含む）、ステップ 1 のシナリオが通る、T-53
+  - 結果（2026-10-10）
+    - `Source`・`SourceKind`、`Milestone`（`entities`、`@Entity`）、`MilestoneKind`、`MilestoneState`、`MilestoneRegistration`、`MilestoneRegistrationRejected`・`MilestoneRejectionReason`（ドメインの拒否の前例 `RouteConfirmationRejected` と同じ形）、`DerivedStatus`、`CurrentStatusDeriver`（`rules`、`@DomainRule`）、`TrackingRecord` の主要実績の列・根拠の実績番号・`reconstitute` の引数（呼び出し元の MyBatis のリポジトリは、ステップ 4 まで空の列を渡す）
+    - 導出の規則に「発生時刻が同じなら実績番号の大きい後の登録」を足した（同時刻の扱いが計画になかった）
+    - `check`・`documentationTest` 緑（用語集に実績の種類・実績の状態・出典の種類の行を足し、主要実績・出典の行を直した）。ステップ 1 のシナリオが通った
+    - 承認ゲートの扱い（T-36）: Red／Green のゲートで止まらずに進めた（AI の判断）。根拠は、導出の規則・種類の対応・未来の発生時刻の拒否が確認ポイント 5〜7 の推奨のとおりであること
 - [ ] **4. スキーマと永続化（PostgreSQL の統合テスト）** 【承認ゲート: スキーマ、Red／Green（業務のルール）】
   - 統合テストを先に書く: 主要実績を INSERT し、追跡記録の現在状態・根拠の実績番号・版を UPDATE する。追跡番号で読むと主要実績が実績番号の順で戻る。古い版での `update` は `ConcurrentTrackingRecordUpdateException`。同じ追跡番号・出典の種類・参照の 2 件目は一意制約の違反を競合にする。CHECK（種類・出典の種類・状態）。アプリケーションの DB 利用者は `tracking.milestone` を DELETE できない・UPDATE はできる（`AppendOnlyGrantIntegrationTest` の `NO_DELETE_TABLES`）。表と列のコメント（`SchemaCommentIntegrationTest`）
   - マイグレーション（`common`。表と全列のコメント）、`afterMigrate` の `[no-delete]` の規則と冒頭の注釈、マッパーの `insertMilestone`・`updateTrackingRecord`・`findMilestones`（`findTrackingRecordByTrackingNumber`・`findByBookingId` の組み立てに主要実績を足す）、行の型 `MilestoneRow` と結果の対応（T-71）。AT-04 の自スキーマの検査を通す
@@ -313,6 +325,7 @@ end note
 
 | 日付 | 更新内容 | 更新者 |
 | :--- | :--- | :--- |
+| 2026-10-10 | 人の指示（`/goal Bolt26b`）で推奨のとおり進める。スキーマのゲート（ステップ 4）は T-80 により止まって判断を仰ぐ | anthropic/claude-opus-5-5、指示 human:kakimomokuri |
 | 2026-10-10 | 開始準備の整合性検証（計画と設計 14 件、横断 19 件）の指摘を反映した。主な修正は次のとおり。<br>- 範囲: 業務のルールと画面で分け、業務のルールの層のシナリオを足した。<br>- 出典の種類の値: 既存の CHECK にそろえた。<br>- 置き場所と名前: `entities`・`rules`・`TrackingRecordCommandService`・Outcome。<br>- 版: SQL で増やす。<br>- 使う列だけを作る。<br>- 状態遷移: 図の改訂を設計への反映にした。<br>- `[no-delete]` の一覧と表・列のコメント。<br>- 設計文書の反映先: architecture_backend.md。 | anthropic/claude-opus-5-5 |
 | 2026-10-10 | 初版作成（承認待ち） | anthropic/claude-opus-5-5 |
 

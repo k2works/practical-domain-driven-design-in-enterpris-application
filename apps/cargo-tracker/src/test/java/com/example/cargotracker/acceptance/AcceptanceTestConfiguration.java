@@ -61,6 +61,7 @@ import com.example.cargotracker.shared.acceptance.DeferredEventDelivery;
 import com.example.cargotracker.shared.acceptance.MutableClock;
 import com.example.cargotracker.shared.acceptance.ScenarioContext;
 import com.example.cargotracker.tracking.acceptance.InMemoryTrackingRecordRepository;
+import com.example.cargotracker.tracking.application.internal.commandservices.TrackingRecordCommandService;
 import com.example.cargotracker.tracking.application.internal.eventhandlers.BookingTrackingStartNotificationEventHandler;
 import com.example.cargotracker.tracking.application.internal.eventhandlers.TrackingStartEventHandler;
 import com.example.cargotracker.tracking.application.internal.outboundservices.acl.BookingTrackingStarts;
@@ -236,6 +237,13 @@ public class AcceptanceTestConfiguration {
                     new RoutingScheduledLegs(new RouteVersionLegQueryAdapter(routingCaseQueryService)),
                     eventDelivery,
                     clock);
+        }
+
+        /** 追跡管理者が主要実績を登録する（US-12。Bolt 26b）。 */
+        @Bean
+        TrackingRecordCommandService trackingRecordCommandService(
+                InMemoryTrackingRecordRepository repository, MutableClock clock) {
+            return new TrackingRecordCommandService(repository, clock);
         }
 
         /** 追跡は DE-22 を受けて予約の公開 API で予約サガを完了にする（ADR-014・015。Bolt 25）。 */

@@ -20,6 +20,7 @@ import com.example.cargotracker.tracking.domain.model.valueobjects.TrackingRecor
 import com.example.cargotracker.tracking.domain.model.valueobjects.TrackingStatus;
 import java.util.List;
 import java.util.Optional;
+import java.util.OptionalInt;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
@@ -63,6 +64,8 @@ class TrackingRecordControllerTest {
                 TrackedBookingStatus.CONFIRMED,
                 TrackingFixture.schedule(),
                 status,
+                OptionalInt.empty(),
+                List.of(),
                 TrackingFixture.at("2026-11-15T00:00:00Z"),
                 TrackingFixture.at("2026-11-16T03:00:00Z"),
                 TrackingFixture.STARTED_AT,

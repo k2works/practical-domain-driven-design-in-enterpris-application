@@ -1,5 +1,6 @@
 package com.example.cargotracker.tracking.acceptance;
 
+import com.example.cargotracker.tracking.domain.model.aggregates.ConcurrentTrackingRecordUpdateException;
 import com.example.cargotracker.tracking.domain.model.aggregates.TrackingRecord;
 import com.example.cargotracker.tracking.domain.model.aggregates.TrackingRecordRepository;
 import com.example.cargotracker.tracking.domain.model.valueobjects.TrackingNumber;
@@ -27,6 +28,35 @@ public class InMemoryTrackingRecordRepository implements TrackingRecordRepositor
             throw new IllegalStateException("予約ごとに追跡記録は 1 件: " + trackingRecord.bookingId());
         }
         byBookingId.put(trackingRecord.bookingId(), trackingRecord);
+    }
+
+    /**
+     * PostgreSQL と同じく、保存されている版が読み込んだときの版と同じときだけ置き換え、版を 1 増やす（Bolt 26b）。追跡記録は不変なので、
+     * 版を増やした追跡記録を組み立て直して置く（写しは要らない）。
+     */
+    @Override
+    public synchronized void update(TrackingRecord trackingRecord) {
+        TrackingRecord saved = byBookingId.get(trackingRecord.bookingId());
+        if (saved == null || saved.aggregateVersion() != trackingRecord.aggregateVersion()) {
+            throw new ConcurrentTrackingRecordUpdateException(
+                    trackingRecord.trackingNumber(), trackingRecord.aggregateVersion());
+        }
+        byBookingId.put(
+                trackingRecord.bookingId(),
+                TrackingRecord.reconstitute(
+                        trackingRecord.trackingNumber(),
+                        trackingRecord.bookingId(),
+                        trackingRecord.shipperCompanyId(),
+                        trackingRecord.consigneeCompanyId(),
+                        trackingRecord.bookingStatus(),
+                        trackingRecord.schedule(),
+                        trackingRecord.currentStatus(),
+                        trackingRecord.statusBasisMilestoneNo(),
+                        trackingRecord.milestones(),
+                        trackingRecord.originalEta(),
+                        trackingRecord.latestEta(),
+                        trackingRecord.startedAt(),
+                        trackingRecord.aggregateVersion() + 1));
     }
 
     @Override

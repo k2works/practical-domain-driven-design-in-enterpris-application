@@ -17,6 +17,13 @@ public interface TrackingRecordRepository {
      */
     void save(TrackingRecord trackingRecord);
 
+    /**
+     * 追跡記録を更新する。まだ保存していない主要実績を追加し、現在状態・根拠の実績番号を書き直して版を 1 増やす（Bolt 26b）。
+     * 読み込んだ後に別の更新が先に保存されていた（版の不一致）か、同じ出典の実績が同時に登録されていた（一意制約の違反）なら
+     * {@link ConcurrentTrackingRecordUpdateException}。
+     */
+    void update(TrackingRecord trackingRecord);
+
     /** 予約 ID で追跡記録を取得する（DE-07 の再配信の冪等。T-INV-11）。 */
     Optional<TrackingRecord> findByBookingId(UUID bookingId);
 

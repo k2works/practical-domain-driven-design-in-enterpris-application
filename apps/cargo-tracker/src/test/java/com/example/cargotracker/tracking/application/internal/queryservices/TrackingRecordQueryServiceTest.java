@@ -143,6 +143,11 @@ class TrackingRecordQueryServiceTest {
         }
 
         @Override
+        public void update(TrackingRecord trackingRecord) {
+            delegate.update(trackingRecord);
+        }
+
+        @Override
         public Optional<TrackingRecord> findByBookingId(UUID bookingId) {
             detailQueries++;
             return delegate.findByBookingId(bookingId);

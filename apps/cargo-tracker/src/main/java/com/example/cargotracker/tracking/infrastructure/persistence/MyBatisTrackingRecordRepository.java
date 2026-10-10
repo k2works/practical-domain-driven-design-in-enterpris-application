@@ -15,6 +15,7 @@ import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Optional;
+import java.util.OptionalInt;
 import java.util.UUID;
 import org.springframework.stereotype.Repository;
 
@@ -66,6 +67,11 @@ public class MyBatisTrackingRecordRepository implements TrackingRecordRepository
     }
 
     @Override
+    public void update(TrackingRecord trackingRecord) {
+        throw new UnsupportedOperationException("Bolt 26b のステップ 4 で作る");
+    }
+
+    @Override
     public Optional<TrackingRecord> findByBookingId(UUID bookingId) {
         return mapper.findTrackingRecordByBookingId(bookingId).map(this::toRecord);
     }
@@ -94,6 +100,8 @@ public class MyBatisTrackingRecordRepository implements TrackingRecordRepository
                 TrackedBookingStatus.valueOf(row.bookingStatus()),
                 new Schedule(row.routingCaseNumber(), row.routeVersionNo(), legs),
                 TrackingStatus.valueOf(row.currentStatus()),
+                OptionalInt.empty(),
+                List.of(),
                 utc(row.originalEta()),
                 utc(row.latestEta()),
                 utc(row.createdAt()),
