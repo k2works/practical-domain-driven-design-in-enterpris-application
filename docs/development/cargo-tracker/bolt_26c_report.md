@@ -5,6 +5,8 @@ description: "26c 回目の Bolt の終了報告。S-13 主要実績の登録、
 tags: [development,bolt-report]
 status: stable
 generated: { by: anthropic/claude-opus-5-5, at: 2026-10-10T03:12:53Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-10-10T03:12:53Z }
 ---
 
 # Bolt 26c 終了報告 - 主要実績の登録の画面（US-12 AC1・AC2。S-13 の登録と S-12 の主要実績の一覧）
