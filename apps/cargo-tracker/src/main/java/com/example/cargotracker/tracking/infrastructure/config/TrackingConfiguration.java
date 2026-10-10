@@ -2,6 +2,7 @@ package com.example.cargotracker.tracking.infrastructure.config;
 
 import com.example.cargotracker.booking.interfaces.api.TrackingStartNotification;
 import com.example.cargotracker.routing.interfaces.api.RouteVersionLegQuery;
+import com.example.cargotracker.tracking.application.internal.commandservices.TrackingRecordCommandService;
 import com.example.cargotracker.tracking.application.internal.eventhandlers.BookingTrackingStartNotificationEventHandler;
 import com.example.cargotracker.tracking.application.internal.eventhandlers.TrackingStartEventHandler;
 import com.example.cargotracker.tracking.application.internal.outboundservices.acl.BookingTrackingStarts;
@@ -47,6 +48,12 @@ public class TrackingConfiguration {
     BookingTrackingStartNotificationEventHandler bookingTrackingStartNotificationEventHandler(
             BookingTrackingStarts trackingStarts) {
         return new BookingTrackingStartNotificationEventHandler(trackingStarts);
+    }
+
+    /** 追跡管理者による主要実績の登録（US-12。Bolt 26b）。 */
+    @Bean
+    TrackingRecordCommandService trackingRecordCommandService(TrackingRecordRepository repository, Clock clock) {
+        return new TrackingRecordCommandService(repository, clock);
     }
 
     /** 追跡記録の照会（S-11 追跡一覧、S-12 追跡の詳細。Bolt 26）。 */

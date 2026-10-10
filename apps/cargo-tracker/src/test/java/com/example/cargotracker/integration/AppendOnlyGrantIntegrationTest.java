@@ -40,6 +40,12 @@ class AppendOnlyGrantIntegrationTest {
             "booking.booking_version",
             "booking.processed_command");
 
+    /**
+     * データモデルの「追記専用」の表のうち、状態などを UPDATE するので DELETE だけを外す表（印は {@code [no-delete]}。Bolt 26b）。
+     * 表を足したらここにも足す。
+     */
+    static final Set<String> NO_DELETE_TABLES = Set.of("tracking.milestone");
+
     /** PostgreSQL のシステムのスキーマと、Flyway の履歴を置く public を除いたスキーマ（業務のスキーマと platform）。 */
     private static final String APPLICATION_SCHEMAS =
             "table_schema NOT IN ('pg_catalog', 'information_schema', 'public') AND table_schema NOT LIKE 'pg\\_%'";
@@ -95,6 +101,61 @@ class AppendOnlyGrantIntegrationTest {
         try (Connection connection = dataSource.getConnection()) {
             assertThat(appendOnlyMarkedTables(connection)).isEqualTo(APPEND_ONLY_TABLES);
             assertThat(tablesWithoutUpdatePrivilege(connection)).isEqualTo(APPEND_ONLY_TABLES);
+        }
+    }
+
+    @Test
+    void 削除禁止の印の付いた表とアプリケーション利用者が削除だけできない表が一致する() throws SQLException {
+        Set<String> withoutDelete = new HashSet<>(APPEND_ONLY_TABLES);
+        withoutDelete.addAll(NO_DELETE_TABLES);
+        try (Connection connection = dataSource.getConnection()) {
+            assertThat(noDeleteMarkedTables(connection)).isEqualTo(NO_DELETE_TABLES);
+            assertThat(tablesWithoutPrivilege(connection, "DELETE")).isEqualTo(withoutDelete);
+        }
+    }
+
+    @Test
+    void アプリケーション利用者は主要実績を追加し状態を更新できるが削除できない() throws SQLException {
+        String trackingNumber = "CT"
+                + UUID.randomUUID().toString().replace("-", "").substring(0, 12).toUpperCase();
+        Timestamp now = Timestamp.from(Instant.parse("2026-11-01T03:00:00Z"));
+        try (Connection connection = connectAsApplicationUser()) {
+            try (PreparedStatement trackingRecord = connection.prepareStatement("INSERT INTO tracking.tracking_record"
+                    + " (tracking_number, booking_id, shipper_company_id, consignee_company_id, booking_status,"
+                    + " current_status, version, created_at, updated_at)"
+                    + " VALUES (?, ?, ?, ?, 'CONFIRMED', 'PICKUP_SCHEDULED', 0, ?, ?)")) {
+                trackingRecord.setString(1, trackingNumber);
+                trackingRecord.setObject(2, UUID.randomUUID());
+                trackingRecord.setObject(3, UUID.randomUUID());
+                trackingRecord.setObject(4, UUID.randomUUID());
+                trackingRecord.setTimestamp(5, now);
+                trackingRecord.setTimestamp(6, now);
+                assertThat(trackingRecord.executeUpdate()).isEqualTo(1);
+            }
+            try (PreparedStatement milestone = connection.prepareStatement("INSERT INTO tracking.milestone"
+                    + " (tracking_number, milestone_no, kind, location_unlocode, occurred_at, source_kind, source_ref,"
+                    + " acquired_at, state, registered_by, registered_at)"
+                    + " VALUES (?, 1, 'PICKUP', 'JPTYO', ?, 'FIELD_RECORD', 'F-118', ?, 'ADOPTED', ?, ?)")) {
+                milestone.setString(1, trackingNumber);
+                milestone.setTimestamp(2, now);
+                milestone.setTimestamp(3, now);
+                milestone.setObject(4, UUID.randomUUID());
+                milestone.setTimestamp(5, now);
+                assertThat(milestone.executeUpdate()).isEqualTo(1);
+            }
+            try (PreparedStatement update = connection.prepareStatement(
+                    "UPDATE tracking.milestone SET state = 'UNDER_REVIEW' WHERE tracking_number = ?")) {
+                update.setString(1, trackingNumber);
+                assertThat(update.executeUpdate()).isEqualTo(1);
+            }
+            try (PreparedStatement delete =
+                    connection.prepareStatement("DELETE FROM tracking.milestone WHERE tracking_number = ?")) {
+                delete.setString(1, trackingNumber);
+                assertThatThrownBy(delete::executeUpdate)
+                        .isInstanceOfSatisfying(
+                                SQLException.class,
+                                e -> assertThat(e.getSQLState()).isEqualTo(INSUFFICIENT_PRIVILEGE));
+            }
         }
     }
 
@@ -239,12 +300,24 @@ class AppendOnlyGrantIntegrationTest {
                         + " WHERE c.relkind = 'r' AND obj_description(c.oid, 'pg_class') LIKE '% [append-only]'");
     }
 
+    private static Set<String> noDeleteMarkedTables(Connection connection) throws SQLException {
+        return tables(
+                connection,
+                "SELECT n.nspname || '.' || c.relname FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace"
+                        + " WHERE c.relkind = 'r' AND obj_description(c.oid, 'pg_class') LIKE '% [no-delete]'");
+    }
+
     private Set<String> tablesWithoutUpdatePrivilege(Connection connection) throws SQLException {
+        return tablesWithoutPrivilege(connection, "UPDATE");
+    }
+
+    private Set<String> tablesWithoutPrivilege(Connection connection, String privilege) throws SQLException {
         try (PreparedStatement statement = connection.prepareStatement("SELECT table_schema || '.' || table_name"
                 + " FROM information_schema.tables WHERE " + APPLICATION_SCHEMAS
                 + " AND table_type = 'BASE TABLE'"
-                + " AND NOT has_table_privilege(?, table_schema || '.' || table_name, 'UPDATE')")) {
+                + " AND NOT has_table_privilege(?, table_schema || '.' || table_name, ?)")) {
             statement.setString(1, appUser);
+            statement.setString(2, privilege);
             return collect(statement.executeQuery());
         }
     }

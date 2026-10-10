@@ -5,14 +5,22 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.example.cargotracker.TestcontainersConfiguration;
 import com.example.cargotracker.shared.domain.CompanyId;
+import com.example.cargotracker.shared.domain.Location;
+import com.example.cargotracker.shared.domain.Source;
+import com.example.cargotracker.shared.domain.SourceKind;
+import com.example.cargotracker.shared.domain.UserId;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import com.example.cargotracker.tracking.domain.model.TrackingFixture;
+import com.example.cargotracker.tracking.domain.model.aggregates.ConcurrentTrackingRecordUpdateException;
 import com.example.cargotracker.tracking.domain.model.aggregates.TrackingRecord;
+import com.example.cargotracker.tracking.domain.model.entities.Milestone;
+import com.example.cargotracker.tracking.domain.model.valueobjects.MilestoneKind;
 import com.example.cargotracker.tracking.domain.model.valueobjects.TrackingNumber;
 import com.example.cargotracker.tracking.domain.model.valueobjects.TrackingRecordSummary;
 import com.example.cargotracker.tracking.domain.model.valueobjects.TrackingStatus;
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.util.OptionalInt;
 import java.util.Random;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
@@ -31,6 +39,7 @@ class MyBatisTrackingRecordRepositoryIntegrationTest {
 
     private static final String ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
     private static final UtcInstant STARTED_AT = new UtcInstant(Instant.parse("2026-10-08T09:00:00.123456Z"));
+    private static final UtcInstant NOW = new UtcInstant(Instant.parse("2026-11-01T03:00:00.456789Z"));
 
     @Autowired
     MyBatisTrackingRecordRepository repository;
@@ -206,6 +215,122 @@ class MyBatisTrackingRecordRepositoryIntegrationTest {
         assertThatThrownBy(() -> repository.findRecentSummaries(1))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining(trackingNumber);
+    }
+
+    // 主要実績（US-12 AC1・AC2、T-INV-01・T-INV-02。Bolt 26b）
+
+    @Test
+    void 主要実績を登録した追跡記録を更新すると実績を追加し現在状態と根拠の実績番号と版を書き直す() {
+        TrackingRecord saved = started(UUID.randomUUID(), trackingNumber());
+        repository.save(saved);
+        TrackingRecord registered = register(saved, MilestoneKind.PICKUP, "2026-11-01T02:30:00.654321Z", "F-118");
+
+        repository.update(registered);
+
+        TrackingRecord found =
+                repository.findByTrackingNumber(saved.trackingNumber()).orElseThrow();
+        assertThat(found.milestones()).isEqualTo(registered.milestones());
+        assertThat(found.currentStatus()).isEqualTo(TrackingStatus.PICKED_UP);
+        assertThat(found.statusBasisMilestoneNo()).isEqualTo(OptionalInt.of(1));
+        assertThat(found.aggregateVersion()).isEqualTo(saved.aggregateVersion() + 1);
+        assertThat(repository.findByBookingId(saved.bookingId()).orElseThrow().milestones())
+                .isEqualTo(registered.milestones());
+    }
+
+    @Test
+    void 読み直して2件目の実績を登録すると実績番号の順に2件を読み出す() {
+        TrackingRecord saved = started(UUID.randomUUID(), trackingNumber());
+        repository.save(saved);
+        repository.update(register(saved, MilestoneKind.PICKUP, "2026-11-01T02:30:00Z", "F-118"));
+        TrackingRecord reloaded =
+                repository.findByTrackingNumber(saved.trackingNumber()).orElseThrow();
+
+        repository.update(register(reloaded, MilestoneKind.RECEIPT_AT_ORIGIN, "2026-11-01T02:50:00Z", "F-119"));
+
+        TrackingRecord found =
+                repository.findByTrackingNumber(saved.trackingNumber()).orElseThrow();
+        assertThat(found.milestones()).extracting(Milestone::milestoneNo).containsExactly(1, 2);
+        assertThat(found.currentStatus()).isEqualTo(TrackingStatus.RECEIVED_AT_ORIGIN);
+        assertThat(found.statusBasisMilestoneNo()).isEqualTo(OptionalInt.of(2));
+        assertThat(found.aggregateVersion()).isEqualTo(2);
+    }
+
+    @Test
+    void 読み込んだ後に別の更新が先に保存されていたら競合にして実績を追加しない() {
+        TrackingRecord saved = started(UUID.randomUUID(), trackingNumber());
+        repository.save(saved);
+        repository.update(register(saved, MilestoneKind.PICKUP, "2026-11-01T02:30:00Z", "F-118"));
+        TrackingRecord stale = register(saved, MilestoneKind.DEPARTURE, "2026-11-01T02:40:00Z", "F-120");
+
+        assertThatThrownBy(() -> repository.update(stale)).isInstanceOf(ConcurrentTrackingRecordUpdateException.class);
+        assertThat(repository
+                        .findByTrackingNumber(saved.trackingNumber())
+                        .orElseThrow()
+                        .milestones())
+                .extracting(milestone -> milestone.source().reference())
+                .containsExactly("F-118");
+    }
+
+    @Test
+    void 同じ出典の実績が同時に登録されていたら一意制約の違反を競合にする() {
+        TrackingRecord saved = started(UUID.randomUUID(), trackingNumber());
+        repository.save(saved);
+        // 別の登録が先に同じ出典の実績を書いた（版はまだ増えていない瞬間を表に直接作る）
+        jdbc.update(
+                "INSERT INTO tracking.milestone (tracking_number, milestone_no, kind, location_unlocode, occurred_at,"
+                        + " source_kind, source_ref, acquired_at, state, registered_by, registered_at)"
+                        + " VALUES (?, 9, 'PICKUP', 'JPTYO', ?, 'FIELD_RECORD', 'F-118', ?, 'ADOPTED', ?, ?)",
+                saved.trackingNumber().value(),
+                Timestamp.from(Instant.parse("2026-11-01T02:30:00Z")),
+                Timestamp.from(NOW.instant()),
+                UUID.randomUUID(),
+                Timestamp.from(NOW.instant()));
+
+        TrackingRecord registered = register(saved, MilestoneKind.PICKUP, "2026-11-01T02:30:00Z", "F-118");
+
+        assertThatThrownBy(() -> repository.update(registered))
+                .isInstanceOf(ConcurrentTrackingRecordUpdateException.class);
+    }
+
+    // PostgreSQL は制約違反でトランザクションを中断するので、制約ごとに 1 つのテストにする
+
+    @Test
+    void 主要実績の種類は決めた値だけ() {
+        assertMilestoneConstraint("kind = 'LOADING'");
+    }
+
+    @Test
+    void 主要実績の出典の種類は決めた値だけ() {
+        assertMilestoneConstraint("source_kind = 'RUMOR'");
+    }
+
+    @Test
+    void 主要実績の状態は決めた値だけ() {
+        assertMilestoneConstraint("state = 'DELETED'");
+    }
+
+    private void assertMilestoneConstraint(String assignment) {
+        TrackingRecord saved = started(UUID.randomUUID(), trackingNumber());
+        repository.save(saved);
+        repository.update(register(saved, MilestoneKind.PICKUP, "2026-11-01T02:30:00Z", "F-118"));
+        String trackingNumber = saved.trackingNumber().value();
+
+        assertThatThrownBy(() -> jdbc.update(
+                        "UPDATE tracking.milestone SET " + assignment + " WHERE tracking_number = ?", trackingNumber))
+                .isInstanceOf(DataIntegrityViolationException.class);
+    }
+
+    private static TrackingRecord register(
+            TrackingRecord trackingRecord, MilestoneKind kind, String occurredAt, String reference) {
+        return trackingRecord
+                .registerMilestone(
+                        kind,
+                        new Location("JPTYO"),
+                        new UtcInstant(Instant.parse(occurredAt)),
+                        new Source(SourceKind.FIELD_RECORD, reference, NOW),
+                        new UserId(UUID.fromString("00000000-0000-0000-0000-000000026b01")),
+                        NOW)
+                .trackingRecord();
     }
 
     private TrackingRecord save(String startedAt, TrackingNumber trackingNumber) {

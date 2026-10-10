@@ -1,5 +1,6 @@
 package com.example.cargotracker.tracking.infrastructure.persistence;
 
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -15,6 +16,19 @@ public interface TrackingRecordMapper {
     void insertTrackingRecord(TrackingRecordRow row);
 
     void insertScheduledLeg(ScheduledLegRow row);
+
+    /** 導出し直した現在状態と根拠の実績番号を書き、版を 1 増やす（Bolt 26b）。読み込んだときの版と違えば 0 件。 */
+    int updateTrackingRecord(
+            @Param("trackingNumber") String trackingNumber,
+            @Param("expectedVersion") long expectedVersion,
+            @Param("currentStatus") String currentStatus,
+            @Param("statusBasisMilestoneNo") Integer statusBasisMilestoneNo,
+            @Param("updatedAt") OffsetDateTime updatedAt);
+
+    void insertMilestone(MilestoneRow row);
+
+    /** 主要実績を実績番号の順に（Bolt 26b）。 */
+    List<MilestoneRow> findMilestones(@Param("trackingNumber") String trackingNumber);
 
     Optional<TrackingRecordRow> findTrackingRecordByBookingId(@Param("bookingId") UUID bookingId);
 

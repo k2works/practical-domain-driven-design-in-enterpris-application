@@ -12,6 +12,7 @@
             <arg column="routing_case_number" name="routingCaseNumber" javaType="String"/>
             <arg column="route_version_no" name="routeVersionNo" javaType="java.lang.Integer"/>
             <arg column="current_status" name="currentStatus" javaType="String"/>
+            <arg column="status_basis_milestone_no" name="statusBasisMilestoneNo" javaType="java.lang.Integer"/>
             <arg column="original_eta" name="originalEta" javaType="java.time.OffsetDateTime"/>
             <arg column="latest_eta" name="latestEta" javaType="java.time.OffsetDateTime"/>
             <arg column="version" name="version" javaType="_long"/>
@@ -32,6 +33,22 @@
         </constructor>
     </resultMap>
 
+    <resultMap id="milestoneRow" type="com.example.cargotracker.tracking.infrastructure.persistence.MilestoneRow">
+        <constructor>
+            <idArg column="tracking_number" name="trackingNumber" javaType="String"/>
+            <idArg column="milestone_no" name="milestoneNo" javaType="_int"/>
+            <arg column="kind" name="kind" javaType="String"/>
+            <arg column="location_unlocode" name="locationUnlocode" javaType="String"/>
+            <arg column="occurred_at" name="occurredAt" javaType="java.time.OffsetDateTime"/>
+            <arg column="source_kind" name="sourceKind" javaType="String"/>
+            <arg column="source_ref" name="sourceRef" javaType="String"/>
+            <arg column="acquired_at" name="acquiredAt" javaType="java.time.OffsetDateTime"/>
+            <arg column="state" name="state" javaType="String"/>
+            <arg column="registered_by" name="registeredBy" javaType="java.util.UUID"/>
+            <arg column="registered_at" name="registeredAt" javaType="java.time.OffsetDateTime"/>
+        </constructor>
+    </resultMap>
+
     <resultMap id="trackingRecordSummaryRow" type="com.example.cargotracker.tracking.infrastructure.persistence.TrackingRecordSummaryRow">
         <constructor>
             <idArg column="tracking_number" name="trackingNumber" javaType="String"/>
@@ -44,17 +61,40 @@
     <!-- 追跡記録の列（予約 ID と追跡番号の 2 つの select で使う。列を足すときに片方だけ直さないため。Bolt 26 レビュー P-5） -->
     <sql id="trackingRecordColumns">
         tracking_number, booking_id, shipper_company_id, consignee_company_id, booking_status, routing_case_number,
-        route_version_no, current_status, original_eta, latest_eta, version, created_at, updated_at
+        route_version_no, current_status, status_basis_milestone_no, original_eta, latest_eta, version, created_at,
+        updated_at
     </sql>
 
     <insert id="insertTrackingRecord">
         INSERT INTO tracking.tracking_record
             (tracking_number, booking_id, shipper_company_id, consignee_company_id, booking_status, routing_case_number,
-             route_version_no, current_status, original_eta, latest_eta, version, created_at, updated_at)
+             route_version_no, current_status, status_basis_milestone_no, original_eta, latest_eta, version, created_at,
+             updated_at)
         VALUES
             (#{trackingNumber}, #{bookingId}, #{shipperCompanyId}, #{consigneeCompanyId}, #{bookingStatus},
-             #{routingCaseNumber}, #{routeVersionNo}, #{currentStatus}, #{originalEta}, #{latestEta}, #{version},
-             #{createdAt}, #{updatedAt})
+             #{routingCaseNumber}, #{routeVersionNo}, #{currentStatus}, #{statusBasisMilestoneNo}, #{originalEta},
+             #{latestEta}, #{version}, #{createdAt}, #{updatedAt})
+    </insert>
+
+    <!-- 主要実績の登録（Bolt 26b）。読み込んだときの版と同じときだけ、導出し直した現在状態と根拠の実績番号を書き、版を 1 増やす（楽観ロック）。
+         経路版・到着予定の列は書かない -->
+    <update id="updateTrackingRecord">
+        UPDATE tracking.tracking_record
+           SET current_status = #{currentStatus},
+               status_basis_milestone_no = #{statusBasisMilestoneNo},
+               version = version + 1,
+               updated_at = #{updatedAt}
+         WHERE tracking_number = #{trackingNumber}
+           AND version = #{expectedVersion}
+    </update>
+
+    <insert id="insertMilestone">
+        INSERT INTO tracking.milestone
+            (tracking_number, milestone_no, kind, location_unlocode, occurred_at, source_kind, source_ref, acquired_at,
+             state, registered_by, registered_at)
+        VALUES
+            (#{trackingNumber}, #{milestoneNo}, #{kind}, #{locationUnlocode}, #{occurredAt}, #{sourceKind}, #{sourceRef},
+             #{acquiredAt}, #{state}, #{registeredBy}, #{registeredAt})
     </insert>
 
     <insert id="insertScheduledLeg">
@@ -84,6 +124,15 @@
           FROM tracking.tracking_record
          ORDER BY created_at DESC, tracking_number
          LIMIT #{limit}
+    </select>
+
+    <!-- 追跡記録の組み立てで、主要実績を実績番号の順に読む（Bolt 26b） -->
+    <select id="findMilestones" resultMap="milestoneRow">
+        SELECT tracking_number, milestone_no, kind, location_unlocode, occurred_at, source_kind, source_ref, acquired_at,
+               state, registered_by, registered_at
+          FROM tracking.milestone
+         WHERE tracking_number = #{trackingNumber}
+         ORDER BY milestone_no
     </select>
 
     <select id="findScheduledLegs" resultMap="scheduledLegRow">

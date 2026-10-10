@@ -2,22 +2,35 @@ package com.example.cargotracker.tracking.infrastructure.persistence;
 
 import com.example.cargotracker.shared.domain.CompanyId;
 import com.example.cargotracker.shared.domain.Location;
+import com.example.cargotracker.shared.domain.Source;
+import com.example.cargotracker.shared.domain.SourceKind;
+import com.example.cargotracker.shared.domain.UserId;
 import com.example.cargotracker.shared.domain.UtcInstant;
+import com.example.cargotracker.tracking.domain.model.aggregates.ConcurrentTrackingRecordUpdateException;
 import com.example.cargotracker.tracking.domain.model.aggregates.TrackingRecord;
 import com.example.cargotracker.tracking.domain.model.aggregates.TrackingRecordRepository;
+import com.example.cargotracker.tracking.domain.model.entities.Milestone;
+import com.example.cargotracker.tracking.domain.model.valueobjects.MilestoneKind;
+import com.example.cargotracker.tracking.domain.model.valueobjects.MilestoneState;
 import com.example.cargotracker.tracking.domain.model.valueobjects.Schedule;
 import com.example.cargotracker.tracking.domain.model.valueobjects.ScheduledLeg;
 import com.example.cargotracker.tracking.domain.model.valueobjects.TrackedBookingStatus;
 import com.example.cargotracker.tracking.domain.model.valueobjects.TrackingNumber;
 import com.example.cargotracker.tracking.domain.model.valueobjects.TrackingRecordSummary;
 import com.example.cargotracker.tracking.domain.model.valueobjects.TrackingStatus;
+import java.time.Clock;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Optional;
 import java.util.OptionalInt;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * 追跡記録のリポジトリの MyBatis 実装（ADR-015、T-INV-11。Bolt 25）。追跡記録と予定区間を同じトランザクションで追加する。予約 ID の
@@ -28,9 +41,11 @@ import org.springframework.stereotype.Repository;
 public class MyBatisTrackingRecordRepository implements TrackingRecordRepository {
 
     private final TrackingRecordMapper mapper;
+    private final Clock clock;
 
-    public MyBatisTrackingRecordRepository(TrackingRecordMapper mapper) {
+    public MyBatisTrackingRecordRepository(TrackingRecordMapper mapper, Clock clock) {
         this.mapper = mapper;
+        this.clock = clock;
     }
 
     @Override
@@ -47,6 +62,7 @@ public class MyBatisTrackingRecordRepository implements TrackingRecordRepository
                 schedule.routingCaseNumber(),
                 schedule.routeVersionNo(),
                 trackingRecord.currentStatus().name(),
+                null,
                 offset(trackingRecord.originalEta()),
                 offset(trackingRecord.latestEta()),
                 trackingRecord.aggregateVersion(),
@@ -66,9 +82,69 @@ public class MyBatisTrackingRecordRepository implements TrackingRecordRepository
         }
     }
 
+    /**
+     * 主要実績の登録を保存する（Bolt 26b）。読み込んだときの版と同じときだけ現在状態と根拠の実績番号を書いて版を 1 増やし、まだ表にない
+     * 主要実績を追加する（実績は削除・上書きしない。T-INV-01）。版が違えば、または同じ出典・同じ実績番号の実績が同時に登録されて一意制約に
+     * 違反したら、セーブポイントに戻して {@link ConcurrentTrackingRecordUpdateException} にする（PostgreSQL は制約違反で
+     * トランザクションを中断するため。貨物予約の保存と同じ）。
+     */
     @Override
+    @Transactional(propagation = Propagation.NESTED)
     public void update(TrackingRecord trackingRecord) {
-        throw new UnsupportedOperationException("Bolt 26b のステップ 4 で作る");
+        String trackingNumber = trackingRecord.trackingNumber().value();
+        Integer statusBasisMilestoneNo = trackingRecord.statusBasisMilestoneNo().isPresent()
+                ? trackingRecord.statusBasisMilestoneNo().getAsInt()
+                : null;
+        if (mapper.updateTrackingRecord(
+                        trackingNumber,
+                        trackingRecord.aggregateVersion(),
+                        trackingRecord.currentStatus().name(),
+                        statusBasisMilestoneNo,
+                        OffsetDateTime.now(clock))
+                == 0) {
+            throw new ConcurrentTrackingRecordUpdateException(
+                    trackingRecord.trackingNumber(), trackingRecord.aggregateVersion());
+        }
+        Set<Integer> saved = mapper.findMilestones(trackingNumber).stream()
+                .map(MilestoneRow::milestoneNo)
+                .collect(Collectors.toSet());
+        try {
+            for (Milestone milestone : trackingRecord.milestones()) {
+                if (!saved.contains(milestone.milestoneNo())) {
+                    mapper.insertMilestone(toRow(trackingNumber, milestone));
+                }
+            }
+        } catch (DuplicateKeyException e) {
+            throw new ConcurrentTrackingRecordUpdateException(
+                    trackingRecord.trackingNumber(), trackingRecord.aggregateVersion());
+        }
+    }
+
+    private static MilestoneRow toRow(String trackingNumber, Milestone milestone) {
+        return new MilestoneRow(
+                trackingNumber,
+                milestone.milestoneNo(),
+                milestone.kind().name(),
+                milestone.location().unLocode(),
+                offset(milestone.occurredAt()),
+                milestone.source().kind().name(),
+                milestone.source().reference(),
+                offset(milestone.source().acquiredAt()),
+                milestone.state().name(),
+                milestone.registeredBy().value(),
+                offset(milestone.registeredAt()));
+    }
+
+    private static Milestone toMilestone(MilestoneRow row) {
+        return new Milestone(
+                row.milestoneNo(),
+                MilestoneKind.valueOf(row.kind()),
+                new Location(row.locationUnlocode()),
+                utc(row.occurredAt()),
+                new Source(SourceKind.valueOf(row.sourceKind()), row.sourceRef(), utc(row.acquiredAt())),
+                MilestoneState.valueOf(row.state()),
+                new UserId(row.registeredBy()),
+                utc(row.registeredAt()));
     }
 
     @Override
@@ -100,8 +176,12 @@ public class MyBatisTrackingRecordRepository implements TrackingRecordRepository
                 TrackedBookingStatus.valueOf(row.bookingStatus()),
                 new Schedule(row.routingCaseNumber(), row.routeVersionNo(), legs),
                 TrackingStatus.valueOf(row.currentStatus()),
-                OptionalInt.empty(),
-                List.of(),
+                row.statusBasisMilestoneNo() == null
+                        ? OptionalInt.empty()
+                        : OptionalInt.of(row.statusBasisMilestoneNo()),
+                mapper.findMilestones(row.trackingNumber()).stream()
+                        .map(MyBatisTrackingRecordRepository::toMilestone)
+                        .toList(),
                 utc(row.originalEta()),
                 utc(row.latestEta()),
                 utc(row.createdAt()),

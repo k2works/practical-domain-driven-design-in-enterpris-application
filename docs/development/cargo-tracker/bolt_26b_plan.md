@@ -259,10 +259,17 @@ end note
     - 導出の規則に「発生時刻が同じなら実績番号の大きい後の登録」を足した（同時刻の扱いが計画になかった）
     - `check`・`documentationTest` 緑（用語集に実績の種類・実績の状態・出典の種類の行を足し、主要実績・出典の行を直した）。ステップ 1 のシナリオが通った
     - 承認ゲートの扱い（T-36）: Red／Green のゲートで止まらずに進めた（AI の判断）。根拠は、導出の規則・種類の対応・未来の発生時刻の拒否が確認ポイント 5〜7 の推奨のとおりであること
-- [ ] **4. スキーマと永続化（PostgreSQL の統合テスト）** 【承認ゲート: スキーマ、Red／Green（業務のルール）】
+- [x] **4. スキーマと永続化（PostgreSQL の統合テスト）** 【承認ゲート: スキーマ、Red／Green（業務のルール）】
   - 統合テストを先に書く: 主要実績を INSERT し、追跡記録の現在状態・根拠の実績番号・版を UPDATE する。追跡番号で読むと主要実績が実績番号の順で戻る。古い版での `update` は `ConcurrentTrackingRecordUpdateException`。同じ追跡番号・出典の種類・参照の 2 件目は一意制約の違反を競合にする。CHECK（種類・出典の種類・状態）。アプリケーションの DB 利用者は `tracking.milestone` を DELETE できない・UPDATE はできる（`AppendOnlyGrantIntegrationTest` の `NO_DELETE_TABLES`）。表と列のコメント（`SchemaCommentIntegrationTest`）
   - マイグレーション（`common`。表と全列のコメント）、`afterMigrate` の `[no-delete]` の規則と冒頭の注釈、マッパーの `insertMilestone`・`updateTrackingRecord`・`findMilestones`（`findTrackingRecordByTrackingNumber`・`findByBookingId` の組み立てに主要実績を足す）、行の型 `MilestoneRow` と結果の対応（T-71）。AT-04 の自スキーマの検査を通す
   - 完了の判定: `check` 緑（H2 の起動とマイグレーションを含む）、`uiTest` の全体が緑（既存の画面が壊れていない。T-79 で数える）、T-53
+  - 結果（2026-10-10）
+    - スキーマのゲートは T-80 により止まり、確認ポイント 3・4 を人に諮った。2026-10-10 に human:kakimomokuri が推奨のとおり（使う列だけの 11 列、`[no-delete]` の印）と決めた
+    - 統合テストを先に書いた: 主要実績の追加と現在状態・根拠の実績番号・版の書き直し、読み直して 2 件目、古い版の競合、同じ出典の同時の登録（一意制約の違反）の競合、CHECK（種類・出典の種類・状態）、`[no-delete]` の印と権限の一致、アプリケーション利用者は追加・更新できるが削除できない。Red は表がない・`update` が未実装・印がないことで 7 件が落ちた（本命のアサーションで落ちたのは印と権限の一致の 1 件。ほかは表がないことの例外。T-39 の記録）
+    - マイグレーション `V20261010090000__create_tracking_milestone.sql`（表と全列のコメント、印 `[no-delete]`）、`afterMigrate` の `[no-delete]` の規則と冒頭の注釈、`AppendOnlyGrantIntegrationTest` の `NO_DELETE_TABLES`、行の型 `MilestoneRow` と `TrackingRecordRow` の根拠の実績番号、マッパーの `updateTrackingRecord`・`insertMilestone`・`findMilestones`、リポジトリの `update`（`Propagation.NESTED` のセーブポイント。貨物予約の保存の前例）と組み立て、`TrackingConfiguration` のコマンドサービス
+    - 計画からの変更: 追加する実績は「表にない実績番号」で選ぶ（件数で選ぶと、同時に別の番号で書かれた行があるときに取りこぼす）。CHECK のテストは制約ごとに分けた（PostgreSQL は制約違反でトランザクションを中断し、同じテストの 2 つ目の文が別の例外になる）
+    - `check`・`documentationTest` 緑。`uiTest` の全体は実行時間のある方の XML で 69 本が通り、失敗 0（T-79）
+    - 承認ゲートの扱い（T-36）: スキーマのゲートは止まって人の判断を受けた。Red／Green のゲートは止まらずに進めた（AI の判断。根拠は、保存の形が確認ポイント 6・12 の推奨と前例のとおりであること）
 - [ ] **5. 開発レビューと終了報告** 【承認ゲート: 開発レビューの判断、終了報告】
   - `developing-review`（プログラマー（テスター・アーキテクトの観点を含む）の観点。画面を変えないので、インタラクションデザイナーの観点は置かない）、SonarQube（`sonar-local:check`）、`bolt_26b_report.md`。受入動画は撮らない（画面がない。Bolt 23 と同じ）
   - 設計文書（T-53）
