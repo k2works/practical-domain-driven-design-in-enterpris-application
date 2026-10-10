@@ -4018,6 +4018,13 @@
   </span>
   
   
+    
+  
+  
+    <span class="md-status md-status--stable"></span>
+  
+
+  
 
       </a>
     </li>
@@ -4058,7 +4065,7 @@
     
   
   
-    <span class="md-status md-status--draft"></span>
+    <span class="md-status md-status--stable"></span>
   
 
   
@@ -4083,7 +4090,7 @@
     
   
   
-    <span class="md-status md-status--draft"></span>
+    <span class="md-status md-status--stable"></span>
   
 
   
@@ -8848,7 +8855,7 @@
 </tr>
 <tr>
 <td style="text-align: left;">人の変更依頼</td>
-<td style="text-align: left;">0（開発レビューの判断 2 件は AI の問いへの回答）</td>
+<td style="text-align: left;">1（終了報告の承認の場で、荷主の予約一覧（C-06）を Bolt 27b で作る。開発レビューの判断 2 件は AI の問いへの回答）</td>
 </tr>
 </tbody>
 </table>
@@ -8883,7 +8890,7 @@
 </tr>
 <tr>
 <td style="text-align: left;">支援技術による手動確認（#12 の完了の定義）</td>
-<td style="text-align: left;">人が行う（議題 7）</td>
+<td style="text-align: left;">通過（2026-10-10、human:kakimomokuri。スクリーンリーダーで C-10 の一覧・入力の誤り・照会の結果・見つからない案内を操作し、問題なし）</td>
 </tr>
 </tbody>
 </table>
@@ -9008,6 +9015,7 @@
 <li><strong>R1.0（US-09 AC2・AC3）</strong>: 確認中・判明している事実・次の行動・次回の更新、停止中の表示。主要実績と予定の並び（U-10）</li>
 <li><strong>R1.1（US-10）</strong>: 荷受人の照会と開示範囲（<code>DisclosureScope</code>）、荷受人の索引</li>
 <li><strong>W9</strong>: 照会記録（IR-INV-01）と KPI-02 の分母（議題 6）</li>
+<li><strong>Bolt 27b（W4、Bolt 28 の前）</strong>: 荷主のナビの「予約」（C-06 予約一覧）が準備中のまま（終了報告の承認の場で人が指摘）。どの週の計画にも入っていなかった。自社の本予約と追跡番号の最小の一覧を、Bolt 25b の S-10 の前例で作る。行から C-10 の照会の結果へつなぐ</li>
 <li><strong>ほかの画面の 404</strong>: C-10 だけ案内を作った。ほかの画面の 404 は既定のエラーページのまま（共通の <code>error/404.html</code> を作るかは、荷主と社内のレイアウトの分け方とあわせて決める）</li>
 <li><strong>社内の画面との共通の課題</strong>: 出典と取得時刻の行（S-12 は括弧を重ねたまま）、<code>ol</code> の番号の読み上げ（U-12）、索引の並びの列（P-8）</li>
 </ul>
@@ -9026,7 +9034,8 @@
 <li>T-86: 画面の文言を変えたら、<code>src/test</code> 全体（ステップ定義の定数を含む）でその文言を検索してから <code>uiTest</code> を流す（AI、次の Bolt から）</li>
 </ul>
 <h2 id="bolt_1">次の Bolt<a class="headerlink" href="#bolt_1" title="Permanent link">&para;</a></h2>
-<p>Bolt 28: 主成功の流れの <code>@ui</code> シナリオと Release 0.1 のデモ（W4 の最後の Bolt）。見積依頼から本予約・追跡の開始・主要実績の登録・荷主の照会までを 1 本の流れで確かめる。</p>
+<p>Bolt 27b: C-06 予約一覧の最小の表示（荷主。終了報告の承認の場で人が決めた）。開始準備の手順（計画・2 つの検証・同期）で計画する。</p>
+<p>その後に Bolt 28: 主成功の流れの <code>@ui</code> シナリオと Release 0.1 のデモ（W4 の最後の Bolt）。見積依頼から本予約・追跡の開始・主要実績の登録・荷主の照会までを 1 本の流れで確かめる。</p>
 <h2 id="_11">更新履歴<a class="headerlink" href="#_11" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
@@ -9037,6 +9046,11 @@
 </tr>
 </thead>
 <tbody>
+<tr>
+<td style="text-align: left;">2026-10-10</td>
+<td style="text-align: left;">終了報告を承認した。議題 1〜6 を事後に承認した。承認の場で、荷主のナビの「予約」（C-06）が準備中のままと指摘され、Bolt 27b で作ると決めた（既知の課題、次の Bolt）。支援技術による手動確認は問題なし（議題 7）</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5、承認 human:kakimomokuri</td>
+</tr>
 <tr>
 <td style="text-align: left;">2026-10-10</td>
 <td style="text-align: left;">初版（ステップ 1〜6 の結果、開発レビュー、品質ゲート、既知の課題、承認の議題 1〜7、Try T-85・T-86）</td>

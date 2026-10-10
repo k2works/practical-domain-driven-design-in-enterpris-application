@@ -4027,6 +4027,13 @@
   </span>
   
   
+    
+  
+  
+    <span class="md-status md-status--stable"></span>
+  
+
+  
 
           <span class="md-nav__icon md-icon"></span>
         </label>
@@ -4044,6 +4051,13 @@
     
   </span>
   
+  
+    
+  
+  
+    <span class="md-status md-status--stable"></span>
+  
+
   
 
       </a>
@@ -4335,7 +4349,7 @@
     
   
   
-    <span class="md-status md-status--draft"></span>
+    <span class="md-status md-status--stable"></span>
   
 
   
@@ -8959,7 +8973,7 @@
 <li>承認ゲートの扱い（T-36）: スキーマのゲートは、確認ポイント 4 を計画の承認で人が決めてあるので止まらずに進めた（T-80）</li>
 </ul>
 </li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>6. 開発レビューと終了報告</strong> 【承認ゲート: 開発レビューの判断、終了報告】</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>6. 開発レビューと終了報告</strong> 【承認ゲート: 開発レビューの判断、終了報告】</li>
 <li><code>developing-review</code>（プログラマー（テスター・アーキテクトの観点を含む）とインタラクションデザイナー（ユーザー代表の観点を含む））、SonarQube（<code>sonar-local:check</code>）、受入動画（<code>./gradlew demoVideo</code>。過去の Bolt の動画は元に戻す）、<code>bolt_27_report.md</code></li>
 <li>設計文書（T-53）<ul>
 <li>ui_design.md: 画面一覧の C-10 の行（自社の追跡記録の一覧を持つこと）、URL の表に C-10 の 2 行、顧客 Web の画面遷移図（ナビ → C-10 の一覧 → 結果、形式の誤り）、C-10 の画面イメージ（salt）を一覧と結果の 2 つに描き直す（予定と主要実績を見出しで分けたリスト。確認中・判明事実・次の行動・問い合わせは後の Bolt と区別して示す）、荷主と荷受人の表示の違いの節（Bolt 27 は荷主だけ）、準備中の画面の行から「追跡の照会」を外す、荷主のナビのリンク</li>
@@ -9143,14 +9157,14 @@
 </table>
 <h2 id="_11">完了条件<a class="headerlink" href="#_11" title="Permanent link">&para;</a></h2>
 <ul class="task-list">
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> 業務のルールの層の受入シナリオ（<code>@US-09-AC1</code>、他社の照会、自社だけの一覧）と画面の層の受入シナリオ（<code>@demo-bolt-27/query-tracking</code>）が通り、受入動画を撮った</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> 単体テストで、荷主向けの照会結果（採用済みの実績だけ、社内の識別子なし）と荷主の照会のサービス（他社は空）を確かめた</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> 画面の単体テストで、項目・開示（他社・存在しない番号の 404 と本文の一致、社内の情報が出ないこと）・表示名・入力の誤りを確かめた。セキュリティの統合テストで、荷主の可否と社内の役割の 403 を確かめた</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> PostgreSQL の統合テストで、荷主企業の一覧と追跡番号の照会と索引を確かめた</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <code>check</code>・<code>documentationTest</code>・<code>uiTest</code> が緑。push して CI とデモ環境の配備を確かめた</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> SonarQube の Quality Gate が PASS</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> 設計文書（ステップ 6 の一覧）に決定を書いた（T-53）</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> 開発レビューと終了報告。承認の後に受入動画を #12 に添付し、結果をコメントして #12 を閉じた。支援技術による手動確認は人が行う</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> 業務のルールの層の受入シナリオ（<code>@US-09-AC1</code>、他社の照会、自社だけの一覧）と画面の層の受入シナリオ（<code>@demo-bolt-27/query-tracking</code>）が通り、受入動画を撮った</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> 単体テストで、荷主向けの照会結果（採用済みの実績だけ、社内の識別子なし）と荷主の照会のサービス（他社は空）を確かめた</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> 画面の単体テストで、項目・開示（他社・存在しない番号の 404 と本文の一致、社内の情報が出ないこと）・表示名・入力の誤りを確かめた。セキュリティの統合テストで、荷主の可否と社内の役割の 403 を確かめた</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> PostgreSQL の統合テストで、荷主企業の一覧と追跡番号の照会と索引を確かめた</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <code>check</code>・<code>documentationTest</code>・<code>uiTest</code> が緑。push して CI とデモ環境の配備を確かめた</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> SonarQube の Quality Gate が PASS</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> 設計文書（ステップ 6 の一覧）に決定を書いた（T-53）</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> 開発レビューと終了報告。承認の後に受入動画を #12 に添付し、結果をコメントして #12 を閉じた。支援技術による手動確認は人が行う</li>
 </ul>
 <h3 id="_12">デモ項目<a class="headerlink" href="#_12" title="Permanent link">&para;</a></h3>
 <p>追跡管理者が集荷の実績を登録した後、荷主担当者が「追跡の照会」から自社の貨物を開くと、現在状態「集荷済み」と予定・主要実績（出典付き）が示される（<code>@demo @demo-bolt-27/query-tracking</code>）。</p>
@@ -9164,6 +9178,11 @@
 </tr>
 </thead>
 <tbody>
+<tr>
+<td style="text-align: left;">2026-10-10</td>
+<td style="text-align: left;">終了報告の承認とあわせて計画を承認した（<code>/goal</code> で進めたので、計画の承認は終了報告の承認の場で受けた）</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5、承認 human:kakimomokuri</td>
+</tr>
 <tr>
 <td style="text-align: left;">2026-10-10</td>
 <td style="text-align: left;">ステップ 1〜6 の結果を記録した。開発レビューの判断で人が決めた 2 点（C-10 専用の 404 の案内、追跡番号の空白とハイフンを除いて受け付ける）により、確認ポイント 12・18 の推奨を改めた</td>
