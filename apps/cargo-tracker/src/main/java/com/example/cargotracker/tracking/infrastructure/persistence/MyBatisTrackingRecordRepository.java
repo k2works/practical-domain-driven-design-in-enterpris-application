@@ -153,13 +153,7 @@ public class MyBatisTrackingRecordRepository implements TrackingRecordRepository
     }
 
     private TrackingRecord toRecord(TrackingRecordRow row) {
-        // 表では経路版と到着予定の列が NULL 可（実績の列と同じく後の Bolt の場面のため）だが、追跡記録は予定と到着予定を必ず持つ
-        if (row.routingCaseNumber() == null
-                || row.routeVersionNo() == null
-                || row.originalEta() == null
-                || row.latestEta() == null) {
-            throw new IllegalStateException("追跡記録 " + row.trackingNumber() + " に予定の経路版または到着予定がありません（追跡の開始では必ず入れる）");
-        }
+        // 経路版と到着予定の 4 列は表で NOT NULL（Bolt 26c）
         List<ScheduledLeg> legs = mapper.findScheduledLegs(row.trackingNumber()).stream()
                 .map(leg -> new ScheduledLeg(
                         leg.voyageNumber(),
@@ -209,10 +203,6 @@ public class MyBatisTrackingRecordRepository implements TrackingRecordRepository
     }
 
     private static TrackingRecordSummary toSummary(TrackingRecordSummaryRow row) {
-        // 集約の組み立てと同じく、表では NULL 可の当初の到着予定がない行は原因の分かる例外にする（Bolt 25 レビュー P-9）
-        if (row.originalEta() == null) {
-            throw new IllegalStateException("追跡記録 " + row.trackingNumber() + " に当初の到着予定がありません（追跡の開始では必ず入れる）");
-        }
         return new TrackingRecordSummary(
                 new TrackingNumber(row.trackingNumber()),
                 TrackingStatus.valueOf(row.currentStatus()),

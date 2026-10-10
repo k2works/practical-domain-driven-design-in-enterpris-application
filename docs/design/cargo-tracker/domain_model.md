@@ -4,7 +4,7 @@ title: "cargo-tracker ドメインモデル"
 description: "cargo-tracker の業務領域の分類、ユビキタス言語、7 つの境界づけられたコンテキスト（通知を含む）の集約・エンティティ・値オブジェクト・ドメインルール、コマンド・クエリ・イベント、予約サガ。"
 tags: [design, domain-model, ddd]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-10T01:10:33Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-10T02:25:55Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T07:41:04Z }
   - { by: human:kakimomokuri, at: 2026-10-01T07:48:17Z }
@@ -159,7 +159,7 @@ quadrantChart
 | 主要実績 | Milestone | 出典と発生時刻を伴う、集荷・搬入・出発・積替・到着・引渡しの事実。追跡記録の中で実績番号（1 から）で識別する。追跡管理者が登録した実績は採用（Bolt 26b） | 追跡 |
 | 実績の種類 | MilestoneKind | 集荷 `PICKUP`、搬入 `RECEIPT_AT_ORIGIN`、出発 `DEPARTURE`（積替港からの出発を含む）、積替 `TRANSSHIPMENT`（積替港到着）、到着 `ARRIVAL`、引渡し `DELIVERY`（Bolt 26b） | 追跡 |
 | 実績の状態 | MilestoneState | 下書き `DRAFT`、採用 `ADOPTED`、確認中 `UNDER_REVIEW`、保持のみ `RETAINED_ONLY`。現在状態の導出には採用だけを入れる（T-INV-08。Bolt 26b） | 追跡 |
-| 出典 | Source | 実績や採用値の根拠。種類・参照（1〜200 文字）・取得時刻を持つ。同じ追跡記録で種類と参照が同じなら同じ出典識別子（T-INV-02。Bolt 26b） | 共有カーネル |
+| 出典 | Source | 実績や採用値の根拠。種類・参照（1〜200 文字）・取得時刻を持つ。同じ追跡記録で種類と参照が同じなら同じ出典識別子（T-INV-02。Bolt 26b）。S-13 で追跡管理者が選べる種類は現場記録・社内確認・手動入力で、外部原本は外部原本の取込（W7）だけが作る。S-13 では取得時刻を登録時刻にし、参照の前後の空白を除く（大文字と小文字は区別する。Bolt 26c） | 共有カーネル |
 | 出典の種類 | SourceKind | 外部原本 `EXTERNAL_RECORD`、現場記録 `FIELD_RECORD`、社内確認 `INTERNAL_CHECK`、手動入力 `MANUAL_ENTRY`（航海の出典の種類と同じ値。Bolt 26b） | 共有カーネル |
 | 確認中 | UnderReview | 順序逆転・矛盾・鮮度超過のため、現在状態に反映せず保留している状態（BR-06） | 追跡 |
 | 訂正 | Correction | 原実績を残したまま理由付きで新しい事実を記録すること（BR-05） | 追跡 |
@@ -1023,7 +1023,7 @@ ADR-002 によりトランザクションスクリプトとする。ここでは
 
 ## ドメインモデルの操作
 
-第 2 章にならい、コンテキストごとのコマンド・クエリ・イベントを示す。コマンドはすべて `commandId` と期待版を持つ（ARCH-HO-01）。
+第 2 章にならい、コンテキストごとのコマンド・クエリ・イベントを示す。コマンドはすべて `commandId` と期待版を持つ（ARCH-HO-01）。例外は主要実績の登録（`RegisterMilestoneCommand`。Bolt 26b・26c）で、期待版だけを持つ。同じ出典識別子（出典の種類と参照）の実績があれば既存の実績を返す（T-INV-02）ので、出典識別子が再送の冪等の鍵の役を果たす。
 
 ```plantuml
 @startuml

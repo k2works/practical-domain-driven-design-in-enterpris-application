@@ -192,9 +192,8 @@ class MyBatisTrackingRecordRepositoryIntegrationTest {
         repository.save(trackingRecord);
         String trackingNumber = trackingRecord.trackingNumber().value();
         // 経路版の 2 列は、2 列そろいの CHECK に当たらないよう両方を NULL にする（NOT NULL で拒否することを確かめる）
-        String assignment = column.startsWith("rout")
-                ? "routing_case_number = NULL, route_version_no = NULL"
-                : column + " = NULL";
+        String assignment =
+                column.startsWith("rout") ? "routing_case_number = NULL, route_version_no = NULL" : column + " = NULL";
 
         assertThatThrownBy(() -> jdbc.update(
                         "UPDATE tracking.tracking_record SET " + assignment + " WHERE tracking_number = ?",
@@ -224,7 +223,9 @@ class MyBatisTrackingRecordRepositoryIntegrationTest {
 
         jdbc.execute("SET CONSTRAINTS ALL IMMEDIATE");
 
-        assertThat(repository.findByTrackingNumber(trackingRecord.trackingNumber()).orElseThrow()
+        assertThat(repository
+                        .findByTrackingNumber(trackingRecord.trackingNumber())
+                        .orElseThrow()
                         .statusBasisMilestoneNo())
                 .isEqualTo(OptionalInt.of(1));
     }
