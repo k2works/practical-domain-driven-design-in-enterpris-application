@@ -1,0 +1,9 @@
+voyage
+route_candidate
+route_version
+routing_case
+port_call
+exclusion_reason
+candidate_leg
+connection_rule
+routing_case_number_counter

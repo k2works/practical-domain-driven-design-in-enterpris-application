@@ -1,0 +1,4 @@
+booking
+booking_saga
+booking_version
+processed_command

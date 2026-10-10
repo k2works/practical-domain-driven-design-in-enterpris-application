@@ -1,0 +1,236 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<database name="cargotracker" schema="routing" type="PostgreSQL - 18.6 (Debian 18.6-1.pgdg13+2)">
+   <tables>
+      <table name="candidate_leg" remarks="区間" schema="routing" type="TABLE">
+         <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="routing_case_id" nullable="false" remarks="経路設計案件 ID" size="2147483647" type="uuid" typeCode="1111">
+            <parent column="routing_case_id" foreignKey="fk_candidate_leg_candidate" implied="false" onDeleteCascade="false" schema="routing" table="route_candidate"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="route_version_no" nullable="false" remarks="経路版番号" size="10" type="int4" typeCode="4">
+            <parent column="route_version_no" foreignKey="fk_candidate_leg_candidate" implied="false" onDeleteCascade="false" schema="routing" table="route_candidate"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="2" name="candidate_no" nullable="false" remarks="候補番号" size="10" type="int4" typeCode="4">
+            <parent column="candidate_no" foreignKey="fk_candidate_leg_candidate" implied="false" onDeleteCascade="false" schema="routing" table="route_candidate"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="3" name="leg_no" nullable="false" remarks="区間の番号" size="10" type="int4" typeCode="4"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="4" name="voyage_number" nullable="false" remarks="航海番号" size="30" type="varchar" typeCode="12">
+            <parent column="voyage_number" foreignKey="Implied Constraint" implied="true" onDeleteCascade="false" schema="routing" table="voyage"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="5" name="load_unlocode" nullable="false" remarks="積地" size="5" type="bpchar" typeCode="1"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="6" name="discharge_unlocode" nullable="false" remarks="揚地" size="5" type="bpchar" typeCode="1"/>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="7" name="departure_at" nullable="false" remarks="出発予定" size="35" type="timestamptz" typeCode="93"/>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="8" name="arrival_at" nullable="false" remarks="到着予定" size="35" type="timestamptz" typeCode="93"/>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="9" name="cargo_cutoff_at" nullable="true" remarks="搬入締切" size="35" type="timestamptz" typeCode="93"/>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="10" name="doc_cutoff_at" nullable="true" remarks="書類締切" size="35" type="timestamptz" typeCode="93"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="11" name="info_version" nullable="false" remarks="航海の採用情報版" size="100" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="12" name="info_acquired_at" nullable="false" remarks="航海の情報の取得時刻" size="35" type="timestamptz" typeCode="93"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="13" name="executed" nullable="false" remarks="実行済みか" size="1" type="bool" typeCode="-7"/>
+         <primaryKey column="routing_case_id" sequenceNumberInPK="1"/>
+         <primaryKey column="route_version_no" sequenceNumberInPK="2"/>
+         <primaryKey column="candidate_no" sequenceNumberInPK="3"/>
+         <primaryKey column="leg_no" sequenceNumberInPK="4"/>
+         <index name="pk_candidate_leg" unique="true">
+            <column ascending="true" name="routing_case_id"/>
+            <column ascending="true" name="route_version_no"/>
+            <column ascending="true" name="candidate_no"/>
+            <column ascending="true" name="leg_no"/>
+         </index>
+         <checkConstraint constraint="(arrival_at &gt; departure_at)" name="ck_candidate_leg_dates"/>
+         <checkConstraint constraint="(leg_no &gt;= 1)" name="ck_candidate_leg_no"/>
+      </table>
+      <table name="connection_rule" remarks="接続時間規則" schema="routing" type="TABLE">
+         <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="id" nullable="false" remarks="規則 ID" size="2147483647" type="uuid" typeCode="1111"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="route_scope" nullable="false" remarks="対象の航路（R0.1 は使わない）" size="100" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="2" name="port_unlocode" nullable="false" remarks="対象の港" size="5" type="bpchar" typeCode="1"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="3" name="min_connection_minutes" nullable="false" remarks="必要最小接続時間（分）" size="10" type="int4" typeCode="4"/>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="4" name="valid_from" nullable="false" remarks="適用の開始" size="35" type="timestamptz" typeCode="93"/>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="5" name="valid_to" nullable="true" remarks="適用の終わり（含まない。NULL は終わりなし）" size="35" type="timestamptz" typeCode="93"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="6" name="version" nullable="false" remarks="楽観ロックの版" size="19" type="int8" typeCode="-5"/>
+         <primaryKey column="id" sequenceNumberInPK="1"/>
+         <index name="pk_connection_rule" unique="true">
+            <column ascending="true" name="id"/>
+         </index>
+         <checkConstraint constraint="(min_connection_minutes &gt;= 0)" name="ck_connection_rule_minutes"/>
+         <checkConstraint constraint="((valid_to IS NULL) OR (valid_to &gt; valid_from))" name="ck_connection_rule_period"/>
+      </table>
+      <table name="exclusion_reason" remarks="除外理由" schema="routing" type="TABLE">
+         <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="routing_case_id" nullable="false" remarks="経路設計案件 ID" size="2147483647" type="uuid" typeCode="1111">
+            <parent column="routing_case_id" foreignKey="fk_exclusion_reason_candidate" implied="false" onDeleteCascade="false" schema="routing" table="route_candidate"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="route_version_no" nullable="false" remarks="経路版番号" size="10" type="int4" typeCode="4">
+            <parent column="route_version_no" foreignKey="fk_exclusion_reason_candidate" implied="false" onDeleteCascade="false" schema="routing" table="route_candidate"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="2" name="candidate_no" nullable="false" remarks="候補番号" size="10" type="int4" typeCode="4">
+            <parent column="candidate_no" foreignKey="fk_exclusion_reason_candidate" implied="false" onDeleteCascade="false" schema="routing" table="route_candidate"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="3" name="reason_no" nullable="false" remarks="理由の番号" size="10" type="int4" typeCode="4"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="4" name="reason_code" nullable="false" remarks="理由の区分" size="30" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="5" name="violated_at" nullable="true" remarks="不適合となった時刻" size="35" type="timestamptz" typeCode="93"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="6" name="threshold" nullable="true" remarks="閾値（期限超過は希望到着期限、接続不足は港と必要最小接続時間、接続できないは港）" size="100" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="7" name="info_version" nullable="true" remarks="参照情報版" size="100" type="varchar" typeCode="12"/>
+         <primaryKey column="routing_case_id" sequenceNumberInPK="1"/>
+         <primaryKey column="route_version_no" sequenceNumberInPK="2"/>
+         <primaryKey column="candidate_no" sequenceNumberInPK="3"/>
+         <primaryKey column="reason_no" sequenceNumberInPK="4"/>
+         <index name="pk_exclusion_reason" unique="true">
+            <column ascending="true" name="routing_case_id"/>
+            <column ascending="true" name="route_version_no"/>
+            <column ascending="true" name="candidate_no"/>
+            <column ascending="true" name="reason_no"/>
+         </index>
+         <checkConstraint constraint="((reason_code)::text = ANY ((ARRAY['DEADLINE_EXCEEDED'::character varying, 'CONNECTION_TOO_SHORT'::character varying, 'CARGO_NOT_SUPPORTED'::character varying, 'NOT_CONNECTABLE'::character varying, 'INFO_INSUFFICIENT'::character varying])::text[]))" name="ck_exclusion_reason_code"/>
+      </table>
+      <table name="port_call" remarks="寄港" schema="routing" type="TABLE">
+         <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="voyage_number" nullable="false" remarks="航海番号" size="30" type="varchar" typeCode="12">
+            <parent column="voyage_number" foreignKey="fk_port_call_voyage" implied="false" onDeleteCascade="false" schema="routing" table="voyage"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="call_no" nullable="false" remarks="寄港の順" size="10" type="int4" typeCode="4"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="2" name="port_unlocode" nullable="false" remarks="港" size="5" type="bpchar" typeCode="1"/>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="3" name="arrival_at" nullable="true" remarks="到着予定" size="35" type="timestamptz" typeCode="93"/>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="4" name="departure_at" nullable="true" remarks="出発予定" size="35" type="timestamptz" typeCode="93"/>
+         <primaryKey column="voyage_number" sequenceNumberInPK="1"/>
+         <primaryKey column="call_no" sequenceNumberInPK="2"/>
+         <index name="pk_port_call" unique="true">
+            <column ascending="true" name="voyage_number"/>
+            <column ascending="true" name="call_no"/>
+         </index>
+         <checkConstraint constraint="(call_no &gt;= 1)" name="ck_port_call_no"/>
+         <checkConstraint constraint="((arrival_at IS NOT NULL) OR (departure_at IS NOT NULL))" name="ck_port_call_times"/>
+      </table>
+      <table name="route_candidate" remarks="経路候補" schema="routing" type="TABLE">
+         <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="routing_case_id" nullable="false" remarks="経路設計案件 ID" size="2147483647" type="uuid" typeCode="1111">
+            <child column="routing_case_id" foreignKey="fk_candidate_leg_candidate" implied="false" onDeleteCascade="false" schema="routing" table="candidate_leg"/>
+            <child column="routing_case_id" foreignKey="fk_exclusion_reason_candidate" implied="false" onDeleteCascade="false" schema="routing" table="exclusion_reason"/>
+            <child column="routing_case_id" foreignKey="fk_route_version_selected_candidate" implied="false" onDeleteCascade="false" schema="routing" table="route_version"/>
+            <parent column="routing_case_id" foreignKey="fk_route_candidate_version" implied="false" onDeleteCascade="false" schema="routing" table="route_version"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="route_version_no" nullable="false" remarks="経路版番号" size="10" type="int4" typeCode="4">
+            <child column="route_version_no" foreignKey="fk_candidate_leg_candidate" implied="false" onDeleteCascade="false" schema="routing" table="candidate_leg"/>
+            <child column="route_version_no" foreignKey="fk_exclusion_reason_candidate" implied="false" onDeleteCascade="false" schema="routing" table="exclusion_reason"/>
+            <child column="route_version_no" foreignKey="fk_route_version_selected_candidate" implied="false" onDeleteCascade="false" schema="routing" table="route_version"/>
+            <parent column="route_version_no" foreignKey="fk_route_candidate_version" implied="false" onDeleteCascade="false" schema="routing" table="route_version"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="2" name="candidate_no" nullable="false" remarks="候補番号" size="10" type="int4" typeCode="4">
+            <child column="candidate_no" foreignKey="fk_candidate_leg_candidate" implied="false" onDeleteCascade="false" schema="routing" table="candidate_leg"/>
+            <child column="candidate_no" foreignKey="fk_exclusion_reason_candidate" implied="false" onDeleteCascade="false" schema="routing" table="exclusion_reason"/>
+            <child column="selected_candidate_no" foreignKey="fk_route_version_selected_candidate" implied="false" onDeleteCascade="false" schema="routing" table="route_version"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="3" name="conforming" nullable="false" remarks="適合か" size="1" type="bool" typeCode="-7"/>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="4" name="estimated_arrival_at" nullable="false" remarks="到着予定" size="35" type="timestamptz" typeCode="93"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="5" name="min_connection_slack_minutes" nullable="true" remarks="接続余裕（分。直行は NULL）" size="10" type="int4" typeCode="4"/>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="6" name="evaluated_at" nullable="false" remarks="判定時刻" size="35" type="timestamptz" typeCode="93"/>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="7" name="oldest_info_acquired_at" nullable="true" remarks="最も古い情報の取得時刻（情報鮮度）" size="35" type="timestamptz" typeCode="93"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="8" name="info_insufficient" nullable="false" remarks="情報不足か" size="1" type="bool" typeCode="-7"/>
+         <primaryKey column="routing_case_id" sequenceNumberInPK="1"/>
+         <primaryKey column="route_version_no" sequenceNumberInPK="2"/>
+         <primaryKey column="candidate_no" sequenceNumberInPK="3"/>
+         <index name="pk_route_candidate" unique="true">
+            <column ascending="true" name="routing_case_id"/>
+            <column ascending="true" name="route_version_no"/>
+            <column ascending="true" name="candidate_no"/>
+         </index>
+         <checkConstraint constraint="((candidate_no &gt;= 1) AND (candidate_no &lt;= 20))" name="ck_route_candidate_no"/>
+      </table>
+      <table name="route_version" remarks="経路版" schema="routing" type="TABLE">
+         <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="routing_case_id" nullable="false" remarks="経路設計案件 ID" size="2147483647" type="uuid" typeCode="1111">
+            <child column="routing_case_id" foreignKey="fk_route_candidate_version" implied="false" onDeleteCascade="false" schema="routing" table="route_candidate"/>
+            <child column="id" foreignKey="fk_routing_case_confirmed_version" implied="false" onDeleteCascade="false" schema="routing" table="routing_case"/>
+            <parent column="id" foreignKey="fk_route_version_case" implied="false" onDeleteCascade="false" schema="routing" table="routing_case"/>
+            <parent column="routing_case_id" foreignKey="fk_route_version_selected_candidate" implied="false" onDeleteCascade="false" schema="routing" table="route_candidate"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="route_version_no" nullable="false" remarks="経路版番号" size="10" type="int4" typeCode="4">
+            <child column="route_version_no" foreignKey="fk_route_candidate_version" implied="false" onDeleteCascade="false" schema="routing" table="route_candidate"/>
+            <child column="confirmed_route_version_no" foreignKey="fk_routing_case_confirmed_version" implied="false" onDeleteCascade="false" schema="routing" table="routing_case"/>
+            <parent column="route_version_no" foreignKey="fk_route_version_selected_candidate" implied="false" onDeleteCascade="false" schema="routing" table="route_candidate"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="2" name="status" nullable="false" remarks="状態" size="30" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="3" name="candidates_evaluated_at" nullable="true" remarks="候補の判定時刻" size="35" type="timestamptz" typeCode="93"/>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="4" name="created_at" nullable="false" remarks="作成時刻" size="35" type="timestamptz" typeCode="93"/>
+         <column autoUpdated="false" defaultValue="0" digits="0" id="5" name="candidates_found" nullable="false" remarks="見つけた候補の数（上限で切る前。示さなかった候補の数を常に示すため）" size="10" type="int4" typeCode="4"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="6" name="selected_candidate_no" nullable="true" remarks="確定した候補番号（確定の記録。確定していなければ NULL）" size="10" type="int4" typeCode="4">
+            <parent column="candidate_no" foreignKey="fk_route_version_selected_candidate" implied="false" onDeleteCascade="false" schema="routing" table="route_candidate"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="7" name="rationale" nullable="true" remarks="判断根拠（確定の記録。前後の空白を除いて 1〜4,000 文字）" size="4000" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="8" name="approved_by" nullable="true" remarks="承認者（経路設計者）の利用者 ID（確定の記録）" size="2147483647" type="uuid" typeCode="1111"/>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="9" name="approved_at" nullable="true" remarks="承認 commit 時刻（確定の記録。確定の再検証の時刻）" size="35" type="timestamptz" typeCode="93"/>
+         <primaryKey column="routing_case_id" sequenceNumberInPK="1"/>
+         <primaryKey column="route_version_no" sequenceNumberInPK="2"/>
+         <index name="pk_route_version" unique="true">
+            <column ascending="true" name="routing_case_id"/>
+            <column ascending="true" name="route_version_no"/>
+         </index>
+         <checkConstraint constraint="((((selected_candidate_no IS NULL) AND (rationale IS NULL) AND (approved_by IS NULL) AND (approved_at IS NULL)) OR ((selected_candidate_no IS NOT NULL) AND (rationale IS NOT NULL) AND (approved_by IS NOT NULL) AND (approved_at IS NOT NULL))) AND (((status)::text &lt;&gt; 'CONFIRMED'::text) OR (selected_candidate_no IS NOT NULL)) AND (((status)::text &lt;&gt; ALL ((ARRAY['DRAFT'::character varying, 'CANDIDATES_PRESENTED'::character varying, 'EXPERT_REVIEW'::character varying])::text[])) OR (selected_candidate_no IS NULL)))" name="ck_route_version_confirmed"/>
+         <checkConstraint constraint="(((status)::text = 'DRAFT'::text) OR (candidates_evaluated_at IS NOT NULL))" name="ck_route_version_evaluated"/>
+         <checkConstraint constraint="(candidates_found &gt;= 0)" name="ck_route_version_found"/>
+         <checkConstraint constraint="(route_version_no &gt;= 1)" name="ck_route_version_no"/>
+         <checkConstraint constraint="((status)::text = ANY ((ARRAY['DRAFT'::character varying, 'CANDIDATES_PRESENTED'::character varying, 'EXPERT_REVIEW'::character varying, 'CONFIRMED'::character varying, 'REDESIGN_REQUIRED'::character varying, 'SUPERSEDED'::character varying])::text[]))" name="ck_route_version_status"/>
+      </table>
+      <table name="routing_case" remarks="経路設計案件" schema="routing" type="TABLE">
+         <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="id" nullable="false" remarks="経路設計案件 ID" size="2147483647" type="uuid" typeCode="1111">
+            <child column="routing_case_id" foreignKey="fk_route_version_case" implied="false" onDeleteCascade="false" schema="routing" table="route_version"/>
+            <parent column="routing_case_id" foreignKey="fk_routing_case_confirmed_version" implied="false" onDeleteCascade="false" schema="routing" table="route_version"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="case_number" nullable="false" remarks="案件番号" size="20" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="2" name="transport_request_id" nullable="false" remarks="輸送要求 ID（見積りの写し）" size="2147483647" type="uuid" typeCode="1111"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="3" name="transport_request_number" nullable="false" remarks="業務番号（見積りの写し）" size="20" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="4" name="transport_request_version_no" nullable="false" remarks="輸送要求の版番号" size="10" type="int4" typeCode="4"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="5" name="quotation_id" nullable="false" remarks="依頼元の見積り ID" size="2147483647" type="uuid" typeCode="1111"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="6" name="route_policy_via" nullable="true" remarks="経路方針（参考）の主な経由地（UN/LOCODE のカンマ区切り）" size="200" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="7" name="origin_unlocode" nullable="false" remarks="出発地" size="5" type="bpchar" typeCode="1"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="8" name="destination_unlocode" nullable="false" remarks="目的地" size="5" type="bpchar" typeCode="1"/>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="9" name="arrival_deadline" nullable="false" remarks="希望到着期限" size="35" type="timestamptz" typeCode="93"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="10" name="cargo_category" nullable="false" remarks="貨物種別" size="30" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="11" name="requested_at" nullable="false" remarks="詳細経路設計の依頼時刻" size="35" type="timestamptz" typeCode="93"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="12" name="confirmed_route_version_no" nullable="true" remarks="確定した経路版番号（未確定は NULL）" size="10" type="int4" typeCode="4">
+            <parent column="route_version_no" foreignKey="fk_routing_case_confirmed_version" implied="false" onDeleteCascade="false" schema="routing" table="route_version"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="13" name="version" nullable="false" remarks="楽観ロックの版" size="19" type="int8" typeCode="-5"/>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="14" name="created_at" nullable="false" remarks="作成時刻" size="35" type="timestamptz" typeCode="93"/>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="15" name="updated_at" nullable="false" remarks="更新時刻" size="35" type="timestamptz" typeCode="93"/>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="16" name="quotation_expires_at" nullable="true" remarks="見積有効期限（DE-16 の写し。案件一覧の並び。Bolt 19 より前の案件は NULL）" size="35" type="timestamptz" typeCode="93"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="17" name="created_by" nullable="true" remarks="詳細経路設計を依頼した荷主担当者の利用者 ID（DE-16 の写し）" size="2147483647" type="uuid" typeCode="1111"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="18" name="updated_by" nullable="true" remarks="最後に候補を算出・確定した経路設計者の利用者 ID" size="2147483647" type="uuid" typeCode="1111"/>
+         <primaryKey column="id" sequenceNumberInPK="1"/>
+         <index name="pk_routing_case" unique="true">
+            <column ascending="true" name="id"/>
+         </index>
+         <index name="ix_routing_case_requested_at" unique="false">
+            <column ascending="true" name="requested_at"/>
+         </index>
+         <index name="uk_routing_case_number" unique="true">
+            <column ascending="true" name="case_number"/>
+         </index>
+         <index name="uk_routing_case_request_version" unique="true">
+            <column ascending="true" name="transport_request_id"/>
+            <column ascending="true" name="transport_request_version_no"/>
+         </index>
+         <checkConstraint constraint="(transport_request_version_no &gt;= 1)" name="ck_routing_case_request_version_no"/>
+         <checkConstraint constraint="(origin_unlocode &lt;&gt; destination_unlocode)" name="ck_routing_case_route"/>
+      </table>
+      <table name="routing_case_number_counter" remarks="案件番号の採番" schema="routing" type="TABLE">
+         <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="number_year" nullable="false" remarks="案件番号の年" size="5" type="int2" typeCode="5"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="last_no" nullable="false" remarks="その年に最後に振った連番" size="10" type="int4" typeCode="4"/>
+         <primaryKey column="number_year" sequenceNumberInPK="1"/>
+         <index name="pk_routing_case_number_counter" unique="true">
+            <column ascending="true" name="number_year"/>
+         </index>
+         <checkConstraint constraint="(last_no &gt;= 0)" name="ck_routing_case_number_counter_last_no"/>
+      </table>
+      <table name="voyage" remarks="航海" schema="routing" type="TABLE">
+         <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="voyage_number" nullable="false" remarks="航海番号" size="30" type="varchar" typeCode="12">
+            <child column="voyage_number" foreignKey="Implied Constraint" implied="true" onDeleteCascade="false" schema="routing" table="candidate_leg"/>
+            <child column="voyage_number" foreignKey="fk_port_call_voyage" implied="false" onDeleteCascade="false" schema="routing" table="port_call"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="adopted_info_version" nullable="false" remarks="採用情報版" size="100" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="2" name="source_kind" nullable="false" remarks="出典の種類" size="30" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="3" name="source_ref" nullable="false" remarks="出典の参照" size="200" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="4" name="acquired_at" nullable="false" remarks="情報の取得時刻" size="35" type="timestamptz" typeCode="93"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="5" name="version" nullable="false" remarks="楽観ロックの版" size="19" type="int8" typeCode="-5"/>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="6" name="updated_at" nullable="false" remarks="更新時刻" size="35" type="timestamptz" typeCode="93"/>
+         <primaryKey column="voyage_number" sequenceNumberInPK="1"/>
+         <index name="pk_voyage" unique="true">
+            <column ascending="true" name="voyage_number"/>
+         </index>
+         <checkConstraint constraint="((source_kind)::text = ANY ((ARRAY['EXTERNAL_RECORD'::character varying, 'FIELD_RECORD'::character varying, 'INTERNAL_CHECK'::character varying, 'MANUAL_ENTRY'::character varying])::text[]))" name="ck_voyage_source_kind"/>
+      </table>
+   </tables>
+</database>

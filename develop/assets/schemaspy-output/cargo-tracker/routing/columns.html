@@ -1,0 +1,1301 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <title>cargotracker.routing</title>
+        <!-- Tell the browser to be responsive to screen width -->
+        <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
+        <link rel="icon" type="image/png" sizes="16x16" href="favicon.png">
+        <!-- Bootstrap 3.3.5 -->
+        <link rel="stylesheet" href="bower/admin-lte/bootstrap/css/bootstrap.min.css">
+        <!-- Font Awesome -->
+        <link rel="stylesheet" href="bower/font-awesome/css/font-awesome.min.css">
+        <!-- Ionicons -->
+        <link rel="stylesheet" href="bower/ionicons/css/ionicons.min.css">
+        <!-- DataTables -->
+        <link rel="stylesheet" href="bower/datatables.net-bs/css/dataTables.bootstrap.min.css">
+        <link rel="stylesheet" href="bower/datatables.net-buttons-bs/css/buttons.bootstrap.min.css">
+        <!-- Code Mirror -->
+        <link rel="stylesheet" href="bower/codemirror/codemirror.css">
+        <!-- Fonts -->
+        <link href='fonts/indieflower/indie-flower.css' rel='stylesheet' type='text/css'>
+        <link href='fonts/source-sans-pro/source-sans-pro.css' rel='stylesheet' type='text/css'>
+
+        <!-- Theme style -->
+        <link rel="stylesheet" href="bower/admin-lte/dist/css/AdminLTE.min.css">
+        <!-- Salvattore -->
+        <link rel="stylesheet" href="bower/salvattore/salvattore.css">
+        <!-- AdminLTE Skins. Choose a skin from the css/skins
+           folder instead of downloading all of them to reduce the load. -->
+        <link rel="stylesheet" href="bower/admin-lte/dist/css/skins/_all-skins.min.css">
+        <!-- SchemaSpy -->
+        <link rel="stylesheet" href="schemaSpy.css">
+
+        <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+        <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+        <!--[if lt IE 9]>
+        <script src="bower/html5shiv/html5shiv.min.js"></script>
+        <script src="bower/respond/respond.min.js"></script>
+        <![endif]-->
+    </head>
+    <!-- ADD THE CLASS layout-top-nav TO REMOVE THE SIDEBAR. -->
+    <body class="hold-transition skin-blue layout-top-nav">
+        <div class="wrapper">
+            <header class="main-header">
+                <nav class="navbar navbar-static-top">
+                    <div class="container">
+                        <div class="navbar-header">
+                            <a href="../index.html" class="navbar-brand"><b>cargotracker</b></a><span class="navbar-brand" style="padding-left: 0">.routing</span>
+                            <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar-collapse"><i class="fa fa-bars"></i></button>
+                        </div>
+
+                        <!-- Collect the nav links, forms, and other content for toggling -->
+                        <div class="collapse navbar-collapse pull-left" id="navbar-collapse">
+                            <ul class="nav navbar-nav">
+                                <li><a href="index.html">Tables <span class="sr-only">(current)</span></a></li>
+                                <li><a href="columns.html" title="All of the columns in the schema">Columns</a></li>
+                                <li><a href="constraints.html" title="Useful for diagnosing error messages that just give constraint name or number">Constraints</a></li>
+                                <li><a href="relationships.html" title="Diagram of table relationships">Relationships</a></li>
+                                <li><a href="orphans.html" title="View of tables with neither parents nor children">Orphan&nbsp;Tables</a></li>
+                                <li><a href="anomalies.html" title="Things that might not be quite right">Anomalies</a></li>
+                                <li><a href="routines.html" title="Procedures and functions">Routines</a></li>
+                            </ul>
+                        </div>
+                        <!-- /.navbar-collapse -->
+                        <!-- Navbar Right Menu -->
+                    </div>
+                    <!-- /.container-fluid -->
+                </nav>
+            </header>
+            <!-- Main content -->
+            <!-- Full Width Column -->
+            <div class="content-wrapper">
+                <!-- Content Header (Page header) -->
+                <section class="content-header">
+                    <h1>Columns</h1>
+                </section>
+                <!-- Main content -->
+                <section class="content">
+                    <div class="box box-primary">
+                        <div class="box-header with-border">
+                            <span class="glyphicon glyphicon-list-alt" aria-hidden="true"></span>
+                            <h3 class="box-title">Columns</h3>
+                        </div>
+                        <div class="box-body">
+                            <table
+                                    id="column_table"
+                                    class="table table-bordered table-striped dataTable"
+                                    role="grid"
+                                    data-paging="true"
+                                    data-page-length="50"
+                                    data-length-change="false">
+                                <thead align='left'>
+                                    <tr>
+                                        <th>Table</th>
+                                        <th>Type</th>
+                                        <th>Column</th>
+                                        <th>Type</th>
+                                        <th>Size</th>
+                                        <th title='Are nulls allowed?'>Nullable</th>
+                                        <th title='Is column automatically updated?'>Auto</th>
+                                        <th title='Default value'>Default</th>
+                                        <th title='Comments' class="toggle"><span>Comments</span></th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+                <script>
+                    var tableData = [
+    {
+        "tableName": "candidate_leg",
+        "tableFileName": "candidate_leg",
+        "tableType": "Table",
+        "keyClass": "primaryKey",
+        "keyTitle": "Primary Key",
+        "name": "<i class='icon ion-key iconkey' style='padding-left: 5px;'></i>routing_case_id",
+        "type": "uuid",
+        "length": 2147483647,
+        "nullable": "",
+        "autoUpdated": "",
+        "defaultValue": "null",
+        "comments": "<p>経路設計案件 ID</p>"
+    },
+    {
+        "tableName": "candidate_leg",
+        "tableFileName": "candidate_leg",
+        "tableType": "Table",
+        "keyClass": "primaryKey",
+        "keyTitle": "Primary Key",
+        "name": "<i class='icon ion-key iconkey' style='padding-left: 5px;'></i>route_version_no",
+        "type": "int4",
+        "length": 10,
+        "nullable": "",
+        "autoUpdated": "",
+        "defaultValue": "null",
+        "comments": "<p>経路版番号</p>"
+    },
+    {
+        "tableName": "candidate_leg",
+        "tableFileName": "candidate_leg",
+        "tableType": "Table",
+        "keyClass": "primaryKey",
+        "keyTitle": "Primary Key",
+        "name": "<i class='icon ion-key iconkey' style='padding-left: 5px;'></i>candidate_no",
+        "type": "int4",
+        "length": 10,
+        "nullable": "",
+        "autoUpdated": "",
+        "defaultValue": "null",
+        "comments": "<p>候補番号</p>"
+    },
+    {
+        "tableName": "candidate_leg",
+        "tableFileName": "candidate_leg",
+        "tableType": "Table",
+        "keyClass": "primaryKey",
+        "keyTitle": "Primary Key",
+        "name": "<i class='icon ion-key iconkey' style='padding-left: 5px;'></i>leg_no",
+        "type": "int4",
+        "length": 10,
+        "nullable": "",
+        "autoUpdated": "",
+        "defaultValue": "null",
+        "comments": "<p>区間の番号</p>"
+    },
+    {
+        "tableName": "candidate_leg",
+        "tableFileName": "candidate_leg",
+        "tableType": "Table",
+        "keyClass": "foreignKey",
+        "keyTitle": "Foreign Key",
+        "name": "<i class='icon ion-key iconkey' style='padding-left: 5px;'></i>voyage_number",
+        "type": "varchar",
+        "length": 30,
+        "nullable": "",
+        "autoUpdated": "",
+        "defaultValue": "null",
+        "comments": "<p>航海番号</p>"
+    },
+    {
+        "tableName": "candidate_leg",
+        "tableFileName": "candidate_leg",
+        "tableType": "Table",
+        "keyClass": "",
+        "keyTitle": "",
+        "name": "load_unlocode",
+        "type": "bpchar",
+        "length": 5,
+        "nullable": "",
+        "autoUpdated": "",
+        "defaultValue": "null",
+        "comments": "<p>積地</p>"
+    },
+    {
+        "tableName": "candidate_leg",
+        "tableFileName": "candidate_leg",
+        "tableType": "Table",
+        "keyClass": "",
+        "keyTitle": "",
+        "name": "discharge_unlocode",
+        "type": "bpchar",
+        "length": 5,
+        "nullable": "",
+        "autoUpdated": "",
+        "defaultValue": "null",
+        "comments": "<p>揚地</p>"
+    },
+    {
+        "tableName": "candidate_leg",
+        "tableFileName": "candidate_leg",
+        "tableType": "Table",
+        "keyClass": "",
+        "keyTitle": "",
+        "name": "departure_at",
+        "type": "timestamptz",
+        "length": 35,
+        "nullable": "",
+        "autoUpdated": "",
+        "defaultValue": "null",
+        "comments": "<p>出発予定</p>"
+    },
+    {
+        "tableName": "candidate_leg",
+        "tableFileName": "candidate_leg",
+        "tableType": "Table",
+        "keyClass": "",
+        "keyTitle": "",
+        "name": "arrival_at",
+        "type": "timestamptz",
+        "length": 35,
+        "nullable": "",
+        "autoUpdated": "",
+        "defaultValue": "null",
+        "comments": "<p>到着予定</p>"
+    },
+    {
+        "tableName": "candidate_leg",
+        "tableFileName": "candidate_leg",
+        "tableType": "Table",
+        "keyClass": "",
+        "keyTitle": "",
+        "name": "cargo_cutoff_at",
+        "type": "timestamptz",
+        "length": 35,
+        "nullable": "√",
+        "autoUpdated": "",
+        "defaultValue": "null",
+        "comments": "<p>搬入締切</p>"
+    },
+    {
+        "tableName": "candidate_leg",
+        "tableFileName": "candidate_leg",
+        "tableType": "Table",
+        "keyClass": "",
+        "keyTitle": "",
+        "name": "doc_cutoff_at",
+        "type": "timestamptz",
+        "length": 35,
+        "nullable": "√",
+        "autoUpdated": "",
+        "defaultValue": "null",
+        "comments": "<p>書類締切</p>"
+    },
+    {
+        "tableName": "candidate_leg",
+        "tableFileName": "candidate_leg",
+        "tableType": "Table",
+        "keyClass": "",
+        "keyTitle": "",
+        "name": "info_version",
+        "type": "varchar",
+        "length": 100,
+        "nullable": "",
+        "autoUpdated": "",
+        "defaultValue": "null",
+        "comments": "<p>航海の採用情報版</p>"
+    },
+    {
+        "tableName": "candidate_leg",
+        "tableFileName": "candidate_leg",
+        "tableType": "Table",
+        "keyClass": "",
+        "keyTitle": "",
+        "name": "info_acquired_at",
+        "type": "timestamptz",
+        "length": 35,
+        "nullable": "",
+        "autoUpdated": "",
+        "defaultValue": "null",
+        "comments": "<p>航海の情報の取得時刻</p>"
+    },
+    {
+        "tableName": "candidate_leg",
+        "tableFileName": "candidate_leg",
+        "tableType": "Table",
+        "keyClass": "",
+        "keyTitle": "",
+        "name": "executed",
+        "type": "bool",
+        "length": 1,
+        "nullable": "",
+        "autoUpdated": "",
+        "defaultValue": "null",
+        "comments": "<p>実行済みか</p>"
+    },
+    {
+        "tableName": "connection_rule",
+        "tableFileName": "connection_rule",
+        "tableType": "Table",
+        "keyClass": "primaryKey",
+        "keyTitle": "Primary Key",
+        "name": "<i class='icon ion-key iconkey' style='padding-left: 5px;'></i>id",
+        "type": "uuid",
+        "length": 2147483647,
+        "nullable": "",
+        "autoUpdated": "",
+        "defaultValue": "null",
+        "comments": "<p>規則 ID</p>"
+    },
+    {
+        "tableName": "connection_rule",
+        "tableFileName": "connection_rule",
+        "tableType": "Table",
+        "keyClass": "",
+        "keyTitle": "",
+        "name": "route_scope",
+        "type": "varchar",
+        "length": 100,
+        "nullable": "",
+        "autoUpdated": "",
+        "defaultValue": "null",
+        "comments": "<p>対象の航路（R0.1 は使わない）</p>"
+    },
+    {
+        "tableName": "connection_rule",
+        "tableFileName": "connection_rule",
+        "tableType": "Table",
+        "keyClass": "",
+        "keyTitle": "",
+        "name": "port_unlocode",
+        "type": "bpchar",
+        "length": 5,
+        "nullable": "",
+        "autoUpdated": "",
+        "defaultValue": "null",
+        "comments": "<p>対象の港</p>"
+    },
+    {
+        "tableName": "connection_rule",
+        "tableFileName": "connection_rule",
+        "tableType": "Table",
+        "keyClass": "",
+        "keyTitle": "",
+        "name": "min_connection_minutes",
+        "type": "int4",
+        "length": 10,
+        "nullable": "",
+        "autoUpdated": "",
+        "defaultValue": "null",
+        "comments": "<p>必要最小接続時間（分）</p>"
+    },
+    {
+        "tableName": "connection_rule",
+        "tableFileName": "connection_rule",
+        "tableType": "Table",
+        "keyClass": "",
+        "keyTitle": "",
+        "name": "valid_from",
+        "type": "timestamptz",
+        "length": 35,
+        "nullable": "",
+        "autoUpdated": "",
+        "defaultValue": "null",
+        "comments": "<p>適用の開始</p>"
+    },
+    {
+        "tableName": "connection_rule",
+        "tableFileName": "connection_rule",
+        "tableType": "Table",
+        "keyClass": "",
+        "keyTitle": "",
+        "name": "valid_to",
+        "type": "timestamptz",
+        "length": 35,
+        "nullable": "√",
+        "autoUpdated": "",
+        "defaultValue": "null",
+        "comments": "<p>適用の終わり（含まない。NULL は終わりなし）</p>"
+    },
+    {
+        "tableName": "connection_rule",
+        "tableFileName": "connection_rule",
+        "tableType": "Table",
+        "keyClass": "",
+        "keyTitle": "",
+        "name": "version",
+        "type": "int8",
+        "length": 19,
+        "nullable": "",
+        "autoUpdated": "",
+        "defaultValue": "null",
+        "comments": "<p>楽観ロックの版</p>"
+    },
+    {
+        "tableName": "exclusion_reason",
+        "tableFileName": "exclusion_reason",
+        "tableType": "Table",
+        "keyClass": "primaryKey",
+        "keyTitle": "Primary Key",
+        "name": "<i class='icon ion-key iconkey' style='padding-left: 5px;'></i>routing_case_id",
+        "type": "uuid",
+        "length": 2147483647,
+        "nullable": "",
+        "autoUpdated": "",
+        "defaultValue": "null",
+        "comments": "<p>経路設計案件 ID</p>"
+    },
+    {
+        "tableName": "exclusion_reason",
+        "tableFileName": "exclusion_reason",
+        "tableType": "Table",
+        "keyClass": "primaryKey",
+        "keyTitle": "Primary Key",
+        "name": "<i class='icon ion-key iconkey' style='padding-left: 5px;'></i>route_version_no",
+        "type": "int4",
+        "length": 10,
+        "nullable": "",
+        "autoUpdated": "",
+        "defaultValue": "null",
+        "comments": "<p>経路版番号</p>"
+    },
+    {
+        "tableName": "exclusion_reason",
+        "tableFileName": "exclusion_reason",
+        "tableType": "Table",
+        "keyClass": "primaryKey",
+        "keyTitle": "Primary Key",
+        "name": "<i class='icon ion-key iconkey' style='padding-left: 5px;'></i>candidate_no",
+        "type": "int4",
+        "length": 10,
+        "nullable": "",
+        "autoUpdated": "",
+        "defaultValue": "null",
+        "comments": "<p>候補番号</p>"
+    },
+    {
+        "tableName": "exclusion_reason",
+        "tableFileName": "exclusion_reason",
+        "tableType": "Table",
+        "keyClass": "primaryKey",
+        "keyTitle": "Primary Key",
+        "name": "<i class='icon ion-key iconkey' style='padding-left: 5px;'></i>reason_no",
+        "type": "int4",
+        "length": 10,
+        "nullable": "",
+        "autoUpdated": "",
+        "defaultValue": "null",
+        "comments": "<p>理由の番号</p>"
+    },
+    {
+        "tableName": "exclusion_reason",
+        "tableFileName": "exclusion_reason",
+        "tableType": "Table",
+        "keyClass": "",
+        "keyTitle": "",
+        "name": "reason_code",
+        "type": "varchar",
+        "length": 30,
+        "nullable": "",
+        "autoUpdated": "",
+        "defaultValue": "null",
+        "comments": "<p>理由の区分</p>"
+    },
+    {
+        "tableName": "exclusion_reason",
+        "tableFileName": "exclusion_reason",
+        "tableType": "Table",
+        "keyClass": "",
+        "keyTitle": "",
+        "name": "violated_at",
+        "type": "timestamptz",
+        "length": 35,
+        "nullable": "√",
+        "autoUpdated": "",
+        "defaultValue": "null",
+        "comments": "<p>不適合となった時刻</p>"
+    },
+    {
+        "tableName": "exclusion_reason",
+        "tableFileName": "exclusion_reason",
+        "tableType": "Table",
+        "keyClass": "",
+        "keyTitle": "",
+        "name": "threshold",
+        "type": "varchar",
+        "length": 100,
+        "nullable": "√",
+        "autoUpdated": "",
+        "defaultValue": "null",
+        "comments": "<p>閾値（期限超過は希望到着期限、接続不足は港と必要最小接続時間、接続できないは港）</p>"
+    },
+    {
+        "tableName": "exclusion_reason",
+        "tableFileName": "exclusion_reason",
+        "tableType": "Table",
+        "keyClass": "",
+        "keyTitle": "",
+        "name": "info_version",
+        "type": "varchar",
+        "length": 100,
+        "nullable": "√",
+        "autoUpdated": "",
+        "defaultValue": "null",
+        "comments": "<p>参照情報版</p>"
+    },
+    {
+        "tableName": "port_call",
+        "tableFileName": "port_call",
+        "tableType": "Table",
+        "keyClass": "primaryKey",
+        "keyTitle": "Primary Key",
+        "name": "<i class='icon ion-key iconkey' style='padding-left: 5px;'></i>voyage_number",
+        "type": "varchar",
+        "length": 30,
+        "nullable": "",
+        "autoUpdated": "",
+        "defaultValue": "null",
+        "comments": "<p>航海番号</p>"
+    },
+    {
+        "tableName": "port_call",
+        "tableFileName": "port_call",
+        "tableType": "Table",
+        "keyClass": "primaryKey",
+        "keyTitle": "Primary Key",
+        "name": "<i class='icon ion-key iconkey' style='padding-left: 5px;'></i>call_no",
+        "type": "int4",
+        "length": 10,
+        "nullable": "",
+        "autoUpdated": "",
+        "defaultValue": "null",
+        "comments": "<p>寄港の順</p>"
+    },
+    {
+        "tableName": "port_call",
+        "tableFileName": "port_call",
+        "tableType": "Table",
+        "keyClass": "",
+        "keyTitle": "",
+        "name": "port_unlocode",
+        "type": "bpchar",
+        "length": 5,
+        "nullable": "",
+        "autoUpdated": "",
+        "defaultValue": "null",
+        "comments": "<p>港</p>"
+    },
+    {
+        "tableName": "port_call",
+        "tableFileName": "port_call",
+        "tableType": "Table",
+        "keyClass": "",
+        "keyTitle": "",
+        "name": "arrival_at",
+        "type": "timestamptz",
+        "length": 35,
+        "nullable": "√",
+        "autoUpdated": "",
+        "defaultValue": "null",
+        "comments": "<p>到着予定</p>"
+    },
+    {
+        "tableName": "port_call",
+        "tableFileName": "port_call",
+        "tableType": "Table",
+        "keyClass": "",
+        "keyTitle": "",
+        "name": "departure_at",
+        "type": "timestamptz",
+        "length": 35,
+        "nullable": "√",
+        "autoUpdated": "",
+        "defaultValue": "null",
+        "comments": "<p>出発予定</p>"
+    },
+    {
+        "tableName": "route_candidate",
+        "tableFileName": "route_candidate",
+        "tableType": "Table",
+        "keyClass": "primaryKey",
+        "keyTitle": "Primary Key",
+        "name": "<i class='icon ion-key iconkey' style='padding-left: 5px;'></i>routing_case_id",
+        "type": "uuid",
+        "length": 2147483647,
+        "nullable": "",
+        "autoUpdated": "",
+        "defaultValue": "null",
+        "comments": "<p>経路設計案件 ID</p>"
+    },
+    {
+        "tableName": "route_candidate",
+        "tableFileName": "route_candidate",
+        "tableType": "Table",
+        "keyClass": "primaryKey",
+        "keyTitle": "Primary Key",
+        "name": "<i class='icon ion-key iconkey' style='padding-left: 5px;'></i>route_version_no",
+        "type": "int4",
+        "length": 10,
+        "nullable": "",
+        "autoUpdated": "",
+        "defaultValue": "null",
+        "comments": "<p>経路版番号</p>"
+    },
+    {
+        "tableName": "route_candidate",
+        "tableFileName": "route_candidate",
+        "tableType": "Table",
+        "keyClass": "primaryKey",
+        "keyTitle": "Primary Key",
+        "name": "<i class='icon ion-key iconkey' style='padding-left: 5px;'></i>candidate_no",
+        "type": "int4",
+        "length": 10,
+        "nullable": "",
+        "autoUpdated": "",
+        "defaultValue": "null",
+        "comments": "<p>候補番号</p>"
+    },
+    {
+        "tableName": "route_candidate",
+        "tableFileName": "route_candidate",
+        "tableType": "Table",
+        "keyClass": "",
+        "keyTitle": "",
+        "name": "conforming",
+        "type": "bool",
+        "length": 1,
+        "nullable": "",
+        "autoUpdated": "",
+        "defaultValue": "null",
+        "comments": "<p>適合か</p>"
+    },
+    {
+        "tableName": "route_candidate",
+        "tableFileName": "route_candidate",
+        "tableType": "Table",
+        "keyClass": "",
+        "keyTitle": "",
+        "name": "estimated_arrival_at",
+        "type": "timestamptz",
+        "length": 35,
+        "nullable": "",
+        "autoUpdated": "",
+        "defaultValue": "null",
+        "comments": "<p>到着予定</p>"
+    },
+    {
+        "tableName": "route_candidate",
+        "tableFileName": "route_candidate",
+        "tableType": "Table",
+        "keyClass": "",
+        "keyTitle": "",
+        "name": "min_connection_slack_minutes",
+        "type": "int4",
+        "length": 10,
+        "nullable": "√",
+        "autoUpdated": "",
+        "defaultValue": "null",
+        "comments": "<p>接続余裕（分。直行は NULL）</p>"
+    },
+    {
+        "tableName": "route_candidate",
+        "tableFileName": "route_candidate",
+        "tableType": "Table",
+        "keyClass": "",
+        "keyTitle": "",
+        "name": "evaluated_at",
+        "type": "timestamptz",
+        "length": 35,
+        "nullable": "",
+        "autoUpdated": "",
+        "defaultValue": "null",
+        "comments": "<p>判定時刻</p>"
+    },
+    {
+        "tableName": "route_candidate",
+        "tableFileName": "route_candidate",
+        "tableType": "Table",
+        "keyClass": "",
+        "keyTitle": "",
+        "name": "oldest_info_acquired_at",
+        "type": "timestamptz",
+        "length": 35,
+        "nullable": "√",
+        "autoUpdated": "",
+        "defaultValue": "null",
+        "comments": "<p>最も古い情報の取得時刻（情報鮮度）</p>"
+    },
+    {
+        "tableName": "route_candidate",
+        "tableFileName": "route_candidate",
+        "tableType": "Table",
+        "keyClass": "",
+        "keyTitle": "",
+        "name": "info_insufficient",
+        "type": "bool",
+        "length": 1,
+        "nullable": "",
+        "autoUpdated": "",
+        "defaultValue": "null",
+        "comments": "<p>情報不足か</p>"
+    },
+    {
+        "tableName": "route_version",
+        "tableFileName": "route_version",
+        "tableType": "Table",
+        "keyClass": "primaryKey",
+        "keyTitle": "Primary Key",
+        "name": "<i class='icon ion-key iconkey' style='padding-left: 5px;'></i>routing_case_id",
+        "type": "uuid",
+        "length": 2147483647,
+        "nullable": "",
+        "autoUpdated": "",
+        "defaultValue": "null",
+        "comments": "<p>経路設計案件 ID</p>"
+    },
+    {
+        "tableName": "route_version",
+        "tableFileName": "route_version",
+        "tableType": "Table",
+        "keyClass": "primaryKey",
+        "keyTitle": "Primary Key",
+        "name": "<i class='icon ion-key iconkey' style='padding-left: 5px;'></i>route_version_no",
+        "type": "int4",
+        "length": 10,
+        "nullable": "",
+        "autoUpdated": "",
+        "defaultValue": "null",
+        "comments": "<p>経路版番号</p>"
+    },
+    {
+        "tableName": "route_version",
+        "tableFileName": "route_version",
+        "tableType": "Table",
+        "keyClass": "",
+        "keyTitle": "",
+        "name": "status",
+        "type": "varchar",
+        "length": 30,
+        "nullable": "",
+        "autoUpdated": "",
+        "defaultValue": "null",
+        "comments": "<p>状態</p>"
+    },
+    {
+        "tableName": "route_version",
+        "tableFileName": "route_version",
+        "tableType": "Table",
+        "keyClass": "",
+        "keyTitle": "",
+        "name": "candidates_evaluated_at",
+        "type": "timestamptz",
+        "length": 35,
+        "nullable": "√",
+        "autoUpdated": "",
+        "defaultValue": "null",
+        "comments": "<p>候補の判定時刻</p>"
+    },
+    {
+        "tableName": "route_version",
+        "tableFileName": "route_version",
+        "tableType": "Table",
+        "keyClass": "",
+        "keyTitle": "",
+        "name": "created_at",
+        "type": "timestamptz",
+        "length": 35,
+        "nullable": "",
+        "autoUpdated": "",
+        "defaultValue": "null",
+        "comments": "<p>作成時刻</p>"
+    },
+    {
+        "tableName": "route_version",
+        "tableFileName": "route_version",
+        "tableType": "Table",
+        "keyClass": "",
+        "keyTitle": "",
+        "name": "candidates_found",
+        "type": "int4",
+        "length": 10,
+        "nullable": "",
+        "autoUpdated": "",
+        "defaultValue": "0",
+        "comments": "<p>見つけた候補の数（上限で切る前。示さなかった候補の数を常に示すため）</p>"
+    },
+    {
+        "tableName": "route_version",
+        "tableFileName": "route_version",
+        "tableType": "Table",
+        "keyClass": "foreignKey",
+        "keyTitle": "Foreign Key",
+        "name": "<i class='icon ion-key iconkey' style='padding-left: 5px;'></i>selected_candidate_no",
+        "type": "int4",
+        "length": 10,
+        "nullable": "√",
+        "autoUpdated": "",
+        "defaultValue": "null",
+        "comments": "<p>確定した候補番号（確定の記録。確定していなければ NULL）</p>"
+    },
+    {
+        "tableName": "route_version",
+        "tableFileName": "route_version",
+        "tableType": "Table",
+        "keyClass": "",
+        "keyTitle": "",
+        "name": "rationale",
+        "type": "varchar",
+        "length": 4000,
+        "nullable": "√",
+        "autoUpdated": "",
+        "defaultValue": "null",
+        "comments": "<p>判断根拠（確定の記録。前後の空白を除いて 1〜4,000 文字）</p>"
+    },
+    {
+        "tableName": "route_version",
+        "tableFileName": "route_version",
+        "tableType": "Table",
+        "keyClass": "",
+        "keyTitle": "",
+        "name": "approved_by",
+        "type": "uuid",
+        "length": 2147483647,
+        "nullable": "√",
+        "autoUpdated": "",
+        "defaultValue": "null",
+        "comments": "<p>承認者（経路設計者）の利用者 ID（確定の記録）</p>"
+    },
+    {
+        "tableName": "route_version",
+        "tableFileName": "route_version",
+        "tableType": "Table",
+        "keyClass": "",
+        "keyTitle": "",
+        "name": "approved_at",
+        "type": "timestamptz",
+        "length": 35,
+        "nullable": "√",
+        "autoUpdated": "",
+        "defaultValue": "null",
+        "comments": "<p>承認 commit 時刻（確定の記録。確定の再検証の時刻）</p>"
+    },
+    {
+        "tableName": "routing_case",
+        "tableFileName": "routing_case",
+        "tableType": "Table",
+        "keyClass": "primaryKey",
+        "keyTitle": "Primary Key",
+        "name": "<i class='icon ion-key iconkey' style='padding-left: 5px;'></i>id",
+        "type": "uuid",
+        "length": 2147483647,
+        "nullable": "",
+        "autoUpdated": "",
+        "defaultValue": "null",
+        "comments": "<p>経路設計案件 ID</p>"
+    },
+    {
+        "tableName": "routing_case",
+        "tableFileName": "routing_case",
+        "tableType": "Table",
+        "keyClass": "indexedColumn",
+        "keyTitle": "Indexed",
+        "name": "<i class='fa fa-sitemap fa-rotate-120' style='padding-right: 5px;'></i>case_number",
+        "type": "varchar",
+        "length": 20,
+        "nullable": "",
+        "autoUpdated": "",
+        "defaultValue": "null",
+        "comments": "<p>案件番号</p>"
+    },
+    {
+        "tableName": "routing_case",
+        "tableFileName": "routing_case",
+        "tableType": "Table",
+        "keyClass": "indexedColumn",
+        "keyTitle": "Indexed",
+        "name": "<i class='fa fa-sitemap fa-rotate-120' style='padding-right: 5px;'></i>transport_request_id",
+        "type": "uuid",
+        "length": 2147483647,
+        "nullable": "",
+        "autoUpdated": "",
+        "defaultValue": "null",
+        "comments": "<p>輸送要求 ID（見積りの写し）</p>"
+    },
+    {
+        "tableName": "routing_case",
+        "tableFileName": "routing_case",
+        "tableType": "Table",
+        "keyClass": "",
+        "keyTitle": "",
+        "name": "transport_request_number",
+        "type": "varchar",
+        "length": 20,
+        "nullable": "",
+        "autoUpdated": "",
+        "defaultValue": "null",
+        "comments": "<p>業務番号（見積りの写し）</p>"
+    },
+    {
+        "tableName": "routing_case",
+        "tableFileName": "routing_case",
+        "tableType": "Table",
+        "keyClass": "indexedColumn",
+        "keyTitle": "Indexed",
+        "name": "<i class='fa fa-sitemap fa-rotate-120' style='padding-right: 5px;'></i>transport_request_version_no",
+        "type": "int4",
+        "length": 10,
+        "nullable": "",
+        "autoUpdated": "",
+        "defaultValue": "null",
+        "comments": "<p>輸送要求の版番号</p>"
+    },
+    {
+        "tableName": "routing_case",
+        "tableFileName": "routing_case",
+        "tableType": "Table",
+        "keyClass": "",
+        "keyTitle": "",
+        "name": "quotation_id",
+        "type": "uuid",
+        "length": 2147483647,
+        "nullable": "",
+        "autoUpdated": "",
+        "defaultValue": "null",
+        "comments": "<p>依頼元の見積り ID</p>"
+    },
+    {
+        "tableName": "routing_case",
+        "tableFileName": "routing_case",
+        "tableType": "Table",
+        "keyClass": "",
+        "keyTitle": "",
+        "name": "route_policy_via",
+        "type": "varchar",
+        "length": 200,
+        "nullable": "√",
+        "autoUpdated": "",
+        "defaultValue": "null",
+        "comments": "<p>経路方針（参考）の主な経由地（UN/LOCODE のカンマ区切り）</p>"
+    },
+    {
+        "tableName": "routing_case",
+        "tableFileName": "routing_case",
+        "tableType": "Table",
+        "keyClass": "",
+        "keyTitle": "",
+        "name": "origin_unlocode",
+        "type": "bpchar",
+        "length": 5,
+        "nullable": "",
+        "autoUpdated": "",
+        "defaultValue": "null",
+        "comments": "<p>出発地</p>"
+    },
+    {
+        "tableName": "routing_case",
+        "tableFileName": "routing_case",
+        "tableType": "Table",
+        "keyClass": "",
+        "keyTitle": "",
+        "name": "destination_unlocode",
+        "type": "bpchar",
+        "length": 5,
+        "nullable": "",
+        "autoUpdated": "",
+        "defaultValue": "null",
+        "comments": "<p>目的地</p>"
+    },
+    {
+        "tableName": "routing_case",
+        "tableFileName": "routing_case",
+        "tableType": "Table",
+        "keyClass": "",
+        "keyTitle": "",
+        "name": "arrival_deadline",
+        "type": "timestamptz",
+        "length": 35,
+        "nullable": "",
+        "autoUpdated": "",
+        "defaultValue": "null",
+        "comments": "<p>希望到着期限</p>"
+    },
+    {
+        "tableName": "routing_case",
+        "tableFileName": "routing_case",
+        "tableType": "Table",
+        "keyClass": "",
+        "keyTitle": "",
+        "name": "cargo_category",
+        "type": "varchar",
+        "length": 30,
+        "nullable": "",
+        "autoUpdated": "",
+        "defaultValue": "null",
+        "comments": "<p>貨物種別</p>"
+    },
+    {
+        "tableName": "routing_case",
+        "tableFileName": "routing_case",
+        "tableType": "Table",
+        "keyClass": "indexedColumn",
+        "keyTitle": "Indexed",
+        "name": "<i class='fa fa-sitemap fa-rotate-120' style='padding-right: 5px;'></i>requested_at",
+        "type": "timestamptz",
+        "length": 35,
+        "nullable": "",
+        "autoUpdated": "",
+        "defaultValue": "null",
+        "comments": "<p>詳細経路設計の依頼時刻</p>"
+    },
+    {
+        "tableName": "routing_case",
+        "tableFileName": "routing_case",
+        "tableType": "Table",
+        "keyClass": "foreignKey",
+        "keyTitle": "Foreign Key",
+        "name": "<i class='icon ion-key iconkey' style='padding-left: 5px;'></i>confirmed_route_version_no",
+        "type": "int4",
+        "length": 10,
+        "nullable": "√",
+        "autoUpdated": "",
+        "defaultValue": "null",
+        "comments": "<p>確定した経路版番号（未確定は NULL）</p>"
+    },
+    {
+        "tableName": "routing_case",
+        "tableFileName": "routing_case",
+        "tableType": "Table",
+        "keyClass": "",
+        "keyTitle": "",
+        "name": "version",
+        "type": "int8",
+        "length": 19,
+        "nullable": "",
+        "autoUpdated": "",
+        "defaultValue": "null",
+        "comments": "<p>楽観ロックの版</p>"
+    },
+    {
+        "tableName": "routing_case",
+        "tableFileName": "routing_case",
+        "tableType": "Table",
+        "keyClass": "",
+        "keyTitle": "",
+        "name": "created_at",
+        "type": "timestamptz",
+        "length": 35,
+        "nullable": "",
+        "autoUpdated": "",
+        "defaultValue": "null",
+        "comments": "<p>作成時刻</p>"
+    },
+    {
+        "tableName": "routing_case",
+        "tableFileName": "routing_case",
+        "tableType": "Table",
+        "keyClass": "",
+        "keyTitle": "",
+        "name": "updated_at",
+        "type": "timestamptz",
+        "length": 35,
+        "nullable": "",
+        "autoUpdated": "",
+        "defaultValue": "null",
+        "comments": "<p>更新時刻</p>"
+    },
+    {
+        "tableName": "routing_case",
+        "tableFileName": "routing_case",
+        "tableType": "Table",
+        "keyClass": "",
+        "keyTitle": "",
+        "name": "quotation_expires_at",
+        "type": "timestamptz",
+        "length": 35,
+        "nullable": "√",
+        "autoUpdated": "",
+        "defaultValue": "null",
+        "comments": "<p>見積有効期限（DE-16 の写し。案件一覧の並び。Bolt 19 より前の案件は NULL）</p>"
+    },
+    {
+        "tableName": "routing_case",
+        "tableFileName": "routing_case",
+        "tableType": "Table",
+        "keyClass": "",
+        "keyTitle": "",
+        "name": "created_by",
+        "type": "uuid",
+        "length": 2147483647,
+        "nullable": "√",
+        "autoUpdated": "",
+        "defaultValue": "null",
+        "comments": "<p>詳細経路設計を依頼した荷主担当者の利用者 ID（DE-16 の写し）</p>"
+    },
+    {
+        "tableName": "routing_case",
+        "tableFileName": "routing_case",
+        "tableType": "Table",
+        "keyClass": "",
+        "keyTitle": "",
+        "name": "updated_by",
+        "type": "uuid",
+        "length": 2147483647,
+        "nullable": "√",
+        "autoUpdated": "",
+        "defaultValue": "null",
+        "comments": "<p>最後に候補を算出・確定した経路設計者の利用者 ID</p>"
+    },
+    {
+        "tableName": "routing_case_number_counter",
+        "tableFileName": "routing_case_number_counter",
+        "tableType": "Table",
+        "keyClass": "primaryKey",
+        "keyTitle": "Primary Key",
+        "name": "<i class='icon ion-key iconkey' style='padding-left: 5px;'></i>number_year",
+        "type": "int2",
+        "length": 5,
+        "nullable": "",
+        "autoUpdated": "",
+        "defaultValue": "null",
+        "comments": "<p>案件番号の年</p>"
+    },
+    {
+        "tableName": "routing_case_number_counter",
+        "tableFileName": "routing_case_number_counter",
+        "tableType": "Table",
+        "keyClass": "",
+        "keyTitle": "",
+        "name": "last_no",
+        "type": "int4",
+        "length": 10,
+        "nullable": "",
+        "autoUpdated": "",
+        "defaultValue": "null",
+        "comments": "<p>その年に最後に振った連番</p>"
+    },
+    {
+        "tableName": "voyage",
+        "tableFileName": "voyage",
+        "tableType": "Table",
+        "keyClass": "primaryKey",
+        "keyTitle": "Primary Key",
+        "name": "<i class='icon ion-key iconkey' style='padding-left: 5px;'></i>voyage_number",
+        "type": "varchar",
+        "length": 30,
+        "nullable": "",
+        "autoUpdated": "",
+        "defaultValue": "null",
+        "comments": "<p>航海番号</p>"
+    },
+    {
+        "tableName": "voyage",
+        "tableFileName": "voyage",
+        "tableType": "Table",
+        "keyClass": "",
+        "keyTitle": "",
+        "name": "adopted_info_version",
+        "type": "varchar",
+        "length": 100,
+        "nullable": "",
+        "autoUpdated": "",
+        "defaultValue": "null",
+        "comments": "<p>採用情報版</p>"
+    },
+    {
+        "tableName": "voyage",
+        "tableFileName": "voyage",
+        "tableType": "Table",
+        "keyClass": "",
+        "keyTitle": "",
+        "name": "source_kind",
+        "type": "varchar",
+        "length": 30,
+        "nullable": "",
+        "autoUpdated": "",
+        "defaultValue": "null",
+        "comments": "<p>出典の種類</p>"
+    },
+    {
+        "tableName": "voyage",
+        "tableFileName": "voyage",
+        "tableType": "Table",
+        "keyClass": "",
+        "keyTitle": "",
+        "name": "source_ref",
+        "type": "varchar",
+        "length": 200,
+        "nullable": "",
+        "autoUpdated": "",
+        "defaultValue": "null",
+        "comments": "<p>出典の参照</p>"
+    },
+    {
+        "tableName": "voyage",
+        "tableFileName": "voyage",
+        "tableType": "Table",
+        "keyClass": "",
+        "keyTitle": "",
+        "name": "acquired_at",
+        "type": "timestamptz",
+        "length": 35,
+        "nullable": "",
+        "autoUpdated": "",
+        "defaultValue": "null",
+        "comments": "<p>情報の取得時刻</p>"
+    },
+    {
+        "tableName": "voyage",
+        "tableFileName": "voyage",
+        "tableType": "Table",
+        "keyClass": "",
+        "keyTitle": "",
+        "name": "version",
+        "type": "int8",
+        "length": 19,
+        "nullable": "",
+        "autoUpdated": "",
+        "defaultValue": "null",
+        "comments": "<p>楽観ロックの版</p>"
+    },
+    {
+        "tableName": "voyage",
+        "tableFileName": "voyage",
+        "tableType": "Table",
+        "keyClass": "",
+        "keyTitle": "",
+        "name": "updated_at",
+        "type": "timestamptz",
+        "length": 35,
+        "nullable": "",
+        "autoUpdated": "",
+        "defaultValue": "null",
+        "comments": "<p>更新時刻</p>"
+    }
+];
+                    var config = {
+                        pagination: true
+                    };
+                </script>
+            </div>
+            <!-- /.content-wrapper -->
+            <footer class="main-footer">
+                <div>
+                    <div class="pull-right hidden-xs">
+                        <a href="https://github.com/schemaspy/schemaspy" title="GitHub for SchemaSpy"><i class="fa fa-github-square fa-2x"></i></a>
+                        <a href="http://stackoverflow.com/questions/tagged/schemaspy" title="StackOverflow for SchemaSpy"><i class="fa fa-stack-overflow fa-2x"></i></a>
+                    </div>
+                    <strong>Generated by <a href="http://schemaspy.org/" class="logo-text"><i class="fa fa-database"></i> SchemaSpy 7.0.2</a></strong>
+                </div>
+                <!-- /.container -->
+            </footer>
+        </div>
+        <!-- ./wrapper -->
+
+        <!-- jQuery 2.2.3 -->
+        <script src="bower/admin-lte/plugins/jQuery/jquery-2.2.3.min.js"></script>
+        <script src="bower/admin-lte/plugins/jQueryUI/jquery-ui.min.js"></script>
+        <!-- Bootstrap 3.3.5 -->
+        <script src="bower/admin-lte/bootstrap/js/bootstrap.min.js"></script>
+        <!-- DataTables -->
+        <script src="bower/datatables.net/jquery.dataTables.min.js"></script>
+        <script src="bower/datatables.net-bs/js/dataTables.bootstrap.min.js"></script>
+        <script src="bower/datatables.net-buttons/dataTables.buttons.min.js"></script>
+        <script src="bower/datatables.net-buttons-bs/js/buttons.bootstrap.min.js"></script>
+        <script src="bower/datatables.net-buttons/buttons.html5.min.js"></script>
+        <script src="bower/datatables.net-buttons/buttons.print.min.js"></script>
+        <script src="bower/datatables.net-buttons/buttons.colVis.min.js"></script>
+        <!-- SheetJS -->
+        <script src="bower/js-xlsx/xlsx.full.min.js"></script>
+        <!-- pdfmake -->
+        <script src="bower/pdfmake/pdfmake.min.js"></script>
+        <script src="bower/pdfmake/vfs_fonts.js"></script>
+        <!-- SlimScroll -->
+        <script src="bower/admin-lte/plugins/slimScroll/jquery.slimscroll.min.js"></script>
+        <!-- FastClick -->
+        <script src="bower/admin-lte/plugins/fastclick/fastclick.js"></script>
+        <!-- Salvattore -->
+        <script src="bower/salvattore/salvattore.min.js"></script>
+        <!-- AnchorJS -->
+        <script src="bower/anchor-js/anchor.min.js"></script>
+        <!-- CodeMirror -->
+        <script src="bower/codemirror/codemirror.js"></script>
+        <script src="bower/codemirror/sql.js"></script>
+        <!-- AdminLTE App -->
+        <script src="bower/admin-lte/dist/js/app.min.js"></script>
+        <script src="column.js"></script>
+        <script src="schemaSpy.js"></script>
+    </body>
+</html>
