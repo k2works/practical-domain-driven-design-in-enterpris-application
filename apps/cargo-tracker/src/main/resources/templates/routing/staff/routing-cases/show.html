@@ -16,8 +16,8 @@
     <dl class="row">
         <dt class="col-sm-3">見積依頼</dt>
         <dd class="col-sm-9" th:text="${routingCase.transportRequest()}">TR-2026-0001 版 1</dd>
-        <dt class="col-sm-3">出発地 → 目的地</dt>
-        <dd class="col-sm-9" th:text="${routingCase.route()}">JPTYO → NLRTM</dd>
+        <dt class="col-sm-3">出発地・目的地</dt>
+        <dd class="col-sm-9" th:text="${routingCase.route()}">JPTYO から NLRTM</dd>
         <dt class="col-sm-3">希望到着期限</dt>
         <dd class="col-sm-9" th:text="${routingCase.arrivalDeadline()}">2026-11-02 09:00 Asia/Tokyo（UTC+09:00）（UTC 2026-11-02 00:00）</dd>
         <dt class="col-sm-3">経路方針（参考）</dt>
@@ -80,7 +80,7 @@
                 <h4 class="h6">区間</h4>
                 <ol class="mb-2">
                     <li th:each="leg : ${candidate.legs()}">
-                        <span th:text="|${leg.voyageNumber()}　${leg.route()}|">V-101　JPTYO → NLRTM</span><br>
+                        <span th:text="|${leg.voyageNumber()}　${leg.route()}|">V-101　JPTYO から NLRTM</span><br>
                         <span th:text="|出発予定 ${leg.departure()}|">出発予定 …</span><br>
                         <span th:text="|到着予定 ${leg.arrival()}|">到着予定 …</span>
                     </li>

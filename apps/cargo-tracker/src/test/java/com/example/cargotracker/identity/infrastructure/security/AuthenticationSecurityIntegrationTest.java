@@ -171,6 +171,14 @@ class AuthenticationSecurityIntegrationTest {
             mvc.perform(get("/staff/tracking-records").cookie(session)).andExpect(status().isForbidden());
             mvc.perform(get("/staff/tracking-records/CTABCDEFGH2345").cookie(session))
                     .andExpect(status().isForbidden());
+            // S-13 主要実績の登録も追跡管理者だけ（Bolt 26c）
+            mvc.perform(get("/staff/tracking-records/CTABCDEFGH2345/milestones/new")
+                            .cookie(session))
+                    .andExpect(status().isForbidden());
+            mvc.perform(post("/staff/tracking-records/CTABCDEFGH2345/milestones")
+                            .cookie(session)
+                            .with(csrf()))
+                    .andExpect(status().isForbidden());
         }
     }
 

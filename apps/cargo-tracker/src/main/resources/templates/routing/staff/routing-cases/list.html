@@ -20,7 +20,7 @@
         <tr>
             <th scope="col">案件番号</th>
             <th scope="col">見積依頼</th>
-            <th scope="col">出発地 → 目的地</th>
+            <th scope="col">出発地・目的地</th>
             <th scope="col">希望到着期限</th>
             <th scope="col">見積有効期限</th>
             <th scope="col">依頼の日時</th>
@@ -31,7 +31,7 @@
         <tr th:each="routingCase : ${cases}">
             <td><a th:href="@{/staff/routing-cases/{number}(number=${routingCase.number()})}" th:text="${routingCase.number()}">RC-2026-0001</a></td>
             <td th:text="${routingCase.transportRequest()}">TR-2026-0001 版 1</td>
-            <td th:text="${routingCase.route()}">JPTYO → NLRTM</td>
+            <td th:text="${routingCase.route()}">JPTYO から NLRTM</td>
             <td th:text="${routingCase.arrivalDeadline()}">2026-11-02 09:00 Asia/Tokyo（UTC+09:00）（UTC 2026-11-02 00:00）</td>
             <td>
                 <span th:text="${routingCase.quotationExpiresAt()}">2026-10-08 18:00 Asia/Tokyo（UTC+09:00）（UTC 2026-10-08 09:00）</span>

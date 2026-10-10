@@ -124,14 +124,17 @@ class AppendOnlyGrantIntegrationTest {
             connection.setAutoCommit(false);
             try (PreparedStatement trackingRecord = connection.prepareStatement("INSERT INTO tracking.tracking_record"
                     + " (tracking_number, booking_id, shipper_company_id, consignee_company_id, booking_status,"
-                    + " current_status, version, created_at, updated_at)"
-                    + " VALUES (?, ?, ?, ?, 'CONFIRMED', 'PICKUP_SCHEDULED', 0, ?, ?)")) {
+                    + " routing_case_number, route_version_no, current_status, original_eta, latest_eta, version,"
+                    + " created_at, updated_at)"
+                    + " VALUES (?, ?, ?, ?, 'CONFIRMED', 'RC-2026-0001', 1, 'PICKUP_SCHEDULED', ?, ?, 0, ?, ?)")) {
                 trackingRecord.setString(1, trackingNumber);
                 trackingRecord.setObject(2, UUID.randomUUID());
                 trackingRecord.setObject(3, UUID.randomUUID());
                 trackingRecord.setObject(4, UUID.randomUUID());
                 trackingRecord.setTimestamp(5, now);
                 trackingRecord.setTimestamp(6, now);
+                trackingRecord.setTimestamp(7, now);
+                trackingRecord.setTimestamp(8, now);
                 assertThat(trackingRecord.executeUpdate()).isEqualTo(1);
             }
             try (PreparedStatement milestone = connection.prepareStatement("INSERT INTO tracking.milestone"

@@ -95,7 +95,10 @@ class RoutingCaseControllerTest {
                 .andExpect(content().string(Matchers.containsString("経路設計案件一覧")))
                 .andExpect(content().string(Matchers.containsString("href=\"" + SHOW + "\"")))
                 .andExpect(content().string(Matchers.containsString("TR-2026-0001 版 1")))
-                .andExpect(content().string(Matchers.containsString("JPTYO → NLRTM")))
+                .andExpect(content().string(Matchers.containsString("JPTYO から NLRTM")))
+                // 「→」はスクリーンリーダーが「右矢印」と読むので使わない（Bolt 26 の U-4。Bolt 26c）
+                .andExpect(content().string(Matchers.containsString(">出発地・目的地</th>")))
+                .andExpect(content().string(Matchers.not(Matchers.containsString("→"))))
                 .andExpect(content()
                         .string(Matchers.containsString(
                                 "2026-11-02 09:00 Asia/Tokyo（UTC+09:00）（UTC 2026-11-02 00:00）")))
@@ -137,7 +140,7 @@ class RoutingCaseControllerTest {
         mockMvc.perform(get(SHOW))
                 .andExpect(status().isOk())
                 .andExpect(content().string(Matchers.containsString("経路候補の比較 RC-2026-0088")))
-                .andExpect(content().string(Matchers.containsString("JPTYO → NLRTM")))
+                .andExpect(content().string(Matchers.containsString("JPTYO から NLRTM")))
                 .andExpect(content().string(Matchers.containsString("SGSIN")))
                 .andExpect(content().string(Matchers.containsString("まだ候補を算出していません")))
                 .andExpect(content().string(Matchers.containsString("action=\"" + SHOW + "/candidates\"")))

@@ -24,6 +24,8 @@ import java.util.OptionalInt;
 import java.util.Random;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
@@ -135,24 +137,6 @@ class MyBatisTrackingRecordRepositoryIntegrationTest {
      * 表では経路版と到着予定の列が NULL 可（data_model.md）だが、追跡記録は予定と到着予定を必ず持つ。NULL の行は、原因の分かる例外に
      * する（自動の unboxing の NPE にしない。Bolt 25 レビュー P-9・A-9）。
      */
-    @Test
-    void 予定の経路版のない行は原因の分かる例外にする() {
-        UUID bookingId = UUID.randomUUID();
-        String trackingNumber = trackingNumber().value();
-        jdbc.update(
-                "INSERT INTO tracking.tracking_record (tracking_number, booking_id, shipper_company_id,"
-                        + " consignee_company_id, booking_status, current_status, version, created_at, updated_at)"
-                        + " VALUES (?, ?, ?, ?, 'CONFIRMED', 'PICKUP_SCHEDULED', 0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)",
-                trackingNumber,
-                bookingId,
-                UUID.randomUUID(),
-                UUID.randomUUID());
-
-        assertThatThrownBy(() -> repository.findByBookingId(bookingId))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining(trackingNumber);
-    }
-
     // S-11・S-12 の照会（Bolt 26）。共有の DB にほかの追跡記録があっても先頭に来るよう、追跡の開始時刻を遠い先にする
 
     @Test
@@ -198,23 +182,51 @@ class MyBatisTrackingRecordRepositoryIntegrationTest {
     }
 
     /** 要約でも、当初の到着予定のない行は原因の分かる例外にする（集約の組み立てと同じ。Bolt 26 計画の確認ポイント 13）。 */
-    @Test
-    void 当初の到着予定のない行の要約は原因の分かる例外にする() {
-        String trackingNumber = trackingNumber().value();
-        jdbc.update(
-                "INSERT INTO tracking.tracking_record (tracking_number, booking_id, shipper_company_id,"
-                        + " consignee_company_id, booking_status, current_status, version, created_at, updated_at)"
-                        + " VALUES (?, ?, ?, ?, 'CONFIRMED', 'PICKUP_SCHEDULED', 0, ?, ?)",
-                trackingNumber,
-                UUID.randomUUID(),
-                UUID.randomUUID(),
-                UUID.randomUUID(),
-                Timestamp.from(Instant.parse("2099-12-31T00:00:00Z")),
-                Timestamp.from(Instant.parse("2099-12-31T00:00:00Z")));
+    // 経路版と到着予定の 4 列は NOT NULL、根拠の実績番号は主要実績を指す（PostgreSQL だけの外部キー。Bolt 26c）
 
-        assertThatThrownBy(() -> repository.findRecentSummaries(1))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining(trackingNumber);
+    /** PostgreSQL は制約違反でトランザクションを中断するので、列ごとに 1 つのテストにする。 */
+    @ParameterizedTest
+    @ValueSource(strings = {"routing_case_number", "route_version_no", "original_eta", "latest_eta"})
+    void 経路版と到着予定の列はNULLを入れられない(String column) {
+        TrackingRecord trackingRecord = started(UUID.randomUUID(), trackingNumber());
+        repository.save(trackingRecord);
+        String trackingNumber = trackingRecord.trackingNumber().value();
+        // 経路版の 2 列は、2 列そろいの CHECK に当たらないよう両方を NULL にする（NOT NULL で拒否することを確かめる）
+        String assignment = column.startsWith("rout")
+                ? "routing_case_number = NULL, route_version_no = NULL"
+                : column + " = NULL";
+
+        assertThatThrownBy(() -> jdbc.update(
+                        "UPDATE tracking.tracking_record SET " + assignment + " WHERE tracking_number = ?",
+                        trackingNumber))
+                .isInstanceOf(DataIntegrityViolationException.class);
+    }
+
+    @Test
+    void 根拠の実績番号はない主要実績を指せない() {
+        TrackingRecord trackingRecord = started(UUID.randomUUID(), trackingNumber());
+        repository.save(trackingRecord);
+        String trackingNumber = trackingRecord.trackingNumber().value();
+        jdbc.update(
+                "UPDATE tracking.tracking_record SET status_basis_milestone_no = 9 WHERE tracking_number = ?",
+                trackingNumber);
+
+        // 外部キーはコミットのときに検査する（DEFERRABLE）ので、テストのトランザクションの中で直ちに検査させる
+        assertThatThrownBy(() -> jdbc.execute("SET CONSTRAINTS ALL IMMEDIATE"))
+                .isInstanceOf(DataIntegrityViolationException.class);
+    }
+
+    @Test
+    void 根拠の実績番号は登録した主要実績を指せる() {
+        TrackingRecord trackingRecord = started(UUID.randomUUID(), trackingNumber());
+        repository.save(trackingRecord);
+        repository.update(register(trackingRecord, MilestoneKind.PICKUP, "2026-11-01T02:30:00Z", "F-118"));
+
+        jdbc.execute("SET CONSTRAINTS ALL IMMEDIATE");
+
+        assertThat(repository.findByTrackingNumber(trackingRecord.trackingNumber()).orElseThrow()
+                        .statusBasisMilestoneNo())
+                .isEqualTo(OptionalInt.of(1));
     }
 
     // 主要実績（US-12 AC1・AC2、T-INV-01・T-INV-02。Bolt 26b）

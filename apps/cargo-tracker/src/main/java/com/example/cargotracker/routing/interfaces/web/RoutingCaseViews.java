@@ -24,7 +24,9 @@ import java.util.stream.Collectors;
  */
 final class RoutingCaseViews {
 
-    private static final String ARROW = " → ";
+    /** 出発地と目的地の間の言葉。「→」はスクリーンリーダーが「右矢印」と読むので使わない（Bolt 26 の U-4。Bolt 26c）。 */
+    private static final String ARROW = " から ";
+
     private static final String INFO_VERSION = "。参照情報版 ";
     private static final String NO_EXPIRY = "期限の記録なし";
 

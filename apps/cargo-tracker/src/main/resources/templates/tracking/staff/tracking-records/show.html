@@ -9,7 +9,12 @@
 <body>
 <main>
     <h1 th:text="|追跡の詳細 ${trackingRecord.trackingNumber()}|">追跡の詳細 CTABCDEFGH2345</h1>
-    <!--/* S-12 の最小の表示（Bolt 26）。主要実績の一覧と登録（S-13）は Bolt 26b、訂正履歴・顧客への表示・有人案件のタブは後の Bolt。
+    <!--/* 主要実績の登録の結果（Bolt 26c）。既存の実績は望んだ結果が成り立っているので警告でなく結果として示し、導線を文の外に置く
+           （Bolt 24 の前例）。競合は警告 */-->
+    <p role="status" th:if="${result}" th:text="${result}">実績 1 を登録しました。</p>
+    <p th:if="${resultLinkHref}"><a th:href="${resultLinkHref}" th:text="${resultLinkLabel}">実績 1 を一覧で見る</a></p>
+    <div class="alert alert-warning" role="alert" th:if="${problem}" th:text="${problem}">ほかの追跡管理者が先にこの追跡記録を更新しました。</div>
+    <!--/* S-12（Bolt 26・26c）。訂正履歴・顧客への表示・有人案件のタブは後の Bolt。
            予定と実績を混同しない（T-INV-08）ので、予定区間と主要実績は別の見出しに分ける */-->
     <dl class="row">
         <dt class="col-sm-3">追跡番号</dt>
@@ -27,13 +32,23 @@
     <h2 class="h4" id="schedule-heading">予定区間</h2>
     <ol aria-labelledby="schedule-heading">
         <li th:each="leg : ${trackingRecord.legs()}" class="mb-2">
-            <span th:text="${leg.summary()}">区間 1、航海 V100、JPTYO → KRPUS</span><br>
+            <span th:text="${leg.summary()}">区間 1、航海 V100、JPTYO から KRPUS</span><br>
             <span th:text="|出発予定 ${leg.departureAt()}|">出発予定 2026-11-01 09:00 Asia/Tokyo（UTC+09:00）（UTC 2026-11-01 00:00）</span><br>
             <span th:text="|到着予定 ${leg.arrivalAt()}|">到着予定 2026-11-03 09:00 Asia/Tokyo（UTC+09:00）（UTC 2026-11-03 00:00）</span>
         </li>
     </ol>
-    <h2 class="h4">主要実績</h2>
-    <p>主要実績はまだありません。</p>
+    <!--/* 主要実績は区間に結び付けず、発生時刻の順の順序付きのリストにする（集荷・搬入・引渡しは区間の外の実績。Bolt 26c 計画の確認ポイント 11） */-->
+    <h2 class="h4" id="milestones-heading">主要実績</h2>
+    <p th:if="${#lists.isEmpty(trackingRecord.milestones())}">主要実績はまだありません。実績を登録すると、現在状態が更新されます。</p>
+    <ol th:unless="${#lists.isEmpty(trackingRecord.milestones())}" aria-labelledby="milestones-heading">
+        <li th:each="milestone : ${trackingRecord.milestones()}" th:id="${milestone.anchor()}" class="mb-2">
+            <span th:text="${milestone.summary()}">実績 1、集荷、JPTYO</span><br>
+            <span th:text="|発生 ${milestone.occurredAt()}|">発生 2026-11-01 11:30 Asia/Tokyo（UTC+09:00）（UTC 2026-11-01 02:30）</span><br>
+            <span th:text="|出典 ${milestone.source()}|">出典 現場記録 F-118（取得 2026-11-01 12:00 Asia/Tokyo（UTC+09:00）（UTC 2026-11-01 03:00））</span><br>
+            <span th:text="|状態 ${milestone.state()}|">状態 採用</span>
+        </li>
+    </ol>
+    <p><a th:href="@{/staff/tracking-records/{trackingNumber}/milestones/new(trackingNumber=${trackingRecord.trackingNumber()})}">実績を登録</a></p>
     <p><a th:href="@{/staff/tracking-records}">追跡一覧</a></p>
 </main>
 </body>

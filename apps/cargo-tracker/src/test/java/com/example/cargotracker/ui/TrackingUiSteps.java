@@ -11,7 +11,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.web.server.LocalServerPort;
 
 /**
- * 追跡管理者の S-11 追跡一覧・S-12 追跡の詳細の画面の層のステップ定義（Bolt 26。US-12 の前提）。追跡記録は、同じシナリオで営業担当者が
+ * 追跡管理者の S-11 追跡一覧・S-12 追跡の詳細（Bolt 26）と S-13 主要実績の登録（US-12 AC1・AC2。Bolt 26c）の画面の層のステップ定義。追跡記録は、同じシナリオで営業担当者が
  * 確定した予約の追跡番号（{@link UiScenarioState}）のものとする。「一覧の先頭」は、シナリオを逐次に実行し、追跡の開始時刻が実時間で
  * 増えることを前提にしている（Bolt 25b の予約一覧と同じ）。
  */
@@ -95,6 +95,111 @@ public class TrackingUiSteps {
                         new Page.GetByRoleOptions().setName("追跡一覧").setExact(true)));
         page().keyboard().press("Enter");
         page().waitForURL("**/staff/tracking-records");
+    }
+
+    // S-13 主要実績の登録（US-12 AC1・AC2。Bolt 26c）
+
+    @もし("キー操作だけで追跡の詳細から実績の登録を開く")
+    public void 追跡の詳細から実績の登録を開く() {
+        page().locator("body").focus();
+        tabUntilFocused(page().getByRole(
+                        AriaRole.LINK,
+                        new Page.GetByRoleOptions().setName("実績を登録").setExact(true)));
+        page().keyboard().press("Enter");
+        page().waitForURL("**/staff/tracking-records/" + state.trackingNumber() + "/milestones/new");
+        assertThat(page().getByRole(AriaRole.HEADING, new Page.GetByRoleOptions().setName("主要実績の登録")))
+                .isVisible();
+        browser.checkAccessibility();
+    }
+
+    @もし("キー操作だけで実績 {string} を場所 {string}・発生時刻 {string}・出典 {string} の参照 {string} で登録する")
+    public void 実績を登録する(String kind, String location, String occurredAt, String sourceKind, String reference) {
+        page().locator("body").focus();
+        chooseRadio(kind);
+        typeInto(page().getByLabel("場所", new Page.GetByLabelOptions().setExact(true)), location);
+        typeInto(page().getByLabel("発生時刻（日本時間）"), occurredAt);
+        chooseRadio(sourceKind);
+        typeInto(page().getByLabel("出典の参照", new Page.GetByLabelOptions().setExact(true)), reference);
+        tabUntilFocused(page().getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("登録する")));
+        // リダイレクトの途中で検査しないよう、行き先の画面（登録の結果は追跡の詳細、入力の誤りは送り先の URL）に移り終わってから検査する
+        page().keyboard().press("Enter");
+        page().waitForURL(url -> !url.endsWith("/milestones/new"));
+        page().waitForLoadState();
+        browser.checkAccessibility();
+    }
+
+    @ならば("追跡の詳細に結果 {string} が示される")
+    public void 追跡の詳細に結果が示される(String message) {
+        page().waitForURL("**/staff/tracking-records/" + state.trackingNumber());
+        assertThat(page().getByRole(AriaRole.STATUS)).containsText(message);
+    }
+
+    @ならば("結果のそばに既存の実績へのリンク {string} が示される")
+    public void 既存の実績へのリンクが示される(String label) {
+        Locator link = page().getByRole(
+                        AriaRole.LINK,
+                        new Page.GetByRoleOptions().setName(label).setExact(true));
+        assertThat(link).isVisible();
+        assertThat(link).hasAttribute("href", "#milestone-1");
+    }
+
+    @ならば("主要実績の一覧に {string} が出典 {string} と状態 {string} とともに示される")
+    public void 主要実績の一覧に示される(String summary, String source, String milestoneState) {
+        Locator item = milestones().getByRole(AriaRole.LISTITEM).first();
+        assertThat(item).containsText(summary);
+        assertThat(item).containsText(source);
+        assertThat(item).containsText(milestoneState);
+    }
+
+    @ならば("主要実績の一覧の実績は {int} 件だけである")
+    public void 主要実績の件数(int count) {
+        assertThat(milestones().getByRole(AriaRole.LISTITEM)).hasCount(count);
+    }
+
+    @ならば("追跡の詳細の現在状態は {string} である")
+    public void 追跡の詳細の現在状態(String status) {
+        assertThat(definition("現在状態")).hasText(status);
+    }
+
+    @ならば("実績の登録のエラー要約にフォーカスが移り、{string} と {string} の誤りが示される")
+    public void エラー要約が示される(String first, String second) {
+        Locator summary = page().locator("#error-summary");
+        assertThat(summary).isFocused();
+        assertThat(summary).containsText(first);
+        assertThat(summary).containsText(second);
+    }
+
+    @ならば("実績の登録の場所に {string} が残っている")
+    public void 場所が残っている(String location) {
+        assertThat(page().getByLabel("場所", new Page.GetByLabelOptions().setExact(true)))
+                .hasValue(location);
+    }
+
+    private Locator milestones() {
+        return page().getByRole(
+                        AriaRole.LIST,
+                        new Page.GetByRoleOptions().setName("主要実績").setExact(true));
+    }
+
+    /** ラジオボタンのグループに Tab で入り、矢印キーで選ぶ（入ったときに選ばれる最初の項目なら Space で選ぶ）。 */
+    private void chooseRadio(String label) {
+        Locator target = page().getByLabel(label, new Page.GetByLabelOptions().setExact(true));
+        Locator group = target.locator("xpath=ancestor::fieldset[1]").getByRole(AriaRole.RADIO);
+        tabUntilFocused(group.first());
+        for (int i = 0; i < 10 && !(Boolean) target.evaluate("element => element === document.activeElement"); i++) {
+            page().keyboard().press("ArrowDown");
+        }
+        page().keyboard().press("Space");
+        assertThat(target).isChecked();
+    }
+
+    private void typeInto(Locator field, String text) {
+        tabUntilFocused(field);
+        page().keyboard().press("ControlOrMeta+a");
+        page().keyboard().press("Delete");
+        if (!text.isEmpty()) {
+            page().keyboard().type(text);
+        }
     }
 
     private void tabUntilFocused(Locator target) {
