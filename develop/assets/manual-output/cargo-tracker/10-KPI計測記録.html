@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>10 章 KPI 計測記録 | cargo-tracker ユーザーマニュアル</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="manual-header">
+    <a class="manual-home" href="index.html">cargo-tracker ユーザーマニュアル</a>
+  </header>
+  <main class="manual-content">
+    <a class="manual-nav-link" href="index.html">← マニュアル目次</a>
+    <h1 id="10-章-kpi-計測記録">10 章 KPI 計測記録</h1>
+<p>パイロットの効果を測る KPI-01（経路提示リードタイム: 見積依頼の提出から最初の見積りの提示まで）の時刻を、見積依頼ごとに確かめる画面です。本章は <a href="01-%E6%A5%AD%E5%8B%99%E3%83%95%E3%83%AD%E3%83%BC.html#wf-1-%E8%A6%8B%E7%A9%8D%E4%BE%9D%E9%A0%BC%E3%81%8B%E3%82%89%E8%BF%BD%E8%B7%A1%E3%81%AE%E7%85%A7%E4%BC%9A%E3%81%BE%E3%81%A7">WF-1</a> の工程 1・2（提出と提示）で記録された時刻を確かめるためのものです。</p>
+<p>画面の開き方: ナビゲーションの「KPI 計測記録」（URL: <code>/staff/kpi-observations</code>）。</p>
+<table>
+<thead>
+<tr>
+<th align="left">画面</th>
+<th align="left">役割</th>
+<th align="left">節</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left">KPI 計測記録</td>
+<td align="left">見積依頼ごとの提出時刻・最初の提示時刻・KPI-01 リードタイムを確かめる</td>
+<td align="left"><a href="#101-kpi-%E8%A8%88%E6%B8%AC%E8%A8%98%E9%8C%B2">10.1</a></td>
+</tr>
+</tbody></table>
+<h2 id="101-kpi-計測記録">10.1 KPI 計測記録</h2>
+<h3 id="この画面でできること">この画面でできること</h3>
+<ul>
+<li>見積依頼ごとに、提出時刻・最初の提示時刻・KPI-01 リードタイムを確かめます</li>
+</ul>
+<h3 id="画面の開き方">画面の開き方</h3>
+<ul>
+<li>ナビゲーションの「KPI 計測記録」（URL: <code>/staff/kpi-observations</code>）</li>
+</ul>
+<h3 id="画面の説明">画面の説明</h3>
+<p><img src="assets/10-kpi-observations.png" alt="KPI 計測記録"></p>
+<table>
+<thead>
+<tr>
+<th align="left">#</th>
+<th align="left">項目</th>
+<th align="left">説明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left">①</td>
+<td align="left">業務番号</td>
+<td align="left">見積依頼の番号</td>
+</tr>
+<tr>
+<td align="left">②</td>
+<td align="left">提出時刻</td>
+<td align="left">荷主が版 1 を最初に提出した日時</td>
+</tr>
+<tr>
+<td align="left">③</td>
+<td align="left">最初の提示時刻</td>
+<td align="left">営業担当者が最初に見積りを提示した日時</td>
+</tr>
+<tr>
+<td align="left">④</td>
+<td align="left">KPI-01 リードタイム</td>
+<td align="left">提出時刻から最初の提示時刻までの時間</td>
+</tr>
+</tbody></table>
+<h3 id="操作手順">操作手順</h3>
+<ol>
+<li>見積依頼ごとの時刻とリードタイムを確かめます</li>
+</ol>
+<h3 id="注意補足">注意・補足</h3>
+<ul>
+<li>まだ見積りを提示していない見積依頼は「—」と示され、リードタイムは算出しません</li>
+<li>リードタイムは暦の経過時間（夜間・休日を含む）です</li>
+<li>この画面は、監査担当者が使う KPI の照会の画面（後のリリースで作ります）の前身の仮の画面です。Release 0.1 では営業担当者が開けます</li>
+</ul>
+
+    <a class="manual-nav-link" href="index.html">← マニュアル目次</a>
+  </main>
+  <footer class="manual-footer">cargo-tracker ユーザーマニュアル</footer>
+</body>
+</html>

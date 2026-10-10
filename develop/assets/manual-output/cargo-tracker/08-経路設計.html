@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>8 章 経路設計 | cargo-tracker ユーザーマニュアル</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="manual-header">
+    <a class="manual-home" href="index.html">cargo-tracker ユーザーマニュアル</a>
+  </header>
+  <main class="manual-content">
+    <a class="manual-nav-link" href="index.html">← マニュアル目次</a>
+    <h1 id="8-章-経路設計">8 章 経路設計</h1>
+<p>荷主が見積りに回答して詳細経路設計を依頼した後に、経路設計者が経路の候補を算出して比べ、判断根拠を残して経路を確定する画面です。本章は <a href="01-%E6%A5%AD%E5%8B%99%E3%83%95%E3%83%AD%E3%83%BC.html#wf-1-%E8%A6%8B%E7%A9%8D%E4%BE%9D%E9%A0%BC%E3%81%8B%E3%82%89%E8%BF%BD%E8%B7%A1%E3%81%AE%E7%85%A7%E4%BC%9A%E3%81%BE%E3%81%A7">WF-1</a> の工程 4（経路の候補を比較して確定する）に対応します。</p>
+<p>画面の開き方: ナビゲーションの「経路設計」（URL: <code>/staff/routing-cases</code>）。経路設計者はログインするとこの画面が開きます。</p>
+<table>
+<thead>
+<tr>
+<th align="left">画面</th>
+<th align="left">役割</th>
+<th align="left">節</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left">経路設計案件一覧</td>
+<td align="left">詳細経路設計の依頼を、見積有効期限の近い順に確かめる</td>
+<td align="left"><a href="#81-%E7%B5%8C%E8%B7%AF%E8%A8%AD%E8%A8%88%E6%A1%88%E4%BB%B6%E4%B8%80%E8%A6%A7">8.1</a></td>
+</tr>
+<tr>
+<td align="left">経路候補の比較</td>
+<td align="left">候補を算出し、適合と除外の候補を理由とともに比べる</td>
+<td align="left"><a href="#82-%E7%B5%8C%E8%B7%AF%E5%80%99%E8%A3%9C%E3%81%AE%E6%AF%94%E8%BC%83">8.2</a></td>
+</tr>
+<tr>
+<td align="left">経路の確定</td>
+<td align="left">判断根拠を書いて候補を確定する</td>
+<td align="left"><a href="#83-%E7%B5%8C%E8%B7%AF%E3%81%AE%E7%A2%BA%E5%AE%9A">8.3</a></td>
+</tr>
+</tbody></table>
+<h2 id="81-経路設計案件一覧">8.1 経路設計案件一覧</h2>
+<h3 id="この画面でできること">この画面でできること</h3>
+<ul>
+<li>荷主が依頼した詳細経路設計の案件を、見積有効期限の近い順（同じなら依頼の古い順）に確かめます</li>
+</ul>
+<h3 id="画面の開き方">画面の開き方</h3>
+<ul>
+<li>ナビゲーションの「経路設計」（URL: <code>/staff/routing-cases</code>）</li>
+</ul>
+<h3 id="画面の説明">画面の説明</h3>
+<p><img src="assets/08-routing-cases.png" alt="経路設計案件一覧"></p>
+<table>
+<thead>
+<tr>
+<th align="left">#</th>
+<th align="left">項目</th>
+<th align="left">説明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left">①</td>
+<td align="left">案件番号</td>
+<td align="left">経路設計の案件の番号（RC-…）。クリックすると経路候補の比較が開きます</td>
+</tr>
+<tr>
+<td align="left">②</td>
+<td align="left">見積依頼</td>
+<td align="left">業務番号と版</td>
+</tr>
+<tr>
+<td align="left">③</td>
+<td align="left">出発地・目的地・希望到着期限</td>
+<td align="left">荷主の輸送条件</td>
+</tr>
+<tr>
+<td align="left">④</td>
+<td align="left">見積有効期限</td>
+<td align="left">この時刻より前に経路を確定し、荷主が承認する必要があります</td>
+</tr>
+<tr>
+<td align="left">⑤</td>
+<td align="left">依頼の日時・状態</td>
+<td align="left">例: 「候補の算出待ち」</td>
+</tr>
+</tbody></table>
+<h3 id="操作手順">操作手順</h3>
+<ol>
+<li>見積有効期限の近い案件から、案件番号をクリックします</li>
+</ol>
+<h3 id="注意補足">注意・補足</h3>
+<ul>
+<li>見積りの有効期限が過ぎた案件は、確定の前後に担当営業と扱いを相談してください</li>
+</ul>
+<h2 id="82-経路候補の比較">8.2 経路候補の比較</h2>
+<h3 id="この画面でできること">この画面でできること</h3>
+<ul>
+<li>航海の情報と接続時間の規則から経路の候補を算出し、期限に間に合うか（適合）、間に合わないか（除外）を、根拠とともに比べます</li>
+</ul>
+<h3 id="画面の開き方">画面の開き方</h3>
+<ul>
+<li>経路設計案件一覧の案件番号（URL: <code>/staff/routing-cases/{案件番号}</code>）</li>
+</ul>
+<h3 id="画面の説明">画面の説明</h3>
+<p><img src="assets/08-candidates.png" alt="経路候補の比較（候補を算出した後）"></p>
+<table>
+<thead>
+<tr>
+<th align="left">#</th>
+<th align="left">項目</th>
+<th align="left">説明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left">①</td>
+<td align="left">案件の情報</td>
+<td align="left">見積依頼・出発地・目的地・希望到着期限・経路方針（参考）・見積有効期限・依頼の日時・判定時刻</td>
+</tr>
+<tr>
+<td align="left">②</td>
+<td align="left">「候補を算出」（算出の後は「候補を再算出」）</td>
+<td align="left">航海の情報から候補を算出します</td>
+</tr>
+<tr>
+<td align="left">③</td>
+<td align="left">経路候補</td>
+<td align="left">適合を先に、到着予定の早い順。候補ごとに「適合」「除外」の印</td>
+</tr>
+<tr>
+<td align="left">④</td>
+<td align="left">到着予定・接続余裕・最も古い情報の取得時刻</td>
+<td align="left">候補の判断の材料</td>
+</tr>
+<tr>
+<td align="left">⑤</td>
+<td align="left">区間</td>
+<td align="left">航海・積地から揚地・出発予定・到着予定</td>
+</tr>
+<tr>
+<td align="left">⑥</td>
+<td align="left">判定の根拠／除外の理由</td>
+<td align="left">期限までの余裕や、除外した理由と参照した情報の版</td>
+</tr>
+<tr>
+<td align="left">⑦</td>
+<td align="left">「この候補で確定へ」</td>
+<td align="left">適合の候補だけに出ます</td>
+</tr>
+</tbody></table>
+<h3 id="操作手順">操作手順</h3>
+<ol>
+<li>「候補を算出」をクリックします。「候補を N 件算出しました（適合 N 件、除外 N 件）」と示されます</li>
+<li>適合の候補の到着予定・接続余裕・判定の根拠を比べます</li>
+<li>選んだ候補の「この候補で確定へ」をクリックします。経路の確定（<a href="#83-%E7%B5%8C%E8%B7%AF%E3%81%AE%E7%A2%BA%E5%AE%9A">8.3</a>）が開きます</li>
+</ol>
+<h3 id="注意補足">注意・補足</h3>
+<ul>
+<li>期限と同時刻に着く候補、必要最小接続時間と同じ接続時間の候補は「適合」です</li>
+<li>除外の候補は確定できません。除外の理由を確かめてください</li>
+<li>経路方針（参考）は営業担当者が見積りで示したものです。参考として比べてください</li>
+</ul>
+<h2 id="83-経路の確定">8.3 経路の確定</h2>
+<h3 id="この画面でできること">この画面でできること</h3>
+<ul>
+<li>選んだ候補を、判断根拠を残して確定します。確定した経路は見積りに割り当てられ、荷主の承認に進みます</li>
+</ul>
+<h3 id="画面の開き方">画面の開き方</h3>
+<ul>
+<li>経路候補の比較の「この候補で確定へ」（URL: <code>/staff/routing-cases/{案件番号}/confirmation?candidate={候補番号}</code>）</li>
+</ul>
+<h3 id="画面の説明">画面の説明</h3>
+<p><img src="assets/08-confirmation.png" alt="経路の確定"></p>
+<table>
+<thead>
+<tr>
+<th align="left">#</th>
+<th align="left">項目</th>
+<th align="left">説明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left">①</td>
+<td align="left">案件の情報</td>
+<td align="left">見積依頼・出発地・目的地・希望到着期限・見積有効期限</td>
+</tr>
+<tr>
+<td align="left">②</td>
+<td align="left">選んだ候補</td>
+<td align="left">到着予定・接続余裕・区間・判定の根拠</td>
+</tr>
+<tr>
+<td align="left">③</td>
+<td align="left">この経路で確定しますか</td>
+<td align="left">確定の時刻の規則で判定し直すこと、確定した後は候補を算出し直せないこと</td>
+</tr>
+<tr>
+<td align="left">④</td>
+<td align="left">判断根拠</td>
+<td align="left">この候補を選んだ理由（必須、4,000 文字まで）。ほかの適合の候補と比べた決め手、接続余裕や期限までの余裕の評価、荷主の要望など</td>
+</tr>
+<tr>
+<td align="left">⑤</td>
+<td align="left">「この経路で確定する」</td>
+<td align="left">確定します</td>
+</tr>
+</tbody></table>
+<h3 id="操作手順">操作手順</h3>
+<ol>
+<li>選んだ候補の内容を確かめます</li>
+<li>「判断根拠」に、この候補を選んだ理由を書きます</li>
+<li>「この経路で確定する」をクリックします</li>
+<li>経路候補の比較に戻り、「候補 N の経路を確定しました。確定した経路は見積りに割り当てられ、荷主の承認に進みます。」と示されます。確定した経路の承認者・承認時刻・判断根拠が示され、候補に「確定した経路」の印が付きます</li>
+</ol>
+<p><img src="assets/08-confirmed.png" alt="経路候補の比較（確定した後）"></p>
+<h3 id="注意補足">注意・補足</h3>
+<ul>
+<li>判断根拠が空、または長すぎると確定できず、エラーが示されます。入力は残ります</li>
+<li>ほかの経路設計者が先に同じ案件を更新していたときは、「ほかの経路設計者が先にこの案件を更新しました。最新の候補を確かめてください。」と示されます</li>
+<li>確定の時刻に、出発済みの区間があったり規則に合わなくなっていたりすると確定できません。候補を算出し直してください</li>
+</ul>
+
+    <a class="manual-nav-link" href="index.html">← マニュアル目次</a>
+  </main>
+  <footer class="manual-footer">cargo-tracker ユーザーマニュアル</footer>
+</body>
+</html>

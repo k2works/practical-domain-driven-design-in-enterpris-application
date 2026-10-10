@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>付録 B トラブルシューティング | cargo-tracker ユーザーマニュアル</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="manual-header">
+    <a class="manual-home" href="index.html">cargo-tracker ユーザーマニュアル</a>
+  </header>
+  <main class="manual-content">
+    <a class="manual-nav-link" href="index.html">← マニュアル目次</a>
+    <h1 id="付録-b-トラブルシューティング">付録 B トラブルシューティング</h1>
+<p>困ったときの症状から引く Q&amp;A です。画面に出たメッセージで探してください。</p>
+<h2 id="1-ログインと画面">1. ログインと画面</h2>
+<h3 id="q1-1-ログインできないメールアドレスまたは-password-が正しくありません">Q1-1. ログインできない（「メールアドレスまたは password が正しくありません。」）</h3>
+<table>
+<thead>
+<tr>
+<th align="left">確認すること</th>
+<th align="left">対処</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left">メールアドレスと password を正しく入れたか</td>
+<td align="left">入れ直してください。どちらが違うかは画面に示されません</td>
+</tr>
+<tr>
+<td align="left">それでもログインできない</td>
+<td align="left">荷主の方は担当営業に、社内の方はシステム管理者にお問い合わせください</td>
+</tr>
+</tbody></table>
+<h3 id="q1-2-もう一度ログインしてくださいと示された">Q1-2. 「もう一度ログインしてください」と示された</h3>
+<table>
+<thead>
+<tr>
+<th align="left">確認すること</th>
+<th align="left">対処</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left">30 分以上操作がなかった、またはログインから 8 時間を過ぎた</td>
+<td align="left">仕様です（不具合ではありません）。「ログインへ」からログインし直すと、開いていた画面に戻ります。送信していない入力は保存されていないので、入れ直してください</td>
+</tr>
+</tbody></table>
+<h3 id="q1-3-権限がありませんと示された">Q1-3. 「権限がありません」と示された</h3>
+<table>
+<thead>
+<tr>
+<th align="left">確認すること</th>
+<th align="left">対処</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left">役割にない画面（荷主の方が社内の画面など）を開いた</td>
+<td align="left">仕様です。「ホームへ戻る」で戻ってください</td>
+</tr>
+<tr>
+<td align="left">自分の役割で使う画面のはずなのに示される</td>
+<td align="left">荷主の方は担当営業に、社内の方はシステム管理者にお問い合わせください</td>
+</tr>
+</tbody></table>
+<h3 id="q1-4-この画面は準備中ですと示された">Q1-4. 「この画面は準備中です」と示された</h3>
+<table>
+<thead>
+<tr>
+<th align="left">確認すること</th>
+<th align="left">対処</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left">ナビゲーションの「問い合わせ」「通知」を開いた</td>
+<td align="left">まだ作っていない画面です（仕様）。使えるようになるまでは、担当営業にご連絡ください</td>
+</tr>
+</tbody></table>
+<h2 id="2-荷主の画面">2. 荷主の画面</h2>
+<h3 id="q2-1-見積依頼を提出できない入力内容に-n-件の誤りがあります">Q2-1. 見積依頼を提出できない（「入力内容に N 件の誤りがあります」）</h3>
+<p>画面の上の誤りの一覧の項目をクリックすると、その入力欄に移ります。主なメッセージと対処は <a href="#4-%E3%82%A8%E3%83%A9%E3%83%BC%E3%83%A1%E3%83%83%E3%82%BB%E3%83%BC%E3%82%B8%E6%97%A9%E8%A6%8B%E8%A1%A8">エラーメッセージ早見表</a> を見てください。</p>
+<h3 id="q2-2-危険物冷凍の貨物を依頼したい危険物冷凍その他特殊の貨物はこの画面では受け付けていません担当の営業窓口へご相談ください">Q2-2. 危険物・冷凍の貨物を依頼したい（「危険物・冷凍・その他特殊の貨物は、この画面では受け付けていません。担当の営業窓口へご相談ください」）</h3>
+<table>
+<thead>
+<tr>
+<th align="left">確認すること</th>
+<th align="left">対処</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left">貨物種別で「危険物」「冷凍」「その他特殊」を選んだ</td>
+<td align="left">仕様です。担当の営業窓口へご相談ください</td>
+</tr>
+</tbody></table>
+<h3 id="q2-3-見積依頼の詳細に確定した経路が出ない">Q2-3. 見積依頼の詳細に確定した経路が出ない</h3>
+<table>
+<thead>
+<tr>
+<th align="left">確認すること</th>
+<th align="left">対処</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left">状態が「経路設計中（A 社の対応待ち）」か</td>
+<td align="left">経路設計者が経路を確定するのを待っています。確定すると「見積りと経路の承認待ち（お客様の対応待ち）」になります。少し待ってから画面を開き直してください</td>
+</tr>
+</tbody></table>
+<h3 id="q2-4-予約一覧の追跡番号がクリックできない追跡の開始待ち">Q2-4. 予約一覧の追跡番号がクリックできない（「追跡の開始待ち」）</h3>
+<table>
+<thead>
+<tr>
+<th align="left">確認すること</th>
+<th align="left">対処</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left">本予約が確定した直後か</td>
+<td align="left">追跡の開始を待っています（仕様）。しばらくして画面を開き直すと「追跡中」に変わり、クリックできるようになります</td>
+</tr>
+<tr>
+<td align="left">「追跡の開始待ち（担当営業が確認します）」と示される</td>
+<td align="left">担当営業が状況を確かめています。しばらく待っても変わらなければ、業務番号を添えて担当営業にご連絡ください</td>
+</tr>
+</tbody></table>
+<h3 id="q2-5-追跡番号で照会すると追跡番号が見つかりませんと示される">Q2-5. 追跡番号で照会すると「追跡番号が見つかりません」と示される</h3>
+<table>
+<thead>
+<tr>
+<th align="left">確認すること</th>
+<th align="left">対処</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left">追跡番号に誤りがないか</td>
+<td align="left">CT で始まる 14 文字です。英字の I・L・O と数字の 0・1 は使いません</td>
+</tr>
+<tr>
+<td align="left">自社の貨物の追跡番号か</td>
+<td align="left">自社の貨物でない追跡番号は照会できません（仕様）</td>
+</tr>
+<tr>
+<td align="left">予約の確定の直後か</td>
+<td align="left">追跡の開始が終わるまで照会できません。予約一覧で「追跡中」になってから照会してください</td>
+</tr>
+</tbody></table>
+<h2 id="3-社内の画面">3. 社内の画面</h2>
+<h3 id="q3-1-本予約を確定できない">Q3-1. 本予約を確定できない</h3>
+<table>
+<thead>
+<tr>
+<th align="left">メッセージ</th>
+<th align="left">対処</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left">「… は有効期限を過ぎたため本予約を確定できません。再見積りが必要です。」</td>
+<td align="left">見積りの有効期限を過ぎています。再見積りしてください</td>
+</tr>
+<tr>
+<td align="left">「… は新しい見積りに置き換えられたため本予約を確定できません。最新の見積りを確かめてください。」</td>
+<td align="left">再見積りで新しい見積りがあります。最新の見積りで進めてください</td>
+</tr>
+<tr>
+<td align="left">「… は荷主の承認がまだのため本予約を確定できません。」</td>
+<td align="left">荷主の承認を待ってください</td>
+</tr>
+<tr>
+<td align="left">「契約条件と照合した（営業担当者の確認）」の印がないというエラー</td>
+<td align="left">契約条件と照合して印を付けてから確定してください</td>
+</tr>
+<tr>
+<td align="left">すでに予約に使われていることと追跡番号が示される</td>
+<td align="left">ほかの担当者が先に確定しています。示された予約の詳細を開いて確かめてください（仕様）</td>
+</tr>
+</tbody></table>
+<h3 id="q3-2-予約の詳細の追跡の開始が処理中のまま">Q3-2. 予約の詳細の「追跡の開始」が「処理中」のまま</h3>
+<table>
+<thead>
+<tr>
+<th align="left">確認すること</th>
+<th align="left">対処</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left">確定した直後か</td>
+<td align="left">追跡の開始は確定の後に自動で進みます。画面は自動では変わらないので、少し待ってから開き直してください</td>
+</tr>
+<tr>
+<td align="left">長く「処理中」のまま、または「有人確認要（担当者が確認します）」</td>
+<td align="left">システム管理者にお問い合わせください</td>
+</tr>
+</tbody></table>
+<h3 id="q3-3-経路の確定実績の登録でほかの…が先に…を更新しましたと示された">Q3-3. 経路の確定・実績の登録で「ほかの…が先に…を更新しました」と示された</h3>
+<table>
+<thead>
+<tr>
+<th align="left">確認すること</th>
+<th align="left">対処</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left">ほかの担当者が同じ案件・追跡記録を同時に操作した</td>
+<td align="left">仕様です。最新の内容を確かめ、必要ならもう一度操作してください</td>
+</tr>
+</tbody></table>
+<h3 id="q3-4-実績を登録すると既存の実績が示される出典…の実績はすでに登録されています実績-n今回の入力は登録していません">Q3-4. 実績を登録すると既存の実績が示される（「出典（…）の実績はすでに登録されています（実績 N）。今回の入力は登録していません。」）</h3>
+<table>
+<thead>
+<tr>
+<th align="left">確認すること</th>
+<th align="left">対処</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left">同じ出典の種類と参照の実績をもう一度登録した</td>
+<td align="left">仕様です（同じ出典の実績を二重に登録しません）。「実績 N を一覧で見る」で既存の実績を確かめてください</td>
+</tr>
+</tbody></table>
+<h2 id="4-エラーメッセージ早見表">4. エラーメッセージ早見表</h2>
+<p>入力欄の下とエラー要約に示される主なメッセージです。</p>
+<table>
+<thead>
+<tr>
+<th align="left">メッセージ</th>
+<th align="left">主な画面</th>
+<th align="left">対処</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left">入力してください</td>
+<td align="left">各画面</td>
+<td align="left">必須の項目を入れてください</td>
+</tr>
+<tr>
+<td align="left">UN/LOCODE（国コード 2 文字 + 地点コード 3 文字、例: JPTYO）で入力してください</td>
+<td align="left">見積依頼の作成、主要実績の登録</td>
+<td align="left">港の 5 文字のコードで入れてください</td>
+</tr>
+<tr>
+<td align="left">同じ港が出発地に入っています。別の港を入力してください</td>
+<td align="left">見積依頼の作成</td>
+<td align="left">目的地に出発地と違う港を入れてください</td>
+</tr>
+<tr>
+<td align="left">過ぎているか、提出する時刻と同じです。提出する時刻より後の日時を入力してください</td>
+<td align="left">見積依頼の作成（希望到着期限）</td>
+<td align="left">提出する時刻より後の日時を入れてください</td>
+</tr>
+<tr>
+<td align="left">2026-11-01 11:30 の形（日本時間）で入力してください</td>
+<td align="left">日時の入力欄</td>
+<td align="left">「年-月-日 時:分」の形で入れてください</td>
+</tr>
+<tr>
+<td align="left">1 以上の整数で入力してください</td>
+<td align="left">見積依頼の作成（個数）</td>
+<td align="left">1 以上の整数を入れてください</td>
+</tr>
+<tr>
+<td align="left">0 より大きい値で入力してください</td>
+<td align="left">見積依頼の作成（総重量・容積）</td>
+<td align="left">0 より大きい値を入れてください</td>
+</tr>
+<tr>
+<td align="left">小数点以下 3 桁までで入力してください</td>
+<td align="left">見積依頼の作成（総重量・容積）</td>
+<td align="left">小数点以下 3 桁までにしてください</td>
+</tr>
+<tr>
+<td align="left">PDF・PNG・JPEG のファイルを選び直してください</td>
+<td align="left">見積依頼の作成（書類）</td>
+<td align="left">PDF・PNG・JPEG のファイルを選んでください</td>
+</tr>
+<tr>
+<td align="left">1 件 10 MB までのファイルを選び直してください</td>
+<td align="left">見積依頼の作成（書類）</td>
+<td align="left">10 MB までのファイルを選んでください</td>
+</tr>
+<tr>
+<td align="left">1 行以上入力してください</td>
+<td align="left">見積りの作成（料金明細）</td>
+<td align="left">料金明細を 1 行以上入れてください</td>
+</tr>
+<tr>
+<td align="left">4,000 文字までで入力してください</td>
+<td align="left">審査、経路の確定</td>
+<td align="left">4,000 文字までにしてください</td>
+</tr>
+<tr>
+<td align="left">CT で始まる 14 文字で入力してください。英字の I・L・O と数字の 0・1 は使いません（例: CTABCDEFGH2345）</td>
+<td align="left">追跡の照会</td>
+<td align="left">追跡番号を確かめて入れ直してください</td>
+</tr>
+</tbody></table>
+
+    <a class="manual-nav-link" href="index.html">← マニュアル目次</a>
+  </main>
+  <footer class="manual-footer">cargo-tracker ユーザーマニュアル</footer>
+</body>
+</html>

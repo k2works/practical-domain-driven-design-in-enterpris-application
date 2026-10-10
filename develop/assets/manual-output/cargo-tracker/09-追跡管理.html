@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>9 章 追跡管理 | cargo-tracker ユーザーマニュアル</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="manual-header">
+    <a class="manual-home" href="index.html">cargo-tracker ユーザーマニュアル</a>
+  </header>
+  <main class="manual-content">
+    <a class="manual-nav-link" href="index.html">← マニュアル目次</a>
+    <h1 id="9-章-追跡管理">9 章 追跡管理</h1>
+<p>本予約が確定して追跡が始まった貨物について、追跡管理者が予定と主要な実績を確かめ、集荷などの実績を出典とともに登録する画面です。本章は <a href="01-%E6%A5%AD%E5%8B%99%E3%83%95%E3%83%AD%E3%83%BC.html#wf-1-%E8%A6%8B%E7%A9%8D%E4%BE%9D%E9%A0%BC%E3%81%8B%E3%82%89%E8%BF%BD%E8%B7%A1%E3%81%AE%E7%85%A7%E4%BC%9A%E3%81%BE%E3%81%A7">WF-1</a> の工程 7（主要な実績を登録する）に対応します。</p>
+<p>画面の開き方: ナビゲーションの「追跡」（URL: <code>/staff/tracking-records</code>）。追跡管理者はログインするとこの画面が開きます。</p>
+<table>
+<thead>
+<tr>
+<th align="left">画面</th>
+<th align="left">役割</th>
+<th align="left">節</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left">追跡一覧</td>
+<td align="left">追跡中の貨物を、追跡の開始時刻の新しい順に確かめる</td>
+<td align="left"><a href="#91-%E8%BF%BD%E8%B7%A1%E4%B8%80%E8%A6%A7">9.1</a></td>
+</tr>
+<tr>
+<td align="left">追跡の詳細</td>
+<td align="left">現在状態・到着の予定・予定区間・主要実績を確かめる</td>
+<td align="left"><a href="#92-%E8%BF%BD%E8%B7%A1%E3%81%AE%E8%A9%B3%E7%B4%B0">9.2</a></td>
+</tr>
+<tr>
+<td align="left">主要実績の登録</td>
+<td align="left">実績の種類・場所・発生時刻・出典を入れて登録する</td>
+<td align="left"><a href="#93-%E4%B8%BB%E8%A6%81%E5%AE%9F%E7%B8%BE%E3%81%AE%E7%99%BB%E9%8C%B2">9.3</a></td>
+</tr>
+</tbody></table>
+<p>登録した実績は、荷主の追跡の照会（<a href="05-%E4%BA%88%E7%B4%84%E4%B8%80%E8%A6%A7%E3%81%A8%E8%BF%BD%E8%B7%A1%E3%81%AE%E7%85%A7%E4%BC%9A.html#53-%E7%85%A7%E4%BC%9A%E3%81%AE%E7%B5%90%E6%9E%9C">5.3</a>）にも示されます。</p>
+<h2 id="91-追跡一覧">9.1 追跡一覧</h2>
+<h3 id="この画面でできること">この画面でできること</h3>
+<ul>
+<li>追跡中の貨物を、追跡の開始時刻の新しい順に確かめ、追跡の詳細を開きます</li>
+</ul>
+<h3 id="画面の開き方">画面の開き方</h3>
+<ul>
+<li>ナビゲーションの「追跡」（URL: <code>/staff/tracking-records</code>）</li>
+</ul>
+<h3 id="画面の説明">画面の説明</h3>
+<p><img src="assets/09-tracking-list.png" alt="追跡一覧"></p>
+<table>
+<thead>
+<tr>
+<th align="left">#</th>
+<th align="left">項目</th>
+<th align="left">説明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left">①</td>
+<td align="left">追跡番号</td>
+<td align="left">クリックすると追跡の詳細が開きます</td>
+</tr>
+<tr>
+<td align="left">②</td>
+<td align="left">現在状態</td>
+<td align="left">例: 「集荷予定」「集荷済み」</td>
+</tr>
+<tr>
+<td align="left">③</td>
+<td align="left">当初の到着予定</td>
+<td align="left">予約したときの到着予定</td>
+</tr>
+<tr>
+<td align="left">④</td>
+<td align="left">追跡の開始時刻</td>
+<td align="left">本予約の確定の後に追跡が始まった日時</td>
+</tr>
+</tbody></table>
+<h3 id="操作手順">操作手順</h3>
+<ol>
+<li>実績を登録する貨物の追跡番号をクリックします</li>
+</ol>
+<h3 id="注意補足">注意・補足</h3>
+<ul>
+<li>新しい 50 件まで示します</li>
+</ul>
+<h2 id="92-追跡の詳細">9.2 追跡の詳細</h2>
+<h3 id="この画面でできること">この画面でできること</h3>
+<ul>
+<li>貨物の現在状態・当初の到着予定・最新の到着見込み・経路・予定区間・主要実績を確かめ、実績の登録を開きます</li>
+</ul>
+<h3 id="画面の開き方">画面の開き方</h3>
+<ul>
+<li>追跡一覧の追跡番号（URL: <code>/staff/tracking-records/{追跡番号}</code>）</li>
+</ul>
+<h3 id="画面の説明">画面の説明</h3>
+<p><img src="assets/09-tracking-detail-registered.png" alt="追跡の詳細（実績を登録した後）"></p>
+<table>
+<thead>
+<tr>
+<th align="left">#</th>
+<th align="left">項目</th>
+<th align="left">説明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left">①</td>
+<td align="left">結果のメッセージ</td>
+<td align="left">実績を登録した直後に「実績 N を登録しました。現在状態は「…」です。」と示されます</td>
+</tr>
+<tr>
+<td align="left">②</td>
+<td align="left">追跡番号・現在状態・当初の到着予定・最新の到着見込み・経路</td>
+<td align="left">経路は確定した経路の番号と版</td>
+</tr>
+<tr>
+<td align="left">③</td>
+<td align="left">予定区間</td>
+<td align="left">区間ごとの航海・積地から揚地・出発予定・到着予定</td>
+</tr>
+<tr>
+<td align="left">④</td>
+<td align="left">主要実績</td>
+<td align="left">発生時刻の順。実績番号・種類・場所、発生・出典（取得時刻）・状態</td>
+</tr>
+<tr>
+<td align="left">⑤</td>
+<td align="left">「実績を登録」</td>
+<td align="left">主要実績の登録（<a href="#93-%E4%B8%BB%E8%A6%81%E5%AE%9F%E7%B8%BE%E3%81%AE%E7%99%BB%E9%8C%B2">9.3</a>）を開きます</td>
+</tr>
+<tr>
+<td align="left">⑥</td>
+<td align="left">「追跡一覧」</td>
+<td align="left">追跡一覧に戻ります</td>
+</tr>
+</tbody></table>
+<h3 id="操作手順">操作手順</h3>
+<ol>
+<li>予定区間と主要実績を確かめます</li>
+<li>新しい実績があれば「実績を登録」をクリックします</li>
+</ol>
+<h3 id="注意補足">注意・補足</h3>
+<ul>
+<li>主要実績がまだなければ「主要実績はまだありません。」と示されます</li>
+<li>現在状態は、採用した主要実績から決まります（例: 集荷の実績で「集荷済み」）</li>
+</ul>
+<h2 id="93-主要実績の登録">9.3 主要実績の登録</h2>
+<h3 id="この画面でできること">この画面でできること</h3>
+<ul>
+<li>集荷・搬入・出発・積替・到着・引渡しの実績を、場所・発生時刻・出典とともに登録します</li>
+</ul>
+<h3 id="画面の開き方">画面の開き方</h3>
+<ul>
+<li>追跡の詳細の「実績を登録」（URL: <code>/staff/tracking-records/{追跡番号}/milestones/new</code>）</li>
+</ul>
+<h3 id="画面の説明">画面の説明</h3>
+<p><img src="assets/09-milestone-new.png" alt="主要実績の登録"></p>
+<table>
+<thead>
+<tr>
+<th align="left">#</th>
+<th align="left">項目</th>
+<th align="left">説明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left">①</td>
+<td align="left">種類</td>
+<td align="left">「集荷」「搬入」「出発」「積替」「到着」「引渡し」。積替港での到着は積替、積替港からの出発は出発を選びます</td>
+</tr>
+<tr>
+<td align="left">②</td>
+<td align="left">場所</td>
+<td align="left">港の UN/LOCODE（例: JPTYO）</td>
+</tr>
+<tr>
+<td align="left">③</td>
+<td align="left">発生時刻（日本時間）</td>
+<td align="left">「2026-11-01 11:30」の形</td>
+</tr>
+<tr>
+<td align="left">④</td>
+<td align="left">出典の種類</td>
+<td align="left">「現場記録」「社内確認」「手動入力」</td>
+</tr>
+<tr>
+<td align="left">⑤</td>
+<td align="left">出典の参照</td>
+<td align="left">200 文字まで。例: 港湾の受付番号、現場の記録番号</td>
+</tr>
+<tr>
+<td align="left">⑥</td>
+<td align="left">「登録する」</td>
+<td align="left">登録します</td>
+</tr>
+</tbody></table>
+<h3 id="操作手順">操作手順</h3>
+<ol>
+<li>種類を選び、場所と発生時刻を入れます</li>
+<li>出典の種類を選び、出典の参照を入れます</li>
+<li>「登録する」をクリックします</li>
+<li>追跡の詳細に戻り、「実績 N を登録しました。現在状態は「…」です。」と示されます</li>
+</ol>
+<h3 id="注意補足">注意・補足</h3>
+<ul>
+<li>発生時刻は、登録する時刻より前にしてください。未来の時刻は登録できません</li>
+<li>同じ出典の種類と参照の実績がすでにあるときは、新しい実績を作らず、既存の実績を示します（「出典（…）の実績はすでに登録されています（実績 N）。今回の入力は登録していません。」と「実績 N を一覧で見る」）</li>
+<li>入力に誤りがあると、画面の上に誤りの一覧が示され、入力した値は残ります</li>
+<li>ほかの追跡管理者が先に同じ追跡記録を更新していたときは、「ほかの追跡管理者が先にこの追跡記録を更新しました。最新の主要実績を確かめ、必要なら、もう一度登録してください。」と示されます</li>
+</ul>
+
+    <a class="manual-nav-link" href="index.html">← マニュアル目次</a>
+  </main>
+  <footer class="manual-footer">cargo-tracker ユーザーマニュアル</footer>
+</body>
+</html>

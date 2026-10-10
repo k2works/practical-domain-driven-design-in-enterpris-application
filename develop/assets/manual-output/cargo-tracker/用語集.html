@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>付録 A 用語集 | cargo-tracker ユーザーマニュアル</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="manual-header">
+    <a class="manual-home" href="index.html">cargo-tracker ユーザーマニュアル</a>
+  </header>
+  <main class="manual-content">
+    <a class="manual-nav-link" href="index.html">← マニュアル目次</a>
+    <h1 id="付録-a-用語集">付録 A 用語集</h1>
+<p>本マニュアルと画面で使う言葉です。</p>
+<h2 id="1-業務用語">1. 業務用語</h2>
+<table>
+<thead>
+<tr>
+<th align="left">用語</th>
+<th align="left">意味</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left">荷主</td>
+<td align="left">貨物を送る会社。荷主担当者が見積依頼を出し、見積りと経路を承認します</td>
+</tr>
+<tr>
+<td align="left">荷受人</td>
+<td align="left">貨物を受け取る会社。見積依頼の作成で選びます</td>
+</tr>
+<tr>
+<td align="left">A 社</td>
+<td align="left">cargo-tracker を運営する会社（自社）。営業担当者・経路設計者・追跡管理者が所属します</td>
+</tr>
+<tr>
+<td align="left">見積依頼</td>
+<td align="left">荷主が出す、輸送の条件と貨物の情報。業務番号で識別します</td>
+</tr>
+<tr>
+<td align="left">業務番号</td>
+<td align="left">見積依頼の番号（TR-2026-0001 の形）。お問い合わせのときに伝えます</td>
+</tr>
+<tr>
+<td align="left">版</td>
+<td align="left">見積依頼を出し直すたびに増える番号。差し戻された見積依頼を直して出し直すと版が 1 つ増えます</td>
+</tr>
+<tr>
+<td align="left">審査</td>
+<td align="left">営業担当者が見積依頼の輸送条件と書類を確かめること。確定すると見積りの作成へ進み、足りなければ差し戻します</td>
+</tr>
+<tr>
+<td align="left">差戻し</td>
+<td align="left">営業担当者が見積依頼の直しを荷主に求めること。理由と不足事項が荷主に示されます</td>
+</tr>
+<tr>
+<td align="left">見積り</td>
+<td align="left">料金根拠（料金明細）・合計・有効期限・経路方針。見積り番号（見積 1 など）で識別します</td>
+</tr>
+<tr>
+<td align="left">有効期限</td>
+<td align="left">見積りが有効な期限。この時刻より前に本予約を確定する必要があります</td>
+</tr>
+<tr>
+<td align="left">経路方針</td>
+<td align="left">見積りの時点の経路の目安（主な経由地、概算の出発と到着）。詳細な経路は経路設計者が確定します</td>
+</tr>
+<tr>
+<td align="left">詳細経路設計</td>
+<td align="left">荷主が見積りに回答した後に、経路設計者が航海と接続から経路を決めること</td>
+</tr>
+<tr>
+<td align="left">経路候補</td>
+<td align="left">航海の情報と接続時間の規則から算出した経路の案。期限に間に合うものは「適合」、間に合わないものは「除外」</td>
+</tr>
+<tr>
+<td align="left">確定した経路（経路版）</td>
+<td align="left">経路設計者が判断根拠を残して確定した経路。番号（RC-…）と版で識別します</td>
+</tr>
+<tr>
+<td align="left">承認</td>
+<td align="left">荷主担当者が見積りと確定した経路を受け入れること。予約の確定ではありません</td>
+</tr>
+<tr>
+<td align="left">本予約</td>
+<td align="left">営業担当者が確定条件を確かめて確定した予約。確定すると追跡番号が発行されます</td>
+</tr>
+<tr>
+<td align="left">追跡番号</td>
+<td align="left">貨物の追跡のための番号（CT で始まる 14 文字）。英字の I・L・O と数字の 0・1 は使いません</td>
+</tr>
+<tr>
+<td align="left">追跡の開始</td>
+<td align="left">本予約の確定の後に、追跡を始める処理。終わるまでは「追跡の開始待ち」（荷主）・「処理中」（社内）と示されます</td>
+</tr>
+<tr>
+<td align="left">主要実績</td>
+<td align="left">集荷・搬入・出発・積替・到着・引渡しの事実。発生時刻と出典とともに記録します</td>
+</tr>
+<tr>
+<td align="left">出典</td>
+<td align="left">主要実績の根拠の情報（現場記録・社内確認・手動入力）と、その参照（受付番号など）</td>
+</tr>
+<tr>
+<td align="left">採用</td>
+<td align="left">現在状態を決めるのに使う主要実績の状態。追跡管理者が登録した実績は採用になります</td>
+</tr>
+<tr>
+<td align="left">現在状態</td>
+<td align="left">採用した主要実績から決まる貨物の状態（集荷予定、集荷済みなど）</td>
+</tr>
+<tr>
+<td align="left">KPI-01</td>
+<td align="left">経路提示リードタイム。見積依頼の最初の提出から最初の見積りの提示までの時間</td>
+</tr>
+</tbody></table>
+<h2 id="2-画面と表記">2. 画面と表記</h2>
+<table>
+<thead>
+<tr>
+<th align="left">用語</th>
+<th align="left">意味</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left">UN/LOCODE</td>
+<td align="left">港を表す 5 文字のコード（例: JPTYO（東京）、NLRTM（ロッテルダム）、SGSIN（シンガポール））</td>
+</tr>
+<tr>
+<td align="left">日本時間（Asia/Tokyo）</td>
+<td align="left">画面の日時の基準。荷主の画面は日本時間、社内の画面は日本時間と UTC を併記します</td>
+</tr>
+<tr>
+<td align="left">ナビゲーション</td>
+<td align="left">画面の左に並ぶ、役割で使える画面の一覧</td>
+</tr>
+<tr>
+<td align="left">エラー要約</td>
+<td align="left">入力に誤りがあるとき画面の上に示される誤りの一覧。項目をクリックすると入力欄に移ります</td>
+</tr>
+<tr>
+<td align="left">準備中の画面</td>
+<td align="left">まだ作っていない画面。「この画面は準備中です」と示されます</td>
+</tr>
+</tbody></table>
+
+    <a class="manual-nav-link" href="index.html">← マニュアル目次</a>
+  </main>
+  <footer class="manual-footer">cargo-tracker ユーザーマニュアル</footer>
+</body>
+</html>

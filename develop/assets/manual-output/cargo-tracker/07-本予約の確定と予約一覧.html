@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>7 章 本予約の確定と予約一覧 | cargo-tracker ユーザーマニュアル</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="manual-header">
+    <a class="manual-home" href="index.html">cargo-tracker ユーザーマニュアル</a>
+  </header>
+  <main class="manual-content">
+    <a class="manual-nav-link" href="index.html">← マニュアル目次</a>
+    <h1 id="7-章-本予約の確定と予約一覧">7 章 本予約の確定と予約一覧</h1>
+<p>荷主が見積りと経路を承認した後に、営業担当者が確定の条件を確かめて本予約を確定する画面と、確定した予約を確かめる画面です。本章は <a href="01-%E6%A5%AD%E5%8B%99%E3%83%95%E3%83%AD%E3%83%BC.html#wf-1-%E8%A6%8B%E7%A9%8D%E4%BE%9D%E9%A0%BC%E3%81%8B%E3%82%89%E8%BF%BD%E8%B7%A1%E3%81%AE%E7%85%A7%E4%BC%9A%E3%81%BE%E3%81%A7">WF-1</a> の工程 6（本予約を確定する）に対応します。</p>
+<p>画面の開き方: ナビゲーションの「見積依頼」→ 受付一覧の「予約の確定待ち」の表、ナビゲーションの「予約」（URL: <code>/staff/bookings</code>）。</p>
+<table>
+<thead>
+<tr>
+<th align="left">画面</th>
+<th align="left">役割</th>
+<th align="left">節</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left">予約の確定待ち（受付一覧）</td>
+<td align="left">荷主が承認した見積りを、有効期限の近い順に確かめる</td>
+<td align="left"><a href="#71-%E4%BA%88%E7%B4%84%E3%81%AE%E7%A2%BA%E5%AE%9A%E5%BE%85%E3%81%A1">7.1</a></td>
+</tr>
+<tr>
+<td align="left">本予約の確定</td>
+<td align="left">確定の条件を確かめ、契約条件と照合して本予約を確定する</td>
+<td align="left"><a href="#72-%E6%9C%AC%E4%BA%88%E7%B4%84%E3%81%AE%E7%A2%BA%E5%AE%9A">7.2</a></td>
+</tr>
+<tr>
+<td align="left">予約の詳細</td>
+<td align="left">追跡番号・状態・追跡の開始・予約版を確かめる</td>
+<td align="left"><a href="#73-%E4%BA%88%E7%B4%84%E3%81%AE%E8%A9%B3%E7%B4%B0">7.3</a></td>
+</tr>
+<tr>
+<td align="left">予約一覧</td>
+<td align="left">確定した予約を、確定時刻の新しい順に確かめる</td>
+<td align="left"><a href="#74-%E4%BA%88%E7%B4%84%E4%B8%80%E8%A6%A7">7.4</a></td>
+</tr>
+</tbody></table>
+<h2 id="71-予約の確定待ち">7.1 予約の確定待ち</h2>
+<h3 id="この画面でできること">この画面でできること</h3>
+<ul>
+<li>荷主が見積りと経路を承認した見積りを、有効期限の近い順に確かめ、本予約の確定を開きます</li>
+</ul>
+<h3 id="画面の開き方">画面の開き方</h3>
+<ul>
+<li>ナビゲーションの「見積依頼」→ 受付一覧の「予約の確定待ち」の表（URL: <code>/staff/transport-requests</code>）</li>
+</ul>
+<h3 id="画面の説明">画面の説明</h3>
+<p><img src="assets/07-intake-list-ready-to-book.png" alt="予約の確定待ち"></p>
+<table>
+<thead>
+<tr>
+<th align="left">#</th>
+<th align="left">項目</th>
+<th align="left">説明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left">①</td>
+<td align="left">見積り</td>
+<td align="left">業務番号と見積り番号</td>
+</tr>
+<tr>
+<td align="left">②</td>
+<td align="left">経路</td>
+<td align="left">荷主が承認した経路の番号と版</td>
+</tr>
+<tr>
+<td align="left">③</td>
+<td align="left">状態</td>
+<td align="left">「荷主承認済み（予約待ち）」</td>
+</tr>
+<tr>
+<td align="left">④</td>
+<td align="left">荷主の承認</td>
+<td align="left">荷主が承認した日時</td>
+</tr>
+<tr>
+<td align="left">⑤</td>
+<td align="left">有効期限</td>
+<td align="left">見積りの有効期限。この時刻より前に確定します</td>
+</tr>
+<tr>
+<td align="left">⑥</td>
+<td align="left">操作</td>
+<td align="left">「TR-… 見積 N の本予約の確定へ」</td>
+</tr>
+</tbody></table>
+<h3 id="操作手順">操作手順</h3>
+<ol>
+<li>有効期限の近いものから、「… の本予約の確定へ」をクリックします。本予約の確定（<a href="#72-%E6%9C%AC%E4%BA%88%E7%B4%84%E3%81%AE%E7%A2%BA%E5%AE%9A">7.2</a>）が開きます</li>
+</ol>
+<h3 id="注意補足">注意・補足</h3>
+<ul>
+<li>有効期限を過ぎた見積りは「失効」になり、本予約を確定できません。再見積りが必要です</li>
+</ul>
+<h2 id="72-本予約の確定">7.2 本予約の確定</h2>
+<h3 id="この画面でできること">この画面でできること</h3>
+<ul>
+<li>確定の条件（有効な見積り・必須の貨物情報・荷主担当者の承認・承認済みの経路版）を確かめ、契約条件と照合したことを示して本予約を確定します。確定すると追跡番号が発行されます</li>
+</ul>
+<h3 id="画面の開き方">画面の開き方</h3>
+<ul>
+<li>予約の確定待ちの「… の本予約の確定へ」（URL: <code>/staff/bookings/new?transportRequest={業務番号}&amp;quotation={見積り番号}</code>）</li>
+</ul>
+<h3 id="画面の説明">画面の説明</h3>
+<p><img src="assets/07-booking-new.png" alt="本予約の確定"></p>
+<table>
+<thead>
+<tr>
+<th align="left">#</th>
+<th align="left">項目</th>
+<th align="left">説明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left">①</td>
+<td align="left">確定条件</td>
+<td align="left">有効な見積り（承認済み・有効期限）、必須貨物情報、荷主担当者の承認、承認済み経路版、営業担当者の確認</td>
+</tr>
+<tr>
+<td align="left">②</td>
+<td align="left">開いた時刻での確認の注意</td>
+<td align="left">有効期限の判定は確定の時刻で行い、期限と同時刻以後は確定できません</td>
+</tr>
+<tr>
+<td align="left">③</td>
+<td align="left">本予約を確定しますか</td>
+<td align="left">対象・変更内容・影響・回復手段</td>
+</tr>
+<tr>
+<td align="left">④</td>
+<td align="left">「契約条件と照合した（営業担当者の確認）」</td>
+<td align="left">契約条件と照合したら印を付けます</td>
+</tr>
+<tr>
+<td align="left">⑤</td>
+<td align="left">「本予約を確定する」</td>
+<td align="left">本予約を確定します</td>
+</tr>
+</tbody></table>
+<h3 id="操作手順">操作手順</h3>
+<ol>
+<li>確定条件を確かめます</li>
+<li>契約条件と照合し、「契約条件と照合した（営業担当者の確認）」に印を付けます</li>
+<li>「本予約を確定する」をクリックします</li>
+<li>予約の詳細（<a href="#73-%E4%BA%88%E7%B4%84%E3%81%AE%E8%A9%B3%E7%B4%B0">7.3</a>）が開き、本予約を確定したことと追跡番号が示されます</li>
+</ol>
+<h3 id="注意補足">注意・補足</h3>
+<ul>
+<li>印を付けずに確定すると、エラーが示され確定されません</li>
+<li>画面を開いた後に有効期限を過ぎた見積りは、送っても確定せず、受付一覧に「… は有効期限を過ぎたため本予約を確定できません。再見積りが必要です。」と示されます</li>
+<li>同じフォームを 2 回送っても、予約は増えず、最初の確定と同じ追跡番号の予約の詳細が示されます</li>
+<li>ほかの担当者が先に同じ見積りを確定していたときは、受付一覧にその予約の追跡番号と予約の詳細への導線が示されます</li>
+<li>確定の後の変更・取消しは申請と営業の承認が必要です（申請の画面は準備中です）</li>
+</ul>
+<h2 id="73-予約の詳細">7.3 予約の詳細</h2>
+<h3 id="この画面でできること">この画面でできること</h3>
+<ul>
+<li>確定した予約の追跡番号・業務番号・状態・追跡の開始と、予約版（確定時刻・経路・貨物）を確かめます</li>
+</ul>
+<h3 id="画面の開き方">画面の開き方</h3>
+<ul>
+<li>本予約を確定した直後に開きます。または予約一覧の追跡番号（URL: <code>/staff/bookings/{追跡番号}</code>）</li>
+</ul>
+<h3 id="画面の説明">画面の説明</h3>
+<p><img src="assets/07-booking-detail.png" alt="予約の詳細"></p>
+<table>
+<thead>
+<tr>
+<th align="left">#</th>
+<th align="left">項目</th>
+<th align="left">説明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left">①</td>
+<td align="left">追跡番号・業務番号・状態</td>
+<td align="left">状態は「確定済み」</td>
+</tr>
+<tr>
+<td align="left">②</td>
+<td align="left">追跡の開始</td>
+<td align="left">「処理中」「完了」「有人確認要（担当者が確認します）」</td>
+</tr>
+<tr>
+<td align="left">③</td>
+<td align="left">予約版</td>
+<td align="left">確定時刻・経路・貨物</td>
+</tr>
+<tr>
+<td align="left">④</td>
+<td align="left">「予約一覧」「見積依頼の受付一覧」</td>
+<td align="left">それぞれの画面に戻ります</td>
+</tr>
+</tbody></table>
+<h3 id="操作手順">操作手順</h3>
+<ol>
+<li>追跡番号を確かめます。荷主にはこの追跡番号で追跡を照会してもらいます</li>
+<li>追跡の開始が「処理中」のときは、少し待ってから画面を開き直します。「完了」になれば、追跡管理者が実績を登録できます</li>
+</ol>
+<h3 id="注意補足">注意・補足</h3>
+<ul>
+<li>追跡の開始は、確定の後に自動で進みます。画面は自動では変わらないので、開き直して確かめてください</li>
+</ul>
+<h2 id="74-予約一覧">7.4 予約一覧</h2>
+<h3 id="この画面でできること">この画面でできること</h3>
+<ul>
+<li>確定した予約を、確定時刻の新しい順に確かめ、予約の詳細を開き直します</li>
+</ul>
+<h3 id="画面の開き方">画面の開き方</h3>
+<ul>
+<li>ナビゲーションの「予約」（URL: <code>/staff/bookings</code>）</li>
+</ul>
+<h3 id="画面の説明">画面の説明</h3>
+<p><img src="assets/07-booking-list.png" alt="予約一覧"></p>
+<table>
+<thead>
+<tr>
+<th align="left">#</th>
+<th align="left">項目</th>
+<th align="left">説明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left">①</td>
+<td align="left">追跡番号</td>
+<td align="left">クリックすると予約の詳細が開きます</td>
+</tr>
+<tr>
+<td align="left">②</td>
+<td align="left">見積り</td>
+<td align="left">業務番号と見積り番号</td>
+</tr>
+<tr>
+<td align="left">③</td>
+<td align="left">確定時刻</td>
+<td align="left">最初に確定した日時</td>
+</tr>
+<tr>
+<td align="left">④</td>
+<td align="left">追跡の開始</td>
+<td align="left">「処理中」「完了」「有人確認要（担当者が確認します）」</td>
+</tr>
+</tbody></table>
+<h3 id="操作手順">操作手順</h3>
+<ol>
+<li>確かめたい予約の追跡番号をクリックします</li>
+</ol>
+<h3 id="注意補足">注意・補足</h3>
+<ul>
+<li>新しい 50 件まで示します</li>
+</ul>
+
+    <a class="manual-nav-link" href="index.html">← マニュアル目次</a>
+  </main>
+  <footer class="manual-footer">cargo-tracker ユーザーマニュアル</footer>
+</body>
+</html>

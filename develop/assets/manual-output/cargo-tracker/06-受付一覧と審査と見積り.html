@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>6 章 受付一覧と審査と見積り | cargo-tracker ユーザーマニュアル</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="manual-header">
+    <a class="manual-home" href="index.html">cargo-tracker ユーザーマニュアル</a>
+  </header>
+  <main class="manual-content">
+    <a class="manual-nav-link" href="index.html">← マニュアル目次</a>
+    <h1 id="6-章-受付一覧と審査と見積り">6 章 受付一覧と審査と見積り</h1>
+<p>営業担当者が、荷主から届いた見積依頼を審査し、見積り（料金根拠と経路方針）を作成して荷主へ提示する画面です。本章は <a href="01-%E6%A5%AD%E5%8B%99%E3%83%95%E3%83%AD%E3%83%BC.html#wf-1-%E8%A6%8B%E7%A9%8D%E4%BE%9D%E9%A0%BC%E3%81%8B%E3%82%89%E8%BF%BD%E8%B7%A1%E3%81%AE%E7%85%A7%E4%BC%9A%E3%81%BE%E3%81%A7">WF-1</a> の工程 2（見積依頼を審査し、見積りを作成して提示する）に対応します。</p>
+<p>画面の開き方: ナビゲーションの「見積依頼」（URL: <code>/staff/transport-requests</code>）。営業担当者はログインするとこの画面が開きます。</p>
+<table>
+<thead>
+<tr>
+<th align="left">画面</th>
+<th align="left">役割</th>
+<th align="left">節</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left">見積依頼の受付一覧</td>
+<td align="left">見積依頼を状態ごとの表で確かめ、次の作業を選ぶ</td>
+<td align="left"><a href="#61-%E8%A6%8B%E7%A9%8D%E4%BE%9D%E9%A0%BC%E3%81%AE%E5%8F%97%E4%BB%98%E4%B8%80%E8%A6%A7">6.1</a></td>
+</tr>
+<tr>
+<td align="left">見積依頼の審査</td>
+<td align="left">輸送条件を確かめ、審査を確定するか差し戻す</td>
+<td align="left"><a href="#62-%E8%A6%8B%E7%A9%8D%E4%BE%9D%E9%A0%BC%E3%81%AE%E5%AF%A9%E6%9F%BB">6.2</a></td>
+</tr>
+<tr>
+<td align="left">見積りの作成</td>
+<td align="left">料金明細・通貨・有効期限・経路方針を入れて算出し、社内承認して提示する</td>
+<td align="left"><a href="#63-%E8%A6%8B%E7%A9%8D%E3%82%8A%E3%81%AE%E4%BD%9C%E6%88%90">6.3</a></td>
+</tr>
+</tbody></table>
+<p>本予約の確定は <a href="07-%E6%9C%AC%E4%BA%88%E7%B4%84%E3%81%AE%E7%A2%BA%E5%AE%9A%E3%81%A8%E4%BA%88%E7%B4%84%E4%B8%80%E8%A6%A7.html">7 章</a> で説明します。</p>
+<h2 id="61-見積依頼の受付一覧">6.1 見積依頼の受付一覧</h2>
+<h3 id="この画面でできること">この画面でできること</h3>
+<ul>
+<li>見積依頼を「審査中」「見積り作成中」「見積提示済み」「経路設計中・荷主承認待ち」「予約の確定待ち」の表に分けて確かめ、次に行う作業の画面を開きます</li>
+</ul>
+<h3 id="画面の開き方">画面の開き方</h3>
+<ul>
+<li>ナビゲーションの「見積依頼」（URL: <code>/staff/transport-requests</code>）</li>
+</ul>
+<h3 id="画面の説明">画面の説明</h3>
+<p><img src="assets/06-intake-list-review.png" alt="見積依頼の受付一覧（審査中）"></p>
+<table>
+<thead>
+<tr>
+<th align="left">#</th>
+<th align="left">項目</th>
+<th align="left">説明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left">①</td>
+<td align="left">審査中</td>
+<td align="left">審査を待っている見積依頼。最初の提出時刻の古い順。業務番号・版・最初の提出時刻・待っている時間・貨物種別・出発地 → 目的地・希望到着期限</td>
+</tr>
+<tr>
+<td align="left">②</td>
+<td align="left">見積り作成中</td>
+<td align="left">審査を確定し、見積りを作成している見積依頼</td>
+</tr>
+<tr>
+<td align="left">③</td>
+<td align="left">見積提示済み</td>
+<td align="left">見積りを提示し、荷主の回答を待っている見積依頼</td>
+</tr>
+<tr>
+<td align="left">④</td>
+<td align="left">経路設計中・荷主承認待ち</td>
+<td align="left">経路設計者の経路の確定と、荷主の承認を待っている見積依頼</td>
+</tr>
+<tr>
+<td align="left">⑤</td>
+<td align="left">予約の確定待ち</td>
+<td align="left">荷主が見積りと経路を承認し、本予約の確定を待っている見積り。有効期限の近い順（<a href="07-%E6%9C%AC%E4%BA%88%E7%B4%84%E3%81%AE%E7%A2%BA%E5%AE%9A%E3%81%A8%E4%BA%88%E7%B4%84%E4%B8%80%E8%A6%A7.html">7 章</a>）</td>
+</tr>
+</tbody></table>
+<h3 id="操作手順">操作手順</h3>
+<ol>
+<li>審査中の表の業務番号をクリックすると、見積依頼の審査（<a href="#62-%E8%A6%8B%E7%A9%8D%E4%BE%9D%E9%A0%BC%E3%81%AE%E5%AF%A9%E6%9F%BB">6.2</a>）が開きます</li>
+<li>見積り作成中・見積提示済みの表の行からは、見積りの画面（<a href="#63-%E8%A6%8B%E7%A9%8D%E3%82%8A%E3%81%AE%E4%BD%9C%E6%88%90">6.3</a>）が開きます</li>
+</ol>
+<h3 id="注意補足">注意・補足</h3>
+<ul>
+<li>社内の画面の日時は、日本時間と UTC を併記します</li>
+<li>表に見積依頼がないときは「審査中の見積依頼はありません。」のように示されます</li>
+<li>見積りを提示すると、画面の上に提示したことが示され、見積依頼は「見積提示済み」の表に移ります</li>
+</ul>
+<p><img src="assets/06-intake-list-presented.png" alt="見積依頼の受付一覧（見積りを提示した後）"></p>
+<h2 id="62-見積依頼の審査">6.2 見積依頼の審査</h2>
+<h3 id="この画面でできること">この画面でできること</h3>
+<ul>
+<li>見積依頼の輸送条件と必要書類を確かめ、審査を確定する（見積りの作成へ進む）か、荷主に差し戻します</li>
+</ul>
+<h3 id="画面の開き方">画面の開き方</h3>
+<ul>
+<li>受付一覧の審査中の表の業務番号（URL: <code>/staff/transport-requests/{業務番号}</code>）</li>
+</ul>
+<h3 id="画面の説明">画面の説明</h3>
+<p><img src="assets/06-review.png" alt="見積依頼の審査"></p>
+<table>
+<thead>
+<tr>
+<th align="left">#</th>
+<th align="left">項目</th>
+<th align="left">説明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left">①</td>
+<td align="left">輸送条件</td>
+<td align="left">状態・荷受人・出発地・目的地・希望到着期限・貨物種別・荷姿・個数・総重量・容積・提出時刻</td>
+</tr>
+<tr>
+<td align="left">②</td>
+<td align="left">必要書類</td>
+<td align="left">荷主が添付した書類。ファイル名をクリックすると取り出せます</td>
+</tr>
+<tr>
+<td align="left">③</td>
+<td align="left">これまでの審査</td>
+<td align="left">過去の版の審査の記録</td>
+</tr>
+<tr>
+<td align="left">④</td>
+<td align="left">審査を確定する（根拠）</td>
+<td align="left">確認した輸送条件を書きます（4,000 文字まで）。「審査を確定する」で見積りの作成へ進みます</td>
+</tr>
+<tr>
+<td align="left">⑤</td>
+<td align="left">差し戻す（理由・不足事項）</td>
+<td align="left">理由は荷主がそのまま読みます。何をどう直せばよいかを荷主に伝わる言葉で書きます。不足事項は 1 行に 1 つ（任意）</td>
+</tr>
+</tbody></table>
+<h3 id="操作手順">操作手順</h3>
+<p>審査を確定するとき:</p>
+<ol>
+<li>輸送条件と必要書類を確かめます</li>
+<li>「根拠」に確認した内容を書き、「審査を確定する」をクリックします</li>
+<li>見積りの作成（<a href="#63-%E8%A6%8B%E7%A9%8D%E3%82%8A%E3%81%AE%E4%BD%9C%E6%88%90">6.3</a>）が開き、「TR-… 版 1 の審査を確定しました」と示されます</li>
+</ol>
+<p>差し戻すとき:</p>
+<ol>
+<li>「理由」と、必要なら「不足事項」を書き、「差し戻す」をクリックします</li>
+<li>見積依頼は荷主の「差戻し（お客様の対応待ち）」になり、荷主が直して出し直すと、新しい版で審査中の表に戻ります</li>
+</ol>
+<h3 id="注意補足">注意・補足</h3>
+<ul>
+<li>根拠と理由は 4,000 文字までです。空のまま確定・差し戻しはできません</li>
+<li>審査を確定すると、荷主の画面の状態は「見積り作成中（A 社の対応待ち）」になります</li>
+</ul>
+<h2 id="63-見積りの作成">6.3 見積りの作成</h2>
+<h3 id="この画面でできること">この画面でできること</h3>
+<ul>
+<li>料金根拠（料金明細）・通貨・有効期限・経路方針を入れて見積りを算出し、内容を確かめて社内承認して荷主へ提示します</li>
+</ul>
+<h3 id="画面の開き方">画面の開き方</h3>
+<ul>
+<li>審査を確定した直後に開きます。または受付一覧の見積り作成中の表の行（URL: <code>/staff/transport-requests/{業務番号}/quotations/new</code>）</li>
+</ul>
+<h3 id="画面の説明">画面の説明</h3>
+<p><img src="assets/06-quotation-new.png" alt="見積りの作成"></p>
+<table>
+<thead>
+<tr>
+<th align="left">#</th>
+<th align="left">項目</th>
+<th align="left">説明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left">①</td>
+<td align="left">輸送条件</td>
+<td align="left">開くと見積依頼の輸送条件を確かめられます</td>
+</tr>
+<tr>
+<td align="left">②</td>
+<td align="left">料金根拠（料金明細）</td>
+<td align="left">明細ごとの内容・金額・参照した契約条件（任意）。10 行まで。空の行は無視します</td>
+</tr>
+<tr>
+<td align="left">③</td>
+<td align="left">通貨</td>
+<td align="left">「USD」「EUR」「JPY」</td>
+</tr>
+<tr>
+<td align="left">④</td>
+<td align="left">有効期限（日本時間）</td>
+<td align="left">予約の確定がこの時刻より前のときだけ、見積りは有効です</td>
+</tr>
+<tr>
+<td align="left">⑤</td>
+<td align="left">経路方針</td>
+<td align="left">主な経由地（UN/LOCODE、カンマ区切り、任意）、概算の出発日時と到着日時</td>
+</tr>
+<tr>
+<td align="left">⑥</td>
+<td align="left">「算出する」</td>
+<td align="left">入れた内容で見積りを算出します</td>
+</tr>
+</tbody></table>
+<h3 id="操作手順">操作手順</h3>
+<ol>
+<li>料金明細の内容と金額を入れます（例: 海上運賃 3200.00、燃料調整金 530.00）</li>
+<li>通貨を選び、有効期限・経路方針を入れて「算出する」をクリックします</li>
+<li>算出した見積りが「承認待ち」で示されます。合計・有効期限・経路方針を確かめます</li>
+</ol>
+<p><img src="assets/06-quotation-calculated.png" alt="算出した見積り"></p>
+<ol start="4">
+<li>「社内承認して提示する」をクリックします。受付一覧に戻り、見積りを提示したことが示されます</li>
+</ol>
+<h3 id="注意補足">注意・補足</h3>
+<ul>
+<li>金額は小数点以下 2 桁まで入れられます。3,200.00 のように 3 桁区切りのカンマを付けてもかまいません</li>
+<li>料金明細を 1 行も入れずに算出すると「1 行以上入力してください」と示されます</li>
+<li>算出した後に直したいときは、「再見積りする」で新しい見積りを作ります</li>
+<li>提示した時刻が、KPI-01 の「最初の提示時刻」として記録されます（<a href="10-KPI%E8%A8%88%E6%B8%AC%E8%A8%98%E9%8C%B2.html">10 章</a>）</li>
+<li>詳細な経路は、荷主が回答した後に経路設計者が確定します（<a href="08-%E7%B5%8C%E8%B7%AF%E8%A8%AD%E8%A8%88.html">8 章</a>）</li>
+</ul>
+
+    <a class="manual-nav-link" href="index.html">← マニュアル目次</a>
+  </main>
+  <footer class="manual-footer">cargo-tracker ユーザーマニュアル</footer>
+</body>
+</html>

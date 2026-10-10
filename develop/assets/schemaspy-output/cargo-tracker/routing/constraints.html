@@ -152,6 +152,30 @@
                                         <td><span title='Restrict delete:&#10;Parent cannot be deleted if children exist'>Restrict delete</span></td>
                                     </tr>
                                     <tr>
+                                        <td>fk_routing_case_confirmed_version</td>
+                                        <td>
+                                            <table border='0' cellspacing='0' cellpadding='0'>
+                                                <tr>
+                                                    <td><a href='tables/routing_case.html'>routing_case</a><span>.id</span></td>
+                                                </tr>
+                                                <tr>
+                                                    <td><a href='tables/routing_case.html'>routing_case</a><span>.confirmed_route_version_no</span></td>
+                                                </tr>
+                                            </table>
+                                        </td>
+                                        <td>
+                                            <table border='0' cellspacing='0' cellpadding='0'>
+                                                <tr>
+                                                    <td><a href='tables/route_version.html'>route_version</a><span>.routing_case_id</span></td>
+                                                </tr>
+                                                <tr>
+                                                    <td><a href='tables/route_version.html'>route_version</a><span>.route_version_no</span></td>
+                                                </tr>
+                                            </table>
+                                        </td>
+                                        <td><span title='Restrict delete:&#10;Parent cannot be deleted if children exist'>Restrict delete</span></td>
+                                    </tr>
+                                    <tr>
                                         <td>fk_route_version_case</td>
                                         <td>
                                             <table border='0' cellspacing='0' cellpadding='0'>
@@ -194,30 +218,6 @@
                                                 </tr>
                                                 <tr>
                                                     <td><a href='tables/route_candidate.html'>route_candidate</a><span>.candidate_no</span></td>
-                                                </tr>
-                                            </table>
-                                        </td>
-                                        <td><span title='Restrict delete:&#10;Parent cannot be deleted if children exist'>Restrict delete</span></td>
-                                    </tr>
-                                    <tr>
-                                        <td>fk_routing_case_confirmed_version</td>
-                                        <td>
-                                            <table border='0' cellspacing='0' cellpadding='0'>
-                                                <tr>
-                                                    <td><a href='tables/routing_case.html'>routing_case</a><span>.id</span></td>
-                                                </tr>
-                                                <tr>
-                                                    <td><a href='tables/routing_case.html'>routing_case</a><span>.confirmed_route_version_no</span></td>
-                                                </tr>
-                                            </table>
-                                        </td>
-                                        <td>
-                                            <table border='0' cellspacing='0' cellpadding='0'>
-                                                <tr>
-                                                    <td><a href='tables/route_version.html'>route_version</a><span>.routing_case_id</span></td>
-                                                </tr>
-                                                <tr>
-                                                    <td><a href='tables/route_version.html'>route_version</a><span>.route_version_no</span></td>
                                                 </tr>
                                             </table>
                                         </td>
@@ -332,6 +332,16 @@
                                         <td>((valid_to IS NULL) OR (valid_to &gt; valid_from))</td>
                                     </tr>
                                     <tr>
+                                        <td><a href='tables/routing_case.html'>routing_case</a></td>
+                                        <td>ck_routing_case_request_version_no</td>
+                                        <td>(transport_request_version_no &gt;&#61; 1)</td>
+                                    </tr>
+                                    <tr>
+                                        <td><a href='tables/routing_case.html'>routing_case</a></td>
+                                        <td>ck_routing_case_route</td>
+                                        <td>(origin_unlocode &lt;&gt; destination_unlocode)</td>
+                                    </tr>
+                                    <tr>
                                         <td><a href='tables/route_version.html'>route_version</a></td>
                                         <td>ck_route_version_confirmed</td>
                                         <td>((((selected_candidate_no IS NULL) AND (rationale IS NULL) AND (approved_by IS NULL) AND (approved_at IS NULL)) OR ((selected_candidate_no IS NOT NULL) AND (rationale IS NOT NULL) AND (approved_by IS NOT NULL) AND (approved_at IS NOT NULL))) AND (((status)::text &lt;&gt; &#39;CONFIRMED&#39;::text) OR (selected_candidate_no IS NOT NULL)) AND (((status)::text &lt;&gt; ALL ((ARRAY[&#39;DRAFT&#39;::character varying, &#39;CANDIDATES_PRESENTED&#39;::character varying, &#39;EXPERT_REVIEW&#39;::character varying])::text[])) OR (selected_candidate_no IS NULL)))</td>
@@ -355,16 +365,6 @@
                                         <td><a href='tables/route_version.html'>route_version</a></td>
                                         <td>ck_route_version_status</td>
                                         <td>((status)::text &#61; ANY ((ARRAY[&#39;DRAFT&#39;::character varying, &#39;CANDIDATES_PRESENTED&#39;::character varying, &#39;EXPERT_REVIEW&#39;::character varying, &#39;CONFIRMED&#39;::character varying, &#39;REDESIGN_REQUIRED&#39;::character varying, &#39;SUPERSEDED&#39;::character varying])::text[]))</td>
-                                    </tr>
-                                    <tr>
-                                        <td><a href='tables/routing_case.html'>routing_case</a></td>
-                                        <td>ck_routing_case_request_version_no</td>
-                                        <td>(transport_request_version_no &gt;&#61; 1)</td>
-                                    </tr>
-                                    <tr>
-                                        <td><a href='tables/routing_case.html'>routing_case</a></td>
-                                        <td>ck_routing_case_route</td>
-                                        <td>(origin_unlocode &lt;&gt; destination_unlocode)</td>
                                     </tr>
                                     <tr>
                                         <td><a href='tables/routing_case_number_counter.html'>routing_case_number_counter</a></td>
