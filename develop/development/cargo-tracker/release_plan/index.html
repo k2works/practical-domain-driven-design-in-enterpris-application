@@ -11098,7 +11098,7 @@
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Bolt 27: US-09（AC1）。<a href="../bolt_27_plan/">Bolt 27 計画</a>（<code>/goal</code> で進めた）、<a href="../bolt_27_report/">Bolt 27 終了報告</a>（完了、2026-10-10 に承認済み。#12 をクローズして SP 3 を数えた。他社・存在しない追跡番号の 404 は C-10 の案内にし、区切りの付いた追跡番号を受け付ける（開発レビューの判断））</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Bolt 27b: C-06 予約一覧の最小の表示（荷主。Bolt 27 の終了報告の承認の場で足した）。<a href="../bolt_27b_plan/">Bolt 27b 計画</a>（承認済み）、<a href="../bolt_27b_report/">Bolt 27b 終了報告</a>（完了、2026-10-10 に承認済み。SP 0。受入動画は #10 に添付した）</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Bolt 28: 主成功の流れの <code>@ui</code> シナリオと Release 0.1 のデモ。<a href="../bolt_28_plan/">Bolt 28 計画</a>、<a href="../bolt_28_report/">Bolt 28 終了報告</a>（完了、2026-10-10 に承認済み。社内デモで流れを確かめ、Release 0.1 のリリース条件をすべて満たした。受入条件の照合と AT-05 を作った。#44 をクローズ、T-87 は #45）</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> ユーザーマニュアル（<code>docs/manual</code>）の作成（Bolt 28 の次。2026-10-10 に human:kakimomokuri が決定）</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> ユーザーマニュアル（<code>docs/manual</code>）の作成（Bolt 28 の次。2026-10-10 に human:kakimomokuri が決定）。はじめに・業務フロー・2〜10 章・用語集・トラブルシューティングの 14 ページと、<code>./gradlew manualScreenshots</code> で撮るキャプチャ 35 枚。HTML は ER 図・JIG と同じく <code>docs/assets/manual-output/cargo-tracker/</code> に出してサイトからリンクした（人の指示）。テクニカルライターのレビューの画面側の指摘（本予約の確定の「確定条件（BR-01）」と「GENERAL / PALLET」、KPI 計測記録の「輸送要求ごと」、経路候補の「参照情報版 UI-…@1」、見積りへの回答の案内の重複、追跡の開始の後も荷主の状態が「（追跡の開始の準備中）」のまま、受付一覧などの「入口の一覧へ戻る」がホームに移るだけ）は W4 の締めで扱いを決める。サイト（mkdocs）は日本語の見出しにアンカーを作らないので、マニュアルの節へのリンクはサイトではページの先頭に飛ぶ（HTML 版は節に飛ぶ）</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> ウォーキングスケルトンのガイドツアーの記事（<code>docs/article</code> に追加。<code>creating-article</code>）の作成（ユーザーマニュアルの次。2026-10-10 に human:kakimomokuri が決定）</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> ベロシティと承認ゲートの密度の見直し（W4 の開始時。「ベロシティ検証計画」）</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> W4 の締め: Release 1.0 の計画の引き直し、Release 0.1 の実績による Release 1.0 の承認ゲートの密度の決め直し、Release 0.1 のリリース完了報告書</li>
@@ -12070,6 +12070,11 @@
 <td style="text-align: left;">2026-10-10</td>
 <td style="text-align: left;">Bolt 28 を終えた。社内デモで流れを確かめ、Release 0.1 のリリース条件にすべてチェックを付けた。#44 をクローズ、T-87 の技術タスクを #45（Release 1.0）として起票した</td>
 <td style="text-align: left;">anthropic/claude-opus-5-5、承認 human:kakimomokuri</td>
+</tr>
+<tr>
+<td style="text-align: left;">2026-10-10</td>
+<td style="text-align: left;">ユーザーマニュアル（<code>docs/manual</code>）を作成した。HTML を ER 図・JIG と同じくサイトに載せた。画面側の課題を W4 の締めの扱いに記録した</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5、指示 human:kakimomokuri</td>
 </tr>
 </tbody>
 </table>

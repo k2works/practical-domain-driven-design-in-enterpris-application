@@ -9311,8 +9311,16 @@
 <td style="text-align: left;">料金根拠（料金明細）・合計・有効期限・経路方針。見積り番号（見積 1 など）で識別します</td>
 </tr>
 <tr>
-<td style="text-align: left;">有効期限</td>
-<td style="text-align: left;">見積りが有効な期限。この時刻より前に本予約を確定する必要があります</td>
+<td style="text-align: left;">有効期限（見積有効期限）</td>
+<td style="text-align: left;">見積りが有効な期限。この時刻より前に本予約を確定する必要があります。社内の経路設計の画面では「見積有効期限」と示します</td>
+</tr>
+<tr>
+<td style="text-align: left;">失効</td>
+<td style="text-align: left;">有効期限を過ぎて見積りが使えなくなった状態。新しい見積りが要ります</td>
+</tr>
+<tr>
+<td style="text-align: left;">置換済み</td>
+<td style="text-align: left;">再見積りで新しい見積りに置き換えられた見積りの状態。読み取り専用になります</td>
 </tr>
 <tr>
 <td style="text-align: left;">経路方針</td>
@@ -9359,8 +9367,12 @@
 <td style="text-align: left;">現在状態を決めるのに使う主要実績の状態。追跡管理者が登録した実績は採用になります</td>
 </tr>
 <tr>
-<td style="text-align: left;">現在状態</td>
-<td style="text-align: left;">採用した主要実績から決まる貨物の状態（集荷予定、集荷済みなど）</td>
+<td style="text-align: left;">現在状態（現在の状態）</td>
+<td style="text-align: left;">採用した主要実績から決まる貨物の状態（集荷予定、集荷済みなど）。荷主の画面では「現在の状態」、社内の画面では「現在状態」と示します</td>
+</tr>
+<tr>
+<td style="text-align: left;">予約版</td>
+<td style="text-align: left;">本予約の内容の版。確定したときが予約版 1 です</td>
 </tr>
 <tr>
 <td style="text-align: left;">KPI-01</td>
