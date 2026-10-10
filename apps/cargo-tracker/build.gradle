@@ -71,6 +71,8 @@ dependencies {
 	testImplementation 'io.cucumber:cucumber-java'
 	testImplementation 'io.cucumber:cucumber-spring'
 	testImplementation 'io.cucumber:cucumber-junit-platform-engine'
+	// 受入条件とシナリオの照合で Feature を Pickle に解析する（Bolt 28。版は cucumber-bom で決まる）
+	testImplementation 'io.cucumber:gherkin'
 	testImplementation 'org.junit.platform:junit-platform-suite'
 	// 画面の層の受入シナリオ（@ui）。実ブラウザの操作とアクセシビリティの自動検査（テスト戦略）
 	testImplementation 'com.microsoft.playwright:playwright:1.63.0'
@@ -147,11 +149,12 @@ tasks.register('demoVideo', Test) {
 	}
 }
 
-// 用語集の整合テスト（LivingGlossaryConsistencyTest）。ソースの Javadoc と設計文書を直接読むため、それらを入力として宣言する。
+// 設計文書との整合テスト（用語集の LivingGlossaryConsistencyTest、受入条件とシナリオの照合の AcceptanceCriteriaCoverageTest。Bolt 28）。
+// ソースの Javadoc・設計文書・Feature を直接読むため、それらを入力として宣言する。
 // test から分け、文書の誤字の修正で Testcontainers を含む全テストが再実行されないようにする
 tasks.register('documentationTest', Test) {
 	group = 'verification'
-	description = '用語集（ドメインモデル設計）とコードの整合を確かめる'
+	description = '用語集（ドメインモデル設計）とコードの整合、受入条件とシナリオの照合を確かめる'
 	testClassesDirs = sourceSets.test.output.classesDirs
 	classpath = sourceSets.test.runtimeClasspath
 	useJUnitPlatform {
@@ -165,6 +168,7 @@ tasks.register('documentationTest', Test) {
 	inputs.file('../../docs/design/cargo-tracker/test_strategy.md').withPropertyName('testStrategy').withPathSensitivity(PathSensitivity.RELATIVE)
 	inputs.dir('src/test/resources/features').withPropertyName('features').withPathSensitivity(PathSensitivity.RELATIVE)
 	systemProperty 'cargotracker.test-strategy', file('../../docs/design/cargo-tracker/test_strategy.md').absolutePath
+	systemProperty 'cargotracker.features', file('src/test/resources/features').absolutePath
 }
 
 tasks.named('check') {

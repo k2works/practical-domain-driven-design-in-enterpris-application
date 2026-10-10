@@ -4,7 +4,7 @@ title: "cargo-tracker テスト戦略"
 description: "cargo-tracker のテスト形状、テストレベルと責務、BDD（Cucumber）のシナリオ階層とタグ規約、不変条件・ユーザーストーリーとテストの対応、カバレッジ目標、CI での実行。"
 tags: [design, test-strategy, bdd]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-10T02:25:55Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-10T09:03:46Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T08:12:04Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:01:38Z }
@@ -123,7 +123,7 @@ stop
 | `@<不変条件 ID>` | ドメインモデルの不変条件 | `@B-INV-03` |
 | `@must`・`@should`・`@could` | ストーリーの優先度（Feature に付ける） | `@must` |
 | `@ui` | 画面を通す階層 | — |
-| `@main-flow` | 主成功の流れ（一般貨物 1 件が提出から追跡の照会まで画面で縦に通る。Bolt 28）。流れの通しを確かめる機能で、`@US-nn` を付けない例外（前例は `layout_ui.feature`） | — |
+| `@main-flow` | 主成功の流れ（Bolt 28）。`@US-nn` を付けない例外（前例は `layout_ui.feature`。理由は「Release 0.1 の受入条件」の注） | — |
 | `@wip` | 作業中。CI の必須の実行から外す | — |
 | `@golden` | Golden dataset による経路の検証 | — |
 
@@ -280,7 +280,7 @@ CI で毎回実行する。
 | AT-02 | 依存は `interfaces` → `application` → `domain` ← `infrastructure` の向きに限る | ArchUnit | バックエンドアーキテクチャ |
 | AT-03 | モジュール（コンテキスト）間の依存は公開 API とドメインイベントだけ | Spring Modulith `ApplicationModules.verify()` | ADR-001 |
 | AT-04 | 各コンテキストのマッパーの SQL は自分のスキーマ（と `platform` の許可された表）以外を参照しない | マッパー XML を読む独自のテスト（`MapperSchemaArchitectureTest`。Bolt 25 で実装。既知の限界: `FROM`・`JOIN`・`INTO`・`UPDATE` の直後の `スキーマ.表` だけを見るので、カンマ結合の 2 つ目の表、`USING`、修飾のない表名、引用符付きの識別子、Java の注釈の SQL（今は使っていない）は拾わない。検査するスキーマの一覧は手で保つ。Bolt 25 レビュー A-5） | ADR-001（改訂）、データモデル |
-| AT-05 | 業務のルールの層のステップ定義（`<コンテキスト>.acceptance`）は、自分のコンテキストのアプリケーション層・ドメイン層と共有カーネル、他のコンテキストの公開 API にだけ依存し、自分のインフラストラクチャ層・画面と他のコンテキストの内部に依存しない（入力ポートのほか、コマンドの組み立てと結果の確かめにドメインの値オブジェクト・集約を使うことは認める。画面の層のステップ定義は対象外） | ArchUnit（`AcceptanceStepArchitectureTest`。Bolt 28 で、Bolt 2 から後に回していたものを実態に合わせて作った） | 本書 BDD |
+| AT-05 | 業務のルールの層のステップ定義（`<コンテキスト>.acceptance`）は、自分のコンテキストのアプリケーション層・ドメイン層と共有カーネル、他のコンテキストの公開 API にだけ依存し、自分のインフラストラクチャ層・画面・公開 API の実装（`interfaces.api.internal`）と他のコンテキストの内部（ドメインイベントを含む）に依存しない（入力ポートのほか、コマンドの組み立てと結果の確かめにドメインの値オブジェクト・集約を使うことは認める。画面の層のステップ定義と、受入テストの組み立て（`acceptance`・`shared.acceptance`。メモリのリポジトリや公開 API の実装をつなぐのが役目）は対象外） | ArchUnit（`AcceptanceStepArchitectureTest`。Bolt 28 で、Bolt 2 から後に回していたものを実態に合わせて作った） | 本書 BDD |
 | AT-06 | 本番の実行クラスパスに H2・Hibernate ORM・JPA が含まれない | Gradle のビルド検査 | ADR-007 |
 
 ## 統合テスト
@@ -327,7 +327,7 @@ CI で毎回実行する。
 
 | フロー | 範囲 | 対応 |
 | :--- | :--- | :--- |
-| 見積依頼から本予約まで | 荷主の提出 → 審査 → 見積りと経路方針の提示 → 荷主が詳細経路設計へ進む → 経路確定 → 荷主の承認 → 本予約確定 → 追跡開始の表示。各段階のメール通知（受けるだけのコンテナで確認） | US-01〜04、US-06〜07、US-22、US-24 |
+| 見積依頼から本予約まで | 荷主の提出 → 審査 → 見積りと経路方針の提示 → 荷主が詳細経路設計へ進む → 経路確定 → 荷主の承認 → 本予約確定 → 追跡開始の表示。各段階のメール通知（受けるだけのコンテナで確認）。Release 0.1 の主成功の流れ（`main_flow_ui.feature`、`@main-flow`。Bolt 28）は、メール通知（US-22、Release 1.0）を含まず、追跡管理者の実績の登録・荷主の予約一覧と追跡の照会・KPI 計測記録の KPI-01 の 2 時刻まで進む | US-01〜04、US-06〜07、US-22、US-24。Release 0.1 の主成功の流れは US-09・US-12・US-21 も通る |
 | 見積りの辞退・相談 | 荷主が辞退（理由）と相談（有人案件の起票）を選ぶ | US-24 |
 | 追跡の照会 | 荷主の照会（確認中の表示を含む）、荷受人の照会（開示範囲）。Bolt 27 は荷主の一覧から結果を開いて戻るまで（`@demo-bolt-27/query-tracking`）。確認中の表示は R1.0、照会記録（IR-INV-01）は W9 | US-09、US-10 |
 | 実績の訂正 | 追跡管理者 2 名による訂正の登録と承認 | US-13 |
@@ -467,7 +467,7 @@ Cucumber の実行結果（HTML・JSON）を CI の成果物として保存し�
 | US-19 荷受人の参照許可を管理する | Could | 7 | identity/ | — |
 | US-16 利用者と権限を管理する | Must | 5 | identity/ | — |
 | US-17 監査証跡を照会する | Should | 3 | identity/ | — |
-| US-21 パイロットの KPI を計測する | Must | 5 | identity/ | — |
+| US-21 パイロットの KPI を計測する | Must | 5 | identity/ | ○（`kpi_observations_ui.feature`。S-22 の前身の KPI 計測記録） |
 | 横断受入条件（BR-13、WCAG 2.2.1） | — | 7 | 各 `@ui` とアクセシビリティテスト | ○ |
 
 合計で受入条件は 120 件（横断の 7 件と Golden dataset を除く）、`@ui` が 15 フロー前後になる見込みである。
@@ -507,7 +507,7 @@ Release 0.1 の範囲（Release 0.1 のマイルストーンの Issue の題名�
 | US-09 | AC1 | `@US-09-AC1` |
 | US-18 | AC2 | `@US-18-AC2` |
 
-注: US-18 は Release 0.1 の #6 の AC2 だけを照合に入れる。Bolt 14 で Release 1.0 の #13 から前倒しした AC1 の password と session の部分・AC4・AC5 は、セキュリティの統合テストなどに移した（`AuthenticationSecurityIntegrationTest`・`SessionLifetimeFilterTest`・`UserTest`・`AuditRecordTest`）。Release 1.0 の表で扱う。主成功の流れ（`main_flow_ui.feature`、`@main-flow`）は流れの通しを確かめるシナリオで、受入条件のタグを付けない（照合の数に入れない）。
+注: US-18 は Release 0.1 の #6 の AC2 だけを照合に入れる。Bolt 14 で Release 1.0 の #13 から前倒しした AC1 の password と session の部分・AC4・AC5 は、セキュリティの統合テストなどに移した（`AuthenticationSecurityIntegrationTest`・`SessionLifetimeFilterTest`・`UserTest`・`AuditRecordTest`）。Release 1.0 の表で扱う。主成功の流れ（`main_flow_ui.feature`、`@main-flow`）は流れの通しを確かめるシナリオで、受入条件のタグを付けない（照合の数に入れない）。照合は Cucumber の解析器で Feature を Pickle にし、機能・ルール・シナリオ・例のタグを継承した結果で数え、`@wip` の Pickle を除く。画面の層のシナリオは逐次に実行する（並行実行を有効にしない。「一覧の先頭」を確かめるシナリオがあるため）。
 
 ## 後続工程への引継ぎ
 
