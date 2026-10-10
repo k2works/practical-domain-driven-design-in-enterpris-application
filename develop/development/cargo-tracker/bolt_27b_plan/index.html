@@ -16,7 +16,7 @@
         <link rel="prev" href="../bolt_27_report/">
       
       
-        <link rel="next" href="../../../operation/">
+        <link rel="next" href="../bolt_27b_report/">
       
       
         
@@ -4390,6 +4390,41 @@
   
 </nav>
       
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../bolt_27b_report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 27b 終了報告
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--draft"></span>
+  
+
+  
+
+      </a>
     </li>
   
 
@@ -8788,6 +8823,10 @@
 <td style="text-align: left;">Issue なし（Bolt 27 の承認の場の指摘を返す画面の補い。SP 0。Bolt 25b の前例）。受入動画は #10（US-04。確定した予約を荷主が確かめる）に添付する。C-06 の本体（絞り込み、C-07 予約の詳細、変更・取消申請の状況）は US-05（W11）</td>
 </tr>
 <tr>
+<td style="text-align: left;">承認ゲートの扱い</td>
+<td style="text-align: left;">人の指示（ステップ 1 の画面のゲートの承認のとき、2026-10-10）により、ステップ 2 以後の承認ゲートで止まらずに進める。止まらなかったゲートごとに根拠を書き、終了報告の承認の議題に置く（T-36）。終了報告では止める</td>
+</tr>
+<tr>
 <td style="text-align: left;">承認ゲート</td>
 <td style="text-align: left;">計画の承認（確認ポイント 1〜16）、画面、Red／Green ごと（照会と開示制御）、認可、開発レビューの判断、終了報告。スキーマは変えないので、スキーマのゲートはない。認可は確認必須なので、計画の承認で判断を受ける（T-80。確認ポイント 8）</td>
 </tr>
@@ -8956,25 +8995,50 @@
 <h2 id="_9">ステップ計画<a class="headerlink" href="#_9" title="Permanent link">&para;</a></h2>
 <p>状態の記号: <code>[ ]</code> 未着手、<code>[-]</code> 進行中、<code>[?]</code> 承認待ち、<code>[x]</code> 完了。各ステップの終わりに <code>check</code> が緑であることと、計画からの変更を設計文書に反映したこと（T-53）を確かめ、Green と同じ push にまとめて CI を確かめる（T-26、T-65）。コミットの前に、そのステップのファイルだけをステージしているか確かめる（T-84）。Red は実行して本命のアサーションで失敗することを確かめてから実装し、骨組みや待ち方を直したら流し直す（T-39、T-83）。</p>
 <ul class="task-list">
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>1. 画面の層の受入シナリオ</strong> 【承認ゲート: 画面】</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>1. 画面の層の受入シナリオ</strong> 【承認ゲート: 画面】</li>
 <li><code>features/ui/confirm_booking_ui.feature</code> に 2 本を足す（背景と <code>BookingUiSteps</code> の確定のステップ、追跡の開始の完了を待つ既存のステップ（<code>BookingUiSteps</code>）を再利用する。デモと幅を分けるのは前例どおりで、受入動画を幅 320 CSS px で撮らないため）: (a) <code>@demo @demo-bolt-27b/customer-booking-list @US-04-AC1</code>: 営業担当者が本予約を確定し、追跡の開始が完了したあと、荷主担当者が荷主のナビの「予約」を開くと、確定した予約が一覧の先頭に「追跡中」で出て、ナビの「予約」が現在の項目として示される。追跡番号のリンクで C-10 の照会の結果を開ける。(b) 幅 320 CSS px で C-06 が横スクロールなしで読める。キー操作だけ、axe-core 0 件</li>
 <li>既存の「追跡の開始が完了するのを待つ」ステップ（<code>BookingUiSteps</code>）は社内の S-24 で待つだけなので、荷主担当者に切り替えて C-06 を開く新しいステップが要る。荷主担当者として C-06 を開くステップと一覧の行を確かめるステップは、新しいステップ定義のクラス <code>ui/CustomerBookingUiSteps</code> に置く（C-10 の <code>CustomerTrackingUiSteps</code> の前例。注釈は 1 文に 1 つ。T-82）</li>
 <li>既存のシナリオを直す: <code>login_ui.feature</code> の「まだ作っていない画面をナビから開くと準備中と示される」が選ぶ項目を「予約」から「問い合わせ」に変える（C-06 に置き換えると落ちる。T-86）</li>
 <li>骨組み（C-06 の見出しだけ）で <code>uiTest</code> を流し、本命のアサーション（一覧の行）で落ちることを確かめる（T-72・T-83。絞り込みが効いたかは実行の件数で確かめる。T-79）</li>
 <li>完了の判定: シナリオが本命のアサーションで落ちる、T-53</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>2. 荷主の照会（単体テスト）</strong> 【承認ゲート: Red／Green（照会と開示制御）】</li>
+<li>結果（2026-10-10）<ul>
+<li><code>confirm_booking_ui.feature</code> に 2 本（<code>@demo @demo-bolt-27b/customer-booking-list @US-04-AC1</code>、幅 320 CSS px の <code>@US-04-AC1</code>）。ステップ定義は <code>ui/CustomerBookingUiSteps</code>（荷主担当者に切り替えて C-06 を開く、一覧の先頭の行、追跡番号から C-10 の結果を開く）</li>
+<li>Red: 骨組み（<code>CustomerBookingController</code> と C-06 の見出しだけ、<code>PlaceholderController</code> から予約を外した）で <code>uiTest</code> を流し、新しい 2 本が本命のアサーション（一覧の表の行がない）で落ちた。<code>login_ui.feature</code> の準備中のシナリオも計画どおり落ちたので、選ぶ項目を「問い合わせ」に直した（T-86）。実行時間のある方の XML で 76 本が通り、失敗 3（T-79）</li>
+</ul>
+</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>2. 荷主の照会（単体テスト）</strong> 【承認ゲート: Red／Green（照会と開示制御）】</li>
 <li>単体テストを先に書く: <code>CustomerBookingQueryService.recent(荷主企業)</code> は自社の予約だけを新しい順に上限まで返し、50 件を超えたかを示す。他社の予約は返らない。要約と予約サガの状態をそれぞれ 1 回の照会で引く（仮説 H1）。予約サガのない予約は例外。メモリのリポジトリの荷主企業の照会は写しを返す（T-61）</li>
 <li><code>BookingRepository.findRecentSummariesByShipper</code>、<code>RecentBookings</code> の組み立て（上限の判定。確認ポイント 7）、<code>CustomerBookingQueryService</code>、組み立て（<code>BookingConfiguration</code>）、貨物予約リポジトリの仮の実装の 2 つ（<code>acceptance/InMemoryBookingRepository</code>、<code>RandomTrackingNumberIssuerTest</code> の中の仮の <code>BookingRepository</code>）</li>
 <li>完了の判定: <code>check</code> 緑、T-53</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>3. 画面と認可（Web テスト）</strong> 【承認ゲート: 画面、認可】</li>
+<li>結果（2026-10-10）<ul>
+<li>Red: 照会のサービスの単体テスト 7 件を骨組み（空を返す）で流し、5 件が本命のアサーションで落ちた（他社だけで空・行の項目の見張りの 2 件は骨組みでも通る見張り）。層の規則（<code>LayerArchitectureTest</code>）で <code>@Service</code> の印が要ることも分かった</li>
+<li>Green: <code>BookingRepository.findRecentSummariesByShipper</code>、<code>RecentBookings.LIMIT</code> と <code>RecentBookings.of</code>（上限・1 件多く引く・予約サガの状態の IN・予約サガのない予約の例外を集めた。<code>BookingQueryService.recent</code> も使う）、<code>CustomerBookingQueryService</code>、<code>BookingConfiguration</code>、メモリのリポジトリ（S-10 と並べ方を共有）、<code>RandomTrackingNumberIssuerTest</code> の仮の実装。リポジトリの MyBatis の実装はステップ 4 までの骨組み（未実装の例外）</li>
+<li>承認ゲートの扱い（T-36）: Red／Green（照会と開示制御）のゲートで止まらずに進めた（人の指示）。根拠は、置き場所と引き方が確認ポイント 7 のとおりであること</li>
+</ul>
+</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>3. 画面と認可（Web テスト）</strong> 【承認ゲート: 画面、認可】</li>
 <li>画面の単体テストを先に書き、実装の前に流して Red を確かめる: 一覧の列と並び、追跡の 4 つの状態の表示とリンクの有無（T-57）、見積依頼のリンク、荷主の日時表示（UTC を併記しない）、予約がないときの文言、50 件を超えたときの文言、予約サガの状態の英語の値と UTC の併記が出ないこと（自社の行が出ていることと組にする。T-85）。照会の結果の型（<code>RecentBookings</code> の行）が予約 ID などの社内の識別子を持たないことは、型の部品名を許可した一覧と比べる見張りのテストで確かめる（Bolt 27 の P-2。もともと持たない値を画面で探すテストにしない）</li>
 <li>セキュリティの統合テスト: 荷主担当者は <code>/customer/bookings</code> を開け、ナビの「予約」が準備中でなくなり現在の項目になる（ナビの変更の前に書いて Red を確かめる。Bolt 27 の議題 3 の再発防止）。社内の役割は 403</li>
 <li><code>CustomerBookingController</code>（<code>booking.interfaces.web</code>）、<code>BookingViews</code> の荷主の表示、<code>templates/booking/bookings/list.html</code>（荷主の画面の前例 <code>quotation/transport-requests/*</code>・<code>tracking/tracking-records/*</code>）、<code>PlaceholderController</code> の荷主の表から予約を外す。準備中の画面の文言のテストを <code>src/test</code> 全体で探して直す（T-86）</li>
 <li>完了の判定: <code>check</code> 緑、T-53</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>4. 永続化（PostgreSQL の統合テスト）</strong> 【承認ゲート: Red／Green（照会と開示制御）】</li>
+<li>結果（2026-10-10）<ul>
+<li>Red: 画面の単体テスト 7 件（列と並び、追跡の 3 つの状態の表示とリンクの有無、英語の値と UTC の併記が出ない、空、上限）を実装の前に流し、7 件とも落ちた。テストの追跡番号に使えない文字（L）を入れていたので直した</li>
+<li>Green: <code>CustomerBookingController</code>（企業を比べない）、<code>BookingViews.customerList</code>・荷主の追跡の表示、<code>templates/booking/bookings/list.html</code></li>
+<li>セキュリティの統合テスト（荷主は C-06 を開けてナビの「予約」が現在の項目、社内の役割は 403）は、ステップ 1 の Red のために C-06 の骨組みと準備中の画面の変更を先に入れたので、最初から通った（Red を確かめていない。終了報告の議題）。うち 1 件はリポジトリの MyBatis の骨組みで落ち、ステップ 4 で通った</li>
+<li>承認ゲートの扱い（T-36）: 画面のゲートは止まらずに進めた（人の指示）。認可のゲートは確認ポイント 8 を計画の承認で人が決めてある（T-80）</li>
+</ul>
+</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>4. 永続化（PostgreSQL の統合テスト）</strong> 【承認ゲート: Red／Green（照会と開示制御）】</li>
 <li>統合テストを先に書く: 荷主企業の要約は自社の予約だけを新しい順（同じ時刻は追跡番号の順）に上限まで返す、他社の予約は出ない</li>
 <li>マッパーの <code>findRecentSummariesByShipper</code>（S-10 の SELECT に <code>WHERE b.shipper_company_id = #{shipperCompanyId}</code>。結果の対応は既存の <code>bookingSummaryRow</code>。T-71）。AT-04 の自スキーマの検査を通す</li>
 <li>完了の判定: <code>check</code>・<code>uiTest</code> 緑（ステップ 1 のシナリオが通る）、T-53</li>
+<li>結果（2026-10-10）<ul>
+<li>Red: 統合テスト 1 件（荷主企業の要約だけを新しい順・同じ時刻は追跡番号の順に上限まで、他社の予約は出ない）を先に書いた。Red は骨組みの未実装の例外で落ち、本命のアサーションではなかった（Bolt 25b のステップ 3 と同じ。終了報告の議題）</li>
+<li>Green: マッパーの <code>findRecentSummariesByShipper</code>（S-10 の SELECT に <code>WHERE b.shipper_company_id</code>）、リポジトリの実装（要約の組み立てを S-10 と共有）。AT-04 の検査は通った</li>
+<li><code>check</code>・<code>documentationTest</code> 緑。<code>uiTest</code> は実行時間のある方の XML で 79 本（+2）が通り、失敗 0（T-79）</li>
+<li>承認ゲートの扱い（T-36）: Red／Green（照会と開示制御）のゲートは止まらずに進めた（人の指示）</li>
+</ul>
+</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>5. 開発レビューと終了報告</strong> 【承認ゲート: 開発レビューの判断、終了報告】</li>
 <li><code>developing-review</code>（プログラマー（テスター・アーキテクトの観点を含む）とインタラクションデザイナー（ユーザー代表の観点を含む））、SonarQube（<code>sonar-local:check</code>）、受入動画（<code>./gradlew demoVideo</code>。過去の Bolt の動画は元に戻す）、<code>bolt_27b_report.md</code></li>
 <li>設計文書（T-53）<ul>
@@ -8987,6 +9051,12 @@
 </li>
 <li>終了報告の承認の後に、受入動画の添付先（<code>ops/scripts/issue_demo.js</code> の <code>BOLT_ISSUES</code> と手順書の表）に <code>bolt-27b → #10</code> を足して添付する。支援技術による手動確認は終了報告の議題に置く（人が行う）</li>
 <li>開発レビューの対応の後も push の前に <code>uiTest</code> を流す（T-70）</li>
+<li>結果（2026-10-10）<ul>
+<li>2 つの観点でレビューした（プログラマー: 必須 0・推奨 4・任意 7、インタラクションデザイナー: 必須 1（UI 設計の反映。レビューの時点ではまだだった）・推奨 4・任意 4）。計画からの変更: caption を「自社の確定した予約（確定時刻の新しい順）」、列名「追跡」を「追跡の状況」に（C-10 の「現在の状態」と取り違えない）、表の前にリンクになる行とならない行が混ざる理由と開始待ちが一時的なことを示す 1 文、上限の文言に次の一手（追跡の照会）、空のときに見積依頼の一覧への道。コードは上限と「1 件多く引く」を <code>RecentBookings.of</code> に集め、見積りの表記と「追跡中」の判定を 1 か所に、表示の部品の名前を <code>customerTracking</code> に、社内の役割の 403 を役割ごとのテストに、既定値どうしの比較を消した（T-85）</li>
+<li>設計文書（T-53）: ui_design.md（URL の表・画面一覧・処理中表示・画面遷移図・準備中の画面）、domain_model.md、data_model.md、test_strategy.md、<code>BookingSummary</code>・<code>RecentBookings</code> の Javadoc</li>
+<li>SonarQube: 新しい指摘 1 件（上限の定数の名前）で FAIL だったので直し、PASS。受入動画を撮った（過去の Bolt の動画は元に戻した）。終了報告は <a href="../bolt_27b_report/">Bolt 27b 終了報告</a></li>
+</ul>
+</li>
 </ul>
 <h3 id="_10">時間の配分と打ち切り<a class="headerlink" href="#_10" title="Permanent link">&para;</a></h3>
 <table>
@@ -9156,6 +9226,16 @@
 </tr>
 </thead>
 <tbody>
+<tr>
+<td style="text-align: left;">2026-10-10</td>
+<td style="text-align: left;">ステップ 1〜5 の結果を記録した。開発レビューで列名を「追跡の状況」、caption を「自社の確定した予約」に変え、表の前の案内・上限の次の一手・空のときの道を足した</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5</td>
+</tr>
+<tr>
+<td style="text-align: left;">2026-10-10</td>
+<td style="text-align: left;">ステップ 1 の画面のゲートを承認した。以後のゲートは止めずに進め、終了報告で止める</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5、承認 human:kakimomokuri</td>
+</tr>
 <tr>
 <td style="text-align: left;">2026-10-10</td>
 <td style="text-align: left;">計画を承認した（確認ポイントはすべて推奨のとおり。確認必須の認可（確認ポイント 8）は事前に判断を受けた。T-80）</td>
