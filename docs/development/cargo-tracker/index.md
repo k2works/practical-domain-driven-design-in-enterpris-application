@@ -56,6 +56,7 @@ Bolt がイテレーションに当たります。ふりかえりは各 Bolt の
 | 26 | [追跡管理者の入口（S-11 追跡一覧・S-12 追跡の詳細の最小の表示）](bolt_26_plan.md) | [終了報告](bolt_26_report.md)（[動画](../../assets/demo/bolt-26/tracking-records.webm){:target="_blank"}） | W4 | 完了 |
 | 26b | [主要実績の登録の業務のルールと永続化（US-12 AC1・AC2）](bolt_26b_plan.md) | [終了報告](bolt_26b_report.md) | W4 | 完了 |
 | 26c | [主要実績の登録の画面（US-12 AC1・AC2。S-13 の登録と S-12 の主要実績の一覧）](bolt_26c_plan.md) | [終了報告](bolt_26c_report.md)（[動画](../../assets/demo/bolt-26c/register-milestone.webm){:target="_blank"}） | W4 | 完了 |
+| 27 | [荷主の追跡の照会（US-09 AC1。C-10 追跡の照会）](bolt_27_plan.md) | — | W4 | 計画済み（承認待ち） |
 
 Bolt を始めるときに行を追加します。
 

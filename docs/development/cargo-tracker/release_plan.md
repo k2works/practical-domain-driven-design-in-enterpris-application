@@ -4,7 +4,7 @@ title: "リリース計画 - cargo-tracker（A 社国際貨物輸送管理シス
 description: "cargo-tracker MVP のリリース計画。1 人 + AI、時間単位の Bolt（= イテレーション）と週次の見直しで、最初の縦の流れ（R0.1）、パイロット準備完了（R1.0）、本格展開前（R1.1）の 3 段階、Unit のエントロピー評価、SP、バッファ、パイロット開始の条件、引継ぎ ID の台帳、業務責任者に確かめる事項の台帳。"
 tags: [development,release-plan]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-10T03:12:53Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-10T04:19:00Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T09:29:53Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:38:26Z }
@@ -479,7 +479,7 @@ AI-DLC では **Bolt がイテレーション** である（[AI-DLC 導入ガイ
 | 26 | 追跡管理者の入口。開発用の利用者（`db/dev-data`）・認可（`SecurityConfiguration`）・ホーム・ナビの「追跡」（Bolt 25 から移した）と、S-11 追跡一覧・S-12 追跡の詳細の最小の表示（予定と現在状態）。[Bolt 26 計画](bolt_26_plan.md)（開始準備で 26・26b に分ける案。`/goal` で推奨のとおり進めた）、[Bolt 26 終了報告](bolt_26_report.md)（完了、2026-10-09 に承認済み） | 0 | アウトサイドイン | 認可、モジュールの境界、画面、Red・Green ごと（照会） |
 | 26b | US-12 AC1 登録・AC2 重複の業務のルールと永続化（[#11](https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/11)）。出典（共有カーネル）、主要実績、現在状態の導出、同じ出典の既存の実績を返す規則、主要実績の表（`tracking.milestone`）。業務のルールの層の受入シナリオ。開始準備で 4 時間を超えると見え、業務のルールと画面で分ける案にした（Bolt 23・23b と同じ）。[Bolt 26b 計画](bolt_26b_plan.md)（`/goal` で進めた。スキーマのゲートは止まって人の判断を受けた）、[Bolt 26b 終了報告](bolt_26b_report.md)（完了、2026-10-10 に承認済み） | 0 | アウトサイドイン | スキーマ、Red・Green ごと（業務のルール） |
 | 26c | US-12 の画面。S-13 の登録、S-12 の主要実績の一覧、AC2 の既存の記録の表示、画面の層のシナリオと受入動画、`tracking_record` の NULL 可の列の見直しと根拠の実績番号の外部キー、Bolt 26 の画面の既知の課題（U-4「→」の読み上げ、U-6、予定と実績の並べ方）。#11 を閉じる。[Bolt 26c 計画](bolt_26c_plan.md)（2026-10-10 に承認済み。`/goal` で進めた）、[Bolt 26c 終了報告](bolt_26c_report.md)（完了、2026-10-10 に承認済み。#11 をクローズした） | 3 | アウトサイドイン | 画面、スキーマ、Red・Green ごと（入力の検証） |
-| 27 | US-09 AC1 照会（現在状態・予定・主要実績・出典・取得時刻。自社に許可された予約に限る BR-07）（[#12](https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/12)） | 3 | アウトサイドイン | Red・Green ごと（開示制御）、認可 |
+| 27 | US-09 AC1 照会（現在状態・予定・主要実績・出典・取得時刻。自社に許可された予約に限る BR-07）（[#12](https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/12)）。[Bolt 27 計画](bolt_27_plan.md)（承認待ち） | 3 | アウトサイドイン | Red・Green ごと（開示制御）、認可 |
 | 28 | 主成功の流れの `@ui` シナリオと Release 0.1 のデモ。序盤の完了条件（開発戦略）と Release 0.1 のリリース条件を確かめる | 0 | アウトサイドイン | `/goal` |
 
 US-04 の SP 5 は、サガの成功の経路を閉じて #10 をクローズする Bolt 25 で数える（Bolt 23・24・25 の SP の分け方は目安だったので、表は Bolt 25 に 5 を寄せた。2026-10-09）。予約サガの再試行（RTY-02）・有人確認要・有人案件の起票（BR-17）は W4 で作らない。状態の値は Bolt 23 の計画で決め、有人案件の起票は US-20 の W8 に回す
