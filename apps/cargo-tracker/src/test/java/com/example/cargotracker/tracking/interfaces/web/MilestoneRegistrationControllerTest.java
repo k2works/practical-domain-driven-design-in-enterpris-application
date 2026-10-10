@@ -204,7 +204,7 @@ class MilestoneRegistrationControllerTest {
         mockMvc.perform(validRegistration())
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl(DETAIL))
-                .andExpect(flash().attribute("result", "実績 1 を登録しました。"));
+                .andExpect(flash().attribute("result", "実績 1 を登録しました。現在状態は「集荷済み」です。"));
 
         ArgumentCaptor<RegisterMilestoneCommand> captor = ArgumentCaptor.forClass(RegisterMilestoneCommand.class);
         then(commandService).should().registerMilestone(captor.capture());
@@ -228,7 +228,7 @@ class MilestoneRegistrationControllerTest {
 
         mockMvc.perform(validRegistration())
                 .andExpect(redirectedUrl(DETAIL))
-                .andExpect(flash().attribute("result", "出典（現場記録 F-118）の実績はすでに登録されています（実績 1）。"))
+                .andExpect(flash().attribute("result", "出典（現場記録 F-118）の実績はすでに登録されています（実績 1）。今回の入力は登録していません。"))
                 .andExpect(flash().attribute("resultLinkHref", "#milestone-1"))
                 .andExpect(flash().attribute("resultLinkLabel", "実績 1 を一覧で見る"));
     }
@@ -239,7 +239,7 @@ class MilestoneRegistrationControllerTest {
 
         mockMvc.perform(validRegistration())
                 .andExpect(redirectedUrl(DETAIL))
-                .andExpect(flash().attribute("problem", "ほかの追跡管理者が先にこの追跡記録を更新しました。最新の主要実績を確かめてください。"));
+                .andExpect(flash().attribute("problem", "ほかの追跡管理者が先にこの追跡記録を更新しました。最新の主要実績を確かめ、必要なら、もう一度登録してください。"));
     }
 
     @Test
@@ -250,9 +250,17 @@ class MilestoneRegistrationControllerTest {
         mockMvc.perform(validRegistration())
                 .andExpect(status().isOk())
                 .andExpect(content().string(containsString("id=\"error-summary\"")))
-                .andExpect(content().string(containsString("発生時刻: 発生時刻は現在より前の時刻を入れてください")))
+                .andExpect(content().string(containsString("発生時刻: いまより前の日時を入力してください")))
                 .andExpect(content().string(containsString("value=\"2026-11-01 11:30\"")))
                 .andExpect(content().string(containsString("<title>入力内容に誤りがあります - 主要実績の登録 CTABCDEFGH2345")));
+    }
+
+    @Test
+    void 形式の誤った追跡番号への登録は404() throws Exception {
+        mockMvc.perform(post("/staff/tracking-records/not-a-tracking-number/milestones"))
+                .andExpect(status().isNotFound());
+
+        then(commandService).should(never()).registerMilestone(any());
     }
 
     @Test
@@ -270,10 +278,10 @@ class MilestoneRegistrationControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(content().string(containsString("入力内容に 5 件の誤りがあります")))
                 .andExpect(content().string(containsString("href=\"#kind\">種類: 選択肢から選んでください")))
-                .andExpect(content().string(containsString("href=\"#location\">場所: ")))
-                .andExpect(content().string(containsString("href=\"#occurredAt\">発生時刻: ")))
+                .andExpect(content().string(containsString("href=\"#location\">場所: 入力してください")))
+                .andExpect(content().string(containsString("href=\"#occurredAt\">発生時刻: 入力してください")))
                 .andExpect(content().string(containsString("href=\"#sourceKind\">出典の種類: 選択肢から選んでください")))
-                .andExpect(content().string(containsString("href=\"#sourceReference\">出典の参照: ")));
+                .andExpect(content().string(containsString("href=\"#sourceReference\">出典の参照: 入力してください")));
 
         then(commandService).should(never()).registerMilestone(any());
     }
@@ -306,7 +314,7 @@ class MilestoneRegistrationControllerTest {
     void 出典の参照が201文字なら誤りにする() throws Exception {
         mockMvc.perform(registration("sourceReference", "a".repeat(201)))
                 .andExpect(status().isOk())
-                .andExpect(content().string(containsString("出典の参照は 200 文字までで入力してください")));
+                .andExpect(content().string(containsString("出典の参照: 200 文字までで入力してください")));
 
         then(commandService).should(never()).registerMilestone(any());
     }
@@ -315,7 +323,7 @@ class MilestoneRegistrationControllerTest {
     void 出典の参照が空白だけなら誤りにする() throws Exception {
         mockMvc.perform(registration("sourceReference", "   "))
                 .andExpect(status().isOk())
-                .andExpect(content().string(containsString("出典の参照を入力してください")));
+                .andExpect(content().string(containsString("出典の参照: 入力してください")));
 
         then(commandService).should(never()).registerMilestone(any());
     }

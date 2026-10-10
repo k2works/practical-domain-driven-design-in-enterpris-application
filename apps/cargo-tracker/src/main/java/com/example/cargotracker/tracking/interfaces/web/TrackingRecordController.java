@@ -11,6 +11,7 @@ import com.example.cargotracker.tracking.domain.model.aggregates.TrackingRecord;
 import com.example.cargotracker.tracking.domain.model.valueobjects.MilestoneKind;
 import com.example.cargotracker.tracking.domain.model.valueobjects.MilestoneRejectionReason;
 import com.example.cargotracker.tracking.domain.model.valueobjects.TrackingNumber;
+import com.example.cargotracker.tracking.domain.model.valueobjects.TrackingStatus;
 import java.time.Clock;
 import java.util.Arrays;
 import java.util.List;
@@ -42,14 +43,13 @@ public class TrackingRecordController {
     private static final String LIST_VIEW = "tracking/staff/tracking-records/list";
     private static final String DETAIL_VIEW = "tracking/staff/tracking-records/show";
     private static final String MILESTONE_FORM_VIEW = "tracking/staff/milestones/new";
-    private static final String DETAIL_PATH = "/staff/tracking-records/";
     private static final String RESULT = "result";
     private static final String RESULT_LINK_HREF = "resultLinkHref";
     private static final String RESULT_LINK_LABEL = "resultLinkLabel";
     private static final String PROBLEM = "problem";
-    private static final String CONFLICT_MESSAGE = "ほかの追跡管理者が先にこの追跡記録を更新しました。最新の主要実績を確かめてください。";
+    private static final String CONFLICT_MESSAGE = "ほかの追跡管理者が先にこの追跡記録を更新しました。最新の主要実績を確かめ、必要なら、もう一度登録してください。";
 
-    /** エラー要約に出す項目の名前（項目の id と同じ順）。 */
+    /** エラー要約に出す項目の名前。文言は項目の名前で始めない（共通部品「エラー要約」）。 */
     private static final Map<String, String> FIELD_LABELS = Map.of(
             "kind", "種類",
             "location", "場所",
@@ -114,33 +114,36 @@ public class TrackingRecordController {
             return milestoneForm(number, form, model);
         }
         RegisterMilestoneCommand command = converted.get();
-        String detail = "redirect:" + DETAIL_PATH + number.value();
         switch (commandService.registerMilestone(command)) {
-            case MilestoneRegistrationOutcome.Registered registered ->
-                redirectAttributes.addFlashAttribute(RESULT, "実績 " + registered.milestoneNo() + " を登録しました。");
-            case MilestoneRegistrationOutcome.AlreadyRegistered already -> {
+            case MilestoneRegistrationOutcome.Registered(int milestoneNo, TrackingStatus currentStatus) ->
+                // 導出し直した現在状態も示す（AC1 の「現在状態が再評価される」を利用者に伝える）
+                redirectAttributes.addFlashAttribute(
+                        RESULT,
+                        "実績 " + milestoneNo + " を登録しました。現在状態は「" + TrackingRecordViews.status(currentStatus) + "」です。");
+            case MilestoneRegistrationOutcome.AlreadyRegistered(int milestoneNo) -> {
                 String source = TrackingRecordViews.sourceLabel(
                         command.source().kind(), command.source().reference());
                 redirectAttributes.addFlashAttribute(
-                        RESULT, "出典（" + source + "）の実績はすでに登録されています（実績 " + already.milestoneNo() + "）。");
-                redirectAttributes.addFlashAttribute(RESULT_LINK_HREF, "#milestone-" + already.milestoneNo());
+                        RESULT, "出典（" + source + "）の実績はすでに登録されています（実績 " + milestoneNo + "）。今回の入力は登録していません。");
+                redirectAttributes.addFlashAttribute(RESULT_LINK_HREF, "#milestone-" + milestoneNo);
                 // リンクの名前だけでどの実績か分かるように、実績番号を入れる（WCAG 2.4.4。Bolt 24 レビュー U-1 と同じ）
-                redirectAttributes.addFlashAttribute(RESULT_LINK_LABEL, "実績 " + already.milestoneNo() + " を一覧で見る");
+                redirectAttributes.addFlashAttribute(RESULT_LINK_LABEL, "実績 " + milestoneNo + " を一覧で見る");
             }
             case MilestoneRegistrationOutcome.Conflict _ ->
                 redirectAttributes.addFlashAttribute(PROBLEM, CONFLICT_MESSAGE);
-            case MilestoneRegistrationOutcome.Rejected rejected -> {
-                bindingResult.rejectValue("occurredAt", "occurredAt.rejected", rejection(rejected.reason()));
+            case MilestoneRegistrationOutcome.Rejected(MilestoneRejectionReason reason) -> {
+                bindingResult.rejectValue("occurredAt", "occurredAt.rejected", rejection(reason));
                 return milestoneForm(number, form, model);
             }
             case MilestoneRegistrationOutcome.NotFound _ -> throw notFound();
         }
-        return detail;
+        // 行き先の追跡番号はパスの変数から展開する（S-12）
+        return "redirect:/staff/tracking-records/{trackingNumber}";
     }
 
     private static String rejection(MilestoneRejectionReason reason) {
         return switch (reason) {
-            case OCCURRED_IN_FUTURE -> "発生時刻は現在より前の時刻を入れてください";
+            case OCCURRED_IN_FUTURE -> "いまより前の日時を入力してください";
         };
     }
 

@@ -36,6 +36,9 @@ final class MilestoneFormConverter {
 
     static final String CHOICE_MESSAGE = "選択肢から選んでください";
 
+    /** 必須の誤り。文言は項目の名前で始めない（エラー要約が項目の名前を前に付ける。共通部品「エラー要約」）。 */
+    static final String REQUIRED_MESSAGE = "入力してください";
+
     private static final DateTimeFormatter OCCURRED_AT_FORMAT =
             DateTimeFormatter.ofPattern(OCCURRED_AT_PATTERN).withResolverStyle(ResolverStyle.STRICT);
 
@@ -58,7 +61,7 @@ final class MilestoneFormConverter {
                 form.getLocation(),
                 "location",
                 errors,
-                "場所を入力してください",
+                REQUIRED_MESSAGE,
                 "UN/LOCODE（国コード 2 文字 + 地点コード 3 文字、例: JPTYO）で入力してください",
                 // 貼り付けで付く前後の空白を除き、小文字は大文字にそろえる（見積依頼と同じ）
                 text -> new Location(text.toUpperCase(Locale.ROOT)));
@@ -66,7 +69,7 @@ final class MilestoneFormConverter {
                 form.getOccurredAt(),
                 "occurredAt",
                 errors,
-                "発生時刻を入力してください",
+                REQUIRED_MESSAGE,
                 "2026-11-01 11:30 の形（日本時間）で入力してください",
                 MilestoneFormConverter::occurredAt);
         SourceKind sourceKind = required(
@@ -116,14 +119,12 @@ final class MilestoneFormConverter {
     private static String reference(String value, BindingResult errors) {
         String text = value == null ? "" : value.strip();
         if (text.isEmpty()) {
-            errors.rejectValue("sourceReference", "sourceReference.required", "出典の参照を入力してください");
+            errors.rejectValue("sourceReference", "sourceReference.required", REQUIRED_MESSAGE);
             return null;
         }
         if (text.length() > Source.REFERENCE_MAX_LENGTH) {
             errors.rejectValue(
-                    "sourceReference",
-                    "sourceReference.length",
-                    "出典の参照は " + Source.REFERENCE_MAX_LENGTH + " 文字までで入力してください");
+                    "sourceReference", "sourceReference.length", Source.REFERENCE_MAX_LENGTH + " 文字までで入力してください");
             return null;
         }
         return text;

@@ -133,10 +133,6 @@ class MyBatisTrackingRecordRepositoryIntegrationTest {
                 .isInstanceOf(DataIntegrityViolationException.class);
     }
 
-    /**
-     * 表では経路版と到着予定の列が NULL 可（data_model.md）だが、追跡記録は予定と到着予定を必ず持つ。NULL の行は、原因の分かる例外に
-     * する（自動の unboxing の NPE にしない。Bolt 25 レビュー P-9・A-9）。
-     */
     // S-11・S-12 の照会（Bolt 26）。共有の DB にほかの追跡記録があっても先頭に来るよう、追跡の開始時刻を遠い先にする
 
     @Test
@@ -181,7 +177,6 @@ class MyBatisTrackingRecordRepositoryIntegrationTest {
                         sameTimeDigit.startedAt()));
     }
 
-    /** 要約でも、当初の到着予定のない行は原因の分かる例外にする（集約の組み立てと同じ。Bolt 26 計画の確認ポイント 13）。 */
     // 経路版と到着予定の 4 列は NOT NULL、根拠の実績番号は主要実績を指す（PostgreSQL だけの外部キー。Bolt 26c）
 
     /** PostgreSQL は制約違反でトランザクションを中断するので、列ごとに 1 つのテストにする。 */
@@ -198,7 +193,8 @@ class MyBatisTrackingRecordRepositoryIntegrationTest {
         assertThatThrownBy(() -> jdbc.update(
                         "UPDATE tracking.tracking_record SET " + assignment + " WHERE tracking_number = ?",
                         trackingNumber))
-                .isInstanceOf(DataIntegrityViolationException.class);
+                .isInstanceOf(DataIntegrityViolationException.class)
+                .hasMessageContaining(column.startsWith("rout") ? "routing_case_number" : column);
     }
 
     @Test
@@ -212,7 +208,8 @@ class MyBatisTrackingRecordRepositoryIntegrationTest {
 
         // 外部キーはコミットのときに検査する（DEFERRABLE）ので、テストのトランザクションの中で直ちに検査させる
         assertThatThrownBy(() -> jdbc.execute("SET CONSTRAINTS ALL IMMEDIATE"))
-                .isInstanceOf(DataIntegrityViolationException.class);
+                .isInstanceOf(DataIntegrityViolationException.class)
+                .hasMessageContaining("fk_tracking_record_status_basis");
     }
 
     @Test

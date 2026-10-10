@@ -248,7 +248,7 @@ class TrackingRecordControllerTest {
 
         String body = mockMvc.perform(get(DETAIL))
                 .andExpect(status().isOk())
-                .andExpect(content().string(containsString("<ol aria-labelledby=\"milestones-heading\"")))
+                .andExpect(content().string(containsString("<ul aria-labelledby=\"milestones-heading\"")))
                 .andExpect(content().string(containsString("id=\"milestone-1\"")))
                 .andExpect(content().string(containsString("実績 2、集荷、JPTYO")))
                 .andExpect(content().string(containsString("実績 1、搬入、JPTYO")))
@@ -264,16 +264,43 @@ class TrackingRecordControllerTest {
     }
 
     @Test
+    void 発生時刻が同じ主要実績は実績番号の順に示す() throws Exception {
+        given(queryService.detail(TrackingFixture.TRACKING_NUMBER))
+                .willReturn(Optional.of(trackingRecord(
+                        TrackingStatus.RECEIVED_AT_ORIGIN,
+                        List.of(
+                                milestone(
+                                        1,
+                                        MilestoneKind.PICKUP,
+                                        "2026-11-01T02:30:00Z",
+                                        SourceKind.FIELD_RECORD,
+                                        "F-118",
+                                        MilestoneState.ADOPTED),
+                                milestone(
+                                        2,
+                                        MilestoneKind.RECEIPT_AT_ORIGIN,
+                                        "2026-11-01T02:30:00Z",
+                                        SourceKind.FIELD_RECORD,
+                                        "F-119",
+                                        MilestoneState.ADOPTED)))));
+
+        String body = mockMvc.perform(get(DETAIL)).andReturn().getResponse().getContentAsString();
+
+        org.assertj.core.api.Assertions.assertThat(body.indexOf("実績 1、集荷")).isLessThan(body.indexOf("実績 2、搬入"));
+    }
+
+    @Test
     void 登録の結果と既存の実績へのリンクを状態の通知として示す() throws Exception {
         given(queryService.detail(TrackingFixture.TRACKING_NUMBER))
                 .willReturn(Optional.of(trackingRecord(TrackingStatus.PICKUP_SCHEDULED)));
 
         mockMvc.perform(get(DETAIL)
-                        .flashAttr("result", "出典（現場記録 F-118）の実績はすでに登録されています（実績 1）。")
+                        .flashAttr("result", "出典（現場記録 F-118）の実績はすでに登録されています（実績 1）。今回の入力は登録していません。")
                         .flashAttr("resultLinkHref", "#milestone-1")
                         .flashAttr("resultLinkLabel", "実績 1 を一覧で見る"))
-                .andExpect(
-                        content().string(containsString("<p role=\"status\">出典（現場記録 F-118）の実績はすでに登録されています（実績 1）。</p>")))
+                .andExpect(content()
+                        .string(containsString(
+                                "<p role=\"status\">出典（現場記録 F-118）の実績はすでに登録されています（実績 1）。今回の入力は登録していません。</p>")))
                 .andExpect(content().string(containsString("href=\"#milestone-1\">実績 1 を一覧で見る</a>")));
     }
 

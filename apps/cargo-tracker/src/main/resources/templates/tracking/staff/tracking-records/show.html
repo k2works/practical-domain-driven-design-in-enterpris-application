@@ -40,14 +40,16 @@
     <!--/* 主要実績は区間に結び付けず、発生時刻の順の順序付きのリストにする（集荷・搬入・引渡しは区間の外の実績。Bolt 26c 計画の確認ポイント 11） */-->
     <h2 class="h4" id="milestones-heading">主要実績</h2>
     <p th:if="${#lists.isEmpty(trackingRecord.milestones())}">主要実績はまだありません。実績を登録すると、現在状態が更新されます。</p>
-    <ol th:unless="${#lists.isEmpty(trackingRecord.milestones())}" aria-labelledby="milestones-heading">
+    <p th:unless="${#lists.isEmpty(trackingRecord.milestones())}">発生時刻の順に示します。</p>
+    <!--/* リストの番号と「実績 N」がずれないよう、番号を見せない ul にする（Bolt 26c レビュー U-4） */-->
+    <ul th:unless="${#lists.isEmpty(trackingRecord.milestones())}" aria-labelledby="milestones-heading">
         <li th:each="milestone : ${trackingRecord.milestones()}" th:id="${milestone.anchor()}" class="mb-2">
             <span th:text="${milestone.summary()}">実績 1、集荷、JPTYO</span><br>
             <span th:text="|発生 ${milestone.occurredAt()}|">発生 2026-11-01 11:30 Asia/Tokyo（UTC+09:00）（UTC 2026-11-01 02:30）</span><br>
             <span th:text="|出典 ${milestone.source()}|">出典 現場記録 F-118（取得 2026-11-01 12:00 Asia/Tokyo（UTC+09:00）（UTC 2026-11-01 03:00））</span><br>
             <span th:text="|状態 ${milestone.state()}|">状態 採用</span>
         </li>
-    </ol>
+    </ul>
     <p><a th:href="@{/staff/tracking-records/{trackingNumber}/milestones/new(trackingNumber=${trackingRecord.trackingNumber()})}">実績を登録</a></p>
     <p><a th:href="@{/staff/tracking-records}">追跡一覧</a></p>
 </main>
