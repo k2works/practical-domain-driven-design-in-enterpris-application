@@ -4,7 +4,7 @@ title: "開発戦略 - cargo-tracker（A 社国際貨物輸送管理システム
 description: "リリース計画の W1〜W14 を序盤・中盤・終盤の局面に分け、各局面の TDD のアプローチ、週ごとのデモ項目を受入シナリオにする方針、Living Documentation の採用を定める開発戦略。"
 tags: [development,development-strategy]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-08T05:07:41Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-10T09:26:40Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T10:25:23Z }
   - { by: human:kakimomokuri, at: 2026-10-01T13:06:21Z }
@@ -320,12 +320,14 @@ stop
 
 ### 完了条件（序盤）
 
-- [ ] W1〜W4 のデモ項目の受入シナリオがすべて通る
-- [ ] ナビゲーションの骨格の E2E（全ルートへの到達、役割ごとの表示・非表示・権限なし）が通る
-- [ ] 主成功の流れの `@ui` シナリオが通る
-- [ ] アーキテクチャテスト AT-01〜06 が通り、注釈の語彙と規則が定義されている
-- [ ] JIG と Modulith の生成物が CI で生成されている
-- [ ] Release 0.1 のリリース条件（リリース計画）を満たす
+- [x] W1〜W4 のデモ項目の受入シナリオがすべて通る
+- [x] ナビゲーションの骨格の E2E（全ルートへの到達、役割ごとの表示・非表示・権限なし）が通る
+- [x] 主成功の流れの `@ui` シナリオが通る
+- [x] アーキテクチャテスト AT-01〜06 が通り、注釈の語彙と規則が定義されている
+- [x] JIG と Modulith の生成物が CI で生成されている
+- [x] Release 0.1 のリリース条件（リリース計画）を満たす
+
+2026-10-10 の Bolt 28 で、各項目の根拠を確かめた（[Bolt 28 終了報告](bolt_28_report.md) の「Release 0.1 のリリース条件と序盤の完了条件の根拠」）。AT-05 は Bolt 28 で作った。
 
 ---
 

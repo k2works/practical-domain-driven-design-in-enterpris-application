@@ -4,7 +4,7 @@ title: "リリース計画 - cargo-tracker（A 社国際貨物輸送管理シス
 description: "cargo-tracker MVP のリリース計画。1 人 + AI、時間単位の Bolt（= イテレーション）と週次の見直しで、最初の縦の流れ（R0.1）、パイロット準備完了（R1.0）、本格展開前（R1.1）の 3 段階、Unit のエントロピー評価、SP、バッファ、パイロット開始の条件、引継ぎ ID の台帳、業務責任者に確かめる事項の台帳。"
 tags: [development,release-plan]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-10T08:14:19Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-10T09:26:40Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T09:29:53Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:38:26Z }
@@ -276,11 +276,11 @@ gantt
 
 **リリース条件**:
 
-- [ ] Release 0.1 の範囲の受入シナリオがすべて通る
-- [ ] 主成功の流れの `@ui` シナリオ 1 本が通る
-- [ ] アーキテクチャテスト（AT-01〜06）が通る
-- [ ] H2 で起動でき、PostgreSQL の統合テストが通る
-- [ ] 社内デモで human:kakimomokuri が流れを確認する
+- [x] Release 0.1 の範囲の受入シナリオがすべて通る（Bolt 28 で確かめた）
+- [x] 主成功の流れの `@ui` シナリオ 1 本が通る（Bolt 28 で確かめた）
+- [x] アーキテクチャテスト（AT-01〜06）が通る（Bolt 28 で確かめた）
+- [x] H2 で起動でき、PostgreSQL の統合テストが通る（Bolt 28 で確かめた）
+- [x] 社内デモで human:kakimomokuri が流れを確認する（2026-10-10、デモ環境。[Bolt 28 終了報告](bolt_28_report.md)）
 
 #### Release 1.0（W10 完了）: パイロット準備完了
 
@@ -481,7 +481,7 @@ AI-DLC では **Bolt がイテレーション** である（[AI-DLC 導入ガイ
 | 26c | US-12 の画面。S-13 の登録、S-12 の主要実績の一覧、AC2 の既存の記録の表示、画面の層のシナリオと受入動画、`tracking_record` の NULL 可の列の見直しと根拠の実績番号の外部キー、Bolt 26 の画面の既知の課題（U-4「→」の読み上げ、U-6、予定と実績の並べ方）。#11 を閉じる。[Bolt 26c 計画](bolt_26c_plan.md)（2026-10-10 に承認済み。`/goal` で進めた）、[Bolt 26c 終了報告](bolt_26c_report.md)（完了、2026-10-10 に承認済み。#11 をクローズした） | 3 | アウトサイドイン | 画面、スキーマ、Red・Green ごと（入力の検証） |
 | 27 | US-09 AC1 照会（現在状態・予定・主要実績・出典・取得時刻。自社に許可された予約に限る BR-07）（[#12](https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/12)）。[Bolt 27 計画](bolt_27_plan.md)（`/goal` で進めた）、[Bolt 27 終了報告](bolt_27_report.md)（完了、2026-10-10 に承認済み） | 3 | アウトサイドイン | Red・Green ごと（開示制御）、認可、スキーマ（索引） |
 | 27b | C-06 予約一覧の最小の表示（荷主。自社の本予約と追跡番号、行から C-10 の照会の結果へ。Bolt 25b の S-10 の前例）。Bolt 27 の終了報告の承認の場で、荷主のナビの「予約」が準備中のままと指摘されて足した（2026-10-10）。[Bolt 27b 計画](bolt_27b_plan.md)（承認済み）、[Bolt 27b 終了報告](bolt_27b_report.md)（完了、2026-10-10 に承認済み） | 0 | アウトサイドイン | 画面、Red・Green ごと（照会と開示制御）、認可 |
-| 28 | 主成功の流れの `@ui` シナリオと Release 0.1 のデモ。序盤の完了条件（開発戦略）と Release 0.1 のリリース条件を確かめる。受入条件とシナリオの照合（Bolt 2 レビュー R-17 の持ち越し）を作る。[Bolt 28 計画](bolt_28_plan.md)（承認済み。[#44](https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/44)） | 0 | アウトサイドイン | `/goal` |
+| 28 | 主成功の流れの `@ui` シナリオと Release 0.1 のデモ。序盤の完了条件（開発戦略）と Release 0.1 のリリース条件を確かめる。受入条件とシナリオの照合（Bolt 2 レビュー R-17 の持ち越し）を作る。[Bolt 28 計画](bolt_28_plan.md)（承認済み）、[Bolt 28 終了報告](bolt_28_report.md)（完了、2026-10-10 に承認済み。[#44](https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/44)） | 0 | アウトサイドイン | `/goal` |
 
 US-04 の SP 5 は、サガの成功の経路を閉じて #10 をクローズする Bolt 25 で数える（Bolt 23・24・25 の SP の分け方は目安だったので、表は Bolt 25 に 5 を寄せた。2026-10-09）。予約サガの再試行（RTY-02）・有人確認要・有人案件の起票（BR-17）は W4 で作らない。状態の値は Bolt 23 の計画で決め、有人案件の起票は US-20 の W8 に回す
 
@@ -503,7 +503,7 @@ US-04 の SP 5 は、サガの成功の経路を閉じて #10 をクローズす
 - [x] Bolt 26b・26c: US-12（AC1、AC2）。[Bolt 26c 計画](bolt_26c_plan.md)、[Bolt 26c 終了報告](bolt_26c_report.md)（完了、2026-10-10 に承認済み。#11 をクローズして SP 3 を数えた）。[Bolt 26b 計画](bolt_26b_plan.md)、[Bolt 26b 終了報告](bolt_26b_report.md)（26b は業務のルールと永続化。完了、2026-10-10 に承認済み。26c は画面）
 - [x] Bolt 27: US-09（AC1）。[Bolt 27 計画](bolt_27_plan.md)（`/goal` で進めた）、[Bolt 27 終了報告](bolt_27_report.md)（完了、2026-10-10 に承認済み。#12 をクローズして SP 3 を数えた。他社・存在しない追跡番号の 404 は C-10 の案内にし、区切りの付いた追跡番号を受け付ける（開発レビューの判断））
 - [x] Bolt 27b: C-06 予約一覧の最小の表示（荷主。Bolt 27 の終了報告の承認の場で足した）。[Bolt 27b 計画](bolt_27b_plan.md)（承認済み）、[Bolt 27b 終了報告](bolt_27b_report.md)（完了、2026-10-10 に承認済み。SP 0。受入動画は #10 に添付した）
-- [ ] Bolt 28: 主成功の流れの `@ui` シナリオと Release 0.1 のデモ。[Bolt 28 計画](bolt_28_plan.md)（承認済み。[#44](https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/44)）
+- [x] Bolt 28: 主成功の流れの `@ui` シナリオと Release 0.1 のデモ。[Bolt 28 計画](bolt_28_plan.md)、[Bolt 28 終了報告](bolt_28_report.md)（完了、2026-10-10 に承認済み。社内デモで流れを確かめ、Release 0.1 のリリース条件をすべて満たした。受入条件の照合と AT-05 を作った。#44 をクローズ、T-87 は #45）
 - [ ] ユーザーマニュアル（`docs/manual`）の作成（Bolt 28 の次。2026-10-10 に human:kakimomokuri が決定）
 - [ ] ウォーキングスケルトンのガイドツアーの記事（`docs/article` に追加。`creating-article`）の作成（ユーザーマニュアルの次。2026-10-10 に human:kakimomokuri が決定）
 - [x] ベロシティと承認ゲートの密度の見直し（W4 の開始時。「ベロシティ検証計画」）
@@ -641,7 +641,7 @@ Bolt のレビューや終了報告で「業務責任者に確かめる」とし
 | W1 | 6 | 6 | 100% | 完了（W1 の期間の前に前倒しで、2026-10-03 に Bolt 1〜8 を終えた。すべて承認済み。US-01（R0.1）・US-02 を完了し、#1・#2・#3・#36 をクローズした。人の変更依頼 0） |
 | W2 | 8 | 7 | 88% | 完了（2026-10-06 に Bolt 9〜14 を終え、2026-10-07 に締めた。US-03 を完了し #4・#37 を、US-18 の一部（2 SP）を完了し #6 をクローズした。US-24 AC1 は Bolt 12 で作り、残りの AC4・AC5 と US-24 の R0.1 の SP 3 は W3 へ（#5 の週を W3 に移した）。人の変更依頼 0） |
 | W3 | 10 | 11 | 110% | 完了（2026-10-06〜10-08 に Bolt 15〜21 を終え、2026-10-08 に締めた。US-06 AC1〜AC3（#7）、US-07 AC1・AC2（#8）、US-24 の R0.1（#5）、US-21 AC1（#9）を完了し、技術タスクの #38・#39 をクローズした。US-24 の R0.1 の 3 SP は #5 をクローズした W3 で数えた。人の変更依頼 0） |
-| W4 | 11 | 11 | - | 進行中（Bolt 22・23・23b・24・25・25b・26・26b・26c・27・27b を終えた。US-09 の R0.1 を完了し、#12 をクローズして SP 3 を数えた。US-12 の R0.1 を完了し、#11 をクローズして SP 3 を数えた。US-04 の R0.1 を完了し、#10 をクローズして SP 5 を数えた。#41・#42 をクローズした。人の変更依頼 3（公開 API の置き場所 2、Bolt 27 の承認の場の荷主の予約一覧 1）） |
+| W4 | 11 | 11 | - | 進行中（Bolt 22・23・23b・24・25・25b・26・26b・26c・27・27b・28 を終えた。Release 0.1 のリリース条件をすべて満たした（Bolt 28）。US-09 の R0.1 を完了し、#12 をクローズして SP 3 を数えた。US-12 の R0.1 を完了し、#11 をクローズして SP 3 を数えた。US-04 の R0.1 を完了し、#10 をクローズして SP 5 を数えた。#41・#42 をクローズした。人の変更依頼 3（公開 API の置き場所 2、Bolt 27 の承認の場の荷主の予約一覧 1）） |
 | W5 | 8 | - | - | 未着手 |
 | W6 | 13 | - | - | 未着手 |
 | W7 | 10 | - | - | 未着手 |
@@ -748,3 +748,4 @@ xychart-beta
 | 2026-10-09 | Bolt 24 終了報告の承認（議題 1〜9）を記録し、Bolt 24 を終えた。台帳に D-85（承認の後に失効した見積りの再見積りの規則）を足した | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-10-10 | Bolt 27・27b を終えた（#12 をクローズして US-09 の R0.1 の SP 3 を数えた。27b は承認の場の指摘で足した C-06 予約一覧、SP 0）。ユーザーマニュアル（`docs/manual`）の作成の時期を、人の指示で「W4 の完了の後」から「Bolt 28 の次」に改めた | anthropic/claude-opus-5-5、指示 human:kakimomokuri |
 | 2026-10-10 | ユーザーマニュアルの次に、ウォーキングスケルトンのガイドツアーの記事（`docs/article`）を作るタスクを W4 に足した | anthropic/claude-opus-5-5、指示 human:kakimomokuri |
+| 2026-10-10 | Bolt 28 を終えた。社内デモで流れを確かめ、Release 0.1 のリリース条件にすべてチェックを付けた。#44 をクローズ、T-87 の技術タスクを #45（Release 1.0）として起票した | anthropic/claude-opus-5-5、承認 human:kakimomokuri |

@@ -3,8 +3,10 @@ type: Report
 title: "Bolt 28 終了報告 - 主成功の流れの @ui シナリオと Release 0.1 のデモ"
 description: "28 回目の Bolt の終了報告。一般貨物 1 件が提出から荷主の追跡の照会まで画面で縦に通り KPI-01 の 2 時刻が残る主成功の流れのシナリオ、Release 0.1 の受入条件とシナリオの照合、AT-05 のアーキテクチャテスト、Release 0.1 のリリース条件と序盤の完了条件の根拠、社内デモの台本と結果、承認の議題を記す。"
 tags: [development,bolt-report]
-status: draft
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-10T09:03:46Z }
+status: stable
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-10T09:26:40Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-10-10T09:26:05Z }
 ---
 
 # Bolt 28 終了報告 - 主成功の流れの `@ui` シナリオと Release 0.1 のデモ
@@ -42,7 +44,7 @@ generated: { by: anthropic/claude-opus-5-5, at: 2026-10-10T09:03:46Z }
 | 1. 主成功の流れの `@ui` シナリオ | 完了 | `6f10e2d` | 足したステップ定義 0、本番のコードの変更 0（仮説 H1） |
 | 2. 受入条件とシナリオの照合 | 完了 | `6f10e2d` | 表が空で Red、存在しない受入条件で落ちることも確かめた |
 | 3. リリース条件と序盤の完了条件の確認 | 完了 | `6f10e2d` | AT-05 の欠けを見つけ、人の判断で作った（議題 2） |
-| 4. 社内デモと終了報告 | 社内デモの待ち | 本報告のコミット | 開発レビュー、SonarQube、受入動画 |
+| 4. 社内デモと終了報告 | 完了 | `09b1a5b`・`76c8b75` | 開発レビュー、SonarQube、受入動画 |
 
 ### 作ったもの
 
@@ -67,12 +69,12 @@ generated: { by: anthropic/claude-opus-5-5, at: 2026-10-10T09:03:46Z }
 | 主成功の流れの `@ui` シナリオ 1 本が通る | `main_flow_ui.feature`（`uiTest` 80 本、失敗 0 の中の 1 本） | 満たす |
 | アーキテクチャテスト AT-01〜06 が通る | AT-01: `DomainArchitectureTest`。AT-02: `LayerArchitectureTest`。AT-03: `ModularityTest`。AT-04: `MapperSchemaArchitectureTest`。AT-05: `AcceptanceStepArchitectureTest`（Bolt 28）。AT-06: Gradle の `verifyProductionClasspath`（`check` に入る） | 満たす（AT-05 は議題 2） |
 | H2 で起動でき、PostgreSQL の統合テストが通る | `H2DevProfileSmokeTest`、`*IntegrationTest`（Testcontainers の PostgreSQL）。`check` のテスト 1602 件、失敗 0 | 満たす |
-| 社内デモで human:kakimomokuri が流れを確認する | 下の社内デモの台本に沿ってデモ環境で確かめる | 社内デモの待ち（議題 1） |
+| 社内デモで human:kakimomokuri が流れを確認する | 社内デモの台本に沿ってデモ環境で確かめた（2026-10-10、手順 1〜9） | 満たす（問題なし） |
 | （序盤）W1〜W4 のデモ項目の受入シナリオがすべて通る | `uiTest` の `@demo` のシナリオ。`./gradlew demoVideo` で全 Bolt の動画を撮り直せた | 満たす |
 | （序盤）ナビゲーションの骨格の E2E が通る | `layout_ui.feature`・`login_ui.feature`（全ルートへの到達、役割ごとの表示・非表示、権限なし） | 満たす |
 | （序盤）注釈の語彙と規則が定義されている | `DddAnnotationArchitectureTest`、`DomainEventArchitectureTest`、`LivingGlossaryConsistencyTest` | 満たす |
 | （序盤）JIG と Modulith の生成物が CI で生成されている | cargo-tracker の CI（`.github/workflows/cargo-tracker-ci.yml` の `./gradlew jigReports` が `build/jig/` を成果物に残す。Modulith の文書は `ModuleDocumentationTest`）と、mkdocs の配備のワークフロー（`mkdocs.yml`。ER 図の SchemaSpy と JIG） | 満たす |
-| （序盤）Release 0.1 のリリース条件を満たす | 表の最初の 5 行（Release 0.1 のリリース条件） | 社内デモの後に満たす |
+| （序盤）Release 0.1 のリリース条件を満たす | 表の最初の 5 行（Release 0.1 のリリース条件） | 満たす |
 
 ## 社内デモの台本
 
@@ -109,7 +111,7 @@ generated: { by: anthropic/claude-opus-5-5, at: 2026-10-10T09:03:46Z }
 | :--- | :--- |
 | `check`（`documentationTest` を含む） | 通過 |
 | `uiTest`（axe-core を含む） | 通過（実行時間のある方の XML で 80 本、失敗 0。T-79） |
-| CI（check・ui・デモ環境への配備） | `6f10e2d` は通過。開発レビューの対応のコミットは push の後に確かめる |
+| CI（check・ui・デモ環境への配備） | `6f10e2d`・`76c8b75` は通過 |
 | SonarQube（ローカル） | 品質ゲート PASS（新しいコードのカバレッジ 97.5%、重複 0.14%、新しい指摘 0 件。開発レビューの対応の前の解析。対応の後にも流す） |
 | `okf:check` | ERROR 0 |
 
@@ -164,6 +166,7 @@ generated: { by: anthropic/claude-opus-5-5, at: 2026-10-10T09:03:46Z }
 
 | 日付 | 更新内容 | 更新者 |
 | :--- | :--- | :--- |
+| 2026-10-10 | 社内デモ（デモ環境で台本の手順 1〜9。human:kakimomokuri）で流れを確かめ、問題なし。Release 0.1 のリリース条件と序盤の完了条件をすべて満たした。終了報告を承認した（議題 1〜7 を事後に承認） | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-10-10 | 初版（ステップ 1〜4 の結果、リリース条件と序盤の完了条件の根拠、社内デモの台本、承認の議題 1〜7、Try T-89） | anthropic/claude-opus-5-5 |
 
 ## 関連ドキュメント
