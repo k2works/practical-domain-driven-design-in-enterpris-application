@@ -243,6 +243,7 @@ nav:
       - 第 1 章 ドメイン駆動設計: article/01-ddd-fundamentals.md
       - 第 2 章 Cargo Tracker のドメインモデル: article/02-cargo-domain-model.md
       - 第 3 章 Spring Platform × モジュラーモノリス: article/03-spring-modular-monolith.md
+      - ウォーキングスケルトンのガイドツアー: article/walking-skeleton-tour.md
   - リファレンス:
       - 概要: reference/index.md
       - よいソフトウェアとは: reference/よいソフトウェアとは.md
