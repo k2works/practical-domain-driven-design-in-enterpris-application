@@ -1890,6 +1890,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="ユーザーストーリーとシナリオの対応">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#release-01" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Release 0.1 の受入条件
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -9149,6 +9166,11 @@
 <td style="text-align: left;">—</td>
 </tr>
 <tr>
+<td style="text-align: left;"><code>@main-flow</code></td>
+<td style="text-align: left;">主成功の流れ（一般貨物 1 件が提出から追跡の照会まで画面で縦に通る。Bolt 28）。流れの通しを確かめる機能で、<code>@US-nn</code> を付けない例外（前例は <code>layout_ui.feature</code>）</td>
+<td style="text-align: left;">—</td>
+</tr>
+<tr>
 <td style="text-align: left;"><code>@wip</code></td>
 <td style="text-align: left;">作業中。CI の必須の実行から外す</td>
 <td style="text-align: left;">—</td>
@@ -9568,8 +9590,8 @@ src/test/java/.../shared/acceptance/      共通ステップ（ログイン、�
 </tr>
 <tr>
 <td style="text-align: left;">AT-05</td>
-<td style="text-align: left;">ステップ定義は自分のコンテキストの入力ポートと公開 API だけを呼ぶ</td>
-<td style="text-align: left;">ArchUnit</td>
+<td style="text-align: left;">業務のルールの層のステップ定義（<code>&lt;コンテキスト&gt;.acceptance</code>）は、自分のコンテキストのアプリケーション層・ドメイン層と共有カーネル、他のコンテキストの公開 API にだけ依存し、自分のインフラストラクチャ層・画面と他のコンテキストの内部に依存しない（入力ポートのほか、コマンドの組み立てと結果の確かめにドメインの値オブジェクト・集約を使うことは認める。画面の層のステップ定義は対象外）</td>
+<td style="text-align: left;">ArchUnit（<code>AcceptanceStepArchitectureTest</code>。Bolt 28 で、Bolt 2 から後に回していたものを実態に合わせて作った）</td>
 <td style="text-align: left;">本書 BDD</td>
 </tr>
 <tr>
@@ -10172,6 +10194,160 @@ src/test/java/.../shared/acceptance/      共通ステップ（ログイン、�
 </tbody>
 </table>
 <p>合計で受入条件は 120 件（横断の 7 件と Golden dataset を除く）、<code>@ui</code> が 15 フロー前後になる見込みである。</p>
+<h3 id="release-01">Release 0.1 の受入条件<a class="headerlink" href="#release-01" title="Permanent link">&para;</a></h3>
+<p>Release 0.1 の範囲（Release 0.1 のマイルストーンの Issue の題名の範囲）の受入条件と、それを確かめるシナリオのタグ。<code>AcceptanceCriteriaCoverageTest</code>（<code>documentationTest</code>）が、各行のタグに <code>@wip</code> でないシナリオがあることを照合する（Bolt 28。Bolt 2 レビュー R-17）。Release 1.0 では、Must の全受入条件の表を足して照合を広げる。</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">ストーリー</th>
+<th style="text-align: left;">受入条件</th>
+<th style="text-align: left;">確かめるもの</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">US-01</td>
+<td style="text-align: left;">AC1</td>
+<td style="text-align: left;"><code>@US-01-AC1</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">US-01</td>
+<td style="text-align: left;">AC2</td>
+<td style="text-align: left;"><code>@US-01-AC2</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">US-01</td>
+<td style="text-align: left;">AC4</td>
+<td style="text-align: left;"><code>@US-01-AC4</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">US-02</td>
+<td style="text-align: left;">AC1</td>
+<td style="text-align: left;"><code>@US-02-AC1</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">US-02</td>
+<td style="text-align: left;">AC2</td>
+<td style="text-align: left;"><code>@US-02-AC2</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">US-02</td>
+<td style="text-align: left;">AC3</td>
+<td style="text-align: left;"><code>@US-02-AC3</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">US-03</td>
+<td style="text-align: left;">AC1</td>
+<td style="text-align: left;"><code>@US-03-AC1</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">US-03</td>
+<td style="text-align: left;">AC2</td>
+<td style="text-align: left;"><code>@US-03-AC2</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">US-03</td>
+<td style="text-align: left;">AC3</td>
+<td style="text-align: left;"><code>@US-03-AC3</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">US-03</td>
+<td style="text-align: left;">AC4</td>
+<td style="text-align: left;"><code>@US-03-AC4</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">US-03</td>
+<td style="text-align: left;">AC5</td>
+<td style="text-align: left;"><code>@US-03-AC5</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">US-24</td>
+<td style="text-align: left;">AC1</td>
+<td style="text-align: left;"><code>@US-24-AC1</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">US-24</td>
+<td style="text-align: left;">AC4</td>
+<td style="text-align: left;"><code>@US-24-AC4</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">US-24</td>
+<td style="text-align: left;">AC5</td>
+<td style="text-align: left;"><code>@US-24-AC5</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">US-06</td>
+<td style="text-align: left;">AC1</td>
+<td style="text-align: left;"><code>@US-06-AC1</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">US-06</td>
+<td style="text-align: left;">AC2</td>
+<td style="text-align: left;"><code>@US-06-AC2</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">US-06</td>
+<td style="text-align: left;">AC3</td>
+<td style="text-align: left;"><code>@US-06-AC3</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">US-07</td>
+<td style="text-align: left;">AC1</td>
+<td style="text-align: left;"><code>@US-07-AC1</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">US-07</td>
+<td style="text-align: left;">AC2</td>
+<td style="text-align: left;"><code>@US-07-AC2</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">US-21</td>
+<td style="text-align: left;">AC1</td>
+<td style="text-align: left;"><code>@US-21-AC1</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">US-04</td>
+<td style="text-align: left;">AC1</td>
+<td style="text-align: left;"><code>@US-04-AC1</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">US-04</td>
+<td style="text-align: left;">AC2</td>
+<td style="text-align: left;"><code>@US-04-AC2</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">US-04</td>
+<td style="text-align: left;">AC4</td>
+<td style="text-align: left;"><code>@US-04-AC4</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">US-04</td>
+<td style="text-align: left;">重複確定の防止</td>
+<td style="text-align: left;"><code>@B-INV-11</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">US-12</td>
+<td style="text-align: left;">AC1</td>
+<td style="text-align: left;"><code>@US-12-AC1</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">US-12</td>
+<td style="text-align: left;">AC2</td>
+<td style="text-align: left;"><code>@US-12-AC2</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">US-09</td>
+<td style="text-align: left;">AC1</td>
+<td style="text-align: left;"><code>@US-09-AC1</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">US-18</td>
+<td style="text-align: left;">AC2</td>
+<td style="text-align: left;"><code>@US-18-AC2</code></td>
+</tr>
+</tbody>
+</table>
+<p>注: US-18 は Release 0.1 の #6 の AC2 だけを照合に入れる。Bolt 14 で Release 1.0 の #13 から前倒しした AC1 の password と session の部分・AC4・AC5 は、セキュリティの統合テストなどに移した（<code>AuthenticationSecurityIntegrationTest</code>・<code>SessionLifetimeFilterTest</code>・<code>UserTest</code>・<code>AuditRecordTest</code>）。Release 1.0 の表で扱う。主成功の流れ（<code>main_flow_ui.feature</code>、<code>@main-flow</code>）は流れの通しを確かめるシナリオで、受入条件のタグを付けない（照合の数に入れない）。</p>
 <h2 id="_18">後続工程への引継ぎ<a class="headerlink" href="#_18" title="Permanent link">&para;</a></h2>
 <table>
 <thead>

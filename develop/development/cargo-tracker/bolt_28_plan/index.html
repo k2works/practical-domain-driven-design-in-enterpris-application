@@ -9027,22 +9027,40 @@
 <h2 id="_9">ステップ計画<a class="headerlink" href="#_9" title="Permanent link">&para;</a></h2>
 <p>状態の記号: <code>[ ]</code> 未着手、<code>[-]</code> 進行中、<code>[?]</code> 承認待ち、<code>[x]</code> 完了。各ステップの終わりに <code>check</code> が緑であることと、計画からの変更を設計文書に反映したこと（T-53）を確かめ、push して CI を確かめる（T-26、T-65）。コミットの前に、そのステップのファイルだけをステージしているか確かめる（T-84）。</p>
 <ul class="task-list">
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>1. 主成功の流れの <code>@ui</code> シナリオ</strong> 【承認ゲート: なし（<code>/goal</code>）】</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>1. 主成功の流れの <code>@ui</code> シナリオ</strong> 【承認ゲート: なし（<code>/goal</code>）】</li>
 <li><code>features/ui/main_flow_ui.feature</code>（新設。機能のタグは <code>@ui @must @main-flow</code>）に 1 本（<code>@demo @demo-bolt-28/main-flow</code>）。背景は使わず、流れの全段階をシナリオの手順として書く: 航海と接続時間規則がある → 荷主が見積依頼を提出 → 営業担当者が審査を確定し見積りを算出して提示 → 荷主が見積りへの回答で詳細経路設計へ進む → 経路設計者が候補を算出して直行の候補で確定 → 荷主が見積りと経路を承認 → 営業担当者が予約の確定待ちから本予約を確定し追跡の開始の完了を待つ → 追跡管理者が集荷の実績を登録 → 荷主担当者が予約一覧の先頭の追跡番号から照会の結果を開き、現在の状態「集荷済み」と主要実績「集荷、JPTYO」と出典を確かめる → 営業担当者が KPI 計測記録で提出時刻と最初の提示時刻を確かめる。axe-core 0 件</li>
 <li>既存のステップの文言をそのまま使う（仮説 H1。足すステップ定義は 0 の見込み。足したら数と理由を結果に書く）</li>
 <li>後片付けのフック（<code>RoutingUiSteps</code> の After）の条件に <code>@US-04</code> と <code>@main-flow</code> を足す（航海を作る背景・手順のシナリオで航海が残らないように）</li>
 <li>Red の扱い（T-88）: 既存の振る舞いの組み合わせなので、最初から通る見込みの「確認のシナリオ」とする。ステップの文言を書き終えた時点で一度流し、未定義のステップ（Undefined）があればそれを Red として確かめてから足す</li>
 <li>完了の判定: <code>uiTest</code> でこのシナリオが通る（実行時間のある方の XML で件数を数える。T-79）</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>2. Release 0.1 の受入条件とシナリオの照合</strong> 【承認ゲート: なし（<code>/goal</code>）】</li>
+<li>結果（2026-10-10）<ul>
+<li><code>features/ui/main_flow_ui.feature</code>（<code>@ui @must @main-flow</code>、シナリオ <code>@demo @demo-bolt-28/main-flow</code>）。全段階を手順に書き、段階ごとにコメントで区切った。足したステップ定義は 0（仮説 H1 のとおり）。本番のコードの変更も 0</li>
+<li>後片付けのフック（<code>RoutingUiSteps</code>）の条件に <code>@US-04</code> と <code>@main-flow</code> を足した</li>
+<li>確認のシナリオ（T-88）: 未定義のステップはなく、最初の実行で通った。<code>uiTest</code> は実行時間のある方の XML で 80 本（+1）が通り、失敗 0（T-79）</li>
+</ul>
+</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>2. Release 0.1 の受入条件とシナリオの照合</strong> 【承認ゲート: なし（<code>/goal</code>）】</li>
 <li>テスト戦略に「Release 0.1 の受入条件」の表を足す（ストーリー・受入条件・確かめるもの）。範囲は Release 0.1 のマイルストーンの Issue の題名のとおり: US-01 AC1・AC2・AC4、US-02 AC1〜AC3、US-03 AC1〜AC5、US-24 AC1・AC4・AC5、US-06 AC1〜AC3、US-07 AC1・AC2、US-21 AC1、US-04 AC1・AC2・AC4 と重複確定の防止（<code>@B-INV-11</code>）、US-12 AC1・AC2、US-09 AC1、US-18 AC2（#6）。US-18 の AC1 の password と session の部分・AC4・AC5 は Release 1.0 の #13 から前倒しした分で、Release 0.1 の範囲の外として表の注に移し先（<code>AuthenticationSecurityIntegrationTest</code>・<code>SessionLifetimeFilterTest</code>・<code>UserTest</code>・<code>AuditRecordTest</code>）を書く（照合の数に入れない）</li>
 <li>照合のテスト（<code>documentation</code> パッケージ、<code>@Tag("documentation")</code>）: 表の受入条件のうちシナリオで確かめるものに、そのタグのシナリオがあり、<code>@wip</code> のシナリオがないこと。移し先の行は、そのテストのクラスが実在すること。表が空でないこと（T-85）。<code>build.gradle</code> の <code>documentationTest</code> の入力に test_strategy.md と <code>src/test/resources/features</code> を足し、test_strategy.md の場所をシステムプロパティで渡す</li>
 <li>Red の代わり（T-88）: 表に存在しない受入条件（例: <code>US-09-AC9</code>）を一時的に足して落ちることを確かめてから外す</li>
 <li>完了の判定: <code>check</code>（<code>documentationTest</code> を含む）緑、T-53</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>3. Release 0.1 のリリース条件と序盤の完了条件の確認</strong> 【承認ゲート: なし（<code>/goal</code>）】</li>
+<li>結果（2026-10-10）<ul>
+<li>テスト戦略に「Release 0.1 の受入条件」の表（28 行。US-04 の重複確定の防止は <code>@B-INV-11</code>、US-18 は #6 の AC2 だけで前倒し分は注に移し先）と、タグの規約に <code>@main-flow</code> を足した</li>
+<li><code>AcceptanceCriteriaCoverageTest</code>（<code>documentation</code>）: 表の各行のタグに <code>@wip</code> でないシナリオがあること、表が空でないこと（T-85）。<code>documentationTest</code> の入力に test_strategy.md と features を足し、場所をシステムプロパティで渡した</li>
+<li>Red: 表を足す前に流し、表が空で落ちることを確かめた。表を足して通した後、存在しない受入条件（<code>US-09-AC9</code>）を一時的に足して落ちることを確かめてから戻した（T-88）</li>
+</ul>
+</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>3. Release 0.1 のリリース条件と序盤の完了条件の確認</strong> 【承認ゲート: なし（<code>/goal</code>）】</li>
 <li><code>check</code>（<code>documentationTest</code>・AT-01〜06・ModularityTest・ArchUnit・PostgreSQL の統合テスト・H2 の起動の確認を含む）と <code>uiTest</code>（ナビゲーションの骨格の E2E とデモ項目のシナリオを含む）を流す</li>
 <li>生成物はワークフローごとに確かめる: JIG と Modulith の文書は cargo-tracker の CI（または <code>documentationTest</code> の生成）、ER 図（SchemaSpy）は mkdocs の配備のワークフロー（開発戦略では週次の生成）</li>
 <li>リリース条件と序盤の完了条件の各項目に、根拠（テストのクラス・シナリオのタグ・件数・CI の実行）を対応させた表を作る（終了報告に置く）</li>
 <li>完了の判定: すべての項目に根拠がある。欠けがあれば人に諮る</li>
+<li>結果（2026-10-10）<ul>
+<li><code>check</code> 緑（テスト 1602 件、失敗 0。AT-01〜04・06、ModularityTest、PostgreSQL の統合テスト、H2 の起動の確認 <code>H2DevProfileSmokeTest</code>、<code>documentationTest</code> を含む）</li>
+<li><strong>欠けの発見と人の判断</strong>: リリース条件の「AT-01〜06」のうち、AT-05（ステップ定義の依存）は Bolt 2 で後に回したまま、アーキテクチャテストになっていなかった。人に諮り、「実態に合わせて作る」と決まった。<code>AcceptanceStepArchitectureTest</code>（業務のルールの層のステップ定義は自分のコンテキストのアプリケーション層・ドメイン層・共有カーネルと他のコンテキストの公開 API にだけ依存し、自分のインフラストラクチャ層・画面と他のコンテキストの内部に依存しない）を作り、テスト戦略の AT-05 の記述を直した。いまのステップ定義に違反はなく、違反を一時的に入れて落ちることを確かめてから戻した</li>
+<li>リリース条件と序盤の完了条件の根拠の表は終了報告に置く</li>
+</ul>
+</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>4. 社内デモと終了報告</strong> 【承認ゲート: 社内デモ、終了報告】</li>
 <li>設計文書（T-53。開発レビューの依頼より先に反映する。Bolt 27b の Problem）: test_strategy.md（Release 0.1 の受入条件の表、タグの規約に <code>@main-flow</code>（主成功の流れ。<code>@US-nn</code> を付けない例外。前例は <code>layout_ui.feature</code>）、<code>@ui</code> の主要フローの「見積依頼から本予約まで」の行に Bolt 28 の主成功の流れ（Release 0.1 はメール通知（US-22）を含まない。照会と KPI まで進む）と対応に US-09・US-12・US-21、US-21 の <code>@ui</code> の欄（<code>kpi_observations_ui.feature</code> がある））、development_strategy.md（序盤の完了条件のチェック）、release_plan.md（Release 0.1 のリリース条件のチェック、W4 の 28 の行と進捗）</li>
 <li>開発レビュー（<code>developing-review</code>。プログラマー（照合のテストとステップ定義。テスター・アーキテクトの観点を含む）とテクニカルライター（デモの台本、シナリオの読みやすさ））、SonarQube（<code>sonar-local:check</code>）、受入動画（<code>./gradlew demoVideo</code>。過去の Bolt の動画は元に戻す）</li>
