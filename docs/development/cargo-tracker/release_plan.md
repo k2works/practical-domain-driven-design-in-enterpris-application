@@ -4,7 +4,7 @@ title: "リリース計画 - cargo-tracker（A 社国際貨物輸送管理シス
 description: "cargo-tracker MVP のリリース計画。1 人 + AI、時間単位の Bolt（= イテレーション）と週次の見直しで、最初の縦の流れ（R0.1）、パイロット準備完了（R1.0）、本格展開前（R1.1）の 3 段階、Unit のエントロピー評価、SP、バッファ、パイロット開始の条件、引継ぎ ID の台帳、業務責任者に確かめる事項の台帳。"
 tags: [development,release-plan]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-10T07:56:47Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-10T08:10:06Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T09:29:53Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:38:26Z }
@@ -481,7 +481,7 @@ AI-DLC では **Bolt がイテレーション** である（[AI-DLC 導入ガイ
 | 26c | US-12 の画面。S-13 の登録、S-12 の主要実績の一覧、AC2 の既存の記録の表示、画面の層のシナリオと受入動画、`tracking_record` の NULL 可の列の見直しと根拠の実績番号の外部キー、Bolt 26 の画面の既知の課題（U-4「→」の読み上げ、U-6、予定と実績の並べ方）。#11 を閉じる。[Bolt 26c 計画](bolt_26c_plan.md)（2026-10-10 に承認済み。`/goal` で進めた）、[Bolt 26c 終了報告](bolt_26c_report.md)（完了、2026-10-10 に承認済み。#11 をクローズした） | 3 | アウトサイドイン | 画面、スキーマ、Red・Green ごと（入力の検証） |
 | 27 | US-09 AC1 照会（現在状態・予定・主要実績・出典・取得時刻。自社に許可された予約に限る BR-07）（[#12](https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/12)）。[Bolt 27 計画](bolt_27_plan.md)（`/goal` で進めた）、[Bolt 27 終了報告](bolt_27_report.md)（完了、2026-10-10 に承認済み） | 3 | アウトサイドイン | Red・Green ごと（開示制御）、認可、スキーマ（索引） |
 | 27b | C-06 予約一覧の最小の表示（荷主。自社の本予約と追跡番号、行から C-10 の照会の結果へ。Bolt 25b の S-10 の前例）。Bolt 27 の終了報告の承認の場で、荷主のナビの「予約」が準備中のままと指摘されて足した（2026-10-10）。[Bolt 27b 計画](bolt_27b_plan.md)（承認済み）、[Bolt 27b 終了報告](bolt_27b_report.md)（完了、2026-10-10 に承認済み） | 0 | アウトサイドイン | 画面、Red・Green ごと（照会と開示制御）、認可 |
-| 28 | 主成功の流れの `@ui` シナリオと Release 0.1 のデモ。序盤の完了条件（開発戦略）と Release 0.1 のリリース条件を確かめる | 0 | アウトサイドイン | `/goal` |
+| 28 | 主成功の流れの `@ui` シナリオと Release 0.1 のデモ。序盤の完了条件（開発戦略）と Release 0.1 のリリース条件を確かめる。受入条件とシナリオの照合（Bolt 2 レビュー R-17 の持ち越し）を作る。[Bolt 28 計画](bolt_28_plan.md)（承認待ち） | 0 | アウトサイドイン | `/goal` |
 
 US-04 の SP 5 は、サガの成功の経路を閉じて #10 をクローズする Bolt 25 で数える（Bolt 23・24・25 の SP の分け方は目安だったので、表は Bolt 25 に 5 を寄せた。2026-10-09）。予約サガの再試行（RTY-02）・有人確認要・有人案件の起票（BR-17）は W4 で作らない。状態の値は Bolt 23 の計画で決め、有人案件の起票は US-20 の W8 に回す
 
@@ -491,7 +491,7 @@ US-04 の SP 5 は、サガの成功の経路を閉じて #10 をクローズす
 
 **デモ項目**: 本予約の確定（重複確定の防止を含む）から追跡の開始・実績の登録・荷主の照会まで（Release 0.1 のデモ）。`@US-04`、`@US-12`、`@US-09`、`@ui` の主成功シナリオ
 
-**ユーザーマニュアル**: Bolt 28（主成功の流れの `@ui` シナリオと Release 0.1 のデモ）の次に、`docs/manual` を作る（2026-10-08 に human:kakimomokuri が決定。`creating-manual`。2026-10-10 に human:kakimomokuri が時期を「W4 の完了の後」から「Bolt 28 の次」に改めた。Release 0.1 の縦の流れがそろった時点で画面を撮る）
+**ユーザーマニュアル**: Bolt 28（主成功の流れの `@ui` シナリオと Release 0.1 のデモ）の次に、`docs/manual` を作る（2026-10-08 に human:kakimomokuri が決定。`creating-manual`。2026-10-10 に human:kakimomokuri が時期を「W4 の完了の後」から「Bolt 28 の次」に改めた。Release 0.1 の縦の流れがそろった時点で画面を撮る）。ユーザーマニュアルの次に、ウォーキングスケルトンのガイドツアーを記事として `docs/article` に足す（2026-10-10 に human:kakimomokuri が決定。`creating-article`）
 
 **主なタスク**:
 
@@ -503,8 +503,9 @@ US-04 の SP 5 は、サガの成功の経路を閉じて #10 をクローズす
 - [x] Bolt 26b・26c: US-12（AC1、AC2）。[Bolt 26c 計画](bolt_26c_plan.md)、[Bolt 26c 終了報告](bolt_26c_report.md)（完了、2026-10-10 に承認済み。#11 をクローズして SP 3 を数えた）。[Bolt 26b 計画](bolt_26b_plan.md)、[Bolt 26b 終了報告](bolt_26b_report.md)（26b は業務のルールと永続化。完了、2026-10-10 に承認済み。26c は画面）
 - [x] Bolt 27: US-09（AC1）。[Bolt 27 計画](bolt_27_plan.md)（`/goal` で進めた）、[Bolt 27 終了報告](bolt_27_report.md)（完了、2026-10-10 に承認済み。#12 をクローズして SP 3 を数えた。他社・存在しない追跡番号の 404 は C-10 の案内にし、区切りの付いた追跡番号を受け付ける（開発レビューの判断））
 - [x] Bolt 27b: C-06 予約一覧の最小の表示（荷主。Bolt 27 の終了報告の承認の場で足した）。[Bolt 27b 計画](bolt_27b_plan.md)（承認済み）、[Bolt 27b 終了報告](bolt_27b_report.md)（完了、2026-10-10 に承認済み。SP 0。受入動画は #10 に添付した）
-- [ ] Bolt 28: 主成功の流れの `@ui` シナリオと Release 0.1 のデモ
+- [ ] Bolt 28: 主成功の流れの `@ui` シナリオと Release 0.1 のデモ。[Bolt 28 計画](bolt_28_plan.md)（承認待ち）
 - [ ] ユーザーマニュアル（`docs/manual`）の作成（Bolt 28 の次。2026-10-10 に human:kakimomokuri が決定）
+- [ ] ウォーキングスケルトンのガイドツアーの記事（`docs/article` に追加。`creating-article`）の作成（ユーザーマニュアルの次。2026-10-10 に human:kakimomokuri が決定）
 - [x] ベロシティと承認ゲートの密度の見直し（W4 の開始時。「ベロシティ検証計画」）
 - [ ] W4 の締め: Release 1.0 の計画の引き直し、Release 0.1 の実績による Release 1.0 の承認ゲートの密度の決め直し、Release 0.1 のリリース完了報告書
 
@@ -746,3 +747,4 @@ xychart-beta
 | 2026-10-08 | Bolt 23 の開始準備: 整合性検証の指摘で、画面（S-09・S-24・S-02）を Bolt 23b に分け、B-INV-11 の UK を Bolt 23 に前倒しし、予約サガは ADR-003 を改訂すると決めた。`booking` の依存を見積りの `api` だけにした | anthropic/claude-opus-5-5、決定 human:kakimomokuri |
 | 2026-10-09 | Bolt 24 終了報告の承認（議題 1〜9）を記録し、Bolt 24 を終えた。台帳に D-85（承認の後に失効した見積りの再見積りの規則）を足した | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-10-10 | Bolt 27・27b を終えた（#12 をクローズして US-09 の R0.1 の SP 3 を数えた。27b は承認の場の指摘で足した C-06 予約一覧、SP 0）。ユーザーマニュアル（`docs/manual`）の作成の時期を、人の指示で「W4 の完了の後」から「Bolt 28 の次」に改めた | anthropic/claude-opus-5-5、指示 human:kakimomokuri |
+| 2026-10-10 | ユーザーマニュアルの次に、ウォーキングスケルトンのガイドツアーの記事（`docs/article`）を作るタスクを W4 に足した | anthropic/claude-opus-5-5、指示 human:kakimomokuri |
