@@ -3,7 +3,10 @@ type: Plan
 title: "Bolt 26c 計画 - 主要実績の登録の画面（US-12 AC1・AC2。S-13 の登録と S-12 の主要実績の一覧）"
 description: "26c 回目の Bolt の計画。S-13 主要実績の登録、S-12 の主要実績の一覧と「実績を登録」、AC2 の既存の記録の表示、画面の層の受入シナリオと受入動画、「→」の読み上げ（U-4）、tracking_record の NULL 可の 4 列の NOT NULL 化と根拠の実績番号の外部キーを、画面の層の受入シナリオ・画面・スキーマの順に、ステップ 1〜4 で定義する。US-12 の R0.1 を終えて #11 を閉じる。"
 tags: [development,bolt-plan]
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-10T01:46:19Z }
+status: stable
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-10T01:50:20Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-10-10T01:50:21Z }
 ---
 
 # Bolt 26c 計画 - 主要実績の登録の画面（US-12 AC1・AC2。S-13 の登録と S-12 の主要実績の一覧）
@@ -278,6 +281,7 @@ S13 --> S12 : 追跡の詳細へ戻る
 
 | 日付 | 更新内容 | 更新者 |
 | :--- | :--- | :--- |
+| 2026-10-10 | 計画を承認した（確認ポイント 1〜18 は推奨のとおり。確認必須のスキーマの 3・4 も含む。T-80） | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-10-10 | 開始準備の整合性検証（計画と設計 15 件、横断 17 件）の指摘を反映した。主な修正は次のとおり。<br>- U-4・U-6 を 26b の承認済みの決定どおり範囲に戻した。<br>- デモ環境の DB の確認の手順を事実に合わせて外した。<br>- 外部キーを PostgreSQL だけに張る案にした（前例 `fk_quotation_replaced_by`）。<br>- AC2 の前例を Bolt 24 に差し替えた。<br>- 競合の文言を経路設計の型にそろえた。<br>- 競合表示からの逸脱を記録した。<br>- エラー要約へのフォーカス。<br>- `DateTimeDisplay.ZONE`。<br>- 場所の規則。<br>- 状態遷移図とドメインの型。<br>- 設計文書の一覧（domain_model.md、画面遷移図、S-13 の salt）。<br>- ARCH-HO-01 の例外。<br>- 403 のテスト。<br>- #11 のコメント。 | anthropic/claude-opus-5-5 |
 | 2026-10-10 | 初版作成（承認待ち） | anthropic/claude-opus-5-5 |
 
