@@ -3,8 +3,10 @@ type: Plan
 title: "Bolt 27b 計画 - C-06 予約一覧の最小の表示（荷主）"
 description: "27b 回目の Bolt の計画。荷主のナビの「予約」の準備中の画面を C-06 予約一覧の最小の表示（自社の本予約の追跡番号・見積依頼・確定時刻・追跡、新しい順）に置き換え、追跡が始まっていれば C-10 の照会の結果へつなぐまでを、画面の層の受入シナリオ・荷主の照会・画面と認可・永続化の順に、ステップ 1〜5 で定義する。他社の予約は出さない（BR-07）。"
 tags: [development,bolt-plan]
-status: draft
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-10T06:16:12Z }
+status: stable
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-10T06:22:17Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-10-10T06:22:16Z }
 ---
 
 # Bolt 27b 計画 - C-06 予約一覧の最小の表示（荷主）
@@ -253,6 +255,7 @@ C06 --> C04 : 見積依頼のリンク
 
 | 日付 | 更新内容 | 更新者 |
 | :--- | :--- | :--- |
+| 2026-10-10 | 計画を承認した（確認ポイントはすべて推奨のとおり。確認必須の認可（確認ポイント 8）は事前に判断を受けた。T-80） | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-10-10 | 開始準備の整合性検証（計画と設計 12 件、横断 11 件）の指摘を反映した。主な修正は次のとおり。<br>- 準備中の画面: `login_ui.feature` の準備中のシナリオの項目を直す、`@GetMapping` の正規表現からも外す。<br>- 追跡の列の語: 「準備中」をやめ「追跡の開始待ち」に。<br>- 上限の判定: `RecentBookings` に寄せて重ねない。<br>- BC の独立: リンクは URL の文字列、`allowedDependencies` は変えない。<br>- 画面の層: デモと幅 320 CSS px のシナリオを分ける、荷主に切り替えるステップ。<br>- 社内の識別子: 型の部品名の見張りのテスト。<br>- 確認ポイント 15（見積依頼の列とリンクの名前）・16（C-10 からの戻り）を足した。<br>- 引き継ぎ: Bolt 25b の確定時刻の表記（未決）。<br>- 設計文書の反映の一覧（処理中表示、予約の節、索引、Javadoc）。<br>- 承認ゲートと局面の列挙は開始準備の同期で release_plan を直す。 | anthropic/claude-opus-5-5 |
 | 2026-10-10 | 初版作成（承認待ち） | anthropic/claude-opus-5-5 |
 
