@@ -3,8 +3,10 @@ type: Report
 title: "Bolt 29c 終了報告 - 本予約の確定と経路候補の比較の画面の語（#46 の後半）"
 description: "29c 回目の Bolt の終了報告。S-09 の見出しと貨物の要約を画面の語にし、貨物の日本語名と重量・容積の書式を見積りの application 層の CargoDisplayNames にまとめて見積依頼の画面もそろえ、S-06・S-07 の参照情報版を「参照した航海情報の版」と示した結果。開発レビューの対応、品質ゲート、ふりかえり、承認の議題を記す。#46 を閉じる。"
 tags: [development,bolt-report]
-status: draft
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-11T07:04:07Z }
+status: stable
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-11T07:47:22Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-10-11T07:47:22Z }
 ---
 
 # Bolt 29c 終了報告 - 本予約の確定と経路候補の比較の画面の語（#46 の後半）
@@ -129,6 +131,7 @@ Bolt 30: ADR-011 の採否と、`identity` に TOTP の資格・回復コード�
 
 | 日付 | 更新内容 | 更新者 |
 | :--- | :--- | :--- |
+| 2026-10-11 | 終了報告を承認した（議題 1〜4 を承認）。#46 を閉じた | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-10-11 | 初版作成（承認待ち） | anthropic/claude-opus-5-5 |
 
 ## 関連ドキュメント

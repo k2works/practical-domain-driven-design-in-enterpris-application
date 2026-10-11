@@ -4,9 +4,10 @@ title: "Bolt 29c 計画 - 本予約の確定と経路候補の比較の画面の
 description: "W5 の 3 本目の Bolt の計画。#46 の残りの 2 か所、S-09 の見出し「確定条件（BR-01）」と貨物の要約「GENERAL / PALLET × 12 / 8400.000 kg / 32.500 m3」、S-06 の「参照情報版」を、画面の語に直す。貨物の日本語名は見積りの application 層に置き、要約の数値の書き方も直す。UI 設計とマニュアル 7・8 章・キャプチャ 4 枚を合わせ、#46 を閉じる。"
 tags: [development,bolt-plan]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-11T07:04:07Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-11T07:47:22Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-11T06:10:53Z }
+  - { by: human:kakimomokuri, at: 2026-10-11T07:47:22Z }
 ---
 
 # Bolt 29c 計画 - 本予約の確定と経路候補の比較の画面の語（#46 の後半）
@@ -148,11 +149,11 @@ BookableQuotationQueryService ..> summary : 公開 API の結果で写す
   - マニュアル（`creating-manual`）: 8 章 8.2 の ⑥・8.3 の ②（画面の語「参照した航海情報の版」）。7 章は文の変更なし（貨物の書式を書いた文がない。キャプチャだけ）。`./gradlew manualScreenshots` で撮り、変わる画面のキャプチャだけを残す: `07-booking-new.png`、`07-booking-detail.png`、`08-candidates.png`、`08-confirmation.png`、`08-confirmed.png` と、条件の表が写る `03-request-detail-submitted.png`、`04-request-detail-*.png`（4 枚）、`05-request-detail-booked.png`、`06-review.png`、S-04 の `06-quotation-*.png`（条件の表が写れば）。ほかの画像と日時だけが違う画像は元に戻す。残す前に画像を目で確かめる
   - 完了の判定: `check` 緑、`okf:check` ERROR 0
   - 結果（2026-10-11）: 8 章 8.2 の ⑥・8.3 の ② を直した。`manualScreenshots` で撮り、変わる画面の 14 枚（3・4・5・6 章の条件の表が写る 9 枚と、7・8 章の 5 枚）だけを残した。S-09・S-06・S-03 の画像を目で確かめた
-- [?] **5. 開発レビューと終了報告** 【承認ゲート: 終了報告】
+- [x] **5. 開発レビューと終了報告** 【承認ゲート: 終了報告】
   - 開発レビュー（`developing-review`。プログラマー（層と依存、書式の境界値）、テクニカルライター（T-90。画面に実装の語や業務ルールの番号が残っていないか、マニュアルと画面の一致）。リンクと画面遷移を変えないのでインタラクションデザイナーの観点は外す）。レビューにキャプチャを渡す
   - SonarQube（`sonar-local:check`。手順書の 9 節のとおり起動）
   - `bolt_29c_report.md`。release_plan の W5 の 29c の行と進捗、開発の索引を更新する。承認の後に #46 を閉じる
-  - 結果（2026-10-11）: 2 つの観点でレビューし（必須 0・推奨 6・任意 6）、推奨 5 件と任意 3 件を直した（`92badaf`）。SonarQube PASS（Code Smell 0）。[Bolt 29c 終了報告](bolt_29c_report.md)（承認待ち）
+  - 結果（2026-10-11）: 2 つの観点でレビューし（必須 0・推奨 6・任意 6）、推奨 5 件と任意 3 件を直した（`92badaf`）。SonarQube PASS（Code Smell 0）。[Bolt 29c 終了報告](bolt_29c_report.md)（2026-10-11 に承認済み）
 
 ### 時間の配分と打ち切り
 
@@ -187,7 +188,7 @@ BookableQuotationQueryService ..> summary : 公開 API の結果で写す
 - [x] マニュアル 8 章を直し、変わる画面のキャプチャを `manualScreenshots` で撮り直した
 - [x] `check`・`uiTest` が緑。push して CI を確かめた（`92badaf`、run 200）
 - [x] SonarQube の Quality Gate が PASS、`okf:check` ERROR 0
-- [ ] 開発レビュー（T-90 の観点を含む）と終了報告。承認の後に #46 を閉じた
+- [x] 開発レビュー（T-90 の観点を含む）と終了報告。承認の後に #46 を閉じた
 
 ### デモ項目
 
@@ -197,6 +198,7 @@ BookableQuotationQueryService ..> summary : 公開 API の結果で写す
 
 | 日付 | 更新内容 | 更新者 |
 | :--- | :--- | :--- |
+| 2026-10-11 | 終了報告を承認し、完了条件をすべて満たした。#46 を閉じた | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-10-11 | ステップ 1〜4 と開発レビューの対応を終え、終了報告を書いた（承認待ち） | anthropic/claude-opus-5-5 |
 | 2026-10-11 | 計画を承認した（確認ポイントはすべて推奨のとおり） | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-10-11 | 開始準備の整合性検証（計画と設計 8 件・横断 7 件。高 1: S-06 の語は S-07 にも出る）を反映し、human:kakimomokuri の決定（重量・容積の書式を 1 か所にまとめて見積依頼の画面もそろえる）で範囲を広げた。S-07・UI:173・8.3、条件の表の数値、適合の根拠のテスト、画面の層のステップの文、指数の表記の境界値、architecture_backend.md と公開 API の Javadoc、UI の「画面の語 / ドメインの概念」の表、SP 0、DoD の `okf:check` | anthropic/claude-opus-5-5、決定 human:kakimomokuri |

@@ -62,7 +62,7 @@ Bolt がイテレーションに当たります。ふりかえりは各 Bolt の
 | 28 | [主成功の流れの `@ui` シナリオと Release 0.1 のデモ](bolt_28_plan.md) | [終了報告](bolt_28_report.md)（[動画](../../assets/demo/bolt-28/main-flow.webm){:target="_blank"}） | W4 | 完了 |
 | 29 | [画面の層のステップ定義のキー操作の部品を 1 か所に集める（#45）](bolt_29_plan.md) | [終了報告](bolt_29_report.md) | W5 | 完了 |
 | 29b | [マニュアルで見つけた画面の文言と表示の課題（#46 の前半）](bolt_29b_plan.md) | [終了報告](bolt_29b_report.md) | W5 | 完了 |
-| 29c | [本予約の確定と経路候補の比較の画面の語（#46 の後半）](bolt_29c_plan.md) | [終了報告](bolt_29c_report.md) | W5 | 終了報告の承認待ち |
+| 29c | [本予約の確定と経路候補の比較の画面の語（#46 の後半）](bolt_29c_plan.md) | [終了報告](bolt_29c_report.md) | W5 | 完了 |
 
 Bolt を始めるときに行を追加します。
 
