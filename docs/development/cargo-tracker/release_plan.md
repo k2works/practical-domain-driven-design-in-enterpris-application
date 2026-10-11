@@ -4,7 +4,7 @@ title: "リリース計画 - cargo-tracker（A 社国際貨物輸送管理シス
 description: "cargo-tracker MVP のリリース計画。1 人 + AI、時間単位の Bolt（= イテレーション）と週次の見直しで、最初の縦の流れ（R0.1）、パイロット準備完了（R1.0）、本格展開前（R1.1）の 3 段階、Unit のエントロピー評価、SP、バッファ、パイロット開始の条件、引継ぎ ID の台帳、業務責任者に確かめる事項の台帳。"
 tags: [development,release-plan]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-11T03:29:21Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-11T03:39:56Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T09:29:53Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:38:26Z }
@@ -563,7 +563,7 @@ US-04 の SP 5 は、サガの成功の経路を閉じて #10 をクローズす
 | D-85 荷主の承認の後に失効した見積りの再見積り | 承認済みの経路版を引き継ぎ、料金と有効期限だけを出し直す。経路設計者の作業は繰り返さない。出し直した見積りには荷主の再承認が要る | Bolt 35。注（設計への反映が必要）: domain_model.md の見積りの状態遷移（承認済みから失効した見積りが終端のまま。再見積りした見積りがどの状態を経て荷主の再承認に至るか）と「再見積りできない」の記述（domain_model.md:480）、UI 設計（S-02・S-04）、US-24 の受入シナリオ。「業務責任者に確かめる事項の台帳」の D-85 |
 | メール送信の部品の置き場所 | 設計どおり「通知（Notification）」モジュールを W5 で最小に作り、送信の公開 API を `notification.interfaces.api` に置く。`identity` の `allowedDependencies` に `notification :: api` を足す。W9 の通知（US-22）はこのモジュールを広げる。最初の決定（`platform` に送信のポートを置く）は、横断整合性検証で「コンテキストから `platform` を参照しない」「`platform` は `java..` にだけ依存する」の規則（architecture_backend.md:272、`LayerArchitectureTest`）に反すると分かり、決め直した。新しいモジュール（構造の変更）と外部連携なので、Bolt 33 の計画の承認の場で確認ポイントとして判断を受ける | Bolt 33。tech_stack.md（メール送信の行）、architecture_backend.md（モジュールの一覧の通知の行と `allowedDependencies`）、data_model.md（`notification.kind` の `PASSWORD_RESET`）、ModularityTest |
 | ADR-011（多要素認証は Spring Security 7 の要素の権限で組み、TOTP は java-otp で作る）の採否 | Bolt 30 の計画の承認の場で、スキーマとあわせて確認ポイントとして決める（Bolt 13 の決定どおり） | Bolt 30 |
-| Bolt 29 の分け方 | #45 と #46 を分ける。#46 は画面 6 か所の修正とマニュアル・キャプチャの撮り直しを伴い、合わせると半日を超える見込みのため | Bolt 29・29b |
+| Bolt 29 の分け方 | #45 と #46 を分ける（Bolt 29b の開始準備で、#46 をさらに 29b（テンプレートの 4 か所）と 29c（S-09・S-06）に分けた）。#46 は画面 6 か所の修正とマニュアル・キャプチャの撮り直しを伴い、合わせると半日を超える見込みのため | Bolt 29・29b |
 | US-18 AC9 の管理者経路 | システム管理者の別経路による TOTP の登録の解除と本人への通知を [#47](https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/47)（W6、US-16 の残りとあわせる）に分け、#13 は W5 の範囲でクローズする（US-24・US-04 の前例） | #47。W6 の行 |
 | session の失効の警告の範囲 | 失効の 5 分前の警告に加え、延長の操作と失効の時の入力の保持（ACC-06、横断の受入条件、テスト戦略）を W5 で入れる（Bolt 14 レビューの「W5 で必ず入れる」）。Bolt 32b に分ける | Bolt 32b |
 
@@ -578,7 +578,8 @@ US-04 の SP 5 は、サガの成功の経路を閉じて #10 をクローズす
 | Bolt | 範囲 | SP | アプローチ | 承認ゲート |
 | :--- | :--- | ---: | :--- | :--- |
 | 29 | 画面の層のステップ定義のキー操作の部品（`tabUntilFocused`。10 クラスに 6 通りの写しがある）を 1 か所に集める。画面の層の後片付けのフックの置き場所の見直し（[#45](https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/45)、T-87） | 0 | リファクタリング（`uiTest` の件数と結果が変わらないことで確かめる） | 計画・終了報告 |
-| 29b | マニュアルの作成で見つけた画面の文言と表示の課題（[#46](https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/46)）。S-09 の業務ルール番号と実装の語、KPI 計測記録（S-22）の見出し、S-06 の参照情報版、見積りへの回答の案内の重複、荷主の見積依頼の詳細の状態、「入口の一覧へ戻る」。マニュアルの該当の節とキャプチャ（`creating-manual`） | 0 | アウトサイドイン | 計画・終了報告 |
+| 29b | マニュアルの作成で見つけた画面の文言と表示の課題（[#46](https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/46)）の前半: S-22 の見出し、C-05 の案内の重複、C-02・S-02 の「入口の一覧へ戻る」、C-04 の予約確定済みの状態と案内（予約一覧へつなぐ。見積りは追跡の開始を知らないまま）。Bolt 28 の SonarQube の Code Smell。マニュアルの該当の節とキャプチャ 6 枚（`creating-manual`）。[Bolt 29b 計画](bolt_29b_plan.md) | 0 | アウトサイドイン | 計画・終了報告 |
+| 29c | #46 の後半: S-09 の「確定条件（BR-01）」の見出しと貨物の要約（見積りのドメインの日本語名で「一般 / パレット × …」と要約する。確定済みの予約版は追記専用なので英語のまま残る）、S-06 の参照情報版の語（値は自由な文字列なのでそのまま示し、語だけ直す）。UI 設計の画面イメージ、マニュアルの 7・8 章とキャプチャ 4 枚。#46 を閉じる（2026-10-11 に human:kakimomokuri が 29b から分けた） | 0 | アウトサイドイン | 計画・終了報告 |
 | 30 | ADR-011 の採否。`identity` に TOTP の資格・回復コード・ログインの失敗（連続の回数、ロックの期限）を足す。ドメインモデルとデータモデルを先に直す | 0 | インサイドアウト | ステップごと（スキーマ、セキュリティ） |
 | 31 | US-18 AC1 の TOTP（最長 8 時間を TOTP が初めて通った時刻から数える。ADR-011）、AC7 初回の TOTP の登録と回復コードの発行（SEC-09。A-02・A-05）。ADR-012 の「W5 で見直すこと」（主体の作り直し、要素の権限、request ごとの DB の問い合わせ） | 2 | インサイドアウト | ステップごと（セキュリティ） |
 | 32 | US-18 AC3 ロック（ロックの数え方を `identity.application` に置く。ADR-012）、AC6 request ごとの役割の確認（Bolt 14 の決定の引き継ぎ。利用停止・権限の取消しの操作は Bolt 34 で作るので、この Bolt では DB の値を変えて確かめる） | 2 | インサイドアウト | ステップごと（セキュリティ、認可） |
@@ -613,7 +614,8 @@ US-18 の残りの SP 6 は #13 をクローズする Bolt 33b で、US-04 の S
 
 - [x] W5 の開始準備（本節。2026-10-11）: 計画の承認、詳細整合性検証・横断整合性検証（指摘を反映）、GitHub の同期（Issue。#47 を起票。Project のフィールドはこの環境から変えられないので人が設定する）、Bolt 29 計画（承認待ち）
 - [x] Bolt 29: #45。[Bolt 29 計画](bolt_29_plan.md)（`/goal` で進めた）、[Bolt 29 終了報告](bolt_29_report.md)（完了、2026-10-11 に承認済み。#45 を閉じた。SonarQube PASS。`uiTest` 80 本は集める前と同じく通った。失敗の経路を読めるものに直した）
-- [ ] Bolt 29b: #46
+- [ ] Bolt 29b: #46 の前半。[Bolt 29b 計画](bolt_29b_plan.md)（承認待ち）
+- [ ] Bolt 29c: #46 の後半
 - [ ] Bolt 30〜33b: US-18 の残り（#13）と通知モジュールの最小の新設
 - [ ] Bolt 34: US-16 の一部（#14）
 - [ ] Bolt 35: US-04 AC3・AC5（#43）、D-85
@@ -866,3 +868,4 @@ xychart-beta
 | 2026-10-11 | W5 の開始準備: W5 の節（ゴール・設計の決定・Bolt 29〜35 の分け方の下書き）を書いた。D-85 を「承認済みの経路版を引き継ぎ料金と有効期限だけを出し直す」に決め、password の再設定のメール送信の部品を W5 で作り、ADR-011 の採否を Bolt 30 の計画で決め、#45・#46 を Bolt 29・29b に分けた。同日に計画が承認された | anthropic/claude-opus-5-5、決定 human:kakimomokuri |
 | 2026-10-11 | W5 の開始準備の詳細整合性検証・横断整合性検証の指摘を W5 の節に反映した。メール送信の部品の置き場所を `platform` から通知モジュールの新設に決め直し、US-18 AC9 の管理者経路を #47（W6）に分け、ACC-06 を Bolt 32b に入れた。Bolt 33b を分け、設計への反映が必要な事項と Bolt 13・14 からの持ち込みを書いた | anthropic/claude-opus-5-5、決定 human:kakimomokuri |
 | 2026-10-11 | Bolt 29 の終了報告の承認を記録し、Bolt 29 を終えた（#45 を閉じた。SP 0） | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
+| 2026-10-11 | Bolt 29b の開始準備: #46 の 6 か所を棚卸しし、29b（テンプレートの 4 か所と Bolt 28 の Code Smell）と 29c（S-09・S-06）に分けた。C-04 は表示と案内を直し、S-09 はドメインの日本語名で要約し、S-06 は語だけ直す。Bolt 29b 計画を作った（承認待ち） | anthropic/claude-opus-5-5、決定 human:kakimomokuri |
