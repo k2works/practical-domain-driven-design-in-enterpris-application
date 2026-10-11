@@ -464,20 +464,20 @@
                                 </thead>
                                 <tbody>
                                 <tr>
-                                    <td>ck_booking_current_version_no</td>
-                                    <td>(current_version_no &gt;&#61; 1)</td>
-                                </tr>
-                                <tr>
-                                    <td>ck_booking_status</td>
-                                    <td>((status)::text &#61; ANY ((ARRAY[&#39;CONFIRMED&#39;::character varying, &#39;AMENDMENT_PENDING&#39;::character varying, &#39;CANCELLATION_PENDING&#39;::character varying, &#39;AMENDING&#39;::character varying, &#39;CANCELLED&#39;::character varying, &#39;IN_TRANSIT&#39;::character varying, &#39;COMPLETED&#39;::character varying])::text[]))</td>
-                                </tr>
-                                <tr>
                                     <td>ck_booking_quotation_no</td>
                                     <td>(quotation_no &gt;&#61; 1)</td>
                                 </tr>
                                 <tr>
                                     <td>ck_booking_transport_phase</td>
                                     <td>((transport_phase)::text &#61; ANY ((ARRAY[&#39;BEFORE_PICKUP&#39;::character varying, &#39;AFTER_PICKUP&#39;::character varying, &#39;COMPLETED&#39;::character varying])::text[]))</td>
+                                </tr>
+                                <tr>
+                                    <td>ck_booking_current_version_no</td>
+                                    <td>(current_version_no &gt;&#61; 1)</td>
+                                </tr>
+                                <tr>
+                                    <td>ck_booking_status</td>
+                                    <td>((status)::text &#61; ANY ((ARRAY[&#39;CONFIRMED&#39;::character varying, &#39;AMENDMENT_PENDING&#39;::character varying, &#39;CANCELLATION_PENDING&#39;::character varying, &#39;AMENDING&#39;::character varying, &#39;CANCELLED&#39;::character varying, &#39;IN_TRANSIT&#39;::character varying, &#39;COMPLETED&#39;::character varying])::text[]))</td>
                                 </tr>
                                 </tbody>
                             </table>
