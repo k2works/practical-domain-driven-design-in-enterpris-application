@@ -4,7 +4,7 @@ title: "Bolt 29b 計画 - マニュアルで見つけた画面の文言と表示
 description: "W5 の 2 本目の Bolt の計画。#46 の 6 か所のうち、テンプレートと画面の文言で直せる 4 か所（S-22 の見出し、C-05 の案内の重複、C-02・S-02 の「入口の一覧へ戻る」、C-04 の予約確定済みの状態と案内）と、Bolt 28 の SonarQube の Code Smell を直し、UI 設計とマニュアル・キャプチャを合わせる。S-09・S-06 は Bolt 29c。"
 tags: [development,bolt-plan]
 status: draft
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-11T05:03:17Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-11T05:23:15Z }
 ---
 
 # Bolt 29b 計画 - マニュアルで見つけた画面の文言と表示の課題（#46 の前半）
@@ -107,22 +107,23 @@ end note
   - ui_design.md: UI:174（S-22 の「輸送要求ごと」→「見積依頼ごと」）、UI:159 と C-05 の画面イメージ UI:573（重複の 1 文を消し、断片の文に任せると書く）、C-02・S-02 の「入口の一覧へ戻る」を出さないこと（UI:182 の注に足す）、UI:968-977 の荷主の状態の表に BOOKED（「予約確定済み」、案内と C-06 へのリンク）を足す
   - 完了の判定: `okf:check` ERROR 0
   - 結果（2026-10-11）: UI:159（C-05）、UI:174（S-22）、UI:182（ホームの注）、UI:573（C-05 の画面イメージ）、荷主の状態の表に予約確定済みの行を足した
-- [ ] **2. S-22・C-02・S-02 の文言とリンク（直す箇所 1・3）** 【承認ゲート: なし】
+- [x] **2. S-22・C-02・S-02 の文言とリンク（直す箇所 1・3）** 【承認ゲート: なし】
   - Red: `KpiObservationControllerTest` に caption「見積依頼ごとの…」を、C-02（`TransportRequestControllerTest`）・S-02（`TransportRequestReviewControllerTest`）に「入口の一覧へ戻る」がないことを足し、落ちることを確かめる（T-88。リンクのテストは今の表示で落ちる本命のアサーション）
   - Green: テンプレートを直す
   - 完了の判定: `check` 緑
-- [ ] **3. C-05 の案内の重複と C-04 の予約確定済み（直す箇所 2・4）** 【承認ゲート: なし】
+- [x] **3. C-05 の案内の重複と C-04 の予約確定済み（直す箇所 2・4）** 【承認ゲート: なし】
   - Red: `QuotationResponseControllerTest` に「同じ画面に経路の確定の案内が 1 回だけ出る」を、`TransportRequestControllerTest` に予約確定済みの C-04 の状態「予約確定済み」・案内・C-06 へのリンクと、C-02 の BOOKED の行の状態「予約確定済み」を足して落ちることを確かめる。消す文を確かめている `QuotationResponseControllerTest.java:97`・`RouteDesignUiSteps.java:68` は断片の文に向け直す（T-86 で `src/test` 全体を探す）。向け直した 2 件は最初から通る「見張り」（T-88）
   - Green: `response.html` の 1 文を消す。`TransportRequestLabels` の荷主の BOOKED の状態と案内を直し、`detail.html` に予約確定済みのときだけ C-06 へのリンクを出す
   - 完了の判定: `check` 緑、`uiTest` 緑（`@US-24` の画面の層のシナリオが通る）
-- [ ] **4. マニュアルとキャプチャ、Code Smell** 【承認ゲート: なし】
+- [x] **4. マニュアルとキャプチャ、Code Smell** 【承認ゲート: なし】
   - マニュアル（`creating-manual`）: 1 章の表（予約確定済み）、2 章 2.2 の①ヘッダー（左の cargo-tracker を押すと役割のホームへ戻る。「入口の一覧へ戻る」を消すため。キャプチャは要らない）、4 章 4.1 の ④（重複の言い換えを外す）、5 章 5.1（予約確定済みの見積依頼の詳細から予約一覧を開くこと。新しいキャプチャ）、用語集（予約確定済み）、10 章 10.1（caption の文言）。3・6・7 章はリンクを避けていた書き方を確かめる。撮影のシナリオ（`manual_screenshots.feature`）の本予約の確定の後に、荷主で C-04 を開いて `05-request-detail-booked.png` を撮る手順を足す。`./gradlew manualScreenshots` で 7 枚（`05-request-detail-booked.png` と、`10-kpi-observations.png`、`04-response.png`、`03-request-list.png`、`06-intake-list-review.png`、`06-intake-list-presented.png`、`07-intake-list-ready-to-book.png`））を撮る（ほかの画像は元に戻す）。HTML 版の出力も更新する
   - Code Smell: `AcceptanceCriteriaCoverageTest` の行の正規表現を `^\|\s*(US-\d+)\s*\|([^|]+)\|([^|]+)\|$` に簡素化する（前後の空白は `[^|]+` が吸収する。行は `strip()` 済み）。見張り: `Release01の受入条件ごとにwipでないシナリオがある` と `表の行が書式から外れると黙って落とさずに失敗する` が通り続けること
   - 完了の判定: `check`（`documentationTest` を含む）緑、`okf:check` ERROR 0
-- [ ] **5. 開発レビューと終了報告** 【承認ゲート: 終了報告】
+- [?] **5. 開発レビューと終了報告** 【承認ゲート: 終了報告】
   - 開発レビュー（`developing-review`。プログラマー、テクニカルライター（T-90。マニュアルを書く立場で、画面に実装の語や業務ルールの番号が出ていないか、状態の表示が実際と合うか）、インタラクションデザイナー（リンクを消した後の戻り方、C-04 の案内とリンクの名前））
   - SonarQube（`sonar-local:check`。手順書の 9 節のとおり起動）、受入動画（`./gradlew demoVideo`。C-04 の予約確定済みの案内を写すシナリオがあれば。過去の Bolt の動画は元に戻す）
   - `bolt_29b_report.md`。release_plan の W5 の 29b の行と進捗、開発の索引を更新する。#46 は Bolt 29c の後に閉じる（この Bolt では進み具合をコメントする）
+  - 結果（2026-10-11）: 3 つの観点でレビューし（必須 1・推奨 6・任意 6）、必須と推奨を直した（`b9aab02`。予約確定済みの承認の記録、リンクを文の中に、テストの絞り込み、マニュアル）。SonarQube PASS（Code Smell 0）。[Bolt 29b 終了報告](bolt_29b_report.md)（承認待ち）
 
 ### 時間の配分と打ち切り
 
@@ -152,12 +153,12 @@ end note
 
 ## 完了条件
 
-- [ ] 直す箇所 1〜4 の画面の文言・リンク・状態の表示が UI 設計どおりになり、コントローラーのテストで確かめた
-- [ ] UI 設計（ui_design.md）の該当の記述と荷主の状態の表を直した
-- [ ] マニュアルの該当の節（1・2・4・5・10 章と用語集）を直し、キャプチャ 7 枚（新しい 1 枚を含む）を `manualScreenshots` で撮った
-- [ ] Bolt 28 の Code Smell を直した（照合のテストが通り続ける）
-- [ ] `check`・`uiTest` が緑。push して CI を確かめた
-- [ ] SonarQube の Quality Gate が PASS
+- [x] 直す箇所 1〜4 の画面の文言・リンク・状態の表示が UI 設計どおりになり、コントローラーのテストで確かめた
+- [x] UI 設計（ui_design.md）の該当の記述と荷主の状態の表を直した
+- [x] マニュアルの該当の節（1・2・4・5・10 章と用語集）を直し、キャプチャ 7 枚（新しい 1 枚を含む）を `manualScreenshots` で撮った
+- [x] Bolt 28 の Code Smell を直した（照合のテストが通り続ける）
+- [x] `check`・`uiTest` が緑。push して CI を確かめた（`b9aab02`、run 196）
+- [x] SonarQube の Quality Gate が PASS
 - [ ] 開発レビュー（T-90 の観点を含む）と終了報告。#46 に進み具合をコメントした
 
 ### デモ項目
@@ -168,6 +169,7 @@ end note
 
 | 日付 | 更新内容 | 更新者 |
 | :--- | :--- | :--- |
+| 2026-10-11 | ステップ 1〜4 と開発レビューの対応を終え、終了報告を書いた（承認待ち）。結果は [Bolt 29b 終了報告](bolt_29b_report.md) | anthropic/claude-opus-5-5 |
 | 2026-10-11 | human:kakimomokuri が `/goal Bolt29b` で着手を指示した。確認ポイントはすべて推奨のとおりとし、途中のゲートは止めずに進め、根拠を終了報告に置く（T-36。Bolt 29 の前例） | anthropic/claude-opus-5-5、指示 human:kakimomokuri |
 | 2026-10-11 | 開始準備の整合性検証（計画と設計 8 件、横断 7 件。高 0）の指摘を反映した。C-02 の状態列も変わること、C-05 の画面イメージ UI:573、予約確定済みの C-04 のキャプチャを足してデモ項目の証跡にすること（確認ポイント 10）、T-89 と採らない代案の扱い（確認ポイント 11）、マニュアル 2 章（ブランドからホームへ）、テストを置くクラス、時間の見込み、見張りの 2 件 | anthropic/claude-opus-5-5 |
 | 2026-10-11 | 初版作成（承認待ち）。開始準備の棚卸しと、human:kakimomokuri の決定（29b と 29c に分ける、C-04 は表示と案内を直す、S-09 はドメインの日本語名、S-06 は語だけ直す）を反映した | anthropic/claude-opus-5-5 |

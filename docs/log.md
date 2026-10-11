@@ -1,6 +1,9 @@
 # Docs Update Log
 
 ## 2026-10-11
+* **Update**: [bolt_29b_report](/development/cargo-tracker/bolt_29b_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_29b_plan](/development/cargo-tracker/bolt_29b_plan.md) を更新（anthropic/claude-opus-5-5）
 * **Update**: [用語集](/manual/用語集.md) を更新（anthropic/claude-opus-5-5）
 * **Update**: [05-予約一覧と追跡の照会](/manual/05-予約一覧と追跡の照会.md) を更新（anthropic/claude-opus-5-5）
 * **Update**: [01-業務フロー](/manual/01-業務フロー.md) を更新（anthropic/claude-opus-5-5）
