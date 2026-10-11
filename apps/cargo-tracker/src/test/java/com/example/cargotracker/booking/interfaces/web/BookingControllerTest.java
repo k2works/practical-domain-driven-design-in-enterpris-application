@@ -81,6 +81,16 @@ class BookingControllerTest {
     // S-09 本予約の確定
 
     @Test
+    void 確定条件の見出しに業務ルールの番号を出さない() throws Exception {
+        given(queryService.confirmation("TR-2026-0001", 1)).willReturn(available(BookingFixture.terms()));
+
+        mockMvc.perform(get(NEW))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString(">確定条件</h2>")))
+                .andExpect(content().string(not(containsString("BR-01"))));
+    }
+
+    @Test
     void 確定の画面に確定条件と開いた時刻での確認であることと確認の領域を示す() throws Exception {
         given(queryService.confirmation("TR-2026-0001", 1)).willReturn(available(BookingFixture.terms()));
 

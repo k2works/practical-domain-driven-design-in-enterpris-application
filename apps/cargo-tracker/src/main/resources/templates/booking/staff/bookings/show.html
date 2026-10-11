@@ -35,7 +35,7 @@
         <dt class="col-sm-3">経路</dt>
         <dd class="col-sm-9" th:text="${booking.route()}">RC-2026-0001 版 1</dd>
         <dt class="col-sm-3">貨物</dt>
-        <dd class="col-sm-9" th:text="${booking.cargoSummary()}">GENERAL / PALLET × 12 / 8400.000 kg / 32.500 m3</dd>
+        <dd class="col-sm-9" th:text="${booking.cargoSummary()}">一般 / パレット × 12 / 8,400 kg / 32.5 m3</dd>
     </dl>
     <!--/* S-24 は確定・予約一覧など入口が複数あるので、来た道によらない行き先の名前にする（Bolt 25b レビュー U-2） */-->
     <p><a th:href="@{/staff/bookings}">予約一覧</a></p>

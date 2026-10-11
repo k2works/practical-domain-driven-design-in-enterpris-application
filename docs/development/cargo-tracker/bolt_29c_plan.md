@@ -4,7 +4,7 @@ title: "Bolt 29c 計画 - 本予約の確定と経路候補の比較の画面の
 description: "W5 の 3 本目の Bolt の計画。#46 の残りの 2 か所、S-09 の見出し「確定条件（BR-01）」と貨物の要約「GENERAL / PALLET × 12 / 8400.000 kg / 32.500 m3」、S-06 の「参照情報版」を、画面の語に直す。貨物の日本語名は見積りの application 層に置き、要約の数値の書き方も直す。UI 設計とマニュアル 7・8 章・キャプチャ 4 枚を合わせ、#46 を閉じる。"
 tags: [development,bolt-plan]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-11T06:11:29Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-11T06:16:43Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-11T06:10:53Z }
 ---
@@ -135,10 +135,11 @@ BookableQuotationQueryService ..> summary : 公開 API の結果で写す
   - ui_design.md: UI:130（S-09 の役割の「BR-01 の」を外す）、UI:165（S-09 の見出しと貨物の書式）、UI:682・684（画面イメージ）、UI:172・173・657・670（S-06・S-07 の理由の語。R-INV-02 の参照はドメインの規則として残す）、UI:49-55 の表（画面の語とドメインの概念）、UI:523 などの条件の表の数値の書式。data_model.md の `cargo_summary` の注（:601）。architecture_backend.md の一文
   - 完了の判定: `okf:check` ERROR 0
   - 結果（2026-10-11）: UI:130・166（S-09 の役割と見出し、貨物の要約の形）・172・173・657・671・683・685、「画面の語 / ドメインの概念」の表に「参照した航海情報の版 ⇔ 参照情報版」の行、data_model.md の `cargo_summary` の注、architecture_backend.md の一文。UI:523 の数値は入力欄の見本なので変えない
-- [ ] **2. 貨物の表示名と要約、S-09 の見出し（直す箇所 1・2）** 【承認ゲート: なし】
+- [x] **2. 貨物の表示名と要約、S-09 の見出し（直す箇所 1・2）** 【承認ゲート: なし】
   - Red: `CargoDisplayNames` の単体テスト（4 つの貨物種別と 4 つの荷姿の名前、数値の書式: `8400.000`→`8,400`、`32.500`→`32.5`、`1200.500`→`1,200.5`、`0.250`→`0.25`、整数部 9 桁 `123456789.000`→`123,456,789`（`stripTrailingZeros` の指数の表記にならないこと））を書き、クラスがないことで落ちる（コンパイルの失敗）のではなく本命のアサーションで落ちるよう、骨組み（空の実装）を先に置く（T-88）。`BookableQuotationQueryAdapterTest.java:59` を新しい書式に向け直して落ちることを確かめる。`BookingControllerTest` に S-09 の見出し「確定条件」と「（BR-01）」がないことを足す。`TransportRequestControllerTest`（C-04）に条件の表の「8,400」を足す
   - Green: `CargoDisplayNames` を実装し（数値は `DecimalFormat("#,##0.###")` などで指数の表記を避ける）、`BookableQuotationQueryService.summary`・`TransportRequestLabels` の選択肢と表示の名前・`TransportRequestViews.termsRows` の重量と容積をそれに寄せる（荷主の画面の選択肢の値と表示は変わらない）。S-09 の見出しとテンプレートの見本の文字列（`new.html:38`・`show.html:38`）を直す。`BookableQuotationResult.cargoSummary` の Javadoc を書く
   - 完了の判定: `check` 緑（ArchUnit の層の規則と ModularityTest を含む）
+  - 結果（2026-10-11）: 骨組み（空の実装）を置いて Red 19 件（名前 8、数値 7、要約 1、公開 API の実装 1、S-09 の見出し 1、C-04 の条件の表 1）が本命のアサーションで落ちることを確かめ、`CargoDisplayNames` を実装して Green。数値は `DecimalFormat`（`Locale.ROOT`、小数 3 桁まで）で指数の表記を避けた。`TransportRequestLabels` の選択肢は enum の順に `CargoDisplayNames` の名前で作る（選択肢の値と順は変わらない）。`check` 緑
 - [ ] **3. S-06 の理由の語（直す箇所 3）** 【承認ゲート: なし】
   - Red: `RoutingCaseControllerTest.java:170` を「参照した航海情報の版 V-LATE@1」に向け直して落ちることを確かめる。S-06 と S-07 のコントローラーのテストに、適合の根拠「…（期限と接続時間を満たす）。参照した航海情報の版 …」を足す。`RoutingUiSteps.java:180` と画面の層のステップの文（`compare_route_candidates_ui.feature:21`、`RoutingUiSteps.java:175`）も画面の語に直す（T-86 で `src/test` 全体を探す）
   - Green: `RoutingCaseViews` の `INFO_VERSION` と適合の根拠の文を直す

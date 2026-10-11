@@ -1,5 +1,6 @@
 package com.example.cargotracker.quotation.interfaces.web;
 
+import com.example.cargotracker.quotation.application.internal.queryservices.CargoDisplayNames;
 import com.example.cargotracker.quotation.domain.model.entities.TransportRequestVersion;
 import com.example.cargotracker.quotation.domain.model.valueobjects.Cargo;
 import com.example.cargotracker.quotation.domain.model.valueobjects.ShipmentTerms;
@@ -35,8 +36,8 @@ final class TransportRequestViews {
         rows.put("貨物種別", TransportRequestLabels.cargoCategory(cargo.category()));
         rows.put("荷姿", TransportRequestLabels.packageType(cargo.packageType()));
         rows.put("個数", String.valueOf(cargo.packageCount()));
-        rows.put("総重量（kg）", cargo.grossWeightKg().stripTrailingZeros().toPlainString());
-        rows.put("容積（m3）", cargo.volumeM3().stripTrailingZeros().toPlainString());
+        rows.put("総重量（kg）", CargoDisplayNames.quantity(cargo.grossWeightKg()));
+        rows.put("容積（m3）", CargoDisplayNames.quantity(cargo.volumeM3()));
         rows.put("提出時刻", dateTime.apply(version.submittedAt()));
         return rows;
     }

@@ -18,7 +18,7 @@
             <li th:if="${page.staffConfirmationMissing()}"><a href="#staffConfirmed">営業担当者の確認: 契約条件と照合したことを確かめて、チェックを入れてください。</a></li>
         </ul>
     </div>
-    <h2 class="h4">確定条件（BR-01）</h2>
+    <h2 class="h4">確定条件</h2>
     <table class="table">
         <thead>
         <tr>
@@ -35,7 +35,7 @@
             <th scope="row">必須貨物情報</th>
             <td>
                 <span th:if="${page.cargoMissing()}"><strong>欠けています</strong>: 貨物の要約がありません。見積依頼の貨物を確かめてください。</span>
-                <span th:unless="${page.cargoMissing()}" th:text="${page.cargoSummary()}">GENERAL / PALLET × 12 / 8400.000 kg / 32.500 m3</span>
+                <span th:unless="${page.cargoMissing()}" th:text="${page.cargoSummary()}">一般 / パレット × 12 / 8,400 kg / 32.5 m3</span>
             </td>
         </tr>
         <tr>

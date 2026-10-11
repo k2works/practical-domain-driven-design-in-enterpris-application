@@ -56,7 +56,7 @@ class BookableQuotationQueryAdapterTest {
                         "RC-2026-0001",
                         1,
                         "GENERAL",
-                        "GENERAL / PALLET × 12 / 8400.000 kg / 32.500 m3",
+                        "一般 / パレット × 12 / 8,400 kg / 32.5 m3",
                         SHIPPER_USER.value(),
                         at("2026-10-07T06:00:00Z"),
                         QuotationFixture.EXPIRES_AT));

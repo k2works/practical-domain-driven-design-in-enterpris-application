@@ -644,6 +644,16 @@ class TransportRequestControllerTest {
     }
 
     @Test
+    void 条件の表の総重量と容積は不要な0を落とし整数部に桁区切りを入れて示す() throws Exception {
+        given(queryService.findByNumber(NUMBER, SHIPPER)).willReturn(Optional.of(underReview()));
+
+        mockMvc.perform(get("/customer/transport-requests/TR-2026-0001"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("<dd>8,400</dd>")))
+                .andExpect(content().string(containsString("<dd>32.5</dd>")));
+    }
+
+    @Test
     void 経路設計中の見積依頼は詳細と一覧でA社の対応待ちと示し連絡は担当営業からと案内する() throws Exception {
         given(queryService.findByNumber(NUMBER, SHIPPER)).willReturn(Optional.of(routing()));
         given(queryService.findSummaries(SHIPPER)).willReturn(List.of(summary(TransportRequestStatus.ROUTING)));

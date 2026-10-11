@@ -88,9 +88,7 @@ public class BookableQuotationQueryService {
     }
 
     private static String summary(Cargo cargo) {
-        return cargo.category().name() + " / " + cargo.packageType().name() + " × " + cargo.packageCount() + " / "
-                + cargo.grossWeightKg().toPlainString() + " kg / "
-                + cargo.volumeM3().toPlainString() + " m3";
+        return CargoDisplayNames.summary(cargo);
     }
 
     /** 業務番号と見積り番号で見積りを引く（D-4。Bolt 23b）。業務番号の形でなければ見つからない。 */

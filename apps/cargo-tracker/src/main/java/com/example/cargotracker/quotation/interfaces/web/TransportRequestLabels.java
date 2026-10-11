@@ -1,12 +1,14 @@
 package com.example.cargotracker.quotation.interfaces.web;
 
 import com.example.cargotracker.platform.web.DateTimeDisplay;
+import com.example.cargotracker.quotation.application.internal.queryservices.CargoDisplayNames;
 import com.example.cargotracker.quotation.domain.model.valueobjects.CargoCategory;
 import com.example.cargotracker.quotation.domain.model.valueobjects.PackageType;
 import com.example.cargotracker.quotation.domain.model.valueobjects.ReviewDecision;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestNumber;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestStatus;
 import com.example.cargotracker.shared.domain.UtcInstant;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -14,17 +16,14 @@ import java.util.List;
  */
 final class TransportRequestLabels {
 
-    static final List<Option> CARGO_CATEGORIES = List.of(
-            new Option(CargoCategory.GENERAL.name(), "一般"),
-            new Option(CargoCategory.DANGEROUS.name(), "危険物"),
-            new Option(CargoCategory.REEFER.name(), "冷凍"),
-            new Option(CargoCategory.OTHER_SPECIAL.name(), "その他特殊"));
+    // 名前は見積りの application 層の CargoDisplayNames に 1 か所で置く（予約へ渡す要約と同じ名前にする。Bolt 29c）
+    static final List<Option> CARGO_CATEGORIES = Arrays.stream(CargoCategory.values())
+            .map(category -> new Option(category.name(), CargoDisplayNames.category(category)))
+            .toList();
 
-    static final List<Option> PACKAGE_TYPES = List.of(
-            new Option(PackageType.PALLET.name(), "パレット"),
-            new Option(PackageType.CARTON.name(), "カートン"),
-            new Option(PackageType.CRATE.name(), "クレート"),
-            new Option(PackageType.OTHER.name(), "その他"));
+    static final List<Option> PACKAGE_TYPES = Arrays.stream(PackageType.values())
+            .map(packageType -> new Option(packageType.name(), CargoDisplayNames.packageType(packageType)))
+            .toList();
 
     private TransportRequestLabels() {}
 
