@@ -3,6 +3,7 @@ package com.example.cargotracker.identity.domain.model.aggregates;
 import com.example.cargotracker.shared.annotation.ddd.AggregateRoot;
 import com.example.cargotracker.shared.domain.UserId;
 import com.example.cargotracker.shared.domain.UtcInstant;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
@@ -47,6 +48,21 @@ public final class RecoveryCode {
     public static RecoveryCode reconstitute(
             UUID id, UserId userId, String codeHash, UtcInstant usedAt, UtcInstant issuedAt) {
         return new RecoveryCode(id, userId, codeHash, usedAt, issuedAt);
+    }
+
+    /**
+     * 発行した回復コードの組が、その利用者の 10 個であることを確かめる（IA-INV-11、SEC-09）。
+     * リポジトリが置き換える前に使う。
+     */
+    public static List<RecoveryCode> requireIssuedSet(UserId userId, List<RecoveryCode> codes) {
+        Objects.requireNonNull(userId, "userId");
+        if (codes == null || codes.size() != CODES_PER_USER) {
+            throw new IllegalArgumentException("回復コードは " + CODES_PER_USER + " 個で発行する");
+        }
+        if (codes.stream().anyMatch(code -> !code.userId().equals(userId) || code.isUsed())) {
+            throw new IllegalArgumentException("発行する回復コードはその利用者の未使用のコードにする");
+        }
+        return List.copyOf(codes);
     }
 
     public UUID id() {

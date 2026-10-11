@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- TOTP の資格・回復コード・ログインの失敗（Bolt 30、ADR-011 の「更新の原子性」）。
+     どれも読んでから書く形にせず、1 文の条件付きの更新の件数で判定する。H2 と PostgreSQL の共通の構文で書き、
+     RETURNING と ON CONFLICT は使わない（ADR-007）。 -->
+<mapper namespace="com.example.cargotracker.identity.infrastructure.persistence.AuthenticationFactorMapper">
+
+    <resultMap id="totpCredentialRow" type="com.example.cargotracker.identity.infrastructure.persistence.TotpCredentialRow">
+        <constructor>
+            <idArg column="user_id" name="userId" javaType="java.util.UUID"/>
+            <arg column="secret_encrypted" name="secretEncrypted" javaType="String"/>
+            <arg column="last_used_step" name="lastUsedStep" javaType="_long"/>
+            <arg column="enrolled_at" name="enrolledAt" javaType="java.time.OffsetDateTime"/>
+        </constructor>
+    </resultMap>
+
+    <resultMap id="recoveryCodeRow" type="com.example.cargotracker.identity.infrastructure.persistence.RecoveryCodeRow">
+        <constructor>
+            <idArg column="id" name="id" javaType="java.util.UUID"/>
+            <arg column="user_id" name="userId" javaType="java.util.UUID"/>
+            <arg column="code_hash" name="codeHash" javaType="String"/>
+            <arg column="used_at" name="usedAt" javaType="java.time.OffsetDateTime"/>
+            <arg column="issued_at" name="issuedAt" javaType="java.time.OffsetDateTime"/>
+        </constructor>
+    </resultMap>
+
+    <resultMap id="loginFailureRow" type="com.example.cargotracker.identity.infrastructure.persistence.LoginFailureRow">
+        <constructor>
+            <idArg column="user_id" name="userId" javaType="java.util.UUID"/>
+            <arg column="consecutive_failures" name="consecutiveFailures" javaType="_int"/>
+            <arg column="locked_until" name="lockedUntil" javaType="java.time.OffsetDateTime"/>
+        </constructor>
+    </resultMap>
+
+    <insert id="insertTotpCredential">
+        INSERT INTO identity.totp_credential (user_id, secret_encrypted, last_used_step, enrolled_at)
+        VALUES (#{userId}, #{secretEncrypted}, #{lastUsedStep}, #{enrolledAt})
+    </insert>
+
+    <select id="selectTotpCredential" resultMap="totpCredentialRow">
+        SELECT user_id, secret_encrypted, last_used_step, enrolled_at
+          FROM identity.totp_credential
+         WHERE user_id = #{userId}
+    </select>
+
+    <!-- 再利用の拒否（IA-INV-10）。最後に使った刻みより後のときだけ書く。同じ刻みの同時の更新は、
+         後の文が先の行ロックを待って WHERE を評価し直し、0 件になる -->
+    <update id="updateLastUsedStepIfLater">
+        UPDATE identity.totp_credential
+           SET last_used_step = #{step}
+         WHERE user_id = #{userId}
+           AND last_used_step &lt; #{step}
+    </update>
+
+    <delete id="deleteRecoveryCodes">
+        DELETE FROM identity.recovery_code WHERE user_id = #{userId}
+    </delete>
+
+    <insert id="insertRecoveryCode">
+        INSERT INTO identity.recovery_code (id, user_id, code_hash, used_at, issued_at)
+        VALUES (#{id}, #{userId}, #{codeHash}, #{usedAt}, #{issuedAt})
+    </insert>
+
+    <select id="selectUnusedRecoveryCodes" resultMap="recoveryCodeRow">
+        SELECT id, user_id, code_hash, used_at, issued_at
+          FROM identity.recovery_code
+         WHERE user_id = #{userId}
+           AND used_at IS NULL
+         ORDER BY issued_at, id
+    </select>
+
+    <!-- 一度だけの消費（IA-INV-11）。未使用のときだけ使った時刻を書き、行は残す -->
+    <update id="updateRecoveryCodeUsedIfUnused">
+        UPDATE identity.recovery_code
+           SET used_at = #{usedAt}
+         WHERE id = #{id}
+           AND used_at IS NULL
+    </update>
+
+    <select id="selectLoginFailure" resultMap="loginFailureRow">
+        SELECT user_id, consecutive_failures, locked_until
+          FROM identity.login_failure
+         WHERE user_id = #{userId}
+    </select>
+
+    <!-- 記録のない利用者の行を 0 回で作る。利用者の表にない利用者では作らない（存在しないメールアドレスの失敗）。
+         同じ利用者の最初の失敗が同時に届くと、片方は主キーの違反になる（Bolt 32 で扱う） -->
+    <insert id="insertLoginFailureIfAbsent">
+        INSERT INTO identity.login_failure (user_id, consecutive_failures, locked_until, updated_at)
+        SELECT u.id, 0, CAST(NULL AS TIMESTAMP WITH TIME ZONE), #{now}
+          FROM identity.app_user u
+         WHERE u.id = #{userId}
+           AND NOT EXISTS (SELECT 1 FROM identity.login_failure f WHERE f.user_id = #{userId})
+    </insert>
+
+    <!-- 失敗の加算とロックの判定を 1 文で行う（IA-INV-03。規則は LoginFailure#recordFailure と同じ）。
+         ロック中（期限より前）は数えない。ロックが解けた後は 1 回目から数え、上限に達したら期限を入れる。
+         SET の式は更新の前の値で評価される。同時の失敗は、後の文が先の行ロックを待ってから評価し直すので両方を数える -->
+    <update id="incrementLoginFailureIfNotLocked">
+        UPDATE identity.login_failure
+           SET consecutive_failures = CASE WHEN locked_until IS NULL THEN consecutive_failures + 1 ELSE 1 END,
+               locked_until = CASE
+                                  WHEN (CASE WHEN locked_until IS NULL THEN consecutive_failures + 1 ELSE 1 END)
+                                       &gt;= #{maxFailures}
+                                  THEN CAST(#{lockedUntil} AS TIMESTAMP WITH TIME ZONE)
+                                  ELSE CAST(NULL AS TIMESTAMP WITH TIME ZONE)
+                              END,
+               updated_at = #{failedAt}
+         WHERE user_id = #{userId}
+           AND (locked_until IS NULL OR locked_until &lt;= #{failedAt})
+    </update>
+
+    <update id="resetLoginFailure">
+        UPDATE identity.login_failure
+           SET consecutive_failures = 0,
+               locked_until = CAST(NULL AS TIMESTAMP WITH TIME ZONE),
+               updated_at = #{now}
+         WHERE user_id = #{userId}
+    </update>
+</mapper>

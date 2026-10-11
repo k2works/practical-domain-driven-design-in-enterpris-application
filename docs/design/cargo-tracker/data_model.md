@@ -4,7 +4,7 @@ title: "cargo-tracker データモデル"
 description: "cargo-tracker の概念データモデル、スキーマ分割、命名と型の規約（H2 と PostgreSQL の共通部分）、コンテキストごとの論理データモデルと ER 図、版・追記専用・冪等性・イベント配信の表現。"
 tags: [design, data-model]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-11T08:28:04Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-11T09:07:36Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T07:48:17Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:01:37Z }
@@ -905,7 +905,7 @@ co ||--o{ ag
 | :--- | :--- | :--- |
 | `user_role` | `role` IN（BR-15 の 8 役割）。システム管理者・監査担当者と業務の役割の併用は、アプリケーションで拒否する | IA-INV-01 |
 | `user_assignment` | `scope_kind` IN（`COMPANY`、`BOOKING`） | IA-INV-02 |
-| `login_failure` | 利用者ごとに 1 行（主キーは `user_id`）。`consecutive_failures >= 0` の CHECK。失敗は、ロック中でないことを条件にした `UPDATE ... SET consecutive_failures = consecutive_failures + 1` の更新件数で数え、回数を同じトランザクションで読み直す（`RETURNING` は H2 で動かないので使わない。ADR-007）。最初の行は `INSERT ... SELECT ... WHERE NOT EXISTS` で作る。存在しないメールアドレスの失敗では行を作らない。成功で 0 に戻す。ロックの期限は 5 回目の失敗の時刻から 15 分 | IA-INV-03 |
+| `login_failure` | 利用者ごとに 1 行（主キーは `user_id`）。`consecutive_failures >= 0` の CHECK。失敗は、ロック中でないことを条件にした `UPDATE ... SET consecutive_failures = consecutive_failures + 1` の更新件数で数え、回数を同じトランザクションで読み直す（`RETURNING` は H2 で動かないので使わない。ADR-007）。最初の行は `INSERT ... SELECT ... FROM app_user WHERE NOT EXISTS` で作る（利用者の表にない利用者では作らない。存在しないメールアドレスの失敗）。同じ利用者の最初の失敗が同時に 2 つ届くと、片方は主キーの違反になる（扱いは Bolt 32 で決める）。ロックの判定も同じ `UPDATE` の `CASE` で行い、ロックが解けた後の失敗は 1 回目から数える。成功で 0 に戻す。ロックの期限は 5 回目の失敗の時刻から 15 分 | IA-INV-03 |
 | `totp_credential` | 利用者ごとに 1 行。`last_used_step >= 0` の CHECK。再利用の拒否は `UPDATE ... SET last_used_step = :step WHERE user_id = :id AND last_used_step < :step` の更新件数で判定する。秘密は暗号文だけを置く（暗号化の方式と鍵は Bolt 31） | IA-INV-10 |
 | `recovery_code` | 利用者ごとに 10 行。`user_id` の索引。消費は `UPDATE ... SET used_at = :now WHERE id = :id AND used_at IS NULL` の更新件数で判定し、行を残す。発行のたびに利用者の行を消して入れ直す（追記専用の印を付けない）。bcrypt は塩が毎回違うので、`(user_id, code_hash)` の一意制約は置かない | IA-INV-11 |
 | `access_grant` | `status` IN（`INVITED`、`ACTIVE`、`REVOKED`、`EXPIRED`）。同じ予約・荷受人企業に有効な許可を重複させないことはアプリケーションで確認する | IA-INV-05、IA-INV-06 |

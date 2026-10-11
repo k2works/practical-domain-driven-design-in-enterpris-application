@@ -15,6 +15,7 @@ class LockPolicyTest {
     void 連続の失敗が5回に達したらロックする() {
         assertThat(policy.shouldLock(4)).isFalse();
         assertThat(policy.shouldLock(5)).isTrue();
+        assertThat(policy.maxConsecutiveFailures()).isEqualTo(5);
     }
 
     @Test

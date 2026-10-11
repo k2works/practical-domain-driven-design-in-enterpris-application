@@ -17,9 +17,14 @@ public class LockPolicy {
     /** ロックの長さ。 */
     public static final Duration LOCK_DURATION = Duration.ofMinutes(15);
 
+    /** 連続の失敗の上限（リポジトリの条件付きの更新に渡す）。 */
+    public int maxConsecutiveFailures() {
+        return MAX_CONSECUTIVE_FAILURES;
+    }
+
     /** その回数の連続の失敗でロックするか。 */
     public boolean shouldLock(int consecutiveFailures) {
-        return consecutiveFailures >= MAX_CONSECUTIVE_FAILURES;
+        return consecutiveFailures >= maxConsecutiveFailures();
     }
 
     /** その時刻の失敗でロックしたときの期限。 */
