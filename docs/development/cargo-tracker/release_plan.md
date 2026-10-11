@@ -789,3 +789,4 @@ xychart-beta
 | 2026-10-10 | ユーザーマニュアル（`docs/manual`）を作成した。HTML を ER 図・JIG と同じくサイトに載せた。画面側の課題を W4 の締めの扱いに記録した | anthropic/claude-opus-5-5、指示 human:kakimomokuri |
 | 2026-10-10 | ウォーキングスケルトンのガイドツアーの記事を作成した（開発ガイドラインとは別の記事） | anthropic/claude-opus-5-5、指示 human:kakimomokuri |
 | 2026-10-10 | W4 を締めた（11 SP、達成率 100%、Release 0.1 の 35 SP を完了）。W4 の結果とふりかえり、実績スケジュール、Release 0.1 リリース完了報告書を書いた。Release 1.0 の計画を引き直し（US-04 の残りを W5 に前倒し、W5 11・W6 10 SP、超過は前倒しの余裕で吸収）、承認ゲートの密度を決め直した。#46（画面側の課題）を起票し、#45・#46・#43 を W5 にした。D-85 の期限を W5 の開始準備にした。GitHub の Release 0.1 のマイルストーンを閉じた | anthropic/claude-opus-5-5、決定 human:kakimomokuri |
+| 2026-10-11 | US-04 の Release 1.0 の範囲が #17（初回同期）と #43（Bolt 25 の締め）の 2 件に重なっていたので、#17 を #43 の重複としてクローズし、#17 にしかなかった MVP の決定・見積り・完了の定義を #43 に移した | anthropic/claude-opus-5-5、決定 human:kakimomokuri |
