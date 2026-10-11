@@ -4,7 +4,7 @@ title: "Bolt 30 計画 - ADR-011 の採用と、TOTP の資格・回復コード
 description: "W5 の 4 本目の Bolt の計画。ADR-011（多要素認証は Spring Security 7 の要素の権限で組み、TOTP は java-otp で作る）を承認にし、identity に TOTP の資格・回復コード・ログインの失敗の表とドメインのモデル・リポジトリ、TOTP の生成のポートと java-otp の実装を、インサイドアウトで作る。画面と認証の流れは Bolt 31 から。"
 tags: [development,bolt-plan]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-11T08:39:29Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-11T08:48:39Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-11T08:26:00Z }
 ---
@@ -193,11 +193,11 @@ u ||--o| f
   - non_functional.md: TOTP の前提としてサーバーの時計の同期（NTP。ECS なら Amazon Time Sync）を書く（K-04）。SEC-09 に回復コードのハッシュの方式（bcrypt）、SEC-16 の旧い列の参照を直す
   - release_plan.md: W5 の節の Bolt 13・14 からの持ち込みの表を、承認された割り振り（確認ポイント 9）に直す。K-03 を W10 に送るなら Issue にする（T-89）
   - 完了の判定: `okf:check` ERROR 0、`documentationTest` 緑
-- [?] **2. 表（マイグレーション）** 【承認ゲート: スキーマ】
+- [x] **2. 表（マイグレーション）** 【承認ゲート: スキーマ】
   - Red: リポジトリの統合テスト（PostgreSQL。`MyBatisIdentityRepositoriesIntegrationTest` の前例）に、3 つの表へ書いて読む骨組みを書き、表がないことで落ちることを確かめる（本命は次のステップのアサーション。ここは表の有無）
   - Green: マイグレーション（`db/migration/common/V20261011xxxxxx__create_identity_totp.sql`。版は作成した日の時刻にする。未来の日付にすると、後の Bolt で足す版が順序の違反になる。H2 と PostgreSQL の共通の構文）。外部キー、CHECK（`consecutive_failures >= 0`、`last_used_step >= 0`）、`recovery_code` の `user_id` の索引、表と列の日本語のコメント（`COMMENT ON`。追記専用の印は付けない）。`afterMigrate` の権限は既存の「スキーマのすべての表」の付与で足りるかを確かめる（足りなければ足す）
   - 完了の判定: `check` 緑（H2 の起動の確かめと PostgreSQL の統合テスト、`SchemaCommentIntegrationTest` を含む）
-- [ ] **3. ドメインのモデル** 【承認ゲート: Red・Green】
+- [?] **3. ドメインのモデル** 【承認ゲート: Red・Green】
   - Red: 単体テスト。TOTP の資格（刻みの単調増加、同じ刻み・前の刻みを拒む）、回復コード（使ったら使えない。ハッシュは `RecoveryCodeHasher` の偽の実装で確かめる）、ログインの失敗（4 回はロックしない・5 回でロック、ロックは 14 分 59 秒で解けず 15 分で解ける、ロック中の失敗は数えない、成功で 0 に戻る）。骨組みを先に置き、本命のアサーションで落とす（T-88）
   - Green: `TotpCredential`・`RecoveryCode`・`LoginFailure`・`RecoveryCodeHasher`（`identity.domain.model.aggregates`）、`LockPolicy`（`rules`、`@DomainRule`）、`EncryptedSecret`（`valueobjects`）。時刻は引数で受け取る（`Clock` を持たない）。前後 1 つの窓の照合はポートを使うのでステップ 5 で書く
   - 完了の判定: `check` 緑、用語集の整合テスト（Living Glossary）と AT-01（ドメインの依存）が通る

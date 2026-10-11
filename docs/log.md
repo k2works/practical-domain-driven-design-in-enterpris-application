@@ -2,6 +2,8 @@
 
 ## 2026-10-11
 * **Update**: [bolt_30_plan](/development/cargo-tracker/bolt_30_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_30_plan](/development/cargo-tracker/bolt_30_plan.md) を更新（anthropic/claude-opus-5-5）
 * **Verification**: [011-mfa-totp](/adr/cargo-tracker/011-mfa-totp.md) を human:kakimomokuri が検証
 * **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
 * **Update**: [bolt_30_plan](/development/cargo-tracker/bolt_30_plan.md) を更新（anthropic/claude-opus-5-5）
