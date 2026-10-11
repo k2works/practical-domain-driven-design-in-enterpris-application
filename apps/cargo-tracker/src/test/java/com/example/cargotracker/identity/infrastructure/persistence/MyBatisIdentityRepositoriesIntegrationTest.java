@@ -34,6 +34,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 /**
  * 企業・利用者・役割・監査記録の表とリポジトリを PostgreSQL 18 で確かめる（Bolt 14、データモデル「アクセス・監査」）。
+ * TOTP の資格・回復コード・ログインの失敗の表の制約も確かめる（Bolt 30）。
  */
 @SpringBootTest
 @Import(TestcontainersConfiguration.class)
@@ -201,6 +202,104 @@ class MyBatisIdentityRepositoriesIntegrationTest {
                                 + " AND table_name IN ('spring_session', 'spring_session_attributes')",
                         Integer.class))
                 .isEqualTo(2);
+    }
+
+    @Test
+    void TOTPの資格を利用者ごとに1つ書いて読める() {
+        UUID userId = insertUser(uniqueEmail(), "ACTIVE");
+        jdbc.update(
+                "INSERT INTO identity.totp_credential (user_id, secret_encrypted, last_used_step, enrolled_at)"
+                        + " VALUES (?, 'ciphertext', 0, now())",
+                userId);
+
+        assertThat(jdbc.queryForObject(
+                        "SELECT last_used_step FROM identity.totp_credential WHERE user_id = ?", Long.class, userId))
+                .isZero();
+        assertThatThrownBy(() -> jdbc.update(
+                        "INSERT INTO identity.totp_credential (user_id, secret_encrypted, last_used_step, enrolled_at)"
+                                + " VALUES (?, 'other', 0, now())",
+                        userId))
+                .isInstanceOf(DataIntegrityViolationException.class);
+    }
+
+    @Test
+    void TOTPの資格の最後に使った刻みは負にできない() {
+        UUID userId = insertUser(uniqueEmail(), "ACTIVE");
+
+        assertThatThrownBy(() -> jdbc.update(
+                        "INSERT INTO identity.totp_credential (user_id, secret_encrypted, last_used_step, enrolled_at)"
+                                + " VALUES (?, 'ciphertext', -1, now())",
+                        userId))
+                .isInstanceOf(DataIntegrityViolationException.class);
+    }
+
+    @Test
+    void 回復コードは利用者ごとに複数書けて使った時刻を残せる() {
+        UUID userId = insertUser(uniqueEmail(), "ACTIVE");
+        UUID used = UUID.randomUUID();
+        jdbc.update(
+                "INSERT INTO identity.recovery_code (id, user_id, code_hash, used_at, issued_at)"
+                        + " VALUES (?, ?, 'hash-1', now(), now())",
+                used,
+                userId);
+        jdbc.update(
+                "INSERT INTO identity.recovery_code (id, user_id, code_hash, used_at, issued_at)"
+                        + " VALUES (?, ?, 'hash-2', NULL, now())",
+                UUID.randomUUID(),
+                userId);
+
+        assertThat(jdbc.queryForObject(
+                        "SELECT count(*) FROM identity.recovery_code WHERE user_id = ? AND used_at IS NULL",
+                        Integer.class,
+                        userId))
+                .isEqualTo(1);
+    }
+
+    @Test
+    void ログインの失敗は利用者ごとに1行で回数は負にできない() {
+        UUID userId = insertUser(uniqueEmail(), "ACTIVE");
+        jdbc.update(
+                "INSERT INTO identity.login_failure (user_id, consecutive_failures, locked_until, updated_at)"
+                        + " VALUES (?, 0, NULL, now())",
+                userId);
+
+        assertThat(jdbc.queryForObject(
+                        "SELECT consecutive_failures FROM identity.login_failure WHERE user_id = ?",
+                        Integer.class,
+                        userId))
+                .isZero();
+        assertThatThrownBy(() -> jdbc.update(
+                        "UPDATE identity.login_failure SET consecutive_failures = -1 WHERE user_id = ?", userId))
+                .isInstanceOf(DataIntegrityViolationException.class);
+    }
+
+    // PostgreSQL は制約の違反の後に同じトランザクションの文を受け付けないため、表ごとに分ける（ADR-007）
+    @Test
+    void TOTPの資格は存在しない利用者に書けない() {
+        assertThatThrownBy(() -> jdbc.update(
+                        "INSERT INTO identity.totp_credential (user_id, secret_encrypted, last_used_step, enrolled_at)"
+                                + " VALUES (?, 'ciphertext', 0, now())",
+                        UUID.randomUUID()))
+                .isInstanceOf(DataIntegrityViolationException.class);
+    }
+
+    @Test
+    void 回復コードは存在しない利用者に書けない() {
+        assertThatThrownBy(() -> jdbc.update(
+                        "INSERT INTO identity.recovery_code (id, user_id, code_hash, used_at, issued_at)"
+                                + " VALUES (?, ?, 'hash', NULL, now())",
+                        UUID.randomUUID(),
+                        UUID.randomUUID()))
+                .isInstanceOf(DataIntegrityViolationException.class);
+    }
+
+    @Test
+    void ログインの失敗は存在しない利用者に書けない() {
+        assertThatThrownBy(() -> jdbc.update(
+                        "INSERT INTO identity.login_failure (user_id, consecutive_failures, locked_until, updated_at)"
+                                + " VALUES (?, 1, NULL, now())",
+                        UUID.randomUUID()))
+                .isInstanceOf(DataIntegrityViolationException.class);
     }
 
     private UUID insertUser(String email, String status) {
