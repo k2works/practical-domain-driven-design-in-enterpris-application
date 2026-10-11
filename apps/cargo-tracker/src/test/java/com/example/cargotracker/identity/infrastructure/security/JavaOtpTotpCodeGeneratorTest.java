@@ -1,0 +1,91 @@
+package com.example.cargotracker.identity.infrastructure.security;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
+import java.nio.charset.StandardCharsets;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.IntStream;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
+
+/**
+ * TOTP の生成の契約（Bolt 30、RFC 6238 の付録 B の試験ベクトル、HMAC-SHA1）。刻みは epoch 秒 / 30。
+ * 6 桁は ADR-011 のスパイクと同じ値（先頭の 0 を保つ）、8 桁は RFC の付録 B の値。
+ */
+class JavaOtpTotpCodeGeneratorTest {
+
+    /** RFC 6238 の付録 B の SHA1 の秘密（ASCII の "12345678901234567890"）。 */
+    private static final byte[] SECRET = "12345678901234567890".getBytes(StandardCharsets.US_ASCII);
+
+    private static long step(long epochSeconds) {
+        return epochSeconds / 30;
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+        "59, 287082",
+        "1111111109, 081804",
+        "1111111111, 050471",
+        "1234567890, 005924",
+        "2000000000, 279037",
+        "20000000000, 353130"
+    })
+    void 六桁のコードはRFC6238の試験ベクトルの下6桁と一致し先頭の0を保つ(long epochSeconds, String expected) {
+        assertThat(new JavaOtpTotpCodeGenerator().code(SECRET, step(epochSeconds)))
+                .isEqualTo(expected);
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+        "59, 94287082",
+        "1111111109, 07081804",
+        "1111111111, 14050471",
+        "1234567890, 89005924",
+        "2000000000, 69279037",
+        "20000000000, 65353130"
+    })
+    void 八桁のコードはRFC6238の試験ベクトルと一致する(long epochSeconds, String expected) {
+        assertThat(new JavaOtpTotpCodeGenerator(8).code(SECRET, step(epochSeconds)))
+                .isEqualTo(expected);
+    }
+
+    @Test
+    void 同じ生成器を並行に使っても試験ベクトルどおりのコードを作る() throws Exception {
+        JavaOtpTotpCodeGenerator generator = new JavaOtpTotpCodeGenerator();
+        ExecutorService executor = Executors.newFixedThreadPool(8);
+        try {
+            List<CompletableFuture<Boolean>> results = IntStream.range(0, 8)
+                    .mapToObj(thread -> CompletableFuture.supplyAsync(
+                            () -> IntStream.range(0, 2_000)
+                                    .allMatch(i ->
+                                            generator.code(SECRET, step(59)).equals("287082")
+                                                    && generator
+                                                            .code(SECRET, step(1111111111))
+                                                            .equals("050471")),
+                            executor))
+                    .toList();
+
+            assertThat(results.stream()
+                            .map(future ->
+                                    future.orTimeout(60, TimeUnit.SECONDS).join())
+                            .toList())
+                    .containsOnly(true);
+        } finally {
+            executor.shutdownNow();
+        }
+    }
+
+    @Test
+    void 空の秘密と負の刻みは失敗へ倒す() {
+        JavaOtpTotpCodeGenerator generator = new JavaOtpTotpCodeGenerator();
+
+        assertThatThrownBy(() -> generator.code(new byte[0], 1)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> generator.code(SECRET, -1)).isInstanceOf(IllegalArgumentException.class);
+    }
+}

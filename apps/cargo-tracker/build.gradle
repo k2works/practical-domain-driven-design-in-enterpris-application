@@ -43,6 +43,8 @@ dependencies {
 	// 認証と session（US-18、ADR-012）。form login・役割による認可・CSRF と、DB に置く session（Bolt 14）
 	implementation 'org.springframework.boot:spring-boot-starter-security'
 	implementation 'org.springframework.boot:spring-boot-starter-session-jdbc'
+	// TOTP の生成（US-18、ADR-011。Bolt 30）。HOTP の計算と切り詰めだけを任せ、依存は identity.infrastructure に閉じる（ArchUnit）
+	implementation 'com.eatthepath:java-otp:1.0.0'
 	// 画面の CSS と部分更新（ADR-005、技術スタック）。フロントエンドのビルドを持たず、WebJars で同梱して版を固定する（Bolt 8）
 	implementation 'org.webjars:webjars-locator-lite'
 	implementation 'org.webjars.npm:bootstrap:5.3.8'

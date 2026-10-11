@@ -4,7 +4,11 @@ import com.example.cargotracker.identity.domain.model.valueobjects.EncryptedSecr
 import com.example.cargotracker.shared.annotation.ddd.AggregateRoot;
 import com.example.cargotracker.shared.domain.UserId;
 import com.example.cargotracker.shared.domain.UtcInstant;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.time.Duration;
 import java.util.Objects;
+import java.util.OptionalLong;
 
 /**
  * TOTP の資格。利用者が登録した TOTP の暗号化した秘密と、最後に使った時間の刻みを持つ。
@@ -13,6 +17,12 @@ import java.util.Objects;
  */
 @AggregateRoot
 public final class TotpCredential {
+
+    /** 時間の刻みの長さ（RFC 6238 の既定。US-18）。 */
+    public static final Duration STEP_DURATION = Duration.ofSeconds(30);
+
+    /** 時間の窓。今の刻みの前後いくつまでのコードを受け付けるか（ADR-011。サーバーの時計は NTP で合わせる）。 */
+    public static final int WINDOW = 1;
 
     private final UserId userId;
     private final EncryptedSecret secret;
@@ -64,6 +74,35 @@ public final class TotpCredential {
             throw new IllegalStateException("最後に使った刻み以下の刻みは使えない");
         }
         return new TotpCredential(userId, secret, step, enrolledAt);
+    }
+
+    /** 時刻の刻みの番号（epoch 秒 / 30）。 */
+    public static long stepAt(UtcInstant at) {
+        return Math.floorDiv(at.instant().getEpochSecond(), STEP_DURATION.toSeconds());
+    }
+
+    /**
+     * コードが、今の刻みの前後 {@value #WINDOW} 個の刻みのどれかのコードに一致し、その刻みを受け付けるなら、その刻みを返す。
+     * 比較は一定時間で行う（どこまで一致したかを時間から推測させない）。形の違うコードと、最後に使った刻み以下の刻みの
+     * コードは受け付けない（失敗へ倒す。T-42）。受け付けた刻みは、リポジトリの条件付きの更新で使ったことにする。
+     *
+     * @param secret 復号した秘密（平文）
+     * @param currentStep 今の刻みの番号（{@link #stepAt}）
+     */
+    public OptionalLong matchingStep(String code, byte[] secret, long currentStep, TotpCodeGenerator generator) {
+        if (code == null || code.isEmpty() || !code.chars().allMatch(c -> c >= '0' && c <= '9')) {
+            return OptionalLong.empty();
+        }
+        byte[] given = code.getBytes(StandardCharsets.US_ASCII);
+        long matched = -1;
+        for (long step = Math.max(0, currentStep - WINDOW); step <= currentStep + WINDOW; step++) {
+            byte[] expected = generator.code(secret, step).getBytes(StandardCharsets.US_ASCII);
+            // 一致を見つけても窓のすべての刻みを比べ、比べる回数を一致の位置で変えない
+            if (MessageDigest.isEqual(expected, given) && accepts(step) && matched < 0) {
+                matched = step;
+            }
+        }
+        return matched < 0 ? OptionalLong.empty() : OptionalLong.of(matched);
     }
 
     private static long requireStep(long step) {

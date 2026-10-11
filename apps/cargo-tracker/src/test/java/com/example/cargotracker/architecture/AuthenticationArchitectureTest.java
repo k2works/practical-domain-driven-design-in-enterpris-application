@@ -24,4 +24,15 @@ class AuthenticationArchitectureTest {
             .should()
             .dependOnClassesThat()
             .resideInAPackage("org.springframework.security..");
+
+    /** TOTP のライブラリは identity.infrastructure に閉じる。ドメインは TotpCodeGenerator のポートだけを知る（ADR-011、Bolt 30）。 */
+    @ArchTest
+    static final ArchRule TOTPのライブラリはidentityのinfrastructureだけが使う = noClasses()
+            .that()
+            .resideInAPackage("com.example.cargotracker..")
+            .and()
+            .resideOutsideOfPackage("com.example.cargotracker.identity.infrastructure..")
+            .should()
+            .dependOnClassesThat()
+            .resideInAPackage("com.eatthepath.otp..");
 }
