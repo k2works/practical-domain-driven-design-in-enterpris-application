@@ -9598,8 +9598,8 @@
 </tr>
 <tr>
 <td style="text-align: left;">3</td>
-<td style="text-align: left;"><strong>SonarQube のローカル検査を実施していない</strong>。この環境にはトークン（<code>.env</code> は暗号化された <code>.env.vault</code> だけ）とローカルのサーバーがない</td>
-<td style="text-align: left;">変更はテストのコードだけで、SonarQube の解析対象の本番のコードは変えていない。Checkstyle・SpotBugs・Spotless は <code>check</code> で通った。必要なら人の環境で <code>sonar-local:check</code> を流す</td>
+<td style="text-align: left;"><strong>SonarQube の Quality Gate は PASS</strong>。ただし Code Smell 1 件（MAJOR。<code>AcceptanceCriteriaCoverageTest.java:40</code> の正規表現のバックトラック）が残る。Bolt 28 で作ったコードで、Bolt 29 では変えていない。初版では「この環境では回せない」と書いたが、過去の履歴（Bolt 19 の T-52、手順書の 9 節）を確かめずに出した誤りで、人の指摘で手順書のとおり <code>sonar-local:start</code> → トークンの作成 → <code>scan</code> → <code>check</code> で回した</td>
+<td style="text-align: left;">Code Smell は Bolt 29 の範囲外。Bolt 29b の開発レビューのときに直すか、W5 の締めで扱いを決める</td>
 <td style="text-align: left;">品質ゲート</td>
 </tr>
 <tr>
@@ -9741,7 +9741,7 @@
 </tr>
 <tr>
 <td style="text-align: left;">SonarQube（ローカル）</td>
-<td style="text-align: left;">未実施（議題 3）</td>
+<td style="text-align: left;">Quality Gate PASS（<code>sonar-local:check</code>。手順書の 9 節のとおり起動）。カバレッジ 95.1%、重複 0.1%、Bug 0、Vulnerability 0、Security Hotspot 0、Code Smell 1（Bolt 28 のコード。議題 3）</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>okf:check</code></td>
@@ -9834,10 +9834,12 @@
 <li>開発レビューの指摘に合わせて判定を <code>count()</code> に変えたとき、要素を待たなくなる副作用に、流す前まで気づかなかった（流す前に自分で気づいて直した）</li>
 <li><code>pkill -f</code> のパターンが自分のシェルにも当たり、編集が当たらなかった</li>
 <li>Maven Central の 429 で、1 回の <code>uiTest</code> の前に数分の再試行が要った</li>
+<li>SonarQube のローカル検査を「この環境では回せない」と、過去の履歴と手順書（Bolt 19 の T-52、<code>application_development_setup.md</code> の 9 節）を確かめずに判断した。T-56（環境の操作の前に手順書を読む）を守らなかった。人の指摘で手順書のとおりに回し、PASS を確かめた</li>
 <li>Try</li>
 <li>T-91: 自動待ちのある API（<code>evaluate</code>・<code>isVisible</code> など）を待たない API（<code>count</code> など）に置き換えるときは、待っていたものを別の手段で残すかを先に決める</li>
 <li>T-92: プロセスを止めるときは <code>pkill -f</code> を使わず、ツールのタスクの停止か PID で止める</li>
 <li>T-93: 依存の取得が 429 になる環境では、最初から <code>--max-workers=1</code> と再試行のループで流す</li>
+<li>T-94: 「この環境ではできない」と書く前に、手順書（<code>docs/operation/</code>）と過去の終了報告で同じ操作の履歴を探す（T-56 の再確認）</li>
 </ul>
 <h2 id="bolt_1">次の Bolt<a class="headerlink" href="#bolt_1" title="Permanent link">&para;</a></h2>
 <p>Bolt 29b（<a href="https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/46">#46</a>）: マニュアルの作成で見つけた画面の文言と表示の課題を直し、マニュアルの該当の節とキャプチャを直す。開発レビューにマニュアルを書く立場の観点を入れる（T-90）。</p>
@@ -9851,6 +9853,11 @@
 </tr>
 </thead>
 <tbody>
+<tr>
+<td style="text-align: left;">2026-10-11</td>
+<td style="text-align: left;">人の指摘（SonarQube は過去に同様の環境で回せた）で、手順書のとおり SonarQube を起動して <code>sonar-local:check</code> を流し、議題 3・品質ゲート・ふりかえりを書き直した（承認待ち）</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5、指摘 human:kakimomokuri</td>
+</tr>
 <tr>
 <td style="text-align: left;">2026-10-11</td>
 <td style="text-align: left;">初版作成（承認待ち）</td>
