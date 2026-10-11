@@ -16,7 +16,7 @@
         <link rel="prev" href="../bolt_28_report/">
       
       
-        <link rel="next" href="../release_report-0_1/">
+        <link rel="next" href="../bolt_29_report/">
       
       
         
@@ -4567,6 +4567,41 @@
   
 </nav>
       
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../bolt_29_report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 29 終了報告
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--draft"></span>
+  
+
+  
+
+      </a>
     </li>
   
 
@@ -9757,20 +9792,24 @@
 <h2 id="_7">ステップ計画<a class="headerlink" href="#_7" title="Permanent link">&para;</a></h2>
 <p>状態の記号: <code>[ ]</code> 未着手、<code>[-]</code> 進行中、<code>[?]</code> 承認待ち、<code>[x]</code> 完了。各ステップの終わりに <code>check</code> が緑であることを確かめ、push して CI を確かめる（T-26、T-65）。コミットの前に、そのステップのファイルだけをステージしているか確かめる（T-84）。</p>
 <ul class="task-list">
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>1. 集める前の基準を取る</strong> 【承認ゲート: なし】</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>1. 集める前の基準を取る</strong> 【承認ゲート: なし】</li>
 <li><code>uiTest</code> を流し、実行時間のある方の XML でシナリオの件数・失敗・実行時間を記録する（T-79。Bolt 28 の時点で 80 本、失敗 0）</li>
 <li>完了の判定: 基準の件数と実行時間を結果に書いた</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>2. <code>BrowserSession</code> に部品を置き、写しを置き換える</strong> 【承認ゲート: なし】</li>
+<li>結果（2026-10-11）: <code>uiTest</code> 80 本、失敗 0、実行時間の合計 801 秒。Maven Central の 429 を <code>--max-workers=1</code> と再試行で越えた</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>2. <code>BrowserSession</code> に部品を置き、写しを置き換える</strong> 【承認ゲート: なし】</li>
 <li><code>BrowserSession</code> に <code>tabUntilFocused(Locator)</code> と <code>tabUntilGroup(String)</code> を足す（Javadoc にそろえた振る舞いと理由を書く）</li>
-<li>10 のクラスの <code>tabUntilFocused</code> と 2 つの <code>tabUntilGroup</code> の写しを消し、<code>browser.tabUntilFocused(...)</code> などの呼び出しに置き換える（呼び出しは 33 か所）。使わなくなった import を消す（<code>spotlessApply</code> の後に確かめる。T-55）</li>
+<li>10 のクラスの <code>tabUntilFocused</code> と 2 つの <code>tabUntilGroup</code> の写しを消し、<code>browser.tabUntilFocused(...)</code> などの呼び出しに置き換える（呼び出しは 35 か所。初版の「33 か所」は <code>tabUntilGroup</code> を数え漏らしていた）。使わなくなった import を消す（<code>spotlessApply</code> の後に確かめる。T-55）</li>
 <li>失敗を報せることの確かめ（T-88）: 集めた部品に、画面にない要素を一時的に指定したシナリオで落ちることを確かめてから戻す</li>
 <li>完了の判定: <code>check</code> 緑、<code>uiTest</code> の件数と結果がステップ 1 と同じ、<code>grep</code> で <code>private void tabUntil</code> が <code>BrowserSession</code> の外に残っていない</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>3. 後片付けのフックの判断と、文書の反映</strong> 【承認ゲート: なし】</li>
+<li>結果（2026-10-11）: 写し 12 を消し、35 か所を <code>browser.</code> 経由にした。開発レビューの指摘で、要素が現れるのを待ってから（<code>isAttached</code>）待たない判定（<code>count</code>）で押す形に変えた（終了報告の議題 1・2）。T-88: 画面にない欄で落ちることを確かめた（対応の前は 30 秒の <code>TimeoutError</code>、後は 5 秒の「Locator expected to be attached」）。<code>uiTest</code> 80 本・失敗 0・名前が一致・780 秒、<code>check</code> 1608 件・失敗 0（<code>71789d8</code>）</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>3. 後片付けのフックの判断と、文書の反映</strong> 【承認ゲート: なし】</li>
 <li>確認ポイント 6 の決定のとおりにする（推奨では動かさない。理由を <code>RoutingUiSteps</code> の Javadoc に 1 文足す）</li>
 <li>設計文書（T-53）: test_strategy.md の画面の層のステップ定義の記述に、キー操作の部品の置き場所を足す（記述があれば）</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>4. 開発レビューと終了報告</strong> 【承認ゲート: 終了報告】</li>
+<li>結果（2026-10-11）: フックは動かさず、理由を <code>RoutingUiSteps</code> の Javadoc に足した。test_strategy.md の「置き場所とステップ定義」に <code>ui/</code> の行と部品の置き場所の段落を足した</li>
+<li>[?] <strong>4. 開発レビューと終了報告</strong> 【承認ゲート: 終了報告】</li>
 <li>開発レビュー（<code>developing-review</code>。プログラマーとテスターの観点。画面を変えないのでインタラクションデザイナー・テクニカルライターの観点は外す）</li>
 <li><code>bolt_29_report.md</code>。release_plan の W5 の 29 の行と進捗、開発の索引を更新する。承認の後に #45 を閉じる</li>
+<li>結果（2026-10-11）: 開発レビュー 1 回（推奨 2・任意 3。推奨 2 と任意 1 を反映）。<a href="../bolt_29_report/">Bolt 29 終了報告</a>（承認待ち）</li>
 </ul>
 <h3 id="_8">時間の配分と打ち切り<a class="headerlink" href="#_8" title="Permanent link">&para;</a></h3>
 <table>
@@ -9873,11 +9912,11 @@
 </table>
 <h2 id="_9">完了条件<a class="headerlink" href="#_9" title="Permanent link">&para;</a></h2>
 <ul class="task-list">
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <code>BrowserSession</code> の外に <code>tabUntilFocused</code>・<code>tabUntilGroup</code> の写しがない</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <code>uiTest</code> の件数と結果が集める前と同じ（実行時間のある方の XML で数える。T-79）</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> 集めた部品が届かない要素で失敗することを確かめた（T-88）</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <code>BrowserSession</code> の外に <code>tabUntilFocused</code>・<code>tabUntilGroup</code> の写しがない</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <code>uiTest</code> の件数と結果が集める前と同じ（実行時間のある方の XML で数える。T-79）</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> 集めた部品が届かない要素で失敗することを確かめた（T-88）</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <code>check</code> が緑。push して CI を確かめた</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> 後片付けのフックの置き場所を決め、理由を残した</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> 後片付けのフックの置き場所を決め、理由を残した</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> 開発レビューと終了報告。承認の後に #45 を閉じた</li>
 </ul>
 <h3 id="_10">デモ項目<a class="headerlink" href="#_10" title="Permanent link">&para;</a></h3>
