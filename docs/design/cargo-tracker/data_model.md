@@ -4,7 +4,7 @@ title: "cargo-tracker データモデル"
 description: "cargo-tracker の概念データモデル、スキーマ分割、命名と型の規約（H2 と PostgreSQL の共通部分）、コンテキストごとの論理データモデルと ER 図、版・追記専用・冪等性・イベント配信の表現。"
 tags: [design, data-model]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-10T02:25:55Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-11T06:11:29Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T07:48:17Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:01:37Z }
@@ -598,7 +598,7 @@ entity "processed_command\n処理済みコマンド" as pc {
 | `booking_saga` | 予約ごとに 1 つ。`status` IN（`IN_PROGRESS`、`COMPLETED`、`FAILED`、`NEEDS_HUMAN`）。完了は `status` と `updated_at`（完了の時刻を兼ねる。予約が通知を受けた時刻で、追跡を開始した時刻ではない。Bolt 25 レビュー A-6）を期待版（`version`）で更新し、完了時刻の列は持たない。`current_step` は完了の後も `START_TRACKING` のまま（Bolt 25）。再試行の回数・次の時刻・最後の誤りは持たない（追跡の開始の再試行はイベントの再配信が担う。ADR-015）。有人確認要の判定は処理中の滞留（`started_at`）で行う | ARCH-HO-02 |
 | `processed_command` | 本予約確定のコマンド ID を記録し、再送には既存の予約 ID と追跡番号を返す。確定に成功したときだけ、貨物予約と同じトランザクションで INSERT する。`command_type` は `ConfirmBooking`、`payload_hash` は業務番号・見積り番号・操作者の利用者 ID の SHA-256、`result_ref` は「予約 ID:追跡番号」、`processed_at` は commit 時刻。追記専用。同じコマンド ID の同時の確定は、同じ見積りなので処理済みコマンドの主キーより先に貨物予約の UK（`quotation_id`）で片方が負ける。負けた側は貨物予約の保存をセーブポイントに戻し（トランザクションは中断しない）、同じトランザクションで処理済みコマンド → 同じ見積りの予約の順に引き直し、最初の結果か既存の追跡番号を返す（Bolt 24） | B-INV-03、B-INV-11 |
 
-`booking_version.cargo_summary` は予約確定時の貨物の写しで、見積りの内部情報（料金明細）は複製しない（units.md「見積り内部情報を予約へ複製しない」）。
+`booking_version.cargo_summary` は予約確定時の貨物の写しで、見積りの内部情報（料金明細）は複製しない（units.md「見積り内部情報を予約へ複製しない」）。表示用の文字列で、書式は見積りが決め、予約は解釈しない。Bolt 29c から貨物種別・荷姿の日本語名と、不要な 0 を落とし桁区切りを入れた重量・容積（例: 「一般 / パレット × 12 / 8,400 kg / 32.5 m3」）。それより前の予約版は追記専用なので英語の値（「GENERAL / PALLET × 12 / 8400.000 kg / 32.500 m3」）のまま残る。
 
 ### 追跡（`tracking`）
 

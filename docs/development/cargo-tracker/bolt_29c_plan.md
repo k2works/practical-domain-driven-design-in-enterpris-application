@@ -3,8 +3,10 @@ type: Plan
 title: "Bolt 29c 計画 - 本予約の確定と経路候補の比較の画面の語（#46 の後半）"
 description: "W5 の 3 本目の Bolt の計画。#46 の残りの 2 か所、S-09 の見出し「確定条件（BR-01）」と貨物の要約「GENERAL / PALLET × 12 / 8400.000 kg / 32.500 m3」、S-06 の「参照情報版」を、画面の語に直す。貨物の日本語名は見積りの application 層に置き、要約の数値の書き方も直す。UI 設計とマニュアル 7・8 章・キャプチャ 4 枚を合わせ、#46 を閉じる。"
 tags: [development,bolt-plan]
-status: draft
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-11T05:51:37Z }
+status: stable
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-11T06:11:29Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-10-11T06:10:53Z }
 ---
 
 # Bolt 29c 計画 - 本予約の確定と経路候補の比較の画面の語（#46 の後半）
@@ -129,9 +131,10 @@ BookableQuotationQueryService ..> summary : 公開 API の結果で写す
 
 状態の記号: `[ ]` 未着手、`[-]` 進行中、`[?]` 承認待ち、`[x]` 完了。各ステップの終わりに `check` が緑であることと、計画からの変更を設計文書に反映したこと（T-53）を確かめ、push して CI を確かめる（T-26、T-65）。コミットの前に、そのステップのファイルだけをステージしているか確かめる（T-84）。依存の取得は最初から `--max-workers=1` と再試行で流す（T-93）。
 
-- [ ] **1. UI 設計とデータモデルの注を直す** 【承認ゲート: なし】
+- [x] **1. UI 設計とデータモデルの注を直す** 【承認ゲート: なし】
   - ui_design.md: UI:130（S-09 の役割の「BR-01 の」を外す）、UI:165（S-09 の見出しと貨物の書式）、UI:682・684（画面イメージ）、UI:172・173・657・670（S-06・S-07 の理由の語。R-INV-02 の参照はドメインの規則として残す）、UI:49-55 の表（画面の語とドメインの概念）、UI:523 などの条件の表の数値の書式。data_model.md の `cargo_summary` の注（:601）。architecture_backend.md の一文
   - 完了の判定: `okf:check` ERROR 0
+  - 結果（2026-10-11）: UI:130・166（S-09 の役割と見出し、貨物の要約の形）・172・173・657・671・683・685、「画面の語 / ドメインの概念」の表に「参照した航海情報の版 ⇔ 参照情報版」の行、data_model.md の `cargo_summary` の注、architecture_backend.md の一文。UI:523 の数値は入力欄の見本なので変えない
 - [ ] **2. 貨物の表示名と要約、S-09 の見出し（直す箇所 1・2）** 【承認ゲート: なし】
   - Red: `CargoDisplayNames` の単体テスト（4 つの貨物種別と 4 つの荷姿の名前、数値の書式: `8400.000`→`8,400`、`32.500`→`32.5`、`1200.500`→`1,200.5`、`0.250`→`0.25`、整数部 9 桁 `123456789.000`→`123,456,789`（`stripTrailingZeros` の指数の表記にならないこと））を書き、クラスがないことで落ちる（コンパイルの失敗）のではなく本命のアサーションで落ちるよう、骨組み（空の実装）を先に置く（T-88）。`BookableQuotationQueryAdapterTest.java:59` を新しい書式に向け直して落ちることを確かめる。`BookingControllerTest` に S-09 の見出し「確定条件」と「（BR-01）」がないことを足す。`TransportRequestControllerTest`（C-04）に条件の表の「8,400」を足す
   - Green: `CargoDisplayNames` を実装し（数値は `DecimalFormat("#,##0.###")` などで指数の表記を避ける）、`BookableQuotationQueryService.summary`・`TransportRequestLabels` の選択肢と表示の名前・`TransportRequestViews.termsRows` の重量と容積をそれに寄せる（荷主の画面の選択肢の値と表示は変わらない）。S-09 の見出しとテンプレートの見本の文字列（`new.html:38`・`show.html:38`）を直す。`BookableQuotationResult.cargoSummary` の Javadoc を書く
@@ -191,6 +194,7 @@ BookableQuotationQueryService ..> summary : 公開 API の結果で写す
 
 | 日付 | 更新内容 | 更新者 |
 | :--- | :--- | :--- |
+| 2026-10-11 | 計画を承認した（確認ポイントはすべて推奨のとおり） | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-10-11 | 開始準備の整合性検証（計画と設計 8 件・横断 7 件。高 1: S-06 の語は S-07 にも出る）を反映し、human:kakimomokuri の決定（重量・容積の書式を 1 か所にまとめて見積依頼の画面もそろえる）で範囲を広げた。S-07・UI:173・8.3、条件の表の数値、適合の根拠のテスト、画面の層のステップの文、指数の表記の境界値、architecture_backend.md と公開 API の Javadoc、UI の「画面の語 / ドメインの概念」の表、SP 0、DoD の `okf:check` | anthropic/claude-opus-5-5、決定 human:kakimomokuri |
 | 2026-10-11 | 初版作成（承認待ち）。開始準備で、画面に出る業務ルールの番号と貨物の要約の作り方を調べ（T-95）、human:kakimomokuri の決定（日本語名は application 層、S-06 の語は「参照した航海情報の版」、要約の数値も直す）を反映した | anthropic/claude-opus-5-5 |
 
