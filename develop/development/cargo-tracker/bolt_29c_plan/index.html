@@ -4530,7 +4530,7 @@
     
   
   
-    <span class="md-status md-status--draft"></span>
+    <span class="md-status md-status--stable"></span>
   
 
   
@@ -9774,11 +9774,11 @@
 <li>マニュアル（<code>creating-manual</code>）: 8 章 8.2 の ⑥・8.3 の ②（画面の語「参照した航海情報の版」）。7 章は文の変更なし（貨物の書式を書いた文がない。キャプチャだけ）。<code>./gradlew manualScreenshots</code> で撮り、変わる画面のキャプチャだけを残す: <code>07-booking-new.png</code>、<code>07-booking-detail.png</code>、<code>08-candidates.png</code>、<code>08-confirmation.png</code>、<code>08-confirmed.png</code> と、条件の表が写る <code>03-request-detail-submitted.png</code>、<code>04-request-detail-*.png</code>（4 枚）、<code>05-request-detail-booked.png</code>、<code>06-review.png</code>、S-04 の <code>06-quotation-*.png</code>（条件の表が写れば）。ほかの画像と日時だけが違う画像は元に戻す。残す前に画像を目で確かめる</li>
 <li>完了の判定: <code>check</code> 緑、<code>okf:check</code> ERROR 0</li>
 <li>結果（2026-10-11）: 8 章 8.2 の ⑥・8.3 の ② を直した。<code>manualScreenshots</code> で撮り、変わる画面の 14 枚（3・4・5・6 章の条件の表が写る 9 枚と、7・8 章の 5 枚）だけを残した。S-09・S-06・S-03 の画像を目で確かめた</li>
-<li>[?] <strong>5. 開発レビューと終了報告</strong> 【承認ゲート: 終了報告】</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>5. 開発レビューと終了報告</strong> 【承認ゲート: 終了報告】</li>
 <li>開発レビュー（<code>developing-review</code>。プログラマー（層と依存、書式の境界値）、テクニカルライター（T-90。画面に実装の語や業務ルールの番号が残っていないか、マニュアルと画面の一致）。リンクと画面遷移を変えないのでインタラクションデザイナーの観点は外す）。レビューにキャプチャを渡す</li>
 <li>SonarQube（<code>sonar-local:check</code>。手順書の 9 節のとおり起動）</li>
 <li><code>bolt_29c_report.md</code>。release_plan の W5 の 29c の行と進捗、開発の索引を更新する。承認の後に #46 を閉じる</li>
-<li>結果（2026-10-11）: 2 つの観点でレビューし（必須 0・推奨 6・任意 6）、推奨 5 件と任意 3 件を直した（<code>92badaf</code>）。SonarQube PASS（Code Smell 0）。<a href="../bolt_29c_report/">Bolt 29c 終了報告</a>（承認待ち）</li>
+<li>結果（2026-10-11）: 2 つの観点でレビューし（必須 0・推奨 6・任意 6）、推奨 5 件と任意 3 件を直した（<code>92badaf</code>）。SonarQube PASS（Code Smell 0）。<a href="../bolt_29c_report/">Bolt 29c 終了報告</a>（2026-10-11 に承認済み）</li>
 </ul>
 <h3 id="_10">時間の配分と打ち切り<a class="headerlink" href="#_10" title="Permanent link">&para;</a></h3>
 <table>
@@ -9898,7 +9898,7 @@
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> マニュアル 8 章を直し、変わる画面のキャプチャを <code>manualScreenshots</code> で撮り直した</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <code>check</code>・<code>uiTest</code> が緑。push して CI を確かめた（<code>92badaf</code>、run 200）</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> SonarQube の Quality Gate が PASS、<code>okf:check</code> ERROR 0</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> 開発レビュー（T-90 の観点を含む）と終了報告。承認の後に #46 を閉じた</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> 開発レビュー（T-90 の観点を含む）と終了報告。承認の後に #46 を閉じた</li>
 </ul>
 <h3 id="_12">デモ項目<a class="headerlink" href="#_12" title="Permanent link">&para;</a></h3>
 <p>営業担当者が本予約の確定（S-09）を開くと、確定条件の表に「一般 / パレット × 12 / 8,400 kg / 32.5 m3」と示され、業務ルールの番号は出ない。経路設計者の経路候補の比較（S-06）と経路の確定（S-07）の理由に「参照した航海情報の版」が示される。見積依頼の詳細と審査の条件の表の重量も「8,400」と示される。証跡はマニュアルのキャプチャとテスト（確認ポイント 7）。</p>
@@ -9912,6 +9912,11 @@
 </tr>
 </thead>
 <tbody>
+<tr>
+<td style="text-align: left;">2026-10-11</td>
+<td style="text-align: left;">終了報告を承認し、完了条件をすべて満たした。#46 を閉じた</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5、承認 human:kakimomokuri</td>
+</tr>
 <tr>
 <td style="text-align: left;">2026-10-11</td>
 <td style="text-align: left;">ステップ 1〜4 と開発レビューの対応を終え、終了報告を書いた（承認待ち）</td>
