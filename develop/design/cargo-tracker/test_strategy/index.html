@@ -9950,7 +9950,9 @@
 
 src/test/java/.../&lt;context&gt;/acceptance/   コンテキストごとのステップ定義
 src/test/java/.../shared/acceptance/      共通ステップ（ログイン、時刻の固定、企業・利用者の準備）
+src/test/java/.../ui/                     画面の層のステップ定義（@ui）。ブラウザの文脈とキー操作の部品は BrowserSession に 1 つ
 </code></pre></div>
+<p>画面の層のステップ定義は、Tab でフォーカスを進める部品（<code>tabUntilFocused</code>・<code>tabUntilGroup</code>）を <code>BrowserSession</code> から使い、クラスごとに写しを作らない（Bolt 29、#45。待ち方と上限を直す場所を 1 つにする）。1 回だけ Tab を押してフォーカスの順序を確かめる部品（<code>tabTo</code>）は、確かめる順序が画面ごとに違うので各クラスに置く。</p>
 <p>ステップ定義は自分のコンテキストの入力ポートだけを呼ぶ。前提の準備で他のコンテキストのデータが必要なときは、そのコンテキストの公開 API を使う（ADR-001 の境界をテストでも守る）。</p>
 <h3 id="_9">シナリオの例<a class="headerlink" href="#_9" title="Permanent link">&para;</a></h3>
 <p>US-04 の受入条件と BR-10 の境界を、日本語 Gherkin で書いた例を示す。</p>
