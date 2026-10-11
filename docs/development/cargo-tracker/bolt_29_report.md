@@ -4,7 +4,7 @@ title: "Bolt 29 終了報告 - 画面の層のステップ定義のキー操作�
 description: "29 回目の Bolt の終了報告。10 のクラスに 6 通りで写された tabUntilFocused と 2 つの tabUntilGroup を BrowserSession に集め、uiTest の 80 本が集める前と同じく通ることを確かめた結果。開発レビューで失敗の経路を読めるものに直したこと、後片付けのフックを動かさない判断、品質ゲート、ふりかえり、承認の議題を記す。"
 tags: [development,bolt-report]
 status: draft
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-11T02:17:31Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-11T02:34:03Z }
 ---
 
 # Bolt 29 終了報告 - 画面の層のステップ定義のキー操作の部品を 1 か所に集める（#45）
@@ -67,7 +67,7 @@ human:kakimomokuri の `/goal Bolt29` の指示で、確認ポイントはすべ
 | `check`（ModularityTest・ArchUnit・AT-01〜06・Checkstyle・SpotBugs・Spotless・`documentationTest` を含む） | 通過（1608 件、失敗 0） |
 | `uiTest`（axe-core を含む） | 通過（80 本、失敗 0。集める前と後でシナリオの名前が一致。開発レビューの対応の後にも流した。T-70） |
 | T-88（集めた部品が失敗を報せる） | 確かめた。画面にない欄を一時的に指定し、スイートを `@US-02` に絞って流すと落ちた（対応の前は 30 秒の `TimeoutError`、対応の後は 5 秒の「Locator expected to be attached」）。確かめた後に戻した |
-| CI | 本報告の初版の時点で `71789d8` の cargo-tracker CI は実行中 |
+| CI | `71789d8` の cargo-tracker CI（`check`・`ui`）は通過（run 191） |
 | SonarQube（ローカル） | 未実施（議題 3） |
 | `okf:check` | ERROR 0 |
 

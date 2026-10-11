@@ -4,7 +4,7 @@ title: "Bolt 29 計画 - 画面の層のステップ定義のキー操作の部�
 description: "29 回目の Bolt の計画。W5 の最初の Bolt で、Release 0.1 の負債 #45（T-87）を返す。10 のクラスに 6 通りで写された tabUntilFocused と 2 つの tabUntilGroup を BrowserSession に集め、uiTest の件数と結果が変わらないことで確かめる。後片付けのフックの置き場所も決める。"
 tags: [development,bolt-plan]
 status: draft
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-11T02:17:31Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-11T02:34:03Z }
 ---
 
 # Bolt 29 計画 - 画面の層のステップ定義のキー操作の部品を 1 か所に集める（#45）
@@ -169,7 +169,7 @@ end note
 - [x] `BrowserSession` の外に `tabUntilFocused`・`tabUntilGroup` の写しがない
 - [x] `uiTest` の件数と結果が集める前と同じ（実行時間のある方の XML で数える。T-79）
 - [x] 集めた部品が届かない要素で失敗することを確かめた（T-88）
-- [ ] `check` が緑。push して CI を確かめた
+- [x] `check` が緑。push して CI を確かめた（`71789d8`、run 191）
 - [x] 後片付けのフックの置き場所を決め、理由を残した
 - [ ] 開発レビューと終了報告。承認の後に #45 を閉じた
 
