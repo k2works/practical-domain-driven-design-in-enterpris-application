@@ -361,12 +361,12 @@
                                 </thead>
                                 <tbody>
                                 <tr>
-                                    <td>ck_app_user_email_normalized</td>
-                                    <td>((email)::text &#61; lower(TRIM(BOTH FROM email)))</td>
-                                </tr>
-                                <tr>
                                     <td>ck_app_user_status</td>
                                     <td>((status)::text &#61; ANY ((ARRAY[&#39;ACTIVE&#39;::character varying, &#39;SUSPENDED&#39;::character varying])::text[]))</td>
+                                </tr>
+                                <tr>
+                                    <td>ck_app_user_email_normalized</td>
+                                    <td>((email)::text &#61; lower(TRIM(BOTH FROM email)))</td>
                                 </tr>
                                 </tbody>
                             </table>
