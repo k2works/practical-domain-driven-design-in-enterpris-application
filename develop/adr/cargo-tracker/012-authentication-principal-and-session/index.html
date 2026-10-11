@@ -6760,7 +6760,7 @@
     
   
   
-    <span class="md-status md-status--draft"></span>
+    <span class="md-status md-status--stable"></span>
   
 
   
@@ -9838,7 +9838,7 @@
 <li>認可の条件（<code>hasRole</code>）に要素の権限を加える。</li>
 <li>request ごとの DB の確かめ（SEC-12・AC6）は、利用者 ID から主体を作り直して差し替える形にし、問い合わせを 1 回にまとめる。</li>
 <li>引数の解決で、TOTP まで済んでいない主体を渡さない。画面の単体テストの主体（<code>WithAuthenticatedActor</code>）にも要素の権限を足す。</li>
-<li>ロックの数え方（IA-INV-03）は <code>identity.application</code> のサービスと利用者の集約に置き、監査の listener は入口だけにする。</li>
+<li>ロックの数え方（IA-INV-03）は <code>identity.application</code> のサービスとログインの失敗の集約に置き、監査の listener は入口だけにする（2026-10-11 に改めた。初めは利用者の集約としたが、失敗のたびに利用者の版が上がり利用者の管理の更新とぶつかるため、Bolt 30 の計画の承認で別の集約にした。<a href="../011-mfa-totp/">ADR-011</a>）。</li>
 </ul>
 <h2 id="_8">コンプライアンス<a class="headerlink" href="#_8" title="Permanent link">&para;</a></h2>
 <ul>

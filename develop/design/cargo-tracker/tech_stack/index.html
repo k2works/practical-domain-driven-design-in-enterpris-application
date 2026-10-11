@@ -6935,7 +6935,7 @@
     
   
   
-    <span class="md-status md-status--draft"></span>
+    <span class="md-status md-status--stable"></span>
   
 
   
@@ -9804,11 +9804,11 @@
 </tr>
 <tr>
 <td style="text-align: left;">多要素認証</td>
-<td style="text-align: left;"><code>com.eatthepath:java-otp</code>（案）</td>
+<td style="text-align: left;"><code>com.eatthepath:java-otp</code></td>
 <td style="text-align: left;">1.0.0</td>
 <td style="text-align: left;">TOTP の生成。時間の窓の照合・再利用の拒否・回復コードはアプリケーションで持つ</td>
 <td style="text-align: left;">MIT</td>
-<td style="text-align: left;">BR-14。Spring Security 7.1 の多要素認証（要素の権限 <code>FACTOR_PASSWORD</code>・<code>FACTOR_TOTP</code>）と組み合わせる。Bolt 13 のスパイク（TS-01）の結論で、<a href="../../../adr/cargo-tracker/011-mfa-totp/">ADR-011</a>（提案）。採否は W5 の US-18 の計画で決める。登録用 QR の描き方は未確認</td>
+<td style="text-align: left;">BR-14。Spring Security 7.1 の多要素認証（要素の権限 <code>FACTOR_PASSWORD</code>・<code>FACTOR_TOTP</code>）と組み合わせる。Bolt 13 のスパイク（TS-01）の結論で、<a href="../../../adr/cargo-tracker/011-mfa-totp/">ADR-011</a>（2026-10-11 に承認、Bolt 30）。依存は <code>identity.infrastructure</code> に閉じ込める（ArchUnit）。登録用 QR の描き方は Bolt 31 で決める</td>
 </tr>
 <tr>
 <td style="text-align: left;">session ストア</td>
@@ -10340,7 +10340,7 @@
 <tr>
 <td style="text-align: left;">TS-01</td>
 <td style="text-align: left;">TOTP ライブラリの決定と、Spring Security 7 の多要素認証との統合方法</td>
-<td style="text-align: left;">スパイク済み（Bolt 13、2026-10-06）。結論は <a href="../../../adr/cargo-tracker/011-mfa-totp/">ADR-011</a>（提案）。W5 の US-18 で採否を決めて実装する</td>
+<td style="text-align: left;">解決済み（Bolt 13 のスパイク、2026-10-06。<a href="../../../adr/cargo-tracker/011-mfa-totp/">ADR-011</a> を 2026-10-11 に Bolt 30 の計画の承認で採用した）。実装は Bolt 30〜33b</td>
 </tr>
 <tr>
 <td style="text-align: left;">TS-02</td>
@@ -10368,7 +10368,7 @@
 <ul>
 <li>チームは Java と Spring に習熟していると仮定した。開発ガイドラインが Spring Platform を前提にしていることと、兄弟プロジェクト（cargo-tracker の Java 版）の実績を根拠にしている。</li>
 <li>リージョンは東京を仮置きした。欧州の荷主の個人情報を扱う場合、越境移転の要件でリージョン構成が変わる可能性がある。</li>
-<li>TOTP ライブラリは Bolt 13 のスパイクで 3 つの候補を比べた（<a href="../../../adr/cargo-tracker/011-mfa-totp/">ADR-011</a>）。本体への採用は ADR の承認の後。</li>
+<li>TOTP ライブラリは Bolt 13 のスパイクで 3 つの候補を比べた（<a href="../../../adr/cargo-tracker/011-mfa-totp/">ADR-011</a>）。2026-10-11 に ADR を承認し、java-otp を本体に採用した（Bolt 30）。</li>
 </ul>
 
 

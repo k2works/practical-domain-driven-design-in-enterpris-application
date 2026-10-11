@@ -6769,7 +6769,7 @@
     
   
   
-    <span class="md-status md-status--draft"></span>
+    <span class="md-status md-status--stable"></span>
   
 
   
@@ -6794,7 +6794,7 @@
     
   
   
-    <span class="md-status md-status--draft"></span>
+    <span class="md-status md-status--stable"></span>
   
 
   
@@ -6842,12 +6842,12 @@
   <a href="#_3" class="md-nav__link">
     <span class="md-ellipsis">
       
-        決定（案）
+        決定
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="決定（案）">
+    <nav class="md-nav" aria-label="決定">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -9750,7 +9750,15 @@
 <p>password の後に TOTP を求める 2 段階のログインを、Spring Security 7 の多要素認証（要素ごとの権限）で組む。TOTP の生成は <code>com.eatthepath:java-otp</code> に任せ、時間の窓・再利用の拒否・失敗の数え方・回復コードはアプリケーションで持つ。</p>
 <p>日付: 2026-10-06</p>
 <h2 id="_1">ステータス<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h2>
-<p>提案（Bolt 13 のスパイク TS-01 の結論。W5 の US-18 の計画の承認で採否を決める。Bolt 13 の確認ポイント 4）</p>
+<p>承認（2026-10-11、human:kakimomokuri が Bolt 30 の計画の承認で採用した。Bolt 13 のスパイク TS-01 の結論）</p>
+<p>採用のときに決めたこと（Bolt 30 の開始準備と計画の承認）:</p>
+<ul>
+<li>表は関心事ごとに分ける（TOTP の資格・回復コード・ログインの失敗）。どれも利用者の行と版に触れずに条件付きの更新で書く</li>
+<li>ロックの方針（5 回・15 分）は、利用者の集約でなく、ログインの失敗の集約に置く（失敗のたびに利用者の版が上がると、利用者の管理の更新とぶつかるため）</li>
+<li>失敗の数え方は H2 と PostgreSQL の共通の構文で書く（ADR-007）。<code>RETURNING</code> は使わず、更新の件数で判定し、回数は同じトランザクションで読み直す</li>
+<li>回復コードは使ったら消さず、使った時刻を入れて残す。ハッシュは bcrypt で、作成と照合はドメインのポートにする</li>
+<li>TOTP の秘密の暗号化の鍵の管理は Bolt 31 の計画で決める。スパイク（<code>spikes/ts-01-totp/</code>）は Bolt 31 の後に消す（消すときにもう一度確かめる）</li>
+</ul>
 <h2 id="_2">コンテキスト<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h2>
 <ul>
 <li>US-18 は、メールアドレス・password・TOTP で本人確認し、無操作 30 分・最長 8 時間の session を発行する（AC1）。password か TOTP の失敗が 5 回続いたら 15 分ロックする（AC3）。初回は TOTP を登録し、一度だけ使える回復コードを発行する（AC7・AC9）。</li>
@@ -9760,7 +9768,7 @@
 <li>開発環境では、ログインの画面（A-01）と認証コードの画面（A-02）を入力済みにする（2026-10-06 の人の決定。Bolt 13 の確認ポイント 7）。</li>
 <li>Bolt 13 で、本体と分けたスパイク（<a href="https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/tree/develop/spikes/ts-01-totp"><code>spikes/ts-01-totp/</code></a>）を Spring Boot 4.1.1（Spring Security 7.1.1）で作り、学習テストで確かめた（初めは 29 件。<a href="../../../review/cargo-tracker/bolt_13_review_20261006/">Bolt 13 のレビュー</a>の指摘で直し、57 件）。</li>
 </ul>
-<h2 id="_3">決定（案）<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h2>
+<h2 id="_3">決定<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h2>
 <h3 id="1-totp">1. TOTP の生成<a class="headerlink" href="#1-totp" title="Permanent link">&para;</a></h3>
 <p><strong><code>com.eatthepath:java-otp</code> で TOTP を作る（HMAC-SHA1、6 桁、30 秒）。前後 1 つの時間の窓の照合、再利用の拒否、一定時間の比較はアプリケーションで持つ。</strong></p>
 <table>
@@ -9868,8 +9876,8 @@
 </tr>
 <tr>
 <td style="text-align: left;">回復コード</td>
-<td style="text-align: left;">TOTP の欄で受け付け、一度使ったら消す</td>
-<td style="text-align: left;">本体ではハッシュで保存する</td>
+<td style="text-align: left;">TOTP の欄で受け付け、一度だけ使える（本体では使った時刻を入れて行を残す）</td>
+<td style="text-align: left;">本体ではハッシュ（bcrypt）で保存する</td>
 </tr>
 <tr>
 <td style="text-align: left;">無操作 30 分</td>
@@ -9888,7 +9896,7 @@
 </tr>
 <tr>
 <td style="text-align: left;">更新の原子性</td>
-<td style="text-align: left;">失敗の回数は <code>UPDATE ... SET failures = failures + 1 ... RETURNING</code>、再利用の拒否は <code>UPDATE ... SET last_used_step = :step WHERE last_used_step &lt; :step</code> の更新件数で判定する。存在しないメールアドレスの失敗では行を作らない</td>
+<td style="text-align: left;">失敗の回数は、ロック中でないことを条件にした <code>UPDATE ... SET consecutive_failures = consecutive_failures + 1</code> の更新件数で判定し、回数を同じトランザクションで読み直す（H2 と PostgreSQL の共通の構文。ADR-007。採用のときに <code>RETURNING</code> から改めた）、再利用の拒否は <code>UPDATE ... SET last_used_step = :step WHERE last_used_step &lt; :step</code> の更新件数で判定する。存在しないメールアドレスの失敗では行を作らない</td>
 <td style="text-align: left;">スパイクは <code>synchronized</code> とメモリで守った。読んでから書く形では、並んだ試行や複数のインスタンスで 5 回を超えて試せ、同じコードが 2 回通る</td>
 </tr>
 </tbody>
@@ -10012,7 +10020,7 @@
 </tr>
 <tr>
 <td style="text-align: left;">部品の分け方</td>
-<td style="text-align: left;">TOTP の生成は <code>TotpCodeGenerator</code> のポート（<code>identity.domain</code>）と java-otp の実装（<code>identity.infrastructure</code>）に分け、RFC 6238 の試験ベクトルを契約テストにする。ロックの方針（5 回・15 分）は利用者の集約、再利用の不変条件（刻みは単調に増える）は TOTP の資格、一度だけ使う回復コードはハッシュの照合に置く</td>
+<td style="text-align: left;">TOTP の生成は <code>TotpCodeGenerator</code> のポート（<code>identity.domain.model.aggregates</code>）と java-otp の実装（<code>identity.infrastructure</code>）に分け、RFC 6238 の試験ベクトルを契約テストにする。ロックの方針（5 回・15 分）はログインの失敗の集約（採用のときに利用者の集約から改めた）、再利用の不変条件（刻みは単調に増える）は TOTP の資格、一度だけ使う回復コードはハッシュの照合に置く</td>
 </tr>
 <tr>
 <td style="text-align: left;">テストのデータ</td>

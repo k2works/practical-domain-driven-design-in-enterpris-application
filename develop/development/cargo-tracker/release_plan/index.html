@@ -7447,7 +7447,7 @@
     
   
   
-    <span class="md-status md-status--draft"></span>
+    <span class="md-status md-status--stable"></span>
   
 
   
@@ -11649,22 +11649,22 @@
 <tr>
 <td style="text-align: left;">AC2（推測できる詳細を出さない）と 2 段階の画面・ロックの表示の緊張（K-02）</td>
 <td style="text-align: left;">Bolt 13 レビュー、ADR-011 の「W5 で人が決める論点」</td>
-<td style="text-align: left;">30・32</td>
+<td style="text-align: left;">31・32（Bolt 30 の計画の承認で、画面とロックの表示を扱う Bolt の確認ポイントにした）</td>
 </tr>
 <tr>
 <td style="text-align: left;">CSRF と <code>same-site=lax</code> のつなぎ（S-01）、password spraying と送信元ごとの流量の制限（S-02）、URL ごとに要素を求める案（R-08）</td>
 <td style="text-align: left;">Bolt 13 レビュー、ADR-012</td>
-<td style="text-align: left;">30・31</td>
+<td style="text-align: left;">31（Spring Security を扱う Bolt の確認ポイント。Bolt 30 の計画の承認）</td>
 </tr>
 <tr>
 <td style="text-align: left;">ステージング・本番での <code>dev</code> プロファイルの拒否と IaC（K-03）、TOTP の時刻の前提の NTP（K-04）</td>
 <td style="text-align: left;">Bolt 13 レビュー</td>
-<td style="text-align: left;">30（W10 の運用準備と分ける）</td>
+<td style="text-align: left;">K-04 は Bolt 30 で非機能要件に書いた。K-03 は W10 の運用準備（<a href="https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/48">#48</a>）</td>
 </tr>
 <tr>
 <td style="text-align: left;">AC7 の画面の認可、特性テスト、スパイクのプロジェクトの削除</td>
 <td style="text-align: left;">Bolt 13 終了報告の既知の課題</td>
-<td style="text-align: left;">30・31</td>
+<td style="text-align: left;">AC7 の認可と特性テストは 31。スパイクは Bolt 31 の後に消す（消すときにもう一度確かめる）</td>
 </tr>
 <tr>
 <td style="text-align: left;">Try T-40・T-42（「W5 の US-18」と指定）</td>

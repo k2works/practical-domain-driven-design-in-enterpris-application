@@ -7124,7 +7124,7 @@
     
   
   
-    <span class="md-status md-status--draft"></span>
+    <span class="md-status md-status--stable"></span>
   
 
   
@@ -10458,7 +10458,7 @@
 <tr>
 <td style="text-align: left;">SEC-09</td>
 <td style="text-align: left;">TOTP の登録</td>
-<td style="text-align: left;">初回ログイン時に必須。登録時に一度だけ使える回復コード 10 個を発行する</td>
+<td style="text-align: left;">初回ログイン時に必須。登録時に一度だけ使える回復コード 10 個を発行する。回復コードは bcrypt（強さ 10）のハッシュだけを保存し、平文を表に書かない（Bolt 30）</td>
 <td style="text-align: left;">提案</td>
 <td style="text-align: left;">端末の紛失に備える</td>
 </tr>
@@ -10478,6 +10478,7 @@
 </tr>
 </tbody>
 </table>
+<p>TOTP の前提: TOTP はサーバーの時計の正しさに依存し、前後 1 つの時間の窓（±30 秒）を超えるずれは認証の障害になる。アプリケーションの実行環境の時計を NTP で同期する（ECS なら Amazon Time Sync Service）。時計の監視と運用の手順は W10 の運用準備で足す（<a href="../../../adr/cargo-tracker/011-mfa-totp/">ADR-011</a>、Bolt 13 の持ち込み K-04、Bolt 30）。</p>
 <h3 id="_4">認可<a class="headerlink" href="#_4" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
@@ -10529,7 +10530,7 @@
 <tr>
 <td style="text-align: left;">SEC-16</td>
 <td style="text-align: left;">保存の暗号化</td>
-<td style="text-align: left;">RDS、S3、バックアップを AWS KMS の鍵で暗号化する。TOTP の秘密情報はアプリケーションでも暗号化して保存する（データモデル <code>totp_secret_encrypted</code>）</td>
+<td style="text-align: left;">RDS、S3、バックアップを AWS KMS の鍵で暗号化する。TOTP の秘密情報はアプリケーションでも暗号化して保存する（データモデル <code>totp_credential.secret_encrypted</code>。暗号化の方式と鍵の管理は Bolt 31 で決める）</td>
 <td style="text-align: left;">提案</td>
 </tr>
 <tr>
