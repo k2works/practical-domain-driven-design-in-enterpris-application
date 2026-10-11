@@ -9735,9 +9735,10 @@
 <li>Green: <code>RoutingCaseViews</code> の <code>INFO_VERSION</code> と適合の根拠の文を直す</li>
 <li>完了の判定: <code>check</code> 緑、<code>uiTest</code> 緑（<code>@US-06</code>・<code>@US-04</code> の画面の層のシナリオと主成功の流れが通る）</li>
 <li>結果（2026-10-11）: <code>RoutingCaseControllerTest.java:170</code> を向け直し、S-06・S-07 の適合の根拠のテスト 2 件を足して Red 3 件を確かめ、<code>RoutingCaseViews</code> の <code>INFO_VERSION</code> と適合の根拠の文を直して Green。画面の層のステップの文（<code>compare_route_candidates_ui.feature:21</code>・<code>RoutingUiSteps.java:175</code>）と <code>:180</code> を画面の語にした。テンプレートに「参照情報版」はなかった。<code>check</code> 緑</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>4. マニュアルとキャプチャ</strong> 【承認ゲート: なし】</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>4. マニュアルとキャプチャ</strong> 【承認ゲート: なし】</li>
 <li>マニュアル（<code>creating-manual</code>）: 8 章 8.2 の ⑥・8.3 の ②（画面の語「参照した航海情報の版」）。7 章は文の変更なし（貨物の書式を書いた文がない。キャプチャだけ）。<code>./gradlew manualScreenshots</code> で撮り、変わる画面のキャプチャだけを残す: <code>07-booking-new.png</code>、<code>07-booking-detail.png</code>、<code>08-candidates.png</code>、<code>08-confirmation.png</code>、<code>08-confirmed.png</code> と、条件の表が写る <code>03-request-detail-submitted.png</code>、<code>04-request-detail-*.png</code>（4 枚）、<code>05-request-detail-booked.png</code>、<code>06-review.png</code>、S-04 の <code>06-quotation-*.png</code>（条件の表が写れば）。ほかの画像と日時だけが違う画像は元に戻す。残す前に画像を目で確かめる</li>
 <li>完了の判定: <code>check</code> 緑、<code>okf:check</code> ERROR 0</li>
+<li>結果（2026-10-11）: 8 章 8.2 の ⑥・8.3 の ② を直した。<code>manualScreenshots</code> で撮り、変わる画面の 14 枚（3・4・5・6 章の条件の表が写る 9 枚と、7・8 章の 5 枚）だけを残した。S-09・S-06・S-03 の画像を目で確かめた</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>5. 開発レビューと終了報告</strong> 【承認ゲート: 終了報告】</li>
 <li>開発レビュー（<code>developing-review</code>。プログラマー（層と依存、書式の境界値）、テクニカルライター（T-90。画面に実装の語や業務ルールの番号が残っていないか、マニュアルと画面の一致）。リンクと画面遷移を変えないのでインタラクションデザイナーの観点は外す）。レビューにキャプチャを渡す</li>
 <li>SonarQube（<code>sonar-local:check</code>。手順書の 9 節のとおり起動）</li>
