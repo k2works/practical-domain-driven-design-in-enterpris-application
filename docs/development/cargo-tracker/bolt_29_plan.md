@@ -4,7 +4,7 @@ title: "Bolt 29 計画 - 画面の層のステップ定義のキー操作の部�
 description: "29 回目の Bolt の計画。W5 の最初の Bolt で、Release 0.1 の負債 #45（T-87）を返す。10 のクラスに 6 通りで写された tabUntilFocused と 2 つの tabUntilGroup を BrowserSession に集め、uiTest の件数と結果が変わらないことで確かめる。後片付けのフックの置き場所も決める。"
 tags: [development,bolt-plan]
 status: draft
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-11T01:13:32Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-11T01:25:23Z }
 ---
 
 # Bolt 29 計画 - 画面の層のステップ定義のキー操作の部品を 1 か所に集める（#45）
@@ -17,7 +17,7 @@ generated: { by: anthropic/claude-opus-5-5, at: 2026-10-11T01:13:32Z }
 | 予定 | W5（2026-11-02 の週。前倒しで着手できる）、作業 1.5〜2 時間（承認ゲートの待ち時間を除く） |
 | 対象 | 横断（画面の層のステップ定義。テストのコードだけで、本番のコードは変えない） |
 | GitHub | [#45](https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/45)（`technical`、Release 1.0、W5、SP 0）。終了報告の承認の後に閉じる |
-| 承認ゲート | 計画の承認（確認ポイント 1〜9）と終了報告。W4 の締めの決定（Release 1.0 の既定は計画と終了報告で止める）に従う。スキーマ・認可・外部連携・セキュリティは変えない |
+| 承認ゲート | 計画の承認（確認ポイント 1〜9。`/goal Bolt29` の指示により推奨のとおりで進めた）と終了報告。W4 の締めの決定（Release 1.0 の既定は計画と終了報告で止める）に従う。スキーマ・認可・外部連携・セキュリティは変えない |
 | アプローチ | リファクタリング（Red-Green-Refactor の Refactor だけ）。安全網は既存の画面の層のシナリオ（`uiTest`。Bolt 28 の時点で 80 本、失敗 0） |
 | 前の Bolt | [Bolt 28 終了報告](bolt_28_report.md)、[Bolt 27b 終了報告](bolt_27b_report.md)（P-9、T-87） |
 
@@ -177,6 +177,7 @@ end note
 
 | 日付 | 更新内容 | 更新者 |
 | :--- | :--- | :--- |
+| 2026-10-11 | human:kakimomokuri が `/goal Bolt29` で着手を指示した。確認ポイントはすべて推奨のとおりとし、途中のゲートは止めずに進め、根拠を終了報告に置く（T-36。Bolt 22・28 の前例） | anthropic/claude-opus-5-5、指示 human:kakimomokuri |
 | 2026-10-11 | 初版作成（承認待ち）。W5 の開始準備で、写しを 10 のクラス・6 通りと数え直し、`tabUntilGroup` の 2 つの写しを範囲の候補に足した | anthropic/claude-opus-5-5 |
 
 ## 関連ドキュメント

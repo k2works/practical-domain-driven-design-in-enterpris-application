@@ -4,7 +4,7 @@ title: "cargo-tracker テスト戦略"
 description: "cargo-tracker のテスト形状、テストレベルと責務、BDD（Cucumber）のシナリオ階層とタグ規約、不変条件・ユーザーストーリーとテストの対応、カバレッジ目標、CI での実行。"
 tags: [design, test-strategy, bdd]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-10T09:03:46Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-11T01:25:23Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T08:12:04Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:01:38Z }
@@ -142,7 +142,10 @@ src/test/resources/features/
 
 src/test/java/.../<context>/acceptance/   コンテキストごとのステップ定義
 src/test/java/.../shared/acceptance/      共通ステップ（ログイン、時刻の固定、企業・利用者の準備）
+src/test/java/.../ui/                     画面の層のステップ定義（@ui）。ブラウザの文脈とキー操作の部品は BrowserSession に 1 つ
 ```
+
+画面の層のステップ定義は、Tab でフォーカスを進める部品（`tabUntilFocused`・`tabUntilGroup`）を `BrowserSession` から使い、クラスごとに写しを作らない（Bolt 29、#45。待ち方と上限を直す場所を 1 つにする）。1 回だけ Tab を押してフォーカスの順序を確かめる部品（`tabTo`）は、確かめる順序が画面ごとに違うので各クラスに置く。
 
 ステップ定義は自分のコンテキストの入力ポートだけを呼ぶ。前提の準備で他のコンテキストのデータが必要なときは、そのコンテキストの公開 API を使う（ADR-001 の境界をテストでも守る）。
 
