@@ -4,7 +4,7 @@ title: "ADR-012: 認証の主体は共有カーネルの型にし、password の
 description: "US-18 の password によるログインと session を、Spring Security 7 の form login と Spring Session JDBC で作る。"
 tags: [adr, authentication, session]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-06T06:51:29Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-11T08:28:04Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-06T06:51:29Z }
 ---
@@ -98,7 +98,7 @@ US-18 の password によるログインと session を、Spring Security 7 の 
 - 認可の条件（`hasRole`）に要素の権限を加える。
 - request ごとの DB の確かめ（SEC-12・AC6）は、利用者 ID から主体を作り直して差し替える形にし、問い合わせを 1 回にまとめる。
 - 引数の解決で、TOTP まで済んでいない主体を渡さない。画面の単体テストの主体（`WithAuthenticatedActor`）にも要素の権限を足す。
-- ロックの数え方（IA-INV-03）は `identity.application` のサービスと利用者の集約に置き、監査の listener は入口だけにする。
+- ロックの数え方（IA-INV-03）は `identity.application` のサービスとログインの失敗の集約に置き、監査の listener は入口だけにする（2026-10-11 に改めた。初めは利用者の集約としたが、失敗のたびに利用者の版が上がり利用者の管理の更新とぶつかるため、Bolt 30 の計画の承認で別の集約にした。[ADR-011](011-mfa-totp.md)）。
 
 ## コンプライアンス
 

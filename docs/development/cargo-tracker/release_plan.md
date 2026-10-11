@@ -4,7 +4,7 @@ title: "リリース計画 - cargo-tracker（A 社国際貨物輸送管理シス
 description: "cargo-tracker MVP のリリース計画。1 人 + AI、時間単位の Bolt（= イテレーション）と週次の見直しで、最初の縦の流れ（R0.1）、パイロット準備完了（R1.0）、本格展開前（R1.1）の 3 段階、Unit のエントロピー評価、SP、バッファ、パイロット開始の条件、引継ぎ ID の台帳、業務責任者に確かめる事項の台帳。"
 tags: [development,release-plan]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-11T08:26:00Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-11T08:28:04Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T09:29:53Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:38:26Z }
@@ -598,10 +598,10 @@ US-18 の残りの SP 6 は #13 をクローズする Bolt 33b で、US-04 の S
 | 事項 | 出典 | Bolt |
 | :--- | :--- | :--- |
 | ADR-012 の「W5 で見直すこと」: 成功のイベントの分け方、`hasRole` と要素の権限、request ごとの DB の問い合わせを 1 回にまとめる、引数の解決で TOTP まで済んでいない主体を渡さない、ロックの数え方を `identity.application` に置く | ADR-012 | 31・32 |
-| AC2（推測できる詳細を出さない）と 2 段階の画面・ロックの表示の緊張（K-02） | Bolt 13 レビュー、ADR-011 の「W5 で人が決める論点」 | 30・32 |
-| CSRF と `same-site=lax` のつなぎ（S-01）、password spraying と送信元ごとの流量の制限（S-02）、URL ごとに要素を求める案（R-08） | Bolt 13 レビュー、ADR-012 | 30・31 |
-| ステージング・本番での `dev` プロファイルの拒否と IaC（K-03）、TOTP の時刻の前提の NTP（K-04） | Bolt 13 レビュー | 30（W10 の運用準備と分ける） |
-| AC7 の画面の認可、特性テスト、スパイクのプロジェクトの削除 | Bolt 13 終了報告の既知の課題 | 30・31 |
+| AC2（推測できる詳細を出さない）と 2 段階の画面・ロックの表示の緊張（K-02） | Bolt 13 レビュー、ADR-011 の「W5 で人が決める論点」 | 31・32（Bolt 30 の計画の承認で、画面とロックの表示を扱う Bolt の確認ポイントにした） |
+| CSRF と `same-site=lax` のつなぎ（S-01）、password spraying と送信元ごとの流量の制限（S-02）、URL ごとに要素を求める案（R-08） | Bolt 13 レビュー、ADR-012 | 31（Spring Security を扱う Bolt の確認ポイント。Bolt 30 の計画の承認） |
+| ステージング・本番での `dev` プロファイルの拒否と IaC（K-03）、TOTP の時刻の前提の NTP（K-04） | Bolt 13 レビュー | K-04 は Bolt 30 で非機能要件に書いた。K-03 は W10 の運用準備（[#48](https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/48)） |
+| AC7 の画面の認可、特性テスト、スパイクのプロジェクトの削除 | Bolt 13 終了報告の既知の課題 | AC7 の認可と特性テストは 31。スパイクは Bolt 31 の後に消す（消すときにもう一度確かめる） |
 | Try T-40・T-42（「W5 の US-18」と指定） | Bolt 13・14 終了報告 | 30〜33b |
 
 **Living Documentation**: `identity`・`notification` の新しい表の `afterMigrate` の権限と追記専用の印、`package-info` の `allowedDependencies`（`identity` → `notification :: api`）、ModularityTest のモジュール名、用語集の整合テスト、受入条件の照合の表（テスト戦略の「Release 0.1 の受入条件」を Release 1.0 の範囲へ広げる。Bolt 28 の決定）

@@ -4,7 +4,7 @@ title: "Bolt 30 計画 - ADR-011 の採用と、TOTP の資格・回復コード
 description: "W5 の 4 本目の Bolt の計画。ADR-011（多要素認証は Spring Security 7 の要素の権限で組み、TOTP は java-otp で作る）を承認にし、identity に TOTP の資格・回復コード・ログインの失敗の表とドメインのモデル・リポジトリ、TOTP の生成のポートと java-otp の実装を、インサイドアウトで作る。画面と認証の流れは Bolt 31 から。"
 tags: [development,bolt-plan]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-11T08:26:00Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-11T08:28:04Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-11T08:26:00Z }
 ---
@@ -184,7 +184,7 @@ u ||--o| f
 
 状態の記号: `[ ]` 未着手、`[-]` 進行中、`[?]` 承認待ち、`[x]` 完了。各ステップの終わりに `check` が緑であることと、計画からの変更を設計文書に反映したこと（T-53）を確かめ、push して CI を確かめる（T-26、T-65）。そのステップのファイルだけをステージする（T-84）。依存の取得は最初から `--max-workers=1` と再試行で流す（T-93）。
 
-- [ ] **1. ADR-011 の採用と設計文書** 【承認ゲート: 設計文書】
+- [?] **1. ADR-011 の採用と設計文書** 【承認ゲート: 設計文書】
   - ADR-011 のステータスを「承認」にし、決定（案）を決定にする。開始準備の決定（表は関心事ごと、暗号化の鍵は Bolt 31、スパイクは Bolt 31 の後に消す）を書く。あわせて、計画の承認で決まった形に直す: ロックの方針の置き場所（141 行目「利用者の集約」→ ログインの失敗の集約。確認ポイント 3）、失敗の数え方の `RETURNING`（83 行目付近 → 条件付きの更新の件数）、回復コードの「一度使ったら消す」（79 行目 → `used_at` で残す）
   - ADR-012 の 101 行目（ロックの数え方を利用者の集約に置く）を、確認ポイント 3 の決定に合わせて改める（採用済みの ADR の改訂。改訂の履歴を残す）
   - domain_model.md の `identity`: TOTP の資格・回復コード・ログインの失敗の概念と不変条件（IA-INV-10・11 と IA-INV-03 の具体）、`TotpCodeGenerator`・`RecoveryCodeHasher` のポート、`LockPolicy`。用語集に `TotpCredential`・`RecoveryCode`・`LoginFailure`・`EncryptedSecret`・`LockPolicy`・`TotpCodeGenerator`・`RecoveryCodeHasher` を足す（`LivingGlossaryConsistencyTest`）。利用者の集約の行から「ロック」を外し、「TOTP は Spring Security に任せる」の記述を改める

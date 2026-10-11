@@ -1,6 +1,15 @@
 # Docs Update Log
 
 ## 2026-10-11
+* **Verification**: [011-mfa-totp](/adr/cargo-tracker/011-mfa-totp.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_30_plan](/development/cargo-tracker/bolt_30_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [tech_stack](/design/cargo-tracker/tech_stack.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [non_functional](/design/cargo-tracker/non_functional.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [012-authentication-principal-and-session](/adr/cargo-tracker/012-authentication-principal-and-session.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [011-mfa-totp](/adr/cargo-tracker/011-mfa-totp.md) を更新（anthropic/claude-opus-5-5）
 * **Verification**: [bolt_30_plan](/development/cargo-tracker/bolt_30_plan.md) を human:kakimomokuri が検証
 * **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
 * **Update**: [bolt_30_plan](/development/cargo-tracker/bolt_30_plan.md) を更新（anthropic/claude-opus-5-5）

@@ -4,7 +4,7 @@ title: "cargo-tracker 非機能要件"
 description: "cargo-tracker の性能・可用性・復旧・データ鮮度・セキュリティ・プライバシー・保持・アクセシビリティ・保守性・拡張性の測定可能な目標値、根拠、決定者、検証方法。"
 tags: [design, non-functional]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-09T03:58:29Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-11T08:28:04Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T08:22:09Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:01:38Z }
@@ -151,9 +151,11 @@ verified:
 | SEC-06 | password の定期変更 | 強制しない。漏えいの疑いがあるときだけ変更を求める | 提案 | 同上 |
 | SEC-07 | password の保存 | Spring Security の推奨するハッシュで保存する。DelegatingPasswordEncoder の既定の bcrypt（強さ 10、`{bcrypt}` の接頭辞）を使う（2026-10-06 の Bolt 14 の確認ポイント 6。Argon2id は Bouncy Castle が要るため採らない。接頭辞で後から移せる） | 確定 | 平文や可逆な暗号で保存しない |
 | SEC-08 | password の回復 | 登録メールアドレスへ 1 回だけ使える再設定リンク（30 分有効）を送る。再設定後も TOTP は必要。再設定は監査記録に残す | 提案 | 多要素を回復の手順でも迂回させない |
-| SEC-09 | TOTP の登録 | 初回ログイン時に必須。登録時に一度だけ使える回復コード 10 個を発行する | 提案 | 端末の紛失に備える |
+| SEC-09 | TOTP の登録 | 初回ログイン時に必須。登録時に一度だけ使える回復コード 10 個を発行する。回復コードは bcrypt（強さ 10）のハッシュだけを保存し、平文を表に書かない（Bolt 30） | 提案 | 端末の紛失に備える |
 | SEC-10 | TOTP の再登録 | 回復コードを使うか、システム管理者が本人確認（所属企業の管理担当者への確認など、事前に決めた別経路）をしたうえで登録を解除する。解除は監査記録に残し、本人に通知する | 提案 | 管理者による解除を悪用されないよう、本人確認の手順を運用で固定する |
 | SEC-11 | ログイン失敗の表示 | どの項目が誤りかを示さない | 確定 | US-18 |
+
+TOTP の前提: TOTP はサーバーの時計の正しさに依存し、前後 1 つの時間の窓（±30 秒）を超えるずれは認証の障害になる。アプリケーションの実行環境の時計を NTP で同期する（ECS なら Amazon Time Sync Service）。時計の監視と運用の手順は W10 の運用準備で足す（[ADR-011](../../adr/cargo-tracker/011-mfa-totp.md)、Bolt 13 の持ち込み K-04、Bolt 30）。
 
 ### 認可
 
@@ -168,7 +170,7 @@ verified:
 | ID | 項目 | 値 | 状態 |
 | :--- | :--- | :--- | :--- |
 | SEC-15 | 通信の暗号化 | TLS 1.2 以上（ALB）。HTTP は HTTPS へ転送。HSTS を有効にする | 提案 |
-| SEC-16 | 保存の暗号化 | RDS、S3、バックアップを AWS KMS の鍵で暗号化する。TOTP の秘密情報はアプリケーションでも暗号化して保存する（データモデル `totp_secret_encrypted`） | 提案 |
+| SEC-16 | 保存の暗号化 | RDS、S3、バックアップを AWS KMS の鍵で暗号化する。TOTP の秘密情報はアプリケーションでも暗号化して保存する（データモデル `totp_credential.secret_encrypted`。暗号化の方式と鍵の管理は Bolt 31 で決める） | 提案 |
 | SEC-17 | Web の基本対策 | CSRF 対策、Cookie の Secure・HttpOnly・SameSite、Content-Security-Policy（外部スクリプトを読まない）、クリックジャッキング対策。Bolt 14 で、Spring Security の CSRF の同期トークン（`same-site=lax` は多層の守りとして残す）、HttpOnly・SameSite（Secure は `dev` の外）、`X-Frame-Options: DENY`、`X-Content-Type-Options: nosniff`、CSP `default-src 'self'` を入れる（2026-10-06 の Bolt 14 の確認ポイント 8） | 確定 |
 | SEC-18 | 依存とイメージの脆弱性 | CI で HIGH・CRITICAL を検出したら配備しない。本番で見つかった CRITICAL は 7 日以内、HIGH は 30 日以内に修正する | 提案 |
 | SEC-19 | 侵入テスト | パイロット開始前に 1 回、外部の専門家による検査を受ける | 提案（決定者: IT 責任者） |

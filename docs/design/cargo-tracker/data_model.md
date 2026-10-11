@@ -4,7 +4,7 @@ title: "cargo-tracker データモデル"
 description: "cargo-tracker の概念データモデル、スキーマ分割、命名と型の規約（H2 と PostgreSQL の共通部分）、コンテキストごとの論理データモデルと ER 図、版・追記専用・冪等性・イベント配信の表現。"
 tags: [design, data-model]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-11T06:11:29Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-11T08:28:04Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T07:48:17Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:01:37Z }
@@ -149,7 +149,7 @@ ADR-007 により、DDL は H2（PostgreSQL 互換モード）と PostgreSQL 18 
 | 区分値 | `VARCHAR(30)` に英語の定数名（例: `UNDER_REVIEW`）を入れ、`CHECK` 制約で値を限る | 列挙型（`CREATE TYPE`）は H2 と PostgreSQL で構文が違う |
 | 真偽 | `BOOLEAN` | 両方で使える |
 | 使わないもの | `JSONB`、部分インデックス、`CREATE TYPE`、シーケンスの方言、トリガー | H2 で動かない。必要になったら ADR-007 に従って別の ADR で判断する |
-| 楽観ロック | 集約ルートの表に `version BIGINT NOT NULL` を置き、`UPDATE ... SET ..., version = version + 1 WHERE id = ? AND version = ?` で更新する。更新が 0 件なら、ほかの更新が先に入ったとして失敗させる（Bolt 5 の輸送要求の状態の更新で使い始める） | ARCH-HO-01 の期待版の照合 |
+| 楽観ロック | 集約ルートの表に `version BIGINT NOT NULL` を置き、`UPDATE ... SET ..., version = version + 1 WHERE id = ? AND version = ?` で更新する。更新が 0 件なら、ほかの更新が先に入ったとして失敗させる（Bolt 5 の輸送要求の状態の更新で使い始める）。例外: `identity` の `totp_credential`・`recovery_code`・`login_failure` は `version` を持たず、値の条件付きの更新の件数で判定する（Bolt 30） | ARCH-HO-01 の期待版の照合 |
 | 監査用の列 | 集約ルートの表に `created_at`、`created_by`、`updated_at`、`updated_by` を置く | ガイドの共通設計原則。業務上の証跡は監査記録が持つ |
 
 ## 版・追記専用・冪等性の表し方
@@ -792,12 +792,31 @@ entity "app_user\n利用者" as u {
   * email : VARCHAR(320) <<UK>>
   * display_name : VARCHAR(200)
   * password_hash : VARCHAR(200)
-  totp_secret_encrypted : VARCHAR(500)
   * status : VARCHAR(30)
-  * failed_attempts : INTEGER
-  locked_until : TIMESTAMPTZ
   * version : BIGINT
   * created_at / updated_at
+}
+entity "totp_credential\nTOTP の資格" as tc {
+  * user_id : UUID <<PK,FK>>
+  --
+  * secret_encrypted : VARCHAR(500)
+  * last_used_step : BIGINT
+  * enrolled_at : TIMESTAMPTZ
+}
+entity "recovery_code\n回復コード" as rc {
+  * id : UUID <<PK>>
+  --
+  * user_id : UUID <<FK>>
+  * code_hash : VARCHAR(200)
+  used_at : TIMESTAMPTZ
+  * issued_at : TIMESTAMPTZ
+}
+entity "login_failure\nログインの失敗" as lf {
+  * user_id : UUID <<PK,FK>>
+  --
+  * consecutive_failures : INTEGER
+  locked_until : TIMESTAMPTZ
+  * updated_at : TIMESTAMPTZ
 }
 entity "user_role\n役割" as ur {
   * user_id : UUID <<PK,FK>>
@@ -873,6 +892,9 @@ entity "kpi_baseline\nKPI 基準値" as kb {
   supersedes_id : UUID
 }
 co ||--o{ u
+u ||--o| tc
+u ||--o{ rc
+u ||--o| lf
 u ||--o{ ur
 u ||--o{ ua
 co ||--o{ ag
@@ -883,7 +905,9 @@ co ||--o{ ag
 | :--- | :--- | :--- |
 | `user_role` | `role` IN（BR-15 の 8 役割）。システム管理者・監査担当者と業務の役割の併用は、アプリケーションで拒否する | IA-INV-01 |
 | `user_assignment` | `scope_kind` IN（`COMPANY`、`BOOKING`） | IA-INV-02 |
-| `app_user` | `failed_attempts` と `locked_until` で 5 回失敗・15 分ロックを表す | IA-INV-03 |
+| `login_failure` | 利用者ごとに 1 行（主キーは `user_id`）。`consecutive_failures >= 0` の CHECK。失敗は、ロック中でないことを条件にした `UPDATE ... SET consecutive_failures = consecutive_failures + 1` の更新件数で数え、回数を同じトランザクションで読み直す（`RETURNING` は H2 で動かないので使わない。ADR-007）。最初の行は `INSERT ... SELECT ... WHERE NOT EXISTS` で作る。存在しないメールアドレスの失敗では行を作らない。成功で 0 に戻す。ロックの期限は 5 回目の失敗の時刻から 15 分 | IA-INV-03 |
+| `totp_credential` | 利用者ごとに 1 行。`last_used_step >= 0` の CHECK。再利用の拒否は `UPDATE ... SET last_used_step = :step WHERE user_id = :id AND last_used_step < :step` の更新件数で判定する。秘密は暗号文だけを置く（暗号化の方式と鍵は Bolt 31） | IA-INV-10 |
+| `recovery_code` | 利用者ごとに 10 行。`user_id` の索引。消費は `UPDATE ... SET used_at = :now WHERE id = :id AND used_at IS NULL` の更新件数で判定し、行を残す。発行のたびに利用者の行を消して入れ直す（追記専用の印を付けない）。bcrypt は塩が毎回違うので、`(user_id, code_hash)` の一意制約は置かない | IA-INV-11 |
 | `access_grant` | `status` IN（`INVITED`、`ACTIVE`、`REVOKED`、`EXPIRED`）。同じ予約・荷受人企業に有効な許可を重複させないことはアプリケーションで確認する | IA-INV-05、IA-INV-06 |
 | `audit_record` | UPDATE・DELETE の権限なし。`event_id` の一意制約で、イベントの再配信による重複記録を防ぐ。認証の失敗と権限外のアクセス試行は `event_id` を持たず、同期で書く | IA-INV-07、IA-INV-08 |
 | `kpi_observation` | 輸送要求ごとに 1 行。DE-01 で作り、DE-03 で最初の提示時刻を記録する。2 回目以降の提示では、届いた提示時刻のほうが早いとき（届く順の入れ替わり）だけ書き換える条件付きの更新にする（Bolt 21。KPI-INV-01）。`ck_kpi_observation_first_presented_at` で最初の提示時刻が提出時刻より前にならないことを確かめる（KPI-INV-03）。Bolt 21 より前に提示した見積りの DE-03 は購読者がいなかったため、その輸送要求の `first_presented_at` は NULL のままである（パイロットの前で本番の記録はない）。`transport_request_number` は DE-01 の表示用の業務番号の写しで、社内の一覧に UUID の代わりに出す（Bolt 4）。Bolt 4 より前の DE-01 は業務番号を持たないため null を許す | KPI-INV-01、KPI-INV-03 |
@@ -896,7 +920,7 @@ session は `platform` スキーマの Spring Session の表に置く。利用�
 Bolt 14 で作る範囲（2026-10-06、human:kakimomokuri。[Bolt 14 計画](../../development/cargo-tracker/bolt_14_plan.md) の確認ポイント 4・5・7・12）:
 
 - `company` は全列を作る。`kind` は `SHIPPER`・`CONSIGNEE`・`OPERATOR`（A 社）。
-- `app_user` は `id`・`company_id`・`email`・`display_name`・`password_hash`・`status`（`ACTIVE`・`SUSPENDED`）・`version`・`created_at`・`updated_at` を作る。`email` は前後の空白を除き小文字にして保存し、一意にする。`totp_secret_encrypted`・`failed_attempts`・`locked_until` は TOTP とロックの W5 で足す。`password_hash` は `{bcrypt}` の接頭辞を付けた DelegatingPasswordEncoder の形式（SEC-07）。
+- `app_user` は `id`・`company_id`・`email`・`display_name`・`password_hash`・`status`（`ACTIVE`・`SUSPENDED`）・`version`・`created_at`・`updated_at` を作る。`email` は前後の空白を除き小文字にして保存し、一意にする。TOTP の秘密・失敗の回数・ロックの期限は `app_user` に足さず、関心事ごとの `totp_credential`・`login_failure`・`recovery_code` に分ける（Bolt 30。利用者の行と `version` に触れずに条件付きの更新で書くため）。この 3 つの表は `version` を持たない（条件付きの更新が楽観ロックの版の代わりになる。上の「楽観ロック」の例外）。`password_hash` は `{bcrypt}` の接頭辞を付けた DelegatingPasswordEncoder の形式（SEC-07）。
 - `user_role` は全列を作る。`role` は `SHIPPER`（荷主担当者）・`SALES`（営業担当者）・`ROUTE_DESIGNER`（経路設計者）・`TRACKING_MANAGER`（追跡管理者）・`DATA_STEWARD`（データ責任者）・`CUSTOMER_SUPPORT`（カスタマーサポート）・`SYSTEM_ADMIN`（システム管理者）・`AUDITOR`（監査担当者）。
 - `audit_record` は `id`・`occurred_at`・`actor_user_id`・`actor_company_id`・`action`・`result`・`reason`・`correlation_id` を作り、追記だけにする（` [append-only]`）。`action` はログインの成功・失敗・ログアウト（`LOGIN_SUCCEEDED`・`LOGIN_FAILED`・`LOGOUT`）、`reason` は失敗の理由（`BAD_CREDENTIALS`・`UNKNOWN_USER`・`SUSPENDED`・`COMPANY_INACTIVE`）。存在しないメールアドレスでの失敗は、操作者を空にして記録し、メールアドレスは残さない。権限外のアクセスの試行の記録は US-16 の Bolt で足す。対象・変更前後・承認・出典・`event_id` の列は使う Bolt で足す。
 - `user_assignment`・`access_grant`・`kpi_baseline` は使う Bolt（US-16・US-19・US-21）で作る。
@@ -1151,6 +1175,7 @@ src/main/resources/db/
 | KPI 計測記録 | `kpi_observation`、`kpi_baseline` | — |
 | 通知 | `notification` | — |
 | 企業・利用者・参照許可・監査記録 | `company`、`app_user`、`user_role`、`user_assignment`、`access_grant`、`audit_record` | 認証の仕組みは Spring Security が使う |
+| TOTP の資格・回復コード・ログインの失敗 | `totp_credential`、`recovery_code`、`login_failure` | 利用者とは別の集約（Bolt 30） |
 | 外部データ（トランザクションスクリプト） | `external_data` の各表 | — |
 
 ## 後続工程への引継ぎ
