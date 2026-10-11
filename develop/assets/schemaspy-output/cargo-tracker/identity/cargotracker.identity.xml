@@ -3,6 +3,9 @@
    <tables>
       <table name="app_user" remarks="利用者" schema="identity" type="TABLE">
          <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="id" nullable="false" remarks="利用者 ID" size="2147483647" type="uuid" typeCode="1111">
+            <child column="user_id" foreignKey="fk_login_failure_user" implied="false" onDeleteCascade="false" schema="identity" table="login_failure"/>
+            <child column="user_id" foreignKey="fk_recovery_code_user" implied="false" onDeleteCascade="false" schema="identity" table="recovery_code"/>
+            <child column="user_id" foreignKey="fk_totp_credential_user" implied="false" onDeleteCascade="false" schema="identity" table="totp_credential"/>
             <child column="user_id" foreignKey="fk_user_role_user" implied="false" onDeleteCascade="false" schema="identity" table="user_role"/>
          </column>
          <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="company_id" nullable="false" remarks="所属企業" size="2147483647" type="uuid" typeCode="1111">
@@ -81,6 +84,48 @@
             <column ascending="true" name="submitted_at"/>
          </index>
          <checkConstraint constraint="((first_presented_at IS NULL) OR (first_presented_at &gt;= submitted_at))" name="ck_kpi_observation_first_presented_at"/>
+      </table>
+      <table name="login_failure" remarks="ログインの失敗" schema="identity" type="TABLE">
+         <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="user_id" nullable="false" remarks="利用者 ID" size="2147483647" type="uuid" typeCode="1111">
+            <parent column="id" foreignKey="fk_login_failure_user" implied="false" onDeleteCascade="false" schema="identity" table="app_user"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="consecutive_failures" nullable="false" remarks="連続の失敗の回数（password と TOTP を合わせる。成功で 0 に戻す）" size="10" type="int4" typeCode="4"/>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="2" name="locked_until" nullable="true" remarks="ロックの期限（5 回目の失敗から 15 分。ロックしていなければ null）" size="35" type="timestamptz" typeCode="93"/>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="3" name="updated_at" nullable="false" remarks="更新した時刻" size="35" type="timestamptz" typeCode="93"/>
+         <primaryKey column="user_id" sequenceNumberInPK="1"/>
+         <index name="pk_login_failure" unique="true">
+            <column ascending="true" name="user_id"/>
+         </index>
+         <checkConstraint constraint="(consecutive_failures &gt;= 0)" name="ck_login_failure_consecutive_failures"/>
+      </table>
+      <table name="recovery_code" remarks="回復コード" schema="identity" type="TABLE">
+         <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="id" nullable="false" remarks="回復コード ID" size="2147483647" type="uuid" typeCode="1111"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="user_id" nullable="false" remarks="利用者 ID" size="2147483647" type="uuid" typeCode="1111">
+            <parent column="id" foreignKey="fk_recovery_code_user" implied="false" onDeleteCascade="false" schema="identity" table="app_user"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="2" name="code_hash" nullable="false" remarks="回復コードのハッシュ（bcrypt。平文は書かない。SEC-09）" size="200" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="3" name="used_at" nullable="true" remarks="使った時刻（未使用は null。一度だけ使える）" size="35" type="timestamptz" typeCode="93"/>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="4" name="issued_at" nullable="false" remarks="発行した時刻" size="35" type="timestamptz" typeCode="93"/>
+         <primaryKey column="id" sequenceNumberInPK="1"/>
+         <index name="pk_recovery_code" unique="true">
+            <column ascending="true" name="id"/>
+         </index>
+         <index name="ix_recovery_code_user" unique="false">
+            <column ascending="true" name="user_id"/>
+         </index>
+      </table>
+      <table name="totp_credential" remarks="TOTP の資格" schema="identity" type="TABLE">
+         <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="user_id" nullable="false" remarks="利用者 ID" size="2147483647" type="uuid" typeCode="1111">
+            <parent column="id" foreignKey="fk_totp_credential_user" implied="false" onDeleteCascade="false" schema="identity" table="app_user"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="secret_encrypted" nullable="false" remarks="暗号化した TOTP の秘密（平文は書かない。SEC-16）" size="500" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="2" name="last_used_step" nullable="false" remarks="最後に使った時間の刻み（epoch 秒 / 30。これ以下の刻みのコードは受け付けない）" size="19" type="int8" typeCode="-5"/>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="3" name="enrolled_at" nullable="false" remarks="登録した時刻" size="35" type="timestamptz" typeCode="93"/>
+         <primaryKey column="user_id" sequenceNumberInPK="1"/>
+         <index name="pk_totp_credential" unique="true">
+            <column ascending="true" name="user_id"/>
+         </index>
+         <checkConstraint constraint="(last_used_step &gt;= 0)" name="ck_totp_credential_last_used_step"/>
       </table>
       <table name="user_role" remarks="利用者の役割" schema="identity" type="TABLE">
          <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="user_id" nullable="false" remarks="利用者 ID" size="2147483647" type="uuid" typeCode="1111">

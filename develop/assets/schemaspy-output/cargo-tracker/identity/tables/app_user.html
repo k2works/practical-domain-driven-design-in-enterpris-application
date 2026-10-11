@@ -131,6 +131,21 @@
                                     <td>
                                         <table border='0' cellspacing='0' cellpadding='0'>
                                             <tr>
+                                                <td title="login_failure.user_id references app_user.id via fk_login_failure_user"><a href='login_failure.html'>login_failure</a><span class='relatedKey'>.user_id</span></td>
+                                                <td class="constraint detail">fk_login_failure_user</td>
+                                                <td class="constraint detail"><span title='Restrict delete:&#10;Parent cannot be deleted if children exist'>R</span></td>
+                                            </tr>
+                                            <tr>
+                                                <td title="recovery_code.user_id references app_user.id via fk_recovery_code_user"><a href='recovery_code.html'>recovery_code</a><span class='relatedKey'>.user_id</span></td>
+                                                <td class="constraint detail">fk_recovery_code_user</td>
+                                                <td class="constraint detail"><span title='Restrict delete:&#10;Parent cannot be deleted if children exist'>R</span></td>
+                                            </tr>
+                                            <tr>
+                                                <td title="totp_credential.user_id references app_user.id via fk_totp_credential_user"><a href='totp_credential.html'>totp_credential</a><span class='relatedKey'>.user_id</span></td>
+                                                <td class="constraint detail">fk_totp_credential_user</td>
+                                                <td class="constraint detail"><span title='Restrict delete:&#10;Parent cannot be deleted if children exist'>R</span></td>
+                                            </tr>
+                                            <tr>
                                                 <td title="user_role.user_id references app_user.id via fk_user_role_user"><a href='user_role.html'>user_role</a><span class='relatedKey'>.user_id</span></td>
                                                 <td class="constraint detail">fk_user_role_user</td>
                                                 <td class="constraint detail"><span title='Restrict delete:&#10;Parent cannot be deleted if children exist'>R</span></td>
@@ -361,12 +376,12 @@
                                 </thead>
                                 <tbody>
                                 <tr>
-                                    <td>ck_app_user_status</td>
-                                    <td>((status)::text &#61; ANY ((ARRAY[&#39;ACTIVE&#39;::character varying, &#39;SUSPENDED&#39;::character varying])::text[]))</td>
-                                </tr>
-                                <tr>
                                     <td>ck_app_user_email_normalized</td>
                                     <td>((email)::text &#61; lower(TRIM(BOTH FROM email)))</td>
+                                </tr>
+                                <tr>
+                                    <td>ck_app_user_status</td>
+                                    <td>((status)::text &#61; ANY ((ARRAY[&#39;ACTIVE&#39;::character varying, &#39;SUSPENDED&#39;::character varying])::text[]))</td>
                                 </tr>
                                 </tbody>
                             </table>

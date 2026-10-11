@@ -1,5 +1,8 @@
 kpi_observation
 audit_record
 user_role
+totp_credential
+recovery_code
+login_failure
 app_user
 company
