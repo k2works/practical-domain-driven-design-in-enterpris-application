@@ -394,20 +394,20 @@
                                 </thead>
                                 <tbody>
                                 <tr>
-                                    <td>ck_milestone_state</td>
-                                    <td>((state)::text &#61; ANY ((ARRAY[&#39;DRAFT&#39;::character varying, &#39;ADOPTED&#39;::character varying, &#39;UNDER_REVIEW&#39;::character varying, &#39;RETAINED_ONLY&#39;::character varying])::text[]))</td>
-                                </tr>
-                                <tr>
-                                    <td>ck_milestone_source_kind</td>
-                                    <td>((source_kind)::text &#61; ANY ((ARRAY[&#39;EXTERNAL_RECORD&#39;::character varying, &#39;FIELD_RECORD&#39;::character varying, &#39;INTERNAL_CHECK&#39;::character varying, &#39;MANUAL_ENTRY&#39;::character varying])::text[]))</td>
-                                </tr>
-                                <tr>
                                     <td>ck_milestone_no</td>
                                     <td>(milestone_no &gt;&#61; 1)</td>
                                 </tr>
                                 <tr>
                                     <td>ck_milestone_kind</td>
                                     <td>((kind)::text &#61; ANY ((ARRAY[&#39;PICKUP&#39;::character varying, &#39;RECEIPT_AT_ORIGIN&#39;::character varying, &#39;DEPARTURE&#39;::character varying, &#39;TRANSSHIPMENT&#39;::character varying, &#39;ARRIVAL&#39;::character varying, &#39;DELIVERY&#39;::character varying])::text[]))</td>
+                                </tr>
+                                <tr>
+                                    <td>ck_milestone_state</td>
+                                    <td>((state)::text &#61; ANY ((ARRAY[&#39;DRAFT&#39;::character varying, &#39;ADOPTED&#39;::character varying, &#39;UNDER_REVIEW&#39;::character varying, &#39;RETAINED_ONLY&#39;::character varying])::text[]))</td>
+                                </tr>
+                                <tr>
+                                    <td>ck_milestone_source_kind</td>
+                                    <td>((source_kind)::text &#61; ANY ((ARRAY[&#39;EXTERNAL_RECORD&#39;::character varying, &#39;FIELD_RECORD&#39;::character varying, &#39;INTERNAL_CHECK&#39;::character varying, &#39;MANUAL_ENTRY&#39;::character varying])::text[]))</td>
                                 </tr>
                                 </tbody>
                             </table>

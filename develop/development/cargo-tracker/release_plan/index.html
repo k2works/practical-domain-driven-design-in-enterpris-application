@@ -2347,6 +2347,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#w52026-11-02-11-0611-03" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        W5（2026-11-02 〜 11-06、11-03 は祝日）
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#w5w10release-10" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -11230,6 +11241,128 @@
 <li>T-90: 画面を作る Bolt の開発レビューに、マニュアルを書く立場の観点（画面に実装の語や業務ルールの番号が出ていないか、状態の表示が実際と合うか）を入れる（AI、W5 から）</li>
 <li>Release 1.0 の承認ゲートの密度は「W4 の締めの見直し」のとおり（既定は計画と終了報告、認証の完成と外部原本の取込はステップごと）</li>
 </ul>
+<h3 id="w52026-11-02-11-0611-03">W5（2026-11-02 〜 11-06、11-03 は祝日）<a class="headerlink" href="#w52026-11-02-11-0611-03" title="Permanent link">&para;</a></h3>
+<p><strong>状態</strong>: 開始準備中（2026-10-11 に計画の下書きを作った。人の承認待ち）</p>
+<p><strong>ゴール</strong>: Release 0.1 の負債（#45・#46）を返し、認証を完成させ（US-18 の残り）、利用者と役割の管理（US-16 の一部）と予約の残り（US-04 AC3・AC5、#43）を作る。</p>
+<p><strong>局面とアプローチ</strong>: 中盤（<a href="../development_strategy/">開発戦略</a>）。新しい集約とスキーマを作る認証・利用者管理（Bolt 30〜34）はインサイドアウトで、認証の流れはセキュリティの統合テストで外側から確かめる。既存の集約を広げる Bolt 29b・35 はアウトサイドイン。Bolt 29 はテストのリファクタリングで、振る舞いを変えない</p>
+<p><strong>設計の決定</strong>（2026-10-11 に human:kakimomokuri が決定。W5 の開始準備の質問への回答）:</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">事項</th>
+<th style="text-align: left;">決定</th>
+<th style="text-align: left;">反映</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">D-85 荷主の承認の後に失効した見積りの再見積り</td>
+<td style="text-align: left;">承認済みの経路版を引き継ぎ、料金と有効期限だけを出し直す。経路設計者の作業は繰り返さない。出し直した見積りには荷主の再承認が要る</td>
+<td style="text-align: left;">Bolt 35。ドメインモデル（見積りの再見積りの規則）、UI 設計（S-02・S-04）、US-24 の受入シナリオ。「業務責任者に確かめる事項の台帳」の D-85</td>
+</tr>
+<tr>
+<td style="text-align: left;">password の再設定のメール送信</td>
+<td style="text-align: left;">W5 で送信の部品を作る。<code>platform</code> に送信のポート（Spring Boot Mail。ローカルではメールを受けるだけのコンテナで確かめる）を置き、<code>identity</code> から使う。W9 の通知（US-22）はこの部品を再利用する。外部連携に当たるので、Bolt 33 の計画の承認の場で確認ポイントとして判断を受ける</td>
+<td style="text-align: left;">Bolt 33。tech_stack.md（メール送信の行の「通知コンテキストの送信アダプター」を改める）、architecture_backend.md の <code>allowedDependencies</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">ADR-011（多要素認証は Spring Security 7 の要素の権限で組み、TOTP は java-otp で作る）の採否</td>
+<td style="text-align: left;">Bolt 30 の計画の承認の場で、スキーマとあわせて確認ポイントとして決める（Bolt 13 の決定どおり）</td>
+<td style="text-align: left;">Bolt 30</td>
+</tr>
+<tr>
+<td style="text-align: left;">Bolt 29 の分け方</td>
+<td style="text-align: left;">#45 と #46 を分ける。#46 は画面 6 か所の修正とマニュアル・キャプチャの撮り直しを伴い、合わせると半日を超える見込みのため</td>
+<td style="text-align: left;">Bolt 29・29b</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Bolt の分け方</strong>（2026-10-11 の下書き。Bolt 30 から後は、各 Bolt の開始準備で引き直す）:</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Bolt</th>
+<th style="text-align: left;">範囲</th>
+<th style="text-align: right;">SP</th>
+<th style="text-align: left;">アプローチ</th>
+<th style="text-align: left;">承認ゲート</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">29</td>
+<td style="text-align: left;">画面の層のステップ定義のキー操作の部品（<code>tabUntilFocused</code>）を 1 か所に集める。画面の層の後片付けのフックの置き場所の見直し（<a href="https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/45">#45</a>、T-87）</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: left;">リファクタリング（<code>uiTest</code> の件数と結果が変わらないことで確かめる）</td>
+<td style="text-align: left;">計画・終了報告</td>
+</tr>
+<tr>
+<td style="text-align: left;">29b</td>
+<td style="text-align: left;">マニュアルの作成で見つけた画面の文言と表示の課題（<a href="https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/46">#46</a>）。S-09 の業務ルール番号と実装の語、KPI 計測記録の見出し、S-06 の参照情報版、見積りへの回答の案内の重複、荷主の見積依頼の詳細の状態、「入口の一覧へ戻る」。マニュアルの該当の節とキャプチャ（<code>creating-manual</code>）</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: left;">アウトサイドイン</td>
+<td style="text-align: left;">計画・終了報告</td>
+</tr>
+<tr>
+<td style="text-align: left;">30</td>
+<td style="text-align: left;">ADR-011 の採否。<code>identity</code> に TOTP の資格・回復コード・ログインの失敗（連続の回数、ロックの期限）を足す</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: left;">インサイドアウト</td>
+<td style="text-align: left;">ステップごと（スキーマ、セキュリティ）</td>
+</tr>
+<tr>
+<td style="text-align: left;">31</td>
+<td style="text-align: left;">US-18: TOTP によるログイン（AC1 の TOTP）、初回の TOTP の登録と回復コードの発行</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: left;">インサイドアウト</td>
+<td style="text-align: left;">ステップごと（セキュリティ）</td>
+</tr>
+<tr>
+<td style="text-align: left;">32</td>
+<td style="text-align: left;">US-18: ロック（AC3）、request ごとの役割の確認（AC6。Bolt 14 の決定の引き継ぎ）、失効の 5 分前の警告</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: left;">インサイドアウト</td>
+<td style="text-align: left;">ステップごと（セキュリティ、認可）</td>
+</tr>
+<tr>
+<td style="text-align: left;">33</td>
+<td style="text-align: left;">US-18: password の再設定（メール送信の部品を含む）、TOTP の再登録（回復コード）</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: left;">インサイドアウト</td>
+<td style="text-align: left;">ステップごと（セキュリティ、外部連携）</td>
+</tr>
+<tr>
+<td style="text-align: left;">34</td>
+<td style="text-align: left;">US-16 の一部: 固定役割（BR-15）の付与と変更履歴、管理範囲外の拒否、職務分離（AC1〜AC3）。システム管理者の別経路による TOTP の登録の解除（US-18）は US-16 の残りとあわせて W6</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: left;">インサイドアウト</td>
+<td style="text-align: left;">ステップごと（認可、スキーマ）</td>
+</tr>
+<tr>
+<td style="text-align: left;">35</td>
+<td style="text-align: left;">US-04 AC3 不足条件・AC5 特殊貨物（<a href="https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/43">#43</a>）、D-85 の再見積り。4 時間を超えると見えたら、開始準備で D-85 を 35b に分ける</td>
+<td style="text-align: right;">3</td>
+<td style="text-align: left;">アウトサイドイン</td>
+<td style="text-align: left;">計画・終了報告</td>
+</tr>
+</tbody>
+</table>
+<p>US-18 の残りの SP 6 は #13 をクローズする Bolt 33 で、US-16 の SP は #14 をクローズする W6 で数える（Bolt ごとの SP は目安）。W5 は祝日の週で 11 SP を計画し、上限（8 SP）を超える。Release 0.1 を約 2 週早く終えた余裕で吸収し、W5 の締めで確かめる（W4 の締めの決定）</p>
+<p><strong>W4 の Try の持ち込み</strong>: 各 Bolt 計画の確認ポイントに、T-83・T-88（骨組みや待ち方を直したら骨組みのまま流し、本命のアサーションで落ちることを確かめる。最初から通るテストは「見張り」と書く）、T-89（後に回したものは Issue にし、W5 の締めで開いている持ち越しを数える）、T-90（画面を作る Bolt の開発レビューに、マニュアルを書く立場の観点を入れる。Bolt 29b から）を入れる。承認ゲートの密度は「W4 の締めの見直し」のとおり（既定は計画と終了報告で止める。認証の完成はステップごとに止める）</p>
+<p><strong>Living Documentation</strong>: <code>identity</code> の新しい表の <code>afterMigrate</code> の権限と追記専用の印、<code>package-info</code> の <code>allowedDependencies</code>（<code>identity</code> → <code>platform</code> のメール送信）、ModularityTest、用語集の整合テスト、受入条件の照合の表（テスト戦略の「Release 0.1 の受入条件」を Release 1.0 の範囲へ広げる。Bolt 28 の決定）</p>
+<p><strong>デモ項目</strong>: TOTP によるログインと初回の登録、ロック、password の再設定、利用者と役割の管理（<code>@US-18</code>、<code>@US-16</code>）。不足条件と特殊貨物による本予約の拒否、承認の後に失効した見積りの再見積り（<code>@US-04</code>、<code>@US-24</code>）</p>
+<p><strong>ユーザーマニュアル</strong>: Bolt 29b で #46 の画面に合わせて該当の節とキャプチャを直す。Bolt 31〜33 はログインの画面が変わるので、「はじめに」のログインの節とキャプチャを Bolt 33 で直す。Bolt 34 は利用者の管理の節を足す</p>
+<p><strong>主なタスク</strong>:</p>
+<ul class="task-list">
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> W5 の開始準備（本節。2026-10-11）: 計画の承認、詳細整合性検証・横断整合性検証、GitHub の同期、Bolt 29 計画</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> Bolt 29: #45</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> Bolt 29b: #46</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> Bolt 30〜33: US-18 の残り（#13）</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> Bolt 34: US-16 の一部（#14）</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> Bolt 35: US-04 AC3・AC5（#43）、D-85</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> W5 の締め: 結果とふりかえり、開いている持ち越しの数（T-89）、W6 の計画の見直し</li>
+</ul>
+<p><strong>目標 SP</strong>: 11（US-18 6、US-16 の一部 2、US-04 3）</p>
 <h3 id="w5w10release-10">W5〜W10（Release 1.0）<a class="headerlink" href="#w5w10release-10" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
@@ -11549,7 +11682,7 @@
 <td style="text-align: left;">US-03、US-04、US-24、ドメインモデル（見積りの再見積りの規則）、UI 設計（S-02・S-04）</td>
 <td style="text-align: left;"><a href="../bolt_23b_report/">Bolt 23b 終了報告</a> 議題 5、<a href="../bolt_24_plan/">Bolt 24 計画</a> 確認ポイント 14</td>
 <td style="text-align: left;">W5 の開始準備（2026-11-02。#43 を W5 に前倒ししたため。W4 の締め）</td>
-<td style="text-align: left;">未決</td>
+<td style="text-align: left;">決定（2026-10-11、human:kakimomokuri。W5 の開始準備）: 承認済みの経路版を引き継ぎ、料金と有効期限だけを出し直す。荷主の再承認が要る。Bolt 35 で作る</td>
 </tr>
 </tbody>
 </table>
@@ -11786,7 +11919,7 @@
 <td style="text-align: right;">11</td>
 <td style="text-align: right;">-</td>
 <td style="text-align: right;">-</td>
-<td style="text-align: left;">未着手（W4 の締めで US-04 の残り 3 を W6 から前倒し。最初の Bolt で #45・#46）</td>
+<td style="text-align: left;">開始準備中（2026-10-11 に計画の下書き。Bolt 29〜35。W4 の締めで US-04 の残り 3 を W6 から前倒し。最初の Bolt 29・29b で #45・#46）</td>
 </tr>
 <tr>
 <td style="text-align: left;">W6</td>
@@ -12215,6 +12348,11 @@
 <tr>
 <td style="text-align: left;">2026-10-11</td>
 <td style="text-align: left;">US-04 の Release 1.0 の範囲が #17（初回同期）と #43（Bolt 25 の締め）の 2 件に重なっていたので、#17 を #43 の重複としてクローズし、#17 にしかなかった MVP の決定・見積り・完了の定義を #43 に移した</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5、決定 human:kakimomokuri</td>
+</tr>
+<tr>
+<td style="text-align: left;">2026-10-11</td>
+<td style="text-align: left;">W5 の開始準備: W5 の節（ゴール・設計の決定・Bolt 29〜35 の分け方の下書き）を書いた。D-85 を「承認済みの経路版を引き継ぎ料金と有効期限だけを出し直す」に決め、password の再設定のメール送信の部品を W5 で作り、ADR-011 の採否を Bolt 30 の計画で決め、#45・#46 を Bolt 29・29b に分けた（計画の承認待ち）</td>
 <td style="text-align: left;">anthropic/claude-opus-5-5、決定 human:kakimomokuri</td>
 </tr>
 </tbody>
