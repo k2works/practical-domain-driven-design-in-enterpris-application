@@ -70,6 +70,8 @@
     かつ 画面を "07-booking-detail" として撮る
     かつ 画面 "/staff/bookings" を開く
     かつ 画面を "07-booking-list" として撮る
+    かつ 画面 "/customer/transport-requests/{業務番号}" を開く
+    かつ 画面を "05-request-detail-booked" として撮る
     # 9 章 追跡管理
     かつ 追跡管理者がホームを開く
     かつ 画面を "09-tracking-list" として撮る

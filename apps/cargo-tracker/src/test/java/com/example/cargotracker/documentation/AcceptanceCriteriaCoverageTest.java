@@ -36,8 +36,9 @@ class AcceptanceCriteriaCoverageTest {
     private static final Path FEATURES =
             Path.of(System.getProperty("cargotracker.features", "src/test/resources/features"));
     private static final String RELEASE_01_HEADING = "### Release 0.1 の受入条件";
-    private static final Pattern TABLE_ROW =
-            Pattern.compile("^\\|\\s*(US-\\d+)\\s*\\|\\s*([^|]+?)\\s*\\|\\s*([^|]+?)\\s*\\|$");
+    // 列の前後の空白は [^|]+ に含める（\s* と [^|]+? の両方が空白に当たるとバックトラックが増える。SonarQube の指摘。
+    // 2 列目は使わず、3 列目はタグを TAG で探すので、空白が残っても結果は変わらない。Bolt 29b）
+    private static final Pattern TABLE_ROW = Pattern.compile("^\\|\\s*(US-\\d+)\\s*\\|([^|]+)\\|([^|]+)\\|$");
     private static final Pattern TAG = Pattern.compile("`(@[A-Za-z0-9-]+)`");
     private static final String WIP = "@wip";
 
