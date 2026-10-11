@@ -4,7 +4,7 @@ title: "cargo-tracker ユーザーストーリー"
 description: "cargo-tracker MVP の価値単位のユーザーストーリー、受入条件、上流要件へのトレーサビリティ。"
 tags: [requirements, user-story]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-09T04:48:46Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-11T01:11:12Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T05:20:11Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:01:39Z }
@@ -200,7 +200,7 @@ MVP の決定: 荷主内の入力者・承認者は分離せず、荷主担当�
 決定（2026-10-09、Bolt 25 の開始準備。human:kakimomokuri）:
 
 - ストーリーの目的「追跡可能な輸送を開始する」は、本予約の確定から追跡の開始（追跡記録を作り、確定した経路版の区間を予定として採用する）を経て予約サガが完了するまでを R0.1 の範囲とする（ADR-015。Bolt 25）。受入条件は変えず、受入シナリオは `@ADR-015 @T-INV-11` のタグで `features/booking/confirm_booking.feature` に置く。
-- #10 は R0.1 の範囲（AC1・AC2・AC4・重複確定の防止）でクローズし、AC3（不足条件）・AC5（特殊貨物）（W6）は新しい Issue にする（US-24 の前例）。
+- #10 は R0.1 の範囲（AC1・AC2・AC4・重複確定の防止）でクローズし、AC3（不足条件）・AC5（特殊貨物）（W6）は新しい Issue にする（US-24 の前例）。AC3・AC5 は #43 にし、W4 の締め（2026-10-10、human:kakimomokuri）で W5 に前倒しした。
 
 ### US-05 予約を変更・取消しする
 
@@ -502,6 +502,8 @@ Bolt 14 の決定（2026-10-06、human:kakimomokuri。[Bolt 14 計画](../../dev
 - AC1 の「利用者・企業・認証時刻が記録される」は、session に置く認証時刻と、監査記録のログインの成功で満たす。
 - Bolt 14 の認可はログインの時点の役割で行う。request ごとに DB の現在値を確かめるのは、AC6 とあわせて W5 で入れる。
 - ステージング・本番の利用者を作る手段は、利用者の管理（US-16）まで作らない。
+
+W5 の開始準備の決定（2026-10-11、human:kakimomokuri）: #13 は W5 の範囲（AC1 の TOTP、AC3、AC6、AC7、AC8、AC9 の回復コードによる再登録、失効の警告と延長）でクローズし、AC9 のシステム管理者の別経路による解除と本人への通知は #47（W6）にする。
 
 ### US-19 荷受人の参照許可を管理する
 
