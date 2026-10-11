@@ -17,7 +17,6 @@
         <dd>提示済み（回答待ち）</dd>
     </dl>
     <div th:replace="~{quotation/fragments/quotation :: details(${quotation})}"></div>
-    <p>詳細な経路と日程は経路設計者の承認後に確定します。</p>
     <p>この回答は予約の確定ではありません。経路が決まったら、あらためて見積りと経路を確かめて承認していただきます。</p>
     <p>辞退や条件の相談は担当営業にご連絡ください。</p>
     <form th:action="@{/customer/transport-requests/{number}/quotations/{no}/response(number=${number},no=${quotation.quotationNo()})}"

@@ -65,7 +65,7 @@ public class RouteDesignUiSteps {
         browser.checkAccessibility();
         assertThat(page().getByRole(AriaRole.HEADING, new Page.GetByRoleOptions().setLevel(1)))
                 .hasText("見積りへの回答 " + number() + " 見積 1");
-        assertThat(page().locator("main")).containsText("詳細な経路と日程は経路設計者の承認後に確定します");
+        assertThat(page().locator("main")).containsText("詳細な経路は、経路設計者の承認後に確定します");
         assertThat(page().locator("main")).containsText("辞退や条件の相談は担当営業にご連絡ください");
         page().locator("body").focus();
         browser.tabUntilFocused(button(PROCEED));

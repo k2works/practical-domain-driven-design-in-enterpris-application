@@ -86,6 +86,16 @@ class QuotationResponseControllerTest {
     }
 
     @Test
+    void 回答の画面は経路の確定の案内を見積りの共通の部品の1文だけにして重ねて出さない() throws Exception {
+        given(quotationQueryService.findVisible(NUMBER, SHIPPER)).willReturn(List.of(presented()));
+
+        mockMvc.perform(get(RESPONSE))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("詳細な経路は、経路設計者の承認後に確定します。")))
+                .andExpect(content().string(not(containsString("詳細な経路と日程は経路設計者の承認後に確定します"))));
+    }
+
+    @Test
     void 回答の画面に見積りと経路方針と確定の旨と進むボタンと辞退や相談の連絡先を示す() throws Exception {
         given(quotationQueryService.findVisible(NUMBER, SHIPPER)).willReturn(List.of(presented()));
 
@@ -94,7 +104,7 @@ class QuotationResponseControllerTest {
                 .andExpect(content().string(containsString("<h1>見積りへの回答 TR-2026-0001 見積 1</h1>")))
                 .andExpect(content().string(containsString("3,730.00 USD")))
                 .andExpect(content().string(containsString("2099-10-08 18:00 Asia/Tokyo（UTC+09:00）")))
-                .andExpect(content().string(containsString("詳細な経路と日程は経路設計者の承認後に確定します。")))
+                .andExpect(content().string(containsString("詳細な経路は、経路設計者の承認後に確定します。")))
                 .andExpect(content().string(containsString("この条件で詳細経路設計へ進む</button>")))
                 .andExpect(content().string(containsString("辞退や条件の相談は担当営業にご連絡ください。")))
                 .andExpect(content().string(containsString("この回答は予約の確定ではありません。経路が決まったら、あらためて見積りと経路を確かめて承認していただきます。")))

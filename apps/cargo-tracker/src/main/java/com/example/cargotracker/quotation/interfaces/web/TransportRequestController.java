@@ -12,6 +12,7 @@ import com.example.cargotracker.quotation.domain.model.valueobjects.SendBackNoti
 import com.example.cargotracker.quotation.domain.model.valueobjects.ShipmentTermsInput;
 import com.example.cargotracker.quotation.domain.model.valueobjects.SubmissionViolations;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestNumber;
+import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestStatus;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestSummary;
 import com.example.cargotracker.shared.domain.AuthenticatedActor;
 import com.example.cargotracker.shared.domain.UtcInstant;
@@ -143,6 +144,8 @@ public class TransportRequestController {
                         request.number(), request.currentVersion().versionNo()));
         model.addAttribute("statusLabel", TransportRequestLabels.customerStatus(request.status()));
         model.addAttribute("guidance", TransportRequestLabels.customerGuidance(request.status()));
+        // 予約確定済みの後の追跡の状況は予約一覧（C-06）に任せる。見積りは追跡の開始を知らない（Bolt 29b、#46）
+        model.addAttribute("booked", request.status() == TransportRequestStatus.BOOKED);
         model.addAttribute("terms", rows);
         model.addAttribute(
                 "sendBack",

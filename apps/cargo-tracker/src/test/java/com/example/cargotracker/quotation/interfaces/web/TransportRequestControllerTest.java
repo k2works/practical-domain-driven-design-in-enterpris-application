@@ -306,6 +306,14 @@ class TransportRequestControllerTest {
         return request;
     }
 
+    private static TransportRequest booked() {
+        TransportRequest request = routing();
+        request.markAwaitingApproval(1);
+        request.markReadyToBook(1);
+        request.markBooked(1);
+        return request;
+    }
+
     private static TransportRequest sentBack() {
         TransportRequest request = underReview();
         request.sendBack(1, STAFF, "目的地の確認が必要", "目的地の港", new UtcInstant(Instant.parse("2026-10-05T03:00:00Z")));
@@ -645,6 +653,32 @@ class TransportRequestControllerTest {
                 .andExpect(content().string(containsString("経路設計者が詳細な経路を設計しています。承認の準備ができたら担当営業からご連絡します。")));
         mockMvc.perform(get("/customer/transport-requests"))
                 .andExpect(content().string(containsString("経路設計中（A 社の対応待ち）")));
+    }
+
+    @Test
+    void 予約確定済みの見積依頼は詳細と一覧で予約確定済みと示し追跡の状況は予約一覧へ案内する() throws Exception {
+        given(queryService.findByNumber(NUMBER, SHIPPER)).willReturn(Optional.of(booked()));
+        given(queryService.findSummaries(SHIPPER)).willReturn(List.of(summary(TransportRequestStatus.BOOKED)));
+
+        mockMvc.perform(get("/customer/transport-requests/TR-2026-0001"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("<dd>予約確定済み</dd>")))
+                .andExpect(content().string(containsString("本予約を確定しました。追跡番号と追跡の状況は予約一覧で確かめられます。")))
+                .andExpect(content().string(containsString("href=\"/customer/bookings\">予約一覧</a>")))
+                .andExpect(content().string(not(containsString("準備中"))));
+        mockMvc.perform(get("/customer/transport-requests"))
+                .andExpect(content().string(containsString("予約確定済み")))
+                .andExpect(content().string(not(containsString("準備中"))));
+    }
+
+    @Test
+    void 予約確定済みでない見積依頼の詳細には予約一覧への案内を出さない() throws Exception {
+        given(queryService.findByNumber(NUMBER, SHIPPER)).willReturn(Optional.of(routing()));
+
+        mockMvc.perform(get("/customer/transport-requests/TR-2026-0001"))
+                .andExpect(status().isOk())
+                // ナビの「予約」も同じ行き先なので、本文の案内のリンク（名前は行き先の見出しの「予約一覧」）で確かめる
+                .andExpect(content().string(not(containsString("href=\"/customer/bookings\">予約一覧</a>"))));
     }
 
     @Test

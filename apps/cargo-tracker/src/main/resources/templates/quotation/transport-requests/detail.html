@@ -22,6 +22,7 @@
         <dd th:text="${statusLabel}">審査中（A 社の対応待ち）</dd>
     </dl>
     <p th:text="${guidance}">営業担当者が内容を審査しています。お問い合わせの際は業務番号をお伝えください。</p>
+    <p th:if="${booked}"><a th:href="@{/customer/bookings}">予約一覧</a></p>
 
     <!-- 荷主に見せるのは、現在の版への差戻しの理由と不足事項だけ。判断者と審査の確定の根拠は見せない（2026-10-03 の人の決定） -->
     <section th:if="${sendBack}" aria-labelledby="send-back-title">
