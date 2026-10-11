@@ -4,9 +4,10 @@ title: "Bolt 30 計画 - ADR-011 の採用と、TOTP の資格・回復コード
 description: "W5 の 4 本目の Bolt の計画。ADR-011（多要素認証は Spring Security 7 の要素の権限で組み、TOTP は java-otp で作る）を承認にし、identity に TOTP の資格・回復コード・ログインの失敗の表とドメインのモデル・リポジトリ、TOTP の生成のポートと java-otp の実装を、インサイドアウトで作る。画面と認証の流れは Bolt 31 から。"
 tags: [development,bolt-plan]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-11T09:43:13Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-11T09:49:47Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-11T08:26:00Z }
+  - { by: human:kakimomokuri, at: 2026-10-11T09:49:48Z }
 ---
 
 # Bolt 30 計画 - ADR-011 の採用と、TOTP の資格・回復コード・ログインの失敗の表とドメイン
@@ -209,7 +210,7 @@ u ||--o| f
   - Red: 契約テスト（RFC 6238 の試験ベクトル。6 桁は ADR-011 のスパイクと同じ値、8 桁は RFC の付録 B の値）。ArchUnit の規則（`com.eatthepath.otp` を参照するのは `identity.infrastructure` だけ。既存の `AuthenticationArchitectureTest` に足す）を、違反を一時的に入れて落ちることを確かめる。生成器のスレッドセーフは未確認（ADR-011、Bolt 13 の R-07）なので、呼び出しごとに生成器を作るか、並行の契約テストで確かめる。`TotpCredential` の前後 1 つの窓の照合の単体テスト（偽の生成器）もここで書く
   - Green: `build.gradle` に `com.eatthepath:java-otp:1.0.0` を足し、`identity.infrastructure` に実装（HMAC-SHA1、30 秒の刻み）。前後 1 つの窓の照合と一定時間の比較は、ドメインかアプリケーションの側に置く（確認ポイント 4）
   - 完了の判定: `check` 緑。CI に依存の脆弱性の検査はないので、GitHub Advisory と OSV を手で引き、ライセンス（MIT）と推移的な依存がないことを終了報告に書く
-- [?] **6. 開発レビューと終了報告** 【承認ゲート: 終了報告】
+- [x] **6. 開発レビューと終了報告** 【承認ゲート: 終了報告】
   - 開発レビュー（`developing-review`。プログラマー（原子的な更新と並行性、境界値）、アーキテクト（集約の分け方、ポートの置き場所、ArchUnit）、テスター（セキュリティの境界値）。画面を変えないのでテクニカルライター・インタラクションデザイナーの観点は外す）
   - SonarQube（`sonar-local:check`。手順書の 9 節）
   - `bolt_30_report.md`。release_plan の W5 の 30 の行と進捗、開発の索引を更新する。#13 に進み具合をコメントする

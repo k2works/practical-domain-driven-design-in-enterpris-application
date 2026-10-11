@@ -2,8 +2,10 @@
 type: Plan
 title: "Bolt 30 終了報告 - ADR-011 の採用と、TOTP の資格・回復コード・ログインの失敗の表とドメイン"
 tags: [plan]
-status: draft
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-11T09:43:13Z }
+status: stable
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-11T09:49:47Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-10-11T09:49:48Z }
 ---
 
 # Bolt 30 終了報告 - ADR-011 の採用と、TOTP の資格・回復コード・ログインの失敗の表とドメイン
@@ -142,6 +144,7 @@ Bolt 31: 2 段階のログイン（AC1 の TOTP、最長 8 時間を TOTP が初
 
 | 日付 | 更新内容 | 更新者 |
 | :--- | :--- | :--- |
+| 2026-10-11 | 終了報告を承認した（議題 1〜4 を承認）。T-99・T-100 を足した | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-10-11 | 初版作成（承認待ち） | anthropic/claude-opus-5-5 |
 
 ## 関連ドキュメント
