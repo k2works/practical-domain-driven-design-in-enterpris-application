@@ -4,7 +4,7 @@ title: "Bolt 29 終了報告 - 画面の層のステップ定義のキー操作�
 description: "29 回目の Bolt の終了報告。10 のクラスに 6 通りで写された tabUntilFocused と 2 つの tabUntilGroup を BrowserSession に集め、uiTest の 80 本が集める前と同じく通ることを確かめた結果。開発レビューで失敗の経路を読めるものに直したこと、後片付けのフックを動かさない判断、品質ゲート、ふりかえり、承認の議題を記す。"
 tags: [development,bolt-report]
 status: draft
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-11T02:34:03Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-11T02:42:38Z }
 ---
 
 # Bolt 29 終了報告 - 画面の層のステップ定義のキー操作の部品を 1 か所に集める（#45）
@@ -17,7 +17,7 @@ human:kakimomokuri の `/goal Bolt29` の指示で、確認ポイントはすべ
 | :--- | :--- | :--- | :--- |
 | 1 | **計画からの変更: 失敗の経路を変えた**。計画は写しの判定（`target.evaluate`）をそのまま集める案だったが、開発レビューの指摘で「目的の要素が現れるのを待ってから（`assertThat(target).isAttached()`）、待たない判定（`target.and(:focus).count()`）で押し、最後に `isFocused` で確かめる」形にした。画面にない要素を指定すると、写しの時代は 30 秒の `TimeoutError` だったのが、5 秒で「Locator expected to be attached」の失敗になる | 通る経路の押す回数とフォーカスの位置は変わらない（35 か所の呼び出しの直前の操作を開発レビューで読み、目的の要素にすでにフォーカスがある呼び出しは 0）。`uiTest` の 80 本が集める前と同じく通った。直す場所が 1 つになった今がいちばん安い | `BrowserSession.tabUntilFocused`、ステップ 2 の結果 |
 | 2 | 判定を待たない形に変えた最初の案（`count()` だけ）は、画面の遷移の直後に要素が描かれる前に Tab を押し始める危険があると AI が自分で気づき、`isAttached()` で待つ形に直してから流した | 元の `evaluate` は要素が現れるまで待っていた。その待ちを `isAttached()` で残した | 同上 |
-| 3 | **SonarQube のローカル検査を実施していない**。この環境にはトークン（`.env` は暗号化された `.env.vault` だけ）とローカルのサーバーがない | 変更はテストのコードだけで、SonarQube の解析対象の本番のコードは変えていない。Checkstyle・SpotBugs・Spotless は `check` で通った。必要なら人の環境で `sonar-local:check` を流す | 品質ゲート |
+| 3 | **SonarQube の Quality Gate は PASS**。ただし Code Smell 1 件（MAJOR。`AcceptanceCriteriaCoverageTest.java:40` の正規表現のバックトラック）が残る。Bolt 28 で作ったコードで、Bolt 29 では変えていない。初版では「この環境では回せない」と書いたが、過去の履歴（Bolt 19 の T-52、手順書の 9 節）を確かめずに出した誤りで、人の指摘で手順書のとおり `sonar-local:start` → トークンの作成 → `scan` → `check` で回した | Code Smell は Bolt 29 の範囲外。Bolt 29b の開発レビューのときに直すか、W5 の締めで扱いを決める | 品質ゲート |
 | 4 | 依存の取得で Maven Central が 429（Too Many Requests）を返し続けたので、`--max-workers=1` と 15 秒の間隔で再試行して流した。手順書のタスクの外の操作はしていない（Gradle のタスクだけ） | 一時的な流量制限で、同じ版の依存を取り直しただけ | ステップ 1 の結果 |
 
 ## 基本情報
@@ -68,7 +68,7 @@ human:kakimomokuri の `/goal Bolt29` の指示で、確認ポイントはすべ
 | `uiTest`（axe-core を含む） | 通過（80 本、失敗 0。集める前と後でシナリオの名前が一致。開発レビューの対応の後にも流した。T-70） |
 | T-88（集めた部品が失敗を報せる） | 確かめた。画面にない欄を一時的に指定し、スイートを `@US-02` に絞って流すと落ちた（対応の前は 30 秒の `TimeoutError`、対応の後は 5 秒の「Locator expected to be attached」）。確かめた後に戻した |
 | CI | `71789d8` の cargo-tracker CI（`check`・`ui`）は通過（run 191） |
-| SonarQube（ローカル） | 未実施（議題 3） |
+| SonarQube（ローカル） | Quality Gate PASS（`sonar-local:check`。手順書の 9 節のとおり起動）。カバレッジ 95.1%、重複 0.1%、Bug 0、Vulnerability 0、Security Hotspot 0、Code Smell 1（Bolt 28 のコード。議題 3） |
 | `okf:check` | ERROR 0 |
 
 ## 仮説の結論
@@ -107,10 +107,12 @@ human:kakimomokuri の `/goal Bolt29` の指示で、確認ポイントはすべ
   - 開発レビューの指摘に合わせて判定を `count()` に変えたとき、要素を待たなくなる副作用に、流す前まで気づかなかった（流す前に自分で気づいて直した）
   - `pkill -f` のパターンが自分のシェルにも当たり、編集が当たらなかった
   - Maven Central の 429 で、1 回の `uiTest` の前に数分の再試行が要った
+  - SonarQube のローカル検査を「この環境では回せない」と、過去の履歴と手順書（Bolt 19 の T-52、`application_development_setup.md` の 9 節）を確かめずに判断した。T-56（環境の操作の前に手順書を読む）を守らなかった。人の指摘で手順書のとおりに回し、PASS を確かめた
 - Try
   - T-91: 自動待ちのある API（`evaluate`・`isVisible` など）を待たない API（`count` など）に置き換えるときは、待っていたものを別の手段で残すかを先に決める
   - T-92: プロセスを止めるときは `pkill -f` を使わず、ツールのタスクの停止か PID で止める
   - T-93: 依存の取得が 429 になる環境では、最初から `--max-workers=1` と再試行のループで流す
+  - T-94: 「この環境ではできない」と書く前に、手順書（`docs/operation/`）と過去の終了報告で同じ操作の履歴を探す（T-56 の再確認）
 
 ## 次の Bolt
 
@@ -120,6 +122,7 @@ Bolt 29b（[#46](https://github.com/k2works/practical-domain-driven-design-in-en
 
 | 日付 | 更新内容 | 更新者 |
 | :--- | :--- | :--- |
+| 2026-10-11 | 人の指摘（SonarQube は過去に同様の環境で回せた）で、手順書のとおり SonarQube を起動して `sonar-local:check` を流し、議題 3・品質ゲート・ふりかえりを書き直した（承認待ち） | anthropic/claude-opus-5-5、指摘 human:kakimomokuri |
 | 2026-10-11 | 初版作成（承認待ち） | anthropic/claude-opus-5-5 |
 
 ## 関連ドキュメント
