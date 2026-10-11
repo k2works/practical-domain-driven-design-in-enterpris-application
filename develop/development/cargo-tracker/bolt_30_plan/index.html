@@ -4806,7 +4806,7 @@
     
   
   
-    <span class="md-status md-status--draft"></span>
+    <span class="md-status md-status--stable"></span>
   
 
   
@@ -10046,7 +10046,7 @@
 <li>Red: 契約テスト（RFC 6238 の試験ベクトル。6 桁は ADR-011 のスパイクと同じ値、8 桁は RFC の付録 B の値）。ArchUnit の規則（<code>com.eatthepath.otp</code> を参照するのは <code>identity.infrastructure</code> だけ。既存の <code>AuthenticationArchitectureTest</code> に足す）を、違反を一時的に入れて落ちることを確かめる。生成器のスレッドセーフは未確認（ADR-011、Bolt 13 の R-07）なので、呼び出しごとに生成器を作るか、並行の契約テストで確かめる。<code>TotpCredential</code> の前後 1 つの窓の照合の単体テスト（偽の生成器）もここで書く</li>
 <li>Green: <code>build.gradle</code> に <code>com.eatthepath:java-otp:1.0.0</code> を足し、<code>identity.infrastructure</code> に実装（HMAC-SHA1、30 秒の刻み）。前後 1 つの窓の照合と一定時間の比較は、ドメインかアプリケーションの側に置く（確認ポイント 4）</li>
 <li>完了の判定: <code>check</code> 緑。CI に依存の脆弱性の検査はないので、GitHub Advisory と OSV を手で引き、ライセンス（MIT）と推移的な依存がないことを終了報告に書く</li>
-<li>[?] <strong>6. 開発レビューと終了報告</strong> 【承認ゲート: 終了報告】</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>6. 開発レビューと終了報告</strong> 【承認ゲート: 終了報告】</li>
 <li>開発レビュー（<code>developing-review</code>。プログラマー（原子的な更新と並行性、境界値）、アーキテクト（集約の分け方、ポートの置き場所、ArchUnit）、テスター（セキュリティの境界値）。画面を変えないのでテクニカルライター・インタラクションデザイナーの観点は外す）</li>
 <li>SonarQube（<code>sonar-local:check</code>。手順書の 9 節）</li>
 <li><code>bolt_30_report.md</code>。release_plan の W5 の 30 の行と進捗、開発の索引を更新する。#13 に進み具合をコメントする</li>
