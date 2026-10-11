@@ -134,6 +134,15 @@ class TransportRequestReviewControllerTest {
     }
 
     @Test
+    void 受付一覧は営業担当者のホームなので入口の一覧へ戻るリンクを出さない() throws Exception {
+        given(queryService.findUnderReview()).willReturn(List.of(summary()));
+
+        mockMvc.perform(get("/staff/transport-requests"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(not(containsString("入口の一覧へ戻る"))));
+    }
+
+    @Test
     void 受付一覧に審査中の見積依頼を業務番号のリンクと社内の日時と待っている時間と貨物種別で示し内部のIDを出さない() throws Exception {
         given(queryService.findUnderReview()).willReturn(List.of(summary()));
 

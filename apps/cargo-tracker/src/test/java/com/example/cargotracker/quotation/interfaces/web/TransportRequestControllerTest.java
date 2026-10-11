@@ -347,6 +347,15 @@ class TransportRequestControllerTest {
     }
 
     @Test
+    void 見積依頼の一覧は荷主のホームなので入口の一覧へ戻るリンクを出さない() throws Exception {
+        given(queryService.findSummaries(SHIPPER)).willReturn(List.of(summary(TransportRequestStatus.DRAFT)));
+
+        mockMvc.perform(get("/customer/transport-requests"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(not(containsString("入口の一覧へ戻る"))));
+    }
+
+    @Test
     void 見積依頼の詳細に業務番号と版と状態と輸送条件と日本時間の提出時刻を示し内部のIDを出さない() throws Exception {
         given(queryService.findByNumber(NUMBER, SHIPPER)).willReturn(Optional.of(underReview()));
 

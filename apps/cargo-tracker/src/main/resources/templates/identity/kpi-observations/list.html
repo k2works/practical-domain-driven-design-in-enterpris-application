@@ -10,9 +10,9 @@
     <h1>KPI 計測記録</h1>
     <p th:if="${#lists.isEmpty(observations)}">まだ記録はありません。</p>
     <div th:unless="${#lists.isEmpty(observations)}" class="table-scroll" tabindex="0" role="region"
-         aria-label="輸送要求ごとの KPI-01 の時刻とリードタイム">
+         aria-label="見積依頼ごとの KPI-01 の時刻とリードタイム">
         <table class="table">
-            <caption>輸送要求ごとの KPI-01 の時刻とリードタイム</caption>
+            <caption>見積依頼ごとの KPI-01 の時刻とリードタイム</caption>
             <thead>
             <tr>
                 <th scope="col">業務番号</th>

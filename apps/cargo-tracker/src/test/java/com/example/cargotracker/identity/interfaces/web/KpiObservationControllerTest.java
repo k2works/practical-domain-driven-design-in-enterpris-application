@@ -81,6 +81,22 @@ class KpiObservationControllerTest {
     }
 
     @Test
+    void 表の見出しは画面の語の見積依頼ごとと示し実装の語の輸送要求を出さない() throws Exception {
+        given(queryService.findAll())
+                .willReturn(List.of(KpiObservation.recordSubmission(
+                        UUID.randomUUID(),
+                        "TR-2026-0001",
+                        new CompanyId(UUID.randomUUID()),
+                        new UtcInstant(Instant.parse("2026-10-05T13:04:05Z")))));
+
+        mockMvc.perform(get("/staff/kpi-observations"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("<caption>見積依頼ごとの KPI-01 の時刻とリードタイム</caption>")))
+                .andExpect(content().string(containsString("aria-label=\"見積依頼ごとの KPI-01 の時刻とリードタイム\"")))
+                .andExpect(content().string(not(containsString("輸送要求ごと"))));
+    }
+
+    @Test
     void 記録がなければその旨を表示する() throws Exception {
         given(queryService.findAll()).willReturn(List.of());
 
