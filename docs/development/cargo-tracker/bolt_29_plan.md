@@ -4,7 +4,7 @@ title: "Bolt 29 計画 - 画面の層のステップ定義のキー操作の部�
 description: "29 回目の Bolt の計画。W5 の最初の Bolt で、Release 0.1 の負債 #45（T-87）を返す。10 のクラスに 6 通りで写された tabUntilFocused と 2 つの tabUntilGroup を BrowserSession に集め、uiTest の件数と結果が変わらないことで確かめる。後片付けのフックの置き場所も決める。"
 tags: [development,bolt-plan]
 status: draft
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-11T01:25:23Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-11T02:17:31Z }
 ---
 
 # Bolt 29 計画 - 画面の層のステップ定義のキー操作の部品を 1 か所に集める（#45）
@@ -122,20 +122,24 @@ end note
 
 状態の記号: `[ ]` 未着手、`[-]` 進行中、`[?]` 承認待ち、`[x]` 完了。各ステップの終わりに `check` が緑であることを確かめ、push して CI を確かめる（T-26、T-65）。コミットの前に、そのステップのファイルだけをステージしているか確かめる（T-84）。
 
-- [ ] **1. 集める前の基準を取る** 【承認ゲート: なし】
+- [x] **1. 集める前の基準を取る** 【承認ゲート: なし】
   - `uiTest` を流し、実行時間のある方の XML でシナリオの件数・失敗・実行時間を記録する（T-79。Bolt 28 の時点で 80 本、失敗 0）
   - 完了の判定: 基準の件数と実行時間を結果に書いた
-- [ ] **2. `BrowserSession` に部品を置き、写しを置き換える** 【承認ゲート: なし】
+  - 結果（2026-10-11）: `uiTest` 80 本、失敗 0、実行時間の合計 801 秒。Maven Central の 429 を `--max-workers=1` と再試行で越えた
+- [x] **2. `BrowserSession` に部品を置き、写しを置き換える** 【承認ゲート: なし】
   - `BrowserSession` に `tabUntilFocused(Locator)` と `tabUntilGroup(String)` を足す（Javadoc にそろえた振る舞いと理由を書く）
-  - 10 のクラスの `tabUntilFocused` と 2 つの `tabUntilGroup` の写しを消し、`browser.tabUntilFocused(...)` などの呼び出しに置き換える（呼び出しは 33 か所）。使わなくなった import を消す（`spotlessApply` の後に確かめる。T-55）
+  - 10 のクラスの `tabUntilFocused` と 2 つの `tabUntilGroup` の写しを消し、`browser.tabUntilFocused(...)` などの呼び出しに置き換える（呼び出しは 35 か所。初版の「33 か所」は `tabUntilGroup` を数え漏らしていた）。使わなくなった import を消す（`spotlessApply` の後に確かめる。T-55）
   - 失敗を報せることの確かめ（T-88）: 集めた部品に、画面にない要素を一時的に指定したシナリオで落ちることを確かめてから戻す
   - 完了の判定: `check` 緑、`uiTest` の件数と結果がステップ 1 と同じ、`grep` で `private void tabUntil` が `BrowserSession` の外に残っていない
-- [ ] **3. 後片付けのフックの判断と、文書の反映** 【承認ゲート: なし】
+  - 結果（2026-10-11）: 写し 12 を消し、35 か所を `browser.` 経由にした。開発レビューの指摘で、要素が現れるのを待ってから（`isAttached`）待たない判定（`count`）で押す形に変えた（終了報告の議題 1・2）。T-88: 画面にない欄で落ちることを確かめた（対応の前は 30 秒の `TimeoutError`、後は 5 秒の「Locator expected to be attached」）。`uiTest` 80 本・失敗 0・名前が一致・780 秒、`check` 1608 件・失敗 0（`71789d8`）
+- [x] **3. 後片付けのフックの判断と、文書の反映** 【承認ゲート: なし】
   - 確認ポイント 6 の決定のとおりにする（推奨では動かさない。理由を `RoutingUiSteps` の Javadoc に 1 文足す）
   - 設計文書（T-53）: test_strategy.md の画面の層のステップ定義の記述に、キー操作の部品の置き場所を足す（記述があれば）
-- [ ] **4. 開発レビューと終了報告** 【承認ゲート: 終了報告】
+  - 結果（2026-10-11）: フックは動かさず、理由を `RoutingUiSteps` の Javadoc に足した。test_strategy.md の「置き場所とステップ定義」に `ui/` の行と部品の置き場所の段落を足した
+- [?] **4. 開発レビューと終了報告** 【承認ゲート: 終了報告】
   - 開発レビュー（`developing-review`。プログラマーとテスターの観点。画面を変えないのでインタラクションデザイナー・テクニカルライターの観点は外す）
   - `bolt_29_report.md`。release_plan の W5 の 29 の行と進捗、開発の索引を更新する。承認の後に #45 を閉じる
+  - 結果（2026-10-11）: 開発レビュー 1 回（推奨 2・任意 3。推奨 2 と任意 1 を反映）。[Bolt 29 終了報告](bolt_29_report.md)（承認待ち）
 
 ### 時間の配分と打ち切り
 
@@ -162,11 +166,11 @@ end note
 
 ## 完了条件
 
-- [ ] `BrowserSession` の外に `tabUntilFocused`・`tabUntilGroup` の写しがない
-- [ ] `uiTest` の件数と結果が集める前と同じ（実行時間のある方の XML で数える。T-79）
-- [ ] 集めた部品が届かない要素で失敗することを確かめた（T-88）
+- [x] `BrowserSession` の外に `tabUntilFocused`・`tabUntilGroup` の写しがない
+- [x] `uiTest` の件数と結果が集める前と同じ（実行時間のある方の XML で数える。T-79）
+- [x] 集めた部品が届かない要素で失敗することを確かめた（T-88）
 - [ ] `check` が緑。push して CI を確かめた
-- [ ] 後片付けのフックの置き場所を決め、理由を残した
+- [x] 後片付けのフックの置き場所を決め、理由を残した
 - [ ] 開発レビューと終了報告。承認の後に #45 を閉じた
 
 ### デモ項目
