@@ -4,7 +4,7 @@ title: "リリース計画 - cargo-tracker（A 社国際貨物輸送管理シス
 description: "cargo-tracker MVP のリリース計画。1 人 + AI、時間単位の Bolt（= イテレーション）と週次の見直しで、最初の縦の流れ（R0.1）、パイロット準備完了（R1.0）、本格展開前（R1.1）の 3 段階、Unit のエントロピー評価、SP、バッファ、パイロット開始の条件、引継ぎ ID の台帳、業務責任者に確かめる事項の台帳。"
 tags: [development,release-plan]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-11T02:17:31Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-11T03:29:21Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T09:29:53Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:38:26Z }
@@ -612,7 +612,7 @@ US-18 の残りの SP 6 は #13 をクローズする Bolt 33b で、US-04 の S
 **主なタスク**:
 
 - [x] W5 の開始準備（本節。2026-10-11）: 計画の承認、詳細整合性検証・横断整合性検証（指摘を反映）、GitHub の同期（Issue。#47 を起票。Project のフィールドはこの環境から変えられないので人が設定する）、Bolt 29 計画（承認待ち）
-- [ ] Bolt 29: #45。[Bolt 29 計画](bolt_29_plan.md)（`/goal` で進めた）、[Bolt 29 終了報告](bolt_29_report.md)（承認待ち。`uiTest` 80 本は集める前と同じく通った。失敗の経路を読めるものに直した）
+- [x] Bolt 29: #45。[Bolt 29 計画](bolt_29_plan.md)（`/goal` で進めた）、[Bolt 29 終了報告](bolt_29_report.md)（完了、2026-10-11 に承認済み。#45 を閉じた。SonarQube PASS。`uiTest` 80 本は集める前と同じく通った。失敗の経路を読めるものに直した）
 - [ ] Bolt 29b: #46
 - [ ] Bolt 30〜33b: US-18 の残り（#13）と通知モジュールの最小の新設
 - [ ] Bolt 34: US-16 の一部（#14）
@@ -865,3 +865,4 @@ xychart-beta
 | 2026-10-11 | US-04 の Release 1.0 の範囲が #17（初回同期）と #43（Bolt 25 の締め）の 2 件に重なっていたので、#17 を #43 の重複としてクローズし、#17 にしかなかった MVP の決定・見積り・完了の定義を #43 に移した | anthropic/claude-opus-5-5、決定 human:kakimomokuri |
 | 2026-10-11 | W5 の開始準備: W5 の節（ゴール・設計の決定・Bolt 29〜35 の分け方の下書き）を書いた。D-85 を「承認済みの経路版を引き継ぎ料金と有効期限だけを出し直す」に決め、password の再設定のメール送信の部品を W5 で作り、ADR-011 の採否を Bolt 30 の計画で決め、#45・#46 を Bolt 29・29b に分けた。同日に計画が承認された | anthropic/claude-opus-5-5、決定 human:kakimomokuri |
 | 2026-10-11 | W5 の開始準備の詳細整合性検証・横断整合性検証の指摘を W5 の節に反映した。メール送信の部品の置き場所を `platform` から通知モジュールの新設に決め直し、US-18 AC9 の管理者経路を #47（W6）に分け、ACC-06 を Bolt 32b に入れた。Bolt 33b を分け、設計への反映が必要な事項と Bolt 13・14 からの持ち込みを書いた | anthropic/claude-opus-5-5、決定 human:kakimomokuri |
+| 2026-10-11 | Bolt 29 の終了報告の承認を記録し、Bolt 29 を終えた（#45 を閉じた。SP 0） | anthropic/claude-opus-5-5、承認 human:kakimomokuri |

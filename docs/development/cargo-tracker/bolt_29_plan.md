@@ -3,8 +3,10 @@ type: Plan
 title: "Bolt 29 計画 - 画面の層のステップ定義のキー操作の部品を 1 か所に集める（#45）"
 description: "29 回目の Bolt の計画。W5 の最初の Bolt で、Release 0.1 の負債 #45（T-87）を返す。10 のクラスに 6 通りで写された tabUntilFocused と 2 つの tabUntilGroup を BrowserSession に集め、uiTest の件数と結果が変わらないことで確かめる。後片付けのフックの置き場所も決める。"
 tags: [development,bolt-plan]
-status: draft
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-11T02:34:03Z }
+status: stable
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-11T03:29:21Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-10-11T03:29:45Z }
 ---
 
 # Bolt 29 計画 - 画面の層のステップ定義のキー操作の部品を 1 か所に集める（#45）
@@ -136,10 +138,10 @@ end note
   - 確認ポイント 6 の決定のとおりにする（推奨では動かさない。理由を `RoutingUiSteps` の Javadoc に 1 文足す）
   - 設計文書（T-53）: test_strategy.md の画面の層のステップ定義の記述に、キー操作の部品の置き場所を足す（記述があれば）
   - 結果（2026-10-11）: フックは動かさず、理由を `RoutingUiSteps` の Javadoc に足した。test_strategy.md の「置き場所とステップ定義」に `ui/` の行と部品の置き場所の段落を足した
-- [?] **4. 開発レビューと終了報告** 【承認ゲート: 終了報告】
+- [x] **4. 開発レビューと終了報告** 【承認ゲート: 終了報告】
   - 開発レビュー（`developing-review`。プログラマーとテスターの観点。画面を変えないのでインタラクションデザイナー・テクニカルライターの観点は外す）
   - `bolt_29_report.md`。release_plan の W5 の 29 の行と進捗、開発の索引を更新する。承認の後に #45 を閉じる
-  - 結果（2026-10-11）: 開発レビュー 1 回（推奨 2・任意 3。推奨 2 と任意 1 を反映）。[Bolt 29 終了報告](bolt_29_report.md)（承認待ち）
+  - 結果（2026-10-11）: 開発レビュー 1 回（推奨 2・任意 3。推奨 2 と任意 1 を反映）。[Bolt 29 終了報告](bolt_29_report.md)（2026-10-11 に承認済み。#45 を閉じた）
 
 ### 時間の配分と打ち切り
 
@@ -171,7 +173,7 @@ end note
 - [x] 集めた部品が届かない要素で失敗することを確かめた（T-88）
 - [x] `check` が緑。push して CI を確かめた（`71789d8`、run 191）
 - [x] 後片付けのフックの置き場所を決め、理由を残した
-- [ ] 開発レビューと終了報告。承認の後に #45 を閉じた
+- [x] 開発レビューと終了報告。承認の後に #45 を閉じた
 
 ### デモ項目
 
@@ -181,6 +183,7 @@ end note
 
 | 日付 | 更新内容 | 更新者 |
 | :--- | :--- | :--- |
+| 2026-10-11 | 終了報告を承認し、完了条件をすべて満たした。#45 を閉じた | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-10-11 | human:kakimomokuri が `/goal Bolt29` で着手を指示した。確認ポイントはすべて推奨のとおりとし、途中のゲートは止めずに進め、根拠を終了報告に置く（T-36。Bolt 22・28 の前例） | anthropic/claude-opus-5-5、指示 human:kakimomokuri |
 | 2026-10-11 | 初版作成（承認待ち）。W5 の開始準備で、写しを 10 のクラス・6 通りと数え直し、`tabUntilGroup` の 2 つの写しを範囲の候補に足した | anthropic/claude-opus-5-5 |
 
