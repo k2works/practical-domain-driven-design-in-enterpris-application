@@ -4288,7 +4288,7 @@
     
   
   
-    <span class="md-status md-status--draft"></span>
+    <span class="md-status md-status--stable"></span>
   
 
   
@@ -4313,7 +4313,7 @@
     
   
   
-    <span class="md-status md-status--draft"></span>
+    <span class="md-status md-status--stable"></span>
   
 
   
@@ -4596,7 +4596,7 @@
     
   
   
-    <span class="md-status md-status--draft"></span>
+    <span class="md-status md-status--stable"></span>
   
 
   
@@ -9806,10 +9806,10 @@
 <li>確認ポイント 6 の決定のとおりにする（推奨では動かさない。理由を <code>RoutingUiSteps</code> の Javadoc に 1 文足す）</li>
 <li>設計文書（T-53）: test_strategy.md の画面の層のステップ定義の記述に、キー操作の部品の置き場所を足す（記述があれば）</li>
 <li>結果（2026-10-11）: フックは動かさず、理由を <code>RoutingUiSteps</code> の Javadoc に足した。test_strategy.md の「置き場所とステップ定義」に <code>ui/</code> の行と部品の置き場所の段落を足した</li>
-<li>[?] <strong>4. 開発レビューと終了報告</strong> 【承認ゲート: 終了報告】</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>4. 開発レビューと終了報告</strong> 【承認ゲート: 終了報告】</li>
 <li>開発レビュー（<code>developing-review</code>。プログラマーとテスターの観点。画面を変えないのでインタラクションデザイナー・テクニカルライターの観点は外す）</li>
 <li><code>bolt_29_report.md</code>。release_plan の W5 の 29 の行と進捗、開発の索引を更新する。承認の後に #45 を閉じる</li>
-<li>結果（2026-10-11）: 開発レビュー 1 回（推奨 2・任意 3。推奨 2 と任意 1 を反映）。<a href="../bolt_29_report/">Bolt 29 終了報告</a>（承認待ち）</li>
+<li>結果（2026-10-11）: 開発レビュー 1 回（推奨 2・任意 3。推奨 2 と任意 1 を反映）。<a href="../bolt_29_report/">Bolt 29 終了報告</a>（2026-10-11 に承認済み。#45 を閉じた）</li>
 </ul>
 <h3 id="_8">時間の配分と打ち切り<a class="headerlink" href="#_8" title="Permanent link">&para;</a></h3>
 <table>
@@ -9917,7 +9917,7 @@
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> 集めた部品が届かない要素で失敗することを確かめた（T-88）</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <code>check</code> が緑。push して CI を確かめた（<code>71789d8</code>、run 191）</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> 後片付けのフックの置き場所を決め、理由を残した</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> 開発レビューと終了報告。承認の後に #45 を閉じた</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> 開発レビューと終了報告。承認の後に #45 を閉じた</li>
 </ul>
 <h3 id="_10">デモ項目<a class="headerlink" href="#_10" title="Permanent link">&para;</a></h3>
 <p>なし（テストのコードのリファクタリング。画面と振る舞いを変えない）。</p>
@@ -9931,6 +9931,11 @@
 </tr>
 </thead>
 <tbody>
+<tr>
+<td style="text-align: left;">2026-10-11</td>
+<td style="text-align: left;">終了報告を承認し、完了条件をすべて満たした。#45 を閉じた</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5、承認 human:kakimomokuri</td>
+</tr>
 <tr>
 <td style="text-align: left;">2026-10-11</td>
 <td style="text-align: left;">human:kakimomokuri が <code>/goal Bolt29</code> で着手を指示した。確認ポイントはすべて推奨のとおりとし、途中のゲートは止めずに進め、根拠を終了報告に置く（T-36。Bolt 22・28 の前例）</td>
