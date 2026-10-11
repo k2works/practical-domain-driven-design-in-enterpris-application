@@ -9674,7 +9674,7 @@
 </tr>
 <tr>
 <td style="text-align: left;">承認ゲート</td>
-<td style="text-align: left;">計画の承認（確認ポイント 1〜10）と終了報告。W4 の締めの決定（Release 1.0 の既定は計画と終了報告で止める）に従う。スキーマ・認可・外部連携・セキュリティは変えない</td>
+<td style="text-align: left;">計画の承認（確認ポイント 1〜11。<code>/goal Bolt29b</code> の指示により推奨のとおりで進めた）と終了報告。W4 の締めの決定（Release 1.0 の既定は計画と終了報告で止める）に従う。スキーマ・認可・外部連携・セキュリティは変えない</td>
 </tr>
 <tr>
 <td style="text-align: left;">アプローチ</td>
@@ -9853,9 +9853,10 @@
 <h2 id="_8">ステップ計画<a class="headerlink" href="#_8" title="Permanent link">&para;</a></h2>
 <p>状態の記号: <code>[ ]</code> 未着手、<code>[-]</code> 進行中、<code>[?]</code> 承認待ち、<code>[x]</code> 完了。各ステップの終わりに <code>check</code> が緑であることと、計画からの変更を設計文書に反映したこと（T-53）を確かめ、push して CI を確かめる（T-26、T-65）。コミットの前に、そのステップのファイルだけをステージしているか確かめる（T-84）。依存の取得は最初から <code>--max-workers=1</code> と再試行で流す（T-93）。</p>
 <ul class="task-list">
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>1. UI 設計を直す</strong> 【承認ゲート: なし】</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>1. UI 設計を直す</strong> 【承認ゲート: なし】</li>
 <li>ui_design.md: UI:174（S-22 の「輸送要求ごと」→「見積依頼ごと」）、UI:159 と C-05 の画面イメージ UI:573（重複の 1 文を消し、断片の文に任せると書く）、C-02・S-02 の「入口の一覧へ戻る」を出さないこと（UI:182 の注に足す）、UI:968-977 の荷主の状態の表に BOOKED（「予約確定済み」、案内と C-06 へのリンク）を足す</li>
 <li>完了の判定: <code>okf:check</code> ERROR 0</li>
+<li>結果（2026-10-11）: UI:159（C-05）、UI:174（S-22）、UI:182（ホームの注）、UI:573（C-05 の画面イメージ）、荷主の状態の表に予約確定済みの行を足した</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>2. S-22・C-02・S-02 の文言とリンク（直す箇所 1・3）</strong> 【承認ゲート: なし】</li>
 <li>Red: <code>KpiObservationControllerTest</code> に caption「見積依頼ごとの…」を、C-02（<code>TransportRequestControllerTest</code>）・S-02（<code>TransportRequestReviewControllerTest</code>）に「入口の一覧へ戻る」がないことを足し、落ちることを確かめる（T-88。リンクのテストは今の表示で落ちる本命のアサーション）</li>
 <li>Green: テンプレートを直す</li>
@@ -10011,6 +10012,11 @@
 </tr>
 </thead>
 <tbody>
+<tr>
+<td style="text-align: left;">2026-10-11</td>
+<td style="text-align: left;">human:kakimomokuri が <code>/goal Bolt29b</code> で着手を指示した。確認ポイントはすべて推奨のとおりとし、途中のゲートは止めずに進め、根拠を終了報告に置く（T-36。Bolt 29 の前例）</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5、指示 human:kakimomokuri</td>
+</tr>
 <tr>
 <td style="text-align: left;">2026-10-11</td>
 <td style="text-align: left;">開始準備の整合性検証（計画と設計 8 件、横断 7 件。高 0）の指摘を反映した。C-02 の状態列も変わること、C-05 の画面イメージ UI:573、予約確定済みの C-04 のキャプチャを足してデモ項目の証跡にすること（確認ポイント 10）、T-89 と採らない代案の扱い（確認ポイント 11）、マニュアル 2 章（ブランドからホームへ）、テストを置くクラス、時間の見込み、見張りの 2 件</td>
