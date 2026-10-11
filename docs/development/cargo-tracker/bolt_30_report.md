@@ -3,7 +3,7 @@ type: Plan
 title: "Bolt 30 終了報告 - ADR-011 の採用と、TOTP の資格・回復コード・ログインの失敗の表とドメイン"
 tags: [plan]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-11T09:49:47Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-11T09:56:26Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-11T09:49:48Z }
 ---
@@ -74,7 +74,7 @@ verified:
 | `check`（ModularityTest・ArchUnit・AT-01〜06・Checkstyle・SpotBugs・Spotless を含む） | 通過（1760 件、失敗 0）。SpotBugs の CT_CONSTRUCTOR_THROW は生成器を `final` にして直した |
 | `documentationTest`（用語集の整合を含む） | 通過 |
 | SonarQube（ローカル） | Quality Gate PASS（手順書の 9 節のとおり起動）。カバレッジ 95.1%、重複 0.1%、Bug・Vulnerability・Code Smell・Security Hotspot 0。初回は新しい指摘 9 件（コンストラクターの `@Autowired`、テストのラムダの S5778、不要な `throws`）で不合格。直して合格。続いて出た S2178（`&`）も直した |
-| CI | ステップ 3 の `51ff255` は通過（run 203）。そのほかのプッシュは、次のプッシュに置き換えられて取り消されるか、実行中。`a3a40b9` の結果は承認の前に確かめる |
+| CI | レビューの対応 `a3a40b9` の cargo-tracker CI（check・ui）は通過（run 206）。ステップ 3・5 も通過（run 203・205）。途中の実行は、次のプッシュに置き換えられて取り消された |
 | `okf:check` | ERROR 0 |
 | 依存 | java-otp 1.0.0: MIT、実行時の推移的な依存なし、GitHub Advisory は該当なし。OSV は確かめられなかった（議題 4） |
 
