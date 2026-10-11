@@ -4358,7 +4358,7 @@
     
   
   
-    <span class="md-status md-status--draft"></span>
+    <span class="md-status md-status--stable"></span>
   
 
   
@@ -4383,7 +4383,7 @@
     
   
   
-    <span class="md-status md-status--draft"></span>
+    <span class="md-status md-status--stable"></span>
   
 
   
@@ -4666,7 +4666,7 @@
     
   
   
-    <span class="md-status md-status--draft"></span>
+    <span class="md-status md-status--stable"></span>
   
 
   
@@ -9904,11 +9904,11 @@
 <li>マニュアル（<code>creating-manual</code>）: 1 章の表（予約確定済み）、2 章 2.2 の①ヘッダー（左の cargo-tracker を押すと役割のホームへ戻る。「入口の一覧へ戻る」を消すため。キャプチャは要らない）、4 章 4.1 の ④（重複の言い換えを外す）、5 章 5.1（予約確定済みの見積依頼の詳細から予約一覧を開くこと。新しいキャプチャ）、用語集（予約確定済み）、10 章 10.1（caption の文言）。3・6・7 章はリンクを避けていた書き方を確かめる。撮影のシナリオ（<code>manual_screenshots.feature</code>）の本予約の確定の後に、荷主で C-04 を開いて <code>05-request-detail-booked.png</code> を撮る手順を足す。<code>./gradlew manualScreenshots</code> で 7 枚（<code>05-request-detail-booked.png</code> と、<code>10-kpi-observations.png</code>、<code>04-response.png</code>、<code>03-request-list.png</code>、<code>06-intake-list-review.png</code>、<code>06-intake-list-presented.png</code>、<code>07-intake-list-ready-to-book.png</code>））を撮る（ほかの画像は元に戻す）。HTML 版の出力も更新する</li>
 <li>Code Smell: <code>AcceptanceCriteriaCoverageTest</code> の行の正規表現を <code>^\|\s*(US-\d+)\s*\|([^|]+)\|([^|]+)\|$</code> に簡素化する（前後の空白は <code>[^|]+</code> が吸収する。行は <code>strip()</code> 済み）。見張り: <code>Release01の受入条件ごとにwipでないシナリオがある</code> と <code>表の行が書式から外れると黙って落とさずに失敗する</code> が通り続けること</li>
 <li>完了の判定: <code>check</code>（<code>documentationTest</code> を含む）緑、<code>okf:check</code> ERROR 0</li>
-<li>[?] <strong>5. 開発レビューと終了報告</strong> 【承認ゲート: 終了報告】</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>5. 開発レビューと終了報告</strong> 【承認ゲート: 終了報告】</li>
 <li>開発レビュー（<code>developing-review</code>。プログラマー、テクニカルライター（T-90。マニュアルを書く立場で、画面に実装の語や業務ルールの番号が出ていないか、状態の表示が実際と合うか）、インタラクションデザイナー（リンクを消した後の戻り方、C-04 の案内とリンクの名前））</li>
 <li>SonarQube（<code>sonar-local:check</code>。手順書の 9 節のとおり起動）、受入動画（<code>./gradlew demoVideo</code>。C-04 の予約確定済みの案内を写すシナリオがあれば。過去の Bolt の動画は元に戻す）</li>
 <li><code>bolt_29b_report.md</code>。release_plan の W5 の 29b の行と進捗、開発の索引を更新する。#46 は Bolt 29c の後に閉じる（この Bolt では進み具合をコメントする）</li>
-<li>結果（2026-10-11）: 3 つの観点でレビューし（必須 1・推奨 6・任意 6）、必須と推奨を直した（<code>b9aab02</code>。予約確定済みの承認の記録、リンクを文の中に、テストの絞り込み、マニュアル）。SonarQube PASS（Code Smell 0）。<a href="../bolt_29b_report/">Bolt 29b 終了報告</a>（承認待ち）</li>
+<li>結果（2026-10-11）: 3 つの観点でレビューし（必須 1・推奨 6・任意 6）、必須と推奨を直した（<code>b9aab02</code>。予約確定済みの承認の記録、リンクを文の中に、テストの絞り込み、マニュアル）。SonarQube PASS（Code Smell 0）。<a href="../bolt_29b_report/">Bolt 29b 終了報告</a>（2026-10-11 に承認済み）</li>
 </ul>
 <h3 id="_9">時間の配分と打ち切り<a class="headerlink" href="#_9" title="Permanent link">&para;</a></h3>
 <table>
@@ -10034,7 +10034,7 @@
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Bolt 28 の Code Smell を直した（照合のテストが通り続ける）</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <code>check</code>・<code>uiTest</code> が緑。push して CI を確かめた（<code>b9aab02</code>、run 196）</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> SonarQube の Quality Gate が PASS</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> 開発レビュー（T-90 の観点を含む）と終了報告。#46 に進み具合をコメントした</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> 開発レビュー（T-90 の観点を含む）と終了報告。#46 に進み具合をコメントした</li>
 </ul>
 <h3 id="_11">デモ項目<a class="headerlink" href="#_11" title="Permanent link">&para;</a></h3>
 <p>荷主が予約確定済みの見積依頼の詳細（C-04）を開くと、状態が「予約確定済み」と示され、案内から予約一覧（C-06）で追跡番号と追跡の状況を確かめられる。証跡はマニュアルのキャプチャ <code>05-request-detail-booked.png</code> とコントローラーのテスト（確認ポイント 10）。KPI 計測記録・見積りへの回答・受付一覧も、マニュアルのキャプチャで確かめる。</p>
@@ -10048,6 +10048,11 @@
 </tr>
 </thead>
 <tbody>
+<tr>
+<td style="text-align: left;">2026-10-11</td>
+<td style="text-align: left;">終了報告を承認し、完了条件をすべて満たした</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5、承認 human:kakimomokuri</td>
+</tr>
 <tr>
 <td style="text-align: left;">2026-10-11</td>
 <td style="text-align: left;">ステップ 1〜4 と開発レビューの対応を終え、終了報告を書いた（承認待ち）。結果は <a href="../bolt_29b_report/">Bolt 29b 終了報告</a></td>
