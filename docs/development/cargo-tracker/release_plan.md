@@ -4,7 +4,7 @@ title: "リリース計画 - cargo-tracker（A 社国際貨物輸送管理シス
 description: "cargo-tracker MVP のリリース計画。1 人 + AI、時間単位の Bolt（= イテレーション）と週次の見直しで、最初の縦の流れ（R0.1）、パイロット準備完了（R1.0）、本格展開前（R1.1）の 3 段階、Unit のエントロピー評価、SP、バッファ、パイロット開始の条件、引継ぎ ID の台帳、業務責任者に確かめる事項の台帳。"
 tags: [development,release-plan]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-11T07:47:22Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-11T08:12:07Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T09:29:53Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:38:26Z }
@@ -580,7 +580,7 @@ US-04 の SP 5 は、サガの成功の経路を閉じて #10 をクローズす
 | 29 | 画面の層のステップ定義のキー操作の部品（`tabUntilFocused`。10 クラスに 6 通りの写しがある）を 1 か所に集める。画面の層の後片付けのフックの置き場所の見直し（[#45](https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/45)、T-87） | 0 | リファクタリング（`uiTest` の件数と結果が変わらないことで確かめる） | 計画・終了報告 |
 | 29b | マニュアルの作成で見つけた画面の文言と表示の課題（[#46](https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/46)）の前半: S-22 の見出し、C-05 の案内の重複、C-02・S-02 の「入口の一覧へ戻る」、C-04 の予約確定済みの状態と案内（予約一覧へつなぐ。見積りは追跡の開始を知らないまま）。Bolt 28 の SonarQube の Code Smell。マニュアルの該当の節とキャプチャ 6 枚（`creating-manual`）。[Bolt 29b 計画](bolt_29b_plan.md) | 0 | アウトサイドイン | 計画・終了報告 |
 | 29c | #46 の後半: S-09 の「確定条件（BR-01）」の見出しと貨物の要約（見積りのドメインの日本語名で「一般 / パレット × …」と要約する。確定済みの予約版は追記専用なので英語のまま残る）、S-06 の参照情報版の語（値は自由な文字列なのでそのまま示し、語だけ直す。開始準備で「参照した航海情報の版」に決めた）。貨物の日本語名は見積りの application 層に置き、要約の数値の不要な 0 も落とす（Bolt 29c の開始準備で human:kakimomokuri が決定）。[Bolt 29c 計画](bolt_29c_plan.md)。S-07 経路の確定の判定の根拠も同じ語になる。重量・容積の書式を 1 か所にまとめ、見積依頼の画面（C-04・S-03・S-04）もそろえる。UI 設計の画面イメージ、マニュアルの 8 章と、変わる画面のキャプチャ。#46 を閉じる（2026-10-11 に human:kakimomokuri が 29b から分けた） | 0 | アウトサイドイン | 計画・終了報告 |
-| 30 | ADR-011 の採否。`identity` に TOTP の資格・回復コード・ログインの失敗（連続の回数、ロックの期限）を足す。ドメインモデルとデータモデルを先に直す | 0 | インサイドアウト | ステップごと（スキーマ、セキュリティ） |
+| 30 | ADR-011 の採否。`identity` に TOTP の資格・回復コード・ログインの失敗（連続の回数、ロックの期限）を足す。ドメインモデルとデータモデルを先に直す。開始準備で ADR-011 を案のとおり採用し、表は関心事ごとに 3 つに分け、スパイクは Bolt 31 の後に消し、暗号化の鍵は Bolt 31 の計画で決めると決めた（human:kakimomokuri）。[Bolt 30 計画](bolt_30_plan.md) | 0 | インサイドアウト | ステップごと（スキーマ、セキュリティ） |
 | 31 | US-18 AC1 の TOTP（最長 8 時間を TOTP が初めて通った時刻から数える。ADR-011）、AC7 初回の TOTP の登録と回復コードの発行（SEC-09。A-02・A-05）。ADR-012 の「W5 で見直すこと」（主体の作り直し、要素の権限、request ごとの DB の問い合わせ） | 2 | インサイドアウト | ステップごと（セキュリティ） |
 | 32 | US-18 AC3 ロック（ロックの数え方を `identity.application` に置く。ADR-012）、AC6 request ごとの役割の確認（Bolt 14 の決定の引き継ぎ。利用停止・権限の取消しの操作は Bolt 34 で作るので、この Bolt では DB の値を変えて確かめる） | 2 | インサイドアウト | ステップごと（セキュリティ、認可） |
 | 32b | session の失効の 5 分前の警告、延長の操作、失効の時の入力の保持（ACC-06） | 0 | インサイドアウト | ステップごと（セキュリティ） |
@@ -616,7 +616,7 @@ US-18 の残りの SP 6 は #13 をクローズする Bolt 33b で、US-04 の S
 - [x] Bolt 29: #45。[Bolt 29 計画](bolt_29_plan.md)（`/goal` で進めた）、[Bolt 29 終了報告](bolt_29_report.md)（完了、2026-10-11 に承認済み。#45 を閉じた。SonarQube PASS。`uiTest` 80 本は集める前と同じく通った。失敗の経路を読めるものに直した）
 - [x] Bolt 29b: #46 の前半。[Bolt 29b 計画](bolt_29b_plan.md)（`/goal` で進めた）、[Bolt 29b 終了報告](bolt_29b_report.md)（完了、2026-10-11 に承認済み。4 か所と開発レビューの必須の指摘を直した。SonarQube PASS・Code Smell 0）
 - [x] Bolt 29c: #46 の後半。[Bolt 29c 計画](bolt_29c_plan.md)（承認済み）、[Bolt 29c 終了報告](bolt_29c_report.md)（完了、2026-10-11 に承認済み。#46 を閉じた。SonarQube PASS・Code Smell 0）
-- [ ] Bolt 30〜33b: US-18 の残り（#13）と通知モジュールの最小の新設
+- [ ] Bolt 30〜33b: US-18 の残り（#13）と通知モジュールの最小の新設。[Bolt 30 計画](bolt_30_plan.md)（承認待ち）
 - [ ] Bolt 34: US-16 の一部（#14）
 - [ ] Bolt 35: US-04 AC3・AC5（#43）、D-85
 - [ ] W5 の締め: 結果とふりかえり、開いている持ち越しの数（T-89）、W6 の計画の見直し
@@ -872,3 +872,4 @@ xychart-beta
 | 2026-10-11 | Bolt 29b の終了報告の承認を記録し、Bolt 29b を終えた（#46 の前半。SP 0。#46 は Bolt 29c の後に閉じる） | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-10-11 | Bolt 29c の開始準備: 画面に出る業務ルールの番号と貨物の要約の作り方を調べ、日本語名を見積りの application 層に置く・S-06 の語を「参照した航海情報の版」・要約の数値も直す、と決めた。Bolt 29c 計画を作った（承認待ち） | anthropic/claude-opus-5-5、決定 human:kakimomokuri |
 | 2026-10-11 | Bolt 29c の終了報告の承認を記録し、Bolt 29c を終えた（#46 の後半。SP 0）。#46 を閉じ、Release 0.1 の負債（#45・#46）を返し終えた | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
+| 2026-10-11 | Bolt 30 の開始準備: ADR-011 を案のとおり採用し、TOTP の資格・回復コード・ログインの失敗を関心事ごとの表に分け、スパイクを Bolt 31 の後に消し、暗号化の鍵を Bolt 31 の計画で決めると決めた。Bolt 30 計画を作った（承認待ち） | anthropic/claude-opus-5-5、決定 human:kakimomokuri |
