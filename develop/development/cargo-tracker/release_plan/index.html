@@ -11496,7 +11496,7 @@
 </tr>
 <tr>
 <td style="text-align: left;">29c</td>
-<td style="text-align: left;">#46 の後半: S-09 の「確定条件（BR-01）」の見出しと貨物の要約（見積りのドメインの日本語名で「一般 / パレット × …」と要約する。確定済みの予約版は追記専用なので英語のまま残る）、S-06 の参照情報版の語（値は自由な文字列なのでそのまま示し、語だけ直す。開始準備で「参照した航海情報の版」に決めた）。貨物の日本語名は見積りの application 層に置き、要約の数値の不要な 0 も落とす（Bolt 29c の開始準備で human:kakimomokuri が決定）。<a href="../bolt_29c_plan/">Bolt 29c 計画</a>。UI 設計の画面イメージ、マニュアルの 7・8 章とキャプチャ 4 枚。#46 を閉じる（2026-10-11 に human:kakimomokuri が 29b から分けた）</td>
+<td style="text-align: left;">#46 の後半: S-09 の「確定条件（BR-01）」の見出しと貨物の要約（見積りのドメインの日本語名で「一般 / パレット × …」と要約する。確定済みの予約版は追記専用なので英語のまま残る）、S-06 の参照情報版の語（値は自由な文字列なのでそのまま示し、語だけ直す。開始準備で「参照した航海情報の版」に決めた）。貨物の日本語名は見積りの application 層に置き、要約の数値の不要な 0 も落とす（Bolt 29c の開始準備で human:kakimomokuri が決定）。<a href="../bolt_29c_plan/">Bolt 29c 計画</a>。S-07 経路の確定の判定の根拠も同じ語になる。重量・容積の書式を 1 か所にまとめ、見積依頼の画面（C-04・S-03・S-04）もそろえる。UI 設計の画面イメージ、マニュアルの 8 章と、変わる画面のキャプチャ。#46 を閉じる（2026-10-11 に human:kakimomokuri が 29b から分けた）</td>
 <td style="text-align: right;">0</td>
 <td style="text-align: left;">アウトサイドイン</td>
 <td style="text-align: left;">計画・終了報告</td>
@@ -11605,7 +11605,7 @@
 </table>
 <p><strong>Living Documentation</strong>: <code>identity</code>・<code>notification</code> の新しい表の <code>afterMigrate</code> の権限と追記専用の印、<code>package-info</code> の <code>allowedDependencies</code>（<code>identity</code> → <code>notification :: api</code>）、ModularityTest のモジュール名、用語集の整合テスト、受入条件の照合の表（テスト戦略の「Release 0.1 の受入条件」を Release 1.0 の範囲へ広げる。Bolt 28 の決定）</p>
 <p><strong>デモ項目</strong>: TOTP によるログインと初回の登録、ロック、session の失効の警告と延長、password の再設定、回復コードによる TOTP の再登録、利用者と役割の管理（<code>@US-18</code>、<code>@US-16</code>）。不足条件と特殊貨物による本予約の拒否、承認の後に失効した見積りの再見積り（<code>@US-04</code>、<code>@US-24</code>）</p>
-<p><strong>ユーザーマニュアル</strong>: Bolt 29b で #46 の前半の画面に合わせて 1・2・4・7・10 章とキャプチャ 7 枚（予約確定済みの見積依頼の詳細を新しく撮る）を、Bolt 29c で 7・8 章とキャプチャ 4 枚（<code>07-booking-new.png</code>・<code>07-booking-detail.png</code>・<code>08-candidates.png</code>・<code>08-confirmed.png</code>）を直す。Bolt 31〜33b はログインの画面が変わるので、「2 章 ログインと共通の画面」とキャプチャを Bolt 33b で直す。Bolt 34 は利用者の管理の節を足す</p>
+<p><strong>ユーザーマニュアル</strong>: Bolt 29b で #46 の前半の画面に合わせて 1・2・4・7・10 章とキャプチャ 7 枚（予約確定済みの見積依頼の詳細を新しく撮る）を、Bolt 29c で 8 章と、変わる画面のキャプチャ（予約・経路設計の 5 枚と、条件の表が写る見積依頼の画面）を直す。Bolt 31〜33b はログインの画面が変わるので、「2 章 ログインと共通の画面」とキャプチャを Bolt 33b で直す。Bolt 34 は利用者の管理の節を足す</p>
 <p><strong>主なタスク</strong>:</p>
 <ul class="task-list">
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> W5 の開始準備（本節。2026-10-11）: 計画の承認、詳細整合性検証・横断整合性検証（指摘を反映）、GitHub の同期（Issue。#47 を起票。Project のフィールドはこの環境から変えられないので人が設定する）、Bolt 29 計画（承認待ち）</li>
