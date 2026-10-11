@@ -60,6 +60,7 @@ Bolt がイテレーションに当たります。ふりかえりは各 Bolt の
 | 27 | [荷主の追跡の照会（US-09 AC1。C-10 追跡の照会）](bolt_27_plan.md) | [終了報告](bolt_27_report.md)（[動画](../../assets/demo/bolt-27/query-tracking.webm){:target="_blank"}） | W4 | 完了 |
 | 27b | [C-06 予約一覧の最小の表示（荷主）](bolt_27b_plan.md) | [終了報告](bolt_27b_report.md)（[動画](../../assets/demo/bolt-27b/customer-booking-list.webm){:target="_blank"}） | W4 | 完了 |
 | 28 | [主成功の流れの `@ui` シナリオと Release 0.1 のデモ](bolt_28_plan.md) | [終了報告](bolt_28_report.md)（[動画](../../assets/demo/bolt-28/main-flow.webm){:target="_blank"}） | W4 | 完了 |
+| 29 | [画面の層のステップ定義のキー操作の部品を 1 か所に集める（#45）](bolt_29_plan.md) | — | W5 | 計画済み（承認待ち） |
 
 Bolt を始めるときに行を追加します。
 
