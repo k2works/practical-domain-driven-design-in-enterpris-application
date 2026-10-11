@@ -1,7 +1,7 @@
 package com.example.cargotracker.quotation.domain.model.valueobjects;
 
 /**
- * 貨物種別。MVP は一般だけを受け付ける（BR-03）。値の名前はデータモデルの値と同じにする。
+ * 貨物種別。MVP は一般だけを受け付ける（BR-03）。値の名前はデータモデルの値と同じにする。宣言の順が荷主の画面の選択肢の順になる（Bolt 29c）。
  */
 public enum CargoCategory {
     /** 一般。 */

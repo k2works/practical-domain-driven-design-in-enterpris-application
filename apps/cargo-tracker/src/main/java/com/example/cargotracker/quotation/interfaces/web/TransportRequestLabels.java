@@ -95,19 +95,11 @@ final class TransportRequestLabels {
     }
 
     static String cargoCategory(CargoCategory category) {
-        return label(CARGO_CATEGORIES, category.name());
+        return CargoDisplayNames.category(category);
     }
 
     static String packageType(PackageType packageType) {
-        return label(PACKAGE_TYPES, packageType.name());
-    }
-
-    private static String label(List<Option> options, String value) {
-        return options.stream()
-                .filter(option -> option.value().equals(value))
-                .map(Option::label)
-                .findFirst()
-                .orElseThrow();
+        return CargoDisplayNames.packageType(packageType);
     }
 
     /**

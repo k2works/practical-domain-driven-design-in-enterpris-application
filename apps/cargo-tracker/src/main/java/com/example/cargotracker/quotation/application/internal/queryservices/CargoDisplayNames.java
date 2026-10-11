@@ -41,7 +41,8 @@ public final class CargoDisplayNames {
 
     /**
      * 重量・容積の表示。不要な 0 を落とし、整数部に 3 桁ごとのカンマを入れる（例: 8400.000 → 8,400、32.500 → 32.5）。小数は貨物の値と同じく
-     * 3 桁まで。{@code BigDecimal.stripTrailingZeros} の指数の表記（8.4E+3）にならないよう、書式で組み立てる。
+     * 3 桁まで（4 桁目は四捨五入。貨物の値は小数 3 桁までに正規化されている前提）。{@code BigDecimal.stripTrailingZeros} の指数の表記
+     * （8.4E+3）にならないよう、書式で組み立てる。
      */
     public static String quantity(BigDecimal value) {
         DecimalFormat format = new DecimalFormat("#,##0", DecimalFormatSymbols.getInstance(Locale.ROOT));

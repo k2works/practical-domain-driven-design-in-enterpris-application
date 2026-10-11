@@ -34,7 +34,8 @@ class CargoDisplayNamesTest {
                 "0.250 | 0.25",
                 "123456789.000 | 123,456,789",
                 "0.001 | 0.001",
-                "1000 | 1,000"
+                "1000 | 1,000",
+                "0.0005 | 0.001"
             })
     void 重量と容積は不要な0を落とし整数部に桁区切りを入れ指数の表記にしない(BigDecimal value, String shown) {
         assertThat(CargoDisplayNames.quantity(value)).isEqualTo(shown);

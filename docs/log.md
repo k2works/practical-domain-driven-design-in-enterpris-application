@@ -1,6 +1,11 @@
 # Docs Update Log
 
 ## 2026-10-11
+* **Update**: [用語集](/manual/用語集.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [08-経路設計](/manual/08-経路設計.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [07-本予約の確定と予約一覧](/manual/07-本予約の確定と予約一覧.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_29c_plan](/development/cargo-tracker/bolt_29c_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
 * **Update**: [08-経路設計](/manual/08-経路設計.md) を更新（anthropic/claude-opus-5-5）
 * **Update**: [bolt_29c_plan](/development/cargo-tracker/bolt_29c_plan.md) を更新（anthropic/claude-opus-5-5）
 * **Update**: [bolt_29c_plan](/development/cargo-tracker/bolt_29c_plan.md) を更新（anthropic/claude-opus-5-5）

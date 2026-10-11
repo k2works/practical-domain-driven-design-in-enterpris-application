@@ -4,7 +4,7 @@ title: "Bolt 29c 計画 - 本予約の確定と経路候補の比較の画面の
 description: "W5 の 3 本目の Bolt の計画。#46 の残りの 2 か所、S-09 の見出し「確定条件（BR-01）」と貨物の要約「GENERAL / PALLET × 12 / 8400.000 kg / 32.500 m3」、S-06 の「参照情報版」を、画面の語に直す。貨物の日本語名は見積りの application 層に置き、要約の数値の書き方も直す。UI 設計とマニュアル 7・8 章・キャプチャ 4 枚を合わせ、#46 を閉じる。"
 tags: [development,bolt-plan]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-11T06:38:55Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-11T06:44:40Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-11T06:10:53Z }
 ---
@@ -100,8 +100,7 @@ package "quotation" {
     class CargoDisplayNames <<新設>> {
       + category(CargoCategory) : String
       + packageType(PackageType) : String
-      + weightKg(BigDecimal) : String
-      + volumeM3(BigDecimal) : String
+      + quantity(BigDecimal) : String
       + summary(Cargo) : String
     }
     class BookableQuotationQueryService
@@ -149,7 +148,7 @@ BookableQuotationQueryService ..> summary : 公開 API の結果で写す
   - マニュアル（`creating-manual`）: 8 章 8.2 の ⑥・8.3 の ②（画面の語「参照した航海情報の版」）。7 章は文の変更なし（貨物の書式を書いた文がない。キャプチャだけ）。`./gradlew manualScreenshots` で撮り、変わる画面のキャプチャだけを残す: `07-booking-new.png`、`07-booking-detail.png`、`08-candidates.png`、`08-confirmation.png`、`08-confirmed.png` と、条件の表が写る `03-request-detail-submitted.png`、`04-request-detail-*.png`（4 枚）、`05-request-detail-booked.png`、`06-review.png`、S-04 の `06-quotation-*.png`（条件の表が写れば）。ほかの画像と日時だけが違う画像は元に戻す。残す前に画像を目で確かめる
   - 完了の判定: `check` 緑、`okf:check` ERROR 0
   - 結果（2026-10-11）: 8 章 8.2 の ⑥・8.3 の ② を直した。`manualScreenshots` で撮り、変わる画面の 14 枚（3・4・5・6 章の条件の表が写る 9 枚と、7・8 章の 5 枚）だけを残した。S-09・S-06・S-03 の画像を目で確かめた
-- [ ] **5. 開発レビューと終了報告** 【承認ゲート: 終了報告】
+- [?] **5. 開発レビューと終了報告** 【承認ゲート: 終了報告】
   - 開発レビュー（`developing-review`。プログラマー（層と依存、書式の境界値）、テクニカルライター（T-90。画面に実装の語や業務ルールの番号が残っていないか、マニュアルと画面の一致）。リンクと画面遷移を変えないのでインタラクションデザイナーの観点は外す）。レビューにキャプチャを渡す
   - SonarQube（`sonar-local:check`。手順書の 9 節のとおり起動）
   - `bolt_29c_report.md`。release_plan の W5 の 29c の行と進捗、開発の索引を更新する。承認の後に #46 を閉じる
