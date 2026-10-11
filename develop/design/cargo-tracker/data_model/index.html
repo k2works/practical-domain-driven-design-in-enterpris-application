@@ -10282,7 +10282,7 @@
 </tr>
 <tr>
 <td style="text-align: left;"><code>login_failure</code></td>
-<td style="text-align: left;">利用者ごとに 1 行（主キーは <code>user_id</code>）。<code>consecutive_failures &gt;= 0</code> の CHECK。失敗は、ロック中でないことを条件にした <code>UPDATE ... SET consecutive_failures = consecutive_failures + 1</code> の更新件数で数え、回数を同じトランザクションで読み直す（<code>RETURNING</code> は H2 で動かないので使わない。ADR-007）。最初の行は <code>INSERT ... SELECT ... WHERE NOT EXISTS</code> で作る。存在しないメールアドレスの失敗では行を作らない。成功で 0 に戻す。ロックの期限は 5 回目の失敗の時刻から 15 分</td>
+<td style="text-align: left;">利用者ごとに 1 行（主キーは <code>user_id</code>）。<code>consecutive_failures &gt;= 0</code> の CHECK。失敗は、ロック中でないことを条件にした <code>UPDATE ... SET consecutive_failures = consecutive_failures + 1</code> の更新件数で数え、回数を同じトランザクションで読み直す（<code>RETURNING</code> は H2 で動かないので使わない。ADR-007）。最初の行は <code>INSERT ... SELECT ... FROM app_user WHERE NOT EXISTS</code> で作る（利用者の表にない利用者では作らない。存在しないメールアドレスの失敗）。同じ利用者の最初の失敗が同時に 2 つ届くと、片方は主キーの違反になる（扱いは Bolt 32 で決める）。ロックの判定も同じ <code>UPDATE</code> の <code>CASE</code> で行い、ロックが解けた後の失敗は 1 回目から数える。成功で 0 に戻す。ロックの期限は 5 回目の失敗の時刻から 15 分</td>
 <td style="text-align: left;">IA-INV-03</td>
 </tr>
 <tr>
