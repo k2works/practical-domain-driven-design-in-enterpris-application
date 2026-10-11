@@ -4,7 +4,7 @@ title: "Bolt 29b 計画 - マニュアルで見つけた画面の文言と表示
 description: "W5 の 2 本目の Bolt の計画。#46 の 6 か所のうち、テンプレートと画面の文言で直せる 4 か所（S-22 の見出し、C-05 の案内の重複、C-02・S-02 の「入口の一覧へ戻る」、C-04 の予約確定済みの状態と案内）と、Bolt 28 の SonarQube の Code Smell を直し、UI 設計とマニュアル・キャプチャを合わせる。S-09・S-06 は Bolt 29c。"
 tags: [development,bolt-plan]
 status: draft
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-11T04:22:46Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-11T05:03:17Z }
 ---
 
 # Bolt 29b 計画 - マニュアルで見つけた画面の文言と表示の課題（#46 の前半）
@@ -54,7 +54,7 @@ Release 0.1 のユーザーマニュアルを書くときに見つけた画面�
 | 1 | S-22 KPI 計測記録 | 表の caption と囲みの aria-label「輸送要求ごとの KPI-01 の時刻とリードタイム」 | 「見積依頼ごとの KPI-01 の時刻とリードタイム」（画面の語は「見積依頼」。UI:78・101、マニュアルの用語集） | テンプレート（`identity/kpi-observations/list.html`）、UI:174 | なし（足す。確認ポイント 3） | 10 章 10.1 はすでに「見積依頼ごと」。`10-kpi-observations.png` を撮り直す |
 | 2 | C-05 見積りへの回答 | 共通の断片の「詳細な経路は、経路設計者の承認後に確定します。」と、画面の「詳細な経路と日程は経路設計者の承認後に確定します。」が続けて出る | 画面の 1 文を消し、断片の 1 文だけにする（断片は C-04・S-04・C-17 と共有） | テンプレート（`quotation/transport-requests/response.html`）、UI:159 | `QuotationResponseControllerTest.java:97`、`RouteDesignUiSteps.java:68`（消す文を確かめている。断片の文に向け直す） | 4 章 4.1 の ④（:46）。`04-response.png` を撮り直す |
 | 3 | C-02 見積依頼の一覧（荷主のホーム）、S-02 受付一覧（営業担当者のホーム） | 「入口の一覧へ戻る」（`/` へのリンク。どちらの役割もホームがこの一覧なので、開き直すだけ） | リンクを消す（UI:182 のとおり、Bolt 3 の入口の一覧はホームに置き換わった。ホームへはナビのブランドから戻れる） | テンプレート（`quotation/transport-requests/list.html`、`quotation/staff/transport-requests/list.html`） | なし（足す。確認ポイント 3） | 3 章・6 章・7 章は載せずに避けている。`03-request-list.png`、`06-intake-list-review.png`、`06-intake-list-presented.png`、`07-intake-list-ready-to-book.png` を撮り直す |
-| 4 | C-04 見積依頼の詳細（荷主）。同じラベルを使う C-02 見積依頼の一覧の状態列も変わる（`TransportRequestController` の C-04 と C-02 の行。UI:966 の表は両方に効く） | 状態「予約確定済み（追跡の開始の準備中）」、案内「本予約を確定しました。追跡の準備ができたら、追跡番号で輸送の状況を照会できます。」（追跡が始まった後もこのまま） | 状態「予約確定済み」（社内の表示と同じ）。案内「本予約を確定しました。追跡番号と追跡の状況は予約一覧で確かめられます。」と、予約一覧（C-06 `/customer/bookings`）へのリンク | 荷主の状態のラベルと案内（`TransportRequestLabels`）、テンプレート（`quotation/transport-requests/detail.html`）、UI:968-977 の荷主の状態の表に BOOKED の行を足す | なし（足す。確認ポイント 3） | 1 章の表（`01-業務フロー.md:51`）。この状態のキャプチャはないので、撮影のシナリオに予約確定済みの C-04 を足して `07-request-detail-booked.png` を撮り、7 章に載せる（確認ポイント 10） |
+| 4 | C-04 見積依頼の詳細（荷主）。同じラベルを使う C-02 見積依頼の一覧の状態列も変わる（`TransportRequestController` の C-04 と C-02 の行。UI:966 の表は両方に効く） | 状態「予約確定済み（追跡の開始の準備中）」、案内「本予約を確定しました。追跡の準備ができたら、追跡番号で輸送の状況を照会できます。」（追跡が始まった後もこのまま） | 状態「予約確定済み」（社内の表示と同じ）。案内「本予約を確定しました。追跡番号と追跡の状況は予約一覧で確かめられます。」と、予約一覧（C-06 `/customer/bookings`）へのリンク | 荷主の状態のラベルと案内（`TransportRequestLabels`）、テンプレート（`quotation/transport-requests/detail.html`）、UI:968-977 の荷主の状態の表に BOOKED の行を足す | なし（足す。確認ポイント 3） | 1 章の表（`01-業務フロー.md:51`）。この状態のキャプチャはないので、撮影のシナリオに予約確定済みの C-04 を足して `05-request-detail-booked.png` を撮り、5 章 5.1 に載せる（確認ポイント 10。実行のとき 7 章の営業担当者の章ではなく、荷主の予約一覧の章に置き直した） |
 
 ### 設計の約束（Try T-1）
 
@@ -116,7 +116,7 @@ end note
   - Green: `response.html` の 1 文を消す。`TransportRequestLabels` の荷主の BOOKED の状態と案内を直し、`detail.html` に予約確定済みのときだけ C-06 へのリンクを出す
   - 完了の判定: `check` 緑、`uiTest` 緑（`@US-24` の画面の層のシナリオが通る）
 - [ ] **4. マニュアルとキャプチャ、Code Smell** 【承認ゲート: なし】
-  - マニュアル（`creating-manual`）: 1 章の表（予約確定済み）、2 章 2.2 の①ヘッダー（左の cargo-tracker を押すと役割のホームへ戻る。「入口の一覧へ戻る」を消すため。キャプチャは要らない）、4 章 4.1 の ④（重複の言い換えを外す）、7 章（予約確定済みの見積依頼の詳細と予約一覧への案内。新しいキャプチャ）、10 章 10.1（caption の文言）。3・6・7 章はリンクを避けていた書き方を確かめる。撮影のシナリオ（`manual_screenshots.feature`）の本予約の確定の後に、荷主で C-04 を開いて `07-request-detail-booked.png` を撮る手順を足す。`./gradlew manualScreenshots` で 7 枚（`07-request-detail-booked.png` と、`10-kpi-observations.png`、`04-response.png`、`03-request-list.png`、`06-intake-list-review.png`、`06-intake-list-presented.png`、`07-intake-list-ready-to-book.png`））を撮る（ほかの画像は元に戻す）。HTML 版の出力も更新する
+  - マニュアル（`creating-manual`）: 1 章の表（予約確定済み）、2 章 2.2 の①ヘッダー（左の cargo-tracker を押すと役割のホームへ戻る。「入口の一覧へ戻る」を消すため。キャプチャは要らない）、4 章 4.1 の ④（重複の言い換えを外す）、5 章 5.1（予約確定済みの見積依頼の詳細から予約一覧を開くこと。新しいキャプチャ）、用語集（予約確定済み）、10 章 10.1（caption の文言）。3・6・7 章はリンクを避けていた書き方を確かめる。撮影のシナリオ（`manual_screenshots.feature`）の本予約の確定の後に、荷主で C-04 を開いて `05-request-detail-booked.png` を撮る手順を足す。`./gradlew manualScreenshots` で 7 枚（`05-request-detail-booked.png` と、`10-kpi-observations.png`、`04-response.png`、`03-request-list.png`、`06-intake-list-review.png`、`06-intake-list-presented.png`、`07-intake-list-ready-to-book.png`））を撮る（ほかの画像は元に戻す）。HTML 版の出力も更新する
   - Code Smell: `AcceptanceCriteriaCoverageTest` の行の正規表現を `^\|\s*(US-\d+)\s*\|([^|]+)\|([^|]+)\|$` に簡素化する（前後の空白は `[^|]+` が吸収する。行は `strip()` 済み）。見張り: `Release01の受入条件ごとにwipでないシナリオがある` と `表の行が書式から外れると黙って落とさずに失敗する` が通り続けること
   - 完了の判定: `check`（`documentationTest` を含む）緑、`okf:check` ERROR 0
 - [ ] **5. 開発レビューと終了報告** 【承認ゲート: 終了報告】
@@ -147,14 +147,14 @@ end note
 | 7 | **#46 の閉じ方** | 5 | Bolt 29c（S-09・S-06）の終了報告の承認の後に閉じる。29b では進み具合をコメントする |
 | 8 | Code Smell をこの Bolt で直す | 4 | 直す（Bolt 29 の承認の決定）。正規表現の簡素化だけで、照合の結果は変えない |
 | 9 | 承認ゲート | 全体 | 計画の承認と終了報告で止める（W4 の締めの決定の既定）。画面の文言の変更は計画の承認の場で確認ポイント 2・4〜6 として判断を受ける（T-80） |
-| 10 | **デモ項目の証跡** | 4・5 | 予約確定済みの C-04 を写す `@demo` のシナリオはない。受入動画は撮らず、マニュアルの撮影のシナリオに予約確定済みの C-04 を足して撮るキャプチャ（`07-request-detail-booked.png`）と、コントローラーのテストを証跡にする。代わりの案は、主成功の流れ（`main_flow_ui.feature`）を「C-04 の『予約一覧』から開く」に変えて動画を撮り直す（Bolt 28 のデモの手順が変わる） |
+| 10 | **デモ項目の証跡** | 4・5 | 予約確定済みの C-04 を写す `@demo` のシナリオはない。受入動画は撮らず、マニュアルの撮影のシナリオに予約確定済みの C-04 を足して撮るキャプチャ（`05-request-detail-booked.png`）と、コントローラーのテストを証跡にする。代わりの案は、主成功の流れ（`main_flow_ui.feature`）を「C-04 の『予約一覧』から開く」に変えて動画を撮り直す（Bolt 28 のデモの手順が変わる） |
 | 11 | 採らない代案の扱い（T-89） | — | 見積りが追跡の開始を知る仕組み（輸送要求の「追跡中」の状態）と、C-04 から追跡番号で直接つなぐこと（DE-07 の通知で追跡番号を写す）は、開始準備で採らないと決めた代案なので Issue にしない。荷主から「見積依頼の詳細で追跡番号を見たい」という声が出たら、その時点でストーリーとして起こす |
 
 ## 完了条件
 
 - [ ] 直す箇所 1〜4 の画面の文言・リンク・状態の表示が UI 設計どおりになり、コントローラーのテストで確かめた
 - [ ] UI 設計（ui_design.md）の該当の記述と荷主の状態の表を直した
-- [ ] マニュアルの該当の節（1・2・4・7・10 章）を直し、キャプチャ 7 枚（新しい 1 枚を含む）を `manualScreenshots` で撮った
+- [ ] マニュアルの該当の節（1・2・4・5・10 章と用語集）を直し、キャプチャ 7 枚（新しい 1 枚を含む）を `manualScreenshots` で撮った
 - [ ] Bolt 28 の Code Smell を直した（照合のテストが通り続ける）
 - [ ] `check`・`uiTest` が緑。push して CI を確かめた
 - [ ] SonarQube の Quality Gate が PASS
@@ -162,7 +162,7 @@ end note
 
 ### デモ項目
 
-荷主が予約確定済みの見積依頼の詳細（C-04）を開くと、状態が「予約確定済み」と示され、案内から予約一覧（C-06）で追跡番号と追跡の状況を確かめられる。証跡はマニュアルのキャプチャ `07-request-detail-booked.png` とコントローラーのテスト（確認ポイント 10）。KPI 計測記録・見積りへの回答・受付一覧も、マニュアルのキャプチャで確かめる。
+荷主が予約確定済みの見積依頼の詳細（C-04）を開くと、状態が「予約確定済み」と示され、案内から予約一覧（C-06）で追跡番号と追跡の状況を確かめられる。証跡はマニュアルのキャプチャ `05-request-detail-booked.png` とコントローラーのテスト（確認ポイント 10）。KPI 計測記録・見積りへの回答・受付一覧も、マニュアルのキャプチャで確かめる。
 
 ## 更新履歴
 

@@ -21,8 +21,9 @@
         <dt>状態</dt>
         <dd th:text="${statusLabel}">審査中（A 社の対応待ち）</dd>
     </dl>
-    <p th:text="${guidance}">営業担当者が内容を審査しています。お問い合わせの際は業務番号をお伝えください。</p>
-    <p th:if="${booked}"><a th:href="@{/customer/bookings}">予約一覧</a></p>
+    <p th:unless="${booked}" th:text="${guidance}">営業担当者が内容を審査しています。お問い合わせの際は業務番号をお伝えください。</p>
+    <!-- 予約確定済みはリンクを案内の文の中に置き、リンクの目的を同じ文で伝える（WCAG 2.4.4。Bolt 29b の開発レビュー） -->
+    <p th:if="${booked}">本予約を確定しました。追跡番号と追跡の状況は<a th:href="@{/customer/bookings}">予約一覧</a>で確かめられます。</p>
 
     <!-- 荷主に見せるのは、現在の版への差戻しの理由と不足事項だけ。判断者と審査の確定の根拠は見せない（2026-10-03 の人の決定） -->
     <section th:if="${sendBack}" aria-labelledby="send-back-title">
@@ -65,8 +66,9 @@
         <p th:if="${quotation.approvable()}"><a th:href="@{/customer/transport-requests/{number}/quotations/{no}/approval(number=${number},no=${quotation.quotationNo()})}">見積りと経路を確かめて承認へ</a></p>
         <p th:if="${quotation.approvedAt() != null and quotation.expired()}" class="alert alert-warning"
            th:text="|承認の後に有効期限（${quotation.expiresAt()}）を過ぎました。本予約の扱いは担当営業からご連絡します。|">承認の後に有効期限（2026-10-05 21:00 Asia/Tokyo（UTC+09:00））を過ぎました。本予約の扱いは担当営業からご連絡します。</p>
+        <!-- 予約確定済みの後は承認の記録だけを示し、確定の前の約束（担当営業が確定します）を出さない（Bolt 29b の開発レビュー） -->
         <p th:if="${quotation.approvedAt() != null and !quotation.expired()}"
-           th:text="|${quotation.approvedAt()}にこの見積りと経路を承認しました。担当営業が本予約を確定します。確定したらご連絡します。|">2026-10-07 15:00 Asia/Tokyo（UTC+09:00）にこの見積りと経路を承認しました。担当営業が本予約を確定します。確定したらご連絡します。</p>
+           th:text="${booked} ? |${quotation.approvedAt()}にこの見積りと経路を承認しました。| : |${quotation.approvedAt()}にこの見積りと経路を承認しました。担当営業が本予約を確定します。確定したらご連絡します。|">2026-10-07 15:00 Asia/Tokyo（UTC+09:00）にこの見積りと経路を承認しました。担当営業が本予約を確定します。確定したらご連絡します。</p>
         <th:block th:unless="${#lists.isEmpty(previousQuotations)}">
             <h3>以前の見積り（読み取り専用）</h3>
             <details th:each="previous : ${previousQuotations}">

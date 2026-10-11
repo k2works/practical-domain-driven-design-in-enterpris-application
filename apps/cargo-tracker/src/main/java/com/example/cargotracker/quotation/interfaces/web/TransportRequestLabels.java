@@ -65,6 +65,7 @@ final class TransportRequestLabels {
             case ROUTING -> "経路設計者が詳細な経路を設計しています。承認の準備ができたら担当営業からご連絡します。";
             case AWAITING_APPROVAL -> "経路が確定しました。見積りと経路を確かめて承認してください。";
             case READY_TO_BOOK -> "見積りと経路を承認いただきました。担当営業が本予約を確定します。確定したらご連絡します。";
+            // C-04 は予約一覧へのリンクを文の中に置くため、この文をテンプレートで組み立てる（detail.html。Bolt 29b）
             case BOOKED -> "本予約を確定しました。追跡番号と追跡の状況は予約一覧で確かめられます。";
         };
     }

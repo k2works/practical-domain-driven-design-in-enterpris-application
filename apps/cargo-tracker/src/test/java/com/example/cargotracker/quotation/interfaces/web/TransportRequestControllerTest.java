@@ -663,12 +663,30 @@ class TransportRequestControllerTest {
         mockMvc.perform(get("/customer/transport-requests/TR-2026-0001"))
                 .andExpect(status().isOk())
                 .andExpect(content().string(containsString("<dd>予約確定済み</dd>")))
-                .andExpect(content().string(containsString("本予約を確定しました。追跡番号と追跡の状況は予約一覧で確かめられます。")))
-                .andExpect(content().string(containsString("href=\"/customer/bookings\">予約一覧</a>")))
-                .andExpect(content().string(not(containsString("準備中"))));
+                // リンクは案内の文の中に置き、リンクの目的が同じ文から分かるようにする（WCAG 2.4.4。Bolt 29b の開発レビュー）
+                .andExpect(content()
+                        .string(containsString(
+                                "本予約を確定しました。追跡番号と追跡の状況は<a href=\"/customer/bookings\">予約一覧</a>で確かめられます。")))
+                .andExpect(content().string(not(containsString("追跡の開始の準備中"))));
         mockMvc.perform(get("/customer/transport-requests"))
+                .andExpect(status().isOk())
                 .andExpect(content().string(containsString("予約確定済み")))
-                .andExpect(content().string(not(containsString("準備中"))));
+                .andExpect(content().string(not(containsString("追跡の開始の準備中"))));
+    }
+
+    @Test
+    void 予約確定済みの見積依頼では承認した見積りに承認の記録だけを示し確定の前の約束を出さない() throws Exception {
+        TransportRequest request = booked();
+        given(queryService.findByNumber(NUMBER, SHIPPER)).willReturn(Optional.of(request));
+        Quotation quotation = awaitingApproval(request.id());
+        quotation.approveByShipper(USER, new UtcInstant(Instant.parse("2026-10-07T06:00:00Z")));
+        given(quotationQueryService.findVisible(NUMBER, SHIPPER)).willReturn(List.of(quotation));
+
+        mockMvc.perform(get("/customer/transport-requests/TR-2026-0001"))
+                .andExpect(status().isOk())
+                .andExpect(
+                        content().string(containsString("2026-10-07 15:00 Asia/Tokyo（UTC+09:00）にこの見積りと経路を承認しました。</p>")))
+                .andExpect(content().string(not(containsString("担当営業が本予約を確定します。"))));
     }
 
     @Test
