@@ -4428,7 +4428,7 @@
     
   
   
-    <span class="md-status md-status--draft"></span>
+    <span class="md-status md-status--stable"></span>
   
 
   
@@ -4453,7 +4453,7 @@
     
   
   
-    <span class="md-status md-status--draft"></span>
+    <span class="md-status md-status--stable"></span>
   
 
   
@@ -9721,9 +9721,10 @@
 <h2 id="_9">ステップ計画<a class="headerlink" href="#_9" title="Permanent link">&para;</a></h2>
 <p>状態の記号: <code>[ ]</code> 未着手、<code>[-]</code> 進行中、<code>[?]</code> 承認待ち、<code>[x]</code> 完了。各ステップの終わりに <code>check</code> が緑であることと、計画からの変更を設計文書に反映したこと（T-53）を確かめ、push して CI を確かめる（T-26、T-65）。コミットの前に、そのステップのファイルだけをステージしているか確かめる（T-84）。依存の取得は最初から <code>--max-workers=1</code> と再試行で流す（T-93）。</p>
 <ul class="task-list">
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>1. UI 設計とデータモデルの注を直す</strong> 【承認ゲート: なし】</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>1. UI 設計とデータモデルの注を直す</strong> 【承認ゲート: なし】</li>
 <li>ui_design.md: UI:130（S-09 の役割の「BR-01 の」を外す）、UI:165（S-09 の見出しと貨物の書式）、UI:682・684（画面イメージ）、UI:172・173・657・670（S-06・S-07 の理由の語。R-INV-02 の参照はドメインの規則として残す）、UI:49-55 の表（画面の語とドメインの概念）、UI:523 などの条件の表の数値の書式。data_model.md の <code>cargo_summary</code> の注（:601）。architecture_backend.md の一文</li>
 <li>完了の判定: <code>okf:check</code> ERROR 0</li>
+<li>結果（2026-10-11）: UI:130・166（S-09 の役割と見出し、貨物の要約の形）・172・173・657・671・683・685、「画面の語 / ドメインの概念」の表に「参照した航海情報の版 ⇔ 参照情報版」の行、data_model.md の <code>cargo_summary</code> の注、architecture_backend.md の一文。UI:523 の数値は入力欄の見本なので変えない</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>2. 貨物の表示名と要約、S-09 の見出し（直す箇所 1・2）</strong> 【承認ゲート: なし】</li>
 <li>Red: <code>CargoDisplayNames</code> の単体テスト（4 つの貨物種別と 4 つの荷姿の名前、数値の書式: <code>8400.000</code>→<code>8,400</code>、<code>32.500</code>→<code>32.5</code>、<code>1200.500</code>→<code>1,200.5</code>、<code>0.250</code>→<code>0.25</code>、整数部 9 桁 <code>123456789.000</code>→<code>123,456,789</code>（<code>stripTrailingZeros</code> の指数の表記にならないこと））を書き、クラスがないことで落ちる（コンパイルの失敗）のではなく本命のアサーションで落ちるよう、骨組み（空の実装）を先に置く（T-88）。<code>BookableQuotationQueryAdapterTest.java:59</code> を新しい書式に向け直して落ちることを確かめる。<code>BookingControllerTest</code> に S-09 の見出し「確定条件」と「（BR-01）」がないことを足す。<code>TransportRequestControllerTest</code>（C-04）に条件の表の「8,400」を足す</li>
 <li>Green: <code>CargoDisplayNames</code> を実装し（数値は <code>DecimalFormat("#,##0.###")</code> などで指数の表記を避ける）、<code>BookableQuotationQueryService.summary</code>・<code>TransportRequestLabels</code> の選択肢と表示の名前・<code>TransportRequestViews.termsRows</code> の重量と容積をそれに寄せる（荷主の画面の選択肢の値と表示は変わらない）。S-09 の見出しとテンプレートの見本の文字列（<code>new.html:38</code>・<code>show.html:38</code>）を直す。<code>BookableQuotationResult.cargoSummary</code> の Javadoc を書く</li>
@@ -9872,6 +9873,11 @@
 </tr>
 </thead>
 <tbody>
+<tr>
+<td style="text-align: left;">2026-10-11</td>
+<td style="text-align: left;">計画を承認した（確認ポイントはすべて推奨のとおり）</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5、承認 human:kakimomokuri</td>
+</tr>
 <tr>
 <td style="text-align: left;">2026-10-11</td>
 <td style="text-align: left;">開始準備の整合性検証（計画と設計 8 件・横断 7 件。高 1: S-06 の語は S-07 にも出る）を反映し、human:kakimomokuri の決定（重量・容積の書式を 1 か所にまとめて見積依頼の画面もそろえる）で範囲を広げた。S-07・UI:173・8.3、条件の表の数値、適合の根拠のテスト、画面の層のステップの文、指数の表記の境界値、architecture_backend.md と公開 API の Javadoc、UI の「画面の語 / ドメインの概念」の表、SP 0、DoD の <code>okf:check</code></td>
