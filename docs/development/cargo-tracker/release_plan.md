@@ -4,7 +4,7 @@ title: "リリース計画 - cargo-tracker（A 社国際貨物輸送管理シス
 description: "cargo-tracker MVP のリリース計画。1 人 + AI、時間単位の Bolt（= イテレーション）と週次の見直しで、最初の縦の流れ（R0.1）、パイロット準備完了（R1.0）、本格展開前（R1.1）の 3 段階、Unit のエントロピー評価、SP、バッファ、パイロット開始の条件、引継ぎ ID の台帳、業務責任者に確かめる事項の台帳。"
 tags: [development,release-plan]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-11T08:12:07Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-11T08:26:00Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T09:29:53Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:38:26Z }
@@ -616,7 +616,7 @@ US-18 の残りの SP 6 は #13 をクローズする Bolt 33b で、US-04 の S
 - [x] Bolt 29: #45。[Bolt 29 計画](bolt_29_plan.md)（`/goal` で進めた）、[Bolt 29 終了報告](bolt_29_report.md)（完了、2026-10-11 に承認済み。#45 を閉じた。SonarQube PASS。`uiTest` 80 本は集める前と同じく通った。失敗の経路を読めるものに直した）
 - [x] Bolt 29b: #46 の前半。[Bolt 29b 計画](bolt_29b_plan.md)（`/goal` で進めた）、[Bolt 29b 終了報告](bolt_29b_report.md)（完了、2026-10-11 に承認済み。4 か所と開発レビューの必須の指摘を直した。SonarQube PASS・Code Smell 0）
 - [x] Bolt 29c: #46 の後半。[Bolt 29c 計画](bolt_29c_plan.md)（承認済み）、[Bolt 29c 終了報告](bolt_29c_report.md)（完了、2026-10-11 に承認済み。#46 を閉じた。SonarQube PASS・Code Smell 0）
-- [ ] Bolt 30〜33b: US-18 の残り（#13）と通知モジュールの最小の新設。[Bolt 30 計画](bolt_30_plan.md)（承認待ち）
+- [ ] Bolt 30〜33b: US-18 の残り（#13）と通知モジュールの最小の新設。[Bolt 30 計画](bolt_30_plan.md)（承認済み。ステップごとに止めて進める）
 - [ ] Bolt 34: US-16 の一部（#14）
 - [ ] Bolt 35: US-04 AC3・AC5（#43）、D-85
 - [ ] W5 の締め: 結果とふりかえり、開いている持ち越しの数（T-89）、W6 の計画の見直し
@@ -873,3 +873,4 @@ xychart-beta
 | 2026-10-11 | Bolt 29c の開始準備: 画面に出る業務ルールの番号と貨物の要約の作り方を調べ、日本語名を見積りの application 層に置く・S-06 の語を「参照した航海情報の版」・要約の数値も直す、と決めた。Bolt 29c 計画を作った（承認待ち） | anthropic/claude-opus-5-5、決定 human:kakimomokuri |
 | 2026-10-11 | Bolt 29c の終了報告の承認を記録し、Bolt 29c を終えた（#46 の後半。SP 0）。#46 を閉じ、Release 0.1 の負債（#45・#46）を返し終えた | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-10-11 | Bolt 30 の開始準備: ADR-011 を案のとおり採用し、TOTP の資格・回復コード・ログインの失敗を関心事ごとの表に分け、スパイクを Bolt 31 の後に消し、暗号化の鍵を Bolt 31 の計画で決めると決めた。Bolt 30 計画を作った（承認待ち） | anthropic/claude-opus-5-5、決定 human:kakimomokuri |
+| 2026-10-11 | Bolt 30 計画の承認を記録した（整合性検証の指摘を反映。ロックはログインの失敗の別の集約にし、ADR-012 を改める） | anthropic/claude-opus-5-5、承認 human:kakimomokuri |

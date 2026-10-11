@@ -3,8 +3,10 @@ type: Plan
 title: "Bolt 30 計画 - ADR-011 の採用と、TOTP の資格・回復コード・ログインの失敗の表とドメイン"
 description: "W5 の 4 本目の Bolt の計画。ADR-011（多要素認証は Spring Security 7 の要素の権限で組み、TOTP は java-otp で作る）を承認にし、identity に TOTP の資格・回復コード・ログインの失敗の表とドメインのモデル・リポジトリ、TOTP の生成のポートと java-otp の実装を、インサイドアウトで作る。画面と認証の流れは Bolt 31 から。"
 tags: [development,bolt-plan]
-status: draft
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-11T08:18:17Z }
+status: stable
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-11T08:26:00Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-10-11T08:26:00Z }
 ---
 
 # Bolt 30 計画 - ADR-011 の採用と、TOTP の資格・回復コード・ログインの失敗の表とドメイン
@@ -258,6 +260,7 @@ u ||--o| f
 | :--- | :--- | :--- |
 | 2026-10-11 | 初版作成（承認待ち）。開始準備で、ADR-011・今の `identity` の表とコード・Bolt 13・14 からの持ち込みを調べ、human:kakimomokuri の決定（ADR-011 を案のとおり採用、表は関心事ごと、スパイクは Bolt 31 の後に消す、暗号化の鍵は Bolt 31 の計画）を反映した | anthropic/claude-opus-5-5 |
 | 2026-10-11 | 詳細整合性検証と横断整合性検証の指摘を反映: `RETURNING` をやめ共通の構文の条件付きの更新の件数にした（ADR-007）、回復コードのハッシュをドメインのポートにした（AT-01）、置き場所を `aggregates`・`rules`・`valueobjects` にそろえた、集約の分け方の確認ポイントに ADR-011・ADR-012 の改訂を明記した、版の時刻を作成日に、表のコメント・用語集・不変条件の ID・旧い列の参照・技術スタックの直し方・`version` の例外・一意制約の撤回・スレッドセーフ・依存の検査の代わり・持ち込みの表の直しと K-03 の Issue を足した | anthropic/claude-opus-5-5 |
+| 2026-10-11 | 計画の承認を記録した。確認ポイントは推奨のとおり。ロックの方針はログインの失敗の別の集約にする（ADR-011・ADR-012 をステップ 1 で改める） | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 
 ## 関連ドキュメント
 
