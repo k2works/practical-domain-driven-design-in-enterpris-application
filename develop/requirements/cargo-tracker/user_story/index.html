@@ -9636,7 +9636,7 @@
 <ul>
 <li>ストーリーの目的「追跡可能な輸送を開始する」は、本予約の確定から追跡の開始（追跡記録を作り、確定した経路版の区間を予定として採用する）を経て予約サガが完了するまでを R0.1 の範囲とする（ADR-015。Bolt 25）。受入条件は変えず、受入シナリオは <code>@ADR-015 @T-INV-11</code> のタグで <code>features/booking/confirm_booking.feature</code> に置く。</li>
 <li>
-<h1 id="10-r01-ac1ac2ac4ac3ac5w6-issue-us-24">10 は R0.1 の範囲（AC1・AC2・AC4・重複確定の防止）でクローズし、AC3（不足条件）・AC5（特殊貨物）（W6）は新しい Issue にする（US-24 の前例）。<a class="headerlink" href="#10-r01-ac1ac2ac4ac3ac5w6-issue-us-24" title="Permanent link">&para;</a></h1>
+<h1 id="10-r01-ac1ac2ac4ac3ac5w6-issue-us-24-ac3ac5-43-w4-2026-10-10humankakimomokuri-w5">10 は R0.1 の範囲（AC1・AC2・AC4・重複確定の防止）でクローズし、AC3（不足条件）・AC5（特殊貨物）（W6）は新しい Issue にする（US-24 の前例）。AC3・AC5 は #43 にし、W4 の締め（2026-10-10、human:kakimomokuri）で W5 に前倒しした。<a class="headerlink" href="#10-r01-ac1ac2ac4ac3ac5w6-issue-us-24-ac3ac5-43-w4-2026-10-10humankakimomokuri-w5" title="Permanent link">&para;</a></h1>
 </li>
 </ul>
 <h3 id="us-05">US-05 予約を変更・取消しする<a class="headerlink" href="#us-05" title="Permanent link">&para;</a></h3>
@@ -10130,6 +10130,7 @@
 <li>Bolt 14 の認可はログインの時点の役割で行う。request ごとに DB の現在値を確かめるのは、AC6 とあわせて W5 で入れる。</li>
 <li>ステージング・本番の利用者を作る手段は、利用者の管理（US-16）まで作らない。</li>
 </ul>
+<p>W5 の開始準備の決定（2026-10-11、human:kakimomokuri）: #13 は W5 の範囲（AC1 の TOTP、AC3、AC6、AC7、AC8、AC9 の回復コードによる再登録、失効の警告と延長）でクローズし、AC9 のシステム管理者の別経路による解除と本人への通知は #47（W6）にする。</p>
 <h3 id="us-19">US-19 荷受人の参照許可を管理する<a class="headerlink" href="#us-19" title="Permanent link">&para;</a></h3>
 <blockquote>
 <p>荷主担当者として、予約単位で荷受人を追跡へ招待し、必要に応じて許可を取り消したい。取引に必要な情報だけを安全に共有するためだ。</p>

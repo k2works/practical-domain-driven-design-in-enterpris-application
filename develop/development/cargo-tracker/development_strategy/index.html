@@ -9971,7 +9971,7 @@
 <tr>
 <td style="text-align: left;">中盤の例外</td>
 <td style="text-align: left;">基本 CRUD 実装済み × ドメインが複雑 → アウトサイドイン推奨</td>
-<td style="text-align: left;">W6 の経路設計・予約の残り（Golden dataset、再設計要・旧版、不足条件）は、序盤で作った経路設計案件と貨物予約を広げる作業である。受入シナリオから入る</td>
+<td style="text-align: left;">W5 の予約の残り（不足条件・特殊貨物。W4 の締めで W6 から前倒し）と W6 の経路設計の残り（Golden dataset、再設計要・旧版）は、序盤で作った経路設計案件と貨物予約を広げる作業である。受入シナリオから入る</td>
 </tr>
 <tr>
 <td style="text-align: left;">終盤</td>
@@ -10196,14 +10196,14 @@
 <tr>
 <td style="text-align: left;">W5</td>
 <td style="text-align: left;">中盤</td>
-<td style="text-align: left;">TOTP・ロック・session の失効と警告・password の再設定。利用者と役割の管理</td>
-<td style="text-align: left;"><code>@US-18</code>、<code>@US-16</code></td>
+<td style="text-align: left;">TOTP・ロック・session の失効の警告と延長・password の再設定・回復コードによる再登録。利用者と役割の管理。確定の不足条件と特殊貨物の拒否、承認の後に失効した見積りの再見積り（D-85）</td>
+<td style="text-align: left;"><code>@US-18</code>、<code>@US-16</code>、<code>@US-04</code>、<code>@US-24</code></td>
 </tr>
 <tr>
 <td style="text-align: left;">W6</td>
 <td style="text-align: left;">中盤</td>
-<td style="text-align: left;">Golden dataset による経路の判定、再設計要・旧版の拒否、確定の不足条件</td>
-<td style="text-align: left;"><code>@golden</code>、<code>@US-06</code>、<code>@US-07</code>、<code>@US-04</code></td>
+<td style="text-align: left;">Golden dataset による経路の判定、再設計要・旧版の拒否。管理者経路による TOTP の登録の解除</td>
+<td style="text-align: left;"><code>@golden</code>、<code>@US-06</code>、<code>@US-07</code>、<code>@US-16</code>、<code>@US-18-AC9</code></td>
 </tr>
 <tr>
 <td style="text-align: left;">W7</td>
@@ -10533,13 +10533,13 @@
 <tbody>
 <tr>
 <td style="text-align: left;">W5</td>
-<td style="text-align: left;">US-18 の残り、US-16</td>
-<td style="text-align: left;">インサイドアウト（利用者・役割・ロックのデータとドメインから。認証の流れはセキュリティの統合テストで外側から確かめる）</td>
+<td style="text-align: left;">US-18 の残り、US-16 の一部、US-04 の残り</td>
+<td style="text-align: left;">US-18・US-16 はインサイドアウト（利用者・役割・ロックのデータとドメインから。認証の流れはセキュリティの統合テストで外側から確かめる）。US-04 の残りは <strong>アウトサイドイン</strong>（中盤の例外。W4 の締めで W6 から前倒しした）</td>
 </tr>
 <tr>
 <td style="text-align: left;">W6</td>
-<td style="text-align: left;">US-06・US-07・US-04 の残り</td>
-<td style="text-align: left;"><strong>アウトサイドイン</strong>（序盤の集約を広げるため。中盤の例外）</td>
+<td style="text-align: left;">US-06・US-07 の残り、US-16 の残り</td>
+<td style="text-align: left;">US-06・US-07 は <strong>アウトサイドイン</strong>（序盤の集約を広げるため。中盤の例外）。US-16 の残りはインサイドアウト</td>
 </tr>
 <tr>
 <td style="text-align: left;">W7</td>
