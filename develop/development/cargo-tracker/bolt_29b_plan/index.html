@@ -9811,7 +9811,7 @@
 <td style="text-align: left;">状態「予約確定済み」（社内の表示と同じ）。案内「本予約を確定しました。追跡番号と追跡の状況は予約一覧で確かめられます。」と、予約一覧（C-06 <code>/customer/bookings</code>）へのリンク</td>
 <td style="text-align: left;">荷主の状態のラベルと案内（<code>TransportRequestLabels</code>）、テンプレート（<code>quotation/transport-requests/detail.html</code>）、UI:968-977 の荷主の状態の表に BOOKED の行を足す</td>
 <td style="text-align: left;">なし（足す。確認ポイント 3）</td>
-<td style="text-align: left;">1 章の表（<code>01-業務フロー.md:51</code>）。この状態のキャプチャはないので、撮影のシナリオに予約確定済みの C-04 を足して <code>07-request-detail-booked.png</code> を撮り、7 章に載せる（確認ポイント 10）</td>
+<td style="text-align: left;">1 章の表（<code>01-業務フロー.md:51</code>）。この状態のキャプチャはないので、撮影のシナリオに予約確定済みの C-04 を足して <code>05-request-detail-booked.png</code> を撮り、5 章 5.1 に載せる（確認ポイント 10。実行のとき 7 章の営業担当者の章ではなく、荷主の予約一覧の章に置き直した）</td>
 </tr>
 </tbody>
 </table>
@@ -9866,7 +9866,7 @@
 <li>Green: <code>response.html</code> の 1 文を消す。<code>TransportRequestLabels</code> の荷主の BOOKED の状態と案内を直し、<code>detail.html</code> に予約確定済みのときだけ C-06 へのリンクを出す</li>
 <li>完了の判定: <code>check</code> 緑、<code>uiTest</code> 緑（<code>@US-24</code> の画面の層のシナリオが通る）</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>4. マニュアルとキャプチャ、Code Smell</strong> 【承認ゲート: なし】</li>
-<li>マニュアル（<code>creating-manual</code>）: 1 章の表（予約確定済み）、2 章 2.2 の①ヘッダー（左の cargo-tracker を押すと役割のホームへ戻る。「入口の一覧へ戻る」を消すため。キャプチャは要らない）、4 章 4.1 の ④（重複の言い換えを外す）、7 章（予約確定済みの見積依頼の詳細と予約一覧への案内。新しいキャプチャ）、10 章 10.1（caption の文言）。3・6・7 章はリンクを避けていた書き方を確かめる。撮影のシナリオ（<code>manual_screenshots.feature</code>）の本予約の確定の後に、荷主で C-04 を開いて <code>07-request-detail-booked.png</code> を撮る手順を足す。<code>./gradlew manualScreenshots</code> で 7 枚（<code>07-request-detail-booked.png</code> と、<code>10-kpi-observations.png</code>、<code>04-response.png</code>、<code>03-request-list.png</code>、<code>06-intake-list-review.png</code>、<code>06-intake-list-presented.png</code>、<code>07-intake-list-ready-to-book.png</code>））を撮る（ほかの画像は元に戻す）。HTML 版の出力も更新する</li>
+<li>マニュアル（<code>creating-manual</code>）: 1 章の表（予約確定済み）、2 章 2.2 の①ヘッダー（左の cargo-tracker を押すと役割のホームへ戻る。「入口の一覧へ戻る」を消すため。キャプチャは要らない）、4 章 4.1 の ④（重複の言い換えを外す）、5 章 5.1（予約確定済みの見積依頼の詳細から予約一覧を開くこと。新しいキャプチャ）、用語集（予約確定済み）、10 章 10.1（caption の文言）。3・6・7 章はリンクを避けていた書き方を確かめる。撮影のシナリオ（<code>manual_screenshots.feature</code>）の本予約の確定の後に、荷主で C-04 を開いて <code>05-request-detail-booked.png</code> を撮る手順を足す。<code>./gradlew manualScreenshots</code> で 7 枚（<code>05-request-detail-booked.png</code> と、<code>10-kpi-observations.png</code>、<code>04-response.png</code>、<code>03-request-list.png</code>、<code>06-intake-list-review.png</code>、<code>06-intake-list-presented.png</code>、<code>07-intake-list-ready-to-book.png</code>））を撮る（ほかの画像は元に戻す）。HTML 版の出力も更新する</li>
 <li>Code Smell: <code>AcceptanceCriteriaCoverageTest</code> の行の正規表現を <code>^\|\s*(US-\d+)\s*\|([^|]+)\|([^|]+)\|$</code> に簡素化する（前後の空白は <code>[^|]+</code> が吸収する。行は <code>strip()</code> 済み）。見張り: <code>Release01の受入条件ごとにwipでないシナリオがある</code> と <code>表の行が書式から外れると黙って落とさずに失敗する</code> が通り続けること</li>
 <li>完了の判定: <code>check</code>（<code>documentationTest</code> を含む）緑、<code>okf:check</code> ERROR 0</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>5. 開発レビューと終了報告</strong> 【承認ゲート: 終了報告】</li>
@@ -9980,7 +9980,7 @@
 <td style="text-align: left;">10</td>
 <td style="text-align: left;"><strong>デモ項目の証跡</strong></td>
 <td style="text-align: left;">4・5</td>
-<td style="text-align: left;">予約確定済みの C-04 を写す <code>@demo</code> のシナリオはない。受入動画は撮らず、マニュアルの撮影のシナリオに予約確定済みの C-04 を足して撮るキャプチャ（<code>07-request-detail-booked.png</code>）と、コントローラーのテストを証跡にする。代わりの案は、主成功の流れ（<code>main_flow_ui.feature</code>）を「C-04 の『予約一覧』から開く」に変えて動画を撮り直す（Bolt 28 のデモの手順が変わる）</td>
+<td style="text-align: left;">予約確定済みの C-04 を写す <code>@demo</code> のシナリオはない。受入動画は撮らず、マニュアルの撮影のシナリオに予約確定済みの C-04 を足して撮るキャプチャ（<code>05-request-detail-booked.png</code>）と、コントローラーのテストを証跡にする。代わりの案は、主成功の流れ（<code>main_flow_ui.feature</code>）を「C-04 の『予約一覧』から開く」に変えて動画を撮り直す（Bolt 28 のデモの手順が変わる）</td>
 </tr>
 <tr>
 <td style="text-align: left;">11</td>
@@ -9994,14 +9994,14 @@
 <ul class="task-list">
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> 直す箇所 1〜4 の画面の文言・リンク・状態の表示が UI 設計どおりになり、コントローラーのテストで確かめた</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> UI 設計（ui_design.md）の該当の記述と荷主の状態の表を直した</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> マニュアルの該当の節（1・2・4・7・10 章）を直し、キャプチャ 7 枚（新しい 1 枚を含む）を <code>manualScreenshots</code> で撮った</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> マニュアルの該当の節（1・2・4・5・10 章と用語集）を直し、キャプチャ 7 枚（新しい 1 枚を含む）を <code>manualScreenshots</code> で撮った</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> Bolt 28 の Code Smell を直した（照合のテストが通り続ける）</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <code>check</code>・<code>uiTest</code> が緑。push して CI を確かめた</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> SonarQube の Quality Gate が PASS</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> 開発レビュー（T-90 の観点を含む）と終了報告。#46 に進み具合をコメントした</li>
 </ul>
 <h3 id="_11">デモ項目<a class="headerlink" href="#_11" title="Permanent link">&para;</a></h3>
-<p>荷主が予約確定済みの見積依頼の詳細（C-04）を開くと、状態が「予約確定済み」と示され、案内から予約一覧（C-06）で追跡番号と追跡の状況を確かめられる。証跡はマニュアルのキャプチャ <code>07-request-detail-booked.png</code> とコントローラーのテスト（確認ポイント 10）。KPI 計測記録・見積りへの回答・受付一覧も、マニュアルのキャプチャで確かめる。</p>
+<p>荷主が予約確定済みの見積依頼の詳細（C-04）を開くと、状態が「予約確定済み」と示され、案内から予約一覧（C-06）で追跡番号と追跡の状況を確かめられる。証跡はマニュアルのキャプチャ <code>05-request-detail-booked.png</code> とコントローラーのテスト（確認ポイント 10）。KPI 計測記録・見積りへの回答・受付一覧も、マニュアルのキャプチャで確かめる。</p>
 <h2 id="_12">更新履歴<a class="headerlink" href="#_12" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
