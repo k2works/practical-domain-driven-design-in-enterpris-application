@@ -16,7 +16,7 @@
         <link rel="prev" href="../bolt_29b_report/">
       
       
-        <link rel="next" href="../release_report-0_1/">
+        <link rel="next" href="../bolt_29c_report/">
       
       
         
@@ -4501,6 +4501,41 @@
   
 </nav>
       
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../bolt_29c_report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 29c 終了報告
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--draft"></span>
+  
+
+  
+
+      </a>
     </li>
   
 
@@ -9743,6 +9778,7 @@
 <li>開発レビュー（<code>developing-review</code>。プログラマー（層と依存、書式の境界値）、テクニカルライター（T-90。画面に実装の語や業務ルールの番号が残っていないか、マニュアルと画面の一致）。リンクと画面遷移を変えないのでインタラクションデザイナーの観点は外す）。レビューにキャプチャを渡す</li>
 <li>SonarQube（<code>sonar-local:check</code>。手順書の 9 節のとおり起動）</li>
 <li><code>bolt_29c_report.md</code>。release_plan の W5 の 29c の行と進捗、開発の索引を更新する。承認の後に #46 を閉じる</li>
+<li>結果（2026-10-11）: 2 つの観点でレビューし（必須 0・推奨 6・任意 6）、推奨 5 件と任意 3 件を直した（<code>92badaf</code>）。SonarQube PASS（Code Smell 0）。<a href="../bolt_29c_report/">Bolt 29c 終了報告</a>（承認待ち）</li>
 </ul>
 <h3 id="_10">時間の配分と打ち切り<a class="headerlink" href="#_10" title="Permanent link">&para;</a></h3>
 <table>
@@ -9856,12 +9892,12 @@
 </table>
 <h2 id="_11">完了条件<a class="headerlink" href="#_11" title="Permanent link">&para;</a></h2>
 <ul class="task-list">
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> S-09 の見出しと S-09・S-24 の貨物の要約、C-04・S-03・S-04 の条件の表の数値、S-06・S-07 の理由の語が UI 設計どおりになり、テストで確かめた</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> 貨物の日本語名と重量・容積の書式が見積りの application 層の 1 か所にあり、ドメインの enum と共有カーネルを変えていない</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> UI 設計・データモデルの注・architecture_backend.md・公開 API の Javadoc を直した</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> マニュアル 8 章を直し、変わる画面のキャプチャを <code>manualScreenshots</code> で撮り直した</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <code>check</code>・<code>uiTest</code> が緑。push して CI を確かめた</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> SonarQube の Quality Gate が PASS、<code>okf:check</code> ERROR 0</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> S-09 の見出しと S-09・S-24 の貨物の要約、C-04・S-03・S-04 の条件の表の数値、S-06・S-07 の理由の語が UI 設計どおりになり、テストで確かめた</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> 貨物の日本語名と重量・容積の書式が見積りの application 層の 1 か所にあり、ドメインの enum と共有カーネルを変えていない</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> UI 設計・データモデルの注・architecture_backend.md・公開 API の Javadoc を直した</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> マニュアル 8 章を直し、変わる画面のキャプチャを <code>manualScreenshots</code> で撮り直した</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <code>check</code>・<code>uiTest</code> が緑。push して CI を確かめた（<code>92badaf</code>、run 200）</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> SonarQube の Quality Gate が PASS、<code>okf:check</code> ERROR 0</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> 開発レビュー（T-90 の観点を含む）と終了報告。承認の後に #46 を閉じた</li>
 </ul>
 <h3 id="_12">デモ項目<a class="headerlink" href="#_12" title="Permanent link">&para;</a></h3>
@@ -9876,6 +9912,11 @@
 </tr>
 </thead>
 <tbody>
+<tr>
+<td style="text-align: left;">2026-10-11</td>
+<td style="text-align: left;">ステップ 1〜4 と開発レビューの対応を終え、終了報告を書いた（承認待ち）</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5</td>
+</tr>
 <tr>
 <td style="text-align: left;">2026-10-11</td>
 <td style="text-align: left;">計画を承認した（確認ポイントはすべて推奨のとおり）</td>
