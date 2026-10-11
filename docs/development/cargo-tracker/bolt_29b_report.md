@@ -3,8 +3,10 @@ type: Report
 title: "Bolt 29b 終了報告 - マニュアルで見つけた画面の文言と表示の課題（#46 の前半）"
 description: "29b 回目の Bolt の終了報告。S-22 の見出し、C-05 の案内の重複、C-02・S-02 の「入口の一覧へ戻る」、C-04 の予約確定済みの状態と案内を直し、開発レビューで見つかった C-04 の確定の前の約束とリンクの置き方も直した結果。UI 設計とマニュアル・キャプチャの対応、Bolt 28 の Code Smell、品質ゲート、ふりかえり、承認の議題を記す。"
 tags: [development,bolt-report]
-status: draft
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-11T05:23:15Z }
+status: stable
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-11T05:26:11Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-10-11T05:26:11Z }
 ---
 
 # Bolt 29b 終了報告 - マニュアルで見つけた画面の文言と表示の課題（#46 の前半）
@@ -128,6 +130,7 @@ Bolt 29c（#46 の後半）: S-09 の「確定条件（BR-01）」の見出し�
 
 | 日付 | 更新内容 | 更新者 |
 | :--- | :--- | :--- |
+| 2026-10-11 | 終了報告を承認した（議題 1〜5 を承認）。#46 に進み具合をコメントした（#46 は Bolt 29c の後に閉じる） | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-10-11 | 初版作成（承認待ち） | anthropic/claude-opus-5-5 |
 
 ## 関連ドキュメント

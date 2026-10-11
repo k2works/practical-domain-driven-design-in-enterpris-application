@@ -4,7 +4,7 @@ title: "リリース計画 - cargo-tracker（A 社国際貨物輸送管理シス
 description: "cargo-tracker MVP のリリース計画。1 人 + AI、時間単位の Bolt（= イテレーション）と週次の見直しで、最初の縦の流れ（R0.1）、パイロット準備完了（R1.0）、本格展開前（R1.1）の 3 段階、Unit のエントロピー評価、SP、バッファ、パイロット開始の条件、引継ぎ ID の台帳、業務責任者に確かめる事項の台帳。"
 tags: [development,release-plan]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-11T05:23:15Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-11T05:26:11Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T09:29:53Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:38:26Z }
@@ -550,7 +550,7 @@ US-04 の SP 5 は、サガの成功の経路を閉じて #10 をクローズす
 
 ### W5（2026-11-02 〜 11-06、11-03 は祝日）
 
-**状態**: 進行中（2026-10-11 に計画を作り、同日に human:kakimomokuri が承認した。Bolt 29 は完了。Bolt 29b は計画の承認待ち）
+**状態**: 進行中（2026-10-11 に計画を作り、同日に human:kakimomokuri が承認した。Bolt 29・29b は完了。次は Bolt 29c）
 
 **ゴール**: Release 0.1 の負債（#45・#46）を返し、認証を完成させ（US-18 の残り）、利用者と役割の管理（US-16 の一部）と予約の残り（US-04 AC3・AC5、#43）を作る。
 
@@ -614,7 +614,7 @@ US-18 の残りの SP 6 は #13 をクローズする Bolt 33b で、US-04 の S
 
 - [x] W5 の開始準備（本節。2026-10-11）: 計画の承認、詳細整合性検証・横断整合性検証（指摘を反映）、GitHub の同期（Issue。#47 を起票。Project のフィールドはこの環境から変えられないので人が設定する）、Bolt 29 計画（承認待ち）
 - [x] Bolt 29: #45。[Bolt 29 計画](bolt_29_plan.md)（`/goal` で進めた）、[Bolt 29 終了報告](bolt_29_report.md)（完了、2026-10-11 に承認済み。#45 を閉じた。SonarQube PASS。`uiTest` 80 本は集める前と同じく通った。失敗の経路を読めるものに直した）
-- [ ] Bolt 29b: #46 の前半。[Bolt 29b 計画](bolt_29b_plan.md)（`/goal` で進めた）、[Bolt 29b 終了報告](bolt_29b_report.md)（承認待ち。4 か所と開発レビューの必須の指摘を直した。SonarQube PASS・Code Smell 0）
+- [x] Bolt 29b: #46 の前半。[Bolt 29b 計画](bolt_29b_plan.md)（`/goal` で進めた）、[Bolt 29b 終了報告](bolt_29b_report.md)（完了、2026-10-11 に承認済み。4 か所と開発レビューの必須の指摘を直した。SonarQube PASS・Code Smell 0）
 - [ ] Bolt 29c: #46 の後半
 - [ ] Bolt 30〜33b: US-18 の残り（#13）と通知モジュールの最小の新設
 - [ ] Bolt 34: US-16 の一部（#14）
@@ -869,3 +869,4 @@ xychart-beta
 | 2026-10-11 | W5 の開始準備の詳細整合性検証・横断整合性検証の指摘を W5 の節に反映した。メール送信の部品の置き場所を `platform` から通知モジュールの新設に決め直し、US-18 AC9 の管理者経路を #47（W6）に分け、ACC-06 を Bolt 32b に入れた。Bolt 33b を分け、設計への反映が必要な事項と Bolt 13・14 からの持ち込みを書いた | anthropic/claude-opus-5-5、決定 human:kakimomokuri |
 | 2026-10-11 | Bolt 29 の終了報告の承認を記録し、Bolt 29 を終えた（#45 を閉じた。SP 0） | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-10-11 | Bolt 29b の開始準備: #46 の 6 か所を棚卸しし、29b（テンプレートの 4 か所と Bolt 28 の Code Smell）と 29c（S-09・S-06）に分けた。C-04 は表示と案内を直し、S-09 はドメインの日本語名で要約し、S-06 は語だけ直す。Bolt 29b 計画を作った（承認待ち） | anthropic/claude-opus-5-5、決定 human:kakimomokuri |
+| 2026-10-11 | Bolt 29b の終了報告の承認を記録し、Bolt 29b を終えた（#46 の前半。SP 0。#46 は Bolt 29c の後に閉じる） | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
