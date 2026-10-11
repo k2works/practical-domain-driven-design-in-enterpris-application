@@ -9995,11 +9995,11 @@
 <li>non_functional.md: TOTP の前提としてサーバーの時計の同期（NTP。ECS なら Amazon Time Sync）を書く（K-04）。SEC-09 に回復コードのハッシュの方式（bcrypt）、SEC-16 の旧い列の参照を直す</li>
 <li>release_plan.md: W5 の節の Bolt 13・14 からの持ち込みの表を、承認された割り振り（確認ポイント 9）に直す。K-03 を W10 に送るなら Issue にする（T-89）</li>
 <li>完了の判定: <code>okf:check</code> ERROR 0、<code>documentationTest</code> 緑</li>
-<li>[?] <strong>2. 表（マイグレーション）</strong> 【承認ゲート: スキーマ】</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>2. 表（マイグレーション）</strong> 【承認ゲート: スキーマ】</li>
 <li>Red: リポジトリの統合テスト（PostgreSQL。<code>MyBatisIdentityRepositoriesIntegrationTest</code> の前例）に、3 つの表へ書いて読む骨組みを書き、表がないことで落ちることを確かめる（本命は次のステップのアサーション。ここは表の有無）</li>
 <li>Green: マイグレーション（<code>db/migration/common/V20261011xxxxxx__create_identity_totp.sql</code>。版は作成した日の時刻にする。未来の日付にすると、後の Bolt で足す版が順序の違反になる。H2 と PostgreSQL の共通の構文）。外部キー、CHECK（<code>consecutive_failures &gt;= 0</code>、<code>last_used_step &gt;= 0</code>）、<code>recovery_code</code> の <code>user_id</code> の索引、表と列の日本語のコメント（<code>COMMENT ON</code>。追記専用の印は付けない）。<code>afterMigrate</code> の権限は既存の「スキーマのすべての表」の付与で足りるかを確かめる（足りなければ足す）</li>
 <li>完了の判定: <code>check</code> 緑（H2 の起動の確かめと PostgreSQL の統合テスト、<code>SchemaCommentIntegrationTest</code> を含む）</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>3. ドメインのモデル</strong> 【承認ゲート: Red・Green】</li>
+<li>[?] <strong>3. ドメインのモデル</strong> 【承認ゲート: Red・Green】</li>
 <li>Red: 単体テスト。TOTP の資格（刻みの単調増加、同じ刻み・前の刻みを拒む）、回復コード（使ったら使えない。ハッシュは <code>RecoveryCodeHasher</code> の偽の実装で確かめる）、ログインの失敗（4 回はロックしない・5 回でロック、ロックは 14 分 59 秒で解けず 15 分で解ける、ロック中の失敗は数えない、成功で 0 に戻る）。骨組みを先に置き、本命のアサーションで落とす（T-88）</li>
 <li>Green: <code>TotpCredential</code>・<code>RecoveryCode</code>・<code>LoginFailure</code>・<code>RecoveryCodeHasher</code>（<code>identity.domain.model.aggregates</code>）、<code>LockPolicy</code>（<code>rules</code>、<code>@DomainRule</code>）、<code>EncryptedSecret</code>（<code>valueobjects</code>）。時刻は引数で受け取る（<code>Clock</code> を持たない）。前後 1 つの窓の照合はポートを使うのでステップ 5 で書く</li>
 <li>完了の判定: <code>check</code> 緑、用語集の整合テスト（Living Glossary）と AT-01（ドメインの依存）が通る</li>
