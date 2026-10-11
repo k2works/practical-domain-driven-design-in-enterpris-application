@@ -167,7 +167,7 @@ class RoutingCaseControllerTest {
                 .andExpect(content().string(Matchers.containsString("SGSIN 積替え")))
                 .andExpect(content().string(Matchers.containsString("直行")))
                 .andExpect(content().string(Matchers.containsString("最も古い情報の取得時刻")))
-                .andExpect(content().string(Matchers.containsString("参照情報版 V-LATE@1")))
+                .andExpect(content().string(Matchers.containsString("参照した航海情報の版 V-LATE@1")))
                 .andExpect(content().string(Matchers.containsString("2026-10-01 15:10 Asia/Tokyo")))
                 .andExpect(content().string(Matchers.containsString("候補を再算出")));
     }
@@ -307,6 +307,26 @@ class RoutingCaseControllerTest {
                                 TestActors.STAFF_USER.value().toString()))))
                 .andExpect(content().string(Matchers.not(Matchers.containsString("候補を再算出"))))
                 .andExpect(content().string(Matchers.not(Matchers.containsString("この候補で確定へ"))));
+    }
+
+    @Test
+    void 比較の画面の適合の根拠に参照した航海情報の版を画面の語で示す() throws Exception {
+        when(queryService.findByNumber(NUMBER)).thenReturn(Optional.of(calculated()));
+
+        mockMvc.perform(get(SHOW))
+                .andExpect(status().isOk())
+                .andExpect(content().string(Matchers.containsString("（期限と接続時間を満たす）。参照した航海情報の版 V-201@1")))
+                .andExpect(content().string(Matchers.not(Matchers.containsString("参照情報版"))));
+    }
+
+    @Test
+    void 確定の画面の判定の根拠に参照した航海情報の版を画面の語で示す() throws Exception {
+        when(queryService.findByNumber(NUMBER)).thenReturn(Optional.of(calculated()));
+
+        mockMvc.perform(get(SHOW + "/confirmation").param("candidate", "1"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(Matchers.containsString("（期限と接続時間を満たす）。参照した航海情報の版 V-201@1")))
+                .andExpect(content().string(Matchers.not(Matchers.containsString("参照情報版"))));
     }
 
     @Test

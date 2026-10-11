@@ -27,7 +27,9 @@ final class RoutingCaseViews {
     /** 出発地と目的地の間の言葉。「→」はスクリーンリーダーが「右矢印」と読むので使わない（Bolt 26 の U-4。Bolt 26c）。 */
     private static final String ARROW = " から ";
 
-    private static final String INFO_VERSION = "。参照情報版 ";
+    /** 参照情報版（R-INV-02）の画面の語。値（航海の採用情報版）はそのまま示す（Bolt 29c、#46）。 */
+    private static final String INFO_VERSION = "。参照した航海情報の版 ";
+
     private static final String NO_EXPIRY = "期限の記録なし";
 
     private RoutingCaseViews() {}
@@ -239,7 +241,8 @@ final class RoutingCaseViews {
             texts.add("期限まで "
                     + DurationDisplay.connection(Duration.between(
                             candidate.evaluation().estimatedArrivalAt().instant(), deadline.instant()))
-                    + "（期限と接続時間を満たす）。参照情報版 "
+                    + "（期限と接続時間を満たす）"
+                    + INFO_VERSION
                     + candidate.legs().stream().map(Leg::infoVersion).distinct().collect(Collectors.joining("、")));
         }
         return texts;

@@ -172,12 +172,12 @@ public class RoutingUiSteps {
         assertThat(candidate).containsText("余裕 0 分");
     }
 
-    @ならば("期限に間に合わない候補は {string} と示され、理由に {string} と参照情報版が示される")
+    @ならば("期限に間に合わない候補は {string} と示され、理由に {string} と参照した航海情報の版が示される")
     public void 期限超過の候補(String judgement, String reason) {
         Locator candidate = candidate(voyage("LATE"));
         assertThat(candidate).containsText(judgement);
         assertThat(candidate).containsText(reason);
-        assertThat(candidate).containsText("参照情報版 " + voyage("LATE") + "@1");
+        assertThat(candidate).containsText("参照した航海情報の版 " + voyage("LATE") + "@1");
     }
 
     /**
