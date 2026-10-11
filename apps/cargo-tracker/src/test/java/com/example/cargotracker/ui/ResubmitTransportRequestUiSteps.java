@@ -94,20 +94,20 @@ public class ResubmitTransportRequestUiSteps {
     @もし("編集を開き、キー操作だけで目的地を {string} に直して出し直す")
     public void キー操作だけで直して出し直す(String destination) {
         page().locator("body").focus();
-        tabUntilFocused(link(EDIT_LINK));
+        browser.tabUntilFocused(link(EDIT_LINK));
         page().keyboard().press("Enter");
         page().waitForURL("**/customer/transport-requests/" + number() + "/edit");
         browser.checkAccessibility();
         page().locator("body").focus();
-        tabUntilFocused(field(DESTINATION));
+        browser.tabUntilFocused(field(DESTINATION));
         page().keyboard().press("ControlOrMeta+A");
         page().keyboard().type(destination);
         // 段階入力（Bolt 8）: 見えている「次へ」を Enter で押して確認の段階まで進む
         for (int i = 0; i < 3; i++) {
-            tabUntilFocused(nextButton());
+            browser.tabUntilFocused(nextButton());
             page().keyboard().press("Enter");
         }
-        tabUntilFocused(resubmitButton());
+        browser.tabUntilFocused(resubmitButton());
         page().keyboard().press("Enter");
         page().waitForURL(SubmitTransportRequestUiSteps.DETAIL_URL);
         browser.checkAccessibility();
@@ -148,16 +148,5 @@ public class ResubmitTransportRequestUiSteps {
     public void 詳細に結果と状態が表示される(String result, String status) {
         assertThat(page().getByRole(AriaRole.STATUS)).containsText(number() + " " + result);
         assertThat(definition("状態")).hasText(status);
-    }
-
-    /** Tab を押してフォーカスを進め、目的の要素に届いたら止まる（届かなければ失敗する）。 */
-    private void tabUntilFocused(Locator target) {
-        for (int i = 0; i < 30; i++) {
-            page().keyboard().press("Tab");
-            if ((Boolean) target.evaluate("element => element === document.activeElement")) {
-                return;
-            }
-        }
-        assertThat(target).isFocused();
     }
 }

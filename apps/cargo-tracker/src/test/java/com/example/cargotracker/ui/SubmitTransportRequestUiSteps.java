@@ -354,7 +354,7 @@ public class SubmitTransportRequestUiSteps {
 
     /** キー操作だけで輸送条件の段階を入力して次へ進み、貨物の段階を入力する（貨物の段階にとどまる）。 */
     public void キー操作だけで輸送条件と貨物を入力する() {
-        tabUntilGroup(CONSIGNEE);
+        browser.tabUntilGroup(CONSIGNEE);
         page().keyboard().press("Space");
         tabTo(ORIGIN);
         page().keyboard().type("JPTYO");
@@ -488,18 +488,6 @@ public class SubmitTransportRequestUiSteps {
                                 new Page.GetByRoleOptions().setName(legend).setExact(true))
                         .locator("input:focus"))
                 .hasCount(1);
-    }
-
-    /** ラジオボタンのグループに届くまで Tab を進める（届かなければ失敗する）。 */
-    private void tabUntilGroup(String legend) {
-        Locator focused = page().getByRole(
-                        AriaRole.GROUP,
-                        new Page.GetByRoleOptions().setName(legend).setExact(true))
-                .locator("input:focus");
-        for (int i = 0; i < 20 && focused.count() == 0; i++) {
-            page().keyboard().press("Tab");
-        }
-        assertThat(focused).hasCount(1);
     }
 
     /** Tab で次の要素へ移り、その要素がラベルの入力欄であることを確かめる（フォーカスの順序の確認）。 */

@@ -137,16 +137,16 @@ public class QuotationUiSteps {
     @もし("キー操作だけで再見積りを開き、有効期限 {string} を入れて算出する")
     public void キー操作だけで再見積りする(String expiresAt) {
         page().locator("body").focus();
-        tabUntilFocused(link(REQUOTE));
+        browser.tabUntilFocused(link(REQUOTE));
         page().keyboard().press("Enter");
         page().waitForURL("**" + quotationsPath() + "/1/requotation");
         browser.checkAccessibility();
         assertThat(field(line(1, "内容"))).hasValue(STANDARD_LINES[0][0]);
         assertThat(field(EXPIRES_AT)).hasValue("");
         page().locator("body").focus();
-        tabUntilFocused(field(EXPIRES_AT));
+        browser.tabUntilFocused(field(EXPIRES_AT));
         page().keyboard().type(expiresAt);
-        tabUntilFocused(button(CALCULATE));
+        browser.tabUntilFocused(button(CALCULATE));
         page().keyboard().press("Enter");
         page().waitForURL("**" + quotationsPath() + "/2");
         browser.checkAccessibility();
@@ -216,7 +216,7 @@ public class QuotationUiSteps {
     @もし("キー操作だけで標準の料金明細と通貨と有効期限と経路方針を入れて算出する")
     public void キー操作だけで算出する() {
         page().locator("body").focus();
-        tabUntilFocused(field(line(1, "内容")));
+        browser.tabUntilFocused(field(line(1, "内容")));
         for (int i = 0; i < STANDARD_LINES.length; i++) {
             if (i > 0) {
                 tabTo(field(line(i + 1, "内容")));
@@ -227,7 +227,7 @@ public class QuotationUiSteps {
             tabTo(field(line(i + 1, "参照した契約条件（任意）")));
             page().keyboard().type(STANDARD_LINES[i][2]);
         }
-        tabUntilGroup(CURRENCY);
+        browser.tabUntilGroup(CURRENCY);
         page().keyboard().press("Space");
         tabTo(field(EXPIRES_AT));
         page().keyboard().type("2099-10-08 18:00");
@@ -254,7 +254,7 @@ public class QuotationUiSteps {
     @もし("キー操作だけで社内承認して提示する")
     public void キー操作だけで提示する() {
         page().locator("body").focus();
-        tabUntilFocused(button(PRESENT));
+        browser.tabUntilFocused(button(PRESENT));
         page().keyboard().press("Enter");
         page().waitForURL("**/staff/transport-requests");
         browser.checkAccessibility();
@@ -336,28 +336,5 @@ public class QuotationUiSteps {
     private void tabTo(Locator target) {
         page().keyboard().press("Tab");
         assertThat(target).isFocused();
-    }
-
-    /** Tab を押してフォーカスを進め、目的の要素に届いたら止まる（届かなければ失敗する）。 */
-    private void tabUntilFocused(Locator target) {
-        for (int i = 0; i < 60; i++) {
-            page().keyboard().press("Tab");
-            if ((Boolean) target.evaluate("element => element === document.activeElement")) {
-                return;
-            }
-        }
-        assertThat(target).isFocused();
-    }
-
-    /** ラジオボタンのグループに届くまで Tab を進める（届かなければ失敗する）。 */
-    private void tabUntilGroup(String legend) {
-        Locator focused = page().getByRole(
-                        AriaRole.GROUP,
-                        new Page.GetByRoleOptions().setName(legend).setExact(true))
-                .locator("input:focus");
-        for (int i = 0; i < 60 && focused.count() == 0; i++) {
-            page().keyboard().press("Tab");
-        }
-        assertThat(focused).hasCount(1);
     }
 }

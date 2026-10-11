@@ -68,7 +68,7 @@ public class CustomerTrackingUiSteps {
     @もし("キー操作だけで追跡の照会の一覧の先頭の貨物を開く")
     public void 一覧の先頭の貨物を開く() {
         page().locator("body").focus();
-        tabUntilFocused(list().locator("tbody tr")
+        browser.tabUntilFocused(list().locator("tbody tr")
                 .first()
                 .getByRole(AriaRole.LINK, new Locator.GetByRoleOptions().setName(state.trackingNumber())));
         page().keyboard().press("Enter");
@@ -96,7 +96,7 @@ public class CustomerTrackingUiSteps {
     @もし("キー操作だけで照会の結果から追跡の照会へ戻る")
     public void 照会の結果から戻る() {
         page().locator("body").focus();
-        tabUntilFocused(page().getByRole(
+        browser.tabUntilFocused(page().getByRole(
                         AriaRole.LINK,
                         new Page.GetByRoleOptions().setName("追跡の照会へ戻る").setExact(true)));
         page().keyboard().press("Enter");
@@ -117,9 +117,9 @@ public class CustomerTrackingUiSteps {
     @もし("キー操作だけで追跡番号 {string} を入れて照会する")
     public void 追跡番号を入れて照会する(String trackingNumber) {
         page().locator("body").focus();
-        tabUntilFocused(page().getByLabel("追跡番号", new Page.GetByLabelOptions().setExact(true)));
+        browser.tabUntilFocused(page().getByLabel("追跡番号", new Page.GetByLabelOptions().setExact(true)));
         page().keyboard().type(trackingNumber);
-        tabUntilFocused(page().getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("照会する")));
+        browser.tabUntilFocused(page().getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("照会する")));
         // 送信の後の移動の途中で検査しないよう、行き先（入力の誤りは一覧の URL に入力を付けたもの、正しければ結果）に移り終わってから
         // 検査する（Bolt 26c の axe の注入の失敗と同じ）
         page().keyboard().press("Enter");
@@ -140,15 +140,5 @@ public class CustomerTrackingUiSteps {
     public void 入力が残っている(String trackingNumber) {
         assertThat(page().getByLabel("追跡番号", new Page.GetByLabelOptions().setExact(true)))
                 .hasValue(trackingNumber);
-    }
-
-    private void tabUntilFocused(Locator target) {
-        for (int i = 0; i < 80; i++) {
-            page().keyboard().press("Tab");
-            if ((Boolean) target.evaluate("element => element === document.activeElement")) {
-                return;
-            }
-        }
-        assertThat(target).isFocused();
     }
 }

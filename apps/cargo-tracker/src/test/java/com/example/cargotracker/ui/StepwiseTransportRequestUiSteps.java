@@ -68,7 +68,7 @@ public class StepwiseTransportRequestUiSteps {
 
     @もし("キー操作だけで確認の段階から提出する")
     public void キー操作だけで提出する() {
-        tabUntilFocused(page().getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(SUBMIT)));
+        browser.tabUntilFocused(page().getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(SUBMIT)));
         page().keyboard().press("Enter");
         page().waitForURL(SubmitTransportRequestUiSteps.DETAIL_URL);
         browser.checkAccessibility();
@@ -104,17 +104,7 @@ public class StepwiseTransportRequestUiSteps {
 
     /** 見えている「次へ」まで Tab で進み、Enter で次の段階へ移る。 */
     private void keyboardNext() {
-        tabUntilFocused(page().getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(NEXT)));
+        browser.tabUntilFocused(page().getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(NEXT)));
         page().keyboard().press("Enter");
-    }
-
-    private void tabUntilFocused(Locator target) {
-        for (int i = 0; i < 30; i++) {
-            if ((Boolean) target.evaluate("element => element === document.activeElement")) {
-                return;
-            }
-            page().keyboard().press("Tab");
-        }
-        assertThat(target).isFocused();
     }
 }

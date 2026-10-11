@@ -59,7 +59,7 @@ public class RouteDesignUiSteps {
     @もし("キー操作だけで見積りへの回答を開き、詳細経路設計へ進む")
     public void キー操作だけで詳細経路設計へ進む() {
         page().locator("body").focus();
-        tabUntilFocused(link(RESPOND));
+        browser.tabUntilFocused(link(RESPOND));
         page().keyboard().press("Enter");
         page().waitForURL("**/customer/transport-requests/" + number() + "/quotations/1/response");
         browser.checkAccessibility();
@@ -68,7 +68,7 @@ public class RouteDesignUiSteps {
         assertThat(page().locator("main")).containsText("詳細な経路と日程は経路設計者の承認後に確定します");
         assertThat(page().locator("main")).containsText("辞退や条件の相談は担当営業にご連絡ください");
         page().locator("body").focus();
-        tabUntilFocused(button(PROCEED));
+        browser.tabUntilFocused(button(PROCEED));
         page().keyboard().press("Enter");
         page().waitForURL("**/customer/transport-requests/" + number());
         browser.checkAccessibility();
@@ -138,16 +138,5 @@ public class RouteDesignUiSteps {
         return page().getByRole(
                         AriaRole.REGION,
                         new Page.GetByRoleOptions().setName("見積り").setExact(true));
-    }
-
-    /** Tab を押してフォーカスを進め、目的の要素に届いたら止まる（届かなければ失敗する）。 */
-    private void tabUntilFocused(Locator target) {
-        for (int i = 0; i < 60; i++) {
-            page().keyboard().press("Tab");
-            if ((Boolean) target.evaluate("element => element === document.activeElement")) {
-                return;
-            }
-        }
-        assertThat(target).isFocused();
     }
 }

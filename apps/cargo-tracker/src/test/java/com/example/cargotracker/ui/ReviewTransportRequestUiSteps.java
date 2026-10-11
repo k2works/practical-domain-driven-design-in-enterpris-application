@@ -103,7 +103,7 @@ public class ReviewTransportRequestUiSteps {
     @もし("根拠 {string} をキー操作だけで入力して審査を確定する")
     public void キー操作だけで審査を確定する(String rationale) {
         page().locator("body").focus();
-        tabUntilFocused(field(RATIONALE));
+        browser.tabUntilFocused(field(RATIONALE));
         page().keyboard().type(rationale);
         page().keyboard().press("Tab");
         assertThat(button("審査を確定する")).isFocused();
@@ -135,16 +135,5 @@ public class ReviewTransportRequestUiSteps {
     @ならば("入力した不足事項 {string} が残っている")
     public void 不足事項が残っている(String missingItems) {
         assertThat(field(MISSING_ITEMS)).hasValue(missingItems);
-    }
-
-    /** Tab を押してフォーカスを進め、目的の要素に届いたら止まる（届かなければ失敗する）。 */
-    private void tabUntilFocused(Locator target) {
-        for (int i = 0; i < 20; i++) {
-            page().keyboard().press("Tab");
-            if ((Boolean) target.evaluate("element => element === document.activeElement")) {
-                return;
-            }
-        }
-        assertThat(target).isFocused();
     }
 }

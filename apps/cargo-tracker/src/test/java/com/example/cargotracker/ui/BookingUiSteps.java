@@ -88,10 +88,10 @@ public class BookingUiSteps {
     @もし("キー操作だけで契約条件と照合したことを示して本予約を確定する")
     public void キー操作だけで確定する() {
         page().locator("body").focus();
-        tabUntilFocused(page().getByLabel("契約条件と照合した（営業担当者の確認）"));
+        browser.tabUntilFocused(page().getByLabel("契約条件と照合した（営業担当者の確認）"));
         page().keyboard().press("Space");
         assertThat(page().getByLabel("契約条件と照合した（営業担当者の確認）")).isChecked();
-        tabUntilFocused(page().getByRole(
+        browser.tabUntilFocused(page().getByRole(
                         AriaRole.BUTTON,
                         new Page.GetByRoleOptions().setName(CONFIRM).setExact(true)));
         page().keyboard().press("Enter");
@@ -227,7 +227,7 @@ public class BookingUiSteps {
     @もし("キー操作だけで予約の詳細を開く")
     public void キー操作だけで予約の詳細を開く() {
         page().locator("body").focus();
-        tabUntilFocused(detailLink());
+        browser.tabUntilFocused(detailLink());
         page().keyboard().press("Enter");
         page().waitForURL("**/staff/bookings/CT*");
     }
@@ -245,7 +245,7 @@ public class BookingUiSteps {
         page().waitForURL("**/staff/bookings/CT*");
         confirmedTrackingNumber = definition("追跡番号").textContent().strip();
         page().locator("body").focus();
-        tabUntilFocused(page().getByRole(
+        browser.tabUntilFocused(page().getByRole(
                         AriaRole.LINK,
                         new Page.GetByRoleOptions().setName("見積依頼の受付一覧").setExact(true)));
         page().keyboard().press("Enter");
@@ -267,7 +267,7 @@ public class BookingUiSteps {
     @もし("キー操作だけで予約一覧の先頭の予約の詳細を開く")
     public void 予約一覧から予約の詳細を開く() {
         page().locator("body").focus();
-        tabUntilFocused(bookingList()
+        browser.tabUntilFocused(bookingList()
                 .locator("tbody tr")
                 .first()
                 .getByRole(AriaRole.LINK, new Locator.GetByRoleOptions().setName(confirmedTrackingNumber)));
@@ -285,7 +285,7 @@ public class BookingUiSteps {
     @もし("キー操作だけで予約の詳細から予約一覧へ戻る")
     public void 予約の詳細から予約一覧へ戻る() {
         page().locator("body").focus();
-        tabUntilFocused(page().getByRole(
+        browser.tabUntilFocused(page().getByRole(
                         AriaRole.LINK,
                         new Page.GetByRoleOptions().setName("予約一覧").setExact(true)));
         page().keyboard().press("Enter");
@@ -319,15 +319,5 @@ public class BookingUiSteps {
                 .post(
                         baseUrl + "/staff/bookings",
                         RequestOptions.create().setForm(data).setMaxRedirects(maxRedirects));
-    }
-
-    private void tabUntilFocused(Locator target) {
-        for (int i = 0; i < 80; i++) {
-            page().keyboard().press("Tab");
-            if ((Boolean) target.evaluate("element => element === document.activeElement")) {
-                return;
-            }
-        }
-        assertThat(target).isFocused();
     }
 }

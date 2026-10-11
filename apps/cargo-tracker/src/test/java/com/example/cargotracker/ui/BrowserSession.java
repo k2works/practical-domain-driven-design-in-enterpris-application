@@ -1,10 +1,13 @@
 package com.example.cargotracker.ui;
 
+import static com.microsoft.playwright.assertions.PlaywrightAssertions.assertThat;
+
 import com.deque.html.axecore.playwright.AxeBuilder;
 import com.deque.html.axecore.results.Rule;
 import com.example.cargotracker.shared.domain.Role;
 import com.microsoft.playwright.Browser;
 import com.microsoft.playwright.BrowserContext;
+import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.Video;
 import com.microsoft.playwright.options.AriaRole;
@@ -41,6 +44,12 @@ public class BrowserSession implements DisposableBean {
     private static final int VIDEO_WIDTH = 1280;
 
     private static final int VIDEO_HEIGHT = 720;
+
+    /** Tab でフォーカスを進める回数の上限。いちばん遠い要素に届く画面に合わせる（Bolt 29、#45）。 */
+    private static final int MAX_TABS = 80;
+
+    /** ラジオボタンのグループまで Tab でフォーカスを進める回数の上限（Bolt 29、#45）。 */
+    private static final int MAX_TABS_TO_GROUP = 60;
 
     public BrowserSession(PlaywrightBrowser browser, UiUsers users) {
         this.users = users;
@@ -116,6 +125,34 @@ public class BrowserSession implements DisposableBean {
         for (Rule violation : new AxeBuilder(page).withTags(WCAG_TAGS).analyze().getViolations()) {
             accessibilityViolations.add(page.url() + " " + violation.getId() + ": " + violation.getHelp());
         }
+    }
+
+    /**
+     * Tab を押してフォーカスを進め、目的の要素に届いたら止まる（届かなければ失敗する）。すでに目的の要素にフォーカスがあれば押さない。
+     * 画面の層のステップ定義がキー操作だけで画面を操作するための部品で、待ち方と上限を直す場所をここ 1 つにする（Bolt 29、#45。T-87）。
+     * 上限は失敗までの時間の上限で、フォーカスの順序の仕様ではない（順序はステップ定義の {@code tabTo} で確かめる）。
+     * 目的の要素が画面に現れるまでは待ち（画面の遷移の直後でも押し始めない）、現れなければ Playwright の待ち時間で読める失敗にする。
+     * 押す間の判定は待たない（{@code count}）。要素の自動待ちで 30 秒の TimeoutError になっていたのを避ける（Bolt 29 の開発レビュー）。
+     */
+    public void tabUntilFocused(Locator target) {
+        assertThat(target).isAttached();
+        Locator focused = target.and(page.locator(":focus"));
+        for (int i = 0; i < MAX_TABS && focused.count() == 0; i++) {
+            page.keyboard().press("Tab");
+        }
+        assertThat(target).isFocused();
+    }
+
+    /** ラジオボタンのグループ（名前は legend）の中の入力欄に届くまで Tab を進める（届かなければ失敗する。Bolt 29、#45）。 */
+    public void tabUntilGroup(String legend) {
+        Locator focused = page.getByRole(
+                        AriaRole.GROUP,
+                        new Page.GetByRoleOptions().setName(legend).setExact(true))
+                .locator("input:focus");
+        for (int i = 0; i < MAX_TABS_TO_GROUP && focused.count() == 0; i++) {
+            page.keyboard().press("Tab");
+        }
+        assertThat(focused).hasCount(1);
     }
 
     public List<String> accessibilityViolations() {

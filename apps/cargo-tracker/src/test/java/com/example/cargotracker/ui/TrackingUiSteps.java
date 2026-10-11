@@ -67,7 +67,7 @@ public class TrackingUiSteps {
     @もし("キー操作だけで追跡一覧の先頭の追跡の詳細を開く")
     public void 追跡一覧から追跡の詳細を開く() {
         page().locator("body").focus();
-        tabUntilFocused(trackingList()
+        browser.tabUntilFocused(trackingList()
                 .locator("tbody tr")
                 .first()
                 .getByRole(AriaRole.LINK, new Locator.GetByRoleOptions().setName(state.trackingNumber())));
@@ -90,7 +90,7 @@ public class TrackingUiSteps {
     @もし("キー操作だけで追跡の詳細から追跡一覧へ戻る")
     public void 追跡の詳細から追跡一覧へ戻る() {
         page().locator("body").focus();
-        tabUntilFocused(page().getByRole(
+        browser.tabUntilFocused(page().getByRole(
                         AriaRole.LINK,
                         new Page.GetByRoleOptions().setName("追跡一覧").setExact(true)));
         page().keyboard().press("Enter");
@@ -102,7 +102,7 @@ public class TrackingUiSteps {
     @もし("キー操作だけで追跡の詳細から実績の登録を開く")
     public void 追跡の詳細から実績の登録を開く() {
         page().locator("body").focus();
-        tabUntilFocused(page().getByRole(
+        browser.tabUntilFocused(page().getByRole(
                         AriaRole.LINK,
                         new Page.GetByRoleOptions().setName("実績を登録").setExact(true)));
         page().keyboard().press("Enter");
@@ -120,7 +120,7 @@ public class TrackingUiSteps {
         typeInto(page().getByLabel("発生時刻（日本時間）"), occurredAt);
         chooseRadio(sourceKind);
         typeInto(page().getByLabel("出典の参照", new Page.GetByLabelOptions().setExact(true)), reference);
-        tabUntilFocused(page().getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("登録する")));
+        browser.tabUntilFocused(page().getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("登録する")));
         // リダイレクトの途中で検査しないよう、行き先の画面（登録の結果は追跡の詳細、入力の誤りは送り先の URL）に移り終わってから検査する
         page().keyboard().press("Enter");
         page().waitForURL(url -> !url.endsWith("/milestones/new"));
@@ -185,7 +185,7 @@ public class TrackingUiSteps {
     private void chooseRadio(String label) {
         Locator target = page().getByLabel(label, new Page.GetByLabelOptions().setExact(true));
         Locator group = target.locator("xpath=ancestor::fieldset[1]").getByRole(AriaRole.RADIO);
-        tabUntilFocused(group.first());
+        browser.tabUntilFocused(group.first());
         for (int i = 0; i < 10 && !(Boolean) target.evaluate("element => element === document.activeElement"); i++) {
             page().keyboard().press("ArrowDown");
         }
@@ -194,21 +194,11 @@ public class TrackingUiSteps {
     }
 
     private void typeInto(Locator field, String text) {
-        tabUntilFocused(field);
+        browser.tabUntilFocused(field);
         page().keyboard().press("ControlOrMeta+a");
         page().keyboard().press("Delete");
         if (!text.isEmpty()) {
             page().keyboard().type(text);
         }
-    }
-
-    private void tabUntilFocused(Locator target) {
-        for (int i = 0; i < 80; i++) {
-            page().keyboard().press("Tab");
-            if ((Boolean) target.evaluate("element => element === document.activeElement")) {
-                return;
-            }
-        }
-        assertThat(target).isFocused();
     }
 }

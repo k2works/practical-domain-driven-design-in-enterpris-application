@@ -66,7 +66,7 @@ public class ShipperApprovalUiSteps {
     @もし("キー操作だけで見積りと経路の承認を開き、承認する")
     public void キー操作だけで承認する() {
         page().locator("body").focus();
-        tabUntilFocused(link(TO_APPROVAL));
+        browser.tabUntilFocused(link(TO_APPROVAL));
         page().keyboard().press("Enter");
         page().waitForURL("**/quotations/1/approval");
         assertThat(page().getByRole(AriaRole.HEADING, new Page.GetByRoleOptions().setLevel(1)))
@@ -75,7 +75,7 @@ public class ShipperApprovalUiSteps {
         assertThat(page().locator("main")).containsText("承認は本予約の確定ではありません");
         browser.checkAccessibility();
         page().locator("body").focus();
-        tabUntilFocused(page().getByRole(
+        browser.tabUntilFocused(page().getByRole(
                         AriaRole.BUTTON,
                         new Page.GetByRoleOptions().setName(APPROVE).setExact(true)));
         page().keyboard().press("Enter");
@@ -102,15 +102,5 @@ public class ShipperApprovalUiSteps {
         assertThat(definition("状態")).hasText(status);
         assertThat(page().locator("main")).containsText("担当営業が本予約を確定します");
         browser.checkAccessibility();
-    }
-
-    private void tabUntilFocused(Locator target) {
-        for (int i = 0; i < 60; i++) {
-            page().keyboard().press("Tab");
-            if ((Boolean) target.evaluate("element => element === document.activeElement")) {
-                return;
-            }
-        }
-        assertThat(target).isFocused();
     }
 }
