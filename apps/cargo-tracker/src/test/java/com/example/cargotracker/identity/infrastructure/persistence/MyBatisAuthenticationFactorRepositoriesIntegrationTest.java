@@ -72,18 +72,20 @@ class MyBatisAuthenticationFactorRepositoriesIntegrationTest extends Authenticat
     }
 
     @Override
+    protected UserId unknownUser() {
+        return new UserId(UUID.randomUUID());
+    }
+
+    @Override
     protected UserId newUser() {
         return AuthenticationFactorFixtures.newUser(companies, users);
     }
 
     @Test
     void 存在しない利用者の失敗では行を作らない() {
-        UserId unknown = new UserId(UUID.randomUUID());
+        UserId unknown = unknownUser();
+        loginFailures.recordFailure(unknown, at(Duration.ZERO), new LockPolicy());
 
-        assertThat(loginFailures
-                        .recordFailure(unknown, at(Duration.ZERO), new LockPolicy())
-                        .consecutiveFailures())
-                .isZero();
         assertThat(jdbc.queryForObject(
                         "SELECT count(*) FROM identity.login_failure WHERE user_id = ?",
                         Integer.class,

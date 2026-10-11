@@ -20,8 +20,8 @@ public interface RecoveryCodeRepository {
     List<RecoveryCode> findUnusedByUserId(UserId userId);
 
     /**
-     * 未使用のときだけ、使った時刻を書く。書けたら true。同じコードの同時の消費は 1 つだけが true になる。
-     * 存在しないコードは false（失敗へ倒す。T-42）。
+     * その利用者の未使用のコードのときだけ、使った時刻を書く。書けたら true。同じコードの同時の消費は 1 つだけが
+     * true になる。存在しないコードと、ほかの利用者のコードは false（失敗へ倒す。T-42。多層の守り）。
      */
-    boolean use(UUID recoveryCodeId, UtcInstant usedAt);
+    boolean use(UserId userId, UUID recoveryCodeId, UtcInstant usedAt);
 }

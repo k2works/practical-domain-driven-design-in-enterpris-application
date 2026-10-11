@@ -7,6 +7,8 @@ import com.example.cargotracker.identity.domain.model.valueobjects.EncryptedSecr
 import com.example.cargotracker.shared.domain.UserId;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 
@@ -100,11 +102,69 @@ class TotpCredentialTest {
     }
 
     @Test
-    void 形の違うコードは受け付けない() {
+    void 形の違うコードは生成器を呼ばずに受け付けない() {
+        TotpCredential credential = lastUsed(0);
+        TotpCodeGenerator mustNotBeCalled = (secret, step) -> {
+            throw new AssertionError("形の違うコードで生成器を呼んだ");
+        };
+
+        assertThat(credential.matchingStep(null, SECRET, 100, mustNotBeCalled)).isEmpty();
+        assertThat(credential.matchingStep("", SECRET, 100, mustNotBeCalled)).isEmpty();
+        assertThat(credential.matchingStep(" 000100", SECRET, 100, mustNotBeCalled))
+                .isEmpty();
+        assertThat(credential.matchingStep("00010a", SECRET, 100, mustNotBeCalled))
+                .isEmpty();
+        assertThat(credential.matchingStep("０００１００", SECRET, 100, mustNotBeCalled))
+                .as("全角の数字")
+                .isEmpty();
+    }
+
+    @Test
+    void 桁数の違うコードは受け付けない() {
         TotpCredential credential = lastUsed(0);
 
-        assertThat(credential.matchingStep(null, SECRET, 100, GENERATOR)).isEmpty();
         assertThat(credential.matchingStep("00100", SECRET, 100, GENERATOR)).isEmpty();
-        assertThat(credential.matchingStep(" 000100", SECRET, 100, GENERATOR)).isEmpty();
+        assertThat(credential.matchingStep("0000100", SECRET, 100, GENERATOR)).isEmpty();
+    }
+
+    @Test
+    void 一致した位置にかかわらず窓のすべての刻みのコードを作って比べる() {
+        TotpCredential credential = lastUsed(0);
+        for (String code : new String[] {"000099", "000100", "000101", "999999"}) {
+            List<Long> generated = new ArrayList<>();
+            TotpCodeGenerator counting = (secret, step) -> {
+                generated.add(step);
+                return GENERATOR.code(secret, step);
+            };
+
+            credential.matchingStep(code, SECRET, 100, counting);
+
+            assertThat(generated).as(code).containsExactly(99L, 100L, 101L);
+        }
+    }
+
+    @Test
+    void 刻み0の窓は負の刻みを作らない() {
+        TotpCredential credential = lastUsed(0);
+        List<Long> generated = new ArrayList<>();
+        TotpCodeGenerator rejectsNegative = (secret, step) -> {
+            if (step < 0) {
+                throw new AssertionError("負の刻みのコードを作った");
+            }
+            generated.add(step);
+            return GENERATOR.code(secret, step);
+        };
+
+        assertThat(credential.matchingStep("000001", SECRET, 0, rejectsNegative))
+                .hasValue(1);
+        assertThat(generated).containsExactly(0L, 1L);
+    }
+
+    @Test
+    void 今の刻みが負なら失敗へ倒す() {
+        TotpCredential credential = lastUsed(0);
+
+        assertThatThrownBy(() -> credential.matchingStep("000000", SECRET, -1, GENERATOR))
+                .isInstanceOf(IllegalArgumentException.class);
     }
 }

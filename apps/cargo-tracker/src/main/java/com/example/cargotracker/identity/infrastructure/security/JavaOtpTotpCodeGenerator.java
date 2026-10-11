@@ -6,7 +6,9 @@ import com.example.cargotracker.identity.domain.model.aggregates.TotpCredential;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
+import java.util.Locale;
 import javax.crypto.spec.SecretKeySpec;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 /**
@@ -22,6 +24,7 @@ public final class JavaOtpTotpCodeGenerator implements TotpCodeGenerator {
     private final TimeBasedOneTimePasswordGenerator generator;
 
     /** 本番の桁数（6 桁）の生成器。 */
+    @Autowired
     public JavaOtpTotpCodeGenerator() {
         this(6);
     }
@@ -46,7 +49,9 @@ public final class JavaOtpTotpCodeGenerator implements TotpCodeGenerator {
         try {
             return generator.generateOneTimePasswordString(
                     new SecretKeySpec(secret, ALGORITHM),
-                    Instant.ofEpochSecond(step * TotpCredential.STEP_DURATION.toSeconds()));
+                    Instant.ofEpochSecond(step * TotpCredential.STEP_DURATION.toSeconds()),
+                    // 既定のロケールの数字（アラビア・インド数字など）にせず、ASCII の数字で書く
+                    Locale.ROOT);
         } catch (InvalidKeyException e) {
             throw new IllegalArgumentException("TOTP の秘密を使えない", e);
         }

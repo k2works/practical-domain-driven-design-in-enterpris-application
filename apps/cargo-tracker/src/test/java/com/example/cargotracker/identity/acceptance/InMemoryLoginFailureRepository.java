@@ -41,7 +41,7 @@ public class InMemoryLoginFailureRepository implements LoginFailureRepository {
 
     @Override
     public void recordSuccess(UserId userId, UtcInstant succeededAt) {
-        store.computeIfPresent(userId, (id, stored) -> stored.recordSuccess());
+        store.computeIfPresent(userId, (id, stored) -> stored.recordSuccess(succeededAt));
     }
 
     /** シナリオの開始時に記録と登録した利用者を消す。 */

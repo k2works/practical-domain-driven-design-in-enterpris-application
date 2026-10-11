@@ -45,8 +45,8 @@ public class MyBatisRecoveryCodeRepository implements RecoveryCodeRepository {
     }
 
     @Override
-    public boolean use(UUID recoveryCodeId, UtcInstant usedAt) {
-        return mapper.updateRecoveryCodeUsedIfUnused(recoveryCodeId, toOffset(usedAt)) == 1;
+    public boolean use(UserId userId, UUID recoveryCodeId, UtcInstant usedAt) {
+        return mapper.updateRecoveryCodeUsedIfUnused(userId.value(), recoveryCodeId, toOffset(usedAt)) == 1;
     }
 
     private static OffsetDateTime toOffset(UtcInstant instant) {

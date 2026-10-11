@@ -20,8 +20,9 @@ class EncryptedSecretTest {
 
     @Test
     void 表の列より長い暗号文は失敗へ倒す() {
-        assertThatThrownBy(() -> new EncryptedSecret("x".repeat(EncryptedSecret.MAX_LENGTH + 1)))
-                .isInstanceOf(IllegalArgumentException.class);
+        String tooLong = "x".repeat(EncryptedSecret.MAX_LENGTH + 1);
+
+        assertThatThrownBy(() -> new EncryptedSecret(tooLong)).isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test

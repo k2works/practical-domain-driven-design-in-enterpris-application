@@ -16,14 +16,15 @@ import com.example.cargotracker.identity.domain.model.rules.LockPolicy;
 import com.example.cargotracker.identity.domain.model.valueobjects.EncryptedSecret;
 import com.example.cargotracker.shared.domain.UserId;
 import com.example.cargotracker.shared.domain.UtcInstant;
+import java.time.Duration;
 import java.time.Instant;
-import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.function.Supplier;
 import java.util.stream.IntStream;
 import org.junit.jupiter.api.Test;
@@ -35,7 +36,8 @@ import org.springframework.transaction.support.TransactionTemplate;
 /**
  * 失敗の加算・刻みの使用・回復コードの消費が、別々のトランザクションでの同時実行でも 1 文の条件付きの更新で
  * 正しく判定されることを確かめる（Bolt 30、ADR-011 の「更新の原子性」）。
- * READ COMMITTED では、後の UPDATE は先の行ロックを待ち、WHERE を評価し直す。
+ * 先のトランザクションは更新の後にコミットを止め、後のトランザクションがその行ロックを待っていることを確かめてから
+ * コミットする。READ COMMITTED では、後の UPDATE は先のコミットの後に WHERE と SET を評価し直す。
  * テストの間でデータを共有しないよう、クラスに @Transactional を付けず、利用者はテストごとに作る。
  */
 @SpringBootTest
@@ -43,7 +45,9 @@ import org.springframework.transaction.support.TransactionTemplate;
 class MyBatisAuthenticationFactorConcurrencyIntegrationTest {
 
     private static final long TIMEOUT_SECONDS = 30;
+    private static final long BLOCKED_CHECK_MILLIS = 500;
     private static final Instant T0 = Instant.parse("2026-10-11T00:00:00Z");
+    private static final LockPolicy POLICY = new LockPolicy();
     private static final RecoveryCodeHasher HASHER = new RecoveryCodeHasher() {
         @Override
         public String hash(String code) {
@@ -80,37 +84,56 @@ class MyBatisAuthenticationFactorConcurrencyIntegrationTest {
                         companies, users));
     }
 
-    @Test
-    void 同時の2つの失敗は両方を数え5回目でロックする() throws Exception {
+    private UserId userWithFailures(int failures) {
         UserId user = newUser();
-        LockPolicy policy = new LockPolicy();
-        for (int i = 0; i < 3; i++) {
-            loginFailures.recordFailure(user, new UtcInstant(T0.plusSeconds(i)), policy);
+        for (int i = 0; i < failures; i++) {
+            loginFailures.recordFailure(user, new UtcInstant(T0.plusSeconds(i)), POLICY);
         }
-        UtcInstant failedAt = new UtcInstant(T0.plusSeconds(10));
-
-        runTogether(
-                () -> loginFailures.recordFailure(user, failedAt, policy),
-                () -> loginFailures.recordFailure(user, failedAt, policy));
-
-        LoginFailure failure = loginFailures.findByUserId(user);
-        assertThat(failure.consecutiveFailures()).isEqualTo(5);
-        assertThat(failure.lockedUntil()).contains(policy.lockedUntil(failedAt));
+        return user;
     }
 
     @Test
-    void 同じ刻みの同時の使用は1つだけが通る() throws Exception {
+    void 重なった2つの失敗は両方を数え5回目でロックする() {
+        UserId user = userWithFailures(3);
+        UtcInstant failedAt = new UtcInstant(T0.plusSeconds(10));
+
+        runOverlapping(
+                () -> loginFailures.recordFailure(user, failedAt, POLICY),
+                () -> loginFailures.recordFailure(user, failedAt, POLICY));
+
+        LoginFailure failure = loginFailures.findByUserId(user);
+        assertThat(failure.consecutiveFailures()).isEqualTo(5);
+        assertThat(failure.lockedUntil()).contains(POLICY.lockedUntil(failedAt));
+    }
+
+    @Test
+    void 五回目と重なった失敗は数えずロックの期限も延ばさない() {
+        UserId user = userWithFailures(4);
+        UtcInstant fifth = new UtcInstant(T0.plusSeconds(10));
+        UtcInstant later = new UtcInstant(T0.plusSeconds(11));
+
+        runOverlapping(
+                () -> loginFailures.recordFailure(user, fifth, POLICY),
+                () -> loginFailures.recordFailure(user, later, POLICY));
+
+        LoginFailure failure = loginFailures.findByUserId(user);
+        assertThat(failure.consecutiveFailures()).isEqualTo(5);
+        assertThat(failure.lockedUntil()).contains(POLICY.lockedUntil(fifth));
+    }
+
+    @Test
+    void 重なった同じ刻みの使用は先の1つだけが通る() {
         UserId user = newUser();
         totpCredentials.add(TotpCredential.enroll(user, new EncryptedSecret("ciphertext"), new UtcInstant(T0)));
 
         List<Boolean> results =
-                runTogether(() -> totpCredentials.useStep(user, 100), () -> totpCredentials.useStep(user, 100));
+                runOverlapping(() -> totpCredentials.useStep(user, 100), () -> totpCredentials.useStep(user, 100));
 
-        assertThat(results).containsExactlyInAnyOrder(true, false);
+        assertThat(results).containsExactly(true, false);
     }
 
     @Test
-    void 同じ回復コードの同時の消費は1つだけが通る() throws Exception {
+    void 重なった同じ回復コードの消費は先の1つだけが通る() {
         UserId user = newUser();
         List<RecoveryCode> issued = IntStream.rangeClosed(1, RecoveryCode.CODES_PER_USER)
                 .mapToObj(i -> RecoveryCode.issue(user, "code-" + i, HASHER, new UtcInstant(T0)))
@@ -118,33 +141,45 @@ class MyBatisAuthenticationFactorConcurrencyIntegrationTest {
         transactionTemplate.executeWithoutResult(status -> recoveryCodes.replaceAll(user, issued));
         UtcInstant usedAt = new UtcInstant(T0.plusSeconds(60));
 
-        List<Boolean> results = runTogether(
-                () -> recoveryCodes.use(issued.getFirst().id(), usedAt),
-                () -> recoveryCodes.use(issued.getFirst().id(), usedAt));
+        List<Boolean> results = runOverlapping(
+                () -> recoveryCodes.use(user, issued.getFirst().id(), usedAt),
+                () -> recoveryCodes.use(user, issued.getFirst().id(), usedAt));
 
-        assertThat(results).containsExactlyInAnyOrder(true, false);
+        assertThat(results).containsExactly(true, false);
     }
 
-    /** 2 つの操作を、ラッチでそろえてから別々のトランザクションで同時に動かす。 */
-    @SafeVarargs
-    private <T> List<T> runTogether(Supplier<T>... operations) throws Exception {
-        CountDownLatch ready = new CountDownLatch(operations.length);
-        ExecutorService executor = Executors.newFixedThreadPool(operations.length);
+    /**
+     * 先の操作を別のトランザクションで動かしてコミットを止め、後の操作を別のトランザクションで始める。後の操作が
+     * 先の行ロックを待っている（終わらない）ことを確かめてから、先をコミットする。結果は先・後の順に返す。
+     */
+    private <T> List<T> runOverlapping(Supplier<T> first, Supplier<T> second) {
+        CountDownLatch firstUpdated = new CountDownLatch(1);
+        CountDownLatch releaseFirst = new CountDownLatch(1);
+        ExecutorService executor = Executors.newFixedThreadPool(2);
         try {
-            List<CompletableFuture<T>> futures = Arrays.stream(operations)
-                    .map(operation -> CompletableFuture.supplyAsync(
-                            () -> {
-                                ready.countDown();
-                                awaitQuietly(ready);
-                                return transactionTemplate.execute(status -> operation.get());
-                            },
-                            executor))
-                    .toList();
-            return futures.stream()
-                    .map(future ->
-                            future.orTimeout(TIMEOUT_SECONDS, TimeUnit.SECONDS).join())
-                    .toList();
+            CompletableFuture<T> firstResult = CompletableFuture.supplyAsync(
+                    () -> transactionTemplate.execute(status -> {
+                        T result = first.get();
+                        firstUpdated.countDown();
+                        awaitQuietly(releaseFirst);
+                        return result;
+                    }),
+                    executor);
+            awaitQuietly(firstUpdated);
+            CompletableFuture<T> secondResult =
+                    CompletableFuture.supplyAsync(() -> transactionTemplate.execute(status -> second.get()), executor);
+
+            assertThat(secondResult)
+                    .as("後の操作は先の行ロックを待つ")
+                    .failsWithin(Duration.ofMillis(BLOCKED_CHECK_MILLIS))
+                    .withThrowableOfType(TimeoutException.class);
+            releaseFirst.countDown();
+
+            return List.of(
+                    firstResult.orTimeout(TIMEOUT_SECONDS, TimeUnit.SECONDS).join(),
+                    secondResult.orTimeout(TIMEOUT_SECONDS, TimeUnit.SECONDS).join());
         } finally {
+            releaseFirst.countDown();
             executor.shutdownNow();
         }
     }

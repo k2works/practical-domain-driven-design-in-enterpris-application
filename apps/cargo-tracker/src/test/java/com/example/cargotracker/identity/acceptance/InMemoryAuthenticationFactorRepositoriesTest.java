@@ -37,4 +37,9 @@ class InMemoryAuthenticationFactorRepositoriesTest extends AuthenticationFactorR
         loginFailures.registerUser(user);
         return user;
     }
+
+    @Override
+    protected UserId unknownUser() {
+        return new UserId(UUID.randomUUID());
+    }
 }

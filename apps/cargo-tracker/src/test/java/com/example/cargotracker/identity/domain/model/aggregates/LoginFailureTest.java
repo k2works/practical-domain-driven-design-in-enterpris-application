@@ -90,10 +90,28 @@ class LoginFailureTest {
     }
 
     @Test
-    void 成功すると回数を0に戻しロックを外す() {
-        LoginFailure failure = failTimes(3).recordSuccess();
+    void 成功すると回数を0に戻す() {
+        LoginFailure failure = failTimes(3).recordSuccess(at(Duration.ofMinutes(1)));
 
         assertThat(failure.consecutiveFailures()).isZero();
         assertThat(failure.lockedUntil()).isEmpty();
+    }
+
+    @Test
+    void ロックが解けた後の成功はロックを外す() {
+        LoginFailure failure = failTimes(5).recordSuccess(at(Duration.ofMinutes(20)));
+
+        assertThat(failure.consecutiveFailures()).isZero();
+        assertThat(failure.lockedUntil()).isEmpty();
+    }
+
+    @Test
+    void ロック中の成功はロックを消さない() {
+        LoginFailure locked = failTimes(5);
+
+        LoginFailure afterSuccess = locked.recordSuccess(at(Duration.ofMinutes(1)));
+
+        assertThat(afterSuccess.consecutiveFailures()).isEqualTo(5);
+        assertThat(afterSuccess.lockedUntil()).isEqualTo(locked.lockedUntil());
     }
 }

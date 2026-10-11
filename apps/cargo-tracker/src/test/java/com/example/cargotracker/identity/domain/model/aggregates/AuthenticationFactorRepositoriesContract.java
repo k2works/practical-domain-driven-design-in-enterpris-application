@@ -45,6 +45,9 @@ public abstract class AuthenticationFactorRepositoriesContract {
     /** 登録済みの利用者を作る（MyBatis では外部キーのため利用者の行が要る）。 */
     protected abstract UserId newUser();
 
+    /** 登録していない利用者（存在しないメールアドレスの失敗に当たる）。 */
+    protected abstract UserId unknownUser();
+
     protected static UtcInstant at(Duration offset) {
         return new UtcInstant(T0.plus(offset));
     }
@@ -93,7 +96,9 @@ public abstract class AuthenticationFactorRepositoriesContract {
         UserId user = newUser();
         totpCredentials().add(TotpCredential.enroll(user, new EncryptedSecret("ciphertext"), at(Duration.ZERO)));
 
-        assertThatThrownBy(() -> totpCredentials().useStep(user, -1)).isInstanceOf(IllegalArgumentException.class);
+        TotpCredentialRepository repository = totpCredentials();
+
+        assertThatThrownBy(() -> repository.useStep(user, -1)).isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
@@ -104,8 +109,9 @@ public abstract class AuthenticationFactorRepositoriesContract {
         RecoveryCode first = issued.getFirst();
 
         assertThat(recoveryCodes().findUnusedByUserId(user)).hasSize(RecoveryCode.CODES_PER_USER);
-        assertThat(recoveryCodes().use(first.id(), at(Duration.ofMinutes(1)))).isTrue();
-        assertThat(recoveryCodes().use(first.id(), at(Duration.ofMinutes(2))))
+        assertThat(recoveryCodes().use(user, first.id(), at(Duration.ofMinutes(1))))
+                .isTrue();
+        assertThat(recoveryCodes().use(user, first.id(), at(Duration.ofMinutes(2))))
                 .as("2 回目")
                 .isFalse();
         assertThat(recoveryCodes().findUnusedByUserId(user))
@@ -135,7 +141,7 @@ public abstract class AuthenticationFactorRepositoriesContract {
         assertThat(recoveryCodes().findUnusedByUserId(user))
                 .hasSize(RecoveryCode.CODES_PER_USER)
                 .noneMatch(code -> code.matches("old-1", HASHER));
-        assertThat(recoveryCodes().use(old.getFirst().id(), at(Duration.ofMinutes(1))))
+        assertThat(recoveryCodes().use(user, old.getFirst().id(), at(Duration.ofMinutes(1))))
                 .isFalse();
     }
 
@@ -143,14 +149,37 @@ public abstract class AuthenticationFactorRepositoriesContract {
     void 回復コードは10個でなければ発行できない() {
         UserId user = newUser();
 
-        assertThatThrownBy(() ->
-                        recoveryCodes().replaceAll(user, issue(user, "code-").subList(0, 9)))
-                .isInstanceOf(IllegalArgumentException.class);
+        RecoveryCodeRepository repository = recoveryCodes();
+        List<RecoveryCode> nine = issue(user, "code-").subList(0, 9);
+
+        assertThatThrownBy(() -> repository.replaceAll(user, nine)).isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
     void 存在しない回復コードは使えない() {
-        assertThat(recoveryCodes().use(UUID.randomUUID(), at(Duration.ZERO))).isFalse();
+        assertThat(recoveryCodes().use(newUser(), UUID.randomUUID(), at(Duration.ZERO)))
+                .isFalse();
+    }
+
+    @Test
+    void ほかの利用者の回復コードは使えない() {
+        UserId owner = newUser();
+        List<RecoveryCode> issued = issue(owner, "code-");
+        recoveryCodes().replaceAll(owner, issued);
+
+        assertThat(recoveryCodes().use(newUser(), issued.getFirst().id(), at(Duration.ZERO)))
+                .isFalse();
+        assertThat(recoveryCodes().findUnusedByUserId(owner)).hasSize(RecoveryCode.CODES_PER_USER);
+    }
+
+    @Test
+    void 存在しない利用者の失敗では記録を作らない() {
+        UserId unknown = unknownUser();
+
+        LoginFailure failure = loginFailures().recordFailure(unknown, at(Duration.ZERO), POLICY);
+
+        assertThat(failure.consecutiveFailures()).isZero();
+        assertThat(loginFailures().findByUserId(unknown).consecutiveFailures()).isZero();
     }
 
     @Test
@@ -196,14 +225,65 @@ public abstract class AuthenticationFactorRepositoriesContract {
     }
 
     @Test
-    void 成功すると回数を0に戻しロックを外す() {
+    void ロックの期限ちょうどの失敗は1回目から数え直し期限の1秒前の失敗は数えない() {
         UserId user = newUser();
-        for (int i = 0; i < 3; i++) {
+        for (int i = 0; i < 5; i++) {
+            loginFailures().recordFailure(user, at(Duration.ofSeconds(i)), POLICY);
+        }
+        Duration fifth = Duration.ofSeconds(4);
+
+        LoginFailure justBefore =
+                loginFailures().recordFailure(user, at(fifth.plusMinutes(15).minusSeconds(1)), POLICY);
+        LoginFailure atExpiry = loginFailures().recordFailure(user, at(fifth.plusMinutes(15)), POLICY);
+
+        assertThat(justBefore.consecutiveFailures()).isEqualTo(5);
+        assertThat(justBefore.lockedUntil()).contains(at(fifth.plusMinutes(15)));
+        assertThat(atExpiry.consecutiveFailures()).isEqualTo(1);
+        assertThat(atExpiry.lockedUntil()).isEmpty();
+    }
+
+    @Test
+    void ロックが解けた後も5回続けばもう一度ロックする() {
+        UserId user = newUser();
+        for (int i = 0; i < 5; i++) {
+            loginFailures().recordFailure(user, at(Duration.ofSeconds(i)), POLICY);
+        }
+        LoginFailure again = null;
+        for (int i = 0; i < 5; i++) {
+            again = loginFailures()
+                    .recordFailure(user, at(Duration.ofMinutes(20).plusSeconds(i)), POLICY);
+        }
+
+        assertThat(again.consecutiveFailures()).isEqualTo(5);
+        assertThat(again.lockedUntil()).contains(at(Duration.ofMinutes(35).plusSeconds(4)));
+    }
+
+    @Test
+    void ロックが解けた後の成功は回数を0に戻しロックを外す() {
+        UserId user = newUser();
+        for (int i = 0; i < 5; i++) {
+            loginFailures().recordFailure(user, at(Duration.ofSeconds(i)), POLICY);
+        }
+
+        loginFailures().recordSuccess(user, at(Duration.ofMinutes(20)));
+
+        LoginFailure failure = loginFailures().findByUserId(user);
+        assertThat(failure.consecutiveFailures()).isZero();
+        assertThat(failure.lockedUntil()).isEmpty();
+        assertThat(failure.isLocked(at(Duration.ofMinutes(20)))).isFalse();
+    }
+
+    @Test
+    void ロック中の成功はロックを消さない() {
+        UserId user = newUser();
+        for (int i = 0; i < 5; i++) {
             loginFailures().recordFailure(user, at(Duration.ofSeconds(i)), POLICY);
         }
 
         loginFailures().recordSuccess(user, at(Duration.ofMinutes(1)));
 
-        assertThat(loginFailures().findByUserId(user).consecutiveFailures()).isZero();
+        LoginFailure failure = loginFailures().findByUserId(user);
+        assertThat(failure.consecutiveFailures()).isEqualTo(5);
+        assertThat(failure.isLocked(at(Duration.ofMinutes(1)))).isTrue();
     }
 }

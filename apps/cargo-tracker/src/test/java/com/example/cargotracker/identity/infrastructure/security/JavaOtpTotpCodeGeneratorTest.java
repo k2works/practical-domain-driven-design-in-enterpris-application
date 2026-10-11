@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Locale;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -56,7 +57,7 @@ class JavaOtpTotpCodeGeneratorTest {
     }
 
     @Test
-    void 同じ生成器を並行に使っても試験ベクトルどおりのコードを作る() throws Exception {
+    void 同じ生成器を並行に使っても試験ベクトルどおりのコードを作る() {
         JavaOtpTotpCodeGenerator generator = new JavaOtpTotpCodeGenerator();
         ExecutorService executor = Executors.newFixedThreadPool(8);
         try {
@@ -78,6 +79,19 @@ class JavaOtpTotpCodeGeneratorTest {
                     .containsOnly(true);
         } finally {
             executor.shutdownNow();
+        }
+    }
+
+    @Test
+    void 既定のロケールがASCIIでない数字を使ってもASCIIの数字で作る() {
+        Locale original = Locale.getDefault();
+        try {
+            Locale.setDefault(Locale.forLanguageTag("ar-EG-u-nu-arab"));
+            String code = new JavaOtpTotpCodeGenerator().code(SECRET, step(59));
+
+            assertThat(code).isEqualTo("287082");
+        } finally {
+            Locale.setDefault(original);
         }
     }
 

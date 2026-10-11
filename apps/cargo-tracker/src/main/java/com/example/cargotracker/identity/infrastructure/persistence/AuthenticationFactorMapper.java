@@ -26,7 +26,8 @@ public interface AuthenticationFactorMapper {
 
     List<RecoveryCodeRow> selectUnusedRecoveryCodes(UUID userId);
 
-    int updateRecoveryCodeUsedIfUnused(@Param("id") UUID id, @Param("usedAt") OffsetDateTime usedAt);
+    int updateRecoveryCodeUsedIfUnused(
+            @Param("userId") UUID userId, @Param("id") UUID id, @Param("usedAt") OffsetDateTime usedAt);
 
     Optional<LoginFailureRow> selectLoginFailure(UUID userId);
 

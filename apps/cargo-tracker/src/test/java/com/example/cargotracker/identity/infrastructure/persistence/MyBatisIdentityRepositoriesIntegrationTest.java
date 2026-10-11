@@ -276,29 +276,36 @@ class MyBatisIdentityRepositoriesIntegrationTest {
     // PostgreSQL は制約の違反の後に同じトランザクションの文を受け付けないため、表ごとに分ける（ADR-007）
     @Test
     void TOTPの資格は存在しない利用者に書けない() {
+        UUID unknown = UUID.randomUUID();
+
         assertThatThrownBy(() -> jdbc.update(
                         "INSERT INTO identity.totp_credential (user_id, secret_encrypted, last_used_step, enrolled_at)"
                                 + " VALUES (?, 'ciphertext', 0, now())",
-                        UUID.randomUUID()))
+                        unknown))
                 .isInstanceOf(DataIntegrityViolationException.class);
     }
 
     @Test
     void 回復コードは存在しない利用者に書けない() {
+        UUID id = UUID.randomUUID();
+        UUID unknown = UUID.randomUUID();
+
         assertThatThrownBy(() -> jdbc.update(
                         "INSERT INTO identity.recovery_code (id, user_id, code_hash, used_at, issued_at)"
                                 + " VALUES (?, ?, 'hash', NULL, now())",
-                        UUID.randomUUID(),
-                        UUID.randomUUID()))
+                        id,
+                        unknown))
                 .isInstanceOf(DataIntegrityViolationException.class);
     }
 
     @Test
     void ログインの失敗は存在しない利用者に書けない() {
+        UUID unknown = UUID.randomUUID();
+
         assertThatThrownBy(() -> jdbc.update(
                         "INSERT INTO identity.login_failure (user_id, consecutive_failures, locked_until, updated_at)"
                                 + " VALUES (?, 1, NULL, now())",
-                        UUID.randomUUID()))
+                        unknown))
                 .isInstanceOf(DataIntegrityViolationException.class);
     }
 

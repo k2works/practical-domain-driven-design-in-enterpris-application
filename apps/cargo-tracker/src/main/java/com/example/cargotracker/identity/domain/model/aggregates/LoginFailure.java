@@ -9,7 +9,7 @@ import java.util.Optional;
 
 /**
  * ログインの失敗。利用者ごとの password か TOTP の連続の失敗の回数と、ロックの期限を持つ（IA-INV-03）。
- * ロック中の失敗は数えず期限も延ばさない。ロックが解けた後の失敗は 1 回目から数え直す。成功で 0 に戻す。
+ * ロック中の失敗は数えず期限も延ばさない。ロックが解けた後の失敗は 1 回目から数え直す。ロック中でなければ成功で 0 に戻す。
  * 利用者とは別の集約にし、利用者の版に触れずにリポジトリの条件付きの更新で原子的に保存する（ADR-011、ADR-012）。
  * 失敗の記録のない利用者は「0 回・ロックなし」とし、存在しないメールアドレスの失敗では作らない。
  */
@@ -65,8 +65,11 @@ public final class LoginFailure {
         return new LoginFailure(userId, failures, policy.shouldLock(failures) ? policy.lockedUntil(failedAt) : null);
     }
 
-    /** 成功を記録したログインの失敗を返す。回数を 0 に戻しロックを外す。 */
-    public LoginFailure recordSuccess() {
-        return none(userId);
+    /**
+     * その時刻の成功を記録したログインの失敗を返す。回数を 0 に戻しロックを外す。ロック中なら変えない
+     * （ロックの確かめと成功の間に、並行の失敗でロックしたときにロックを消さない）。
+     */
+    public LoginFailure recordSuccess(UtcInstant succeededAt) {
+        return isLocked(succeededAt) ? this : none(userId);
     }
 }

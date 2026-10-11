@@ -69,11 +69,12 @@
          ORDER BY issued_at, id
     </select>
 
-    <!-- 一度だけの消費（IA-INV-11）。未使用のときだけ使った時刻を書き、行は残す -->
+    <!-- 一度だけの消費（IA-INV-11）。その利用者の未使用のときだけ使った時刻を書き、行は残す -->
     <update id="updateRecoveryCodeUsedIfUnused">
         UPDATE identity.recovery_code
            SET used_at = #{usedAt}
          WHERE id = #{id}
+           AND user_id = #{userId}
            AND used_at IS NULL
     </update>
 
@@ -110,11 +111,13 @@
            AND (locked_until IS NULL OR locked_until &lt;= #{failedAt})
     </update>
 
+    <!-- 成功で 0 に戻す。ロック中は変えない（ロックの確かめと成功の間に、並行の失敗でロックしたときにロックを消さない） -->
     <update id="resetLoginFailure">
         UPDATE identity.login_failure
            SET consecutive_failures = 0,
                locked_until = CAST(NULL AS TIMESTAMP WITH TIME ZONE),
                updated_at = #{now}
          WHERE user_id = #{userId}
+           AND (locked_until IS NULL OR locked_until &lt;= #{now})
     </update>
 </mapper>

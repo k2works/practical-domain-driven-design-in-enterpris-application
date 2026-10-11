@@ -36,9 +36,9 @@ public class InMemoryRecoveryCodeRepository implements RecoveryCodeRepository {
     }
 
     @Override
-    public synchronized boolean use(UUID recoveryCodeId, UtcInstant usedAt) {
+    public synchronized boolean use(UserId userId, UUID recoveryCodeId, UtcInstant usedAt) {
         RecoveryCode stored = store.get(recoveryCodeId);
-        if (stored == null || stored.isUsed()) {
+        if (stored == null || !stored.userId().equals(userId) || stored.isUsed()) {
             return false;
         }
         store.put(recoveryCodeId, stored.use(usedAt));

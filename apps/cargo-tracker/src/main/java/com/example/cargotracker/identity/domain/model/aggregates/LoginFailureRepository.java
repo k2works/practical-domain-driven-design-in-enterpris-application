@@ -21,6 +21,6 @@ public interface LoginFailureRepository {
      */
     LoginFailure recordFailure(UserId userId, UtcInstant failedAt, LockPolicy policy);
 
-    /** 成功を記録する。回数を 0 に戻しロックを外す。記録のない利用者では何もしない。 */
+    /** 成功を記録する。ロック中でなければ回数を 0 に戻しロックを外す。記録のない利用者では何もしない。 */
     void recordSuccess(UserId userId, UtcInstant succeededAt);
 }

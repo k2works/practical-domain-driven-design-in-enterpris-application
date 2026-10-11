@@ -7,6 +7,7 @@ import com.example.cargotracker.identity.domain.model.aggregates.RecoveryCodeRep
 import com.example.cargotracker.identity.domain.model.aggregates.TotpCredentialRepository;
 import com.example.cargotracker.identity.domain.model.aggregates.UserRepository;
 import com.example.cargotracker.shared.domain.UserId;
+import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
@@ -49,6 +50,11 @@ class H2AuthenticationFactorRepositoriesTest extends AuthenticationFactorReposit
     @Override
     protected LoginFailureRepository loginFailures() {
         return loginFailures;
+    }
+
+    @Override
+    protected UserId unknownUser() {
+        return new UserId(UUID.randomUUID());
     }
 
     @Override

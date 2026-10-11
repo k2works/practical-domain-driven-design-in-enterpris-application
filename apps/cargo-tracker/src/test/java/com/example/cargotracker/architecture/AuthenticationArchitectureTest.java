@@ -1,5 +1,6 @@
 package com.example.cargotracker.architecture;
 
+import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 
 import com.tngtech.archunit.core.importer.ImportOption;
@@ -33,6 +34,17 @@ class AuthenticationArchitectureTest {
             .and()
             .resideOutsideOfPackage("com.example.cargotracker.identity.infrastructure..")
             .should()
+            .dependOnClassesThat()
+            .resideInAPackage("com.eatthepath.otp..");
+
+    /** 上の規則が空振りしていないこと（パッケージ名の書き誤りで何も守らない状態にならないこと）を確かめる。 */
+    @ArchTest
+    static final ArchRule TOTPの生成器の実装はTOTPのライブラリを使う = classes()
+            .that()
+            .haveSimpleName("JavaOtpTotpCodeGenerator")
+            .should()
+            .resideInAPackage("com.example.cargotracker.identity.infrastructure..")
+            .andShould()
             .dependOnClassesThat()
             .resideInAPackage("com.eatthepath.otp..");
 }

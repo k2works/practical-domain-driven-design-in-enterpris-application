@@ -87,9 +87,10 @@ public final class TotpCredential {
      * コードは受け付けない（失敗へ倒す。T-42）。受け付けた刻みは、リポジトリの条件付きの更新で使ったことにする。
      *
      * @param secret 復号した秘密（平文）
-     * @param currentStep 今の刻みの番号（{@link #stepAt}）
+     * @param currentStep 今の刻みの番号（{@link #stepAt}）。0 以上（負なら失敗へ倒して例外）
      */
     public OptionalLong matchingStep(String code, byte[] secret, long currentStep, TotpCodeGenerator generator) {
+        requireStep(currentStep);
         if (code == null || code.isEmpty() || !code.chars().allMatch(c -> c >= '0' && c <= '9')) {
             return OptionalLong.empty();
         }
@@ -98,7 +99,10 @@ public final class TotpCredential {
         for (long step = Math.max(0, currentStep - WINDOW); step <= currentStep + WINDOW; step++) {
             byte[] expected = generator.code(secret, step).getBytes(StandardCharsets.US_ASCII);
             // 一致を見つけても窓のすべての刻みを比べ、比べる回数を一致の位置で変えない
-            if (MessageDigest.isEqual(expected, given) && accepts(step) && matched < 0) {
+            boolean equal = MessageDigest.isEqual(expected, given);
+            boolean acceptable = accepts(step);
+            // 比べた結果と受け付けるかは先に両方とも求めてあるので、ここでの短絡は比べる時間を変えない
+            if (matched < 0 && equal && acceptable) {
                 matched = step;
             }
         }

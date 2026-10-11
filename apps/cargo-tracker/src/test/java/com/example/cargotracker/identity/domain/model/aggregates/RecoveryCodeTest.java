@@ -6,7 +6,10 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import com.example.cargotracker.shared.domain.UserId;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
+import java.util.stream.IntStream;
 import org.junit.jupiter.api.Test;
 
 class RecoveryCodeTest {
@@ -68,6 +71,43 @@ class RecoveryCodeTest {
     @Test
     void 空の平文は発行できない() {
         assertThatThrownBy(() -> RecoveryCode.issue(USER, " ", HASHER, ISSUED_AT))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    private static List<RecoveryCode> issue(UserId userId, int count) {
+        return IntStream.rangeClosed(1, count)
+                .mapToObj(i -> RecoveryCode.issue(userId, "code-" + i, HASHER, ISSUED_AT))
+                .toList();
+    }
+
+    @Test
+    void 発行する組はその利用者の未使用の10個() {
+        assertThat(RecoveryCode.requireIssuedSet(USER, issue(USER, 10))).hasSize(10);
+    }
+
+    @Test
+    void 発行する組が10個でなければ失敗へ倒す() {
+        List<RecoveryCode> nine = issue(USER, 9);
+        List<RecoveryCode> eleven = issue(USER, 11);
+
+        assertThatThrownBy(() -> RecoveryCode.requireIssuedSet(USER, nine))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> RecoveryCode.requireIssuedSet(USER, eleven))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> RecoveryCode.requireIssuedSet(USER, null))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void ほかの利用者のコードや使ったコードが混ざった組は失敗へ倒す() {
+        List<RecoveryCode> withOthers = new ArrayList<>(issue(USER, 9));
+        withOthers.add(RecoveryCode.issue(new UserId(UUID.randomUUID()), "other", HASHER, ISSUED_AT));
+        List<RecoveryCode> withUsed = new ArrayList<>(issue(USER, 9));
+        withUsed.add(RecoveryCode.issue(USER, "used", HASHER, ISSUED_AT).use(USED_AT));
+
+        assertThatThrownBy(() -> RecoveryCode.requireIssuedSet(USER, withOthers))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> RecoveryCode.requireIssuedSet(USER, withUsed))
                 .isInstanceOf(IllegalArgumentException.class);
     }
 
