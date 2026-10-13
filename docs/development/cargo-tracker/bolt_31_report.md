@@ -3,8 +3,10 @@ type: Plan
 title: "Bolt 31 終了報告 - TOTP の秘密の暗号化と 2 段階のログイン（A-02）"
 description: "W5 の 5 本目の Bolt の終了報告。TOTP の秘密を AES-GCM で暗号化し、Spring Security 7 の要素の権限で password と TOTP の 2 段階のログイン（A-02）を組んだ。最長 8 時間は TOTP が初めて通った時刻から数え、password の段だけの session は 5 分で失効する。層の規則に 2 つの狭い例外を足した。/goal Bolt31 で承認ゲートを止めずに進めたので、止まらなかったゲートを承認の議題に置く。"
 tags: [plan]
-status: draft
+status: stable
 generated: { by: anthropic/claude-opus-5-5, at: 2026-10-13T04:09:09Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-10-13T04:10:15Z }
 ---
 
 # Bolt 31 終了報告 - TOTP の秘密の暗号化と 2 段階のログイン（A-02）
@@ -155,6 +157,7 @@ Bolt 31b: AC7 初回の TOTP の登録（A-07、QR）と回復コードの発行
 
 | 日付 | 更新内容 | 更新者 |
 | :--- | :--- | :--- |
+| 2026-10-13 | 終了報告を承認した（議題 1〜5 を承認）。T-101〜T-104 を足した | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-10-13 | 初版作成（承認待ち） | anthropic/claude-opus-5-5 |
 
 ## 関連ドキュメント

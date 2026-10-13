@@ -7,6 +7,7 @@ status: stable
 generated: { by: anthropic/claude-opus-5-5, at: 2026-10-13T03:29:13Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-13T01:20:00Z }
+  - { by: human:kakimomokuri, at: 2026-10-13T04:10:15Z }
 ---
 
 # Bolt 31 計画 - TOTP の秘密の暗号化と 2 段階のログイン（A-02）
