@@ -10345,7 +10345,7 @@
 </tr>
 <tr>
 <td style="text-align: left;">入力のトークンと provider</td>
-<td style="text-align: left;">フィルターは <code>recoveryCode</code> があるとき、確かめる前の入力だけを <code>RecoveryCodeAuthenticationToken</code> にする（<code>eraseCredentials</code> で平文を消す）。<code>RecoveryCodeAuthenticationProvider</code> が確かめ、照合と消費はアプリケーションのサービス <code>RecoveryCodeVerificationService</code>（<code>identity.application.internal.commandservices</code>）に任せる（決定 5 の「照合」と同じ分け方。D-5 の認証の例外の範囲）</td>
+<td style="text-align: left;">フィルターは <code>recoveryCode</code> があるとき、確かめる前の入力だけを <code>RecoveryCodeAuthenticationToken</code> にする（平文は request の範囲でしか持たない。ProviderManager が平文を消すのは認証の結果だけで、入力には呼ばない。失敗のイベントに入るので、リスナーは <code>getCredentials()</code> を読まない。Bolt 31c の開発レビュー）。<code>RecoveryCodeAuthenticationProvider</code> が確かめ、照合と消費はアプリケーションのサービス <code>RecoveryCodeVerificationService</code>（<code>identity.application.internal.commandservices</code>）に任せる（決定 5 の「照合」と同じ分け方。D-5 の認証の例外の範囲）</td>
 </tr>
 <tr>
 <td style="text-align: left;">結果の型</td>
@@ -10361,7 +10361,7 @@
 </tr>
 <tr>
 <td style="text-align: left;">正規化</td>
-<td style="text-align: left;">形の知識はドメインに置く（<code>RecoveryCode.normalize</code>）。前後と中の空白を除き、小文字にし、ハイフンのない 8 文字は 4 文字目の後にハイフンを入れる。<code>^[0-9a-f]{4}-[0-9a-f]{4}$</code> に合わなければ照合せずに拒む（bcrypt を回さない）。手で書き写したコードを打ち直させない</td>
+<td style="text-align: left;">形の知識はドメインに置く（<code>RecoveryCode.normalize</code>）。全角を半角に直し（NFKC。IME で入れたまま）、ハイフンに似た文字（長音など）をハイフンにそろえ、前後と中の空白（全角スペースを含む）を除き、小文字にし、ハイフンのない 8 文字は 4 文字目の後にハイフンを入れる。<code>^[0-9a-f]{4}-[0-9a-f]{4}$</code> に合わなければ照合せずに拒む（bcrypt を回さない）。手で書き写したコードを打ち直させない</td>
 </tr>
 <tr>
 <td style="text-align: left;">照合とトランザクションの境界</td>

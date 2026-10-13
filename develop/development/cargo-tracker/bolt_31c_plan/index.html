@@ -10209,7 +10209,7 @@
 <h2 id="_8">ステップ計画<a class="headerlink" href="#_8" title="Permanent link">&para;</a></h2>
 <p>状態の記号: <code>[ ]</code> 未着手、<code>[-]</code> 進行中、<code>[?]</code> 承認待ち、<code>[x]</code> 完了。各ステップの終わりに <code>check</code> が緑であることと、計画からの変更を設計文書に反映したこと（T-53）を確かめ、push して CI を確かめる（T-26、T-65）。そのステップのファイルだけをステージする（T-84）。複数行の書き換えはスクリプトのファイルにする（T-103）。ステップの順はインサイドアウト（ドメインの正規化と主体の値 → サービス → 主体の型と引数の解決 → 認証の入口と画面）。主体の型を入口と画面より先に作り、A-02 の controller を 2 回直さない。</p>
 <ul class="task-list">
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>1. 設計文書</strong> 【承認ゲート: 設計文書】</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>1. 設計文書</strong> 【承認ゲート: 設計文書】</li>
 <li>ADR-011: 回復コードによるログイン（同じ入口、入力のトークンと結果の型、<code>RecoveryCodeRejectedException</code> と対応表、<code>FACTOR_TOTP</code>、照合の回数と bcrypt の時間とトランザクションの境界、正規化、拒否の扱い）。105 行目の「TOTP の欄で受け付け」を「A-02 の別の欄で受け付け」に、28 行目のスパイクの削除の時期を「Bolt 31d」に、40 行目の 31c の範囲から特性テストを外して 31d に、197 行目の「入口と暗号のパッケージは Bolt 31c で諮る」を 31d に直す。246 行目（T-35）の A-02 で誤ったときの次の操作と、確認ポイント 5 の文言を合わせる</li>
 <li>ADR-012: 見直しの 4 を「決めた」に移す（<code>PasswordVerifiedUser</code> の置き場所と項目、引数の解決の振る舞い）。64 行目の監査の操作と理由の一覧に <code>RECOVERY_CODE_USED</code>・<code>INVALID_RECOVERY_CODE</code> を、68 行目の入口と暗号のパッケージを 31d に直す</li>
 <li>ui_design.md: A-02 の salt と 511 行目（回復コードの欄、登録の直後の案内、問い合わせ先の移動）、画面と URL の表の A-02（180 行目の「回復コードの欄は Bolt 31c」）、A-03（183 行目の 8 時間の起点を「TOTP または回復コードが初めて通った時刻」に）、画面遷移図（230〜252 行目。回復コードで A-02 からホームへ）、A-07 の節（563・566 行目）、A-01 の誤りの文言</li>
@@ -10219,15 +10219,15 @@
 <li>architecture_backend.md: 引数の解決が <code>FACTOR_TOTP</code> を確かめること、<code>PasswordVerifiedUser</code> を受ける controller の規則、新しい provider が D-5 の認証の例外の範囲に収まること</li>
 <li>release_plan.md の W5 の節: 31c の行を本計画に、31d の行を足す（SP 0、アプローチはリファクタリング、承認ゲートはステップごと（構造））。32 の行（588 行目）に「回復コードの誤りも失敗の回数に数えるか」。596 行目の本数と一覧（14 本）と順序（31c → 31d → 32、31c → 33b）。持ち込みの表の 608 行目（特性テスト・スパイクの削除を 31d に）</li>
 <li>完了の判定: <code>okf:check</code> ERROR 0、<code>documentationTest</code> 緑</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>2. 回復コードの正規化と確かめのサービス</strong> 【承認ゲート: Red・Green】</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>2. 回復コードの正規化と確かめのサービス</strong> 【承認ゲート: Red・Green】</li>
 <li>Red: <code>RecoveryCode.normalize</code> の単体テスト（大文字・前後と中の空白・ハイフンなしを受ける、16 進でない・長さの違う形は空）。<code>RecoveryCodeVerificationService</code> の単体テスト（正しいコードで使った時刻が入り監査記録 <code>RECOVERY_CODE_USED</code>、同じコードの二度目は拒む、誤ったコード・形の違うコード・回復コードのない利用者は拒み何も書かない（形の違うコードは照合しない）、ほかの利用者のコードでは通らない、監査の追記が失敗したら使用も戻る、照合の後に平文を記録に出さない）。PostgreSQL の統合テスト（同じコードを 2 つのトランザクションで同時に使うと 1 つだけ通る。T-100）</li>
 <li>Green: <code>RecoveryCode.normalize</code>、サービス（<code>@Service</code>・<code>IdentityConfiguration</code>・<code>TransactionTemplate</code>）、<code>RecoveryCodeVerification</code>、<code>AuditAction.RECOVERY_CODE_USED</code>・<code>AuditRecord.recoveryCodeUsed</code>、<code>AuthenticationRejection.INVALID_RECOVERY_CODE</code>。SpotBugs の EI_EXPOSE_REP2 が出れば、Bolt 31・31b と同じくこのクラスに限って抑止する（<code>config/spotbugs/exclude.xml</code>）</li>
 <li>完了の判定: <code>check</code> 緑</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>3. password の段の主体の型と引数の解決</strong> 【承認ゲート: セキュリティ、構造】</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>3. password の段の主体の型と引数の解決</strong> 【承認ゲート: セキュリティ、構造】</li>
 <li>Red: 引数の解決の単体テスト（password の要素だけの主体には <code>AuthenticatedActor</code> を渡さず例外、<code>Optional&lt;AuthenticatedActor&gt;</code> は空。2 つの要素がそろった主体には渡す。<code>PasswordVerifiedUser</code> は password の要素がある主体に渡す、未認証なら例外）。セキュリティの統合テスト（GET <code>/login/totp</code> のモデルの <code>currentActor</code> が空で、<code>PasswordVerifiedUser</code> の利用者 ID で登録の有無を引いて A-07 に振り分ける。2 つの要素がそろった主体では業務の画面のヘッダーに名前が出る）。ArchUnit（<code>PasswordVerifiedUser</code> を受ける controller は <code>LoginController</code>・<code>TotpEnrollmentController</code> だけ。空振りを防ぐ見張り（2 つの controller が受けている）を並べる。identity の外からの参照は <code>ModularityTest</code> が止めるので重ねない）</li>
 <li>Green: <code>PasswordVerifiedUser</code>、<code>PasswordVerifiedUserArgumentResolver</code>（<code>IdentityWebConfiguration</code> に登録）、<code>AuthenticatedActorArgumentResolver</code> が <code>FACTOR_TOTP</code> を確かめる、<code>LoginController</code>・<code>TotpEnrollmentController</code> を <code>PasswordVerifiedUser</code> で受け <code>Principal</code> の引数を外す（<code>TotpEnrollmentService</code> の引数も <code>AuthenticatedActor</code> から <code>PasswordVerifiedUser</code> に変える）、<code>WithAuthenticatedActorSecurityContextFactory</code> が <code>FactorGrantedAuthority</code> で <code>FACTOR_PASSWORD</code>・<code>FACTOR_TOTP</code> を足す。<code>AuthenticationArchitectureTest.java:109</code> のコメントの「31c で諮る」を 31d に直す</li>
 <li>完了の判定: <code>check</code> 緑。ほかのコンテキストの本体のコードと、<code>@WithAuthenticatedActor</code> を使う 11 ファイルに差分がない（H2）</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>4. A-02 の回復コードの欄と認証</strong> 【承認ゲート: セキュリティ、画面】</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>4. A-02 の回復コードの欄と認証</strong> 【承認ゲート: セキュリティ、画面】</li>
 <li>Red: セキュリティの統合テスト（本物のフィルターの連なりと Spring Session JDBC の上で）<ul>
 <li>回復コードで A-02 を通ると、主体が <code>FACTOR_PASSWORD</code> と <code>FACTOR_TOTP</code> の両方を持ち、session の ID が変わり、業務の URL を開け、8 時間の起点が置かれ、監査記録に <code>RECOVERY_CODE_USED</code> と <code>LOGIN_SUCCEEDED</code>（<code>PASSWORD_VERIFIED</code> ではない）</li>
 <li>使ったコードでもう一度ログインすると A-01 に戻り、監査記録の理由は <code>INVALID_RECOVERY_CODE</code>。誤ったコード・形の違うコードも同じ。session・監査記録に回復コードの平文がなく、使ったコードの <code>used_at</code> はある（T-106）</li>
@@ -10239,10 +10239,10 @@
 </li>
 <li>Green: <code>RecoveryCodeAuthenticationToken</code>（入力だけ、<code>eraseCredentials</code>）・<code>RecoveryCodeAuthenticationProvider</code>（結果は <code>TotpAuthenticationToken.authenticated</code>）・<code>RecoveryCodeRejectedException</code>、<code>TotpAuthenticationFilter</code> の振り分け、成功の後に登録を始めた時刻を消す、<code>SecurityConfiguration</code> の provider の登録と例外の対応表、<code>AuthenticationAuditListener</code> の拒否の理由の分岐、<code>login-totp.html</code> の <code>&lt;details&gt;</code> と登録の直後の案内と問い合わせ先の移動（3 行目の古い注釈も直す）、<code>login.html</code> の誤りの文言</li>
 <li>完了の判定: <code>check</code> 緑</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>5. 画面の層</strong> 【承認ゲート: セキュリティ】</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>5. 画面の層</strong> 【承認ゲート: セキュリティ】</li>
 <li><code>login_ui.feature</code> に「認証アプリを使えない荷主担当者が回復コードでログインする」（<code>UiUsers</code> に回復コードを発行する口を足す。平文はテストの準備で決めた値）。印は <code>@US-18-AC9 @demo @demo-bolt-31c/recovery</code>（AC9 のログインの分。再登録は 33b で同じ印のシナリオを足し、<code>test_strategy.md</code> の受入条件の照合の表の AC9 は 33b で「完了」にする）</li>
 <li>完了の判定: <code>check</code> と <code>uiTest</code> が緑</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>6. SonarQube と開発レビューとデモと終了報告</strong> 【承認ゲート: 終了報告】</li>
+<li>[-] <strong>6. SonarQube と開発レビューとデモと終了報告</strong> 【承認ゲート: 終了報告】</li>
 <li>SonarQube（<code>sonar-local:check</code>。T-104 で開発レビューの前に流す）</li>
 <li>開発レビュー（プログラマー、アーキテクト、テスター（セキュリティの境界）、テクニカルライター（A-02 の回復コードの欄・案内・A-01 の誤りの文言。T-90））</li>
 <li>レビューの直しの後にデモの動画（<code>demoVideo</code>）を撮り、#13 に添付する（<code>issue:attach-demo</code>。T-105）。<code>bolt_31c_report.md</code>。release_plan の W5 の 31c の行、開発の索引。#13 に進み具合をコメントする</li>
@@ -10405,6 +10405,11 @@
 <td style="text-align: left;">2026-10-13</td>
 <td style="text-align: left;">計画の承認を記録した。確認ポイント 1〜11 は推奨のとおり。ステップの承認ゲートで止まらずに進める（T-36）</td>
 <td style="text-align: left;">anthropic/claude-opus-5-5、承認 human:kakimomokuri</td>
+</tr>
+<tr>
+<td style="text-align: left;">2026-10-13</td>
+<td style="text-align: left;">開発レビューの直しで計画から変えたことを記録した。(1) 正規化に全角（NFKC）・全角スペース・長音を足した（計画は半角の空白・大文字・ハイフンの抜けだけ）。(2) 入力のトークンの平文は <code>eraseCredentials</code> で消す計画だったが、ProviderManager は入力に呼ばないので「request の範囲でしか持たない」に書き方を改めた。(3) 要素の判定を <code>AuthenticationFactors</code> にまとめ、<code>AuthenticatedActor</code> の引数の解決は <code>FACTOR_PASSWORD</code> と <code>FACTOR_TOTP</code> の両方を確かめる形にした。(4) 回復コードの欄の説明の文を「半角の数字と a〜f の英字で 8 文字。…」にし、salt の問い合わせ先を実装の文に合わせた</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5</td>
 </tr>
 </tbody>
 </table>
