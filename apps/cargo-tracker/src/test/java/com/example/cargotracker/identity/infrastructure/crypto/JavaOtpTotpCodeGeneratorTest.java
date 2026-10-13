@@ -111,8 +111,8 @@ class JavaOtpTotpCodeGeneratorTest {
     void 秘密がないときと負の刻みと復号できない秘密は失敗へ倒す() {
         JavaOtpTotpCodeGenerator generator = new JavaOtpTotpCodeGenerator(CIPHER);
 
-        assertThatThrownBy(() -> generator.code(OWNER, null, 1)).isInstanceOf(IllegalArgumentException.class);
-        assertThatThrownBy(() -> generator.code(OWNER, SECRET, -1)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> generator.code(OWNER, null, 1)).isExactlyInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> generator.code(OWNER, SECRET, -1)).isExactlyInstanceOf(IllegalArgumentException.class);
         EncryptedSecret unknownVersion = new EncryptedSecret("v9:AAAA");
         assertThatThrownBy(() -> generator.code(OWNER, unknownVersion, 1))
                 .isInstanceOf(UnreadableCredentialException.class);

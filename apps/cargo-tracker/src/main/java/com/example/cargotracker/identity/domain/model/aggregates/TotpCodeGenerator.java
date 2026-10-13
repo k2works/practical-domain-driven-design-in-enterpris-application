@@ -19,5 +19,10 @@ public interface TotpCodeGenerator {
      * @param step 時間の刻みの番号（epoch 秒 / 30）。0 以上
      * @return 先頭の 0 を保った固定の桁数のコード
      */
+    /**
+     * その刻みのコードを作る。
+     *
+     * @throws UnreadableCredentialException 暗号文を読めない（知らない鍵の版・壊れた暗号文・別の持ち主の暗号文。Bolt 31d）
+     */
     String code(UserId owner, EncryptedSecret secret, long step);
 }

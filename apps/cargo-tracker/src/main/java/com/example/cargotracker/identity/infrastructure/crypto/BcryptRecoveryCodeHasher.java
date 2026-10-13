@@ -2,6 +2,7 @@ package com.example.cargotracker.identity.infrastructure.crypto;
 
 import com.example.cargotracker.identity.domain.model.aggregates.RecoveryCodeHasher;
 import com.example.cargotracker.identity.domain.model.aggregates.UnreadableCredentialException;
+import java.util.Objects;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
@@ -30,6 +31,8 @@ public class BcryptRecoveryCodeHasher implements RecoveryCodeHasher {
      */
     @Override
     public boolean matches(String code, String hash) {
+        // 平文がないのは呼び出し側の実装の誤り（読めない要素に包まない）
+        Objects.requireNonNull(code, "code");
         try {
             return passwordEncoder.matches(code, hash);
         } catch (IllegalArgumentException e) {

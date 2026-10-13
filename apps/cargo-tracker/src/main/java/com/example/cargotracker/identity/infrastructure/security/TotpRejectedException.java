@@ -17,6 +17,10 @@ public final class TotpRejectedException extends BadCredentialsException {
 
     public TotpRejectedException(TotpVerification verification) {
         super("認証コードが正しくない");
+        if (verification == null || verification.accepted()) {
+            // 通った結果を拒否の理由にしない（監査記録の理由を誤らせない。Bolt 31d の開発レビュー）
+            throw new IllegalArgumentException("拒否の結果で作る: " + verification);
+        }
         this.verification = verification;
     }
 

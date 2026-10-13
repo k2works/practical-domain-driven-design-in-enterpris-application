@@ -82,13 +82,15 @@ public final class TotpCredential {
     }
 
     /**
-     * コードが、今の刻みの前後 {@value #WINDOW} 個の刻みのどれかのコードに一致し、その刻みを受け付けるなら、その刻みを返す。
+     * コードを今の刻みの前後 {@value #WINDOW} 個の刻みのコードと照合し、その結果（{@link TotpMatch}）を返す。使っていない刻みと一致すれば
+     * その刻み、使った刻み以下とだけ一致すれば再利用、どれとも一致しなければ不一致。
      * 比較は一定時間で行う（どこまで一致したかを時間から推測させない）。形の違うコードは生成器を呼ばずに不一致とし、
      * 最後に使った刻み以下の刻みのコードとだけ一致したら再利用とする（失敗へ倒す。T-42。Bolt 31d で結果をドメインの値にした）。
      * 受け付けた刻みは、リポジトリの条件付きの更新で使ったことにする。
      * 生成器には自分の暗号化した秘密を渡し、平文の秘密は扱わない（Bolt 31）。
      *
      * @param currentStep 今の刻みの番号（{@link #stepAt}）。0 以上（負なら失敗へ倒して例外）
+     * @throws UnreadableCredentialException 生成器が暗号文を読めない（Bolt 31d）
      */
     public TotpMatch match(String code, long currentStep, TotpCodeGenerator generator) {
         requireStep(currentStep);
@@ -97,7 +99,7 @@ public final class TotpCredential {
         }
         byte[] given = code.getBytes(StandardCharsets.US_ASCII);
         long matched = -1;
-        boolean usedMatched = false;
+        boolean reused = false;
         for (long step = Math.max(0, currentStep - WINDOW); step <= currentStep + WINDOW; step++) {
             byte[] expected = generator.code(this.userId, this.secret, step).getBytes(StandardCharsets.US_ASCII);
             // 一致を見つけても窓のすべての刻みを比べ、比べる回数を一致の位置で変えない
@@ -107,20 +109,20 @@ public final class TotpCredential {
             if (matched < 0 && equal && acceptable) {
                 matched = step;
             }
-            usedMatched |= equal && !acceptable;
+            reused |= equal && !acceptable;
         }
-        return resultOf(matched, usedMatched);
+        return resultOf(matched, reused);
     }
 
     private static boolean isDigits(String code) {
         return code != null && !code.isEmpty() && code.chars().allMatch(c -> c >= '0' && c <= '9');
     }
 
-    private static TotpMatch resultOf(long matched, boolean usedMatched) {
+    private static TotpMatch resultOf(long matched, boolean reused) {
         if (matched >= 0) {
             return new TotpMatch.Matched(matched);
         }
-        return usedMatched ? new TotpMatch.Reused() : new TotpMatch.Mismatch();
+        return reused ? new TotpMatch.Reused() : new TotpMatch.Mismatch();
     }
 
     private static long requireStep(long step) {

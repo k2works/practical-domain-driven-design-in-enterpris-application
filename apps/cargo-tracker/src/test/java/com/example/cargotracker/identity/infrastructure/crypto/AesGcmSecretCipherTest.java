@@ -75,8 +75,8 @@ class AesGcmSecretCipherTest {
         EncryptedSecret encrypted = cipher.encrypt(SECRET.clone(), OWNER);
         byte[] plain = SECRET.clone();
 
-        assertThatThrownBy(() -> cipher.decrypt(encrypted, null)).isInstanceOf(IllegalArgumentException.class);
-        assertThatThrownBy(() -> cipher.encrypt(plain, null)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> cipher.decrypt(encrypted, null)).isExactlyInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> cipher.encrypt(plain, null)).isExactlyInstanceOf(IllegalArgumentException.class);
     }
 
     @Test

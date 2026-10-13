@@ -8,7 +8,7 @@ import java.io.Serial;
  * 要素のポート（{@link TotpCodeGenerator}・{@link TotpSecretIssuer}・{@link RecoveryCodeHasher}）の実装が投げ、認証の入口と登録の
  * サービスはこの例外だけを捕まえる。ほかの {@link IllegalArgumentException} は実装の誤りとして捕まえない（500 にしてログに残す）。
  */
-public class UnreadableCredentialException extends IllegalArgumentException {
+public final class UnreadableCredentialException extends IllegalArgumentException {
 
     @Serial
     private static final long serialVersionUID = 1L;

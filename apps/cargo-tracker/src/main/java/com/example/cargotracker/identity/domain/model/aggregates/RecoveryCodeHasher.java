@@ -10,5 +10,10 @@ public interface RecoveryCodeHasher {
     String hash(String code);
 
     /** 平文の回復コードがハッシュに一致するか。 */
+    /**
+     * 平文が保存したハッシュに一致するか。
+     *
+     * @throws UnreadableCredentialException 保存したハッシュの形が違う（Bolt 31d）
+     */
     boolean matches(String code, String hash);
 }

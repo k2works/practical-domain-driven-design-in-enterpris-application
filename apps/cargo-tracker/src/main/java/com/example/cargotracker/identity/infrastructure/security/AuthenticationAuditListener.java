@@ -101,7 +101,8 @@ public class AuthenticationAuditListener {
             return switch (rejected.verification()) {
                 case REJECTED_REUSED -> AuthenticationRejection.TOTP_REUSED;
                 case REJECTED_NOT_ENROLLED -> AuthenticationRejection.TOTP_NOT_ENROLLED;
-                case ACCEPTED, REJECTED_MISMATCH -> AuthenticationRejection.INVALID_TOTP;
+                case REJECTED_MISMATCH -> AuthenticationRejection.INVALID_TOTP;
+                case ACCEPTED -> throw new IllegalStateException("通った結果で拒否された（実装の誤り）");
             };
         }
         return AuthenticationRejection.INVALID_TOTP;

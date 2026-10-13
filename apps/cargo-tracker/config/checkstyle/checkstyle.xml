@@ -9,6 +9,8 @@
     <property name="charset" value="UTF-8"/>
     <property name="severity" value="error"/>
     <module name="TreeWalker">
+        <!-- パッケージの宣言とディレクトリの一致（Bolt 31d の開発レビュー。git mv の改名だけが先にコミットされた食い違いを落とす） -->
+        <module name="PackageDeclaration"/>
         <module name="AvoidStarImport"/>
         <module name="RedundantImport"/>
         <module name="UnusedImports"/>

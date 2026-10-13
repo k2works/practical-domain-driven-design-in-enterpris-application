@@ -120,13 +120,13 @@ public class TotpEnrollmentService {
         }
         UtcInstant now = new UtcInstant(clock.instant());
         TotpCredential credential = TotpCredential.enroll(owner, secret, now);
-        TotpMatch matched;
+        TotpMatch match;
         try {
-            matched = credential.match(code, TotpCredential.stepAt(now), generator);
+            match = credential.match(code, TotpCredential.stepAt(now), generator);
         } catch (UnreadableCredentialException _) {
             return new EnrollmentResult.SecretUnusable();
         }
-        if (!(matched instanceof TotpMatch.Matched)) {
+        if (!(match instanceof TotpMatch.Matched)) {
             // 登録したばかりの資格はどの刻みも使っていないので、再利用にはならない
             return new EnrollmentResult.CodeRejected();
         }

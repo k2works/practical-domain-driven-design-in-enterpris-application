@@ -102,6 +102,15 @@ class TotpCredentialTest {
     }
 
     @Test
+    void 同じコードが使った刻みと受け付ける刻みの両方に一致したら受け付ける刻みを返す() {
+        TotpCredential credential = lastUsed(100);
+        TotpCodeGenerator sameCode =
+                (owner, secret, step) -> step == 100 ? "999999" : (step == 99 || step == 101 ? "123456" : "000000");
+
+        assertThat(credential.match("123456", 100, sameCode)).isEqualTo(new TotpMatch.Matched(101));
+    }
+
+    @Test
     void 形の違うコードは生成器を呼ばずに受け付けない() {
         TotpCredential credential = lastUsed(0);
         TotpCodeGenerator mustNotBeCalled = (owner, secret, step) -> {

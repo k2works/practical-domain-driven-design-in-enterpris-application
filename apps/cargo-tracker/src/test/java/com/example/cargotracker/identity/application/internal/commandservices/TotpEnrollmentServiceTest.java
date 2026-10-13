@@ -47,7 +47,7 @@ class TotpEnrollmentServiceTest {
     private static final Instant NOW = Instant.ofEpochSecond(3_000);
 
     /** 偽の秘密の発行。暗号文は持ち主の ID を含み、別の持ち主では表示の値を作らない（AAD の代わり）。 */
-    private static final class FakeIssuer implements TotpSecretIssuer {
+    private static class FakeIssuer implements TotpSecretIssuer {
         private final AtomicInteger issued = new AtomicInteger();
 
         @Override
@@ -283,6 +283,31 @@ class TotpEnrollmentServiceTest {
         EncryptedSecret secret = started(Optional.empty());
 
         assertThatThrownBy(() -> brokenService.complete(actor, secret, "000100"))
+                .isExactlyInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void 登録の途中の暗号文で読めない要素でない実装の誤りが起きたら新しく発行し直さず投げる() {
+        // 開始の処理の catch も読めない要素だけに狭めたことを固定する（Bolt 31d の開発レビュー）
+        TotpSecretIssuer broken = new FakeIssuer() {
+            @Override
+            public TotpProvisioning provisioning(UserId owner, EncryptedSecret secret, String accountName) {
+                throw new IllegalArgumentException("値の検証の誤り");
+            }
+        };
+        TotpEnrollmentService brokenService = new TotpEnrollmentService(
+                credentials,
+                recoveryCodes,
+                auditRecords,
+                broken,
+                recoveryCodeGenerator,
+                HASHER,
+                GENERATOR,
+                Clock.fixed(NOW, ZoneOffset.UTC),
+                NO_TRANSACTION);
+        Optional<EncryptedSecret> pending = Optional.of(issuer.issue(actor.userId()));
+
+        assertThatThrownBy(() -> brokenService.begin(actor, pending))
                 .isExactlyInstanceOf(IllegalArgumentException.class);
     }
 }

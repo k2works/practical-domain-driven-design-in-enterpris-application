@@ -12,6 +12,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.example.cargotracker.TestcontainersConfiguration;
+import com.example.cargotracker.identity.LogCapture;
 import com.example.cargotracker.identity.domain.model.aggregates.Company;
 import com.example.cargotracker.identity.domain.model.aggregates.CompanyRepository;
 import com.example.cargotracker.identity.domain.model.aggregates.TotpCodeGenerator;
@@ -23,6 +24,7 @@ import com.example.cargotracker.identity.domain.model.valueobjects.CompanyKind;
 import com.example.cargotracker.identity.domain.model.valueobjects.EmailAddress;
 import com.example.cargotracker.identity.domain.model.valueobjects.UserStatus;
 import com.example.cargotracker.identity.infrastructure.crypto.AesGcmSecretCipher;
+import com.example.cargotracker.identity.infrastructure.crypto.Base32;
 import com.example.cargotracker.shared.acceptance.MutableClock;
 import com.example.cargotracker.shared.domain.CompanyId;
 import com.example.cargotracker.shared.domain.Role;
@@ -46,15 +48,13 @@ import java.util.UUID;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
-import org.springframework.boot.test.system.CapturedOutput;
-import org.springframework.boot.test.system.OutputCaptureExtension;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
@@ -78,7 +78,6 @@ import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandl
  */
 @SpringBootTest
 @AutoConfigureMockMvc
-@ExtendWith(OutputCaptureExtension.class)
 @Import({TestcontainersConfiguration.class, AuthenticationSecurityIntegrationTest.FixedClock.class})
 class AuthenticationSecurityIntegrationTest {
 
@@ -433,7 +432,7 @@ class AuthenticationSecurityIntegrationTest {
     }
 
     @Test
-    void 秘密を復号できない利用者は500にせずA01に戻し監査記録に残す(CapturedOutput output) throws Exception {
+    void 秘密を復号できない利用者は500にせずA01に戻し監査記録に残す() throws Exception {
         String email = shipper(UserStatus.ACTIVE);
         Cookie session = loginWithPassword(email);
         jdbc.update(
@@ -441,17 +440,52 @@ class AuthenticationSecurityIntegrationTest {
                         + " WHERE user_id = ?",
                 userIdOf(email).value());
 
-        mvc.perform(post(TOTP_URL).cookie(session).param("code", "654321").with(csrf()))
-                .andExpect(redirectedUrl("/login?totp-error"));
+        String logs;
+        try (LogCapture capture = LogCapture.start()) {
+            mvc.perform(post(TOTP_URL).cookie(session).param("code", "654321").with(csrf()))
+                    .andExpect(redirectedUrl("/login?totp-error"));
+            logs = capture.text();
+        }
 
         assertThat(auditOf(email))
                 .contains(Map.of("action", "LOGIN_FAILED", "result", "FAILURE", "reason", "INVALID_TOTP"));
-        // ログの平文の見張り（Bolt 31d）。エラーの行があること（T-107）と、送ったコード・password・秘密がないこと
-        assertThat(output.getAll())
+        // ログの平文の見張り（Bolt 31d）。エラーの行があること（T-107）と、送ったコード・password がないこと。この場面は暗号文を
+        // 壊してあり平文の秘密はアプリの手に入らないので、秘密は正しい秘密で誤ったコードを送る場面で見張る
+        assertThat(logs)
                 .contains("TOTP の秘密を復号できず", userIdOf(email).value().toString())
                 .doesNotContain("654321")
-                .doesNotContain(PASSWORD)
-                .doesNotContain(new String(TOTP_SECRET, StandardCharsets.US_ASCII));
+                .doesNotContain(PASSWORD);
+    }
+
+    @Test
+    void 秘密を復号して誤ったコードを拒むときもログに秘密もコードも出さない() throws Exception {
+        // ログの平文の見張り（Bolt 31d の開発レビュー）。秘密を実際に復号する場面で、ASCII と Base32 の両方の形を見る
+        String email = shipper(UserStatus.ACTIVE);
+        Cookie session = loginWithPassword(email);
+        String wrong = wrongCode(email);
+
+        String logs;
+        try (LogCapture capture = LogCapture.start()) {
+            // この経路はエラーのログを出さないので、取り込みが効いていることを目印の行で確かめる（T-107）
+            LoggerFactory.getLogger(AuthenticationSecurityIntegrationTest.class).info("ログの見張りの目印");
+            mvc.perform(post(TOTP_URL).cookie(session).param("code", wrong).with(csrf()))
+                    .andExpect(redirectedUrl("/login?totp-error"));
+            logs = capture.text();
+        }
+
+        assertThat(logs)
+                .as("ログの取り込みが効いている")
+                .contains("ログの見張りの目印")
+                .doesNotContain(new String(TOTP_SECRET, StandardCharsets.US_ASCII))
+                .doesNotContain(Base32.encode(TOTP_SECRET))
+                .doesNotContain(wrong)
+                .doesNotContain(PASSWORD);
+    }
+
+    @Test
+    void 本体のpasswordの符号化は委譲する形のbcryptで強さ10() {
+        // スパイクの「既定の bcrypt の強さは 10」を本体の部品で確かめる（Bolt 31d の対応表の (d)）
+        assertThat(passwordEncoder.encode(PASSWORD)).startsWith("{bcrypt}$2a$10$");
     }
 
     @Test

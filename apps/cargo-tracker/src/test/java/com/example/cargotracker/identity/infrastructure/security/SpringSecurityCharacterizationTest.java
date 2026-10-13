@@ -23,6 +23,7 @@ import org.springframework.security.core.authority.FactorGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.AbstractAuthenticationProcessingFilter;
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
+import org.springframework.security.web.context.RequestAttributeSecurityContextRepository;
 import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
 
 /**
@@ -85,11 +86,20 @@ class SpringSecurityCharacterizationTest {
                 List.of(FactorGrantedAuthority.fromAuthority(FactorGrantedAuthority.PASSWORD_AUTHORITY)));
     }
 
-    private static List<String> authoritiesAfter(AbstractAuthenticationProcessingFilter filter, MockHttpSession session)
-            throws Exception {
-        SecurityContextHolder.getContext().setAuthentication(passwordStage());
+    private static MockHttpServletRequest postTo(MockHttpSession session) {
         MockHttpServletRequest request = new MockHttpServletRequest("POST", URL);
         request.setSession(session);
+        return request;
+    }
+
+    private static List<String> authoritiesAfter(AbstractAuthenticationProcessingFilter filter, MockHttpSession session)
+            throws Exception {
+        return authoritiesAfter(filter, postTo(session));
+    }
+
+    private static List<String> authoritiesAfter(
+            AbstractAuthenticationProcessingFilter filter, MockHttpServletRequest request) throws Exception {
+        SecurityContextHolder.getContext().setAuthentication(passwordStage());
         filter.doFilter(request, new MockHttpServletResponse(), new MockFilterChain());
         return SecurityContextHolder.getContext().getAuthentication().getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
@@ -113,24 +123,39 @@ class SpringSecurityCharacterizationTest {
     }
 
     @Test
-    void 認証のフィルターの既定の置き場所では認証の文脈が次のrequestに残らない() throws Exception {
-        // ② TotpAuthenticationFilter が session の置き場所を明示する理由（R-16 の「既定のリポジトリ」）
+    void 認証のフィルターの既定の置き場所はrequestの属性でsessionには残らない() throws Exception {
+        // ② TotpAuthenticationFilter が session の置き場所を明示する理由（R-16 の「既定のリポジトリ」）。対照として session の置き場所を
+        // 明示したフィルターと比べ、このテストが違いを捉えられることを示す
         GrantedAuthority totp = FactorGrantedAuthority.fromAuthority(TotpAuthenticationToken.FACTOR_TOTP);
         FixedResultFilter defaultRepository =
                 new FixedResultFilter(TotpAuthenticationToken.authenticated("shipper", totp));
-        MockHttpSession session = new MockHttpSession();
+        FixedResultFilter sessionRepository =
+                new FixedResultFilter(TotpAuthenticationToken.authenticated("shipper", totp));
+        sessionRepository.setSecurityContextRepository(new HttpSessionSecurityContextRepository());
 
-        assertThat(authoritiesAfter(defaultRepository, session))
-                .as("その request の中では認証される")
-                .isNotEmpty();
-        assertThat(session.getAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY))
-                .as("session には置かれない")
+        MockHttpSession defaultSession = new MockHttpSession();
+        MockHttpServletRequest defaultRequest = postTo(defaultSession);
+        assertThat(authoritiesAfter(defaultRepository, defaultRequest))
+                .as("フィルターが認証した")
+                .contains(TotpAuthenticationToken.FACTOR_TOTP);
+        assertThat(defaultRequest.getAttribute(RequestAttributeSecurityContextRepository.DEFAULT_REQUEST_ATTR_NAME))
+                .as("既定の置き場所は request の属性")
+                .isNotNull();
+        assertThat(defaultSession.getAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY))
+                .as("session には置かれない（次の request に残らない）")
                 .isNull();
+
+        MockHttpSession explicitSession = new MockHttpSession();
+        authoritiesAfter(sessionRepository, postTo(explicitSession));
+        assertThat(explicitSession.getAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY))
+                .as("session の置き場所を明示すると session に置かれる")
+                .isNotNull();
     }
 
     @Test
-    void 要素の権限の発行時刻は枠組みの時計で決まる() {
-        // ③ 最長 8 時間の判定に issuedAt を使わず、session の時刻（アプリケーションの Clock）で数える理由
+    void 要素の権限の発行時刻はシステムの時計で決まる() {
+        // ③ fromAuthority の issuedAt はシステムの時計（Instant.now）で決まり、アプリケーションの Clock を受けない。最長 8 時間の判定に
+        // issuedAt を使わず、session の時刻（アプリケーションの Clock）で数える理由
         Instant before = Instant.now();
         FactorGrantedAuthority factor = FactorGrantedAuthority.fromAuthority(TotpAuthenticationToken.FACTOR_TOTP);
 

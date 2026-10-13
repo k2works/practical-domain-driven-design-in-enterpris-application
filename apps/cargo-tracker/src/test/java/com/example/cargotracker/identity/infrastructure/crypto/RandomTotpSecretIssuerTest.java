@@ -3,6 +3,7 @@ package com.example.cargotracker.identity.infrastructure.crypto;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import com.example.cargotracker.identity.domain.model.aggregates.UnreadableCredentialException;
 import com.example.cargotracker.identity.domain.model.valueobjects.EncryptedSecret;
 import com.example.cargotracker.identity.domain.model.valueobjects.TotpProvisioning;
 import com.example.cargotracker.shared.domain.UserId;
@@ -35,7 +36,7 @@ class RandomTotpSecretIssuerTest {
 
         assertThat(cipher.decrypt(first, OWNER)).hasSize(20);
         assertThat(cipher.decrypt(first, OWNER)).isNotEqualTo(cipher.decrypt(second, OWNER));
-        assertThatThrownBy(() -> cipher.decrypt(first, OTHER)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> cipher.decrypt(first, OTHER)).isInstanceOf(UnreadableCredentialException.class);
     }
 
     @Test
