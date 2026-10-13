@@ -3,8 +3,10 @@ type: Plan
 title: "Bolt 31 計画 - TOTP の秘密の暗号化と 2 段階のログイン（A-02）"
 description: "W5 の 5 本目の Bolt の計画。TOTP の秘密をアプリケーションで暗号化し（AES-GCM、鍵の版の接頭辞）、Spring Security 7 の要素の権限で password と TOTP の 2 段階のログイン（A-02、最長 8 時間を TOTP が初めて通った時刻から数える）を組み、ADR-012 の「W5 で見直すこと」の 1・2 を片づける。層の規則 D-5 に認証の例外を足す。初回の登録（A-07）・回復コード・特性テスト・引数の解決は Bolt 31b。"
 tags: [development,bolt-plan]
-status: draft
+status: stable
 generated: { by: anthropic/claude-opus-5-5, at: 2026-10-13T01:00:30Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-10-13T01:20:00Z }
 ---
 
 # Bolt 31 計画 - TOTP の秘密の暗号化と 2 段階のログイン（A-02）
@@ -19,6 +21,7 @@ generated: { by: anthropic/claude-opus-5-5, at: 2026-10-13T01:00:30Z }
 | SP | 0（US-18 AC1 の TOTP の部分。US-18 の SP 6 は #13 をクローズする Bolt 33b で数える。リリース計画の Bolt 31 の SP 2 は、AC7 を作る Bolt 31b に移す） |
 | GitHub | [#13](https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/13)（US-18、R1.0）。この Bolt では閉じない |
 | 承認ゲート | **ステップごとに止める**（W4 の締めの決定: 認証の完成はステップごと）。確認必須（セキュリティ、認可、構造（層の規則）、データベース（dev-data））は計画の承認の場で確認ポイントとして判断を受け、そのうえで各ステップの終わりに止める |
+| 承認ゲートの扱い | 2026-10-13 に human:kakimomokuri が計画を承認した（確認ポイント 1〜13 は推奨のとおり）。あわせて人の指示（`/goal Bolt31`）により、ステップの承認ゲートで止まらずに進める。止まらなかったゲートごとに根拠を書き、終了報告の承認の議題に置く（T-36） |
 | アプローチ | インサイドアウト（開発戦略の中盤）。暗号化とアプリケーションのサービスを内側から固め、認証の流れはセキュリティの統合テストで外側から確かめる |
 | 前の Bolt | [Bolt 30 終了報告](bolt_30_report.md)、[Bolt 14 終了報告](bolt_14_report.md)、[Bolt 13 終了報告](bolt_13_report.md) |
 
@@ -287,6 +290,7 @@ title Bolt 31 で作る認証の画面遷移（A-07 は Bolt 31b）
 | :--- | :--- | :--- |
 | 2026-10-13 | 初版作成（承認待ち）。開始準備で、ADR-011・ADR-012・今の `identity` のコードとテスト・スパイク・Bolt 13・14・30 からの持ち込みを調べ、human:kakimomokuri の決定（31 と 31b に分ける、AES-GCM と環境変数の鍵と版の接頭辞、K-02 を受け入れる、`TotpCodeGenerator` は `EncryptedSecret` を受ける）を反映した | anthropic/claude-opus-5-5 |
 | 2026-10-13 | 詳細整合性検証と横断整合性検証の指摘を反映した。human:kakimomokuri の回答（D-5 に認証の例外を足す、dev のコードは dev 専用の部品を関数の型で注入する、画面の層のテストは刻みを戻す、特性テストと ADR-012 の見直しの 4 を 31b に送る）を確認ポイント 5〜8 にした。password の段の上限（fail-closed との両立）、A-02 と登録の案内の認可の例外、環境変数の名前、TOTP の失敗の監査と理由、A-02 の誤りの行き先を UI 設計に合わせる、設計文書の直し（domain_model.md・SEC-03・data_model.md:925・ui_design.md の A-02・ADR-011 の `SecurityFilterChain`・release_plan の持ち込みの表と 31b・32・32b・33b の行）、dev の秘密の一致のテスト、T-89 から外れる扱い、AT-02 の番号、前例の置き場所を直した | anthropic/claude-opus-5-5 |
+| 2026-10-13 | 計画の承認を記録した。確認ポイント 1〜13 は推奨のとおり。`/goal Bolt31` により、ステップの承認ゲートで止まらずに進める（T-36） | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 
 ## 関連ドキュメント
 
