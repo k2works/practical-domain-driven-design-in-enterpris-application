@@ -4897,6 +4897,34 @@
   
   
     <li class="md-nav__item">
+      <a href="bolt_31d_plan/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 31d 計画
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="release_report-0_1/" class="md-nav__link">
         
   
@@ -10240,6 +10268,13 @@
 <td style="text-align: left;">W5</td>
 <td style="text-align: left;">完了</td>
 </tr>
+<tr>
+<td style="text-align: left;">31d</td>
+<td style="text-align: left;"><a href="bolt_31d_plan/">認証の部品の守りの直し（照合の 3 値、暗号のパッケージ、特性テスト、スパイクの削除）</a></td>
+<td style="text-align: left;">—</td>
+<td style="text-align: left;">W5</td>
+<td style="text-align: left;">計画済み（承認待ち）</td>
+</tr>
 </tbody>
 </table>
 <p>Bolt を始めるときに行を追加します。</p>
@@ -10539,6 +10574,7 @@
 <li><a href="bolt_23b_report/">Bolt 23b 終了報告 - 本予約の確定の画面（US-04 AC1・AC2、#10）</a> - 23b 回目の Bolt の終了報告。S-02 の予約の確定待ちの表、S-09 本予約の確定（画面そのものを確認の領域にする）、S-24 予約の詳細の最小の表示を作り、見積りの公開 API の照会を業務番号と見積り番号に改めた（ADR-016 の改訂）。/goal で止まらなかった承認ゲート、開発レビューの対応（承認の後に失効した見積りの再見積りの行き止まりほか）、既知の課題を記録する。</li>
 <li><a href="bolt_24_report/">Bolt 24 終了報告 - 本予約の確定の再送と重複確定の防止（US-04 AC4、B-INV-03・B-INV-11、#10）</a> - 24 回目の Bolt の終了報告。本予約の確定にコマンド ID と処理済みコマンドを足し、同じ要求の再送には最初の結果を、同じ見積りの別の確定には既存の追跡番号を返し、確定済みの判定を見積りの照会より前に置いた。/goal で止まらなかった承認ゲート、スキーマの承認、開発レビューの対応、人に諮る設計の判断（ADR-001 の例外、追記専用と保持期間）、既知の課題を記録する。</li>
 <li><a href="bolt_31c_plan/">Bolt 31c 計画 - 回復コードによるログインと password の段の主体の型</a></li>
+<li><a href="bolt_31d_plan/">Bolt 31d 計画 - 認証の部品の守りの直し（照合の 3 値、暗号のパッケージ、特性テスト、スパイクの削除）</a> - W5 の 8 本目の Bolt の計画。Bolt 31・31b・31c から送った構造の直しのうち守りに関わるものを片づける。TOTP の照合の結果（一致・再利用・不一致）をドメインに寄せ、暗号の部品を identity.infrastructure.crypto に分けて層の規則 D-5 の認証の例外を入口だけに狭め、FACTOR_* の ArchUnit の空振り・全 URL の見張り・ログの平文の見張り・枠組みの特性テストを足し、スパイクを本体のテストとの対応を確かめてから消す。画面は変えない。</li>
 </ul>
 
 
