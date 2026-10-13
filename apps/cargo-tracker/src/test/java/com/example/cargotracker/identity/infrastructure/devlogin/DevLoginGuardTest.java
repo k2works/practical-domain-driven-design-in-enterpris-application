@@ -15,7 +15,7 @@ import org.springframework.mock.env.MockEnvironment;
 class DevLoginGuardTest {
 
     private static final DevLoginProperties CONFIGURED = new DevLoginProperties(
-            List.of(new DevLoginProperties.Account(Role.SHIPPER, "dev@example.com", "dev-password")));
+            List.of(new DevLoginProperties.Account(Role.SHIPPER, "dev@example.com", "dev-password", null)));
     private static final DevLoginProperties EMPTY = new DevLoginProperties(null);
     private static final String DEV_DATA_LOCATIONS = "classpath:db/migration/common,classpath:db/dev-data";
 

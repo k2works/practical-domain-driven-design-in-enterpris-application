@@ -54,6 +54,23 @@ class AuthenticationArchitectureTest {
             .dependOnClassesThat()
             .haveSimpleName("AesGcmSecretCipher");
 
+    /**
+     * 要素の権限（FACTOR_PASSWORD・FACTOR_TOTP）は identity.infrastructure に閉じる。ほかのコンテキストと identity の画面・業務の層は
+     * 認証の段を知らない（Bolt 31、ADR-011 のコンプライアンス）。
+     */
+    @ArchTest
+    static final ArchRule 要素の権限はidentityのinfrastructureだけが参照する = noClasses()
+            .that()
+            .resideInAPackage("com.example.cargotracker..")
+            .and()
+            .resideOutsideOfPackage("com.example.cargotracker.identity.infrastructure..")
+            .should()
+            .dependOnClassesThat()
+            .haveFullyQualifiedName("org.springframework.security.core.authority.FactorGrantedAuthority")
+            .orShould()
+            .dependOnClassesThat()
+            .haveSimpleName("TotpAuthenticationToken");
+
     /** 上の規則が空振りしていないことを確かめる。 */
     @ArchTest
     static final ArchRule 秘密の暗号化の部品はJDKの暗号を使う = classes()

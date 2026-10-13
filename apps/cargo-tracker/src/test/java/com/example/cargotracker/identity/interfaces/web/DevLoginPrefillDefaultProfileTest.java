@@ -29,6 +29,9 @@ class DevLoginPrefillDefaultProfileTest {
     @Test
     void 既定の設定では入力済みの部品がない() {
         assertThat(context.getBeanNamesForType(DevLoginPrefill.class)).isEmpty();
+        assertThat(context.getBeanNamesForType(DevTotpCodeSource.class))
+                .as("A-02 のコードの部品もない（Bolt 31）")
+                .isEmpty();
     }
 
     @Test

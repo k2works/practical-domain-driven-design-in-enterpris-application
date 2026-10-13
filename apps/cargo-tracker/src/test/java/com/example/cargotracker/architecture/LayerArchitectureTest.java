@@ -3,6 +3,7 @@ package com.example.cargotracker.architecture;
 import static com.tngtech.archunit.base.DescribedPredicate.not;
 import static com.tngtech.archunit.core.domain.JavaCall.Predicates.target;
 import static com.tngtech.archunit.core.domain.JavaClass.Predicates.assignableTo;
+import static com.tngtech.archunit.core.domain.JavaClass.Predicates.equivalentTo;
 import static com.tngtech.archunit.core.domain.JavaClass.Predicates.resideInAPackage;
 import static com.tngtech.archunit.core.domain.JavaClass.Predicates.resideInAnyPackage;
 import static com.tngtech.archunit.core.domain.properties.HasName.Predicates.nameMatching;
@@ -11,6 +12,7 @@ import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 import static com.tngtech.archunit.library.Architectures.layeredArchitecture;
 
+import com.example.cargotracker.identity.interfaces.web.DevTotpCodeSource;
 import com.example.cargotracker.shared.annotation.ddd.Saga;
 import com.tngtech.archunit.base.DescribedPredicate;
 import com.tngtech.archunit.core.domain.JavaClass;
@@ -79,7 +81,12 @@ class LayerArchitectureTest {
             // 実装は interfaces.api.internal に置く。見積りの公開 API も 2026-10-09 に移した）
             .ignoreDependency(
                     resideInAnyPackage("..application.internal.outboundservices.acl..", "..infrastructure.config.."),
-                    resideInAPackage("com.example.cargotracker.*.interfaces.api"));
+                    resideInAPackage("com.example.cargotracker.*.interfaces.api"))
+            // dev の A-02 の入力済みのコード（Bolt 31、ADR-011 の dev の 1 層目）。画面の層の関数の型に dev だけの部品をつなぐのは、
+            // identity の合成ルートだけに許す（2026-10-13 の人の決定。画面の層は infrastructure を参照しない）
+            .ignoreDependency(
+                    resideInAPackage("com.example.cargotracker.identity.infrastructure.config.."),
+                    equivalentTo(DevTotpCodeSource.class));
 
     /**
      * 合成ルートの外の infrastructure は application に依存しない（D-5）。例外はサガの状態の永続化で、永続化の実装

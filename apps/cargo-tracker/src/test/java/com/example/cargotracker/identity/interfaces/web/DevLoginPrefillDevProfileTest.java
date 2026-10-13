@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
@@ -19,6 +20,7 @@ import org.springframework.test.web.servlet.MvcResult;
 /**
  * 開発環境（dev、H2）のログインの画面（2026-10-06 の人の決定、UI 設計「A-01」）。
  * A-01 は開発用の荷主の利用者で入力済みになり、荷主担当者・営業担当者の開発用の利用者を選んでそのままログインできる。
+ * A-02 は開発用の利用者の固定の秘密からその時点のコードで入力済みになる（Bolt 31。TOTP を飛ばさない）。
  */
 @SpringBootTest
 @ActiveProfiles("dev")
@@ -27,6 +29,12 @@ class DevLoginPrefillDevProfileTest {
 
     @Autowired
     MockMvc mvc;
+
+    @Autowired
+    DevTotpCodeSource devTotpCodes;
+
+    @Autowired
+    JdbcTemplate jdbc;
 
     @Test
     void devではログインの画面にメールアドレスとpasswordが入っている() throws Exception {
@@ -45,36 +53,46 @@ class DevLoginPrefillDevProfileTest {
                 .andExpect(content().string(containsString("追跡管理者でログイン（tracking-manager@dev.cargo-tracker.example）")));
     }
 
-    // 開発用の利用者の TOTP の資格は Bolt 31 のステップ 6 で dev-data に足す。それまでは password の段の後に登録の案内へ移る
     @Test
-    void 追跡管理者の開発用の利用者を選ぶと追跡一覧へ移る() throws Exception {
-        MvcResult login = mvc.perform(post("/login")
-                        .param("username", "tracking-manager@dev.cargo-tracker.example")
-                        .param("password", "dev-password-staff")
-                        .with(csrf()))
-                .andExpect(redirectedUrl("/login/totp/enroll"))
-                .andReturn();
-        Cookie session = login.getResponse().getCookie("SESSION");
+    void 追跡管理者の開発用の利用者を選ぶとA02が入力済みで確認すると追跡一覧へ移る() throws Exception {
+        Cookie session = signIn("tracking-manager@dev.cargo-tracker.example");
 
-        mvc.perform(get("/").cookie(session))
-                .andExpect(result -> org.assertj.core.api.Assertions.assertThat(
-                                result.getResponse().getRedirectedUrl())
-                        .startsWith("/login/totp?factor.type=totp"));
+        mvc.perform(get("/").cookie(session)).andExpect(redirectedUrl("/staff/tracking-records"));
     }
 
     @Test
-    void 営業担当者の開発用の利用者を選ぶと社内のホームへ移る() throws Exception {
-        MvcResult login = mvc.perform(post("/login")
-                        .param("username", "sales@dev.cargo-tracker.example")
+    void 営業担当者の開発用の利用者を選ぶとA02が入力済みで確認すると社内のホームへ移る() throws Exception {
+        Cookie session = signIn("sales@dev.cargo-tracker.example");
+
+        mvc.perform(get("/").cookie(session)).andExpect(redirectedUrl("/staff/transport-requests"));
+    }
+
+    /**
+     * 開発用の利用者のボタンと同じ送信（password の段）の後に、A-02 が入力済みであることを確かめ、そのコードを送る（Bolt 31）。
+     * 同じ利用者のテストの間で同じ刻みのコードを使い回さないよう、使った刻みを戻す（テストの準備。確認ポイント 7）。
+     */
+    private Cookie signIn(String email) throws Exception {
+        jdbc.update(
+                "UPDATE identity.totp_credential SET last_used_step = 0 WHERE user_id ="
+                        + " (SELECT id FROM identity.app_user WHERE email = ?)",
+                email);
+        MvcResult password = mvc.perform(post("/login")
+                        .param("username", email)
                         .param("password", "dev-password-staff")
                         .with(csrf()))
-                .andExpect(redirectedUrl("/login/totp/enroll"))
+                .andExpect(redirectedUrl("/login/totp"))
                 .andReturn();
-        Cookie session = login.getResponse().getCookie("SESSION");
+        Cookie passwordStage = password.getResponse().getCookie("SESSION");
+        String code = devTotpCodes.codeFor(email).orElseThrow();
 
-        mvc.perform(get("/").cookie(session))
-                .andExpect(result -> org.assertj.core.api.Assertions.assertThat(
-                                result.getResponse().getRedirectedUrl())
-                        .startsWith("/login/totp?factor.type=totp"));
+        mvc.perform(get("/login/totp").cookie(passwordStage))
+                .andExpect(content().string(containsString("value=\"" + code + "\"")));
+        MvcResult totp = mvc.perform(post("/login/totp")
+                        .cookie(passwordStage)
+                        .param("code", code)
+                        .with(csrf()))
+                .andExpect(redirectedUrl("/"))
+                .andReturn();
+        return totp.getResponse().getCookie("SESSION");
     }
 }

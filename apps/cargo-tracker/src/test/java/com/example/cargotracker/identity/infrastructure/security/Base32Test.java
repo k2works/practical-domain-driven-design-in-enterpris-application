@@ -1,0 +1,56 @@
+package com.example.cargotracker.identity.infrastructure.security;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
+import java.nio.charset.StandardCharsets;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
+
+/**
+ * Base32（RFC 4648 の 6 節）。TOTP の秘密を認証アプリと受け渡す形（Bolt 31 の dev の入力済み、Bolt 31b の otpauth の URI）。
+ * 試験ベクトルは RFC 4648 の 10 節。
+ */
+class Base32Test {
+
+    @ParameterizedTest
+    @CsvSource({
+        "f, MY======",
+        "fo, MZXQ====",
+        "foo, MZXW6===",
+        "foob, MZXW6YQ=",
+        "fooba, MZXW6YTB",
+        "foobar, MZXW6YTBOI======"
+    })
+    void RFC4648の試験ベクトルを符号化し復号する(String plain, String encoded) {
+        byte[] bytes = plain.getBytes(StandardCharsets.US_ASCII);
+
+        assertThat(Base32.encode(bytes)).isEqualTo(encoded);
+        assertThat(Base32.decode(encoded)).isEqualTo(bytes);
+    }
+
+    @Test
+    void RFC6238の秘密を復号する() {
+        assertThat(Base32.decode("GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ"))
+                .isEqualTo("12345678901234567890".getBytes(StandardCharsets.US_ASCII));
+    }
+
+    @Test
+    void 埋め草のない形と小文字と区切りの空白も復号する() {
+        assertThat(Base32.decode("mzxw 6ytb oi")).isEqualTo("foobar".getBytes(StandardCharsets.US_ASCII));
+    }
+
+    @Test
+    void 空の文字列は空の配列() {
+        assertThat(Base32.decode("")).isEmpty();
+        assertThat(Base32.encode(new byte[0])).isEmpty();
+    }
+
+    @Test
+    void Base32の文字でないものは失敗へ倒す() {
+        assertThatThrownBy(() -> Base32.decode("MZXW1")).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> Base32.decode("MZ=XW")).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> Base32.decode(null)).isInstanceOf(IllegalArgumentException.class);
+    }
+}

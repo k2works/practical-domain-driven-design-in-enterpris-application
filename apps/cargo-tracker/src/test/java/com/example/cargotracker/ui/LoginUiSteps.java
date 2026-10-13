@@ -14,7 +14,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.web.server.LocalServerPort;
 
 /**
- * ログイン（A-01）・ログアウト・権限なし（A-04）・準備中の画面の画面の層のステップ（US-18 の password の段、Bolt 14）。
+ * ログイン（A-01）・認証コードの入力（A-02）・ログアウト・権限なし（A-04）・準備中の画面の画面の層のステップ（US-18、Bolt 14。
+ * A-02 は Bolt 31）。
  */
 public class LoginUiSteps {
 
@@ -22,6 +23,7 @@ public class LoginUiSteps {
     private final UiUsers users;
     private final String baseUrl;
     private UiUsers.Credentials credentials;
+    private Role role;
 
     public LoginUiSteps(
             BrowserSession browser,
@@ -43,12 +45,14 @@ public class LoginUiSteps {
 
     @前提("荷主担当者の利用者が登録されている")
     public void 荷主担当者の利用者が登録されている() {
-        credentials = users.of(Role.SHIPPER);
+        role = Role.SHIPPER;
+        credentials = users.of(role);
     }
 
     @前提("営業担当者の利用者が登録されている")
     public void 営業担当者の利用者が登録されている() {
-        credentials = users.of(Role.SALES);
+        role = Role.SALES;
+        credentials = users.of(role);
     }
 
     @もし("ログインの画面でメールアドレスと password を入れてログインする")
@@ -81,8 +85,42 @@ public class LoginUiSteps {
         page().keyboard().type(credentials.password());
         page().keyboard().press("Tab");
         page().keyboard().press("Enter");
+        page().waitForURL(url -> url.contains("/login/totp"));
+        browser.checkAccessibility();
+    }
+
+    @もし("認証コードの画面で認証アプリのコードを入れて確認する")
+    public void 認証アプリのコードを入れて確認する() {
+        submitTotp(users.totpCode(role));
         page().waitForURL(url -> !url.contains("/login"));
         browser.checkAccessibility();
+    }
+
+    @もし("認証コードの画面で誤ったコードを入れて確認する")
+    public void 誤ったコードを入れて確認する() {
+        // 今のコードの各桁をずらしたコード（前後の刻みのコードと重なる見込みは 100 万分の 2 ほど）
+        int current = Integer.parseInt(users.totpCode(role));
+        submitTotp(String.format("%06d", (current + 500_000) % 1_000_000));
+        page().waitForLoadState();
+        browser.checkAccessibility();
+    }
+
+    @もし("認証コードの画面でキー操作だけでコードを入れて確認する")
+    public void キー操作だけでコードを入れて確認する() {
+        page().waitForURL(url -> url.contains("/login/totp"));
+        page().getByLabel("認証コード").focus();
+        page().keyboard().type(users.totpCode(role));
+        page().keyboard().press("Enter");
+        page().waitForURL(url -> !url.contains("/login"));
+        browser.checkAccessibility();
+    }
+
+    private void submitTotp(String code) {
+        page().waitForURL(url -> url.contains("/login/totp"));
+        browser.checkAccessibility();
+        page().getByLabel("認証コード").fill(code);
+        page().getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("確認"))
+                .click();
     }
 
     @ならば("ヘッダーに {string} と {string} とログアウトが表示される")

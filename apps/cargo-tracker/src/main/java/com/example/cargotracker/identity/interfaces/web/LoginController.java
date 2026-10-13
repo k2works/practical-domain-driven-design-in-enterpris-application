@@ -2,6 +2,7 @@ package com.example.cargotracker.identity.interfaces.web;
 
 import com.example.cargotracker.identity.application.internal.commandservices.TotpVerificationService;
 import com.example.cargotracker.shared.domain.AuthenticatedActor;
+import java.security.Principal;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -28,10 +29,17 @@ public class LoginController {
     /** dev プロファイルでだけある。ほかの環境では空で、画面は入力済みにならない（守りの 1 層目）。 */
     private final ObjectProvider<DevLoginPrefill> devLogin;
 
+    /** dev プロファイルでだけある A-02 の入力済みのコード（Bolt 31）。ほかの環境では空で、A-02 は入力済みにならない。 */
+    private final ObjectProvider<DevTotpCodeSource> devTotpCodes;
+
     private final TotpVerificationService totp;
 
-    public LoginController(ObjectProvider<DevLoginPrefill> devLogin, TotpVerificationService totp) {
+    public LoginController(
+            ObjectProvider<DevLoginPrefill> devLogin,
+            ObjectProvider<DevTotpCodeSource> devTotpCodes,
+            TotpVerificationService totp) {
         this.devLogin = devLogin;
+        this.devTotpCodes = devTotpCodes;
         this.totp = totp;
     }
 
@@ -49,10 +57,12 @@ public class LoginController {
 
     /** A-02 認証コードの入力（Bolt 31）。TOTP を登録していない利用者は登録の案内へ移す。 */
     @GetMapping("/login/totp")
-    public String totp(AuthenticatedActor actor) {
+    public String totp(AuthenticatedActor actor, Principal principal, Model model) {
         if (!totp.isEnrolled(actor.userId())) {
             return "redirect:/login/totp/enroll";
         }
+        devTotpCodes.ifAvailable(
+                codes -> codes.codeFor(principal.getName()).ifPresent(code -> model.addAttribute("code", code)));
         return "identity/login-totp";
     }
 

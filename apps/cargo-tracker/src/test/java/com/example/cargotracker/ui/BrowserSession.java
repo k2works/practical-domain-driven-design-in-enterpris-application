@@ -104,7 +104,7 @@ public class BrowserSession implements DisposableBean {
         page.navigate(url);
     }
 
-    /** A-01 からその役割の利用者でログインする（Cookie を消してから）。 */
+    /** A-01 からその役割の利用者でログインし、A-02 で TOTP のコードを入れる（Cookie を消してから。Bolt 31 で 2 段階にした）。 */
     public void signInAs(Role role, String loginUrl) {
         UiUsers.Credentials credentials = users.of(role);
         context.clearCookies();
@@ -113,6 +113,11 @@ public class BrowserSession implements DisposableBean {
         page.getByLabel("メールアドレス").fill(credentials.email());
         page.getByLabel("password").fill(credentials.password());
         page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("ログイン"))
+                .click();
+        // A-02 の URL も "/login" を含むので、A-02 に着いたことを待ってからコードを入れ、A-02 を離れたことを待つ
+        page.waitForURL(url -> url.contains("/login/totp"));
+        page.getByLabel("認証コード").fill(users.totpCode(role));
+        page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("確認"))
                 .click();
         page.waitForURL(url -> !url.contains("/login"));
         signedIn = role;

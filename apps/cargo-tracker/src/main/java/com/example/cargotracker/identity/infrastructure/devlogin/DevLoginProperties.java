@@ -28,6 +28,7 @@ public record DevLoginProperties(List<Account> accounts) {
      * @param role 役割（ボタンの名前に使う）
      * @param email メールアドレス
      * @param password password（開発用の固定の値。本物の秘密を使わない）
+     * @param totpSecret TOTP の秘密（Base32。開発用の固定の値で、利用者ごとに別。db/dev-data の暗号文と同じ秘密。Bolt 31）
      */
-    public record Account(Role role, String email, String password) {}
+    public record Account(Role role, String email, String password, String totpSecret) {}
 }
