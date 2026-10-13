@@ -16,7 +16,7 @@
         <link rel="prev" href="../bolt_31c_report/">
       
       
-        <link rel="next" href="../release_report-0_1/">
+        <link rel="next" href="../bolt_31d_report/">
       
       
         
@@ -5019,6 +5019,34 @@
   
 </nav>
       
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../bolt_31d_report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 31d 終了報告
+  
+
+    
+  </span>
+  
+  
+
+      </a>
     </li>
   
 
@@ -10220,7 +10248,7 @@
 <h2 id="_8">ステップ計画<a class="headerlink" href="#_8" title="Permanent link">&para;</a></h2>
 <p>状態の記号: <code>[ ]</code> 未着手、<code>[-]</code> 進行中、<code>[?]</code> 承認待ち、<code>[x]</code> 完了。各ステップの終わりに <code>check</code> が緑であることと、計画からの変更を設計文書に反映したこと（T-53）を確かめ、push して CI を確かめる（T-26、T-65）。そのステップのファイルだけをステージする（T-84）。複数行の書き換えはスクリプトのファイルにする（T-103）。ステップ 1 を push してからコードのステップを push する（T-109）。</p>
 <ul class="task-list">
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>1. 設計文書</strong> 【承認ゲート: 設計文書】</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>1. 設計文書</strong> 【承認ゲート: 設計文書】</li>
 <li>ADR-011: 照合の結果（<code>TotpMatch</code>）、<code>UnreadableCredentialException</code> と失敗へ倒す範囲（決定 7 の表の 218 行目「照合の途中の例外は 500 にせず拒否」を改める）、暗号の部品のパッケージ（決定 5 の 157 行目・決定 6 の 203 行目・コンプライアンスの 287 行目の ArchUnit の範囲）、<code>FACTOR_TOTP</code> の名前を残す理由、スパイクの削除（28 行目、58 行目のスパイクへのリンクはコミットに固定したリンクに、302 行目の参考資料）、コンプライアンスの節に新しい見張り（<code>FACTOR_*</code> のソースの走査、全 URL、ログの平文、特性テスト）と R-16 の特性テストの形（284〜285 行目）</li>
 <li>ADR-012: D-5 の認証の例外を <code>identity.infrastructure.security</code>（入口）だけにしたこと（決定 6、コンプライアンスの 121 行目）、監査の理由の一覧（64 行目）に <code>TOTP_NOT_ENROLLED</code></li>
 <li>architecture_backend.md: D-5 の節（276〜277 行目。暗号の部品のパッケージ、例外の範囲、クラス名の一覧の規則をパッケージの規則に置き換えたこと、<code>UnreadableCredentialException</code> の向き（crypto が投げ、入口が捕まえる））</li>
@@ -10228,28 +10256,28 @@
 <li>data_model.md: 監査の理由の一覧に <code>TOTP_NOT_ENROLLED</code>（ui_design.md:521 は画面を通る理由だけを書いているので直さない）</li>
 <li>release_plan.md の W5 の節: 31d の行（587 行目）を本計画に（回復コードは 2 値のまま、低の指摘を送る、承認ゲートは構造・セキュリティ・ファイルの削除）。557 行目の W5 のアプローチの説明に 31d はリファクタリング（振る舞いの変更は 2 つだけ）と書く。32 の行（588 行目）と 33b の行に送る低の指摘（確認ポイント 8。32 は範囲が重いので開始準備で分けるかを見直す材料になると添える）</li>
 <li>完了の判定: <code>okf:check</code> ERROR 0、<code>documentationTest</code> 緑。push してからステップ 2 のコードを push する（T-109）</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>2. 照合の結果をドメインに寄せる</strong> 【承認ゲート: Red・Green】</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>2. 照合の結果をドメインに寄せる</strong> 【承認ゲート: Red・Green】</li>
 <li>Red: <code>TotpCredential#match</code> の単体テスト（今の刻みで一致は <code>Matched</code>、窓の前後で一致は <code>Matched</code>、使った刻み以下でだけ一致は <code>Reused</code>、どれとも一致しない数字のコードは <code>Mismatch</code>、生成の呼び出しは数字のコードで窓の刻みの数（刻み 0 は 2 回）、形の違う・空のコードは生成器を呼ばずに <code>Mismatch</code>）。確かめのサービスの単体テスト（拒否のときの生成の呼び出しが窓の刻みの数だけ）。監査の理由の統合テスト（TOTP を登録していない利用者の A-02 の送信は理由 <code>TOTP_NOT_ENROLLED</code>。今は <code>INVALID_TOTP</code>）</li>
 <li>Green: <code>TotpMatch</code>（sealed interface と入れ子の 3 つの record、<code>@ValueObject</code>）、<code>TotpCredential#match</code>（<code>matchingStep</code> を置き換え、登録のサービスも直す）、確かめのサービスから <code>wasAlreadyUsed</code> を消す、<code>AuthenticationRejection.TOTP_NOT_ENROLLED</code> と監査のリスナーの写し</li>
 <li>書き直すテスト: <code>TotpCredentialTest</code> の <code>matchingStep</code> のテスト（83〜180 行目）を <code>match</code> に。<code>TotpVerificationServiceTest</code> の <code>REJECTED_NOT_ENROLLED</code> のテストは既にある（Red にならない）</li>
 <li>完了の判定: <code>check</code> 緑。契約テストと統合テストは期待値を変えずに緑（API の名前の変更だけ）</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>3. 読めない要素の例外と、暗号の部品のパッケージ</strong> 【承認ゲート: セキュリティ、構造】</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>3. 読めない要素の例外と、暗号の部品のパッケージ</strong> 【承認ゲート: セキュリティ、構造】</li>
 <li>Red（振る舞い）: provider の単体テスト（<code>UnreadableCredentialException</code> は拒否、ただの <code>IllegalArgumentException</code> は捕まえずに投げる（500 になる））。登録のサービスの単体テスト（読めない暗号文は <code>SecretUnusable</code>、ただの <code>IllegalArgumentException</code> は投げる）。暗号の部品の単体テスト（復号の失敗・生成器の鍵の誤り・知らない接頭辞のハッシュは <code>UnreadableCredentialException</code>）。書き直すテスト: <code>RecoveryCodeAuthenticationProviderTest.java:97-98</code>（ただの <code>IllegalArgumentException</code> で拒否されることを確かめている）、<code>AesGcmSecretCipherTest</code> ほかの <code>IllegalArgumentException</code> の期待（専用の例外は <code>IllegalArgumentException</code> を継ぐので、型を狭めて確かめ直す）</li>
 <li>Green（振る舞い）: <code>UnreadableCredentialException</code>、3 つの暗号の部品が投げる、2 つの provider と登録のサービスがこれだけを捕まえる、ポートの Javadoc の <code>@throws</code></li>
 <li>Red（構造。守りを先に）: ArchUnit「<code>identity.infrastructure.crypto</code> は <code>identity.infrastructure.security</code> に依存しない」と、見張り（<code>crypto</code> に 6 つの暗号の部品がある、既存の規則（合成ルートと入口の外の infrastructure は application に依存しない）が <code>crypto</code> のクラスにかかる）。暗号の部品が移るまで見張りが落ちることを確かめる</li>
 <li>Green（構造）: 6 つのクラスとそのテスト、テストの共通部品 <code>TestSecretCiphers</code> を <code>identity.infrastructure.crypto</code> に移す（<code>git mv</code>）。<code>crypto/package-info.java</code> を足し（暗号の部品。application と入口に依存しない）、<code>security/package-info.java</code> の説明を入口だけに直す。利用者の import を直す（main: <code>IdentityConfiguration</code>・<code>DevLoginGuardConfiguration</code>・<code>devlogin/DevTotpCodes</code>。test: <code>UiUsers</code>・<code>DevTotpCodesTest</code>・<code>DevTotpCredentialsDevProfileTest</code>・<code>TotpVerificationServiceIntegrationTest</code>・<code>TotpSecretKeysBindingTest</code>・security の 3 つの統合テスト）。<code>AuthenticationArchitectureTest</code> のクラス名の一覧の規則（「秘密の発行と回復コードの生成の実装は application に依存しない」）を消し、暗号・ZXing・TOTP のライブラリの閉じ込めを <code>identity.infrastructure.crypto</code> に狭める（<code>AesGcmSecretCipher</code> を参照してよいのは crypto・合成ルート・dev の部品。<code>Base32</code> は dev の部品も使うが規則の対象外）。違反を入れて落ちることを確かめる（T-88）</li>
 <li>完了の判定: <code>check</code> 緑。<code>identity.infrastructure.security</code> に暗号の部品が残っていない</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>4. 守りのテスト</strong> 【承認ゲート: セキュリティ】</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>4. 守りのテスト</strong> 【承認ゲート: セキュリティ】</li>
 <li><code>FACTOR_*</code> の参照の見張り: <code>src/main/java</code> を走査し、<code>"FACTOR_</code> の文字列と <code>FactorGrantedAuthority</code> を書いているファイルが <code>identity/infrastructure/security</code> と合成ルート <code>identity/infrastructure/config</code> の中だけであることを確かめる（コンパイル時の定数の埋め込みで ArchUnit が見落とす分。範囲は ArchUnit の既存の規則より狭く、入口と合成ルートだけ）。走査したファイルの数が 0 でなく、<code>TotpAuthenticationToken.java</code> が見つかることを先に確かめる（T-107）</li>
 <li>全 URL の見張り: <code>RequestMappingHandlerMapping</code> の一覧から、認証の画面（<code>/login</code>・<code>/login/totp</code>・<code>/login/totp/enroll</code>・<code>/session-expired</code>）、<code>/error</code>、静的な資源を除くすべての URL（GET と POST。POST には CSRF のトークンを付ける）について、password の段だけの主体が A-02 へ導かれることを確かめる。パスの変数は仮の値で埋める（正規表現の候補は最初の値、ID は乱数の UUID、番号は形の合う仮の値）。主体の役割は URL の接頭辞の規則（<code>SecurityConfiguration.java:144-153</code>）に合わせる（<code>/customer</code> は荷主、<code>/staff/routing-cases</code> は経路設計者、<code>/staff/tracking-records</code> は追跡管理者、ほかの <code>/staff</code> は営業、<code>/</code> は荷主）。役割の誤り（403）と A-02 への誘導を区別するため。一覧の数が 0 でないことを先に確かめる。今の代表の URL のテスト（<code>AuthenticationSecurityIntegrationTest</code> の「役割があってもTOTPの要素の欠けた主体はどの業務のURLも開けない」）は置き換える</li>
 <li>ログの平文の見張り: <code>OutputCaptureExtension</code> で、TOTP の秘密を復号できない利用者の A-02 の送信と、保存した回復コードのハッシュの形の誤り（知らない接頭辞）の利用者の回復コードの送信の後、ログにその利用者の ID のエラーの行があり（T-107）、送ったコード・回復コード・password・秘密の Base32 がないこと</li>
 <li>特性テスト（R-16。Spring Security の版を上げるときの守り。確認ポイント 6）: ①mfaEnabled の認証のフィルターは、認証の結果の型が <code>toBuilder()</code> を持つときだけ前の要素の権限を合わせる（<code>toBuilder()</code> を持たない結果の型では <code>FACTOR_PASSWORD</code> が落ちる）、②認証のフィルター（<code>AbstractAuthenticationProcessingFilter</code>）の既定の文脈の置き場所は request の属性で、次の request に残らない（<code>TotpAuthenticationFilter</code> が session の置き場所を明示する理由）、③<code>FactorGrantedAuthority</code> の <code>issuedAt</code> はアプリケーションの <code>Clock</code> でなく枠組みの時計で決まる（最長 8 時間の判定に使わない理由）</li>
 <li>完了の判定: <code>check</code> 緑。見張りは違反を入れて落ちることを確かめる（T-88）</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>5. スパイクを消す</strong> 【承認ゲート: ファイルの削除】</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>5. スパイクを消す</strong> 【承認ゲート: ファイルの削除】</li>
 <li>スパイクのテスト（<code>MfaLoginTest</code> 18、<code>DevLoginPrefillTest</code> 5、<code>TotpCandidatesTest</code> 6（パラメーター化の展開で 29 件）、<code>PasswordStorageTest</code> 3、<code>SessionTimeoutTest</code> 1、<code>SpikeSetupTest</code> 1。計 34 のメソッド）と、本体のテスト・後の Bolt の計画・ADR の記録との対応表を作る（確認ポイント 7 の分け方）。本体にない確かめのうち本体の守りになるもの（bcrypt の強さ 10）は本体にテストを足す</li>
 <li><code>spikes/ts-01-totp/</code> を消す（<code>git rm -r</code>）。ほかから参照されていないことを確かめる（Gradle の設定・CI・文書のリンク）。文書のスパイクへのリンク（ADR-011:58 は develop の外部リンクなので <code>okf:check</code> で検出されない）と、<code>JavaOtpTotpCodeGenerator</code> の Javadoc のスパイクへの言及は、コミットに固定したリンクか記述に直す</li>
 <li>完了の判定: <code>check</code> 緑、<code>okf:check</code> ERROR 0、<code>spikes/ts-01-totp</code> を参照する記述が文書とコードに残っていない（固定したリンクを除く）</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>6. SonarQube と開発レビューと終了報告</strong> 【承認ゲート: 終了報告】</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>6. SonarQube と開発レビューと終了報告</strong> 【承認ゲート: 終了報告】</li>
 <li>SonarQube（<code>sonar-local:check</code>。T-104）</li>
 <li>開発レビュー（プログラマー、アーキテクト、テスター（守りのテストの空振り））。画面を変えないのでテクニカルライターの観点は設計文書だけにする</li>
 <li><code>bolt_31d_report.md</code>（スパイクとの対応表を含む）。release_plan の W5 の 31d の行、開発の索引。#13 に進み具合をコメントする。画面を変えないのでデモの動画は撮らない</li>
@@ -10398,6 +10426,11 @@
 <td style="text-align: left;">2026-10-13</td>
 <td style="text-align: left;">計画の承認を記録した。確認ポイント 1〜9 は推奨のとおり。ステップの承認ゲートで止まらずに進める（T-36）</td>
 <td style="text-align: left;">anthropic/claude-opus-5-5、承認 human:kakimomokuri</td>
+</tr>
+<tr>
+<td style="text-align: left;">2026-10-13</td>
+<td style="text-align: left;">実施の結果で計画から変えたことを記録した。(1) 確認ポイント 7 の (d) は、初めは既存のテストで足りると判断したが、開発レビューで本体の部品を見ていないと指摘され、本体の <code>PasswordEncoder</code> で確かめるテストを足した。(2) Checkstyle に <code>PackageDeclaration</code> を足した（ステップ 1 のコミットに <code>git mv</code> の改名が混ざった再発の防ぎ）。(3) ログの見張りは、クラス単位の出力の取り込みが CI で OutOfMemoryError を起こしたので、操作の間だけ取り込む <code>LogCapture</code> にした。(4) 拒否の例外は通った結果を持たず、監査のリスナーの届かない枝は実装の誤りにした（利用者への応答は変わらない）</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5</td>
 </tr>
 </tbody>
 </table>
