@@ -239,9 +239,11 @@ class AuthenticationSecurityIntegrationTest {
         // 捨てた session の Cookie は、無効な session として A-03 に送られる（A-02 を開けない）
         mvc.perform(get(TOTP_URL).cookie(session)).andExpect(redirectedUrl("/session-expired"));
         mvc.perform(get("/login").param("totp-error", ""))
-                .andExpect(content()
-                        .string(Matchers.containsString(
-                                "認証コードが正しくないか、すでに使われています。認証アプリに新しいコードが表示されてから、もう一度ログインしてください。")));
+                .andExpect(
+                        content()
+                                .string(
+                                        Matchers.containsString(
+                                                "認証コードまたは回復コードが正しくないか、すでに使われています。もう一度ログインして、認証アプリに表示された新しいコードか、まだ使っていない回復コードを入れてください。")));
     }
 
     @Test

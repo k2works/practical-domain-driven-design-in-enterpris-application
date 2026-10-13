@@ -32,6 +32,8 @@ import org.springframework.security.web.servlet.util.matcher.PathPatternRequestM
  * 合わせる。成功したら session の ID を変え CSRF のトークンを作り直す（権限が上がる段の固定化を防ぐ。T-40）。
  * 最長 8 時間の起点（{@link SessionLifetime#AUTHENTICATED_AT}）は、その session で初めて TOTP が通ったときだけ置く（送り直しで
  * 延ばさせない）。誤り・再利用は password の要素を捨てて A-01 に戻す（UI 設計「A-02」。1 つの session で TOTP を試し続けさせない）。
+ * 回復コードの欄（{@code recoveryCode}）があれば回復コードの入力にし、{@link RecoveryCodeAuthenticationProvider} で確かめる。
+ * 結果は TOTP と同じ要素の権限なので、session の ID の変更・8 時間の起点・失敗の扱いは同じ（Bolt 31c、ADR-011）。
  */
 public class TotpAuthenticationFilter extends AbstractAuthenticationProcessingFilter {
 
@@ -40,6 +42,9 @@ public class TotpAuthenticationFilter extends AbstractAuthenticationProcessingFi
 
     /** A-07 認証アプリの登録の URL（GET・POST。password の要素だけで開ける。Bolt 31b）。 */
     public static final String ENROLL_URL = "/login/totp/enroll";
+
+    /** A-02 の回復コードの欄の名前（Bolt 31c）。 */
+    public static final String RECOVERY_CODE_PARAMETER = "recoveryCode";
 
     /** TOTP の誤りで戻す A-01 の URL（UI 設計「A-02」の文言を出す）。 */
     public static final String FAILURE_URL = "/login?totp-error";
@@ -72,6 +77,12 @@ public class TotpAuthenticationFilter extends AbstractAuthenticationProcessingFi
             throw new InsufficientAuthenticationException("password の要素がない");
         }
         String code = request.getParameter("code");
+        String recoveryCode = request.getParameter(RECOVERY_CODE_PARAMETER);
+        if (recoveryCode != null && !recoveryCode.isBlank()) {
+            return getAuthenticationManager()
+                    .authenticate(RecoveryCodeAuthenticationToken.unauthenticated(
+                            current.getPrincipal(), recoveryCode, code != null && !code.isBlank()));
+        }
         return getAuthenticationManager()
                 .authenticate(TotpAuthenticationToken.unauthenticated(
                         current.getPrincipal(), code == null ? "" : code.strip()));
@@ -95,6 +106,9 @@ public class TotpAuthenticationFilter extends AbstractAuthenticationProcessingFi
             if (session.getAttribute(SessionLifetime.AUTHENTICATED_AT) == null) {
                 session.setAttribute(SessionLifetime.AUTHENTICATED_AT, clock.instant());
             }
+            // 登録を始めた時刻は、ログインを終えたら使わない（登録の直後の A-02 の案内を出さない。期限は要素で選ぶので変わらない。
+            // Bolt 31c の確認ポイント 9）
+            session.removeAttribute(SessionLifetime.ENROLLMENT_STARTED_AT);
             super.onAuthenticationSuccess(request, response, authentication);
         }
     }

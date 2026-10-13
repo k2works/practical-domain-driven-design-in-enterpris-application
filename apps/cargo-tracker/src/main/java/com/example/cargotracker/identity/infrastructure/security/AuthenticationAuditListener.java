@@ -89,8 +89,14 @@ public class AuthenticationAuditListener {
                 .orElse(AuthenticationRejection.BAD_CREDENTIALS);
     }
 
-    /** TOTP の段の失敗の理由。再利用だけを分け、ほかは一致しないとする（利用者には同じ文言。AC2）。 */
+    /**
+     * TOTP の段の失敗の理由。回復コードの拒否は {@code INVALID_RECOVERY_CODE}（Bolt 31c）。TOTP は再利用だけを分け、ほかは一致しない
+     * とする（利用者には同じ文言。AC2）。
+     */
     private static AuthenticationRejection totpReasonOf(AbstractAuthenticationFailureEvent event) {
+        if (event.getException() instanceof RecoveryCodeRejectedException) {
+            return AuthenticationRejection.INVALID_RECOVERY_CODE;
+        }
         return event.getException() instanceof TotpRejectedException rejected
                         && rejected.verification() == TotpVerification.REJECTED_REUSED
                 ? AuthenticationRejection.TOTP_REUSED

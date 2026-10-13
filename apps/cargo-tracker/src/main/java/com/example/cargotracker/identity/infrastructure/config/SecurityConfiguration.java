@@ -1,5 +1,6 @@
 package com.example.cargotracker.identity.infrastructure.config;
 
+import com.example.cargotracker.identity.application.internal.commandservices.RecoveryCodeVerificationService;
 import com.example.cargotracker.identity.application.internal.commandservices.TotpVerificationService;
 import com.example.cargotracker.identity.domain.model.aggregates.AuditRecordRepository;
 import com.example.cargotracker.identity.domain.model.aggregates.CompanyRepository;
@@ -8,6 +9,8 @@ import com.example.cargotracker.identity.infrastructure.security.AuthenticationA
 import com.example.cargotracker.identity.infrastructure.security.CargoUserDetailsService;
 import com.example.cargotracker.identity.infrastructure.security.KeepEmailAuthenticationFailureHandler;
 import com.example.cargotracker.identity.infrastructure.security.LoginSuccessHandler;
+import com.example.cargotracker.identity.infrastructure.security.RecoveryCodeAuthenticationProvider;
+import com.example.cargotracker.identity.infrastructure.security.RecoveryCodeRejectedException;
 import com.example.cargotracker.identity.infrastructure.security.SessionLifetime;
 import com.example.cargotracker.identity.infrastructure.security.SessionLifetimeFilter;
 import com.example.cargotracker.identity.infrastructure.security.TotpAuthenticationFilter;
@@ -102,19 +105,25 @@ public class SecurityConfiguration {
             CargoUserDetailsService userDetails,
             PasswordEncoder passwordEncoder,
             TotpVerificationService totpVerificationService,
+            RecoveryCodeVerificationService recoveryCodeVerificationService,
             ApplicationEventPublisher publisher) {
         DaoAuthenticationProvider provider = new DaoAuthenticationProvider(userDetails);
         provider.setPasswordEncoder(passwordEncoder);
         provider.setPreAuthenticationChecks(user -> {});
         provider.setPostAuthenticationChecks(new AccountStatusUserDetailsChecker());
         // TOTP の要素も同じ認証のイベント（成功・失敗）で監査記録に書く（ADR-011 の決定 2）
-        ProviderManager manager =
-                new ProviderManager(provider, new TotpAuthenticationProvider(totpVerificationService));
+        ProviderManager manager = new ProviderManager(
+                provider,
+                new TotpAuthenticationProvider(totpVerificationService),
+                new RecoveryCodeAuthenticationProvider(recoveryCodeVerificationService));
         DefaultAuthenticationEventPublisher events = new DefaultAuthenticationEventPublisher(publisher);
         // 失敗のイベントは例外のクラス名の完全一致で選ばれる。BadCredentialsException を継いだ TOTP の拒否も、password の誤りと
         // 同じ失敗のイベントにする（対応がないとイベントが出ず、監査記録に残らない。Bolt 31 のステップ 5 で見つけた）
-        events.setAdditionalExceptionMappings(
-                Map.of(TotpRejectedException.class, AuthenticationFailureBadCredentialsEvent.class));
+        events.setAdditionalExceptionMappings(Map.of(
+                TotpRejectedException.class,
+                AuthenticationFailureBadCredentialsEvent.class,
+                RecoveryCodeRejectedException.class,
+                AuthenticationFailureBadCredentialsEvent.class));
         manager.setAuthenticationEventPublisher(events);
         return manager;
     }

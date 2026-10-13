@@ -2,6 +2,7 @@ package com.example.cargotracker.identity.interfaces.web;
 
 import com.example.cargotracker.identity.application.internal.queryservices.TotpEnrollmentQueryService;
 import com.example.cargotracker.identity.domain.model.valueobjects.PasswordVerifiedUser;
+import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -57,10 +58,12 @@ public class LoginController {
 
     /** A-02 認証コードの入力（Bolt 31）。TOTP を登録していない利用者は登録の案内へ移す。 */
     @GetMapping("/login/totp")
-    public String totp(PasswordVerifiedUser user, Model model) {
+    public String totp(PasswordVerifiedUser user, HttpSession session, Model model) {
         if (!enrollment.isEnrolled(user.userId())) {
             return "redirect:/login/totp/enroll";
         }
+        // 登録の直後（登録を始めた時刻が残っている）だけ案内を出す。TOTP・回復コードが通ると時刻は消える（Bolt 31c）
+        model.addAttribute("justEnrolled", session.getAttribute(TotpEnrollmentController.STARTED_AT) != null);
         devTotpCodes.ifAvailable(
                 codes -> codes.codeFor(user.email().value()).ifPresent(code -> model.addAttribute("code", code)));
         return "identity/login-totp";

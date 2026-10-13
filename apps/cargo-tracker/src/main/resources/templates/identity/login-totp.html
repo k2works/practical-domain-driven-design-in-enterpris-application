@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <!--/* A-02 認証コードの入力（US-18 AC1、UI 設計「A-02」、Bolt 31）。password が正しいときだけ開ける（K-02 は ADR-011 で受け入れた）。
-       誤り・再利用は password の要素を捨てて A-01 に戻し、誤りと再利用を区別しない（AC2）。回復コードの欄は Bolt 31b */-->
+       誤り・再利用は password の要素を捨てて A-01 に戻し、誤りと再利用を区別しない（AC2）。回復コードの欄は details の中の別のフォーム
+       （Bolt 31c。JavaScript を使わない） */-->
 <html lang="ja" xmlns:th="http://www.thymeleaf.org" th:replace="~{layout/public :: layout(~{::title}, ~{::main})}">
 <head>
     <meta charset="UTF-8">
@@ -9,6 +10,9 @@
 <body>
 <main>
     <h1>認証コードの入力</h1>
+    <div th:if="${justEnrolled}" class="alert alert-success" role="status">
+        認証アプリを登録しました。認証アプリに表示されたコードを入れてログインを終えてください。
+    </div>
     <p>認証アプリに表示されている 6 桁のコードを入力してください。</p>
     <form th:action="@{/login/totp}" method="post" class="app-login-form">
         <div class="mb-3">
@@ -20,11 +24,24 @@
         </div>
         <button type="submit" class="btn btn-primary">確認</button>
     </form>
+    <details class="mt-4">
+        <summary>認証アプリを使えない場合</summary>
+        <p class="mt-2">登録のときに保存した回復コード（例: 1a2b-3c4d）を 1 つ入力してください。使った回復コードは二度と使えません。</p>
+        <form th:action="@{/login/totp}" method="post" class="app-login-form">
+            <div class="mb-3">
+                <label for="recoveryCode" class="form-label">回復コード</label>
+                <input type="text" id="recoveryCode" name="recoveryCode" class="form-control" autocomplete="off"
+                       maxlength="20" required aria-describedby="recovery-code-help">
+                <div id="recovery-code-help" class="form-text">8 文字の英数字。ハイフンはあってもなくてもかまいません。</div>
+            </div>
+            <button type="submit" class="btn btn-outline-primary">回復コードで確認</button>
+        </form>
+        <p class="mt-3">回復コードもない場合は、荷主の方は担当営業に、社内の方はシステム管理者にお問い合わせください。</p>
+    </details>
     <!--/* 別の利用者で password を通したときなどに引き返す（Bolt 31 の開発レビュー） */-->
     <form th:action="@{/logout}" method="post" class="mt-3">
         <button type="submit" class="btn btn-link p-0">ログインの画面に戻る</button>
     </form>
-    <p class="mt-4">認証アプリを使えない場合は、荷主の方は担当営業に、社内の方はシステム管理者にお問い合わせください。</p>
 </main>
 </body>
 </html>
