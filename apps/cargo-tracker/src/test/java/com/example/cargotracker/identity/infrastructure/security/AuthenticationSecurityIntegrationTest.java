@@ -306,7 +306,7 @@ class AuthenticationSecurityIntegrationTest {
 
         mvc.perform(get("/login/totp/enroll").cookie(session))
                 .andExpect(status().isOk())
-                .andExpect(content().string(Matchers.containsString("ログインするには、認証アプリの登録が必要です。")));
+                .andExpect(content().string(Matchers.containsString("認証アプリで QR コードを読み取る")));
         mvc.perform(get(TOTP_URL).cookie(session)).andExpect(redirectedUrl("/login/totp/enroll"));
         mvc.perform(get("/customer/transport-requests").cookie(session)).andExpect(redirectsToTotp());
     }

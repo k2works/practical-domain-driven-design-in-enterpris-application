@@ -55,9 +55,19 @@ public class SessionLifetimeFilter extends OncePerRequestFilter {
             return false;
         }
         boolean totpPassed = hasAuthority(authentication, TotpAuthenticationToken.FACTOR_TOTP);
-        Object startedAt = session.getAttribute(
-                totpPassed ? SessionLifetime.AUTHENTICATED_AT : SessionLifetime.PASSWORD_VERIFIED_AT);
-        Duration lifetime = totpPassed ? SessionLifetime.MAX_LIFETIME : SessionLifetime.PASSWORD_STAGE_LIFETIME;
+        if (totpPassed) {
+            return expiredSince(session.getAttribute(SessionLifetime.AUTHENTICATED_AT), SessionLifetime.MAX_LIFETIME);
+        }
+        // 登録の途中（A-07 を開いた後）だけ、登録を始めた時刻から 15 分（Bolt 31b）。それ以外の password の段は 5 分
+        Object enrollmentStartedAt = session.getAttribute(SessionLifetime.ENROLLMENT_STARTED_AT);
+        if (enrollmentStartedAt != null) {
+            return expiredSince(enrollmentStartedAt, SessionLifetime.ENROLLMENT_LIFETIME);
+        }
+        return expiredSince(
+                session.getAttribute(SessionLifetime.PASSWORD_VERIFIED_AT), SessionLifetime.PASSWORD_STAGE_LIFETIME);
+    }
+
+    private boolean expiredSince(Object startedAt, Duration lifetime) {
         return !(startedAt instanceof Instant at) || !clock.instant().isBefore(at.plus(lifetime));
     }
 

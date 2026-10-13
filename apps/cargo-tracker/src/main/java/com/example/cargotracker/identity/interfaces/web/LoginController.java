@@ -9,7 +9,8 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 
 /**
- * ログイン（A-01）・認証コードの入力（A-02）・認証アプリの登録の案内・再認証の案内（A-03）の画面（US-18）。ログインと認証コードの
+ * ログイン（A-01）・認証コードの入力（A-02）・再認証の案内（A-03）の画面（US-18）。A-07 認証アプリの登録は
+ * {@link TotpEnrollmentController}（Bolt 31b）。ログインと認証コードの
  * 送信、ログアウトは Spring Security が受ける。A-02 と登録の案内は password の要素だけで開ける（Bolt 31）。
  * ログインに失敗したときは、入れたメールアドレスを残し password を消す（UI 設計「A-01」）。
  * 開発環境（dev）だけ、開発用の利用者で入力済みにし、荷主担当者・営業担当者の開発用の利用者を選んでそのままログインできる
@@ -64,12 +65,6 @@ public class LoginController {
         devTotpCodes.ifAvailable(
                 codes -> codes.codeFor(principal.getName()).ifPresent(code -> model.addAttribute("code", code)));
         return "identity/login-totp";
-    }
-
-    /** 認証アプリの登録の案内（Bolt 31。Bolt 31b で A-07 認証アプリの登録に置き換える）。 */
-    @GetMapping("/login/totp/enroll")
-    public String totpEnroll() {
-        return "identity/totp-enroll";
     }
 
     @GetMapping("/session-expired")

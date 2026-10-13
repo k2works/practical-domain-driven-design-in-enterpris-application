@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<!--/* A-07 認証アプリの登録（US-18 AC7、UI 設計「A-07」、Bolt 31b）。password の要素だけで開ける。QR コードと手入力のキーは秘密と同じ
+       重さで、この応答にだけ示す（Spring Security の既定で Cache-Control: no-store）。QR は自分で作ったインラインの SVG なので utext で出す */-->
+<html lang="ja" xmlns:th="http://www.thymeleaf.org" th:replace="~{layout/public :: layout(~{::title}, ~{::main})}">
+<head>
+    <meta charset="UTF-8">
+    <title>認証アプリの登録 - cargo-tracker</title>
+</head>
+<body>
+<main>
+    <h1>認証アプリの登録</h1>
+    <div th:if="${codeError}" class="alert alert-danger" role="alert" tabindex="-1" id="enroll-error">
+        認証コードが正しくありません。認証アプリに表示されている最新のコードを入力してください。
+    </div>
+    <div th:if="${restarted}" class="alert alert-warning" role="alert" tabindex="-1" id="enroll-restarted">
+        登録をやり直してください。新しい QR コードを認証アプリで読み取ってください。
+    </div>
+    <p>ログインするには、認証アプリ（スマートフォンの TOTP のアプリ）の登録が必要です。この画面を開いてから 15 分以内に登録してください。</p>
+    <h2 class="h5">1. 認証アプリで QR コードを読み取る</h2>
+    <div class="app-totp-qr" th:utext="${qrSvg}"></div>
+    <p>QR コードを使えない場合は、次のキーを認証アプリに入力してください。</p>
+    <p><code class="app-totp-key" th:attr="data-manual-key=${manualKey}" th:text="${manualKey}">ABCD EFGH IJKL MNOP</code></p>
+    <h2 class="h5">2. 表示された 6 桁のコードを入力する</h2>
+    <form th:action="@{/login/totp/enroll}" method="post" class="app-login-form">
+        <div class="mb-3">
+            <label for="code" class="form-label">認証コード</label>
+            <input type="text" id="code" name="code" class="form-control" autocomplete="one-time-code"
+                   inputmode="numeric" pattern="[0-9]{6}" maxlength="6" required aria-describedby="code-help">
+            <div id="code-help" class="form-text">6 桁の数字。空白は入れずに入力します。</div>
+        </div>
+        <button type="submit" class="btn btn-primary">登録する</button>
+    </form>
+    <form th:action="@{/logout}" method="post" class="mt-3">
+        <button type="submit" class="btn btn-link p-0">ログインの画面に戻る</button>
+    </form>
+    <p class="mt-4">認証アプリを使えない場合は、荷主の方は担当営業に、社内の方はシステム管理者にお問い合わせください。</p>
+</main>
+</body>
+</html>

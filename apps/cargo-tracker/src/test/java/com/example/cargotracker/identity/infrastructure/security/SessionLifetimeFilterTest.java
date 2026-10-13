@@ -102,6 +102,32 @@ class SessionLifetimeFilterTest {
         assertThat(SessionLifetime.PASSWORD_VERIFIED_AT).isEqualTo("cargotracker.session.passwordVerifiedAt");
     }
 
+    @Test
+    void 登録の途中の属性の名前は画面の層と同じ値() {
+        assertThat(SessionLifetime.ENROLLMENT_STARTED_AT)
+                .isEqualTo(com.example.cargotracker.identity.interfaces.web.TotpEnrollmentController.STARTED_AT);
+        assertThat(SessionLifetime.ENROLLMENT_PENDING_SECRET)
+                .isEqualTo(com.example.cargotracker.identity.interfaces.web.TotpEnrollmentController.PENDING_SECRET);
+    }
+
+    @Test
+    void 登録の途中のpasswordの段は登録を始めた時刻から15分の1秒前まで通し15分で失効させる() throws Exception {
+        MockHttpSession session = passwordStageSession(true);
+        session.setAttribute(SessionLifetime.ENROLLMENT_STARTED_AT, LOGIN_AT.plus(Duration.ofMinutes(1)));
+
+        assertThat(request(session, Duration.ofMinutes(16).minusSeconds(1)).getRedirectedUrl())
+                .isNull();
+        assertThat(request(session, Duration.ofMinutes(16)).getRedirectedUrl()).isEqualTo(SessionLifetime.EXPIRED_URL);
+    }
+
+    @Test
+    void 二つの要素がそろった後は登録の途中の時刻を使わず8時間で判定する() throws Exception {
+        MockHttpSession session = authenticatedSession(true);
+        session.setAttribute(SessionLifetime.ENROLLMENT_STARTED_AT, LOGIN_AT);
+
+        assertThat(request(session, Duration.ofHours(1)).getRedirectedUrl()).isNull();
+    }
+
     // --- password の段だけの session（Bolt 31。password を確かめた時刻から 5 分） ---
 
     private static MockHttpSession passwordStageSession(boolean withVerifiedTime) {

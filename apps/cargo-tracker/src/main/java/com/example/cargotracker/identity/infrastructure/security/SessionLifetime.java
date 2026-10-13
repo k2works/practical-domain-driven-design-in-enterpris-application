@@ -22,6 +22,18 @@ public final class SessionLifetime {
     /** password を確かめた時刻を置く session の属性の名前（password の段だけの session の上限の起点。固定の値）。 */
     public static final String PASSWORD_VERIFIED_AT = "cargotracker.session.passwordVerifiedAt";
 
+    /** 登録の途中（A-07 を開いた後）の password の段の上限（Bolt 31b。認証アプリの導入と読み取りに時間がかかるため）。 */
+    public static final Duration ENROLLMENT_LIFETIME = Duration.ofMinutes(15);
+
+    /**
+     * 登録を始めた時刻を置く session の属性の名前（登録の途中の上限の起点。A-07 の controller が置く。画面の層の
+     * {@code TotpEnrollmentController.STARTED_AT} と同じ値で、テストで守る）。
+     */
+    public static final String ENROLLMENT_STARTED_AT = "cargotracker.session.enrollmentStartedAt";
+
+    /** 登録の途中の暗号文を置く session の属性の名前（画面の層の {@code TotpEnrollmentController.PENDING_SECRET} と同じ値）。 */
+    public static final String ENROLLMENT_PENDING_SECRET = "cargotracker.session.enrollmentPendingSecret";
+
     /** 失効した session の request を移す先（A-03 再認証の案内）。 */
     public static final String EXPIRED_URL = "/session-expired";
 
