@@ -77,6 +77,7 @@ class MyBatisAuthenticationFactorConcurrencyIntegrationTest {
 
     private UserId userWithFailures(int failures) {
         UserId user = newUser();
+        loginFailures.prepare(user, new UtcInstant(T0));
         for (int i = 0; i < failures; i++) {
             loginFailures.recordFailure(user, new UtcInstant(T0.plusSeconds(i)), POLICY);
         }

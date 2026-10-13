@@ -25,6 +25,8 @@
             <Class name="com.example.cargotracker.identity.application.internal.queryservices.TotpEnrollmentQueryService"/>
             <!-- Bolt 31c の回復コードの確かめのサービスも、同じく DI の部品を保持するだけ -->
             <Class name="com.example.cargotracker.identity.application.internal.commandservices.RecoveryCodeVerificationService"/>
+            <!-- Bolt 32 のログインの試行のサービスも、同じく DI の部品を保持するだけ -->
+            <Class name="com.example.cargotracker.identity.application.internal.commandservices.LoginAttemptService"/>
         </Or>
     </Match>
 </FindBugsFilter>

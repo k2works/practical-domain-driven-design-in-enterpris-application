@@ -15,6 +15,8 @@ public enum AuditAction {
     TOTP_ENROLLED,
     /** 回復コードを 1 つ使った（A-02 で TOTP の代わりに使った。Bolt 31c。続けて LOGIN_SUCCEEDED を書く）。 */
     RECOVERY_CODE_USED,
+    /** 5 回続けて失敗してロックした（Bolt 32。US-18 AC3）。 */
+    ACCOUNT_LOCKED,
     /** ログアウトした。 */
     LOGOUT
 }

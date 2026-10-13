@@ -19,5 +19,9 @@ public enum AuthenticationRejection {
     /** TOTP を登録していない利用者が認証コードを送った（A-02 の画面は A-07 へ送るので、画面を経ない送信。Bolt 31d）。 */
     TOTP_NOT_ENROLLED,
     /** 回復コードが形の違い・誤り・使用済みのどれか、または回復コードと認証コードの両方を送った（Bolt 31c）。 */
-    INVALID_RECOVERY_CODE
+    INVALID_RECOVERY_CODE,
+    /** ロック中の試行（数えない。Bolt 32、US-18 AC3）。 */
+    LOCKED,
+    /** 利用者の読み出しが DB の誤りなどで失敗した（枠組みが失敗へ倒す。数えない。Bolt 32）。 */
+    SERVICE_ERROR
 }

@@ -1,5 +1,6 @@
 package com.example.cargotracker.identity.acceptance;
 
+import com.example.cargotracker.identity.domain.model.aggregates.FailureCount;
 import com.example.cargotracker.identity.domain.model.aggregates.LoginFailure;
 import com.example.cargotracker.identity.domain.model.aggregates.LoginFailureRepository;
 import com.example.cargotracker.identity.domain.model.rules.LockPolicy;
@@ -30,13 +31,20 @@ public class InMemoryLoginFailureRepository implements LoginFailureRepository {
     }
 
     @Override
-    public LoginFailure recordFailure(UserId userId, UtcInstant failedAt, LockPolicy policy) {
-        if (!registeredUsers.contains(userId)) {
-            return LoginFailure.none(userId);
+    public void prepare(UserId userId, UtcInstant at) {
+        if (registeredUsers.contains(userId)) {
+            store.putIfAbsent(userId, LoginFailure.none(userId));
         }
-        return store.compute(
-                userId,
-                (id, stored) -> (stored == null ? LoginFailure.none(id) : stored).recordFailure(failedAt, policy));
+    }
+
+    @Override
+    public FailureCount recordFailure(UserId userId, UtcInstant failedAt, LockPolicy policy) {
+        boolean[] counted = {false};
+        LoginFailure after = store.computeIfPresent(userId, (id, stored) -> {
+            counted[0] = !stored.isLocked(failedAt);
+            return stored.recordFailure(failedAt, policy);
+        });
+        return new FailureCount(counted[0], after == null ? LoginFailure.none(userId) : after);
     }
 
     @Override

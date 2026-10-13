@@ -61,6 +61,14 @@ public final class AuditRecord {
                 UUID.randomUUID(), at, user, company, AuditAction.RECOVERY_CODE_USED, AuditResult.SUCCESS, null);
     }
 
+    /**
+     * ロックを記録する（Bolt 32、US-18 AC3、OBS-09）。5 回目の失敗でロックしたときに、その失敗の記録と同じトランザクションで書く。
+     */
+    public static AuditRecord accountLocked(UserId user, CompanyId company, UtcInstant at) {
+        return new AuditRecord(
+                UUID.randomUUID(), at, user, company, AuditAction.ACCOUNT_LOCKED, AuditResult.SUCCESS, null);
+    }
+
     /** ログインの成功を記録する。 */
     public static AuditRecord loginSucceeded(UserId user, CompanyId company, UtcInstant at) {
         return new AuditRecord(

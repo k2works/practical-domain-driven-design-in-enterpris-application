@@ -85,7 +85,7 @@
     </select>
 
     <!-- 記録のない利用者の行を 0 回で作る。利用者の表にない利用者では作らない（存在しないメールアドレスの失敗）。
-         同じ利用者の最初の失敗が同時に届くと、片方は主キーの違反になる（Bolt 32 で扱う） -->
+         同じ利用者の最初の失敗が同時に届くと、片方は主キーの違反になる（リポジトリがトランザクションの外で受ける。Bolt 32） -->
     <insert id="insertLoginFailureIfAbsent">
         INSERT INTO identity.login_failure (user_id, consecutive_failures, locked_until, updated_at)
         SELECT u.id, 0, CAST(NULL AS TIMESTAMP WITH TIME ZONE), #{now}

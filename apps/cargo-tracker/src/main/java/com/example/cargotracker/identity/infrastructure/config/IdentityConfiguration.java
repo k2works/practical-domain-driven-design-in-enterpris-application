@@ -1,5 +1,6 @@
 package com.example.cargotracker.identity.infrastructure.config;
 
+import com.example.cargotracker.identity.application.internal.commandservices.LoginAttemptService;
 import com.example.cargotracker.identity.application.internal.commandservices.RecoveryCodeVerificationService;
 import com.example.cargotracker.identity.application.internal.commandservices.TotpEnrollmentService;
 import com.example.cargotracker.identity.application.internal.commandservices.TotpVerificationService;
@@ -8,12 +9,14 @@ import com.example.cargotracker.identity.application.internal.queryservices.KpiO
 import com.example.cargotracker.identity.application.internal.queryservices.TotpEnrollmentQueryService;
 import com.example.cargotracker.identity.domain.model.aggregates.AuditRecordRepository;
 import com.example.cargotracker.identity.domain.model.aggregates.KpiObservationRepository;
+import com.example.cargotracker.identity.domain.model.aggregates.LoginFailureRepository;
 import com.example.cargotracker.identity.domain.model.aggregates.RecoveryCodeGenerator;
 import com.example.cargotracker.identity.domain.model.aggregates.RecoveryCodeHasher;
 import com.example.cargotracker.identity.domain.model.aggregates.RecoveryCodeRepository;
 import com.example.cargotracker.identity.domain.model.aggregates.TotpCodeGenerator;
 import com.example.cargotracker.identity.domain.model.aggregates.TotpCredentialRepository;
 import com.example.cargotracker.identity.domain.model.aggregates.TotpSecretIssuer;
+import com.example.cargotracker.identity.domain.model.rules.LockPolicy;
 import com.example.cargotracker.identity.infrastructure.crypto.AesGcmSecretCipher;
 import com.example.cargotracker.identity.infrastructure.crypto.RandomRecoveryCodeGenerator;
 import com.example.cargotracker.identity.infrastructure.crypto.RandomTotpSecretIssuer;
@@ -54,6 +57,16 @@ public class IdentityConfiguration {
     TotpVerificationService totpVerificationService(
             TotpCredentialRepository credentials, TotpCodeGenerator generator, Clock clock) {
         return new TotpVerificationService(credentials, generator, clock);
+    }
+
+    /** ログインの試行（失敗を数えてロックし、監査記録と同じトランザクションで書く。Bolt 32）。 */
+    @Bean
+    LoginAttemptService loginAttemptService(
+            LoginFailureRepository failures,
+            AuditRecordRepository auditRecords,
+            Clock clock,
+            TransactionTemplate transactionTemplate) {
+        return new LoginAttemptService(failures, auditRecords, new LockPolicy(), clock, transactionTemplate);
     }
 
     @Bean
