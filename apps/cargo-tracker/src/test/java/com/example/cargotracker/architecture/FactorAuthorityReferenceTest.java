@@ -49,8 +49,7 @@ class FactorAuthorityReferenceTest {
                         "com/example/cargotracker/identity/infrastructure/security/LoginSuccessHandler.java")
                 .allMatch(path -> ALLOWED.stream().anyMatch(path::startsWith));
         // 画面のテンプレート（sec:authorize の hasAuthority('FACTOR_TOTP') など）も要素の権限を書かない
-        assertThat(templates).as("走査したテンプレート").isNotEmpty();
-        assertThat(templates).noneMatch(FactorAuthorityReferenceTest::refersToFactors);
+        assertThat(templates).as("走査したテンプレート").isNotEmpty().noneMatch(FactorAuthorityReferenceTest::refersToFactors);
     }
 
     private static List<Path> files(Path root, String extension) throws IOException {
