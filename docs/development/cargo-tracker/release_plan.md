@@ -4,7 +4,7 @@ title: "リリース計画 - cargo-tracker（A 社国際貨物輸送管理シス
 description: "cargo-tracker MVP のリリース計画。1 人 + AI、時間単位の Bolt（= イテレーション）と週次の見直しで、最初の縦の流れ（R0.1）、パイロット準備完了（R1.0）、本格展開前（R1.1）の 3 段階、Unit のエントロピー評価、SP、バッファ、パイロット開始の条件、引継ぎ ID の台帳、業務責任者に確かめる事項の台帳。"
 tags: [development,release-plan]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-13T10:53:44Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-13T11:09:01Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T09:29:53Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:38:26Z }
@@ -898,3 +898,4 @@ xychart-beta
 | 2026-10-13 | Bolt 31d の開始準備: 守りの直しを 31d に入れ低の指摘は 32・33b に送る、暗号の部品を identity.infrastructure.crypto に分けて D-5 の例外を入口だけにする、`FACTOR_TOTP` は改名せず用語集に書く、スパイクは特性テストを移してから消すことを決めた。Bolt 31d 計画を作り、2 つの整合性検証と T-101 の骨組みの確かめの結果を反映した（承認待ち。W5 の行の直しは計画のステップ 1） | anthropic/claude-opus-5-5、決定 human:kakimomokuri |
 | 2026-10-13 | Bolt 31d のステップ 1: W5 の Bolt の分け方の表の 31d の行を Bolt 31d 計画の内容にし（回復コードは 2 値のまま、低の指摘を 32・33b に送る、承認ゲートは構造・セキュリティ・ファイルの削除）、W5 の局面とアプローチに 31d はリファクタリング（振る舞いの変更は 2 つだけ）と書いた。32 と 33b の行に 31d から送った低の指摘を足した（確認ポイント 8） | anthropic/claude-opus-5-5 |
 | 2026-10-13 | Bolt 31d の終了報告を作った（承認待ち。承認ゲートを止めずに進めた。開発レビューの高を直し、残りは 32・33b に送る） | anthropic/claude-opus-5-5 |
+| 2026-10-13 | Bolt 31d の終了報告の承認を記録した（議題 1〜5 を承認） | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
