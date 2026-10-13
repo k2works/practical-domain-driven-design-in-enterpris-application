@@ -4,9 +4,11 @@ import com.example.cargotracker.shared.annotation.ddd.AggregateRoot;
 import com.example.cargotracker.shared.domain.UserId;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.regex.Pattern;
 
 /**
  * 回復コード。TOTP の端末を失ったときに一度だけ使えるコード。ハッシュだけを持ち、平文を持たない（IA-INV-11、SEC-09）。
@@ -18,6 +20,10 @@ public final class RecoveryCode {
 
     /** 利用者ごとに発行する数（SEC-09）。 */
     public static final int CODES_PER_USER = 10;
+
+    private static final Pattern WHITESPACE = Pattern.compile("\\s+");
+    private static final Pattern UNHYPHENATED = Pattern.compile("[0-9a-f]{8}");
+    private static final Pattern NORMALIZED = Pattern.compile("[0-9a-f]{4}-[0-9a-f]{4}");
 
     private final UUID id;
     private final UserId userId;
@@ -87,6 +93,22 @@ public final class RecoveryCode {
 
     public boolean isUsed() {
         return usedAt != null;
+    }
+
+    /**
+     * 利用者が入力した回復コードを、照合する形（小文字の 16 進 4 文字・ハイフン・4 文字。発行の形と同じ）に直す（Bolt 31c）。
+     * 書き写したコードを打ち直させないため、空白・大文字・ハイフンの抜けを受ける。形が合わなければ空にし、照合させない
+     * （bcrypt を回さない）。
+     */
+    public static Optional<String> normalize(String input) {
+        if (input == null) {
+            return Optional.empty();
+        }
+        String compact = WHITESPACE.matcher(input).replaceAll("").toLowerCase(Locale.ROOT);
+        String hyphenated = UNHYPHENATED.matcher(compact).matches()
+                ? compact.substring(0, 4) + "-" + compact.substring(4)
+                : compact;
+        return NORMALIZED.matcher(hyphenated).matches() ? Optional.of(hyphenated) : Optional.empty();
     }
 
     /** 未使用で、平文がハッシュに一致するか。使ったコードは一致しない。 */

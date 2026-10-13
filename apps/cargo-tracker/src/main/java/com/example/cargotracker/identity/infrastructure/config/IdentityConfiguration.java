@@ -1,5 +1,6 @@
 package com.example.cargotracker.identity.infrastructure.config;
 
+import com.example.cargotracker.identity.application.internal.commandservices.RecoveryCodeVerificationService;
 import com.example.cargotracker.identity.application.internal.commandservices.TotpEnrollmentService;
 import com.example.cargotracker.identity.application.internal.commandservices.TotpVerificationService;
 import com.example.cargotracker.identity.application.internal.eventhandlers.KpiObservationEventHandler;
@@ -53,6 +54,16 @@ public class IdentityConfiguration {
     TotpVerificationService totpVerificationService(
             TotpCredentialRepository credentials, TotpCodeGenerator generator, Clock clock) {
         return new TotpVerificationService(credentials, generator, clock);
+    }
+
+    @Bean
+    RecoveryCodeVerificationService recoveryCodeVerificationService(
+            RecoveryCodeRepository codes,
+            AuditRecordRepository auditRecords,
+            RecoveryCodeHasher hasher,
+            Clock clock,
+            TransactionTemplate transactionTemplate) {
+        return new RecoveryCodeVerificationService(codes, auditRecords, hasher, clock, transactionTemplate);
     }
 
     @Bean

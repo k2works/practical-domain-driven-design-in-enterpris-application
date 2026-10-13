@@ -13,6 +13,8 @@ public enum AuditAction {
     LOGIN_FAILED,
     /** TOTP を登録した（Bolt 31b）。 */
     TOTP_ENROLLED,
+    /** 回復コードを 1 つ使った（A-02 で TOTP の代わりに使った。Bolt 31c。続けて LOGIN_SUCCEEDED を書く）。 */
+    RECOVERY_CODE_USED,
     /** ログアウトした。 */
     LOGOUT
 }

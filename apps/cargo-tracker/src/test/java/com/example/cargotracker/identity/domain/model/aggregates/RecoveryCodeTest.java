@@ -115,4 +115,23 @@ class RecoveryCodeTest {
     void 利用者ごとに発行する数は10() {
         assertThat(RecoveryCode.CODES_PER_USER).isEqualTo(10);
     }
+
+    @Test
+    void 入力した回復コードを小文字の16進のハイフン区切りに正規化する() {
+        assertThat(RecoveryCode.normalize("1a2b-3c4d")).contains("1a2b-3c4d");
+        assertThat(RecoveryCode.normalize("  1A2B-3C4D \t")).as("前後の空白と大文字").contains("1a2b-3c4d");
+        assertThat(RecoveryCode.normalize("1a2b3c4d")).as("ハイフンなし").contains("1a2b-3c4d");
+        assertThat(RecoveryCode.normalize("1a2b 3c4d")).as("中の空白").contains("1a2b-3c4d");
+    }
+
+    @Test
+    void 形の違う入力は正規化せず空にする() {
+        assertThat(RecoveryCode.normalize(null)).isEmpty();
+        assertThat(RecoveryCode.normalize("")).isEmpty();
+        assertThat(RecoveryCode.normalize("1a2b-3c4")).as("短い").isEmpty();
+        assertThat(RecoveryCode.normalize("1a2b-3c4d5")).as("長い").isEmpty();
+        assertThat(RecoveryCode.normalize("1a2g-3c4d")).as("16 進でない").isEmpty();
+        assertThat(RecoveryCode.normalize("1a2-b3c4d")).as("区切りの位置が違う").isEmpty();
+        assertThat(RecoveryCode.normalize("123456")).as("TOTP の形").isEmpty();
+    }
 }

@@ -23,6 +23,8 @@
             <!-- Bolt 31b の登録のサービスと問い合わせのサービスも、同じく DI の部品を保持するだけ -->
             <Class name="com.example.cargotracker.identity.application.internal.commandservices.TotpEnrollmentService"/>
             <Class name="com.example.cargotracker.identity.application.internal.queryservices.TotpEnrollmentQueryService"/>
+            <!-- Bolt 31c の回復コードの確かめのサービスも、同じく DI の部品を保持するだけ -->
+            <Class name="com.example.cargotracker.identity.application.internal.commandservices.RecoveryCodeVerificationService"/>
         </Or>
     </Match>
 </FindBugsFilter>
