@@ -12,6 +12,7 @@ import com.example.cargotracker.shared.domain.UserId;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import java.time.Clock;
 import java.util.Optional;
+import java.util.function.Supplier;
 import org.springframework.context.event.EventListener;
 import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.event.AbstractAuthenticationFailureEvent;
@@ -26,7 +27,8 @@ import org.springframework.security.core.Authentication;
  * 認証の成功・失敗とログアウトを、Spring Security のイベントから同じ request の中で同期に監査記録へ書く（IA-INV-08、ADR-012）。
  * 失敗の理由は、利用者があれば業務の規則（IA-INV-09）で求め、なければ存在しないメールアドレスとして操作者を残さない。
  * ロック（失敗の回数）は、この入口からログインの試行のサービスに写して数える（Bolt 32、ADR-012 の見直しの 5）。数えるのは誤り
- * （BadCredentials のイベント）だけで、ロック中・利用停止・入口の DB の誤りは数えない。
+ * （BadCredentials のイベント）だけで、ロック中の試行もサービスに写す。数えない拒否（利用停止・無効な企業、存在しない利用者、
+ * 利用者の読み出しの DB の誤り）と password の段の成功は、ここから監査記録に直接書く。
  */
 public class AuthenticationAuditListener {
 
@@ -72,11 +74,15 @@ public class AuthenticationAuditListener {
      */
     @EventListener
     public void onFailure(AbstractAuthenticationFailureEvent event) {
-        if (event instanceof AuthenticationFailureServiceExceptionEvent
-                && !(event.getAuthentication().getPrincipal() instanceof CargoUserDetails)) {
-            // 利用者の読み出しが DB の誤りなどで失敗した（枠組みが包んで失敗へ倒す）。同じ読み出しを繰り返さず、利用者を引かずに
-            // 記録する。利用者の誤りとして数えない（Bolt 32、確認ポイント 8）
-            auditRecords.append(AuditRecord.loginFailed(null, null, AuthenticationRejection.SERVICE_ERROR, now()));
+        if (event instanceof AuthenticationFailureServiceExceptionEvent) {
+            // 利用者の読み出し（loadUserByUsername）が DB の誤りなどで失敗した（枠組みが包んで失敗へ倒す）。同じ読み出しを繰り返さず、
+            // 主体（password の段の利用者）があればその利用者で、なければ利用者なしで記録する。数えない（Bolt 32、確認ポイント 8）
+            Optional<AuthenticatedActor> actor = actorOf(event.getAuthentication());
+            auditRecords.append(AuditRecord.loginFailed(
+                    actor.map(AuthenticatedActor::userId).orElse(null),
+                    actor.map(AuthenticatedActor::companyId).orElse(null),
+                    AuthenticationRejection.SERVICE_ERROR,
+                    now()));
             return;
         }
         Optional<Target> target = targetOf(event);
@@ -88,31 +94,30 @@ public class AuthenticationAuditListener {
         switch (event) {
             // 誤り（password・TOTP・回復コード）だけを数える。ロック中なら、サービスが理由 LOCKED にして数えない
             case AuthenticationFailureBadCredentialsEvent _ ->
-                attempts.recordFailure(found.userId(), found.companyId(), found.reason());
-            // ロック中の正しい password・ロック中の確かめの前の拒否。数えない
+                attempts.recordFailure(
+                        found.userId(), found.companyId(), found.reason().get());
+            // ロックで確かめずに拒んだ（password の段の正しい password、TOTP・回復コードの段で照合の前）。数えない
             case AuthenticationFailureLockedEvent _ -> attempts.recordLockedAttempt(found.userId(), found.companyId());
-            // 入口の読み出しの DB の誤り（枠組みが包んで失敗へ倒す）。利用者の誤りとして数えない
-            case AuthenticationFailureServiceExceptionEvent _ ->
-                auditRecords.append(AuditRecord.loginFailed(
-                        found.userId(), found.companyId(), AuthenticationRejection.SERVICE_ERROR, now()));
             // 利用停止・無効な企業など（password が正しく、業務の規則で拒んだ）。数えない
             default ->
-                auditRecords.append(AuditRecord.loginFailed(found.userId(), found.companyId(), found.reason(), now()));
+                auditRecords.append(AuditRecord.loginFailed(
+                        found.userId(), found.companyId(), found.reason().get(), now()));
         }
     }
 
-    /** 失敗の記録の宛先（利用者・企業・理由）。存在しない利用者なら空。 */
+    /** 失敗の記録の宛先（利用者・企業）と理由の求め方。存在しない利用者なら空。 */
     private Optional<Target> targetOf(AbstractAuthenticationFailureEvent event) {
         if (event.getAuthentication().getPrincipal() instanceof CargoUserDetails details) {
             AuthenticatedActor actor = details.actor();
-            return Optional.of(new Target(actor.userId(), actor.companyId(), secondFactorReasonOf(event)));
+            return Optional.of(new Target(actor.userId(), actor.companyId(), () -> secondFactorReasonOf(event)));
         }
         return userDetails
                 .findUser(String.valueOf(event.getAuthentication().getPrincipal()))
-                .map(user -> new Target(user.id(), user.companyId(), reasonOf(event, user)));
+                .map(user -> new Target(user.id(), user.companyId(), () -> reasonOf(event, user)));
     }
 
-    private record Target(UserId userId, CompanyId companyId, AuthenticationRejection reason) {}
+    /** 理由は要る節でだけ求める（利用停止の理由は企業を引くので、ロック中の試行では引かない）。 */
+    private record Target(UserId userId, CompanyId companyId, Supplier<AuthenticationRejection> reason) {}
 
     /**
      * 失敗の理由。password が正しく、利用停止・無効な企業で拒否したとき（DisabledException）だけ業務の規則で理由を求め、

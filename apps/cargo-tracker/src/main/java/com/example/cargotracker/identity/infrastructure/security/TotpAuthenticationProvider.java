@@ -8,7 +8,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.InsufficientAuthenticationException;
-import org.springframework.security.authentication.LockedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.FactorGrantedAuthority;
 
@@ -34,10 +33,8 @@ public class TotpAuthenticationProvider implements AuthenticationProvider {
         if (!(authentication.getPrincipal() instanceof CargoUserDetails details)) {
             throw new InsufficientAuthenticationException("password の段の主体がない");
         }
-        if (attempts.isLocked(details.actor().userId())) {
-            // password の段の後にロックされた（ほかの session の失敗）。確かめずに拒む（ロック中に刻みを使わせない。Bolt 32）
-            throw new LockedException("ロック中");
-        }
+        // password の段の後にロックされた（ほかの session の失敗）なら確かめずに拒む（ロック中に刻みを使わせない。Bolt 32）
+        LockAwareUserDetailsChecker.rejectIfLocked(attempts, details.actor().userId());
         String code = authentication.getCredentials() instanceof String given ? given : "";
         TotpVerification verification;
         try {

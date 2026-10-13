@@ -27,6 +27,19 @@ public final class OverlappingTransactions {
 
     /** 先・後の順に結果を返す。 */
     public static <T> List<T> run(TransactionTemplate transactionTemplate, Supplier<T> first, Supplier<T> second) {
+        return overlap(transactionTemplate, first, () -> transactionTemplate.execute(status -> second.get()));
+    }
+
+    /**
+     * 後の操作をトランザクションで包まずに動かす（後の操作が自分でトランザクションを持つとき。Bolt 32 の最初の失敗の作成の競合）。
+     * 後をトランザクションで包むと、PostgreSQL では一意制約の違反で包んだトランザクションが中断される（ADR-007）。
+     */
+    public static <T> List<T> runSecondOutsideTransaction(
+            TransactionTemplate transactionTemplate, Supplier<T> first, Supplier<T> second) {
+        return overlap(transactionTemplate, first, second);
+    }
+
+    private static <T> List<T> overlap(TransactionTemplate transactionTemplate, Supplier<T> first, Supplier<T> second) {
         CountDownLatch firstUpdated = new CountDownLatch(1);
         CountDownLatch releaseFirst = new CountDownLatch(1);
         ExecutorService executor = Executors.newFixedThreadPool(2);
@@ -40,8 +53,7 @@ public final class OverlappingTransactions {
                     }),
                     executor);
             awaitQuietly(firstUpdated);
-            CompletableFuture<T> secondResult =
-                    CompletableFuture.supplyAsync(() -> transactionTemplate.execute(status -> second.get()), executor);
+            CompletableFuture<T> secondResult = CompletableFuture.supplyAsync(second, executor);
 
             assertThat(secondResult)
                     .as("後の操作は先の行ロックを待つ")

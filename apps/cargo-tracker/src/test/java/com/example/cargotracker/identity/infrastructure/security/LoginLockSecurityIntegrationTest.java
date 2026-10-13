@@ -183,7 +183,27 @@ class LoginLockSecurityIntegrationTest {
                 .andExpect(redirectedUrl(TOTP_ERROR));
 
         assertThat(failures(email)).isEqualTo(5);
+        assertThat(failureReasons(email))
+                .as("要素ごとの理由で記録する")
+                .containsExactlyInAnyOrder(
+                        "BAD_CREDENTIALS", "BAD_CREDENTIALS", "INVALID_TOTP", "INVALID_TOTP", "INVALID_RECOVERY_CODE");
+        assertThat(auditActions(email)).as("回復コードの段でロックした").containsOnlyOnce("ACCOUNT_LOCKED");
         postPassword(email, PASSWORD).andExpect(redirectedUrl(LOGIN_ERROR));
+    }
+
+    @Test
+    void 利用停止の利用者の正しいpasswordは何度送っても数えずロックしない() throws Exception {
+        // 数えない拒否（業務の規則）と、数える誤りを並べる（T-106）
+        String email = user();
+        jdbc.update("UPDATE identity.app_user SET status = 'SUSPENDED' WHERE email = ?", email);
+        for (int i = 0; i < 6; i++) {
+            postPassword(email, PASSWORD).andExpect(redirectedUrl(LOGIN_ERROR));
+        }
+
+        assertThat(failures(email)).isZero();
+        assertThat(failureReasons(email)).hasSize(6).containsOnly("SUSPENDED");
+        failPassword(email, 1);
+        assertThat(failures(email)).as("誤った password は数える").isEqualTo(1);
     }
 
     // --- AC2 ---
@@ -283,6 +303,7 @@ class LoginLockSecurityIntegrationTest {
                         .with(csrf()))
                 .andExpect(redirectedUrl(TOTP_ERROR));
 
+        assertThat(auditActions(email)).as("TOTP の段でロックした").containsOnlyOnce("ACCOUNT_LOCKED");
         postPassword(email, PASSWORD).andExpect(redirectedUrl(LOGIN_ERROR));
     }
 
@@ -293,6 +314,7 @@ class LoginLockSecurityIntegrationTest {
         String email = userWithRecoveryCodes();
         Cookie first = loginWithPassword(email);
         Cookie second = loginWithPassword(email);
+        Cookie third = loginWithPassword(email);
         failPassword(email, 5);
 
         mvc.perform(post(TOTP_URL)
@@ -306,9 +328,24 @@ class LoginLockSecurityIntegrationTest {
                         .with(csrf()))
                 .andExpect(redirectedUrl(TOTP_ERROR));
 
+        mvc.perform(post(TOTP_URL).cookie(third).param("code", wrongCode(email)).with(csrf()))
+                .andExpect(redirectedUrl(TOTP_ERROR));
+
         assertThat(recoveryCodes.findUnusedByUserId(userIdOf(email)))
                 .as("ロック中に回復コードを使わせない")
                 .hasSize(RecoveryCode.CODES_PER_USER);
+        assertThat(failures(email)).as("ロック中の 3 回は数えない").isEqualTo(5);
+        assertThat(failureReasons(email))
+                .as("数えた 5 回と、確かめずに拒んだ 3 回（誤った TOTP を含む）")
+                .containsExactlyInAnyOrder(
+                        "BAD_CREDENTIALS",
+                        "BAD_CREDENTIALS",
+                        "BAD_CREDENTIALS",
+                        "BAD_CREDENTIALS",
+                        "BAD_CREDENTIALS",
+                        "LOCKED",
+                        "LOCKED",
+                        "LOCKED");
         mvc.perform(get("/login?totp-error"))
                 .andExpect(status().isOk())
                 .andExpect(result ->

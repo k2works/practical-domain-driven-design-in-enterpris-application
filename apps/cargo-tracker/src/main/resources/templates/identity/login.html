@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <!--/* A-01 ログイン（US-18 の password の段、UI 設計「A-01」）。どの失敗も同じ文言にし、どれが誤りかを示さない（AC2、SEC-11）。
+       ロック中も同じ文言で、一般の予告だけを足す（ロックの有無と解ける時刻は示さない。Bolt 32、ADR-011 の決定 9）。
        「password を忘れた場合」（A-05）は W5 で足す */-->
 <html lang="ja" xmlns:th="http://www.thymeleaf.org" th:replace="~{layout/public :: layout(~{::title}, ~{::main})}">
 <head>

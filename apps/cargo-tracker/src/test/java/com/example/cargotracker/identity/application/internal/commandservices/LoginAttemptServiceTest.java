@@ -145,15 +145,25 @@ class LoginAttemptServiceTest {
     }
 
     @Test
-    void 成功はLOGIN_SUCCEEDEDを書き回数を0に戻すがロック中は戻さない() {
+    void 成功はLOGIN_SUCCEEDEDを書き回数を0に戻す() {
         fail(3);
+
         service.recordSuccess(user, company);
+
         assertThat(failures.findByUserId(user).consecutiveFailures()).isZero();
         assertThat(actions()).endsWith("LOGIN_SUCCEEDED");
+    }
 
+    @Test
+    void ロック中に届いた成功はLOGIN_SUCCEEDEDを書くが回数もロックも消さない() {
+        // 確かめてから成功するまでの短い間に別の session の失敗でロックされた場合（ADR-011 の決定 9 の受け入れること）
         fail(5);
+
         service.recordSuccess(user, company);
-        assertThat(service.isLocked(user)).as("ロック中の成功はロックを消さない").isTrue();
+
+        assertThat(actions()).endsWith("LOGIN_SUCCEEDED");
+        assertThat(failures.findByUserId(user).consecutiveFailures()).isEqualTo(5);
+        assertThat(service.isLocked(user)).isTrue();
     }
 
     @Test
@@ -164,6 +174,8 @@ class LoginAttemptServiceTest {
 
         assertThat(failures.findByUserId(unknown).consecutiveFailures()).isZero();
         assertThat(service.isLocked(unknown)).isFalse();
+        // 入口は利用者を引いてから写すので、この場面は入口からは来ない。来ても数えなかった失敗として理由 LOCKED で残る
+        assertThat(audit).singleElement().extracting(AuditRecord::reason).isEqualTo("LOCKED");
     }
 
     @Test

@@ -11,12 +11,8 @@ import com.example.cargotracker.identity.domain.model.aggregates.UserRepository;
 import com.example.cargotracker.identity.domain.model.valueobjects.AuthenticationRejection;
 import com.example.cargotracker.shared.domain.CompanyId;
 import com.example.cargotracker.shared.domain.UserId;
-import java.util.List;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
+import com.example.cargotracker.shared.domain.UtcInstant;
+import java.time.Instant;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -31,8 +27,6 @@ import org.springframework.transaction.support.TransactionTemplate;
 @SpringBootTest
 @Import(TestcontainersConfiguration.class)
 class LoginAttemptServiceIntegrationTest {
-
-    private static final long TIMEOUT_SECONDS = 30;
 
     @Autowired
     LoginAttemptService service;
@@ -69,34 +63,25 @@ class LoginAttemptServiceIntegrationTest {
     }
 
     @Test
-    void 同じ利用者の最初の失敗が同時に届いても両方を数え両方の監査記録を書く() throws Exception {
-        // 議題 2 の③: 記録の作成の一意制約の違反をトランザクションの外で受ける
+    void 最初の失敗の記録の作成が重なっても後の作成は先を待って違反を受け数えて監査記録を書く() {
+        // 議題 2 の③: 記録の作成の一意制約の違反をトランザクションの外で受ける。先の作成のコミットを止め、後の作成が一意索引で
+        // 待つことを確かめてから先をコミットする（開始のラッチだけでは競合した保証がない。テスターの指摘）
         UserId user = newUser();
         CompanyId company = companyOf(user);
-        CountDownLatch start = new CountDownLatch(1);
-        ExecutorService executor = Executors.newFixedThreadPool(2);
-        try {
-            List<CompletableFuture<Void>> both = List.of(
-                    CompletableFuture.runAsync(
-                            () -> {
-                                await(start);
-                                service.recordFailure(user, company, AuthenticationRejection.BAD_CREDENTIALS);
-                            },
-                            executor),
-                    CompletableFuture.runAsync(
-                            () -> {
-                                await(start);
-                                service.recordFailure(user, company, AuthenticationRejection.BAD_CREDENTIALS);
-                            },
-                            executor));
-            start.countDown();
-            CompletableFuture.allOf(both.toArray(CompletableFuture[]::new)).get(TIMEOUT_SECONDS, TimeUnit.SECONDS);
-        } finally {
-            executor.shutdownNow();
-        }
 
-        assertThat(failures.findByUserId(user).consecutiveFailures()).isEqualTo(2);
-        assertThat(auditCount(user, "LOGIN_FAILED")).isEqualTo(2);
+        OverlappingTransactions.runSecondOutsideTransaction(
+                transactionTemplate,
+                () -> {
+                    failures.prepare(user, new UtcInstant(Instant.now()));
+                    return Boolean.TRUE;
+                },
+                () -> {
+                    service.recordFailure(user, company, AuthenticationRejection.BAD_CREDENTIALS);
+                    return Boolean.TRUE;
+                });
+
+        assertThat(failures.findByUserId(user).consecutiveFailures()).isEqualTo(1);
+        assertThat(auditCount(user, "LOGIN_FAILED")).isEqualTo(1);
     }
 
     @Test
@@ -107,6 +92,7 @@ class LoginAttemptServiceIntegrationTest {
             service.recordFailure(user, company, AuthenticationRejection.BAD_CREDENTIALS);
         }
 
+        // 外側のトランザクションの中で呼ぶ（本番と違う）。記録はもうあり、作成はサービスが外側から切り離すので害はない
         OverlappingTransactions.run(
                 transactionTemplate,
                 () -> {
@@ -131,16 +117,5 @@ class LoginAttemptServiceIntegrationTest {
                         "BAD_CREDENTIALS",
                         "BAD_CREDENTIALS",
                         "LOCKED");
-    }
-
-    private static void await(CountDownLatch latch) {
-        try {
-            if (!latch.await(TIMEOUT_SECONDS, TimeUnit.SECONDS)) {
-                throw new IllegalStateException("同時の操作がそろいませんでした");
-            }
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new IllegalStateException(e);
-        }
     }
 }

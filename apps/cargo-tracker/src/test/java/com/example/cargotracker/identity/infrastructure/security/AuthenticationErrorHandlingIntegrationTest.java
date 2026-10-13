@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.doThrow;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -11,6 +12,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.example.cargotracker.TestcontainersConfiguration;
 import com.example.cargotracker.identity.LogCapture;
+import com.example.cargotracker.identity.domain.model.aggregates.AuditRecord;
+import com.example.cargotracker.identity.domain.model.aggregates.AuditRecordRepository;
 import com.example.cargotracker.identity.domain.model.aggregates.Company;
 import com.example.cargotracker.identity.domain.model.aggregates.CompanyRepository;
 import com.example.cargotracker.identity.domain.model.aggregates.LoginFailureRepository;
@@ -19,6 +22,7 @@ import com.example.cargotracker.identity.domain.model.aggregates.TotpCredential;
 import com.example.cargotracker.identity.domain.model.aggregates.TotpCredentialRepository;
 import com.example.cargotracker.identity.domain.model.aggregates.User;
 import com.example.cargotracker.identity.domain.model.aggregates.UserRepository;
+import com.example.cargotracker.identity.domain.model.valueobjects.AuditAction;
 import com.example.cargotracker.identity.domain.model.valueobjects.CompanyKind;
 import com.example.cargotracker.identity.domain.model.valueobjects.EmailAddress;
 import com.example.cargotracker.identity.domain.model.valueobjects.UserStatus;
@@ -69,6 +73,9 @@ class AuthenticationErrorHandlingIntegrationTest {
 
     @MockitoSpyBean
     UserRepository users;
+
+    @MockitoSpyBean
+    AuditRecordRepository auditRecords;
 
     @Autowired
     MockMvc mvc;
@@ -127,6 +134,7 @@ class AuthenticationErrorHandlingIntegrationTest {
     @Test
     void 利用者の読み出しのDBの誤りは失敗へ倒れ理由SERVICE_ERRORで数えない() throws Exception {
         String email = user();
+        int before = serviceErrors();
         doThrow(new DataAccessResourceFailureException("DB の誤り")).when(users).findByEmail(any());
 
         String logs;
@@ -139,11 +147,42 @@ class AuthenticationErrorHandlingIntegrationTest {
             logs = capture.text();
         }
 
-        assertThat(jdbc.queryForObject(
-                        "SELECT count(*) FROM identity.audit_record WHERE action = 'LOGIN_FAILED' AND reason = 'SERVICE_ERROR'",
-                        Integer.class))
-                .isPositive();
+        assertThat(serviceErrors()).as("この送信の 1 行").isEqualTo(before + 1);
         assertThat(logs).doesNotContain(PASSWORD);
+        assertThat(failures(email)).as("数えない").isZero();
+
+        org.mockito.Mockito.reset(users);
+        mvc.perform(password(email, "wrong")).andExpect(redirectedUrl("/login?error"));
+        assertThat(failures(email)).as("DB が戻れば誤りは数える").isEqualTo(1);
+    }
+
+    @Test
+    void 失敗の監査記録の書き込みのDBの誤りは回数も戻す() {
+        // IA-INV-08: 加算の後に監査の追記が失敗したら、回数も同じトランザクションで戻る
+        String email = user();
+        doThrow(new DataAccessResourceFailureException("DB の誤り"))
+                .when(auditRecords)
+                .append(argThat((AuditRecord record) -> record.action() == AuditAction.LOGIN_FAILED));
+        RequestBuilder wrong = password(email, "wrong");
+
+        assertThatThrownBy(() -> mvc.perform(wrong)).isInstanceOf(DataAccessResourceFailureException.class);
+        assertThat(failures(email)).isZero();
+    }
+
+    @Test
+    void ロックの監査記録の書き込みのDBの誤りは5回目の加算も戻しロックしない() throws Exception {
+        String email = user();
+        for (int i = 0; i < 4; i++) {
+            mvc.perform(password(email, "wrong")).andExpect(redirectedUrl("/login?error"));
+        }
+        doThrow(new DataAccessResourceFailureException("DB の誤り"))
+                .when(auditRecords)
+                .append(argThat((AuditRecord record) -> record.action() == AuditAction.ACCOUNT_LOCKED));
+        RequestBuilder fifth = password(email, "wrong");
+
+        assertThatThrownBy(() -> mvc.perform(fifth)).isInstanceOf(DataAccessResourceFailureException.class);
+        assertThat(failures(email)).as("4 回のまま").isEqualTo(4);
+        assertThat(failureReasons(email)).as("5 回目の LOGIN_FAILED も戻る").hasSize(4);
     }
 
     @Test
@@ -155,11 +194,16 @@ class AuthenticationErrorHandlingIntegrationTest {
                 .findByUserId(any());
         RequestBuilder correct = password(email, PASSWORD);
         RequestBuilder code = totpCode(session);
+        RequestBuilder recovery = post(TOTP_URL)
+                .cookie(session)
+                .param("recoveryCode", "1a2b-3c4d")
+                .with(csrf());
 
         assertThatThrownBy(() -> mvc.perform(correct))
                 .as("照合の後の確認の例外は枠組みが包まない")
                 .isInstanceOf(DataAccessResourceFailureException.class);
         assertThatThrownBy(() -> mvc.perform(code)).isInstanceOf(DataAccessResourceFailureException.class);
+        assertThatThrownBy(() -> mvc.perform(recovery)).isInstanceOf(DataAccessResourceFailureException.class);
     }
 
     // --- 補助 ---
@@ -212,6 +256,12 @@ class AuthenticationErrorHandlingIntegrationTest {
                 Integer.class,
                 userIdOf(email).value());
         return count == null ? 0 : count;
+    }
+
+    private int serviceErrors() {
+        return jdbc.queryForObject(
+                "SELECT count(*) FROM identity.audit_record WHERE action = 'LOGIN_FAILED' AND reason = 'SERVICE_ERROR'",
+                Integer.class);
     }
 
     private List<String> failureReasons(String email) {
