@@ -11755,7 +11755,7 @@
 <h3 id="w52026-11-02-11-0611-03">W5（2026-11-02 〜 11-06、11-03 は祝日）<a class="headerlink" href="#w52026-11-02-11-0611-03" title="Permanent link">&para;</a></h3>
 <p><strong>状態</strong>: 進行中（2026-10-11 に計画を作り、同日に human:kakimomokuri が承認した。Bolt 29・29b・29c・30 は完了し、Release 0.1 の負債 #45・#46 を返し、ADR-011 を採用して認証の土台を作った。Bolt 31 は 2026-10-13 に終え、終了報告を承認した。Bolt 31b は 2026-10-13 に計画を承認し、着手した）</p>
 <p><strong>ゴール</strong>: Release 0.1 の負債（#45・#46）を返し、認証を完成させ（US-18 の残り）、利用者と役割の管理（US-16 の一部）と予約の残り（US-04 AC3・AC5、#43）を作る。</p>
-<p><strong>局面とアプローチ</strong>: 中盤（<a href="../development_strategy/">開発戦略</a>）。新しい集約とスキーマを作る認証・通知・利用者管理（Bolt 30〜34）はインサイドアウトで、認証の流れはセキュリティの統合テストで外側から確かめる。既存の集約を広げる Bolt 29b・35 はアウトサイドイン（Bolt 35 は中盤の例外。W4 の締めで W6 から前倒しした）。Bolt 29 はテストのリファクタリングで、振る舞いを変えない</p>
+<p><strong>局面とアプローチ</strong>: 中盤（<a href="../development_strategy/">開発戦略</a>）。新しい集約とスキーマを作る認証・通知・利用者管理（Bolt 30〜34）はインサイドアウトで、認証の流れはセキュリティの統合テストで外側から確かめる。既存の集約を広げる Bolt 29b・35 はアウトサイドイン（Bolt 35 は中盤の例外。W4 の締めで W6 から前倒しした）。Bolt 29 はテストのリファクタリングで、振る舞いを変えない。Bolt 31d は認証の部品の守りの直しのリファクタリングで、構造の直しは守りのテストを先に足して緑のまま動かし、振る舞いの変わる 2 つ（監査の理由 <code>TOTP_NOT_ENROLLED</code>、失敗へ倒す範囲）だけをインサイドアウトの TDD にする</p>
 <p><strong>設計の決定</strong>（2026-10-11 に human:kakimomokuri が決定。W5 の開始準備の質問への回答と、整合性検証の指摘への回答）:</p>
 <table>
 <thead>
@@ -11867,14 +11867,14 @@
 </tr>
 <tr>
 <td style="text-align: left;">31d</td>
-<td style="text-align: left;">構造の直し: 照合の 3 値をドメインに寄せる（31c の <code>RecoveryCodeVerification</code> を含む）、<code>REJECTED_NOT_ENROLLED</code> の監査の理由、<code>FACTOR_*</code> の ArchUnit の空振り対策、入口と暗号のパッケージ（D-5 の認証の例外を入口だけに狭めるか）、枠組みの特性テスト（R-16）、Bolt 31 の低の指摘、SVG の組み立て・定数、スパイクの削除（Bolt 31c の開始準備で 31c から分けた）</td>
+<td style="text-align: left;">認証の部品の守りの直し: TOTP の照合の結果をドメインの値 <code>TotpMatch</code>（一致した刻み・再利用・不一致）にし、確かめのサービスから再利用の回り道（<code>wasAlreadyUsed</code>）をなくす（回復コードの <code>RecoveryCodeVerification</code> は 2 値のまま。使用済みは未使用の一覧に出ないため）。監査の理由 <code>TOTP_NOT_ENROLLED</code>（<code>REJECTED_NOT_ENROLLED</code> を <code>INVALID_TOTP</code> から分ける）。保存した要素を読めないときだけを拒否に倒す（<code>UnreadableCredentialException</code>。ほかの実装の誤りは 500）。暗号の部品を <code>identity.infrastructure.crypto</code> に分け、D-5 の認証の例外を入口だけにする。<code>FACTOR_*</code> の参照・全 URL・ログの平文の見張り、枠組みの特性テスト（R-16）の 3 つ。スパイクを本体のテストとの対応表で確かめてから消す。振る舞いの変更は監査の理由と失敗へ倒す範囲の 2 つだけ。<code>FACTOR_TOTP</code> は改名せず用語集に書く。低の指摘は 32・33b に送る（開始準備の決定。2026-10-13、human:kakimomokuri）。<a href="../bolt_31d_plan/">Bolt 31d 計画</a></td>
 <td style="text-align: right;">0</td>
 <td style="text-align: left;">リファクタリング</td>
-<td style="text-align: left;">ステップごと（構造）</td>
+<td style="text-align: left;">ステップごと（構造、セキュリティ、ファイルの削除）</td>
 </tr>
 <tr>
 <td style="text-align: left;">32</td>
-<td style="text-align: left;">US-18 AC3 ロック（ロックの数え方を <code>identity.application</code> に置く。ADR-012）、AC6 request ごとの役割の確認（Bolt 14 の決定の引き継ぎ。利用停止・権限の取消しの操作は Bolt 34 で作るので、この Bolt では DB の値を変えて確かめる）。ADR-012 の「W5 で見直すこと」の 3（request ごとの問い合わせを 1 回に。AC6 と同じ仕組み）と 5（ロックの数え方。入口は D-5 の認証の例外と同じ形）、S-02（送信元ごとの流量の制限）、Bolt 30 の議題 2 の③。回復コードの誤りも失敗の回数に数えるか（Bolt 31c で <code>RecoveryCodeRejectedException</code> を失敗のイベントの対応表に足した）。範囲が重いので、開始準備で 32 を分けるかを見直す</td>
+<td style="text-align: left;">US-18 AC3 ロック（ロックの数え方を <code>identity.application</code> に置く。ADR-012）、AC6 request ごとの役割の確認（Bolt 14 の決定の引き継ぎ。利用停止・権限の取消しの操作は Bolt 34 で作るので、この Bolt では DB の値を変えて確かめる）。ADR-012 の「W5 で見直すこと」の 3（request ごとの問い合わせを 1 回に。AC6 と同じ仕組み）と 5（ロックの数え方。入口は D-5 の認証の例外と同じ形）、S-02（送信元ごとの流量の制限）、Bolt 30 の議題 2 の③。回復コードの誤りも失敗の回数に数えるか（Bolt 31c で <code>RecoveryCodeRejectedException</code> を失敗のイベントの対応表に足した）。31d から送った低の指摘（ロックで統合テストと認証の入口に触るため）: Bolt 31 の低の指摘（Base32 の不正な長さ、T-100 の待ちの判定、刻みを戻す SQL の重複、dev のテストの刻みの境界、合成ルートのクラスの分け方）、3 つの統合テストの時計の設定、<code>DataAccessException</code> の扱い、8 時間の起点の値と監査の順のテスト。範囲が重いので、開始準備で 32 を分けるかを見直す（31d から送った低の指摘もその見直しの材料になる）</td>
 <td style="text-align: right;">2</td>
 <td style="text-align: left;">インサイドアウト</td>
 <td style="text-align: left;">ステップごと（セキュリティ、認可）</td>
@@ -11895,7 +11895,7 @@
 </tr>
 <tr>
 <td style="text-align: left;">33b</td>
-<td style="text-align: left;">US-18 AC9 の回復コードによる TOTP の再登録（A-07。回復コードによるログインは 31c）。#13 をクローズする（管理者経路は #47）</td>
+<td style="text-align: left;">US-18 AC9 の回復コードによる TOTP の再登録（A-07。回復コードによるログインは 31c）。31d から送った低の指摘（登録と再登録の部品に触るため）: 桁数・周期・アルゴリズムの定数、SVG の組み立て、登録を始めた時刻のキーの定数、回復コードの形の知識の 2 か所、<code>TotpEnrollmentService</code> の引数の型（31c の議題 4）、<code>normalize</code> の戻り値の型。#13 をクローズする（管理者経路は #47）</td>
 <td style="text-align: right;">2</td>
 <td style="text-align: left;">インサイドアウト</td>
 <td style="text-align: left;">ステップごと（セキュリティ）</td>
@@ -13092,6 +13092,11 @@
 <td style="text-align: left;">2026-10-13</td>
 <td style="text-align: left;">Bolt 31d の開始準備: 守りの直しを 31d に入れ低の指摘は 32・33b に送る、暗号の部品を identity.infrastructure.crypto に分けて D-5 の例外を入口だけにする、<code>FACTOR_TOTP</code> は改名せず用語集に書く、スパイクは特性テストを移してから消すことを決めた。Bolt 31d 計画を作り、2 つの整合性検証と T-101 の骨組みの確かめの結果を反映した（承認待ち。W5 の行の直しは計画のステップ 1）</td>
 <td style="text-align: left;">anthropic/claude-opus-5-5、決定 human:kakimomokuri</td>
+</tr>
+<tr>
+<td style="text-align: left;">2026-10-13</td>
+<td style="text-align: left;">Bolt 31d のステップ 1: W5 の Bolt の分け方の表の 31d の行を Bolt 31d 計画の内容にし（回復コードは 2 値のまま、低の指摘を 32・33b に送る、承認ゲートは構造・セキュリティ・ファイルの削除）、W5 の局面とアプローチに 31d はリファクタリング（振る舞いの変更は 2 つだけ）と書いた。32 と 33b の行に 31d から送った低の指摘を足した（確認ポイント 8）</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5</td>
 </tr>
 </tbody>
 </table>
