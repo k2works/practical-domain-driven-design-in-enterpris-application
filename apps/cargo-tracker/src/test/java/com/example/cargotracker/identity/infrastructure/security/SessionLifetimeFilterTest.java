@@ -12,6 +12,7 @@ import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.mock.web.MockHttpSession;
 import org.springframework.security.authentication.TestingAuthenticationToken;
+import org.springframework.security.core.authority.FactorGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 
 /**
@@ -92,5 +93,67 @@ class SessionLifetimeFilterTest {
     @Test
     void ログインの時刻の属性の名前はクラスの名前に依らない固定の値() {
         assertThat(SessionLifetime.AUTHENTICATED_AT).isEqualTo("cargotracker.session.authenticatedAt");
+        assertThat(SessionLifetime.PASSWORD_VERIFIED_AT).isEqualTo("cargotracker.session.passwordVerifiedAt");
+    }
+
+    // --- password の段だけの session（Bolt 31。password を確かめた時刻から 5 分） ---
+
+    private static MockHttpSession passwordStageSession(boolean withVerifiedTime) {
+        SecurityContextHolder.getContext()
+                .setAuthentication(new TestingAuthenticationToken(
+                        "user", null, "ROLE_SHIPPER", FactorGrantedAuthority.PASSWORD_AUTHORITY));
+        MockHttpSession session = new MockHttpSession();
+        if (withVerifiedTime) {
+            session.setAttribute(SessionLifetime.PASSWORD_VERIFIED_AT, LOGIN_AT);
+        }
+        return session;
+    }
+
+    @Test
+    void passwordの段だけのsessionは5分の1秒前まで通す() throws Exception {
+        MockHttpSession session = passwordStageSession(true);
+
+        assertThat(request(session, Duration.ofMinutes(5).minusSeconds(1)).getRedirectedUrl())
+                .isNull();
+    }
+
+    @Test
+    void passwordの段だけのsessionは5分ちょうどで失効させる() throws Exception {
+        MockHttpSession session = passwordStageSession(true);
+
+        assertThat(request(session, Duration.ofMinutes(5)).getRedirectedUrl()).isEqualTo(SessionLifetime.EXPIRED_URL);
+        assertThat(session.isInvalid()).isTrue();
+    }
+
+    @Test
+    void passwordを確かめた時刻のないpasswordの段のsessionは失効させる() throws Exception {
+        MockHttpSession session = passwordStageSession(false);
+
+        assertThat(request(session, Duration.ZERO).getRedirectedUrl()).isEqualTo(SessionLifetime.EXPIRED_URL);
+    }
+
+    @Test
+    void 二つの要素がそろったのにログインの時刻がないsessionはpasswordの時刻があっても失効させる() throws Exception {
+        SecurityContextHolder.getContext()
+                .setAuthentication(new TestingAuthenticationToken(
+                        "user",
+                        null,
+                        "ROLE_SHIPPER",
+                        FactorGrantedAuthority.PASSWORD_AUTHORITY,
+                        TotpAuthenticationToken.FACTOR_TOTP));
+        MockHttpSession session = new MockHttpSession();
+        session.setAttribute(SessionLifetime.PASSWORD_VERIFIED_AT, LOGIN_AT);
+
+        assertThat(request(session, Duration.ZERO).getRedirectedUrl()).isEqualTo(SessionLifetime.EXPIRED_URL);
+    }
+
+    @Test
+    void 配備の前の形のsessionはpasswordの段でも8時間の上限で判定する() throws Exception {
+        // Bolt 31 の前は password の段でログインの時刻を置いた。その session は TOTP を求められるが、上限は元の時刻から数える
+        MockHttpSession session = passwordStageSession(false);
+        session.setAttribute(SessionLifetime.AUTHENTICATED_AT, LOGIN_AT);
+
+        assertThat(request(session, Duration.ofHours(1)).getRedirectedUrl()).isNull();
+        assertThat(request(session, Duration.ofHours(8)).getRedirectedUrl()).isEqualTo(SessionLifetime.EXPIRED_URL);
     }
 }

@@ -1,12 +1,15 @@
 package com.example.cargotracker.identity.interfaces.web;
 
+import com.example.cargotracker.identity.application.internal.commandservices.TotpVerificationService;
+import com.example.cargotracker.shared.domain.AuthenticatedActor;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 
 /**
- * ログイン（A-01）と再認証の案内（A-03）の画面（US-18 の password の段）。ログインの送信とログアウトは Spring Security が受ける。
+ * ログイン（A-01）・認証コードの入力（A-02）・認証アプリの登録の案内・再認証の案内（A-03）の画面（US-18）。ログインと認証コードの
+ * 送信、ログアウトは Spring Security が受ける。A-02 と登録の案内は password の要素だけで開ける（Bolt 31）。
  * ログインに失敗したときは、入れたメールアドレスを残し password を消す（UI 設計「A-01」）。
  * 開発環境（dev）だけ、開発用の利用者で入力済みにし、荷主担当者・営業担当者の開発用の利用者を選んでそのままログインできる
  * ボタンを出す（2026-10-06 の人の決定）。
@@ -25,8 +28,11 @@ public class LoginController {
     /** dev プロファイルでだけある。ほかの環境では空で、画面は入力済みにならない（守りの 1 層目）。 */
     private final ObjectProvider<DevLoginPrefill> devLogin;
 
-    public LoginController(ObjectProvider<DevLoginPrefill> devLogin) {
+    private final TotpVerificationService totp;
+
+    public LoginController(ObjectProvider<DevLoginPrefill> devLogin, TotpVerificationService totp) {
         this.devLogin = devLogin;
+        this.totp = totp;
     }
 
     @GetMapping("/login")
@@ -39,6 +45,21 @@ public class LoginController {
             model.addAttribute(DEV_ACCOUNTS, prefill.accounts());
         });
         return "identity/login";
+    }
+
+    /** A-02 認証コードの入力（Bolt 31）。TOTP を登録していない利用者は登録の案内へ移す。 */
+    @GetMapping("/login/totp")
+    public String totp(AuthenticatedActor actor) {
+        if (!totp.isEnrolled(actor.userId())) {
+            return "redirect:/login/totp/enroll";
+        }
+        return "identity/login-totp";
+    }
+
+    /** 認証アプリの登録の案内（Bolt 31。Bolt 31b で A-07 認証アプリの登録に置き換える）。 */
+    @GetMapping("/login/totp/enroll")
+    public String totpEnroll() {
+        return "identity/totp-enroll";
     }
 
     @GetMapping("/session-expired")

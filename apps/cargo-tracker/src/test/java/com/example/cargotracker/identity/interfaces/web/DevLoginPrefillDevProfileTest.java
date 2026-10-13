@@ -45,17 +45,21 @@ class DevLoginPrefillDevProfileTest {
                 .andExpect(content().string(containsString("追跡管理者でログイン（tracking-manager@dev.cargo-tracker.example）")));
     }
 
+    // 開発用の利用者の TOTP の資格は Bolt 31 のステップ 6 で dev-data に足す。それまでは password の段の後に登録の案内へ移る
     @Test
     void 追跡管理者の開発用の利用者を選ぶと追跡一覧へ移る() throws Exception {
         MvcResult login = mvc.perform(post("/login")
                         .param("username", "tracking-manager@dev.cargo-tracker.example")
                         .param("password", "dev-password-staff")
                         .with(csrf()))
-                .andExpect(redirectedUrl("/"))
+                .andExpect(redirectedUrl("/login/totp/enroll"))
                 .andReturn();
         Cookie session = login.getResponse().getCookie("SESSION");
 
-        mvc.perform(get("/").cookie(session)).andExpect(redirectedUrl("/staff/tracking-records"));
+        mvc.perform(get("/").cookie(session))
+                .andExpect(result -> org.assertj.core.api.Assertions.assertThat(
+                                result.getResponse().getRedirectedUrl())
+                        .startsWith("/login/totp?factor.type=totp"));
     }
 
     @Test
@@ -64,10 +68,13 @@ class DevLoginPrefillDevProfileTest {
                         .param("username", "sales@dev.cargo-tracker.example")
                         .param("password", "dev-password-staff")
                         .with(csrf()))
-                .andExpect(redirectedUrl("/"))
+                .andExpect(redirectedUrl("/login/totp/enroll"))
                 .andReturn();
         Cookie session = login.getResponse().getCookie("SESSION");
 
-        mvc.perform(get("/").cookie(session)).andExpect(redirectedUrl("/staff/transport-requests"));
+        mvc.perform(get("/").cookie(session))
+                .andExpect(result -> org.assertj.core.api.Assertions.assertThat(
+                                result.getResponse().getRedirectedUrl())
+                        .startsWith("/login/totp?factor.type=totp"));
     }
 }

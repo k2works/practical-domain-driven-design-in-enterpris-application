@@ -39,11 +39,18 @@ public class AuthenticationAuditListener {
         this.clock = clock;
     }
 
+    /**
+     * 成功を記録する。password の段の成功（{@code PASSWORD_VERIFIED}）と、TOTP が通って 2 つの要素がそろった成功
+     * （{@code LOGIN_SUCCEEDED}）を分ける（Bolt 31、ADR-012 の見直しの 1）。
+     */
     @EventListener
     public void onSuccess(AuthenticationSuccessEvent event) {
+        boolean totpPassed = event.getAuthentication() instanceof TotpAuthenticationToken;
         actorOf(event.getAuthentication())
-                .ifPresent(actor ->
-                        auditRecords.append(AuditRecord.loginSucceeded(actor.userId(), actor.companyId(), now())));
+                .ifPresent(actor -> auditRecords.append(
+                        totpPassed
+                                ? AuditRecord.loginSucceeded(actor.userId(), actor.companyId(), now())
+                                : AuditRecord.passwordVerified(actor.userId(), actor.companyId(), now())));
     }
 
     @EventListener

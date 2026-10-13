@@ -12,6 +12,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.example.cargotracker.TestcontainersConfiguration;
 import com.example.cargotracker.identity.domain.model.aggregates.Company;
 import com.example.cargotracker.identity.domain.model.aggregates.CompanyRepository;
+import com.example.cargotracker.identity.domain.model.aggregates.TotpCodeGenerator;
+import com.example.cargotracker.identity.domain.model.aggregates.TotpCredential;
+import com.example.cargotracker.identity.domain.model.aggregates.TotpCredentialRepository;
 import com.example.cargotracker.identity.domain.model.aggregates.User;
 import com.example.cargotracker.identity.domain.model.aggregates.UserRepository;
 import com.example.cargotracker.identity.domain.model.valueobjects.CompanyKind;
@@ -21,11 +24,13 @@ import com.example.cargotracker.shared.acceptance.MutableClock;
 import com.example.cargotracker.shared.domain.CompanyId;
 import com.example.cargotracker.shared.domain.Role;
 import com.example.cargotracker.shared.domain.UserId;
+import com.example.cargotracker.shared.domain.UtcInstant;
 import com.example.cargotracker.tracking.domain.model.TrackingFixture;
 import com.example.cargotracker.tracking.domain.model.aggregates.TrackingRecord;
 import com.example.cargotracker.tracking.domain.model.aggregates.TrackingRecordRepository;
 import com.example.cargotracker.tracking.domain.model.valueobjects.TrackingNumber;
 import jakarta.servlet.http.Cookie;
+import java.nio.charset.StandardCharsets;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
@@ -33,6 +38,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import org.hamcrest.Matchers;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -48,9 +54,10 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.test.web.servlet.ResultMatcher;
 
 /**
- * セキュリティの統合テスト（US-18 の password の段、ADR-012、テスト戦略「セキュリティの統合テスト」）。
+ * セキュリティの統合テスト（US-18 の password の段と TOTP の段、ADR-011・ADR-012、テスト戦略「セキュリティの統合テスト」）。
  * 本物のフィルターの連なりと Spring Session JDBC（PostgreSQL 18）の上で、ログイン・拒否・失効・CSRF・役割・監査を確かめる。
  * session は Cookie（{@code SESSION}）で受け渡し、ログインの前後で値が変わることを見る（session の固定化の防止。T-40）。
  */
@@ -62,6 +69,8 @@ class AuthenticationSecurityIntegrationTest {
     private static final String PASSWORD = "correct horse battery staple";
     private static final String SESSION_COOKIE = "SESSION";
     private static final Instant LOGIN_AT = Instant.parse("2026-10-06T00:00:00Z");
+    private static final byte[] TOTP_SECRET = "12345678901234567890".getBytes(StandardCharsets.US_ASCII);
+    private static final String TOTP_URL = "/login/totp";
 
     @TestConfiguration(proxyBeanMethods = false)
     static class FixedClock {
@@ -94,6 +103,15 @@ class AuthenticationSecurityIntegrationTest {
     @Autowired
     TrackingRecordRepository trackingRecords;
 
+    @Autowired
+    TotpCredentialRepository totpCredentials;
+
+    @Autowired
+    TotpCodeGenerator totpCodes;
+
+    @Autowired
+    AesGcmSecretCipher cipher;
+
     private Company shipperCompany;
 
     @BeforeEach
@@ -121,23 +139,187 @@ class AuthenticationSecurityIntegrationTest {
     // --- ログインの成功（AC1） ---
 
     @Test
-    void 荷主担当者はログインすると荷主のホームへ移りsessionIDが変わる() throws Exception {
+    void 荷主担当者はpasswordの後にTOTPを入れると荷主のホームへ移り段ごとにsessionIDが変わる() throws Exception {
         String email = shipper(UserStatus.ACTIVE);
         Cookie before = sessionOf(mvc.perform(get("/login")).andReturn());
 
-        MvcResult login = mvc.perform(post("/login")
+        Cookie passwordStage = sessionOf(mvc.perform(post("/login")
                         .cookie(before)
                         .param("username", email)
                         .param("password", PASSWORD)
                         .with(csrf()))
                 .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl(TOTP_URL))
+                .andReturn());
+        MvcResult totp = mvc.perform(post(TOTP_URL)
+                        .cookie(passwordStage)
+                        .param("code", currentCode(email))
+                        .with(csrf()))
+                .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/"))
                 .andReturn();
 
-        Cookie after = sessionOf(login);
+        Cookie after = sessionOf(totp);
+        assertThat(passwordStage.getValue()).isNotEqualTo(before.getValue());
+        assertThat(after.getValue()).as("権限が上がる TOTP の段でも変える（T-40）").isNotEqualTo(passwordStage.getValue());
         mvc.perform(get("/").cookie(after)).andExpect(redirectedUrl("/customer/transport-requests"));
-        assertThat(after.getValue()).isNotEqualTo(before.getValue());
         mvc.perform(get("/customer/transport-requests").cookie(after)).andExpect(status().isOk());
+    }
+
+    // --- TOTP の段（US-18 AC1、ADR-011。Bolt 31） ---
+
+    @Test
+    void passwordだけでは業務の画面を開けずA02へ導かれる() throws Exception {
+        Cookie session = loginWithPassword(shipper(UserStatus.ACTIVE));
+
+        mvc.perform(get("/customer/transport-requests").cookie(session))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectsToTotp());
+        mvc.perform(get("/").cookie(session)).andExpect(redirectsToTotp());
+        mvc.perform(get(TOTP_URL).cookie(session))
+                .andExpect(status().isOk())
+                .andExpect(content().string(Matchers.containsString("autocomplete=\"one-time-code\"")));
+    }
+
+    @Test
+    void A02のPOSTにもCSRFのトークンが要る() throws Exception {
+        String email = shipper(UserStatus.ACTIVE);
+        Cookie session = loginWithPassword(email);
+
+        // A-02 の画面を開くと session に CSRF のトークンができる。トークンを付けない送信と誤ったトークンの送信は拒否する
+        mvc.perform(get(TOTP_URL).cookie(session)).andExpect(status().isOk());
+
+        mvc.perform(post(TOTP_URL).cookie(session).param("code", currentCode(email)))
+                .andExpect(status().isForbidden());
+        mvc.perform(post(TOTP_URL)
+                        .cookie(session)
+                        .param("code", currentCode(email))
+                        .with(csrf().useInvalidToken()))
+                .andExpect(status().isForbidden());
+        mvc.perform(get("/customer/transport-requests").cookie(session)).andExpect(redirectsToTotp());
+    }
+
+    @Test
+    void passwordの段を経ずにTOTPを送っても通らない() throws Exception {
+        String email = shipper(UserStatus.ACTIVE);
+
+        MvcResult result = mvc.perform(
+                        post(TOTP_URL).param("code", currentCode(email)).with(csrf()))
+                .andExpect(redirectedUrl("/login?totp-error"))
+                .andReturn();
+
+        Cookie session = result.getResponse().getCookie(SESSION_COOKIE);
+        if (session != null) {
+            mvc.perform(get("/customer/transport-requests").cookie(session)).andExpect(redirectedUrl("/login"));
+        }
+        mvc.perform(get(TOTP_URL)).andExpect(redirectedUrl("/login"));
+    }
+
+    @Test
+    void 誤ったTOTPではpasswordの要素を捨ててA01に戻る() throws Exception {
+        Cookie session = loginWithPassword(shipper(UserStatus.ACTIVE));
+
+        mvc.perform(post(TOTP_URL).cookie(session).param("code", "000000").with(csrf()))
+                .andExpect(redirectedUrl("/login?totp-error"));
+
+        // 捨てた session の Cookie は、無効な session として A-03 に送られる（A-02 を開けない）
+        mvc.perform(get(TOTP_URL).cookie(session)).andExpect(redirectedUrl("/session-expired"));
+        mvc.perform(get("/login").param("totp-error", ""))
+                .andExpect(content().string(Matchers.containsString("認証コードが正しくありません。もう一度ログインしてください。")));
+    }
+
+    @Test
+    void 一度通ったコードは同じ刻みの間にもう一度は使えない() throws Exception {
+        String email = shipper(UserStatus.ACTIVE);
+        String code = currentCode(email);
+        submitTotp(loginWithPassword(email), code);
+
+        mvc.perform(post(TOTP_URL)
+                        .cookie(loginWithPassword(email))
+                        .param("code", code)
+                        .with(csrf()))
+                .andExpect(redirectedUrl("/login?totp-error"));
+    }
+
+    @Test
+    void 別の利用者のpasswordを送ると先の利用者のTOTPの要素は引き継がれない() throws Exception {
+        String first = shipper(UserStatus.ACTIVE);
+        String second = shipper(UserStatus.ACTIVE);
+        Cookie session = login(first);
+
+        Cookie switched = sessionOf(mvc.perform(post("/login")
+                        .cookie(session)
+                        .param("username", second)
+                        .param("password", PASSWORD)
+                        .with(csrf()))
+                .andExpect(redirectedUrl(TOTP_URL))
+                .andReturn());
+
+        mvc.perform(get("/customer/transport-requests").cookie(switched)).andExpect(redirectsToTotp());
+    }
+
+    @Test
+    void TOTPを登録していない利用者はpasswordが正しくても登録の案内へ移り業務の画面を開けない() throws Exception {
+        String email = userWithoutTotp(shipperCompany, Role.SHIPPER);
+
+        Cookie session = sessionOf(mvc.perform(post("/login")
+                        .param("username", email)
+                        .param("password", PASSWORD)
+                        .with(csrf()))
+                .andExpect(redirectedUrl("/login/totp/enroll"))
+                .andReturn());
+
+        mvc.perform(get("/login/totp/enroll").cookie(session))
+                .andExpect(status().isOk())
+                .andExpect(content().string(Matchers.containsString("認証アプリの登録の画面は準備中です。システム管理者にお問い合わせください。")));
+        mvc.perform(get(TOTP_URL).cookie(session)).andExpect(redirectedUrl("/login/totp/enroll"));
+        mvc.perform(get("/customer/transport-requests").cookie(session)).andExpect(redirectsToTotp());
+    }
+
+    @Test
+    void passwordの段は5分の1秒前までTOTPを送れ5分で再認証の案内へ移る() throws Exception {
+        String email = shipper(UserStatus.ACTIVE);
+        Cookie early = loginWithPassword(email);
+        Cookie late = loginWithPassword(email);
+
+        advance(Duration.ofMinutes(5).minusSeconds(1));
+        submitTotp(early, currentCode(email));
+
+        advance(Duration.ofMinutes(5));
+        resetTotpStep(email);
+        mvc.perform(post(TOTP_URL)
+                        .cookie(late)
+                        .param("code", currentCode(email))
+                        .with(csrf()))
+                .andExpect(redirectedUrl("/session-expired"));
+    }
+
+    @Test
+    void 最長8時間はTOTPが初めて通った時刻から数える() throws Exception {
+        String email = shipper(UserStatus.ACTIVE);
+        Cookie passwordStage = loginWithPassword(email);
+        advance(Duration.ofMinutes(4));
+        Cookie session = submitTotp(passwordStage, currentCode(email));
+
+        advance(Duration.ofHours(8));
+        mvc.perform(get("/customer/transport-requests").cookie(session)).andExpect(status().isOk());
+
+        advance(Duration.ofHours(8).plusMinutes(4));
+        mvc.perform(get("/customer/transport-requests").cookie(session)).andExpect(redirectedUrl("/session-expired"));
+    }
+
+    @Test
+    void 期限切れのsessionにTOTPを送っても延びない() throws Exception {
+        String email = shipper(UserStatus.ACTIVE);
+        Cookie session = login(email);
+        advance(Duration.ofHours(8));
+
+        mvc.perform(post(TOTP_URL)
+                        .cookie(session)
+                        .param("code", currentCode(email))
+                        .with(csrf()))
+                .andExpect(redirectedUrl("/session-expired"));
+        mvc.perform(get("/customer/transport-requests").cookie(session)).andExpect(status().is3xxRedirection());
     }
 
     @Test
@@ -246,12 +428,18 @@ class AuthenticationSecurityIntegrationTest {
         String email = user(staffCompany(), Role.SALES, UserStatus.ACTIVE);
         MvcResult first = mvc.perform(get("/staff/kpi-observations")).andReturn();
 
-        mvc.perform(post("/login")
+        MvcResult password = mvc.perform(post("/login")
                         .cookie(sessionOf(first))
                         .param("username", email)
                         .param("password", PASSWORD)
                         .with(csrf()))
-                // Spring Security は保存した request へ戻すとき、目印の continue を付ける
+                .andExpect(redirectedUrl(TOTP_URL))
+                .andReturn();
+        mvc.perform(post(TOTP_URL)
+                        .cookie(sessionOf(password))
+                        .param("code", currentCode(email))
+                        .with(csrf()))
+                // Spring Security は保存した request へ戻すとき、目印の continue を付ける。TOTP の段の後に戻す
                 .andExpect(redirectedUrl("http://localhost/staff/kpi-observations?continue"));
     }
 
@@ -263,7 +451,7 @@ class AuthenticationSecurityIntegrationTest {
                         .param("username", "  " + email.toUpperCase(java.util.Locale.ROOT) + " ")
                         .param("password", PASSWORD)
                         .with(csrf()))
-                .andExpect(redirectedUrl("/"));
+                .andExpect(redirectedUrl(TOTP_URL));
     }
 
     @Test
@@ -281,7 +469,10 @@ class AuthenticationSecurityIntegrationTest {
         login(email);
 
         assertThat(auditOf(email))
-                .containsExactly(Map.of("action", "LOGIN_SUCCEEDED", "result", "SUCCESS", "reason", "-"));
+                .as("password の段と 2 つの要素がそろった段を分けて残す（ADR-012 の見直しの 1）")
+                .containsExactly(
+                        Map.of("action", "PASSWORD_VERIFIED", "result", "SUCCESS", "reason", "-"),
+                        Map.of("action", "LOGIN_SUCCEEDED", "result", "SUCCESS", "reason", "-"));
     }
 
     @Test
@@ -293,7 +484,9 @@ class AuthenticationSecurityIntegrationTest {
         login(email);
 
         Map<String, Object> row = jdbc.queryForMap(
-                "SELECT actor_company_id, occurred_at FROM identity.audit_record WHERE actor_user_id = ?", userId);
+                "SELECT actor_company_id, occurred_at FROM identity.audit_record WHERE actor_user_id = ?"
+                        + " AND action = 'LOGIN_SUCCEEDED'",
+                userId);
         assertThat(row).containsEntry("actor_company_id", shipperCompany.id().value());
         assertThat(((java.sql.Timestamp) row.get("occurred_at")).toInstant()).isEqualTo(LOGIN_AT);
     }
@@ -371,7 +564,9 @@ class AuthenticationSecurityIntegrationTest {
                 .andExpect(redirectedUrl("/login?logout"));
 
         mvc.perform(get("/customer/transport-requests").cookie(session)).andExpect(status().is3xxRedirection());
-        assertThat(auditOf(email)).extracting(row -> row.get("action")).containsExactly("LOGIN_SUCCEEDED", "LOGOUT");
+        assertThat(auditOf(email))
+                .extracting(row -> row.get("action"))
+                .containsExactly("PASSWORD_VERIFIED", "LOGIN_SUCCEEDED", "LOGOUT");
     }
 
     @Test
@@ -759,26 +954,87 @@ class AuthenticationSecurityIntegrationTest {
     }
 
     private String user(Company company, Role role, UserStatus status, String email) {
+        UserId userId = new UserId(UUID.randomUUID());
         users.add(User.of(
-                new UserId(UUID.randomUUID()),
+                userId,
                 company.id(),
                 EmailAddress.of(email),
                 "利用者",
                 passwordEncoder.encode(PASSWORD),
                 status,
                 Set.of(role)));
+        totpCredentials.add(
+                TotpCredential.enroll(userId, cipher.encrypt(TOTP_SECRET.clone()), new UtcInstant(clock.instant())));
         return email;
     }
 
+    /** TOTP を登録していない利用者（31b までは登録の案内へ送る）。 */
+    private String userWithoutTotp(Company company, Role role) {
+        String email = "user-" + UUID.randomUUID() + "@example.com";
+        users.add(User.of(
+                new UserId(UUID.randomUUID()),
+                company.id(),
+                EmailAddress.of(email),
+                "利用者",
+                passwordEncoder.encode(PASSWORD),
+                UserStatus.ACTIVE,
+                Set.of(role)));
+        return email;
+    }
+
+    /** password と TOTP の 2 段階でログインする。同じ利用者の入り直しで再利用にならないよう、使った刻みを戻してから送る。 */
     private Cookie login(String email) throws Exception {
+        Cookie passwordStage = loginWithPassword(email);
+        resetTotpStep(email);
+        return submitTotp(passwordStage, currentCode(email));
+    }
+
+    /** password の段だけを通す（A-02 へ移る）。 */
+    private Cookie loginWithPassword(String email) throws Exception {
         MvcResult result = mvc.perform(post("/login")
                         .param("username", email)
                         .param("password", PASSWORD)
                         .with(csrf()))
                 .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl(TOTP_URL))
                 .andReturn();
-        assertThat(result.getResponse().getRedirectedUrl()).doesNotContain("error");
         return sessionOf(result);
+    }
+
+    private Cookie submitTotp(Cookie passwordStage, String code) throws Exception {
+        MvcResult result = mvc.perform(
+                        post(TOTP_URL).cookie(passwordStage).param("code", code).with(csrf()))
+                .andExpect(status().is3xxRedirection())
+                .andReturn();
+        assertThat(result.getResponse().getRedirectedUrl())
+                .doesNotContain("error")
+                .doesNotContain("expired");
+        return sessionOf(result);
+    }
+
+    /** いまの時計の刻みの TOTP のコード（テストの固定の秘密から作る）。 */
+    private String currentCode(String email) {
+        TotpCredential credential =
+                totpCredentials.findByUserId(userIdOf(email)).orElseThrow();
+        return totpCodes.code(credential.secret(), TotpCredential.stepAt(new UtcInstant(clock.instant())));
+    }
+
+    /** テストの準備として、使った刻みを戻す（同じ利用者が同じ刻みの間に入り直すため。Bolt 31 の確認ポイント 7）。 */
+    private void resetTotpStep(String email) {
+        jdbc.update(
+                "UPDATE identity.totp_credential SET last_used_step = 0 WHERE user_id = ?",
+                userIdOf(email).value());
+    }
+
+    /** 足りない TOTP の要素を求めて A-02 へ導く（枠組みが factor.type・factor.reason を付ける）。 */
+    private static ResultMatcher redirectsToTotp() {
+        return result -> assertThat(result.getResponse().getRedirectedUrl())
+                .as("A-02 へ導く")
+                .startsWith(TOTP_URL + "?factor.type=totp");
+    }
+
+    private UserId userIdOf(String email) {
+        return users.findByEmail(EmailAddress.of(email.strip())).orElseThrow().id();
     }
 
     private void assertLoginRejected(String email, String password) throws Exception {

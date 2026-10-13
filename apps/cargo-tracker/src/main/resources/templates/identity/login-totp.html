@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<!--/* A-02 認証コードの入力（US-18 AC1、UI 設計「A-02」、Bolt 31）。password が正しいときだけ開ける（K-02 は ADR-011 で受け入れた）。
+       誤り・再利用は password の要素を捨てて A-01 に戻し、どれが誤りかを示さない（AC2）。回復コードの欄は Bolt 31b */-->
+<html lang="ja" xmlns:th="http://www.thymeleaf.org" th:replace="~{layout/public :: layout(~{::title}, ~{::main})}">
+<head>
+    <meta charset="UTF-8">
+    <title>認証コードの入力 - cargo-tracker</title>
+</head>
+<body>
+<main>
+    <h1>認証コードの入力</h1>
+    <p>認証アプリに表示されている 6 桁のコードを入力してください。</p>
+    <form th:action="@{/login/totp}" method="post" class="app-login-form">
+        <div class="mb-3">
+            <label for="code" class="form-label">認証コード</label>
+            <input type="text" id="code" name="code" class="form-control" autocomplete="one-time-code"
+                   inputmode="numeric" pattern="[0-9]{6}" maxlength="6" required aria-describedby="code-help"
+                   th:value="${code}">
+            <div id="code-help" class="form-text">数字 6 桁（例: 123456）</div>
+        </div>
+        <button type="submit" class="btn btn-primary">確認</button>
+    </form>
+    <p class="mt-4">認証アプリを使えない場合は、荷主の方は担当営業に、社内の方はシステム管理者にお問い合わせください。</p>
+</main>
+</body>
+</html>

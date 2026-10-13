@@ -14,7 +14,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 /**
- * 発行から 8 時間の上限（US-18 AC5、SEC-03）。ログインの時刻を session に置き、request ごとにアプリケーションの時計と比べる。
+ * session の上限（US-18 AC5、SEC-03）。TOTP が初めて通った時刻から 8 時間、password の段だけの session は password を確かめた
+ * 時刻から 5 分（Bolt 31）。起点の時刻を session に置き、request ごとにアプリケーションの時計と比べる。
  * 認証の処理より前に置く（Bolt 13 の Try T-40）。認証済みなのにログインの時刻がない session も失効させる。上限を過ぎたら session を捨てて業務データを出さずに A-03 へ移す。
  * 古い session のままのログインの送信も A-03 へ移す（上限を過ぎた session を、ログインの送信で延命させない）。
  */
@@ -40,17 +41,29 @@ public class SessionLifetimeFilter extends OncePerRequestFilter {
     }
 
     /**
-     * 上限を過ぎたか。認証済みなのにログインの時刻がない session も失効として扱う（fail-closed）。ログインの時刻を置かない
-     * 認証の経路を足しても、上限が黙って外れないようにする（Bolt 14 レビュー）。
+     * 上限を過ぎたか（Bolt 31）。2 つの要素がそろった session は TOTP が初めて通った時刻から 8 時間、password の段だけの session は
+     * password を確かめた時刻から 5 分。認証済みなのに起点の時刻がない session も失効として扱う（fail-closed。Bolt 14 レビュー）。
+     * 起点を置かない認証の経路を足しても、上限が黙って外れないようにする。
      */
     private boolean expired(HttpSession session) {
-        Object authenticatedAt = session.getAttribute(SessionLifetime.AUTHENTICATED_AT);
-        if (authenticatedAt instanceof Instant at) {
-            return !clock.instant().isBefore(at.plus(SessionLifetime.MAX_LIFETIME));
+        Instant now = clock.instant();
+        if (session.getAttribute(SessionLifetime.AUTHENTICATED_AT) instanceof Instant at) {
+            return !now.isBefore(at.plus(SessionLifetime.MAX_LIFETIME));
         }
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        return authentication != null
-                && authentication.isAuthenticated()
-                && !(authentication instanceof AnonymousAuthenticationToken);
+        if (authentication == null
+                || !authentication.isAuthenticated()
+                || authentication instanceof AnonymousAuthenticationToken) {
+            return false;
+        }
+        if (hasAuthority(authentication, TotpAuthenticationToken.FACTOR_TOTP)) {
+            return true;
+        }
+        return !(session.getAttribute(SessionLifetime.PASSWORD_VERIFIED_AT) instanceof Instant verifiedAt)
+                || !now.isBefore(verifiedAt.plus(SessionLifetime.PASSWORD_STAGE_LIFETIME));
+    }
+
+    private static boolean hasAuthority(Authentication authentication, String authority) {
+        return authentication.getAuthorities().stream().anyMatch(granted -> authority.equals(granted.getAuthority()));
     }
 }

@@ -34,6 +34,17 @@ class AuditRecordTest {
     }
 
     @Test
+    void passwordの段の成功はログインの成功と分けて記録する() {
+        AuditRecord auditRecord = AuditRecord.passwordVerified(USER, COMPANY, AT);
+
+        assertThat(auditRecord.action()).isEqualTo(AuditAction.PASSWORD_VERIFIED);
+        assertThat(auditRecord.result()).isEqualTo(AuditResult.SUCCESS);
+        assertThat(auditRecord.actorUserId()).isEqualTo(USER);
+        assertThat(auditRecord.actorCompanyId()).isEqualTo(COMPANY);
+        assertThat(auditRecord.reason()).isNull();
+    }
+
+    @Test
     void ログインの失敗は理由を記録する() {
         AuditRecord auditRecord = AuditRecord.loginFailed(USER, COMPANY, AuthenticationRejection.SUSPENDED, AT);
 

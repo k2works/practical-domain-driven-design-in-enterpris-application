@@ -43,6 +43,12 @@ public final class AuditRecord {
         this.reason = reason;
     }
 
+    /** password の段の成功を記録する（2 つの要素がそろったログインの成功とは分ける。Bolt 31、ADR-012 の見直しの 1）。 */
+    public static AuditRecord passwordVerified(UserId user, CompanyId company, UtcInstant at) {
+        return new AuditRecord(
+                UUID.randomUUID(), at, user, company, AuditAction.PASSWORD_VERIFIED, AuditResult.SUCCESS, null);
+    }
+
     /** ログインの成功を記録する。 */
     public static AuditRecord loginSucceeded(UserId user, CompanyId company, UtcInstant at) {
         return new AuditRecord(
