@@ -10212,11 +10212,11 @@
 </tr>
 <tr>
 <td style="text-align: left;">QR と表示の値</td>
-<td style="text-align: left;">ZXing（<code>com.google.zxing:core</code>、Apache-2.0、実行時の推移的な依存なし）で QR の行列を作り、インラインの SVG にする。色は <code>fill</code> の属性で付け、<code>style</code> は使わない（CSP が <code>style-src</code> を許さないため。CSP は変えない）。URI は <code>otpauth://totp/cargo-tracker:&lt;メールアドレス&gt;?secret=…&amp;issuer=cargo-tracker&amp;digits=6&amp;period=30&amp;algorithm=SHA1</code>、手入力のキーは Base32 を 4 文字ずつ区切る。画面は <code>th:utext</code> で、自分で作った SVG にだけ使う。クライアントで描く案は、秘密を JavaScript に渡し、CSP に script を足すことになるので採らない</td>
+<td style="text-align: left;">ZXing（<code>com.google.zxing:core</code>、Apache-2.0、実行時の推移的な依存なし）で QR の行列を作り、インラインの SVG にする。色は <code>fill</code> の属性で付け、<code>style</code> は使わない（CSP が <code>style-src</code> を許さないため。CSP は変えない）。URI は <code>otpauth://totp/cargo-tracker:&lt;メールアドレス&gt;?secret=…&amp;issuer=cargo-tracker&amp;digits=6&amp;period=30&amp;algorithm=SHA1</code>、手入力のキーは Base32 を 4 文字ずつ区切る。画面は <code>th:utext</code> で、自分で作った SVG にだけ使う。クライアントで描く案は、秘密を JavaScript に渡し、CSP に script を足すことになるので採らない。URI は URL エンコードした ASCII だけなので、QR の生成で文字セットを指定しない（ECI を付けると読めない認証アプリがある。Bolt 31b の開発レビュー）</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>TotpProvisioning</code> を値に置く</td>
-<td style="text-align: left;">表示の値（URI、手入力のキー、QR の SVG）は秘密と同じ重さとして扱う。ZXing を <code>identity.infrastructure</code> に閉じるには、ポートが表示の値を返すしかないため、ドメインの値 <code>TotpProvisioning</code>（<code>identity.domain.model.valueobjects</code>、<code>@ValueObject</code>）にし、<code>toString</code> で値を隠す（<code>EncryptedSecret</code> の前例）。画面に一度だけ渡し、session・flash の属性・記録には置かない。A-07 の応答は <code>Cache-Control: no-store</code></td>
+<td style="text-align: left;">表示の値（URI、手入力のキー、QR の SVG）は秘密と同じ重さとして扱う。ZXing を <code>identity.infrastructure</code> に閉じるには、ポートが表示の値を返すしかないため、ドメインの値 <code>TotpProvisioning</code>（<code>identity.domain.model.valueobjects</code>、<code>@ValueObject</code>）にし、<code>toString</code> で値を隠す（<code>EncryptedSecret</code> の前例）。代わりに、QR の SVG という表示の形がドメインの値に入る（ドメインは中身を解釈せず、運ぶだけ）。ZXing をドメインに入れるより小さい代償として受け入れ、表示の形を変えるときはインフラ層の実装だけを変える（Bolt 31b の開発レビュー）。画面に一度だけ渡し、session・flash の属性・記録には置かない。A-07 の応答は <code>Cache-Control: no-store</code></td>
 </tr>
 <tr>
 <td style="text-align: left;">新しいポートの置き場所</td>
@@ -10224,7 +10224,7 @@
 </tr>
 <tr>
 <td style="text-align: left;">同時の登録（Bolt 30 の議題 2 の①の初回の分）</td>
-<td style="text-align: left;">TOTP の資格の追加（主キー）を先に行い、回復コード 10 個の置き換えと監査記録（<code>TOTP_ENROLLED</code>）と同じトランザクションにする。同時の 2 つの登録は主キーで片方が失敗してロールバックし、回復コードは 10 個のまま。主キーの違反はリポジトリの実装で <code>DuplicateTotpEnrollmentException</code> に写し、負けた側は登録済みとして A-02 へ送る（500 にしない）。回復コードの発行し直しの競合（AC9）は Bolt 33b で確かめる</td>
+<td style="text-align: left;">TOTP の資格の追加（主キー）を先に行い、回復コード 10 個の置き換えと監査記録（<code>TOTP_ENROLLED</code>）と同じトランザクションにする。同時の 2 つの登録は主キーで片方が失敗してロールバックし、回復コードは 10 個のまま。主キーの違反はリポジトリの実装で <code>DuplicateTotpEnrollmentException</code> に写す。登録のサービスはトランザクションを <code>TransactionTemplate</code> で内側に持ち、その外側で違反を受けて「登録済み」（<code>AlreadyEnrolled</code>）を返す。負けた側も勝った後の再送も同じ結果で、A-02 へ送る（500 にしない。同じトランザクションで一意制約の違反を捕まえない規則を守りつつ、結果を 1 つの経路にする。Bolt 31b の開発レビュー）。回復コードの生成とハッシュ（bcrypt）は書き込みでないので、主キーの行ロックを取る前に済ませる。回復コードの発行し直しの競合（AC9）は Bolt 33b で確かめる</td>
 </tr>
 <tr>
 <td style="text-align: left;">回復コードの並び順（議題 2 の④）</td>
@@ -10232,7 +10232,7 @@
 </tr>
 <tr>
 <td style="text-align: left;">登録の途中の上限</td>
-<td style="text-align: left;">A-07 を開いた時刻（登録を始めた時刻）を session に置き、それがある password の段だけ、その時刻から 15 分を上限にする（ほかの password の段は 5 分のまま）。認証アプリを入れて QR を読む時間を見込むため。登録の途中の時刻は password の段の 5 分の中でしか置けない（A-07 を開けるのは期限の確認の後）。2 つの要素がそろったら使わない。A-07 に期限の目安を示す（SEC-03）</td>
+<td style="text-align: left;">A-07 を開いた時刻（登録を始めた時刻）を session に置き、それがある password の段だけ、その時刻から 15 分を上限にする（ほかの password の段は 5 分のまま）。認証アプリを入れて QR を読む時間を見込むため。登録の途中の時刻は password の段の 5 分の中でしか置けない（A-07 を開けるのは期限の確認の後）。2 つの要素がそろったら使わない。登録を始めた時刻は登録の後も A-02 で TOTP が通るまで残し、回復コードを書き写して A-02 でログインを終えるまでを同じ 15 分に含める。再読み込みでは延ばさない。A-07 と回復コードの保存の画面に、期限を時刻で示す（「… までに、登録とログインを終えてください」。SEC-03。Bolt 31b の開発レビュー）</td>
 </tr>
 <tr>
 <td style="text-align: left;">失敗へ倒す場面（T-42）</td>
@@ -10351,6 +10351,7 @@
 <p>復号した平文の消去について（Bolt 31 の開発レビュー）: 生成器は復号した配列を使い終えたら消すが、JDK の <code>SecretKeySpec</code> と java-otp の <code>Mac</code> は内部に鍵の写しを持つので、JVM の中の写しまでは消せない。消せるのは呼び出し側の配列だけである。</p>
 <h2 id="_10">改訂の経緯<a class="headerlink" href="#_10" title="Permanent link">&para;</a></h2>
 <ul>
+<li>2026-10-13: Bolt 31b の開発レビューで、同時の登録の負けた側の結果をサービスの中で「登録済み」にまとめること、登録を始めた時刻を A-02 まで残し期限を時刻で示すこと、QR の生成で文字セットを指定しないこと、<code>TotpProvisioning</code> に表示の形が入る代償を足した。</li>
 <li>2026-10-13: Bolt 31b の計画の承認で、暗号文の AAD（決定 5）と、初回の TOTP の登録と回復コードの発行（決定 6。登録の流れ、要素は与えない、QR は ZXing のインラインの SVG、<code>TotpProvisioning</code> を値に置く理由、新しいポートの置き場所、議題 2 の①④、登録の途中の上限 15 分、先取りの登録のリスクを受け入れること）を足した。QR・URI・回復コードの発行を「未確認の項目」から決定に移し、A-02 の回復コードの入力を Bolt 31c に、スパイクの削除の時期を「Bolt 31c の後」に改めた（31b と 31c に分けたため。human:kakimomokuri が決定）。</li>
 <li>2026-10-13: Bolt 31 の開始準備と計画の承認で、TOTP の秘密の暗号化（決定 5。AES-GCM、鍵の版の接頭辞、環境変数の鍵）、<code>TotpCodeGenerator</code> が暗号文を受ける形、K-02 を受け入れる判断、R-08 の比較の結果（全体の注釈を採る）、<code>SecurityFilterChain</code> の置き場所、password の段の上限 5 分、dev のコードの部品の置き方、Base32 を自分で書くことを足した。「未確認の項目」から解いたものを決定に移し、スパイクの削除の時期を「Bolt 31b の後」に改めた（31 と 31b に分けたため。human:kakimomokuri が決定）。</li>
 <li>2026-10-11: Bolt 30 の計画の承認で採用した。ロックの方針を利用者の集約からログインの失敗の集約に改め、失敗の数え方を <code>RETURNING</code> から更新の件数の判定に改めた（ステータスの「採用のときに決めたこと」）。</li>
