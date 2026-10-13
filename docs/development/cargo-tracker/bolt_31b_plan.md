@@ -3,8 +3,10 @@ type: Plan
 title: "Bolt 31b 計画 - 暗号文の AAD と初回の TOTP の登録（A-07）・回復コードの発行"
 description: "W5 の 6 本目の Bolt の計画。TOTP の秘密の暗号文を利用者に結び付け（AAD）、初回の TOTP の登録（A-07。秘密の発行、QR、最初のコードの確かめ）と回復コードの発行と一度だけの表示（US-18 AC7、SEC-09）を作る。登録の途中だけ password の段の上限を 15 分にする。回復コードによるログイン、password の段の主体の型、ADR-012 の見直しの 4、特性テストは Bolt 31c。"
 tags: [development,bolt-plan]
-status: draft
+status: stable
 generated: { by: anthropic/claude-opus-5-5, at: 2026-10-13T04:38:54Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-10-13T04:40:50Z }
 ---
 
 # Bolt 31b 計画 - 暗号文の AAD と初回の TOTP の登録（A-07）・回復コードの発行
@@ -19,6 +21,7 @@ generated: { by: anthropic/claude-opus-5-5, at: 2026-10-13T04:38:54Z }
 | SP | 2（US-18 AC7。SP は #13 をクローズする Bolt 33b で数える） |
 | GitHub | [#13](https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/13)（US-18、R1.0）。この Bolt では閉じない |
 | 承認ゲート | **ステップごとに止める**（W4 の締めの決定: 認証の完成はステップごと）。確認必須（セキュリティ、外部ライブラリ（ZXing）、データベース（dev-data）、画面の流れの変更）は計画の承認の場で確認ポイントとして判断を受ける |
+| 承認ゲートの扱い | 2026-10-13 に human:kakimomokuri が計画を承認した（確認ポイント 1〜17 は推奨のとおり）。あわせて人の指示（`/goal Bolt31b`）により、ステップの承認ゲートで止まらずに進める。止まらなかったゲートごとに根拠を書き、終了報告の承認の議題に置く（T-36）。途中で規則の例外が要れば人に諮る |
 | アプローチ | インサイドアウト（開発戦略の中盤）。新しい集約もスキーマもなく Bolt 30 の集約に AC7 を足すので、開発戦略の表ではアウトサイドインに当たるが、W5 の表で US-18 はインサイドアウトと決めている（development_strategy.md:344）。不確実性が暗号文の形（AAD）と秘密の発行のポート（平文を infrastructure に閉じる）にあり、内側から固めるほうが早い |
 | 前の Bolt | [Bolt 31 終了報告](bolt_31_report.md)、[Bolt 30 終了報告](bolt_30_report.md) |
 
@@ -276,6 +279,7 @@ title Bolt 31b で作る登録の画面遷移
 | :--- | :--- | :--- |
 | 2026-10-13 | 初版作成（承認待ち）。開始準備で、Bolt 31 の終了報告の議題 5 と既知の課題、UI 設計の A-07、今の回復コードの集約とリポジトリを調べ、human:kakimomokuri の決定（31b と 31c に分ける、password の段の主体は identity の中だけの型、QR は ZXing でインラインの SVG、AAD は 31b）を反映した | anthropic/claude-opus-5-5 |
 | 2026-10-13 | 詳細整合性検証（21 件）と横断整合性検証（17 件）の指摘と、T-101 の骨組みの確かめの結果を反映した。human:kakimomokuri の回答（登録の途中だけ 15 分、「保存した」は画面の必須だけ、先取りの登録は受け入れて ADR に書く、`TotpProvisioning` は値で値を隠す）を確認ポイント 6〜9 にした。session には暗号文の文字列を置く、表示の値は秘密と同じ重さとして扱う、GET の再読み込みで秘密を変えない、AAD の文字列、監査記録の企業 ID、同時の登録で負けた側の応答、A-02 を経て A-07 へ、画面の層は要素の権限を見ない、失敗へ倒す場面（T-42）、T-99、31c に移すことで古くなる上流の記述、直すテスト、アプローチの理由、ZXing の見張りと入口でない部品の規則、ステップの番号を直した | anthropic/claude-opus-5-5 |
+| 2026-10-13 | 計画の承認を記録した。確認ポイント 1〜17 は推奨のとおり。`/goal Bolt31b` により、ステップの承認ゲートで止まらずに進める（T-36） | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 
 ## 関連ドキュメント
 

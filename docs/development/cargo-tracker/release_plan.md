@@ -550,7 +550,7 @@ US-04 の SP 5 は、サガの成功の経路を閉じて #10 をクローズす
 
 ### W5（2026-11-02 〜 11-06、11-03 は祝日）
 
-**状態**: 進行中（2026-10-11 に計画を作り、同日に human:kakimomokuri が承認した。Bolt 29・29b・29c・30 は完了し、Release 0.1 の負債 #45・#46 を返し、ADR-011 を採用して認証の土台を作った。Bolt 31 は 2026-10-13 に終え、終了報告を承認した。Bolt 31b は計画の承認待ち）
+**状態**: 進行中（2026-10-11 に計画を作り、同日に human:kakimomokuri が承認した。Bolt 29・29b・29c・30 は完了し、Release 0.1 の負債 #45・#46 を返し、ADR-011 を採用して認証の土台を作った。Bolt 31 は 2026-10-13 に終え、終了報告を承認した。Bolt 31b は 2026-10-13 に計画を承認し、着手した）
 
 **ゴール**: Release 0.1 の負債（#45・#46）を返し、認証を完成させ（US-18 の残り）、利用者と役割の管理（US-16 の一部）と予約の残り（US-04 AC3・AC5、#43）を作る。
 
@@ -618,7 +618,7 @@ US-18 の残りの SP 6 は #13 をクローズする Bolt 33b で、US-04 の S
 - [x] Bolt 29: #45。[Bolt 29 計画](bolt_29_plan.md)（`/goal` で進めた）、[Bolt 29 終了報告](bolt_29_report.md)（完了、2026-10-11 に承認済み。#45 を閉じた。SonarQube PASS。`uiTest` 80 本は集める前と同じく通った。失敗の経路を読めるものに直した）
 - [x] Bolt 29b: #46 の前半。[Bolt 29b 計画](bolt_29b_plan.md)（`/goal` で進めた）、[Bolt 29b 終了報告](bolt_29b_report.md)（完了、2026-10-11 に承認済み。4 か所と開発レビューの必須の指摘を直した。SonarQube PASS・Code Smell 0）
 - [x] Bolt 29c: #46 の後半。[Bolt 29c 計画](bolt_29c_plan.md)（承認済み）、[Bolt 29c 終了報告](bolt_29c_report.md)（完了、2026-10-11 に承認済み。#46 を閉じた。SonarQube PASS・Code Smell 0）
-- [ ] Bolt 30〜33b: US-18 の残り（#13）と通知モジュールの最小の新設。[Bolt 30 計画](bolt_30_plan.md)（承認済み）、[Bolt 30 終了報告](bolt_30_report.md)（完了、2026-10-11 に承認済み。ADR-011 を採用し、3 つの表・ドメイン・リポジトリ・TOTP の生成を作った。SonarQube PASS・Code Smell 0）、[Bolt 31 計画](bolt_31_plan.md)（承認済み）、[Bolt 31 終了報告](bolt_31_report.md)（完了、2026-10-13 に承認済み。`/goal Bolt31` で進めた。TOTP の秘密の暗号化と 2 段階のログイン（A-02）。層の規則に 2 つの狭い例外。SonarQube PASS）、[Bolt 31b 計画](bolt_31b_plan.md)（承認待ち）
+- [ ] Bolt 30〜33b: US-18 の残り（#13）と通知モジュールの最小の新設。[Bolt 30 計画](bolt_30_plan.md)（承認済み）、[Bolt 30 終了報告](bolt_30_report.md)（完了、2026-10-11 に承認済み。ADR-011 を採用し、3 つの表・ドメイン・リポジトリ・TOTP の生成を作った。SonarQube PASS・Code Smell 0）、[Bolt 31 計画](bolt_31_plan.md)（承認済み）、[Bolt 31 終了報告](bolt_31_report.md)（完了、2026-10-13 に承認済み。`/goal Bolt31` で進めた。TOTP の秘密の暗号化と 2 段階のログイン（A-02）。層の規則に 2 つの狭い例外。SonarQube PASS）、[Bolt 31b 計画](bolt_31b_plan.md)（承認済み）
 - [ ] Bolt 34: US-16 の一部（#14）
 - [ ] Bolt 35: US-04 AC3・AC5（#43）、D-85
 - [ ] W5 の締め: 結果とふりかえり、開いている持ち越しの数（T-89）、W6 の計画の見直し
@@ -883,4 +883,5 @@ xychart-beta
 | 2026-10-13 | Bolt 31 の終了報告を作った（承認待ち。`/goal Bolt31` で承認ゲートを止めずに進めた。開発レビューの高を直し、残りは 31b・32・32b・33b に送る） | anthropic/claude-opus-5-5 |
 | 2026-10-13 | Bolt 31 の終了報告の承認を記録し、Bolt 31 を終えた（SP 0。開発レビューの残りは 31b・32・32b・33b の確認ポイント。デモの動画を #13 に添付した） | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-10-13 | Bolt 31b の開始準備: 31b と 31c に分け（SP 2 は 31b）、AAD・QR（ZXing）・password の段の主体の型（31c）・登録の途中の上限 15 分・回復コードの保存の確認・先取りの登録のリスク・`TotpProvisioning` の置き場所を決めた。Bolt 31b 計画を作り、2 つの整合性検証と T-101 の骨組みの確かめの結果を反映した（承認待ち） | anthropic/claude-opus-5-5、決定 human:kakimomokuri |
+| 2026-10-13 | Bolt 31b 計画の承認を記録した（確認ポイントは推奨のとおり。`/goal Bolt31b` で承認ゲートを止めずに進める） | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-10-13 | Bolt 31 のステップ 1: W5 の Bolt の分け方の表に、回復コードによるログイン（31b）と再登録（33b）の分担、ADR-012 の見直しの 3・5 と S-02 と「開始準備で 32 を分けるかを見直す」（32）、8 時間の起点（32b）を書いた。Bolt 13・14 からの持ち込みの表で、ADR-012 の見直しの割り振り、AC7 の認可と特性テストを 31b、スパイクの削除を「31b の後」に直した | anthropic/claude-opus-5-5 |
