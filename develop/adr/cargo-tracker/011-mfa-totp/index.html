@@ -7046,6 +7046,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#6-totp-bolt-31b" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. 初回の TOTP の登録と回復コードの発行（Bolt 31b）
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#_4" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -9919,7 +9930,7 @@
 <li>ロックの方針（5 回・15 分）は、利用者の集約でなく、ログインの失敗の集約に置く（失敗のたびに利用者の版が上がると、利用者の管理の更新とぶつかるため）</li>
 <li>失敗の数え方は H2 と PostgreSQL の共通の構文で書く（ADR-007）。<code>RETURNING</code> は使わず、更新の件数で判定し、回数は同じトランザクションで読み直す</li>
 <li>回復コードは使ったら消さず、使った時刻を入れて残す。ハッシュは bcrypt で、作成と照合はドメインのポートにする</li>
-<li>TOTP の秘密の暗号化の鍵の管理は Bolt 31 の計画で決める（決めた。決定 5）。スパイク（<code>spikes/ts-01-totp/</code>）は Bolt 31b の後に消す（本体に登録と回復コードがそろってから。消すときにもう一度確かめる）</li>
+<li>TOTP の秘密の暗号化の鍵の管理は Bolt 31 の計画で決める（決めた。決定 5）。スパイク（<code>spikes/ts-01-totp/</code>）は Bolt 31c の後に消す（本体に登録と回復コードの発行（Bolt 31b）と回復コードによるログイン（Bolt 31c）がそろってから。消すときにもう一度確かめる）</li>
 </ul>
 <p>Bolt 31 の開始準備と計画の承認（2026-10-13、human:kakimomokuri）で決めたこと:</p>
 <ul>
@@ -9928,6 +9939,13 @@
 <li>要素は全体の注釈で求める（R-08 の比較。代替案）。<code>SecurityFilterChain</code> は <code>identity.infrastructure.config</code> に置く（決定 4）</li>
 <li>password の段だけの session は、password を確かめた時刻から 5 分で失効させる（決定 2）</li>
 <li>dev のコードは dev 専用の部品を関数の型で注入する。Base32 は自分で書く（決定 1・3）</li>
+</ul>
+<p>Bolt 31b の開始準備と計画の承認（2026-10-13、human:kakimomokuri）で決めたこと:</p>
+<ul>
+<li>US-18 の残りを 31b（AAD、初回の登録、回復コードの発行）と 31c（回復コードによるログイン、password の段の主体の型、ADR-012 の見直しの 4、特性テスト）に分ける</li>
+<li>暗号文に AAD（<code>totp-secret:</code> と利用者 ID）を付け、別の利用者の暗号文では復号できないようにする（決定 5）</li>
+<li>QR は ZXing（<code>com.google.zxing:core</code>）でサーバーがインラインの SVG にする（決定 1・6）</li>
+<li>登録の途中だけ password の段の上限を 15 分にする。回復コードの「保存した」は画面の必須だけにする。先取りの登録のリスクを受け入れる。<code>TotpProvisioning</code> はドメインの値に置き、値を隠す（決定 6）</li>
 </ul>
 <h2 id="_2">コンテキスト<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h2>
 <ul>
@@ -9990,7 +10008,7 @@
 <ul>
 <li>(b) が担うのは HOTP の計算と切り詰めだけで、時間の窓での照合の API を持たない。照合は「前後 1 つの刻みのコードを作り、一定時間で比べる」をアプリケーションで書く（スパイクの <code>SpikeUsers</code>）。再利用の拒否・秘密の生成・Base32・<code>otpauth://</code> の URI もアプリケーションが持つ。</li>
 <li>(a) と (b) の差は小さく、生成をポートの裏に置けば後で替えられる判断である（下の「US-18 の Bolt で要るもの」）。</li>
-<li>秘密は 160 ビット（20 バイト）の乱数で作り、Base32 で <code>otpauth://</code> の URI と、手で入力する文字列に使う案とする。Base32 は JDK にも (b) にもないため、<code>identity.infrastructure</code> に自分で書く（RFC 4648、30 行ほど。RFC 4648 の試験ベクトルで確かめる。Bolt 31 で決めた）。<code>commons-codec</code> は実行時の依存にないので足さない。dev の入力済み（Bolt 31）と <code>otpauth://</code> の URI（Bolt 31b）で使う。URI の組み立てと登録の QR の描き方（ZXing（Apache-2.0）をサーバーで使うか、クライアントで描くか）は Bolt 31b で決める（未確認）。</li>
+<li>秘密は 160 ビット（20 バイト）の乱数で作り、Base32 で <code>otpauth://</code> の URI と、手で入力する文字列に使う案とする。Base32 は JDK にも (b) にもないため、<code>identity.infrastructure</code> に自分で書く（RFC 4648、30 行ほど。RFC 4648 の試験ベクトルで確かめる。Bolt 31 で決めた）。<code>commons-codec</code> は実行時の依存にないので足さない。dev の入力済み（Bolt 31）と <code>otpauth://</code> の URI（Bolt 31b）で使う。URI の組み立てと登録の QR の描き方は Bolt 31b で決めた（決定 6）。</li>
 </ul>
 <h3 id="2-2-spring-security-7">2. 2 段階のログイン（Spring Security 7）<a class="headerlink" href="#2-2-spring-security-7" title="Permanent link">&para;</a></h3>
 <p><strong>password（<code>FACTOR_PASSWORD</code>）と TOTP（独自の要素 <code>FACTOR_TOTP</code>）の両方を、認証が要るすべての画面に求める。</strong></p>
@@ -10143,8 +10161,16 @@
 <td style="text-align: left;"><code>v2</code> を足し、読むときは接頭辞の版の鍵で復号し、書くときは最新の版で暗号化する。入れ替えの手順は W10 の運用手順書に書く</td>
 </tr>
 <tr>
+<td style="text-align: left;">AAD（Bolt 31b）</td>
+<td style="text-align: left;">暗号化と復号に、<code>totp-secret:</code> と利用者 ID（<code>UserId#value()</code> の UUID の小文字の形。<code>toString()</code> ではない）を UTF-8 にした AAD を付ける。DB で別の利用者の暗号文に入れ替えられても、タグが合わず復号できない（fail-closed）。用途の接頭辞で、将来ほかの値を同じ鍵で暗号化しても取り違えない。暗号文の列の形（<code>v1:&lt;Base64&gt;</code>）は変えない。本番の利用者はまだいない（Bolt 34 まで）ので、作り直すのは dev-data の暗号文だけで、適用済みの版は書き換えず新しい版のマイグレーション（<code>UPDATE</code>）で作り直す</td>
+</tr>
+<tr>
 <td style="text-align: left;">生成のポート</td>
-<td style="text-align: left;"><code>TotpCodeGenerator#code(EncryptedSecret, long)</code>。実装（<code>JavaOtpTotpCodeGenerator</code>）の中で復号 → 生成 → 配列を消す。平文の秘密をドメインとアプリケーションの層に出さない（Bolt 30 の議題 2 の②）。<code>TotpCredential#matchingStep</code> は自分の暗号文を生成器に渡す</td>
+<td style="text-align: left;"><code>TotpCodeGenerator#code(UserId, EncryptedSecret, long)</code>（Bolt 31b で AAD のため持ち主を受ける形にした）。実装（<code>JavaOtpTotpCodeGenerator</code>）の中で復号 → 生成 → 配列を消す。平文の秘密をドメインとアプリケーションの層に出さない（Bolt 30 の議題 2 の②）。<code>TotpCredential#matchingStep</code> は自分の利用者 ID と暗号文を生成器に渡す</td>
+</tr>
+<tr>
+<td style="text-align: left;">dev のコードの部品の AAD</td>
+<td style="text-align: left;"><code>DevTotpCodes</code> は設定の秘密を、開発用の利用者のメールアドレスから決める作り物の ID（<code>UUID.nameUUIDFromBytes</code>）を AAD にして内部で扱う。利用者の表を読まない（決定 3 の 3 層目）ため、DB の暗号文の利用者 ID とは別である。dev-data の暗号文は DB の利用者 ID を AAD にして作り、復号すると設定の秘密と一致することをテストで確かめる</td>
 </tr>
 <tr>
 <td style="text-align: left;">照合</td>
@@ -10153,6 +10179,69 @@
 </tbody>
 </table>
 <p>ArchUnit で、暗号化の部品と <code>javax.crypto</code> を参照するのが <code>identity.infrastructure</code> だけであることを守る。</p>
+<h3 id="6-totp-bolt-31b">6. 初回の TOTP の登録と回復コードの発行（Bolt 31b）<a class="headerlink" href="#6-totp-bolt-31b" title="Permanent link">&para;</a></h3>
+<p><strong>TOTP を登録していない利用者は、password の後に A-02 を経て A-07 で登録する。サーバーが秘密を発行し、利用者が入れた最初のコードで確かめてから、TOTP の資格と回復コード 10 個を 1 つのトランザクションで保存し、回復コードの平文は登録を保存した応答で一度だけ示す。登録は TOTP の要素を与えず、登録の後は A-02 で TOTP を入れてログインを終える。</strong></p>
+<p><img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB2ZXJzaW9uPSIxLjEiIGRhdGEtZGlhZ3JhbS10eXBlPSJTRVFVRU5DRSIgc3R5bGU9IndpZHRoOjk4N3B4O2hlaWdodDo1OTNweDtiYWNrZ3JvdW5kOiNGRkZGRkY7IiB3aWR0aD0iOTg3cHgiIGhlaWdodD0iNTkzcHgiIHZpZXdCb3g9IjAgMCA5ODcgNTkzIiB6b29tQW5kUGFuPSJtYWduaWZ5IiBwcmVzZXJ2ZUFzcGVjdFJhdGlvPSJub25lIiBjb250ZW50U3R5bGVUeXBlPSJ0ZXh0L2NzcyI+PD9wbGFudHVtbCAxLjIwMjYuOD8+PGRlZnMvPjxnIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBsZW5ndGhBZGp1c3Q9InNwYWNpbmciPjxnIGNsYXNzPSJ0aXRsZSIgZGF0YS1zb3VyY2UtbGluZT0iMSI+PHRleHQgeD0iMzc4LjE5MSIgeT0iMjcuOTk1IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE0IiB0ZXh0TGVuZ3RoPSIyMjkuMTY3IiBmb250LXdlaWdodD0iNzAwIj7liJ3lm57jga4gVE9UUCDjga7nmbvpjLLvvIhCb2x0IDMxYu+8iTwvdGV4dD48L2c+PGc+PHRpdGxlPi4uLjwvdGl0bGU+PHJlY3QgeD0iMzAuNSIgeT0iMTIzLjU5NCIgd2lkdGg9IjgiIGhlaWdodD0iMzgyLjcyNyIgZmlsbD0iIzAwMCIgZmlsbC1vcGFjaXR5PSIwIi8+PGxpbmUgeDE9IjM0IiB5MT0iMTIzLjU5NCIgeDI9IjM0IiB5Mj0iNTA2LjMyIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjAuNTtzdHJva2UtZGFzaGFycmF5OjUsNTsiLz48L2c+PGc+PHRpdGxlPkEtMDIgLiBjb250cm9sbGVyPC90aXRsZT48cmVjdCB4PSIyNjkuNzY4IiB5PSIxMjMuNTk0IiB3aWR0aD0iOCIgaGVpZ2h0PSIzODIuNzI3IiBmaWxsPSIjMDAwIiBmaWxsLW9wYWNpdHk9IjAiLz48bGluZSB4MT0iMjczLjI2OCIgeTE9IjEyMy41OTQiIHgyPSIyNzMuMjY4IiB5Mj0iNTA2LjMyIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjAuNTtzdHJva2UtZGFzaGFycmF5OjUsNTsiLz48L2c+PGc+PHRpdGxlPkEtMDcgLiBjb250cm9sbGVyPC90aXRsZT48cmVjdCB4PSI0MTYuMjA2IiB5PSIxMjMuNTk0IiB3aWR0aD0iOCIgaGVpZ2h0PSIzODIuNzI3IiBmaWxsPSIjMDAwIiBmaWxsLW9wYWNpdHk9IjAiLz48bGluZSB4MT0iNDE5LjcwNiIgeTE9IjEyMy41OTQiIHgyPSI0MTkuNzA2IiB5Mj0iNTA2LjMyIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjAuNTtzdHJva2UtZGFzaGFycmF5OjUsNTsiLz48L2c+PGc+PHRpdGxlPlRvdHBFbnJvbGxtZW50U2VydmljZTwvdGl0bGU+PHJlY3QgeD0iNjk3LjU2IiB5PSIxMjMuNTk0IiB3aWR0aD0iOCIgaGVpZ2h0PSIzODIuNzI3IiBmaWxsPSIjMDAwIiBmaWxsLW9wYWNpdHk9IjAiLz48bGluZSB4MT0iNzAxLjA2IiB5MT0iMTIzLjU5NCIgeDI9IjcwMS4wNiIgeTI9IjUwNi4zMiIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDowLjU7c3Ryb2tlLWRhc2hhcnJheTo1LDU7Ii8+PC9nPjxnPjx0aXRsZT5Ub3RwU2VjcmV0SXNzdWVyPC90aXRsZT48cmVjdCB4PSI4ODMuNzIyIiB5PSIxMjMuNTk0IiB3aWR0aD0iOCIgaGVpZ2h0PSIzODIuNzI3IiBmaWxsPSIjMDAwIiBmaWxsLW9wYWNpdHk9IjAiLz48bGluZSB4MT0iODg3LjIyMiIgeTE9IjEyMy41OTQiIHgyPSI4ODcuMjIyIiB5Mj0iNTA2LjMyIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjAuNTtzdHJva2UtZGFzaGFycmF5OjUsNTsiLz48L2c+PHRleHQgeD0iMTAiIHk9IjEyMC4yOTIiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTQiIHRleHRMZW5ndGg9IjQyIj7liKnnlKjogIU8L3RleHQ+PGVsbGlwc2UgY3g9IjM0IiBjeT0iNTUuNzk3IiByeD0iOCIgcnk9IjgiIGZpbGw9IiNFMkUyRjAiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MC41OyIvPjxwYXRoIGQ9Ik0zNCw2My43OTcgTDM0LDkwLjc5NyBNMjEsNzEuNzk3IEw0Nyw3MS43OTcgTTM0LDkwLjc5NyBMMjEsMTA1Ljc5NyBNMzQsOTAuNzk3IEw0NywxMDUuNzk3IiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjAuNTsiIGZpbGw9Im5vbmUiLz48cmVjdCB4PSIyMDUuMDQ5IiB5PSI5Mi4yOTciIHdpZHRoPSIxMzYuNDM4IiBoZWlnaHQ9IjMwLjI5NyIgZmlsbD0iI0UyRTJGMCIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDowLjU7IiByeD0iMi41IiByeT0iMi41Ii8+PHRleHQgeD0iMjEyLjA0OSIgeT0iMTEyLjI5MiIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxNCIgdGV4dExlbmd0aD0iMTIyLjQzOCI+QS0wMiDjga4gY29udHJvbGxlcjwvdGV4dD48cmVjdCB4PSIzNTEuNDg3IiB5PSI5Mi4yOTciIHdpZHRoPSIxMzYuNDM4IiBoZWlnaHQ9IjMwLjI5NyIgZmlsbD0iI0UyRTJGMCIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDowLjU7IiByeD0iMi41IiByeT0iMi41Ii8+PHRleHQgeD0iMzU4LjQ4NyIgeT0iMTEyLjI5MiIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxNCIgdGV4dExlbmd0aD0iMTIyLjQzOCI+QS0wNyDjga4gY29udHJvbGxlcjwvdGV4dD48cmVjdCB4PSI2MTQuMjI2IiB5PSI5Mi4yOTciIHdpZHRoPSIxNzMuNjY3IiBoZWlnaHQ9IjMwLjI5NyIgZmlsbD0iI0UyRTJGMCIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDowLjU7IiByeD0iMi41IiByeT0iMi41Ii8+PHRleHQgeD0iNjIxLjIyNiIgeT0iMTEyLjI5MiIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxNCIgdGV4dExlbmd0aD0iMTU5LjY2NyI+VG90cEVucm9sbG1lbnRTZXJ2aWNlPC90ZXh0PjxyZWN0IHg9Ijc5Ny44OTMiIHk9Ijc2IiB3aWR0aD0iMTc4LjY1NyIgaGVpZ2h0PSI0Ni41OTQiIGZpbGw9IiNFMkUyRjAiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MC41OyIgcng9IjIuNSIgcnk9IjIuNSIvPjx0ZXh0IHg9IjgyNy45NjgiIHk9Ijk1Ljk5NSIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxNCIgdGV4dExlbmd0aD0iMTE4LjUwOCI+VG90cFNlY3JldElzc3VlcjwvdGV4dD48dGV4dCB4PSI4MDQuODkzIiB5PSIxMTIuMjkyIiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE0IiB0ZXh0TGVuZ3RoPSIxNjQuNjU3Ij4oaWRlbnRpdHkuaW5mcmFzdHJ1Y3R1cmUpPC90ZXh0Pjx0ZXh0IHg9IjEwIiB5PSI1MTkuMzE1IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE0IiB0ZXh0TGVuZ3RoPSI0MiI+5Yip55So6ICFPC90ZXh0PjxlbGxpcHNlIGN4PSIzNCIgY3k9IjUzMS4xMTciIHJ4PSI4IiByeT0iOCIgZmlsbD0iI0UyRTJGMCIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDowLjU7Ii8+PHBhdGggZD0iTTM0LDUzOS4xMTcgTDM0LDU2Ni4xMTcgTTIxLDU0Ny4xMTcgTDQ3LDU0Ny4xMTcgTTM0LDU2Ni4xMTcgTDIxLDU4MS4xMTcgTTM0LDU2Ni4xMTcgTDQ3LDU4MS4xMTciIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MC41OyIgZmlsbD0ibm9uZSIvPjxyZWN0IHg9IjIwNS4wNDkiIHk9IjUwNi4zMiIgd2lkdGg9IjEzNi40MzgiIGhlaWdodD0iMzAuMjk3IiBmaWxsPSIjRTJFMkYwIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjAuNTsiIHJ4PSIyLjUiIHJ5PSIyLjUiLz48dGV4dCB4PSIyMTIuMDQ5IiB5PSI1MjYuMzE1IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE0IiB0ZXh0TGVuZ3RoPSIxMjIuNDM4Ij5BLTAyIOOBriBjb250cm9sbGVyPC90ZXh0PjxyZWN0IHg9IjM1MS40ODciIHk9IjUwNi4zMiIgd2lkdGg9IjEzNi40MzgiIGhlaWdodD0iMzAuMjk3IiBmaWxsPSIjRTJFMkYwIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjAuNTsiIHJ4PSIyLjUiIHJ5PSIyLjUiLz48dGV4dCB4PSIzNTguNDg3IiB5PSI1MjYuMzE1IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE0IiB0ZXh0TGVuZ3RoPSIxMjIuNDM4Ij5BLTA3IOOBriBjb250cm9sbGVyPC90ZXh0PjxyZWN0IHg9IjYxNC4yMjYiIHk9IjUwNi4zMiIgd2lkdGg9IjE3My42NjciIGhlaWdodD0iMzAuMjk3IiBmaWxsPSIjRTJFMkYwIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjAuNTsiIHJ4PSIyLjUiIHJ5PSIyLjUiLz48dGV4dCB4PSI2MjEuMjI2IiB5PSI1MjYuMzE1IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE0IiB0ZXh0TGVuZ3RoPSIxNTkuNjY3Ij5Ub3RwRW5yb2xsbWVudFNlcnZpY2U8L3RleHQ+PHJlY3QgeD0iNzk3Ljg5MyIgeT0iNTA2LjMyIiB3aWR0aD0iMTc4LjY1NyIgaGVpZ2h0PSI0Ni41OTQiIGZpbGw9IiNFMkUyRjAiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MC41OyIgcng9IjIuNSIgcnk9IjIuNSIvPjx0ZXh0IHg9IjgyNy45NjgiIHk9IjUyNi4zMTUiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTQiIHRleHRMZW5ndGg9IjExOC41MDgiPlRvdHBTZWNyZXRJc3N1ZXI8L3RleHQ+PHRleHQgeD0iODA0Ljg5MyIgeT0iNTQyLjYxMiIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxNCIgdGV4dExlbmd0aD0iMTY0LjY1NyI+KGlkZW50aXR5LmluZnJhc3RydWN0dXJlKTwvdGV4dD48cG9seWdvbiBwb2ludHM9IjI2MS4yNjgsMTQ4LjcyNywyNzEuMjY4LDE1Mi43MjcsMjYxLjI2OCwxNTYuNzI3LDI2NS4yNjgsMTUyLjcyNyIgZmlsbD0iIzE4MTgxOCIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxO3N0cm9rZS1saW5lam9pbjptaXRlcjtzdHJva2UtbWl0ZXJsaW1pdDoxMDsiLz48bGluZSB4MT0iMzQiIHkxPSIxNTIuNzI3IiB4Mj0iMjY3LjI2OCIgeTI9IjE1Mi43MjciIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTsiLz48dGV4dCB4PSI0MSIgeT0iMTQ3LjY2MSIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxMyIgdGV4dExlbmd0aD0iMjE1LjI2OCI+R0VUIC9sb2dpbi90b3Rw77yIcGFzc3dvcmQg44Gu5q6177yJPC90ZXh0Pjxwb2x5Z29uIHBvaW50cz0iNDUsMTc3Ljg1OSwzNSwxODEuODU5LDQ1LDE4NS44NTksNDEsMTgxLjg1OSIgZmlsbD0iIzE4MTgxOCIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxO3N0cm9rZS1saW5lam9pbjptaXRlcjtzdHJva2UtbWl0ZXJsaW1pdDoxMDsiLz48bGluZSB4MT0iMzkiIHkxPSIxODEuODU5IiB4Mj0iMjcyLjI2OCIgeTI9IjE4MS44NTkiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTtzdHJva2UtZGFzaGFycmF5OjIsMjsiLz48dGV4dCB4PSI1MSIgeT0iMTc2Ljc5MyIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxMyIgdGV4dExlbmd0aD0iMTk0LjIzMiI+5pyq55m76Yyy44Gq44KJIC9sb2dpbi90b3RwL2Vucm9sbCDjgbg8L3RleHQ+PHBvbHlnb24gcG9pbnRzPSI0MDcuNzA2LDIwNi45OTIsNDE3LjcwNiwyMTAuOTkyLDQwNy43MDYsMjE0Ljk5Miw0MTEuNzA2LDIxMC45OTIiIGZpbGw9IiMxODE4MTgiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTtzdHJva2UtbGluZWpvaW46bWl0ZXI7c3Ryb2tlLW1pdGVybGltaXQ6MTA7Ii8+PGxpbmUgeDE9IjM0IiB5MT0iMjEwLjk5MiIgeDI9IjQxMy43MDYiIHkyPSIyMTAuOTkyIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjE7Ii8+PHRleHQgeD0iNDEiIHk9IjIwNS45MjYiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTMiIHRleHRMZW5ndGg9IjEzOC4zMjgiPkdFVCAvbG9naW4vdG90cC9lbnJvbGw8L3RleHQ+PHBvbHlnb24gcG9pbnRzPSI2ODkuMDYsMjM2LjEyNSw2OTkuMDYsMjQwLjEyNSw2ODkuMDYsMjQ0LjEyNSw2OTMuMDYsMjQwLjEyNSIgZmlsbD0iIzE4MTgxOCIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxO3N0cm9rZS1saW5lam9pbjptaXRlcjtzdHJva2UtbWl0ZXJsaW1pdDoxMDsiLz48bGluZSB4MT0iNDE5LjcwNiIgeTE9IjI0MC4xMjUiIHgyPSI2OTUuMDYiIHkyPSIyNDAuMTI1IiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjE7Ii8+PHRleHQgeD0iNDI2LjcwNiIgeT0iMjM1LjA1OSIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxMyIgdGV4dExlbmd0aD0iMjU3LjM1MyI+YmVnaW7vvIjnmbvpjLLjga7pgJTkuK3jga7mmpflj7fmlofjgYzjgYLjgozjgbDmuKHjgZnvvIk8L3RleHQ+PHBvbHlnb24gcG9pbnRzPSI4NzUuMjIyLDI2NS4yNTgsODg1LjIyMiwyNjkuMjU4LDg3NS4yMjIsMjczLjI1OCw4NzkuMjIyLDI2OS4yNTgiIGZpbGw9IiMxODE4MTgiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTtzdHJva2UtbGluZWpvaW46bWl0ZXI7c3Ryb2tlLW1pdGVybGltaXQ6MTA7Ii8+PGxpbmUgeDE9IjcwMS4wNiIgeTE9IjI2OS4yNTgiIHgyPSI4ODEuMjIyIiB5Mj0iMjY5LjI1OCIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxOyIvPjx0ZXh0IHg9IjcwOC4wNiIgeT0iMjY0LjE5MiIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxMyIgdGV4dExlbmd0aD0iMTI1LjkzMSI+aXNzdWXjg7twcm92aXNpb25pbmc8L3RleHQ+PHBvbHlnb24gcG9pbnRzPSI0NSwzMDkuNTIzLDM1LDMxMy41MjMsNDUsMzE3LjUyMyw0MSwzMTMuNTIzIiBmaWxsPSIjMTgxODE4IiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjE7c3Ryb2tlLWxpbmVqb2luOm1pdGVyO3N0cm9rZS1taXRlcmxpbWl0OjEwOyIvPjxsaW5lIHgxPSIzOSIgeTE9IjMxMy41MjMiIHgyPSI0MTguNzA2IiB5Mj0iMzEzLjUyMyIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxO3N0cm9rZS1kYXNoYXJyYXk6MiwyOyIvPjx0ZXh0IHg9IjUxIiB5PSIyOTMuMzI1IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjEzIiB0ZXh0TGVuZ3RoPSIyMDMuMzE2Ij5RUuODu+aJi+WFpeWKm+OBruOCreODvO+8iG5vLXN0b3Jl77yJ44CCPC90ZXh0Pjx0ZXh0IHg9IjUxIiB5PSIzMDguNDU4IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjEzIiB0ZXh0TGVuZ3RoPSIzMTYuMzg2Ij7mmpflj7fmlofjga7mloflrZfliJfjgajnmbvpjLLjgpLlp4vjgoHjgZ/mmYLliLvjgpIgc2Vzc2lvbiDjgavnva7jgY88L3RleHQ+PHBvbHlnb24gcG9pbnRzPSI0MDcuNzA2LDMzOC42NTYsNDE3LjcwNiwzNDIuNjU2LDQwNy43MDYsMzQ2LjY1Niw0MTEuNzA2LDM0Mi42NTYiIGZpbGw9IiMxODE4MTgiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTtzdHJva2UtbGluZWpvaW46bWl0ZXI7c3Ryb2tlLW1pdGVybGltaXQ6MTA7Ii8+PGxpbmUgeDE9IjM0IiB5MT0iMzQyLjY1NiIgeDI9IjQxMy43MDYiIHkyPSIzNDIuNjU2IiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjE7Ii8+PHRleHQgeD0iNDEiIHk9IjMzNy41OSIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxMyIgdGV4dExlbmd0aD0iMjUwLjM2NCI+UE9TVCAvbG9naW4vdG90cC9lbnJvbGzvvIjmnIDliJ3jga7jgrPjg7zjg4nvvIk8L3RleHQ+PHBvbHlnb24gcG9pbnRzPSI2ODkuMDYsMzY3Ljc4OSw2OTkuMDYsMzcxLjc4OSw2ODkuMDYsMzc1Ljc4OSw2OTMuMDYsMzcxLjc4OSIgZmlsbD0iIzE4MTgxOCIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxO3N0cm9rZS1saW5lam9pbjptaXRlcjtzdHJva2UtbWl0ZXJsaW1pdDoxMDsiLz48bGluZSB4MT0iNDE5LjcwNiIgeTE9IjM3MS43ODkiIHgyPSI2OTUuMDYiIHkyPSIzNzEuNzg5IiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjE7Ii8+PHRleHQgeD0iNDI2LjcwNiIgeT0iMzY2LjcyMyIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxMyIgdGV4dExlbmd0aD0iMTc3LjcyMiI+Y29tcGxldGXvvIjmmpflj7fmlofjgIHjgrPjg7zjg4nvvIk8L3RleHQ+PHBvbHlnb24gcG9pbnRzPSI0MzAuNzA2LDM5Ni45MjIsNDIwLjcwNiw0MDAuOTIyLDQzMC43MDYsNDA0LjkyMiw0MjYuNzA2LDQwMC45MjIiIGZpbGw9IiMxODE4MTgiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTtzdHJva2UtbGluZWpvaW46bWl0ZXI7c3Ryb2tlLW1pdGVybGltaXQ6MTA7Ii8+PGxpbmUgeDE9IjQyNC43MDYiIHkxPSI0MDAuOTIyIiB4Mj0iNzAwLjA2IiB5Mj0iNDAwLjkyMiIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxO3N0cm9rZS1kYXNoYXJyYXk6MiwyOyIvPjx0ZXh0IHg9IjQzNi43MDYiIHk9IjM5NS44NTYiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTMiIHRleHRMZW5ndGg9IjE0MS44MDciPuWbnuW+qeOCs+ODvOODieOBruW5s+aWhyAxMCDlgIs8L3RleHQ+PHBvbHlnb24gcG9pbnRzPSI0NSw0MjYuMDU1LDM1LDQzMC4wNTUsNDUsNDM0LjA1NSw0MSw0MzAuMDU1IiBmaWxsPSIjMTgxODE4IiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjE7c3Ryb2tlLWxpbmVqb2luOm1pdGVyO3N0cm9rZS1taXRlcmxpbWl0OjEwOyIvPjxsaW5lIHgxPSIzOSIgeTE9IjQzMC4wNTUiIHgyPSI0MTguNzA2IiB5Mj0iNDMwLjA1NSIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxO3N0cm9rZS1kYXNoYXJyYXk6MiwyOyIvPjx0ZXh0IHg9IjUxIiB5PSI0MjQuOTg5IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjEzIiB0ZXh0TGVuZ3RoPSIyMjEiPuWbnuW+qeOCs+ODvOODieOBruS/neWtmOOBrueUu+mdou+8iOS4gOW6puOBoOOBke+8iTwvdGV4dD48cG9seWdvbiBwb2ludHM9IjI2MS4yNjgsNDU1LjE4OCwyNzEuMjY4LDQ1OS4xODgsMjYxLjI2OCw0NjMuMTg4LDI2NS4yNjgsNDU5LjE4OCIgZmlsbD0iIzE4MTgxOCIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxO3N0cm9rZS1saW5lam9pbjptaXRlcjtzdHJva2UtbWl0ZXJsaW1pdDoxMDsiLz48bGluZSB4MT0iMzQiIHkxPSI0NTkuMTg4IiB4Mj0iMjY3LjI2OCIgeTI9IjQ1OS4xODgiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTsiLz48dGV4dCB4PSI0MSIgeT0iNDU0LjEyMiIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxMyIgdGV4dExlbmd0aD0iMTgyLjIyOSI+44CM44Ot44Kw44Kk44Oz44KS57aa44GR44KL44CN77yIR0VU77yJPC90ZXh0Pjxwb2x5Z29uIHBvaW50cz0iMjYxLjI2OCw0ODQuMzIsMjcxLjI2OCw0ODguMzIsMjYxLjI2OCw0OTIuMzIsMjY1LjI2OCw0ODguMzIiIGZpbGw9IiMxODE4MTgiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTtzdHJva2UtbGluZWpvaW46bWl0ZXI7c3Ryb2tlLW1pdGVybGltaXQ6MTA7Ii8+PGxpbmUgeDE9IjM0IiB5MT0iNDg4LjMyIiB4Mj0iMjY3LjI2OCIgeTI9IjQ4OC4zMiIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxOyIvPjx0ZXh0IHg9IjQxIiB5PSI0ODMuMjU0IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjEzIiB0ZXh0TGVuZ3RoPSIxNjUuMTc5Ij5QT1NUIC9sb2dpbi90b3Rw77yIVE9UUO+8iTwvdGV4dD48P3BsYW50dW1sLXNyYyBSUEZEUmpEMDU4TnRVT2ZITHgwOFFTaVk0V2thOGJLZWduUVN4QmZudFE0UW9STWp5UUk4ZFNUSEhLQTJBYjNLYUJSWEpfb3FIUjRnOFkyRzAwenBDbXZQekhNdU9xOThJM1VNdlZrVFV5d3pDblBDczlJZVNhaVRGR1NQYVZuUVZmdFdveDNQNnpLLU5sSkJqcm5SYUVqQmNuVnpJaWdxWENpSEZYdE1KdHU1VXlKcUlJN2JjTG1tWXRjYzh5WjJJZGZuTVNrOXZKZzJreFBELU9CNkxmUmRrRW9iTjdRTW94bDJNdEtxaTRDVE9MMi1vb29RYUNPeVE1MkJLdjdwX0lCYjZ5dUxqZUtJOVh2U095dXpSbGcyNW9ySHZGSGc4aS1iMllIejR0RUg2LUpzUWZ2YVI3VVJFSGMxUk4xZXBfSnotb3hWcVg3Wnc5RVU3U2FxMldoOG55VGRWek8zeVdwMm9oR3NHdkVtZ0VrRTNSQnAxY0NlWEpLYTMwR3NBVFJHenNfUlExSksxenNzVFp6aWdGcWx5UzUzYTNNRzhPSnVGOC14aHEwc1RJZjNUeVhYMXdRZFhiQkZ1LXVreXZkaEM2U3hDSFhkbGRDTll0NmJnbFJVZ2FUN3MxWjJEZkp3d0VjdVFILUZiTTh4MkM4RFB5ZW5tZ1RnRHJJdjBWOWFkMnJ5Z2p2TjhQR1dOeUpESzlMeC04TnVyRFVVRUZRN3VWUzh2RnhLeUVqaG5jTkpldER5N0UzNUl4OXFDMGtLQWljWTlya250MXRGZmU5Z1QxOGdhM0VxYUtvTzZFNERMWnpFOXJOaWd4dnNLNEFNNWVhQWdqRlJjNFM3RnJrZ19LblZfN2ZscjdnRGJlRGtlQnd6MF9hSXYxRmp6RS0tRzUyM0tYbDJTbVpWR0FjMzJuWC1GYUdBbVllNFpyNkF2cHNoLTd5N29FV1YzUTdWPz48L2c+PC9zdmc+" class="uml" alt="uml diagram" title="" /></p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">項目</th>
+<th style="text-align: left;">方針</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">登録の流れ</td>
+<td style="text-align: left;"><code>LoginSuccessHandler</code>（認証の入口）は登録の有無を見ずに A-02 へ送り、A-02 の controller が未登録の利用者を A-07（<code>/login/totp/enroll</code>。GET・POST とも同じ URL）へ送る。A-07 は password の要素だけで開ける（R-08 の例外）。登録済みの利用者と 2 つの要素がそろった主体は A-02 へ送る（2 つの要素がそろった主体は登録済みなので、同じ振り分けでよい。画面の層は要素の権限を見ない）</td>
+</tr>
+<tr>
+<td style="text-align: left;">秘密の発行</td>
+<td style="text-align: left;">160 ビットの秘密を乱数で作り、AAD を付けて暗号化して返す（<code>TotpSecretIssuer</code>）。平文の秘密は <code>identity.infrastructure</code> の実装の中だけで扱い、session には暗号文の文字列（<code>EncryptedSecret#value()</code>）だけを置く（<code>EncryptedSecret</code> は直列化できる型でなく、Spring Session JDBC は Java の直列化を使う。ドメインの値に <code>Serializable</code> は足さない）。登録の途中の暗号文が session にあり、同じ利用者の AAD で復号できる限りそれを使い続ける（GET の再読み込みやタブを 2 つ開いても秘密を変えない）</td>
+</tr>
+<tr>
+<td style="text-align: left;">最初のコードの確かめ</td>
+<td style="text-align: left;">暗号文と入れたコードで前後 1 つの刻みを照合する。誤りは保存せず、同じ秘密で A-07 に示し直す。password の要素は捨てない（登録は認証の段ではない）。誤りは失敗の回数に数えない（登録の誤りを数えるかは Bolt 32 で決める）</td>
+</tr>
+<tr>
+<td style="text-align: left;">要素は与えない</td>
+<td style="text-align: left;">登録は <code>FACTOR_TOTP</code> を与えない。登録で確かめたコードの刻みは使ったことにしない（最後に使った刻みは 0）ので、同じコードを A-02 でもう一度使える。登録を認証のフィルターにせず、認証の流れと session の ID の変更・8 時間の起点を A-02 の 1 か所に保つ</td>
+</tr>
+<tr>
+<td style="text-align: left;">回復コード</td>
+<td style="text-align: left;">10 個を乱数で作る（<code>RecoveryCodeGenerator</code>。形は <code>1a2b-3c4d</code>。8 文字の 16 進を 4 文字ずつハイフンで区切る 32 ビット。総当たりはロック（5 回）と bcrypt で抑える。10 個のうちに重複がない）。ハッシュだけを保存し、平文は登録を保存した POST の応答で一度だけ示す（PRG にしない。再読み込みは登録済みとして A-02 へ送る）。登録の前の画面に示すと、平文の回復コードを登録の途中の session（Spring Session JDBC の表）に置くことになるため。「回復コードを安全な場所に保存した」の確認は画面の必須（<code>required</code>）だけにし、サーバーの状態を増やさない</td>
+</tr>
+<tr>
+<td style="text-align: left;">QR と表示の値</td>
+<td style="text-align: left;">ZXing（<code>com.google.zxing:core</code>、Apache-2.0、実行時の推移的な依存なし）で QR の行列を作り、インラインの SVG にする。色は <code>fill</code> の属性で付け、<code>style</code> は使わない（CSP が <code>style-src</code> を許さないため。CSP は変えない）。URI は <code>otpauth://totp/cargo-tracker:&lt;メールアドレス&gt;?secret=…&amp;issuer=cargo-tracker&amp;digits=6&amp;period=30&amp;algorithm=SHA1</code>、手入力のキーは Base32 を 4 文字ずつ区切る。画面は <code>th:utext</code> で、自分で作った SVG にだけ使う。クライアントで描く案は、秘密を JavaScript に渡し、CSP に script を足すことになるので採らない</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>TotpProvisioning</code> を値に置く</td>
+<td style="text-align: left;">表示の値（URI、手入力のキー、QR の SVG）は秘密と同じ重さとして扱う。ZXing を <code>identity.infrastructure</code> に閉じるには、ポートが表示の値を返すしかないため、ドメインの値 <code>TotpProvisioning</code>（<code>identity.domain.model.valueobjects</code>、<code>@ValueObject</code>）にし、<code>toString</code> で値を隠す（<code>EncryptedSecret</code> の前例）。画面に一度だけ渡し、session・flash の属性・記録には置かない。A-07 の応答は <code>Cache-Control: no-store</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">新しいポートの置き場所</td>
+<td style="text-align: left;">認証の要素のポート（生成 <code>TotpCodeGenerator</code>・発行 <code>TotpSecretIssuer</code>・ハッシュ <code>RecoveryCodeHasher</code>・回復コードの生成 <code>RecoveryCodeGenerator</code>）は、前例（<code>TrackingNumberIssuer</code>）にそろえて <code>identity.domain.model.aggregates</code> に置く。ポートの置き場所を分けるのは、ほかのコンテキストでも増えたときに ADR で諮る。登録のサービス <code>TotpEnrollmentService</code> は <code>identity.application.internal.commandservices</code>、登録済みかの問い合わせ <code>TotpEnrollmentQueryService</code> は <code>queryservices</code> に置く（<code>isEnrolled</code> を <code>TotpVerificationService</code> から移し、画面の層だけが呼ぶ。D-5 の認証の例外は広げない）</td>
+</tr>
+<tr>
+<td style="text-align: left;">同時の登録（Bolt 30 の議題 2 の①の初回の分）</td>
+<td style="text-align: left;">TOTP の資格の追加（主キー）を先に行い、回復コード 10 個の置き換えと監査記録（<code>TOTP_ENROLLED</code>）と同じトランザクションにする。同時の 2 つの登録は主キーで片方が失敗してロールバックし、回復コードは 10 個のまま。主キーの違反はリポジトリの実装で <code>DuplicateTotpEnrollmentException</code> に写し、負けた側は登録済みとして A-02 へ送る（500 にしない）。回復コードの発行し直しの競合（AC9）は Bolt 33b で確かめる</td>
+</tr>
+<tr>
+<td style="text-align: left;">回復コードの並び順（議題 2 の④）</td>
+<td style="text-align: left;">未使用の回復コードの並び順は約束しない（照合はすべての未使用のコードと比べる）。SQL の <code>ORDER BY</code> は残す（並びは決まるが約束はしない）</td>
+</tr>
+<tr>
+<td style="text-align: left;">登録の途中の上限</td>
+<td style="text-align: left;">A-07 を開いた時刻（登録を始めた時刻）を session に置き、それがある password の段だけ、その時刻から 15 分を上限にする（ほかの password の段は 5 分のまま）。認証アプリを入れて QR を読む時間を見込むため。登録の途中の時刻は password の段の 5 分の中でしか置けない（A-07 を開けるのは期限の確認の後）。2 つの要素がそろったら使わない。A-07 に期限の目安を示す（SEC-03）</td>
+</tr>
+<tr>
+<td style="text-align: left;">失敗へ倒す場面（T-42）</td>
+<td style="text-align: left;">登録の途中の暗号文が session にない POST は A-07 を開き直す（新しい秘密）。別の利用者の暗号文・鍵の版の違う暗号文・壊れた暗号文は使えないものとし、A-07 を開き直して登録をやり直してもらう（500 にしない）。ZXing の生成の失敗は実装の誤りで、利用者の入力では起きないので 500 のままにし、エラーのログを出す</td>
+</tr>
+</tbody>
+</table>
+<p>先取りの登録のリスクを受け入れる（2026-10-13、human:kakimomokuri）: 未登録の利用者の password を知った者は、本人より先に自分の認証アプリを登録できる（初回の登録に共通する）。受け入れるリスクとし、<code>TOTP_ENROLLED</code> の監査記録（主体の利用者 ID と企業 ID）、ロック（Bolt 32）、システム管理者の別経路の解除と本人への通知（#47、W6）で抑える。初回の password の渡し方は利用者の管理（Bolt 34）で決める。</p>
+<p>ArchUnit で、ZXing を参照するのが <code>identity.infrastructure</code> だけであること（空振りを防ぐため、秘密の発行の実装が ZXing を使うことも確かめる）と、秘密の発行と回復コードの生成の実装が application に依存しないこと（D-5 の認証の例外は <code>identity.infrastructure.security</code> 全体にかかるので、入口でない部品の守りを足す）を守る。入口と暗号の部品のパッケージを分けて例外を入口だけに狭めるかは Bolt 31c で諮る。</p>
 <h3 id="_4">代替案<a class="headerlink" href="#_4" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
@@ -10189,7 +10278,7 @@
 <ul>
 <li>認証の流れと認可の判定を枠組みに任せ、アプリケーションが持つのは TOTP の照合・再利用・失敗の数え方・回復コードだけになる。</li>
 <li>失敗の数え方と監査記録を、Spring Security のイベントの 1 か所にまとめられる。</li>
-<li>新しい依存は <code>java-otp</code> 1 つで、推移的な依存がない。</li>
+<li>新しい依存は <code>java-otp</code> と ZXing の core（Bolt 31b）の 2 つで、どちらも実行時の推移的な依存がない。</li>
 </ul>
 <h3 id="_7">ネガティブ<a class="headerlink" href="#_7" title="Permanent link">&para;</a></h3>
 <ul>
@@ -10197,6 +10286,7 @@
 <li>TOTP はサーバーの時計の正しさに依存する。前後 1 つの窓（±30 秒）を超えるずれは認証の障害になる。NTP（ECS なら Amazon Time Sync）の前提を、非機能要件か運用要件に書く。</li>
 <li>要素の権限の発行時刻（<code>FactorGrantedAuthority</code> の <code>issuedAt</code>）はシステムの時計で決まり、アプリケーションの <code>Clock</code> で動かせない。時刻に頼る判定（最長 8 時間）は、session に残す自分の時刻で行う。</li>
 <li>再利用の拒否・失敗の回数・ロック・回復コードの記録が、複数のアプリケーションの実行環境で共有される必要がある（本体では表）。</li>
+<li>初回の登録では、未登録の利用者の password を知った者が本人より先に認証アプリを登録できる（決定 6 で受け入れたリスク）。</li>
 </ul>
 <h3 id="us-18-bolt">US-18 の Bolt で要るもの<a class="headerlink" href="#us-18-bolt" title="Permanent link">&para;</a></h3>
 <table>
@@ -10213,7 +10303,7 @@
 </tr>
 <tr>
 <td style="text-align: left;">画面</td>
-<td style="text-align: left;">A-01（ログイン）、A-02（認証コード。回復コードの入力（Bolt 31b）、ロック中の案内と解ける時刻（Bolt 32）。A-02 に来る理由は password の後だけなので、<code>factor.reason</code> に応じた案内は出さない（Bolt 31 で決めた））、TOTP の登録（A-07。QR か手入力の秘密、回復コードの表示。Bolt 31b）</td>
+<td style="text-align: left;">A-01（ログイン）、A-02（認証コード。回復コードの入力（Bolt 31c）、ロック中の案内と解ける時刻（Bolt 32）。A-02 に来る理由は password の後だけなので、<code>factor.reason</code> に応じた案内は出さない（Bolt 31 で決めた））、TOTP の登録（A-07。QR と手入力のキー、登録の後の回復コードの保存の画面。Bolt 31b）</td>
 </tr>
 <tr>
 <td style="text-align: left;">置き換え</td>
@@ -10225,7 +10315,7 @@
 </tr>
 <tr>
 <td style="text-align: left;">部品の分け方</td>
-<td style="text-align: left;">TOTP の生成は <code>TotpCodeGenerator</code> のポート（<code>identity.domain.model.aggregates</code>。Bolt 31 で暗号文と時間の刻みを受ける形 <code>code(EncryptedSecret, long)</code> にした）と java-otp の実装（<code>identity.infrastructure</code>）に分け、RFC 6238 の試験ベクトルを契約テストにする。ロックの方針（5 回・15 分）はログインの失敗の集約（採用のときに利用者の集約から改めた）、再利用の不変条件（刻みは単調に増える）は TOTP の資格、一度だけ使う回復コードはハッシュの照合に置く</td>
+<td style="text-align: left;">TOTP の生成は <code>TotpCodeGenerator</code> のポート（<code>identity.domain.model.aggregates</code>。Bolt 31 で暗号文と時間の刻みを受ける形 <code>code(EncryptedSecret, long)</code> にし、Bolt 31b で AAD のため <code>code(UserId, EncryptedSecret, long)</code> にした）と java-otp の実装（<code>identity.infrastructure</code>）に分け、RFC 6238 の試験ベクトルを契約テストにする。ロックの方針（5 回・15 分）はログインの失敗の集約（採用のときに利用者の集約から改めた）、再利用の不変条件（刻みは単調に増える）は TOTP の資格、一度だけ使う回復コードはハッシュの照合に置く</td>
 </tr>
 <tr>
 <td style="text-align: left;">テストのデータ</td>
@@ -10235,13 +10325,11 @@
 </table>
 <h3 id="_8">未確認の項目<a class="headerlink" href="#_8" title="Permanent link">&para;</a></h3>
 <p>Bolt 31 で解いたもの（決定に移した）: TOTP の秘密の暗号化の鍵の管理（決定 5）、秘密の Base32 の出どころ（決定 1）、Spring Session JDBC の上の直列化と changeSessionId（決定 2 の「session の直列化」。統合テストで確かめる）。無操作 30 分の設定は Bolt 14 で <code>spring.session.timeout</code> と確かめた（ADR-012）。</p>
+<p>Bolt 31b で解いたもの（決定 6 に移した）: 登録の QR の描き方と <code>otpauth://</code> の URI の組み立て、回復コード 10 個の発行（SEC-09。ハッシュでの保存は Bolt 30 で作った）、初回の登録（AC7）の画面の認可と登録を終えていない利用者の扱い（登録の完了時に <code>FACTOR_TOTP</code> は与えない）。</p>
 <ul>
-<li>登録の QR の描き方（ZXing をサーバーで使うか、クライアントで描くか）と <code>otpauth://</code> の URI の組み立て（Bolt 31b）。</li>
-<li>回復コード 10 個の発行（SEC-09）とハッシュでの保存（スパイクは 2 個を平文で持つ。保存は Bolt 30 で作った。発行は Bolt 31b）。</li>
 <li>java-otp の生成器のスレッドセーフ（スパイクは照合を <code>synchronized</code> の中で行う）。</li>
 <li>最長 8 時間を即時失効（BR-14）と同じ経路にできるか（Bolt 32）。</li>
 <li>同じ利用者の同時のログインと、同じコードの同時の送信（1 つだけ通ること）。学習テストは MockMvc だけ。</li>
-<li>初回の登録（AC7）の画面の認可と、登録を終えていない利用者の扱い。登録の完了時に最初のコードを確かめて <code>FACTOR_TOTP</code> を与えるか。</li>
 <li>password の再設定（SEC-08）と、TOTP の再登録（SEC-10）の流れ。</li>
 <li>利用者の画面で「次に取れる操作」（T-35）: A-02 で誤ったときは再入力か回復コード、ロック中は解ける時刻を示して待つ、端末を失ったときは回復コードか管理者への連絡。US-18 の計画の確認ポイントにする。</li>
 </ul>
@@ -10258,11 +10346,12 @@
 <li>US-18 の Bolt で、本体の統合テストに次を加える。2 つの要素がそろわないと業務の画面を開けない（全 URL）、再利用の拒否、5 回の失敗のロックの境界（4・5 回、14 分 59 秒・15 分）、最長 8 時間の境界（7 時間 59 分 59 秒・8 時間）、期限切れの session に TOTP を送っても延びない、TOTP の段で session の ID が変わる、ロック中の誤りで期限が延びない、認証の成功・失敗・ロックが同じ transaction で監査記録に書かれる（IA-INV-08）。</li>
 <li>枠組みの振る舞いの特性テスト（ビルダーのないトークンでは <code>FACTOR_PASSWORD</code> が失われる、既定のリポジトリでは request の中にしか残らない、要素の発行時刻はシステムの時計）を置き、Spring Security の版を上げるときの回帰の守りにする。</li>
 <li>既定・staging・prod の設定で A-01・A-02 が入力済みにならないこと、dev の外で dev-login の設定があると起動しないことを、本体のテストで守る。</li>
-<li>ArchUnit で、TOTP のライブラリへの依存を <code>identity.infrastructure</code> に閉じ込め、ほかのコンテキストが <code>FACTOR_*</code> を参照しないことを守る。暗号化の部品と <code>javax.crypto</code> を参照するのも <code>identity.infrastructure</code> だけにする（Bolt 31）。</li>
+<li>ArchUnit で、TOTP のライブラリと ZXing（Bolt 31b）への依存を <code>identity.infrastructure</code> に閉じ込め、ほかのコンテキストが <code>FACTOR_*</code> を参照しないことを守る。暗号化の部品と <code>javax.crypto</code> を参照するのも <code>identity.infrastructure</code> だけにする（Bolt 31）。</li>
 </ul>
 <p>復号した平文の消去について（Bolt 31 の開発レビュー）: 生成器は復号した配列を使い終えたら消すが、JDK の <code>SecretKeySpec</code> と java-otp の <code>Mac</code> は内部に鍵の写しを持つので、JVM の中の写しまでは消せない。消せるのは呼び出し側の配列だけである。</p>
 <h2 id="_10">改訂の経緯<a class="headerlink" href="#_10" title="Permanent link">&para;</a></h2>
 <ul>
+<li>2026-10-13: Bolt 31b の計画の承認で、暗号文の AAD（決定 5）と、初回の TOTP の登録と回復コードの発行（決定 6。登録の流れ、要素は与えない、QR は ZXing のインラインの SVG、<code>TotpProvisioning</code> を値に置く理由、新しいポートの置き場所、議題 2 の①④、登録の途中の上限 15 分、先取りの登録のリスクを受け入れること）を足した。QR・URI・回復コードの発行を「未確認の項目」から決定に移し、A-02 の回復コードの入力を Bolt 31c に、スパイクの削除の時期を「Bolt 31c の後」に改めた（31b と 31c に分けたため。human:kakimomokuri が決定）。</li>
 <li>2026-10-13: Bolt 31 の開始準備と計画の承認で、TOTP の秘密の暗号化（決定 5。AES-GCM、鍵の版の接頭辞、環境変数の鍵）、<code>TotpCodeGenerator</code> が暗号文を受ける形、K-02 を受け入れる判断、R-08 の比較の結果（全体の注釈を採る）、<code>SecurityFilterChain</code> の置き場所、password の段の上限 5 分、dev のコードの部品の置き方、Base32 を自分で書くことを足した。「未確認の項目」から解いたものを決定に移し、スパイクの削除の時期を「Bolt 31b の後」に改めた（31 と 31b に分けたため。human:kakimomokuri が決定）。</li>
 <li>2026-10-11: Bolt 30 の計画の承認で採用した。ロックの方針を利用者の集約からログインの失敗の集約に改め、失敗の数え方を <code>RETURNING</code> から更新の件数の判定に改めた（ステータスの「採用のときに決めたこと」）。</li>
 </ul>

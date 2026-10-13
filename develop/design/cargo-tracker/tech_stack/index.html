@@ -9948,7 +9948,15 @@
 <td style="text-align: left;">1.0.0</td>
 <td style="text-align: left;">TOTP の生成。時間の窓の照合・再利用の拒否・回復コードはアプリケーションで持つ</td>
 <td style="text-align: left;">MIT</td>
-<td style="text-align: left;">BR-14。Spring Security 7.1 の多要素認証（要素の権限 <code>FACTOR_PASSWORD</code>・<code>FACTOR_TOTP</code>）と組み合わせる。Bolt 13 のスパイク（TS-01）の結論で、<a href="../../../adr/cargo-tracker/011-mfa-totp/">ADR-011</a>（2026-10-11 に承認、Bolt 30）。依存は <code>identity.infrastructure</code> に閉じ込める（ArchUnit）。登録用 QR の描き方は Bolt 31b で決める。TOTP の秘密の暗号化（AES-GCM）は JDK の <code>Cipher</code> で組み、新しい依存を足さない（spring-security-crypto の <code>Encryptors</code> の既定の IV は 16 バイトのため使わない。Bolt 31）。Base32 は自分で書く（RFC 4648。<code>commons-codec</code> を足さない。Bolt 31）</td>
+<td style="text-align: left;">BR-14。Spring Security 7.1 の多要素認証（要素の権限 <code>FACTOR_PASSWORD</code>・<code>FACTOR_TOTP</code>）と組み合わせる。Bolt 13 のスパイク（TS-01）の結論で、<a href="../../../adr/cargo-tracker/011-mfa-totp/">ADR-011</a>（2026-10-11 に承認、Bolt 30）。依存は <code>identity.infrastructure</code> に閉じ込める（ArchUnit）。登録用 QR の描き方は Bolt 31b で決めた（下の ZXing の行）。TOTP の秘密の暗号化（AES-GCM）は JDK の <code>Cipher</code> で組み、新しい依存を足さない（spring-security-crypto の <code>Encryptors</code> の既定の IV は 16 バイトのため使わない。Bolt 31）。Base32 は自分で書く（RFC 4648。<code>commons-codec</code> を足さない。Bolt 31）</td>
+</tr>
+<tr>
+<td style="text-align: left;">QR コード</td>
+<td style="text-align: left;"><code>com.google.zxing:core</code></td>
+<td style="text-align: left;">3.5.4（2025-11。Bolt 31b のステップ 3 で Maven Central の最新の安定版を確かめた。実行時の推移的な依存なし。GitHub Advisory・OSV に既知の脆弱性なし）</td>
+<td style="text-align: left;">TOTP の登録（A-07）の QR コードの行列を作る。SVG への描画はアプリケーションで持つ</td>
+<td style="text-align: left;">Apache-2.0</td>
+<td style="text-align: left;">US-18 AC7。サーバーで QR コードの行列を作り、インラインの SVG にする（色は <code>fill</code> の属性。CSP の <code>style-src</code> を変えない）。クライアントで描くと秘密を JavaScript に渡すことになるため採らない。core だけを使い、実行時の推移的な依存はない（<code>javase</code> の画像の部品は足さない）。依存は <code>identity.infrastructure</code> に閉じ込める（ArchUnit）。脆弱性は GitHub Advisory・OSV を手で引き、Bolt 31b の終了報告に書く（<a href="../../../adr/cargo-tracker/011-mfa-totp/">ADR-011</a> の決定 6）</td>
 </tr>
 <tr>
 <td style="text-align: left;">session ストア</td>

@@ -11762,7 +11762,7 @@
 </tr>
 <tr>
 <td style="text-align: left;">33b</td>
-<td style="text-align: left;">US-18 AC9 の回復コードによる TOTP の再登録（A-07。回復コードによるログインは 31b）。#13 をクローズする（管理者経路は #47）</td>
+<td style="text-align: left;">US-18 AC9 の回復コードによる TOTP の再登録（A-07。回復コードによるログインは 31c）。#13 をクローズする（管理者経路は #47）</td>
 <td style="text-align: right;">2</td>
 <td style="text-align: left;">インサイドアウト</td>
 <td style="text-align: left;">ステップごと（セキュリティ）</td>
@@ -11784,6 +11784,7 @@
 </tbody>
 </table>
 <p>US-18 の残りの SP 6 は #13 をクローズする Bolt 33b で、US-04 の SP 3 は #43 をクローズする Bolt 35 で数える。US-16 の SP 5 は #14 をクローズする W6 で数えるので、W5 の目標 11 SP のうち W5 で数えられるのは最大 9 SP である（Bolt ごとの SP は目安）。W5 は祝日の週で、上限（8 SP）を超える。Release 0.1 を約 2 週早く終えた余裕で吸収し、W5 の締めで確かめる（W4 の締めの決定）</p>
+<p>US-18 の Bolt の順序は 31b → 31c → 32 とする。32 の ADR-012 の見直しの 3（request ごとの問い合わせを 1 回に）は、31c の引数の解決（見直しの 4）と同じ部品に触るため。31c → 33b とする。33b の回復コードによる再登録は、31c の回復コードによるログインを前提にするため（Bolt 31b の開始準備）。Bolt 31b の開始準備で 31c を足し、W5 の Bolt は 13 本（29・29b・29c・30・31・31b・31c・32・32b・33・33b・34・35）になった。祝日の週で SP も上限を超えるので、本数と SP の両方を W5 の締めで確かめる</p>
 <p><strong>W4 の Try の持ち込み</strong>: 各 Bolt 計画の確認ポイントに、T-83・T-88（骨組みや待ち方を直したら骨組みのまま流し、本命のアサーションで落ちることを確かめる。最初から通るテストは「見張り」と書く）、T-89（後に回したものは Issue にし、W5 の締めで開いている持ち越しを数える）、T-90（画面を作る Bolt の開発レビューに、マニュアルを書く立場の観点を入れる。Bolt 29b から）を入れる。承認ゲートの密度は「W4 の締めの見直し」のとおり（既定は計画と終了報告で止める。認証の完成はステップごとに止める）</p>
 <p><strong>Bolt 13・14 からの持ち込み</strong>（横断整合性検証の指摘。担当の Bolt の確認ポイントにする）:</p>
 <table>
@@ -11798,7 +11799,7 @@
 <tr>
 <td style="text-align: left;">ADR-012 の「W5 で見直すこと」: 成功のイベントの分け方、<code>hasRole</code> と要素の権限、request ごとの DB の問い合わせを 1 回にまとめる、引数の解決で TOTP まで済んでいない主体を渡さない、ロックの数え方を <code>identity.application</code> に置く</td>
 <td style="text-align: left;">ADR-012</td>
-<td style="text-align: left;">1（成功のイベント）・2（<code>hasRole</code>）は 31、4（引数の解決）は 31b、3（問い合わせを 1 回に）・5（ロックの数え方）は 32（Bolt 31 の計画の承認）</td>
+<td style="text-align: left;">1（成功のイベント）・2（<code>hasRole</code>）は 31、4（引数の解決）は 31c、3（問い合わせを 1 回に）・5（ロックの数え方）は 32（Bolt 31 の計画の承認。4 は Bolt 31b の開始準備で 31b と 31c に分けたときに 31c に送った）</td>
 </tr>
 <tr>
 <td style="text-align: left;">AC2（推測できる詳細を出さない）と 2 段階の画面・ロックの表示の緊張（K-02）</td>
@@ -11818,7 +11819,7 @@
 <tr>
 <td style="text-align: left;">AC7 の画面の認可、特性テスト、スパイクのプロジェクトの削除</td>
 <td style="text-align: left;">Bolt 13 終了報告の既知の課題</td>
-<td style="text-align: left;">AC7 の認可と特性テストは 31b（Bolt 31 の開始準備で 31 と 31b に分けた）。スパイクは Bolt 31b の後に消す（本体に登録と回復コードがそろってから。消すときにもう一度確かめる）</td>
+<td style="text-align: left;">AC7 の認可は 31b、特性テストは 31c（Bolt 31 の開始準備で 31 と 31b に分け、Bolt 31b の開始準備で 31b と 31c に分けた）。スパイクは Bolt 31c の後に消す（本体に登録と回復コードの発行（31b）と回復コードによるログイン（31c）がそろってから。消すときにもう一度確かめる）</td>
 </tr>
 <tr>
 <td style="text-align: left;">Try T-40・T-42（「W5 の US-18」と指定）</td>
@@ -12917,6 +12918,11 @@
 <tr>
 <td style="text-align: left;">2026-10-13</td>
 <td style="text-align: left;">Bolt 31 のステップ 1: W5 の Bolt の分け方の表に、回復コードによるログイン（31b）と再登録（33b）の分担、ADR-012 の見直しの 3・5 と S-02 と「開始準備で 32 を分けるかを見直す」（32）、8 時間の起点（32b）を書いた。Bolt 13・14 からの持ち込みの表で、ADR-012 の見直しの割り振り、AC7 の認可と特性テストを 31b、スパイクの削除を「31b の後」に直した</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5</td>
+</tr>
+<tr>
+<td style="text-align: left;">2026-10-13</td>
+<td style="text-align: left;">Bolt 31b のステップ 1: W5 の Bolt の分け方の表の 33b の行で回復コードによるログインを 31c に、Bolt 13・14 からの持ち込みの表で ADR-012 の見直しの 4・特性テスト・スパイクの削除を 31c に直した。US-18 の Bolt の順序（31b → 31c → 32、31c → 33b）と、W5 が 13 本になり本数と SP を W5 の締めで確かめることを書いた</td>
 <td style="text-align: left;">anthropic/claude-opus-5-5</td>
 </tr>
 </tbody>
