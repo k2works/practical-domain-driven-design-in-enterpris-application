@@ -200,18 +200,12 @@ class AuthenticationSecurityIntegrationTest {
     }
 
     @Test
-    void passwordの段を経ずにTOTPを送っても通らない() throws Exception {
+    void passwordの段を経ずにTOTPを送っても通らず認証コードの誤りの文言も出さない() throws Exception {
         String email = shipper(UserStatus.ACTIVE);
 
-        MvcResult result = mvc.perform(
-                        post(TOTP_URL).param("code", currentCode(email)).with(csrf()))
-                .andExpect(redirectedUrl("/login?totp-error"))
-                .andReturn();
+        mvc.perform(post(TOTP_URL).param("code", currentCode(email)).with(csrf()))
+                .andExpect(redirectedUrl("/login"));
 
-        Cookie session = result.getResponse().getCookie(SESSION_COOKIE);
-        if (session != null) {
-            mvc.perform(get("/customer/transport-requests").cookie(session)).andExpect(redirectedUrl("/login"));
-        }
         mvc.perform(get(TOTP_URL)).andExpect(redirectedUrl("/login"));
     }
 
@@ -229,7 +223,9 @@ class AuthenticationSecurityIntegrationTest {
         // 捨てた session の Cookie は、無効な session として A-03 に送られる（A-02 を開けない）
         mvc.perform(get(TOTP_URL).cookie(session)).andExpect(redirectedUrl("/session-expired"));
         mvc.perform(get("/login").param("totp-error", ""))
-                .andExpect(content().string(Matchers.containsString("認証コードが正しくありません。もう一度ログインしてください。")));
+                .andExpect(content()
+                        .string(Matchers.containsString(
+                                "認証コードが正しくないか、すでに使われています。認証アプリに新しいコードが表示されてから、もう一度ログインしてください。")));
     }
 
     @Test
@@ -263,6 +259,40 @@ class AuthenticationSecurityIntegrationTest {
     }
 
     @Test
+    void 利用者を切り替えたpasswordの段は前の利用者の時刻を引き継がず5分で失効しTOTPから8時間を数え直す() throws Exception {
+        String first = shipper(UserStatus.ACTIVE);
+        String second = shipper(UserStatus.ACTIVE);
+        Cookie session = login(first);
+        advance(Duration.ofHours(7));
+        Cookie switched = sessionOf(mvc.perform(post("/login")
+                        .cookie(session)
+                        .param("username", second)
+                        .param("password", PASSWORD)
+                        .with(csrf()))
+                .andExpect(redirectedUrl(TOTP_URL))
+                .andReturn());
+
+        advance(Duration.ofHours(7).plusMinutes(4));
+        Cookie secondSession = submitTotp(switched, currentCode(second));
+
+        advance(Duration.ofHours(8).plusMinutes(1));
+        // 前の利用者の起点（0 時）から 8 時間を過ぎても、後の利用者の TOTP の時刻（7 時間 4 分）から数える
+        mvc.perform(get("/customer/transport-requests").cookie(secondSession)).andExpect(status().isOk());
+
+        Cookie other = login(first);
+        Cookie switchedAgain = sessionOf(mvc.perform(post("/login")
+                        .cookie(other)
+                        .param("username", second)
+                        .param("password", PASSWORD)
+                        .with(csrf()))
+                .andExpect(redirectedUrl(TOTP_URL))
+                .andReturn());
+        advance(Duration.ofHours(8).plusMinutes(6));
+        // 切り替えた password の段は 5 分で失効する
+        mvc.perform(get(TOTP_URL).cookie(switchedAgain)).andExpect(redirectedUrl("/session-expired"));
+    }
+
+    @Test
     void TOTPを登録していない利用者はpasswordが正しくても登録の案内へ移り業務の画面を開けない() throws Exception {
         String email = userWithoutTotp(shipperCompany, Role.SHIPPER);
 
@@ -275,7 +305,7 @@ class AuthenticationSecurityIntegrationTest {
 
         mvc.perform(get("/login/totp/enroll").cookie(session))
                 .andExpect(status().isOk())
-                .andExpect(content().string(Matchers.containsString("認証アプリの登録の画面は準備中です。システム管理者にお問い合わせください。")));
+                .andExpect(content().string(Matchers.containsString("ログインするには、認証アプリの登録が必要です。")));
         mvc.perform(get(TOTP_URL).cookie(session)).andExpect(redirectedUrl("/login/totp/enroll"));
         mvc.perform(get("/customer/transport-requests").cookie(session)).andExpect(redirectsToTotp());
     }
@@ -313,6 +343,45 @@ class AuthenticationSecurityIntegrationTest {
     }
 
     @Test
+    void 最長8時間はTOTPの時刻から数えて1秒前は使える() throws Exception {
+        String email = shipper(UserStatus.ACTIVE);
+        Cookie passwordStage = loginWithPassword(email);
+        advance(Duration.ofMinutes(4));
+        Cookie session = submitTotp(passwordStage, currentCode(email));
+
+        advance(Duration.ofMinutes(4).plus(Duration.ofHours(8)).minusSeconds(1));
+        mvc.perform(get("/customer/transport-requests").cookie(session)).andExpect(status().isOk());
+    }
+
+    @Test
+    void 有効期間の中でTOTPを送り直しても8時間の起点は延びない() throws Exception {
+        String email = shipper(UserStatus.ACTIVE);
+        Cookie session = login(email);
+        advance(Duration.ofHours(7));
+
+        Cookie resent = submitTotp(session, currentCode(email));
+
+        advance(Duration.ofHours(8));
+        mvc.perform(get("/customer/transport-requests").cookie(resent)).andExpect(redirectedUrl("/session-expired"));
+    }
+
+    @Test
+    void 秘密を復号できない利用者は500にせずA01に戻し監査記録に残す() throws Exception {
+        String email = shipper(UserStatus.ACTIVE);
+        Cookie session = loginWithPassword(email);
+        jdbc.update(
+                "UPDATE identity.totp_credential SET secret_encrypted = 'v9:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'"
+                        + " WHERE user_id = ?",
+                userIdOf(email).value());
+
+        mvc.perform(post(TOTP_URL).cookie(session).param("code", "123456").with(csrf()))
+                .andExpect(redirectedUrl("/login?totp-error"));
+
+        assertThat(auditOf(email))
+                .contains(Map.of("action", "LOGIN_FAILED", "result", "FAILURE", "reason", "INVALID_TOTP"));
+    }
+
+    @Test
     void 期限切れのsessionにTOTPを送っても延びない() throws Exception {
         String email = shipper(UserStatus.ACTIVE);
         Cookie session = login(email);
@@ -323,7 +392,7 @@ class AuthenticationSecurityIntegrationTest {
                         .param("code", currentCode(email))
                         .with(csrf()))
                 .andExpect(redirectedUrl("/session-expired"));
-        mvc.perform(get("/customer/transport-requests").cookie(session)).andExpect(status().is3xxRedirection());
+        mvc.perform(get("/customer/transport-requests").cookie(session)).andExpect(redirectedUrl("/session-expired"));
     }
 
     // --- TOTP の失敗の監査（ADR-012 の見直しの 1、IA-INV-08。Bolt 31） ---
@@ -630,7 +699,7 @@ class AuthenticationSecurityIntegrationTest {
         mvc.perform(get("/customer/transport-requests").cookie(session)).andExpect(status().is3xxRedirection());
         assertThat(auditOf(email))
                 .extracting(row -> row.get("action"))
-                .containsExactly("PASSWORD_VERIFIED", "LOGIN_SUCCEEDED", "LOGOUT");
+                .containsExactlyInAnyOrder("PASSWORD_VERIFIED", "LOGIN_SUCCEEDED", "LOGOUT");
     }
 
     @Test

@@ -4,12 +4,13 @@
 <html lang="ja" xmlns:th="http://www.thymeleaf.org" th:replace="~{layout/public :: layout(~{::title}, ~{::main})}">
 <head>
     <meta charset="UTF-8">
-    <title>認証アプリの登録 - cargo-tracker</title>
+    <title>認証アプリの登録が必要です - cargo-tracker</title>
 </head>
 <body>
 <main>
-    <h1>認証アプリの登録</h1>
-    <p>認証アプリの登録の画面は準備中です。システム管理者にお問い合わせください。</p>
+    <h1>認証アプリの登録が必要です</h1>
+    <p>ログインするには、認証アプリの登録が必要です。認証アプリの登録の画面は準備中です。</p>
+    <p>荷主の方は担当営業に、社内の方はシステム管理者にお問い合わせください。</p>
     <form th:action="@{/logout}" method="post">
         <button type="submit" class="btn btn-outline-secondary">ログアウト</button>
     </form>

@@ -4,7 +4,7 @@ title: "ADR-012: 認証の主体は共有カーネルの型にし、password の
 description: "US-18 の password によるログインと session を、Spring Security 7 の form login と Spring Session JDBC で作る。"
 tags: [adr, authentication, session]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-13T01:41:37Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-13T03:24:05Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-06T06:51:29Z }
 ---
@@ -65,7 +65,7 @@ US-18 の password によるログインと session を、Spring Security 7 の 
 
 ### 6. 層の規則 D-5 の認証の例外（Bolt 31）
 
-- 認証の入口（`identity.infrastructure.security` の Spring Security の provider と listener）から、`identity.application.internal.commandservices` だけを参照してよい。合成ルートの外の `infrastructure` は `application` に依存しない規則（D-5）の狭い例外で、サガの例外（`infrastructure.persistence` から `application.sagas`）と同じ書き方で `LayerArchitectureTest` に足し、理由を `because` に書く。例外の外は落ちることを、違反を入れて確かめる。
+- 認証の入口のパッケージ（`identity.infrastructure.security`。Spring Security の provider・listener・成功と失敗のハンドラー・フィルター・拒否の例外）から、`identity.application.internal.commandservices` だけを参照してよい。暗号化（`AesGcmSecretCipher`）と Base32 も同じパッケージにあり、例外の範囲はパッケージ全体になる（入口と暗号を分けるかは Bolt 31b の開始準備で決める。Bolt 31 の開発レビュー）。合成ルートの外の `infrastructure` は `application` に依存しない規則（D-5）の狭い例外で、サガの例外（`infrastructure.persistence` から `application.sagas`）と同じ書き方で `LayerArchitectureTest` に足し、理由を `because` に書く。例外の外は落ちることを、違反を入れて確かめる。
 - 理由: provider と listener は Spring Security が呼ぶ入口で、`interfaces` の層に置けない。業務の判断（TOTP の照合と刻みの使用）はアプリケーションのサービス（`TotpVerificationService`）に置き、入口は結果を認証の成否に直すだけにする。
 - Bolt 32 のロックの数え方（下の「W5 で見直すこと」の 5）も同じ形にする（2026-10-13、Bolt 31 の整合性検証の指摘への回答で human:kakimomokuri が決定。[バックエンドのアーキテクチャ](../../design/cargo-tracker/architecture_backend.md)）。
 
@@ -92,7 +92,7 @@ US-18 の password によるログインと session を、Spring Security 7 の 
 
 ### ネガティブ
 
-- session は JDK の直列化で DB に置く。`Role` の定数の改名・削除、`CargoUserDetails` の移動や項目の変更、Spring Security の版の更新、W5 の要素の権限の追加で、配備の前の session が復元できなくなる。互換を壊す変更を配備するときは、配備の手順で `platform.spring_session` の行を消し、利用者にログインし直してもらう（W10 の運用手順書に書く）。復元の失敗を無効な session として扱う変換は、W5 の要素の権限を足すときに検討する（Bolt 31 で、復元の失敗を無効な session として扱い A-03 に送ると決めた。ADR-011 の決定 2）。
+- session は JDK の直列化で DB に置く。`Role` の定数の改名・削除、`CargoUserDetails` の移動や項目の変更、Spring Security の版の更新、W5 の要素の権限の追加で、配備の前の session が復元できなくなる。互換を壊す変更を配備するときは、配備の手順で `platform.spring_session` の行を消し、利用者にログインし直してもらう（W10 の運用手順書に書く）。復元の失敗を無効な session として扱う変換は、W5 の要素の権限を足すときに検討する（Bolt 31 では、要素の権限を足しても配備の前の session は復元でき、password の段の時刻がないので期限の判定で A-03 に送る形になった。復元そのものが失敗する変更の変換は入れていない。ADR-011 の決定 2）。
 - 未認証の request（ログインの画面の CSRF のトークン、失敗の後のメールアドレス）でも session の行ができる。作られる速さの上限（レート制限）は、W5 のロックか W10 の WAF で扱う（リスク台帳）。
 
 - W5 まで、利用停止しても既存の session は最長 8 時間使える（パイロットの前で本番の利用者はいない）。

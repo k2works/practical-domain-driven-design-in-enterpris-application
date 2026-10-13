@@ -20,7 +20,8 @@ public final class TotpAuthenticationToken extends AbstractAuthenticationToken {
     @Serial
     private static final long serialVersionUID = 1L;
 
-    /** session（Spring Session JDBC）に直列化して置く。主体は直列化できる {@link CargoUserDetails}。 */
+    /** session（Spring Session JDBC）に直列化して置く。主体は直列化できる {@link CargoUserDetails}（枠組みの型が Object）。 */
+    @SuppressWarnings("java:S1948")
     private final Object principal;
 
     private String code;
@@ -51,6 +52,17 @@ public final class TotpAuthenticationToken extends AbstractAuthenticationToken {
     @Override
     public Builder toBuilder() {
         return new Builder(this);
+    }
+
+    /** 等しさは枠組みの規則（主体・権限・認証済みか）に従い、型も同じことを求める。 */
+    @Override
+    public boolean equals(Object other) {
+        return other instanceof TotpAuthenticationToken && super.equals(other);
+    }
+
+    @Override
+    public int hashCode() {
+        return super.hashCode();
     }
 
     @Override

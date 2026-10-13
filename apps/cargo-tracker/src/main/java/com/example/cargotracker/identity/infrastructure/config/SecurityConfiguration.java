@@ -60,8 +60,11 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class SecurityConfiguration {
 
     /** 認証なしで開ける URL（ログイン、再認証の案内、エラー、静的な資源）。 */
+    /** A-01 の URL。 */
+    private static final String LOGIN_URL = "/login";
+
     private static final String[] PUBLIC_PATHS = {
-        "/login", SessionLifetime.EXPIRED_URL, "/error", "/css/**", "/js/**", "/webjars/**", "/favicon.ico"
+        LOGIN_URL, SessionLifetime.EXPIRED_URL, "/error", "/css/**", "/js/**", "/webjars/**", "/favicon.ico"
     };
 
     /**
@@ -141,7 +144,7 @@ public class SecurityConfiguration {
                         .hasRole(Role.SALES.name())
                         .anyRequest()
                         .authenticated())
-                .formLogin(form -> form.loginPage("/login")
+                .formLogin(form -> form.loginPage(LOGIN_URL)
                         .successHandler(new LoginSuccessHandler(totpVerificationService, clock))
                         .failureHandler(new KeepEmailAuthenticationFailureHandler()))
                 .logout(logout -> logout.logoutUrl("/logout").logoutSuccessUrl("/login?logout"))
@@ -159,7 +162,7 @@ public class SecurityConfiguration {
                                         new LoginUrlAuthenticationEntryPoint(TotpAuthenticationFilter.URL),
                                         TotpAuthenticationToken.FACTOR_TOTP)
                                 .addEntryPointFor(
-                                        new LoginUrlAuthenticationEntryPoint("/login"),
+                                        new LoginUrlAuthenticationEntryPoint(LOGIN_URL),
                                         FactorGrantedAuthority.PASSWORD_AUTHORITY)
                                 .build()))
                 .headers(headers -> headers.frameOptions(frame -> frame.deny())

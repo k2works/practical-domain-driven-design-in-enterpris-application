@@ -98,10 +98,8 @@ public class LoginUiSteps {
 
     @もし("認証コードの画面で誤ったコードを入れて確認する")
     public void 誤ったコードを入れて確認する() {
-        // 今のコードの各桁をずらしたコード（前後の刻みのコードと重なる見込みは 100 万分の 2 ほど）
-        int current = Integer.parseInt(users.totpCode(role));
-        submitTotp(String.format("%06d", (current + 500_000) % 1_000_000));
-        page().waitForLoadState();
+        submitTotp(users.wrongTotpCode(role));
+        page().waitForURL(url -> url.contains("totp-error"));
         browser.checkAccessibility();
     }
 

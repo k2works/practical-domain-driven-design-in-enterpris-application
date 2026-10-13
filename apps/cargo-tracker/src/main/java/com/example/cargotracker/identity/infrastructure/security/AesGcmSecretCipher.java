@@ -28,8 +28,8 @@ public final class AesGcmSecretCipher {
     private static final int KEY_BYTES = 32;
     private static final int IV_BYTES = 12;
     private static final int TAG_BITS = 128;
-    private static final Pattern VERSION = Pattern.compile("v([1-9][0-9]{0,8})");
-    private static final Pattern ENCRYPTED = Pattern.compile("(v[1-9][0-9]{0,8}):(.+)");
+    private static final Pattern VERSION = Pattern.compile("v([1-9]\\d{0,8})");
+    private static final Pattern ENCRYPTED = Pattern.compile("(v[1-9]\\d{0,8}):(.+)");
 
     private final Map<String, SecretKey> keys;
     private final String currentVersion;

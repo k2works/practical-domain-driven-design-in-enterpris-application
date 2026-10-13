@@ -16,7 +16,8 @@ import org.springframework.security.core.authority.FactorGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 
 /**
- * 発行から 8 時間の上限の判定（US-18 AC5、T-38 の 3 点）。認証済みなのにログインの時刻がない session も失効として扱う
+ * 2 つの要素がそろった session の 8 時間（TOTP が初めて通った時刻から）と password の段だけの session の 5 分の上限の判定
+ * （US-18 AC5、T-38 の 3 点。Bolt 31）。認証済みなのにログインの時刻がない session も失効として扱う
  * （fail-closed。Bolt 14 レビュー）。
  */
 class SessionLifetimeFilterTest {
@@ -42,7 +43,12 @@ class SessionLifetimeFilterTest {
 
     private static MockHttpSession authenticatedSession(boolean withLoginTime) {
         SecurityContextHolder.getContext()
-                .setAuthentication(new TestingAuthenticationToken("user", null, "ROLE_SHIPPER"));
+                .setAuthentication(new TestingAuthenticationToken(
+                        "user",
+                        null,
+                        "ROLE_SHIPPER",
+                        FactorGrantedAuthority.PASSWORD_AUTHORITY,
+                        TotpAuthenticationToken.FACTOR_TOTP));
         MockHttpSession session = new MockHttpSession();
         if (withLoginTime) {
             session.setAttribute(SessionLifetime.AUTHENTICATED_AT, LOGIN_AT);
@@ -148,12 +154,28 @@ class SessionLifetimeFilterTest {
     }
 
     @Test
-    void 配備の前の形のsessionはpasswordの段でも8時間の上限で判定する() throws Exception {
-        // Bolt 31 の前は password の段でログインの時刻を置いた。その session は TOTP を求められるが、上限は元の時刻から数える
+    void 配備の前の形のsessionはpasswordの段の時刻がないので失効させる() throws Exception {
+        // Bolt 31 の前は password の段でログインの時刻を置いた。その session は A-03 に送り、ログインし直してもらう（ADR-012）
         MockHttpSession session = passwordStageSession(false);
         session.setAttribute(SessionLifetime.AUTHENTICATED_AT, LOGIN_AT);
 
-        assertThat(request(session, Duration.ofHours(1)).getRedirectedUrl()).isNull();
-        assertThat(request(session, Duration.ofHours(8)).getRedirectedUrl()).isEqualTo(SessionLifetime.EXPIRED_URL);
+        assertThat(request(session, Duration.ofMinutes(1)).getRedirectedUrl()).isEqualTo(SessionLifetime.EXPIRED_URL);
+    }
+
+    @Test
+    void passwordの段だけのsessionはTOTPの時刻が残っていても5分で失効させる() throws Exception {
+        // 利用者を切り替えた session に前の利用者の TOTP の時刻が残っても、password の段の上限を外さない（Bolt 31 の開発レビュー）
+        MockHttpSession session = passwordStageSession(true);
+        session.setAttribute(SessionLifetime.AUTHENTICATED_AT, LOGIN_AT);
+
+        assertThat(request(session, Duration.ofMinutes(5)).getRedirectedUrl()).isEqualTo(SessionLifetime.EXPIRED_URL);
+    }
+
+    @Test
+    void passwordの段だけのsessionは5分の1秒後も失効させる() throws Exception {
+        MockHttpSession session = passwordStageSession(true);
+
+        assertThat(request(session, Duration.ofMinutes(5).plusSeconds(1)).getRedirectedUrl())
+                .isEqualTo(SessionLifetime.EXPIRED_URL);
     }
 }

@@ -74,6 +74,21 @@ public class UiUsers {
      * A-02 に入れる、その時点のコード。同じ利用者が同じ刻みの間に入り直しても再利用として拒まれないよう、テストの準備として
      * 使った刻みを戻してから作る（本体の再利用の拒否は変えない。Bolt 31 の確認ポイント 7）。
      */
+    /** 前後 1 つの刻みのどのコードとも一致しないコード（誤ったコードの送信のため）。 */
+    public String wrongTotpCode(Role role) {
+        TotpCredential credential =
+                totpCredentials.findByUserId(of(role).userId()).orElseThrow();
+        long step = TotpCredential.stepAt(new UtcInstant(clock.instant()));
+        java.util.List<String> window = java.util.stream.LongStream.rangeClosed(step - 1, step + 1)
+                .mapToObj(each -> totpCodes.code(credential.secret(), each))
+                .toList();
+        return java.util.stream.IntStream.range(0, 10)
+                .mapToObj(i -> String.format("%06d", i))
+                .filter(code -> !window.contains(code))
+                .findFirst()
+                .orElseThrow();
+    }
+
     public String totpCode(Role role) {
         UserId userId = of(role).userId();
         jdbc.update("UPDATE identity.totp_credential SET last_used_step = 0 WHERE user_id = ?", userId.value());

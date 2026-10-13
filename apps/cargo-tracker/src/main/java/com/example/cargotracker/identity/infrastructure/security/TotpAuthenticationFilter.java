@@ -46,6 +46,9 @@ public class TotpAuthenticationFilter extends AbstractAuthenticationProcessingFi
         setMfaEnabled(true);
         setSecurityContextRepository(new DelegatingSecurityContextRepository(
                 new RequestAttributeSecurityContextRepository(), new HttpSessionSecurityContextRepository()));
+        // formLogin と同じ既定（session ID の付け替えと、session に置く CSRF のトークンの作り直し）を組む。フィルターを作る時点では
+        // 共有の戦略がまだ組まれていないため。CSRF のトークンの置き場所や session の管理を変えたら、ここも合わせる（統合テストで
+        // 段ごとの session ID の変化と CSRF を見張る。Bolt 31 の開発レビュー）
         setSessionAuthenticationStrategy(new CompositeSessionAuthenticationStrategy(List.of(
                 new ChangeSessionIdAuthenticationStrategy(),
                 new CsrfAuthenticationStrategy(new HttpSessionCsrfTokenRepository()))));
@@ -105,7 +108,9 @@ public class TotpAuthenticationFilter extends AbstractAuthenticationProcessingFi
                 session.invalidate();
             }
             SecurityContextHolder.clearContext();
-            response.sendRedirect(request.getContextPath() + FAILURE_URL);
+            // password の段を経ない送信には、認証コードの誤りの文言を出さない（Bolt 31 の開発レビュー）
+            String target = exception instanceof InsufficientAuthenticationException ? "/login" : FAILURE_URL;
+            response.sendRedirect(request.getContextPath() + target);
         }
     }
 }

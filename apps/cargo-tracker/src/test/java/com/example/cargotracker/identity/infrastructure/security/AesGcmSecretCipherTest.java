@@ -78,10 +78,11 @@ class AesGcmSecretCipherTest {
         AesGcmSecretCipher cipher = TestSecretCiphers.cipher();
         String body = cipher.encrypt(SECRET.clone()).value().substring("v1:".length());
 
-        assertThatThrownBy(() -> cipher.decrypt(new EncryptedSecret("v2:" + body)))
-                .isInstanceOf(IllegalArgumentException.class);
-        assertThatThrownBy(() -> cipher.decrypt(new EncryptedSecret(body)))
-                .isInstanceOf(IllegalArgumentException.class);
+        EncryptedSecret unknownVersion = new EncryptedSecret("v2:" + body);
+        EncryptedSecret noVersion = new EncryptedSecret(body);
+
+        assertThatThrownBy(() -> cipher.decrypt(unknownVersion)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> cipher.decrypt(noVersion)).isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
@@ -95,36 +96,48 @@ class AesGcmSecretCipherTest {
         AesGcmSecretCipher otherKey = AesGcmSecretCipher.fromBase64Keys(Map.of("v1", KEY_V2));
 
         assertThatThrownBy(() -> cipher.decrypt(tampered)).isInstanceOf(IllegalArgumentException.class);
-        assertThatThrownBy(() -> otherKey.decrypt(new EncryptedSecret(value)))
-                .isInstanceOf(IllegalArgumentException.class);
+        EncryptedSecret byOtherKey = new EncryptedSecret(value);
+        assertThatThrownBy(() -> otherKey.decrypt(byOtherKey)).isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
     void Base64でない暗号文と短すぎる暗号文は失敗へ倒す() {
         AesGcmSecretCipher cipher = TestSecretCiphers.cipher();
 
-        assertThatThrownBy(() -> cipher.decrypt(new EncryptedSecret("v1:%%%")))
-                .isInstanceOf(IllegalArgumentException.class);
-        assertThatThrownBy(() -> cipher.decrypt(new EncryptedSecret("v1:AAAA")))
-                .isInstanceOf(IllegalArgumentException.class);
+        EncryptedSecret notBase64 = new EncryptedSecret("v1:%%%");
+        EncryptedSecret tooShort = new EncryptedSecret("v1:AAAA");
+
+        assertThatThrownBy(() -> cipher.decrypt(notBase64)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> cipher.decrypt(tooShort)).isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
     void 鍵がない設定と32バイトでない鍵と版の名前が違う設定は作れない() {
-        assertThatThrownBy(() -> AesGcmSecretCipher.fromBase64Keys(Map.of()))
+        Map<String, String> none = Map.of();
+        Map<String, String> shortKey = Map.of("v1", Base64.getEncoder().encodeToString(new byte[16]));
+        Map<String, String> longKey = Map.of("v1", Base64.getEncoder().encodeToString(new byte[33]));
+        Map<String, String> badName = Map.of("key1", TestSecretCiphers.KEY_V1);
+        Map<String, String> zeroVersion = Map.of("v0", TestSecretCiphers.KEY_V1);
+        Map<String, String> notBase64 = Map.of("v1", "not base64!");
+
+        assertThatThrownBy(() -> AesGcmSecretCipher.fromBase64Keys(none)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> AesGcmSecretCipher.fromBase64Keys(shortKey))
                 .isInstanceOf(IllegalArgumentException.class);
-        assertThatThrownBy(() -> AesGcmSecretCipher.fromBase64Keys(
-                        Map.of("v1", Base64.getEncoder().encodeToString(new byte[16]))))
+        assertThatThrownBy(() -> AesGcmSecretCipher.fromBase64Keys(longKey))
                 .isInstanceOf(IllegalArgumentException.class);
-        assertThatThrownBy(() -> AesGcmSecretCipher.fromBase64Keys(Map.of("key1", TestSecretCiphers.KEY_V1)))
+        assertThatThrownBy(() -> AesGcmSecretCipher.fromBase64Keys(badName))
                 .isInstanceOf(IllegalArgumentException.class);
-        assertThatThrownBy(() -> AesGcmSecretCipher.fromBase64Keys(Map.of("v1", "not base64!")))
+        assertThatThrownBy(() -> AesGcmSecretCipher.fromBase64Keys(zeroVersion))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> AesGcmSecretCipher.fromBase64Keys(notBase64))
                 .isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
     void 空の秘密は暗号化しない() {
-        assertThatThrownBy(() -> TestSecretCiphers.cipher().encrypt(new byte[0]))
-                .isInstanceOf(IllegalArgumentException.class);
+        AesGcmSecretCipher cipher = TestSecretCiphers.cipher();
+        byte[] empty = new byte[0];
+
+        assertThatThrownBy(() -> cipher.encrypt(empty)).isInstanceOf(IllegalArgumentException.class);
     }
 }

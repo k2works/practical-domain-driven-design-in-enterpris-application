@@ -2,6 +2,8 @@ package com.example.cargotracker.identity.infrastructure.security;
 
 import com.example.cargotracker.identity.application.internal.commandservices.TotpVerification;
 import com.example.cargotracker.identity.application.internal.commandservices.TotpVerificationService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.InsufficientAuthenticationException;
 import org.springframework.security.core.Authentication;
@@ -13,6 +15,8 @@ import org.springframework.security.core.authority.FactorGrantedAuthority;
  * 監査記録に書く。password の要素と合わせるのはフィルター（mfaEnabled）が行う。
  */
 public class TotpAuthenticationProvider implements AuthenticationProvider {
+
+    private static final Logger LOG = LoggerFactory.getLogger(TotpAuthenticationProvider.class);
 
     private final TotpVerificationService verificationService;
 
@@ -26,8 +30,18 @@ public class TotpAuthenticationProvider implements AuthenticationProvider {
             throw new InsufficientAuthenticationException("password の段の主体がない");
         }
         String code = authentication.getCredentials() instanceof String given ? given : "";
-        TotpVerification verification =
-                verificationService.verify(details.actor().userId(), code);
+        TotpVerification verification;
+        try {
+            verification = verificationService.verify(details.actor().userId(), code);
+        } catch (IllegalArgumentException e) {
+            // 秘密を復号できない（知らない鍵の版・壊れた暗号文）。500 にせず拒否し、監査記録に残して運用で気付けるようにする
+            // （失敗へ倒す。T-42。Bolt 31 の開発レビュー）
+            LOG.error(
+                    "TOTP の秘密を復号できず、認証コードを拒否した: user={}",
+                    details.actor().userId().value(),
+                    e);
+            throw new TotpRejectedException(TotpVerification.REJECTED_MISMATCH);
+        }
         if (!verification.accepted()) {
             throw new TotpRejectedException(verification);
         }

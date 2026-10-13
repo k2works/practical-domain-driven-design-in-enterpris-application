@@ -4,7 +4,7 @@ title: "ADR-011: 多要素認証は Spring Security 7 の要素の権限で組�
 description: "password の後に TOTP を求める 2 段階のログインを、Spring Security 7 の多要素認証（要素ごとの権限）で組む。"
 tags: [adr, authentication, mfa, totp]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-13T02:57:49Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-13T03:24:05Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-11T08:28:34Z }
 ---
@@ -92,7 +92,7 @@ T --> U : 2 つの要素を合わせた認証。業務の画面へ
 | session の固定化 | TOTP の段でも session の ID を変え、CSRF のトークンを作り直す（`ChangeSessionIdAuthenticationStrategy` と `CsrfAuthenticationStrategy`）。本体では `http.getSharedObject(SessionAuthenticationStrategy.class)` を渡すか、configurer で組んで formLogin とそろえる | `new` で足したフィルターの既定は何もしない戦略で、権限が上がる TOTP の段で ID が変わらなかった（レビューで見つけて直した） |
 | 成功の後の行き先 | 保存した request（深いリンク）へ戻すか、役割ごとの既定の画面へ導く | スパイクは固定の `/staff`。荷主（`/customer`）と社内（`/staff`）の役割分け（US-16）と一緒に決める |
 | session の保存 | TOTP のフィルターに `HttpSessionSecurityContextRepository` を設定する | 既定のままでは request の中だけに残る |
-| session の直列化 | Spring Session JDBC に、独自のトークン・`FactorGrantedAuthority`・`Instant` を JDK の直列化で置く。要素の権限を足すと配備の前の session は復元できないので、復元の失敗を無効な session として扱い A-03 に送る（Bolt 31 で決めた。ADR-012 のネガティブ）。デモ環境では配備のときにログインし直してもらう | スパイクはメモリの session。本体のセキュリティの統合テスト（PostgreSQL の Testcontainers）で、要素の権限が次の request に残ることと TOTP の段の ID の変化を確かめる（Bolt 31） |
+| session の直列化 | Spring Session JDBC に、独自のトークン・`FactorGrantedAuthority`・`Instant` を JDK の直列化で置く。要素の権限を足しても、配備の前の session は復元できた（`CargoUserDetails` と既存の型を変えていないため）。配備の前の session は password の段の時刻（`PASSWORD_VERIFIED_AT`）を持たないので、期限の判定で A-03 に送り、ログインし直してもらう。期限の上限は認証の要素で選び（2 つの要素なら TOTP の時刻から 8 時間、password の段だけなら password の時刻から 5 分）、利用者を切り替えた session に前の利用者の時刻が残っても上限を外さない（Bolt 31 の開発レビュー）。復元そのものが失敗する変更（型の移動や改名）の扱いは変えていない（ADR-012 のネガティブ。配備の手順で session の行を消す） | スパイクはメモリの session。本体のセキュリティの統合テスト（PostgreSQL の Testcontainers）で、要素の権限が次の request に残ることと TOTP の段の ID の変化を確かめる（Bolt 31） |
 | 失敗の数え方 | password と TOTP の誤りを、`AuthenticationFailureBadCredentialsEvent` の 1 か所で数える。5 回続いたら 15 分ロック（`UserDetails` の `accountLocked` と、TOTP の provider の確認） | 監査記録（IA-INV-08）を書く箇所と同じにできる。ロック中の拒否は数えない |
 | 再利用の拒否 | 利用者ごとに最後に使った時間の刻みの番号を持ち、それ以下の刻みを拒否する | TOTP のライブラリの外の記録が要る（H3） |
 | 回復コード | TOTP の欄で受け付け、一度だけ使える（本体では使った時刻を入れて行を残す） | 本体ではハッシュ（bcrypt）で保存する |

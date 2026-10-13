@@ -51,7 +51,9 @@ class TotpSecretKeysBindingTest {
     void 鍵がなければ暗号化の部品を作らず起動を失敗させる() {
         StandardEnvironment environment = environmentWith(new MapPropertySource("empty", Map.of()));
 
-        assertThatThrownBy(() -> new IdentityConfiguration().totpSecretCipher(environment))
+        IdentityConfiguration configuration = new IdentityConfiguration();
+
+        assertThatThrownBy(() -> configuration.totpSecretCipher(environment))
                 .isInstanceOf(IllegalArgumentException.class);
     }
 }

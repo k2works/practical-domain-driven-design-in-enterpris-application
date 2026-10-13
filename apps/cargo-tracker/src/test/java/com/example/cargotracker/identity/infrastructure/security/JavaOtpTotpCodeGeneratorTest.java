@@ -107,7 +107,7 @@ class JavaOtpTotpCodeGeneratorTest {
 
         assertThatThrownBy(() -> generator.code(null, 1)).isInstanceOf(IllegalArgumentException.class);
         assertThatThrownBy(() -> generator.code(SECRET, -1)).isInstanceOf(IllegalArgumentException.class);
-        assertThatThrownBy(() -> generator.code(new EncryptedSecret("v9:AAAA"), 1))
-                .isInstanceOf(IllegalArgumentException.class);
+        EncryptedSecret unknownVersion = new EncryptedSecret("v9:AAAA");
+        assertThatThrownBy(() -> generator.code(unknownVersion, 1)).isInstanceOf(IllegalArgumentException.class);
     }
 }
