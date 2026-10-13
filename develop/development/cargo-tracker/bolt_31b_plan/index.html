@@ -4946,7 +4946,7 @@
     
   
   
-    <span class="md-status md-status--draft"></span>
+    <span class="md-status md-status--stable"></span>
   
 
   
@@ -10238,7 +10238,7 @@
 <li>統合テスト: 登録の途中の session に別の利用者の password を送ると、前の利用者の登録の途中の暗号文は使えず（AAD）、新しい秘密になる（T-102）。登録の途中の時刻も新しい利用者の password の段で消える</li>
 <li>画面の層: <code>login_ui.feature</code> に「未登録の利用者が A-07 で登録し、回復コードを保存して A-02 でログインする」（<code>UiUsers</code> に未登録の利用者を作る口を足す。QR の代わりに手入力のキーからコードを作る）。デモの印 <code>@demo @demo-bolt-31b/enroll</code></li>
 <li>完了の判定: <code>check</code> と <code>uiTest</code> が緑</li>
-<li>[-] <strong>6. SonarQube と開発レビューと終了報告</strong> 【承認ゲート: 終了報告】</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>6. SonarQube と開発レビューと終了報告</strong> 【承認ゲート: 終了報告】</li>
 <li>SonarQube（<code>sonar-local:check</code>。T-104 で開発レビューの前に流す）</li>
 <li>開発レビュー（プログラマー、アーキテクト、テスター（セキュリティの境界）、テクニカルライター（A-07 の文言。T-90））</li>
 <li>デモの動画（<code>demoVideo</code>）と #13 への添付（<code>issue:attach-demo</code>）。<code>bolt_31b_report.md</code>。release_plan の W5 の 31b の行、開発の索引。#13 に進み具合をコメントする</li>
