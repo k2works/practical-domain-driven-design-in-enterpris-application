@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.request;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.model;
@@ -36,6 +37,8 @@ import java.nio.charset.StandardCharsets;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -43,20 +46,30 @@ import java.util.UUID;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.boot.test.system.CapturedOutput;
+import org.springframework.boot.test.system.OutputCaptureExtension;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.Primary;
+import org.springframework.http.HttpMethod;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.ResultMatcher;
+import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.method.HandlerMethod;
+import org.springframework.web.servlet.mvc.method.RequestMappingInfo;
+import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
 
 /**
  * セキュリティの統合テスト（US-18 の password の段と TOTP の段、ADR-011・ADR-012、テスト戦略「セキュリティの統合テスト」）。
@@ -65,8 +78,17 @@ import org.springframework.test.web.servlet.ResultMatcher;
  */
 @SpringBootTest
 @AutoConfigureMockMvc
+@ExtendWith(OutputCaptureExtension.class)
 @Import({TestcontainersConfiguration.class, AuthenticationSecurityIntegrationTest.FixedClock.class})
 class AuthenticationSecurityIntegrationTest {
+
+    /** 全 URL の見張りから除く、password の段だけで開ける認証の画面（Bolt 31d）。 */
+    private static final Set<String> AUTHENTICATION_SCREENS =
+            Set.of("/login", "/login/totp", "/login/totp/enroll", "/session-expired");
+
+    @Autowired
+    @Qualifier("requestMappingHandlerMapping")
+    RequestMappingHandlerMapping handlerMapping;
 
     private static final String PASSWORD = "correct horse battery staple";
     private static final String SESSION_COOKIE = "SESSION";
@@ -411,7 +433,7 @@ class AuthenticationSecurityIntegrationTest {
     }
 
     @Test
-    void 秘密を復号できない利用者は500にせずA01に戻し監査記録に残す() throws Exception {
+    void 秘密を復号できない利用者は500にせずA01に戻し監査記録に残す(CapturedOutput output) throws Exception {
         String email = shipper(UserStatus.ACTIVE);
         Cookie session = loginWithPassword(email);
         jdbc.update(
@@ -419,11 +441,17 @@ class AuthenticationSecurityIntegrationTest {
                         + " WHERE user_id = ?",
                 userIdOf(email).value());
 
-        mvc.perform(post(TOTP_URL).cookie(session).param("code", "123456").with(csrf()))
+        mvc.perform(post(TOTP_URL).cookie(session).param("code", "654321").with(csrf()))
                 .andExpect(redirectedUrl("/login?totp-error"));
 
         assertThat(auditOf(email))
                 .contains(Map.of("action", "LOGIN_FAILED", "result", "FAILURE", "reason", "INVALID_TOTP"));
+        // ログの平文の見張り（Bolt 31d）。エラーの行があること（T-107）と、送ったコード・password・秘密がないこと
+        assertThat(output.getAll())
+                .contains("TOTP の秘密を復号できず", userIdOf(email).value().toString())
+                .doesNotContain("654321")
+                .doesNotContain(PASSWORD)
+                .doesNotContain(new String(TOTP_SECRET, StandardCharsets.US_ASCII));
     }
 
     @Test
@@ -493,25 +521,47 @@ class AuthenticationSecurityIntegrationTest {
     }
 
     /**
-     * 見張り（T-88）。全体の注釈で 2 つの要素を求めるので、URL ごとの規則は役割だけのままにした（ADR-012 の見直しの 2）。
-     * 役割がそろっていても TOTP の要素の欠けた主体は、どの業務の URL も開けない。ステップ 4 の後では最初から通る。
+     * 見張り（T-88。Bolt 31 のレビュー 17 で代表の URL から全 URL に広げた。Bolt 31d）。全体の注釈で 2 つの要素を求めるので、URL ごとの
+     * 規則は役割だけのままにした（ADR-012 の見直しの 2）。役割がそろっていても TOTP の要素の欠けた主体は、画面のハンドラーの一覧の
+     * どの URL（GET・POST）も開けず A-02 へ導かれる。役割の誤り（403）と区別するため、URL の接頭辞の規則に合う役割の主体で送る。
+     * パスの変数は仮の値で埋める（認可はハンドラーより前に効くので、値の形は問わない）。
      */
     @Test
-    void 役割があってもTOTPの要素の欠けた主体はどの業務のURLも開けない() throws Exception {
-        Cookie shipper = loginWithPassword(shipper(UserStatus.ACTIVE));
-        Cookie sales = loginWithPassword(user(staffCompany(), Role.SALES, UserStatus.ACTIVE));
-        Cookie routeDesigner = loginWithPassword(user(staffCompany(), Role.ROUTE_DESIGNER, UserStatus.ACTIVE));
-        Cookie trackingManager = loginWithPassword(user(staffCompany(), Role.TRACKING_MANAGER, UserStatus.ACTIVE));
+    void 役割があってもTOTPの要素の欠けた主体は画面のどのURLも開けずA02へ導かれる() throws Exception {
+        Map<Role, Cookie> passwordStage = new EnumMap<>(Role.class);
+        passwordStage.put(Role.SHIPPER, loginWithPassword(shipper(UserStatus.ACTIVE)));
+        passwordStage.put(Role.SALES, loginWithPassword(user(staffCompany(), Role.SALES, UserStatus.ACTIVE)));
+        passwordStage.put(
+                Role.ROUTE_DESIGNER, loginWithPassword(user(staffCompany(), Role.ROUTE_DESIGNER, UserStatus.ACTIVE)));
+        passwordStage.put(
+                Role.TRACKING_MANAGER,
+                loginWithPassword(user(staffCompany(), Role.TRACKING_MANAGER, UserStatus.ACTIVE)));
+        List<String> checked = new ArrayList<>();
 
-        for (String url :
-                List.of("/", "/customer/transport-requests", "/customer/bookings", "/customer/tracking-records")) {
-            mvc.perform(get(url).cookie(shipper)).andExpect(redirectsToTotp());
+        for (Map.Entry<RequestMappingInfo, HandlerMethod> entry :
+                handlerMapping.getHandlerMethods().entrySet()) {
+            Set<RequestMethod> methods = entry.getKey().getMethodsCondition().getMethods();
+            for (String pattern : entry.getKey().getPatternValues()) {
+                if (AUTHENTICATION_SCREENS.contains(pattern) || pattern.startsWith("/error")) {
+                    continue;
+                }
+                String url = withSampleVariables(pattern);
+                Cookie session = passwordStage.get(roleFor(url));
+                for (RequestMethod method : methods.isEmpty() ? Set.of(RequestMethod.GET) : methods) {
+                    MockHttpServletRequestBuilder request = method == RequestMethod.GET
+                            ? get(url)
+                            : request(HttpMethod.valueOf(method.name()), url).with(csrf());
+                    mvc.perform(request.cookie(session)).andExpect(redirectsToTotp());
+                    checked.add(method + " " + url);
+                }
+            }
         }
-        for (String url : List.of("/staff/transport-requests", "/staff/kpi-observations", "/staff/bookings")) {
-            mvc.perform(get(url).cookie(sales)).andExpect(redirectsToTotp());
-        }
-        mvc.perform(get("/staff/routing-cases").cookie(routeDesigner)).andExpect(redirectsToTotp());
-        mvc.perform(get("/staff/tracking-records").cookie(trackingManager)).andExpect(redirectsToTotp());
+
+        // 一覧が空のまま通らないことを確かめる（T-107）
+        assertThat(checked)
+                .as("見張りの対象の URL")
+                .contains("GET /customer/transport-requests", "GET /staff/transport-requests")
+                .anyMatch(each -> each.startsWith("POST "));
     }
 
     @Test
@@ -1234,6 +1284,22 @@ class AuthenticationSecurityIntegrationTest {
                 .filter(code -> !window.contains(code))
                 .findFirst()
                 .orElseThrow();
+    }
+
+    /** パスの変数を仮の値で埋める（正規表現の候補は最初の値）。 */
+    private static String withSampleVariables(String pattern) {
+        return pattern.replaceAll("\\{[^}:]+:([^}|]+)[^}]*}", "$1").replaceAll("\\{[^}]+}", "1");
+    }
+
+    /** URL の接頭辞の規則（SecurityConfiguration）に合う役割。 */
+    private static Role roleFor(String url) {
+        if (url.startsWith("/staff/routing-cases")) {
+            return Role.ROUTE_DESIGNER;
+        }
+        if (url.startsWith("/staff/tracking-records")) {
+            return Role.TRACKING_MANAGER;
+        }
+        return url.startsWith("/staff") ? Role.SALES : Role.SHIPPER;
     }
 
     private static ResultMatcher redirectsToTotp() {

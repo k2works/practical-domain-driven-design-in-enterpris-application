@@ -43,9 +43,12 @@ import java.util.stream.IntStream;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.boot.test.system.CapturedOutput;
+import org.springframework.boot.test.system.OutputCaptureExtension;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
@@ -62,6 +65,7 @@ import org.springframework.test.web.servlet.MvcResult;
  */
 @SpringBootTest
 @AutoConfigureMockMvc
+@ExtendWith(OutputCaptureExtension.class)
 @Import({TestcontainersConfiguration.class, RecoveryCodeLoginSecurityIntegrationTest.FixedClock.class})
 class RecoveryCodeLoginSecurityIntegrationTest {
 
@@ -179,6 +183,28 @@ class RecoveryCodeLoginSecurityIntegrationTest {
                 .as("ログインを終えた session には主体があり、回復コードの平文はない")
                 .contains(email)
                 .doesNotContain(RECOVERY_CODE);
+    }
+
+    @Test
+    void 保存したハッシュの形が違う利用者は500にせずA01に戻しログに平文を出さない(CapturedOutput output) throws Exception {
+        // 読めない認証の要素（Bolt 31d、確認ポイント 5）。ログの平文の見張り: エラーの行があること（T-107）と、回復コード・password がないこと
+        String email = enrolledUserWithRecoveryCodes();
+        jdbc.update(
+                "UPDATE identity.recovery_code SET code_hash = 'no-prefix-hash' WHERE user_id = ?",
+                userIdOf(email).value());
+
+        mvc.perform(post(TOTP_URL)
+                        .cookie(loginWithPassword(email))
+                        .param("recoveryCode", RECOVERY_CODE)
+                        .with(csrf()))
+                .andExpect(redirectedUrl(TOTP_ERROR));
+
+        assertThat(failureReasons(email)).containsExactly("INVALID_RECOVERY_CODE");
+        assertThat(output.getAll())
+                .contains("回復コードを照合できず", userIdOf(email).value().toString())
+                .doesNotContain(RECOVERY_CODE)
+                .doesNotContain("1a2b3c4d")
+                .doesNotContain(PASSWORD);
     }
 
     @Test
