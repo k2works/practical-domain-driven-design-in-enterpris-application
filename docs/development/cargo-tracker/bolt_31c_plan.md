@@ -4,7 +4,7 @@ title: "Bolt 31c 計画 - 回復コードによるログインと password の�
 description: "W5 の 7 本目の Bolt の計画。A-02 で回復コードを使ってログインを終えられるようにし（US-18 AC9 のログインの分、SEC-09）、password の段だけの主体を identity の中だけの型に分けて、AuthenticatedActor を 2 つの要素がそろった主体だけにする（ADR-012 の見直しの 4）。構造の直しは Bolt 31d。"
 tags: [development,bolt-plan]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-13T06:46:28Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-13T07:42:09Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-13T06:46:28Z }
 ---
@@ -198,7 +198,7 @@ Totp --> Login : 誤り・再利用・使用済み（password の要素を捨て
 
 状態の記号: `[ ]` 未着手、`[-]` 進行中、`[?]` 承認待ち、`[x]` 完了。各ステップの終わりに `check` が緑であることと、計画からの変更を設計文書に反映したこと（T-53）を確かめ、push して CI を確かめる（T-26、T-65）。そのステップのファイルだけをステージする（T-84）。複数行の書き換えはスクリプトのファイルにする（T-103）。ステップの順はインサイドアウト（ドメインの正規化と主体の値 → サービス → 主体の型と引数の解決 → 認証の入口と画面）。主体の型を入口と画面より先に作り、A-02 の controller を 2 回直さない。
 
-- [ ] **1. 設計文書** 【承認ゲート: 設計文書】
+- [x] **1. 設計文書** 【承認ゲート: 設計文書】
   - ADR-011: 回復コードによるログイン（同じ入口、入力のトークンと結果の型、`RecoveryCodeRejectedException` と対応表、`FACTOR_TOTP`、照合の回数と bcrypt の時間とトランザクションの境界、正規化、拒否の扱い）。105 行目の「TOTP の欄で受け付け」を「A-02 の別の欄で受け付け」に、28 行目のスパイクの削除の時期を「Bolt 31d」に、40 行目の 31c の範囲から特性テストを外して 31d に、197 行目の「入口と暗号のパッケージは Bolt 31c で諮る」を 31d に直す。246 行目（T-35）の A-02 で誤ったときの次の操作と、確認ポイント 5 の文言を合わせる
   - ADR-012: 見直しの 4 を「決めた」に移す（`PasswordVerifiedUser` の置き場所と項目、引数の解決の振る舞い）。64 行目の監査の操作と理由の一覧に `RECOVERY_CODE_USED`・`INVALID_RECOVERY_CODE` を、68 行目の入口と暗号のパッケージを 31d に直す
   - ui_design.md: A-02 の salt と 511 行目（回復コードの欄、登録の直後の案内、問い合わせ先の移動）、画面と URL の表の A-02（180 行目の「回復コードの欄は Bolt 31c」）、A-03（183 行目の 8 時間の起点を「TOTP または回復コードが初めて通った時刻」に）、画面遷移図（230〜252 行目。回復コードで A-02 からホームへ）、A-07 の節（563・566 行目）、A-01 の誤りの文言
@@ -208,15 +208,15 @@ Totp --> Login : 誤り・再利用・使用済み（password の要素を捨て
   - architecture_backend.md: 引数の解決が `FACTOR_TOTP` を確かめること、`PasswordVerifiedUser` を受ける controller の規則、新しい provider が D-5 の認証の例外の範囲に収まること
   - release_plan.md の W5 の節: 31c の行を本計画に、31d の行を足す（SP 0、アプローチはリファクタリング、承認ゲートはステップごと（構造））。32 の行（588 行目）に「回復コードの誤りも失敗の回数に数えるか」。596 行目の本数と一覧（14 本）と順序（31c → 31d → 32、31c → 33b）。持ち込みの表の 608 行目（特性テスト・スパイクの削除を 31d に）
   - 完了の判定: `okf:check` ERROR 0、`documentationTest` 緑
-- [ ] **2. 回復コードの正規化と確かめのサービス** 【承認ゲート: Red・Green】
+- [x] **2. 回復コードの正規化と確かめのサービス** 【承認ゲート: Red・Green】
   - Red: `RecoveryCode.normalize` の単体テスト（大文字・前後と中の空白・ハイフンなしを受ける、16 進でない・長さの違う形は空）。`RecoveryCodeVerificationService` の単体テスト（正しいコードで使った時刻が入り監査記録 `RECOVERY_CODE_USED`、同じコードの二度目は拒む、誤ったコード・形の違うコード・回復コードのない利用者は拒み何も書かない（形の違うコードは照合しない）、ほかの利用者のコードでは通らない、監査の追記が失敗したら使用も戻る、照合の後に平文を記録に出さない）。PostgreSQL の統合テスト（同じコードを 2 つのトランザクションで同時に使うと 1 つだけ通る。T-100）
   - Green: `RecoveryCode.normalize`、サービス（`@Service`・`IdentityConfiguration`・`TransactionTemplate`）、`RecoveryCodeVerification`、`AuditAction.RECOVERY_CODE_USED`・`AuditRecord.recoveryCodeUsed`、`AuthenticationRejection.INVALID_RECOVERY_CODE`。SpotBugs の EI_EXPOSE_REP2 が出れば、Bolt 31・31b と同じくこのクラスに限って抑止する（`config/spotbugs/exclude.xml`）
   - 完了の判定: `check` 緑
-- [ ] **3. password の段の主体の型と引数の解決** 【承認ゲート: セキュリティ、構造】
+- [x] **3. password の段の主体の型と引数の解決** 【承認ゲート: セキュリティ、構造】
   - Red: 引数の解決の単体テスト（password の要素だけの主体には `AuthenticatedActor` を渡さず例外、`Optional<AuthenticatedActor>` は空。2 つの要素がそろった主体には渡す。`PasswordVerifiedUser` は password の要素がある主体に渡す、未認証なら例外）。セキュリティの統合テスト（GET `/login/totp` のモデルの `currentActor` が空で、`PasswordVerifiedUser` の利用者 ID で登録の有無を引いて A-07 に振り分ける。2 つの要素がそろった主体では業務の画面のヘッダーに名前が出る）。ArchUnit（`PasswordVerifiedUser` を受ける controller は `LoginController`・`TotpEnrollmentController` だけ。空振りを防ぐ見張り（2 つの controller が受けている）を並べる。identity の外からの参照は `ModularityTest` が止めるので重ねない）
   - Green: `PasswordVerifiedUser`、`PasswordVerifiedUserArgumentResolver`（`IdentityWebConfiguration` に登録）、`AuthenticatedActorArgumentResolver` が `FACTOR_TOTP` を確かめる、`LoginController`・`TotpEnrollmentController` を `PasswordVerifiedUser` で受け `Principal` の引数を外す（`TotpEnrollmentService` の引数も `AuthenticatedActor` から `PasswordVerifiedUser` に変える）、`WithAuthenticatedActorSecurityContextFactory` が `FactorGrantedAuthority` で `FACTOR_PASSWORD`・`FACTOR_TOTP` を足す。`AuthenticationArchitectureTest.java:109` のコメントの「31c で諮る」を 31d に直す
   - 完了の判定: `check` 緑。ほかのコンテキストの本体のコードと、`@WithAuthenticatedActor` を使う 11 ファイルに差分がない（H2）
-- [ ] **4. A-02 の回復コードの欄と認証** 【承認ゲート: セキュリティ、画面】
+- [x] **4. A-02 の回復コードの欄と認証** 【承認ゲート: セキュリティ、画面】
   - Red: セキュリティの統合テスト（本物のフィルターの連なりと Spring Session JDBC の上で）
     - 回復コードで A-02 を通ると、主体が `FACTOR_PASSWORD` と `FACTOR_TOTP` の両方を持ち、session の ID が変わり、業務の URL を開け、8 時間の起点が置かれ、監査記録に `RECOVERY_CODE_USED` と `LOGIN_SUCCEEDED`（`PASSWORD_VERIFIED` ではない）
     - 使ったコードでもう一度ログインすると A-01 に戻り、監査記録の理由は `INVALID_RECOVERY_CODE`。誤ったコード・形の違うコードも同じ。session・監査記録に回復コードの平文がなく、使ったコードの `used_at` はある（T-106）
@@ -226,10 +226,10 @@ Totp --> Login : 誤り・再利用・使用済み（password の要素を捨て
     - 登録の直後の A-02 に案内が出て、ログインを終えた後に A-02 を開き直すと出ない
   - Green: `RecoveryCodeAuthenticationToken`（入力だけ、`eraseCredentials`）・`RecoveryCodeAuthenticationProvider`（結果は `TotpAuthenticationToken.authenticated`）・`RecoveryCodeRejectedException`、`TotpAuthenticationFilter` の振り分け、成功の後に登録を始めた時刻を消す、`SecurityConfiguration` の provider の登録と例外の対応表、`AuthenticationAuditListener` の拒否の理由の分岐、`login-totp.html` の `<details>` と登録の直後の案内と問い合わせ先の移動（3 行目の古い注釈も直す）、`login.html` の誤りの文言
   - 完了の判定: `check` 緑
-- [ ] **5. 画面の層** 【承認ゲート: セキュリティ】
+- [x] **5. 画面の層** 【承認ゲート: セキュリティ】
   - `login_ui.feature` に「認証アプリを使えない荷主担当者が回復コードでログインする」（`UiUsers` に回復コードを発行する口を足す。平文はテストの準備で決めた値）。印は `@US-18-AC9 @demo @demo-bolt-31c/recovery`（AC9 のログインの分。再登録は 33b で同じ印のシナリオを足し、`test_strategy.md` の受入条件の照合の表の AC9 は 33b で「完了」にする）
   - 完了の判定: `check` と `uiTest` が緑
-- [ ] **6. SonarQube と開発レビューとデモと終了報告** 【承認ゲート: 終了報告】
+- [-] **6. SonarQube と開発レビューとデモと終了報告** 【承認ゲート: 終了報告】
   - SonarQube（`sonar-local:check`。T-104 で開発レビューの前に流す）
   - 開発レビュー（プログラマー、アーキテクト、テスター（セキュリティの境界）、テクニカルライター（A-02 の回復コードの欄・案内・A-01 の誤りの文言。T-90））
   - レビューの直しの後にデモの動画（`demoVideo`）を撮り、#13 に添付する（`issue:attach-demo`。T-105）。`bolt_31c_report.md`。release_plan の W5 の 31c の行、開発の索引。#13 に進み具合をコメントする
@@ -282,6 +282,7 @@ Totp --> Login : 誤り・再利用・使用済み（password の要素を捨て
 | 2026-10-13 | 初版作成（承認待ち）。開始準備で、Bolt 31b の終了報告の Try と既知の課題、ADR-012 の見直しの 4、UI 設計の A-02、回復コードの集約とリポジトリ、引数の解決と TOTP の入口を調べ、human:kakimomokuri の決定（31c と 31d に分ける、回復コードは `<details>` の別の欄、`FACTOR_TOTP` と専用の監査、主体の型は `valueobjects`）を反映した | anthropic/claude-opus-5-5 |
 | 2026-10-13 | 詳細整合性検証（16 件）と横断整合性検証（17 件）の指摘を反映した。provider の結果を `TotpAuthenticationToken` にすること（成功の監査の判定と `toBuilder()`）、拒否の例外と失敗のイベントの対応表、トランザクションの境界（照合は外、消費と監査は 1 つ）、正規化をドメインに置くことと形の正規表現、`PasswordVerifiedUser` の `EmailAddress`、両方の欄がある送信の拒み方、A-01 の誤りの文言と問い合わせ先の移動（確認ポイント 5）、登録の直後の案内の条件、A-02 のヘッダーのテストの空振り（T-106）、ステップ 3 と 4 の入れ替え、ステップ 1 の対象（non_functional・architecture_backend、ADR・UI 設計・ドメインモデル・データモデル・release_plan の行）、4 図の省略の明記、H2 の根拠、`@US-18-AC9`、SpotBugs を直した | anthropic/claude-opus-5-5 |
 | 2026-10-13 | 計画の承認を記録した。確認ポイント 1〜11 は推奨のとおり。ステップの承認ゲートで止まらずに進める（T-36） | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
+| 2026-10-13 | 開発レビューの直しで計画から変えたことを記録した。(1) 正規化に全角（NFKC）・全角スペース・長音を足した（計画は半角の空白・大文字・ハイフンの抜けだけ）。(2) 入力のトークンの平文は `eraseCredentials` で消す計画だったが、ProviderManager は入力に呼ばないので「request の範囲でしか持たない」に書き方を改めた。(3) 要素の判定を `AuthenticationFactors` にまとめ、`AuthenticatedActor` の引数の解決は `FACTOR_PASSWORD` と `FACTOR_TOTP` の両方を確かめる形にした。(4) 回復コードの欄の説明の文を「半角の数字と a〜f の英字で 8 文字。…」にし、salt の問い合わせ先を実装の文に合わせた | anthropic/claude-opus-5-5 |
 
 ## 関連ドキュメント
 
