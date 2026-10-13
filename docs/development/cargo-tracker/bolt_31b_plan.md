@@ -4,7 +4,7 @@ title: "Bolt 31b 計画 - 暗号文の AAD と初回の TOTP の登録（A-07）
 description: "W5 の 6 本目の Bolt の計画。TOTP の秘密の暗号文を利用者に結び付け（AAD）、初回の TOTP の登録（A-07。秘密の発行、QR、最初のコードの確かめ）と回復コードの発行と一度だけの表示（US-18 AC7、SEC-09）を作る。登録の途中だけ password の段の上限を 15 分にする。回復コードによるログイン、password の段の主体の型、ADR-012 の見直しの 4、特性テストは Bolt 31c。"
 tags: [development,bolt-plan]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-13T04:38:54Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-13T06:02:20Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-13T04:40:50Z }
 ---
@@ -188,24 +188,24 @@ title Bolt 31b で作る登録の画面遷移
 
 状態の記号: `[ ]` 未着手、`[-]` 進行中、`[?]` 承認待ち、`[x]` 完了。各ステップの終わりに `check` が緑であることと、計画からの変更を設計文書に反映したこと（T-53）を確かめ、push して CI を確かめる（T-26、T-65）。そのステップのファイルだけをステージする（T-84）。複数行の書き換えはスクリプトのファイルにする（T-103）。
 
-- [ ] **1. 設計文書** 【承認ゲート: 設計文書】
+- [x] **1. 設計文書** 【承認ゲート: 設計文書】
   - ADR-011: AAD（決定 5。AAD の文字列、dev のコードの部品の AAD は開発用の利用者のメールアドレスから決める作り物の ID で DB の利用者 ID とは別であること）、登録の流れ（秘密の発行、最初のコードの確かめ、要素は与えない、回復コードは登録の後に一度だけ、登録の途中の上限 15 分）、QR（ZXing、インラインの SVG、`fill` の属性）、`TotpProvisioning` を値に置く理由、新しいポートの置き場所、議題 2 の①④の決定、先取りの登録のリスクを受け入れること（確認ポイント 8）。28 行目のスパイクの削除を「Bolt 31c の後」に、174 行目の A-02 の回復コードの入力を 31c に、62・184・185 行目（QR・URI・発行は 31b で決める）を決定に移す
   - ADR-012: 「W5 で見直すこと」の 4 の割り振りを 31c に（104・109・121 行目）。password の段の主体の型を `identity.domain.model.valueobjects` に置く見込み（T-101 の結果。31c で決める）
   - ui_design.md: A-07 の 2 つの画面の節と salt、画面と URL の表（登録の案内を A-07 に置き換える。180・181 行目）、遷移図（A-02 を経て A-07。248・249 行目）、A-02 の回復コードの欄を 31c に（180・508 行目）
   - domain_model.md（用語集に `TotpSecretIssuer`・`RecoveryCodeGenerator`・`TotpProvisioning`・`TotpEnrollmentService`・`TotpEnrollmentQueryService`、`TotpCodeGenerator` の形（182 行目）、`TotpVerificationService` から `isEnrolled` が抜けること（183 行目）、ポートの説明（958 行目）、IA-INV-11 の発行の形）、data_model.md（暗号文の AAD、`TOTP_ENROLLED`、並び順）、tech_stack.md（ZXing の行）、non_functional.md の SEC-03（登録の途中の 15 分）・SEC-09・SEC-16
   - release_plan.md の W5 の節: 31b の行を本計画に、31c の行を足す（SP は 31b に 2、31c に 0）。33b の行（589 行目「回復コードによるログインは 31b」を 31c に）、持ち込みの表（601・605 行目の見直しの 4・特性テスト・スパイクの削除を 31c に）。順序（31b → 31c → 32。32 の見直しの 3 は 31c の引数の解決と同じ部品に触り、33b の再登録は 31c の回復コードのログインを前提にする）と、W5 が 13 本になり祝日の週で SP も上限を超えることを W5 の締めで確かめると書く
   - 完了の判定: `okf:check` ERROR 0、`documentationTest` 緑
-- [ ] **2. AAD** 【承認ゲート: Red・Green、データベース（dev-data）】
+- [x] **2. AAD** 【承認ゲート: Red・Green、データベース（dev-data）】
   - Red: `AesGcmSecretCipher` の単体テスト（同じ利用者 ID なら往復できる、別の利用者 ID では復号できない、AAD の文字列の形）、生成器の契約テストを `code(UserId, EncryptedSecret, long)` に直して落とす。統合テスト「DB で別の利用者の暗号文に入れ替えると TOTP が通らず、500 にせず A-01 に戻る」
   - Green: 暗号化・復号に AAD、`TotpCodeGenerator` のシグネチャ、`TotpCredential#matchingStep` が自分の利用者 ID を渡す。`DevTotpCodes` は設定の秘密を、開発用の利用者のメールアドレスから決める作り物の ID を AAD にして内部で扱う（利用者の表を読まない）。dev-data の暗号文を新しい版のマイグレーションで作り直す
   - 直すテスト: `TestSecretCiphers`、`AesGcmSecretCipherTest`、`JavaOtpTotpCodeGeneratorTest`、`TotpCredentialTest`、`DevTotpCodesTest`、`DevTotpCredentialsDevProfileTest`（DB の利用者 ID を AAD にして復号）、`AuthenticationSecurityIntegrationTest`・`TotpVerificationServiceIntegrationTest`・`UiUsers`（暗号化の呼び出し）
   - 完了の判定: `check` 緑
-- [ ] **3. 秘密の発行・回復コードの生成・登録のサービス** 【承認ゲート: Red・Green、外部ライブラリ】
+- [x] **3. 秘密の発行・回復コードの生成・登録のサービス** 【承認ゲート: Red・Green、外部ライブラリ】
   - Red: `RandomTotpSecretIssuer` の単体テスト（20 バイト、利用者ごとに違う、URI の形、キーが Base32 の 4 文字区切り、QR の SVG を ZXing で読み戻すと URI に戻る、SVG に `style` がない）、`TotpProvisioning#toString` が値を隠す、`RandomRecoveryCodeGenerator`（10 個、形、重複しない）、`TotpEnrollmentService` の単体テスト（登録済みは拒む、途中の暗号文を使い続ける、別の利用者の暗号文は使わず新しく発行する、誤ったコードは保存しない、正しいコードで資格と回復コード 10 個と監査記録、回復コードの平文はハッシュと照合できる、復号できない暗号文は `SecretUnusable`）、PostgreSQL の統合テスト（同時の 2 つの登録で 1 つだけ通り回復コードは 10 個、負けた側は `AlreadyEnrolled`。T-100・T-99）
   - Green: `build.gradle` に `com.google.zxing:core` を足す（確認ポイント 3）。ポートと実装、`TotpProvisioning`、`TotpEnrollmentService`（`@Service`・`IdentityConfiguration`）、`TotpEnrollmentQueryService`（`isEnrolled` を移す）、`AuditAction.TOTP_ENROLLED` と `AuditRecord.totpEnrolled`、`DuplicateTotpEnrollmentException`、回復コードのリポジトリの Javadoc（並び順を約束しない）
   - ArchUnit: ZXing を `identity.infrastructure` に閉じる規則と、空振りを防ぐ見張り（秘密の発行の実装が ZXing を使う）。秘密の発行と回復コードの生成の実装は application に依存しない規則（D-5 の認証の例外は `identity.infrastructure.security` 全体にかかるので、入口でない部品の守りを足す）。違反を入れて落ちることを確かめる
   - 完了の判定: `check` 緑、ZXing の依存の脆弱性（GitHub Advisory・OSV を手で引く）とライセンスを終了報告に書く
-- [ ] **4. A-07 の 2 つの画面と登録の途中の上限** 【承認ゲート: セキュリティ、画面】
+- [x] **4. A-07 の 2 つの画面と登録の途中の上限** 【承認ゲート: セキュリティ、画面】
   - Red: セキュリティの統合テスト（本物の Spring Session JDBC の上で）
     - 未登録の利用者は password の後に A-02 を経て A-07 に来る。QR と手入力のキーが出て、応答が `no-store`。GET の再読み込みでキーが変わらない。session の属性に平文の秘密も表示の値もない
     - 誤ったコードでは保存せず、同じ秘密で示し直す。正しいコードで回復コード 10 個の画面になり、監査記録に `TOTP_ENROLLED`。回復コードの画面の再読み込み（登録の POST の再送）は A-02 へ送る
@@ -215,11 +215,11 @@ title Bolt 31b で作る登録の画面遷移
   - Green: A-07 の controller（`identity.interfaces.web`）、`login-totp-enroll.html`・`login-totp-recovery-codes.html`（Bolt 31 の `totp-enroll.html` を置き換える）、登録の途中の暗号文の文字列と登録を始めた時刻を session に置く・登録の後に消す、`SessionLifetimeFilter` の登録の途中の上限、`ENROLL_URL` の定数の移動、`LoginSuccessHandler` は登録の有無を見ずに A-02 へ送る（A-02 の controller が未登録を A-07 へ送る）、`SecurityConfiguration` の組み立ての直し
   - 直すテスト: `AuthenticationSecurityIntegrationTest` の「TOTP を登録していない利用者は…登録の案内へ移り」（password の後に A-02 を経て A-07 に変わる）
   - 完了の判定: `check` 緑
-- [ ] **5. 利用者の切り替えと画面の層** 【承認ゲート: セキュリティ】
+- [x] **5. 利用者の切り替えと画面の層** 【承認ゲート: セキュリティ】
   - 統合テスト: 登録の途中の session に別の利用者の password を送ると、前の利用者の登録の途中の暗号文は使えず（AAD）、新しい秘密になる（T-102）。登録の途中の時刻も新しい利用者の password の段で消える
   - 画面の層: `login_ui.feature` に「未登録の利用者が A-07 で登録し、回復コードを保存して A-02 でログインする」（`UiUsers` に未登録の利用者を作る口を足す。QR の代わりに手入力のキーからコードを作る）。デモの印 `@demo @demo-bolt-31b/enroll`
   - 完了の判定: `check` と `uiTest` が緑
-- [ ] **6. SonarQube と開発レビューと終了報告** 【承認ゲート: 終了報告】
+- [-] **6. SonarQube と開発レビューと終了報告** 【承認ゲート: 終了報告】
   - SonarQube（`sonar-local:check`。T-104 で開発レビューの前に流す）
   - 開発レビュー（プログラマー、アーキテクト、テスター（セキュリティの境界）、テクニカルライター（A-07 の文言。T-90））
   - デモの動画（`demoVideo`）と #13 への添付（`issue:attach-demo`）。`bolt_31b_report.md`。release_plan の W5 の 31b の行、開発の索引。#13 に進み具合をコメントする
@@ -280,6 +280,7 @@ title Bolt 31b で作る登録の画面遷移
 | 2026-10-13 | 初版作成（承認待ち）。開始準備で、Bolt 31 の終了報告の議題 5 と既知の課題、UI 設計の A-07、今の回復コードの集約とリポジトリを調べ、human:kakimomokuri の決定（31b と 31c に分ける、password の段の主体は identity の中だけの型、QR は ZXing でインラインの SVG、AAD は 31b）を反映した | anthropic/claude-opus-5-5 |
 | 2026-10-13 | 詳細整合性検証（21 件）と横断整合性検証（17 件）の指摘と、T-101 の骨組みの確かめの結果を反映した。human:kakimomokuri の回答（登録の途中だけ 15 分、「保存した」は画面の必須だけ、先取りの登録は受け入れて ADR に書く、`TotpProvisioning` は値で値を隠す）を確認ポイント 6〜9 にした。session には暗号文の文字列を置く、表示の値は秘密と同じ重さとして扱う、GET の再読み込みで秘密を変えない、AAD の文字列、監査記録の企業 ID、同時の登録で負けた側の応答、A-02 を経て A-07 へ、画面の層は要素の権限を見ない、失敗へ倒す場面（T-42）、T-99、31c に移すことで古くなる上流の記述、直すテスト、アプローチの理由、ZXing の見張りと入口でない部品の規則、ステップの番号を直した | anthropic/claude-opus-5-5 |
 | 2026-10-13 | 計画の承認を記録した。確認ポイント 1〜17 は推奨のとおり。`/goal Bolt31b` により、ステップの承認ゲートで止まらずに進める（T-36） | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
+| 2026-10-13 | 開発レビューの直しで計画から変えたことを記録した。(1) 同時の登録の負けた側: 計画は「負けた側は `AlreadyEnrolled`」としていたが、ステップ 3 では例外を controller で受けていた。レビューでサービスの中にまとめ（`TransactionTemplate` の外側で受ける）、計画どおりの結果に戻した。(2) 登録を始めた時刻: 登録の後に消す計画を、A-02 で TOTP が通るまで残す形に改めた（回復コードを書き写す時間を同じ 15 分に含める）。期限は時刻で示す。(3) `begin` の戻り値: 計画の「秘密と表示の値」を `EnrollmentStart`（`Started`・`AlreadyEnrolled`）にした（ステップ 3）。(4) A-03 の文言にログインの手続きの時間切れを足した | anthropic/claude-opus-5-5 |
 
 ## 関連ドキュメント
 
