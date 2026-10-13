@@ -3,7 +3,7 @@ type: Plan
 title: "Bolt 32 計画 - ログインのロック（US-18 AC3）"
 description: "W5 の 9 本目の Bolt の計画。password・TOTP・回復コードの失敗が 5 回続いたら 15 分ロックする（US-18 AC3、IA-INV-03）。失敗の数え方と監査記録をアプリケーションのサービスで 1 つのトランザクションにまとめ（ADR-012 の見直しの 5、IA-INV-08）、ロック中も誤りと同じ応答にして存在を漏らさない（AC2）。Bolt 31d から送った例外の親の型と、実装の誤りは 500 の端から端までの確かめも入れる。AC6 と見直しの 3 は Bolt 32c。"
 tags: [development,bolt-plan]
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-13T13:17:00Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-13T13:39:40Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-13T11:45:39Z }
 ---
@@ -197,7 +197,7 @@ Totp --> Login : 誤り・再利用・使用済み、またはロック中（/lo
 
 状態の記号: `[ ]` 未着手、`[-]` 進行中、`[?]` 承認待ち、`[x]` 完了。各ステップの終わりに `check` が緑であることと、計画からの変更を設計文書に反映したこと（T-53）を確かめ、push して CI を確かめる（T-26、T-65）。コミットは pathspec で作り、そのステップのファイルだけを入れる（T-84、T-110）。複数行の書き換えはスクリプトのファイルにする（T-103）。ステップ 1 を push してからコードのステップを push する（T-109）。
 
-- [ ] **1. 設計文書** 【承認ゲート: 設計文書】
+- [x] **1. 設計文書** 【承認ゲート: 設計文書】
   - ADR-011: ロック（数え方の置き場所と 1 つのトランザクション、数える失敗と数えない失敗（回復コードを数える、A-07 は数えない）、成功で戻す時点、ロックの確かめの位置と 1 か所の判定、理由の優先（ロック中は利用停止より先に `LOCKED`）、ロックの監査、最初の失敗の作成の競合、DB の誤りの扱い、`{bcrypt}` の壊れたハッシュを受け入れる理由、TOTP の段は照合の前にロックを見るので時間でロックが分かることを受け入れる理由（K-02 で password が正しいことは分かっている））。直す行: 58・114（「password と TOTP」→ 回復コードも）、224（回復コードを数えるかは 32 → 決定）、276（A-02 のロック中の案内と解ける時刻）、292（解ける時刻を示して待つ）、296-297（ロックの確認は照合より先・表示から存在が分かる）。S-02 を W10 の WAF に送ることと受け入れるリスク。`UnreadableCredentialException` の親の型（決定 8 を改める）
   - ADR-012: 見直しの 5 を「決めた」に移し、`isLocked` を `commandservices` に置く理由を書く。見直しの 3 を 32c に（104 行目）。63 行目（数え方を listener に足す）、95 行目（ネガティブの `CargoUserDetails` の項目の変更。この Bolt では足さない）、96 行目（レート制限は W10 の WAF）
   - ui_design.md: A-01 の salt 本体（470-487 行目あたり）と 2 つの誤りの文言、画面と URL の表の A-01・A-02（180 行目の「ロック中の案内は Bolt 32」）、画面遷移図のロック中の状態（245・255・262 行目）と説明（270 行目）、521 行目、A-07 の 558 行目（登録の誤りは数えないと決めた）
@@ -208,11 +208,11 @@ Totp --> Login : 誤り・再利用・使用済み、またはロック中（/lo
   - user_story.md: US-18 の決定の注記（回復コードの誤りも数える、ロック中も誤りと同じ応答、S-02 は W10）
   - release_plan.md の W5 の節: 32 の行を本計画に、32c の行を足す（AC6、見直しの 3、31d から送った低の指摘を 1 つずつ。SP 0）。557 行目の言い方（32 はスキーマも集約も新しく作らない）。Bolt の本数（15 本）と順序（32 → 32c。32c と 32b に依存はない。33b は 32c に依存しない）。W5 の状態と主なタスク（553・617 行目）。持ち込みの表の 607 行目（S-02 を W10 の WAF に）。リスク台帳（S-02 の行）
   - 完了の判定: `okf:check` ERROR 0、`documentationTest` 緑。push してからコードを push する
-- [ ] **2. 数え方と監査をまとめるサービス** 【承認ゲート: Red・Green、データベース】
+- [x] **2. 数え方と監査をまとめるサービス** 【承認ゲート: Red・Green、データベース】
   - Red: リポジトリの契約テスト（MyBatis（PostgreSQL・H2）とメモリ: `prepare` が 2 回でも 1 行、`recordFailure` が数えたかと数えた後の状態を返す、境界の 4・5 回・14 分 59 秒・15 分、解けた後の 1 回目。T-99）。`LoginAttemptService` の単体テスト（失敗で `LOGIN_FAILED` と回数、5 回目で `ACCOUNT_LOCKED`、ロック中の失敗は理由 `LOCKED` で数えない、`recordLockedAttempt`、成功で 0 に戻しロック中は戻さない、監査の追記が失敗したら回数も戻る、存在しない利用者は記録を作らない）。PostgreSQL の統合テスト（同じ利用者の最初の失敗が同時に 2 つでも両方数えられる（議題 2 の③）、同時の失敗が両方の監査記録を持つ、同時の 4・5 回目で `ACCOUNT_LOCKED` が 1 行だけ。T-100）
   - Green: `FailureCount`、リポジトリの `prepare` と `recordFailure` の戻り値（更新の件数）、`LoginAttemptService`（`@Service`、`IdentityConfiguration` で組み立て、`TransactionTemplate`）、`AuditRecord.accountLocked`、`AuditAction.ACCOUNT_LOCKED`、`AuthenticationRejection.LOCKED`・`SERVICE_ERROR`、SpotBugs の EI_EXPOSE_REP2 の抑止（クラス単位。5 つ目）。Bolt 32 で扱うと書いた注釈（`LoginFailureRepository.java:20`、`AuthenticationFactorMapper.xml:88`、`MyBatisLoginFailureRepository.java:14`）を直す
   - 完了の判定: `check` 緑（H2 の契約テストを含む）
-- [ ] **3. 認証の入口のロック** 【承認ゲート: セキュリティ、画面】
+- [x] **3. 認証の入口のロック** 【承認ゲート: セキュリティ、画面】
   - Red: セキュリティの統合テスト
     - AC3 の境界: 4 回はロックされず 5 回でロック、14 分 59 秒はロック中で 15 分で解ける、15 分後に 1 回誤ってもロックされない（1 回目から数える）
     - 合わせて数える: password と TOTP と回復コードの失敗を合わせて 5 回
@@ -226,16 +226,16 @@ Totp --> Login : 誤り・再利用・使用済み、またはロック中（/lo
   - 特性テスト（`SpringSecurityCharacterizationTest` に足す。T-108）: `DaoAuthenticationProvider` は照合の後の確認を照合が通ったときだけ呼ぶ、`LockedException` の失敗のイベントは `AuthenticationFailureLockedEvent`、`ProviderManager` はアカウントの状態の例外でほかの provider を試さない、利用者の読み出しの例外は `InternalAuthenticationServiceException` に包まれる
   - Green: `LockAwareUserDetailsChecker`（`SecurityConfiguration` の照合の後の確認に組む）、`AuthenticationAuditListener` の書き換え、2 つの provider がロックを見る、`login.html` の 2 つの文言、`SecurityConfiguration` の組み立て（`AuthenticationAuditListener.java:22` の注釈も直す）
   - 完了の判定: `check` 緑
-- [ ] **4. Bolt 31d から送った例外の扱い** 【承認ゲート: セキュリティ】
+- [x] **4. Bolt 31d から送った例外の扱い** 【承認ゲート: セキュリティ】
   - `UnreadableCredentialException` を `RuntimeException` に（テストの型の確かめを合わせる）
   - 実装の誤りは 500 の統合テスト（TOTP の生成器が素の `IllegalArgumentException` を投げる偽物の部品で、500 になり、監査の失敗が残らず、数えないこと）
   - `DataAccessException` の扱い（確認ポイント 8）: 書き込み（数え方・監査の書き込み）の DB の誤りは 500 にしてエラーのログを残す。読み出しの DB の誤りは、password の段（利用者・ロックの読み出し）は枠組みが失敗へ倒し `/login?error`（理由 `SERVICE_ERROR`、数えない）、TOTP の段は 500。それぞれを統合テストで 1 本ずつ確かめ、エラーのログ（`LogCapture`）を確かめる
   - `{bcrypt}` で中身が壊れたハッシュは、枠組みが false を返す（一致しない。利用者の誤りとして数えられる）ことを特性テストに固定する（確認ポイント 9）
   - 完了の判定: `check` 緑
-- [ ] **5. 画面の層** 【承認ゲート: セキュリティ】
+- [x] **5. 画面の層** 【承認ゲート: セキュリティ】
   - `login_ui.feature` に「password を 5 回誤った荷主担当者は、正しい password でも同じ誤りの文言でログインできない」（`@US-18-AC3 @demo @demo-bolt-32/lock`）。画面の層には時計を進める部品がないので、解けることは統合テストに任せる
   - 完了の判定: `check` と `uiTest` が緑
-- [ ] **6. SonarQube と開発レビューとデモと終了報告** 【承認ゲート: 終了報告】
+- [x] **6. SonarQube と開発レビューとデモと終了報告** 【承認ゲート: 終了報告】
   - SonarQube（`sonar-local:check`。T-104）
   - 開発レビュー（プログラマー、アーキテクト、テスター（ロックの境界と同時の失敗）、テクニカルライター（A-01 の文言と予告。T-90））
   - レビューの直しの後にデモの動画を撮り、#13 に添付する（T-105）。`bolt_32_report.md`（スパイクのロックの 5 本との対応を含む）。release_plan の W5 の 32 の行、開発の索引。#13 に進み具合をコメントする
@@ -273,12 +273,12 @@ Totp --> Login : 誤り・再利用・使用済み、またはロック中（/lo
 
 ## 完了条件
 
-- [ ] password・TOTP・回復コードの失敗が合わせて 5 回続くとロックされ、15 分の間は正しい認証情報でも拒まれ、15 分で解け、解けた後は 1 回目から数える。ロック中の試行は数えず期限も延びない。2 つの要素がそろったログインで 0 に戻り、password の段の成功では戻らない
-- [ ] ロック中も誤りと同じ応答（password の段は `/login?error`、認証コードの段は `/login?totp-error`）で、ロックの有無と解ける時刻は示さない。存在しないメールアドレスの応答とも同じ。A-01 の 2 つの誤りの文言に予告がある
-- [ ] 失敗の監査記録と回数が 1 つのトランザクションで、ロックで `ACCOUNT_LOCKED` が 1 行、ロック中の試行で理由 `LOCKED` が残る。同時の最初の失敗も両方数えられる
-- [ ] `UnreadableCredentialException` が `RuntimeException` を継ぎ、実装の誤りは端から端まで 500 になる。DB の誤りの扱いが確認ポイント 8 のとおり（統合テスト）
-- [ ] `check` と `uiTest` が緑。push して CI を確かめた。SonarQube の Quality Gate が PASS、`okf:check` ERROR 0
-- [ ] 開発レビュー、レビューの後のデモの動画と #13 への添付、終了報告（スパイクのロックの 5 本との対応を含む）。#13 に進み具合をコメントした
+- [x] password・TOTP・回復コードの失敗が合わせて 5 回続くとロックされ、15 分の間は正しい認証情報でも拒まれ、15 分で解け、解けた後は 1 回目から数える。ロック中の試行は数えず期限も延びない。2 つの要素がそろったログインで 0 に戻り、password の段の成功では戻らない
+- [x] ロック中も誤りと同じ応答（password の段は `/login?error`、認証コードの段は `/login?totp-error`）で、ロックの有無と解ける時刻は示さない。存在しないメールアドレスの応答とも同じ。A-01 の 2 つの誤りの文言に予告がある
+- [x] 失敗の監査記録と回数が 1 つのトランザクションで、ロックで `ACCOUNT_LOCKED` が 1 行、ロック中の試行で理由 `LOCKED` が残る。同時の最初の失敗も両方数えられる
+- [x] `UnreadableCredentialException` が `RuntimeException` を継ぎ、実装の誤りは端から端まで 500 になる。DB の誤りの扱いが確認ポイント 8 のとおり（統合テスト）
+- [x] `check` と `uiTest` が緑。push して CI を確かめた。SonarQube の Quality Gate が PASS、`okf:check` ERROR 0
+- [x] 開発レビュー、レビューの後のデモの動画と #13 への添付、終了報告（スパイクのロックの 5 本との対応を含む）。#13 に進み具合をコメントした
 
 ### デモ項目
 
