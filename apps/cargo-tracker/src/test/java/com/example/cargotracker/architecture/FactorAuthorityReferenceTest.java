@@ -38,8 +38,8 @@ class FactorAuthorityReferenceTest {
         // 走査が空振りしていないこと（T-107）: ソースがあり、要素の権限を定める入口のクラスが見つかる
         assertThat(sources).as("走査したソース").hasSizeGreaterThan(100);
         assertThat(referencing)
-                .contains("com/example/cargotracker/identity/infrastructure/security/TotpAuthenticationToken.java");
-        assertThat(referencing).allMatch(path -> ALLOWED.stream().anyMatch(path::startsWith));
+                .contains("com/example/cargotracker/identity/infrastructure/security/TotpAuthenticationToken.java")
+                .allMatch(path -> ALLOWED.stream().anyMatch(path::startsWith));
     }
 
     private static boolean refersToFactors(Path path) {

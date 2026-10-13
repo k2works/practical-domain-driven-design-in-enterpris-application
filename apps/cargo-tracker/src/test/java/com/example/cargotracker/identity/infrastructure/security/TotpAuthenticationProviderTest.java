@@ -14,6 +14,7 @@ import java.time.Clock;
 import java.util.Set;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
+import org.springframework.security.core.GrantedAuthority;
 
 /**
  * A-02 の TOTP の provider（Bolt 31、Bolt 31d）。サービスの結果を認証の成否に直す。保存した秘密を読めないときだけ拒否に倒し、
@@ -62,7 +63,7 @@ class TotpAuthenticationProviderTest {
                 new TotpAuthenticationProvider(new StubService(TotpVerification.ACCEPTED, null));
 
         assertThat(provider.authenticate(input()).getAuthorities())
-                .extracting(authority -> authority.getAuthority())
+                .extracting(GrantedAuthority::getAuthority)
                 .containsExactly(TotpAuthenticationToken.FACTOR_TOTP);
     }
 
