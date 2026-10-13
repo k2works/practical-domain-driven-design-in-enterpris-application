@@ -4,7 +4,7 @@ title: "cargo-tracker 非機能要件"
 description: "cargo-tracker の性能・可用性・復旧・データ鮮度・セキュリティ・プライバシー・保持・アクセシビリティ・保守性・拡張性の測定可能な目標値、根拠、決定者、検証方法。"
 tags: [design, non-functional]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-13T01:41:37Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-13T05:15:17Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T08:22:09Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:01:38Z }
@@ -145,13 +145,13 @@ verified:
 | :--- | :--- | :--- | :--- | :--- |
 | SEC-01 | 認証方式 | 事前登録したメールアドレス + password + TOTP | 確定 | BR-14 |
 | SEC-02 | ロック | 5 回連続失敗で 15 分 | 確定 | BR-14 |
-| SEC-03 | session | 無操作 30 分、発行から 8 時間で失効。8 時間の起点は、その session で初めて TOTP が通った時刻（Bolt 31）。password の段だけの session は、password を確かめた時刻から 5 分で失効（Bolt 31。ADR-011） | 確定 | BR-14 |
+| SEC-03 | session | 無操作 30 分、発行から 8 時間で失効。8 時間の起点は、その session で初めて TOTP が通った時刻（Bolt 31）。password の段だけの session は、password を確かめた時刻から 5 分で失効（Bolt 31。ADR-011）。ただし TOTP の登録の途中（A-07 を開いた session）は、登録を始めた時刻から 15 分で失効（認証アプリを入れて QR コードを読む時間を見込む。登録を始めた時刻は password の段の 5 分の中でしか置けず、2 つの要素がそろった後は使わない。Bolt 31b。ADR-011 の決定 6） | 確定 | BR-14 |
 | SEC-04 | password の長さ | 12 文字以上、64 文字以下。空白と全角文字を許す | 提案 | NIST SP 800-63B は多要素認証と組み合わせる password に最低 8 文字を求める。業務データを扱うため余裕をとる |
 | SEC-05 | password の構成規則 | 文字種の組合せは強制しない。漏えい済みの password の一覧と、よく使われる password の一覧に載っているものは拒否する | 提案 | NIST SP 800-63B の考え方（構成規則より漏えい一覧との照合） |
 | SEC-06 | password の定期変更 | 強制しない。漏えいの疑いがあるときだけ変更を求める | 提案 | 同上 |
 | SEC-07 | password の保存 | Spring Security の推奨するハッシュで保存する。DelegatingPasswordEncoder の既定の bcrypt（強さ 10、`{bcrypt}` の接頭辞）を使う（2026-10-06 の Bolt 14 の確認ポイント 6。Argon2id は Bouncy Castle が要るため採らない。接頭辞で後から移せる） | 確定 | 平文や可逆な暗号で保存しない |
 | SEC-08 | password の回復 | 登録メールアドレスへ 1 回だけ使える再設定リンク（30 分有効）を送る。再設定後も TOTP は必要。再設定は監査記録に残す | 提案 | 多要素を回復の手順でも迂回させない |
-| SEC-09 | TOTP の登録 | 初回ログイン時に必須。登録時に一度だけ使える回復コード 10 個を発行する。回復コードは bcrypt（強さ 10）のハッシュだけを保存し、平文を表に書かない（Bolt 30） | 提案 | 端末の紛失に備える |
+| SEC-09 | TOTP の登録 | 初回ログイン時に必須。登録時に一度だけ使える回復コード 10 個を発行する。回復コードは bcrypt（強さ 10）のハッシュだけを保存し、平文を表に書かない（Bolt 30）。回復コードは乱数で作る `1a2b-3c4d` の形（8 文字の 16 進を 4 文字ずつ区切る 32 ビット。総当たりはロックと bcrypt で抑える）で、10 個のうちに重複がない。平文は登録を保存した応答（A-07 の回復コードの保存の画面、`Cache-Control: no-store`）で一度だけ示し、session にも記録にも置かない（Bolt 31b） | 提案 | 端末の紛失に備える |
 | SEC-10 | TOTP の再登録 | 回復コードを使うか、システム管理者が本人確認（所属企業の管理担当者への確認など、事前に決めた別経路）をしたうえで登録を解除する。解除は監査記録に残し、本人に通知する | 提案 | 管理者による解除を悪用されないよう、本人確認の手順を運用で固定する |
 | SEC-11 | ログイン失敗の表示 | どの項目が誤りかを示さない | 確定 | US-18 |
 
@@ -170,7 +170,7 @@ TOTP の前提: TOTP はサーバーの時計の正しさに依存し、前後 1
 | ID | 項目 | 値 | 状態 |
 | :--- | :--- | :--- | :--- |
 | SEC-15 | 通信の暗号化 | TLS 1.2 以上（ALB）。HTTP は HTTPS へ転送。HSTS を有効にする | 提案 |
-| SEC-16 | 保存の暗号化 | RDS、S3、バックアップを AWS KMS の鍵で暗号化する。TOTP の秘密情報はアプリケーションでも暗号化して保存する（データモデル `totp_credential.secret_encrypted`）。方式は AES-GCM（鍵 256 ビット、IV 96 ビット）で、暗号文の先頭に鍵の版（`v1:`）を持つ。鍵は環境変数 `CARGOTRACKER_TOTPSECRETKEYS_V1`（プロパティ `cargotracker.totp-secret-keys.v1`）から渡し、本番は Secrets Manager から注入する（W10 の IaC）。鍵がない・長さが違うと起動で失敗する。鍵の入れ替えは新しい版を足して行う（Bolt 31。[ADR-011](../../adr/cargo-tracker/011-mfa-totp.md) の決定 5） | 提案 |
+| SEC-16 | 保存の暗号化 | RDS、S3、バックアップを AWS KMS の鍵で暗号化する。TOTP の秘密情報はアプリケーションでも暗号化して保存する（データモデル `totp_credential.secret_encrypted`）。方式は AES-GCM（鍵 256 ビット、IV 96 ビット）で、暗号文の先頭に鍵の版（`v1:`）を持つ。鍵は環境変数 `CARGOTRACKER_TOTPSECRETKEYS_V1`（プロパティ `cargotracker.totp-secret-keys.v1`）から渡し、本番は Secrets Manager から注入する（W10 の IaC）。鍵がない・長さが違うと起動で失敗する。鍵の入れ替えは新しい版を足して行う（Bolt 31。[ADR-011](../../adr/cargo-tracker/011-mfa-totp.md) の決定 5）。暗号文は `totp-secret:` と利用者 ID を AAD にして利用者に結び付け、DB で別の利用者の暗号文に入れ替えられても復号できない（Bolt 31b） | 提案 |
 | SEC-17 | Web の基本対策 | CSRF 対策、Cookie の Secure・HttpOnly・SameSite、Content-Security-Policy（外部スクリプトを読まない）、クリックジャッキング対策。Bolt 14 で、Spring Security の CSRF の同期トークン（`same-site=lax` は多層の守りとして残す）、HttpOnly・SameSite（Secure は `dev` の外）、`X-Frame-Options: DENY`、`X-Content-Type-Options: nosniff`、CSP `default-src 'self'` を入れる（2026-10-06 の Bolt 14 の確認ポイント 8） | 確定 |
 | SEC-18 | 依存とイメージの脆弱性 | CI で HIGH・CRITICAL を検出したら配備しない。本番で見つかった CRITICAL は 7 日以内、HIGH は 30 日以内に修正する | 提案 |
 | SEC-19 | 侵入テスト | パイロット開始前に 1 回、外部の専門家による検査を受ける | 提案（決定者: IT 責任者） |
