@@ -3,7 +3,7 @@ type: Plan
 title: "Bolt 31c 終了報告 - 回復コードによるログインと password の段の主体の型"
 description: "W5 の 7 本目の Bolt の終了報告。A-02 で回復コードを 1 つ使ってログインを終えられるようにし（US-18 AC9 のログインの分）、password の段だけの主体を PasswordVerifiedUser に分けて AuthenticatedActor を 2 つの要素がそろった主体だけにした（ADR-012 の見直しの 4）。「承認して止めずに進める」の指示で承認ゲートを止めずに進めたので、止まらなかったゲートを承認の議題に置く。"
 tags: [plan]
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-13T08:04:39Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-13T08:12:23Z }
 ---
 
 # Bolt 31c 終了報告 - 回復コードによるログインと password の段の主体の型
@@ -73,7 +73,7 @@ generated: { by: anthropic/claude-opus-5-5, at: 2026-10-13T08:04:39Z }
 | `check`（ModularityTest・ArchUnit・Checkstyle・SpotBugs・Spotless・documentationTest を含む） | 通過。SpotBugs の EI_EXPOSE_REP2 を `RecoveryCodeVerificationService` だけに抑止した（Bolt 31・31b と同じ理由。`exclude.xml`） |
 | uiTest | 通過（166 件、失敗 0） |
 | SonarQube（ローカル） | Quality Gate PASS。新しいコードのカバレッジ 96.2%、重複 0.1%、新しい指摘 0（レビューの直しで足したテストのラムダ 1 件を直した） |
-| CI | 各ステップの push の後の cargo-tracker CI を確かめる（終了報告の push の後にまとめて確かめる） |
+| CI | 最後の push（`2c48d88`、run 38366198076）で check・ui・デモ環境への配備が通過。ステップ 3（`5f0fea3`）と 4（`589edb6`）の push では check の `documentationTest`（用語集と Javadoc の一致）が落ちた。`PasswordVerifiedUser` の用語集の行は、並行して設計文書を直していたサブエージェントの未コミットの変更にあり、手元の `check` は同じ作業ツリーで緑だったが、コードだけをコミットしたため CI には用語集がなかった。ステップ 1 の設計文書（`84ef211`）を push した後は通過した（KPT の Problem と T-109） |
 | `okf:check` | ERROR 0 |
 
 ## 仮説の結論
@@ -127,9 +127,11 @@ generated: { by: anthropic/claude-opus-5-5, at: 2026-10-13T08:04:39Z }
   - シェルのヒアドキュメントで長いスクリプトを渡して 1 回失敗した（T-103 の取りこぼし）
   - 新しいテストのうち 3 つ（監査の `toString`、session の平文、トランザクションの境界）が、レビューまで空振りに気付かなかった
   - CSRF のテストで、A-02 を開く前の送信の扱い（A-03 へ送る）を忘れて 1 回落とした
+  - 設計文書のサブエージェントと同じ作業ツリーでコードを進め、手元の `check` が未コミットの用語集を含んで緑だったため、コードだけを push したステップ 3・4 の CI が落ちた（ステップ 1 の push で直った。計画の「ステップ 1 から順に push」を守らなかった）
 - Try
   - T-107: 「ないこと」を確かめるテストは、確かめる対象（session・記録）がテストの時点で存在することを先に確かめる
   - T-108: 枠組みに任せる約束（平文の消去、イベント、要素の合わせ）は、計画に「どの部品がいつ呼ぶか」を書き、呼ばれることをテストで確かめる
+  - T-109: 設計文書をサブエージェントに並行して任せるときは、設計文書のステップを先に push してからコードのステップを push する。間に合わなければ、コードのコミットに必要な用語集の行を含める（手元の `check` は作業ツリーの未コミットの変更を含む）
 
 ### 既知の課題（後に持ち込む）
 
