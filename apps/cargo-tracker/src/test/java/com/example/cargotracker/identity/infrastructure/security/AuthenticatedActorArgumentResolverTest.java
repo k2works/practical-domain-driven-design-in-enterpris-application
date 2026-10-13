@@ -112,6 +112,15 @@ class AuthenticatedActorArgumentResolverTest {
     }
 
     @Test
+    void passwordの要素のない主体には業務の引数を渡さない() throws Exception {
+        signIn(TotpAuthenticationToken.FACTOR_TOTP);
+        MethodParameter actorParameter = parameter(0);
+
+        assertThatThrownBy(() -> resolver.resolveArgument(actorParameter, null, null, null))
+                .isInstanceOf(AuthenticationCredentialsNotFoundException.class);
+    }
+
+    @Test
     void 二つの要素がそろった主体にもpasswordの段の主体を渡す() throws Exception {
         signIn(FactorGrantedAuthority.PASSWORD_AUTHORITY, TotpAuthenticationToken.FACTOR_TOTP);
 

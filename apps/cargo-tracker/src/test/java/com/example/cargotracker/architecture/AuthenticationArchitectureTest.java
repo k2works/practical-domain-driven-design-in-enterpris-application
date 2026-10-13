@@ -15,6 +15,9 @@ import com.tngtech.archunit.lang.ArchRule;
 @AnalyzeClasses(packages = "com.example.cargotracker", importOptions = ImportOption.DoNotIncludeTests.class)
 class AuthenticationArchitectureTest {
 
+    private static final String PASSWORD_VERIFIED_USER =
+            "com.example.cargotracker.identity.domain.model.valueobjects.PasswordVerifiedUser";
+
     /** 認証の方式は identity に閉じる。コンテキストが増えても守りが外れないよう、identity 以外を対象にする（Bolt 14 レビュー）。 */
     @ArchTest
     static final ArchRule identity以外はSpringSecurityに依存しない = noClasses()
@@ -130,25 +133,23 @@ class AuthenticationArchitectureTest {
             .that()
             .resideInAPackage("com.example.cargotracker..interfaces..")
             .and()
-            .doNotHaveSimpleName("LoginController")
+            .doNotHaveFullyQualifiedName("com.example.cargotracker.identity.interfaces.web.LoginController")
             .and()
-            .doNotHaveSimpleName("TotpEnrollmentController")
+            .doNotHaveFullyQualifiedName("com.example.cargotracker.identity.interfaces.web.TotpEnrollmentController")
             .should()
             .dependOnClassesThat()
-            .haveSimpleName("PasswordVerifiedUser");
+            .haveFullyQualifiedName(PASSWORD_VERIFIED_USER);
 
     /** 上の規則が空振りしていないことを確かめる。 */
     @ArchTest
     static final ArchRule A02とA07の画面はpasswordの段の主体を受ける = classes()
             .that()
-            .haveSimpleName("LoginController")
+            .haveFullyQualifiedName("com.example.cargotracker.identity.interfaces.web.LoginController")
             .or()
-            .haveSimpleName("TotpEnrollmentController")
+            .haveFullyQualifiedName("com.example.cargotracker.identity.interfaces.web.TotpEnrollmentController")
             .should()
-            .resideInAPackage("com.example.cargotracker.identity.interfaces.web")
-            .andShould()
             .dependOnClassesThat()
-            .haveSimpleName("PasswordVerifiedUser");
+            .haveFullyQualifiedName(PASSWORD_VERIFIED_USER);
 
     /** 上の規則が空振りしていないこと（パッケージ名の書き誤りで何も守らない状態にならないこと）を確かめる。 */
     @ArchTest

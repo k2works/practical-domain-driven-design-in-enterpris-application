@@ -12,7 +12,6 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.InsufficientAuthenticationException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
-import org.springframework.security.core.authority.FactorGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.AbstractAuthenticationProcessingFilter;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
@@ -67,13 +66,9 @@ public class TotpAuthenticationFilter extends AbstractAuthenticationProcessingFi
     @Override
     public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response) {
         Authentication current = SecurityContextHolder.getContext().getAuthentication();
-        boolean passwordVerified = current != null
-                && current.isAuthenticated()
-                && current.getPrincipal() instanceof CargoUserDetails
-                && current.getAuthorities().stream()
-                        .anyMatch(authority ->
-                                FactorGrantedAuthority.PASSWORD_AUTHORITY.equals(authority.getAuthority()));
-        if (!passwordVerified) {
+        if (current == null
+                || !(current.getPrincipal() instanceof CargoUserDetails)
+                || !AuthenticationFactors.passwordVerified(current)) {
             throw new InsufficientAuthenticationException("password の要素がない");
         }
         String code = request.getParameter("code");

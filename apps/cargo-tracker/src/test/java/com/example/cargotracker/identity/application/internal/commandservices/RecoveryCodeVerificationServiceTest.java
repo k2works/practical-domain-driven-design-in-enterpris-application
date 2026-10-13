@@ -24,6 +24,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.support.AbstractPlatformTransactionManager;
 import org.springframework.transaction.support.DefaultTransactionStatus;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.transaction.support.TransactionTemplate;
 
 /**
@@ -45,9 +46,12 @@ class RecoveryCodeVerificationServiceTest {
             return "hashed:" + code;
         }
 
+        private final List<Boolean> inTransaction = new ArrayList<>();
+
         @Override
         public boolean matches(String code, String hash) {
             matches.incrementAndGet();
+            inTransaction.add(TransactionSynchronizationManager.isActualTransactionActive());
             return hash.equals("hashed:" + code);
         }
     }
@@ -80,7 +84,16 @@ class RecoveryCodeVerificationServiceTest {
     private final UserId user = new UserId(UUID.randomUUID());
     private final CompanyId company = new CompanyId(UUID.randomUUID());
     private final CountingHasher hasher = new CountingHasher();
-    private final InMemoryRecoveryCodeRepository codes = new InMemoryRecoveryCodeRepository();
+    /** 使用がトランザクションの中で呼ばれたかを覚える。 */
+    private final List<Boolean> usedInTransaction = new ArrayList<>();
+
+    private final InMemoryRecoveryCodeRepository codes = new InMemoryRecoveryCodeRepository() {
+        @Override
+        public synchronized boolean use(UserId userId, UUID recoveryCodeId, UtcInstant usedAt) {
+            usedInTransaction.add(TransactionSynchronizationManager.isActualTransactionActive());
+            return super.use(userId, recoveryCodeId, usedAt);
+        }
+    };
     private final List<AuditRecord> audit = new ArrayList<>();
     private final AuditRecordRepository auditRecords = new AuditRecordRepository() {
         @Override
@@ -116,8 +129,40 @@ class RecoveryCodeVerificationServiceTest {
             assertThat(entry.action()).isEqualTo(AuditAction.RECOVERY_CODE_USED);
             assertThat(entry.actorUserId()).isEqualTo(user);
             assertThat(entry.actorCompanyId()).isEqualTo(company);
-            assertThat(entry.toString()).doesNotContain(PLAIN);
+            assertThat(entry.reason()).as("どのコードを使ったかは残さない").isNull();
         });
+    }
+
+    @Test
+    void 照合はトランザクションの外で行い使用だけをトランザクションの中で行う() {
+        // 確認ポイント 8: 最大 10 回の bcrypt の間 DB の接続を持たない
+        issueCodes(user);
+
+        service.verify(user, company, PLAIN);
+
+        assertThat(hasher.inTransaction).isNotEmpty().containsOnly(false);
+        assertThat(usedInTransaction).containsExactly(true);
+    }
+
+    @Test
+    void 同時の使用で後になったら拒み監査記録を書かない() {
+        issueCodes(user);
+        InMemoryRecoveryCodeRepository lost = new InMemoryRecoveryCodeRepository() {
+            @Override
+            public synchronized boolean use(UserId userId, UUID recoveryCodeId, UtcInstant usedAt) {
+                return false;
+            }
+
+            @Override
+            public synchronized List<RecoveryCode> findUnusedByUserId(UserId userId) {
+                return codes.findUnusedByUserId(userId);
+            }
+        };
+        RecoveryCodeVerificationService racing = new RecoveryCodeVerificationService(
+                lost, auditRecords, hasher, Clock.fixed(NOW, ZoneOffset.UTC), new TransactionTemplate(transactions));
+
+        assertThat(racing.verify(user, company, PLAIN)).isEqualTo(RecoveryCodeVerification.REJECTED);
+        assertThat(audit).isEmpty();
     }
 
     @Test
@@ -138,14 +183,18 @@ class RecoveryCodeVerificationServiceTest {
     }
 
     @Test
-    void 誤ったコードと回復コードのない利用者は拒み何も書かない() {
+    void 誤ったコードは拒み何も書かない() {
         issueCodes(user);
 
         assertThat(service.verify(user, company, "ffff-ffff")).isEqualTo(RecoveryCodeVerification.REJECTED);
-        assertThat(service.verify(new UserId(UUID.randomUUID()), company, PLAIN))
-                .isEqualTo(RecoveryCodeVerification.REJECTED);
 
         assertThat(codes.findUnusedByUserId(user)).hasSize(RecoveryCode.CODES_PER_USER);
+        assertThat(audit).isEmpty();
+    }
+
+    @Test
+    void 回復コードのない利用者は拒み何も書かない() {
+        assertThat(service.verify(user, company, PLAIN)).isEqualTo(RecoveryCodeVerification.REJECTED);
         assertThat(audit).isEmpty();
     }
 
@@ -168,7 +217,7 @@ class RecoveryCodeVerificationServiceTest {
     }
 
     @Test
-    void 監査記録を書けなければ使ったことも取り消す() {
+    void 監査記録を書けなければトランザクションをロールバックさせる() {
         issueCodes(user);
         RecoveryCodeVerificationService failing = new RecoveryCodeVerificationService(
                 codes,

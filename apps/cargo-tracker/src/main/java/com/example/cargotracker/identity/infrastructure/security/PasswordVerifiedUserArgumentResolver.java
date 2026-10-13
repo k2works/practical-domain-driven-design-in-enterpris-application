@@ -5,7 +5,6 @@ import com.example.cargotracker.identity.domain.model.valueobjects.PasswordVerif
 import org.springframework.core.MethodParameter;
 import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.authority.FactorGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.support.WebDataBinderFactory;
 import org.springframework.web.context.request.NativeWebRequest;
@@ -33,8 +32,7 @@ public class PasswordVerifiedUserArgumentResolver implements HandlerMethodArgume
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication != null
                 && authentication.getPrincipal() instanceof CargoUserDetails details
-                && AuthenticatedActorArgumentResolver.hasFactor(
-                        authentication, FactorGrantedAuthority.PASSWORD_AUTHORITY)) {
+                && AuthenticationFactors.passwordVerified(authentication)) {
             return new PasswordVerifiedUser(
                     details.actor().userId(), details.actor().companyId(), EmailAddress.of(details.getUsername()));
         }

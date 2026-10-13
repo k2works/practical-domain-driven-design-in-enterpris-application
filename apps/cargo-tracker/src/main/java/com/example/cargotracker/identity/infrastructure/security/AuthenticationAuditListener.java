@@ -62,7 +62,8 @@ public class AuthenticationAuditListener {
     public void onFailure(AbstractAuthenticationFailureEvent event) {
         if (event.getAuthentication().getPrincipal() instanceof CargoUserDetails details) {
             AuthenticatedActor actor = details.actor();
-            auditRecords.append(AuditRecord.loginFailed(actor.userId(), actor.companyId(), totpReasonOf(event), now()));
+            auditRecords.append(
+                    AuditRecord.loginFailed(actor.userId(), actor.companyId(), secondFactorReasonOf(event), now()));
             return;
         }
         Optional<User> user =
@@ -90,10 +91,10 @@ public class AuthenticationAuditListener {
     }
 
     /**
-     * TOTP の段の失敗の理由。回復コードの拒否は {@code INVALID_RECOVERY_CODE}（Bolt 31c）。TOTP は再利用だけを分け、ほかは一致しない
+     * 2 つ目の要素（TOTP の段）の失敗の理由。回復コードの拒否は {@code INVALID_RECOVERY_CODE}（Bolt 31c）。TOTP は再利用だけを分け、ほかは一致しない
      * とする（利用者には同じ文言。AC2）。
      */
-    private static AuthenticationRejection totpReasonOf(AbstractAuthenticationFailureEvent event) {
+    private static AuthenticationRejection secondFactorReasonOf(AbstractAuthenticationFailureEvent event) {
         if (event.getException() instanceof RecoveryCodeRejectedException) {
             return AuthenticationRejection.INVALID_RECOVERY_CODE;
         }

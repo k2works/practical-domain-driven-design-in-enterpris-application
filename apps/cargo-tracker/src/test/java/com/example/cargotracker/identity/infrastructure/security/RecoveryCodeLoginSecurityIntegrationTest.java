@@ -71,6 +71,7 @@ class RecoveryCodeLoginSecurityIntegrationTest {
     private static final String TOTP_ERROR = "/login?totp-error";
     private static final String BUSINESS_URL = "/customer/transport-requests";
     private static final String RECOVERY_CODE = "1a2b-3c4d";
+    private static final String SECOND_RECOVERY_CODE = "5e6f-7a8b";
     private static final byte[] TOTP_SECRET = "12345678901234567890".getBytes(StandardCharsets.US_ASCII);
     private static final Pattern MANUAL_KEY = Pattern.compile("data-manual-key=\"([A-Z2-7 ]+)\"");
     private static final String JUST_ENROLLED = "認証アプリを登録しました。";
@@ -152,10 +153,14 @@ class RecoveryCodeLoginSecurityIntegrationTest {
     @Test
     void 使った回復コードはもう一度使えずA01に戻り理由だけが監査記録に残り平文はどこにも残らない() throws Exception {
         String email = enrolledUserWithRecoveryCodes();
-        mvc.perform(post(TOTP_URL)
-                .cookie(loginWithPassword(email))
-                .param("recoveryCode", RECOVERY_CODE)
-                .with(csrf()));
+        Cookie full = mvc.perform(post(TOTP_URL)
+                        .cookie(loginWithPassword(email))
+                        .param("recoveryCode", RECOVERY_CODE)
+                        .with(csrf()))
+                .andExpect(redirectedUrl("/"))
+                .andReturn()
+                .getResponse()
+                .getCookie(SESSION_COOKIE);
         Cookie again = loginWithPassword(email);
 
         mvc.perform(post(TOTP_URL)
@@ -168,7 +173,10 @@ class RecoveryCodeLoginSecurityIntegrationTest {
         // 「ないこと」と並べて「あるべきもの」を確かめる（T-106）
         assertThat(usedAtCount(email)).as("使った回復コードの時刻は残る").isEqualTo(1);
         assertThat(auditText(email)).doesNotContain(RECOVERY_CODE).doesNotContain("1a2b3c4d");
-        assertThat(sessionAttributeText()).doesNotContain(RECOVERY_CODE);
+        assertThat(sessionAttributeText(full))
+                .as("ログインを終えた session には主体があり、回復コードの平文はない")
+                .contains(email)
+                .doesNotContain(RECOVERY_CODE);
     }
 
     @Test
@@ -209,7 +217,7 @@ class RecoveryCodeLoginSecurityIntegrationTest {
     void 回復コードの欄を開いたsessionで別の利用者のpasswordを送ると前の利用者の回復コードでは通らない() throws Exception {
         // T-102: 回復コードは主体の利用者 ID で探すので、利用者を切り替えた session では前の利用者のコードは使えない
         String first = enrolledUserWithRecoveryCodes();
-        String second = enrolledUser();
+        String second = enrolledUserWithRecoveryCodes(SECOND_RECOVERY_CODE);
         Cookie session = loginWithPassword(first);
         mvc.perform(get(TOTP_URL).cookie(session)).andExpect(status().isOk());
         Cookie switched = mvc.perform(post("/login")
@@ -228,6 +236,29 @@ class RecoveryCodeLoginSecurityIntegrationTest {
                         .with(csrf()))
                 .andExpect(redirectedUrl(TOTP_ERROR));
         assertThat(recoveryCodes.findUnusedByUserId(userIdOf(first))).hasSize(RecoveryCode.CODES_PER_USER);
+        assertThat(failureReasons(second)).as("拒否は切り替えた後の利用者に記録する").containsExactly("INVALID_RECOVERY_CODE");
+        // 主体が本当に 2 人目に切り替わっていること（あるべきもの。T-106）
+        mvc.perform(post(TOTP_URL)
+                        .cookie(loginWithPassword(second))
+                        .param("recoveryCode", SECOND_RECOVERY_CODE)
+                        .with(csrf()))
+                .andExpect(redirectedUrl("/"));
+    }
+
+    @Test
+    void どちらの欄もない送信と空白だけの回復コードは認証コードの誤りと同じに扱う() throws Exception {
+        String email = enrolledUserWithRecoveryCodes();
+
+        mvc.perform(post(TOTP_URL).cookie(loginWithPassword(email)).with(csrf()))
+                .andExpect(redirectedUrl(TOTP_ERROR));
+        mvc.perform(post(TOTP_URL)
+                        .cookie(loginWithPassword(email))
+                        .param("recoveryCode", "   ")
+                        .with(csrf()))
+                .andExpect(redirectedUrl(TOTP_ERROR));
+
+        assertThat(failureReasons(email)).containsExactly("INVALID_TOTP", "INVALID_TOTP");
+        assertThat(recoveryCodes.findUnusedByUserId(userIdOf(email))).hasSize(RecoveryCode.CODES_PER_USER);
     }
 
     @Test
@@ -295,14 +326,18 @@ class RecoveryCodeLoginSecurityIntegrationTest {
     }
 
     private String enrolledUserWithRecoveryCodes() {
+        return enrolledUserWithRecoveryCodes(RECOVERY_CODE);
+    }
+
+    private String enrolledUserWithRecoveryCodes(String plain) {
         String email = enrolledUser();
         UserId userId = userIdOf(email);
         UtcInstant now = new UtcInstant(clock.instant());
         recoveryCodes.replaceAll(
                 userId,
                 IntStream.range(0, RecoveryCode.CODES_PER_USER)
-                        .mapToObj(i -> RecoveryCode.issue(
-                                userId, i == 0 ? RECOVERY_CODE : String.format("0000-%04x", i), hasher, now))
+                        .mapToObj(i ->
+                                RecoveryCode.issue(userId, i == 0 ? plain : String.format("0000-%04x", i), hasher, now))
                         .toList());
         return email;
     }
@@ -385,12 +420,16 @@ class RecoveryCodeLoginSecurityIntegrationTest {
                 userIdOf(email).value());
     }
 
-    private String sessionAttributeText() {
+    private String sessionAttributeText(Cookie session) {
+        String sessionId = new String(Base64.getDecoder().decode(session.getValue()), StandardCharsets.US_ASCII);
         return String.join(
                 "|",
                 jdbc.query(
-                        "SELECT attribute_bytes FROM platform.spring_session_attributes",
-                        (rs, n) -> new String(rs.getBytes(1), StandardCharsets.ISO_8859_1)));
+                        "SELECT a.attribute_bytes FROM platform.spring_session_attributes a"
+                                + " JOIN platform.spring_session s ON s.primary_id = a.session_primary_id"
+                                + " WHERE s.session_id = ?",
+                        (rs, n) -> new String(rs.getBytes(1), StandardCharsets.ISO_8859_1),
+                        sessionId));
     }
 
     private List<String> sessionAttributeNames(Cookie session) {

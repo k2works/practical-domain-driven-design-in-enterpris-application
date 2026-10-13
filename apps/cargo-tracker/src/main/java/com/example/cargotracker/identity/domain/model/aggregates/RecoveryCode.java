@@ -3,6 +3,7 @@ package com.example.cargotracker.identity.domain.model.aggregates;
 import com.example.cargotracker.shared.annotation.ddd.AggregateRoot;
 import com.example.cargotracker.shared.domain.UserId;
 import com.example.cargotracker.shared.domain.UtcInstant;
+import java.text.Normalizer;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
@@ -21,7 +22,8 @@ public final class RecoveryCode {
     /** 利用者ごとに発行する数（SEC-09）。 */
     public static final int CODES_PER_USER = 10;
 
-    private static final Pattern WHITESPACE = Pattern.compile("\\s+");
+    private static final Pattern WHITESPACE = Pattern.compile("[\\s\\p{Z}]+");
+    private static final Pattern HYPHEN_LIKE = Pattern.compile("[\\u2010-\\u2015\\u2212\\u30FC\\uFF70]");
     private static final Pattern UNHYPHENATED = Pattern.compile("[0-9a-f]{8}");
     private static final Pattern NORMALIZED = Pattern.compile("[0-9a-f]{4}-[0-9a-f]{4}");
 
@@ -97,14 +99,18 @@ public final class RecoveryCode {
 
     /**
      * 利用者が入力した回復コードを、照合する形（小文字の 16 進 4 文字・ハイフン・4 文字。発行の形と同じ）に直す（Bolt 31c）。
-     * 書き写したコードを打ち直させないため、空白・大文字・ハイフンの抜けを受ける。形が合わなければ空にし、照合させない
+     * 書き写したコードを打ち直させないため、空白・大文字・ハイフンの抜け・全角（IME で入れたまま）を受ける。形が合わなければ空にし、照合させない
      * （bcrypt を回さない）。
      */
     public static Optional<String> normalize(String input) {
         if (input == null) {
             return Optional.empty();
         }
-        String compact = WHITESPACE.matcher(input).replaceAll("").toLowerCase(Locale.ROOT);
+        // 全角の英数字・全角スペース・全角ハイフンを半角に直し（IME で入れたまま）、ハイフンに似た文字をハイフンにそろえる
+        String halfWidth = HYPHEN_LIKE
+                .matcher(Normalizer.normalize(input, Normalizer.Form.NFKC))
+                .replaceAll("-");
+        String compact = WHITESPACE.matcher(halfWidth).replaceAll("").toLowerCase(Locale.ROOT);
         String hyphenated = UNHYPHENATED.matcher(compact).matches()
                 ? compact.substring(0, 4) + "-" + compact.substring(4)
                 : compact;

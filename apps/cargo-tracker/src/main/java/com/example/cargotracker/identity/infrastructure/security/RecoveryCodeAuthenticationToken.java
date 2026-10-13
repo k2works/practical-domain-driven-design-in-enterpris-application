@@ -7,7 +7,9 @@ import org.springframework.security.authentication.AbstractAuthenticationToken;
 /**
  * A-02 で入れた回復コードの、確かめる前の入力（Bolt 31c、US-18 AC9 のログインの分、ADR-011）。主体は password の段の主体。
  * 確かめた後の結果は TOTP と同じ {@link TotpAuthenticationToken}（要素の権限 {@code FACTOR_TOTP}）にするので、この型は認証の
- * 結果として session に置かれない。回復コードと認証コードの両方を送った入力は、照合せずに拒むために印を付ける。
+ * 結果として session に置かれない。平文は request の範囲でしか持たない（ProviderManager が平文を消すのは認証の結果のトークン
+ * だけで、この入力には呼ばない。失敗のイベントに入るので、リスナーは {@code getCredentials()} を読まない）。回復コードと認証コードの
+ * 両方を送った入力は、照合せずに拒むために印を付ける。
  */
 public final class RecoveryCodeAuthenticationToken extends AbstractAuthenticationToken {
 

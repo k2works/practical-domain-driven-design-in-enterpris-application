@@ -122,6 +122,9 @@ class RecoveryCodeTest {
         assertThat(RecoveryCode.normalize("  1A2B-3C4D \t")).as("前後の空白と大文字").contains("1a2b-3c4d");
         assertThat(RecoveryCode.normalize("1a2b3c4d")).as("ハイフンなし").contains("1a2b-3c4d");
         assertThat(RecoveryCode.normalize("1a2b 3c4d")).as("中の空白").contains("1a2b-3c4d");
+        assertThat(RecoveryCode.normalize("１ａ２ｂ－３ｃ４ｄ")).as("全角（IME で入れたまま）").contains("1a2b-3c4d");
+        assertThat(RecoveryCode.normalize("1a2b\u30003c4d")).as("全角スペース").contains("1a2b-3c4d");
+        assertThat(RecoveryCode.normalize("1a2bー3c4d")).as("長音").contains("1a2b-3c4d");
     }
 
     @Test
@@ -131,6 +134,9 @@ class RecoveryCodeTest {
         assertThat(RecoveryCode.normalize("1a2b-3c4")).as("短い").isEmpty();
         assertThat(RecoveryCode.normalize("1a2b-3c4d5")).as("長い").isEmpty();
         assertThat(RecoveryCode.normalize("1a2g-3c4d")).as("16 進でない").isEmpty();
+        assertThat(RecoveryCode.normalize("1a2l-3c4o"))
+                .as("l と o（1 と 0 の見間違い）は受けない")
+                .isEmpty();
         assertThat(RecoveryCode.normalize("1a2-b3c4d")).as("区切りの位置が違う").isEmpty();
         assertThat(RecoveryCode.normalize("123456")).as("TOTP の形").isEmpty();
     }

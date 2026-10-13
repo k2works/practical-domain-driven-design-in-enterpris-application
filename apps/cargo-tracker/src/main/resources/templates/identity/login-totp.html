@@ -11,7 +11,7 @@
 <main>
     <h1>認証コードの入力</h1>
     <div th:if="${justEnrolled}" class="alert alert-success" role="status">
-        認証アプリを登録しました。認証アプリに表示されたコードを入れてログインを終えてください。
+        認証アプリを登録しました。認証アプリに表示されたコードを入力して、ログインを終えてください。
     </div>
     <p>認証アプリに表示されている 6 桁のコードを入力してください。</p>
     <form th:action="@{/login/totp}" method="post" class="app-login-form">
@@ -26,13 +26,14 @@
     </form>
     <details class="mt-4">
         <summary>認証アプリを使えない場合</summary>
-        <p class="mt-2">登録のときに保存した回復コード（例: 1a2b-3c4d）を 1 つ入力してください。使った回復コードは二度と使えません。</p>
+        <p class="mt-2" id="recovery-code-intro">登録のときに保存した回復コード（例: 1a2b-3c4d）を 1 つ入力してください。使った回復コードは二度と使えません。</p>
         <form th:action="@{/login/totp}" method="post" class="app-login-form">
             <div class="mb-3">
                 <label for="recoveryCode" class="form-label">回復コード</label>
                 <input type="text" id="recoveryCode" name="recoveryCode" class="form-control" autocomplete="off"
-                       maxlength="20" required aria-describedby="recovery-code-help">
-                <div id="recovery-code-help" class="form-text">8 文字の英数字。ハイフンはあってもなくてもかまいません。</div>
+                       spellcheck="false" maxlength="20" required
+                       aria-describedby="recovery-code-intro recovery-code-help">
+                <div id="recovery-code-help" class="form-text">半角の数字と a〜f の英字で 8 文字。大文字、空白、ハイフンはあってもかまいません。</div>
             </div>
             <button type="submit" class="btn btn-outline-primary">回復コードで確認</button>
         </form>

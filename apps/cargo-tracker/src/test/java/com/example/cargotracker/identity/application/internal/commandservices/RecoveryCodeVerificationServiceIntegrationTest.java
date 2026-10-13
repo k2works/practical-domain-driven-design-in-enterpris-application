@@ -15,12 +15,12 @@ import com.example.cargotracker.shared.domain.UserId;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import java.time.Clock;
 import java.util.List;
-import java.util.UUID;
 import java.util.stream.IntStream;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.support.TransactionTemplate;
 
 /**
@@ -54,10 +54,13 @@ class RecoveryCodeVerificationServiceIntegrationTest {
     @Autowired
     Clock clock;
 
+    @Autowired
+    JdbcTemplate jdbc;
+
     @Test
     void 重なった同じ回復コードの使用は先の1つだけが通り後は拒む() {
         UserId user = transactionTemplate.execute(status -> AuthenticationFactorFixtures.newUser(companies, users));
-        CompanyId company = new CompanyId(UUID.randomUUID());
+        CompanyId company = users.findById(user).orElseThrow().companyId();
         UtcInstant now = new UtcInstant(clock.instant());
         List<RecoveryCode> issued = IntStream.range(0, RecoveryCode.CODES_PER_USER)
                 .mapToObj(i -> RecoveryCode.issue(user, i == 0 ? PLAIN : String.format("0000-%04x", i), hasher, now))
@@ -71,5 +74,11 @@ class RecoveryCodeVerificationServiceIntegrationTest {
 
         assertThat(results).containsExactly(RecoveryCodeVerification.ACCEPTED, RecoveryCodeVerification.REJECTED);
         assertThat(codes.findUnusedByUserId(user)).hasSize(RecoveryCode.CODES_PER_USER - 1);
+        assertThat(jdbc.queryForObject(
+                        "SELECT count(*) FROM identity.audit_record WHERE actor_user_id = ? AND action = 'RECOVERY_CODE_USED'",
+                        Integer.class,
+                        user.value()))
+                .as("後になった側は監査記録を書かない")
+                .isEqualTo(1);
     }
 }
