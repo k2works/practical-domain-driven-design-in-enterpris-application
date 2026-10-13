@@ -3,7 +3,9 @@ type: Plan
 title: "Bolt 31d 計画 - 認証の部品の守りの直し（照合の 3 値、暗号のパッケージ、特性テスト、スパイクの削除）"
 description: "W5 の 8 本目の Bolt の計画。Bolt 31・31b・31c から送った構造の直しのうち守りに関わるものを片づける。TOTP の照合の結果（一致・再利用・不一致）をドメインに寄せ、暗号の部品を identity.infrastructure.crypto に分けて層の規則 D-5 の認証の例外を入口だけに狭め、FACTOR_* の ArchUnit の空振り・全 URL の見張り・ログの平文の見張り・枠組みの特性テストを足し、スパイクを本体のテストとの対応を確かめてから消す。画面は変えない。"
 tags: [development,bolt-plan]
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-13T09:16:29Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-13T09:24:37Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-10-13T09:24:37Z }
 ---
 
 # Bolt 31d 計画 - 認証の部品の守りの直し（照合の 3 値、暗号のパッケージ、特性テスト、スパイクの削除）
@@ -18,6 +20,7 @@ generated: { by: anthropic/claude-opus-5-5, at: 2026-10-13T09:16:29Z }
 | SP | 0（US-18 の残りの SP は #13 をクローズする Bolt 33b で数える） |
 | GitHub | [#13](https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/13)（US-18、R1.0）。この Bolt では閉じない |
 | 承認ゲート | **ステップごとに止める**（W4 の締めの決定: 認証の完成はステップごと）。確認必須（構造（パッケージの移動と層の規則の例外の範囲、新しい `package-info.java`）、ファイルの削除（スパイク）、セキュリティ（失敗へ倒す範囲の変更））は計画の承認の場で確認ポイントとして判断を受ける |
+| 承認ゲートの扱い | 2026-10-13 に human:kakimomokuri が計画を承認した（確認ポイント 1〜9 は推奨のとおり）。あわせて人の指示（「推奨のまま承認して止めずに進める」）により、ステップの承認ゲートで止まらずに進める。止まらなかったゲートごとに根拠を書き、終了報告の承認の議題に置く（T-36）。対応表に当てはまらないスパイクのテスト、層の規則の新しい例外が要るときは止めて人に諮る |
 | アプローチ | リファクタリング（release_plan の 31d の行）。開発戦略の表（development_strategy.md:116-122）では技術タスクに当たり、テストの入口は検証の手段（ArchUnit・見張り）。構造の直し（パッケージ、見張り、特性テスト、スパイク）は守りのテストを先に足して緑のまま動かす。振る舞いの変わる 2 つ（照合の結果と監査の理由、失敗へ倒す範囲）は、W5 の表のとおりインサイドアウトの TDD（Red から）にする |
 | 前の Bolt | [Bolt 31c 終了報告](bolt_31c_report.md)、[Bolt 31b 終了報告](bolt_31b_report.md)、[Bolt 31 終了報告](bolt_31_report.md) |
 
@@ -215,6 +218,7 @@ TotpEnrollmentService ..> UnreadableCredentialException : 捕まえる
 | :--- | :--- | :--- |
 | 2026-10-13 | 初版作成（承認待ち）。開始準備で、Bolt 31c の終了報告の Try（T-107〜T-109）と既知の課題、Bolt 31 のレビュー 17、Bolt 13 の R-16、スパイクのテスト、照合と確かめのサービス、層の規則を調べ、human:kakimomokuri の決定（守りの直しを 31d・低は 32 以降、暗号の部品を crypto に分ける、`FACTOR_TOTP` は改名せず用語集に書く、スパイクは特性テストを移してから消す）を反映した | anthropic/claude-opus-5-5 |
 | 2026-10-13 | 詳細整合性検証（19 件）と横断整合性検証（17 件）の指摘と、T-101 の骨組みの確かめの結果を反映した。`FACTOR_*` の見張りの範囲に合成ルートを含める、スパイクのテストの数（6 クラス・34 メソッド）と対応表の分け方、特性テスト②を枠組みの既定の置き場所に、ログの見張りをエラーのログが出る場面に、読めない要素の例外をドメインに置き登録のサービスも狭める（名前を `UnreadableCredentialException` に）、投げる場所の一覧、振る舞いの変更を 2 つと書く、失敗へ倒す範囲の完了条件、全 URL の見張りの除外・パスの変数・CSRF・役割、`TotpMatch` の入れ子と用語集、足す規則を「crypto は security に依存しない」だけに、利用者の一覧と `package-info.java`、Red と書き直すテストの区別、ステップ 1 の対象（ADR の行・release_plan の 557 行目・用語集の説明）、アプローチの理由、低の指摘の送り先の漏れを直した | anthropic/claude-opus-5-5 |
+| 2026-10-13 | 計画の承認を記録した。確認ポイント 1〜9 は推奨のとおり。ステップの承認ゲートで止まらずに進める（T-36） | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 
 ## 関連ドキュメント
 
