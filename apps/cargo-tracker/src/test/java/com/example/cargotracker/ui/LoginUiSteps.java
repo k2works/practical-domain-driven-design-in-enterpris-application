@@ -98,6 +98,19 @@ public class LoginUiSteps {
         submitLogin("wrong-" + credentials.password());
     }
 
+    @もし("ログインの画面でメールアドレスと誤った password を {int} 回入れてログインする")
+    public void 誤ったpasswordで続けてログインする(int times) {
+        for (int i = 0; i < times; i++) {
+            submitLogin("wrong-" + credentials.password());
+        }
+    }
+
+    /** 正しい password を入れても、ロック中は A-02 に進まず A-01 の誤りに戻る（US-18 AC3。Bolt 32）。 */
+    @もし("ログインの画面でメールアドレスと正しい password を入れる")
+    public void 正しいpasswordを入れる() {
+        submitLogin(credentials.password());
+    }
+
     private void submitLogin(String password) {
         page().navigate(baseUrl + "/login");
         browser.checkAccessibility();
