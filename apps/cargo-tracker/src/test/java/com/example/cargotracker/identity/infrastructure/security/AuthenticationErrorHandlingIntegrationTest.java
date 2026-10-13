@@ -44,6 +44,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.RequestBuilder;
 
 /**
  * 認証の入口の誤りの扱い（Bolt 32 の確認ポイント 8、Bolt 31d から送った「実装の誤りは 500」）。実装の誤りと書き込みの DB の誤りは
@@ -103,27 +104,23 @@ class AuthenticationErrorHandlingIntegrationTest {
         String email = user();
         Cookie session = loginWithPassword(email);
         doThrow(new IllegalArgumentException("値の検証の誤り")).when(totpCodes).code(any(), any(), anyLong());
+        RequestBuilder code = totpCode(session);
 
-        assertThatThrownBy(() -> mvc.perform(
-                        post(TOTP_URL).cookie(session).param("code", "123456").with(csrf())))
-                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> mvc.perform(code)).isInstanceOf(IllegalArgumentException.class);
 
         assertThat(failureReasons(email)).as("監査の失敗を残さない").isEmpty();
         assertThat(failures(email)).isZero();
     }
 
     @Test
-    void 失敗の書き込みのDBの誤りは500にし誤りの応答にしない() throws Exception {
+    void 失敗の書き込みのDBの誤りは500にし誤りの応答にしない() {
         String email = user();
         doThrow(new DataAccessResourceFailureException("DB の誤り"))
                 .when(loginFailures)
                 .recordFailure(any(), any(), any());
+        RequestBuilder wrong = password(email, "wrong");
 
-        assertThatThrownBy(() -> mvc.perform(post("/login")
-                        .param("username", email)
-                        .param("password", "wrong")
-                        .with(csrf())))
-                .isInstanceOf(DataAccessResourceFailureException.class);
+        assertThatThrownBy(() -> mvc.perform(wrong)).isInstanceOf(DataAccessResourceFailureException.class);
         assertThat(failureReasons(email)).as("回数と同じトランザクションの監査記録も戻る").isEmpty();
     }
 
@@ -156,19 +153,27 @@ class AuthenticationErrorHandlingIntegrationTest {
         doThrow(new DataAccessResourceFailureException("DB の誤り"))
                 .when(loginFailures)
                 .findByUserId(any());
+        RequestBuilder correct = password(email, PASSWORD);
+        RequestBuilder code = totpCode(session);
 
-        assertThatThrownBy(() -> mvc.perform(post("/login")
-                        .param("username", email)
-                        .param("password", PASSWORD)
-                        .with(csrf())))
+        assertThatThrownBy(() -> mvc.perform(correct))
                 .as("照合の後の確認の例外は枠組みが包まない")
                 .isInstanceOf(DataAccessResourceFailureException.class);
-        assertThatThrownBy(() -> mvc.perform(
-                        post(TOTP_URL).cookie(session).param("code", "123456").with(csrf())))
-                .isInstanceOf(DataAccessResourceFailureException.class);
+        assertThatThrownBy(() -> mvc.perform(code)).isInstanceOf(DataAccessResourceFailureException.class);
     }
 
     // --- 補助 ---
+
+    private static RequestBuilder password(String email, String password) {
+        return post("/login")
+                .param("username", email)
+                .param("password", password)
+                .with(csrf());
+    }
+
+    private static RequestBuilder totpCode(Cookie session) {
+        return post(TOTP_URL).cookie(session).param("code", "123456").with(csrf());
+    }
 
     private String user() {
         String email = "error-" + UUID.randomUUID() + "@example.com";

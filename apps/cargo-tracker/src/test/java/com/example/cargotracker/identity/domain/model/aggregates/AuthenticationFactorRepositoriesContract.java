@@ -210,13 +210,13 @@ public abstract class AuthenticationFactorRepositoriesContract {
         UserId user = newUser();
         LoginFailure failure = null;
         for (int i = 0; i < 4; i++) {
-            failure = record(user, at(Duration.ofSeconds(i)));
+            failure = failAt(user, at(Duration.ofSeconds(i)));
         }
         assertThat(failure.consecutiveFailures()).isEqualTo(4);
         assertThat(failure.lockedUntil()).isEmpty();
 
-        LoginFailure fifth = record(user, at(Duration.ofSeconds(4)));
-        LoginFailure whileLocked = record(user, at(Duration.ofMinutes(10)));
+        LoginFailure fifth = failAt(user, at(Duration.ofSeconds(4)));
+        LoginFailure whileLocked = failAt(user, at(Duration.ofMinutes(10)));
 
         assertThat(fifth.consecutiveFailures()).isEqualTo(5);
         assertThat(fifth.lockedUntil()).contains(at(Duration.ofSeconds(4).plusMinutes(15)));
@@ -230,10 +230,10 @@ public abstract class AuthenticationFactorRepositoriesContract {
     void ロックが解けた後の失敗は1回目から数え直す() {
         UserId user = newUser();
         for (int i = 0; i < 5; i++) {
-            record(user, at(Duration.ofSeconds(i)));
+            failAt(user, at(Duration.ofSeconds(i)));
         }
 
-        LoginFailure afterLock = record(user, at(Duration.ofMinutes(20)));
+        LoginFailure afterLock = failAt(user, at(Duration.ofMinutes(20)));
 
         assertThat(afterLock.consecutiveFailures()).isEqualTo(1);
         assertThat(afterLock.lockedUntil()).isEmpty();
@@ -243,12 +243,12 @@ public abstract class AuthenticationFactorRepositoriesContract {
     void ロックの期限ちょうどの失敗は1回目から数え直し期限の1秒前の失敗は数えない() {
         UserId user = newUser();
         for (int i = 0; i < 5; i++) {
-            record(user, at(Duration.ofSeconds(i)));
+            failAt(user, at(Duration.ofSeconds(i)));
         }
         Duration fifth = Duration.ofSeconds(4);
 
-        LoginFailure justBefore = record(user, at(fifth.plusMinutes(15).minusSeconds(1)));
-        LoginFailure atExpiry = record(user, at(fifth.plusMinutes(15)));
+        LoginFailure justBefore = failAt(user, at(fifth.plusMinutes(15).minusSeconds(1)));
+        LoginFailure atExpiry = failAt(user, at(fifth.plusMinutes(15)));
 
         assertThat(justBefore.consecutiveFailures()).isEqualTo(5);
         assertThat(justBefore.lockedUntil()).contains(at(fifth.plusMinutes(15)));
@@ -260,11 +260,11 @@ public abstract class AuthenticationFactorRepositoriesContract {
     void ロックが解けた後も5回続けばもう一度ロックする() {
         UserId user = newUser();
         for (int i = 0; i < 5; i++) {
-            record(user, at(Duration.ofSeconds(i)));
+            failAt(user, at(Duration.ofSeconds(i)));
         }
         LoginFailure again = null;
         for (int i = 0; i < 5; i++) {
-            again = record(user, at(Duration.ofMinutes(20).plusSeconds(i)));
+            again = failAt(user, at(Duration.ofMinutes(20).plusSeconds(i)));
         }
 
         assertThat(again.consecutiveFailures()).isEqualTo(5);
@@ -275,7 +275,7 @@ public abstract class AuthenticationFactorRepositoriesContract {
     void ロックが解けた後の成功は回数を0に戻しロックを外す() {
         UserId user = newUser();
         for (int i = 0; i < 5; i++) {
-            record(user, at(Duration.ofSeconds(i)));
+            failAt(user, at(Duration.ofSeconds(i)));
         }
 
         loginFailures().recordSuccess(user, at(Duration.ofMinutes(20)));
@@ -290,7 +290,7 @@ public abstract class AuthenticationFactorRepositoriesContract {
     void ロック中の成功はロックを消さない() {
         UserId user = newUser();
         for (int i = 0; i < 5; i++) {
-            record(user, at(Duration.ofSeconds(i)));
+            failAt(user, at(Duration.ofSeconds(i)));
         }
 
         loginFailures().recordSuccess(user, at(Duration.ofMinutes(1)));
@@ -301,7 +301,7 @@ public abstract class AuthenticationFactorRepositoriesContract {
     }
 
     /** 記録を作ってから失敗を数え、数えた後のログインの失敗を返す（サービスと同じ順）。 */
-    private LoginFailure record(UserId user, UtcInstant at) {
+    private LoginFailure failAt(UserId user, UtcInstant at) {
         loginFailures().prepare(user, at);
         return loginFailures().recordFailure(user, at, POLICY).after();
     }
@@ -309,7 +309,7 @@ public abstract class AuthenticationFactorRepositoriesContract {
     @Test
     void 記録の用意は何度呼んでも1つで数えた回数を変えない() {
         UserId user = newUser();
-        record(user, at(Duration.ZERO));
+        failAt(user, at(Duration.ZERO));
 
         loginFailures().prepare(user, at(Duration.ofSeconds(1)));
         loginFailures().prepare(user, at(Duration.ofSeconds(2)));
@@ -321,7 +321,7 @@ public abstract class AuthenticationFactorRepositoriesContract {
     void 数えたかを返しロック中とロックした失敗を見分けられる() {
         UserId user = newUser();
         for (int i = 0; i < 4; i++) {
-            record(user, at(Duration.ofSeconds(i)));
+            failAt(user, at(Duration.ofSeconds(i)));
         }
 
         FailureCount fifth = loginFailures().recordFailure(user, at(Duration.ofSeconds(4)), POLICY);

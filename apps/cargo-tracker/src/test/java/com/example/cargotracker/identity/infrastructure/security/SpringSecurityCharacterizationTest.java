@@ -207,10 +207,9 @@ class SpringSecurityCharacterizationTest {
         // ロックを照合の後に確かめる理由（誤った password とロック中の応答の時間を変えない。AC2）
         List<String> postChecks = new ArrayList<>();
         DaoAuthenticationProvider provider = daoProvider(oneUser(), postChecks);
+        Authentication wrong = UsernamePasswordAuthenticationToken.unauthenticated("shipper", "wrong");
 
-        assertThatThrownBy(() ->
-                        provider.authenticate(UsernamePasswordAuthenticationToken.unauthenticated("shipper", "wrong")))
-                .isInstanceOf(BadCredentialsException.class);
+        assertThatThrownBy(() -> provider.authenticate(wrong)).isInstanceOf(BadCredentialsException.class);
         assertThat(postChecks).as("誤った password では呼ばない").isEmpty();
         provider.authenticate(UsernamePasswordAuthenticationToken.unauthenticated("shipper", "correct"));
         assertThat(postChecks).containsExactly("shipper");
@@ -254,10 +253,9 @@ class SpringSecurityCharacterizationTest {
             }
         };
         ProviderManager manager = new ProviderManager(locked, accepting);
+        Authentication input = UsernamePasswordAuthenticationToken.unauthenticated("shipper", "x");
 
-        assertThatThrownBy(
-                        () -> manager.authenticate(UsernamePasswordAuthenticationToken.unauthenticated("shipper", "x")))
-                .isInstanceOf(LockedException.class);
+        assertThatThrownBy(() -> manager.authenticate(input)).isInstanceOf(LockedException.class);
     }
 
     @Test
@@ -268,9 +266,9 @@ class SpringSecurityCharacterizationTest {
                     throw new IllegalStateException("DB の誤り");
                 },
                 new ArrayList<>());
+        Authentication input = UsernamePasswordAuthenticationToken.unauthenticated("shipper", "x");
 
-        assertThatThrownBy(() ->
-                        provider.authenticate(UsernamePasswordAuthenticationToken.unauthenticated("shipper", "x")))
+        assertThatThrownBy(() -> provider.authenticate(input))
                 .isInstanceOf(InternalAuthenticationServiceException.class);
     }
 

@@ -87,13 +87,12 @@ public class AuthenticationAuditListener {
         Target found = target.get();
         switch (event) {
             // 誤り（password・TOTP・回復コード）だけを数える。ロック中なら、サービスが理由 LOCKED にして数えない
-            case AuthenticationFailureBadCredentialsEvent bad ->
+            case AuthenticationFailureBadCredentialsEvent _ ->
                 attempts.recordFailure(found.userId(), found.companyId(), found.reason());
             // ロック中の正しい password・ロック中の確かめの前の拒否。数えない
-            case AuthenticationFailureLockedEvent locked ->
-                attempts.recordLockedAttempt(found.userId(), found.companyId());
+            case AuthenticationFailureLockedEvent _ -> attempts.recordLockedAttempt(found.userId(), found.companyId());
             // 入口の読み出しの DB の誤り（枠組みが包んで失敗へ倒す）。利用者の誤りとして数えない
-            case AuthenticationFailureServiceExceptionEvent serviceError ->
+            case AuthenticationFailureServiceExceptionEvent _ ->
                 auditRecords.append(AuditRecord.loginFailed(
                         found.userId(), found.companyId(), AuthenticationRejection.SERVICE_ERROR, now()));
             // 利用停止・無効な企業など（password が正しく、業務の規則で拒んだ）。数えない
