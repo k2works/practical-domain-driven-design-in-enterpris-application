@@ -4,7 +4,7 @@ title: "ADR-011: 多要素認証は Spring Security 7 の要素の権限で組�
 description: "password の後に TOTP を求める 2 段階のログインを、Spring Security 7 の多要素認証（要素ごとの権限）で組む。"
 tags: [adr, authentication, mfa, totp]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-13T10:25:04Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-13T12:13:54Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-11T08:28:34Z }
 ---
@@ -53,9 +53,17 @@ Bolt 31d の開始準備と計画の承認（2026-10-13、human:kakimomokuri）�
 - 守りの直し（照合の 3 値、監査の理由、失敗へ倒す範囲、暗号の部品のパッケージ、見張り、特性テスト、スパイクの削除）を 31d に入れ、低の指摘は該当する部品に触る Bolt（32・33b）に送る
 - TOTP の照合の結果をドメインの値 `TotpMatch` にし、保存した要素を読めないことを `UnreadableCredentialException` で表して、入口が拒否に倒す範囲をそれだけに絞る。暗号の部品を `identity.infrastructure.crypto` に分け、D-5 の認証の例外を入口だけにする。`FACTOR_TOTP`・`TotpAuthenticationToken` は改名しない（決定 8）
 
+Bolt 32 の開始準備と計画の承認（2026-10-13、human:kakimomokuri）で決めたこと:
+
+- US-18 の残りを 32（ロック、ADR-012 の見直しの 5、Bolt 30 の議題 2 の③、Bolt 31d から送った例外の扱い）と 32c（AC6 の request ごとの役割の確認、ADR-012 の見直しの 3、Bolt 31d から送った低の指摘）に分ける
+- password・TOTP・回復コードの誤りを合わせて数え、5 回続いたら 15 分ロックする。数え方と監査記録はアプリケーションのサービス `LoginAttemptService` で 1 つのトランザクションにし、ロックの確かめは password の照合の後に行う（決定 9）
+- ロック中も誤りと同じ応答と文言にし、A-01 の 2 つの誤りの文言に一般の予告だけを足す。解ける時刻は示さない（決定 9）
+- S-02（複数の利用者への password の試し）は W10 の WAF の送信元ごとの流量の規則に送り、それまでは受け入れる（決定 9）
+- `UnreadableCredentialException` は `RuntimeException` を継ぐ形に替える（決定 8 を改めた）
+
 ## コンテキスト
 
-- US-18 は、メールアドレス・password・TOTP で本人確認し、無操作 30 分・最長 8 時間の session を発行する（AC1）。password か TOTP の失敗が 5 回続いたら 15 分ロックする（AC3）。初回は TOTP を登録し、一度だけ使える回復コードを発行する（AC7・AC9）。
+- US-18 は、メールアドレス・password・TOTP で本人確認し、無操作 30 分・最長 8 時間の session を発行する（AC1）。password か TOTP の失敗が 5 回続いたら 15 分ロックする（AC3。回復コードの誤りも数えると Bolt 32 で決めた。決定 9）。初回は TOTP を登録し、一度だけ使える回復コードを発行する（AC7・AC9）。
 - 非機能要件は、password を Argon2id か bcrypt で保存し（SEC-07）、回復コードを 10 個発行する（SEC-09）。
 - 技術スタックは、TOTP のライブラリを候補（`dev.samstevens.totp`）として挙げただけで、評価していなかった（TS-01）。リスク台帳には「TOTP と Spring Security 7 の統合が想定より難しい（中・中）」がある。
 - アクセス・監査は「単純なモデル」で、認証の仕組みは実績のある部品に任せる（[アーキテクチャ](../../design/cargo-tracker/architecture_backend.md)）。認証の成功・失敗・ロックは、Spring Security のイベントから同期で監査記録に書く（IA-INV-08）。
@@ -111,7 +119,7 @@ T --> U : 2 つの要素を合わせた認証。業務の画面へ
 | 成功の後の行き先 | 保存した request（深いリンク）へ戻すか、役割ごとの既定の画面へ導く | スパイクは固定の `/staff`。荷主（`/customer`）と社内（`/staff`）の役割分け（US-16）と一緒に決める |
 | session の保存 | TOTP のフィルターに `HttpSessionSecurityContextRepository` を設定する | 既定のままでは request の中だけに残る |
 | session の直列化 | Spring Session JDBC に、独自のトークン・`FactorGrantedAuthority`・`Instant` を JDK の直列化で置く。要素の権限を足しても、配備の前の session は復元できた（`CargoUserDetails` と既存の型を変えていないため）。配備の前の session は password の段の時刻（`PASSWORD_VERIFIED_AT`）を持たないので、期限の判定で A-03 に送り、ログインし直してもらう。期限の上限は認証の要素で選び（2 つの要素なら TOTP の時刻から 8 時間、password の段だけなら password の時刻から 5 分）、利用者を切り替えた session に前の利用者の時刻が残っても上限を外さない（Bolt 31 の開発レビュー）。復元そのものが失敗する変更（型の移動や改名）の扱いは変えていない（ADR-012 のネガティブ。配備の手順で session の行を消す） | スパイクはメモリの session。本体のセキュリティの統合テスト（PostgreSQL の Testcontainers）で、要素の権限が次の request に残ることと TOTP の段の ID の変化を確かめる（Bolt 31） |
-| 失敗の数え方 | password と TOTP の誤りを、`AuthenticationFailureBadCredentialsEvent` の 1 か所で数える。5 回続いたら 15 分ロック（`UserDetails` の `accountLocked` と、TOTP の provider の確認） | 監査記録（IA-INV-08）を書く箇所と同じにできる。ロック中の拒否は数えない |
+| 失敗の数え方 | password・TOTP・回復コードの誤りを、`AuthenticationFailureBadCredentialsEvent` から数える。5 回続いたら 15 分ロック。数えて監査記録を書くのはアプリケーションのサービス `LoginAttemptService` で、ロックは password の照合の後の確認と、TOTP・回復コードの provider で確かめる（`UserDetails` の `accountLocked` は使わない。Bolt 32 で改めた。決定 9） | 監査記録（IA-INV-08）を書く箇所と同じにできる。ロック中の拒否は数えない |
 | 再利用の拒否 | 利用者ごとに最後に使った時間の刻みの番号を持ち、それ以下の刻みを拒否する | TOTP のライブラリの外の記録が要る（H3） |
 | 回復コード | A-02 の別の欄（`<details>`）で受け付け（Bolt 31c。決定 7）、一度だけ使える（本体では使った時刻を入れて行を残す） | スパイクは TOTP の欄で受け付けた。本体ではハッシュ（bcrypt）で保存する |
 | 無操作 30 分 | `server.servlet.session.timeout=30m`（Spring Session JDBC では効く設定を確かめる） | 設定しただけで、振る舞いは確かめていない（W5 の統合テスト） |
@@ -192,7 +200,7 @@ U -> A2 : POST /login/totp（TOTP）
 | :--- | :--- |
 | 登録の流れ | `LoginSuccessHandler`（認証の入口）は登録の有無を見ずに A-02 へ送り、A-02 の controller が未登録の利用者を A-07（`/login/totp/enroll`。GET・POST とも同じ URL）へ送る。A-07 は password の要素だけで開ける（R-08 の例外）。登録済みの利用者と 2 つの要素がそろった主体は A-02 へ送る（2 つの要素がそろった主体は登録済みなので、同じ振り分けでよい。画面の層は要素の権限を見ない） |
 | 秘密の発行 | 160 ビットの秘密を乱数で作り、AAD を付けて暗号化して返す（`TotpSecretIssuer`）。平文の秘密は `identity.infrastructure` の実装の中だけで扱い、session には暗号文の文字列（`EncryptedSecret#value()`）だけを置く（`EncryptedSecret` は直列化できる型でなく、Spring Session JDBC は Java の直列化を使う。ドメインの値に `Serializable` は足さない）。登録の途中の暗号文が session にあり、同じ利用者の AAD で復号できる限りそれを使い続ける（GET の再読み込みやタブを 2 つ開いても秘密を変えない） |
-| 最初のコードの確かめ | 暗号文と入れたコードで前後 1 つの刻みを照合する。誤りは保存せず、同じ秘密で A-07 に示し直す。password の要素は捨てない（登録は認証の段ではない）。誤りは失敗の回数に数えない（登録の誤りを数えるかは Bolt 32 で決める） |
+| 最初のコードの確かめ | 暗号文と入れたコードで前後 1 つの刻みを照合する。誤りは保存せず、同じ秘密で A-07 に示し直す。password の要素は捨てない（登録は認証の段ではない）。誤りは失敗の回数に数えない（Bolt 32 で決めた。登録は認証のイベントを経ず、登録の誤りは自分の秘密の確かめで、他人の要素の推測にならない。決定 9） |
 | 要素は与えない | 登録は `FACTOR_TOTP` を与えない。登録で確かめたコードの刻みは使ったことにしない（最後に使った刻みは 0）ので、同じコードを A-02 でもう一度使える。登録を認証のフィルターにせず、認証の流れと session の ID の変更・8 時間の起点を A-02 の 1 か所に保つ |
 | 回復コード | 10 個を乱数で作る（`RecoveryCodeGenerator`。形は `1a2b-3c4d`。8 文字の 16 進を 4 文字ずつハイフンで区切る 32 ビット。総当たりはロック（5 回）と bcrypt で抑える。10 個のうちに重複がない）。ハッシュだけを保存し、平文は登録を保存した POST の応答で一度だけ示す（PRG にしない。再読み込みは登録済みとして A-02 へ送る）。登録の前の画面に示すと、平文の回復コードを登録の途中の session（Spring Session JDBC の表）に置くことになるため。「回復コードを安全な場所に保存した」の確認は画面の必須（`required`）だけにし、サーバーの状態を増やさない |
 | QR と表示の値 | ZXing（`com.google.zxing:core`、Apache-2.0、実行時の推移的な依存なし）で QR の行列を作り、インラインの SVG にする。色は `fill` の属性で付け、`style` は使わない（CSP が `style-src` を許さないため。CSP は変えない）。URI は `otpauth://totp/cargo-tracker:<メールアドレス>?secret=…&issuer=cargo-tracker&digits=6&period=30&algorithm=SHA1`、手入力のキーは Base32 を 4 文字ずつ区切る。画面は `th:utext` で、自分で作った SVG にだけ使う。クライアントで描く案は、秘密を JavaScript に渡し、CSP に script を足すことになるので採らない。URI は URL エンコードした ASCII だけなので、QR の生成で文字セットを指定しない（ECI を付けると読めない認証アプリがある。Bolt 31b の開発レビュー） |
@@ -221,7 +229,7 @@ ArchUnit で、ZXing を参照するのが暗号の部品（`identity.infrastruc
 | 正規化 | 形の知識はドメインに置く（`RecoveryCode.normalize`）。全角を半角に直し（NFKC。IME で入れたまま）、ハイフンに似た文字（長音など）をハイフンにそろえ、前後と中の空白（全角スペースを含む）を除き、小文字にし、ハイフンのない 8 文字は 4 文字目の後にハイフンを入れる。`^[0-9a-f]{4}-[0-9a-f]{4}$` に合わなければ照合せずに拒む（bcrypt を回さない）。手で書き写したコードを打ち直させない |
 | 照合とトランザクションの境界 | 未使用の回復コードのすべてとハッシュで照合する（1 回の送信で最大 10 回の bcrypt、約 1 秒）。読み出しと照合はトランザクションの外で行い、一致したコードの条件付きの更新（`use`）と監査記録 `RECOVERY_CODE_USED` だけを `TransactionTemplate` の 1 つのトランザクションにする（DB の接続を照合の間持たない。監査の追記が失敗したら使用も戻る）。更新できなかったら（同時の消費で負けた）拒む。同じコードを 2 つの session で同時に送っても 1 つだけが通る。照合の時間で一致の位置が分かる心配は、使用済みが一覧に出ない形なので受け入れる |
 | 失敗へ倒す場面（T-42） | 回復コードのない利用者（TOTP を登録していない利用者を含む）は拒む（TOTP の資格のリポジトリに依存しない）。`recoveryCode` と `code` の両方がある送信は、フィルターで投げずに回復コードの入力として provider に渡し、provider が照合せずに `RecoveryCodeRejectedException` で拒む（失敗のイベントが出て監査記録 `INVALID_RECOVERY_CODE` が残る）。どちらもない送信は TOTP の誤りと同じ。照合の途中の例外は、読めない要素（`UnreadableCredentialException`）は拒否してログを出し、実装の誤り（ほかの `IllegalArgumentException`）は 500 にしてエラーのログに残す（Bolt 31d で改めた。決定 8） |
-| 誤りの扱い | TOTP の誤りと同じく password の要素を捨てて A-01 に戻す（1 つの session で試し続けさせない。K-02）。A-01 の誤りの文言は TOTP と回復コードを区別しない: 「認証コードまたは回復コードが正しくないか、すでに使われています。もう一度ログインして、認証アプリに表示された新しいコードか、まだ使っていない回復コードを入れてください。」（AC2。拒否の種類は監査記録にだけ残す）。回数の上限はロック（Bolt 32。回復コードの誤りも数えるかはそこで決める）で抑える |
+| 誤りの扱い | TOTP の誤りと同じく password の要素を捨てて A-01 に戻す（1 つの session で試し続けさせない。K-02）。A-01 の誤りの文言は TOTP と回復コードを区別しない: 「認証コードまたは回復コードが正しくないか、すでに使われています。もう一度ログインして、認証アプリに表示された新しいコードか、まだ使っていない回復コードを入れてください。」（AC2。拒否の種類は監査記録にだけ残す）。回数の上限はロックで抑える（回復コードの誤りも数える。Bolt 32。決定 9） |
 | 登録を始めた時刻 | TOTP・回復コードが通ったら、session の登録を始めた時刻（決定 6 の「登録の途中の上限」）を消す。登録の直後の A-02 の案内は登録を始めた時刻があるときだけ示すので、ログインを終えた後に A-02 を開き直しても出ない。8 時間の判定は要素で選ぶので、消しても上限は変わらない。新しい session の属性は足さない |
 | 問い合わせ先 | A-02 の「認証アプリを使えない場合は…お問い合わせください」（SEC-10 の経路）は、`<details>` の中の回復コードの欄の下に「回復コードもない場合は…」として移す |
 
@@ -236,11 +244,37 @@ ArchUnit で、ZXing を参照するのが暗号の部品（`identity.infrastruc
 | 照合の結果 | `TotpMatch`（`identity.domain.model.valueobjects`。sealed interface と入れ子の record `Matched(step)`・`Reused`・`Mismatch`）を `TotpCredential#match` が返す（`matchingStep` を置き換えた）。窓の刻みのすべてを一定時間で比べ、使っていない刻みで一致すれば `Matched(step)`、使った刻み以下でだけ一致すれば `Reused`、どれとも一致しなければ `Mismatch`。形の違うコード（数字以外、空）は生成器を呼ばずに `Mismatch`。`@ValueObject` は `TotpMatch` だけに付け、用語集は 1 行にする（`Matched` のような一般的な名前を用語集に並べない）。確かめのサービスは結果を写すだけになり、資格を作り直して再利用を見分ける回り道（`wasAlreadyUsed`）をなくした。アプリケーションの `TotpVerification`（4 値。未登録を含む）は残す |
 | 回復コードの照合 | `RecoveryCodeVerification` は 2 値のまま。使用済みは未使用の一覧に出ないので、再利用と誤りを区別できない（区別するには使用済みのコードとも照合し、bcrypt が倍になる） |
 | 監査の理由 `TOTP_NOT_ENROLLED` | TOTP を登録していない利用者の A-02 の送信（A-02 の画面は A-07 へ送るので、画面を経ない送信だけ）は、理由を `INVALID_TOTP` から `TOTP_NOT_ENROLLED` に分ける。運用で「登録していないのに TOTP を送った」と区別するため。利用者への応答は変えない（AC2）。理由の列は CHECK 制約のない文字列なので、マイグレーションは要らない |
-| 読めない要素 | 保存した要素を読めないこと（復号の失敗・ハッシュの形の誤り）を `UnreadableCredentialException`（`identity.domain.model.aggregates`。ポートと同じ置き場所。`IllegalArgumentException` を継ぐ）で表す。暗号の部品が投げる（`AesGcmSecretCipher#decrypt` の知らない鍵の版・壊れた暗号文・別の利用者の暗号文、`JavaOtpTotpCodeGenerator` の鍵の誤り、`BcryptRecoveryCodeHasher#matches` の知らない `{id}` の接頭辞）。2 つの provider と登録のサービスがこれだけを捕まえる。ポートの Javadoc の `@throws` もこれに合わせる |
+| 読めない要素 | 保存した要素を読めないこと（復号の失敗・ハッシュの形の誤り）を `UnreadableCredentialException`（`identity.domain.model.aggregates`。ポートと同じ置き場所。`RuntimeException` を継ぐ）で表す。Bolt 31d では `IllegalArgumentException` を継いでいたが、どこかに `catch (IllegalArgumentException)` が書かれると、狭めた範囲が黙って元に戻る（実装の誤りまで拒否に倒れる）ので、Bolt 32 で `RuntimeException` に改めた（Bolt 31d の議題 4。捕まえる側は変えない）。暗号の部品が投げる（`AesGcmSecretCipher#decrypt` の知らない鍵の版・壊れた暗号文・別の利用者の暗号文、`JavaOtpTotpCodeGenerator` の鍵の誤り、`BcryptRecoveryCodeHasher#matches` の知らない `{id}` の接頭辞）。2 つの provider と登録のサービスがこれだけを捕まえる。ポートの Javadoc の `@throws` もこれに合わせる |
 | 失敗へ倒す範囲（T-42 を改める） | 読めない要素は拒否（登録では A-07 を開き直す）。ほかの `IllegalArgumentException`（値の検証など実装の誤り）は 500 にしてエラーのログに残す。今までは拒否に倒れ、利用者に「コードの誤り」と見え、ログを見ないと気付けなかった。ログインは通さないので失敗へは倒れたまま。`RecoveryCode` の構築子の空のハッシュ（DB の破損）は 500 のまま（データの破損は利用者の誤りに見せない）。決定 7 の「照合の途中の例外は 500 にせず拒否」を改めた |
 | 暗号の部品のパッケージ | `AesGcmSecretCipher`・`Base32`・`BcryptRecoveryCodeHasher`・`JavaOtpTotpCodeGenerator`・`RandomRecoveryCodeGenerator`・`RandomTotpSecretIssuer` の 6 つを `identity.infrastructure.crypto` に置き、application にも入口（`security`）にも依存しない。D-5 の認証の例外は入口 `identity.infrastructure.security` だけにする。既存の規則（合成ルートと入口の外の infrastructure は application に依存しない）が `crypto` にもかかるので、足す規則は「`crypto` は `security` に依存しない」だけ。秘密の発行と回復コードの生成の実装を名指しした規則はパッケージの規則に置き換え、TOTP のライブラリ・ZXing・`AesGcmSecretCipher` の閉じ込めは `crypto` に狭める（`AesGcmSecretCipher` は合成ルートと dev の部品も参照してよい） |
 | `FACTOR_TOTP` と `TotpAuthenticationToken` の名前 | 改名しない。回復コードでも同じ要素を与えるので、意味は「TOTP または回復コードで与える 2 つ目の要素」になったが、名前を変えると配備の前の session が復元できない（session の直列化の互換。ADR-012 のネガティブ）。意味は用語集と Javadoc に書く |
 | スパイク | `spikes/ts-01-totp/` を、6 つのテストのクラス（34 のテストのメソッド）と本体のテスト・後の Bolt の計画・ADR の記録との対応表で、すべてが結び付いていることを確かめてから消す。本体にない確かめのうち本体の守りになるもの（bcrypt の強さ 10）は本体にテストを足す。対応表は Bolt 31d の終了報告に残す（消した。34 本はどれも本体のテスト・Bolt 32 の計画・この ADR の記録のどれかに対応し、本体に足すテストはなかった。bcrypt の強さ 10 は本体の回復コードのハッシュのテストで確かめている） |
+
+### 9. ログインのロック（Bolt 32）
+
+**password・TOTP・回復コードの誤りが合わせて 5 回続いたら、その時点から 15 分ロックし、追加の試行を拒む。数え方と監査記録はアプリケーションのサービス `LoginAttemptService` で 1 つのトランザクションにし、ロックは password の照合の後に確かめ、ロック中も誤りと同じ応答にする。**
+
+| 項目 | 方針 |
+| :--- | :--- |
+| 数え方の置き場所 | 規則（5 回・15 分、ロック中は数えない・延ばさない）は、ログインの失敗の集約 `LoginFailure` と方針 `LockPolicy`（Bolt 30）のまま。数える・0 に戻す・監査記録を書くのは、アプリケーションのサービス `LoginAttemptService`（`identity.application.internal.commandservices`）で、回数と監査記録を `TransactionTemplate` の 1 つのトランザクションにする（IA-INV-08。ADR-012 の見直しの 5）。監査記録の追記が失敗したら回数も戻る。監査のリスナー（`AuthenticationAuditListener`）は失敗・成功のイベントをサービスに写すだけにする（決定 2 の表の「イベントの 1 か所で数える」を、数える場所をサービスに移す形に改めた） |
+| 数える失敗 | password・TOTP・回復コードの誤り（`AuthenticationFailureBadCredentialsEvent`。TOTP・回復コードの拒否を含む）。利用停止の利用者でも password が誤っていれば数える。回復コードの誤りも数えるのは、回復コード（32 ビット。決定 6）の総当たりをロックで抑えるため |
+| 数えない失敗 | ロック中の試行（期限も延ばさない）、存在しない利用者（行を作らない）、password が正しく利用停止・無効な企業で拒んだとき（Disabled のイベント。今の理由）、入口の DB の誤り、A-07 の登録のコードの誤り（登録は認証のイベントを経ず、登録の誤りは自分の秘密の確かめで、他人の要素の推測にならない） |
+| 0 に戻す時点 | 2 つの要素（TOTP または回復コード）がそろったログインの成功だけ。password の段の成功では戻さない（password を知る者が、TOTP を試しながら password を通し直して回数を戻せないように）。ロック中は戻さない（IA-INV-03） |
+| ロックの確かめ | 判定は `LoginAttemptService#isLocked` の 1 か所。password の段は `DaoAuthenticationProvider` の照合の後の確認で、今の `AccountStatusUserDetailsChecker` を包む入口の部品 `LockAwareUserDetailsChecker` が、まず `isLocked` を見て `LockedException`、次に今の利用停止の確認をする。照合の前に確かめると、応答の時間（bcrypt を回すか）でロックが分かる（Bolt 14 の利用停止と同じ理由）。TOTP・回復コードの段は、provider が確かめる前に `isLocked` を見て `LockedException`（失敗のハンドラーが `/login?totp-error` に戻す）。`LockedException` の失敗のイベントは `AuthenticationFailureLockedEvent`（枠組みの既定の対応） |
+| `CargoUserDetails` | 項目を足さない。足すと配備の前の session の値が false で復元され、ロックの状態が session に写る（session の直列化の互換。ADR-012 のネガティブ）。ロックの状態は session に写さず、毎回 `isLocked` で確かめる |
+| 理由の優先 | ロックが先。ロック中で利用停止の利用者は理由 `LOCKED` |
+| ロック中の試行の監査 | 正しい password（Locked のイベント）は `recordLockedAttempt`、誤った password（BadCredentials のイベント）は `recordFailure` がロック中と見分けて、どちらも `LOGIN_FAILED`（理由 `LOCKED`）を書き、数えない |
+| ロックの監査 | この失敗でロックしたときだけ `ACCOUNT_LOCKED`（結果 `SUCCESS`、理由なし、操作者は利用者と企業）を同じトランザクションで書く。リポジトリの `recordFailure` が条件付きの更新の件数から「数えたか」と数えた後の状態（`FailureCount`）を返し、サービスはそれで見分ける。同時の 4・5 回目でも `ACCOUNT_LOCKED` は 1 行だけになる |
+| 最初の失敗の作成の競合（Bolt 30 の議題 2 の③） | 主たるトランザクションの前に、別の短いトランザクションで 0 回の行を作る（`prepare`。なければ作る。入れ子にしないので接続を 2 本持たない。採番の `prepareYear` と同じ形）。一意制約の違反はトランザクションの外で受けて、既にあるとして続ける（ADR-007 の「一意制約の違反は同じトランザクションで捕まえない」）。数える・監査は主たるトランザクションに残す。利用者を作るときに行を作る案は、利用者の管理（Bolt 34）と既存の利用者のデータの移行が要るので採らない |
+| DB の誤り | 書き込み（数え方・監査）の DB の誤りは 500 にしてエラーのログを残す（監査記録なしにログインを通さない。IA-INV-08）。読み出しの誤りは、どこで起きるかで違う。利用者の読み出し（`loadUserByUsername`）の誤りだけは、枠組みが `InternalAuthenticationServiceException` に包んで失敗へ倒し `/login?error` になる（ログインは通さない）。これを受け入れ、監査の理由は `SERVICE_ERROR`（数えない）にする。この例外には既定の失敗のイベントの対応がない（対応は例外のクラス名の完全一致で選ばれ、親の型の対応は使われない）ので、`SecurityConfiguration` で `AuthenticationFailureServiceExceptionEvent` に対応させる。ロックの読み出しの誤りは、password の段（照合の後の確認。枠組みは包まない）でも TOTP・回復コードの段でも 500。計画では password の段のロックの読み出しも `/login?error` になると見ていたが、実装で照合の後の確認の例外は包まれないと分かった（Bolt 32。`AuthenticationErrorHandlingIntegrationTest` と特性テストで確かめる）。利用者の読み出しも 500 にそろえるには枠組みの失敗の扱いを変える必要があり、得るものが小さい |
+| 応答と画面 | ロック中も誤りと同じ応答（password の段は `/login?error`、TOTP・回復コードの段は `/login?totp-error`。どちらも誤りと同じ文言）。存在しない利用者の応答とも同じ。A-01 の 2 つの誤りの文言（password の段、認証コードの段）に一般の予告「続けて 5 回誤ると、15 分ログインできなくなります。」を足す（TOTP・回復コードの誤りも数えるので、予告を見ないままロックされないように）。ロックの有無と解ける時刻は示さない（AC2） |
+
+受け入れること（2026-10-13、human:kakimomokuri）:
+
+- TOTP・回復コードの段は照合の前にロックを見るので、応答の時間（照合を回すか）でロックが分かる。この段に来た者は password が正しいことを既に知っている（K-02）ので受け入れる。
+- `{bcrypt}` の接頭辞で中身が壊れた password のハッシュは、枠組みが false を返す（照合が一致しない。利用者の誤りとして数えられる）。読めない要素として扱うには bcrypt の形の知識を入口に持ち込むことになり、壊すには DB への書き込みが要るので、扱いを変えず、特性テストで固定する。
+- S-02（利用者を変えながら password を試す攻撃。spraying）は、利用者ごとのロックでは止まらない。本番の前段の WAF の送信元ごとの流量の規則（W10。SEC-20）で扱い、それまでは受け入れる（パイロットの前で本番の利用者はいない）。リスク台帳に置く。
+- ロックの解除の操作（システム管理者）は、利用者の管理（US-16。Bolt 34）で作る。それまでは 15 分の経過だけで解ける。
 
 ### 代替案
 
@@ -257,7 +291,7 @@ ArchUnit で、ZXing を参照するのが暗号の部品（`identity.infrastruc
 ### ポジティブ
 
 - 認証の流れと認可の判定を枠組みに任せ、アプリケーションが持つのは TOTP の照合・再利用・失敗の数え方・回復コードだけになる。
-- 失敗の数え方と監査記録を、Spring Security のイベントの 1 か所にまとめられる。
+- 失敗の数え方と監査記録を、Spring Security のイベントを受けるアプリケーションのサービスの 1 つのトランザクションにまとめられる（決定 9）。
 - 新しい依存は `java-otp` と ZXing の core（Bolt 31b）の 2 つで、どちらも実行時の推移的な依存がない。
 
 ### ネガティブ
@@ -273,7 +307,7 @@ ArchUnit で、ZXing を参照するのが暗号の部品（`identity.infrastruc
 | 種類 | 内容 |
 | :--- | :--- |
 | 表（`identity`） | 利用者（メールアドレス、password のハッシュ、状態、所属企業）、TOTP の資格（暗号化した秘密、最後に使った時間の刻み）、回復コード（ハッシュ、使った時刻）、ログインの失敗（連続の回数、ロックの期限） |
-| 画面 | A-01（ログイン）、A-02（認証コード。回復コードの入力（Bolt 31c）、ロック中の案内と解ける時刻（Bolt 32）。A-02 に来る理由は password の後だけなので、`factor.reason` に応じた案内は出さない（Bolt 31 で決めた））、TOTP の登録（A-07。QR と手入力のキー、登録の後の回復コードの保存の画面。Bolt 31b） |
+| 画面 | A-01（ログイン）、A-02（認証コード。回復コードの入力（Bolt 31c）。ロック中の案内と解ける時刻は示さず、誤りと同じ応答にする（Bolt 32。決定 9）。A-02 に来る理由は password の後だけなので、`factor.reason` に応じた案内は出さない（Bolt 31 で決めた））、TOTP の登録（A-07。QR と手入力のキー、登録の後の回復コードの保存の画面。Bolt 31b） |
 | 置き換え | 仮の主体（`ProvisionalActorProperties`）を、認証の主体から利用者と荷主企業を引く形に置き換える。荷主の画面（`/customer`）と社内の画面（`/staff`）の役割を分ける（US-16） |
 | 開発環境 | 開発用の利用者（荷主担当者・営業担当者）と固定の TOTP の秘密を `dev` プロファイルで投入し、A-01・A-02 を入力済みにする（決定 3 の 5 つの層） |
 | 部品の分け方 | TOTP の生成は `TotpCodeGenerator` のポート（`identity.domain.model.aggregates`。Bolt 31 で暗号文と時間の刻みを受ける形 `code(EncryptedSecret, long)` にし、Bolt 31b で AAD のため `code(UserId, EncryptedSecret, long)` にした）と java-otp の実装（`identity.infrastructure`）に分け、RFC 6238 の試験ベクトルを契約テストにする。ロックの方針（5 回・15 分）はログインの失敗の集約（採用のときに利用者の集約から改めた）、再利用の不変条件（刻みは単調に増える）は TOTP の資格、一度だけ使う回復コードはハッシュの照合に置く |
@@ -286,22 +320,24 @@ Bolt 31 で解いたもの（決定に移した）: TOTP の秘密の暗号化�
 Bolt 31b で解いたもの（決定 6 に移した）: 登録の QR の描き方と `otpauth://` の URI の組み立て、回復コード 10 個の発行（SEC-09。ハッシュでの保存は Bolt 30 で作った）、初回の登録（AC7）の画面の認可と登録を終えていない利用者の扱い（登録の完了時に `FACTOR_TOTP` は与えない）。
 
 - java-otp の生成器のスレッドセーフ（スパイクは照合を `synchronized` の中で行う）。
-- 最長 8 時間を即時失効（BR-14）と同じ経路にできるか（Bolt 32）。
+- 最長 8 時間を即時失効（BR-14）と同じ経路にできるか（Bolt 32c。AC6 の request ごとの確認と同じ仕組みのため、Bolt 32 の開始準備で 32 から送った）。
 - 同じ利用者の同時のログインと、同じコードの同時の送信（1 つだけ通ること）。学習テストは MockMvc だけ。
 - password の再設定（SEC-08）と、TOTP の再登録（SEC-10）の流れ。
-- 利用者の画面で「次に取れる操作」（T-35）: A-02 で誤ったときは A-01 からログインし直し、認証アプリの新しいコードか、まだ使っていない回復コードを入れる（A-01 の誤りの文言。Bolt 31c の決定 7）、ロック中は解ける時刻を示して待つ、端末を失ったときは回復コードか管理者への連絡。US-18 の計画の確認ポイントにする。
+- 利用者の画面で「次に取れる操作」（T-35）: A-02 で誤ったときは A-01 からログインし直し、認証アプリの新しいコードか、まだ使っていない回復コードを入れる（A-01 の誤りの文言。Bolt 31c の決定 7）、端末を失ったときは回復コードか管理者への連絡。US-18 の計画の確認ポイントにする。ロック中は解ける時刻を示さず、誤りの文言の一般の予告（5 回・15 分）から待つことが分かるようにする（Bolt 32 で決めた。決定 9）。
 
 ### W5 で人が決める論点
 
-- AC2（利用者の存在や失敗箇所を第三者が推測できる詳細を示さない）と 2 段階の画面の緊張。A-02 に進めば password が正しいと分かる。ロックの確認は password の照合より先に行われ、存在しない利用者はロックされないため、ロックの表示（A-02 の解ける時刻を含む）から利用者の存在が分かる。
-  - 決定（K-02。2026-10-13、Bolt 31 の開始準備で human:kakimomokuri が決めた）: 受け入れる。password が正しいときだけ A-02 に進めるのは一般的な 2 段階のログインの形で、1 つの画面で同時に送る案（代替案）より扱いが単純になる。password の推測は、ロック（5 回・15 分。Bolt 32）と監査記録（失敗の利用者と理由）で抑える。A-02 の誤り・再利用は password の要素を捨てて A-01 に戻し、1 つの session で TOTP を試し続けられないようにする。ロックの表示の文言は Bolt 32 で決める。
-- 複数の利用者への password の総当たり（spraying）は利用者ごとのロックでは防げない。送信元ごとの流量の制限を非機能要件で扱うか。
+- AC2（利用者の存在や失敗箇所を第三者が推測できる詳細を示さない）と 2 段階の画面の緊張。A-02 に進めば password が正しいと分かる。ロックの確認を password の照合より先に行い、ロックを表示すると、存在しない利用者はロックされないため、表示から利用者の存在が分かる。
+  - 決定（K-02。2026-10-13、Bolt 31 の開始準備で human:kakimomokuri が決めた）: 受け入れる。password が正しいときだけ A-02 に進めるのは一般的な 2 段階のログインの形で、1 つの画面で同時に送る案（代替案）より扱いが単純になる。password の推測は、ロック（5 回・15 分。Bolt 32）と監査記録（失敗の利用者と理由）で抑える。A-02 の誤り・再利用は password の要素を捨てて A-01 に戻し、1 つの session で TOTP を試し続けられないようにする。
+  - 決定（ロックの表示。2026-10-13、Bolt 32 の計画の承認）: ロックの確認は password の照合の後に行い、ロック中も誤りと同じ応答と文言にする。解ける時刻は示さず、誤りの文言に一般の予告だけを足す。ロックの表示から利用者の存在は分からない（決定 9）。
+- 複数の利用者への password の総当たり（spraying。S-02）は利用者ごとのロックでは防げない。送信元ごとの流量の制限を非機能要件で扱うか。
+  - 決定（S-02。2026-10-13、Bolt 32 の開始準備で human:kakimomokuri が決めた）: 本番の前段の WAF の送信元ごとの流量の規則（W10。SEC-20）で扱い、それまでは受け入れる（パイロットの前で本番の利用者はいない）。リスク台帳に置く（決定 9）。
 - 本体の `same-site=lax` のつなぎ（D-21）と、US-18 で有効にする CSRF の防御との関係。
   - 決定（S-01。Bolt 31 の計画の承認）: 今の設定（`same-site=lax` と Spring Security の CSRF のトークン）を保つ。A-02 の POST にもトークンが要ることを統合テストで確かめる。lax は外のサイトからの POST に cookie を付けないので、トークンと二重に守る。
 
 ## コンプライアンス
 
-- US-18 の Bolt で、本体の統合テストに次を加える。2 つの要素がそろわないと業務の画面を開けない（全 URL）、再利用の拒否、5 回の失敗のロックの境界（4・5 回、14 分 59 秒・15 分）、最長 8 時間の境界（7 時間 59 分 59 秒・8 時間）、期限切れの session に TOTP を送っても延びない、TOTP の段で session の ID が変わる、ロック中の誤りで期限が延びない、認証の成功・失敗・ロックが同じ transaction で監査記録に書かれる（IA-INV-08）。
+- US-18 の Bolt で、本体の統合テストに次を加える。2 つの要素がそろわないと業務の画面を開けない（全 URL）、再利用の拒否、5 回の失敗のロックの境界（4・5 回、14 分 59 秒・15 分、解けた後の 1 回目。Bolt 32）、ロック中も誤りと同じ応答（Bolt 32）、最長 8 時間の境界（7 時間 59 分 59 秒・8 時間）、期限切れの session に TOTP を送っても延びない、TOTP の段で session の ID が変わる、ロック中の誤りで期限が延びない、認証の成功・失敗・ロックが同じ transaction で監査記録に書かれる（IA-INV-08）。
 - 枠組みの振る舞いの特性テスト（R-16。Bolt 31d）を置き、Spring Security の版を上げるときの回帰の守りにする。どれも枠組みのどの部品の既定の振る舞いかを書き、その振る舞いを直接確かめる。①mfaEnabled の認証のフィルターは、認証の結果の型が `toBuilder()` を持つときだけ前の要素の権限を合わせる（持たない型では `FACTOR_PASSWORD` が落ちる。2 つの型の結果で比べる）。②`AbstractAuthenticationProcessingFilter` の既定の文脈の置き場所は request の属性で、次の request に残らない（`TotpAuthenticationFilter` が session の置き場所を明示する理由）。③`FactorGrantedAuthority` の `issuedAt` はアプリケーションの `Clock` でなく枠組みの時計で決まる（最長 8 時間の判定に使わない理由）。
 - 既定・staging・prod の設定で A-01・A-02 が入力済みにならないこと、dev の外で dev-login の設定があると起動しないことを、本体のテストで守る。
 - ArchUnit で、TOTP のライブラリと ZXing（Bolt 31b）への依存を `identity.infrastructure.crypto` に閉じ込め（Bolt 31d で `identity.infrastructure` から狭めた）、ほかのコンテキストが `FACTOR_*` を参照しないことを守る。`javax.crypto` を参照するのも `identity.infrastructure.crypto` だけにする（Bolt 31 では `identity.infrastructure`。Bolt 31d で狭めた）。`crypto` は `security` に依存しない（Bolt 31d。決定 8）。
@@ -314,6 +350,7 @@ Bolt 31b で解いたもの（決定 6 に移した）: 登録の QR の描き�
 
 ## 改訂の経緯
 
+- 2026-10-13: Bolt 32 の計画の承認で、ログインのロック（決定 9。数え方の置き場所と 1 つのトランザクション、数える失敗と数えない失敗（回復コードを数え、A-07 の登録の誤りは数えない）、0 に戻す時点、ロックの確かめの位置と 1 か所の判定、理由の優先、ロック中の試行とロックの監査、最初の失敗の作成の競合、DB の誤りの扱い、応答と予告、受け入れること（TOTP の段の時間、`{bcrypt}` の壊れたハッシュ、S-02 を W10 の WAF に））を足した。決定 2 の表の失敗の数え方、決定 6 の登録の誤り、決定 7 の誤りの扱い、「US-18 の Bolt で要るもの」の A-02、「未確認の項目」の次に取れる操作、「W5 で人が決める論点」のロックの表示と spraying を決定に合わせ、決定 8 の `UnreadableCredentialException` の親の型を `RuntimeException` に改めた（human:kakimomokuri が決定）。
 - 2026-10-13: Bolt 31d の計画の承認で、認証の部品の守りの直し（決定 8。照合の結果 `TotpMatch`、`UnreadableCredentialException` と失敗へ倒す範囲、暗号の部品のパッケージ `identity.infrastructure.crypto` と D-5 の例外を入口だけにすること、`FACTOR_TOTP`・`TotpAuthenticationToken` を改名しない理由、監査の理由 `TOTP_NOT_ENROLLED`、スパイクの削除）を足した。決定 7 の「照合の途中の例外は 500 にせず拒否」を「読めない要素は拒否、実装の誤りは 500」に改め、決定 4・5・6 とコンプライアンスの ArchUnit の範囲を crypto に合わせ、コンプライアンスに見張りと特性テストの形を足した（human:kakimomokuri が決定）。
 - 2026-10-13: Bolt 31c の計画の承認で、回復コードによるログイン（決定 7。A-02 の別の欄、入力のトークンと TOTP と同じ結果の型、拒否の例外と失敗のイベントの対応表、監査 `RECOVERY_CODE_USED`・`INVALID_RECOVERY_CODE`、正規化、照合とトランザクションの境界、両方の欄がある送信の拒み方、登録を始めた時刻を消すこと、A-01 の誤りの文言）を足した。決定 2 の表の回復コードを「A-02 の別の欄」に改め、スパイクの削除・特性テスト・入口と暗号のパッケージを Bolt 31d に送った（31c と 31d に分けたため。human:kakimomokuri が決定）。
 - 2026-10-13: Bolt 31b の開発レビューで、同時の登録の負けた側の結果をサービスの中で「登録済み」にまとめること、登録を始めた時刻を A-02 まで残し期限を時刻で示すこと、QR の生成で文字セットを指定しないこと、`TotpProvisioning` に表示の形が入る代償を足した。
