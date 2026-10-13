@@ -4,7 +4,7 @@ title: "Bolt 31 終了報告 - TOTP の秘密の暗号化と 2 段階のログ�
 description: "W5 の 5 本目の Bolt の終了報告。TOTP の秘密を AES-GCM で暗号化し、Spring Security 7 の要素の権限で password と TOTP の 2 段階のログイン（A-02）を組んだ。最長 8 時間は TOTP が初めて通った時刻から数え、password の段だけの session は 5 分で失効する。層の規則に 2 つの狭い例外を足した。/goal Bolt31 で承認ゲートを止めずに進めたので、止まらなかったゲートを承認の議題に置く。"
 tags: [plan]
 status: draft
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-13T03:29:13Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-13T03:39:53Z }
 ---
 
 # Bolt 31 終了報告 - TOTP の秘密の暗号化と 2 段階のログイン（A-02）
@@ -78,7 +78,7 @@ generated: { by: anthropic/claude-opus-5-5, at: 2026-10-13T03:29:13Z }
 | `check`（ModularityTest・ArchUnit・Checkstyle・SpotBugs・Spotless を含む） | 通過（1822 件、失敗 0）。SpotBugs の EI_EXPOSE_REP2 が `TotpVerificationService` だけに出たので、このクラスに限って抑止した（理由は `exclude.xml`） |
 | uiTest | 通過（162 件、失敗 0） |
 | SonarQube（ローカル） | Quality Gate PASS（手順書の 9 節のとおり起動）。カバレッジ 95.0%、重複 0.1%、新しい指摘 0。初回は新しい指摘 17 件（テストのラムダの S5778 が 12 件、S1192・S6353・S2160・S1948）で不合格。直して合格 |
-| CI | ステップ 3（`4d3f110`）とステップ 6（`71f2282`）の cargo-tracker CI（check・ui・デモ環境への配備）は通過。レビューの対応 `558c8d2` は終了報告の時点で実行中 |
+| CI | ステップ 3（`4d3f110`）とステップ 6（`71f2282`）の cargo-tracker CI（check・ui・デモ環境への配備）は通過。レビューの対応 `558c8d2` も通過（run 38341531981） |
 | `okf:check` | ERROR 0 |
 
 ## 仮説の結論
