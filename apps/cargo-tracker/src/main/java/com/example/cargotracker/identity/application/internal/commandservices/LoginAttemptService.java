@@ -11,6 +11,7 @@ import com.example.cargotracker.shared.domain.UserId;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import java.time.Clock;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.support.TransactionTemplate;
 
@@ -36,15 +37,15 @@ public class LoginAttemptService {
             AuditRecordRepository auditRecords,
             LockPolicy policy,
             Clock clock,
-            TransactionTemplate transactionTemplate) {
+            PlatformTransactionManager transactionManager) {
         this.failures = failures;
         this.auditRecords = auditRecords;
         this.policy = policy;
         this.clock = clock;
-        this.transactionTemplate = transactionTemplate;
+        this.transactionTemplate = new TransactionTemplate(transactionManager);
         // 記録の作成は外側のトランザクションに入れない。外側があれば中断して 1 文を auto-commit で流す（一意制約の違反で外側が
         // 中断されないように。ADR-007）。本番の入口は外側を持たないので、接続は 1 本のまま（ADR-011 の決定 9）
-        this.outsideTransaction = new TransactionTemplate(transactionTemplate.getTransactionManager());
+        this.outsideTransaction = new TransactionTemplate(transactionManager);
         this.outsideTransaction.setPropagationBehavior(TransactionDefinition.PROPAGATION_NOT_SUPPORTED);
     }
 

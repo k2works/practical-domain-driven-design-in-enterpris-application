@@ -14,7 +14,6 @@ import java.util.List;
 import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.support.AbstractPlatformTransactionManager;
 import org.springframework.transaction.support.DefaultTransactionStatus;
-import org.springframework.transaction.support.TransactionTemplate;
 
 /**
  * 入口の単体テストのための、ロックの有無を決めて呼び出しを覚える偽のログインの試行のサービス（Bolt 32）。親の部品はメモリの
@@ -31,7 +30,7 @@ class FakeLoginAttemptService extends LoginAttemptService {
                 new DiscardingAuditRecords(),
                 new LockPolicy(),
                 Clock.systemUTC(),
-                new TransactionTemplate(new NoTransactions()));
+                new NoTransactions());
         this.locked = locked;
     }
 

@@ -22,7 +22,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.support.AbstractPlatformTransactionManager;
 import org.springframework.transaction.support.DefaultTransactionStatus;
-import org.springframework.transaction.support.TransactionTemplate;
 
 /**
  * ログインの試行のサービス（Bolt 32、US-18 AC3、IA-INV-03・IA-INV-08）。失敗を数えて 5 回目でロックし、ロック中は理由 LOCKED で
@@ -75,8 +74,8 @@ class LoginAttemptServiceTest {
         }
     };
     private final RecordingTransactionManager transactions = new RecordingTransactionManager();
-    private final LoginAttemptService service = new LoginAttemptService(
-            failures, auditRecords, new LockPolicy(), clock, new TransactionTemplate(transactions));
+    private final LoginAttemptService service =
+            new LoginAttemptService(failures, auditRecords, new LockPolicy(), clock, transactions);
 
     @BeforeEach
     void 利用者を登録し時計を合わせる() {
@@ -195,7 +194,7 @@ class LoginAttemptServiceTest {
                 },
                 new LockPolicy(),
                 clock,
-                new TransactionTemplate(transactions));
+                transactions);
 
         assertThatThrownBy(() -> failing.recordFailure(user, company, AuthenticationRejection.BAD_CREDENTIALS))
                 .isInstanceOf(IllegalStateException.class);

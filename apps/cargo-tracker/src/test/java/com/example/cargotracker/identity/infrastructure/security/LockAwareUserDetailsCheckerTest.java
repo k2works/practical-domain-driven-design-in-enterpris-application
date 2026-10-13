@@ -40,22 +40,25 @@ class LockAwareUserDetailsCheckerTest {
     @Test
     void ロック中ならロックの例外で拒む() {
         CargoUserDetails active = details(true);
+        LockAwareUserDetailsChecker checker = checker(true);
 
-        assertThatThrownBy(() -> checker(true).check(active)).isExactlyInstanceOf(LockedException.class);
+        assertThatThrownBy(() -> checker.check(active)).isExactlyInstanceOf(LockedException.class);
     }
 
     @Test
     void ロック中で利用停止でもロックを先にする() {
         CargoUserDetails disabled = details(false);
+        LockAwareUserDetailsChecker checker = checker(true);
 
-        assertThatThrownBy(() -> checker(true).check(disabled)).isExactlyInstanceOf(LockedException.class);
+        assertThatThrownBy(() -> checker.check(disabled)).isExactlyInstanceOf(LockedException.class);
     }
 
     @Test
     void ロックでなければ今の利用停止の確認に回す() {
         CargoUserDetails disabled = details(false);
+        LockAwareUserDetailsChecker checker = checker(false);
 
-        assertThatThrownBy(() -> checker(false).check(disabled)).isExactlyInstanceOf(DisabledException.class);
+        assertThatThrownBy(() -> checker.check(disabled)).isExactlyInstanceOf(DisabledException.class);
     }
 
     @Test

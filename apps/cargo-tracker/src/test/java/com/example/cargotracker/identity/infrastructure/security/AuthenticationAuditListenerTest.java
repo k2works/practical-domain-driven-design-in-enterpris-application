@@ -90,9 +90,9 @@ class AuthenticationAuditListenerTest {
                 password("nobody@example.com"), new BadCredentialsException("誤り")));
 
         assertThat(attempts.calls).isEmpty();
-        assertThat(audit).singleElement().satisfies(record -> {
-            assertThat(record.reason()).isEqualTo(AuthenticationRejection.UNKNOWN_USER.name());
-            assertThat(record.actorUserId()).isNull();
+        assertThat(audit).singleElement().satisfies(audited -> {
+            assertThat(audited.reason()).isEqualTo(AuthenticationRejection.UNKNOWN_USER.name());
+            assertThat(audited.actorUserId()).isNull();
         });
     }
 
@@ -111,9 +111,9 @@ class AuthenticationAuditListenerTest {
                 password("suspended@example.com"), new DisabledException("利用停止")));
 
         assertThat(attempts.calls).isEmpty();
-        assertThat(audit).singleElement().satisfies(record -> {
-            assertThat(record.reason()).isEqualTo(AuthenticationRejection.SUSPENDED.name());
-            assertThat(record.actorUserId()).isEqualTo(suspended.id());
+        assertThat(audit).singleElement().satisfies(audited -> {
+            assertThat(audited.reason()).isEqualTo(AuthenticationRejection.SUSPENDED.name());
+            assertThat(audited.actorUserId()).isEqualTo(suspended.id());
         });
     }
 
@@ -124,10 +124,10 @@ class AuthenticationAuditListenerTest {
 
         assertThat(userLookups).as("同じ読み出しを繰り返さない").isEmpty();
         assertThat(attempts.calls).isEmpty();
-        assertThat(audit).singleElement().satisfies(record -> {
-            assertThat(record.action()).isEqualTo(AuditAction.LOGIN_FAILED);
-            assertThat(record.reason()).isEqualTo(AuthenticationRejection.SERVICE_ERROR.name());
-            assertThat(record.actorUserId()).isNull();
+        assertThat(audit).singleElement().satisfies(audited -> {
+            assertThat(audited.action()).isEqualTo(AuditAction.LOGIN_FAILED);
+            assertThat(audited.reason()).isEqualTo(AuthenticationRejection.SERVICE_ERROR.name());
+            assertThat(audited.actorUserId()).isNull();
         });
     }
 

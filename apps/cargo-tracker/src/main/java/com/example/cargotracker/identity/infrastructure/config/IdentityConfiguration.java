@@ -27,6 +27,7 @@ import org.springframework.boot.context.properties.bind.Binder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
+import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 
 /**
@@ -65,8 +66,8 @@ public class IdentityConfiguration {
             LoginFailureRepository failures,
             AuditRecordRepository auditRecords,
             Clock clock,
-            TransactionTemplate transactionTemplate) {
-        return new LoginAttemptService(failures, auditRecords, new LockPolicy(), clock, transactionTemplate);
+            PlatformTransactionManager transactionManager) {
+        return new LoginAttemptService(failures, auditRecords, new LockPolicy(), clock, transactionManager);
     }
 
     @Bean

@@ -162,7 +162,7 @@ class AuthenticationErrorHandlingIntegrationTest {
         String email = user();
         doThrow(new DataAccessResourceFailureException("DB の誤り"))
                 .when(auditRecords)
-                .append(argThat((AuditRecord record) -> record.action() == AuditAction.LOGIN_FAILED));
+                .append(argThat((AuditRecord appended) -> appended.action() == AuditAction.LOGIN_FAILED));
         RequestBuilder wrong = password(email, "wrong");
 
         assertThatThrownBy(() -> mvc.perform(wrong)).isInstanceOf(DataAccessResourceFailureException.class);
@@ -177,7 +177,7 @@ class AuthenticationErrorHandlingIntegrationTest {
         }
         doThrow(new DataAccessResourceFailureException("DB の誤り"))
                 .when(auditRecords)
-                .append(argThat((AuditRecord record) -> record.action() == AuditAction.ACCOUNT_LOCKED));
+                .append(argThat((AuditRecord appended) -> appended.action() == AuditAction.ACCOUNT_LOCKED));
         RequestBuilder fifth = password(email, "wrong");
 
         assertThatThrownBy(() -> mvc.perform(fifth)).isInstanceOf(DataAccessResourceFailureException.class);
