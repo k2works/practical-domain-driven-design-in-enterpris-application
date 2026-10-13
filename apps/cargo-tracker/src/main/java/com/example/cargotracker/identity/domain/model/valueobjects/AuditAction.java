@@ -11,6 +11,8 @@ public enum AuditAction {
     LOGIN_SUCCEEDED,
     /** ログインに失敗した。 */
     LOGIN_FAILED,
+    /** TOTP を登録した（Bolt 31b）。 */
+    TOTP_ENROLLED,
     /** ログアウトした。 */
     LOGOUT
 }

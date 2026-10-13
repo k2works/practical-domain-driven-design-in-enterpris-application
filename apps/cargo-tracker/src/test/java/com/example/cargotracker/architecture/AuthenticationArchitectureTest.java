@@ -82,6 +82,44 @@ class AuthenticationArchitectureTest {
             .dependOnClassesThat()
             .resideInAPackage("javax.crypto..");
 
+    /** QR のライブラリ（ZXing）は identity.infrastructure に閉じる（Bolt 31b、ADR-011）。 */
+    @ArchTest
+    static final ArchRule QRのライブラリはidentityのinfrastructureだけが使う = noClasses()
+            .that()
+            .resideInAPackage("com.example.cargotracker..")
+            .and()
+            .resideOutsideOfPackage("com.example.cargotracker.identity.infrastructure..")
+            .should()
+            .dependOnClassesThat()
+            .resideInAPackage("com.google.zxing..");
+
+    /** 上の規則が空振りしていないことを確かめる。 */
+    @ArchTest
+    static final ArchRule 秘密の発行の実装はQRのライブラリを使う = classes()
+            .that()
+            .haveSimpleName("RandomTotpSecretIssuer")
+            .should()
+            .resideInAPackage("com.example.cargotracker.identity.infrastructure..")
+            .andShould()
+            .dependOnClassesThat()
+            .resideInAPackage("com.google.zxing..");
+
+    /**
+     * 秘密の発行と回復コードの生成の実装は、認証の入口ではないので application に依存しない（Bolt 31b）。層の規則 D-5 の認証の例外は
+     * {@code identity.infrastructure.security} 全体にかかるので、入口でない部品の守りを足す（入口と暗号のパッケージは 31c で諮る）。
+     */
+    @ArchTest
+    static final ArchRule 秘密の発行と回復コードの生成の実装はapplicationに依存しない = noClasses()
+            .that()
+            .haveSimpleName("RandomTotpSecretIssuer")
+            .or()
+            .haveSimpleName("RandomRecoveryCodeGenerator")
+            .or()
+            .haveSimpleName("AesGcmSecretCipher")
+            .should()
+            .dependOnClassesThat()
+            .resideInAPackage("..application..");
+
     /** 上の規則が空振りしていないこと（パッケージ名の書き誤りで何も守らない状態にならないこと）を確かめる。 */
     @ArchTest
     static final ArchRule TOTPの生成器の実装はTOTPのライブラリを使う = classes()

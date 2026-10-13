@@ -45,6 +45,8 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-session-jdbc'
 	// TOTP の生成（US-18、ADR-011。Bolt 30）。HOTP の計算と切り詰めだけを任せ、依存は identity.infrastructure に閉じる（ArchUnit）
 	implementation 'com.eatthepath:java-otp:1.0.0'
+	// 登録の QR（A-07）をインラインの SVG で描く（Bolt 31b、ADR-011。Apache-2.0、実行時の推移的な依存なし。identity.infrastructure に閉じる）
+	implementation 'com.google.zxing:core:3.5.4'
 	// 画面の CSS と部分更新（ADR-005、技術スタック）。フロントエンドのビルドを持たず、WebJars で同梱して版を固定する（Bolt 8）
 	implementation 'org.webjars:webjars-locator-lite'
 	implementation 'org.webjars.npm:bootstrap:5.3.8'

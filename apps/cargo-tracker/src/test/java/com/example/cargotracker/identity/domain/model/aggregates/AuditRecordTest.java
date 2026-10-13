@@ -45,6 +45,17 @@ class AuditRecordTest {
     }
 
     @Test
+    void TOTPの登録は利用者と企業を記録する() {
+        AuditRecord auditRecord = AuditRecord.totpEnrolled(USER, COMPANY, AT);
+
+        assertThat(auditRecord.action()).isEqualTo(AuditAction.TOTP_ENROLLED);
+        assertThat(auditRecord.result()).isEqualTo(AuditResult.SUCCESS);
+        assertThat(auditRecord.actorUserId()).isEqualTo(USER);
+        assertThat(auditRecord.actorCompanyId()).isEqualTo(COMPANY);
+        assertThat(auditRecord.reason()).isNull();
+    }
+
+    @Test
     void ログインの失敗は理由を記録する() {
         AuditRecord auditRecord = AuditRecord.loginFailed(USER, COMPANY, AuthenticationRejection.SUSPENDED, AT);
 

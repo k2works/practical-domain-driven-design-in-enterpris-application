@@ -1,5 +1,6 @@
 package com.example.cargotracker.identity.acceptance;
 
+import com.example.cargotracker.identity.domain.model.aggregates.DuplicateTotpEnrollmentException;
 import com.example.cargotracker.identity.domain.model.aggregates.TotpCredential;
 import com.example.cargotracker.identity.domain.model.aggregates.TotpCredentialRepository;
 import com.example.cargotracker.shared.domain.UserId;
@@ -18,7 +19,7 @@ public class InMemoryTotpCredentialRepository implements TotpCredentialRepositor
     @Override
     public void add(TotpCredential credential) {
         if (store.putIfAbsent(credential.userId(), credential) != null) {
-            throw new IllegalStateException("その利用者の TOTP の資格は既にある");
+            throw new DuplicateTotpEnrollmentException("その利用者の TOTP の資格は既にある", null);
         }
     }
 

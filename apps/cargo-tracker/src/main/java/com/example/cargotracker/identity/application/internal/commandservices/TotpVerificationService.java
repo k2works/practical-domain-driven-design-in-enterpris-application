@@ -53,11 +53,6 @@ public class TotpVerificationService {
                 : TotpVerification.REJECTED_MISMATCH;
     }
 
-    /** TOTP を登録しているか（未登録の利用者を登録の案内へ送るため）。 */
-    public boolean isEnrolled(UserId userId) {
-        return credentials.findByUserId(userId).isPresent();
-    }
-
     /**
      * 窓の中で一致したが、使った刻み以下だったか（監査記録の理由を分けるためだけに使う）。まだどの刻みも使っていない資格として
      * 照合し直す。拒否の後でだけ呼ぶので、通るときの照合の時間は変わらない。

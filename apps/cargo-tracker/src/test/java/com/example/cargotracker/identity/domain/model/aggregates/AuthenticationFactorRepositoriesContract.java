@@ -59,6 +59,17 @@ public abstract class AuthenticationFactorRepositoriesContract {
     }
 
     @Test
+    void 同じ利用者の2つ目のTOTPの資格は登録済みとして拒む() {
+        UserId user = newUser();
+        totpCredentials().add(TotpCredential.enroll(user, new EncryptedSecret("ciphertext"), at(Duration.ZERO)));
+        TotpCredential second = TotpCredential.enroll(user, new EncryptedSecret("other"), at(Duration.ZERO));
+
+        assertThatThrownBy(() -> totpCredentials().add(second)).isInstanceOf(DuplicateTotpEnrollmentException.class);
+        assertThat(totpCredentials().findByUserId(user))
+                .hasValueSatisfying(found -> assertThat(found.secret()).isEqualTo(new EncryptedSecret("ciphertext")));
+    }
+
+    @Test
     void 登録したTOTPの資格を利用者で読み出せる() {
         UserId user = newUser();
         totpCredentials().add(TotpCredential.enroll(user, new EncryptedSecret("ciphertext"), at(Duration.ZERO)));

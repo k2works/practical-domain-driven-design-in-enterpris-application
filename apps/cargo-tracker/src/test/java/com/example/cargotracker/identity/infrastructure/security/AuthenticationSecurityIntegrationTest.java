@@ -293,14 +293,15 @@ class AuthenticationSecurityIntegrationTest {
     }
 
     @Test
-    void TOTPを登録していない利用者はpasswordが正しくても登録の案内へ移り業務の画面を開けない() throws Exception {
+    void TOTPを登録していない利用者はpasswordの後にA02を経て登録の画面へ移り業務の画面を開けない() throws Exception {
         String email = userWithoutTotp(shipperCompany, Role.SHIPPER);
 
+        // 認証の入口は登録の有無を見ずに A-02 へ送り、A-02 の画面が未登録を A-07 へ送る（Bolt 31b の確認ポイント 10）
         Cookie session = sessionOf(mvc.perform(post("/login")
                         .param("username", email)
                         .param("password", PASSWORD)
                         .with(csrf()))
-                .andExpect(redirectedUrl("/login/totp/enroll"))
+                .andExpect(redirectedUrl(TOTP_URL))
                 .andReturn());
 
         mvc.perform(get("/login/totp/enroll").cookie(session))

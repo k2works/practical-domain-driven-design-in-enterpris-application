@@ -130,7 +130,7 @@ public class SecurityConfiguration {
                         .permitAll()
                         // A-02 と登録の案内は password の要素だけで開ける。access に渡した判定は全体の注釈の 2 つの要素の要求を
                         // 足されない（ほかの URL は既定で 2 つの要素を求めるので、新しい URL を足しても要求が漏れない）
-                        .requestMatchers(TotpAuthenticationFilter.URL, LoginSuccessHandler.ENROLL_URL)
+                        .requestMatchers(TotpAuthenticationFilter.URL, TotpAuthenticationFilter.ENROLL_URL)
                         .access(AuthorityAuthorizationManager.hasAuthority(FactorGrantedAuthority.PASSWORD_AUTHORITY))
                         .requestMatchers("/customer/**")
                         .hasRole(Role.SHIPPER.name())
@@ -145,7 +145,7 @@ public class SecurityConfiguration {
                         .anyRequest()
                         .authenticated())
                 .formLogin(form -> form.loginPage(LOGIN_URL)
-                        .successHandler(new LoginSuccessHandler(totpVerificationService, clock))
+                        .successHandler(new LoginSuccessHandler(clock))
                         .failureHandler(new KeepEmailAuthenticationFailureHandler()))
                 .logout(logout -> logout.logoutUrl("/logout").logoutSuccessUrl("/login?logout"))
                 .sessionManagement(session -> session.invalidSessionUrl(SessionLifetime.EXPIRED_URL))

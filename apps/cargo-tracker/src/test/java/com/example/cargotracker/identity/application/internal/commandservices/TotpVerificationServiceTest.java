@@ -68,7 +68,5 @@ class TotpVerificationServiceTest {
         UserId notEnrolled = new UserId(UUID.randomUUID());
 
         assertThat(service.verify(notEnrolled, "000100")).isEqualTo(TotpVerification.REJECTED_NOT_ENROLLED);
-        assertThat(service.isEnrolled(notEnrolled)).isFalse();
-        assertThat(service.isEnrolled(user)).isTrue();
     }
 }

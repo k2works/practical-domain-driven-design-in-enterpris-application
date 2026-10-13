@@ -16,7 +16,7 @@ public interface RecoveryCodeRepository {
      */
     void replaceAll(UserId userId, List<RecoveryCode> codes);
 
-    /** 利用者の未使用の回復コードを、発行した順に返す。 */
+    /** 利用者の未使用の回復コードを、並び順は約束しない（照合はすべての未使用のコードと比べる。Bolt 31b、Bolt 30 の議題 2 の④）。 */
     List<RecoveryCode> findUnusedByUserId(UserId userId);
 
     /**

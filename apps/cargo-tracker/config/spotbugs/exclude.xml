@@ -18,6 +18,11 @@
     -->
     <Match>
         <Bug pattern="EI_EXPOSE_REP2"/>
-        <Class name="com.example.cargotracker.identity.application.internal.commandservices.TotpVerificationService"/>
+        <Or>
+            <Class name="com.example.cargotracker.identity.application.internal.commandservices.TotpVerificationService"/>
+            <!-- Bolt 31b の登録のサービスと問い合わせのサービスも、同じく DI の部品を保持するだけ -->
+            <Class name="com.example.cargotracker.identity.application.internal.commandservices.TotpEnrollmentService"/>
+            <Class name="com.example.cargotracker.identity.application.internal.queryservices.TotpEnrollmentQueryService"/>
+        </Or>
     </Match>
 </FindBugsFilter>

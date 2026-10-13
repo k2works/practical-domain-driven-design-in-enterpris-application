@@ -1,12 +1,21 @@
 package com.example.cargotracker.identity.infrastructure.config;
 
+import com.example.cargotracker.identity.application.internal.commandservices.TotpEnrollmentService;
 import com.example.cargotracker.identity.application.internal.commandservices.TotpVerificationService;
 import com.example.cargotracker.identity.application.internal.eventhandlers.KpiObservationEventHandler;
 import com.example.cargotracker.identity.application.internal.queryservices.KpiObservationQueryService;
+import com.example.cargotracker.identity.application.internal.queryservices.TotpEnrollmentQueryService;
+import com.example.cargotracker.identity.domain.model.aggregates.AuditRecordRepository;
 import com.example.cargotracker.identity.domain.model.aggregates.KpiObservationRepository;
+import com.example.cargotracker.identity.domain.model.aggregates.RecoveryCodeGenerator;
+import com.example.cargotracker.identity.domain.model.aggregates.RecoveryCodeHasher;
+import com.example.cargotracker.identity.domain.model.aggregates.RecoveryCodeRepository;
 import com.example.cargotracker.identity.domain.model.aggregates.TotpCodeGenerator;
 import com.example.cargotracker.identity.domain.model.aggregates.TotpCredentialRepository;
+import com.example.cargotracker.identity.domain.model.aggregates.TotpSecretIssuer;
 import com.example.cargotracker.identity.infrastructure.security.AesGcmSecretCipher;
+import com.example.cargotracker.identity.infrastructure.security.RandomRecoveryCodeGenerator;
+import com.example.cargotracker.identity.infrastructure.security.RandomTotpSecretIssuer;
 import java.time.Clock;
 import java.util.Map;
 import org.springframework.boot.context.properties.bind.Bindable;
@@ -43,6 +52,36 @@ public class IdentityConfiguration {
     TotpVerificationService totpVerificationService(
             TotpCredentialRepository credentials, TotpCodeGenerator generator, Clock clock) {
         return new TotpVerificationService(credentials, generator, clock);
+    }
+
+    @Bean
+    RandomTotpSecretIssuer totpSecretIssuer(AesGcmSecretCipher cipher) {
+        return new RandomTotpSecretIssuer(cipher);
+    }
+
+    @Bean
+    RandomRecoveryCodeGenerator recoveryCodeGenerator() {
+        return new RandomRecoveryCodeGenerator();
+    }
+
+    @Bean
+    @SuppressWarnings("java:S107") // 登録のサービスに要るポートをそろえて渡す
+    TotpEnrollmentService totpEnrollmentService(
+            TotpCredentialRepository credentials,
+            RecoveryCodeRepository recoveryCodes,
+            AuditRecordRepository auditRecords,
+            TotpSecretIssuer issuer,
+            RecoveryCodeGenerator recoveryCodeGenerator,
+            RecoveryCodeHasher hasher,
+            TotpCodeGenerator generator,
+            Clock clock) {
+        return new TotpEnrollmentService(
+                credentials, recoveryCodes, auditRecords, issuer, recoveryCodeGenerator, hasher, generator, clock);
+    }
+
+    @Bean
+    TotpEnrollmentQueryService totpEnrollmentQueryService(TotpCredentialRepository credentials) {
+        return new TotpEnrollmentQueryService(credentials);
     }
 
     @Bean

@@ -38,6 +38,9 @@ public class TotpAuthenticationFilter extends AbstractAuthenticationProcessingFi
     /** A-02 の URL。 */
     public static final String URL = "/login/totp";
 
+    /** A-07 認証アプリの登録の URL（GET・POST。password の要素だけで開ける。Bolt 31b）。 */
+    public static final String ENROLL_URL = "/login/totp/enroll";
+
     /** TOTP の誤りで戻す A-01 の URL（UI 設計「A-02」の文言を出す）。 */
     public static final String FAILURE_URL = "/login?totp-error";
 

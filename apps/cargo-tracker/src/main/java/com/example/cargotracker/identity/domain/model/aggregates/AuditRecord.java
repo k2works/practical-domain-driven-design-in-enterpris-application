@@ -49,6 +49,12 @@ public final class AuditRecord {
                 UUID.randomUUID(), at, user, company, AuditAction.PASSWORD_VERIFIED, AuditResult.SUCCESS, null);
     }
 
+    /** TOTP の登録を記録する（Bolt 31b、US-18 AC7。先取りの登録を後から追えるようにする。ADR-011）。 */
+    public static AuditRecord totpEnrolled(UserId user, CompanyId company, UtcInstant at) {
+        return new AuditRecord(
+                UUID.randomUUID(), at, user, company, AuditAction.TOTP_ENROLLED, AuditResult.SUCCESS, null);
+    }
+
     /** ログインの成功を記録する。 */
     public static AuditRecord loginSucceeded(UserId user, CompanyId company, UtcInstant at) {
         return new AuditRecord(

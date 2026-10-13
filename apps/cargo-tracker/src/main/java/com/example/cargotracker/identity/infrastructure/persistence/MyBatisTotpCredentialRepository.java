@@ -1,5 +1,6 @@
 package com.example.cargotracker.identity.infrastructure.persistence;
 
+import com.example.cargotracker.identity.domain.model.aggregates.DuplicateTotpEnrollmentException;
 import com.example.cargotracker.identity.domain.model.aggregates.TotpCredential;
 import com.example.cargotracker.identity.domain.model.aggregates.TotpCredentialRepository;
 import com.example.cargotracker.identity.domain.model.valueobjects.EncryptedSecret;
@@ -7,6 +8,7 @@ import com.example.cargotracker.shared.domain.UserId;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import java.time.ZoneOffset;
 import java.util.Optional;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Repository;
 
 /**
@@ -23,11 +25,15 @@ public class MyBatisTotpCredentialRepository implements TotpCredentialRepository
 
     @Override
     public void add(TotpCredential credential) {
-        mapper.insertTotpCredential(new TotpCredentialRow(
-                credential.userId().value(),
-                credential.secret().value(),
-                credential.lastUsedStep(),
-                credential.enrolledAt().instant().atOffset(ZoneOffset.UTC)));
+        try {
+            mapper.insertTotpCredential(new TotpCredentialRow(
+                    credential.userId().value(),
+                    credential.secret().value(),
+                    credential.lastUsedStep(),
+                    credential.enrolledAt().instant().atOffset(ZoneOffset.UTC)));
+        } catch (DuplicateKeyException e) {
+            throw new DuplicateTotpEnrollmentException("その利用者の TOTP の資格は既にある", e);
+        }
     }
 
     @Override

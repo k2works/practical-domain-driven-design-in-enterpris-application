@@ -1,6 +1,5 @@
 package com.example.cargotracker.identity.infrastructure.security;
 
-import com.example.cargotracker.identity.application.internal.commandservices.TotpVerificationService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
@@ -11,19 +10,14 @@ import org.springframework.security.web.authentication.AuthenticationSuccessHand
 
 /**
  * password の段の成功（UI 設計「A-01」、Bolt 31）。password を確かめた時刻を session に置き（password の段だけの session の上限の
- * 起点）、TOTP を登録していれば A-02、していなければ登録の案内へ移す。ログインの前に開いた画面は覚えたままにし、TOTP が通った後に
+ * 起点）、A-02 へ移す（未登録の利用者は A-02 の画面が A-07 へ送る。Bolt 31b）。ログインの前に開いた画面は覚えたままにし、TOTP が通った後に
  * そこへ戻す（{@link TotpAuthenticationFilter}）。最長 8 時間の起点は TOTP が初めて通った時刻（ADR-011）。
  */
 public class LoginSuccessHandler implements AuthenticationSuccessHandler {
 
-    /** 登録の案内の URL（Bolt 31b で A-07 に置き換える）。 */
-    public static final String ENROLL_URL = "/login/totp/enroll";
-
-    private final TotpVerificationService totp;
     private final Clock clock;
 
-    public LoginSuccessHandler(TotpVerificationService totp, Clock clock) {
-        this.totp = totp;
+    public LoginSuccessHandler(Clock clock) {
         this.clock = clock;
     }
 
@@ -40,8 +34,7 @@ public class LoginSuccessHandler implements AuthenticationSuccessHandler {
         if (!totpCarried) {
             session.removeAttribute(SessionLifetime.AUTHENTICATED_AT);
         }
-        boolean enrolled = authentication.getPrincipal() instanceof CargoUserDetails details
-                && totp.isEnrolled(details.actor().userId());
-        response.sendRedirect(request.getContextPath() + (enrolled ? TotpAuthenticationFilter.URL : ENROLL_URL));
+        // 登録の有無は見ない。A-02 の画面が未登録の利用者を A-07 へ送る（認証の入口から問い合わせのサービスを呼ばない。Bolt 31b）
+        response.sendRedirect(request.getContextPath() + TotpAuthenticationFilter.URL);
     }
 }
