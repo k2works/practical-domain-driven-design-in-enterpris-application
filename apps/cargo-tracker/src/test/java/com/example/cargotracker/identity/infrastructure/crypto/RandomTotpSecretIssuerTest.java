@@ -71,7 +71,7 @@ class RandomTotpSecretIssuerTest {
         EncryptedSecret othersSecret = issuer.issue(OTHER);
 
         assertThatThrownBy(() -> issuer.provisioning(OWNER, othersSecret, "shipper@example.com"))
-                .isInstanceOf(IllegalArgumentException.class);
+                .isInstanceOf(UnreadableCredentialException.class);
     }
 
     /** SVG の正方形のモジュール（rect）を画素にして、ZXing で読み戻す。 */
