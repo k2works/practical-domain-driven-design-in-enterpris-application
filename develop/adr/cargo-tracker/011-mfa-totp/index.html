@@ -9966,7 +9966,7 @@
 </tr>
 <tr>
 <td style="text-align: left;">session の直列化</td>
-<td style="text-align: left;">Spring Session JDBC に、独自のトークン・<code>FactorGrantedAuthority</code>・<code>Instant</code> を JDK の直列化で置く。要素の権限を足すと配備の前の session は復元できないので、復元の失敗を無効な session として扱い A-03 に送る（Bolt 31 で決めた。ADR-012 のネガティブ）。デモ環境では配備のときにログインし直してもらう</td>
+<td style="text-align: left;">Spring Session JDBC に、独自のトークン・<code>FactorGrantedAuthority</code>・<code>Instant</code> を JDK の直列化で置く。要素の権限を足しても、配備の前の session は復元できた（<code>CargoUserDetails</code> と既存の型を変えていないため）。配備の前の session は password の段の時刻（<code>PASSWORD_VERIFIED_AT</code>）を持たないので、期限の判定で A-03 に送り、ログインし直してもらう。期限の上限は認証の要素で選び（2 つの要素なら TOTP の時刻から 8 時間、password の段だけなら password の時刻から 5 分）、利用者を切り替えた session に前の利用者の時刻が残っても上限を外さない（Bolt 31 の開発レビュー）。復元そのものが失敗する変更（型の移動や改名）の扱いは変えていない（ADR-012 のネガティブ。配備の手順で session の行を消す）</td>
 <td style="text-align: left;">スパイクはメモリの session。本体のセキュリティの統合テスト（PostgreSQL の Testcontainers）で、要素の権限が次の request に残ることと TOTP の段の ID の変化を確かめる（Bolt 31）</td>
 </tr>
 <tr>
@@ -10034,7 +10034,7 @@
 </tr>
 </tbody>
 </table>
-<p>dev のコードの部品（Bolt 31 で決めた）: 関数の型 <code>DevTotpCodeSource</code>（利用者のメールアドレスからその時点のコードを返す。dev の利用者でなければ空）を <code>identity.interfaces.web</code> に置き、<code>DevLoginPrefill</code> はこれだけを見る（1 層目）。実装 <code>DevTotpCodes</code> は <code>identity.infrastructure.devlogin</code> に <code>@Profile("dev")</code> で置き、<code>cargotracker.dev-login.accounts[n].totp-secret</code>（Base32、利用者ごとに別）だけからコードを作り、利用者の表を読まない（3 層目）。組み立ては <code>identity.infrastructure.config</code>。集約でないドメインのポートは足さない。dev-data の TOTP の資格は、dev の固定の鍵で設定の <code>totp-secret</code> を暗号化した値にし、復号すると設定の秘密と一致することをテストで確かめる（4 層目）。
+<p>dev のコードの部品（Bolt 31 で決めた）: 関数の型 <code>DevTotpCodeSource</code>（利用者のメールアドレスからその時点のコードを返す。dev の利用者でなければ空）を <code>identity.interfaces.web</code> に置き、<code>DevLoginPrefill</code> はこれだけを見る（1 層目）。実装 <code>DevTotpCodes</code> は <code>identity.infrastructure.devlogin</code> に置き（画面の層の型は実装しない）、<code>cargotracker.dev-login.accounts[n].totp-secret</code>（Base32、利用者ごとに別）だけからコードを作り、利用者の表を読まない（3 層目）。組み立ては <code>identity.infrastructure.config</code> で、dev プロファイルでだけ <code>DevTotpCodes</code> のメソッドを <code>DevTotpCodeSource</code> につなぐ。合成ルートが画面の層の型を参照するのは層の規則（interfaces はどの層からも参照されない）の例外で、<code>identity.infrastructure.config</code> から <code>DevTotpCodeSource</code> だけを許す（公開 API の合成ルートの例外と同じ書き方。Bolt 31 のステップ 6 で規則に当たり、2026-10-13 に human:kakimomokuri が決定）。集約でないドメインのポートは足さない。dev-data の TOTP の資格は、dev の固定の鍵で設定の <code>totp-secret</code> を暗号化した値にし、復号すると設定の秘密と一致することをテストで確かめる（4 層目）。
 | 4 | 開発用の利用者と固定の秘密は、<code>spring.flyway.locations</code> の共通・ベンダーの場所に置かず、<code>dev</code> だけで足す場所か起動時の投入にし、その場所をテストで確かめる。利用者を 2 人以上にし、秘密が別であることも確かめる | 本体で守る |
 | 5 | ステージング・本番で <code>SPRING_PROFILES_ACTIVE</code> を固定し、<code>dev</code> を拒否する確認を IaC・CD と運用の手順に足す | 本体で守る（W5） |</p>
 <p>本体の <code>dev</code> プロファイルは今「H2 で bootRun」の意味で、入力済みの意味がそこに相乗りする。</p>
