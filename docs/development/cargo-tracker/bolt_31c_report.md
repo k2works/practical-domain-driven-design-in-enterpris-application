@@ -3,7 +3,9 @@ type: Plan
 title: "Bolt 31c 終了報告 - 回復コードによるログインと password の段の主体の型"
 description: "W5 の 7 本目の Bolt の終了報告。A-02 で回復コードを 1 つ使ってログインを終えられるようにし（US-18 AC9 のログインの分）、password の段だけの主体を PasswordVerifiedUser に分けて AuthenticatedActor を 2 つの要素がそろった主体だけにした（ADR-012 の見直しの 4）。「承認して止めずに進める」の指示で承認ゲートを止めずに進めたので、止まらなかったゲートを承認の議題に置く。"
 tags: [plan]
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-13T08:12:23Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-13T08:28:37Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-10-13T08:28:38Z }
 ---
 
 # Bolt 31c 終了報告 - 回復コードによるログインと password の段の主体の型
@@ -147,6 +149,7 @@ Bolt 31d: 構造の直し（照合の 3 値、`FACTOR_*` の ArchUnit、入口�
 
 | 日付 | 更新内容 | 更新者 |
 | :--- | :--- | :--- |
+| 2026-10-13 | 終了報告を承認した（議題 1〜4 を承認）。T-107〜T-109 を足した | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-10-13 | 初版作成（承認待ち） | anthropic/claude-opus-5-5 |
 
 ## 関連ドキュメント

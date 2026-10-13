@@ -4,7 +4,7 @@ title: "リリース計画 - cargo-tracker（A 社国際貨物輸送管理シス
 description: "cargo-tracker MVP のリリース計画。1 人 + AI、時間単位の Bolt（= イテレーション）と週次の見直しで、最初の縦の流れ（R0.1）、パイロット準備完了（R1.0）、本格展開前（R1.1）の 3 段階、Unit のエントロピー評価、SP、バッファ、パイロット開始の条件、引継ぎ ID の台帳、業務責任者に確かめる事項の台帳。"
 tags: [development,release-plan]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-13T08:04:39Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-13T08:28:37Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T09:29:53Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:38:26Z }
@@ -894,3 +894,4 @@ xychart-beta
 | 2026-10-13 | Bolt 31c の開始準備: 31c と 31d に分け（31c は回復コードによるログインと password の段の主体の型・ADR-012 の見直しの 4、31d は構造の直し。どちらも SP 0）、回復コードは A-02 の `<details>` の別の欄、通ったら `FACTOR_TOTP` と専用の監査、主体の型は `valueobjects` に置くことを決めた。Bolt 31c 計画を作り、2 つの整合性検証の指摘を反映した（承認待ち。W5 の行の直しは計画のステップ 1） | anthropic/claude-opus-5-5、決定 human:kakimomokuri |
 | 2026-10-13 | Bolt 31c のステップ 1: W5 の Bolt の分け方の表の 31c の行を Bolt 31c 計画の内容にし、31d の行（構造の直し。SP 0、リファクタリング、ステップごと（構造））を足した。32 の行に回復コードの誤りも失敗の回数に数えるかを、US-18 の Bolt の順序に 31d を、W5 の本数を 14 本に直した。Bolt 13・14 からの持ち込みの表で特性テストとスパイクの削除を 31d に直した | anthropic/claude-opus-5-5 |
 | 2026-10-13 | Bolt 31c の終了報告を作った（承認待ち。承認ゲートを止めずに進めた。開発レビューの高を直し、残りは 31d・32・33b に送る） | anthropic/claude-opus-5-5 |
+| 2026-10-13 | Bolt 31c の終了報告の承認を記録した（議題 1〜4 を承認） | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
