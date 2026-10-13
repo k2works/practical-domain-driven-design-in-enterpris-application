@@ -217,9 +217,13 @@ class AuthenticationSecurityIntegrationTest {
 
     @Test
     void 誤ったTOTPではpasswordの要素を捨ててA01に戻る() throws Exception {
-        Cookie session = loginWithPassword(shipper(UserStatus.ACTIVE));
+        String email = shipper(UserStatus.ACTIVE);
+        Cookie session = loginWithPassword(email);
 
-        mvc.perform(post(TOTP_URL).cookie(session).param("code", "000000").with(csrf()))
+        mvc.perform(post(TOTP_URL)
+                        .cookie(session)
+                        .param("code", wrongCode(email))
+                        .with(csrf()))
                 .andExpect(redirectedUrl("/login?totp-error"));
 
         // 捨てた session の Cookie は、無効な session として A-03 に送られる（A-02 を開けない）
@@ -320,6 +324,66 @@ class AuthenticationSecurityIntegrationTest {
                         .with(csrf()))
                 .andExpect(redirectedUrl("/session-expired"));
         mvc.perform(get("/customer/transport-requests").cookie(session)).andExpect(status().is3xxRedirection());
+    }
+
+    // --- TOTP の失敗の監査（ADR-012 の見直しの 1、IA-INV-08。Bolt 31） ---
+
+    @Test
+    void 誤ったTOTPは利用者と理由で失敗として監査記録に残り存在しない利用者としては数えない() throws Exception {
+        String email = shipper(UserStatus.ACTIVE);
+        Cookie session = loginWithPassword(email);
+        Integer unknownBefore = unknownUserFailures();
+
+        mvc.perform(post(TOTP_URL)
+                        .cookie(session)
+                        .param("code", wrongCode(email))
+                        .with(csrf()))
+                .andExpect(redirectedUrl("/login?totp-error"));
+
+        assertThat(auditOf(email))
+                .containsExactlyInAnyOrder(
+                        Map.of("action", "PASSWORD_VERIFIED", "result", "SUCCESS", "reason", "-"),
+                        Map.of("action", "LOGIN_FAILED", "result", "FAILURE", "reason", "INVALID_TOTP"));
+        assertThat(unknownUserFailures()).isEqualTo(unknownBefore);
+    }
+
+    @Test
+    void 使ったコードの再利用は理由を分けて監査記録に残る() throws Exception {
+        String email = shipper(UserStatus.ACTIVE);
+        String code = currentCode(email);
+        submitTotp(loginWithPassword(email), code);
+
+        mvc.perform(post(TOTP_URL)
+                        .cookie(loginWithPassword(email))
+                        .param("code", code)
+                        .with(csrf()))
+                .andExpect(redirectedUrl("/login?totp-error"));
+
+        assertThat(auditOf(email))
+                .filteredOn(row -> row.get("action").equals("LOGIN_FAILED"))
+                .containsExactly(Map.of("action", "LOGIN_FAILED", "result", "FAILURE", "reason", "TOTP_REUSED"));
+    }
+
+    /**
+     * 見張り（T-88）。全体の注釈で 2 つの要素を求めるので、URL ごとの規則は役割だけのままにした（ADR-012 の見直しの 2）。
+     * 役割がそろっていても TOTP の要素の欠けた主体は、どの業務の URL も開けない。ステップ 4 の後では最初から通る。
+     */
+    @Test
+    void 役割があってもTOTPの要素の欠けた主体はどの業務のURLも開けない() throws Exception {
+        Cookie shipper = loginWithPassword(shipper(UserStatus.ACTIVE));
+        Cookie sales = loginWithPassword(user(staffCompany(), Role.SALES, UserStatus.ACTIVE));
+        Cookie routeDesigner = loginWithPassword(user(staffCompany(), Role.ROUTE_DESIGNER, UserStatus.ACTIVE));
+        Cookie trackingManager = loginWithPassword(user(staffCompany(), Role.TRACKING_MANAGER, UserStatus.ACTIVE));
+
+        for (String url :
+                List.of("/", "/customer/transport-requests", "/customer/bookings", "/customer/tracking-records")) {
+            mvc.perform(get(url).cookie(shipper)).andExpect(redirectsToTotp());
+        }
+        for (String url : List.of("/staff/transport-requests", "/staff/kpi-observations", "/staff/bookings")) {
+            mvc.perform(get(url).cookie(sales)).andExpect(redirectsToTotp());
+        }
+        mvc.perform(get("/staff/routing-cases").cookie(routeDesigner)).andExpect(redirectsToTotp());
+        mvc.perform(get("/staff/tracking-records").cookie(trackingManager)).andExpect(redirectsToTotp());
     }
 
     @Test
@@ -469,8 +533,8 @@ class AuthenticationSecurityIntegrationTest {
         login(email);
 
         assertThat(auditOf(email))
-                .as("password の段と 2 つの要素がそろった段を分けて残す（ADR-012 の見直しの 1）")
-                .containsExactly(
+                .as("password の段と 2 つの要素がそろった段を分けて残す（ADR-012 の見直しの 1。同じ時刻なので順は問わない）")
+                .containsExactlyInAnyOrder(
                         Map.of("action", "PASSWORD_VERIFIED", "result", "SUCCESS", "reason", "-"),
                         Map.of("action", "LOGIN_SUCCEEDED", "result", "SUCCESS", "reason", "-"));
     }
@@ -1027,6 +1091,22 @@ class AuthenticationSecurityIntegrationTest {
     }
 
     /** 足りない TOTP の要素を求めて A-02 へ導く（枠組みが factor.type・factor.reason を付ける）。 */
+    /** いまの時計の前後 1 つの刻みのどれとも一致しないコード。 */
+    private String wrongCode(String email) {
+        TotpCredential credential =
+                totpCredentials.findByUserId(userIdOf(email)).orElseThrow();
+        long step = TotpCredential.stepAt(new UtcInstant(clock.instant()));
+        List<String> window = List.of(
+                totpCodes.code(credential.secret(), step - 1),
+                totpCodes.code(credential.secret(), step),
+                totpCodes.code(credential.secret(), step + 1));
+        return java.util.stream.IntStream.range(0, 10)
+                .mapToObj(i -> String.format("%06d", i))
+                .filter(code -> !window.contains(code))
+                .findFirst()
+                .orElseThrow();
+    }
+
     private static ResultMatcher redirectsToTotp() {
         return result -> assertThat(result.getResponse().getRedirectedUrl())
                 .as("A-02 へ導く")

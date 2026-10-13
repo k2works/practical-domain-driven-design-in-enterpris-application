@@ -13,8 +13,10 @@ import com.example.cargotracker.identity.infrastructure.security.SessionLifetime
 import com.example.cargotracker.identity.infrastructure.security.TotpAuthenticationFilter;
 import com.example.cargotracker.identity.infrastructure.security.TotpAuthenticationProvider;
 import com.example.cargotracker.identity.infrastructure.security.TotpAuthenticationToken;
+import com.example.cargotracker.identity.infrastructure.security.TotpRejectedException;
 import com.example.cargotracker.shared.domain.Role;
 import java.time.Clock;
+import java.util.Map;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -23,6 +25,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.DefaultAuthenticationEventPublisher;
 import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.security.authentication.event.AuthenticationFailureBadCredentialsEvent;
 import org.springframework.security.authorization.AuthorityAuthorizationManager;
 import org.springframework.security.config.annotation.authorization.EnableMultiFactorAuthentication;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -104,7 +107,12 @@ public class SecurityConfiguration {
         // TOTP の要素も同じ認証のイベント（成功・失敗）で監査記録に書く（ADR-011 の決定 2）
         ProviderManager manager =
                 new ProviderManager(provider, new TotpAuthenticationProvider(totpVerificationService));
-        manager.setAuthenticationEventPublisher(new DefaultAuthenticationEventPublisher(publisher));
+        DefaultAuthenticationEventPublisher events = new DefaultAuthenticationEventPublisher(publisher);
+        // 失敗のイベントは例外のクラス名の完全一致で選ばれる。BadCredentialsException を継いだ TOTP の拒否も、password の誤りと
+        // 同じ失敗のイベントにする（対応がないとイベントが出ず、監査記録に残らない。Bolt 31 のステップ 5 で見つけた）
+        events.setAdditionalExceptionMappings(
+                Map.of(TotpRejectedException.class, AuthenticationFailureBadCredentialsEvent.class));
+        manager.setAuthenticationEventPublisher(events);
         return manager;
     }
 

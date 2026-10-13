@@ -1,5 +1,6 @@
 package com.example.cargotracker.identity.infrastructure.security;
 
+import com.example.cargotracker.identity.application.internal.commandservices.TotpVerification;
 import com.example.cargotracker.identity.domain.model.aggregates.AuditRecord;
 import com.example.cargotracker.identity.domain.model.aggregates.AuditRecordRepository;
 import com.example.cargotracker.identity.domain.model.aggregates.CompanyRepository;
@@ -19,7 +20,7 @@ import org.springframework.security.core.Authentication;
 /**
  * 認証の成功・失敗とログアウトを、Spring Security のイベントから同じ request の中で同期に監査記録へ書く（IA-INV-08、ADR-012）。
  * 失敗の理由は、利用者があれば業務の規則（IA-INV-09）で求め、なければ存在しないメールアドレスとして操作者を残さない。
- * W5 のロック（失敗の回数）も、ここで数える（ADR-011 の決定 2）。
+ * W5 のロック（失敗の回数）は Bolt 32 で、この記録を入口にして identity のコマンドサービスで数える（ADR-012 の見直しの 5）。
  */
 public class AuthenticationAuditListener {
 
@@ -53,8 +54,17 @@ public class AuthenticationAuditListener {
                                 : AuditRecord.passwordVerified(actor.userId(), actor.companyId(), now())));
     }
 
+    /**
+     * 失敗を記録する。TOTP の段の失敗は、主体が password の段で確かめた利用者なので、その利用者と TOTP の理由で書く（Bolt 31、
+     * ADR-012 の見直しの 1）。password の段の失敗は、入れたメールアドレスで利用者を引く。
+     */
     @EventListener
     public void onFailure(AbstractAuthenticationFailureEvent event) {
+        if (event.getAuthentication().getPrincipal() instanceof CargoUserDetails details) {
+            AuthenticatedActor actor = details.actor();
+            auditRecords.append(AuditRecord.loginFailed(actor.userId(), actor.companyId(), totpReasonOf(event), now()));
+            return;
+        }
         Optional<User> user =
                 userDetails.findUser(String.valueOf(event.getAuthentication().getPrincipal()));
         if (user.isEmpty()) {
@@ -77,6 +87,14 @@ public class AuthenticationAuditListener {
                 .findById(user.companyId())
                 .flatMap(user::authenticationRejection)
                 .orElse(AuthenticationRejection.BAD_CREDENTIALS);
+    }
+
+    /** TOTP の段の失敗の理由。再利用だけを分け、ほかは一致しないとする（利用者には同じ文言。AC2）。 */
+    private static AuthenticationRejection totpReasonOf(AbstractAuthenticationFailureEvent event) {
+        return event.getException() instanceof TotpRejectedException rejected
+                        && rejected.verification() == TotpVerification.REJECTED_REUSED
+                ? AuthenticationRejection.TOTP_REUSED
+                : AuthenticationRejection.INVALID_TOTP;
     }
 
     @EventListener

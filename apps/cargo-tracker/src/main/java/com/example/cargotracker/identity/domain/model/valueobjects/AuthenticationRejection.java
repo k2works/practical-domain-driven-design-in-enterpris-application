@@ -11,5 +11,9 @@ public enum AuthenticationRejection {
     /** 利用者が利用停止。 */
     SUSPENDED,
     /** 所属企業が無効。 */
-    COMPANY_INACTIVE
+    COMPANY_INACTIVE,
+    /** TOTP の認証コードが前後 1 つの刻みのどれとも一致しない（Bolt 31）。 */
+    INVALID_TOTP,
+    /** 使った刻み以下の TOTP の認証コード（同じコードの再利用。IA-INV-10、Bolt 31）。 */
+    TOTP_REUSED
 }
