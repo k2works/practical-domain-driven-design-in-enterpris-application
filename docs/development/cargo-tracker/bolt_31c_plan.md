@@ -3,8 +3,10 @@ type: Plan
 title: "Bolt 31c 計画 - 回復コードによるログインと password の段の主体の型"
 description: "W5 の 7 本目の Bolt の計画。A-02 で回復コードを使ってログインを終えられるようにし（US-18 AC9 のログインの分、SEC-09）、password の段だけの主体を identity の中だけの型に分けて、AuthenticatedActor を 2 つの要素がそろった主体だけにする（ADR-012 の見直しの 4）。構造の直しは Bolt 31d。"
 tags: [development,bolt-plan]
-status: draft
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-13T06:45:10Z }
+status: stable
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-13T06:46:28Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-10-13T06:46:28Z }
 ---
 
 # Bolt 31c 計画 - 回復コードによるログインと password の段の主体の型
@@ -19,6 +21,7 @@ generated: { by: anthropic/claude-opus-5-5, at: 2026-10-13T06:45:10Z }
 | SP | 0（US-18 の残りの SP は #13 をクローズする Bolt 33b で数える） |
 | GitHub | [#13](https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/13)（US-18、R1.0）。この Bolt では閉じない |
 | 承認ゲート | **ステップごとに止める**（W4 の締めの決定: 認証の完成はステップごと）。確認必須（セキュリティ、構造、画面の流れの変更）は計画の承認の場で確認ポイントとして判断を受ける |
+| 承認ゲートの扱い | 2026-10-13 に human:kakimomokuri が計画を承認した（確認ポイント 1〜11 は推奨のとおり）。あわせて人の指示（「承認して止めずに進める」）により、ステップの承認ゲートで止まらずに進める。止まらなかったゲートごとに根拠を書き、終了報告の承認の議題に置く（T-36）。途中で規則の例外が要れば人に諮る |
 | アプローチ | インサイドアウト（開発戦略の中盤。W5 の表で US-18 はインサイドアウト。development_strategy.md:344 の「データとドメインから」）。回復コードの集約と条件付きの消費（Bolt 30）はあるので、ドメインの正規化と主体の値から固め、サービス、認証の入口、画面の順に足す |
 | 前の Bolt | [Bolt 31b 終了報告](bolt_31b_report.md)、[Bolt 31 終了報告](bolt_31_report.md) |
 
@@ -278,6 +281,7 @@ Totp --> Login : 誤り・再利用・使用済み（password の要素を捨て
 | :--- | :--- | :--- |
 | 2026-10-13 | 初版作成（承認待ち）。開始準備で、Bolt 31b の終了報告の Try と既知の課題、ADR-012 の見直しの 4、UI 設計の A-02、回復コードの集約とリポジトリ、引数の解決と TOTP の入口を調べ、human:kakimomokuri の決定（31c と 31d に分ける、回復コードは `<details>` の別の欄、`FACTOR_TOTP` と専用の監査、主体の型は `valueobjects`）を反映した | anthropic/claude-opus-5-5 |
 | 2026-10-13 | 詳細整合性検証（16 件）と横断整合性検証（17 件）の指摘を反映した。provider の結果を `TotpAuthenticationToken` にすること（成功の監査の判定と `toBuilder()`）、拒否の例外と失敗のイベントの対応表、トランザクションの境界（照合は外、消費と監査は 1 つ）、正規化をドメインに置くことと形の正規表現、`PasswordVerifiedUser` の `EmailAddress`、両方の欄がある送信の拒み方、A-01 の誤りの文言と問い合わせ先の移動（確認ポイント 5）、登録の直後の案内の条件、A-02 のヘッダーのテストの空振り（T-106）、ステップ 3 と 4 の入れ替え、ステップ 1 の対象（non_functional・architecture_backend、ADR・UI 設計・ドメインモデル・データモデル・release_plan の行）、4 図の省略の明記、H2 の根拠、`@US-18-AC9`、SpotBugs を直した | anthropic/claude-opus-5-5 |
+| 2026-10-13 | 計画の承認を記録した。確認ポイント 1〜11 は推奨のとおり。ステップの承認ゲートで止まらずに進める（T-36） | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 
 ## 関連ドキュメント
 

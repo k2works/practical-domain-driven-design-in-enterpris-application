@@ -1,6 +1,8 @@
 # Docs Update Log
 
 ## 2026-10-13
+* **Verification**: [bolt_31c_plan](/development/cargo-tracker/bolt_31c_plan.md) を human:kakimomokuri が検証
+* **Update**: [bolt_31c_plan](/development/cargo-tracker/bolt_31c_plan.md) を更新（anthropic/claude-opus-5-5）
 * **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
 * **Update**: [bolt_31c_plan](/development/cargo-tracker/bolt_31c_plan.md) を更新（anthropic/claude-opus-5-5）
 * **Creation**: [bolt_31c_plan](/development/cargo-tracker/bolt_31c_plan.md) を作成（anthropic/claude-opus-5-5）
