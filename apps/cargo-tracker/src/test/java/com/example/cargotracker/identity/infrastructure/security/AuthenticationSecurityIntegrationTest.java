@@ -6,6 +6,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.model;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -179,6 +180,21 @@ class AuthenticationSecurityIntegrationTest {
         mvc.perform(get(TOTP_URL).cookie(session))
                 .andExpect(status().isOk())
                 .andExpect(content().string(Matchers.containsString("autocomplete=\"one-time-code\"")));
+    }
+
+    @Test
+    void passwordの段の主体は画面のモデルに業務の利用者として置かず二つの要素がそろうと置く() throws Exception {
+        // ADR-012 の見直しの 4（Bolt 31c）。「ないこと」と並べて「あるべきもの」を確かめる（T-106）
+        String email = shipper(UserStatus.ACTIVE);
+        Cookie session = loginWithPassword(email);
+
+        mvc.perform(get(TOTP_URL).cookie(session))
+                .andExpect(status().isOk())
+                .andExpect(model().attribute("currentActor", Matchers.nullValue()));
+        Cookie full = submitTotp(session, currentCode(email));
+        mvc.perform(get("/customer/transport-requests").cookie(full))
+                .andExpect(status().isOk())
+                .andExpect(model().attribute("currentActor", Matchers.notNullValue()));
     }
 
     @Test

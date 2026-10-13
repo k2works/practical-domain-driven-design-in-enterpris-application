@@ -17,6 +17,10 @@ import org.springframework.web.method.support.ModelAndViewContainer;
  * 業務の引数（{@code AuthenticatedActor}）は、未認証なら例外にして A-01 へ移す（fail-closed。null を渡さない）。
  * 未認証の画面でも使う場所（レイアウトのヘッダー）は {@code Optional<AuthenticatedActor>} で受け取る（Bolt 14 レビュー）。
  * 引数の解決があることで、{@code AuthenticatedActor} が request の値から組み立てられることもない。
+ * {@code AuthenticatedActor} は 2 つの要素（password と TOTP または回復コード。{@code FACTOR_TOTP}）がそろった主体だけに渡す。
+ * password の段だけの主体には業務の引数を渡さず例外にし、{@code Optional} は空にする（ADR-012 の見直しの 4、Bolt 31c）。本番では
+ * 全体の注釈で要素の欠けた主体は業務の URL に届かないので、届いたら実装の誤り。password の段だけで開く画面は
+ * {@link PasswordVerifiedUserArgumentResolver} の値を受ける。
  */
 public class AuthenticatedActorArgumentResolver implements HandlerMethodArgumentResolver {
 
@@ -45,8 +49,17 @@ public class AuthenticatedActorArgumentResolver implements HandlerMethodArgument
 
     private static Optional<AuthenticatedActor> currentActor() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        return authentication != null && authentication.getPrincipal() instanceof CargoUserDetails details
+        return authentication != null
+                        && authentication.getPrincipal() instanceof CargoUserDetails details
+                        && hasFactor(authentication, TotpAuthenticationToken.FACTOR_TOTP)
                 ? Optional.of(details.actor())
                 : Optional.empty();
+    }
+
+    /** 主体が要素の権限を持つか（password の段の主体の引数の解決と共有する）。 */
+    static boolean hasFactor(Authentication authentication, String factor) {
+        return authentication.isAuthenticated()
+                && authentication.getAuthorities().stream()
+                        .anyMatch(authority -> factor.equals(authority.getAuthority()));
     }
 }

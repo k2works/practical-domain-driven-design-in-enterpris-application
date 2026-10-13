@@ -1,8 +1,7 @@
 package com.example.cargotracker.identity.interfaces.web;
 
 import com.example.cargotracker.identity.application.internal.queryservices.TotpEnrollmentQueryService;
-import com.example.cargotracker.shared.domain.AuthenticatedActor;
-import java.security.Principal;
+import com.example.cargotracker.identity.domain.model.valueobjects.PasswordVerifiedUser;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -58,12 +57,12 @@ public class LoginController {
 
     /** A-02 認証コードの入力（Bolt 31）。TOTP を登録していない利用者は登録の案内へ移す。 */
     @GetMapping("/login/totp")
-    public String totp(AuthenticatedActor actor, Principal principal, Model model) {
-        if (!enrollment.isEnrolled(actor.userId())) {
+    public String totp(PasswordVerifiedUser user, Model model) {
+        if (!enrollment.isEnrolled(user.userId())) {
             return "redirect:/login/totp/enroll";
         }
         devTotpCodes.ifAvailable(
-                codes -> codes.codeFor(principal.getName()).ifPresent(code -> model.addAttribute("code", code)));
+                codes -> codes.codeFor(user.email().value()).ifPresent(code -> model.addAttribute("code", code)));
         return "identity/login-totp";
     }
 

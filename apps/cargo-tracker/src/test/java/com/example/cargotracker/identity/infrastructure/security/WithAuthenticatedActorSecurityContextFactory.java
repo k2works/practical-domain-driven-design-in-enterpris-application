@@ -2,8 +2,12 @@ package com.example.cargotracker.identity.infrastructure.security;
 
 import com.example.cargotracker.shared.domain.AuthenticatedActor;
 import com.example.cargotracker.shared.domain.Role;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.FactorGrantedAuthority;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.test.context.support.WithSecurityContextFactory;
@@ -26,8 +30,11 @@ public class WithAuthenticatedActorSecurityContextFactory
         CargoUserDetails details =
                 new CargoUserDetails(actor, shipper ? "shipper@example.com" : "sales@example.com", true, null);
         SecurityContext context = SecurityContextHolder.createEmptyContext();
-        context.setAuthentication(
-                UsernamePasswordAuthenticationToken.authenticated(details, null, details.getAuthorities()));
+        // 本番と同じく 2 つの要素（password と TOTP）がそろった主体にする（ADR-012 の見直しの 4、Bolt 31c）
+        List<GrantedAuthority> authorities = new ArrayList<>(details.getAuthorities());
+        authorities.add(FactorGrantedAuthority.fromAuthority(FactorGrantedAuthority.PASSWORD_AUTHORITY));
+        authorities.add(FactorGrantedAuthority.fromAuthority(TotpAuthenticationToken.FACTOR_TOTP));
+        context.setAuthentication(UsernamePasswordAuthenticationToken.authenticated(details, null, authorities));
         return context;
     }
 }

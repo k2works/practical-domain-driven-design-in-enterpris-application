@@ -106,7 +106,7 @@ class AuthenticationArchitectureTest {
 
     /**
      * 秘密の発行と回復コードの生成の実装は、認証の入口ではないので application に依存しない（Bolt 31b）。層の規則 D-5 の認証の例外は
-     * {@code identity.infrastructure.security} 全体にかかるので、入口でない部品の守りを足す（入口と暗号のパッケージは 31c で諮る）。
+     * {@code identity.infrastructure.security} 全体にかかるので、入口でない部品の守りを足す（入口と暗号のパッケージは 31d で諮る）。
      */
     @ArchTest
     static final ArchRule 秘密の発行と回復コードの生成の実装はapplicationに依存しない = noClasses()
@@ -119,6 +119,36 @@ class AuthenticationArchitectureTest {
             .should()
             .dependOnClassesThat()
             .resideInAPackage("..application..");
+
+    /**
+     * password の段だけの主体（{@code PasswordVerifiedUser}）を受ける画面は、A-02 と A-07 の controller だけ（Bolt 31c、ADR-012 の
+     * 見直しの 4）。ほかの画面は 2 つの要素がそろった主体（{@code AuthenticatedActor}）だけを受ける。identity の外からの参照は
+     * Spring Modulith の検証（ModularityTest）が止める。
+     */
+    @ArchTest
+    static final ArchRule passwordの段の主体を受ける画面はA02とA07だけ = noClasses()
+            .that()
+            .resideInAPackage("com.example.cargotracker..interfaces..")
+            .and()
+            .doNotHaveSimpleName("LoginController")
+            .and()
+            .doNotHaveSimpleName("TotpEnrollmentController")
+            .should()
+            .dependOnClassesThat()
+            .haveSimpleName("PasswordVerifiedUser");
+
+    /** 上の規則が空振りしていないことを確かめる。 */
+    @ArchTest
+    static final ArchRule A02とA07の画面はpasswordの段の主体を受ける = classes()
+            .that()
+            .haveSimpleName("LoginController")
+            .or()
+            .haveSimpleName("TotpEnrollmentController")
+            .should()
+            .resideInAPackage("com.example.cargotracker.identity.interfaces.web")
+            .andShould()
+            .dependOnClassesThat()
+            .haveSimpleName("PasswordVerifiedUser");
 
     /** 上の規則が空振りしていないこと（パッケージ名の書き誤りで何も守らない状態にならないこと）を確かめる。 */
     @ArchTest

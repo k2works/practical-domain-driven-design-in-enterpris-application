@@ -10,14 +10,13 @@ import com.example.cargotracker.identity.domain.model.aggregates.TotpCodeGenerat
 import com.example.cargotracker.identity.domain.model.aggregates.TotpCredential;
 import com.example.cargotracker.identity.domain.model.aggregates.TotpCredentialRepository;
 import com.example.cargotracker.identity.domain.model.aggregates.UserRepository;
+import com.example.cargotracker.identity.domain.model.valueobjects.EmailAddress;
 import com.example.cargotracker.identity.domain.model.valueobjects.EncryptedSecret;
-import com.example.cargotracker.shared.domain.AuthenticatedActor;
-import com.example.cargotracker.shared.domain.Role;
+import com.example.cargotracker.identity.domain.model.valueobjects.PasswordVerifiedUser;
 import com.example.cargotracker.shared.domain.UserId;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import java.time.Clock;
 import java.time.Duration;
-import java.util.EnumSet;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
@@ -69,7 +68,7 @@ class TotpEnrollmentServiceIntegrationTest {
     @Test
     void 重なった同じ利用者の登録は先の1つだけが通り後は登録済みとして返り回復コードは10個() throws Exception {
         UserId user = transactionTemplate.execute(status -> AuthenticationFactorFixtures.newUser(companies, users));
-        AuthenticatedActor actor = actorOf(user);
+        PasswordVerifiedUser actor = actorOf(user);
         EncryptedSecret secret = started(actor);
         String code = generator.code(user, secret, TotpCredential.stepAt(new UtcInstant(clock.instant())));
         CountDownLatch firstSaved = new CountDownLatch(1);
@@ -107,14 +106,14 @@ class TotpEnrollmentServiceIntegrationTest {
         assertThat(credentials.findByUserId(user)).isPresent();
     }
 
-    private EncryptedSecret started(AuthenticatedActor actor) {
-        EnrollmentStart start = service.begin(actor, "user@example.com", Optional.empty());
+    private EncryptedSecret started(PasswordVerifiedUser actor) {
+        EnrollmentStart start = service.begin(actor, Optional.empty());
         return ((EnrollmentStart.Started) start).secret();
     }
 
-    private AuthenticatedActor actorOf(UserId user) {
-        return new AuthenticatedActor(
-                user, users.findById(user).orElseThrow().companyId(), EnumSet.of(Role.SHIPPER), "荷主 太郎", "荷主 A");
+    private PasswordVerifiedUser actorOf(UserId user) {
+        return new PasswordVerifiedUser(
+                user, users.findById(user).orElseThrow().companyId(), EmailAddress.of("user@example.com"));
     }
 
     private static void await(CountDownLatch latch) {

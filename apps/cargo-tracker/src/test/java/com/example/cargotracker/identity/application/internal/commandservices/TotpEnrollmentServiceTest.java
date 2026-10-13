@@ -13,18 +13,17 @@ import com.example.cargotracker.identity.domain.model.aggregates.TotpCodeGenerat
 import com.example.cargotracker.identity.domain.model.aggregates.TotpCredential;
 import com.example.cargotracker.identity.domain.model.aggregates.TotpSecretIssuer;
 import com.example.cargotracker.identity.domain.model.valueobjects.AuditAction;
+import com.example.cargotracker.identity.domain.model.valueobjects.EmailAddress;
 import com.example.cargotracker.identity.domain.model.valueobjects.EncryptedSecret;
+import com.example.cargotracker.identity.domain.model.valueobjects.PasswordVerifiedUser;
 import com.example.cargotracker.identity.domain.model.valueobjects.TotpProvisioning;
-import com.example.cargotracker.shared.domain.AuthenticatedActor;
 import com.example.cargotracker.shared.domain.CompanyId;
-import com.example.cargotracker.shared.domain.Role;
 import com.example.cargotracker.shared.domain.UserId;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
-import java.util.EnumSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -140,26 +139,18 @@ class TotpEnrollmentServiceTest {
             Clock.fixed(NOW, ZoneOffset.UTC),
             NO_TRANSACTION);
 
-    private final AuthenticatedActor actor = actor();
-
-    private static AuthenticatedActor actor() {
-        return new AuthenticatedActor(
-                new UserId(UUID.randomUUID()),
-                new CompanyId(UUID.randomUUID()),
-                EnumSet.of(Role.SHIPPER),
-                "荷主 太郎",
-                "荷主 A");
-    }
+    private final PasswordVerifiedUser actor = new PasswordVerifiedUser(
+            new UserId(UUID.randomUUID()), new CompanyId(UUID.randomUUID()), EmailAddress.of("shipper@example.com"));
 
     private EncryptedSecret started(Optional<EncryptedSecret> pending) {
-        EnrollmentStart start = service.begin(actor, "shipper@example.com", pending);
+        EnrollmentStart start = service.begin(actor, pending);
         assertThat(start).isInstanceOf(EnrollmentStart.Started.class);
         return ((EnrollmentStart.Started) start).secret();
     }
 
     @Test
     void 登録を始めると持ち主に結び付いた秘密と表示の値を返す() {
-        EnrollmentStart start = service.begin(actor, "shipper@example.com", Optional.empty());
+        EnrollmentStart start = service.begin(actor, Optional.empty());
 
         assertThat(start).isInstanceOfSatisfying(EnrollmentStart.Started.class, started -> {
             assertThat(started.secret().value()).contains(actor.userId().value().toString());
@@ -184,8 +175,7 @@ class TotpEnrollmentServiceTest {
         credentials.add(TotpCredential.enroll(
                 actor.userId(), new EncryptedSecret("v1:" + actor.userId().value() + ":0"), new UtcInstant(NOW)));
 
-        assertThat(service.begin(actor, "shipper@example.com", Optional.empty()))
-                .isInstanceOf(EnrollmentStart.AlreadyEnrolled.class);
+        assertThat(service.begin(actor, Optional.empty())).isInstanceOf(EnrollmentStart.AlreadyEnrolled.class);
         assertThat(service.complete(actor, issuer.issue(actor.userId()), "000100"))
                 .isInstanceOf(EnrollmentResult.AlreadyEnrolled.class);
     }

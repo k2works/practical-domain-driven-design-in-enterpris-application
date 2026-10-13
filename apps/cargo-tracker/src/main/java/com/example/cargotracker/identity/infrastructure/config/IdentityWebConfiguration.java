@@ -1,6 +1,7 @@
 package com.example.cargotracker.identity.infrastructure.config;
 
 import com.example.cargotracker.identity.infrastructure.security.AuthenticatedActorArgumentResolver;
+import com.example.cargotracker.identity.infrastructure.security.PasswordVerifiedUserArgumentResolver;
 import java.util.List;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.method.support.HandlerMethodArgumentResolver;
@@ -15,5 +16,6 @@ public class IdentityWebConfiguration implements WebMvcConfigurer {
     @Override
     public void addArgumentResolvers(List<HandlerMethodArgumentResolver> resolvers) {
         resolvers.add(new AuthenticatedActorArgumentResolver());
+        resolvers.add(new PasswordVerifiedUserArgumentResolver());
     }
 }

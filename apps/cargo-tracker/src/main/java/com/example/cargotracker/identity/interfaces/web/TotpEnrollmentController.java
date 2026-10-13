@@ -5,11 +5,10 @@ import com.example.cargotracker.identity.application.internal.commandservices.En
 import com.example.cargotracker.identity.application.internal.commandservices.TotpEnrollmentService;
 import com.example.cargotracker.identity.application.internal.queryservices.TotpEnrollmentQueryService;
 import com.example.cargotracker.identity.domain.model.valueobjects.EncryptedSecret;
+import com.example.cargotracker.identity.domain.model.valueobjects.PasswordVerifiedUser;
 import com.example.cargotracker.identity.domain.model.valueobjects.TotpProvisioning;
 import com.example.cargotracker.platform.web.DateTimeDisplay;
-import com.example.cargotracker.shared.domain.AuthenticatedActor;
 import jakarta.servlet.http.HttpSession;
-import java.security.Principal;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
@@ -61,23 +60,22 @@ public class TotpEnrollmentController {
     }
 
     @GetMapping
-    public String form(AuthenticatedActor actor, Principal principal, HttpSession session, Model model) {
-        return start(actor, principal, session, model);
+    public String form(PasswordVerifiedUser user, HttpSession session, Model model) {
+        return start(user, session, model);
     }
 
     @PostMapping
     public String enroll(
-            AuthenticatedActor actor,
-            Principal principal,
+            PasswordVerifiedUser user,
             HttpSession session,
             @RequestParam(name = "code", defaultValue = "") String code,
             Model model) {
         Optional<EncryptedSecret> pending = pendingSecret(session);
         if (pending.isEmpty()) {
             // 登録の途中の暗号文がない送信（登録の後の再送、登録を始めていない送信）。登録済みなら A-02、そうでなければ A-07 を開き直す
-            return enrollmentQuery.isEnrolled(actor.userId()) ? TO_TOTP : TO_ENROLL;
+            return enrollmentQuery.isEnrolled(user.userId()) ? TO_TOTP : TO_ENROLL;
         }
-        EnrollmentResult result = enrollment.complete(actor, pending.get(), code.strip());
+        EnrollmentResult result = enrollment.complete(user, pending.get(), code.strip());
         return switch (result) {
             case EnrollmentResult.Enrolled(var recoveryCodes) -> {
                 // 登録を始めた時刻は残す。A-02 で TOTP が通るまで同じ 15 分の上限で、回復コードを書き写す時間をとる（ADR-011 の決定 6）
@@ -88,12 +86,12 @@ public class TotpEnrollmentController {
             }
             case EnrollmentResult.CodeRejected() -> {
                 model.addAttribute("codeError", true);
-                yield start(actor, principal, session, model);
+                yield start(user, session, model);
             }
             case EnrollmentResult.SecretUnusable() -> {
                 clearPending(session);
                 model.addAttribute("restarted", true);
-                yield start(actor, principal, session, model);
+                yield start(user, session, model);
             }
             case EnrollmentResult.AlreadyEnrolled() -> {
                 clearPending(session);
@@ -102,8 +100,8 @@ public class TotpEnrollmentController {
         };
     }
 
-    private String start(AuthenticatedActor actor, Principal principal, HttpSession session, Model model) {
-        EnrollmentStart start = enrollment.begin(actor, principal.getName(), pendingSecret(session));
+    private String start(PasswordVerifiedUser user, HttpSession session, Model model) {
+        EnrollmentStart start = enrollment.begin(user, pendingSecret(session));
         if (start instanceof EnrollmentStart.Started(EncryptedSecret secret, TotpProvisioning provisioning)) {
             session.setAttribute(PENDING_SECRET, secret.value());
             if (session.getAttribute(STARTED_AT) == null) {

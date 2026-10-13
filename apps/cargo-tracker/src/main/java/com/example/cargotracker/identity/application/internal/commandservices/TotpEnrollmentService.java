@@ -12,8 +12,8 @@ import com.example.cargotracker.identity.domain.model.aggregates.TotpCredential;
 import com.example.cargotracker.identity.domain.model.aggregates.TotpCredentialRepository;
 import com.example.cargotracker.identity.domain.model.aggregates.TotpSecretIssuer;
 import com.example.cargotracker.identity.domain.model.valueobjects.EncryptedSecret;
+import com.example.cargotracker.identity.domain.model.valueobjects.PasswordVerifiedUser;
 import com.example.cargotracker.identity.domain.model.valueobjects.TotpProvisioning;
-import com.example.cargotracker.shared.domain.AuthenticatedActor;
 import com.example.cargotracker.shared.domain.UserId;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import java.time.Clock;
@@ -72,11 +72,12 @@ public class TotpEnrollmentService {
      * 登録を始める。登録済みなら拒む。登録の途中の暗号文を受けたら、同じ利用者の暗号文として使える限りそれを使い続け（再読み込みや
      * 2 つのタブで秘密を変えない）、使えなければ新しく発行する。
      *
-     * @param accountName 認証アプリに示す名前（主体のメールアドレス）
+     * @param user password を確かめた利用者（メールアドレスを認証アプリに示す名前にする）
      * @param pending 登録の途中の暗号文（session に置いた値）
      */
-    public EnrollmentStart begin(AuthenticatedActor actor, String accountName, Optional<EncryptedSecret> pending) {
-        UserId owner = actor.userId();
+    public EnrollmentStart begin(PasswordVerifiedUser user, Optional<EncryptedSecret> pending) {
+        UserId owner = user.userId();
+        String accountName = user.email().value();
         if (credentials.findByUserId(owner).isPresent()) {
             return new EnrollmentStart.AlreadyEnrolled();
         }
@@ -102,17 +103,17 @@ public class TotpEnrollmentService {
     /**
      * 最初のコードで確かめて登録する。誤ったコード・使えない暗号文では何も保存しない。同時の登録で後になったときも「登録済み」を返す。
      */
-    public EnrollmentResult complete(AuthenticatedActor actor, EncryptedSecret secret, String code) {
+    public EnrollmentResult complete(PasswordVerifiedUser user, EncryptedSecret secret, String code) {
         try {
-            return transactionTemplate.execute(status -> completeInTransaction(actor, secret, code));
+            return transactionTemplate.execute(status -> completeInTransaction(user, secret, code));
         } catch (DuplicateTotpEnrollmentException _) {
             // 先の登録が通っている（主キーの違反で、このトランザクションはロールバックした）
             return new EnrollmentResult.AlreadyEnrolled();
         }
     }
 
-    private EnrollmentResult completeInTransaction(AuthenticatedActor actor, EncryptedSecret secret, String code) {
-        UserId owner = actor.userId();
+    private EnrollmentResult completeInTransaction(PasswordVerifiedUser user, EncryptedSecret secret, String code) {
+        UserId owner = user.userId();
         if (credentials.findByUserId(owner).isPresent()) {
             return new EnrollmentResult.AlreadyEnrolled();
         }
@@ -138,7 +139,7 @@ public class TotpEnrollmentService {
         // 資格の追加（主キー）を先に行い、同時の登録では回復コードを置き換える前に後の登録を止める（議題 2 の①）
         credentials.add(credential);
         recoveryCodes.replaceAll(owner, issued);
-        auditRecords.append(AuditRecord.totpEnrolled(owner, actor.companyId(), now));
+        auditRecords.append(AuditRecord.totpEnrolled(owner, user.companyId(), now));
         return new EnrollmentResult.Enrolled(plainCodes);
     }
 }
