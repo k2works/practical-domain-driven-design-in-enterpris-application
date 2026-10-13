@@ -10078,7 +10078,7 @@
 <li>ロックの方針（5 回・15 分）は、利用者の集約でなく、ログインの失敗の集約に置く（失敗のたびに利用者の版が上がると、利用者の管理の更新とぶつかるため）</li>
 <li>失敗の数え方は H2 と PostgreSQL の共通の構文で書く（ADR-007）。<code>RETURNING</code> は使わず、更新の件数で判定し、回数は同じトランザクションで読み直す</li>
 <li>回復コードは使ったら消さず、使った時刻を入れて残す。ハッシュは bcrypt で、作成と照合はドメインのポートにする</li>
-<li>TOTP の秘密の暗号化の鍵の管理は Bolt 31 の計画で決める（決めた。決定 5）。スパイク（<code>spikes/ts-01-totp/</code>）は Bolt 31d で消す（本体に登録と回復コードの発行（Bolt 31b）と回復コードによるログイン（Bolt 31c）がそろった後の構造の直しで。消すときにもう一度確かめる）</li>
+<li>TOTP の秘密の暗号化の鍵の管理は Bolt 31 の計画で決める（決めた。決定 5）。スパイク（<code>spikes/ts-01-totp/</code>）は Bolt 31d で消した（本体に登録と回復コードの発行（Bolt 31b）と回復コードによるログイン（Bolt 31c）がそろった後、本体のテストとの対応を確かめた。決定 8）</li>
 </ul>
 <p>Bolt 31 の開始準備と計画の承認（2026-10-13、human:kakimomokuri）で決めたこと:</p>
 <ul>
@@ -10113,7 +10113,7 @@
 <li>技術スタックは、TOTP のライブラリを候補（<code>dev.samstevens.totp</code>）として挙げただけで、評価していなかった（TS-01）。リスク台帳には「TOTP と Spring Security 7 の統合が想定より難しい（中・中）」がある。</li>
 <li>アクセス・監査は「単純なモデル」で、認証の仕組みは実績のある部品に任せる（<a href="../../../design/cargo-tracker/architecture_backend/">アーキテクチャ</a>）。認証の成功・失敗・ロックは、Spring Security のイベントから同期で監査記録に書く（IA-INV-08）。</li>
 <li>開発環境では、ログインの画面（A-01）と認証コードの画面（A-02）を入力済みにする（2026-10-06 の人の決定。Bolt 13 の確認ポイント 7）。</li>
-<li>Bolt 13 で、本体と分けたスパイク（<a href="https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/tree/develop/spikes/ts-01-totp"><code>spikes/ts-01-totp/</code></a>）を Spring Boot 4.1.1（Spring Security 7.1.1）で作り、学習テストで確かめた（初めは 29 件。<a href="../../../review/cargo-tracker/bolt_13_review_20261006/">Bolt 13 のレビュー</a>の指摘で直し、57 件）。</li>
+<li>Bolt 13 で、本体と分けたスパイク（<a href="https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/tree/670589409f/spikes/ts-01-totp"><code>spikes/ts-01-totp/</code></a>）を Spring Boot 4.1.1（Spring Security 7.1.1）で作り、学習テストで確かめた（初めは 29 件。<a href="../../../review/cargo-tracker/bolt_13_review_20261006/">Bolt 13 のレビュー</a>の指摘で直し、57 件）。</li>
 </ul>
 <h2 id="_3">決定<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h2>
 <h3 id="1-totp">1. TOTP の生成<a class="headerlink" href="#1-totp" title="Permanent link">&para;</a></h3>
@@ -10498,7 +10498,7 @@
 </tr>
 <tr>
 <td style="text-align: left;">スパイク</td>
-<td style="text-align: left;"><code>spikes/ts-01-totp/</code> を、6 つのテストのクラス（34 のテストのメソッド）と本体のテスト・後の Bolt の計画・ADR の記録との対応表で、すべてが結び付いていることを確かめてから消す。本体にない確かめのうち本体の守りになるもの（bcrypt の強さ 10）は本体にテストを足す。対応表は Bolt 31d の終了報告に残す</td>
+<td style="text-align: left;"><code>spikes/ts-01-totp/</code> を、6 つのテストのクラス（34 のテストのメソッド）と本体のテスト・後の Bolt の計画・ADR の記録との対応表で、すべてが結び付いていることを確かめてから消す。本体にない確かめのうち本体の守りになるもの（bcrypt の強さ 10）は本体にテストを足す。対応表は Bolt 31d の終了報告に残す（消した。34 本はどれも本体のテスト・Bolt 32 の計画・この ADR の記録のどれかに対応し、本体に足すテストはなかった。bcrypt の強さ 10 は本体の回復コードのハッシュのテストで確かめている）</td>
 </tr>
 </tbody>
 </table>
@@ -10625,7 +10625,7 @@
 <h2 id="_11">参考資料<a class="headerlink" href="#_11" title="Permanent link">&para;</a></h2>
 <ul>
 <li><a href="../../../development/cargo-tracker/bolt_13_plan/">Bolt 13 計画</a>、<a href="../../../development/cargo-tracker/bolt_13_report/">Bolt 13 終了報告</a>、<a href="../../../review/cargo-tracker/bolt_13_review_20261006/">Bolt 13 のレビュー</a></li>
-<li>スパイク: <code>spikes/ts-01-totp/</code>（<code>SpikeSetupTest</code>、<code>TotpCandidatesTest</code>、<code>MfaLoginTest</code>、<code>DevLoginPrefillTest</code>、<code>PasswordStorageTest</code>、<code>SessionTimeoutTest</code>）</li>
+<li>スパイク: <a href="https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/tree/670589409f/spikes/ts-01-totp"><code>spikes/ts-01-totp/</code></a>（<code>SpikeSetupTest</code>、<code>TotpCandidatesTest</code>、<code>MfaLoginTest</code>、<code>DevLoginPrefillTest</code>、<code>PasswordStorageTest</code>、<code>SessionTimeoutTest</code>。Bolt 31d で本体のテストとの対応を確かめて消した。リンクは消す前のコミットに固定した。対応表は <a href="../../development/cargo-tracker/bolt_31d_report.md">Bolt 31d 終了報告</a>）</li>
 <li>RFC 6238（TOTP）、RFC 4226（HOTP）</li>
 <li><a href="../../../requirements/cargo-tracker/user_story/">ユーザーストーリー</a>（US-18）、<a href="../../../design/cargo-tracker/non_functional/">非機能要件</a>（SEC-04〜10）、<a href="../../../design/cargo-tracker/tech_stack/">技術スタック</a>（TS-01）</li>
 </ul>
