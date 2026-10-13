@@ -16,7 +16,7 @@
         <link rel="prev" href="../bolt_31b_report/">
       
       
-        <link rel="next" href="../release_report-0_1/">
+        <link rel="next" href="../bolt_31c_report/">
       
       
         
@@ -4987,6 +4987,34 @@
   
 </nav>
       
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../bolt_31c_report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 31c 終了報告
+  
+
+    
+  </span>
+  
+  
+
+      </a>
     </li>
   
 
@@ -10242,7 +10270,7 @@
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>5. 画面の層</strong> 【承認ゲート: セキュリティ】</li>
 <li><code>login_ui.feature</code> に「認証アプリを使えない荷主担当者が回復コードでログインする」（<code>UiUsers</code> に回復コードを発行する口を足す。平文はテストの準備で決めた値）。印は <code>@US-18-AC9 @demo @demo-bolt-31c/recovery</code>（AC9 のログインの分。再登録は 33b で同じ印のシナリオを足し、<code>test_strategy.md</code> の受入条件の照合の表の AC9 は 33b で「完了」にする）</li>
 <li>完了の判定: <code>check</code> と <code>uiTest</code> が緑</li>
-<li>[-] <strong>6. SonarQube と開発レビューとデモと終了報告</strong> 【承認ゲート: 終了報告】</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>6. SonarQube と開発レビューとデモと終了報告</strong> 【承認ゲート: 終了報告】</li>
 <li>SonarQube（<code>sonar-local:check</code>。T-104 で開発レビューの前に流す）</li>
 <li>開発レビュー（プログラマー、アーキテクト、テスター（セキュリティの境界）、テクニカルライター（A-02 の回復コードの欄・案内・A-01 の誤りの文言。T-90））</li>
 <li>レビューの直しの後にデモの動画（<code>demoVideo</code>）を撮り、#13 に添付する（<code>issue:attach-demo</code>。T-105）。<code>bolt_31c_report.md</code>。release_plan の W5 の 31c の行、開発の索引。#13 に進み具合をコメントする</li>
