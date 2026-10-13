@@ -4,7 +4,7 @@ title: "Bolt 31 計画 - TOTP の秘密の暗号化と 2 段階のログイン�
 description: "W5 の 5 本目の Bolt の計画。TOTP の秘密をアプリケーションで暗号化し（AES-GCM、鍵の版の接頭辞）、Spring Security 7 の要素の権限で password と TOTP の 2 段階のログイン（A-02、最長 8 時間を TOTP が初めて通った時刻から数える）を組み、ADR-012 の「W5 で見直すこと」の 1・2 を片づける。層の規則 D-5 に認証の例外を足す。初回の登録（A-07）・回復コード・特性テスト・引数の解決は Bolt 31b。"
 tags: [development,bolt-plan]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-13T01:00:30Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-13T03:29:13Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-13T01:20:00Z }
 ---
@@ -188,7 +188,7 @@ title Bolt 31 で作る認証の画面遷移（A-07 は Bolt 31b）
 
 状態の記号: `[ ]` 未着手、`[-]` 進行中、`[?]` 承認待ち、`[x]` 完了。各ステップの終わりに `check` が緑であることと、計画からの変更を設計文書に反映したこと（T-53）を確かめ、push して CI を確かめる（T-26、T-65）。そのステップのファイルだけをステージする（T-84）。依存の取得は最初から `--max-workers=1` と再試行で流す（T-93）。
 
-- [ ] **1. 設計文書** 【承認ゲート: 設計文書】
+- [x] **1. 設計文書** 【承認ゲート: 設計文書】
   - ADR-011: 開始準備の決定（K-02 を受け入れる理由とロック・監査記録で抑えること、暗号化の方式と鍵の版、`TotpCodeGenerator` の形、dev のコードの部品の置き方）と、R-08 の比較の結果（確認ポイント 10）を書く。`SecurityFilterChain` の置き場所（`identity.infrastructure.config`。115 行目の「W5 で決める」）を決定にする。「未確認の項目」のうち、この Bolt で解くもの（鍵の管理、Base32 の出どころ、Spring Session JDBC の上での直列化）を移す。28 行目のスパイクの削除の時期を「Bolt 31b の後」に直す
   - ADR-012: 「W5 で見直すこと」の 1・2 をこの Bolt、4 を 31b、3 を Bolt 32 と書く。D-5 の認証の例外（確認ポイント 5）を決定に足す（Bolt 32 のロックの数え方も同じ形）
   - domain_model.md: 182 行目の `TotpCodeGenerator` の定義（暗号文と時間の刻みから）、957 行目の役割の分け方（照合と刻みの使用はアプリケーションのサービス）、959 行目の監査の操作（`PASSWORD_VERIFIED`）、IA-INV-03（982 行目）の「発行後 8 時間」を「TOTP が初めて通った時刻から 8 時間」に。用語集に `TotpVerificationService` を足す（`LivingGlossaryConsistencyTest`）
@@ -196,17 +196,17 @@ title Bolt 31 で作る認証の画面遷移（A-07 は Bolt 31b）
   - data_model.md（909 行目の暗号化、925 行目の `action`・`reason` の一覧）、non_functional.md の SEC-03（148 行目。8 時間の起点）と SEC-16（方式と鍵の版、鍵は環境変数で本番は Secrets Manager から注入）、tech_stack.md（53 行目の QR を Bolt 31b に、暗号化に JDK の `Cipher` を使うこと）、architecture_backend.md（274 行目付近に D-5 の認証の例外）
   - release_plan.md の W5 の節: Bolt の分け方の表で 31 を 31 と 31b に分け（SP 2 は 31b）、31 の「A-05」を「A-07」に直す。31b に回復コードによるログイン、33b に回復コードによる再登録と分担を書く。ADR-012 の 3 を Bolt 32 の行に移し、Bolt 32 の行に「開始準備で 32 を分けるかを見直す」を足す。32b の行に「8 時間の起点は TOTP の時刻（Bolt 31）」を足す。Bolt 13・14 からの持ち込みの表で、AC7 の認可と特性テストを 31b、スパイクの削除を「31b の後」に直す
   - 完了の判定: `okf:check` ERROR 0、`documentationTest` 緑
-- [ ] **2. 秘密の暗号化と生成のポートの変更** 【承認ゲート: Red・Green】
+- [x] **2. 秘密の暗号化と生成のポートの変更** 【承認ゲート: Red・Green】
   - Red: `AesGcmSecretCipher` の単体テスト（往復で一致、同じ平文でも暗号文が毎回違う、`v1:` が付く、知らない版・タグの改ざん・Base64 の誤りで例外、鍵が 32 バイトでなければ起動で失敗）。鍵のプロパティが環境変数 `CARGOTRACKER_TOTPSECRETKEYS_V1` から結び付くことの起動のテスト。`TotpCodeGenerator` の契約テスト（RFC 6238 の試験ベクトル）を `EncryptedSecret` を受ける形に直して落とす
   - Green: `identity.infrastructure.security` に `AesGcmSecretCipher` と鍵のプロパティ（`cargotracker.totp-secret-keys.v1`、Base64。既存の `cargotracker.dev-login`・`document-storage` と同じく、コンテキストの段を入れない。`@ConfigurationProperties` で起動時に確かめる）。`TotpCodeGenerator#code(EncryptedSecret, long)` に変え、`JavaOtpTotpCodeGenerator` の中で復号 → 生成 → 配列を消す。`TotpCredential#matchingStep` から `byte[] secret` の引数を消し、自分の `secret` を生成器に渡す
   - ArchUnit: `AesGcmSecretCipher` と `javax.crypto` を参照するのが `identity.infrastructure` だけであること（違反を入れて落ちることも確かめる）
   - 完了の判定: `check` 緑
-- [ ] **3. TOTP を確かめるアプリケーションのサービスと D-5 の例外** 【承認ゲート: Red・Green、構造（層の規則）】
+- [x] **3. TOTP を確かめるアプリケーションのサービスと D-5 の例外** 【承認ゲート: Red・Green、構造（層の規則）】
   - Red: 単体テスト（メモリのリポジトリと偽の生成器）。今の刻み・前後 1 つの刻みは通る、2 つ離れた刻みは拒む、同じ刻みの 2 回目は再利用として拒む、資格がない利用者は拒む（T-42）、通った刻みが記録される。PostgreSQL の統合テストで、同じコードの同時の 2 つの確かめのうち 1 つだけが通ること（T-100）
   - Green: `identity.application.internal.commandservices`（`package-info.java`）に `TotpVerificationService` と `TotpVerification`。`IdentityConfiguration` で組み立てる
   - 層の規則: `LayerArchitectureTest` の D-5 に「`identity.infrastructure.security` は `identity.application.internal.commandservices` を参照してよい」の狭い例外を足す（サガの例外と同じ書き方。理由を `because` に書く）。例外の外（例: `infrastructure.persistence` から `commandservices`）は落ちることを、違反を入れて確かめる
   - 完了の判定: `check` 緑、AT-02（D-5 を含む）が通る
-- [ ] **4. Spring Security の 2 段階化と A-02** 【承認ゲート: セキュリティ・認可】
+- [x] **4. Spring Security の 2 段階化と A-02** 【承認ゲート: セキュリティ・認可】
   - Red: セキュリティの統合テスト（`AuthenticationSecurityIntegrationTest` の前例。PostgreSQL の Testcontainers と `MutableClock`）に次を書いて落とす
     - password だけでは業務の画面（`/customer/**`・`/staff/**`・`/`）を開けず A-02 に導かれる。TOTP が通ると元の URL か役割のホームへ行く
     - TOTP の段で session の ID が変わる（T-40）。A-02 の POST に CSRF のトークンが要る（S-01）
@@ -217,19 +217,19 @@ title Bolt 31 で作る認証の画面遷移（A-07 は Bolt 31b）
     - 配備の前の形の session の行を置いて request すると、A-03 に送られる（確認ポイント 4）
   - Green: `SecurityConfiguration` に `@EnableMultiFactorAuthentication(authorities = {FACTOR_PASSWORD, FACTOR_TOTP})`、`DelegatingMissingAuthorityAccessDeniedHandler`（`FACTOR_TOTP` が足りなければ `/login/totp`）、`/login/totp` と `/login/totp/enroll` は `FACTOR_PASSWORD` だけで入れる規則、TOTP のフィルター（`HttpSessionSecurityContextRepository`、`http.getSharedObject(SessionAuthenticationStrategy.class)` で formLogin と同じ ID の変更と CSRF）、`TotpAuthenticationToken`（`toBuilder()`）・`TotpAuthenticationProvider`。`LoginController` に A-02（`identity/login-totp.html`）と登録の案内。`LoginSuccessHandler` は password の段で `PASSWORD_VERIFIED_AT` を置き、TOTP の段の成功（初めて通ったときだけ）で `AUTHENTICATED_AT` を置く。`SessionLifetimeFilter` は要素の数で上限を選ぶ
   - 完了の判定: `check` 緑（既存のセキュリティの統合テストは、ステップ 6 でログインの手順を 2 段階にするまで、password の段の後に TOTP の段を送る補助を足して通す）
-- [ ] **5. ADR-012 の見直しの 1・2 と TOTP の失敗の監査** 【承認ゲート: セキュリティ・認可】
+- [x] **5. ADR-012 の見直しの 1・2 と TOTP の失敗の監査** 【承認ゲート: セキュリティ・認可】
   - 1: 監査の操作を `PASSWORD_VERIFIED`（password の段の成功）と `LOGIN_SUCCEEDED`（2 つの要素がそろった）に分ける。`AuthenticationAuditListener` で要素の権限を見て分け、`AuditAction` に足す
   - TOTP の失敗: 今のリスナーは失敗の主体を `String.valueOf(principal)` のメールアドレスとして引くので、TOTP の失敗（主体は `CargoUserDetails`）が `UNKNOWN_USER` と記録される。TOTP の失敗は利用者と理由（`INVALID_TOTP`・`TOTP_REUSED`）で記録する。`AuthenticationRejection` に足す。Bolt 32 のロックはこの記録を前提にする
   - 成功・失敗の記録が同じ transaction で書かれること（IA-INV-08）を統合テストで確かめる
   - 2: 認可の条件（`hasRole`）は、全体の注釈で要素を求めるので、URL ごとの規則は役割だけのままにする。要素の欠けた主体で業務の URL を開けないことを全 URL で確かめる（ステップ 4 の後では最初から通るので「見張り」と書く。T-88）
   - 完了の判定: `check` 緑
-- [ ] **6. 画面の層のログインの手順と dev の入力済み** 【承認ゲート: セキュリティ、データベース（dev-data）】
+- [x] **6. 画面の層のログインの手順と dev の入力済み** 【承認ゲート: セキュリティ、データベース（dev-data）】
   - ArchUnit: ほかのコンテキストが `FACTOR_*`（`FactorGrantedAuthority`）を参照しない
   - 画面の層: `BrowserSession.signInAs` の待ちを「`/login` を離れた」から「A-02 を経て業務の画面に着いた」に直す（`/login/totp` も "/login" を含むので、今の待ちは 2 段目で終わらない）。`UiUsers` で TOTP の資格を作り、テストの固定の秘密から A-02 のコードを作って入れる。ログインの前に、テストの準備として `totp_credential` の `last_used_step` を戻す（同じ利用者の 30 秒以内の入り直しで再利用として拒否されないため。確認ポイント 7）。`login_ui.feature`（`@US-18`）に 2 段階のシナリオ（誤りのコードで A-01 に戻る）を足す
   - dev の入力済み: `DevLoginProperties.Account` と `DevLoginPrefill.Account` に `totpSecret` を足し、`cargotracker.dev-login.accounts[n].totp-secret`（Base32。利用者ごとに別）を `application-dev.properties` に置く。`DevTotpCodes`・`DevTotpCodeSource`（上の表）を作り、`DevLoginPrefill` が A-02 にその時点のコードを入れる。Base32 の復号は `identity.infrastructure` に自分で書き、RFC 4648 の試験ベクトルで確かめる（確認ポイント 6）
   - dev-data に TOTP の資格を足す。dev-data の暗号文を dev の鍵で復号すると設定の `totp-secret` と一致すること、利用者ごとに秘密が違うことをテストにする（ADR-011 の dev の 4 層目）。既定・staging・prod の設定で A-02 が入力済みにならないこと、dev-login の設定が `dev` の外にあると起動しないこと（既存）を確かめる
   - 完了の判定: `check` と `uiTest` が緑。H2 の `bootRun`（dev）で A-01 → A-02 → ホームを手で通す
-- [ ] **7. 開発レビューと終了報告** 【承認ゲート: 終了報告】
+- [x] **7. 開発レビューと終了報告** 【承認ゲート: 終了報告】
   - 開発レビュー（`developing-review`。プログラマー（フィルターの構成、暗号化、窓の 3 つの刻みごとに復号が 3 回になること）、アーキテクト（置き場所、D-5 の例外、ArchUnit、ADR との整合）、テスター（セキュリティの境界値）、テクニカルライター（A-02 と登録の案内の文言。T-90））
   - SonarQube（`sonar-local:check`。手順書の 9 節）
   - `bolt_31_report.md`。release_plan の W5 の 31 の行と進捗、開発の索引を更新する。#13 に進み具合をコメントする
@@ -291,6 +291,7 @@ title Bolt 31 で作る認証の画面遷移（A-07 は Bolt 31b）
 | 2026-10-13 | 初版作成（承認待ち）。開始準備で、ADR-011・ADR-012・今の `identity` のコードとテスト・スパイク・Bolt 13・14・30 からの持ち込みを調べ、human:kakimomokuri の決定（31 と 31b に分ける、AES-GCM と環境変数の鍵と版の接頭辞、K-02 を受け入れる、`TotpCodeGenerator` は `EncryptedSecret` を受ける）を反映した | anthropic/claude-opus-5-5 |
 | 2026-10-13 | 詳細整合性検証と横断整合性検証の指摘を反映した。human:kakimomokuri の回答（D-5 に認証の例外を足す、dev のコードは dev 専用の部品を関数の型で注入する、画面の層のテストは刻みを戻す、特性テストと ADR-012 の見直しの 4 を 31b に送る）を確認ポイント 5〜8 にした。password の段の上限（fail-closed との両立）、A-02 と登録の案内の認可の例外、環境変数の名前、TOTP の失敗の監査と理由、A-02 の誤りの行き先を UI 設計に合わせる、設計文書の直し（domain_model.md・SEC-03・data_model.md:925・ui_design.md の A-02・ADR-011 の `SecurityFilterChain`・release_plan の持ち込みの表と 31b・32・32b・33b の行）、dev の秘密の一致のテスト、T-89 から外れる扱い、AT-02 の番号、前例の置き場所を直した | anthropic/claude-opus-5-5 |
 | 2026-10-13 | 計画の承認を記録した。確認ポイント 1〜13 は推奨のとおり。`/goal Bolt31` により、ステップの承認ゲートで止まらずに進める（T-36） | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
+| 2026-10-13 | ステップ 1〜7 を終えた（`/goal Bolt31`）。計画から変えたこと: 成功の監査の分け方をステップ 5 から 4 に前倒しした（2 段階にすると password の段でも成功のイベントが出るため）。配備の前の session は、復元の失敗の変換ではなく、password の段の時刻がないので期限の判定で A-03 に送る形にした（復元は失敗しなかった）。CSRF のトークンがまだ session にない A-02 の送信は既存の扱いどおり A-03。dev のコードの部品の組み立てが層の規則に当たり、合成ルートの例外を人に諮った（2026-10-13 に human:kakimomokuri が決定）。開発レビューで、期限の上限を認証の要素で選ぶ形、復号の失敗の扱い、TOTP の誤りの文言、登録の案内を直した。鍵は `@ConfigurationProperties` でなく `Binder` で結び付けた（起動を失敗させる振る舞いは同じ）。[Bolt 31 終了報告](bolt_31_report.md) | anthropic/claude-opus-5-5 |
 
 ## 関連ドキュメント
 

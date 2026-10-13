@@ -4,7 +4,7 @@ title: "リリース計画 - cargo-tracker（A 社国際貨物輸送管理シス
 description: "cargo-tracker MVP のリリース計画。1 人 + AI、時間単位の Bolt（= イテレーション）と週次の見直しで、最初の縦の流れ（R0.1）、パイロット準備完了（R1.0）、本格展開前（R1.1）の 3 段階、Unit のエントロピー評価、SP、バッファ、パイロット開始の条件、引継ぎ ID の台帳、業務責任者に確かめる事項の台帳。"
 tags: [development,release-plan]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-13T01:41:37Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-13T03:29:13Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T09:29:53Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:38:26Z }
@@ -550,7 +550,7 @@ US-04 の SP 5 は、サガの成功の経路を閉じて #10 をクローズす
 
 ### W5（2026-11-02 〜 11-06、11-03 は祝日）
 
-**状態**: 進行中（2026-10-11 に計画を作り、同日に human:kakimomokuri が承認した。Bolt 29・29b・29c・30 は完了し、Release 0.1 の負債 #45・#46 を返し、ADR-011 を採用して認証の土台を作った。Bolt 31 は 2026-10-13 に計画を承認し、着手した）
+**状態**: 進行中（2026-10-11 に計画を作り、同日に human:kakimomokuri が承認した。Bolt 29・29b・29c・30 は完了し、Release 0.1 の負債 #45・#46 を返し、ADR-011 を採用して認証の土台を作った。Bolt 31 は 2026-10-13 に終え、終了報告の承認待ち。次は Bolt 31b）
 
 **ゴール**: Release 0.1 の負債（#45・#46）を返し、認証を完成させ（US-18 の残り）、利用者と役割の管理（US-16 の一部）と予約の残り（US-04 AC3・AC5、#43）を作る。
 
@@ -617,7 +617,7 @@ US-18 の残りの SP 6 は #13 をクローズする Bolt 33b で、US-04 の S
 - [x] Bolt 29: #45。[Bolt 29 計画](bolt_29_plan.md)（`/goal` で進めた）、[Bolt 29 終了報告](bolt_29_report.md)（完了、2026-10-11 に承認済み。#45 を閉じた。SonarQube PASS。`uiTest` 80 本は集める前と同じく通った。失敗の経路を読めるものに直した）
 - [x] Bolt 29b: #46 の前半。[Bolt 29b 計画](bolt_29b_plan.md)（`/goal` で進めた）、[Bolt 29b 終了報告](bolt_29b_report.md)（完了、2026-10-11 に承認済み。4 か所と開発レビューの必須の指摘を直した。SonarQube PASS・Code Smell 0）
 - [x] Bolt 29c: #46 の後半。[Bolt 29c 計画](bolt_29c_plan.md)（承認済み）、[Bolt 29c 終了報告](bolt_29c_report.md)（完了、2026-10-11 に承認済み。#46 を閉じた。SonarQube PASS・Code Smell 0）
-- [ ] Bolt 30〜33b: US-18 の残り（#13）と通知モジュールの最小の新設。[Bolt 30 計画](bolt_30_plan.md)（承認済み）、[Bolt 30 終了報告](bolt_30_report.md)（完了、2026-10-11 に承認済み。ADR-011 を採用し、3 つの表・ドメイン・リポジトリ・TOTP の生成を作った。SonarQube PASS・Code Smell 0）、[Bolt 31 計画](bolt_31_plan.md)（承認済み）
+- [ ] Bolt 30〜33b: US-18 の残り（#13）と通知モジュールの最小の新設。[Bolt 30 計画](bolt_30_plan.md)（承認済み）、[Bolt 30 終了報告](bolt_30_report.md)（完了、2026-10-11 に承認済み。ADR-011 を採用し、3 つの表・ドメイン・リポジトリ・TOTP の生成を作った。SonarQube PASS・Code Smell 0）、[Bolt 31 計画](bolt_31_plan.md)（承認済み）、[Bolt 31 終了報告](bolt_31_report.md)（完了、承認待ち。`/goal Bolt31` で進めた。TOTP の秘密の暗号化と 2 段階のログイン（A-02）。層の規則に 2 つの狭い例外。SonarQube PASS）
 - [ ] Bolt 34: US-16 の一部（#14）
 - [ ] Bolt 35: US-04 AC3・AC5（#43）、D-85
 - [ ] W5 の締め: 結果とふりかえり、開いている持ち越しの数（T-89）、W6 の計画の見直し
@@ -879,4 +879,5 @@ xychart-beta
 | 2026-10-11 | Bolt 30 の終了報告の承認を記録し、Bolt 30 を終えた（SP 0。開発レビューの残りは Bolt 31・32 の確認ポイント） | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-10-13 | Bolt 31 の開始準備: 31 と 31b に分け（SP 2 は 31b）、暗号化の方式と鍵・K-02・`TotpCodeGenerator` の形・D-5 の認証の例外・dev のコードの部品・画面の層のテストの刻みの戻し・31b に送るものを決めた。Bolt 31 計画を作り、2 つの整合性検証の指摘を反映した（承認待ち） | anthropic/claude-opus-5-5、決定 human:kakimomokuri |
 | 2026-10-13 | Bolt 31 計画の承認を記録した（確認ポイントは推奨のとおり。`/goal Bolt31` で承認ゲートを止めずに進める） | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
+| 2026-10-13 | Bolt 31 の終了報告を作った（承認待ち。`/goal Bolt31` で承認ゲートを止めずに進めた。開発レビューの高を直し、残りは 31b・32・32b・33b に送る） | anthropic/claude-opus-5-5 |
 | 2026-10-13 | Bolt 31 のステップ 1: W5 の Bolt の分け方の表に、回復コードによるログイン（31b）と再登録（33b）の分担、ADR-012 の見直しの 3・5 と S-02 と「開始準備で 32 を分けるかを見直す」（32）、8 時間の起点（32b）を書いた。Bolt 13・14 からの持ち込みの表で、ADR-012 の見直しの割り振り、AC7 の認可と特性テストを 31b、スパイクの削除を「31b の後」に直した | anthropic/claude-opus-5-5 |
