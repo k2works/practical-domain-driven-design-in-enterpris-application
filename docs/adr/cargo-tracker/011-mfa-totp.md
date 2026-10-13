@@ -4,7 +4,7 @@ title: "ADR-011: 多要素認証は Spring Security 7 の要素の権限で組�
 description: "password の後に TOTP を求める 2 段階のログインを、Spring Security 7 の多要素認証（要素ごとの権限）で組む。"
 tags: [adr, authentication, mfa, totp]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-13T09:31:29Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-13T09:54:25Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-11T08:28:34Z }
 ---
@@ -25,7 +25,7 @@ password の後に TOTP を求める 2 段階のログインを、Spring Securit
 - ロックの方針（5 回・15 分）は、利用者の集約でなく、ログインの失敗の集約に置く（失敗のたびに利用者の版が上がると、利用者の管理の更新とぶつかるため）
 - 失敗の数え方は H2 と PostgreSQL の共通の構文で書く（ADR-007）。`RETURNING` は使わず、更新の件数で判定し、回数は同じトランザクションで読み直す
 - 回復コードは使ったら消さず、使った時刻を入れて残す。ハッシュは bcrypt で、作成と照合はドメインのポートにする
-- TOTP の秘密の暗号化の鍵の管理は Bolt 31 の計画で決める（決めた。決定 5）。スパイク（`spikes/ts-01-totp/`）は Bolt 31d で消す（本体に登録と回復コードの発行（Bolt 31b）と回復コードによるログイン（Bolt 31c）がそろった後の構造の直しで。消すときにもう一度確かめる）
+- TOTP の秘密の暗号化の鍵の管理は Bolt 31 の計画で決める（決めた。決定 5）。スパイク（`spikes/ts-01-totp/`）は Bolt 31d で消した（本体に登録と回復コードの発行（Bolt 31b）と回復コードによるログイン（Bolt 31c）がそろった後、本体のテストとの対応を確かめた。決定 8）
 
 Bolt 31 の開始準備と計画の承認（2026-10-13、human:kakimomokuri）で決めたこと:
 
@@ -60,7 +60,7 @@ Bolt 31d の開始準備と計画の承認（2026-10-13、human:kakimomokuri）�
 - 技術スタックは、TOTP のライブラリを候補（`dev.samstevens.totp`）として挙げただけで、評価していなかった（TS-01）。リスク台帳には「TOTP と Spring Security 7 の統合が想定より難しい（中・中）」がある。
 - アクセス・監査は「単純なモデル」で、認証の仕組みは実績のある部品に任せる（[アーキテクチャ](../../design/cargo-tracker/architecture_backend.md)）。認証の成功・失敗・ロックは、Spring Security のイベントから同期で監査記録に書く（IA-INV-08）。
 - 開発環境では、ログインの画面（A-01）と認証コードの画面（A-02）を入力済みにする（2026-10-06 の人の決定。Bolt 13 の確認ポイント 7）。
-- Bolt 13 で、本体と分けたスパイク（[`spikes/ts-01-totp/`](https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/tree/develop/spikes/ts-01-totp)）を Spring Boot 4.1.1（Spring Security 7.1.1）で作り、学習テストで確かめた（初めは 29 件。[Bolt 13 のレビュー](../../review/cargo-tracker/bolt_13_review_20261006.md)の指摘で直し、57 件）。
+- Bolt 13 で、本体と分けたスパイク（[`spikes/ts-01-totp/`](https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/tree/670589409f/spikes/ts-01-totp)）を Spring Boot 4.1.1（Spring Security 7.1.1）で作り、学習テストで確かめた（初めは 29 件。[Bolt 13 のレビュー](../../review/cargo-tracker/bolt_13_review_20261006.md)の指摘で直し、57 件）。
 
 ## 決定
 
@@ -240,7 +240,7 @@ ArchUnit で、ZXing を参照するのが `identity.infrastructure` だけで�
 | 失敗へ倒す範囲（T-42 を改める） | 読めない要素は拒否（登録では A-07 を開き直す）。ほかの `IllegalArgumentException`（値の検証など実装の誤り）は 500 にしてエラーのログに残す。今までは拒否に倒れ、利用者に「コードの誤り」と見え、ログを見ないと気付けなかった。ログインは通さないので失敗へは倒れたまま。`RecoveryCode` の構築子の空のハッシュ（DB の破損）は 500 のまま（データの破損は利用者の誤りに見せない）。決定 7 の「照合の途中の例外は 500 にせず拒否」を改めた |
 | 暗号の部品のパッケージ | `AesGcmSecretCipher`・`Base32`・`BcryptRecoveryCodeHasher`・`JavaOtpTotpCodeGenerator`・`RandomRecoveryCodeGenerator`・`RandomTotpSecretIssuer` の 6 つを `identity.infrastructure.crypto` に置き、application にも入口（`security`）にも依存しない。D-5 の認証の例外は入口 `identity.infrastructure.security` だけにする。既存の規則（合成ルートと入口の外の infrastructure は application に依存しない）が `crypto` にもかかるので、足す規則は「`crypto` は `security` に依存しない」だけ。秘密の発行と回復コードの生成の実装を名指しした規則はパッケージの規則に置き換え、TOTP のライブラリ・ZXing・`AesGcmSecretCipher` の閉じ込めは `crypto` に狭める（`AesGcmSecretCipher` は合成ルートと dev の部品も参照してよい） |
 | `FACTOR_TOTP` と `TotpAuthenticationToken` の名前 | 改名しない。回復コードでも同じ要素を与えるので、意味は「TOTP または回復コードで与える 2 つ目の要素」になったが、名前を変えると配備の前の session が復元できない（session の直列化の互換。ADR-012 のネガティブ）。意味は用語集と Javadoc に書く |
-| スパイク | `spikes/ts-01-totp/` を、6 つのテストのクラス（34 のテストのメソッド）と本体のテスト・後の Bolt の計画・ADR の記録との対応表で、すべてが結び付いていることを確かめてから消す。本体にない確かめのうち本体の守りになるもの（bcrypt の強さ 10）は本体にテストを足す。対応表は Bolt 31d の終了報告に残す |
+| スパイク | `spikes/ts-01-totp/` を、6 つのテストのクラス（34 のテストのメソッド）と本体のテスト・後の Bolt の計画・ADR の記録との対応表で、すべてが結び付いていることを確かめてから消す。本体にない確かめのうち本体の守りになるもの（bcrypt の強さ 10）は本体にテストを足す。対応表は Bolt 31d の終了報告に残す（消した。34 本はどれも本体のテスト・Bolt 32 の計画・この ADR の記録のどれかに対応し、本体に足すテストはなかった。bcrypt の強さ 10 は本体の回復コードのハッシュのテストで確かめている） |
 
 ### 代替案
 
@@ -324,6 +324,6 @@ Bolt 31b で解いたもの（決定 6 に移した）: 登録の QR の描き�
 ## 参考資料
 
 - [Bolt 13 計画](../../development/cargo-tracker/bolt_13_plan.md)、[Bolt 13 終了報告](../../development/cargo-tracker/bolt_13_report.md)、[Bolt 13 のレビュー](../../review/cargo-tracker/bolt_13_review_20261006.md)
-- スパイク: `spikes/ts-01-totp/`（`SpikeSetupTest`、`TotpCandidatesTest`、`MfaLoginTest`、`DevLoginPrefillTest`、`PasswordStorageTest`、`SessionTimeoutTest`）
+- スパイク: [`spikes/ts-01-totp/`](https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/tree/670589409f/spikes/ts-01-totp)（`SpikeSetupTest`、`TotpCandidatesTest`、`MfaLoginTest`、`DevLoginPrefillTest`、`PasswordStorageTest`、`SessionTimeoutTest`。Bolt 31d で本体のテストとの対応を確かめて消した。リンクは消す前のコミットに固定した。対応表は [Bolt 31d 終了報告](../../development/cargo-tracker/bolt_31d_report.md)）
 - RFC 6238（TOTP）、RFC 4226（HOTP）
 - [ユーザーストーリー](../../requirements/cargo-tracker/user_story.md)（US-18）、[非機能要件](../../design/cargo-tracker/non_functional.md)（SEC-04〜10）、[技術スタック](../../design/cargo-tracker/tech_stack.md)（TS-01）

@@ -10,7 +10,7 @@ import org.springframework.security.core.GrantedAuthority;
  * TOTP の要素の認証（Bolt 31、ADR-011）。認証されたら要素の権限 {@link #FACTOR_TOTP} を持つ。主体は password の段の主体
  * （{@link CargoUserDetails}）をそのまま引き継ぐ（引数の解決とほかのコンテキストは主体から {@code AuthenticatedActor} を得る）。
  * Spring Security 7 は、認証の結果の型が {@code toBuilder()} を宣言しているときだけ、先に認証した要素（password）の権限を
- * 結果に合わせる（{@code AbstractAuthenticationProcessingFilter} の mfaEnabled。Bolt 13 のスパイクで分かったこと）。
+ * 結果に合わせる（{@code AbstractAuthenticationProcessingFilter} の mfaEnabled。Bolt 13 のスパイクで分かり、Bolt 31d で特性テスト {@code SpringSecurityCharacterizationTest} に移した）。
  */
 public final class TotpAuthenticationToken extends AbstractAuthenticationToken {
 

@@ -19,7 +19,7 @@ import org.springframework.stereotype.Component;
  * TOTP の生成器の java-otp の実装（ADR-011、Bolt 30）。HMAC-SHA1、30 秒の刻み、6 桁（US-18）。暗号化した秘密を受け、
  * 復号から平文の消去までをこの中で済ませる（Bolt 31）。
  * java-otp が担うのは HOTP の計算と切り詰めだけで、時間の窓の照合と再利用の拒否は {@link TotpCredential} が持つ。
- * 1 つの生成器を並行に使っても正しいコードを作ることを契約テストで確かめている（スパイクは synchronized で守った）。
+ * 1 つの生成器を並行に使っても正しいコードを作ることを契約テストで確かめている（Bolt 13 のスパイクでは synchronized で守った）。
  */
 @Component
 public final class JavaOtpTotpCodeGenerator implements TotpCodeGenerator {

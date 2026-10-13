@@ -1,6 +1,7 @@
 # Docs Update Log
 
 ## 2026-10-13
+* **Update**: [011-mfa-totp](/adr/cargo-tracker/011-mfa-totp.md) を更新（anthropic/claude-opus-5-5）
 * **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
 * **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
 * **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
