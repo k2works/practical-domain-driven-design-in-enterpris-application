@@ -3,7 +3,7 @@ type: Plan
 title: "Bolt 32 終了報告 - ログインのロック（US-18 AC3）"
 description: "W5 の 9 本目の Bolt の終了報告。password・TOTP・回復コードの誤りを合わせて数え、5 回続いたら 15 分ロックし、ロック中も誤りと同じ応答と予告にした。数えることと監査記録はアプリケーションのサービス LoginAttemptService の 1 つのトランザクションにし、最初の失敗の行はトランザクションの外で作る。入口の誤りの扱い（実装の誤り・書き込みの DB の誤りは 500、利用者の読み出しの DB の誤りは失敗へ倒す）を統合テストと特性テストで固定した。承認ゲートを止めずに進めたので、止まらなかったゲートと計画からの逸脱を承認の議題に置く。"
 tags: [plan]
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-13T13:39:40Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-13T13:55:59Z }
 ---
 
 # Bolt 32 終了報告 - ログインのロック（US-18 AC3）
@@ -87,7 +87,7 @@ Bolt 31d でスパイク（`spikes/ts-01-totp/` の `MfaLoginTest`）を消す�
 | :--- | :--- |
 | `check`（ModularityTest・ArchUnit・Checkstyle・SpotBugs・Spotless・documentationTest を含む） | 通過。SpotBugs が構築子の例外（`CT_CONSTRUCTOR_THROW`）を指摘したので、サービスはトランザクションマネージャーを受けて 2 つのテンプレートを自分で作る形にした（偽のサービスが継ぐので `final` にできない）。レビューの直しの後の 1 回目に、テストの JVM が途中で終わる失敗（`Gradle Test Executor FAILED`）が 1 回出た。すべてやり直すと 2 回続けて通り、再現しなかった（「既知の課題」で見張る） |
 | SonarQube（ローカル） | Quality Gate PASS。Bolt 32 の指摘 12 件（使わないパターンの変数、制限された識別子、例外を確かめるラムダの呼び出し）を直し 0 件。レビューの直しの後にも 9 件（テストの変数名、ラムダ、構築子の null の可能性）が出たので直し 0 件。残る 2 件は routing の以前からの指摘 |
-| CI | ステップ 2〜4 の push（`a0ee4ca`）で check・ui・デモ環境への配備が通過。最後の push は「更新履歴」の承認の時に確かめる |
+| CI | ステップ 2〜4 の push（`a0ee4ca`）で check・ui・デモ環境への配備が通過。最後の push（`aadad89`、run 38406785166）で check・ui・デモ環境への配備が通過 |
 | `okf:check` | ERROR 0 |
 
 ## 仮説の結論
