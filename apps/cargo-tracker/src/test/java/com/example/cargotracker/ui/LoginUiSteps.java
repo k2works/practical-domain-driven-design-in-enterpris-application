@@ -129,6 +129,19 @@ public class LoginUiSteps {
         browser.checkAccessibility();
     }
 
+    @もし("認証コードの画面で認証アプリを使えない場合を開き回復コードを入れて確認する")
+    public void 回復コードを入れて確認する() {
+        String code = users.recoveryCode(role);
+        page().waitForURL(url -> url.contains("/login/totp"));
+        page().getByText("認証アプリを使えない場合").click();
+        browser.checkAccessibility();
+        page().getByLabel("回復コード", new Page.GetByLabelOptions().setExact(true)).fill(code);
+        page().getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("回復コードで確認"))
+                .click();
+        page().waitForURL(url -> !url.contains("/login"));
+        browser.checkAccessibility();
+    }
+
     @もし("認証コードの画面で誤ったコードを入れて確認する")
     public void 誤ったコードを入れて確認する() {
         submitTotp(users.wrongTotpCode(role));

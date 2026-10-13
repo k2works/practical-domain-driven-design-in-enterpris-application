@@ -2,6 +2,9 @@ package com.example.cargotracker.ui;
 
 import com.example.cargotracker.identity.domain.model.aggregates.Company;
 import com.example.cargotracker.identity.domain.model.aggregates.CompanyRepository;
+import com.example.cargotracker.identity.domain.model.aggregates.RecoveryCode;
+import com.example.cargotracker.identity.domain.model.aggregates.RecoveryCodeHasher;
+import com.example.cargotracker.identity.domain.model.aggregates.RecoveryCodeRepository;
 import com.example.cargotracker.identity.domain.model.aggregates.TotpCodeGenerator;
 import com.example.cargotracker.identity.domain.model.aggregates.TotpCredential;
 import com.example.cargotracker.identity.domain.model.aggregates.TotpCredentialRepository;
@@ -40,10 +43,15 @@ public class UiUsers {
     /** テストの利用者の TOTP の秘密（本物の秘密ではない）。 */
     private static final byte[] TOTP_SECRET = "ui-test-totp-secret!".getBytes(StandardCharsets.US_ASCII);
 
+    /** テストの利用者の回復コードの 1 つ（本物の秘密ではない）。 */
+    private static final String RECOVERY_CODE = "7e57-c0de";
+
     private final CompanyRepository companies;
     private final UserRepository users;
     private final PasswordEncoder passwordEncoder;
     private final TotpCredentialRepository totpCredentials;
+    private final RecoveryCodeRepository recoveryCodes;
+    private final RecoveryCodeHasher recoveryCodeHasher;
     private final TotpCodeGenerator totpCodes;
     private final AesGcmSecretCipher cipher;
     private final Clock clock;
@@ -57,6 +65,8 @@ public class UiUsers {
             UserRepository users,
             PasswordEncoder passwordEncoder,
             TotpCredentialRepository totpCredentials,
+            RecoveryCodeRepository recoveryCodes,
+            RecoveryCodeHasher recoveryCodeHasher,
             TotpCodeGenerator totpCodes,
             AesGcmSecretCipher cipher,
             Clock clock,
@@ -65,6 +75,8 @@ public class UiUsers {
         this.users = users;
         this.passwordEncoder = passwordEncoder;
         this.totpCredentials = totpCredentials;
+        this.recoveryCodes = recoveryCodes;
+        this.recoveryCodeHasher = recoveryCodeHasher;
         this.totpCodes = totpCodes;
         this.cipher = cipher;
         this.clock = clock;
@@ -96,6 +108,25 @@ public class UiUsers {
         TotpCredential credential = totpCredentials.findByUserId(userId).orElseThrow();
         return totpCodes.code(
                 credential.userId(), credential.secret(), TotpCredential.stepAt(new UtcInstant(clock.instant())));
+    }
+
+    /**
+     * 役割の利用者に回復コード 10 個を発行し、そのうち 1 つの平文を返す（A-02 の回復コードのシナリオ。Bolt 31c）。平文はテストの
+     * 準備で決めた値で、本物の秘密ではない。
+     */
+    public String recoveryCode(Role role) {
+        UserId userId = of(role).userId();
+        UtcInstant now = new UtcInstant(clock.instant());
+        recoveryCodes.replaceAll(
+                userId,
+                java.util.stream.IntStream.range(0, RecoveryCode.CODES_PER_USER)
+                        .mapToObj(i -> RecoveryCode.issue(
+                                userId,
+                                i == 0 ? RECOVERY_CODE : String.format("0000-%04x", i),
+                                recoveryCodeHasher,
+                                now))
+                        .toList());
+        return RECOVERY_CODE;
     }
 
     /** 役割の利用者のメールアドレスと password。初めて求められたときに作る。 */
