@@ -10626,7 +10626,7 @@
 <tr>
 <td style="text-align: left;">SEC-03</td>
 <td style="text-align: left;">session</td>
-<td style="text-align: left;">無操作 30 分、発行から 8 時間で失効。8 時間の起点は、その session で初めて TOTP が通った時刻（Bolt 31）。password の段だけの session は、password を確かめた時刻から 5 分で失効（Bolt 31。ADR-011）。ただし TOTP の登録の途中（A-07 を開いた session）は、登録を始めた時刻から 15 分で失効（認証アプリを入れて QR コードを読む時間を見込む。登録を始めた時刻は password の段の 5 分の中でしか置けず、2 つの要素がそろった後は使わない。Bolt 31b。ADR-011 の決定 6）</td>
+<td style="text-align: left;">無操作 30 分、発行から 8 時間で失効。8 時間の起点は、その session で初めて TOTP または回復コードが通った時刻（<code>FACTOR_TOTP</code> が与えられた時刻。TOTP は Bolt 31、回復コードは Bolt 31c）。password の段だけの session は、password を確かめた時刻から 5 分で失効（Bolt 31。ADR-011）。ただし TOTP の登録の途中（A-07 を開いた session）は、登録を始めた時刻から 15 分で失効（認証アプリを入れて QR コードを読む時間を見込む。登録を始めた時刻は password の段の 5 分の中でしか置けず、2 つの要素がそろった後は使わない。Bolt 31b。ADR-011 の決定 6）</td>
 <td style="text-align: left;">確定</td>
 <td style="text-align: left;">BR-14</td>
 </tr>
@@ -10668,7 +10668,7 @@
 <tr>
 <td style="text-align: left;">SEC-09</td>
 <td style="text-align: left;">TOTP の登録</td>
-<td style="text-align: left;">初回ログイン時に必須。登録時に一度だけ使える回復コード 10 個を発行する。回復コードは bcrypt（強さ 10）のハッシュだけを保存し、平文を表に書かない（Bolt 30）。回復コードは乱数で作る <code>1a2b-3c4d</code> の形（8 文字の 16 進を 4 文字ずつ区切る 32 ビット。総当たりはロックと bcrypt で抑える）で、10 個のうちに重複がない。平文は登録を保存した応答（A-07 の回復コードの保存の画面、<code>Cache-Control: no-store</code>）で一度だけ示し、session にも記録にも置かない（Bolt 31b）</td>
+<td style="text-align: left;">初回ログイン時に必須。登録時に一度だけ使える回復コード 10 個を発行する。回復コードは bcrypt（強さ 10）のハッシュだけを保存し、平文を表に書かない（Bolt 30）。回復コードは乱数で作る <code>1a2b-3c4d</code> の形（8 文字の 16 進を 4 文字ずつ区切る 32 ビット。総当たりはロックと bcrypt で抑える）で、10 個のうちに重複がない。平文は登録を保存した応答（A-07 の回復コードの保存の画面、<code>Cache-Control: no-store</code>）で一度だけ示し、session にも記録にも置かない（Bolt 31b）。回復コードは A-02 の「認証アプリを使えない場合」の欄でログインに使え、一度だけ通る（未使用であることを条件にした更新で、同時に使っても 1 つだけ）。入力は正規化し（空白を除き小文字にし、ハイフンのない 8 文字も受ける）、形が合わなければ照合しない。誤り・使用済み・形の違いは TOTP の誤りと同じく password の要素を捨てて A-01 に戻し、拒否の種類は監査記録の理由（<code>INVALID_RECOVERY_CODE</code>）にだけ残す。照合の後、平文は記録・監査・session に残さない（Bolt 31c。ADR-011 の決定 7）</td>
 <td style="text-align: left;">提案</td>
 <td style="text-align: left;">端末の紛失に備える</td>
 </tr>

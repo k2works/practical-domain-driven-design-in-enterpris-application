@@ -7127,6 +7127,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#7-bolt-31c" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. 回復コードによるログイン（Bolt 31c）
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#_4" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -10000,7 +10011,7 @@
 <li>ロックの方針（5 回・15 分）は、利用者の集約でなく、ログインの失敗の集約に置く（失敗のたびに利用者の版が上がると、利用者の管理の更新とぶつかるため）</li>
 <li>失敗の数え方は H2 と PostgreSQL の共通の構文で書く（ADR-007）。<code>RETURNING</code> は使わず、更新の件数で判定し、回数は同じトランザクションで読み直す</li>
 <li>回復コードは使ったら消さず、使った時刻を入れて残す。ハッシュは bcrypt で、作成と照合はドメインのポートにする</li>
-<li>TOTP の秘密の暗号化の鍵の管理は Bolt 31 の計画で決める（決めた。決定 5）。スパイク（<code>spikes/ts-01-totp/</code>）は Bolt 31c の後に消す（本体に登録と回復コードの発行（Bolt 31b）と回復コードによるログイン（Bolt 31c）がそろってから。消すときにもう一度確かめる）</li>
+<li>TOTP の秘密の暗号化の鍵の管理は Bolt 31 の計画で決める（決めた。決定 5）。スパイク（<code>spikes/ts-01-totp/</code>）は Bolt 31d で消す（本体に登録と回復コードの発行（Bolt 31b）と回復コードによるログイン（Bolt 31c）がそろった後の構造の直しで。消すときにもう一度確かめる）</li>
 </ul>
 <p>Bolt 31 の開始準備と計画の承認（2026-10-13、human:kakimomokuri）で決めたこと:</p>
 <ul>
@@ -10012,10 +10023,16 @@
 </ul>
 <p>Bolt 31b の開始準備と計画の承認（2026-10-13、human:kakimomokuri）で決めたこと:</p>
 <ul>
-<li>US-18 の残りを 31b（AAD、初回の登録、回復コードの発行）と 31c（回復コードによるログイン、password の段の主体の型、ADR-012 の見直しの 4、特性テスト）に分ける</li>
+<li>US-18 の残りを 31b（AAD、初回の登録、回復コードの発行）と 31c（回復コードによるログイン、password の段の主体の型、ADR-012 の見直しの 4）に分ける（特性テストは Bolt 31c の開始準備で 31d に送った）</li>
 <li>暗号文に AAD（<code>totp-secret:</code> と利用者 ID）を付け、別の利用者の暗号文では復号できないようにする（決定 5）</li>
 <li>QR は ZXing（<code>com.google.zxing:core</code>）でサーバーがインラインの SVG にする（決定 1・6）</li>
 <li>登録の途中だけ password の段の上限を 15 分にする。回復コードの「保存した」は画面の必須だけにする。先取りの登録のリスクを受け入れる。<code>TotpProvisioning</code> はドメインの値に置き、値を隠す（決定 6）</li>
+</ul>
+<p>Bolt 31c の開始準備と計画の承認（2026-10-13、human:kakimomokuri）で決めたこと:</p>
+<ul>
+<li>US-18 の残りを 31c（回復コードによるログイン、password の段の主体の型、ADR-012 の見直しの 4）と 31d（照合の 3 値、<code>REJECTED_NOT_ENROLLED</code> の監査の理由、<code>FACTOR_*</code> の ArchUnit の空振り対策、入口と暗号のパッケージ、特性テスト、スパイクの削除などの構造の直し）に分ける</li>
+<li>回復コードは A-02 の <code>&lt;details&gt;</code> で開く別の欄（<code>recoveryCode</code>）で受け、同じ <code>POST /login/totp</code> に送る。通ったら <code>FACTOR_TOTP</code> を与え、監査は専用の操作（<code>RECOVERY_CODE_USED</code>）にする（決定 7）</li>
+<li>回復コードの正規化はドメインに置き、照合はトランザクションの外、消費と監査記録だけを 1 つのトランザクションにする。A-01 の誤りの文言は TOTP と回復コードを区別しない（決定 7）</li>
 </ul>
 <h2 id="_2">コンテキスト<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h2>
 <ul>
@@ -10139,8 +10156,8 @@
 </tr>
 <tr>
 <td style="text-align: left;">回復コード</td>
-<td style="text-align: left;">TOTP の欄で受け付け、一度だけ使える（本体では使った時刻を入れて行を残す）</td>
-<td style="text-align: left;">本体ではハッシュ（bcrypt）で保存する</td>
+<td style="text-align: left;">A-02 の別の欄（<code>&lt;details&gt;</code>）で受け付け（Bolt 31c。決定 7）、一度だけ使える（本体では使った時刻を入れて行を残す）</td>
+<td style="text-align: left;">スパイクは TOTP の欄で受け付けた。本体ではハッシュ（bcrypt）で保存する</td>
 </tr>
 <tr>
 <td style="text-align: left;">無操作 30 分</td>
@@ -10302,7 +10319,7 @@
 </tr>
 <tr>
 <td style="text-align: left;">登録の途中の上限</td>
-<td style="text-align: left;">A-07 を開いた時刻（登録を始めた時刻）を session に置き、それがある password の段だけ、その時刻から 15 分を上限にする（ほかの password の段は 5 分のまま）。認証アプリを入れて QR を読む時間を見込むため。登録の途中の時刻は password の段の 5 分の中でしか置けない（A-07 を開けるのは期限の確認の後）。2 つの要素がそろったら使わない。登録を始めた時刻は登録の後も A-02 で TOTP が通るまで残し、回復コードを書き写して A-02 でログインを終えるまでを同じ 15 分に含める。再読み込みでは延ばさない。A-07 と回復コードの保存の画面に、期限を時刻で示す（「… までに、登録とログインを終えてください」。SEC-03。Bolt 31b の開発レビュー）</td>
+<td style="text-align: left;">A-07 を開いた時刻（登録を始めた時刻）を session に置き、それがある password の段だけ、その時刻から 15 分を上限にする（ほかの password の段は 5 分のまま）。認証アプリを入れて QR を読む時間を見込むため。登録の途中の時刻は password の段の 5 分の中でしか置けない（A-07 を開けるのは期限の確認の後）。2 つの要素がそろったら使わない。登録を始めた時刻は登録の後も A-02 で TOTP（Bolt 31c から回復コードも）が通るまで残し（通ったら消す。決定 7）、回復コードを書き写して A-02 でログインを終えるまでを同じ 15 分に含める。再読み込みでは延ばさない。A-07 と回復コードの保存の画面に、期限を時刻で示す（「… までに、登録とログインを終えてください」。SEC-03。Bolt 31b の開発レビュー）</td>
 </tr>
 <tr>
 <td style="text-align: left;">失敗へ倒す場面（T-42）</td>
@@ -10311,7 +10328,64 @@
 </tbody>
 </table>
 <p>先取りの登録のリスクを受け入れる（2026-10-13、human:kakimomokuri）: 未登録の利用者の password を知った者は、本人より先に自分の認証アプリを登録できる（初回の登録に共通する）。受け入れるリスクとし、<code>TOTP_ENROLLED</code> の監査記録（主体の利用者 ID と企業 ID）、ロック（Bolt 32）、システム管理者の別経路の解除と本人への通知（#47、W6）で抑える。初回の password の渡し方は利用者の管理（Bolt 34）で決める。</p>
-<p>ArchUnit で、ZXing を参照するのが <code>identity.infrastructure</code> だけであること（空振りを防ぐため、秘密の発行の実装が ZXing を使うことも確かめる）と、秘密の発行と回復コードの生成の実装が application に依存しないこと（D-5 の認証の例外は <code>identity.infrastructure.security</code> 全体にかかるので、入口でない部品の守りを足す）を守る。入口と暗号の部品のパッケージを分けて例外を入口だけに狭めるかは Bolt 31c で諮る。</p>
+<p>ArchUnit で、ZXing を参照するのが <code>identity.infrastructure</code> だけであること（空振りを防ぐため、秘密の発行の実装が ZXing を使うことも確かめる）と、秘密の発行と回復コードの生成の実装が application に依存しないこと（D-5 の認証の例外は <code>identity.infrastructure.security</code> 全体にかかるので、入口でない部品の守りを足す）を守る。入口と暗号の部品のパッケージを分けて例外を入口だけに狭めるかは Bolt 31d で諮る（Bolt 31c の開始準備で 31d に送った）。</p>
+<h3 id="7-bolt-31c">7. 回復コードによるログイン（Bolt 31c）<a class="headerlink" href="#7-bolt-31c" title="Permanent link">&para;</a></h3>
+<p><strong>TOTP の端末を持たない利用者は、A-02 の <code>&lt;details&gt;</code> で開く別の欄に回復コードを 1 つ入れてログインを終える。回復コードは TOTP と同じ入口で受け、通ったら TOTP と同じ結果の型と要素の権限（<code>FACTOR_TOTP</code>）を与える。使った回復コードは二度と使えない。</strong></p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">項目</th>
+<th style="text-align: left;">方針</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">入口と欄</td>
+<td style="text-align: left;">TOTP と同じ入口（<code>TotpAuthenticationFilter</code>、<code>POST /login/totp</code>）。A-02 の <code>&lt;details&gt;</code>（「認証アプリを使えない場合」）の中の別のフォームで、欄は <code>recoveryCode</code>（<code>autocomplete="off"</code>、<code>inputmode</code> は付けない）。欄の形で TOTP と取り違えない。JavaScript も CSP の変更も要らない。スパイクの「TOTP の欄で受け付け」（決定 2 の表）を改める</td>
+</tr>
+<tr>
+<td style="text-align: left;">入力のトークンと provider</td>
+<td style="text-align: left;">フィルターは <code>recoveryCode</code> があるとき、確かめる前の入力だけを <code>RecoveryCodeAuthenticationToken</code> にする（<code>eraseCredentials</code> で平文を消す）。<code>RecoveryCodeAuthenticationProvider</code> が確かめ、照合と消費はアプリケーションのサービス <code>RecoveryCodeVerificationService</code>（<code>identity.application.internal.commandservices</code>）に任せる（決定 5 の「照合」と同じ分け方。D-5 の認証の例外の範囲）</td>
+</tr>
+<tr>
+<td style="text-align: left;">結果の型</td>
+<td style="text-align: left;">provider は TOTP と同じ <code>TotpAuthenticationToken.authenticated(details, FACTOR_TOTP)</code> を返す。結果の型を変えないので、mfaEnabled の要素の合わせ（<code>toBuilder()</code>）、成功の監査の判定（<code>LOGIN_SUCCEEDED</code>）、session の直列化、業務の認可、session の ID の変更、CSRF の作り直し、8 時間の起点（<code>AUTHENTICATED_AT</code>）が 1 か所に保たれる。別の結果の型にすると、これらの守りを重ねて作ることになる。<code>CargoUserDetails</code> と session の属性は変えない</td>
+</tr>
+<tr>
+<td style="text-align: left;">拒否の例外とイベント</td>
+<td style="text-align: left;">拒否は <code>RecoveryCodeRejectedException</code>（<code>BadCredentialsException</code> を継ぐ）で表し、<code>DefaultAuthenticationEventPublisher</code> の例外とイベントの対応表に足して失敗のイベントを出す（対応表にない例外ではイベントが出ず、監査記録が書かれない）。失敗の数え方（Bolt 32）も同じイベントの上に置く</td>
+</tr>
+<tr>
+<td style="text-align: left;">監査</td>
+<td style="text-align: left;">通ったら回復コードの使用 <code>RECOVERY_CODE_USED</code> と <code>LOGIN_SUCCEEDED</code> の 2 行（<code>PASSWORD_VERIFIED</code> ではない）。拒否は理由 <code>INVALID_RECOVERY_CODE</code> を監査記録にだけ残す（誤り・使用済み・形の違い・回復コードがない・両方の欄を区別しない）。回復コードの平文は照合の後どこにも残さない（記録・監査・session・例外のメッセージ）</td>
+</tr>
+<tr>
+<td style="text-align: left;">正規化</td>
+<td style="text-align: left;">形の知識はドメインに置く（<code>RecoveryCode.normalize</code>）。前後と中の空白を除き、小文字にし、ハイフンのない 8 文字は 4 文字目の後にハイフンを入れる。<code>^[0-9a-f]{4}-[0-9a-f]{4}$</code> に合わなければ照合せずに拒む（bcrypt を回さない）。手で書き写したコードを打ち直させない</td>
+</tr>
+<tr>
+<td style="text-align: left;">照合とトランザクションの境界</td>
+<td style="text-align: left;">未使用の回復コードのすべてとハッシュで照合する（1 回の送信で最大 10 回の bcrypt、約 1 秒）。読み出しと照合はトランザクションの外で行い、一致したコードの条件付きの更新（<code>use</code>）と監査記録 <code>RECOVERY_CODE_USED</code> だけを <code>TransactionTemplate</code> の 1 つのトランザクションにする（DB の接続を照合の間持たない。監査の追記が失敗したら使用も戻る）。更新できなかったら（同時の消費で負けた）拒む。同じコードを 2 つの session で同時に送っても 1 つだけが通る。照合の時間で一致の位置が分かる心配は、使用済みが一覧に出ない形なので受け入れる</td>
+</tr>
+<tr>
+<td style="text-align: left;">失敗へ倒す場面（T-42）</td>
+<td style="text-align: left;">回復コードのない利用者（TOTP を登録していない利用者を含む）は拒む（TOTP の資格のリポジトリに依存しない）。<code>recoveryCode</code> と <code>code</code> の両方がある送信は、フィルターで投げずに回復コードの入力として provider に渡し、provider が照合せずに <code>RecoveryCodeRejectedException</code> で拒む（失敗のイベントが出て監査記録 <code>INVALID_RECOVERY_CODE</code> が残る）。どちらもない送信は TOTP の誤りと同じ。照合の途中の例外は 500 にせず拒否してログを出す</td>
+</tr>
+<tr>
+<td style="text-align: left;">誤りの扱い</td>
+<td style="text-align: left;">TOTP の誤りと同じく password の要素を捨てて A-01 に戻す（1 つの session で試し続けさせない。K-02）。A-01 の誤りの文言は TOTP と回復コードを区別しない: 「認証コードまたは回復コードが正しくないか、すでに使われています。もう一度ログインして、認証アプリに表示された新しいコードか、まだ使っていない回復コードを入れてください。」（AC2。拒否の種類は監査記録にだけ残す）。回数の上限はロック（Bolt 32。回復コードの誤りも数えるかはそこで決める）で抑える</td>
+</tr>
+<tr>
+<td style="text-align: left;">登録を始めた時刻</td>
+<td style="text-align: left;">TOTP・回復コードが通ったら、session の登録を始めた時刻（決定 6 の「登録の途中の上限」）を消す。登録の直後の A-02 の案内は登録を始めた時刻があるときだけ示すので、ログインを終えた後に A-02 を開き直しても出ない。8 時間の判定は要素で選ぶので、消しても上限は変わらない。新しい session の属性は足さない</td>
+</tr>
+<tr>
+<td style="text-align: left;">問い合わせ先</td>
+<td style="text-align: left;">A-02 の「認証アプリを使えない場合は…お問い合わせください」（SEC-10 の経路）は、<code>&lt;details&gt;</code> の中の回復コードの欄の下に「回復コードもない場合は…」として移す</td>
+</tr>
+</tbody>
+</table>
+<p>回復コードによる TOTP の再登録と、残りが少ないときの案内（AC9 の残り）は Bolt 33b で決める。</p>
 <h3 id="_4">代替案<a class="headerlink" href="#_4" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
@@ -10401,7 +10475,7 @@
 <li>最長 8 時間を即時失効（BR-14）と同じ経路にできるか（Bolt 32）。</li>
 <li>同じ利用者の同時のログインと、同じコードの同時の送信（1 つだけ通ること）。学習テストは MockMvc だけ。</li>
 <li>password の再設定（SEC-08）と、TOTP の再登録（SEC-10）の流れ。</li>
-<li>利用者の画面で「次に取れる操作」（T-35）: A-02 で誤ったときは再入力か回復コード、ロック中は解ける時刻を示して待つ、端末を失ったときは回復コードか管理者への連絡。US-18 の計画の確認ポイントにする。</li>
+<li>利用者の画面で「次に取れる操作」（T-35）: A-02 で誤ったときは A-01 からログインし直し、認証アプリの新しいコードか、まだ使っていない回復コードを入れる（A-01 の誤りの文言。Bolt 31c の決定 7）、ロック中は解ける時刻を示して待つ、端末を失ったときは回復コードか管理者への連絡。US-18 の計画の確認ポイントにする。</li>
 </ul>
 <h3 id="w5">W5 で人が決める論点<a class="headerlink" href="#w5" title="Permanent link">&para;</a></h3>
 <ul>
@@ -10421,6 +10495,7 @@
 <p>復号した平文の消去について（Bolt 31 の開発レビュー）: 生成器は復号した配列を使い終えたら消すが、JDK の <code>SecretKeySpec</code> と java-otp の <code>Mac</code> は内部に鍵の写しを持つので、JVM の中の写しまでは消せない。消せるのは呼び出し側の配列だけである。</p>
 <h2 id="_10">改訂の経緯<a class="headerlink" href="#_10" title="Permanent link">&para;</a></h2>
 <ul>
+<li>2026-10-13: Bolt 31c の計画の承認で、回復コードによるログイン（決定 7。A-02 の別の欄、入力のトークンと TOTP と同じ結果の型、拒否の例外と失敗のイベントの対応表、監査 <code>RECOVERY_CODE_USED</code>・<code>INVALID_RECOVERY_CODE</code>、正規化、照合とトランザクションの境界、両方の欄がある送信の拒み方、登録を始めた時刻を消すこと、A-01 の誤りの文言）を足した。決定 2 の表の回復コードを「A-02 の別の欄」に改め、スパイクの削除・特性テスト・入口と暗号のパッケージを Bolt 31d に送った（31c と 31d に分けたため。human:kakimomokuri が決定）。</li>
 <li>2026-10-13: Bolt 31b の開発レビューで、同時の登録の負けた側の結果をサービスの中で「登録済み」にまとめること、登録を始めた時刻を A-02 まで残し期限を時刻で示すこと、QR の生成で文字セットを指定しないこと、<code>TotpProvisioning</code> に表示の形が入る代償を足した。</li>
 <li>2026-10-13: Bolt 31b の計画の承認で、暗号文の AAD（決定 5）と、初回の TOTP の登録と回復コードの発行（決定 6。登録の流れ、要素は与えない、QR は ZXing のインラインの SVG、<code>TotpProvisioning</code> を値に置く理由、新しいポートの置き場所、議題 2 の①④、登録の途中の上限 15 分、先取りの登録のリスクを受け入れること）を足した。QR・URI・回復コードの発行を「未確認の項目」から決定に移し、A-02 の回復コードの入力を Bolt 31c に、スパイクの削除の時期を「Bolt 31c の後」に改めた（31b と 31c に分けたため。human:kakimomokuri が決定）。</li>
 <li>2026-10-13: Bolt 31 の開始準備と計画の承認で、TOTP の秘密の暗号化（決定 5。AES-GCM、鍵の版の接頭辞、環境変数の鍵）、<code>TotpCodeGenerator</code> が暗号文を受ける形、K-02 を受け入れる判断、R-08 の比較の結果（全体の注釈を採る）、<code>SecurityFilterChain</code> の置き場所、password の段の上限 5 分、dev のコードの部品の置き方、Base32 を自分で書くことを足した。「未確認の項目」から解いたものを決定に移し、スパイクの削除の時期を「Bolt 31b の後」に改めた（31 と 31b に分けたため。human:kakimomokuri が決定）。</li>

@@ -10899,6 +10899,36 @@
 <td style="text-align: left;">アクセス・監査</td>
 </tr>
 <tr>
+<td style="text-align: left;">回復コードの確認</td>
+<td style="text-align: left;">RecoveryCodeVerificationService</td>
+<td style="text-align: left;">回復コードによるログインで、入れたコードを正規化し、利用者の未使用の回復コードのすべてとハッシュで照合し（トランザクションの外）、一致したコードの条件付きの更新と監査記録（<code>RECOVERY_CODE_USED</code>）を 1 つのトランザクションで行うアプリケーションのサービス（US-18 AC9、IA-INV-11、ADR-011 の決定 7、Bolt 31c）</td>
+<td style="text-align: left;">アクセス・監査</td>
+</tr>
+<tr>
+<td style="text-align: left;">回復コードの確認の結果</td>
+<td style="text-align: left;">RecoveryCodeVerification</td>
+<td style="text-align: left;">回復コードの確認の結果。受理（<code>ACCEPTED</code>）か拒否（<code>REJECTED</code>）で、拒否の種類（形の違い・誤り・使用済み・同時の使用で負けた・回復コードがない）は分けない（使用済みのコードは未使用の一覧に出ないため。Bolt 31c）</td>
+<td style="text-align: left;">アクセス・監査</td>
+</tr>
+<tr>
+<td style="text-align: left;">password を確かめた利用者</td>
+<td style="text-align: left;">PasswordVerifiedUser</td>
+<td style="text-align: left;">password の段がそろった主体の利用者 ID・企業 ID・メールアドレス。password の段だけで開く画面（A-02・A-07）が受ける identity の中だけの値で、2 つの要素がそろった主体の <code>AuthenticatedActor</code> と分ける（ADR-012 の見直しの 4、Bolt 31c）</td>
+<td style="text-align: left;">アクセス・監査</td>
+</tr>
+<tr>
+<td style="text-align: left;">監査の操作</td>
+<td style="text-align: left;">AuditAction</td>
+<td style="text-align: left;">監査記録の操作。password の段の成功（<code>PASSWORD_VERIFIED</code>）、ログインの成功（<code>LOGIN_SUCCEEDED</code>。2 つの要素がそろった）、ログインの失敗（<code>LOGIN_FAILED</code>）、TOTP の登録（<code>TOTP_ENROLLED</code>。Bolt 31b）、回復コードの使用（<code>RECOVERY_CODE_USED</code>。Bolt 31c）、ログアウト（<code>LOGOUT</code>）</td>
+<td style="text-align: left;">アクセス・監査</td>
+</tr>
+<tr>
+<td style="text-align: left;">認証の拒否の理由</td>
+<td style="text-align: left;">AuthenticationRejection</td>
+<td style="text-align: left;">認証を受け付けなかった理由。監査記録にだけ残し、利用者には同じ応答を返す。<code>BAD_CREDENTIALS</code>・<code>UNKNOWN_USER</code>・<code>SUSPENDED</code>・<code>COMPANY_INACTIVE</code>（Bolt 14）、<code>INVALID_TOTP</code>・<code>TOTP_REUSED</code>（Bolt 31）、<code>INVALID_RECOVERY_CODE</code>（回復コードの形の違い・誤り・使用済み、または回復コードと認証コードの両方を送った。Bolt 31c）</td>
+<td style="text-align: left;">アクセス・監査</td>
+</tr>
+<tr>
 <td style="text-align: left;">役割</td>
 <td style="text-align: left;">Role</td>
 <td style="text-align: left;">荷主担当者、営業担当者、経路設計者、追跡管理者、データ責任者、カスタマーサポート、システム管理者、監査担当者</td>
@@ -11009,7 +11039,7 @@
 <tr>
 <td style="text-align: left;">認証された利用者</td>
 <td style="text-align: left;">AuthenticatedActor</td>
-<td style="text-align: left;">ログインした利用者の利用者 ID・企業 ID・役割・表示名・企業名。ほかのコンテキストが操作者と所属企業を知るための値（Bolt 14）</td>
+<td style="text-align: left;">ログインした利用者の利用者 ID・企業 ID・役割・表示名・企業名。ほかのコンテキストが操作者と所属企業を知るための値（Bolt 14）。2 つの要素（password と TOTP または回復コード）がそろった主体だけを表す（Bolt 31c。password の段だけの主体は <code>PasswordVerifiedUser</code>）</td>
 <td style="text-align: left;">共有カーネル</td>
 </tr>
 </tbody>
@@ -11699,7 +11729,7 @@
 <h3 id="identity-auditu4">アクセス・監査（Identity &amp; Audit、U4）<a class="headerlink" href="#identity-auditu4" title="Permanent link">&para;</a></h3>
 <p>ADR-002 により単純なモデルとする。認証の流れ（2 段階のログイン、session）は Spring Security に任せ、ドメインモデルは業務上の規則（TOTP の再利用の拒否、一度だけの回復コード、ロック）だけを持つ。TOTP のコードの生成は <code>TotpCodeGenerator</code> のポートの裏の java-otp に、回復コードのハッシュは <code>RecoveryCodeHasher</code> のポートの裏の bcrypt に任せる（<a href="../../../adr/cargo-tracker/011-mfa-totp/">ADR-011</a>、Bolt 30）。生成器は持ち主の利用者 ID と暗号化した秘密（<code>EncryptedSecret</code>）と時間の刻みを受け（<code>code(UserId, EncryptedSecret, long)</code>）、復号はインフラ層の実装の中で済ませる（Bolt 31。利用者 ID は Bolt 31b）。暗号文は <code>totp-secret:</code> と利用者 ID を AAD にして暗号化し、別の利用者の暗号文では復号できない（Bolt 31b）。照合と刻みの使用は、アプリケーションのサービス <code>TotpVerificationService</code>（<code>identity.application.internal.commandservices</code>）が行う。TOTP の資格の集約が前後 1 つの刻みの照合（<code>matchingStep</code>）を、リポジトリが刻みの使用（条件付きの更新。件数が 0 なら再利用）を受け持ち、サービスは時刻を <code>Clock</code> から刻みに直して両者をつなぐ。Spring Security の provider はサービスの結果を認証の成否に直すだけにする（層の規則 D-5 の認証の例外。ADR-012 の決定 6、Bolt 31）。</p>
 <p>初回の TOTP の登録（Bolt 31b。ADR-011 の決定 6）では、秘密の発行は <code>TotpSecretIssuer</code>、回復コードの生成は <code>RecoveryCodeGenerator</code> のポートの裏に置き、実装は <code>identity.infrastructure</code> に置く。認証の要素のポート（生成・発行・ハッシュ・回復コードの生成）は、前例にそろえて <code>identity.domain.model.aggregates</code> に置く。ZXing をインフラ層に閉じるため、表示の値はポートが値 <code>TotpProvisioning</code>（<code>identity.domain.model.valueobjects</code>）にして返す。登録はアプリケーションのサービス <code>TotpEnrollmentService</code>（<code>commandservices</code>）が行う。<code>begin</code> は登録済みなら拒み、登録の途中の暗号文を同じ利用者の AAD で復号できる限り使い続け、なければ新しく発行する。<code>complete</code> は暗号文と入れたコードを前後 1 つの刻みで照合し、1 つのトランザクションで TOTP の資格を追加し（最後に使った刻みは 0。登録のコードは A-02 でもう一度使える）、回復コード 10 個をハッシュで置き換え、監査記録を書き、回復コードの平文を返す。同時の登録は TOTP の資格の主キーで 1 つに絞り、主キーの違反はリポジトリの実装で <code>DuplicateTotpEnrollmentException</code> に写す。登録は TOTP の要素を与えず、ログインは A-02 で終える。登録済みかの問い合わせは <code>TotpEnrollmentQueryService</code>（<code>queryservices</code>）に置き、画面の層だけが呼ぶ（<code>TotpVerificationService</code> から移した）。利用者の登録の状態は TOTP の資格の有無で決まり（未登録 → 登録済み）、状態の列は持たない。登録の途中は session の属性（暗号文の文字列と登録を始めた時刻）で、ドメインモデルには置かない。</p>
-<p>認証された利用者を表す値 <code>AuthenticatedActor</code>（利用者 ID・企業 ID・役割（1 つ以上）・表示名・企業名）と役割 <code>Role</code>（BR-15 の 8 役割）は、共有カーネル（<code>shared</code>）に置く。ほかのコンテキストはこの型だけを受け取り、Spring Security の型にも <code>identity</code> にも依存しない。<code>identity</code> に置くと、<code>quotation → identity → quotation::events</code> の依存が循環するため（ADR-011 の決定 4、<a href="../../../adr/cargo-tracker/012-authentication-principal-and-session/">ADR-012</a>、Bolt 14 の確認ポイント 2）。利用者の集約は「認証できない理由」（利用停止・企業が無効）を返し、Spring Security の利用者の読み出しがその理由を認証の失敗に変える（IA-INV-09）。監査記録の操作には、ログインの成功（<code>LOGIN_SUCCEEDED</code>）・失敗（<code>LOGIN_FAILED</code>）・ログアウト（<code>LOGOUT</code>）を Bolt 14 で足す。Bolt 31 で password の段の成功（<code>PASSWORD_VERIFIED</code>）を足し、<code>LOGIN_SUCCEEDED</code> は 2 つの要素（password と TOTP）がそろったときにする。TOTP の失敗は利用者と理由（<code>INVALID_TOTP</code>・<code>TOTP_REUSED</code>）で <code>LOGIN_FAILED</code> に記録する（ADR-012 の見直しの 1）。Bolt 31b で初回の TOTP の登録（<code>TOTP_ENROLLED</code>。主体の利用者 ID と企業 ID）を足す（先取りの登録を見つける手がかり。ADR-011 の決定 6）。</p>
+<p>認証された利用者を表す値 <code>AuthenticatedActor</code>（利用者 ID・企業 ID・役割（1 つ以上）・表示名・企業名）と役割 <code>Role</code>（BR-15 の 8 役割）は、共有カーネル（<code>shared</code>）に置く。ほかのコンテキストはこの型だけを受け取り、Spring Security の型にも <code>identity</code> にも依存しない。<code>AuthenticatedActor</code> は 2 つの要素（password と TOTP または回復コード）がそろった主体だけを表し、引数の解決は <code>FACTOR_TOTP</code> がない主体に渡さない。password の段だけで開く画面（A-02・A-07）は、identity の中だけの値 <code>PasswordVerifiedUser</code>（<code>identity.domain.model.valueobjects</code>。利用者 ID・企業 ID・メールアドレス）を受ける（ADR-012 の見直しの 4、Bolt 31c）。<code>identity</code> に置くと、<code>quotation → identity → quotation::events</code> の依存が循環するため（ADR-011 の決定 4、<a href="../../../adr/cargo-tracker/012-authentication-principal-and-session/">ADR-012</a>、Bolt 14 の確認ポイント 2）。利用者の集約は「認証できない理由」（利用停止・企業が無効）を返し、Spring Security の利用者の読み出しがその理由を認証の失敗に変える（IA-INV-09）。監査記録の操作には、ログインの成功（<code>LOGIN_SUCCEEDED</code>）・失敗（<code>LOGIN_FAILED</code>）・ログアウト（<code>LOGOUT</code>）を Bolt 14 で足す。Bolt 31 で password の段の成功（<code>PASSWORD_VERIFIED</code>）を足し、<code>LOGIN_SUCCEEDED</code> は 2 つの要素（password と TOTP）がそろったときにする。TOTP の失敗は利用者と理由（<code>INVALID_TOTP</code>・<code>TOTP_REUSED</code>）で <code>LOGIN_FAILED</code> に記録する（ADR-012 の見直しの 1）。Bolt 31b で初回の TOTP の登録（<code>TOTP_ENROLLED</code>。主体の利用者 ID と企業 ID）を足す（先取りの登録を見つける手がかり。ADR-011 の決定 6）。Bolt 31c で回復コードの使用（<code>RECOVERY_CODE_USED</code>。主体の利用者 ID と企業 ID）を足し、回復コードでログインを終えたときは <code>RECOVERY_CODE_USED</code> と <code>LOGIN_SUCCEEDED</code> の 2 行を書く。回復コードの拒否は理由 <code>INVALID_RECOVERY_CODE</code> で <code>LOGIN_FAILED</code> に記録する（ADR-011 の決定 7）。</p>
 <table>
 <thead>
 <tr>
@@ -11831,7 +11861,7 @@
 </tr>
 <tr>
 <td style="text-align: left;">IA-INV-11</td>
-<td style="text-align: left;">回復コードは 1 人に 10 個で、発行のたびに置き換える。ハッシュだけを持ち、一度使ったら使えない（使った時刻を入れて残す）。未使用のコードがなければ拒否する（Bolt 30 で追加）。初回の発行は TOTP の登録と同じトランザクションで行い、10 個を乱数で作り（形は <code>1a2b-3c4d</code>、重複なし）、平文は登録を保存した応答で一度だけ示してどこにも保存しない。未使用のコードの並び順は約束しない（Bolt 31b）</td>
+<td style="text-align: left;">回復コードは 1 人に 10 個で、発行のたびに置き換える。ハッシュだけを持ち、一度使ったら使えない（使った時刻を入れて残す）。未使用のコードがなければ拒否する（Bolt 30 で追加）。初回の発行は TOTP の登録と同じトランザクションで行い、10 個を乱数で作り（形は <code>1a2b-3c4d</code>、重複なし）、平文は登録を保存した応答で一度だけ示してどこにも保存しない。未使用のコードの並び順は約束しない（Bolt 31b）。ログインでの消費（Bolt 31c）では、入れたコードを正規化し（前後と中の空白を除き小文字にし、ハイフンのない 8 文字は 4 文字目の後にハイフンを入れる。<code>^[0-9a-f]{4}-[0-9a-f]{4}$</code> に合わなければ照合せずに拒む。<code>RecoveryCode.normalize</code>）、その利用者の未使用のコードとだけ照合する。一致したコードは未使用であることを条件にした更新で使い、同じコードを同時に使っても 1 つだけが通る（更新の件数が 0 なら拒む）</td>
 <td style="text-align: left;">US-18 AC7・AC9、SEC-09</td>
 </tr>
 <tr>

@@ -11804,21 +11804,28 @@
 </tr>
 <tr>
 <td style="text-align: left;">31c</td>
-<td style="text-align: left;">A-02 での回復コードによるログイン（回復コードによる再登録は 33b）、password の段の主体の型（<code>identity.domain.model.valueobjects</code> の見込み。Bolt 31b の T-101 の確かめ）と ADR-012 の「W5 で見直すこと」の 4（引数の解決と <code>@WithAuthenticatedActor</code>）、照合の 3 値をドメインに寄せる、枠組みの特性テスト（R-16）、<code>FACTOR_*</code> の ArchUnit の空振り対策、入口と暗号のパッケージ、Bolt 31 の低の指摘、スパイクの削除</td>
+<td style="text-align: left;">US-18 AC9 のうちログインの分: A-02 の <code>&lt;details&gt;</code> で開く別の欄（<code>recoveryCode</code>）で回復コードを受け、同じ <code>POST /login/totp</code> で確かめてログインを終える（回復コードによる再登録は 33b）。入力のトークンと provider、結果は TOTP と同じ <code>TotpAuthenticationToken</code>（<code>FACTOR_TOTP</code>）、拒否の例外と失敗のイベントの対応表、監査 <code>RECOVERY_CODE_USED</code>・<code>INVALID_RECOVERY_CODE</code>、正規化（<code>RecoveryCode.normalize</code>）、照合はトランザクションの外で消費と監査だけを 1 つのトランザクションに、A-01 の誤りの文言、登録の直後の A-02 の案内（Bolt 31b のレビュー 13）。password の段の主体の型 <code>PasswordVerifiedUser</code>（<code>identity.domain.model.valueobjects</code>）と ADR-012 の「W5 で見直すこと」の 4（引数の解決が <code>FACTOR_TOTP</code> を確かめる、<code>@WithAuthenticatedActor</code> の要素の権限）。開始準備で 31c と 31d に分け、回復コードの欄・要素と監査・主体の型の置き場所を決めた（2026-10-13、human:kakimomokuri）。<a href="../bolt_31c_plan/">Bolt 31c 計画</a></td>
 <td style="text-align: right;">0</td>
 <td style="text-align: left;">インサイドアウト</td>
-<td style="text-align: left;">ステップごと（セキュリティ）</td>
+<td style="text-align: left;">ステップごと（セキュリティ、構造、画面）</td>
+</tr>
+<tr>
+<td style="text-align: left;">31d</td>
+<td style="text-align: left;">構造の直し: 照合の 3 値をドメインに寄せる（31c の <code>RecoveryCodeVerification</code> を含む）、<code>REJECTED_NOT_ENROLLED</code> の監査の理由、<code>FACTOR_*</code> の ArchUnit の空振り対策、入口と暗号のパッケージ（D-5 の認証の例外を入口だけに狭めるか）、枠組みの特性テスト（R-16）、Bolt 31 の低の指摘、SVG の組み立て・定数、スパイクの削除（Bolt 31c の開始準備で 31c から分けた）</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: left;">リファクタリング</td>
+<td style="text-align: left;">ステップごと（構造）</td>
 </tr>
 <tr>
 <td style="text-align: left;">32</td>
-<td style="text-align: left;">US-18 AC3 ロック（ロックの数え方を <code>identity.application</code> に置く。ADR-012）、AC6 request ごとの役割の確認（Bolt 14 の決定の引き継ぎ。利用停止・権限の取消しの操作は Bolt 34 で作るので、この Bolt では DB の値を変えて確かめる）。ADR-012 の「W5 で見直すこと」の 3（request ごとの問い合わせを 1 回に。AC6 と同じ仕組み）と 5（ロックの数え方。入口は D-5 の認証の例外と同じ形）、S-02（送信元ごとの流量の制限）、Bolt 30 の議題 2 の③。範囲が重いので、開始準備で 32 を分けるかを見直す</td>
+<td style="text-align: left;">US-18 AC3 ロック（ロックの数え方を <code>identity.application</code> に置く。ADR-012）、AC6 request ごとの役割の確認（Bolt 14 の決定の引き継ぎ。利用停止・権限の取消しの操作は Bolt 34 で作るので、この Bolt では DB の値を変えて確かめる）。ADR-012 の「W5 で見直すこと」の 3（request ごとの問い合わせを 1 回に。AC6 と同じ仕組み）と 5（ロックの数え方。入口は D-5 の認証の例外と同じ形）、S-02（送信元ごとの流量の制限）、Bolt 30 の議題 2 の③。回復コードの誤りも失敗の回数に数えるか（Bolt 31c で <code>RecoveryCodeRejectedException</code> を失敗のイベントの対応表に足した）。範囲が重いので、開始準備で 32 を分けるかを見直す</td>
 <td style="text-align: right;">2</td>
 <td style="text-align: left;">インサイドアウト</td>
 <td style="text-align: left;">ステップごと（セキュリティ、認可）</td>
 </tr>
 <tr>
 <td style="text-align: left;">32b</td>
-<td style="text-align: left;">session の失効の 5 分前の警告、延長の操作、失効の時の入力の保持（ACC-06）。8 時間の起点は TOTP の時刻（Bolt 31）</td>
+<td style="text-align: left;">session の失効の 5 分前の警告、延長の操作、失効の時の入力の保持（ACC-06）。8 時間の起点は TOTP または回復コードが初めて通った時刻（Bolt 31・31c）</td>
 <td style="text-align: right;">0</td>
 <td style="text-align: left;">インサイドアウト</td>
 <td style="text-align: left;">ステップごと（セキュリティ）</td>
@@ -11854,7 +11861,7 @@
 </tbody>
 </table>
 <p>US-18 の残りの SP 6 は #13 をクローズする Bolt 33b で、US-04 の SP 3 は #43 をクローズする Bolt 35 で数える。US-16 の SP 5 は #14 をクローズする W6 で数えるので、W5 の目標 11 SP のうち W5 で数えられるのは最大 9 SP である（Bolt ごとの SP は目安）。W5 は祝日の週で、上限（8 SP）を超える。Release 0.1 を約 2 週早く終えた余裕で吸収し、W5 の締めで確かめる（W4 の締めの決定）</p>
-<p>US-18 の Bolt の順序は 31b → 31c → 32 とする。32 の ADR-012 の見直しの 3（request ごとの問い合わせを 1 回に）は、31c の引数の解決（見直しの 4）と同じ部品に触るため。31c → 33b とする。33b の回復コードによる再登録は、31c の回復コードによるログインを前提にするため（Bolt 31b の開始準備）。Bolt 31b の開始準備で 31c を足し、W5 の Bolt は 13 本（29・29b・29c・30・31・31b・31c・32・32b・33・33b・34・35）になった。祝日の週で SP も上限を超えるので、本数と SP の両方を W5 の締めで確かめる</p>
+<p>US-18 の Bolt の順序は 31b → 31c → 31d → 32 とする。32 のロックの数え方は、31d で照合の結果をドメインに寄せた後のほうが置きやすい（Bolt 31c の開始準備）。32 の ADR-012 の見直しの 3（request ごとの問い合わせを 1 回に）は、31c の引数の解決（見直しの 4）と同じ部品に触るため。31c → 33b とする。33b の回復コードによる再登録は、31c の回復コードによるログインを前提にするため（Bolt 31b の開始準備）。Bolt 31b の開始準備で 31c を、Bolt 31c の開始準備で 31d を足し、W5 の Bolt は 14 本（29・29b・29c・30・31・31b・31c・31d・32・32b・33・33b・34・35）になった。祝日の週で SP も上限を超えるので、本数と SP の両方を W5 の締めで確かめる</p>
 <p><strong>W4 の Try の持ち込み</strong>: 各 Bolt 計画の確認ポイントに、T-83・T-88（骨組みや待ち方を直したら骨組みのまま流し、本命のアサーションで落ちることを確かめる。最初から通るテストは「見張り」と書く）、T-89（後に回したものは Issue にし、W5 の締めで開いている持ち越しを数える）、T-90（画面を作る Bolt の開発レビューに、マニュアルを書く立場の観点を入れる。Bolt 29b から）を入れる。承認ゲートの密度は「W4 の締めの見直し」のとおり（既定は計画と終了報告で止める。認証の完成はステップごとに止める）</p>
 <p><strong>Bolt 13・14 からの持ち込み</strong>（横断整合性検証の指摘。担当の Bolt の確認ポイントにする）:</p>
 <table>
@@ -11889,7 +11896,7 @@
 <tr>
 <td style="text-align: left;">AC7 の画面の認可、特性テスト、スパイクのプロジェクトの削除</td>
 <td style="text-align: left;">Bolt 13 終了報告の既知の課題</td>
-<td style="text-align: left;">AC7 の認可は 31b、特性テストは 31c（Bolt 31 の開始準備で 31 と 31b に分け、Bolt 31b の開始準備で 31b と 31c に分けた）。スパイクは Bolt 31c の後に消す（本体に登録と回復コードの発行（31b）と回復コードによるログイン（31c）がそろってから。消すときにもう一度確かめる）</td>
+<td style="text-align: left;">AC7 の認可は 31b、特性テストは 31d（Bolt 31 の開始準備で 31 と 31b に、Bolt 31b の開始準備で 31b と 31c に、Bolt 31c の開始準備で 31c と 31d に分けた）。スパイクは 31d で消す（本体に登録と回復コードの発行（31b）と回復コードによるログイン（31c）がそろった後。消すときにもう一度確かめる）</td>
 </tr>
 <tr>
 <td style="text-align: left;">Try T-40・T-42（「W5 の US-18」と指定）</td>
@@ -13009,6 +13016,11 @@
 <td style="text-align: left;">2026-10-13</td>
 <td style="text-align: left;">Bolt 31c の開始準備: 31c と 31d に分け（31c は回復コードによるログインと password の段の主体の型・ADR-012 の見直しの 4、31d は構造の直し。どちらも SP 0）、回復コードは A-02 の <code>&lt;details&gt;</code> の別の欄、通ったら <code>FACTOR_TOTP</code> と専用の監査、主体の型は <code>valueobjects</code> に置くことを決めた。Bolt 31c 計画を作り、2 つの整合性検証の指摘を反映した（承認待ち。W5 の行の直しは計画のステップ 1）</td>
 <td style="text-align: left;">anthropic/claude-opus-5-5、決定 human:kakimomokuri</td>
+</tr>
+<tr>
+<td style="text-align: left;">2026-10-13</td>
+<td style="text-align: left;">Bolt 31c のステップ 1: W5 の Bolt の分け方の表の 31c の行を Bolt 31c 計画の内容にし、31d の行（構造の直し。SP 0、リファクタリング、ステップごと（構造））を足した。32 の行に回復コードの誤りも失敗の回数に数えるかを、US-18 の Bolt の順序に 31d を、W5 の本数を 14 本に直した。Bolt 13・14 からの持ち込みの表で特性テストとスパイクの削除を 31d に直した</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5</td>
 </tr>
 </tbody>
 </table>
