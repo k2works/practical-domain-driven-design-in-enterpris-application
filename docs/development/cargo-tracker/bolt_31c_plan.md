@@ -4,7 +4,7 @@ title: "Bolt 31c 計画 - 回復コードによるログインと password の�
 description: "W5 の 7 本目の Bolt の計画。A-02 で回復コードを使ってログインを終えられるようにし（US-18 AC9 のログインの分、SEC-09）、password の段だけの主体を identity の中だけの型に分けて、AuthenticatedActor を 2 つの要素がそろった主体だけにする（ADR-012 の見直しの 4）。構造の直しは Bolt 31d。"
 tags: [development,bolt-plan]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-13T07:42:09Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-13T08:04:39Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-13T06:46:28Z }
 ---
@@ -229,7 +229,7 @@ Totp --> Login : 誤り・再利用・使用済み（password の要素を捨て
 - [x] **5. 画面の層** 【承認ゲート: セキュリティ】
   - `login_ui.feature` に「認証アプリを使えない荷主担当者が回復コードでログインする」（`UiUsers` に回復コードを発行する口を足す。平文はテストの準備で決めた値）。印は `@US-18-AC9 @demo @demo-bolt-31c/recovery`（AC9 のログインの分。再登録は 33b で同じ印のシナリオを足し、`test_strategy.md` の受入条件の照合の表の AC9 は 33b で「完了」にする）
   - 完了の判定: `check` と `uiTest` が緑
-- [-] **6. SonarQube と開発レビューとデモと終了報告** 【承認ゲート: 終了報告】
+- [x] **6. SonarQube と開発レビューとデモと終了報告** 【承認ゲート: 終了報告】
   - SonarQube（`sonar-local:check`。T-104 で開発レビューの前に流す）
   - 開発レビュー（プログラマー、アーキテクト、テスター（セキュリティの境界）、テクニカルライター（A-02 の回復コードの欄・案内・A-01 の誤りの文言。T-90））
   - レビューの直しの後にデモの動画（`demoVideo`）を撮り、#13 に添付する（`issue:attach-demo`。T-105）。`bolt_31c_report.md`。release_plan の W5 の 31c の行、開発の索引。#13 に進み具合をコメントする

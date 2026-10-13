@@ -66,7 +66,7 @@ Bolt がイテレーションに当たります。ふりかえりは各 Bolt の
 | 30 | [ADR-011 の採用と、TOTP の資格・回復コード・ログインの失敗の表とドメイン](bolt_30_plan.md) | [終了報告](bolt_30_report.md) | W5 | 完了 |
 | 31 | [TOTP の秘密の暗号化と 2 段階のログイン（A-02）](bolt_31_plan.md) | [終了報告](bolt_31_report.md)（[動画](../../assets/demo/bolt-31/two-step-login.webm){:target="_blank"}） | W5 | 完了 |
 | 31b | [暗号文の AAD と初回の TOTP の登録（A-07）・回復コードの発行](bolt_31b_plan.md) | [終了報告](bolt_31b_report.md)（[動画](../../assets/demo/bolt-31b/enroll.webm){:target="_blank"}） | W5 | 完了 |
-| 31c | [回復コードによるログインと password の段の主体の型](bolt_31c_plan.md) | — | W5 | 進行中 |
+| 31c | [回復コードによるログインと password の段の主体の型](bolt_31c_plan.md) | [終了報告](bolt_31c_report.md)（[動画](../../assets/demo/bolt-31c/recovery.webm){:target="_blank"}） | W5 | 完了（承認待ち） |
 
 Bolt を始めるときに行を追加します。
 
