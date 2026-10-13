@@ -366,6 +366,31 @@ class AuthenticationSecurityIntegrationTest {
     }
 
     @Test
+    void DBで別の利用者の暗号文に入れ替えるとTOTPは通らず500にせずA01に戻す() throws Exception {
+        // 暗号文は持ち主の利用者 ID に結び付く（AAD。Bolt 31b）。DB に書ける者が別の利用者の暗号文を写しても、その秘密では通らない
+        String victim = shipper(UserStatus.ACTIVE);
+        String attacker = shipper(UserStatus.ACTIVE);
+        jdbc.update(
+                "UPDATE identity.totp_credential SET secret_encrypted ="
+                        + " (SELECT secret_encrypted FROM identity.totp_credential WHERE user_id = ?) WHERE user_id = ?",
+                userIdOf(attacker).value(),
+                userIdOf(victim).value());
+        Cookie session = loginWithPassword(victim);
+        TotpCredential attackersCredential =
+                totpCredentials.findByUserId(userIdOf(attacker)).orElseThrow();
+        String attackersCode = totpCodes.code(
+                attackersCredential.userId(),
+                attackersCredential.secret(),
+                TotpCredential.stepAt(new UtcInstant(clock.instant())));
+
+        mvc.perform(post(TOTP_URL).cookie(session).param("code", attackersCode).with(csrf()))
+                .andExpect(redirectedUrl("/login?totp-error"));
+
+        assertThat(auditOf(victim))
+                .contains(Map.of("action", "LOGIN_FAILED", "result", "FAILURE", "reason", "INVALID_TOTP"));
+    }
+
+    @Test
     void 秘密を復号できない利用者は500にせずA01に戻し監査記録に残す() throws Exception {
         String email = shipper(UserStatus.ACTIVE);
         Cookie session = loginWithPassword(email);
@@ -1096,8 +1121,8 @@ class AuthenticationSecurityIntegrationTest {
                 passwordEncoder.encode(PASSWORD),
                 status,
                 Set.of(role)));
-        totpCredentials.add(
-                TotpCredential.enroll(userId, cipher.encrypt(TOTP_SECRET.clone()), new UtcInstant(clock.instant())));
+        totpCredentials.add(TotpCredential.enroll(
+                userId, cipher.encrypt(TOTP_SECRET.clone(), userId), new UtcInstant(clock.instant())));
         return email;
     }
 
@@ -1149,7 +1174,8 @@ class AuthenticationSecurityIntegrationTest {
     private String currentCode(String email) {
         TotpCredential credential =
                 totpCredentials.findByUserId(userIdOf(email)).orElseThrow();
-        return totpCodes.code(credential.secret(), TotpCredential.stepAt(new UtcInstant(clock.instant())));
+        return totpCodes.code(
+                credential.userId(), credential.secret(), TotpCredential.stepAt(new UtcInstant(clock.instant())));
     }
 
     /** テストの準備として、使った刻みを戻す（同じ利用者が同じ刻みの間に入り直すため。Bolt 31 の確認ポイント 7）。 */
@@ -1166,9 +1192,9 @@ class AuthenticationSecurityIntegrationTest {
                 totpCredentials.findByUserId(userIdOf(email)).orElseThrow();
         long step = TotpCredential.stepAt(new UtcInstant(clock.instant()));
         List<String> window = List.of(
-                totpCodes.code(credential.secret(), step - 1),
-                totpCodes.code(credential.secret(), step),
-                totpCodes.code(credential.secret(), step + 1));
+                totpCodes.code(credential.userId(), credential.secret(), step - 1),
+                totpCodes.code(credential.userId(), credential.secret(), step),
+                totpCodes.code(credential.userId(), credential.secret(), step + 1));
         return java.util.stream.IntStream.range(0, 10)
                 .mapToObj(i -> String.format("%06d", i))
                 .filter(code -> !window.contains(code))

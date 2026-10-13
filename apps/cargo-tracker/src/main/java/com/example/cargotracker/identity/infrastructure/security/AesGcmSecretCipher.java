@@ -1,7 +1,9 @@
 package com.example.cargotracker.identity.infrastructure.security;
 
 import com.example.cargotracker.identity.domain.model.valueobjects.EncryptedSecret;
+import com.example.cargotracker.shared.domain.UserId;
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
 import java.security.SecureRandom;
 import java.util.Arrays;
@@ -18,7 +20,8 @@ import javax.crypto.spec.SecretKeySpec;
 
 /**
  * TOTP の秘密の暗号化（Bolt 31、SEC-16、ADR-011）。AES-GCM（256 ビットの鍵、96 ビットの IV を毎回乱数で作る、128 ビットのタグ）。
- * 暗号文は {@code v<版>:<Base64(IV + 暗号文 + タグ)>} の形で、先頭に鍵の版を持つ。暗号化は最新の版の鍵で行い、復号は暗号文の版の
+ * 暗号文は {@code v<版>:<Base64(IV + 暗号文 + タグ)>} の形で、先頭に鍵の版を持つ。持ち主の利用者 ID を関連データ（AAD）にして
+ * 暗号文を持ち主に結び付ける（Bolt 31b）。暗号化は最新の版の鍵で行い、復号は暗号文の版の
  * 鍵で行う（鍵の入れ替えに備える）。知らない版・改ざん・形の誤りは失敗へ倒す（T-42）。平文の秘密はこの部品と
  * {@link JavaOtpTotpCodeGenerator} の中だけで扱い、使い終えたら呼び出し側が消す（ArchUnit で `identity.infrastructure` に閉じる）。
  */
@@ -85,15 +88,17 @@ public final class AesGcmSecretCipher {
     }
 
     /** 最新の版の鍵で暗号化する。平文の配列は呼び出し側が使い終えたら消す。 */
-    public EncryptedSecret encrypt(byte[] plaintext) {
+    public EncryptedSecret encrypt(byte[] plaintext, UserId owner) {
         if (plaintext == null || plaintext.length == 0) {
             throw new IllegalArgumentException("暗号化する秘密がない");
         }
+        byte[] aad = associatedData(owner);
         byte[] iv = new byte[IV_BYTES];
         random.nextBytes(iv);
         try {
             Cipher cipher = Cipher.getInstance(TRANSFORMATION);
             cipher.init(Cipher.ENCRYPT_MODE, keys.get(currentVersion), new GCMParameterSpec(TAG_BITS, iv));
+            cipher.updateAAD(aad);
             byte[] sealed = cipher.doFinal(plaintext);
             byte[] body = ByteBuffer.allocate(IV_BYTES + sealed.length)
                     .put(iv)
@@ -111,10 +116,11 @@ public final class AesGcmSecretCipher {
      *
      * @throws IllegalArgumentException 版がない・知らない版、Base64 でない、短すぎる、改ざん・別の鍵
      */
-    public byte[] decrypt(EncryptedSecret encrypted) {
+    public byte[] decrypt(EncryptedSecret encrypted, UserId owner) {
         if (encrypted == null) {
             throw new IllegalArgumentException("暗号化した秘密がない");
         }
+        byte[] aad = associatedData(owner);
         Matcher matcher = ENCRYPTED.matcher(encrypted.value());
         if (!matcher.matches()) {
             throw new IllegalArgumentException("暗号化した秘密に鍵の版がない");
@@ -135,11 +141,23 @@ public final class AesGcmSecretCipher {
         try {
             Cipher cipher = Cipher.getInstance(TRANSFORMATION);
             cipher.init(Cipher.DECRYPT_MODE, key, new GCMParameterSpec(TAG_BITS, body, 0, IV_BYTES));
+            cipher.updateAAD(aad);
             return cipher.doFinal(body, IV_BYTES, body.length - IV_BYTES);
         } catch (javax.crypto.AEADBadTagException e) {
-            throw new IllegalArgumentException("暗号化した秘密を復号できない（改ざんか別の鍵）", e);
+            throw new IllegalArgumentException("暗号化した秘密を復号できない（改ざん、別の鍵、または別の利用者の暗号文）", e);
         } catch (GeneralSecurityException e) {
             throw new IllegalStateException("TOTP の秘密を復号できない", e);
         }
+    }
+
+    /**
+     * 暗号文を持ち主に結び付ける関連データ（AAD。Bolt 31b）。用途の接頭辞と利用者 ID の UUID の小文字の形。DB で別の利用者の暗号文に
+     * 入れ替えられても、その利用者としては復号できない。用途の接頭辞で、将来ほかの値を同じ鍵で暗号化しても取り違えない。
+     */
+    private static byte[] associatedData(UserId owner) {
+        if (owner == null) {
+            throw new IllegalArgumentException("暗号文の持ち主がない");
+        }
+        return ("totp-secret:" + owner.value()).getBytes(StandardCharsets.UTF_8);
     }
 }

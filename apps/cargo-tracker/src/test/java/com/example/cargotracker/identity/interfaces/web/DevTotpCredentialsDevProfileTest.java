@@ -48,7 +48,7 @@ class DevTotpCredentialsDevProfileTest {
                             .id())
                     .orElseThrow();
 
-            assertThat(cipher.decrypt(credential.secret()))
+            assertThat(cipher.decrypt(credential.secret(), credential.userId()))
                     .as(account.email())
                     .isEqualTo(Base32.decode(account.totpSecret()));
             secrets.add(account.totpSecret());

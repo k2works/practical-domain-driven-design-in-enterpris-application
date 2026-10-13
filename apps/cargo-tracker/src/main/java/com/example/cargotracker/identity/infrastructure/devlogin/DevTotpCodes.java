@@ -5,13 +5,16 @@ import com.example.cargotracker.identity.domain.model.aggregates.TotpCredential;
 import com.example.cargotracker.identity.domain.model.valueobjects.EncryptedSecret;
 import com.example.cargotracker.identity.infrastructure.security.AesGcmSecretCipher;
 import com.example.cargotracker.identity.infrastructure.security.Base32;
+import com.example.cargotracker.shared.domain.UserId;
 import com.example.cargotracker.shared.domain.UtcInstant;
+import java.nio.charset.StandardCharsets;
 import java.time.Clock;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 
 /**
  * 開発環境だけの A-02 の入力済みのコード（Bolt 31、ADR-011 の dev の 3 層目）。設定（{@code cargotracker.dev-login.accounts[n].totp-secret}）
@@ -21,6 +24,7 @@ import java.util.Optional;
 public final class DevTotpCodes {
 
     private final Map<String, EncryptedSecret> secrets = new HashMap<>();
+    private final Map<String, UserId> owners = new HashMap<>();
     private final TotpCodeGenerator generator;
     private final Clock clock;
 
@@ -34,8 +38,11 @@ public final class DevTotpCodes {
             }
             // 生成器は暗号文を受けるので、設定の平文の秘密をこの部品の中で暗号化し、平文の配列は消す
             byte[] plain = Base32.decode(account.totpSecret());
+            String email = normalize(account.email());
+            UserId owner = syntheticOwner(email);
             try {
-                secrets.put(normalize(account.email()), cipher.encrypt(plain));
+                owners.put(email, owner);
+                secrets.put(email, cipher.encrypt(plain, owner));
             } finally {
                 Arrays.fill(plain, (byte) 0);
             }
@@ -47,8 +54,18 @@ public final class DevTotpCodes {
         if (email == null) {
             return Optional.empty();
         }
-        return Optional.ofNullable(secrets.get(normalize(email)))
-                .map(secret -> generator.code(secret, TotpCredential.stepAt(new UtcInstant(clock.instant()))));
+        String key = normalize(email);
+        return Optional.ofNullable(secrets.get(key))
+                .map(secret -> generator.code(
+                        owners.get(key), secret, TotpCredential.stepAt(new UtcInstant(clock.instant()))));
+    }
+
+    /**
+     * この部品の中だけで使う作り物の持ち主（AAD）。利用者の表を読まない（ADR-011 の dev の 3 層目）ので、DB の利用者 ID とは別の、
+     * メールアドレスから決まる ID にする（Bolt 31b の確認ポイント 1）。
+     */
+    private static UserId syntheticOwner(String email) {
+        return new UserId(UUID.nameUUIDFromBytes(("dev-login:" + email).getBytes(StandardCharsets.UTF_8)));
     }
 
     private static String normalize(String email) {

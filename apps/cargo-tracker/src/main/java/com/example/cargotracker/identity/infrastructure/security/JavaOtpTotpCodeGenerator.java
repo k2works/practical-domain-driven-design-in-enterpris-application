@@ -4,6 +4,7 @@ import com.eatthepath.otp.TimeBasedOneTimePasswordGenerator;
 import com.example.cargotracker.identity.domain.model.aggregates.TotpCodeGenerator;
 import com.example.cargotracker.identity.domain.model.aggregates.TotpCredential;
 import com.example.cargotracker.identity.domain.model.valueobjects.EncryptedSecret;
+import com.example.cargotracker.shared.domain.UserId;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
@@ -45,7 +46,7 @@ public final class JavaOtpTotpCodeGenerator implements TotpCodeGenerator {
     }
 
     @Override
-    public String code(EncryptedSecret encrypted, long step) {
+    public String code(UserId owner, EncryptedSecret encrypted, long step) {
         if (encrypted == null) {
             throw new IllegalArgumentException("TOTP の秘密がない");
         }
@@ -53,7 +54,7 @@ public final class JavaOtpTotpCodeGenerator implements TotpCodeGenerator {
             throw new IllegalArgumentException("時間の刻みは 0 以上");
         }
         // 復号した平文はこのメソッドの中だけで使い、使い終えたら消す（Bolt 31、SEC-16）
-        byte[] secret = cipher.decrypt(encrypted);
+        byte[] secret = cipher.decrypt(encrypted, owner);
         try {
             return generator.generateOneTimePasswordString(
                     new SecretKeySpec(secret, ALGORITHM),

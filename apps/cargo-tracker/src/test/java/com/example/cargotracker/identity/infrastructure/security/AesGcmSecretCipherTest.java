@@ -4,9 +4,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.example.cargotracker.identity.domain.model.valueobjects.EncryptedSecret;
+import com.example.cargotracker.shared.domain.UserId;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.Map;
+import java.util.UUID;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -14,6 +16,8 @@ import org.junit.jupiter.api.Test;
  * 知らない版・改ざん・形の誤りは失敗へ倒す（T-42）。
  */
 class AesGcmSecretCipherTest {
+
+    private static final UserId OWNER = new UserId(UUID.fromString("00000000-0000-0000-0000-00000000a001"));
 
     private static final byte[] SECRET = "12345678901234567890".getBytes(StandardCharsets.US_ASCII);
 
@@ -30,23 +34,42 @@ class AesGcmSecretCipherTest {
     void 暗号化して復号すると元の秘密に戻り暗号文は鍵の版で始まる() {
         AesGcmSecretCipher cipher = TestSecretCiphers.cipher();
 
-        EncryptedSecret encrypted = cipher.encrypt(SECRET.clone());
+        EncryptedSecret encrypted = cipher.encrypt(SECRET.clone(), OWNER);
 
         assertThat(encrypted.value()).startsWith("v1:");
         assertThat(encrypted.value()).doesNotContain("12345678901234567890");
-        assertThat(cipher.decrypt(encrypted)).isEqualTo(SECRET);
+        assertThat(cipher.decrypt(encrypted, OWNER)).isEqualTo(SECRET);
+    }
+
+    @Test
+    void 別の利用者の暗号文としては復号できない() {
+        AesGcmSecretCipher cipher = TestSecretCiphers.cipher();
+        EncryptedSecret encrypted = cipher.encrypt(SECRET.clone(), OWNER);
+        UserId other = new UserId(UUID.fromString("00000000-0000-0000-0000-00000000a002"));
+
+        assertThatThrownBy(() -> cipher.decrypt(encrypted, other)).isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void 持ち主がないと暗号化も復号もしない() {
+        AesGcmSecretCipher cipher = TestSecretCiphers.cipher();
+        EncryptedSecret encrypted = cipher.encrypt(SECRET.clone(), OWNER);
+        byte[] plain = SECRET.clone();
+
+        assertThatThrownBy(() -> cipher.decrypt(encrypted, null)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> cipher.encrypt(plain, null)).isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
     void 同じ秘密でも暗号化のたびに暗号文が違う() {
         AesGcmSecretCipher cipher = TestSecretCiphers.cipher();
 
-        assertThat(cipher.encrypt(SECRET.clone())).isNotEqualTo(cipher.encrypt(SECRET.clone()));
+        assertThat(cipher.encrypt(SECRET.clone(), OWNER)).isNotEqualTo(cipher.encrypt(SECRET.clone(), OWNER));
     }
 
     @Test
     void 暗号文は表の列の長さに収まる() {
-        EncryptedSecret encrypted = TestSecretCiphers.cipher().encrypt(SECRET.clone());
+        EncryptedSecret encrypted = TestSecretCiphers.cipher().encrypt(SECRET.clone(), OWNER);
 
         assertThat(encrypted.value()).hasSize("v1:".length() + 64);
     }
@@ -56,13 +79,13 @@ class AesGcmSecretCipherTest {
         AesGcmSecretCipher old = TestSecretCiphers.cipher();
         AesGcmSecretCipher rotated =
                 AesGcmSecretCipher.fromBase64Keys(Map.of("v1", TestSecretCiphers.KEY_V1, "v2", KEY_V2));
-        EncryptedSecret byOld = old.encrypt(SECRET.clone());
+        EncryptedSecret byOld = old.encrypt(SECRET.clone(), OWNER);
 
-        EncryptedSecret byRotated = rotated.encrypt(SECRET.clone());
+        EncryptedSecret byRotated = rotated.encrypt(SECRET.clone(), OWNER);
 
         assertThat(byRotated.value()).startsWith("v2:");
-        assertThat(rotated.decrypt(byOld)).isEqualTo(SECRET);
-        assertThat(rotated.decrypt(byRotated)).isEqualTo(SECRET);
+        assertThat(rotated.decrypt(byOld, OWNER)).isEqualTo(SECRET);
+        assertThat(rotated.decrypt(byRotated, OWNER)).isEqualTo(SECRET);
     }
 
     @Test
@@ -70,34 +93,34 @@ class AesGcmSecretCipherTest {
         AesGcmSecretCipher cipher =
                 AesGcmSecretCipher.fromBase64Keys(Map.of("v2", KEY_V2, "v10", TestSecretCiphers.KEY_V1));
 
-        assertThat(cipher.encrypt(SECRET.clone()).value()).startsWith("v10:");
+        assertThat(cipher.encrypt(SECRET.clone(), OWNER).value()).startsWith("v10:");
     }
 
     @Test
     void 知らない版と版のない暗号文は失敗へ倒す() {
         AesGcmSecretCipher cipher = TestSecretCiphers.cipher();
-        String body = cipher.encrypt(SECRET.clone()).value().substring("v1:".length());
+        String body = cipher.encrypt(SECRET.clone(), OWNER).value().substring("v1:".length());
 
         EncryptedSecret unknownVersion = new EncryptedSecret("v2:" + body);
         EncryptedSecret noVersion = new EncryptedSecret(body);
 
-        assertThatThrownBy(() -> cipher.decrypt(unknownVersion)).isInstanceOf(IllegalArgumentException.class);
-        assertThatThrownBy(() -> cipher.decrypt(noVersion)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> cipher.decrypt(unknownVersion, OWNER)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> cipher.decrypt(noVersion, OWNER)).isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
     void 改ざんした暗号文と別の鍵の暗号文は失敗へ倒す() {
         AesGcmSecretCipher cipher = TestSecretCiphers.cipher();
-        String value = cipher.encrypt(SECRET.clone()).value();
+        String value = cipher.encrypt(SECRET.clone(), OWNER).value();
         byte[] raw = Base64.getDecoder().decode(value.substring("v1:".length()));
         raw[raw.length - 1] ^= 1;
         EncryptedSecret tampered =
                 new EncryptedSecret("v1:" + Base64.getEncoder().encodeToString(raw));
         AesGcmSecretCipher otherKey = AesGcmSecretCipher.fromBase64Keys(Map.of("v1", KEY_V2));
 
-        assertThatThrownBy(() -> cipher.decrypt(tampered)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> cipher.decrypt(tampered, OWNER)).isInstanceOf(IllegalArgumentException.class);
         EncryptedSecret byOtherKey = new EncryptedSecret(value);
-        assertThatThrownBy(() -> otherKey.decrypt(byOtherKey)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> otherKey.decrypt(byOtherKey, OWNER)).isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
@@ -107,8 +130,8 @@ class AesGcmSecretCipherTest {
         EncryptedSecret notBase64 = new EncryptedSecret("v1:%%%");
         EncryptedSecret tooShort = new EncryptedSecret("v1:AAAA");
 
-        assertThatThrownBy(() -> cipher.decrypt(notBase64)).isInstanceOf(IllegalArgumentException.class);
-        assertThatThrownBy(() -> cipher.decrypt(tooShort)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> cipher.decrypt(notBase64, OWNER)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> cipher.decrypt(tooShort, OWNER)).isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
@@ -138,6 +161,6 @@ class AesGcmSecretCipherTest {
         AesGcmSecretCipher cipher = TestSecretCiphers.cipher();
         byte[] empty = new byte[0];
 
-        assertThatThrownBy(() -> cipher.encrypt(empty)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> cipher.encrypt(empty, OWNER)).isInstanceOf(IllegalArgumentException.class);
     }
 }

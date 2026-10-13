@@ -59,10 +59,10 @@ class TotpVerificationServiceIntegrationTest {
         UserId user = transactionTemplate.execute(status -> AuthenticationFactorFixtures.newUser(companies, users));
         TotpCredential credential = TotpCredential.enroll(
                 user,
-                cipher.encrypt("12345678901234567890".getBytes(StandardCharsets.US_ASCII)),
+                cipher.encrypt("12345678901234567890".getBytes(StandardCharsets.US_ASCII), user),
                 new UtcInstant(clock.instant()));
         credentials.add(credential);
-        String code = generator.code(credential.secret(), TotpCredential.stepAt(new UtcInstant(clock.instant())));
+        String code = generator.code(user, credential.secret(), TotpCredential.stepAt(new UtcInstant(clock.instant())));
 
         List<TotpVerification> results = OverlappingTransactions.run(
                 transactionTemplate, () -> service.verify(user, code), () -> service.verify(user, code));

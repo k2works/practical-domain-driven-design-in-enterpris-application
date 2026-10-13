@@ -66,7 +66,7 @@ class TotpCredentialTest {
     }
 
     /** 偽の生成器。秘密を使わず、刻みの番号を 6 桁にしたものをコードにする。 */
-    private static final TotpCodeGenerator GENERATOR = (secret, step) -> String.format("%06d", step % 1_000_000);
+    private static final TotpCodeGenerator GENERATOR = (owner, secret, step) -> String.format("%06d", step % 1_000_000);
 
     @Test
     void 時刻の刻みは30秒ごとの番号() {
@@ -102,7 +102,7 @@ class TotpCredentialTest {
     @Test
     void 形の違うコードは生成器を呼ばずに受け付けない() {
         TotpCredential credential = lastUsed(0);
-        TotpCodeGenerator mustNotBeCalled = (secret, step) -> {
+        TotpCodeGenerator mustNotBeCalled = (owner, secret, step) -> {
             throw new AssertionError("形の違うコードで生成器を呼んだ");
         };
 
@@ -128,9 +128,9 @@ class TotpCredentialTest {
         TotpCredential credential = lastUsed(0);
         for (String code : new String[] {"000099", "000100", "000101", "999999"}) {
             List<Long> generated = new ArrayList<>();
-            TotpCodeGenerator counting = (secret, step) -> {
+            TotpCodeGenerator counting = (owner, secret, step) -> {
                 generated.add(step);
-                return GENERATOR.code(secret, step);
+                return GENERATOR.code(owner, secret, step);
             };
 
             credential.matchingStep(code, 100, counting);
@@ -143,12 +143,12 @@ class TotpCredentialTest {
     void 刻み0の窓は負の刻みを作らない() {
         TotpCredential credential = lastUsed(0);
         List<Long> generated = new ArrayList<>();
-        TotpCodeGenerator rejectsNegative = (secret, step) -> {
+        TotpCodeGenerator rejectsNegative = (owner, secret, step) -> {
             if (step < 0) {
                 throw new AssertionError("負の刻みのコードを作った");
             }
             generated.add(step);
-            return GENERATOR.code(secret, step);
+            return GENERATOR.code(owner, secret, step);
         };
 
         assertThat(credential.matchingStep("000001", 0, rejectsNegative)).hasValue(1);
@@ -160,14 +160,17 @@ class TotpCredentialTest {
         EncryptedSecret own = new EncryptedSecret("v1:own-ciphertext");
         TotpCredential credential = TotpCredential.reconstitute(USER, own, 0, ENROLLED_AT);
         List<EncryptedSecret> given = new ArrayList<>();
-        TotpCodeGenerator recording = (secret, step) -> {
+        List<UserId> owners = new ArrayList<>();
+        TotpCodeGenerator recording = (owner, secret, step) -> {
             given.add(secret);
-            return GENERATOR.code(secret, step);
+            owners.add(owner);
+            return GENERATOR.code(owner, secret, step);
         };
 
         credential.matchingStep("000100", 100, recording);
 
         assertThat(given).hasSize(3).containsOnly(own);
+        assertThat(owners).as("暗号文の持ち主として自分の利用者を渡す（AAD。Bolt 31b）").containsOnly(USER);
     }
 
     @Test

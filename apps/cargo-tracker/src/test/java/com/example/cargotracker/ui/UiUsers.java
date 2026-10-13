@@ -80,7 +80,7 @@ public class UiUsers {
                 totpCredentials.findByUserId(of(role).userId()).orElseThrow();
         long step = TotpCredential.stepAt(new UtcInstant(clock.instant()));
         java.util.List<String> window = java.util.stream.LongStream.rangeClosed(step - 1, step + 1)
-                .mapToObj(each -> totpCodes.code(credential.secret(), each))
+                .mapToObj(each -> totpCodes.code(credential.userId(), credential.secret(), each))
                 .toList();
         return java.util.stream.IntStream.range(0, 10)
                 .mapToObj(i -> String.format("%06d", i))
@@ -93,7 +93,8 @@ public class UiUsers {
         UserId userId = of(role).userId();
         jdbc.update("UPDATE identity.totp_credential SET last_used_step = 0 WHERE user_id = ?", userId.value());
         TotpCredential credential = totpCredentials.findByUserId(userId).orElseThrow();
-        return totpCodes.code(credential.secret(), TotpCredential.stepAt(new UtcInstant(clock.instant())));
+        return totpCodes.code(
+                credential.userId(), credential.secret(), TotpCredential.stepAt(new UtcInstant(clock.instant())));
     }
 
     /** 役割の利用者のメールアドレスと password。初めて求められたときに作る。 */
@@ -119,8 +120,8 @@ public class UiUsers {
                 passwordEncoder.encode(PASSWORD),
                 UserStatus.ACTIVE,
                 Set.of(role)));
-        totpCredentials.add(
-                TotpCredential.enroll(userId, cipher.encrypt(TOTP_SECRET.clone()), new UtcInstant(clock.instant())));
+        totpCredentials.add(TotpCredential.enroll(
+                userId, cipher.encrypt(TOTP_SECRET.clone(), userId), new UtcInstant(clock.instant())));
         return new Credentials(userId, email, PASSWORD);
     }
 

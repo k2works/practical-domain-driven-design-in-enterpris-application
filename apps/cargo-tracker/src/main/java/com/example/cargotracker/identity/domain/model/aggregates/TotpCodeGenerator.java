@@ -1,6 +1,7 @@
 package com.example.cargotracker.identity.domain.model.aggregates;
 
 import com.example.cargotracker.identity.domain.model.valueobjects.EncryptedSecret;
+import com.example.cargotracker.shared.domain.UserId;
 
 /**
  * TOTP の生成器。暗号化した秘密と時間の刻みから TOTP のコードを作るポート（ADR-011）。平文の秘密はドメインとアプリケーションの層に
@@ -13,9 +14,10 @@ public interface TotpCodeGenerator {
     /**
      * その刻みのコードを作る。
      *
+     * @param owner 秘密の持ち主（暗号文は持ち主に結び付く。AAD。Bolt 31b）
      * @param secret 暗号化した秘密。復号と平文の消去は実装の中で済ませる
      * @param step 時間の刻みの番号（epoch 秒 / 30）。0 以上
      * @return 先頭の 0 を保った固定の桁数のコード
      */
-    String code(EncryptedSecret secret, long step);
+    String code(UserId owner, EncryptedSecret secret, long step);
 }

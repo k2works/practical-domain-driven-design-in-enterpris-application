@@ -25,7 +25,7 @@ class TotpVerificationServiceTest {
     private static final Instant NOW = Instant.ofEpochSecond(3_000);
 
     /** 偽の生成器。秘密を使わず、刻みの番号を 6 桁にしたものをコードにする。 */
-    private static final TotpCodeGenerator GENERATOR = (secret, step) -> String.format("%06d", step % 1_000_000);
+    private static final TotpCodeGenerator GENERATOR = (owner, secret, step) -> String.format("%06d", step % 1_000_000);
 
     private final InMemoryTotpCredentialRepository credentials = new InMemoryTotpCredentialRepository();
     private final TotpVerificationService service =

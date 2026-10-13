@@ -97,7 +97,7 @@ public final class TotpCredential {
         byte[] given = code.getBytes(StandardCharsets.US_ASCII);
         long matched = -1;
         for (long step = Math.max(0, currentStep - WINDOW); step <= currentStep + WINDOW; step++) {
-            byte[] expected = generator.code(this.secret, step).getBytes(StandardCharsets.US_ASCII);
+            byte[] expected = generator.code(this.userId, this.secret, step).getBytes(StandardCharsets.US_ASCII);
             // 一致を見つけても窓のすべての刻みを比べ、比べる回数を一致の位置で変えない
             boolean equal = MessageDigest.isEqual(expected, given);
             boolean acceptable = accepts(step);
