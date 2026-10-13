@@ -34,6 +34,7 @@ import java.util.Base64;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import java.util.regex.MatchResult;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.junit.jupiter.api.BeforeEach;
@@ -182,11 +183,7 @@ class TotpEnrollmentSecurityIntegrationTest {
                 .andReturn();
 
         String html = enrolled.getResponse().getContentAsString();
-        assertThat(RECOVERY_CODE
-                        .matcher(html)
-                        .results()
-                        .map(match -> match.group())
-                        .distinct())
+        assertThat(RECOVERY_CODE.matcher(html).results().map(MatchResult::group).distinct())
                 .hasSize(10);
         assertThat(html).contains("回復コードを安全な場所に保存した").contains("required");
         assertThat(recoveryCodes.findUnusedByUserId(userIdOf(email))).hasSize(10);

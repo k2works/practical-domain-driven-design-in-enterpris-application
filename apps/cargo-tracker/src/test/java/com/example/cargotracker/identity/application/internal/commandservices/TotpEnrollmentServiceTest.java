@@ -188,13 +188,17 @@ class TotpEnrollmentServiceTest {
                 .as("登録のコードは使ったことにしない（A-02 でもう一度使える。確認ポイント 2）")
                 .isZero();
         List<RecoveryCode> saved = recoveryCodes.findUnusedByUserId(actor.userId());
-        assertThat(saved).hasSize(RecoveryCode.CODES_PER_USER);
-        assertThat(saved).allMatch(code -> !code.codeHash().startsWith("aaaa"));
-        assertThat(RECOVERY_CODES).allMatch(plain -> saved.stream().anyMatch(code -> code.matches(plain, HASHER)));
-        assertThat(audit).singleElement().satisfies(record -> {
-            assertThat(record.action()).isEqualTo(AuditAction.TOTP_ENROLLED);
-            assertThat(record.actorUserId()).isEqualTo(actor.userId());
-            assertThat(record.actorCompanyId()).isEqualTo(actor.companyId());
+        assertThat(saved)
+                .hasSize(RecoveryCode.CODES_PER_USER)
+                .as("平文ではなくハッシュを保存する")
+                .noneMatch(code -> code.codeHash().startsWith("aaaa"));
+        for (String plain : RECOVERY_CODES) {
+            assertThat(saved).anyMatch(code -> code.matches(plain, HASHER));
+        }
+        assertThat(audit).singleElement().satisfies(entry -> {
+            assertThat(entry.action()).isEqualTo(AuditAction.TOTP_ENROLLED);
+            assertThat(entry.actorUserId()).isEqualTo(actor.userId());
+            assertThat(entry.actorCompanyId()).isEqualTo(actor.companyId());
         });
     }
 

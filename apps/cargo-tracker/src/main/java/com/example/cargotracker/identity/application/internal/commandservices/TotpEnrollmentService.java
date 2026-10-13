@@ -87,7 +87,7 @@ public class TotpEnrollmentService {
     private Optional<TotpProvisioning> provisioningOf(UserId owner, EncryptedSecret secret, String accountName) {
         try {
             return Optional.of(issuer.provisioning(owner, secret, accountName));
-        } catch (IllegalArgumentException e) {
+        } catch (IllegalArgumentException _) {
             // 別の利用者の暗号文・壊れた暗号文・知らない鍵の版は使い続けず、新しく発行する（失敗へ倒す。T-42）
             return Optional.empty();
         }
@@ -109,7 +109,7 @@ public class TotpEnrollmentService {
         OptionalLong matched;
         try {
             matched = credential.matchingStep(code, TotpCredential.stepAt(now), generator);
-        } catch (IllegalArgumentException e) {
+        } catch (IllegalArgumentException _) {
             return new EnrollmentResult.SecretUnusable();
         }
         if (matched.isEmpty()) {

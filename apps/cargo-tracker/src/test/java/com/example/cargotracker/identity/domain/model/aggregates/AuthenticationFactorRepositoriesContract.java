@@ -64,7 +64,9 @@ public abstract class AuthenticationFactorRepositoriesContract {
         totpCredentials().add(TotpCredential.enroll(user, new EncryptedSecret("ciphertext"), at(Duration.ZERO)));
         TotpCredential second = TotpCredential.enroll(user, new EncryptedSecret("other"), at(Duration.ZERO));
 
-        assertThatThrownBy(() -> totpCredentials().add(second)).isInstanceOf(DuplicateTotpEnrollmentException.class);
+        TotpCredentialRepository repository = totpCredentials();
+
+        assertThatThrownBy(() -> repository.add(second)).isInstanceOf(DuplicateTotpEnrollmentException.class);
         assertThat(totpCredentials().findByUserId(user))
                 .hasValueSatisfying(found -> assertThat(found.secret()).isEqualTo(new EncryptedSecret("ciphertext")));
     }

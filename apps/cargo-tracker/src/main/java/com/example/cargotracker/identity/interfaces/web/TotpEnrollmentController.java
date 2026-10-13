@@ -39,7 +39,9 @@ public class TotpEnrollmentController {
     /** 登録を始めた時刻を置く session の属性の名前（登録の途中の上限 15 分の起点。{@code SessionLifetime} と同じ値）。 */
     public static final String STARTED_AT = "cargotracker.session.enrollmentStartedAt";
 
-    private static final String TOTP_URL = "/login/totp";
+    private static final String TO_TOTP = "redirect:/login/totp";
+
+    private static final String TO_ENROLL = "redirect:/login/totp/enroll";
     private static final String FORM_VIEW = "identity/login-totp-enroll";
 
     private final TotpEnrollmentService enrollment;
@@ -68,52 +70,51 @@ public class TotpEnrollmentController {
         Optional<EncryptedSecret> pending = pendingSecret(session);
         if (pending.isEmpty()) {
             // 登録の途中の暗号文がない送信（登録の後の再送、登録を始めていない送信）。登録済みなら A-02、そうでなければ A-07 を開き直す
-            return enrollmentQuery.isEnrolled(actor.userId()) ? "redirect:" + TOTP_URL : "redirect:/login/totp/enroll";
+            return enrollmentQuery.isEnrolled(actor.userId()) ? TO_TOTP : TO_ENROLL;
         }
         EnrollmentResult result;
         try {
             result = enrollment.complete(actor, pending.get(), code.strip());
-        } catch (DuplicateTotpEnrollmentException e) {
+        } catch (DuplicateTotpEnrollmentException _) {
             // 同時の登録で後になった（先の登録が通っている）。登録済みとして A-02 へ送る（T-42）
             clearPending(session);
-            return "redirect:" + TOTP_URL;
+            return TO_TOTP;
         }
         return switch (result) {
-            case EnrollmentResult.Enrolled enrolled -> {
+            case EnrollmentResult.Enrolled(var recoveryCodes) -> {
                 clearPending(session);
-                model.addAttribute("recoveryCodes", enrolled.recoveryCodes());
+                model.addAttribute("recoveryCodes", recoveryCodes);
                 yield "identity/login-totp-recovery-codes";
             }
-            case EnrollmentResult.CodeRejected rejected -> {
+            case EnrollmentResult.CodeRejected() -> {
                 model.addAttribute("codeError", true);
                 yield start(actor, principal, session, model);
             }
-            case EnrollmentResult.SecretUnusable unusable -> {
+            case EnrollmentResult.SecretUnusable() -> {
                 clearPending(session);
                 model.addAttribute("restarted", true);
                 yield start(actor, principal, session, model);
             }
-            case EnrollmentResult.AlreadyEnrolled already -> {
+            case EnrollmentResult.AlreadyEnrolled() -> {
                 clearPending(session);
-                yield "redirect:" + TOTP_URL;
+                yield TO_TOTP;
             }
         };
     }
 
     private String start(AuthenticatedActor actor, Principal principal, HttpSession session, Model model) {
         EnrollmentStart start = enrollment.begin(actor, principal.getName(), pendingSecret(session));
-        if (start instanceof EnrollmentStart.Started started) {
-            session.setAttribute(PENDING_SECRET, started.secret().value());
+        if (start instanceof EnrollmentStart.Started(EncryptedSecret secret, TotpProvisioning provisioning)) {
+            session.setAttribute(PENDING_SECRET, secret.value());
             if (session.getAttribute(STARTED_AT) == null) {
                 session.setAttribute(STARTED_AT, clock.instant());
             }
-            TotpProvisioning provisioning = started.provisioning();
             model.addAttribute("qrSvg", provisioning.qrSvg());
             model.addAttribute("manualKey", provisioning.manualKey());
             return FORM_VIEW;
         }
         clearPending(session);
-        return "redirect:" + TOTP_URL;
+        return TO_TOTP;
     }
 
     private static Optional<EncryptedSecret> pendingSecret(HttpSession session) {

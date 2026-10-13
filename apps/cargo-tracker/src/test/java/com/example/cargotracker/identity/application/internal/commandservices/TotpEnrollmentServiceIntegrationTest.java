@@ -92,7 +92,7 @@ class TotpEnrollmentServiceIntegrationTest {
                             return service.complete(actor, secret, code)
                                     .getClass()
                                     .getSimpleName();
-                        } catch (DuplicateTotpEnrollmentException e) {
+                        } catch (DuplicateTotpEnrollmentException _) {
                             return "Duplicate";
                         }
                     },
