@@ -5246,7 +5246,7 @@
     
   
   
-    <span class="md-status md-status--draft"></span>
+    <span class="md-status md-status--stable"></span>
   
 
   
@@ -11557,7 +11557,7 @@
 <li>Release 1.0 の承認ゲートの密度は「W4 の締めの見直し」のとおり（既定は計画と終了報告、認証の完成と外部原本の取込はステップごと）</li>
 </ul>
 <h3 id="w52026-11-02-11-0611-03">W5（2026-11-02 〜 11-06、11-03 は祝日）<a class="headerlink" href="#w52026-11-02-11-0611-03" title="Permanent link">&para;</a></h3>
-<p><strong>状態</strong>: 進行中（2026-10-11 に計画を作り、同日に human:kakimomokuri が承認した。Bolt 29・29b・29c・30 は完了し、Release 0.1 の負債 #45・#46 を返し、ADR-011 を採用して認証の土台を作った。Bolt 31 は計画の承認待ち）</p>
+<p><strong>状態</strong>: 進行中（2026-10-11 に計画を作り、同日に human:kakimomokuri が承認した。Bolt 29・29b・29c・30 は完了し、Release 0.1 の負債 #45・#46 を返し、ADR-011 を採用して認証の土台を作った。Bolt 31 は 2026-10-13 に計画を承認し、着手した）</p>
 <p><strong>ゴール</strong>: Release 0.1 の負債（#45・#46）を返し、認証を完成させ（US-18 の残り）、利用者と役割の管理（US-16 の一部）と予約の残り（US-04 AC3・AC5、#43）を作る。</p>
 <p><strong>局面とアプローチ</strong>: 中盤（<a href="../development_strategy/">開発戦略</a>）。新しい集約とスキーマを作る認証・通知・利用者管理（Bolt 30〜34）はインサイドアウトで、認証の流れはセキュリティの統合テストで外側から確かめる。既存の集約を広げる Bolt 29b・35 はアウトサイドイン（Bolt 35 は中盤の例外。W4 の締めで W6 から前倒しした）。Bolt 29 はテストのリファクタリングで、振る舞いを変えない</p>
 <p><strong>設計の決定</strong>（2026-10-11 に human:kakimomokuri が決定。W5 の開始準備の質問への回答と、整合性検証の指摘への回答）:</p>
@@ -11657,21 +11657,21 @@
 </tr>
 <tr>
 <td style="text-align: left;">31b</td>
-<td style="text-align: left;">US-18 AC7 初回の TOTP の登録（A-07、QR）と回復コードの発行（SEC-09）、回復コードによるログイン（A-02 の回復コードの欄）、AC7 の画面の認可、枠組みの特性テスト（R-16）、ADR-012 の「W5 で見直すこと」の 4（引数の解決と <code>@WithAuthenticatedActor</code>）</td>
+<td style="text-align: left;">US-18 AC7 初回の TOTP の登録（A-07、QR）と回復コードの発行（SEC-09）、回復コードによるログイン（A-02 の回復コードの欄。回復コードによる再登録は 33b）、AC7 の画面の認可、枠組みの特性テスト（R-16）、ADR-012 の「W5 で見直すこと」の 4（引数の解決と <code>@WithAuthenticatedActor</code>）。Bolt 30 の議題 2 の①④。スパイクはこの Bolt の後に消す</td>
 <td style="text-align: right;">2</td>
 <td style="text-align: left;">インサイドアウト</td>
 <td style="text-align: left;">ステップごと（セキュリティ）</td>
 </tr>
 <tr>
 <td style="text-align: left;">32</td>
-<td style="text-align: left;">US-18 AC3 ロック（ロックの数え方を <code>identity.application</code> に置く。ADR-012）、AC6 request ごとの役割の確認（Bolt 14 の決定の引き継ぎ。利用停止・権限の取消しの操作は Bolt 34 で作るので、この Bolt では DB の値を変えて確かめる）</td>
+<td style="text-align: left;">US-18 AC3 ロック（ロックの数え方を <code>identity.application</code> に置く。ADR-012）、AC6 request ごとの役割の確認（Bolt 14 の決定の引き継ぎ。利用停止・権限の取消しの操作は Bolt 34 で作るので、この Bolt では DB の値を変えて確かめる）。ADR-012 の「W5 で見直すこと」の 3（request ごとの問い合わせを 1 回に。AC6 と同じ仕組み）と 5（ロックの数え方。入口は D-5 の認証の例外と同じ形）、S-02（送信元ごとの流量の制限）、Bolt 30 の議題 2 の③。範囲が重いので、開始準備で 32 を分けるかを見直す</td>
 <td style="text-align: right;">2</td>
 <td style="text-align: left;">インサイドアウト</td>
 <td style="text-align: left;">ステップごと（セキュリティ、認可）</td>
 </tr>
 <tr>
 <td style="text-align: left;">32b</td>
-<td style="text-align: left;">session の失効の 5 分前の警告、延長の操作、失効の時の入力の保持（ACC-06）</td>
+<td style="text-align: left;">session の失効の 5 分前の警告、延長の操作、失効の時の入力の保持（ACC-06）。8 時間の起点は TOTP の時刻（Bolt 31）</td>
 <td style="text-align: right;">0</td>
 <td style="text-align: left;">インサイドアウト</td>
 <td style="text-align: left;">ステップごと（セキュリティ）</td>
@@ -11685,7 +11685,7 @@
 </tr>
 <tr>
 <td style="text-align: left;">33b</td>
-<td style="text-align: left;">US-18 AC9 の回復コードによる TOTP の再登録（A-07）。#13 をクローズする（管理者経路は #47）</td>
+<td style="text-align: left;">US-18 AC9 の回復コードによる TOTP の再登録（A-07。回復コードによるログインは 31b）。#13 をクローズする（管理者経路は #47）</td>
 <td style="text-align: right;">2</td>
 <td style="text-align: left;">インサイドアウト</td>
 <td style="text-align: left;">ステップごと（セキュリティ）</td>
@@ -11721,7 +11721,7 @@
 <tr>
 <td style="text-align: left;">ADR-012 の「W5 で見直すこと」: 成功のイベントの分け方、<code>hasRole</code> と要素の権限、request ごとの DB の問い合わせを 1 回にまとめる、引数の解決で TOTP まで済んでいない主体を渡さない、ロックの数え方を <code>identity.application</code> に置く</td>
 <td style="text-align: left;">ADR-012</td>
-<td style="text-align: left;">31・32</td>
+<td style="text-align: left;">1（成功のイベント）・2（<code>hasRole</code>）は 31、4（引数の解決）は 31b、3（問い合わせを 1 回に）・5（ロックの数え方）は 32（Bolt 31 の計画の承認）</td>
 </tr>
 <tr>
 <td style="text-align: left;">AC2（推測できる詳細を出さない）と 2 段階の画面・ロックの表示の緊張（K-02）</td>
@@ -11731,7 +11731,7 @@
 <tr>
 <td style="text-align: left;">CSRF と <code>same-site=lax</code> のつなぎ（S-01）、password spraying と送信元ごとの流量の制限（S-02）、URL ごとに要素を求める案（R-08）</td>
 <td style="text-align: left;">Bolt 13 レビュー、ADR-012</td>
-<td style="text-align: left;">31（Spring Security を扱う Bolt の確認ポイント。Bolt 30 の計画の承認）</td>
+<td style="text-align: left;">S-01・R-08 は 31（Spring Security を扱う Bolt の確認ポイント。Bolt 30 の計画の承認）。S-02 は 32（Bolt 31 の計画の承認）</td>
 </tr>
 <tr>
 <td style="text-align: left;">ステージング・本番での <code>dev</code> プロファイルの拒否と IaC（K-03）、TOTP の時刻の前提の NTP（K-04）</td>
@@ -11741,7 +11741,7 @@
 <tr>
 <td style="text-align: left;">AC7 の画面の認可、特性テスト、スパイクのプロジェクトの削除</td>
 <td style="text-align: left;">Bolt 13 終了報告の既知の課題</td>
-<td style="text-align: left;">AC7 の認可と特性テストは 31。スパイクは Bolt 31 の後に消す（消すときにもう一度確かめる）</td>
+<td style="text-align: left;">AC7 の認可と特性テストは 31b（Bolt 31 の開始準備で 31 と 31b に分けた）。スパイクは Bolt 31b の後に消す（本体に登録と回復コードがそろってから。消すときにもう一度確かめる）</td>
 </tr>
 <tr>
 <td style="text-align: left;">Try T-40・T-42（「W5 の US-18」と指定）</td>
@@ -11759,7 +11759,7 @@
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Bolt 29: #45。<a href="../bolt_29_plan/">Bolt 29 計画</a>（<code>/goal</code> で進めた）、<a href="../bolt_29_report/">Bolt 29 終了報告</a>（完了、2026-10-11 に承認済み。#45 を閉じた。SonarQube PASS。<code>uiTest</code> 80 本は集める前と同じく通った。失敗の経路を読めるものに直した）</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Bolt 29b: #46 の前半。<a href="../bolt_29b_plan/">Bolt 29b 計画</a>（<code>/goal</code> で進めた）、<a href="../bolt_29b_report/">Bolt 29b 終了報告</a>（完了、2026-10-11 に承認済み。4 か所と開発レビューの必須の指摘を直した。SonarQube PASS・Code Smell 0）</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Bolt 29c: #46 の後半。<a href="../bolt_29c_plan/">Bolt 29c 計画</a>（承認済み）、<a href="../bolt_29c_report/">Bolt 29c 終了報告</a>（完了、2026-10-11 に承認済み。#46 を閉じた。SonarQube PASS・Code Smell 0）</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> Bolt 30〜33b: US-18 の残り（#13）と通知モジュールの最小の新設。<a href="../bolt_30_plan/">Bolt 30 計画</a>（承認済み）、<a href="../bolt_30_report/">Bolt 30 終了報告</a>（完了、2026-10-11 に承認済み。ADR-011 を採用し、3 つの表・ドメイン・リポジトリ・TOTP の生成を作った。SonarQube PASS・Code Smell 0）、<a href="../bolt_31_plan/">Bolt 31 計画</a>（承認待ち）</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> Bolt 30〜33b: US-18 の残り（#13）と通知モジュールの最小の新設。<a href="../bolt_30_plan/">Bolt 30 計画</a>（承認済み）、<a href="../bolt_30_report/">Bolt 30 終了報告</a>（完了、2026-10-11 に承認済み。ADR-011 を採用し、3 つの表・ドメイン・リポジトリ・TOTP の生成を作った。SonarQube PASS・Code Smell 0）、<a href="../bolt_31_plan/">Bolt 31 計画</a>（承認済み）</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> Bolt 34: US-16 の一部（#14）</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> Bolt 35: US-04 AC3・AC5（#43）、D-85</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> W5 の締め: 結果とふりかえり、開いている持ち越しの数（T-89）、W6 の計画の見直し</li>
@@ -12811,6 +12811,16 @@
 <td style="text-align: left;">2026-10-13</td>
 <td style="text-align: left;">Bolt 31 の開始準備: 31 と 31b に分け（SP 2 は 31b）、暗号化の方式と鍵・K-02・<code>TotpCodeGenerator</code> の形・D-5 の認証の例外・dev のコードの部品・画面の層のテストの刻みの戻し・31b に送るものを決めた。Bolt 31 計画を作り、2 つの整合性検証の指摘を反映した（承認待ち）</td>
 <td style="text-align: left;">anthropic/claude-opus-5-5、決定 human:kakimomokuri</td>
+</tr>
+<tr>
+<td style="text-align: left;">2026-10-13</td>
+<td style="text-align: left;">Bolt 31 計画の承認を記録した（確認ポイントは推奨のとおり。<code>/goal Bolt31</code> で承認ゲートを止めずに進める）</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5、承認 human:kakimomokuri</td>
+</tr>
+<tr>
+<td style="text-align: left;">2026-10-13</td>
+<td style="text-align: left;">Bolt 31 のステップ 1: W5 の Bolt の分け方の表に、回復コードによるログイン（31b）と再登録（33b）の分担、ADR-012 の見直しの 3・5 と S-02 と「開始準備で 32 を分けるかを見直す」（32）、8 時間の起点（32b）を書いた。Bolt 13・14 からの持ち込みの表で、ADR-012 の見直しの割り振り、AC7 の認可と特性テストを 31b、スパイクの削除を「31b の後」に直した</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5</td>
 </tr>
 </tbody>
 </table>

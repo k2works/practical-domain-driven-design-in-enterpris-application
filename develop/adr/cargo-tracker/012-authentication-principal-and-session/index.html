@@ -4552,7 +4552,7 @@
     
   
   
-    <span class="md-status md-status--draft"></span>
+    <span class="md-status md-status--stable"></span>
   
 
   
@@ -7000,6 +7000,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#6-d-5-bolt-31" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. 層の規則 D-5 の認証の例外（Bolt 31）
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#5" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -7089,6 +7100,17 @@
       
         <li class="md-nav__item">
   <a href="#_9" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        改訂の経緯
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_10" class="md-nav__link">
     <span class="md-ellipsis">
       
         参考資料
@@ -9840,7 +9862,7 @@
 <ul>
 <li>Spring Session JDBC で、<code>platform</code> スキーマの <code>spring_session</code>・<code>spring_session_attributes</code> に置く（DDL はベンダーごと）。</li>
 <li>無操作 30 分は session の期限（<code>MAX_INACTIVE_INTERVAL</code>）で判定する。期限は <code>spring.session.timeout</code> で決める（<code>server.servlet.session.timeout</code> は Spring Session に効かないことを、既定と違う値のテストで確かめた）。</li>
-<li>発行から 8 時間の上限は、ログインのときに session の属性（固定の名前）に置いた認証時刻と、アプリケーションの <code>Clock</code> で比べるフィルターで判定する。このフィルターは認証の処理より前に置く（Bolt 13 の Try T-40）。認証済みなのに認証時刻がない session も失効させる（fail-closed。ログインの時刻を置かない認証の経路を足しても上限が外れない）。</li>
+<li>発行から 8 時間の上限は、ログインのときに session の属性（固定の名前）に置いた認証時刻と、アプリケーションの <code>Clock</code> で比べるフィルターで判定する。Bolt 31 から、8 時間の起点（<code>AUTHENTICATED_AT</code>）はその session で初めて TOTP が通った時刻にし、password の段だけの session は password を確かめた時刻（<code>PASSWORD_VERIFIED_AT</code>）から 5 分で失効させる（<a href="../011-mfa-totp/">ADR-011</a> の決定 2）。フィルターは要素の数で上限を選ぶ。このフィルターは認証の処理より前に置く（Bolt 13 の Try T-40）。認証済みなのに認証時刻がない session も失効させる（fail-closed。ログインの時刻を置かない認証の経路を足しても上限が外れない）。</li>
 <li>役割とホームの対応はルートのコントローラーの 1 か所に置き、ログインの後もルートを通す。画面のまだない役割は A-04 にする。</li>
 <li>失効した session の request は、業務データを出さずに A-03（<code>/session-expired</code>）へ移す。上限を過ぎた session のままのログインの送信も A-03 へ移し、ログインの送信で session を延命させない。session に CSRF のトークンがない古いフォームの送信も、Spring Security が無効な session として A-03 へ移す。</li>
 </ul>
@@ -9851,6 +9873,13 @@
 <li>監査記録の書き込みに失敗したら、ログインも失敗にする（IA-INV-08 の同期の書き込み。fail-closed）。</li>
 <li>権限外のアクセスの試行の記録は、利用者と役割の管理（US-16）の Bolt で足す。</li>
 <li>W5 のロックの失敗の数え方も、この listener に足す（ADR-011 の決定 2 の「失敗を一か所で数える」）。</li>
+<li>Bolt 31 から、操作を <code>PASSWORD_VERIFIED</code>（password の段の成功）と <code>LOGIN_SUCCEEDED</code>（2 つの要素がそろった）に分ける。TOTP の失敗は利用者と理由（<code>INVALID_TOTP</code>・<code>TOTP_REUSED</code>）で記録する（下の「W5 で見直すこと」の 1）。</li>
+</ul>
+<h3 id="6-d-5-bolt-31">6. 層の規則 D-5 の認証の例外（Bolt 31）<a class="headerlink" href="#6-d-5-bolt-31" title="Permanent link">&para;</a></h3>
+<ul>
+<li>認証の入口（<code>identity.infrastructure.security</code> の Spring Security の provider と listener）から、<code>identity.application.internal.commandservices</code> だけを参照してよい。合成ルートの外の <code>infrastructure</code> は <code>application</code> に依存しない規則（D-5）の狭い例外で、サガの例外（<code>infrastructure.persistence</code> から <code>application.sagas</code>）と同じ書き方で <code>LayerArchitectureTest</code> に足し、理由を <code>because</code> に書く。例外の外は落ちることを、違反を入れて確かめる。</li>
+<li>理由: provider と listener は Spring Security が呼ぶ入口で、<code>interfaces</code> の層に置けない。業務の判断（TOTP の照合と刻みの使用）はアプリケーションのサービス（<code>TotpVerificationService</code>）に置き、入口は結果を認証の成否に直すだけにする。</li>
+<li>Bolt 32 のロックの数え方（下の「W5 で見直すこと」の 5）も同じ形にする（2026-10-13、Bolt 31 の整合性検証の指摘への回答で human:kakimomokuri が決定。<a href="../../../design/cargo-tracker/architecture_backend/">バックエンドのアーキテクチャ</a>）。</li>
 </ul>
 <h3 id="5">5. 開発環境の入力済み<a class="headerlink" href="#5" title="Permanent link">&para;</a></h3>
 <ul>
@@ -9892,7 +9921,7 @@
 </ul>
 <h3 id="_7">ネガティブ<a class="headerlink" href="#_7" title="Permanent link">&para;</a></h3>
 <ul>
-<li>session は JDK の直列化で DB に置く。<code>Role</code> の定数の改名・削除、<code>CargoUserDetails</code> の移動や項目の変更、Spring Security の版の更新、W5 の要素の権限の追加で、配備の前の session が復元できなくなる。互換を壊す変更を配備するときは、配備の手順で <code>platform.spring_session</code> の行を消し、利用者にログインし直してもらう（W10 の運用手順書に書く）。復元の失敗を無効な session として扱う変換は、W5 の要素の権限を足すときに検討する。</li>
+<li>session は JDK の直列化で DB に置く。<code>Role</code> の定数の改名・削除、<code>CargoUserDetails</code> の移動や項目の変更、Spring Security の版の更新、W5 の要素の権限の追加で、配備の前の session が復元できなくなる。互換を壊す変更を配備するときは、配備の手順で <code>platform.spring_session</code> の行を消し、利用者にログインし直してもらう（W10 の運用手順書に書く）。復元の失敗を無効な session として扱う変換は、W5 の要素の権限を足すときに検討する（Bolt 31 で、復元の失敗を無効な session として扱い A-03 に送ると決めた。ADR-011 の決定 2）。</li>
 <li>
 <p>未認証の request（ログインの画面の CSRF のトークン、失敗の後のメールアドレス）でも session の行ができる。作られる速さの上限（レート制限）は、W5 のロックか W10 の WAF で扱う（リスク台帳）。</p>
 </li>
@@ -9903,20 +9932,27 @@
 <li>ステージング・本番の利用者を作る手段は、利用者の管理（US-16）まで無い。</li>
 </ul>
 <h2 id="w5">W5 で見直すこと<a class="headerlink" href="#w5" title="Permanent link">&para;</a></h2>
-<ul>
-<li><code>@EnableMultiFactorAuthentication</code> を入れると、password の段でも認証の成功のイベントが出る。監査の操作を「password を確かめた」と「ログインした」に分ける。</li>
-<li>認可の条件（<code>hasRole</code>）に要素の権限を加える。</li>
-<li>request ごとの DB の確かめ（SEC-12・AC6）は、利用者 ID から主体を作り直して差し替える形にし、問い合わせを 1 回にまとめる。</li>
-<li>引数の解決で、TOTP まで済んでいない主体を渡さない。画面の単体テストの主体（<code>WithAuthenticatedActor</code>）にも要素の権限を足す。</li>
-<li>ロックの数え方（IA-INV-03）は <code>identity.application</code> のサービスとログインの失敗の集約に置き、監査の listener は入口だけにする（2026-10-11 に改めた。初めは利用者の集約としたが、失敗のたびに利用者の版が上がり利用者の管理の更新とぶつかるため、Bolt 30 の計画の承認で別の集約にした。<a href="../011-mfa-totp/">ADR-011</a>）。</li>
-</ul>
+<p>番号は Bolt 31 の計画で振った。1・2 は Bolt 31、4 は Bolt 31b、3 は Bolt 32、5 は Bolt 32 で片づける（2026-10-13、Bolt 31 の計画の承認）。</p>
+<ol>
+<li><code>@EnableMultiFactorAuthentication</code> を入れると、password の段でも認証の成功のイベントが出る。監査の操作を「password を確かめた」と「ログインした」に分ける（Bolt 31）。</li>
+<li>認可の条件（<code>hasRole</code>）に要素の権限を加える（Bolt 31）。全体の注釈で業務の URL に 2 つの要素を求めるので、URL ごとの規則は役割だけのままにし、要素の欠けた主体で業務の URL を開けないことを全 URL で確かめる。</li>
+<li>request ごとの DB の確かめ（SEC-12・AC6）は、利用者 ID から主体を作り直して差し替える形にし、問い合わせを 1 回にまとめる（Bolt 32。request ごとの役割の確認（AC6）と同じ仕組みのため）。</li>
+<li>引数の解決で、TOTP まで済んでいない主体を渡さない。画面の単体テストの主体（<code>WithAuthenticatedActor</code>）にも要素の権限を足す（Bolt 31b。それまでも全体の注釈で、要素の欠けた主体は controller に届かない）。</li>
+<li>ロックの数え方（IA-INV-03）は <code>identity.application</code> のサービスとログインの失敗の集約に置き、監査の listener は入口だけにする（2026-10-11 に改めた。初めは利用者の集約としたが、失敗のたびに利用者の版が上がり利用者の管理の更新とぶつかるため、Bolt 30 の計画の承認で別の集約にした。<a href="../011-mfa-totp/">ADR-011</a>）。数え方の入口は決定 6 の D-5 の認証の例外と同じ形にする（Bolt 32）。</li>
+</ol>
 <h2 id="_8">コンプライアンス<a class="headerlink" href="#_8" title="Permanent link">&para;</a></h2>
 <ul>
 <li>ArchUnit: <code>identity</code> の外は <code>org.springframework.security</code> に依存しない。Spring Modulith の検証で、<code>quotation</code> は <code>identity</code> に依存しない。</li>
 <li>セキュリティの統合テスト: 未認証の拒否、AC2・AC4 の同じ応答、session ID の変化、30 分・8 時間の境界の 3 点、8 時間の確認が認証より前、CSRF、役割の分離、監査記録の同期の書き込み、応答のヘッダー。</li>
 <li>既定の設定で A-01 が入力済みにならないこと、<code>dev</code> の外の <code>cargotracker.dev-login.*</code> で起動が失敗すること。</li>
+<li>ArchUnit（<code>LayerArchitectureTest</code> の D-5）: 認証の例外は <code>identity.infrastructure.security</code> から <code>identity.application.internal.commandservices</code> に限り、例外の外は落ちる（Bolt 31）。</li>
 </ul>
-<h2 id="_9">参考資料<a class="headerlink" href="#_9" title="Permanent link">&para;</a></h2>
+<h2 id="_9">改訂の経緯<a class="headerlink" href="#_9" title="Permanent link">&para;</a></h2>
+<ul>
+<li>2026-10-13: Bolt 31 の計画の承認で、「W5 で見直すこと」に番号と片づける Bolt（1・2 は Bolt 31、4 は Bolt 31b、3・5 は Bolt 32）を書き、層の規則 D-5 の認証の例外（決定 6）を足した。8 時間の起点を TOTP が初めて通った時刻に改め、password の段だけの session の上限（5 分）と監査の操作の分け方を足した（human:kakimomokuri が決定）。</li>
+<li>2026-10-11: ロックの数え方の置き場所を、利用者の集約からログインの失敗の集約に改めた（Bolt 30 の計画の承認）。</li>
+</ul>
+<h2 id="_10">参考資料<a class="headerlink" href="#_10" title="Permanent link">&para;</a></h2>
 <ul>
 <li><a href="../011-mfa-totp/">ADR-011 多要素認証（TOTP）</a></li>
 <li><a href="../../../development/cargo-tracker/bolt_14_plan/">Bolt 14 計画</a></li>

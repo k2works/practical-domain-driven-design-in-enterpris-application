@@ -4568,7 +4568,7 @@
     
   
   
-    <span class="md-status md-status--draft"></span>
+    <span class="md-status md-status--stable"></span>
   
 
   
@@ -4593,7 +4593,7 @@
     
   
   
-    <span class="md-status md-status--draft"></span>
+    <span class="md-status md-status--stable"></span>
   
 
   
@@ -9891,6 +9891,10 @@
 <td style="text-align: left;"><strong>ステップごとに止める</strong>（W4 の締めの決定: 認証の完成はステップごと）。確認必須（セキュリティ、認可、構造（層の規則）、データベース（dev-data））は計画の承認の場で確認ポイントとして判断を受け、そのうえで各ステップの終わりに止める</td>
 </tr>
 <tr>
+<td style="text-align: left;">承認ゲートの扱い</td>
+<td style="text-align: left;">2026-10-13 に human:kakimomokuri が計画を承認した（確認ポイント 1〜13 は推奨のとおり）。あわせて人の指示（<code>/goal Bolt31</code>）により、ステップの承認ゲートで止まらずに進める。止まらなかったゲートごとに根拠を書き、終了報告の承認の議題に置く（T-36）</td>
+</tr>
+<tr>
 <td style="text-align: left;">アプローチ</td>
 <td style="text-align: left;">インサイドアウト（開発戦略の中盤）。暗号化とアプリケーションのサービスを内側から固め、認証の流れはセキュリティの統合テストで外側から確かめる</td>
 </tr>
@@ -9936,7 +9940,7 @@
 <tbody>
 <tr>
 <td style="text-align: left;">開始準備の決定（2026-10-13、human:kakimomokuri）</td>
-<td style="text-align: left;">31 と 31b に分ける。暗号化は spring-security-crypto の AES-GCM で、鍵は環境変数、暗号文に鍵の版の接頭辞を付ける。K-02 は受け入れてロックと監査記録で抑える。<code>TotpCodeGenerator</code> は <code>EncryptedSecret</code> を受ける</td>
+<td style="text-align: left;">31 と 31b に分ける。暗号化は AES-GCM（新しい依存を足さず、JDK の <code>Cipher</code> で組む。確認ポイント 1）で、鍵は環境変数、暗号文に鍵の版の接頭辞を付ける。K-02 は受け入れてロックと監査記録で抑える。<code>TotpCodeGenerator</code> は <code>EncryptedSecret</code> を受ける</td>
 <td style="text-align: left;">本計画の範囲と、確認ポイント 1〜4</td>
 </tr>
 <tr>
@@ -10314,6 +10318,11 @@
 <td style="text-align: left;">2026-10-13</td>
 <td style="text-align: left;">詳細整合性検証と横断整合性検証の指摘を反映した。human:kakimomokuri の回答（D-5 に認証の例外を足す、dev のコードは dev 専用の部品を関数の型で注入する、画面の層のテストは刻みを戻す、特性テストと ADR-012 の見直しの 4 を 31b に送る）を確認ポイント 5〜8 にした。password の段の上限（fail-closed との両立）、A-02 と登録の案内の認可の例外、環境変数の名前、TOTP の失敗の監査と理由、A-02 の誤りの行き先を UI 設計に合わせる、設計文書の直し（domain_model.md・SEC-03・data_model.md:925・ui_design.md の A-02・ADR-011 の <code>SecurityFilterChain</code>・release_plan の持ち込みの表と 31b・32・32b・33b の行）、dev の秘密の一致のテスト、T-89 から外れる扱い、AT-02 の番号、前例の置き場所を直した</td>
 <td style="text-align: left;">anthropic/claude-opus-5-5</td>
+</tr>
+<tr>
+<td style="text-align: left;">2026-10-13</td>
+<td style="text-align: left;">計画の承認を記録した。確認ポイント 1〜13 は推奨のとおり。<code>/goal Bolt31</code> により、ステップの承認ゲートで止まらずに進める（T-36）</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5、承認 human:kakimomokuri</td>
 </tr>
 </tbody>
 </table>
