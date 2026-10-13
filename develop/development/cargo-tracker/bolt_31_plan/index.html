@@ -16,7 +16,7 @@
         <link rel="prev" href="../bolt_30_report/">
       
       
-        <link rel="next" href="../release_report-0_1/">
+        <link rel="next" href="../bolt_31_report/">
       
       
         
@@ -4847,6 +4847,41 @@
   
 </nav>
       
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../bolt_31_report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 31 終了報告
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--draft"></span>
+  
+
+  
+
+      </a>
     </li>
   
 
@@ -10094,7 +10129,7 @@
 <h2 id="_8">ステップ計画<a class="headerlink" href="#_8" title="Permanent link">&para;</a></h2>
 <p>状態の記号: <code>[ ]</code> 未着手、<code>[-]</code> 進行中、<code>[?]</code> 承認待ち、<code>[x]</code> 完了。各ステップの終わりに <code>check</code> が緑であることと、計画からの変更を設計文書に反映したこと（T-53）を確かめ、push して CI を確かめる（T-26、T-65）。そのステップのファイルだけをステージする（T-84）。依存の取得は最初から <code>--max-workers=1</code> と再試行で流す（T-93）。</p>
 <ul class="task-list">
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>1. 設計文書</strong> 【承認ゲート: 設計文書】</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>1. 設計文書</strong> 【承認ゲート: 設計文書】</li>
 <li>ADR-011: 開始準備の決定（K-02 を受け入れる理由とロック・監査記録で抑えること、暗号化の方式と鍵の版、<code>TotpCodeGenerator</code> の形、dev のコードの部品の置き方）と、R-08 の比較の結果（確認ポイント 10）を書く。<code>SecurityFilterChain</code> の置き場所（<code>identity.infrastructure.config</code>。115 行目の「W5 で決める」）を決定にする。「未確認の項目」のうち、この Bolt で解くもの（鍵の管理、Base32 の出どころ、Spring Session JDBC の上での直列化）を移す。28 行目のスパイクの削除の時期を「Bolt 31b の後」に直す</li>
 <li>ADR-012: 「W5 で見直すこと」の 1・2 をこの Bolt、4 を 31b、3 を Bolt 32 と書く。D-5 の認証の例外（確認ポイント 5）を決定に足す（Bolt 32 のロックの数え方も同じ形）</li>
 <li>domain_model.md: 182 行目の <code>TotpCodeGenerator</code> の定義（暗号文と時間の刻みから）、957 行目の役割の分け方（照合と刻みの使用はアプリケーションのサービス）、959 行目の監査の操作（<code>PASSWORD_VERIFIED</code>）、IA-INV-03（982 行目）の「発行後 8 時間」を「TOTP が初めて通った時刻から 8 時間」に。用語集に <code>TotpVerificationService</code> を足す（<code>LivingGlossaryConsistencyTest</code>）</li>
@@ -10102,17 +10137,17 @@
 <li>data_model.md（909 行目の暗号化、925 行目の <code>action</code>・<code>reason</code> の一覧）、non_functional.md の SEC-03（148 行目。8 時間の起点）と SEC-16（方式と鍵の版、鍵は環境変数で本番は Secrets Manager から注入）、tech_stack.md（53 行目の QR を Bolt 31b に、暗号化に JDK の <code>Cipher</code> を使うこと）、architecture_backend.md（274 行目付近に D-5 の認証の例外）</li>
 <li>release_plan.md の W5 の節: Bolt の分け方の表で 31 を 31 と 31b に分け（SP 2 は 31b）、31 の「A-05」を「A-07」に直す。31b に回復コードによるログイン、33b に回復コードによる再登録と分担を書く。ADR-012 の 3 を Bolt 32 の行に移し、Bolt 32 の行に「開始準備で 32 を分けるかを見直す」を足す。32b の行に「8 時間の起点は TOTP の時刻（Bolt 31）」を足す。Bolt 13・14 からの持ち込みの表で、AC7 の認可と特性テストを 31b、スパイクの削除を「31b の後」に直す</li>
 <li>完了の判定: <code>okf:check</code> ERROR 0、<code>documentationTest</code> 緑</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>2. 秘密の暗号化と生成のポートの変更</strong> 【承認ゲート: Red・Green】</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>2. 秘密の暗号化と生成のポートの変更</strong> 【承認ゲート: Red・Green】</li>
 <li>Red: <code>AesGcmSecretCipher</code> の単体テスト（往復で一致、同じ平文でも暗号文が毎回違う、<code>v1:</code> が付く、知らない版・タグの改ざん・Base64 の誤りで例外、鍵が 32 バイトでなければ起動で失敗）。鍵のプロパティが環境変数 <code>CARGOTRACKER_TOTPSECRETKEYS_V1</code> から結び付くことの起動のテスト。<code>TotpCodeGenerator</code> の契約テスト（RFC 6238 の試験ベクトル）を <code>EncryptedSecret</code> を受ける形に直して落とす</li>
 <li>Green: <code>identity.infrastructure.security</code> に <code>AesGcmSecretCipher</code> と鍵のプロパティ（<code>cargotracker.totp-secret-keys.v1</code>、Base64。既存の <code>cargotracker.dev-login</code>・<code>document-storage</code> と同じく、コンテキストの段を入れない。<code>@ConfigurationProperties</code> で起動時に確かめる）。<code>TotpCodeGenerator#code(EncryptedSecret, long)</code> に変え、<code>JavaOtpTotpCodeGenerator</code> の中で復号 → 生成 → 配列を消す。<code>TotpCredential#matchingStep</code> から <code>byte[] secret</code> の引数を消し、自分の <code>secret</code> を生成器に渡す</li>
 <li>ArchUnit: <code>AesGcmSecretCipher</code> と <code>javax.crypto</code> を参照するのが <code>identity.infrastructure</code> だけであること（違反を入れて落ちることも確かめる）</li>
 <li>完了の判定: <code>check</code> 緑</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>3. TOTP を確かめるアプリケーションのサービスと D-5 の例外</strong> 【承認ゲート: Red・Green、構造（層の規則）】</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>3. TOTP を確かめるアプリケーションのサービスと D-5 の例外</strong> 【承認ゲート: Red・Green、構造（層の規則）】</li>
 <li>Red: 単体テスト（メモリのリポジトリと偽の生成器）。今の刻み・前後 1 つの刻みは通る、2 つ離れた刻みは拒む、同じ刻みの 2 回目は再利用として拒む、資格がない利用者は拒む（T-42）、通った刻みが記録される。PostgreSQL の統合テストで、同じコードの同時の 2 つの確かめのうち 1 つだけが通ること（T-100）</li>
 <li>Green: <code>identity.application.internal.commandservices</code>（<code>package-info.java</code>）に <code>TotpVerificationService</code> と <code>TotpVerification</code>。<code>IdentityConfiguration</code> で組み立てる</li>
 <li>層の規則: <code>LayerArchitectureTest</code> の D-5 に「<code>identity.infrastructure.security</code> は <code>identity.application.internal.commandservices</code> を参照してよい」の狭い例外を足す（サガの例外と同じ書き方。理由を <code>because</code> に書く）。例外の外（例: <code>infrastructure.persistence</code> から <code>commandservices</code>）は落ちることを、違反を入れて確かめる</li>
 <li>完了の判定: <code>check</code> 緑、AT-02（D-5 を含む）が通る</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>4. Spring Security の 2 段階化と A-02</strong> 【承認ゲート: セキュリティ・認可】</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>4. Spring Security の 2 段階化と A-02</strong> 【承認ゲート: セキュリティ・認可】</li>
 <li>Red: セキュリティの統合テスト（<code>AuthenticationSecurityIntegrationTest</code> の前例。PostgreSQL の Testcontainers と <code>MutableClock</code>）に次を書いて落とす<ul>
 <li>password だけでは業務の画面（<code>/customer/**</code>・<code>/staff/**</code>・<code>/</code>）を開けず A-02 に導かれる。TOTP が通ると元の URL か役割のホームへ行く</li>
 <li>TOTP の段で session の ID が変わる（T-40）。A-02 の POST に CSRF のトークンが要る（S-01）</li>
@@ -10125,19 +10160,19 @@
 </li>
 <li>Green: <code>SecurityConfiguration</code> に <code>@EnableMultiFactorAuthentication(authorities = {FACTOR_PASSWORD, FACTOR_TOTP})</code>、<code>DelegatingMissingAuthorityAccessDeniedHandler</code>（<code>FACTOR_TOTP</code> が足りなければ <code>/login/totp</code>）、<code>/login/totp</code> と <code>/login/totp/enroll</code> は <code>FACTOR_PASSWORD</code> だけで入れる規則、TOTP のフィルター（<code>HttpSessionSecurityContextRepository</code>、<code>http.getSharedObject(SessionAuthenticationStrategy.class)</code> で formLogin と同じ ID の変更と CSRF）、<code>TotpAuthenticationToken</code>（<code>toBuilder()</code>）・<code>TotpAuthenticationProvider</code>。<code>LoginController</code> に A-02（<code>identity/login-totp.html</code>）と登録の案内。<code>LoginSuccessHandler</code> は password の段で <code>PASSWORD_VERIFIED_AT</code> を置き、TOTP の段の成功（初めて通ったときだけ）で <code>AUTHENTICATED_AT</code> を置く。<code>SessionLifetimeFilter</code> は要素の数で上限を選ぶ</li>
 <li>完了の判定: <code>check</code> 緑（既存のセキュリティの統合テストは、ステップ 6 でログインの手順を 2 段階にするまで、password の段の後に TOTP の段を送る補助を足して通す）</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>5. ADR-012 の見直しの 1・2 と TOTP の失敗の監査</strong> 【承認ゲート: セキュリティ・認可】</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>5. ADR-012 の見直しの 1・2 と TOTP の失敗の監査</strong> 【承認ゲート: セキュリティ・認可】</li>
 <li>1: 監査の操作を <code>PASSWORD_VERIFIED</code>（password の段の成功）と <code>LOGIN_SUCCEEDED</code>（2 つの要素がそろった）に分ける。<code>AuthenticationAuditListener</code> で要素の権限を見て分け、<code>AuditAction</code> に足す</li>
 <li>TOTP の失敗: 今のリスナーは失敗の主体を <code>String.valueOf(principal)</code> のメールアドレスとして引くので、TOTP の失敗（主体は <code>CargoUserDetails</code>）が <code>UNKNOWN_USER</code> と記録される。TOTP の失敗は利用者と理由（<code>INVALID_TOTP</code>・<code>TOTP_REUSED</code>）で記録する。<code>AuthenticationRejection</code> に足す。Bolt 32 のロックはこの記録を前提にする</li>
 <li>成功・失敗の記録が同じ transaction で書かれること（IA-INV-08）を統合テストで確かめる</li>
 <li>2: 認可の条件（<code>hasRole</code>）は、全体の注釈で要素を求めるので、URL ごとの規則は役割だけのままにする。要素の欠けた主体で業務の URL を開けないことを全 URL で確かめる（ステップ 4 の後では最初から通るので「見張り」と書く。T-88）</li>
 <li>完了の判定: <code>check</code> 緑</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>6. 画面の層のログインの手順と dev の入力済み</strong> 【承認ゲート: セキュリティ、データベース（dev-data）】</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>6. 画面の層のログインの手順と dev の入力済み</strong> 【承認ゲート: セキュリティ、データベース（dev-data）】</li>
 <li>ArchUnit: ほかのコンテキストが <code>FACTOR_*</code>（<code>FactorGrantedAuthority</code>）を参照しない</li>
 <li>画面の層: <code>BrowserSession.signInAs</code> の待ちを「<code>/login</code> を離れた」から「A-02 を経て業務の画面に着いた」に直す（<code>/login/totp</code> も "/login" を含むので、今の待ちは 2 段目で終わらない）。<code>UiUsers</code> で TOTP の資格を作り、テストの固定の秘密から A-02 のコードを作って入れる。ログインの前に、テストの準備として <code>totp_credential</code> の <code>last_used_step</code> を戻す（同じ利用者の 30 秒以内の入り直しで再利用として拒否されないため。確認ポイント 7）。<code>login_ui.feature</code>（<code>@US-18</code>）に 2 段階のシナリオ（誤りのコードで A-01 に戻る）を足す</li>
 <li>dev の入力済み: <code>DevLoginProperties.Account</code> と <code>DevLoginPrefill.Account</code> に <code>totpSecret</code> を足し、<code>cargotracker.dev-login.accounts[n].totp-secret</code>（Base32。利用者ごとに別）を <code>application-dev.properties</code> に置く。<code>DevTotpCodes</code>・<code>DevTotpCodeSource</code>（上の表）を作り、<code>DevLoginPrefill</code> が A-02 にその時点のコードを入れる。Base32 の復号は <code>identity.infrastructure</code> に自分で書き、RFC 4648 の試験ベクトルで確かめる（確認ポイント 6）</li>
 <li>dev-data に TOTP の資格を足す。dev-data の暗号文を dev の鍵で復号すると設定の <code>totp-secret</code> と一致すること、利用者ごとに秘密が違うことをテストにする（ADR-011 の dev の 4 層目）。既定・staging・prod の設定で A-02 が入力済みにならないこと、dev-login の設定が <code>dev</code> の外にあると起動しないこと（既存）を確かめる</li>
 <li>完了の判定: <code>check</code> と <code>uiTest</code> が緑。H2 の <code>bootRun</code>（dev）で A-01 → A-02 → ホームを手で通す</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>7. 開発レビューと終了報告</strong> 【承認ゲート: 終了報告】</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>7. 開発レビューと終了報告</strong> 【承認ゲート: 終了報告】</li>
 <li>開発レビュー（<code>developing-review</code>。プログラマー（フィルターの構成、暗号化、窓の 3 つの刻みごとに復号が 3 回になること）、アーキテクト（置き場所、D-5 の例外、ArchUnit、ADR との整合）、テスター（セキュリティの境界値）、テクニカルライター（A-02 と登録の案内の文言。T-90））</li>
 <li>SonarQube（<code>sonar-local:check</code>。手順書の 9 節）</li>
 <li><code>bolt_31_report.md</code>。release_plan の W5 の 31 の行と進捗、開発の索引を更新する。#13 に進み具合をコメントする</li>
@@ -10323,6 +10358,11 @@
 <td style="text-align: left;">2026-10-13</td>
 <td style="text-align: left;">計画の承認を記録した。確認ポイント 1〜13 は推奨のとおり。<code>/goal Bolt31</code> により、ステップの承認ゲートで止まらずに進める（T-36）</td>
 <td style="text-align: left;">anthropic/claude-opus-5-5、承認 human:kakimomokuri</td>
+</tr>
+<tr>
+<td style="text-align: left;">2026-10-13</td>
+<td style="text-align: left;">ステップ 1〜7 を終えた（<code>/goal Bolt31</code>）。計画から変えたこと: 成功の監査の分け方をステップ 5 から 4 に前倒しした（2 段階にすると password の段でも成功のイベントが出るため）。配備の前の session は、復元の失敗の変換ではなく、password の段の時刻がないので期限の判定で A-03 に送る形にした（復元は失敗しなかった）。CSRF のトークンがまだ session にない A-02 の送信は既存の扱いどおり A-03。dev のコードの部品の組み立てが層の規則に当たり、合成ルートの例外を人に諮った（2026-10-13 に human:kakimomokuri が決定）。開発レビューで、期限の上限を認証の要素で選ぶ形、復号の失敗の扱い、TOTP の誤りの文言、登録の案内を直した。鍵は <code>@ConfigurationProperties</code> でなく <code>Binder</code> で結び付けた（起動を失敗させる振る舞いは同じ）。<a href="../bolt_31_report/">Bolt 31 終了報告</a></td>
+<td style="text-align: left;">anthropic/claude-opus-5-5</td>
 </tr>
 </tbody>
 </table>
