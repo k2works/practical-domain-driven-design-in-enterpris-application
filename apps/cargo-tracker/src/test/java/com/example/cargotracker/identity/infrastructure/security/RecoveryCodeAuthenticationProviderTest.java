@@ -16,6 +16,7 @@ import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.authentication.InsufficientAuthenticationException;
+import org.springframework.security.authentication.LockedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 
@@ -24,6 +25,8 @@ import org.springframework.security.core.GrantedAuthority;
  * 権限 FACTOR_TOTP）、拒否は RecoveryCodeRejectedException。照合の途中の例外は 500 にせず拒否する（T-42）。
  */
 class RecoveryCodeAuthenticationProviderTest {
+
+    private static final FakeLoginAttemptService NOT_LOCKED = new FakeLoginAttemptService(false);
 
     private static final CargoUserDetails DETAILS = new CargoUserDetails(
             new AuthenticatedActor(
@@ -60,8 +63,8 @@ class RecoveryCodeAuthenticationProviderTest {
 
     @Test
     void 通ればTOTPと同じ要素の権限の結果を返す() {
-        RecoveryCodeAuthenticationProvider provider =
-                new RecoveryCodeAuthenticationProvider(new StubService(RecoveryCodeVerification.ACCEPTED, null));
+        RecoveryCodeAuthenticationProvider provider = new RecoveryCodeAuthenticationProvider(
+                new StubService(RecoveryCodeVerification.ACCEPTED, null), NOT_LOCKED);
 
         Authentication result =
                 provider.authenticate(RecoveryCodeAuthenticationToken.unauthenticated(DETAILS, "1a2b-3c4d", false));
@@ -75,8 +78,8 @@ class RecoveryCodeAuthenticationProviderTest {
 
     @Test
     void 拒否は回復コードの拒否の例外にする() {
-        RecoveryCodeAuthenticationProvider provider =
-                new RecoveryCodeAuthenticationProvider(new StubService(RecoveryCodeVerification.REJECTED, null));
+        RecoveryCodeAuthenticationProvider provider = new RecoveryCodeAuthenticationProvider(
+                new StubService(RecoveryCodeVerification.REJECTED, null), NOT_LOCKED);
         RecoveryCodeAuthenticationToken input =
                 RecoveryCodeAuthenticationToken.unauthenticated(DETAILS, "1a2b-3c4d", false);
 
@@ -86,7 +89,7 @@ class RecoveryCodeAuthenticationProviderTest {
     @Test
     void 認証コードも一緒に送った入力は照合せずに拒む() {
         StubService service = new StubService(RecoveryCodeVerification.ACCEPTED, null);
-        RecoveryCodeAuthenticationProvider provider = new RecoveryCodeAuthenticationProvider(service);
+        RecoveryCodeAuthenticationProvider provider = new RecoveryCodeAuthenticationProvider(service, NOT_LOCKED);
         RecoveryCodeAuthenticationToken input =
                 RecoveryCodeAuthenticationToken.unauthenticated(DETAILS, "1a2b-3c4d", true);
 
@@ -97,7 +100,7 @@ class RecoveryCodeAuthenticationProviderTest {
     @Test
     void 保存したハッシュを読めないときは500にせず拒否する() {
         StubService service = new StubService(null, new UnreadableCredentialException("保存したハッシュの形が違う"));
-        RecoveryCodeAuthenticationProvider provider = new RecoveryCodeAuthenticationProvider(service);
+        RecoveryCodeAuthenticationProvider provider = new RecoveryCodeAuthenticationProvider(service, NOT_LOCKED);
         RecoveryCodeAuthenticationToken input =
                 RecoveryCodeAuthenticationToken.unauthenticated(DETAILS, "1a2b-3c4d", false);
 
@@ -109,7 +112,7 @@ class RecoveryCodeAuthenticationProviderTest {
     void 読めない要素でない実装の誤りは拒否に見せず投げる() {
         // 利用者の誤りに見せず、500 にしてエラーのログに残す（Bolt 31d、確認ポイント 5）
         StubService service = new StubService(null, new IllegalArgumentException("値の検証の誤り"));
-        RecoveryCodeAuthenticationProvider provider = new RecoveryCodeAuthenticationProvider(service);
+        RecoveryCodeAuthenticationProvider provider = new RecoveryCodeAuthenticationProvider(service, NOT_LOCKED);
         RecoveryCodeAuthenticationToken input =
                 RecoveryCodeAuthenticationToken.unauthenticated(DETAILS, "1a2b-3c4d", false);
 
@@ -118,8 +121,8 @@ class RecoveryCodeAuthenticationProviderTest {
 
     @Test
     void passwordの段の主体がない入力は受け付けない() {
-        RecoveryCodeAuthenticationProvider provider =
-                new RecoveryCodeAuthenticationProvider(new StubService(RecoveryCodeVerification.ACCEPTED, null));
+        RecoveryCodeAuthenticationProvider provider = new RecoveryCodeAuthenticationProvider(
+                new StubService(RecoveryCodeVerification.ACCEPTED, null), NOT_LOCKED);
         RecoveryCodeAuthenticationToken input =
                 RecoveryCodeAuthenticationToken.unauthenticated("anonymous", "1a2b-3c4d", false);
 
@@ -128,10 +131,22 @@ class RecoveryCodeAuthenticationProviderTest {
 
     @Test
     void 回復コードの入力だけを受け持つ() {
-        RecoveryCodeAuthenticationProvider provider =
-                new RecoveryCodeAuthenticationProvider(new StubService(RecoveryCodeVerification.ACCEPTED, null));
+        RecoveryCodeAuthenticationProvider provider = new RecoveryCodeAuthenticationProvider(
+                new StubService(RecoveryCodeVerification.ACCEPTED, null), NOT_LOCKED);
 
         assertThat(provider.supports(RecoveryCodeAuthenticationToken.class)).isTrue();
         assertThat(provider.supports(TotpAuthenticationToken.class)).isFalse();
+    }
+
+    @Test
+    void ロック中は確かめずに拒む() {
+        StubService service = new StubService(RecoveryCodeVerification.ACCEPTED, null);
+        RecoveryCodeAuthenticationProvider provider =
+                new RecoveryCodeAuthenticationProvider(service, new FakeLoginAttemptService(true));
+        RecoveryCodeAuthenticationToken input =
+                RecoveryCodeAuthenticationToken.unauthenticated(DETAILS, "1a2b-3c4d", false);
+
+        assertThatThrownBy(() -> provider.authenticate(input)).isInstanceOf(LockedException.class);
+        assertThat(service.calls).as("ロック中に回復コードを使わせない").hasValue(0);
     }
 }

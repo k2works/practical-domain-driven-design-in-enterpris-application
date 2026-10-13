@@ -10,11 +10,12 @@
 <main>
     <h1>ログイン</h1>
     <div th:if="${param.error}" class="alert alert-danger" role="alert" tabindex="-1" id="login-error">
-        メールアドレスまたは password が正しくありません。
+        メールアドレスまたは password が正しくありません。続けて 5 回誤ると、15 分ログインできなくなります。
     </div>
-    <!--/* A-02 の誤り・再利用で password の要素を捨てて戻ったとき（UI 設計「A-02」、Bolt 31）。誤りと再利用を区別しない（AC2） */-->
+    <!--/* A-02 の誤り・再利用で password の要素を捨てて戻ったとき（UI 設計「A-02」、Bolt 31）。誤りと再利用を区別しない（AC2）。
+         ロック中も同じ文言で、ロックの有無と解ける時刻は示さない（Bolt 32） */-->
     <div th:if="${param['totp-error']}" class="alert alert-danger" role="alert" tabindex="-1" id="totp-error">
-        認証コードまたは回復コードが正しくないか、すでに使われています。もう一度ログインして、認証アプリに表示された新しいコードか、まだ使っていない回復コードを入れてください。
+        認証コードまたは回復コードが正しくないか、すでに使われています。もう一度ログインして、認証アプリに表示された新しいコードか、まだ使っていない回復コードを入れてください。続けて 5 回誤ると、15 分ログインできなくなります。
     </div>
     <div th:if="${param.logout}" class="alert alert-success" role="status">ログアウトしました。</div>
     <p>メールアドレスと password を入力してください。</p>

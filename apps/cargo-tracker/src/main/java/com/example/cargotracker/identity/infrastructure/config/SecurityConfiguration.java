@@ -1,5 +1,6 @@
 package com.example.cargotracker.identity.infrastructure.config;
 
+import com.example.cargotracker.identity.application.internal.commandservices.LoginAttemptService;
 import com.example.cargotracker.identity.application.internal.commandservices.RecoveryCodeVerificationService;
 import com.example.cargotracker.identity.application.internal.commandservices.TotpVerificationService;
 import com.example.cargotracker.identity.domain.model.aggregates.AuditRecordRepository;
@@ -8,6 +9,7 @@ import com.example.cargotracker.identity.domain.model.aggregates.UserRepository;
 import com.example.cargotracker.identity.infrastructure.security.AuthenticationAuditListener;
 import com.example.cargotracker.identity.infrastructure.security.CargoUserDetailsService;
 import com.example.cargotracker.identity.infrastructure.security.KeepEmailAuthenticationFailureHandler;
+import com.example.cargotracker.identity.infrastructure.security.LockAwareUserDetailsChecker;
 import com.example.cargotracker.identity.infrastructure.security.LoginSuccessHandler;
 import com.example.cargotracker.identity.infrastructure.security.RecoveryCodeAuthenticationProvider;
 import com.example.cargotracker.identity.infrastructure.security.RecoveryCodeRejectedException;
@@ -26,9 +28,11 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AccountStatusUserDetailsChecker;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.DefaultAuthenticationEventPublisher;
+import org.springframework.security.authentication.InternalAuthenticationServiceException;
 import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.authentication.event.AuthenticationFailureBadCredentialsEvent;
+import org.springframework.security.authentication.event.AuthenticationFailureServiceExceptionEvent;
 import org.springframework.security.authorization.AuthorityAuthorizationManager;
 import org.springframework.security.config.annotation.authorization.EnableMultiFactorAuthentication;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -92,8 +96,9 @@ public class SecurityConfiguration {
             AuditRecordRepository auditRecords,
             CargoUserDetailsService userDetails,
             CompanyRepository companies,
-            Clock clock) {
-        return new AuthenticationAuditListener(auditRecords, userDetails, companies, clock);
+            Clock clock,
+            LoginAttemptService loginAttemptService) {
+        return new AuthenticationAuditListener(auditRecords, userDetails, companies, clock, loginAttemptService);
     }
 
     /**
@@ -106,16 +111,19 @@ public class SecurityConfiguration {
             PasswordEncoder passwordEncoder,
             TotpVerificationService totpVerificationService,
             RecoveryCodeVerificationService recoveryCodeVerificationService,
+            LoginAttemptService loginAttemptService,
             ApplicationEventPublisher publisher) {
         DaoAuthenticationProvider provider = new DaoAuthenticationProvider(userDetails);
         provider.setPasswordEncoder(passwordEncoder);
         provider.setPreAuthenticationChecks(user -> {});
-        provider.setPostAuthenticationChecks(new AccountStatusUserDetailsChecker());
+        // ロックは照合の後に 1 か所で確かめる（Bolt 32、AC2）。続けて利用停止・無効な企業を確かめる
+        provider.setPostAuthenticationChecks(
+                new LockAwareUserDetailsChecker(loginAttemptService, new AccountStatusUserDetailsChecker()));
         // TOTP の要素も同じ認証のイベント（成功・失敗）で監査記録に書く（ADR-011 の決定 2）
         ProviderManager manager = new ProviderManager(
                 provider,
-                new TotpAuthenticationProvider(totpVerificationService),
-                new RecoveryCodeAuthenticationProvider(recoveryCodeVerificationService));
+                new TotpAuthenticationProvider(totpVerificationService, loginAttemptService),
+                new RecoveryCodeAuthenticationProvider(recoveryCodeVerificationService, loginAttemptService));
         DefaultAuthenticationEventPublisher events = new DefaultAuthenticationEventPublisher(publisher);
         // 失敗のイベントは例外のクラス名の完全一致で選ばれる。BadCredentialsException を継いだ TOTP の拒否も、password の誤りと
         // 同じ失敗のイベントにする（対応がないとイベントが出ず、監査記録に残らない。Bolt 31 のステップ 5 で見つけた）
@@ -123,7 +131,10 @@ public class SecurityConfiguration {
                 TotpRejectedException.class,
                 AuthenticationFailureBadCredentialsEvent.class,
                 RecoveryCodeRejectedException.class,
-                AuthenticationFailureBadCredentialsEvent.class));
+                AuthenticationFailureBadCredentialsEvent.class,
+                // 利用者の読み出しの DB の誤り（DaoAuthenticationProvider が包む）。既定の対応は親の型だけなので足す（Bolt 32）
+                InternalAuthenticationServiceException.class,
+                AuthenticationFailureServiceExceptionEvent.class));
         manager.setAuthenticationEventPublisher(events);
         return manager;
     }

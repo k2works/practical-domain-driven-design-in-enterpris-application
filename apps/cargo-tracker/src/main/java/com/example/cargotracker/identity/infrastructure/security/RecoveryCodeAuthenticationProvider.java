@@ -1,5 +1,6 @@
 package com.example.cargotracker.identity.infrastructure.security;
 
+import com.example.cargotracker.identity.application.internal.commandservices.LoginAttemptService;
 import com.example.cargotracker.identity.application.internal.commandservices.RecoveryCodeVerification;
 import com.example.cargotracker.identity.application.internal.commandservices.RecoveryCodeVerificationService;
 import com.example.cargotracker.identity.domain.model.aggregates.UnreadableCredentialException;
@@ -7,6 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.InsufficientAuthenticationException;
+import org.springframework.security.authentication.LockedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.FactorGrantedAuthority;
 
@@ -20,9 +22,12 @@ public class RecoveryCodeAuthenticationProvider implements AuthenticationProvide
     private static final Logger LOG = LoggerFactory.getLogger(RecoveryCodeAuthenticationProvider.class);
 
     private final RecoveryCodeVerificationService verificationService;
+    private final LoginAttemptService attempts;
 
-    public RecoveryCodeAuthenticationProvider(RecoveryCodeVerificationService verificationService) {
+    public RecoveryCodeAuthenticationProvider(
+            RecoveryCodeVerificationService verificationService, LoginAttemptService attempts) {
         this.verificationService = verificationService;
+        this.attempts = attempts;
     }
 
     @Override
@@ -34,6 +39,10 @@ public class RecoveryCodeAuthenticationProvider implements AuthenticationProvide
         if (input.withTotpCode()) {
             // どちらを確かめたか曖昧にしない。照合せずに拒み、失敗のイベントで監査記録に残す（確認ポイント 7）
             throw new RecoveryCodeRejectedException();
+        }
+        if (attempts.isLocked(details.actor().userId())) {
+            // password の段の後にロックされた（ほかの session の失敗）。確かめずに拒む（ロック中に回復コードを使わせない。Bolt 32）
+            throw new LockedException("ロック中");
         }
         String code = input.getCredentials() instanceof String given ? given : "";
         RecoveryCodeVerification verification;

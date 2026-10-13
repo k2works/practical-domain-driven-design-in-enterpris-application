@@ -14,6 +14,9 @@ import java.time.Clock;
 import java.util.Set;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
+import org.springframework.security.authentication.LockedException;
 import org.springframework.security.core.GrantedAuthority;
 
 /**
@@ -21,6 +24,8 @@ import org.springframework.security.core.GrantedAuthority;
  * ほかの実装の誤りは利用者の誤りに見せずに投げる（確認ポイント 5）。
  */
 class TotpAuthenticationProviderTest {
+
+    private static final FakeLoginAttemptService NOT_LOCKED = new FakeLoginAttemptService(false);
 
     private static final CargoUserDetails DETAILS = new CargoUserDetails(
             new AuthenticatedActor(
@@ -60,7 +65,7 @@ class TotpAuthenticationProviderTest {
     @Test
     void 通ればTOTPの要素の権限の結果を返す() {
         TotpAuthenticationProvider provider =
-                new TotpAuthenticationProvider(new StubService(TotpVerification.ACCEPTED, null));
+                new TotpAuthenticationProvider(new StubService(TotpVerification.ACCEPTED, null), NOT_LOCKED);
 
         assertThat(provider.authenticate(input()).getAuthorities())
                 .extracting(GrantedAuthority::getAuthority)
@@ -69,8 +74,8 @@ class TotpAuthenticationProviderTest {
 
     @Test
     void 保存した秘密を読めないときは500にせず拒否する() {
-        TotpAuthenticationProvider provider =
-                new TotpAuthenticationProvider(new StubService(null, new UnreadableCredentialException("知らない鍵の版")));
+        TotpAuthenticationProvider provider = new TotpAuthenticationProvider(
+                new StubService(null, new UnreadableCredentialException("知らない鍵の版")), NOT_LOCKED);
         TotpAuthenticationToken given = input();
 
         assertThatThrownBy(() -> provider.authenticate(given)).isInstanceOf(TotpRejectedException.class);
@@ -78,10 +83,35 @@ class TotpAuthenticationProviderTest {
 
     @Test
     void 読めない要素でない実装の誤りは拒否に見せず投げる() {
-        TotpAuthenticationProvider provider =
-                new TotpAuthenticationProvider(new StubService(null, new IllegalArgumentException("値の検証の誤り")));
+        TotpAuthenticationProvider provider = new TotpAuthenticationProvider(
+                new StubService(null, new IllegalArgumentException("値の検証の誤り")), NOT_LOCKED);
         TotpAuthenticationToken given = input();
 
         assertThatThrownBy(() -> provider.authenticate(given)).isExactlyInstanceOf(IllegalArgumentException.class);
+    }
+
+    @ParameterizedTest
+    @EnumSource(
+            value = TotpVerification.class,
+            names = {"REJECTED_MISMATCH", "REJECTED_REUSED", "REJECTED_NOT_ENROLLED"})
+    void 拒否の種類は拒否の例外にそのまま渡す(TotpVerification rejected) {
+        // 監査記録の理由の写しの元（Bolt 31d の開発レビュー。Bolt 32）
+        TotpAuthenticationProvider provider =
+                new TotpAuthenticationProvider(new StubService(rejected, null), NOT_LOCKED);
+        TotpAuthenticationToken given = input();
+
+        assertThatThrownBy(() -> provider.authenticate(given))
+                .isInstanceOfSatisfying(
+                        TotpRejectedException.class,
+                        e -> assertThat(e.verification()).isEqualTo(rejected));
+    }
+
+    @Test
+    void ロック中は確かめずに拒む() {
+        TotpAuthenticationProvider provider = new TotpAuthenticationProvider(
+                new StubService(null, new IllegalStateException("確かめてはいけない")), new FakeLoginAttemptService(true));
+        TotpAuthenticationToken given = input();
+
+        assertThatThrownBy(() -> provider.authenticate(given)).isInstanceOf(LockedException.class);
     }
 }

@@ -1,0 +1,218 @@
+package com.example.cargotracker.identity.infrastructure.security;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.doThrow;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
+
+import com.example.cargotracker.TestcontainersConfiguration;
+import com.example.cargotracker.identity.LogCapture;
+import com.example.cargotracker.identity.domain.model.aggregates.Company;
+import com.example.cargotracker.identity.domain.model.aggregates.CompanyRepository;
+import com.example.cargotracker.identity.domain.model.aggregates.LoginFailureRepository;
+import com.example.cargotracker.identity.domain.model.aggregates.TotpCodeGenerator;
+import com.example.cargotracker.identity.domain.model.aggregates.TotpCredential;
+import com.example.cargotracker.identity.domain.model.aggregates.TotpCredentialRepository;
+import com.example.cargotracker.identity.domain.model.aggregates.User;
+import com.example.cargotracker.identity.domain.model.aggregates.UserRepository;
+import com.example.cargotracker.identity.domain.model.valueobjects.CompanyKind;
+import com.example.cargotracker.identity.domain.model.valueobjects.EmailAddress;
+import com.example.cargotracker.identity.domain.model.valueobjects.UserStatus;
+import com.example.cargotracker.identity.infrastructure.crypto.AesGcmSecretCipher;
+import com.example.cargotracker.shared.domain.CompanyId;
+import com.example.cargotracker.shared.domain.Role;
+import com.example.cargotracker.shared.domain.UserId;
+import com.example.cargotracker.shared.domain.UtcInstant;
+import jakarta.servlet.http.Cookie;
+import java.nio.charset.StandardCharsets;
+import java.time.Clock;
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.context.annotation.Import;
+import org.springframework.dao.DataAccessResourceFailureException;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
+import org.springframework.test.web.servlet.MockMvc;
+
+/**
+ * 認証の入口の誤りの扱い（Bolt 32 の確認ポイント 8、Bolt 31d から送った「実装の誤りは 500」）。実装の誤りと書き込みの DB の誤りは
+ * 500 にしてログインを通さず、利用者の誤りとして数えない。利用者の読み出しの DB の誤りは、枠組みが包んで失敗へ倒し
+ * {@code /login?error}（理由 {@code SERVICE_ERROR}、数えない）。ロックの読み出しの DB の誤りは 500（照合の後の確認と TOTP の段）。
+ */
+@SpringBootTest
+@AutoConfigureMockMvc
+@Import(TestcontainersConfiguration.class)
+class AuthenticationErrorHandlingIntegrationTest {
+
+    private static final String PASSWORD = "correct horse battery staple";
+    private static final String SESSION_COOKIE = "SESSION";
+    private static final String TOTP_URL = "/login/totp";
+    private static final byte[] TOTP_SECRET = "12345678901234567890".getBytes(StandardCharsets.US_ASCII);
+
+    @MockitoSpyBean
+    TotpCodeGenerator totpCodes;
+
+    @MockitoSpyBean
+    LoginFailureRepository loginFailures;
+
+    @MockitoSpyBean
+    UserRepository users;
+
+    @Autowired
+    MockMvc mvc;
+
+    @Autowired
+    CompanyRepository companies;
+
+    @Autowired
+    PasswordEncoder passwordEncoder;
+
+    @Autowired
+    TotpCredentialRepository totpCredentials;
+
+    @Autowired
+    AesGcmSecretCipher cipher;
+
+    @Autowired
+    JdbcTemplate jdbc;
+
+    @Autowired
+    Clock clock;
+
+    private Company company;
+
+    @BeforeEach
+    void 企業を登録する() {
+        company = Company.of(new CompanyId(UUID.randomUUID()), "荷主 A", CompanyKind.SHIPPER, true);
+        companies.add(company);
+    }
+
+    @Test
+    void 実装の誤りは500にしログインを通さず利用者の誤りとして数えない() throws Exception {
+        String email = user();
+        Cookie session = loginWithPassword(email);
+        doThrow(new IllegalArgumentException("値の検証の誤り")).when(totpCodes).code(any(), any(), anyLong());
+
+        assertThatThrownBy(() -> mvc.perform(
+                        post(TOTP_URL).cookie(session).param("code", "123456").with(csrf())))
+                .isInstanceOf(IllegalArgumentException.class);
+
+        assertThat(failureReasons(email)).as("監査の失敗を残さない").isEmpty();
+        assertThat(failures(email)).isZero();
+    }
+
+    @Test
+    void 失敗の書き込みのDBの誤りは500にし誤りの応答にしない() throws Exception {
+        String email = user();
+        doThrow(new DataAccessResourceFailureException("DB の誤り"))
+                .when(loginFailures)
+                .recordFailure(any(), any(), any());
+
+        assertThatThrownBy(() -> mvc.perform(post("/login")
+                        .param("username", email)
+                        .param("password", "wrong")
+                        .with(csrf())))
+                .isInstanceOf(DataAccessResourceFailureException.class);
+        assertThat(failureReasons(email)).as("回数と同じトランザクションの監査記録も戻る").isEmpty();
+    }
+
+    @Test
+    void 利用者の読み出しのDBの誤りは失敗へ倒れ理由SERVICE_ERRORで数えない() throws Exception {
+        String email = user();
+        doThrow(new DataAccessResourceFailureException("DB の誤り")).when(users).findByEmail(any());
+
+        String logs;
+        try (LogCapture capture = LogCapture.start()) {
+            mvc.perform(post("/login")
+                            .param("username", email)
+                            .param("password", PASSWORD)
+                            .with(csrf()))
+                    .andExpect(redirectedUrl("/login?error"));
+            logs = capture.text();
+        }
+
+        assertThat(jdbc.queryForObject(
+                        "SELECT count(*) FROM identity.audit_record WHERE action = 'LOGIN_FAILED' AND reason = 'SERVICE_ERROR'",
+                        Integer.class))
+                .isPositive();
+        assertThat(logs).doesNotContain(PASSWORD);
+    }
+
+    @Test
+    void ロックの読み出しのDBの誤りはpasswordの段でもTOTPの段でも500にする() throws Exception {
+        String email = user();
+        Cookie session = loginWithPassword(email);
+        doThrow(new DataAccessResourceFailureException("DB の誤り"))
+                .when(loginFailures)
+                .findByUserId(any());
+
+        assertThatThrownBy(() -> mvc.perform(post("/login")
+                        .param("username", email)
+                        .param("password", PASSWORD)
+                        .with(csrf())))
+                .as("照合の後の確認の例外は枠組みが包まない")
+                .isInstanceOf(DataAccessResourceFailureException.class);
+        assertThatThrownBy(() -> mvc.perform(
+                        post(TOTP_URL).cookie(session).param("code", "123456").with(csrf())))
+                .isInstanceOf(DataAccessResourceFailureException.class);
+    }
+
+    // --- 補助 ---
+
+    private String user() {
+        String email = "error-" + UUID.randomUUID() + "@example.com";
+        UserId userId = new UserId(UUID.randomUUID());
+        users.add(User.of(
+                userId,
+                company.id(),
+                EmailAddress.of(email),
+                "荷主 太郎",
+                passwordEncoder.encode(PASSWORD),
+                UserStatus.ACTIVE,
+                Set.of(Role.SHIPPER)));
+        totpCredentials.add(TotpCredential.enroll(
+                userId, cipher.encrypt(TOTP_SECRET.clone(), userId), new UtcInstant(clock.instant())));
+        return email;
+    }
+
+    private Cookie loginWithPassword(String email) throws Exception {
+        return mvc.perform(post("/login")
+                        .param("username", email)
+                        .param("password", PASSWORD)
+                        .with(csrf()))
+                .andExpect(redirectedUrl(TOTP_URL))
+                .andReturn()
+                .getResponse()
+                .getCookie(SESSION_COOKIE);
+    }
+
+    private UserId userIdOf(String email) {
+        return new UserId(jdbc.queryForObject("SELECT id FROM identity.app_user WHERE email = ?", UUID.class, email));
+    }
+
+    private int failures(String email) {
+        Integer count = jdbc.queryForObject(
+                "SELECT coalesce(max(consecutive_failures), 0) FROM identity.login_failure WHERE user_id = ?",
+                Integer.class,
+                userIdOf(email).value());
+        return count == null ? 0 : count;
+    }
+
+    private List<String> failureReasons(String email) {
+        return jdbc.queryForList(
+                "SELECT reason FROM identity.audit_record WHERE actor_user_id = ? AND action = 'LOGIN_FAILED'",
+                String.class,
+                userIdOf(email).value());
+    }
+}

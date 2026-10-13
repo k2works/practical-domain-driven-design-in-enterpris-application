@@ -1,12 +1,14 @@
 package com.example.cargotracker.identity.infrastructure.security;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.Serial;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -16,11 +18,25 @@ import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.mock.web.MockHttpSession;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
+import org.springframework.security.authentication.AuthenticationProvider;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.DefaultAuthenticationEventPublisher;
+import org.springframework.security.authentication.InternalAuthenticationServiceException;
+import org.springframework.security.authentication.LockedException;
+import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.security.authentication.event.AuthenticationFailureLockedEvent;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.FactorGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.factory.PasswordEncoderFactories;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.authentication.AbstractAuthenticationProcessingFilter;
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.security.web.context.RequestAttributeSecurityContextRepository;
@@ -160,5 +176,122 @@ class SpringSecurityCharacterizationTest {
         FactorGrantedAuthority factor = FactorGrantedAuthority.fromAuthority(TotpAuthenticationToken.FACTOR_TOTP);
 
         assertThat(factor.getIssuedAt()).isBetween(before, Instant.now().plus(Duration.ofSeconds(1)));
+    }
+
+    // --- Bolt 32 のロックが頼る枠組みの振る舞い（T-108） ---
+
+    private static DaoAuthenticationProvider daoProvider(UserDetailsService users, List<String> postChecks) {
+        DaoAuthenticationProvider provider = new DaoAuthenticationProvider(users);
+        provider.setPasswordEncoder(PasswordEncoderFactories.createDelegatingPasswordEncoder());
+        provider.setPreAuthenticationChecks(user -> {});
+        provider.setPostAuthenticationChecks(user -> postChecks.add(user.getUsername()));
+        return provider;
+    }
+
+    private static UserDetailsService oneUser() {
+        UserDetails user = User.withUsername("shipper")
+                .password(PasswordEncoderFactories.createDelegatingPasswordEncoder()
+                        .encode("correct"))
+                .roles("SHIPPER")
+                .build();
+        return username -> {
+            if (!"shipper".equals(username)) {
+                throw new UsernameNotFoundException("なし");
+            }
+            return User.withUserDetails(user).build();
+        };
+    }
+
+    @Test
+    void 照合の後の確認はpasswordが一致したときだけ呼ばれる() {
+        // ロックを照合の後に確かめる理由（誤った password とロック中の応答の時間を変えない。AC2）
+        List<String> postChecks = new ArrayList<>();
+        DaoAuthenticationProvider provider = daoProvider(oneUser(), postChecks);
+
+        assertThatThrownBy(() ->
+                        provider.authenticate(UsernamePasswordAuthenticationToken.unauthenticated("shipper", "wrong")))
+                .isInstanceOf(BadCredentialsException.class);
+        assertThat(postChecks).as("誤った password では呼ばない").isEmpty();
+        provider.authenticate(UsernamePasswordAuthenticationToken.unauthenticated("shipper", "correct"));
+        assertThat(postChecks).containsExactly("shipper");
+    }
+
+    @Test
+    void ロックの例外の失敗のイベントはロックのイベントになる() {
+        // 監査のリスナーがロック中の試行を数えない試行として写す拠り所（既定の例外とイベントの対応）
+        List<Object> events = new ArrayList<>();
+        DefaultAuthenticationEventPublisher publisher = new DefaultAuthenticationEventPublisher(events::add);
+
+        publisher.publishAuthenticationFailure(
+                new LockedException("ロック中"), UsernamePasswordAuthenticationToken.unauthenticated("shipper", "x"));
+
+        assertThat(events).singleElement().isInstanceOf(AuthenticationFailureLockedEvent.class);
+    }
+
+    @Test
+    void アカウントの状態の例外ではほかのproviderを試さない() {
+        // TOTP の provider がロックで拒んだときに、ほかの provider で通らないこと
+        AuthenticationProvider locked = new AuthenticationProvider() {
+            @Override
+            public Authentication authenticate(Authentication authentication) {
+                throw new LockedException("ロック中");
+            }
+
+            @Override
+            public boolean supports(Class<?> authentication) {
+                return true;
+            }
+        };
+        AuthenticationProvider accepting = new AuthenticationProvider() {
+            @Override
+            public Authentication authenticate(Authentication authentication) {
+                return UsernamePasswordAuthenticationToken.authenticated("shipper", null, List.of());
+            }
+
+            @Override
+            public boolean supports(Class<?> authentication) {
+                return true;
+            }
+        };
+        ProviderManager manager = new ProviderManager(locked, accepting);
+
+        assertThatThrownBy(
+                        () -> manager.authenticate(UsernamePasswordAuthenticationToken.unauthenticated("shipper", "x")))
+                .isInstanceOf(LockedException.class);
+    }
+
+    @Test
+    void 利用者の読み出しの例外は内部の認証の例外に包まれ失敗へ倒れる() {
+        // password の段の読み出しの DB の誤りが 500 でなく /login?error になる理由（確認ポイント 8）
+        DaoAuthenticationProvider provider = daoProvider(
+                username -> {
+                    throw new IllegalStateException("DB の誤り");
+                },
+                new ArrayList<>());
+
+        assertThatThrownBy(() ->
+                        provider.authenticate(UsernamePasswordAuthenticationToken.unauthenticated("shipper", "x")))
+                .isInstanceOf(InternalAuthenticationServiceException.class);
+    }
+
+    @Test
+    void 接頭辞が正しく中身の壊れたbcryptのハッシュは例外でなく一致しないになる() {
+        // 確認ポイント 9: 読めない要素としては扱わず、利用者の誤りとして数えられることを受け入れる（壊すには DB への書き込みが要る）
+        PasswordEncoder encoder = PasswordEncoderFactories.createDelegatingPasswordEncoder();
+
+        assertThat(encoder.matches("1a2b-3c4d", "{bcrypt}not-a-bcrypt-hash")).isFalse();
+    }
+
+    @Test
+    void 失敗のイベントは例外のクラス名の完全一致で選ばれ内部の認証の例外には既定のイベントがない() {
+        // SecurityConfiguration が TOTP・回復コードの拒否と内部の認証の例外を対応表に足す理由（Bolt 31・32）
+        List<Object> events = new ArrayList<>();
+        DefaultAuthenticationEventPublisher publisher = new DefaultAuthenticationEventPublisher(events::add);
+
+        publisher.publishAuthenticationFailure(
+                new InternalAuthenticationServiceException("DB の誤り"),
+                UsernamePasswordAuthenticationToken.unauthenticated("shipper", "x"));
+
+        assertThat(events).as("親の型（AuthenticationServiceException）の対応は使われない").isEmpty();
     }
 }
