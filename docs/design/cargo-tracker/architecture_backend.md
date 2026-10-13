@@ -4,7 +4,7 @@ title: "cargo-tracker バックエンドアーキテクチャ"
 description: "cargo-tracker の境界づけられたコンテキスト、コンテキストごとのドメインロジックパターン、パッケージ構成、サガとドメインイベントによる連携（ARCH-HO-01〜03）、受信サービスの方針。"
 tags: [design, architecture, backend]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-11T06:11:29Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-13T01:41:37Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T07:11:12Z }
   - { by: human:kakimomokuri, at: 2026-10-01T07:41:04Z }
@@ -272,7 +272,7 @@ Bolt 1 の実装で次を決めた。
 - MyBatis の型ハンドラーなど、コンテキストに属さない技術的な部品は基盤（`platform`）モジュールに置き、設定（`mybatis.type-handlers-package`）を通してだけ使う。コンテキストのコードから `platform` を参照しない。例外は画面の表示の部品（`platform.web`。日時表示・期間表示）で、名前付きインターフェース `platform :: web` として公開し、コンテキストの画面の層（`interfaces.web`）からだけ参照できる。業務の型と規則は置かず、`platform` は `java..` だけに依存する（Bolt 22、#41。共有カーネルを表示の関心で変えない。D-84）。画面の層は日時の書式とタイムゾーンを自分で持たない（入力を解釈するフォームの変換の書式を除く。ArchUnit で確かめる）。業務番号の採番の年の区切り（`TransportRequestNumber`・`RoutingCaseNumber` の `Asia/Tokyo`）は業務の規則で、表示のタイムゾーンとは別に扱い、利用者ごとのタイムゾーンを入れても変えない。貨物種別・荷姿の日本語名と重量・容積の表示の書式は、見積りの application 層（`CargoDisplayNames`）に置く。予約へ渡す貨物の要約が公開 API の値で、画面の層の外で作るため（業務の型の名前なので `platform.web` にも置かない。ドメインの enum は表示の関心で変えない。Bolt 29c）
 - アプリケーションサービスは各コンテキストの `infrastructure.config` で Bean として組み立てる。アプリケーション層を Spring の部品探索から切り離し、どのアダプターをつないだかをコンテキストごとに 1 か所で見えるようにするためである。受入シナリオでは、同じサービスをメモリ上のリポジトリと同期の配信で組み直せる
 - アプリケーションサービス（`commandservices`・`queryservices` の `*Service`、`eventhandlers` の `*EventHandler`）には `@Service` を付ける。JIG がユースケースとして読むための印で、部品探索には拾わせない（`CargoTrackerApplication` の部品探索から `..application..` を外す）。2026-10-03 に human:kakimomokuri が決定。ArchUnit（`LayerArchitectureTest`）が印を、`ComponentScanTest` が部品探索の除外を固定する。Spring は同じ名前の `@Bean` が部品探索の定義を上書きするため、除外が外れても起動では気づけない
-- `infrastructure.config` は合成ルートであり、依存の向きの規則（`interfaces` → `application` → `domain` ← `infrastructure`）の唯一の例外として `application` に依存してよい。AT-02 では `..infrastructure.config..` だけにこの依存を許し、`config` には `@Configuration` のクラスだけを置く（Bolt 1 レビュー R-15。2026-10-02 に human:kakimomokuri が承認した D-5。ADR-001 のコンプライアンスから参照）
+- `infrastructure.config` は合成ルートであり、依存の向きの規則（`interfaces` → `application` → `domain` ← `infrastructure`）の例外として `application` に依存してよい。AT-02 では `..infrastructure.config..` だけにこの依存を許し、`config` には `@Configuration` のクラスだけを置く（Bolt 1 レビュー R-15。2026-10-02 に human:kakimomokuri が承認した D-5。ADR-001 のコンプライアンスから参照）。合成ルートの外の例外は 2 つに限る。永続化の実装（`infrastructure.persistence`）から `application.sagas`（サガ。Bolt 23）と、認証の入口（`identity.infrastructure.security`）から `identity.application.internal.commandservices` だけ（Bolt 31）。Spring Security の provider と listener は認証の入口で、業務の判断（TOTP の照合と刻みの使用。Bolt 32 のロックの数え方も同じ形）はアプリケーションのサービスに置き、入口はその結果を認証の成否に直すだけにする。`LayerArchitectureTest` の D-5 にサガの例外と同じ書き方で足し、理由を `because` に書く。例外の外（例: `identity.infrastructure.persistence` から `commandservices`）は落ちる（2026-10-13 に human:kakimomokuri が決定。[ADR-012](../../adr/cargo-tracker/012-authentication-principal-and-session.md)）
 - 各コンテキストの `package-info.java` に、依存してよいモジュールを `allowedDependencies` で宣言する（例: アクセス・監査は `shared` と `quotation :: events`）
 
 ドメインイベントは発行記録に JSON で保存され、未完了のものは後で復元されて再配信される。そのため、イベントの形を次の規則で進化させる（Bolt 1 レビュー R-05・R-37）。

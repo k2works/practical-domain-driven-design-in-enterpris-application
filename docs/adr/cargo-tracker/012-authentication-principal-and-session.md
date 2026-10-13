@@ -4,7 +4,7 @@ title: "ADR-012: 認証の主体は共有カーネルの型にし、password の
 description: "US-18 の password によるログインと session を、Spring Security 7 の form login と Spring Session JDBC で作る。"
 tags: [adr, authentication, session]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-11T08:28:04Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-13T01:41:37Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-06T06:51:29Z }
 ---
@@ -50,7 +50,7 @@ US-18 の password によるログインと session を、Spring Security 7 の 
 
 - Spring Session JDBC で、`platform` スキーマの `spring_session`・`spring_session_attributes` に置く（DDL はベンダーごと）。
 - 無操作 30 分は session の期限（`MAX_INACTIVE_INTERVAL`）で判定する。期限は `spring.session.timeout` で決める（`server.servlet.session.timeout` は Spring Session に効かないことを、既定と違う値のテストで確かめた）。
-- 発行から 8 時間の上限は、ログインのときに session の属性（固定の名前）に置いた認証時刻と、アプリケーションの `Clock` で比べるフィルターで判定する。このフィルターは認証の処理より前に置く（Bolt 13 の Try T-40）。認証済みなのに認証時刻がない session も失効させる（fail-closed。ログインの時刻を置かない認証の経路を足しても上限が外れない）。
+- 発行から 8 時間の上限は、ログインのときに session の属性（固定の名前）に置いた認証時刻と、アプリケーションの `Clock` で比べるフィルターで判定する。Bolt 31 から、8 時間の起点（`AUTHENTICATED_AT`）はその session で初めて TOTP が通った時刻にし、password の段だけの session は password を確かめた時刻（`PASSWORD_VERIFIED_AT`）から 5 分で失効させる（[ADR-011](011-mfa-totp.md) の決定 2）。フィルターは要素の数で上限を選ぶ。このフィルターは認証の処理より前に置く（Bolt 13 の Try T-40）。認証済みなのに認証時刻がない session も失効させる（fail-closed。ログインの時刻を置かない認証の経路を足しても上限が外れない）。
 - 役割とホームの対応はルートのコントローラーの 1 か所に置き、ログインの後もルートを通す。画面のまだない役割は A-04 にする。
 - 失効した session の request は、業務データを出さずに A-03（`/session-expired`）へ移す。上限を過ぎた session のままのログインの送信も A-03 へ移し、ログインの送信で session を延命させない。session に CSRF のトークンがない古いフォームの送信も、Spring Security が無効な session として A-03 へ移す。
 
@@ -61,6 +61,13 @@ US-18 の password によるログインと session を、Spring Security 7 の 
 - 監査記録の書き込みに失敗したら、ログインも失敗にする（IA-INV-08 の同期の書き込み。fail-closed）。
 - 権限外のアクセスの試行の記録は、利用者と役割の管理（US-16）の Bolt で足す。
 - W5 のロックの失敗の数え方も、この listener に足す（ADR-011 の決定 2 の「失敗を一か所で数える」）。
+- Bolt 31 から、操作を `PASSWORD_VERIFIED`（password の段の成功）と `LOGIN_SUCCEEDED`（2 つの要素がそろった）に分ける。TOTP の失敗は利用者と理由（`INVALID_TOTP`・`TOTP_REUSED`）で記録する（下の「W5 で見直すこと」の 1）。
+
+### 6. 層の規則 D-5 の認証の例外（Bolt 31）
+
+- 認証の入口（`identity.infrastructure.security` の Spring Security の provider と listener）から、`identity.application.internal.commandservices` だけを参照してよい。合成ルートの外の `infrastructure` は `application` に依存しない規則（D-5）の狭い例外で、サガの例外（`infrastructure.persistence` から `application.sagas`）と同じ書き方で `LayerArchitectureTest` に足し、理由を `because` に書く。例外の外は落ちることを、違反を入れて確かめる。
+- 理由: provider と listener は Spring Security が呼ぶ入口で、`interfaces` の層に置けない。業務の判断（TOTP の照合と刻みの使用）はアプリケーションのサービス（`TotpVerificationService`）に置き、入口は結果を認証の成否に直すだけにする。
+- Bolt 32 のロックの数え方（下の「W5 で見直すこと」の 5）も同じ形にする（2026-10-13、Bolt 31 の整合性検証の指摘への回答で human:kakimomokuri が決定。[バックエンドのアーキテクチャ](../../design/cargo-tracker/architecture_backend.md)）。
 
 ### 5. 開発環境の入力済み
 
@@ -85,7 +92,7 @@ US-18 の password によるログインと session を、Spring Security 7 の 
 
 ### ネガティブ
 
-- session は JDK の直列化で DB に置く。`Role` の定数の改名・削除、`CargoUserDetails` の移動や項目の変更、Spring Security の版の更新、W5 の要素の権限の追加で、配備の前の session が復元できなくなる。互換を壊す変更を配備するときは、配備の手順で `platform.spring_session` の行を消し、利用者にログインし直してもらう（W10 の運用手順書に書く）。復元の失敗を無効な session として扱う変換は、W5 の要素の権限を足すときに検討する。
+- session は JDK の直列化で DB に置く。`Role` の定数の改名・削除、`CargoUserDetails` の移動や項目の変更、Spring Security の版の更新、W5 の要素の権限の追加で、配備の前の session が復元できなくなる。互換を壊す変更を配備するときは、配備の手順で `platform.spring_session` の行を消し、利用者にログインし直してもらう（W10 の運用手順書に書く）。復元の失敗を無効な session として扱う変換は、W5 の要素の権限を足すときに検討する（Bolt 31 で、復元の失敗を無効な session として扱い A-03 に送ると決めた。ADR-011 の決定 2）。
 - 未認証の request（ログインの画面の CSRF のトークン、失敗の後のメールアドレス）でも session の行ができる。作られる速さの上限（レート制限）は、W5 のロックか W10 の WAF で扱う（リスク台帳）。
 
 - W5 まで、利用停止しても既存の session は最長 8 時間使える（パイロットの前で本番の利用者はいない）。
@@ -94,17 +101,25 @@ US-18 の password によるログインと session を、Spring Security 7 の 
 
 ## W5 で見直すこと
 
-- `@EnableMultiFactorAuthentication` を入れると、password の段でも認証の成功のイベントが出る。監査の操作を「password を確かめた」と「ログインした」に分ける。
-- 認可の条件（`hasRole`）に要素の権限を加える。
-- request ごとの DB の確かめ（SEC-12・AC6）は、利用者 ID から主体を作り直して差し替える形にし、問い合わせを 1 回にまとめる。
-- 引数の解決で、TOTP まで済んでいない主体を渡さない。画面の単体テストの主体（`WithAuthenticatedActor`）にも要素の権限を足す。
-- ロックの数え方（IA-INV-03）は `identity.application` のサービスとログインの失敗の集約に置き、監査の listener は入口だけにする（2026-10-11 に改めた。初めは利用者の集約としたが、失敗のたびに利用者の版が上がり利用者の管理の更新とぶつかるため、Bolt 30 の計画の承認で別の集約にした。[ADR-011](011-mfa-totp.md)）。
+番号は Bolt 31 の計画で振った。1・2 は Bolt 31、4 は Bolt 31b、3 は Bolt 32、5 は Bolt 32 で片づける（2026-10-13、Bolt 31 の計画の承認）。
+
+1. `@EnableMultiFactorAuthentication` を入れると、password の段でも認証の成功のイベントが出る。監査の操作を「password を確かめた」と「ログインした」に分ける（Bolt 31）。
+2. 認可の条件（`hasRole`）に要素の権限を加える（Bolt 31）。全体の注釈で業務の URL に 2 つの要素を求めるので、URL ごとの規則は役割だけのままにし、要素の欠けた主体で業務の URL を開けないことを全 URL で確かめる。
+3. request ごとの DB の確かめ（SEC-12・AC6）は、利用者 ID から主体を作り直して差し替える形にし、問い合わせを 1 回にまとめる（Bolt 32。request ごとの役割の確認（AC6）と同じ仕組みのため）。
+4. 引数の解決で、TOTP まで済んでいない主体を渡さない。画面の単体テストの主体（`WithAuthenticatedActor`）にも要素の権限を足す（Bolt 31b。それまでも全体の注釈で、要素の欠けた主体は controller に届かない）。
+5. ロックの数え方（IA-INV-03）は `identity.application` のサービスとログインの失敗の集約に置き、監査の listener は入口だけにする（2026-10-11 に改めた。初めは利用者の集約としたが、失敗のたびに利用者の版が上がり利用者の管理の更新とぶつかるため、Bolt 30 の計画の承認で別の集約にした。[ADR-011](011-mfa-totp.md)）。数え方の入口は決定 6 の D-5 の認証の例外と同じ形にする（Bolt 32）。
 
 ## コンプライアンス
 
 - ArchUnit: `identity` の外は `org.springframework.security` に依存しない。Spring Modulith の検証で、`quotation` は `identity` に依存しない。
 - セキュリティの統合テスト: 未認証の拒否、AC2・AC4 の同じ応答、session ID の変化、30 分・8 時間の境界の 3 点、8 時間の確認が認証より前、CSRF、役割の分離、監査記録の同期の書き込み、応答のヘッダー。
 - 既定の設定で A-01 が入力済みにならないこと、`dev` の外の `cargotracker.dev-login.*` で起動が失敗すること。
+- ArchUnit（`LayerArchitectureTest` の D-5）: 認証の例外は `identity.infrastructure.security` から `identity.application.internal.commandservices` に限り、例外の外は落ちる（Bolt 31）。
+
+## 改訂の経緯
+
+- 2026-10-13: Bolt 31 の計画の承認で、「W5 で見直すこと」に番号と片づける Bolt（1・2 は Bolt 31、4 は Bolt 31b、3・5 は Bolt 32）を書き、層の規則 D-5 の認証の例外（決定 6）を足した。8 時間の起点を TOTP が初めて通った時刻に改め、password の段だけの session の上限（5 分）と監査の操作の分け方を足した（human:kakimomokuri が決定）。
+- 2026-10-11: ロックの数え方の置き場所を、利用者の集約からログインの失敗の集約に改めた（Bolt 30 の計画の承認）。
 
 ## 参考資料
 
