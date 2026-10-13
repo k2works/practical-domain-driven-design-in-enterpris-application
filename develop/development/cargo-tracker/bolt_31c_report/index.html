@@ -10190,7 +10190,7 @@
 </tr>
 <tr>
 <td style="text-align: left;">CI</td>
-<td style="text-align: left;">各ステップの push の後の cargo-tracker CI を確かめる（終了報告の push の後にまとめて確かめる）</td>
+<td style="text-align: left;">最後の push（<code>2c48d88</code>、run 38366198076）で check・ui・デモ環境への配備が通過。ステップ 3（<code>5f0fea3</code>）と 4（<code>589edb6</code>）の push では check の <code>documentationTest</code>（用語集と Javadoc の一致）が落ちた。<code>PasswordVerifiedUser</code> の用語集の行は、並行して設計文書を直していたサブエージェントの未コミットの変更にあり、手元の <code>check</code> は同じ作業ツリーで緑だったが、コードだけをコミットしたため CI には用語集がなかった。ステップ 1 の設計文書（<code>84ef211</code>）を push した後は通過した（KPT の Problem と T-109）</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>okf:check</code></td>
@@ -10375,9 +10375,11 @@
 <li>シェルのヒアドキュメントで長いスクリプトを渡して 1 回失敗した（T-103 の取りこぼし）</li>
 <li>新しいテストのうち 3 つ（監査の <code>toString</code>、session の平文、トランザクションの境界）が、レビューまで空振りに気付かなかった</li>
 <li>CSRF のテストで、A-02 を開く前の送信の扱い（A-03 へ送る）を忘れて 1 回落とした</li>
+<li>設計文書のサブエージェントと同じ作業ツリーでコードを進め、手元の <code>check</code> が未コミットの用語集を含んで緑だったため、コードだけを push したステップ 3・4 の CI が落ちた（ステップ 1 の push で直った。計画の「ステップ 1 から順に push」を守らなかった）</li>
 <li>Try</li>
 <li>T-107: 「ないこと」を確かめるテストは、確かめる対象（session・記録）がテストの時点で存在することを先に確かめる</li>
 <li>T-108: 枠組みに任せる約束（平文の消去、イベント、要素の合わせ）は、計画に「どの部品がいつ呼ぶか」を書き、呼ばれることをテストで確かめる</li>
+<li>T-109: 設計文書をサブエージェントに並行して任せるときは、設計文書のステップを先に push してからコードのステップを push する。間に合わなければ、コードのコミットに必要な用語集の行を含める（手元の <code>check</code> は作業ツリーの未コミットの変更を含む）</li>
 </ul>
 <h3 id="_12">既知の課題（後に持ち込む）<a class="headerlink" href="#_12" title="Permanent link">&para;</a></h3>
 <ul>
