@@ -4,7 +4,7 @@ title: "ADR-012: 認証の主体は共有カーネルの型にし、password の
 description: "US-18 の password によるログインと session を、Spring Security 7 の form login と Spring Session JDBC で作る。"
 tags: [adr, authentication, session]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-13T05:15:17Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-13T06:51:15Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-06T06:51:29Z }
 ---
@@ -61,11 +61,11 @@ US-18 の password によるログインと session を、Spring Security 7 の 
 - 監査記録の書き込みに失敗したら、ログインも失敗にする（IA-INV-08 の同期の書き込み。fail-closed）。
 - 権限外のアクセスの試行の記録は、利用者と役割の管理（US-16）の Bolt で足す。
 - W5 のロックの失敗の数え方も、この listener に足す（ADR-011 の決定 2 の「失敗を一か所で数える」）。
-- Bolt 31 から、操作を `PASSWORD_VERIFIED`（password の段の成功）と `LOGIN_SUCCEEDED`（2 つの要素がそろった）に分ける。TOTP の失敗は利用者と理由（`INVALID_TOTP`・`TOTP_REUSED`）で記録する（下の「W5 で見直すこと」の 1）。
+- Bolt 31 から、操作を `PASSWORD_VERIFIED`（password の段の成功）と `LOGIN_SUCCEEDED`（2 つの要素がそろった）に分ける。TOTP の失敗は利用者と理由（`INVALID_TOTP`・`TOTP_REUSED`）で記録する（下の「W5 で見直すこと」の 1）。Bolt 31b から TOTP の登録を `TOTP_ENROLLED` で、Bolt 31c から回復コードの使用を `RECOVERY_CODE_USED`（`LOGIN_SUCCEEDED` と 2 行）で記録し、回復コードの拒否は理由 `INVALID_RECOVERY_CODE` で記録する（[ADR-011](011-mfa-totp.md) の決定 7）。
 
 ### 6. 層の規則 D-5 の認証の例外（Bolt 31）
 
-- 認証の入口のパッケージ（`identity.infrastructure.security`。Spring Security の provider・listener・成功と失敗のハンドラー・フィルター・拒否の例外）から、`identity.application.internal.commandservices` だけを参照してよい。暗号化（`AesGcmSecretCipher`）と Base32 も同じパッケージにあり、例外の範囲はパッケージ全体になる（入口と暗号を分けるかは Bolt 31 の開発レビューで挙がった。Bolt 31b では分けず、秘密の発行と回復コードの生成の実装が application に依存しない規則を足して守りを補う。分けて例外を入口だけに狭めるかは Bolt 31c で諮る）。合成ルートの外の `infrastructure` は `application` に依存しない規則（D-5）の狭い例外で、サガの例外（`infrastructure.persistence` から `application.sagas`）と同じ書き方で `LayerArchitectureTest` に足し、理由を `because` に書く。例外の外は落ちることを、違反を入れて確かめる。
+- 認証の入口のパッケージ（`identity.infrastructure.security`。Spring Security の provider・listener・成功と失敗のハンドラー・フィルター・拒否の例外）から、`identity.application.internal.commandservices` だけを参照してよい。暗号化（`AesGcmSecretCipher`）と Base32 も同じパッケージにあり、例外の範囲はパッケージ全体になる（入口と暗号を分けるかは Bolt 31 の開発レビューで挙がった。Bolt 31b では分けず、秘密の発行と回復コードの生成の実装が application に依存しない規則を足して守りを補う。分けて例外を入口だけに狭めるかは Bolt 31d で諮る（Bolt 31c の開始準備で 31d に送った））。Bolt 31c の回復コードの provider（`RecoveryCodeAuthenticationProvider`）も入口で、`RecoveryCodeVerificationService`（`commandservices`）を呼ぶので、この例外の範囲に収まる。合成ルートの外の `infrastructure` は `application` に依存しない規則（D-5）の狭い例外で、サガの例外（`infrastructure.persistence` から `application.sagas`）と同じ書き方で `LayerArchitectureTest` に足し、理由を `because` に書く。例外の外は落ちることを、違反を入れて確かめる。
 - 理由: provider と listener は Spring Security が呼ぶ入口で、`interfaces` の層に置けない。業務の判断（TOTP の照合と刻みの使用）はアプリケーションのサービス（`TotpVerificationService`）に置き、入口は結果を認証の成否に直すだけにする。
 - Bolt 32 のロックの数え方（下の「W5 で見直すこと」の 5）も同じ形にする（2026-10-13、Bolt 31 の整合性検証の指摘への回答で human:kakimomokuri が決定。[バックエンドのアーキテクチャ](../../design/cargo-tracker/architecture_backend.md)）。
 
@@ -101,12 +101,16 @@ US-18 の password によるログインと session を、Spring Security 7 の 
 
 ## W5 で見直すこと
 
-番号は Bolt 31 の計画で振った。1・2 は Bolt 31、4 は Bolt 31c、3 は Bolt 32、5 は Bolt 32 で片づける（2026-10-13、Bolt 31 の計画の承認。4 は Bolt 31b の開始準備で 31b と 31c に分けたときに 31c に送った）。
+番号は Bolt 31 の計画で振った。1・2 は Bolt 31、4 は Bolt 31c、3 は Bolt 32、5 は Bolt 32 で片づける（2026-10-13、Bolt 31 の計画の承認。4 は Bolt 31b の開始準備で 31b と 31c に分けたときに 31c に送り、Bolt 31c の計画の承認で決めた）。
 
 1. `@EnableMultiFactorAuthentication` を入れると、password の段でも認証の成功のイベントが出る。監査の操作を「password を確かめた」と「ログインした」に分ける（Bolt 31）。
 2. 認可の条件（`hasRole`）に要素の権限を加える（Bolt 31）。全体の注釈で業務の URL に 2 つの要素を求めるので、URL ごとの規則は役割だけのままにし、要素の欠けた主体で業務の URL を開けないことを全 URL で確かめる。
 3. request ごとの DB の確かめ（SEC-12・AC6）は、利用者 ID から主体を作り直して差し替える形にし、問い合わせを 1 回にまとめる（Bolt 32。request ごとの役割の確認（AC6）と同じ仕組みのため）。
-4. 引数の解決で、TOTP まで済んでいない主体を渡さない。画面の単体テストの主体（`WithAuthenticatedActor`）にも要素の権限を足す（Bolt 31c。それまでも全体の注釈で、要素の欠けた主体は controller に届かない）。password の段だけで開く画面（A-02・A-07）が受ける主体は、`AuthenticatedActor`（2 つの要素がそろった主体だけ）と分けた identity の中だけの型にし、引数の解決を変えるときに一緒に作る。置き場所は `identity.domain.model.valueobjects` の見込みで、Bolt 31c で決める（Bolt 31b の開始準備の骨組みの確かめ（T-101）で、`identity.interfaces.web` に置くと infrastructure の引数の解決からの参照が層の規則に当たり、`valueobjects` に置くと通った）。Bolt 31b の A-07 は、今の A-02 と同じく `AuthenticatedActor` で受ける。
+4. 引数の解決で、TOTP まで済んでいない主体を渡さない（決めた。2026-10-13、Bolt 31c の計画の承認で human:kakimomokuri が決定）。
+   - password の段だけで開く画面（A-02・A-07）が受ける主体は、`AuthenticatedActor`（2 つの要素がそろった主体だけ）と分けた identity の中だけの型 `PasswordVerifiedUser` にする。`identity.domain.model.valueobjects` に置く `@ValueObject` の record で、項目は利用者 ID（`UserId`）・企業 ID（`CompanyId`）・メールアドレス（`EmailAddress`）。置き場所は Bolt 31b の開始準備の骨組みの確かめ（T-101）による（`identity.interfaces.web` に置くと infrastructure の引数の解決からの参照が層の規則に当たり、`valueobjects` に置くと通った）。
+   - `PasswordVerifiedUserArgumentResolver`（`identity.infrastructure.security`）が password の要素がある主体から作って渡す。未認証なら例外。A-02・A-07 の controller（`LoginController`・`TotpEnrollmentController`）はこれを受け、`Principal` の引数を外す（メールアドレスは dev の A-02 の入力済みと登録の URI のアカウント名に使う）。`PasswordVerifiedUser` を受ける controller はこの 2 つだけにする（ArchUnit。空振りを防ぐ見張りを並べる）。
+   - `AuthenticatedActorArgumentResolver` は `FACTOR_TOTP` がない主体に `AuthenticatedActor` を渡さず例外にし、`Optional<AuthenticatedActor>` は空にする。本番では全体の注釈で要素の欠けた主体は業務の URL に届かないので、届いたら実装の誤りである。ほかのコンテキストの controller の本体は変わらない。
+   - 画面の単体テストの主体（`@WithAuthenticatedActor`）の工場（`WithAuthenticatedActorSecurityContextFactory`）が、`FactorGrantedAuthority` で `FACTOR_PASSWORD`・`FACTOR_TOTP` を足す（使うテストのファイルは変えない）。
 5. ロックの数え方（IA-INV-03）は `identity.application` のサービスとログインの失敗の集約に置き、監査の listener は入口だけにする（2026-10-11 に改めた。初めは利用者の集約としたが、失敗のたびに利用者の版が上がり利用者の管理の更新とぶつかるため、Bolt 30 の計画の承認で別の集約にした。[ADR-011](011-mfa-totp.md)）。数え方の入口は決定 6 の D-5 の認証の例外と同じ形にする（Bolt 32）。
 
 ## コンプライアンス
@@ -118,6 +122,7 @@ US-18 の password によるログインと session を、Spring Security 7 の 
 
 ## 改訂の経緯
 
+- 2026-10-13: Bolt 31c の計画の承認で、「W5 で見直すこと」の 4 を決めた（`PasswordVerifiedUser` の置き場所と項目、2 つの引数の解決の振る舞い、受ける controller の規則、`@WithAuthenticatedActor` の要素の権限）。監査の操作と理由に `TOTP_ENROLLED`・`RECOVERY_CODE_USED`・`INVALID_RECOVERY_CODE` を足し、入口と暗号の部品のパッケージを Bolt 31d で諮ることに改めた（31c と 31d に分けたため。human:kakimomokuri が決定）。
 - 2026-10-13: Bolt 31b の計画の承認で、「W5 で見直すこと」の 4 を Bolt 31c に送り、password の段の主体の型を `identity.domain.model.valueobjects` に置く見込み（Bolt 31c で決める）と、入口と暗号の部品のパッケージを Bolt 31c で諮ることを書いた（31b と 31c に分けたため。human:kakimomokuri が決定）。
 - 2026-10-13: Bolt 31 の計画の承認で、「W5 で見直すこと」に番号と片づける Bolt（1・2 は Bolt 31、4 は Bolt 31b（のちに 31c）、3・5 は Bolt 32）を書き、層の規則 D-5 の認証の例外（決定 6）を足した。8 時間の起点を TOTP が初めて通った時刻に改め、password の段だけの session の上限（5 分）と監査の操作の分け方を足した（human:kakimomokuri が決定）。
 - 2026-10-11: ロックの数え方の置き場所を、利用者の集約からログインの失敗の集約に改めた（Bolt 30 の計画の承認）。
