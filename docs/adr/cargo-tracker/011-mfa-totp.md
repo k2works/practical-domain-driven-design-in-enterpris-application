@@ -4,7 +4,7 @@ title: "ADR-011: 多要素認証は Spring Security 7 の要素の権限で組�
 description: "password の後に TOTP を求める 2 段階のログインを、Spring Security 7 の多要素認証（要素ごとの権限）で組む。"
 tags: [adr, authentication, mfa, totp]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-13T12:13:54Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-13T13:17:00Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-11T08:28:34Z }
 ---
@@ -256,17 +256,17 @@ ArchUnit で、ZXing を参照するのが暗号の部品（`identity.infrastruc
 
 | 項目 | 方針 |
 | :--- | :--- |
-| 数え方の置き場所 | 規則（5 回・15 分、ロック中は数えない・延ばさない）は、ログインの失敗の集約 `LoginFailure` と方針 `LockPolicy`（Bolt 30）のまま。数える・0 に戻す・監査記録を書くのは、アプリケーションのサービス `LoginAttemptService`（`identity.application.internal.commandservices`）で、回数と監査記録を `TransactionTemplate` の 1 つのトランザクションにする（IA-INV-08。ADR-012 の見直しの 5）。監査記録の追記が失敗したら回数も戻る。監査のリスナー（`AuthenticationAuditListener`）は失敗・成功のイベントをサービスに写すだけにする（決定 2 の表の「イベントの 1 か所で数える」を、数える場所をサービスに移す形に改めた） |
+| 数え方の置き場所 | 規則（5 回・15 分、ロック中は数えない・延ばさない）は、ログインの失敗の集約 `LoginFailure` と方針 `LockPolicy`（Bolt 30）のまま。数える・0 に戻す・監査記録を書くのは、アプリケーションのサービス `LoginAttemptService`（`identity.application.internal.commandservices`）で、回数と監査記録を `TransactionTemplate` の 1 つのトランザクションにする（IA-INV-08。ADR-012 の見直しの 5）。監査記録の追記が失敗したら回数も戻る。監査のリスナー（`AuthenticationAuditListener`）は、誤りの失敗（数える）とロック中の試行をサービスに写し、数えない拒否（利用停止・無効な企業、存在しない利用者、利用者の読み出しの DB の誤り）と password の段の成功は監査記録に直接書く（Bolt 32 の開発レビューで、文書を実装に合わせた。ログインの監査をすべてサービスに寄せるかは終了報告の議題）（決定 2 の表の「イベントの 1 か所で数える」を、数える場所をサービスに移す形に改めた） |
 | 数える失敗 | password・TOTP・回復コードの誤り（`AuthenticationFailureBadCredentialsEvent`。TOTP・回復コードの拒否を含む）。利用停止の利用者でも password が誤っていれば数える。回復コードの誤りも数えるのは、回復コード（32 ビット。決定 6）の総当たりをロックで抑えるため |
-| 数えない失敗 | ロック中の試行（期限も延ばさない）、存在しない利用者（行を作らない）、password が正しく利用停止・無効な企業で拒んだとき（Disabled のイベント。今の理由）、入口の DB の誤り、A-07 の登録のコードの誤り（登録は認証のイベントを経ず、登録の誤りは自分の秘密の確かめで、他人の要素の推測にならない） |
+| 数えない失敗 | ロック中の試行（期限も延ばさない）、存在しない利用者（行を作らない）、password が正しく利用停止・無効な企業で拒んだとき（Disabled のイベント。今の理由）、利用者の読み出しの DB の誤り（ロックの読み出しの誤りは 500。下の「DB の誤り」）、A-07 の登録のコードの誤り（登録は認証のイベントを経ず、登録の誤りは自分の秘密の確かめで、他人の要素の推測にならない） |
 | 0 に戻す時点 | 2 つの要素（TOTP または回復コード）がそろったログインの成功だけ。password の段の成功では戻さない（password を知る者が、TOTP を試しながら password を通し直して回数を戻せないように）。ロック中は戻さない（IA-INV-03） |
 | ロックの確かめ | 判定は `LoginAttemptService#isLocked` の 1 か所。password の段は `DaoAuthenticationProvider` の照合の後の確認で、今の `AccountStatusUserDetailsChecker` を包む入口の部品 `LockAwareUserDetailsChecker` が、まず `isLocked` を見て `LockedException`、次に今の利用停止の確認をする。照合の前に確かめると、応答の時間（bcrypt を回すか）でロックが分かる（Bolt 14 の利用停止と同じ理由）。TOTP・回復コードの段は、provider が確かめる前に `isLocked` を見て `LockedException`（失敗のハンドラーが `/login?totp-error` に戻す）。`LockedException` の失敗のイベントは `AuthenticationFailureLockedEvent`（枠組みの既定の対応） |
 | `CargoUserDetails` | 項目を足さない。足すと配備の前の session の値が false で復元され、ロックの状態が session に写る（session の直列化の互換。ADR-012 のネガティブ）。ロックの状態は session に写さず、毎回 `isLocked` で確かめる |
 | 理由の優先 | ロックが先。ロック中で利用停止の利用者は理由 `LOCKED` |
-| ロック中の試行の監査 | 正しい password（Locked のイベント）は `recordLockedAttempt`、誤った password（BadCredentials のイベント）は `recordFailure` がロック中と見分けて、どちらも `LOGIN_FAILED`（理由 `LOCKED`）を書き、数えない |
+| ロック中の試行の監査 | ロックで確かめずに拒んだ試行（Locked のイベント。password の段の正しい password、TOTP・回復コードの段で照合の前）は `recordLockedAttempt`、誤った password（BadCredentials のイベント）は `recordFailure` がロック中と見分けて、どちらも `LOGIN_FAILED`（理由 `LOCKED`）を書き、数えない |
 | ロックの監査 | この失敗でロックしたときだけ `ACCOUNT_LOCKED`（結果 `SUCCESS`、理由なし、操作者は利用者と企業）を同じトランザクションで書く。リポジトリの `recordFailure` が条件付きの更新の件数から「数えたか」と数えた後の状態（`FailureCount`）を返し、サービスはそれで見分ける。同時の 4・5 回目でも `ACCOUNT_LOCKED` は 1 行だけになる |
-| 最初の失敗の作成の競合（Bolt 30 の議題 2 の③） | 主たるトランザクションの前に、別の短いトランザクションで 0 回の行を作る（`prepare`。なければ作る。入れ子にしないので接続を 2 本持たない。採番の `prepareYear` と同じ形）。一意制約の違反はトランザクションの外で受けて、既にあるとして続ける（ADR-007 の「一意制約の違反は同じトランザクションで捕まえない」）。数える・監査は主たるトランザクションに残す。利用者を作るときに行を作る案は、利用者の管理（Bolt 34）と既存の利用者のデータの移行が要るので採らない |
-| DB の誤り | 書き込み（数え方・監査）の DB の誤りは 500 にしてエラーのログを残す（監査記録なしにログインを通さない。IA-INV-08）。読み出しの誤りは、どこで起きるかで違う。利用者の読み出し（`loadUserByUsername`）の誤りだけは、枠組みが `InternalAuthenticationServiceException` に包んで失敗へ倒し `/login?error` になる（ログインは通さない）。これを受け入れ、監査の理由は `SERVICE_ERROR`（数えない）にする。この例外には既定の失敗のイベントの対応がない（対応は例外のクラス名の完全一致で選ばれ、親の型の対応は使われない）ので、`SecurityConfiguration` で `AuthenticationFailureServiceExceptionEvent` に対応させる。ロックの読み出しの誤りは、password の段（照合の後の確認。枠組みは包まない）でも TOTP・回復コードの段でも 500。計画では password の段のロックの読み出しも `/login?error` になると見ていたが、実装で照合の後の確認の例外は包まれないと分かった（Bolt 32。`AuthenticationErrorHandlingIntegrationTest` と特性テストで確かめる）。利用者の読み出しも 500 にそろえるには枠組みの失敗の扱いを変える必要があり、得るものが小さい |
+| 最初の失敗の作成の競合（Bolt 30 の議題 2 の③） | 主たるトランザクションの前に、トランザクションの外の 1 文（auto-commit）で 0 回の行を作る（`prepare`。なければ作る。入れ子にしないので接続を 2 本持たない）。サービスは作成を `PROPAGATION_NOT_SUPPORTED` で流し、外側にトランザクションがあっても中断して外で流す（採番の `prepareYear` は `REQUIRES_NEW` で守る。どちらも違反で外側を中断させない）。一意制約の違反はトランザクションの外で受けて、既にあるとして続ける（ADR-007 の「一意制約の違反は同じトランザクションで捕まえない」）。数える・監査は主たるトランザクションに残す。利用者を作るときに行を作る案は、利用者の管理（Bolt 34）と既存の利用者のデータの移行が要るので採らない |
+| DB の誤り | 書き込み（数え方・監査）の DB の誤りは 500 にしてエラーのログを残す（監査記録なしにログインを通さない。IA-INV-08）。読み出しの誤りは、どこで起きるかで違う。利用者の読み出し（`loadUserByUsername`）の誤りだけは、枠組みが `InternalAuthenticationServiceException` に包んで失敗へ倒し `/login?error` になる（ログインは通さない）。これを受け入れ、監査の理由は `SERVICE_ERROR`（数えない）にする。この例外には既定の失敗のイベントの対応がない（対応は例外のクラス名の完全一致で選ばれ、親の型の対応は使われない）ので、`SecurityConfiguration` で `AuthenticationFailureServiceExceptionEvent` に対応させる。ロックの読み出しの誤りは、password の段（照合の後の確認。枠組みは包まない）でも TOTP・回復コードの段でも 500。計画では password の段のロックの読み出しも `/login?error` になると見ていたが、実装で照合の後の確認の例外は包まれないと分かった（Bolt 32。`AuthenticationErrorHandlingIntegrationTest` と特性テストで確かめる）。利用者の読み出しも 500 にそろえるには枠組みの失敗の扱いを変える必要があり、得るものが小さい。password の段のロックの読み出しの 500 は password が正しいときだけ起きるので、DB の障害の間に限り「500 なら password は正しい」という手がかりになる。攻撃者は DB の障害を起こせないので受け入れる |
 | 応答と画面 | ロック中も誤りと同じ応答（password の段は `/login?error`、TOTP・回復コードの段は `/login?totp-error`。どちらも誤りと同じ文言）。存在しない利用者の応答とも同じ。A-01 の 2 つの誤りの文言（password の段、認証コードの段）に一般の予告「続けて 5 回誤ると、15 分ログインできなくなります。」を足す（TOTP・回復コードの誤りも数えるので、予告を見ないままロックされないように）。ロックの有無と解ける時刻は示さない（AC2） |
 
 受け入れること（2026-10-13、human:kakimomokuri）:
@@ -275,6 +275,7 @@ ArchUnit で、ZXing を参照するのが暗号の部品（`identity.infrastruc
 - `{bcrypt}` の接頭辞で中身が壊れた password のハッシュは、枠組みが false を返す（照合が一致しない。利用者の誤りとして数えられる）。読めない要素として扱うには bcrypt の形の知識を入口に持ち込むことになり、壊すには DB への書き込みが要るので、扱いを変えず、特性テストで固定する。
 - S-02（利用者を変えながら password を試す攻撃。spraying）は、利用者ごとのロックでは止まらない。本番の前段の WAF の送信元ごとの流量の規則（W10。SEC-20）で扱い、それまでは受け入れる（パイロットの前で本番の利用者はいない）。リスク台帳に置く。
 - ロックの解除の操作（システム管理者）は、利用者の管理（US-16。Bolt 34）で作る。それまでは 15 分の経過だけで解ける。
+- TOTP・回復コードの段で、ロックを確かめてから成功を記録するまでの短い間（数十ミリ秒）に別の session の失敗でロックされると、そのログインは通る（回数とロックは消さない）。間は短く、この段に来た者は password を知っているので受け入れる（Bolt 32 の開発レビュー）。
 
 ### 代替案
 

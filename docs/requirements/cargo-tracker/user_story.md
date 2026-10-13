@@ -4,7 +4,7 @@ title: "cargo-tracker ユーザーストーリー"
 description: "cargo-tracker MVP の価値単位のユーザーストーリー、受入条件、上流要件へのトレーサビリティ。"
 tags: [requirements, user-story]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-13T12:13:54Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-13T13:17:00Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T05:20:11Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:01:39Z }
@@ -507,7 +507,7 @@ W5 の開始準備の決定（2026-10-11、human:kakimomokuri）: #13 は W5 の
 
 Bolt 32 の決定（2026-10-13、human:kakimomokuri。[Bolt 32 計画](../../development/cargo-tracker/bolt_32_plan.md) の確認ポイント 1〜11、[ADR-011](../../adr/cargo-tracker/011-mfa-totp.md) の決定 9）:
 
-- AC3 の「password または TOTP の認証」の失敗には、回復コードの誤りも含めて合わせて数える（回復コードの総当たりもロックで抑える）。数えないのは、ロック中の試行、存在しない利用者、password が正しく利用停止・無効な企業で拒んだとき、入口の DB の誤り、TOTP の登録のコードの誤り。0 に戻すのは 2 つの要素がそろったログインの成功だけ。
+- AC3 の「password または TOTP の認証」の失敗には、回復コードの誤りも含めて合わせて数える（回復コードの総当たりもロックで抑える）。数えないのは、ロック中の試行、存在しない利用者、password が正しく利用停止・無効な企業で拒んだとき、利用者の読み出しの DB の誤り、TOTP の登録のコードの誤り。0 に戻すのは 2 つの要素がそろったログインの成功だけ。
 - AC3 の「追加試行が拒否される」は、ロック中も AC2 と同じく誤りと同じ応答と文言で拒む。ロックの有無と解ける時刻は示さず、誤りの文言に一般の予告「続けて 5 回誤ると、15 分ログインできなくなります。」を足す。
 - 利用者を変えながら password を試す攻撃（S-02）は利用者ごとのロックでは止まらないので、W10 の WAF の送信元ごとの流量の規則（SEC-20）で扱う。
 - AC6 の request ごとの役割の確認は Bolt 32c で作る。
