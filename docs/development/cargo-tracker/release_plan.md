@@ -4,7 +4,7 @@ title: "リリース計画 - cargo-tracker（A 社国際貨物輸送管理シス
 description: "cargo-tracker MVP のリリース計画。1 人 + AI、時間単位の Bolt（= イテレーション）と週次の見直しで、最初の縦の流れ（R0.1）、パイロット準備完了（R1.0）、本格展開前（R1.1）の 3 段階、Unit のエントロピー評価、SP、バッファ、パイロット開始の条件、引継ぎ ID の台帳、業務責任者に確かめる事項の台帳。"
 tags: [development,release-plan]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-13T06:26:33Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-13T06:45:10Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T09:29:53Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:38:26Z }
@@ -890,3 +890,4 @@ xychart-beta
 | 2026-10-13 | Bolt 31b のステップ 1: W5 の Bolt の分け方の表の 33b の行で回復コードによるログインを 31c に、Bolt 13・14 からの持ち込みの表で ADR-012 の見直しの 4・特性テスト・スパイクの削除を 31c に直した。US-18 の Bolt の順序（31b → 31c → 32、31c → 33b）と、W5 が 13 本になり本数と SP を W5 の締めで確かめることを書いた | anthropic/claude-opus-5-5 |
 | 2026-10-13 | Bolt 31b の終了報告を作った（承認待ち。`/goal Bolt31b` で承認ゲートを止めずに進めた。開発レビューの高を直し、残りは 31c・32・33b に送る。US-18 の AC7 の SP 2 を 31b で数える） | anthropic/claude-opus-5-5 |
 | 2026-10-13 | Bolt 31b の終了報告の承認を記録した（議題 1〜5 を承認。動画は撮り直さない） | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
+| 2026-10-13 | Bolt 31c の開始準備: 31c と 31d に分け（31c は回復コードによるログインと password の段の主体の型・ADR-012 の見直しの 4、31d は構造の直し。どちらも SP 0）、回復コードは A-02 の `<details>` の別の欄、通ったら `FACTOR_TOTP` と専用の監査、主体の型は `valueobjects` に置くことを決めた。Bolt 31c 計画を作り、2 つの整合性検証の指摘を反映した（承認待ち。W5 の行の直しは計画のステップ 1） | anthropic/claude-opus-5-5、決定 human:kakimomokuri |
