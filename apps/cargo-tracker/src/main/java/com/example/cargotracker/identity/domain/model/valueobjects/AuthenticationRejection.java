@@ -16,6 +16,8 @@ public enum AuthenticationRejection {
     INVALID_TOTP,
     /** 使った刻み以下の TOTP の認証コード（同じコードの再利用。IA-INV-10、Bolt 31）。 */
     TOTP_REUSED,
+    /** TOTP を登録していない利用者が認証コードを送った（A-02 の画面は A-07 へ送るので、画面を経ない送信。Bolt 31d）。 */
+    TOTP_NOT_ENROLLED,
     /** 回復コードが形の違い・誤り・使用済みのどれか、または回復コードと認証コードの両方を送った（Bolt 31c）。 */
     INVALID_RECOVERY_CODE
 }

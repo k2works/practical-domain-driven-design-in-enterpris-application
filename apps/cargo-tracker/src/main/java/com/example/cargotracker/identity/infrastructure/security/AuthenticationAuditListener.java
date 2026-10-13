@@ -1,6 +1,5 @@
 package com.example.cargotracker.identity.infrastructure.security;
 
-import com.example.cargotracker.identity.application.internal.commandservices.TotpVerification;
 import com.example.cargotracker.identity.domain.model.aggregates.AuditRecord;
 import com.example.cargotracker.identity.domain.model.aggregates.AuditRecordRepository;
 import com.example.cargotracker.identity.domain.model.aggregates.CompanyRepository;
@@ -91,17 +90,21 @@ public class AuthenticationAuditListener {
     }
 
     /**
-     * 2 つ目の要素（TOTP の段）の失敗の理由。回復コードの拒否は {@code INVALID_RECOVERY_CODE}（Bolt 31c）。TOTP は再利用だけを分け、ほかは一致しない
-     * とする（利用者には同じ文言。AC2）。
+     * 2 つ目の要素（TOTP の段）の失敗の理由。回復コードの拒否は {@code INVALID_RECOVERY_CODE}（Bolt 31c）。TOTP は再利用と未登録
+     * （Bolt 31d）を分け、ほかは一致しないとする（利用者には同じ文言。AC2）。
      */
     private static AuthenticationRejection secondFactorReasonOf(AbstractAuthenticationFailureEvent event) {
         if (event.getException() instanceof RecoveryCodeRejectedException) {
             return AuthenticationRejection.INVALID_RECOVERY_CODE;
         }
-        return event.getException() instanceof TotpRejectedException rejected
-                        && rejected.verification() == TotpVerification.REJECTED_REUSED
-                ? AuthenticationRejection.TOTP_REUSED
-                : AuthenticationRejection.INVALID_TOTP;
+        if (event.getException() instanceof TotpRejectedException rejected) {
+            return switch (rejected.verification()) {
+                case REJECTED_REUSED -> AuthenticationRejection.TOTP_REUSED;
+                case REJECTED_NOT_ENROLLED -> AuthenticationRejection.TOTP_NOT_ENROLLED;
+                case ACCEPTED, REJECTED_MISMATCH -> AuthenticationRejection.INVALID_TOTP;
+            };
+        }
+        return AuthenticationRejection.INVALID_TOTP;
     }
 
     @EventListener

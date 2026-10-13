@@ -12,6 +12,7 @@ import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -61,6 +62,25 @@ class TotpVerificationServiceTest {
         assertThat(service.verify(user, "000100")).isEqualTo(TotpVerification.REJECTED_REUSED);
         assertThat(service.verify(user, "000099")).as("使った刻みより前").isEqualTo(TotpVerification.REJECTED_REUSED);
         assertThat(service.verify(user, "000101")).as("使った刻みより後").isEqualTo(TotpVerification.ACCEPTED);
+    }
+
+    @Test
+    void 拒否のときも生成の呼び出しは窓の刻みの数だけで資格を作り直さない() {
+        // H1: 照合の結果（TotpMatch）を写すだけにし、再利用を見分けるための 2 回目の照合をしない（Bolt 31d）
+        AtomicInteger calls = new AtomicInteger();
+        TotpCodeGenerator counting = (owner, secret, step) -> {
+            calls.incrementAndGet();
+            return GENERATOR.code(owner, secret, step);
+        };
+        TotpVerificationService countingService =
+                new TotpVerificationService(credentials, counting, Clock.fixed(NOW, ZoneOffset.UTC));
+
+        assertThat(countingService.verify(user, "000098")).isEqualTo(TotpVerification.REJECTED_MISMATCH);
+        assertThat(calls).as("不一致").hasValue(3);
+        countingService.verify(user, "000100");
+        calls.set(0);
+        assertThat(countingService.verify(user, "000100")).isEqualTo(TotpVerification.REJECTED_REUSED);
+        assertThat(calls).as("再利用").hasValue(3);
     }
 
     @Test

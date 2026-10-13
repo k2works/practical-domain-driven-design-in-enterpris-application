@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.example.cargotracker.identity.domain.model.valueobjects.EncryptedSecret;
+import com.example.cargotracker.identity.domain.model.valueobjects.TotpMatch;
 import com.example.cargotracker.shared.domain.UserId;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import java.time.Instant;
@@ -80,23 +81,24 @@ class TotpCredentialTest {
     void 前後1つの刻みのコードを受け付けそれより外は受け付けない() {
         TotpCredential credential = lastUsed(0);
 
-        assertThat(credential.matchingStep("000100", 100, GENERATOR)).hasValue(100);
-        assertThat(credential.matchingStep("000099", 100, GENERATOR)).hasValue(99);
-        assertThat(credential.matchingStep("000101", 100, GENERATOR)).hasValue(101);
-        assertThat(credential.matchingStep("000098", 100, GENERATOR)).isEmpty();
-        assertThat(credential.matchingStep("000102", 100, GENERATOR)).isEmpty();
-        assertThat(credential.matchingStep("123456", 100, GENERATOR)).isEmpty();
+        assertThat(credential.match("000100", 100, GENERATOR)).isEqualTo(new TotpMatch.Matched(100));
+        assertThat(credential.match("000099", 100, GENERATOR)).isEqualTo(new TotpMatch.Matched(99));
+        assertThat(credential.match("000101", 100, GENERATOR)).isEqualTo(new TotpMatch.Matched(101));
+        assertThat(credential.match("000098", 100, GENERATOR)).isEqualTo(new TotpMatch.Mismatch());
+        assertThat(credential.match("000102", 100, GENERATOR)).isEqualTo(new TotpMatch.Mismatch());
+        assertThat(credential.match("123456", 100, GENERATOR)).isEqualTo(new TotpMatch.Mismatch());
     }
 
     @Test
     void 窓の中でも最後に使った刻み以下のコードは受け付けない() {
         TotpCredential credential = lastUsed(100);
 
-        assertThat(credential.matchingStep("000099", 100, GENERATOR)).isEmpty();
-        assertThat(credential.matchingStep("000100", 100, GENERATOR))
-                .as("同じコードの再利用")
-                .isEmpty();
-        assertThat(credential.matchingStep("000101", 100, GENERATOR)).hasValue(101);
+        assertThat(credential.match("000099", 100, GENERATOR)).as("使った刻みより前で一致").isEqualTo(new TotpMatch.Reused());
+        assertThat(credential.match("000100", 100, GENERATOR)).as("同じコードの再利用").isEqualTo(new TotpMatch.Reused());
+        assertThat(credential.match("000101", 100, GENERATOR)).isEqualTo(new TotpMatch.Matched(101));
+        assertThat(credential.match("000098", 100, GENERATOR))
+                .as("窓の外は使った刻み以下でも再利用でなく不一致")
+                .isEqualTo(new TotpMatch.Mismatch());
     }
 
     @Test
@@ -106,21 +108,19 @@ class TotpCredentialTest {
             throw new AssertionError("形の違うコードで生成器を呼んだ");
         };
 
-        assertThat(credential.matchingStep(null, 100, mustNotBeCalled)).isEmpty();
-        assertThat(credential.matchingStep("", 100, mustNotBeCalled)).isEmpty();
-        assertThat(credential.matchingStep(" 000100", 100, mustNotBeCalled)).isEmpty();
-        assertThat(credential.matchingStep("00010a", 100, mustNotBeCalled)).isEmpty();
-        assertThat(credential.matchingStep("０００１００", 100, mustNotBeCalled))
-                .as("全角の数字")
-                .isEmpty();
+        assertThat(credential.match(null, 100, mustNotBeCalled)).isEqualTo(new TotpMatch.Mismatch());
+        assertThat(credential.match("", 100, mustNotBeCalled)).isEqualTo(new TotpMatch.Mismatch());
+        assertThat(credential.match(" 000100", 100, mustNotBeCalled)).isEqualTo(new TotpMatch.Mismatch());
+        assertThat(credential.match("00010a", 100, mustNotBeCalled)).isEqualTo(new TotpMatch.Mismatch());
+        assertThat(credential.match("０００１００", 100, mustNotBeCalled)).as("全角の数字").isEqualTo(new TotpMatch.Mismatch());
     }
 
     @Test
     void 桁数の違うコードは受け付けない() {
         TotpCredential credential = lastUsed(0);
 
-        assertThat(credential.matchingStep("00100", 100, GENERATOR)).isEmpty();
-        assertThat(credential.matchingStep("0000100", 100, GENERATOR)).isEmpty();
+        assertThat(credential.match("00100", 100, GENERATOR)).isEqualTo(new TotpMatch.Mismatch());
+        assertThat(credential.match("0000100", 100, GENERATOR)).isEqualTo(new TotpMatch.Mismatch());
     }
 
     @Test
@@ -133,7 +133,7 @@ class TotpCredentialTest {
                 return GENERATOR.code(owner, secret, step);
             };
 
-            credential.matchingStep(code, 100, counting);
+            credential.match(code, 100, counting);
 
             assertThat(generated).as(code).containsExactly(99L, 100L, 101L);
         }
@@ -151,7 +151,7 @@ class TotpCredentialTest {
             return GENERATOR.code(owner, secret, step);
         };
 
-        assertThat(credential.matchingStep("000001", 0, rejectsNegative)).hasValue(1);
+        assertThat(credential.match("000001", 0, rejectsNegative)).isEqualTo(new TotpMatch.Matched(1));
         assertThat(generated).containsExactly(0L, 1L);
     }
 
@@ -167,7 +167,7 @@ class TotpCredentialTest {
             return GENERATOR.code(owner, secret, step);
         };
 
-        credential.matchingStep("000100", 100, recording);
+        credential.match("000100", 100, recording);
 
         assertThat(given).hasSize(3).containsOnly(own);
         assertThat(owners).as("暗号文の持ち主として自分の利用者を渡す（AAD。Bolt 31b）").containsOnly(USER);
@@ -177,7 +177,7 @@ class TotpCredentialTest {
     void 今の刻みが負なら失敗へ倒す() {
         TotpCredential credential = lastUsed(0);
 
-        assertThatThrownBy(() -> credential.matchingStep("000000", -1, GENERATOR))
+        assertThatThrownBy(() -> credential.match("000000", -1, GENERATOR))
                 .isInstanceOf(IllegalArgumentException.class);
     }
 }
