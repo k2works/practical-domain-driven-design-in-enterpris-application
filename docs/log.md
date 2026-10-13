@@ -4,6 +4,7 @@
 * **Update**: [bolt_31_report](/development/cargo-tracker/bolt_31_report.md) を更新（anthropic/claude-opus-5-5）
 * **Update**: [bolt_31_report](/development/cargo-tracker/bolt_31_report.md) を更新（anthropic/claude-opus-5-5）
 * **Update**: [bolt_31_report](/development/cargo-tracker/bolt_31_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_31_report](/development/cargo-tracker/bolt_31_report.md) を更新（anthropic/claude-opus-5-5）
 * **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
 * **Update**: [bolt_31_plan](/development/cargo-tracker/bolt_31_plan.md) を更新（anthropic/claude-opus-5-5）
 * **Update**: [011-mfa-totp](/adr/cargo-tracker/011-mfa-totp.md) を更新（anthropic/claude-opus-5-5）

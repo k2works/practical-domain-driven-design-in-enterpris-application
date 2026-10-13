@@ -4,7 +4,7 @@ title: "Bolt 31 終了報告 - TOTP の秘密の暗号化と 2 段階のログ�
 description: "W5 の 5 本目の Bolt の終了報告。TOTP の秘密を AES-GCM で暗号化し、Spring Security 7 の要素の権限で password と TOTP の 2 段階のログイン（A-02）を組んだ。最長 8 時間は TOTP が初めて通った時刻から数え、password の段だけの session は 5 分で失効する。層の規則に 2 つの狭い例外を足した。/goal Bolt31 で承認ゲートを止めずに進めたので、止まらなかったゲートを承認の議題に置く。"
 tags: [plan]
 status: draft
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-13T03:46:14Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-13T04:09:09Z }
 ---
 
 # Bolt 31 終了報告 - TOTP の秘密の暗号化と 2 段階のログイン（A-02）
@@ -29,7 +29,7 @@ generated: { by: anthropic/claude-opus-5-5, at: 2026-10-13T03:46:14Z }
 | 期間 | 2026-10-13 10:20（計画の承認の記録 `2528a39`）〜 12:30。開始準備（計画の初版 `d6c8791`）は 09:45 頃から |
 | 対象 | `identity`（暗号化、TOTP の確かめのサービス、Spring Security の 2 段階化、A-02・登録の案内、監査、dev の入力済み）、層の規則、画面の層のテストのログインの手順、ADR-011・ADR-012、ドメインモデル・UI 設計・データモデル・非機能要件・技術スタック・アーキテクチャ、リリース計画 |
 | SP | 0（US-18 の SP 6 は Bolt 33b で数える） |
-| GitHub | [#13](https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/13)（閉じない） |
+| GitHub | [#13](https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/13)（閉じない）。デモの動画 2 本を[コメント](https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/13#issuecomment-6138030372)に添付した（`issue:attach-demo`。人の指示で終了報告の承認の前に添付した） |
 | 計画 | [Bolt 31 計画](bolt_31_plan.md) |
 
 ## 成果
