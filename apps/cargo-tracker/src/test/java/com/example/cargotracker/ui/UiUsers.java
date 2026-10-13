@@ -11,6 +11,7 @@ import com.example.cargotracker.identity.domain.model.valueobjects.CompanyKind;
 import com.example.cargotracker.identity.domain.model.valueobjects.EmailAddress;
 import com.example.cargotracker.identity.domain.model.valueobjects.UserStatus;
 import com.example.cargotracker.identity.infrastructure.security.AesGcmSecretCipher;
+import com.example.cargotracker.identity.infrastructure.security.Base32;
 import com.example.cargotracker.shared.domain.CompanyId;
 import com.example.cargotracker.shared.domain.Role;
 import com.example.cargotracker.shared.domain.UserId;
@@ -70,10 +71,6 @@ public class UiUsers {
         this.jdbc = jdbc;
     }
 
-    /**
-     * A-02 に入れる、その時点のコード。同じ利用者が同じ刻みの間に入り直しても再利用として拒まれないよう、テストの準備として
-     * 使った刻みを戻してから作る（本体の再利用の拒否は変えない。Bolt 31 の確認ポイント 7）。
-     */
     /** 前後 1 つの刻みのどのコードとも一致しないコード（誤ったコードの送信のため）。 */
     public String wrongTotpCode(Role role) {
         TotpCredential credential =
@@ -89,6 +86,10 @@ public class UiUsers {
                 .orElseThrow();
     }
 
+    /**
+     * A-02 に入れる、その時点のコード。同じ利用者が同じ刻みの間に入り直しても再利用として拒まれないよう、テストの準備として
+     * 使った刻みを戻してから作る（本体の再利用の拒否は変えない。Bolt 31 の確認ポイント 7）。
+     */
     public String totpCode(Role role) {
         UserId userId = of(role).userId();
         jdbc.update("UPDATE identity.totp_credential SET last_used_step = 0 WHERE user_id = ?", userId.value());
@@ -99,10 +100,24 @@ public class UiUsers {
 
     /** 役割の利用者のメールアドレスと password。初めて求められたときに作る。 */
     public Credentials of(Role role) {
-        return created.computeIfAbsent(role, this::create);
+        return created.computeIfAbsent(role, each -> create(each, true));
     }
 
-    private Credentials create(Role role) {
+    /** TOTP を登録していない役割の利用者（A-07 の登録のシナリオ。Bolt 31b）。初めて求められたときに作る。 */
+    public Credentials ofWithoutTotp(Role role) {
+        return created.computeIfAbsent(role, each -> create(each, false));
+    }
+
+    /** A-07 の手入力のキー（Base32）から、利用者の認証アプリと同じようにその時点のコードを作る（Bolt 31b）。 */
+    public String codeFromKey(Role role, String manualKey) {
+        UserId owner = of(role).userId();
+        return totpCodes.code(
+                owner,
+                cipher.encrypt(Base32.decode(manualKey.replace(" ", "")), owner),
+                TotpCredential.stepAt(new UtcInstant(clock.instant())));
+    }
+
+    private Credentials create(Role role, boolean enrollTotp) {
         boolean shipper = role == Role.SHIPPER;
         Company company = Company.of(
                 new CompanyId(UUID.randomUUID()),
@@ -120,8 +135,10 @@ public class UiUsers {
                 passwordEncoder.encode(PASSWORD),
                 UserStatus.ACTIVE,
                 Set.of(role)));
-        totpCredentials.add(TotpCredential.enroll(
-                userId, cipher.encrypt(TOTP_SECRET.clone(), userId), new UtcInstant(clock.instant())));
+        if (enrollTotp) {
+            totpCredentials.add(TotpCredential.enroll(
+                    userId, cipher.encrypt(TOTP_SECRET.clone(), userId), new UtcInstant(clock.instant())));
+        }
         return new Credentials(userId, email, PASSWORD);
     }
 

@@ -274,6 +274,37 @@ class TotpEnrollmentSecurityIntegrationTest {
         mvc.perform(get(TOTP_URL).cookie(session)).andExpect(redirectedUrl("/session-expired"));
     }
 
+    @Test
+    void 登録の途中のsessionで別の利用者がpasswordを送ると前の利用者の秘密は使えず新しい秘密になる() throws Exception {
+        // T-102: 同じ session での利用者の切り替え。前の利用者の登録の途中の暗号文と時刻を残さない。見張り（T-88）: password の段で
+        // 値を消すことと、暗号文の AAD（前の利用者の暗号文は後の利用者として使えない）の 2 つで守るので、片方を外しても通る
+        String first = unenrolledUser();
+        String second = unenrolledUser();
+        Cookie session = loginWithPassword(first);
+        String firstKey = manualKey(enrollPage(session));
+
+        Cookie switched = mvc.perform(post("/login")
+                        .cookie(session)
+                        .param("username", second)
+                        .param("password", PASSWORD)
+                        .with(csrf()))
+                .andExpect(redirectedUrl(TOTP_URL))
+                .andReturn()
+                .getResponse()
+                .getCookie(SESSION_COOKIE);
+        String secondKey = manualKey(enrollPage(switched));
+
+        assertThat(secondKey).isNotEqualTo(firstKey);
+        mvc.perform(post(ENROLL_URL)
+                        .cookie(switched)
+                        .param("code", codeFromKey(first, firstKey))
+                        .with(csrf()))
+                .andExpect(status().isOk());
+        assertThat(totpCredentials.findByUserId(userIdOf(second)))
+                .as("前の利用者の秘密のコードでは登録しない")
+                .isEmpty();
+    }
+
     // --- 補助 ---
 
     private String unenrolledUser() {

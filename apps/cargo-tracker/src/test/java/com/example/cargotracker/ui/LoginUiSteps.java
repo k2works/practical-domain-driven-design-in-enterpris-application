@@ -49,6 +49,38 @@ public class LoginUiSteps {
         credentials = users.of(role);
     }
 
+    @前提("認証アプリを登録していない荷主担当者の利用者が登録されている")
+    public void 認証アプリを登録していない荷主担当者の利用者が登録されている() {
+        role = Role.SHIPPER;
+        credentials = users.ofWithoutTotp(role);
+    }
+
+    @もし("認証アプリの登録の画面で手入力のキーから作ったコードを入れて登録する")
+    public void 手入力のキーから作ったコードを入れて登録する() {
+        page().waitForURL(url -> url.contains("/login/totp/enroll"));
+        browser.checkAccessibility();
+        String key = page().locator("code.app-totp-key").getAttribute("data-manual-key");
+        page().getByLabel("認証コード").fill(users.codeFromKey(role, key));
+        page().getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("登録する"))
+                .click();
+        page().waitForURL(url -> url.contains("/login/totp/enroll"));
+        page().waitForLoadState();
+        browser.checkAccessibility();
+    }
+
+    @ならば("回復コードが {int} 個表示される")
+    public void 回復コードが表示される(int count) {
+        assertThat(page().locator("ol.app-recovery-codes li")).hasCount(count);
+    }
+
+    @もし("回復コードを安全な場所に保存したに印を付けてログインを続ける")
+    public void 回復コードを保存したに印を付けてログインを続ける() {
+        page().getByLabel("回復コードを安全な場所に保存した").check();
+        page().getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("ログインを続ける"))
+                .click();
+        page().waitForURL(url -> url.contains("/login/totp") && !url.contains("enroll"));
+    }
+
     @前提("営業担当者の利用者が登録されている")
     public void 営業担当者の利用者が登録されている() {
         role = Role.SALES;
