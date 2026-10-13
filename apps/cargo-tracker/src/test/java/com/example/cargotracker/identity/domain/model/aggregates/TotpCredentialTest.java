@@ -68,8 +68,6 @@ class TotpCredentialTest {
     /** 偽の生成器。秘密を使わず、刻みの番号を 6 桁にしたものをコードにする。 */
     private static final TotpCodeGenerator GENERATOR = (secret, step) -> String.format("%06d", step % 1_000_000);
 
-    private static final byte[] SECRET = {1, 2, 3};
-
     @Test
     void 時刻の刻みは30秒ごとの番号() {
         assertThat(TotpCredential.stepAt(new UtcInstant(Instant.ofEpochSecond(59))))
@@ -82,23 +80,23 @@ class TotpCredentialTest {
     void 前後1つの刻みのコードを受け付けそれより外は受け付けない() {
         TotpCredential credential = lastUsed(0);
 
-        assertThat(credential.matchingStep("000100", SECRET, 100, GENERATOR)).hasValue(100);
-        assertThat(credential.matchingStep("000099", SECRET, 100, GENERATOR)).hasValue(99);
-        assertThat(credential.matchingStep("000101", SECRET, 100, GENERATOR)).hasValue(101);
-        assertThat(credential.matchingStep("000098", SECRET, 100, GENERATOR)).isEmpty();
-        assertThat(credential.matchingStep("000102", SECRET, 100, GENERATOR)).isEmpty();
-        assertThat(credential.matchingStep("123456", SECRET, 100, GENERATOR)).isEmpty();
+        assertThat(credential.matchingStep("000100", 100, GENERATOR)).hasValue(100);
+        assertThat(credential.matchingStep("000099", 100, GENERATOR)).hasValue(99);
+        assertThat(credential.matchingStep("000101", 100, GENERATOR)).hasValue(101);
+        assertThat(credential.matchingStep("000098", 100, GENERATOR)).isEmpty();
+        assertThat(credential.matchingStep("000102", 100, GENERATOR)).isEmpty();
+        assertThat(credential.matchingStep("123456", 100, GENERATOR)).isEmpty();
     }
 
     @Test
     void 窓の中でも最後に使った刻み以下のコードは受け付けない() {
         TotpCredential credential = lastUsed(100);
 
-        assertThat(credential.matchingStep("000099", SECRET, 100, GENERATOR)).isEmpty();
-        assertThat(credential.matchingStep("000100", SECRET, 100, GENERATOR))
+        assertThat(credential.matchingStep("000099", 100, GENERATOR)).isEmpty();
+        assertThat(credential.matchingStep("000100", 100, GENERATOR))
                 .as("同じコードの再利用")
                 .isEmpty();
-        assertThat(credential.matchingStep("000101", SECRET, 100, GENERATOR)).hasValue(101);
+        assertThat(credential.matchingStep("000101", 100, GENERATOR)).hasValue(101);
     }
 
     @Test
@@ -108,13 +106,11 @@ class TotpCredentialTest {
             throw new AssertionError("形の違うコードで生成器を呼んだ");
         };
 
-        assertThat(credential.matchingStep(null, SECRET, 100, mustNotBeCalled)).isEmpty();
-        assertThat(credential.matchingStep("", SECRET, 100, mustNotBeCalled)).isEmpty();
-        assertThat(credential.matchingStep(" 000100", SECRET, 100, mustNotBeCalled))
-                .isEmpty();
-        assertThat(credential.matchingStep("00010a", SECRET, 100, mustNotBeCalled))
-                .isEmpty();
-        assertThat(credential.matchingStep("０００１００", SECRET, 100, mustNotBeCalled))
+        assertThat(credential.matchingStep(null, 100, mustNotBeCalled)).isEmpty();
+        assertThat(credential.matchingStep("", 100, mustNotBeCalled)).isEmpty();
+        assertThat(credential.matchingStep(" 000100", 100, mustNotBeCalled)).isEmpty();
+        assertThat(credential.matchingStep("00010a", 100, mustNotBeCalled)).isEmpty();
+        assertThat(credential.matchingStep("０００１００", 100, mustNotBeCalled))
                 .as("全角の数字")
                 .isEmpty();
     }
@@ -123,8 +119,8 @@ class TotpCredentialTest {
     void 桁数の違うコードは受け付けない() {
         TotpCredential credential = lastUsed(0);
 
-        assertThat(credential.matchingStep("00100", SECRET, 100, GENERATOR)).isEmpty();
-        assertThat(credential.matchingStep("0000100", SECRET, 100, GENERATOR)).isEmpty();
+        assertThat(credential.matchingStep("00100", 100, GENERATOR)).isEmpty();
+        assertThat(credential.matchingStep("0000100", 100, GENERATOR)).isEmpty();
     }
 
     @Test
@@ -137,7 +133,7 @@ class TotpCredentialTest {
                 return GENERATOR.code(secret, step);
             };
 
-            credential.matchingStep(code, SECRET, 100, counting);
+            credential.matchingStep(code, 100, counting);
 
             assertThat(generated).as(code).containsExactly(99L, 100L, 101L);
         }
@@ -155,16 +151,30 @@ class TotpCredentialTest {
             return GENERATOR.code(secret, step);
         };
 
-        assertThat(credential.matchingStep("000001", SECRET, 0, rejectsNegative))
-                .hasValue(1);
+        assertThat(credential.matchingStep("000001", 0, rejectsNegative)).hasValue(1);
         assertThat(generated).containsExactly(0L, 1L);
+    }
+
+    @Test
+    void 生成器には資格が持つ暗号化した秘密を渡し平文の秘密を扱わない() {
+        EncryptedSecret own = new EncryptedSecret("v1:own-ciphertext");
+        TotpCredential credential = TotpCredential.reconstitute(USER, own, 0, ENROLLED_AT);
+        List<EncryptedSecret> given = new ArrayList<>();
+        TotpCodeGenerator recording = (secret, step) -> {
+            given.add(secret);
+            return GENERATOR.code(secret, step);
+        };
+
+        credential.matchingStep("000100", 100, recording);
+
+        assertThat(given).hasSize(3).containsOnly(own);
     }
 
     @Test
     void 今の刻みが負なら失敗へ倒す() {
         TotpCredential credential = lastUsed(0);
 
-        assertThatThrownBy(() -> credential.matchingStep("000000", SECRET, -1, GENERATOR))
+        assertThatThrownBy(() -> credential.matchingStep("000000", -1, GENERATOR))
                 .isInstanceOf(IllegalArgumentException.class);
     }
 }

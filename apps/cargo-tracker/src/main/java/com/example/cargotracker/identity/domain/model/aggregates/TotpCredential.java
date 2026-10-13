@@ -85,11 +85,11 @@ public final class TotpCredential {
      * コードが、今の刻みの前後 {@value #WINDOW} 個の刻みのどれかのコードに一致し、その刻みを受け付けるなら、その刻みを返す。
      * 比較は一定時間で行う（どこまで一致したかを時間から推測させない）。形の違うコードと、最後に使った刻み以下の刻みの
      * コードは受け付けない（失敗へ倒す。T-42）。受け付けた刻みは、リポジトリの条件付きの更新で使ったことにする。
+     * 生成器には自分の暗号化した秘密を渡し、平文の秘密は扱わない（Bolt 31）。
      *
-     * @param secret 復号した秘密（平文）
      * @param currentStep 今の刻みの番号（{@link #stepAt}）。0 以上（負なら失敗へ倒して例外）
      */
-    public OptionalLong matchingStep(String code, byte[] secret, long currentStep, TotpCodeGenerator generator) {
+    public OptionalLong matchingStep(String code, long currentStep, TotpCodeGenerator generator) {
         requireStep(currentStep);
         if (code == null || code.isEmpty() || !code.chars().allMatch(c -> c >= '0' && c <= '9')) {
             return OptionalLong.empty();
@@ -97,7 +97,7 @@ public final class TotpCredential {
         byte[] given = code.getBytes(StandardCharsets.US_ASCII);
         long matched = -1;
         for (long step = Math.max(0, currentStep - WINDOW); step <= currentStep + WINDOW; step++) {
-            byte[] expected = generator.code(secret, step).getBytes(StandardCharsets.US_ASCII);
+            byte[] expected = generator.code(this.secret, step).getBytes(StandardCharsets.US_ASCII);
             // 一致を見つけても窓のすべての刻みを比べ、比べる回数を一致の位置で変えない
             boolean equal = MessageDigest.isEqual(expected, given);
             boolean acceptable = accepts(step);

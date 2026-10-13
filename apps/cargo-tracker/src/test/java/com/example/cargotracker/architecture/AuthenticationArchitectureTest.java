@@ -37,6 +37,34 @@ class AuthenticationArchitectureTest {
             .dependOnClassesThat()
             .resideInAPackage("com.eatthepath.otp..");
 
+    /**
+     * TOTP の秘密の平文を扱う暗号化は identity.infrastructure に閉じる。ドメインとアプリケーションは暗号文（EncryptedSecret）
+     * だけを受け渡す（Bolt 31、SEC-16、Bolt 30 の議題 2 の②）。
+     */
+    @ArchTest
+    static final ArchRule 秘密の暗号化はidentityのinfrastructureだけが使う = noClasses()
+            .that()
+            .resideInAPackage("com.example.cargotracker..")
+            .and()
+            .resideOutsideOfPackage("com.example.cargotracker.identity.infrastructure..")
+            .should()
+            .dependOnClassesThat()
+            .resideInAPackage("javax.crypto..")
+            .orShould()
+            .dependOnClassesThat()
+            .haveSimpleName("AesGcmSecretCipher");
+
+    /** 上の規則が空振りしていないことを確かめる。 */
+    @ArchTest
+    static final ArchRule 秘密の暗号化の部品はJDKの暗号を使う = classes()
+            .that()
+            .haveSimpleName("AesGcmSecretCipher")
+            .should()
+            .resideInAPackage("com.example.cargotracker.identity.infrastructure..")
+            .andShould()
+            .dependOnClassesThat()
+            .resideInAPackage("javax.crypto..");
+
     /** 上の規則が空振りしていないこと（パッケージ名の書き誤りで何も守らない状態にならないこと）を確かめる。 */
     @ArchTest
     static final ArchRule TOTPの生成器の実装はTOTPのライブラリを使う = classes()

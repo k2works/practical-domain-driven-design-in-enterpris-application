@@ -3,6 +3,7 @@ package com.example.cargotracker.identity.infrastructure.security;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import com.example.cargotracker.identity.domain.model.valueobjects.EncryptedSecret;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Locale;
@@ -22,7 +23,12 @@ import org.junit.jupiter.params.provider.CsvSource;
 class JavaOtpTotpCodeGeneratorTest {
 
     /** RFC 6238 の付録 B の SHA1 の秘密（ASCII の "12345678901234567890"）。 */
-    private static final byte[] SECRET = "12345678901234567890".getBytes(StandardCharsets.US_ASCII);
+    private static final byte[] PLAIN_SECRET = "12345678901234567890".getBytes(StandardCharsets.US_ASCII);
+
+    private static final AesGcmSecretCipher CIPHER = TestSecretCiphers.cipher();
+
+    /** 生成器は暗号化した秘密を受け、中で復号する（Bolt 31、ADR-011）。 */
+    private static final EncryptedSecret SECRET = CIPHER.encrypt(PLAIN_SECRET.clone());
 
     private static long step(long epochSeconds) {
         return epochSeconds / 30;
@@ -38,7 +44,7 @@ class JavaOtpTotpCodeGeneratorTest {
         "20000000000, 353130"
     })
     void 六桁のコードはRFC6238の試験ベクトルの下6桁と一致し先頭の0を保つ(long epochSeconds, String expected) {
-        assertThat(new JavaOtpTotpCodeGenerator().code(SECRET, step(epochSeconds)))
+        assertThat(new JavaOtpTotpCodeGenerator(CIPHER).code(SECRET, step(epochSeconds)))
                 .isEqualTo(expected);
     }
 
@@ -52,13 +58,13 @@ class JavaOtpTotpCodeGeneratorTest {
         "20000000000, 65353130"
     })
     void 八桁のコードはRFC6238の試験ベクトルと一致する(long epochSeconds, String expected) {
-        assertThat(new JavaOtpTotpCodeGenerator(8).code(SECRET, step(epochSeconds)))
+        assertThat(new JavaOtpTotpCodeGenerator(CIPHER, 8).code(SECRET, step(epochSeconds)))
                 .isEqualTo(expected);
     }
 
     @Test
     void 同じ生成器を並行に使っても試験ベクトルどおりのコードを作る() {
-        JavaOtpTotpCodeGenerator generator = new JavaOtpTotpCodeGenerator();
+        JavaOtpTotpCodeGenerator generator = new JavaOtpTotpCodeGenerator(CIPHER);
         ExecutorService executor = Executors.newFixedThreadPool(8);
         try {
             List<CompletableFuture<Boolean>> results = IntStream.range(0, 8)
@@ -87,7 +93,7 @@ class JavaOtpTotpCodeGeneratorTest {
         Locale original = Locale.getDefault();
         try {
             Locale.setDefault(Locale.forLanguageTag("ar-EG-u-nu-arab"));
-            String code = new JavaOtpTotpCodeGenerator().code(SECRET, step(59));
+            String code = new JavaOtpTotpCodeGenerator(CIPHER).code(SECRET, step(59));
 
             assertThat(code).isEqualTo("287082");
         } finally {
@@ -96,10 +102,12 @@ class JavaOtpTotpCodeGeneratorTest {
     }
 
     @Test
-    void 空の秘密と負の刻みは失敗へ倒す() {
-        JavaOtpTotpCodeGenerator generator = new JavaOtpTotpCodeGenerator();
+    void 秘密がないときと負の刻みと復号できない秘密は失敗へ倒す() {
+        JavaOtpTotpCodeGenerator generator = new JavaOtpTotpCodeGenerator(CIPHER);
 
-        assertThatThrownBy(() -> generator.code(new byte[0], 1)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> generator.code(null, 1)).isInstanceOf(IllegalArgumentException.class);
         assertThatThrownBy(() -> generator.code(SECRET, -1)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> generator.code(new EncryptedSecret("v9:AAAA"), 1))
+                .isInstanceOf(IllegalArgumentException.class);
     }
 }
