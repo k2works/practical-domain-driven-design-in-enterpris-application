@@ -3,8 +3,10 @@ type: Plan
 title: "Bolt 31b 終了報告 - 暗号文の AAD と初回の TOTP の登録（A-07）・回復コードの発行"
 description: "W5 の 6 本目の Bolt の終了報告。TOTP の暗号文を利用者に結び付け（AAD）、A-07 で認証アプリの初回の登録と回復コード 10 個の一度だけの表示を作った。登録の途中だけ上限を 15 分にし、期限を時刻で示す。同時の登録は主キーで 1 つに絞り、負けた側も「登録済み」を返す。/goal Bolt31b で承認ゲートを止めずに進めたので、止まらなかったゲートを承認の議題に置く。"
 tags: [plan]
-status: draft
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-13T06:08:07Z }
+status: stable
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-13T06:26:33Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-10-13T06:26:33Z }
 ---
 
 # Bolt 31b 終了報告 - 暗号文の AAD と初回の TOTP の登録（A-07）・回復コードの発行
@@ -146,6 +148,7 @@ Bolt 31c: password の段の主体の型と ADR-012 の見直しの 4、回復�
 
 | 日付 | 更新内容 | 更新者 |
 | :--- | :--- | :--- |
+| 2026-10-13 | 終了報告を承認した（議題 1〜5 を承認。デモの動画は撮り直さず、文言の直しの前のものを残す）。T-105・T-106 を足した | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-10-13 | 初版作成（承認待ち） | anthropic/claude-opus-5-5 |
 
 ## 関連ドキュメント

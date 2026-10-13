@@ -4,7 +4,7 @@ title: "Bolt 31b 計画 - 暗号文の AAD と初回の TOTP の登録（A-07）
 description: "W5 の 6 本目の Bolt の計画。TOTP の秘密の暗号文を利用者に結び付け（AAD）、初回の TOTP の登録（A-07。秘密の発行、QR、最初のコードの確かめ）と回復コードの発行と一度だけの表示（US-18 AC7、SEC-09）を作る。登録の途中だけ password の段の上限を 15 分にする。回復コードによるログイン、password の段の主体の型、ADR-012 の見直しの 4、特性テストは Bolt 31c。"
 tags: [development,bolt-plan]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-13T06:02:20Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-13T06:26:33Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-13T04:40:50Z }
 ---
@@ -219,7 +219,7 @@ title Bolt 31b で作る登録の画面遷移
   - 統合テスト: 登録の途中の session に別の利用者の password を送ると、前の利用者の登録の途中の暗号文は使えず（AAD）、新しい秘密になる（T-102）。登録の途中の時刻も新しい利用者の password の段で消える
   - 画面の層: `login_ui.feature` に「未登録の利用者が A-07 で登録し、回復コードを保存して A-02 でログインする」（`UiUsers` に未登録の利用者を作る口を足す。QR の代わりに手入力のキーからコードを作る）。デモの印 `@demo @demo-bolt-31b/enroll`
   - 完了の判定: `check` と `uiTest` が緑
-- [-] **6. SonarQube と開発レビューと終了報告** 【承認ゲート: 終了報告】
+- [x] **6. SonarQube と開発レビューと終了報告** 【承認ゲート: 終了報告】
   - SonarQube（`sonar-local:check`。T-104 で開発レビューの前に流す）
   - 開発レビュー（プログラマー、アーキテクト、テスター（セキュリティの境界）、テクニカルライター（A-07 の文言。T-90））
   - デモの動画（`demoVideo`）と #13 への添付（`issue:attach-demo`）。`bolt_31b_report.md`。release_plan の W5 の 31b の行、開発の索引。#13 に進み具合をコメントする
