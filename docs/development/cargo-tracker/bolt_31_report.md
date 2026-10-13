@@ -4,7 +4,7 @@ title: "Bolt 31 終了報告 - TOTP の秘密の暗号化と 2 段階のログ�
 description: "W5 の 5 本目の Bolt の終了報告。TOTP の秘密を AES-GCM で暗号化し、Spring Security 7 の要素の権限で password と TOTP の 2 段階のログイン（A-02）を組んだ。最長 8 時間は TOTP が初めて通った時刻から数え、password の段だけの session は 5 分で失効する。層の規則に 2 つの狭い例外を足した。/goal Bolt31 で承認ゲートを止めずに進めたので、止まらなかったゲートを承認の議題に置く。"
 tags: [plan]
 status: draft
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-13T03:39:53Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-13T03:46:14Z }
 ---
 
 # Bolt 31 終了報告 - TOTP の秘密の暗号化と 2 段階のログイン（A-02）
@@ -59,7 +59,7 @@ generated: { by: anthropic/claude-opus-5-5, at: 2026-10-13T03:39:53Z }
 ### デモ項目
 
 - dev（H2 の `bootRun`）で、営業担当者のボタン → A-02（入力済み）→「確認」→ S-02。`DevLoginPrefillDevProfileTest` が同じ流れを確かめる（手での確かめは人のデモで行う）
-- 画面の層のシナリオ（`login_ui.feature`）: 2 段階のログイン、キー操作だけのログイン、誤った認証コードで A-01 に戻る
+- 画面の層のシナリオ（`login_ui.feature`）の動画（`./gradlew demoVideo`）: [2 段階のログイン](../../assets/demo/bolt-31/two-step-login.webm){:target="_blank"}（A-01 → A-02 → 荷主のホーム）、[誤った認証コード](../../assets/demo/bolt-31/wrong-code.webm){:target="_blank"}（A-01 に戻り、誤りと再利用を区別しない文言が出る）。ほかの Bolt の動画も、2 段階のログインを経る形で撮り直した
 
 ## 指標
 
