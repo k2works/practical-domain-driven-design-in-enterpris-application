@@ -1,6 +1,9 @@
 # Docs Update Log
 
 ## 2026-10-13
+* **Update**: [bolt_31d_report](/development/cargo-tracker/bolt_31d_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_31d_plan](/development/cargo-tracker/bolt_31d_plan.md) を更新（anthropic/claude-opus-5-5）
 * **Update**: [011-mfa-totp](/adr/cargo-tracker/011-mfa-totp.md) を更新（anthropic/claude-opus-5-5）
 * **Update**: [011-mfa-totp](/adr/cargo-tracker/011-mfa-totp.md) を更新（anthropic/claude-opus-5-5）
 * **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）

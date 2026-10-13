@@ -3,7 +3,7 @@ type: Plan
 title: "Bolt 31d 計画 - 認証の部品の守りの直し（照合の 3 値、暗号のパッケージ、特性テスト、スパイクの削除）"
 description: "W5 の 8 本目の Bolt の計画。Bolt 31・31b・31c から送った構造の直しのうち守りに関わるものを片づける。TOTP の照合の結果（一致・再利用・不一致）をドメインに寄せ、暗号の部品を identity.infrastructure.crypto に分けて層の規則 D-5 の認証の例外を入口だけに狭め、FACTOR_* の ArchUnit の空振り・全 URL の見張り・ログの平文の見張り・枠組みの特性テストを足し、スパイクを本体のテストとの対応を確かめてから消す。画面は変えない。"
 tags: [development,bolt-plan]
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-13T09:24:37Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-13T10:53:44Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-13T09:24:37Z }
 ---
@@ -141,7 +141,7 @@ TotpEnrollmentService ..> UnreadableCredentialException : 捕まえる
 
 状態の記号: `[ ]` 未着手、`[-]` 進行中、`[?]` 承認待ち、`[x]` 完了。各ステップの終わりに `check` が緑であることと、計画からの変更を設計文書に反映したこと（T-53）を確かめ、push して CI を確かめる（T-26、T-65）。そのステップのファイルだけをステージする（T-84）。複数行の書き換えはスクリプトのファイルにする（T-103）。ステップ 1 を push してからコードのステップを push する（T-109）。
 
-- [ ] **1. 設計文書** 【承認ゲート: 設計文書】
+- [x] **1. 設計文書** 【承認ゲート: 設計文書】
   - ADR-011: 照合の結果（`TotpMatch`）、`UnreadableCredentialException` と失敗へ倒す範囲（決定 7 の表の 218 行目「照合の途中の例外は 500 にせず拒否」を改める）、暗号の部品のパッケージ（決定 5 の 157 行目・決定 6 の 203 行目・コンプライアンスの 287 行目の ArchUnit の範囲）、`FACTOR_TOTP` の名前を残す理由、スパイクの削除（28 行目、58 行目のスパイクへのリンクはコミットに固定したリンクに、302 行目の参考資料）、コンプライアンスの節に新しい見張り（`FACTOR_*` のソースの走査、全 URL、ログの平文、特性テスト）と R-16 の特性テストの形（284〜285 行目）
   - ADR-012: D-5 の認証の例外を `identity.infrastructure.security`（入口）だけにしたこと（決定 6、コンプライアンスの 121 行目）、監査の理由の一覧（64 行目）に `TOTP_NOT_ENROLLED`
   - architecture_backend.md: D-5 の節（276〜277 行目。暗号の部品のパッケージ、例外の範囲、クラス名の一覧の規則をパッケージの規則に置き換えたこと、`UnreadableCredentialException` の向き（crypto が投げ、入口が捕まえる））
@@ -149,28 +149,28 @@ TotpEnrollmentService ..> UnreadableCredentialException : 捕まえる
   - data_model.md: 監査の理由の一覧に `TOTP_NOT_ENROLLED`（ui_design.md:521 は画面を通る理由だけを書いているので直さない）
   - release_plan.md の W5 の節: 31d の行（587 行目）を本計画に（回復コードは 2 値のまま、低の指摘を送る、承認ゲートは構造・セキュリティ・ファイルの削除）。557 行目の W5 のアプローチの説明に 31d はリファクタリング（振る舞いの変更は 2 つだけ）と書く。32 の行（588 行目）と 33b の行に送る低の指摘（確認ポイント 8。32 は範囲が重いので開始準備で分けるかを見直す材料になると添える）
   - 完了の判定: `okf:check` ERROR 0、`documentationTest` 緑。push してからステップ 2 のコードを push する（T-109）
-- [ ] **2. 照合の結果をドメインに寄せる** 【承認ゲート: Red・Green】
+- [x] **2. 照合の結果をドメインに寄せる** 【承認ゲート: Red・Green】
   - Red: `TotpCredential#match` の単体テスト（今の刻みで一致は `Matched`、窓の前後で一致は `Matched`、使った刻み以下でだけ一致は `Reused`、どれとも一致しない数字のコードは `Mismatch`、生成の呼び出しは数字のコードで窓の刻みの数（刻み 0 は 2 回）、形の違う・空のコードは生成器を呼ばずに `Mismatch`）。確かめのサービスの単体テスト（拒否のときの生成の呼び出しが窓の刻みの数だけ）。監査の理由の統合テスト（TOTP を登録していない利用者の A-02 の送信は理由 `TOTP_NOT_ENROLLED`。今は `INVALID_TOTP`）
   - Green: `TotpMatch`（sealed interface と入れ子の 3 つの record、`@ValueObject`）、`TotpCredential#match`（`matchingStep` を置き換え、登録のサービスも直す）、確かめのサービスから `wasAlreadyUsed` を消す、`AuthenticationRejection.TOTP_NOT_ENROLLED` と監査のリスナーの写し
   - 書き直すテスト: `TotpCredentialTest` の `matchingStep` のテスト（83〜180 行目）を `match` に。`TotpVerificationServiceTest` の `REJECTED_NOT_ENROLLED` のテストは既にある（Red にならない）
   - 完了の判定: `check` 緑。契約テストと統合テストは期待値を変えずに緑（API の名前の変更だけ）
-- [ ] **3. 読めない要素の例外と、暗号の部品のパッケージ** 【承認ゲート: セキュリティ、構造】
+- [x] **3. 読めない要素の例外と、暗号の部品のパッケージ** 【承認ゲート: セキュリティ、構造】
   - Red（振る舞い）: provider の単体テスト（`UnreadableCredentialException` は拒否、ただの `IllegalArgumentException` は捕まえずに投げる（500 になる））。登録のサービスの単体テスト（読めない暗号文は `SecretUnusable`、ただの `IllegalArgumentException` は投げる）。暗号の部品の単体テスト（復号の失敗・生成器の鍵の誤り・知らない接頭辞のハッシュは `UnreadableCredentialException`）。書き直すテスト: `RecoveryCodeAuthenticationProviderTest.java:97-98`（ただの `IllegalArgumentException` で拒否されることを確かめている）、`AesGcmSecretCipherTest` ほかの `IllegalArgumentException` の期待（専用の例外は `IllegalArgumentException` を継ぐので、型を狭めて確かめ直す）
   - Green（振る舞い）: `UnreadableCredentialException`、3 つの暗号の部品が投げる、2 つの provider と登録のサービスがこれだけを捕まえる、ポートの Javadoc の `@throws`
   - Red（構造。守りを先に）: ArchUnit「`identity.infrastructure.crypto` は `identity.infrastructure.security` に依存しない」と、見張り（`crypto` に 6 つの暗号の部品がある、既存の規則（合成ルートと入口の外の infrastructure は application に依存しない）が `crypto` のクラスにかかる）。暗号の部品が移るまで見張りが落ちることを確かめる
   - Green（構造）: 6 つのクラスとそのテスト、テストの共通部品 `TestSecretCiphers` を `identity.infrastructure.crypto` に移す（`git mv`）。`crypto/package-info.java` を足し（暗号の部品。application と入口に依存しない）、`security/package-info.java` の説明を入口だけに直す。利用者の import を直す（main: `IdentityConfiguration`・`DevLoginGuardConfiguration`・`devlogin/DevTotpCodes`。test: `UiUsers`・`DevTotpCodesTest`・`DevTotpCredentialsDevProfileTest`・`TotpVerificationServiceIntegrationTest`・`TotpSecretKeysBindingTest`・security の 3 つの統合テスト）。`AuthenticationArchitectureTest` のクラス名の一覧の規則（「秘密の発行と回復コードの生成の実装は application に依存しない」）を消し、暗号・ZXing・TOTP のライブラリの閉じ込めを `identity.infrastructure.crypto` に狭める（`AesGcmSecretCipher` を参照してよいのは crypto・合成ルート・dev の部品。`Base32` は dev の部品も使うが規則の対象外）。違反を入れて落ちることを確かめる（T-88）
   - 完了の判定: `check` 緑。`identity.infrastructure.security` に暗号の部品が残っていない
-- [ ] **4. 守りのテスト** 【承認ゲート: セキュリティ】
+- [x] **4. 守りのテスト** 【承認ゲート: セキュリティ】
   - `FACTOR_*` の参照の見張り: `src/main/java` を走査し、`"FACTOR_` の文字列と `FactorGrantedAuthority` を書いているファイルが `identity/infrastructure/security` と合成ルート `identity/infrastructure/config` の中だけであることを確かめる（コンパイル時の定数の埋め込みで ArchUnit が見落とす分。範囲は ArchUnit の既存の規則より狭く、入口と合成ルートだけ）。走査したファイルの数が 0 でなく、`TotpAuthenticationToken.java` が見つかることを先に確かめる（T-107）
   - 全 URL の見張り: `RequestMappingHandlerMapping` の一覧から、認証の画面（`/login`・`/login/totp`・`/login/totp/enroll`・`/session-expired`）、`/error`、静的な資源を除くすべての URL（GET と POST。POST には CSRF のトークンを付ける）について、password の段だけの主体が A-02 へ導かれることを確かめる。パスの変数は仮の値で埋める（正規表現の候補は最初の値、ID は乱数の UUID、番号は形の合う仮の値）。主体の役割は URL の接頭辞の規則（`SecurityConfiguration.java:144-153`）に合わせる（`/customer` は荷主、`/staff/routing-cases` は経路設計者、`/staff/tracking-records` は追跡管理者、ほかの `/staff` は営業、`/` は荷主）。役割の誤り（403）と A-02 への誘導を区別するため。一覧の数が 0 でないことを先に確かめる。今の代表の URL のテスト（`AuthenticationSecurityIntegrationTest` の「役割があってもTOTPの要素の欠けた主体はどの業務のURLも開けない」）は置き換える
   - ログの平文の見張り: `OutputCaptureExtension` で、TOTP の秘密を復号できない利用者の A-02 の送信と、保存した回復コードのハッシュの形の誤り（知らない接頭辞）の利用者の回復コードの送信の後、ログにその利用者の ID のエラーの行があり（T-107）、送ったコード・回復コード・password・秘密の Base32 がないこと
   - 特性テスト（R-16。Spring Security の版を上げるときの守り。確認ポイント 6）: ①mfaEnabled の認証のフィルターは、認証の結果の型が `toBuilder()` を持つときだけ前の要素の権限を合わせる（`toBuilder()` を持たない結果の型では `FACTOR_PASSWORD` が落ちる）、②認証のフィルター（`AbstractAuthenticationProcessingFilter`）の既定の文脈の置き場所は request の属性で、次の request に残らない（`TotpAuthenticationFilter` が session の置き場所を明示する理由）、③`FactorGrantedAuthority` の `issuedAt` はアプリケーションの `Clock` でなく枠組みの時計で決まる（最長 8 時間の判定に使わない理由）
   - 完了の判定: `check` 緑。見張りは違反を入れて落ちることを確かめる（T-88）
-- [ ] **5. スパイクを消す** 【承認ゲート: ファイルの削除】
+- [x] **5. スパイクを消す** 【承認ゲート: ファイルの削除】
   - スパイクのテスト（`MfaLoginTest` 18、`DevLoginPrefillTest` 5、`TotpCandidatesTest` 6（パラメーター化の展開で 29 件）、`PasswordStorageTest` 3、`SessionTimeoutTest` 1、`SpikeSetupTest` 1。計 34 のメソッド）と、本体のテスト・後の Bolt の計画・ADR の記録との対応表を作る（確認ポイント 7 の分け方）。本体にない確かめのうち本体の守りになるもの（bcrypt の強さ 10）は本体にテストを足す
   - `spikes/ts-01-totp/` を消す（`git rm -r`）。ほかから参照されていないことを確かめる（Gradle の設定・CI・文書のリンク）。文書のスパイクへのリンク（ADR-011:58 は develop の外部リンクなので `okf:check` で検出されない）と、`JavaOtpTotpCodeGenerator` の Javadoc のスパイクへの言及は、コミットに固定したリンクか記述に直す
   - 完了の判定: `check` 緑、`okf:check` ERROR 0、`spikes/ts-01-totp` を参照する記述が文書とコードに残っていない（固定したリンクを除く）
-- [ ] **6. SonarQube と開発レビューと終了報告** 【承認ゲート: 終了報告】
+- [x] **6. SonarQube と開発レビューと終了報告** 【承認ゲート: 終了報告】
   - SonarQube（`sonar-local:check`。T-104）
   - 開発レビュー（プログラマー、アーキテクト、テスター（守りのテストの空振り））。画面を変えないのでテクニカルライターの観点は設計文書だけにする
   - `bolt_31d_report.md`（スパイクとの対応表を含む）。release_plan の W5 の 31d の行、開発の索引。#13 に進み具合をコメントする。画面を変えないのでデモの動画は撮らない
@@ -219,6 +219,7 @@ TotpEnrollmentService ..> UnreadableCredentialException : 捕まえる
 | 2026-10-13 | 初版作成（承認待ち）。開始準備で、Bolt 31c の終了報告の Try（T-107〜T-109）と既知の課題、Bolt 31 のレビュー 17、Bolt 13 の R-16、スパイクのテスト、照合と確かめのサービス、層の規則を調べ、human:kakimomokuri の決定（守りの直しを 31d・低は 32 以降、暗号の部品を crypto に分ける、`FACTOR_TOTP` は改名せず用語集に書く、スパイクは特性テストを移してから消す）を反映した | anthropic/claude-opus-5-5 |
 | 2026-10-13 | 詳細整合性検証（19 件）と横断整合性検証（17 件）の指摘と、T-101 の骨組みの確かめの結果を反映した。`FACTOR_*` の見張りの範囲に合成ルートを含める、スパイクのテストの数（6 クラス・34 メソッド）と対応表の分け方、特性テスト②を枠組みの既定の置き場所に、ログの見張りをエラーのログが出る場面に、読めない要素の例外をドメインに置き登録のサービスも狭める（名前を `UnreadableCredentialException` に）、投げる場所の一覧、振る舞いの変更を 2 つと書く、失敗へ倒す範囲の完了条件、全 URL の見張りの除外・パスの変数・CSRF・役割、`TotpMatch` の入れ子と用語集、足す規則を「crypto は security に依存しない」だけに、利用者の一覧と `package-info.java`、Red と書き直すテストの区別、ステップ 1 の対象（ADR の行・release_plan の 557 行目・用語集の説明）、アプローチの理由、低の指摘の送り先の漏れを直した | anthropic/claude-opus-5-5 |
 | 2026-10-13 | 計画の承認を記録した。確認ポイント 1〜9 は推奨のとおり。ステップの承認ゲートで止まらずに進める（T-36） | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
+| 2026-10-13 | 実施の結果で計画から変えたことを記録した。(1) 確認ポイント 7 の (d) は、初めは既存のテストで足りると判断したが、開発レビューで本体の部品を見ていないと指摘され、本体の `PasswordEncoder` で確かめるテストを足した。(2) Checkstyle に `PackageDeclaration` を足した（ステップ 1 のコミットに `git mv` の改名が混ざった再発の防ぎ）。(3) ログの見張りは、クラス単位の出力の取り込みが CI で OutOfMemoryError を起こしたので、操作の間だけ取り込む `LogCapture` にした。(4) 拒否の例外は通った結果を持たず、監査のリスナーの届かない枝は実装の誤りにした（利用者への応答は変わらない） | anthropic/claude-opus-5-5 |
 
 ## 関連ドキュメント
 
