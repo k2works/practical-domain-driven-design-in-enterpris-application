@@ -8,10 +8,12 @@ import com.example.cargotracker.identity.domain.model.valueobjects.EncryptedSecr
 import com.example.cargotracker.identity.domain.model.valueobjects.TotpProvisioning;
 import com.example.cargotracker.shared.domain.UserId;
 import com.google.zxing.BinaryBitmap;
+import com.google.zxing.DecodeHintType;
 import com.google.zxing.LuminanceSource;
 import com.google.zxing.RGBLuminanceSource;
 import com.google.zxing.common.HybridBinarizer;
 import com.google.zxing.qrcode.QRCodeReader;
+import java.util.Map;
 import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -95,8 +97,11 @@ class RandomTotpSecretIssuerTest {
             }
         }
         LuminanceSource source = new RGBLuminanceSource(width, width, pixels);
+        // 余白のある素の画像なので、位置の検出をせずに読む（検出器は秘密によって 1% ほど読み損ねる。Bolt 32 で見つけた揺れ）
         return new QRCodeReader()
-                .decode(new BinaryBitmap(new HybridBinarizer(source)))
+                .decode(
+                        new BinaryBitmap(new HybridBinarizer(source)),
+                        Map.of(DecodeHintType.PURE_BARCODE, Boolean.TRUE))
                 .getText();
     }
 }
