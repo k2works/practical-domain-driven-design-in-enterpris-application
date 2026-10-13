@@ -4,7 +4,7 @@ title: "ADR-011: 多要素認証は Spring Security 7 の要素の権限で組�
 description: "password の後に TOTP を求める 2 段階のログインを、Spring Security 7 の多要素認証（要素ごとの権限）で組む。"
 tags: [adr, authentication, mfa, totp]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-13T09:54:25Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-13T10:25:04Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-11T08:28:34Z }
 ---
@@ -159,7 +159,7 @@ dev のコードの部品（Bolt 31 で決めた）: 関数の型 `DevTotpCodeSo
 | dev のコードの部品の AAD | `DevTotpCodes` は設定の秘密を、開発用の利用者のメールアドレスから決める作り物の ID（`UUID.nameUUIDFromBytes`）を AAD にして内部で扱う。利用者の表を読まない（決定 3 の 3 層目）ため、DB の暗号文の利用者 ID とは別である。dev-data の暗号文は DB の利用者 ID を AAD にして作り、復号すると設定の秘密と一致することをテストで確かめる |
 | 照合 | 前後 1 つの刻みでの照合は TOTP の資格（`TotpCredential#match`）が行い、結果をドメインの値 `TotpMatch` で返す（Bolt 31d。決定 8）。刻みの使用（条件付きの更新）は、アプリケーションのサービス `TotpVerificationService`（`identity.application.internal.commandservices`）が照合の結果を写して行う。Spring Security の provider は結果を認証の成否に直すだけにする（ADR-012 の D-5 の認証の例外） |
 
-ArchUnit で、暗号化の部品と `javax.crypto` を参照するのが `identity.infrastructure` だけであることを守る。暗号の部品は Bolt 31d から `identity.infrastructure.crypto` に置き、`AesGcmSecretCipher` を参照してよいのは crypto・合成ルート・dev の部品だけにする（決定 8）。
+ArchUnit で、`javax.crypto` を参照するのが暗号の部品（`identity.infrastructure.crypto`）だけであることを守る（Bolt 31 では `identity.infrastructure` だけとし、Bolt 31d で狭めた）。`AesGcmSecretCipher` を参照してよいのは crypto・合成ルート・dev の部品だけにする（決定 8）。
 
 ### 6. 初回の TOTP の登録と回復コードの発行（Bolt 31b）
 
@@ -205,7 +205,7 @@ U -> A2 : POST /login/totp（TOTP）
 
 先取りの登録のリスクを受け入れる（2026-10-13、human:kakimomokuri）: 未登録の利用者の password を知った者は、本人より先に自分の認証アプリを登録できる（初回の登録に共通する）。受け入れるリスクとし、`TOTP_ENROLLED` の監査記録（主体の利用者 ID と企業 ID）、ロック（Bolt 32）、システム管理者の別経路の解除と本人への通知（#47、W6）で抑える。初回の password の渡し方は利用者の管理（Bolt 34）で決める。
 
-ArchUnit で、ZXing を参照するのが `identity.infrastructure` だけであること（空振りを防ぐため、秘密の発行の実装が ZXing を使うことも確かめる）と、秘密の発行と回復コードの生成の実装が application に依存しないこと（D-5 の認証の例外は `identity.infrastructure.security` 全体にかかるので、入口でない部品の守りを足す）を守る。入口と暗号の部品のパッケージを分けて例外を入口だけに狭めることは Bolt 31d で決めた（決定 8）。ZXing の閉じ込めは `identity.infrastructure.crypto` に狭め、秘密の発行と回復コードの生成の実装を名指しした規則は、パッケージの規則（合成ルートと入口の外の infrastructure は application に依存しない、`crypto` は `security` に依存しない）に置き換えた。
+ArchUnit で、ZXing を参照するのが暗号の部品（`identity.infrastructure.crypto`）だけであること（空振りを防ぐため、秘密の発行の実装が ZXing を使うことも確かめる）と、暗号の部品が application と認証の入口に依存しないことを守る（決定 8。Bolt 31b では `identity.infrastructure` に閉じ込め、入口でない部品はクラス名を挙げて application に依存しない規則で守っていた。Bolt 31d でパッケージを分け、D-5 の認証の例外を入口だけに狭めて、パッケージの規則に置き換えた）。
 
 ### 7. 回復コードによるログイン（Bolt 31c）
 
@@ -304,7 +304,7 @@ Bolt 31b で解いたもの（決定 6 に移した）: 登録の QR の描き�
 - US-18 の Bolt で、本体の統合テストに次を加える。2 つの要素がそろわないと業務の画面を開けない（全 URL）、再利用の拒否、5 回の失敗のロックの境界（4・5 回、14 分 59 秒・15 分）、最長 8 時間の境界（7 時間 59 分 59 秒・8 時間）、期限切れの session に TOTP を送っても延びない、TOTP の段で session の ID が変わる、ロック中の誤りで期限が延びない、認証の成功・失敗・ロックが同じ transaction で監査記録に書かれる（IA-INV-08）。
 - 枠組みの振る舞いの特性テスト（R-16。Bolt 31d）を置き、Spring Security の版を上げるときの回帰の守りにする。どれも枠組みのどの部品の既定の振る舞いかを書き、その振る舞いを直接確かめる。①mfaEnabled の認証のフィルターは、認証の結果の型が `toBuilder()` を持つときだけ前の要素の権限を合わせる（持たない型では `FACTOR_PASSWORD` が落ちる。2 つの型の結果で比べる）。②`AbstractAuthenticationProcessingFilter` の既定の文脈の置き場所は request の属性で、次の request に残らない（`TotpAuthenticationFilter` が session の置き場所を明示する理由）。③`FactorGrantedAuthority` の `issuedAt` はアプリケーションの `Clock` でなく枠組みの時計で決まる（最長 8 時間の判定に使わない理由）。
 - 既定・staging・prod の設定で A-01・A-02 が入力済みにならないこと、dev の外で dev-login の設定があると起動しないことを、本体のテストで守る。
-- ArchUnit で、TOTP のライブラリと ZXing（Bolt 31b）への依存を `identity.infrastructure.crypto` に閉じ込め（Bolt 31d で `identity.infrastructure` から狭めた）、ほかのコンテキストが `FACTOR_*` を参照しないことを守る。暗号化の部品と `javax.crypto` を参照するのも `identity.infrastructure` だけにする（Bolt 31）。`crypto` は `security` に依存しない（Bolt 31d。決定 8）。
+- ArchUnit で、TOTP のライブラリと ZXing（Bolt 31b）への依存を `identity.infrastructure.crypto` に閉じ込め（Bolt 31d で `identity.infrastructure` から狭めた）、ほかのコンテキストが `FACTOR_*` を参照しないことを守る。`javax.crypto` を参照するのも `identity.infrastructure.crypto` だけにする（Bolt 31 では `identity.infrastructure`。Bolt 31d で狭めた）。`crypto` は `security` に依存しない（Bolt 31d。決定 8）。
 - 見張り（Bolt 31d）。どれも確かめる対象がその時点で存在することを先に確かめる（T-107）。
   - `FACTOR_*` の参照: `src/main/java` を走査し、`"FACTOR_` の文字列と `FactorGrantedAuthority` を書いているファイルが入口（`identity/infrastructure/security`）と合成ルート（`identity/infrastructure/config`）の中だけであることを確かめる（コンパイル時の定数の埋め込みで ArchUnit が見落とす分）。
   - 全 URL: `RequestMappingHandlerMapping` の一覧から、認証の画面・`/error`・静的な資源を除くすべての URL（GET と POST）について、password の段だけの主体が A-02 へ導かれることを確かめる（代表の URL のテストを置き換えた）。
