@@ -23,6 +23,7 @@ import org.springframework.boot.context.properties.bind.Binder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
+import org.springframework.transaction.support.TransactionTemplate;
 
 /**
  * アクセス・監査コンテキストの組み立て。アプリケーションサービスに送信アダプターをつなぐ。
@@ -74,9 +75,18 @@ public class IdentityConfiguration {
             RecoveryCodeGenerator recoveryCodeGenerator,
             RecoveryCodeHasher hasher,
             TotpCodeGenerator generator,
-            Clock clock) {
+            Clock clock,
+            TransactionTemplate transactionTemplate) {
         return new TotpEnrollmentService(
-                credentials, recoveryCodes, auditRecords, issuer, recoveryCodeGenerator, hasher, generator, clock);
+                credentials,
+                recoveryCodes,
+                auditRecords,
+                issuer,
+                recoveryCodeGenerator,
+                hasher,
+                generator,
+                clock,
+                transactionTemplate);
     }
 
     @Bean

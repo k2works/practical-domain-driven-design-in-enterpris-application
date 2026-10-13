@@ -31,6 +31,10 @@ import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.IntStream;
 import org.junit.jupiter.api.Test;
+import org.springframework.transaction.TransactionDefinition;
+import org.springframework.transaction.support.AbstractPlatformTransactionManager;
+import org.springframework.transaction.support.DefaultTransactionStatus;
+import org.springframework.transaction.support.TransactionTemplate;
 
 /**
  * 初回の TOTP の登録（Bolt 31b、US-18 AC7、SEC-09、IA-INV-10・11）。登録済みなら拒み、最初のコードで確かめてから資格と回復コード
@@ -101,6 +105,30 @@ class TotpEnrollmentServiceTest {
     };
     private final FakeIssuer issuer = new FakeIssuer();
     private final RecoveryCodeGenerator recoveryCodeGenerator = () -> RECOVERY_CODES;
+    /** トランザクションを持たない単体テストのための、何もしないトランザクションマネージャー。 */
+    private static final TransactionTemplate NO_TRANSACTION =
+            new TransactionTemplate(new AbstractPlatformTransactionManager() {
+                @Override
+                protected Object doGetTransaction() {
+                    return new Object();
+                }
+
+                @Override
+                protected void doBegin(Object transaction, TransactionDefinition definition) {
+                    // 何もしない
+                }
+
+                @Override
+                protected void doCommit(DefaultTransactionStatus status) {
+                    // 何もしない
+                }
+
+                @Override
+                protected void doRollback(DefaultTransactionStatus status) {
+                    // 何もしない
+                }
+            });
+
     private final TotpEnrollmentService service = new TotpEnrollmentService(
             credentials,
             recoveryCodes,
@@ -109,7 +137,8 @@ class TotpEnrollmentServiceTest {
             recoveryCodeGenerator,
             HASHER,
             GENERATOR,
-            Clock.fixed(NOW, ZoneOffset.UTC));
+            Clock.fixed(NOW, ZoneOffset.UTC),
+            NO_TRANSACTION);
 
     private final AuthenticatedActor actor = actor();
 
@@ -208,5 +237,38 @@ class TotpEnrollmentServiceTest {
 
         assertThat(service.complete(actor, othersSecret, "000100")).isInstanceOf(EnrollmentResult.SecretUnusable.class);
         assertThat(credentials.findByUserId(actor.userId())).isEmpty();
+    }
+
+    @Test
+    void 同時の登録で後になり資格の追加が主キーの違反になったら何も保存せず登録済みを返す() {
+        // 先の登録がまだコミットしていない状態（読むと見えないが、追加は主キーの違反になる）
+        InMemoryTotpCredentialRepository racing = new InMemoryTotpCredentialRepository() {
+            @Override
+            public Optional<TotpCredential> findByUserId(UserId userId) {
+                return Optional.empty();
+            }
+        };
+        racing.add(TotpCredential.enroll(
+                actor.userId(), new EncryptedSecret("v1:" + actor.userId().value() + ":0"), new UtcInstant(NOW)));
+        TotpEnrollmentService racingService = new TotpEnrollmentService(
+                racing,
+                recoveryCodes,
+                auditRecords,
+                issuer,
+                recoveryCodeGenerator,
+                HASHER,
+                GENERATOR,
+                Clock.fixed(NOW, ZoneOffset.UTC),
+                NO_TRANSACTION);
+
+        assertThat(racingService.complete(actor, issuer.issue(actor.userId()), "000100"))
+                .isInstanceOf(EnrollmentResult.AlreadyEnrolled.class);
+        assertThat(recoveryCodes.findUnusedByUserId(actor.userId())).isEmpty();
+        assertThat(audit).isEmpty();
+    }
+
+    @Test
+    void 登録の結果の文字列に回復コードの平文を出さない() {
+        assertThat(new EnrollmentResult.Enrolled(RECOVERY_CODES).toString()).doesNotContain("aaaa");
     }
 }

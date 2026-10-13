@@ -4,13 +4,15 @@ import com.example.cargotracker.identity.application.internal.commandservices.En
 import com.example.cargotracker.identity.application.internal.commandservices.EnrollmentStart;
 import com.example.cargotracker.identity.application.internal.commandservices.TotpEnrollmentService;
 import com.example.cargotracker.identity.application.internal.queryservices.TotpEnrollmentQueryService;
-import com.example.cargotracker.identity.domain.model.aggregates.DuplicateTotpEnrollmentException;
 import com.example.cargotracker.identity.domain.model.valueobjects.EncryptedSecret;
 import com.example.cargotracker.identity.domain.model.valueobjects.TotpProvisioning;
+import com.example.cargotracker.platform.web.DateTimeDisplay;
 import com.example.cargotracker.shared.domain.AuthenticatedActor;
 import jakarta.servlet.http.HttpSession;
 import java.security.Principal;
 import java.time.Clock;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.Optional;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -44,6 +46,9 @@ public class TotpEnrollmentController {
     private static final String TO_ENROLL = "redirect:/login/totp/enroll";
     private static final String FORM_VIEW = "identity/login-totp-enroll";
 
+    /** 登録とログインを終える期限の長さ（{@code SessionLifetime.ENROLLMENT_LIFETIME} と同じ。テストで守る）。 */
+    static final Duration ENROLLMENT_LIFETIME = Duration.ofMinutes(15);
+
     private final TotpEnrollmentService enrollment;
     private final TotpEnrollmentQueryService enrollmentQuery;
     private final Clock clock;
@@ -72,18 +77,13 @@ public class TotpEnrollmentController {
             // 登録の途中の暗号文がない送信（登録の後の再送、登録を始めていない送信）。登録済みなら A-02、そうでなければ A-07 を開き直す
             return enrollmentQuery.isEnrolled(actor.userId()) ? TO_TOTP : TO_ENROLL;
         }
-        EnrollmentResult result;
-        try {
-            result = enrollment.complete(actor, pending.get(), code.strip());
-        } catch (DuplicateTotpEnrollmentException _) {
-            // 同時の登録で後になった（先の登録が通っている）。登録済みとして A-02 へ送る（T-42）
-            clearPending(session);
-            return TO_TOTP;
-        }
+        EnrollmentResult result = enrollment.complete(actor, pending.get(), code.strip());
         return switch (result) {
             case EnrollmentResult.Enrolled(var recoveryCodes) -> {
+                // 登録を始めた時刻は残す。A-02 で TOTP が通るまで同じ 15 分の上限で、回復コードを書き写す時間をとる（ADR-011 の決定 6）
                 clearPending(session);
                 model.addAttribute("recoveryCodes", recoveryCodes);
+                model.addAttribute("deadline", deadline(session));
                 yield "identity/login-totp-recovery-codes";
             }
             case EnrollmentResult.CodeRejected() -> {
@@ -109,12 +109,20 @@ public class TotpEnrollmentController {
             if (session.getAttribute(STARTED_AT) == null) {
                 session.setAttribute(STARTED_AT, clock.instant());
             }
+            model.addAttribute("deadline", deadline(session));
             model.addAttribute("qrSvg", provisioning.qrSvg());
             model.addAttribute("manualKey", provisioning.manualKey());
             return FORM_VIEW;
         }
         clearPending(session);
         return TO_TOTP;
+    }
+
+    /** 登録とログインを終える期限（登録を始めた時刻から 15 分）の表示。 */
+    private static String deadline(HttpSession session) {
+        return session.getAttribute(STARTED_AT) instanceof Instant startedAt
+                ? DateTimeDisplay.customer(startedAt.plus(ENROLLMENT_LIFETIME))
+                : "";
     }
 
     private static Optional<EncryptedSecret> pendingSecret(HttpSession session) {

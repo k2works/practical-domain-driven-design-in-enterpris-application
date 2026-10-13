@@ -5,7 +5,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.example.cargotracker.TestcontainersConfiguration;
 import com.example.cargotracker.identity.AuthenticationFactorFixtures;
 import com.example.cargotracker.identity.domain.model.aggregates.CompanyRepository;
-import com.example.cargotracker.identity.domain.model.aggregates.DuplicateTotpEnrollmentException;
 import com.example.cargotracker.identity.domain.model.aggregates.RecoveryCodeRepository;
 import com.example.cargotracker.identity.domain.model.aggregates.TotpCodeGenerator;
 import com.example.cargotracker.identity.domain.model.aggregates.TotpCredential;
@@ -68,7 +67,7 @@ class TotpEnrollmentServiceIntegrationTest {
     Clock clock;
 
     @Test
-    void 重なった同じ利用者の登録は先の1つだけが通り後は主キーの違反で拒み回復コードは10個() throws Exception {
+    void 重なった同じ利用者の登録は先の1つだけが通り後は登録済みとして返り回復コードは10個() throws Exception {
         UserId user = transactionTemplate.execute(status -> AuthenticationFactorFixtures.newUser(companies, users));
         AuthenticatedActor actor = actorOf(user);
         EncryptedSecret secret = started(actor);
@@ -86,17 +85,8 @@ class TotpEnrollmentServiceIntegrationTest {
                     }),
                     executor);
             await(firstSaved);
-            CompletableFuture<String> second = CompletableFuture.supplyAsync(
-                    () -> {
-                        try {
-                            return service.complete(actor, secret, code)
-                                    .getClass()
-                                    .getSimpleName();
-                        } catch (DuplicateTotpEnrollmentException _) {
-                            return "Duplicate";
-                        }
-                    },
-                    executor);
+            CompletableFuture<EnrollmentResult> second =
+                    CompletableFuture.supplyAsync(() -> service.complete(actor, secret, code), executor);
 
             assertThat(second)
                     .as("後の登録は先の登録の主キーを待つ")
@@ -107,7 +97,8 @@ class TotpEnrollmentServiceIntegrationTest {
             assertThat(first.orTimeout(TIMEOUT_SECONDS, TimeUnit.SECONDS).join())
                     .isInstanceOf(EnrollmentResult.Enrolled.class);
             assertThat(second.orTimeout(TIMEOUT_SECONDS, TimeUnit.SECONDS).join())
-                    .isEqualTo("Duplicate");
+                    .as("後の登録は主キーの違反でロールバックし、登録済みとして返る")
+                    .isInstanceOf(EnrollmentResult.AlreadyEnrolled.class);
         } finally {
             releaseFirst.countDown();
             executor.shutdownNow();

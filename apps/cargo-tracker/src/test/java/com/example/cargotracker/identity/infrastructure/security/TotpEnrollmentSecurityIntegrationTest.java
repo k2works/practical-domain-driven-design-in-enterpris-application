@@ -67,6 +67,8 @@ class TotpEnrollmentSecurityIntegrationTest {
     private static final String ENROLL_URL = "/login/totp/enroll";
     private static final Pattern MANUAL_KEY = Pattern.compile("data-manual-key=\"([A-Z2-7 ]+)\"");
     private static final Pattern RECOVERY_CODE = Pattern.compile("[0-9a-f]{4}-[0-9a-f]{4}");
+    /** LOGIN_AT（日本時間 9:00）に登録を始めたときの期限の表示。 */
+    private static final String DEADLINE_AT_LOGIN = "2026-10-13 09:15 Asia/Tokyo（UTC+09:00）";
 
     @TestConfiguration(proxyBeanMethods = false)
     static class FixedClock {
@@ -132,7 +134,8 @@ class TotpEnrollmentSecurityIntegrationTest {
         assertThat(html)
                 .contains("<svg")
                 .contains("認証アプリで読み取る QR コード")
-                .contains("この画面を開いてから 15 分以内に登録してください。")
+                .contains(DEADLINE_AT_LOGIN + "</span> までに、登録とログインを終えてください")
+                .doesNotContain("TOTP")
                 .contains("autocomplete=\"one-time-code\"");
         assertThat(manualKey(html)).hasSize(32);
     }
@@ -146,9 +149,31 @@ class TotpEnrollmentSecurityIntegrationTest {
         String second = manualKey(enrollPage(session));
 
         assertThat(second).isEqualTo(first);
-        assertThat(sessionAttributeBytes(session))
-                .as("session の属性に、手入力のキー（Base32 の平文の秘密）の文字列がない")
-                .noneMatch(bytes -> new String(bytes, StandardCharsets.ISO_8859_1).contains(first));
+        assertNoPlaintextInSession(session, first);
+        mvc.perform(post(ENROLL_URL)
+                        .cookie(session)
+                        .param("code", wrongCode(email, first))
+                        .with(csrf()))
+                .andExpect(status().isOk());
+        assertNoPlaintextInSession(session, first);
+    }
+
+    @Test
+    void 再読み込みしても登録を始めた時刻は変わらず15分の上限を延ばさない() throws Exception {
+        Cookie session = loginWithPassword(unenrolledUser());
+        enrollPage(session);
+
+        advance(Duration.ofMinutes(10));
+        assertThat(enrollPage(session)).as("期限の表示も最初の時刻のまま").contains(DEADLINE_AT_LOGIN);
+
+        advance(Duration.ofMinutes(15));
+        mvc.perform(get(ENROLL_URL).cookie(session)).andExpect(redirectedUrl("/session-expired"));
+    }
+
+    @Test
+    void 認証していない利用者はA07を開けず送信もできずログインの画面へ送られる() throws Exception {
+        mvc.perform(get(ENROLL_URL)).andExpect(redirectedUrl("/login"));
+        mvc.perform(post(ENROLL_URL).param("code", "123456").with(csrf())).andExpect(redirectedUrl("/login"));
     }
 
     @Test
@@ -185,7 +210,11 @@ class TotpEnrollmentSecurityIntegrationTest {
         String html = enrolled.getResponse().getContentAsString();
         assertThat(RECOVERY_CODE.matcher(html).results().map(MatchResult::group).distinct())
                 .hasSize(10);
-        assertThat(html).contains("回復コードを安全な場所に保存した").contains("required");
+        assertThat(html)
+                .contains("回復コードを安全な場所に保存した")
+                .contains("required")
+                .as("登録を始めた時刻からの期限を続けて示す")
+                .contains(DEADLINE_AT_LOGIN + "</span> までに、続けてログインを終えてください");
         assertThat(recoveryCodes.findUnusedByUserId(userIdOf(email))).hasSize(10);
         assertThat(auditActions(email)).contains("TOTP_ENROLLED");
 
@@ -258,6 +287,9 @@ class TotpEnrollmentSecurityIntegrationTest {
                         .param("code", codeFromKey(email, key))
                         .with(csrf()))
                 .andExpect(status().isOk());
+        assertThat(totpCredentials.findByUserId(userIdOf(email)))
+                .as("上限の 1 秒前は登録できる")
+                .isPresent();
 
         advance(Duration.ofMinutes(1).plus(Duration.ofMinutes(15)));
         mvc.perform(get(ENROLL_URL).cookie(late)).andExpect(redirectedUrl("/session-expired"));
@@ -302,7 +334,47 @@ class TotpEnrollmentSecurityIntegrationTest {
                 .isEmpty();
     }
 
+    @Test
+    void 登録の途中のsessionで別の利用者がpasswordを送ると登録を始めた時刻を持ち越さずpasswordの段の5分になる() throws Exception {
+        // T-102: 前の利用者の登録を始めた時刻が残ると、次の利用者の password の段が 15 分に延びる
+        Cookie session = loginWithPassword(unenrolledUser());
+        enrollPage(session);
+
+        advance(Duration.ofMinutes(1));
+        Cookie switched = mvc.perform(post("/login")
+                        .cookie(session)
+                        .param("username", unenrolledUser())
+                        .param("password", PASSWORD)
+                        .with(csrf()))
+                .andExpect(redirectedUrl(TOTP_URL))
+                .andReturn()
+                .getResponse()
+                .getCookie(SESSION_COOKIE);
+
+        advance(Duration.ofMinutes(6));
+        mvc.perform(get(TOTP_URL).cookie(switched)).andExpect(redirectedUrl("/session-expired"));
+    }
+
     // --- 補助 ---
+
+    /**
+     * session の属性に、登録の途中の暗号文（{@code v1:}）はあり、平文の秘密（手入力のキー、4 文字ずつの区切り、復号した値）も
+     * 表示の値（otpauth の URI、QR の SVG）もないこと。
+     */
+    private void assertNoPlaintextInSession(Cookie session, String key) {
+        List<String> attributes = sessionAttributeBytes(session).stream()
+                .map(bytes -> new String(bytes, StandardCharsets.ISO_8859_1))
+                .toList();
+        String grouped = String.join(" ", key.split("(?<=\\G.{4})"));
+        String raw = new String(Base32.decode(key), StandardCharsets.ISO_8859_1);
+        assertThat(attributes).as("登録の途中の暗号文").anyMatch(value -> value.contains("v1:"));
+        assertThat(attributes)
+                .noneMatch(value -> value.contains(key))
+                .noneMatch(value -> value.contains(grouped))
+                .noneMatch(value -> value.contains(raw))
+                .noneMatch(value -> value.contains("otpauth://"))
+                .noneMatch(value -> value.contains("<svg"));
+    }
 
     private String unenrolledUser() {
         return user("enroll-" + UUID.randomUUID() + "@example.com");

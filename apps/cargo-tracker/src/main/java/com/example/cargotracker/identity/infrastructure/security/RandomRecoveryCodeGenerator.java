@@ -18,6 +18,8 @@ public final class RandomRecoveryCodeGenerator implements RecoveryCodeGenerator 
 
     private static final int CODE_BYTES = 4;
 
+    private static final HexFormat HEX = HexFormat.of();
+
     private final SecureRandom random = new SecureRandom();
 
     @Override
@@ -26,7 +28,7 @@ public final class RandomRecoveryCodeGenerator implements RecoveryCodeGenerator 
         byte[] bytes = new byte[CODE_BYTES];
         while (codes.size() < RecoveryCode.CODES_PER_USER) {
             random.nextBytes(bytes);
-            String hex = HexFormat.of().formatHex(bytes);
+            String hex = HEX.formatHex(bytes);
             codes.add(hex.substring(0, 4) + "-" + hex.substring(4));
         }
         return new ArrayList<>(codes);

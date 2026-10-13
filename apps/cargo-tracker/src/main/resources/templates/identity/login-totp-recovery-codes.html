@@ -15,6 +15,7 @@
     <ol class="app-recovery-codes">
         <li th:each="code : ${recoveryCodes}"><code th:text="${code}">1a2b-3c4d</code></li>
     </ol>
+    <p><span th:text="${deadline}">2026-10-13 10:15 Asia/Tokyo（UTC+09:00）</span> までに、続けてログインを終えてください。</p>
     <form th:action="@{/login/totp}" method="get">
         <div class="form-check mb-3">
             <input class="form-check-input" type="checkbox" id="saved" name="saved" required>

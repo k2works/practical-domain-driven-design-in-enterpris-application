@@ -9,6 +9,9 @@ import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.Map;
 import java.util.UUID;
+import javax.crypto.Cipher;
+import javax.crypto.spec.GCMParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -39,6 +42,21 @@ class AesGcmSecretCipherTest {
         assertThat(encrypted.value()).startsWith("v1:");
         assertThat(encrypted.value()).doesNotContain("12345678901234567890");
         assertThat(cipher.decrypt(encrypted, OWNER)).isEqualTo(SECRET);
+    }
+
+    @Test
+    void 関連データは決まった形の文字列で外の実装からも復号できる() throws Exception {
+        // AAD の形（"totp-secret:" + 利用者 ID）は保存した暗号文の互換の条件。変えると既存の暗号文が復号できなくなる
+        EncryptedSecret encrypted = TestSecretCiphers.cipher().encrypt(SECRET.clone(), OWNER);
+        byte[] body = Base64.getDecoder().decode(encrypted.value().substring("v1:".length()));
+        Cipher aes = Cipher.getInstance("AES/GCM/NoPadding");
+        aes.init(
+                Cipher.DECRYPT_MODE,
+                new SecretKeySpec(Base64.getDecoder().decode(TestSecretCiphers.KEY_V1), "AES"),
+                new GCMParameterSpec(128, body, 0, 12));
+        aes.updateAAD(("totp-secret:" + OWNER.value()).getBytes(StandardCharsets.UTF_8));
+
+        assertThat(aes.doFinal(body, 12, body.length - 12)).isEqualTo(SECRET);
     }
 
     @Test

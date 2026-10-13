@@ -63,8 +63,9 @@ public class LoginUiSteps {
         page().getByLabel("認証コード").fill(users.codeFromKey(role, key));
         page().getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("登録する"))
                 .click();
-        page().waitForURL(url -> url.contains("/login/totp/enroll"));
-        page().waitForLoadState();
+        // 登録の応答は同じ URL で返る（PRG にしない）ので、URL ではなく回復コードの見出しを待つ
+        assertThat(page().getByRole(AriaRole.HEADING, new Page.GetByRoleOptions().setName("回復コードの保存")))
+                .isVisible();
         browser.checkAccessibility();
     }
 

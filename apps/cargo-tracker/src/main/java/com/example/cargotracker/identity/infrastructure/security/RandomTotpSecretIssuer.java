@@ -5,7 +5,6 @@ import com.example.cargotracker.identity.domain.model.aggregates.TotpSecretIssue
 import com.example.cargotracker.identity.domain.model.valueobjects.EncryptedSecret;
 import com.example.cargotracker.identity.domain.model.valueobjects.TotpProvisioning;
 import com.example.cargotracker.shared.domain.UserId;
-import com.google.zxing.EncodeHintType;
 import com.google.zxing.WriterException;
 import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel;
 import com.google.zxing.qrcode.encoder.ByteMatrix;
@@ -15,7 +14,6 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.util.Arrays;
-import java.util.Map;
 
 /**
  * TOTP の秘密の発行（Bolt 31b、US-18 AC7、ADR-011）。160 ビットの秘密を乱数で作り、持ち主に結び付けて暗号化する（AAD）。
@@ -84,8 +82,8 @@ public final class RandomTotpSecretIssuer implements TotpSecretIssuer {
     private static String qrSvg(String text) {
         QRCode code;
         try {
-            code = Encoder.encode(
-                    text, ErrorCorrectionLevel.M, Map.of(EncodeHintType.CHARACTER_SET, StandardCharsets.UTF_8.name()));
+            // URI は URL エンコードした ASCII だけなので文字セットを指定しない（ECI を付けると読めない認証アプリがある。Bolt 31b の開発レビュー）
+            code = Encoder.encode(text, ErrorCorrectionLevel.M);
         } catch (WriterException e) {
             throw new IllegalStateException("QR コードを作れない", e);
         }
