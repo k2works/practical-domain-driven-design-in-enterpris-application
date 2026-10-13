@@ -11,4 +11,13 @@
         <Bug pattern="EI_EXPOSE_REP2"/>
         <Package name="~com\.example\.cargotracker\..*\.infrastructure\..*"/>
     </Match>
+    <!--
+      EI_EXPOSE_REP2: TOTP の確かめのサービス（Bolt 31）が DI で受け取ったリポジトリを保持することへの指摘。上と同じく Spring が管理する
+      シングルトンで、値として外へ渡さない。ほかのアプリケーションサービスは同じ形でも指摘されず、このクラスだけが指摘されたので、
+      アプリケーション層の全体ではなくこのクラスに限って抑止する。
+    -->
+    <Match>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+        <Class name="com.example.cargotracker.identity.application.internal.commandservices.TotpVerificationService"/>
+    </Match>
 </FindBugsFilter>

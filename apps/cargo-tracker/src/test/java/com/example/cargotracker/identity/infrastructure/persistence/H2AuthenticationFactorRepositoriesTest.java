@@ -1,5 +1,6 @@
 package com.example.cargotracker.identity.infrastructure.persistence;
 
+import com.example.cargotracker.identity.AuthenticationFactorFixtures;
 import com.example.cargotracker.identity.domain.model.aggregates.AuthenticationFactorRepositoriesContract;
 import com.example.cargotracker.identity.domain.model.aggregates.CompanyRepository;
 import com.example.cargotracker.identity.domain.model.aggregates.LoginFailureRepository;
@@ -59,7 +60,6 @@ class H2AuthenticationFactorRepositoriesTest extends AuthenticationFactorReposit
 
     @Override
     protected UserId newUser() {
-        return MyBatisAuthenticationFactorRepositoriesIntegrationTest.AuthenticationFactorFixtures.newUser(
-                companies, users);
+        return AuthenticationFactorFixtures.newUser(companies, users);
     }
 }

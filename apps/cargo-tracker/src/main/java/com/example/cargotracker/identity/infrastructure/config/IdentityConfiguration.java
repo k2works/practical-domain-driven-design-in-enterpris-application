@@ -1,9 +1,13 @@
 package com.example.cargotracker.identity.infrastructure.config;
 
+import com.example.cargotracker.identity.application.internal.commandservices.TotpVerificationService;
 import com.example.cargotracker.identity.application.internal.eventhandlers.KpiObservationEventHandler;
 import com.example.cargotracker.identity.application.internal.queryservices.KpiObservationQueryService;
 import com.example.cargotracker.identity.domain.model.aggregates.KpiObservationRepository;
+import com.example.cargotracker.identity.domain.model.aggregates.TotpCodeGenerator;
+import com.example.cargotracker.identity.domain.model.aggregates.TotpCredentialRepository;
 import com.example.cargotracker.identity.infrastructure.security.AesGcmSecretCipher;
+import java.time.Clock;
 import java.util.Map;
 import org.springframework.boot.context.properties.bind.Bindable;
 import org.springframework.boot.context.properties.bind.Binder;
@@ -33,6 +37,12 @@ public class IdentityConfiguration {
     @Bean
     AesGcmSecretCipher totpSecretCipher(Environment environment) {
         return AesGcmSecretCipher.fromBase64Keys(totpSecretKeys(environment));
+    }
+
+    @Bean
+    TotpVerificationService totpVerificationService(
+            TotpCredentialRepository credentials, TotpCodeGenerator generator, Clock clock) {
+        return new TotpVerificationService(credentials, generator, clock);
     }
 
     @Bean

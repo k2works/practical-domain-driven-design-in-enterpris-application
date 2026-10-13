@@ -28,13 +28,18 @@ import org.springframework.web.bind.annotation.RequestMapping;
 
 /**
  * AT-02: 依存は interfaces → application → domain ← infrastructure の向きに限る（バックエンドアーキテクチャ）。
- * サービスを組み立てる infrastructure.config（合成ルート）だけが、例外として application に依存してよい（D-5）。
+ * サービスを組み立てる infrastructure.config（合成ルート）だけが、例外として application に依存してよい（D-5）。ほかの例外は
+ * サガの状態の永続化（ADR-015）と、identity の認証の入口から identity のコマンドサービスへの依存（Bolt 31、ADR-012）。
  *
  * <p>層の規則（layeredArchitecture）は層の間の依存だけを見る。層の外（platform、ルートのパッケージ、外部のライブラリ）への
  * 依存は、このクラスの残りの規則で見る。コンテキストの間の依存は Spring Modulith の検証（AT-03、ModularityTest）が見る。
  */
 @AnalyzeClasses(packages = "com.example.cargotracker", importOptions = ImportOption.DoNotIncludeTests.class)
 class LayerArchitectureTest {
+
+    /** Spring Security の認証の入口（D-5 の認証の例外。Bolt 31）。 */
+    private static final String IDENTITY_AUTHENTICATION_ENTRY =
+            "com.example.cargotracker.identity.infrastructure.security..";
 
     /** 顧客 Web の URL（{@code /customer/}）の下に割り当てたコントローラー。 */
     private static final DescribedPredicate<JavaClass> CUSTOMER_WEB_CONTROLLERS =
@@ -86,11 +91,26 @@ class LayerArchitectureTest {
             .that()
             .resideInAPackage("..infrastructure..")
             .and()
-            .resideOutsideOfPackage("..infrastructure.config..")
+            .resideOutsideOfPackages("..infrastructure.config..", IDENTITY_AUTHENTICATION_ENTRY)
             .should()
             .dependOnClassesThat(
                     resideInAPackage("..application..").and(not(resideInAPackage("..application.sagas.."))))
             .because("サガの状態の永続化だけを例外にする（D-5、ADR-015）");
+
+    /**
+     * D-5 の認証の例外（Bolt 31、ADR-012）。Spring Security の認証の入口（provider・listener）は {@code identity.infrastructure.security}
+     * に置き、業務の判断（TOTP の照合と刻みの使用、Bolt 32 のロックの数え方）は {@code identity.application.internal.commandservices}
+     * に置く。入口から参照してよいのはそのコマンドサービスだけで、ほかのアプリケーション層には依存しない。
+     */
+    @ArchTest
+    static final ArchRule 認証の入口はidentityのコマンドサービスだけに依存してよい = noClasses()
+            .that()
+            .resideInAPackage(IDENTITY_AUTHENTICATION_ENTRY)
+            .should()
+            .dependOnClassesThat(resideInAPackage("..application..")
+                    .and(not(resideInAPackage(
+                            "com.example.cargotracker.identity.application.internal.commandservices.."))))
+            .because("認証の入口の例外は identity のコマンドサービスに限る（D-5、ADR-012、Bolt 31）");
 
     @ArchTest
     static final ArchRule サガの状態はinfrastructureの永続化の実装からだけ参照される = noClasses()

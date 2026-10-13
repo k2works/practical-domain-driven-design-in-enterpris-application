@@ -3,6 +3,8 @@ package com.example.cargotracker.identity.infrastructure.persistence;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.example.cargotracker.TestcontainersConfiguration;
+import com.example.cargotracker.identity.AuthenticationFactorFixtures;
+import com.example.cargotracker.identity.OverlappingTransactions;
 import com.example.cargotracker.identity.domain.model.aggregates.CompanyRepository;
 import com.example.cargotracker.identity.domain.model.aggregates.LoginFailure;
 import com.example.cargotracker.identity.domain.model.aggregates.LoginFailureRepository;
@@ -16,15 +18,8 @@ import com.example.cargotracker.identity.domain.model.rules.LockPolicy;
 import com.example.cargotracker.identity.domain.model.valueobjects.EncryptedSecret;
 import com.example.cargotracker.shared.domain.UserId;
 import com.example.cargotracker.shared.domain.UtcInstant;
-import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.function.Supplier;
 import java.util.stream.IntStream;
 import org.junit.jupiter.api.Test;
@@ -44,8 +39,6 @@ import org.springframework.transaction.support.TransactionTemplate;
 @Import(TestcontainersConfiguration.class)
 class MyBatisAuthenticationFactorConcurrencyIntegrationTest {
 
-    private static final long TIMEOUT_SECONDS = 30;
-    private static final long BLOCKED_CHECK_MILLIS = 500;
     private static final Instant T0 = Instant.parse("2026-10-11T00:00:00Z");
     private static final LockPolicy POLICY = new LockPolicy();
     private static final RecoveryCodeHasher HASHER = new RecoveryCodeHasher() {
@@ -79,9 +72,7 @@ class MyBatisAuthenticationFactorConcurrencyIntegrationTest {
     TransactionTemplate transactionTemplate;
 
     private UserId newUser() {
-        return transactionTemplate.execute(
-                status -> MyBatisAuthenticationFactorRepositoriesIntegrationTest.AuthenticationFactorFixtures.newUser(
-                        companies, users));
+        return transactionTemplate.execute(status -> AuthenticationFactorFixtures.newUser(companies, users));
     }
 
     private UserId userWithFailures(int failures) {
@@ -148,50 +139,8 @@ class MyBatisAuthenticationFactorConcurrencyIntegrationTest {
         assertThat(results).containsExactly(true, false);
     }
 
-    /**
-     * 先の操作を別のトランザクションで動かしてコミットを止め、後の操作を別のトランザクションで始める。後の操作が
-     * 先の行ロックを待っている（終わらない）ことを確かめてから、先をコミットする。結果は先・後の順に返す。
-     */
+    /** 先の操作のコミットを止め、後の操作が待っていることを確かめてから放す（T-100）。結果は先・後の順。 */
     private <T> List<T> runOverlapping(Supplier<T> first, Supplier<T> second) {
-        CountDownLatch firstUpdated = new CountDownLatch(1);
-        CountDownLatch releaseFirst = new CountDownLatch(1);
-        ExecutorService executor = Executors.newFixedThreadPool(2);
-        try {
-            CompletableFuture<T> firstResult = CompletableFuture.supplyAsync(
-                    () -> transactionTemplate.execute(status -> {
-                        T result = first.get();
-                        firstUpdated.countDown();
-                        awaitQuietly(releaseFirst);
-                        return result;
-                    }),
-                    executor);
-            awaitQuietly(firstUpdated);
-            CompletableFuture<T> secondResult =
-                    CompletableFuture.supplyAsync(() -> transactionTemplate.execute(status -> second.get()), executor);
-
-            assertThat(secondResult)
-                    .as("後の操作は先の行ロックを待つ")
-                    .failsWithin(Duration.ofMillis(BLOCKED_CHECK_MILLIS))
-                    .withThrowableOfType(TimeoutException.class);
-            releaseFirst.countDown();
-
-            return List.of(
-                    firstResult.orTimeout(TIMEOUT_SECONDS, TimeUnit.SECONDS).join(),
-                    secondResult.orTimeout(TIMEOUT_SECONDS, TimeUnit.SECONDS).join());
-        } finally {
-            releaseFirst.countDown();
-            executor.shutdownNow();
-        }
-    }
-
-    private static void awaitQuietly(CountDownLatch latch) {
-        try {
-            if (!latch.await(TIMEOUT_SECONDS, TimeUnit.SECONDS)) {
-                throw new IllegalStateException("同時の操作がそろいませんでした");
-            }
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new IllegalStateException(e);
-        }
+        return OverlappingTransactions.run(transactionTemplate, first, second);
     }
 }

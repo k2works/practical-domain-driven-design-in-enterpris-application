@@ -3,24 +3,17 @@ package com.example.cargotracker.identity.infrastructure.persistence;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.example.cargotracker.TestcontainersConfiguration;
+import com.example.cargotracker.identity.AuthenticationFactorFixtures;
 import com.example.cargotracker.identity.domain.model.aggregates.AuthenticationFactorRepositoriesContract;
-import com.example.cargotracker.identity.domain.model.aggregates.Company;
 import com.example.cargotracker.identity.domain.model.aggregates.CompanyRepository;
 import com.example.cargotracker.identity.domain.model.aggregates.LoginFailureRepository;
 import com.example.cargotracker.identity.domain.model.aggregates.RecoveryCode;
 import com.example.cargotracker.identity.domain.model.aggregates.RecoveryCodeRepository;
 import com.example.cargotracker.identity.domain.model.aggregates.TotpCredentialRepository;
-import com.example.cargotracker.identity.domain.model.aggregates.User;
 import com.example.cargotracker.identity.domain.model.aggregates.UserRepository;
 import com.example.cargotracker.identity.domain.model.rules.LockPolicy;
-import com.example.cargotracker.identity.domain.model.valueobjects.CompanyKind;
-import com.example.cargotracker.identity.domain.model.valueobjects.EmailAddress;
-import com.example.cargotracker.identity.domain.model.valueobjects.UserStatus;
-import com.example.cargotracker.shared.domain.CompanyId;
-import com.example.cargotracker.shared.domain.Role;
 import com.example.cargotracker.shared.domain.UserId;
 import java.time.Duration;
-import java.util.Set;
 import java.util.UUID;
 import java.util.stream.IntStream;
 import org.junit.jupiter.api.Test;
@@ -106,26 +99,5 @@ class MyBatisAuthenticationFactorRepositoriesIntegrationTest extends Authenticat
                         "SELECT count(*) FROM identity.recovery_code WHERE user_id = ? AND code_hash LIKE 'plain-%'",
                         Integer.class, user.value()))
                 .isZero();
-    }
-
-    /** 外部キーのための企業と利用者を作る（並行のテストと共有する）。 */
-    static final class AuthenticationFactorFixtures {
-
-        private AuthenticationFactorFixtures() {}
-
-        static UserId newUser(CompanyRepository companies, UserRepository users) {
-            Company company = Company.of(new CompanyId(UUID.randomUUID()), "荷主 A", CompanyKind.SHIPPER, true);
-            companies.add(company);
-            UserId userId = new UserId(UUID.randomUUID());
-            users.add(User.of(
-                    userId,
-                    company.id(),
-                    EmailAddress.of("user-" + UUID.randomUUID() + "@example.com"),
-                    "荷主 太郎",
-                    "{noop}x",
-                    UserStatus.ACTIVE,
-                    Set.of(Role.SHIPPER)));
-            return userId;
-        }
     }
 }
