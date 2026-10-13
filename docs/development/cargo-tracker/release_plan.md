@@ -4,7 +4,7 @@ title: "リリース計画 - cargo-tracker（A 社国際貨物輸送管理シス
 description: "cargo-tracker MVP のリリース計画。1 人 + AI、時間単位の Bolt（= イテレーション）と週次の見直しで、最初の縦の流れ（R0.1）、パイロット準備完了（R1.0）、本格展開前（R1.1）の 3 段階、Unit のエントロピー評価、SP、バッファ、パイロット開始の条件、引継ぎ ID の台帳、業務責任者に確かめる事項の台帳。"
 tags: [development,release-plan]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-13T22:51:41Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-13T23:28:51Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T09:29:53Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:38:26Z }
@@ -904,3 +904,4 @@ xychart-beta
 | 2026-10-13 | Bolt 32 の開始準備: 32 と 32c に分け（32 はロック、32c は AC6・見直しの 3・31d から送った低の指摘）、S-02 は W10 の WAF に送る、ロック中は誤りと同じ文言で予告だけ、`UnreadableCredentialException` を `RuntimeException` にすることを決めた。Bolt 32 計画を作り、2 つの整合性検証の指摘を反映した（承認待ち。W5 の行の直しは計画のステップ 1） | anthropic/claude-opus-5-5、決定 human:kakimomokuri |
 | 2026-10-13 | Bolt 32 のステップ 1: W5 の Bolt の分け方の表の 32 の行を Bolt 32 計画の内容にし、32c の行（AC6、ADR-012 の見直しの 3、31d から送った低の指摘。SP 0、インサイドアウト、ステップごと（セキュリティ、認可））を足した。局面とアプローチに 32 と 32c の理由を、US-18 の Bolt の順序に 32c を、W5 の本数を 15 本に直した。W5 の状態と主なタスク、実績の表の W5 の行を今の進み具合にした。Bolt 13・14 からの持ち込みの表で見直しの 3 を 32c に、S-02 を W10 の WAF に直し、リスク台帳に S-02 の行を足した | anthropic/claude-opus-5-5 |
 | 2026-10-14 | Bolt 32 の終了報告の承認を記録した（議題 1〜6 を承認。議題 4・5 は Bolt 32c の確認ポイントにする）。W5 の状態を Bolt 32 まで終えた形にした | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
+| 2026-10-14 | Bolt 32c の開始準備: 32c と 32d に分け（32c は AC6 と見直しの 3、32d は 31d から送った低の指摘と Bolt 32 の既知の課題のテストの整理）、止められた利用者の session は捨てて A-03 に送り `SESSION_REVOKED` を書く、Bolt 32 の議題 4・5 は採らないことを決めた。Bolt 32c 計画を作り、2 つの整合性検証の指摘を反映した（承認待ち。W5 の行の直しは計画のステップ 1） | anthropic/claude-opus-5-5、決定 human:kakimomokuri |
