@@ -3,7 +3,9 @@ type: Plan
 title: "Bolt 32 終了報告 - ログインのロック（US-18 AC3）"
 description: "W5 の 9 本目の Bolt の終了報告。password・TOTP・回復コードの誤りを合わせて数え、5 回続いたら 15 分ロックし、ロック中も誤りと同じ応答と予告にした。数えることと監査記録はアプリケーションのサービス LoginAttemptService の 1 つのトランザクションにし、最初の失敗の行はトランザクションの外で作る。入口の誤りの扱い（実装の誤り・書き込みの DB の誤りは 500、利用者の読み出しの DB の誤りは失敗へ倒す）を統合テストと特性テストで固定した。承認ゲートを止めずに進めたので、止まらなかったゲートと計画からの逸脱を承認の議題に置く。"
 tags: [plan]
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-13T13:55:59Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-13T22:51:41Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-10-13T22:51:57Z }
 ---
 
 # Bolt 32 終了報告 - ログインのロック（US-18 AC3）
@@ -171,6 +173,7 @@ Bolt 32c: AC6 の request ごとの役割の確認と ADR-012 の見直しの 3�
 
 | 日付 | 更新内容 | 更新者 |
 | :--- | :--- | :--- |
+| 2026-10-14 | 終了報告を承認した（議題 1〜6 を承認。議題 4 の文言と議題 5 の監査の書き込みの置き場所は Bolt 32c の確認ポイントにする）。T-113・T-114 を足した | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-10-13 | 初版作成（承認待ち） | anthropic/claude-opus-5-5 |
 
 ## 関連ドキュメント
