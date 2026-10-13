@@ -10589,7 +10589,7 @@
 <tbody>
 <tr>
 <td style="text-align: left;">数え方の置き場所</td>
-<td style="text-align: left;">規則（5 回・15 分、ロック中は数えない・延ばさない）は、ログインの失敗の集約 <code>LoginFailure</code> と方針 <code>LockPolicy</code>（Bolt 30）のまま。数える・0 に戻す・監査記録を書くのは、アプリケーションのサービス <code>LoginAttemptService</code>（<code>identity.application.internal.commandservices</code>）で、回数と監査記録を <code>TransactionTemplate</code> の 1 つのトランザクションにする（IA-INV-08。ADR-012 の見直しの 5）。監査記録の追記が失敗したら回数も戻る。監査のリスナー（<code>AuthenticationAuditListener</code>）は失敗・成功のイベントをサービスに写すだけにする（決定 2 の表の「イベントの 1 か所で数える」を、数える場所をサービスに移す形に改めた）</td>
+<td style="text-align: left;">規則（5 回・15 分、ロック中は数えない・延ばさない）は、ログインの失敗の集約 <code>LoginFailure</code> と方針 <code>LockPolicy</code>（Bolt 30）のまま。数える・0 に戻す・監査記録を書くのは、アプリケーションのサービス <code>LoginAttemptService</code>（<code>identity.application.internal.commandservices</code>）で、回数と監査記録を <code>TransactionTemplate</code> の 1 つのトランザクションにする（IA-INV-08。ADR-012 の見直しの 5）。監査記録の追記が失敗したら回数も戻る。監査のリスナー（<code>AuthenticationAuditListener</code>）は、誤りの失敗（数える）とロック中の試行をサービスに写し、数えない拒否（利用停止・無効な企業、存在しない利用者、利用者の読み出しの DB の誤り）と password の段の成功は監査記録に直接書く（Bolt 32 の開発レビューで、文書を実装に合わせた。ログインの監査をすべてサービスに寄せるかは終了報告の議題）（決定 2 の表の「イベントの 1 か所で数える」を、数える場所をサービスに移す形に改めた）</td>
 </tr>
 <tr>
 <td style="text-align: left;">数える失敗</td>
@@ -10597,7 +10597,7 @@
 </tr>
 <tr>
 <td style="text-align: left;">数えない失敗</td>
-<td style="text-align: left;">ロック中の試行（期限も延ばさない）、存在しない利用者（行を作らない）、password が正しく利用停止・無効な企業で拒んだとき（Disabled のイベント。今の理由）、入口の DB の誤り、A-07 の登録のコードの誤り（登録は認証のイベントを経ず、登録の誤りは自分の秘密の確かめで、他人の要素の推測にならない）</td>
+<td style="text-align: left;">ロック中の試行（期限も延ばさない）、存在しない利用者（行を作らない）、password が正しく利用停止・無効な企業で拒んだとき（Disabled のイベント。今の理由）、利用者の読み出しの DB の誤り（ロックの読み出しの誤りは 500。下の「DB の誤り」）、A-07 の登録のコードの誤り（登録は認証のイベントを経ず、登録の誤りは自分の秘密の確かめで、他人の要素の推測にならない）</td>
 </tr>
 <tr>
 <td style="text-align: left;">0 に戻す時点</td>
@@ -10617,7 +10617,7 @@
 </tr>
 <tr>
 <td style="text-align: left;">ロック中の試行の監査</td>
-<td style="text-align: left;">正しい password（Locked のイベント）は <code>recordLockedAttempt</code>、誤った password（BadCredentials のイベント）は <code>recordFailure</code> がロック中と見分けて、どちらも <code>LOGIN_FAILED</code>（理由 <code>LOCKED</code>）を書き、数えない</td>
+<td style="text-align: left;">ロックで確かめずに拒んだ試行（Locked のイベント。password の段の正しい password、TOTP・回復コードの段で照合の前）は <code>recordLockedAttempt</code>、誤った password（BadCredentials のイベント）は <code>recordFailure</code> がロック中と見分けて、どちらも <code>LOGIN_FAILED</code>（理由 <code>LOCKED</code>）を書き、数えない</td>
 </tr>
 <tr>
 <td style="text-align: left;">ロックの監査</td>
@@ -10625,11 +10625,11 @@
 </tr>
 <tr>
 <td style="text-align: left;">最初の失敗の作成の競合（Bolt 30 の議題 2 の③）</td>
-<td style="text-align: left;">主たるトランザクションの前に、別の短いトランザクションで 0 回の行を作る（<code>prepare</code>。なければ作る。入れ子にしないので接続を 2 本持たない。採番の <code>prepareYear</code> と同じ形）。一意制約の違反はトランザクションの外で受けて、既にあるとして続ける（ADR-007 の「一意制約の違反は同じトランザクションで捕まえない」）。数える・監査は主たるトランザクションに残す。利用者を作るときに行を作る案は、利用者の管理（Bolt 34）と既存の利用者のデータの移行が要るので採らない</td>
+<td style="text-align: left;">主たるトランザクションの前に、トランザクションの外の 1 文（auto-commit）で 0 回の行を作る（<code>prepare</code>。なければ作る。入れ子にしないので接続を 2 本持たない）。サービスは作成を <code>PROPAGATION_NOT_SUPPORTED</code> で流し、外側にトランザクションがあっても中断して外で流す（採番の <code>prepareYear</code> は <code>REQUIRES_NEW</code> で守る。どちらも違反で外側を中断させない）。一意制約の違反はトランザクションの外で受けて、既にあるとして続ける（ADR-007 の「一意制約の違反は同じトランザクションで捕まえない」）。数える・監査は主たるトランザクションに残す。利用者を作るときに行を作る案は、利用者の管理（Bolt 34）と既存の利用者のデータの移行が要るので採らない</td>
 </tr>
 <tr>
 <td style="text-align: left;">DB の誤り</td>
-<td style="text-align: left;">書き込み（数え方・監査）の DB の誤りは 500 にしてエラーのログを残す（監査記録なしにログインを通さない。IA-INV-08）。読み出しの誤りは、どこで起きるかで違う。利用者の読み出し（<code>loadUserByUsername</code>）の誤りだけは、枠組みが <code>InternalAuthenticationServiceException</code> に包んで失敗へ倒し <code>/login?error</code> になる（ログインは通さない）。これを受け入れ、監査の理由は <code>SERVICE_ERROR</code>（数えない）にする。この例外には既定の失敗のイベントの対応がない（対応は例外のクラス名の完全一致で選ばれ、親の型の対応は使われない）ので、<code>SecurityConfiguration</code> で <code>AuthenticationFailureServiceExceptionEvent</code> に対応させる。ロックの読み出しの誤りは、password の段（照合の後の確認。枠組みは包まない）でも TOTP・回復コードの段でも 500。計画では password の段のロックの読み出しも <code>/login?error</code> になると見ていたが、実装で照合の後の確認の例外は包まれないと分かった（Bolt 32。<code>AuthenticationErrorHandlingIntegrationTest</code> と特性テストで確かめる）。利用者の読み出しも 500 にそろえるには枠組みの失敗の扱いを変える必要があり、得るものが小さい</td>
+<td style="text-align: left;">書き込み（数え方・監査）の DB の誤りは 500 にしてエラーのログを残す（監査記録なしにログインを通さない。IA-INV-08）。読み出しの誤りは、どこで起きるかで違う。利用者の読み出し（<code>loadUserByUsername</code>）の誤りだけは、枠組みが <code>InternalAuthenticationServiceException</code> に包んで失敗へ倒し <code>/login?error</code> になる（ログインは通さない）。これを受け入れ、監査の理由は <code>SERVICE_ERROR</code>（数えない）にする。この例外には既定の失敗のイベントの対応がない（対応は例外のクラス名の完全一致で選ばれ、親の型の対応は使われない）ので、<code>SecurityConfiguration</code> で <code>AuthenticationFailureServiceExceptionEvent</code> に対応させる。ロックの読み出しの誤りは、password の段（照合の後の確認。枠組みは包まない）でも TOTP・回復コードの段でも 500。計画では password の段のロックの読み出しも <code>/login?error</code> になると見ていたが、実装で照合の後の確認の例外は包まれないと分かった（Bolt 32。<code>AuthenticationErrorHandlingIntegrationTest</code> と特性テストで確かめる）。利用者の読み出しも 500 にそろえるには枠組みの失敗の扱いを変える必要があり、得るものが小さい。password の段のロックの読み出しの 500 は password が正しいときだけ起きるので、DB の障害の間に限り「500 なら password は正しい」という手がかりになる。攻撃者は DB の障害を起こせないので受け入れる</td>
 </tr>
 <tr>
 <td style="text-align: left;">応答と画面</td>
@@ -10643,6 +10643,7 @@
 <li><code>{bcrypt}</code> の接頭辞で中身が壊れた password のハッシュは、枠組みが false を返す（照合が一致しない。利用者の誤りとして数えられる）。読めない要素として扱うには bcrypt の形の知識を入口に持ち込むことになり、壊すには DB への書き込みが要るので、扱いを変えず、特性テストで固定する。</li>
 <li>S-02（利用者を変えながら password を試す攻撃。spraying）は、利用者ごとのロックでは止まらない。本番の前段の WAF の送信元ごとの流量の規則（W10。SEC-20）で扱い、それまでは受け入れる（パイロットの前で本番の利用者はいない）。リスク台帳に置く。</li>
 <li>ロックの解除の操作（システム管理者）は、利用者の管理（US-16。Bolt 34）で作る。それまでは 15 分の経過だけで解ける。</li>
+<li>TOTP・回復コードの段で、ロックを確かめてから成功を記録するまでの短い間（数十ミリ秒）に別の session の失敗でロックされると、そのログインは通る（回数とロックは消さない）。間は短く、この段に来た者は password を知っているので受け入れる（Bolt 32 の開発レビュー）。</li>
 </ul>
 <h3 id="_4">代替案<a class="headerlink" href="#_4" title="Permanent link">&para;</a></h3>
 <table>

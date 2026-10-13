@@ -10124,7 +10124,7 @@
 <li>存在しないメールアドレスでの失敗は、操作者を空にして記録し、メールアドレスは残さない。</li>
 <li>監査記録の書き込みに失敗したら、ログインも失敗にする（IA-INV-08 の同期の書き込み。fail-closed）。</li>
 <li>権限外のアクセスの試行の記録は、利用者と役割の管理（US-16）の Bolt で足す。</li>
-<li>W5 のロックの失敗の数え方は、この listener が失敗・成功のイベントをアプリケーションのサービス <code>LoginAttemptService</code> に写す形にする。数えるのと監査記録を書くのはサービスの 1 つのトランザクションで、listener は数えない（Bolt 32。下の「W5 で見直すこと」の 5。<a href="../011-mfa-totp/">ADR-011</a> の決定 9）。Bolt 32 から、ロックしたときに <code>ACCOUNT_LOCKED</code> を書き、ロック中の試行を理由 <code>LOCKED</code>、入口の読み出しの DB の誤りを理由 <code>SERVICE_ERROR</code> で記録する（どちらも数えない）。</li>
+<li>W5 のロックの失敗の数え方は、この listener が失敗・成功のイベントをアプリケーションのサービス <code>LoginAttemptService</code> に写す形にする。数えるのと、その監査記録を書くのはサービスの 1 つのトランザクションで、listener は数えない。数えない拒否と password の段の成功は listener が監査記録に直接書く（Bolt 32。下の「W5 で見直すこと」の 5。<a href="../011-mfa-totp/">ADR-011</a> の決定 9）。Bolt 32 から、ロックしたときに <code>ACCOUNT_LOCKED</code> を書き、ロック中の試行を理由 <code>LOCKED</code>、利用者の読み出し（<code>loadUserByUsername</code>）の DB の誤りを理由 <code>SERVICE_ERROR</code> で記録する（どちらも数えない）。</li>
 <li>Bolt 31 から、操作を <code>PASSWORD_VERIFIED</code>（password の段の成功）と <code>LOGIN_SUCCEEDED</code>（2 つの要素がそろった）に分ける。TOTP の失敗は利用者と理由（<code>INVALID_TOTP</code>・<code>TOTP_REUSED</code>）で記録する（下の「W5 で見直すこと」の 1）。Bolt 31b から TOTP の登録を <code>TOTP_ENROLLED</code> で、Bolt 31c から回復コードの使用を <code>RECOVERY_CODE_USED</code>（<code>LOGIN_SUCCEEDED</code> と 2 行）で記録し、回復コードの拒否は理由 <code>INVALID_RECOVERY_CODE</code> で記録する（<a href="../011-mfa-totp/">ADR-011</a> の決定 7）。Bolt 31d から、TOTP を登録していない利用者の TOTP の送信を理由 <code>TOTP_NOT_ENROLLED</code> で記録する（今までは <code>INVALID_TOTP</code>。利用者への応答は変えない。ADR-011 の決定 8）。</li>
 </ul>
 <h3 id="6-d-5-bolt-31">6. 層の規則 D-5 の認証の例外（Bolt 31）<a class="headerlink" href="#6-d-5-bolt-31" title="Permanent link">&para;</a></h3>
@@ -10197,8 +10197,8 @@
 <li>画面の単体テストの主体（<code>@WithAuthenticatedActor</code>）の工場（<code>WithAuthenticatedActorSecurityContextFactory</code>）が、<code>FactorGrantedAuthority</code> で <code>FACTOR_PASSWORD</code>・<code>FACTOR_TOTP</code> を足す（使うテストのファイルは変えない）。</li>
 <li>ロックの数え方（IA-INV-03）は <code>identity.application</code> のサービスとログインの失敗の集約に置き、監査の listener は入口だけにする（決めた。2026-10-13、Bolt 32 の計画の承認で human:kakimomokuri が決定）。</li>
 <li>規則（5 回・15 分、ロック中は数えない・延ばさない）はログインの失敗の集約 <code>LoginFailure</code> と方針 <code>LockPolicy</code> のまま（2026-10-11 に改めた。初めは利用者の集約としたが、失敗のたびに利用者の版が上がり利用者の管理の更新とぶつかるため、Bolt 30 の計画の承認で別の集約にした）。</li>
-<li>数える・0 に戻す・監査記録を書くのは <code>LoginAttemptService</code>（<code>identity.application.internal.commandservices</code>）で、回数と監査記録を 1 つのトランザクションにする（IA-INV-08）。listener は失敗・成功のイベントの型でサービスのメソッドに写すだけにする。数え方の入口は決定 6 の D-5 の認証の例外と同じ形で、<code>isLocked</code> も <code>commandservices</code> に置く（決定 6）。</li>
-<li>最初の失敗の行は主たるトランザクションの前に別の短いトランザクションで作り、一意制約の違反はトランザクションの外で受ける。詳細は <a href="../011-mfa-totp/">ADR-011</a> の決定 9。</li>
+<li>数える・0 に戻す・監査記録を書くのは <code>LoginAttemptService</code>（<code>identity.application.internal.commandservices</code>）で、回数と監査記録を 1 つのトランザクションにする（IA-INV-08）。listener は誤りの失敗・ロック中の試行・2 つの要素がそろった成功をイベントの型でサービスのメソッドに写し、数えない拒否と password の段の成功は監査記録に直接書く（Bolt 32 の開発レビューで実装に合わせた）。数え方の入口は決定 6 の D-5 の認証の例外と同じ形で、<code>isLocked</code> も <code>commandservices</code> に置く（決定 6）。</li>
+<li>最初の失敗の行は主たるトランザクションの前にトランザクションの外の 1 文で作り、一意制約の違反はトランザクションの外で受ける。詳細は <a href="../011-mfa-totp/">ADR-011</a> の決定 9。</li>
 </ol>
 <h2 id="_8">コンプライアンス<a class="headerlink" href="#_8" title="Permanent link">&para;</a></h2>
 <ul>

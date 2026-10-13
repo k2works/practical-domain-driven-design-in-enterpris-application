@@ -10478,6 +10478,9 @@
 </tr>
 </tbody>
 </table>
+<blockquote>
+<p><strong>実装での逸脱（Bolt 32 のステップ 4）</strong>: password の段のロックの読み出しの DB の誤りは、照合の後の確認の例外を枠組みが包まないため <code>/login?error</code> でなく 500 になった。<code>/login?error</code>（理由 <code>SERVICE_ERROR</code>）になるのは利用者の読み出しの誤りだけ。ADR-011 の決定 9 の「DB の誤り」を事実に合わせ、終了報告に記録した。完了条件の「確認ポイント 8 のとおり」は、この注記を含めて判定する。</p>
+</blockquote>
 <h2 id="_10">完了条件<a class="headerlink" href="#_10" title="Permanent link">&para;</a></h2>
 <ul class="task-list">
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> password・TOTP・回復コードの失敗が合わせて 5 回続くとロックされ、15 分の間は正しい認証情報でも拒まれ、15 分で解け、解けた後は 1 回目から数える。ロック中の試行は数えず期限も延びない。2 つの要素がそろったログインで 0 に戻り、password の段の成功では戻らない</li>
