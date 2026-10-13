@@ -10,7 +10,7 @@ import com.example.cargotracker.identity.domain.model.aggregates.TotpCodeGenerat
 import com.example.cargotracker.identity.domain.model.aggregates.TotpCredential;
 import com.example.cargotracker.identity.domain.model.aggregates.TotpCredentialRepository;
 import com.example.cargotracker.identity.domain.model.aggregates.UserRepository;
-import com.example.cargotracker.identity.infrastructure.security.AesGcmSecretCipher;
+import com.example.cargotracker.identity.infrastructure.crypto.AesGcmSecretCipher;
 import com.example.cargotracker.shared.domain.UserId;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import java.nio.charset.StandardCharsets;

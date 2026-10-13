@@ -1,8 +1,9 @@
-package com.example.cargotracker.identity.infrastructure.security;
+package com.example.cargotracker.identity.infrastructure.crypto;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import com.example.cargotracker.identity.domain.model.aggregates.UnreadableCredentialException;
 import com.example.cargotracker.identity.domain.model.valueobjects.EncryptedSecret;
 import com.example.cargotracker.shared.domain.UserId;
 import java.nio.charset.StandardCharsets;
@@ -113,6 +114,7 @@ class JavaOtpTotpCodeGeneratorTest {
         assertThatThrownBy(() -> generator.code(OWNER, null, 1)).isInstanceOf(IllegalArgumentException.class);
         assertThatThrownBy(() -> generator.code(OWNER, SECRET, -1)).isInstanceOf(IllegalArgumentException.class);
         EncryptedSecret unknownVersion = new EncryptedSecret("v9:AAAA");
-        assertThatThrownBy(() -> generator.code(OWNER, unknownVersion, 1)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> generator.code(OWNER, unknownVersion, 1))
+                .isInstanceOf(UnreadableCredentialException.class);
     }
 }

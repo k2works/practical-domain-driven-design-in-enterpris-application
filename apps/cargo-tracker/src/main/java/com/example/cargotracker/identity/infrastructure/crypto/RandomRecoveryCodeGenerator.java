@@ -1,4 +1,4 @@
-package com.example.cargotracker.identity.infrastructure.security;
+package com.example.cargotracker.identity.infrastructure.crypto;
 
 import com.example.cargotracker.identity.domain.model.aggregates.RecoveryCode;
 import com.example.cargotracker.identity.domain.model.aggregates.RecoveryCodeGenerator;

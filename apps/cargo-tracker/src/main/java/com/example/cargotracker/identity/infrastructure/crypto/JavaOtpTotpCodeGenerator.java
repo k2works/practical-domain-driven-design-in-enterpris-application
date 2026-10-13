@@ -1,8 +1,9 @@
-package com.example.cargotracker.identity.infrastructure.security;
+package com.example.cargotracker.identity.infrastructure.crypto;
 
 import com.eatthepath.otp.TimeBasedOneTimePasswordGenerator;
 import com.example.cargotracker.identity.domain.model.aggregates.TotpCodeGenerator;
 import com.example.cargotracker.identity.domain.model.aggregates.TotpCredential;
+import com.example.cargotracker.identity.domain.model.aggregates.UnreadableCredentialException;
 import com.example.cargotracker.identity.domain.model.valueobjects.EncryptedSecret;
 import com.example.cargotracker.shared.domain.UserId;
 import java.security.InvalidKeyException;
@@ -62,7 +63,7 @@ public final class JavaOtpTotpCodeGenerator implements TotpCodeGenerator {
                     // 既定のロケールの数字（アラビア・インド数字など）にせず、ASCII の数字で書く
                     Locale.ROOT);
         } catch (InvalidKeyException e) {
-            throw new IllegalArgumentException("TOTP の秘密を使えない", e);
+            throw new UnreadableCredentialException("TOTP の秘密を使えない", e);
         } finally {
             Arrays.fill(secret, (byte) 0);
         }

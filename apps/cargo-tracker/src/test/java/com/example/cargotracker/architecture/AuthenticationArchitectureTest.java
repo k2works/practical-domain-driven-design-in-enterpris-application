@@ -29,33 +29,50 @@ class AuthenticationArchitectureTest {
             .dependOnClassesThat()
             .resideInAPackage("org.springframework.security..");
 
-    /** TOTP のライブラリは identity.infrastructure に閉じる。ドメインは TotpCodeGenerator のポートだけを知る（ADR-011、Bolt 30）。 */
+    /**
+     * TOTP のライブラリは暗号の部品（identity.infrastructure.crypto）に閉じる。ドメインは TotpCodeGenerator のポートだけを知る
+     * （ADR-011、Bolt 30。Bolt 31d で crypto に狭めた）。
+     */
     @ArchTest
-    static final ArchRule TOTPのライブラリはidentityのinfrastructureだけが使う = noClasses()
+    static final ArchRule TOTPのライブラリは暗号の部品だけが使う = noClasses()
             .that()
             .resideInAPackage("com.example.cargotracker..")
             .and()
-            .resideOutsideOfPackage("com.example.cargotracker.identity.infrastructure..")
+            .resideOutsideOfPackage("com.example.cargotracker.identity.infrastructure.crypto..")
             .should()
             .dependOnClassesThat()
             .resideInAPackage("com.eatthepath.otp..");
 
     /**
-     * TOTP の秘密の平文を扱う暗号化は identity.infrastructure に閉じる。ドメインとアプリケーションは暗号文（EncryptedSecret）
-     * だけを受け渡す（Bolt 31、SEC-16、Bolt 30 の議題 2 の②）。
+     * TOTP の秘密の平文を扱う JDK の暗号は暗号の部品（identity.infrastructure.crypto）に閉じる。ドメインとアプリケーションは暗号文
+     * （EncryptedSecret）だけを受け渡す（Bolt 31、SEC-16、Bolt 30 の議題 2 の②。Bolt 31d で crypto に狭めた）。
      */
     @ArchTest
-    static final ArchRule 秘密の暗号化はidentityのinfrastructureだけが使う = noClasses()
+    static final ArchRule JDKの暗号は暗号の部品だけが使う = noClasses()
             .that()
             .resideInAPackage("com.example.cargotracker..")
             .and()
-            .resideOutsideOfPackage("com.example.cargotracker.identity.infrastructure..")
+            .resideOutsideOfPackage("com.example.cargotracker.identity.infrastructure.crypto..")
             .should()
             .dependOnClassesThat()
-            .resideInAPackage("javax.crypto..")
-            .orShould()
+            .resideInAPackage("javax.crypto..");
+
+    /**
+     * 暗号化の部品（AesGcmSecretCipher）を参照してよいのは、暗号の部品と、組み立てる合成ルートと、dev の入力済みの部品だけ
+     * （Bolt 31d）。認証の入口・画面・業務の層は暗号文の文字列とポートだけを扱う。
+     */
+    @ArchTest
+    static final ArchRule 暗号化の部品は暗号の部品と合成ルートとdevの部品だけが参照する = noClasses()
+            .that()
+            .resideInAPackage("com.example.cargotracker..")
+            .and()
+            .resideOutsideOfPackages(
+                    "com.example.cargotracker.identity.infrastructure.crypto..",
+                    "com.example.cargotracker.identity.infrastructure.config..",
+                    "com.example.cargotracker.identity.infrastructure.devlogin..")
+            .should()
             .dependOnClassesThat()
-            .haveSimpleName("AesGcmSecretCipher");
+            .haveFullyQualifiedName("com.example.cargotracker.identity.infrastructure.crypto.AesGcmSecretCipher");
 
     /**
      * 要素の権限（FACTOR_PASSWORD・FACTOR_TOTP）は identity.infrastructure に閉じる。ほかのコンテキストと identity の画面・業務の層は
@@ -80,18 +97,18 @@ class AuthenticationArchitectureTest {
             .that()
             .haveSimpleName("AesGcmSecretCipher")
             .should()
-            .resideInAPackage("com.example.cargotracker.identity.infrastructure..")
+            .resideInAPackage("com.example.cargotracker.identity.infrastructure.crypto..")
             .andShould()
             .dependOnClassesThat()
             .resideInAPackage("javax.crypto..");
 
-    /** QR のライブラリ（ZXing）は identity.infrastructure に閉じる（Bolt 31b、ADR-011）。 */
+    /** QR のライブラリ（ZXing）は暗号の部品（identity.infrastructure.crypto）に閉じる（Bolt 31b、ADR-011。Bolt 31d で crypto に狭めた）。 */
     @ArchTest
-    static final ArchRule QRのライブラリはidentityのinfrastructureだけが使う = noClasses()
+    static final ArchRule QRのライブラリは暗号の部品だけが使う = noClasses()
             .that()
             .resideInAPackage("com.example.cargotracker..")
             .and()
-            .resideOutsideOfPackage("com.example.cargotracker.identity.infrastructure..")
+            .resideOutsideOfPackage("com.example.cargotracker.identity.infrastructure.crypto..")
             .should()
             .dependOnClassesThat()
             .resideInAPackage("com.google.zxing..");
@@ -102,26 +119,41 @@ class AuthenticationArchitectureTest {
             .that()
             .haveSimpleName("RandomTotpSecretIssuer")
             .should()
-            .resideInAPackage("com.example.cargotracker.identity.infrastructure..")
+            .resideInAPackage("com.example.cargotracker.identity.infrastructure.crypto..")
             .andShould()
             .dependOnClassesThat()
             .resideInAPackage("com.google.zxing..");
 
     /**
-     * 秘密の発行と回復コードの生成の実装は、認証の入口ではないので application に依存しない（Bolt 31b）。層の規則 D-5 の認証の例外は
-     * {@code identity.infrastructure.security} 全体にかかるので、入口でない部品の守りを足す（入口と暗号のパッケージは 31d で諮る）。
+     * 暗号の部品（identity.infrastructure.crypto）は認証の入口（identity.infrastructure.security）に依存しない（Bolt 31d、ADR-011 の
+     * 決定 8）。層の規則 D-5 の認証の例外は入口だけにかかり、暗号の部品は application にも依存しない（合成ルートと入口の外の
+     * infrastructure の規則。LayerArchitectureTest）。
      */
     @ArchTest
-    static final ArchRule 秘密の発行と回復コードの生成の実装はapplicationに依存しない = noClasses()
+    static final ArchRule 暗号の部品は認証の入口に依存しない = noClasses()
             .that()
-            .haveSimpleName("RandomTotpSecretIssuer")
+            .resideInAPackage("com.example.cargotracker.identity.infrastructure.crypto..")
+            .should()
+            .dependOnClassesThat()
+            .resideInAPackage("com.example.cargotracker.identity.infrastructure.security..");
+
+    /** 上の規則と D-5 の規則が空振りしていないこと（暗号の部品が crypto にあること）を確かめる。 */
+    @ArchTest
+    static final ArchRule 暗号の部品はcryptoにある = classes()
+            .that()
+            .haveSimpleName("AesGcmSecretCipher")
+            .or()
+            .haveSimpleName("Base32")
+            .or()
+            .haveSimpleName("BcryptRecoveryCodeHasher")
+            .or()
+            .haveSimpleName("JavaOtpTotpCodeGenerator")
             .or()
             .haveSimpleName("RandomRecoveryCodeGenerator")
             .or()
-            .haveSimpleName("AesGcmSecretCipher")
+            .haveSimpleName("RandomTotpSecretIssuer")
             .should()
-            .dependOnClassesThat()
-            .resideInAPackage("..application..");
+            .resideInAPackage("com.example.cargotracker.identity.infrastructure.crypto..");
 
     /**
      * password の段だけの主体（{@code PasswordVerifiedUser}）を受ける画面は、A-02 と A-07 の controller だけ（Bolt 31c、ADR-012 の
@@ -157,7 +189,7 @@ class AuthenticationArchitectureTest {
             .that()
             .haveSimpleName("JavaOtpTotpCodeGenerator")
             .should()
-            .resideInAPackage("com.example.cargotracker.identity.infrastructure..")
+            .resideInAPackage("com.example.cargotracker.identity.infrastructure.crypto..")
             .andShould()
             .dependOnClassesThat()
             .resideInAPackage("com.eatthepath.otp..");

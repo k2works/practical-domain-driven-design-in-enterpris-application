@@ -3,9 +3,9 @@ package com.example.cargotracker.identity.infrastructure.devlogin;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.example.cargotracker.identity.domain.model.aggregates.TotpCredential;
-import com.example.cargotracker.identity.infrastructure.security.AesGcmSecretCipher;
-import com.example.cargotracker.identity.infrastructure.security.JavaOtpTotpCodeGenerator;
-import com.example.cargotracker.identity.infrastructure.security.TestSecretCiphers;
+import com.example.cargotracker.identity.infrastructure.crypto.AesGcmSecretCipher;
+import com.example.cargotracker.identity.infrastructure.crypto.JavaOtpTotpCodeGenerator;
+import com.example.cargotracker.identity.infrastructure.crypto.TestSecretCiphers;
 import com.example.cargotracker.shared.domain.Role;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import java.time.Clock;

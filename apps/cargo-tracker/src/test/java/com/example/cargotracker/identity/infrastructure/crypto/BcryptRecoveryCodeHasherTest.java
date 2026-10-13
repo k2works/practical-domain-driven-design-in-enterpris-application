@@ -1,7 +1,9 @@
-package com.example.cargotracker.identity.infrastructure.security;
+package com.example.cargotracker.identity.infrastructure.crypto;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import com.example.cargotracker.identity.domain.model.aggregates.UnreadableCredentialException;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 
@@ -30,5 +32,12 @@ class BcryptRecoveryCodeHasherTest {
     @Test
     void 違う平文には一致しない() {
         assertThat(hasher.matches("abcd-efgx", hasher.hash("abcd-efgh"))).isFalse();
+    }
+
+    @Test
+    void 形の違う保存したハッシュは読めない要素として拒否へ倒す() {
+        // 接頭辞（{bcrypt}）のないハッシュは DelegatingPasswordEncoder が IllegalArgumentException を投げる（Bolt 31d）
+        assertThatThrownBy(() -> hasher.matches("1a2b-3c4d", "no-prefix-hash"))
+                .isInstanceOf(UnreadableCredentialException.class);
     }
 }

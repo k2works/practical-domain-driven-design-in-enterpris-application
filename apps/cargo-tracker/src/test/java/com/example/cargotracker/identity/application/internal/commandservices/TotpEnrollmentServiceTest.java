@@ -1,6 +1,7 @@
 package com.example.cargotracker.identity.application.internal.commandservices;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.example.cargotracker.identity.acceptance.InMemoryRecoveryCodeRepository;
 import com.example.cargotracker.identity.acceptance.InMemoryTotpCredentialRepository;
@@ -12,6 +13,7 @@ import com.example.cargotracker.identity.domain.model.aggregates.RecoveryCodeHas
 import com.example.cargotracker.identity.domain.model.aggregates.TotpCodeGenerator;
 import com.example.cargotracker.identity.domain.model.aggregates.TotpCredential;
 import com.example.cargotracker.identity.domain.model.aggregates.TotpSecretIssuer;
+import com.example.cargotracker.identity.domain.model.aggregates.UnreadableCredentialException;
 import com.example.cargotracker.identity.domain.model.valueobjects.AuditAction;
 import com.example.cargotracker.identity.domain.model.valueobjects.EmailAddress;
 import com.example.cargotracker.identity.domain.model.valueobjects.EncryptedSecret;
@@ -62,7 +64,7 @@ class TotpEnrollmentServiceTest {
 
     private static void requireOwner(UserId owner, EncryptedSecret secret) {
         if (!secret.value().contains(owner.value().toString())) {
-            throw new IllegalArgumentException("別の利用者の暗号文");
+            throw new UnreadableCredentialException("別の利用者の暗号文");
         }
     }
 
@@ -260,5 +262,27 @@ class TotpEnrollmentServiceTest {
     @Test
     void 登録の結果の文字列に回復コードの平文を出さない() {
         assertThat(new EnrollmentResult.Enrolled(RECOVERY_CODES).toString()).doesNotContain("aaaa");
+    }
+
+    @Test
+    void 読めない要素でない実装の誤りは使えない秘密に見せず投げる() {
+        // 確認ポイント 5（Bolt 31d）
+        TotpCodeGenerator broken = (owner, secret, step) -> {
+            throw new IllegalArgumentException("値の検証の誤り");
+        };
+        TotpEnrollmentService brokenService = new TotpEnrollmentService(
+                credentials,
+                recoveryCodes,
+                auditRecords,
+                issuer,
+                recoveryCodeGenerator,
+                HASHER,
+                broken,
+                Clock.fixed(NOW, ZoneOffset.UTC),
+                NO_TRANSACTION);
+        EncryptedSecret secret = started(Optional.empty());
+
+        assertThatThrownBy(() -> brokenService.complete(actor, secret, "000100"))
+                .isExactlyInstanceOf(IllegalArgumentException.class);
     }
 }

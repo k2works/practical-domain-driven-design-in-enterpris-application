@@ -1,5 +1,6 @@
-package com.example.cargotracker.identity.infrastructure.security;
+package com.example.cargotracker.identity.infrastructure.crypto;
 
+import com.example.cargotracker.identity.domain.model.aggregates.UnreadableCredentialException;
 import com.example.cargotracker.identity.domain.model.valueobjects.EncryptedSecret;
 import com.example.cargotracker.shared.domain.UserId;
 import java.nio.ByteBuffer;
@@ -114,7 +115,9 @@ public final class AesGcmSecretCipher {
     /**
      * 暗号文の版の鍵で復号する。返した配列は呼び出し側が使い終えたら消す（{@link Arrays#fill(byte[], byte)}）。
      *
-     * @throws IllegalArgumentException 版がない・知らない版、Base64 でない、短すぎる、改ざん・別の鍵
+     * @throws UnreadableCredentialException 保存した暗号文を読めない（版がない・知らない版、Base64 でない、短すぎる、改ざん・別の鍵・
+     *     別の利用者の暗号文。Bolt 31d）
+     * @throws IllegalArgumentException 暗号文か持ち主がない（実装の誤り）
      */
     public byte[] decrypt(EncryptedSecret encrypted, UserId owner) {
         if (encrypted == null) {
@@ -123,20 +126,20 @@ public final class AesGcmSecretCipher {
         byte[] aad = associatedData(owner);
         Matcher matcher = ENCRYPTED.matcher(encrypted.value());
         if (!matcher.matches()) {
-            throw new IllegalArgumentException("暗号化した秘密に鍵の版がない");
+            throw new UnreadableCredentialException("暗号化した秘密に鍵の版がない");
         }
         SecretKey key = keys.get(matcher.group(1));
         if (key == null) {
-            throw new IllegalArgumentException("知らない鍵の版: " + matcher.group(1));
+            throw new UnreadableCredentialException("知らない鍵の版: " + matcher.group(1));
         }
         byte[] body;
         try {
             body = Base64.getDecoder().decode(matcher.group(2));
         } catch (IllegalArgumentException e) {
-            throw new IllegalArgumentException("暗号化した秘密が Base64 でない", e);
+            throw new UnreadableCredentialException("暗号化した秘密が Base64 でない", e);
         }
         if (body.length <= IV_BYTES + TAG_BITS / 8) {
-            throw new IllegalArgumentException("暗号化した秘密が短すぎる");
+            throw new UnreadableCredentialException("暗号化した秘密が短すぎる");
         }
         try {
             Cipher cipher = Cipher.getInstance(TRANSFORMATION);
@@ -144,7 +147,7 @@ public final class AesGcmSecretCipher {
             cipher.updateAAD(aad);
             return cipher.doFinal(body, IV_BYTES, body.length - IV_BYTES);
         } catch (javax.crypto.AEADBadTagException e) {
-            throw new IllegalArgumentException("暗号化した秘密を復号できない（改ざん、別の鍵、または別の利用者の暗号文）", e);
+            throw new UnreadableCredentialException("暗号化した秘密を復号できない（改ざん、別の鍵、または別の利用者の暗号文）", e);
         } catch (GeneralSecurityException e) {
             throw new IllegalStateException("TOTP の秘密を復号できない", e);
         }

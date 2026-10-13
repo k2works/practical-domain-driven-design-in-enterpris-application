@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.example.cargotracker.identity.application.internal.commandservices.RecoveryCodeVerification;
 import com.example.cargotracker.identity.application.internal.commandservices.RecoveryCodeVerificationService;
+import com.example.cargotracker.identity.domain.model.aggregates.UnreadableCredentialException;
 import com.example.cargotracker.shared.domain.AuthenticatedActor;
 import com.example.cargotracker.shared.domain.CompanyId;
 import com.example.cargotracker.shared.domain.Role;
@@ -94,14 +95,25 @@ class RecoveryCodeAuthenticationProviderTest {
     }
 
     @Test
-    void 照合の途中の形の誤りは500にせず拒否する() {
-        StubService service = new StubService(null, new IllegalArgumentException("保存したハッシュの形が違う"));
+    void 保存したハッシュを読めないときは500にせず拒否する() {
+        StubService service = new StubService(null, new UnreadableCredentialException("保存したハッシュの形が違う"));
         RecoveryCodeAuthenticationProvider provider = new RecoveryCodeAuthenticationProvider(service);
         RecoveryCodeAuthenticationToken input =
                 RecoveryCodeAuthenticationToken.unauthenticated(DETAILS, "1a2b-3c4d", false);
 
         assertThatThrownBy(() -> provider.authenticate(input)).isInstanceOf(RecoveryCodeRejectedException.class);
         assertThat(service.calls).hasValue(1);
+    }
+
+    @Test
+    void 読めない要素でない実装の誤りは拒否に見せず投げる() {
+        // 利用者の誤りに見せず、500 にしてエラーのログに残す（Bolt 31d、確認ポイント 5）
+        StubService service = new StubService(null, new IllegalArgumentException("値の検証の誤り"));
+        RecoveryCodeAuthenticationProvider provider = new RecoveryCodeAuthenticationProvider(service);
+        RecoveryCodeAuthenticationToken input =
+                RecoveryCodeAuthenticationToken.unauthenticated(DETAILS, "1a2b-3c4d", false);
+
+        assertThatThrownBy(() -> provider.authenticate(input)).isExactlyInstanceOf(IllegalArgumentException.class);
     }
 
     @Test

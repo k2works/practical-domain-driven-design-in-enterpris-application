@@ -11,15 +11,16 @@ import com.example.cargotracker.identity.domain.model.aggregates.TotpCodeGenerat
 import com.example.cargotracker.identity.domain.model.aggregates.TotpCredential;
 import com.example.cargotracker.identity.domain.model.aggregates.TotpCredentialRepository;
 import com.example.cargotracker.identity.domain.model.aggregates.TotpSecretIssuer;
+import com.example.cargotracker.identity.domain.model.aggregates.UnreadableCredentialException;
 import com.example.cargotracker.identity.domain.model.valueobjects.EncryptedSecret;
 import com.example.cargotracker.identity.domain.model.valueobjects.PasswordVerifiedUser;
+import com.example.cargotracker.identity.domain.model.valueobjects.TotpMatch;
 import com.example.cargotracker.identity.domain.model.valueobjects.TotpProvisioning;
 import com.example.cargotracker.shared.domain.UserId;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import java.time.Clock;
 import java.util.List;
 import java.util.Optional;
-import java.util.OptionalLong;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
 
@@ -94,7 +95,7 @@ public class TotpEnrollmentService {
     private Optional<TotpProvisioning> provisioningOf(UserId owner, EncryptedSecret secret, String accountName) {
         try {
             return Optional.of(issuer.provisioning(owner, secret, accountName));
-        } catch (IllegalArgumentException _) {
+        } catch (UnreadableCredentialException _) {
             // 別の利用者の暗号文・壊れた暗号文・知らない鍵の版は使い続けず、新しく発行する（失敗へ倒す。T-42）
             return Optional.empty();
         }
@@ -119,13 +120,14 @@ public class TotpEnrollmentService {
         }
         UtcInstant now = new UtcInstant(clock.instant());
         TotpCredential credential = TotpCredential.enroll(owner, secret, now);
-        OptionalLong matched;
+        TotpMatch matched;
         try {
-            matched = credential.matchingStep(code, TotpCredential.stepAt(now), generator);
-        } catch (IllegalArgumentException _) {
+            matched = credential.match(code, TotpCredential.stepAt(now), generator);
+        } catch (UnreadableCredentialException _) {
             return new EnrollmentResult.SecretUnusable();
         }
-        if (matched.isEmpty()) {
+        if (!(matched instanceof TotpMatch.Matched)) {
+            // 登録したばかりの資格はどの刻みも使っていないので、再利用にはならない
             return new EnrollmentResult.CodeRejected();
         }
         // 回復コードの生成とハッシュ（bcrypt 10 回）は書き込みでないので、主キーの行ロックを取る前に済ませる（同時の登録の相手を

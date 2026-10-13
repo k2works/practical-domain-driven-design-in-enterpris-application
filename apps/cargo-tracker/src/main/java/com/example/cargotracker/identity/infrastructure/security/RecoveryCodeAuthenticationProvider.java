@@ -2,6 +2,7 @@ package com.example.cargotracker.identity.infrastructure.security;
 
 import com.example.cargotracker.identity.application.internal.commandservices.RecoveryCodeVerification;
 import com.example.cargotracker.identity.application.internal.commandservices.RecoveryCodeVerificationService;
+import com.example.cargotracker.identity.domain.model.aggregates.UnreadableCredentialException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.AuthenticationProvider;
@@ -39,8 +40,9 @@ public class RecoveryCodeAuthenticationProvider implements AuthenticationProvide
         try {
             verification = verificationService.verify(
                     details.actor().userId(), details.actor().companyId(), code);
-        } catch (IllegalArgumentException e) {
-            // 保存したハッシュの形の誤りなど。500 にせず拒否し、運用で気付けるようにする（失敗へ倒す。T-42）
+        } catch (UnreadableCredentialException e) {
+            // 保存したハッシュの形の誤り。500 にせず拒否し、運用で気付けるようにする（失敗へ倒す。T-42）。ほかの実装の誤りは捕まえず、
+            // 利用者の誤りに見せない（Bolt 31d、確認ポイント 5）
             LOG.error("回復コードを照合できず、拒否した: user={}", details.actor().userId().value(), e);
             throw new RecoveryCodeRejectedException();
         }

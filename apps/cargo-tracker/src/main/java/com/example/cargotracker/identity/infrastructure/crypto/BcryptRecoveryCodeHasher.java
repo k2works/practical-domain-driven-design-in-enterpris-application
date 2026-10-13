@@ -1,6 +1,7 @@
-package com.example.cargotracker.identity.infrastructure.security;
+package com.example.cargotracker.identity.infrastructure.crypto;
 
 import com.example.cargotracker.identity.domain.model.aggregates.RecoveryCodeHasher;
+import com.example.cargotracker.identity.domain.model.aggregates.UnreadableCredentialException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
@@ -23,8 +24,16 @@ public class BcryptRecoveryCodeHasher implements RecoveryCodeHasher {
         return passwordEncoder.encode(code);
     }
 
+    /**
+     * 平文が保存したハッシュに一致するか。接頭辞（{@code {bcrypt}}）のない・知らないハッシュは、枠組み（DelegatingPasswordEncoder）が
+     * {@link IllegalArgumentException} を投げるので、読めない要素として包み直す（Bolt 31d）。bcrypt の形の誤りは枠組みが false を返す。
+     */
     @Override
     public boolean matches(String code, String hash) {
-        return passwordEncoder.matches(code, hash);
+        try {
+            return passwordEncoder.matches(code, hash);
+        } catch (IllegalArgumentException e) {
+            throw new UnreadableCredentialException("保存した回復コードのハッシュの形が違う", e);
+        }
     }
 }

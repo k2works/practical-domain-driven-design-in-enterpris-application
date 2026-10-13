@@ -3,7 +3,7 @@ package com.example.cargotracker.identity.infrastructure.config;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import com.example.cargotracker.identity.infrastructure.security.TestSecretCiphers;
+import com.example.cargotracker.identity.infrastructure.crypto.TestSecretCiphers;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
 import org.springframework.core.env.MapPropertySource;

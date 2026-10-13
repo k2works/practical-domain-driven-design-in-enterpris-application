@@ -21,6 +21,7 @@ import com.example.cargotracker.identity.domain.model.aggregates.UserRepository;
 import com.example.cargotracker.identity.domain.model.valueobjects.CompanyKind;
 import com.example.cargotracker.identity.domain.model.valueobjects.EmailAddress;
 import com.example.cargotracker.identity.domain.model.valueobjects.UserStatus;
+import com.example.cargotracker.identity.infrastructure.crypto.AesGcmSecretCipher;
 import com.example.cargotracker.shared.acceptance.MutableClock;
 import com.example.cargotracker.shared.domain.CompanyId;
 import com.example.cargotracker.shared.domain.Role;
@@ -458,6 +459,20 @@ class AuthenticationSecurityIntegrationTest {
                         Map.of("action", "PASSWORD_VERIFIED", "result", "SUCCESS", "reason", "-"),
                         Map.of("action", "LOGIN_FAILED", "result", "FAILURE", "reason", "INVALID_TOTP"));
         assertThat(unknownUserFailures()).isEqualTo(unknownBefore);
+    }
+
+    @Test
+    void TOTPを登録していない利用者がA02を経ずにコードを送ると登録していないという理由で監査記録に残る() throws Exception {
+        // 確認ポイント 3（Bolt 31d）。利用者への応答は TOTP の誤りと同じ（AC2）
+        String email = userWithoutTotp(shipperCompany, Role.SHIPPER);
+        Cookie session = loginWithPassword(email);
+
+        mvc.perform(post(TOTP_URL).cookie(session).param("code", "123456").with(csrf()))
+                .andExpect(redirectedUrl("/login?totp-error"));
+
+        assertThat(auditOf(email))
+                .filteredOn(row -> row.get("action").equals("LOGIN_FAILED"))
+                .containsExactly(Map.of("action", "LOGIN_FAILED", "result", "FAILURE", "reason", "TOTP_NOT_ENROLLED"));
     }
 
     @Test

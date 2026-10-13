@@ -2,6 +2,7 @@ package com.example.cargotracker.identity.infrastructure.security;
 
 import com.example.cargotracker.identity.application.internal.commandservices.TotpVerification;
 import com.example.cargotracker.identity.application.internal.commandservices.TotpVerificationService;
+import com.example.cargotracker.identity.domain.model.aggregates.UnreadableCredentialException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.AuthenticationProvider;
@@ -33,7 +34,7 @@ public class TotpAuthenticationProvider implements AuthenticationProvider {
         TotpVerification verification;
         try {
             verification = verificationService.verify(details.actor().userId(), code);
-        } catch (IllegalArgumentException e) {
+        } catch (UnreadableCredentialException e) {
             // 秘密を復号できない（知らない鍵の版・壊れた暗号文）。500 にせず拒否し、監査記録に残して運用で気付けるようにする
             // （失敗へ倒す。T-42。Bolt 31 の開発レビュー）
             LOG.error(

@@ -1,10 +1,10 @@
 package com.example.cargotracker.identity.infrastructure.config;
 
 import com.example.cargotracker.identity.domain.model.aggregates.TotpCodeGenerator;
+import com.example.cargotracker.identity.infrastructure.crypto.AesGcmSecretCipher;
 import com.example.cargotracker.identity.infrastructure.devlogin.DevLoginGuard;
 import com.example.cargotracker.identity.infrastructure.devlogin.DevLoginProperties;
 import com.example.cargotracker.identity.infrastructure.devlogin.DevTotpCodes;
-import com.example.cargotracker.identity.infrastructure.security.AesGcmSecretCipher;
 import com.example.cargotracker.identity.interfaces.web.DevTotpCodeSource;
 import java.time.Clock;
 import org.springframework.boot.flyway.autoconfigure.FlywayConfigurationCustomizer;

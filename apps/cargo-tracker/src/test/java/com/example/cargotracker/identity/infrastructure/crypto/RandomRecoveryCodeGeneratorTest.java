@@ -1,4 +1,4 @@
-package com.example.cargotracker.identity.infrastructure.security;
+package com.example.cargotracker.identity.infrastructure.crypto;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

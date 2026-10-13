@@ -1,8 +1,9 @@
-package com.example.cargotracker.identity.infrastructure.security;
+package com.example.cargotracker.identity.infrastructure.crypto;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import com.example.cargotracker.identity.domain.model.aggregates.UnreadableCredentialException;
 import com.example.cargotracker.identity.domain.model.valueobjects.EncryptedSecret;
 import com.example.cargotracker.shared.domain.UserId;
 import java.nio.charset.StandardCharsets;
@@ -65,7 +66,7 @@ class AesGcmSecretCipherTest {
         EncryptedSecret encrypted = cipher.encrypt(SECRET.clone(), OWNER);
         UserId other = new UserId(UUID.fromString("00000000-0000-0000-0000-00000000a002"));
 
-        assertThatThrownBy(() -> cipher.decrypt(encrypted, other)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> cipher.decrypt(encrypted, other)).isInstanceOf(UnreadableCredentialException.class);
     }
 
     @Test
@@ -122,8 +123,9 @@ class AesGcmSecretCipherTest {
         EncryptedSecret unknownVersion = new EncryptedSecret("v2:" + body);
         EncryptedSecret noVersion = new EncryptedSecret(body);
 
-        assertThatThrownBy(() -> cipher.decrypt(unknownVersion, OWNER)).isInstanceOf(IllegalArgumentException.class);
-        assertThatThrownBy(() -> cipher.decrypt(noVersion, OWNER)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> cipher.decrypt(unknownVersion, OWNER))
+                .isInstanceOf(UnreadableCredentialException.class);
+        assertThatThrownBy(() -> cipher.decrypt(noVersion, OWNER)).isInstanceOf(UnreadableCredentialException.class);
     }
 
     @Test
@@ -136,9 +138,9 @@ class AesGcmSecretCipherTest {
                 new EncryptedSecret("v1:" + Base64.getEncoder().encodeToString(raw));
         AesGcmSecretCipher otherKey = AesGcmSecretCipher.fromBase64Keys(Map.of("v1", KEY_V2));
 
-        assertThatThrownBy(() -> cipher.decrypt(tampered, OWNER)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> cipher.decrypt(tampered, OWNER)).isInstanceOf(UnreadableCredentialException.class);
         EncryptedSecret byOtherKey = new EncryptedSecret(value);
-        assertThatThrownBy(() -> otherKey.decrypt(byOtherKey, OWNER)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> otherKey.decrypt(byOtherKey, OWNER)).isInstanceOf(UnreadableCredentialException.class);
     }
 
     @Test
@@ -148,8 +150,8 @@ class AesGcmSecretCipherTest {
         EncryptedSecret notBase64 = new EncryptedSecret("v1:%%%");
         EncryptedSecret tooShort = new EncryptedSecret("v1:AAAA");
 
-        assertThatThrownBy(() -> cipher.decrypt(notBase64, OWNER)).isInstanceOf(IllegalArgumentException.class);
-        assertThatThrownBy(() -> cipher.decrypt(tooShort, OWNER)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> cipher.decrypt(notBase64, OWNER)).isInstanceOf(UnreadableCredentialException.class);
+        assertThatThrownBy(() -> cipher.decrypt(tooShort, OWNER)).isInstanceOf(UnreadableCredentialException.class);
     }
 
     @Test

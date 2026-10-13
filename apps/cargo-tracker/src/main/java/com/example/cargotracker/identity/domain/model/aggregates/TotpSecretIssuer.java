@@ -16,7 +16,7 @@ public interface TotpSecretIssuer {
     /**
      * 暗号文から登録の表示の値を作る。
      *
-     * @throws IllegalArgumentException 別の利用者の暗号文、壊れた暗号文、知らない鍵の版（失敗へ倒す。T-42）
+     * @throws UnreadableCredentialException 別の利用者の暗号文、壊れた暗号文、知らない鍵の版（失敗へ倒す。T-42。Bolt 31d）
      */
     TotpProvisioning provisioning(UserId owner, EncryptedSecret secret, String accountName);
 }

@@ -14,9 +14,9 @@ import com.example.cargotracker.identity.domain.model.aggregates.RecoveryCodeRep
 import com.example.cargotracker.identity.domain.model.aggregates.TotpCodeGenerator;
 import com.example.cargotracker.identity.domain.model.aggregates.TotpCredentialRepository;
 import com.example.cargotracker.identity.domain.model.aggregates.TotpSecretIssuer;
-import com.example.cargotracker.identity.infrastructure.security.AesGcmSecretCipher;
-import com.example.cargotracker.identity.infrastructure.security.RandomRecoveryCodeGenerator;
-import com.example.cargotracker.identity.infrastructure.security.RandomTotpSecretIssuer;
+import com.example.cargotracker.identity.infrastructure.crypto.AesGcmSecretCipher;
+import com.example.cargotracker.identity.infrastructure.crypto.RandomRecoveryCodeGenerator;
+import com.example.cargotracker.identity.infrastructure.crypto.RandomTotpSecretIssuer;
 import java.time.Clock;
 import java.util.Map;
 import org.springframework.boot.context.properties.bind.Bindable;
