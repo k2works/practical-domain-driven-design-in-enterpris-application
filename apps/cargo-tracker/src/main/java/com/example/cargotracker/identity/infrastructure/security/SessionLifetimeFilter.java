@@ -24,9 +24,11 @@ import org.springframework.web.filter.OncePerRequestFilter;
 public class SessionLifetimeFilter extends OncePerRequestFilter {
 
     private final Clock clock;
+    private final ExpiredSessionRequestSaver requestSaver;
 
-    public SessionLifetimeFilter(Clock clock) {
+    public SessionLifetimeFilter(Clock clock, ExpiredSessionRequestSaver requestSaver) {
         this.clock = clock;
+        this.requestSaver = requestSaver;
     }
 
     @Override
@@ -36,13 +38,24 @@ public class SessionLifetimeFilter extends OncePerRequestFilter {
         // 上限の判定と残りの秒数を同じ時刻で数える（境界で「上限の前なのに残り 0 秒」にしない）
         Instant now = clock.instant();
         if (session != null && expired(session, now)) {
-            session.invalidate();
+            // 8 時間の上限なら、開いていた業務の画面を新しい session に覚える。password の段・登録の途中の失効は、ログインの
+            // 手続きのやり直しなので、覚えていた要求を持ち越す（Bolt 32e）
+            boolean fullyAuthenticated = fullyAuthenticated();
             SecurityContextHolder.clearContext();
+            if (fullyAuthenticated) {
+                session.invalidate();
+                requestSaver.remember(request, response);
+            } else {
+                ExpiredSessionRequestSaver.invalidateCarryingSavedRequest(request);
+            }
             response.sendRedirect(request.getContextPath() + SessionLifetime.EXPIRED_URL);
             return;
         }
         if (session != null) {
             putLifetimeRemaining(request, session, now);
+            if (requestSaver.returnable(request)) {
+                request.setAttribute(SessionLifetime.RETURN_PATH_ATTRIBUTE, returnPath(request));
+            }
         }
         chain.doFilter(request, response);
     }
@@ -51,6 +64,17 @@ public class SessionLifetimeFilter extends OncePerRequestFilter {
      * 2 つの要素がそろった session なら、8 時間の上限までの残りの秒数を request の属性に置く（Bolt 32b、ACC-06。画面の session の
      * 警告）。上限の判定と同じ起点と時計で数える。password の段・登録の途中・認証の前には置かない。
      */
+    private static boolean fullyAuthenticated() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        return authentication != null && hasAuthority(authentication, TotpAuthenticationToken.FACTOR_TOTP);
+    }
+
+    /** 戻り先（context path を除いた path と query）。 */
+    private static String returnPath(HttpServletRequest request) {
+        String path = request.getRequestURI().substring(request.getContextPath().length());
+        return request.getQueryString() == null ? path : path + "?" + request.getQueryString();
+    }
+
     private static void putLifetimeRemaining(HttpServletRequest request, HttpSession session, Instant now) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || !hasAuthority(authentication, TotpAuthenticationToken.FACTOR_TOTP)) {

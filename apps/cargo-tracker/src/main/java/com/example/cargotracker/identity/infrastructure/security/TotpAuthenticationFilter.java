@@ -115,10 +115,8 @@ public class TotpAuthenticationFilter extends AbstractAuthenticationProcessingFi
         public void onAuthenticationFailure(
                 HttpServletRequest request, HttpServletResponse response, AuthenticationException exception)
                 throws IOException {
-            HttpSession session = request.getSession(false);
-            if (session != null) {
-                session.invalidate();
-            }
+            // 覚えていた要求（失効の前に開いていた画面）は新しい session に持ち越す（ログインし直した後に戻れるように。Bolt 32e）
+            ExpiredSessionRequestSaver.invalidateCarryingSavedRequest(request);
             SecurityContextHolder.clearContext();
             // password の段を経ない送信には、認証コードの誤りの文言を出さない（Bolt 31 の開発レビュー）
             String target = exception instanceof InsufficientAuthenticationException ? "/login" : FAILURE_URL;

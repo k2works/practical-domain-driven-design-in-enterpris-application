@@ -25,7 +25,8 @@ class SessionLifetimeFilterTest {
     private static final Instant LOGIN_AT = Instant.parse("2026-10-06T00:00:00Z");
 
     private final MutableClock clock = new MutableClock();
-    private final SessionLifetimeFilter filter = new SessionLifetimeFilter(clock);
+    private final SessionLifetimeFilter filter =
+            new SessionLifetimeFilter(clock, new ExpiredSessionRequestSaver(request -> false));
 
     @AfterEach
     void 認証を消す() {

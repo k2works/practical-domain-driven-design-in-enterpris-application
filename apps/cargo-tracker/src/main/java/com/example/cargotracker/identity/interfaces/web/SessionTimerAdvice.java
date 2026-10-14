@@ -20,8 +20,17 @@ public class SessionTimerAdvice {
      */
     public static final String LIFETIME_REMAINING_ATTRIBUTE = "cargotracker.request.sessionLifetimeRemainingSeconds";
 
-    /** 無操作の期限の秒数と、8 時間の上限までの残りの秒数。 */
-    public record SessionTimer(long idleSeconds, long lifetimeRemainingSeconds) {}
+    /**
+     * 戻り先の request の属性の名前。認証の入口の {@code SessionLifetime.RETURN_PATH_ATTRIBUTE} と同じ値（Bolt 32e。同じ理由で
+     * 2 つの定数で持つ）。
+     */
+    public static final String RETURN_PATH_ATTRIBUTE = "cargotracker.request.returnPath";
+
+    /**
+     * 無操作の期限の秒数、8 時間の上限までの残りの秒数、戻り先（GET で開いた業務の画面の path と query。送信の後の画面などでは
+     * null。Bolt 32e）。
+     */
+    public record SessionTimer(long idleSeconds, long lifetimeRemainingSeconds, String returnPath) {}
 
     @ModelAttribute("sessionTimer")
     public SessionTimer sessionTimer(HttpServletRequest request) {
@@ -32,6 +41,9 @@ public class SessionTimerAdvice {
         if (session == null) {
             return null;
         }
-        return new SessionTimer(session.getMaxInactiveInterval(), lifetimeRemaining);
+        return new SessionTimer(
+                session.getMaxInactiveInterval(),
+                lifetimeRemaining,
+                request.getAttribute(RETURN_PATH_ATTRIBUTE) instanceof String path ? path : null);
     }
 }

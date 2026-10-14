@@ -1022,7 +1022,8 @@ class AuthenticationSecurityIntegrationTest {
                 .trackingRecord());
 
         // フィルターと実際のエラー処理を通して、状態と本文が同じことを確かめる（BR-07。Bolt 27 の開発レビュー）。
-        // CSRF のトークンは要求ごとに変わるので除いて比べる
+        // CSRF のトークンは要求ごとに変わるので除いて比べる。session の警告の戻り先（Bolt 32e）は開いた URL そのものなので除く
+        // （利用者が送った URL で、追跡の記録の有無や持ち主を示さない）
         String other = notFoundBody(session, otherShippers.value());
         assertThat(other).contains("<h1>追跡番号が見つかりません</h1>");
         assertThat(notFoundBody(session, "CTZZZZZZZZZZZZ")).isEqualTo(other);
@@ -1035,7 +1036,8 @@ class AuthenticationSecurityIntegrationTest {
                 .andReturn()
                 .getResponse()
                 .getContentAsString()
-                .replaceAll("name=\"_csrf\" value=\"[^\"]*\"", "name=\"_csrf\"");
+                .replaceAll("name=\"_csrf\" value=\"[^\"]*\"", "name=\"_csrf\"")
+                .replaceAll("data-return-path=\"[^\"]*\"", "data-return-path");
     }
 
     @Test

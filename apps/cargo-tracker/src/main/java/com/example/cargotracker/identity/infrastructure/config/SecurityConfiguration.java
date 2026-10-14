@@ -9,6 +9,7 @@ import com.example.cargotracker.identity.domain.model.aggregates.CompanyReposito
 import com.example.cargotracker.identity.domain.model.aggregates.UserRepository;
 import com.example.cargotracker.identity.infrastructure.security.AuthenticationAuditListener;
 import com.example.cargotracker.identity.infrastructure.security.CargoUserDetailsService;
+import com.example.cargotracker.identity.infrastructure.security.ExpiredSessionRequestSaver;
 import com.example.cargotracker.identity.infrastructure.security.KeepEmailAuthenticationFailureHandler;
 import com.example.cargotracker.identity.infrastructure.security.LockAwareUserDetailsChecker;
 import com.example.cargotracker.identity.infrastructure.security.LoginSuccessHandler;
@@ -28,6 +29,7 @@ import java.util.Map;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AccountStatusUserDetailsChecker;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.DefaultAuthenticationEventPublisher;
@@ -87,6 +89,20 @@ public class SecurityConfiguration {
      */
     private static final String CONTENT_SECURITY_POLICY =
             "default-src 'self'; frame-ancestors 'none'; form-action 'self'; base-uri 'self'; object-src 'none'";
+
+    /**
+     * 失効の後にログインし直したら戻れる業務の画面（Bolt 32e、ADR-012）。GET で、荷主の画面か社内の画面。書類のダウンロードは
+     * 画面でないので除く。送信（POST）は覚えない（送信の本体を session に入れない）。
+     */
+    private static RequestMatcher returnablePages() {
+        return request -> {
+            String path =
+                    request.getRequestURI().substring(request.getContextPath().length());
+            return HttpMethod.GET.matches(request.getMethod())
+                    && (path.startsWith("/customer/") || path.startsWith("/staff/"))
+                    && !path.contains("/documents/");
+        };
+    }
 
     private static RequestMatcher publicRequests() {
         PathPatternRequestMatcher.Builder paths = PathPatternRequestMatcher.withDefaults();
@@ -160,6 +176,7 @@ public class SecurityConfiguration {
             TotpVerificationService totpVerificationService,
             SessionRevalidationService sessionRevalidationService,
             Clock clock) {
+        ExpiredSessionRequestSaver requestSaver = new ExpiredSessionRequestSaver(returnablePages());
         return http.authenticationManager(authenticationManager)
                 .authorizeHttpRequests(requests -> requests.requestMatchers(PUBLIC_PATHS)
                         .permitAll()
@@ -183,13 +200,16 @@ public class SecurityConfiguration {
                         .successHandler(new LoginSuccessHandler(clock))
                         .failureHandler(new KeepEmailAuthenticationFailureHandler()))
                 .logout(logout -> logout.logoutUrl("/logout").logoutSuccessUrl("/login?logout"))
-                .sessionManagement(session -> session.invalidSessionUrl(SessionLifetime.EXPIRED_URL))
+                // 失効した session の request は、新しい session を作り、開いていた業務の画面の GET を覚えて A-03 へ移す（Bolt 32e）。
+                // CSRF のトークンのない送信の失効も同じ扱いを通る
+                .sessionManagement(session -> session.invalidSessionStrategy(requestSaver))
                 // TOTP の段は password の段の後に置く。期限の確認は両方より前に置く（期限切れの session に TOTP を送って
                 // 延ばさせない。ADR-011、T-40）
                 .addFilterAfter(
                         new TotpAuthenticationFilter(authenticationManager, clock),
                         UsernamePasswordAuthenticationFilter.class)
-                .addFilterBefore(new SessionLifetimeFilter(clock), UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(
+                        new SessionLifetimeFilter(clock, requestSaver), UsernamePasswordAuthenticationFilter.class)
                 // request ごとの利用者の確かめは期限の確認の直後、認証のフィルターより前に置く（期限の切れた session は読まない。
                 // 止められた利用者の A-02・A-07 の送信も認証の前に A-03。Bolt 32c）
                 // addFilterAfter の順序の値は UsernamePasswordAuthenticationFilter と同じになり、先に登録したこちらが前に来る（並びは

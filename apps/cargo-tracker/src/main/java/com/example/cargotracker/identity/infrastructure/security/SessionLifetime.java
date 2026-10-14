@@ -41,6 +41,13 @@ public final class SessionLifetime {
      */
     public static final String LIFETIME_REMAINING_ATTRIBUTE = "cargotracker.request.sessionLifetimeRemainingSeconds";
 
+    /**
+     * ログインした後に戻れる業務の画面の GET のとき、その path と query を置く request の属性の名前（Bolt 32e。警告の期限の到来の
+     * 案内のリンクに使う）。{@link SessionLifetimeFilter} が置き、画面の層の {@code SessionTimerAdvice} が同じ値の定数で読む
+     * （{@link #LIFETIME_REMAINING_ATTRIBUTE} と同じ形。Bolt 33b でまとめて直す）。
+     */
+    public static final String RETURN_PATH_ATTRIBUTE = "cargotracker.request.returnPath";
+
     /** 失効した session の request を移す先（A-03 再認証の案内）。 */
     public static final String EXPIRED_URL = "/session-expired";
 

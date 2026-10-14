@@ -129,7 +129,8 @@ class SessionTimerSecurityIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(model().attribute(
                                 "sessionTimer",
-                                new SessionTimer(1800, Duration.ofHours(6).toSeconds())))
+                                new SessionTimer(
+                                        1800, Duration.ofHours(6).toSeconds(), "/customer/transport-requests")))
                 .andReturn()
                 .getResponse()
                 .getContentAsString();

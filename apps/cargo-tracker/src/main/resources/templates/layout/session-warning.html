@@ -11,6 +11,7 @@
             aria-labelledby="session-warning-title" aria-describedby="session-warning-message"
             th:data-idle-seconds="${timer.idleSeconds()}"
             th:data-lifetime-remaining-seconds="${timer.lifetimeRemainingSeconds()}"
+            th:data-return-path="${timer.returnPath()}"
             data-idle-message="画面の移動や送信がないため、あと {minutes}でログアウトします。続けて使う場合は「ログインを延長する」を押してください。"
             data-lifetime-message="ログインから 8 時間になるため、あと {minutes}でログアウトします。延長はできません。入力中の内容は、それまでに送信してください。">
         <h2 id="session-warning-title" class="h5">まもなくログアウトします</h2>
