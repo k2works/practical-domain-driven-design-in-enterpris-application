@@ -1,6 +1,7 @@
 package com.example.cargotracker.identity;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 
 import java.time.Duration;
 import java.util.List;
@@ -70,9 +71,7 @@ public final class OverlappingTransactions {
                     .as("後の操作は先の行ロックを待つ")
                     .failsWithin(Duration.ofMillis(BLOCKED_CHECK_MILLIS))
                     .withThrowableOfType(TimeoutException.class);
-            assertThat(waitsForLockOf(jdbc, firstPid.get()))
-                    .as("後の操作の接続が先の接続のロックを待っている（遅いだけでない）")
-                    .isTrue();
+            awaitLockWaitOn(jdbc, firstPid.get());
             releaseFirst.countDown();
 
             return List.of(
@@ -91,25 +90,16 @@ public final class OverlappingTransactions {
         throw new IllegalStateException("DataSource のトランザクションマネージャーで使う");
     }
 
-    /** 先の接続を待っている接続が現れるまで待つ（タイムアウトで偽）。待ちは別の接続（自動コミット）で読む。 */
-    private static boolean waitsForLockOf(JdbcTemplate jdbc, int blockingPid) {
-        long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(TIMEOUT_SECONDS);
-        while (System.nanoTime() < deadline) {
-            Integer waiting = jdbc.queryForObject(
-                    "SELECT count(*) FROM pg_stat_activity WHERE ? = ANY(pg_blocking_pids(pid))",
-                    Integer.class,
-                    blockingPid);
-            if (waiting != null && waiting > 0) {
-                return true;
-            }
-            try {
-                Thread.sleep(LOCK_WAIT_POLL_MILLIS);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                return false;
-            }
-        }
-        return false;
+    /** 先の接続を待っている接続が現れるまで待つ（タイムアウトで落とす）。待ちは別の接続（自動コミット）で読む。 */
+    private static void awaitLockWaitOn(JdbcTemplate jdbc, int blockingPid) {
+        await("後の操作の接続が先の接続のロックを待っている（遅いだけでない）")
+                .atMost(Duration.ofSeconds(TIMEOUT_SECONDS))
+                .pollInterval(Duration.ofMillis(LOCK_WAIT_POLL_MILLIS))
+                .until(() -> jdbc.queryForObject(
+                                "SELECT count(*) FROM pg_stat_activity WHERE ? = ANY(pg_blocking_pids(pid))",
+                                Integer.class,
+                                blockingPid)
+                        > 0);
     }
 
     private static void awaitQuietly(CountDownLatch latch) {
