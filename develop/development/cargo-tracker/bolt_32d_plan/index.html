@@ -10437,7 +10437,7 @@
 <h2 id="_5">ステップ計画<a class="headerlink" href="#_5" title="Permanent link">&para;</a></h2>
 <p>状態の記号: <code>[ ]</code> 未着手、<code>[-]</code> 進行中、<code>[?]</code> 承認待ち、<code>[x]</code> 完了。各ステップの終わりに <code>check</code> が緑であることと、計画からの変更を設計文書に反映したこと（T-53）を確かめ、push して CI を確かめる（T-26、T-65）。コミットは pathspec で作り、そのステップのファイルだけを入れる（T-84、T-110）。複数行の書き換えはスクリプトのファイルにする（T-103）。ステップ 1 を push してからコードのステップを push する（T-109）。</p>
 <ul class="task-list">
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>1. 設計文書</strong> 【承認ゲート: 設計文書】</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>1. 設計文書</strong> 【承認ゲート: 設計文書】</li>
 <li>architecture_backend.md: identity の合成ルートの規則（「設計の約束」）。暗号の部品の節に、部品探索で拾うことを足す。ほかのコンテキストの合成ルートは対象外と書く</li>
 <li>ADR-011 の決定 1: Base32 は不正な長さ・余りのビット・埋め草の数を拒む（Bolt 32d）。改訂の経緯</li>
 <li>test_strategy.md: 統合テストの節に、identity の統合テストは共通の時計の設定と spy の基底で Spring のコンテキストを共有することと、同時の待ちは PostgreSQL のロックの待ちで判定することを足す。アーキテクチャテストの表に <code>@Bean</code> の戻り値の型の見張り。アクセシビリティの節に、同じ画面を繰り返し表示するシナリオでは axe を 1 回目だけにする例外</li>

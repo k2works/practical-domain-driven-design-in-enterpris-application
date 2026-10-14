@@ -11016,6 +11016,12 @@ src/test/java/.../ui/                     画面の層のステップ定義（@u
 <td style="text-align: left;">Gradle のビルド検査</td>
 <td style="text-align: left;">ADR-007</td>
 </tr>
+<tr>
+<td style="text-align: left;">AT-07</td>
+<td style="text-align: left;">identity の合成ルート（<code>identity.infrastructure.config</code>）の <code>@Bean</code> のメソッドが返す型は、<code>identity.application.internal..</code>・<code>identity.infrastructure.security..</code>・<code>org.springframework..</code> の型か <code>AesGcmSecretCipher</code> に限る（送信アダプターは部品探索で拾う）</td>
+<td style="text-align: left;">見張りのテスト（Bolt 32d）</td>
+<td style="text-align: left;">バックエンドアーキテクチャの identity の合成ルートの規則</td>
+</tr>
 </tbody>
 </table>
 <h2 id="_13">統合テスト<a class="headerlink" href="#_13" title="Permanent link">&para;</a></h2>
@@ -11098,6 +11104,7 @@ src/test/java/.../ui/                     画面の層のステップ定義（@u
 </tbody>
 </table>
 <p>統合テストは Testcontainers の PostgreSQL を使い、H2 で書かない（ADR-007）。H2 で確かめるのはスモークテストだけとする。</p>
+<p>identity の統合テストは、時計を共通の <code>@TestConfiguration</code>（<code>MutableClock</code> を <code>@Primary</code>）で差し替え、spy（<code>@MockitoSpyBean</code>）を使うクラスは同じ spy のフィールドの組を持つ共通の基底のクラスを継ぐ。Spring のコンテキストは <code>@Import</code> の組と bean の差し替えの組（spy はフィールド名を含む）で区別されるので、組をそろえてコンテキストを共有する（Bolt 32d）。同時の操作のテスト（<code>OverlappingTransactions</code>）は、後の操作が先の行ロックを待っていることを PostgreSQL の <code>pg_blocking_pids</code> で確かめてから先をコミットする（「一定時間の間に終わらない」だけでは待ちの証拠にならない。Bolt 32d）。</p>
 <h2 id="web">Web テストと開示制御<a class="headerlink" href="#web" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
@@ -11241,6 +11248,7 @@ src/test/java/.../ui/                     画面の層のステップ定義（@u
 </tr>
 </tbody>
 </table>
+<p>同じ画面を繰り返し表示するシナリオ（ロックまでの誤りの送信など）では、自動検査は 1 回目と状態の変わった後の画面だけにする（同じ画面の検査を重ねない。Bolt 32d）。</p>
 <p>自動検査で WCAG 2.2 AA の全体を判定することはできない。手動確認の結果は Bolt の完了報告に記録する。</p>
 <h2 id="_14">非機能要件のテスト<a class="headerlink" href="#_14" title="Permanent link">&para;</a></h2>
 <p>非機能要件の検証方法（<a href="../non_functional/">非機能要件</a>）を、テストのレベルと時期に対応させる（H-13、R-21）。テストには <code>@NFR-&lt;ID&gt;</code> のタグを付ける。</p>
