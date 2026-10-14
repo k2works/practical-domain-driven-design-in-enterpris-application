@@ -2,6 +2,7 @@ package com.example.cargotracker.identity.infrastructure.config;
 
 import com.example.cargotracker.identity.application.internal.commandservices.LoginAttemptService;
 import com.example.cargotracker.identity.application.internal.commandservices.RecoveryCodeVerificationService;
+import com.example.cargotracker.identity.application.internal.commandservices.SessionRevalidationService;
 import com.example.cargotracker.identity.application.internal.commandservices.TotpEnrollmentService;
 import com.example.cargotracker.identity.application.internal.commandservices.TotpVerificationService;
 import com.example.cargotracker.identity.application.internal.eventhandlers.KpiObservationEventHandler;
@@ -16,6 +17,7 @@ import com.example.cargotracker.identity.domain.model.aggregates.RecoveryCodeRep
 import com.example.cargotracker.identity.domain.model.aggregates.TotpCodeGenerator;
 import com.example.cargotracker.identity.domain.model.aggregates.TotpCredentialRepository;
 import com.example.cargotracker.identity.domain.model.aggregates.TotpSecretIssuer;
+import com.example.cargotracker.identity.domain.model.aggregates.UserStandingRepository;
 import com.example.cargotracker.identity.domain.model.rules.LockPolicy;
 import com.example.cargotracker.identity.infrastructure.crypto.AesGcmSecretCipher;
 import com.example.cargotracker.identity.infrastructure.crypto.RandomRecoveryCodeGenerator;
@@ -68,6 +70,16 @@ public class IdentityConfiguration {
             Clock clock,
             PlatformTransactionManager transactionManager) {
         return new LoginAttemptService(failures, auditRecords, new LockPolicy(), clock, transactionManager);
+    }
+
+    /** request ごとの利用者の確かめ（利用者・役割・企業を 1 回で読み、取消しを監査記録に書く。Bolt 32c）。 */
+    @Bean
+    SessionRevalidationService sessionRevalidationService(
+            UserStandingRepository standings,
+            AuditRecordRepository auditRecords,
+            Clock clock,
+            TransactionTemplate transactionTemplate) {
+        return new SessionRevalidationService(standings, auditRecords, clock, transactionTemplate);
     }
 
     @Bean

@@ -17,6 +17,8 @@ public enum AuditAction {
     RECOVERY_CODE_USED,
     /** 5 回続けて失敗してロックした（Bolt 32。US-18 AC3）。 */
     ACCOUNT_LOCKED,
+    /** request ごとの確かめで利用停止・無効な企業・利用者なしを見つけて session を捨てた（Bolt 32c。US-18 AC6）。 */
+    SESSION_REVOKED,
     /** ログアウトした。 */
     LOGOUT
 }

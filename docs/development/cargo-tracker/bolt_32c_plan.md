@@ -225,7 +225,7 @@ Biz --> A04 : 取り消した役割の URL
   - user_story.md: US-18 の AC6 の注記（止められた利用者は A-03、役割の取消しは A-04 で「管理者への確認」に当たる、`SESSION_REVOKED`）、503 行目（Bolt 14 の「ログインの時点の役割」を Bolt 32c で置き換えた）
   - release_plan.md の W5 の節: 32c の行を本計画に（承認ゲートに「データベース（読み出しの形）」と「構造」を足す）、32d の行を足す（31d から送った低の指摘、Bolt 32 の既知の課題のテストの整理。SP 0、アプローチはリファクタリング（テストの整理で、件数と結果を変えない）、承認ゲートは構造。32b と同じ session の上限の部品のテストに触るので 32d → 32b の順）。557 行目の局面とアプローチに 32d、598 行目の順序（32c → 32d → 32b。32d の理由は「32 で認証の入口と統合テストを直した後に、31d から送った低の指摘を片づける」を 32c から移す）と本数（16 本）、553・625・764 行目（Bolt 32 の終了報告の承認、W5 の状態）、592 行目の 33b の行（マニュアルに議題 4 の一文）、593 行目の 34 の行（議題 5: ログインの監査の書き込みの経路の見直し）、617 行目のユーザーマニュアルの段落（議題 4 の一文は 33b、AC6 の 2.3・2.4・付録 B は 32c）
   - 完了の判定: `okf:check` ERROR 0、`documentationTest` 緑。push してからコードを push する
-- [ ] **2. 1 回で読むポートと判定のサービス** 【承認ゲート: Red・Green、データベース、構造】
+- [x] **2. 1 回で読むポートと判定のサービス** 【承認ゲート: Red・Green、データベース、構造】
   - Red: 層の規則の骨組み（ポート・実装・サービス・フィルターの空のクラスで `LayerArchitectureTest` が緑のまま。T-101）。読み出しの契約テスト（PostgreSQL・H2: 利用者・役割・企業を 1 回で読む、役割が複数でも 1 人の `User` になる、利用者がなければ空、無効な企業・利用停止もそのまま読める、役割が 0 件なら例外）。`SessionRevalidationService` の単体テスト（利用停止・無効な企業・利用者なしで拒否の理由と `SESSION_REVOKED` 1 行、拒否でなければ今の役割・表示名・企業名の主体を返し監査を書かない、監査の追記が失敗したら例外）。特性テスト（`SpringSecurityCharacterizationTest` に足す。T-114）: 「開始準備で確かめたこと」の 2 つ
   - Green: `UserStanding`・`UserStandingRepository`、`IdentityMapper.xml`・`IdentityMapper.java` の結合の SQL と `MyBatisUserStandingRepository`、`SessionRevalidationService`（`IdentityConfiguration` で組み立て、`TransactionTemplate`）、`AuditAction.SESSION_REVOKED`、`AuditRecord.sessionRevoked`（`UtcInstant`、理由の null を拒む）
   - 完了の判定: `check` 緑（H2 の契約テストを含む）

@@ -1,6 +1,7 @@
 package com.example.cargotracker.identity.domain.model.aggregates;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.example.cargotracker.identity.domain.model.valueobjects.AuditAction;
 import com.example.cargotracker.identity.domain.model.valueobjects.AuditResult;
@@ -86,5 +87,27 @@ class AuditRecordTest {
     void 記録ごとに別の識別子を持つ() {
         assertThat(AuditRecord.logout(USER, COMPANY, AT).id())
                 .isNotEqualTo(AuditRecord.logout(USER, COMPANY, AT).id());
+    }
+
+    @Test
+    void sessionの取消しは失敗として理由とsessionの主体を記録する() {
+        AuditRecord auditRecord = AuditRecord.sessionRevoked(USER, COMPANY, AuthenticationRejection.SUSPENDED, AT);
+
+        assertThat(auditRecord.action()).isEqualTo(AuditAction.SESSION_REVOKED);
+        assertThat(auditRecord.result()).isEqualTo(AuditResult.FAILURE);
+        assertThat(auditRecord.reason()).isEqualTo("SUSPENDED");
+        assertThat(auditRecord.actorUserId()).isEqualTo(USER);
+        assertThat(auditRecord.actorCompanyId()).isEqualTo(COMPANY);
+        assertThat(auditRecord.occurredAt()).isEqualTo(AT);
+    }
+
+    @Test
+    void sessionの取消しは理由と主体を欠かせない() {
+        assertThatThrownBy(() -> AuditRecord.sessionRevoked(USER, COMPANY, null, AT))
+                .isInstanceOf(NullPointerException.class);
+        assertThatThrownBy(() -> AuditRecord.sessionRevoked(null, COMPANY, AuthenticationRejection.UNKNOWN_USER, AT))
+                .isInstanceOf(NullPointerException.class);
+        assertThatThrownBy(() -> AuditRecord.sessionRevoked(USER, null, AuthenticationRejection.UNKNOWN_USER, AT))
+                .isInstanceOf(NullPointerException.class);
     }
 }

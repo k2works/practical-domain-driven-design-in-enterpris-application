@@ -30,6 +30,8 @@ import org.springframework.security.authentication.event.AuthenticationFailureLo
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.FactorGrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -40,6 +42,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.authentication.AbstractAuthenticationProcessingFilter;
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.security.web.context.RequestAttributeSecurityContextRepository;
+import org.springframework.security.web.context.SecurityContextHolderFilter;
 import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
 
 /**
@@ -291,5 +294,112 @@ class SpringSecurityCharacterizationTest {
                 UsernamePasswordAuthenticationToken.unauthenticated("shipper", "x"));
 
         assertThat(events).as("親の型（AuthenticationServiceException）の対応は使われない").isEmpty();
+    }
+
+    // --- Bolt 32c の request ごとの確かめが頼る枠組みの振る舞い（T-114、T-108） ---
+
+    private static List<String> authorityNames(Authentication authentication) {
+        return authentication.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .toList();
+    }
+
+    /** 主体と ROLE_ の権限だけを替える（SessionRevalidationFilter と同じ替え方）。 */
+    private static Authentication replacePrincipalAndRoles(Authentication current, Object principal, String role) {
+        return current.toBuilder()
+                .principal(principal)
+                .authorities(authorities -> {
+                    authorities.removeIf(granted -> granted.getAuthority().startsWith("ROLE_"));
+                    authorities.add(new SimpleGrantedAuthority(role));
+                })
+                .build();
+    }
+
+    @Test
+    void toBuilderで主体とROLEの権限だけを替えても認証の型と認証済みの印と要素の権限が残る() {
+        // 2 つの要素がそろった主体（TotpAuthenticationToken）と password の段だけの主体（UsernamePasswordAuthenticationToken）の両方
+        GrantedAuthority password = FactorGrantedAuthority.fromAuthority(FactorGrantedAuthority.PASSWORD_AUTHORITY);
+        GrantedAuthority totp = FactorGrantedAuthority.fromAuthority(TotpAuthenticationToken.FACTOR_TOTP);
+        Authentication twoFactors = TotpAuthenticationToken.authenticated("before", totp).toBuilder()
+                .authorities(authorities -> {
+                    authorities.add(password);
+                    authorities.add(new SimpleGrantedAuthority("ROLE_SHIPPER"));
+                })
+                .build();
+        Authentication passwordOnly = UsernamePasswordAuthenticationToken.authenticated(
+                "before", null, List.of(password, new SimpleGrantedAuthority("ROLE_SHIPPER")));
+
+        Authentication replacedTwo = replacePrincipalAndRoles(twoFactors, "after", "ROLE_SALES");
+        Authentication replacedPassword = replacePrincipalAndRoles(passwordOnly, "after", "ROLE_SALES");
+
+        assertThat(replacedTwo).isInstanceOf(TotpAuthenticationToken.class);
+        assertThat(replacedTwo.isAuthenticated()).isTrue();
+        assertThat(replacedTwo.getPrincipal()).isEqualTo("after");
+        assertThat(authorityNames(replacedTwo))
+                .containsExactlyInAnyOrder(
+                        FactorGrantedAuthority.PASSWORD_AUTHORITY, TotpAuthenticationToken.FACTOR_TOTP, "ROLE_SALES");
+        assertThat(List.<GrantedAuthority>copyOf(replacedTwo.getAuthorities()))
+                .as("要素の権限は同じもの（発行時刻も同じ）")
+                .contains(password, totp);
+        assertThat(replacedPassword).isInstanceOf(UsernamePasswordAuthenticationToken.class);
+        assertThat(replacedPassword.isAuthenticated()).isTrue();
+        assertThat(replacedPassword.getPrincipal()).isEqualTo("after");
+        assertThat(authorityNames(replacedPassword))
+                .containsExactlyInAnyOrder(FactorGrantedAuthority.PASSWORD_AUTHORITY, "ROLE_SALES");
+    }
+
+    @Test
+    void 新しい文脈に差し替えた主体は明示的に保存しなければsessionに残らない() throws Exception {
+        // SecurityContextHolderFilter は request の終わりに文脈を保存しない（明示的な保存。Spring Security 6 から）。差し替えを request の
+        // 中だけにできる理由。対照として、session から読んだ文脈そのものを書き換えると session の値も変わることを示す（新しい文脈を
+        // 作る理由）
+        Authentication stored = UsernamePasswordAuthenticationToken.authenticated(
+                "before", null, List.of(new SimpleGrantedAuthority("ROLE_SHIPPER")));
+        Authentication replaced = UsernamePasswordAuthenticationToken.authenticated(
+                "after", null, List.of(new SimpleGrantedAuthority("ROLE_SALES")));
+        HttpSessionSecurityContextRepository repository = new HttpSessionSecurityContextRepository();
+        SecurityContextHolderFilter filter = new SecurityContextHolderFilter(repository);
+
+        MockHttpSession newContextSession = sessionWith(stored);
+        filter.doFilter(
+                new MockHttpRequestWithSession(newContextSession), new MockHttpServletResponse(), (req, res) -> {
+                    SecurityContext context = SecurityContextHolder.createEmptyContext();
+                    context.setAuthentication(replaced);
+                    SecurityContextHolder.setContext(context);
+                });
+        MockHttpSession mutatedSession = sessionWith(stored);
+        filter.doFilter(
+                new MockHttpRequestWithSession(mutatedSession),
+                new MockHttpServletResponse(),
+                (req, res) -> SecurityContextHolder.getContext().setAuthentication(replaced));
+
+        assertThat(storedPrincipal(newContextSession))
+                .as("新しい文脈は session に残らない")
+                .isEqualTo("before");
+        assertThat(storedPrincipal(mutatedSession))
+                .as("読んだ文脈を書き換えると session の値が変わる")
+                .isEqualTo("after");
+    }
+
+    private static MockHttpSession sessionWith(Authentication authentication) {
+        MockHttpSession session = new MockHttpSession();
+        SecurityContext context = SecurityContextHolder.createEmptyContext();
+        context.setAuthentication(authentication);
+        session.setAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY, context);
+        return session;
+    }
+
+    private static Object storedPrincipal(MockHttpSession session) {
+        SecurityContext context = (SecurityContext)
+                session.getAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY);
+        return context.getAuthentication().getPrincipal();
+    }
+
+    /** session を持つ GET の request。 */
+    private static final class MockHttpRequestWithSession extends MockHttpServletRequest {
+        MockHttpRequestWithSession(MockHttpSession session) {
+            super("GET", "/customer/home");
+            setSession(session);
+        }
     }
 }

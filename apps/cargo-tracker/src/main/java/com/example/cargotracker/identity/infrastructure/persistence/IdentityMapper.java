@@ -27,6 +27,9 @@ public interface IdentityMapper {
 
     List<String> selectUserRoles(UUID userId);
 
+    /** 利用者・所属企業・役割を 1 つの SQL で読む（Bolt 32c）。役割の数だけ行が出る。 */
+    List<UserStandingRow> selectUserStanding(UUID id);
+
     void insertAuditRecord(AuditRecordRow row);
 
     List<AuditRecordRow> selectAuditRecordsByActor(UUID actorUserId);

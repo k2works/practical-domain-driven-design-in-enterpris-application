@@ -22,6 +22,21 @@
         </constructor>
     </resultMap>
 
+    <resultMap id="userStandingRow" type="com.example.cargotracker.identity.infrastructure.persistence.UserStandingRow">
+        <constructor>
+            <arg column="id" name="id" javaType="java.util.UUID"/>
+            <arg column="company_id" name="companyId" javaType="java.util.UUID"/>
+            <arg column="email" name="email" javaType="String"/>
+            <arg column="display_name" name="displayName" javaType="String"/>
+            <arg column="password_hash" name="passwordHash" javaType="String"/>
+            <arg column="status" name="status" javaType="String"/>
+            <arg column="company_name" name="companyName" javaType="String"/>
+            <arg column="company_kind" name="companyKind" javaType="String"/>
+            <arg column="company_active" name="companyActive" javaType="_boolean"/>
+            <arg column="role" name="role" javaType="String"/>
+        </constructor>
+    </resultMap>
+
     <resultMap id="auditRecordRow" type="com.example.cargotracker.identity.infrastructure.persistence.AuditRecordRow">
         <constructor>
             <idArg column="id" name="id" javaType="java.util.UUID"/>
@@ -66,6 +81,18 @@
 
     <select id="selectUserRoles" resultType="String">
         SELECT role FROM identity.user_role WHERE user_id = #{userId} ORDER BY role
+    </select>
+
+    <!-- request ごとの確かめ（Bolt 32c、ADR-012 の見直しの 3）。利用者・所属企業・役割を 1 回で読む。役割がなければ role が NULL の 1 行 -->
+    <select id="selectUserStanding" resultMap="userStandingRow">
+        SELECT u.id, u.company_id, u.email, u.display_name, u.password_hash, u.status,
+               c.name AS company_name, c.kind AS company_kind, c.active AS company_active,
+               r.role
+          FROM identity.app_user u
+          JOIN identity.company c ON c.id = u.company_id
+          LEFT JOIN identity.user_role r ON r.user_id = u.id
+         WHERE u.id = #{id}
+         ORDER BY r.role
     </select>
 
     <insert id="insertAuditRecord">

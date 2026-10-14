@@ -69,6 +69,20 @@ public final class AuditRecord {
                 UUID.randomUUID(), at, user, company, AuditAction.ACCOUNT_LOCKED, AuditResult.SUCCESS, null);
     }
 
+    /**
+     * session の取消しを記録する（Bolt 32c、US-18 AC6、IA-INV-04）。request ごとの確かめで利用停止・無効な企業・利用者なしを
+     * 見つけて session を捨てたとき。結果は失敗（その session を通さなかった）。操作者は session の主体で、利用者が消えていても
+     * 追跡できるように残す。
+     */
+    public static AuditRecord sessionRevoked(
+            UserId user, CompanyId company, AuthenticationRejection reason, UtcInstant at) {
+        Objects.requireNonNull(user, "user");
+        Objects.requireNonNull(company, "company");
+        Objects.requireNonNull(reason, "reason");
+        return new AuditRecord(
+                UUID.randomUUID(), at, user, company, AuditAction.SESSION_REVOKED, AuditResult.FAILURE, reason.name());
+    }
+
     /** ログインの成功を記録する。 */
     public static AuditRecord loginSucceeded(UserId user, CompanyId company, UtcInstant at) {
         return new AuditRecord(
