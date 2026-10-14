@@ -3,7 +3,9 @@ type: Plan
 title: "Bolt 32b 終了報告 - session の失効の警告と延長（ACC-06）"
 description: "W5 の 12 本目の Bolt の終了報告。ログインした画面で、無操作 30 分の失効の 5 分前に警告し、画面を移らずに延長できるようにした。8 時間の上限も 5 分前に警告し（延長はできない）、警告の時刻をタブの間でそろえ、期限を過ぎたら画面を移らずに案内を出す。8 時間の残りは認証の入口から request の属性で画面に渡し、層の規則に例外を足さなかった。開発レビューで支援技術への知らせ・文言・テストを強めた。支援技術の手動確認（人）と、8 時間の警告の時刻・A-03 の文言の扱いを承認の議題に置く。"
 tags: [plan]
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-14T09:23:31Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-14T09:48:18Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-10-14T09:48:18Z }
 ---
 
 # Bolt 32b 終了報告 - session の失効の警告と延長（ACC-06）
@@ -40,7 +42,7 @@ generated: { by: anthropic/claude-opus-5-5, at: 2026-10-14T09:23:31Z }
 | 期間 | 2026-10-14 16:34（計画の承認の記録 `adc9eeb`）〜 18:30 頃 |
 | 対象 | `identity`（8 時間の残りの算出、延長の URL）、共通のレイアウト（顧客 Web・社内業務 Web）、警告のダイアログと JavaScript、画面の層のテストの部品、UI 設計、フロントエンドとバックエンドのアーキテクチャ、ACC-06、ADR-011・ADR-012、テスト戦略、ユーザーストーリー、リリース計画、ユーザーマニュアル |
 | SP | 0（US-18 の残りの SP は 33b で数える） |
-| GitHub | [#13](https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/13)（閉じない）。デモの動画（延長）は終了報告の承認の後に添付する |
+| GitHub | [#13](https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/13)（閉じない）。デモの動画（延長）を承認の後に添付した |
 | 計画 | [Bolt 32b 計画](bolt_32b_plan.md) |
 
 ## 成果
@@ -165,6 +167,7 @@ generated: { by: anthropic/claude-opus-5-5, at: 2026-10-14T09:23:31Z }
 - `SessionTimerAdvice` は範囲を指定しない `@ControllerAdvice`（`CurrentActorAdvice` と同じ）。共通のレイアウトの属性を足す advice が増えたら、置き場所を見直す
 - 静的資源の request でも 8 時間の残りを置き、利用者の確かめの SQL が走る（W10 の性能の評価で 32c の指摘と一緒に見る）
 - テストの JVM のメモリ不足（CI で 1 回）。続けて出たら、テストの JVM のメモリを見直す
+- 支援技術（NVDA または VoiceOver）の手動確認は未実施（議題 1）。Bolt 32e の完了の前に、上の手順と 32e の入力の保持をあわせて人が確かめる
 
 ## 次の Bolt
 
@@ -174,6 +177,7 @@ Bolt 32e: 失効の時の入力の保持と、再認証の後に開いていた�
 
 | 日付 | 更新内容 | 更新者 |
 | :--- | :--- | :--- |
+| 2026-10-14 | 終了報告を承認した（議題 2〜5 を承認。議題 4 の 8 時間の警告は 5 分前のまま、議題 5 の A-03 の文言は Bolt 32e で直す）。議題 1 の支援技術の手動確認は未実施のまま承認を受けたので、Bolt 32e に持ち越す（32e の完了の前に人が行い、結果を 32e の報告に記録する）。デモの動画を #13 に添付した。T-119・T-120 を足した | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-10-14 | 初版作成（承認待ち。支援技術の手動確認は人を待つ） | anthropic/claude-opus-5-5 |
 
 ## 関連ドキュメント
