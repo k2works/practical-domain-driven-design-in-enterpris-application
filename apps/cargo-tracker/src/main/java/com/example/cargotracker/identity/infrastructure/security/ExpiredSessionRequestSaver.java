@@ -21,7 +21,8 @@ import org.springframework.security.web.util.matcher.RequestMatcher;
 public class ExpiredSessionRequestSaver implements InvalidSessionStrategy {
 
     /**
-     * 覚えた要求を置く session の属性の名前（{@link HttpSessionRequestCache} の既定。成功の扱いが同じ既定で読む。持ち越しで使う）。
+     * 覚えた要求を置く session の属性の名前（{@link HttpSessionRequestCache} の既定。TOTP の成功の扱い・未認証の入口が同じ既定で
+     * 読むので、この部品の cache にも明示して渡す。持ち越しで使う。一致は持ち越しの統合テストが見張る）。
      */
     static final String SAVED_REQUEST = "SPRING_SECURITY_SAVED_REQUEST";
 
@@ -32,17 +33,27 @@ public class ExpiredSessionRequestSaver implements InvalidSessionStrategy {
         this.returnablePages = returnablePages;
         HttpSessionRequestCache cache = new HttpSessionRequestCache();
         cache.setRequestMatcher(returnablePages);
+        cache.setSessionAttrName(SAVED_REQUEST);
         this.requestCache = cache;
     }
 
     @Override
     public void onInvalidSessionDetected(HttpServletRequest request, HttpServletResponse response) throws IOException {
-        remember(request, response);
+        // 失効した session はもうないので、新しい session を作って覚える
+        rememberInNewSession(request, response);
         response.sendRedirect(request.getContextPath() + SessionLifetime.EXPIRED_URL);
     }
 
-    /** 新しい session を作り、開いていた業務の画面の GET なら覚える（session は捨ててから呼ぶ）。 */
-    public void remember(HttpServletRequest request, HttpServletResponse response) {
+    /** 今の session を捨て、新しい session を作り、開いていた業務の画面の GET なら覚える（8 時間の上限。Bolt 32e）。 */
+    public void discardAndRemember(HttpServletRequest request, HttpServletResponse response) {
+        HttpSession session = request.getSession(false);
+        if (session != null) {
+            session.invalidate();
+        }
+        rememberInNewSession(request, response);
+    }
+
+    private void rememberInNewSession(HttpServletRequest request, HttpServletResponse response) {
         request.getSession(true);
         requestCache.saveRequest(request, response);
     }
@@ -53,8 +64,9 @@ public class ExpiredSessionRequestSaver implements InvalidSessionStrategy {
     }
 
     /**
-     * session を捨て、捨てる前に覚えた要求があれば新しい session に持ち越す（Bolt 32e）。ログインの手続きのやり直し（認証コードの
-     * 誤り、password の段・登録の途中の失効）で、戻る先を失わないようにする。
+     * session を捨てて新しい session を作り、捨てる前に覚えた要求があれば移す（Bolt 32e）。ログインの手続きのやり直し（認証コードの
+     * 誤り、password の段・登録の途中の失効）で、戻る先を失わないようにする。移すのは覚えた要求の属性だけで、認証の情報は移さない。
+     * 覚えた要求がなくても新しい session を作る（失効の扱いと同じく、古い Cookie のままの A-03 で失効の扱いを挟まない）。
      */
     public static void invalidateCarryingSavedRequest(HttpServletRequest request) {
         HttpSession session = request.getSession(false);
@@ -63,8 +75,9 @@ public class ExpiredSessionRequestSaver implements InvalidSessionStrategy {
         }
         Object saved = session.getAttribute(SAVED_REQUEST);
         session.invalidate();
+        HttpSession fresh = request.getSession(true);
         if (saved != null) {
-            request.getSession(true).setAttribute(SAVED_REQUEST, saved);
+            fresh.setAttribute(SAVED_REQUEST, saved);
         }
     }
 }

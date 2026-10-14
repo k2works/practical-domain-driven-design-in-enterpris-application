@@ -1031,12 +1031,14 @@ class AuthenticationSecurityIntegrationTest {
     }
 
     private String notFoundBody(Cookie session, String trackingNumber) throws Exception {
-        return mvc.perform(get("/customer/tracking-records/" + trackingNumber).cookie(session))
+        String url = "/customer/tracking-records/" + trackingNumber;
+        String body = mvc.perform(get(url).cookie(session))
                 .andExpect(status().isNotFound())
                 .andReturn()
                 .getResponse()
-                .getContentAsString()
-                .replaceAll("name=\"_csrf\" value=\"[^\"]*\"", "name=\"_csrf\"")
+                .getContentAsString();
+        assertThat(body).as("戻り先は開いた URL そのもの").contains("data-return-path=\"" + url + "\"");
+        return body.replaceAll("name=\"_csrf\" value=\"[^\"]*\"", "name=\"_csrf\"")
                 .replaceAll("data-return-path=\"[^\"]*\"", "data-return-path");
     }
 

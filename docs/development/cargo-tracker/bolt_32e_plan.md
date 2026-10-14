@@ -3,7 +3,7 @@ type: Plan
 title: "Bolt 32e 計画 - 失効の後に開いていた画面へ戻す（ACC-06）"
 description: "W5 の 13 本目の Bolt の計画。無操作 30 分と 8 時間の上限で失効した後、もう一度ログインすると開いていた画面へ戻す（横断の受入条件の「再認証後に再開できる」の画面の分、Bolt 31 のレビュー 5）。失効を見つけたときに、開いていた業務の画面の GET を新しい session に覚え、TOTP が通った後にそこへ戻す。認証コードの誤りと password の段の失効では覚えた要求を持ち越し、取消しでは持ち越さない。警告の期限の到来の案内のリンクは、GET で開いた画面なら開き直す。送信（POST）の後の失効と入力の保持は Bolt 32f。"
 tags: [plan]
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-14T10:43:41Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-14T11:18:45Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-14T10:37:12Z }
 ---
@@ -153,7 +153,7 @@ stop
     - 32e の行を本計画に。32f の行を足す（入力の保持。開始準備の決定: sessionStorage、利用者を確かめて戻す、password・CSRF のトークン・ファイルは置かない、自動で戻して知らせ「戻した入力を消す」、取消しでは保持しない。32e から送るもの: 送信の後の失効で送信した画面へ戻すこと、案内のリンクで画面を離れる前と送信の前に入力を写すこと、戻り先は 32e の戻り先と同じ鍵にすること）
     - US-18 の Bolt の順序（32b → 32e → 32f → 33b。32f は #13 をクローズする 33b より前）、W5 の本数（18 本）、「session の失効の警告の範囲」の決定の反映先（32b・32e・32f）、局面とアプローチの段落、デモの項目、ユーザーマニュアルの段落、W5 の状態
   - 完了の判定: `okf:check` ERROR 0、`documentationTest` 緑
-- [ ] **2. 失効の扱いで要求を覚え、持ち越す** 【承認ゲート: Red・Green、セキュリティ、構造】
+- [x] **2. 失効の扱いで要求を覚え、持ち越す** 【承認ゲート: Red・Green、セキュリティ、構造】
   - Red（統合テスト `ReturnAfterExpirySecurityIntegrationTest`。`@IdentityIntegrationTest`、`MutableClock` を直接受ける。ログインし直す前に `AuthenticationFactorFixtures.resetTotpStep` で刻みを戻す）:
     - 無操作で失効した session（`SpringSessionRows.idle` で 31 分）で業務の画面を開くと A-03 へ移り、ログインし直すとその画面（`?continue` 付き）へ移る。覚えた要求に query 以外の parameter がない
     - 8 時間を過ぎた session で業務の画面を開くと、同じく戻る
@@ -166,13 +166,13 @@ stop
     - ログインした業務の画面の GET の応答に `data-return-path` がある。送信の後の画面（入力の誤りの画面）にはない
   - Green: 失効の扱いの部品、`SecurityConfiguration`、`SessionLifetimeFilter`（コンストラクターが変われば `SessionLifetimeFilterTest` も直す）、`DiscardPasswordFactorFailureHandler`、`SessionTimerAdvice` の戻り先
   - 完了の判定: `check` 緑（層の規則と全 URL の見張りを含む）
-- [ ] **3. 期限の到来の案内のリンク（画面の層の Red から）** 【承認ゲート: Red・Green（画面）】
+- [x] **3. 期限の到来の案内のリンク（画面の層の Red から）** 【承認ゲート: Red・Green（画面）】
   - Red（`session_timeout_ui.feature`。機能の説明を「サーバーの session を失効させるシナリオもある」に直す）:
     - 警告のまま期限を過ぎ、サーバーの session も切れた後に案内の「もう一度ログインする」を押すと、再認証の案内を経て、ログインし直した後に同じ画面に戻る（`@demo @demo-bolt-32e/return`）
     - 警告のまま期限を過ぎても、サーバーの session が生きていれば、案内のリンクで同じ画面がログインしたまま開く（T-119 の対）
   - Green: `layout/session-warning` と `session-timeout.js`（戻り先があればリンクにする）
   - 完了の判定: `check` を先に（T-120）、続けて `uiTest` が緑
-- [ ] **4. 画面の層の受入シナリオの残りとマニュアル** 【承認ゲート: Red・Green、マニュアル】
+- [x] **4. 画面の層の受入シナリオの残りとマニュアル** 【承認ゲート: Red・Green、マニュアル】
   - `session_timeout_ui.feature` に足す: サーバーの session が無操作で切れた後に画面を開き直すと、再認証の案内を経てログインし直した後に同じ画面に戻る。ログインから 8 時間を過ぎた session で画面を開くと、同じく戻る
   - マニュアル: 2.4（画面の説明の ①、操作手順 2、画面の開き方、注意・補足の食い違いの補足を消し、戻らない場合（送信の後、利用を止められたとき、別の端末）を書く）、2.5（期限の到来の案内のリンク）、付録 B の Q1-2・Q1-5。キャプチャの撮り直しが要るかを確かめる
   - `templates/identity/session-expired.html` のコメント（入力の保持は 32f）
@@ -223,6 +223,7 @@ stop
 
 | 日付 | 更新内容 | 更新者 |
 | :--- | :--- | :--- |
+| 2026-10-14 | ステップ 2〜4 と開発レビュー（4 つの観点）の直しを終えた。計画からの変更と見つけたこと: (1) 失効の扱いの部品は `ExpiredSessionRequestSaver`（`discardAndRemember`・`invalidateCarryingSavedRequest`）。持ち越しは覚えた要求がなくても新しい session を作る。(2) 戻り先の判定は画面の層では書けない（層の規則）ので、`SessionLifetimeFilter` が request の属性 `cargotracker.request.returnPath` に置き、`SessionTimerAdvice` が読む（32b の残り時間と同じ 2 つの定数。33b の直しの 3 組目）。戻り先は context path を含む。(3) 許す一覧は認可と同じ `PathPatternRequestMatcher` で判定し、書類のダウンロードと部分更新（`HX-Request`）を除く（文字列の比較では percent-encode で除外をすり抜けた。アーキテクトの指摘）。(4) 404 の本文の一致のテスト（BR-07）に戻り先（開いた URL そのもの）が入るので、比べる前に戻り先が開いた URL と同じことを確かめてから除いた。(5) 32b の画面の層のステップが案内のリンクを `/session-expired` と決めていたので、戻り先に直した（テスターが予告し、UI テストで 3 件落ちて確かめた）。(6) テストを開発レビューで足した: 社内の画面、書類のダウンロード・延長・公開の URL・8 時間の送信を覚えない、query 付きの戻り先と覚えた要求の消え方、別の利用者は前の画面へ移り権限で拒まれる、取消しの応答の Cookie を辿る、延長の失敗の後の A-01 からの復帰（UI）、`SessionLifetimeFilter` の単体テスト | anthropic/claude-opus-5-5 |
 | 2026-10-14 | 承認（確認ポイント 1〜10 は推奨のまま）。`/goal Bolt32e` の下で、ステップの承認ゲートでは止めずに進め、終了報告でまとめて確かめを受ける | human:kakimomokuri |
 | 2026-10-14 | 詳細整合性検証（16 件）と横断整合性検証（19 件）の指摘を反映した。spring-security 7.1.1 の jar で、CSRF の拒否も `invalidSessionStrategy` を通ること・フィルターの順序・`changeSessionId` の後も覚えた要求が残ること・A-01 と A-02 が消さないことを確かめた（T-114）。送信は覚えない（Referer を使わない。オープンリダイレクトと送信の本体を避け、送信の後の失効は 32f に送った）。覚えるのは GET で許す一覧の画面だけ。覚えるかに関わらず新しい session を作る（A-03 の 302 の繰り返しを防ぐ）。認証コードの誤りと password の段の失効では持ち越す。戻り先は GET の画面にだけサーバーが渡す（送信の後の画面の URL を開き直さない）。延長の失敗の後の A-01 への直接の遷移、利用者に結び付けないこと、確認ポイント 4〜6。ステップ 3 を画面の層の Red から。ステップ 1 の文書の漏れ（アーキテクチャ・ACC-06・user_story・ui_design の各行・release_plan の段落）、32d・32b の既知の課題と T-115 の引き継ぎ、デモの添付の対応表 | anthropic/claude-opus-5-5 |
 | 2026-10-14 | 初版作成（承認待ち）。開始準備で、TOTP の成功の扱い（覚えた要求へ戻す）、無操作と 8 時間の失効の経路（要求を覚えない）、警告の期限の到来の案内のリンクを調べ、human:kakimomokuri の決定（32e と 32f に分ける、入力の保持は sessionStorage で自動で戻して知らせる、取消しでは戻さない）を反映した | anthropic/claude-opus-5-5 |

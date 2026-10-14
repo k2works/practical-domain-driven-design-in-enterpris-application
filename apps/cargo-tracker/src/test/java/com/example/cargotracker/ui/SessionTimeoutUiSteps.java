@@ -3,6 +3,7 @@ package com.example.cargotracker.ui;
 import static com.microsoft.playwright.assertions.PlaywrightAssertions.assertThat;
 
 import com.example.cargotracker.identity.SpringSessionRows;
+import com.example.cargotracker.shared.domain.Role;
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.Route;
@@ -106,6 +107,54 @@ public class SessionTimeoutUiSteps {
         warningButton(name).click();
     }
 
+    @もし("サーバーの session が無操作で切れる")
+    public void サーバーのsessionが無操作で切れる() {
+        new SpringSessionRows(jdbc).idle(browser.sessionCookieValue(), Duration.ofMinutes(31));
+    }
+
+    @もし("案内の {string} を押す")
+    public void 案内の_を押す(String name) {
+        page().getByRole(AriaRole.ALERT)
+                .getByRole(AriaRole.LINK, new Locator.GetByRoleOptions().setName(name))
+                .click();
+    }
+
+    @もし("見積依頼の作成画面を開き直す")
+    public void 見積依頼の作成画面を開き直す() {
+        page().navigate(baseUrl + NEW_TRANSPORT_REQUEST);
+    }
+
+    @もし("再認証の案内からもう一度ログインする")
+    public void 再認証の案内からもう一度ログインする() {
+        // 失効の扱いが作った新しい session に覚えた要求があるので、Cookie を消さずにログインする（signInAs は Cookie を消す）
+        page().getByRole(AriaRole.LINK, new Page.GetByRoleOptions().setName("ログインへ"))
+                .click();
+        browser.signInHere(Role.SHIPPER);
+    }
+
+    @ならば("ログインの画面が表示される")
+    public void ログインの画面が表示される() {
+        assertThat(page().getByRole(AriaRole.HEADING, new Page.GetByRoleOptions().setName("ログイン")))
+                .isVisible();
+    }
+
+    @もし("ログインの画面からもう一度ログインする")
+    public void ログインの画面からもう一度ログインする() {
+        browser.signInHere(Role.SHIPPER);
+    }
+
+    @ならば("再認証の案内が表示される")
+    public void 再認証の案内が表示される() {
+        assertThat(page().getByRole(AriaRole.HEADING, new Page.GetByRoleOptions().setName("もう一度ログインしてください")))
+                .isVisible();
+    }
+
+    @ならば("ログインしたままである")
+    public void ログインしたままである() {
+        assertThat(page().getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("ログアウト")))
+                .isVisible();
+    }
+
     @もし("同じブラウザの別のタブで見積依頼の一覧を開く")
     public void 同じブラウザの別のタブで見積依頼の一覧を開く() {
         browser.openTab(baseUrl + "/customer/transport-requests");
@@ -165,7 +214,7 @@ public class SessionTimeoutUiSteps {
         Locator notice = page().getByRole(AriaRole.ALERT).filter(new Locator.FilterOptions().setHasText(message));
         assertThat(notice).isVisible();
         assertThat(notice.getByRole(AriaRole.LINK, new Locator.GetByRoleOptions().setName(link)))
-                .hasAttribute("href", "/session-expired");
+                .hasAttribute("href", NEW_TRANSPORT_REQUEST);
         browser.checkAccessibility();
     }
 }

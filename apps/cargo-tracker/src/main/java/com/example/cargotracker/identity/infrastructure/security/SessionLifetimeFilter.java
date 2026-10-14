@@ -20,6 +20,9 @@ import org.springframework.web.filter.OncePerRequestFilter;
  * 認証の処理より前に置く（Bolt 13 の Try T-40）。認証済みなのにログインの時刻がない session も失効させる。上限を過ぎたら session を捨てて業務データを出さずに A-03 へ移す。
  * 古い session のままのログインの送信も A-03 へ移す（上限を過ぎた session を、ログインの送信で延命させない）。
  * 上限の前なら、2 つの要素がそろった session の 8 時間の残りを request の属性に置き、画面の session の警告に渡す（Bolt 32b）。
+ * 8 時間の上限で捨てるときは開いていた業務の画面を新しい session に覚え、password の段・登録の途中の失効では覚えていた要求を
+ * 持ち越す（Bolt 32e）。戻れる業務の画面の GET なら、戻り先（context path を含む path と query）を request の属性に置く（警告の
+ * 期限の到来の案内のリンク。Bolt 32e）。
  */
 public class SessionLifetimeFilter extends OncePerRequestFilter {
 
@@ -43,8 +46,7 @@ public class SessionLifetimeFilter extends OncePerRequestFilter {
             boolean fullyAuthenticated = fullyAuthenticated();
             SecurityContextHolder.clearContext();
             if (fullyAuthenticated) {
-                session.invalidate();
-                requestSaver.remember(request, response);
+                requestSaver.discardAndRemember(request, response);
             } else {
                 ExpiredSessionRequestSaver.invalidateCarryingSavedRequest(request);
             }
@@ -64,26 +66,27 @@ public class SessionLifetimeFilter extends OncePerRequestFilter {
      * 2 つの要素がそろった session なら、8 時間の上限までの残りの秒数を request の属性に置く（Bolt 32b、ACC-06。画面の session の
      * 警告）。上限の判定と同じ起点と時計で数える。password の段・登録の途中・認証の前には置かない。
      */
-    private static boolean fullyAuthenticated() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        return authentication != null && hasAuthority(authentication, TotpAuthenticationToken.FACTOR_TOTP);
-    }
-
-    /** 戻り先（context path を除いた path と query）。 */
-    private static String returnPath(HttpServletRequest request) {
-        String path = request.getRequestURI().substring(request.getContextPath().length());
-        return request.getQueryString() == null ? path : path + "?" + request.getQueryString();
-    }
-
     private static void putLifetimeRemaining(HttpServletRequest request, HttpSession session, Instant now) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || !hasAuthority(authentication, TotpAuthenticationToken.FACTOR_TOTP)) {
+        if (!fullyAuthenticated()) {
             return;
         }
         if (session.getAttribute(SessionLifetime.AUTHENTICATED_AT) instanceof Instant at) {
             Duration remaining = Duration.between(now, at.plus(SessionLifetime.MAX_LIFETIME));
             request.setAttribute(SessionLifetime.LIFETIME_REMAINING_ATTRIBUTE, remaining.toSeconds());
         }
+    }
+
+    /** 2 つの要素（password と TOTP）がそろった主体か。 */
+    private static boolean fullyAuthenticated() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        return authentication != null && hasAuthority(authentication, TotpAuthenticationToken.FACTOR_TOTP);
+    }
+
+    /** 戻り先（context path を含む path と query。そのままリンクにできる。Bolt 32e）。 */
+    private static String returnPath(HttpServletRequest request) {
+        return request.getQueryString() == null
+                ? request.getRequestURI()
+                : request.getRequestURI() + "?" + request.getQueryString();
     }
 
     /**

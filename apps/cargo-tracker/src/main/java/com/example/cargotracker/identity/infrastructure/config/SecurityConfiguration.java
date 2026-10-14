@@ -49,7 +49,10 @@ import org.springframework.security.web.access.DelegatingMissingAuthorityAccessD
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
+import org.springframework.security.web.util.matcher.AndRequestMatcher;
+import org.springframework.security.web.util.matcher.NegatedRequestMatcher;
 import org.springframework.security.web.util.matcher.OrRequestMatcher;
+import org.springframework.security.web.util.matcher.RequestHeaderRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 
 /**
@@ -91,17 +94,22 @@ public class SecurityConfiguration {
             "default-src 'self'; frame-ancestors 'none'; form-action 'self'; base-uri 'self'; object-src 'none'";
 
     /**
-     * 失効の後にログインし直したら戻れる業務の画面（Bolt 32e、ADR-012）。GET で、荷主の画面か社内の画面。書類のダウンロードは
-     * 画面でないので除く。送信（POST）は覚えない（送信の本体を session に入れない）。
+     * 失効の後にログインし直したら戻れる業務の画面（Bolt 32e、ADR-012）。GET で、荷主の画面か社内の画面。書類のダウンロードは画面で
+     * ないので除き、部分更新（htmx の {@code HX-Request}）も除く。送信（POST）は覚えない（送信の本体を session に入れない）。
+     * 認可と同じ path の解釈（{@link PathPatternRequestMatcher}）で判定する。{@code /customer/**}・{@code /staff/**} の GET は状態を
+     * 変えない（ログインの後に覚えた GET を利用者の権限で開き直すため。architecture_backend）。
      */
-    private static RequestMatcher returnablePages() {
-        return request -> {
-            String path =
-                    request.getRequestURI().substring(request.getContextPath().length());
-            return HttpMethod.GET.matches(request.getMethod())
-                    && (path.startsWith("/customer/") || path.startsWith("/staff/"))
-                    && !path.contains("/documents/");
-        };
+    static RequestMatcher returnablePages() {
+        PathPatternRequestMatcher.Builder paths = PathPatternRequestMatcher.withDefaults();
+        RequestMatcher pages = new OrRequestMatcher(
+                paths.matcher(HttpMethod.GET, "/customer/**"), paths.matcher(HttpMethod.GET, "/staff/**"));
+        RequestMatcher documents = new OrRequestMatcher(
+                paths.matcher("/customer/transport-requests/*/versions/*/documents/*"),
+                paths.matcher("/staff/transport-requests/*/versions/*/documents/*"));
+        return new AndRequestMatcher(
+                pages,
+                new NegatedRequestMatcher(documents),
+                new NegatedRequestMatcher(new RequestHeaderRequestMatcher("HX-Request")));
     }
 
     private static RequestMatcher publicRequests() {

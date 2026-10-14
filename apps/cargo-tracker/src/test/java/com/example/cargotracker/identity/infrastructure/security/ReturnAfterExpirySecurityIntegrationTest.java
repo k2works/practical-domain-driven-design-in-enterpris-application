@@ -37,7 +37,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.web.savedrequest.SavedRequest;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
@@ -61,6 +60,7 @@ class ReturnAfterExpirySecurityIntegrationTest {
     private static final String TOTP_URL = "/login/totp";
     private static final String EXPIRED_URL = "/session-expired";
     private static final String SAVED_REQUEST = "SPRING_SECURITY_SAVED_REQUEST";
+    private static final String STAFF_URL = "/staff/transport-requests";
 
     @Autowired
     MockMvc mvc;
@@ -113,16 +113,30 @@ class ReturnAfterExpirySecurityIntegrationTest {
     }
 
     @Test
-    void 覚えた要求はqueryのほかにparameterを持たない() throws Exception {
+    void queryの付いた画面に戻りその画面が開くと覚えた要求は消える() throws Exception {
         Cookie session = login(email, null);
         sessions().idle(session, Duration.ofMinutes(31));
 
         Cookie expired = expiredTo(get(PAGE_URL).queryParam("copyFrom", "TR-1").cookie(session));
+        MvcResult back = loginAgainResult(email, expired);
 
-        SavedRequest saved = (SavedRequest) sessions().attribute(expired, SAVED_REQUEST);
-        assertThat(saved).as("覚えた要求").isNotNull();
-        assertThat(saved.getMethod()).isEqualTo("GET");
-        assertThat(saved.getParameterMap()).containsOnlyKeys("copyFrom");
+        String target = back.getResponse().getRedirectedUrl();
+        assertThat(target).isEqualTo("http://localhost" + PAGE_URL + "?copyFrom=TR-1&continue");
+        Cookie loggedIn = sessionOr(back, expired);
+        mvc.perform(get(target.substring("http://localhost".length())).cookie(loggedIn))
+                .andExpect(status().isOk());
+        assertThat(sessions().attribute(loggedIn, SAVED_REQUEST)).as("開いた後は消える").isNull();
+    }
+
+    @Test
+    void 社内の画面も覚えて戻る() throws Exception {
+        String sales = user(staffCompany(), Role.SALES);
+        Cookie session = login(sales, null);
+        sessions().idle(session, Duration.ofMinutes(31));
+
+        Cookie expired = expiredTo(get(STAFF_URL).cookie(session));
+
+        assertThat(loginAgain(sales, expired)).isEqualTo("http://localhost" + STAFF_URL + "?continue");
     }
 
     @Test
@@ -144,6 +158,9 @@ class ReturnAfterExpirySecurityIntegrationTest {
         Cookie fresh = expiredTo(get(EXPIRED_URL).cookie(session));
 
         mvc.perform(get(EXPIRED_URL).cookie(fresh)).andExpect(status().isOk());
+        assertThat(sessions().attribute(fresh, SAVED_REQUEST))
+                .as("公開の URL は覚えない")
+                .isNull();
     }
 
     // --- 覚えない（覚える場合と同じ流れで対にする。T-119） ---
@@ -175,6 +192,46 @@ class ReturnAfterExpirySecurityIntegrationTest {
     }
 
     @Test
+    void 失効したsessionの延長は覚えない() throws Exception {
+        Cookie session = login(email, null);
+        String token = csrfTokenOf(session);
+        sessions().idle(session, Duration.ofMinutes(31));
+
+        Cookie expired = expiredTo(post("/session/extend")
+                .cookie(session)
+                .param("_csrf", token)
+                .header("Referer", "http://localhost" + PAGE_URL));
+
+        assertThat(loginAgain(email, expired)).isEqualTo(HOME_URL);
+    }
+
+    @Test
+    void 書類のダウンロードのGETは覚えない() throws Exception {
+        Cookie session = login(email, null);
+        sessions().idle(session, Duration.ofMinutes(31));
+
+        Cookie expired = expiredTo(get("/customer/transport-requests/TR-2026-0001/versions/1/documents/1")
+                .cookie(session));
+
+        assertThat(sessions().attribute(expired, SAVED_REQUEST)).isNull();
+        assertThat(loginAgain(email, expired)).isEqualTo(HOME_URL);
+    }
+
+    @Test
+    void 八時間を過ぎたsessionの業務の送信は覚えずログインし直すとホームへ移る() throws Exception {
+        // 8 時間の上限は session が生きているので CSRF を通り、SessionLifetimeFilter が送信を受ける唯一の経路
+        Cookie session = login(email, null);
+        String token = csrfTokenOf(session);
+        atElapsed(Duration.ofHours(8));
+
+        Cookie expired =
+                expiredTo(post("/customer/transport-requests").cookie(session).param("_csrf", token));
+
+        assertThat(sessions().attribute(expired, SAVED_REQUEST)).isNull();
+        assertThat(loginAgain(email, expired)).isEqualTo(HOME_URL);
+    }
+
+    @Test
     void 許す一覧の外のGETは覚えない() throws Exception {
         Cookie session = login(email, null);
         sessions().idle(session, Duration.ofMinutes(31));
@@ -192,9 +249,15 @@ class ReturnAfterExpirySecurityIntegrationTest {
         mvc.perform(get(PAGE_URL).cookie(session)).andExpect(status().isOk());
         jdbc.update("UPDATE identity.app_user SET status = 'SUSPENDED' WHERE email = ?", email);
 
-        mvc.perform(get(PAGE_URL).cookie(session)).andExpect(redirectedUrl(EXPIRED_URL));
-        // ブラウザは捨てられた session の Cookie のまま A-03 を開く
-        Cookie afterRevoke = expiredTo(get(EXPIRED_URL).cookie(session));
+        MvcResult revoked = mvc.perform(get(PAGE_URL).cookie(session))
+                .andExpect(redirectedUrl(EXPIRED_URL))
+                .andReturn();
+        // ブラウザと同じく、応答が新しい session の Cookie を置けばそれを、置かなければ捨てられた Cookie のまま A-03 を開く
+        Cookie next = sessionOr(revoked, session);
+        Cookie afterRevoke = next == session ? expiredTo(get(EXPIRED_URL).cookie(session)) : next;
+        assertThat(sessions().attribute(afterRevoke, SAVED_REQUEST))
+                .as("取消しでは覚えない")
+                .isNull();
         jdbc.update("UPDATE identity.app_user SET status = 'ACTIVE' WHERE email = ?", email);
 
         assertThat(loginAgain(email, afterRevoke)).isEqualTo(HOME_URL);
@@ -211,11 +274,11 @@ class ReturnAfterExpirySecurityIntegrationTest {
         Cookie passwordStage = loginWithPassword(email, expired);
         MvcResult wrong = mvc.perform(post(TOTP_URL)
                         .cookie(passwordStage)
-                        .param("code", "000000".equals(currentCode(email)) ? "111111" : "000000")
+                        .param("code", codeAt(email, 10))
                         .with(csrf()))
                 .andExpect(status().is3xxRedirection())
                 .andReturn();
-        assertThat(wrong.getResponse().getRedirectedUrl()).contains("/login");
+        assertThat(wrong.getResponse().getRedirectedUrl()).isEqualTo(TotpAuthenticationFilter.FAILURE_URL);
 
         assertThat(loginAgain(email, sessionOr(wrong, passwordStage))).isEqualTo(RETURN_URL);
     }
@@ -236,12 +299,18 @@ class ReturnAfterExpirySecurityIntegrationTest {
     // --- 受け入れた振る舞い（確認ポイント 4） ---
 
     @Test
-    void 覚えた要求は利用者に結び付けず別の利用者がログインしても使われる() throws Exception {
-        Cookie session = login(email, null);
+    void 覚えた要求は利用者に結び付けず別の利用者がログインすると前の画面へ移るが権限で拒まれる() throws Exception {
+        // 受け入れた振る舞い（確認ポイント 4）。社内の画面を開いていた session で、荷主がログインし直す
+        String sales = user(staffCompany(), Role.SALES);
+        Cookie session = login(sales, null);
         sessions().idle(session, Duration.ofMinutes(31));
-        Cookie expired = expiredTo(get(PAGE_URL).cookie(session));
+        Cookie expired = expiredTo(get(STAFF_URL).cookie(session));
 
-        assertThat(loginAgain(shipper(), expired)).isEqualTo(RETURN_URL);
+        MvcResult back = loginAgainResult(email, expired);
+
+        assertThat(back.getResponse().getRedirectedUrl()).isEqualTo("http://localhost" + STAFF_URL + "?continue");
+        mvc.perform(get(STAFF_URL + "?continue").cookie(sessionOr(back, expired)))
+                .andExpect(status().isForbidden());
     }
 
     // --- 戻り先を画面に渡す ---
@@ -263,6 +332,7 @@ class ReturnAfterExpirySecurityIntegrationTest {
                 .getContentAsString();
 
         assertThat(page).contains("data-return-path=\"" + PAGE_URL + "\"");
+        assertThat(afterPost).as("警告の部分は描かれている（T-119）").contains("data-idle-seconds=");
         assertThat(afterPost).as("入力の誤りの画面（送信の URL のまま描き直す）").doesNotContain("data-return-path");
     }
 
@@ -279,27 +349,24 @@ class ReturnAfterExpirySecurityIntegrationTest {
 
     /** その session（Cookie）のまま A-01・A-02 でログインし直し、TOTP の後に移る先を返す。 */
     private String loginAgain(String who, Cookie current) throws Exception {
+        return loginAgainResult(who, current).getResponse().getRedirectedUrl();
+    }
+
+    /** その session（Cookie）のまま A-01・A-02 でログインし直した、TOTP の送信の応答。 */
+    private MvcResult loginAgainResult(String who, Cookie current) throws Exception {
         Cookie passwordStage = loginWithPassword(who, current);
         AuthenticationFactorFixtures.resetTotpStep(jdbc, who);
-        MvcResult result = mvc.perform(post(TOTP_URL)
+        return mvc.perform(post(TOTP_URL)
                         .cookie(passwordStage)
                         .param("code", currentCode(who))
                         .with(csrf()))
                 .andExpect(status().is3xxRedirection())
                 .andReturn();
-        return result.getResponse().getRedirectedUrl();
     }
 
     private Cookie login(String who, Cookie current) throws Exception {
-        Cookie passwordStage = loginWithPassword(who, current);
-        AuthenticationFactorFixtures.resetTotpStep(jdbc, who);
-        MvcResult result = mvc.perform(post(TOTP_URL)
-                        .cookie(passwordStage)
-                        .param("code", currentCode(who))
-                        .with(csrf()))
-                .andExpect(status().is3xxRedirection())
-                .andReturn();
-        return sessionOr(result, passwordStage);
+        MvcResult result = loginAgainResult(who, current);
+        return sessionOr(result, current);
     }
 
     private Cookie loginWithPassword(String who, Cookie current) throws Exception {
@@ -313,6 +380,18 @@ class ReturnAfterExpirySecurityIntegrationTest {
         return sessionOr(result, current);
     }
 
+    /** いまの刻みから steps だけ先の刻みのコード（照合の窓（前後 1 つ）に入らない誤ったコード）。 */
+    private String codeAt(String who, long steps) {
+        TotpCredential credential = totpCredentials
+                .findByUserId(
+                        users.findByEmail(EmailAddress.of(who)).orElseThrow().id())
+                .orElseThrow();
+        return totpCodes.code(
+                credential.userId(),
+                credential.secret(),
+                TotpCredential.stepAt(new UtcInstant(clock.instant())) + steps);
+    }
+
     private String currentCode(String who) {
         TotpCredential credential = totpCredentials
                 .findByUserId(
@@ -323,16 +402,26 @@ class ReturnAfterExpirySecurityIntegrationTest {
     }
 
     private String shipper() {
+        return user(company, Role.SHIPPER);
+    }
+
+    private Company staffCompany() {
+        Company operator = Company.of(new CompanyId(UUID.randomUUID()), "A 社", CompanyKind.OPERATOR, true);
+        companies.add(operator);
+        return operator;
+    }
+
+    private String user(Company of, Role role) {
         String newEmail = "return-" + UUID.randomUUID() + "@example.com";
         UserId userId = new UserId(UUID.randomUUID());
         users.add(User.of(
                 userId,
-                company.id(),
+                of.id(),
                 EmailAddress.of(newEmail),
-                "荷主 太郎",
+                "利用者",
                 passwordEncoder.encode(PASSWORD),
                 UserStatus.ACTIVE,
-                Set.of(Role.SHIPPER)));
+                Set.of(role)));
         totpCredentials.add(TotpCredential.enroll(
                 userId, cipher.encrypt(TOTP_SECRET.clone(), userId), new UtcInstant(clock.instant())));
         return newEmail;

@@ -278,6 +278,64 @@ class SessionLifetimeFilterTest {
                                 .LIFETIME_REMAINING_ATTRIBUTE);
     }
 
+    // --- 失効の後に開いていた画面へ戻す（Bolt 32e） ---
+
+    private final SessionLifetimeFilter returningFilter =
+            new SessionLifetimeFilter(clock, new ExpiredSessionRequestSaver(request -> true));
+
+    private MockHttpServletRequest returningRequest(MockHttpSession session, Duration elapsed) throws Exception {
+        clock.setInstant(LOGIN_AT.plus(elapsed));
+        MockHttpServletRequest request = new MockHttpServletRequest("GET", "/customer/transport-requests");
+        request.setQueryString("page=2");
+        request.setSession(session);
+        returningFilter.doFilter(request, new MockHttpServletResponse(), new MockFilterChain());
+        return request;
+    }
+
+    @Test
+    void 戻れる画面なら戻り先をqueryごとrequestの属性に置く() throws Exception {
+        MockHttpServletRequest request = returningRequest(authenticatedSession(true), Duration.ofHours(1));
+
+        assertThat(request.getAttribute(SessionLifetime.RETURN_PATH_ATTRIBUTE))
+                .isEqualTo("/customer/transport-requests?page=2");
+    }
+
+    @Test
+    void 戻れない画面には戻り先を置かない() throws Exception {
+        MockHttpServletRequest request = requestOf(authenticatedSession(true), Duration.ofHours(1));
+
+        assertThat(request.getAttribute(SessionLifetime.RETURN_PATH_ATTRIBUTE)).isNull();
+    }
+
+    @Test
+    void 八時間の上限では新しいsessionに開いていた画面を覚える() throws Exception {
+        MockHttpServletRequest request = returningRequest(authenticatedSession(true), Duration.ofHours(8));
+
+        assertThat(request.getSession(false)).as("新しい session").isNotNull();
+        assertThat(request.getSession(false).getAttribute(ExpiredSessionRequestSaver.SAVED_REQUEST))
+                .isNotNull();
+    }
+
+    @Test
+    void passwordの段の失効では覚えていた要求を新しいsessionに持ち越す() throws Exception {
+        MockHttpSession session = passwordStageSession(true);
+        Object saved = new Object();
+        session.setAttribute(ExpiredSessionRequestSaver.SAVED_REQUEST, saved);
+
+        MockHttpServletRequest request = returningRequest(session, Duration.ofMinutes(5));
+
+        assertThat(session.isInvalid()).isTrue();
+        assertThat(request.getSession(false).getAttribute(ExpiredSessionRequestSaver.SAVED_REQUEST))
+                .isSameAs(saved);
+    }
+
+    @Test
+    void 戻り先のrequestの属性の名前は画面の層と同じ値() {
+        assertThat(SessionLifetime.RETURN_PATH_ATTRIBUTE)
+                .isEqualTo("cargotracker.request.returnPath")
+                .isEqualTo(com.example.cargotracker.identity.interfaces.web.SessionTimerAdvice.RETURN_PATH_ATTRIBUTE);
+    }
+
     @Test
     void passwordの段だけのsessionは5分の1秒後も失効させる() throws Exception {
         MockHttpSession session = passwordStageSession(true);

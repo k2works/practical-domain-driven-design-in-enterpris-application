@@ -8,7 +8,8 @@
 // - 早いほうの期限の 5 分前に警告を開く。無操作の警告は「ログインを延長する」にフォーカスを移し、8 時間の警告は延長を出さない
 // - 延長は htmx でなく fetch で送る（302 を opaqueredirect として受け、失効を見分けるため）。204 なら閉じ、302 なら期限の到来、
 //   それ以外（403・500・通信の失敗）は「延長できませんでした」を role="alert" で示して延長のボタンを残す
-// - 期限を過ぎたら、モーダルを閉じて期限の到来の案内を画面の先頭に出す（自動で画面を移らない。入力を控えられるようにする）
+// - 期限を過ぎたら、モーダルを閉じて期限の到来の案内を画面の先頭に出す（自動で画面を移らない。入力を控えられるようにする）。
+//   案内のリンクは、サーバーが渡した戻り先（GET で開いた業務の画面）があればそれを開き直す（Bolt 32e）
 // - ブラウザの「戻る」（bfcache）やタブを見えるようにしたときは、localStorage の時刻を読み直す
 document.addEventListener('DOMContentLoaded', () => {
   const dialog = document.getElementById('session-warning');
@@ -99,6 +100,19 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 
+  // サーバーが渡した戻り先を、同じ origin の path と query に限って使う（多層防御。サーバーは業務の画面の path だけを渡す）
+  const sameOriginPath = (value) => {
+    if (!value) {
+      return null;
+    }
+    try {
+      const url = new URL(value, window.location.origin);
+      return url.origin === window.location.origin ? url.pathname + url.search : null;
+    } catch (e) {
+      return null;
+    }
+  };
+
   const expire = () => {
     expired = true;
     window.clearTimeout(timer);
@@ -106,6 +120,13 @@ document.addEventListener('DOMContentLoaded', () => {
     // 画面の先頭（タブの順でも最初）に案内を置き、案内が背後の画面のフォーカスを隠さないよう scroll-padding を足す
     document.body.prepend(notice);
     notice.replaceChildren(noticeTemplate.content.cloneNode(true));
+    // GET で開いた業務の画面なら、案内のリンクでその画面を開き直す。サーバーの session が切れていれば、失効の扱いが画面を覚えて
+    // A-03 へ移し、ログインし直した後に戻る（Bolt 32e）。送信の後の画面などで戻り先がなければ、今どおり A-03 へ移る
+    const link = notice.querySelector('[data-session-return]');
+    const target = sameOriginPath(dialog.dataset.returnPath);
+    if (link && target) {
+      link.setAttribute('href', target);
+    }
     document.documentElement.style.scrollPaddingTop = `${notice.offsetHeight}px`;
   };
 

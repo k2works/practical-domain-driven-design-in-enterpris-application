@@ -32,7 +32,7 @@
     <template id="session-expired-template">
         <div class="alert alert-warning mb-0" role="alert">
             <p class="mb-2">ログアウトした可能性があります。入力中の内容は送信されていません。必要なら控えてから、もう一度ログインしてください。</p>
-            <a th:href="@{/session-expired}" class="alert-link">もう一度ログインする</a>
+            <a th:href="@{/session-expired}" class="alert-link" data-session-return>もう一度ログインする</a>
         </div>
     </template>
     <script th:src="@{/js/session-timeout.js}" defer></script>

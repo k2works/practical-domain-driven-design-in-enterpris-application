@@ -4,7 +4,7 @@ title: "ADR-012: 認証の主体は共有カーネルの型にし、password の
 description: "US-18 の password によるログインと session を、Spring Security 7 の form login と Spring Session JDBC で作る。"
 tags: [adr, authentication, session]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-14T10:43:41Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-14T11:18:45Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-06T06:51:29Z }
 ---
@@ -61,7 +61,8 @@ US-18 の password によるログインと session を、Spring Security 7 の 
   - 覚えるのは、GET で path が許す一覧（`/customer/**`・`/staff/**`）に当たる要求だけにする。送信（POST。延長・ログアウト・業務の送信）・公開の URL・ログインの手続き・静的な資源・`/`・書類のダウンロードは覚えない。GET の parameter は query だけなので、送信の本体は session に入らない。Referer は使わない。戻り先はサーバーが受けた request から作るので、ほかのサイトへは移らない（オープンリダイレクトにしない）。覚えるのは Spring Security の `HttpSessionRequestCache` に `RequestMatcher`（GET かつ許す一覧）を渡したもので、TOTP の成功の扱い（`SavedRequestAwareAuthenticationSuccessHandler` を継ぐ）と同じ属性の名前と `continue` の引数名を使い、TOTP が通ると `?continue` を付けて戻す。許す一覧の `RequestMatcher` は合成ルートが渡す（認証の入口から画面の層を参照しない）。
   - 持ち越し: password の段の 5 分・登録の途中の 15 分の失効と、認証コード・回復コードの誤りで session を捨てるときは、捨てる前の session に覚えた要求があれば新しい session に移す（ログインの手続きをやり直すだけなので、戻る先を失わない）。
   - 取消し（利用停止・所属企業の無効化・利用者の削除。`SessionRevalidationFilter`）では覚えず、持ち越さない（止められた利用者には復帰も入力の保持もしない。Bolt 32e の開始準備の決定）。
-  - 覚えた要求は利用者に結び付けない。無操作の失効では、失効した session から利用者が分からない。8 時間の上限だけ結び付けると、2 つの失効で振る舞いが分かれる。別の利用者が同じブラウザでログインすると前の URL（業務番号を含みうる）へ移るが、認可で拒まれて A-04 になり、データは見えない（URL の path は見える）。共用の端末ではログアウトしてから離れる運用で補う（マニュアル）。
+  - 取消しで覚えないのは、止めた request の分である。A-03 の後に新しい匿名の session で業務の画面を開けば、通常の未認証の入口（`ExceptionTranslationFilter`）がその画面を覚える（利用者が自分で開いた画面なので受け入れる）。覚えた要求（`DefaultSavedRequest`）には URL のほかに要求のヘッダーと Cookie も入り、Spring Session の表に置かれる（失効した session の ID の Cookie を含む。署名付きの Cookie や認証のヘッダーを足すときは見直す）。
+  - 覚えた要求は利用者に結び付けない。無操作の失効では、失効した session から利用者が分からない。8 時間の上限だけ結び付けると、2 つの失効で振る舞いが分かれる。別の利用者が同じブラウザでログインすると前の URL（業務番号を含みうる）へ移るが、役割が違えば認可で拒まれて A-04、同じ役割の他社の業務番号なら所有の確かめで見つからない扱い（BR-07 の 404）になり、データは見えない（URL の path は見える）。共用の端末ではログアウトしてから離れる運用で補う（マニュアル）。
   - 覚えた要求の戻り先の URL は、request の scheme と host から作る。ロードバランサーの後ろでは forward headers（`X-Forwarded-Proto` など）の扱いに頼る。デモ（Heroku）は Spring Boot が環境を検出して有効にする（Bolt 15 で確かめた）。W10 の ALB では、戻り先の URL が https のままであることを R-13（forward headers のテスト）とあわせて確かめる。
   - 送信の後の失効で送信した画面へ戻すことと、送信していない入力の保持は Bolt 32f（ブラウザの sessionStorage。サーバーの session には置かない）。
 
@@ -112,7 +113,7 @@ US-18 の password によるログインと session を、Spring Security 7 の 
 
 - Bolt 32c まで、利用停止しても既存の session は最長 8 時間使えた（パイロットの前で本番の利用者はいない）。Bolt 32c で request ごとに確かめるようにして解消した。その代わりに、認証済みの request ごとに 1 回の SQL が増える。キャッシュは入れない（入れると AC6 の「次の request から」が崩れる）。W10 の性能の評価で計測する（PERF-01・02）。
 - 既存のテスト（controller の単体テスト、画面の層のシナリオ）にログインの準備が要る。
-- Bolt 32e から、失効の後に同じブラウザで別の利用者がログインすると、前の利用者が開いていた画面の URL へ移る（認可で拒まれて A-04。URL の path は見える）。覚えた要求を利用者に結び付けないため。共用の端末はログアウトしてから離れる運用で補う。
+- Bolt 32e から、失効の後に同じブラウザで別の利用者がログインすると、前の利用者が開いていた画面の URL へ移る（役割の違いは A-04、他社の業務番号は見つからない扱い。URL の path は見える）。覚えた要求を利用者に結び付けないため。共用の端末はログアウトしてから離れる運用で補う。
 - ステージング・本番の利用者を作る手段は、利用者の管理（US-16）まで無い。
 
 ## W5 で見直すこと
@@ -150,6 +151,7 @@ US-18 の password によるログインと session を、Spring Security 7 の 
 
 ## 改訂の経緯
 
+- 2026-10-14: Bolt 32e の開発レビューで、別の利用者が前の URL へ移ったときの結果を「役割の違いは A-04、他社の業務番号は見つからない扱い」に正した。取消しで覚えないのは止めた request の分で、A-03 の後に利用者が開いた画面は通常の未認証の入口が覚えること、覚えた要求には URL のほかに要求のヘッダーと Cookie も入ることを書いた（human:kakimomokuri が承認した計画の範囲の訂正）。
 - 2026-10-14: Bolt 32e の計画の承認で、決定 3 に失効の扱いで要求を覚えること（`invalidSessionUrl` から `invalidSessionStrategy` へ、覚えるかに関わらず新しい session を作る、覚えるのは GET で許す一覧の画面だけ、password の段・登録の途中の失効と認証コードの誤りでは持ち越す、取消しでは覚えない、利用者に結び付けない、forward headers に頼る）を書き、Bolt 32b の延長の経路の `invalidSessionUrl` の記述を改めた。代替案に Referer と利用者への結び付け、ネガティブに別の利用者が前の URL へ移ること、コンプライアンスに統合テストを足した（human:kakimomokuri が決定）。
 - 2026-10-14: Bolt 32b の計画の承認で、決定 3 に延長の URL（`POST /session/extend`。今のフィルターを通し、8 時間の上限を延ばさず、監査記録を書かない）、CSRF と失効の経路（無操作で失効した session の延長は CSRF のトークンがない拒否で A-03、session が生きていてトークンが誤りなら 403）、8 時間の残りを認証の入口から request の属性で画面の層に渡すことを書き、コンプライアンスに統合テストを足した（human:kakimomokuri が決定）。
 - 2026-10-14: Bolt 32c の計画の承認で、「W5 で見直すこと」の 3 を決めた（`SessionRevalidationFilter` の位置、`UserStandingRepository` の 1 回の読み出し、判定と `SESSION_REVOKED` は `SessionRevalidationService`、差し替えは request の中だけ、fail-closed）。決定 2 の「認可はログインの時点の役割」を改め、決定 3 に止められた利用者を A-03 に送ること、決定 4 に `SESSION_REVOKED`、決定 6 にこの形が認証の例外の範囲に収まることを書いた。ネガティブの「最長 8 時間使える」を解消した（human:kakimomokuri が決定）。

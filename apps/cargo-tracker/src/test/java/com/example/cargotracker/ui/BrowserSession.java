@@ -108,9 +108,18 @@ public class BrowserSession implements DisposableBean {
 
     /** A-01 からその役割の利用者でログインし、A-02 で TOTP のコードを入れる（Cookie を消してから。Bolt 31 で 2 段階にした）。 */
     public void signInAs(Role role, String loginUrl) {
-        UiUsers.Credentials credentials = users.of(role);
         context.clearCookies();
         page.navigate(loginUrl);
+        signInHere(role);
+    }
+
+    /**
+     * いま開いている A-01 から、Cookie を消さずにその役割の利用者でログインする（Bolt 32e。失効の扱いが新しい session に覚えた
+     * 要求へ、ログインの後に戻ることを確かめる）。
+     */
+    public void signInHere(Role role) {
+        UiUsers.Credentials credentials = users.of(role);
+        page.waitForURL(url -> URI.create(url).getPath().equals("/login"));
         checkAccessibility();
         page.getByLabel("メールアドレス").fill(credentials.email());
         page.getByLabel("password").fill(credentials.password());
