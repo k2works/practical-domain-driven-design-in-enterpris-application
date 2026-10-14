@@ -3,8 +3,10 @@ type: Plan
 title: "Bolt 32c 計画 - request ごとの利用者の確かめ（US-18 AC6）"
 description: "W5 の 10 本目の Bolt の計画。利用停止・所属企業の無効化・権限の取消しを既存の session の次の request から反映する（US-18 AC6、IA-INV-04、SEC-12 の役割と利用状態の分）。request ごとに利用者・役割・企業を 1 回の SQL で読み、アプリケーションのサービスが判定して主体を作り直す（ADR-012 の見直しの 3）。止められた利用者の session は捨てて A-03 に送り SESSION_REVOKED を記録し、取り消した役割の URL は A-04 にする。31d から送った低の指摘とテストの整理は Bolt 32d。"
 tags: [development,bolt-plan]
-status: draft
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-14T00:00:01Z }
+status: stable
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-14T01:21:30Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-10-14T01:20:58Z }
 ---
 
 # Bolt 32c 計画 - request ごとの利用者の確かめ（US-18 AC6）
@@ -297,6 +299,7 @@ Biz --> A04 : 取り消した役割の URL
 | 2026-10-14 | 初版作成（承認待ち）。開始準備で、Bolt 32 の終了報告の Try（T-113・T-114）と既知の課題、US-18 AC6、ADR-012 の見直しの 3、認証の入口と層の規則を調べ、human:kakimomokuri の決定（32c と 32d に分ける、止められた利用者は A-03、`SESSION_REVOKED` を書く、Bolt 32 の議題 4・5 は採らない）を反映した | anthropic/claude-opus-5-5 |
 | 2026-10-14 | 詳細整合性検証（21 件）と横断整合性検証（21 件）の指摘を反映した。判定と監査を `commandservices` のサービスに、読み出しをドメインのポートにして置き場所の案を並べ直した、フィルターの位置を `SessionLifetimeFilter` の直後と明記した、役割の取消しは A-04 にし UI 設計の 3 か所を直す、役割 0 件・DB の誤り・監査の誤りは fail-closed の 500、`user_role` の外部結合、`UtcInstant` と `LOGOUT`、監査の操作者、A-03 の文言の確認、4 図を PlantUML にし ER 図と画面遷移図を足した、ステップ 1 の対象の行（ADR-012 の決定 3・4・6・ネガティブ・コンプライアンス、domain_model・data_model・ui_design・non_functional・user_story・release_plan の行）、32d の行の書き方と順序、T-102・T-107・T-108・T-111 の扱い、既知の課題の行き先。T-114 の特性（`toBuilder` と session への保存）を使い捨てのテストで確かめた結果を書いた | anthropic/claude-opus-5-5 |
 | 2026-10-14 | 人の指示で、完了条件とステップ 5 にユーザーマニュアルの AC6 の分（2 章の 2.3・2.4、付録 B の Q1-2・Q1-3。キャプチャは撮り直さない）を入れた。見込みを約 4 時間 15 分に直した | anthropic/claude-opus-5-5、指示 human:kakimomokuri |
+| 2026-10-14 | 承認（確認ポイント 1〜10 は推奨のまま）。`/goal Bolt 32c` の下で、ステップの承認ゲートでは止めずに進め、終了報告でまとめて確かめを受ける | human:kakimomokuri |
 
 ## 関連ドキュメント
 

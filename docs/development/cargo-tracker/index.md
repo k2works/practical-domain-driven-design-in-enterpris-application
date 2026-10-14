@@ -69,7 +69,7 @@ Bolt がイテレーションに当たります。ふりかえりは各 Bolt の
 | 31c | [回復コードによるログインと password の段の主体の型](bolt_31c_plan.md) | [終了報告](bolt_31c_report.md)（[動画](../../assets/demo/bolt-31c/recovery.webm){:target="_blank"}） | W5 | 完了 |
 | 31d | [認証の部品の守りの直し（照合の 3 値、暗号のパッケージ、特性テスト、スパイクの削除）](bolt_31d_plan.md) | [終了報告](bolt_31d_report.md) | W5 | 完了 |
 | 32 | [ログインのロック（US-18 AC3）](bolt_32_plan.md) | [終了報告](bolt_32_report.md)（[動画](../../assets/demo/bolt-32/lock.webm){:target="_blank"}） | W5 | 完了 |
-| 32c | [request ごとの利用者の確かめ（US-18 AC6）](bolt_32c_plan.md) | — | W5 | 計画の承認待ち |
+| 32c | [request ごとの利用者の確かめ（US-18 AC6）](bolt_32c_plan.md) | — | W5 | 進行中（計画を承認済み） |
 
 Bolt を始めるときに行を追加します。
 
