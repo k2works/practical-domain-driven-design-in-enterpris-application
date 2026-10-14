@@ -16,7 +16,7 @@
         <link rel="prev" href="../bolt_32_report/">
       
       
-        <link rel="next" href="../release_report-0_1/">
+        <link rel="next" href="../bolt_32c_report/">
       
       
         
@@ -5184,6 +5184,34 @@
   
 </nav>
       
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../bolt_32c_report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 32c 終了報告
+  
+
+    
+  </span>
+  
+  
+
+      </a>
     </li>
   
 
@@ -10435,7 +10463,7 @@
 <li><code>creating-manual</code> の手順で、<code>docs/manual/02-ログインと共通の画面.md</code> の 2.3（役割を外された後に、その役割の画面を開くと示される）と 2.4（「この画面でできること」に、管理者が利用を止めた後の次の操作でも示されることを足す。「注意・補足」の問い合わせ先の行を、続けてログインできないときにも当てる）、<code>付録B-トラブルシューティング.md</code> の Q1-2・Q1-3 を直す。画面に出ない理由（利用停止）はマニュアルにだけ書き、画面の文言は変えない（確認ポイント 2）</li>
 <li>画面と文言は変わらないので、キャプチャ（<code>02-forbidden.png</code>・<code>02-session-expired.png</code>）は撮り直さない。2.1 の 2 段階のログインの書き直しは Bolt 33b のまま</li>
 <li>完了の判定: <code>okf:check</code> ERROR 0、<code>documentationTest</code> 緑。マニュアルの HTML の出力（<code>npx gulp manual:build</code>。<code>docs/assets/manual-output/cargo-tracker/</code>）を作り直す</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>6. SonarQube と開発レビューとデモと終了報告</strong> 【承認ゲート: 終了報告】</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>6. SonarQube と開発レビューとデモと終了報告</strong> 【承認ゲート: 終了報告】</li>
 <li>SonarQube（<code>sonar-local:check</code>。T-104）</li>
 <li>開発レビュー（プログラマー、アーキテクト（フィルター・サービス・ポートの置き場所）、テスター（取消しの境界と読み出しの回数）、テクニカルライター（A-03 の文言と止められた利用者、マニュアルの 2.3・2.4・付録 B。T-90））</li>
 <li>レビューの直しの後にデモの動画を撮り、#13 に添付する（T-105）。<code>bolt_32c_report.md</code>。release_plan の W5 の 32c の行、開発の索引。#13 に進み具合をコメントする</li>
@@ -10558,12 +10586,12 @@
 </table>
 <h2 id="_11">完了条件<a class="headerlink" href="#_11" title="Permanent link">&para;</a></h2>
 <ul class="task-list">
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> 利用停止・所属企業の無効化・利用者の削除の後の次の request は、業務データを出さずに session を捨てて A-03 に移り、<code>SESSION_REVOKED</code> が残る。password の段だけの主体も同じで、TOTP の照合に進まない</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> 役割の取消し・追加が次の request から認可とナビに効き（取り消した URL は A-04）、要素の権限と session の起点の時刻は保たれる</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> 認証済みの 1 つの request の読み出しが 1 回で、未認証の request と期限の切れた session では読まない。読み出し・監査の誤りと役割 0 件は session を捨てて 500</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <code>check</code> と <code>uiTest</code> が緑。push して CI を確かめた。SonarQube の Quality Gate が PASS、<code>okf:check</code> ERROR 0</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> ユーザーマニュアルの 2 章の 2.3・2.4 と付録 B の Q1-2・Q1-3 が、AC6 の振る舞い（役割を外された後は「権限がありません」、利用を止められた後は「もう一度ログインしてください」）を説明している。マニュアルの HTML を作り直した</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> 開発レビュー、レビューの後のデモの動画と #13 への添付、終了報告。#13 に進み具合をコメントした</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> 利用停止・所属企業の無効化・利用者の削除の後の次の request は、業務データを出さずに session を捨てて A-03 に移り、<code>SESSION_REVOKED</code> が残る。password の段だけの主体も同じで、TOTP の照合に進まない</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> 役割の取消し・追加が次の request から認可とナビに効き（取り消した URL は A-04）、要素の権限と session の起点の時刻は保たれる</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> 認証済みの 1 つの request の読み出しが 1 回で、未認証の request と期限の切れた session では読まない。読み出し・監査の誤りと役割 0 件は session を捨てて 500</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <code>check</code> と <code>uiTest</code> が緑。push して CI を確かめた。SonarQube の Quality Gate が PASS、<code>okf:check</code> ERROR 0</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> ユーザーマニュアルの 2 章の 2.3・2.4 と付録 B の Q1-2・Q1-3 が、AC6 の振る舞い（役割を外された後は「権限がありません」、利用を止められた後は「もう一度ログインしてください」）を説明している。マニュアルの HTML を作り直した</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> 開発レビュー、レビューの後のデモの動画と #13 への添付、終了報告。#13 に進み具合をコメントした</li>
 </ul>
 <h3 id="_12">デモ項目<a class="headerlink" href="#_12" title="Permanent link">&para;</a></h3>
 <ul>
@@ -10593,6 +10621,11 @@
 <td style="text-align: left;">2026-10-14</td>
 <td style="text-align: left;">人の指示で、完了条件とステップ 5 にユーザーマニュアルの AC6 の分（2 章の 2.3・2.4、付録 B の Q1-2・Q1-3。キャプチャは撮り直さない）を入れた。見込みを約 4 時間 15 分に直した</td>
 <td style="text-align: left;">anthropic/claude-opus-5-5、指示 human:kakimomokuri</td>
+</tr>
+<tr>
+<td style="text-align: left;">2026-10-14</td>
+<td style="text-align: left;">全ステップを終えた。開発レビューで公開の URL を確かめから外し（計画の約束どおり）、500 のときのログはコンテナが残す形に変えた（<a href="../bolt_32c_report/">Bolt 32c 終了報告</a> の議題 2・4）</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5</td>
 </tr>
 <tr>
 <td style="text-align: left;">2026-10-14</td>
