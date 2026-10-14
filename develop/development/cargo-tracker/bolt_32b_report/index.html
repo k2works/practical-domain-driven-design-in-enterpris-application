@@ -10303,7 +10303,7 @@
 <tbody>
 <tr>
 <td style="text-align: left;">1</td>
-<td style="text-align: left;"><strong>支援技術の手動確認（人の作業。未実施）</strong>: 計画のステップ 6 の承認ゲート。NVDA または VoiceOver で、下の「支援技術の手動確認の手順」を行い、結果を教えてほしい</td>
+<td style="text-align: left;"><strong>支援技術の手動確認（人の作業。2026-10-14 に human:kakimomokuri が行い、問題なし）</strong>: 計画のステップ 6 の承認ゲート。NVDA または VoiceOver で、下の「支援技術の手動確認の手順」を行い、結果を教えてほしい</td>
 <td style="text-align: left;">axe と画面の層のシナリオで、フォーカスの移動・<code>role="alert"</code> の差し込み・コントラストは確かめた。読み上げそのもの（差し込んだ alert が VoiceOver で読まれるか、閉じた後の読み上げ）は自動のテストで確かめられない</td>
 <td style="text-align: left;">「支援技術の手動確認の手順」</td>
 </tr>
@@ -10371,7 +10371,7 @@
 </tr>
 <tr>
 <td style="text-align: left;">GitHub</td>
-<td style="text-align: left;"><a href="https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/13">#13</a>（閉じない）。デモの動画（延長）は終了報告の承認の後に添付する</td>
+<td style="text-align: left;"><a href="https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/13">#13</a>（閉じない）。デモの動画（延長）を承認の後に添付した</td>
 </tr>
 <tr>
 <td style="text-align: left;">計画</td>
@@ -10417,7 +10417,7 @@
 </tr>
 <tr>
 <td style="text-align: left;">6. 品質と報告</td>
-<td style="text-align: left;">開発レビュー（5 つの観点）の直し（<code>6591450</code>）、SonarQube、この報告。支援技術の手動確認は人の作業として議題 1 に置いた</td>
+<td style="text-align: left;">開発レビュー（5 つの観点）の直し（<code>6591450</code>）、SonarQube、この報告。支援技術の手動確認は人が行い、問題なし（議題 1）</td>
 <td style="text-align: left;">下の各欄</td>
 </tr>
 </tbody>
@@ -10468,7 +10468,7 @@
 </tr>
 <tr>
 <td style="text-align: left;">承認ゲートの通過</td>
-<td style="text-align: left;">計画は人が承認。ステップ 1〜6 は止めずに進めた（議題 2）。支援技術の手動確認は人を待つ（議題 1）</td>
+<td style="text-align: left;">計画は人が承認。ステップ 1〜6 は止めずに進めた（議題 2）。支援技術の手動確認は人が行い、問題なし（議題 1）</td>
 </tr>
 <tr>
 <td style="text-align: left;">人の変更依頼</td>
@@ -10729,8 +10729,6 @@
 <h3 id="_12">既知の課題（後に持ち込む）<a class="headerlink" href="#_12" title="Permanent link">&para;</a></h3>
 <ul>
 <li><code>localStorage</code> の時刻は利用者を区別しない（別のタブで別の利用者がログインし直すと、古いタブの時刻もそろう。業務データは置かないので実害は小さい）</li>
-<li>差し込んだ <code>role="alert"</code> が VoiceOver で読まれるか（議題 1 の手動確認で確かめる。読まれなければ差し込みを遅らせる）</li>
-<li><code>role="dialog"</code> と <code>alertdialog</code> のどちらにするか（手動確認の結果で決める）</li>
 <li>ブラウザが数えない request（書類のダウンロード、<code>layout/public</code> の画面）でブラウザの期限が早く来る。部分更新（htmx）を足す Bolt では、その request も数える（architecture_frontend）</li>
 <li>別のタブでログインし直した後の古いタブの延長は 403 が続く（文言で「画面を開き直す」に導く）</li>
 <li>画面の層の時計は実時間で流れる（<code>pauseAt</code> していない）。「1 分未満」の表示、<code>localStorage</code> を使えないとき、別のタブの延長による同期は確かめていない</li>
@@ -10752,6 +10750,16 @@
 </tr>
 </thead>
 <tbody>
+<tr>
+<td style="text-align: left;">2026-10-14</td>
+<td style="text-align: left;">議題 1 の支援技術の手動確認を human:kakimomokuri が行い、問題なしだった。手動確認を Bolt 32e に持ち越す記録を消し、VoiceOver の読み上げと dialog の role の既知の課題を閉じた（role は <code>dialog</code> のまま）</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5、確認 human:kakimomokuri</td>
+</tr>
+<tr>
+<td style="text-align: left;">2026-10-14</td>
+<td style="text-align: left;">終了報告を承認した（議題 2〜5 を承認。議題 4 の 8 時間の警告は 5 分前のまま、議題 5 の A-03 の文言は Bolt 32e で直す）。議題 1 の支援技術の手動確認は未実施のまま承認を受けたので、Bolt 32e に持ち越す（32e の完了の前に人が行い、結果を 32e の報告に記録する）。デモの動画を #13 に添付した。T-119・T-120 を足した</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5、承認 human:kakimomokuri</td>
+</tr>
 <tr>
 <td style="text-align: left;">2026-10-14</td>
 <td style="text-align: left;">初版作成（承認待ち。支援技術の手動確認は人を待つ）</td>

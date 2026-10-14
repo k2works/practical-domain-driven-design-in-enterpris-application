@@ -10576,7 +10576,7 @@
 <li>警告のダイアログのキャプチャ（<code>manual_screenshots.feature</code>。時計を <code>signInAs</code> の前に入れる）</li>
 <li>デモの動画（<code>@demo-bolt-32b/extend</code>）を録画して保存する。#13 への添付と <code>ops/scripts/issue_demo.js</code>・運用の手順書の表への追記は、終了報告の承認の後（運用の手順書）</li>
 <li>完了の判定: <code>manual:build</code> が通る。<code>okf:check</code> ERROR 0</li>
-<li>[?] <strong>6. SonarQube と開発レビューと支援技術の確認と終了報告</strong> 【承認ゲート: 支援技術の手動確認、終了報告】</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>6. SonarQube と開発レビューと支援技術の確認と終了報告</strong> 【承認ゲート: 支援技術の手動確認、終了報告】</li>
 <li>SonarQube（<code>sonar-local:check</code>。テストとコードを書き換えていない間に流す。T-116）</li>
 <li>開発レビュー（プログラマー、アーキテクト（認証の入口から画面への値の渡し方、延長の URL）、テスター（時計を進めるシナリオ）、テクニカルライター（警告の文言とマニュアル。T-90）、インタラクションデザイナー（ダイアログのフォーカスと支援技術への通知））</li>
 <li>人による支援技術の手動確認（NVDA または VoiceOver）: 警告が読み上げられること、延長のボタンへのフォーカス、閉じた後のフォーカスの戻り、期限の到来の案内の読み上げ。手順は AI が用意し、結果を終了報告に記録する</li>
@@ -10724,7 +10724,7 @@
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <code>layout/public</code> の画面と password の段の画面には警告が出ない。層の規則と要素の権限の参照の見張りは例外を足さずに緑</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> UI 設計・フロントエンドとバックエンドのアーキテクチャ・ACC-06・ADR-011・ADR-012・テスト戦略・ユーザーストーリー・リリース計画（32e・33b の行）を更新した</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> ユーザーマニュアル（2.4・2.5・付録 B。2.5 は開発レビューで分けた）とキャプチャを更新し、デモの動画を録画した（#13 への添付は終了報告の承認の後）</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> 人による支援技術の手動確認の結果を終了報告に記録した</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> 人による支援技術の手動確認の結果を終了報告に記録した（承認の後に human:kakimomokuri が行い、問題なし）</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <code>check</code> と <code>uiTest</code> が緑。push して CI を確かめた。SonarQube の Quality Gate が PASS、<code>okf:check</code> ERROR 0</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> 開発レビュー、終了報告。#13 に進み具合をコメントした</li>
 </ul>
@@ -10738,6 +10738,16 @@
 </tr>
 </thead>
 <tbody>
+<tr>
+<td style="text-align: left;">2026-10-14</td>
+<td style="text-align: left;">支援技術の手動確認を行い、問題なしだった（完了条件をすべて満たした）</td>
+<td style="text-align: left;">human:kakimomokuri</td>
+</tr>
+<tr>
+<td style="text-align: left;">2026-10-14</td>
+<td style="text-align: left;">終了報告の承認を受けた（議題 2〜5 を承認）。支援技術の手動確認は未実施のまま Bolt 32e に持ち越した</td>
+<td style="text-align: left;">human:kakimomokuri</td>
+</tr>
 <tr>
 <td style="text-align: left;">2026-10-14</td>
 <td style="text-align: left;">ステップ 5・6 を終えた（支援技術の手動確認は人を待つ）。開発レビュー（5 つの観点、高 3 件）の直しで、文言を「画面の移動や送信がないため」「8 時間になるため」「もう一度ログインする」にし、マニュアルの警告を 2.2 でなく新しい節 2.5 に分け、付録 B に Q1-5 を足した。延長の失敗を role="alert" で知らせ、期限の到来の案内を画面の先頭の sticky にし、レイアウトの組み立てを部品にまとめた（<a href="../bolt_32b_report/">Bolt 32b 終了報告</a>）</td>
