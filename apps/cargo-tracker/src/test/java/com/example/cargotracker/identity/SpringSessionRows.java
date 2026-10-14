@@ -4,8 +4,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import jakarta.servlet.http.Cookie;
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
@@ -31,7 +34,32 @@ public final class SpringSessionRows {
 
     /** cookie の値（Base64）から session ID を取る。 */
     public static String sessionId(Cookie session) {
-        return new String(Base64.getDecoder().decode(session.getValue()), StandardCharsets.US_ASCII);
+        return sessionId(session.getValue());
+    }
+
+    /** cookie の値（Base64 の文字列）から session ID を取る（画面の層のテストはブラウザの cookie の値を渡す。Bolt 32b）。 */
+    public static String sessionId(String cookieValue) {
+        return new String(Base64.getDecoder().decode(cookieValue), StandardCharsets.US_ASCII);
+    }
+
+    /**
+     * session の属性の値を書き換える（Spring Session JDBC の既定の JDK の直列化で書く。Bolt 32b）。画面の層のテストでは
+     * サーバーの時計を進められないので、ログインの時刻を前にずらして 8 時間の上限の近い session を作る。
+     */
+    public void putAttribute(String cookieValue, String name, Serializable value) {
+        ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+        try (ObjectOutputStream out = new ObjectOutputStream(bytes)) {
+            out.writeObject(value);
+        } catch (IOException e) {
+            throw new IllegalStateException("session の属性を書けない: " + name, e);
+        }
+        int updated = jdbc.update(
+                "UPDATE platform.spring_session_attributes SET attribute_bytes = ? WHERE attribute_name = ?"
+                        + " AND session_primary_id = (SELECT primary_id FROM platform.spring_session WHERE session_id = ?)",
+                bytes.toByteArray(),
+                name,
+                sessionId(cookieValue));
+        assertThat(updated).as("session の属性 " + name).isEqualTo(1);
     }
 
     /** session の行があるか（捨てられていないか）。 */
@@ -79,6 +107,16 @@ public final class SpringSessionRows {
                 lastAccess,
                 sessionId(session));
         assertThat(updated).as("session の行").isEqualTo(1);
+    }
+
+    /** 最終アクセスの時刻（Spring Session が実時間で書く。延長で新しくなることを確かめる。Bolt 32b）。 */
+    public Instant lastAccessTime(Cookie session) {
+        Long millis = jdbc.queryForObject(
+                "SELECT last_access_time FROM platform.spring_session WHERE session_id = ?",
+                Long.class,
+                sessionId(session));
+        assertThat(millis).as("session の行").isNotNull();
+        return Instant.ofEpochMilli(millis);
     }
 
     /** その利用者の session の無操作の期限（秒）。 */

@@ -34,6 +34,13 @@ public final class SessionLifetime {
     /** 登録の途中の暗号文を置く session の属性の名前（画面の層の {@code TotpEnrollmentController.PENDING_SECRET} と同じ値）。 */
     public static final String ENROLLMENT_PENDING_SECRET = "cargotracker.session.enrollmentPendingSecret";
 
+    /**
+     * 2 つの要素がそろった session の 8 時間の上限までの残りの秒数（{@code Long}）を置く request の属性の名前（Bolt 32b、ACC-06）。
+     * {@link SessionLifetimeFilter} が置き、画面の層の {@code SessionTimerAdvice} が同じ値の定数で読む（画面の層は infrastructure に
+     * 依存できない。名前の一致はテストで守る。Bolt 33b でまとめて置き場所を直す）。session の属性と分けるため接頭辞を変える。
+     */
+    public static final String LIFETIME_REMAINING_ATTRIBUTE = "cargotracker.request.sessionLifetimeRemainingSeconds";
+
     /** 失効した session の request を移す先（A-03 再認証の案内）。 */
     public static final String EXPIRED_URL = "/session-expired";
 

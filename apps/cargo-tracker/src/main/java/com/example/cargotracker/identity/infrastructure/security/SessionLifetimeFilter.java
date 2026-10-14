@@ -19,6 +19,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
  * 時刻から 5 分（Bolt 31）。起点の時刻を session に置き、request ごとにアプリケーションの時計と比べる。
  * 認証の処理より前に置く（Bolt 13 の Try T-40）。認証済みなのにログインの時刻がない session も失効させる。上限を過ぎたら session を捨てて業務データを出さずに A-03 へ移す。
  * 古い session のままのログインの送信も A-03 へ移す（上限を過ぎた session を、ログインの送信で延命させない）。
+ * 上限の前なら、2 つの要素がそろった session の 8 時間の残りを request の属性に置き、画面の session の警告に渡す（Bolt 32b）。
  */
 public class SessionLifetimeFilter extends OncePerRequestFilter {
 
@@ -38,7 +39,25 @@ public class SessionLifetimeFilter extends OncePerRequestFilter {
             response.sendRedirect(request.getContextPath() + SessionLifetime.EXPIRED_URL);
             return;
         }
+        if (session != null) {
+            putLifetimeRemaining(request, session);
+        }
         chain.doFilter(request, response);
+    }
+
+    /**
+     * 2 つの要素がそろった session なら、8 時間の上限までの残りの秒数を request の属性に置く（Bolt 32b、ACC-06。画面の session の
+     * 警告）。上限の判定と同じ起点と時計で数える。password の段・登録の途中・認証の前には置かない。
+     */
+    private void putLifetimeRemaining(HttpServletRequest request, HttpSession session) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !hasAuthority(authentication, TotpAuthenticationToken.FACTOR_TOTP)) {
+            return;
+        }
+        if (session.getAttribute(SessionLifetime.AUTHENTICATED_AT) instanceof Instant at) {
+            Duration remaining = Duration.between(clock.instant(), at.plus(SessionLifetime.MAX_LIFETIME));
+            request.setAttribute(SessionLifetime.LIFETIME_REMAINING_ATTRIBUTE, remaining.toSeconds());
+        }
     }
 
     /**

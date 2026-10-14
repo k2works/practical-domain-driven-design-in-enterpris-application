@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<!--/* session の警告（Bolt 32b、ACC-06、UI 設計の共通部品「session の警告」）。顧客 Web と社内業務 Web のレイアウトの body の最後で
+       <th:block th:if="${currentActor != null and sessionTimer != null}"><th:block th:replace="~{layout/session-warning :: warning(${sessionTimer})}"></th:block></th:block>
+       のように使う（th:replace は th:if より先に評価されるので、条件は外側に置く）。残り時間は data- 属性で渡し、/js/session-timeout.js が数える。文言の {minutes} はスクリプトが残りの分に置き換える。
+       JavaScript がないときは何も出さない（dialog は開かず、期限の到来の案内は空のまま） */-->
+<html lang="ja" xmlns:th="http://www.thymeleaf.org">
+<body>
+<th:block th:fragment="warning(timer)">
+    <dialog id="session-warning" class="app-session-warning"
+            aria-labelledby="session-warning-title" aria-describedby="session-warning-message"
+            th:attr="data-idle-seconds=${timer.idleSeconds()},data-lifetime-remaining-seconds=${timer.lifetimeRemainingSeconds()}"
+            data-idle-message="操作がないため、あと {minutes}でログアウトします。続けて使う場合は「ログインを延長する」を押してください。"
+            data-lifetime-message="ログインから 8 時間がたつため、あと {minutes}でログアウトします。延長はできません。入力中の内容は、それまでに送信してください。">
+        <h2 id="session-warning-title" class="h5">まもなくログアウトします</h2>
+        <p id="session-warning-message"></p>
+        <p id="session-warning-error" class="text-danger" hidden>延長できませんでした。もう一度お試しください。</p>
+        <form id="session-warning-extend" th:action="@{/session/extend}" method="post" class="d-flex gap-2 mb-0">
+            <button type="submit" class="btn btn-primary">ログインを延長する</button>
+            <button type="button" class="btn btn-secondary" data-session-warning-close>閉じる</button>
+        </form>
+    </dialog>
+    <!-- 期限の到来の案内。モーダルにせず、背後の画面の入力を控えられるようにする。期限が来たら role="alert" の要素を差し込んで
+         支援技術に知らせる（空の alert の領域を常に置くと、画面のほかの alert と区別しにくくなる） -->
+    <div id="session-expired-notice" class="app-session-expired"></div>
+    <template id="session-expired-template">
+        <div class="alert alert-warning mb-0" role="alert">
+            <p class="mb-2">ログアウトした可能性があります。入力中の内容は送信されていません。必要なら控えてから、再ログインの案内に進んでください。</p>
+            <a th:href="@{/session-expired}" class="alert-link">再ログインの案内へ</a>
+        </div>
+    </template>
+</th:block>
+</body>
+</html>

@@ -65,3 +65,25 @@ td {
 .app-preline {
     white-space: pre-line;
 }
+
+/* session の警告（Bolt 32b、ACC-06）。どの画面の上にも出るモーダルのダイアログ（session の警告だけの例外。UI 設計） */
+.app-session-warning {
+    max-width: 32rem;
+    border: 1px solid var(--bs-border-color);
+    border-radius: 0.5rem;
+    padding: 1.5rem;
+}
+
+.app-session-warning::backdrop {
+    background-color: rgb(0 0 0 / 50%);
+}
+
+/* 期限の到来の案内。モーダルにせず画面の上部に重ね、背後の入力を控えられるようにする */
+.app-session-expired {
+    position: fixed;
+    top: 1rem;
+    left: 50%;
+    z-index: 1080;
+    width: min(40rem, calc(100% - 2rem));
+    transform: translateX(-50%);
+}

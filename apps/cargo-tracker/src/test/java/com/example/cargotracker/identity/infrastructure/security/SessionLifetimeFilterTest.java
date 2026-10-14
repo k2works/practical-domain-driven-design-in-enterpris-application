@@ -41,6 +41,14 @@ class SessionLifetimeFilterTest {
         return response;
     }
 
+    private MockHttpServletRequest requestOf(MockHttpSession session, Duration elapsed) throws Exception {
+        clock.setInstant(LOGIN_AT.plus(elapsed));
+        MockHttpServletRequest request = new MockHttpServletRequest("GET", "/customer/transport-requests");
+        request.setSession(session);
+        filter.doFilter(request, new MockHttpServletResponse(), new MockFilterChain());
+        return request;
+    }
+
     private static MockHttpSession authenticatedSession(boolean withLoginTime) {
         SecurityContextHolder.getContext()
                 .setAuthentication(new TestingAuthenticationToken(
@@ -195,6 +203,68 @@ class SessionLifetimeFilterTest {
         session.setAttribute(SessionLifetime.AUTHENTICATED_AT, LOGIN_AT);
 
         assertThat(request(session, Duration.ofMinutes(5)).getRedirectedUrl()).isEqualTo(SessionLifetime.EXPIRED_URL);
+    }
+
+    // --- 8 時間の残りを画面に渡す（Bolt 32b、ACC-06。session の警告） ---
+
+    @Test
+    void 二つの要素がそろったsessionは8時間の残りの秒数をrequestの属性に置く() throws Exception {
+        MockHttpServletRequest request = requestOf(authenticatedSession(true), Duration.ofHours(2));
+
+        assertThat(request.getAttribute(SessionLifetime.LIFETIME_REMAINING_ATTRIBUTE))
+                .isEqualTo(Duration.ofHours(6).toSeconds());
+    }
+
+    @Test
+    void 上限の1秒前は残りを1秒として置く() throws Exception {
+        MockHttpServletRequest request =
+                requestOf(authenticatedSession(true), Duration.ofHours(8).minusSeconds(1));
+
+        assertThat(request.getAttribute(SessionLifetime.LIFETIME_REMAINING_ATTRIBUTE))
+                .isEqualTo(1L);
+    }
+
+    @Test
+    void 上限を過ぎたsessionには残りを置かない() throws Exception {
+        MockHttpServletRequest request = requestOf(authenticatedSession(true), Duration.ofHours(8));
+
+        assertThat(request.getAttribute(SessionLifetime.LIFETIME_REMAINING_ATTRIBUTE))
+                .isNull();
+    }
+
+    @Test
+    void passwordの段だけのsessionには残りを置かない() throws Exception {
+        MockHttpServletRequest request = requestOf(passwordStageSession(true), Duration.ofMinutes(1));
+
+        assertThat(request.getAttribute(SessionLifetime.LIFETIME_REMAINING_ATTRIBUTE))
+                .isNull();
+    }
+
+    @Test
+    void 登録の途中のsessionには残りを置かない() throws Exception {
+        MockHttpSession session = passwordStageSession(true);
+        session.setAttribute(SessionLifetime.ENROLLMENT_STARTED_AT, LOGIN_AT);
+
+        assertThat(requestOf(session, Duration.ofMinutes(1)).getAttribute(SessionLifetime.LIFETIME_REMAINING_ATTRIBUTE))
+                .isNull();
+    }
+
+    @Test
+    void 未認証のsessionには残りを置かない() throws Exception {
+        MockHttpServletRequest request = requestOf(new MockHttpSession(), Duration.ZERO);
+
+        assertThat(request.getAttribute(SessionLifetime.LIFETIME_REMAINING_ATTRIBUTE))
+                .isNull();
+    }
+
+    @Test
+    void 残りのrequestの属性の名前は画面の層と同じ値() {
+        // 画面の層は infrastructure に依存できないので、名前を 2 つの定数で持つ（Bolt 33b でまとめて直す。Bolt 31c のレビュー 14）
+        assertThat(SessionLifetime.LIFETIME_REMAINING_ATTRIBUTE)
+                .isEqualTo("cargotracker.request.sessionLifetimeRemainingSeconds")
+                .isEqualTo(
+                        com.example.cargotracker.identity.interfaces.web.SessionTimerAdvice
+                                .LIFETIME_REMAINING_ATTRIBUTE);
     }
 
     @Test
