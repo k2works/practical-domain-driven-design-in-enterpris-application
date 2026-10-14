@@ -11863,7 +11863,7 @@
 </tr>
 <tr>
 <td style="text-align: left;">入力の控えの知らせ</td>
-<td style="text-align: left;">ログインした画面（<code>layout/customer</code>・<code>layout/staff</code>）の <code>main</code> の前に空の <code>role="status"</code> の領域を置き、失効の前の入力を戻したことと、ログアウトの前の入力があることを知らせる。フォーカスは移さない（Bolt 32f。文言と振る舞いは下の「入力の控え（Bolt 32f）」）</td>
+<td style="text-align: left;">ログインした画面（<code>layout/customer</code>・<code>layout/staff</code>）の <code>main</code> の前に空の live region（<code>aria-live="polite"</code>。画面の結果の知らせの <code>role="status"</code> と区別する）を置き、失効の前の入力を戻したことと、ログアウトの前の入力があることを知らせる。フォーカスは移さない（Bolt 32f。文言と振る舞いは下の「入力の控え（Bolt 32f）」）</td>
 <td style="text-align: left;">WCAG 4.1.3、US 横断受入条件、ACC-06</td>
 </tr>
 <tr>
@@ -12031,7 +12031,7 @@
 </tbody>
 </table>
 <ul>
-<li><strong>知らせの領域</strong>: 共通のレイアウト（<code>layout/customer</code>・<code>layout/staff</code>）の <code>main</code> の前に、空の <code>role="status"</code> の領域を置いておき、読み込みの後に文言を入れる（読み込みのときに領域ごと差し込むと、支援技術に読まれないことがある）。知らせと案内は同じ領域に出す。<code>role="alert"</code> にしない（急ぎの知らせでない）</li>
+<li><strong>知らせの領域</strong>: 共通のレイアウト（<code>layout/customer</code>・<code>layout/staff</code>）の <code>main</code> の前に、空の live region（<code>aria-live="polite"</code>。画面の結果の知らせの <code>role="status"</code> と区別する）を置いておき、読み込みの後に文言を入れる（読み込みのときに領域ごと差し込むと、支援技術に読まれないことがある）。知らせと案内は同じ領域に出す。<code>role="alert"</code> にしない（急ぎの知らせでない）</li>
 <li><strong>フォーカス</strong>: 知らせ・案内を出してもフォーカスは移さない（読み込んだ画面の最初の位置のまま）。「戻した入力を消す」・「消す」を押すとボタンは無くなるので、フォーカスは領域（<code>tabindex="-1"</code>）に移し、消した後の文言を読ませる</li>
 <li><strong>「戻した入力を消す」</strong>: 控えを捨て、戻した欄を <code>form.reset()</code> で初期の値（画面を開いたときの値）に戻す</li>
 <li><strong>「画面を開く」の行き先</strong>: 控えの戻り先を、同じ origin の path と query に限って使う（<code>session-timeout.js</code> の <code>sameOriginPath</code>）。ブラウザで path の前方一致の判定はしない</li>

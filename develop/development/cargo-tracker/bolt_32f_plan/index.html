@@ -10556,7 +10556,7 @@
 <h3 id="try-t-1">設計の約束（Try T-1）<a class="headerlink" href="#try-t-1" title="Permanent link">&para;</a></h3>
 <ul>
 <li><strong>入力の控え</strong>（<code>/js/session-input.js</code>。1 つのファイルで、ログインした画面（警告の部分の中）と公開の画面（<code>layout/public</code>）の両方で読み、置かれた画面で役割を切り替える）: sessionStorage のキー <code>cargotracker.session.savedInput</code> に 1 件の JSON（利用者の ID、戻り先（正規化したもの）、写した時刻、写した理由（<code>expired</code>・<code>reopen</code>・<code>submit</code>）、拒まれた印、欄の値の一覧（フォームの順番・欄の名前・種類・値・ファイルの欄があったか））。sessionStorage を使えないときは何もしない</li>
-<li><strong>利用者の ID</strong>: 警告の部分に <code>data-user="${currentActor.userId().value()}"</code> を出す（自分の画面に自分の内部の識別子。業務データでも個人情報でもない。出す理由は ADR-012 に書く）</li>
+<li><strong>利用者の ID</strong>: 警告の部分に <code>data-user</code> として利用者の ID の一方向の値（SHA-256 の先頭 16 文字）を出す（実装で、画面の HTML に UUID を出さない既存の確かめに当たったため、UUID そのものから変えた。出す理由は ADR-012）</li>
 <li><strong>戻り先の正規化</strong>: 写すときと比べるときは同じ関数で、戻り先の query から <code>continue</code> を除き、それ以外は生の文字列のまま残す。比べる相手は今の画面の <code>data-return-path</code>（<code>location</code> でなく）</li>
 <li><strong>写す</strong>: 期限の到来は <code>session-timeout.js</code> が出す CustomEvent（<code>cargotracker:session-expired</code>）で、取り消しは <code>cargotracker:session-unexpired</code> で受ける。「画面を開き直す」は案内の領域でクリックを受ける（案内は後から差し込まれるため）。送信の前は POST のフォームの <code>submit</code> を <code>main</code> で受ける</li>
 <li><strong>公開の画面の印</strong>: 公開のレイアウトで読み込まれたら、写した理由が送信の控えに「拒まれた」印を付ける。A-03 では、控えがあり利用者の確かめの前でも戻せる見込みがあるとき（印を付けた控えか、期限の到来・開き直しの控え）だけ一文を足す</li>
