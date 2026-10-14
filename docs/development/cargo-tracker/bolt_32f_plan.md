@@ -3,7 +3,7 @@ type: Plan
 title: "Bolt 32f 計画 - 失効の時の入力の保持（ACC-06）"
 description: "W5 の 14 本目の Bolt の計画。失効の時に送信していない入力を、ブラウザのそのタブ（sessionStorage）に「入力の控え」として写し、同じ利用者が同じ画面に戻ったら自動で戻して知らせる（横断の受入条件の「未保存の入力は失われず再認証後に再開できる」、ACC-06 の残り）。写すのは警告の期限の到来・「画面を開き直す」・送信の前で、変えた欄だけ。送信が公開の画面（A-03・403・413・A-01）で拒まれたら、ログインし直した後の画面に案内を出す。控えは戻したら・送信が届いたら・ログアウト・別の利用者・8 時間で捨てる。ADR-005 の例外として記録する。"
 tags: [plan]
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-14T12:44:45Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-14T13:20:30Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-14T12:34:46Z }
 ---
@@ -78,7 +78,7 @@ verified:
 ### 設計の約束（Try T-1）
 
 - **入力の控え**（`/js/session-input.js`。1 つのファイルで、ログインした画面（警告の部分の中）と公開の画面（`layout/public`）の両方で読み、置かれた画面で役割を切り替える）: sessionStorage のキー `cargotracker.session.savedInput` に 1 件の JSON（利用者の ID、戻り先（正規化したもの）、写した時刻、写した理由（`expired`・`reopen`・`submit`）、拒まれた印、欄の値の一覧（フォームの順番・欄の名前・種類・値・ファイルの欄があったか））。sessionStorage を使えないときは何もしない
-- **利用者の ID**: 警告の部分に `data-user="${currentActor.userId().value()}"` を出す（自分の画面に自分の内部の識別子。業務データでも個人情報でもない。出す理由は ADR-012 に書く）
+- **利用者の ID**: 警告の部分に `data-user` として利用者の ID の一方向の値（SHA-256 の先頭 16 文字）を出す（実装で、画面の HTML に UUID を出さない既存の確かめに当たったため、UUID そのものから変えた。出す理由は ADR-012）
 - **戻り先の正規化**: 写すときと比べるときは同じ関数で、戻り先の query から `continue` を除き、それ以外は生の文字列のまま残す。比べる相手は今の画面の `data-return-path`（`location` でなく）
 - **写す**: 期限の到来は `session-timeout.js` が出す CustomEvent（`cargotracker:session-expired`）で、取り消しは `cargotracker:session-unexpired` で受ける。「画面を開き直す」は案内の領域でクリックを受ける（案内は後から差し込まれるため）。送信の前は POST のフォームの `submit` を `main` で受ける
 - **公開の画面の印**: 公開のレイアウトで読み込まれたら、写した理由が送信の控えに「拒まれた」印を付ける。A-03 では、控えがあり利用者の確かめの前でも戻せる見込みがあるとき（印を付けた控えか、期限の到来・開き直しの控え）だけ一文を足す

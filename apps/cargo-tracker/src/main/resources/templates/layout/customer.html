@@ -48,6 +48,8 @@
             </ul>
         </nav>
         <div class="col app-main">
+            <!--/* 入力の控えの知らせ（Bolt 32f）。読み込みの時に差し込むと読まれないことがあるので、空の live region（aria-live="polite"）を先に置く。role="status" にしないのは、画面の結果の知らせ（role="status"）と区別するため */-->
+            <div id="session-input-status" class="app-session-input" aria-live="polite" aria-atomic="true" th:if="${sessionTimer != null}"></div>
             <main th:replace="${content}"></main>
         </div>
     </div>

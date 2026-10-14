@@ -155,6 +155,139 @@ public class SessionTimeoutUiSteps {
                 .isVisible();
     }
 
+    // --- 入力の控え（Bolt 32f） ---
+
+    private static final String SAVED_INPUT = "cargotracker.session.savedInput";
+
+    private Locator status() {
+        return page().locator("#session-input-status");
+    }
+
+    private Object savedInput() {
+        return page().evaluate("key => window.sessionStorage.getItem(key)", SAVED_INPUT);
+    }
+
+    @もし("見積依頼の作成画面のフォームを送信する")
+    public void 見積依頼の作成画面のフォームを送信する() {
+        // 段階入力では提出のボタンが最後の段階にしか出ないので、フォームの送信を直接起こす（submit のイベントは出る）
+        page().locator("main form[data-stepwise]").evaluate("form => form.requestSubmit()");
+    }
+
+    @もし("CSRF のトークンが合わない状態で見積依頼の作成画面のフォームを送信する")
+    public void CSRFのトークンが合わない状態で見積依頼の作成画面のフォームを送信する() {
+        page().locator("main form[data-stepwise] input[name='_csrf']")
+                .evaluate("input => { input.value = 'invalid'; }");
+        見積依頼の作成画面のフォームを送信する();
+    }
+
+    @もし("見積依頼の一覧を開く")
+    public void 見積依頼の一覧を開く() {
+        page().navigate(baseUrl + "/customer/transport-requests");
+    }
+
+    @もし("知らせの {string} を押す")
+    public void 知らせの_を押す(String name) {
+        status().getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName(name))
+                .or(status().getByRole(AriaRole.LINK, new Locator.GetByRoleOptions().setName(name)))
+                .click();
+    }
+
+    @もし("社内の見積依頼の一覧を開く")
+    public void 社内の見積依頼の一覧を開く() {
+        page().navigate(baseUrl + "/staff/transport-requests");
+    }
+
+    @もし("再認証の案内から営業担当者でもう一度ログインする")
+    public void 再認証の案内から営業担当者でもう一度ログインする() {
+        page().getByRole(AriaRole.LINK, new Page.GetByRoleOptions().setName("ログインへ"))
+                .click();
+        browser.signInHere(Role.SALES);
+    }
+
+    @もし("入力を控えてから {int} 時間 {int} 分たったことにする")
+    public void 入力を控えてから_時間_分たったことにする(int hours, int minutes) {
+        long elapsed = Duration.ofHours(hours).plusMinutes(minutes).toMillis();
+        page().evaluate(
+                        "([key, elapsed]) => { const saved = JSON.parse(window.sessionStorage.getItem(key)); "
+                                + "saved.savedAt = Date.now() - elapsed; window.sessionStorage.setItem(key, JSON.stringify(saved)); }",
+                        java.util.List.of(SAVED_INPUT, (double) elapsed));
+    }
+
+    @もし("商業送り状のファイルを選ぶ")
+    public void 商業送り状のファイルを選ぶ() throws java.io.IOException {
+        java.nio.file.Path file = java.nio.file.Files.createTempFile("invoice", ".pdf");
+        java.nio.file.Files.writeString(file, "%PDF-1.4");
+        page().locator("#commercialInvoice").setInputFiles(file);
+    }
+
+    @ならば("再認証の案内が表示され入力を戻す旨が示される")
+    public void 再認証の案内が表示され入力を戻す旨が示される() {
+        再認証の案内が表示される();
+        assertThat(page().locator("main")).containsText("このタブでログインし直すと、ログアウトの前に入力していた内容を戻します。");
+    }
+
+    @ならば("出発地に {string} が戻り {string} と示される")
+    public void 出発地に_が戻り_と示される(String value, String message) {
+        assertThat(status()).containsText(message);
+        assertThat(origin()).hasValue(value);
+        browser.checkAccessibility();
+    }
+
+    @ならば("出発地は空で {string} と示される")
+    public void 出発地は空で_と示される(String message) {
+        assertThat(status()).containsText(message);
+        assertThat(origin()).hasValue("");
+    }
+
+    @ならば("出発地は空である")
+    public void 出発地は空である() {
+        assertThat(origin()).hasValue("");
+    }
+
+    @ならば("{string} と示される")
+    public void _と示される(String message) {
+        assertThat(status()).containsText(message);
+        browser.checkAccessibility();
+    }
+
+    @ならば("{string} とは示されない")
+    public void _とは示されない(String message) {
+        assertThat(page().locator("main")).isVisible();
+        assertThat(status()).not().containsText(message);
+    }
+
+    @ならば("権限がない画面が表示される")
+    public void 権限がない画面が表示される() {
+        assertThat(page().getByRole(AriaRole.HEADING, new Page.GetByRoleOptions().setName("権限がありません")))
+                .isVisible();
+    }
+
+    @ならば("入力の誤りが示される")
+    public void 入力の誤りが示される() {
+        assertThat(page().locator("#error-summary")).isVisible();
+    }
+
+    @ならば("入力の控えがある")
+    public void 入力の控えがある() {
+        org.assertj.core.api.Assertions.assertThat(savedInput()).as("入力の控え").isNotNull();
+    }
+
+    @ならば("入力の控えが残っていない")
+    public void 入力の控えが残っていない() {
+        org.assertj.core.api.Assertions.assertThat(savedInput()).as("入力の控え").isNull();
+    }
+
+    @ならば("入力の控えに CSRF のトークンとファイルが写っていない")
+    public void 入力の控えにCSRFのトークンとファイルが写っていない() {
+        Object saved = savedInput();
+        org.assertj.core.api.Assertions.assertThat(saved).as("入力の控え").isNotNull();
+        org.assertj.core.api.Assertions.assertThat(saved.toString())
+                .contains("JPTYO")
+                .doesNotContain("_csrf")
+                .doesNotContain("commercialInvoice")
+                .doesNotContain("invoice");
+    }
+
     @もし("同じブラウザの別のタブで見積依頼の一覧を開く")
     public void 同じブラウザの別のタブで見積依頼の一覧を開く() {
         browser.openTab(baseUrl + "/customer/transport-requests");

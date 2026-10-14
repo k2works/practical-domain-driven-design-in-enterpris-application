@@ -8,6 +8,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title th:replace="${title}">cargo-tracker</title>
     <th:block th:replace="~{layout/common :: assets(~{})}"></th:block>
+    <!-- 公開の画面（A-03・A-01・403 など）では、入力の控えに「公開の画面を経た」印を付ける（Bolt 32f） -->
+    <script th:src="@{/js/session-input.js}" defer></script>
 </head>
 <body>
 <header class="navbar border-bottom app-header">

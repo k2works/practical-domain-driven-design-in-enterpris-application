@@ -4,7 +4,7 @@ title: "cargo-tracker フロントエンドアーキテクチャ"
 description: "cargo-tracker の利用チャネル、サーバーサイドレンダリングとハイパーメディアによる画面提供、画面の配置、アクセシビリティと開示制御の構造的な担保。"
 tags: [design, architecture, frontend]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-14T12:44:45Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-14T13:20:30Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T07:11:12Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:01:37Z }
@@ -126,14 +126,14 @@ WCAG 2.2 AA を目標とし、個々の画面の注意に頼らず共通部品�
 
 - **スクリプト**: `/js/session-input.js` の 1 つのファイルを、ログインした画面（警告の部分 `layout/session-warning` の中）と公開の画面（`layout/public`）の両方で読み、置かれた画面で役割を切り替える。CSP（`default-src 'self'`）のため外部のファイルにする。`/js/**` は公開の URL
 - **置き場所とキー**: sessionStorage のキー `cargotracker.session.savedInput` に 1 件の JSON を置く。中身は、利用者の ID、戻り先（正規化したもの）、写した時刻、写した理由（`expired`・`reopen`・`submit`）、公開の画面を経た印（拒まれた印）、欄の値の一覧（フォームの順番・欄の名前・種類・値・ファイルの欄があったか）。sessionStorage はタブごとで、タブを閉じれば消える。1 つのタブに 1 件で、新しく写したら置き換える。sessionStorage を使えないときは何もしない（写さず、戻さない）
-- **利用者の ID**: 警告の部分に `data-user="${currentActor.userId().value()}"` を出す（`UserId` の UUID の値。record の `toString` は出さない）。自分の画面に自分の内部の識別子を出すだけで、業務データでも個人情報でもない（出す理由は ADR-012）。`localStorage`（タブの間の同期）には今までどおり利用者の識別子を置かない
+- **利用者の鍵**: 警告の部分に `data-user` として、利用者の ID の一方向の値（`SessionTimerAdvice.ownerKey`。`UserId` の SHA-256 の先頭 16 文字、URL で使える Base64）を出す。同じ利用者かどうかだけが分かり、画面に内部の識別子（UUID）を出さない（画面の HTML に UUID を出さない既存の確かめを守る。Bolt 32f の実装で見つけた。理由は ADR-012）。`localStorage`（タブの間の同期）には今までどおり利用者の識別子を置かない
 - **写す時**: 期限の到来は `session-timeout.js` が出す CustomEvent `cargotracker:session-expired` で受け、取り消し（ほかのタブの延長や期限のぎわの 204。`unexpire()`）は `cargotracker:session-unexpired` で受けて、期限の到来で写した控えを捨てる（2 つのスクリプトを互いの内部に依存させない）。「画面を開き直す」は、後から差し込まれる案内の領域でクリックを受けて写してから開く。送信の前は、`main` で POST のフォームの `submit` を受ける（ヘッダーのログアウトと警告の延長のフォームは `main` の外なので写らない）。どれも戻り先（`data-return-path`）のある画面でだけ写す
 - **写す欄**: `main` の中の POST のフォームの、テキスト・数・日付・選択・ラジオ・チェックの欄と `textarea` のうち、初期の値（`defaultValue`・`defaultChecked`・`defaultSelected`）から変えた欄だけ。password・hidden（CSRF のトークンを含む）・ファイル・ボタンは写さない。GET のフォーム（照会）は写さない。変えた欄がなければ写さず、前の控えを残す
 - **戻り先の正規化**: 写すときと比べるときは同じ関数で、戻り先の query から `continue` を除き、それ以外は生の文字列のまま残す（ログインし直して戻った画面の戻り先には `?continue`・`&continue` が入るため。Bolt 32e）。比べる相手は今の画面の `data-return-path` で、`location` でない
 - **公開の画面での印**: 公開のレイアウトで読み込まれたら、控えがあれば公開の画面を経た印を付ける（送信の控えでは「拒まれた」印。送信の次の画面が公開の画面（A-03・A-01・403・413 など）なら、送信は拒まれている）。A-03 では、控えがあり、戻せる見込みがあるとき（印を付けた送信の控え、期限の到来・開き直しの控え）だけ、利用者を確かめる前に一文を足す（文言は UI 設計）。公開の画面では戻さず、捨てない
 - **ログインした画面で**: 読み込みの後に、捨てる条件（利用者が違う、写してから 8 時間を過ぎた、送信の控えで印がない（送信が届いた））を見て、当たれば捨てる。残れば、今の画面の戻り先と同じなら戻して知らせ、控えを捨てる。違えば、拒まれた送信の控えと、公開の画面を経た期限の到来・開き直しの控えについて、案内と「画面を開く」（控えの戻り先を `sameOriginPath` で同じ origin の path と query に限る）「消す」を出す。ヘッダーのログアウトの送信で捨てる
 - **戻し方と順序**: 欄に `.value`・`.checked` で値を入れ（HTML として解釈しない。`innerHTML` を使わない）、`input`・`change` のイベントを出す。画面のスクリプトの初期化の後に戻すため、DOMContentLoaded で戻す（`transport-request-form.js` は head で defer、入力の控えのスクリプトは警告の部分（body の最後）で defer なので、DOMContentLoaded の扱いは画面のスクリプトが先に動く）。C-03 は段階 1 のまま（段階の位置は控えない）
-- **知らせの領域**: `layout/customer`・`layout/staff` の `main` の前に空の `role="status"` の領域を置いておき、後から文言を入れる。フォーカスは移さない
+- **知らせの領域**: `layout/customer`・`layout/staff` の `main` の前に空の live region（`aria-live="polite"`・`aria-atomic="true"`。画面の結果の知らせの `role="status"` と区別するため role は付けない）を置いておき、後から文言を入れる。フォーカスは移さない
 - **送信が届いたかの判定**: サーバーに問い合わせない。送信の次に読み込んだ画面がログインした画面なら届いた、公開の画面なら拒まれたとみなす。8 時間のぎわで、送信が届いた直後の移動（PRG の GET）が A-03 になると、届いた送信の控えが残り、戻りうる（まれ。既知の課題。ADR-012）
 - **既知の制約**: 送信の後に入力の誤りで描き直した画面には戻り先がないので写さない。ほかのタブ・ほかのブラウザでは戻らない。閉じたタブを開き直したとき（ブラウザの復元、タブの複製）には sessionStorage が残ることがある（共用のパソコンではログアウトで捨てる。マニュアル 2.1）。XSS があれば控えも読まれる（SEC-17）
 - **取消しの扱い**: 利用を止められた利用者もブラウザでは失効と見分けられず、控えはそのタブに残る。戻るのは同じ利用者がログインし直せたときだけで、止められている間はログインできない。別の利用者がログインすると捨てる（Bolt 32e の「止められた利用者には保持しない」を Bolt 32f の開始準備で変えた。ADR-012）

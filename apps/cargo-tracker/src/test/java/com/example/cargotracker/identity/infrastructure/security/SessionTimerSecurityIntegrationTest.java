@@ -23,6 +23,7 @@ import com.example.cargotracker.identity.domain.model.valueobjects.EmailAddress;
 import com.example.cargotracker.identity.domain.model.valueobjects.UserStatus;
 import com.example.cargotracker.identity.infrastructure.crypto.AesGcmSecretCipher;
 import com.example.cargotracker.identity.interfaces.web.SessionController;
+import com.example.cargotracker.identity.interfaces.web.SessionTimerAdvice;
 import com.example.cargotracker.identity.interfaces.web.SessionTimerAdvice.SessionTimer;
 import com.example.cargotracker.shared.acceptance.MutableClock;
 import com.example.cargotracker.shared.domain.CompanyId;
@@ -130,7 +131,12 @@ class SessionTimerSecurityIntegrationTest {
                 .andExpect(model().attribute(
                                 "sessionTimer",
                                 new SessionTimer(
-                                        1800, Duration.ofHours(6).toSeconds(), "/customer/transport-requests")))
+                                        1800,
+                                        Duration.ofHours(6).toSeconds(),
+                                        "/customer/transport-requests",
+                                        SessionTimerAdvice.ownerKey(users.findByEmail(EmailAddress.of(email))
+                                                .orElseThrow()
+                                                .id()))))
                 .andReturn()
                 .getResponse()
                 .getContentAsString();
@@ -140,6 +146,37 @@ class SessionTimerSecurityIntegrationTest {
                 .contains("data-idle-seconds=\"1800\"")
                 .contains("data-lifetime-remaining-seconds=\"21600\"")
                 .contains("/js/session-timeout.js");
+    }
+
+    @Test
+    void ログインした画面に利用者のIDと入力の控えの知らせの領域が出る() throws Exception {
+        // 入力の控え（Bolt 32f）は利用者の ID で確かめる。知らせは先に置いた空の role="status" の領域に入れる
+        Cookie session = login();
+        UserId userId = users.findByEmail(EmailAddress.of(email)).orElseThrow().id();
+
+        String html = mvc.perform(get(HOME_URL).cookie(session))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        assertThat(html)
+                .contains("data-user=\"" + SessionTimerAdvice.ownerKey(userId) + "\"")
+                .doesNotContain(userId.value().toString())
+                .contains("id=\"session-input-status\"")
+                .contains("/js/session-input.js");
+    }
+
+    @Test
+    void 公開の画面にも入力の控えのスクリプトが出る() throws Exception {
+        // 送信が公開の画面（A-03・403 など）で拒まれたことを控えに印として残す（Bolt 32f）
+        String html = mvc.perform(get(EXPIRED_URL))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        assertThat(html).contains("/js/session-input.js").doesNotContain("data-user");
     }
 
     @Test

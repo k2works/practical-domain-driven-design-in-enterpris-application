@@ -15,7 +15,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const dialog = document.getElementById('session-warning');
   const notice = document.getElementById('session-expired-notice');
   const noticeTemplate = document.getElementById('session-expired-template');
-  const errorTemplate = document.getElementById('session-warning-error-template');
+  const errorTemplate = document.getElementById(
+    dialog && dialog.dataset.returnPath ? 'session-warning-error-reopen-template' : 'session-warning-error-template');
   if (!dialog || !notice || !noticeTemplate || !errorTemplate) {
     return;
   }
@@ -119,7 +120,11 @@ document.addEventListener('DOMContentLoaded', () => {
     close();
     // 画面の先頭（タブの順でも最初）に案内を置き、案内が背後の画面のフォーカスを隠さないよう scroll-padding を足す
     document.body.prepend(notice);
-    notice.replaceChildren(noticeTemplate.content.cloneNode(true));
+    // 入力の控え（session-input.js）に期限の到来を知らせる（Bolt 32f）
+    document.dispatchEvent(new CustomEvent('cargotracker:session-expired'));
+    const reopenTemplate = document.getElementById('session-expired-reopen-template');
+    notice.replaceChildren((sameOriginPath(dialog.dataset.returnPath) && reopenTemplate
+      ? reopenTemplate : noticeTemplate).content.cloneNode(true));
     // GET で開いた業務の画面なら、案内のリンクでその画面を開き直す。サーバーの session が切れていれば、失効の扱いが画面を覚えて
     // A-03 へ移し、ログインし直した後に戻る（Bolt 32e）。送信の後の画面などで戻り先がなければ、今どおり A-03 へ移る
     const link = notice.querySelector('[data-session-return]');
@@ -133,6 +138,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const unexpire = () => {
     expired = false;
     notice.replaceChildren();
+    document.dispatchEvent(new CustomEvent('cargotracker:session-unexpired'));
     document.documentElement.style.scrollPaddingTop = '';
   };
 
