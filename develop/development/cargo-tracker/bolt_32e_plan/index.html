@@ -10698,6 +10698,11 @@
 <tbody>
 <tr>
 <td style="text-align: left;">2026-10-14</td>
+<td style="text-align: left;">承認（確認ポイント 1〜10 は推奨のまま）。<code>/goal Bolt32e</code> の下で、ステップの承認ゲートでは止めずに進め、終了報告でまとめて確かめを受ける</td>
+<td style="text-align: left;">human:kakimomokuri</td>
+</tr>
+<tr>
+<td style="text-align: left;">2026-10-14</td>
 <td style="text-align: left;">詳細整合性検証（16 件）と横断整合性検証（19 件）の指摘を反映した。spring-security 7.1.1 の jar で、CSRF の拒否も <code>invalidSessionStrategy</code> を通ること・フィルターの順序・<code>changeSessionId</code> の後も覚えた要求が残ること・A-01 と A-02 が消さないことを確かめた（T-114）。送信は覚えない（Referer を使わない。オープンリダイレクトと送信の本体を避け、送信の後の失効は 32f に送った）。覚えるのは GET で許す一覧の画面だけ。覚えるかに関わらず新しい session を作る（A-03 の 302 の繰り返しを防ぐ）。認証コードの誤りと password の段の失効では持ち越す。戻り先は GET の画面にだけサーバーが渡す（送信の後の画面の URL を開き直さない）。延長の失敗の後の A-01 への直接の遷移、利用者に結び付けないこと、確認ポイント 4〜6。ステップ 3 を画面の層の Red から。ステップ 1 の文書の漏れ（アーキテクチャ・ACC-06・user_story・ui_design の各行・release_plan の段落）、32d・32b の既知の課題と T-115 の引き継ぎ、デモの添付の対応表</td>
 <td style="text-align: left;">anthropic/claude-opus-5-5</td>
 </tr>
