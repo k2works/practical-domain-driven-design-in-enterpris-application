@@ -70,7 +70,7 @@ Bolt がイテレーションに当たります。ふりかえりは各 Bolt の
 | 31d | [認証の部品の守りの直し（照合の 3 値、暗号のパッケージ、特性テスト、スパイクの削除）](bolt_31d_plan.md) | [終了報告](bolt_31d_report.md) | W5 | 完了 |
 | 32 | [ログインのロック（US-18 AC3）](bolt_32_plan.md) | [終了報告](bolt_32_report.md)（[動画](../../assets/demo/bolt-32/lock.webm){:target="_blank"}） | W5 | 完了 |
 | 32c | [request ごとの利用者の確かめ（US-18 AC6）](bolt_32c_plan.md) | [終了報告](bolt_32c_report.md)（[動画](../../assets/demo/bolt-32c/revoked.webm){:target="_blank"}） | W5 | 完了 |
-| 32d | [認証の部品の低の指摘とテストの整理](bolt_32d_plan.md) | — | W5 | 進行中（計画を承認済み） |
+| 32d | [認証の部品の低の指摘とテストの整理](bolt_32d_plan.md) | [終了報告](bolt_32d_report.md) | W5 | 完了（終了報告の承認待ち） |
 
 Bolt を始めるときに行を追加します。
 
@@ -148,3 +148,4 @@ Bolt を始めるときに行を追加します。
 * [Bolt 32c 計画 - request ごとの利用者の確かめ（US-18 AC6）](./bolt_32c_plan.md) - W5 の 10 本目の Bolt の計画。利用停止・所属企業の無効化・権限の取消しを既存の session の次の request から反映する（US-18 AC6、IA-INV-04、SEC-12 の役割と利用状態の分）。request ごとに利用者・役割・企業を 1 回の SQL で読み、アプリケーションのサービスが判定して主体を作り直す（ADR-012 の見直しの 3）。止められた利用者の session は捨てて A-03 に送り SESSION_REVOKED を記録し、取り消した役割の URL は A-04 にする。31d から送った低の指摘とテストの整理は Bolt 32d。
 * [Bolt 32c 終了報告 - request ごとの利用者の確かめ（US-18 AC6）](./bolt_32c_report.md) - 認証済みの request ごとに利用者・役割・企業を 1 回の SQL で読み、主体を作り直すようにした。止められた利用者は session を捨てて A-03 と SESSION_REVOKED、取り消した役割の URL は A-04。開発レビューで静的な資源でも読んでいたことを直した。A-03 の文言とロックの扱いを承認の議題に置く。
 * [Bolt 32d 計画 - 認証の部品の低の指摘とテストの整理](./bolt_32d_plan.md) - W5 の 11 本目の Bolt の計画。Base32 の不正な長さを失敗へ倒し、identity の合成ルートの組み立て方を規則にそろえ、統合テストの共通の時計の設定と spy の基底で Spring のコンテキストを減らし、テストの補助の共通化・同時の待ちの判定・dev のテストの刻みの境界・8 時間の起点の値と監査の順・ロックのシナリオの axe を直す。
+* [Bolt 32d 終了報告 - 認証の部品の低の指摘とテストの整理](./bolt_32d_report.md) - Base32 の不正な形を失敗へ倒し、identity の合成ルートの規則を見張りで守り、統合テストの時計と spy を共通にして Spring のコンテキストを 50 から 42 に減らした。同時の待ちを PostgreSQL のロックの待ちで判定する。合成ルートの dev の例外と開発レビューで強めたことを承認の議題に置く。
