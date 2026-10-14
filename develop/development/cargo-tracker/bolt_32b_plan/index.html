@@ -16,7 +16,7 @@
         <link rel="prev" href="../bolt_32d_report/">
       
       
-        <link rel="next" href="../release_report-0_1/">
+        <link rel="next" href="../bolt_32b_report/">
       
       
         
@@ -5257,6 +5257,34 @@
   
 </nav>
       
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../bolt_32b_report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 32b 終了報告
+  
+
+    
+  </span>
+  
+  
+
+      </a>
     </li>
   
 
@@ -10543,12 +10571,12 @@
 </ul>
 </li>
 <li>完了の判定: <code>uiTest</code> 緑。警告を外す違反（JavaScript の読み込みを外す）で落ちることを確かめる（T-112）</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>5. ユーザーマニュアルとデモの録画</strong> 【承認ゲート: マニュアル】</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>5. ユーザーマニュアルとデモの録画</strong> 【承認ゲート: マニュアル】</li>
 <li>2.2 画面の構成に「session の警告と延長」（警告の出ない画面も書く）。2.4 の注意・補足と付録 B の Q1-2 に、警告と延長（8 時間は延長できない）を足す。「開いていた画面に戻ります」は確認ポイント 9 の結果に従う</li>
 <li>警告のダイアログのキャプチャ（<code>manual_screenshots.feature</code>。時計を <code>signInAs</code> の前に入れる）</li>
 <li>デモの動画（<code>@demo-bolt-32b/extend</code>）を録画して保存する。#13 への添付と <code>ops/scripts/issue_demo.js</code>・運用の手順書の表への追記は、終了報告の承認の後（運用の手順書）</li>
 <li>完了の判定: <code>manual:build</code> が通る。<code>okf:check</code> ERROR 0</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>6. SonarQube と開発レビューと支援技術の確認と終了報告</strong> 【承認ゲート: 支援技術の手動確認、終了報告】</li>
+<li>[?] <strong>6. SonarQube と開発レビューと支援技術の確認と終了報告</strong> 【承認ゲート: 支援技術の手動確認、終了報告】</li>
 <li>SonarQube（<code>sonar-local:check</code>。テストとコードを書き換えていない間に流す。T-116）</li>
 <li>開発レビュー（プログラマー、アーキテクト（認証の入口から画面への値の渡し方、延長の URL）、テスター（時計を進めるシナリオ）、テクニカルライター（警告の文言とマニュアル。T-90）、インタラクションデザイナー（ダイアログのフォーカスと支援技術への通知））</li>
 <li>人による支援技術の手動確認（NVDA または VoiceOver）: 警告が読み上げられること、延長のボタンへのフォーカス、閉じた後のフォーカスの戻り、期限の到来の案内の読み上げ。手順は AI が用意し、結果を終了報告に記録する</li>
@@ -10690,15 +10718,15 @@
 </table>
 <h2 id="_9">完了条件<a class="headerlink" href="#_9" title="Permanent link">&para;</a></h2>
 <ul class="task-list">
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> ログインした画面で、無操作の期限の 5 分前に警告が開き、延長のボタンにフォーカスが移る。延長すると画面を移らずに閉じ、サーバーの session の最終アクセスが新しくなる</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> 8 時間の上限の 5 分前に、延長のボタンのない警告が開く。延長は 8 時間の上限を延ばさない</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> 警告の時刻がタブの間でそろう。期限を過ぎるとモーダルでない案内に替わり、入力が画面に残る。延長の失敗は失効と分けて示す</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <code>layout/public</code> の画面と password の段の画面には警告が出ない。層の規則と要素の権限の参照の見張りは例外を足さずに緑</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> UI 設計・フロントエンドとバックエンドのアーキテクチャ・ACC-06・ADR-011・ADR-012・テスト戦略・ユーザーストーリー・リリース計画（32e・33b の行）を更新した</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> ユーザーマニュアル（2.2・2.4・付録 B）とキャプチャを更新し、デモの動画を録画した（#13 への添付は終了報告の承認の後）</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> ログインした画面で、無操作の期限の 5 分前に警告が開き、延長のボタンにフォーカスが移る。延長すると画面を移らずに閉じ、サーバーの session の最終アクセスが新しくなる</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> 8 時間の上限の 5 分前に、延長のボタンのない警告が開く。延長は 8 時間の上限を延ばさない</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> 警告の時刻がタブの間でそろう。期限を過ぎるとモーダルでない案内に替わり、入力が画面に残る。延長の失敗は失効と分けて示す</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <code>layout/public</code> の画面と password の段の画面には警告が出ない。層の規則と要素の権限の参照の見張りは例外を足さずに緑</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> UI 設計・フロントエンドとバックエンドのアーキテクチャ・ACC-06・ADR-011・ADR-012・テスト戦略・ユーザーストーリー・リリース計画（32e・33b の行）を更新した</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> ユーザーマニュアル（2.4・2.5・付録 B。2.5 は開発レビューで分けた）とキャプチャを更新し、デモの動画を録画した（#13 への添付は終了報告の承認の後）</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> 人による支援技術の手動確認の結果を終了報告に記録した</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <code>check</code> と <code>uiTest</code> が緑。push して CI を確かめた。SonarQube の Quality Gate が PASS、<code>okf:check</code> ERROR 0</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> 開発レビュー、終了報告。#13 に進み具合をコメントした</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <code>check</code> と <code>uiTest</code> が緑。push して CI を確かめた。SonarQube の Quality Gate が PASS、<code>okf:check</code> ERROR 0</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> 開発レビュー、終了報告。#13 に進み具合をコメントした</li>
 </ul>
 <h2 id="_10">更新履歴<a class="headerlink" href="#_10" title="Permanent link">&para;</a></h2>
 <table>
@@ -10710,6 +10738,11 @@
 </tr>
 </thead>
 <tbody>
+<tr>
+<td style="text-align: left;">2026-10-14</td>
+<td style="text-align: left;">ステップ 5・6 を終えた（支援技術の手動確認は人を待つ）。開発レビュー（5 つの観点、高 3 件）の直しで、文言を「画面の移動や送信がないため」「8 時間になるため」「もう一度ログインする」にし、マニュアルの警告を 2.2 でなく新しい節 2.5 に分け、付録 B に Q1-5 を足した。延長の失敗を role="alert" で知らせ、期限の到来の案内を画面の先頭の sticky にし、レイアウトの組み立てを部品にまとめた（<a href="../bolt_32b_report/">Bolt 32b 終了報告</a>）</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5</td>
+</tr>
 <tr>
 <td style="text-align: left;">2026-10-14</td>
 <td style="text-align: left;">ステップ 2〜4 を終えた。H2 は確かめた（Playwright のコンテキストの時計で 25 分進めると警告が開く）。計画からの変更と見つけたこと: (1) 骨組みは仮のダイアログでなく本物の部分とスクリプトで流した（最初の UI テストで時計が効くことを確かめた）。(2) 警告の文言は HTML の <code>data-</code> 属性に置き、スクリプトは <code>{minutes}</code> を置き換えるだけにした（文言を UI 設計とテンプレートの 1 か所に保つ）。(3) 空の <code>role="alert"</code> の領域を常に置くと既存のシナリオの <code>getByRole(ALERT)</code> が 2 つに当たったので、期限が来たときに <code>role="alert"</code> の要素を差し込む形にした。(4) axe の色のコントラストの違反で、「閉じる」を <code>btn-secondary</code>、案内のリンクを <code>alert-link</code> にした。違反の報告に対象の要素を出すようにした（<code>BrowserSession.checkAccessibility</code>）。(5) <code>th:replace</code> は <code>th:if</code> より先に評価されるので、レイアウトの条件を外側の <code>th:block</code> に置いた（<code>@WebMvcTest</code> で 162 件落ちて見つけた）。(6) 違反（顧客 Web のレイアウトからスクリプトを外す）で警告のシナリオ 5 件のうち 4 件が落ち、タブの同期のシナリオは警告がなくても通ったので、別のタブを開く前に警告が出ていることを確かめる手順を足した（T-117）。(7) 利用者が閉じた（「閉じる」・Esc）ときだけ同じ期限で開かない扱いにした（延長で閉じたときの <code>close</code> のイベントが次の警告を止めていた）</td>
