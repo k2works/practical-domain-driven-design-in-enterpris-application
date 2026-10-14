@@ -10769,6 +10769,11 @@
 <tbody>
 <tr>
 <td style="text-align: left;">2026-10-14</td>
+<td style="text-align: left;">承認（確認ポイント 1〜13 は推奨のまま）。<code>/goal Bolt32f</code> の下で、ステップの承認ゲートでは止めずに進め、終了報告でまとめて確かめを受ける。ステップ 5 の支援技術の手動確認は人が行う</td>
+<td style="text-align: left;">human:kakimomokuri</td>
+</tr>
+<tr>
+<td style="text-align: left;">2026-10-14</td>
 <td style="text-align: left;">詳細整合性検証（19 件）と横断整合性検証（22 件）の指摘を反映し、human:kakimomokuri の決定（1 本で作る、取消しの決定を変えて受け入れる、ADR-005 に例外を書き詳細は ADR-012）を受けた。用語を「下書き」から「入力の控え」に（業務の下書きとの衝突）。送信が届いたかの判定を A-03 だけでなく公開の画面すべての印に広げた（403 で拒まれた送信の入力を失わない）。写すのは変えた欄だけ、GET のフォームは写さない。戻り先は正規化して今の画面の <code>data-return-path</code> と比べる。ログアウトと期限の到来の取り消しで捨てる。A-03 の文言は控えめにしスクリプトで足す。知らせの領域を先に置く。CustomEvent でつなぐ。送信の後に描き直した画面は保持しない（既知の課題）。8 時間のぎわの二重の送信のおそれ（確認ポイント 7）。ADR-005・SEC-17・PRV-01・アーキテクチャの各行・release_plan の段落・マニュアル 2.1 と 3 章をステップ 1・4 に足した。人による支援技術の手動確認を足した。アプローチをアウトサイドインに直した</td>
 <td style="text-align: left;">anthropic/claude-opus-5-5</td>
 </tr>
