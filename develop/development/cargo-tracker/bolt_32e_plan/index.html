@@ -16,7 +16,7 @@
         <link rel="prev" href="../bolt_32b_report/">
       
       
-        <link rel="next" href="../release_report-0_1/">
+        <link rel="next" href="../bolt_32e_report/">
       
       
         
@@ -5325,6 +5325,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../bolt_32e_report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 32e 終了報告
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../release_report-0_1/" class="md-nav__link">
         
   
@@ -10561,7 +10589,7 @@
 <li><code>templates/identity/session-expired.html</code> のコメント（入力の保持は 32f）</li>
 <li>デモの動画（<code>@demo-bolt-32e/return</code>）を録画する</li>
 <li>完了の判定: <code>check</code> と <code>uiTest</code> が緑。<code>manual:build</code> が通る</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>5. SonarQube と開発レビューと終了報告</strong> 【承認ゲート: 終了報告】</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>5. SonarQube と開発レビューと終了報告</strong> 【承認ゲート: 終了報告】</li>
 <li>SonarQube（T-116）</li>
 <li>開発レビュー（プログラマー、アーキテクト（失効の扱いの差し替え、持ち越し、許す一覧）、テスター、テクニカルライター（A-03 とマニュアル。T-90））</li>
 <li><code>bolt_32e_report.md</code>。release_plan の W5 の 32e の行、開発の索引。#13 に進み具合をコメントする。終了報告の承認の後に、デモの動画を #13 に添付し、<code>ops/scripts/issue_demo.js</code> と運用の手順書の添付先の表に bolt-32e を足す</li>
@@ -10679,12 +10707,12 @@
 </table>
 <h2 id="_9">完了条件<a class="headerlink" href="#_9" title="Permanent link">&para;</a></h2>
 <ul class="task-list">
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> 無操作 30 分と 8 時間の上限で失効した後、もう一度ログインすると、GET で開いていた業務の画面に戻る（画面を開き直したとき、警告の案内のリンクを押したとき）。認証コードの誤りと password の段の失効をはさんでも戻る</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> 送信・取消し・公開の URL・許す一覧の外では覚えない（覚える場合と対で確かめた）。A-03 は 302 を繰り返さない</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> UI 設計・アーキテクチャ・ACC-06・ADR-012・テスト戦略・ユーザーストーリー・リリース計画（32e・32f の行）を更新した</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> ユーザーマニュアル（2.4・2.5・付録 B）を更新し、デモの動画を録画した（#13 への添付は終了報告の承認の後）</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <code>check</code> と <code>uiTest</code> が緑。push して CI を確かめた。SonarQube の Quality Gate が PASS、<code>okf:check</code> ERROR 0</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> 開発レビュー、終了報告。#13 に進み具合をコメントした</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> 無操作 30 分と 8 時間の上限で失効した後、もう一度ログインすると、GET で開いていた業務の画面に戻る（画面を開き直したとき、警告の案内のリンクを押したとき）。認証コードの誤りと password の段の失効をはさんでも戻る</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> 送信・取消し・公開の URL・許す一覧の外では覚えない（覚える場合と対で確かめた）。A-03 は 302 を繰り返さない</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> UI 設計・アーキテクチャ・ACC-06・ADR-012・テスト戦略・ユーザーストーリー・リリース計画（32e・32f の行）を更新した</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> ユーザーマニュアル（2.4・2.5・付録 B）を更新し、デモの動画を録画した（#13 への添付は終了報告の承認の後）</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <code>check</code> と <code>uiTest</code> が緑。push して CI を確かめた。SonarQube の Quality Gate が PASS、<code>okf:check</code> ERROR 0</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> 開発レビュー、終了報告。#13 に進み具合をコメントした</li>
 </ul>
 <h2 id="_10">更新履歴<a class="headerlink" href="#_10" title="Permanent link">&para;</a></h2>
 <table>
@@ -10696,6 +10724,11 @@
 </tr>
 </thead>
 <tbody>
+<tr>
+<td style="text-align: left;">2026-10-14</td>
+<td style="text-align: left;">ステップ 5 を終えた。SonarQube の指摘 2 件（テスト）を直し、Quality Gate は PASS。終了報告を作った（<a href="../bolt_32e_report/">Bolt 32e 終了報告</a>）</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5</td>
+</tr>
 <tr>
 <td style="text-align: left;">2026-10-14</td>
 <td style="text-align: left;">ステップ 2〜4 と開発レビュー（4 つの観点）の直しを終えた。計画からの変更と見つけたこと: (1) 失効の扱いの部品は <code>ExpiredSessionRequestSaver</code>（<code>discardAndRemember</code>・<code>invalidateCarryingSavedRequest</code>）。持ち越しは覚えた要求がなくても新しい session を作る。(2) 戻り先の判定は画面の層では書けない（層の規則）ので、<code>SessionLifetimeFilter</code> が request の属性 <code>cargotracker.request.returnPath</code> に置き、<code>SessionTimerAdvice</code> が読む（32b の残り時間と同じ 2 つの定数。33b の直しの 3 組目）。戻り先は context path を含む。(3) 許す一覧は認可と同じ <code>PathPatternRequestMatcher</code> で判定し、書類のダウンロードと部分更新（<code>HX-Request</code>）を除く（文字列の比較では percent-encode で除外をすり抜けた。アーキテクトの指摘）。(4) 404 の本文の一致のテスト（BR-07）に戻り先（開いた URL そのもの）が入るので、比べる前に戻り先が開いた URL と同じことを確かめてから除いた。(5) 32b の画面の層のステップが案内のリンクを <code>/session-expired</code> と決めていたので、戻り先に直した（テスターが予告し、UI テストで 3 件落ちて確かめた）。(6) テストを開発レビューで足した: 社内の画面、書類のダウンロード・延長・公開の URL・8 時間の送信を覚えない、query 付きの戻り先と覚えた要求の消え方、別の利用者は前の画面へ移り権限で拒まれる、取消しの応答の Cookie を辿る、延長の失敗の後の A-01 からの復帰（UI）、<code>SessionLifetimeFilter</code> の単体テスト</td>
