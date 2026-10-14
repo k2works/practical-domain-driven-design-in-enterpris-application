@@ -8,8 +8,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.example.cargotracker.TestcontainersConfiguration;
-import com.example.cargotracker.identity.IdentityTestClock;
+import com.example.cargotracker.identity.IdentityIntegrationTest;
 import com.example.cargotracker.identity.SpringSessionRows;
 import com.example.cargotracker.identity.domain.model.aggregates.Company;
 import com.example.cargotracker.identity.domain.model.aggregates.CompanyRepository;
@@ -43,9 +42,6 @@ import java.util.regex.Pattern;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
-import org.springframework.context.annotation.Import;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.web.servlet.MockMvc;
@@ -55,9 +51,7 @@ import org.springframework.test.web.servlet.MvcResult;
  * 初回の TOTP の登録（A-07）のセキュリティの統合テスト（Bolt 31b、US-18 AC7、SEC-09・SEC-16）。本物のフィルターの連なりと
  * Spring Session JDBC（PostgreSQL）の上で、登録の流れ、session に平文を置かないこと、登録の途中の上限（15 分）、CSRF を確かめる。
  */
-@SpringBootTest
-@AutoConfigureMockMvc
-@Import({TestcontainersConfiguration.class, IdentityTestClock.class})
+@IdentityIntegrationTest
 class TotpEnrollmentSecurityIntegrationTest {
 
     private static final String PASSWORD = "correct horse battery staple";

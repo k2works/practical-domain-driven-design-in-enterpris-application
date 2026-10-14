@@ -88,7 +88,8 @@ class DevLoginPrefillDevProfileTest {
                 .andReturn();
         Cookie passwordStage = password.getResponse().getCookie("SESSION");
         // 画面を開く前後でコードを作り、画面に出たコードがそのどちらかであることを確かめる。刻み（30 秒）の境界をまたいでも
-        // 揺れないよう、送るのは画面に出たコード（Bolt 32d）
+        // 揺れないよう、送るのは画面に出たコード（Bolt 32d）。画面を開いてから送るまでに刻みをまたいでも通るのは、照合の窓が前後
+        // 1 つの刻みだから（TotpCredential の窓。窓を狭めるときはここも見直す）
         String before = devTotpCodes.codeFor(email).orElseThrow();
         String page = mvc.perform(get("/login/totp").cookie(passwordStage))
                 .andReturn()

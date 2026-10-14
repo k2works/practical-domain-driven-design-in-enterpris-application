@@ -7,8 +7,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.example.cargotracker.TestcontainersConfiguration;
-import com.example.cargotracker.identity.IdentityTestClock;
+import com.example.cargotracker.identity.IdentityIntegrationTest;
 import com.example.cargotracker.identity.domain.model.aggregates.Company;
 import com.example.cargotracker.identity.domain.model.aggregates.CompanyRepository;
 import com.example.cargotracker.identity.domain.model.aggregates.LoginFailureRepository;
@@ -41,9 +40,6 @@ import java.util.stream.IntStream;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
-import org.springframework.context.annotation.Import;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.web.servlet.MockMvc;
@@ -55,9 +51,7 @@ import org.springframework.test.web.servlet.MvcResult;
  * 拒み、ロック中の試行は数えず、2 つの要素がそろったログインで 0 に戻ることを確かめる。スパイクのロックの 5 本（Bolt 31d の
  * 対応表）を受ける。
  */
-@SpringBootTest
-@AutoConfigureMockMvc
-@Import({TestcontainersConfiguration.class, IdentityTestClock.class})
+@IdentityIntegrationTest
 class LoginLockSecurityIntegrationTest {
 
     private static final String PASSWORD = "correct horse battery staple";

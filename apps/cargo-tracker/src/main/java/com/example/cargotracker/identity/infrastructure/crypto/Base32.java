@@ -7,9 +7,9 @@ import java.util.Set;
 /**
  * Base32（RFC 4648 の 6 節）。TOTP の秘密を認証アプリと受け渡す形（Bolt 31 の dev の入力済み、Bolt 31b の otpauth の URI と
  * 手で入力する秘密）。JDK にも java-otp にもないので自分で書き、RFC 4648 の試験ベクトルで確かめる（ADR-011）。
- * 復号は、埋め草（=）のない形・小文字・区切りの空白も受け付け、ほかの文字は失敗へ倒す。RFC 4648 で現れない長さ（8 で割った余りが
- * 1・3・6）、最後の文字の余りのビットが 0 でないもの（同じバイト列の 2 つ目の書き方）、埋め草を付けて全体が 8 の倍数にならない
- * ものも失敗へ倒す（Bolt 32d）。
+ * 復号は、埋め草（=）のない形・小文字・区切りの半角スペースも受け付け、ほかの文字は失敗へ倒す。RFC 4648 で現れない長さ（8 で割った
+ * 余りが 1・3・6）、最後の文字の余りのビットが 0 でないもの（同じバイト列の 2 つ目の書き方）、データの長さに合わない数の埋め草も
+ * 失敗へ倒す（Bolt 32d）。
  */
 public final class Base32 {
 
@@ -46,16 +46,7 @@ public final class Base32 {
             throw new IllegalArgumentException("Base32 の文字列がない");
         }
         String normalized = text.replace(" ", "").toUpperCase(Locale.ROOT);
-        int padding = normalized.indexOf('=');
-        if (padding >= 0) {
-            if (!normalized.substring(padding).chars().allMatch(c -> c == '=')) {
-                throw new IllegalArgumentException("Base32 の埋め草の後に文字がある");
-            }
-            if (normalized.length() % 8 != 0) {
-                throw new IllegalArgumentException("Base32 の埋め草を付けた長さが 8 の倍数でない");
-            }
-            normalized = normalized.substring(0, padding);
-        }
+        normalized = withoutPadding(normalized);
         if (INVALID_REMAINDERS.contains(normalized.length() % 8)) {
             throw new IllegalArgumentException("Base32 の長さが正しくない");
         }
@@ -78,5 +69,20 @@ public final class Base32 {
             throw new IllegalArgumentException("Base32 の最後の文字の余りのビットが 0 でない");
         }
         return out.toByteArray();
+    }
+
+    /** 末尾の埋め草（=）を除く。埋め草はデータの文字を 8 の倍数にそろえる数だけ（多すぎる・足りない・データのない埋め草を許さない）。 */
+    private static String withoutPadding(String normalized) {
+        int padding = normalized.indexOf('=');
+        if (padding < 0) {
+            return normalized;
+        }
+        if (!normalized.substring(padding).chars().allMatch(c -> c == '=')) {
+            throw new IllegalArgumentException("Base32 の埋め草の後に文字がある");
+        }
+        if (padding == 0 || normalized.length() != (padding + 7) / 8 * 8) {
+            throw new IllegalArgumentException("Base32 の埋め草の数がデータの長さに合わない");
+        }
+        return normalized.substring(0, padding);
     }
 }

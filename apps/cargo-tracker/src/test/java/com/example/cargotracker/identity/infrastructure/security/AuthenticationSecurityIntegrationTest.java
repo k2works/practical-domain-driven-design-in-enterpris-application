@@ -11,9 +11,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.example.cargotracker.TestcontainersConfiguration;
+import com.example.cargotracker.identity.AuditRecordRows;
 import com.example.cargotracker.identity.AuthenticationFactorFixtures;
-import com.example.cargotracker.identity.IdentityTestClock;
+import com.example.cargotracker.identity.IdentityIntegrationTest;
 import com.example.cargotracker.identity.LogCapture;
 import com.example.cargotracker.identity.SpringSessionRows;
 import com.example.cargotracker.identity.domain.model.aggregates.Company;
@@ -56,9 +56,6 @@ import org.junit.jupiter.params.provider.EnumSource;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
-import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpMethod;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -76,9 +73,7 @@ import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandl
  * 本物のフィルターの連なりと Spring Session JDBC（PostgreSQL 18）の上で、ログイン・拒否・失効・CSRF・役割・監査を確かめる。
  * session は Cookie（{@code SESSION}）で受け渡し、ログインの前後で値が変わることを見る（session の固定化の防止。T-40）。
  */
-@SpringBootTest
-@AutoConfigureMockMvc
-@Import({TestcontainersConfiguration.class, IdentityTestClock.class})
+@IdentityIntegrationTest
 class AuthenticationSecurityIntegrationTest {
 
     /** 全 URL の見張りから除く、password の段だけで開ける認証の画面（Bolt 31d）。 */
@@ -507,8 +502,13 @@ class AuthenticationSecurityIntegrationTest {
         assertThat(sessions().attribute(full, SessionLifetime.AUTHENTICATED_AT))
                 .as("8 時間の起点は TOTP が通った時刻（password の段の時刻でない。Bolt 31）")
                 .isEqualTo(totpAt);
-        assertThat(actionsAt(email, LOGIN_AT)).as("password の段が先").containsExactly("PASSWORD_VERIFIED");
-        assertThat(actionsAt(email, totpAt)).containsExactly("LOGIN_SUCCEEDED");
+        assertThat(new AuditRecordRows(jdbc).actionsAt(userIdOf(email), LOGIN_AT))
+                .as("password の段が先")
+                .containsExactly("PASSWORD_VERIFIED");
+        assertThat(new AuditRecordRows(jdbc).actionsAt(userIdOf(email), totpAt)).containsExactly("LOGIN_SUCCEEDED");
+        assertThat(new AuditRecordRows(jdbc).actionsOf(userIdOf(email)))
+                .as("ほかの時刻の行はない")
+                .hasSize(2);
     }
 
     // --- TOTP の失敗の監査（ADR-012 の見直しの 1、IA-INV-08。Bolt 31） ---
@@ -1399,14 +1399,5 @@ class AuthenticationSecurityIntegrationTest {
 
     private SpringSessionRows sessions() {
         return new SpringSessionRows(jdbc);
-    }
-
-    /** その利用者の、その時刻の監査記録の操作（監査の順を時刻で確かめる。同じ時刻の行は順を問わない。T-113）。 */
-    private List<String> actionsAt(String email, Instant at) {
-        return jdbc.queryForList(
-                "SELECT action FROM identity.audit_record WHERE actor_user_id = ? AND occurred_at = ?",
-                String.class,
-                userIdOf(email).value(),
-                java.time.OffsetDateTime.ofInstant(at, java.time.ZoneOffset.UTC));
     }
 }

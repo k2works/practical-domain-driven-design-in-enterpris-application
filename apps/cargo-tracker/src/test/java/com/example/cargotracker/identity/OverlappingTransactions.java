@@ -10,7 +10,6 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 import javax.sql.DataSource;
@@ -28,7 +27,6 @@ import org.springframework.transaction.support.TransactionTemplate;
 public final class OverlappingTransactions {
 
     private static final long TIMEOUT_SECONDS = 30;
-    private static final long BLOCKED_CHECK_MILLIS = 500;
     private static final long LOCK_WAIT_POLL_MILLIS = 50;
 
     private OverlappingTransactions() {}
@@ -67,11 +65,9 @@ public final class OverlappingTransactions {
             awaitQuietly(firstUpdated);
             CompletableFuture<T> secondResult = CompletableFuture.supplyAsync(second, executor);
 
-            assertThat(secondResult)
-                    .as("後の操作は先の行ロックを待つ")
-                    .failsWithin(Duration.ofMillis(BLOCKED_CHECK_MILLIS))
-                    .withThrowableOfType(TimeoutException.class);
+            // ロックの待ちを見てから、まだ終わっていないことを確かめる（一定時間を待たない。開発レビュー）
             awaitLockWaitOn(jdbc, firstPid.get());
+            assertThat(secondResult).as("後の操作は先の行ロックを待っていて終わっていない").isNotDone();
             releaseFirst.countDown();
 
             return List.of(
@@ -96,7 +92,8 @@ public final class OverlappingTransactions {
                 .atMost(Duration.ofSeconds(TIMEOUT_SECONDS))
                 .pollInterval(Duration.ofMillis(LOCK_WAIT_POLL_MILLIS))
                 .until(() -> jdbc.queryForObject(
-                                "SELECT count(*) FROM pg_stat_activity WHERE ? = ANY(pg_blocking_pids(pid))",
+                                "SELECT count(*) FROM pg_stat_activity WHERE wait_event_type = 'Lock'"
+                                        + " AND ? = ANY(pg_blocking_pids(pid))",
                                 Integer.class,
                                 blockingPid)
                         > 0);

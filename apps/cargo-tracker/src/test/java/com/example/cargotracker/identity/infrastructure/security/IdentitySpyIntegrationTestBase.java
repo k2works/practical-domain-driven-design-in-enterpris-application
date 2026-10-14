@@ -1,16 +1,12 @@
 package com.example.cargotracker.identity.infrastructure.security;
 
-import com.example.cargotracker.TestcontainersConfiguration;
-import com.example.cargotracker.identity.IdentityTestClock;
+import com.example.cargotracker.identity.IdentityIntegrationTest;
 import com.example.cargotracker.identity.domain.model.aggregates.AuditRecordRepository;
 import com.example.cargotracker.identity.domain.model.aggregates.CompanyRepository;
 import com.example.cargotracker.identity.domain.model.aggregates.LoginFailureRepository;
 import com.example.cargotracker.identity.domain.model.aggregates.TotpCodeGenerator;
 import com.example.cargotracker.identity.domain.model.aggregates.UserRepository;
 import com.example.cargotracker.identity.domain.model.aggregates.UserStandingRepository;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
-import org.springframework.context.annotation.Import;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 
 /**
@@ -19,9 +15,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
  * このクラスから継ぎ、コンテキストを 1 つにする。spy は既定で各テストの後に元に戻る（{@code MockReset.AFTER}）。時計の時刻は
  * 継ぐクラスが各テストの前に置く。
  */
-@SpringBootTest
-@AutoConfigureMockMvc
-@Import({TestcontainersConfiguration.class, IdentityTestClock.class})
+@IdentityIntegrationTest
 abstract class IdentitySpyIntegrationTestBase {
 
     @MockitoSpyBean

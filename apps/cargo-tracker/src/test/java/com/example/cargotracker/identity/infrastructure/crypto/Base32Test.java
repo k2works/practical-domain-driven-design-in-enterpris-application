@@ -63,9 +63,12 @@ class Base32Test {
     }
 
     @ParameterizedTest
-    @CsvSource({"M", "MZX", "MZXW6Y", "MZX=====", "mzx w6y", "MZXW6YTBO"})
+    @CsvSource({"M", "MZX", "MZXW6Y", "MZX=====", "mzx w6y", "MZXW6YTBO", "A", "AAA", "AAAAAA"})
     void 余りが1と3と6の長さは失敗へ倒す(String encoded) {
-        assertThatThrownBy(() -> Base32.decode(encoded)).isInstanceOf(IllegalArgumentException.class);
+        // A・AAA・AAAAAA は余りのビットが 0 なので、長さの規則がなければ通ってしまう（開発レビュー。規則ごとに文言で確かめる）
+        assertThatThrownBy(() -> Base32.decode(encoded))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("長さ");
     }
 
     @Test
@@ -74,12 +77,26 @@ class Base32Test {
         assertThatThrownBy(() -> Base32.decode("MZ")).isInstanceOf(IllegalArgumentException.class);
         assertThat(Base32.decode("MZXQ")).isEqualTo("fo".getBytes(StandardCharsets.US_ASCII));
         assertThatThrownBy(() -> Base32.decode("MZXR")).isInstanceOf(IllegalArgumentException.class);
+        // 余り 5（1 ビット）と 7（3 ビット）
+        assertThat(Base32.decode("MZXW6")).isEqualTo("foo".getBytes(StandardCharsets.US_ASCII));
+        assertThatThrownBy(() -> Base32.decode("MZXW7"))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("余りのビット");
+        assertThat(Base32.decode("MZXW6YQ")).isEqualTo("foob".getBytes(StandardCharsets.US_ASCII));
+        assertThatThrownBy(() -> Base32.decode("MZXW6YR"))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("余りのビット");
     }
 
     @Test
-    void 埋め草を付けるなら全体が8の倍数の長さでなければ失敗へ倒す() {
+    void 埋め草はデータの長さに合う数でなければ失敗へ倒す() {
         assertThat(Base32.decode("MY======")).isEqualTo("f".getBytes(StandardCharsets.US_ASCII));
-        assertThatThrownBy(() -> Base32.decode("MY=")).isInstanceOf(IllegalArgumentException.class);
-        assertThatThrownBy(() -> Base32.decode("MY=======")).isInstanceOf(IllegalArgumentException.class);
+        assertThat(Base32.decode("MZXW6YTB")).isEqualTo("fooba".getBytes(StandardCharsets.US_ASCII));
+        for (String padded : new String[] {"MY=", "MY=======", "MY==============", "MZXW6YTB========", "========"}) {
+            assertThatThrownBy(() -> Base32.decode(padded))
+                    .as(padded)
+                    .isInstanceOf(IllegalArgumentException.class)
+                    .hasMessageContaining("埋め草");
+        }
     }
 }

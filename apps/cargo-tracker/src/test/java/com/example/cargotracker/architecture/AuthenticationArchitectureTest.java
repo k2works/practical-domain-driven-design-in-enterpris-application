@@ -13,6 +13,7 @@ import com.tngtech.archunit.lang.ArchCondition;
 import com.tngtech.archunit.lang.ArchRule;
 import com.tngtech.archunit.lang.ConditionEvents;
 import com.tngtech.archunit.lang.SimpleConditionEvent;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -209,18 +210,25 @@ class AuthenticationArchitectureTest {
             "com.example.cargotracker.identity.infrastructure.crypto.AesGcmSecretCipher",
             "com.example.cargotracker.identity.interfaces.web.DevTotpCodeSource");
 
+    /** identity の合成ルートが組み立ててよい型のパッケージ（そのパッケージとその下）。 */
+    private static final List<String> ALLOWED_BEAN_PACKAGES = List.of(
+            "com.example.cargotracker.identity.application.internal",
+            "com.example.cargotracker.identity.infrastructure.security",
+            "org.springframework");
+
+    private static boolean isInPackage(JavaClass type, String prefix) {
+        String name = type.getPackageName();
+        return name.equals(prefix) || name.startsWith(prefix + ".");
+    }
+
     /** identity の合成ルートの {@code @Bean} が返してよい型（Bolt 32d、バックエンドアーキテクチャの identity の合成ルートの規則）。 */
     private static final ArchCondition<JavaMethod> 合成ルートが組み立ててよい型を返す =
             new ArchCondition<>("identity の合成ルートが組み立ててよい型を返す") {
                 @Override
                 public void check(JavaMethod method, ConditionEvents events) {
                     JavaClass type = method.getRawReturnType();
-                    boolean allowed =
-                            type.getPackageName().startsWith("com.example.cargotracker.identity.application.internal")
-                                    || type.getPackageName()
-                                            .startsWith("com.example.cargotracker.identity.infrastructure.security")
-                                    || type.getPackageName().startsWith("org.springframework")
-                                    || ALLOWED_BEAN_TYPES.contains(type.getName());
+                    boolean allowed = ALLOWED_BEAN_PACKAGES.stream().anyMatch(prefix -> isInPackage(type, prefix))
+                            || ALLOWED_BEAN_TYPES.contains(type.getName());
                     events.add(new SimpleConditionEvent(
                             method, allowed, method.getFullName() + " は " + type.getName() + " を返す"));
                 }
@@ -240,4 +248,20 @@ class AuthenticationArchitectureTest {
             .resideInAPackage("com.example.cargotracker.identity.infrastructure.config..")
             .should(合成ルートが組み立ててよい型を返す)
             .allowEmptyShould(false);
+
+    /**
+     * identity の合成ルートは送信アダプター（persistence・crypto）を自分で作らない（部品探索で拾う。Bolt 32d の開発レビュー）。
+     * {@code @Bean} の戻り値の型の見張りだけでは、サービスの {@code @Bean} の本体で {@code new} する書き方を見逃すため。設定の値から
+     * 作る {@code AesGcmSecretCipher} は工場のメソッド（{@code fromBase64Keys}）で作るので、この規則に当たらない。
+     */
+    @ArchTest
+    static final ArchRule identityの合成ルートは送信アダプターを作らない = noClasses()
+            .that()
+            .resideInAPackage("com.example.cargotracker.identity.infrastructure.config..")
+            .should()
+            .callConstructorWhere(com.tngtech.archunit.core.domain.JavaConstructorCall.Predicates.target(
+                    com.tngtech.archunit.core.domain.properties.HasOwner.Predicates.With.owner(
+                            com.tngtech.archunit.core.domain.JavaClass.Predicates.resideInAnyPackage(
+                                    "com.example.cargotracker.identity.infrastructure.persistence..",
+                                    "com.example.cargotracker.identity.infrastructure.crypto.."))));
 }

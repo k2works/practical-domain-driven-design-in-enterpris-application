@@ -8,8 +8,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.example.cargotracker.TestcontainersConfiguration;
-import com.example.cargotracker.identity.IdentityTestClock;
+import com.example.cargotracker.identity.AuditRecordRows;
+import com.example.cargotracker.identity.IdentityIntegrationTest;
 import com.example.cargotracker.identity.LogCapture;
 import com.example.cargotracker.identity.SpringSessionRows;
 import com.example.cargotracker.identity.domain.model.aggregates.Company;
@@ -47,9 +47,6 @@ import org.hamcrest.Matchers;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
-import org.springframework.context.annotation.Import;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.web.servlet.MockMvc;
@@ -60,9 +57,7 @@ import org.springframework.test.web.servlet.MvcResult;
  * フィルターの連なりと Spring Session JDBC（PostgreSQL）の上で、回復コードが TOTP と同じ 2 つ目の要素として通ること、一度だけ
  * 使えること、誤りは A-01 に戻り監査記録に理由だけが残ること、登録の直後の案内を確かめる。
  */
-@SpringBootTest
-@AutoConfigureMockMvc
-@Import({TestcontainersConfiguration.class, IdentityTestClock.class})
+@IdentityIntegrationTest
 class RecoveryCodeLoginSecurityIntegrationTest {
 
     private static final String PASSWORD = "correct horse battery staple";
@@ -140,8 +135,10 @@ class RecoveryCodeLoginSecurityIntegrationTest {
         assertThat(sessions().attribute(full, SessionLifetime.AUTHENTICATED_AT))
                 .as("8 時間の起点は回復コードが通った時刻（password の段の時刻でない。Bolt 31c）")
                 .isEqualTo(recoveredAt);
-        assertThat(actionsAt(email, LOGIN_AT)).as("password の段が先").containsExactly("PASSWORD_VERIFIED");
-        assertThat(actionsAt(email, recoveredAt))
+        assertThat(new AuditRecordRows(jdbc).actionsAt(userIdOf(email), LOGIN_AT))
+                .as("password の段が先")
+                .containsExactly("PASSWORD_VERIFIED");
+        assertThat(new AuditRecordRows(jdbc).actionsAt(userIdOf(email), recoveredAt))
                 .as("回復コードの使用とログインの成功は同じ時刻に書く（順は問わない）")
                 .containsExactlyInAnyOrder("RECOVERY_CODE_USED", "LOGIN_SUCCEEDED");
         assertThat(auditActions(email)).hasSize(3);
@@ -455,14 +452,5 @@ class RecoveryCodeLoginSecurityIntegrationTest {
 
     private SpringSessionRows sessions() {
         return new SpringSessionRows(jdbc);
-    }
-
-    /** その利用者の、その時刻の監査記録の操作（監査の順を時刻で確かめる。同じ時刻の行は順を問わない。T-113）。 */
-    private List<String> actionsAt(String email, Instant at) {
-        return jdbc.queryForList(
-                "SELECT action FROM identity.audit_record WHERE actor_user_id = ? AND occurred_at = ?",
-                String.class,
-                userIdOf(email).value(),
-                java.time.OffsetDateTime.ofInstant(at, java.time.ZoneOffset.UTC));
     }
 }
