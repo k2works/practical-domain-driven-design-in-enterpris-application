@@ -3,7 +3,7 @@ type: Plan
 title: "Bolt 32b 計画 - session の失効の警告と延長（ACC-06）"
 description: "W5 の 12 本目の Bolt の計画。ログインした利用者の画面（顧客 Web・社内業務 Web）で、無操作 30 分の失効の 5 分前に警告し、画面を移らずに延長できるようにする（ACC-06、WCAG 2.2.1、横断の受入条件）。発行から 8 時間の上限も 5 分前に警告する（延長はできない。SEC-03 の必須の制限）。警告の時刻は複数のタブの間でそろえる。失効の時の入力の保持と、再認証の後に開いていた画面へ戻すことは Bolt 32e に分ける。"
 tags: [plan]
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-14T07:42:42Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-14T08:39:45Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-14T07:34:51Z }
 ---
@@ -162,7 +162,7 @@ SessionLifetimeFilter -> ブラウザ : 204（Spring Session が最終アクセ�
     - 33b の行に、確認ポイント 5 の結果（(b) なら「32b の残り時間の属性の名前も同じ直しの対象」）
     - ユーザーマニュアルの段落（32b の 2.2・2.4・付録 B、32e の分）、進み具合の行（:628）、W5 の状態
   - 完了の判定: `okf:check` ERROR 0、`documentationTest` 緑
-- [ ] **2. 8 時間の残りと延長の URL** 【承認ゲート: Red・Green、セキュリティ】
+- [x] **2. 8 時間の残りと延長の URL** 【承認ゲート: Red・Green、セキュリティ】
   - Red（単体テスト `SessionLifetimeFilterTest`）: 2 つの要素がそろった session で、8 時間の残りの秒数が request の属性に置かれる（起点の直後、上限の 1 秒前）。password の段・登録の途中・起点のない session・認証の前では置かれない。上限を過ぎたら今どおり A-03（属性は置かない）
   - Red（統合テスト `SessionTimerSecurityIntegrationTest`。`@IdentityIntegrationTest`、`MutableClock` を直接受け、`@BeforeEach` で時刻を置く）:
     - ログインした業務の画面のモデルの `sessionTimer` に、無操作の秒数（1800）と 8 時間の残りの秒数（時計を 2 時間進めたら 6 時間分）がある。応答の HTML の `data-` 属性にも出る
@@ -175,13 +175,13 @@ SessionLifetimeFilter -> ブラウザ : 204（Spring Session が最終アクセ�
     - 認証の入口と画面の層の request の属性の名前が同じ値であること（確認ポイント 5 の (b) のとき）
   - Green: `SessionLifetimeFilter` が 8 時間の残りを request の属性に置く（上限の判定と同じ起点と時計）。`SessionTimerAdvice` と `SessionController` を作る
   - 完了の判定: `check` 緑（ArchUnit の層の規則と要素の権限の参照の見張りを含む）
-- [ ] **3. 警告のダイアログと JavaScript** 【承認ゲート: Green（画面）、構造】
+- [x] **3. 警告のダイアログと JavaScript** 【承認ゲート: Green（画面）、構造】
   - 骨組み（H2）: `BrowserSession` にブラウザの時計を入れる操作（`signInAs` の前に `context.clock().install()`）を足し、`setTimeout` で開く最小のダイアログを 25 分進めて開くことを、仮のシナリオで確かめる。効かなければ止めて諮る
   - `layout/session-warning` の部分（`<dialog>`、延長のフォームは `th:action` で CSRF のトークンを持つ）を `layout/customer`・`layout/staff` に入れる（`currentActor` と `sessionTimer` があるときだけ）。`<dialog>` と `::backdrop` と案内の表示を `app.css` に足す
   - `/js/session-timeout.js`（「設計の約束」のブラウザの数え方・延長の応答の扱い・ダイアログの状態）
   - `templates/identity/session-expired.html` のコメントの「入力の保持と失効の前の警告は W5」を 32b・32e に直す
   - 完了の判定: `check` 緑。dev で起動し、画面の読み込みと延長の POST が通ることを目で確かめる
-- [ ] **4. 画面の層の受入シナリオ** 【承認ゲート: Red・Green】
+- [x] **4. 画面の層の受入シナリオ** 【承認ゲート: Red・Green】
   - `BrowserSession` に、別のタブを開く操作と、session の属性 `cargotracker.session.authenticatedAt` を書き換える部品（`JdbcTemplate`。Java の直列化の値を書く）を足す
   - `session_timeout_ui.feature`（`@ui @US-18`。横断の受入条件の失効の警告。時計を入れる前提が要るので `login_ui.feature`・`layout_ui.feature` と分ける）と、ステップ定義のクラス（新規。`LoginUiSteps` は触らない）:
     - 無操作で 25 分たつと警告が出て、延長のボタンにフォーカスがある。axe の違反がない
@@ -248,6 +248,7 @@ SessionLifetimeFilter -> ブラウザ : 204（Spring Session が最終アクセ�
 
 | 日付 | 更新内容 | 更新者 |
 | :--- | :--- | :--- |
+| 2026-10-14 | ステップ 2〜4 を終えた。H2 は確かめた（Playwright のコンテキストの時計で 25 分進めると警告が開く）。計画からの変更と見つけたこと: (1) 骨組みは仮のダイアログでなく本物の部分とスクリプトで流した（最初の UI テストで時計が効くことを確かめた）。(2) 警告の文言は HTML の `data-` 属性に置き、スクリプトは `{minutes}` を置き換えるだけにした（文言を UI 設計とテンプレートの 1 か所に保つ）。(3) 空の `role="alert"` の領域を常に置くと既存のシナリオの `getByRole(ALERT)` が 2 つに当たったので、期限が来たときに `role="alert"` の要素を差し込む形にした。(4) axe の色のコントラストの違反で、「閉じる」を `btn-secondary`、案内のリンクを `alert-link` にした。違反の報告に対象の要素を出すようにした（`BrowserSession.checkAccessibility`）。(5) `th:replace` は `th:if` より先に評価されるので、レイアウトの条件を外側の `th:block` に置いた（`@WebMvcTest` で 162 件落ちて見つけた）。(6) 違反（顧客 Web のレイアウトからスクリプトを外す）で警告のシナリオ 5 件のうち 4 件が落ち、タブの同期のシナリオは警告がなくても通ったので、別のタブを開く前に警告が出ていることを確かめる手順を足した（T-117）。(7) 利用者が閉じた（「閉じる」・Esc）ときだけ同じ期限で開かない扱いにした（延長で閉じたときの `close` のイベントが次の警告を止めていた） | anthropic/claude-opus-5-5 |
 | 2026-10-14 | ステップ 1 を終えた。計画からの変更: 期限の到来の案内の文言から「操作がなかったため」を外した（8 時間の上限でも同じ案内が出るため）。警告を出さない画面に、`layout/public` を使う A-07 と回復コードの保存の画面を足した。「別のダイアログは挟まない」の方針は ui_design の :232 でなく C-17・S-09 の行にあったので、そこを参照した | anthropic/claude-opus-5-5 |
 | 2026-10-14 | 承認（確認ポイント 1〜13 は推奨のまま）。`/goal Bolt32b` の下で、ステップの承認ゲートでは止めずに進め、終了報告でまとめて確かめを受ける。ステップ 6 の支援技術の手動確認は人が行う | human:kakimomokuri |
 | 2026-10-14 | 詳細整合性検証（14 件）と横断整合性検証（18 件）の指摘を反映した。用語を上流に合わせて「警告」にした。画面の層のテストはサーバーの時計を動かせないので、8 時間は session の属性を書き換えて確かめる。アプローチの欄に表から外れる理由、H2 の骨組みをステップ 3 の最初に、`SessionLifetimeFilterTest` の単体テスト。CSRF と失効の経路（無操作の失効の延長は CSRF の拒否で A-03、403 は session にトークンがあるときだけ）、延長の最終アクセスは行を古くしてから確かめる。延長の応答の扱い（302 だけを失効に）、Esc・8 時間への切り替え・期限の到来をモーダルでない案内に、A-03 へのリンク。htmx でなく `fetch`・モーダルのダイアログの例外・`<dialog>` を選ぶ理由。属性の名前の 2 つの定数と Bolt 31c のレビュー 14 の関係（確認ポイント 5）、request の属性の接頭辞、`SessionTimerAdvice` は session を作らない。ステップ 1 の対象に ui_design の 5 か所・architecture_backend・ADR-011・test_strategy の 2 か所・user_story・release_plan の付随の節。`BrowserSession` の時計と別のタブ、JavaScript を置くレイアウト、`app.css`、テンプレートのコメント。マニュアルは 2.4 と付録 B の Q1-2 を直す（確認ポイント 9）。デモの添付は終了報告の承認の後。支援技術の手動確認。Bolt 32d のフラグ引数と時計の受け方の引き継ぎ。T-101 の引用を直した。時間を 4 時間 30 分に | anthropic/claude-opus-5-5 |
