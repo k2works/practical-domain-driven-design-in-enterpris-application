@@ -4,7 +4,7 @@ title: "Bolt 32c 計画 - request ごとの利用者の確かめ（US-18 AC6）"
 description: "W5 の 10 本目の Bolt の計画。利用停止・所属企業の無効化・権限の取消しを既存の session の次の request から反映する（US-18 AC6、IA-INV-04、SEC-12 の役割と利用状態の分）。request ごとに利用者・役割・企業を 1 回の SQL で読み、アプリケーションのサービスが判定して主体を作り直す（ADR-012 の見直しの 3）。止められた利用者の session は捨てて A-03 に送り SESSION_REVOKED を記録し、取り消した役割の URL は A-04 にする。31d から送った低の指摘とテストの整理は Bolt 32d。"
 tags: [development,bolt-plan]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-14T02:05:16Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-14T02:39:24Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-14T01:20:58Z }
   - { by: human:kakimomokuri, at: 2026-10-14T01:21:42Z }
@@ -247,7 +247,7 @@ Biz --> A04 : 取り消した役割の URL
   - `creating-manual` の手順で、`docs/manual/02-ログインと共通の画面.md` の 2.3（役割を外された後に、その役割の画面を開くと示される）と 2.4（「この画面でできること」に、管理者が利用を止めた後の次の操作でも示されることを足す。「注意・補足」の問い合わせ先の行を、続けてログインできないときにも当てる）、`付録B-トラブルシューティング.md` の Q1-2・Q1-3 を直す。画面に出ない理由（利用停止）はマニュアルにだけ書き、画面の文言は変えない（確認ポイント 2）
   - 画面と文言は変わらないので、キャプチャ（`02-forbidden.png`・`02-session-expired.png`）は撮り直さない。2.1 の 2 段階のログインの書き直しは Bolt 33b のまま
   - 完了の判定: `okf:check` ERROR 0、`documentationTest` 緑。マニュアルの HTML の出力（`npx gulp manual:build`。`docs/assets/manual-output/cargo-tracker/`）を作り直す
-- [ ] **6. SonarQube と開発レビューとデモと終了報告** 【承認ゲート: 終了報告】
+- [x] **6. SonarQube と開発レビューとデモと終了報告** 【承認ゲート: 終了報告】
   - SonarQube（`sonar-local:check`。T-104）
   - 開発レビュー（プログラマー、アーキテクト（フィルター・サービス・ポートの置き場所）、テスター（取消しの境界と読み出しの回数）、テクニカルライター（A-03 の文言と止められた利用者、マニュアルの 2.3・2.4・付録 B。T-90））
   - レビューの直しの後にデモの動画を撮り、#13 に添付する（T-105）。`bolt_32c_report.md`。release_plan の W5 の 32c の行、開発の索引。#13 に進み具合をコメントする
@@ -282,12 +282,12 @@ Biz --> A04 : 取り消した役割の URL
 
 ## 完了条件
 
-- [ ] 利用停止・所属企業の無効化・利用者の削除の後の次の request は、業務データを出さずに session を捨てて A-03 に移り、`SESSION_REVOKED` が残る。password の段だけの主体も同じで、TOTP の照合に進まない
-- [ ] 役割の取消し・追加が次の request から認可とナビに効き（取り消した URL は A-04）、要素の権限と session の起点の時刻は保たれる
-- [ ] 認証済みの 1 つの request の読み出しが 1 回で、未認証の request と期限の切れた session では読まない。読み出し・監査の誤りと役割 0 件は session を捨てて 500
-- [ ] `check` と `uiTest` が緑。push して CI を確かめた。SonarQube の Quality Gate が PASS、`okf:check` ERROR 0
-- [ ] ユーザーマニュアルの 2 章の 2.3・2.4 と付録 B の Q1-2・Q1-3 が、AC6 の振る舞い（役割を外された後は「権限がありません」、利用を止められた後は「もう一度ログインしてください」）を説明している。マニュアルの HTML を作り直した
-- [ ] 開発レビュー、レビューの後のデモの動画と #13 への添付、終了報告。#13 に進み具合をコメントした
+- [x] 利用停止・所属企業の無効化・利用者の削除の後の次の request は、業務データを出さずに session を捨てて A-03 に移り、`SESSION_REVOKED` が残る。password の段だけの主体も同じで、TOTP の照合に進まない
+- [x] 役割の取消し・追加が次の request から認可とナビに効き（取り消した URL は A-04）、要素の権限と session の起点の時刻は保たれる
+- [x] 認証済みの 1 つの request の読み出しが 1 回で、未認証の request と期限の切れた session では読まない。読み出し・監査の誤りと役割 0 件は session を捨てて 500
+- [x] `check` と `uiTest` が緑。push して CI を確かめた。SonarQube の Quality Gate が PASS、`okf:check` ERROR 0
+- [x] ユーザーマニュアルの 2 章の 2.3・2.4 と付録 B の Q1-2・Q1-3 が、AC6 の振る舞い（役割を外された後は「権限がありません」、利用を止められた後は「もう一度ログインしてください」）を説明している。マニュアルの HTML を作り直した
+- [x] 開発レビュー、レビューの後のデモの動画と #13 への添付、終了報告。#13 に進み具合をコメントした
 
 ### デモ項目
 
@@ -300,6 +300,7 @@ Biz --> A04 : 取り消した役割の URL
 | 2026-10-14 | 初版作成（承認待ち）。開始準備で、Bolt 32 の終了報告の Try（T-113・T-114）と既知の課題、US-18 AC6、ADR-012 の見直しの 3、認証の入口と層の規則を調べ、human:kakimomokuri の決定（32c と 32d に分ける、止められた利用者は A-03、`SESSION_REVOKED` を書く、Bolt 32 の議題 4・5 は採らない）を反映した | anthropic/claude-opus-5-5 |
 | 2026-10-14 | 詳細整合性検証（21 件）と横断整合性検証（21 件）の指摘を反映した。判定と監査を `commandservices` のサービスに、読み出しをドメインのポートにして置き場所の案を並べ直した、フィルターの位置を `SessionLifetimeFilter` の直後と明記した、役割の取消しは A-04 にし UI 設計の 3 か所を直す、役割 0 件・DB の誤り・監査の誤りは fail-closed の 500、`user_role` の外部結合、`UtcInstant` と `LOGOUT`、監査の操作者、A-03 の文言の確認、4 図を PlantUML にし ER 図と画面遷移図を足した、ステップ 1 の対象の行（ADR-012 の決定 3・4・6・ネガティブ・コンプライアンス、domain_model・data_model・ui_design・non_functional・user_story・release_plan の行）、32d の行の書き方と順序、T-102・T-107・T-108・T-111 の扱い、既知の課題の行き先。T-114 の特性（`toBuilder` と session への保存）を使い捨てのテストで確かめた結果を書いた | anthropic/claude-opus-5-5 |
 | 2026-10-14 | 人の指示で、完了条件とステップ 5 にユーザーマニュアルの AC6 の分（2 章の 2.3・2.4、付録 B の Q1-2・Q1-3。キャプチャは撮り直さない）を入れた。見込みを約 4 時間 15 分に直した | anthropic/claude-opus-5-5、指示 human:kakimomokuri |
+| 2026-10-14 | 全ステップを終えた。開発レビューで公開の URL を確かめから外し（計画の約束どおり）、500 のときのログはコンテナが残す形に変えた（[Bolt 32c 終了報告](bolt_32c_report.md) の議題 2・4） | anthropic/claude-opus-5-5 |
 | 2026-10-14 | 承認（確認ポイント 1〜10 は推奨のまま）。`/goal Bolt 32c` の下で、ステップの承認ゲートでは止めずに進め、終了報告でまとめて確かめを受ける | human:kakimomokuri |
 
 ## 関連ドキュメント

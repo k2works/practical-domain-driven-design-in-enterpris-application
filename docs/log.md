@@ -1,6 +1,12 @@
 # Docs Update Log
 
 ## 2026-10-14
+* **Update**: [bolt_32c_report](/development/cargo-tracker/bolt_32c_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_32c_plan](/development/cargo-tracker/bolt_32c_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_32c_report](/development/cargo-tracker/bolt_32c_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_32c_plan](/development/cargo-tracker/bolt_32c_plan.md) を更新（anthropic/claude-opus-5-5）
 * **Update**: [付録B-トラブルシューティング](/manual/付録B-トラブルシューティング.md) を更新（anthropic/claude-opus-5-5）
 * **Update**: [02-ログインと共通の画面](/manual/02-ログインと共通の画面.md) を更新（anthropic/claude-opus-5-5）
 * **Update**: [012-authentication-principal-and-session](/adr/cargo-tracker/012-authentication-principal-and-session.md) を更新（anthropic/claude-opus-5-5）
