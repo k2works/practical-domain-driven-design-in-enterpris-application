@@ -14,6 +14,7 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.util.Arrays;
+import org.springframework.stereotype.Component;
 
 /**
  * TOTP の秘密の発行（Bolt 31b、US-18 AC7、ADR-011）。160 ビットの秘密を乱数で作り、持ち主に結び付けて暗号化する（AAD）。
@@ -21,6 +22,7 @@ import java.util.Arrays;
  * この部品の外に出さない（使い終えた配列は消す）。QR は ZXing で行列を作り、CSP（{@code default-src 'self'}）のもとで描けるよう
  * {@code style} を使わず {@code fill} の属性で色を付ける。
  */
+@Component
 public final class RandomTotpSecretIssuer implements TotpSecretIssuer {
 
     /** 秘密の長さ（160 ビット。RFC 4226 の推奨、ADR-011）。 */

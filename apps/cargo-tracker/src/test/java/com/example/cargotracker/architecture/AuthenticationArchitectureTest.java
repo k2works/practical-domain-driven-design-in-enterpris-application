@@ -1,12 +1,19 @@
 package com.example.cargotracker.architecture;
 
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes;
+import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.methods;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 
+import com.tngtech.archunit.core.domain.JavaClass;
+import com.tngtech.archunit.core.domain.JavaMethod;
 import com.tngtech.archunit.core.importer.ImportOption;
 import com.tngtech.archunit.junit.AnalyzeClasses;
 import com.tngtech.archunit.junit.ArchTest;
+import com.tngtech.archunit.lang.ArchCondition;
 import com.tngtech.archunit.lang.ArchRule;
+import com.tngtech.archunit.lang.ConditionEvents;
+import com.tngtech.archunit.lang.SimpleConditionEvent;
+import java.util.Set;
 
 /**
  * identity 以外は認証の方式に依存しない（ADR-012、バックエンドアーキテクチャ「認証方式を業務規則へ埋め込まない」）。
@@ -193,4 +200,44 @@ class AuthenticationArchitectureTest {
             .andShould()
             .dependOnClassesThat()
             .resideInAPackage("com.eatthepath.otp..");
+
+    /**
+     * パッケージの外で、identity の合成ルートが組み立ててよい型。設定の値から作る暗号の部品と、dev の A-02 の入力済みのコードの関数の
+     * 型（合成ルートから画面の層への唯一の例外。Bolt 31）。
+     */
+    private static final Set<String> ALLOWED_BEAN_TYPES = Set.of(
+            "com.example.cargotracker.identity.infrastructure.crypto.AesGcmSecretCipher",
+            "com.example.cargotracker.identity.interfaces.web.DevTotpCodeSource");
+
+    /** identity の合成ルートの {@code @Bean} が返してよい型（Bolt 32d、バックエンドアーキテクチャの identity の合成ルートの規則）。 */
+    private static final ArchCondition<JavaMethod> 合成ルートが組み立ててよい型を返す =
+            new ArchCondition<>("identity の合成ルートが組み立ててよい型を返す") {
+                @Override
+                public void check(JavaMethod method, ConditionEvents events) {
+                    JavaClass type = method.getRawReturnType();
+                    boolean allowed =
+                            type.getPackageName().startsWith("com.example.cargotracker.identity.application.internal")
+                                    || type.getPackageName()
+                                            .startsWith("com.example.cargotracker.identity.infrastructure.security")
+                                    || type.getPackageName().startsWith("org.springframework")
+                                    || ALLOWED_BEAN_TYPES.contains(type.getName());
+                    events.add(new SimpleConditionEvent(
+                            method, allowed, method.getFullName() + " は " + type.getName() + " を返す"));
+                }
+            };
+
+    /**
+     * identity の送信アダプター（persistence・crypto）は部品探索で拾い、合成ルートの {@code @Bean} はアプリケーションのサービス、
+     * Spring Security の入口と部品、設定の値から作る {@code AesGcmSecretCipher}、dev の {@code DevTotpCodeSource} に限る（Bolt 32d）。{@code @Bean} がないと空振りする
+     * ので、なければ落とす（T-107）。
+     */
+    @ArchTest
+    static final ArchRule identityの合成ルートのBeanは規則の型だけを返す = methods()
+            .that()
+            .areAnnotatedWith("org.springframework.context.annotation.Bean")
+            .and()
+            .areDeclaredInClassesThat()
+            .resideInAPackage("com.example.cargotracker.identity.infrastructure.config..")
+            .should(合成ルートが組み立ててよい型を返す)
+            .allowEmptyShould(false);
 }

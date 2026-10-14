@@ -20,8 +20,6 @@ import com.example.cargotracker.identity.domain.model.aggregates.TotpSecretIssue
 import com.example.cargotracker.identity.domain.model.aggregates.UserStandingRepository;
 import com.example.cargotracker.identity.domain.model.rules.LockPolicy;
 import com.example.cargotracker.identity.infrastructure.crypto.AesGcmSecretCipher;
-import com.example.cargotracker.identity.infrastructure.crypto.RandomRecoveryCodeGenerator;
-import com.example.cargotracker.identity.infrastructure.crypto.RandomTotpSecretIssuer;
 import java.time.Clock;
 import java.util.Map;
 import org.springframework.boot.context.properties.bind.Bindable;
@@ -90,16 +88,6 @@ public class IdentityConfiguration {
             Clock clock,
             TransactionTemplate transactionTemplate) {
         return new RecoveryCodeVerificationService(codes, auditRecords, hasher, clock, transactionTemplate);
-    }
-
-    @Bean
-    RandomTotpSecretIssuer totpSecretIssuer(AesGcmSecretCipher cipher) {
-        return new RandomTotpSecretIssuer(cipher);
-    }
-
-    @Bean
-    RandomRecoveryCodeGenerator recoveryCodeGenerator() {
-        return new RandomRecoveryCodeGenerator();
     }
 
     @Bean

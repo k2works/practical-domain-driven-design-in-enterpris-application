@@ -4,7 +4,7 @@ title: "Bolt 32d 計画 - 認証の部品の低の指摘とテストの整理"
 description: "W5 の 11 本目の Bolt の計画。Bolt 31 から送ってきた認証の部品の低の指摘（Base32 の不正な長さ、合成ルートの部品の組み立て方）を片づけ、Bolt 32・32c で増えた identity の統合テストの重複と揺れの元を整理する（共通の時計の設定と spy の基底で Spring のコンテキストを減らす、テストの補助の共通化、同時の待ちを PostgreSQL のロックの待ちで判定、dev のテストの刻みの境界、8 時間の起点の値と監査の順、ロックのシナリオの axe）。"
 tags: [plan]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-14T03:56:21Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-14T04:09:53Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-14T03:55:21Z }
 ---
@@ -86,7 +86,7 @@ Spring Session の表を参照する 5 つのクラスと操作:
 
 ### 設計の約束（Try T-1）
 
-- **identity の合成ルートの規則**（architecture_backend.md に、identity の規則として書く）: identity の送信アダプター（`infrastructure.persistence`・`infrastructure.crypto`）は `@Repository`・`@Component` で部品探索に拾わせる。identity の合成ルート（`infrastructure.config`）の `@Bean` が返してよい型は、`identity.application.internal..`（部品探索から外したアプリケーションのサービス・イベントハンドラー・問い合わせ）、`identity.infrastructure.security..`（Spring Security の入口の部品）、`org.springframework..`（Spring Security の部品・フィルターの連なり・Flyway の設定など）、設定の値から作る部品 `AesGcmSecretCipher` に限る。`IdentityConfiguration` はアプリケーションのサービスと設定から作る部品、`SecurityConfiguration` は Spring Security の部品、`DevLoginGuardConfiguration`・`IdentityWebConfiguration` は今のまま。判定は `@Bean` のメソッドの戻り値の型が、これらのパッケージの型か `AesGcmSecretCipher` か
+- **identity の合成ルートの規則**（architecture_backend.md に、identity の規則として書く）: identity の送信アダプター（`infrastructure.persistence`・`infrastructure.crypto`）は `@Repository`・`@Component` で部品探索に拾わせる。identity の合成ルート（`infrastructure.config`）の `@Bean` が返してよい型は、`identity.application.internal..`（部品探索から外したアプリケーションのサービス・イベントハンドラー・問い合わせ）、`identity.infrastructure.security..`（Spring Security の入口の部品）、`org.springframework..`（Spring Security の部品・フィルターの連なり・Flyway の設定など）、設定の値から作る部品 `AesGcmSecretCipher`、dev の `DevTotpCodeSource`（Bolt 31 の合成ルートから画面の層への例外。ステップ 3 の Red で見つけて足した）に限る。`IdentityConfiguration` はアプリケーションのサービスと設定から作る部品、`SecurityConfiguration` は Spring Security の部品、`DevLoginGuardConfiguration`・`IdentityWebConfiguration` は今のまま。判定は `@Bean` のメソッドの戻り値の型が、これらのパッケージの型か `AesGcmSecretCipher` か
 - **Base32**: 空白を除き大文字にし、末尾の埋め草（`=`）を除いた長さを 8 で割った余りが 1・3・6 なら拒む（RFC 4648 で現れない長さ）。最後の文字の余りのビットが 0 でなければ拒む（同じバイト列に 2 つの書き方を許さない）。埋め草を付けるなら全体の長さが 8 の倍数であること（`MY=` は拒み、`MY======` と `MY` は通る）。dev の固定の秘密の設定が不正なら、`DevTotpCodes` の構築で復号するので起動の時点で失敗する（今は黙って短い秘密になる）
 - **テストの共通の設定**: 時計は `identity` のテストの共通の `@TestConfiguration`（`MutableClock` を `@Primary`）を `@Import` する。同じ組の設定を使うクラスは Spring のコンテキストを共有する。spy を使う 2 つのクラス（`AuthenticationErrorHandlingIntegrationTest`・`SessionRevalidationSecurityIntegrationTest`）は、同じ spy のフィールドの組（`UserStandingRepository`・`UserRepository`・`CompanyRepository`・`AuditRecordRepository`・`TotpCodeGenerator`・`LoginFailureRepository`）と共通の時計の `@Import` を持つ基底のクラスを継ぐ。`AuthenticationErrorHandlingIntegrationTest` は今まで本物の時計を使っていたので、`@BeforeEach` で時計を決めた時刻に置く。spy の後片付けは既定（各テストの後の `reset`）に任せ、テストの途中の `reset` は残す
 - **待ちの判定**: `OverlappingTransactions` に `DataSource`（または `JdbcTemplate`）を渡す。先の操作のトランザクションの中で `pg_backend_pid()` を取り、別の接続で `pg_blocking_pids(pid)` にその pid を含む接続が現れるまで待ってから（タイムアウトで失敗）、先をコミットする。今の「500 ミリ秒の間に終わらない」の確かめも残す。判定の SQL はテストの補助の中に置き、本体のコードに置かない。4 つの呼び出し元を直す
@@ -136,11 +136,11 @@ RandomTotpSecretIssuer ..> AesGcmSecretCipher
   - test_strategy.md: 統合テストの節に、identity の統合テストは共通の時計の設定と spy の基底で Spring のコンテキストを共有することと、同時の待ちは PostgreSQL のロックの待ちで判定することを足す。アーキテクチャテストの表に `@Bean` の戻り値の型の見張り。アクセシビリティの節に、同じ画面を繰り返し表示するシナリオでは axe を 1 回目だけにする例外
   - release_plan.md の W5 の節: 32d の行を本計画に（承認ゲートは「ステップごと（構造）」）。557 行の局面とアプローチの 32d の文を「振る舞いの変わる Base32 の 1 つだけをインサイドアウトの TDD」に直す。後に回すものを行に書く（T-89）: 33b の行に Bolt 31d から送った残り（`instanceof` の `switch` 化、空の復号の結果）と「5 回」「15 分」の文言の重複、34 の行にロックと IA-INV-04 の明文化と「暗号の部品は crypto にある」の規則、W10 の持ち込みに 500 の応答の画面・監査の書き込みのロールバック・request ごとの SQL と接続プール・`password_hash` の読み出し・DB の往復の回数。W5 の状態
   - 完了の判定: `okf:check` ERROR 0、`documentationTest` 緑
-- [ ] **2. Base32 の不正な長さ** 【承認ゲート: Red・Green、セキュリティ（dev だけ）】
+- [x] **2. Base32 の不正な長さ** 【承認ゲート: Red・Green、セキュリティ（dev だけ）】
   - Red: `Base32Test` に、余りが 1・3・6 の長さ（埋め草の有無、空白と小文字を含む形）、余りのビットが 0 でない最後の文字（`MY` は通り `MZ` は拒む）、埋め草の数の誤り（`MY=`）を拒むこと、正しい長さの全部（余り 0・2・4・5・7、埋め草の有無）が今どおり通ることを足す（「ないこと」に「あること」を並べる。T-106）
   - Green: `Base32.decode` で長さ・余りのビット・埋め草の数を確かめる
   - 完了の判定: `check` 緑。dev の設定の秘密（`application-dev` の 5 人分。どれも 32 文字）が今どおり読めること（`DevTotpCodesTest`・`DevTotpCredentialsDevProfileTest`）
-- [ ] **3. identity の合成ルートの規則** 【承認ゲート: 構造】
+- [x] **3. identity の合成ルートの規則** 【承認ゲート: 構造】
   - `RandomTotpSecretIssuer`・`RandomRecoveryCodeGenerator` に `@Component` を付け、`IdentityConfiguration` の `@Bean` を外す。`ComponentScanTest`・ArchUnit・起動のテストが緑のまま
   - 見張り: identity の `infrastructure.config` の `@Bean` のメソッドの戻り値の型が「設計の約束」の型であること（ArchUnit のメソッドの規則。書きにくければ反射のテスト）。対象が存在すること（`@Bean` のメソッドが 1 つ以上あること）を先に確かめる（T-107）。違反（暗号の部品の `@Bean` を足す）を入れて落ちることを確かめる（T-112）
   - 完了の判定: `check` 緑

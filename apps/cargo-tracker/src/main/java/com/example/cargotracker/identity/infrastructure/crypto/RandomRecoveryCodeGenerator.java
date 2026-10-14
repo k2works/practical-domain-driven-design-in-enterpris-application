@@ -8,12 +8,14 @@ import java.util.HexFormat;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+import org.springframework.stereotype.Component;
 
 /**
  * 回復コードの生成（Bolt 31b、SEC-09、UI 設計「A-07」）。{@value RecoveryCode#CODES_PER_USER} 個を乱数で作る。形は 8 文字の
  * 16 進を 4 文字ずつハイフンで区切る（{@code 1a2b-3c4d}。32 ビット）。総当たりはロック（5 回）と bcrypt のハッシュで抑える。
  * 一組の中に同じコードは入れない。
  */
+@Component
 public final class RandomRecoveryCodeGenerator implements RecoveryCodeGenerator {
 
     private static final int CODE_BYTES = 4;
