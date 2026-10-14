@@ -214,6 +214,22 @@ public class LoginUiSteps {
                 .isVisible();
     }
 
+    @もし("管理者がその利用者の利用を止める")
+    public void 管理者がその利用者の利用を止める() {
+        users.suspend(role);
+    }
+
+    @ならば("業務データを出さずに再ログインの案内が表示される")
+    public void 業務データを出さずに再ログインの案内が表示される() {
+        page().waitForURL(url -> url.endsWith("/session-expired"));
+        assertThat(page().getByRole(AriaRole.HEADING, new Page.GetByRoleOptions().setName("もう一度ログインしてください")))
+                .isVisible();
+        assertThat(page().getByRole(AriaRole.NAVIGATION)).hasCount(0);
+        assertThat(page().getByRole(AriaRole.LINK, new Page.GetByRoleOptions().setName("ログインへ")))
+                .isVisible();
+        browser.checkAccessibility();
+    }
+
     @ならば("{string} と表示される")
     public void と表示される(String text) {
         assertThat(page().getByText(text)).isVisible();

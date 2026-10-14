@@ -129,6 +129,16 @@ public class UiUsers {
         return RECOVERY_CODE;
     }
 
+    /**
+     * 役割の利用者の利用を止める（AC6 のシナリオ。Bolt 32c）。利用停止の操作（US-16）は Bolt 34 で作るので、テストの準備として
+     * DB の値を変える。
+     */
+    public void suspend(Role role) {
+        jdbc.update(
+                "UPDATE identity.app_user SET status = 'SUSPENDED' WHERE id = ?",
+                of(role).userId().value());
+    }
+
     /** 役割の利用者のメールアドレスと password。初めて求められたときに作る。 */
     public Credentials of(Role role) {
         return created.computeIfAbsent(role, each -> create(each, true));

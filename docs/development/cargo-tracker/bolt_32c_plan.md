@@ -240,7 +240,7 @@ Biz --> A04 : 取り消した役割の URL
     - fail-closed: 読み出しの DB の誤り、`SESSION_REVOKED` の書き込みの誤り、役割 0 件は 500 で、session が捨てられ、エラーのログが残る（`LogCapture`。T-111）
   - Green: `SessionRevalidationFilter`、`SecurityConfiguration` の組み立て（`addFilterAfter(…, SessionLifetimeFilter.class)`）、`SecurityConfiguration.java:55-57` と `CargoUserDetails.java:17-19` の Javadoc
   - 完了の判定: `check` 緑
-- [ ] **4. 画面の層** 【承認ゲート: セキュリティ】
+- [x] **4. 画面の層** 【承認ゲート: セキュリティ】
   - 業務の画面の feature に「利用停止された荷主担当者の次の操作は、業務データを出さずに A-03 に移る」（`@US-18-AC6 @demo @demo-bolt-32c/revoked`）。利用停止の操作はまだないので、テストの手順が DB の値を変える
   - 完了の判定: `check` と `uiTest` が緑
 - [ ] **5. ユーザーマニュアル** 【承認ゲート: 設計文書】（人の指示。2026-10-14）
