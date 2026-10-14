@@ -3,8 +3,10 @@ type: Plan
 title: "Bolt 32d 計画 - 認証の部品の低の指摘とテストの整理"
 description: "W5 の 11 本目の Bolt の計画。Bolt 31 から送ってきた認証の部品の低の指摘（Base32 の不正な長さ、合成ルートの部品の組み立て方）を片づけ、Bolt 32・32c で増えた identity の統合テストの重複と揺れの元を整理する（共通の時計の設定と spy の基底で Spring のコンテキストを減らす、テストの補助の共通化、同時の待ちを PostgreSQL のロックの待ちで判定、dev のテストの刻みの境界、8 時間の起点の値と監査の順、ロックのシナリオの axe）。"
 tags: [plan]
-status: draft
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-14T03:32:52Z }
+status: stable
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-14T03:55:21Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-10-14T03:55:21Z }
 ---
 
 # Bolt 32d 計画 - 認証の部品の低の指摘とテストの整理
@@ -202,6 +204,7 @@ RandomTotpSecretIssuer ..> AesGcmSecretCipher
 | 日付 | 更新内容 | 更新者 |
 | :--- | :--- | :--- |
 | 2026-10-14 | 初版作成（承認待ち）。開始準備で、Bolt 31 の低の指摘、Bolt 31d・32・32c の既知の課題、Bolt 32c の Try（T-115・T-116）を調べ、human:kakimomokuri の決定（Base32 は失敗へ倒す、合成ルートは今のまま規則を書く、コンテキストは時計と spy の両方、ほかの 6 項目もすべて入れる）を反映した | anthropic/claude-opus-5-5 |
+| 2026-10-14 | 承認（確認ポイント 1〜8 は推奨のまま）。`/goal Bolt32d` の下で、ステップの承認ゲートでは止めずに進め、終了報告でまとめて確かめを受ける | human:kakimomokuri |
 | 2026-10-14 | 詳細整合性検証（16 件）と横断整合性検証（10 件）の指摘を反映した。`@Bean` の見張りの許す型をパッケージで書いた（入口の部品と Spring の型）、spy の基底に共通の時計を持たせ `AuthenticationErrorHandlingIntegrationTest` は時計を置く、合成ルートの規則を identity に限った、待ちの判定の形（`pg_backend_pid`・`pg_blocking_pids`、`DataSource`、4 つの呼び出し元）、「開始準備で確かめたこと」の節（spring-test 7.0.9 のソース）、Spring Session の表の参照の 5 種類の操作、Base32 の長さを測る時点と埋め草の数、監査の同じ時刻の行は集合で、後に回すものの送り先（33b・34・W10）、release_plan の 557 行と承認ゲートの書き方、テスト戦略の見張りと axe の例外、ステップ 2 のセキュリティ（dev だけ）、ステップ 5 の時間 | anthropic/claude-opus-5-5 |
 
 ## 関連ドキュメント
