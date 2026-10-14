@@ -10532,7 +10532,7 @@
 </ul>
 </li>
 <li>完了の判定: <code>okf:check</code> ERROR 0、<code>documentationTest</code> 緑</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>2. 失効の扱いで要求を覚え、持ち越す</strong> 【承認ゲート: Red・Green、セキュリティ、構造】</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>2. 失効の扱いで要求を覚え、持ち越す</strong> 【承認ゲート: Red・Green、セキュリティ、構造】</li>
 <li>Red（統合テスト <code>ReturnAfterExpirySecurityIntegrationTest</code>。<code>@IdentityIntegrationTest</code>、<code>MutableClock</code> を直接受ける。ログインし直す前に <code>AuthenticationFactorFixtures.resetTotpStep</code> で刻みを戻す）:<ul>
 <li>無操作で失効した session（<code>SpringSessionRows.idle</code> で 31 分）で業務の画面を開くと A-03 へ移り、ログインし直すとその画面（<code>?continue</code> 付き）へ移る。覚えた要求に query 以外の parameter がない</li>
 <li>8 時間を過ぎた session で業務の画面を開くと、同じく戻る</li>
@@ -10547,7 +10547,7 @@
 </li>
 <li>Green: 失効の扱いの部品、<code>SecurityConfiguration</code>、<code>SessionLifetimeFilter</code>（コンストラクターが変われば <code>SessionLifetimeFilterTest</code> も直す）、<code>DiscardPasswordFactorFailureHandler</code>、<code>SessionTimerAdvice</code> の戻り先</li>
 <li>完了の判定: <code>check</code> 緑（層の規則と全 URL の見張りを含む）</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>3. 期限の到来の案内のリンク（画面の層の Red から）</strong> 【承認ゲート: Red・Green（画面）】</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>3. 期限の到来の案内のリンク（画面の層の Red から）</strong> 【承認ゲート: Red・Green（画面）】</li>
 <li>Red（<code>session_timeout_ui.feature</code>。機能の説明を「サーバーの session を失効させるシナリオもある」に直す）:<ul>
 <li>警告のまま期限を過ぎ、サーバーの session も切れた後に案内の「もう一度ログインする」を押すと、再認証の案内を経て、ログインし直した後に同じ画面に戻る（<code>@demo @demo-bolt-32e/return</code>）</li>
 <li>警告のまま期限を過ぎても、サーバーの session が生きていれば、案内のリンクで同じ画面がログインしたまま開く（T-119 の対）</li>
@@ -10555,7 +10555,7 @@
 </li>
 <li>Green: <code>layout/session-warning</code> と <code>session-timeout.js</code>（戻り先があればリンクにする）</li>
 <li>完了の判定: <code>check</code> を先に（T-120）、続けて <code>uiTest</code> が緑</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>4. 画面の層の受入シナリオの残りとマニュアル</strong> 【承認ゲート: Red・Green、マニュアル】</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>4. 画面の層の受入シナリオの残りとマニュアル</strong> 【承認ゲート: Red・Green、マニュアル】</li>
 <li><code>session_timeout_ui.feature</code> に足す: サーバーの session が無操作で切れた後に画面を開き直すと、再認証の案内を経てログインし直した後に同じ画面に戻る。ログインから 8 時間を過ぎた session で画面を開くと、同じく戻る</li>
 <li>マニュアル: 2.4（画面の説明の ①、操作手順 2、画面の開き方、注意・補足の食い違いの補足を消し、戻らない場合（送信の後、利用を止められたとき、別の端末）を書く）、2.5（期限の到来の案内のリンク）、付録 B の Q1-2・Q1-5。キャプチャの撮り直しが要るかを確かめる</li>
 <li><code>templates/identity/session-expired.html</code> のコメント（入力の保持は 32f）</li>
@@ -10696,6 +10696,11 @@
 </tr>
 </thead>
 <tbody>
+<tr>
+<td style="text-align: left;">2026-10-14</td>
+<td style="text-align: left;">ステップ 2〜4 と開発レビュー（4 つの観点）の直しを終えた。計画からの変更と見つけたこと: (1) 失効の扱いの部品は <code>ExpiredSessionRequestSaver</code>（<code>discardAndRemember</code>・<code>invalidateCarryingSavedRequest</code>）。持ち越しは覚えた要求がなくても新しい session を作る。(2) 戻り先の判定は画面の層では書けない（層の規則）ので、<code>SessionLifetimeFilter</code> が request の属性 <code>cargotracker.request.returnPath</code> に置き、<code>SessionTimerAdvice</code> が読む（32b の残り時間と同じ 2 つの定数。33b の直しの 3 組目）。戻り先は context path を含む。(3) 許す一覧は認可と同じ <code>PathPatternRequestMatcher</code> で判定し、書類のダウンロードと部分更新（<code>HX-Request</code>）を除く（文字列の比較では percent-encode で除外をすり抜けた。アーキテクトの指摘）。(4) 404 の本文の一致のテスト（BR-07）に戻り先（開いた URL そのもの）が入るので、比べる前に戻り先が開いた URL と同じことを確かめてから除いた。(5) 32b の画面の層のステップが案内のリンクを <code>/session-expired</code> と決めていたので、戻り先に直した（テスターが予告し、UI テストで 3 件落ちて確かめた）。(6) テストを開発レビューで足した: 社内の画面、書類のダウンロード・延長・公開の URL・8 時間の送信を覚えない、query 付きの戻り先と覚えた要求の消え方、別の利用者は前の画面へ移り権限で拒まれる、取消しの応答の Cookie を辿る、延長の失敗の後の A-01 からの復帰（UI）、<code>SessionLifetimeFilter</code> の単体テスト</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5</td>
+</tr>
 <tr>
 <td style="text-align: left;">2026-10-14</td>
 <td style="text-align: left;">承認（確認ポイント 1〜10 は推奨のまま）。<code>/goal Bolt32e</code> の下で、ステップの承認ゲートでは止めずに進め、終了報告でまとめて確かめを受ける</td>
