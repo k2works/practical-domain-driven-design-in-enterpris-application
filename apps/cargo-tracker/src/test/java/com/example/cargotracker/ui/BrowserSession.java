@@ -7,6 +7,7 @@ import com.deque.html.axecore.results.Rule;
 import com.example.cargotracker.shared.domain.Role;
 import com.microsoft.playwright.Browser;
 import com.microsoft.playwright.BrowserContext;
+import com.microsoft.playwright.Clock;
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.Video;
@@ -14,6 +15,7 @@ import com.microsoft.playwright.options.AriaRole;
 import io.cucumber.spring.ScenarioScope;
 import java.net.URI;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -124,11 +126,44 @@ public class BrowserSession implements DisposableBean {
     }
 
     /**
+     * ブラウザの時計を差し替える（Bolt 32b。session の警告を 30 分待たずに確かめる）。同じ文脈のページ（別のタブも）が同じ時計を使う。
+     * 読み込んだ後の画面のタイマーは差し替えた時計に乗らないので、ログインの前（画面を開く前）に入れる。時刻は今の実時間から始める
+     * （サーバーの時計は実時間のまま。TOTP のコードはサーバーの時刻で作る）。
+     */
+    public void installClock() {
+        context.clock().install(new Clock.InstallOptions().setTime(System.currentTimeMillis()));
+    }
+
+    /** ブラウザの時計を進め、その間に期限の来たタイマーを動かす（Bolt 32b）。サーバーの時計は進めない。 */
+    public void fastForward(Duration duration) {
+        context.clock().fastForward(duration.toMillis());
+    }
+
+    /** 同じ文脈（同じ Cookie とストレージ）で別のタブを開き、その URL を開く（Bolt 32b。タブの間の警告の同期）。 */
+    public Page openTab(String url) {
+        Page tab = context.newPage();
+        tab.navigate(url);
+        return tab;
+    }
+
+    /** いまの session の Cookie の値（Bolt 32b。テストの準備として session の属性を書き換える）。 */
+    public String sessionCookieValue() {
+        return context.cookies().stream()
+                .filter(cookie -> "SESSION".equals(cookie.name))
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException("session の Cookie がない"))
+                .value;
+    }
+
+    /**
      * いま表示している画面を axe-core で検査し、違反があればためる。
      */
     public void checkAccessibility() {
         for (Rule violation : new AxeBuilder(page).withTags(WCAG_TAGS).analyze().getViolations()) {
-            accessibilityViolations.add(page.url() + " " + violation.getId() + ": " + violation.getHelp());
+            accessibilityViolations.add(page.url() + " " + violation.getId() + ": " + violation.getHelp() + " "
+                    + violation.getNodes().stream()
+                            .map(node -> String.valueOf(node.getTarget()))
+                            .toList());
         }
     }
 
