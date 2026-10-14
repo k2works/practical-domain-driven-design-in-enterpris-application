@@ -1,5 +1,6 @@
 package com.example.cargotracker.identity.interfaces.web;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -9,6 +10,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.example.cargotracker.identity.AuthenticationFactorFixtures;
 import jakarta.servlet.http.Cookie;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -27,6 +30,9 @@ import org.springframework.test.web.servlet.MvcResult;
 @ActiveProfiles("dev")
 @AutoConfigureMockMvc
 class DevLoginPrefillDevProfileTest {
+
+    /** A-02 の認証コードの欄の入力済みの値。 */
+    private static final Pattern PREFILLED_CODE = Pattern.compile("name=\"code\"[^>]*value=\"([0-9]{6})\"");
 
     @Autowired
     MockMvc mvc;
@@ -81,10 +87,18 @@ class DevLoginPrefillDevProfileTest {
                 .andExpect(redirectedUrl("/login/totp"))
                 .andReturn();
         Cookie passwordStage = password.getResponse().getCookie("SESSION");
-        String code = devTotpCodes.codeFor(email).orElseThrow();
-
-        mvc.perform(get("/login/totp").cookie(passwordStage))
-                .andExpect(content().string(containsString("value=\"" + code + "\"")));
+        // 画面を開く前後でコードを作り、画面に出たコードがそのどちらかであることを確かめる。刻み（30 秒）の境界をまたいでも
+        // 揺れないよう、送るのは画面に出たコード（Bolt 32d）
+        String before = devTotpCodes.codeFor(email).orElseThrow();
+        String page = mvc.perform(get("/login/totp").cookie(passwordStage))
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+        String after = devTotpCodes.codeFor(email).orElseThrow();
+        Matcher prefilled = PREFILLED_CODE.matcher(page);
+        assertThat(prefilled.find()).as("A-02 が入力済み").isTrue();
+        String code = prefilled.group(1);
+        assertThat(code).isIn(before, after);
         MvcResult totp = mvc.perform(post("/login/totp")
                         .cookie(passwordStage)
                         .param("code", code)

@@ -3,6 +3,9 @@ package com.example.cargotracker.identity;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import jakarta.servlet.http.Cookie;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
@@ -47,6 +50,23 @@ public final class SpringSessionRows {
     public List<byte[]> attributeBytes(Cookie session) {
         return jdbc.query(
                 "SELECT a.attribute_bytes" + ATTRIBUTES_OF_SESSION, (rs, n) -> rs.getBytes(1), sessionId(session));
+    }
+
+    /** session の属性の値（Spring Session JDBC の既定の JDK の直列化を戻す）。属性がなければ null。 */
+    public Object attribute(Cookie session, String name) {
+        List<byte[]> values = jdbc.query(
+                "SELECT a.attribute_bytes" + ATTRIBUTES_OF_SESSION + " AND a.attribute_name = ?",
+                (rs, n) -> rs.getBytes(1),
+                sessionId(session),
+                name);
+        if (values.isEmpty()) {
+            return null;
+        }
+        try (ObjectInputStream in = new ObjectInputStream(new ByteArrayInputStream(values.getFirst()))) {
+            return in.readObject();
+        } catch (IOException | ClassNotFoundException e) {
+            throw new IllegalStateException("session の属性を読めない: " + name, e);
+        }
     }
 
     /** 最終アクセスの時刻を、いまから指定の時間だけ前にする（無操作の時間を作る。Spring Session は実時間で期限を見る）。 */

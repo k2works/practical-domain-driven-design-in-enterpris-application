@@ -100,8 +100,10 @@ public class LoginUiSteps {
 
     @もし("ログインの画面でメールアドレスと誤った password を {int} 回入れてログインする")
     public void 誤ったpasswordで続けてログインする(int times) {
+        // 同じ画面の繰り返しなので、axe の検査は 1 回目だけにする（テスト戦略のアクセシビリティ。Bolt 32d）。ロックの後の画面は
+        // 次の手順（正しい password を入れる）で検査する
         for (int i = 0; i < times; i++) {
-            submitLogin("wrong-" + credentials.password());
+            submitLogin("wrong-" + credentials.password(), i == 0);
         }
     }
 
@@ -112,14 +114,22 @@ public class LoginUiSteps {
     }
 
     private void submitLogin(String password) {
+        submitLogin(password, true);
+    }
+
+    private void submitLogin(String password, boolean checkAccessibility) {
         page().navigate(baseUrl + "/login");
-        browser.checkAccessibility();
+        if (checkAccessibility) {
+            browser.checkAccessibility();
+        }
         page().getByLabel("メールアドレス").fill(credentials.email());
         page().getByLabel("password").fill(password);
         page().getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("ログイン"))
                 .click();
         page().waitForLoadState();
-        browser.checkAccessibility();
+        if (checkAccessibility) {
+            browser.checkAccessibility();
+        }
     }
 
     @もし("ログインの画面でキー操作だけでメールアドレスと password を入れてログインする")

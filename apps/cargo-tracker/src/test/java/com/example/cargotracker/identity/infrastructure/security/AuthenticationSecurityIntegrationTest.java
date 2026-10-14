@@ -492,6 +492,25 @@ class AuthenticationSecurityIntegrationTest {
         mvc.perform(get("/customer/transport-requests").cookie(session)).andExpect(redirectedUrl("/session-expired"));
     }
 
+    // --- 8 時間の起点の値と監査の順（Bolt 31d から送った。Bolt 32d） ---
+
+    @Test
+    void 八時間の起点はTOTPが通った時刻で監査記録はpasswordの段の後にログインの成功が並ぶ() throws Exception {
+        String email = shipper(UserStatus.ACTIVE);
+        Cookie passwordStage = loginWithPassword(email);
+        Instant totpAt = LOGIN_AT.plus(Duration.ofMinutes(2));
+        advance(Duration.ofMinutes(2));
+        resetTotpStep(email);
+
+        Cookie full = submitTotp(passwordStage, currentCode(email));
+
+        assertThat(sessions().attribute(full, SessionLifetime.AUTHENTICATED_AT))
+                .as("8 時間の起点は TOTP が通った時刻（password の段の時刻でない。Bolt 31）")
+                .isEqualTo(totpAt);
+        assertThat(actionsAt(email, LOGIN_AT)).as("password の段が先").containsExactly("PASSWORD_VERIFIED");
+        assertThat(actionsAt(email, totpAt)).containsExactly("LOGIN_SUCCEEDED");
+    }
+
     // --- TOTP の失敗の監査（ADR-012 の見直しの 1、IA-INV-08。Bolt 31） ---
 
     @Test
@@ -1380,5 +1399,14 @@ class AuthenticationSecurityIntegrationTest {
 
     private SpringSessionRows sessions() {
         return new SpringSessionRows(jdbc);
+    }
+
+    /** その利用者の、その時刻の監査記録の操作（監査の順を時刻で確かめる。同じ時刻の行は順を問わない。T-113）。 */
+    private List<String> actionsAt(String email, Instant at) {
+        return jdbc.queryForList(
+                "SELECT action FROM identity.audit_record WHERE actor_user_id = ? AND occurred_at = ?",
+                String.class,
+                userIdOf(email).value(),
+                java.time.OffsetDateTime.ofInstant(at, java.time.ZoneOffset.UTC));
     }
 }

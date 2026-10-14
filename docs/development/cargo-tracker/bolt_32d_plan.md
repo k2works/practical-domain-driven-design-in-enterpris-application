@@ -152,7 +152,7 @@ RandomTotpSecretIssuer ..> AesGcmSecretCipher
   - 共通の補助: 刻みを戻す SQL（`AuthenticationSecurityIntegrationTest`・`DevLoginPrefillDevProfileTest`・`UiUsers`）と、Spring Session の表の参照（上の表の 5 つのクラス）。`ui` のパッケージからも使えるように公開の補助にする（`AuthenticationFactorFixtures` と同じ置き方）
   - 後: コンテキストの数と、`check` の件数・失敗 0 を比べる
   - 完了の判定: `check` 緑。テストの件数は整理の前と同じ
-- [ ] **5. テストの確かめを強める** 【承認ゲート: Red・Green】
+- [x] **5. テストの確かめを強める** 【承認ゲート: Red・Green】
   - `OverlappingTransactions`: 「設計の約束」の待ちの判定。4 つの呼び出し元を直す。違反（後の操作が先の行ロックを取らない）を入れて落ちることを確かめる（H2、T-112）
   - `DevLoginPrefillDevProfileTest`（`signIn`）: コードを作ってから画面を開くまでに刻みをまたぐと揺れる。画面に出たコードを読み、それが送る前後の刻みのどちらかのコードであることを確かめてから、画面に出たコードを送る
   - 8 時間の起点の値: 時計を進めて password の段と TOTP・回復コードの段の時刻を分け、`AUTHENTICATED_AT` の値が TOTP・回復コードが通った時刻であることを確かめる（`AuthenticationSecurityIntegrationTest`・`RecoveryCodeLoginSecurityIntegrationTest`）。監査記録はそのテストの利用者で絞り、`occurred_at` の順で `PASSWORD_VERIFIED` → `LOGIN_SUCCEEDED`（回復コードは `PASSWORD_VERIFIED` → {`RECOVERY_CODE_USED`, `LOGIN_SUCCEEDED`}。同じ時刻の 2 行は集合で）を確かめる（T-113）

@@ -35,6 +35,7 @@ import com.example.cargotracker.shared.domain.UtcInstant;
 import jakarta.servlet.http.Cookie;
 import java.nio.charset.StandardCharsets;
 import java.time.Clock;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.Set;
@@ -123,6 +124,8 @@ class RecoveryCodeLoginSecurityIntegrationTest {
     void 回復コードでA02を通ると業務の画面を開けsessionIDが変わり監査記録はログインの成功になる() throws Exception {
         String email = enrolledUserWithRecoveryCodes();
         Cookie passwordStage = loginWithPassword(email);
+        Instant recoveredAt = LOGIN_AT.plus(Duration.ofMinutes(2));
+        ((MutableClock) clock).setInstant(recoveredAt);
 
         MvcResult result = mvc.perform(post(TOTP_URL)
                         .cookie(passwordStage)
@@ -134,10 +137,14 @@ class RecoveryCodeLoginSecurityIntegrationTest {
         Cookie full = result.getResponse().getCookie(SESSION_COOKIE);
         assertThat(full.getValue()).as("権限が上がる段で session ID を変える（T-40）").isNotEqualTo(passwordStage.getValue());
         mvc.perform(get(BUSINESS_URL).cookie(full)).andExpect(status().isOk());
-        assertThat(sessions().attributeNames(full)).as("8 時間の起点").contains(SessionLifetime.AUTHENTICATED_AT);
-        assertThat(auditActions(email))
-                .as("時計を止めているので順は問わない")
-                .containsExactlyInAnyOrder("PASSWORD_VERIFIED", "RECOVERY_CODE_USED", "LOGIN_SUCCEEDED");
+        assertThat(sessions().attribute(full, SessionLifetime.AUTHENTICATED_AT))
+                .as("8 時間の起点は回復コードが通った時刻（password の段の時刻でない。Bolt 31c）")
+                .isEqualTo(recoveredAt);
+        assertThat(actionsAt(email, LOGIN_AT)).as("password の段が先").containsExactly("PASSWORD_VERIFIED");
+        assertThat(actionsAt(email, recoveredAt))
+                .as("回復コードの使用とログインの成功は同じ時刻に書く（順は問わない）")
+                .containsExactlyInAnyOrder("RECOVERY_CODE_USED", "LOGIN_SUCCEEDED");
+        assertThat(auditActions(email)).hasSize(3);
         assertThat(recoveryCodes.findUnusedByUserId(userIdOf(email))).hasSize(RecoveryCode.CODES_PER_USER - 1);
     }
 
@@ -448,5 +455,14 @@ class RecoveryCodeLoginSecurityIntegrationTest {
 
     private SpringSessionRows sessions() {
         return new SpringSessionRows(jdbc);
+    }
+
+    /** その利用者の、その時刻の監査記録の操作（監査の順を時刻で確かめる。同じ時刻の行は順を問わない。T-113）。 */
+    private List<String> actionsAt(String email, Instant at) {
+        return jdbc.queryForList(
+                "SELECT action FROM identity.audit_record WHERE actor_user_id = ? AND occurred_at = ?",
+                String.class,
+                userIdOf(email).value(),
+                java.time.OffsetDateTime.ofInstant(at, java.time.ZoneOffset.UTC));
     }
 }

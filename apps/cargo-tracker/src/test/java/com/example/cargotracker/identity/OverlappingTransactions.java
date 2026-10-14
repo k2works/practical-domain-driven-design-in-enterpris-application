@@ -10,18 +10,25 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
+import javax.sql.DataSource;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 
 /**
  * 2 つの操作を別々のトランザクションで重ねて動かすテストの補助（Bolt 30 の T-100、Bolt 31 で抜き出した）。
  * 先の操作はコミットを止め、後の操作がその行ロックを待っている（終わらない）ことを確かめてから、先をコミットする。
- * 開始のラッチだけで組むと、2 つが直列に動いても通ってしまう（Bolt 30 のふりかえり）。
+ * 開始のラッチだけで組むと、2 つが直列に動いても通ってしまう（Bolt 30 のふりかえり）。「一定時間の間に終わらない」だけでは、
+ * 遅いだけの操作と区別できないので、後の操作の接続が先の接続を待っていることを PostgreSQL の {@code pg_blocking_pids} で
+ * 確かめる（Bolt 32d。PostgreSQL の統合テストだけが使う）。接続はトランザクションマネージャーの {@code DataSource} から取る。
  */
 public final class OverlappingTransactions {
 
     private static final long TIMEOUT_SECONDS = 30;
     private static final long BLOCKED_CHECK_MILLIS = 500;
+    private static final long LOCK_WAIT_POLL_MILLIS = 50;
 
     private OverlappingTransactions() {}
 
@@ -42,11 +49,15 @@ public final class OverlappingTransactions {
     private static <T> List<T> overlap(TransactionTemplate transactionTemplate, Supplier<T> first, Supplier<T> second) {
         CountDownLatch firstUpdated = new CountDownLatch(1);
         CountDownLatch releaseFirst = new CountDownLatch(1);
+        JdbcTemplate jdbc = new JdbcTemplate(dataSourceOf(transactionTemplate));
+        AtomicInteger firstPid = new AtomicInteger();
         ExecutorService executor = Executors.newFixedThreadPool(2);
         try {
             CompletableFuture<T> firstResult = CompletableFuture.supplyAsync(
                     () -> transactionTemplate.execute(status -> {
                         T result = first.get();
+                        // 先のトランザクションの接続の番号（同じトランザクションの接続で読む）
+                        firstPid.set(jdbc.queryForObject("SELECT pg_backend_pid()", Integer.class));
                         firstUpdated.countDown();
                         awaitQuietly(releaseFirst);
                         return result;
@@ -59,6 +70,9 @@ public final class OverlappingTransactions {
                     .as("後の操作は先の行ロックを待つ")
                     .failsWithin(Duration.ofMillis(BLOCKED_CHECK_MILLIS))
                     .withThrowableOfType(TimeoutException.class);
+            assertThat(waitsForLockOf(jdbc, firstPid.get()))
+                    .as("後の操作の接続が先の接続のロックを待っている（遅いだけでない）")
+                    .isTrue();
             releaseFirst.countDown();
 
             return List.of(
@@ -68,6 +82,34 @@ public final class OverlappingTransactions {
             releaseFirst.countDown();
             executor.shutdownNow();
         }
+    }
+
+    private static DataSource dataSourceOf(TransactionTemplate transactionTemplate) {
+        if (transactionTemplate.getTransactionManager() instanceof DataSourceTransactionManager manager) {
+            return manager.getDataSource();
+        }
+        throw new IllegalStateException("DataSource のトランザクションマネージャーで使う");
+    }
+
+    /** 先の接続を待っている接続が現れるまで待つ（タイムアウトで偽）。待ちは別の接続（自動コミット）で読む。 */
+    private static boolean waitsForLockOf(JdbcTemplate jdbc, int blockingPid) {
+        long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(TIMEOUT_SECONDS);
+        while (System.nanoTime() < deadline) {
+            Integer waiting = jdbc.queryForObject(
+                    "SELECT count(*) FROM pg_stat_activity WHERE ? = ANY(pg_blocking_pids(pid))",
+                    Integer.class,
+                    blockingPid);
+            if (waiting != null && waiting > 0) {
+                return true;
+            }
+            try {
+                Thread.sleep(LOCK_WAIT_POLL_MILLIS);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                return false;
+            }
+        }
+        return false;
     }
 
     private static void awaitQuietly(CountDownLatch latch) {
