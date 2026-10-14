@@ -10415,7 +10415,7 @@
 <li>Red: 層の規則の骨組み（ポート・実装・サービス・フィルターの空のクラスで <code>LayerArchitectureTest</code> が緑のまま。T-101）。読み出しの契約テスト（PostgreSQL・H2: 利用者・役割・企業を 1 回で読む、役割が複数でも 1 人の <code>User</code> になる、利用者がなければ空、無効な企業・利用停止もそのまま読める、役割が 0 件なら例外）。<code>SessionRevalidationService</code> の単体テスト（利用停止・無効な企業・利用者なしで拒否の理由と <code>SESSION_REVOKED</code> 1 行、拒否でなければ今の役割・表示名・企業名の主体を返し監査を書かない、監査の追記が失敗したら例外）。特性テスト（<code>SpringSecurityCharacterizationTest</code> に足す。T-114）: 「開始準備で確かめたこと」の 2 つ</li>
 <li>Green: <code>UserStanding</code>・<code>UserStandingRepository</code>、<code>IdentityMapper.xml</code>・<code>IdentityMapper.java</code> の結合の SQL と <code>MyBatisUserStandingRepository</code>、<code>SessionRevalidationService</code>（<code>IdentityConfiguration</code> で組み立て、<code>TransactionTemplate</code>）、<code>AuditAction.SESSION_REVOKED</code>、<code>AuditRecord.sessionRevoked</code>（<code>UtcInstant</code>、理由の null を拒む）</li>
 <li>完了の判定: <code>check</code> 緑（H2 の契約テストを含む）</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>3. request ごとの確かめのフィルター</strong> 【承認ゲート: セキュリティ、認可】</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>3. request ごとの確かめのフィルター</strong> 【承認ゲート: セキュリティ、認可】</li>
 <li>Red: セキュリティの統合テスト<ul>
 <li>AC6 の利用停止: ログインして業務の画面を開ける（あること。T-106・T-107）→ 利用者を <code>SUSPENDED</code> にする → 次の業務の request は A-03 に送られ、業務データを出さず、session が捨てられ、そのテストの利用者の <code>SESSION_REVOKED</code>（理由 <code>SUSPENDED</code>）が 1 行残る（T-113）</li>
 <li>無効な企業: 所属企業を無効にすると同じ（理由 <code>COMPANY_INACTIVE</code>）。利用者を消すと同じ（理由 <code>UNKNOWN_USER</code>）</li>
