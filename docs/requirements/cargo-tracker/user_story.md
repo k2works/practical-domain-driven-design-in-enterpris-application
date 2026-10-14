@@ -4,7 +4,7 @@ title: "cargo-tracker ユーザーストーリー"
 description: "cargo-tracker MVP の価値単位のユーザーストーリー、受入条件、上流要件へのトレーサビリティ。"
 tags: [requirements, user-story]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-13T13:17:00Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-14T01:25:26Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T05:20:11Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:01:39Z }
@@ -500,7 +500,7 @@ Bolt 14 の決定（2026-10-06、human:kakimomokuri。[Bolt 14 計画](../../dev
 
 - Release 0.1 の #6（AC2）に加え、Release 1.0 の #13 から AC1 の password と session の部分、AC4、AC5 を Bolt 14 で前倒しして作る。AC1 の TOTP、AC3（ロック）、AC6（権限の取消し）、初回の TOTP の登録、password の再設定、TOTP の再登録、失効 5 分前の警告は W5 に残す。
 - AC1 の「利用者・企業・認証時刻が記録される」は、session に置く認証時刻と、監査記録のログインの成功で満たす。
-- Bolt 14 の認可はログインの時点の役割で行う。request ごとに DB の現在値を確かめるのは、AC6 とあわせて W5 で入れる。
+- Bolt 14 の認可はログインの時点の役割で行っていた。Bolt 32c で、AC6 とあわせて request ごとに DB の現在値を確かめる形に置き換えた。
 - ステージング・本番の利用者を作る手段は、利用者の管理（US-16）まで作らない。
 
 W5 の開始準備の決定（2026-10-11、human:kakimomokuri）: #13 は W5 の範囲（AC1 の TOTP、AC3、AC6、AC7、AC8、AC9 の回復コードによる再登録、失効の警告と延長）でクローズし、AC9 のシステム管理者の別経路による解除と本人への通知は #47（W6）にする。
@@ -511,6 +511,12 @@ Bolt 32 の決定（2026-10-13、human:kakimomokuri。[Bolt 32 計画](../../dev
 - AC3 の「追加試行が拒否される」は、ロック中も AC2 と同じく誤りと同じ応答と文言で拒む。ロックの有無と解ける時刻は示さず、誤りの文言に一般の予告「続けて 5 回誤ると、15 分ログインできなくなります。」を足す。
 - 利用者を変えながら password を試す攻撃（S-02）は利用者ごとのロックでは止まらないので、W10 の WAF の送信元ごとの流量の規則（SEC-20）で扱う。
 - AC6 の request ごとの役割の確認は Bolt 32c で作る。
+
+Bolt 32c の決定（2026-10-14、human:kakimomokuri。[Bolt 32c 計画](../../development/cargo-tracker/bolt_32c_plan.md) の確認ポイント 1〜10、[ADR-012](../../adr/cargo-tracker/012-authentication-principal-and-session.md) の見直しの 3）:
+
+- AC6 の「再認証が要求される」は、利用停止・所属企業の無効化・利用者の削除の後の次の request で、業務データを出さずに session を捨てて A-03 に送ることで満たす。止められたことは画面に示さない（ログインし直すと A-01 の誤りになり、理由は管理者に確かめる）。password の段だけの主体（A-02・A-07 の途中）も同じで、TOTP・回復コードの段に進めない。session を捨てたことは監査記録 `SESSION_REVOKED` に残す。
+- AC6 の「管理者への確認が要求される」は、役割を外された後にその役割の URL を開くと A-04（権限なし。管理者への問い合わせを示す）になることで満たす。残した役割の画面は使え、足した役割は次の request から使える。役割の変更だけでは監査記録を書かない（利用者の管理の監査は US-16 の Bolt 34）。
+- 利用停止・権限の取消しの操作は US-16（Bolt 34）で作るので、Bolt 32c では DB の値を変えて確かめる。
 
 ### US-19 荷受人の参照許可を管理する
 
