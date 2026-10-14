@@ -10575,7 +10575,7 @@
 <h2 id="_7">ステップ計画<a class="headerlink" href="#_7" title="Permanent link">&para;</a></h2>
 <p>状態の記号: <code>[ ]</code> 未着手、<code>[-]</code> 進行中、<code>[?]</code> 承認待ち、<code>[x]</code> 完了。各ステップの終わりに <code>check</code> が緑であることと、計画からの変更を設計文書に反映したこと（T-53）を確かめ、push して CI を確かめる（T-26、T-65、T-118）。コミットは pathspec で作る（T-84、T-110）。複数行の書き換えはスクリプトのファイルにする（T-103）。ステップ 1 を push してからコードのステップを push する（T-109）。共通の部品を変えたら <code>check</code> を先に流す（T-120）。</p>
 <ul class="task-list">
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>1. 設計文書</strong> 【承認ゲート: 設計文書】</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>1. 設計文書</strong> 【承認ゲート: 設計文書】</li>
 <li>ui_design.md: 用語（入力の控えと業務の下書きの区別）、session の警告の節（期限の到来の案内の本文とリンクの語「画面を開き直す」・戻り先がないとき、延長の失敗の文言）、知らせと案内の文言・<code>role="status"</code>・フォーカスを移さないこと・「消す」の後の知らせ、共通部品の表に「入力の控えの知らせ」、A-03 の行と文言、エラーと例外の扱い（:1037・:1045・:1118・:1119）、画面遷移図のラベル（:262-264）とログインした別の画面の案内からの遷移、送信の後に描き直した画面は保持しないこと、C-03 は段階 1 から開くこと</li>
 <li>architecture_frontend.md: 部分更新の方針の例外（:29）、「session の時間制限」と警告の節の入力の保持（<code>session-input.js</code>、キーと中身、写す時・戻す時・捨てる時、正規化、CustomEvent、公開のレイアウトでの印、スクリプトの順序）、「ブラウザが持つのは時刻と戻り先の path だけ」（:117・:119）と「利用者の識別子は置かない」（:116）の書き分け、取消しの扱い（:120）</li>
 <li>non_functional.md: ACC-06（入力の保持、送信が拒まれた場合の案内）、SEC-17（XSS のとき控えが読まれる。CSP と <code>.value</code> で入れることで抑える）、PRV-01（荷受人の連絡先などがそのタブに最長 8 時間残る）</li>

@@ -7326,6 +7326,17 @@
   <a href="#_9" class="md-nav__link">
     <span class="md-ellipsis">
       
+        改訂の経緯
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_10" class="md-nav__link">
+    <span class="md-ellipsis">
+      
         備考
       
     </span>
@@ -10306,6 +10317,7 @@
 <li>変更用のフォームは <code>commandId</code> と対象の版を隠し項目に持つ（ARCH-HO-01）。</li>
 <li>MVP では REST API を作らない。外部の利用者が現れた時点で <code>interfaces.rest</code> を追加する。</li>
 <li>テンプレートエンジンと部分更新のライブラリは Thymeleaf 3.1 と htmx 2.0 とする（ADR-006 で決定）。</li>
+<li>業務状態をクライアントに持たない。例外は失効の時の入力の控えだけである（Bolt 32f。下の「改訂の経緯」）。</li>
 </ul>
 <h3 id="_4">代替案<a class="headerlink" href="#_4" title="Permanent link">&para;</a></h3>
 <table>
@@ -10344,7 +10356,11 @@
 <li>顧客向けの各画面について、料金・契約条件・書類が HTML に含まれないことを自動テストで確認する。</li>
 <li>主要フローの自動テストと支援技術による手動確認で、BR-13 の要求を確認する。</li>
 </ul>
-<h2 id="_9">備考<a class="headerlink" href="#_9" title="Permanent link">&para;</a></h2>
+<h2 id="_9">改訂の経緯<a class="headerlink" href="#_9" title="Permanent link">&para;</a></h2>
+<ul>
+<li>2026-10-14: Bolt 32f の計画の承認で、失効の時の入力の控えを「業務状態をクライアントに持たない」の例外にした。送信していない入力を、ブラウザのそのタブ（sessionStorage）に写し、同じ利用者がログインし直して同じ画面に戻ったらブラウザが戻す（ACC-06、US の横断受入条件の「未保存の入力は失われず再認証後に再開できる」）。控えは送信の前の入力の写しで、業務状態の正ではない（正はサーバーにあり、控えを戻しても利用者が送信するまで何も変わらない）。サーバーに送信していない入力を置かないため、ブラウザに置く。置き場所・利用者の確かめ・捨てる時・個人情報と XSS の扱いは <a href="../012-authentication-principal-and-session/">ADR-012</a> の決定 3 に置く（human:kakimomokuri が決定）。</li>
+</ul>
+<h2 id="_10">備考<a class="headerlink" href="#_10" title="Permanent link">&para;</a></h2>
 <ul>
 <li>著者: anthropic/claude-opus-5-5（AI の提案。human:kakimomokuri が 2026-10-01 に承認）</li>
 <li>関連文書: <a href="../../../design/cargo-tracker/architecture_frontend/">フロントエンドアーキテクチャ</a>、<a href="../../../article/03-spring-modular-monolith/">第 3 章</a></li>
