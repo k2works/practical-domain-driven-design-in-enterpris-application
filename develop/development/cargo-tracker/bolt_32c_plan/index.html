@@ -10431,7 +10431,7 @@
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>4. 画面の層</strong> 【承認ゲート: セキュリティ】</li>
 <li>業務の画面の feature に「利用停止された荷主担当者の次の操作は、業務データを出さずに A-03 に移る」（<code>@US-18-AC6 @demo @demo-bolt-32c/revoked</code>）。利用停止の操作はまだないので、テストの手順が DB の値を変える</li>
 <li>完了の判定: <code>check</code> と <code>uiTest</code> が緑</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>5. ユーザーマニュアル</strong> 【承認ゲート: 設計文書】（人の指示。2026-10-14）</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>5. ユーザーマニュアル</strong> 【承認ゲート: 設計文書】（人の指示。2026-10-14）</li>
 <li><code>creating-manual</code> の手順で、<code>docs/manual/02-ログインと共通の画面.md</code> の 2.3（役割を外された後に、その役割の画面を開くと示される）と 2.4（「この画面でできること」に、管理者が利用を止めた後の次の操作でも示されることを足す。「注意・補足」の問い合わせ先の行を、続けてログインできないときにも当てる）、<code>付録B-トラブルシューティング.md</code> の Q1-2・Q1-3 を直す。画面に出ない理由（利用停止）はマニュアルにだけ書き、画面の文言は変えない（確認ポイント 2）</li>
 <li>画面と文言は変わらないので、キャプチャ（<code>02-forbidden.png</code>・<code>02-session-expired.png</code>）は撮り直さない。2.1 の 2 段階のログインの書き直しは Bolt 33b のまま</li>
 <li>完了の判定: <code>okf:check</code> ERROR 0、<code>documentationTest</code> 緑。マニュアルの HTML の出力（<code>npx gulp manual:build</code>。<code>docs/assets/manual-output/cargo-tracker/</code>）を作り直す</li>
