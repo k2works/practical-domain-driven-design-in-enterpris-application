@@ -3,7 +3,9 @@ type: Plan
 title: "Bolt 32e 終了報告 - 失効の後に開いていた画面へ戻す（ACC-06）"
 description: "W5 の 13 本目の Bolt の終了報告。無操作 30 分と 8 時間の上限で失効した後、もう一度ログインすると GET で開いていた業務の画面に戻るようにした（A-03 の「開いていた画面に戻ります」を事実にした。Bolt 31 のレビュー 5）。失効の扱いを invalidSessionStrategy に替え、新しい session に要求を覚え、認証コードの誤りと password の段の失効では持ち越す。警告の期限の到来の案内のリンクは戻り先を開き直す。開発レビューで許す一覧の判定と覚えない場合の対のテストを強めた。送信の後の失効と入力の保持は Bolt 32f。"
 tags: [plan]
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-14T11:52:08Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-14T11:58:25Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-10-14T11:58:25Z }
 ---
 
 # Bolt 32e 終了報告 - 失効の後に開いていた画面へ戻す（ACC-06）
@@ -28,7 +30,7 @@ generated: { by: anthropic/claude-opus-5-5, at: 2026-10-14T11:52:08Z }
 | 期間 | 2026-10-14 19:37（計画の承認の記録 `13b7836`）〜 20:45 頃 |
 | 対象 | `identity`（`ExpiredSessionRequestSaver`、`SecurityConfiguration`、`SessionLifetimeFilter`、認証コードの誤りの扱い、`SessionTimerAdvice`）、警告の部分と `session-timeout.js`、UI 設計、アーキテクチャ、ACC-06、ADR-012、テスト戦略、ユーザーストーリー、リリース計画、ユーザーマニュアル |
 | SP | 0（US-18 の残りの SP は 33b で数える） |
-| GitHub | [#13](https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/13)（閉じない）。デモの動画（失効の後に開いていた画面へ戻る）は終了報告の承認の後に添付する |
+| GitHub | [#13](https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/13)（閉じない）。デモの動画（失効の後に開いていた画面へ戻る）を承認の後に添付した |
 | 計画 | [Bolt 32e 計画](bolt_32e_plan.md) |
 
 ## 成果
@@ -145,6 +147,7 @@ Bolt 32f: 失効の時の入力の保持（ブラウザの sessionStorage、利�
 
 | 日付 | 更新内容 | 更新者 |
 | :--- | :--- | :--- |
+| 2026-10-14 | 終了報告を承認した（議題 1〜5 を承認。戻り先の属性の名前は 33b、A-03 の入力の文言と案内のリンクの語は 32f で扱う）。デモの動画を #13 に添付した。T-121・T-122 を足した | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-10-14 | 初版作成（承認待ち） | anthropic/claude-opus-5-5 |
 
 ## 関連ドキュメント

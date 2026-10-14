@@ -72,7 +72,7 @@ Bolt がイテレーションに当たります。ふりかえりは各 Bolt の
 | 32c | [request ごとの利用者の確かめ（US-18 AC6）](bolt_32c_plan.md) | [終了報告](bolt_32c_report.md)（[動画](../../assets/demo/bolt-32c/revoked.webm){:target="_blank"}） | W5 | 完了 |
 | 32d | [認証の部品の低の指摘とテストの整理](bolt_32d_plan.md) | [終了報告](bolt_32d_report.md) | W5 | 完了 |
 | 32b | [session の失効の警告と延長（ACC-06）](bolt_32b_plan.md) | [終了報告](bolt_32b_report.md)（[動画](../../assets/demo/bolt-32b/extend.webm){:target="_blank"}） | W5 | 完了 |
-| 32e | [失効の後に開いていた画面へ戻す（ACC-06）](bolt_32e_plan.md) | [終了報告](bolt_32e_report.md)（[動画](../../assets/demo/bolt-32e/return.webm){:target="_blank"}） | W5 | 完了（終了報告の承認待ち） |
+| 32e | [失効の後に開いていた画面へ戻す（ACC-06）](bolt_32e_plan.md) | [終了報告](bolt_32e_report.md)（[動画](../../assets/demo/bolt-32e/return.webm){:target="_blank"}） | W5 | 完了 |
 
 Bolt を始めるときに行を追加します。
 
