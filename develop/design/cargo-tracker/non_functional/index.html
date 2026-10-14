@@ -10452,6 +10452,7 @@
 </tr>
 </tbody>
 </table>
+<p>PERF-01・02 の注記（Bolt 32c）: 認証済みの request ごとに、利用者・役割・企業を確かめる SQL が 1 回増える（SEC-12、IA-INV-04）。キャッシュは入れない（入れると利用停止・権限の取消しの「次の request から」が崩れる）。W10 の性能の評価で、この SQL の時間を計測項目に入れる。</p>
 <h3 id="ui-ho-02">非同期処理の状態の問い合わせ（UI-HO-02）<a class="headerlink" href="#ui-ho-02" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
@@ -10878,7 +10879,7 @@
 <tr>
 <td style="text-align: left;">SEC-12</td>
 <td style="text-align: left;">方式</td>
-<td style="text-align: left;">役割（BR-15 の 8 役割）と担当範囲（企業・案件）と参照許可（BR-07）の組合せ。request ごとに DB の現在値で判断する</td>
+<td style="text-align: left;">役割（BR-15 の 8 役割）と担当範囲（企業・案件）と参照許可（BR-07）の組合せ。request ごとに DB の現在値で判断する。Bolt 32c で役割・利用状態・企業の有効性を実現した（認証済みの request ごとに 1 回の SQL で読み、止められた利用者は A-03、取り消した役割の URL は A-04）。担当範囲は US-16（Bolt 34・W6）、参照許可は US-19 で足す</td>
 <td style="text-align: left;">確定（BR-07、BR-15、IA-INV-04）</td>
 </tr>
 <tr>
@@ -10958,7 +10959,7 @@
 <tr>
 <td style="text-align: left;">AUD-01</td>
 <td style="text-align: left;">記録の対象</td>
-<td style="text-align: left;">状態を変える全操作、認証の成功・失敗・ロック、権限の変更、参照許可の発行・取消し、権限外のアクセス試行、データの訂正、外部原本の採否。認証と権限外のアクセス試行は、ドメインイベントを経ずに同期で記録する（IA-INV-08）。ロックは、その失敗でロックしたときだけ <code>ACCOUNT_LOCKED</code> を 1 行、失敗の回数と同じトランザクションで記録し、ロック中の試行は <code>LOGIN_FAILED</code>（理由 <code>LOCKED</code>）で記録する（Bolt 32）</td>
+<td style="text-align: left;">状態を変える全操作、認証の成功・失敗・ロック、権限の変更、参照許可の発行・取消し、権限外のアクセス試行、データの訂正、外部原本の採否。認証と権限外のアクセス試行は、ドメインイベントを経ずに同期で記録する（IA-INV-08）。ロックは、その失敗でロックしたときだけ <code>ACCOUNT_LOCKED</code> を 1 行、失敗の回数と同じトランザクションで記録し、ロック中の試行は <code>LOGIN_FAILED</code>（理由 <code>LOCKED</code>）で記録する（Bolt 32）。request ごとの確かめで利用停止・無効な企業・利用者なしを見つけて session を捨てたときは <code>SESSION_REVOKED</code> を記録する（Bolt 32c）</td>
 <td style="text-align: left;">提案（NFR-AUDIT-01、US-16〜19）</td>
 </tr>
 <tr>

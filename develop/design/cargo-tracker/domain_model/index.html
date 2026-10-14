@@ -11038,6 +11038,24 @@
 <td style="text-align: left;">アクセス・監査</td>
 </tr>
 <tr>
+<td style="text-align: left;">利用者の立場</td>
+<td style="text-align: left;">UserStanding</td>
+<td style="text-align: left;">利用者とその所属企業の組。request ごとの確かめで、今の役割と利用状態・企業の有効性を 1 回で読んだ結果（IA-INV-04。Bolt 32c）</td>
+<td style="text-align: left;">アクセス・監査</td>
+</tr>
+<tr>
+<td style="text-align: left;">利用者の立場のリポジトリ</td>
+<td style="text-align: left;">UserStandingRepository</td>
+<td style="text-align: left;">利用者 ID から <code>UserStanding</code> を 1 回の読み出しで返すドメインのポート（<code>identity.domain.model.aggregates</code>）。実装は利用者・企業・役割の表を 1 つの SQL で結合する。役割が 0 件の利用者はデータの不整合として例外にする（Bolt 32c）</td>
+<td style="text-align: left;">アクセス・監査</td>
+</tr>
+<tr>
+<td style="text-align: left;">session の確かめのサービス</td>
+<td style="text-align: left;">SessionRevalidationService</td>
+<td style="text-align: left;">認証済みの request ごとに <code>UserStanding</code> を読み、今のドメインの規則（<code>User#authenticationRejection</code>）で判定するアプリケーションのサービス（<code>commandservices</code>）。拒否なら <code>SESSION_REVOKED</code> を書いて理由を返し、拒否でなければ今の役割・表示名・企業名の主体を返す。認証の入口のフィルター <code>SessionRevalidationFilter</code> から呼ぶ（IA-INV-04、ADR-012 の見直しの 3、Bolt 32c）</td>
+<td style="text-align: left;">アクセス・監査</td>
+</tr>
+<tr>
 <td style="text-align: left;">ログインの試行のサービス</td>
 <td style="text-align: left;">LoginAttemptService</td>
 <td style="text-align: left;">ログインの失敗を数え、2 つの要素がそろったログインの成功で 0 に戻し、その監査記録（<code>LOGIN_FAILED</code>・<code>ACCOUNT_LOCKED</code>・<code>LOGIN_SUCCEEDED</code>）を回数と 1 つのトランザクションで書くアプリケーションのサービス。ロックの判定（<code>isLocked</code>）の 1 か所でもある。認証の入口（監査のリスナー、照合の後の確認、TOTP・回復コードの provider）から呼ぶので <code>commandservices</code> に置く（IA-INV-03・IA-INV-08、ADR-011 の決定 9、ADR-012 の見直しの 5、Bolt 32）</td>
@@ -11124,13 +11142,13 @@
 <tr>
 <td style="text-align: left;">監査の操作</td>
 <td style="text-align: left;">AuditAction</td>
-<td style="text-align: left;">監査記録の操作。password の段の成功（<code>PASSWORD_VERIFIED</code>）、ログインの成功（<code>LOGIN_SUCCEEDED</code>。2 つの要素がそろった）、ログインの失敗（<code>LOGIN_FAILED</code>）、TOTP の登録（<code>TOTP_ENROLLED</code>。Bolt 31b）、回復コードの使用（<code>RECOVERY_CODE_USED</code>。Bolt 31c）、ロック（<code>ACCOUNT_LOCKED</code>。その失敗でロックしたときだけ。Bolt 32）、ログアウト（<code>LOGOUT</code>）</td>
+<td style="text-align: left;">監査記録の操作。password の段の成功（<code>PASSWORD_VERIFIED</code>）、ログインの成功（<code>LOGIN_SUCCEEDED</code>。2 つの要素がそろった）、ログインの失敗（<code>LOGIN_FAILED</code>）、TOTP の登録（<code>TOTP_ENROLLED</code>。Bolt 31b）、回復コードの使用（<code>RECOVERY_CODE_USED</code>。Bolt 31c）、ロック（<code>ACCOUNT_LOCKED</code>。その失敗でロックしたときだけ。Bolt 32）、session の取消し（<code>SESSION_REVOKED</code>。request ごとの確かめで利用停止・無効な企業・利用者なしを見つけて session を捨てた。Bolt 32c）、ログアウト（<code>LOGOUT</code>）</td>
 <td style="text-align: left;">アクセス・監査</td>
 </tr>
 <tr>
 <td style="text-align: left;">認証の拒否の理由</td>
 <td style="text-align: left;">AuthenticationRejection</td>
-<td style="text-align: left;">認証を受け付けなかった理由。監査記録にだけ残し、利用者には同じ応答を返す。<code>BAD_CREDENTIALS</code>・<code>UNKNOWN_USER</code>・<code>SUSPENDED</code>・<code>COMPANY_INACTIVE</code>（Bolt 14）、<code>INVALID_TOTP</code>・<code>TOTP_REUSED</code>（Bolt 31）、<code>INVALID_RECOVERY_CODE</code>（回復コードの形の違い・誤り・使用済み、または回復コードと認証コードの両方を送った。Bolt 31c）、<code>TOTP_NOT_ENROLLED</code>（TOTP を登録していない利用者の TOTP の送信。Bolt 31d で <code>INVALID_TOTP</code> から分けた）、<code>LOCKED</code>（ロック中の試行。数えない）・<code>SERVICE_ERROR</code>（利用者の読み出しの DB の誤り。数えない）（Bolt 32）</td>
+<td style="text-align: left;">認証を受け付けなかった理由。session の取消しの理由（<code>SUSPENDED</code>・<code>COMPANY_INACTIVE</code>・<code>UNKNOWN_USER</code>。Bolt 32c）にも使う。監査記録にだけ残し、利用者には同じ応答を返す。<code>BAD_CREDENTIALS</code>・<code>UNKNOWN_USER</code>・<code>SUSPENDED</code>・<code>COMPANY_INACTIVE</code>（Bolt 14）、<code>INVALID_TOTP</code>・<code>TOTP_REUSED</code>（Bolt 31）、<code>INVALID_RECOVERY_CODE</code>（回復コードの形の違い・誤り・使用済み、または回復コードと認証コードの両方を送った。Bolt 31c）、<code>TOTP_NOT_ENROLLED</code>（TOTP を登録していない利用者の TOTP の送信。Bolt 31d で <code>INVALID_TOTP</code> から分けた）、<code>LOCKED</code>（ロック中の試行。数えない）・<code>SERVICE_ERROR</code>（利用者の読み出しの DB の誤り。数えない）（Bolt 32）</td>
 <td style="text-align: left;">アクセス・監査</td>
 </tr>
 <tr>
@@ -11934,8 +11952,9 @@
 <h3 id="identity-auditu4">アクセス・監査（Identity &amp; Audit、U4）<a class="headerlink" href="#identity-auditu4" title="Permanent link">&para;</a></h3>
 <p>ADR-002 により単純なモデルとする。認証の流れ（2 段階のログイン、session）は Spring Security に任せ、ドメインモデルは業務上の規則（TOTP の再利用の拒否、一度だけの回復コード、ロック）だけを持つ。TOTP のコードの生成は <code>TotpCodeGenerator</code> のポートの裏の java-otp に、回復コードのハッシュは <code>RecoveryCodeHasher</code> のポートの裏の bcrypt に任せる（<a href="../../../adr/cargo-tracker/011-mfa-totp/">ADR-011</a>、Bolt 30）。生成器は持ち主の利用者 ID と暗号化した秘密（<code>EncryptedSecret</code>）と時間の刻みを受け（<code>code(UserId, EncryptedSecret, long)</code>）、復号はインフラ層の実装の中で済ませる（Bolt 31。利用者 ID は Bolt 31b）。暗号文は <code>totp-secret:</code> と利用者 ID を AAD にして暗号化し、別の利用者の暗号文では復号できない（Bolt 31b）。照合と刻みの使用は、アプリケーションのサービス <code>TotpVerificationService</code>（<code>identity.application.internal.commandservices</code>）が行う。TOTP の資格の集約が前後 1 つの刻みの照合（<code>match</code>。結果は値 <code>TotpMatch</code> の一致した刻み・再利用・不一致。Bolt 31d で <code>matchingStep</code> から改めた）を、リポジトリが刻みの使用（条件付きの更新。件数が 0 なら同時の確かめで後になったので再利用）を受け持ち、サービスは時刻を <code>Clock</code> から刻みに直し、照合の結果を写して両者をつなぐ（資格を作り直して再利用を見分ける回り道はない。Bolt 31d）。Spring Security の provider はサービスの結果を認証の成否に直すだけにする（層の規則 D-5 の認証の例外。ADR-012 の決定 6、Bolt 31）。保存した要素（暗号文・回復コードのハッシュ）を読めないことはドメインの例外 <code>UnreadableCredentialException</code>（<code>identity.domain.model.aggregates</code>）で表し、暗号の部品（<code>identity.infrastructure.crypto</code>）が投げ、provider と登録のサービスがこれだけを拒否に倒す。ほかの実装の誤りは 500 にする（ADR-011 の決定 8、Bolt 31d）。<code>UnreadableCredentialException</code> は <code>RuntimeException</code> を継ぐ（Bolt 32 で <code>IllegalArgumentException</code> から改めた。実装の誤りを捕まえる <code>catch</code> と取り違えないため）。</p>
 <p>ログインのロック（Bolt 32。ADR-011 の決定 9）では、規則（5 回・15 分、ロック中は数えない・延ばさない）はログインの失敗の集約と方針のまま、数える・0 に戻す・監査記録を書くのはアプリケーションのサービス <code>LoginAttemptService</code>（<code>commandservices</code>）が 1 つのトランザクションで行う（IA-INV-08）。リポジトリの <code>recordFailure</code> は条件付きの更新の件数から、数えたかと数えた後の状態を値 <code>FailureCount</code> で返し、サービスはそれでロック中の試行（理由 <code>LOCKED</code>）と、この失敗でロックしたこと（<code>ACCOUNT_LOCKED</code>）を見分ける。最初の失敗の行は、主たるトランザクションの前にトランザクションの外の 1 文で作る（<code>prepare</code>。一意制約の違反はトランザクションの外で受ける）。ロックの判定は <code>isLocked</code> の 1 か所で、password の段は照合の後の確認（入口の部品 <code>LockAwareUserDetailsChecker</code>）が、TOTP・回復コードの段は provider が確かめる前に呼ぶ。<code>CargoUserDetails</code> にロックの項目は足さない（session の直列化の互換）。認証の監査のリスナーは誤りの失敗・ロック中の試行・2 つの要素がそろった成功をサービスに写し、数えない拒否と password の段の成功は監査記録に直接書く。</p>
+<p>request ごとの確かめ（Bolt 32c。IA-INV-04、ADR-012 の見直しの 3）では、ドメインのポート <code>UserStandingRepository</code>（<code>identity.domain.model.aggregates</code>。認証の要素のポートと同じ置き場所）が利用者とその所属企業の組 <code>UserStanding</code> を 1 回の読み出しで返す。アプリケーションのサービス <code>SessionRevalidationService</code>（<code>commandservices</code>）は利用者の集約の <code>authenticationRejection(company)</code> で判定し（ログインと同じ規則）、利用者がなければ <code>UNKNOWN_USER</code> にする。拒否なら監査記録 <code>SESSION_REVOKED</code>（結果は失敗、理由、session の主体の利用者 ID と企業 ID）を 1 つのトランザクションで書き、拒否でなければ今の役割・表示名・企業名の <code>AuthenticatedActor</code> を返す。役割が変わっただけのときは記録しない。認証の入口のフィルター <code>SessionRevalidationFilter</code> が結果を session と主体に写す（ADR-012 の決定 6 の認証の例外の範囲）。集約と規則は変えない。</p>
 <p>初回の TOTP の登録（Bolt 31b。ADR-011 の決定 6）では、秘密の発行は <code>TotpSecretIssuer</code>、回復コードの生成は <code>RecoveryCodeGenerator</code> のポートの裏に置き、実装は <code>identity.infrastructure</code> に置く。認証の要素のポート（生成・発行・ハッシュ・回復コードの生成）は、前例にそろえて <code>identity.domain.model.aggregates</code> に置く。ZXing をインフラ層に閉じるため、表示の値はポートが値 <code>TotpProvisioning</code>（<code>identity.domain.model.valueobjects</code>）にして返す。登録はアプリケーションのサービス <code>TotpEnrollmentService</code>（<code>commandservices</code>）が行う。<code>begin</code> は登録済みなら拒み、登録の途中の暗号文を同じ利用者の AAD で復号できる限り使い続け、なければ新しく発行する。<code>complete</code> は暗号文と入れたコードを前後 1 つの刻みで照合し、1 つのトランザクションで TOTP の資格を追加し（最後に使った刻みは 0。登録のコードは A-02 でもう一度使える）、回復コード 10 個をハッシュで置き換え、監査記録を書き、回復コードの平文を返す。同時の登録は TOTP の資格の主キーで 1 つに絞り、主キーの違反はリポジトリの実装で <code>DuplicateTotpEnrollmentException</code> に写す。登録は TOTP の要素を与えず、ログインは A-02 で終える。登録済みかの問い合わせは <code>TotpEnrollmentQueryService</code>（<code>queryservices</code>）に置き、画面の層だけが呼ぶ（<code>TotpVerificationService</code> から移した）。利用者の登録の状態は TOTP の資格の有無で決まり（未登録 → 登録済み）、状態の列は持たない。登録の途中は session の属性（暗号文の文字列と登録を始めた時刻）で、ドメインモデルには置かない。</p>
-<p>認証された利用者を表す値 <code>AuthenticatedActor</code>（利用者 ID・企業 ID・役割（1 つ以上）・表示名・企業名）と役割 <code>Role</code>（BR-15 の 8 役割）は、共有カーネル（<code>shared</code>）に置く。ほかのコンテキストはこの型だけを受け取り、Spring Security の型にも <code>identity</code> にも依存しない。<code>AuthenticatedActor</code> は 2 つの要素（password と TOTP または回復コード）がそろった主体だけを表し、引数の解決は <code>FACTOR_TOTP</code> がない主体に渡さない。password の段だけで開く画面（A-02・A-07）は、identity の中だけの値 <code>PasswordVerifiedUser</code>（<code>identity.domain.model.valueobjects</code>。利用者 ID・企業 ID・メールアドレス）を受ける（ADR-012 の見直しの 4、Bolt 31c）。<code>identity</code> に置くと、<code>quotation → identity → quotation::events</code> の依存が循環するため（ADR-011 の決定 4、<a href="../../../adr/cargo-tracker/012-authentication-principal-and-session/">ADR-012</a>、Bolt 14 の確認ポイント 2）。利用者の集約は「認証できない理由」（利用停止・企業が無効）を返し、Spring Security の利用者の読み出しがその理由を認証の失敗に変える（IA-INV-09）。監査記録の操作には、ログインの成功（<code>LOGIN_SUCCEEDED</code>）・失敗（<code>LOGIN_FAILED</code>）・ログアウト（<code>LOGOUT</code>）を Bolt 14 で足す。Bolt 31 で password の段の成功（<code>PASSWORD_VERIFIED</code>）を足し、<code>LOGIN_SUCCEEDED</code> は 2 つの要素（password と TOTP）がそろったときにする。TOTP の失敗は利用者と理由（<code>INVALID_TOTP</code>・<code>TOTP_REUSED</code>）で <code>LOGIN_FAILED</code> に記録する（ADR-012 の見直しの 1）。Bolt 31b で初回の TOTP の登録（<code>TOTP_ENROLLED</code>。主体の利用者 ID と企業 ID）を足す（先取りの登録を見つける手がかり。ADR-011 の決定 6）。Bolt 31c で回復コードの使用（<code>RECOVERY_CODE_USED</code>。主体の利用者 ID と企業 ID）を足し、回復コードでログインを終えたときは <code>RECOVERY_CODE_USED</code> と <code>LOGIN_SUCCEEDED</code> の 2 行を書く。回復コードの拒否は理由 <code>INVALID_RECOVERY_CODE</code> で <code>LOGIN_FAILED</code> に記録する（ADR-011 の決定 7）。Bolt 31d で、TOTP を登録していない利用者の TOTP の送信の理由を <code>INVALID_TOTP</code> から <code>TOTP_NOT_ENROLLED</code> に分ける（利用者への応答は変えない。ADR-011 の決定 8）。Bolt 32 で、ロック（<code>ACCOUNT_LOCKED</code>。結果は成功、理由なし、主体の利用者 ID と企業 ID）と、ロック中の試行の理由 <code>LOCKED</code>、利用者の読み出しの DB の誤りの理由 <code>SERVICE_ERROR</code> を足す（どちらも数えない。ADR-011 の決定 9）。2 つ目の要素の権限 <code>FACTOR_TOTP</code> とその認証の結果 <code>TotpAuthenticationToken</code> は「TOTP または回復コードで与える 2 つ目の要素」を表し、session の直列化の互換のため名前を変えない（用語集）。</p>
+<p>認証された利用者を表す値 <code>AuthenticatedActor</code>（利用者 ID・企業 ID・役割（1 つ以上）・表示名・企業名）と役割 <code>Role</code>（BR-15 の 8 役割）は、共有カーネル（<code>shared</code>）に置く。ほかのコンテキストはこの型だけを受け取り、Spring Security の型にも <code>identity</code> にも依存しない。<code>AuthenticatedActor</code> は 2 つの要素（password と TOTP または回復コード）がそろった主体だけを表し、引数の解決は <code>FACTOR_TOTP</code> がない主体に渡さない。password の段だけで開く画面（A-02・A-07）は、identity の中だけの値 <code>PasswordVerifiedUser</code>（<code>identity.domain.model.valueobjects</code>。利用者 ID・企業 ID・メールアドレス）を受ける（ADR-012 の見直しの 4、Bolt 31c）。<code>identity</code> に置くと、<code>quotation → identity → quotation::events</code> の依存が循環するため（ADR-011 の決定 4、<a href="../../../adr/cargo-tracker/012-authentication-principal-and-session/">ADR-012</a>、Bolt 14 の確認ポイント 2）。利用者の集約は「認証できない理由」（利用停止・企業が無効）を返し、Spring Security の利用者の読み出しがその理由を認証の失敗に変える（IA-INV-09）。監査記録の操作には、ログインの成功（<code>LOGIN_SUCCEEDED</code>）・失敗（<code>LOGIN_FAILED</code>）・ログアウト（<code>LOGOUT</code>）を Bolt 14 で足す。Bolt 31 で password の段の成功（<code>PASSWORD_VERIFIED</code>）を足し、<code>LOGIN_SUCCEEDED</code> は 2 つの要素（password と TOTP）がそろったときにする。TOTP の失敗は利用者と理由（<code>INVALID_TOTP</code>・<code>TOTP_REUSED</code>）で <code>LOGIN_FAILED</code> に記録する（ADR-012 の見直しの 1）。Bolt 31b で初回の TOTP の登録（<code>TOTP_ENROLLED</code>。主体の利用者 ID と企業 ID）を足す（先取りの登録を見つける手がかり。ADR-011 の決定 6）。Bolt 31c で回復コードの使用（<code>RECOVERY_CODE_USED</code>。主体の利用者 ID と企業 ID）を足し、回復コードでログインを終えたときは <code>RECOVERY_CODE_USED</code> と <code>LOGIN_SUCCEEDED</code> の 2 行を書く。回復コードの拒否は理由 <code>INVALID_RECOVERY_CODE</code> で <code>LOGIN_FAILED</code> に記録する（ADR-011 の決定 7）。Bolt 31d で、TOTP を登録していない利用者の TOTP の送信の理由を <code>INVALID_TOTP</code> から <code>TOTP_NOT_ENROLLED</code> に分ける（利用者への応答は変えない。ADR-011 の決定 8）。Bolt 32 で、ロック（<code>ACCOUNT_LOCKED</code>。結果は成功、理由なし、主体の利用者 ID と企業 ID）と、ロック中の試行の理由 <code>LOCKED</code>、利用者の読み出しの DB の誤りの理由 <code>SERVICE_ERROR</code> を足す（どちらも数えない。ADR-011 の決定 9）。Bolt 32c で、request ごとの確かめで session を捨てたこと（<code>SESSION_REVOKED</code>。結果は失敗、理由 <code>SUSPENDED</code>・<code>COMPANY_INACTIVE</code>・<code>UNKNOWN_USER</code>、session の主体の利用者 ID と企業 ID）を足す（ADR-012 の見直しの 3）。2 つ目の要素の権限 <code>FACTOR_TOTP</code> とその認証の結果 <code>TotpAuthenticationToken</code> は「TOTP または回復コードで与える 2 つ目の要素」を表し、session の直列化の互換のため名前を変えない（用語集）。</p>
 <table>
 <thead>
 <tr>
@@ -12032,7 +12051,7 @@
 </tr>
 <tr>
 <td style="text-align: left;">IA-INV-04</td>
-<td style="text-align: left;">利用停止・権限取消しは次の request から反映する</td>
+<td style="text-align: left;">利用停止・権限取消しは次の request から反映する。認証済みの request ごとに <code>SessionRevalidationService</code> が利用者・役割・企業を 1 回で読んで判定し、止められた利用者の session は捨てて A-03 に、取り消した役割の URL は A-04 にする（Bolt 32c。それまではログインの時点の役割）</td>
 <td style="text-align: left;">BR-14、US-16、US-18</td>
 </tr>
 <tr>
@@ -12052,7 +12071,7 @@
 </tr>
 <tr>
 <td style="text-align: left;">IA-INV-08</td>
-<td style="text-align: left;">認証の成功・失敗・ロック、権限外のアクセス試行は、ドメインイベントを経ずに同じ request の中で同期に監査記録へ書く。ログインの失敗の回数とその監査記録（<code>LOGIN_FAILED</code>・<code>ACCOUNT_LOCKED</code>）、成功で 0 に戻すことと <code>LOGIN_SUCCEEDED</code> は 1 つのトランザクションにし、監査記録の追記が失敗したら回数も戻す。ロックの監査はその失敗でロックしたときだけ 1 行書く（Bolt 32）</td>
+<td style="text-align: left;">認証の成功・失敗・ロック、権限外のアクセス試行は、ドメインイベントを経ずに同じ request の中で同期に監査記録へ書く。ログインの失敗の回数とその監査記録（<code>LOGIN_FAILED</code>・<code>ACCOUNT_LOCKED</code>）、成功で 0 に戻すことと <code>LOGIN_SUCCEEDED</code> は 1 つのトランザクションにし、監査記録の追記が失敗したら回数も戻す。ロックの監査はその失敗でロックしたときだけ 1 行書く（Bolt 32）。request ごとの確かめで session を捨てたときの <code>SESSION_REVOKED</code> も、その request の中で 1 つのトランザクションで書き、追記が失敗したら session を捨てて 500 にする（Bolt 32c）</td>
 <td style="text-align: left;">AUD-01、US-16〜US-19</td>
 </tr>
 <tr>

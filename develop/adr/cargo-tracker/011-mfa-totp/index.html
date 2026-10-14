@@ -10238,11 +10238,17 @@
 </ul>
 <p>Bolt 32 の開始準備と計画の承認（2026-10-13、human:kakimomokuri）で決めたこと:</p>
 <ul>
-<li>US-18 の残りを 32（ロック、ADR-012 の見直しの 5、Bolt 30 の議題 2 の③、Bolt 31d から送った例外の扱い）と 32c（AC6 の request ごとの役割の確認、ADR-012 の見直しの 3、Bolt 31d から送った低の指摘）に分ける</li>
+<li>US-18 の残りを 32（ロック、ADR-012 の見直しの 5、Bolt 30 の議題 2 の③、Bolt 31d から送った例外の扱い）と 32c（AC6 の request ごとの役割の確認、ADR-012 の見直しの 3、Bolt 31d から送った低の指摘）に分ける（Bolt 32c の開始準備で、31d から送った低の指摘を 32d に分けた）</li>
 <li>password・TOTP・回復コードの誤りを合わせて数え、5 回続いたら 15 分ロックする。数え方と監査記録はアプリケーションのサービス <code>LoginAttemptService</code> で 1 つのトランザクションにし、ロックの確かめは password の照合の後に行う（決定 9）</li>
 <li>ロック中も誤りと同じ応答と文言にし、A-01 の 2 つの誤りの文言に一般の予告だけを足す。解ける時刻は示さない（決定 9）</li>
 <li>S-02（複数の利用者への password の試し）は W10 の WAF の送信元ごとの流量の規則に送り、それまでは受け入れる（決定 9）</li>
 <li><code>UnreadableCredentialException</code> は <code>RuntimeException</code> を継ぐ形に替える（決定 8 を改めた）</li>
+</ul>
+<p>Bolt 32c の開始準備と計画の承認（2026-10-14、human:kakimomokuri）で決めたこと:</p>
+<ul>
+<li>US-18 の残りを 32c（AC6 の request ごとの確かめ、ADR-012 の見直しの 3）と 32d（Bolt 31d から送った低の指摘、Bolt 32 の既知の課題のテストの整理）に分ける</li>
+<li>Bolt 32 の議題 4（A-01 の予告の後に「15 分たってからもう一度ログインしてください」を足す）は採らない。A-01 の文言は決定 9 のまま（誤りと同じ文言と一般の予告）にし、待てば解けることはユーザーマニュアル（Bolt 33b の 2 章の書き直し）に書く。画面・UI 設計・ADR・US-18・シナリオの 5 か所を変えずに済み、文言は計画の承認どおりに保てる</li>
+<li>Bolt 32 の議題 5（ログインの監査の追記をすべて <code>LoginAttemptService</code> に寄せる）は採らない。数えない拒否と password の段の成功は、今のまま監査のリスナーが直接書く（決定 9 の表の「数え方の置き場所」）。利用者の管理の監査を作る Bolt 34 で、監査の書き込みの経路をあわせて見直す。Bolt 32c の <code>SESSION_REVOKED</code> はアプリケーションのサービスで書き、監査を直接書く入口の経路を増やさない（ADR-012 の決定 4）</li>
 </ul>
 <h2 id="_2">コンテキスト<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h2>
 <ul>
@@ -10794,7 +10800,7 @@
 <p>Bolt 31b で解いたもの（決定 6 に移した）: 登録の QR の描き方と <code>otpauth://</code> の URI の組み立て、回復コード 10 個の発行（SEC-09。ハッシュでの保存は Bolt 30 で作った）、初回の登録（AC7）の画面の認可と登録を終えていない利用者の扱い（登録の完了時に <code>FACTOR_TOTP</code> は与えない）。</p>
 <ul>
 <li>java-otp の生成器のスレッドセーフ（スパイクは照合を <code>synchronized</code> の中で行う）。</li>
-<li>最長 8 時間を即時失効（BR-14）と同じ経路にできるか（Bolt 32c。AC6 の request ごとの確認と同じ仕組みのため、Bolt 32 の開始準備で 32 から送った）。</li>
+<li>最長 8 時間を即時失効（BR-14）と同じ経路にできるか（Bolt 32c で見た。同じ経路にはしない。8 時間・5 分は <code>SessionLifetimeFilter</code> が DB を読まずに判定し、利用停止などの即時の失効はその直後の <code>SessionRevalidationFilter</code> が DB を読んで判定する。どちらも A-03 に送る。ADR-012 の見直しの 3）。</li>
 <li>同じ利用者の同時のログインと、同じコードの同時の送信（1 つだけ通ること）。学習テストは MockMvc だけ。</li>
 <li>password の再設定（SEC-08）と、TOTP の再登録（SEC-10）の流れ。</li>
 <li>利用者の画面で「次に取れる操作」（T-35）: A-02 で誤ったときは A-01 からログインし直し、認証アプリの新しいコードか、まだ使っていない回復コードを入れる（A-01 の誤りの文言。Bolt 31c の決定 7）、端末を失ったときは回復コードか管理者への連絡。US-18 の計画の確認ポイントにする。ロック中は解ける時刻を示さず、誤りの文言の一般の予告（5 回・15 分）から待つことが分かるようにする（Bolt 32 で決めた。決定 9）。</li>
@@ -10823,6 +10829,7 @@
 <p>復号した平文の消去について（Bolt 31 の開発レビュー）: 生成器は復号した配列を使い終えたら消すが、JDK の <code>SecretKeySpec</code> と java-otp の <code>Mac</code> は内部に鍵の写しを持つので、JVM の中の写しまでは消せない。消せるのは呼び出し側の配列だけである。</p>
 <h2 id="_10">改訂の経緯<a class="headerlink" href="#_10" title="Permanent link">&para;</a></h2>
 <ul>
+<li>2026-10-14: Bolt 32c の計画の承認で、ステータスに 32c の開始準備の決定（32c と 32d の分け方、Bolt 32 の議題 4・5 を採らない理由と行き先）を足し、「未確認の項目」の最長 8 時間と即時失効の経路を解いた（human:kakimomokuri が決定）。</li>
 <li>2026-10-13: Bolt 32 の計画の承認で、ログインのロック（決定 9。数え方の置き場所と 1 つのトランザクション、数える失敗と数えない失敗（回復コードを数え、A-07 の登録の誤りは数えない）、0 に戻す時点、ロックの確かめの位置と 1 か所の判定、理由の優先、ロック中の試行とロックの監査、最初の失敗の作成の競合、DB の誤りの扱い、応答と予告、受け入れること（TOTP の段の時間、<code>{bcrypt}</code> の壊れたハッシュ、S-02 を W10 の WAF に））を足した。決定 2 の表の失敗の数え方、決定 6 の登録の誤り、決定 7 の誤りの扱い、「US-18 の Bolt で要るもの」の A-02、「未確認の項目」の次に取れる操作、「W5 で人が決める論点」のロックの表示と spraying を決定に合わせ、決定 8 の <code>UnreadableCredentialException</code> の親の型を <code>RuntimeException</code> に改めた（human:kakimomokuri が決定）。</li>
 <li>2026-10-13: Bolt 31d の計画の承認で、認証の部品の守りの直し（決定 8。照合の結果 <code>TotpMatch</code>、<code>UnreadableCredentialException</code> と失敗へ倒す範囲、暗号の部品のパッケージ <code>identity.infrastructure.crypto</code> と D-5 の例外を入口だけにすること、<code>FACTOR_TOTP</code>・<code>TotpAuthenticationToken</code> を改名しない理由、監査の理由 <code>TOTP_NOT_ENROLLED</code>、スパイクの削除）を足した。決定 7 の「照合の途中の例外は 500 にせず拒否」を「読めない要素は拒否、実装の誤りは 500」に改め、決定 4・5・6 とコンプライアンスの ArchUnit の範囲を crypto に合わせ、コンプライアンスに見張りと特性テストの形を足した（human:kakimomokuri が決定）。</li>
 <li>2026-10-13: Bolt 31c の計画の承認で、回復コードによるログイン（決定 7。A-02 の別の欄、入力のトークンと TOTP と同じ結果の型、拒否の例外と失敗のイベントの対応表、監査 <code>RECOVERY_CODE_USED</code>・<code>INVALID_RECOVERY_CODE</code>、正規化、照合とトランザクションの境界、両方の欄がある送信の拒み方、登録を始めた時刻を消すこと、A-01 の誤りの文言）を足した。決定 2 の表の回復コードを「A-02 の別の欄」に改め、スパイクの削除・特性テスト・入口と暗号のパッケージを Bolt 31d に送った（31c と 31d に分けたため。human:kakimomokuri が決定）。</li>
