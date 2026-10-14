@@ -6,7 +6,7 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="W5 の 12 本目の Bolt の計画。ログインした利用者の画面（顧客 Web・社内業務 Web）で、無操作 30 分の失効の 5 分前に予告し、画面を移らずに延長できるようにする（ACC-06、WCAG 2.2.1、横断の受入条件）。発行から 8 時間の上限も 5 分前に予告する（延長はできない）。予告の時刻は複数のタブの間でそろえる。失効の時の入力の保持と、再認証の後に開いていた画面へ戻すことは Bolt 32e に分ける。">
+        <meta name="description" content="W5 の 12 本目の Bolt の計画。ログインした利用者の画面（顧客 Web・社内業務 Web）で、無操作 30 分の失効の 5 分前に警告し、画面を移らずに延長できるようにする（ACC-06、WCAG 2.2.1、横断の受入条件）。発行から 8 時間の上限も 5 分前に警告する（延長はできない。SEC-03 の必須の制限）。警告の時刻は複数のタブの間でそろえる。失効の時の入力の保持と、再認証の後に開いていた画面へ戻すことは Bolt 32e に分ける。">
       
       
         <meta name="author" content="k2works">
@@ -27,7 +27,7 @@
     
     
       
-        <title>Bolt 32b 計画 - session の失効の予告と延長（ACC-06） - 実践ドメイン駆動設計 in エンタープライズアプリケーション</title>
+        <title>Bolt 32b 計画 - session の失効の警告と延長（ACC-06） - 実践ドメイン駆動設計 in エンタープライズアプリケーション</title>
       
     
     
@@ -112,7 +112,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Bolt 32b 計画 - session の失効の予告と延長（ACC-06）
+              Bolt 32b 計画 - session の失効の警告と延長（ACC-06）
             
           </span>
         </div>
@@ -5077,10 +5077,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#t-101t-114" class="md-nav__link">
+  <a href="#t-114" class="md-nav__link">
     <span class="md-ellipsis">
       
-        開始準備で確かめたこと（T-101・T-114）
+        開始準備で確かめたこと（T-114）
       
     </span>
   </a>
@@ -5158,7 +5158,7 @@
   <a href="#_5" class="md-nav__link">
     <span class="md-ellipsis">
       
-        予告のダイアログの状態
+        警告のダイアログの状態
       
     </span>
   </a>
@@ -10266,7 +10266,7 @@
   
 
 
-<h1 id="bolt-32b-session-acc-06">Bolt 32b 計画 - session の失効の予告と延長（ACC-06）<a class="headerlink" href="#bolt-32b-session-acc-06" title="Permanent link">&para;</a></h1>
+<h1 id="bolt-32b-session-acc-06">Bolt 32b 計画 - session の失効の警告と延長（ACC-06）<a class="headerlink" href="#bolt-32b-session-acc-06" title="Permanent link">&para;</a></h1>
 <h2 id="_1">基本情報<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
@@ -10282,11 +10282,11 @@
 </tr>
 <tr>
 <td style="text-align: left;">予定</td>
-<td style="text-align: left;">W5（2026-11-02 の週。前倒しで着手できる）。作業は約 4 時間 15 分（承認ゲートの待ち時間を除く。上限に近い。「時間の配分と打ち切り」）</td>
+<td style="text-align: left;">W5（2026-11-02 の週。前倒しで着手できる）。作業は約 4 時間 30 分（承認ゲートと人の手動確認の待ち時間を除く。上限ちょうど。「時間の配分と打ち切り」）</td>
 </tr>
 <tr>
 <td style="text-align: left;">対象</td>
-<td style="text-align: left;"><code>identity</code>（8 時間の残りの算出を認証の入口に置き、画面に渡す。延長の URL）、共通のレイアウト（顧客 Web・社内業務 Web）、予告のダイアログと JavaScript、UI 設計、フロントエンドのアーキテクチャ、非機能要件、ADR-012、テスト戦略、リリース計画、ユーザーマニュアル</td>
+<td style="text-align: left;"><code>identity</code>（8 時間の残りの算出を認証の入口に置き画面に渡す、延長の URL）、共通のレイアウト（顧客 Web・社内業務 Web）、警告のダイアログと JavaScript、画面の層のテストの部品（<code>BrowserSession</code>）、UI 設計、フロントエンドとバックエンドのアーキテクチャ、非機能要件、ADR-011・ADR-012、テスト戦略、ユーザーストーリー、リリース計画、ユーザーマニュアル</td>
 </tr>
 <tr>
 <td style="text-align: left;">SP</td>
@@ -10298,11 +10298,11 @@
 </tr>
 <tr>
 <td style="text-align: left;">承認ゲート</td>
-<td style="text-align: left;"><strong>ステップごとに止める</strong>（W4 の締めの決定: 認証の完成はステップごと）。確認必須（セキュリティ（延長の URL、認証の入口から画面への値の渡し方）、新しいファイル（JavaScript、レイアウトの部分、コントローラー））は計画の承認の場で確認ポイントとして判断を受ける</td>
+<td style="text-align: left;"><strong>ステップごとに止める</strong>（W4 の締めの決定: 認証の完成はステップごと）。確認必須（セキュリティ（延長の URL、認証の入口から画面への値の渡し方、ブラウザに置く値）、構造（新しい UI のパターンのモーダルのダイアログ）、新しいファイル）は計画の承認の場で確認ポイントとして判断を受ける</td>
 </tr>
 <tr>
 <td style="text-align: left;">アプローチ</td>
-<td style="text-align: left;">インサイドアウト（W5 の表の 32b の行）。サーバーの部品（8 時間の残りの算出、延長の URL）をセキュリティの統合テストで先に作り、レイアウトと JavaScript を画面の層の受入シナリオ（Playwright の時計）で外側から確かめる</td>
+<td style="text-align: left;">インサイドアウト（W5 の表の 32b の行）。開発戦略の表ではインサイドアウトは「新しい集約・スキーマを作る」ときで、32b はドメインもデータも変えないので表から外れる。外れる理由: 不確実性とリスクがサーバーの側（認証の入口から画面への値の渡し方、延長の URL のセキュリティ、Spring Security の CSRF と失効の経路）にあり、セキュリティの統合テストと単体テストから入るほうが早く確かめられる。画面は、ブラウザの時計の骨組みをステップ 3 の最初に確かめてから、画面の層の受入シナリオで外側から確かめる</td>
 </tr>
 <tr>
 <td style="text-align: left;">前の Bolt</td>
@@ -10311,7 +10311,7 @@
 </tbody>
 </table>
 <h2 id="bolt">Bolt ゴール<a class="headerlink" href="#bolt" title="Permanent link">&para;</a></h2>
-<p>ログインした利用者が、無操作の失効に気づかないまま作業を失わないようにする。無操作 30 分の失効の 5 分前に予告し、画面を移らずに延長できる（入力中の値は消えない）。発行から 8 時間の上限は延長できないので、5 分前に「延長できない」ことと送信を促す予告を出す。予告は支援技術に伝わり、延長のボタンにフォーカスが移る（UI 設計の状態表示）。</p>
+<p>ログインした利用者が、無操作の失効に気づかないまま作業を失わないようにする。無操作 30 分の失効の 5 分前に警告し、画面を移らずに延長できる（入力中の値は消えない）。発行から 8 時間の上限は延長できないので、5 分前に「延長できない」ことと送信を促す警告を出す。警告は支援技術に伝わり、延長のボタンにフォーカスが移る（UI 設計の「部分更新を使う箇所」と共通部品の「session の警告」）。</p>
 <h3 id="_2">確かめたい仮説<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
@@ -10324,23 +10324,25 @@
 <tbody>
 <tr>
 <td style="text-align: left;">H1</td>
-<td style="text-align: left;">残り時間はサーバーが画面に出した秒数（無操作の期限と 8 時間の残り）から、ブラウザの時計で数えれば足りる。残りを問い合わせる定期の request は要らない（問い合わせ自体が無操作の期限を延ばしてしまう）</td>
-<td style="text-align: left;">画面の層の受入シナリオで、予告が 25 分の時点で出て、延長の後は次の 25 分まで出ないこと。延長の後にサーバーの session の最終アクセスが新しくなること（統合テスト）</td>
+<td style="text-align: left;">残り時間は、サーバーが画面に出した秒数（無操作の期限と 8 時間の残り）からブラウザの時計で数えれば足りる。残りを問い合わせる定期の request は要らない（問い合わせ自体が無操作の期限を延ばしてしまう）</td>
+<td style="text-align: left;">画面の層の受入シナリオで、警告が 25 分の時点で出て、延長の後は次の 25 分まで出ないこと。延長でサーバーの session の最終アクセスが新しくなること（統合テスト）</td>
 </tr>
 <tr>
 <td style="text-align: left;">H2</td>
-<td style="text-align: left;">Playwright のブラウザのコンテキストの時計（<code>BrowserContext.clock()</code>）で時間を進めれば、30 分を待たずに予告・延長・タブの間の同期・失効を確かめられる</td>
-<td style="text-align: left;">ステップ 4 の最初に骨組み（時計を入れて 25 分進め、予告が出る）で確かめる（T-101）</td>
+<td style="text-align: left;">Playwright のブラウザのコンテキストの時計（<code>BrowserContext.clock()</code>）で時間を進めれば、30 分を待たずに警告・延長・タブの間の同期・期限の到来を確かめられる</td>
+<td style="text-align: left;">ステップ 3 の最初に、骨組み（時計を入れて 25 分進めると、<code>setTimeout</code> で開く最小のダイアログが開く）で確かめる（W4 の T-83「骨組みのまま流して本命で落とす」。T-114「枠組みに頼る確認ポイントは確かめてから決める」）。効かなければ止めて諮る</td>
 </tr>
 </tbody>
 </table>
-<h3 id="t-101t-114">開始準備で確かめたこと（T-101・T-114）<a class="headerlink" href="#t-101t-114" title="Permanent link">&para;</a></h3>
+<h3 id="t-114">開始準備で確かめたこと（T-114）<a class="headerlink" href="#t-114" title="Permanent link">&para;</a></h3>
 <ul>
-<li><strong>A-03 の「開いていた画面に戻ります」は、無操作の失効では成り立っていない</strong>: 無操作の失効は <code>sessionManagement().invalidSessionUrl</code> が要求を保存せずに A-03 へ移し、8 時間の上限は <code>SessionLifetimeFilter</code> が session を捨てて A-03 へ移す。どちらも開いていた画面の URL を覚えないので、A-03 から「ログインへ」で入り直すとホームに着く（Bolt 31 のレビュー 5 の「確かめていない」）。Bolt 32e で直す（開始準備の決定）。この Bolt では A-03 の文言を変えない</li>
-<li><strong>層の規則</strong>: 画面の層（<code>interfaces</code>）は <code>infrastructure</code> に依存できない（<code>LayerArchitectureTest</code>）。要素の権限（<code>FACTOR_TOTP</code>）を参照できるのは認証の入口と合成ルートだけ（<code>FactorAuthorityReferenceTest</code>）。8 時間の起点（<code>SessionLifetime.AUTHENTICATED_AT</code>）と上限（<code>MAX_LIFETIME</code>）も認証の入口にある。よって 8 時間の残りは認証の入口（<code>SessionLifetimeFilter</code>）で算出して request の属性に置き、画面の層はその属性を名前で読む（属性の名前は固定の文字列で、画面の層と認証の入口の値が同じことをテストで守る。<code>TotpEnrollmentController.STARTED_AT</code> と同じ書き方）。無操作の期限の秒数は画面の層が <code>HttpSession.getMaxInactiveInterval()</code> で読める</li>
-<li><strong>CSP</strong>: <code>default-src 'self'</code> でインラインのスクリプトを許さない。JavaScript は <code>/js/</code> の外部のファイルにする（<code>transport-request-form.js</code> と同じ）。ダイアログは HTML の <code>&lt;dialog&gt;</code> と <code>showModal()</code> で作る（Bootstrap のモーダルの JavaScript を使わず、インラインの style も足さない）</li>
-<li><strong>画面の層の受入シナリオの時計</strong>: サーバーの時計は共通のステップ「現在時刻が … である」（<code>ClockSteps</code>、<code>MutableClock</code>）で動かせる（8 時間の残り）。ブラウザの時計は Playwright 1.63 の <code>Clock</code>（<code>BrowserContext.clock()</code>。同じコンテキストのページが同じ時計を使う）で動かせる。Spring Session の無操作の期限はサーバーの実時間で数える（Bolt 32d の既知の課題の <code>SpringSessionRows.idle</code>）ので、画面の層のシナリオではサーバーの session を実際に失効させない。失効の後のサーバーの振る舞い（A-03）は Bolt 14 の統合テストが確かめている</li>
-<li><strong>部分更新</strong>: 今のテンプレートに <code>hx-get</code>・<code>hx-post</code> はない（画面の操作はすべて画面の移動）。よってサーバーへの request は「画面の読み込み」と「延長」の 2 つだけを数えればよい。htmx の request を後で足したら、そのときに数える（下の「入れない」）</li>
+<li><strong>A-03 の「開いていた画面に戻ります」は、無操作の失効では成り立っていない</strong>: 無操作の失効は <code>sessionManagement().invalidSessionUrl</code> が要求を保存せずに A-03 へ移す。8 時間の上限は <code>SessionLifetimeFilter</code> が session を捨てて A-03 へ移す。どちらも開いていた画面の URL を覚えないので、A-03 から「ログインへ」で入り直すとホームに着く（Bolt 31 のレビュー 5 の「確かめていない」）。画面の文言を直して復帰を作るのは Bolt 32e（開始準備の決定）。マニュアルの同じ記述の扱いは確認ポイント 9</li>
+<li><strong>層の規則</strong>: 画面の層（<code>interfaces</code>）は <code>infrastructure</code> に依存できない（<code>LayerArchitectureTest</code>）。要素の権限（<code>FACTOR_TOTP</code>）を参照できるのは認証の入口と合成ルートだけ（<code>FactorAuthorityReferenceTest</code>）。8 時間の起点（<code>SessionLifetime.AUTHENTICATED_AT</code>）と上限（<code>MAX_LIFETIME</code>）も認証の入口にある。よって 8 時間の残りは認証の入口（<code>SessionLifetimeFilter</code>）で算出して request の属性に置き、画面の層はその属性を名前で読む。無操作の期限の秒数は画面の層が <code>HttpSession.getMaxInactiveInterval()</code> で読める。名前を 2 つの定数で持つことは確認ポイント 5</li>
+<li><strong>CSRF と失効の経路</strong>: <code>CsrfFilter</code> は <code>SessionLifetimeFilter</code> より前に動く。無操作で失効した session では CSRF のトークンも消えているので、延長の POST は CSRF のトークンがない拒否（<code>MissingCsrfTokenException</code>）になり、<code>invalidSessionUrl</code> があるため A-03 への 302 になる（ADR-012 の「session に CSRF のトークンがない古いフォームの送信も A-03」）。session が生きていてトークンが誤っているときだけ 403 になる。どちらもステップ 2 の統合テストで確かめる</li>
+<li><strong>CSP とダイアログ</strong>: <code>default-src 'self'</code> でインラインのスクリプトを許さない。JavaScript は <code>/js/</code> の外部のファイルにする（<code>transport-request-form.js</code> と同じ）。ダイアログは HTML の <code>&lt;dialog&gt;</code> と <code>showModal()</code> で作る。理由は、フォーカスの閉じ込めと背後の inert 化、Esc の扱いをブラウザが標準で持ち、Bootstrap のモーダルの JavaScript と属性の組み立てを要らなくするため（Bootstrap の JavaScript は読み込み済みで、今の CSP でも動く。CSP は選んだ理由ではない）</li>
+<li><strong>htmx を使わない理由</strong>: UI 設計（:35）とフロントエンドのアーキテクチャ（:29）は session の警告を部分更新（htmx 相当）に数えている。延長は htmx でなく <code>fetch</code> で送る。htmx（XHR）は 302 を黙って追い、A-03 の HTML を 200 で受けるので、失効を見分けられない。<code>fetch</code> は <code>redirect: 'manual'</code> で 302 を <code>opaqueredirect</code> として受けられる。警告を開く時刻もブラウザだけの関心で、サーバーの部分を返す request が要らない。ステップ 1 で両文書に書く</li>
+<li><strong>画面の層の受入シナリオの時計</strong>: 画面の層のテストのアプリは本物の時計（<code>Clock.systemUTC()</code>）で動き、<code>MutableClock</code> も共通の時計のステップ（<code>ClockSteps</code>）も使わない（<code>UiTestConfiguration</code>・<code>RunUiCucumberTest</code> の glue）。よってサーバーの時計は進められない。8 時間の警告は、テストの部品が session の属性 <code>cargotracker.session.authenticatedAt</code> を 7 時間 56 分前の時刻に書き換えてから画面を開いて確かめる（画面の層のテストは <code>JdbcTemplate</code> を持つ。<code>UiUsers</code>）。ブラウザの時計は Playwright 1.63 の <code>Clock</code>（<code>BrowserContext.clock()</code>。同じコンテキストのページが同じ時計を使う）で動かせる。Spring Session の無操作の期限はサーバーの実時間で数えるので、画面の層のシナリオではサーバーの session を実際に失効させない（サーバーの失効は統合テスト）</li>
+<li><strong>数える request</strong>: 今のテンプレートに <code>hx-get</code>・<code>hx-post</code> はない（画面の操作はすべて画面の移動）。<code>SessionLifetimeFilter</code> は公開の資源（<code>/js/**</code> など）でも session を読むので、資源の request でもサーバーの期限は延びるが、資源は画面の読み込みと同時に読まれる。よってブラウザは「画面の読み込み」と「延長」を数えれば足りる。ブラウザが数えない request（<code>layout/public</code> の A-04・エラーの画面、書類のダウンロード）でもサーバーの期限は延びるので、ブラウザの期限はサーバーより早く来ることがある（安全側。期限を過ぎたときの文言は断定しない。確認ポイント 7）</li>
 </ul>
 <h2 id="bolt_1">ふりかえりと前の Bolt からの引き継ぎ<a class="headerlink" href="#bolt_1" title="Permanent link">&para;</a></h2>
 <table>
@@ -10354,13 +10356,13 @@
 <tbody>
 <tr>
 <td style="text-align: left;">開始準備の決定（2026-10-14、human:kakimomokuri）</td>
-<td style="text-align: left;">32b（予告と延長）と 32e（入力の保持と開いていた画面への復帰）に分ける。8 時間の上限も 5 分前に予告する（延長はできない）。予告の時刻はタブの間でそろえる。延長は POST の専用の URL</td>
+<td style="text-align: left;">32b（警告と延長）と 32e（入力の保持と開いていた画面への復帰）に分ける。8 時間の上限も 5 分前に警告する（延長はできない）。警告の時刻はタブの間でそろえる。延長は POST の専用の URL</td>
 <td style="text-align: left;">本計画の範囲と、確認ポイント 1〜4</td>
 </tr>
 <tr>
 <td style="text-align: left;">Bolt 32d の Try T-117</td>
 <td style="text-align: left;">規則のテストは、その規則を外したときだけ落ちる入力を選び、規則ごとに文言で確かめる</td>
-<td style="text-align: left;">ステップ 2 の属性の名前の一致のテストと、延長の URL の CSRF・認証のテストは、それぞれ 1 つの条件だけを外した request で確かめる</td>
+<td style="text-align: left;">ステップ 2 の延長の URL の CSRF・認証・失効のテストは、それぞれ 1 つの条件だけを外した request で確かめる。延長の最終アクセスは、先に行を古くしてから確かめる（ほかの request でも最終アクセスは新しくなるため）</td>
 </tr>
 <tr>
 <td style="text-align: left;">Bolt 32d の Try T-118</td>
@@ -10368,9 +10370,14 @@
 <td style="text-align: left;">全ステップ</td>
 </tr>
 <tr>
-<td style="text-align: left;">Bolt 32d の既知の課題</td>
-<td style="text-align: left;">統合テストの時計を <code>Clock</code> で受けて <code>MutableClock</code> に型変換する書き方が 6 クラスに散らばる。共有の <code>MutableClock</code> の時刻を各テストの前に置くのは約束だけ</td>
-<td style="text-align: left;">確認ポイント 6。この Bolt で足す統合テストは <code>@IdentityIntegrationTest</code> を付け、<code>MutableClock</code> を直接受け、<code>@BeforeEach</code> で時刻を置く。既存の 6 クラスは触らない</td>
+<td style="text-align: left;">Bolt 32d の既知の課題（時計の受け方）</td>
+<td style="text-align: left;">統合テストの時計を <code>Clock</code> で受けて <code>MutableClock</code> に型変換する書き方が 6 クラスに散らばる。報告は「次に identity の統合テストを触る Bolt でそろえる」</td>
+<td style="text-align: left;">確認ポイント 6。この Bolt は既存の 6 クラスを書き換えないので、新しいテストだけを <code>MutableClock</code> を直接受ける形で書く（報告の「触る Bolt」の約束を「書き換える Bolt」と読む。違いを承認の場で確かめる）</td>
+</tr>
+<tr>
+<td style="text-align: left;">Bolt 32d の既知の課題（フラグ引数）</td>
+<td style="text-align: left;">画面の層のステップの <code>submitLogin(String, boolean)</code> のフラグ引数は、画面の層のステップを触る Bolt で分ける</td>
+<td style="text-align: left;"><code>LoginUiSteps</code> は触らない（新しいステップ定義のクラスを作り、ログインは今の共通のステップを使う）。分けるのは <code>LoginUiSteps</code> を書き換える Bolt</td>
 </tr>
 <tr>
 <td style="text-align: left;">Bolt 32c の Try T-115・T-116</td>
@@ -10380,7 +10387,7 @@
 <tr>
 <td style="text-align: left;">Bolt 32 の Try T-113</td>
 <td style="text-align: left;">共有の表の件数はそのテストの利用者で絞る</td>
-<td style="text-align: left;">延長の後の最終アクセスは、そのテストの session の行で確かめる（<code>SpringSessionRows</code>）</td>
+<td style="text-align: left;">延長の最終アクセスは、そのテストの session の行で確かめる（<code>SpringSessionRows</code>）</td>
 </tr>
 <tr>
 <td style="text-align: left;">Bolt 31 のレビュー 5（テクニカルライター、高）</td>
@@ -10388,14 +10395,19 @@
 <td style="text-align: left;">確かめた（上の「開始準備で確かめたこと」）。直すのは Bolt 32e。ステップ 1 でリリース計画の 32e の行に書く</td>
 </tr>
 <tr>
+<td style="text-align: left;">Bolt 31c のレビュー 14（中、33b に送った）</td>
+<td style="text-align: left;">登録を始めた時刻のキーを 2 つの定数で読み書きしている</td>
+<td style="text-align: left;">同じ形の 3 つ目を足すかを確認ポイント 5 で決める</td>
+</tr>
+<tr>
 <td style="text-align: left;">Bolt 14 のレビュー（利用者の代表）</td>
 <td style="text-align: left;">入力の保持と失効の前の警告は、利用者の信頼にかかわるため W5 で必ず入れる</td>
-<td style="text-align: left;">予告と延長はこの Bolt、入力の保持は Bolt 32e（どちらも W5）</td>
+<td style="text-align: left;">警告と延長はこの Bolt、入力の保持は Bolt 32e（どちらも W5）</td>
 </tr>
 <tr>
 <td style="text-align: left;">W4 の Try T-83・T-88・T-89・T-90</td>
 <td style="text-align: left;">骨組みのまま流して本命で落とす。見張り。後に回したものは Issue か計画の表に。画面の文言を変える Bolt にテクニカルライターの観点</td>
-<td style="text-align: left;">全ステップ。予告の文言は UI 設計に書いてから作り、開発レビューにテクニカルライターを入れる</td>
+<td style="text-align: left;">H2 の骨組み。警告の文言は UI 設計に書いてから作り、開発レビューにテクニカルライターを入れる。後に回すものはステップ 1 でリリース計画の 32e・33b の行に書く</td>
 </tr>
 </tbody>
 </table>
@@ -10410,93 +10422,136 @@
 </thead>
 <tbody>
 <tr>
-<td style="text-align: left;">無操作 30 分の失効の 5 分前の予告と、画面を移らない延長（<code>POST /session/extend</code>。CSRF のトークン付き。204 を返す）</td>
-<td style="text-align: left;">失効の時の入力の保持と、再認証の後に開いていた画面へ戻すこと（Bolt 32e。A-03 の文言の直しも 32e）</td>
+<td style="text-align: left;">無操作 30 分の失効の 5 分前の警告と、画面を移らない延長（<code>POST /session/extend</code>。CSRF のトークン付き。204 を返す）</td>
+<td style="text-align: left;">失効の時の入力の保持と、再認証の後に開いていた画面へ戻すこと（Bolt 32e。A-03 の画面の文言の直しも 32e）</td>
 </tr>
 <tr>
-<td style="text-align: left;">発行から 8 時間の上限の 5 分前の予告（延長のボタンを出さない。送信を促す）</td>
-<td style="text-align: left;">password の段（A-02 の 5 分）と登録の途中（A-07 の 15 分）の予告（A-07 は期限の時刻をすでに示している。認証の手続きの画面で、業務の入力を持たない）</td>
+<td style="text-align: left;">発行から 8 時間の上限の 5 分前の警告（延長のボタンを出さない。送信を促す）</td>
+<td style="text-align: left;">password の段（A-02 の 5 分）と登録の途中（A-07 の 15 分）の警告（A-07 は期限の時刻をすでに示している。認証の手続きの画面で、業務の入力を持たない）</td>
 </tr>
 <tr>
-<td style="text-align: left;">予告の時刻を複数のタブの間でそろえる（最後にサーバーへ request した時刻だけを <code>localStorage</code> で共有する。業務データは置かない）</td>
+<td style="text-align: left;">警告の時刻を複数のタブの間でそろえる（最後にサーバーへ request した時刻だけを <code>localStorage</code> で共有する）</td>
 <td style="text-align: left;">部分更新（htmx）の request を最後の request の時刻に数えること（今のテンプレートに部分更新がない。足す Bolt で数える）</td>
 </tr>
 <tr>
-<td style="text-align: left;">失効の時刻を過ぎたら、ダイアログを「ログアウトしました」の案内（「ログインへ」）に替える（自動で画面を移らない。入力を画面に残す）</td>
-<td style="text-align: left;">予告までの時間・失効までの時間を利用者が変える設定</td>
+<td style="text-align: left;">期限の時刻を過ぎたら、ダイアログをモーダルでない案内に替える（A-03 へのリンク。自動で画面を移らず、入力を画面に残して写し取れるようにする）</td>
+<td style="text-align: left;">警告までの時間・失効までの時間を利用者が変える設定。警告の英語（荷受人の画面の多言語は US-10 の Bolt に申し送る）</td>
 </tr>
 <tr>
-<td style="text-align: left;">顧客 Web と社内業務 Web の共通のレイアウト（<code>layout/customer</code>・<code>layout/staff</code>）に予告の部分を置く。認証の前の画面（<code>layout/public</code>）には置かない</td>
-<td style="text-align: left;">予告の音・ブラウザの通知</td>
+<td style="text-align: left;">顧客 Web と社内業務 Web の共通のレイアウト（<code>layout/customer</code>・<code>layout/staff</code>）に警告の部分と JavaScript を置く。<code>layout/public</code> の画面（A-01〜A-04、エラーの画面）には置かない</td>
+<td style="text-align: left;">警告の音・ブラウザの通知</td>
 </tr>
 <tr>
-<td style="text-align: left;">UI 設計・フロントエンドのアーキテクチャ・非機能要件（ACC-06）・ADR-012・テスト戦略・リリース計画（32e の行）の更新</td>
+<td style="text-align: left;">画面の層のテストの部品 <code>BrowserSession</code> に、ブラウザの時計を入れる操作と別のタブを開く操作、session の属性を書き換える部品を足す</td>
+<td style="text-align: left;"><code>LoginUiSteps</code> のフラグ引数（書き換える Bolt で分ける）</td>
+</tr>
+<tr>
+<td style="text-align: left;">UI 設計・フロントエンドとバックエンドのアーキテクチャ・非機能要件（ACC-06）・ADR-011・ADR-012・テスト戦略・ユーザーストーリー・リリース計画（32e・33b の行）の更新</td>
 <td style="text-align: left;">—</td>
 </tr>
 <tr>
-<td style="text-align: left;">ユーザーマニュアル（2.2 画面の構成にログアウトの予告と延長、付録 B）と画面のキャプチャ、デモの動画（利用者に見える振る舞いが変わる。メモリの規則「振る舞いが変わる Bolt はマニュアルを完了条件に入れる」）</td>
+<td style="text-align: left;">ユーザーマニュアル（2.2 画面の構成に session の警告と延長、2.4 の注意・補足と付録 B の Q1-2 に警告と延長）と画面のキャプチャ、デモの動画の録画（利用者に見える振る舞いが変わる。メモリの規則「振る舞いが変わる Bolt はマニュアルを完了条件に入れる」）。#13 への添付は終了報告の承認の後（運用の手順書）</td>
+<td style="text-align: left;">—</td>
+</tr>
+<tr>
+<td style="text-align: left;">支援技術（NVDA または VoiceOver）による人の手動確認（テスト戦略のアクセシビリティの表）</td>
 <td style="text-align: left;">—</td>
 </tr>
 </tbody>
 </table>
 <h3 id="try-t-1">設計の約束（Try T-1）<a class="headerlink" href="#try-t-1" title="Permanent link">&para;</a></h3>
 <ul>
-<li><strong>残り時間の渡し方</strong>: ログインした画面（2 つの要素がそろった session）の応答に、無操作の期限の秒数（<code>HttpSession.getMaxInactiveInterval()</code>。今は 1800）と、8 時間の上限までの残りの秒数を出す。8 時間の残りは <code>SessionLifetimeFilter</code> が上限の判定と同じ起点・同じ時計で算出し、request の属性（固定の名前 <code>cargotracker.session.lifetimeRemainingSeconds</code>）に置く。画面の層の <code>@ControllerAdvice</code>（<code>identity.interfaces.web.SessionTimerAdvice</code>）が 2 つの値をモデルの属性 <code>sessionTimer</code> にし、共通のレイアウトが予告の部分の <code>data-</code> 属性に書く。2 つの要素がそろっていない session と認証の前の画面には出さない</li>
-<li><strong>延長</strong>: <code>POST /session/extend</code>（<code>identity.interfaces.web.SessionController</code>）。認証と request ごとの利用者の確かめ（Bolt 32c）と上限の判定は今のフィルターをそのまま通す（延長の URL を公開の URL にしない）。Spring Session がその request で session の最終アクセスを新しくするので、コントローラーは 204 を返すだけにする。8 時間の上限は延びない。失効した session の延長は、今のフィルターが A-03 へ移す（302）。JavaScript は 204 以外を失効として扱う（<code>fetch</code> の <code>redirect: 'manual'</code>）</li>
-<li><strong>ブラウザの数え方</strong>（<code>/js/session-timeout.js</code>）: 画面の読み込みと延長の 204 の時刻を「最後の request の時刻」とし、<code>localStorage</code> に置く（キー <code>cargotracker.session.lastRequestAt</code>。値はミリ秒の時刻だけ）。無操作の期限は「最後の request の時刻 + 無操作の秒数」、8 時間の期限は「読み込みの時刻 + 8 時間の残りの秒数」。早いほうの期限の 5 分前に予告を開く。ほかのタブが <code>localStorage</code> を更新したら（<code>storage</code> のイベント）期限を数え直し、予告が要らなくなったら閉じる。<code>localStorage</code> を使えないときは、そのタブの時刻だけで数える</li>
-<li><strong>予告のダイアログ</strong>（<code>layout/session-warning</code> の部分。UI 設計の文言）: <code>&lt;dialog&gt;</code> を <code>showModal()</code> で開き、<code>aria-labelledby</code>・<code>aria-describedby</code> で見出しと本文を結ぶ。開いたら延長のボタンにフォーカスを移す（8 時間の予告では「閉じる」）。閉じたら開く前のフォーカスに戻す。残りの分は 1 分ごとに書き換えるが、支援技術には毎回読ませない（開いたときの本文で伝える）。延長に成功したら閉じる。失効の時刻を過ぎたら、同じダイアログを「ログアウトしました」の案内に替える。JavaScript がないときは何も出さない（今の振る舞い）</li>
+<li><strong>残り時間の渡し方</strong>: ログインした画面（2 つの要素がそろった session）の応答に、無操作の期限の秒数（<code>HttpSession.getMaxInactiveInterval()</code>。今は 1800）と、8 時間の上限までの残りの秒数を出す。8 時間の残りは <code>SessionLifetimeFilter</code> が上限の判定と同じ起点・同じ時計で算出し、2 つの要素がそろった session のときだけ request の属性（<code>cargotracker.request.sessionLifetimeRemainingSeconds</code>。session の属性の接頭辞 <code>cargotracker.session.</code> と分ける）に置く（password の段・登録の途中・起点のない session では置かない）。画面の層の <code>@ControllerAdvice</code>（<code>identity.interfaces.web.SessionTimerAdvice</code>。共通の画面のモデルの属性を足す前例は <code>CurrentActorAdvice</code>）は、request の属性があるときだけ <code>request.getSession(false)</code> で無操作の秒数を読み、モデルの属性 <code>sessionTimer</code> にする（引数で <code>HttpSession</code> を受けると session を作ってしまうため受けない）。共通のレイアウトが警告の部分の <code>data-</code> 属性に書く</li>
+<li><strong>延長</strong>: <code>POST /session/extend</code>（<code>identity.interfaces.web.SessionController</code>）。公開の URL にせず、認証・request ごとの利用者の確かめ（Bolt 32c）・上限の判定・CSRF の今のフィルターをすべて通す。Spring Session がその request で session の最終アクセスを新しくするので、コントローラーは 204 を返すだけにする。8 時間の上限は延びない。監査記録は書かない（延長はログインでも権限の変更でもない）</li>
+<li><strong>ブラウザの数え方</strong>（<code>/js/session-timeout.js</code>。<code>layout/customer</code>・<code>layout/staff</code> の head に直接置く）: 画面の読み込みと延長の 204 の時刻を「最後の request の時刻」とし、<code>localStorage</code> に置く（キー <code>cargotracker.session.lastRequestAt</code>。値はミリ秒の時刻だけ）。無操作の期限は「最後の request の時刻 + 無操作の秒数」、8 時間の期限は「読み込みの時刻 + 8 時間の残りの秒数」。早いほうの期限の 5 分前に警告を開く。ほかのタブが <code>localStorage</code> を更新したら（<code>storage</code> のイベント）期限を数え直し、警告が要らなくなったら閉じる。<code>localStorage</code> を使えないときは、そのタブの時刻だけで数える</li>
+<li><strong>延長の応答の扱い</strong>: 204 なら閉じる。<code>opaqueredirect</code>（302。失効した session は A-03 へ、ログインしていない session は A-01 へ移される）なら「ログアウトしました」の案内に替える。それ以外（403・500・通信の失敗）は「延長できませんでした。もう一度お試しください。」を警告の中に示し、延長のボタンを残す（session が生きているのに「ログアウトしました」と出さない）</li>
+<li><strong>警告のダイアログ</strong>（<code>layout/session-warning</code> の部分。文言は UI 設計）: <code>&lt;dialog&gt;</code> を <code>showModal()</code> で開き、<code>aria-labelledby</code>・<code>aria-describedby</code> で見出しと本文を結ぶ。開いたら延長のボタンにフォーカスを移す（8 時間の警告では「閉じる」）。閉じたら開く前のフォーカスに戻す。残りの分は 1 分ごとに書き換えるが、支援技術には毎回読ませない（開いたときの本文で伝える）。残りは相対の分で示す（A-07 の期限は絶対の時刻とタイムゾーンで示すが、警告は 5 分以内のことで、時刻の書式とタイムゾーンをブラウザで組み立てない）。Esc（<code>cancel</code>）は「閉じる」と同じで延長しない（期限が来たら案内に替わる）。延長の後に 8 時間の期限が 5 分以内なら、8 時間の警告に替える。期限を過ぎたら、モーダルを閉じて同じ部分をモーダルでない案内（<code>role="alert"</code>。「操作がなかったため、ログアウトした可能性があります」と A-03 へのリンク）にし、背後の画面の入力を写し取れるようにする。JavaScript がないときは何も出さない（今の振る舞い）</li>
+<li><strong>モーダルのダイアログは session の警告だけの例外</strong>: UI 設計は確認を画面の中の確認の領域で行い、別のダイアログを挟まない（:232）。session の警告は、どの画面の上にも出て操作を止めて知らせる必要があるため、モーダルのダイアログにする。この例外を UI 設計に書く</li>
 </ul>
 <h2 id="bolt_2">設計（この Bolt の範囲）<a class="headerlink" href="#bolt_2" title="Permanent link">&para;</a></h2>
-<p>この Bolt はドメインのモデルとデータモデルを変えない。4 図のうち、ドメインモデル図と ER 図は対象がないので省く。予告のダイアログの状態遷移図と、残り時間の受け渡しの図を置く。画面遷移は変わらない（ダイアログは画面を移らない。失効の後は今の A-03）。</p>
-<h3 id="_5">予告のダイアログの状態<a class="headerlink" href="#_5" title="Permanent link">&para;</a></h3>
-<p><img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB2ZXJzaW9uPSIxLjEiIGRhdGEtZGlhZ3JhbS10eXBlPSJTVEFURSIgc3R5bGU9IndpZHRoOjEwNjRweDtoZWlnaHQ6NTUwcHg7YmFja2dyb3VuZDojRkZGRkZGOyIgd2lkdGg9IjEwNjRweCIgaGVpZ2h0PSI1NTBweCIgdmlld0JveD0iMCAwIDEwNjQgNTUwIiB6b29tQW5kUGFuPSJtYWduaWZ5IiBwcmVzZXJ2ZUFzcGVjdFJhdGlvPSJub25lIiBjb250ZW50U3R5bGVUeXBlPSJ0ZXh0L2NzcyI+PD9wbGFudHVtbCAxLjIwMjYuOD8+PGRlZnMvPjxnIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBsZW5ndGhBZGp1c3Q9InNwYWNpbmciPjxnIGNsYXNzPSJzdGFydF9lbnRpdHkiIGRhdGEtcXVhbGlmaWVkLW5hbWU9Ii5zdGFydC4iIGlkPSJlbnQwMDAxIiBkYXRhLXNvdXJjZS1saW5lPSIxIj48ZWxsaXBzZSBjeD0iNDk3LjAzIiBjeT0iMTYiIHJ4PSIxMCIgcnk9IjEwIiBmaWxsPSIjMjIyIiBzdHlsZT0ic3Ryb2tlOiMyMjI7c3Ryb2tlLXdpZHRoOjE7Ii8+PC9nPjxnIGNsYXNzPSJlbnRpdHkiIGRhdGEtcXVhbGlmaWVkLW5hbWU9Ii4uLi4uIiBpZD0iZW50MDAwMiIgZGF0YS1zb3VyY2UtbGluZT0iMSI+PHJlY3QgeD0iNDUyLjAzIiB5PSIxMDMiIHdpZHRoPSI5MCIgaGVpZ2h0PSI1MCIgZmlsbD0iI0YxRjFGMSIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDowLjU7IiByeD0iMTIuNSIgcnk9IjEyLjUiLz48bGluZSB4MT0iNDUyLjAzIiB5MT0iMTI5LjI5NyIgeDI9IjU0Mi4wMyIgeTI9IjEyOS4yOTciIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MC41OyIvPjx0ZXh0IHg9IjQ2Mi4wMyIgeT0iMTIwLjk5NSIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxNCIgdGV4dExlbmd0aD0iNzAiPumWieOBmOOBpuOBhOOCizwvdGV4dD48L2c+PGcgY2xhc3M9ImVudGl0eSIgZGF0YS1xdWFsaWZpZWQtbmFtZT0iLi4uLi4uIiBpZD0iZW50MDAwNCIgZGF0YS1zb3VyY2UtbGluZT0iMiI+PHJlY3QgeD0iMjczLjAzIiB5PSIyNDUiIHdpZHRoPSIxMDQiIGhlaWdodD0iNTAiIGZpbGw9IiNGMUYxRjEiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MC41OyIgcng9IjEyLjUiIHJ5PSIxMi41Ii8+PGxpbmUgeDE9IjI3My4wMyIgeTE9IjI3MS4yOTciIHgyPSIzNzcuMDMiIHkyPSIyNzEuMjk3IiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjAuNTsiLz48dGV4dCB4PSIyODMuMDMiIHk9IjI2Mi45OTUiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTQiIHRleHRMZW5ndGg9Ijg0Ij7nhKHmk43kvZzjga7kuojlkYo8L3RleHQ+PC9nPjxnIGNsYXNzPSJlbnRpdHkiIGRhdGEtcXVhbGlmaWVkLW5hbWU9IjguLi4uLiIgaWQ9ImVudDAwMDYiIGRhdGEtc291cmNlLWxpbmU9IjMiPjxyZWN0IHg9IjY5My41OCIgeT0iMjQ1IiB3aWR0aD0iOTguOTA3IiBoZWlnaHQ9IjUwIiBmaWxsPSIjRjFGMUYxIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjAuNTsiIHJ4PSIxMi41IiByeT0iMTIuNSIvPjxsaW5lIHgxPSI2OTMuNTgiIHkxPSIyNzEuMjk3IiB4Mj0iNzkyLjQ4NyIgeTI9IjI3MS4yOTciIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MC41OyIvPjx0ZXh0IHg9IjcwMy41OCIgeT0iMjYyLjk5NSIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxNCIgdGV4dExlbmd0aD0iNzguOTA3Ij445pmC6ZaT44Gu5LqI5ZGKPC90ZXh0PjwvZz48ZyBjbGFzcz0iZW50aXR5IiBkYXRhLXF1YWxpZmllZC1uYW1lPSIuLi4uLi4uLi4iIGlkPSJlbnQwMDEwIiBkYXRhLXNvdXJjZS1saW5lPSI2Ij48cmVjdCB4PSI2NzAuMDMiIHk9IjM4NyIgd2lkdGg9IjE0NS45OTkiIGhlaWdodD0iNTAiIGZpbGw9IiNGMUYxRjEiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MC41OyIgcng9IjEyLjUiIHJ5PSIxMi41Ii8+PGxpbmUgeDE9IjY3MC4wMyIgeTE9IjQxMy4yOTciIHgyPSI4MTYuMDI5IiB5Mj0iNDEzLjI5NyIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDowLjU7Ii8+PHRleHQgeD0iNjgwLjAzIiB5PSI0MDQuOTk1IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE0IiB0ZXh0TGVuZ3RoPSIxMjUuOTk5Ij7jg63jgrDjgqLjgqbjg4jjgZfjgb7jgZfjgZ88L3RleHQ+PC9nPjxnIGNsYXNzPSJlbmRfZW50aXR5IiBkYXRhLXF1YWxpZmllZC1uYW1lPSIuZW5kLiIgaWQ9ImVudDAwMTUiIGRhdGEtc291cmNlLWxpbmU9IjEwIj48ZWxsaXBzZSBjeD0iNzQzLjAzIiBjeT0iNTI1IiByeD0iMTEiIHJ5PSIxMSIgZmlsbD0ibm9uZSIgc3R5bGU9InN0cm9rZTojMjIyO3N0cm9rZS13aWR0aDoxOyIvPjxlbGxpcHNlIGN4PSI3NDMuMDMiIGN5PSI1MjUiIHJ4PSI2IiByeT0iNiIgZmlsbD0iIzIyMiIgc3R5bGU9InN0cm9rZTojMjIyO3N0cm9rZS13aWR0aDoxOyIvPjwvZz48IS0tbGluayAqc3RhcnQqIHRvIOmWieOBmOOBpuOBhOOCiy0tPjxnIGNsYXNzPSJsaW5rIiBkYXRhLWVudGl0eS0xPSJlbnQwMDAxIiBkYXRhLWVudGl0eS0yPSJlbnQwMDAyIiBpZD0ibG5rMyIgZGF0YS1zb3VyY2UtbGluZT0iMSIgZGF0YS1saW5rLXR5cGU9ImRlcGVuZGVuY3kiPjxwYXRoIGQ9Ik00OTcuMDMsMjYuMzggQzQ5Ny4wMyw0My4xMSA0OTcuMDMsNzMuNTkgNDk3LjAzLDk3LjYzIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjE7IiBmaWxsPSJub25lIiBpZD0iKnN0YXJ0Ki10by3plonjgZjjgabjgYTjgosiLz48cG9seWdvbiBwb2ludHM9IjQ5Ny4wMywxMDIuNjMsNTAxLjAzLDkzLjYzLDQ5Ny4wMyw5Ny42Myw0OTMuMDMsOTMuNjMsNDk3LjAzLDEwMi42MyIgZmlsbD0iIzE4MTgxOCIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxO3N0cm9rZS1saW5lam9pbjptaXRlcjtzdHJva2UtbWl0ZXJsaW1pdDoxMDsiLz48dGV4dCB4PSI0OTguMDMiIHk9IjY5LjA2NyIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxMyIgdGV4dExlbmd0aD0iMTY5Ij7jg63jgrDjgqTjg7PjgZfjgZ/nlLvpnaLjga7oqq3jgb/ovrzjgb88L3RleHQ+PC9nPjwhLS1saW5rIOmWieOBmOOBpuOBhOOCiyB0byDnhKHmk43kvZzjga7kuojlkYotLT48ZyBjbGFzcz0ibGluayIgZGF0YS1lbnRpdHktMT0iZW50MDAwMiIgZGF0YS1lbnRpdHktMj0iZW50MDAwNCIgaWQ9ImxuazUiIGRhdGEtc291cmNlLWxpbmU9IjIiIGRhdGEtbGluay10eXBlPSJkZXBlbmRlbmN5Ij48cGF0aCBkPSJNNDUxLjc0LDEzMS4zNCBDMzQ2LjI3LDEzNy4yNSA5MS4zLDE1NC4zOCA2Ni4wMywxODMgQzYsMjUxLjAzIDE3NS43MTMsMjY1LjI0MSAyNjcuNTYzLDI2OC4xNzEiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTsiIGZpbGw9Im5vbmUiIGlkPSLplonjgZjjgabjgYTjgostdG8t54Sh5pON5L2c44Gu5LqI5ZGKIi8+PHBvbHlnb24gcG9pbnRzPSIyNzIuNTYsMjY4LjMzLDI2My42OTIsMjY0LjA0NSwyNjcuNTYzLDI2OC4xNzEsMjYzLjQzNywyNzIuMDQxLDI3Mi41NiwyNjguMzMiIGZpbGw9IiMxODE4MTgiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTtzdHJva2UtbGluZWpvaW46bWl0ZXI7c3Ryb2tlLW1pdGVybGltaXQ6MTA7Ii8+PHRleHQgeD0iNzcuOTY0IiB5PSIxOTYuMDY3IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjEzIiB0ZXh0TGVuZ3RoPSIxMzMuNTM2Ij7nhKHmk43kvZzjga7mnJ/pmZDjga4gNSDliIbliY08L3RleHQ+PHRleHQgeD0iNjcuMDMiIHk9IjIxMS4yIiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjEzIiB0ZXh0TGVuZ3RoPSIxNTUuNDAzIj7vvIg4IOaZgumWk+OBruacn+mZkOOCiOOCiuaXqeOBhO+8iTwvdGV4dD48L2c+PCEtLWxpbmsg54Sh5pON5L2c44Gu5LqI5ZGKIHRvIOmWieOBmOOBpuOBhOOCiy0tPjxnIGNsYXNzPSJsaW5rIiBkYXRhLWVudGl0eS0xPSJlbnQwMDA0IiBkYXRhLWVudGl0eS0yPSJlbnQwMDAyIiBpZD0ibG5rOCIgZGF0YS1zb3VyY2UtbGluZT0iNCIgZGF0YS1saW5rLXR5cGU9ImRlcGVuZGVuY3kiPjxwYXRoIGQ9Ik0yODguOTYsMjQ0LjgyIEMyNjcuMzMsMjI3LjM0IDI0Ni44OCwyMDMuMzEgMjYzLjAzLDE4MyBDMjg2LjE0LDE1My45NiAzODUuMjY2LDEzOS43MTEgNDQ2LjU2NiwxMzMuNDExIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjE7IiBmaWxsPSJub25lIiBpZD0i54Sh5pON5L2c44Gu5LqI5ZGKLXRvLemWieOBmOOBpuOBhOOCiyIvPjxwb2x5Z29uIHBvaW50cz0iNDUxLjU0LDEzMi45LDQ0Mi4xNzgsMTI5Ljg0MSw0NDYuNTY2LDEzMy40MTEsNDQyLjk5NiwxMzcuNzk5LDQ1MS41NCwxMzIuOSIgZmlsbD0iIzE4MTgxOCIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxO3N0cm9rZS1saW5lam9pbjptaXRlcjtzdHJva2UtbWl0ZXJsaW1pdDoxMDsiLz48dGV4dCB4PSIyNjQuMDMiIHk9IjIwMy41NjciIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTMiIHRleHRMZW5ndGg9Ijc2LjgxMyI+5bu26ZW377yIMjA077yJPC90ZXh0PjwvZz48IS0tbGluayDnhKHmk43kvZzjga7kuojlkYogdG8g6ZaJ44GY44Gm44GE44KLLS0+PGcgY2xhc3M9ImxpbmsiIGRhdGEtZW50aXR5LTE9ImVudDAwMDQiIGRhdGEtZW50aXR5LTI9ImVudDAwMDIiIGlkPSJsbms5IiBkYXRhLXNvdXJjZS1saW5lPSI1IiBkYXRhLWxpbmstdHlwZT0iZGVwZW5kZW5jeSI+PHBhdGggZD0iTTMzNi4wOSwyNDQuODQgQzM0NS43MiwyMjUuOTcgMzYxLjI1LDIwMC4xNiAzODEuMDMsMTgzIEM0MDEuNSwxNjUuMjQgNDI0LjE0MywxNTMuOTM1IDQ0Ny4xMjMsMTQ1LjA5NSIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxOyIgZmlsbD0ibm9uZSIgaWQ9IueEoeaTjeS9nOOBruS6iOWRii10by3plonjgZjjgabjgYTjgostMSIvPjxwb2x5Z29uIHBvaW50cz0iNDUxLjc5LDE0My4zLDQ0MS45NTQsMTQyLjc5OCw0NDcuMTIzLDE0NS4wOTUsNDQ0LjgyNiwxNTAuMjY1LDQ1MS43OSwxNDMuMyIgZmlsbD0iIzE4MTgxOCIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxO3N0cm9rZS1saW5lam9pbjptaXRlcjtzdHJva2UtbWl0ZXJsaW1pdDoxMDsiLz48dGV4dCB4PSI0MDguODgxIiB5PSIxOTYuMDY3IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjEzIiB0ZXh0TGVuZ3RoPSIxMzEuODM1Ij7jgbvjgYvjga7jgr/jg5bjga4gcmVxdWVzdDwvdGV4dD48dGV4dCB4PSIzODIuMDMiIHk9IjIxMS4yIiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjEzIiB0ZXh0TGVuZ3RoPSIxODUuNTM2Ij7vvIjmnJ/pmZDjgYwgNSDliIbjgojjgorlhYjjgavjgarjgaPjgZ/vvIk8L3RleHQ+PC9nPjwhLS1saW5rIOmWieOBmOOBpuOBhOOCiyB0byA45pmC6ZaT44Gu5LqI5ZGKLS0+PGcgY2xhc3M9ImxpbmsiIGRhdGEtZW50aXR5LTE9ImVudDAwMDIiIGRhdGEtZW50aXR5LTI9ImVudDAwMDYiIGlkPSJsbms3IiBkYXRhLXNvdXJjZS1saW5lPSIzIiBkYXRhLWxpbmstdHlwZT0iZGVwZW5kZW5jeSI+PHBhdGggZD0iTTUzMi4zMSwxNTMuMjcgQzU0NS4wNCwxNjIuMzMgNTU5LjM5LDE3Mi44NyA1NzIuMDMsMTgzIEM1ODguNzQsMTk2LjM4IDU4OS44MiwyMDMuNzUgNjA4LjAzLDIxNSBDNjM0LjU1LDIzMS4zOSA2NjIuMTgsMjQyLjg4MSA2ODguNTcsMjUyLjEwMSIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxOyIgZmlsbD0ibm9uZSIgaWQ9IumWieOBmOOBpuOBhOOCiy10by045pmC6ZaT44Gu5LqI5ZGKIi8+PHBvbHlnb24gcG9pbnRzPSI2OTMuMjksMjUzLjc1LDY4Ni4xMTMsMjQ3LjAwNSw2ODguNTcsMjUyLjEwMSw2ODMuNDc0LDI1NC41NTgsNjkzLjI5LDI1My43NSIgZmlsbD0iIzE4MTgxOCIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxO3N0cm9rZS1saW5lam9pbjptaXRlcjtzdHJva2UtbWl0ZXJsaW1pdDoxMDsiLz48dGV4dCB4PSI2MjAuNTYxIiB5PSIxOTYuMDY3IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjEzIiB0ZXh0TGVuZ3RoPSIxMzIuOTM5Ij44IOaZgumWk+OBruacn+mZkOOBriA1IOWIhuWJjTwvdGV4dD48dGV4dCB4PSI2MDkuMDMiIHk9IjIxMS4yIiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjEzIiB0ZXh0TGVuZ3RoPSIxNTYiPu+8iOeEoeaTjeS9nOOBruacn+mZkOOCiOOCiuaXqeOBhO+8iTwvdGV4dD48L2c+PCEtLWxpbmsgOOaZgumWk+OBruS6iOWRiiB0byDplonjgZjjgabjgYTjgostLT48ZyBjbGFzcz0ibGluayIgZGF0YS1lbnRpdHktMT0iZW50MDAwNiIgZGF0YS1lbnRpdHktMj0iZW50MDAwMiIgaWQ9ImxuazEyIiBkYXRhLXNvdXJjZS1saW5lPSI3IiBkYXRhLWxpbmstdHlwZT0iZGVwZW5kZW5jeSI+PHBhdGggZD0iTTc2MS43NCwyNDQuNzkgQzc3My43MiwyMjYuMTQgNzg0LjU0LDIwMC42NSA3NzAuMDMsMTgzIEM3NDEuNzQsMTQ4LjU2IDYxNy40MiwxMzYuMDMgNTQ3LjQsMTMxLjU0IiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjE7IiBmaWxsPSJub25lIiBpZD0iOOaZgumWk+OBruS6iOWRii10by3plonjgZjjgabjgYTjgosiLz48cG9seWdvbiBwb2ludHM9IjU0Mi40MSwxMzEuMjIsNTUxLjEzNiwxMzUuNzg4LDU0Ny40LDEzMS41NCw1NTEuNjQ4LDEyNy44MDQsNTQyLjQxLDEzMS4yMiIgZmlsbD0iIzE4MTgxOCIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxO3N0cm9rZS1saW5lam9pbjptaXRlcjtzdHJva2UtbWl0ZXJsaW1pdDoxMDsiLz48dGV4dCB4PSI3NzcuOTkiIHk9IjIwMy41NjciIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTMiIHRleHRMZW5ndGg9IjE2OSI+6ZaJ44GY44KL77yI5pyf6ZmQ44Gv5aSJ44KP44KJ44Gq44GE77yJPC90ZXh0PjwvZz48IS0tbGluayDnhKHmk43kvZzjga7kuojlkYogdG8g44Ot44Kw44Ki44Km44OI44GX44G+44GX44GfLS0+PGcgY2xhc3M9ImxpbmsiIGRhdGEtZW50aXR5LTE9ImVudDAwMDQiIGRhdGEtZW50aXR5LTI9ImVudDAwMTAiIGlkPSJsbmsxMSIgZGF0YS1zb3VyY2UtbGluZT0iNiIgZGF0YS1saW5rLXR5cGU9ImRlcGVuZGVuY3kiPjxwYXRoIGQ9Ik0zNzcuMTMsMjg4LjQ1IEM0NTAuOTksMzEzLjE5IDU4MS43MjksMzU2Ljk3MiA2NjUuNDk5LDM4NS4wMzIiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTsiIGZpbGw9Im5vbmUiIGlkPSLnhKHmk43kvZzjga7kuojlkYotdG8t44Ot44Kw44Ki44Km44OI44GX44G+44GX44GfIi8+PHBvbHlnb24gcG9pbnRzPSI2NzAuMjQsMzg2LjYyLDY2Mi45NzcsMzc5Ljk2OSw2NjUuNDk5LDM4NS4wMzIsNjYwLjQzNiwzODcuNTU0LDY3MC4yNCwzODYuNjIiIGZpbGw9IiMxODE4MTgiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTtzdHJva2UtbGluZWpvaW46bWl0ZXI7c3Ryb2tlLW1pdGVybGltaXQ6MTA7Ii8+PHRleHQgeD0iNTgxLjkzMSIgeT0iMzM4LjA2NyIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxMyIgdGV4dExlbmd0aD0iOTguMDc4Ij7lu7bplbfjgYwgMjA0IOS7peWkljwvdGV4dD48dGV4dCB4PSI1NzIuNDciIHk9IjM1My4yIiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjEzIiB0ZXh0TGVuZ3RoPSIxMTciPuOBvuOBn+OBr+acn+mZkOOCkumBjuOBjuOBnzwvdGV4dD48L2c+PCEtLWxpbmsg6ZaJ44GY44Gm44GE44KLIHRvIOODreOCsOOCouOCpuODiOOBl+OBvuOBl+OBny0tPjxnIGNsYXNzPSJsaW5rIiBkYXRhLWVudGl0eS0xPSJlbnQwMDAyIiBkYXRhLWVudGl0eS0yPSJlbnQwMDEwIiBpZD0ibG5rMTMiIGRhdGEtc291cmNlLWxpbmU9IjgiIGRhdGEtbGluay10eXBlPSJkZXBlbmRlbmN5Ij48cGF0aCBkPSJNNTQyLjM4LDEzMC45NyBDNjUyLjg0LDEzNi4yNSA5MjguODEsMTUyLjM4IDk1Ni4wMywxODMgQzEwMjMuMjYsMjU4LjYgODgzLjUyNSwzNDIuOTk5IDgwMC41OTUsMzg0LjMzOSIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxOyIgZmlsbD0ibm9uZSIgaWQ9IumWieOBmOOBpuOBhOOCiy10by3jg63jgrDjgqLjgqbjg4jjgZfjgb7jgZfjgZ8iLz48cG9seWdvbiBwb2ludHM9Ijc5Ni4xMiwzODYuNTcsODA1Ljk1OSwzODYuMTM1LDgwMC41OTUsMzg0LjMzOSw4MDIuMzksMzc4Ljk3NSw3OTYuMTIsMzg2LjU3IiBmaWxsPSIjMTgxODE4IiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjE7c3Ryb2tlLWxpbmVqb2luOm1pdGVyO3N0cm9rZS1taXRlcmxpbWl0OjEwOyIvPjx0ZXh0IHg9Ijk3MC4yNyIgeT0iMjc0LjU2NyIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxMyIgdGV4dExlbmd0aD0iNzgiPuacn+mZkOOCkumBjuOBjuOBnzwvdGV4dD48L2c+PCEtLWxpbmsgOOaZgumWk+OBruS6iOWRiiB0byDjg63jgrDjgqLjgqbjg4jjgZfjgb7jgZfjgZ8tLT48ZyBjbGFzcz0ibGluayIgZGF0YS1lbnRpdHktMT0iZW50MDAwNiIgZGF0YS1lbnRpdHktMj0iZW50MDAxMCIgaWQ9ImxuazE0IiBkYXRhLXNvdXJjZS1saW5lPSI5IiBkYXRhLWxpbmstdHlwZT0iZGVwZW5kZW5jeSI+PHBhdGggZD0iTTc0My4wMywyOTUuMzkgQzc0My4wMywzMjEuMDggNzQzLjAzLDM1Ni4zIDc0My4wMywzODEuODkiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTsiIGZpbGw9Im5vbmUiIGlkPSI45pmC6ZaT44Gu5LqI5ZGKLXRvLeODreOCsOOCouOCpuODiOOBl+OBvuOBl+OBnyIvPjxwb2x5Z29uIHBvaW50cz0iNzQzLjAzLDM4Ni44OSw3NDcuMDMsMzc3Ljg5LDc0My4wMywzODEuODksNzM5LjAzLDM3Ny44OSw3NDMuMDMsMzg2Ljg5IiBmaWxsPSIjMTgxODE4IiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjE7c3Ryb2tlLWxpbmVqb2luOm1pdGVyO3N0cm9rZS1taXRlcmxpbWl0OjEwOyIvPjx0ZXh0IHg9Ijc0NC4wMyIgeT0iMzQ1LjU2NyIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxMyIgdGV4dExlbmd0aD0iNzgiPuacn+mZkOOCkumBjuOBjuOBnzwvdGV4dD48L2c+PCEtLWxpbmsg44Ot44Kw44Ki44Km44OI44GX44G+44GX44GfIHRvICplbmQqLS0+PGcgY2xhc3M9ImxpbmsiIGRhdGEtZW50aXR5LTE9ImVudDAwMTAiIGRhdGEtZW50aXR5LTI9ImVudDAwMTUiIGlkPSJsbmsxNiIgZGF0YS1zb3VyY2UtbGluZT0iMTAiIGRhdGEtbGluay10eXBlPSJkZXBlbmRlbmN5Ij48cGF0aCBkPSJNNzQzLjAzLDQzNy4zNiBDNzQzLjAzLDQ2MS4yMyA3NDMuMDMsNDkxLjQ2IDc0My4wMyw1MDguNzEiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTsiIGZpbGw9Im5vbmUiIGlkPSLjg63jgrDjgqLjgqbjg4jjgZfjgb7jgZfjgZ8tdG8tKmVuZCoiLz48cG9seWdvbiBwb2ludHM9Ijc0My4wMyw1MTMuNzEsNzQ3LjAzLDUwNC43MSw3NDMuMDMsNTA4LjcxLDczOS4wMyw1MDQuNzEsNzQzLjAzLDUxMy43MSIgZmlsbD0iIzE4MTgxOCIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxO3N0cm9rZS1saW5lam9pbjptaXRlcjtzdHJva2UtbWl0ZXJsaW1pdDoxMDsiLz48dGV4dCB4PSI3NDQuMDMiIHk9IjQ4MC4wNjciIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTMiIHRleHRMZW5ndGg9IjEyMS4xMjYiPuODreOCsOOCpOODs+OBuO+8iEEtMDHvvIk8L3RleHQ+PC9nPjw/cGxhbnR1bWwtc3JjIGJQRkRJaUQwNThOdFZPZlAydTRnMmlNNXU3RXFCaGlqLUZTMFRyOGJRUW5fclRIMjlMWFptS2dqOEFZT3NaeENvUUpEZ2dfVzkzTXJmMzVPMjRDT3hadGRFX1NvLVBLVGZZWFJwM1RycTBzZTNJZzM2c29KR1VzMmx1M1JLNXoxVFAwcmtkQnlzblJlVVRwZldlUlpHTC1VY05YZGUzT2d0dGNyZ2xsTGJDTmtmb09rQWI5bV9qOWhNZHhaTkZ3bTNJUXFPdzVOMndMOU55aW5oeTV6aV9QUm1KTm1ZYlRfYkVBSmxmdmViZmxycEFtTVRVOUUySjBuZ3VHQ29PQ0lwZmpfX0l1cnJ4QmhJcE0yNzkwWGd5MjdLQ3MwU1EtdVVyWlNGbVdIOF9BSkFWY0tKbm5mZTJURzF0R2xMdkJZNS1zbDFUdzZnZUtoNzRtTkVPQ0VuMktyU3ZxN09QazVLYlhYV05oSEkydnpFYU5tTVBjNUNJVTctaGRYbmJvMmRoMXJ5M0RtRkdKX1N2RmZvRnpiTWJlYmhJNEdwQ2l0NGR5RjdwQlVqZjlUYkw2LTBHMDA/PjwvZz48L3N2Zz4=" class="uml" alt="uml diagram" title="" /></p>
+<p>この Bolt はドメインのモデルとデータモデルを変えない。4 図のうち、ドメインモデル図と ER 図は対象がないので省く。警告のダイアログの状態遷移図と、残り時間の受け渡しの図を置く。画面遷移は、期限の到来の案内から A-03 へのリンクが増える（今の「ホーム → A-03 → A-01」の経路に合わせ、A-01 へ直接移さない。A-03 の問い合わせ先の案内を通す）。</p>
+<h3 id="_5">警告のダイアログの状態<a class="headerlink" href="#_5" title="Permanent link">&para;</a></h3>
+<p><img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB2ZXJzaW9uPSIxLjEiIGRhdGEtZGlhZ3JhbS10eXBlPSJTVEFURSIgc3R5bGU9IndpZHRoOjEzNzZweDtoZWlnaHQ6Njc5cHg7YmFja2dyb3VuZDojRkZGRkZGOyIgd2lkdGg9IjEzNzZweCIgaGVpZ2h0PSI2NzlweCIgdmlld0JveD0iMCAwIDEzNzYgNjc5IiB6b29tQW5kUGFuPSJtYWduaWZ5IiBwcmVzZXJ2ZUFzcGVjdFJhdGlvPSJub25lIiBjb250ZW50U3R5bGVUeXBlPSJ0ZXh0L2NzcyI+PD9wbGFudHVtbCAxLjIwMjYuOD8+PGRlZnMvPjxnIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBsZW5ndGhBZGp1c3Q9InNwYWNpbmciPjxnIGNsYXNzPSJlbnRpdHkiIGRhdGEtcXVhbGlmaWVkLW5hbWU9Ii4uLi4uIiBpZD0iZW50MDAwMSIgZGF0YS1zb3VyY2UtbGluZT0iMTMiPjxyZWN0IHg9IjQ1Mi40MiIgeT0iNTE0IiB3aWR0aD0iMjQ0Ljg4MSIgaGVpZ2h0PSI1Mi41OTQiIGZpbGw9IiNGMUYxRjEiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MC41OyIgcng9IjEyLjUiIHJ5PSIxMi41Ii8+PGxpbmUgeDE9IjQ1Mi40MiIgeTE9IjU0MC4yOTciIHgyPSI2OTcuMzAxIiB5Mj0iNTQwLjI5NyIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDowLjU7Ii8+PHRleHQgeD0iNTM5Ljg2MSIgeT0iNTMxLjk5NSIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxNCIgdGV4dExlbmd0aD0iNzAiPuacn+mZkOOBruWIsOadpTwvdGV4dD48dGV4dCB4PSI0NTcuNDIiIHk9IjU1OC4yOTIiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTQiIHRleHRMZW5ndGg9IjIyNC44ODEiPuODouODvOODgOODq+OBp+OBquOBhOahiOWGhe+8iHJvbGU9YWxlcnTvvIk8L3RleHQ+PC9nPjxnIGNsYXNzPSJzdGFydF9lbnRpdHkiIGRhdGEtcXVhbGlmaWVkLW5hbWU9Ii5zdGFydC4iIGlkPSJlbnQwMDAyIiBkYXRhLXNvdXJjZS1saW5lPSIxIj48ZWxsaXBzZSBjeD0iNTc0Ljg2IiBjeT0iMTYiIHJ4PSIxMCIgcnk9IjEwIiBmaWxsPSIjMjIyIiBzdHlsZT0ic3Ryb2tlOiMyMjI7c3Ryb2tlLXdpZHRoOjE7Ii8+PC9nPjxnIGNsYXNzPSJlbnRpdHkiIGRhdGEtcXVhbGlmaWVkLW5hbWU9Ii4uLi4uIiBpZD0iZW50MDAwMyIgZGF0YS1zb3VyY2UtbGluZT0iMSI+PHJlY3QgeD0iNTI5Ljg2IiB5PSIxMDMiIHdpZHRoPSI5MCIgaGVpZ2h0PSI1MCIgZmlsbD0iI0YxRjFGMSIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDowLjU7IiByeD0iMTIuNSIgcnk9IjEyLjUiLz48bGluZSB4MT0iNTI5Ljg2IiB5MT0iMTI5LjI5NyIgeDI9IjYxOS44NiIgeTI9IjEyOS4yOTciIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MC41OyIvPjx0ZXh0IHg9IjUzOS44NiIgeT0iMTIwLjk5NSIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxNCIgdGV4dExlbmd0aD0iNzAiPumWieOBmOOBpuOBhOOCizwvdGV4dD48L2c+PGcgY2xhc3M9ImVudGl0eSIgZGF0YS1xdWFsaWZpZWQtbmFtZT0iLi4uLi4uIiBpZD0iZW50MDAwNSIgZGF0YS1zb3VyY2UtbGluZT0iMiI+PHJlY3QgeD0iNTIyLjg2IiB5PSIyNDUiIHdpZHRoPSIxMDQiIGhlaWdodD0iNTAiIGZpbGw9IiNGMUYxRjEiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MC41OyIgcng9IjEyLjUiIHJ5PSIxMi41Ii8+PGxpbmUgeDE9IjUyMi44NiIgeTE9IjI3MS4yOTciIHgyPSI2MjYuODYiIHkyPSIyNzEuMjk3IiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjAuNTsiLz48dGV4dCB4PSI1MzIuODYiIHk9IjI2Mi45OTUiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTQiIHRleHRMZW5ndGg9Ijg0Ij7nhKHmk43kvZzjga7orablkYo8L3RleHQ+PC9nPjxnIGNsYXNzPSJlbnRpdHkiIGRhdGEtcXVhbGlmaWVkLW5hbWU9IjguLi4uLiIgaWQ9ImVudDAwMDciIGRhdGEtc291cmNlLWxpbmU9IjMiPjxyZWN0IHg9IjgzOS40MSIgeT0iMzg3IiB3aWR0aD0iOTguOTA3IiBoZWlnaHQ9IjUwIiBmaWxsPSIjRjFGMUYxIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjAuNTsiIHJ4PSIxMi41IiByeT0iMTIuNSIvPjxsaW5lIHgxPSI4MzkuNDEiIHkxPSI0MTMuMjk3IiB4Mj0iOTM4LjMxNyIgeTI9IjQxMy4yOTciIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MC41OyIvPjx0ZXh0IHg9Ijg0OS40MSIgeT0iNDA0Ljk5NSIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxNCIgdGV4dExlbmd0aD0iNzguOTA3Ij445pmC6ZaT44Gu6K2m5ZGKPC90ZXh0PjwvZz48ZyBjbGFzcz0iZW5kX2VudGl0eSIgZGF0YS1xdWFsaWZpZWQtbmFtZT0iLmVuZC4iIGlkPSJlbnQwMDE4IiBkYXRhLXNvdXJjZS1saW5lPSIxNCI+PGVsbGlwc2UgY3g9IjU3NC44NiIgY3k9IjY1NC41OSIgcng9IjExIiByeT0iMTEiIGZpbGw9Im5vbmUiIHN0eWxlPSJzdHJva2U6IzIyMjtzdHJva2Utd2lkdGg6MTsiLz48ZWxsaXBzZSBjeD0iNTc0Ljg2IiBjeT0iNjU0LjU5IiByeD0iNiIgcnk9IjYiIGZpbGw9IiMyMjIiIHN0eWxlPSJzdHJva2U6IzIyMjtzdHJva2Utd2lkdGg6MTsiLz48L2c+PCEtLWxpbmsgKnN0YXJ0KiB0byDplonjgZjjgabjgYTjgostLT48ZyBjbGFzcz0ibGluayIgZGF0YS1lbnRpdHktMT0iZW50MDAwMiIgZGF0YS1lbnRpdHktMj0iZW50MDAwMyIgaWQ9ImxuazQiIGRhdGEtc291cmNlLWxpbmU9IjEiIGRhdGEtbGluay10eXBlPSJkZXBlbmRlbmN5Ij48cGF0aCBkPSJNNTc0Ljg2LDI2LjM3IEM1NzQuODYsNDMuMSA1NzQuODYsNzMuNTkgNTc0Ljg2LDk3LjYyIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjE7IiBmaWxsPSJub25lIiBpZD0iKnN0YXJ0Ki10by3plonjgZjjgabjgYTjgosiLz48cG9seWdvbiBwb2ludHM9IjU3NC44NiwxMDIuNjIsNTc4Ljg2LDkzLjYyLDU3NC44Niw5Ny42Miw1NzAuODYsOTMuNjIsNTc0Ljg2LDEwMi42MiIgZmlsbD0iIzE4MTgxOCIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxO3N0cm9rZS1saW5lam9pbjptaXRlcjtzdHJva2UtbWl0ZXJsaW1pdDoxMDsiLz48dGV4dCB4PSI1NzUuODYiIHk9IjY5LjA2NyIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxMyIgdGV4dExlbmd0aD0iMTY5Ij7jg63jgrDjgqTjg7PjgZfjgZ/nlLvpnaLjga7oqq3jgb/ovrzjgb88L3RleHQ+PC9nPjwhLS1saW5rIOmWieOBmOOBpuOBhOOCiyB0byDnhKHmk43kvZzjga7orablkYotLT48ZyBjbGFzcz0ibGluayIgZGF0YS1lbnRpdHktMT0iZW50MDAwMyIgZGF0YS1lbnRpdHktMj0iZW50MDAwNSIgaWQ9ImxuazYiIGRhdGEtc291cmNlLWxpbmU9IjIiIGRhdGEtbGluay10eXBlPSJkZXBlbmRlbmN5Ij48cGF0aCBkPSJNNTI5LjcsMTMxLjQgQzQyNS4yMiwxMzcuNDIgMTczLjc4LDE1NC43MiAxNDguODYsMTgzIEMxMzkuNDYsMTkzLjY3IDEzOS40NiwyMDQuMzMgMTQ4Ljg2LDIxNSBDMTczLjIzLDI0Mi42NSA0MDkuMTQ5LDI1OS41MDYgNTE3LjUxOSwyNjUuODg2IiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjE7IiBmaWxsPSJub25lIiBpZD0i6ZaJ44GY44Gm44GE44KLLXRvLeeEoeaTjeS9nOOBruitpuWRiiIvPjxwb2x5Z29uIHBvaW50cz0iNTIyLjUxLDI2Ni4xOCw1MTMuNzYxLDI2MS42NTgsNTE3LjUxOSwyNjUuODg2LDUxMy4yOSwyNjkuNjQ0LDUyMi41MSwyNjYuMTgiIGZpbGw9IiMxODE4MTgiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTtzdHJva2UtbGluZWpvaW46bWl0ZXI7c3Ryb2tlLW1pdGVybGltaXQ6MTA7Ii8+PHRleHQgeD0iMTYwLjc5NCIgeT0iMTk2LjA2NyIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxMyIgdGV4dExlbmd0aD0iMTMzLjUzNiI+54Sh5pON5L2c44Gu5pyf6ZmQ44GuIDUg5YiG5YmNPC90ZXh0Pjx0ZXh0IHg9IjE0OS44NiIgeT0iMjExLjIiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTMiIHRleHRMZW5ndGg9IjE1NS40MDMiPu+8iDgg5pmC6ZaT44Gu5pyf6ZmQ44KI44KK5pep44GE77yJPC90ZXh0PjwvZz48IS0tbGluayDnhKHmk43kvZzjga7orablkYogdG8g6ZaJ44GY44Gm44GE44KLLS0+PGcgY2xhc3M9ImxpbmsiIGRhdGEtZW50aXR5LTE9ImVudDAwMDUiIGRhdGEtZW50aXR5LTI9ImVudDAwMDMiIGlkPSJsbms5IiBkYXRhLXNvdXJjZS1saW5lPSI0IiBkYXRhLWxpbmstdHlwZT0iZGVwZW5kZW5jeSI+PHBhdGggZD0iTTUyMi41MiwyNjcuMTUgQzQ0MC43MSwyNjIuMzYgMjk2LjcsMjQ1LjEgMzQ1Ljg2LDE4MyBDMzY4LjMzLDE1NC42MSA0NjQuNDk5LDE0MC4xOSA1MjQuNTg5LDEzMy42NiIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxOyIgZmlsbD0ibm9uZSIgaWQ9IueEoeaTjeS9nOOBruitpuWRii10by3plonjgZjjgabjgYTjgosiLz48cG9seWdvbiBwb2ludHM9IjUyOS41NiwxMzMuMTIsNTIwLjE4MSwxMzAuMTE2LDUyNC41ODksMTMzLjY2LDUyMS4wNDUsMTM4LjA2OSw1MjkuNTYsMTMzLjEyIiBmaWxsPSIjMTgxODE4IiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjE7c3Ryb2tlLWxpbmVqb2luOm1pdGVyO3N0cm9rZS1taXRlcmxpbWl0OjEwOyIvPjx0ZXh0IHg9IjQwMC45MjMiIHk9IjE5Ni4wNjciIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTMiIHRleHRMZW5ndGg9Ijc2LjgxMyI+5bu26ZW377yIMjA077yJPC90ZXh0Pjx0ZXh0IHg9IjM0Ni44NiIgeT0iMjExLjIiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTMiIHRleHRMZW5ndGg9IjE4NC45MzkiPu+8iDgg5pmC6ZaT44Gu5pyf6ZmQ44GvIDUg5YiG44KI44KK5YWI77yJPC90ZXh0PjwvZz48IS0tbGluayDnhKHmk43kvZzjga7orablkYogdG8g6ZaJ44GY44Gm44GE44KLLS0+PGcgY2xhc3M9ImxpbmsiIGRhdGEtZW50aXR5LTE9ImVudDAwMDUiIGRhdGEtZW50aXR5LTI9ImVudDAwMDMiIGlkPSJsbmsxMSIgZGF0YS1zb3VyY2UtbGluZT0iNiIgZGF0YS1saW5rLXR5cGU9ImRlcGVuZGVuY3kiPjxwYXRoIGQ9Ik01NzMuMjEsMjQ0LjU1IEM1NzIuNjcsMjM1LjI5IDU3Mi4xMywyMjQuNjYgNTcxLjg2LDIxNSBDNTcxLjQ3LDIwMC43OCA1NzEuNDcsMTk3LjIxIDU3MS44NiwxODMgQzU3Mi4xMywxNzMuMzMgNTcyLjM3OSwxNjcuNjkyIDU3Mi45MTksMTU4LjQ0MiIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxOyIgZmlsbD0ibm9uZSIgaWQ9IueEoeaTjeS9nOOBruitpuWRii10by3plonjgZjjgabjgYTjgostMSIvPjxwb2x5Z29uIHBvaW50cz0iNTczLjIxLDE1My40NSw1NjguNjkyLDE2Mi4yMDIsNTcyLjkxOSwxNTguNDQyLDU3Ni42NzksMTYyLjY2OCw1NzMuMjEsMTUzLjQ1IiBmaWxsPSIjMTgxODE4IiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjE7c3Ryb2tlLWxpbmVqb2luOm1pdGVyO3N0cm9rZS1taXRlcmxpbWl0OjEwOyIvPjx0ZXh0IHg9IjU5OS43MTEiIHk9IjE5Ni4wNjciIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTMiIHRleHRMZW5ndGg9IjEzMS44MzUiPuOBu+OBi+OBruOCv+ODluOBriByZXF1ZXN0PC90ZXh0Pjx0ZXh0IHg9IjU3Mi44NiIgeT0iMjExLjIiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTMiIHRleHRMZW5ndGg9IjE4NS41MzYiPu+8iOacn+mZkOOBjCA1IOWIhuOCiOOCiuWFiOOBq+OBquOBo+OBn++8iTwvdGV4dD48L2c+PCEtLWxpbmsg54Sh5pON5L2c44Gu6K2m5ZGKIHRvIOmWieOBmOOBpuOBhOOCiy0tPjxnIGNsYXNzPSJsaW5rIiBkYXRhLWVudGl0eS0xPSJlbnQwMDA1IiBkYXRhLWVudGl0eS0yPSJlbnQwMDAzIiBpZD0ibG5rMTMiIGRhdGEtc291cmNlLWxpbmU9IjgiIGRhdGEtbGluay10eXBlPSJkZXBlbmRlbmN5Ij48cGF0aCBkPSJNNjI2Ljk4LDI2MS4xNSBDNjc2LjczLDI1Mi40NiA3NDYuNDYsMjM2Ljc2IDc2Mi44NiwyMTUgQzgwMi42NSwxNjIuMTcgNjkyLjc0NywxNDEuNDE1IDYyNS4yMjcsMTMzLjYwNSIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxOyIgZmlsbD0ibm9uZSIgaWQ9IueEoeaTjeS9nOOBruitpuWRii10by3plonjgZjjgabjgYTjgostMiIvPjxwb2x5Z29uIHBvaW50cz0iNjIwLjI2LDEzMy4wMyw2MjguNzQxLDEzOC4wMzgsNjI1LjIyNywxMzMuNjA1LDYyOS42NiwxMzAuMDkxLDYyMC4yNiwxMzMuMDMiIGZpbGw9IiMxODE4MTgiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTtzdHJva2UtbGluZWpvaW46bWl0ZXI7c3Ryb2tlLW1pdGVybGltaXQ6MTA7Ii8+PHRleHQgeD0iNzcyLjAzIiB5PSIyMDMuNTY3IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjEzIiB0ZXh0TGVuZ3RoPSIxNjUuMTM0Ij7plonjgZjjgovjg7tFc2PvvIjlu7bplbfjgZfjgarjgYTvvIk8L3RleHQ+PC9nPjwhLS1saW5rIOmWieOBmOOBpuOBhOOCiyB0byA45pmC6ZaT44Gu6K2m5ZGKLS0+PGcgY2xhc3M9ImxpbmsiIGRhdGEtZW50aXR5LTE9ImVudDAwMDMiIGRhdGEtZW50aXR5LTI9ImVudDAwMDciIGlkPSJsbms4IiBkYXRhLXNvdXJjZS1saW5lPSIzIiBkYXRhLWxpbmstdHlwZT0iZGVwZW5kZW5jeSI+PHBhdGggZD0iTTYyMC4yNSwxMjguNTYgQzcwOS44MiwxMjguNzYgOTA0LjI0LDEzNC44OCA5NDUuODYsMTgzIEM5NjQsMjAzLjk3IDEwMTQuMjUsMTgzLjgyIDk0MC44NiwzNTcgQzkzNi4xNCwzNjguMTQgOTMxLjUyMiwzNzQuNzgxIDkyMy4wNTIsMzgzLjIyMSIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxOyIgZmlsbD0ibm9uZSIgaWQ9IumWieOBmOOBpuOBhOOCiy10by045pmC6ZaT44Gu6K2m5ZGKIi8+PHBvbHlnb24gcG9pbnRzPSI5MTkuNTEsMzg2Ljc1LDkyOC43MDksMzgzLjIzMSw5MjMuMDUyLDM4My4yMjEsOTIzLjA2MiwzNzcuNTY0LDkxOS41MSwzODYuNzUiIGZpbGw9IiMxODE4MTgiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTtzdHJva2UtbGluZWpvaW46bWl0ZXI7c3Ryb2tlLW1pdGVybGltaXQ6MTA7Ii8+PHRleHQgeD0iOTkwLjI3MSIgeT0iMjY3LjA2NyIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxMyIgdGV4dExlbmd0aD0iMTMyLjkzOSI+OCDmmYLplpPjga7mnJ/pmZDjga4gNSDliIbliY08L3RleHQ+PHRleHQgeD0iOTc4Ljc0IiB5PSIyODIuMiIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxMyIgdGV4dExlbmd0aD0iMTU2Ij7vvIjnhKHmk43kvZzjga7mnJ/pmZDjgojjgorml6njgYTvvIk8L3RleHQ+PC9nPjwhLS1saW5rIDjmmYLplpPjga7orablkYogdG8g6ZaJ44GY44Gm44GE44KLLS0+PGcgY2xhc3M9ImxpbmsiIGRhdGEtZW50aXR5LTE9ImVudDAwMDciIGRhdGEtZW50aXR5LTI9ImVudDAwMDMiIGlkPSJsbmsxNSIgZGF0YS1zb3VyY2UtbGluZT0iMTAiIGRhdGEtbGluay10eXBlPSJkZXBlbmRlbmN5Ij48cGF0aCBkPSJNOTM4LjY4LDQwMC45NSBDMTAyOCwzODAuNiAxMjAwLjk2LDMyOS4xNCAxMTQzLjg2LDI0NSBDMTA4NC44NCwxNTguMDMgNzQ5LjUxNiwxMzUuOTkyIDYyNS4yNTYsMTMwLjcyMiIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxOyIgZmlsbD0ibm9uZSIgaWQ9IjjmmYLplpPjga7orablkYotdG8t6ZaJ44GY44Gm44GE44KLIi8+PHBvbHlnb24gcG9pbnRzPSI2MjAuMjYsMTMwLjUxLDYyOS4wODIsMTM0Ljg4OCw2MjUuMjU2LDEzMC43MjIsNjI5LjQyMSwxMjYuODk1LDYyMC4yNiwxMzAuNTEiIGZpbGw9IiMxODE4MTgiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTtzdHJva2UtbGluZWpvaW46bWl0ZXI7c3Ryb2tlLW1pdGVybGltaXQ6MTA7Ii8+PHRleHQgeD0iMTE1Ni4xNyIgeT0iMjc0LjU2NyIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxMyIgdGV4dExlbmd0aD0iMjA0LjEzNCI+6ZaJ44GY44KL44O7RXNj77yI5pyf6ZmQ44Gv5aSJ44KP44KJ44Gq44GE77yJPC90ZXh0PjwvZz48IS0tbGluayDnhKHmk43kvZzjga7orablkYogdG8gOOaZgumWk+OBruitpuWRii0tPjxnIGNsYXNzPSJsaW5rIiBkYXRhLWVudGl0eS0xPSJlbnQwMDA1IiBkYXRhLWVudGl0eS0yPSJlbnQwMDA3IiBpZD0ibG5rMTAiIGRhdGEtc291cmNlLWxpbmU9IjUiIGRhdGEtbGluay10eXBlPSJkZXBlbmRlbmN5Ij48cGF0aCBkPSJNNjI3LjA2LDI5NC4yNyBDNjg2LjAxLDMyMC41NSA3NzYuNjUzLDM2MC45NjQgODM0LjU2MywzODYuNzg0IiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjE7IiBmaWxsPSJub25lIiBpZD0i54Sh5pON5L2c44Gu6K2m5ZGKLXRvLTjmmYLplpPjga7orablkYoiLz48cG9seWdvbiBwb2ludHM9IjgzOS4xMywzODguODIsODMyLjUzOSwzODEuNTAyLDgzNC41NjMsMzg2Ljc4NCw4MjkuMjgxLDM4OC44MDgsODM5LjEzLDM4OC44MiIgZmlsbD0iIzE4MTgxOCIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxO3N0cm9rZS1saW5lam9pbjptaXRlcjtzdHJva2UtbWl0ZXJsaW1pdDoxMDsiLz48dGV4dCB4PSI4MDguNTQzIiB5PSIzMzguMDY3IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjEzIiB0ZXh0TGVuZ3RoPSI3Ni44MTMiPuW7tumVt++8iDIwNO+8iTwvdGV4dD48dGV4dCB4PSI3NjAuOTgiIHk9IjM1My4yIiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjEzIiB0ZXh0TGVuZ3RoPSIxNzEuOTM5Ij7vvIg4IOaZgumWk+OBruacn+mZkOOBjCA1IOWIhuS7peWGhe+8iTwvdGV4dD48L2c+PCEtLWxpbmsg54Sh5pON5L2c44Gu6K2m5ZGKIHRvIOeEoeaTjeS9nOOBruitpuWRii0tPjxnIGNsYXNzPSJsaW5rIiBkYXRhLWVudGl0eS0xPSJlbnQwMDA1IiBkYXRhLWVudGl0eS0yPSJlbnQwMDA1IiBpZD0ibG5rMTIiIGRhdGEtc291cmNlLWxpbmU9IjciIGRhdGEtbGluay10eXBlPSJkZXBlbmRlbmN5Ij48cGF0aCBkPSJNNjI3LjA5LDI1Ni43IEM2NDYuMiwyNTYuMzQgNjYxLjg2LDI2MC43NyA2NjEuODYsMjcwIEM2NjEuODYsMjc5LjIyIDY1MS4xOTksMjgzLjc0NCA2MzIuMDg5LDI4My4zODQiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTsiIGZpbGw9Im5vbmUiIGlkPSLnhKHmk43kvZzjga7orablkYotdG8t54Sh5pON5L2c44Gu6K2m5ZGKIi8+PHBvbHlnb24gcG9pbnRzPSI2MjcuMDksMjgzLjI5LDYzNi4wMTMsMjg3LjQ1OSw2MzIuMDg5LDI4My4zODQsNjM2LjE2NCwyNzkuNDYsNjI3LjA5LDI4My4yOSIgZmlsbD0iIzE4MTgxOCIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxO3N0cm9rZS1saW5lam9pbjptaXRlcjtzdHJva2UtbWl0ZXJsaW1pdDoxMDsiLz48dGV4dCB4PSI2NjcuODYiIHk9IjI2Ny4wNjciIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTMiIHRleHRMZW5ndGg9IjE4My43NTgiPuW7tumVt+OBjCA0MDPjg7s1MDDjg7vpgJrkv6Hjga7lpLHmlZc8L3RleHQ+PHRleHQgeD0iNjgxLjczOSIgeT0iMjgyLjIiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTMiIHRleHRMZW5ndGg9IjE1NiI+77yI5bu26ZW344Gn44GN44G+44Gb44KT44Gn44GX44Gf77yJPC90ZXh0PjwvZz48IS0tbGluayDnhKHmk43kvZzjga7orablkYogdG8g5pyf6ZmQ44Gu5Yiw5p2lLS0+PGcgY2xhc3M9ImxpbmsiIGRhdGEtZW50aXR5LTE9ImVudDAwMDUiIGRhdGEtZW50aXR5LTI9ImVudDAwMDEiIGlkPSJsbmsxNCIgZGF0YS1zb3VyY2UtbGluZT0iOSIgZGF0YS1saW5rLXR5cGU9ImRlcGVuZGVuY3kiPjxwYXRoIGQ9Ik01NzQuODYsMjk1LjI4IEM1NzQuODYsMzQ1Ljg0IDU3NC44Niw0NTcuMDIgNTc0Ljg2LDUwOC43IiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjE7IiBmaWxsPSJub25lIiBpZD0i54Sh5pON5L2c44Gu6K2m5ZGKLXRvLeacn+mZkOOBruWIsOadpSIvPjxwb2x5Z29uIHBvaW50cz0iNTc0Ljg2LDUxMy43LDU3OC44Niw1MDQuNyw1NzQuODYsNTA4LjcsNTcwLjg2LDUwNC43LDU3NC44Niw1MTMuNyIgZmlsbD0iIzE4MTgxOCIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxO3N0cm9rZS1saW5lam9pbjptaXRlcjtzdHJva2UtbWl0ZXJsaW1pdDoxMDsiLz48dGV4dCB4PSI2MDAuMzg3IiB5PSI0MDkuMDY3IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjEzIiB0ZXh0TGVuZ3RoPSI2Ny45NDUiPuW7tumVt+OBjCAzMDI8L3RleHQ+PHRleHQgeD0iNTc1Ljg2IiB5PSI0MjQuMiIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxMyIgdGV4dExlbmd0aD0iMTE3Ij7jgb7jgZ/jga/mnJ/pmZDjgpLpgY7jgY7jgZ88L3RleHQ+PC9nPjwhLS1saW5rIOmWieOBmOOBpuOBhOOCiyB0byDmnJ/pmZDjga7liLDmnaUtLT48ZyBjbGFzcz0ibGluayIgZGF0YS1lbnRpdHktMT0iZW50MDAwMyIgZGF0YS1lbnRpdHktMj0iZW50MDAwMSIgaWQ9ImxuazE2IiBkYXRhLXNvdXJjZS1saW5lPSIxMSIgZGF0YS1saW5rLXR5cGU9ImRlcGVuZGVuY3kiPjxwYXRoIGQ9Ik01MjkuNzEsMTMxLjE5IEM0MjIuNTUsMTM2Ljg2IDE1OS44NCwxNTMuNjUgMTMzLjg2LDE4MyBDNiwzMjcuNDYgMzI3LjY5Miw0NTcuOTcyIDQ4Ny43MzIsNTExLjk2MiIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxOyIgZmlsbD0ibm9uZSIgaWQ9IumWieOBmOOBpuOBhOOCiy10by3mnJ/pmZDjga7liLDmnaUiLz48cG9seWdvbiBwb2ludHM9IjQ5Mi40Nyw1MTMuNTYsNDg1LjIyMSw1MDYuODkzLDQ4Ny43MzIsNTExLjk2Miw0ODIuNjY0LDUxNC40NzMsNDkyLjQ3LDUxMy41NiIgZmlsbD0iIzE4MTgxOCIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxO3N0cm9rZS1saW5lam9pbjptaXRlcjtzdHJva2UtbWl0ZXJsaW1pdDoxMDsiLz48dGV4dCB4PSIxNjkuMDQiIHk9IjM0NS41NjciIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTMiIHRleHRMZW5ndGg9Ijc4Ij7mnJ/pmZDjgpLpgY7jgY7jgZ88L3RleHQ+PC9nPjwhLS1saW5rIDjmmYLplpPjga7orablkYogdG8g5pyf6ZmQ44Gu5Yiw5p2lLS0+PGcgY2xhc3M9ImxpbmsiIGRhdGEtZW50aXR5LTE9ImVudDAwMDciIGRhdGEtZW50aXR5LTI9ImVudDAwMDEiIGlkPSJsbmsxNyIgZGF0YS1zb3VyY2UtbGluZT0iMTIiIGRhdGEtbGluay10eXBlPSJkZXBlbmRlbmN5Ij48cGF0aCBkPSJNODM5LjExLDQzMy4wMSBDNzg0Ljg5LDQ1NC44MSA3MDIuNjM5LDQ4Ny44OTQgNjQzLjQwOSw1MTEuNzI0IiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjE7IiBmaWxsPSJub25lIiBpZD0iOOaZgumWk+OBruitpuWRii10by3mnJ/pmZDjga7liLDmnaUiLz48cG9seWdvbiBwb2ludHM9IjYzOC43Nyw1MTMuNTksNjQ4LjYxMyw1MTMuOTQyLDY0My40MDksNTExLjcyNCw2NDUuNjI3LDUwNi41Miw2MzguNzcsNTEzLjU5IiBmaWxsPSIjMTgxODE4IiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjE7c3Ryb2tlLWxpbmVqb2luOm1pdGVyO3N0cm9rZS1taXRlcmxpbWl0OjEwOyIvPjx0ZXh0IHg9Ijc1MS42NiIgeT0iNDgwLjA2NyIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxMyIgdGV4dExlbmd0aD0iNzgiPuacn+mZkOOCkumBjuOBjuOBnzwvdGV4dD48L2c+PCEtLWxpbmsg5pyf6ZmQ44Gu5Yiw5p2lIHRvICplbmQqLS0+PGcgY2xhc3M9ImxpbmsiIGRhdGEtZW50aXR5LTE9ImVudDAwMDEiIGRhdGEtZW50aXR5LTI9ImVudDAwMTgiIGlkPSJsbmsxOSIgZGF0YS1zb3VyY2UtbGluZT0iMTQiIGRhdGEtbGluay10eXBlPSJkZXBlbmRlbmN5Ij48cGF0aCBkPSJNNTc0Ljg2LDU2Ny4wNiBDNTc0Ljg2LDU5MS4xNCA1NzQuODYsNjIwLjkxIDU3NC44Niw2MzguMTIiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTsiIGZpbGw9Im5vbmUiIGlkPSLmnJ/pmZDjga7liLDmnaUtdG8tKmVuZCoiLz48cG9seWdvbiBwb2ludHM9IjU3NC44Niw2NDMuMTIsNTc4Ljg2LDYzNC4xMiw1NzQuODYsNjM4LjEyLDU3MC44Niw2MzQuMTIsNTc0Ljg2LDY0My4xMiIgZmlsbD0iIzE4MTgxOCIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxO3N0cm9rZS1saW5lam9pbjptaXRlcjtzdHJva2UtbWl0ZXJsaW1pdDoxMDsiLz48dGV4dCB4PSI1NzUuODYiIHk9IjYwOS42NTciIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTMiIHRleHRMZW5ndGg9Ijk5LjI1OCI+QS0wMyDjgbjjga7jg6rjg7Pjgq88L3RleHQ+PC9nPjw/cGxhbnR1bWwtc3JjIGJMSFRJeTlHNkJ4dEwtbXc0OE9NSDUzR0hSXzJrZVptSmVoS3hkdEZBVGFxLXA5VGJZQVE2WWRzR0wzMUI3X0N3dmRqb2hfR0VSRU1STWlpNjhWanlCeEZudGNWZFRaU1hYR0VocVhjTUtNdUdFV1d4MkY5SXFpSXFad0kxb0dqZjR5ODZhOXpWQXdSaklSMnRLVXRacDN5VTFfbURVSmk1NlpaX09QSEI4cFVnZ0F1dHM2ZEVHdXVrc2JLd3NSYlhCejgybjlKaWFtamg2ekYxaWdZUDVJOE1JeC1MMTA1SVN4R1JaZHVQQTF3YVl0UUZKUUw2eVY5djI3NkdVTlhtVmtXY0Z2aWJidXVQYUlVdnVyXzY4N3hnTzBmM0pqR1YzV3k3MEthRVBvSVpGR3Nvbnh5b21NMlpmM2RMS1k2SUNsWW05Qm50UnJ1QWNybkVHWGk1bVd6WDJ4MkRTLTczdnpkOEFRVTFFUXk3NE1nQnlXb055dEN2TVpPdTdNaXpNWUtEOGx6a184NmVPM21aZDI1ZjZYelFsd3lSZnpWRW9KRmdUUElNcEZXY2NONFJfUHNiZlpvT0RKUWxvbjR2U1p3amdNanBjVno3UWFwNHV2R0ZGTUdRd1gxelRhMU9ZcUxvSjRJektVZXJfX1dMWGJLSlExRVRuN0k5ajgxcVdwSWRaS0tlU3ZlQTVPNGJVSEU4aHd5Y09XZHFxQW1pcmxHbmxXVGoySWpYa0tlSi02aFkyM2pZYWs3dDd5Mj8+PC9nPjwvc3ZnPg==" class="uml" alt="uml diagram" title="" /></p>
 <h3 id="_6">残り時間の受け渡し<a class="headerlink" href="#_6" title="Permanent link">&para;</a></h3>
-<p><img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB2ZXJzaW9uPSIxLjEiIGRhdGEtZGlhZ3JhbS10eXBlPSJTRVFVRU5DRSIgc3R5bGU9IndpZHRoOjk2MHB4O2hlaWdodDo1MjFweDtiYWNrZ3JvdW5kOiNGRkZGRkY7IiB3aWR0aD0iOTYwcHgiIGhlaWdodD0iNTIxcHgiIHZpZXdCb3g9IjAgMCA5NjAgNTIxIiB6b29tQW5kUGFuPSJtYWduaWZ5IiBwcmVzZXJ2ZUFzcGVjdFJhdGlvPSJub25lIiBjb250ZW50U3R5bGVUeXBlPSJ0ZXh0L2NzcyI+PD9wbGFudHVtbCAxLjIwMjYuOD8+PGRlZnMvPjxnIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBsZW5ndGhBZGp1c3Q9InNwYWNpbmciPjxnPjx0aXRsZT4uLi4uPC90aXRsZT48cmVjdCB4PSI0MS41IiB5PSI1Ny41OTQiIHdpZHRoPSI4IiBoZWlnaHQ9IjI1NC4xOTUiIGZpbGw9IiMwMDAiIGZpbGwtb3BhY2l0eT0iMCIvPjxsaW5lIHgxPSI0NSIgeTE9IjU3LjU5NCIgeDI9IjQ1IiB5Mj0iMzExLjc4OSIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDowLjU7c3Ryb2tlLWRhc2hhcnJheTo1LDU7Ii8+PC9nPjxsaW5lIHgxPSI0NSIgeTE9IjMxMS43ODkiIHgyPSI0NSIgeTI9IjM1Mi41OTQiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MC41O3N0cm9rZS1kYXNoYXJyYXk6MSw0OyIvPjxnPjx0aXRsZT4uLi4uPC90aXRsZT48cmVjdCB4PSI0MS41IiB5PSIzNTIuNTk0IiB3aWR0aD0iOCIgaGVpZ2h0PSIxMTAuMzk4IiBmaWxsPSIjMDAwIiBmaWxsLW9wYWNpdHk9IjAiLz48bGluZSB4MT0iNDUiIHkxPSIzNTIuNTk0IiB4Mj0iNDUiIHkyPSI0NjIuOTkyIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjAuNTtzdHJva2UtZGFzaGFycmF5OjUsNTsiLz48L2c+PGc+PHRpdGxlPi4uLi4uLi4uLjwvdGl0bGU+PHJlY3QgeD0iMzg1LjEzIiB5PSI1Ny41OTQiIHdpZHRoPSI4IiBoZWlnaHQ9IjI1NC4xOTUiIGZpbGw9IiMwMDAiIGZpbGwtb3BhY2l0eT0iMCIvPjxsaW5lIHgxPSIzODguNjMiIHkxPSI1Ny41OTQiIHgyPSIzODguNjMiIHkyPSIzMTEuNzg5IiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjAuNTtzdHJva2UtZGFzaGFycmF5OjUsNTsiLz48L2c+PGxpbmUgeDE9IjM4OC42MyIgeTE9IjMxMS43ODkiIHgyPSIzODguNjMiIHkyPSIzNTIuNTk0IiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjAuNTtzdHJva2UtZGFzaGFycmF5OjEsNDsiLz48Zz48dGl0bGU+Li4uLi4uLi4uPC90aXRsZT48cmVjdCB4PSIzODUuMTMiIHk9IjM1Mi41OTQiIHdpZHRoPSI4IiBoZWlnaHQ9IjExMC4zOTgiIGZpbGw9IiMwMDAiIGZpbGwtb3BhY2l0eT0iMCIvPjxsaW5lIHgxPSIzODguNjMiIHkxPSIzNTIuNTk0IiB4Mj0iMzg4LjYzIiB5Mj0iNDYyLjk5MiIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDowLjU7c3Ryb2tlLWRhc2hhcnJheTo1LDU7Ii8+PC9nPjxnPjx0aXRsZT4uLi4uLi4uLjwvdGl0bGU+PHJlY3QgeD0iNjI1LjUiIHk9IjU3LjU5NCIgd2lkdGg9IjgiIGhlaWdodD0iMjU0LjE5NSIgZmlsbD0iIzAwMCIgZmlsbC1vcGFjaXR5PSIwIi8+PGxpbmUgeDE9IjYyOSIgeTE9IjU3LjU5NCIgeDI9IjYyOSIgeTI9IjMxMS43ODkiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MC41O3N0cm9rZS1kYXNoYXJyYXk6NSw1OyIvPjwvZz48bGluZSB4MT0iNjI5IiB5MT0iMzExLjc4OSIgeDI9IjYyOSIgeTI9IjM1Mi41OTQiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MC41O3N0cm9rZS1kYXNoYXJyYXk6MSw0OyIvPjxnPjx0aXRsZT4uLi4uLi4uLjwvdGl0bGU+PHJlY3QgeD0iNjI1LjUiIHk9IjM1Mi41OTQiIHdpZHRoPSI4IiBoZWlnaHQ9IjExMC4zOTgiIGZpbGw9IiMwMDAiIGZpbGwtb3BhY2l0eT0iMCIvPjxsaW5lIHgxPSI2MjkiIHkxPSIzNTIuNTk0IiB4Mj0iNjI5IiB5Mj0iNDYyLjk5MiIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDowLjU7c3Ryb2tlLWRhc2hhcnJheTo1LDU7Ii8+PC9nPjxnPjx0aXRsZT4uLi4uLi4uLjwvdGl0bGU+PHJlY3QgeD0iODgyLjkwNCIgeT0iNTcuNTk0IiB3aWR0aD0iOCIgaGVpZ2h0PSIyNTQuMTk1IiBmaWxsPSIjMDAwIiBmaWxsLW9wYWNpdHk9IjAiLz48bGluZSB4MT0iODg2LjQwNCIgeTE9IjU3LjU5NCIgeDI9Ijg4Ni40MDQiIHkyPSIzMTEuNzg5IiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjAuNTtzdHJva2UtZGFzaGFycmF5OjUsNTsiLz48L2c+PGxpbmUgeDE9Ijg4Ni40MDQiIHkxPSIzMTEuNzg5IiB4Mj0iODg2LjQwNCIgeTI9IjM1Mi41OTQiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MC41O3N0cm9rZS1kYXNoYXJyYXk6MSw0OyIvPjxnPjx0aXRsZT4uLi4uLi4uLjwvdGl0bGU+PHJlY3QgeD0iODgyLjkwNCIgeT0iMzUyLjU5NCIgd2lkdGg9IjgiIGhlaWdodD0iMTEwLjM5OCIgZmlsbD0iIzAwMCIgZmlsbC1vcGFjaXR5PSIwIi8+PGxpbmUgeDE9Ijg4Ni40MDQiIHkxPSIzNTIuNTk0IiB4Mj0iODg2LjQwNCIgeTI9IjQ2Mi45OTIiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MC41O3N0cm9rZS1kYXNoYXJyYXk6NSw1OyIvPjwvZz48cmVjdCB4PSIxMCIgeT0iMjYuMjk3IiB3aWR0aD0iNzAiIGhlaWdodD0iMzAuMjk3IiBmaWxsPSIjRTJFMkYwIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjAuNTsiIHJ4PSIyLjUiIHJ5PSIyLjUiLz48dGV4dCB4PSIxNyIgeT0iNDYuMjkyIiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE0IiB0ZXh0TGVuZ3RoPSI1NiI+44OW44Op44Km44K2PC90ZXh0PjxyZWN0IHg9IjMwOC42NDYiIHk9IjEwIiB3aWR0aD0iMTU5Ljk2OCIgaGVpZ2h0PSI0Ni41OTQiIGZpbGw9IiNFMkUyRjAiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MC41OyIgcng9IjIuNSIgcnk9IjIuNSIvPjx0ZXh0IHg9IjM0NS4wNjUiIHk9IjI5Ljk5NSIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxNCIgdGV4dExlbmd0aD0iODcuMTMxIiBmb250LXN0eWxlPSJpdGFsaWMiPsKr6KqN6Ki844Gu5YWl5Y+jwrs8L3RleHQ+PHRleHQgeD0iMzE1LjY0NiIgeT0iNDYuMjkyIiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE0IiB0ZXh0TGVuZ3RoPSIxNDUuOTY4Ij5TZXNzaW9uTGlmZXRpbWVGaWx0ZXI8L3RleHQ+PHJlY3QgeD0iNTUxLjU5NCIgeT0iMTAiIHdpZHRoPSIxNTQuODEzIiBoZWlnaHQ9IjQ2LjU5NCIgZmlsbD0iI0UyRTJGMCIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDowLjU7IiByeD0iMi41IiByeT0iMi41Ii8+PHRleHQgeD0iNTkyLjQzNSIgeT0iMjkuOTk1IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE0IiB0ZXh0TGVuZ3RoPSI3My4xMzEiIGZvbnQtc3R5bGU9Iml0YWxpYyI+wqvnlLvpnaLjga7lsaTCuzwvdGV4dD48dGV4dCB4PSI1NTguNTk0IiB5PSI0Ni4yOTIiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTQiIHRleHRMZW5ndGg9IjE0MC44MTMiPlNlc3Npb25UaW1lckFkdmljZTwvdGV4dD48cmVjdCB4PSI4MjMuNDA0IiB5PSIyNi4yOTciIHdpZHRoPSIxMjYiIGhlaWdodD0iMzAuMjk3IiBmaWxsPSIjRTJFMkYwIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjAuNTsiIHJ4PSIyLjUiIHJ5PSIyLjUiLz48dGV4dCB4PSI4MzAuNDA0IiB5PSI0Ni4yOTIiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTQiIHRleHRMZW5ndGg9IjExMiI+5YWx6YCa44Gu44Os44Kk44Ki44Km44OIPC90ZXh0PjxyZWN0IHg9IjEwIiB5PSI0NjIuOTkyIiB3aWR0aD0iNzAiIGhlaWdodD0iMzAuMjk3IiBmaWxsPSIjRTJFMkYwIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjAuNTsiIHJ4PSIyLjUiIHJ5PSIyLjUiLz48dGV4dCB4PSIxNyIgeT0iNDgyLjk4NyIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxNCIgdGV4dExlbmd0aD0iNTYiPuODluODqeOCpuOCtjwvdGV4dD48cmVjdCB4PSIzMDguNjQ2IiB5PSI0NjIuOTkyIiB3aWR0aD0iMTU5Ljk2OCIgaGVpZ2h0PSI0Ni41OTQiIGZpbGw9IiNFMkUyRjAiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MC41OyIgcng9IjIuNSIgcnk9IjIuNSIvPjx0ZXh0IHg9IjM0NS4wNjUiIHk9IjQ4Mi45ODciIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTQiIHRleHRMZW5ndGg9Ijg3LjEzMSIgZm9udC1zdHlsZT0iaXRhbGljIj7Cq+iqjeiovOOBruWFpeWPo8K7PC90ZXh0Pjx0ZXh0IHg9IjMxNS42NDYiIHk9IjQ5OS4yODQiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTQiIHRleHRMZW5ndGg9IjE0NS45NjgiPlNlc3Npb25MaWZldGltZUZpbHRlcjwvdGV4dD48cmVjdCB4PSI1NTEuNTk0IiB5PSI0NjIuOTkyIiB3aWR0aD0iMTU0LjgxMyIgaGVpZ2h0PSI0Ni41OTQiIGZpbGw9IiNFMkUyRjAiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MC41OyIgcng9IjIuNSIgcnk9IjIuNSIvPjx0ZXh0IHg9IjU5Mi40MzUiIHk9IjQ4Mi45ODciIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTQiIHRleHRMZW5ndGg9IjczLjEzMSIgZm9udC1zdHlsZT0iaXRhbGljIj7Cq+eUu+mdouOBruWxpMK7PC90ZXh0Pjx0ZXh0IHg9IjU1OC41OTQiIHk9IjQ5OS4yODQiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTQiIHRleHRMZW5ndGg9IjE0MC44MTMiPlNlc3Npb25UaW1lckFkdmljZTwvdGV4dD48cmVjdCB4PSI4MjMuNDA0IiB5PSI0NjIuOTkyIiB3aWR0aD0iMTI2IiBoZWlnaHQ9IjMwLjI5NyIgZmlsbD0iI0UyRTJGMCIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDowLjU7IiByeD0iMi41IiByeT0iMi41Ii8+PHRleHQgeD0iODMwLjQwNCIgeT0iNDgyLjk4NyIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxNCIgdGV4dExlbmd0aD0iMTEyIj7lhbHpgJrjga7jg6zjgqTjgqLjgqbjg4g8L3RleHQ+PHBvbHlnb24gcG9pbnRzPSIzNzYuNjMsODIuNzI3LDM4Ni42Myw4Ni43MjcsMzc2LjYzLDkwLjcyNywzODAuNjMsODYuNzI3IiBmaWxsPSIjMTgxODE4IiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjE7c3Ryb2tlLWxpbmVqb2luOm1pdGVyO3N0cm9rZS1taXRlcmxpbWl0OjEwOyIvPjxsaW5lIHgxPSI0NSIgeTE9Ijg2LjcyNyIgeDI9IjM4Mi42MyIgeTI9Ijg2LjcyNyIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxOyIvPjx0ZXh0IHg9IjUyIiB5PSI4MS42NjEiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTMiIHRleHRMZW5ndGg9IjE1Ni4yMjkiPkdFVO+8iOODreOCsOOCpOODs+OBl+OBn+eUu+mdou+8iTwvdGV4dD48bGluZSB4MT0iMzg4LjYzIiB5MT0iMTMwLjk5MiIgeDI9IjQzMC42MyIgeTI9IjEzMC45OTIiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTsiLz48bGluZSB4MT0iNDMwLjYzIiB5MT0iMTMwLjk5MiIgeDI9IjQzMC42MyIgeTI9IjE0My45OTIiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTsiLz48bGluZSB4MT0iMzg5LjYzIiB5MT0iMTQzLjk5MiIgeDI9IjQzMC42MyIgeTI9IjE0My45OTIiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTsiLz48cG9seWdvbiBwb2ludHM9IjM5OS42MywxMzkuOTkyLDM4OS42MywxNDMuOTkyLDM5OS42MywxNDcuOTkyLDM5NS42MywxNDMuOTkyIiBmaWxsPSIjMTgxODE4IiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjE7c3Ryb2tlLWxpbmVqb2luOm1pdGVyO3N0cm9rZS1taXRlcmxpbWl0OjEwOyIvPjx0ZXh0IHg9IjM5NS42MyIgeT0iMTEwLjc5MyIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxMyIgdGV4dExlbmd0aD0iMTQzIj7kuIrpmZDjga7liKTlrprvvIjku4rjganjgYrjgorvvIk8L3RleHQ+PHRleHQgeD0iMzk1LjYzIiB5PSIxMjUuOTI2IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjEzIiB0ZXh0TGVuZ3RoPSIyMjYuMzciPjgg5pmC6ZaT44Gu5q6L44KK44KSIHJlcXVlc3Qg44Gu5bGe5oCn44Gr572u44GPPC90ZXh0Pjxwb2x5Z29uIHBvaW50cz0iNjE3LDE2OS4xMjUsNjI3LDE3My4xMjUsNjE3LDE3Ny4xMjUsNjIxLDE3My4xMjUiIGZpbGw9IiMxODE4MTgiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTtzdHJva2UtbGluZWpvaW46bWl0ZXI7c3Ryb2tlLW1pdGVybGltaXQ6MTA7Ii8+PGxpbmUgeDE9IjM4OC42MyIgeTE9IjE3My4xMjUiIHgyPSI2MjMiIHkyPSIxNzMuMTI1IiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjE7Ii8+PHRleHQgeD0iMzk1LjYzIiB5PSIxNjguMDU5IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjEzIiB0ZXh0TGVuZ3RoPSIxNDMiPu+8iOOCs+ODs+ODiOODreODvOODqeODvOOBruWJje+8iTwvdGV4dD48cG9seWdvbiBwb2ludHM9Ijg3NC40MDQsMjEzLjM5MSw4ODQuNDA0LDIxNy4zOTEsODc0LjQwNCwyMjEuMzkxLDg3OC40MDQsMjE3LjM5MSIgZmlsbD0iIzE4MTgxOCIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxO3N0cm9rZS1saW5lam9pbjptaXRlcjtzdHJva2UtbWl0ZXJsaW1pdDoxMDsiLz48bGluZSB4MT0iNjI5IiB5MT0iMjE3LjM5MSIgeDI9Ijg4MC40MDQiIHkyPSIyMTcuMzkxIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjE7Ii8+PHRleHQgeD0iNjM2IiB5PSIxOTcuMTkyIiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjEzIiB0ZXh0TGVuZ3RoPSI4NS42ODEiPnNlc3Npb25UaW1lcjwvdGV4dD48dGV4dCB4PSI2MzYiIHk9IjIxMi4zMjUiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTMiIHRleHRMZW5ndGg9IjIzMy40MDQiPu+8iOeEoeaTjeS9nOOBruenkuaVsOOAgTgg5pmC6ZaT44Gu5q6L44KK44Gu56eS5pWw77yJPC90ZXh0Pjxwb2x5Z29uIHBvaW50cz0iNTYsMjU3LjY1Niw0NiwyNjEuNjU2LDU2LDI2NS42NTYsNTIsMjYxLjY1NiIgZmlsbD0iIzE4MTgxOCIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxO3N0cm9rZS1saW5lam9pbjptaXRlcjtzdHJva2UtbWl0ZXJsaW1pdDoxMDsiLz48bGluZSB4MT0iNTAiIHkxPSIyNjEuNjU2IiB4Mj0iODg1LjQwNCIgeTI9IjI2MS42NTYiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTsiLz48dGV4dCB4PSI2MiIgeT0iMjQxLjQ1OCIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxMyIgdGV4dExlbmd0aD0iMTY4LjEwNSI+ZGF0YS0g5bGe5oCn44KS5oyB44Gk5LqI5ZGK44Gu6YOo5YiGPC90ZXh0Pjx0ZXh0IHg9IjYyIiB5PSIyNTYuNTkiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTMiIHRleHRMZW5ndGg9IjEzNy4xMzUiPi9qcy9zZXNzaW9uLXRpbWVvdXQuanM8L3RleHQ+PGxpbmUgeDE9IjQ1IiB5MT0iMjkwLjc4OSIgeDI9Ijg3IiB5Mj0iMjkwLjc4OSIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxOyIvPjxsaW5lIHgxPSI4NyIgeTE9IjI5MC43ODkiIHgyPSI4NyIgeTI9IjMwMy43ODkiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTsiLz48bGluZSB4MT0iNDYiIHkxPSIzMDMuNzg5IiB4Mj0iODciIHkyPSIzMDMuNzg5IiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjE7Ii8+PHBvbHlnb24gcG9pbnRzPSI1NiwyOTkuNzg5LDQ2LDMwMy43ODksNTYsMzA3Ljc4OSw1MiwzMDMuNzg5IiBmaWxsPSIjMTgxODE4IiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjE7c3Ryb2tlLWxpbmVqb2luOm1pdGVyO3N0cm9rZS1taXRlcmxpbWl0OjEwOyIvPjx0ZXh0IHg9IjUyIiB5PSIyODUuNzIzIiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjEzIiB0ZXh0TGVuZ3RoPSIyMzQuMjU0Ij5sb2NhbFN0b3JhZ2Ug44Gr5pyA5b6M44GuIHJlcXVlc3Qg44Gu5pmC5Yi7PC90ZXh0Pjx0ZXh0IHg9IjQ1MS40NTUiIHk9IjMzNiIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxMSIgdGV4dExlbmd0aD0iMjguNDk0Ij4yNSDliIY8L3RleHQ+PGxpbmUgeDE9IjQ1IiB5MT0iMzczLjcyNyIgeDI9Ijg3IiB5Mj0iMzczLjcyNyIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxOyIvPjxsaW5lIHgxPSI4NyIgeTE9IjM3My43MjciIHgyPSI4NyIgeTI9IjM4Ni43MjciIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTsiLz48bGluZSB4MT0iNDYiIHkxPSIzODYuNzI3IiB4Mj0iODciIHkyPSIzODYuNzI3IiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjE7Ii8+PHBvbHlnb24gcG9pbnRzPSI1NiwzODIuNzI3LDQ2LDM4Ni43MjcsNTYsMzkwLjcyNyw1MiwzODYuNzI3IiBmaWxsPSIjMTgxODE4IiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjE7c3Ryb2tlLWxpbmVqb2luOm1pdGVyO3N0cm9rZS1taXRlcmxpbWl0OjEwOyIvPjx0ZXh0IHg9IjUyIiB5PSIzNjguNjYxIiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjEzIiB0ZXh0TGVuZ3RoPSIyNDciPuS6iOWRiuOCkumWi+OBj++8iOW7tumVt+OBruODnOOCv+ODs+OBq+ODleOCqeODvOOCq+OCue+8iTwvdGV4dD48cG9seWdvbiBwb2ludHM9IjM3Ni42Myw0MTEuODU5LDM4Ni42Myw0MTUuODU5LDM3Ni42Myw0MTkuODU5LDM4MC42Myw0MTUuODU5IiBmaWxsPSIjMTgxODE4IiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjE7c3Ryb2tlLWxpbmVqb2luOm1pdGVyO3N0cm9rZS1taXRlcmxpbWl0OjEwOyIvPjxsaW5lIHgxPSI0NSIgeTE9IjQxNS44NTkiIHgyPSIzODIuNjMiIHkyPSI0MTUuODU5IiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjE7Ii8+PHRleHQgeD0iNTIiIHk9IjQxMC43OTMiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTMiIHRleHRMZW5ndGg9IjIwMC4zOTYiPlBPU1QgL3Nlc3Npb24vZXh0ZW5k77yIQ1NSRu+8iTwvdGV4dD48cG9seWdvbiBwb2ludHM9IjU2LDQ0MC45OTIsNDYsNDQ0Ljk5Miw1Niw0NDguOTkyLDUyLDQ0NC45OTIiIGZpbGw9IiMxODE4MTgiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTtzdHJva2UtbGluZWpvaW46bWl0ZXI7c3Ryb2tlLW1pdGVybGltaXQ6MTA7Ii8+PGxpbmUgeDE9IjUwIiB5MT0iNDQ0Ljk5MiIgeDI9IjM4Ny42MyIgeTI9IjQ0NC45OTIiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTsiLz48dGV4dCB4PSI2MiIgeT0iNDM5LjkyNiIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxMyIgdGV4dExlbmd0aD0iMzE5LjYzIj4yMDTvvIhTcHJpbmcgU2Vzc2lvbiDjgYzmnIDntYLjgqLjgq/jgrvjgrnjgpLmlrDjgZfjgY/jgZnjgovvvIk8L3RleHQ+PD9wbGFudHVtbC1zcmMgWlBGRFJqREc0OE50VmVnaHhmRVcyWUdLTFA0R1FqYVdXTjJNc0xaOWZOOExkNjJ4MjdRdnpyQmF2YVUxYjBJYklhNktHNWkyOExMNS1LYUEzcEVuTlFfdzJpbnI0eWNhZk1MZFVKcFZkN0RjTkRIQ015X2dIU3NtMk9XTVkzdFc3dTBWQWlMOEdRTU1mSFVDc19melFraUZ3OUFVandiOTVYUUVGelFFVHFWMC1reFFVeFYtQmZLd2hva0Q3VVFEdDJDekl4NzVWcGFDamhQYm90dnR2bGl2VHNxX0E2clkzU0dkdTV0V3NyQUJTRVE4UGY2eXpnSW1RWWpBTDJJOWZWd1hCS2JrQlFQRkhXdzhweTA3NFlPRVdCcTJ6a1BLbUNiZU5KY195bUJhLTdpdlEzLU5zZnNrc3p6NF83WE8xaE83aDBveVpDWUNTUHJ1Ukh3cURsMFpocl8xankwUm5BR0ZMd2M1LUtoTmh4dEkzaDJVVnpHN0xoektHcEl5OTk2Ni04NnE4YTlkT1lJWjRFNDZyY2lISno0c1g5cmNYbTBoS2l1T1lGRVZsbEtzUWtFWjNZQnlkT1JONzQyOWRKS25CU2VING5YWV9yZjVha0dxTXVrSFlLRlV5QWVDTTdWeXF0NVZJNDBXVGJ0ZE1TUDhoNVk5WU9vT2o4b2ktOGZyUGdxcHg3bVhnLUxMa3MxZ29uSHB4N2NUYWxraFlqWGVrQVpRVE9QQUYxdWR5elM4SllGdVUxYnY4ZjB0V2JPNUR1QVBrQ0YzZUZhakZDQ0V5RF9YdlZIMEQ4NjdNVkNVeTF5b1lGLXpuQmp0cjNJUFVheEducE9yU1paY2ZkZmx3UzhwZDE0d1YtS2dUZ2I1S3BVTWZ4RkdUSE1aeUJfb3k2VnYwZG84dWNKdWhLNXV4ZExXUlUwTGRGQzc/PjwvZz48L3N2Zz4=" class="uml" alt="uml diagram" title="" /></p>
+<p><img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB2ZXJzaW9uPSIxLjEiIGRhdGEtZGlhZ3JhbS10eXBlPSJTRVFVRU5DRSIgc3R5bGU9IndpZHRoOjk2MHB4O2hlaWdodDo1MzZweDtiYWNrZ3JvdW5kOiNGRkZGRkY7IiB3aWR0aD0iOTYwcHgiIGhlaWdodD0iNTM2cHgiIHZpZXdCb3g9IjAgMCA5NjAgNTM2IiB6b29tQW5kUGFuPSJtYWduaWZ5IiBwcmVzZXJ2ZUFzcGVjdFJhdGlvPSJub25lIiBjb250ZW50U3R5bGVUeXBlPSJ0ZXh0L2NzcyI+PD9wbGFudHVtbCAxLjIwMjYuOD8+PGRlZnMvPjxnIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBsZW5ndGhBZGp1c3Q9InNwYWNpbmciPjxnPjx0aXRsZT4uLi4uPC90aXRsZT48cmVjdCB4PSI0MS41IiB5PSI1Ny41OTQiIHdpZHRoPSI4IiBoZWlnaHQ9IjI2OS4zMjgiIGZpbGw9IiMwMDAiIGZpbGwtb3BhY2l0eT0iMCIvPjxsaW5lIHgxPSI0NSIgeTE9IjU3LjU5NCIgeDI9IjQ1IiB5Mj0iMzI2LjkyMiIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDowLjU7c3Ryb2tlLWRhc2hhcnJheTo1LDU7Ii8+PC9nPjxsaW5lIHgxPSI0NSIgeTE9IjMyNi45MjIiIHgyPSI0NSIgeTI9IjM2Ny43MjciIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MC41O3N0cm9rZS1kYXNoYXJyYXk6MSw0OyIvPjxnPjx0aXRsZT4uLi4uPC90aXRsZT48cmVjdCB4PSI0MS41IiB5PSIzNjcuNzI3IiB3aWR0aD0iOCIgaGVpZ2h0PSIxMTAuMzk4IiBmaWxsPSIjMDAwIiBmaWxsLW9wYWNpdHk9IjAiLz48bGluZSB4MT0iNDUiIHkxPSIzNjcuNzI3IiB4Mj0iNDUiIHkyPSI0NzguMTI1IiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjAuNTtzdHJva2UtZGFzaGFycmF5OjUsNTsiLz48L2c+PGc+PHRpdGxlPi4uLi4uLi4uLjwvdGl0bGU+PHJlY3QgeD0iMzg1LjEzIiB5PSI1Ny41OTQiIHdpZHRoPSI4IiBoZWlnaHQ9IjI2OS4zMjgiIGZpbGw9IiMwMDAiIGZpbGwtb3BhY2l0eT0iMCIvPjxsaW5lIHgxPSIzODguNjMiIHkxPSI1Ny41OTQiIHgyPSIzODguNjMiIHkyPSIzMjYuOTIyIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjAuNTtzdHJva2UtZGFzaGFycmF5OjUsNTsiLz48L2c+PGxpbmUgeDE9IjM4OC42MyIgeTE9IjMyNi45MjIiIHgyPSIzODguNjMiIHkyPSIzNjcuNzI3IiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjAuNTtzdHJva2UtZGFzaGFycmF5OjEsNDsiLz48Zz48dGl0bGU+Li4uLi4uLi4uPC90aXRsZT48cmVjdCB4PSIzODUuMTMiIHk9IjM2Ny43MjciIHdpZHRoPSI4IiBoZWlnaHQ9IjExMC4zOTgiIGZpbGw9IiMwMDAiIGZpbGwtb3BhY2l0eT0iMCIvPjxsaW5lIHgxPSIzODguNjMiIHkxPSIzNjcuNzI3IiB4Mj0iMzg4LjYzIiB5Mj0iNDc4LjEyNSIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDowLjU7c3Ryb2tlLWRhc2hhcnJheTo1LDU7Ii8+PC9nPjxnPjx0aXRsZT4uLi4uLi4uLjwvdGl0bGU+PHJlY3QgeD0iNjI1LjUiIHk9IjU3LjU5NCIgd2lkdGg9IjgiIGhlaWdodD0iMjY5LjMyOCIgZmlsbD0iIzAwMCIgZmlsbC1vcGFjaXR5PSIwIi8+PGxpbmUgeDE9IjYyOSIgeTE9IjU3LjU5NCIgeDI9IjYyOSIgeTI9IjMyNi45MjIiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MC41O3N0cm9rZS1kYXNoYXJyYXk6NSw1OyIvPjwvZz48bGluZSB4MT0iNjI5IiB5MT0iMzI2LjkyMiIgeDI9IjYyOSIgeTI9IjM2Ny43MjciIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MC41O3N0cm9rZS1kYXNoYXJyYXk6MSw0OyIvPjxnPjx0aXRsZT4uLi4uLi4uLjwvdGl0bGU+PHJlY3QgeD0iNjI1LjUiIHk9IjM2Ny43MjciIHdpZHRoPSI4IiBoZWlnaHQ9IjExMC4zOTgiIGZpbGw9IiMwMDAiIGZpbGwtb3BhY2l0eT0iMCIvPjxsaW5lIHgxPSI2MjkiIHkxPSIzNjcuNzI3IiB4Mj0iNjI5IiB5Mj0iNDc4LjEyNSIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDowLjU7c3Ryb2tlLWRhc2hhcnJheTo1LDU7Ii8+PC9nPjxnPjx0aXRsZT4uLi4uLi4uLjwvdGl0bGU+PHJlY3QgeD0iODgyLjkwNCIgeT0iNTcuNTk0IiB3aWR0aD0iOCIgaGVpZ2h0PSIyNjkuMzI4IiBmaWxsPSIjMDAwIiBmaWxsLW9wYWNpdHk9IjAiLz48bGluZSB4MT0iODg2LjQwNCIgeTE9IjU3LjU5NCIgeDI9Ijg4Ni40MDQiIHkyPSIzMjYuOTIyIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjAuNTtzdHJva2UtZGFzaGFycmF5OjUsNTsiLz48L2c+PGxpbmUgeDE9Ijg4Ni40MDQiIHkxPSIzMjYuOTIyIiB4Mj0iODg2LjQwNCIgeTI9IjM2Ny43MjciIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MC41O3N0cm9rZS1kYXNoYXJyYXk6MSw0OyIvPjxnPjx0aXRsZT4uLi4uLi4uLjwvdGl0bGU+PHJlY3QgeD0iODgyLjkwNCIgeT0iMzY3LjcyNyIgd2lkdGg9IjgiIGhlaWdodD0iMTEwLjM5OCIgZmlsbD0iIzAwMCIgZmlsbC1vcGFjaXR5PSIwIi8+PGxpbmUgeDE9Ijg4Ni40MDQiIHkxPSIzNjcuNzI3IiB4Mj0iODg2LjQwNCIgeTI9IjQ3OC4xMjUiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MC41O3N0cm9rZS1kYXNoYXJyYXk6NSw1OyIvPjwvZz48cmVjdCB4PSIxMCIgeT0iMjYuMjk3IiB3aWR0aD0iNzAiIGhlaWdodD0iMzAuMjk3IiBmaWxsPSIjRTJFMkYwIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjAuNTsiIHJ4PSIyLjUiIHJ5PSIyLjUiLz48dGV4dCB4PSIxNyIgeT0iNDYuMjkyIiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE0IiB0ZXh0TGVuZ3RoPSI1NiI+44OW44Op44Km44K2PC90ZXh0PjxyZWN0IHg9IjMwOC42NDYiIHk9IjEwIiB3aWR0aD0iMTU5Ljk2OCIgaGVpZ2h0PSI0Ni41OTQiIGZpbGw9IiNFMkUyRjAiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MC41OyIgcng9IjIuNSIgcnk9IjIuNSIvPjx0ZXh0IHg9IjM0NS4wNjUiIHk9IjI5Ljk5NSIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxNCIgdGV4dExlbmd0aD0iODcuMTMxIiBmb250LXN0eWxlPSJpdGFsaWMiPsKr6KqN6Ki844Gu5YWl5Y+jwrs8L3RleHQ+PHRleHQgeD0iMzE1LjY0NiIgeT0iNDYuMjkyIiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE0IiB0ZXh0TGVuZ3RoPSIxNDUuOTY4Ij5TZXNzaW9uTGlmZXRpbWVGaWx0ZXI8L3RleHQ+PHJlY3QgeD0iNTUxLjU5NCIgeT0iMTAiIHdpZHRoPSIxNTQuODEzIiBoZWlnaHQ9IjQ2LjU5NCIgZmlsbD0iI0UyRTJGMCIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDowLjU7IiByeD0iMi41IiByeT0iMi41Ii8+PHRleHQgeD0iNTkyLjQzNSIgeT0iMjkuOTk1IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE0IiB0ZXh0TGVuZ3RoPSI3My4xMzEiIGZvbnQtc3R5bGU9Iml0YWxpYyI+wqvnlLvpnaLjga7lsaTCuzwvdGV4dD48dGV4dCB4PSI1NTguNTk0IiB5PSI0Ni4yOTIiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTQiIHRleHRMZW5ndGg9IjE0MC44MTMiPlNlc3Npb25UaW1lckFkdmljZTwvdGV4dD48cmVjdCB4PSI4MjMuNDA0IiB5PSIyNi4yOTciIHdpZHRoPSIxMjYiIGhlaWdodD0iMzAuMjk3IiBmaWxsPSIjRTJFMkYwIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjAuNTsiIHJ4PSIyLjUiIHJ5PSIyLjUiLz48dGV4dCB4PSI4MzAuNDA0IiB5PSI0Ni4yOTIiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTQiIHRleHRMZW5ndGg9IjExMiI+5YWx6YCa44Gu44Os44Kk44Ki44Km44OIPC90ZXh0PjxyZWN0IHg9IjEwIiB5PSI0NzguMTI1IiB3aWR0aD0iNzAiIGhlaWdodD0iMzAuMjk3IiBmaWxsPSIjRTJFMkYwIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjAuNTsiIHJ4PSIyLjUiIHJ5PSIyLjUiLz48dGV4dCB4PSIxNyIgeT0iNDk4LjEyIiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE0IiB0ZXh0TGVuZ3RoPSI1NiI+44OW44Op44Km44K2PC90ZXh0PjxyZWN0IHg9IjMwOC42NDYiIHk9IjQ3OC4xMjUiIHdpZHRoPSIxNTkuOTY4IiBoZWlnaHQ9IjQ2LjU5NCIgZmlsbD0iI0UyRTJGMCIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDowLjU7IiByeD0iMi41IiByeT0iMi41Ii8+PHRleHQgeD0iMzQ1LjA2NSIgeT0iNDk4LjEyIiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE0IiB0ZXh0TGVuZ3RoPSI4Ny4xMzEiIGZvbnQtc3R5bGU9Iml0YWxpYyI+wqvoqo3oqLzjga7lhaXlj6PCuzwvdGV4dD48dGV4dCB4PSIzMTUuNjQ2IiB5PSI1MTQuNDE3IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE0IiB0ZXh0TGVuZ3RoPSIxNDUuOTY4Ij5TZXNzaW9uTGlmZXRpbWVGaWx0ZXI8L3RleHQ+PHJlY3QgeD0iNTUxLjU5NCIgeT0iNDc4LjEyNSIgd2lkdGg9IjE1NC44MTMiIGhlaWdodD0iNDYuNTk0IiBmaWxsPSIjRTJFMkYwIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjAuNTsiIHJ4PSIyLjUiIHJ5PSIyLjUiLz48dGV4dCB4PSI1OTIuNDM1IiB5PSI0OTguMTIiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTQiIHRleHRMZW5ndGg9IjczLjEzMSIgZm9udC1zdHlsZT0iaXRhbGljIj7Cq+eUu+mdouOBruWxpMK7PC90ZXh0Pjx0ZXh0IHg9IjU1OC41OTQiIHk9IjUxNC40MTciIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTQiIHRleHRMZW5ndGg9IjE0MC44MTMiPlNlc3Npb25UaW1lckFkdmljZTwvdGV4dD48cmVjdCB4PSI4MjMuNDA0IiB5PSI0NzguMTI1IiB3aWR0aD0iMTI2IiBoZWlnaHQ9IjMwLjI5NyIgZmlsbD0iI0UyRTJGMCIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDowLjU7IiByeD0iMi41IiByeT0iMi41Ii8+PHRleHQgeD0iODMwLjQwNCIgeT0iNDk4LjEyIiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE0IiB0ZXh0TGVuZ3RoPSIxMTIiPuWFsemAmuOBruODrOOCpOOCouOCpuODiDwvdGV4dD48cG9seWdvbiBwb2ludHM9IjM3Ni42Myw4Mi43MjcsMzg2LjYzLDg2LjcyNywzNzYuNjMsOTAuNzI3LDM4MC42Myw4Ni43MjciIGZpbGw9IiMxODE4MTgiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTtzdHJva2UtbGluZWpvaW46bWl0ZXI7c3Ryb2tlLW1pdGVybGltaXQ6MTA7Ii8+PGxpbmUgeDE9IjQ1IiB5MT0iODYuNzI3IiB4Mj0iMzgyLjYzIiB5Mj0iODYuNzI3IiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjE7Ii8+PHRleHQgeD0iNTIiIHk9IjgxLjY2MSIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxMyIgdGV4dExlbmd0aD0iMTU2LjIyOSI+R0VU77yI44Ot44Kw44Kk44Oz44GX44Gf55S76Z2i77yJPC90ZXh0PjxsaW5lIHgxPSIzODguNjMiIHkxPSIxNDYuMTI1IiB4Mj0iNDMwLjYzIiB5Mj0iMTQ2LjEyNSIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxOyIvPjxsaW5lIHgxPSI0MzAuNjMiIHkxPSIxNDYuMTI1IiB4Mj0iNDMwLjYzIiB5Mj0iMTU5LjEyNSIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxOyIvPjxsaW5lIHgxPSIzODkuNjMiIHkxPSIxNTkuMTI1IiB4Mj0iNDMwLjYzIiB5Mj0iMTU5LjEyNSIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxOyIvPjxwb2x5Z29uIHBvaW50cz0iMzk5LjYzLDE1NS4xMjUsMzg5LjYzLDE1OS4xMjUsMzk5LjYzLDE2My4xMjUsMzk1LjYzLDE1OS4xMjUiIGZpbGw9IiMxODE4MTgiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTtzdHJva2UtbGluZWpvaW46bWl0ZXI7c3Ryb2tlLW1pdGVybGltaXQ6MTA7Ii8+PHRleHQgeD0iMzk1LjYzIiB5PSIxMTAuNzkzIiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjEzIiB0ZXh0TGVuZ3RoPSIxNDMiPuS4iumZkOOBruWIpOWumu+8iOS7iuOBqeOBiuOCiu+8iTwvdGV4dD48dGV4dCB4PSIzOTUuNjMiIHk9IjEyNS45MjYiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTMiIHRleHRMZW5ndGg9IjE2OC40MDQiPjIg44Gk44Gu6KaB57Sg44GM44Gd44KN44Gj44Gm44GE44KM44GwPC90ZXh0Pjx0ZXh0IHg9IjM5NS42MyIgeT0iMTQxLjA1OSIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxMyIgdGV4dExlbmd0aD0iMjI2LjM3Ij44IOaZgumWk+OBruaui+OCiuOCkiByZXF1ZXN0IOOBruWxnuaAp+OBq+e9ruOBjzwvdGV4dD48cG9seWdvbiBwb2ludHM9IjYxNywxODQuMjU4LDYyNywxODguMjU4LDYxNywxOTIuMjU4LDYyMSwxODguMjU4IiBmaWxsPSIjMTgxODE4IiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjE7c3Ryb2tlLWxpbmVqb2luOm1pdGVyO3N0cm9rZS1taXRlcmxpbWl0OjEwOyIvPjxsaW5lIHgxPSIzODguNjMiIHkxPSIxODguMjU4IiB4Mj0iNjIzIiB5Mj0iMTg4LjI1OCIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxOyIvPjx0ZXh0IHg9IjM5NS42MyIgeT0iMTgzLjE5MiIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxMyIgdGV4dExlbmd0aD0iMTQzIj7vvIjjgrPjg7Pjg4jjg63jg7zjg6njg7zjga7liY3vvIk8L3RleHQ+PHBvbHlnb24gcG9pbnRzPSI4NzQuNDA0LDIyOC41MjMsODg0LjQwNCwyMzIuNTIzLDg3NC40MDQsMjM2LjUyMyw4NzguNDA0LDIzMi41MjMiIGZpbGw9IiMxODE4MTgiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTtzdHJva2UtbGluZWpvaW46bWl0ZXI7c3Ryb2tlLW1pdGVybGltaXQ6MTA7Ii8+PGxpbmUgeDE9IjYyOSIgeTE9IjIzMi41MjMiIHgyPSI4ODAuNDA0IiB5Mj0iMjMyLjUyMyIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxOyIvPjx0ZXh0IHg9IjYzNiIgeT0iMjEyLjMyNSIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxMyIgdGV4dExlbmd0aD0iODUuNjgxIj5zZXNzaW9uVGltZXI8L3RleHQ+PHRleHQgeD0iNjM2IiB5PSIyMjcuNDU4IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjEzIiB0ZXh0TGVuZ3RoPSIyMzMuNDA0Ij7vvIjnhKHmk43kvZzjga7np5LmlbDjgIE4IOaZgumWk+OBruaui+OCiuOBruenkuaVsO+8iTwvdGV4dD48cG9seWdvbiBwb2ludHM9IjU2LDI3Mi43ODksNDYsMjc2Ljc4OSw1NiwyODAuNzg5LDUyLDI3Ni43ODkiIGZpbGw9IiMxODE4MTgiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTtzdHJva2UtbGluZWpvaW46bWl0ZXI7c3Ryb2tlLW1pdGVybGltaXQ6MTA7Ii8+PGxpbmUgeDE9IjUwIiB5MT0iMjc2Ljc4OSIgeDI9Ijg4NS40MDQiIHkyPSIyNzYuNzg5IiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjE7Ii8+PHRleHQgeD0iNjIiIHk9IjI1Ni41OSIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxMyIgdGV4dExlbmd0aD0iMTY4LjEwNSI+ZGF0YS0g5bGe5oCn44KS5oyB44Gk6K2m5ZGK44Gu6YOo5YiGPC90ZXh0Pjx0ZXh0IHg9IjYyIiB5PSIyNzEuNzIzIiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjEzIiB0ZXh0TGVuZ3RoPSIxMzcuMTM1Ij4vanMvc2Vzc2lvbi10aW1lb3V0LmpzPC90ZXh0PjxsaW5lIHgxPSI0NSIgeTE9IjMwNS45MjIiIHgyPSI4NyIgeTI9IjMwNS45MjIiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTsiLz48bGluZSB4MT0iODciIHkxPSIzMDUuOTIyIiB4Mj0iODciIHkyPSIzMTguOTIyIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjE7Ii8+PGxpbmUgeDE9IjQ2IiB5MT0iMzE4LjkyMiIgeDI9Ijg3IiB5Mj0iMzE4LjkyMiIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxOyIvPjxwb2x5Z29uIHBvaW50cz0iNTYsMzE0LjkyMiw0NiwzMTguOTIyLDU2LDMyMi45MjIsNTIsMzE4LjkyMiIgZmlsbD0iIzE4MTgxOCIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxO3N0cm9rZS1saW5lam9pbjptaXRlcjtzdHJva2UtbWl0ZXJsaW1pdDoxMDsiLz48dGV4dCB4PSI1MiIgeT0iMzAwLjg1NiIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxMyIgdGV4dExlbmd0aD0iMjM0LjI1NCI+bG9jYWxTdG9yYWdlIOOBq+acgOW+jOOBriByZXF1ZXN0IOOBruaZguWIuzwvdGV4dD48dGV4dCB4PSI0NTEuNDU1IiB5PSIzNTEuMTMyIiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjExIiB0ZXh0TGVuZ3RoPSIyOC40OTQiPjI1IOWIhjwvdGV4dD48bGluZSB4MT0iNDUiIHkxPSIzODguODU5IiB4Mj0iODciIHkyPSIzODguODU5IiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjE7Ii8+PGxpbmUgeDE9Ijg3IiB5MT0iMzg4Ljg1OSIgeDI9Ijg3IiB5Mj0iNDAxLjg1OSIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxOyIvPjxsaW5lIHgxPSI0NiIgeTE9IjQwMS44NTkiIHgyPSI4NyIgeTI9IjQwMS44NTkiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTsiLz48cG9seWdvbiBwb2ludHM9IjU2LDM5Ny44NTksNDYsNDAxLjg1OSw1Niw0MDUuODU5LDUyLDQwMS44NTkiIGZpbGw9IiMxODE4MTgiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTtzdHJva2UtbGluZWpvaW46bWl0ZXI7c3Ryb2tlLW1pdGVybGltaXQ6MTA7Ii8+PHRleHQgeD0iNTIiIHk9IjM4My43OTMiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTMiIHRleHRMZW5ndGg9IjI0NyI+6K2m5ZGK44KS6ZaL44GP77yI5bu26ZW344Gu44Oc44K/44Oz44Gr44OV44Kp44O844Kr44K577yJPC90ZXh0Pjxwb2x5Z29uIHBvaW50cz0iMzc2LjYzLDQyNi45OTIsMzg2LjYzLDQzMC45OTIsMzc2LjYzLDQzNC45OTIsMzgwLjYzLDQzMC45OTIiIGZpbGw9IiMxODE4MTgiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTtzdHJva2UtbGluZWpvaW46bWl0ZXI7c3Ryb2tlLW1pdGVybGltaXQ6MTA7Ii8+PGxpbmUgeDE9IjQ1IiB5MT0iNDMwLjk5MiIgeDI9IjM4Mi42MyIgeTI9IjQzMC45OTIiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTsiLz48dGV4dCB4PSI1MiIgeT0iNDI1LjkyNiIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxMyIgdGV4dExlbmd0aD0iMjAwLjM5NiI+UE9TVCAvc2Vzc2lvbi9leHRlbmTvvIhDU1JG77yJPC90ZXh0Pjxwb2x5Z29uIHBvaW50cz0iNTYsNDU2LjEyNSw0Niw0NjAuMTI1LDU2LDQ2NC4xMjUsNTIsNDYwLjEyNSIgZmlsbD0iIzE4MTgxOCIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxO3N0cm9rZS1saW5lam9pbjptaXRlcjtzdHJva2UtbWl0ZXJsaW1pdDoxMDsiLz48bGluZSB4MT0iNTAiIHkxPSI0NjAuMTI1IiB4Mj0iMzg3LjYzIiB5Mj0iNDYwLjEyNSIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxOyIvPjx0ZXh0IHg9IjYyIiB5PSI0NTUuMDU5IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjEzIiB0ZXh0TGVuZ3RoPSIzMTkuNjMiPjIwNO+8iFNwcmluZyBTZXNzaW9uIOOBjOacgOe1guOCouOCr+OCu+OCueOCkuaWsOOBl+OBj+OBmeOCi++8iTwvdGV4dD48P3BsYW50dW1sLXNyYyBaTEREUm45SDVEdEZodFpmN1oxNDRxQ1E0Y0RRRG9PUU9TYmMwY0NwM0hybVBjZnFudGtsRFBJRmU1R21ERElGNWNhaDVjY2dMSkRLVnluYlBmWExfdUJ0Skk0UFFNdFRKVVJVUy11dnZ6d05idExKSlFqdk1KQzl5MlJtMHMxVE8yVElGYjE4QThRWHZoSnh3Y0Y1TDVVS0hKTGhBWmdQZG56X2dleHRYcTN4emxmN2t4T1Jaci02SVk5Mmx2RHZnZ09MWEJZbEJNenhIcTJFRVpGelNfUndhTFZPbVhobXB5MHdtN1E0NWJ3Uzh4OTFpbEJwdEFlZklLNkg5MUpfWHhPT2tSVUdGMWlNV0h5MjZtV29WV3BxM1QxdHZtQkVYWGxJdlNXaEE0U19JYnhoZlQxVXhEWnpCUUdWTUlNVzFxMUJtNGY4Y1RBWTE2VzdFeVBUd2R2ejN4RzJUMWpPNVVXa3EyeEdETTN1UHYzSVJYRWRuUnBjOWhPd19KQVlXVE05aFpuUExHcFNXcVpkaExGTzB6ZnBKX2owUXpUZzNPT1M4eTh1RW5RTWtQeTA3dWg4a0ItZlpNaDBVbjI2UEVTUDh1NEhBQVNxZjdGTkZaWVJyVDVmNm9kU2xSaEo2NDIxTlpHbkJPZUg0cEFhX01qYkNQQUhKSmI0OVd2UHRRYkdwNm55c0JMVjJHQUZ4emw1NW9hamljbjQ5WjkybVo5b1hQVUQyLWtWdVN4Y3FkOHNPVVBxVUtkMTc3akVrczNfbWlaeG1OMUhqTHNxZjcwdUpBQXQyNHVaLTdhVHlxR1dndGxEQ2N1NEN4Nmo0d19udEpfTkRoM1ZfZU5yVzNVMC1MY3A3aDJWOGVaX2xUWTczbjk5Q2xLU0tQd1BZZlIxQ05TSlpuUWxGRFNQZVQ0UkRuNkxvRWtnalpJVFhRdWg2OE54WlZjRndXaW0yeU05eTlpM19yZEtXQlEwYk43RTdtMDA/PjwvZz48L3N2Zz4=" class="uml" alt="uml diagram" title="" /></p>
 <h2 id="_7">ステップ計画<a class="headerlink" href="#_7" title="Permanent link">&para;</a></h2>
 <p>状態の記号: <code>[ ]</code> 未着手、<code>[-]</code> 進行中、<code>[?]</code> 承認待ち、<code>[x]</code> 完了。各ステップの終わりに <code>check</code> が緑であることと、計画からの変更を設計文書に反映したこと（T-53）を確かめ、push して CI を確かめる（T-26、T-65、T-118）。コミットは pathspec で作り、そのステップのファイルだけを入れる（T-84、T-110）。複数行の書き換えはスクリプトのファイルにする（T-103）。ステップ 1 を push してからコードのステップを push する（T-109）。</p>
 <ul class="task-list">
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>1. 設計文書</strong> 【承認ゲート: 設計文書】</li>
-<li>ui_design.md: 「状態表示」の session の警告の行と、共通のレイアウトの節に予告のダイアログ（無操作の予告・8 時間の予告・ログアウトしました）の文言とフォーカスの動きを書く。A-03 の行の「入力の保持と失効 5 分前の警告（ACC-06）は W5」を「予告と延長は Bolt 32b、入力の保持と開いていた画面への復帰は Bolt 32e」に直す</li>
-<li>architecture_frontend.md の「session の時間制限」: 共通のレイアウトの部分と <code>/js/session-timeout.js</code>、タブの間の同期、残り時間はサーバーが出した秒数から数える（定期の問い合わせをしない）こと</li>
-<li>non_functional.md の ACC-06: 8 時間の上限も 5 分前に予告する（延長はできない）。延長は画面を移らない</li>
-<li>ADR-012: 延長の URL（<code>POST /session/extend</code>。今のフィルターを通し、8 時間の上限を延ばさない）と、8 時間の残りを認証の入口から request の属性で画面に渡すこと（改訂の経緯）</li>
-<li>test_strategy.md: 画面の層の受入シナリオで、ブラウザの時計を Playwright の <code>BrowserContext.clock()</code> で進めること。サーバーの session は実時間で失効させない（サーバーの失効は統合テスト）</li>
-<li>release_plan.md の W5 の節: 32b の行を本計画に、32e の行（入力の保持と開いていた画面への復帰、A-03 の文言、Bolt 31 のレビュー 5）を足す。US-18 の Bolt の順序（32d → 32b → 32e）、W5 の本数（17 本）、「session の失効の警告の範囲」の決定の反映先（32b・32e）。W5 の状態</li>
+<li>ui_design.md:<ul>
+<li>前提の表（:35・:38）、共通部品の表の「session の警告」（:1012）、エラーと例外の扱い（:1089・:1090）、部分更新を使う箇所（:1107）を 32b（警告と延長）と 32e（入力の保持と画面への復帰）に分けて書く</li>
+<li>警告のダイアログ（無操作の警告・8 時間の警告・延長できませんでした・期限の到来の案内）の文言、フォーカスの動き、Esc、相対の分で示す理由。モーダルのダイアログは session の警告だけの例外（:232 の方針との関係）</li>
+<li>警告の出ない画面（<code>layout/public</code> の A-01〜A-04・エラーの画面）。画面遷移図に期限の到来の案内から A-03 への遷移</li>
+<li>A-03 の行の「入力の保持と失効 5 分前の警告（ACC-06）は W5」を「警告と延長は Bolt 32b、入力の保持と開いていた画面への復帰は Bolt 32e」に直す</li>
+</ul>
+</li>
+<li>architecture_frontend.md:<ul>
+<li>「session の時間制限」を 32b と 32e に分ける</li>
+<li>共通のレイアウトの部分と <code>/js/session-timeout.js</code>、タブの間の同期、残り時間はサーバーが出した秒数から数える（定期の問い合わせをしない）こと</li>
+<li>htmx でなく <code>fetch</code> にする理由（ADR-005 の部分更新の方針との関係）</li>
+<li>数える request と、ブラウザの期限が早く来ることがある既知の制約</li>
+<li>共通のレイアウトの部品を <code>identity.interfaces.web</code> に置く判断（前例は <code>CurrentActorAdvice</code>）</li>
+</ul>
+</li>
+<li>architecture_backend.md: 認証の入口の部品の節に、8 時間の残りを request の属性の名前で画面の層に渡す契約（層の規則に例外を足さない理由、名前の一致をテストで守る）と <code>SessionController</code>・<code>SessionTimerAdvice</code></li>
+<li>non_functional.md の ACC-06: 8 時間の上限は SEC-03 のセキュリティ上の必須の制限（WCAG 2.2.1 の Essential の例外）として延長を出さず、5 分前に警告する。延長は画面を移らない</li>
+<li>ADR-012: 延長の URL（<code>POST /session/extend</code>。今のフィルターを通し、8 時間の上限を延ばさない。CSRF と失効の経路）と、8 時間の残りを認証の入口から request の属性で画面に渡すこと（改訂の経緯）</li>
+<li>ADR-011 の :136 の「無操作 30 分 | <code>server.servlet.session.timeout=30m</code> … 振る舞いは確かめていない」を、ADR-012 と <code>spring.session.timeout</code> に合わせて直す（改訂の経緯）</li>
+<li>test_strategy.md:<ul>
+<li>画面の層の受入シナリオで、ブラウザの時計を Playwright の <code>BrowserContext.clock()</code> で進めること。サーバーの session は実時間で失効させない（サーバーの失効は統合テスト）。8 時間は session の属性を書き換えて確かめる</li>
+<li>認証の行（:342）を 32b と 32e に分け、共通部品のテスト（:349）に session の警告を足す</li>
+</ul>
+</li>
+<li>user_story.md の :501 の「失効 5 分前の警告は W5 に残す」に、32b（警告と延長）と 32e（入力の保持）の分担を書く</li>
+<li>release_plan.md の W5 の節:<ul>
+<li>32b の行を本計画に（承認ゲートは「ステップごと（セキュリティ、構造、画面）」）。32e の行（入力の保持と開いていた画面への復帰、A-03 の文言、Bolt 31 のレビュー 5）を足す</li>
+<li>US-18 の Bolt の順序（32d → 32b → 32e）、W5 の本数（17 本）、「session の失効の警告の範囲」の決定の反映先（32b・32e）</li>
+<li>33b の行に、確認ポイント 5 の結果（(b) なら「32b の残り時間の属性の名前も同じ直しの対象」）</li>
+<li>ユーザーマニュアルの段落（32b の 2.2・2.4・付録 B、32e の分）、進み具合の行（:628）、W5 の状態</li>
+</ul>
+</li>
 <li>完了の判定: <code>okf:check</code> ERROR 0、<code>documentationTest</code> 緑</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>2. 8 時間の残りと延長の URL</strong> 【承認ゲート: Red・Green、セキュリティ】</li>
-<li>Red（統合テスト <code>SessionTimerSecurityIntegrationTest</code>。<code>@IdentityIntegrationTest</code>、<code>MutableClock</code> を直接受ける）:<ul>
-<li>ログインした画面の応答に、無操作の秒数（1800）と 8 時間の残りの秒数（時計を 2 時間進めたら 6 時間分）が出る</li>
-<li>認証の前の画面（A-01・A-03）と password の段の画面（A-02）には出ない</li>
-<li><code>POST /session/extend</code> が CSRF のトークン付きで 204 を返し、その session の行の最終アクセスが新しくなる</li>
-<li>CSRF のトークンがなければ 403、ログインしていなければ A-01 へ、password の段だけなら A-02 へ、8 時間を過ぎていれば A-03 へ（どれも 1 つの条件だけを外す。T-117）</li>
+<li>Red（単体テスト <code>SessionLifetimeFilterTest</code>）: 2 つの要素がそろった session で、8 時間の残りの秒数が request の属性に置かれる（起点の直後、上限の 1 秒前）。password の段・登録の途中・起点のない session・認証の前では置かれない。上限を過ぎたら今どおり A-03（属性は置かない）</li>
+<li>Red（統合テスト <code>SessionTimerSecurityIntegrationTest</code>。<code>@IdentityIntegrationTest</code>、<code>MutableClock</code> を直接受け、<code>@BeforeEach</code> で時刻を置く）:<ul>
+<li>ログインした業務の画面のモデルの <code>sessionTimer</code> に、無操作の秒数（1800）と 8 時間の残りの秒数（時計を 2 時間進めたら 6 時間分）がある。応答の HTML の <code>data-</code> 属性にも出る</li>
+<li>A-02（password の段）の request では、request の属性もモデルの <code>sessionTimer</code> もない</li>
+<li>延長: <code>SpringSessionRows.idle</code> で最終アクセスを 20 分戻してから <code>POST /session/extend</code> を送り、204 で、その session の行の最終アクセスが今に近い（<code>SpringSessionRows</code> に <code>last_access_time</code> を読む補助を足す）</li>
+<li>業務の画面を GET して session に CSRF のトークンを作ってから、トークンなし・誤ったトークンで送ると 403（T-117）</li>
+<li>無操作で失効した session（<code>SpringSessionRows.idle</code> で 31 分戻す）の延長は A-03 への 302（CSRF のトークンのない拒否の経路）</li>
+<li>password の段だけの session の延長は A-02 へ、8 時間を過ぎた session の延長は A-03 へ。ログインしていない request は A-01 へ（MockMvc の <code>csrf()</code> を付けた前提。実際のブラウザでは session がないので A-03 になる、と前提を書く）</li>
 <li>延長は 8 時間の上限を延ばさない（上限の 1 分前に延長し、時計を 1 分進めると A-03。T-115）</li>
-<li>認証の入口と画面の層の属性の名前が同じ値であること</li>
+<li>認証の入口と画面の層の request の属性の名前が同じ値であること（確認ポイント 5 の (b) のとき）</li>
 </ul>
 </li>
 <li>Green: <code>SessionLifetimeFilter</code> が 8 時間の残りを request の属性に置く（上限の判定と同じ起点と時計）。<code>SessionTimerAdvice</code> と <code>SessionController</code> を作る</li>
 <li>完了の判定: <code>check</code> 緑（ArchUnit の層の規則と要素の権限の参照の見張りを含む）</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>3. 予告のダイアログと JavaScript</strong> 【承認ゲート: Green（画面）】</li>
-<li><code>layout/session-warning</code> の部分（<code>&lt;dialog&gt;</code>、延長のフォームは <code>th:action</code> で CSRF のトークンを持つ）を <code>layout/customer</code>・<code>layout/staff</code> に入れる（<code>currentActor</code> と <code>sessionTimer</code> があるときだけ）</li>
-<li><code>/js/session-timeout.js</code>（「設計の約束」のブラウザの数え方とダイアログの状態）</li>
-<li>完了の判定: <code>check</code> 緑。dev で起動し、時計を進めずに画面の読み込み・延長の POST が通ることを目で確かめる</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>3. 警告のダイアログと JavaScript</strong> 【承認ゲート: Green（画面）、構造】</li>
+<li>骨組み（H2）: <code>BrowserSession</code> にブラウザの時計を入れる操作（<code>signInAs</code> の前に <code>context.clock().install()</code>）を足し、<code>setTimeout</code> で開く最小のダイアログを 25 分進めて開くことを、仮のシナリオで確かめる。効かなければ止めて諮る</li>
+<li><code>layout/session-warning</code> の部分（<code>&lt;dialog&gt;</code>、延長のフォームは <code>th:action</code> で CSRF のトークンを持つ）を <code>layout/customer</code>・<code>layout/staff</code> に入れる（<code>currentActor</code> と <code>sessionTimer</code> があるときだけ）。<code>&lt;dialog&gt;</code> と <code>::backdrop</code> と案内の表示を <code>app.css</code> に足す</li>
+<li><code>/js/session-timeout.js</code>（「設計の約束」のブラウザの数え方・延長の応答の扱い・ダイアログの状態）</li>
+<li><code>templates/identity/session-expired.html</code> のコメントの「入力の保持と失効の前の警告は W5」を 32b・32e に直す</li>
+<li>完了の判定: <code>check</code> 緑。dev で起動し、画面の読み込みと延長の POST が通ることを目で確かめる</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>4. 画面の層の受入シナリオ</strong> 【承認ゲート: Red・Green】</li>
-<li>骨組み: Playwright の時計を入れて 25 分進め、予告が出ることを先に確かめる（H2、T-101。時計が効かなければ止めて諮る）</li>
-<li><code>session_timeout_ui.feature</code>（<code>@ui @US-18</code>。横断の受入条件の失効の予告）:<ul>
-<li>無操作で 25 分たつと予告が出て、延長のボタンにフォーカスがある。axe の違反がない</li>
-<li>延長すると予告が閉じ、入力中の値が残り、次の 25 分まで予告が出ない（<code>@demo @demo-bolt-32b/extend</code>）</li>
-<li>ログインから 7 時間 55 分を過ぎた画面では、延長のボタンのない 8 時間の予告が出る（サーバーの時計を進めてから画面を開く）</li>
-<li>同じブラウザの別のタブで画面を開くと、もう一方のタブの予告が閉じる</li>
-<li>予告のまま 30 分を過ぎると、「ログアウトしました」の案内と「ログインへ」に替わる</li>
+<li><code>BrowserSession</code> に、別のタブを開く操作と、session の属性 <code>cargotracker.session.authenticatedAt</code> を書き換える部品（<code>JdbcTemplate</code>。Java の直列化の値を書く）を足す</li>
+<li><code>session_timeout_ui.feature</code>（<code>@ui @US-18</code>。横断の受入条件の失効の警告。時計を入れる前提が要るので <code>login_ui.feature</code>・<code>layout_ui.feature</code> と分ける）と、ステップ定義のクラス（新規。<code>LoginUiSteps</code> は触らない）:<ul>
+<li>無操作で 25 分たつと警告が出て、延長のボタンにフォーカスがある。axe の違反がない</li>
+<li>延長すると警告が閉じ、入力中の値が残り、次の 25 分まで警告が出ない（<code>@demo @demo-bolt-32b/extend</code>）</li>
+<li>ログインから 7 時間 56 分の session（属性を書き換える）で画面を開くと、延長のボタンのない 8 時間の警告が出る</li>
+<li>同じブラウザの別のタブで画面を開くと、もう一方のタブの警告が閉じる</li>
+<li>警告のまま期限を過ぎると、モーダルでない案内と A-03 へのリンクに替わり、入力中の値が残っている</li>
 </ul>
 </li>
-<li>完了の判定: <code>uiTest</code> 緑。予告を外す違反（JavaScript の読み込みを外す）で落ちることを確かめる（T-112）</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>5. ユーザーマニュアルとデモ</strong> 【承認ゲート: マニュアル】</li>
-<li>2.2 画面の構成に「ログアウトの予告と延長」、付録 B に「作業の途中でログアウトされる」の対処（延長、8 時間）。予告のダイアログのキャプチャ（<code>manual_screenshots.feature</code>）</li>
-<li>デモの動画（<code>@demo-bolt-32b/extend</code>）を撮り、#13 に添付する（<code>issue:attach-demo</code>。<code>ops/scripts/issue_demo.js</code> と運用の手順書に対応を足す）</li>
+<li>完了の判定: <code>uiTest</code> 緑。警告を外す違反（JavaScript の読み込みを外す）で落ちることを確かめる（T-112）</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>5. ユーザーマニュアルとデモの録画</strong> 【承認ゲート: マニュアル】</li>
+<li>2.2 画面の構成に「session の警告と延長」（警告の出ない画面も書く）。2.4 の注意・補足と付録 B の Q1-2 に、警告と延長（8 時間は延長できない）を足す。「開いていた画面に戻ります」は確認ポイント 9 の結果に従う</li>
+<li>警告のダイアログのキャプチャ（<code>manual_screenshots.feature</code>。時計を <code>signInAs</code> の前に入れる）</li>
+<li>デモの動画（<code>@demo-bolt-32b/extend</code>）を録画して保存する。#13 への添付と <code>ops/scripts/issue_demo.js</code>・運用の手順書の表への追記は、終了報告の承認の後（運用の手順書）</li>
 <li>完了の判定: <code>manual:build</code> が通る。<code>okf:check</code> ERROR 0</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>6. SonarQube と開発レビューと終了報告</strong> 【承認ゲート: 終了報告】</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>6. SonarQube と開発レビューと支援技術の確認と終了報告</strong> 【承認ゲート: 支援技術の手動確認、終了報告】</li>
 <li>SonarQube（<code>sonar-local:check</code>。テストとコードを書き換えていない間に流す。T-116）</li>
-<li>開発レビュー（プログラマー、アーキテクト（認証の入口から画面への値の渡し方、延長の URL）、テスター（時計を進めるシナリオ）、テクニカルライター（予告の文言とマニュアル。T-90）、インタラクションデザイナー（ダイアログのフォーカスと支援技術への通知））</li>
+<li>開発レビュー（プログラマー、アーキテクト（認証の入口から画面への値の渡し方、延長の URL）、テスター（時計を進めるシナリオ）、テクニカルライター（警告の文言とマニュアル。T-90）、インタラクションデザイナー（ダイアログのフォーカスと支援技術への通知））</li>
+<li>人による支援技術の手動確認（NVDA または VoiceOver）: 警告が読み上げられること、延長のボタンへのフォーカス、閉じた後のフォーカスの戻り、期限の到来の案内の読み上げ。手順は AI が用意し、結果を終了報告に記録する</li>
 <li><code>bolt_32b_report.md</code>。release_plan の W5 の 32b の行、開発の索引。#13 に進み具合をコメントする</li>
 </ul>
 <h3 id="_8">時間の配分と打ち切り<a class="headerlink" href="#_8" title="Permanent link">&para;</a></h3>
@@ -10511,37 +10566,37 @@
 <tbody>
 <tr>
 <td style="text-align: left;">1</td>
-<td style="text-align: left;">35 分</td>
-<td style="text-align: left;">—</td>
-</tr>
-<tr>
-<td style="text-align: left;">2</td>
-<td style="text-align: left;">50 分</td>
-<td style="text-align: left;">—</td>
-</tr>
-<tr>
-<td style="text-align: left;">3</td>
 <td style="text-align: left;">45 分</td>
 <td style="text-align: left;">—</td>
 </tr>
 <tr>
+<td style="text-align: left;">2</td>
+<td style="text-align: left;">60 分</td>
+<td style="text-align: left;">—</td>
+</tr>
+<tr>
+<td style="text-align: left;">3</td>
+<td style="text-align: left;">55 分</td>
+<td style="text-align: left;">骨組みで時計が効かなければ止めて諮る</td>
+</tr>
+<tr>
 <td style="text-align: left;">4</td>
 <td style="text-align: left;">55 分</td>
-<td style="text-align: left;">骨組みで時計が効かなければ止めて諮る。タブの間の同期のシナリオが書けなければ、同期は統合テストで確かめられないので既知の課題にして 32e で書く</td>
+<td style="text-align: left;">タブの間の同期と 8 時間の警告のシナリオが書けなければ、8 時間は統合テストの値で確かめ（画面の層では確かめない）、既知の課題にする</td>
 </tr>
 <tr>
 <td style="text-align: left;">5</td>
-<td style="text-align: left;">30 分</td>
+<td style="text-align: left;">25 分</td>
 <td style="text-align: left;">—</td>
 </tr>
 <tr>
 <td style="text-align: left;">6</td>
-<td style="text-align: left;">40 分（SonarQube の待ちを除く）</td>
+<td style="text-align: left;">30 分（SonarQube と人の手動確認の待ちを除く）</td>
 <td style="text-align: left;">—</td>
 </tr>
 </tbody>
 </table>
-<p>合計 255 分（約 4 時間 15 分。上限に近い）。4.5 時間を超えると見えたら止めて諮る（候補: 失効の後の「ログアウトしました」の案内を 32e に送る。32e は失効の時の振る舞いを扱う）。</p>
+<p>合計 270 分（約 4 時間 30 分。上限ちょうど）。超えると見えたら止めて諮る（候補: 期限の到来の案内を 32e に送る。32e は失効の時の振る舞いを扱う）。</p>
 <h2 id="try-t-6">確認ポイント（計画の承認の場でまとめて確認する。Try T-6）<a class="headerlink" href="#try-t-6" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
@@ -10557,13 +10612,13 @@
 <td style="text-align: left;">1</td>
 <td style="text-align: left;"><strong>分け方</strong>（開始準備で決めた）</td>
 <td style="text-align: left;">1</td>
-<td style="text-align: left;">32b は予告と延長、32e は失効の時の入力の保持と再認証の後に開いていた画面へ戻すこと（A-03 の文言と Bolt 31 のレビュー 5）。32e の入力の保持の置き場所（ブラウザかサーバーか）は 32e の開始準備で決める</td>
+<td style="text-align: left;">32b は警告と延長、32e は失効の時の入力の保持と再認証の後に開いていた画面へ戻すこと（A-03 の画面の文言と Bolt 31 のレビュー 5）。32e の入力の保持の置き場所（ブラウザかサーバーか）は 32e の開始準備で決める</td>
 </tr>
 <tr>
 <td style="text-align: left;">2</td>
-<td style="text-align: left;"><strong>8 時間の上限の予告</strong>（開始準備で決めた）</td>
+<td style="text-align: left;"><strong>8 時間の上限の警告</strong>（開始準備で決めた）</td>
 <td style="text-align: left;">1〜4</td>
-<td style="text-align: left;">5 分前に予告する。延長のボタンは出さず、延長できないことと送信を促す。8 時間の上限そのものは変えない（SEC-03）</td>
+<td style="text-align: left;">5 分前に警告する。延長のボタンは出さず、延長できないことと送信を促す。8 時間の上限そのものは変えない（SEC-03）。WCAG 2.2.1 の Essential の例外として ACC-06 に根拠を書く</td>
 </tr>
 <tr>
 <td style="text-align: left;">3</td>
@@ -10579,50 +10634,69 @@
 </tr>
 <tr>
 <td style="text-align: left;">5</td>
-<td style="text-align: left;"><strong>認証の入口から画面への値の渡し方</strong>（構造）</td>
-<td style="text-align: left;">2</td>
-<td style="text-align: left;">8 時間の残りは <code>SessionLifetimeFilter</code> が request の属性に置き、画面の層の <code>SessionTimerAdvice</code> が名前で読む。層の規則（画面の層は <code>infrastructure</code> に依存しない）と要素の権限の参照の見張りを変えずに済む（規則の例外を足さない）。属性の名前の一致はテストで守る</td>
+<td style="text-align: left;"><strong>認証の入口から画面への値の渡し方</strong>（構造。Bolt 31c のレビュー 14 との関係）</td>
+<td style="text-align: left;">1・2</td>
+<td style="text-align: left;">(b) 8 時間の残りは <code>SessionLifetimeFilter</code> が request の属性に置き、画面の層の <code>SessionTimerAdvice</code> が名前で読む。名前は 2 つの定数で持ち、一致をテストで守る（層の規則に例外を足さない）。レビュー 14 で 33b に送った「キーを 2 つの定数で持つ」負債と同じ形なので、33b の行に「32b の属性の名前も同じ直しの対象」と書き、33b でまとめて置き場所を決める。代わりの (a) は、33b でとる解決（両方の層から参照できる置き場所）を 32b で先にとる。設計の判断が 33b の範囲（登録の部品）と絡むので推奨しない</td>
 </tr>
 <tr>
 <td style="text-align: left;">6</td>
 <td style="text-align: left;"><strong>統合テストの時計の受け方</strong>（Bolt 32d の既知の課題）</td>
 <td style="text-align: left;">2</td>
-<td style="text-align: left;">この Bolt で足すテストは <code>MutableClock</code> を直接受け、<code>@BeforeEach</code> で時刻を置く。既存の 6 クラスは触らない（触る Bolt でそろえる、の約束のまま）</td>
+<td style="text-align: left;">この Bolt で足すテストは <code>MutableClock</code> を直接受け、<code>@BeforeEach</code> で時刻を置く。既存の 6 クラスは書き換えない（報告の「次に identity の統合テストを触る Bolt でそろえる」を「書き換える Bolt」と読む。32b は新しいクラスを足すだけ）</td>
 </tr>
 <tr>
 <td style="text-align: left;">7</td>
-<td style="text-align: left;"><strong>失効の時刻を過ぎたときの画面</strong></td>
-<td style="text-align: left;">3・4</td>
-<td style="text-align: left;">自動で A-03 へ移らず、ダイアログを「ログアウトしました」と「ログインへ」に替える（画面の入力を消さない。保持は 32e）。サーバーの session は今どおり失効していて、次の request は A-03</td>
+<td style="text-align: left;"><strong>期限を過ぎたときの画面</strong></td>
+<td style="text-align: left;">1・3・4</td>
+<td style="text-align: left;">自動で A-03 へ移らず、モーダルを閉じてモーダルでない案内（「操作がなかったため、ログアウトした可能性があります」と A-03 へのリンク）にする。背後の画面の入力を写し取れる（保持は 32e）。ブラウザの期限はサーバーより早く来ることがある（数えない request がある）ので、文言は断定しない。延長の 302 だけを失効として扱い、403・500・通信の失敗は「延長できませんでした」</td>
 </tr>
 <tr>
 <td style="text-align: left;">8</td>
-<td style="text-align: left;"><strong>新しいファイル</strong></td>
+<td style="text-align: left;"><strong>新しいファイルと UI のパターン</strong>（構造）</td>
 <td style="text-align: left;">2〜5</td>
-<td style="text-align: left;"><code>SessionTimerAdvice</code>・<code>SessionController</code>（<code>identity.interfaces.web</code>）、<code>layout/session-warning.html</code>、<code>/js/session-timeout.js</code>、<code>session_timeout_ui.feature</code> とステップ定義、<code>SessionTimerSecurityIntegrationTest</code></td>
+<td style="text-align: left;"><code>SessionTimerAdvice</code>・<code>SessionController</code>（<code>identity.interfaces.web</code>）、<code>layout/session-warning.html</code>、<code>/js/session-timeout.js</code>、<code>session_timeout_ui.feature</code> とステップ定義、<code>SessionTimerSecurityIntegrationTest</code>。モーダルのダイアログは session の警告だけの例外として UI 設計に書く。延長は htmx でなく <code>fetch</code>（理由は「開始準備で確かめたこと」）</td>
 </tr>
 <tr>
 <td style="text-align: left;">9</td>
-<td style="text-align: left;"><strong>マニュアルとデモ</strong></td>
+<td style="text-align: left;"><strong>マニュアルの「開いていた画面に戻ります」</strong></td>
 <td style="text-align: left;">5</td>
-<td style="text-align: left;">入れる（利用者に見える振る舞いが変わる）。2.2 と付録 B、予告のダイアログのキャプチャ、延長のデモの動画</td>
+<td style="text-align: left;">2.4 と付録 B の Q1-2 から、この Bolt で外す（利用者向けの事実として誤りと分かったため）。画面（A-03）の文言は 32e で復帰を作るときに直す（32e で復帰ができたらマニュアルにも戻す）。画面とマニュアルが 32e までずれることを受け入れる</td>
 </tr>
 <tr>
 <td style="text-align: left;">10</td>
+<td style="text-align: left;"><strong>マニュアルとデモ</strong></td>
+<td style="text-align: left;">5</td>
+<td style="text-align: left;">入れる（利用者に見える振る舞いが変わる）。2.2・2.4・付録 B、警告のダイアログのキャプチャ。デモは録画までをこの Bolt で、#13 への添付は終了報告の承認の後</td>
+</tr>
+<tr>
+<td style="text-align: left;">11</td>
+<td style="text-align: left;"><strong>支援技術の手動確認</strong></td>
+<td style="text-align: left;">6</td>
+<td style="text-align: left;">人が NVDA または VoiceOver で確かめる（テスト戦略）。AI が手順を用意し、結果を終了報告に記録する</td>
+</tr>
+<tr>
+<td style="text-align: left;">12</td>
+<td style="text-align: left;"><strong>用語</strong></td>
+<td style="text-align: left;">1</td>
+<td style="text-align: left;">上流の文書（ユーザーストーリー・UI 設計・リリース計画・テスト戦略）に合わせて「警告」にする。「予告」は Bolt 32 の A-01 のロックの予告で使っている</td>
+</tr>
+<tr>
+<td style="text-align: left;">13</td>
 <td style="text-align: left;">承認ゲート</td>
 <td style="text-align: left;">全体</td>
-<td style="text-align: left;">ステップごとに止める（W4 の締めの決定）。ステップ 2 はセキュリティの確認必須</td>
+<td style="text-align: left;">ステップごとに止める（W4 の締めの決定）。ステップ 2 はセキュリティ、3 は構造（新しい UI のパターン）、6 は人の手動確認</td>
 </tr>
 </tbody>
 </table>
 <h2 id="_9">完了条件<a class="headerlink" href="#_9" title="Permanent link">&para;</a></h2>
 <ul class="task-list">
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> ログインした画面で、無操作の期限の 5 分前に予告が開き、延長のボタンにフォーカスが移る。延長すると画面を移らずに閉じ、サーバーの session の最終アクセスが新しくなる</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> 8 時間の上限の 5 分前に、延長のボタンのない予告が開く。延長は 8 時間の上限を延ばさない</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> 予告の時刻がタブの間でそろう。失効の時刻を過ぎると「ログアウトしました」の案内に替わる</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> 認証の前の画面と password の段の画面には予告が出ない。層の規則と要素の権限の参照の見張りは例外を足さずに緑</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> UI 設計・フロントエンドのアーキテクチャ・ACC-06・ADR-012・テスト戦略・リリース計画（32e の行）を更新した</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> ユーザーマニュアル（2.2・付録 B）とキャプチャを更新し、デモの動画を #13 に添付した</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> ログインした画面で、無操作の期限の 5 分前に警告が開き、延長のボタンにフォーカスが移る。延長すると画面を移らずに閉じ、サーバーの session の最終アクセスが新しくなる</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> 8 時間の上限の 5 分前に、延長のボタンのない警告が開く。延長は 8 時間の上限を延ばさない</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> 警告の時刻がタブの間でそろう。期限を過ぎるとモーダルでない案内に替わり、入力が画面に残る。延長の失敗は失効と分けて示す</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <code>layout/public</code> の画面と password の段の画面には警告が出ない。層の規則と要素の権限の参照の見張りは例外を足さずに緑</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> UI 設計・フロントエンドとバックエンドのアーキテクチャ・ACC-06・ADR-011・ADR-012・テスト戦略・ユーザーストーリー・リリース計画（32e・33b の行）を更新した</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> ユーザーマニュアル（2.2・2.4・付録 B）とキャプチャを更新し、デモの動画を録画した（#13 への添付は終了報告の承認の後）</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> 人による支援技術の手動確認の結果を終了報告に記録した</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <code>check</code> と <code>uiTest</code> が緑。push して CI を確かめた。SonarQube の Quality Gate が PASS、<code>okf:check</code> ERROR 0</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> 開発レビュー、終了報告。#13 に進み具合をコメントした</li>
 </ul>
@@ -10638,7 +10712,12 @@
 <tbody>
 <tr>
 <td style="text-align: left;">2026-10-14</td>
-<td style="text-align: left;">初版作成（承認待ち）。開始準備で、ACC-06・UI 設計・フロントエンドのアーキテクチャ・ADR-012、今の失効の経路（A-03 の「開いていた画面に戻ります」が無操作の失効で成り立たないこと）、層の規則、CSP、Playwright の時計を調べ、human:kakimomokuri の決定（32b と 32e に分ける、8 時間も予告する、タブの間でそろえる、延長は POST の専用の URL）を反映した</td>
+<td style="text-align: left;">詳細整合性検証（14 件）と横断整合性検証（18 件）の指摘を反映した。用語を上流に合わせて「警告」にした。画面の層のテストはサーバーの時計を動かせないので、8 時間は session の属性を書き換えて確かめる。アプローチの欄に表から外れる理由、H2 の骨組みをステップ 3 の最初に、<code>SessionLifetimeFilterTest</code> の単体テスト。CSRF と失効の経路（無操作の失効の延長は CSRF の拒否で A-03、403 は session にトークンがあるときだけ）、延長の最終アクセスは行を古くしてから確かめる。延長の応答の扱い（302 だけを失効に）、Esc・8 時間への切り替え・期限の到来をモーダルでない案内に、A-03 へのリンク。htmx でなく <code>fetch</code>・モーダルのダイアログの例外・<code>&lt;dialog&gt;</code> を選ぶ理由。属性の名前の 2 つの定数と Bolt 31c のレビュー 14 の関係（確認ポイント 5）、request の属性の接頭辞、<code>SessionTimerAdvice</code> は session を作らない。ステップ 1 の対象に ui_design の 5 か所・architecture_backend・ADR-011・test_strategy の 2 か所・user_story・release_plan の付随の節。<code>BrowserSession</code> の時計と別のタブ、JavaScript を置くレイアウト、<code>app.css</code>、テンプレートのコメント。マニュアルは 2.4 と付録 B の Q1-2 を直す（確認ポイント 9）。デモの添付は終了報告の承認の後。支援技術の手動確認。Bolt 32d のフラグ引数と時計の受け方の引き継ぎ。T-101 の引用を直した。時間を 4 時間 30 分に</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5</td>
+</tr>
+<tr>
+<td style="text-align: left;">2026-10-14</td>
+<td style="text-align: left;">初版作成（承認待ち）。開始準備で、ACC-06・UI 設計・フロントエンドのアーキテクチャ・ADR-012、今の失効の経路（A-03 の「開いていた画面に戻ります」が無操作の失効で成り立たないこと）、層の規則、CSP、Playwright の時計を調べ、human:kakimomokuri の決定（32b と 32e に分ける、8 時間も警告する、タブの間でそろえる、延長は POST の専用の URL）を反映した</td>
 <td style="text-align: left;">anthropic/claude-opus-5-5</td>
 </tr>
 </tbody>
@@ -10646,10 +10725,10 @@
 <h2 id="_11">関連ドキュメント<a class="headerlink" href="#_11" title="Permanent link">&para;</a></h2>
 <ul>
 <li><a href="../release_plan/">リリース計画</a>（W5）</li>
-<li><a href="../bolt_32d_report/">Bolt 32d 終了報告</a>、<a href="../bolt_32c_report/">Bolt 32c 終了報告</a>、<a href="../bolt_14_report/">Bolt 14 終了報告</a></li>
+<li><a href="../bolt_32d_report/">Bolt 32d 終了報告</a>、<a href="../bolt_32c_report/">Bolt 32c 終了報告</a>、<a href="../bolt_14_report/">Bolt 14 終了報告</a>、<a href="../bolt_31c_report/">Bolt 31c 終了報告</a>（レビュー 14）</li>
 <li><a href="../../../requirements/cargo-tracker/user_story/">ユーザーストーリー</a>（横断受入条件、US-18）</li>
-<li><a href="../../../design/cargo-tracker/non_functional/">非機能要件</a>（ACC-06、SEC-03）、<a href="../../../design/cargo-tracker/ui_design/">UI 設計</a>、<a href="../../../design/cargo-tracker/architecture_frontend/">フロントエンドのアーキテクチャ</a></li>
-<li><a href="../../../adr/cargo-tracker/012-authentication-principal-and-session/">ADR-012</a>、<a href="../../../design/cargo-tracker/test_strategy/">テスト戦略</a></li>
+<li><a href="../../../design/cargo-tracker/non_functional/">非機能要件</a>（ACC-06、SEC-03）、<a href="../../../design/cargo-tracker/ui_design/">UI 設計</a>、<a href="../../../design/cargo-tracker/architecture_frontend/">フロントエンドのアーキテクチャ</a>、<a href="../../../design/cargo-tracker/architecture_backend/">バックエンドのアーキテクチャ</a></li>
+<li><a href="../../../adr/cargo-tracker/011-mfa-totp/">ADR-011</a>、<a href="../../../adr/cargo-tracker/012-authentication-principal-and-session/">ADR-012</a>、<a href="../../../design/cargo-tracker/test_strategy/">テスト戦略</a></li>
 </ul>
 
 
