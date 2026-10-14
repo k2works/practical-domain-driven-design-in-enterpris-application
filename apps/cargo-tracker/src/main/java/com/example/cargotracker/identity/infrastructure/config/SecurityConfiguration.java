@@ -2,6 +2,7 @@ package com.example.cargotracker.identity.infrastructure.config;
 
 import com.example.cargotracker.identity.application.internal.commandservices.LoginAttemptService;
 import com.example.cargotracker.identity.application.internal.commandservices.RecoveryCodeVerificationService;
+import com.example.cargotracker.identity.application.internal.commandservices.SessionRevalidationService;
 import com.example.cargotracker.identity.application.internal.commandservices.TotpVerificationService;
 import com.example.cargotracker.identity.domain.model.aggregates.AuditRecordRepository;
 import com.example.cargotracker.identity.domain.model.aggregates.CompanyRepository;
@@ -15,6 +16,7 @@ import com.example.cargotracker.identity.infrastructure.security.RecoveryCodeAut
 import com.example.cargotracker.identity.infrastructure.security.RecoveryCodeRejectedException;
 import com.example.cargotracker.identity.infrastructure.security.SessionLifetime;
 import com.example.cargotracker.identity.infrastructure.security.SessionLifetimeFilter;
+import com.example.cargotracker.identity.infrastructure.security.SessionRevalidationFilter;
 import com.example.cargotracker.identity.infrastructure.security.TotpAuthenticationFilter;
 import com.example.cargotracker.identity.infrastructure.security.TotpAuthenticationProvider;
 import com.example.cargotracker.identity.infrastructure.security.TotpAuthenticationToken;
@@ -53,8 +55,9 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
  *       認証が要るすべての URL に求める（Bolt 13 レビューの R-08 の比較で全体の注釈を採った）。password の要素だけで開けるのは
  *       A-02（{@code /login/totp}）と登録の案内（{@code /login/totp/enroll}）だけ。足りない要素の画面へ導く
  *   <li>荷主の画面（{@code /customer/**}）は荷主担当者、社内の画面（{@code /staff/**}）は営業担当者。経路設計（{@code /staff/routing-cases/**}）は
- *       経路設計者、追跡（{@code /staff/tracking-records/**}）は追跡管理者。ログインの時点の役割で判定する
- *       （request ごとに DB で確かめるのは W5。ADR-012）
+ *       経路設計者、追跡（{@code /staff/tracking-records/**}）は追跡管理者。request ごとの今の役割で判定する（Bolt 32c。
+ *       {@link SessionRevalidationFilter} が主体を作り直す。ADR-012 の見直しの 3）
+ *   <li>利用停止・無効な企業・利用者なしは、次の request で session を捨てて A-03（Bolt 32c、US-18 AC6）
  *   <li>session の固定化の防止（ログインで session ID を付け替える。既定）、CSRF の同期トークン（既定）
  *   <li>無操作 30 分（Spring Session の期限）と、TOTP が初めて通った時刻から 8 時間・password の段だけは 5 分
  *       （{@link SessionLifetimeFilter}）。失効したら A-03
@@ -144,6 +147,7 @@ public class SecurityConfiguration {
             HttpSecurity http,
             AuthenticationManager authenticationManager,
             TotpVerificationService totpVerificationService,
+            SessionRevalidationService sessionRevalidationService,
             Clock clock) {
         return http.authenticationManager(authenticationManager)
                 .authorizeHttpRequests(requests -> requests.requestMatchers(PUBLIC_PATHS)
@@ -175,6 +179,9 @@ public class SecurityConfiguration {
                         new TotpAuthenticationFilter(authenticationManager, clock),
                         UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(new SessionLifetimeFilter(clock), UsernamePasswordAuthenticationFilter.class)
+                // request ごとの利用者の確かめは期限の確認の直後、認証のフィルターより前に置く（期限の切れた session は読まない。
+                // 止められた利用者の A-02・A-07 の送信も認証の前に A-03。Bolt 32c）
+                .addFilterAfter(new SessionRevalidationFilter(sessionRevalidationService), SessionLifetimeFilter.class)
                 // 足りない要素の画面へ導く。TOTP が足りなければ A-02、password が足りなければ A-01
                 .exceptionHandling(exceptions ->
                         exceptions.accessDeniedHandler(DelegatingMissingAuthorityAccessDeniedHandler.builder()

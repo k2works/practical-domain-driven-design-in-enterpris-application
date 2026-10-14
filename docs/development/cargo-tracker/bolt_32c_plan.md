@@ -229,7 +229,7 @@ Biz --> A04 : 取り消した役割の URL
   - Red: 層の規則の骨組み（ポート・実装・サービス・フィルターの空のクラスで `LayerArchitectureTest` が緑のまま。T-101）。読み出しの契約テスト（PostgreSQL・H2: 利用者・役割・企業を 1 回で読む、役割が複数でも 1 人の `User` になる、利用者がなければ空、無効な企業・利用停止もそのまま読める、役割が 0 件なら例外）。`SessionRevalidationService` の単体テスト（利用停止・無効な企業・利用者なしで拒否の理由と `SESSION_REVOKED` 1 行、拒否でなければ今の役割・表示名・企業名の主体を返し監査を書かない、監査の追記が失敗したら例外）。特性テスト（`SpringSecurityCharacterizationTest` に足す。T-114）: 「開始準備で確かめたこと」の 2 つ
   - Green: `UserStanding`・`UserStandingRepository`、`IdentityMapper.xml`・`IdentityMapper.java` の結合の SQL と `MyBatisUserStandingRepository`、`SessionRevalidationService`（`IdentityConfiguration` で組み立て、`TransactionTemplate`）、`AuditAction.SESSION_REVOKED`、`AuditRecord.sessionRevoked`（`UtcInstant`、理由の null を拒む）
   - 完了の判定: `check` 緑（H2 の契約テストを含む）
-- [ ] **3. request ごとの確かめのフィルター** 【承認ゲート: セキュリティ、認可】
+- [x] **3. request ごとの確かめのフィルター** 【承認ゲート: セキュリティ、認可】
   - Red: セキュリティの統合テスト
     - AC6 の利用停止: ログインして業務の画面を開ける（あること。T-106・T-107）→ 利用者を `SUSPENDED` にする → 次の業務の request は A-03 に送られ、業務データを出さず、session が捨てられ、そのテストの利用者の `SESSION_REVOKED`（理由 `SUSPENDED`）が 1 行残る（T-113）
     - 無効な企業: 所属企業を無効にすると同じ（理由 `COMPANY_INACTIVE`）。利用者を消すと同じ（理由 `UNKNOWN_USER`）
