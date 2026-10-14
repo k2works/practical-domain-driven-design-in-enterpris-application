@@ -4,7 +4,7 @@ title: "cargo-tracker テスト戦略"
 description: "cargo-tracker のテスト形状、テストレベルと責務、BDD（Cucumber）のシナリオ階層とタグ規約、不変条件・ユーザーストーリーとテストの対応、カバレッジ目標、CI での実行。"
 tags: [design, test-strategy, bdd]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-11T01:25:23Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-14T03:56:21Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T08:12:04Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:01:38Z }
@@ -285,6 +285,7 @@ CI で毎回実行する。
 | AT-04 | 各コンテキストのマッパーの SQL は自分のスキーマ（と `platform` の許可された表）以外を参照しない | マッパー XML を読む独自のテスト（`MapperSchemaArchitectureTest`。Bolt 25 で実装。既知の限界: `FROM`・`JOIN`・`INTO`・`UPDATE` の直後の `スキーマ.表` だけを見るので、カンマ結合の 2 つ目の表、`USING`、修飾のない表名、引用符付きの識別子、Java の注釈の SQL（今は使っていない）は拾わない。検査するスキーマの一覧は手で保つ。Bolt 25 レビュー A-5） | ADR-001（改訂）、データモデル |
 | AT-05 | 業務のルールの層のステップ定義（`<コンテキスト>.acceptance`）は、自分のコンテキストのアプリケーション層・ドメイン層と共有カーネル、他のコンテキストの公開 API にだけ依存し、自分のインフラストラクチャ層・画面・公開 API の実装（`interfaces.api.internal`）と他のコンテキストの内部（ドメインイベントを含む）に依存しない（入力ポートのほか、コマンドの組み立てと結果の確かめにドメインの値オブジェクト・集約を使うことは認める。画面の層のステップ定義と、受入テストの組み立て（`acceptance`・`shared.acceptance`。メモリのリポジトリや公開 API の実装をつなぐのが役目）は対象外） | ArchUnit（`AcceptanceStepArchitectureTest`。Bolt 28 で、Bolt 2 から後に回していたものを実態に合わせて作った） | 本書 BDD |
 | AT-06 | 本番の実行クラスパスに H2・Hibernate ORM・JPA が含まれない | Gradle のビルド検査 | ADR-007 |
+| AT-07 | identity の合成ルート（`identity.infrastructure.config`）の `@Bean` のメソッドが返す型は、`identity.application.internal..`・`identity.infrastructure.security..`・`org.springframework..` の型か `AesGcmSecretCipher` に限る（送信アダプターは部品探索で拾う） | 見張りのテスト（Bolt 32d） | バックエンドアーキテクチャの identity の合成ルートの規則 |
 
 ## 統合テスト
 
@@ -309,6 +310,8 @@ CI で毎回実行する。
 | 通知 | メールを受けるだけのコンテナで、通知の宛先・件名・本文（料金などを含まない）と、送信失敗の記録を確かめる |
 
 統合テストは Testcontainers の PostgreSQL を使い、H2 で書かない（ADR-007）。H2 で確かめるのはスモークテストだけとする。
+
+identity の統合テストは、時計を共通の `@TestConfiguration`（`MutableClock` を `@Primary`）で差し替え、spy（`@MockitoSpyBean`）を使うクラスは同じ spy のフィールドの組を持つ共通の基底のクラスを継ぐ。Spring のコンテキストは `@Import` の組と bean の差し替えの組（spy はフィールド名を含む）で区別されるので、組をそろえてコンテキストを共有する（Bolt 32d）。同時の操作のテスト（`OverlappingTransactions`）は、後の操作が先の行ロックを待っていることを PostgreSQL の `pg_blocking_pids` で確かめてから先をコミットする（「一定時間の間に終わらない」だけでは待ちの証拠にならない。Bolt 32d）。
 
 ## Web テストと開示制御
 
@@ -349,6 +352,8 @@ CI で毎回実行する。
 | 画面幅 | 顧客向けの画面を 320 CSS px で表示し、横スクロールが出ないことを確かめる（1.4.10） | CI で毎回 |
 | 問い合わせの間隔と通知 | Playwright の時計を進めて、非同期処理の状態の問い合わせ間隔と停止、状態が変わったときだけの通知を確かめる | CI で毎回 |
 | 支援技術による手動確認 | 主要フローをスクリーンリーダー（NVDA または VoiceOver）で操作する | Bolt の完了時、画面を変えたとき |
+
+同じ画面を繰り返し表示するシナリオ（ロックまでの誤りの送信など）では、自動検査は 1 回目と状態の変わった後の画面だけにする（同じ画面の検査を重ねない。Bolt 32d）。
 
 自動検査で WCAG 2.2 AA の全体を判定することはできない。手動確認の結果は Bolt の完了報告に記録する。
 
