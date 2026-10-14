@@ -10500,8 +10500,8 @@
 </tr>
 <tr>
 <td style="text-align: left;">無操作 30 分</td>
-<td style="text-align: left;"><code>server.servlet.session.timeout=30m</code>（Spring Session JDBC では効く設定を確かめる）</td>
-<td style="text-align: left;">設定しただけで、振る舞いは確かめていない（W5 の統合テスト）</td>
+<td style="text-align: left;"><code>spring.session.timeout=30m</code>（Spring Session JDBC の期限 <code>MAX_INACTIVE_INTERVAL</code>。<a href="../012-authentication-principal-and-session/">ADR-012</a> の決定 3）</td>
+<td style="text-align: left;">スパイクは <code>server.servlet.session.timeout</code> を設定しただけで、振る舞いを確かめていなかった。本体は Bolt 14 で <code>spring.session.timeout</code> にし、<code>server.servlet.session.timeout</code> が Spring Session に効かないことを既定と違う値のテストで、30 分の境界をセキュリティの統合テストで確かめた（ADR-012 のコンプライアンス）。失効の 5 分前の警告と延長は Bolt 32b</td>
 </tr>
 <tr>
 <td style="text-align: left;">最長 8 時間</td>
@@ -10952,6 +10952,7 @@
 <p>復号した平文の消去について（Bolt 31 の開発レビュー）: 生成器は復号した配列を使い終えたら消すが、JDK の <code>SecretKeySpec</code> と java-otp の <code>Mac</code> は内部に鍵の写しを持つので、JVM の中の写しまでは消せない。消せるのは呼び出し側の配列だけである。</p>
 <h2 id="_10">改訂の経緯<a class="headerlink" href="#_10" title="Permanent link">&para;</a></h2>
 <ul>
+<li>2026-10-14: Bolt 32b のステップ 1 で、決定 2 の表の無操作 30 分の行を、本体の設定 <code>spring.session.timeout</code> と Bolt 14 で確かめたこと（ADR-012）に合わせて直した。</li>
 <li>2026-10-14: Bolt 32d の計画の承認で、決定 1 の Base32 の復号が、不正な長さ・余りのビットが 0 でない最後の文字・データの長さに合わない数の埋め草を失敗へ倒すことを書いた（human:kakimomokuri が決定。埋め草の数は開発レビューで厳しくした）。</li>
 <li>2026-10-14: Bolt 32c の計画の承認で、ステータスに 32c の開始準備の決定（32c と 32d の分け方、Bolt 32 の議題 4・5 を採らない理由と行き先）を足し、「未確認の項目」の最長 8 時間と即時失効の経路を解いた（human:kakimomokuri が決定）。</li>
 <li>2026-10-13: Bolt 32 の計画の承認で、ログインのロック（決定 9。数え方の置き場所と 1 つのトランザクション、数える失敗と数えない失敗（回復コードを数え、A-07 の登録の誤りは数えない）、0 に戻す時点、ロックの確かめの位置と 1 か所の判定、理由の優先、ロック中の試行とロックの監査、最初の失敗の作成の競合、DB の誤りの扱い、応答と予告、受け入れること（TOTP の段の時間、<code>{bcrypt}</code> の壊れたハッシュ、S-02 を W10 の WAF に））を足した。決定 2 の表の失敗の数え方、決定 6 の登録の誤り、決定 7 の誤りの扱い、「US-18 の Bolt で要るもの」の A-02、「未確認の項目」の次に取れる操作、「W5 で人が決める論点」のロックの表示と spraying を決定に合わせ、決定 8 の <code>UnreadableCredentialException</code> の親の型を <code>RuntimeException</code> に改めた（human:kakimomokuri が決定）。</li>

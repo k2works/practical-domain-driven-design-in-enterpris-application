@@ -10667,6 +10667,7 @@ src/test/java/.../shared/acceptance/      共通ステップ（ログイン、�
 src/test/java/.../ui/                     画面の層のステップ定義（@ui）。ブラウザの文脈とキー操作の部品は BrowserSession に 1 つ
 </code></pre></div>
 <p>画面の層のステップ定義は、Tab でフォーカスを進める部品（<code>tabUntilFocused</code>・<code>tabUntilGroup</code>）を <code>BrowserSession</code> から使い、クラスごとに写しを作らない（Bolt 29、#45。待ち方と上限を直す場所を 1 つにする）。1 回だけ Tab を押してフォーカスの順序を確かめる部品（<code>tabTo</code>）は、確かめる順序が画面ごとに違うので各クラスに置く。</p>
+<p>時間の経過を画面の層の受入シナリオで確かめるとき（session の警告。Bolt 32b）は、Playwright の <code>BrowserContext.clock()</code> でブラウザの時計を進める。時計は <code>signInAs</code> の前に入れる（<code>install</code>）。同じコンテキストのページは同じ時計を使うので、タブの間の同期も確かめられる。画面の層のテストのアプリは本物の時計（<code>Clock.systemUTC()</code>）で動き、<code>MutableClock</code> も共通の時計のステップも使わないので、サーバーの時計は進められない。Spring Session の無操作の期限はサーバーの実時間で数えるので、画面の層のシナリオではサーバーの session を実際に失効させない（サーバーの失効と延長による最終アクセスの更新は、セキュリティの統合テストで確かめる）。8 時間の警告は、テストの部品（<code>BrowserSession</code>）が session の属性 <code>cargotracker.session.authenticatedAt</code> を上限の近い時刻（7 時間 56 分前）に書き換えてから画面を開いて確かめる。</p>
 <p>ステップ定義は自分のコンテキストの入力ポートだけを呼ぶ。前提の準備で他のコンテキストのデータが必要なときは、そのコンテキストの公開 API を使う（ADR-001 の境界をテストでも守る）。</p>
 <h3 id="_9">シナリオの例<a class="headerlink" href="#_9" title="Permanent link">&para;</a></h3>
 <p>US-04 の受入条件と BR-10 の境界を、日本語 Gherkin で書いた例を示す。</p>
@@ -11252,7 +11253,7 @@ src/test/java/.../ui/                     画面の層のステップ定義（@u
 </tr>
 <tr>
 <td style="text-align: left;">認証</td>
-<td style="text-align: left;">ログイン、初回の TOTP の登録、password の再設定、ロック、session の失効の警告と延長、失効後の再認証の案内と入力の保持</td>
+<td style="text-align: left;">ログイン、初回の TOTP の登録、password の再設定、ロック、session の失効の警告と延長（Bolt 32b。無操作の警告と延長、8 時間の警告、タブの間の同期、期限の到来の案内。<code>session_timeout_ui.feature</code>）、失効後の再認証の案内と入力の保持・開いていた画面への復帰（Bolt 32e）</td>
 <td style="text-align: left;">US-18、US 横断受入条件</td>
 </tr>
 </tbody>
@@ -11274,7 +11275,7 @@ src/test/java/.../ui/                     画面の層のステップ定義（@u
 </tr>
 <tr>
 <td style="text-align: left;">部品のテスト</td>
-<td style="text-align: left;">共通部品（エラー要約、状態バッジ、確認画面、日時表示、通知領域）の HTML 構造と属性</td>
+<td style="text-align: left;">共通部品（エラー要約、状態バッジ、確認画面、日時表示、通知領域、session の警告）の HTML 構造と属性。session の警告は、警告の部分の <code>data-</code> 属性がログインした画面にだけ出ること（統合テスト）と、ダイアログのフォーカス・axe の違反がないこと（<code>@ui</code>）で確かめる（Bolt 32b）</td>
 <td style="text-align: left;">CI で毎回（Web テスト）</td>
 </tr>
 <tr>

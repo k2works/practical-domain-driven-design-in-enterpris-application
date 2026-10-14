@@ -10477,7 +10477,7 @@
 <h2 id="_7">ステップ計画<a class="headerlink" href="#_7" title="Permanent link">&para;</a></h2>
 <p>状態の記号: <code>[ ]</code> 未着手、<code>[-]</code> 進行中、<code>[?]</code> 承認待ち、<code>[x]</code> 完了。各ステップの終わりに <code>check</code> が緑であることと、計画からの変更を設計文書に反映したこと（T-53）を確かめ、push して CI を確かめる（T-26、T-65、T-118）。コミットは pathspec で作り、そのステップのファイルだけを入れる（T-84、T-110）。複数行の書き換えはスクリプトのファイルにする（T-103）。ステップ 1 を push してからコードのステップを push する（T-109）。</p>
 <ul class="task-list">
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>1. 設計文書</strong> 【承認ゲート: 設計文書】</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>1. 設計文書</strong> 【承認ゲート: 設計文書】</li>
 <li>ui_design.md:<ul>
 <li>前提の表（:35・:38）、共通部品の表の「session の警告」（:1012）、エラーと例外の扱い（:1089・:1090）、部分更新を使う箇所（:1107）を 32b（警告と延長）と 32e（入力の保持と画面への復帰）に分けて書く</li>
 <li>警告のダイアログ（無操作の警告・8 時間の警告・延長できませんでした・期限の到来の案内）の文言、フォーカスの動き、Esc、相対の分で示す理由。モーダルのダイアログは session の警告だけの例外（:232 の方針との関係）</li>
@@ -10710,6 +10710,11 @@
 </tr>
 </thead>
 <tbody>
+<tr>
+<td style="text-align: left;">2026-10-14</td>
+<td style="text-align: left;">ステップ 1 を終えた。計画からの変更: 期限の到来の案内の文言から「操作がなかったため」を外した（8 時間の上限でも同じ案内が出るため）。警告を出さない画面に、<code>layout/public</code> を使う A-07 と回復コードの保存の画面を足した。「別のダイアログは挟まない」の方針は ui_design の :232 でなく C-17・S-09 の行にあったので、そこを参照した</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5</td>
+</tr>
 <tr>
 <td style="text-align: left;">2026-10-14</td>
 <td style="text-align: left;">承認（確認ポイント 1〜13 は推奨のまま）。<code>/goal Bolt32b</code> の下で、ステップの承認ゲートでは止めずに進め、終了報告でまとめて確かめを受ける。ステップ 6 の支援技術の手動確認は人が行う</td>

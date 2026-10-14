@@ -1523,6 +1523,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="多言語と session の時間制限">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#session-bolt-32b" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        session の警告と延長（Bolt 32b）
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -10224,7 +10241,7 @@
 </tbody>
 </table>
 <h2 id="_3">レンダリング方式<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h2>
-<p><strong>サーバーが HTML を返し、部分更新にハイパーメディア（htmx 相当）を使う。</strong> クライアント側に業務状態を持つ SPA は作らない（ADR-005）。</p>
+<p><strong>サーバーが HTML を返し、部分更新にハイパーメディア（htmx 相当）を使う。</strong> クライアント側に業務状態を持つ SPA は作らない（ADR-005）。例外は session の警告で、ブラウザの時計で開き、延長だけを <code>fetch</code> で送る（Bolt 32b。下の「session の警告と延長」）。</p>
 <table>
 <thead>
 <tr>
@@ -10413,11 +10430,21 @@
 </tr>
 <tr>
 <td style="text-align: left;">session の時間制限</td>
-<td style="text-align: left;">無操作による失効の 5 分前に警告し、延長の操作を示す（共通のレイアウトに置く）。失効したときは、送信しようとした入力を下書きとして保持し、再認証後に戻す</td>
-<td style="text-align: left;">WCAG 2.2.1、US 横断受入条件、レビュー R-15</td>
+<td style="text-align: left;">無操作による失効と発行から 8 時間の上限の 5 分前に警告し、無操作の期限は画面を移らずに延長できる（Bolt 32b。下の「session の警告と延長」）。失効したときは、送信しようとした入力を保持し、再認証の後に開いていた画面へ戻す（Bolt 32e。保持の置き場所（ブラウザかサーバーか）は 32e の開始準備で決める）</td>
+<td style="text-align: left;">WCAG 2.2.1、US 横断受入条件、レビュー R-15、ACC-06</td>
 </tr>
 </tbody>
 </table>
+<h3 id="session-bolt-32b">session の警告と延長（Bolt 32b）<a class="headerlink" href="#session-bolt-32b" title="Permanent link">&para;</a></h3>
+<p>文言とフォーカスの動きは <a href="../ui_design/">UI 設計</a> の共通部品「session の警告（Bolt 32b）」に置く。</p>
+<ul>
+<li><strong>置き場所</strong>: 警告の部分（<code>templates/layout/session-warning.html</code>）を共通のレイアウト <code>layout/customer</code>・<code>layout/staff</code> に入れ、<code>/js/session-timeout.js</code> をその head に直接置く。<code>layout/public</code> には置かない。CSP（<code>default-src 'self'</code>）がインラインのスクリプトを許さないので、外部のファイルにする（<code>transport-request-form.js</code> と同じ）</li>
+<li><strong>残り時間はサーバーが出した秒数から数える</strong>: ログインした画面の応答に、無操作の期限の秒数（<code>HttpSession.getMaxInactiveInterval()</code>。今は 1800）と 8 時間の上限までの残りの秒数を、警告の部分の <code>data-</code> 属性で出す。ブラウザは残りを問い合わせる定期の request を送らない（問い合わせ自体が無操作の期限を延ばしてしまう）</li>
+<li><strong>タブの間の同期</strong>: 画面の読み込みと延長の 204 の時刻を「最後の request の時刻」とし、<code>localStorage</code> のキー <code>cargotracker.session.lastRequestAt</code> に置く。値はミリ秒の時刻だけで、業務データ・利用者の識別子・session ID は置かない。ログアウトしても消さない（次のログインの画面の読み込みで上書きされる）。無操作の期限は「最後の request の時刻 + 無操作の秒数」、8 時間の期限は「読み込みの時刻 + 8 時間の残りの秒数」とし、早いほうの 5 分前に警告を開く。ほかのタブが <code>localStorage</code> を更新したら（<code>storage</code> のイベント）数え直し、要らなくなった警告を閉じる。<code>localStorage</code> を使えないときは、そのタブの時刻だけで数える</li>
+<li><strong>延長は htmx でなく <code>fetch</code></strong>: 延長は <code>POST /session/extend</code> を CSRF のトークン付きで <code>fetch</code> で送る。htmx（XHR）は 302 を黙って追い、A-03 の HTML を 200 で受けるので、失効を見分けられない。<code>fetch</code> は <code>redirect: 'manual'</code> で 302 を <code>opaqueredirect</code> として受けられる。204 なら閉じ、<code>opaqueredirect</code>（失効した session は A-03、ログインしていない session は A-01 へ移される）なら期限の到来の案内に替え、それ以外（403・500・通信の失敗）は「延長できませんでした」を示す。警告を開く時刻もブラウザだけの関心で、サーバーの部分を返す request が要らない。よって ADR-005 の「部分更新はハイパーメディアで」の例外にする。業務状態をクライアントに持たない方針は変えない（ブラウザが持つのは時刻だけ）</li>
+<li><strong>数える request と既知の制約</strong>: 今のテンプレートに部分更新の request（<code>hx-get</code>・<code>hx-post</code>）はなく、画面の操作はすべて画面の移動である。<code>SessionLifetimeFilter</code> は公開の資源（<code>/js/**</code> など）でも session を読むので、資源の request でもサーバーの期限は延びるが、資源は画面の読み込みと同時に読まれる。よってブラウザは「画面の読み込み」と「延長」を数えれば足りる。部分更新を足す Bolt で、その request も数える。ブラウザが数えない request（<code>layout/public</code> の A-04・エラーの画面、書類のダウンロード）でもサーバーの期限は延びるので、ブラウザの期限はサーバーより早く来ることがある。安全側なので受け入れ、期限の到来の文言は断定しない</li>
+<li><strong>部品の置き場所</strong>: 残り時間をモデルに足す <code>SessionTimerAdvice</code>（<code>@ControllerAdvice</code>）と延長の <code>SessionController</code> は <code>identity.interfaces.web</code> に置く。共通のレイアウトの属性を足す前例は <code>CurrentActorAdvice</code>（ヘッダーの利用者）で、同じ置き場所にある。session の期限は認証の関心で、8 時間の起点と上限も identity の認証の入口にあるので、共有の Web 基盤（<code>shared</code>）には置かない（値の受け渡しは <a href="../architecture_backend/">バックエンドのアーキテクチャ</a>）</li>
+</ul>
 <h2 id="_7">後続工程への引継ぎ<a class="headerlink" href="#_7" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
