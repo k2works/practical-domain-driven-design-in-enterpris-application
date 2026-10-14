@@ -3,7 +3,7 @@ type: Plan
 title: "Bolt 32c 終了報告 - request ごとの利用者の確かめ（US-18 AC6）"
 description: "W5 の 10 本目の Bolt の終了報告。認証済みの request ごとに利用者・役割・企業を 1 回の SQL で読み、アプリケーションのサービスが判定して主体を作り直すようにした（ADR-012 の見直しの 3）。利用停止・所属企業の無効化・利用者の削除の後の次の request は session を捨てて A-03 に送り SESSION_REVOKED を記録し、取り消した役割の URL は A-04 にした。読み出し・監査の誤りと役割 0 件は session を捨てて 500。開発レビューで静的な資源でも読んでいたことを直した。承認ゲートを止めずに進めたので、止まらなかったゲートと計画からの変更を承認の議題に置く。"
 tags: [plan]
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-14T02:39:24Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-14T02:47:13Z }
 ---
 
 # Bolt 32c 終了報告 - request ごとの利用者の確かめ（US-18 AC6）
@@ -73,7 +73,7 @@ generated: { by: anthropic/claude-opus-5-5, at: 2026-10-14T02:39:24Z }
 | :--- | :--- |
 | `check`（ModularityTest・ArchUnit・Checkstyle・SpotBugs・Spotless・documentationTest を含む） | 通過。SpotBugs の指摘 2 件（サービスが DI の部品を保持する `EI_EXPOSE_REP2`、権限の名前の null の可能性 `NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE`）は、前者を前例のサービスと同じく除外の表に足し、後者は名前を 1 回だけ読む形に直した |
 | SonarQube（ローカル） | Quality Gate PASS。1 回目はテストの書き換えと重なってビルドが途中で失敗、2 回目は java:S2139 の 1 件で FAILED、直した後の 3 回目で PASS（議題 4） |
-| CI | ステップ 1〜4 の push と、開発レビューの直しの push（`bcc605d`、run 38500366965）は、どれも check・ui が通過。SonarQube の直しの push（`03e24e2`、run 38501513333）は報告の時点で実行中（結果を #13 のコメントに書く） |
+| CI | ステップ 1〜4 の push と、開発レビューの直しの push（`bcc605d`、run 38500366965）は、どれも check・ui が通過。SonarQube の直しの push（`03e24e2`、run 38501513333）も check・ui が通過 |
 | `okf:check` | ERROR 0 |
 
 ## 仮説の結論
