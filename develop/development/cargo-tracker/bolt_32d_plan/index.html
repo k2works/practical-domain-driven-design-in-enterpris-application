@@ -16,7 +16,7 @@
         <link rel="prev" href="../bolt_32c_report/">
       
       
-        <link rel="next" href="../release_report-0_1/">
+        <link rel="next" href="../bolt_32d_report/">
       
       
         
@@ -5197,6 +5197,34 @@
   
 </nav>
       
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../bolt_32d_report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 32d 終了報告
+  
+
+    
+  </span>
+  
+  
+
+      </a>
     </li>
   
 
@@ -10465,7 +10493,7 @@
 <li>8 時間の起点の値: 時計を進めて password の段と TOTP・回復コードの段の時刻を分け、<code>AUTHENTICATED_AT</code> の値が TOTP・回復コードが通った時刻であることを確かめる（<code>AuthenticationSecurityIntegrationTest</code>・<code>RecoveryCodeLoginSecurityIntegrationTest</code>）。監査記録はそのテストの利用者で絞り、<code>occurred_at</code> の順で <code>PASSWORD_VERIFIED</code> → <code>LOGIN_SUCCEEDED</code>（回復コードは <code>PASSWORD_VERIFIED</code> → {<code>RECOVERY_CODE_USED</code>, <code>LOGIN_SUCCEEDED</code>}。同じ時刻の 2 行は集合で）を確かめる（T-113）</li>
 <li>画面の層のロックのシナリオ（<code>LoginUiSteps</code> の誤りの送信）: 2 回目以降の誤りでは axe を流さない（1 回目と、ロックの後の画面だけ）</li>
 <li>完了の判定: <code>check</code> と <code>uiTest</code> が緑</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>6. SonarQube と開発レビューと終了報告</strong> 【承認ゲート: 終了報告】</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>6. SonarQube と開発レビューと終了報告</strong> 【承認ゲート: 終了報告】</li>
 <li>SonarQube（<code>sonar-local:check</code>。テストとコードを書き換えていない間に流す。T-116）</li>
 <li>開発レビュー（プログラマー、アーキテクト（合成ルートの規則と見張り）、テスター（共通の設定と待ちの判定）、テクニカルライター（ADR・テスト戦略の書き方））</li>
 <li><code>bolt_32d_report.md</code>。release_plan の W5 の 32d の行、開発の索引。#13 に進み具合をコメントする。デモの動画は撮らない（画面の振る舞いが変わらない）</li>
@@ -10576,13 +10604,13 @@
 </table>
 <h2 id="_7">完了条件<a class="headerlink" href="#_7" title="Permanent link">&para;</a></h2>
 <ul class="task-list">
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <code>Base32.decode</code> が不正な長さ・余りのビット・埋め草の数を拒み、正しい長さはすべて今どおり通る。dev の設定の秘密が読める</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> identity の合成ルートの規則が architecture_backend に書かれ、暗号の部品は設定から作る <code>AesGcmSecretCipher</code> を除いて部品探索で拾われ、<code>@Bean</code> の戻り値の型の見張りがある</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> identity の統合テストが共通の時計の設定と spy の基底を使い、Spring のコンテキストの数が減った（前後の数を報告に書く）。テストの件数は整理の前と同じ（足したテストを除く）</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> 刻みを戻す SQL と Spring Session の表の参照が、それぞれ 1 か所の補助になった</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> 同時の待ちを PostgreSQL のロックの待ちで判定し、違反で落ちることを確かめた。dev の A-02 のテストが刻みの境界で揺れない。8 時間の起点は値で、監査は順で確かめる。ロックのシナリオの axe は 1 回目とロックの後だけ</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <code>check</code> と <code>uiTest</code> が緑。push して CI を確かめた。SonarQube の Quality Gate が PASS、<code>okf:check</code> ERROR 0</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> 開発レビュー、終了報告。#13 に進み具合をコメントした</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <code>Base32.decode</code> が不正な長さ・余りのビット・埋め草の数を拒み、正しい長さはすべて今どおり通る。dev の設定の秘密が読める</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> identity の合成ルートの規則が architecture_backend に書かれ、暗号の部品は設定から作る <code>AesGcmSecretCipher</code> を除いて部品探索で拾われ、<code>@Bean</code> の戻り値の型の見張りがある</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> identity の統合テストが共通の時計の設定と spy の基底を使い、Spring のコンテキストの数が減った（前後の数を報告に書く）。テストの件数は整理の前と同じ（足したテストを除く）</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> 刻みを戻す SQL と Spring Session の表の参照が、それぞれ 1 か所の補助になった</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> 同時の待ちを PostgreSQL のロックの待ちで判定し、違反で落ちることを確かめた。dev の A-02 のテストが刻みの境界で揺れない。8 時間の起点は値で、監査は順で確かめる。ロックのシナリオの axe は 1 回目とロックの後だけ</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <code>check</code> と <code>uiTest</code> が緑。push して CI を確かめた。SonarQube の Quality Gate が PASS、<code>okf:check</code> ERROR 0</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> 開発レビュー、終了報告。#13 に進み具合をコメントした</li>
 </ul>
 <h2 id="_8">更新履歴<a class="headerlink" href="#_8" title="Permanent link">&para;</a></h2>
 <table>
@@ -10597,6 +10625,11 @@
 <tr>
 <td style="text-align: left;">2026-10-14</td>
 <td style="text-align: left;">初版作成（承認待ち）。開始準備で、Bolt 31 の低の指摘、Bolt 31d・32・32c の既知の課題、Bolt 32c の Try（T-115・T-116）を調べ、human:kakimomokuri の決定（Base32 は失敗へ倒す、合成ルートは今のまま規則を書く、コンテキストは時計と spy の両方、ほかの 6 項目もすべて入れる）を反映した</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5</td>
+</tr>
+<tr>
+<td style="text-align: left;">2026-10-14</td>
+<td style="text-align: left;">全ステップを終えた。合成ルートの許す型に dev の <code>DevTotpCodeSource</code> を足し、開発レビューで埋め草の数・コンストラクターの見張り・合成注釈を足した。<code>OverlappingTransactions</code> の呼び出し元は変えなかった（<a href="../bolt_32d_report/">Bolt 32d 終了報告</a> の議題 2〜4）</td>
 <td style="text-align: left;">anthropic/claude-opus-5-5</td>
 </tr>
 <tr>
