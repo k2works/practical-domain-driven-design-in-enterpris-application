@@ -3,7 +3,9 @@ type: Plan
 title: "Bolt 32c 終了報告 - request ごとの利用者の確かめ（US-18 AC6）"
 description: "W5 の 10 本目の Bolt の終了報告。認証済みの request ごとに利用者・役割・企業を 1 回の SQL で読み、アプリケーションのサービスが判定して主体を作り直すようにした（ADR-012 の見直しの 3）。利用停止・所属企業の無効化・利用者の削除の後の次の request は session を捨てて A-03 に送り SESSION_REVOKED を記録し、取り消した役割の URL は A-04 にした。読み出し・監査の誤りと役割 0 件は session を捨てて 500。開発レビューで静的な資源でも読んでいたことを直した。承認ゲートを止めずに進めたので、止まらなかったゲートと計画からの変更を承認の議題に置く。"
 tags: [plan]
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-14T02:47:13Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-14T03:19:07Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-10-14T03:19:07Z }
 ---
 
 # Bolt 32c 終了報告 - request ごとの利用者の確かめ（US-18 AC6）
@@ -152,6 +154,7 @@ Bolt 32d: Bolt 31d から送った低の指摘と、Bolt 32 の既知の課題�
 
 | 日付 | 更新内容 | 更新者 |
 | :--- | :--- | :--- |
+| 2026-10-14 | 終了報告を承認した（議題 1〜7 を承認。議題 5 の A-03 の文言は変えないまま、議題 6 のロックと IA-INV-04 の明文化は Bolt 34 で扱う）。T-115・T-116 を足した | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-10-14 | 初版作成（承認待ち） | anthropic/claude-opus-5-5 |
 
 ## 関連ドキュメント
