@@ -4,7 +4,7 @@ title: "リリース計画 - cargo-tracker（A 社国際貨物輸送管理シス
 description: "cargo-tracker MVP のリリース計画。1 人 + AI、時間単位の Bolt（= イテレーション）と週次の見直しで、最初の縦の流れ（R0.1）、パイロット準備完了（R1.0）、本格展開前（R1.1）の 3 段階、Unit のエントロピー評価、SP、バッファ、パイロット開始の条件、引継ぎ ID の台帳、業務責任者に確かめる事項の台帳。"
 tags: [development,release-plan]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-14T03:19:07Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-14T03:32:52Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T09:29:53Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:38:26Z }
@@ -909,3 +909,4 @@ xychart-beta
 | 2026-10-14 | Bolt 32c 計画の承認とステップ 1: W5 の Bolt の分け方の表の 32c の行を計画の内容にし、32d の行（31d から送った低の指摘、Bolt 32 の既知の課題のテストの整理。SP 0、リファクタリング、構造）を足した。局面とアプローチに 32d、US-18 の Bolt の順序（32c → 32d → 32b）、W5 の本数を 16 本に直した。33b の行にマニュアルの 2.1 と議題 4、34 の行に利用停止・権限の取消しの操作と議題 5 を足した。ユーザーマニュアルの段落に 32c の 2.3・2.4・付録 B を足した。W5 の状態と主なタスク、実績の表の W5 の行を今の進み具合にした | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-10-14 | Bolt 32c を終えた。W5 の状態と主なタスク、実績の表の W5 の行を今の進み具合にした | anthropic/claude-opus-5-5 |
 | 2026-10-14 | Bolt 32c の終了報告の承認を記録した（議題 1〜7 を承認。ロックと IA-INV-04 の明文化は Bolt 34） | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
+| 2026-10-14 | Bolt 32d の開始準備: Base32 の不正な長さは失敗へ倒す、identity の合成ルートは今のクラスの分け方のまま規則を書く、統合テストのコンテキストは時計と spy の両方をまとめる、ほかの 6 項目もすべて入れることを決めた。Bolt 32d 計画を作り、2 つの整合性検証の指摘を反映した（承認待ち。W5 の行の直しは計画のステップ 1） | anthropic/claude-opus-5-5、決定 human:kakimomokuri |
