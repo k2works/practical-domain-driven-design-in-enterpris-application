@@ -3,7 +3,7 @@ type: Plan
 title: "Bolt 32b 終了報告 - session の失効の警告と延長（ACC-06）"
 description: "W5 の 12 本目の Bolt の終了報告。ログインした画面で、無操作 30 分の失効の 5 分前に警告し、画面を移らずに延長できるようにした。8 時間の上限も 5 分前に警告し（延長はできない）、警告の時刻をタブの間でそろえ、期限を過ぎたら画面を移らずに案内を出す。8 時間の残りは認証の入口から request の属性で画面に渡し、層の規則に例外を足さなかった。開発レビューで支援技術への知らせ・文言・テストを強めた。支援技術の手動確認（人）と、8 時間の警告の時刻・A-03 の文言の扱いを承認の議題に置く。"
 tags: [plan]
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-14T09:23:18Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-14T09:23:31Z }
 ---
 
 # Bolt 32b 終了報告 - session の失効の警告と延長（ACC-06）
@@ -83,7 +83,7 @@ generated: { by: anthropic/claude-opus-5-5, at: 2026-10-14T09:23:18Z }
 | `check` | 緑（2061 件。ArchUnit の層の規則・要素の権限の参照の見張り・全 URL の見張り（延長の URL も対象）を含む） |
 | `uiTest` | 緑（180 件。axe の違反 0） |
 | SonarQube | Quality Gate PASS（新しいコードのカバレッジ 96.1%、重複 0.08%、新しい指摘 0） |
-| CI | `375f84d` の CI は緑。ステップ 1 の文書のコミット `093e243` の CI は、テストの JVM のメモリ不足（`OutOfMemoryError`）で落ちた（Bolt 32 の既知の課題の「テストの JVM の途中の終了」と同じ。同じテストの次のコミットは緑）。開発レビューの直し `6591450` の CI（run 38540074496）は check・ui・deploy-demo とも緑 |
+| CI | `375f84d` の CI は緑。ステップ 1 の文書のコミット `093e243` の CI は、テストの JVM のメモリ不足（`OutOfMemoryError`）で落ちた（Bolt 32 の既知の課題の「テストの JVM の途中の終了」と同じ。同じテストの次のコミットは緑）。開発レビューの直し `6591450` の CI（run 38540074495）は check・ui・deploy-demo とも緑 |
 | `okf:check` | ERROR 0 |
 | `manual:build` | 通る |
 
