@@ -10209,11 +10209,11 @@
 </tr>
 <tr>
 <td style="text-align: left;">予定</td>
-<td style="text-align: left;">W5（2026-11-02 の週。前倒しで着手できる）。作業は約 3 時間 55 分（承認ゲートの待ち時間を除く。「時間の配分と打ち切り」）</td>
+<td style="text-align: left;">W5（2026-11-02 の週。前倒しで着手できる）。作業は約 4 時間 15 分（承認ゲートの待ち時間を除く。「時間の配分と打ち切り」）</td>
 </tr>
 <tr>
 <td style="text-align: left;">対象</td>
-<td style="text-align: left;"><code>identity</code>（利用者と企業の組を 1 回で読むポートと MyBatis の実装、判定と監査のアプリケーションのサービス <code>SessionRevalidationService</code>、入口のフィルター <code>SessionRevalidationFilter</code>、監査の操作 <code>SESSION_REVOKED</code>）、<code>SecurityConfiguration</code>、セキュリティの統合テスト・特性テスト、画面の層、ADR-012・ADR-011、ドメインモデル・データモデル・UI 設計・非機能要件・アーキテクチャ・ユーザーストーリーの注記、リリース計画</td>
+<td style="text-align: left;"><code>identity</code>（利用者と企業の組を 1 回で読むポートと MyBatis の実装、判定と監査のアプリケーションのサービス <code>SessionRevalidationService</code>、入口のフィルター <code>SessionRevalidationFilter</code>、監査の操作 <code>SESSION_REVOKED</code>）、<code>SecurityConfiguration</code>、セキュリティの統合テスト・特性テスト、画面の層、ユーザーマニュアル（2 章の 2.3・2.4、付録 B）、ADR-012・ADR-011、ドメインモデル・データモデル・UI 設計・非機能要件・アーキテクチャ・ユーザーストーリーの注記、リリース計画</td>
 </tr>
 <tr>
 <td style="text-align: left;">SP</td>
@@ -10371,7 +10371,11 @@
 </tr>
 <tr>
 <td style="text-align: left;">画面の層のシナリオ（利用停止された荷主担当者の次の操作が A-03 になる）</td>
-<td style="text-align: left;">ユーザーマニュアル（Bolt 33b でまとめて直す。Bolt 32 の議題 4 の一文もそこに書く）</td>
+<td style="text-align: left;">2 章の 2.1 を 2 段階のログイン（A-02・A-07・回復コード）とロックの予告に書き直すこと、Bolt 32 の議題 4 の一文（Bolt 33b でまとめて直す）</td>
+</tr>
+<tr>
+<td style="text-align: left;">ユーザーマニュアルの AC6 の分（人の指示。2026-10-14）: 2 章の 2.3「権限がありません」と 2.4「もう一度ログインしてください」に、管理者が役割・利用を変えた後の次の操作で示されることを足す。付録 B の Q1-2・Q1-3 も同じ。画面と文言は変わらないのでキャプチャは撮り直さない</td>
+<td style="text-align: left;"></td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>SecurityConfiguration</code>・<code>CargoUserDetails</code> の Javadoc の「ログインの時点の役割」を直す</td>
@@ -10405,7 +10409,7 @@
 <li>non_functional.md: SEC-12（164 行目。Bolt 32c で役割・利用状態・企業の有効性を実現。担当範囲は US-16、参照許可は US-19）、AUD-01（<code>SESSION_REVOKED</code>）、PERF-01・02 の注記（認証済みの request ごとに 1 回の SQL。キャッシュは入れない。W10 の性能の評価で計測する）</li>
 <li>architecture_backend.md: request ごとの確かめのフィルター・サービス・ポートの置き場所と依存の向き</li>
 <li>user_story.md: US-18 の AC6 の注記（止められた利用者は A-03、役割の取消しは A-04 で「管理者への確認」に当たる、<code>SESSION_REVOKED</code>）、503 行目（Bolt 14 の「ログインの時点の役割」を Bolt 32c で置き換えた）</li>
-<li>release_plan.md の W5 の節: 32c の行を本計画に（承認ゲートに「データベース（読み出しの形）」と「構造」を足す）、32d の行を足す（31d から送った低の指摘、Bolt 32 の既知の課題のテストの整理。SP 0、アプローチはリファクタリング（テストの整理で、件数と結果を変えない）、承認ゲートは構造。32b と同じ session の上限の部品のテストに触るので 32d → 32b の順）。557 行目の局面とアプローチに 32d、598 行目の順序（32c → 32d → 32b。32d の理由は「32 で認証の入口と統合テストを直した後に、31d から送った低の指摘を片づける」を 32c から移す）と本数（16 本）、553・625・764 行目（Bolt 32 の終了報告の承認、W5 の状態）、592 行目の 33b の行（マニュアルに議題 4 の一文）、593 行目の 34 の行（議題 5: ログインの監査の書き込みの経路の見直し）、617 行目のユーザーマニュアルの段落（議題 4 の一文）</li>
+<li>release_plan.md の W5 の節: 32c の行を本計画に（承認ゲートに「データベース（読み出しの形）」と「構造」を足す）、32d の行を足す（31d から送った低の指摘、Bolt 32 の既知の課題のテストの整理。SP 0、アプローチはリファクタリング（テストの整理で、件数と結果を変えない）、承認ゲートは構造。32b と同じ session の上限の部品のテストに触るので 32d → 32b の順）。557 行目の局面とアプローチに 32d、598 行目の順序（32c → 32d → 32b。32d の理由は「32 で認証の入口と統合テストを直した後に、31d から送った低の指摘を片づける」を 32c から移す）と本数（16 本）、553・625・764 行目（Bolt 32 の終了報告の承認、W5 の状態）、592 行目の 33b の行（マニュアルに議題 4 の一文）、593 行目の 34 の行（議題 5: ログインの監査の書き込みの経路の見直し）、617 行目のユーザーマニュアルの段落（議題 4 の一文は 33b、AC6 の 2.3・2.4・付録 B は 32c）</li>
 <li>完了の判定: <code>okf:check</code> ERROR 0、<code>documentationTest</code> 緑。push してからコードを push する</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>2. 1 回で読むポートと判定のサービス</strong> 【承認ゲート: Red・Green、データベース、構造】</li>
 <li>Red: 層の規則の骨組み（ポート・実装・サービス・フィルターの空のクラスで <code>LayerArchitectureTest</code> が緑のまま。T-101）。読み出しの契約テスト（PostgreSQL・H2: 利用者・役割・企業を 1 回で読む、役割が複数でも 1 人の <code>User</code> になる、利用者がなければ空、無効な企業・利用停止もそのまま読める、役割が 0 件なら例外）。<code>SessionRevalidationService</code> の単体テスト（利用停止・無効な企業・利用者なしで拒否の理由と <code>SESSION_REVOKED</code> 1 行、拒否でなければ今の役割・表示名・企業名の主体を返し監査を書かない、監査の追記が失敗したら例外）。特性テスト（<code>SpringSecurityCharacterizationTest</code> に足す。T-114）: 「開始準備で確かめたこと」の 2 つ</li>
@@ -10427,9 +10431,13 @@
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>4. 画面の層</strong> 【承認ゲート: セキュリティ】</li>
 <li>業務の画面の feature に「利用停止された荷主担当者の次の操作は、業務データを出さずに A-03 に移る」（<code>@US-18-AC6 @demo @demo-bolt-32c/revoked</code>）。利用停止の操作はまだないので、テストの手順が DB の値を変える</li>
 <li>完了の判定: <code>check</code> と <code>uiTest</code> が緑</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>5. SonarQube と開発レビューとデモと終了報告</strong> 【承認ゲート: 終了報告】</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>5. ユーザーマニュアル</strong> 【承認ゲート: 設計文書】（人の指示。2026-10-14）</li>
+<li><code>creating-manual</code> の手順で、<code>docs/manual/02-ログインと共通の画面.md</code> の 2.3（役割を外された後に、その役割の画面を開くと示される）と 2.4（「この画面でできること」に、管理者が利用を止めた後の次の操作でも示されることを足す。「注意・補足」の問い合わせ先の行を、続けてログインできないときにも当てる）、<code>付録B-トラブルシューティング.md</code> の Q1-2・Q1-3 を直す。画面に出ない理由（利用停止）はマニュアルにだけ書き、画面の文言は変えない（確認ポイント 2）</li>
+<li>画面と文言は変わらないので、キャプチャ（<code>02-forbidden.png</code>・<code>02-session-expired.png</code>）は撮り直さない。2.1 の 2 段階のログインの書き直しは Bolt 33b のまま</li>
+<li>完了の判定: <code>okf:check</code> ERROR 0、<code>documentationTest</code> 緑。マニュアルの HTML の出力（<code>npx gulp manual:build</code>。<code>docs/assets/manual-output/cargo-tracker/</code>）を作り直す</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>6. SonarQube と開発レビューとデモと終了報告</strong> 【承認ゲート: 終了報告】</li>
 <li>SonarQube（<code>sonar-local:check</code>。T-104）</li>
-<li>開発レビュー（プログラマー、アーキテクト（フィルター・サービス・ポートの置き場所）、テスター（取消しの境界と読み出しの回数）、テクニカルライター（A-03 の文言と止められた利用者。T-90））</li>
+<li>開発レビュー（プログラマー、アーキテクト（フィルター・サービス・ポートの置き場所）、テスター（取消しの境界と読み出しの回数）、テクニカルライター（A-03 の文言と止められた利用者、マニュアルの 2.3・2.4・付録 B。T-90））</li>
 <li>レビューの直しの後にデモの動画を撮り、#13 に添付する（T-105）。<code>bolt_32c_report.md</code>。release_plan の W5 の 32c の行、開発の索引。#13 に進み具合をコメントする</li>
 </ul>
 <h3 id="_10">時間の配分と打ち切り<a class="headerlink" href="#_10" title="Permanent link">&para;</a></h3>
@@ -10464,12 +10472,17 @@
 </tr>
 <tr>
 <td style="text-align: left;">5</td>
+<td style="text-align: left;">20 分</td>
+<td style="text-align: left;">—</td>
+</tr>
+<tr>
+<td style="text-align: left;">6</td>
 <td style="text-align: left;">35 分（SonarQube と動画の待ちを除く）</td>
 <td style="text-align: left;">—</td>
 </tr>
 </tbody>
 </table>
-<p>合計 235 分（約 3 時間 55 分）。</p>
+<p>合計 255 分（約 4 時間 15 分。上限に近い）。4.5 時間を超えると見えたら、止めて人に諮る（候補: ステップ 4 の画面の層のシナリオを 32d に送る）。</p>
 <h2 id="try-t-6">確認ポイント（計画の承認の場でまとめて確認する。Try T-6）<a class="headerlink" href="#try-t-6" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
@@ -10533,13 +10546,13 @@
 <td style="text-align: left;">9</td>
 <td style="text-align: left;">後の Bolt に送るものと T-89</td>
 <td style="text-align: left;">—</td>
-<td style="text-align: left;">32d: 確認ポイント 1 のもの。33b: マニュアル（議題 4 の一文を含む）。34: 利用停止・権限の取消しの操作、ログインの監査の書き込みの経路（議題 5）、<code>LoginAttemptService</code> などの <code>@Service</code> と <code>@Bean</code> の二重の定義、回復コードのログインの IA-INV-08 の範囲（回復コードの消費と <code>LOGIN_SUCCEEDED</code> が別のトランザクション）の文書化。W10: 存在する利用者と存在しない利用者の DB の往復の回数、S-02 の受入テストの置き場所、request ごとの SQL の計測。どれも W5 の節の表か W10 の持ち込みで追う</td>
+<td style="text-align: left;">32d: 確認ポイント 1 のもの。33b: マニュアルの 2.1 の 2 段階のログインの書き直し（議題 4 の一文を含む。AC6 の分は 32c のステップ 5）。34: 利用停止・権限の取消しの操作、ログインの監査の書き込みの経路（議題 5）、<code>LoginAttemptService</code> などの <code>@Service</code> と <code>@Bean</code> の二重の定義、回復コードのログインの IA-INV-08 の範囲（回復コードの消費と <code>LOGIN_SUCCEEDED</code> が別のトランザクション）の文書化。W10: 存在する利用者と存在しない利用者の DB の往復の回数、S-02 の受入テストの置き場所、request ごとの SQL の計測。どれも W5 の節の表か W10 の持ち込みで追う</td>
 </tr>
 <tr>
 <td style="text-align: left;">10</td>
 <td style="text-align: left;">承認ゲート</td>
 <td style="text-align: left;">全体</td>
-<td style="text-align: left;">ステップごとに止める（W4 の締めの決定）。ステップ 2 はデータベースと構造、3・4 はセキュリティと認可の確認必須</td>
+<td style="text-align: left;">ステップごとに止める（W4 の締めの決定）。ステップ 2 はデータベースと構造、3・4 はセキュリティと認可の確認必須。5 はマニュアル</td>
 </tr>
 </tbody>
 </table>
@@ -10549,6 +10562,7 @@
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> 役割の取消し・追加が次の request から認可とナビに効き（取り消した URL は A-04）、要素の権限と session の起点の時刻は保たれる</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> 認証済みの 1 つの request の読み出しが 1 回で、未認証の request と期限の切れた session では読まない。読み出し・監査の誤りと役割 0 件は session を捨てて 500</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <code>check</code> と <code>uiTest</code> が緑。push して CI を確かめた。SonarQube の Quality Gate が PASS、<code>okf:check</code> ERROR 0</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> ユーザーマニュアルの 2 章の 2.3・2.4 と付録 B の Q1-2・Q1-3 が、AC6 の振る舞い（役割を外された後は「権限がありません」、利用を止められた後は「もう一度ログインしてください」）を説明している。マニュアルの HTML を作り直した</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> 開発レビュー、レビューの後のデモの動画と #13 への添付、終了報告。#13 に進み具合をコメントした</li>
 </ul>
 <h3 id="_12">デモ項目<a class="headerlink" href="#_12" title="Permanent link">&para;</a></h3>
@@ -10574,6 +10588,11 @@
 <td style="text-align: left;">2026-10-14</td>
 <td style="text-align: left;">詳細整合性検証（21 件）と横断整合性検証（21 件）の指摘を反映した。判定と監査を <code>commandservices</code> のサービスに、読み出しをドメインのポートにして置き場所の案を並べ直した、フィルターの位置を <code>SessionLifetimeFilter</code> の直後と明記した、役割の取消しは A-04 にし UI 設計の 3 か所を直す、役割 0 件・DB の誤り・監査の誤りは fail-closed の 500、<code>user_role</code> の外部結合、<code>UtcInstant</code> と <code>LOGOUT</code>、監査の操作者、A-03 の文言の確認、4 図を PlantUML にし ER 図と画面遷移図を足した、ステップ 1 の対象の行（ADR-012 の決定 3・4・6・ネガティブ・コンプライアンス、domain_model・data_model・ui_design・non_functional・user_story・release_plan の行）、32d の行の書き方と順序、T-102・T-107・T-108・T-111 の扱い、既知の課題の行き先。T-114 の特性（<code>toBuilder</code> と session への保存）を使い捨てのテストで確かめた結果を書いた</td>
 <td style="text-align: left;">anthropic/claude-opus-5-5</td>
+</tr>
+<tr>
+<td style="text-align: left;">2026-10-14</td>
+<td style="text-align: left;">人の指示で、完了条件とステップ 5 にユーザーマニュアルの AC6 の分（2 章の 2.3・2.4、付録 B の Q1-2・Q1-3。キャプチャは撮り直さない）を入れた。見込みを約 4 時間 15 分に直した</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5、指示 human:kakimomokuri</td>
 </tr>
 </tbody>
 </table>
