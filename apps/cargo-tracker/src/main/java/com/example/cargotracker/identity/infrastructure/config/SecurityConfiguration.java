@@ -45,9 +45,11 @@ import org.springframework.security.core.authority.FactorGrantedAuthority;
 import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.security.web.access.DelegatingMissingAuthorityAccessDeniedHandler;
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.csrf.CsrfException;
 import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
 import org.springframework.security.web.util.matcher.AndRequestMatcher;
 import org.springframework.security.web.util.matcher.NegatedRequestMatcher;
@@ -77,6 +79,12 @@ import org.springframework.security.web.util.matcher.RequestMatcher;
 @EnableMultiFactorAuthentication(
         authorities = {FactorGrantedAuthority.PASSWORD_AUTHORITY, TotpAuthenticationToken.FACTOR_TOTP})
 public class SecurityConfiguration {
+
+    /**
+     * 403 の画面（A-04）に渡す、CSRF のトークンが合わず送信が拒まれた印の名前（Bolt 32f）。印があれば、画面が入力の控えに「拒まれた」
+     * 印を付け、ログインし直した後の画面で案内する。認可の 403 はログアウトでも送信の失敗でもないので付けない。
+     */
+    public static final String SESSION_INPUT_REJECTED = "sessionInputRejected";
 
     /** A-01 の URL。 */
     private static final String LOGIN_URL = "/login";
@@ -226,17 +234,26 @@ public class SecurityConfiguration {
                         new SessionRevalidationFilter(sessionRevalidationService, publicRequests()),
                         SessionLifetimeFilter.class)
                 // 足りない要素の画面へ導く。TOTP が足りなければ A-02、password が足りなければ A-01
-                .exceptionHandling(exceptions ->
-                        exceptions.accessDeniedHandler(DelegatingMissingAuthorityAccessDeniedHandler.builder()
+                .exceptionHandling(exceptions -> exceptions.accessDeniedHandler(
+                        markingCsrfRejection(DelegatingMissingAuthorityAccessDeniedHandler.builder()
                                 .addEntryPointFor(
                                         new LoginUrlAuthenticationEntryPoint(TotpAuthenticationFilter.URL),
                                         TotpAuthenticationToken.FACTOR_TOTP)
                                 .addEntryPointFor(
                                         new LoginUrlAuthenticationEntryPoint(LOGIN_URL),
                                         FactorGrantedAuthority.PASSWORD_AUTHORITY)
-                                .build()))
+                                .build())))
                 .headers(headers -> headers.frameOptions(frame -> frame.deny())
                         .contentSecurityPolicy(csp -> csp.policyDirectives(CONTENT_SECURITY_POLICY)))
                 .build();
+    }
+
+    private static AccessDeniedHandler markingCsrfRejection(AccessDeniedHandler delegate) {
+        return (request, response, exception) -> {
+            if (exception instanceof CsrfException) {
+                request.setAttribute(SESSION_INPUT_REJECTED, Boolean.TRUE);
+            }
+            delegate.handle(request, response, exception);
+        };
     }
 }

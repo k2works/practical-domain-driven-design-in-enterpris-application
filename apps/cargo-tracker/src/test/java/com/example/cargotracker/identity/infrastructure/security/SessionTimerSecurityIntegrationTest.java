@@ -1,11 +1,13 @@
 package com.example.cargotracker.identity.infrastructure.security;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.nullValue;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.model;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.request;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.example.cargotracker.identity.AuthenticationFactorFixtures;
@@ -21,6 +23,7 @@ import com.example.cargotracker.identity.domain.model.aggregates.UserRepository;
 import com.example.cargotracker.identity.domain.model.valueobjects.CompanyKind;
 import com.example.cargotracker.identity.domain.model.valueobjects.EmailAddress;
 import com.example.cargotracker.identity.domain.model.valueobjects.UserStatus;
+import com.example.cargotracker.identity.infrastructure.config.SecurityConfiguration;
 import com.example.cargotracker.identity.infrastructure.crypto.AesGcmSecretCipher;
 import com.example.cargotracker.identity.interfaces.web.SessionController;
 import com.example.cargotracker.identity.interfaces.web.SessionTimerAdvice;
@@ -149,8 +152,8 @@ class SessionTimerSecurityIntegrationTest {
     }
 
     @Test
-    void ログインした画面に利用者のIDと入力の控えの知らせの領域が出る() throws Exception {
-        // 入力の控え（Bolt 32f）は利用者の ID で確かめる。知らせは先に置いた空の role="status" の領域に入れる
+    void ログインした画面に利用者の鍵と入力の控えの知らせの領域が出る() throws Exception {
+        // 入力の控え（Bolt 32f）は利用者の ID の一方向の値（鍵）で確かめる。知らせは先に置いた空の live region に入れる
         Cookie session = login();
         UserId userId = users.findByEmail(EmailAddress.of(email)).orElseThrow().id();
 
@@ -168,15 +171,28 @@ class SessionTimerSecurityIntegrationTest {
     }
 
     @Test
-    void 公開の画面にも入力の控えのスクリプトが出る() throws Exception {
-        // 送信が公開の画面（A-03・403 など）で拒まれたことを控えに印として残す（Bolt 32f）
+    void 公開の画面にも入力の控えのスクリプトが出てA03は送信が拒まれた画面の印を持つ() throws Exception {
+        // 送信が拒まれた画面（A-03・CSRF の 403・413）では、控えに印を付ける（Bolt 32f）
         String html = mvc.perform(get(EXPIRED_URL))
                 .andExpect(status().isOk())
                 .andReturn()
                 .getResponse()
                 .getContentAsString();
 
-        assertThat(html).contains("/js/session-input.js").doesNotContain("data-user");
+        assertThat(html)
+                .contains("/js/session-input.js")
+                .contains("data-session-input=\"rejected\"")
+                .doesNotContain("data-user");
+    }
+
+    @Test
+    void 認可の403には送信が拒まれた印を置かない() throws Exception {
+        // 役割にない画面の 403 は、ログアウトでも送信の失敗でもない（Bolt 32f）
+        Cookie session = login();
+
+        mvc.perform(get("/staff/transport-requests").cookie(session))
+                .andExpect(status().isForbidden())
+                .andExpect(request().attribute(SecurityConfiguration.SESSION_INPUT_REJECTED, nullValue()));
     }
 
     @Test
@@ -251,7 +267,9 @@ class SessionTimerSecurityIntegrationTest {
         ensureCsrfTokenInSession(session);
 
         mvc.perform(post(EXTEND_URL).cookie(session).with(csrf().useInvalidToken()))
-                .andExpect(status().isForbidden());
+                .andExpect(status().isForbidden())
+                // CSRF の拒否は送信が拒まれた印を置き、403 の画面が入力の控えに印を付ける（Bolt 32f）
+                .andExpect(request().attribute(SecurityConfiguration.SESSION_INPUT_REJECTED, true));
     }
 
     @Test

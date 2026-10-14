@@ -15,8 +15,24 @@ document.addEventListener('DOMContentLoaded', () => {
   const dialog = document.getElementById('session-warning');
   const notice = document.getElementById('session-expired-notice');
   const noticeTemplate = document.getElementById('session-expired-template');
+  // サーバーが渡した戻り先を、同じ origin の path と query に限って使う（多層防御。サーバーは業務の画面の path だけを渡す）。
+  // // や /\ で始まる path は、リンクにするとほかの origin を指すので拒む（session-input.js にも同じ確かめがある）
+  const sameOriginPath = (value) => {
+    if (!value) {
+      return null;
+    }
+    try {
+      const url = new URL(value, window.location.origin);
+      const path = url.pathname + url.search;
+      return url.origin === window.location.origin && /^\/(?![/\\])/.test(path) ? path : null;
+    } catch (e) {
+      return null;
+    }
+  };
+  // 入力を控えられる画面（戻り先と利用者の鍵がある）では、入力が戻ることを伝える文言を使う（Bolt 32f）
+  const keepsInput = Boolean(dialog && sameOriginPath(dialog.dataset.returnPath) && dialog.dataset.user);
   const errorTemplate = document.getElementById(
-    dialog && dialog.dataset.returnPath ? 'session-warning-error-reopen-template' : 'session-warning-error-template');
+    keepsInput ? 'session-warning-error-reopen-template' : 'session-warning-error-template');
   if (!dialog || !notice || !noticeTemplate || !errorTemplate) {
     return;
   }
@@ -101,19 +117,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 
-  // サーバーが渡した戻り先を、同じ origin の path と query に限って使う（多層防御。サーバーは業務の画面の path だけを渡す）
-  const sameOriginPath = (value) => {
-    if (!value) {
-      return null;
-    }
-    try {
-      const url = new URL(value, window.location.origin);
-      return url.origin === window.location.origin ? url.pathname + url.search : null;
-    } catch (e) {
-      return null;
-    }
-  };
-
   const expire = () => {
     expired = true;
     window.clearTimeout(timer);
@@ -123,8 +126,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // 入力の控え（session-input.js）に期限の到来を知らせる（Bolt 32f）
     document.dispatchEvent(new CustomEvent('cargotracker:session-expired'));
     const reopenTemplate = document.getElementById('session-expired-reopen-template');
-    notice.replaceChildren((sameOriginPath(dialog.dataset.returnPath) && reopenTemplate
-      ? reopenTemplate : noticeTemplate).content.cloneNode(true));
+    notice.replaceChildren((keepsInput && reopenTemplate ? reopenTemplate : noticeTemplate).content.cloneNode(true));
     // GET で開いた業務の画面なら、案内のリンクでその画面を開き直す。サーバーの session が切れていれば、失効の扱いが画面を覚えて
     // A-03 へ移し、ログインし直した後に戻る（Bolt 32e）。送信の後の画面などで戻り先がなければ、今どおり A-03 へ移る
     const link = notice.querySelector('[data-session-return]');

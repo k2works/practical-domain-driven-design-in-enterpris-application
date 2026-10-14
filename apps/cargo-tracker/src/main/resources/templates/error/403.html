@@ -7,7 +7,9 @@
     <title>権限がありません - cargo-tracker</title>
 </head>
 <body>
-<main>
+<!--/* CSRF のトークンが合わず送信が拒まれたときだけ、入力の控えに「拒まれた」印を付ける（Bolt 32f。認可の 403 はログアウトでも
+       送信の失敗でもないので付けない。印は SecurityConfiguration の AccessDeniedHandler が request に置く） */-->
+<main th:data-session-input="${sessionInputRejected} ? 'rejected'">
     <h1>権限がありません</h1>
     <p>この画面を表示する権限がありません。</p>
     <p>荷主の方は担当営業に、社内の方はシステム管理者にお問い合わせください。</p>

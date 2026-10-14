@@ -175,9 +175,64 @@ public class SessionTimeoutUiSteps {
 
     @もし("CSRF のトークンが合わない状態で見積依頼の作成画面のフォームを送信する")
     public void CSRFのトークンが合わない状態で見積依頼の作成画面のフォームを送信する() {
+        CSRFのトークンの値を変える();
+        見積依頼の作成画面のフォームを送信する();
+    }
+
+    /**
+     * CSRF のトークン（hidden）の値を変える。hidden の欄は値を変えると初期の値（{@code defaultValue}）も同じに変わるので、変えた欄
+     * だけを写す仕組みでも写らない。写さないことは写す欄の許す一覧と二重に守られ、このシナリオだけでは許す一覧の退行を見分けられない
+     * （Bolt 32f の変異の確かめ）。値が控えに入らないことの確かめとして残す。
+     */
+    @もし("CSRF のトークンの値を変える")
+    public void CSRFのトークンの値を変える() {
         page().locator("main form[data-stepwise] input[name='_csrf']")
                 .evaluate("input => { input.value = 'invalid'; }");
+    }
+
+    /**
+     * 送信がサーバーに届き、結果の画面が同じ作成画面だった場合を作る（POST をブラウザの中で 303 にして同じ画面へ移す）。送信の前に
+     * 写した控えが、届いた送信の後に戻らないこと（二重の送信を招かないこと）を確かめるため。移り先に付ける {@code continue} は、
+     * 控えの戻り先の比較で除かれる印（ログインし直して戻ったときの印）なので、戻り先は作成画面と同じになる。移ったことを URL で待てる。
+     */
+    @もし("見積依頼の作成の送信が届き同じ画面に戻る")
+    public void 見積依頼の作成の送信が届き同じ画面に戻る() {
+        page().route("**/customer/transport-requests", route -> {
+            if ("POST".equals(route.request().method())) {
+                route.fulfill(new Route.FulfillOptions()
+                        .setStatus(303)
+                        .setHeaders(java.util.Map.of("Location", baseUrl + NEW_TRANSPORT_REQUEST + "?continue")));
+            } else {
+                route.resume();
+            }
+        });
         見積依頼の作成画面のフォームを送信する();
+        page().waitForURL("**" + NEW_TRANSPORT_REQUEST + "?continue");
+    }
+
+    @もし("貨物種別に一般以外を選ぶ")
+    public void 貨物種別に一般以外を選ぶ() {
+        // 貨物種別は段階 2 にあり隠れているので、値を変えて change を出す（利用者が選んだときと同じイベント）
+        page().locator("input[name='cargoCategory']:not([value='GENERAL'])")
+                .first()
+                .evaluate(
+                        "input => { input.checked = true; input.dispatchEvent(new Event('change', { bubbles: true })); }");
+    }
+
+    @ならば("貨物種別に一般以外が戻り提出は使えない")
+    public void 貨物種別に一般以外が戻り提出は使えない() {
+        assertThat(status()).containsText("前に入力していた内容を戻しました。");
+        assertThat(status()).containsText("すべての段階に戻しました。");
+        assertThat(page().locator("input[name='cargoCategory']:checked")).not().hasAttribute("value", "GENERAL");
+        assertThat(page().locator("#submit")).hasAttribute("aria-disabled", "true");
+    }
+
+    @ならば("貨物種別が一般に戻り提出は使える")
+    public void 貨物種別が一般に戻り提出は使える() {
+        assertThat(status()).containsText("戻した入力を消しました。");
+        assertThat(page().locator("input[name='cargoCategory']:checked")).hasAttribute("value", "GENERAL");
+        assertThat(page().locator("#submit")).not().hasAttribute("aria-disabled", "true");
+        assertThat(page().locator("#cargo-category-notice")).isHidden();
     }
 
     @もし("見積依頼の一覧を開く")
@@ -220,10 +275,15 @@ public class SessionTimeoutUiSteps {
         page().locator("#commercialInvoice").setInputFiles(file);
     }
 
+    @ならば("再認証の案内に入力を戻す旨は示されない")
+    public void 再認証の案内に入力を戻す旨は示されない() {
+        assertThat(page().locator("#session-input-note")).isEmpty();
+    }
+
     @ならば("再認証の案内が表示され入力を戻す旨が示される")
     public void 再認証の案内が表示され入力を戻す旨が示される() {
         再認証の案内が表示される();
-        assertThat(page().locator("main")).containsText("このタブでログインし直すと、ログアウトの前に入力していた内容を戻します。");
+        assertThat(page().locator("main")).containsText("このタブで同じ利用者がログインし直すと、ログアウトの前に入力していた内容を戻します。");
     }
 
     @ならば("出発地に {string} が戻り {string} と示される")
@@ -252,7 +312,8 @@ public class SessionTimeoutUiSteps {
 
     @ならば("{string} とは示されない")
     public void _とは示されない(String message) {
-        assertThat(page().locator("main")).isVisible();
+        // 知らせの領域があることを先に確かめる（領域がなくなる退行で、否定が常に通らないように）
+        assertThat(status()).isAttached();
         assertThat(status()).not().containsText(message);
     }
 
@@ -272,9 +333,10 @@ public class SessionTimeoutUiSteps {
         org.assertj.core.api.Assertions.assertThat(savedInput()).as("入力の控え").isNotNull();
     }
 
+    /** 捨てるのが別のタブの知らせ（storage のイベント）を受けた後のこともあるので、残っていないことを待って確かめる。 */
     @ならば("入力の控えが残っていない")
     public void 入力の控えが残っていない() {
-        org.assertj.core.api.Assertions.assertThat(savedInput()).as("入力の控え").isNull();
+        page().waitForFunction("key => window.sessionStorage.getItem(key) === null", SAVED_INPUT);
     }
 
     @ならば("入力の控えに CSRF のトークンとファイルが写っていない")
@@ -284,6 +346,7 @@ public class SessionTimeoutUiSteps {
         org.assertj.core.api.Assertions.assertThat(saved.toString())
                 .contains("JPTYO")
                 .doesNotContain("_csrf")
+                .doesNotContain("invalid")
                 .doesNotContain("commercialInvoice")
                 .doesNotContain("invoice");
     }

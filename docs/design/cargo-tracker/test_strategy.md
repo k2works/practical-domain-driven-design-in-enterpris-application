@@ -4,7 +4,7 @@ title: "cargo-tracker テスト戦略"
 description: "cargo-tracker のテスト形状、テストレベルと責務、BDD（Cucumber）のシナリオ階層とタグ規約、不変条件・ユーザーストーリーとテストの対応、カバレッジ目標、CI での実行。"
 tags: [design, test-strategy, bdd]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-14T12:44:45Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-14T14:16:15Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T08:12:04Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:01:38Z }
@@ -341,7 +341,7 @@ identity の統合テストは、時計を差し替えるなら合成注釈 `@Id
 | 実績の訂正 | 追跡管理者 2 名による訂正の登録と承認 | US-13 |
 | 外部データの取込 | ファイル取込と分類結果の表示 | US-14 |
 | 問い合わせ | 荷主の問い合わせの起票 → 社内の受領・回答 → 荷主の確認と再開の依頼 | US-20、US-23 |
-| 認証 | ログイン、初回の TOTP の登録、password の再設定、ロック、session の失効の警告と延長（Bolt 32b。無操作の警告と延長、8 時間の警告、タブの間の同期、期限の到来の案内。`session_timeout_ui.feature`）、失効後の再認証の案内と開いていた画面への復帰（Bolt 32e。無操作と 8 時間の失効の後に画面を開き直す・期限の到来の案内のリンクを押すと、ログインし直した後に同じ画面に戻る。サーバーの session の失効はセキュリティの統合テスト `ReturnAfterExpirySecurityIntegrationTest` で、画面は `session_timeout_ui.feature` で、session の行を古くして確かめる）、送信していない入力の保持と送信の後の失効（Bolt 32f。警告の期限の到来・「画面を開き直す」・送信の前にブラウザの sessionStorage の入力の控えに写し、同じ利用者が同じ画面に戻ると戻って知らせが出る。送信が公開の画面（A-03・403）で拒まれたら、ログインし直した後の画面に案内が出る。捨てる条件（別の利用者、8 時間と 7 時間 59 分の対、送信が届いた、ログアウト、期限の到来の取り消し）と、password・CSRF のトークン・ファイルを写さないことは、同じ流れで先に控えが写っていることを確かめてから見る。画面は `session_timeout_ui.feature` で sessionStorage を読んで確かめ、`data-user` と知らせの領域と公開の画面のスクリプトは `SessionTimerSecurityIntegrationTest` で確かめる） | US-18、US 横断受入条件 |
+| 認証 | ログイン、初回の TOTP の登録、password の再設定、ロック、session の失効の警告と延長（Bolt 32b。無操作の警告と延長、8 時間の警告、タブの間の同期、期限の到来の案内。`session_timeout_ui.feature`）、失効後の再認証の案内と開いていた画面への復帰（Bolt 32e。無操作と 8 時間の失効の後に画面を開き直す・期限の到来の案内のリンクを押すと、ログインし直した後に同じ画面に戻る。サーバーの session の失効はセキュリティの統合テスト `ReturnAfterExpirySecurityIntegrationTest` で、画面は `session_timeout_ui.feature` で、session の行を古くして確かめる）、送信していない入力の保持と送信の後の失効（Bolt 32f。警告の期限の到来・「画面を開き直す」・送信の前にブラウザの sessionStorage の入力の控えに写し、同じ利用者が同じ画面に戻ると戻って知らせが出る。送信が拒まれた画面（A-03・CSRF の 403）で拒まれたら、ログインし直した後の画面に案内が出る（認可の 403 では出ない）。捨てる条件（別の利用者、8 時間と 7 時間 59 分の対、送信が届いた、送信が届いて同じ画面に戻った、案内と知らせの消す、ログアウト、期限の到来の取り消し）と、CSRF のトークン（値を変えてから。hidden の欄は値を変えると初期の値も変わるので、変えた欄だけを写す仕組みでも写らず、許す一覧の退行はこのシナリオでは見分けられない）・ファイルを写さないことは、同じ流れで先に控えが写っていることを確かめてから見る。戻した欄に画面の表示が追随し、消すと初めの状態に戻ることは貨物種別で見る。password を写さないことは、写す画面（ログインした画面の業務のフォーム）に password の欄がないので画面の層では確かめない（写す欄を許す一覧で決めている）。画面は `session_timeout_ui.feature` で sessionStorage を読んで確かめ、`data-user` と知らせの領域と公開の画面のスクリプト、A-03 の印、CSRF と認可の 403 の印は `SessionTimerSecurityIntegrationTest`、利用者の鍵は `SessionTimerAdviceTest` で確かめる） | US-18、US 横断受入条件 |
 
 ## アクセシビリティテスト（BR-13、NFR-ACCESS-01）
 

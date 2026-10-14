@@ -9,7 +9,8 @@
     <title>送信が大きすぎます - cargo-tracker</title>
 </head>
 <body>
-<main>
+<!--/* 送信が拒まれた画面の印（Bolt 32f。session-input.js） */-->
+<main data-session-input="rejected">
     <th:block th:if="${path != null and #strings.startsWith(path, '/customer/transport-requests')}">
         <h1>送信したファイルが大きすぎます</h1>
         <!-- 入力はブラウザの「戻る」で残っていることが多い -->

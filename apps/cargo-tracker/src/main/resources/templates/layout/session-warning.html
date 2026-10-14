@@ -25,7 +25,7 @@
         </form>
     </dialog>
     <template id="session-warning-error-template">
-        <p class="text-danger" role="alert">延長できませんでした。もう一度お試しください。続けて失敗する場合は、入力中の内容を控えてから画面を開き直してください。</p>
+        <p class="text-danger" role="alert">延長できませんでした。もう一度お試しください。続けて失敗する場合は、入力中の内容を書き写してから画面を開き直してください。</p>
     </template>
     <!-- 戻り先のある画面の延長の失敗（Bolt 32f。入力の控えで戻せる） -->
     <template id="session-warning-error-reopen-template">
@@ -37,13 +37,13 @@
     <!-- 戻り先のある画面の期限の到来の案内（Bolt 32f）。リンクを押すと入力を控えてから開き直す（session-input.js） -->
     <template id="session-expired-reopen-template">
         <div class="alert alert-warning mb-0" role="alert">
-            <p class="mb-2">ログアウトした可能性があります。入力中の内容は送信されていません。「画面を開き直す」を押すと、入力中の内容をこのタブに控えてから開き直し、ログインし直した後に戻します。</p>
+            <p class="mb-2">ログアウトした可能性があります。入力中の内容は送信されていません。「画面を開き直す」を押すと、入力中の内容をこのタブに控えてから開き直し、開いた画面に戻します（ログインを求められたら、ログインし直した後に戻します）。</p>
             <a th:href="@{/session-expired}" class="alert-link" data-session-return>画面を開き直す</a>
         </div>
     </template>
     <template id="session-expired-template">
         <div class="alert alert-warning mb-0" role="alert">
-            <p class="mb-2">ログアウトした可能性があります。入力中の内容は送信されていません。必要なら控えてから、もう一度ログインしてください。</p>
+            <p class="mb-2">ログアウトした可能性があります。入力中の内容は送信されていません。必要なら書き写してから、もう一度ログインしてください。</p>
             <a th:href="@{/session-expired}" class="alert-link" data-session-return>もう一度ログインする</a>
         </div>
     </template>
