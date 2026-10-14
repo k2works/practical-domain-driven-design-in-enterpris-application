@@ -4,7 +4,7 @@ title: "Heroku デモ環境セットアップ手順書 - cargo-tracker"
 description: "cargo-tracker を dev プロファイルのまま Heroku（Container Registry、Eco dyno）へ配備し、関係者が触って確かめるデモ環境を作る・更新する・止める手順を示す。"
 tags: [operation,playbook,setup,heroku]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-09T06:08:07Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-14T10:02:26Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-06T11:19:09Z }
   - { by: human:kakimomokuri, at: 2026-10-07T02:53:59Z }
@@ -184,10 +184,10 @@ npx gulp deploy:demo:status       # DEMO_REVISION が配備したコミットか
 
 - `deploy-demo` は `needs: [check, ui]` で、develop の push と手動の実行のときだけ動きます。Pull Request と develop の外では動きません。
 - `docker/build-push-action` で `demo` のステージを `linux/amd64`・Docker v2 の manifest（`oci-mediatypes=false`）で作り、ラベルに `github.sha` を付けて push します。
-- Heroku Platform API で formation を更新して release し、Config Vars の `DEMO_REVISION` を `github.sha` にします。
+- Heroku Platform API で formation を更新して release し、その release の web の dyno が up で `/login` が 200 になるのを待ってから、Config Vars の `DEMO_REVISION` を `github.sha` にします。2 つの変更はそれぞれ release と再起動を起こし、続けて出すと 2 つの起動が重なって、残ったプロセスの H2 が閉じることがありました（2026-10-14。ログインが 500 になった。`deploy:demo:restart` で直した）。
 - release の前に、CI の対象のパスを最後に変えたコミットが、配備するコミットまでと develop の先頭までで同じかを確かめます。違えば（古い実行を再実行したときなど）警告を出して配備を飛ばします。古いコミットに戻したいときは、develop で `git revert` して push します。
 - 配備のジョブはワークフローの取り消しの外にあり、release の途中で取り消されません。配備どうしは 1 つずつ動き、後から来たものが待ちを置き換えます。
-- 配備の後、`DEMO_REVISION` が配備したコミットで、最新の release が succeeded で、その版の web の dyno が up で、`/login` が 200 になるのを最大 180 秒待ちます。来なければ直前の release に Platform API で戻し、ジョブを失敗にします。Eco には preboot がなく、新しい dyno が起動に失敗すると古い dyno は止まっているため、戻さないとデモが落ちたままになります。戻せなかったときは「ロールバック」の手順で戻します。
+- 配備の後、`DEMO_REVISION` が配備したコミットで、最新の release が succeeded で、その版の web の dyno が up で、`/login` が 200 になるのを最大 180 秒待ちます。続けて、dev の荷主（db/dev-data の公開の値）の password の段のログインを送り、A-02 へ移ること（DB を使う操作が 500 にならないこと）を確かめます。`/login` の表示は DB を使わないので、DB が閉じていても 200 になるためです。どれかが来なければ直前の release に Platform API で戻し、ジョブを失敗にします。Eco には preboot がなく、新しい dyno が起動に失敗すると古い dyno は止まっているため、戻さないとデモが落ちたままになります。戻せなかったときは「ロールバック」の手順で戻します。
 - ログイン・ビルド・push で失敗したときは、release の前なので、前の release のまま動き続けます。
 - 同じコミットを配備し直しても（手動の実行など）、イメージと `DEMO_REVISION` が変わらないため Heroku は新しい release を作らず、再起動もしません（Bolt 16 で確かめた）。これはビルドのキャッシュが当たって同じイメージが再現されるときの話で、キャッシュが追い出されていればイメージが変わり、再起動が起きます。
 - 所要時間は、配備のジョブが 30 秒〜3 分（キャッシュがあれば短い）。push から配備までは、check・ui を含めて 12〜15 分です。

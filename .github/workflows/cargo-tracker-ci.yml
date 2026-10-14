@@ -213,7 +213,8 @@ jobs:
           cache-to: type=gha,scope=demo,mode=max
 
       # Heroku CLI はランナーにないため、Platform API で release する（formation の更新と DEMO_REVISION）。
-      # その後、自分の release（DEMO_REVISION が github.sha、release が succeeded、その版の web の dyno が up）と /login の 200 を待つ。
+      # イメージの差し替えの release の起動を待ってから DEMO_REVISION を設定し（2 つの起動を重ねない）、自分の release（DEMO_REVISION が
+      # github.sha、release が succeeded、その版の web の dyno が up）と /login の 200 を待ち、password の段のログイン（DB を使う）を確かめる。
       # 来なければ直前の release に戻してジョブを失敗にする（Eco は preboot がなく、起動に失敗すると落ちたままになるため。R-01・R-07・R-08）
       - name: Heroku に release し、起動を確かめる（失敗したら直前の release に戻す）
         if: steps.latest.outputs.deploy == 'true'
@@ -221,6 +222,9 @@ jobs:
           HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
           IMAGE_ID: ${{ steps.build.outputs.imageid }}
           REVISION: ${{ github.sha }}
+          # 配備の後の DB を使う確かめに使う dev の荷主（db/dev-data と application-dev.properties の公開の値。本番には存在しない）
+          DEMO_CHECK_EMAIL: shipper@dev.cargo-tracker.example
+          DEMO_CHECK_PASSWORD: dev-password-shipper
         run: |
           set -euo pipefail
           # キーをコマンドの引数に置かない（R-16）。ヘッダーはランナーの一時のファイルから渡す
@@ -244,27 +248,57 @@ jobs:
           read -r previous_id previous_version <<< "$previous"
           echo "直前の release: v${previous_version}"
 
-          send PATCH formation "$docker_releases" \
-            "{\"updates\":[{\"type\":\"web\",\"docker_image\":\"${IMAGE_ID}\"}]}"
+          rollback() {
+            echo "::error::$1。v${previous_version} に戻します"
+            send POST releases "$v3" "{\"release\":\"${previous_id}\"}" || echo '::error::自動で戻せませんでした。手順書の「ロールバック」で戻してください'
+            exit 1
+          }
+
+          # 最新の release が succeeded で、その版の web の dyno が up で、/login が 200 になるのを最大 180 秒待つ。
+          # 引数: 求める DEMO_REVISION（空なら問わない）。直前の release より新しい版であることも求める
+          wait_up() {
+            local want="$1"
+            state=none; code=000; status=none; version=none; revision=none
+            for i in $(seq 1 36); do
+              sleep 5
+              # API と HTTP の一時の失敗は受け流し、時間切れで判定する
+              revision=$(get config-vars | jq -r '.DEMO_REVISION // "none"') || revision=error
+              read -r version status <<< "$(get releases -H 'Range: version ..; order=desc, max=1' | jq -r '.[0] | "\(.version) \(.status)"' || echo 'error error')"
+              if [ "$version" != 'error' ]; then
+                state=$(get dynos | jq -r --argjson v "$version" '[.[] | select(.type == "web" and .release.version == $v)][0].state // "none"') || state=error
+              fi
+              code=$(curl --silent --output /dev/null --write-out '%{http_code}' "${DEMO_URL}/login" || echo 000)
+              if { [ -z "$want" ] || [ "$revision" = "$want" ]; } && [ "$version" != 'error' ] && [ "$version" -gt "$previous_version" ]                 && [ "$status" = 'succeeded' ] && [ "$state" = 'up' ] && [ "$code" = '200' ]; then
+                echo "v${version} の dyno が up で、/login が 200（${i} 回目）"
+                return 0
+              fi
+            done
+            echo "release=v${version} ${status}、dyno=${state}、/login=${code}、DEMO_REVISION=${revision}"
+            return 1
+          }
+
+          # イメージの差し替えと DEMO_REVISION の設定は、それぞれ release と再起動を起こす。続けて出すと 2 つの起動が重なり、
+          # 残ったプロセスの H2 が閉じてログインが 500 になった（2026-10-14）。差し替えの release が起動しきってから設定する
+          send PATCH formation "$docker_releases"             "{\"updates\":[{\"type\":\"web\",\"docker_image\":\"${IMAGE_ID}\"}]}"
+          wait_up '' || rollback 'イメージの差し替えの release の起動を 180 秒たっても確かめられません'
           send PATCH config-vars "$v3" "{\"DEMO_REVISION\":\"${REVISION}\"}"
           echo "release した: ${REVISION}"
+          wait_up "$REVISION" || rollback 'DEMO_REVISION の release の起動を 180 秒たっても確かめられません'
 
-          state=none; code=000; status=none; version=none; revision=none
-          for i in $(seq 1 36); do
+          # DB を使う操作も確かめる（/login の表示は DB を使わないので、DB が閉じていても 200 になる）。dev の荷主の password の段の
+          # ログインを送り、A-02 へ移ることを確かめる（500 なら DB に届いていない）。dev の利用者は db/dev-data の公開の値
+          jar="${RUNNER_TEMP}/demo-cookies"
+          login=none
+          for i in $(seq 1 6); do
+            rm -f "$jar"
+            token=$(curl --silent -c "$jar" -b "$jar" "${DEMO_URL}/login" | grep -o 'name="_csrf" value="[^"]*"' | head -1 | sed 's/.*value="//; s/"$//') || token=''
+            login=$(curl --silent --output /dev/null --write-out '%{http_code} %{redirect_url}' -c "$jar" -b "$jar"               --data-urlencode "username=${DEMO_CHECK_EMAIL}" --data-urlencode "password=${DEMO_CHECK_PASSWORD}"               --data-urlencode "_csrf=${token}" "${DEMO_URL}/login" || echo '000 none')
+            case "$login" in
+              '302 '*'/login/totp')
+                echo "password の段のログインが A-02 へ移る（${i} 回目）"
+                exit 0
+                ;;
+            esac
             sleep 5
-            # API と HTTP の一時の失敗は受け流し、時間切れで判定する
-            revision=$(get config-vars | jq -r '.DEMO_REVISION // "none"') || revision=error
-            read -r version status <<< "$(get releases -H 'Range: version ..; order=desc, max=1' | jq -r '.[0] | "\(.version) \(.status)"' || echo 'error error')"
-            if [ "$version" != 'error' ]; then
-              state=$(get dynos | jq -r --argjson v "$version" '[.[] | select(.type == "web" and .release.version == $v)][0].state // "none"') || state=error
-            fi
-            code=$(curl --silent --output /dev/null --write-out '%{http_code}' "${DEMO_URL}/login" || echo 000)
-            if [ "$revision" = "$REVISION" ] && [ "$status" = 'succeeded' ] && [ "$state" = 'up' ] && [ "$code" = '200' ]; then
-              echo "v${version} の dyno が up で、/login が 200（${i} 回目）"
-              exit 0
-            fi
           done
-
-          echo "::error::180 秒たっても起動を確かめられません（release=v${version} ${status}、dyno=${state}、/login=${code}、DEMO_REVISION が一致=$([ "$revision" = "$REVISION" ] && echo yes || echo no)）。v${previous_version} に戻します"
-          send POST releases "$v3" "{\"release\":\"${previous_id}\"}" || echo '::error::自動で戻せませんでした。手順書の「ロールバック」で戻してください'
-          exit 1
+          rollback "password の段のログインが A-02 へ移りません（${login}）"
