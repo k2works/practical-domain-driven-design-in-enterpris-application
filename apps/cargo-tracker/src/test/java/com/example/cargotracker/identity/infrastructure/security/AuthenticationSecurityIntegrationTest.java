@@ -12,7 +12,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.example.cargotracker.TestcontainersConfiguration;
+import com.example.cargotracker.identity.AuthenticationFactorFixtures;
+import com.example.cargotracker.identity.IdentityTestClock;
 import com.example.cargotracker.identity.LogCapture;
+import com.example.cargotracker.identity.SpringSessionRows;
 import com.example.cargotracker.identity.domain.model.aggregates.Company;
 import com.example.cargotracker.identity.domain.model.aggregates.CompanyRepository;
 import com.example.cargotracker.identity.domain.model.aggregates.TotpCodeGenerator;
@@ -54,11 +57,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
-import org.springframework.context.annotation.Primary;
 import org.springframework.http.HttpMethod;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -78,7 +78,7 @@ import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandl
  */
 @SpringBootTest
 @AutoConfigureMockMvc
-@Import({TestcontainersConfiguration.class, AuthenticationSecurityIntegrationTest.FixedClock.class})
+@Import({TestcontainersConfiguration.class, IdentityTestClock.class})
 class AuthenticationSecurityIntegrationTest {
 
     /** 全 URL の見張りから除く、password の段だけで開ける認証の画面（Bolt 31d）。 */
@@ -94,16 +94,6 @@ class AuthenticationSecurityIntegrationTest {
     private static final Instant LOGIN_AT = Instant.parse("2026-10-06T00:00:00Z");
     private static final byte[] TOTP_SECRET = "12345678901234567890".getBytes(StandardCharsets.US_ASCII);
     private static final String TOTP_URL = "/login/totp";
-
-    @TestConfiguration(proxyBeanMethods = false)
-    static class FixedClock {
-
-        @Bean
-        @Primary
-        MutableClock mutableClock() {
-            return new MutableClock();
-        }
-    }
 
     @Autowired
     MockMvc mvc;
@@ -1161,7 +1151,7 @@ class AuthenticationSecurityIntegrationTest {
     void 無操作30分の1秒前は使える() throws Exception {
         Cookie session = login(shipper(UserStatus.ACTIVE));
 
-        idle(session, Duration.ofMinutes(30).minusSeconds(1));
+        sessions().idle(session, Duration.ofMinutes(30).minusSeconds(1));
 
         mvc.perform(get("/customer/transport-requests").cookie(session)).andExpect(status().isOk());
     }
@@ -1174,7 +1164,7 @@ class AuthenticationSecurityIntegrationTest {
     void 無操作30分で再認証の案内へ移る() throws Exception {
         Cookie session = login(shipper(UserStatus.ACTIVE));
 
-        idle(session, Duration.ofMinutes(30));
+        sessions().idle(session, Duration.ofMinutes(30));
 
         mvc.perform(get("/customer/transport-requests").cookie(session)).andExpect(redirectedUrl("/session-expired"));
     }
@@ -1183,7 +1173,7 @@ class AuthenticationSecurityIntegrationTest {
     void 無操作30分の1秒後も再認証の案内へ移る() throws Exception {
         Cookie session = login(shipper(UserStatus.ACTIVE));
 
-        idle(session, Duration.ofMinutes(30).plusSeconds(1));
+        sessions().idle(session, Duration.ofMinutes(30).plusSeconds(1));
 
         mvc.perform(get("/customer/transport-requests").cookie(session)).andExpect(redirectedUrl("/session-expired"));
     }
@@ -1298,9 +1288,7 @@ class AuthenticationSecurityIntegrationTest {
 
     /** テストの準備として、使った刻みを戻す（同じ利用者が同じ刻みの間に入り直すため。Bolt 31 の確認ポイント 7）。 */
     private void resetTotpStep(String email) {
-        jdbc.update(
-                "UPDATE identity.totp_credential SET last_used_step = 0 WHERE user_id = ?",
-                userIdOf(email).value());
+        AuthenticationFactorFixtures.resetTotpStep(jdbc, userIdOf(email));
     }
 
     /** 足りない TOTP の要素を求めて A-02 へ導く（枠組みが factor.type・factor.reason を付ける）。 */
@@ -1370,19 +1358,6 @@ class AuthenticationSecurityIntegrationTest {
         ((MutableClock) clock).setInstant(LOGIN_AT.plus(duration));
     }
 
-    /** Spring Session の最終アクセスの時刻を、いまから指定の時間だけ前にする（無操作の時間を作る）。 */
-    private void idle(Cookie session, Duration duration) {
-        String sessionId = new String(java.util.Base64.getDecoder().decode(session.getValue()));
-        long lastAccess = Instant.now().minus(duration).toEpochMilli();
-        int updated = jdbc.update(
-                "UPDATE platform.spring_session SET last_access_time = ?,"
-                        + " expiry_time = ? + max_inactive_interval * 1000 WHERE session_id = ?",
-                lastAccess,
-                lastAccess,
-                sessionId);
-        assertThat(updated).as("session の行").isEqualTo(1);
-    }
-
     private List<Map<String, String>> auditOf(String email) {
         UUID userId =
                 users.findByEmail(EmailAddress.of(email)).orElseThrow().id().value();
@@ -1401,5 +1376,9 @@ class AuthenticationSecurityIntegrationTest {
                 "SELECT count(*) FROM identity.audit_record WHERE action = 'LOGIN_FAILED'"
                         + " AND reason = 'UNKNOWN_USER' AND actor_user_id IS NULL AND actor_company_id IS NULL",
                 Integer.class);
+    }
+
+    private SpringSessionRows sessions() {
+        return new SpringSessionRows(jdbc);
     }
 }

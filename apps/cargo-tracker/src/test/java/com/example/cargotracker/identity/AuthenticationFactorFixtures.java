@@ -12,6 +12,7 @@ import com.example.cargotracker.shared.domain.Role;
 import com.example.cargotracker.shared.domain.UserId;
 import java.util.Set;
 import java.util.UUID;
+import org.springframework.jdbc.core.JdbcTemplate;
 
 /** 認証の要素のテストで、外部キーのための企業と利用者を作る（並行のテストと共有する。Bolt 30、Bolt 31 で抜き出した）。 */
 public final class AuthenticationFactorFixtures {
@@ -31,5 +32,21 @@ public final class AuthenticationFactorFixtures {
                 UserStatus.ACTIVE,
                 Set.of(Role.SHIPPER)));
         return userId;
+    }
+
+    /**
+     * テストの準備として、利用者の TOTP の使った刻みを 0 に戻す（同じ利用者が同じ刻みの間にログインし直しても、再利用として拒まれない
+     * ように。本体の再利用の拒否は変えない。Bolt 31 の確認ポイント 7。Bolt 32d で 3 か所の SQL をここにまとめた）。
+     */
+    public static void resetTotpStep(JdbcTemplate jdbc, UserId userId) {
+        jdbc.update("UPDATE identity.totp_credential SET last_used_step = 0 WHERE user_id = ?", userId.value());
+    }
+
+    /** メールアドレスの利用者の TOTP の使った刻みを 0 に戻す（{@link #resetTotpStep(JdbcTemplate, UserId)} と同じ）。 */
+    public static void resetTotpStep(JdbcTemplate jdbc, String email) {
+        jdbc.update(
+                "UPDATE identity.totp_credential SET last_used_step = 0 WHERE user_id ="
+                        + " (SELECT id FROM identity.app_user WHERE email = ?)",
+                email);
     }
 }

@@ -8,6 +8,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.example.cargotracker.TestcontainersConfiguration;
+import com.example.cargotracker.identity.IdentityTestClock;
 import com.example.cargotracker.identity.domain.model.aggregates.Company;
 import com.example.cargotracker.identity.domain.model.aggregates.CompanyRepository;
 import com.example.cargotracker.identity.domain.model.aggregates.LoginFailureRepository;
@@ -41,11 +42,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
-import org.springframework.context.annotation.Primary;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.web.servlet.MockMvc;
@@ -59,7 +57,7 @@ import org.springframework.test.web.servlet.MvcResult;
  */
 @SpringBootTest
 @AutoConfigureMockMvc
-@Import({TestcontainersConfiguration.class, LoginLockSecurityIntegrationTest.FixedClock.class})
+@Import({TestcontainersConfiguration.class, IdentityTestClock.class})
 class LoginLockSecurityIntegrationTest {
 
     private static final String PASSWORD = "correct horse battery staple";
@@ -72,16 +70,6 @@ class LoginLockSecurityIntegrationTest {
     private static final String RECOVERY_CODE = "1a2b-3c4d";
     private static final String WARNING = "続けて 5 回誤ると、15 分ログインできなくなります。";
     private static final byte[] TOTP_SECRET = "12345678901234567890".getBytes(StandardCharsets.US_ASCII);
-
-    @TestConfiguration(proxyBeanMethods = false)
-    static class FixedClock {
-
-        @Bean
-        @Primary
-        MutableClock mutableClock() {
-            return new MutableClock();
-        }
-    }
 
     @Autowired
     MockMvc mvc;

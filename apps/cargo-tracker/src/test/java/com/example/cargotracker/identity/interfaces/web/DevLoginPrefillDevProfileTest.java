@@ -7,6 +7,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 
+import com.example.cargotracker.identity.AuthenticationFactorFixtures;
 import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -72,10 +73,7 @@ class DevLoginPrefillDevProfileTest {
      * 同じ利用者のテストの間で同じ刻みのコードを使い回さないよう、使った刻みを戻す（テストの準備。確認ポイント 7）。
      */
     private Cookie signIn(String email) throws Exception {
-        jdbc.update(
-                "UPDATE identity.totp_credential SET last_used_step = 0 WHERE user_id ="
-                        + " (SELECT id FROM identity.app_user WHERE email = ?)",
-                email);
+        AuthenticationFactorFixtures.resetTotpStep(jdbc, email);
         MvcResult password = mvc.perform(post("/login")
                         .param("username", email)
                         .param("password", "dev-password-staff")

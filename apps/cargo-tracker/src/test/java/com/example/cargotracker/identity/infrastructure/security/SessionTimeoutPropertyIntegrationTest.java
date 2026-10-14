@@ -5,6 +5,7 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 
 import com.example.cargotracker.TestcontainersConfiguration;
+import com.example.cargotracker.identity.SpringSessionRows;
 import com.example.cargotracker.identity.domain.model.aggregates.Company;
 import com.example.cargotracker.identity.domain.model.aggregates.CompanyRepository;
 import com.example.cargotracker.identity.domain.model.aggregates.User;
@@ -67,10 +68,6 @@ class SessionTimeoutPropertyIntegrationTest {
         mvc.perform(
                 post("/login").param("username", email).param("password", "pw").with(csrf()));
 
-        assertThat(jdbc.queryForObject(
-                        "SELECT max_inactive_interval FROM platform.spring_session WHERE principal_name = ?",
-                        Integer.class,
-                        email))
-                .isEqualTo(600);
+        assertThat(new SpringSessionRows(jdbc).maxInactiveIntervalOf(email)).isEqualTo(600);
     }
 }

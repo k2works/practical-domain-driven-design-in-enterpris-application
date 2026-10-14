@@ -144,7 +144,7 @@ RandomTotpSecretIssuer ..> AesGcmSecretCipher
   - `RandomTotpSecretIssuer`・`RandomRecoveryCodeGenerator` に `@Component` を付け、`IdentityConfiguration` の `@Bean` を外す。`ComponentScanTest`・ArchUnit・起動のテストが緑のまま
   - 見張り: identity の `infrastructure.config` の `@Bean` のメソッドの戻り値の型が「設計の約束」の型であること（ArchUnit のメソッドの規則。書きにくければ反射のテスト）。対象が存在すること（`@Bean` のメソッドが 1 つ以上あること）を先に確かめる（T-107）。違反（暗号の部品の `@Bean` を足す）を入れて落ちることを確かめる（T-112）
   - 完了の判定: `check` 緑
-- [ ] **4. テストの共通の設定と補助** 【承認ゲート: 構造】
+- [x] **4. テストの共通の設定と補助** 【承認ゲート: 構造】
   - 前: identity の統合テストを流し、コンテキストのキャッシュの統計（DEBUG のログ）でコンテキストの数を数える（H1）
   - 骨組み: 共通の時計の設定（`identity` のテストの `@TestConfiguration`）を 2 つのクラスに当てて、コンテキストが 1 つになることを先に確かめる（T-101。ならなければ止めて諮る）
   - 共通の時計の設定で 5 つの統合テスト（`AuthenticationSecurityIntegrationTest`・`LoginLockSecurityIntegrationTest`・`RecoveryCodeLoginSecurityIntegrationTest`・`TotpEnrollmentSecurityIntegrationTest`・`SessionRevalidationSecurityIntegrationTest`）の入れ子の `FixedClock` を置き換える

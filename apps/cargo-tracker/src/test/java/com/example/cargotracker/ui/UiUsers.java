@@ -1,5 +1,6 @@
 package com.example.cargotracker.ui;
 
+import com.example.cargotracker.identity.AuthenticationFactorFixtures;
 import com.example.cargotracker.identity.domain.model.aggregates.Company;
 import com.example.cargotracker.identity.domain.model.aggregates.CompanyRepository;
 import com.example.cargotracker.identity.domain.model.aggregates.RecoveryCode;
@@ -104,7 +105,7 @@ public class UiUsers {
      */
     public String totpCode(Role role) {
         UserId userId = of(role).userId();
-        jdbc.update("UPDATE identity.totp_credential SET last_used_step = 0 WHERE user_id = ?", userId.value());
+        AuthenticationFactorFixtures.resetTotpStep(jdbc, userId);
         TotpCredential credential = totpCredentials.findByUserId(userId).orElseThrow();
         return totpCodes.code(
                 credential.userId(), credential.secret(), TotpCredential.stepAt(new UtcInstant(clock.instant())));

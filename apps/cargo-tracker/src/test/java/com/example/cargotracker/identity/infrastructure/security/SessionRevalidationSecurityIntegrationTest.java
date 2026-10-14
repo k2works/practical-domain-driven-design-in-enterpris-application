@@ -15,19 +15,14 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.example.cargotracker.TestcontainersConfiguration;
-import com.example.cargotracker.identity.domain.model.aggregates.AuditRecordRepository;
+import com.example.cargotracker.identity.SpringSessionRows;
 import com.example.cargotracker.identity.domain.model.aggregates.Company;
-import com.example.cargotracker.identity.domain.model.aggregates.CompanyRepository;
 import com.example.cargotracker.identity.domain.model.aggregates.RecoveryCode;
 import com.example.cargotracker.identity.domain.model.aggregates.RecoveryCodeHasher;
 import com.example.cargotracker.identity.domain.model.aggregates.RecoveryCodeRepository;
-import com.example.cargotracker.identity.domain.model.aggregates.TotpCodeGenerator;
 import com.example.cargotracker.identity.domain.model.aggregates.TotpCredential;
 import com.example.cargotracker.identity.domain.model.aggregates.TotpCredentialRepository;
 import com.example.cargotracker.identity.domain.model.aggregates.User;
-import com.example.cargotracker.identity.domain.model.aggregates.UserRepository;
-import com.example.cargotracker.identity.domain.model.aggregates.UserStandingRepository;
 import com.example.cargotracker.identity.domain.model.valueobjects.CompanyKind;
 import com.example.cargotracker.identity.domain.model.valueobjects.EmailAddress;
 import com.example.cargotracker.identity.domain.model.valueobjects.UserStatus;
@@ -42,7 +37,6 @@ import java.nio.charset.StandardCharsets;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.Base64;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -51,16 +45,9 @@ import java.util.stream.IntStream;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.context.TestConfiguration;
-import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Import;
-import org.springframework.context.annotation.Primary;
 import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.RequestBuilder;
@@ -72,10 +59,7 @@ import org.springframework.test.web.servlet.RequestBuilder;
  * 読み出し・監査の誤りと役割 0 件が session を捨てて 500 になることを確かめる。利用停止・役割の変更の操作は Bolt 34 で作るので、
  * DB の値を変えて確かめる。
  */
-@SpringBootTest
-@AutoConfigureMockMvc
-@Import({TestcontainersConfiguration.class, SessionRevalidationSecurityIntegrationTest.FixedClock.class})
-class SessionRevalidationSecurityIntegrationTest {
+class SessionRevalidationSecurityIntegrationTest extends IdentitySpyIntegrationTestBase {
 
     private static final String PASSWORD = "correct horse battery staple";
     private static final String SESSION_COOKIE = "SESSION";
@@ -87,28 +71,6 @@ class SessionRevalidationSecurityIntegrationTest {
     private static final String ROUTING_URL = "/staff/routing-cases";
     private static final String TRACKING_URL = "/staff/tracking-records";
     private static final String RECOVERY_CODE = "1a2b-3c4d";
-
-    @TestConfiguration(proxyBeanMethods = false)
-    static class FixedClock {
-
-        @Bean
-        @Primary
-        MutableClock mutableClock() {
-            return new MutableClock();
-        }
-    }
-
-    @MockitoSpyBean
-    UserStandingRepository standings;
-
-    @MockitoSpyBean
-    UserRepository users;
-
-    @MockitoSpyBean
-    CompanyRepository companies;
-
-    @MockitoSpyBean
-    AuditRecordRepository auditRecords;
 
     @Autowired
     MockMvc mvc;
@@ -124,9 +86,6 @@ class SessionRevalidationSecurityIntegrationTest {
 
     @Autowired
     TotpCredentialRepository totpCredentials;
-
-    @Autowired
-    TotpCodeGenerator totpCodes;
 
     @Autowired
     AesGcmSecretCipher cipher;
@@ -156,7 +115,7 @@ class SessionRevalidationSecurityIntegrationTest {
         String email = user(Set.of(Role.SALES));
         Cookie session = login(email);
         mvc.perform(get(SALES_URL).cookie(session)).andExpect(status().isOk());
-        assertThat(sessionExists(session)).as("止める前は session がある").isTrue();
+        assertThat(sessions().exists(session)).as("止める前は session がある").isTrue();
 
         jdbc.update("UPDATE identity.app_user SET status = 'SUSPENDED' WHERE email = ?", email);
         MvcResult revoked = mvc.perform(get(SALES_URL).cookie(session))
@@ -164,7 +123,7 @@ class SessionRevalidationSecurityIntegrationTest {
                 .andReturn();
 
         assertThat(revoked.getResponse().getContentAsString()).as("業務データを出さない").isEmpty();
-        assertThat(sessionExists(session)).as("session を捨てた").isFalse();
+        assertThat(sessions().exists(session)).as("session を捨てた").isFalse();
         assertThat(revocations(email)).containsExactly(Map.of("result", "FAILURE", "reason", "SUSPENDED"));
         assertThat(companyOfRevocation(email)).isEqualTo(company.id().value());
     }
@@ -180,7 +139,7 @@ class SessionRevalidationSecurityIntegrationTest {
                 company.id().value());
 
         mvc.perform(get(SALES_URL).cookie(session)).andExpect(redirectedUrl(EXPIRED_URL));
-        assertThat(sessionExists(session)).isFalse();
+        assertThat(sessions().exists(session)).isFalse();
         assertThat(revocations(email)).containsExactly(Map.of("result", "FAILURE", "reason", "COMPANY_INACTIVE"));
     }
 
@@ -194,7 +153,7 @@ class SessionRevalidationSecurityIntegrationTest {
         deleteUser(userId);
 
         mvc.perform(get(SALES_URL).cookie(session)).andExpect(redirectedUrl(EXPIRED_URL));
-        assertThat(sessionExists(session)).isFalse();
+        assertThat(sessions().exists(session)).isFalse();
         assertThat(jdbc.queryForList(
                         "SELECT reason FROM identity.audit_record WHERE actor_user_id = ? AND action = 'SESSION_REVOKED'",
                         String.class,
@@ -214,7 +173,7 @@ class SessionRevalidationSecurityIntegrationTest {
                         .with(csrf()))
                 .andExpect(redirectedUrl(EXPIRED_URL));
 
-        assertThat(sessionExists(passwordStage)).isFalse();
+        assertThat(sessions().exists(passwordStage)).isFalse();
         assertThat(actions(email)).containsOnlyOnce("SESSION_REVOKED").doesNotContain("LOGIN_SUCCEEDED");
         assertThat(lastUsedStep(email)).as("TOTP の照合に進まない（刻みを使わない）").isZero();
     }
@@ -232,7 +191,7 @@ class SessionRevalidationSecurityIntegrationTest {
                         .toList());
         Cookie passwordStage = loginWithPassword(email);
         mvc.perform(get(TOTP_URL).cookie(passwordStage)).andExpect(status().isOk());
-        assertThat(sessionExists(passwordStage)).as("止める前は session がある").isTrue();
+        assertThat(sessions().exists(passwordStage)).as("止める前は session がある").isTrue();
 
         jdbc.update("UPDATE identity.app_user SET status = 'SUSPENDED' WHERE email = ?", email);
         mvc.perform(post(TOTP_URL)
@@ -241,7 +200,7 @@ class SessionRevalidationSecurityIntegrationTest {
                         .with(csrf()))
                 .andExpect(redirectedUrl(EXPIRED_URL));
 
-        assertThat(sessionExists(passwordStage)).isFalse();
+        assertThat(sessions().exists(passwordStage)).isFalse();
         assertThat(recoveryCodes.findUnusedByUserId(userId)).as("回復コードを使わない").hasSize(RecoveryCode.CODES_PER_USER);
         assertThat(actions(email))
                 .containsOnlyOnce("SESSION_REVOKED")
@@ -268,7 +227,7 @@ class SessionRevalidationSecurityIntegrationTest {
                 .getResponse()
                 .getContentAsString();
         assertThat(salesPage).as("ナビから経路設計が消える").doesNotContain("href=\"/staff/routing-cases\"");
-        assertThat(sessionExists(session)).as("session は捨てない").isTrue();
+        assertThat(sessions().exists(session)).as("session は捨てない").isTrue();
         assertThat(actions(email)).doesNotContain("SESSION_REVOKED");
     }
 
@@ -407,7 +366,7 @@ class SessionRevalidationSecurityIntegrationTest {
             reset(standings);
         }
 
-        assertThat(sessionExists(session)).isFalse();
+        assertThat(sessions().exists(session)).isFalse();
     }
 
     @Test
@@ -426,7 +385,7 @@ class SessionRevalidationSecurityIntegrationTest {
             reset(auditRecords);
         }
 
-        assertThat(sessionExists(session)).isFalse();
+        assertThat(sessions().exists(session)).isFalse();
         assertThat(actions(email)).doesNotContain("SESSION_REVOKED");
     }
 
@@ -440,7 +399,7 @@ class SessionRevalidationSecurityIntegrationTest {
         RequestBuilder request = get(SALES_URL).cookie(session);
 
         assertFailsWithContext(request, email, IllegalStateException.class);
-        assertThat(sessionExists(session)).isFalse();
+        assertThat(sessions().exists(session)).isFalse();
     }
 
     // --- 補助 ---
@@ -532,13 +491,6 @@ class SessionRevalidationSecurityIntegrationTest {
         return cookie;
     }
 
-    private boolean sessionExists(Cookie session) {
-        String sessionId = new String(Base64.getDecoder().decode(session.getValue()), StandardCharsets.US_ASCII);
-        Integer rows = jdbc.queryForObject(
-                "SELECT count(*) FROM platform.spring_session WHERE session_id = ?", Integer.class, sessionId);
-        return rows != null && rows > 0;
-    }
-
     private UserId userIdOf(String email) {
         return jdbc.queryForObject(
                 "SELECT id FROM identity.app_user WHERE email = ?",
@@ -573,5 +525,9 @@ class SessionRevalidationSecurityIntegrationTest {
                 "SELECT actor_company_id FROM identity.audit_record WHERE actor_user_id = ? AND action = 'SESSION_REVOKED'",
                 UUID.class,
                 userIdOf(email).value());
+    }
+
+    private SpringSessionRows sessions() {
+        return new SpringSessionRows(jdbc);
     }
 }

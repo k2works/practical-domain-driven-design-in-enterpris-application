@@ -10,23 +10,18 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 
-import com.example.cargotracker.TestcontainersConfiguration;
 import com.example.cargotracker.identity.LogCapture;
 import com.example.cargotracker.identity.domain.model.aggregates.AuditRecord;
-import com.example.cargotracker.identity.domain.model.aggregates.AuditRecordRepository;
 import com.example.cargotracker.identity.domain.model.aggregates.Company;
-import com.example.cargotracker.identity.domain.model.aggregates.CompanyRepository;
-import com.example.cargotracker.identity.domain.model.aggregates.LoginFailureRepository;
-import com.example.cargotracker.identity.domain.model.aggregates.TotpCodeGenerator;
 import com.example.cargotracker.identity.domain.model.aggregates.TotpCredential;
 import com.example.cargotracker.identity.domain.model.aggregates.TotpCredentialRepository;
 import com.example.cargotracker.identity.domain.model.aggregates.User;
-import com.example.cargotracker.identity.domain.model.aggregates.UserRepository;
 import com.example.cargotracker.identity.domain.model.valueobjects.AuditAction;
 import com.example.cargotracker.identity.domain.model.valueobjects.CompanyKind;
 import com.example.cargotracker.identity.domain.model.valueobjects.EmailAddress;
 import com.example.cargotracker.identity.domain.model.valueobjects.UserStatus;
 import com.example.cargotracker.identity.infrastructure.crypto.AesGcmSecretCipher;
+import com.example.cargotracker.shared.acceptance.MutableClock;
 import com.example.cargotracker.shared.domain.CompanyId;
 import com.example.cargotracker.shared.domain.Role;
 import com.example.cargotracker.shared.domain.UserId;
@@ -34,19 +29,16 @@ import com.example.cargotracker.shared.domain.UtcInstant;
 import jakarta.servlet.http.Cookie;
 import java.nio.charset.StandardCharsets;
 import java.time.Clock;
+import java.time.Instant;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
-import org.springframework.context.annotation.Import;
 import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.RequestBuilder;
 
@@ -55,33 +47,16 @@ import org.springframework.test.web.servlet.RequestBuilder;
  * 500 にしてログインを通さず、利用者の誤りとして数えない。利用者の読み出しの DB の誤りは、枠組みが包んで失敗へ倒し
  * {@code /login?error}（理由 {@code SERVICE_ERROR}、数えない）。ロックの読み出しの DB の誤りは 500（照合の後の確認と TOTP の段）。
  */
-@SpringBootTest
-@AutoConfigureMockMvc
-@Import(TestcontainersConfiguration.class)
-class AuthenticationErrorHandlingIntegrationTest {
+class AuthenticationErrorHandlingIntegrationTest extends IdentitySpyIntegrationTestBase {
 
     private static final String PASSWORD = "correct horse battery staple";
+    private static final Instant NOW = Instant.parse("2026-10-14T00:00:00Z");
     private static final String SESSION_COOKIE = "SESSION";
     private static final String TOTP_URL = "/login/totp";
     private static final byte[] TOTP_SECRET = "12345678901234567890".getBytes(StandardCharsets.US_ASCII);
 
-    @MockitoSpyBean
-    TotpCodeGenerator totpCodes;
-
-    @MockitoSpyBean
-    LoginFailureRepository loginFailures;
-
-    @MockitoSpyBean
-    UserRepository users;
-
-    @MockitoSpyBean
-    AuditRecordRepository auditRecords;
-
     @Autowired
     MockMvc mvc;
-
-    @Autowired
-    CompanyRepository companies;
 
     @Autowired
     PasswordEncoder passwordEncoder;
@@ -102,6 +77,8 @@ class AuthenticationErrorHandlingIntegrationTest {
 
     @BeforeEach
     void 企業を登録する() {
+        // 共通の時計（MutableClock）を決めた時刻に置く。前のテストのクラスが残した時刻を引き継がない（Bolt 32d）
+        ((MutableClock) clock).setInstant(NOW);
         company = Company.of(new CompanyId(UUID.randomUUID()), "荷主 A", CompanyKind.SHIPPER, true);
         companies.add(company);
     }

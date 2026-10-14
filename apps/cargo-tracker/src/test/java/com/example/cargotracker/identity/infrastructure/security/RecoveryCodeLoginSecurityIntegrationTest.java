@@ -9,7 +9,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.example.cargotracker.TestcontainersConfiguration;
+import com.example.cargotracker.identity.IdentityTestClock;
 import com.example.cargotracker.identity.LogCapture;
+import com.example.cargotracker.identity.SpringSessionRows;
 import com.example.cargotracker.identity.domain.model.aggregates.Company;
 import com.example.cargotracker.identity.domain.model.aggregates.CompanyRepository;
 import com.example.cargotracker.identity.domain.model.aggregates.RecoveryCode;
@@ -34,7 +36,6 @@ import jakarta.servlet.http.Cookie;
 import java.nio.charset.StandardCharsets;
 import java.time.Clock;
 import java.time.Instant;
-import java.util.Base64;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -46,11 +47,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
-import org.springframework.context.annotation.Primary;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.web.servlet.MockMvc;
@@ -63,7 +61,7 @@ import org.springframework.test.web.servlet.MvcResult;
  */
 @SpringBootTest
 @AutoConfigureMockMvc
-@Import({TestcontainersConfiguration.class, RecoveryCodeLoginSecurityIntegrationTest.FixedClock.class})
+@Import({TestcontainersConfiguration.class, IdentityTestClock.class})
 class RecoveryCodeLoginSecurityIntegrationTest {
 
     private static final String PASSWORD = "correct horse battery staple";
@@ -78,16 +76,6 @@ class RecoveryCodeLoginSecurityIntegrationTest {
     private static final byte[] TOTP_SECRET = "12345678901234567890".getBytes(StandardCharsets.US_ASCII);
     private static final Pattern MANUAL_KEY = Pattern.compile("data-manual-key=\"([A-Z2-7 ]+)\"");
     private static final String JUST_ENROLLED = "認証アプリを登録しました。";
-
-    @TestConfiguration(proxyBeanMethods = false)
-    static class FixedClock {
-
-        @Bean
-        @Primary
-        MutableClock mutableClock() {
-            return new MutableClock();
-        }
-    }
 
     @Autowired
     MockMvc mvc;
@@ -146,7 +134,7 @@ class RecoveryCodeLoginSecurityIntegrationTest {
         Cookie full = result.getResponse().getCookie(SESSION_COOKIE);
         assertThat(full.getValue()).as("権限が上がる段で session ID を変える（T-40）").isNotEqualTo(passwordStage.getValue());
         mvc.perform(get(BUSINESS_URL).cookie(full)).andExpect(status().isOk());
-        assertThat(sessionAttributeNames(full)).as("8 時間の起点").contains(SessionLifetime.AUTHENTICATED_AT);
+        assertThat(sessions().attributeNames(full)).as("8 時間の起点").contains(SessionLifetime.AUTHENTICATED_AT);
         assertThat(auditActions(email))
                 .as("時計を止めているので順は問わない")
                 .containsExactlyInAnyOrder("PASSWORD_VERIFIED", "RECOVERY_CODE_USED", "LOGIN_SUCCEEDED");
@@ -342,7 +330,7 @@ class RecoveryCodeLoginSecurityIntegrationTest {
         mvc.perform(get(TOTP_URL).cookie(full))
                 .andExpect(status().isOk())
                 .andExpect(content().string(Matchers.not(Matchers.containsString(JUST_ENROLLED))));
-        assertThat(sessionAttributeNames(full)).doesNotContain(SessionLifetime.ENROLLMENT_STARTED_AT);
+        assertThat(sessions().attributeNames(full)).doesNotContain(SessionLifetime.ENROLLMENT_STARTED_AT);
     }
 
     // --- 補助 ---
@@ -451,23 +439,14 @@ class RecoveryCodeLoginSecurityIntegrationTest {
     }
 
     private String sessionAttributeText(Cookie session) {
-        String sessionId = new String(Base64.getDecoder().decode(session.getValue()), StandardCharsets.US_ASCII);
         return String.join(
                 "|",
-                jdbc.query(
-                        "SELECT a.attribute_bytes FROM platform.spring_session_attributes a"
-                                + " JOIN platform.spring_session s ON s.primary_id = a.session_primary_id"
-                                + " WHERE s.session_id = ?",
-                        (rs, n) -> new String(rs.getBytes(1), StandardCharsets.ISO_8859_1),
-                        sessionId));
+                sessions().attributeBytes(session).stream()
+                        .map(bytes -> new String(bytes, StandardCharsets.ISO_8859_1))
+                        .toList());
     }
 
-    private List<String> sessionAttributeNames(Cookie session) {
-        String sessionId = new String(Base64.getDecoder().decode(session.getValue()), StandardCharsets.US_ASCII);
-        return jdbc.queryForList(
-                "SELECT a.attribute_name FROM platform.spring_session_attributes a"
-                        + " JOIN platform.spring_session s ON s.primary_id = a.session_primary_id WHERE s.session_id = ?",
-                String.class,
-                sessionId);
+    private SpringSessionRows sessions() {
+        return new SpringSessionRows(jdbc);
     }
 }
