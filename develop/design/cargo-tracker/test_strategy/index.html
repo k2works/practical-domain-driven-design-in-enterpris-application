@@ -11309,7 +11309,7 @@ src/test/java/.../ui/                     画面の層のステップ定義（@u
 </tr>
 <tr>
 <td style="text-align: left;">認証</td>
-<td style="text-align: left;">ログイン、初回の TOTP の登録、password の再設定、ロック、session の失効の警告と延長（Bolt 32b。無操作の警告と延長、8 時間の警告、タブの間の同期、期限の到来の案内。<code>session_timeout_ui.feature</code>）、失効後の再認証の案内と入力の保持・開いていた画面への復帰（Bolt 32e）</td>
+<td style="text-align: left;">ログイン、初回の TOTP の登録、password の再設定、ロック、session の失効の警告と延長（Bolt 32b。無操作の警告と延長、8 時間の警告、タブの間の同期、期限の到来の案内。<code>session_timeout_ui.feature</code>）、失効後の再認証の案内と開いていた画面への復帰（Bolt 32e。無操作と 8 時間の失効の後に画面を開き直す・期限の到来の案内のリンクを押すと、ログインし直した後に同じ画面に戻る。サーバーの session の失効はセキュリティの統合テスト <code>ReturnAfterExpirySecurityIntegrationTest</code> で、画面は <code>session_timeout_ui.feature</code> で、session の行を古くして確かめる）、送信していない入力の保持と送信の後の失効（Bolt 32f）</td>
 <td style="text-align: left;">US-18、US 横断受入条件</td>
 </tr>
 </tbody>

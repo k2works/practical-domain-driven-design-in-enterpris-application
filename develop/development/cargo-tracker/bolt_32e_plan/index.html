@@ -10518,7 +10518,7 @@
 <h2 id="_7">ステップ計画<a class="headerlink" href="#_7" title="Permanent link">&para;</a></h2>
 <p>状態の記号: <code>[ ]</code> 未着手、<code>[-]</code> 進行中、<code>[?]</code> 承認待ち、<code>[x]</code> 完了。各ステップの終わりに <code>check</code> が緑であることと、計画からの変更を設計文書に反映したこと（T-53）を確かめ、push して CI を確かめる（T-26、T-65、T-118）。コミットは pathspec で作る（T-84、T-110）。複数行の書き換えはスクリプトのファイルにする（T-103）。ステップ 1 を push してからコードのステップを push する（T-109）。</p>
 <ul class="task-list">
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>1. 設計文書</strong> 【承認ゲート: 設計文書】</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>1. 設計文書</strong> 【承認ゲート: 設計文書】</li>
 <li>ui_design.md: A-03 の行（失効の後に開いていた画面に戻る。戻らない場合）、前提の表（:38）、画面遷移図と説明（:262・:275。案内のリンクの行き先、延長の失敗の後の A-01、ラベルを「もう一度ログインする」に）、session の警告の節（期限の到来の案内のリンク、:1035）、エラーと例外の扱い（:1116・:1117）</li>
 <li>architecture_backend.md: 認証の入口の部品の節に、失効の扱い（<code>invalidSessionStrategy</code>、覚える要求の条件、許す一覧は合成ルートが渡す）と持ち越し</li>
 <li>architecture_frontend.md: 「session の時間制限」（:108）と警告の節の 32e・32f の書き分け、期限の到来の案内のリンク</li>
