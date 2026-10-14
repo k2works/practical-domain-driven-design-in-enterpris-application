@@ -18,7 +18,8 @@ import org.springframework.security.core.userdetails.UserDetails;
  * ほかのコンテキストには {@link #actor()} で共有カーネルの型を渡す（ADR-012）。
  * 利用停止・無効な企業は {@link #isEnabled()} が false になり、password の照合の後に拒否する（IA-INV-09）。
  * session に置いた主体はログインの時点の値だが、Bolt 32c から認証済みの request ごとに {@link SessionRevalidationFilter} が今の
- * 役割・表示名・企業名で作り直して差し替える（{@code enabled} は true、password のハッシュは持たない。session には保存しない）。
+ * 役割・表示名・企業名で作り直して差し替える（{@code enabled} は true、password のハッシュは持たない。このフィルターは session に
+ * 保存しないが、A-02・A-07 が通ったときは認証のフィルターが作り直した主体で保存する）。
  */
 public final class CargoUserDetails implements UserDetails, CredentialsContainer {
 

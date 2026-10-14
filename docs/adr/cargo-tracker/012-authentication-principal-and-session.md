@@ -4,7 +4,7 @@ title: "ADR-012: 認証の主体は共有カーネルの型にし、password の
 description: "US-18 の password によるログインと session を、Spring Security 7 の form login と Spring Session JDBC で作る。"
 tags: [adr, authentication, session]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-14T01:25:26Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-14T02:18:41Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-06T06:51:29Z }
 ---
@@ -52,7 +52,7 @@ US-18 の password によるログインと session を、Spring Security 7 の 
 - 無操作 30 分は session の期限（`MAX_INACTIVE_INTERVAL`）で判定する。期限は `spring.session.timeout` で決める（`server.servlet.session.timeout` は Spring Session に効かないことを、既定と違う値のテストで確かめた）。
 - 発行から 8 時間の上限は、ログインのときに session の属性（固定の名前）に置いた認証時刻と、アプリケーションの `Clock` で比べるフィルターで判定する。Bolt 31 から、8 時間の起点（`AUTHENTICATED_AT`）はその session で初めて TOTP が通った時刻にし、password の段だけの session は password を確かめた時刻（`PASSWORD_VERIFIED_AT`）から 5 分で失効させる（[ADR-011](011-mfa-totp.md) の決定 2）。フィルターは要素の数で上限を選ぶ。このフィルターは認証の処理より前に置く（Bolt 13 の Try T-40）。認証済みなのに認証時刻がない session も失効させる（fail-closed。ログインの時刻を置かない認証の経路を足しても上限が外れない）。
 - 役割とホームの対応はルートのコントローラーの 1 か所に置き、ログインの後もルートを通す。画面のまだない役割は A-04 にする。
-- 失効した session の request は、業務データを出さずに A-03（`/session-expired`）へ移す。Bolt 32c から、利用停止・所属企業の無効化・利用者の削除の後の次の request も、session を捨てて A-03 へ移す（AC6。止められたことは画面に示さない）。この確かめのフィルター（`SessionRevalidationFilter`）は期限のフィルター（`SessionLifetimeFilter`）の直後、認証のフィルター（`UsernamePasswordAuthenticationFilter`・`TotpAuthenticationFilter`）より前に置く。期限の切れた session は先に A-03 に送られ、DB を読まない。上限を過ぎた session のままのログインの送信も A-03 へ移し、ログインの送信で session を延命させない。session に CSRF のトークンがない古いフォームの送信も、Spring Security が無効な session として A-03 へ移す。
+- 失効した session の request は、業務データを出さずに A-03（`/session-expired`）へ移す。Bolt 32c から、利用停止・所属企業の無効化・利用者の削除の後の次の request も、session を捨てて A-03 へ移す（AC6。止められたことは画面に示さない）。この確かめのフィルター（`SessionRevalidationFilter`）は期限のフィルター（`SessionLifetimeFilter`）の直後、認証のフィルター（`UsernamePasswordAuthenticationFilter`・`TotpAuthenticationFilter`）より前に置く。期限の切れた session は先に A-03 に送られ、DB を読まない。公開の URL（ログイン・再認証の案内・エラー・静的な資源）では確かめない（1 画面の表示で資源の数だけ読まず、止められた利用者の並行の資源の request で取消しを重ねて書かないため。Bolt 32c の開発レビュー）。ログアウトの送信は確かめるので、止められた利用者のログアウトは A-03 で終わり、監査記録は `LOGOUT` でなく `SESSION_REVOKED` になる。並行の業務の request が同時に取り消されると、`SESSION_REVOKED` が 2 行以上になることがあり、受け入れる。フィルターの順序の値は `addFilterAfter` で `UsernamePasswordAuthenticationFilter` と同じになり、登録の順で前に来る（統合テストで並びを見張る）。上限を過ぎた session のままのログインの送信も A-03 へ移し、ログインの送信で session を延命させない。session に CSRF のトークンがない古いフォームの送信も、Spring Security が無効な session として A-03 へ移す。
 
 ### 4. 監査
 

@@ -20,6 +20,9 @@ import com.example.cargotracker.identity.LogCapture;
 import com.example.cargotracker.identity.domain.model.aggregates.AuditRecordRepository;
 import com.example.cargotracker.identity.domain.model.aggregates.Company;
 import com.example.cargotracker.identity.domain.model.aggregates.CompanyRepository;
+import com.example.cargotracker.identity.domain.model.aggregates.RecoveryCode;
+import com.example.cargotracker.identity.domain.model.aggregates.RecoveryCodeHasher;
+import com.example.cargotracker.identity.domain.model.aggregates.RecoveryCodeRepository;
 import com.example.cargotracker.identity.domain.model.aggregates.TotpCodeGenerator;
 import com.example.cargotracker.identity.domain.model.aggregates.TotpCredential;
 import com.example.cargotracker.identity.domain.model.aggregates.TotpCredentialRepository;
@@ -45,6 +48,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.IntStream;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -83,6 +87,9 @@ class SessionRevalidationSecurityIntegrationTest {
     private static final String SALES_URL = "/staff/transport-requests";
     private static final String ROUTING_URL = "/staff/routing-cases";
     private static final String TRACKING_URL = "/staff/tracking-records";
+    private static final String RECOVERY_CODE = "1a2b-3c4d";
+    /** フィルターがエラーのレベルで残す行の文言（ほかのログの行と分ける）。 */
+    private static final String FAILURE_LOG = "request ごとの利用者の確かめに失敗した";
 
     @TestConfiguration(proxyBeanMethods = false)
     static class FixedClock {
@@ -126,6 +133,15 @@ class SessionRevalidationSecurityIntegrationTest {
 
     @Autowired
     AesGcmSecretCipher cipher;
+
+    @Autowired
+    RecoveryCodeRepository recoveryCodes;
+
+    @Autowired
+    RecoveryCodeHasher hasher;
+
+    @Autowired
+    org.springframework.security.web.FilterChainProxy filterChainProxy;
 
     private Company company;
 
@@ -202,8 +218,37 @@ class SessionRevalidationSecurityIntegrationTest {
                 .andExpect(redirectedUrl(EXPIRED_URL));
 
         assertThat(sessionExists(passwordStage)).isFalse();
-        assertThat(actions(email)).contains("SESSION_REVOKED").doesNotContain("LOGIN_SUCCEEDED");
+        assertThat(actions(email)).containsOnlyOnce("SESSION_REVOKED").doesNotContain("LOGIN_SUCCEEDED");
         assertThat(lastUsedStep(email)).as("TOTP の照合に進まない（刻みを使わない）").isZero();
+    }
+
+    @Test
+    void passwordの段だけの主体は利用停止の後は回復コードの送信もA03になり回復コードを使わない() throws Exception {
+        String email = user(Set.of(Role.SALES));
+        UserId userId = userIdOf(email);
+        UtcInstant now = new UtcInstant(clock.instant());
+        recoveryCodes.replaceAll(
+                userId,
+                IntStream.range(0, RecoveryCode.CODES_PER_USER)
+                        .mapToObj(i -> RecoveryCode.issue(
+                                userId, i == 0 ? RECOVERY_CODE : String.format("0000-%04x", i), hasher, now))
+                        .toList());
+        Cookie passwordStage = loginWithPassword(email);
+        mvc.perform(get(TOTP_URL).cookie(passwordStage)).andExpect(status().isOk());
+        assertThat(sessionExists(passwordStage)).as("止める前は session がある").isTrue();
+
+        jdbc.update("UPDATE identity.app_user SET status = 'SUSPENDED' WHERE email = ?", email);
+        mvc.perform(post(TOTP_URL)
+                        .cookie(passwordStage)
+                        .param("recoveryCode", RECOVERY_CODE)
+                        .with(csrf()))
+                .andExpect(redirectedUrl(EXPIRED_URL));
+
+        assertThat(sessionExists(passwordStage)).isFalse();
+        assertThat(recoveryCodes.findUnusedByUserId(userId)).as("回復コードを使わない").hasSize(RecoveryCode.CODES_PER_USER);
+        assertThat(actions(email))
+                .containsOnlyOnce("SESSION_REVOKED")
+                .doesNotContain("RECOVERY_CODE_USED", "LOGIN_SUCCEEDED");
     }
 
     // --- 役割の取消し・追加 ---
@@ -213,6 +258,7 @@ class SessionRevalidationSecurityIntegrationTest {
         String email = user(Set.of(Role.SALES, Role.ROUTE_DESIGNER));
         Cookie session = login(email);
         mvc.perform(get(ROUTING_URL).cookie(session)).andExpect(status().isOk());
+        assertThat(salesPage(session)).as("外す前はナビに経路設計がある").contains("href=\"/staff/routing-cases\"");
 
         jdbc.update(
                 "DELETE FROM identity.user_role WHERE user_id = ? AND role = 'ROUTE_DESIGNER'",
@@ -299,7 +345,7 @@ class SessionRevalidationSecurityIntegrationTest {
     }
 
     @Test
-    void 未認証のrequestと公開のURLと期限の切れたsessionでは読まない() throws Exception {
+    void 未認証のrequestと期限の切れたsessionでは読まない() throws Exception {
         String email = user(Set.of(Role.SALES));
         Cookie session = login(email);
         advance(Duration.ofHours(8));
@@ -310,6 +356,41 @@ class SessionRevalidationSecurityIntegrationTest {
         mvc.perform(get(SALES_URL).cookie(session)).andExpect(redirectedUrl(EXPIRED_URL));
 
         verify(standings, never()).findById(any());
+    }
+
+    @Test
+    void 認証済みのsessionでも公開のURLと静的な資源では読まない() throws Exception {
+        // 1 画面の表示で静的な資源の数だけ読まず、止められた利用者の並行の資源の request で取消しを重ねて書かない（Bolt 32c の開発レビュー）
+        String email = user(Set.of(Role.SALES));
+        Cookie session = login(email);
+        mvc.perform(get(SALES_URL).cookie(session)).andExpect(status().isOk());
+        clearInvocations(standings);
+
+        mvc.perform(get("/css/app.css").cookie(session)).andExpect(status().isOk());
+        mvc.perform(get("/js/transport-request-form.js").cookie(session)).andExpect(status().isOk());
+        mvc.perform(get(EXPIRED_URL).cookie(session)).andExpect(status().isOk());
+
+        verify(standings, never()).findById(any());
+        mvc.perform(get(SALES_URL).cookie(session)).andExpect(status().isOk());
+        verify(standings, times(1)).findById(userIdOf(email));
+    }
+
+    @Test
+    void 確かめのフィルターは期限のフィルターの直後で認証のフィルターより前にある() {
+        // addFilterAfter は順序の値が UsernamePasswordAuthenticationFilter と同じになり、登録の順で前に来る。その順を見張る（開発レビュー）
+        List<Class<?>> order = filterChainProxy.getFilterChains().getFirst().getFilters().stream()
+                .<Class<?>>map(Object::getClass)
+                .toList();
+
+        assertThat(order)
+                .containsSubsequence(
+                        SessionLifetimeFilter.class,
+                        SessionRevalidationFilter.class,
+                        org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter.class,
+                        TotpAuthenticationFilter.class);
+        assertThat(order.indexOf(SessionRevalidationFilter.class))
+                .as("期限のフィルターの直後")
+                .isEqualTo(order.indexOf(SessionLifetimeFilter.class) + 1);
     }
 
     // --- 誤りは fail-closed ---
@@ -332,7 +413,7 @@ class SessionRevalidationSecurityIntegrationTest {
         }
 
         assertThat(sessionExists(session)).isFalse();
-        assertThat(logs).contains(userIdOf(email).value().toString());
+        assertThat(logs).contains(FAILURE_LOG, userIdOf(email).value().toString());
     }
 
     @Test
@@ -347,7 +428,8 @@ class SessionRevalidationSecurityIntegrationTest {
 
         try (LogCapture capture = LogCapture.start()) {
             assertThatThrownBy(() -> mvc.perform(request)).isInstanceOf(DataAccessResourceFailureException.class);
-            assertThat(capture.text()).contains(userIdOf(email).value().toString());
+            assertThat(capture.text())
+                    .contains(FAILURE_LOG, userIdOf(email).value().toString());
         } finally {
             reset(auditRecords);
         }
@@ -365,7 +447,11 @@ class SessionRevalidationSecurityIntegrationTest {
                 userIdOf(email).value());
         RequestBuilder request = get(SALES_URL).cookie(session);
 
-        assertThatThrownBy(() -> mvc.perform(request)).isInstanceOf(IllegalStateException.class);
+        try (LogCapture capture = LogCapture.start()) {
+            assertThatThrownBy(() -> mvc.perform(request)).isInstanceOf(IllegalStateException.class);
+            assertThat(capture.text())
+                    .contains(FAILURE_LOG, userIdOf(email).value().toString());
+        }
         assertThat(sessionExists(session)).isFalse();
     }
 
@@ -428,6 +514,14 @@ class SessionRevalidationSecurityIntegrationTest {
                 totpCredentials.findByUserId(userIdOf(email)).orElseThrow();
         return totpCodes.code(
                 credential.userId(), credential.secret(), TotpCredential.stepAt(new UtcInstant(clock.instant())));
+    }
+
+    private String salesPage(Cookie session) throws Exception {
+        return mvc.perform(get(SALES_URL).cookie(session))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
     }
 
     private long lastUsedStep(String email) {

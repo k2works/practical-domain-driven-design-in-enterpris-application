@@ -49,17 +49,15 @@ public class SessionRevalidationService {
      */
     public SessionStanding revalidate(UserId userId, CompanyId companyId) {
         Optional<UserStanding> found = standings.findById(userId);
-        Optional<AuthenticationRejection> rejection = found.map(
-                        standing -> standing.user().authenticationRejection(standing.company()))
-                .orElse(Optional.of(AuthenticationRejection.UNKNOWN_USER));
-        if (rejection.isPresent()) {
-            AuditRecord revoked =
-                    AuditRecord.sessionRevoked(userId, companyId, rejection.get(), new UtcInstant(clock.instant()));
-            transactionTemplate.executeWithoutResult(status -> auditRecords.append(revoked));
-            return new SessionStanding.Revoked(rejection.get());
+        if (found.isEmpty()) {
+            return revoke(userId, companyId, AuthenticationRejection.UNKNOWN_USER);
         }
-        UserStanding standing = found.orElseThrow();
+        UserStanding standing = found.get();
         User user = standing.user();
+        Optional<AuthenticationRejection> rejection = user.authenticationRejection(standing.company());
+        if (rejection.isPresent()) {
+            return revoke(userId, companyId, rejection.get());
+        }
         return new SessionStanding.Current(
                 new AuthenticatedActor(
                         user.id(),
@@ -68,5 +66,15 @@ public class SessionRevalidationService {
                         user.displayName(),
                         standing.company().name()),
                 user.email());
+    }
+
+    /**
+     * 取消しを記録する。操作者は session の主体（利用者が消えていても追跡できるように）。利用者は企業を移らない前提で、session の
+     * 企業 ID は読み出した利用者の企業と同じ（企業の移動は利用者の管理（US-16）で扱うときに見直す）。
+     */
+    private SessionStanding revoke(UserId userId, CompanyId companyId, AuthenticationRejection reason) {
+        AuditRecord revoked = AuditRecord.sessionRevoked(userId, companyId, reason, new UtcInstant(clock.instant()));
+        transactionTemplate.executeWithoutResult(status -> auditRecords.append(revoked));
+        return new SessionStanding.Revoked(reason);
     }
 }

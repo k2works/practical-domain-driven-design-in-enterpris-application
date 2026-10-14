@@ -23,6 +23,7 @@ import com.example.cargotracker.identity.infrastructure.security.TotpAuthenticat
 import com.example.cargotracker.identity.infrastructure.security.TotpRejectedException;
 import com.example.cargotracker.shared.domain.Role;
 import java.time.Clock;
+import java.util.Arrays;
 import java.util.Map;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
@@ -45,6 +46,9 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.access.DelegatingMissingAuthorityAccessDeniedHandler;
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
+import org.springframework.security.web.util.matcher.OrRequestMatcher;
+import org.springframework.security.web.util.matcher.RequestMatcher;
 
 /**
  * 認証と認可の構成（US-18 の password の段と TOTP の段、ADR-011・ADR-012）。
@@ -69,10 +73,10 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
         authorities = {FactorGrantedAuthority.PASSWORD_AUTHORITY, TotpAuthenticationToken.FACTOR_TOTP})
 public class SecurityConfiguration {
 
-    /** 認証なしで開ける URL（ログイン、再認証の案内、エラー、静的な資源）。 */
     /** A-01 の URL。 */
     private static final String LOGIN_URL = "/login";
 
+    /** 認証なしで開ける URL（ログイン、再認証の案内、エラー、静的な資源）。request ごとの利用者の確かめもしない（Bolt 32c）。 */
     private static final String[] PUBLIC_PATHS = {
         LOGIN_URL, SessionLifetime.EXPIRED_URL, "/error", "/css/**", "/js/**", "/webjars/**", "/favicon.ico"
     };
@@ -83,6 +87,13 @@ public class SecurityConfiguration {
      */
     private static final String CONTENT_SECURITY_POLICY =
             "default-src 'self'; frame-ancestors 'none'; form-action 'self'; base-uri 'self'; object-src 'none'";
+
+    private static RequestMatcher publicRequests() {
+        PathPatternRequestMatcher.Builder paths = PathPatternRequestMatcher.withDefaults();
+        return new OrRequestMatcher(Arrays.stream(PUBLIC_PATHS)
+                .map(path -> (RequestMatcher) paths.matcher(path))
+                .toList());
+    }
 
     @Bean
     PasswordEncoder passwordEncoder() {
@@ -181,7 +192,11 @@ public class SecurityConfiguration {
                 .addFilterBefore(new SessionLifetimeFilter(clock), UsernamePasswordAuthenticationFilter.class)
                 // request ごとの利用者の確かめは期限の確認の直後、認証のフィルターより前に置く（期限の切れた session は読まない。
                 // 止められた利用者の A-02・A-07 の送信も認証の前に A-03。Bolt 32c）
-                .addFilterAfter(new SessionRevalidationFilter(sessionRevalidationService), SessionLifetimeFilter.class)
+                // addFilterAfter の順序の値は UsernamePasswordAuthenticationFilter と同じになり、先に登録したこちらが前に来る（並びは
+                // 統合テストで見張る）
+                .addFilterAfter(
+                        new SessionRevalidationFilter(sessionRevalidationService, publicRequests()),
+                        SessionLifetimeFilter.class)
                 // 足りない要素の画面へ導く。TOTP が足りなければ A-02、password が足りなければ A-01
                 .exceptionHandling(exceptions ->
                         exceptions.accessDeniedHandler(DelegatingMissingAuthorityAccessDeniedHandler.builder()

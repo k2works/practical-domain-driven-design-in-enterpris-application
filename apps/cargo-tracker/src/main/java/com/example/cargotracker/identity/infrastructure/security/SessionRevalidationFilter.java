@@ -15,6 +15,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 /**
@@ -25,12 +26,15 @@ import org.springframework.web.filter.OncePerRequestFilter;
  * <ul>
  *   <li>拒否（利用停止・無効な企業・利用者なし）なら、session を捨て、セキュリティの文脈を消し、業務データを出さずに A-03 へ移す
  *   <li>拒否でなければ、今の役割・表示名・企業名で主体を作り直し、今の認証の結果を {@code toBuilder()} で主体と {@code ROLE_} の
- *       権限だけ替える（要素の権限は残す）。新しい文脈に入れ、session には保存しない（毎回作り直すので古い役割は戻らない）
+ *       権限だけ替える（要素の権限は残す）。新しい文脈に入れ、このフィルターは session に保存しない（毎回作り直すので古い役割は
+ *       戻らない。A-02・A-07 が通ったときは、後ろの認証のフィルターが差し替えた後の主体で保存する）
  *   <li>読み出し・監査の誤り、役割が 0 件の利用者は、session を捨ててから投げ直し 500 にする（fail-closed）
  * </ul>
  *
  * <p>{@link SessionLifetimeFilter} の直後、認証のフィルター（password・TOTP）より前に置く。期限の切れた session は先に A-03 へ
- * 送られ、ここでは読まない。止められた利用者の A-02・A-07 の送信も、認証の前に A-03 になる。
+ * 送られ、ここでは読まない。止められた利用者の A-02・A-07 の送信も、認証の前に A-03 になる。公開の URL（ログイン・再認証の案内・
+ * エラー・静的な資源）では確かめない。ログアウトの送信は確かめるので、止められた利用者のログアウトは A-03 で終わり、監査記録は
+ * {@code LOGOUT} でなく {@code SESSION_REVOKED} になる。
  */
 public class SessionRevalidationFilter extends OncePerRequestFilter {
 
@@ -38,9 +42,21 @@ public class SessionRevalidationFilter extends OncePerRequestFilter {
     private static final String ROLE_PREFIX = "ROLE_";
 
     private final SessionRevalidationService service;
+    private final RequestMatcher publicRequests;
 
-    public SessionRevalidationFilter(SessionRevalidationService service) {
+    /**
+     * @param service 確かめのサービス
+     * @param publicRequests 確かめない公開の URL（ログイン、再認証の案内、エラー、静的な資源）。1 画面の表示で静的な資源の数だけ
+     *     読まず、止められた利用者の並行の資源の request で取消しを重ねて書かないため（Bolt 32c の開発レビュー）
+     */
+    public SessionRevalidationFilter(SessionRevalidationService service, RequestMatcher publicRequests) {
         this.service = service;
+        this.publicRequests = publicRequests;
+    }
+
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        return publicRequests.matches(request);
     }
 
     @Override
@@ -62,7 +78,12 @@ public class SessionRevalidationFilter extends OncePerRequestFilter {
                     "request ごとの利用者の確かめに失敗した。session を捨てる（利用者 {}）",
                     sessionActor.userId().value(),
                     e);
-            discard(request);
+            try {
+                discard(request);
+            } catch (RuntimeException discardFailure) {
+                // session の行を消せなくても、元の誤りを投げ直す（原因を失わない）
+                e.addSuppressed(discardFailure);
+            }
             throw e;
         }
         switch (standing) {

@@ -88,32 +88,47 @@ abstract class UserStandingRepositoryContract {
     }
 
     @Test
-    void 利用停止の利用者と無効な企業もそのまま読める() {
+    void 利用停止の利用者もそのまま読める() {
         Company company = newCompany();
         User user = newUser(company, Set.of(Role.SHIPPER));
         jdbc().update(
                         "UPDATE identity.app_user SET status = 'SUSPENDED' WHERE id = ?",
                         user.id().value());
+
+        assertThat(standings().findById(user.id())).hasValueSatisfying(standing -> {
+            assertThat(standing.user().status()).isEqualTo(UserStatus.SUSPENDED);
+            assertThat(standing.company().active()).isTrue();
+        });
+    }
+
+    @Test
+    void 無効な企業の利用者もそのまま読める() {
+        Company company = newCompany();
+        User user = newUser(company, Set.of(Role.SHIPPER));
         jdbc().update(
                         "UPDATE identity.company SET active = FALSE WHERE id = ?",
                         company.id().value());
 
         assertThat(standings().findById(user.id())).hasValueSatisfying(standing -> {
-            assertThat(standing.user().status()).isEqualTo(UserStatus.SUSPENDED);
+            assertThat(standing.user().status()).isEqualTo(UserStatus.ACTIVE);
             assertThat(standing.company().active()).isFalse();
         });
     }
 
     @Test
-    void 役割の変更は次の読み出しに出る() {
+    void 今の役割の行だけを読む() {
+        // 変更の前後の読み比べは統合テストに任せる（ここはトランザクションの中で、MyBatis の 1 次キャッシュが前の結果を返すため）
         User user = newUser(newCompany(), Set.of(Role.SHIPPER, Role.SALES));
         jdbc().update(
                         "DELETE FROM identity.user_role WHERE user_id = ? AND role = 'SALES'",
                         user.id().value());
+        jdbc().update(
+                        "INSERT INTO identity.user_role (user_id, role, granted_at) VALUES (?, 'TRACKING_MANAGER', CURRENT_TIMESTAMP)",
+                        user.id().value());
 
         assertThat(standings().findById(user.id()))
-                .hasValueSatisfying(
-                        standing -> assertThat(standing.user().roles()).containsExactly(Role.SHIPPER));
+                .hasValueSatisfying(standing -> assertThat(standing.user().roles())
+                        .containsExactlyInAnyOrder(Role.SHIPPER, Role.TRACKING_MANAGER));
     }
 
     @Test
