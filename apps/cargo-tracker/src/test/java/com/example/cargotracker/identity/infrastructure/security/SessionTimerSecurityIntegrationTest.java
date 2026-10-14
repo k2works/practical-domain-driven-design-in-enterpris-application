@@ -22,6 +22,7 @@ import com.example.cargotracker.identity.domain.model.valueobjects.CompanyKind;
 import com.example.cargotracker.identity.domain.model.valueobjects.EmailAddress;
 import com.example.cargotracker.identity.domain.model.valueobjects.UserStatus;
 import com.example.cargotracker.identity.infrastructure.crypto.AesGcmSecretCipher;
+import com.example.cargotracker.identity.interfaces.web.SessionController;
 import com.example.cargotracker.identity.interfaces.web.SessionTimerAdvice.SessionTimer;
 import com.example.cargotracker.shared.acceptance.MutableClock;
 import com.example.cargotracker.shared.domain.CompanyId;
@@ -60,7 +61,7 @@ class SessionTimerSecurityIntegrationTest {
     private static final byte[] TOTP_SECRET = "12345678901234567890".getBytes(StandardCharsets.US_ASCII);
     private static final String HOME_URL = "/customer/transport-requests";
     private static final String TOTP_URL = "/login/totp";
-    private static final String EXTEND_URL = "/session/extend";
+    private static final String EXTEND_URL = SessionController.EXTEND_URL;
     private static final String EXPIRED_URL = "/session-expired";
     private static final Pattern CSRF_TOKEN = Pattern.compile("name=\"_csrf\" value=\"([^\"]+)\"");
 
@@ -96,20 +97,25 @@ class SessionTimerSecurityIntegrationTest {
     @BeforeEach
     void 時計を置き荷主担当者を登録する() {
         clock.setInstant(LOGIN_AT);
-        Company company = Company.of(new CompanyId(UUID.randomUUID()), "荷主 A", CompanyKind.SHIPPER, true);
+        email = user(CompanyKind.SHIPPER, Role.SHIPPER);
+    }
+
+    private String user(CompanyKind kind, Role role) {
+        Company company = Company.of(new CompanyId(UUID.randomUUID()), "A 社", kind, true);
         companies.add(company);
-        email = "timer-" + UUID.randomUUID() + "@example.com";
+        String newEmail = "timer-" + UUID.randomUUID() + "@example.com";
         UserId userId = new UserId(UUID.randomUUID());
         users.add(User.of(
                 userId,
                 company.id(),
-                EmailAddress.of(email),
-                "荷主 太郎",
+                EmailAddress.of(newEmail),
+                "利用者",
                 passwordEncoder.encode(PASSWORD),
                 UserStatus.ACTIVE,
-                Set.of(Role.SHIPPER)));
+                Set.of(role)));
         totpCredentials.add(TotpCredential.enroll(
                 userId, cipher.encrypt(TOTP_SECRET.clone(), userId), new UtcInstant(clock.instant())));
+        return newEmail;
     }
 
     // --- 残り時間を画面に渡す ---
@@ -117,7 +123,7 @@ class SessionTimerSecurityIntegrationTest {
     @Test
     void ログインした画面に無操作の秒数と8時間の残りの秒数が渡る() throws Exception {
         Cookie session = login();
-        advance(Duration.ofHours(2));
+        atElapsed(Duration.ofHours(2));
 
         String html = mvc.perform(get(HOME_URL).cookie(session))
                 .andExpect(status().isOk())
@@ -149,7 +155,35 @@ class SessionTimerSecurityIntegrationTest {
         assertThat(html).doesNotContain("session-warning").doesNotContain("/js/session-timeout.js");
     }
 
+    @Test
+    void 社内業務Webのレイアウトにも残り時間と警告が出る() throws Exception {
+        email = user(CompanyKind.OPERATOR, Role.SALES);
+        Cookie session = login();
+
+        String html = mvc.perform(get("/staff/transport-requests").cookie(session))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        assertThat(html)
+                .contains("data-idle-seconds=\"1800\"")
+                .contains("data-lifetime-remaining-seconds=\"28800\"")
+                .contains("/js/session-timeout.js");
+    }
+
     // --- 延長 ---
+
+    @Test
+    void 利用を止められた利用者の延長はsessionを捨ててA03へ移す() throws Exception {
+        // 延長も request ごとの利用者の確かめを通る（Bolt 32c。止められた利用者に 204 を返して延長できたと示さない）
+        Cookie session = login();
+        String token = csrfTokenOf(session);
+        jdbc.update("UPDATE identity.app_user SET status = 'SUSPENDED' WHERE email = ?", email);
+
+        mvc.perform(post(EXTEND_URL).cookie(session).param("_csrf", token)).andExpect(redirectedUrl(EXPIRED_URL));
+        assertThat(sessions().exists(session)).as("session を捨てた").isFalse();
+    }
 
     @Test
     void 延長は204を返しsessionの最終アクセスを新しくする() throws Exception {
@@ -168,7 +202,7 @@ class SessionTimerSecurityIntegrationTest {
     @Test
     void CSRFのトークンのない延長は403で拒む() throws Exception {
         Cookie session = login();
-        csrfTokenOf(session);
+        ensureCsrfTokenInSession(session);
 
         mvc.perform(post(EXTEND_URL).cookie(session)).andExpect(status().isForbidden());
     }
@@ -176,7 +210,7 @@ class SessionTimerSecurityIntegrationTest {
     @Test
     void 誤ったCSRFのトークンの延長は403で拒む() throws Exception {
         Cookie session = login();
-        csrfTokenOf(session);
+        ensureCsrfTokenInSession(session);
 
         mvc.perform(post(EXTEND_URL).cookie(session).with(csrf().useInvalidToken()))
                 .andExpect(status().isForbidden());
@@ -196,7 +230,7 @@ class SessionTimerSecurityIntegrationTest {
     void 八時間を過ぎたsessionの延長はA03へ移す() throws Exception {
         Cookie session = login();
         String token = csrfTokenOf(session);
-        advance(Duration.ofHours(8));
+        atElapsed(Duration.ofHours(8));
 
         mvc.perform(post(EXTEND_URL).cookie(session).param("_csrf", token)).andExpect(redirectedUrl(EXPIRED_URL));
     }
@@ -205,10 +239,10 @@ class SessionTimerSecurityIntegrationTest {
     void 延長は八時間の上限を延ばさない() throws Exception {
         Cookie session = login();
         String token = csrfTokenOf(session);
-        advance(Duration.ofHours(8).minusMinutes(1));
+        atElapsed(Duration.ofHours(8).minusMinutes(1));
         mvc.perform(post(EXTEND_URL).cookie(session).param("_csrf", token)).andExpect(status().isNoContent());
 
-        advance(Duration.ofHours(8));
+        atElapsed(Duration.ofHours(8));
 
         mvc.perform(get(HOME_URL).cookie(session)).andExpect(redirectedUrl(EXPIRED_URL));
     }
@@ -264,6 +298,14 @@ class SessionTimerSecurityIntegrationTest {
         return sessionOf(result);
     }
 
+    /**
+     * ログインした画面を開いて session に CSRF のトークンを作る（トークンのない session では、トークンのない送信が 403 でなく
+     * invalidSessionUrl の A-03 になるため、403 を確かめる前に作る）。
+     */
+    private void ensureCsrfTokenInSession(Cookie session) throws Exception {
+        csrfTokenOf(session);
+    }
+
     /** ログインした画面を開いて、session の CSRF のトークンを画面の HTML から取る（ヘッダーのログアウトのフォーム）。 */
     private String csrfTokenOf(Cookie session) throws Exception {
         return tokenIn(mvc.perform(get(HOME_URL).cookie(session))
@@ -283,7 +325,8 @@ class SessionTimerSecurityIntegrationTest {
         return cookie;
     }
 
-    private void advance(Duration duration) {
+    /** 時計をログインの時刻からその時間だけ後に置く（進める量でなく、ログインからの位置）。 */
+    private void atElapsed(Duration duration) {
         clock.setInstant(LOGIN_AT.plus(duration));
     }
 

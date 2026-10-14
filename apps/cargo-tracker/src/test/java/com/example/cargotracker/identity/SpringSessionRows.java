@@ -99,13 +99,18 @@ public final class SpringSessionRows {
 
     /** 最終アクセスの時刻を、いまから指定の時間だけ前にする（無操作の時間を作る。Spring Session は実時間で期限を見る）。 */
     public void idle(Cookie session, Duration duration) {
+        idle(session.getValue(), duration);
+    }
+
+    /** {@link #idle(Cookie, Duration)} の、ブラウザの cookie の値（Base64 の文字列）を受ける形（画面の層のテスト。Bolt 32b）。 */
+    public void idle(String cookieValue, Duration duration) {
         long lastAccess = Instant.now().minus(duration).toEpochMilli();
         int updated = jdbc.update(
                 "UPDATE platform.spring_session SET last_access_time = ?,"
                         + " expiry_time = ? + max_inactive_interval * 1000 WHERE session_id = ?",
                 lastAccess,
                 lastAccess,
-                sessionId(session));
+                sessionId(cookieValue));
         assertThat(updated).as("session の行").isEqualTo(1);
     }
 

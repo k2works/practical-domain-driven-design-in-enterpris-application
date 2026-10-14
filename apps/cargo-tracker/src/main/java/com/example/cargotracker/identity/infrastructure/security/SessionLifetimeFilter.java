@@ -33,14 +33,16 @@ public class SessionLifetimeFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
             throws ServletException, IOException {
         HttpSession session = request.getSession(false);
-        if (session != null && expired(session)) {
+        // 上限の判定と残りの秒数を同じ時刻で数える（境界で「上限の前なのに残り 0 秒」にしない）
+        Instant now = clock.instant();
+        if (session != null && expired(session, now)) {
             session.invalidate();
             SecurityContextHolder.clearContext();
             response.sendRedirect(request.getContextPath() + SessionLifetime.EXPIRED_URL);
             return;
         }
         if (session != null) {
-            putLifetimeRemaining(request, session);
+            putLifetimeRemaining(request, session, now);
         }
         chain.doFilter(request, response);
     }
@@ -49,13 +51,13 @@ public class SessionLifetimeFilter extends OncePerRequestFilter {
      * 2 つの要素がそろった session なら、8 時間の上限までの残りの秒数を request の属性に置く（Bolt 32b、ACC-06。画面の session の
      * 警告）。上限の判定と同じ起点と時計で数える。password の段・登録の途中・認証の前には置かない。
      */
-    private void putLifetimeRemaining(HttpServletRequest request, HttpSession session) {
+    private static void putLifetimeRemaining(HttpServletRequest request, HttpSession session, Instant now) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || !hasAuthority(authentication, TotpAuthenticationToken.FACTOR_TOTP)) {
             return;
         }
         if (session.getAttribute(SessionLifetime.AUTHENTICATED_AT) instanceof Instant at) {
-            Duration remaining = Duration.between(clock.instant(), at.plus(SessionLifetime.MAX_LIFETIME));
+            Duration remaining = Duration.between(now, at.plus(SessionLifetime.MAX_LIFETIME));
             request.setAttribute(SessionLifetime.LIFETIME_REMAINING_ATTRIBUTE, remaining.toSeconds());
         }
     }
@@ -66,7 +68,7 @@ public class SessionLifetimeFilter extends OncePerRequestFilter {
      * session に前の利用者の時刻が残っても、password の段の上限を外さない。Bolt 31 の開発レビュー）。認証済みなのに起点の時刻が
      * ない session も失効として扱う（fail-closed。Bolt 14 レビュー）。配備の前の形の session（password の段の時刻がない）も失効する。
      */
-    private boolean expired(HttpSession session) {
+    private static boolean expired(HttpSession session, Instant now) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null
                 || !authentication.isAuthenticated()
@@ -75,19 +77,22 @@ public class SessionLifetimeFilter extends OncePerRequestFilter {
         }
         boolean totpPassed = hasAuthority(authentication, TotpAuthenticationToken.FACTOR_TOTP);
         if (totpPassed) {
-            return expiredSince(session.getAttribute(SessionLifetime.AUTHENTICATED_AT), SessionLifetime.MAX_LIFETIME);
+            return expiredSince(
+                    session.getAttribute(SessionLifetime.AUTHENTICATED_AT), SessionLifetime.MAX_LIFETIME, now);
         }
         // 登録の途中（A-07 を開いた後）だけ、登録を始めた時刻から 15 分（Bolt 31b）。それ以外の password の段は 5 分
         Object enrollmentStartedAt = session.getAttribute(SessionLifetime.ENROLLMENT_STARTED_AT);
         if (enrollmentStartedAt != null) {
-            return expiredSince(enrollmentStartedAt, SessionLifetime.ENROLLMENT_LIFETIME);
+            return expiredSince(enrollmentStartedAt, SessionLifetime.ENROLLMENT_LIFETIME, now);
         }
         return expiredSince(
-                session.getAttribute(SessionLifetime.PASSWORD_VERIFIED_AT), SessionLifetime.PASSWORD_STAGE_LIFETIME);
+                session.getAttribute(SessionLifetime.PASSWORD_VERIFIED_AT),
+                SessionLifetime.PASSWORD_STAGE_LIFETIME,
+                now);
     }
 
-    private boolean expiredSince(Object startedAt, Duration lifetime) {
-        return !(startedAt instanceof Instant at) || !clock.instant().isBefore(at.plus(lifetime));
+    private static boolean expiredSince(Object startedAt, Duration lifetime, Instant now) {
+        return !(startedAt instanceof Instant at) || !now.isBefore(at.plus(lifetime));
     }
 
     private static boolean hasAuthority(Authentication authentication, String authority) {

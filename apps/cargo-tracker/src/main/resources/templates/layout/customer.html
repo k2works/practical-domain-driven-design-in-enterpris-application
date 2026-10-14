@@ -8,8 +8,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title th:replace="${title}">cargo-tracker</title>
     <th:block th:replace="~{layout/common :: assets(${scripts})}"></th:block>
-    <!-- session の警告（Bolt 32b、ACC-06）。ログインした画面だけで読む（layout/public には置かない） -->
-    <script th:if="${sessionTimer != null}" th:src="@{/js/session-timeout.js}" defer></script>
 </head>
 <body>
 <header class="navbar navbar-expand-md border-bottom app-header">
@@ -58,8 +56,9 @@
 <footer class="border-top app-footer">
     <p class="mb-0">お困りのときは: カスタマーサポート 平日 09:00〜18:00（Asia/Tokyo）</p>
 </footer>
-<!-- th:replace は th:if より先に評価されるので、条件は外側の th:block に置く -->
-<th:block th:if="${currentActor != null and sessionTimer != null}">
+<!-- session の警告とそのスクリプト（Bolt 32b、ACC-06）。2 つの要素のそろった session の画面だけ（layout/public には置かない）。
+     th:replace は th:if より先に評価されるので、条件は外側の th:block に置く -->
+<th:block th:if="${sessionTimer != null}">
     <th:block th:replace="~{layout/session-warning :: warning(${sessionTimer})}"></th:block>
 </th:block>
 </body>

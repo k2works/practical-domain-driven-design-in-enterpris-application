@@ -241,6 +241,16 @@ class SessionLifetimeFilterTest {
     }
 
     @Test
+    void 前の利用者のログインの時刻が残ったpasswordの段のsessionには残りを置かない() throws Exception {
+        // 置くかどうかは session の時刻の属性でなく認証の要素で選ぶ（上限の判定と同じ。Bolt 32b の開発レビュー）
+        MockHttpSession session = passwordStageSession(true);
+        session.setAttribute(SessionLifetime.AUTHENTICATED_AT, LOGIN_AT);
+
+        assertThat(requestOf(session, Duration.ofMinutes(1)).getAttribute(SessionLifetime.LIFETIME_REMAINING_ATTRIBUTE))
+                .isNull();
+    }
+
+    @Test
     void 登録の途中のsessionには残りを置かない() throws Exception {
         MockHttpSession session = passwordStageSession(true);
         session.setAttribute(SessionLifetime.ENROLLMENT_STARTED_AT, LOGIN_AT);

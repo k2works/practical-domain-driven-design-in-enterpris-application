@@ -5,6 +5,7 @@ import static com.microsoft.playwright.assertions.PlaywrightAssertions.assertTha
 import com.example.cargotracker.identity.SpringSessionRows;
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
+import com.microsoft.playwright.Route;
 import com.microsoft.playwright.options.AriaRole;
 import io.cucumber.java.ja.かつ;
 import io.cucumber.java.ja.ならば;
@@ -78,14 +79,31 @@ public class SessionTimeoutUiSteps {
         warningButton(name).click();
     }
 
-    @もし("ログインから 7 時間 56 分たった session で見積依頼の作成画面を開き直す")
-    public void ログインから7時間56分たったsessionで見積依頼の作成画面を開き直す() {
+    @もし("ログインから {int} 時間 {int} 分たった session で見積依頼の作成画面を開き直す")
+    public void ログインから_時間_分たったsessionで見積依頼の作成画面を開き直す(int hours, int minutes) {
         new SpringSessionRows(jdbc)
                 .putAttribute(
                         browser.sessionCookieValue(),
                         AUTHENTICATED_AT,
-                        Instant.now().minus(Duration.ofHours(7).plusMinutes(56)));
+                        Instant.now().minus(Duration.ofHours(hours).plusMinutes(minutes)));
         page().navigate(baseUrl + NEW_TRANSPORT_REQUEST);
+    }
+
+    @もし("Esc キーを押す")
+    public void Escキーを押す() {
+        page().keyboard().press("Escape");
+    }
+
+    @もし("延長の送信がサーバーの誤りで失敗する状態で警告の {string} を押す")
+    public void 延長の送信がサーバーの誤りで失敗する状態で警告の_を押す(String name) {
+        page().route("**/session/extend", route -> route.fulfill(new Route.FulfillOptions().setStatus(500)));
+        warningButton(name).click();
+    }
+
+    @もし("サーバーの session が無操作で切れた後に警告の {string} を押す")
+    public void サーバーのsessionが無操作で切れた後に警告の_を押す(String name) {
+        new SpringSessionRows(jdbc).idle(browser.sessionCookieValue(), Duration.ofMinutes(31));
+        warningButton(name).click();
     }
 
     @もし("同じブラウザの別のタブで見積依頼の一覧を開く")
@@ -96,15 +114,15 @@ public class SessionTimeoutUiSteps {
     @ならば("操作がないためにログアウトする警告が出て {string} にフォーカスがある")
     public void 操作がないためにログアウトする警告が出て_にフォーカスがある(String name) {
         assertThat(warning()).isVisible();
-        assertThat(warning()).containsText("操作がないため、あと 5 分でログアウトします。");
+        assertThat(warning()).containsText("画面の移動や送信がないため、あと 5 分でログアウトします。");
         assertThat(warningButton(name)).isFocused();
         browser.checkAccessibility();
     }
 
-    @ならば("ログインから 8 時間がたつ警告が出て延長のボタンはなく {string} にフォーカスがある")
-    public void ログインから8時間がたつ警告が出て延長のボタンはなく_にフォーカスがある(String name) {
+    @ならば("ログインから 8 時間になる警告が出て延長のボタンはなく {string} にフォーカスがある")
+    public void ログインから8時間になる警告が出て延長のボタンはなく_にフォーカスがある(String name) {
         assertThat(warning()).isVisible();
-        assertThat(warning()).containsText("ログインから 8 時間がたつため");
+        assertThat(warning()).containsText("ログインから 8 時間になるため");
         assertThat(warning()).containsText("延長はできません。");
         assertThat(warningButton("ログインを延長する")).isHidden();
         assertThat(warningButton(name)).isFocused();
@@ -114,6 +132,21 @@ public class SessionTimeoutUiSteps {
     @ならば("警告が閉じる")
     public void 警告が閉じる() {
         assertThat(warning()).isHidden();
+    }
+
+    @ならば("警告が閉じ出発地にフォーカスが戻る")
+    public void 警告が閉じ出発地にフォーカスが戻る() {
+        assertThat(warning()).isHidden();
+        assertThat(origin()).isFocused();
+    }
+
+    @ならば("警告の中に {string} と示され {string} が残る")
+    public void 警告の中に_と示され_が残る(String message, String name) {
+        assertThat(warning()).isVisible();
+        assertThat(warning().getByRole(AriaRole.ALERT)).containsText(message);
+        assertThat(warningButton(name)).isVisible();
+        assertThat(warningButton(name)).isEnabled();
+        browser.checkAccessibility();
     }
 
     @ならば("警告は出ていない")

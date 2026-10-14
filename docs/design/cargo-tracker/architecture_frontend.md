@@ -4,7 +4,7 @@ title: "cargo-tracker フロントエンドアーキテクチャ"
 description: "cargo-tracker の利用チャネル、サーバーサイドレンダリングとハイパーメディアによる画面提供、画面の配置、アクセシビリティと開示制御の構造的な担保。"
 tags: [design, architecture, frontend]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-14T07:42:42Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-14T09:07:27Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T07:11:12Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:01:37Z }
@@ -111,9 +111,9 @@ WCAG 2.2 AA を目標とし、個々の画面の注意に頼らず共通部品�
 
 文言とフォーカスの動きは [UI 設計](ui_design.md) の共通部品「session の警告（Bolt 32b）」に置く。
 
-- **置き場所**: 警告の部分（`templates/layout/session-warning.html`）を共通のレイアウト `layout/customer`・`layout/staff` に入れ、`/js/session-timeout.js` をその head に直接置く。`layout/public` には置かない。CSP（`default-src 'self'`）がインラインのスクリプトを許さないので、外部のファイルにする（`transport-request-form.js` と同じ）
+- **置き場所**: 警告の部分（`templates/layout/session-warning.html`）を共通のレイアウト `layout/customer`・`layout/staff` の body の最後に入れ、`/js/session-timeout.js` は警告の部分の中に置く（出す条件を 1 か所にする。Bolt 32b の開発レビュー）。`layout/public` には置かない。CSP（`default-src 'self'`）がインラインのスクリプトを許さないので、外部のファイルにする（`transport-request-form.js` と同じ）
 - **残り時間はサーバーが出した秒数から数える**: ログインした画面の応答に、無操作の期限の秒数（`HttpSession.getMaxInactiveInterval()`。今は 1800）と 8 時間の上限までの残りの秒数を、警告の部分の `data-` 属性で出す。ブラウザは残りを問い合わせる定期の request を送らない（問い合わせ自体が無操作の期限を延ばしてしまう）
-- **タブの間の同期**: 画面の読み込みと延長の 204 の時刻を「最後の request の時刻」とし、`localStorage` のキー `cargotracker.session.lastRequestAt` に置く。値はミリ秒の時刻だけで、業務データ・利用者の識別子・session ID は置かない。ログアウトしても消さない（次のログインの画面の読み込みで上書きされる）。無操作の期限は「最後の request の時刻 + 無操作の秒数」、8 時間の期限は「読み込みの時刻 + 8 時間の残りの秒数」とし、早いほうの 5 分前に警告を開く。ほかのタブが `localStorage` を更新したら（`storage` のイベント）数え直し、要らなくなった警告を閉じる。`localStorage` を使えないときは、そのタブの時刻だけで数える
+- **タブの間の同期**: 画面の読み込みと延長の 204 の時刻を「最後の request の時刻」とし、`localStorage` のキー `cargotracker.session.lastRequestAt` に置く。値はミリ秒の時刻だけで、業務データ・利用者の識別子・session ID は置かない。ログアウトしても消さない（次のログインの画面の読み込みで上書きされる）。無操作の期限は「最後の request の時刻 + 無操作の秒数」、8 時間の期限は「読み込みの時刻 + 8 時間の残りの秒数」とし、早いほうの 5 分前に警告を開く。読み込みにかかった時間だけブラウザの期限がサーバーより遅れないよう、どちらの期限も 10 秒早める。ほかのタブが `localStorage` を更新したら（`storage` のイベント）数え直し、要らなくなった警告を閉じる。`localStorage` を使えないときは、そのタブの時刻だけで数える。ブラウザの「戻る」（bfcache から戻った画面は `storage` のイベントを受け取っていない）とタブを見えるようにしたとき（`pageshow`・`visibilitychange`）も `localStorage` を読み直す
 - **延長は htmx でなく `fetch`**: 延長は `POST /session/extend` を CSRF のトークン付きで `fetch` で送る。htmx（XHR）は 302 を黙って追い、A-03 の HTML を 200 で受けるので、失効を見分けられない。`fetch` は `redirect: 'manual'` で 302 を `opaqueredirect` として受けられる。204 なら閉じ、`opaqueredirect`（失効した session は A-03、ログインしていない session は A-01 へ移される）なら期限の到来の案内に替え、それ以外（403・500・通信の失敗）は「延長できませんでした」を示す。警告を開く時刻もブラウザだけの関心で、サーバーの部分を返す request が要らない。よって ADR-005 の「部分更新はハイパーメディアで」の例外にする。業務状態をクライアントに持たない方針は変えない（ブラウザが持つのは時刻だけ）
 - **数える request と既知の制約**: 今のテンプレートに部分更新の request（`hx-get`・`hx-post`）はなく、画面の操作はすべて画面の移動である。`SessionLifetimeFilter` は公開の資源（`/js/**` など）でも session を読むので、資源の request でもサーバーの期限は延びるが、資源は画面の読み込みと同時に読まれる。よってブラウザは「画面の読み込み」と「延長」を数えれば足りる。部分更新を足す Bolt で、その request も数える。ブラウザが数えない request（`layout/public` の A-04・エラーの画面、書類のダウンロード）でもサーバーの期限は延びるので、ブラウザの期限はサーバーより早く来ることがある。安全側なので受け入れ、期限の到来の文言は断定しない
 - **部品の置き場所**: 残り時間をモデルに足す `SessionTimerAdvice`（`@ControllerAdvice`）と延長の `SessionController` は `identity.interfaces.web` に置く。共通のレイアウトの属性を足す前例は `CurrentActorAdvice`（ヘッダーの利用者）で、同じ置き場所にある。session の期限は認証の関心で、8 時間の起点と上限も identity の認証の入口にあるので、共有の Web 基盤（`shared`）には置かない（値の受け渡しは [バックエンドのアーキテクチャ](architecture_backend.md)）
