@@ -3,7 +3,9 @@ type: Plan
 title: "Bolt 32b 計画 - session の失効の警告と延長（ACC-06）"
 description: "W5 の 12 本目の Bolt の計画。ログインした利用者の画面（顧客 Web・社内業務 Web）で、無操作 30 分の失効の 5 分前に警告し、画面を移らずに延長できるようにする（ACC-06、WCAG 2.2.1、横断の受入条件）。発行から 8 時間の上限も 5 分前に警告する（延長はできない。SEC-03 の必須の制限）。警告の時刻は複数のタブの間でそろえる。失効の時の入力の保持と、再認証の後に開いていた画面へ戻すことは Bolt 32e に分ける。"
 tags: [plan]
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-14T07:00:18Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-14T07:34:51Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-10-14T07:34:51Z }
 ---
 
 # Bolt 32b 計画 - session の失効の警告と延長（ACC-06）
@@ -246,6 +248,7 @@ SessionLifetimeFilter -> ブラウザ : 204（Spring Session が最終アクセ�
 
 | 日付 | 更新内容 | 更新者 |
 | :--- | :--- | :--- |
+| 2026-10-14 | 承認（確認ポイント 1〜13 は推奨のまま）。`/goal Bolt32b` の下で、ステップの承認ゲートでは止めずに進め、終了報告でまとめて確かめを受ける。ステップ 6 の支援技術の手動確認は人が行う | human:kakimomokuri |
 | 2026-10-14 | 詳細整合性検証（14 件）と横断整合性検証（18 件）の指摘を反映した。用語を上流に合わせて「警告」にした。画面の層のテストはサーバーの時計を動かせないので、8 時間は session の属性を書き換えて確かめる。アプローチの欄に表から外れる理由、H2 の骨組みをステップ 3 の最初に、`SessionLifetimeFilterTest` の単体テスト。CSRF と失効の経路（無操作の失効の延長は CSRF の拒否で A-03、403 は session にトークンがあるときだけ）、延長の最終アクセスは行を古くしてから確かめる。延長の応答の扱い（302 だけを失効に）、Esc・8 時間への切り替え・期限の到来をモーダルでない案内に、A-03 へのリンク。htmx でなく `fetch`・モーダルのダイアログの例外・`<dialog>` を選ぶ理由。属性の名前の 2 つの定数と Bolt 31c のレビュー 14 の関係（確認ポイント 5）、request の属性の接頭辞、`SessionTimerAdvice` は session を作らない。ステップ 1 の対象に ui_design の 5 か所・architecture_backend・ADR-011・test_strategy の 2 か所・user_story・release_plan の付随の節。`BrowserSession` の時計と別のタブ、JavaScript を置くレイアウト、`app.css`、テンプレートのコメント。マニュアルは 2.4 と付録 B の Q1-2 を直す（確認ポイント 9）。デモの添付は終了報告の承認の後。支援技術の手動確認。Bolt 32d のフラグ引数と時計の受け方の引き継ぎ。T-101 の引用を直した。時間を 4 時間 30 分に | anthropic/claude-opus-5-5 |
 | 2026-10-14 | 初版作成（承認待ち）。開始準備で、ACC-06・UI 設計・フロントエンドのアーキテクチャ・ADR-012、今の失効の経路（A-03 の「開いていた画面に戻ります」が無操作の失効で成り立たないこと）、層の規則、CSP、Playwright の時計を調べ、human:kakimomokuri の決定（32b と 32e に分ける、8 時間も警告する、タブの間でそろえる、延長は POST の専用の URL）を反映した | anthropic/claude-opus-5-5 |
 
