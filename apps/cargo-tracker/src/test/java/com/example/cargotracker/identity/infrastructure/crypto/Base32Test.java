@@ -53,4 +53,33 @@ class Base32Test {
         assertThatThrownBy(() -> Base32.decode("MZ=XW")).isInstanceOf(IllegalArgumentException.class);
         assertThatThrownBy(() -> Base32.decode(null)).isInstanceOf(IllegalArgumentException.class);
     }
+
+    // --- 不正な長さ・余りのビット・埋め草の数（Bolt 32d。同じバイト列に 2 つの書き方を許さず、RFC 4648 で現れない形を拒む） ---
+
+    @ParameterizedTest
+    @CsvSource({"MY, f", "MZXQ, fo", "MZXW6, foo", "MZXW6YQ, foob", "MZXW6YTB, fooba", "MZXW6YTBOI, foobar"})
+    void 余りが0と2と4と5と7の長さは埋め草がなくても復号する(String encoded, String plain) {
+        assertThat(Base32.decode(encoded)).isEqualTo(plain.getBytes(StandardCharsets.US_ASCII));
+    }
+
+    @ParameterizedTest
+    @CsvSource({"M", "MZX", "MZXW6Y", "MZX=====", "mzx w6y", "MZXW6YTBO"})
+    void 余りが1と3と6の長さは失敗へ倒す(String encoded) {
+        assertThatThrownBy(() -> Base32.decode(encoded)).isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void 最後の文字の余りのビットが0でなければ失敗へ倒す() {
+        assertThat(Base32.decode("MY")).isEqualTo("f".getBytes(StandardCharsets.US_ASCII));
+        assertThatThrownBy(() -> Base32.decode("MZ")).isInstanceOf(IllegalArgumentException.class);
+        assertThat(Base32.decode("MZXQ")).isEqualTo("fo".getBytes(StandardCharsets.US_ASCII));
+        assertThatThrownBy(() -> Base32.decode("MZXR")).isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void 埋め草を付けるなら全体が8の倍数の長さでなければ失敗へ倒す() {
+        assertThat(Base32.decode("MY======")).isEqualTo("f".getBytes(StandardCharsets.US_ASCII));
+        assertThatThrownBy(() -> Base32.decode("MY=")).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> Base32.decode("MY=======")).isInstanceOf(IllegalArgumentException.class);
+    }
 }
