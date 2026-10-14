@@ -9,8 +9,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import java.io.IOException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContext;
@@ -38,7 +36,9 @@ import org.springframework.web.filter.OncePerRequestFilter;
  */
 public class SessionRevalidationFilter extends OncePerRequestFilter {
 
-    private static final Logger LOG = LoggerFactory.getLogger(SessionRevalidationFilter.class);
+    /** 確かめに失敗したときの例外の文言（利用者 ID を足す）。 */
+    static final String FAILURE_MESSAGE = "request ごとの利用者の確かめに失敗した。session を捨てた";
+
     private static final String ROLE_PREFIX = "ROLE_";
 
     private final SessionRevalidationService service;
@@ -74,17 +74,16 @@ public class SessionRevalidationFilter extends OncePerRequestFilter {
         try {
             standing = service.revalidate(sessionActor.userId(), sessionActor.companyId());
         } catch (RuntimeException e) {
-            LOG.error(
-                    "request ごとの利用者の確かめに失敗した。session を捨てる（利用者 {}）",
-                    sessionActor.userId().value(),
-                    e);
+            // 利用者 ID を文脈に足して投げ直す。エラーのログはコンテナが 500 にするときに残す（ここで残すと二重になる）
+            IllegalStateException failure = new IllegalStateException(
+                    FAILURE_MESSAGE + "（利用者 " + sessionActor.userId().value() + "）", e);
             try {
                 discard(request);
             } catch (RuntimeException discardFailure) {
                 // session の行を消せなくても、元の誤りを投げ直す（原因を失わない）
-                e.addSuppressed(discardFailure);
+                failure.addSuppressed(discardFailure);
             }
-            throw e;
+            throw failure;
         }
         switch (standing) {
             case SessionStanding.Revoked _ -> {

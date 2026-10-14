@@ -16,7 +16,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.example.cargotracker.TestcontainersConfiguration;
-import com.example.cargotracker.identity.LogCapture;
 import com.example.cargotracker.identity.domain.model.aggregates.AuditRecordRepository;
 import com.example.cargotracker.identity.domain.model.aggregates.Company;
 import com.example.cargotracker.identity.domain.model.aggregates.CompanyRepository;
@@ -88,8 +87,6 @@ class SessionRevalidationSecurityIntegrationTest {
     private static final String ROUTING_URL = "/staff/routing-cases";
     private static final String TRACKING_URL = "/staff/tracking-records";
     private static final String RECOVERY_CODE = "1a2b-3c4d";
-    /** フィルターがエラーのレベルで残す行の文言（ほかのログの行と分ける）。 */
-    private static final String FAILURE_LOG = "request ごとの利用者の確かめに失敗した";
 
     @TestConfiguration(proxyBeanMethods = false)
     static class FixedClock {
@@ -396,7 +393,7 @@ class SessionRevalidationSecurityIntegrationTest {
     // --- 誤りは fail-closed ---
 
     @Test
-    void 読み出しのDBの誤りはsessionを捨てて500にしエラーのログを残す() throws Exception {
+    void 読み出しのDBの誤りはsessionを捨てて利用者IDを文脈に足して500にする() throws Exception {
         String email = user(Set.of(Role.SALES));
         Cookie session = login(email);
         doThrow(new DataAccessResourceFailureException("DB の誤り"))
@@ -404,16 +401,13 @@ class SessionRevalidationSecurityIntegrationTest {
                 .findById(any());
         RequestBuilder request = get(SALES_URL).cookie(session);
 
-        String logs;
-        try (LogCapture capture = LogCapture.start()) {
-            assertThatThrownBy(() -> mvc.perform(request)).isInstanceOf(DataAccessResourceFailureException.class);
-            logs = capture.text();
+        try {
+            assertFailsWithContext(request, email, DataAccessResourceFailureException.class);
         } finally {
             reset(standings);
         }
 
         assertThat(sessionExists(session)).isFalse();
-        assertThat(logs).contains(FAILURE_LOG, userIdOf(email).value().toString());
     }
 
     @Test
@@ -426,10 +420,8 @@ class SessionRevalidationSecurityIntegrationTest {
                 .append(any());
         RequestBuilder request = get(SALES_URL).cookie(session);
 
-        try (LogCapture capture = LogCapture.start()) {
-            assertThatThrownBy(() -> mvc.perform(request)).isInstanceOf(DataAccessResourceFailureException.class);
-            assertThat(capture.text())
-                    .contains(FAILURE_LOG, userIdOf(email).value().toString());
+        try {
+            assertFailsWithContext(request, email, DataAccessResourceFailureException.class);
         } finally {
             reset(auditRecords);
         }
@@ -447,15 +439,21 @@ class SessionRevalidationSecurityIntegrationTest {
                 userIdOf(email).value());
         RequestBuilder request = get(SALES_URL).cookie(session);
 
-        try (LogCapture capture = LogCapture.start()) {
-            assertThatThrownBy(() -> mvc.perform(request)).isInstanceOf(IllegalStateException.class);
-            assertThat(capture.text())
-                    .contains(FAILURE_LOG, userIdOf(email).value().toString());
-        }
+        assertFailsWithContext(request, email, IllegalStateException.class);
         assertThat(sessionExists(session)).isFalse();
     }
 
     // --- 補助 ---
+
+    /** 500 になる誤りは、元の誤りを原因に持ち、文言に利用者 ID を足して投げ直される（エラーのログはコンテナが残す）。 */
+    private void assertFailsWithContext(RequestBuilder request, String email, Class<? extends Throwable> cause) {
+        assertThatThrownBy(() -> mvc.perform(request))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining(SessionRevalidationFilter.FAILURE_MESSAGE)
+                .hasMessageContaining(userIdOf(email).value().toString())
+                .cause()
+                .isInstanceOf(cause);
+    }
 
     private void advance(Duration duration) {
         ((MutableClock) clock).setInstant(LOGIN_AT.plus(duration));
