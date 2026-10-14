@@ -3,7 +3,9 @@ type: Plan
 title: "Bolt 32d 終了報告 - 認証の部品の低の指摘とテストの整理"
 description: "W5 の 11 本目の Bolt の終了報告。Base32 の不正な長さ・余りのビット・埋め草の数を失敗へ倒し、identity の合成ルートの規則を見張りの ArchUnit で守り、暗号の部品 2 つを部品探索に移した。identity の統合テストの時計と spy を共通にして Spring のコンテキストを 50 から 42 に減らし、Spring Session と監査記録と刻みの補助をまとめ、同時の待ちを PostgreSQL のロックの待ちで判定し、dev のテストの刻みの境界・8 時間の起点の値・監査の時刻の順・ロックのシナリオの axe を直した。承認ゲートを止めずに進めたので、止まらなかったゲートと計画からの変更を承認の議題に置く。"
 tags: [plan]
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-14T05:09:41Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-14T06:15:42Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-10-14T06:15:42Z }
 ---
 
 # Bolt 32d 終了報告 - 認証の部品の低の指摘とテストの整理
@@ -147,6 +149,7 @@ Bolt 32b: session の失効の 5 分前の警告、延長の操作、失効の�
 
 | 日付 | 更新内容 | 更新者 |
 | :--- | :--- | :--- |
+| 2026-10-14 | 終了報告を承認した（議題 1〜6 を承認。既知の課題は触る Bolt で扱い、時計の受け方は Bolt 32b の確認ポイント、見張りは Bolt 34 で見る）。T-117・T-118 を足した | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-10-14 | 初版作成（承認待ち） | anthropic/claude-opus-5-5 |
 
 ## 関連ドキュメント
