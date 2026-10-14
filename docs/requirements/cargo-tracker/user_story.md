@@ -4,7 +4,7 @@ title: "cargo-tracker ユーザーストーリー"
 description: "cargo-tracker MVP の価値単位のユーザーストーリー、受入条件、上流要件へのトレーサビリティ。"
 tags: [requirements, user-story]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-14T10:43:41Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-14T12:44:45Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T05:20:11Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:01:39Z }
@@ -498,7 +498,7 @@ MVP の決定: 通知はメールだけとし、配信設定・静穏時間・�
 
 Bolt 14 の決定（2026-10-06、human:kakimomokuri。[Bolt 14 計画](../../development/cargo-tracker/bolt_14_plan.md) の確認ポイント 1・9・13）:
 
-- Release 0.1 の #6（AC2）に加え、Release 1.0 の #13 から AC1 の password と session の部分、AC4、AC5 を Bolt 14 で前倒しして作る。AC1 の TOTP、AC3（ロック）、AC6（権限の取消し）、初回の TOTP の登録、password の再設定、TOTP の再登録、失効 5 分前の警告は W5 に残す（W5 で、警告と延長は Bolt 32b、失効の時の入力の保持と再認証の後に開いていた画面への復帰は Bolt 32e に分けた。2026-10-14、Bolt 32b の開始準備で human:kakimomokuri が決定。8 時間の上限も 5 分前に警告し、延長はできない。さらに、再認証の後に GET で開いていた画面へ戻すことは Bolt 32e、送信していない入力の保持と送信の後の失効は Bolt 32f に分けた。利用を止められた利用者には、復帰も保持もしない。2026-10-14、Bolt 32e の開始準備で human:kakimomokuri が決定）。
+- Release 0.1 の #6（AC2）に加え、Release 1.0 の #13 から AC1 の password と session の部分、AC4、AC5 を Bolt 14 で前倒しして作る。AC1 の TOTP、AC3（ロック）、AC6（権限の取消し）、初回の TOTP の登録、password の再設定、TOTP の再登録、失効 5 分前の警告は W5 に残す（W5 で、警告と延長は Bolt 32b、失効の時の入力の保持と再認証の後に開いていた画面への復帰は Bolt 32e に分けた。2026-10-14、Bolt 32b の開始準備で human:kakimomokuri が決定。8 時間の上限も 5 分前に警告し、延長はできない。さらに、再認証の後に GET で開いていた画面へ戻すことは Bolt 32e、送信していない入力の保持と送信の後の失効は Bolt 32f に分けた。利用を止められた利用者には復帰しない。2026-10-14、Bolt 32e の開始準備で human:kakimomokuri が決定。Bolt 32f の開始準備で、入力はブラウザのそのタブに「入力の控え」として写し、同じ利用者がログインし直して同じ画面に戻ったら戻す、送信が拒まれたらログインし直した後の画面に案内を出す、と決め、取消しでも控えはそのタブに残るが戻るのは同じ利用者がログインし直せたときだけ、に変えた。2026-10-14、human:kakimomokuri が決定。横断の受入条件の「未保存の入力は失われず再認証後に再開できる」は Bolt 32f で満たす）。
 - AC1 の「利用者・企業・認証時刻が記録される」は、session に置く認証時刻と、監査記録のログインの成功で満たす。
 - Bolt 14 の認可はログインの時点の役割で行っていた。Bolt 32c で、AC6 とあわせて request ごとに DB の現在値を確かめる形に置き換えた。
 - ステージング・本番の利用者を作る手段は、利用者の管理（US-16）まで作らない。

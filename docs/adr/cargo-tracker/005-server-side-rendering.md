@@ -4,7 +4,7 @@ title: "ADR-005: 画面はサーバーサイドレンダリングとハイパー
 description: "顧客 Web と社内業務 Web を、各コンテキストの interfaces.web からサーバーサイドで描画した HTML と部分更新で提供し、SPA を作らない決定。"
 tags: [adr, architecture]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-01T08:48:17Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-14T12:44:45Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T07:11:13Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:01:36Z }
@@ -37,6 +37,7 @@ verified:
 - 変更用のフォームは `commandId` と対象の版を隠し項目に持つ（ARCH-HO-01）。
 - MVP では REST API を作らない。外部の利用者が現れた時点で `interfaces.rest` を追加する。
 - テンプレートエンジンと部分更新のライブラリは Thymeleaf 3.1 と htmx 2.0 とする（ADR-006 で決定）。
+- 業務状態をクライアントに持たない。例外は失効の時の入力の控えだけである（Bolt 32f。下の「改訂の経緯」）。
 
 ### 代替案
 
@@ -63,6 +64,10 @@ verified:
 
 - 顧客向けの各画面について、料金・契約条件・書類が HTML に含まれないことを自動テストで確認する。
 - 主要フローの自動テストと支援技術による手動確認で、BR-13 の要求を確認する。
+
+## 改訂の経緯
+
+- 2026-10-14: Bolt 32f の計画の承認で、失効の時の入力の控えを「業務状態をクライアントに持たない」の例外にした。送信していない入力を、ブラウザのそのタブ（sessionStorage）に写し、同じ利用者がログインし直して同じ画面に戻ったらブラウザが戻す（ACC-06、US の横断受入条件の「未保存の入力は失われず再認証後に再開できる」）。控えは送信の前の入力の写しで、業務状態の正ではない（正はサーバーにあり、控えを戻しても利用者が送信するまで何も変わらない）。サーバーに送信していない入力を置かないため、ブラウザに置く。置き場所・利用者の確かめ・捨てる時・個人情報と XSS の扱いは [ADR-012](012-authentication-principal-and-session.md) の決定 3 に置く（human:kakimomokuri が決定）。
 
 ## 備考
 
