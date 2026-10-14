@@ -11018,7 +11018,7 @@ src/test/java/.../ui/                     画面の層のステップ定義（@u
 </tr>
 <tr>
 <td style="text-align: left;">AT-07</td>
-<td style="text-align: left;">identity の合成ルート（<code>identity.infrastructure.config</code>）の <code>@Bean</code> のメソッドが返す型は、<code>identity.application.internal..</code>・<code>identity.infrastructure.security..</code>・<code>org.springframework..</code> の型か <code>AesGcmSecretCipher</code>・dev の <code>DevTotpCodeSource</code> に限る（送信アダプターは部品探索で拾う）</td>
+<td style="text-align: left;">identity の合成ルート（<code>identity.infrastructure.config</code>）の <code>@Bean</code> のメソッドが返す型は、<code>identity.application.internal..</code>・<code>identity.infrastructure.security..</code>・<code>org.springframework..</code> （そのパッケージとその下）の型か <code>AesGcmSecretCipher</code>・dev の <code>DevTotpCodeSource</code> に限り、送信アダプター（persistence・crypto）のコンストラクターを呼ばない（送信アダプターは部品探索で拾う）</td>
 <td style="text-align: left;">見張りのテスト（Bolt 32d）</td>
 <td style="text-align: left;">バックエンドアーキテクチャの identity の合成ルートの規則</td>
 </tr>
@@ -11104,7 +11104,7 @@ src/test/java/.../ui/                     画面の層のステップ定義（@u
 </tbody>
 </table>
 <p>統合テストは Testcontainers の PostgreSQL を使い、H2 で書かない（ADR-007）。H2 で確かめるのはスモークテストだけとする。</p>
-<p>identity の統合テストは、時計を共通の <code>@TestConfiguration</code>（<code>MutableClock</code> を <code>@Primary</code>）で差し替え、spy（<code>@MockitoSpyBean</code>）を使うクラスは同じ spy のフィールドの組を持つ共通の基底のクラスを継ぐ。Spring のコンテキストは <code>@Import</code> の組と bean の差し替えの組（spy はフィールド名を含む）で区別されるので、組をそろえてコンテキストを共有する（Bolt 32d）。同時の操作のテスト（<code>OverlappingTransactions</code>）は、後の操作が先の行ロックを待っていることを PostgreSQL の <code>pg_blocking_pids</code> で確かめてから先をコミットする（「一定時間の間に終わらない」だけでは待ちの証拠にならない。Bolt 32d）。</p>
+<p>identity の統合テストは、時計を差し替えるなら合成注釈 <code>@IdentityIntegrationTest</code>（<code>@SpringBootTest</code>・<code>@AutoConfigureMockMvc</code>・PostgreSQL と共通の時計 <code>IdentityTestClock</code> の <code>@Import</code>）を付け、spy（<code>@MockitoSpyBean</code>）を使うクラスは同じ spy のフィールドの組を持つ共通の基底のクラス <code>IdentitySpyIntegrationTestBase</code> を継ぐ。Spring のコンテキストは <code>@Import</code> の組と bean の差し替えの組（spy はフィールド名と置き場所を含む）で区別されるので、組をそろえてコンテキストを共有する（Bolt 32d）。同じ組のクラスはコンテキストと PostgreSQL のコンテナ（DB）も共有するので、共有の表の件数は利用者で絞るかテストの前後の差で確かめる（T-113）。JUnit の並列実行を入れるときは、この共有を見直す。基底の spy の組を増やすのは、spy を使うクラスが要るときだけにする（増やすと spy を使う全クラスの組が変わる）。同時の操作のテスト（<code>OverlappingTransactions</code>）は、後の操作が先の行ロックを待っていることを PostgreSQL の <code>pg_blocking_pids</code> で確かめてから先をコミットする（「一定時間の間に終わらない」だけでは待ちの証拠にならない。Bolt 32d）。</p>
 <h2 id="web">Web テストと開示制御<a class="headerlink" href="#web" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
