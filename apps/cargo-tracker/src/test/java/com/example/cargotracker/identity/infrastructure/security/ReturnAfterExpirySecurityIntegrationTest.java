@@ -34,6 +34,8 @@ import java.util.Set;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -165,42 +167,16 @@ class ReturnAfterExpirySecurityIntegrationTest {
 
     // --- 覚えない（覚える場合と同じ流れで対にする。T-119） ---
 
-    @Test
-    void 失効したsessionの業務の送信は覚えずログインし直すとホームへ移る() throws Exception {
-        Cookie session = login(email, null);
-        String token = csrfTokenOf(session);
-        sessions().idle(session, Duration.ofMinutes(31));
-
-        Cookie expired = expiredTo(post("/customer/transport-requests")
-                .cookie(session)
-                .param("_csrf", token)
-                .header("Referer", "http://localhost" + PAGE_URL));
-
-        assertThat(loginAgain(email, expired)).isEqualTo(HOME_URL);
-    }
-
-    @Test
-    void 失効したsessionのログアウトは覚えない() throws Exception {
+    @ParameterizedTest(name = "失効した session の送信 {0} は覚えずログインし直すとホームへ移る")
+    @ValueSource(strings = {"/customer/transport-requests", "/logout", "/session/extend"})
+    void 失効したsessionの送信は覚えずログインし直すとホームへ移る(String url) throws Exception {
+        // 業務の送信・ログアウト・延長。同じサイトの Referer があっても覚えない（Referer を使わない）
         Cookie session = login(email, null);
         String token = csrfTokenOf(session);
         sessions().idle(session, Duration.ofMinutes(31));
 
         Cookie expired = expiredTo(
-                post("/logout").cookie(session).param("_csrf", token).header("Referer", "http://localhost" + PAGE_URL));
-
-        assertThat(loginAgain(email, expired)).isEqualTo(HOME_URL);
-    }
-
-    @Test
-    void 失効したsessionの延長は覚えない() throws Exception {
-        Cookie session = login(email, null);
-        String token = csrfTokenOf(session);
-        sessions().idle(session, Duration.ofMinutes(31));
-
-        Cookie expired = expiredTo(post("/session/extend")
-                .cookie(session)
-                .param("_csrf", token)
-                .header("Referer", "http://localhost" + PAGE_URL));
+                post(url).cookie(session).param("_csrf", token).header("Referer", "http://localhost" + PAGE_URL));
 
         assertThat(loginAgain(email, expired)).isEqualTo(HOME_URL);
     }
@@ -332,8 +308,10 @@ class ReturnAfterExpirySecurityIntegrationTest {
                 .getContentAsString();
 
         assertThat(page).contains("data-return-path=\"" + PAGE_URL + "\"");
-        assertThat(afterPost).as("警告の部分は描かれている（T-119）").contains("data-idle-seconds=");
-        assertThat(afterPost).as("入力の誤りの画面（送信の URL のまま描き直す）").doesNotContain("data-return-path");
+        assertThat(afterPost)
+                .as("入力の誤りの画面（送信の URL のまま描き直す）。警告の部分は描かれている（T-119）")
+                .contains("data-idle-seconds=")
+                .doesNotContain("data-return-path");
     }
 
     // --- 補助 ---
