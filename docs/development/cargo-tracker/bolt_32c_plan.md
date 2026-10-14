@@ -4,7 +4,7 @@ title: "Bolt 32c 計画 - request ごとの利用者の確かめ（US-18 AC6）"
 description: "W5 の 10 本目の Bolt の計画。利用停止・所属企業の無効化・権限の取消しを既存の session の次の request から反映する（US-18 AC6、IA-INV-04、SEC-12 の役割と利用状態の分）。request ごとに利用者・役割・企業を 1 回の SQL で読み、アプリケーションのサービスが判定して主体を作り直す（ADR-012 の見直しの 3）。止められた利用者の session は捨てて A-03 に送り SESSION_REVOKED を記録し、取り消した役割の URL は A-04 にする。31d から送った低の指摘とテストの整理は Bolt 32d。"
 tags: [development,bolt-plan]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-14T01:21:30Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-14T02:05:16Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-14T01:20:58Z }
   - { by: human:kakimomokuri, at: 2026-10-14T01:21:42Z }
@@ -243,7 +243,7 @@ Biz --> A04 : 取り消した役割の URL
 - [x] **4. 画面の層** 【承認ゲート: セキュリティ】
   - 業務の画面の feature に「利用停止された荷主担当者の次の操作は、業務データを出さずに A-03 に移る」（`@US-18-AC6 @demo @demo-bolt-32c/revoked`）。利用停止の操作はまだないので、テストの手順が DB の値を変える
   - 完了の判定: `check` と `uiTest` が緑
-- [ ] **5. ユーザーマニュアル** 【承認ゲート: 設計文書】（人の指示。2026-10-14）
+- [x] **5. ユーザーマニュアル** 【承認ゲート: 設計文書】（人の指示。2026-10-14）
   - `creating-manual` の手順で、`docs/manual/02-ログインと共通の画面.md` の 2.3（役割を外された後に、その役割の画面を開くと示される）と 2.4（「この画面でできること」に、管理者が利用を止めた後の次の操作でも示されることを足す。「注意・補足」の問い合わせ先の行を、続けてログインできないときにも当てる）、`付録B-トラブルシューティング.md` の Q1-2・Q1-3 を直す。画面に出ない理由（利用停止）はマニュアルにだけ書き、画面の文言は変えない（確認ポイント 2）
   - 画面と文言は変わらないので、キャプチャ（`02-forbidden.png`・`02-session-expired.png`）は撮り直さない。2.1 の 2 段階のログインの書き直しは Bolt 33b のまま
   - 完了の判定: `okf:check` ERROR 0、`documentationTest` 緑。マニュアルの HTML の出力（`npx gulp manual:build`。`docs/assets/manual-output/cargo-tracker/`）を作り直す
