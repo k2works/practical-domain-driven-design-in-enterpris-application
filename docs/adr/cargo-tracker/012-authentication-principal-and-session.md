@@ -4,7 +4,7 @@ title: "ADR-012: 認証の主体は共有カーネルの型にし、password の
 description: "US-18 の password によるログインと session を、Spring Security 7 の form login と Spring Session JDBC で作る。"
 tags: [adr, authentication, session]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-14T02:18:41Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-14T07:42:42Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-06T06:51:29Z }
 ---
@@ -53,6 +53,8 @@ US-18 の password によるログインと session を、Spring Security 7 の 
 - 発行から 8 時間の上限は、ログインのときに session の属性（固定の名前）に置いた認証時刻と、アプリケーションの `Clock` で比べるフィルターで判定する。Bolt 31 から、8 時間の起点（`AUTHENTICATED_AT`）はその session で初めて TOTP が通った時刻にし、password の段だけの session は password を確かめた時刻（`PASSWORD_VERIFIED_AT`）から 5 分で失効させる（[ADR-011](011-mfa-totp.md) の決定 2）。フィルターは要素の数で上限を選ぶ。このフィルターは認証の処理より前に置く（Bolt 13 の Try T-40）。認証済みなのに認証時刻がない session も失効させる（fail-closed。ログインの時刻を置かない認証の経路を足しても上限が外れない）。
 - 役割とホームの対応はルートのコントローラーの 1 か所に置き、ログインの後もルートを通す。画面のまだない役割は A-04 にする。
 - 失効した session の request は、業務データを出さずに A-03（`/session-expired`）へ移す。Bolt 32c から、利用停止・所属企業の無効化・利用者の削除の後の次の request も、session を捨てて A-03 へ移す（AC6。止められたことは画面に示さない）。この確かめのフィルター（`SessionRevalidationFilter`）は期限のフィルター（`SessionLifetimeFilter`）の直後、認証のフィルター（`UsernamePasswordAuthenticationFilter`・`TotpAuthenticationFilter`）より前に置く。期限の切れた session は先に A-03 に送られ、DB を読まない。公開の URL（ログイン・再認証の案内・エラー・静的な資源）では確かめない（1 画面の表示で資源の数だけ読まず、止められた利用者の並行の資源の request で取消しを重ねて書かないため。Bolt 32c の開発レビュー）。ログアウトの送信は確かめるので、止められた利用者のログアウトは A-03 で終わり、監査記録は `LOGOUT` でなく `SESSION_REVOKED` になる。並行の業務の request が同時に取り消されると、`SESSION_REVOKED` が 2 行以上になることがあり、受け入れる。フィルターの順序の値は `addFilterAfter` で `UsernamePasswordAuthenticationFilter` と同じになり、登録の順で前に来る（統合テストで並びを見張る）。上限を過ぎた session のままのログインの送信も A-03 へ移し、ログインの送信で session を延命させない。session に CSRF のトークンがない古いフォームの送信も、Spring Security が無効な session として A-03 へ移す。
+- Bolt 32b から、ログインした画面で失効の 5 分前に警告し、無操作の期限を画面を移らずに延長できる（ACC-06）。延長の URL は `POST /session/extend`（`identity.interfaces.web.SessionController`）で、公開の URL にせず、今のフィルター（CSRF・`SessionLifetimeFilter`・`SessionRevalidationFilter`・認証）をすべて通す。Spring Session がその request で session の最終アクセスを新しくするので、204 を返すだけにする。8 時間の上限は延ばさず、監査記録は書かない（延長はログインでも権限の変更でもない）。`CsrfFilter` は `SessionLifetimeFilter` より前に動く。無操作で失効した session では CSRF のトークンも消えているので、延長は CSRF のトークンがない拒否（`MissingCsrfTokenException`）になり、`invalidSessionUrl` によって A-03 への 302 になる（上の古いフォームの送信と同じ経路）。session が生きていてトークンが誤っているときだけ 403 になる。画面は 302 を失効、403 を延長の失敗として分けて示す。
+- 8 時間の上限までの残りの秒数は、`SessionLifetimeFilter` が上限の判定と同じ起点と時計で算出し、2 つの要素のそろった session でだけ request の属性 `cargotracker.request.sessionLifetimeRemainingSeconds` に置く。画面の層（`SessionTimerAdvice`）は名前で読み、画面に出す（Bolt 32b）。画面の層は `infrastructure` に依存できないので、request の属性で渡し、層の規則に例外を足さない。名前は 2 つの定数で持ち、一致をテストで守る（Bolt 31c のレビュー 14 と同じ形で、Bolt 33b でまとめて直す。[バックエンドのアーキテクチャ](../../design/cargo-tracker/architecture_backend.md)）。
 
 ### 4. 監査
 
@@ -130,10 +132,12 @@ US-18 の password によるログインと session を、Spring Security 7 の 
 - セキュリティの統合テスト: 未認証の拒否、AC2・AC4 の同じ応答、session ID の変化、30 分・8 時間の境界の 3 点、8 時間の確認が認証より前、CSRF、役割の分離、監査記録の同期の書き込み、応答のヘッダー。
 - 既定の設定で A-01 が入力済みにならないこと、`dev` の外の `cargotracker.dev-login.*` で起動が失敗すること。
 - セキュリティの統合テスト（Bolt 32c）: 利用停止・無効な企業・利用者の削除の後の次の request が A-03 で session が捨てられ `SESSION_REVOKED` が残る、password の段だけの主体も同じ、役割の取消し・追加が次の request から効く（取り消した URL は A-04）、要素の権限と 8 時間の起点が保たれる、認証済みの 1 つの request の読み出しが 1 回で未認証・期限切れでは読まない、DB の誤りと役割 0 件は 500。
+- セキュリティの統合テスト（Bolt 32b）: 延長の 204 と session の最終アクセスの更新、CSRF のトークンなし・誤りの 403、無操作で失効した session の延長は A-03、延長は 8 時間の上限を延ばさない、8 時間の残りは 2 つの要素のそろった session でだけ request の属性に置かれる（password の段では置かれない）。
 - ArchUnit（`LayerArchitectureTest` の D-5）: 認証の例外は `identity.infrastructure.security` から `identity.application.internal.commandservices` に限り、例外の外は落ちる（Bolt 31）。例外は入口だけにかかり、暗号の部品（`identity.infrastructure.crypto`）は application にも `security` にも依存しない（Bolt 31d。crypto に 6 つの暗号の部品があることと、既存の規則が crypto のクラスにかかることを見張りで確かめる）。
 
 ## 改訂の経緯
 
+- 2026-10-14: Bolt 32b の計画の承認で、決定 3 に延長の URL（`POST /session/extend`。今のフィルターを通し、8 時間の上限を延ばさず、監査記録を書かない）、CSRF と失効の経路（無操作で失効した session の延長は CSRF のトークンがない拒否で A-03、session が生きていてトークンが誤りなら 403）、8 時間の残りを認証の入口から request の属性で画面の層に渡すことを書き、コンプライアンスに統合テストを足した（human:kakimomokuri が決定）。
 - 2026-10-14: Bolt 32c の計画の承認で、「W5 で見直すこと」の 3 を決めた（`SessionRevalidationFilter` の位置、`UserStandingRepository` の 1 回の読み出し、判定と `SESSION_REVOKED` は `SessionRevalidationService`、差し替えは request の中だけ、fail-closed）。決定 2 の「認可はログインの時点の役割」を改め、決定 3 に止められた利用者を A-03 に送ること、決定 4 に `SESSION_REVOKED`、決定 6 にこの形が認証の例外の範囲に収まることを書いた。ネガティブの「最長 8 時間使える」を解消した（human:kakimomokuri が決定）。
 - 2026-10-13: Bolt 32 の計画の承認で、「W5 で見直すこと」の 5 を決めた（`LoginAttemptService` の 1 つのトランザクション、listener は写すだけ、`isLocked` を `commandservices` に置く理由を決定 6 に）。3 を Bolt 32c に送り、決定 4 の listener の数え方と監査の操作・理由（`ACCOUNT_LOCKED`・`LOCKED`・`SERVICE_ERROR`）、ネガティブの `CargoUserDetails` の項目（足さない）とレート制限（W10 の WAF）を改めた（human:kakimomokuri が決定）。
 - 2026-10-13: Bolt 31d の計画の承認で、D-5 の認証の例外を入口（`identity.infrastructure.security`）だけにし、暗号の部品を `identity.infrastructure.crypto` に分けたことを決定 6 とコンプライアンスに書いた。監査の理由に `TOTP_NOT_ENROLLED` を足した（human:kakimomokuri が決定）。

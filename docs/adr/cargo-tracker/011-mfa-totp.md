@@ -4,7 +4,7 @@ title: "ADR-011: 多要素認証は Spring Security 7 の要素の権限で組�
 description: "password の後に TOTP を求める 2 段階のログインを、Spring Security 7 の多要素認証（要素ごとの権限）で組む。"
 tags: [adr, authentication, mfa, totp]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-14T04:54:07Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-14T07:42:42Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-11T08:28:34Z }
 ---
@@ -133,7 +133,7 @@ T --> U : 2 つの要素を合わせた認証。業務の画面へ
 | 失敗の数え方 | password・TOTP・回復コードの誤りを、`AuthenticationFailureBadCredentialsEvent` から数える。5 回続いたら 15 分ロック。数えて監査記録を書くのはアプリケーションのサービス `LoginAttemptService` で、ロックは password の照合の後の確認と、TOTP・回復コードの provider で確かめる（`UserDetails` の `accountLocked` は使わない。Bolt 32 で改めた。決定 9） | 監査記録（IA-INV-08）を書く箇所と同じにできる。ロック中の拒否は数えない |
 | 再利用の拒否 | 利用者ごとに最後に使った時間の刻みの番号を持ち、それ以下の刻みを拒否する | TOTP のライブラリの外の記録が要る（H3） |
 | 回復コード | A-02 の別の欄（`<details>`）で受け付け（Bolt 31c。決定 7）、一度だけ使える（本体では使った時刻を入れて行を残す） | スパイクは TOTP の欄で受け付けた。本体ではハッシュ（bcrypt）で保存する |
-| 無操作 30 分 | `server.servlet.session.timeout=30m`（Spring Session JDBC では効く設定を確かめる） | 設定しただけで、振る舞いは確かめていない（W5 の統合テスト） |
+| 無操作 30 分 | `spring.session.timeout=30m`（Spring Session JDBC の期限 `MAX_INACTIVE_INTERVAL`。[ADR-012](012-authentication-principal-and-session.md) の決定 3） | スパイクは `server.servlet.session.timeout` を設定しただけで、振る舞いを確かめていなかった。本体は Bolt 14 で `spring.session.timeout` にし、`server.servlet.session.timeout` が Spring Session に効かないことを既定と違う値のテストで、30 分の境界をセキュリティの統合テストで確かめた（ADR-012 のコンプライアンス）。失効の 5 分前の警告と延長は Bolt 32b |
 | 最長 8 時間 | 本人確認の時刻（`AUTHENTICATED_AT`）を、その session で初めて TOTP が通ったときだけ残し、request ごとに比べるフィルター。**期限の確認を 2 つの要素の認証より前に置く**（フィルターの順序に頼らない形も W5 で比べる）。password の段だけの session は、password を確かめた時刻（`PASSWORD_VERIFIED_AT`）から 5 分で失効させ A-03 に送る（A-02 を開いたまま放置した session を残さない。Bolt 31 で決めた）。どちらの時刻もない認証済みの session は失効させる（fail-closed） | 確認を認可の直前に置いたら、期限切れの session に TOTP だけを送って 8 時間延ばせた（レビューで見つけて直した）。Spring Security の `RequiredFactor` には有効期間（`validDuration`）があり時計も替えられるが、期限切れは要素の再入力を求めるもので session を終わらせない。AC5 の再認証には session を捨てるフィルターを使う |
 | password の保存 | `PasswordEncoderFactories` の既定（bcrypt、強さ 10） | Argon2id は Bouncy Castle を足さないと符号化で `NoClassDefFoundError` になる。SEC-07 は bcrypt で満たす |
 | 更新の原子性 | 失敗の回数は、ロック中でないことを条件にした `UPDATE ... SET consecutive_failures = consecutive_failures + 1` の更新件数で判定し、回数を同じトランザクションで読み直す（H2 と PostgreSQL の共通の構文。ADR-007。採用のときに `RETURNING` から改めた）、再利用の拒否は `UPDATE ... SET last_used_step = :step WHERE last_used_step < :step` の更新件数で判定する。存在しないメールアドレスの失敗では行を作らない | スパイクは `synchronized` とメモリで守った。読んでから書く形では、並んだ試行や複数のインスタンスで 5 回を超えて試せ、同じコードが 2 回通る |
@@ -362,6 +362,7 @@ Bolt 31b で解いたもの（決定 6 に移した）: 登録の QR の描き�
 
 ## 改訂の経緯
 
+- 2026-10-14: Bolt 32b のステップ 1 で、決定 2 の表の無操作 30 分の行を、本体の設定 `spring.session.timeout` と Bolt 14 で確かめたこと（ADR-012）に合わせて直した。
 - 2026-10-14: Bolt 32d の計画の承認で、決定 1 の Base32 の復号が、不正な長さ・余りのビットが 0 でない最後の文字・データの長さに合わない数の埋め草を失敗へ倒すことを書いた（human:kakimomokuri が決定。埋め草の数は開発レビューで厳しくした）。
 - 2026-10-14: Bolt 32c の計画の承認で、ステータスに 32c の開始準備の決定（32c と 32d の分け方、Bolt 32 の議題 4・5 を採らない理由と行き先）を足し、「未確認の項目」の最長 8 時間と即時失効の経路を解いた（human:kakimomokuri が決定）。
 - 2026-10-13: Bolt 32 の計画の承認で、ログインのロック（決定 9。数え方の置き場所と 1 つのトランザクション、数える失敗と数えない失敗（回復コードを数え、A-07 の登録の誤りは数えない）、0 に戻す時点、ロックの確かめの位置と 1 か所の判定、理由の優先、ロック中の試行とロックの監査、最初の失敗の作成の競合、DB の誤りの扱い、応答と予告、受け入れること（TOTP の段の時間、`{bcrypt}` の壊れたハッシュ、S-02 を W10 の WAF に））を足した。決定 2 の表の失敗の数え方、決定 6 の登録の誤り、決定 7 の誤りの扱い、「US-18 の Bolt で要るもの」の A-02、「未確認の項目」の次に取れる操作、「W5 で人が決める論点」のロックの表示と spraying を決定に合わせ、決定 8 の `UnreadableCredentialException` の親の型を `RuntimeException` に改めた（human:kakimomokuri が決定）。
