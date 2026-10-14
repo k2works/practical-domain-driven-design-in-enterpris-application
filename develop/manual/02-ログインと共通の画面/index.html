@@ -10539,14 +10539,47 @@
 </tr>
 </tbody>
 </table>
+<p><strong>ログアウトの警告</strong>: 操作がないままログアウトする時刻の 5 分前に、画面の上に「まもなくログアウトします」が開きます。ログインから 8 時間がたつ 5 分前にも開きます。</p>
+<p><img alt="ログアウトの警告（操作がないとき）" src="../assets/02-session-warning.png" /></p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">#</th>
+<th style="text-align: left;">項目</th>
+<th style="text-align: left;">説明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">①</td>
+<td style="text-align: left;">メッセージ</td>
+<td style="text-align: left;">ログアウトの理由と、あと何分でログアウトするか</td>
+</tr>
+<tr>
+<td style="text-align: left;">②</td>
+<td style="text-align: left;">「ログインを延長する」</td>
+<td style="text-align: left;">ログインを延長します。画面は移らず、入力中の内容もそのまま残ります。ログインから 8 時間がたつときは出ません（延長できません）</td>
+</tr>
+<tr>
+<td style="text-align: left;">③</td>
+<td style="text-align: left;">「閉じる」</td>
+<td style="text-align: left;">警告を閉じます。延長はしません</td>
+</tr>
+</tbody>
+</table>
 <h3 id="_9">操作手順<a class="headerlink" href="#_9" title="Permanent link">&para;</a></h3>
 <ol>
 <li>ナビゲーションの項目をクリックすると、その画面が開きます</li>
 <li>画面の幅が狭いときは、ナビゲーションがメニューのボタンにまとまります。ボタンを押すと項目が開きます</li>
+<li>「まもなくログアウトします」が開いたら、続けて使う場合は「ログインを延長する」を押します（Enter キーでも押せます。開いたときにボタンが選ばれています）。延長すると、操作がないままの時間を最初から数え直します</li>
+<li>ログインから 8 時間がたつ警告では延長できません。入力中の内容は、ログアウトの前に送信してください</li>
 </ol>
 <h3 id="_10">注意・補足<a class="headerlink" href="#_10" title="Permanent link">&para;</a></h3>
 <ul>
 <li>「問い合わせ」「通知」は、まだ作っていない画面です。開くと「この画面は準備中です」と示されます。使えるようになるまでは、担当営業にご連絡ください</li>
+<li>警告を閉じたまま、または開いたまま時刻を過ぎると、画面は移らずに上部に「ログアウトした可能性があります。」と「再ログインの案内へ」が示されます。入力中の内容は送信されていないので、必要なら控えてから「再ログインの案内へ」を押してください（<a href="#24-もう一度ログインしてください">2.4</a>）</li>
+<li>同じブラウザのほかのタブで操作すると、どのタブでも操作がないままの時間を数え直し、警告は閉じます</li>
+<li>ログイン・認証コード・権限がありません・もう一度ログインしてくださいの画面には、警告は出ません</li>
 </ul>
 <h2 id="23">2.3 権限がありません<a class="headerlink" href="#23" title="Permanent link">&para;</a></h2>
 <h3 id="_11">この画面でできること<a class="headerlink" href="#_11" title="Permanent link">&para;</a></h3>
@@ -10600,6 +10633,7 @@
 <h3 id="_17">画面の開き方<a class="headerlink" href="#_17" title="Permanent link">&para;</a></h3>
 <ul>
 <li>ログアウトした後に画面を操作すると示されます（URL: <code>/session-expired</code>）</li>
+<li>ログアウトの警告（<a href="#22-画面の構成">2.2</a>）のまま時刻を過ぎた後、「再ログインの案内へ」を押しても示されます</li>
 <li>管理者が利用を止めた後は、画面の移動・送信・認証コードの入力のどれでも、次の操作で示されます。止められた後に送った入力は保存されていません</li>
 </ul>
 <h3 id="_18">画面の説明<a class="headerlink" href="#_18" title="Permanent link">&para;</a></h3>
@@ -10616,7 +10650,7 @@
 <tr>
 <td style="text-align: left;">①</td>
 <td style="text-align: left;">メッセージ</td>
-<td style="text-align: left;">ログアウトした理由と、ログインすると開いていた画面に戻ること</td>
+<td style="text-align: left;">ログアウトした理由</td>
 </tr>
 <tr>
 <td style="text-align: left;">②</td>
@@ -10628,12 +10662,13 @@
 <h3 id="_19">操作手順<a class="headerlink" href="#_19" title="Permanent link">&para;</a></h3>
 <ol>
 <li>「ログインへ」をクリックします</li>
-<li><a href="#21-ログイン">2.1 ログイン</a> の手順でログインします。開いていた画面に戻ります。ログインできない場合は、下の「注意・補足」を見てください</li>
+<li><a href="#21-ログイン">2.1 ログイン</a> の手順でログインします。ログインの後は、役割のホームが開きます。ログインできない場合は、下の「注意・補足」を見てください</li>
 </ol>
 <h3 id="_20">注意・補足<a class="headerlink" href="#_20" title="Permanent link">&para;</a></h3>
 <ul>
 <li>送信していない入力は保存されていません。ログインし直した後に、もう一度入力してください</li>
-<li>操作がないままの時間は 30 分まで、ログインしてからの時間は 8 時間までです</li>
+<li>画面には「ログインすると、開いていた画面に戻ります。」と示されますが、今はログインの後に役割のホームが開きます。開いていた画面は、ナビゲーションから開き直してください（改善を予定しています）</li>
+<li>操作がないままの時間は 30 分まで、ログインしてからの時間は 8 時間までです。どちらも 5 分前に警告が出ます。操作がないときの警告では延長できます（<a href="#22-画面の構成">2.2</a>）</li>
 <li>繰り返しログアウトされる場合や、ログインし直そうとしても「メールアドレスまたは password が正しくありません。」と示されてログインできない場合は、利用が止められていることがあります。荷主の方は担当営業に、社内の方はシステム管理者にお問い合わせください</li>
 </ul>
 

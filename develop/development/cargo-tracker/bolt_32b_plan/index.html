@@ -10511,7 +10511,7 @@
 </ul>
 </li>
 <li>完了の判定: <code>okf:check</code> ERROR 0、<code>documentationTest</code> 緑</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>2. 8 時間の残りと延長の URL</strong> 【承認ゲート: Red・Green、セキュリティ】</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>2. 8 時間の残りと延長の URL</strong> 【承認ゲート: Red・Green、セキュリティ】</li>
 <li>Red（単体テスト <code>SessionLifetimeFilterTest</code>）: 2 つの要素がそろった session で、8 時間の残りの秒数が request の属性に置かれる（起点の直後、上限の 1 秒前）。password の段・登録の途中・起点のない session・認証の前では置かれない。上限を過ぎたら今どおり A-03（属性は置かない）</li>
 <li>Red（統合テスト <code>SessionTimerSecurityIntegrationTest</code>。<code>@IdentityIntegrationTest</code>、<code>MutableClock</code> を直接受け、<code>@BeforeEach</code> で時刻を置く）:<ul>
 <li>ログインした業務の画面のモデルの <code>sessionTimer</code> に、無操作の秒数（1800）と 8 時間の残りの秒数（時計を 2 時間進めたら 6 時間分）がある。応答の HTML の <code>data-</code> 属性にも出る</li>
@@ -10526,13 +10526,13 @@
 </li>
 <li>Green: <code>SessionLifetimeFilter</code> が 8 時間の残りを request の属性に置く（上限の判定と同じ起点と時計）。<code>SessionTimerAdvice</code> と <code>SessionController</code> を作る</li>
 <li>完了の判定: <code>check</code> 緑（ArchUnit の層の規則と要素の権限の参照の見張りを含む）</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>3. 警告のダイアログと JavaScript</strong> 【承認ゲート: Green（画面）、構造】</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>3. 警告のダイアログと JavaScript</strong> 【承認ゲート: Green（画面）、構造】</li>
 <li>骨組み（H2）: <code>BrowserSession</code> にブラウザの時計を入れる操作（<code>signInAs</code> の前に <code>context.clock().install()</code>）を足し、<code>setTimeout</code> で開く最小のダイアログを 25 分進めて開くことを、仮のシナリオで確かめる。効かなければ止めて諮る</li>
 <li><code>layout/session-warning</code> の部分（<code>&lt;dialog&gt;</code>、延長のフォームは <code>th:action</code> で CSRF のトークンを持つ）を <code>layout/customer</code>・<code>layout/staff</code> に入れる（<code>currentActor</code> と <code>sessionTimer</code> があるときだけ）。<code>&lt;dialog&gt;</code> と <code>::backdrop</code> と案内の表示を <code>app.css</code> に足す</li>
 <li><code>/js/session-timeout.js</code>（「設計の約束」のブラウザの数え方・延長の応答の扱い・ダイアログの状態）</li>
 <li><code>templates/identity/session-expired.html</code> のコメントの「入力の保持と失効の前の警告は W5」を 32b・32e に直す</li>
 <li>完了の判定: <code>check</code> 緑。dev で起動し、画面の読み込みと延長の POST が通ることを目で確かめる</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>4. 画面の層の受入シナリオ</strong> 【承認ゲート: Red・Green】</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>4. 画面の層の受入シナリオ</strong> 【承認ゲート: Red・Green】</li>
 <li><code>BrowserSession</code> に、別のタブを開く操作と、session の属性 <code>cargotracker.session.authenticatedAt</code> を書き換える部品（<code>JdbcTemplate</code>。Java の直列化の値を書く）を足す</li>
 <li><code>session_timeout_ui.feature</code>（<code>@ui @US-18</code>。横断の受入条件の失効の警告。時計を入れる前提が要るので <code>login_ui.feature</code>・<code>layout_ui.feature</code> と分ける）と、ステップ定義のクラス（新規。<code>LoginUiSteps</code> は触らない）:<ul>
 <li>無操作で 25 分たつと警告が出て、延長のボタンにフォーカスがある。axe の違反がない</li>
@@ -10710,6 +10710,11 @@
 </tr>
 </thead>
 <tbody>
+<tr>
+<td style="text-align: left;">2026-10-14</td>
+<td style="text-align: left;">ステップ 2〜4 を終えた。H2 は確かめた（Playwright のコンテキストの時計で 25 分進めると警告が開く）。計画からの変更と見つけたこと: (1) 骨組みは仮のダイアログでなく本物の部分とスクリプトで流した（最初の UI テストで時計が効くことを確かめた）。(2) 警告の文言は HTML の <code>data-</code> 属性に置き、スクリプトは <code>{minutes}</code> を置き換えるだけにした（文言を UI 設計とテンプレートの 1 か所に保つ）。(3) 空の <code>role="alert"</code> の領域を常に置くと既存のシナリオの <code>getByRole(ALERT)</code> が 2 つに当たったので、期限が来たときに <code>role="alert"</code> の要素を差し込む形にした。(4) axe の色のコントラストの違反で、「閉じる」を <code>btn-secondary</code>、案内のリンクを <code>alert-link</code> にした。違反の報告に対象の要素を出すようにした（<code>BrowserSession.checkAccessibility</code>）。(5) <code>th:replace</code> は <code>th:if</code> より先に評価されるので、レイアウトの条件を外側の <code>th:block</code> に置いた（<code>@WebMvcTest</code> で 162 件落ちて見つけた）。(6) 違反（顧客 Web のレイアウトからスクリプトを外す）で警告のシナリオ 5 件のうち 4 件が落ち、タブの同期のシナリオは警告がなくても通ったので、別のタブを開く前に警告が出ていることを確かめる手順を足した（T-117）。(7) 利用者が閉じた（「閉じる」・Esc）ときだけ同じ期限で開かない扱いにした（延長で閉じたときの <code>close</code> のイベントが次の警告を止めていた）</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5</td>
+</tr>
 <tr>
 <td style="text-align: left;">2026-10-14</td>
 <td style="text-align: left;">ステップ 1 を終えた。計画からの変更: 期限の到来の案内の文言から「操作がなかったため」を外した（8 時間の上限でも同じ案内が出るため）。警告を出さない画面に、<code>layout/public</code> を使う A-07 と回復コードの保存の画面を足した。「別のダイアログは挟まない」の方針は ui_design の :232 でなく C-17・S-09 の行にあったので、そこを参照した</td>
