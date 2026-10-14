@@ -10451,7 +10451,7 @@
 <li><code>RandomTotpSecretIssuer</code>・<code>RandomRecoveryCodeGenerator</code> に <code>@Component</code> を付け、<code>IdentityConfiguration</code> の <code>@Bean</code> を外す。<code>ComponentScanTest</code>・ArchUnit・起動のテストが緑のまま</li>
 <li>見張り: identity の <code>infrastructure.config</code> の <code>@Bean</code> のメソッドの戻り値の型が「設計の約束」の型であること（ArchUnit のメソッドの規則。書きにくければ反射のテスト）。対象が存在すること（<code>@Bean</code> のメソッドが 1 つ以上あること）を先に確かめる（T-107）。違反（暗号の部品の <code>@Bean</code> を足す）を入れて落ちることを確かめる（T-112）</li>
 <li>完了の判定: <code>check</code> 緑</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>4. テストの共通の設定と補助</strong> 【承認ゲート: 構造】</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>4. テストの共通の設定と補助</strong> 【承認ゲート: 構造】</li>
 <li>前: identity の統合テストを流し、コンテキストのキャッシュの統計（DEBUG のログ）でコンテキストの数を数える（H1）</li>
 <li>骨組み: 共通の時計の設定（<code>identity</code> のテストの <code>@TestConfiguration</code>）を 2 つのクラスに当てて、コンテキストが 1 つになることを先に確かめる（T-101。ならなければ止めて諮る）</li>
 <li>共通の時計の設定で 5 つの統合テスト（<code>AuthenticationSecurityIntegrationTest</code>・<code>LoginLockSecurityIntegrationTest</code>・<code>RecoveryCodeLoginSecurityIntegrationTest</code>・<code>TotpEnrollmentSecurityIntegrationTest</code>・<code>SessionRevalidationSecurityIntegrationTest</code>）の入れ子の <code>FixedClock</code> を置き換える</li>
