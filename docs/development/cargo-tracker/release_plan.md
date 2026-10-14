@@ -4,7 +4,7 @@ title: "リリース計画 - cargo-tracker（A 社国際貨物輸送管理シス
 description: "cargo-tracker MVP のリリース計画。1 人 + AI、時間単位の Bolt（= イテレーション）と週次の見直しで、最初の縦の流れ（R0.1）、パイロット準備完了（R1.0）、本格展開前（R1.1）の 3 段階、Unit のエントロピー評価、SP、バッファ、パイロット開始の条件、引継ぎ ID の台帳、業務責任者に確かめる事項の台帳。"
 tags: [development,release-plan]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-14T09:07:27Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-14T09:23:18Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T09:29:53Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:38:26Z }
@@ -626,7 +626,7 @@ US-18 の Bolt の順序は 31b → 31c → 31d → 32 → 32c → 32d → 32b �
 - [x] Bolt 29: #45。[Bolt 29 計画](bolt_29_plan.md)（`/goal` で進めた）、[Bolt 29 終了報告](bolt_29_report.md)（完了、2026-10-11 に承認済み。#45 を閉じた。SonarQube PASS。`uiTest` 80 本は集める前と同じく通った。失敗の経路を読めるものに直した）
 - [x] Bolt 29b: #46 の前半。[Bolt 29b 計画](bolt_29b_plan.md)（`/goal` で進めた）、[Bolt 29b 終了報告](bolt_29b_report.md)（完了、2026-10-11 に承認済み。4 か所と開発レビューの必須の指摘を直した。SonarQube PASS・Code Smell 0）
 - [x] Bolt 29c: #46 の後半。[Bolt 29c 計画](bolt_29c_plan.md)（承認済み）、[Bolt 29c 終了報告](bolt_29c_report.md)（完了、2026-10-11 に承認済み。#46 を閉じた。SonarQube PASS・Code Smell 0）
-- [ ] Bolt 30〜33b: US-18 の残り（#13）と通知モジュールの最小の新設。[Bolt 30 計画](bolt_30_plan.md)（承認済み）、[Bolt 30 終了報告](bolt_30_report.md)（完了、2026-10-11 に承認済み。ADR-011 を採用し、3 つの表・ドメイン・リポジトリ・TOTP の生成を作った。SonarQube PASS・Code Smell 0）、[Bolt 31 計画](bolt_31_plan.md)（承認済み）、[Bolt 31 終了報告](bolt_31_report.md)（完了、2026-10-13 に承認済み。`/goal Bolt31` で進めた。TOTP の秘密の暗号化と 2 段階のログイン（A-02）。層の規則に 2 つの狭い例外。SonarQube PASS）、[Bolt 31b 計画](bolt_31b_plan.md)（承認済み）、[Bolt 31b 終了報告](bolt_31b_report.md)（完了、2026-10-13 に承認済み）、[Bolt 31c 計画](bolt_31c_plan.md)（承認済み）、[Bolt 31c 終了報告](bolt_31c_report.md)（完了、2026-10-13 に承認済み）、[Bolt 31d 計画](bolt_31d_plan.md)（承認済み）、[Bolt 31d 終了報告](bolt_31d_report.md)（完了、2026-10-13 に承認済み。スパイクを消した）、[Bolt 32 計画](bolt_32_plan.md)（承認済み）、[Bolt 32 終了報告](bolt_32_report.md)（完了、2026-10-14 に承認済み。ログインのロック）、[Bolt 32c 計画](bolt_32c_plan.md)（承認済み）、[Bolt 32c 終了報告](bolt_32c_report.md)（完了、2026-10-14 に承認済み。request ごとの利用者の確かめ）、[Bolt 32d 計画](bolt_32d_plan.md)（承認済み）、[Bolt 32d 終了報告](bolt_32d_report.md)（完了、2026-10-14 に承認済み。認証の部品の低の指摘とテストの整理）、[Bolt 32b 計画](bolt_32b_plan.md)（承認済み。session の失効の警告と延長。進行中）。Bolt 32e（失効の時の入力の保持と開いていた画面への復帰）は 32b の後
+- [ ] Bolt 30〜33b: US-18 の残り（#13）と通知モジュールの最小の新設。[Bolt 30 計画](bolt_30_plan.md)（承認済み）、[Bolt 30 終了報告](bolt_30_report.md)（完了、2026-10-11 に承認済み。ADR-011 を採用し、3 つの表・ドメイン・リポジトリ・TOTP の生成を作った。SonarQube PASS・Code Smell 0）、[Bolt 31 計画](bolt_31_plan.md)（承認済み）、[Bolt 31 終了報告](bolt_31_report.md)（完了、2026-10-13 に承認済み。`/goal Bolt31` で進めた。TOTP の秘密の暗号化と 2 段階のログイン（A-02）。層の規則に 2 つの狭い例外。SonarQube PASS）、[Bolt 31b 計画](bolt_31b_plan.md)（承認済み）、[Bolt 31b 終了報告](bolt_31b_report.md)（完了、2026-10-13 に承認済み）、[Bolt 31c 計画](bolt_31c_plan.md)（承認済み）、[Bolt 31c 終了報告](bolt_31c_report.md)（完了、2026-10-13 に承認済み）、[Bolt 31d 計画](bolt_31d_plan.md)（承認済み）、[Bolt 31d 終了報告](bolt_31d_report.md)（完了、2026-10-13 に承認済み。スパイクを消した）、[Bolt 32 計画](bolt_32_plan.md)（承認済み）、[Bolt 32 終了報告](bolt_32_report.md)（完了、2026-10-14 に承認済み。ログインのロック）、[Bolt 32c 計画](bolt_32c_plan.md)（承認済み）、[Bolt 32c 終了報告](bolt_32c_report.md)（完了、2026-10-14 に承認済み。request ごとの利用者の確かめ）、[Bolt 32d 計画](bolt_32d_plan.md)（承認済み）、[Bolt 32d 終了報告](bolt_32d_report.md)（完了、2026-10-14 に承認済み。認証の部品の低の指摘とテストの整理）、[Bolt 32b 計画](bolt_32b_plan.md)（承認済み。session の失効の警告と延長）、[Bolt 32b 終了報告](bolt_32b_report.md)（承認待ち。支援技術の手動確認は人を待つ）。Bolt 32e（失効の時の入力の保持と開いていた画面への復帰）は 32b の後
 - [ ] Bolt 34: US-16 の一部（#14）
 - [ ] Bolt 35: US-04 AC3・AC5（#43）、D-85
 - [ ] W5 の締め: 結果とふりかえり、開いている持ち越しの数（T-89）、W6 の計画の見直し
@@ -765,7 +765,7 @@ Bolt のレビューや終了報告で「業務責任者に確かめる」とし
 | W2 | 8 | 7 | 88% | 完了（2026-10-06 に Bolt 9〜14 を終え、2026-10-07 に締めた。US-03 を完了し #4・#37 を、US-18 の一部（2 SP）を完了し #6 をクローズした。US-24 AC1 は Bolt 12 で作り、残りの AC4・AC5 と US-24 の R0.1 の SP 3 は W3 へ（#5 の週を W3 に移した）。人の変更依頼 0） |
 | W3 | 10 | 11 | 110% | 完了（2026-10-06〜10-08 に Bolt 15〜21 を終え、2026-10-08 に締めた。US-06 AC1〜AC3（#7）、US-07 AC1・AC2（#8）、US-24 の R0.1（#5）、US-21 AC1（#9）を完了し、技術タスクの #38・#39 をクローズした。US-24 の R0.1 の 3 SP は #5 をクローズした W3 で数えた。人の変更依頼 0） |
 | W4 | 11 | 11 | 100% | 完了（2026-10-08〜10-10 に終え、2026-10-10 に締めた。Bolt 22・23・23b・24・25・25b・26・26b・26c・27・27b・28 を終えた。Release 0.1 のリリース条件をすべて満たした（Bolt 28）。US-09 の R0.1 を完了し、#12 をクローズして SP 3 を数えた。US-12 の R0.1 を完了し、#11 をクローズして SP 3 を数えた。US-04 の R0.1 を完了し、#10 をクローズして SP 5 を数えた。#41・#42 をクローズした。人の変更依頼 3（予約サガの置き場所 1、公開 API の置き場所 2）と範囲の追加 1（Bolt 27 の承認の場の荷主の予約一覧）。Release 0.1 の 35 SP を終え、マイルストーンを閉じた） |
-| W5 | 11 | - | - | 進行中（2026-10-11 に計画を作り、同日に承認された。Bolt 29〜35（17 本。Bolt 32b の開始準備で 32e を足した）。W4 の締めで US-04 の残り 3 を W6 から前倒し。Bolt 29〜32d を終え（#45・#46 を閉じた）。Bolt 32b を進めている） |
+| W5 | 11 | - | - | 進行中（2026-10-11 に計画を作り、同日に承認された。Bolt 29〜35（17 本。Bolt 32b の開始準備で 32e を足した）。W4 の締めで US-04 の残り 3 を W6 から前倒し。Bolt 29〜32b を終え（#45・#46 を閉じた）、Bolt 32b の終了報告の承認と支援技術の手動確認を待つ。次は Bolt 32e） |
 | W6 | 10 | - | - | 未着手 |
 | W7 | 10 | - | - | 未着手 |
 | W8 | 8 | - | - | 未着手 |
@@ -919,3 +919,4 @@ xychart-beta
 | 2026-10-14 | Bolt 32b の開始準備: 32b（警告と延長）と 32e（入力の保持と開いていた画面への復帰）に分け、8 時間の上限も 5 分前に警告する（延長はできない）、警告の時刻をタブの間でそろえる、延長は POST の専用の URL、と決めた。Bolt 32b 計画を作り、2 つの整合性検証の指摘を反映した（承認待ち。W5 の行の直しは計画のステップ 1） | anthropic/claude-opus-5-5、決定 human:kakimomokuri |
 | 2026-10-14 | Bolt 32b 計画の承認を記録した（確認ポイント 1〜13 は推奨のまま。`/goal Bolt32b` で承認ゲートを止めずに進める） | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-10-14 | Bolt 32b のステップ 1: W5 の Bolt の分け方の表の 32b の行を計画の内容にし（アプローチはインサイドアウト（表から外れる理由は計画）、承認ゲートは「ステップごと（セキュリティ、構造、画面）」）、32e の行（入力の保持と開いていた画面への復帰、A-03 の文言、Bolt 31 のレビュー 5）を足した。US-18 の Bolt の順序に 32d → 32b → 32e、W5 の本数を 17 本、「session の失効の警告の範囲」の反映先を 32b・32e に、33b の行に 32b の request の属性の名前（Bolt 31c のレビュー 14）、ユーザーマニュアルの段落に 32b・32e の分を足し、W5 の状態と進み具合を今に合わせた | anthropic/claude-opus-5-5 |
+| 2026-10-14 | Bolt 32b を終えた（終了報告は承認待ち。支援技術の手動確認は人を待つ）。W5 の状態と主なタスクを今の進み具合にした | anthropic/claude-opus-5-5 |
