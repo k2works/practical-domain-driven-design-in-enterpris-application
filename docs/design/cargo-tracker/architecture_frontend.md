@@ -4,7 +4,7 @@ title: "cargo-tracker フロントエンドアーキテクチャ"
 description: "cargo-tracker の利用チャネル、サーバーサイドレンダリングとハイパーメディアによる画面提供、画面の配置、アクセシビリティと開示制御の構造的な担保。"
 tags: [design, architecture, frontend]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-14T14:16:15Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-15T11:44:17Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T07:11:12Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:01:37Z }
@@ -118,7 +118,7 @@ WCAG 2.2 AA を目標とし、個々の画面の注意に頼らず共通部品�
 - **数える request と既知の制約**: 今のテンプレートに部分更新の request（`hx-get`・`hx-post`）はなく、画面の操作はすべて画面の移動である。`SessionLifetimeFilter` は公開の資源（`/js/**` など）でも session を読むので、資源の request でもサーバーの期限は延びるが、資源は画面の読み込みと同時に読まれる。よってブラウザは「画面の読み込み」と「延長」を数えれば足りる。部分更新を足す Bolt で、その request も数える。ブラウザが数えない request（`layout/public` の A-04・エラーの画面、書類のダウンロード）でもサーバーの期限は延びるので、ブラウザの期限はサーバーより早く来ることがある。安全側なので受け入れ、期限の到来の文言は断定しない
 - **期限の到来の案内のリンクと戻り先（Bolt 32e）**: 認証の入口の `SessionLifetimeFilter` が、GET で許す一覧（`/customer/**`・`/staff/**`）に当たる request のときだけ戻り先（context path を含む path と query）を request の属性に置き、`SessionTimerAdvice` がそれを `sessionTimer` に足す。警告の部分はそれを `data-return-path` に書き、`session-timeout.js` は期限の到来の案内のリンク「もう一度ログインする」（`data-session-return` の印）の行き先を、同じ origin の path と query に限ってそれにする（戻り先がなければ今どおり `/session-expired`）。戻り先はサーバーが受けた request から作るので、ほかのサイトへは移らない。送信の後の画面（POST で描き直した入力の誤りの画面）には渡さない（送信の URL を開き直すと別の画面か 405 になる）。リンクで開き直したとき、サーバーの session が切れていれば失効の扱いが要求を覚えて A-03 へ移し、ログインし直すと同じ画面に戻る。延長が失効で失敗した後は、失効の扱いがすでに新しい session を作っているので、開き直すと A-01 へ直接移り、ログインの後に同じ画面に戻る。ブラウザの期限が早く来ていて session が生きていれば、その画面がそのまま開く（Bolt 32f から、入力の控えを戻す）。戻り先のためにブラウザが持つのは、サーバーが画面に書いた戻り先の path と query だけである（Bolt 32f から、入力の控えにも同じ戻り先を写す）。Bolt 32f から、戻り先があれば案内のリンクの語を「画面を開き直す」にし、押すと入力を控えに写してから開く（戻り先がなければ「もう一度ログインする」のまま）
 - **入力の保持（Bolt 32f）**: 下の「入力の控え（Bolt 32f）」に置く
-- **部品の置き場所**: 残り時間をモデルに足す `SessionTimerAdvice`（`@ControllerAdvice`）と延長の `SessionController` は `identity.interfaces.web` に置く。共通のレイアウトの属性を足す前例は `CurrentActorAdvice`（ヘッダーの利用者）で、同じ置き場所にある。session の期限は認証の関心で、8 時間の起点と上限も identity の認証の入口にあるので、共有の Web 基盤（`shared`）には置かない（値の受け渡しは [バックエンドのアーキテクチャ](architecture_backend.md)）
+- **部品の置き場所**: 残り時間をモデルに足す `SessionTimerAdvice`（`@ControllerAdvice`）と延長の `SessionController` は `identity.interfaces.web` に置く。共通のレイアウトの属性を足す前例は `CurrentActorAdvice`（ヘッダーの利用者）で、同じ置き場所にある。session の期限は認証の関心で、8 時間の起点と上限も identity の認証の入口にあるので、共有の Web 基盤（`shared`）には置かない（値の受け渡しは [バックエンドのアーキテクチャ](architecture_backend.md)）。`SessionTimerAdvice` が読む request の属性の名前（8 時間の残り・戻り先）は、認証の入口と同じ application 層の `SessionKeys`（`identity.application.internal.session`）の定数を参照する。警告の部分（`session-warning.html`）の A-03 の URL と、共通のレイアウト（`layout/customer`・`layout/staff`）・A-08 の画面の A-08 の URL も、テンプレートに直書きせず `SessionKeys` を式で参照する。表示と振る舞いは変えない（Bolt 33c。それまでは入口と画面の層の 2 つの定数で持ち、一致をテストで守っていた）
 
 ### 入力の控え（Bolt 32f）
 

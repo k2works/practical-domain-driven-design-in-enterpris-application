@@ -4,7 +4,7 @@ title: "cargo-tracker UI 設計"
 description: "cargo-tracker の顧客 Web と社内業務 Web の画面オブジェクト、システムメタファー、画面一覧、画面遷移、主要画面のイメージ、共通部品（WCAG 2.2 AA）、エラー時を含むインタラクション。"
 tags: [design, ui]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-15T09:43:21Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-15T11:44:17Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T07:57:45Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:01:39Z }
@@ -786,7 +786,7 @@ A-07 は、登録の画面と、登録を保存した応答で示す回復コー
 
 ### A-08 認証アプリの再登録
 
-A-08 は、回復コードでログインした利用者が認証アプリを登録し直す画面と、完了の POST の応答で示す新しい回復コードの保存の画面の 2 つからなる（Bolt 33b。US-18 AC9、SEC-10、[ADR-011](../../adr/cargo-tracker/011-mfa-totp.md) の決定 10）。A-07 と同じ形にし、秘密の発行のポート（`TotpSecretIssuer`）と QR コードを A-07 と共用する（A-08 は A-07 のサービス `TotpEnrollmentService` を呼ばない。途中の暗号文の扱いと回復コードの発行の重複は Bolt 33c で寄せる）。A-07 との違いは、2 つの要素がそろった session のログインした画面のレイアウト（`layout/customer`・`layout/staff`）に置くこと、「後で登録する」があること、ログインの手続きでなく登録し直しなので期限の文言と「ログインの画面に戻る」がないこと、の 3 つである。ログインした画面なので session の警告（共通部品）は出る。印の知らせ（共通部品）は A-08 には出さない（同じことを画面の本文が言う）。
+A-08 は、回復コードでログインした利用者が認証アプリを登録し直す画面と、完了の POST の応答で示す新しい回復コードの保存の画面の 2 つからなる（Bolt 33b。US-18 AC9、SEC-10、[ADR-011](../../adr/cargo-tracker/011-mfa-totp.md) の決定 10）。A-07 と同じ形にし、秘密の発行のポート（`TotpSecretIssuer`）と QR コードを A-07 と共用する（A-08 は A-07 のサービス `TotpEnrollmentService` を呼ばない。途中の暗号文の扱いと回復コードの発行の重複は Bolt 33d で寄せる。Bolt 33c の開始準備で 33c から 33d に移した）。A-08 の URL は、共通のレイアウトの知らせのリンクと A-08 の画面のフォームの送信先ともに、application 層の `SessionKeys` を式で参照する（Bolt 33c。表示と振る舞いは変えない。A-07 との違いは、2 つの要素がそろった session のログインした画面のレイアウト（`layout/customer`・`layout/staff`）に置くこと、「後で登録する」があること、ログインの手続きでなく登録し直しなので期限の文言と「ログインの画面に戻る」がないこと、の 3 つである。ログインした画面なので session の警告（共通部品）は出る。印の知らせ（共通部品）は A-08 には出さない（同じことを画面の本文が言う）。
 
 登録し直しの画面:
 
@@ -1360,7 +1360,7 @@ Bolt 26c の登録の画面。種類と出典の種類に既定の選択は置�
 
 回復コードでログインし、A-08 で「後で登録する」を選んだ利用者に、認証アプリを登録し直すよう促す部品である（US-18 AC9、SEC-10、[ADR-011](../../adr/cargo-tracker/011-mfa-totp.md) の決定 10）。残りの回復コードが少ないときの案内は作らず、この知らせで再登録を促す（残りの数の案内は [#47](https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/47)）。
 
-文言は印の状態で 2 つに分ける（画面の層の `RecoveryLogin.stateOf` が NONE・ACTIVE・EXPIRED を返す。NONE では出さない）:
+文言は印の状態で 2 つに分ける（画面の層の `RecoveryLogin.stateOf` が NONE・ACTIVE・EXPIRED を返す。NONE では出さない。15 分はドメインルール `SessionPolicy` の印の期間で、属性の名前は `SessionKeys` にある。Bolt 33c で寄せた。文言は変えない）:
 
 | 印の状態 | 出す条件 | 文言 |
 | :--- | :--- | :--- |

@@ -4,7 +4,7 @@ title: "cargo-tracker データモデル"
 description: "cargo-tracker の概念データモデル、スキーマ分割、命名と型の規約（H2 と PostgreSQL の共通部分）、コンテキストごとの論理データモデルと ER 図、版・追記専用・冪等性・イベント配信の表現。"
 tags: [design, data-model]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-15T08:14:43Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-15T11:44:17Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T07:48:17Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:01:37Z }
@@ -971,7 +971,7 @@ entity "notification\n通知" as n {
 | :--- | :--- | :--- |
 | `notification` | UK（`event_id`、`recipient_user_id`）で、イベントの再配信でも同じ宛先へ 2 通送らない。`kind` IN（`QUOTATION_PRESENTED`、`ROUTE_APPROVED`、`QUOTATION_EXPIRING`、`BOOKING_CONFIRMED`、`TRACKING_UNDER_REVIEW`、`CONSIGNEE_INVITATION`、`PASSWORD_RESET`）。`status` IN（`PENDING`、`SENT`、`FAILED`）。`recipient_user_id` はコンテキストをまたぐので外部キーにしない。PENDING で追加してから送り、送信の結果は `UPDATE ... SET status = ..., sent_at = ..., failure_reason = ... WHERE id = :id AND status = 'PENDING'` の更新件数で書く（`version` を持たない例外）。`email`（宛先のメールアドレス。個人情報）の保持の期間は、トークンの表と同じく非機能要件（W10）で決める（Bolt 33） | N-INV-02、N-INV-03 |
 
-Bolt 33 でこの表を作る（[Bolt 33 計画](../../development/cargo-tracker/bolt_33_plan.md) の確認ポイント 4、[ADR-017](../../adr/cargo-tracker/017-notification-module-and-mail.md)）。`kind` の CHECK には上の 7 値を置くが、Bolt 33 で使うのは `PASSWORD_RESET` だけで、ほかの値は業務の通知（W9）で使う。新しいスキーマなので、`afterMigrate__grant_app_user.sql` の `GRANT USAGE ON SCHEMA`、`MapperSchemaArchitectureTest.SCHEMAS`、`SchemaCommentIntegrationTest.BUSINESS_SCHEMAS`、ER 図の対象（`ops/scripts/design_docs.js` の `schemas`）の 4 か所に `notification` を足す（ER 図の対象の漏れは Bolt 33 で MkDocs の配備を止め、後から足した）。
+Bolt 33 でこの表を作る（[Bolt 33 計画](../../development/cargo-tracker/bolt_33_plan.md) の確認ポイント 4、[ADR-017](../../adr/cargo-tracker/017-notification-module-and-mail.md)）。`kind` の CHECK には上の 7 値を置くが、Bolt 33 で使うのは `PASSWORD_RESET` だけで、ほかの値は業務の通知（W9）で使う。新しいスキーマなので、`afterMigrate__grant_app_user.sql` の `GRANT USAGE ON SCHEMA`、`MapperSchemaArchitectureTest.SCHEMAS`、`SchemaCommentIntegrationTest.BUSINESS_SCHEMAS`、ER 図の対象（`ops/scripts/design_docs.js` の `schemas`）の 4 か所に `notification` を足す（ER 図の対象の漏れは Bolt 33 で MkDocs の配備を止め、後から足した）。なお、`SchemaCommentIntegrationTest.BUSINESS_SCHEMAS` には `tracking` も漏れていた（Bolt 33a の既知の課題）。`tracking` の表と列にはコメントがそろっていて、マイグレーションは要らないので、Bolt 33c でテストの一覧に足す。
 
 メールの本文は保存しない（料金などを含まないことは N-INV-01 で守り、本文はテンプレートと `target_ref` から再現できる）。例外は `PASSWORD_RESET` で、`event_id` は再設定の依頼の ID、`target_ref` は再設定のトークンの ID（`identity.password_reset_token.id`）とする。本文のリンクは平文のトークンを含み、どこにも残さないので、この種類は本文を再現しない（残るのは宛先・種類・対象・送信の結果まで）。トークンと送信の記録の保持の期間は非機能要件（W10）で決める。
 
@@ -1147,7 +1147,7 @@ src/main/resources/db/
 | 共通部分 | 業務の表の DDL は H2 と PostgreSQL の両方で実行する（ADR-007）。CI で両方に適用して確かめる |
 | 権限 | 権限の付与と剥奪は PostgreSQL 用の `afterMigrate` のコールバックで行い、表の作成と同じ配備で反映する。新しい表を足したら、同じ変更でコールバックも更新する |
 | 後方互換 | ローリングデプロイのため、列の削除・名前の変更は「追加 → 移行 → 削除」に分ける（インフラ設計） |
-| 日本語名のコメント | 業務の表と列には、作るマイグレーションで日本語名のコメント（`COMMENT ON TABLE`・`COMMENT ON COLUMN`）を付ける。表の日本語名は本書の ER 図、列の日本語名はドメインモデルの用語集に合わせる。ER 図（SchemaSpy）に日本語名が出る。付け忘れは PostgreSQL の統合テスト（`SchemaCommentIntegrationTest`）が検出する（2026-10-03、human:kakimomokuri） |
+| 日本語名のコメント | 業務の表と列には、作るマイグレーションで日本語名のコメント（`COMMENT ON TABLE`・`COMMENT ON COLUMN`）を付ける。表の日本語名は本書の ER 図、列の日本語名はドメインモデルの用語集に合わせる。ER 図（SchemaSpy）に日本語名が出る。付け忘れは PostgreSQL の統合テスト（`SchemaCommentIntegrationTest`）が検出する（2026-10-03、human:kakimomokuri）。検出する業務のスキーマの一覧（`BUSINESS_SCHEMAS`）は手で保つので、新しいスキーマを作るときに足す（`tracking` は Bolt 33c で足した） |
 | 追記専用の印 | 追記専用の表には、作るマイグレーションで表のコメントの日本語名の後ろに印を付ける（`COMMENT ON TABLE ... IS '<日本語名> [append-only]'`。2026-10-03 に `'append-only'` だけの形から変えた）。PostgreSQL の `afterMigrate` のコールバックは、コメントが ` [append-only]` で終わる表からアプリケーション利用者の UPDATE・DELETE を外す（名指しにしないので、書き忘れで保護が黙って外れない）。印の付け忘れは、権限の統合テストが設計の一覧との一致で検出する（Bolt 3 レビュー R-02）。状態などを UPDATE するが行を消してはならない表（`tracking.milestone`）は、印 ` [no-delete]` を付け、`afterMigrate` が DELETE だけを外す（Bolt 26b。権限の統合テストの `NO_DELETE_TABLES`） |
 | スキーマの自動初期化 | 使わない。スキーマと表は Flyway だけが作る（Spring Modulith の `spring.modulith.events.jdbc.schema-initialization.enabled=false`。将来の Spring Session なども同じ）。既定権限（`ALTER DEFAULT PRIVILEGES`）も使わない。Flyway 以外で作られた表に UPDATE・DELETE が付くのを防ぐ。連番（SEQUENCE、IDENTITY）を使う表を足したら、コールバックに `USAGE ON ALL SEQUENCES` の付与を足す（Bolt 3 レビュー R-25） |
 | 凍結の時点 | 最初にステージングへ配置したマイグレーションは書き換えない。それまでは Bolt で使う列だけを作り、後の Bolt で足す。凍結の後に `NOT NULL` の列を足すときは、既定値付きで追加するか「追加 → 移行 → 制約」の 3 段にする。状態の `CHECK` 制約は、状態を足すたびに作り直す（Bolt 1 レビュー R-37） |
