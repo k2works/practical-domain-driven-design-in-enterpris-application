@@ -3,7 +3,7 @@ type: Plan
 title: "Bolt 33d 計画 - TOTP と回復コードの部品の整理（振る舞いの変わらない直し）"
 description: "W5 の 19 本目の Bolt の計画。TOTP の桁数・アルゴリズムの定数を 1 か所にし、QR コードの SVG の組み立てを秘密の発行から分け、回復コードの形の知識を RecoveryCode に寄せ、normalize の戻り値を値オブジェクトにし、A-07 と A-08 で重複していた途中の暗号文を使い続ける処理と回復コード 10 個の発行を小さな部品に切り出す。振る舞いは変えない。認証の入口と期限の直しは 33e に分ける。"
 tags: [plan]
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-15T21:57:32Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-15T21:59:31Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-15T21:57:32Z }
 ---
@@ -110,7 +110,7 @@ package "identity" {
 
 状態の記号: `[ ]` 未着手、`[-]` 進行中、`[?]` 承認待ち、`[x]` 完了。各ステップの終わりに `check` が緑であることを確かめ、push してアプリの CI と MkDocs の配備を確かめる（T-26、T-126）。コミットは pathspec で作る（T-110）。複数行の書き換えはスクリプトのファイルにする（T-103）。
 
-- [ ] **1. 設計文書** 【承認ゲート: 設計文書】
+- [x] **1. 設計文書** 【承認ゲート: 設計文書】
   - domain_model.md: `TotpCredential.DIGITS`、`RecoveryCode` の形・`format`・`issueSet`、`NormalizedRecoveryCode` を要素表と用語集（89 行目の表）に、`TotpProvisioningStarter`、identity の図。「Bolt 33d で寄せる」（196・1062 行目）を閉じ、IA-INV-11（1169 行目の `normalize`）を直す
   - architecture_backend.md: crypto の部品の一覧（284 行目の「6 つ」）に `QrCodeSvg` を足して数え直し、アルゴリズムの置き場所と重複の寄せ方を書く
   - ui_design.md: 789 行目の「Bolt 33d で寄せる」を閉じ、コードの欄の属性を桁数から描くことを書く
