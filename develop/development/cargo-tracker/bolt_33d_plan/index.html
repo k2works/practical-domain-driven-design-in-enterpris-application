@@ -10787,7 +10787,7 @@
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>3. 回復コードの形と <code>normalize</code> の型</strong></li>
 <li>生成した値が <code>normalize</code> を通るテストを先に足し、<code>RandomRecoveryCodeGeneratorTest</code> の正規表現の写しを置き換える → 形の知識と <code>format</code> を <code>RecoveryCode</code> に寄せる → <code>NormalizedRecoveryCode</code> を足し、<code>normalize</code>・<code>matches</code>・<code>RecoveryCodeVerificationService</code> を付け替え、テストのデータ（<code>RecoveryCodeTest</code> の 49・50・60 行目、<code>AuthenticationFactorRepositoriesContract</code> の 215・216・229 行目）と <code>normalize(..)</code> の比べ方（<code>RecoveryCodeTest</code> の 121〜141 行目）を直す</li>
 <li>変異の確かめ（<code>format</code> の区切りを変えると落ちる。控えから戻す。T-131）</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>4. A-07 と A-08 の重複</strong></li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>4. A-07 と A-08 の重複</strong></li>
 <li><code>RecoveryCode.issueSet</code>（<code>RecoveryCodeTest</code> に足す）と <code>TotpProvisioningStarter</code>（単体テストを足す）を作り、2 つのサービスを付け替える（<code>TotpEnrollmentService</code> の 85〜102・140〜145 行目、<code>TotpReEnrollmentService</code> の 106〜114・164〜169・209〜216 行目）。登録・再登録の単体・統合テスト（同時の登録・再登録、二度押し、途中の暗号文の使い続け）が緑のまま</li>
 <li>完了の判定: <code>check</code> 緑、<code>uiTest</code> 緑</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>5. SonarQube と開発レビューと終了報告</strong> 【承認ゲート: 終了報告】</li>
