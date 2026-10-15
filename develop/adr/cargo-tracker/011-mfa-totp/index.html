@@ -5396,6 +5396,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../development/cargo-tracker/bolt_33d_report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 33d 終了報告
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../development/cargo-tracker/release_report-0_1/" class="md-nav__link">
         
   
@@ -11151,7 +11179,7 @@
 </tr>
 <tr>
 <td style="text-align: left;">正規化</td>
-<td style="text-align: left;">形の知識はドメインに置く（<code>RecoveryCode.normalize</code>）。全角を半角に直し（NFKC。IME で入れたまま）、ハイフンに似た文字（長音など）をハイフンにそろえ、前後と中の空白（全角スペースを含む）を除き、小文字にし、ハイフンのない 8 文字は 4 文字目の後にハイフンを入れる。<code>^[0-9a-f]{4}-[0-9a-f]{4}$</code> に合わなければ照合せずに拒む（bcrypt を回さない）。手で書き写したコードを打ち直させない。Bolt 33d から、正規化の結果は値 <code>NormalizedRecoveryCode</code>（<code>Optional</code> で返す）で、照合はこの値だけを受ける。形の知識（生成の <code>fromBytes</code> を含む）は値 <code>NormalizedRecoveryCode</code> だけに置く</td>
+<td style="text-align: left;">形の知識はドメインに置く（<code>RecoveryCode.normalize</code>）。全角を半角に直し（NFKC。IME で入れたまま）、ハイフンに似た文字（長音など）をハイフンにそろえ、前後と中の空白（全角スペースを含む）を除き、小文字にし、ハイフンのない 8 文字は 4 文字目の後にハイフンを入れる。<code>^[0-9a-f]{4}-[0-9a-f]{4}$</code> に合わなければ照合せずに拒む（bcrypt を回さない）。手で書き写したコードを打ち直させない。Bolt 33d から、正規化の結果は値 <code>NormalizedRecoveryCode</code>（<code>Optional</code> で返す）で、照合はこの値だけを受ける。形の知識（ハイフンのない 8 文字の区切りの <code>parse</code>、生成の <code>fromBytes</code> を含む）は値 <code>NormalizedRecoveryCode</code> だけに置く</td>
 </tr>
 <tr>
 <td style="text-align: left;">照合とトランザクションの境界</td>
@@ -11208,7 +11236,7 @@
 </tr>
 <tr>
 <td style="text-align: left;">暗号の部品のパッケージ</td>
-<td style="text-align: left;"><code>AesGcmSecretCipher</code>・<code>Base32</code>・<code>BcryptRecoveryCodeHasher</code>・<code>JavaOtpTotpCodeGenerator</code>・<code>RandomRecoveryCodeGenerator</code>・<code>RandomTotpSecretIssuer</code> の 6 つ（Bolt 33d で QR コードの SVG の組み立てを分けた <code>QrCodeSvg</code> を足して 7 つ）を <code>identity.infrastructure.crypto</code> に置き、application にも入口（<code>security</code>）にも依存しない。D-5 の認証の例外は入口 <code>identity.infrastructure.security</code> だけにする。既存の規則（合成ルートと入口の外の infrastructure は application に依存しない）が <code>crypto</code> にもかかるので、足す規則は「<code>crypto</code> は <code>security</code> に依存しない」だけ。秘密の発行と回復コードの生成の実装を名指しした規則はパッケージの規則に置き換え、TOTP のライブラリ・ZXing・<code>AesGcmSecretCipher</code> の閉じ込めは <code>crypto</code> に狭める（<code>AesGcmSecretCipher</code> は合成ルートと dev の部品も参照してよい）</td>
+<td style="text-align: left;"><code>AesGcmSecretCipher</code>・<code>Base32</code>・<code>BcryptRecoveryCodeHasher</code>・<code>JavaOtpTotpCodeGenerator</code>・<code>RandomRecoveryCodeGenerator</code>・<code>RandomTotpSecretIssuer</code> の 6 つ（Bolt 33d で QR コードの SVG の組み立てを分けた <code>QrCodeSvg</code> を足して 7 つ。ほかに password と password の再設定の部品が 4 つある。<a href="../../../design/cargo-tracker/architecture_backend/">バックエンドのアーキテクチャ</a>）を <code>identity.infrastructure.crypto</code> に置き、application にも入口（<code>security</code>）にも依存しない。D-5 の認証の例外は入口 <code>identity.infrastructure.security</code> だけにする。既存の規則（合成ルートと入口の外の infrastructure は application に依存しない）が <code>crypto</code> にもかかるので、足す規則は「<code>crypto</code> は <code>security</code> に依存しない」だけ。秘密の発行と回復コードの生成の実装を名指しした規則はパッケージの規則に置き換え、TOTP のライブラリ・ZXing・<code>AesGcmSecretCipher</code> の閉じ込めは <code>crypto</code> に狭める（<code>AesGcmSecretCipher</code> は合成ルートと dev の部品も参照してよい）</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>FACTOR_TOTP</code> と <code>TotpAuthenticationToken</code> の名前</td>
