@@ -7734,6 +7734,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#10-totp-bolt-33b" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        10. 回復コードによる TOTP の再登録（Bolt 33b）
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#_4" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -10684,6 +10695,13 @@
 <li>Bolt 32 の議題 4（A-01 の予告の後に「15 分たってからもう一度ログインしてください」を足す）は採らない。A-01 の文言は決定 9 のまま（誤りと同じ文言と一般の予告）にし、待てば解けることはユーザーマニュアル（Bolt 33b の 2 章の書き直し）に書く。画面・UI 設計・ADR・US-18・シナリオの 5 か所を変えずに済み、文言は計画の承認どおりに保てる</li>
 <li>Bolt 32 の議題 5（ログインの監査の追記をすべて <code>LoginAttemptService</code> に寄せる）は採らない。数えない拒否と password の段の成功は、今のまま監査のリスナーが直接書く（決定 9 の表の「数え方の置き場所」）。利用者の管理の監査を作る Bolt 34 で、監査の書き込みの経路をあわせて見直す。Bolt 32c の <code>SESSION_REVOKED</code> はアプリケーションのサービスで書き、監査を直接書く入口の経路を増やさない（ADR-012 の決定 4）</li>
 </ul>
+<p>Bolt 33b の開始準備と計画の承認（2026-10-15、human:kakimomokuri）で決めたこと:</p>
+<ul>
+<li>US-18 の残りを 33b（AC9 の回復コードによる再登録と、それが触る部品（<code>TotpEnrollmentService</code> の引数の型、<code>instanceof</code> の <code>switch</code> 化）とマニュアル）と 33c（振る舞いの変わらない直し）に分け、#13 は 33b でクローズする</li>
+<li>回復コードでログインしたら印を置いて再登録の画面（A-08）へ導き、「後で登録する」で業務の画面へ進める。印がある間は業務の画面に知らせを出す。入口はこの流れだけにする（決定 10）</li>
+<li>新しいコードを確かめた時点で古い秘密を置き換え、回復コードを 10 個発行し直して 1 回だけ示し、監査 <code>TOTP_RE_ENROLLED</code> を書く。コミットの後に、その利用者のほかの session を失効させる（今の session は残す）。本人へのメールの通知は #47（決定 10）</li>
+<li>刻みの使用の条件に、照合で読んだ秘密の暗号文との一致を足す。置き換えでは最後に使った刻みを大きい方にする。残りの回復コードが少ないときの案内は #47 に送る（決定 10）</li>
+</ul>
 <h2 id="_2">コンテキスト<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h2>
 <ul>
 <li>US-18 は、メールアドレス・password・TOTP で本人確認し、無操作 30 分・最長 8 時間の session を発行する（AC1）。password か TOTP の失敗が 5 回続いたら 15 分ロックする（AC3。回復コードの誤りも数えると Bolt 32 で決めた。決定 9）。初回は TOTP を登録し、一度だけ使える回復コードを発行する（AC7・AC9）。</li>
@@ -10965,7 +10983,7 @@
 </tr>
 <tr>
 <td style="text-align: left;">同時の登録（Bolt 30 の議題 2 の①の初回の分）</td>
-<td style="text-align: left;">TOTP の資格の追加（主キー）を先に行い、回復コード 10 個の置き換えと監査記録（<code>TOTP_ENROLLED</code>）と同じトランザクションにする。同時の 2 つの登録は主キーで片方が失敗してロールバックし、回復コードは 10 個のまま。主キーの違反はリポジトリの実装で <code>DuplicateTotpEnrollmentException</code> に写す。登録のサービスはトランザクションを <code>TransactionTemplate</code> で内側に持ち、その外側で違反を受けて「登録済み」（<code>AlreadyEnrolled</code>）を返す。負けた側も勝った後の再送も同じ結果で、A-02 へ送る（500 にしない。同じトランザクションで一意制約の違反を捕まえない規則を守りつつ、結果を 1 つの経路にする。Bolt 31b の開発レビュー）。回復コードの生成とハッシュ（bcrypt）は書き込みでないので、主キーの行ロックを取る前に済ませる。回復コードの発行し直しの競合（AC9）は Bolt 33b で確かめる</td>
+<td style="text-align: left;">TOTP の資格の追加（主キー）を先に行い、回復コード 10 個の置き換えと監査記録（<code>TOTP_ENROLLED</code>）と同じトランザクションにする。同時の 2 つの登録は主キーで片方が失敗してロールバックし、回復コードは 10 個のまま。主キーの違反はリポジトリの実装で <code>DuplicateTotpEnrollmentException</code> に写す。登録のサービスはトランザクションを <code>TransactionTemplate</code> で内側に持ち、その外側で違反を受けて「登録済み」（<code>AlreadyEnrolled</code>）を返す。負けた側も勝った後の再送も同じ結果で、A-02 へ送る（500 にしない。同じトランザクションで一意制約の違反を捕まえない規則を守りつつ、結果を 1 つの経路にする。Bolt 31b の開発レビュー）。回復コードの生成とハッシュ（bcrypt）は書き込みでないので、主キーの行ロックを取る前に済ませる。回復コードの発行し直しの競合（AC9）は Bolt 33b で確かめる（決定 10。再登録は読んだ秘密のままのときだけ置き換えて発行し直し、同時の 2 つの完了と、発行し直しと回復コードによるログインの重なりを統合テストで確かめる）</td>
 </tr>
 <tr>
 <td style="text-align: left;">回復コードの並び順（議題 2 の④）</td>
@@ -11039,7 +11057,7 @@
 </tr>
 </tbody>
 </table>
-<p>回復コードによる TOTP の再登録と、残りが少ないときの案内（AC9 の残り）は Bolt 33b で決める。</p>
+<p>回復コードによる TOTP の再登録は Bolt 33b で決めた（決定 10）。残りが少ないときの案内は作らず、<a href="https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/47">#47</a>（W6）に送る（Bolt 33b では、回復コードでログインした印の知らせで再登録を促す）。</p>
 <h3 id="8-bolt-31d">8. 認証の部品の守りの直し（Bolt 31d）<a class="headerlink" href="#8-bolt-31d" title="Permanent link">&para;</a></h3>
 <p><strong>TOTP の照合の結果をドメインの値にし、保存した要素を読めないときだけを拒否に倒し、暗号の部品を入口から分けて層の規則 D-5 の認証の例外を入口だけにする。振る舞いの変更は、監査の理由 <code>TOTP_NOT_ENROLLED</code> と、失敗へ倒す範囲の 2 つだけである。</strong></p>
 <table>
@@ -11152,6 +11170,73 @@
 <li>ロックの解除の操作（システム管理者）は、利用者の管理（US-16。Bolt 34）で作る。それまでは 15 分の経過だけで解ける。</li>
 <li>TOTP・回復コードの段で、ロックを確かめてから成功を記録するまでの短い間（数十ミリ秒）に別の session の失敗でロックされると、そのログインは通る（回数とロックは消さない）。間は短く、この段に来た者は password を知っているので受け入れる（Bolt 32 の開発レビュー）。</li>
 </ul>
+<h3 id="10-totp-bolt-33b">10. 回復コードによる TOTP の再登録（Bolt 33b）<a class="headerlink" href="#10-totp-bolt-33b" title="Permanent link">&para;</a></h3>
+<p><strong>回復コードでログインした利用者は、session に印を置いて認証アプリの再登録の画面（A-08）に導く。新しい秘密を発行し、新しいコードを確かめた時点で TOTP の秘密を置き換え、回復コード 10 個を発行し直し、監査 <code>TOTP_RE_ENROLLED</code> を書く。コミットの後に、その利用者のほかの session を失効させる（今の session は残す）。「後で登録する」で業務の画面に進め、印がある間は知らせを出す。</strong></p>
+<p><img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB2ZXJzaW9uPSIxLjEiIGRhdGEtZGlhZ3JhbS10eXBlPSJTRVFVRU5DRSIgc3R5bGU9IndpZHRoOjE1MTdweDtoZWlnaHQ6NzQ1cHg7YmFja2dyb3VuZDojRkZGRkZGOyIgd2lkdGg9IjE1MTdweCIgaGVpZ2h0PSI3NDVweCIgdmlld0JveD0iMCAwIDE1MTcgNzQ1IiB6b29tQW5kUGFuPSJtYWduaWZ5IiBwcmVzZXJ2ZUFzcGVjdFJhdGlvPSJub25lIiBjb250ZW50U3R5bGVUeXBlPSJ0ZXh0L2NzcyI+PD9wbGFudHVtbCAxLjIwMjYuOD8+PGRlZnMvPjxnIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBsZW5ndGhBZGp1c3Q9InNwYWNpbmciPjxnIGNsYXNzPSJ0aXRsZSIgZGF0YS1zb3VyY2UtbGluZT0iMSI+PHRleHQgeD0iNjAxLjA3OSIgeT0iMjcuOTk1IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE0IiB0ZXh0TGVuZ3RoPSIzMTMuMTY3IiBmb250LXdlaWdodD0iNzAwIj7lm57lvqnjgrPjg7zjg4njgavjgojjgosgVE9UUCDjga7lho3nmbvpjLLvvIhCb2x0IDMzYu+8iTwvdGV4dD48L2c+PHJlY3QgeD0iMTgiIHk9IjMxMS41MjMiIHdpZHRoPSIxNDI1LjgyOCIgaGVpZ2h0PSIzMjIuMjY2IiBmaWxsPSJub25lIiBzdHlsZT0ic3Ryb2tlOiMwMDA7c3Ryb2tlLXdpZHRoOjEuNTsiLz48Zz48dGl0bGU+Li4uPC90aXRsZT48cmVjdCB4PSIzMC41IiB5PSIxMjMuNTk0IiB3aWR0aD0iOCIgaGVpZ2h0PSI1MzQuMTk1IiBmaWxsPSIjMDAwIiBmaWxsLW9wYWNpdHk9IjAiLz48bGluZSB4MT0iMzQiIHkxPSIxMjMuNTk0IiB4Mj0iMzQiIHkyPSI2NTcuNzg5IiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjAuNTtzdHJva2UtZGFzaGFycmF5OjUsNTsiLz48L2c+PGc+PHRpdGxlPi4uLi4uPC90aXRsZT48cmVjdCB4PSIzODUuMjg5IiB5PSIxMjMuNTk0IiB3aWR0aD0iOCIgaGVpZ2h0PSI1MzQuMTk1IiBmaWxsPSIjMDAwIiBmaWxsLW9wYWNpdHk9IjAiLz48bGluZSB4MT0iMzg4Ljc4OSIgeTE9IjEyMy41OTQiIHgyPSIzODguNzg5IiB5Mj0iNjU3Ljc4OSIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDowLjU7c3Ryb2tlLWRhc2hhcnJheTo1LDU7Ii8+PC9nPjxnPjx0aXRsZT5BLTA4IC4gY29udHJvbGxlcjwvdGl0bGU+PHJlY3QgeD0iNjAyLjkxIiB5PSIxMjMuNTk0IiB3aWR0aD0iOCIgaGVpZ2h0PSI1MzQuMTk1IiBmaWxsPSIjMDAwIiBmaWxsLW9wYWNpdHk9IjAiLz48bGluZSB4MT0iNjA2LjQxIiB5MT0iMTIzLjU5NCIgeDI9IjYwNi40MSIgeTI9IjY1Ny43ODkiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MC41O3N0cm9rZS1kYXNoYXJyYXk6NSw1OyIvPjwvZz48Zz48dGl0bGU+VG90cFJlRW5yb2xsbWVudFNlcnZpY2U8L3RpdGxlPjxyZWN0IHg9Ijk3My42MzIiIHk9IjEyMy41OTQiIHdpZHRoPSI4IiBoZWlnaHQ9IjUzNC4xOTUiIGZpbGw9IiMwMDAiIGZpbGwtb3BhY2l0eT0iMCIvPjxsaW5lIHgxPSI5NzcuMTMyIiB5MT0iMTIzLjU5NCIgeDI9Ijk3Ny4xMzIiIHkyPSI2NTcuNzg5IiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjAuNTtzdHJva2UtZGFzaGFycmF5OjUsNTsiLz48L2c+PGc+PHRpdGxlPlVzZXJTZXNzaW9uUmV2b2tlcjwvdGl0bGU+PHJlY3QgeD0iMTQyNC4zMjgiIHk9IjEyMy41OTQiIHdpZHRoPSI4IiBoZWlnaHQ9IjUzNC4xOTUiIGZpbGw9IiMwMDAiIGZpbGwtb3BhY2l0eT0iMCIvPjxsaW5lIHgxPSIxNDI3LjgyOCIgeTE9IjEyMy41OTQiIHgyPSIxNDI3LjgyOCIgeTI9IjY1Ny43ODkiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MC41O3N0cm9rZS1kYXNoYXJyYXk6NSw1OyIvPjwvZz48dGV4dCB4PSIxMCIgeT0iMTIwLjI5MiIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxNCIgdGV4dExlbmd0aD0iNDIiPuWIqeeUqOiAhTwvdGV4dD48ZWxsaXBzZSBjeD0iMzQiIGN5PSI1NS43OTciIHJ4PSI4IiByeT0iOCIgZmlsbD0iI0UyRTJGMCIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDowLjU7Ii8+PHBhdGggZD0iTTM0LDYzLjc5NyBMMzQsOTAuNzk3IE0yMSw3MS43OTcgTDQ3LDcxLjc5NyBNMzQsOTAuNzk3IEwyMSwxMDUuNzk3IE0zNCw5MC43OTcgTDQ3LDEwNS43OTciIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MC41OyIgZmlsbD0ibm9uZSIvPjxyZWN0IHg9IjI5MS4zNSIgeT0iNzYiIHdpZHRoPSIxOTQuODc5IiBoZWlnaHQ9IjQ2LjU5NCIgZmlsbD0iI0UyRTJGMCIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDowLjU7IiByeD0iMi41IiByeT0iMi41Ii8+PHRleHQgeD0iMzUzLjc4OSIgeT0iOTUuOTk1IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE0IiB0ZXh0TGVuZ3RoPSI3MCI+6KqN6Ki844Gu5YWl5Y+jPC90ZXh0Pjx0ZXh0IHg9IjI5OC4zNSIgeT0iMTEyLjI5MiIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxNCIgdGV4dExlbmd0aD0iMTgwLjg3OSI+KFRvdHBBdXRoZW50aWNhdGlvbkZpbHRlcik8L3RleHQ+PHJlY3QgeD0iNDk2LjIyOSIgeT0iNzYiIHdpZHRoPSIyMjAuMzYzIiBoZWlnaHQ9IjQ2LjU5NCIgZmlsbD0iI0UyRTJGMCIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDowLjU7IiByeD0iMi41IiByeT0iMi41Ii8+PHRleHQgeD0iNTQ1LjE5MSIgeT0iOTUuOTk1IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE0IiB0ZXh0TGVuZ3RoPSIxMjIuNDM4Ij5BLTA4IOOBriBjb250cm9sbGVyPC90ZXh0Pjx0ZXh0IHg9IjUwMy4yMjkiIHk9IjExMi4yOTIiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTQiIHRleHRMZW5ndGg9IjIwNi4zNjMiPihUb3RwUmVFbnJvbGxtZW50Q29udHJvbGxlcik8L3RleHQ+PHJlY3QgeD0iODgxLjEyOCIgeT0iOTIuMjk3IiB3aWR0aD0iMTkyLjAwOCIgaGVpZ2h0PSIzMC4yOTciIGZpbGw9IiNFMkUyRjAiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MC41OyIgcng9IjIuNSIgcnk9IjIuNSIvPjx0ZXh0IHg9Ijg4OC4xMjgiIHk9IjExMi4yOTIiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTQiIHRleHRMZW5ndGg9IjE3OC4wMDgiPlRvdHBSZUVucm9sbG1lbnRTZXJ2aWNlPC90ZXh0PjxyZWN0IHg9IjEzNDkuMzMxIiB5PSI5Mi4yOTciIHdpZHRoPSIxNTYuOTk0IiBoZWlnaHQ9IjMwLjI5NyIgZmlsbD0iI0UyRTJGMCIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDowLjU7IiByeD0iMi41IiByeT0iMi41Ii8+PHRleHQgeD0iMTM1Ni4zMzEiIHk9IjExMi4yOTIiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTQiIHRleHRMZW5ndGg9IjE0Mi45OTQiPlVzZXJTZXNzaW9uUmV2b2tlcjwvdGV4dD48dGV4dCB4PSIxMCIgeT0iNjcwLjc4NCIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxNCIgdGV4dExlbmd0aD0iNDIiPuWIqeeUqOiAhTwvdGV4dD48ZWxsaXBzZSBjeD0iMzQiIGN5PSI2ODIuNTg2IiByeD0iOCIgcnk9IjgiIGZpbGw9IiNFMkUyRjAiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MC41OyIvPjxwYXRoIGQ9Ik0zNCw2OTAuNTg2IEwzNCw3MTcuNTg2IE0yMSw2OTguNTg2IEw0Nyw2OTguNTg2IE0zNCw3MTcuNTg2IEwyMSw3MzIuNTg2IE0zNCw3MTcuNTg2IEw0Nyw3MzIuNTg2IiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjAuNTsiIGZpbGw9Im5vbmUiLz48cmVjdCB4PSIyOTEuMzUiIHk9IjY1Ny43ODkiIHdpZHRoPSIxOTQuODc5IiBoZWlnaHQ9IjQ2LjU5NCIgZmlsbD0iI0UyRTJGMCIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDowLjU7IiByeD0iMi41IiByeT0iMi41Ii8+PHRleHQgeD0iMzUzLjc4OSIgeT0iNjc3Ljc4NCIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxNCIgdGV4dExlbmd0aD0iNzAiPuiqjeiovOOBruWFpeWPozwvdGV4dD48dGV4dCB4PSIyOTguMzUiIHk9IjY5NC4wODEiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTQiIHRleHRMZW5ndGg9IjE4MC44NzkiPihUb3RwQXV0aGVudGljYXRpb25GaWx0ZXIpPC90ZXh0PjxyZWN0IHg9IjQ5Ni4yMjkiIHk9IjY1Ny43ODkiIHdpZHRoPSIyMjAuMzYzIiBoZWlnaHQ9IjQ2LjU5NCIgZmlsbD0iI0UyRTJGMCIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDowLjU7IiByeD0iMi41IiByeT0iMi41Ii8+PHRleHQgeD0iNTQ1LjE5MSIgeT0iNjc3Ljc4NCIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxNCIgdGV4dExlbmd0aD0iMTIyLjQzOCI+QS0wOCDjga4gY29udHJvbGxlcjwvdGV4dD48dGV4dCB4PSI1MDMuMjI5IiB5PSI2OTQuMDgxIiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE0IiB0ZXh0TGVuZ3RoPSIyMDYuMzYzIj4oVG90cFJlRW5yb2xsbWVudENvbnRyb2xsZXIpPC90ZXh0PjxyZWN0IHg9Ijg4MS4xMjgiIHk9IjY1Ny43ODkiIHdpZHRoPSIxOTIuMDA4IiBoZWlnaHQ9IjMwLjI5NyIgZmlsbD0iI0UyRTJGMCIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDowLjU7IiByeD0iMi41IiByeT0iMi41Ii8+PHRleHQgeD0iODg4LjEyOCIgeT0iNjc3Ljc4NCIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxNCIgdGV4dExlbmd0aD0iMTc4LjAwOCI+VG90cFJlRW5yb2xsbWVudFNlcnZpY2U8L3RleHQ+PHJlY3QgeD0iMTM0OS4zMzEiIHk9IjY1Ny43ODkiIHdpZHRoPSIxNTYuOTk0IiBoZWlnaHQ9IjMwLjI5NyIgZmlsbD0iI0UyRTJGMCIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDowLjU7IiByeD0iMi41IiByeT0iMi41Ii8+PHRleHQgeD0iMTM1Ni4zMzEiIHk9IjY3Ny43ODQiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTQiIHRleHRMZW5ndGg9IjE0Mi45OTQiPlVzZXJTZXNzaW9uUmV2b2tlcjwvdGV4dD48cG9seWdvbiBwb2ludHM9IjM3Ni43ODksMTQ4LjcyNywzODYuNzg5LDE1Mi43MjcsMzc2Ljc4OSwxNTYuNzI3LDM4MC43ODksMTUyLjcyNyIgZmlsbD0iIzE4MTgxOCIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxO3N0cm9rZS1saW5lam9pbjptaXRlcjtzdHJva2UtbWl0ZXJsaW1pdDoxMDsiLz48bGluZSB4MT0iMzQiIHkxPSIxNTIuNzI3IiB4Mj0iMzgyLjc4OSIgeTI9IjE1Mi43MjciIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTsiLz48dGV4dCB4PSI0MSIgeT0iMTQ3LjY2MSIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxMyIgdGV4dExlbmd0aD0iMjIxLjY3OSI+UE9TVCAvbG9naW4vdG90cO+8iHJlY292ZXJ5Q29kZe+8iTwvdGV4dD48cG9seWdvbiBwb2ludHM9IjQ1LDE5Mi45OTIsMzUsMTk2Ljk5Miw0NSwyMDAuOTkyLDQxLDE5Ni45OTIiIGZpbGw9IiMxODE4MTgiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTtzdHJva2UtbGluZWpvaW46bWl0ZXI7c3Ryb2tlLW1pdGVybGltaXQ6MTA7Ii8+PGxpbmUgeDE9IjM5IiB5MT0iMTk2Ljk5MiIgeDI9IjM4Ny43ODkiIHkyPSIxOTYuOTkyIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjE7c3Ryb2tlLWRhc2hhcnJheToyLDI7Ii8+PHRleHQgeD0iNTEiIHk9IjE3Ni43OTMiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTMiIHRleHRMZW5ndGg9IjI1Ni4zNjMiPuWbnuW+qeOCs+ODvOODieOBjOmAmuOCi+OAgnNlc3Npb24g44GuIElEIOOCkuWkieOBiOOAgTwvdGV4dD48dGV4dCB4PSI1MSIgeT0iMTkxLjkyNiIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxMyIgdGV4dExlbmd0aD0iMzMwLjc4OSI+5Y2w77yI5Yip55So6ICF44GuIElE77yJ44KS572u44GE44GmIC9hY2NvdW50L2F1dGhlbnRpY2F0b3Ig44G4PC90ZXh0Pjxwb2x5Z29uIHBvaW50cz0iNTk0LjQxLDIyMi4xMjUsNjA0LjQxLDIyNi4xMjUsNTk0LjQxLDIzMC4xMjUsNTk4LjQxLDIyNi4xMjUiIGZpbGw9IiMxODE4MTgiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTtzdHJva2UtbGluZWpvaW46bWl0ZXI7c3Ryb2tlLW1pdGVybGltaXQ6MTA7Ii8+PGxpbmUgeDE9IjM0IiB5MT0iMjI2LjEyNSIgeDI9IjYwMC40MSIgeTI9IjIyNi4xMjUiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTsiLz48dGV4dCB4PSI0MSIgeT0iMjIxLjA1OSIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxMyIgdGV4dExlbmd0aD0iMTc4LjkwOSI+R0VUIC9hY2NvdW50L2F1dGhlbnRpY2F0b3I8L3RleHQ+PHBvbHlnb24gcG9pbnRzPSI5NjUuMTMyLDI1MS4yNTgsOTc1LjEzMiwyNTUuMjU4LDk2NS4xMzIsMjU5LjI1OCw5NjkuMTMyLDI1NS4yNTgiIGZpbGw9IiMxODE4MTgiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTtzdHJva2UtbGluZWpvaW46bWl0ZXI7c3Ryb2tlLW1pdGVybGltaXQ6MTA7Ii8+PGxpbmUgeDE9IjYwNi40MSIgeTE9IjI1NS4yNTgiIHgyPSI5NzEuMTMyIiB5Mj0iMjU1LjI1OCIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxOyIvPjx0ZXh0IHg9IjYxMy40MSIgeT0iMjUwLjE5MiIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxMyIgdGV4dExlbmd0aD0iMjMxLjM1MyI+YmVnaW7vvIjliKnnlKjogIXjgIHkvIHmpa3jgIHpgJTkuK3jga7mmpflj7fmlofvvIk8L3RleHQ+PHBvbHlnb24gcG9pbnRzPSI0NSwyOTUuNTIzLDM1LDI5OS41MjMsNDUsMzAzLjUyMyw0MSwyOTkuNTIzIiBmaWxsPSIjMTgxODE4IiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjE7c3Ryb2tlLWxpbmVqb2luOm1pdGVyO3N0cm9rZS1taXRlcmxpbWl0OjEwOyIvPjxsaW5lIHgxPSIzOSIgeTE9IjI5OS41MjMiIHgyPSI2MDUuNDEiIHkyPSIyOTkuNTIzIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjE7c3Ryb2tlLWRhc2hhcnJheToyLDI7Ii8+PHRleHQgeD0iNTEiIHk9IjI3OS4zMjUiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTMiIHRleHRMZW5ndGg9IjE5MC4zMTYiPlFS44O744Kt44O844O75pyf6ZmQ77yIbm8tc3RvcmXvvInjgII8L3RleHQ+PHRleHQgeD0iNTEiIHk9IjI5NC40NTgiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTMiIHRleHRMZW5ndGg9IjI2NC4zODYiPumAlOS4reOBruaal+WPt+aWh+OBqOmWi+OBhOOBn+aZguWIu+OCkiBzZXNzaW9uIOOBq+e9ruOBjzwvdGV4dD48cGF0aCBkPSJNMTgsMzExLjUyMyBMODIuNDQzLDMxMS41MjMgTDgyLjQ0MywzMTguNjU2IEw3Mi40NDMsMzI4LjY1NiBMMTgsMzI4LjY1NiBMMTgsMzExLjUyMyIgc3R5bGU9InN0cm9rZTojMDAwO3N0cm9rZS13aWR0aDoxLjU7IiBmaWxsPSIjRUVFIi8+PHJlY3QgeD0iMTgiIHk9IjMxMS41MjMiIHdpZHRoPSIxNDI1LjgyOCIgaGVpZ2h0PSIzMjIuMjY2IiBmaWxsPSJub25lIiBzdHlsZT0ic3Ryb2tlOiMwMDA7c3Ryb2tlLXdpZHRoOjEuNTsiLz48dGV4dCB4PSIzMyIgeT0iMzI0LjU5IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjEzIiB0ZXh0TGVuZ3RoPSIxOS40NDMiIGZvbnQtd2VpZ2h0PSI3MDAiPmFsdDwvdGV4dD48dGV4dCB4PSI5Ny40NDMiIHk9IjMyMy43MzQiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTEiIHRleHRMZW5ndGg9Ijc2LjA1NCIgZm9udC13ZWlnaHQ9IjcwMCI+W+W+jOOBp+eZu+mMsuOBmeOCi108L3RleHQ+PHBvbHlnb24gcG9pbnRzPSI1OTQuNDEsMzU1Ljc4OSw2MDQuNDEsMzU5Ljc4OSw1OTQuNDEsMzYzLjc4OSw1OTguNDEsMzU5Ljc4OSIgZmlsbD0iIzE4MTgxOCIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxO3N0cm9rZS1saW5lam9pbjptaXRlcjtzdHJva2UtbWl0ZXJsaW1pdDoxMDsiLz48bGluZSB4MT0iMzQiIHkxPSIzNTkuNzg5IiB4Mj0iNjAwLjQxIiB5Mj0iMzU5Ljc4OSIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxOyIvPjx0ZXh0IHg9IjQxIiB5PSIzNTQuNzIzIiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjEzIiB0ZXh0TGVuZ3RoPSIyMjEuMzQzIj5QT1NUIC9hY2NvdW50L2F1dGhlbnRpY2F0b3IvbGF0ZXI8L3RleHQ+PHBvbHlnb24gcG9pbnRzPSI0NSwzODQuOTIyLDM1LDM4OC45MjIsNDUsMzkyLjkyMiw0MSwzODguOTIyIiBmaWxsPSIjMTgxODE4IiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjE7c3Ryb2tlLWxpbmVqb2luOm1pdGVyO3N0cm9rZS1taXRlcmxpbWl0OjEwOyIvPjxsaW5lIHgxPSIzOSIgeTE9IjM4OC45MjIiIHgyPSI2MDUuNDEiIHkyPSIzODguOTIyIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjE7c3Ryb2tlLWRhc2hhcnJheToyLDI7Ii8+PHRleHQgeD0iNTEiIHk9IjM4My44NTYiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTMiIHRleHRMZW5ndGg9IjM2NCI+6Kaa44GI44Gf6KaB5rGC44GL5b255Ymy44Gu44Ob44O844Og77yI5Y2w44Gv5q6L44KL44CC5qWt5YuZ44Gu55S76Z2i44Gr55+l44KJ44Gb77yJPC90ZXh0PjxsaW5lIHgxPSIxOCIgeTE9IjM5Ny45MjIiIHgyPSIxNDQzLjgyOCIgeTI9IjM5Ny45MjIiIHN0eWxlPSJzdHJva2U6IzAwMDtzdHJva2Utd2lkdGg6MTtzdHJva2UtZGFzaGFycmF5OjIsMjsiLz48dGV4dCB4PSIyMyIgeT0iNDEwLjEzMiIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxMSIgdGV4dExlbmd0aD0iNTQuMDU0IiBmb250LXdlaWdodD0iNzAwIj5b55m76Yyy44GZ44KLXTwvdGV4dD48cG9seWdvbiBwb2ludHM9IjU5NC40MSw0MzIuODU5LDYwNC40MSw0MzYuODU5LDU5NC40MSw0NDAuODU5LDU5OC40MSw0MzYuODU5IiBmaWxsPSIjMTgxODE4IiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjE7c3Ryb2tlLWxpbmVqb2luOm1pdGVyO3N0cm9rZS1taXRlcmxpbWl0OjEwOyIvPjxsaW5lIHgxPSIzNCIgeTE9IjQzNi44NTkiIHgyPSI2MDAuNDEiIHkyPSI0MzYuODU5IiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjE7Ii8+PHRleHQgeD0iNDEiIHk9IjQzMS43OTMiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTMiIHRleHRMZW5ndGg9IjI5MC45NDUiPlBPU1QgL2FjY291bnQvYXV0aGVudGljYXRvcu+8iOaWsOOBl+OBhOOCs+ODvOODie+8iTwvdGV4dD48cG9seWdvbiBwb2ludHM9Ijk2NS4xMzIsNDYxLjk5Miw5NzUuMTMyLDQ2NS45OTIsOTY1LjEzMiw0NjkuOTkyLDk2OS4xMzIsNDY1Ljk5MiIgZmlsbD0iIzE4MTgxOCIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxO3N0cm9rZS1saW5lam9pbjptaXRlcjtzdHJva2UtbWl0ZXJsaW1pdDoxMDsiLz48bGluZSB4MT0iNjA2LjQxIiB5MT0iNDY1Ljk5MiIgeDI9Ijk3MS4xMzIiIHkyPSI0NjUuOTkyIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjE7Ii8+PHRleHQgeD0iNjEzLjQxIiB5PSI0NjAuOTI2IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjEzIiB0ZXh0TGVuZ3RoPSIzNDYuNzIyIj5jb21wbGV0Ze+8iOWIqeeUqOiAheOAgeS8gealreOAgeaal+WPt+aWh+OAgeOCs+ODvOODieOAgemWi+OBhOOBn+aZguWIu++8iTwvdGV4dD48bGluZSB4MT0iOTc3LjEzMiIgeTE9IjUyNS4zOTEiIHgyPSIxMDE5LjEzMiIgeTI9IjUyNS4zOTEiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTsiLz48bGluZSB4MT0iMTAxOS4xMzIiIHkxPSI1MjUuMzkxIiB4Mj0iMTAxOS4xMzIiIHkyPSI1MzguMzkxIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjE7Ii8+PGxpbmUgeDE9Ijk3OC4xMzIiIHkxPSI1MzguMzkxIiB4Mj0iMTAxOS4xMzIiIHkyPSI1MzguMzkxIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjE7Ii8+PHBvbHlnb24gcG9pbnRzPSI5ODguMTMyLDUzNC4zOTEsOTc4LjEzMiw1MzguMzkxLDk4OC4xMzIsNTQyLjM5MSw5ODQuMTMyLDUzOC4zOTEiIGZpbGw9IiMxODE4MTgiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTtzdHJva2UtbGluZWpvaW46bWl0ZXI7c3Ryb2tlLW1pdGVybGltaXQ6MTA7Ii8+PHRleHQgeD0iOTg0LjEzMiIgeT0iNDkwLjA1OSIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxMyIgdGV4dExlbmd0aD0iMTYzLjY3NCI+MTUg5YiG44Go44Kz44O844OJ44KS56K644GL44KB44KL44CCPC90ZXh0Pjx0ZXh0IHg9Ijk4NC4xMzIiIHk9IjUwNS4xOTIiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTMiIHRleHRMZW5ndGg9IjIzNCI+6Kqt44KT44Gg56eY5a+G44Gu44G+44G+44Gq44KJ56eY5a+G44Gu572u44GN5o+b44GI44O7PC90ZXh0Pjx0ZXh0IHg9Ijk4NC4xMzIiIHk9IjUyMC4zMjUiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTMiIHRleHRMZW5ndGg9IjQxOC4zMjMiPuWbnuW+qeOCs+ODvOODiSAxMCDlgIvjg7tUT1RQX1JFX0VOUk9MTEVE77yIMSDjgaTjga7jg4jjg6njg7Pjgrbjgq/jgrfjg6fjg7PvvIk8L3RleHQ+PHBvbHlnb24gcG9pbnRzPSIxNDE1LjgyOCw1NjMuNTIzLDE0MjUuODI4LDU2Ny41MjMsMTQxNS44MjgsNTcxLjUyMywxNDE5LjgyOCw1NjcuNTIzIiBmaWxsPSIjMTgxODE4IiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjE7c3Ryb2tlLWxpbmVqb2luOm1pdGVyO3N0cm9rZS1taXRlcmxpbWl0OjEwOyIvPjxsaW5lIHgxPSI5NzcuMTMyIiB5MT0iNTY3LjUyMyIgeDI9IjE0MjEuODI4IiB5Mj0iNTY3LjUyMyIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxOyIvPjx0ZXh0IHg9Ijk4NC4xMzIiIHk9IjU2Mi40NTgiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTMiIHRleHRMZW5ndGg9IjQyNi42OTYiPuOCs+ODn+ODg+ODiOOBruW+jOOBqyByZXZva2VPdGhlcnPvvIjjg6Hjg7zjg6vjgqLjg4njg6zjgrnjgIHku4rjga4gc2Vzc2lvbiDjga4gSUTvvIk8L3RleHQ+PHBvbHlnb24gcG9pbnRzPSI2MTcuNDEsNTkyLjY1Niw2MDcuNDEsNTk2LjY1Niw2MTcuNDEsNjAwLjY1Niw2MTMuNDEsNTk2LjY1NiIgZmlsbD0iIzE4MTgxOCIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxO3N0cm9rZS1saW5lam9pbjptaXRlcjtzdHJva2UtbWl0ZXJsaW1pdDoxMDsiLz48bGluZSB4MT0iNjExLjQxIiB5MT0iNTk2LjY1NiIgeDI9Ijk3Ni4xMzIiIHkyPSI1OTYuNjU2IiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjE7c3Ryb2tlLWRhc2hhcnJheToyLDI7Ii8+PHRleHQgeD0iNjIzLjQxIiB5PSI1OTEuNTkiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTMiIHRleHRMZW5ndGg9IjE5My44MDciPuWujOS6hu+8iOWbnuW+qeOCs+ODvOODieOBruW5s+aWhyAxMCDlgIvvvIk8L3RleHQ+PHBvbHlnb24gcG9pbnRzPSI0NSw2MjEuNzg5LDM1LDYyNS43ODksNDUsNjI5Ljc4OSw0MSw2MjUuNzg5IiBmaWxsPSIjMTgxODE4IiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjE7c3Ryb2tlLWxpbmVqb2luOm1pdGVyO3N0cm9rZS1taXRlcmxpbWl0OjEwOyIvPjxsaW5lIHgxPSIzOSIgeTE9IjYyNS43ODkiIHgyPSI2MDUuNDEiIHkyPSI2MjUuNzg5IiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjE7c3Ryb2tlLWRhc2hhcnJheToyLDI7Ii8+PHRleHQgeD0iNTEiIHk9IjYyMC43MjMiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTMiIHRleHRMZW5ndGg9IjQwMyI+5paw44GX44GE5Zue5b6p44Kz44O844OJ44Gu5L+d5a2Y44Gu55S76Z2i77yI5LiA5bqm44Gg44GR77yJ44CC5Y2w44Go6YCU5Lit44Gu5bGe5oCn44KS5raI44GZPC90ZXh0Pjw/cGxhbnR1bWwtc3JjIGJQSERKbmZINThSdF84ZVJMLXMyZTM1RGNZd1FNMGZENHJDaXU4eDRaN1pKYWV1cFBYWERrZml4S29xTTJBcXJBYkI1TWh5amczTm4yeEdfdmQwN01GYU5Va3VDR2o2d1FDODJYbFUtenhwRkVNVnFYMnZKbVdraF82ZU5wNkVtZ2MzRDBqaTdDbUxjY2FIM3FJNDJoQ25kaWxMeWZQZHZUTHJERkxEYmRWSnRacnZOUHBySU41U3JtYkV4elZjVFhaNURmMkdQemFuOGNmdzg5b09hSElTelpScmlPd1NnQkFPdFVVdjdKN2FHTFZNOVdLZHpCTExHOVVhOUxHYWNQOXJnM3RsNHlNM3R5RzVseHNESDA4Y2hZZ3dmaWFvcmJhTU8xWEpuTzFuel9FcV9OSERfanlialVPSGdLdWF1VFFJSFJrYm1hY2VIY2FuWUxNNHdmUndaY2dDQVV1UTl6b2E5YVlUYUExSTk0Zi1pbGFhZUZYc0RhT1g2dS1lS3JUeHhySjRnZzBJOTV5TjNBQnUzRGpDcWJYNGk2NlJJbFNLOXpfOHYwTkVFUncwVzFHUUJBSm54WUJ2amhndTZoTDVMbG9tMy1tMWlZX1lhVTVvVEw3SVZyQTY5dEcxc3ZiUmhubTlVMUFCdHczbi1lT2NXUGZIWWJneGgzNVFoQ2RrcFg1LVFuZHBqaDhHNXNDa0JGN1RnQnRtSzJWdGpYQV8zTzVOMEIzYTFBX1F0T1pGXzZScUtyUGw0SW1HRXAxZkp4amUwc3Nha2Y5cWVISmpseVhJd3A5NEViTnFkUUN1WnVSSm5nbW9tUk5TMldVS0hPMlVYc3V6X0hsSjk0aXhMTnlLc2pmTzVPTFBpUjM3eG8wSU12ZlZkVjFPem9zMExkMFhoMGFKczREWTFOS3d4ZEs4R0Y5cjdKTnMtcWJuUDV3S0xEeTc0UFhLNDJvZWRBVmRsc2wwUVVtNmxNSEc0UmtRWlhUUGpJcm1UZHYyZkprX2hKOFVhbUplSlhYdGhmWWV5OHBVVVZPem1NTVNHVlVTMEpqSncxUDgwYXhibk9xZlpobUpjTHMxaHpVcWJWWjBad0IwaHZ4RTdpVGlGZEdQYnhMbjFDQktnRUJOVHFxeHdVV2F0cWxZTlU4c0NYMENaV0xWWHFFMVcwMlN2ck9TanRkMnV1emJUaTh4MUYwN3AwQ25KaUJSblB4bGlDOVJqTTFSMWllR1FOb0xZN0ZROXZZbmUyQTVnSU5HNHd4anBCeHd4cmFLbXdvVU92bTlPdlBGT2QtdnpRemN0LWlKQmNUaDVaMDF6VXJfQl9GbU80UlVZVDh6LWt0enRKekwtaF8zSUtkamFxQmJzUGwyQkJNR0F4OGt4NUN3S3hSR05Xbi1qc2lPc2ppQy1tT252M3JONl9XMDA/PjwvZz48L3N2Zz4=" class="uml" alt="uml diagram" title="" /></p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">項目</th>
+<th style="text-align: left;">方針</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">入口と印</td>
+<td style="text-align: left;">認証の入口（<code>TotpAuthenticationFilter</code>）が <code>recoveryCode</code> の欄で回復コードの経路を選んだことを成功の扱い（<code>FirstTotpSuccessHandler</code>）に伝え、成功の扱いが session に印（属性の値は利用者の ID）を置いて <code>/account/authenticator</code> に移す（覚えた要求は消さずに残す）。認証コードの経路は今のまま。session の ID は回復コードの経路でも認証の入口の <code>ChangeSessionIdAuthenticationStrategy</code> が変えているので足さない（<code>RecoveryCodeLoginSecurityIntegrationTest</code> が確かめている）。印は再登録の完了、ログアウト（session と一緒に消える）、password の段の成功（<code>LoginSuccessHandler</code>。同じ session で別の利用者に切り替えたときに前の利用者の印を残さない）で消す。画面は印の利用者の ID が今の主体と同じときだけ印として扱う</td>
+</tr>
+<tr>
+<td style="text-align: left;">印の属性の名前</td>
+<td style="text-align: left;">認証の入口（<code>SessionLifetime</code>。<code>identity.infrastructure.security</code>）と画面の層（<code>identity.interfaces.web</code>）に同じ値の定数を置き、一致をテストで守る（前例 <code>SessionLifetime.ENROLLMENT_PENDING_SECRET</code> と <code>TotpEnrollmentController.PENDING_SECRET</code>）。画面の層は infrastructure に依存できないため。属性の名前と期間を 2 つの定数で持つ組はこれで 5 組になり、置き場所は Bolt 33c でまとめて直す</td>
+</tr>
+<tr>
+<td style="text-align: left;">A-08 の画面と認可</td>
+<td style="text-align: left;"><code>GET</code>・<code>POST /account/authenticator</code>、<code>POST /account/authenticator/later</code>。ログインした画面のレイアウトで、ナビゲーションの対象外。2 つの要素がそろった主体（<code>AuthenticatedActor</code>）で、役割は問わない（<code>anyRequest().authenticated()</code> の範囲で、全体の注釈が 2 つの要素を求める。password の段の主体は A-02 へ）。印がなければ役割のホームへ移す（403 にしない）。A-07（<code>/login/totp/enroll</code>。password の段）とは URL も認可も分ける</td>
+</tr>
+<tr>
+<td style="text-align: left;">再認証と上限</td>
+<td style="text-align: left;">再登録の前に password を求め直さない（回復コードを持つ本人が同じ session で続けることが前提。印は上の 3 つで消える）。15 分の上限は開いた時刻からで、再登録のサービスが判定する（2 つの要素がそろった session では <code>SessionLifetimeFilter</code> の登録の途中の上限（決定 6）が効かないため）。期限切れは置き換えず、新しいキーで示し直す</td>
+</tr>
+<tr>
+<td style="text-align: left;">置き換えの時点</td>
+<td style="text-align: left;">新しいコードを確かめた時点で置き換える（それまでは古い秘密と残りの回復コードが有効。途中でやめても前の要素で入れる）。コードの誤りは置き換えず、失敗の回数に数えない（決定 9。登録の誤りと同じ）</td>
+</tr>
+<tr>
+<td style="text-align: left;">置き換えと発行し直し</td>
+<td style="text-align: left;">1 つのトランザクションで、TOTP の資格の秘密を再登録の前に読んだ秘密のままのときだけ置き換える条件付きの更新（<code>replace(資格, 読んだ秘密)</code>）で置き換え（0 件なら、ほかの画面で先に登録し直していた <code>Superseded</code> としてトランザクションを戻す。資格がないときは照合の前に利用できないとする）、回復コード 10 個を置き換え（<code>replaceAll</code>）、監査 <code>TOTP_RE_ENROLLED</code>（成功だけ。主体の利用者 ID と企業 ID）を書く。今の秘密が送られた暗号文と同じなら（二度押し）、照合の前に <code>Superseded</code> とする。同時の 2 つの完了は、後の置き換えが先の行ロックを待って 0 件になり 1 つに絞る。発行し直しと回復コードによるログインの重なりは、後の消費が消えた行の行ロックを待って 0 件になる（決定 6 の宿題。Bolt 33b の統合テストで確かめた。開発の途中で、計画の「利用者の行を占有する」から、TOTP の刻みの使用と同じ条件付きの更新に改めた）</td>
+</tr>
+<tr>
+<td style="text-align: left;">置き換えと照合の競合</td>
+<td style="text-align: left;">A-02 の照合は資格を読んでから刻みを使うまでに間がある。刻みの使用（<code>useStep(利用者, 読んだ暗号文, 刻み)</code>）は、読んだ暗号文が今の行と同じで、刻みが最後に使った刻みより大きいときだけ更新する。置き換えの後は 0 件になり、古い秘密で照合を終えた要求は通らない（再利用と同じ拒否）。置き換えは最後に使った刻みを古い値と新しいコードの刻みの大きい方にし、IA-INV-10 の単調性を保つ（再登録のコードは A-02 でもう一度使えない）</td>
+</tr>
+<tr>
+<td style="text-align: left;">ほかの session</td>
+<td style="text-align: left;">コミットの後に <code>UserSessionRevoker.revokeOthers(メールアドレス, 今の session の ID)</code> で、その利用者の今の session のほかを失効させる（Spring Session は自分のトランザクションで動くので、置き換えのトランザクションに入れない。Bolt 33a と同じ）。失敗は警告のログにとどめ、完了にする（<a href="https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/49">#49</a> と同じく残りうる）。今の session は残し、session の ID も変えない（回復コードのログインで変えている）。ほかの端末は次の操作で A-03（文言に「認証アプリを登録し直したため」を足す）</td>
+</tr>
+<tr>
+<td style="text-align: left;">メールアドレスと主体の型</td>
+<td style="text-align: left;">再登録のサービスは利用者の ID で <code>User</code> を読んでメールアドレスを得る（利用停止・所属企業の無効は利用できない）。主体の型（<code>AuthenticatedActor</code>。ADR-012）は変えない。初回の登録のサービスも段に中立な値 <code>EnrollingUser</code> で受け、秘密の発行と QR を A-07 と A-08 で共用する</td>
+</tr>
+<tr>
+<td style="text-align: left;">新しい回復コード</td>
+<td style="text-align: left;">平文は完了の応答で一度だけ示す（PRG にしない。<code>Cache-Control: no-store</code>。A-07 の回復コードの保存の画面と同じ形）。再読み込みは印がないので役割のホームへ移し、もう示さない</td>
+</tr>
+<tr>
+<td style="text-align: left;">監査</td>
+<td style="text-align: left;">成功だけ（<code>TOTP_RE_ENROLLED</code>）。失敗の試行の監査は書かない（#49 と同じ扱い）</td>
+</tr>
+<tr>
+<td style="text-align: left;">送るもの</td>
+<td style="text-align: left;">本人へのメールの通知、管理者の別経路の解除、残りの回復コードが少ないときの案内は <a href="https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/47">#47</a>（W6）に送る。残りの数の案内の代わりに、印の知らせで再登録を促す</td>
+</tr>
+</tbody>
+</table>
+<p>受け入れること（2026-10-15、Bolt 33b の計画の承認の確認ポイント 2・11・13 で human:kakimomokuri が決定。3 つ目はその帰結）:</p>
+<ul>
+<li>「後で登録する」を選んでログアウトすると印は消え、次のログインでも認証アプリがなければ回復コードを使う（また A-08 に導く）。回復コードを使い切る前に登録し直すことはマニュアルで補い、残りの数の案内は #47 で作る。</li>
+<li>認証コードでログインした利用者は再登録できない（機種を変えるときも回復コードでログインする）。設定の画面は作らない。</li>
+<li>再登録の前に password を求め直さないので、password と回復コードの両方を知る者は、ログインしてそのまま認証アプリを登録し直せる。その者は再登録しなくてもログインできるので、再登録で得るのは持続だけで、それは監査 <code>TOTP_RE_ENROLLED</code> と本人への通知（#47）で見つける。</li>
+</ul>
 <h3 id="_4">代替案<a class="headerlink" href="#_4" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
@@ -11181,6 +11266,18 @@
 <td style="text-align: left;">Argon2id にする</td>
 <td style="text-align: left;">Bouncy Castle が要る。bcrypt で SEC-07 を満たすため、足す理由がまだない</td>
 </tr>
+<tr>
+<td style="text-align: left;">再登録を認証アプリの設定の画面（ヘッダーの導線）に置き、誰でも開けるようにする（Bolt 33b）</td>
+<td style="text-align: left;">印のない利用者の再登録には、本人を確かめ直す手順（password の求め直しなど）が要り、画面と規則が増える。AC9 の範囲は端末を失った利用者の回復で、回復コードでログインした流れだけで満たせる</td>
+</tr>
+<tr>
+<td style="text-align: left;">回復コードでログインしたら再登録を終えるまで業務の画面に進ませない（Bolt 33b）</td>
+<td style="text-align: left;">出先で端末がないまま業務を続けたい利用者を止める。回復コードは 10 個あり、印の知らせで再登録を促せる</td>
+</tr>
+<tr>
+<td style="text-align: left;">再登録を始めた時点で古い秘密を無効にする（Bolt 33b）</td>
+<td style="text-align: left;">登録の途中でやめると、利用者が認証アプリでも回復コードでも入れなくなりうる。確かめた時点の置き換えなら途中でやめても前の要素が残る</td>
+</tr>
 </tbody>
 </table>
 <h2 id="_5">影響<a class="headerlink" href="#_5" title="Permanent link">&para;</a></h2>
@@ -11197,6 +11294,7 @@
 <li>要素の権限の発行時刻（<code>FactorGrantedAuthority</code> の <code>issuedAt</code>）はシステムの時計で決まり、アプリケーションの <code>Clock</code> で動かせない。時刻に頼る判定（最長 8 時間）は、session に残す自分の時刻で行う。</li>
 <li>再利用の拒否・失敗の回数・ロック・回復コードの記録が、複数のアプリケーションの実行環境で共有される必要がある（本体では表）。</li>
 <li>初回の登録では、未登録の利用者の password を知った者が本人より先に認証アプリを登録できる（決定 6 で受け入れたリスク）。</li>
+<li>回復コードでログインした印は session にあり、「後で登録する」の後にログアウトすると消える。残りの回復コードの数は示さない（#47。決定 10 で受け入れた）。</li>
 </ul>
 <h3 id="us-18-bolt">US-18 の Bolt で要るもの<a class="headerlink" href="#us-18-bolt" title="Permanent link">&para;</a></h3>
 <table>
@@ -11213,7 +11311,7 @@
 </tr>
 <tr>
 <td style="text-align: left;">画面</td>
-<td style="text-align: left;">A-01（ログイン）、A-02（認証コード。回復コードの入力（Bolt 31c）。ロック中の案内と解ける時刻は示さず、誤りと同じ応答にする（Bolt 32。決定 9）。A-02 に来る理由は password の後だけなので、<code>factor.reason</code> に応じた案内は出さない（Bolt 31 で決めた））、TOTP の登録（A-07。QR と手入力のキー、登録の後の回復コードの保存の画面。Bolt 31b）</td>
+<td style="text-align: left;">A-01（ログイン）、A-02（認証コード。回復コードの入力（Bolt 31c）。ロック中の案内と解ける時刻は示さず、誤りと同じ応答にする（Bolt 32。決定 9）。A-02 に来る理由は password の後だけなので、<code>factor.reason</code> に応じた案内は出さない（Bolt 31 で決めた））、TOTP の登録（A-07。QR と手入力のキー、登録の後の回復コードの保存の画面。Bolt 31b）、認証アプリの再登録（A-08。回復コードでログインした印があるときだけ開け、完了の後に新しい回復コードを示す。Bolt 33b。決定 10）</td>
 </tr>
 <tr>
 <td style="text-align: left;">置き換え</td>
@@ -11238,11 +11336,11 @@
 <p>Bolt 31b で解いたもの（決定 6 に移した）: 登録の QR の描き方と <code>otpauth://</code> の URI の組み立て、回復コード 10 個の発行（SEC-09。ハッシュでの保存は Bolt 30 で作った）、初回の登録（AC7）の画面の認可と登録を終えていない利用者の扱い（登録の完了時に <code>FACTOR_TOTP</code> は与えない）。</p>
 <p>Bolt 33 で解いたもの: password の再設定（SEC-08）の流れ。A-01 の「password を忘れた場合」から A-05 で依頼し、登録された有効な利用者にだけ 1 回だけ使える 30 分のリンクを送る（登録の有無を示さない。依頼の応答から切り離したイベントのハンドラーでトークンを発行して送る。<a href="../017-notification-module-and-mail/">ADR-017</a>）。リンクを開く A-06（Bolt 33a）は password の要素を与えず、設定したら A-01 に戻し、新しい password と TOTP でログインし直す（再設定の後も TOTP を求める。SEC-08）。</p>
 <p>Bolt 33a で解いたもの: A-06 の設定。リンクを開くとトークンを確かめて session にトークンの ID だけを置き、トークンのない URL（<code>/password-reset/new</code>）の A-06 へ移す。A-06 で新しい password（SEC-04・SEC-05）を設定すると、今の認証と session を捨てて新しい session を作り、A-01 に完了の知らせを出す。A-06 は password の要素を与えない（Bolt 33 の決定のまま）。利用者は A-01 から新しい password と TOTP（または回復コード）でログインし直し、多要素を回復の手順でも迂回させない。ロックと失敗の数は変えない（決定 9 のロックを再設定で解かない。SEC-02）。完了のコミットの後に、その利用者の session をすべて失効させる（<a href="../012-authentication-principal-and-session/">ADR-012</a> の決定 3）。</p>
+<p>Bolt 33b で解いたもの（決定 10 に移した）: TOTP の再登録（SEC-10）の回復コードの経路。回復コードでログインしたら印を置いて A-08 に導き、確かめた時点で秘密を置き換えて回復コードを発行し直し、コミットの後にほかの session を失効させる。管理者の別経路の解除、本人への通知、残りの回復コードが少ないときの案内は #47（W6）に残る。回復コードの発行し直しの競合（決定 6 の宿題）も決定 10 で扱う。</p>
 <ul>
 <li>java-otp の生成器のスレッドセーフ（スパイクは照合を <code>synchronized</code> の中で行う）。</li>
 <li>最長 8 時間を即時失効（BR-14）と同じ経路にできるか（Bolt 32c で見た。同じ経路にはしない。8 時間・5 分は <code>SessionLifetimeFilter</code> が DB を読まずに判定し、利用停止などの即時の失効はその直後の <code>SessionRevalidationFilter</code> が DB を読んで判定する。どちらも A-03 に送る。ADR-012 の見直しの 3）。</li>
 <li>同じ利用者の同時のログインと、同じコードの同時の送信（1 つだけ通ること）。学習テストは MockMvc だけ。</li>
-<li>TOTP の再登録（SEC-10）の流れ（Bolt 33b）。</li>
 <li>利用者の画面で「次に取れる操作」（T-35）: A-02 で誤ったときは A-01 からログインし直し、認証アプリの新しいコードか、まだ使っていない回復コードを入れる（A-01 の誤りの文言。Bolt 31c の決定 7）、端末を失ったときは回復コードか管理者への連絡。US-18 の計画の確認ポイントにする。ロック中は解ける時刻を示さず、誤りの文言の一般の予告（5 回・15 分）から待つことが分かるようにする（Bolt 32 で決めた。決定 9）。</li>
 </ul>
 <h3 id="w5">W5 で人が決める論点<a class="headerlink" href="#w5" title="Permanent link">&para;</a></h3>
@@ -11269,6 +11367,7 @@
 <p>復号した平文の消去について（Bolt 31 の開発レビュー）: 生成器は復号した配列を使い終えたら消すが、JDK の <code>SecretKeySpec</code> と java-otp の <code>Mac</code> は内部に鍵の写しを持つので、JVM の中の写しまでは消せない。消せるのは呼び出し側の配列だけである。</p>
 <h2 id="_10">改訂の経緯<a class="headerlink" href="#_10" title="Permanent link">&para;</a></h2>
 <ul>
+<li>2026-10-15: Bolt 33b のステップ 1 で、回復コードによる TOTP の再登録（決定 10。印と A-08、置き換えの時点、置き換えと発行し直しのトランザクション、刻みの使用の秘密の一致の条件と大きい方の刻み、コミットの後のほかの session の失効、メールアドレスはサービスが読む、#47 に送るもの、受け入れること）を足し、ステータスに 33b の開始準備の決定を書いた。決定 6 の発行し直しの競合と決定 7 の末尾の宿題を決定 10 に結び、残りが少ないときの案内は #47 に送ると書いた。代替案に 3 つ、ネガティブに 1 つ足し、「未確認の項目」の TOTP の再登録を解いた側へ移した（Bolt 33b の開始準備の決定 1・2。human:kakimomokuri が決定）。</li>
 <li>2026-10-15: Bolt 33a のステップ 1 で、「未確認の項目」に Bolt 33a で解いたもの（A-06 の設定、password の要素を与えないこと、ロックを再設定で解かないこと、完了の後の session の失効）を書いた（Bolt 33a の開始準備の決定 1・2。human:kakimomokuri が決定）。</li>
 <li>2026-10-15: Bolt 33 の計画の承認で、代替案の「password の要素だけで入れる例外」から A-06 を外し（A-06 は password の要素を与えず、設定したら A-01 に戻してログインし直す）、「未確認の項目」の password の再設定（SEC-08）の流れを解いた側へ移した。TOTP の再登録（SEC-10）は Bolt 33b のまま残した（human:kakimomokuri が決定。<a href="../017-notification-module-and-mail/">ADR-017</a>）。</li>
 <li>2026-10-14: Bolt 32b のステップ 1 で、決定 2 の表の無操作 30 分の行を、本体の設定 <code>spring.session.timeout</code> と Bolt 14 で確かめたこと（ADR-012）に合わせて直した。</li>
