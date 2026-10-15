@@ -11323,7 +11323,7 @@ src/test/java/.../ui/                     画面の層のステップ定義（@u
 <td style="text-align: left;">IA-INV-10〜11（TOTP の資格と回復コード。Bolt 33b の置き換えと発行し直し）</td>
 <td style="text-align: left;">○（<code>TotpCredential.reEnroll</code> の最後に使った刻みは大きい方（古い値が大きい・新しいコードが大きい）。再登録のサービスの完了・コードの誤り（置き換えない）・15 分を過ぎた・秘密が読めない・資格がない・利用停止と企業の無効、監査 <code>TOTP_RE_ENROLLED</code>（利用者で絞る。T-113）、コミットの後の失効（ロールバックしたら失効しない）、失効が失敗しても完了、監査を書けなければ失効しない、外側のトランザクションの中では呼べない）</td>
 <td style="text-align: left;">○（<code>@US-18-AC9</code>。回復コードでログイン → A-08 → 再登録 → 新しい回復コード）</td>
-<td style="text-align: left;">○（<code>replace</code> の置き換え・0 件・<code>last_used_step</code> が大きい方、古い秘密を読んでから置き換えると <code>useStep</code> が 0 件（秘密の条件を外すと落ちる。T-112）、<code>revokeOthers</code> で今の session が残り同じ利用者のほかの session が消えほかの利用者の session は残る、再登録の完了 2 つの同時で 1 つだけ（占有を外すと落ちる）、発行し直しと回復コードによるログインの同時で古い回復コードは置き換えの後に通らない（T-100））</td>
+<td style="text-align: left;">○（<code>replace</code> の置き換え・0 件・<code>last_used_step</code> が大きい方、古い秘密を読んでから置き換えると <code>useStep</code> が 0 件（秘密の条件を外すと落ちる。T-112）、<code>revokeOthers</code> で今の session が残り同じ利用者のほかの session が消えほかの利用者の session は残る、再登録の完了 2 つの同時で 1 つだけ（後の再登録が先の行ロックを待つことを <code>pg_stat_activity</code> の待ちで確かめてから先を確定させ、後は <code>Superseded</code>。置き換えの秘密の条件を外すと落ちる）、発行し直しと回復コードによるログインの同時で古い回復コードは置き換えの後に通らない（T-100）、監査を書けなければ資格も回復コードも元のまま（<code>TotpReEnrollmentRollbackIntegrationTest</code>。全体が戻る））</td>
 <td style="text-align: left;">○（A-08 の axe の違反 0）</td>
 </tr>
 <tr>
@@ -11515,7 +11515,7 @@ src/test/java/.../ui/                     画面の層のステップ定義（@u
 </tr>
 <tr>
 <td style="text-align: left;">認証アプリの再登録</td>
-<td style="text-align: left;">Bolt 33b（US-18 AC9 の回復コードの経路）。回復コードでログインすると A-08 に移り（session の ID が変わることは既存の <code>RecoveryCodeLoginSecurityIntegrationTest</code> のまま）、認証コードでログインすると今のまま。印のない session・password の段・同じ session で別の利用者に切り替えた後に A-08 を開くと、役割のホーム・A-02・役割のホーム（T-102）。CSRF のトークンがない送信は 403。再登録の後に新しいコードでログインでき、古いコードと古い回復コードは通らない。ほかの端末の session は A-03 になり、今の session は残る。後で登録すると業務の画面に知らせが出る。全 URL の見張り（<code>AUTHENTICATION_SCREENS</code>）に <code>/account/authenticator</code> と <code>/account/authenticator/later</code> を足す。印の属性の名前の 2 つの定数が同じ値であることを単体テストで守る</td>
+<td style="text-align: left;">Bolt 33b（US-18 AC9 の回復コードの経路）。回復コードでログインすると A-08 に移り（session の ID が変わることは既存の <code>RecoveryCodeLoginSecurityIntegrationTest</code> のまま）、認証コードでログインすると今のまま。印のない session・password の段・同じ session で別の利用者に切り替えた後に A-08 を開くと、役割のホーム・A-02・役割のホーム（T-102）。CSRF のトークンがない送信は 403。再登録の後に新しいコードでログインでき、古いコードと古い回復コードは通らない。ほかの端末の session は A-03 になり、今の session は残る。後で登録すると業務の画面に知らせが出る。完了の後の再送は置き換えずに役割のホームへ移る。回復コードでログインしてから 15 分を過ぎると A-08 を開けず、知らせはログインし直す案内になる（印の期限。Bolt 33b の開発レビュー）。ログインの前に開いた query の付いた画面に、「後で登録する」でも「続ける」（<code>POST /account/authenticator/continue</code>）でも query を保って戻る。A-08 の URL は全 URL の見張り（<code>AuthenticationSecurityIntegrationTest</code> の <code>checked</code>）が自動で含む（password の段の主体は A-02 へ。除外の一覧 <code>AUTHENTICATION_SCREENS</code> には足さない）。印の 2 つの属性の名前（利用者の ID と時刻）の 2 つの定数が同じ値であることを単体テストで守る（<code>SessionLifetimeFilterTest</code>）。印の状態（ログインから 15 分の間だけ ACTIVE、別の利用者の印と印のない session は NONE、時刻のない印は EXPIRED、消すと印も時刻もなくなる）は単体テスト <code>RecoveryLoginTest</code> で確かめる。監査を書けなければ資格も回復コードも元のままになることは統合テスト <code>TotpReEnrollmentRollbackIntegrationTest</code>、同時の再登録で後が先の確定を待つことは <code>pg_stat_activity</code> の待ちで確かめる</td>
 </tr>
 </tbody>
 </table>

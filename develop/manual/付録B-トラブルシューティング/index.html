@@ -5926,7 +5926,7 @@
   <a href="#q1-1-password" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Q1-1. ログインできない（「メールアドレスまたは password が正しくありません。」）
+        Q1-1. ログインできない（「メールアドレスまたは password が正しくありません。」「認証コードまたは回復コードが正しくないか、すでに使われています。」）
       
     </span>
   </a>
@@ -10638,7 +10638,7 @@
 <h1 id="b">付録 B トラブルシューティング<a class="headerlink" href="#b" title="Permanent link">&para;</a></h1>
 <p>困ったときの症状から引く Q&amp;A です。画面に出たメッセージで探してください。</p>
 <h2 id="1">1. ログインと画面<a class="headerlink" href="#1" title="Permanent link">&para;</a></h2>
-<h3 id="q1-1-password">Q1-1. ログインできない（「メールアドレスまたは password が正しくありません。」）<a class="headerlink" href="#q1-1-password" title="Permanent link">&para;</a></h3>
+<h3 id="q1-1-password">Q1-1. ログインできない（「メールアドレスまたは password が正しくありません。」「認証コードまたは回復コードが正しくないか、すでに使われています。」）<a class="headerlink" href="#q1-1-password" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
 <tr>
@@ -10652,16 +10652,16 @@
 <td style="text-align: left;">入れ直してください。どちらが違うかは画面に示されません</td>
 </tr>
 <tr>
-<td style="text-align: left;">それでもログインできない</td>
-<td style="text-align: left;">荷主の方は担当営業に、社内の方はシステム管理者にお問い合わせください</td>
+<td style="text-align: left;">続けて 5 回誤った（password・認証コード・回復コードを合わせて数えます）</td>
+<td style="text-align: left;">15 分ログインできなくなります。15 分たってから、もう一度ログインしてください。その間は正しく入れても同じ文言が示されます（<a href="../02-%E3%83%AD%E3%82%B0%E3%82%A4%E3%83%B3%E3%81%A8%E5%85%B1%E9%80%9A%E3%81%AE%E7%94%BB%E9%9D%A2/#21-ログイン">2.1</a>）</td>
 </tr>
 <tr>
 <td style="text-align: left;">直前に「もう一度ログインしてください」と示されていた</td>
 <td style="text-align: left;">管理者があなたの利用、または所属する企業の利用を止めた可能性があります（Q1-2）。荷主の方は担当営業に、社内の方はシステム管理者にお問い合わせください</td>
 </tr>
 <tr>
-<td style="text-align: left;">続けて 5 回誤った（password・認証コード・回復コードを合わせて数えます）</td>
-<td style="text-align: left;">15 分ログインできなくなります。15 分たってから、もう一度ログインしてください。その間は正しく入れても同じ文言が示されます（<a href="../02-%E3%83%AD%E3%82%B0%E3%82%A4%E3%83%B3%E3%81%A8%E5%85%B1%E9%80%9A%E3%81%AE%E7%94%BB%E9%9D%A2/#21-ログイン">2.1</a>）</td>
+<td style="text-align: left;">それでもログインできない</td>
+<td style="text-align: left;">荷主の方は担当営業に、社内の方はシステム管理者にお問い合わせください</td>
 </tr>
 </tbody>
 </table>
@@ -10848,8 +10848,16 @@
 <td style="text-align: left;">認証コードの画面の「認証アプリを使えない場合」から回復コードでログインし、認証アプリを登録し直してください（<a href="../02-%E3%83%AD%E3%82%B0%E3%82%A4%E3%83%B3%E3%81%A8%E5%85%B1%E9%80%9A%E3%81%AE%E7%94%BB%E9%9D%A2/#27-認証アプリを登録し直す">2.7</a>）</td>
 </tr>
 <tr>
+<td style="text-align: left;">新しいスマートフォンに替える（前のものもまだ使える）</td>
+<td style="text-align: left;">認証コードの画面で「認証アプリを使えない場合」を開き、回復コードでログインすると、登録し直す画面が開きます。認証コードでログインした場合は、この画面は開きません</td>
+</tr>
+<tr>
 <td style="text-align: left;">回復コードが残り少ない</td>
 <td style="text-align: left;">回復コードでログインした後に認証アプリを登録し直すと、新しい回復コードが 10 個示されます</td>
+</tr>
+<tr>
+<td style="text-align: left;">「後で登録する」を選んだ後、業務の画面に「…15 分を過ぎたため、この画面からは認証アプリを登録し直せません。…」と示された</td>
+<td style="text-align: left;">いったんログアウトして、残っている回復コードでログインし直すと、登録し直す画面が開きます</td>
 </tr>
 <tr>
 <td style="text-align: left;">回復コードもない</td>

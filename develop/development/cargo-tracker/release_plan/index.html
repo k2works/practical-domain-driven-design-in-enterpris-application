@@ -12490,7 +12490,7 @@
 </tr>
 <tr>
 <td style="text-align: left;">33c</td>
-<td style="text-align: left;">振る舞いの変わらない直し（Bolt 33b の開始準備で 33b から分けた）: session の属性の名前と期間を 2 つの定数で持つ 5 組（登録を始めた時刻・途中の秘密・8 時間の残り・戻り先・回復コードでログインした印。Bolt 31c のレビュー 14、Bolt 32b の確認ポイント 5）と 15 分の期間の置き場所（案 <code>identity.domain.model.rules.SessionPolicy</code> は開始準備で諮る）、TOTP の桁数・周期・アルゴリズムの定数、SVG の組み立て、A-01 の「5 回」「15 分」の文言と <code>LockPolicy</code> の重複（Bolt 32 の既知の課題）、回復コードの形の知識の 2 か所、<code>normalize</code> の戻り値の型、空の復号の境界のテスト（31d から送った低の指摘）、T-128 の見張り（Playwright の正規表現に渡す文字列の共通の補助と <code>Pattern.quote</code> の見張り。テストのクラスを読む ArchUnit の規則にし、対象が空でないことと違反を入れて落ちることを確かめる）、<code>SchemaCommentIntegrationTest</code> の <code>tracking</code>（Bolt 33a の既知の課題）</td>
+<td style="text-align: left;">振る舞いの変わらない直し（Bolt 33b の開始準備で 33b から分けた）: session の属性の名前と期間を 2 つの定数で持つ 5 組（登録を始めた時刻・途中の秘密・8 時間の残り・戻り先・回復コードでログインした印。Bolt 31c のレビュー 14、Bolt 32b の確認ポイント 5）と 15 分の期間の置き場所（案 <code>identity.domain.model.rules.SessionPolicy</code> は開始準備で諮る）、A-08 の URL の組（6 組目。<code>SessionLifetime.RE_ENROLL_URL</code>・<code>TotpReEnrollmentController.URL</code>・テンプレートの直書き。Bolt 33b の開発レビュー）、<code>HttpSessionRequestCache</code> の一本化、A-07 と A-08 の、途中の暗号文の扱いと回復コードの発行の重複、認証の結果のトークンに経路（要素の種類）を持たせる、<code>revokeOthers</code> の session の ID を値オブジェクトに（この 4 つも Bolt 33b の開発レビュー）、TOTP の桁数・周期・アルゴリズムの定数、SVG の組み立て、A-01 の「5 回」「15 分」の文言と <code>LockPolicy</code> の重複（Bolt 32 の既知の課題）、回復コードの形の知識の 2 か所、<code>normalize</code> の戻り値の型、空の復号の境界のテスト（31d から送った低の指摘）、T-128 の見張り（Playwright の正規表現に渡す文字列の共通の補助と <code>Pattern.quote</code> の見張り。テストのクラスを読む ArchUnit の規則にし、対象が空でないことと違反を入れて落ちることを確かめる）、<code>SchemaCommentIntegrationTest</code> の <code>tracking</code>（Bolt 33a の既知の課題）</td>
 <td style="text-align: right;">0</td>
 <td style="text-align: left;">リファクタリング（インサイドアウト）</td>
 <td style="text-align: left;">構造</td>
@@ -13913,6 +13913,11 @@
 <tr>
 <td style="text-align: left;">2026-10-15</td>
 <td style="text-align: left;">Bolt 33b のステップ 1: W5 の状態を「Bolt 33b は計画を承認し、進めている」にし、Bolt の分け方の表の 33b の行を A-08 と開始準備の決定 1 の範囲に直して 33c に送るものを外し、33c の行（SP 0、振る舞いの変わらない直し、リファクタリング（インサイドアウト）、承認ゲートは構造）を足した。局面とアプローチの段落に 33c の理由を、US-18 の Bolt の順序の文に 33b → 33c を、W5 の注に SP 6 の数え方を、デモ項目に <code>@demo-bolt-33b/re-enroll</code> を、ユーザーマニュアルの段落に 33b の分を足し、W5 の Bolt の本数を 20 本にした</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5</td>
+</tr>
+<tr>
+<td style="text-align: left;">2026-10-15</td>
+<td style="text-align: left;">Bolt 33b の開発レビュー（5 観点）の直し: 33c の行の範囲に、A-08 の URL の組（6 組目）、<code>HttpSessionRequestCache</code> の一本化、A-07 と A-08 の途中の暗号文の扱いと回復コードの発行の重複、認証の結果のトークンに経路（要素の種類）を持たせること、<code>revokeOthers</code> の session の ID を値オブジェクトにすることを足した</td>
 <td style="text-align: left;">anthropic/claude-opus-5-5</td>
 </tr>
 </tbody>
