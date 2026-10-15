@@ -3,7 +3,7 @@ type: Plan
 title: "Bolt 33c 計画 - session の属性の名前と期間の置き場所の整理（振る舞いの変わらない直し）"
 description: "W5 の 18 本目の Bolt の計画。認証の入口と画面に同じ値の 2 つの定数で持っていた session・request の属性の名前と A-08 の URL を application 層の SessionKeys に、ログインの期間（8 時間・5 分・15 分・印の 15 分）を domain の SessionPolicy に寄せる（認証の入口の規則に例外を足す）。覚えた要求の属性の名前を SessionKeys で共有し、A-01 の「5 回」「15 分」を LockPolicy から描き、T-128 の見張り（Playwright の正規表現）、SchemaCommentIntegrationTest の tracking、空の復号の境界のテストを足す。TOTP の部品の整理は 33d に分ける。"
 tags: [plan]
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-15T12:00:35Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-15T12:16:45Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-15T11:34:07Z }
 ---
@@ -60,7 +60,7 @@ verified:
 - **`SessionKeys`**（`identity.application.internal.session`）: `public final class` に `public static final String` の名前と URL を置く。値は今の文字列を変えない（既存の session の属性が読めなくならない）。ふるまいは持たない。`session/package-info.java` を足し、`application/internal/package-info.java` の「インフラストラクチャ層の設定からだけ使う」の文を直す。パッケージは開発ガイドライン第 3 章の置き場所にないので、人の決定として architecture_backend のパッケージの図と ADR-012 に書く
 - **`SessionPolicy`**（`identity.domain.model.rules`、`@DomainRule`）: `public static final Duration` の期間を置く。ふるまいは持たない定数のクラスにする（期限の判定は今の置き場所のまま。`LockPolicy` は判定のふるまいを持つが、ここでは期間だけを寄せる）。`Duration` は `java..` なのでドメインの規則に当たらない
 - **規則の例外**: `LayerArchitectureTest` の「認証の入口はidentityのコマンドサービスだけに依存してよい」の許可を `commandservices..` と `session..` にし、because に「session の属性の名前を認証の入口と画面で共有するため（Bolt 33c）」を足す。ADR-012 の決定 6（D-5 の認証の例外）と改訂の経緯に書く（決定 6 の「例外を queryservices に広げない」と矛盾しない理由: `SessionKeys` はふるまいを持たない名前だけで、業務の判断を入口に持ち込まない）
-- **`RequestCache`**: identity の合成ルートに `@Bean RequestCache`（今の `ExpiredSessionRequestSaver` の設定と同じ）を置き、`ExpiredSessionRequestSaver`・`TotpReEnrollmentController`・`FirstTotpSuccessHandler` に注入する。Spring Security の `http.requestCache` には渡さない（決定 4）
+- **覚えた要求**: 属性の名前 `SessionKeys.SAVED_REQUEST` を、失効の部品（matcher と名前を明示した cache）と A-08 の画面（名前を明示した cache で読む）が共有する。Bean にはしない（Bean にすると Spring Security が型で見つけて未認証の入口でも使う。決定 4 を決定 7 で改めた）
 - **A-01**: `LoginController` が `LockPolicy.MAX_CONSECUTIVE_FAILURES` と `LockPolicy.LOCK_DURATION.toMinutes()` をモデルに入れ、`login.html` の 3 か所は `th:text` で描く。表示の文字列は変えない（画面の単体テストで同じ文字列を確かめる）
 
 ## 設計（この Bolt の範囲）
@@ -88,8 +88,8 @@ package "identity" {
     }
   }
   package "infrastructure.security" {
-    class SessionLifetime
     class SessionLifetimeFilter
+    class ExpiredSessionRequestSaver
   }
   package "interfaces.web" {
     class SessionTimerAdvice
@@ -97,8 +97,9 @@ package "identity" {
     class RecoveryLogin
     class TotpReEnrollmentController
   }
-  SessionLifetime ..> SessionKeys
-  SessionLifetime ..> SessionPolicy
+  SessionLifetimeFilter ..> SessionKeys
+  SessionLifetimeFilter ..> SessionPolicy
+  ExpiredSessionRequestSaver ..> SessionKeys
   class TotpReEnrollmentService <<アプリケーションサービス>>
   TotpReEnrollmentService ..> SessionPolicy
   TotpEnrollmentController ..> SessionPolicy
@@ -125,7 +126,7 @@ package "identity" {
   - `SessionKeysTest`（すべての名前の値を固定する。:108 を移す）を先に書く → `SessionKeys` と `SessionPolicy` を足し、規則の例外を足して ArchUnit を流す → 参照を 1 つずつ移す → 一致を守るテスト 4 本を消す → テンプレートの直書きを式にする
   - 完了の判定: `check` 緑、`uiTest` 緑（属性の名前を変えていないので、既存のシナリオがそのまま通る）
 - [x] **3. 覚えた要求の一本化** 【承認ゲート: 構造】
-  - `RequestCache` の Bean と 3 つの部品への注入（Spring Security の既定には渡さない）。覚えた要求に戻るテスト（`ReturnAfterExpirySecurityIntegrationTest`、33b の「後で登録する」「続ける」、未認証で開いた画面に戻るテスト）が緑のまま
+  - 覚えた要求の属性の名前を `SessionKeys` に移し、失効の部品と A-08 の画面がそれを明示する（決定 7。Bean にはしない）。覚えた要求に戻るテスト（`ReturnAfterExpirySecurityIntegrationTest`、33b の「後で登録する」「続ける」、未認証で開いた画面に戻るテスト）が緑のまま
 - [x] **4. 小さな直し**
   - A-01: 「5 回」「15 分」で全体を grep し（T-132）、:27 の文言を確かめるテスト（`AuthenticationSecurityIntegrationTest` の完了の知らせ）を足してから、数値を `LockPolicy` から描く（既存の `LoginLockSecurityIntegrationTest:65` と `login_ui.feature:44` も緑のまま）
   - 空の復号の境界のテスト（本物の暗号文）、`tracking` のコメントのテスト
@@ -165,7 +166,7 @@ package "identity" {
 | 10 | **新しいファイル** | 2〜5 | `SessionKeys`・`session/package-info.java`、`SessionPolicy`、`PlaywrightText`、ArchUnit の規則（既存のクラスに足せるなら足す）、`SessionKeysTest` などのテスト |
 | 13 | **範囲**（開始準備で決めた） | 2 | `SessionKeys` には層をまたいで共有する名前と URL だけを寄せる。画面だけが使う名前は画面に残し、テストの URL の写しは仕様として残す。「始めたときの秘密を置き換えの条件にする」は #49 |
 | 11 | **マニュアル・デモ** | — | 対象外（画面の振る舞いと文言を変えない） |
-| 12 | **アプローチと承認ゲートと時間** | 全体 | リファクタリング（インサイドアウト）。ステップごとに止める（構造）。約 4 時間 |
+| 12 | **アプローチと承認ゲートと時間** | 全体 | リファクタリング（インサイドアウト）。ステップごとに止める（構造）。約 4.5 時間 |
 
 ## 完了条件
 
