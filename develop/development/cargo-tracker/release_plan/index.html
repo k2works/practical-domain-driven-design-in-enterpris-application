@@ -12553,7 +12553,7 @@
 </tr>
 <tr>
 <td style="text-align: left;">33d</td>
-<td style="text-align: left;">振る舞いの変わらない直しのうち、TOTP の部品の整理（Bolt 33c の開始準備で 33c から分けた）: TOTP の桁数・周期・アルゴリズムの定数、SVG の組み立ての分離、回復コードの形の知識の 2 か所、<code>normalize</code> の戻り値の型、A-07 と A-08 の、途中の暗号文の扱いと回復コードの発行の重複、認証の結果のトークンに経路（要素の種類）を持たせる、<code>revokeOthers</code> の session の ID を値オブジェクトに（後の 4 つは Bolt 33b の開発レビュー）</td>
+<td style="text-align: left;">振る舞いの変わらない直しのうち、TOTP の部品の整理（Bolt 33c の開始準備で 33c から分けた）: TOTP の桁数・周期・アルゴリズムの定数、SVG の組み立ての分離、回復コードの形の知識の 2 か所、<code>normalize</code> の戻り値の型、A-07 と A-08 の、途中の暗号文の扱いと回復コードの発行の重複、認証の結果のトークンに経路（要素の種類）を持たせる、<code>revokeOthers</code> の session の ID を値オブジェクトに（後の 4 つは Bolt 33b の開発レビュー）。Bolt 33c の開発レビューから: 期限の境界の判定（「ちょうどの時刻は期限切れ」が <code>SessionLifetimeFilter</code>・<code>RecoveryLogin</code>・<code>TotpReEnrollmentService</code>・<code>TotpReEnrollmentController</code> の 4 か所）を <code>SessionPolicy</code> に寄せるか、テンプレートに直書きした「15 分」「8 時間」（印の知らせ・A-08・A-07・session の警告）を <code>SessionPolicy</code> から描くか</td>
 <td style="text-align: right;">0</td>
 <td style="text-align: left;">リファクタリング（インサイドアウト）</td>
 <td style="text-align: left;">構造</td>
@@ -14007,6 +14007,11 @@
 <tr>
 <td style="text-align: left;">2026-10-15</td>
 <td style="text-align: left;">Bolt 33c の実装の事実に合わせた: Bolt の分け方の表の 33c の行と局面とアプローチで、覚えた要求を「<code>RequestCache</code> を 1 つの Bean に」から「属性の名前 <code>SessionKeys.SAVED_REQUEST</code> だけを共有する」に（Bean にすると Spring Security が型で見つけて未認証の入口でも使うため。human:kakimomokuri が決定）、テンプレートの直書きを「式にする」から「画面の層の <code>SessionUrlsAdvice</code> がモデルで URL を渡す」に改めた</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5</td>
+</tr>
+<tr>
+<td style="text-align: left;">2026-10-15</td>
+<td style="text-align: left;">Bolt 33c の開発レビュー: 33d の行に、期限の境界の判定の寄せ方と、テンプレートに直書きした期間の数値を足した</td>
 <td style="text-align: left;">anthropic/claude-opus-5-5</td>
 </tr>
 </tbody>
