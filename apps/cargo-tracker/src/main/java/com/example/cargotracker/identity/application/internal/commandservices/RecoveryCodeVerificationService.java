@@ -5,6 +5,7 @@ import com.example.cargotracker.identity.domain.model.aggregates.AuditRecordRepo
 import com.example.cargotracker.identity.domain.model.aggregates.RecoveryCode;
 import com.example.cargotracker.identity.domain.model.aggregates.RecoveryCodeHasher;
 import com.example.cargotracker.identity.domain.model.aggregates.RecoveryCodeRepository;
+import com.example.cargotracker.identity.domain.model.valueobjects.NormalizedRecoveryCode;
 import com.example.cargotracker.shared.domain.CompanyId;
 import com.example.cargotracker.shared.domain.UserId;
 import com.example.cargotracker.shared.domain.UtcInstant;
@@ -44,7 +45,7 @@ public class RecoveryCodeVerificationService {
 
     /** 利用者の入れた回復コードを確かめ、通ればそのコードを使う。拒否の種類は分けない（AC2）。 */
     public RecoveryCodeVerification verify(UserId userId, CompanyId companyId, String code) {
-        Optional<String> normalized = RecoveryCode.normalize(code);
+        Optional<NormalizedRecoveryCode> normalized = RecoveryCode.normalize(code);
         if (normalized.isEmpty()) {
             return RecoveryCodeVerification.REJECTED;
         }

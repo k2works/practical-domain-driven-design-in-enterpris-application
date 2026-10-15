@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.example.cargotracker.identity.domain.model.rules.LockPolicy;
 import com.example.cargotracker.identity.domain.model.valueobjects.EncryptedSecret;
+import com.example.cargotracker.identity.domain.model.valueobjects.NormalizedRecoveryCode;
 import com.example.cargotracker.shared.domain.UserId;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import java.time.Duration;
@@ -53,9 +54,18 @@ public abstract class AuthenticationFactorRepositoriesContract {
         return new UtcInstant(T0.plus(offset));
     }
 
+    /** 回復コードの形（16 進 4 文字・ハイフン・4 文字）の平文。照合は正規化した値だけを受ける（Bolt 33d）。 */
+    private static String code(String prefix, int i) {
+        return prefix + "-" + String.format("%04d", i);
+    }
+
+    private static NormalizedRecoveryCode normalized(String value) {
+        return RecoveryCode.normalize(value).orElseThrow();
+    }
+
     private static List<RecoveryCode> issue(UserId userId, String prefix) {
         return IntStream.rangeClosed(1, RecoveryCode.CODES_PER_USER)
-                .mapToObj(i -> RecoveryCode.issue(userId, prefix + i, HASHER, at(Duration.ZERO)))
+                .mapToObj(i -> RecoveryCode.issue(userId, code(prefix, i), HASHER, at(Duration.ZERO)))
                 .toList();
     }
 
@@ -190,7 +200,7 @@ public abstract class AuthenticationFactorRepositoriesContract {
     @Test
     void 発行した回復コードは未使用のものだけを読み出せ一度だけ使える() {
         UserId user = newUser();
-        List<RecoveryCode> issued = issue(user, "code-");
+        List<RecoveryCode> issued = issue(user, "c0de");
         recoveryCodes().replaceAll(user, issued);
         RecoveryCode first = issued.getFirst();
 
@@ -209,24 +219,24 @@ public abstract class AuthenticationFactorRepositoriesContract {
     @Test
     void 読み出した回復コードは平文で照合できる() {
         UserId user = newUser();
-        recoveryCodes().replaceAll(user, issue(user, "code-"));
+        recoveryCodes().replaceAll(user, issue(user, "c0de"));
 
         assertThat(recoveryCodes().findUnusedByUserId(user))
-                .anyMatch(code -> code.matches("code-3", HASHER))
-                .noneMatch(code -> code.matches("code-99", HASHER));
+                .anyMatch(code -> code.matches(normalized(code("c0de", 3)), HASHER))
+                .noneMatch(code -> code.matches(normalized(code("c0de", 99)), HASHER));
     }
 
     @Test
     void 回復コードを発行し直すと前のコードは使えなくなる() {
         UserId user = newUser();
-        List<RecoveryCode> old = issue(user, "old-");
+        List<RecoveryCode> old = issue(user, "01d0");
         recoveryCodes().replaceAll(user, old);
 
-        recoveryCodes().replaceAll(user, issue(user, "new-"));
+        recoveryCodes().replaceAll(user, issue(user, "0e30"));
 
         assertThat(recoveryCodes().findUnusedByUserId(user))
                 .hasSize(RecoveryCode.CODES_PER_USER)
-                .noneMatch(code -> code.matches("old-1", HASHER));
+                .noneMatch(code -> code.matches(normalized(code("01d0", 1)), HASHER));
         assertThat(recoveryCodes().use(user, old.getFirst().id(), at(Duration.ofMinutes(1))))
                 .isFalse();
     }
@@ -236,7 +246,7 @@ public abstract class AuthenticationFactorRepositoriesContract {
         UserId user = newUser();
 
         RecoveryCodeRepository repository = recoveryCodes();
-        List<RecoveryCode> nine = issue(user, "code-").subList(0, 9);
+        List<RecoveryCode> nine = issue(user, "c0de").subList(0, 9);
 
         assertThatThrownBy(() -> repository.replaceAll(user, nine)).isInstanceOf(IllegalArgumentException.class);
     }
@@ -250,7 +260,7 @@ public abstract class AuthenticationFactorRepositoriesContract {
     @Test
     void ほかの利用者の回復コードは使えない() {
         UserId owner = newUser();
-        List<RecoveryCode> issued = issue(owner, "code-");
+        List<RecoveryCode> issued = issue(owner, "c0de");
         recoveryCodes().replaceAll(owner, issued);
 
         assertThat(recoveryCodes().use(newUser(), issued.getFirst().id(), at(Duration.ZERO)))

@@ -4,7 +4,7 @@ title: "ADR-011: 多要素認証は Spring Security 7 の要素の権限で組�
 description: "password の後に TOTP を求める 2 段階のログインを、Spring Security 7 の多要素認証（要素ごとの権限）で組む。"
 tags: [adr, authentication, mfa, totp]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-15T21:59:31Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-15T22:16:14Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-11T08:28:34Z }
 ---
@@ -250,7 +250,7 @@ ArchUnit で、ZXing を参照するのが暗号の部品（`identity.infrastruc
 | 結果の型 | provider は TOTP と同じ `TotpAuthenticationToken.authenticated(details, FACTOR_TOTP)` を返す。結果の型を変えないので、mfaEnabled の要素の合わせ（`toBuilder()`）、成功の監査の判定（`LOGIN_SUCCEEDED`）、session の直列化、業務の認可、session の ID の変更、CSRF の作り直し、8 時間の起点（`AUTHENTICATED_AT`）が 1 か所に保たれる。別の結果の型にすると、これらの守りを重ねて作ることになる。`CargoUserDetails` と session の属性は変えない |
 | 拒否の例外とイベント | 拒否は `RecoveryCodeRejectedException`（`BadCredentialsException` を継ぐ）で表し、`DefaultAuthenticationEventPublisher` の例外とイベントの対応表に足して失敗のイベントを出す（対応表にない例外ではイベントが出ず、監査記録が書かれない）。失敗の数え方（Bolt 32）も同じイベントの上に置く |
 | 監査 | 通ったら回復コードの使用 `RECOVERY_CODE_USED` と `LOGIN_SUCCEEDED` の 2 行（`PASSWORD_VERIFIED` ではない）。拒否は理由 `INVALID_RECOVERY_CODE` を監査記録にだけ残す（誤り・使用済み・形の違い・回復コードがない・両方の欄を区別しない）。回復コードの平文は照合の後どこにも残さない（記録・監査・session・例外のメッセージ） |
-| 正規化 | 形の知識はドメインに置く（`RecoveryCode.normalize`）。全角を半角に直し（NFKC。IME で入れたまま）、ハイフンに似た文字（長音など）をハイフンにそろえ、前後と中の空白（全角スペースを含む）を除き、小文字にし、ハイフンのない 8 文字は 4 文字目の後にハイフンを入れる。`^[0-9a-f]{4}-[0-9a-f]{4}$` に合わなければ照合せずに拒む（bcrypt を回さない）。手で書き写したコードを打ち直させない。Bolt 33d から、正規化の結果は値 `NormalizedRecoveryCode`（`Optional` で返す）で、照合はこの値だけを受ける。形の知識（生成の `format` を含む）は `RecoveryCode` だけに置く |
+| 正規化 | 形の知識はドメインに置く（`RecoveryCode.normalize`）。全角を半角に直し（NFKC。IME で入れたまま）、ハイフンに似た文字（長音など）をハイフンにそろえ、前後と中の空白（全角スペースを含む）を除き、小文字にし、ハイフンのない 8 文字は 4 文字目の後にハイフンを入れる。`^[0-9a-f]{4}-[0-9a-f]{4}$` に合わなければ照合せずに拒む（bcrypt を回さない）。手で書き写したコードを打ち直させない。Bolt 33d から、正規化の結果は値 `NormalizedRecoveryCode`（`Optional` で返す）で、照合はこの値だけを受ける。形の知識（生成の `fromBytes` を含む）は値 `NormalizedRecoveryCode` だけに置く |
 | 照合とトランザクションの境界 | 未使用の回復コードのすべてとハッシュで照合する（1 回の送信で最大 10 回の bcrypt、約 1 秒）。読み出しと照合はトランザクションの外で行い、一致したコードの条件付きの更新（`use`）と監査記録 `RECOVERY_CODE_USED` だけを `TransactionTemplate` の 1 つのトランザクションにする（DB の接続を照合の間持たない。監査の追記が失敗したら使用も戻る）。更新できなかったら（同時の消費で負けた）拒む。同じコードを 2 つの session で同時に送っても 1 つだけが通る。照合の時間で一致の位置が分かる心配は、使用済みが一覧に出ない形なので受け入れる |
 | 失敗へ倒す場面（T-42） | 回復コードのない利用者（TOTP を登録していない利用者を含む）は拒む（TOTP の資格のリポジトリに依存しない）。`recoveryCode` と `code` の両方がある送信は、フィルターで投げずに回復コードの入力として provider に渡し、provider が照合せずに `RecoveryCodeRejectedException` で拒む（失敗のイベントが出て監査記録 `INVALID_RECOVERY_CODE` が残る）。どちらもない送信は TOTP の誤りと同じ。照合の途中の例外は、読めない要素（`UnreadableCredentialException`）は拒否してログを出し、実装の誤り（ほかの `IllegalArgumentException`）は 500 にしてエラーのログに残す（Bolt 31d で改めた。決定 8） |
 | 誤りの扱い | TOTP の誤りと同じく password の要素を捨てて A-01 に戻す（1 つの session で試し続けさせない。K-02）。A-01 の誤りの文言は TOTP と回復コードを区別しない: 「認証コードまたは回復コードが正しくないか、すでに使われています。もう一度ログインして、認証アプリに表示された新しいコードか、まだ使っていない回復コードを入れてください。」（AC2。拒否の種類は監査記録にだけ残す）。回数の上限はロックで抑える（回復コードの誤りも数える。Bolt 32。決定 9） |

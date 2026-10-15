@@ -3,6 +3,7 @@ package com.example.cargotracker.identity.domain.model.aggregates;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import com.example.cargotracker.identity.domain.model.valueobjects.NormalizedRecoveryCode;
 import com.example.cargotracker.shared.domain.UserId;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import java.time.Instant;
@@ -33,37 +34,37 @@ class RecoveryCodeTest {
 
     @Test
     void 発行するとハッシュだけを持ち平文を持たない() {
-        RecoveryCode code = RecoveryCode.issue(USER, "abcd-efgh", HASHER, ISSUED_AT);
+        RecoveryCode code = RecoveryCode.issue(USER, "1a2b-3c4d", HASHER, ISSUED_AT);
 
         assertThat(code.userId()).isEqualTo(USER);
-        assertThat(code.codeHash()).isEqualTo("hashed:abcd-efgh");
+        assertThat(code.codeHash()).isEqualTo("hashed:1a2b-3c4d");
         assertThat(code.issuedAt()).isEqualTo(ISSUED_AT);
         assertThat(code.isUsed()).isFalse();
-        assertThat(code.toString()).doesNotContain("abcd-efgh");
+        assertThat(code.toString()).doesNotContain("1a2b-3c4d");
     }
 
     @Test
     void 未使用のコードは同じ平文に一致し違う平文に一致しない() {
-        RecoveryCode code = RecoveryCode.issue(USER, "abcd-efgh", HASHER, ISSUED_AT);
+        RecoveryCode code = RecoveryCode.issue(USER, "1a2b-3c4d", HASHER, ISSUED_AT);
 
-        assertThat(code.matches("abcd-efgh", HASHER)).isTrue();
-        assertThat(code.matches("abcd-efgx", HASHER)).isFalse();
+        assertThat(code.matches(normalized("1a2b-3c4d"), HASHER)).isTrue();
+        assertThat(code.matches(normalized("1a2b-3c4e"), HASHER)).isFalse();
     }
 
     @Test
     void 使ったコードは使った時刻を持ち同じ平文にも一致しない() {
         RecoveryCode used =
-                RecoveryCode.issue(USER, "abcd-efgh", HASHER, ISSUED_AT).use(USED_AT);
+                RecoveryCode.issue(USER, "1a2b-3c4d", HASHER, ISSUED_AT).use(USED_AT);
 
         assertThat(used.isUsed()).isTrue();
         assertThat(used.usedAt()).contains(USED_AT);
-        assertThat(used.matches("abcd-efgh", HASHER)).isFalse();
+        assertThat(used.matches(normalized("1a2b-3c4d"), HASHER)).isFalse();
     }
 
     @Test
     void 使ったコードはもう一度使えない() {
         RecoveryCode used =
-                RecoveryCode.issue(USER, "abcd-efgh", HASHER, ISSUED_AT).use(USED_AT);
+                RecoveryCode.issue(USER, "1a2b-3c4d", HASHER, ISSUED_AT).use(USED_AT);
 
         assertThatThrownBy(() -> used.use(USED_AT)).isInstanceOf(IllegalStateException.class);
     }
@@ -118,13 +119,26 @@ class RecoveryCodeTest {
 
     @Test
     void 入力した回復コードを小文字の16進のハイフン区切りに正規化する() {
-        assertThat(RecoveryCode.normalize("1a2b-3c4d")).contains("1a2b-3c4d");
-        assertThat(RecoveryCode.normalize("  1A2B-3C4D \t")).as("前後の空白と大文字").contains("1a2b-3c4d");
-        assertThat(RecoveryCode.normalize("1a2b3c4d")).as("ハイフンなし").contains("1a2b-3c4d");
-        assertThat(RecoveryCode.normalize("1a2b 3c4d")).as("中の空白").contains("1a2b-3c4d");
-        assertThat(RecoveryCode.normalize("１ａ２ｂ－３ｃ４ｄ")).as("全角（IME で入れたまま）").contains("1a2b-3c4d");
-        assertThat(RecoveryCode.normalize("1a2b\u30003c4d")).as("全角スペース").contains("1a2b-3c4d");
-        assertThat(RecoveryCode.normalize("1a2bー3c4d")).as("長音").contains("1a2b-3c4d");
+        assertThat(RecoveryCode.normalize("1a2b-3c4d").map(NormalizedRecoveryCode::value))
+                .contains("1a2b-3c4d");
+        assertThat(RecoveryCode.normalize("  1A2B-3C4D \t").map(NormalizedRecoveryCode::value))
+                .as("前後の空白と大文字")
+                .contains("1a2b-3c4d");
+        assertThat(RecoveryCode.normalize("1a2b3c4d").map(NormalizedRecoveryCode::value))
+                .as("ハイフンなし")
+                .contains("1a2b-3c4d");
+        assertThat(RecoveryCode.normalize("1a2b 3c4d").map(NormalizedRecoveryCode::value))
+                .as("中の空白")
+                .contains("1a2b-3c4d");
+        assertThat(RecoveryCode.normalize("１ａ２ｂ－３ｃ４ｄ").map(NormalizedRecoveryCode::value))
+                .as("全角（IME で入れたまま）")
+                .contains("1a2b-3c4d");
+        assertThat(RecoveryCode.normalize("1a2b\u30003c4d").map(NormalizedRecoveryCode::value))
+                .as("全角スペース")
+                .contains("1a2b-3c4d");
+        assertThat(RecoveryCode.normalize("1a2bー3c4d").map(NormalizedRecoveryCode::value))
+                .as("長音")
+                .contains("1a2b-3c4d");
     }
 
     @Test
@@ -139,5 +153,30 @@ class RecoveryCodeTest {
                 .isEmpty();
         assertThat(RecoveryCode.normalize("1a2-b3c4d")).as("区切りの位置が違う").isEmpty();
         assertThat(RecoveryCode.normalize("123456")).as("TOTP の形").isEmpty();
+    }
+
+    @Test
+    void 照合は正規化した値だけを受け形の合わない値は作れない() {
+        assertThatThrownBy(() -> new NormalizedRecoveryCode("abcd-efgh")).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> new NormalizedRecoveryCode("1A2B-3C4D")).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> new NormalizedRecoveryCode(null)).isInstanceOf(IllegalArgumentException.class);
+        assertThat(new NormalizedRecoveryCode("1a2b-3c4d").toString()).doesNotContain("1a2b");
+    }
+
+    @Test
+    void 乱数のバイトから発行の形を作る() {
+        assertThat(NormalizedRecoveryCode.fromBytes(new byte[] {0x1a, 0x2b, 0x3c, 0x4d})
+                        .value())
+                .isEqualTo("1a2b-3c4d");
+        assertThat(NormalizedRecoveryCode.fromBytes(new byte[] {0, 0, 0, (byte) 0xff})
+                        .value())
+                .as("先頭の 0 を落とさない")
+                .isEqualTo("0000-00ff");
+        assertThatThrownBy(() -> NormalizedRecoveryCode.fromBytes(new byte[3]))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    private static NormalizedRecoveryCode normalized(String value) {
+        return RecoveryCode.normalize(value).orElseThrow();
     }
 }

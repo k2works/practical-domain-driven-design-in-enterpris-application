@@ -1,5 +1,6 @@
 package com.example.cargotracker.identity.domain.model.aggregates;
 
+import com.example.cargotracker.identity.domain.model.valueobjects.NormalizedRecoveryCode;
 import com.example.cargotracker.shared.annotation.ddd.AggregateRoot;
 import com.example.cargotracker.shared.domain.UserId;
 import com.example.cargotracker.shared.domain.UtcInstant;
@@ -25,7 +26,6 @@ public final class RecoveryCode {
     private static final Pattern WHITESPACE = Pattern.compile("[\\s\\p{Z}]+");
     private static final Pattern HYPHEN_LIKE = Pattern.compile("[\\u2010-\\u2015\\u2212\\u30FC\\uFF70]");
     private static final Pattern UNHYPHENATED = Pattern.compile("[0-9a-f]{8}");
-    private static final Pattern NORMALIZED = Pattern.compile("[0-9a-f]{4}-[0-9a-f]{4}");
 
     private final UUID id;
     private final UserId userId;
@@ -98,11 +98,11 @@ public final class RecoveryCode {
     }
 
     /**
-     * 利用者が入力した回復コードを、照合する形（小文字の 16 進 4 文字・ハイフン・4 文字。発行の形と同じ）に直す（Bolt 31c）。
-     * 書き写したコードを打ち直させないため、空白・大文字・ハイフンの抜け・全角（IME で入れたまま）を受ける。形が合わなければ空にし、照合させない
-     * （bcrypt を回さない）。
+     * 利用者が入力した回復コードを、照合する形（{@link NormalizedRecoveryCode}。発行の形と同じ）に直す（Bolt 31c。Bolt 33d で
+     * 値オブジェクトを返すようにした）。書き写したコードを打ち直させないため、空白・大文字・ハイフンの抜け・全角（IME で入れたまま）を
+     * 受ける。形が合わなければ空にし、照合させない（bcrypt を回さない）。
      */
-    public static Optional<String> normalize(String input) {
+    public static Optional<NormalizedRecoveryCode> normalize(String input) {
         if (input == null) {
             return Optional.empty();
         }
@@ -114,12 +114,14 @@ public final class RecoveryCode {
         String hyphenated = UNHYPHENATED.matcher(compact).matches()
                 ? compact.substring(0, 4) + "-" + compact.substring(4)
                 : compact;
-        return NORMALIZED.matcher(hyphenated).matches() ? Optional.of(hyphenated) : Optional.empty();
+        return NormalizedRecoveryCode.isForm(hyphenated)
+                ? Optional.of(new NormalizedRecoveryCode(hyphenated))
+                : Optional.empty();
     }
 
-    /** 未使用で、平文がハッシュに一致するか。使ったコードは一致しない。 */
-    public boolean matches(String code, RecoveryCodeHasher hasher) {
-        return !isUsed() && code != null && hasher.matches(code, codeHash);
+    /** 未使用で、正規化した平文がハッシュに一致するか。使ったコードは一致しない（Bolt 33d から正規化した値だけを受ける）。 */
+    public boolean matches(NormalizedRecoveryCode code, RecoveryCodeHasher hasher) {
+        return !isUsed() && code != null && hasher.matches(code.value(), codeHash);
     }
 
     /** 使った回復コードを返す。使ったコードはもう一度使えない。 */

@@ -3,6 +3,7 @@ package com.example.cargotracker.identity.infrastructure.crypto;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.example.cargotracker.identity.domain.model.aggregates.RecoveryCode;
+import com.example.cargotracker.identity.domain.model.valueobjects.NormalizedRecoveryCode;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -16,12 +17,16 @@ class RandomRecoveryCodeGeneratorTest {
     private final RandomRecoveryCodeGenerator generator = new RandomRecoveryCodeGenerator();
 
     @Test
-    void 回復コードを10個作り形は4文字ずつ区切った8文字の16進() {
+    void 回復コードを10個作り形は正規化しても変わらない() {
         List<String> codes = generator.generate();
 
+        // 形の知識は回復コードの正規化だけに置き、ここに写さない（Bolt 33d）
         assertThat(codes)
                 .hasSize(RecoveryCode.CODES_PER_USER)
-                .allMatch(code -> code.matches("[0-9a-f]{4}-[0-9a-f]{4}"));
+                .allSatisfy(code -> assertThat(RecoveryCode.normalize(code))
+                        .as("生成した値は正規化しても変わらない")
+                        .map(NormalizedRecoveryCode::value)
+                        .contains(code));
     }
 
     @Test

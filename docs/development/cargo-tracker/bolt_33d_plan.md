@@ -3,7 +3,7 @@ type: Plan
 title: "Bolt 33d 計画 - TOTP と回復コードの部品の整理（振る舞いの変わらない直し）"
 description: "W5 の 19 本目の Bolt の計画。TOTP の桁数・アルゴリズムの定数を 1 か所にし、QR コードの SVG の組み立てを秘密の発行から分け、回復コードの形の知識を RecoveryCode に寄せ、normalize の戻り値を値オブジェクトにし、A-07 と A-08 で重複していた途中の暗号文を使い続ける処理と回復コード 10 個の発行を小さな部品に切り出す。振る舞いは変えない。認証の入口と期限の直しは 33e に分ける。"
 tags: [plan]
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-15T22:09:25Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-15T22:16:14Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-15T21:57:32Z }
 ---
@@ -124,7 +124,7 @@ package "identity" {
   - 先に 3 画面の欄の見張りのテストを足す（緑。属性を消す変異で落ちることを確かめ、控えから戻す。T-131）
   - `TotpCredential.DIGITS` とアルゴリズムの定数を足し、生成器と発行を付け替える。3 つの画面のハンドラーがモデルで桁数を渡し、テンプレートの欄の属性を描く
   - `QrCodeSvg` を分け、SVG の単体テストを移す。AuthenticationArchitectureTest の QR のライブラリの規則の対象を `QrCodeSvg` に替え、crypto の一覧に足す
-- [ ] **3. 回復コードの形と `normalize` の型**
+- [x] **3. 回復コードの形と `normalize` の型**
   - 生成した値が `normalize` を通るテストを先に足し、`RandomRecoveryCodeGeneratorTest` の正規表現の写しを置き換える → 形の知識と `format` を `RecoveryCode` に寄せる → `NormalizedRecoveryCode` を足し、`normalize`・`matches`・`RecoveryCodeVerificationService` を付け替え、テストのデータ（`RecoveryCodeTest` の 49・50・60 行目、`AuthenticationFactorRepositoriesContract` の 215・216・229 行目）と `normalize(..)` の比べ方（`RecoveryCodeTest` の 121〜141 行目）を直す
   - 変異の確かめ（`format` の区切りを変えると落ちる。控えから戻す。T-131）
 - [ ] **4. A-07 と A-08 の重複**
@@ -179,6 +179,7 @@ package "identity" {
 | 2026-10-16 | 初版作成（承認待ち）。開始準備で、33d の範囲（9 項目、約 6 時間）を見積もり、human:kakimomokuri の決定（33d と 33e に分ける、A-07 と A-08 の重複は小さな部品に切り出す）を反映した | anthropic/claude-opus-5-5 |
 | 2026-10-16 | 詳細整合性検証（12 件）と横断整合性検証（11 件）の指摘を反映した。QR のライブラリの見張りの付け替え、アルゴリズムの定数の置き場所、欄の見張りのテスト、record のコンストラクターの公開範囲、`TotpProvisioningStarter` の戻り値と Bean にしないこと、設計文書と release_plan の行、変えないもの。human:kakimomokuri の決定（33c の議題 4 (b) は 33e、`matches` は値オブジェクトだけで受ける、欄の属性だけを描く、過去の報告に「→ 33e」を書き添える）を反映した | anthropic/claude-opus-5-5 |
 | 2026-10-16 | 計画を承認した（`/goal Bolt33d`） | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
+| 2026-10-16 | ステップ 3: 回復コードの形の知識（正規表現と、乱数のバイトから作る関数）を、計画の `RecoveryCode`（`format`）でなく値オブジェクト `NormalizedRecoveryCode`（`fromBytes`）に置いた。値は形を確かめるのに形の知識が要り、値オブジェクトから集約への依存の前例がないため（人に諮らずに決めた。終了報告の議題にする） | anthropic/claude-opus-5-5 |
 
 ## 関連ドキュメント
 

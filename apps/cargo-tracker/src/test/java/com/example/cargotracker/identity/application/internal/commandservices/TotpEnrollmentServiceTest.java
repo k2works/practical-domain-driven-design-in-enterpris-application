@@ -214,7 +214,8 @@ class TotpEnrollmentServiceTest {
                 .as("平文ではなくハッシュを保存する")
                 .noneMatch(code -> code.codeHash().startsWith("aaaa"));
         for (String plain : RECOVERY_CODES) {
-            assertThat(saved).anyMatch(code -> code.matches(plain, HASHER));
+            assertThat(saved)
+                    .anyMatch(code -> code.matches(RecoveryCode.normalize(plain).orElseThrow(), HASHER));
         }
         assertThat(audit).singleElement().satisfies(entry -> {
             assertThat(entry.action()).isEqualTo(AuditAction.TOTP_ENROLLED);
