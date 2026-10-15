@@ -5978,6 +5978,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../bolt_33b_report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 33b 終了報告
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../release_report-0_1/" class="md-nav__link">
         
   
@@ -13134,7 +13162,7 @@
 <td style="text-align: right;">11</td>
 <td style="text-align: right;">-</td>
 <td style="text-align: right;">-</td>
-<td style="text-align: left;">進行中（2026-10-11 に計画を作り、同日に承認された。Bolt 29〜35（20 本。Bolt 32b の開始準備で 32e を、Bolt 32e の開始準備で 32f を、Bolt 33 の開始準備で 33a を、Bolt 33b の開始準備で 33c を足した）。W4 の締めで US-04 の残り 3 を W6 から前倒し。Bolt 29〜33 を終え（#45・#46 を閉じた）。Bolt 33a を終え、Bolt 33b は計画を承認し、進めている）</td>
+<td style="text-align: left;">進行中（2026-10-11 に計画を作り、同日に承認された。Bolt 29〜35（20 本。Bolt 32b の開始準備で 32e を、Bolt 32e の開始準備で 32f を、Bolt 33 の開始準備で 33a を、Bolt 33b の開始準備で 33c を足した）。W4 の締めで US-04 の残り 3 を W6 から前倒し。Bolt 29〜33 を終え（#45・#46 を閉じた）。Bolt 33a を終え、Bolt 33b は計画を承認して終え、終了報告の承認を待っている）</td>
 </tr>
 <tr>
 <td style="text-align: left;">W6</td>
@@ -13902,7 +13930,7 @@
 </tr>
 <tr>
 <td style="text-align: left;">2026-10-15</td>
-<td style="text-align: left;">Bolt 33b の開始準備: 33b（回復コードによる TOTP の再登録 A-08 と #13 のクローズ）と 33c（振る舞いの変わらない直し）に分けると決めた。回復コードでログインしたら A-08 へ導き後にもできる、確かめた時点で置き換えて回復コードを発行し直す、ほかの session を失効させ通知は #47、<code>useStep</code> に秘密の一致、SP は 6 を数える。<a href="../bolt_33b_plan/">Bolt 33b 計画</a>（承認待ち）。33b・33c の行の書き換えはステップ 1 で行う</td>
+<td style="text-align: left;">Bolt 33b の開始準備: 33b（回復コードによる TOTP の再登録 A-08 と #13 のクローズ）と 33c（振る舞いの変わらない直し）に分けると決めた。回復コードでログインしたら A-08 へ導き後にもできる、確かめた時点で置き換えて回復コードを発行し直す、ほかの session を失効させ通知は #47、<code>useStep</code> に秘密の一致、SP は 6 を数える。<a href="../bolt_33b_plan/">Bolt 33b 計画</a>（承認済み）、<a href="../bolt_33b_report/">Bolt 33b 終了報告</a>（完了、承認待ち）。33b・33c の行の書き換えはステップ 1 で行う</td>
 <td style="text-align: left;">anthropic/claude-opus-5-5</td>
 </tr>
 <tr>
@@ -13912,12 +13940,17 @@
 </tr>
 <tr>
 <td style="text-align: left;">2026-10-15</td>
-<td style="text-align: left;">Bolt 33b のステップ 1: W5 の状態を「Bolt 33b は計画を承認し、進めている」にし、Bolt の分け方の表の 33b の行を A-08 と開始準備の決定 1 の範囲に直して 33c に送るものを外し、33c の行（SP 0、振る舞いの変わらない直し、リファクタリング（インサイドアウト）、承認ゲートは構造）を足した。局面とアプローチの段落に 33c の理由を、US-18 の Bolt の順序の文に 33b → 33c を、W5 の注に SP 6 の数え方を、デモ項目に <code>@demo-bolt-33b/re-enroll</code> を、ユーザーマニュアルの段落に 33b の分を足し、W5 の Bolt の本数を 20 本にした</td>
+<td style="text-align: left;">Bolt 33b のステップ 1: W5 の状態を「Bolt 33b は計画を承認して終え、終了報告の承認を待っている」にし、Bolt の分け方の表の 33b の行を A-08 と開始準備の決定 1 の範囲に直して 33c に送るものを外し、33c の行（SP 0、振る舞いの変わらない直し、リファクタリング（インサイドアウト）、承認ゲートは構造）を足した。局面とアプローチの段落に 33c の理由を、US-18 の Bolt の順序の文に 33b → 33c を、W5 の注に SP 6 の数え方を、デモ項目に <code>@demo-bolt-33b/re-enroll</code> を、ユーザーマニュアルの段落に 33b の分を足し、W5 の Bolt の本数を 20 本にした</td>
 <td style="text-align: left;">anthropic/claude-opus-5-5</td>
 </tr>
 <tr>
 <td style="text-align: left;">2026-10-15</td>
 <td style="text-align: left;">Bolt 33b の開発レビュー（5 観点）の直し: 33c の行の範囲に、A-08 の URL の組（6 組目）、<code>HttpSessionRequestCache</code> の一本化、A-07 と A-08 の途中の暗号文の扱いと回復コードの発行の重複、認証の結果のトークンに経路（要素の種類）を持たせること、<code>revokeOthers</code> の session の ID を値オブジェクトにすることを足した</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5</td>
+</tr>
+<tr>
+<td style="text-align: left;">2026-10-15</td>
+<td style="text-align: left;">Bolt 33b を終え、終了報告を作った（承認待ち）。開発レビューで印に 15 分の期限を付けた（human:kakimomokuri の決定）。#47・#49 にコメントした。#13 のクローズと US-18 の SP 6 の計上は承認の後</td>
 <td style="text-align: left;">anthropic/claude-opus-5-5</td>
 </tr>
 </tbody>

@@ -16,7 +16,7 @@
         <link rel="prev" href="../bolt_33a_report/">
       
       
-        <link rel="next" href="../release_report-0_1/">
+        <link rel="next" href="../bolt_33b_report/">
       
       
         
@@ -5521,6 +5521,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../bolt_33b_report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 33b 終了報告
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../release_report-0_1/" class="md-nav__link">
         
   
@@ -10746,12 +10774,12 @@
 <li>セキュリティの統合テスト: 回復コードでログインすると A-08 に移り（session の ID が変わることは既存のテストのまま）、認証コードでログインすると今のまま、印のない session・password の段・同じ session で別の利用者に切り替えた後に A-08 を開く、CSRF、再登録の後に新しいコードでログインでき古いコードと古い回復コードは通らない、ほかの端末は A-03、今の session は残る、後で登録すると知らせが出る</li>
 <li>画面の層の受入シナリオ（<code>login_ui.feature</code>、<code>@US-18-AC9</code>）: 回復コードでログイン → A-08 → QR の秘密から作ったコードで再登録 → 新しい回復コード → 続ける → 業務の画面（<code>@demo @demo-bolt-33b/re-enroll</code>）。後で登録する → 知らせ → リンクから A-08。axe の違反 0。正規表現は <code>BookingUiSteps.literal</code> と同じエスケープ</li>
 <li>完了の判定: <code>check</code> を先に（T-120）、続けて <code>uiTest</code> が緑。決定の順と実装を突き合わせる（T-129）</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>5. マニュアルとデモ</strong> 【承認ゲート: マニュアル】</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>5. マニュアルとデモ</strong> 【承認ゲート: マニュアル】</li>
 <li>マニュアル 2.1 を 2 段階のログインに書き直す（A-02 の認証コード、初回の A-07 と回復コードの保存、回復コードでのログインと書き方、誤りは password・認証コード・回復コードを合わせて 5 回でロック、15 分たってからログインし直す、誤ったときの戻り方、問い合わせ先）。2.4 の最初の箇条に「ログインの手続きを時間内に終えなかった」。2.7 認証アプリの再登録（回復コードでログインした後、後で登録する、知らせ、新しい回復コード、ほかの端末はログアウト）。付録 B（Q1-1 の 5 回の行、認証アプリを失った・機種を変えた）。マニュアルの用語集（回復コード・認証アプリ）</li>
 <li>キャプチャ（<code>manual_screenshots.feature</code> に足す）: A-02、A-08、新しい回復コード、知らせ、無効なリンクの案内（33a の既知の課題）</li>
 <li>デモの動画（<code>./gradlew demoVideo</code>。<code>@demo-bolt-33b/re-enroll</code>）は、レビューの直しで文言が変わらないと確かめてから録画する（T-105）。フレームを切り出して中身を確かめる</li>
 <li>完了の判定: <code>manual:build</code> が通る。<code>okf:check</code> ERROR 0</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>6. SonarQube と開発レビューと終了報告、#13 のクローズ</strong> 【承認ゲート: 終了報告】</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>6. SonarQube と開発レビューと終了報告、#13 のクローズ</strong> 【承認ゲート: 終了報告】</li>
 <li>SonarQube（T-116）。開発レビュー（プログラマー、テスター、アーキテクト、セキュリティ、テクニカルライター）</li>
 <li><code>bolt_33b_report.md</code>。release_plan の W5 の 33b の行、US-18 の SP 6 の計上、開発の索引。終了報告の承認の後に、デモの動画を #13 に添付し、添付の対応表に bolt-33b を足し、#13 をクローズする（AC9 の管理者経路は #47 と書く）</li>
 </ul>
@@ -10909,12 +10937,12 @@
 </table>
 <h2 id="_9">完了条件<a class="headerlink" href="#_9" title="Permanent link">&para;</a></h2>
 <ul class="task-list">
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> 回復コードでログインすると A-08 が開き、認証アプリの新しいコードで再登録できる。古い秘密のコードと古い回復コードは使えなくなり、新しい回復コード 10 個が 1 回だけ示される。「後で登録する」で業務の画面へ進め、印がある間は知らせが出る。印のない session・別の利用者に切り替えた session では A-08 を開けない</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> 再登録はコードを確かめてから置き換え、古い秘密で照合した要求は置き換えの後に通らず、監査 <code>TOTP_RE_ENROLLED</code> に残り、コミットの後にほかの session が失効し、今の session は残る</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <code>TotpEnrollmentService</code> は段に中立な値で受け、A-07 の振る舞いは変わらない</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> 設計文書（ui_design・domain_model・data_model・non_functional・ADR-011・ADR-012・architecture_backend・test_strategy・user_story・release_plan）を更新し、33c の行を足した</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> ユーザーマニュアル（2.1・2.4・2.7・付録 B・用語集）とキャプチャを更新し、デモの動画を録画して中身を確かめた（#13 への添付は終了報告の承認の後）</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <code>check</code> と <code>uiTest</code> が緑。push してアプリの CI と MkDocs の配備を確かめた。SonarQube の Quality Gate が PASS、<code>okf:check</code> ERROR 0</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> 回復コードでログインすると A-08 が開き、認証アプリの新しいコードで再登録できる。古い秘密のコードと古い回復コードは使えなくなり、新しい回復コード 10 個が 1 回だけ示される。「後で登録する」で業務の画面へ進め、印がある間は知らせが出る。印のない session・別の利用者に切り替えた session では A-08 を開けない</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> 再登録はコードを確かめてから置き換え、古い秘密で照合した要求は置き換えの後に通らず、監査 <code>TOTP_RE_ENROLLED</code> に残り、コミットの後にほかの session が失効し、今の session は残る</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <code>TotpEnrollmentService</code> は段に中立な値で受け、A-07 の振る舞いは変わらない</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> 設計文書（ui_design・domain_model・data_model・non_functional・ADR-011・ADR-012・architecture_backend・test_strategy・user_story・release_plan）を更新し、33c の行を足した</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> ユーザーマニュアル（2.1・2.4・2.7・付録 B・用語集）とキャプチャを更新し、デモの動画を録画して中身を確かめた（#13 への添付は終了報告の承認の後）</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <code>check</code> と <code>uiTest</code> が緑。push してアプリの CI と MkDocs の配備を確かめた。SonarQube の Quality Gate が PASS、<code>okf:check</code> ERROR 0</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> 開発レビュー、終了報告。終了報告の承認の後に #13 をクローズし、US-18 の残りの SP 6 を数えた</li>
 </ul>
 <h2 id="_10">更新履歴<a class="headerlink" href="#_10" title="Permanent link">&para;</a></h2>
@@ -10927,6 +10955,11 @@
 </tr>
 </thead>
 <tbody>
+<tr>
+<td style="text-align: left;">2026-10-15</td>
+<td style="text-align: left;">ステップ 5・6 を終えた。デモの動画を録画して中身を確かめ、SonarQube を PASS にし、終了報告を作った（承認待ち）。#13 のクローズと US-18 の SP 6 の計上は承認の後</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5</td>
+</tr>
 <tr>
 <td style="text-align: left;">2026-10-15</td>
 <td style="text-align: left;">開発レビュー（5 観点）の指摘を直した: (1) 回復コードでログインした印に 15 分の期限を付けた（認証の入口が利用者の ID に加えてログインした時刻 <code>SessionLifetime.RECOVERY_LOGIN_AT</code> を置き、password の段の成功で両方を消す。画面は NONE・ACTIVE・EXPIRED の 3 つに分け、EXPIRED では A-08 の GET・POST・「後で登録する」を役割のホームへ移し、業務の画面の知らせをリンクのない案内にする。「後で登録する」の後も印が session の最大 8 時間残ると、session を盗んだ者や離席中の端末に触れた者が password なしで登録し直せるため。human:kakimomokuri が決定。A-08 の期限切れの分岐は画面からはほぼ届かない守りになる）。(2) 新しい回復コードの画面の「続ける」を GET のフォームから POST（<code>/account/authenticator/continue</code>）にし、サーバーが覚えた要求か役割のホームへ redirect する（GET のフォームは action の query を捨てるため）。(3) 「後で登録する」も印を確かめ、期限を過ぎた途中の値は GET で始め直すときに捨てる。(4) 置き換えは再登録の前に読んだ秘密のままのときの条件付きの更新で、結果は 6 種類（<code>Superseded</code> を含む。人の事後の承認は終了報告の議題）。計画の古い記述（利用者の行の占有、引数の企業の ID、結果の種類、ステップ 3 の完了の判定、ドメインモデル図の <code>replace</code>、共用の文、「続ける」）を実装に合わせた</td>
