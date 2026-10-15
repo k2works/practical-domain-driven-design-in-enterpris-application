@@ -16,7 +16,7 @@
         <link rel="prev" href="../bolt_33_report/">
       
       
-        <link rel="next" href="../release_report-0_1/">
+        <link rel="next" href="../bolt_33a_report/">
       
       
         
@@ -5443,6 +5443,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../bolt_33a_report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 33a 終了報告
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../release_report-0_1/" class="md-nav__link">
         
   
@@ -10707,12 +10735,12 @@
 <li>画面の層の受入シナリオ（<code>login_ui.feature</code>、<code>@US-18-AC8</code>）: 依頼 → メール → リンクを開く → A-06 で設定 → A-01 の完了の知らせ → 新しい password と TOTP でログイン（<code>@demo @demo-bolt-33a/reset</code>）。期限切れのリンクで案内が出る（表の <code>expires_at</code> を書き換えるテストの補助を足す）。よく使われる password で誤りが出る。axe の違反 0</li>
 <li>仮の A-06 のテンプレートを消す</li>
 <li>完了の判定: <code>check</code> を先に（T-120）、続けて <code>uiTest</code> が緑</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>5. マニュアルとデモ</strong> 【承認ゲート: マニュアル】</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>5. マニュアルとデモ</strong> 【承認ゲート: マニュアル】</li>
 <li>マニュアル 2.6 に A-06 の手順（リンクを開く、新しい password と確認、長さ・全角・よく使われる password、設定の後は新しい password と TOTP でログインし直す、ほかの端末は次の操作で「もう一度ログインしてください」になる、ロック中は 15 分たってから、リンクが使えないとき）、2.4（A-03 の場面）、付録 B の Q1-6 と早見表、A-06 と完了の知らせのキャプチャ</li>
 <li>デモ環境のリンクが公開の base URL を指すかを確かめる（Bolt 33 の議題 6）</li>
 <li>デモの動画（<code>./gradlew demoVideo</code>。<code>@demo-bolt-33a/reset</code>）を録画する（レビューの直しで文言が変わらないと確かめてから。T-105）</li>
 <li>完了の判定: <code>manual:build</code> が通る。<code>okf:check</code> ERROR 0</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>6. SonarQube と開発レビューと終了報告</strong> 【承認ゲート: 終了報告】</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>6. SonarQube と開発レビューと終了報告</strong> 【承認ゲート: 終了報告】</li>
 <li>SonarQube（T-116）。開発レビュー（プログラマー、テスター、アーキテクト、セキュリティ、テクニカルライター）</li>
 <li>
 <h1 id="49-password-sec-05">49 に、漏えい済みの password の照合（SEC-05 の残り）を足すコメントをする<a class="headerlink" href="#49-password-sec-05" title="Permanent link">&para;</a></h1>
@@ -10861,13 +10889,13 @@
 </table>
 <h2 id="_10">完了条件<a class="headerlink" href="#_10" title="Permanent link">&para;</a></h2>
 <ul class="task-list">
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> メールのリンクを開くとトークンのない URL の A-06 が開き、12〜64 文字・72 バイト以下でよく使われる password でない新しい password を設定できる。トークンは 1 回だけ使え、移った後の URL・session・表に平文が残らない</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> 期限切れ・使用済み・無効のリンクは同じ案内になる</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> 設定すると、前の未使用のトークンが使えなくなり、今のブラウザの session は作り直され、コミットの後にその利用者のほかの session がすべて失効し、ロックは変わらず、監査に記録される。A-01 に完了の知らせが出て、新しい password と TOTP でログインできる</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> 設計文書（ui_design・domain_model・data_model・non_functional・architecture_backend・ADR-011・ADR-012・ADR-017・test_strategy・user_story・release_plan）を更新した</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> ユーザーマニュアル（2.4・2.6・付録 B）とキャプチャを更新し、デモの動画を録画した（#13 への添付は終了報告の承認の後）</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <code>check</code> と <code>uiTest</code> が緑。push してアプリの CI と MkDocs の配備を確かめた。SonarQube の Quality Gate が PASS、<code>okf:check</code> ERROR 0</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> 開発レビュー、終了報告。#13 に進み具合をコメントし、#49 に漏えいの照合を足した</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> メールのリンクを開くとトークンのない URL の A-06 が開き、12〜64 文字・72 バイト以下でよく使われる password でない新しい password を設定できる。トークンは 1 回だけ使え、移った後の URL・session・表に平文が残らない</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> 期限切れ・使用済み・無効のリンクは同じ案内になる</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> 設定すると、前の未使用のトークンが使えなくなり、今のブラウザの session は作り直され、コミットの後にその利用者のほかの session がすべて失効し、ロックは変わらず、監査に記録される。A-01 に完了の知らせが出て、新しい password と TOTP でログインできる</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> 設計文書（ui_design・domain_model・data_model・non_functional・architecture_backend・ADR-011・ADR-012・ADR-017・test_strategy・user_story・release_plan）を更新した</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> ユーザーマニュアル（2.4・2.6・付録 B）とキャプチャを更新し、デモの動画を録画した（#13 への添付は終了報告の承認の後）</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <code>check</code> と <code>uiTest</code> が緑。push してアプリの CI と MkDocs の配備を確かめた。SonarQube の Quality Gate が PASS、<code>okf:check</code> ERROR 0</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> 開発レビュー、終了報告。#13 に進み具合をコメントし、#49 に漏えいの照合を足した</li>
 </ul>
 <h2 id="_11">更新履歴<a class="headerlink" href="#_11" title="Permanent link">&para;</a></h2>
 <table>
@@ -10879,6 +10907,11 @@
 </tr>
 </thead>
 <tbody>
+<tr>
+<td style="text-align: left;">2026-10-15</td>
+<td style="text-align: left;">ステップ 5・6 を終えた。デモの動画を録画し、SonarQube を PASS にし、終了報告を作った（承認待ち）。デモ環境の <code>CARGOTRACKER_PUBLICBASEURL</code> はまだ空で、終了報告の議題 6 に置いた</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5</td>
+</tr>
 <tr>
 <td style="text-align: left;">2026-10-15</td>
 <td style="text-align: left;">開発レビュー（5 観点）の指摘を直した: (1) リンクを開いて session にトークンの ID を置くときに session の ID を変える（session 固定化。プログラマーとセキュリティの中）。(2) 今の session を捨てるのは完了の後（決定 2 の (6) の「完了の前に」と実装が食い違っていた。方針の誤りで送り直せるように実装の順を採り、SEC-08・ADR-012・ui_design を直した。終了報告の議題に置く）。(3) 完了のサービスは外側のトランザクションの中では呼べないようにした（外側の確定の前に session を消さないため）。コミットの後の失効と、監査を書けなければ失効しないことを単体テストで固定した。(4) 使えないリンクは方針の誤りより先に無効とする。(5) よく使われる一覧の照合で前後の空白を除く。(6) テストを足した: <code>/password-reset/{token}/x</code> を公開しない、A-02 にいたほかの端末はログインを終えられない、TOO_LONG と TOO_MANY_BYTES の文言、session の表の照合の陽性の対照、未認証の session でも ID を変える。ArchUnit の暗号の部品に 2 つを足した。(7) マニュアル: 再設定の画面を 30 分開いたままの案内、「タブ」を「ブラウザ」に、手順 8、Q1-2 に再設定の途中の行、期限の起点。(8) SonarQube の 4 件。残りは #49（W10）に送る</td>
