@@ -10685,7 +10685,7 @@
 <h2 id="_8">ステップ計画<a class="headerlink" href="#_8" title="Permanent link">&para;</a></h2>
 <p>状態の記号: <code>[ ]</code> 未着手、<code>[-]</code> 進行中、<code>[?]</code> 承認待ち、<code>[x]</code> 完了。各ステップの終わりに <code>check</code> が緑であることと、計画からの変更を設計文書に反映したこと（T-53）を確かめ、push してアプリの CI と MkDocs の配備を確かめる（T-26、T-118、T-126）。コミットは pathspec で作る（T-110）。複数行の書き換えはスクリプトのファイルにする（T-103）。共通の部品を変えたら <code>check</code> を先に流す（T-120）。</p>
 <ul class="task-list">
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>1. 設計文書</strong> 【承認ゲート: 設計文書】</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>1. 設計文書</strong> 【承認ゲート: 設計文書】</li>
 <li>ui_design.md: A-06 の URL・画面イメージ（新しい password・確認・「password を設定する」）と文言、誤りの文言（方針の定数から描く）、無効なリンクの案内、A-01 の完了の知らせ、A-03 の文言（場面の表に「再設定でほかの端末の session を消した」を足し、事実と合わなければ文言を直す）、:180・:181・:182・:1193 の仮の A-06 の記述、画面遷移。場面の表（T-123）には、ロック中の利用者・at-least-once で先のリンクが無効になった場合・失効した Cookie でリンクを開いた場合を入れる</li>
 <li>domain_model.md: password の方針（SEC-04・SEC-05、72 バイト）、<code>PasswordPolicyViolation</code>、<code>User</code> の password の変更、トークンを使う（IA-INV-12 の「使った」と SQL との契約）、ポート 3 つ、用語集、<code>PASSWORD_RESET_COMPLETED</code></li>
 <li>data_model.md: audit_record の action の範囲（:938）、<code>app_user</code> の password の更新（版を上げるが条件にしない理由）、session を主体の名前で消す（:1125）</li>
@@ -10879,6 +10879,11 @@
 </tr>
 </thead>
 <tbody>
+<tr>
+<td style="text-align: left;">2026-10-15</td>
+<td style="text-align: left;"><code>/goal Bolt33a</code> を受けた。承認ゲートでは止めずに進める</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5、指示 human:kakimomokuri</td>
+</tr>
 <tr>
 <td style="text-align: left;">2026-10-15</td>
 <td style="text-align: left;">承認（確認ポイント 1〜14 は推奨のまま）。承認ゲートでは止めずに進め、止めなかったゲートごとに根拠を書いて終了報告の承認の議題に置く（T-36）。実装の途中で層・モジュールの規則に当たったときと、5 時間を超えると見えたときは止めて諮る</td>

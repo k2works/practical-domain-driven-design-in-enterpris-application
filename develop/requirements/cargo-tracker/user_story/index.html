@@ -11158,6 +11158,13 @@
 <li>AC8 の「再設定後も TOTP の提示が必要」は、A-06 が password の要素を与えず、設定したら A-01 に戻して新しい password と TOTP でログインし直すことで満たす（Bolt 33a で作る）。</li>
 <li>メールは新しい通知のモジュールの公開 API で送り、送信の記録（本文とリンクは保存しない）を通知に残す。dev はメールをログに出す。</li>
 </ul>
+<p>Bolt 33a の開始準備の決定（2026-10-15、human:kakimomokuri。<a href="../../../development/cargo-tracker/bolt_33a_plan/">Bolt 33a 計画</a> の開始準備の決定 1・2）:</p>
+<ul>
+<li>AC8 の「1 回だけ使える期限付きの再設定リンク」は、リンクを開くとトークンを確かめて session にトークンの ID だけを移し、トークンのない URL の A-06 で新しい password を設定させ、トークンを 1 回だけ使うことで満たす。期限切れ・使用済み・新しいリンクを送った後・存在しないリンクは、どれも同じ案内で依頼し直しを促す。</li>
+<li>新しい password は 12〜64 文字（UTF-8 で 72 バイト以下）で、よく使われる password の一覧に載っていないもの（SEC-04・SEC-05）。漏えい済みの password の照合は W10（#49）。</li>
+<li>AC8 の「再設定後も TOTP の提示が必要」は、設定の後に今の session を作り直して A-01 に完了の知らせを出し、新しい password と TOTP でログインし直させることで満たす。完了のコミットの後に、その利用者のほかの session をすべて失効させる（ほかの端末は次の操作で再認証の案内）。ロックと失敗の数は変えない（SEC-02）。</li>
+<li>AC8 の「再設定が監査証跡へ記録される」は、依頼（<code>PASSWORD_RESET_REQUESTED</code>。Bolt 33）と完了（<code>PASSWORD_RESET_COMPLETED</code>。成功だけ）で満たす。</li>
+</ul>
 <h3 id="us-19">US-19 荷受人の参照許可を管理する<a class="headerlink" href="#us-19" title="Permanent link">&para;</a></h3>
 <blockquote>
 <p>荷主担当者として、予約単位で荷受人を追跡へ招待し、必要に応じて許可を取り消したい。取引に必要な情報だけを安全に共有するためだ。</p>

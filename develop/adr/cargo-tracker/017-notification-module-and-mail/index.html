@@ -7935,6 +7935,17 @@
   <a href="#_10" class="md-nav__link">
     <span class="md-ellipsis">
       
+        改訂の経緯
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_11" class="md-nav__link">
+    <span class="md-ellipsis">
+      
         関連ドキュメント
       
     </span>
@@ -10649,6 +10660,7 @@
 </ul>
 <h3 id="6-33a-a-06">6. 33a までの仮の A-06<a class="headerlink" href="#6-33a-a-06" title="Permanent link">&para;</a></h3>
 <p>Bolt 33a まで、仮の A-06 を公開する（2026-10-15、human:kakimomokuri が決定）。<code>GET /password-reset/{トークン}</code> を公開の URL にし、トークンを読まず session に覚えず、「準備中」の画面だけを返す（応答に <code>Referrer-Policy: no-referrer</code>）。公開の URL は <code>/password-reset</code> と <code>/password-reset/*</code>。33a で本物の A-06 に置き換える。届いたリンクが「見つからない」画面にならず、トークンがリンク先の Referer に漏れない。</p>
+<p>Bolt 33a で置き換える（2026-10-15、Bolt 33a の開始準備の決定 1）。<code>GET /password-reset/{トークン}</code> はトークンを確かめて session にトークンの ID だけを置き、トークンのない <code>/password-reset/new</code>（A-06）へ PRG で移す。使えないリンクは理由によらず同じ案内にする。どちらの応答にも <code>Referrer-Policy: no-referrer</code> を付ける。仮の A-06 のテンプレートは消す。公開の URL は <code>/password-reset</code> と <code>/password-reset/*</code> のまま（<a href="../012-authentication-principal-and-session/">ADR-012</a> の決定 2）。リンクの path は <code>PasswordResetController</code> の定数に寄せる（Bolt 33 の既知の課題の「リンクの path の 2 か所」）。</p>
 <h3 id="_4">代替案<a class="headerlink" href="#_4" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
@@ -10707,7 +10719,11 @@
 <li>統合テストで、Mailpit にメールが届くこと、登録あり・なし・止められた利用者で応答が同じこと、送信アダプターを遅くしても応答が待たないこと、発行記録の JSON・トークンの表・ログにトークンも URL もないこと、同じ依頼の ID の再配信で 2 通送らないこと、ロールバックしたらハンドラーが呼ばれないことを確かめる。</li>
 <li>dev の守りの式が外れたとき（dev と staging・prod の併用、staging・prod で SMTP の設定がない）に起動が止まることを、本体のテストで守る。</li>
 </ul>
-<h2 id="_10">関連ドキュメント<a class="headerlink" href="#_10" title="Permanent link">&para;</a></h2>
+<h2 id="_10">改訂の経緯<a class="headerlink" href="#_10" title="Permanent link">&para;</a></h2>
+<ul>
+<li>2026-10-15: Bolt 33a のステップ 1 で、決定 6 に仮の A-06 を本物の A-06 に置き換えること（リンクを開くとトークンの ID だけを session に移して PRG、使えないリンクは同じ案内、仮のテンプレートを消す、リンクの path を定数に寄せる）を書いた（Bolt 33a の開始準備の決定 1。human:kakimomokuri が決定）。</li>
+</ul>
+<h2 id="_11">関連ドキュメント<a class="headerlink" href="#_11" title="Permanent link">&para;</a></h2>
 <ul>
 <li><a href="../003-inter-context-integration/">ADR-003</a>、<a href="../011-mfa-totp/">ADR-011</a>、<a href="../012-authentication-principal-and-session/">ADR-012</a>、<a href="../013-heroku-demo-environment/">ADR-013</a>、<a href="../014-downstream-to-upstream-notification/">ADR-014</a></li>
 <li><a href="../../../design/cargo-tracker/architecture_backend/">バックエンドのアーキテクチャ</a>、<a href="../../../design/cargo-tracker/tech_stack/">技術スタック</a>、<a href="../../../design/cargo-tracker/non_functional/">非機能要件</a>（SEC-08、AUD-01）</li>

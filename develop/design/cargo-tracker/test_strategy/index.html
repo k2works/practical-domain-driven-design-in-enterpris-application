@@ -11230,7 +11230,7 @@ src/test/java/.../ui/                     画面の層のステップ定義（@u
 </tr>
 <tr>
 <td style="text-align: left;">IA-INV-03（ロック）</td>
-<td style="text-align: left;">○（4・5・6 回目、ロックの 14:59・15:00）</td>
+<td style="text-align: left;">○（4・5・6 回目、ロックの 14:59・15:00。Bolt 33a: password の再設定でロックと失敗の数が変わらない）</td>
 <td style="text-align: left;">—</td>
 <td style="text-align: left;">—</td>
 <td style="text-align: left;">○</td>
@@ -11265,10 +11265,17 @@ src/test/java/.../ui/                     画面の層のステップ定義（@u
 </tr>
 <tr>
 <td style="text-align: left;">IA-INV-12（再設定のトークン）</td>
-<td style="text-align: left;">○（Bolt 33: 期限の 29 分 59 秒と 30 分、無効化、ハッシュだけを持つ。依頼のサービスの監査の結果と理由（有効・登録なし・止められた利用者・所属企業の無効）。使う側は Bolt 33a）</td>
-<td style="text-align: left;">○（Bolt 33: <code>@US-18-AC8</code>。登録ありならリンクが届くことを先に確かめてから、登録なしで届かないこと）</td>
-<td style="text-align: left;">○（Bolt 33: ハッシュで探す、新しい発行で前を無効、<code>request_id</code> の一意。ハンドラーの繰り返しの 59 秒と 1 分、同じ依頼の ID の再配信で 2 通送らない、送信の <code>Failed</code> で完了、依頼がロールバックしたら呼ばれない、同時の 2 つの発行の直列（T-100）。発行記録・トークンの表・ログに平文のトークンと URL がない）</td>
-<td style="text-align: left;">○（Bolt 33: 登録の有無で応答（リダイレクト先・本文）が同じ、応答が送信を待たない）</td>
+<td style="text-align: left;">○（Bolt 33: 期限の 29 分 59 秒と 30 分、無効化、ハッシュだけを持つ。依頼のサービスの監査の結果と理由（有効・登録なし・止められた利用者・所属企業の無効）。Bolt 33a: 完了のサービスの完了・無効（期限切れ・使用済み・無効化・存在しない）・方針の誤り（トークンを使わない）・利用停止と企業の無効（無効、監査なし）、前の未使用のトークンの無効化、監査（利用者で絞る。T-113）、コミットの後の失効（ロールバックしたら失効しない）、失効が失敗しても完了）</td>
+<td style="text-align: left;">○（Bolt 33: <code>@US-18-AC8</code>。登録ありならリンクが届くことを先に確かめてから、登録なしで届かないこと。Bolt 33a: 依頼から設定まで、期限切れのリンクの案内、よく使われる password の誤り）</td>
+<td style="text-align: left;">○（Bolt 33: ハッシュで探す、新しい発行で前を無効、<code>request_id</code> の一意。ハンドラーの繰り返しの 59 秒と 1 分、同じ依頼の ID の再配信で 2 通送らない、送信の <code>Failed</code> で完了、依頼がロールバックしたら呼ばれない、同時の 2 つの発行の直列（T-100）。発行記録・トークンの表・ログに平文のトークンと URL がない。Bolt 33a: <code>findById</code>・<code>markUsed</code> と <code>isUsable</code> との契約テスト（使える・期限ちょうど・使用済み・無効）、同じトークンの同時の 2 つの送信で 1 回だけ（T-100。条件を外すと落ちることを確かめる。T-112））</td>
+<td style="text-align: left;">○（Bolt 33: 登録の有無で応答（リダイレクト先・本文）が同じ、応答が送信を待たない。Bolt 33a: 期限切れ・使用済み・無効のリンクが同じ案内）</td>
+</tr>
+<tr>
+<td style="text-align: left;">password の方針（SEC-04・SEC-05。Bolt 33a）</td>
+<td style="text-align: left;">○（11・12・64・65 文字、72・73 バイト、空白と全角、一覧の照合の結果。一覧は 1 語・大文字小文字の違い・1 文字違い、読めない・空で起動を止める）</td>
+<td style="text-align: left;">○（よく使われる password で誤りが出る）</td>
+<td style="text-align: left;">○（利用者の password の更新（<code>version</code> が上がる）、bcrypt のハッシュで新しい password でログインでき、古い password でログインできない）</td>
+<td style="text-align: left;">○（誤りの文言、axe の違反 0）</td>
 </tr>
 <tr>
 <td style="text-align: left;">ED-INV-01（情報源 0 件で開始不可）</td>
@@ -11439,6 +11446,10 @@ src/test/java/.../ui/                     画面の層のステップ定義（@u
 <td style="text-align: left;">password の再設定の依頼</td>
 <td style="text-align: left;">Bolt 33（US-18 AC8 の前半）。<code>/password-reset</code> が未認証で開ける、<code>/password-reset/{トークン}</code> は 33a まで仮の A-06（準備中）を返し、トークンを読まず session に覚えず <code>Referrer-Policy: no-referrer</code> を付ける（<code>/password-reset/x/y</code> は公開しない）、CSRF のトークンがない送信は 403、送信の後は <code>/login?reset-requested</code> に戻り、登録の有無・止められた利用者・所属企業の無効で応答（リダイレクト先・本文）が同じ、応答がハンドラーを待たない（送信アダプターを遅くする）、ログイン済み・password の段の session で開いた場合（T-102）。発行と送信を依頼のトランザクションの中に戻す違反で、応答が送信を待つテストが落ちることを確かめる（T-112）</td>
 </tr>
+<tr>
+<td style="text-align: left;">password の再設定の完了</td>
+<td style="text-align: left;">Bolt 33a（US-18 AC8 の後半）。リンクを開くと <code>/password-reset/new</code> に移り、移った先の URL と session の表にトークンがない（session があることを先に確かめる。T-107）、<code>Referrer-Policy: no-referrer</code>、無効なトークンは同じ案内、session にトークンの ID がなければ A-06 は案内、CSRF。完了の後に、ほかの端末の session で業務の画面を開くと A-03 になり、新しい password と TOTP でログインでき、古い password ではログインできない。消えるのはその利用者の session だけで、ほかの利用者と主体のない session は残る。ログイン中・password の段・別の利用者のブラウザでリンクを開いて設定しても完了の知らせが出る（T-102）。失効した Cookie でリンクを開いた場合も session の表にトークンがない。全 URL の見張り（<code>AUTHENTICATION_SCREENS</code>）に <code>/password-reset/new</code> と <code>/password-reset/{token}</code> を足す。<code>/password-reset/x/y</code> は公開しない</td>
+</tr>
 </tbody>
 </table>
 <p>統合テストは Testcontainers の PostgreSQL を使い、H2 で書かない（ADR-007）。H2 で確かめるのはスモークテストだけとする。</p>
@@ -11536,7 +11547,7 @@ src/test/java/.../ui/                     画面の層のステップ定義（@u
 </tr>
 <tr>
 <td style="text-align: left;">認証</td>
-<td style="text-align: left;">ログイン、初回の TOTP の登録、password の再設定（Bolt 33 は依頼まで。<code>login_ui.feature</code> の <code>@US-18-AC8</code>: A-01 から A-05 を開いて送ると A-01 に知らせが出て、登録された利用者にはリンクを含むメールが届く（Mailpit の API で確かめる）。登録のないアドレスでも同じ知らせが出てメールは届かない（先に登録ありで届くことを確かめる）。知らせの印 <code>reset-requested</code> がなければ出ない（T-124）。axe の違反 0。A-06 でリンクを開いて設定する流れは Bolt 33a）、ロック、session の失効の警告と延長（Bolt 32b。無操作の警告と延長、8 時間の警告、タブの間の同期、期限の到来の案内。<code>session_timeout_ui.feature</code>）、失効後の再認証の案内と開いていた画面への復帰（Bolt 32e。無操作と 8 時間の失効の後に画面を開き直す・期限の到来の案内のリンクを押すと、ログインし直した後に同じ画面に戻る。サーバーの session の失効はセキュリティの統合テスト <code>ReturnAfterExpirySecurityIntegrationTest</code> で、画面は <code>session_timeout_ui.feature</code> で、session の行を古くして確かめる）、送信していない入力の保持と送信の後の失効（Bolt 32f。警告の期限の到来・「画面を開き直す」・送信の前にブラウザの sessionStorage の入力の控えに写し、同じ利用者が同じ画面に戻ると戻って知らせが出る。送信が拒まれた画面（A-03・CSRF の 403）で拒まれたら、ログインし直した後の画面に案内が出る（認可の 403 では出ない）。捨てる条件（別の利用者、8 時間と 7 時間 59 分の対、送信が届いた、送信が届いて同じ画面に戻った、案内と知らせの消す、ログアウト、期限の到来の取り消し）と、CSRF のトークン（値を変えてから。hidden の欄は値を変えると初期の値も変わるので、変えた欄だけを写す仕組みでも写らず、許す一覧の退行はこのシナリオでは見分けられない）・ファイルを写さないことは、同じ流れで先に控えが写っていることを確かめてから見る。戻した欄に画面の表示が追随し、消すと初めの状態に戻ることは貨物種別で見る。password を写さないことは、写す画面（ログインした画面の業務のフォーム）に password の欄がないので画面の層では確かめない（写す欄を許す一覧で決めている）。画面は <code>session_timeout_ui.feature</code> で sessionStorage を読んで確かめ、<code>data-user</code> と知らせの領域と公開の画面のスクリプト、A-03 の印、CSRF と認可の 403 の印は <code>SessionTimerSecurityIntegrationTest</code>、利用者の鍵は <code>SessionTimerAdviceTest</code> で確かめる）</td>
+<td style="text-align: left;">ログイン、初回の TOTP の登録、password の再設定（Bolt 33 は依頼まで。<code>login_ui.feature</code> の <code>@US-18-AC8</code>: A-01 から A-05 を開いて送ると A-01 に知らせが出て、登録された利用者にはリンクを含むメールが届く（Mailpit の API で確かめる）。登録のないアドレスでも同じ知らせが出てメールは届かない（先に登録ありで届くことを確かめる）。知らせの印 <code>reset-requested</code> がなければ出ない（T-124）。axe の違反 0。Bolt 33a は、依頼 → メール → リンクを開く → A-06 で設定 → A-01 の完了の知らせ → 新しい password と TOTP でログイン（<code>@demo @demo-bolt-33a/reset</code>。メールの到着の後に発行記録の完了を待ってからリンクを開く。T-127）、期限切れのリンクで案内が出る（表の <code>expires_at</code> を書き換えるテストの補助）、よく使われる password で誤りが出る、axe の違反 0）、ロック、session の失効の警告と延長（Bolt 32b。無操作の警告と延長、8 時間の警告、タブの間の同期、期限の到来の案内。<code>session_timeout_ui.feature</code>）、失効後の再認証の案内と開いていた画面への復帰（Bolt 32e。無操作と 8 時間の失効の後に画面を開き直す・期限の到来の案内のリンクを押すと、ログインし直した後に同じ画面に戻る。サーバーの session の失効はセキュリティの統合テスト <code>ReturnAfterExpirySecurityIntegrationTest</code> で、画面は <code>session_timeout_ui.feature</code> で、session の行を古くして確かめる）、送信していない入力の保持と送信の後の失効（Bolt 32f。警告の期限の到来・「画面を開き直す」・送信の前にブラウザの sessionStorage の入力の控えに写し、同じ利用者が同じ画面に戻ると戻って知らせが出る。送信が拒まれた画面（A-03・CSRF の 403）で拒まれたら、ログインし直した後の画面に案内が出る（認可の 403 では出ない）。捨てる条件（別の利用者、8 時間と 7 時間 59 分の対、送信が届いた、送信が届いて同じ画面に戻った、案内と知らせの消す、ログアウト、期限の到来の取り消し）と、CSRF のトークン（値を変えてから。hidden の欄は値を変えると初期の値も変わるので、変えた欄だけを写す仕組みでも写らず、許す一覧の退行はこのシナリオでは見分けられない）・ファイルを写さないことは、同じ流れで先に控えが写っていることを確かめてから見る。戻した欄に画面の表示が追随し、消すと初めの状態に戻ることは貨物種別で見る。password を写さないことは、写す画面（ログインした画面の業務のフォーム）に password の欄がないので画面の層では確かめない（写す欄を許す一覧で決めている）。画面は <code>session_timeout_ui.feature</code> で sessionStorage を読んで確かめ、<code>data-user</code> と知らせの領域と公開の画面のスクリプト、A-03 の印、CSRF と認可の 403 の印は <code>SessionTimerSecurityIntegrationTest</code>、利用者の鍵は <code>SessionTimerAdviceTest</code> で確かめる）</td>
 <td style="text-align: left;">US-18、US 横断受入条件</td>
 </tr>
 </tbody>
@@ -12134,7 +12145,7 @@ src/test/java/.../ui/                     画面の層のステップ定義（@u
 <td style="text-align: left;">US-18</td>
 <td style="text-align: left;">AC8 の後半（A-06 でリンクを開いて新しい password を設定し、A-01 でログインし直す。期限切れ・使用済みのリンク）</td>
 <td style="text-align: left;">33a</td>
-<td style="text-align: left;">Bolt 33a の計画で決める</td>
+<td style="text-align: left;"><code>@US-18-AC8</code>（<code>login_ui.feature</code>。依頼から設定とログインし直しまで、期限切れのリンク、よく使われる password）、password の再設定の完了のセキュリティの統合テスト、IA-INV-12 と password の方針の単体・統合テスト</td>
 </tr>
 </tbody>
 </table>
