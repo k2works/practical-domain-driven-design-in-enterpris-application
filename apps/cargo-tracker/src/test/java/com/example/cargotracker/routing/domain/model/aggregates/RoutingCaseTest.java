@@ -134,8 +134,9 @@ class RoutingCaseTest {
                         1, RouteVersionStatus.SUPERSEDED, List.of(), JUDGED_AT)),
                 3);
 
+        List<Voyage> noVoyages = List.of();
         org.assertj.core.api.Assertions.assertThatThrownBy(
-                        () -> superseded.calculateCandidates(List.of(), RULES, JUDGED_AT, finder, evaluator))
+                        () -> superseded.calculateCandidates(noVoyages, RULES, JUDGED_AT, finder, evaluator))
                 .isInstanceOf(IllegalStateException.class);
     }
 

@@ -59,7 +59,7 @@ public final class MailpitClient {
             return await().atMost(timeout)
                     .pollInterval(Duration.ofMillis(100))
                     .until(() -> messagesTo(address), mails -> mails.size() >= count);
-        } catch (ConditionTimeoutException e) {
+        } catch (ConditionTimeoutException _) {
             return messagesTo(address);
         }
     }

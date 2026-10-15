@@ -78,12 +78,7 @@ class AuthenticationSecurityIntegrationTest {
 
     /** 全 URL の見張りから除く、password の段だけで開ける認証の画面と、未認証で開ける公開の画面（Bolt 31d。A-05 は Bolt 33）。 */
     private static final Set<String> AUTHENTICATION_SCREENS = Set.of(
-            "/login",
-            "/login/totp",
-            "/login/totp/enroll",
-            "/session-expired",
-            "/password-reset",
-            "/password-reset/{token}");
+            "/login", "/login/totp", "/login/totp/enroll", "/session-expired", "/password-reset", "/password-reset/*");
 
     @Autowired
     @Qualifier("requestMappingHandlerMapping")

@@ -51,7 +51,7 @@ public class PasswordResetController {
      * 仮の A-06（Bolt 33a まで。2026-10-15 の人の決定）。メールのリンクを開くと「準備中」だけを示す。トークンは読まず、公開の URL なので
      * session にも覚えない。リンクの URL を次の要求の Referer に出さない。Bolt 33a で本物の A-06 に置き換える。
      */
-    @GetMapping("/{token}")
+    @GetMapping("/*")
     public String pending(HttpServletResponse response) {
         response.setHeader(REFERRER_POLICY, NO_REFERRER);
         return PENDING_VIEW;

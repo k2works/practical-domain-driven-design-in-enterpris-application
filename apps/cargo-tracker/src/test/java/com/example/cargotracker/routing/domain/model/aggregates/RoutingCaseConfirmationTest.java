@@ -23,6 +23,7 @@ import com.example.cargotracker.routing.domain.model.valueobjects.RouteSpecifica
 import com.example.cargotracker.routing.domain.model.valueobjects.RouteVersionStatus;
 import com.example.cargotracker.routing.domain.model.valueobjects.RoutingCaseId;
 import com.example.cargotracker.routing.domain.model.valueobjects.RoutingCaseNumber;
+import com.example.cargotracker.shared.domain.Location;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import java.time.Duration;
 import java.util.List;
@@ -298,6 +299,7 @@ class RoutingCaseConfirmationTest {
                 new RouteSpecification(TOKYO, ROTTERDAM, RoutingCaseTest.DEADLINE, "GENERAL");
         UtcInstant requestedAt = at("2026-10-06T02:00:00Z");
         List<RouteVersion> twoConfirmed = List.of(confirmedV1, withNo(confirmedV1, 2));
+        List<Location> noVia = List.of();
 
         assertThatThrownBy(() -> RoutingCase.reconstitute(
                         id,
@@ -306,7 +308,7 @@ class RoutingCaseConfirmationTest {
                         "TR-2026-0001",
                         1,
                         quotationId,
-                        List.of(),
+                        noVia,
                         specification,
                         requestedAt,
                         null,

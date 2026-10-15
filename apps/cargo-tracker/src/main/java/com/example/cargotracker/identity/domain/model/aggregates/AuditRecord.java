@@ -18,6 +18,9 @@ import java.util.UUID;
 @AggregateRoot
 public final class AuditRecord {
 
+    /** 理由の引数の名前（null の確かめの文）。 */
+    private static final String REASON_ARGUMENT = "reason";
+
     private final UUID id;
     private final UtcInstant occurredAt;
     private final UserId actorUserId;
@@ -78,7 +81,7 @@ public final class AuditRecord {
             UserId user, CompanyId company, AuthenticationRejection reason, UtcInstant at) {
         Objects.requireNonNull(user, "user");
         Objects.requireNonNull(company, "company");
-        Objects.requireNonNull(reason, "reason");
+        Objects.requireNonNull(reason, REASON_ARGUMENT);
         return new AuditRecord(
                 UUID.randomUUID(), at, user, company, AuditAction.SESSION_REVOKED, AuditResult.FAILURE, reason.name());
     }
@@ -94,7 +97,7 @@ public final class AuditRecord {
      */
     public static AuditRecord loginFailed(
             UserId user, CompanyId company, AuthenticationRejection reason, UtcInstant at) {
-        Objects.requireNonNull(reason, "reason");
+        Objects.requireNonNull(reason, REASON_ARGUMENT);
         return new AuditRecord(
                 UUID.randomUUID(), at, user, company, AuditAction.LOGIN_FAILED, AuditResult.FAILURE, reason.name());
     }
@@ -116,7 +119,7 @@ public final class AuditRecord {
      */
     public static AuditRecord passwordResetRejected(
             UserId user, CompanyId company, AuthenticationRejection reason, UtcInstant at) {
-        Objects.requireNonNull(reason, "reason");
+        Objects.requireNonNull(reason, REASON_ARGUMENT);
         return new AuditRecord(
                 UUID.randomUUID(),
                 at,
