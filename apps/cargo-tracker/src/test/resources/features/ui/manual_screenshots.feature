@@ -10,6 +10,8 @@
     # 2 章 ログインと共通の画面
     もし 画面 "/login" を開く
     かつ 画面を "02-login" として撮る
+    かつ 画面 "/password-reset" を開く
+    かつ 画面を "02-password-reset" として撮る
     かつ 画面 "/session-expired" を開く
     かつ 画面を "02-session-expired" として撮る
     # 3 章 見積依頼（作成の前の空の画面、提出の後の詳細、一覧）
