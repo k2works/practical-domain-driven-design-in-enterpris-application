@@ -3,7 +3,7 @@ type: Plan
 title: "Bolt 33a 計画 - password の再設定（A-06。US-18 AC8 の後半）"
 description: "W5 の 16 本目の Bolt の計画。メールのリンクを開くとトークンを確かめて session にトークンの ID だけを移し、トークンのない URL の A-06 で新しい password を設定する（SEC-04 の 12〜64 文字と 72 バイト以下、SEC-05 のよく使われる password の一覧、トークンを 1 回だけ使う、期限切れ・使用済み・無効は同じ案内）。設定したら、今の session を作り直し、コミットの後にその利用者の session をすべて失効させる。ロックはそのまま、A-01 に戻して新しい password と TOTP でログインし直す。監査に記録する。仮の A-06 を置き換え、マニュアルの 2.6 とデモの動画（依頼から設定まで）を作る。"
 tags: [plan]
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-15T06:14:01Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-15T06:50:21Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-15T03:47:46Z }
 ---
@@ -256,6 +256,7 @@ a03 --> a01 : ほかの端末の次の操作（コミットの後に失効）
 
 | 日付 | 更新内容 | 更新者 |
 | :--- | :--- | :--- |
+| 2026-10-15 | 終了報告の承認の後、人の許可を受けてデモ環境の Config Vars を反映した（`CARGOTRACKER_PUBLICBASEURL` が公開の URL を指す。Bolt 33 の議題 6 を閉じた） | anthropic/claude-opus-5-5、許可 human:kakimomokuri |
 | 2026-10-15 | ステップ 5・6 を終えた。デモの動画を録画し、SonarQube を PASS にし、終了報告を作った（承認待ち）。デモ環境の `CARGOTRACKER_PUBLICBASEURL` はまだ空で、終了報告の議題 6 に置いた | anthropic/claude-opus-5-5 |
 | 2026-10-15 | 開発レビュー（5 観点）の指摘を直した: (1) リンクを開いて session にトークンの ID を置くときに session の ID を変える（session 固定化。プログラマーとセキュリティの中）。(2) 今の session を捨てるのは完了の後（決定 2 の (6) の「完了の前に」と実装が食い違っていた。方針の誤りで送り直せるように実装の順を採り、SEC-08・ADR-012・ui_design を直した。終了報告の議題に置く）。(3) 完了のサービスは外側のトランザクションの中では呼べないようにした（外側の確定の前に session を消さないため）。コミットの後の失効と、監査を書けなければ失効しないことを単体テストで固定した。(4) 使えないリンクは方針の誤りより先に無効とする。(5) よく使われる一覧の照合で前後の空白を除く。(6) テストを足した: `/password-reset/{token}/x` を公開しない、A-02 にいたほかの端末はログインを終えられない、TOO_LONG と TOO_MANY_BYTES の文言、session の表の照合の陽性の対照、未認証の session でも ID を変える。ArchUnit の暗号の部品に 2 つを足した。(7) マニュアル: 再設定の画面を 30 分開いたままの案内、「タブ」を「ブラウザ」に、手順 8、Q1-2 に再設定の途中の行、期限の起点。(8) SonarQube の 4 件。残りは #49（W10）に送る | anthropic/claude-opus-5-5 |
 | 2026-10-15 | ステップ 4 を終え、ステップ 5 のマニュアルとキャプチャを書いた。計画からの変更と見つけたこと: (1) 失効した Cookie でリンクを開くと、Spring Security の無効な session の扱いで A-03 に移る（トークンは使わず session にも置かない。開き直せば使える）。テストはこの振る舞いを確かめ、マニュアル 2.6 にも書いた。(2) 画面の層のシナリオで、Awaitility の中でシナリオのスコープの bean を読んで落ちた（利用者の ID を先に読む形に直した）。(3) 欄の説明の照合に Java の `Pattern.quote` を使い、Playwright が JavaScript の正規表現に変えるため一致しなかった。Bolt 5・25 と同じ落とし穴で 3 回目になる（終了報告で機械の見張りを諮る）。(4) A-03 の文言の変更に合わせて A-03 のキャプチャも撮り直した。(5) デモ環境の `CARGOTRACKER_PUBLICBASEURL` はまだ空だった（Bolt 33 の議題 6。終了報告の議題に置く）。運用手順書の「33a までは準備中」の記述を直した。`check`・`uiTest` 緑 | anthropic/claude-opus-5-5 |

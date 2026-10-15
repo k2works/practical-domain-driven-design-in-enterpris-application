@@ -3,7 +3,7 @@ type: Plan
 title: "Bolt 33a 終了報告 - password の再設定（A-06。US-18 AC8 の後半）"
 description: "W5 の 16 本目の Bolt の終了報告。メールのリンクを開くとトークンを確かめて session に ID だけを置き、トークンのない URL の A-06 で新しい password（12〜64 文字、72 バイト以下、よく使われる password でない）を設定できるようにした。完了は 1 つのトランザクションでトークンを 1 回だけ使い、コミットの後にその利用者の session をすべて失効させ、A-01 に完了の知らせを出す。開発レビューで session 固定化と、今の session を捨てる順序（決定と実装の食い違い）を見つけて直した。"
 tags: [plan]
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-15T06:43:02Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-15T06:50:21Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-15T06:43:03Z }
 ---
@@ -130,7 +130,7 @@ verified:
 
 - #49 に送ったもの（議題 5）
 - 無効なリンクの案内（A-06 の案内）のキャプチャがない。キャプチャに説明の表の番号の印がない（マニュアル全体の課題）
-- デモ環境の Config Vars の反映は人の作業（議題 6）
+- デモ環境の Config Vars の反映（議題 6）は、承認の後に人の許可を受けて済ませた
 - `SchemaCommentIntegrationTest.BUSINESS_SCHEMAS` に `tracking` が入っていない（Bolt 33 から）
 
 ## 次の Bolt
@@ -141,7 +141,7 @@ Bolt 33b（W5 の続き）。#13 をクローズする Bolt（US-18 の残りと
 
 | 日付 | 更新内容 | 更新者 |
 | :--- | :--- | :--- |
-| 2026-10-15 | 終了報告を承認した（議題 1〜7。議題 7 の Try の見張りの形は Bolt 33b の開始準備で決める。デモ環境の Config Vars の反映（議題 6）は人の作業として残る）。デモの動画を #13 に添付し、添付の対応表に bolt-33a を足した | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
+| 2026-10-15 | 終了報告を承認した（議題 1〜7。議題 7 の Try の見張りの形は Bolt 33b の開始準備で決める）。デモの動画を #13 に添付し、添付の対応表に bolt-33a を足した。人の許可を受けて `deploy:demo:setup` を実行し、デモ環境の `CARGOTRACKER_PUBLICBASEURL` を公開の URL にした（v260。再起動の後に A-01 と無効なリンクの案内が開くことを確かめた） | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-10-15 | 初版作成（承認待ち） | anthropic/claude-opus-5-5 |
 
 ## 関連ドキュメント
