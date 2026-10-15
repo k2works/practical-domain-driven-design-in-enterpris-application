@@ -11683,7 +11683,7 @@
 <tr>
 <td style="text-align: left;">再設定のリンクを開く</td>
 <td style="text-align: left;"><code>GET /password-reset/{トークン}</code></td>
-<td style="text-align: left;">Bolt 33a（US-18 AC8 の後半）。メールのリンクの URL で、公開の URL（<code>/password-reset/*</code>）。画面を持たない。トークンをハッシュにして探し、使えれば session にトークンの ID だけを置いて <code>/password-reset/new</code>（A-06）へ PRG で移す。使えなければ（期限切れ・使用済み・新しいリンクを送った後・存在しない）無効なリンクの案内を出す（どの理由かを示さない。下の A-06 の節）。どちらの応答にも <code>Referrer-Policy: no-referrer</code> を付ける。平文のトークンは最初の 1 回の要求の URL にだけ現れ、ログ・モデル・session・移った後の URL に置かない（アクセスログには最初の要求の path が残る。SEC-08）。ログイン済み・password の段・別の利用者の session で開いても同じに扱う（今の認証を捨てるのは設定の完了のとき）。Bolt 33 から 33a までは、トークンを読まず session に覚えない仮の A-06（準備中）を返していた（2026-10-15 に human:kakimomokuri が決定。33a でテンプレートを消す）</td>
+<td style="text-align: left;">Bolt 33a（US-18 AC8 の後半）。メールのリンクの URL で、公開の URL（<code>/password-reset/*</code>）。画面を持たない。トークンをハッシュにして探し、使えれば session にトークンの ID だけを置き、session の ID を変えて（session 固定化を防ぐ）<code>/password-reset/new</code>（A-06）へ PRG で移す。使えなければ（期限切れ・使用済み・新しいリンクを送った後・存在しない）無効なリンクの案内を出す（どの理由かを示さない。下の A-06 の節）。どちらの応答にも <code>Referrer-Policy: no-referrer</code> を付ける。平文のトークンは最初の 1 回の要求の URL にだけ現れ、ログ・モデル・session・移った後の URL に置かない（アクセスログには最初の要求の path が残る。SEC-08）。ログイン済み・password の段・別の利用者の session で開いても同じに扱う（今の認証を捨てるのは設定の完了のとき）。Bolt 33 から 33a までは、トークンを読まず session に覚えない仮の A-06（準備中）を返していた（2026-10-15 に human:kakimomokuri が決定。33a でテンプレートを消す）</td>
 </tr>
 <tr>
 <td style="text-align: left;">A-06 password の再設定</td>
@@ -12032,7 +12032,7 @@
 </tr>
 <tr>
 <td style="text-align: left;">同じ利用者がログイン中のブラウザ</td>
-<td style="text-align: left;">完了の前に今の認証と session を捨てて新しい session を作る</td>
+<td style="text-align: left;">完了したら今の認証と session を捨てて新しい session を作る（方針の誤りで送り直せるように、完了の前には捨てない。Bolt 33a の開発レビューで、決定 2 の (6) の「完了の前に」から改めた）</td>
 <td style="text-align: left;">合う（「ログアウトしました」）。ログインし直すまで業務の画面は開けない</td>
 </tr>
 <tr>

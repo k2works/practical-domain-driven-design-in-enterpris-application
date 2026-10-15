@@ -10668,7 +10668,7 @@
 <li><strong>リンクを開く</strong>（<code>PasswordResetController</code> の <code>GET /{token}</code>）: <code>PasswordResetCompletionService.open(token)</code> がハッシュにして探し、使えればトークンの ID を返す。コントローラーは session の属性（<code>PasswordResetSession.TOKEN_ID</code>。<code>interfaces.web</code> に置き、属性を読み書きするのは画面の層だけ）に ID を置き、<code>redirect:/password-reset/new</code>。使えなければ無効なリンクの案内（<code>identity/password-reset-invalid</code>）。トークンの値はログ・モデル・session に置かない</li>
 <li><strong>A-06</strong>（<code>GET /password-reset/new</code>）: session のトークンの ID で <code>isUsable(tokenId)</code> を聞き、使えればフォーム（<code>identity/password-reset-new</code>）、使えなければ ID を消して案内。<code>POST</code> は確認の不一致だけを画面で見て、<code>complete(tokenId, newPassword)</code> の結果（完了・方針の誤り（種類）・無効）で分ける</li>
 <li><strong>完了のサービス</strong>（<code>identity.application.internal.commandservices.PasswordResetCompletionService</code>）: トランザクションの中で、方針を確かめる（一覧の照合の結果を渡す）→ トークンを条件付きで使う（<code>used_at IS NULL AND invalidated_at IS NULL AND expires_at &gt; now</code>。0 件なら無効）→ 利用者を読み、利用停止・企業の無効なら無効（示さない。監査なし。トランザクションを戻す）→ ハッシュを作って password を変える → 同じ利用者の未使用のトークンを無効にする → 監査 <code>PASSWORD_RESET_COMPLETED</code>。コミットの後に <code>UserSessionRevoker.revokeAll(メールアドレス)</code> を呼び、失敗は警告のログ（password は変わっている）</li>
-<li><strong>今の session</strong>: コントローラーは完了を呼ぶ前に、今の認証を捨て、今の session を捨てて新しい session を作る（トークンの ID は引数で渡し、新しい session には移さない）。新しい session は主体がないので失効の対象にならない</li>
+<li><strong>今の session</strong>: コントローラーは完了したら、今の認証を捨て、今の session を捨てて新しい session を作る（トークンの ID は新しい session には移さない。開発レビューで「完了を呼ぶ前に」から改めた。方針の誤りで送り直せるように）。新しい session は主体がないので失効の対象にならない</li>
 <li><strong>ポートと実装</strong>（CLAUDE.md の規則、開始準備の決定 7）: <code>PasswordHasher</code>（実装 <code>infrastructure.crypto.BcryptPasswordHasher</code>。<code>PasswordEncoder</code> を包む）、<code>CommonPasswordList</code>（実装 <code>infrastructure.crypto.BundledCommonPasswordList</code>。起動のときに資源を読み、小文字の集合にする。読めない・空なら起動を止める）、<code>UserSessionRevoker</code>（実装 <code>infrastructure.security.SpringSessionUserSessionRevoker</code>。<code>FindByIndexNameSessionRepository</code> で主体の名前の session を探して消す）。ポートは <code>identity.domain.model.aggregates</code></li>
 <li><strong>トークンを使う条件</strong>: ドメインの <code>isUsable(now)</code> と SQL の条件を、<code>LockPolicy</code> の前例に倣って契約テストで両方確かめる（IA-INV-12）。リポジトリに <code>findById</code> と <code>markUsed(id, at)</code>（条件付き）を足す</li>
 <li><strong>公開の URL</strong>: <code>/password-reset/*</code> のまま（<code>/password-reset/new</code> も 1 段で含まれる。<code>new</code> はトークン（43 文字）と重ならない）。判定は <code>PathPatternRequestMatcher</code> のまま（T-121）。全 URL の見張りに <code>/password-reset/new</code> と <code>/password-reset/{token}</code> を足す</li>
@@ -10879,6 +10879,11 @@
 </tr>
 </thead>
 <tbody>
+<tr>
+<td style="text-align: left;">2026-10-15</td>
+<td style="text-align: left;">開発レビュー（5 観点）の指摘を直した: (1) リンクを開いて session にトークンの ID を置くときに session の ID を変える（session 固定化。プログラマーとセキュリティの中）。(2) 今の session を捨てるのは完了の後（決定 2 の (6) の「完了の前に」と実装が食い違っていた。方針の誤りで送り直せるように実装の順を採り、SEC-08・ADR-012・ui_design を直した。終了報告の議題に置く）。(3) 完了のサービスは外側のトランザクションの中では呼べないようにした（外側の確定の前に session を消さないため）。コミットの後の失効と、監査を書けなければ失効しないことを単体テストで固定した。(4) 使えないリンクは方針の誤りより先に無効とする。(5) よく使われる一覧の照合で前後の空白を除く。(6) テストを足した: <code>/password-reset/{token}/x</code> を公開しない、A-02 にいたほかの端末はログインを終えられない、TOO_LONG と TOO_MANY_BYTES の文言、session の表の照合の陽性の対照、未認証の session でも ID を変える。ArchUnit の暗号の部品に 2 つを足した。(7) マニュアル: 再設定の画面を 30 分開いたままの案内、「タブ」を「ブラウザ」に、手順 8、Q1-2 に再設定の途中の行、期限の起点。(8) SonarQube の 4 件。残りは #49（W10）に送る</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5</td>
+</tr>
 <tr>
 <td style="text-align: left;">2026-10-15</td>
 <td style="text-align: left;">ステップ 4 を終え、ステップ 5 のマニュアルとキャプチャを書いた。計画からの変更と見つけたこと: (1) 失効した Cookie でリンクを開くと、Spring Security の無効な session の扱いで A-03 に移る（トークンは使わず session にも置かない。開き直せば使える）。テストはこの振る舞いを確かめ、マニュアル 2.6 にも書いた。(2) 画面の層のシナリオで、Awaitility の中でシナリオのスコープの bean を読んで落ちた（利用者の ID を先に読む形に直した）。(3) 欄の説明の照合に Java の <code>Pattern.quote</code> を使い、Playwright が JavaScript の正規表現に変えるため一致しなかった。Bolt 5・25 と同じ落とし穴で 3 回目になる（終了報告で機械の見張りを諮る）。(4) A-03 の文言の変更に合わせて A-03 のキャプチャも撮り直した。(5) デモ環境の <code>CARGOTRACKER_PUBLICBASEURL</code> はまだ空だった（Bolt 33 の議題 6。終了報告の議題に置く）。運用手順書の「33a までは準備中」の記述を直した。<code>check</code>・<code>uiTest</code> 緑</td>
