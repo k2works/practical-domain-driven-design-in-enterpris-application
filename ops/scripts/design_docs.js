@@ -21,7 +21,7 @@ const SUBSYSTEMS = [
     dbUser: 'cargotracker',
     // 業務のスキーマ（データモデルのスキーマ分割）。ER 図の対象の一覧はここだけに書き、Compose の schemaspy へは環境変数
     // SCHEMASPY_SCHEMAS で渡す。スキーマを足したらここに足す（足し忘れは schemaspy:generate がマイグレーションの後に検出する）
-    schemas: ['identity', 'quotation', 'routing', 'booking', 'tracking', 'platform'],
+    schemas: ['identity', 'quotation', 'routing', 'booking', 'tracking', 'notification', 'platform'],
   },
 ];
 
