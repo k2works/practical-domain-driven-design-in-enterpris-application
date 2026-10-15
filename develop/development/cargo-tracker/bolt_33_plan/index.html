@@ -16,7 +16,7 @@
         <link rel="prev" href="../bolt_32f_report/">
       
       
-        <link rel="next" href="../release_report-0_1/">
+        <link rel="next" href="../bolt_33_report/">
       
       
         
@@ -5459,6 +5459,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../bolt_33_report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 33 終了報告
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../release_report-0_1/" class="md-nav__link">
         
   
@@ -10768,7 +10796,7 @@
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>5. マニュアル</strong> 【承認ゲート: マニュアル】</li>
 <li>2 章に「password を忘れた場合」（A-01 のリンク、A-05 で送る、届くまでの目安とメールが届かないとき、リンクは 30 分・1 回だけ・新しい依頼で前のリンクは使えない・1 分以内の依頼し直しでは送られない）。A-06 の手順は 33a で足す（33a までリンクの先がないので、マニュアルの公開とデモ環境での案内は 33a と同じ日にする前提を終了報告に書く）。付録 B に「再設定のメールが届かない」。A-05 のキャプチャ（<code>manual_screenshots.feature</code>）と A-01 の撮り直し（リンクが増える）</li>
 <li>完了の判定: <code>manual:build</code> が通る。<code>okf:check</code> ERROR 0</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>6. SonarQube と開発レビューと終了報告</strong> 【承認ゲート: 終了報告】</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>6. SonarQube と開発レビューと終了報告</strong> 【承認ゲート: 終了報告】</li>
 <li>SonarQube（テストとコードを書き換えていない間に。T-116）</li>
 <li>開発レビュー（プログラマー、アーキテクト（モジュールの境界、公開 API、イベントのハンドラー、循環の制約、AT-07）、テスター、テクニカルライター（A-05・A-01 の知らせ・メールの本文・マニュアル。T-90）、セキュリティの観点（列挙、トークン、平文が残らないこと、Host ヘッダー、ログに出す送信））</li>
 <li><code>bolt_33_report.md</code>。release_plan の W5 の 33 の行、開発の索引。#13 に進み具合をコメントする。後に回すものを Issue にするか既存の Issue に足す（T-89）</li>
@@ -10945,15 +10973,15 @@
 </table>
 <h2 id="_10">完了条件<a class="headerlink" href="#_10" title="Permanent link">&para;</a></h2>
 <ul class="task-list">
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> A-01 の「password を忘れた場合」から A-05 で送ると、登録された有効な利用者には 30 分・1 回だけのリンクを含むメールが届き、登録の有無にかかわらず同じ知らせが A-01 に出る</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> トークンは表にハッシュだけがあり、新しい発行で前のトークンが使えなくなる。繰り返しの依頼では送らず、同時の依頼でも 2 通送らない。発行記録・ログに平文のトークンと URL が残らない</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> 依頼が監査に記録される（登録なしは操作者を空にし、アドレスを残さない）</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> 通知モジュールが公開 API で送信を受け、送信の記録（本文とリンクなし）を残す。dev はログに出し、守りの式が外れたら起動を止める</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> アーキテクチャのテストに例外を足さずに緑。新しい集約に注釈（<code>@AggregateRoot</code> など）があり、JIG の用語集に載る</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> ADR-017 を作り、設計文書（domain_model・data_model・architecture_backend・tech_stack・ui_design・non_functional・ADR-011・ADR-012・ADR-013・test_strategy・user_story・release_plan）を更新した</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> ユーザーマニュアル（2 章・付録 B）とキャプチャを更新した</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <code>check</code> と <code>uiTest</code> が緑。push して CI を確かめた。SonarQube の Quality Gate が PASS、<code>okf:check</code> ERROR 0</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> 開発レビュー、終了報告。#13 に進み具合をコメントした。後に回すものを Issue にした（T-89）</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> A-01 の「password を忘れた場合」から A-05 で送ると、登録された有効な利用者には 30 分・1 回だけのリンクを含むメールが届き、登録の有無にかかわらず同じ知らせが A-01 に出る</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> トークンは表にハッシュだけがあり、新しい発行で前のトークンが使えなくなる。繰り返しの依頼では送らず、同時の依頼でも 2 通送らない。発行記録・ログに平文のトークンと URL が残らない</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> 依頼が監査に記録される（登録なしは操作者を空にし、アドレスを残さない）</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> 通知モジュールが公開 API で送信を受け、送信の記録（本文とリンクなし）を残す。dev はログに出し、守りの式が外れたら起動を止める</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> アーキテクチャのテストに例外を足さずに緑。新しい集約に注釈（<code>@AggregateRoot</code> など）があり、JIG の用語集に載る</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> ADR-017 を作り、設計文書（domain_model・data_model・architecture_backend・tech_stack・ui_design・non_functional・ADR-011・ADR-012・ADR-013・test_strategy・user_story・release_plan）を更新した</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> ユーザーマニュアル（2 章・付録 B）とキャプチャを更新した</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <code>check</code> と <code>uiTest</code> が緑。push して CI を確かめた。SonarQube の Quality Gate が PASS、<code>okf:check</code> ERROR 0</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> 開発レビュー、終了報告。#13 に進み具合をコメントした。後に回すものを Issue にした（T-89）</li>
 </ul>
 <h2 id="_11">更新履歴<a class="headerlink" href="#_11" title="Permanent link">&para;</a></h2>
 <table>
