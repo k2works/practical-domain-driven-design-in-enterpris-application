@@ -11641,7 +11641,7 @@ src/test/java/.../ui/                     画面の層のステップ定義（@u
 </tr>
 <tr>
 <td style="text-align: left;">TOTP と回復コードの部品の整理</td>
-<td style="text-align: left;">Bolt 33d（振る舞いの変わらない直し）。移す前に、A-02・A-07・A-08 のコードの欄の <code>pattern="[0-9]{6}"</code>・<code>maxlength="6"</code> と見出し・前文の「6 桁」を確かめるテストをセキュリティの統合テストに足し（今は <code>autocomplete</code> だけ）、属性を消す変異で落ちることを確かめる。生成した回復コードが <code>RecoveryCode.normalize</code> を通ることを確かめ、<code>RandomRecoveryCodeGeneratorTest</code> の正規表現の写しを置き換え、<code>format</code> の区切りを変える変異で落ちることを確かめる。QR コードの SVG のテストは <code>QrCodeSvgTest</code> に移し、秘密の発行の側に URI を読み戻すテストを 1 本残す。<code>RecoveryCode.issueSet</code> と <code>TotpProvisioningStarter</code> は単体テストを足し、登録・再登録の既存の単体・統合テスト（同時の登録・再登録、二度押し、途中の暗号文の使い続け）を緑のまま付け替える。テストの中の 6 桁の写し（偽の生成器の <code>%06d</code> など）は仕様を固定する値として文字列のまま残す</td>
+<td style="text-align: left;">Bolt 33d（振る舞いの変わらない直し）。移す前に、A-02・A-07・A-08 のコードの欄の <code>pattern="[0-9]{6}"</code>・<code>maxlength="6"</code> と見出し・前文の「6 桁」を確かめるテストをセキュリティの統合テストに足し（今は <code>autocomplete</code> だけ）、属性を消す変異で落ちることを確かめる。生成した回復コードが <code>RecoveryCode.normalize</code> を通ることを確かめ、<code>RandomRecoveryCodeGeneratorTest</code> の正規表現の写しを置き換え、<code>NormalizedRecoveryCode.fromBytes</code> の区切りを変える変異で落ちることを確かめる。QR コードの SVG のテストは <code>QrCodeSvgTest</code> に移し、秘密の発行の側に URI を読み戻すテストを 1 本残す。<code>RecoveryCode.issueSet</code> と <code>TotpProvisioningStarter</code> は単体テストを足し、登録・再登録の既存の単体・統合テスト（同時の登録・再登録、二度押し、途中の暗号文の使い続け）を緑のまま付け替える。テストの中の 6 桁の写し（偽の生成器の <code>%06d</code> など）は仕様を固定する値として文字列のまま残す</td>
 </tr>
 </tbody>
 </table>

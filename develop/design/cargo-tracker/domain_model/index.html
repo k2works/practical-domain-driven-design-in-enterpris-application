@@ -11562,13 +11562,13 @@
 <tr>
 <td style="text-align: left;">回復コード</td>
 <td style="text-align: left;">RecoveryCode</td>
-<td style="text-align: left;">TOTP の端末を失ったときに一度だけ使えるコード。ハッシュだけを持つ（SEC-09、Bolt 30）。コードの形（16 進 8 文字を 4 文字ずつハイフンで区切る）の知識をこの集約だけに置き、乱数のバイトから形を作る <code>format</code>、入れたコードを正規化する <code>normalize</code>、10 個の発行とそろいの確かめを 1 つにした工場メソッド <code>issueSet</code> を持つ（Bolt 33d）</td>
+<td style="text-align: left;">TOTP の端末を失ったときに一度だけ使えるコード。ハッシュだけを持つ（SEC-09、Bolt 30）。入れたコードを正規化して <code>NormalizedRecoveryCode</code> を返す <code>normalize</code>、10 個の発行とそろいの確かめを 1 つにした工場メソッド <code>issueSet</code> を持つ。コードの形（16 進 8 文字を 4 文字ずつハイフンで区切る）の知識は <code>NormalizedRecoveryCode</code> に置く（Bolt 33d。値オブジェクトから集約への依存の前例がないので、形の知識は値の側に置いた（Bolt 33d のステップ 3））</td>
 <td style="text-align: left;">アクセス・監査</td>
 </tr>
 <tr>
 <td style="text-align: left;">正規化した回復コード</td>
 <td style="text-align: left;">NormalizedRecoveryCode</td>
-<td style="text-align: left;">入れた回復コードを正規化した値（<code>1a2b-3c4d</code> の形）。<code>RecoveryCode.normalize</code> が返し、照合（<code>RecoveryCode.matches</code>）はこの値だけを受ける。作るときに形を確かめるので、形の合わない値は照合に渡らない（Bolt 33d）</td>
+<td style="text-align: left;">入れた回復コードを正規化した値（<code>1a2b-3c4d</code> の形）。回復コードの形の知識（形の正規表現、乱数の 4 バイトから発行の形を作る <code>fromBytes</code>）を持ち、生成器（<code>RandomRecoveryCodeGenerator</code>）と <code>RecoveryCode.normalize</code> が使う。照合（<code>RecoveryCode.matches</code>）はこの値だけを受ける。作るときに形を確かめるので、形の合わない値は照合に渡らない（Bolt 33d）</td>
 <td style="text-align: left;">アクセス・監査</td>
 </tr>
 <tr>

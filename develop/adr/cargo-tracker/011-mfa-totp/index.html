@@ -11151,7 +11151,7 @@
 </tr>
 <tr>
 <td style="text-align: left;">正規化</td>
-<td style="text-align: left;">形の知識はドメインに置く（<code>RecoveryCode.normalize</code>）。全角を半角に直し（NFKC。IME で入れたまま）、ハイフンに似た文字（長音など）をハイフンにそろえ、前後と中の空白（全角スペースを含む）を除き、小文字にし、ハイフンのない 8 文字は 4 文字目の後にハイフンを入れる。<code>^[0-9a-f]{4}-[0-9a-f]{4}$</code> に合わなければ照合せずに拒む（bcrypt を回さない）。手で書き写したコードを打ち直させない。Bolt 33d から、正規化の結果は値 <code>NormalizedRecoveryCode</code>（<code>Optional</code> で返す）で、照合はこの値だけを受ける。形の知識（生成の <code>format</code> を含む）は <code>RecoveryCode</code> だけに置く</td>
+<td style="text-align: left;">形の知識はドメインに置く（<code>RecoveryCode.normalize</code>）。全角を半角に直し（NFKC。IME で入れたまま）、ハイフンに似た文字（長音など）をハイフンにそろえ、前後と中の空白（全角スペースを含む）を除き、小文字にし、ハイフンのない 8 文字は 4 文字目の後にハイフンを入れる。<code>^[0-9a-f]{4}-[0-9a-f]{4}$</code> に合わなければ照合せずに拒む（bcrypt を回さない）。手で書き写したコードを打ち直させない。Bolt 33d から、正規化の結果は値 <code>NormalizedRecoveryCode</code>（<code>Optional</code> で返す）で、照合はこの値だけを受ける。形の知識（生成の <code>fromBytes</code> を含む）は値 <code>NormalizedRecoveryCode</code> だけに置く</td>
 </tr>
 <tr>
 <td style="text-align: left;">照合とトランザクションの境界</td>

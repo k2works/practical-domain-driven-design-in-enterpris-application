@@ -12609,7 +12609,7 @@
 </tr>
 <tr>
 <td style="text-align: left;">33d</td>
-<td style="text-align: left;">振る舞いの変わらない直しのうち、TOTP と回復コードの部品の整理（Bolt 33c の開始準備で 33c から分け、Bolt 33d の開始準備で 33d と 33e に分けた。<a href="../bolt_33d_plan/">Bolt 33d 計画</a>）: TOTP の桁数を <code>TotpCredential.DIGITS</code>、アルゴリズムを <code>JavaOtpTotpCodeGenerator</code> の定数にし、A-02・A-07・A-08 のコードの欄の <code>pattern</code>・<code>maxlength</code> を桁数から描く（文言は残す）。QR コードの SVG の組み立てを <code>QrCodeSvg</code> に分ける（ZXing の見張りの対象を付け替える）。回復コードの形の知識を <code>RecoveryCode</code> に寄せ、<code>normalize</code> の戻り値を値オブジェクト <code>NormalizedRecoveryCode</code> にし、<code>matches</code> はそれだけを受ける。A-07 と A-08 の重複は、回復コード 10 個の発行を <code>RecoveryCode.issueSet</code> に、途中の暗号文の扱いを <code>TotpProvisioningStarter</code> に切り出し、2 つのサービスは残す（2026-10-16、human:kakimomokuri が決定）</td>
+<td style="text-align: left;">振る舞いの変わらない直しのうち、TOTP と回復コードの部品の整理（Bolt 33c の開始準備で 33c から分け、Bolt 33d の開始準備で 33d と 33e に分けた。<a href="../bolt_33d_plan/">Bolt 33d 計画</a>）: TOTP の桁数を <code>TotpCredential.DIGITS</code>、アルゴリズムを <code>JavaOtpTotpCodeGenerator</code> の定数にし、A-02・A-07・A-08 のコードの欄の <code>pattern</code>・<code>maxlength</code> を桁数から描く（文言は残す）。QR コードの SVG の組み立てを <code>QrCodeSvg</code> に分ける（ZXing の見張りの対象を付け替える）。回復コードの形の知識を値オブジェクト <code>NormalizedRecoveryCode</code> に寄せ、<code>normalize</code> の戻り値をそれにし、<code>matches</code> はそれだけを受ける。A-07 と A-08 の重複は、回復コード 10 個の発行を <code>RecoveryCode.issueSet</code> に、途中の暗号文の扱いを <code>TotpProvisioningStarter</code> に切り出し、2 つのサービスは残す（2026-10-16、human:kakimomokuri が決定）</td>
 <td style="text-align: right;">0</td>
 <td style="text-align: left;">リファクタリング（インサイドアウト）</td>
 <td style="text-align: left;">構造</td>

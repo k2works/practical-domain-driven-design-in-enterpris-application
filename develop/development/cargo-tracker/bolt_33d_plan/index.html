@@ -10784,7 +10784,7 @@
 <li>先に 3 画面の欄の見張りのテストを足す（緑。属性を消す変異で落ちることを確かめ、控えから戻す。T-131）</li>
 <li><code>TotpCredential.DIGITS</code> とアルゴリズムの定数を足し、生成器と発行を付け替える。3 つの画面のハンドラーがモデルで桁数を渡し、テンプレートの欄の属性を描く</li>
 <li><code>QrCodeSvg</code> を分け、SVG の単体テストを移す。AuthenticationArchitectureTest の QR のライブラリの規則の対象を <code>QrCodeSvg</code> に替え、crypto の一覧に足す</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>3. 回復コードの形と <code>normalize</code> の型</strong></li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>3. 回復コードの形と <code>normalize</code> の型</strong></li>
 <li>生成した値が <code>normalize</code> を通るテストを先に足し、<code>RandomRecoveryCodeGeneratorTest</code> の正規表現の写しを置き換える → 形の知識と <code>format</code> を <code>RecoveryCode</code> に寄せる → <code>NormalizedRecoveryCode</code> を足し、<code>normalize</code>・<code>matches</code>・<code>RecoveryCodeVerificationService</code> を付け替え、テストのデータ（<code>RecoveryCodeTest</code> の 49・50・60 行目、<code>AuthenticationFactorRepositoriesContract</code> の 215・216・229 行目）と <code>normalize(..)</code> の比べ方（<code>RecoveryCodeTest</code> の 121〜141 行目）を直す</li>
 <li>変異の確かめ（<code>format</code> の区切りを変えると落ちる。控えから戻す。T-131）</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>4. A-07 と A-08 の重複</strong></li>
@@ -10950,6 +10950,11 @@
 <td style="text-align: left;">2026-10-16</td>
 <td style="text-align: left;">計画を承認した（<code>/goal Bolt33d</code>）</td>
 <td style="text-align: left;">anthropic/claude-opus-5-5、承認 human:kakimomokuri</td>
+</tr>
+<tr>
+<td style="text-align: left;">2026-10-16</td>
+<td style="text-align: left;">ステップ 3: 回復コードの形の知識（正規表現と、乱数のバイトから作る関数）を、計画の <code>RecoveryCode</code>（<code>format</code>）でなく値オブジェクト <code>NormalizedRecoveryCode</code>（<code>fromBytes</code>）に置いた。値は形を確かめるのに形の知識が要り、値オブジェクトから集約への依存の前例がないため（人に諮らずに決めた。終了報告の議題にする）</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5</td>
 </tr>
 </tbody>
 </table>
