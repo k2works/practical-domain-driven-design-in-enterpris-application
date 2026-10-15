@@ -4,7 +4,7 @@ title: "ADR-011: 多要素認証は Spring Security 7 の要素の権限で組�
 description: "password の後に TOTP を求める 2 段階のログインを、Spring Security 7 の多要素認証（要素ごとの権限）で組む。"
 tags: [adr, authentication, mfa, totp]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-14T07:42:42Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-15T01:13:15Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-11T08:28:34Z }
 ---
@@ -295,7 +295,7 @@ ArchUnit で、ZXing を参照するのが暗号の部品（`identity.infrastruc
 | 独自のフィルターの連鎖で段階を管理する（Spring Security 6 までのやり方） | Spring Security 7 の要素の権限で、足りない要素への誘導と認可の判定を枠組みに任せられる |
 | password と TOTP を 1 つの画面で同時に送る | 誤った password でも TOTP を試せ、どちらが誤りかの扱いが複雑になる。US-18 の画面（A-01・A-02）と合わない。ただし 2 段階の画面は AC2 と緊張する（下の「W5 で人が決める論点」） |
 | 開発環境では TOTP を飛ばす | 開発と本番で認証の流れが変わり、2 段階のログインを開発環境で確かめられない（確認ポイント 7） |
-| 要素を全体の注釈でなく URL ごとに求める（`AuthorizationManagerFactories` 等で、登録の画面は `FACTOR_PASSWORD` だけ） | Bolt 31 で比べて採らなかった（R-08）。URL ごとでは、新しい URL を足したときに要素の要求を書き漏らすと TOTP なしで開ける。全体の注釈なら既定で 2 つの要素を求め、漏れても閉じる側に倒れる。password の要素だけで入れる例外は、A-02（`/login/totp`）と登録の案内（`/login/totp/enroll`。Bolt 31）、A-07（同じ URL。Bolt 31b）、A-06（Bolt 33）に限り、`requestMatchers` に足す。登録を終えていない利用者は、例外の URL のほかに入れない |
+| 要素を全体の注釈でなく URL ごとに求める（`AuthorizationManagerFactories` 等で、登録の画面は `FACTOR_PASSWORD` だけ） | Bolt 31 で比べて採らなかった（R-08）。URL ごとでは、新しい URL を足したときに要素の要求を書き漏らすと TOTP なしで開ける。全体の注釈なら既定で 2 つの要素を求め、漏れても閉じる側に倒れる。password の要素だけで入れる例外は、A-02（`/login/totp`）と登録の案内（`/login/totp/enroll`。Bolt 31）、A-07（同じ URL。Bolt 31b）に限り、`requestMatchers` に足す。A-06（password の再設定。Bolt 33a）は password の要素を与えない公開の画面で、設定したら A-01 に戻して新しい password と TOTP でログインし直す（2026-10-15、Bolt 33 の開始準備の決定。[ADR-017](017-notification-module-and-mail.md)）ので、この例外に入れない。登録を終えていない利用者は、例外の URL のほかに入れない |
 | Argon2id にする | Bouncy Castle が要る。bcrypt で SEC-07 を満たすため、足す理由がまだない |
 
 ## 影響
@@ -331,10 +331,12 @@ Bolt 31 で解いたもの（決定に移した）: TOTP の秘密の暗号化�
 
 Bolt 31b で解いたもの（決定 6 に移した）: 登録の QR の描き方と `otpauth://` の URI の組み立て、回復コード 10 個の発行（SEC-09。ハッシュでの保存は Bolt 30 で作った）、初回の登録（AC7）の画面の認可と登録を終えていない利用者の扱い（登録の完了時に `FACTOR_TOTP` は与えない）。
 
+Bolt 33 で解いたもの: password の再設定（SEC-08）の流れ。A-01 の「password を忘れた場合」から A-05 で依頼し、登録された有効な利用者にだけ 1 回だけ使える 30 分のリンクを送る（登録の有無を示さない。依頼の応答から切り離したイベントのハンドラーでトークンを発行して送る。[ADR-017](017-notification-module-and-mail.md)）。リンクを開く A-06（Bolt 33a）は password の要素を与えず、設定したら A-01 に戻し、新しい password と TOTP でログインし直す（再設定の後も TOTP を求める。SEC-08）。
+
 - java-otp の生成器のスレッドセーフ（スパイクは照合を `synchronized` の中で行う）。
 - 最長 8 時間を即時失効（BR-14）と同じ経路にできるか（Bolt 32c で見た。同じ経路にはしない。8 時間・5 分は `SessionLifetimeFilter` が DB を読まずに判定し、利用停止などの即時の失効はその直後の `SessionRevalidationFilter` が DB を読んで判定する。どちらも A-03 に送る。ADR-012 の見直しの 3）。
 - 同じ利用者の同時のログインと、同じコードの同時の送信（1 つだけ通ること）。学習テストは MockMvc だけ。
-- password の再設定（SEC-08）と、TOTP の再登録（SEC-10）の流れ。
+- TOTP の再登録（SEC-10）の流れ（Bolt 33b）。
 - 利用者の画面で「次に取れる操作」（T-35）: A-02 で誤ったときは A-01 からログインし直し、認証アプリの新しいコードか、まだ使っていない回復コードを入れる（A-01 の誤りの文言。Bolt 31c の決定 7）、端末を失ったときは回復コードか管理者への連絡。US-18 の計画の確認ポイントにする。ロック中は解ける時刻を示さず、誤りの文言の一般の予告（5 回・15 分）から待つことが分かるようにする（Bolt 32 で決めた。決定 9）。
 
 ### W5 で人が決める論点
@@ -362,6 +364,7 @@ Bolt 31b で解いたもの（決定 6 に移した）: 登録の QR の描き�
 
 ## 改訂の経緯
 
+- 2026-10-15: Bolt 33 の計画の承認で、代替案の「password の要素だけで入れる例外」から A-06 を外し（A-06 は password の要素を与えず、設定したら A-01 に戻してログインし直す）、「未確認の項目」の password の再設定（SEC-08）の流れを解いた側へ移した。TOTP の再登録（SEC-10）は Bolt 33b のまま残した（human:kakimomokuri が決定。[ADR-017](017-notification-module-and-mail.md)）。
 - 2026-10-14: Bolt 32b のステップ 1 で、決定 2 の表の無操作 30 分の行を、本体の設定 `spring.session.timeout` と Bolt 14 で確かめたこと（ADR-012）に合わせて直した。
 - 2026-10-14: Bolt 32d の計画の承認で、決定 1 の Base32 の復号が、不正な長さ・余りのビットが 0 でない最後の文字・データの長さに合わない数の埋め草を失敗へ倒すことを書いた（human:kakimomokuri が決定。埋め草の数は開発レビューで厳しくした）。
 - 2026-10-14: Bolt 32c の計画の承認で、ステータスに 32c の開始準備の決定（32c と 32d の分け方、Bolt 32 の議題 4・5 を採らない理由と行き先）を足し、「未確認の項目」の最長 8 時間と即時失効の経路を解いた（human:kakimomokuri が決定）。

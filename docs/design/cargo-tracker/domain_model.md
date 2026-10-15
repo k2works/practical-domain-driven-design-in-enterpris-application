@@ -4,7 +4,7 @@ title: "cargo-tracker ドメインモデル"
 description: "cargo-tracker の業務領域の分類、ユビキタス言語、7 つの境界づけられたコンテキスト（通知を含む）の集約・エンティティ・値オブジェクト・ドメインルール、コマンド・クエリ・イベント、予約サガ。"
 tags: [design, domain-model, ddd]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-14T01:25:26Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-15T01:13:15Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T07:41:04Z }
   - { by: human:kakimomokuri, at: 2026-10-01T07:48:17Z }
@@ -71,7 +71,7 @@ quadrantChart
 | 見積り（Quotation） | 中核 | 根拠付き見積りと有効期限の境界（BR-10）を持つ。差別化は経路設計ほど高くない |
 | 外部データ（External Data） | 補完 | 冪等性・隔離・照合（BR-12）は手続き的。A 社固有の採否判断を含むため一般ではない |
 | アクセス・監査（Identity & Audit） | 一般 | 認証・役割・監査証跡は業界共通の仕組みで足りる。パイロットの KPI の計測（US-21）もここに置く |
-| 通知（Notification） | 一般 | メールの送信と送信結果の記録だけを担う。業務の判断を持たない（US-22） |
+| 通知（Notification） | 一般 | 利用者へのメールの送信と送信結果の記録だけを担う。業務の判断を持たない（US-22 の荷主への業務の通知、US-18 AC8 の password の再設定のメール。Bolt 33 で最小に作る。[ADR-017](../../adr/cargo-tracker/017-notification-module-and-mail.md)） |
 
 ## ユビキタス言語
 
@@ -198,12 +198,26 @@ quadrantChart
 | 回復コードの確認の結果 | RecoveryCodeVerification | 回復コードの確認の結果。受理（`ACCEPTED`）か拒否（`REJECTED`）で、拒否の種類（形の違い・誤り・使用済み・同時の使用で負けた・回復コードがない）は分けない（使用済みのコードは未使用の一覧に出ないため。Bolt 31c） | アクセス・監査 |
 | TOTP の要素の認証 | TotpAuthenticationToken | 2 つ目の要素（TOTP または回復コード）が通った認証の結果。要素の権限 `FACTOR_TOTP` を持ち、`FACTOR_TOTP` は「TOTP または回復コードで与える 2 つ目の要素」を表す。回復コードでも同じ型と権限を与える（ADR-011 の決定 7）。名前に TOTP が残るが、改名すると配備の前の session が復元できない（session の直列化の互換。ADR-012 のネガティブ）ので改名しない（ADR-011 の決定 8、Bolt 31d） | アクセス・監査 |
 | password を確かめた利用者 | PasswordVerifiedUser | password の段がそろった主体の利用者 ID・企業 ID・メールアドレス。password の段だけで開く画面（A-02・A-07）が受ける identity の中だけの値で、2 つの要素がそろった主体の `AuthenticatedActor` と分ける（ADR-012 の見直しの 4、Bolt 31c） | アクセス・監査 |
-| 監査の操作 | AuditAction | 監査記録の操作。password の段の成功（`PASSWORD_VERIFIED`）、ログインの成功（`LOGIN_SUCCEEDED`。2 つの要素がそろった）、ログインの失敗（`LOGIN_FAILED`）、TOTP の登録（`TOTP_ENROLLED`。Bolt 31b）、回復コードの使用（`RECOVERY_CODE_USED`。Bolt 31c）、ロック（`ACCOUNT_LOCKED`。その失敗でロックしたときだけ。Bolt 32）、session の取消し（`SESSION_REVOKED`。request ごとの確かめで利用停止・無効な企業・利用者なしを見つけて session を捨てた。Bolt 32c）、ログアウト（`LOGOUT`） | アクセス・監査 |
-| 認証の拒否の理由 | AuthenticationRejection | 認証を受け付けなかった理由。session の取消しの理由（`SUSPENDED`・`COMPANY_INACTIVE`・`UNKNOWN_USER`。Bolt 32c）にも使う。監査記録にだけ残し、利用者には同じ応答を返す。`BAD_CREDENTIALS`・`UNKNOWN_USER`・`SUSPENDED`・`COMPANY_INACTIVE`（Bolt 14）、`INVALID_TOTP`・`TOTP_REUSED`（Bolt 31）、`INVALID_RECOVERY_CODE`（回復コードの形の違い・誤り・使用済み、または回復コードと認証コードの両方を送った。Bolt 31c）、`TOTP_NOT_ENROLLED`（TOTP を登録していない利用者の TOTP の送信。Bolt 31d で `INVALID_TOTP` から分けた）、`LOCKED`（ロック中の試行。数えない）・`SERVICE_ERROR`（利用者の読み出しの DB の誤り。数えない）（Bolt 32） | アクセス・監査 |
+| 監査の操作 | AuditAction | 監査記録の操作。password の段の成功（`PASSWORD_VERIFIED`）、ログインの成功（`LOGIN_SUCCEEDED`。2 つの要素がそろった）、ログインの失敗（`LOGIN_FAILED`）、TOTP の登録（`TOTP_ENROLLED`。Bolt 31b）、回復コードの使用（`RECOVERY_CODE_USED`。Bolt 31c）、ロック（`ACCOUNT_LOCKED`。その失敗でロックしたときだけ。Bolt 32）、session の取消し（`SESSION_REVOKED`。request ごとの確かめで利用停止・無効な企業・利用者なしを見つけて session を捨てた。Bolt 32c）、ログアウト（`LOGOUT`）、password の再設定の依頼（`PASSWORD_RESET_REQUESTED`。Bolt 33） | アクセス・監査 |
+| 認証の拒否の理由 | AuthenticationRejection | 認証を受け付けなかった理由。session の取消しの理由（`SUSPENDED`・`COMPANY_INACTIVE`・`UNKNOWN_USER`。Bolt 32c）と、password の再設定の依頼を受け付けなかった理由（同じ 3 つ。Bolt 33）にも使う。監査記録にだけ残し、利用者には同じ応答を返す。`BAD_CREDENTIALS`・`UNKNOWN_USER`・`SUSPENDED`・`COMPANY_INACTIVE`（Bolt 14）、`INVALID_TOTP`・`TOTP_REUSED`（Bolt 31）、`INVALID_RECOVERY_CODE`（回復コードの形の違い・誤り・使用済み、または回復コードと認証コードの両方を送った。Bolt 31c）、`TOTP_NOT_ENROLLED`（TOTP を登録していない利用者の TOTP の送信。Bolt 31d で `INVALID_TOTP` から分けた）、`LOCKED`（ロック中の試行。数えない）・`SERVICE_ERROR`（利用者の読み出しの DB の誤り。数えない）（Bolt 32） | アクセス・監査 |
+| 再設定のトークン | PasswordResetToken | password の再設定のリンクに入れる 1 回だけ使える値の発行の記録。依頼の ID・利用者・トークンのハッシュ・発行時刻・期限（発行から 30 分）・使った時刻・無効にした時刻を持ち、平文のトークンは持たない（IA-INV-12、US-18 AC8、Bolt 33。使う側は Bolt 33a） | アクセス・監査 |
+| password の再設定を依頼した | PasswordResetRequested | 有効な利用者が password の再設定を依頼したことを表すドメインのイベント（`identity.domain.events`、DE-23）。依頼の ID・利用者の ID・依頼の時刻だけを持ち、トークンも URL も持たない（発行記録に秘密を残さない。ADR-017、Bolt 33） | アクセス・監査 |
+| 再設定の依頼のサービス | PasswordResetRequestService | A-05 の依頼を受けるアプリケーションのサービス（`commandservices`）。メールアドレスを正規化して利用者を探し、`User#authenticationRejection(company)` で有効かを判定し、監査記録（`PASSWORD_RESET_REQUESTED`）を同じトランザクションで書き、有効なら依頼の ID を採番して `PasswordResetRequested` を出す。応答はどの場合も同じで、トークンの発行も送信も待たない（Bolt 33） | アクセス・監査 |
+| 再設定のメールのイベントハンドラー | PasswordResetMailEventHandler | `PasswordResetRequested` を依頼のコミットの後に別のトランザクションで受けるハンドラー（`eventhandlers`、`@ApplicationModuleListener`）。利用者の行をロックし、同じ依頼の ID のトークンがあれば何もせず、前の発行から 1 分以内なら発行も送信もせず、そうでなければ前の未使用のトークンを無効にしてトークンを発行し、通知の公開 API で送る。送信の失敗でも完了にする（Bolt 33） | アクセス・監査 |
+| 再設定のトークンの生成器 | PasswordResetTokenGenerator | 32 バイトの乱数を URL 安全な Base64 にした再設定のトークンを作るポート。実装は `identity.infrastructure.crypto`（Bolt 33） | アクセス・監査 |
+| 再設定のトークンのハッシュ | PasswordResetTokenHasher | 再設定のトークンの SHA-256 のハッシュ（16 進 64 文字）を作るポート。表にはこのハッシュだけを置く。実装は `identity.infrastructure.crypto`（Bolt 33） | アクセス・監査 |
+| 通知の再設定のメール | NotificationPasswordResetMails | 通知の公開 API `PasswordResetMail` を呼ぶ identity の ACL（`application.internal.outboundservices.acl`。上流の名前 + 名詞）。通知の結果を identity の言葉に写す（Bolt 33） | アクセス・監査 |
 | 役割 | Role | 荷主担当者、営業担当者、経路設計者、追跡管理者、データ責任者、カスタマーサポート、システム管理者、監査担当者 | 共有カーネル（Bolt 14） |
 | 参照許可 | AccessGrant | 荷主担当者が予約単位で荷受人に与える照会の許可（BR-07） | アクセス・監査 |
 | KPI 計測記録 | KpiObservation | KPI-01・KPI-02 の算出に使う時刻・件数と、パイロット開始前の基準値 | アクセス・監査 |
-| 通知 | Notification | 荷主担当者へ送るメール 1 通の宛先・種類・対象・送信結果 | 通知 |
+| 通知 | Notification | 利用者へ送るメール 1 通（荷主への業務の通知と password の再設定）の宛先・種類・対象・送信結果の記録。本文とリンクは持たない | 通知 |
+| 通知の種類 | NotificationKind | 通知の契機の区分。password の再設定 `PASSWORD_RESET`（Bolt 33）。荷主への業務の通知の値（`QUOTATION_PRESENTED` など。データモデルの CHECK の値）は使う Bolt（W9）で足す | 通知 |
+| 通知の状態 | NotificationStatus | 送信待ち `PENDING`、送信済み `SENT`、失敗 `FAILED`。PENDING からだけ SENT か FAILED に変わる（Bolt 33） | 通知 |
+| 再設定のメール | PasswordResetMail | 通知の公開 API（`notification.interfaces.api`）。password の再設定のメール 1 通を送る操作 `send(PasswordResetMailRequest)` を持ち、`PasswordResetMailReceipt` を返す。宛先は呼ぶ側が渡し、通知は identity に依存しない（ADR-017、Bolt 33） | 通知 |
+| 再設定のメールの要求 | PasswordResetMailRequest | 再設定のメールの公開 API の要求。依頼の ID（通知の `event_id`）、トークンの ID（`target_ref`）、宛先の利用者の ID、メールアドレス、再設定の URL、期限（`UtcInstant`）、言語を持つ（Bolt 33） | 通知 |
+| 再設定のメールの結果 | PasswordResetMailReceipt | 再設定のメールの公開 API の結果。送った `Sent`、同じ依頼の ID と宛先で送り済み `AlreadySent`、送れなかった `Failed`（Bolt 33） | 通知 |
+| 再設定のメールの送信のサービス | PasswordResetMailService | 通知のアプリケーションのサービス（`notification.application.internal.commandservices`）。通知を PENDING で記録してからメールの送信のポートを呼び、SENT か FAILED（理由）にする。同じ `event_id` と宛先の通知があれば送らない（N-INV-02、Bolt 33） | 通知 |
+| メールの送信 | MailSender | 宛先・件名・本文のメール 1 通を送るポート（`notification.application.internal.outboundservices`）。実装は SMTP の `SmtpMailSender` と、dev だけのログに出す `LoggingMailSender`（`notification.infrastructure.mail`。ADR-017、Bolt 33） | 通知 |
 | 監査記録 | AuditRecord | 操作者・時刻・対象・変更前後・理由・承認・出典の追記専用の記録 | アクセス・監査 |
 | 情報源 | DataSource | データ責任者が選定・承認した運送会社・港湾などの原本の提供元（BR-18） | 外部データ |
 | 外部原本 | ExternalRecord | 外部から受け取った無加工の原本と、その分類（採用・重複・隔離） | 外部データ |
@@ -981,7 +995,9 @@ request ごとの確かめ（Bolt 32c。IA-INV-04、ADR-012 の見直しの 3）
 
 初回の TOTP の登録（Bolt 31b。ADR-011 の決定 6）では、秘密の発行は `TotpSecretIssuer`、回復コードの生成は `RecoveryCodeGenerator` のポートの裏に置き、実装は `identity.infrastructure` に置く。認証の要素のポート（生成・発行・ハッシュ・回復コードの生成）は、前例にそろえて `identity.domain.model.aggregates` に置く。ZXing をインフラ層に閉じるため、表示の値はポートが値 `TotpProvisioning`（`identity.domain.model.valueobjects`）にして返す。登録はアプリケーションのサービス `TotpEnrollmentService`（`commandservices`）が行う。`begin` は登録済みなら拒み、登録の途中の暗号文を同じ利用者の AAD で復号できる限り使い続け、なければ新しく発行する。`complete` は暗号文と入れたコードを前後 1 つの刻みで照合し、1 つのトランザクションで TOTP の資格を追加し（最後に使った刻みは 0。登録のコードは A-02 でもう一度使える）、回復コード 10 個をハッシュで置き換え、監査記録を書き、回復コードの平文を返す。同時の登録は TOTP の資格の主キーで 1 つに絞り、主キーの違反はリポジトリの実装で `DuplicateTotpEnrollmentException` に写す。登録は TOTP の要素を与えず、ログインは A-02 で終える。登録済みかの問い合わせは `TotpEnrollmentQueryService`（`queryservices`）に置き、画面の層だけが呼ぶ（`TotpVerificationService` から移した）。利用者の登録の状態は TOTP の資格の有無で決まり（未登録 → 登録済み）、状態の列は持たない。登録の途中は session の属性（暗号文の文字列と登録を始めた時刻）で、ドメインモデルには置かない。
 
-認証された利用者を表す値 `AuthenticatedActor`（利用者 ID・企業 ID・役割（1 つ以上）・表示名・企業名）と役割 `Role`（BR-15 の 8 役割）は、共有カーネル（`shared`）に置く。ほかのコンテキストはこの型だけを受け取り、Spring Security の型にも `identity` にも依存しない。`AuthenticatedActor` は 2 つの要素（password と TOTP または回復コード）がそろった主体だけを表し、引数の解決は `FACTOR_TOTP` がない主体に渡さない。password の段だけで開く画面（A-02・A-07）は、identity の中だけの値 `PasswordVerifiedUser`（`identity.domain.model.valueobjects`。利用者 ID・企業 ID・メールアドレス）を受ける（ADR-012 の見直しの 4、Bolt 31c）。`identity` に置くと、`quotation → identity → quotation::events` の依存が循環するため（ADR-011 の決定 4、[ADR-012](../../adr/cargo-tracker/012-authentication-principal-and-session.md)、Bolt 14 の確認ポイント 2）。利用者の集約は「認証できない理由」（利用停止・企業が無効）を返し、Spring Security の利用者の読み出しがその理由を認証の失敗に変える（IA-INV-09）。監査記録の操作には、ログインの成功（`LOGIN_SUCCEEDED`）・失敗（`LOGIN_FAILED`）・ログアウト（`LOGOUT`）を Bolt 14 で足す。Bolt 31 で password の段の成功（`PASSWORD_VERIFIED`）を足し、`LOGIN_SUCCEEDED` は 2 つの要素（password と TOTP）がそろったときにする。TOTP の失敗は利用者と理由（`INVALID_TOTP`・`TOTP_REUSED`）で `LOGIN_FAILED` に記録する（ADR-012 の見直しの 1）。Bolt 31b で初回の TOTP の登録（`TOTP_ENROLLED`。主体の利用者 ID と企業 ID）を足す（先取りの登録を見つける手がかり。ADR-011 の決定 6）。Bolt 31c で回復コードの使用（`RECOVERY_CODE_USED`。主体の利用者 ID と企業 ID）を足し、回復コードでログインを終えたときは `RECOVERY_CODE_USED` と `LOGIN_SUCCEEDED` の 2 行を書く。回復コードの拒否は理由 `INVALID_RECOVERY_CODE` で `LOGIN_FAILED` に記録する（ADR-011 の決定 7）。Bolt 31d で、TOTP を登録していない利用者の TOTP の送信の理由を `INVALID_TOTP` から `TOTP_NOT_ENROLLED` に分ける（利用者への応答は変えない。ADR-011 の決定 8）。Bolt 32 で、ロック（`ACCOUNT_LOCKED`。結果は成功、理由なし、主体の利用者 ID と企業 ID）と、ロック中の試行の理由 `LOCKED`、利用者の読み出しの DB の誤りの理由 `SERVICE_ERROR` を足す（どちらも数えない。ADR-011 の決定 9）。Bolt 32c で、request ごとの確かめで session を捨てたこと（`SESSION_REVOKED`。結果は失敗、理由 `SUSPENDED`・`COMPANY_INACTIVE`・`UNKNOWN_USER`、session の主体の利用者 ID と企業 ID）を足す（ADR-012 の見直しの 3）。2 つ目の要素の権限 `FACTOR_TOTP` とその認証の結果 `TotpAuthenticationToken` は「TOTP または回復コードで与える 2 つ目の要素」を表し、session の直列化の互換のため名前を変えない（用語集）。
+認証された利用者を表す値 `AuthenticatedActor`（利用者 ID・企業 ID・役割（1 つ以上）・表示名・企業名）と役割 `Role`（BR-15 の 8 役割）は、共有カーネル（`shared`）に置く。ほかのコンテキストはこの型だけを受け取り、Spring Security の型にも `identity` にも依存しない。`AuthenticatedActor` は 2 つの要素（password と TOTP または回復コード）がそろった主体だけを表し、引数の解決は `FACTOR_TOTP` がない主体に渡さない。password の段だけで開く画面（A-02・A-07）は、identity の中だけの値 `PasswordVerifiedUser`（`identity.domain.model.valueobjects`。利用者 ID・企業 ID・メールアドレス）を受ける（ADR-012 の見直しの 4、Bolt 31c）。`identity` に置くと、`quotation → identity → quotation::events` の依存が循環するため（ADR-011 の決定 4、[ADR-012](../../adr/cargo-tracker/012-authentication-principal-and-session.md)、Bolt 14 の確認ポイント 2）。利用者の集約は「認証できない理由」（利用停止・企業が無効）を返し、Spring Security の利用者の読み出しがその理由を認証の失敗に変える（IA-INV-09）。監査記録の操作には、ログインの成功（`LOGIN_SUCCEEDED`）・失敗（`LOGIN_FAILED`）・ログアウト（`LOGOUT`）を Bolt 14 で足す。Bolt 31 で password の段の成功（`PASSWORD_VERIFIED`）を足し、`LOGIN_SUCCEEDED` は 2 つの要素（password と TOTP）がそろったときにする。TOTP の失敗は利用者と理由（`INVALID_TOTP`・`TOTP_REUSED`）で `LOGIN_FAILED` に記録する（ADR-012 の見直しの 1）。Bolt 31b で初回の TOTP の登録（`TOTP_ENROLLED`。主体の利用者 ID と企業 ID）を足す（先取りの登録を見つける手がかり。ADR-011 の決定 6）。Bolt 31c で回復コードの使用（`RECOVERY_CODE_USED`。主体の利用者 ID と企業 ID）を足し、回復コードでログインを終えたときは `RECOVERY_CODE_USED` と `LOGIN_SUCCEEDED` の 2 行を書く。回復コードの拒否は理由 `INVALID_RECOVERY_CODE` で `LOGIN_FAILED` に記録する（ADR-011 の決定 7）。Bolt 31d で、TOTP を登録していない利用者の TOTP の送信の理由を `INVALID_TOTP` から `TOTP_NOT_ENROLLED` に分ける（利用者への応答は変えない。ADR-011 の決定 8）。Bolt 32 で、ロック（`ACCOUNT_LOCKED`。結果は成功、理由なし、主体の利用者 ID と企業 ID）と、ロック中の試行の理由 `LOCKED`、利用者の読み出しの DB の誤りの理由 `SERVICE_ERROR` を足す（どちらも数えない。ADR-011 の決定 9）。Bolt 32c で、request ごとの確かめで session を捨てたこと（`SESSION_REVOKED`。結果は失敗、理由 `SUSPENDED`・`COMPANY_INACTIVE`・`UNKNOWN_USER`、session の主体の利用者 ID と企業 ID）を足す（ADR-012 の見直しの 3）。2 つ目の要素の権限 `FACTOR_TOTP` とその認証の結果 `TotpAuthenticationToken` は「TOTP または回復コードで与える 2 つ目の要素」を表し、session の直列化の互換のため名前を変えない（用語集）。Bolt 33 で、password の再設定の依頼（`PASSWORD_RESET_REQUESTED`）を足す。有効な利用者は `SUCCESS`（理由なし）、止められた利用者は `FAILURE`・`SUSPENDED`、所属企業の無効は `FAILURE`・`COMPANY_INACTIVE`、登録なしは `FAILURE`・`UNKNOWN_USER`（操作者を空にし、メールアドレスを残さない）。
+
+password の再設定（US-18 AC8。Bolt 33 は依頼から送信まで、新しい password の設定は Bolt 33a。[ADR-017](../../adr/cargo-tracker/017-notification-module-and-mail.md)）では、再設定のトークン `PasswordResetToken`（`identity.domain.model.aggregates`）を利用者とは別の集約にする。トークンの生成は `PasswordResetTokenGenerator`（32 バイトの乱数を URL 安全な Base64）、ハッシュは `PasswordResetTokenHasher`（SHA-256）のポートの裏に置き、実装は `identity.infrastructure.crypto` に置く（回復コードの生成とハッシュと同じ分け方）。依頼のサービス `PasswordResetRequestService`（`commandservices`）は、入力を `EmailAddress` で正規化して利用者を探し、`User#authenticationRejection(company)` と `UserStandingRepository` で有効かを判定し、監査記録を同じトランザクションで書く（IA-INV-08）。有効なら依頼の ID を採番してドメインのイベント `PasswordResetRequested`（`identity.domain.events`。依頼の ID・利用者の ID・依頼の時刻だけ）を出す。応答は登録の有無にかかわらず同じで、トークンの発行も送信も待たない。トークンの発行と送信は、イベントのハンドラー `PasswordResetMailEventHandler`（`eventhandlers`、`@ApplicationModuleListener`。依頼のコミットの後に別のスレッドと別のトランザクションで動く。ADR-003）が行う。ハンドラーは利用者の行をロックして同時の発行を直列にし、同じ依頼の ID のトークンがあれば何もしない（再配信で 2 通送らない）。前の発行から 1 分以内なら発行も送信もしない（繰り返し）。そうでなければ前の未使用のトークンを無効にし、トークンを発行してハッシュを保存し、設定の公開の base URL（`cargotracker.public-base-url`。Host ヘッダーから組み立てない）からリンクを組み立て、ACL `NotificationPasswordResetMails` で通知の公開 API に送る。送信が `Failed` でも例外にせず完了にする（再配信で新しいトークンを作らない。利用者が依頼し直す）。平文のトークンと URL はハンドラーのメソッドの中の変数と送信の要求だけにあり、イベントの発行記録・ログ・表に残らない。繰り返しで送らなかったことは監査に書かず、送信の記録がないことで分かる。
 
 | 集約 | 集約ルート | 識別子 | 含むもの | 責務 |
 | :--- | :--- | :--- | :--- | :--- |
@@ -990,11 +1006,12 @@ request ごとの確かめ（Bolt 32c。IA-INV-04、ADR-012 の見直しの 3）
 | TOTP の資格 | TOTP の資格（TotpCredential） | 利用者 ID | 暗号化した秘密、最後に使った時間の刻み、登録時刻 | 再利用の拒否（IA-INV-10）、前後 1 つの時間の窓の照合（Bolt 30。結果は `TotpMatch`。Bolt 31d） |
 | 回復コード | 回復コード（RecoveryCode） | 回復コード ID | 利用者 ID、ハッシュ、使った時刻、発行時刻 | 一度だけの使用（IA-INV-11。Bolt 30） |
 | ログインの失敗 | ログインの失敗（LoginFailure） | 利用者 ID | 連続の失敗の回数、ロックの期限（ロックの方針 `LockPolicy` は引数で受け取る） | ロック（IA-INV-03。Bolt 30。数え方と監査記録は `LoginAttemptService`。Bolt 32） |
+| 再設定のトークン | 再設定のトークン（PasswordResetToken） | トークン ID | 依頼の ID、利用者 ID、トークンのハッシュ、発行時刻、期限、使った時刻、無効にした時刻 | 1 回だけの使用、30 分の期限、新しい発行による前のトークンの無効化（IA-INV-12。Bolt 33。使う側は Bolt 33a） |
 | 参照許可 | 参照許可（AccessGrant） | 参照許可 ID | 予約 ID、荷受人企業、開示項目、有効期間、状態 | 荷受人の招待・受諾・取消し |
 | 監査記録 | 監査記録（AuditRecord） | 監査記録 ID | 操作者、時刻、対象と版、変更前後、理由、承認、出典、結果 | 追記専用の証跡 |
 | KPI 計測 | KPI 計測記録（KpiObservation） | 輸送要求 ID・週 | 提出時刻、最初の提示時刻、照会の件数、基準値 | KPI-01・KPI-02 の週次の算出（US-21） |
 
-TOTP の資格・回復コード・ログインの失敗は、利用者とは別の集約にする。どれも利用者の行と版に触れず、1 文の条件付きの更新（更新の件数で判定する）で原子的に変える。失敗のたびに利用者の版が上がると、利用者の管理の更新とぶつかるため（Bolt 30 の計画の承認。ADR-011・ADR-012 を改めた）。回復コードは自分のリポジトリを持ち、消費が原子的な更新の単位なので、エンティティでなく小さな集約とする。ログインの失敗の行がない利用者は「0 回・ロックなし」として扱い、存在しないメールアドレスの失敗では行を作らない（T-42）。
+TOTP の資格・回復コード・ログインの失敗は、利用者とは別の集約にする。どれも利用者の行と版に触れず、1 文の条件付きの更新（更新の件数で判定する）で原子的に変える。失敗のたびに利用者の版が上がると、利用者の管理の更新とぶつかるため（Bolt 30 の計画の承認。ADR-011・ADR-012 を改めた）。回復コードは自分のリポジトリを持ち、消費が原子的な更新の単位なので、エンティティでなく小さな集約とする。再設定のトークンも同じ理由で利用者とは別の小さな集約にし、版を持たず、無効化と使用を条件付きの更新（使っておらず無効にしていない行だけ）で行う（Bolt 33）。ログインの失敗の行がない利用者は「0 回・ロックなし」として扱い、存在しないメールアドレスの失敗では行を作らない（T-42）。
 
 | ID | 不変条件・ルール | 根拠 |
 | :--- | :--- | :--- |
@@ -1009,6 +1026,7 @@ TOTP の資格・回復コード・ログインの失敗は、利用者とは別
 | IA-INV-09 | 利用停止の利用者と、無効な企業に所属する利用者は認証できない。理由は監査記録にだけ残し、利用者には誤った認証情報と同じ応答を返す（Bolt 14 で追加） | US-18 AC2・AC4、SEC-11 |
 | IA-INV-10 | TOTP の資格は 1 人に 1 つ。最後に使った時間の刻みは単調に増え、それ以下の刻みのコードは受け付けない（同じコードの再利用の拒否）。資格のない利用者の TOTP は拒否する（Bolt 30 で追加） | US-18 AC1、ADR-011 |
 | IA-INV-11 | 回復コードは 1 人に 10 個で、発行のたびに置き換える。ハッシュだけを持ち、一度使ったら使えない（使った時刻を入れて残す）。未使用のコードがなければ拒否する（Bolt 30 で追加）。初回の発行は TOTP の登録と同じトランザクションで行い、10 個を乱数で作り（形は `1a2b-3c4d`、重複なし）、平文は登録を保存した応答で一度だけ示してどこにも保存しない。未使用のコードの並び順は約束しない（Bolt 31b）。ログインでの消費（Bolt 31c）では、入れたコードを正規化し（前後と中の空白を除き小文字にし、ハイフンのない 8 文字は 4 文字目の後にハイフンを入れる。`^[0-9a-f]{4}-[0-9a-f]{4}$` に合わなければ照合せずに拒む。`RecoveryCode.normalize`）、その利用者の未使用のコードとだけ照合する。一致したコードは未使用であることを条件にした更新で使い、同じコードを同時に使っても 1 つだけが通る（更新の件数が 0 なら拒む） | US-18 AC7・AC9、SEC-09 |
+| IA-INV-12 | 再設定のトークンは 1 回だけ使え、発行から 30 分で使えなくなる（29 分 59 秒では使える）。同じ利用者に新しく発行すると、前の未使用のトークンは使えなくなる（無効にした時刻を入れて残す）。表にはトークンのハッシュ（SHA-256）だけを置き、平文のトークンとリンクは表・イベントの発行記録・ログに残さない。発行は登録された有効な利用者にだけ行い、同じ依頼の ID では 1 つだけ、同じ利用者の前の発行から 1 分以内なら発行しない。依頼の応答は登録の有無にかかわらず同じにする（Bolt 33。使う側は Bolt 33a） | US-18 AC8、SEC-08 |
 | KPI-INV-01 | KPI-01 は、版 1 を最初に提出した時刻（提出時刻）と、最初に提示した見積り（経路方針を含む）の提示時刻（最初の提示時刻）から求める。最初の提示時刻は、荷主の条件変更・再見積りで出し直しても変えない。DE-03 は届く順が入れ替わることがあるため、いちばん早い提示時刻を持つ。誤りで取り消した見積りを数えない規則は、見積りの取消しの操作を作るときに足す。見積りごとの提示時刻は `quotation.quotation.presented_at` に残るため、そのときに終点を出し直せる（D-11。2026-10-08 に human:kakimomokuri が Bolt 21 終了報告の承認で決めた）。リードタイムは暦の経過時間で、営業時間に換算しない。差戻し・再提出・新しい版で開始時刻を戻さない（2026-10-02 の D-3）。KPI-02 は照会記録から求める。PV-01 の除外（訓練データ、顧客都合の取消し）を適用し、除外の対象・理由・判断者を記録する | US-21、PV-01 |
 | KPI-INV-02 | パイロット開始前の基準値は、算出方法と登録者とともに記録し、登録後は変更せず訂正は新しい記録で行う | US-21、PV-01 |
 | KPI-INV-03 | 最初の提示時刻は提出時刻より前にならない。提出の記録がないまま届いた DE-03 は記録せず、イベントの発行を未完了のまま残して再配信で記録する。提示時刻が提出時刻より前の DE-03 は、再配信しても直らないため、ERROR のログを残して捨てる（Bolt 21。開発レビュー D-79） | US-21 |
@@ -1044,6 +1062,20 @@ title ログインの失敗（IA-INV-03）
 
 ロックは画面の遷移でなく、ログインの失敗の集約の内部の状態である（Bolt 32 で UI 設計の画面遷移図から移した）。ロック中も画面は誤りと同じ経路と文言にする（ADR-011 の決定 9）。
 
+```plantuml
+@startuml
+title 再設定のトークン（IA-INV-12）
+[*] --> 使える : 発行（30 分）
+使える --> 使えない : 同じ利用者の新しい発行
+使える --> 使えない : 30 分を過ぎた
+使える --> 使った : 新しい password を設定（Bolt 33a）
+使った --> [*]
+使えない --> [*]
+@enduml
+```
+
+「使えない」のうち、新しい発行によるものは無効にした時刻を入れ、期限によるものは列を変えずに期限と今の時刻で判定する。
+
 ### 外部データ（External Data、U5）
 
 ADR-002 によりトランザクションスクリプトとする。ここでは処理が扱うデータの構造と規則を示す。
@@ -1060,11 +1092,15 @@ ADR-002 によりトランザクションスクリプトとする。ここでは
 
 ### 通知（Notification）
 
-荷主担当者へのメール通知（US-22）を担う一般のコンテキストとする。業務の判断を持たず、他のコンテキストのイベントを購読して、宛先をアクセス・監査の公開 API で解決し、メールを送る。
+利用者へのメール（荷主担当者への業務の通知（US-22）と password の再設定（US-18 AC8））を担う一般のコンテキストとする。業務の判断を持たず、メールを送り、その結果を記録する。Bolt 33 で password の再設定のメールの分だけを最小に作る（[ADR-017](../../adr/cargo-tracker/017-notification-module-and-mail.md)）。
+
+通知は `identity` に依存しない（`allowedDependencies = {"shared"}`）。宛先（利用者 ID とメールアドレス）は呼ぶ側が渡す。アクセス・監査が通知の公開 API を呼ぶ（Bolt 33）ので、通知がアクセス・監査の公開 API で宛先を解決すると依存が循環するため（開始準備の決定 6）。W9 の業務の通知（US-22）で宛先をどう渡すか（イベントに載せる、購読する側で解決するなど）は W9 の開始準備で決める。
+
+入口は 2 つになる。1 つは他のコンテキストのイベントの購読（業務の通知。W9）、もう 1 つは公開 API（`notification.interfaces.api`）の同期の呼び出し（password の再設定。Bolt 33）である。公開 API `PasswordResetMail` のアダプター（`interfaces.api.internal`）は、アプリケーションのサービス `PasswordResetMailService` を呼ぶ。サービスは通知を PENDING で記録してから送信のポート `MailSender` を呼び、SENT か FAILED（理由）にする。同じ `event_id` と宛先の通知が既にあれば送らず `AlreadySent` を返す（N-INV-02）。件名と本文は通知のテンプレート（Thymeleaf のテキストのテンプレート）で組み立て、保存しない。`MailSender` の実装は SMTP（`SmtpMailSender`）と、dev だけのログに出す送信（`LoggingMailSender`）で、`notification.infrastructure.mail` に置く。
 
 | 集約 | 集約ルート | 識別子 | 含むもの | 責務 |
 | :--- | :--- | :--- | :--- | :--- |
-| 通知 | 通知（Notification） | 通知 ID | 宛先（利用者 ID・メールアドレス）、種類、対象、言語、状態（送信待ち・送信済み・失敗）、送信時刻 | メールの送信と結果の記録 |
+| 通知 | 通知（Notification） | 通知 ID | イベント ID（契機の業務キー。password の再設定では依頼の ID）、宛先（利用者 ID・メールアドレス）、種類（`NotificationKind`）、対象（password の再設定ではトークンの ID）、言語、状態（`NotificationStatus`。送信待ち・送信済み・失敗）、送信時刻、失敗の理由 | メールの送信と結果の記録（本文とリンクは持たない） |
 
 | ID | 不変条件・ルール | 根拠 |
 | :--- | :--- | :--- |
@@ -1080,6 +1116,18 @@ ADR-002 によりトランザクションスクリプトとする。ここでは
 | 本予約の確定 | DE-07 | 同上 |
 | 確認中への遷移 | DE-18 | 予約の荷主担当者 |
 | 荷受人への招待 | 参照許可の発行 | 荷受人（日本語と英語） |
+| password の再設定（`PASSWORD_RESET`。Bolt 33） | アクセス・監査から公開 API で同期に呼ばれる（2 つ目の入口。DE-23 のハンドラーが呼ぶ） | 依頼した利用者（宛先は呼ぶ側が渡す） |
+
+password の再設定のメールは、本文にリンクとその期限・使い方だけを書き、料金などの業務の情報を書かない（N-INV-01）。リンクを含むため本文を保存せず、テンプレートと `target_ref` からも再現しない（この種類だけの例外。データモデルの通知の表）。
+
+```plantuml
+@startuml
+title 通知
+[*] --> PENDING : 記録する
+PENDING --> SENT : 送信に成功
+PENDING --> FAILED : 送信に失敗（理由）
+@enduml
+```
 
 ### 外部データの開始判定
 
@@ -1139,6 +1187,7 @@ package "外部データ" {
 package "アクセス・監査" {
   [KPI を照会する] <<Query>>
   [基準値を登録する] <<Command>>
+  [password の再設定を依頼する] <<Command>>
 }
 [見積りを提示した] <<Event>>
 [荷主が詳細経路設計を依頼した] <<Event>>
@@ -1149,6 +1198,7 @@ package "アクセス・監査" {
 [追跡が確認中になった] <<Event>>
 [航海の採用値を更新した] <<Event>>
 [主要実績の採用値を受け付けた] <<Event>>
+[password の再設定を依頼した] <<Event>>
 
 [見積りを提示する] --> [見積りを提示した]
 [詳細経路設計を依頼する] --> [荷主が詳細経路設計を依頼した]
@@ -1159,6 +1209,7 @@ package "アクセス・監査" {
 [主要実績を登録する] --> [追跡が確認中になった]
 [外部原本を取り込む] --> [航海の採用値を更新した]
 [外部原本を取り込む] --> [主要実績の採用値を受け付けた]
+[password の再設定を依頼する] --> [password の再設定を依頼した]
 @enduml
 ```
 
@@ -1190,6 +1241,7 @@ package "アクセス・監査" {
 | DE-13 | 主要実績の採用値を受け付けた | 外部データ | 追跡番号、実績、出典 | 追跡: 主要実績を登録する（下書き） | EV-06 |
 | DE-14 | 外部原本を隔離した | 外部データ | 冪等性キー、理由 | 監査、データ責任者への表示 | EV-05 |
 | DE-15 | 参照許可を取り消した | アクセス・監査 | 参照許可 ID、予約 ID、荷受人 | 追跡: 照会の開示判断に反映（次の request から） | — |
+| DE-23 | password の再設定を依頼した（`PasswordResetRequested`） | アクセス・監査 | 依頼の ID、利用者の ID、依頼の時刻だけ（`identity.domain.events`。トークンも URL も載せない。発行記録に秘密を残さないため。Bolt 33） | アクセス・監査: 同じコンテキストのハンドラー `PasswordResetMailEventHandler` がトークンを発行し、通知の公開 API で送る（コミットの後、別のトランザクション。依頼の ID で冪等。IA-INV-12）。監査記録は依頼のサービスが同期に書くので、このイベントからは書かない | — |
 
 表は業務の順序に並べた。ID は追加した順のため連番になっていない。
 
@@ -1267,8 +1319,8 @@ stop
 | 経路設計 | 経路設計案件リポジトリ、航海リポジトリ、接続時間規則リポジトリ | ID で取得、期待版で保存、航海番号を参照する確定済み経路版の案件を取得 |
 | 予約 | 貨物予約リポジトリ | ID・追跡番号で取得、コマンド ID で確定結果（処理済みコマンド）を取得、業務番号と見積り番号で追跡番号を取得、処理済みコマンドを貨物予約と同じトランザクションで記録、期待版で保存（Bolt 24。確定した予約の要約（`BookingSummary`）を確定時刻の新しい順に上限まで取得（S-10。集約を組み立てない。予約サガの状態は予約サガのリポジトリから予約 ID の集合でまとめて取得。Bolt 25b）。荷主企業の予約の要約を同じ並びで上限まで取得（C-06。他社の予約は返さない。BR-07。荷主用の照会のサービス `CustomerBookingQueryService` が使い、画面は企業を比べない。追跡の荷主の照会と同じ形。Bolt 27b）） |
 | 追跡 | 追跡記録・有人案件・照会記録・営業日カレンダーのリポジトリ | 追跡番号で取得（S-12。Bolt 26）、予約 ID で追跡記録を取得（T-INV-11。Bolt 25）、追跡記録の要約（`TrackingRecordSummary`。最新の到着見込みを含む）を追跡の開始時刻の新しい順に上限まで取得（S-11。集約を組み立てない。Bolt 26）、荷主企業の追跡記録の要約を同じ順に上限まで取得・追跡番号と荷主企業で追跡記録を取得（C-10。他社の追跡記録は存在しないのと同じく空。BR-07。Bolt 27）、期待版で保存（追跡記録の `update`。まだ表にない主要実績を追加し、現在状態と根拠の実績番号を書き直して版を増やす。Bolt 26b）、期限を過ぎた未受領案件を取得、荷主企業の問い合わせを取得 |
-| 通知 | 通知リポジトリ | イベント ID と宛先で既存の通知を取得（N-INV-02） |
-| アクセス・監査 | 企業・利用者・参照許可リポジトリ、監査記録リポジトリ（追記のみ）、KPI 計測記録リポジトリ | ID・メールアドレスで取得、予約と荷受人で有効な許可を取得 |
+| 通知 | 通知リポジトリ | イベント ID と宛先で既存の通知を取得（N-INV-02）、PENDING で追加、`status = 'PENDING'` を条件に SENT・FAILED へ更新（版を持たない。Bolt 33） |
+| アクセス・監査 | 企業・利用者・参照許可リポジトリ、監査記録リポジトリ（追記のみ）、KPI 計測記録リポジトリ、再設定のトークンリポジトリ | ID・メールアドレスで取得、予約と荷受人で有効な許可を取得。再設定のトークン（Bolt 33）: 同じ依頼の ID のトークンの有無、利用者の最後の発行時刻（繰り返しの判定）、利用者の未使用のトークンの無効化（`used_at IS NULL AND invalidated_at IS NULL` を条件にした更新）、追加。ハッシュでの取得と使用は Bolt 33a |
 
 ## 後続工程への引継ぎ
 

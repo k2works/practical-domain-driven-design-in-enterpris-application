@@ -4,7 +4,7 @@ title: "cargo-tracker データモデル"
 description: "cargo-tracker の概念データモデル、スキーマ分割、命名と型の規約（H2 と PostgreSQL の共通部分）、コンテキストごとの論理データモデルと ER 図、版・追記専用・冪等性・イベント配信の表現。"
 tags: [design, data-model]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-14T01:25:26Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-15T01:13:15Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T07:48:17Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:01:37Z }
@@ -149,8 +149,8 @@ ADR-007 により、DDL は H2（PostgreSQL 互換モード）と PostgreSQL 18 
 | 区分値 | `VARCHAR(30)` に英語の定数名（例: `UNDER_REVIEW`）を入れ、`CHECK` 制約で値を限る | 列挙型（`CREATE TYPE`）は H2 と PostgreSQL で構文が違う |
 | 真偽 | `BOOLEAN` | 両方で使える |
 | 使わないもの | `JSONB`、部分インデックス、`CREATE TYPE`、シーケンスの方言、トリガー | H2 で動かない。必要になったら ADR-007 に従って別の ADR で判断する |
-| 楽観ロック | 集約ルートの表に `version BIGINT NOT NULL` を置き、`UPDATE ... SET ..., version = version + 1 WHERE id = ? AND version = ?` で更新する。更新が 0 件なら、ほかの更新が先に入ったとして失敗させる（Bolt 5 の輸送要求の状態の更新で使い始める）。例外: `identity` の `totp_credential`・`recovery_code`・`login_failure` は `version` を持たず、値の条件付きの更新の件数で判定する（Bolt 30） | ARCH-HO-01 の期待版の照合 |
-| 監査用の列 | 集約ルートの表に `created_at`、`created_by`、`updated_at`、`updated_by` を置く | ガイドの共通設計原則。業務上の証跡は監査記録が持つ |
+| 楽観ロック | 集約ルートの表に `version BIGINT NOT NULL` を置き、`UPDATE ... SET ..., version = version + 1 WHERE id = ? AND version = ?` で更新する。更新が 0 件なら、ほかの更新が先に入ったとして失敗させる（Bolt 5 の輸送要求の状態の更新で使い始める）。例外: `identity` の `totp_credential`・`recovery_code`・`login_failure` は `version` を持たず、値の条件付きの更新の件数で判定する（Bolt 30）。`identity.password_reset_token` は `version` を持たず、無効化と使用を `used_at IS NULL AND invalidated_at IS NULL` を条件にした更新の件数で判定する。`notification.notification` は `version` を持たず、送信の結果を `status = 'PENDING'` を条件にした更新で書く（どちらも Bolt 33。条件付きの更新が版の代わりになる） | ARCH-HO-01 の期待版の照合 |
+| 監査用の列 | 集約ルートの表に `created_at`、`created_by`、`updated_at`、`updated_by` を置く。例外: `identity.password_reset_token` は監査用の列を持たず、発行時刻（`issued_at`）が作った時刻を兼ねる。`notification.notification` は `created_at` だけを持つ（どちらも行は利用者の操作でなくシステムが作る。`tracking_record` と同じ考え方。Bolt 33） | ガイドの共通設計原則。業務上の証跡は監査記録が持つ |
 
 ## 版・追記専用・冪等性の表し方
 
@@ -878,6 +878,17 @@ entity "kpi_observation\nKPI 計測記録" as ko {
   exclusion_reason : VARCHAR(1000)
   excluded_by : UUID
 }
+entity "password_reset_token\n再設定のトークン" as prt {
+  * id : UUID <<PK>>
+  --
+  * request_id : UUID <<UK>>
+  * user_id : UUID <<FK>>
+  * token_hash : CHAR(64) <<UK>>
+  * issued_at : TIMESTAMPTZ
+  * expires_at : TIMESTAMPTZ
+  used_at : TIMESTAMPTZ
+  invalidated_at : TIMESTAMPTZ
+}
 entity "kpi_baseline\nKPI 基準値" as kb {
   * id : UUID <<PK>>
   --
@@ -897,6 +908,7 @@ u ||--o{ rc
 u ||--o| lf
 u ||--o{ ur
 u ||--o{ ua
+u ||--o{ prt
 co ||--o{ ag
 @enduml
 ```
@@ -908,6 +920,7 @@ co ||--o{ ag
 | `login_failure` | 利用者ごとに 1 行（主キーは `user_id`）。`consecutive_failures >= 0` の CHECK。失敗は、ロック中でないことを条件にした `UPDATE ... SET consecutive_failures = consecutive_failures + 1` の更新件数で数え、回数を同じトランザクションで読み直す（`RETURNING` は H2 で動かないので使わない。ADR-007）。最初の行は `INSERT ... SELECT ... FROM app_user WHERE NOT EXISTS` で作る（利用者の表にない利用者では作らない。存在しないメールアドレスの失敗）。同じ利用者の最初の失敗が同時に 2 つ届くと、片方は主キーの違反になる。Bolt 32 で、最初の行（0 回）は数える主たるトランザクションの前にトランザクションの外の 1 文（auto-commit）で作り（`prepare`。入れ子にしないので接続を 2 本持たない。サービスは `PROPAGATION_NOT_SUPPORTED` で流し、外側にトランザクションがあっても中断して外で流す）、主キーの違反はトランザクションの外で受けて「既にある」として続けることにした（ADR-007 の「一意制約の違反は同じトランザクションで捕まえない」。ADR-011 の決定 9）。数える `UPDATE` とその監査記録は主たるトランザクションに置き（IA-INV-08）、更新の件数から数えたか（ロック中なら 0 件）を返す。ロックの判定も同じ `UPDATE` の `CASE` で行い、ロックが解けた後の失敗は 1 回目から数える。2 つの要素がそろったログインの成功で 0 に戻す（ロック中は戻さない）。ロックの期限は 5 回目の失敗の時刻から 15 分。数えるのは password・TOTP・回復コードの失敗（回復コードは Bolt 32）。表の注釈（`COMMENT`）は「password と TOTP」のままで、マイグレーションが要るので次にこの表を変えるときに直す | IA-INV-03 |
 | `totp_credential` | 利用者ごとに 1 行。`last_used_step >= 0` の CHECK。再利用の拒否は `UPDATE ... SET last_used_step = :step WHERE user_id = :id AND last_used_step < :step` の更新件数で判定する。秘密は暗号文だけを置く。`secret_encrypted` は `v1:<Base64(IV 12 バイト + 暗号文 + タグ 16 バイト)>`（AES-GCM、鍵 256 ビット、IV 96 ビットを毎回乱数で作る。20 バイトの秘密で 64 文字）。先頭の `v1:` は鍵の版で、読むときはその版の鍵で復号し、書くときは最新の版で暗号化する。鍵はプロパティ `cargotracker.totp-secret-keys.v1`（環境変数 `CARGOTRACKER_TOTPSECRETKEYS_V1`。本番は Secrets Manager から注入）で、表には置かない（Bolt 31。ADR-011 の決定 5）。Bolt 31b から、暗号化と復号に `totp-secret:` と利用者 ID（`user_id` の UUID の小文字の形）を UTF-8 にした AAD を付ける。別の利用者の行の暗号文に入れ替えると、タグが合わず復号できない。列の形（`v1:<Base64>`）と長さは変わらない。dev-data の暗号文は、適用済みの版を書き換えず、新しい版のマイグレーション（`UPDATE`）で AAD を付けた形に作り直す（本番の利用者はまだいない） | IA-INV-10 |
 | `recovery_code` | 利用者ごとに 10 行。`user_id` の索引。消費は `UPDATE ... SET used_at = :now WHERE id = :id AND user_id = :userId AND used_at IS NULL` の更新件数で判定し、行を残す（ほかの利用者のコードの行は使えない。同じコードを同時に使っても 1 つだけが通る）。発行のたびに利用者の行を消して入れ直す（追記専用の印を付けない）。bcrypt は塩が毎回違うので、`(user_id, code_hash)` の一意制約は置かない。初回の発行は `totp_credential` の行の追加（主キーで同時の登録を 1 つに絞る）と同じトランザクションで行う（Bolt 31b）。未使用のコードの読み出しは並び順を約束しない（照合はすべての未使用のコードと比べる。SQL の `ORDER BY issued_at, id` は残すが、並びは契約にしない。Bolt 31b）。Bolt 31c から、ログインで回復コードを使う（読み出しと照合はトランザクションの外で行い、消費の `UPDATE` と監査記録 `RECOVERY_CODE_USED` の追加だけを 1 つのトランザクションにする。ADR-011 の決定 7） | IA-INV-11 |
+| `password_reset_token` | 主キー `id`（UUID）。UK（`request_id`）: 同じ依頼の ID のトークンは 1 つだけで、`PasswordResetRequested` の再配信で 2 通送らない冪等の正。UK（`token_hash`）: トークンの SHA-256 の 16 進 64 文字（`CHAR(64)`）だけを置き、平文のトークンとリンクは置かない。`user_id` は `app_user` への外部キー。`issued_at`・`expires_at` は NOT NULL（期限は発行から 30 分）、`used_at`・`invalidated_at` は NULL 可。同じ利用者の新しい発行の前に、`UPDATE ... SET invalidated_at = :now WHERE user_id = :userId AND used_at IS NULL AND invalidated_at IS NULL` で前の未使用のトークンを無効にする。使用（Bolt 33a）も同じ条件の更新の件数で判定する（`version` を持たない例外）。同時の発行は、発行の前に `app_user` の行を `SELECT ... FOR UPDATE` でロックして直列にする。行は消さず、追記専用の印も付けない（状態の列を更新する）。インデックス（`user_id`、`issued_at`）は無効化と繰り返しの判定（前の発行から 1 分以内）に使う。保持の期間は非機能要件（W10）で決める（Bolt 33） | IA-INV-12 |
 | `access_grant` | `status` IN（`INVITED`、`ACTIVE`、`REVOKED`、`EXPIRED`）。同じ予約・荷受人企業に有効な許可を重複させないことはアプリケーションで確認する | IA-INV-05、IA-INV-06 |
 | `audit_record` | UPDATE・DELETE の権限なし。`event_id` の一意制約で、イベントの再配信による重複記録を防ぐ。認証の失敗と権限外のアクセス試行は `event_id` を持たず、同期で書く | IA-INV-07、IA-INV-08 |
 | `kpi_observation` | 輸送要求ごとに 1 行。DE-01 で作り、DE-03 で最初の提示時刻を記録する。2 回目以降の提示では、届いた提示時刻のほうが早いとき（届く順の入れ替わり）だけ書き換える条件付きの更新にする（Bolt 21。KPI-INV-01）。`ck_kpi_observation_first_presented_at` で最初の提示時刻が提出時刻より前にならないことを確かめる（KPI-INV-03）。Bolt 21 より前に提示した見積りの DE-03 は購読者がいなかったため、その輸送要求の `first_presented_at` は NULL のままである（パイロットの前で本番の記録はない）。`transport_request_number` は DE-01 の表示用の業務番号の写しで、社内の一覧に UUID の代わりに出す（Bolt 4）。Bolt 4 より前の DE-01 は業務番号を持たないため null を許す | KPI-INV-01、KPI-INV-03 |
@@ -922,8 +935,9 @@ Bolt 14 で作る範囲（2026-10-06、human:kakimomokuri。[Bolt 14 計画](../
 - `company` は全列を作る。`kind` は `SHIPPER`・`CONSIGNEE`・`OPERATOR`（A 社）。
 - `app_user` は `id`・`company_id`・`email`・`display_name`・`password_hash`・`status`（`ACTIVE`・`SUSPENDED`）・`version`・`created_at`・`updated_at` を作る。`email` は前後の空白を除き小文字にして保存し、一意にする。TOTP の秘密・失敗の回数・ロックの期限は `app_user` に足さず、関心事ごとの `totp_credential`・`login_failure`・`recovery_code` に分ける（Bolt 30。利用者の行と `version` に触れずに条件付きの更新で書くため）。この 3 つの表は `version` を持たない（条件付きの更新が楽観ロックの版の代わりになる。上の「楽観ロック」の例外）。`password_hash` は `{bcrypt}` の接頭辞を付けた DelegatingPasswordEncoder の形式（SEC-07）。
 - `user_role` は全列を作る。`role` は `SHIPPER`（荷主担当者）・`SALES`（営業担当者）・`ROUTE_DESIGNER`（経路設計者）・`TRACKING_MANAGER`（追跡管理者）・`DATA_STEWARD`（データ責任者）・`CUSTOMER_SUPPORT`（カスタマーサポート）・`SYSTEM_ADMIN`（システム管理者）・`AUDITOR`（監査担当者）。
-- `audit_record` は `id`・`occurred_at`・`actor_user_id`・`actor_company_id`・`action`・`result`・`reason`・`correlation_id` を作り、追記だけにする（` [append-only]`）。`action` は password の段の成功・ログインの成功・失敗・TOTP の登録・回復コードの使用・ロック・session の取消し・ログアウト（`PASSWORD_VERIFIED`・`LOGIN_SUCCEEDED`・`LOGIN_FAILED`・`TOTP_ENROLLED`・`RECOVERY_CODE_USED`・`ACCOUNT_LOCKED`・`SESSION_REVOKED`・`LOGOUT`）、`reason` は失敗の理由（`BAD_CREDENTIALS`・`UNKNOWN_USER`・`SUSPENDED`・`COMPANY_INACTIVE`・`INVALID_TOTP`・`TOTP_REUSED`・`INVALID_RECOVERY_CODE`・`TOTP_NOT_ENROLLED`・`LOCKED`・`SERVICE_ERROR`）。`PASSWORD_VERIFIED` と `INVALID_TOTP`・`TOTP_REUSED` は Bolt 31 で足し、`LOGIN_SUCCEEDED` は 2 つの要素（password と TOTP）がそろったときに改めた。Bolt 31b で初回の TOTP の登録（`TOTP_ENROLLED`。操作者に登録した利用者と企業を入れる）を足す。Bolt 31c で回復コードの使用（`RECOVERY_CODE_USED`。操作者に利用者と企業を入れ、`LOGIN_SUCCEEDED` と 2 行にする）と、回復コードの拒否の理由（`INVALID_RECOVERY_CODE`。形の違い・誤り・使用済み・両方の欄がある送信を区別しない）を足す（ADR-011 の決定 7）。Bolt 31d で、TOTP を登録していない利用者の TOTP の送信の理由（`TOTP_NOT_ENROLLED`。今までは `INVALID_TOTP`）を分ける（ADR-011 の決定 8）。Bolt 32 で、ロック（`ACCOUNT_LOCKED`。その失敗でロックしたときだけ 1 行。結果は `SUCCESS`、理由は空、操作者に利用者と企業を入れる）と、ロック中の試行の理由（`LOCKED`）、利用者の読み出しの DB の誤りの理由（`SERVICE_ERROR`）を足す（どちらも失敗を数えない。ADR-011 の決定 9）。失敗の `LOGIN_FAILED` と `ACCOUNT_LOCKED` は `login_failure` の更新と同じトランザクションで書く（IA-INV-08）。Bolt 32c で、request ごとの確かめで session を捨てたこと（`SESSION_REVOKED`）を足す。結果は `FAILURE`（その session を通さなかった。`ACCOUNT_LOCKED` はロックを成し遂げた操作なので `SUCCESS`）、理由は `SUSPENDED`・`COMPANY_INACTIVE`・`UNKNOWN_USER`、操作者は session の主体の利用者 ID と企業 ID（利用者が消えていても追跡できるように残す。外部キーはない）。役割が変わっただけのときは書かない。TOTP の失敗は操作者に利用者を入れて記録する。どちらの列にも CHECK 制約はないので、値を足すマイグレーションは要らない。存在しないメールアドレスでの失敗は、操作者を空にして記録し、メールアドレスは残さない。権限外のアクセスの試行の記録は US-16 の Bolt で足す。対象・変更前後・承認・出典・`event_id` の列は使う Bolt で足す。
+- `audit_record` は `id`・`occurred_at`・`actor_user_id`・`actor_company_id`・`action`・`result`・`reason`・`correlation_id` を作り、追記だけにする（` [append-only]`）。`action` は password の段の成功・ログインの成功・失敗・TOTP の登録・回復コードの使用・ロック・session の取消し・ログアウト・password の再設定の依頼（`PASSWORD_VERIFIED`・`LOGIN_SUCCEEDED`・`LOGIN_FAILED`・`TOTP_ENROLLED`・`RECOVERY_CODE_USED`・`ACCOUNT_LOCKED`・`SESSION_REVOKED`・`LOGOUT`・`PASSWORD_RESET_REQUESTED`）、`reason` は失敗の理由（`BAD_CREDENTIALS`・`UNKNOWN_USER`・`SUSPENDED`・`COMPANY_INACTIVE`・`INVALID_TOTP`・`TOTP_REUSED`・`INVALID_RECOVERY_CODE`・`TOTP_NOT_ENROLLED`・`LOCKED`・`SERVICE_ERROR`）。`PASSWORD_VERIFIED` と `INVALID_TOTP`・`TOTP_REUSED` は Bolt 31 で足し、`LOGIN_SUCCEEDED` は 2 つの要素（password と TOTP）がそろったときに改めた。Bolt 31b で初回の TOTP の登録（`TOTP_ENROLLED`。操作者に登録した利用者と企業を入れる）を足す。Bolt 31c で回復コードの使用（`RECOVERY_CODE_USED`。操作者に利用者と企業を入れ、`LOGIN_SUCCEEDED` と 2 行にする）と、回復コードの拒否の理由（`INVALID_RECOVERY_CODE`。形の違い・誤り・使用済み・両方の欄がある送信を区別しない）を足す（ADR-011 の決定 7）。Bolt 31d で、TOTP を登録していない利用者の TOTP の送信の理由（`TOTP_NOT_ENROLLED`。今までは `INVALID_TOTP`）を分ける（ADR-011 の決定 8）。Bolt 32 で、ロック（`ACCOUNT_LOCKED`。その失敗でロックしたときだけ 1 行。結果は `SUCCESS`、理由は空、操作者に利用者と企業を入れる）と、ロック中の試行の理由（`LOCKED`）、利用者の読み出しの DB の誤りの理由（`SERVICE_ERROR`）を足す（どちらも失敗を数えない。ADR-011 の決定 9）。失敗の `LOGIN_FAILED` と `ACCOUNT_LOCKED` は `login_failure` の更新と同じトランザクションで書く（IA-INV-08）。Bolt 32c で、request ごとの確かめで session を捨てたこと（`SESSION_REVOKED`）を足す。結果は `FAILURE`（その session を通さなかった。`ACCOUNT_LOCKED` はロックを成し遂げた操作なので `SUCCESS`）、理由は `SUSPENDED`・`COMPANY_INACTIVE`・`UNKNOWN_USER`、操作者は session の主体の利用者 ID と企業 ID（利用者が消えていても追跡できるように残す。外部キーはない）。役割が変わっただけのときは書かない。Bolt 33 で、password の再設定の依頼（`PASSWORD_RESET_REQUESTED`）を足す。有効な利用者は `SUCCESS`（理由は空、操作者に利用者と企業を入れる）、止められた利用者は `FAILURE`・`SUSPENDED`、所属企業の無効は `FAILURE`・`COMPANY_INACTIVE`、登録なしは `FAILURE`・`UNKNOWN_USER`（操作者を空にし、入力したメールアドレスを残さない）で、理由は既存の値を再利用する。依頼の監査は依頼のサービスが同期に書き、トークンの発行と送信（イベントのハンドラー）では書かない。監査と送信の記録を結ぶ対象の列は使う Bolt で足す（AUD-02）。TOTP の失敗は操作者に利用者を入れて記録する。どちらの列にも CHECK 制約はないので、値を足すマイグレーションは要らない。存在しないメールアドレスでの失敗は、操作者を空にして記録し、メールアドレスは残さない。権限外のアクセスの試行の記録は US-16 の Bolt で足す。対象・変更前後・承認・出典・`event_id` の列は使う Bolt で足す。
 - `user_assignment`・`access_grant`・`kpi_baseline` は使う Bolt（US-16・US-19・US-21）で作る。
+- `password_reset_token` は Bolt 33 で全列とインデックスを作る（[Bolt 33 計画](../../development/cargo-tracker/bolt_33_plan.md) の確認ポイント 8）。表と列に日本語名のコメントを付ける。
 - 既存の表の `shipper_company_id`・`consignee_company_id`・`submitted_by` などには外部キーを張らない。仮の荷受人の企業（US-16 の企業マスターまで設定にある）を表に持たないため、企業マスターで決める。
 - `db/dev-data/` の開発用のシードは、スキーマの所有（ADR-001）の例外として、ほかのコンテキストの表から写してよい（例: Bolt 21 の KPI 計測記録の最初の提示時刻を `quotation.quotation` から写す）。本番のマイグレーションとアプリケーションのコードでは、ほかのコンテキストの表を読まない。ただし、写しの列を足すマイグレーションが既存の行を 1 回だけ埋めるときは、ADR-001 のコンプライアンスの例外として読んでよい（Bolt 24。`booking.booking.quotation_no`）。
 - 開発用の企業と利用者は `db/dev-data/` に置き、`dev` のときだけ Flyway の場所に足す。共通・ベンダーの場所に置かない（ADR-011 の決定 3）。
@@ -955,9 +969,11 @@ entity "notification\n通知" as n {
 
 | 表 | 主な制約 | 対応する不変条件 |
 | :--- | :--- | :--- |
-| `notification` | UK（`event_id`、`recipient_user_id`）で、イベントの再配信でも同じ宛先へ 2 通送らない。`kind` IN（`QUOTATION_PRESENTED`、`ROUTE_APPROVED`、`QUOTATION_EXPIRING`、`BOOKING_CONFIRMED`、`TRACKING_UNDER_REVIEW`、`CONSIGNEE_INVITATION`、`PASSWORD_RESET`）。`status` IN（`PENDING`、`SENT`、`FAILED`） | N-INV-02、N-INV-03 |
+| `notification` | UK（`event_id`、`recipient_user_id`）で、イベントの再配信でも同じ宛先へ 2 通送らない。`kind` IN（`QUOTATION_PRESENTED`、`ROUTE_APPROVED`、`QUOTATION_EXPIRING`、`BOOKING_CONFIRMED`、`TRACKING_UNDER_REVIEW`、`CONSIGNEE_INVITATION`、`PASSWORD_RESET`）。`status` IN（`PENDING`、`SENT`、`FAILED`）。`recipient_user_id` はコンテキストをまたぐので外部キーにしない。PENDING で追加してから送り、送信の結果は `UPDATE ... SET status = ..., sent_at = ..., failure_reason = ... WHERE id = :id AND status = 'PENDING'` の更新件数で書く（`version` を持たない例外） | N-INV-02、N-INV-03 |
 
-メールの本文は保存しない（料金などを含まないことは N-INV-01 で守り、本文はテンプレートと `target_ref` から再現できる）。
+Bolt 33 でこの表を作る（[Bolt 33 計画](../../development/cargo-tracker/bolt_33_plan.md) の確認ポイント 4、[ADR-017](../../adr/cargo-tracker/017-notification-module-and-mail.md)）。`kind` の CHECK には上の 7 値を置くが、Bolt 33 で使うのは `PASSWORD_RESET` だけで、ほかの値は業務の通知（W9）で使う。新しいスキーマなので、`afterMigrate__grant_app_user.sql` の `GRANT USAGE ON SCHEMA`、`MapperSchemaArchitectureTest.SCHEMAS`、`SchemaCommentIntegrationTest.BUSINESS_SCHEMAS` に `notification` を足す。
+
+メールの本文は保存しない（料金などを含まないことは N-INV-01 で守り、本文はテンプレートと `target_ref` から再現できる）。例外は `PASSWORD_RESET` で、`event_id` は再設定の依頼の ID、`target_ref` は再設定のトークンの ID（`identity.password_reset_token.id`）とする。本文のリンクは平文のトークンを含み、どこにも残さないので、この種類は本文を再現しない（残るのは宛先・種類・対象・送信の結果まで）。トークンと送信の記録の保持の期間は非機能要件（W10）で決める。
 
 ### 外部データ（`external_data`）
 
@@ -1156,6 +1172,8 @@ src/main/resources/db/
 | `tracking.service_case` | （`shipper_company_id`、`status`） | 荷主の問い合わせ一覧（US-23） |
 | `tracking.inquiry_record` | （`shipper_company_id`、`received_at`） | KPI-02 の週次集計 |
 | `identity.kpi_observation` | （`submitted_at`） | KPI-01 の週次集計 |
+| `identity.password_reset_token` | （`user_id`、`issued_at`）。`request_id` と `token_hash` は一意制約が索引を兼ねる | 前の未使用のトークンの無効化と、前の発行から 1 分以内の繰り返しの判定（Bolt 33）。ハッシュでの照合（Bolt 33a） |
+| `notification.notification` | （`event_id`、`recipient_user_id`）は一意制約が索引を兼ねる | 同じ依頼の ID と宛先の通知の有無（N-INV-02。Bolt 33） |
 | `quotation.quotation` | （`status`、`expires_at`） | 期限間近の見積り（DE-19）、荷主承認済み・期限間近の一覧 |
 
 ## ドメインモデルとの対応
@@ -1173,9 +1191,10 @@ src/main/resources/db/
 | 有人案件 | `service_case`、`service_case_source`、`service_case_progress`、`service_case_answer` | — |
 | 照会記録・営業日カレンダー | `inquiry_record`、`business_calendar` | — |
 | KPI 計測記録 | `kpi_observation`、`kpi_baseline` | — |
-| 通知 | `notification` | — |
+| 通知 | `notification` | 本文とリンクは保存しない。`PASSWORD_RESET` の `target_ref` は再設定のトークンの ID（Bolt 33） |
 | 企業・利用者・参照許可・監査記録 | `company`、`app_user`、`user_role`、`user_assignment`、`access_grant`、`audit_record` | 認証の仕組みは Spring Security が使う |
 | TOTP の資格・回復コード・ログインの失敗 | `totp_credential`、`recovery_code`、`login_failure` | 利用者とは別の集約（Bolt 30） |
+| 再設定のトークン | `password_reset_token` | 利用者とは別の集約。ハッシュだけを持つ（IA-INV-12。Bolt 33） |
 | 外部データ（トランザクションスクリプト） | `external_data` の各表 | — |
 
 ## 後続工程への引継ぎ

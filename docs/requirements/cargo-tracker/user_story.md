@@ -4,7 +4,7 @@ title: "cargo-tracker ユーザーストーリー"
 description: "cargo-tracker MVP の価値単位のユーザーストーリー、受入条件、上流要件へのトレーサビリティ。"
 tags: [requirements, user-story]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-14T12:44:45Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-15T01:13:15Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T05:20:11Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:01:39Z }
@@ -517,6 +517,12 @@ Bolt 32c の決定（2026-10-14、human:kakimomokuri。[Bolt 32c 計画](../../d
 - AC6 の「再認証が要求される」は、利用停止・所属企業の無効化・利用者の削除の後の次の request で、業務データを出さずに session を捨てて A-03 に送ることで満たす。止められたことは画面に示さない（ログインし直すと A-01 の誤りになり、理由は管理者に確かめる）。password の段だけの主体（A-02・A-07 の途中）も同じで、TOTP・回復コードの段に進めない。session を捨てたことは監査記録 `SESSION_REVOKED` に残す。
 - AC6 の「管理者への確認が要求される」は、役割を外された後にその役割の URL を開くと A-04（権限なし。管理者への問い合わせを示す）になることで満たす。残した役割の画面は使え、足した役割は次の request から使える。役割の変更だけでは監査記録を書かない（利用者の管理の監査は US-16 の Bolt 34）。
 - 利用停止・権限の取消しの操作は US-16（Bolt 34）で作るので、Bolt 32c では DB の値を変えて確かめる。
+
+Bolt 33 の開始準備の決定（2026-10-15、human:kakimomokuri。[Bolt 33 計画](../../development/cargo-tracker/bolt_33_plan.md) の開始準備の決定 1・2、[ADR-017](../../adr/cargo-tracker/017-notification-module-and-mail.md)）:
+
+- AC8 を 2 つの Bolt に分ける。Bolt 33 は依頼から送信まで（A-01 の「password を忘れた場合」から A-05 で登録メールアドレスを送ると、登録された有効な利用者にだけ 1 回だけ使える 30 分の再設定のリンクが届く。登録の有無を示さない。依頼を監査に `PASSWORD_RESET_REQUESTED` で記録する）。Bolt 33a は設定（リンクから A-06 で新しい password を設定する。再設定の記録の監査は 33a）。
+- AC8 の「再設定後も TOTP の提示が必要」は、A-06 が password の要素を与えず、設定したら A-01 に戻して新しい password と TOTP でログインし直すことで満たす（Bolt 33a で作る）。
+- メールは新しい通知のモジュールの公開 API で送り、送信の記録（本文とリンクは保存しない）を通知に残す。dev はメールをログに出す。
 
 ### US-19 荷受人の参照許可を管理する
 

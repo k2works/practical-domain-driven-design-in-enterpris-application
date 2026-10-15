@@ -1,6 +1,27 @@
 # Docs Update Log
 
 ## 2026-10-15
+* **Update**: [017-notification-module-and-mail](/adr/cargo-tracker/017-notification-module-and-mail.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [user_story](/requirements/cargo-tracker/user_story.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_33_plan](/development/cargo-tracker/bolt_33_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [tech_stack](/design/cargo-tracker/tech_stack.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [non_functional](/design/cargo-tracker/non_functional.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [013-heroku-demo-environment](/adr/cargo-tracker/013-heroku-demo-environment.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [012-authentication-principal-and-session](/adr/cargo-tracker/012-authentication-principal-and-session.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [011-mfa-totp](/adr/cargo-tracker/011-mfa-totp.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [non_functional](/design/cargo-tracker/non_functional.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [tech_stack](/design/cargo-tracker/tech_stack.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [013-heroku-demo-environment](/adr/cargo-tracker/013-heroku-demo-environment.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [012-authentication-principal-and-session](/adr/cargo-tracker/012-authentication-principal-and-session.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [011-mfa-totp](/adr/cargo-tracker/011-mfa-totp.md) を更新（anthropic/claude-opus-5-5）
+* **Creation**: [017-notification-module-and-mail](/adr/cargo-tracker/017-notification-module-and-mail.md) を作成（anthropic/claude-opus-5-5）
 * **Verification**: [bolt_33_plan](/development/cargo-tracker/bolt_33_plan.md) を human:kakimomokuri が検証
 * **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
 * **Update**: [bolt_33_plan](/development/cargo-tracker/bolt_33_plan.md) を更新（anthropic/claude-opus-5-5）

@@ -3,7 +3,7 @@ type: Plan
 title: "Bolt 33 計画 - 通知モジュールの新設と password の再設定の依頼（US-18 AC8 の前半）"
 description: "W5 の 15 本目の Bolt の計画。通知（Notification）モジュールを最小に新設し（送信の公開 API、送信の記録の表、SMTP の送信アダプター、dev ではログに出す送信）、A-01 の「password を忘れた場合」から A-05 で再設定を依頼すると、依頼の後にモジュールのイベントで 1 回だけ使える 30 分の再設定のトークンを発行して登録メールアドレスへリンクを送る（登録の有無を示さない。平文のトークンは保存しない。監査に記録）。ADR-017 を作る。リンクを開いて新しい password を設定する A-06 は Bolt 33a。"
 tags: [plan]
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-15T01:02:51Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-15T01:13:15Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-15T01:03:03Z }
 ---
@@ -251,7 +251,7 @@ a06 --> a01 : 新しい password を設定（もう一度ログインし TOTP �
 
 状態の記号: `[ ]` 未着手、`[-]` 進行中、`[?]` 承認待ち、`[x]` 完了。各ステップの終わりに `check` が緑であることと、計画からの変更を設計文書に反映したこと（T-53）を確かめ、push して CI を確かめる（T-26、T-65、T-118）。コミットは pathspec で作る（T-84、T-110）。複数行の書き換えはスクリプトのファイルにする（T-103）。ステップ 1 を push してからコードのステップを push する（T-109）。共通の部品を変えたら `check` を先に流す（T-120）。
 
-- [ ] **1. 設計文書と ADR-017** 【承認ゲート: 設計文書】
+- [x] **1. 設計文書と ADR-017** 【承認ゲート: 設計文書】
   - ADR-017（新規。通知モジュールとメール送信）: 公開 API と `identity` からの同期の呼び出し、通知は `identity` に依存しない制約（W9 の宛先の渡し方は W9 の開始準備）、SMTP と dev のログに出す送信と守り、統合テストの Mailpit、送信を依頼の応答から切り離す形（`@ApplicationModuleListener` にトークンの発行を移し、イベントに秘密を載せない）、送信の記録と `target_ref`
   - domain_model.md: `identity` に再設定のトークン（概念・IA-INV-12）、`PasswordResetRequested`、用語集（`PasswordResetToken`・`PasswordResetRequestService`・`PasswordResetMailEventHandler`・ポート 2 つ・`PASSWORD_RESET_REQUESTED`。:201）。通知の用語（:206。利用者全般へのメール）、節の冒頭（:1063。依存の制約）、集約の表の「含むもの」（event_id・失敗の理由）、種類の表に password の再設定、公開 API と送信のサービスと `MailSender` の用語、リポジトリの行（:1270）、一般の領域の行（:74）
   - data_model.md: `identity.password_reset_token` の表（列・制約・コメント・インデックス）、`notification` の表をこの Bolt で作ること・`PASSWORD_RESET` の `target_ref` と「本文を再現しない」例外、2 つの表が版の列を持たない例外（:152-153。tracking_record の書き方（:759）に倣う）、audit_record の action の範囲（:925）、インデックスの付表とドメインモデルとの対応の表（:1145-1176）
@@ -341,6 +341,7 @@ a06 --> a01 : 新しい password を設定（もう一度ログインし TOTP �
 
 | 日付 | 更新内容 | 更新者 |
 | :--- | :--- | :--- |
+| 2026-10-15 | `/goal Bolt33` を受けた。承認ゲートでは止めずに進め、止めなかったゲートごとに根拠を書いて終了報告の承認の議題に置く（T-36）。途中で層の規則の例外が要るとき、5 時間を超えると見えたときは止めて諮る | anthropic/claude-opus-5-5、指示 human:kakimomokuri |
 | 2026-10-15 | 承認（確認ポイント 1〜19 は推奨のまま）。ステップごとの承認ゲートで止めて進める | human:kakimomokuri |
 | 2026-10-15 | 詳細整合性検証（20 件）と横断整合性検証（21 件）の指摘を反映し、human:kakimomokuri の決定（トークンの発行を `@ApplicationModuleListener` のハンドラーに移しイベントに秘密を載せない、通知は identity に依存しない制約を今決め W9 の渡し方は W9 に、ADR-017 を作る、`target_ref` はトークンの ID、約 4.5 時間のまま）を受けた。ER 図の型を data_model に合わせた（TIMESTAMPTZ、`status VARCHAR(30)`、`target_ref` 必須、`request_id`）。版の列を持たない例外、スキーマの一覧 3 か所、`@NamedInterface`、mail の禁止のパッケージ、`DevLoginGuard` と同じ守り、生成とハッシュのポートと `identity.infrastructure.crypto`、監査のファクトリーと理由の値、公開 API の `AlreadySent`、公開の URL を `/password-reset` だけに、テンプレート名を `identity/password-reset.html` に、IA-INV-12、AT-07 を足した。ステップ 1 の反映先に ADR-012・ADR-013・ADR-011:337・用語集・コンテキストマップ・Testcontainers の行・ui_design の :179・:504・AUD-01・保持の期間・付表・test_strategy の表を足した。T-83・T-88・T-89・T-100・T-102・T-111・T-121・T-122 を足し、各ステップの先頭に表を置いた。時間を約 4.9 時間に見直した | anthropic/claude-opus-5-5 |
 | 2026-10-15 | 初版作成（承認待ち）。開始準備で、`notification` がないこと、公開 API と ACL の前例、認証の入口の公開の URL、`User` と監査の種類、依存とコンテナ、デモ環境を調べ、human:kakimomokuri の決定（33 と 33a に分ける、dev はログに出す送信と統合テストの Mailpit、A-06 の後は A-01 に戻す、送信の記録を作る）を反映した | anthropic/claude-opus-5-5 |

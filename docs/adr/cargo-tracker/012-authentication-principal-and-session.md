@@ -4,7 +4,7 @@ title: "ADR-012: 認証の主体は共有カーネルの型にし、password の
 description: "US-18 の password によるログインと session を、Spring Security 7 の form login と Spring Session JDBC で作る。"
 tags: [adr, authentication, session]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-14T14:16:15Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-15T01:13:15Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-06T06:51:29Z }
 ---
@@ -39,7 +39,7 @@ US-18 の password によるログインと session を、Spring Security 7 の 
 
 ### 2. 認証の構成
 
-- `SecurityFilterChain` は `identity.infrastructure.config` に置く。`/customer/**` は `SHIPPER`、`/staff/**` は `SALES` の役割を求める。静的な資源と `/login`・`/session-expired` は認証なしで開ける。
+- `SecurityFilterChain` は `identity.infrastructure.config` に置く。`/customer/**` は `SHIPPER`、`/staff/**` は `SALES` の役割を求める。静的な資源と `/login`・`/session-expired`・`/password-reset`（A-05。password の再設定の依頼。Bolt 33。A-06 の `/password-reset/**` は Bolt 33a で足す）は認証なしで開ける。公開の URL（`PUBLIC_PATHS`）は `SessionRevalidationFilter` の確かめと失効の時に要求を覚える動きの対象外になる。
 - form login（`GET`・`POST /login`）と `DaoAuthenticationProvider` を使う。利用者の読み出し（`UserDetailsService`）は `identity` に置き、利用停止の利用者と無効な企業の利用者を、理由付きで認証の失敗にする（IA-INV-09）。画面の文言はすべて同じにする（SEC-11）。
 - password は DelegatingPasswordEncoder の既定（bcrypt、`{bcrypt}` の接頭辞。SEC-07）。
 - session の固定化を防ぐため、ログインで session ID を付け替える（Spring Security の既定の `ChangeSessionIdAuthenticationStrategy`）。CSRF は同期トークン（既定）。
@@ -81,6 +81,7 @@ US-18 の password によるログインと session を、Spring Security 7 の 
 
 - ログインの成功・失敗・ログアウトを、Spring Security のイベントの listener から、同じ request の中で `identity.audit_record`（追記だけ）に書く。失敗の理由（`BAD_CREDENTIALS`・`UNKNOWN_USER`・`SUSPENDED`・`COMPANY_INACTIVE`）は記録にだけ残す。
 - 存在しないメールアドレスでの失敗は、操作者を空にして記録し、メールアドレスは残さない。
+- Bolt 33 から、password の再設定の依頼（A-05）を `PASSWORD_RESET_REQUESTED` で記録する。書くのは依頼のアプリケーションサービス `PasswordResetRequestService` で、依頼と同じトランザクションで書く（IA-INV-08）。有効な利用者は `SUCCESS`（理由なし）、止められた利用者は `FAILURE`・`SUSPENDED`、所属企業の無効は `FAILURE`・`COMPANY_INACTIVE`、登録のないアドレスは `FAILURE`・`UNKNOWN_USER`（操作者を空にし、アドレスを残さない）。理由は `AuthenticationRejection` の値を使う。繰り返し（1 分以内）で送らなかったことは記録しない。監査と送信の記録は結ばない（AUD-02 の対象の列は使う Bolt で足す。[ADR-017](017-notification-module-and-mail.md)）。
 - 監査記録の書き込みに失敗したら、ログインも失敗にする（IA-INV-08 の同期の書き込み。fail-closed）。
 - 権限外のアクセスの試行の記録は、利用者と役割の管理（US-16）の Bolt で足す。
 - W5 のロックの失敗の数え方は、この listener が失敗・成功のイベントをアプリケーションのサービス `LoginAttemptService` に写す形にする。数えるのと、その監査記録を書くのはサービスの 1 つのトランザクションで、listener は数えない。数えない拒否と password の段の成功は listener が監査記録に直接書く（Bolt 32。下の「W5 で見直すこと」の 5。[ADR-011](011-mfa-totp.md) の決定 9）。Bolt 32 から、ロックしたときに `ACCOUNT_LOCKED` を書き、ロック中の試行を理由 `LOCKED`、利用者の読み出し（`loadUserByUsername`）の DB の誤りを理由 `SERVICE_ERROR` で記録する（どちらも数えない）。
@@ -166,6 +167,7 @@ US-18 の password によるログインと session を、Spring Security 7 の 
 
 ## 改訂の経緯
 
+- 2026-10-15: Bolt 33 の計画の承認で、決定 2 の公開の URL に `/password-reset`（A-05。`/password-reset/**` は Bolt 33a）を、決定 4 に再設定の依頼の監査（`PASSWORD_RESET_REQUESTED` の結果と理由、登録のないアドレスは操作者を空にしアドレスを残さない）を足した（human:kakimomokuri が決定。[ADR-017](017-notification-module-and-mail.md)）。
 - 2026-10-14: Bolt 32f の開発レビューで、拒まれた印を付ける画面を公開のレイアウトの一律から画面ごとの明示（A-03・CSRF の 403・413）に変え、利用者の鍵が仮名化であること、捨てる時の列挙（公開の画面での 8 時間、`/login?logout`、印のない別の画面、形の合わない控え）、戻した入力による上書きの既知の課題を書いた（human:kakimomokuri が承認した計画の範囲の訂正）。
 - 2026-10-14: Bolt 32f の計画の承認で、決定 3 に失効の時の入力の控え（置き場所は sessionStorage、利用者の ID を画面に出す理由、写す時と捨てる時、送信が届いたかの判定、8 時間のぎわの二重の送信のおそれ、共用のパソコンと閉じたタブの復元、個人情報と XSS）を書いた。取消しの決定を「止められた利用者には入力の保持もしない」から「控えはそのタブに残るが、戻るのは同じ利用者がログインし直せたときだけ」に変えた。代替案にサーバーと `localStorage` に置く案、ネガティブに控えが残ること、コンプライアンスに統合テストを足した。ADR-005 の例外にした（human:kakimomokuri が決定）。
 - 2026-10-14: Bolt 32e の開発レビューで、別の利用者が前の URL へ移ったときの結果を「役割の違いは A-04、他社の業務番号は見つからない扱い」に正した。取消しで覚えないのは止めた request の分で、A-03 の後に利用者が開いた画面は通常の未認証の入口が覚えること、覚えた要求には URL のほかに要求のヘッダーと Cookie も入ることを書いた（human:kakimomokuri が承認した計画の範囲の訂正）。

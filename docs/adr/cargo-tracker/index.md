@@ -22,6 +22,7 @@ cargo-tracker プロジェクトの ADR ドキュメントです。
 | [ADR-014](./014-downstream-to-upstream-notification.md) | 下流から上流への通知は、下流の listener が上流の公開 API を呼んで行う | 承認済み |
 | [ADR-015](./015-booking-saga-starts-tracking-by-event.md) | 予約サガは状態を予約に持ち、追跡の開始は追跡が DE-07 を購読して行う（ADR-003 を改訂） | 承認済み（文面は Bolt 23 の終了報告で確かめる） |
 | [ADR-016](./016-booking-checks-quotation-at-commit-time.md) | 予約は commit 時刻を渡して見積りの公開 API で確定に使えるかを確かめる | 承認済み（文面は Bolt 23 の終了報告で確かめる） |
+| [ADR-017](./017-notification-module-and-mail.md) | 通知モジュールを新設し、メールは公開 API で受けて SMTP で送る | 採用（2026-10-15、Bolt 33） |
 
 ## 補足
 

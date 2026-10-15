@@ -4,7 +4,7 @@ title: "cargo-tracker バックエンドアーキテクチャ"
 description: "cargo-tracker の境界づけられたコンテキスト、コンテキストごとのドメインロジックパターン、パッケージ構成、サガとドメインイベントによる連携（ARCH-HO-01〜03）、受信サービスの方針。"
 tags: [design, architecture, backend]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-14T11:18:45Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-15T01:13:15Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T07:11:12Z }
   - { by: human:kakimomokuri, at: 2026-10-01T07:41:04Z }
@@ -68,7 +68,7 @@ Unit は業務能力の単位であり、デプロイ単位ではない（units.
 | 追跡（Tracking） | U3 | 中核 | 追跡記録（主要実績を含む）、有人案件 | 状態管理・例外対応はコアで成熟度が低い。第 2 章の TrackingActivity に当たる |
 | アクセス・監査（Identity & Audit） | U4 | 一般 | 企業、利用者、参照許可、監査証跡 | 業務固有性は低く、標準的な手法で足りる |
 | 外部データ（External Data） | U5 | 補完 | 取込バッチ、外部原本、隔離案件 | 中核を支える取込・照合 |
-| 通知（Notification） | U3（US-22） | 一般 | 通知 | 荷主へのメール通知（UC-13 の一部を MVP へ前倒し）。業務の判断を持たず、イベントを購読して送るだけ。第 2 段階の通知（配信設定、代替チャネル）もここで拡張する |
+| 通知（Notification） | U3（US-22） | 一般 | 通知 | 利用者へのメールの送信と送信の記録。W5（Bolt 33）で最小に新設し、送信の公開 API（`notification.interfaces.api`）で password の再設定のメールを送る（[ADR-017](../../adr/cargo-tracker/017-notification-module-and-mail.md)）。荷主へのメール通知（UC-13 の一部を MVP へ前倒し。US-22、W9）も同じモジュールに足す。業務の判断を持たない。第 2 段階の通知（配信設定、代替チャネル）もここで拡張する |
 
 荷役（Handling）は第 2 段階で加える。MVP の主要実績の登録（US-12）は、追跡管理者が追跡コンテキストで行う。荷役コンテキストを加えるときに、実績の登録をどちらが持つかを見直す。
 
@@ -87,6 +87,7 @@ rectangle "予約\n(U6)" as B
 rectangle "追跡\n(U3)" as T
 rectangle "アクセス・監査\n(U4)" as IA
 rectangle "外部データ\n(U5)" as X
+rectangle "通知\n(US-22)" as N
 rectangle "共有カーネル\n時刻・識別子・版・場所" as SK
 cloud "運送会社・港湾\n（承認済みファイル）" as EXT
 
@@ -103,6 +104,7 @@ IA --> R
 IA --> B
 IA --> T
 IA --> X
+IA ..> N : 公開 API を呼ぶ（ADR-017）\npassword の再設定のメール
 SK .. Q
 SK .. R
 SK .. B
@@ -132,6 +134,7 @@ end note
 | 追跡 → 予約（イベントのみ） | T → B | 公表された言語（ドメインイベント） | 集荷実績の採用と引渡しの確認だけを通知する。予約は追跡の公開 API・内部に依存しない（[ドメインモデル](domain_model.md) DE-09、DE-10。第 2 章で Booking が Cargo Handled を購読するのと同じ）。注: 予約が追跡のイベントを購読すると `booking → tracking :: events` が加わり、ADR-015 の依存の向き（`tracking → booking`・`routing`）と循環する。DE-09・DE-10 は ADR-014 の形（追跡の listener が予約の公開 API を呼ぶ）にそろえ、US-12 の残り（W7）の Bolt で直す |
 | 予約 → 見積り（下流から上流への通知） | B → Q | 下流の listener が上流の公開 API を呼ぶ（[ADR-014](../../adr/cargo-tracker/014-downstream-to-upstream-notification.md)） | 本予約の確定（DE-07）を予約の listener が受け、見積りの公開 API で輸送要求を予約確定済みにする（W4） |
 | 経路設計 → 見積り（下流から上流への通知） | R → Q | 下流の listener が上流の公開 API を呼ぶ（ADR-014） | 経路の確定（DE-05）を経路設計の listener が受け、見積りの公開 API（経路の割当て）で依頼元の見積りに経路版を割り当てる（Bolt 20）。見積りは経路設計のイベントを購読しない |
+| アクセス・監査 → 通知（公開 API の呼び出し） | IA → N（呼ぶ向き） | 公開ホスト（通知の公開 API を、アクセス・監査の ACL が同期で呼ぶ。[ADR-017](../../adr/cargo-tracker/017-notification-module-and-mail.md)） | ADR-014 の「下流の listener が上流の公開 API を呼ぶ」形ではなく、通知は送信の能力を公開 API で提供する。通知は `identity` に依存しない（宛先は呼ぶ側が渡す。US-22 の宛先の渡し方は W9 の開始準備で決める）。password の再設定のメールを、依頼の応答から切り離したイベントのハンドラーが送る（Bolt 33） |
 
 下流のコンテキストは、上流の公開 API を自分の application 層の ACL（腐敗防止層）越しに呼ぶ（第 3 章 `application.internal.outboundservices.acl`）。上流のドメインオブジェクトを自分のドメイン層に持ち込まない。
 
@@ -144,6 +147,7 @@ end note
 - 下流から上流への通知（ADR-014）では、上流の公開 API に冪等な操作のインターフェースを置き、業務の処理は上流の `application.internal.commandservices` に置く。業務の拒否は戻り値の値で返す。最初の操作は、見積りの「経路の割当て」（`quotation.interfaces.api.RouteAssignment`。案件番号・経路版番号・確定の時刻・区間を受け、依頼元の見積りに割り当てる。Bolt 20）。
 - 最初の公開 API は、見積りの「経路条件の照会」（`quotation.interfaces.api.RouteConditionQuery`。輸送要求 ID と版番号から、出発地・目的地・希望到着期限・貨物種別を返す）。経路設計が DE-16 を受けて経路設計案件を作るときに呼ぶ。
 - 予約が使う見積りの公開 API（Bolt 23・23b）: 確定に使えるかの照会（`BookableQuotationQuery`。業務番号・見積り番号・commit 時刻から、確定に要る写しか使えない理由を返す。ADR-016）と、予約確定済みの通知（`BookingNotification`。ADR-014）。
+- アクセス・監査が使う通知の公開 API（Bolt 33。[ADR-017](../../adr/cargo-tracker/017-notification-module-and-mail.md)）: password の再設定のメールの送信（`notification.interfaces.api.PasswordResetMail`。依頼の ID・トークンの ID・宛先の利用者の ID・アドレス・再設定の URL・期限・言語を受け、送信の記録を残して送る。結果は `Sent`・`AlreadySent`（同じ依頼の ID と宛先で記録済み）・`Failed`）。呼ぶ側は `identity.application.internal.outboundservices.acl.NotificationPasswordResetMails` で、イベントのハンドラー `PasswordResetMailEventHandler`（`@ApplicationModuleListener`）から呼ぶ。アダプターは `notification.interfaces.api.internal` に置き、通知のアプリケーションサービス `PasswordResetMailService`（`notification.application.internal.commandservices`）に委ねる。
 - 追跡が使う公開 API（Bolt 25。ADR-015）: 経路設計の経路版の区間の照会（`routing.interfaces.api.RouteVersionLegQuery`。案件番号と経路版番号から、確定した経路版の区間を区間の順に返す。ない経路版は空）と、予約の追跡の開始の通知（`booking.interfaces.api.TrackingStartNotification`。予約 ID・追跡番号・開始時刻を受け、処理中の予約サガを完了にする。結果は `Completed`・`AlreadyCompleted`・`NotCompleted(reason)`）。
 
 ### 共有カーネル
@@ -282,7 +286,9 @@ Bolt 1 の実装で次を決めた。
 - session の残り時間と延長（Bolt 32b。[ADR-012](../../adr/cargo-tracker/012-authentication-principal-and-session.md) の決定 3、ACC-06）: 8 時間の上限までの残りの秒数は、入口のフィルター `SessionLifetimeFilter` が上限の判定と同じ起点（`AUTHENTICATED_AT`）と同じ時計で算出し、2 つの要素のそろった session でだけ request の属性 `cargotracker.request.sessionLifetimeRemainingSeconds` に置く（password の段・登録の途中・起点のない session・認証の前では置かない。session の属性の接頭辞 `cargotracker.session.` と分ける）。画面の層の `SessionTimerAdvice`（`identity.interfaces.web` の `@ControllerAdvice`。共通の画面のモデルの属性を足す前例は `CurrentActorAdvice`）がこの属性を名前で読み、属性があるときだけ `request.getSession(false)` で無操作の秒数（`getMaxInactiveInterval()`）を読んで、モデルの属性 `sessionTimer` にする（引数で `HttpSession` を受けると session を作ってしまうので受けない）。画面の層は `infrastructure` に依存できず（`LayerArchitectureTest`）、8 時間の起点と上限は認証の入口にあるので、値は request の属性で渡し、層の規則に例外を足さない。名前は 2 つの定数（入口と画面の層）で持ち、一致をテストで守る。登録を始めた時刻のキーを 2 つの定数で持つ形（Bolt 31c のレビュー 14）と同じなので、Bolt 33b でまとめて置き場所を直す。延長は `SessionController`（`identity.interfaces.web`）の `POST /session/extend` で、公開の URL にせず、今のフィルター（CSRF・`SessionLifetimeFilter`・`SessionRevalidationFilter`・認証）をすべて通す。Spring Session がその request で session の最終アクセスを新しくするので、controller は 204 を返すだけにする。8 時間の上限は延ばさない。監査記録は書かない（延長はログインでも権限の変更でもない）
 - 失効の後に開いていた画面へ戻す（Bolt 32e。[ADR-012](../../adr/cargo-tracker/012-authentication-principal-and-session.md) の決定 3、ACC-06）: 無操作の失効の扱いは、`SecurityConfiguration` の `sessionManagement` を `invalidSessionUrl`（A-03）から `invalidSessionStrategy` に替え、入口の部品（`identity.infrastructure.security` の `ExpiredSessionRequestSaver`）を渡す。CSRF のトークンがない拒否（`MissingCsrfTokenException`）も、Spring Security の `InvalidSessionAccessDeniedHandler` を通して同じ部品に来る。部品は失効した request について、覚えるかに関わらず新しい session を作り（古い Cookie のまま A-03 を開いて 302 を繰り返さない）、GET で path が許す一覧（`/customer/**`・`/staff/**`）に当たる request だけを覚えて、A-03 へ移す。許す一覧は認可と同じ path の解釈（`PathPatternRequestMatcher`）で判定し、書類のダウンロード（`/*/transport-requests/*/versions/*/documents/*`）と部分更新（`HX-Request`）を除く。`/customer/**`・`/staff/**` の GET は状態を変えない（ログインの後に覚えた GET を利用者の権限で開き直すため。設計の制約）。覚えるのは Spring Security の `HttpSessionRequestCache` に `RequestMatcher`（GET かつ許す一覧）と属性の名前を明示して渡したもので、TOTP の成功の扱い `FirstTotpSuccessHandler`（`SavedRequestAwareAuthenticationSuccessHandler` を継ぐ）と同じ属性の名前と `continue` の引数名を使う。TOTP が通ると、覚えた要求があれば `?continue` を付けてそこへ移し、その GET で `RequestCacheAwareFilter` が覚えた要求を消す。POST（延長・ログアウト・業務の送信）・公開の URL・ログインの手続き・静的な資源・`/`・書類のダウンロード（一覧の外。`/customer/**` の下にあれば除く一覧で外す）は覚えない。GET の parameter は query だけなので、送信の本体は session に入らない。許す一覧の `RequestMatcher` は合成ルート（`SecurityConfiguration`）が渡す（`SessionRevalidationFilter` の `publicRequests()` と同じ形。認証の入口から画面の層を参照しない）。8 時間の上限では、`SessionLifetimeFilter` が 2 つの要素のそろった session を捨てたときに、同じ部品で新しい session に覚える。持ち越し: password の段の 5 分・登録の途中の 15 分の失効（`SessionLifetimeFilter`）と、認証コード・回復コードの誤り（`DiscardPasswordFactorFailureHandler`）で session を捨てるときは、捨てる前の session に覚えた要求があれば新しい session に移す（password の段の `changeSessionId` は同じ session の ID だけを替えるので、もともと残る）。取消し（`SessionRevalidationFilter`。Bolt 32c）は変えず、覚えず持ち越さない。覚えた要求は利用者に結び付けない（ADR-012）。戻り先は、`SessionLifetimeFilter` が合成ルートの許す一覧で判定し、当たれば request の属性 `cargotracker.request.returnPath`（context path を含む path と query）に置く。画面の層の `SessionTimerAdvice` はその属性を名前で読んで `sessionTimer` に足し、警告の部分が `data-return-path` に書く（名前は 2 つの定数で持ち、一致をテストで守る。32b の残り時間と同じ形で、Bolt 33b でまとめて直す（送信の後の画面には渡さない。[フロントエンドのアーキテクチャ](architecture_frontend.md)の「session の警告と延長」）。どの部品も認証の入口と合成ルートと画面の層の中にあり、層の規則に例外を足さない。送信の後の失効と送信していない入力の保持は Bolt 32f（ブラウザの sessionStorage。サーバーは持たない）
 - 認証の主体の引数の解決（Bolt 31c。[ADR-012](../../adr/cargo-tracker/012-authentication-principal-and-session.md) の見直しの 4）: `AuthenticatedActorArgumentResolver` は主体が `FACTOR_TOTP` を持つことを確かめ、持たない主体には `AuthenticatedActor` を渡さず例外にする（`Optional<AuthenticatedActor>` は空）。password の段だけで開く画面は identity の中だけの値 `PasswordVerifiedUser`（`identity.domain.model.valueobjects`）を `PasswordVerifiedUserArgumentResolver` から受ける。`PasswordVerifiedUser` を受ける controller は `LoginController`（A-02）・`TotpEnrollmentController`（A-07）だけにする（ArchUnit。空振りを防ぐ見張り（2 つの controller が受けている）を並べる。identity の外からの参照は `ModularityTest` が止める）
-- 各コンテキストの `package-info.java` に、依存してよいモジュールを `allowedDependencies` で宣言する（例: アクセス・監査は `shared` と `quotation :: events`）
+- 通知の合成ルートと送信アダプター（Bolt 33。[ADR-017](../../adr/cargo-tracker/017-notification-module-and-mail.md)）: 送信のポート `MailSender` は `notification.application.internal.outboundservices` に置き、送信アダプター（SMTP の `SmtpMailSender`。`spring-boot-starter-mail` の `JavaMailSender`。dev のログに出す `LoggingMailSender`）は `notification.infrastructure.mail` に置く。`LoggingMailSender` は dev のプロファイルでだけ Bean になる。守り（`notification.infrastructure.config`）は `DevLoginGuard` と同じ式（dev かつ staging・prod と併用しない）で、外れたら起動を止め、dev 以外で SMTP の設定がないときも起動を止める。application は `org.springframework.mail..`・`jakarta.mail..` に依存しない（`LayerArchitectureTest` の web・jdbc・mybatis・servlet の禁止に足す）。identity の側は、ACL に通知の公開 API を渡す組み立てを `identity.infrastructure.config` に置き、公開の base URL（`cargotracker.public-base-url`）を設定の record で受ける。`@Bean` の戻り値の型は上の AT-07 の範囲に収める
+- 通知の依存の制約（Bolt 33 の開始準備の決定 6）: 通知は `identity` に依存しない。宛先（利用者の ID とアドレス）は呼ぶ側が渡す。荷主への通知（US-22）の宛先の渡し方は W9 の開始準備で決める
+- 各コンテキストの `package-info.java` に、依存してよいモジュールを `allowedDependencies` で宣言する（例: アクセス・監査は `shared`・`quotation :: events`・`platform :: web`・`notification :: api`（Bolt 33）、通知は `shared` だけ）
 
 ドメインイベントは発行記録に JSON で保存され、未完了のものは後で復元されて再配信される。そのため、イベントの形を次の規則で進化させる（Bolt 1 レビュー R-05・R-37）。
 

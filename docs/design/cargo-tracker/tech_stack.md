@@ -4,7 +4,7 @@ title: "cargo-tracker 技術スタック"
 description: "cargo-tracker のバックエンド・画面・データベース・テスト・ビルド・インフラの技術、バージョン、サポート期限、選定理由、アップグレード計画。"
 tags: [design, tech-stack]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-13T05:15:17Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-15T01:13:15Z }
 stale_after: 2027-04-01T00:00:00Z
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T07:29:04Z }
@@ -57,7 +57,7 @@ verified:
 | 永続化 | MyBatis（mybatis-spring-boot-starter） | 4.1.0 | 集約の永続化、照会 | — | 第 3 章と同じ。SQL を明示的に管理し、版・追記専用・スキーマ分割を SQL で確実に表現できる（ADR-007） |
 | 運用 | Spring Boot Actuator・Micrometer | Boot 管理 | ヘルスチェック、メトリクス | Boot に従う | 第 3 章の Readiness Patterns |
 | 定期処理の排他 | ShedLock（shedlock-spring、shedlock-provider-jdbc-template） | 7.10.x（2026-10 時点 7.10.1、Spring Framework 7 対応） | イベントの再配信・予約サガの滞留の判定・日次の定期処理を 1 インスタンスに限る | — | 複数インスタンス（AVL）で定期処理が二重に動かないようにする。Spring Modulith は再配信の排他を提供しない（ADR-003） |
-| メール送信 | Spring Boot Mail（spring-boot-starter-mail）+ Amazon SES の SMTP | Boot 管理 | 荷主への通知（US-22）、password の再設定、荷受人への招待 | — | 通知コンテキストの送信アダプター。SES の API を直接使わず SMTP で送り、ローカルではメールを受けるだけのコンテナで確かめる |
+| メール送信 | Spring Boot Mail（spring-boot-starter-mail）+ Amazon SES の SMTP | Boot 管理 | 荷主への通知（US-22）、password の再設定、荷受人への招待 | — | 通知コンテキストの送信アダプター（`notification.infrastructure.mail`）。SES の API を直接使わず SMTP で送る（SES の SMTP の設定は W10）。dev はメールをログに出す送信アダプターで送らず、統合テストは Testcontainers の Mailpit で確かめる。Bolt 33 で導入（[ADR-017](../../adr/cargo-tracker/017-notification-module-and-mail.md)） |
 | 多言語 | Spring の MessageSource + Thymeleaf のメッセージ | Boot 管理 | 荷受人向けの画面と招待メールの英語表示（US-10、US-19） | — | 追加のライブラリを使わない |
 
 ## 画面
@@ -85,7 +85,7 @@ verified:
 | :--- | :--- |
 | ローカルでのアプリ起動・画面確認 | H2（PostgreSQL 互換モード、インメモリ） |
 | ドメイン・アプリケーション層のユニットテスト、Cucumber の業務ルールのシナリオ | DB を使わない（リポジトリをテスト用の実装に差し替える） |
-| リポジトリ・MyBatis マッパー・イベント配信・取込の統合テスト | Testcontainers の PostgreSQL 18 |
+| リポジトリ・MyBatis マッパー・イベント配信・取込の統合テスト | Testcontainers の PostgreSQL 18（SMTP の送信アダプターの統合テストは、あわせて Testcontainers の Mailpit を使う。Bolt 33） |
 | E2E（画面を通す Cucumber シナリオ） | PostgreSQL 18 |
 | ステージング・本番 | Amazon RDS for PostgreSQL 18 |
 
@@ -98,6 +98,7 @@ verified:
 | テストフレームワーク | JUnit Jupiter | 6.x（Boot 管理） | ユニット・統合テスト | Spring Boot 4 の標準 |
 | アサーション・モック | AssertJ、Mockito | Boot 管理 | 集約・値オブジェクトの検証、ポートのモック | Spring Boot の標準 |
 | 統合テスト | Testcontainers（PostgreSQL） | 2.0.x（Boot 管理） | 実 PostgreSQL でのリポジトリ・イベント配信・取込のテスト | SQL の正しさは実 DB で確かめる |
+| メールの統合テスト | Testcontainers の `GenericContainer` + Mailpit（イメージ `axllent/mailpit`） | イメージの版は Bolt 33 のステップ 2 で固定する（公開から 2 週間以上たった版） | SMTP の送信アダプターが送ったメールの件名・本文・宛先を Mailpit の API で確かめる。画面の層の受入シナリオでもメールが届いたかを確かめる | ローカルの起動では使わない（dev はログに出す）。SMTP を受けて API で読めるため、組み込みの SMTP サーバーを使わずに実際の SMTP の経路を確かめられる（[ADR-017](../../adr/cargo-tracker/017-notification-module-and-mail.md)） |
 | Web テスト | Spring MockMvc | Boot 管理 | 画面のレンダリング、認可、開示制御（BR-07）の検証 | 顧客向け HTML に料金・契約条件・書類が含まれないことを確認する |
 | アーキテクチャテスト | ArchUnit、Spring Modulith（ApplicationModules の検証） | ArchUnit 1.5.x、Modulith 2.1.x | パッケージ依存、ドメインのフレームワーク非依存、モジュール間の依存 | 第 3 章と同じ。モジュール間の依存は Modulith、層の規則は ArchUnit で検証する |
 | イベントのテスト | Spring Modulith Test（Scenario） | 2.1.x | サガ・イベント配信の結合テスト | ADR-003 の「購読前に停止しても失われない」を確かめる |
@@ -144,7 +145,7 @@ verified:
 | 可観測性 | Amazon CloudWatch（Logs・Metrics・Alarms） | — | 構造化ログ、業務メトリクス、アラート | Micrometer から CloudWatch へ送る。分散トレースは導入しない（インフラ設計） |
 | IaC | Terraform | 1.x | 環境の構築 | `operating-provision` スキルの前提 |
 | CI/CD | GitHub Actions（AWS へは OIDC で認証） | — | ビルド・テスト・配備 | AGENTS.md。長期のアクセスキーを持たない |
-| ローカル | H2、ローカルファイルシステム | — | アプリの起動に外部のコンテナを必要としない | 開発体験を優先する。外部原本はローカルのファイルシステムに保存するアダプターで代替する。Docker は統合テスト（Testcontainers）と E2E にだけ使う |
+| ローカル | H2、ローカルファイルシステム、ログに出すメールの送信 | — | アプリの起動に外部のコンテナを必要としない | 開発体験を優先する。メールは dev のログに出し、メールのコンテナを起動しない（Bolt 33）。外部原本はローカルのファイルシステムに保存するアダプターで代替する。Docker は統合テスト（Testcontainers）と E2E にだけ使う |
 
 ## バージョン管理とアップグレード計画
 
