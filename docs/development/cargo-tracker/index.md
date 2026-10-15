@@ -78,7 +78,7 @@ Bolt がイテレーションに当たります。ふりかえりは各 Bolt の
 | 33a | [password の再設定（A-06。US-18 AC8 の後半）](bolt_33a_plan.md) | [終了報告](bolt_33a_report.md) | W5 | 完了 |
 | 33b | [回復コードによる TOTP の再登録（US-18 AC9）と #13 のクローズ](bolt_33b_plan.md) | [終了報告](bolt_33b_report.md) | W5 | 完了 |
 | 33c | [session の属性の名前と期間の置き場所の整理（振る舞いの変わらない直し）](bolt_33c_plan.md) | [終了報告](bolt_33c_report.md) | W5 | 完了 |
-| 33d | [TOTP と回復コードの部品の整理（振る舞いの変わらない直し）](bolt_33d_plan.md) | - | W5 | 計画済み（承認待ち） |
+| 33d | [TOTP と回復コードの部品の整理（振る舞いの変わらない直し）](bolt_33d_plan.md) | [終了報告](bolt_33d_report.md) | W5 | 完了（終了報告は承認待ち） |
 
 Bolt を始めるときに行を追加します。
 
@@ -172,3 +172,4 @@ Bolt を始めるときに行を追加します。
 * [Bolt 33c 計画 - session の属性の名前と期間の置き場所の整理（振る舞いの変わらない直し）](./bolt_33c_plan.md) - W5 の 18 本目の Bolt の計画。認証の入口と画面に 2 つの定数で持っていた session の属性の名前と URL を application 層の SessionKeys に、期間を domain の SessionPolicy に寄せ、覚えた要求の属性の名前を共有する。TOTP の部品の整理は 33d。
 * [Bolt 33c 終了報告 - session の属性の名前と期間の置き場所の整理（振る舞いの変わらない直し）](./bolt_33c_report.md) - session の属性の名前と URL を SessionKeys に、期間を SessionPolicy に寄せ、規則の例外を 1 つ足してふるまいを持たないことを見張った。覚えた要求は Bean にせず名前だけを共有した。
 * [Bolt 33d 計画 - TOTP と回復コードの部品の整理（振る舞いの変わらない直し）](./bolt_33d_plan.md) - W5 の 19 本目の Bolt の計画。TOTP の桁数・アルゴリズムの定数を 1 か所にし、QR コードの SVG の組み立てを秘密の発行から分け、回復コードの形の知識を RecoveryCode に寄せ、normalize の戻り値を値オブジェクトにし、A-07 と A-08 で重複していた途中の暗号文を使い続ける処理と回復コード 10 個の発行を小さな部品に切り出す。振る舞いは変えない。認証の入口と期限の直しは 33e に分ける。
+* [Bolt 33d 終了報告 - TOTP と回復コードの部品の整理（振る舞いの変わらない直し）](./bolt_33d_report.md) - TOTP の桁数とアルゴリズムを 1 か所にし、QR の SVG を分け、回復コードの形の知識を NormalizedRecoveryCode に寄せ、A-07 と A-08 の重複を小さな部品で共有した。振る舞いは変えていない。

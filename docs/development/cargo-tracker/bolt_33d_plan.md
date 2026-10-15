@@ -1,9 +1,9 @@
 ---
 type: Plan
 title: "Bolt 33d 計画 - TOTP と回復コードの部品の整理（振る舞いの変わらない直し）"
-description: "W5 の 19 本目の Bolt の計画。TOTP の桁数・アルゴリズムの定数を 1 か所にし、QR コードの SVG の組み立てを秘密の発行から分け、回復コードの形の知識を RecoveryCode に寄せ、normalize の戻り値を値オブジェクトにし、A-07 と A-08 で重複していた途中の暗号文を使い続ける処理と回復コード 10 個の発行を小さな部品に切り出す。振る舞いは変えない。認証の入口と期限の直しは 33e に分ける。"
+description: "W5 の 19 本目の Bolt の計画。TOTP の桁数・アルゴリズムの定数を 1 か所にし、QR コードの SVG の組み立てを秘密の発行から分け、回復コードの形の知識を値オブジェクト NormalizedRecoveryCode に寄せ、normalize の戻り値を値オブジェクトにし、A-07 と A-08 で重複していた途中の暗号文を使い続ける処理と回復コード 10 個の発行を小さな部品に切り出す。振る舞いは変えない。認証の入口と期限の直しは 33e に分ける。"
 tags: [plan]
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-15T22:31:06Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-15T22:55:41Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-15T21:57:32Z }
 ---
@@ -43,7 +43,7 @@ verified:
 | :--- | :--- | :--- |
 | TOTP の桁数を `TotpCredential.DIGITS`（周期の `STEP_DURATION` と並べる）にし、`JavaOtpTotpCodeGenerator`（`this(cipher, 6)`）と `RandomTotpSecretIssuer`（URI の `digits=6`）が使う。アルゴリズムは `JavaOtpTotpCodeGenerator` の package-private の定数 2 つ（HMAC の名前 `HmacSHA1` と otpauth の URI の名前 `SHA1`）にし、`RandomTotpSecretIssuer` が URI の名前を使う（新しいファイルは作らない）。A-02・A-07・A-08 のコードの欄の `pattern`・`maxlength` を、画面がモデルで渡す桁数から描く | 認証の結果のトークンに経路（要素の種類） | 全画面に効く `@ControllerAdvice` 4 つのまとめ |
 | QR コードの組み立て（ZXing の Encoder の呼び出しと SVG の文字列）を `infrastructure.crypto.QrCodeSvg` に分け、SVG の単体テストを移す。秘密の発行の側に URI を読み戻すテストを 1 本残す | `revokeOthers` の session の ID の値オブジェクト | テストの中の 6 桁の写し（偽の生成器の `%06d`、誤りのコードの補助、`[0-9]{6}`、URI の文字列）は仕様を固定する値として文字列のまま残す |
-| 回復コードの形（16 進 8 文字を 4 文字ずつハイフンで区切る）の知識を `RecoveryCode` に寄せる（形の正規表現と、乱数のバイトから形を作る static の関数）。`RandomRecoveryCodeGenerator` はそれを使い、`RandomRecoveryCodeGeneratorTest` の正規表現の写しを「生成した値が `normalize` を通る」テストに置き換える | 期限の境界の判定（4 か所）を `SessionPolicy` に、テンプレートの「15 分」「8 時間」を `SessionPolicy` から描く | `TotpCredential.match` で桁数を確かめること（結果は今と同じ `Mismatch` で、変わるのは生成器を呼ぶかどうかだけなので足さない） |
+| 回復コードの形（16 進 8 文字を 4 文字ずつハイフンで区切る）の知識を値オブジェクト `NormalizedRecoveryCode` に寄せる（形の正規表現、ハイフンのない 8 文字を区切る `parse`、乱数のバイトから形を作る `fromBytes`。ステップ 3 で計画の `RecoveryCode.format` から改めた）。`RandomRecoveryCodeGenerator` はそれを使い、`RandomRecoveryCodeGeneratorTest` の正規表現の写しを「生成した値が `normalize` を通る」テストに置き換える | 期限の境界の判定（4 か所）を `SessionPolicy` に、テンプレートの「15 分」「8 時間」を `SessionPolicy` から描く | `TotpCredential.match` で桁数を確かめること（結果は今と同じ `Mismatch` で、変わるのは生成器を呼ぶかどうかだけなので足さない） |
 | `RecoveryCode.normalize` の戻り値を `Optional<NormalizedRecoveryCode>`（`valueobjects` の record）にし、`matches` は `NormalizedRecoveryCode` だけを受ける。`RecoveryCodeVerificationService` を付け替え、16 進でない平文を使うテスト（`RecoveryCodeTest`、`AuthenticationFactorRepositoriesContract`）のデータを正しい形に直す | 33c の議題 4 (b)（URL の負債を ADR-012 に書くか）、画面だけが使う属性の名前 2 つの値のテスト、`SessionKeys` の命名 | — |
 | 回復コード 10 個の発行（平文の一覧 → ハッシュ → `requireIssuedSet`）を `RecoveryCode.issueSet` に、途中の暗号文を使い続けて表示の値を作る処理（`begin` と `provisioningOf`）を `commandservices.TotpProvisioningStarter` に寄せ、`TotpEnrollmentService`・`TotpReEnrollmentService` が使う | — | — |
 
@@ -52,8 +52,8 @@ verified:
 - **桁数**: `TotpCredential.DIGITS = 6`（ドメイン。周期と同じく TOTP の資格の決まり）。アルゴリズムは技術の知識なので `infrastructure.crypto` の `JavaOtpTotpCodeGenerator` に置く（ドメインに出さない）。画面は `TotpCredential.DIGITS` をモデル（例 `codeDigits`）に入れ、テンプレートは `th:attr` で `pattern="[0-9]{n}"`・`maxlength` を描く（Thymeleaf の式で静的なクラスを参照しない。33c で分かった制限）。モデルに入れるのは `LoginController.totp`・`TotpEnrollmentController.start`・`TotpReEnrollmentController.start` の 3 か所
 - **欄の見張り**: 移す前に、3 画面のコードの欄の `pattern="[0-9]{6}"`・`maxlength="6"` と、見出し・前文の「6 桁」を確かめるテストをセキュリティの統合テストに足す（今は `autocomplete="one-time-code"` しか確かめていない）。属性を消す変異で落ちることを確かめる
 - **SVG**: `QrCodeSvg`（`infrastructure.crypto`、package-private）は URI から QR コードの行列を作り SVG の文字列にするだけで、秘密を知らない。AuthenticationArchitectureTest の「秘密の発行の実装は QR のライブラリを使う」の対象を `QrCodeSvg` に替え、「暗号の部品は crypto にある」の一覧と architecture_backend の crypto の部品の一覧に足す（規則の例外ではなく見張りの対象の付け替え）
-- **回復コードの形**: `RecoveryCode` に形の正規表現（今の `NORMALIZED`）と「4 バイトを 16 進 8 文字にして 4 文字ずつ区切る」static の関数（例 `RecoveryCode.format(byte[])`）を置く。生成器は乱数のバイトをその関数に渡す。`normalize` は同じ知識を使う
-- **`NormalizedRecoveryCode`**: record（`valueobjects`、`@ValueObject`）。コンストラクターで形（`RecoveryCode` の正規表現）を確かめるので、だれが作っても形は守られる（record の標準のコンストラクターは別のパッケージから呼べるので、「`normalize` だけが作る」とはしない）。用語集に `| 正規化した回復コード | NormalizedRecoveryCode | … | identity |` の行を足し、Javadoc の最初の文を「正規化した回復コード。」にする（LivingGlossaryConsistencyTest）。`normalize(..)` の結果を文字列で比べるテスト（`RecoveryCodeTest`）は `value()` で比べる
+- **回復コードの形**: `NormalizedRecoveryCode` に形の正規表現、ハイフンのない 8 文字を区切って読む `parse`、「4 バイトを 16 進 8 文字にして 4 文字ずつ区切る」`fromBytes` を置く。生成器は乱数のバイトを `fromBytes` に渡し、`RecoveryCode.normalize` は空白・大文字・全角を直してから `parse` に渡す（ステップ 3 で、計画の `RecoveryCode.format` から改めた。値オブジェクトから集約への依存の前例がないため）
+- **`NormalizedRecoveryCode`**: record（`valueobjects`、`@ValueObject`）。コンストラクターで形を確かめるので、だれが作っても形は守られる（record の標準のコンストラクターは別のパッケージから呼べるので、「`normalize` だけが作る」とはしない）。用語集に `| 正規化した回復コード | NormalizedRecoveryCode | … | identity |` の行を足し、Javadoc の最初の文を「正規化した回復コード。」にする（LivingGlossaryConsistencyTest）。`normalize(..)` の結果を文字列で比べるテスト（`RecoveryCodeTest`）は `value()` で比べる
 - **`RecoveryCode.issueSet(owner, plainCodes, hasher, at)`**: 平文の一覧（10 個）をハッシュにして `RecoveryCode` の一覧を作り、今の `requireIssuedSet` でそろいを確かめて返す。平文の一覧は今のとおり呼び出し側（サービス）が生成器から受けて画面に返す
 - **`TotpProvisioningStarter`**（`commandservices`、Bean にしない）: `start(owner, pending, accountName)` で、途中の暗号文が同じ利用者のものとして復号できれば使い続け、できなければ新しく発行し、入れ子の record（暗号文と表示の値）を返す。2 つのサービスはそれを `EnrollmentStart`・`ReEnrollmentStart` に詰め替える。名前が `*Service` でないので `@Service` の規則に当たらない
 
@@ -73,9 +73,11 @@ package "identity" {
       normalize(input): Optional<NormalizedRecoveryCode>
       matches(NormalizedRecoveryCode, hasher): boolean
       issueSet(owner, plainCodes, hasher, at): List<RecoveryCode>
-      format(bytes): String
     }
-    class NormalizedRecoveryCode <<値オブジェクト>>
+    class NormalizedRecoveryCode <<値オブジェクト>> {
+      parse(compact): Optional<NormalizedRecoveryCode>
+      fromBytes(bytes): NormalizedRecoveryCode
+    }
   }
   package "application.internal.commandservices" {
     class TotpProvisioningStarter
@@ -100,7 +102,7 @@ package "identity" {
   RecoveryCode ..> NormalizedRecoveryCode
   RandomTotpSecretIssuer ..> QrCodeSvg
   RandomTotpSecretIssuer ..> JavaOtpTotpCodeGenerator : URI_ALGORITHM
-  RandomRecoveryCodeGenerator ..> RecoveryCode : format
+  RandomRecoveryCodeGenerator ..> NormalizedRecoveryCode : fromBytes
   JavaOtpTotpCodeGenerator ..> TotpCredential : DIGITS
 }
 @enduml
@@ -111,7 +113,7 @@ package "identity" {
 状態の記号: `[ ]` 未着手、`[-]` 進行中、`[?]` 承認待ち、`[x]` 完了。各ステップの終わりに `check` が緑であることを確かめ、push してアプリの CI と MkDocs の配備を確かめる（T-26、T-126）。コミットは pathspec で作る（T-110）。複数行の書き換えはスクリプトのファイルにする（T-103）。
 
 - [x] **1. 設計文書** 【承認ゲート: 設計文書】
-  - domain_model.md: `TotpCredential.DIGITS`、`RecoveryCode` の形・`format`・`issueSet`、`NormalizedRecoveryCode` を要素表と用語集（89 行目の表）に、`TotpProvisioningStarter`、identity の図。「Bolt 33d で寄せる」（196・1062 行目）を閉じ、IA-INV-11（1169 行目の `normalize`）を直す
+  - domain_model.md: `TotpCredential.DIGITS`、`RecoveryCode` の `issueSet`、`NormalizedRecoveryCode` の形（`parse`・`fromBytes`）、`NormalizedRecoveryCode` を要素表と用語集（89 行目の表）に、`TotpProvisioningStarter`、identity の図。「Bolt 33d で寄せる」（196・1062 行目）を閉じ、IA-INV-11（1169 行目の `normalize`）を直す
   - architecture_backend.md: crypto の部品の一覧（284 行目の「6 つ」）に `QrCodeSvg` を足して数え直し、アルゴリズムの置き場所と重複の寄せ方を書く
   - ui_design.md: 789 行目の「Bolt 33d で寄せる」を閉じ、コードの欄の属性を桁数から描くことを書く
   - ADR-011: 72 行目を閉じ、79 行目を 33d（閉じる）と 33e（経路・session の ID）に分け、253 行目の正規化の行に戻り値の型を、273 行目の crypto の部品の数に `QrCodeSvg` を足す
@@ -125,12 +127,12 @@ package "identity" {
   - `TotpCredential.DIGITS` とアルゴリズムの定数を足し、生成器と発行を付け替える。3 つの画面のハンドラーがモデルで桁数を渡し、テンプレートの欄の属性を描く
   - `QrCodeSvg` を分け、SVG の単体テストを移す。AuthenticationArchitectureTest の QR のライブラリの規則の対象を `QrCodeSvg` に替え、crypto の一覧に足す
 - [x] **3. 回復コードの形と `normalize` の型**
-  - 生成した値が `normalize` を通るテストを先に足し、`RandomRecoveryCodeGeneratorTest` の正規表現の写しを置き換える → 形の知識と `format` を `RecoveryCode` に寄せる → `NormalizedRecoveryCode` を足し、`normalize`・`matches`・`RecoveryCodeVerificationService` を付け替え、テストのデータ（`RecoveryCodeTest` の 49・50・60 行目、`AuthenticationFactorRepositoriesContract` の 215・216・229 行目）と `normalize(..)` の比べ方（`RecoveryCodeTest` の 121〜141 行目）を直す
-  - 変異の確かめ（`format` の区切りを変えると落ちる。控えから戻す。T-131）
+  - 生成した値が `normalize` を通るテストを先に足し、`RandomRecoveryCodeGeneratorTest` の正規表現の写しを置き換える → 形の知識と `fromBytes`・`parse` を `NormalizedRecoveryCode` に寄せる → `NormalizedRecoveryCode` を足し、`normalize`・`matches`・`RecoveryCodeVerificationService` を付け替え、テストのデータ（`RecoveryCodeTest` の 49・50・60 行目、`AuthenticationFactorRepositoriesContract` の 215・216・229 行目）と `normalize(..)` の比べ方（`RecoveryCodeTest` の 121〜141 行目）を直す
+  - 変異の確かめ（`fromBytes` の区切りを変えると落ちる。控えから戻す。T-131）
 - [x] **4. A-07 と A-08 の重複**
   - `RecoveryCode.issueSet`（`RecoveryCodeTest` に足す）と `TotpProvisioningStarter`（単体テストを足す）を作り、2 つのサービスを付け替える（`TotpEnrollmentService` の 85〜102・140〜145 行目、`TotpReEnrollmentService` の 106〜114・164〜169・209〜216 行目）。登録・再登録の単体・統合テスト（同時の登録・再登録、二度押し、途中の暗号文の使い続け）が緑のまま
   - 完了の判定: `check` 緑、`uiTest` 緑
-- [ ] **5. SonarQube と開発レビューと終了報告** 【承認ゲート: 終了報告】
+- [x] **5. SonarQube と開発レビューと終了報告** 【承認ゲート: 終了報告】
   - SonarQube（T-116）。開発レビュー（プログラマー・テスター、アーキテクト）。振る舞いを変えないのでセキュリティとテクニカルライターは省く
   - `bolt_33d_report.md`。release_plan の W5 の 33d の行、開発の索引
 
@@ -165,12 +167,12 @@ package "identity" {
 
 ## 完了条件
 
-- [ ] TOTP の桁数とアルゴリズムが 1 か所ずつにあり、画面のコードの欄の属性もその桁数から描かれる（見張りのテストで表示が同じことを確かめた）。QR コードの SVG の組み立てが秘密の発行から分かれ、見張りの規則が `QrCodeSvg` を対象にしている
-- [ ] 回復コードの形の知識が `RecoveryCode` だけにあり、`normalize` が `NormalizedRecoveryCode` を返し、`matches` はそれだけを受ける。変異の確かめで落ちることを確かめた
-- [ ] A-07 と A-08 が回復コード 10 個の発行と途中の暗号文の処理を共有し、登録・再登録の振る舞いが変わらない
-- [ ] 設計文書（domain_model・architecture_backend・ui_design・ADR-011・test_strategy・release_plan）を更新し、33e の行を足した。過去の報告に「→ 33e」を書き添えた
-- [ ] `check` と `uiTest` が緑。push してアプリの CI と MkDocs の配備を確かめた。SonarQube の Quality Gate が PASS、`okf:check` ERROR 0
-- [ ] 開発レビュー、終了報告
+- [x] TOTP の桁数とアルゴリズムが 1 か所ずつにあり、画面のコードの欄の属性もその桁数から描かれる（見張りのテストで表示が同じことを確かめた）。QR コードの SVG の組み立てが秘密の発行から分かれ、見張りの規則が `QrCodeSvg` を対象にしている
+- [x] 回復コードの形の知識が `NormalizedRecoveryCode` だけにあり、`normalize` が `NormalizedRecoveryCode` を返し、`matches` はそれだけを受ける。変異の確かめで落ちることを確かめた
+- [x] A-07 と A-08 が回復コード 10 個の発行と途中の暗号文の処理を共有し、登録・再登録の振る舞いが変わらない
+- [x] 設計文書（domain_model・architecture_backend・ui_design・ADR-011・test_strategy・release_plan）を更新し、33e の行を足した。過去の報告に「→ 33e」を書き添えた
+- [x] `check` と `uiTest` が緑。push してアプリの CI と MkDocs の配備を確かめた。SonarQube の Quality Gate が PASS、`okf:check` ERROR 0
+- [x] 開発レビュー、終了報告
 
 ## 更新履歴
 
@@ -180,6 +182,7 @@ package "identity" {
 | 2026-10-16 | 詳細整合性検証（12 件）と横断整合性検証（11 件）の指摘を反映した。QR のライブラリの見張りの付け替え、アルゴリズムの定数の置き場所、欄の見張りのテスト、record のコンストラクターの公開範囲、`TotpProvisioningStarter` の戻り値と Bean にしないこと、設計文書と release_plan の行、変えないもの。human:kakimomokuri の決定（33c の議題 4 (b) は 33e、`matches` は値オブジェクトだけで受ける、欄の属性だけを描く、過去の報告に「→ 33e」を書き添える）を反映した | anthropic/claude-opus-5-5 |
 | 2026-10-16 | 計画を承認した（`/goal Bolt33d`） | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-10-16 | ステップ 3: 回復コードの形の知識（正規表現と、乱数のバイトから作る関数）を、計画の `RecoveryCode`（`format`）でなく値オブジェクト `NormalizedRecoveryCode`（`fromBytes`）に置いた。値は形を確かめるのに形の知識が要り、値オブジェクトから集約への依存の前例がないため（人に諮らずに決めた。終了報告の議題にする） | anthropic/claude-opus-5-5 |
+| 2026-10-16 | ステップ 5 を終え、[終了報告](bolt_33d_report.md)を作った（承認待ち）。開発レビューの指摘で、本文・図・完了条件の形の知識の置き場所を `NormalizedRecoveryCode` に合わせた | anthropic/claude-opus-5-5 |
 
 ## 関連ドキュメント
 
