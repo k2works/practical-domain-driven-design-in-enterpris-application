@@ -21,12 +21,6 @@ import org.springframework.security.web.util.matcher.RequestMatcher;
  */
 public class ExpiredSessionRequestSaver implements InvalidSessionStrategy {
 
-    /**
-     * 覚えた要求を置く session の属性の名前（{@link HttpSessionRequestCache} の既定。TOTP の成功の扱い・未認証の入口が同じ既定で
-     * 読むので、この部品の cache にも明示して渡す。持ち越しで使う。一致は持ち越しの統合テストが見張る）。
-     */
-    static final String SAVED_REQUEST = "SPRING_SECURITY_SAVED_REQUEST";
-
     private final RequestMatcher returnablePages;
     private final RequestCache requestCache;
 
@@ -34,7 +28,7 @@ public class ExpiredSessionRequestSaver implements InvalidSessionStrategy {
         this.returnablePages = returnablePages;
         HttpSessionRequestCache cache = new HttpSessionRequestCache();
         cache.setRequestMatcher(returnablePages);
-        cache.setSessionAttrName(SAVED_REQUEST);
+        cache.setSessionAttrName(SessionKeys.SAVED_REQUEST);
         this.requestCache = cache;
     }
 
@@ -74,11 +68,11 @@ public class ExpiredSessionRequestSaver implements InvalidSessionStrategy {
         if (session == null) {
             return;
         }
-        Object saved = session.getAttribute(SAVED_REQUEST);
+        Object saved = session.getAttribute(SessionKeys.SAVED_REQUEST);
         session.invalidate();
         HttpSession fresh = request.getSession(true);
         if (saved != null) {
-            fresh.setAttribute(SAVED_REQUEST, saved);
+            fresh.setAttribute(SessionKeys.SAVED_REQUEST, saved);
         }
     }
 }

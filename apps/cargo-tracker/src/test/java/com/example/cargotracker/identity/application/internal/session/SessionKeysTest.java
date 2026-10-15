@@ -18,6 +18,8 @@ class SessionKeysTest {
         assertThat(SessionKeys.ENROLLMENT_PENDING_SECRET).isEqualTo("cargotracker.session.enrollmentPendingSecret");
         assertThat(SessionKeys.RECOVERY_LOGIN_USER).isEqualTo("cargotracker.session.recoveryLoginUser");
         assertThat(SessionKeys.RECOVERY_LOGIN_AT).isEqualTo("cargotracker.session.recoveryLoginAt");
+        // 覚えた要求は Spring Security の HttpSessionRequestCache の既定の名前（未認証の入口と TOTP の成功の扱いが既定で読む）
+        assertThat(SessionKeys.SAVED_REQUEST).isEqualTo("SPRING_SECURITY_SAVED_REQUEST");
     }
 
     @Test

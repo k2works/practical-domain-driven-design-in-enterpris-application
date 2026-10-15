@@ -1410,7 +1410,9 @@ class AuthenticationSecurityIntegrationTest {
 
         mvc.perform(get(COMPLETED_URL))
                 .andExpect(status().isOk())
-                .andExpect(content().string(org.hamcrest.Matchers.containsString("password を変更しました。")));
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("password を変更しました。")))
+                // ロックの数値は LockPolicy から描く（Bolt 33c。表示は変えない）
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("15 分たってから、もう一度ログインしてください。")));
         mvc.perform(get("/customer/transport-requests").cookie(otherDevice))
                 .andExpect(redirectedUrl("/session-expired"));
         assertLoginRejected(email, PASSWORD);

@@ -110,16 +110,9 @@ public class BookingUiSteps {
         assertThat(definition("業務番号")).hasText(state.transportRequestNumber());
         assertThat(definition("状態")).hasText("確定済み");
         assertThat(definition("追跡の開始"))
-                .hasText(Pattern.compile("^(" + literal(inProgress) + "|" + literal(completed) + ")$"));
+                .hasText(Pattern.compile(
+                        "^(" + PlaywrightText.literal(inProgress) + "|" + PlaywrightText.literal(completed) + ")$"));
         browser.checkAccessibility();
-    }
-
-    /**
-     * 正規表現のメタ文字だけをエスケープする。Playwright は Java の正規表現をブラウザーの JavaScript の正規表現に変えて照合するため、
-     * JavaScript にない {@code Pattern.quote} の {@code \Q…\E} は使えない（Bolt 25）。
-     */
-    private static String literal(String text) {
-        return text.replaceAll("[.*+?^${}()|\\[\\]\\\\]", "\\\\$0");
     }
 
     /**

@@ -30,7 +30,7 @@ import org.springframework.security.web.servlet.util.matcher.PathPatternRequestM
  * A-02 の送信（{@code POST /login/totp}）で TOTP の要素を認証する（Bolt 31、US-18 AC1、ADR-011）。password の要素がそろった
  * session でだけ受け付ける。mfaEnabled を有効にし、認証の結果（{@code FACTOR_TOTP}）を同じ利用者の password の要素の権限に
  * 合わせる。成功したら session の ID を変え CSRF のトークンを作り直す（権限が上がる段の固定化を防ぐ。T-40）。
- * 最長 8 時間の起点（{@link SessionLifetime#AUTHENTICATED_AT}）は、その session で初めて TOTP が通ったときだけ置く（送り直しで
+ * 最長 8 時間の起点（{@code SessionKeys.AUTHENTICATED_AT}）は、その session で初めて TOTP が通ったときだけ置く（送り直しで
  * 延ばさせない）。誤り・再利用は password の要素を捨てて A-01 に戻す（UI 設計「A-02」。1 つの session で TOTP を試し続けさせない）。
  * 回復コードの欄（{@code recoveryCode}）があれば回復コードの入力にし、{@link RecoveryCodeAuthenticationProvider} で確かめる。
  * 結果は TOTP と同じ要素の権限なので、session の ID の変更・8 時間の起点・失敗の扱いは同じ（Bolt 31c、ADR-011）。

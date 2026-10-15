@@ -48,7 +48,8 @@ public class TotpReEnrollmentController {
 
     private final TotpReEnrollmentService reEnrollment;
     private final Clock clock;
-    private final RequestCache requestCache = new HttpSessionRequestCache();
+    /** 覚えた要求を読む cache（失効の部品と同じ属性の名前。読み出しは matcher を使わない。Bolt 33c）。 */
+    private final RequestCache requestCache = savedRequestCache();
 
     public TotpReEnrollmentController(TotpReEnrollmentService reEnrollment, Clock clock) {
         this.reEnrollment = reEnrollment;
@@ -179,6 +180,12 @@ public class TotpReEnrollmentController {
         }
         requestCache.removeRequest(request, response);
         return saved.getRedirectUrl();
+    }
+
+    private static RequestCache savedRequestCache() {
+        HttpSessionRequestCache cache = new HttpSessionRequestCache();
+        cache.setSessionAttrName(SessionKeys.SAVED_REQUEST);
+        return cache;
     }
 
     private static Optional<EncryptedSecret> pendingSecret(HttpSession session) {

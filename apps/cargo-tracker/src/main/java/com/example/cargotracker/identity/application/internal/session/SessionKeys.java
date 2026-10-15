@@ -35,6 +35,14 @@ public final class SessionKeys {
     /** ログインした後に戻れる業務の画面の GET のとき、その path と query を置く request の属性の名前（Bolt 32e）。 */
     public static final String RETURN_PATH_ATTRIBUTE = "cargotracker.request.returnPath";
 
+    /**
+     * ログインの前・失効の前に開いていた画面の要求（覚えた要求）を置く session の属性の名前。Spring Security の
+     * {@code HttpSessionRequestCache} の既定の名前で、未認証の入口と回復コード・TOTP の成功の扱いが既定で読む。失効の部品
+     * （{@code ExpiredSessionRequestSaver}）と A-08 の画面は、この名前を明示した cache を使う（Bolt 33c。Spring Security の既定の cache の
+     * 範囲を変えないよう、Bean は作らず名前だけを共有する）。
+     */
+    public static final String SAVED_REQUEST = "SPRING_SECURITY_SAVED_REQUEST";
+
     /** A-08 認証アプリの再登録の URL（回復コードでログインした後に移す。Bolt 33b）。 */
     public static final String RE_ENROLL_URL = "/account/authenticator";
 

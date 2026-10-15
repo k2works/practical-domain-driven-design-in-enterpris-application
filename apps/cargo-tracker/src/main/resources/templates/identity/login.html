@@ -12,19 +12,19 @@
 <main>
     <h1>ログイン</h1>
     <div th:if="${param.error}" class="alert alert-danger" role="alert" tabindex="-1" id="login-error">
-        メールアドレスまたは password が正しくありません。続けて 5 回誤ると、15 分ログインできなくなります。
+        メールアドレスまたは password が正しくありません。続けて [[${lockFailures}]] 回誤ると、[[${lockMinutes}]] 分ログインできなくなります。
     </div>
     <!--/* A-02 の誤り・再利用で password の要素を捨てて戻ったとき（UI 設計「A-02」、Bolt 31）。誤りと再利用を区別しない（AC2）。
          ロック中も同じ文言で、ロックの有無と解ける時刻は示さない（Bolt 32） */-->
     <div th:if="${param['totp-error']}" class="alert alert-danger" role="alert" tabindex="-1" id="totp-error">
-        認証コードまたは回復コードが正しくないか、すでに使われています。もう一度ログインして、認証アプリに表示された新しいコードか、まだ使っていない回復コードを入れてください。続けて 5 回誤ると、15 分ログインできなくなります。
+        認証コードまたは回復コードが正しくないか、すでに使われています。もう一度ログインして、認証アプリに表示された新しいコードか、まだ使っていない回復コードを入れてください。続けて [[${lockFailures}]] 回誤ると、[[${lockMinutes}]] 分ログインできなくなります。
     </div>
     <div th:if="${param.logout}" class="alert alert-success" role="status">ログアウトしました。</div>
     <!--/* 再設定を終えた後（印 reset-completed。Bolt 33a、UI 設計「A-06」の完了の知らせの場面の表）。ロックの有無は示さず、どの利用者にも同じに出す */-->
     <div th:if="${param['reset-completed']}" class="alert alert-success" role="status" id="reset-completed">
         <p class="mb-1"><strong>password を変更しました。</strong></p>
         <p class="mb-1">新しい password でログインしてください。このブラウザでログインしていた場合は、ログアウトしました。</p>
-        <p class="mb-0">新しい password を正しく入れてもログインできない場合は、続けて誤ったログインのために、しばらくログインできなくなっていることがあります。15 分たってから、もう一度ログインしてください。</p>
+        <p class="mb-0">新しい password を正しく入れてもログインできない場合は、続けて誤ったログインのために、しばらくログインできなくなっていることがあります。[[${lockMinutes}]] 分たってから、もう一度ログインしてください。</p>
     </div>
     <div th:if="${param['reset-requested']}" class="alert alert-info" role="status" id="reset-requested">
         <p class="mb-1"><strong>password の再設定の依頼を受け付けました。</strong></p>

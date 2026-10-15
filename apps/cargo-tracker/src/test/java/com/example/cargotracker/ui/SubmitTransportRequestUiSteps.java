@@ -224,7 +224,9 @@ public class SubmitTransportRequestUiSteps {
     public void ファイルを選び直すよう示される(String item) {
         // 表示名は 1 回だけ出す（Bolt 6〜8 レビュー R-04。UI 設計の C-03 のエラー要約の例と同じ形）
         assertThat(errorSummary()
-                        .getByRole(AriaRole.LINK, new Locator.GetByRoleOptions().setName(Pattern.compile("^" + item))))
+                        .getByRole(
+                                AriaRole.LINK,
+                                new Locator.GetByRoleOptions().setName(PlaywrightText.startingWith(item))))
                 .hasText(item + ": PDF・PNG・JPEG のファイルを選び直してください");
     }
 
@@ -249,7 +251,7 @@ public class SubmitTransportRequestUiSteps {
     @もし("エラー要約の {string} のリンクを選ぶ")
     public void エラー要約のリンクを選ぶ(String item) {
         errorSummary()
-                .getByRole(AriaRole.LINK, new Locator.GetByRoleOptions().setName(Pattern.compile("^" + item)))
+                .getByRole(AriaRole.LINK, new Locator.GetByRoleOptions().setName(PlaywrightText.startingWith(item)))
                 .click();
     }
 

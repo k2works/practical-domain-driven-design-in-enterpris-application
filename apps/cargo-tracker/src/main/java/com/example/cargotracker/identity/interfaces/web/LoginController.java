@@ -2,6 +2,7 @@ package com.example.cargotracker.identity.interfaces.web;
 
 import com.example.cargotracker.identity.application.internal.queryservices.TotpEnrollmentQueryService;
 import com.example.cargotracker.identity.application.internal.session.SessionKeys;
+import com.example.cargotracker.identity.domain.model.rules.LockPolicy;
 import com.example.cargotracker.identity.domain.model.valueobjects.PasswordVerifiedUser;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.ObjectProvider;
@@ -47,6 +48,9 @@ public class LoginController {
 
     @GetMapping("/login")
     public String login(Model model) {
+        // ロックの回数と長さは LockPolicy から描く（A-01 の文言。Bolt 32 の既知の課題を Bolt 33c で直した）
+        model.addAttribute("lockFailures", LockPolicy.MAX_CONSECUTIVE_FAILURES);
+        model.addAttribute("lockMinutes", LockPolicy.LOCK_DURATION.toMinutes());
         devLogin.ifAvailable(prefill -> {
             if (!model.containsAttribute(USERNAME)) {
                 model.addAttribute(USERNAME, prefill.email());

@@ -289,7 +289,7 @@ class SessionLifetimeFilterTest {
         MockHttpServletRequest request = returningRequest(authenticatedSession(true), Duration.ofHours(8));
 
         assertThat(request.getSession(false)).as("新しい session").isNotNull();
-        assertThat(request.getSession(false).getAttribute(ExpiredSessionRequestSaver.SAVED_REQUEST))
+        assertThat(request.getSession(false).getAttribute(SessionKeys.SAVED_REQUEST))
                 .isNotNull();
     }
 
@@ -297,12 +297,12 @@ class SessionLifetimeFilterTest {
     void passwordの段の失効では覚えていた要求を新しいsessionに持ち越す() throws Exception {
         MockHttpSession session = passwordStageSession(true);
         Object saved = new Object();
-        session.setAttribute(ExpiredSessionRequestSaver.SAVED_REQUEST, saved);
+        session.setAttribute(SessionKeys.SAVED_REQUEST, saved);
 
         MockHttpServletRequest request = returningRequest(session, Duration.ofMinutes(5));
 
         assertThat(session.isInvalid()).isTrue();
-        assertThat(request.getSession(false).getAttribute(ExpiredSessionRequestSaver.SAVED_REQUEST))
+        assertThat(request.getSession(false).getAttribute(SessionKeys.SAVED_REQUEST))
                 .isSameAs(saved);
     }
 

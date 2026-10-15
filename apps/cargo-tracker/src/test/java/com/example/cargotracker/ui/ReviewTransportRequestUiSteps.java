@@ -8,7 +8,6 @@ import com.microsoft.playwright.options.AriaRole;
 import io.cucumber.java.ja.ならば;
 import io.cucumber.java.ja.もし;
 import io.cucumber.java.ja.前提;
-import java.util.regex.Pattern;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.web.server.LocalServerPort;
 
@@ -128,7 +127,7 @@ public class ReviewTransportRequestUiSteps {
         Locator summary = page().locator("#error-summary");
         assertThat(summary).isFocused();
         assertThat(summary.getByRole(
-                        AriaRole.LINK, new Locator.GetByRoleOptions().setName(Pattern.compile("^" + REASON))))
+                        AriaRole.LINK, new Locator.GetByRoleOptions().setName(PlaywrightText.startingWith(REASON))))
                 .isVisible();
     }
 

@@ -61,6 +61,28 @@ class AesGcmSecretCipherTest {
     }
 
     @Test
+    void 平文が空の暗号文はIVとタグちょうどの長さでも短すぎるとして復号しない() throws Exception {
+        // 本物の鍵と AAD で空の平文を暗号化する（乱数のバイト列では、境界の判定がなくてもタグの不一致で同じ例外になり、境界を確かめられない）
+        byte[] iv = new byte[12];
+        Cipher aes = Cipher.getInstance("AES/GCM/NoPadding");
+        aes.init(
+                Cipher.ENCRYPT_MODE,
+                new SecretKeySpec(Base64.getDecoder().decode(TestSecretCiphers.KEY_V1), "AES"),
+                new GCMParameterSpec(128, iv));
+        aes.updateAAD(("totp-secret:" + OWNER.value()).getBytes(StandardCharsets.UTF_8));
+        byte[] tag = aes.doFinal(new byte[0]);
+        byte[] body = new byte[iv.length + tag.length];
+        System.arraycopy(iv, 0, body, 0, iv.length);
+        System.arraycopy(tag, 0, body, iv.length, tag.length);
+        EncryptedSecret empty = new EncryptedSecret("v1:" + Base64.getEncoder().encodeToString(body));
+        AesGcmSecretCipher cipher = TestSecretCiphers.cipher();
+
+        assertThatThrownBy(() -> cipher.decrypt(empty, OWNER))
+                .isInstanceOf(UnreadableCredentialException.class)
+                .hasMessageContaining("短すぎる");
+    }
+
+    @Test
     void 別の利用者の暗号文としては復号できない() {
         AesGcmSecretCipher cipher = TestSecretCiphers.cipher();
         EncryptedSecret encrypted = cipher.encrypt(SECRET.clone(), OWNER);

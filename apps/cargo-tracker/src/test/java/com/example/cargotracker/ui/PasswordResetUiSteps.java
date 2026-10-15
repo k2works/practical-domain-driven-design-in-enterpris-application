@@ -217,9 +217,8 @@ public class PasswordResetUiSteps {
     public void 新しいpasswordの欄に示される(String message) {
         assertThat(page().getByLabel("新しい password", new Page.GetByLabelOptions().setExact(true)))
                 .hasAccessibleDescription(
-                        // 説明は誤りの文言のあとに条件の箇条が続く（aria-describedby の順）。Playwright は正規表現をブラウザーで照合するので、
-                        // JavaScript にない Pattern.quote の \Q…\E は使えない（Bolt 25。BookingUiSteps と同じ）
-                        Pattern.compile("^" + message.replaceAll("[.*+?^${}()|\\[\\]\\\\]", "\\\\$0")));
+                        // 説明は誤りの文言のあとに条件の箇条が続く（aria-describedby の順）
+                        PlaywrightText.startingWith(message));
         assertThat(page().getByLabel("新しい password", new Page.GetByLabelOptions().setExact(true)))
                 .hasValue("");
         browser.checkAccessibility();

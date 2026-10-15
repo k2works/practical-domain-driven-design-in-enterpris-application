@@ -40,6 +40,19 @@ class AcceptanceStepArchitectureTest {
     @ArchTest
     static final ArchRule アクセス監査のステップ定義は自分のコンテキストと公開APIだけに依存する = rule("identity");
 
+    /**
+     * 画面の層のステップは {@code Pattern.quote} を呼ばない（Bolt 33c、Try T-128）。Playwright は正規表現をブラウザーの JavaScript で照合し、
+     * {@code \Q…\E} が効かない（Bolt 5・25・33a で踏んだ）。文字列は {@code PlaywrightText} でエスケープする。対象のクラスがなければ
+     * ArchUnit が失敗する（空振りしない）。
+     */
+    @ArchTest
+    static final ArchRule 画面の層のステップはPatternのquoteを呼ばない = noClasses()
+            .that()
+            .resideInAPackage(ROOT + "ui..")
+            .should()
+            .callMethod(java.util.regex.Pattern.class, "quote", String.class)
+            .because("Playwright は正規表現を JavaScript で照合するので、PlaywrightText.literal でエスケープする（T-128）");
+
     /** 規則の判定そのもの（他のコンテキストの公開 API へ依存するステップ定義がまだないため、判定を直接確かめる。Bolt 28 の開発レビュー）。 */
     @Test
     void 他のコンテキストは公開APIだけを許し自分のインフラストラクチャ層と画面と公開APIの実装は許さない() {
