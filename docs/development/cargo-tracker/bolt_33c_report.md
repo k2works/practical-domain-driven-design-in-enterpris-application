@@ -3,7 +3,9 @@ type: Plan
 title: "Bolt 33c 終了報告 - session の属性の名前と期間の置き場所の整理（振る舞いの変わらない直し）"
 description: "W5 の 18 本目の Bolt の終了報告。認証の入口と画面に同じ値の 2 つの定数で持っていた session・request の属性の名前と A-08・A-03 の URL を application 層の SessionKeys に、ログインの期間を domain の SessionPolicy に寄せ、認証の入口の規則に例外を 1 つ足した（ふるまいを持たないことを ArchUnit で見張る）。覚えた要求は Bean にせず属性の名前だけを共有した（Bean にすると Spring Security が型で見つけて未認証の入口でも使うため）。A-01 の数値を LockPolicy から描き、T-128 の見張り、tracking のコメント、空の復号の境界のテストを足した。振る舞いは変えていない。"
 tags: [plan]
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-15T12:25:10Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-15T12:41:19Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-10-15T12:41:20Z }
 ---
 
 # Bolt 33c 終了報告 - session の属性の名前と期間の置き場所の整理（振る舞いの変わらない直し）
@@ -47,7 +49,7 @@ generated: { by: anthropic/claude-opus-5-5, at: 2026-10-15T12:25:10Z }
 | :--- | :--- |
 | テスト | `check` 2233 件、失敗 0（33b の終わりは 2229 件）。`uiTest` 244 件、失敗 0 |
 | 承認ゲートの通過 | 計画は人が承認した。ステップ 1〜6 は止めずに進め、ステップ 3 で計画の打ち切りの条件に当たって 1 回諮った |
-| 人の変更依頼 | 0（この報告の承認の前） |
+| 人の変更依頼 | 0 |
 | リードタイム | 約 1 時間 5 分（計画の承認 20:34 から）。計画の目安 4.5 時間の内 |
 | 変異の確かめ | 3 つ（議題 1） |
 
@@ -117,6 +119,7 @@ Bolt 33d（W5 の続き）。TOTP の部品の整理（TOTP の定数、SVG、�
 
 | 日付 | 更新内容 | 更新者 |
 | :--- | :--- | :--- |
+| 2026-10-15 | 終了報告を承認した（議題 1〜4。議題 3 の人に諮らずに変えたこと 3 つを事後に承認。議題 4 の (b)・(c) は 33d の開始準備で扱う） | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-10-15 | 初版作成（承認待ち） | anthropic/claude-opus-5-5 |
 
 ## 関連ドキュメント

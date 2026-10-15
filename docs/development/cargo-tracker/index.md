@@ -77,7 +77,7 @@ Bolt がイテレーションに当たります。ふりかえりは各 Bolt の
 | 33 | [通知モジュールの新設と password の再設定の依頼（US-18 AC8 の前半）](bolt_33_plan.md) | [終了報告](bolt_33_report.md) | W5 | 完了 |
 | 33a | [password の再設定（A-06。US-18 AC8 の後半）](bolt_33a_plan.md) | [終了報告](bolt_33a_report.md) | W5 | 完了 |
 | 33b | [回復コードによる TOTP の再登録（US-18 AC9）と #13 のクローズ](bolt_33b_plan.md) | [終了報告](bolt_33b_report.md) | W5 | 完了 |
-| 33c | [session の属性の名前と期間の置き場所の整理（振る舞いの変わらない直し）](bolt_33c_plan.md) | [終了報告](bolt_33c_report.md) | W5 | 完了（承認待ち） |
+| 33c | [session の属性の名前と期間の置き場所の整理（振る舞いの変わらない直し）](bolt_33c_plan.md) | [終了報告](bolt_33c_report.md) | W5 | 完了 |
 
 Bolt を始めるときに行を追加します。
 
