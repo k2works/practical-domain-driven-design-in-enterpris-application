@@ -3,7 +3,9 @@ type: Plan
 title: "Bolt 33a 終了報告 - password の再設定（A-06。US-18 AC8 の後半）"
 description: "W5 の 16 本目の Bolt の終了報告。メールのリンクを開くとトークンを確かめて session に ID だけを置き、トークンのない URL の A-06 で新しい password（12〜64 文字、72 バイト以下、よく使われる password でない）を設定できるようにした。完了は 1 つのトランザクションでトークンを 1 回だけ使い、コミットの後にその利用者の session をすべて失効させ、A-01 に完了の知らせを出す。開発レビューで session 固定化と、今の session を捨てる順序（決定と実装の食い違い）を見つけて直した。"
 tags: [plan]
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-15T06:32:52Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-15T06:43:02Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-10-15T06:43:03Z }
 ---
 
 # Bolt 33a 終了報告 - password の再設定（A-06。US-18 AC8 の後半）
@@ -30,7 +32,7 @@ generated: { by: anthropic/claude-opus-5-5, at: 2026-10-15T06:32:52Z }
 | 期間 | 2026-10-15 12:47（計画の承認の記録 `d06dacaa8`）〜 15:10 頃 |
 | 対象 | `identity`（password の方針、ポート 3 つと実装、`User` の password の変更、トークンを使う、再設定の完了のサービス、A-06・無効なリンクの案内・A-01 の完了の知らせ・A-03 の文言、監査）、よく使われる password の一覧（同梱）、アーキテクチャのテスト、設計文書（ui_design・domain_model・data_model・non_functional・architecture_backend・test_strategy・user_story）、ADR-011・012・017、ユーザーマニュアル、デモ環境の手順書 |
 | SP | 0（US-18 の SP は 33b で数える） |
-| GitHub | [#13](https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/13)（閉じない）。#49 にコメントした |
+| GitHub | [#13](https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/13)（閉じない。デモの動画を承認の後に添付した）。#49 にコメントした |
 | 計画 | [Bolt 33a 計画](bolt_33a_plan.md) |
 
 ## 成果
@@ -52,7 +54,7 @@ generated: { by: anthropic/claude-opus-5-5, at: 2026-10-15T06:32:52Z }
 | :--- | :--- |
 | テスト | `check` 2183 件、失敗 0（33 の終わりは 2147 件）。`uiTest` 240 件（実行 120、失敗 0。新しいシナリオ 3） |
 | 承認ゲートの通過 | 計画は人が承認した。ステップ 1〜6 は止めずに進めた（議題 1） |
-| 人の変更依頼 | 0（この報告の承認の前） |
+| 人の変更依頼 | 0 |
 | リードタイム | 約 2 時間 25 分（計画の承認 12:47 から）。計画の目安 4.75 時間の内 |
 | 変異の確かめ | 1 つ（議題 1）と、開発レビューの直しの Red 4 つ |
 
@@ -139,6 +141,7 @@ Bolt 33b（W5 の続き）。#13 をクローズする Bolt（US-18 の残りと
 
 | 日付 | 更新内容 | 更新者 |
 | :--- | :--- | :--- |
+| 2026-10-15 | 終了報告を承認した（議題 1〜7。議題 7 の Try の見張りの形は Bolt 33b の開始準備で決める。デモ環境の Config Vars の反映（議題 6）は人の作業として残る）。デモの動画を #13 に添付し、添付の対応表に bolt-33a を足した | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-10-15 | 初版作成（承認待ち） | anthropic/claude-opus-5-5 |
 
 ## 関連ドキュメント
