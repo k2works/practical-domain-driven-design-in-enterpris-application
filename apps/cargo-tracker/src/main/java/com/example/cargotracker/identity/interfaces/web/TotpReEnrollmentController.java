@@ -58,7 +58,7 @@ public class TotpReEnrollmentController {
 
     @GetMapping
     public String form(AuthenticatedActor actor, HttpSession session, Model model) {
-        if (!RecoveryLogin.isMarked(session, actor)) {
+        if (!RecoveryLogin.isMarked(session, actor, clock.instant())) {
             return HOME;
         }
         return start(actor, session, model);
@@ -72,7 +72,7 @@ public class TotpReEnrollmentController {
             HttpServletResponse response,
             @RequestParam(name = "code", defaultValue = "") String code,
             Model model) {
-        if (!RecoveryLogin.isMarked(session, actor)) {
+        if (!RecoveryLogin.isMarked(session, actor, clock.instant())) {
             return HOME;
         }
         Optional<EncryptedSecret> pending = pendingSecret(session);
@@ -89,7 +89,6 @@ public class TotpReEnrollmentController {
                 RecoveryLogin.clear(session);
                 addLayout(actor, model);
                 model.addAttribute("recoveryCodes", recoveryCodes);
-                model.addAttribute("continueUrl", savedOrHome(request, response));
                 yield CODES_VIEW;
             }
             case ReEnrollmentResult.CodeRejected() -> {
@@ -119,13 +118,31 @@ public class TotpReEnrollmentController {
         };
     }
 
-    /** 後で登録する。印を残して、覚えた要求の画面か役割のホームへ移す。 */
+    /** 後で登録する。印を残して、覚えた要求の画面か役割のホームへ移す（印がなければ役割のホーム）。 */
     @PostMapping("/later")
-    public String later(HttpServletRequest request, HttpServletResponse response) {
+    public String later(
+            AuthenticatedActor actor, HttpSession session, HttpServletRequest request, HttpServletResponse response) {
+        if (!RecoveryLogin.isMarked(session, actor, clock.instant())) {
+            return HOME;
+        }
+        return "redirect:" + savedOrHome(request, response);
+    }
+
+    /**
+     * 新しい回復コードの画面の「続ける」。覚えた要求の画面か役割のホームへ移す（GET のフォームは action の query を捨てるので、POST で
+     * 受けてサーバーが redirect する。Bolt 33b の開発レビュー）。
+     */
+    @PostMapping("/continue")
+    public String proceed(HttpServletRequest request, HttpServletResponse response) {
         return "redirect:" + savedOrHome(request, response);
     }
 
     private String start(AuthenticatedActor actor, HttpSession session, Model model) {
+        if (session.getAttribute(STARTED_AT) instanceof Instant started
+                && !clock.instant().isBefore(started.plus(TotpReEnrollmentService.LIMIT))) {
+            // 期限を過ぎた途中の値は使わず、新しいキーと期限で始め直す
+            clearPending(session);
+        }
         ReEnrollmentStart start = reEnrollment.begin(actor.userId(), pendingSecret(session));
         if (start instanceof ReEnrollmentStart.Started(EncryptedSecret secret, TotpProvisioning provisioning)) {
             session.setAttribute(PENDING_SECRET, secret.value());
@@ -148,7 +165,7 @@ public class TotpReEnrollmentController {
     /** ログインした画面のレイアウト（役割で選ぶ）。A-08 には印の知らせを出さない（本文が同じことを言う）。 */
     private static void addLayout(AuthenticatedActor actor, Model model) {
         model.addAttribute("layout", isShipper(actor) ? "layout/customer" : "layout/staff");
-        model.addAttribute(RecoveryLoginAdvice.NOTICE, false);
+        model.addAttribute(RecoveryLoginAdvice.NOTICE, null);
     }
 
     private static boolean isShipper(AuthenticatedActor actor) {

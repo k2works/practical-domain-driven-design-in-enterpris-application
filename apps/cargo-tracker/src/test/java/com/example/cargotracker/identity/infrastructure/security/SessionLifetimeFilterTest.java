@@ -123,6 +123,8 @@ class SessionLifetimeFilterTest {
     void 回復コードでログインした印の属性の名前とA08のURLは画面の層と同じ値() {
         assertThat(SessionLifetime.RECOVERY_LOGIN_USER)
                 .isEqualTo(com.example.cargotracker.identity.interfaces.web.RecoveryLogin.MARK);
+        assertThat(SessionLifetime.RECOVERY_LOGIN_AT)
+                .isEqualTo(com.example.cargotracker.identity.interfaces.web.RecoveryLogin.AT);
         assertThat(SessionLifetime.RE_ENROLL_URL)
                 .isEqualTo(com.example.cargotracker.identity.interfaces.web.TotpReEnrollmentController.URL);
     }

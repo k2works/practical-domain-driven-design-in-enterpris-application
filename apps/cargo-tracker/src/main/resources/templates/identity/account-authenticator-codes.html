@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!--/* A-08 新しい回復コードの保存（US-18 AC9、SEC-10、UI 設計「A-08」、Bolt 33b）。登録し直した POST の応答で一度だけ示す（平文の回復
-       コードはどこにも保存しない。再読み込みは印が消えているので役割のホームへ移す）。「保存した」は画面の必須。「続ける」の行き先は
-       サーバーが覚えた要求か役割のホーム */-->
+       コードはどこにも保存しない。再読み込みは印が消えているので役割のホームへ移す）。「保存した」は画面の必須。「続ける」は POST で、
+       サーバーが覚えた要求か役割のホームへ移す（GET のフォームは覚えた要求の query を捨てるため） */-->
 <html lang="ja" xmlns:th="http://www.thymeleaf.org"
       th:replace="~{__${layout}__ :: layout(~{::title}, ~{::main}, ~{}, '')}">
 <head>
@@ -17,7 +17,7 @@
     <ol class="app-recovery-codes">
         <li th:each="code : ${recoveryCodes}"><code th:text="${code}">1a2b-3c4d</code></li>
     </ol>
-    <form th:action="${continueUrl}" method="get">
+    <form th:action="@{/account/authenticator/continue}" method="post">
         <div class="form-check mb-3">
             <input class="form-check-input" type="checkbox" id="saved" required>
             <label class="form-check-label" for="saved">回復コードを安全な場所に保存した</label>

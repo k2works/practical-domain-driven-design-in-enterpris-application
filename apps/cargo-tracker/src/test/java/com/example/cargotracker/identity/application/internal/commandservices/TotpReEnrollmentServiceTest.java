@@ -181,9 +181,10 @@ class TotpReEnrollmentServiceTest {
         assertThat(replaced.secret()).isEqualTo(renewed);
         assertThat(replaced.lastUsedStep()).as("確かめたコードの刻みは使ったことにする").isEqualTo(100);
         assertThat(recoveryCodes.findUnusedByUserId(user.id())).hasSize(RecoveryCode.CODES_PER_USER);
-        assertThat(audit).singleElement().satisfies(record -> {
-            assertThat(record.action()).isEqualTo(AuditAction.TOTP_RE_ENROLLED);
-            assertThat(record.actorCompanyId()).isEqualTo(company.id());
+        assertThat(audit).singleElement().satisfies(written -> {
+            assertThat(written.action()).isEqualTo(AuditAction.TOTP_RE_ENROLLED);
+            assertThat(written.actorUserId()).isEqualTo(user.id());
+            assertThat(written.actorCompanyId()).isEqualTo(company.id());
         });
         verify(sessions).revokeOthers(user.email(), CURRENT_SESSION);
     }
@@ -306,7 +307,9 @@ class TotpReEnrollmentServiceTest {
                         started -> assertThat(started.secret()).isNotEqualTo(pending));
         assertThat(othersPending)
                 .isInstanceOfSatisfying(
-                        ReEnrollmentStart.Started.class, started -> requireOwner(user.id(), started.secret()));
+                        ReEnrollmentStart.Started.class,
+                        started -> assertThat(started.secret().value())
+                                .contains(user.id().value().toString()));
     }
 
     /** 確定したことを覚える、何もしないトランザクションマネージャー（単体テスト用）。 */

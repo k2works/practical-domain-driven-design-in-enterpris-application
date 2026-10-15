@@ -26,7 +26,6 @@ import java.time.Clock;
 import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -171,18 +170,17 @@ public class TotpReEnrollmentService {
                 plainCodes.stream()
                         .map(plain -> RecoveryCode.issue(owner, plain, hasher, now))
                         .toList());
-        AtomicReference<Boolean> replaced = new AtomicReference<>(false);
-        transactionTemplate.executeWithoutResult(status -> {
+        Boolean replaced = transactionTemplate.execute(status -> {
             // 資格の置き換えを先に行い、同時の再登録では回復コードを置き換える前に後の再登録を止める
             if (!credentials.replace(current.reEnroll(secret, step, now), current.secret())) {
                 status.setRollbackOnly();
-                return;
+                return false;
             }
             recoveryCodes.replaceAll(owner, issued);
             auditRecords.append(AuditRecord.totpReEnrolled(owner, user.companyId(), now));
-            replaced.set(true);
+            return true;
         });
-        if (!replaced.get()) {
+        if (!Boolean.TRUE.equals(replaced)) {
             return new ReEnrollmentResult.Superseded();
         }
         revokeOthers(user, currentSessionId);

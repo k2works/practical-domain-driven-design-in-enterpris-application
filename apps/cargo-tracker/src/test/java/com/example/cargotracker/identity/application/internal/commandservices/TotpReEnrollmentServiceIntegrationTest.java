@@ -21,7 +21,6 @@ import com.example.cargotracker.shared.domain.CompanyId;
 import com.example.cargotracker.shared.domain.UserId;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import java.time.Clock;
-import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -29,12 +28,12 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.function.Supplier;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.support.TransactionTemplate;
 
 /**
@@ -87,6 +86,9 @@ class TotpReEnrollmentServiceIntegrationTest {
 
     @Autowired
     TransactionTemplate transactionTemplate;
+
+    @Autowired
+    JdbcTemplate jdbc;
 
     @Autowired
     Clock clock;
@@ -142,23 +144,37 @@ class TotpReEnrollmentServiceIntegrationTest {
     }
 
     @Test
-    void 先の再登録の置き換えが確定するまで後の再登録は待ちほかの画面で登録し直したとして置き換えない() throws Exception {
+    void 先の再登録の置き換えが確定するまで後の再登録は待ちほかの画面で登録し直したとして置き換えない() {
         Enrolled before = enrolledUser();
         EncryptedSecret first = begin(before.user());
         EncryptedSecret second = issuer.issue(before.user());
         TotpCredential read = credentials.findByUserId(before.user()).orElseThrow();
 
+        List<String> firstCodes = recoveryCodeGenerator.generate();
+
         List<Object> results = whileFirstHoldsTheCredential(
-                () -> credentials.replace(read.reEnroll(first, 0, new UtcInstant(clock.instant())), before.secret()),
+                () -> {
+                    UtcInstant now = new UtcInstant(clock.instant());
+                    boolean replaced = credentials.replace(read.reEnroll(first, 0, now), before.secret());
+                    recoveryCodes.replaceAll(
+                            before.user(),
+                            firstCodes.stream()
+                                    .map(plain -> RecoveryCode.issue(before.user(), plain, hasher, now))
+                                    .toList());
+                    return replaced;
+                },
                 () -> complete(before.user(), second));
 
         assertThat(results).containsExactly(true, new ReEnrollmentResult.Superseded());
         assertThat(credentials.findByUserId(before.user()).orElseThrow().secret())
                 .isEqualTo(first);
+        assertThat(recovery.verify(before.user(), before.company(), firstCodes.getFirst()))
+                .as("先の再登録が示した回復コードは、後の再登録で無効にならない")
+                .isEqualTo(RecoveryCodeVerification.ACCEPTED);
     }
 
     @Test
-    void 回復コードの発行し直しが確定するまで古い回復コードのログインは待ち確定の後は通らない() throws Exception {
+    void 回復コードの発行し直しが確定するまで古い回復コードのログインは待ち確定の後は通らない() {
         Enrolled before = enrolledUser();
         EncryptedSecret renewed = begin(before.user());
         TotpCredential read = credentials.findByUserId(before.user()).orElseThrow();
@@ -185,8 +201,7 @@ class TotpReEnrollmentServiceIntegrationTest {
      * 先の操作をトランザクションの中で行い、確定を止めてから後の操作を始める。後の操作が待っていることを確かめてから、先を確定させる
      * （T-100）。
      */
-    private List<Object> whileFirstHoldsTheCredential(Supplier<Object> first, Supplier<Object> second)
-            throws Exception {
+    private List<Object> whileFirstHoldsTheCredential(Supplier<Object> first, Supplier<Object> second) {
         CountDownLatch firstDone = new CountDownLatch(1);
         CountDownLatch releaseFirst = new CountDownLatch(1);
         ExecutorService executor = Executors.newFixedThreadPool(2);
@@ -202,10 +217,9 @@ class TotpReEnrollmentServiceIntegrationTest {
             await(firstDone);
             CompletableFuture<Object> secondResult = CompletableFuture.supplyAsync(second, executor);
 
-            assertThat(secondResult)
-                    .as("後の操作は先の確定を待つ")
-                    .failsWithin(Duration.ofMillis(500))
-                    .withThrowableOfType(TimeoutException.class);
+            // 後の操作が先の行ロックを待っていることを、時間ではなく PostgreSQL の待ちで確かめる（bcrypt の時間で空振りしない）
+            awaitLockWaiter();
+            assertThat(secondResult).as("後の操作は先の確定を待つ").isNotDone();
             releaseFirst.countDown();
             return List.of(
                     firstResult.orTimeout(TIMEOUT_SECONDS, TimeUnit.SECONDS).join(),
@@ -214,6 +228,22 @@ class TotpReEnrollmentServiceIntegrationTest {
             releaseFirst.countDown();
             executor.shutdownNow();
         }
+    }
+
+    /** ほかの接続が行ロックを待つまで待つ。 */
+    private void awaitLockWaiter() {
+        long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(TIMEOUT_SECONDS);
+        while (System.nanoTime() < deadline) {
+            Integer waiting = jdbc.queryForObject(
+                    "SELECT count(*) FROM pg_stat_activity WHERE wait_event_type = 'Lock'"
+                            + " AND datname = current_database()",
+                    Integer.class);
+            if (waiting != null && waiting > 0) {
+                return;
+            }
+            Thread.onSpinWait();
+        }
+        throw new IllegalStateException("後の操作が行ロックを待ちませんでした");
     }
 
     private static void await(CountDownLatch latch) {

@@ -117,6 +117,7 @@ public class TotpAuthenticationFilter extends AbstractAuthenticationProcessingFi
                 session.setAttribute(
                         SessionLifetime.RECOVERY_LOGIN_USER,
                         user.actor().userId().value().toString());
+                session.setAttribute(SessionLifetime.RECOVERY_LOGIN_AT, clock.instant());
                 clearAuthenticationAttributes(request);
                 response.sendRedirect(request.getContextPath() + SessionLifetime.RE_ENROLL_URL);
                 return;

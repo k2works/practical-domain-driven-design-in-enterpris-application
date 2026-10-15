@@ -55,6 +55,12 @@ public final class SessionLifetime {
      */
     public static final String RECOVERY_LOGIN_USER = "cargotracker.session.recoveryLoginUser";
 
+    /**
+     * 回復コードでログインした時刻（{@code Instant}）を置く session の属性の名前（Bolt 33b の開発レビュー）。印はこの時刻から 15 分だけ
+     * 有効にする（{@link #RECOVERY_LOGIN_USER} と同じく、画面の層の {@code RecoveryLogin.AT} と同じ値で、テストで守る）。
+     */
+    public static final String RECOVERY_LOGIN_AT = "cargotracker.session.recoveryLoginAt";
+
     /** 回復コードでログインした後に移す A-08 認証アプリの再登録の URL（Bolt 33b）。 */
     public static final String RE_ENROLL_URL = "/account/authenticator";
 
