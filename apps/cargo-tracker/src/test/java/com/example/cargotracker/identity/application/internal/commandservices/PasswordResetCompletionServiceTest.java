@@ -120,7 +120,8 @@ class PasswordResetCompletionServiceTest {
         givenUsableToken();
         doThrow(new IllegalStateException("監査の表に届かない")).when(auditRecords).append(any());
 
-        assertThatThrownBy(() -> service.complete(token.id(), "a brand new long passphrase"))
+        UUID tokenId = token.id();
+        assertThatThrownBy(() -> service.complete(tokenId, "a brand new long passphrase"))
                 .isInstanceOf(IllegalStateException.class);
         verify(sessions, never()).revokeAll(any());
     }
@@ -130,7 +131,8 @@ class PasswordResetCompletionServiceTest {
         // 外側に参加すると、外側の確定の前に session を消してしまう（ロールバックしても消えたまま。ADR-012）
         TransactionSynchronizationManager.setActualTransactionActive(true);
         try {
-            assertThatThrownBy(() -> service.complete(token.id(), "a brand new long passphrase"))
+            UUID tokenId = token.id();
+            assertThatThrownBy(() -> service.complete(tokenId, "a brand new long passphrase"))
                     .isInstanceOf(IllegalStateException.class);
         } finally {
             TransactionSynchronizationManager.setActualTransactionActive(false);

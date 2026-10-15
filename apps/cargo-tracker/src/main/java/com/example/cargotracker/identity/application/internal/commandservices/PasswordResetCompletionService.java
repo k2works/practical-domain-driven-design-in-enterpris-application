@@ -19,6 +19,7 @@ import com.example.cargotracker.shared.domain.UtcInstant;
 import java.time.Clock;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -117,18 +118,14 @@ public class PasswordResetCompletionService {
         if (violation.isPresent()) {
             return new PasswordResetCompletion.PolicyViolated(violation.get());
         }
-        // 使えなければ null（ロールバックする）
-        EmailAddress changed = transactionTemplate.execute(status -> {
-            Optional<EmailAddress> result = changePassword(tokenId, newPassword);
-            if (result.isEmpty()) {
-                status.setRollbackOnly();
-            }
-            return result.orElse(null);
-        });
-        if (changed == null) {
+        // 変えた利用者のメールアドレス。使えなければ空のままでロールバックする
+        AtomicReference<EmailAddress> changed = new AtomicReference<>();
+        transactionTemplate.executeWithoutResult(
+                status -> changePassword(tokenId, newPassword).ifPresentOrElse(changed::set, status::setRollbackOnly));
+        if (changed.get() == null) {
             return new PasswordResetCompletion.Invalid();
         }
-        revokeSessions(tokenId, changed);
+        revokeSessions(tokenId, changed.get());
         return new PasswordResetCompletion.Completed();
     }
 
