@@ -4,7 +4,7 @@ title: "ADR-017: 通知モジュールを新設し、メールは公開 API で�
 description: "通知モジュールを最小に新設し、メールの送信を公開 API（notification.interfaces.api の PasswordResetMail）で受けて SMTP で送る決定。identity は依頼の応答から切り離した @ApplicationModuleListener のハンドラーで再設定のトークンを発行し、ACL から同期で呼ぶ。通知は identity に依存しない。dev はログに出す送信、統合テストは Mailpit、SES の SMTP は W10。"
 tags: [adr, architecture, notification, mail]
 status: draft
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-15T01:40:48Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-15T02:38:56Z }
 ---
 
 # ADR-017: 通知モジュールを新設し、メールは公開 API で受けて SMTP で送る
@@ -39,6 +39,8 @@ generated: { by: anthropic/claude-opus-5-5, at: 2026-10-15T01:40:48Z }
 | 重複 | 同じ `event_id` と宛先の通知が既にあれば送らず `AlreadySent` を返す（UK(event_id, recipient_user_id)。N-INV-02） |
 | 本文 | 件名と本文は通知モジュールのテンプレート（Thymeleaf のテキストのテンプレート）で組み立てる。料金などを書かない（N-INV-01） |
 
+補足（2026-10-15、human:kakimomokuri が決定）: 外部の技術のポート（回復コードのハッシュ・TOTP の秘密の発行・メールの送信など）はドメイン（`domain.model.aggregates`）に置く。`application.internal.outboundservices` は他のコンテキストを呼ぶ ACL に使う。Bolt 33 のステップ 2 で送信のポートを `application.internal.outboundservices` に置いて層の規則に当たり、人に諮って、それまでの前例（回復コードのハッシュ・TOTP の秘密の発行）を規則にした。送信のポート `MailSender`・`PasswordResetMailTemplate`・`OutgoingMail` は `notification.domain.model.aggregates` のままにする。
+
 ### 2. identity からの呼び出しと依存の制約
 
 - `identity` は ACL `identity.application.internal.outboundservices.acl.NotificationPasswordResetMails`（上流の名前 + 名詞）から公開 API を同期で呼ぶ。組み立ては `identity.infrastructure.config` で、`identity` の `allowedDependencies` に `"notification :: api"` を足す。層の規則に例外を足さない。
@@ -49,10 +51,10 @@ generated: { by: anthropic/claude-opus-5-5, at: 2026-10-15T01:40:48Z }
 
 | 要素 | 決定 |
 | :--- | :--- |
-| ポート | `notification.domain.model.aggregates` の `MailSender`（文面の `PasswordResetMailTemplate`、送るメール `OutgoingMail` も同じ。技術のポートの前例に合わせ、Bolt 33 のステップ 2 で層の規則に当たって `application.internal.outboundservices` から移した）。application は `org.springframework.mail..`・`jakarta.mail..` に依存しない（`LayerArchitectureTest` の禁止に足す） |
-| SMTP | `notification.infrastructure.mail.SmtpMailSender`（`spring-boot-starter-mail` の `JavaMailSender`。版は Boot 管理） |
-| dev | `notification.infrastructure.mail.LoggingMailSender` がメールをログに出す（宛先・件名・本文。リンクを含む）。dev のプロファイルでだけ Bean になる |
-| 守り | `notification.infrastructure.config` で、`DevLoginGuard` と同じ式（dev かつ staging・prod と併用しない）を確かめ、外れたら起動を止める。dev 以外で SMTP の設定がないときも起動を止める |
+| ポート | `notification.domain.model.aggregates` の `MailSender`（文面の `PasswordResetMailTemplate`、送るメール `OutgoingMail` も同じ。決定 1 の補足の規則による。Bolt 33 のステップ 2 で層の規則に当たって `application.internal.outboundservices` から移した）。application は `org.springframework.mail..`・`jakarta.mail..` に依存しない（`LayerArchitectureTest` の禁止に足す） |
+| SMTP | `notification.infrastructure.mail.SmtpMailSender`（`spring-boot-starter-mail` の `JavaMailSender`。版は Boot 管理）。接続・読み・書きのタイムアウトを各 5 秒にする（`spring.mail.properties.mail.smtp.connectiontimeout`・`timeout`・`writetimeout`。決定 4） |
+| dev | `notification.infrastructure.mail.LoggingMailSender` がメールをログに出す（宛先・件名・本文。リンクを含む）。`notification.infrastructure.config` の 1 つの `MailSender` の Bean の中で、守りの式で `LoggingMailSender` と `SmtpMailSender` を切り替える |
+| 守り | `notification.infrastructure.mail.NotificationMailGuard` で、dev と staging・prod の併用と、staging・prod で SMTP の設定がないときは起動を止める。それ以外（プロファイルなしのテストなど）は送信の失敗として記録する |
 | 統合テスト | SMTP の送信アダプターは Testcontainers の Mailpit（`GenericContainer`、版を固定）で件名・本文・宛先を確かめる。ローカルの起動では Mailpit を使わない（dev はログに出す） |
 | ステージング・本番 | Amazon SES の SMTP。設定と送信元の認証（SPF・DKIM）は W10 の運用準備で行う |
 
@@ -66,6 +68,7 @@ generated: { by: anthropic/claude-opus-5-5, at: 2026-10-15T01:40:48Z }
 | 再配信 | 同じ依頼の ID のトークンが既にあれば何もしない（トークンの表の `request_id` に一意制約）。再配信で 2 通送らない |
 | 送信の失敗 | `Failed` でも例外にせず完了にする。再配信で新しいトークンを作らない。送れなかった依頼は利用者が依頼し直す |
 | ADR-003 | 例外を作らない。`@ApplicationModuleListener` と発行記録の形のまま |
+| 送信の保証 | SMTP の送信はハンドラーのトランザクションと利用者の行の占有の中で行い、接続・読み・書きのタイムアウト（各 5 秒）で占有の長さを抑える。トークンの発行・通知の記録・送信の結果は 1 つのトランザクションで、送信は at-least-once とする。送った後、コミットの前に落ちると、届いたリンクは使えず、再配信で新しいリンクの 2 通目が送られることがある（2026-10-15、human:kakimomokuri が決定） |
 
 トークンの規則（32 バイトの乱数、SHA-256 のハッシュだけを保存、30 分、1 回だけ、新しい発行で前を無効、1 分以内の依頼し直しは送らない）は [非機能要件](../../design/cargo-tracker/non_functional.md) の SEC-08 とドメインモデルの IA-INV-12 に置く。
 
@@ -74,6 +77,10 @@ generated: { by: anthropic/claude-opus-5-5, at: 2026-10-15T01:40:48Z }
 - 通知モジュールの `notification.notification` の表に、宛先の利用者・アドレス・種類（`PASSWORD_RESET`）・対象・言語・状態・送信時刻・失敗の理由を残す。本文とリンクは保存しない。
 - `PASSWORD_RESET` の `target_ref` はトークンの ID とし、本文を再現しない（この種類だけの例外。リンクを再現できる値を残さない）。`recipient_user_id` はコンテキストをまたぐので FK にしない。
 - 繰り返し（1 分以内）で送らなかったことは記録せず、送信の記録がないことで分かる。監査（`PASSWORD_RESET_REQUESTED`）と送信の記録は結ばない（AUD-02 の対象の列は使う Bolt で足す）。
+
+### 6. 33a までの仮の A-06
+
+Bolt 33a まで、仮の A-06 を公開する（2026-10-15、human:kakimomokuri が決定）。`GET /password-reset/{トークン}` を公開の URL にし、トークンを読まず session に覚えず、「準備中」の画面だけを返す（応答に `Referrer-Policy: no-referrer`）。公開の URL は `/password-reset` と `/password-reset/*`。33a で本物の A-06 に置き換える。届いたリンクが「見つからない」画面にならず、トークンがリンク先の Referer に漏れない。
 
 ### 代替案
 
@@ -98,13 +105,25 @@ generated: { by: anthropic/claude-opus-5-5, at: 2026-10-15T01:40:48Z }
 - 利用者の検索と監査の書き込みの時間の差は応答に残る（既知の課題。W10 の WAF とあわせて扱う）。
 - dev はリンクを含むメールをログに出す。デモ環境（Heroku）でもログに出る（デモの利用者のアドレスだけ。ADR-013）。
 - 宛先を呼ぶ側が渡す制約のため、US-22 では宛先の渡し方を W9 の開始準備で決める必要がある。
+- SMTP の送信が利用者の行の占有の中にあるため、SMTP が遅いと同じ利用者の依頼の処理が最大でタイムアウトの分だけ待つ。送信は at-least-once で、まれに 2 通目（新しいリンク）が届く（決定 4）。
+
+### 既知の課題
+
+W10 に送る（2026-10-15、human:kakimomokuri が決定）。
+
+- 登録の有無による応答時間の数 ms の差。有効な利用者だけ、企業の読み出しと発行記録の INSERT が加わる。
+- 発信元ごとの抑止がなく、監査と発行記録が増えうる。監査に発信元がない。
+- 爆撃の 1 日の上限がない。1 分ごとに依頼し直して、前のリンクを無効にできる。
+- デモのログにリンクが出る。デモには実在のメールアドレスを登録しない（ADR-013）。
+
+W9 の開始準備で、宛先のモデルを決める。利用者でない宛先（荷受人への招待 `CONSIGNEE_INVITATION`）を扱うため、`recipient_user_id` の NOT NULL と UK(event_id, recipient_user_id)、公開 API を種類ごとに分けるか汎用にするかを見直す。
 
 ## コンプライアンス
 
 - ModularityTest のモジュール一覧に通知を足し、`notification` が `shared` だけに依存することを確かめる。
 - `LayerArchitectureTest` に、application が `org.springframework.mail..`・`jakarta.mail..` に依存しない規則を足す。`PublicApiArchitectureTest` で公開 API の形を確かめる。identity の合成ルートの `@Bean` の戻り値は AT-07 の範囲に収める。
 - 統合テストで、Mailpit にメールが届くこと、登録あり・なし・止められた利用者で応答が同じこと、送信アダプターを遅くしても応答が待たないこと、発行記録の JSON・トークンの表・ログにトークンも URL もないこと、同じ依頼の ID の再配信で 2 通送らないこと、ロールバックしたらハンドラーが呼ばれないことを確かめる。
-- dev の守りの式が外れたら起動が止まることを、本体のテストで守る。
+- dev の守りの式が外れたとき（dev と staging・prod の併用、staging・prod で SMTP の設定がない）に起動が止まることを、本体のテストで守る。
 
 ## 関連ドキュメント
 

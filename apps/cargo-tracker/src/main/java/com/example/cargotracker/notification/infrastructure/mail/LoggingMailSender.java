@@ -13,12 +13,11 @@ public final class LoggingMailSender implements MailSender {
 
     private static final Logger LOG = LoggerFactory.getLogger(LoggingMailSender.class);
 
+    private static final String FORMAT =
+            String.join(System.lineSeparator(), "dev のためメールを送らずにログに出す（ADR-017）", "宛先: {}", "件名: {}", "{}");
+
     @Override
     public void send(OutgoingMail mail) {
-        LOG.info(
-                "dev のためメールを送らずにログに出す（ADR-017）%n宛先: {}%n件名: {}%n{}".replace("%n", System.lineSeparator()),
-                mail.to(),
-                mail.subject(),
-                mail.body());
+        LOG.info(FORMAT, mail.to(), mail.subject(), mail.body());
     }
 }

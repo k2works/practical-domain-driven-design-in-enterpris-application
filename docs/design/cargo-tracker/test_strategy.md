@@ -4,7 +4,7 @@ title: "cargo-tracker テスト戦略"
 description: "cargo-tracker のテスト形状、テストレベルと責務、BDD（Cucumber）のシナリオ階層とタグ規約、不変条件・ユーザーストーリーとテストの対応、カバレッジ目標、CI での実行。"
 tags: [design, test-strategy, bdd]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-15T01:13:15Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-15T02:38:56Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T08:12:04Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:01:38Z }
@@ -310,12 +310,16 @@ CI で毎回実行する。
 | セキュリティ | SpringBootTest と PostgreSQL で、session の無操作 30 分・発行後 8 時間の失効、利用停止・権限取消し・参照許可の取消しの次の request からの反映、認証の失敗と権限外のアクセス試行の監査記録への同期の記録を確かめる（IA-INV-03〜08） |
 | 監査記録の欠落の照合 | 業務の状態変更と監査記録の件数の照合が、欠落を異常として検出する（AUD-04） |
 | 時刻に依存する定期処理 | Clock を固定して、鮮度超過（FRS-01・02）、受領期限の超過と escalation（SVC-01〜05）、見積りの期限間近（DE-19）、再配信（RTY-01）の判定の境界を確かめる |
-| 通知 | メールを受けるだけのコンテナ（Testcontainers の Mailpit。Bolt 33、ADR-017）で、通知の宛先・件名・本文（料金などを含まない）と、送信失敗の記録を確かめる。Bolt 33 は password の再設定のメールの分: SMTP の送信アダプターで件名・本文・宛先が届く、送信のサービスが PENDING から SENT・FAILED にする、同じ `event_id` と宛先で 2 通送らない。dev のログに出す送信（`LoggingMailSender`）はログの取り込みを送信の間だけにして確かめ（T-111）、守りの式（dev かつ staging・prod と併用しない）が外れたら起動を止めることを確かめる |
-| password の再設定の依頼 | Bolt 33（US-18 AC8 の前半）。`/password-reset` が未認証で開ける（`/password-reset/x` は公開しない）、CSRF のトークンがない送信は 403、送信の後は `/login?reset-requested` に戻り、登録の有無・止められた利用者・所属企業の無効で応答（リダイレクト先・本文）が同じ、応答がハンドラーを待たない（送信アダプターを遅くする）、ログイン済み・password の段の session で開いた場合（T-102）。発行と送信を依頼のトランザクションの中に戻す違反で、応答が送信を待つテストが落ちることを確かめる（T-112） |
+| 通知 | メールを受けるだけのコンテナ（Testcontainers の Mailpit。Bolt 33、ADR-017）で、通知の宛先・件名・本文（料金などを含まない）と、送信失敗の記録を確かめる。Bolt 33 は password の再設定のメールの分: SMTP の送信アダプターで件名・本文・宛先が届く、送信のサービスが PENDING から SENT・FAILED にする、同じ `event_id` と宛先で 2 通送らない。dev のログに出す送信（`LoggingMailSender`）はログの取り込みを送信の間だけにして確かめ（T-111）、dev と staging・prod の併用と、staging・prod で SMTP の設定がないときに起動を止めることを確かめる |
+| password の再設定の依頼 | Bolt 33（US-18 AC8 の前半）。`/password-reset` が未認証で開ける、`/password-reset/{トークン}` は 33a まで仮の A-06（準備中）を返し、トークンを読まず session に覚えず `Referrer-Policy: no-referrer` を付ける（`/password-reset/x/y` は公開しない）、CSRF のトークンがない送信は 403、送信の後は `/login?reset-requested` に戻り、登録の有無・止められた利用者・所属企業の無効で応答（リダイレクト先・本文）が同じ、応答がハンドラーを待たない（送信アダプターを遅くする）、ログイン済み・password の段の session で開いた場合（T-102）。発行と送信を依頼のトランザクションの中に戻す違反で、応答が送信を待つテストが落ちることを確かめる（T-112） |
 
 統合テストは Testcontainers の PostgreSQL を使い、H2 で書かない（ADR-007）。H2 で確かめるのはスモークテストだけとする。
 
 identity の統合テストは、時計を差し替えるなら合成注釈 `@IdentityIntegrationTest`（`@SpringBootTest`・`@AutoConfigureMockMvc`・PostgreSQL と共通の時計 `IdentityTestClock` の `@Import`）を付け、spy（`@MockitoSpyBean`）を使うクラスは同じ spy のフィールドの組を持つ共通の基底のクラス `IdentitySpyIntegrationTestBase` を継ぐ。Spring のコンテキストは `@Import` の組と bean の差し替えの組（spy はフィールド名と置き場所を含む）で区別されるので、組をそろえてコンテキストを共有する（Bolt 32d）。同じ組のクラスはコンテキストと PostgreSQL のコンテナ（DB）も共有するので、共有の表の件数は利用者で絞るかテストの前後の差で確かめる（T-113）。JUnit の並列実行を入れるときは、この共有を見直す。基底の spy の組を増やすのは、spy を使うクラスが要るときだけにする（増やすと spy を使う全クラスの組が変わる）。同時の操作のテスト（`OverlappingTransactions`）は、後の操作が先の行ロックを待っていることを PostgreSQL の `pg_blocking_pids` で確かめてから先をコミットする（「一定時間の間に終わらない」だけでは待ちの証拠にならない。Bolt 32d）。
+
+モジュールのイベントの非同期のハンドラー（`@ApplicationModuleListener`）を確かめるテストは、時計を進める前と DB を読む前に、発行記録（`platform.event_publication`）の完了を待つ（ハンドラーは別のスレッドで動くので、待たずに読むと前のハンドラーの書き込みと競う。Bolt 33 の開発レビュー）。
+
+メールを受ける Mailpit は、PostgreSQL の `TestcontainersConfiguration` とは別の `MailpitConfiguration` に分け、メールを確かめるテスト・identity の統合テスト・画面の層のテストだけで `@Import` して起動する（ほかのテストのコンテキストでコンテナを起動しない。Bolt 33 の開発レビュー）。
 
 ## Web テストと開示制御
 

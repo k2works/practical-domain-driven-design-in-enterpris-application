@@ -86,11 +86,31 @@ class PasswordResetRequestIntegrationTest {
                 "SELECT count(*) FROM identity.password_reset_token WHERE user_id = ?", Integer.class, user.value());
     }
 
-    private List<Map<String, Object>> auditsAt(Instant at) {
+    /** 利用者の再設定の依頼の監査（共有の表なので利用者で絞る。T-113）。 */
+    private List<Map<String, Object>> auditsOf(UserId user) {
         return jdbc.queryForList(
-                "SELECT actor_user_id, actor_company_id, result, reason FROM identity.audit_record"
-                        + " WHERE action = 'PASSWORD_RESET_REQUESTED' AND occurred_at = ?",
+                "SELECT result, reason FROM identity.audit_record"
+                        + " WHERE action = 'PASSWORD_RESET_REQUESTED' AND actor_user_id = ?",
+                user.value());
+    }
+
+    /** 時刻で絞った、操作者のない（登録のないアドレスの）再設定の依頼の監査の件数。 */
+    private int unknownAuditsAt(Instant at) {
+        return jdbc.queryForObject(
+                "SELECT count(*) FROM identity.audit_record WHERE action = 'PASSWORD_RESET_REQUESTED'"
+                        + " AND actor_user_id IS NULL AND actor_company_id IS NULL AND result = 'FAILURE'"
+                        + " AND reason = 'UNKNOWN_USER' AND occurred_at = ?",
+                Integer.class,
                 java.sql.Timestamp.from(at));
+    }
+
+    /** その利用者の DE-23 の発行の記録の件数（完了したかを問わない）。 */
+    private int publications(UserId user) {
+        return jdbc.queryForObject(
+                "SELECT count(*) FROM platform.event_publication WHERE event_type = ? AND serialized_event LIKE ?",
+                Integer.class,
+                PasswordResetRequested.class.getName(),
+                "%" + user.value() + "%");
     }
 
     /** その利用者の DE-23 の発行の記録が、指定の件数だけ完了するまで待つ（ハンドラーが動き終えた印）。 */
@@ -121,15 +141,17 @@ class PasswordResetRequestIntegrationTest {
         service.request(email);
 
         List<ReceivedMail> mails = mailpit().awaitMessagesTo(email.value(), 1, WAIT);
-        assertThat(mails).hasSize(1);
-        String token = tokenIn(mails.getFirst());
-        assertThat(auditsAt(now)).singleElement().satisfies(row -> {
-            assertThat(row.get("actor_user_id")).isEqualTo(user.value());
-            assertThat(row.get("result")).isEqualTo("SUCCESS");
-            assertThat(row.get("reason")).isNull();
+        // メールはハンドラーのコミットの前に届くので、表を読む前にハンドラーの完了を待つ
+        awaitCompletedPublications(user, 1);
+        assertThat(mails).singleElement().satisfies(mail -> {
+            assertThat(tokenIn(mail)).hasSize(43);
+            assertThat(mail.text()).contains("このリンクは 2026-10-15 11:30 Asia/Tokyo（UTC+09:00） まで使えます");
         });
+        assertThat(auditsOf(user))
+                .singleElement()
+                .satisfies(row ->
+                        assertThat(row).containsEntry("result", "SUCCESS").containsEntry("reason", null));
         assertThat(tokenCount(user)).isEqualTo(1);
-        assertThat(mails.getFirst().text()).contains("2026-10-15 11:30 Asia/Tokyo（UTC+09:00）");
     }
 
     @Test
@@ -148,55 +170,70 @@ class PasswordResetRequestIntegrationTest {
                         "%" + token + "%"))
                 .isZero();
         assertThat(jdbc.queryForObject(
-                        "SELECT count(*) FROM identity.password_reset_token WHERE token_hash = ? OR user_id = ?"
-                                + " AND token_hash LIKE ?",
-                        Integer.class,
-                        token,
-                        user.value(),
-                        "%" + token + "%"))
-                .isZero();
-        assertThat(jdbc.queryForObject(
                         "SELECT count(*) FROM notification.notification WHERE recipient_user_id = ?"
-                                + " AND (target_ref LIKE ? OR failure_reason LIKE ?)",
+                                + " AND (target_ref LIKE ? OR locale LIKE ? OR COALESCE(failure_reason, '') LIKE ?)",
                         Integer.class,
                         user.value(),
                         "%" + token + "%",
+                        "%" + token + "%",
                         "%" + token + "%"))
+                .as("通知の記録に平文がない")
                 .isZero();
+        assertThat(jdbc.queryForObject(
+                        "SELECT count(*) FROM notification.notification WHERE recipient_user_id = ?",
+                        Integer.class,
+                        user.value()))
+                .as("同じ利用者の通知はある（空振りしない）")
+                .isEqualTo(1);
         assertThat(tokens.findByTokenHash(sha256(token))).as("表にはハッシュがある").isPresent();
     }
 
     @Test
     void 登録のないメールアドレスと止められた利用者には送らず監査に理由を書く() {
-        // 先に、同じ流れで有効な利用者には届くことを確かめる（T-119）
-        UserId active = newUser();
-        clock.setInstant(Instant.parse("2026-10-15T02:20:00Z"));
-        service.request(emailOf(active));
-        assertThat(mailpit().awaitMessagesTo(emailOf(active).value(), 1, WAIT)).hasSize(1);
-
         UserId suspended = newUser();
         jdbc.update("UPDATE identity.app_user SET status = 'SUSPENDED' WHERE id = ?", suspended.value());
         EmailAddress unknown = EmailAddress.of("unknown-" + UUID.randomUUID() + "@example.com");
+        UserId control = newUser();
         Instant now = Instant.parse("2026-10-15T02:21:00Z");
         clock.setInstant(now);
 
+        // 否定の依頼を先に出し、最後に出した有効な利用者の依頼が届くまで待ってから確かめる（T-119。空振りしない）
         service.request(emailOf(suspended));
         service.request(unknown);
+        service.request(emailOf(control));
+        assertThat(mailpit().awaitMessagesTo(emailOf(control).value(), 1, WAIT)).hasSize(1);
+        awaitCompletedPublications(control, 1);
 
-        assertThat(auditsAt(now))
-                .extracting(row -> row.get("actor_user_id"), row -> row.get("result"), row -> row.get("reason"))
-                .containsExactlyInAnyOrder(
-                        org.assertj.core.groups.Tuple.tuple(suspended.value(), "FAILURE", "SUSPENDED"),
-                        org.assertj.core.groups.Tuple.tuple(null, "FAILURE", "UNKNOWN_USER"));
-        assertThat(jdbc.queryForObject(
-                        "SELECT count(*) FROM identity.audit_record WHERE reason = 'UNKNOWN_USER'"
-                                + " AND action = 'PASSWORD_RESET_REQUESTED' AND actor_company_id IS NOT NULL",
-                        Integer.class))
-                .as("登録のないアドレスは操作者を残さない")
+        assertThat(auditsOf(suspended))
+                .singleElement()
+                .satisfies(row ->
+                        assertThat(row).containsEntry("result", "FAILURE").containsEntry("reason", "SUSPENDED"));
+        assertThat(unknownAuditsAt(now)).as("登録のないアドレスは操作者を残さない").isEqualTo(1);
+        assertThat(publications(suspended))
+                .as("止められた利用者には DE-23 を出さない（サービスの判定）")
                 .isZero();
         assertThat(tokenCount(suspended)).isZero();
         assertThat(mailpit().messagesTo(emailOf(suspended).value())).isEmpty();
         assertThat(mailpit().messagesTo(unknown.value())).isEmpty();
+    }
+
+    @Test
+    void 依頼の後に止められた利用者にはハンドラーが発行しない() {
+        UserId user = newUser();
+        UserId control = newUser();
+        clock.setInstant(Instant.parse("2026-10-15T02:25:00Z"));
+        UtcInstant now = new UtcInstant(clock.instant());
+        PasswordResetMailEventHandler target = AopTestUtils.getTargetObject(handler);
+        jdbc.update("UPDATE identity.app_user SET status = 'SUSPENDED' WHERE id = ?", user.value());
+
+        transactionTemplate.executeWithoutResult(
+                status -> target.on(new PasswordResetRequested(UUID.randomUUID(), control, now)));
+        transactionTemplate.executeWithoutResult(
+                status -> target.on(new PasswordResetRequested(UUID.randomUUID(), user, now)));
+
+        assertThat(tokenCount(control)).as("有効な利用者には発行する（対照）").isEqualTo(1);
+        assertThat(tokenCount(user)).isZero();
+        assertThat(mailpit().messagesTo(emailOf(user).value())).isEmpty();
     }
 
     @Test
@@ -208,6 +245,7 @@ class PasswordResetRequestIntegrationTest {
         service.request(email);
         String firstToken =
                 tokenIn(mailpit().awaitMessagesTo(email.value(), 1, WAIT).getFirst());
+        awaitCompletedPublications(user, 1);
 
         clock.setInstant(first.plusSeconds(59));
         service.request(email);
@@ -218,6 +256,7 @@ class PasswordResetRequestIntegrationTest {
         clock.setInstant(first.plusSeconds(60));
         service.request(email);
         assertThat(mailpit().awaitMessagesTo(email.value(), 2, WAIT)).hasSize(2);
+        awaitCompletedPublications(user, 3);
         assertThat(tokenCount(user)).isEqualTo(2);
         assertThat(tokens.findByTokenHash(sha256(firstToken)).orElseThrow().invalidatedAt())
                 .contains(new UtcInstant(first.plusSeconds(60)));
@@ -237,6 +276,8 @@ class PasswordResetRequestIntegrationTest {
 
         // ロールバックしなかった依頼が届くまで待ってから、ロールバックした依頼には何もないことを確かめる
         assertThat(mailpit().awaitMessagesTo(emailOf(control).value(), 1, WAIT)).hasSize(1);
+        awaitCompletedPublications(control, 1);
+        assertThat(publications(user)).as("ロールバックした依頼の DE-23 は記録されない").isZero();
         assertThat(tokenCount(user)).isZero();
         assertThat(mailpit().messagesTo(emailOf(user).value())).isEmpty();
     }

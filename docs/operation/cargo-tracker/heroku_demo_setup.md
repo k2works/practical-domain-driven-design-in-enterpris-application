@@ -4,7 +4,7 @@ title: "Heroku デモ環境セットアップ手順書 - cargo-tracker"
 description: "cargo-tracker を dev プロファイルのまま Heroku（Container Registry、Eco dyno）へ配備し、関係者が触って確かめるデモ環境を作る・更新する・止める手順を示す。"
 tags: [operation,playbook,setup,heroku]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-15T02:09:56Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-15T02:38:56Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-06T11:19:09Z }
   - { by: human:kakimomokuri, at: 2026-10-07T02:53:59Z }
@@ -134,7 +134,7 @@ npx gulp deploy:demo:setup
 
 アプリの作成（`--stack container --region us`）、Config Vars の設定、`log-runtime-metrics`（メモリの値をログに出す）の有効化を行います。アプリ名・region・JVM の設定は `.env` の `DEMO_*` で変えられます（`.env.example` を参照）。
 
-Config Vars には、password の再設定のメールのリンクを組み立てる公開の base URL（`CARGOTRACKER_PUBLICBASEURL`。既定はデモ環境の URL、`DEMO_PUBLIC_BASE_URL` で変えられる）も入ります（Bolt 33、ADR-017）。デモ環境は dev プロファイルなので、再設定のメールは送らずにログ（`npx gulp deploy:demo:logs`）に出ます。Bolt 33 の前に作ったアプリでは、`deploy:demo:setup` をもう一度実行して Config Vars を合わせてください。
+Config Vars には、password の再設定のメールのリンクを組み立てる公開の base URL（`CARGOTRACKER_PUBLICBASEURL`。既定はデモ環境の URL、`DEMO_PUBLIC_BASE_URL` で変えられる）も入ります（Bolt 33、ADR-017）。デモ環境は dev プロファイルなので、再設定のメールは送らずにログ（`npx gulp deploy:demo:logs`）に出ます。Bolt 33a までは、リンクを開くと「準備中」の画面になります。デモ環境のログには再設定のリンクが出るため、ログを読める人を限り、デモには実在のメールアドレスを登録しないでください。Bolt 33 の前に作ったアプリでは、`deploy:demo:setup` をもう一度実行して Config Vars を合わせてください。
 
 ### CI からの配備の準備
 

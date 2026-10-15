@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.example.cargotracker.MailpitClient;
 import com.example.cargotracker.MailpitClient.ReceivedMail;
+import com.example.cargotracker.MailpitConfiguration;
 import com.example.cargotracker.TestcontainersConfiguration;
 import com.example.cargotracker.notification.domain.model.aggregates.NotificationRepository;
 import com.example.cargotracker.notification.domain.model.valueobjects.NotificationStatus;
@@ -20,7 +21,7 @@ import org.testcontainers.containers.GenericContainer;
 
 /** 通知の公開 API から SMTP（Mailpit）まで（ADR-017、N-INV-01・02。Bolt 33）。 */
 @SpringBootTest
-@Import(TestcontainersConfiguration.class)
+@Import({TestcontainersConfiguration.class, MailpitConfiguration.class})
 class PasswordResetMailIntegrationTest {
 
     @Autowired

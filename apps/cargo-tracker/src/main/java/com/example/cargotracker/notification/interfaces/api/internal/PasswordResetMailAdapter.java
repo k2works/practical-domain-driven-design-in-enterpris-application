@@ -34,7 +34,7 @@ public class PasswordResetMailAdapter implements PasswordResetMail {
         return switch (outcome) {
             case PasswordResetMailOutcome.Sent _ -> new PasswordResetMailReceipt.Sent();
             case PasswordResetMailOutcome.AlreadySent _ -> new PasswordResetMailReceipt.AlreadySent();
-            case PasswordResetMailOutcome.Failed failed -> new PasswordResetMailReceipt.Failed(failed.reason());
+            case PasswordResetMailOutcome.Failed(String reason) -> new PasswordResetMailReceipt.Failed(reason);
         };
     }
 }

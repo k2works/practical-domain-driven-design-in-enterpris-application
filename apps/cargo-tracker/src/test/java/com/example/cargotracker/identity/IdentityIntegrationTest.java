@@ -1,5 +1,6 @@
 package com.example.cargotracker.identity;
 
+import com.example.cargotracker.MailpitConfiguration;
 import com.example.cargotracker.TestcontainersConfiguration;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -19,5 +20,5 @@ import org.springframework.context.annotation.Import;
 @Retention(RetentionPolicy.RUNTIME)
 @SpringBootTest
 @AutoConfigureMockMvc
-@Import({TestcontainersConfiguration.class, IdentityTestClock.class})
+@Import({TestcontainersConfiguration.class, MailpitConfiguration.class, IdentityTestClock.class})
 public @interface IdentityIntegrationTest {}

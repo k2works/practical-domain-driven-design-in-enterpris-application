@@ -104,12 +104,37 @@ class MyBatisPasswordResetTokenRepositoryIntegrationTest {
     }
 
     @Test
+    void 使ったトークンは無効にしない() {
+        UserId user = AuthenticationFactorFixtures.newUser(companies, users);
+        PasswordResetToken unused = issue(user, ISSUED);
+        PasswordResetToken used = PasswordResetToken.reconstitute(
+                UUID.randomUUID(),
+                UUID.randomUUID(),
+                user,
+                hash(),
+                ISSUED,
+                new UtcInstant(ISSUED.instant().plus(PasswordResetToken.VALIDITY)),
+                LATER,
+                null);
+        repository.add(used);
+
+        assertThat(repository.invalidateUnused(user, LATER)).isEqualTo(1);
+
+        assertThat(repository.findByTokenHash(unused.tokenHash()).orElseThrow().invalidatedAt())
+                .as("未使用のトークンは無効にする（対照）")
+                .contains(LATER);
+        assertThat(repository.findByTokenHash(used.tokenHash()).orElseThrow().invalidatedAt())
+                .as("使ったトークンは変えない")
+                .isEmpty();
+    }
+
+    @Test
     void 同じ依頼のIDのトークンは2つ記録できない() {
         UserId user = AuthenticationFactorFixtures.newUser(companies, users);
         PasswordResetToken first = issue(user, ISSUED);
+        PasswordResetToken sameRequest = PasswordResetToken.issue(first.requestId(), user, hash(), LATER);
 
-        assertThatThrownBy(() -> repository.add(PasswordResetToken.issue(first.requestId(), user, hash(), LATER)))
-                .isInstanceOf(DataIntegrityViolationException.class);
+        assertThatThrownBy(() -> repository.add(sameRequest)).isInstanceOf(DataIntegrityViolationException.class);
     }
 
     @Test

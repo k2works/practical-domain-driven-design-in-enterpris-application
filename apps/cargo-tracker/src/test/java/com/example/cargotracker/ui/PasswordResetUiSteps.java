@@ -26,7 +26,7 @@ import org.testcontainers.containers.GenericContainer;
 public class PasswordResetUiSteps {
 
     private static final Duration MAIL_WAIT = Duration.ofSeconds(10);
-    private static final String NOTICE = "依頼を受け付けました。";
+    private static final String NOTICE = "password の再設定の依頼を受け付けました。";
 
     private final BrowserSession browser;
     private final UiUsers users;
@@ -101,7 +101,7 @@ public class PasswordResetUiSteps {
 
     @かつ("登録のないメールアドレスにはメールが届かない")
     public void 登録のないメールアドレスにはメールが届かない() {
-        // 同じシナリオで、登録したアドレスには届いたことを先に確かめている（T-119）
+        // 同じシナリオで、登録のないアドレスの依頼の後に出した登録したアドレスの依頼が届いたことを先に確かめている（T-119）
         assertThat(new MailpitClient(mailpitContainer).messagesTo(unknownAddress))
                 .isEmpty();
     }

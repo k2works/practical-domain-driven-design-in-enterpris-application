@@ -58,8 +58,8 @@ public class PasswordResetRequestService {
             UtcInstant now = new UtcInstant(clock.instant());
             Optional<User> found = users.findByEmail(email);
             if (found.isEmpty()) {
-                auditRecords.append(AuditRecord.passwordResetRequested(
-                        null, null, Optional.of(AuthenticationRejection.UNKNOWN_USER), now));
+                auditRecords.append(
+                        AuditRecord.passwordResetRejected(null, null, AuthenticationRejection.UNKNOWN_USER, now));
                 return;
             }
             User user = found.get();
@@ -67,10 +67,12 @@ public class PasswordResetRequestService {
                     .findById(user.companyId())
                     .orElseThrow(() -> new IllegalStateException("利用者の所属企業がない: " + user.id()));
             Optional<AuthenticationRejection> rejection = user.authenticationRejection(company);
-            auditRecords.append(AuditRecord.passwordResetRequested(user.id(), company.id(), rejection, now));
-            if (rejection.isEmpty()) {
-                events.publishEvent(new PasswordResetRequested(UUID.randomUUID(), user.id(), now));
+            if (rejection.isPresent()) {
+                auditRecords.append(AuditRecord.passwordResetRejected(user.id(), company.id(), rejection.get(), now));
+                return;
             }
+            auditRecords.append(AuditRecord.passwordResetRequested(user.id(), company.id(), now));
+            events.publishEvent(new PasswordResetRequested(UUID.randomUUID(), user.id(), now));
         });
     }
 }

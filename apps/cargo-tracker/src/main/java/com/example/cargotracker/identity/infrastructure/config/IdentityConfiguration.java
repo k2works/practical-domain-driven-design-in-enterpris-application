@@ -28,6 +28,7 @@ import com.example.cargotracker.identity.domain.model.aggregates.UserRepository;
 import com.example.cargotracker.identity.domain.model.aggregates.UserStandingRepository;
 import com.example.cargotracker.identity.domain.model.rules.LockPolicy;
 import com.example.cargotracker.identity.infrastructure.crypto.AesGcmSecretCipher;
+import com.example.cargotracker.identity.interfaces.web.PasswordResetController;
 import com.example.cargotracker.notification.interfaces.api.PasswordResetMail;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -63,8 +64,8 @@ public class IdentityConfiguration {
         String value = environment.getProperty(PUBLIC_BASE_URL, "").strip();
         URI uri = absoluteHttpUrl(value);
         boolean production = environment.acceptsProfiles(Profiles.of("staging | prod"));
-        if (production && (!"https".equalsIgnoreCase(uri.getScheme()) || "localhost".equalsIgnoreCase(uri.getHost()))) {
-            throw new IllegalStateException("ステージング・本番の " + PUBLIC_BASE_URL + " は https で localhost でない URL にする");
+        if (production && (!"https".equalsIgnoreCase(uri.getScheme()) || isLoopback(uri.getHost()))) {
+            throw new IllegalStateException("ステージング・本番の " + PUBLIC_BASE_URL + " は https でループバックでない URL にする");
         }
         return value.endsWith("/") ? value.substring(0, value.length() - 1) : value;
     }
@@ -79,10 +80,16 @@ public class IdentityConfiguration {
         }
         String scheme = uri.getScheme() == null ? "" : uri.getScheme().toLowerCase(Locale.ROOT);
         boolean http = scheme.equals("http") || scheme.equals("https");
-        if (!http || uri.getHost() == null || uri.getQuery() != null || uri.getFragment() != null) {
-            throw new IllegalStateException(PUBLIC_BASE_URL + " は query と fragment のない http(s) の絶対の URL にする");
+        boolean extra = uri.getUserInfo() != null || uri.getQuery() != null || uri.getFragment() != null;
+        if (!http || uri.getHost() == null || extra) {
+            throw new IllegalStateException(PUBLIC_BASE_URL + " は userinfo・query・fragment のない http(s) の絶対の URL にする");
         }
         return uri;
+    }
+
+    private static boolean isLoopback(String host) {
+        String name = host.toLowerCase(Locale.ROOT);
+        return name.equals("localhost") || name.startsWith("127.") || name.equals("[::1]") || name.equals("::1");
     }
 
     /** TOTP の秘密の暗号化の鍵の設定の名前（版ごとの Base64 の鍵。環境変数は CARGOTRACKER_TOTPSECRETKEYS_V1）。 */
@@ -206,7 +213,7 @@ public class IdentityConfiguration {
                 generator,
                 hasher,
                 notificationPasswordResetMails,
-                publicBaseUrl(environment),
+                publicBaseUrl(environment) + PasswordResetController.URL + "/",
                 clock);
     }
 

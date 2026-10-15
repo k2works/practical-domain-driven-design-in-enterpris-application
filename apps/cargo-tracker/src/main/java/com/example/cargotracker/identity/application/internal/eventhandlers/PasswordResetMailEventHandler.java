@@ -25,6 +25,7 @@ import org.springframework.stereotype.Service;
  * 2 通送らない）。同じ依頼の ID のトークンがあれば何もしない（再配信で 2 通送らない）。前の発行から 1 分たっていなければ発行も送信も
  * しない。発行するときは前の未使用のトークンを無効にする。送信の失敗は例外にせず完了にする（再配信で新しいトークンを作らない。利用者が
  * 依頼し直す）。リンクの値（平文）はこのメソッドの中と送信の要求にだけあり、表・発行記録・ログに残らない。
+ * SMTP の送信はこのトランザクションと利用者の行の占有の中で行い、送信は at-least-once になる（ADR-017。2026-10-15 の人の決定）。
  *
  * <p>{@code @Service} は JIG がユースケースとして読むための印で、部品探索の対象にはしない（CargoTrackerApplication）。
  * 組み立ては {@code IdentityConfiguration} が担う。
@@ -34,20 +35,18 @@ public class PasswordResetMailEventHandler {
 
     private static final Logger LOG = LoggerFactory.getLogger(PasswordResetMailEventHandler.class);
 
-    /** A-06 の path の接頭辞（リンクは「公開の base URL + この接頭辞 + トークン」。A-06 は Bolt 33a）。 */
-    static final String RESET_PATH = "/password-reset/";
-
     private final PasswordResetTokenRepository tokens;
     private final UserRepository users;
     private final CompanyRepository companies;
     private final PasswordResetTokenGenerator generator;
     private final PasswordResetTokenHasher hasher;
     private final NotificationPasswordResetMails mails;
-    private final String publicBaseUrl;
+    private final String resetLinkPrefix;
     private final Clock clock;
 
     /**
-     * @param publicBaseUrl 公開の base URL（末尾の / なし。合成ルートが設定から確かめて渡す。request の Host ヘッダーから組み立てない）
+     * @param resetLinkPrefix リンクの接頭辞（公開の base URL と A-06 の path。リンクはこれにトークンを続ける。合成ルートが設定から確かめて
+     *     渡す。request の Host ヘッダーから組み立てない）
      */
     @SuppressWarnings("java:S107") // 発行と送信に要るポートと設定をそろえて受ける
     public PasswordResetMailEventHandler(
@@ -57,7 +56,7 @@ public class PasswordResetMailEventHandler {
             PasswordResetTokenGenerator generator,
             PasswordResetTokenHasher hasher,
             NotificationPasswordResetMails mails,
-            String publicBaseUrl,
+            String resetLinkPrefix,
             Clock clock) {
         this.tokens = tokens;
         this.users = users;
@@ -65,7 +64,7 @@ public class PasswordResetMailEventHandler {
         this.generator = generator;
         this.hasher = hasher;
         this.mails = mails;
-        this.publicBaseUrl = publicBaseUrl;
+        this.resetLinkPrefix = resetLinkPrefix;
         this.clock = clock;
     }
 
@@ -100,7 +99,7 @@ public class PasswordResetMailEventHandler {
                         issued.id(),
                         userId,
                         user.get().email(),
-                        publicBaseUrl + RESET_PATH + token,
+                        resetLinkPrefix + token,
                         issued.expiresAt())
                 .ifPresent(reason -> LOG.warn(
                         "再設定のメールを送れなかった（利用者が依頼し直す）: 依頼 {}、トークン {}、理由 {}", event.requestId(), issued.id(), reason));

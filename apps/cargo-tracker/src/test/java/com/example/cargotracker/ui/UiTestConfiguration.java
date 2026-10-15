@@ -1,5 +1,6 @@
 package com.example.cargotracker.ui;
 
+import com.example.cargotracker.MailpitConfiguration;
 import com.example.cargotracker.TestcontainersConfiguration;
 import io.cucumber.spring.CucumberContextConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -16,6 +17,7 @@ import org.springframework.context.annotation.Import;
         properties = "spring.flyway.placeholders.requireappuser=true")
 @Import({
     TestcontainersConfiguration.class,
+    MailpitConfiguration.class,
     ApplicationUserConnection.class,
     PlaywrightBrowser.class,
     BrowserSession.class,

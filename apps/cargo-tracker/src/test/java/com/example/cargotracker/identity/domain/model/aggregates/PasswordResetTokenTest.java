@@ -58,9 +58,9 @@ class PasswordResetTokenTest {
     @Test
     void 無効にしたトークンはもう一度無効にできない() {
         PasswordResetToken invalidated = issued().invalidate(at(ISSUED.plusSeconds(10)));
+        UtcInstant later = at(ISSUED.plusSeconds(20));
 
-        assertThatThrownBy(() -> invalidated.invalidate(at(ISSUED.plusSeconds(20))))
-                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> invalidated.invalidate(later)).isInstanceOf(IllegalStateException.class);
     }
 
     @Test
@@ -77,10 +77,14 @@ class PasswordResetTokenTest {
     @Test
     void ハッシュはSHA256の16進64文字に限る() {
         UserId user = new UserId(UUID.randomUUID());
+        UUID requestId = UUID.randomUUID();
+        UtcInstant issuedAt = at(ISSUED);
+        String tooShort = "a".repeat(63);
+        String upperCase = "A".repeat(64);
 
-        assertThatThrownBy(() -> PasswordResetToken.issue(UUID.randomUUID(), user, "a".repeat(63), at(ISSUED)))
+        assertThatThrownBy(() -> PasswordResetToken.issue(requestId, user, tooShort, issuedAt))
                 .isInstanceOf(IllegalArgumentException.class);
-        assertThatThrownBy(() -> PasswordResetToken.issue(UUID.randomUUID(), user, "A".repeat(64), at(ISSUED)))
+        assertThatThrownBy(() -> PasswordResetToken.issue(requestId, user, upperCase, issuedAt))
                 .isInstanceOf(IllegalArgumentException.class);
     }
 

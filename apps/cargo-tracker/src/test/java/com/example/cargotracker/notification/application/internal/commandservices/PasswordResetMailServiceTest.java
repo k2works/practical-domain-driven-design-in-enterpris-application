@@ -65,7 +65,6 @@ class PasswordResetMailServiceTest {
         assertThat(recorded.sentAt()).contains(new UtcInstant(NOW));
         assertThat(recorded.kind()).isEqualTo(NotificationKind.PASSWORD_RESET);
         assertThat(recorded.targetRef()).isEqualTo(command.tokenId().toString());
-        assertThat(recorded.toString() + recorded.targetRef()).doesNotContain("secret-token");
     }
 
     @Test
@@ -106,6 +105,32 @@ class PasswordResetMailServiceTest {
                 .hasValueSatisfying(reason -> assertThat(reason).doesNotContain("secret-token"));
     }
 
+    @Test
+    void 失敗の理由にトークンとメールアドレスを残さない() {
+        SendPasswordResetMailCommand command = command(UUID.randomUUID());
+        sender.failure = new IllegalStateException(
+                "550 <shipper@example.com>: Recipient rejected; token secret-token; to=other.user+tag@example.co.jp");
+
+        service.send(command);
+
+        assertThat(notifications.find(command).orElseThrow().failureReason())
+                .hasValueSatisfying(reason -> assertThat(reason)
+                        .startsWith("IllegalStateException: 550")
+                        .doesNotContain("secret-token")
+                        .doesNotContain("shipper@example.com")
+                        .doesNotContain("other.user+tag@example.co.jp")
+                        .contains("[メールアドレス]"));
+    }
+
+    @Test
+    void 送信の結果を書けなくても例外にしない() {
+        SendPasswordResetMailCommand command = command(UUID.randomUUID());
+        notifications.rejectOutcome = true;
+
+        assertThat(service.send(command)).isEqualTo(new PasswordResetMailOutcome.Sent());
+        assertThat(sender.sent).hasSize(1);
+    }
+
     private static final class RecordingSender implements MailSender {
         private final List<OutgoingMail> sent = new ArrayList<>();
         private RuntimeException failure;
@@ -121,6 +146,7 @@ class PasswordResetMailServiceTest {
 
     private static final class InMemoryNotifications implements NotificationRepository {
         private final Map<String, Notification> rows = new HashMap<>();
+        private boolean rejectOutcome;
 
         private static String key(UUID eventId, UUID recipient) {
             return eventId + "/" + recipient;
@@ -139,7 +165,7 @@ class PasswordResetMailServiceTest {
         public boolean recordOutcome(Notification notification) {
             String key = key(notification.eventId(), notification.recipientUserId());
             Notification current = rows.get(key);
-            if (current == null || current.status() != NotificationStatus.PENDING) {
+            if (rejectOutcome || current == null || current.status() != NotificationStatus.PENDING) {
                 return false;
             }
             rows.put(key, notification);

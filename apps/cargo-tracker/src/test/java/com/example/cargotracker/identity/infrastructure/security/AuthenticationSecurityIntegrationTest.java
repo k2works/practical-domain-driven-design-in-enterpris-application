@@ -77,8 +77,13 @@ import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandl
 class AuthenticationSecurityIntegrationTest {
 
     /** 全 URL の見張りから除く、password の段だけで開ける認証の画面と、未認証で開ける公開の画面（Bolt 31d。A-05 は Bolt 33）。 */
-    private static final Set<String> AUTHENTICATION_SCREENS =
-            Set.of("/login", "/login/totp", "/login/totp/enroll", "/session-expired", "/password-reset");
+    private static final Set<String> AUTHENTICATION_SCREENS = Set.of(
+            "/login",
+            "/login/totp",
+            "/login/totp/enroll",
+            "/session-expired",
+            "/password-reset",
+            "/password-reset/{token}");
 
     @Autowired
     @Qualifier("requestMappingHandlerMapping")
@@ -1211,15 +1216,31 @@ class AuthenticationSecurityIntegrationTest {
 
     private static final String RESET_URL = "/password-reset";
     private static final String RESET_REQUESTED = "/login?reset-requested";
-    private static final String RESET_NOTICE = "依頼を受け付けました。";
+    private static final String RESET_NOTICE = "password の再設定の依頼を受け付けました。";
 
     @Test
-    void 再設定の依頼の画面は未認証で開けその下のURLは公開しない() throws Exception {
+    void 再設定の依頼の画面は未認証で開ける() throws Exception {
         mvc.perform(get(RESET_URL))
                 .andExpect(status().isOk())
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("再設定のリンクを送る")))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("autocomplete=\"email\"")));
-        mvc.perform(get(RESET_URL + "/some-token")).andExpect(redirectedUrl("/login"));
+    }
+
+    @Test
+    void 仮の再設定の画面はトークンを覚えずに準備中だけを示しRefererを出さない() throws Exception {
+        String token = "aB3_-" + UUID.randomUUID();
+
+        MvcResult result = mvc.perform(get(RESET_URL + "/" + token))
+                .andExpect(status().isOk())
+                .andExpect(header().string("Referrer-Policy", "no-referrer"))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("この画面は準備中です。")))
+                .andReturn();
+
+        // 公開の URL なので、未認証で開いてもリンクの URL（トークン）を session に覚えない（SEC-08。Bolt 33 の開発レビュー）
+        assertThat(result.getResponse().getCookie(SESSION_COOKIE)).isNull();
+        assertThat(result.getResponse().getContentAsString()).doesNotContain(token);
+        // その下の URL は公開しない
+        mvc.perform(get(RESET_URL + "/" + token + "/x")).andExpect(redirectedUrl("/login"));
     }
 
     @Test

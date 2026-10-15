@@ -1,5 +1,7 @@
 package com.example.cargotracker;
 
+import static org.awaitility.Awaitility.await;
+
 import java.io.IOException;
 import java.net.URI;
 import java.net.URLEncoder;
@@ -8,9 +10,9 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import org.awaitility.core.ConditionTimeoutException;
 import org.testcontainers.containers.GenericContainer;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
@@ -29,8 +31,7 @@ public final class MailpitClient {
     private final String baseUrl;
 
     public MailpitClient(GenericContainer<?> mailpit) {
-        this.baseUrl = "http://" + mailpit.getHost() + ":"
-                + mailpit.getMappedPort(TestcontainersConfiguration.MAILPIT_HTTP_PORT);
+        this.baseUrl = "http://" + mailpit.getHost() + ":" + mailpit.getMappedPort(MailpitConfiguration.HTTP_PORT);
     }
 
     /** 宛先に届いたメールを、新しい順に返す。 */
@@ -52,15 +53,15 @@ public final class MailpitClient {
         return mails;
     }
 
-    /** 宛先にメールが届くまで待って返す（送信は別のスレッドで動くことがある）。 */
+    /** 宛先にメールが届くまで待って返す（送信は別のスレッドで動くことがある）。届かなければ、その時点のメールを返す。 */
     public List<ReceivedMail> awaitMessagesTo(String address, int count, Duration timeout) {
-        Instant deadline = Instant.now().plus(timeout);
-        List<ReceivedMail> mails = messagesTo(address);
-        while (mails.size() < count && Instant.now().isBefore(deadline)) {
-            pause();
-            mails = messagesTo(address);
+        try {
+            return await().atMost(timeout)
+                    .pollInterval(Duration.ofMillis(100))
+                    .until(() -> messagesTo(address), mails -> mails.size() >= count);
+        } catch (ConditionTimeoutException e) {
+            return messagesTo(address);
         }
-        return mails;
     }
 
     private JsonNode get(String path) {
@@ -74,15 +75,6 @@ public final class MailpitClient {
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             throw new IllegalStateException("Mailpit を読む間に割り込まれた", e);
-        }
-    }
-
-    private static void pause() {
-        try {
-            Thread.sleep(100);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new IllegalStateException(e);
         }
     }
 }

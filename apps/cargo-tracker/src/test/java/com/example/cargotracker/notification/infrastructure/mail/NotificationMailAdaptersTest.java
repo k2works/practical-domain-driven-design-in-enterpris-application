@@ -36,7 +36,7 @@ class NotificationMailAdaptersTest {
         assertThat(mail.body())
                 .startsWith("cargo-tracker で、このメールアドレスの password の再設定の依頼を受け付けました。")
                 .contains("https://cargo.example/password-reset/abc?x=1&y=2")
-                .contains("このリンクの有効期限は 2026-10-15 10:30 Asia/Tokyo（UTC+09:00）（依頼から 30 分）です。")
+                .contains("このリンクは 2026-10-15 10:30 Asia/Tokyo（UTC+09:00） まで使えます（30 分間、1 回だけ）。")
                 .contains("リンクを開かなければ、password は変わりません。")
                 .doesNotContain("&amp;");
     }
@@ -61,25 +61,27 @@ class NotificationMailAdaptersTest {
 
     @Test
     void devとstagingやprodの併用では起動を止める() {
-        assertThatCode(() -> NotificationMailGuard.check(profiles("dev"))).doesNotThrowAnyException();
+        MockEnvironment dev = profiles("dev");
+        MockEnvironment devAndStaging = profiles("dev", "staging");
+        MockEnvironment devAndProd = profiles("dev", "prod");
 
-        assertThatThrownBy(() -> NotificationMailGuard.check(profiles("dev", "staging")))
-                .isInstanceOf(IllegalStateException.class);
-        assertThatThrownBy(() -> NotificationMailGuard.check(profiles("dev", "prod")))
-                .isInstanceOf(IllegalStateException.class);
+        assertThatCode(() -> NotificationMailGuard.check(dev)).doesNotThrowAnyException();
+        assertThatThrownBy(() -> NotificationMailGuard.check(devAndStaging)).isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> NotificationMailGuard.check(devAndProd)).isInstanceOf(IllegalStateException.class);
     }
 
     @Test
     void ステージングと本番ではSMTPの設定がなければ起動を止める() {
         MockEnvironment withSmtp = profiles("prod");
         withSmtp.setProperty("spring.mail.host", "email-smtp.ap-northeast-1.amazonaws.com");
+        MockEnvironment staging = profiles("staging");
+        MockEnvironment prod = profiles("prod");
+        MockEnvironment none = profiles();
 
         assertThatCode(() -> NotificationMailGuard.check(withSmtp)).doesNotThrowAnyException();
-        assertThatThrownBy(() -> NotificationMailGuard.check(profiles("staging")))
-                .isInstanceOf(IllegalStateException.class);
-        assertThatThrownBy(() -> NotificationMailGuard.check(profiles("prod")))
-                .isInstanceOf(IllegalStateException.class);
-        assertThatCode(() -> NotificationMailGuard.check(profiles()))
+        assertThatThrownBy(() -> NotificationMailGuard.check(staging)).isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> NotificationMailGuard.check(prod)).isInstanceOf(IllegalStateException.class);
+        assertThatCode(() -> NotificationMailGuard.check(none))
                 .as("テストなどのプロファイルなしは SMTP の設定がなくても起動する（送ると失敗を記録する）")
                 .doesNotThrowAnyException();
     }

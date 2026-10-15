@@ -26,25 +26,26 @@ class PublicBaseUrlTest {
                 .isEqualTo("https://cargo.example");
     }
 
-    @Test
-    void 値がないか絶対のhttpのURLでなければ起動を止める() {
-        assertThatThrownBy(() -> IdentityConfiguration.publicBaseUrl(environment(null)))
-                .isInstanceOf(IllegalStateException.class);
-        assertThatThrownBy(() -> IdentityConfiguration.publicBaseUrl(environment("/relative")))
-                .isInstanceOf(IllegalStateException.class);
-        assertThatThrownBy(() -> IdentityConfiguration.publicBaseUrl(environment("javascript:alert(1)")))
-                .isInstanceOf(IllegalStateException.class);
-        assertThatThrownBy(() -> IdentityConfiguration.publicBaseUrl(environment("https://cargo.example/?x=1")))
+    private static void assertRejected(MockEnvironment environment) {
+        assertThatThrownBy(() -> IdentityConfiguration.publicBaseUrl(environment))
                 .isInstanceOf(IllegalStateException.class);
     }
 
     @Test
-    void ステージングと本番ではhttpsでlocalhostでない値を求める() {
-        assertThatThrownBy(() -> IdentityConfiguration.publicBaseUrl(environment("http://localhost:8080", "prod")))
-                .isInstanceOf(IllegalStateException.class);
-        assertThatThrownBy(() -> IdentityConfiguration.publicBaseUrl(environment("https://localhost", "staging")))
-                .isInstanceOf(IllegalStateException.class);
-        assertThatThrownBy(() -> IdentityConfiguration.publicBaseUrl(environment("http://cargo.example", "staging")))
-                .isInstanceOf(IllegalStateException.class);
+    void 値がないか絶対のhttpのURLでなければ起動を止める() {
+        assertRejected(environment(null));
+        assertRejected(environment("/relative"));
+        assertRejected(environment("javascript:alert(1)"));
+        assertRejected(environment("https://cargo.example/?x=1"));
+        assertRejected(environment("https://user:secret@cargo.example"));
+    }
+
+    @Test
+    void ステージングと本番ではhttpsでループバックでない値を求める() {
+        assertRejected(environment("http://localhost:8080", "prod"));
+        assertRejected(environment("https://localhost", "staging"));
+        assertRejected(environment("https://127.0.0.1", "prod"));
+        assertRejected(environment("https://[::1]", "prod"));
+        assertRejected(environment("http://cargo.example", "staging"));
     }
 }

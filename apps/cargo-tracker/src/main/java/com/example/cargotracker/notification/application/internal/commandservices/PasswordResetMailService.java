@@ -9,16 +9,20 @@ import com.example.cargotracker.notification.domain.model.aggregates.PasswordRes
 import com.example.cargotracker.notification.domain.model.valueobjects.NotificationKind;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import java.time.Clock;
+import java.util.regex.Pattern;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
 
 /**
- * 再設定のメールの送信のサービス（ADR-017。Bolt 33）。通知を送信待ちで記録してから送り、送信済みか失敗にする。同じ契機（依頼の ID）と
+ * 再設定のメールの送信のサービス（ADR-017。Bolt 33）。通知を送信待ちで記録し、送り、送信済みか失敗にする。同じ契機（依頼の ID）と
  * 宛先の通知がすでにあれば送らない（N-INV-02）。送信の失敗は例外にせず失敗として記録して返す（再配信で新しいトークンを作らないため。
- * 利用者が依頼し直す）。本文とリンクは記録しない（N-INV-01）。呼ぶ側にトランザクションがあれば加わる（identity のイベントハンドラーの
- * トランザクションで、トークンの発行と通知の記録を一緒に確定する）。
+ * 利用者が依頼し直す）。本文とリンクは記録しない（N-INV-01）。失敗の理由とログには、リンクのトークンとメールアドレスを残さない。
+ *
+ * <p>呼ぶ側にトランザクションがあれば加わる。identity のイベントハンドラーから呼ばれるときは、トークンの発行・通知の記録・送信の結果が
+ * 1 つのトランザクションで確定し、送信は at-least-once になる（送った後、コミットの前に落ちると、届いたリンクは使えず、再配信で新しい
+ * リンクの 2 通目が送られることがある。2026-10-15 の人の決定。SMTP は 5 秒で打ち切る）。
  */
 @Service
 public class PasswordResetMailService {
@@ -27,6 +31,11 @@ public class PasswordResetMailService {
 
     /** 失敗の理由でリンクの代わりに置く文字列。 */
     static final String LINK_PLACEHOLDER = "[再設定のリンク]";
+
+    /** 失敗の理由でメールアドレスの代わりに置く文字列。 */
+    static final String ADDRESS_PLACEHOLDER = "[メールアドレス]";
+
+    private static final Pattern EMAIL_ADDRESS = Pattern.compile("[^\\s<>\"'(),;:]+@[^\\s<>\"'(),;:]+");
 
     private final NotificationRepository notifications;
     private final MailSender sender;
@@ -67,29 +76,39 @@ public class PasswordResetMailService {
             sender.send(mail);
         } catch (RuntimeException e) {
             String reason = reasonOf(e, command.resetUrl());
-            LOG.warn("password の再設定のメールを送れなかった: 通知 {}、理由 {}", pending.id(), reason);
-            record(pending.failed(reason));
+            LOG.warn("password の再設定のメールを送れなかった: 依頼 {}、通知 {}、理由 {}", command.requestId(), pending.id(), reason);
+            saveOutcome(pending.failed(reason));
             return new PasswordResetMailOutcome.Failed(reason);
         }
-        record(pending.sent(now()));
+        saveOutcome(pending.sent(now()));
         return new PasswordResetMailOutcome.Sent();
     }
 
-    private void record(Notification outcome) {
-        transactionTemplate.executeWithoutResult(status -> {
-            if (!notifications.recordOutcome(outcome)) {
-                throw new IllegalStateException("送信待ちでない通知に送信の結果を書こうとした: " + outcome.id());
-            }
-        });
+    /**
+     * 送信の結果を書く。送った後なので、書けなくても例外にしない（例外にすると呼ぶ側のトランザクションが戻り、届いたリンクのトークンが
+     * 消える）。同じ通知を同時に 2 つが書くことはない（記録は契機と宛先で 1 つ）ので、書けないのは想定の外で、警告を残す。
+     */
+    private void saveOutcome(Notification outcome) {
+        Boolean saved = transactionTemplate.execute(status -> notifications.recordOutcome(outcome));
+        if (!Boolean.TRUE.equals(saved)) {
+            LOG.warn("送信待ちでない通知に送信の結果を書こうとした: 通知 {}、結果 {}", outcome.id(), outcome.status());
+        }
     }
 
     private UtcInstant now() {
         return new UtcInstant(clock.instant());
     }
 
-    /** 例外の型と文。リンクが入っていたら置き換える（記録とログにリンクを残さない）。 */
-    private static String reasonOf(RuntimeException e, String resetUrl) {
+    /**
+     * 例外の型と文。リンク（とその中のトークン）とメールアドレスを伏せる（記録とログに残さない。SMTP の応答の文には宛先が入ることがある）。
+     */
+    static String reasonOf(RuntimeException e, String resetUrl) {
         String message = String.valueOf(e.getMessage()).replace(resetUrl, LINK_PLACEHOLDER);
+        String token = resetUrl.substring(resetUrl.lastIndexOf('/') + 1);
+        if (!token.isEmpty()) {
+            message = message.replace(token, LINK_PLACEHOLDER);
+        }
+        message = EMAIL_ADDRESS.matcher(message).replaceAll(ADDRESS_PLACEHOLDER);
         return e.getClass().getSimpleName() + ": " + message;
     }
 }

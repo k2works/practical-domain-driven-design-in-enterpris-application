@@ -4,7 +4,7 @@ title: "cargo-tracker ドメインモデル"
 description: "cargo-tracker の業務領域の分類、ユビキタス言語、7 つの境界づけられたコンテキスト（通知を含む）の集約・エンティティ・値オブジェクト・ドメインルール、コマンド・クエリ・イベント、予約サガ。"
 tags: [design, domain-model, ddd]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-15T01:40:48Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-15T02:38:56Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T07:41:04Z }
   - { by: human:kakimomokuri, at: 2026-10-01T07:48:17Z }
@@ -217,8 +217,9 @@ quadrantChart
 | 再設定のメールの要求 | PasswordResetMailRequest | 再設定のメールの公開 API の要求。依頼の ID（通知の `event_id`）、トークンの ID（`target_ref`）、宛先の利用者の ID、メールアドレス、再設定の URL、期限（`UtcInstant`）、言語を持つ（Bolt 33） | 通知 |
 | 再設定のメールの結果 | PasswordResetMailReceipt | 再設定のメールの公開 API の結果。送った `Sent`、同じ依頼の ID と宛先で送り済み `AlreadySent`、送れなかった `Failed`（Bolt 33） | 通知 |
 | 再設定のメールの送信のサービス | PasswordResetMailService | 通知のアプリケーションのサービス（`notification.application.internal.commandservices`）。通知を PENDING で記録してからメールの送信のポートを呼び、SENT か FAILED（理由）にする。同じ `event_id` と宛先の通知があれば送らない（N-INV-02、Bolt 33） | 通知 |
+| 再設定のメールの文面 | PasswordResetMailTemplate | password の再設定のメールの件名と本文を組み立てるポート（`notification.domain.model.aggregates`）。実装は Thymeleaf のテキストのテンプレートの `ThymeleafPasswordResetMailTemplate`（`notification.infrastructure.mail`。ADR-017、Bolt 33） | 通知 |
 | 送るメール | OutgoingMail | 宛先・件名・本文（テキスト）のメール 1 通。本文にリンクが入るので文字列に出さない（`notification.domain.model.aggregates`。Bolt 33） | 通知 |
-| メールの送信 | MailSender | 宛先・件名・本文のメール 1 通を送るポート（`notification.domain.model.aggregates`。技術のポートの前例と同じ置き場所）。実装は SMTP の `SmtpMailSender` と、dev だけのログに出す `LoggingMailSender`（`notification.infrastructure.mail`。ADR-017、Bolt 33） | 通知 |
+| メールの送信 | MailSender | 宛先・件名・本文のメール 1 通を送るポート（`notification.domain.model.aggregates`。外部の技術のポートはドメインに置く規則）。実装は SMTP の `SmtpMailSender` と、dev でログに出す `LoggingMailSender`（1 つの Bean の中で守りの式で切り替える）（`notification.infrastructure.mail`。ADR-017、Bolt 33） | 通知 |
 | 監査記録 | AuditRecord | 操作者・時刻・対象・変更前後・理由・承認・出典の追記専用の記録 | アクセス・監査 |
 | 情報源 | DataSource | データ責任者が選定・承認した運送会社・港湾などの原本の提供元（BR-18） | 外部データ |
 | 外部原本 | ExternalRecord | 外部から受け取った無加工の原本と、その分類（採用・重複・隔離） | 外部データ |

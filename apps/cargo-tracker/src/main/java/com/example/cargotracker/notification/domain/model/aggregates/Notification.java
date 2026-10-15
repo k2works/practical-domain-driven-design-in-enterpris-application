@@ -125,8 +125,10 @@ public final class Notification {
     public Notification failed(String reason) {
         requirePending();
         String text = requireText(reason, "reason");
-        String truncated =
-                text.length() > FAILURE_REASON_MAX_LENGTH ? text.substring(0, FAILURE_REASON_MAX_LENGTH) : text;
+        // 列の長さは文字数なので、サロゲートペアの途中で切らないよう code point で数える
+        String truncated = text.codePointCount(0, text.length()) > FAILURE_REASON_MAX_LENGTH
+                ? text.substring(0, text.offsetByCodePoints(0, FAILURE_REASON_MAX_LENGTH))
+                : text;
         return new Notification(
                 id,
                 eventId,

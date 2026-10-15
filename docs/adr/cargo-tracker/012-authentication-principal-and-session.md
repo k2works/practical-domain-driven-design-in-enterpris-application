@@ -4,7 +4,7 @@ title: "ADR-012: 認証の主体は共有カーネルの型にし、password の
 description: "US-18 の password によるログインと session を、Spring Security 7 の form login と Spring Session JDBC で作る。"
 tags: [adr, authentication, session]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-15T01:13:15Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-15T02:38:56Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-06T06:51:29Z }
 ---
@@ -39,7 +39,7 @@ US-18 の password によるログインと session を、Spring Security 7 の 
 
 ### 2. 認証の構成
 
-- `SecurityFilterChain` は `identity.infrastructure.config` に置く。`/customer/**` は `SHIPPER`、`/staff/**` は `SALES` の役割を求める。静的な資源と `/login`・`/session-expired`・`/password-reset`（A-05。password の再設定の依頼。Bolt 33。A-06 の `/password-reset/**` は Bolt 33a で足す）は認証なしで開ける。公開の URL（`PUBLIC_PATHS`）は `SessionRevalidationFilter` の確かめと失効の時に要求を覚える動きの対象外になる。
+- `SecurityFilterChain` は `identity.infrastructure.config` に置く。`/customer/**` は `SHIPPER`、`/staff/**` は `SALES` の役割を求める。静的な資源と `/login`・`/session-expired`・`/password-reset`（A-05。password の再設定の依頼。Bolt 33）と `/password-reset/*`（A-06。33a までは準備中の仮の画面。ADR-017 の決定 6）は認証なしで開ける。公開の URL（`PUBLIC_PATHS`）は `SessionRevalidationFilter` の確かめと失効の時に要求を覚える動きの対象外になる。
 - form login（`GET`・`POST /login`）と `DaoAuthenticationProvider` を使う。利用者の読み出し（`UserDetailsService`）は `identity` に置き、利用停止の利用者と無効な企業の利用者を、理由付きで認証の失敗にする（IA-INV-09）。画面の文言はすべて同じにする（SEC-11）。
 - password は DelegatingPasswordEncoder の既定（bcrypt、`{bcrypt}` の接頭辞。SEC-07）。
 - session の固定化を防ぐため、ログインで session ID を付け替える（Spring Security の既定の `ChangeSessionIdAuthenticationStrategy`）。CSRF は同期トークン（既定）。
