@@ -5838,6 +5838,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../bolt_33_plan/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 33 計画
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../release_report-0_1/" class="md-nav__link">
         
   
@@ -12294,10 +12322,17 @@
 </tr>
 <tr>
 <td style="text-align: left;">33</td>
-<td style="text-align: left;">通知モジュールの最小の新設（送信の公開 API、Spring Boot Mail、ローカルでメールを受けるだけのコンテナ）と US-18 AC8 password の再設定（1 回だけ使える 30 分のリンク、再設定の後も TOTP を求める、監査記録。SEC-08。A-06）</td>
+<td style="text-align: left;">通知モジュールの最小の新設（送信の公開 API、送信の記録の表、SMTP の送信アダプターと dev のログに出す送信、統合テストの Mailpit）と US-18 AC8 の前半: A-01 の「password を忘れた場合」から A-05 で依頼すると、1 回だけ使える 30 分の再設定のトークン（ハッシュで保存）を発行してリンクを送る（登録の有無を示さない、繰り返しの依頼を抑える、監査記録。SEC-08）</td>
 <td style="text-align: right;">0</td>
 <td style="text-align: left;">インサイドアウト</td>
 <td style="text-align: left;">ステップごと（セキュリティ、外部連携、モジュールの境界、スキーマ）</td>
+</tr>
+<tr>
+<td style="text-align: left;">33a</td>
+<td style="text-align: left;">US-18 AC8 の後半: リンクから A-06 で新しい password を設定する（SEC-04・SEC-05、トークンを 1 回だけ使う、期限切れ・使用済みの画面、設定の後は A-01 に戻して新しい password と TOTP でログインし直す、監査記録）。マニュアルの A-06 の手順とデモの動画（依頼から設定まで）</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: left;">インサイドアウト</td>
+<td style="text-align: left;">ステップごと（セキュリティ、スキーマ）</td>
 </tr>
 <tr>
 <td style="text-align: left;">33b</td>
@@ -12323,7 +12358,7 @@
 </tbody>
 </table>
 <p>US-18 の残りの SP 6 は #13 をクローズする Bolt 33b で、US-04 の SP 3 は #43 をクローズする Bolt 35 で数える。US-16 の SP 5 は #14 をクローズする W6 で数えるので、W5 の目標 11 SP のうち W5 で数えられるのは最大 9 SP である（Bolt ごとの SP は目安）。W5 は祝日の週で、上限（8 SP）を超える。Release 0.1 を約 2 週早く終えた余裕で吸収し、W5 の締めで確かめる（W4 の締めの決定）</p>
-<p>US-18 の Bolt の順序は 31b → 31c → 31d → 32 → 32c → 32d → 32b → 32e → 32f とし、32f は #13 をクローズする 33b より前にする（32b → 32e → 32f → 33b）。32 のロックの数え方は、31d で照合の結果をドメインに寄せた後のほうが置きやすい（Bolt 31c の開始準備）。32c の ADR-012 の見直しの 3（request ごとの問い合わせを 1 回に）は、31c の引数の解決（見直しの 4）と同じ部品に触るため。32c は 32 の後にする（32 で認証の入口と統合テストを直した後に、request ごとの確かめを足す）。32d は 32c の後にする（32 で認証の入口と統合テストを直した後に、31d から送った低の指摘を片づける。32b と同じ session の上限の部品のテストに触るので 32d → 32b の順にする）。32e は 32b の後にする（32b の警告の部分と期限の到来の案内に、開いていた画面への復帰を足すため）。32f は 32e の後にする（32e の戻り先と同じ鍵で入力を保持するため）。33b は 32c に依存しない。31c → 33b とする。33b の回復コードによる再登録は、31c の回復コードによるログインを前提にするため（Bolt 31b の開始準備）。Bolt 31b の開始準備で 31c を、Bolt 31c の開始準備で 31d を、Bolt 32 の開始準備で 32c を、Bolt 32c の開始準備で 32d を、Bolt 32b の開始準備で 32e を、Bolt 32e の開始準備で 32f を足し、W5 の Bolt は 18 本（29・29b・29c・30・31・31b・31c・31d・32・32c・32d・32b・32e・32f・33・33b・34・35）になった。祝日の週で SP も上限を超えるので、本数と SP の両方を W5 の締めで確かめる</p>
+<p>US-18 の Bolt の順序は 31b → 31c → 31d → 32 → 32c → 32d → 32b → 32e → 32f → 33 → 33a とし、32f は #13 をクローズする 33b より前にする（32b → 32e → 32f → 33b）。32 のロックの数え方は、31d で照合の結果をドメインに寄せた後のほうが置きやすい（Bolt 31c の開始準備）。32c の ADR-012 の見直しの 3（request ごとの問い合わせを 1 回に）は、31c の引数の解決（見直しの 4）と同じ部品に触るため。32c は 32 の後にする（32 で認証の入口と統合テストを直した後に、request ごとの確かめを足す）。32d は 32c の後にする（32 で認証の入口と統合テストを直した後に、31d から送った低の指摘を片づける。32b と同じ session の上限の部品のテストに触るので 32d → 32b の順にする）。32e は 32b の後にする（32b の警告の部分と期限の到来の案内に、開いていた画面への復帰を足すため）。32f は 32e の後にする（32e の戻り先と同じ鍵で入力を保持するため）。33b は 32c に依存しない。31c → 33b とする。33b の回復コードによる再登録は、31c の回復コードによるログインを前提にするため（Bolt 31b の開始準備）。Bolt 31b の開始準備で 31c を、Bolt 31c の開始準備で 31d を、Bolt 32 の開始準備で 32c を、Bolt 32c の開始準備で 32d を、Bolt 32b の開始準備で 32e を、Bolt 32e の開始準備で 32f を足し、W5 の Bolt は 18 本（29・29b・29c・30・31・31b・31c・31d・32・32c・32d・32b・32e・32f・33・33b・34・35）になった。祝日の週で SP も上限を超えるので、本数と SP の両方を W5 の締めで確かめる</p>
 <p><strong>W4 の Try の持ち込み</strong>: 各 Bolt 計画の確認ポイントに、T-83・T-88（骨組みや待ち方を直したら骨組みのまま流し、本命のアサーションで落ちることを確かめる。最初から通るテストは「見張り」と書く）、T-89（後に回したものは Issue にし、W5 の締めで開いている持ち越しを数える）、T-90（画面を作る Bolt の開発レビューに、マニュアルを書く立場の観点を入れる。Bolt 29b から）を入れる。承認ゲートの密度は「W4 の締めの見直し」のとおり（既定は計画と終了報告で止める。認証の完成はステップごとに止める）</p>
 <p><strong>Bolt 13・14 からの持ち込み</strong>（横断整合性検証の指摘。担当の Bolt の確認ポイントにする）:</p>
 <table>
@@ -12377,7 +12412,7 @@
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Bolt 29: #45。<a href="../bolt_29_plan/">Bolt 29 計画</a>（<code>/goal</code> で進めた）、<a href="../bolt_29_report/">Bolt 29 終了報告</a>（完了、2026-10-11 に承認済み。#45 を閉じた。SonarQube PASS。<code>uiTest</code> 80 本は集める前と同じく通った。失敗の経路を読めるものに直した）</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Bolt 29b: #46 の前半。<a href="../bolt_29b_plan/">Bolt 29b 計画</a>（<code>/goal</code> で進めた）、<a href="../bolt_29b_report/">Bolt 29b 終了報告</a>（完了、2026-10-11 に承認済み。4 か所と開発レビューの必須の指摘を直した。SonarQube PASS・Code Smell 0）</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Bolt 29c: #46 の後半。<a href="../bolt_29c_plan/">Bolt 29c 計画</a>（承認済み）、<a href="../bolt_29c_report/">Bolt 29c 終了報告</a>（完了、2026-10-11 に承認済み。#46 を閉じた。SonarQube PASS・Code Smell 0）</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> Bolt 30〜33b: US-18 の残り（#13）と通知モジュールの最小の新設。<a href="../bolt_30_plan/">Bolt 30 計画</a>（承認済み）、<a href="../bolt_30_report/">Bolt 30 終了報告</a>（完了、2026-10-11 に承認済み。ADR-011 を採用し、3 つの表・ドメイン・リポジトリ・TOTP の生成を作った。SonarQube PASS・Code Smell 0）、<a href="../bolt_31_plan/">Bolt 31 計画</a>（承認済み）、<a href="../bolt_31_report/">Bolt 31 終了報告</a>（完了、2026-10-13 に承認済み。<code>/goal Bolt31</code> で進めた。TOTP の秘密の暗号化と 2 段階のログイン（A-02）。層の規則に 2 つの狭い例外。SonarQube PASS）、<a href="../bolt_31b_plan/">Bolt 31b 計画</a>（承認済み）、<a href="../bolt_31b_report/">Bolt 31b 終了報告</a>（完了、2026-10-13 に承認済み）、<a href="../bolt_31c_plan/">Bolt 31c 計画</a>（承認済み）、<a href="../bolt_31c_report/">Bolt 31c 終了報告</a>（完了、2026-10-13 に承認済み）、<a href="../bolt_31d_plan/">Bolt 31d 計画</a>（承認済み）、<a href="../bolt_31d_report/">Bolt 31d 終了報告</a>（完了、2026-10-13 に承認済み。スパイクを消した）、<a href="../bolt_32_plan/">Bolt 32 計画</a>（承認済み）、<a href="../bolt_32_report/">Bolt 32 終了報告</a>（完了、2026-10-14 に承認済み。ログインのロック）、<a href="../bolt_32c_plan/">Bolt 32c 計画</a>（承認済み）、<a href="../bolt_32c_report/">Bolt 32c 終了報告</a>（完了、2026-10-14 に承認済み。request ごとの利用者の確かめ）、<a href="../bolt_32d_plan/">Bolt 32d 計画</a>（承認済み）、<a href="../bolt_32d_report/">Bolt 32d 終了報告</a>（完了、2026-10-14 に承認済み。認証の部品の低の指摘とテストの整理）、<a href="../bolt_32b_plan/">Bolt 32b 計画</a>（承認済み。session の失効の警告と延長）、<a href="../bolt_32b_report/">Bolt 32b 終了報告</a>（完了、2026-10-14 に承認済み。session の警告と延長。支援技術の手動確認も済み）、<a href="../bolt_32e_plan/">Bolt 32e 計画</a>（承認済み。失効の後に開いていた画面へ戻す）、<a href="../bolt_32e_report/">Bolt 32e 終了報告</a>（完了、2026-10-14 に承認済み。失効の後に開いていた画面へ戻す）、<a href="../bolt_32f_plan/">Bolt 32f 計画</a>（承認済み。失効の時の入力の保持）、<a href="../bolt_32f_report/">Bolt 32f 終了報告</a>（完了、2026-10-15 に承認済み。失効の時の入力の保持。支援技術の手動確認も済み）。Bolt 32f（入力の保持と送信の後の失効）は 32e の後で、33b より前</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> Bolt 30〜33b: US-18 の残り（#13）と通知モジュールの最小の新設。<a href="../bolt_30_plan/">Bolt 30 計画</a>（承認済み）、<a href="../bolt_30_report/">Bolt 30 終了報告</a>（完了、2026-10-11 に承認済み。ADR-011 を採用し、3 つの表・ドメイン・リポジトリ・TOTP の生成を作った。SonarQube PASS・Code Smell 0）、<a href="../bolt_31_plan/">Bolt 31 計画</a>（承認済み）、<a href="../bolt_31_report/">Bolt 31 終了報告</a>（完了、2026-10-13 に承認済み。<code>/goal Bolt31</code> で進めた。TOTP の秘密の暗号化と 2 段階のログイン（A-02）。層の規則に 2 つの狭い例外。SonarQube PASS）、<a href="../bolt_31b_plan/">Bolt 31b 計画</a>（承認済み）、<a href="../bolt_31b_report/">Bolt 31b 終了報告</a>（完了、2026-10-13 に承認済み）、<a href="../bolt_31c_plan/">Bolt 31c 計画</a>（承認済み）、<a href="../bolt_31c_report/">Bolt 31c 終了報告</a>（完了、2026-10-13 に承認済み）、<a href="../bolt_31d_plan/">Bolt 31d 計画</a>（承認済み）、<a href="../bolt_31d_report/">Bolt 31d 終了報告</a>（完了、2026-10-13 に承認済み。スパイクを消した）、<a href="../bolt_32_plan/">Bolt 32 計画</a>（承認済み）、<a href="../bolt_32_report/">Bolt 32 終了報告</a>（完了、2026-10-14 に承認済み。ログインのロック）、<a href="../bolt_32c_plan/">Bolt 32c 計画</a>（承認済み）、<a href="../bolt_32c_report/">Bolt 32c 終了報告</a>（完了、2026-10-14 に承認済み。request ごとの利用者の確かめ）、<a href="../bolt_32d_plan/">Bolt 32d 計画</a>（承認済み）、<a href="../bolt_32d_report/">Bolt 32d 終了報告</a>（完了、2026-10-14 に承認済み。認証の部品の低の指摘とテストの整理）、<a href="../bolt_32b_plan/">Bolt 32b 計画</a>（承認済み。session の失効の警告と延長）、<a href="../bolt_32b_report/">Bolt 32b 終了報告</a>（完了、2026-10-14 に承認済み。session の警告と延長。支援技術の手動確認も済み）、<a href="../bolt_32e_plan/">Bolt 32e 計画</a>（承認済み。失効の後に開いていた画面へ戻す）、<a href="../bolt_32e_report/">Bolt 32e 終了報告</a>（完了、2026-10-14 に承認済み。失効の後に開いていた画面へ戻す）、<a href="../bolt_32f_plan/">Bolt 32f 計画</a>（承認済み。失効の時の入力の保持）、<a href="../bolt_32f_report/">Bolt 32f 終了報告</a>（完了、2026-10-15 に承認済み。失効の時の入力の保持。支援技術の手動確認も済み）、<a href="../bolt_33_plan/">Bolt 33 計画</a>（承認済み。通知モジュールの新設と再設定の依頼）。Bolt 32f（入力の保持と送信の後の失効）は 32e の後で、33b より前</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> Bolt 34: US-16 の一部（#14）</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> Bolt 35: US-04 AC3・AC5（#43）、D-85</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> W5 の締め: 結果とふりかえり、開いている持ち越しの数（T-89）、W6 の計画の見直し</li>
@@ -13654,6 +13689,21 @@
 <tr>
 <td style="text-align: left;">2026-10-15</td>
 <td style="text-align: left;">Bolt 32f の終了報告の承認を記録した（議題 1〜7 を承認。支援技術の手動確認も済み）。デモの動画を #13 に添付した</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5、承認 human:kakimomokuri</td>
+</tr>
+<tr>
+<td style="text-align: left;">2026-10-15</td>
+<td style="text-align: left;">Bolt 33 の開始準備: 33（通知モジュールの新設と再設定の依頼から送信まで）と 33a（A-06 の設定と監査）に分けた。dev はメールをログに出す送信（dev の外では起動を止める）にし、統合テストは Mailpit で確かめる。A-06 で設定したら A-01 に戻してログインし直す（ADR-011 の A-06 の例外は要らなくなる）。通知の送信の記録の表を 33 で作る。W5 の表に 33a の行を足し、US-18 の Bolt の順序に 33・33a を足した</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5、決定 human:kakimomokuri</td>
+</tr>
+<tr>
+<td style="text-align: left;">2026-10-15</td>
+<td style="text-align: left;">Bolt 33 の開始準備の詳細整合性検証（20 件）と横断整合性検証（21 件）を計画に反映した。トークンの発行を <code>@ApplicationModuleListener</code> のハンドラーに移しイベントに秘密を載せない、通知は identity に依存しない制約を今決め W9 の宛先の渡し方は W9 の開始準備で決める、ADR-017（通知モジュールとメール送信）を作る、<code>target_ref</code> はトークンの ID、約 4.9 時間のまま 1 本で進める</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5、決定 human:kakimomokuri</td>
+</tr>
+<tr>
+<td style="text-align: left;">2026-10-15</td>
+<td style="text-align: left;">Bolt 33 計画の承認を記録した（確認ポイント 1〜19 は推奨のまま。ステップごとの承認ゲートで止めて進める）</td>
 <td style="text-align: left;">anthropic/claude-opus-5-5、承認 human:kakimomokuri</td>
 </tr>
 </tbody>

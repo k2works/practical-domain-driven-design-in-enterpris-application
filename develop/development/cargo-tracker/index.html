@@ -5303,6 +5303,34 @@
   
   
     <li class="md-nav__item">
+      <a href="bolt_33_plan/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 33 計画
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="release_report-0_1/" class="md-nav__link">
         
   
@@ -10695,6 +10723,13 @@
 <td style="text-align: left;">W5</td>
 <td style="text-align: left;">完了</td>
 </tr>
+<tr>
+<td style="text-align: left;">33</td>
+<td style="text-align: left;"><a href="bolt_33_plan/">通知モジュールの新設と password の再設定の依頼（US-18 AC8 の前半）</a></td>
+<td style="text-align: left;">—</td>
+<td style="text-align: left;">W5</td>
+<td style="text-align: left;">計画（承認済み）</td>
+</tr>
 </tbody>
 </table>
 <p>Bolt を始めるときに行を追加します。</p>
@@ -11007,6 +11042,7 @@
 <li><a href="bolt_32e_report/">Bolt 32e 終了報告 - 失効の後に開いていた画面へ戻す（ACC-06）</a> - 無操作 30 分と 8 時間の上限で失効した後、もう一度ログインすると GET で開いていた業務の画面に戻るようにした。失効の扱いを invalidSessionStrategy に替え、認証コードの誤りと password の段の失効では覚えた要求を持ち越す。警告の案内のリンクは戻り先を開き直す。</li>
 <li><a href="bolt_32f_plan/">Bolt 32f 計画 - 失効の時の入力の保持（ACC-06）</a> - W5 の 14 本目の Bolt の計画。失効の時に送信していない入力をブラウザのそのタブに「入力の控え」として写し、同じ利用者が同じ画面に戻ったら自動で戻して知らせる。送信が公開の画面で拒まれたら、ログインし直した後の画面に案内を出す。案内のリンクの語を「画面を開き直す」にし、ADR-005 の例外として記録する。</li>
 <li><a href="bolt_32f_report/">Bolt 32f 終了報告 - 失効の時の入力の保持（ACC-06）</a> - 失効の時に送信していない入力をブラウザのそのタブ（sessionStorage）に控え、同じ利用者が同じ画面に戻ったら戻すようにした。送信が拒まれたらログインし直した後の画面に案内を出す。開発レビューで拒まれた印を画面ごとの明示に変え、文言を直した。支援技術の手動確認は人が済ませた。</li>
+<li><a href="bolt_33_plan/">Bolt 33 計画 - 通知モジュールの新設と password の再設定の依頼（US-18 AC8 の前半）</a> - W5 の 15 本目の Bolt の計画。通知モジュールを最小に新設し（送信の公開 API、送信の記録、SMTP と dev のログに出す送信）、A-01 の「password を忘れた場合」から A-05 で依頼すると、1 回だけ使える 30 分のリンクを登録メールアドレスへ送る（登録の有無を示さない）。A-06 は Bolt 33a。</li>
 </ul>
 
 
