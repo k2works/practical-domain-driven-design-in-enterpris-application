@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<!--/* A-08 新しい回復コードの保存（US-18 AC9、SEC-10、UI 設計「A-08」、Bolt 33b）。登録し直した POST の応答で一度だけ示す（平文の回復
+       コードはどこにも保存しない。再読み込みは印が消えているので役割のホームへ移す）。「保存した」は画面の必須。「続ける」の行き先は
+       サーバーが覚えた要求か役割のホーム */-->
+<html lang="ja" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{__${layout}__ :: layout(~{::title}, ~{::main}, ~{}, '')}">
+<head>
+    <meta charset="UTF-8">
+    <title>回復コードの保存 - cargo-tracker</title>
+</head>
+<body>
+<main>
+    <h1>回復コードの保存</h1>
+    <div class="alert alert-success" role="status">認証アプリを登録し直しました。前の回復コードは使えなくなりました。</div>
+    <h2 class="h5">回復コード（一度だけ表示します）</h2>
+    <p>認証アプリを使えなくなったときに、認証コードの代わりに 1 回ずつ使えます。この画面を閉じると、もう表示できません。印刷するか、安全な場所に書き写してください。</p>
+    <ol class="app-recovery-codes">
+        <li th:each="code : ${recoveryCodes}"><code th:text="${code}">1a2b-3c4d</code></li>
+    </ol>
+    <form th:action="${continueUrl}" method="get">
+        <div class="form-check mb-3">
+            <input class="form-check-input" type="checkbox" id="saved" required>
+            <label class="form-check-label" for="saved">回復コードを安全な場所に保存した</label>
+        </div>
+        <button type="submit" class="btn btn-primary">続ける</button>
+    </form>
+</main>
+</body>
+</html>

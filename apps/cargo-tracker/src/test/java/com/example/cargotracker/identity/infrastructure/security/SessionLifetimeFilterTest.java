@@ -120,6 +120,14 @@ class SessionLifetimeFilterTest {
     }
 
     @Test
+    void 回復コードでログインした印の属性の名前とA08のURLは画面の層と同じ値() {
+        assertThat(SessionLifetime.RECOVERY_LOGIN_USER)
+                .isEqualTo(com.example.cargotracker.identity.interfaces.web.RecoveryLogin.MARK);
+        assertThat(SessionLifetime.RE_ENROLL_URL)
+                .isEqualTo(com.example.cargotracker.identity.interfaces.web.TotpReEnrollmentController.URL);
+    }
+
+    @Test
     void 登録の途中のpasswordの段は登録を始めた時刻から15分の1秒前まで通し15分で失効させる() throws Exception {
         MockHttpSession session = passwordStageSession(true);
         session.setAttribute(SessionLifetime.ENROLLMENT_STARTED_AT, LOGIN_AT.plus(Duration.ofMinutes(1)));

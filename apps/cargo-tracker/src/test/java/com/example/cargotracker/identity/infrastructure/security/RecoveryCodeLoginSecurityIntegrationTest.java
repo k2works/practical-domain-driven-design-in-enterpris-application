@@ -5,6 +5,7 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -72,6 +73,9 @@ class RecoveryCodeLoginSecurityIntegrationTest {
     private static final byte[] TOTP_SECRET = "12345678901234567890".getBytes(StandardCharsets.US_ASCII);
     private static final Pattern MANUAL_KEY = Pattern.compile("data-manual-key=\"([A-Z2-7 ]+)\"");
     private static final String JUST_ENROLLED = "認証アプリを登録しました。";
+    private static final String RE_ENROLL_URL = "/account/authenticator";
+    private static final String NOTICE = "回復コードでログインしました。認証アプリを登録し直してください。";
+    private static final Pattern NEW_RECOVERY_CODE = Pattern.compile("\\b([0-9a-f]{4}-[0-9a-f]{4})\\b");
 
     @Autowired
     MockMvc mvc;
@@ -126,7 +130,7 @@ class RecoveryCodeLoginSecurityIntegrationTest {
                         .cookie(passwordStage)
                         .param("recoveryCode", " 1A2B3C4D ")
                         .with(csrf()))
-                .andExpect(redirectedUrl("/"))
+                .andExpect(redirectedUrl(RE_ENROLL_URL))
                 .andReturn();
 
         Cookie full = result.getResponse().getCookie(SESSION_COOKIE);
@@ -152,7 +156,7 @@ class RecoveryCodeLoginSecurityIntegrationTest {
                         .cookie(loginWithPassword(email))
                         .param("recoveryCode", RECOVERY_CODE)
                         .with(csrf()))
-                .andExpect(redirectedUrl("/"))
+                .andExpect(redirectedUrl(RE_ENROLL_URL))
                 .andReturn()
                 .getResponse()
                 .getCookie(SESSION_COOKIE);
@@ -264,7 +268,7 @@ class RecoveryCodeLoginSecurityIntegrationTest {
                         .cookie(loginWithPassword(second))
                         .param("recoveryCode", SECOND_RECOVERY_CODE)
                         .with(csrf()))
-                .andExpect(redirectedUrl("/"));
+                .andExpect(redirectedUrl(RE_ENROLL_URL));
     }
 
     @Test
@@ -335,6 +339,207 @@ class RecoveryCodeLoginSecurityIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(content().string(Matchers.not(Matchers.containsString(JUST_ENROLLED))));
         assertThat(sessions().attributeNames(full)).doesNotContain(SessionLifetime.ENROLLMENT_STARTED_AT);
+    }
+
+    // --- 認証アプリの再登録（A-08。US-18 AC9、SEC-10。Bolt 33b） ---
+
+    private Cookie loginWithRecoveryCode(String email, String code) throws Exception {
+        return mvc.perform(post(TOTP_URL)
+                        .cookie(loginWithPassword(email))
+                        .param("recoveryCode", code)
+                        .with(csrf()))
+                .andExpect(redirectedUrl(RE_ENROLL_URL))
+                .andReturn()
+                .getResponse()
+                .getCookie(SESSION_COOKIE);
+    }
+
+    private Cookie loginWithTotp(String email) throws Exception {
+        return mvc.perform(post(TOTP_URL)
+                        .cookie(loginWithPassword(email))
+                        .param("code", currentCode(email))
+                        .with(csrf()))
+                .andExpect(redirectedUrl("/"))
+                .andReturn()
+                .getResponse()
+                .getCookie(SESSION_COOKIE);
+    }
+
+    /** 時計を次の刻みに進める（同じ刻みのコードを二度使わない）。 */
+    private void nextStep() {
+        ((MutableClock) clock).setInstant(clock.instant().plus(TotpCredential.STEP_DURATION));
+    }
+
+    @Test
+    void 回復コードでログインするとA08に移り認証コードでログインした利用者はA08を開けない() throws Exception {
+        String email = enrolledUserWithRecoveryCodes();
+        Cookie recovered = loginWithRecoveryCode(email, RECOVERY_CODE);
+
+        String html = mvc.perform(get(RE_ENROLL_URL).cookie(recovered))
+                .andExpect(status().isOk())
+                .andExpect(header().string("Cache-Control", org.hamcrest.Matchers.containsString("no-store")))
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+        assertThat(html).contains("<title>認証アプリの再登録 - cargo-tracker</title>", "後で登録する");
+        // 本文は知らせと同じ文を言うので、知らせの部品がないことを見る
+        assertThat(html).as("A-08 には印の知らせを出さない").doesNotContain("app-recovery-notice");
+
+        nextStep();
+        Cookie byTotp = loginWithTotp(email);
+        mvc.perform(get(RE_ENROLL_URL).cookie(byTotp)).andExpect(redirectedUrl("/"));
+        mvc.perform(get(BUSINESS_URL).cookie(byTotp))
+                .andExpect(status().isOk())
+                .andExpect(content().string(org.hamcrest.Matchers.not(org.hamcrest.Matchers.containsString(NOTICE))));
+    }
+
+    @Test
+    void A08で登録し直すと新しい回復コードを示し古いコードと古い回復コードは通らずほかの端末はA03で今のsessionは残る() throws Exception {
+        String email = enrolledUserWithRecoveryCodes();
+        Cookie otherDevice = loginWithTotp(email);
+        nextStep();
+        Cookie recovered = loginWithRecoveryCode(email, RECOVERY_CODE);
+        String form = mvc.perform(get(RE_ENROLL_URL).cookie(recovered))
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+        String newKey = manualKey(form);
+
+        String done = mvc.perform(post(RE_ENROLL_URL)
+                        .cookie(recovered)
+                        .param("code", codeFromKey(email, newKey))
+                        .with(csrf()))
+                .andExpect(status().isOk())
+                .andExpect(header().string("Cache-Control", org.hamcrest.Matchers.containsString("no-store")))
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        assertThat(done).contains("認証アプリを登録し直しました。前の回復コードは使えなくなりました。");
+        Matcher codes = NEW_RECOVERY_CODE.matcher(done);
+        List<String> shown = new java.util.ArrayList<>();
+        while (codes.find()) {
+            shown.add(codes.group(1));
+        }
+        assertThat(shown).hasSize(RecoveryCode.CODES_PER_USER);
+        assertThat(auditActions(email)).contains("TOTP_RE_ENROLLED");
+        mvc.perform(get(BUSINESS_URL).cookie(otherDevice)).andExpect(redirectedUrl("/session-expired"));
+        mvc.perform(get(BUSINESS_URL).cookie(recovered))
+                .andExpect(status().isOk())
+                .andExpect(content().string(org.hamcrest.Matchers.not(org.hamcrest.Matchers.containsString(NOTICE))));
+        mvc.perform(get(RE_ENROLL_URL).cookie(recovered)).andExpect(redirectedUrl("/"));
+
+        nextStep();
+        mvc.perform(post(TOTP_URL)
+                        .cookie(loginWithPassword(email))
+                        .param("recoveryCode", "0000-0001")
+                        .with(csrf()))
+                .andExpect(redirectedUrl(TOTP_ERROR));
+        mvc.perform(post(TOTP_URL)
+                        .cookie(loginWithPassword(email))
+                        .param("code", oldSecretCode(email))
+                        .with(csrf()))
+                .andExpect(redirectedUrl(TOTP_ERROR));
+        mvc.perform(post(TOTP_URL)
+                        .cookie(loginWithPassword(email))
+                        .param("code", codeFromKey(email, newKey))
+                        .with(csrf()))
+                .andExpect(redirectedUrl("/"));
+        nextStep();
+        loginWithRecoveryCode(email, shown.getFirst());
+    }
+
+    @Test
+    void 後で登録すると業務の画面に印の知らせが出てリンクからA08を開ける() throws Exception {
+        String email = enrolledUserWithRecoveryCodes();
+        Cookie recovered = loginWithRecoveryCode(email, RECOVERY_CODE);
+
+        mvc.perform(post(RE_ENROLL_URL + "/later").cookie(recovered).with(csrf()))
+                .andExpect(redirectedUrl("/"));
+
+        mvc.perform(get(BUSINESS_URL).cookie(recovered))
+                .andExpect(status().isOk())
+                .andExpect(content().string(org.hamcrest.Matchers.containsString(NOTICE)))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("認証アプリを登録し直す")));
+        mvc.perform(get(RE_ENROLL_URL).cookie(recovered)).andExpect(status().isOk());
+        assertThat(auditActions(email)).doesNotContain("TOTP_RE_ENROLLED");
+    }
+
+    @Test
+    void 回復コードでログインしたsessionで別の利用者に切り替えると印は消える() throws Exception {
+        String first = enrolledUserWithRecoveryCodes();
+        String second = enrolledUserWithRecoveryCodes(SECOND_RECOVERY_CODE);
+        Cookie recovered = loginWithRecoveryCode(first, RECOVERY_CODE);
+        mvc.perform(get(RE_ENROLL_URL).cookie(recovered)).andExpect(status().isOk());
+
+        Cookie switched = mvc.perform(post("/login")
+                        .cookie(recovered)
+                        .param("username", second)
+                        .param("password", PASSWORD)
+                        .with(csrf()))
+                .andExpect(redirectedUrl(TOTP_URL))
+                .andReturn()
+                .getResponse()
+                .getCookie(SESSION_COOKIE);
+        Cookie secondFull = mvc.perform(post(TOTP_URL)
+                        .cookie(switched)
+                        .param("code", currentCode(second))
+                        .with(csrf()))
+                .andExpect(redirectedUrl("/"))
+                .andReturn()
+                .getResponse()
+                .getCookie(SESSION_COOKIE);
+
+        mvc.perform(get(RE_ENROLL_URL).cookie(secondFull)).andExpect(redirectedUrl("/"));
+        mvc.perform(get(BUSINESS_URL).cookie(secondFull))
+                .andExpect(content().string(org.hamcrest.Matchers.not(org.hamcrest.Matchers.containsString(NOTICE))));
+    }
+
+    @Test
+    void A08の登録と後で登録するはCSRFのトークンがなければ処理しない() throws Exception {
+        String email = enrolledUserWithRecoveryCodes();
+        Cookie recovered = loginWithRecoveryCode(email, RECOVERY_CODE);
+
+        mvc.perform(post(RE_ENROLL_URL)
+                        .cookie(recovered)
+                        .param("code", "000000")
+                        .with(csrf().useInvalidToken()))
+                .andExpect(status().isForbidden());
+        mvc.perform(post(RE_ENROLL_URL + "/later").cookie(recovered).with(csrf().useInvalidToken()))
+                .andExpect(status().isForbidden());
+        assertThat(auditActions(email)).doesNotContain("TOTP_RE_ENROLLED");
+    }
+
+    @Test
+    void A08で誤ったコードを送ると置き換えず同じキーで示し直す() throws Exception {
+        String email = enrolledUserWithRecoveryCodes();
+        Cookie recovered = loginWithRecoveryCode(email, RECOVERY_CODE);
+        String key = manualKey(mvc.perform(get(RE_ENROLL_URL).cookie(recovered))
+                .andReturn()
+                .getResponse()
+                .getContentAsString());
+
+        String again = mvc.perform(post(RE_ENROLL_URL)
+                        .cookie(recovered)
+                        .param("code", "000000")
+                        .with(csrf()))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        assertThat(again).contains("認証コードが正しくありません。認証アプリに表示されている最新のコードを入力してください。");
+        assertThat(manualKey(again)).isEqualTo(key);
+        assertThat(auditActions(email)).doesNotContain("TOTP_RE_ENROLLED");
+    }
+
+    /** 古い秘密（テストの固定の秘密）の今の刻みのコード。 */
+    private String oldSecretCode(String email) {
+        UserId owner = userIdOf(email);
+        return totpCodes.code(
+                owner,
+                cipher.encrypt(TOTP_SECRET.clone(), owner),
+                TotpCredential.stepAt(new UtcInstant(clock.instant())));
     }
 
     // --- 補助 ---

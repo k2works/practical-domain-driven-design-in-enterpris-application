@@ -45,6 +45,9 @@ public class TotpAuthenticationFilter extends AbstractAuthenticationProcessingFi
     /** A-02 の回復コードの欄の名前（Bolt 31c）。 */
     public static final String RECOVERY_CODE_PARAMETER = "recoveryCode";
 
+    /** 回復コードの経路で認証したことを成功のハンドラーに伝える request の属性の名前（Bolt 33b）。 */
+    static final String RECOVERY_ATTEMPT_ATTRIBUTE = TotpAuthenticationFilter.class.getName() + ".RECOVERY_ATTEMPT";
+
     /** TOTP の誤りで戻す A-01 の URL（UI 設計「A-02」の文言を出す）。 */
     public static final String FAILURE_URL = "/login?totp-error";
 
@@ -74,6 +77,7 @@ public class TotpAuthenticationFilter extends AbstractAuthenticationProcessingFi
         String code = request.getParameter("code");
         String recoveryCode = request.getParameter(RECOVERY_CODE_PARAMETER);
         if (recoveryCode != null && !recoveryCode.isBlank()) {
+            request.setAttribute(RECOVERY_ATTEMPT_ATTRIBUTE, Boolean.TRUE);
             return getAuthenticationManager()
                     .authenticate(RecoveryCodeAuthenticationToken.unauthenticated(
                             current.getPrincipal(), recoveryCode, code != null && !code.isBlank()));
@@ -83,7 +87,11 @@ public class TotpAuthenticationFilter extends AbstractAuthenticationProcessingFi
                         current.getPrincipal(), code == null ? "" : code.strip()));
     }
 
-    /** 初めて TOTP が通った時刻を置き、ログインの前に開いた画面か、ルート（役割のホームへ振り分ける）へ移す。 */
+    /**
+     * 初めて TOTP が通った時刻を置き、ログインの前に開いた画面か、ルート（役割のホームへ振り分ける）へ移す。回復コードで通ったときは、
+     * 回復コードでログインした印（利用者の ID）を置いて A-08 へ移す（覚えた要求は残し、A-08 の「後で登録する」・「続ける」が使う。
+     * Bolt 33b、US-18 AC9。session の ID は認証の入口の {@code ChangeSessionIdAuthenticationStrategy} がすでに変えている）。
+     */
     static final class FirstTotpSuccessHandler extends SavedRequestAwareAuthenticationSuccessHandler {
 
         private final Clock clock;
@@ -104,6 +112,15 @@ public class TotpAuthenticationFilter extends AbstractAuthenticationProcessingFi
             // 登録を始めた時刻は、ログインを終えたら使わない（登録の直後の A-02 の案内を出さない。期限は要素で選ぶので変わらない。
             // Bolt 31c の確認ポイント 9）
             session.removeAttribute(SessionLifetime.ENROLLMENT_STARTED_AT);
+            if (Boolean.TRUE.equals(request.getAttribute(RECOVERY_ATTEMPT_ATTRIBUTE))
+                    && authentication.getPrincipal() instanceof CargoUserDetails user) {
+                session.setAttribute(
+                        SessionLifetime.RECOVERY_LOGIN_USER,
+                        user.actor().userId().value().toString());
+                clearAuthenticationAttributes(request);
+                response.sendRedirect(request.getContextPath() + SessionLifetime.RE_ENROLL_URL);
+                return;
+            }
             super.onAuthenticationSuccess(request, response, authentication);
         }
     }

@@ -69,6 +69,63 @@ public class LoginUiSteps {
         browser.checkAccessibility();
     }
 
+    @ならば("認証アプリの再登録の画面が表示される")
+    public void 認証アプリの再登録の画面が表示される() {
+        page().waitForURL(url -> url.contains("/account/authenticator"));
+        assertThat(page().getByRole(AriaRole.HEADING, new Page.GetByRoleOptions().setName("認証アプリの再登録")))
+                .isVisible();
+        browser.checkAccessibility();
+    }
+
+    @もし("認証アプリの再登録の画面で手入力のキーから作ったコードを入れて登録する")
+    public void 再登録の画面で手入力のキーから作ったコードを入れて登録する() {
+        String key = page().locator("code.app-totp-key").getAttribute("data-manual-key");
+        page().getByLabel("認証コード").fill(users.codeFromKey(role, key));
+        // 「後で登録する」と区別するため、名前は完全一致で探す
+        page().getByRole(
+                        AriaRole.BUTTON,
+                        new Page.GetByRoleOptions().setName("登録する").setExact(true))
+                .click();
+        // 登録し直しの応答は同じ URL で返る（PRG にしない）ので、URL ではなく回復コードの見出しを待つ
+        assertThat(page().getByRole(AriaRole.HEADING, new Page.GetByRoleOptions().setName("回復コードの保存")))
+                .isVisible();
+        assertThat(page().getByRole(AriaRole.STATUS)).containsText("認証アプリを登録し直しました。前の回復コードは使えなくなりました。");
+        browser.checkAccessibility();
+    }
+
+    @もし("認証アプリの再登録の画面で後で登録する")
+    public void 再登録の画面で後で登録する() {
+        page().getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("後で登録する"))
+                .click();
+        page().waitForURL(url -> !url.contains("/account/authenticator"));
+    }
+
+    @もし("回復コードを安全な場所に保存したに印を付けて続ける")
+    public void 回復コードを保存したに印を付けて続ける() {
+        page().getByLabel("回復コードを安全な場所に保存した").check();
+        page().getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("続ける"))
+                .click();
+        page().waitForURL(url -> !url.contains("/account/authenticator"));
+    }
+
+    @ならば("回復コードでログインした印の知らせが表示される")
+    public void 印の知らせが表示される() {
+        assertThat(page().locator(".app-recovery-notice")).containsText("回復コードでログインしました。認証アプリを登録し直してください。");
+        browser.checkAccessibility();
+    }
+
+    @ならば("回復コードでログインした印の知らせは表示されない")
+    public void 印の知らせは表示されない() {
+        assertThat(page().locator(".app-recovery-notice")).hasCount(0);
+    }
+
+    @もし("回復コードでログインした印の知らせの {string} を開く")
+    public void 印の知らせのリンクを開く(String name) {
+        page().locator(".app-recovery-notice")
+                .getByRole(AriaRole.LINK, new Locator.GetByRoleOptions().setName(name))
+                .click();
+    }
+
     @ならば("回復コードが {int} 個表示される")
     public void 回復コードが表示される(int count) {
         assertThat(page().locator("ol.app-recovery-codes li")).hasCount(count);

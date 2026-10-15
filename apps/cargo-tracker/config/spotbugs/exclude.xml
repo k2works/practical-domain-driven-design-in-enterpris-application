@@ -35,6 +35,8 @@
             <Class name="com.example.cargotracker.identity.application.internal.commandservices.PasswordResetCompletionService"/>
             <!-- Bolt 33b の認証アプリの再登録のサービスも、同じく DI の部品を保持するだけ -->
             <Class name="com.example.cargotracker.identity.application.internal.commandservices.TotpReEnrollmentService"/>
+            <!-- A-08 の画面も、同じく DI の部品（再登録のサービス）を保持するだけ（Bolt 33b） -->
+            <Class name="com.example.cargotracker.identity.interfaces.web.TotpReEnrollmentController"/>
             <Class name="com.example.cargotracker.identity.application.internal.eventhandlers.PasswordResetMailEventHandler"/>
             <Class name="com.example.cargotracker.notification.application.internal.commandservices.PasswordResetMailService"/>
         </Or>

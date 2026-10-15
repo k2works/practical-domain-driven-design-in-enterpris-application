@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<!--/* A-08 認証アプリの再登録（US-18 AC9、SEC-10、UI 設計「A-08」、Bolt 33b）。回復コードでログインした印があるときだけ開ける。
+       ログインした画面のレイアウト（役割で選ぶ）。QR コードと手入力のキーは秘密と同じ重さで、この応答にだけ示す
+       （Spring Security の既定で Cache-Control: no-store）。QR は自分で作ったインラインの SVG なので utext で出す（A-07 と同じ） */-->
+<html lang="ja" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{__${layout}__ :: layout(~{::title}, ~{::main}, ~{}, '')}">
+<head>
+    <meta charset="UTF-8">
+    <title>認証アプリの再登録 - cargo-tracker</title>
+</head>
+<body>
+<main>
+    <h1>認証アプリの再登録</h1>
+    <div th:if="${codeError}" class="alert alert-danger" role="alert" tabindex="-1" id="re-enroll-error">
+        認証コードが正しくありません。認証アプリに表示されている最新のコードを入力してください。
+    </div>
+    <div th:if="${expired}" class="alert alert-warning" role="alert" tabindex="-1" id="re-enroll-expired">
+        登録し直しの期限を過ぎたため、新しいキーを発行しました。先ほど認証アプリに追加した項目は使えないので削除し、新しい QR コードを読み取ってください。登録し直すまでは、前の認証アプリのコードと残っている回復コードを使えます。
+    </div>
+    <div th:if="${restarted}" class="alert alert-warning" role="alert" tabindex="-1" id="re-enroll-restarted">
+        登録し直しの手続きが中断されたため、新しいキーを発行しました。先ほど認証アプリに追加した項目は使えないので削除し、新しい QR コードを読み取ってください。
+    </div>
+    <p>回復コードでログインしました。認証アプリを登録し直してください。</p>
+    <p>登録し直すと、前の認証アプリのコードと、残っている回復コードは使えなくなります。</p>
+    <p><span th:text="${deadline}">2026-10-15 10:15 Asia/Tokyo（UTC+09:00）</span> までに登録してください（この画面を開いてから 15 分）。</p>
+    <h2 class="h5">1. 認証アプリで QR コードを読み取る</h2>
+    <div class="app-totp-qr" th:utext="${qrSvg}"></div>
+    <p>QR コードを使えない場合は、次のキーを認証アプリに入力してください。</p>
+    <p><code class="app-totp-key" th:attr="data-manual-key=${manualKey}" th:text="${manualKey}">ABCD EFGH IJKL MNOP</code></p>
+    <h2 class="h5">2. 表示された 6 桁のコードを入力する</h2>
+    <form th:action="@{/account/authenticator}" method="post" class="app-login-form">
+        <div class="mb-3">
+            <label for="code" class="form-label">認証コード</label>
+            <input type="text" id="code" name="code" class="form-control" autocomplete="one-time-code"
+                   inputmode="numeric" pattern="[0-9]{6}" maxlength="6" required aria-describedby="code-help">
+            <div id="code-help" class="form-text">6 桁の数字。空白は入れずに入力します。</div>
+        </div>
+        <button type="submit" class="btn btn-primary">登録する</button>
+    </form>
+    <hr>
+    <p>今は登録しない場合は、後で登録できます。このログインの間は、業務の画面の上部の案内から登録し直せます。</p>
+    <form th:action="@{/account/authenticator/later}" method="post">
+        <button type="submit" class="btn btn-outline-secondary">後で登録する</button>
+    </form>
+</main>
+</body>
+</html>

@@ -37,6 +37,8 @@ public class LoginSuccessHandler implements AuthenticationSuccessHandler {
         // 登録の途中の値は、この password の段の利用者のものとして始め直す（前の利用者の暗号文と時刻を残さない。T-102、Bolt 31b）
         session.removeAttribute(SessionLifetime.ENROLLMENT_PENDING_SECRET);
         session.removeAttribute(SessionLifetime.ENROLLMENT_STARTED_AT);
+        // 回復コードでログインした印も、前の利用者のものとして消す（別の利用者に A-08 を開かせない。T-102、Bolt 33b）
+        session.removeAttribute(SessionLifetime.RECOVERY_LOGIN_USER);
         // 登録の有無は見ない。A-02 の画面が未登録の利用者を A-07 へ送る（認証の入口から問い合わせのサービスを呼ばない。Bolt 31b）
         response.sendRedirect(request.getContextPath() + TotpAuthenticationFilter.URL);
     }

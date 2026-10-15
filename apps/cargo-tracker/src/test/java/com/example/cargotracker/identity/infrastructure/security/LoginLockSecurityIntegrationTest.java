@@ -262,7 +262,8 @@ class LoginLockSecurityIntegrationTest {
                         .cookie(loginWithPassword(byRecovery))
                         .param("recoveryCode", RECOVERY_CODE)
                         .with(csrf()))
-                .andExpect(redirectedUrl("/"));
+                // 回復コードで終えたログインは認証アプリの再登録（A-08）へ移る（Bolt 33b）
+                .andExpect(redirectedUrl("/account/authenticator"));
         assertThat(failures(byRecovery)).isZero();
     }
 

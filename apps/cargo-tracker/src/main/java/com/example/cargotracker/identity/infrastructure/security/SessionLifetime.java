@@ -48,6 +48,16 @@ public final class SessionLifetime {
      */
     public static final String RETURN_PATH_ATTRIBUTE = "cargotracker.request.returnPath";
 
+    /**
+     * 回復コードでログインした印を置く session の属性の名前（Bolt 33b、US-18 AC9）。値は印を置いた利用者の ID（{@code UUID} の文字列）。
+     * 認証の入口（回復コードが通ったとき）が置いて password の段の成功で消し、画面の層の {@code RecoveryLogin.MARK} が同じ値の定数で
+     * 読む（画面の層は infrastructure に依存できない。名前の一致はテストで守る。Bolt 33c でまとめて置き場所を直す）。
+     */
+    public static final String RECOVERY_LOGIN_USER = "cargotracker.session.recoveryLoginUser";
+
+    /** 回復コードでログインした後に移す A-08 認証アプリの再登録の URL（Bolt 33b）。 */
+    public static final String RE_ENROLL_URL = "/account/authenticator";
+
     /** 失効した session の request を移す先（A-03 再認証の案内）。 */
     public static final String EXPIRED_URL = "/session-expired";
 
