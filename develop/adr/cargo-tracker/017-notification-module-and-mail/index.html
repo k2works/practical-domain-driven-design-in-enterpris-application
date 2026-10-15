@@ -10498,7 +10498,7 @@
 <tbody>
 <tr>
 <td style="text-align: left;">ポート</td>
-<td style="text-align: left;"><code>notification.application.internal.outboundservices</code> の <code>MailSender</code>。application は <code>org.springframework.mail..</code>・<code>jakarta.mail..</code> に依存しない（<code>LayerArchitectureTest</code> の禁止に足す）</td>
+<td style="text-align: left;"><code>notification.domain.model.aggregates</code> の <code>MailSender</code>（文面の <code>PasswordResetMailTemplate</code>、送るメール <code>OutgoingMail</code> も同じ。技術のポートの前例に合わせ、Bolt 33 のステップ 2 で層の規則に当たって <code>application.internal.outboundservices</code> から移した）。application は <code>org.springframework.mail..</code>・<code>jakarta.mail..</code> に依存しない（<code>LayerArchitectureTest</code> の禁止に足す）</td>
 </tr>
 <tr>
 <td style="text-align: left;">SMTP</td>

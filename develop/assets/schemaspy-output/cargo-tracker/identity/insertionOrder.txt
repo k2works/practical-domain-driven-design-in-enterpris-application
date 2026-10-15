@@ -1,6 +1,7 @@
 company
 app_user
 login_failure
+password_reset_token
 recovery_code
 totp_credential
 user_role

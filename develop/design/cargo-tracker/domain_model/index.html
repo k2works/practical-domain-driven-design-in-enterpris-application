@@ -11576,9 +11576,15 @@
 <td style="text-align: left;">通知</td>
 </tr>
 <tr>
+<td style="text-align: left;">送るメール</td>
+<td style="text-align: left;">OutgoingMail</td>
+<td style="text-align: left;">宛先・件名・本文（テキスト）のメール 1 通。本文にリンクが入るので文字列に出さない（<code>notification.domain.model.aggregates</code>。Bolt 33）</td>
+<td style="text-align: left;">通知</td>
+</tr>
+<tr>
 <td style="text-align: left;">メールの送信</td>
 <td style="text-align: left;">MailSender</td>
-<td style="text-align: left;">宛先・件名・本文のメール 1 通を送るポート（<code>notification.application.internal.outboundservices</code>）。実装は SMTP の <code>SmtpMailSender</code> と、dev だけのログに出す <code>LoggingMailSender</code>（<code>notification.infrastructure.mail</code>。ADR-017、Bolt 33）</td>
+<td style="text-align: left;">宛先・件名・本文のメール 1 通を送るポート（<code>notification.domain.model.aggregates</code>。技術のポートの前例と同じ置き場所）。実装は SMTP の <code>SmtpMailSender</code> と、dev だけのログに出す <code>LoggingMailSender</code>（<code>notification.infrastructure.mail</code>。ADR-017、Bolt 33）</td>
 <td style="text-align: left;">通知</td>
 </tr>
 <tr>
