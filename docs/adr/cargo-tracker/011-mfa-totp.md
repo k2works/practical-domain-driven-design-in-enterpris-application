@@ -4,7 +4,7 @@ title: "ADR-011: 多要素認証は Spring Security 7 の要素の権限で組�
 description: "password の後に TOTP を求める 2 段階のログインを、Spring Security 7 の多要素認証（要素ごとの権限）で組む。"
 tags: [adr, authentication, mfa, totp]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-15T08:14:43Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-15T09:43:21Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-11T08:28:34Z }
 ---
@@ -297,7 +297,7 @@ ArchUnit で、ZXing を参照するのが暗号の部品（`identity.infrastruc
 
 ### 10. 回復コードによる TOTP の再登録（Bolt 33b）
 
-**回復コードでログインした利用者は、session に印を置いて認証アプリの再登録の画面（A-08）に導く。新しい秘密を発行し、新しいコードを確かめた時点で TOTP の秘密を置き換え、回復コード 10 個を発行し直し、監査 `TOTP_RE_ENROLLED` を書く。コミットの後に、その利用者のほかの session を失効させる（今の session は残す）。「後で登録する」で業務の画面に進め、印がある間は知らせを出す。**
+**回復コードでログインした利用者は、session に印を置いて認証アプリの再登録の画面（A-08）に導く。新しい秘密を発行し、新しいコードを確かめた時点で TOTP の秘密を置き換え、回復コード 10 個を発行し直し、監査 `TOTP_RE_ENROLLED` を書く。コミットの後に、その利用者のほかの session を失効させる（今の session は残す）。「後で登録する」で業務の画面に進め、印がある間は知らせを出す。印はログインから 15 分だけ有効にする（Bolt 33b の開発レビュー）。**
 
 ```plantuml
 @startuml
@@ -308,35 +308,38 @@ participant "A-08 の controller\n(TotpReEnrollmentController)" as C
 participant "TotpReEnrollmentService" as S
 participant "UserSessionRevoker" as R
 U -> F : POST /login/totp（recoveryCode）
-F --> U : 回復コードが通る。session の ID を変え、\n印（利用者の ID）を置いて /account/authenticator へ
-U -> C : GET /account/authenticator
-C -> S : begin（利用者、企業、途中の暗号文）
+F --> U : 回復コードが通る。session の ID を変え、\n印（利用者の ID とログインした時刻）を置いて /account/authenticator へ
+U -> C : GET /account/authenticator（印はログインから 15 分だけ有効）
+C -> S : begin（利用者、途中の暗号文）
 C --> U : QR・キー・期限（no-store）。\n途中の暗号文と開いた時刻を session に置く
 alt 後で登録する
   U -> C : POST /account/authenticator/later
   C --> U : 覚えた要求か役割のホーム（印は残る。業務の画面に知らせ）
 else 登録する
   U -> C : POST /account/authenticator（新しいコード）
-  C -> S : complete（利用者、企業、暗号文、コード、開いた時刻）
+  C -> S : complete（利用者、暗号文、コード、開いた時刻、今の session の ID）
   S -> S : 15 分とコードを確かめる。\n読んだ秘密のままなら秘密の置き換え・\n回復コード 10 個・TOTP_RE_ENROLLED（1 つのトランザクション）
   S -> R : コミットの後に revokeOthers（メールアドレス、今の session の ID）
   S --> C : 完了（回復コードの平文 10 個）
   C --> U : 新しい回復コードの保存の画面（一度だけ）。印と途中の属性を消す
+  U -> C : POST /account/authenticator/continue（「続ける」）
+  C --> U : 覚えた要求か役割のホーム
 end
 @enduml
 ```
 
 | 項目 | 方針 |
 | :--- | :--- |
-| 入口と印 | 認証の入口（`TotpAuthenticationFilter`）が `recoveryCode` の欄で回復コードの経路を選んだことを成功の扱い（`FirstTotpSuccessHandler`）に伝え、成功の扱いが session に印（属性の値は利用者の ID）を置いて `/account/authenticator` に移す（覚えた要求は消さずに残す）。認証コードの経路は今のまま。session の ID は回復コードの経路でも認証の入口の `ChangeSessionIdAuthenticationStrategy` が変えているので足さない（`RecoveryCodeLoginSecurityIntegrationTest` が確かめている）。印は再登録の完了、ログアウト（session と一緒に消える）、password の段の成功（`LoginSuccessHandler`。同じ session で別の利用者に切り替えたときに前の利用者の印を残さない）で消す。画面は印の利用者の ID が今の主体と同じときだけ印として扱う |
-| 印の属性の名前 | 認証の入口（`SessionLifetime`。`identity.infrastructure.security`）と画面の層（`identity.interfaces.web`）に同じ値の定数を置き、一致をテストで守る（前例 `SessionLifetime.ENROLLMENT_PENDING_SECRET` と `TotpEnrollmentController.PENDING_SECRET`）。画面の層は infrastructure に依存できないため。属性の名前と期間を 2 つの定数で持つ組はこれで 5 組になり、置き場所は Bolt 33c でまとめて直す |
-| A-08 の画面と認可 | `GET`・`POST /account/authenticator`、`POST /account/authenticator/later`。ログインした画面のレイアウトで、ナビゲーションの対象外。2 つの要素がそろった主体（`AuthenticatedActor`）で、役割は問わない（`anyRequest().authenticated()` の範囲で、全体の注釈が 2 つの要素を求める。password の段の主体は A-02 へ）。印がなければ役割のホームへ移す（403 にしない）。A-07（`/login/totp/enroll`。password の段）とは URL も認可も分ける |
-| 再認証と上限 | 再登録の前に password を求め直さない（回復コードを持つ本人が同じ session で続けることが前提。印は上の 3 つで消える）。15 分の上限は開いた時刻からで、再登録のサービスが判定する（2 つの要素がそろった session では `SessionLifetimeFilter` の登録の途中の上限（決定 6）が効かないため）。期限切れは置き換えず、新しいキーで示し直す |
+| 入口と印 | 認証の入口（`TotpAuthenticationFilter`）が `recoveryCode` の欄で回復コードの経路を選んだことを成功の扱い（`FirstTotpSuccessHandler`）に伝え、成功の扱いが session に印（2 つの属性。利用者の ID の `SessionLifetime.RECOVERY_LOGIN_USER` と、ログインした時刻の `SessionLifetime.RECOVERY_LOGIN_AT`）を置いて `/account/authenticator` に移す（覚えた要求は消さずに残す）。認証コードの経路は今のまま。session の ID は回復コードの経路でも認証の入口の `ChangeSessionIdAuthenticationStrategy` が変えているので足さない（`RecoveryCodeLoginSecurityIntegrationTest` が確かめている）。印は再登録の完了、ログアウト（session と一緒に消える）、password の段の成功（`LoginSuccessHandler`。同じ session で別の利用者に切り替えたときに前の利用者の印を残さない。2 つの属性をどちらも消す）で消す。画面（`RecoveryLogin.stateOf`）は印の状態を 3 つに分ける。NONE（印がない、または印の利用者の ID が今の主体と違う）、ACTIVE（印の利用者が今の主体で、ログインから 15 分未満）、EXPIRED（15 分を過ぎた）。A-08 を開けるのは ACTIVE だけ |
+| 印の期限 | 印はログインから 15 分だけ有効にする（2026-10-15 の Bolt 33b の開発レビューで human:kakimomokuri が決定）。期限がないと、「後で登録する」の後も印が session の最大 8 時間残り、session を盗んだ者や離席中の端末に触れた者が、password なしで認証アプリを登録し直せる（一時的な乗っ取りが、続く乗っ取りになる）。期限を過ぎたら（EXPIRED）A-08 の GET・POST・「後で登録する」は役割のホームへ移し、業務の画面の知らせはリンクのない案内（ログアウトして回復コードでログインし直す）に変える。印の期限はログインから数えるので、A-08 の 15 分（開いた時刻から）より先に来る。そのため、サービスの期限切れ（`Expired`）は画面からはほぼ届かない守りになる |
+| 印の属性の名前 | 認証の入口（`SessionLifetime`。`identity.infrastructure.security`）と画面の層（`identity.interfaces.web`）に同じ値の定数を置き、一致をテストで守る（前例 `SessionLifetime.ENROLLMENT_PENDING_SECRET` と `TotpEnrollmentController.PENDING_SECRET`）。画面の層は infrastructure に依存できないため。属性の名前と期間を 2 つの定数で持つ組はこれで 5 組になり（印の時刻 `RECOVERY_LOGIN_AT` と `RecoveryLogin.AT` は利用者の ID の組と同じ組に数える）、置き場所は Bolt 33c でまとめて直す。A-08 の URL（`SessionLifetime.RE_ENROLL_URL`・`TotpReEnrollmentController.URL`・テンプレートの直書き）は 6 組目で、これも 33c で直す |
+| A-08 の画面と認可 | `GET`・`POST /account/authenticator`、`POST /account/authenticator/later`、`POST /account/authenticator/continue`（新しい回復コードの画面の「続ける」。GET のフォームは action の query を捨て、覚えた要求の query が消えるので POST にし、サーバーが覚えた要求か役割のホームへ redirect する。覚えた要求を読むのは「続ける」と「後で登録する」の時で、完了の応答では消さない）。ログインした画面のレイアウトで、ナビゲーションの対象外。2 つの要素がそろった主体（`AuthenticatedActor`）で、役割は問わない（`anyRequest().authenticated()` の範囲で、全体の注釈が 2 つの要素を求める。password の段の主体は A-02 へ）。印がない・期限を過ぎていれば、GET・POST・「後で登録する」とも役割のホームへ移す（403 にしない）。期限を過ぎた途中の値（暗号文・開いた時刻）は、GET で始め直すときに捨てる。A-07（`/login/totp/enroll`。password の段）とは URL も認可も分ける |
+| 再認証と上限 | 再登録の前に password を求め直さない（回復コードを持つ本人が同じ session で、ログインの直後に続けることが前提。印は上の 3 つで消え、ログインから 15 分で使えなくなる）。15 分の上限は開いた時刻からで、再登録のサービスが判定する（2 つの要素がそろった session では `SessionLifetimeFilter` の登録の途中の上限（決定 6）が効かないため）。期限切れは置き換えず、新しいキーで示し直す |
 | 置き換えの時点 | 新しいコードを確かめた時点で置き換える（それまでは古い秘密と残りの回復コードが有効。途中でやめても前の要素で入れる）。コードの誤りは置き換えず、失敗の回数に数えない（決定 9。登録の誤りと同じ） |
 | 置き換えと発行し直し | 1 つのトランザクションで、TOTP の資格の秘密を再登録の前に読んだ秘密のままのときだけ置き換える条件付きの更新（`replace(資格, 読んだ秘密)`）で置き換え（0 件なら、ほかの画面で先に登録し直していた `Superseded` としてトランザクションを戻す。資格がないときは照合の前に利用できないとする）、回復コード 10 個を置き換え（`replaceAll`）、監査 `TOTP_RE_ENROLLED`（成功だけ。主体の利用者 ID と企業 ID）を書く。今の秘密が送られた暗号文と同じなら（二度押し）、照合の前に `Superseded` とする。同時の 2 つの完了は、後の置き換えが先の行ロックを待って 0 件になり 1 つに絞る。発行し直しと回復コードによるログインの重なりは、後の消費が消えた行の行ロックを待って 0 件になる（決定 6 の宿題。Bolt 33b の統合テストで確かめた。開発の途中で、計画の「利用者の行を占有する」から、TOTP の刻みの使用と同じ条件付きの更新に改めた） |
 | 置き換えと照合の競合 | A-02 の照合は資格を読んでから刻みを使うまでに間がある。刻みの使用（`useStep(利用者, 読んだ暗号文, 刻み)`）は、読んだ暗号文が今の行と同じで、刻みが最後に使った刻みより大きいときだけ更新する。置き換えの後は 0 件になり、古い秘密で照合を終えた要求は通らない（再利用と同じ拒否）。置き換えは最後に使った刻みを古い値と新しいコードの刻みの大きい方にし、IA-INV-10 の単調性を保つ（再登録のコードは A-02 でもう一度使えない） |
 | ほかの session | コミットの後に `UserSessionRevoker.revokeOthers(メールアドレス, 今の session の ID)` で、その利用者の今の session のほかを失効させる（Spring Session は自分のトランザクションで動くので、置き換えのトランザクションに入れない。Bolt 33a と同じ）。失敗は警告のログにとどめ、完了にする（[#49](https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/49) と同じく残りうる）。今の session は残し、session の ID も変えない（回復コードのログインで変えている）。ほかの端末は次の操作で A-03（文言に「認証アプリを登録し直したため」を足す） |
-| メールアドレスと主体の型 | 再登録のサービスは利用者の ID で `User` を読んでメールアドレスを得る（利用停止・所属企業の無効は利用できない）。主体の型（`AuthenticatedActor`。ADR-012）は変えない。初回の登録のサービスも段に中立な値 `EnrollingUser` で受け、秘密の発行と QR を A-07 と A-08 で共用する |
+| メールアドレスと主体の型 | 再登録のサービスは利用者の ID で `User` を読んでメールアドレスを得る（利用停止・所属企業の無効は利用できない）。主体の型（`AuthenticatedActor`。ADR-012）は変えない。初回の登録のサービスも段に中立な値 `EnrollingUser` で受ける。A-07 と A-08 で共用するのは、秘密の発行のポート `TotpSecretIssuer`（QR を含む表示の値を返す）と値 `EnrollingUser` で、A-08 は `TotpEnrollmentService` を呼ばない。途中の暗号文を使い続ける処理と、回復コード 10 個の発行の重複は Bolt 33c で寄せる |
 | 新しい回復コード | 平文は完了の応答で一度だけ示す（PRG にしない。`Cache-Control: no-store`。A-07 の回復コードの保存の画面と同じ形）。再読み込みは印がないので役割のホームへ移し、もう示さない |
 | 監査 | 成功だけ（`TOTP_RE_ENROLLED`）。失敗の試行の監査は書かない（#49 と同じ扱い） |
 | 送るもの | 本人へのメールの通知、管理者の別経路の解除、残りの回復コードが少ないときの案内は [#47](https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/47)（W6）に送る。残りの数の案内の代わりに、印の知らせで再登録を促す |
@@ -345,7 +348,7 @@ end
 
 - 「後で登録する」を選んでログアウトすると印は消え、次のログインでも認証アプリがなければ回復コードを使う（また A-08 に導く）。回復コードを使い切る前に登録し直すことはマニュアルで補い、残りの数の案内は #47 で作る。
 - 認証コードでログインした利用者は再登録できない（機種を変えるときも回復コードでログインする）。設定の画面は作らない。
-- 再登録の前に password を求め直さないので、password と回復コードの両方を知る者は、ログインしてそのまま認証アプリを登録し直せる。その者は再登録しなくてもログインできるので、再登録で得るのは持続だけで、それは監査 `TOTP_RE_ENROLLED` と本人への通知（#47）で見つける。
+- 再登録の前に password を求め直さないので、password と回復コードの両方を知る者は、ログインしてそのまま認証アプリを登録し直せる。その者は再登録しなくてもログインできるので、再登録で得るのは持続だけで、それは監査 `TOTP_RE_ENROLLED` と本人への通知（#47）で見つける。この受け入れは、印がログインから 15 分だけ有効であることを前提にする（印が session の間ずっと残ると、session を盗んだ者や離席中の端末に触れた者も、password なしで登録し直せてしまう。2026-10-15 の開発レビューで human:kakimomokuri が決定）。
 
 ### 代替案
 
@@ -375,7 +378,7 @@ end
 - 要素の権限の発行時刻（`FactorGrantedAuthority` の `issuedAt`）はシステムの時計で決まり、アプリケーションの `Clock` で動かせない。時刻に頼る判定（最長 8 時間）は、session に残す自分の時刻で行う。
 - 再利用の拒否・失敗の回数・ロック・回復コードの記録が、複数のアプリケーションの実行環境で共有される必要がある（本体では表）。
 - 初回の登録では、未登録の利用者の password を知った者が本人より先に認証アプリを登録できる（決定 6 で受け入れたリスク）。
-- 回復コードでログインした印は session にあり、「後で登録する」の後にログアウトすると消える。残りの回復コードの数は示さない（#47。決定 10 で受け入れた）。
+- 回復コードでログインした印は session にあり、「後で登録する」の後にログアウトすると消え、ログインから 15 分で使えなくなる（登録し直すには回復コードでログインし直す）。残りの回復コードの数は示さない（#47。決定 10 で受け入れた）。
 
 ### US-18 の Bolt で要るもの
 
@@ -430,6 +433,7 @@ Bolt 33b で解いたもの（決定 10 に移した）: TOTP の再登録（SEC
 
 ## 改訂の経緯
 
+- 2026-10-15: Bolt 33b の開発レビューで、決定 10 に印の期限（ログインから 15 分。状態 NONE・ACTIVE・EXPIRED。期限を過ぎたら A-08 は役割のホーム、知らせはリンクのない案内）、印の 2 つの属性、「続ける」を POST（`/account/authenticator/continue`）にしたこと、A-08 の URL を 33c で直す 6 組目に数えることを足した。共用の文を事実（ポート `TotpSecretIssuer` と値 `EnrollingUser`。A-08 は `TotpEnrollmentService` を呼ばない）に直し、受け入れること（再認証なし）の前提に印の期限を書いた（印の期限は human:kakimomokuri が決定）。
 - 2026-10-15: Bolt 33b のステップ 1 で、回復コードによる TOTP の再登録（決定 10。印と A-08、置き換えの時点、置き換えと発行し直しのトランザクション、刻みの使用の秘密の一致の条件と大きい方の刻み、コミットの後のほかの session の失効、メールアドレスはサービスが読む、#47 に送るもの、受け入れること）を足し、ステータスに 33b の開始準備の決定を書いた。決定 6 の発行し直しの競合と決定 7 の末尾の宿題を決定 10 に結び、残りが少ないときの案内は #47 に送ると書いた。代替案に 3 つ、ネガティブに 1 つ足し、「未確認の項目」の TOTP の再登録を解いた側へ移した（Bolt 33b の開始準備の決定 1・2。human:kakimomokuri が決定）。
 - 2026-10-15: Bolt 33a のステップ 1 で、「未確認の項目」に Bolt 33a で解いたもの（A-06 の設定、password の要素を与えないこと、ロックを再設定で解かないこと、完了の後の session の失効）を書いた（Bolt 33a の開始準備の決定 1・2。human:kakimomokuri が決定）。
 - 2026-10-15: Bolt 33 の計画の承認で、代替案の「password の要素だけで入れる例外」から A-06 を外し（A-06 は password の要素を与えず、設定したら A-01 に戻してログインし直す）、「未確認の項目」の password の再設定（SEC-08）の流れを解いた側へ移した。TOTP の再登録（SEC-10）は Bolt 33b のまま残した（human:kakimomokuri が決定。[ADR-017](017-notification-module-and-mail.md)）。
