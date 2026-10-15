@@ -4,7 +4,7 @@ title: "ADR-011: 多要素認証は Spring Security 7 の要素の権限で組�
 description: "password の後に TOTP を求める 2 段階のログインを、Spring Security 7 の多要素認証（要素ごとの権限）で組む。"
 tags: [adr, authentication, mfa, totp]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-15T01:13:15Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-15T04:05:17Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-11T08:28:34Z }
 ---
@@ -333,6 +333,8 @@ Bolt 31b で解いたもの（決定 6 に移した）: 登録の QR の描き�
 
 Bolt 33 で解いたもの: password の再設定（SEC-08）の流れ。A-01 の「password を忘れた場合」から A-05 で依頼し、登録された有効な利用者にだけ 1 回だけ使える 30 分のリンクを送る（登録の有無を示さない。依頼の応答から切り離したイベントのハンドラーでトークンを発行して送る。[ADR-017](017-notification-module-and-mail.md)）。リンクを開く A-06（Bolt 33a）は password の要素を与えず、設定したら A-01 に戻し、新しい password と TOTP でログインし直す（再設定の後も TOTP を求める。SEC-08）。
 
+Bolt 33a で解いたもの: A-06 の設定。リンクを開くとトークンを確かめて session にトークンの ID だけを置き、トークンのない URL（`/password-reset/new`）の A-06 へ移す。A-06 で新しい password（SEC-04・SEC-05）を設定すると、今の認証と session を捨てて新しい session を作り、A-01 に完了の知らせを出す。A-06 は password の要素を与えない（Bolt 33 の決定のまま）。利用者は A-01 から新しい password と TOTP（または回復コード）でログインし直し、多要素を回復の手順でも迂回させない。ロックと失敗の数は変えない（決定 9 のロックを再設定で解かない。SEC-02）。完了のコミットの後に、その利用者の session をすべて失効させる（[ADR-012](012-authentication-principal-and-session.md) の決定 3）。
+
 - java-otp の生成器のスレッドセーフ（スパイクは照合を `synchronized` の中で行う）。
 - 最長 8 時間を即時失効（BR-14）と同じ経路にできるか（Bolt 32c で見た。同じ経路にはしない。8 時間・5 分は `SessionLifetimeFilter` が DB を読まずに判定し、利用停止などの即時の失効はその直後の `SessionRevalidationFilter` が DB を読んで判定する。どちらも A-03 に送る。ADR-012 の見直しの 3）。
 - 同じ利用者の同時のログインと、同じコードの同時の送信（1 つだけ通ること）。学習テストは MockMvc だけ。
@@ -364,6 +366,7 @@ Bolt 33 で解いたもの: password の再設定（SEC-08）の流れ。A-01 �
 
 ## 改訂の経緯
 
+- 2026-10-15: Bolt 33a のステップ 1 で、「未確認の項目」に Bolt 33a で解いたもの（A-06 の設定、password の要素を与えないこと、ロックを再設定で解かないこと、完了の後の session の失効）を書いた（Bolt 33a の開始準備の決定 1・2。human:kakimomokuri が決定）。
 - 2026-10-15: Bolt 33 の計画の承認で、代替案の「password の要素だけで入れる例外」から A-06 を外し（A-06 は password の要素を与えず、設定したら A-01 に戻してログインし直す）、「未確認の項目」の password の再設定（SEC-08）の流れを解いた側へ移した。TOTP の再登録（SEC-10）は Bolt 33b のまま残した（human:kakimomokuri が決定。[ADR-017](017-notification-module-and-mail.md)）。
 - 2026-10-14: Bolt 32b のステップ 1 で、決定 2 の表の無操作 30 分の行を、本体の設定 `spring.session.timeout` と Bolt 14 で確かめたこと（ADR-012）に合わせて直した。
 - 2026-10-14: Bolt 32d の計画の承認で、決定 1 の Base32 の復号が、不正な長さ・余りのビットが 0 でない最後の文字・データの長さに合わない数の埋め草を失敗へ倒すことを書いた（human:kakimomokuri が決定。埋め草の数は開発レビューで厳しくした）。

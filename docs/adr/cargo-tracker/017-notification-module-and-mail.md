@@ -4,7 +4,7 @@ title: "ADR-017: 通知モジュールを新設し、メールは公開 API で�
 description: "通知モジュールを最小に新設し、メールの送信を公開 API（notification.interfaces.api の PasswordResetMail）で受けて SMTP で送る決定。identity は依頼の応答から切り離した @ApplicationModuleListener のハンドラーで再設定のトークンを発行し、ACL から同期で呼ぶ。通知は identity に依存しない。dev はログに出す送信、統合テストは Mailpit、SES の SMTP は W10。"
 tags: [adr, architecture, notification, mail]
 status: draft
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-15T02:38:56Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-15T04:05:17Z }
 ---
 
 # ADR-017: 通知モジュールを新設し、メールは公開 API で受けて SMTP で送る
@@ -82,6 +82,8 @@ generated: { by: anthropic/claude-opus-5-5, at: 2026-10-15T02:38:56Z }
 
 Bolt 33a まで、仮の A-06 を公開する（2026-10-15、human:kakimomokuri が決定）。`GET /password-reset/{トークン}` を公開の URL にし、トークンを読まず session に覚えず、「準備中」の画面だけを返す（応答に `Referrer-Policy: no-referrer`）。公開の URL は `/password-reset` と `/password-reset/*`。33a で本物の A-06 に置き換える。届いたリンクが「見つからない」画面にならず、トークンがリンク先の Referer に漏れない。
 
+Bolt 33a で置き換える（2026-10-15、Bolt 33a の開始準備の決定 1）。`GET /password-reset/{トークン}` はトークンを確かめて session にトークンの ID だけを置き、トークンのない `/password-reset/new`（A-06）へ PRG で移す。使えないリンクは理由によらず同じ案内にする。どちらの応答にも `Referrer-Policy: no-referrer` を付ける。仮の A-06 のテンプレートは消す。公開の URL は `/password-reset` と `/password-reset/*` のまま（[ADR-012](012-authentication-principal-and-session.md) の決定 2）。リンクの path は `PasswordResetController` の定数に寄せる（Bolt 33 の既知の課題の「リンクの path の 2 か所」）。
+
 ### 代替案
 
 | 案 | 採らない理由 |
@@ -124,6 +126,10 @@ W9 の開始準備で、宛先のモデルを決める。利用者でない宛�
 - `LayerArchitectureTest` に、application が `org.springframework.mail..`・`jakarta.mail..` に依存しない規則を足す。`PublicApiArchitectureTest` で公開 API の形を確かめる。identity の合成ルートの `@Bean` の戻り値は AT-07 の範囲に収める。
 - 統合テストで、Mailpit にメールが届くこと、登録あり・なし・止められた利用者で応答が同じこと、送信アダプターを遅くしても応答が待たないこと、発行記録の JSON・トークンの表・ログにトークンも URL もないこと、同じ依頼の ID の再配信で 2 通送らないこと、ロールバックしたらハンドラーが呼ばれないことを確かめる。
 - dev の守りの式が外れたとき（dev と staging・prod の併用、staging・prod で SMTP の設定がない）に起動が止まることを、本体のテストで守る。
+
+## 改訂の経緯
+
+- 2026-10-15: Bolt 33a のステップ 1 で、決定 6 に仮の A-06 を本物の A-06 に置き換えること（リンクを開くとトークンの ID だけを session に移して PRG、使えないリンクは同じ案内、仮のテンプレートを消す、リンクの path を定数に寄せる）を書いた（Bolt 33a の開始準備の決定 1。human:kakimomokuri が決定）。
 
 ## 関連ドキュメント
 

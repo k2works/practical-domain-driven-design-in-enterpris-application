@@ -4,7 +4,7 @@ title: "cargo-tracker ユーザーストーリー"
 description: "cargo-tracker MVP の価値単位のユーザーストーリー、受入条件、上流要件へのトレーサビリティ。"
 tags: [requirements, user-story]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-15T01:13:15Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-15T04:05:17Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T05:20:11Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:01:39Z }
@@ -523,6 +523,13 @@ Bolt 33 の開始準備の決定（2026-10-15、human:kakimomokuri。[Bolt 33 �
 - AC8 を 2 つの Bolt に分ける。Bolt 33 は依頼から送信まで（A-01 の「password を忘れた場合」から A-05 で登録メールアドレスを送ると、登録された有効な利用者にだけ 1 回だけ使える 30 分の再設定のリンクが届く。登録の有無を示さない。依頼を監査に `PASSWORD_RESET_REQUESTED` で記録する）。Bolt 33a は設定（リンクから A-06 で新しい password を設定する。再設定の記録の監査は 33a）。
 - AC8 の「再設定後も TOTP の提示が必要」は、A-06 が password の要素を与えず、設定したら A-01 に戻して新しい password と TOTP でログインし直すことで満たす（Bolt 33a で作る）。
 - メールは新しい通知のモジュールの公開 API で送り、送信の記録（本文とリンクは保存しない）を通知に残す。dev はメールをログに出す。
+
+Bolt 33a の開始準備の決定（2026-10-15、human:kakimomokuri。[Bolt 33a 計画](../../development/cargo-tracker/bolt_33a_plan.md) の開始準備の決定 1・2）:
+
+- AC8 の「1 回だけ使える期限付きの再設定リンク」は、リンクを開くとトークンを確かめて session にトークンの ID だけを移し、トークンのない URL の A-06 で新しい password を設定させ、トークンを 1 回だけ使うことで満たす。期限切れ・使用済み・新しいリンクを送った後・存在しないリンクは、どれも同じ案内で依頼し直しを促す。
+- 新しい password は 12〜64 文字（UTF-8 で 72 バイト以下）で、よく使われる password の一覧に載っていないもの（SEC-04・SEC-05）。漏えい済みの password の照合は W10（#49）。
+- AC8 の「再設定後も TOTP の提示が必要」は、設定の後に今の session を作り直して A-01 に完了の知らせを出し、新しい password と TOTP でログインし直させることで満たす。完了のコミットの後に、その利用者のほかの session をすべて失効させる（ほかの端末は次の操作で再認証の案内）。ロックと失敗の数は変えない（SEC-02）。
+- AC8 の「再設定が監査証跡へ記録される」は、依頼（`PASSWORD_RESET_REQUESTED`。Bolt 33）と完了（`PASSWORD_RESET_COMPLETED`。成功だけ）で満たす。
 
 ### US-19 荷受人の参照許可を管理する
 
