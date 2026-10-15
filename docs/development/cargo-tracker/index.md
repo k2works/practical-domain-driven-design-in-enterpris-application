@@ -76,7 +76,7 @@ Bolt がイテレーションに当たります。ふりかえりは各 Bolt の
 | 32f | [失効の時の入力の保持（ACC-06）](bolt_32f_plan.md) | [終了報告](bolt_32f_report.md)（[動画](../../assets/demo/bolt-32f/restore.webm){:target="_blank"}） | W5 | 完了 |
 | 33 | [通知モジュールの新設と password の再設定の依頼（US-18 AC8 の前半）](bolt_33_plan.md) | [終了報告](bolt_33_report.md) | W5 | 完了 |
 | 33a | [password の再設定（A-06。US-18 AC8 の後半）](bolt_33a_plan.md) | [終了報告](bolt_33a_report.md) | W5 | 完了 |
-| 33b | [回復コードによる TOTP の再登録（US-18 AC9）と #13 のクローズ](bolt_33b_plan.md) | [終了報告](bolt_33b_report.md) | W5 | 完了（承認待ち） |
+| 33b | [回復コードによる TOTP の再登録（US-18 AC9）と #13 のクローズ](bolt_33b_plan.md) | [終了報告](bolt_33b_report.md) | W5 | 完了 |
 
 Bolt を始めるときに行を追加します。
 

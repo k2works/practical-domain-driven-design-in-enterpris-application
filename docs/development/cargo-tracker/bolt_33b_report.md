@@ -3,7 +3,9 @@ type: Plan
 title: "Bolt 33b 終了報告 - 回復コードによる TOTP の再登録（US-18 AC9）と #13 のクローズ"
 description: "W5 の 17 本目の Bolt の終了報告。回復コードでログインしたら session に印を付けて A-08 認証アプリの再登録へ導き、新しいコードを確かめてから TOTP の秘密を置き換え（読んだ秘密のままのときだけの条件付きの更新）、回復コード 10 個を発行し直し、監査を残し、確定の後にほかの session を失効させるようにした。古い秘密で照合した要求と古い回復コードは置き換えの後に通らない。開発レビューで印に 15 分の期限を付け、覚えた要求の query を保つ形に直した。マニュアル 2.1 を 2 段階のログインに書き直し、#13 のクローズを終了報告の承認の後に行う。"
 tags: [plan]
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-15T10:04:06Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-15T10:28:16Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-10-15T10:28:17Z }
 ---
 
 # Bolt 33b 終了報告 - 回復コードによる TOTP の再登録（US-18 AC9）と #13 のクローズ
@@ -29,8 +31,8 @@ generated: { by: anthropic/claude-opus-5-5, at: 2026-10-15T10:04:06Z }
 | Bolt | 第 33b 回（W5 の 17 本目。US-18 の残りの 14 本目、最後） |
 | 期間 | 2026-10-15 16:44（計画の承認の記録 `363a0965f`）〜 19:30 頃 |
 | 対象 | `identity`（TOTP の資格の置き換えと刻みの使用の秘密の条件、`EnrollingUser`、再登録のサービス、ほかの session の失効、回復コードでログインした印、A-08、業務の画面の知らせ、A-03 の文言、監査の種類）、設計文書（ui_design・domain_model・data_model・non_functional・architecture_backend・test_strategy・user_story・release_plan）、ADR-011・012、ユーザーマニュアル（2.1・2.4・2.6・2.7・付録 B・用語集） |
-| SP | 表の 33b の行は 2。#13 のクローズで US-18 の残りの SP 6 を数える（承認の後） |
-| GitHub | [#13](https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/13)（承認の後にクローズ）。#47・#49 にコメントした |
+| SP | 表の 33b の行は 2。#13 のクローズで US-18 の残りの SP 6 を数えた |
+| GitHub | [#13](https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/13)（終了報告の承認の後に、デモの動画を添付してクローズした）。#47・#49 にコメントした |
 | 計画 | [Bolt 33b 計画](bolt_33b_plan.md) |
 
 ## 成果
@@ -52,7 +54,7 @@ generated: { by: anthropic/claude-opus-5-5, at: 2026-10-15T10:04:06Z }
 | :--- | :--- |
 | テスト | `check` 2229 件、失敗 0（33a の終わりは 2183 件）。`uiTest` 244 件、失敗 0（新しいシナリオ 2、31c のシナリオを A-08 を経る形に直した） |
 | 承認ゲートの通過 | 計画は人が承認した。ステップ 1〜6 は止めずに進め、開発レビューの 1 つの判断（印の期限）を人に諮った |
-| 人の変更依頼 | 0（この報告の承認の前） |
+| 人の変更依頼 | 0 |
 | リードタイム | 約 2 時間 45 分（計画の承認 16:44 から）。計画の目安 5.6 時間の内 |
 | 変異の確かめ | 2 つ（議題 1） |
 
@@ -142,6 +144,7 @@ Bolt 33c（W5 の続き）。振る舞いの変わらない直し（属性の名
 
 | 日付 | 更新内容 | 更新者 |
 | :--- | :--- | :--- |
+| 2026-10-15 | 終了報告を承認した（議題 1〜7。議題 2 の置き換えの仕組みの変更を事後に承認）。デモの動画を #13 に添付し、#13 をクローズして US-18 の残りの SP 6 を数えた。添付の対応表に bolt-33b を足した | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-10-15 | 初版作成（承認待ち） | anthropic/claude-opus-5-5 |
 
 ## 関連ドキュメント
