@@ -10,13 +10,14 @@ import java.nio.charset.StandardCharsets;
 import java.util.HashSet;
 import java.util.Locale;
 import java.util.Set;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
 
 /**
  * よく使われる password の一覧の実装（Bolt 33a、SEC-05）。同梱の一覧（{@code classpath:security/common-passwords.txt}。出典と抜き出し方は
- * 同じ置き場所の NOTICE）を起動のときに読み、小文字の集合にして照合する。読めない・空のときは起動を止める（照合を黙って空にしない）。
+ * 同じ置き場所の NOTICE）を起動のときに読み、小文字の集合にして、前後の空白を除いて照合する。読めない・空のときは起動を止める（照合を黙って空にしない）。
  */
 @Component
 public final class BundledCommonPasswordList implements CommonPasswordList {
@@ -26,6 +27,7 @@ public final class BundledCommonPasswordList implements CommonPasswordList {
 
     private final Set<String> passwords;
 
+    @Autowired
     public BundledCommonPasswordList() {
         this(new ClassPathResource(LOCATION));
     }
@@ -55,7 +57,8 @@ public final class BundledCommonPasswordList implements CommonPasswordList {
 
     @Override
     public boolean contains(String password) {
-        return password != null && passwords.contains(password.toLowerCase(Locale.ROOT));
+        // 一覧の語の前後に空白を足すだけで照合を抜けないように、前後の空白を除いて比べる（Bolt 33a の開発レビュー）
+        return password != null && passwords.contains(password.strip().toLowerCase(Locale.ROOT));
     }
 
     /** 一覧の語数（確かめ用）。 */

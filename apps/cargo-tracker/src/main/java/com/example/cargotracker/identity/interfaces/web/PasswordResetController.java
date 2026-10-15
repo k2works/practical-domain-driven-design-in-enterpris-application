@@ -26,7 +26,7 @@ import org.springframework.web.bind.annotation.RequestParam;
  *
  * <p>A-05 は入力の形の誤り（空・形式）だけを示し、それ以外は登録の有無にかかわらず A-01 に戻して同じ知らせを出す（PRG。登録の有無を示さない）。
  *
- * <p>A-06: メールのリンク（この URL + / + トークン）を開くと、トークンを確かめて session にトークンの ID だけを置き、トークンのない URL
+ * <p>A-06: メールのリンク（この URL + / + トークン）を開くと、トークンを確かめて session にトークンの ID だけを置き（session の ID は変える）、トークンのない URL
  * （{@code /password-reset/new}）へ移す（PRG。トークンを以後の URL・Referer・session に残さない）。設定に成功したら、今のブラウザの認証と
  * session を捨てて新しい session で A-01 に移す（ログイン中のブラウザでも知らせが出る。ほかの端末の session はサービスが確定の後に消す）。
  * 使えないリンクは、どの理由でも同じ案内にする。2 つの欄に入れた値は応答に書き戻さない。
@@ -96,6 +96,8 @@ public class PasswordResetController {
             return INVALID_VIEW;
         }
         request.getSession().setAttribute(PasswordResetSession.TOKEN_ID, tokenId.get());
+        // password を設定できる session になるので、ログインと同じく session の ID を変える（session 固定化を防ぐ。Bolt 33a の開発レビュー）
+        request.changeSessionId();
         return REDIRECT + NEW_URL;
     }
 

@@ -22,16 +22,18 @@ import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.transaction.support.TransactionTemplate;
 
 /**
  * 再設定の完了のサービス。password の再設定のリンクの確かめと A-06 の設定（Bolt 33a、US-18 AC8、SEC-04・SEC-05・SEC-08、IA-INV-12）。リンクのトークンを確かめ（{@link #open}・
  * {@link #isUsable}）、A-06 で新しい password を設定する（{@link #complete}）。
  *
- * <p>設定は、方針を確かめてから（誤りではトークンを使わない）、1 つのトランザクションで、トークンを条件付きで使い、password を変え、同じ利用者の
+ * <p>設定は、リンクがまだ使えるかと方針を確かめてから（使えなければ方針より先に無効とし、方針の誤りではトークンを使わない）、1 つのトランザクションで、トークンを条件付きで使い、password を変え、同じ利用者の
  * 未使用のトークンを無効にし、監査を書く。利用停止・企業の無効は、どれかを示さずに無効とする。確定の後に、その利用者の session をすべて
  * 失効させる（Spring Session は自分のトランザクションで動くため。消せなくても password は変わっているので、警告のログにとどめる）。
- * ロックと失敗の数は変えない（SEC-02）。トークンの値はログに出さない。
+ * ロックと失敗の数は変えない（SEC-02）。トークンの値はログに出さない。外側のトランザクションの中では呼べない（参加すると、外側の
+ * 確定の前に session を消してしまう。ADR-012）。
  */
 @Service
 public class PasswordResetCompletionService {
@@ -104,22 +106,29 @@ public class PasswordResetCompletionService {
      * @param newPassword 新しい password（確認の欄との一致は画面が確かめる）
      */
     public PasswordResetCompletion complete(UUID tokenId, String newPassword) {
+        if (TransactionSynchronizationManager.isActualTransactionActive()) {
+            throw new IllegalStateException("password の再設定の完了は外側のトランザクションの中では呼べない（確定の後に session を失効させるため）");
+        }
+        if (!isUsable(tokenId)) {
+            return new PasswordResetCompletion.Invalid();
+        }
         Optional<PasswordPolicyViolation> violation =
                 policy.violation(newPassword, commonPasswords.contains(newPassword));
         if (violation.isPresent()) {
             return new PasswordResetCompletion.PolicyViolated(violation.get());
         }
-        Optional<EmailAddress> changed = Optional.ofNullable(transactionTemplate.execute(status -> {
+        // 使えなければ null（ロールバックする）
+        EmailAddress changed = transactionTemplate.execute(status -> {
             Optional<EmailAddress> result = changePassword(tokenId, newPassword);
             if (result.isEmpty()) {
                 status.setRollbackOnly();
             }
             return result.orElse(null);
-        }));
-        if (changed.isEmpty()) {
+        });
+        if (changed == null) {
             return new PasswordResetCompletion.Invalid();
         }
-        revokeSessions(tokenId, changed.get());
+        revokeSessions(tokenId, changed);
         return new PasswordResetCompletion.Completed();
     }
 

@@ -7,7 +7,7 @@ import com.example.cargotracker.shared.annotation.ddd.ValueObject;
  */
 @ValueObject
 public enum PasswordPolicyViolation {
-    /** 12 文字より短い。 */
+    /** 12 文字より短い（空を含む）。 */
     TOO_SHORT,
     /** 64 文字より長い。 */
     TOO_LONG,

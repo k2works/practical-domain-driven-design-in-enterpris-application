@@ -1359,6 +1359,15 @@ class AuthenticationSecurityIntegrationTest {
                 sessionIdOf(session));
         assertThat(attributes).as("session に属性がある（空振りしない）").isPositive();
         assertThat(jdbc.queryForObject(
+                        "SELECT count(*) FROM platform.spring_session_attributes a JOIN platform.spring_session s"
+                                + " ON s.primary_id = a.session_primary_id WHERE s.session_id = ?"
+                                + " AND encode(a.attribute_bytes, 'escape') LIKE ?",
+                        Integer.class,
+                        sessionIdOf(session),
+                        "%UUID%"))
+                .as("同じ照合でトークンの ID の属性を見つけられる（陽性の対照）")
+                .isPositive();
+        assertThat(jdbc.queryForObject(
                         "SELECT count(*) FROM platform.spring_session_attributes"
                                 + " WHERE encode(attribute_bytes, 'escape') LIKE ?",
                         Integer.class,
@@ -1427,6 +1436,13 @@ class AuthenticationSecurityIntegrationTest {
                                 org.hamcrest.Matchers.containsString("value=\"password1234\""))));
         mvc.perform(setPassword(session, "short", "short"))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("12 文字以上の password を入力してください。")));
+        mvc.perform(setPassword(session, "a".repeat(65), "a".repeat(65)))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("64 文字までの password を入力してください。")));
+        mvc.perform(setPassword(session, "あ".repeat(25), "あ".repeat(25)))
+                .andExpect(content()
+                        .string(org.hamcrest.Matchers.containsString(
+                                "全角の文字を含めると長すぎます。全角の文字（かな・漢字など）は 1 文字を 3 文字分として数え、合わせて 72 文字分までの"
+                                        + " password を入力してください。")));
 
         mvc.perform(setPassword(session, NEW_PASSWORD, NEW_PASSWORD)).andExpect(redirectedUrl(COMPLETED_URL));
     }
@@ -1474,6 +1490,9 @@ class AuthenticationSecurityIntegrationTest {
         Cookie passwordStage = loginWithPassword(midLogin);
         String token = issueResetToken(midLogin);
         Cookie session = openResetLink(token, passwordStage);
+        assertThat(session.getValue())
+                .as("トークンの ID を置くときに session の ID を変える（session 固定化を防ぐ）")
+                .isNotEqualTo(passwordStage.getValue());
         assertNoTokenInSessions(token);
         mvc.perform(setPassword(session, NEW_PASSWORD, NEW_PASSWORD)).andExpect(redirectedUrl(COMPLETED_URL));
 
@@ -1492,6 +1511,39 @@ class AuthenticationSecurityIntegrationTest {
         assertThat(renewed.getValue()).as("失効した Cookie を使い続けていない").isNotEqualTo(stale.getValue());
         assertNoTokenInSessions(staleToken);
         mvc.perform(setPassword(renewed, NEW_PASSWORD, NEW_PASSWORD)).andExpect(redirectedUrl(COMPLETED_URL));
+    }
+
+    @Test
+    void 未認証のsessionでリンクを開いてもsessionのIDを変える() throws Exception {
+        String email = shipper(UserStatus.ACTIVE);
+        Cookie first = openResetLink(issueResetToken(email), null);
+
+        Cookie second = openResetLink(issueResetToken(email), first);
+
+        assertThat(second.getValue()).isNotEqualTo(first.getValue());
+    }
+
+    @Test
+    void トークンの後ろに段を足したURLは公開しない() throws Exception {
+        String token = issueResetToken(shipper(UserStatus.ACTIVE));
+
+        mvc.perform(get(RESET_URL + "/" + token + "/x")).andExpect(redirectedUrl("/login"));
+    }
+
+    @Test
+    void 古いpasswordで認証コードの画面にいたほかの端末は再設定の後にログインを終えられない() throws Exception {
+        String email = shipper(UserStatus.ACTIVE);
+        Cookie otherDevice = loginWithPassword(email);
+        Cookie session = openResetLink(issueResetToken(email), null);
+        mvc.perform(setPassword(session, NEW_PASSWORD, NEW_PASSWORD)).andExpect(redirectedUrl(COMPLETED_URL));
+
+        resetTotpStep(email);
+        // password の段の session も失効していて、認証コードを送ってもログインの画面に戻る
+        mvc.perform(post(TOTP_URL)
+                        .cookie(otherDevice)
+                        .param("code", currentCode(email))
+                        .with(csrf()))
+                .andExpect(redirectedUrl("/login"));
     }
 
     @Test

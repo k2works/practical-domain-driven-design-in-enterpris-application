@@ -26,13 +26,23 @@ class PasswordCredentialsTest {
     }
 
     @Test
-    void 同梱の一覧は12文字以上だけを持つ() throws Exception {
+    void 同梱の一覧は方針の長さに合う語だけを持つ() throws Exception {
         String content =
                 new ClassPathResource(BundledCommonPasswordList.LOCATION).getContentAsString(StandardCharsets.UTF_8);
 
-        assertThat(content.lines())
-                .allSatisfy(line ->
-                        assertThat(line.codePointCount(0, line.length())).isBetween(12, 64));
+        assertThat(content.lines().toList()).isNotEmpty().allSatisfy(line -> {
+            assertThat(line.codePointCount(0, line.length())).isBetween(12, 64);
+            assertThat(line.getBytes(StandardCharsets.UTF_8)).hasSizeLessThanOrEqualTo(72);
+        });
+    }
+
+    @Test
+    void 前後に空白を足した一覧の語も一覧にあるとする() {
+        BundledCommonPasswordList list =
+                new BundledCommonPasswordList(new ByteArrayResource("password1234\n".getBytes(StandardCharsets.UTF_8)));
+
+        assertThat(list.contains(" password1234 ")).isTrue();
+        assertThat(list.contains("password 1234")).isFalse();
     }
 
     @Test

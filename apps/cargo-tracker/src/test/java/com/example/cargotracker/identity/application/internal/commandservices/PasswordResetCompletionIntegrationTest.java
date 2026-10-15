@@ -198,7 +198,7 @@ class PasswordResetCompletionIntegrationTest {
     }
 
     @Test
-    void 同じトークンの同時の2つの設定は後が先を待ち1回だけ変える() {
+    void 先にトークンを使った設定があると後の設定はトークンの行で待って無効になる() {
         UserId user = newUser();
         UUID tokenId = opened(issue(user, NOW.minusSeconds(60)));
 

@@ -51,11 +51,4 @@ class PasswordPolicyTest {
     void 長さの誤りはよく使われるかより先に示す() {
         assertThat(policy.violation("short", true)).contains(PasswordPolicyViolation.TOO_SHORT);
     }
-
-    @Test
-    void 画面の文言に使う定数は方針と同じ値() {
-        assertThat(PasswordPolicy.MIN_LENGTH).isEqualTo(12);
-        assertThat(PasswordPolicy.MAX_LENGTH).isEqualTo(64);
-        assertThat(PasswordPolicy.MAX_BYTES).isEqualTo(72);
-    }
 }
