@@ -4,7 +4,7 @@ title: "リリース計画 - cargo-tracker（A 社国際貨物輸送管理シス
 description: "cargo-tracker MVP のリリース計画。1 人 + AI、時間単位の Bolt（= イテレーション）と週次の見直しで、最初の縦の流れ（R0.1）、パイロット準備完了（R1.0）、本格展開前（R1.1）の 3 段階、Unit のエントロピー評価、SP、バッファ、パイロット開始の条件、引継ぎ ID の台帳、業務責任者に確かめる事項の台帳。"
 tags: [development,release-plan]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-15T12:41:19Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-15T21:27:01Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T09:29:53Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:38:26Z }
@@ -961,3 +961,4 @@ xychart-beta
 | 2026-10-15 | Bolt 33c の開発レビュー: 33d の行に、期限の境界の判定の寄せ方と、テンプレートに直書きした期間の数値を足した | anthropic/claude-opus-5-5 |
 | 2026-10-15 | Bolt 33c を終え、終了報告を作った（承認待ち）。覚えた要求は Bean にせず属性の名前だけを共有した（決定 7、human:kakimomokuri）。次は Bolt 33d | anthropic/claude-opus-5-5 |
 | 2026-10-15 | Bolt 33c の終了報告の承認を記録した。次は Bolt 33d | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
+| 2026-10-16 | Bolt 33d の開始準備: 33d（TOTP の定数、QR の SVG の分離、回復コードの形と `normalize` の型、A-07 と A-08 の重複）と 33e（認証の結果に経路、session の ID の値オブジェクト、期限の境界の判定、テンプレートの期間の数値、33c の議題 4 (b)）に分けた。[Bolt 33d 計画](bolt_33d_plan.md)（承認待ち）。33d の行の書き換えと 33e の行の追加（W5 は 22 本）はステップ 1 で行う | anthropic/claude-opus-5-5 |
