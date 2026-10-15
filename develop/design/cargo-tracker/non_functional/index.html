@@ -11159,7 +11159,7 @@
 <tr>
 <td style="text-align: left;">SEC-08</td>
 <td style="text-align: left;">password の回復</td>
-<td style="text-align: left;">登録メールアドレスへ 1 回だけ使える再設定リンク（30 分有効）を送る。再設定後も TOTP は必要。再設定は監査記録に残す。Bolt 33 で依頼までを作る（A-06 は Bolt 33a）: トークンは 32 バイトの乱数（URL 安全な Base64）で、表には SHA-256 のハッシュだけを置き、平文は表・発行記録・ログに残さない。発行から 30 分で使えなくなり、1 回だけ使える。同じ利用者に新しく発行すると前の未使用のトークンは使えなくなる。同じ利用者への前の発行から 1 分以内の依頼し直しでは発行も送信もしない。登録の有無・止められた利用者かを画面の応答（リダイレクト先と知らせ）で示さない。応答はトークンの発行も送信も待たない（依頼の後のモジュールのイベントのハンドラーで発行して送る）。リンクは設定の公開の base URL（<code>cargotracker.public-base-url</code>）から組み立て、request の Host ヘッダーから組み立てない。A-06 は password の要素を与えず、設定したら A-01 に戻し、新しい password と TOTP でログインし直す（<a href="../../../adr/cargo-tracker/017-notification-module-and-mail/">ADR-017</a>、IA-INV-12）</td>
+<td style="text-align: left;">登録メールアドレスへ 1 回だけ使える再設定リンク（30 分有効）を送る。再設定後も TOTP は必要。再設定は監査記録に残す。Bolt 33 で依頼までを作る（A-06 は Bolt 33a）: トークンは 32 バイトの乱数（URL 安全な Base64）で、表には SHA-256 のハッシュだけを置き、平文は表・発行記録・ログに残さない。発行から 30 分で使えなくなり、1 回だけ使える。同じ利用者に新しく発行すると前の未使用のトークンは使えなくなる。同じ利用者への前の発行から 1 分以内の依頼し直しでは発行も送信もしない。登録の有無・止められた利用者かを画面の応答（リダイレクト先と知らせ）で示さない。応答はトークンの発行も送信も待たない（依頼の後のモジュールのイベントのハンドラーで発行して送る）。リンクは設定の公開の base URL（<code>cargotracker.public-base-url</code>）から組み立て、request の Host ヘッダーから組み立てない。A-06 は password の要素を与えず、設定したら A-01 に戻し、新しい password と TOTP でログインし直す（<a href="../../../adr/cargo-tracker/017-notification-module-and-mail/">ADR-017</a>、IA-INV-12）。33a までは仮の A-06（準備中。トークンを読まず session に覚えず、<code>Referrer-Policy: no-referrer</code>）を返す。SMTP の送信はハンドラーのトランザクションと利用者の行の占有の中で行い、接続・読み・書きのタイムアウトを各 5 秒にする（<code>spring.mail.properties.mail.smtp.connectiontimeout</code>・<code>timeout</code>・<code>writetimeout</code>）。トークンの発行・通知の記録・送信の結果は 1 つのトランザクションで、送信は at-least-once とする。送った後、コミットの前に落ちると、届いたリンクは使えず、再配信で新しいリンクの 2 通目が送られることがある（2026-10-15 に human:kakimomokuri が決定）。残りのリスクは W10 に送る（既知の課題）: 登録の有無による応答時間の数 ms の差（有効な利用者だけ企業の読み出しと発行記録の INSERT が加わる）、発信元ごとの抑止がなく監査と発行記録が増えうること・監査に発信元がないこと（SEC-20）、爆撃の 1 日の上限がないこと（1 分ごとに前のリンクを無効にできる）、デモのログにリンクが出ること（デモには実在のメールアドレスを登録しない。ADR-013）</td>
 <td style="text-align: left;">提案</td>
 <td style="text-align: left;">多要素を回復の手順でも迂回させない</td>
 </tr>
@@ -11262,7 +11262,7 @@
 <tr>
 <td style="text-align: left;">SEC-20</td>
 <td style="text-align: left;">WAF</td>
-<td style="text-align: left;">AWS WAF のマネージドルール（一般的な攻撃、既知の不正入力）を有効にする。ログイン（<code>POST /login</code>・<code>POST /login/totp</code>）に送信元ごとの流量の規則を置き、利用者を変えながら password を試す攻撃（S-02。利用者ごとのロックでは止まらない）と、未認証の request で session の行が作られる速さを抑える（W10。Bolt 32 の開始準備で決めた。それまでは受け入れる。ADR-011 の決定 9）。password の再設定の依頼（<code>POST /password-reset</code>。A-05）にも送信元ごとの流量の規則を置く（W10。Bolt 33。同じ利用者への 1 分以内の依頼し直しはアプリケーションで送らないが、送信元ごとの流量は WAF で抑える）</td>
+<td style="text-align: left;">AWS WAF のマネージドルール（一般的な攻撃、既知の不正入力）を有効にする。ログイン（<code>POST /login</code>・<code>POST /login/totp</code>）に送信元ごとの流量の規則を置き、利用者を変えながら password を試す攻撃（S-02。利用者ごとのロックでは止まらない）と、未認証の request で session の行が作られる速さを抑える（W10。Bolt 32 の開始準備で決めた。それまでは受け入れる。ADR-011 の決定 9）。password の再設定の依頼（<code>POST /password-reset</code>。A-05）にも送信元ごとの流量の規則を置く（W10。Bolt 33。同じ利用者への 1 分以内の依頼し直しはアプリケーションで送らないが、送信元ごとの流量は WAF で抑える）。それまでは発信元ごとの抑止がなく、依頼の監査と発行記録が増えうる。依頼の監査に発信元（IP アドレス）がない。どちらも W10 の課題とする（Bolt 33 の開発レビュー。2026-10-15 に human:kakimomokuri が決定）</td>
 <td style="text-align: left;">提案</td>
 </tr>
 </tbody>

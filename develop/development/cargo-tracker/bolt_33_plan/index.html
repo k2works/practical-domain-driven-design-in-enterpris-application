@@ -10967,6 +10967,11 @@
 <tbody>
 <tr>
 <td style="text-align: left;">2026-10-15</td>
+<td style="text-align: left;">ステップ 6 の開発レビュー（プログラマー・テスター・アーキテクト・セキュリティ・テクニカルライター）の指摘を直し、human:kakimomokuri の決定を受けた: (1) 外部の技術のポートはドメインに置く前例を規則にする（ステップ 2 で人に諮らずに動かしたことを指摘された。CLAUDE.md のガードレールに足した）。(2) SMTP の送信はトランザクションと利用者の行の占有の中のまま、接続・読み・書きのタイムアウト（各 5 秒）を入れ、at-least-once の保証を ADR-017 に書く。(3) 33a まで仮の A-06（<code>/password-reset/*</code> を公開にし、トークンを読まず session に覚えず「準備中」と <code>Referrer-Policy: no-referrer</code> だけを返す）。(4) 応答時間の差・発信元ごとの抑止・爆撃の 1 日の上限・デモのログのリンクは W10 に送る（#49）。ほかの直し: 失敗の理由からトークンとメールアドレスを伏せる、送信の結果を書けなくても例外にしない、ログを通知の側に寄せる、監査の工場メソッドを受け付けた・受け付けなかったの 2 つに分ける、リンクの接頭辞を合成ルートから渡す、公開の base URL で userinfo とループバックを拒む、A-05 の誤りで title と autofocus、A-01 の知らせを段落と箇条書きに、メールの本文と 1 分の起点（前にリンクを送ってから）の文言、Mailpit を <code>MailpitConfiguration</code> に分け要るテストだけで起動、テストの競合（メールの後に発行記録の完了を待つ）と否定の確かめの順序、ハンドラーの再確認と経路の失敗と使ったトークンのテスト、SonarQube の指摘。CI の MkDocs の配備が、ER 図の対象（<code>ops/scripts/design_docs.js</code>）に <code>notification</code> がなくて止まっていたので直した（人の指摘）。<code>check</code> 2147 件・<code>uiTest</code> 234 件、失敗 0</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5、決定 human:kakimomokuri</td>
+</tr>
+<tr>
+<td style="text-align: left;">2026-10-15</td>
 <td style="text-align: left;">ステップ 4 を終えた。計画からの変更と見つけたこと: (1) T-122 で、全 URL の見張り（<code>AuthenticationSecurityIntegrationTest</code> の <code>AUTHENTICATION_SCREENS</code>）が <code>/password-reset</code> を公開にすると落ちる期待だと分かり、公開の画面として足した。(2) CSRF のトークンのない送信は、計画の「403」でなく既存の扱いのとおり A-03（session のない古いフォームの送信。Bolt 32e）に移り、誤ったトークンは 403 になる。どちらも依頼を処理しないことを監査で確かめる形にした。(3) A-05 のフォームは <code>novalidate</code> にし、誤りの文言はブラウザの検証でなくサーバーの文言（UI 設計）で示す。(4) 応答が送信を待たないことは、送信を 3 秒遅らせる別の組み立ての統合テストで確かめ、ハンドラーを同期のリスナーにする変異で落ちることを確かめた（T-112）。<code>check</code> 緑、<code>uiTest</code> 234 件・失敗 0（新しいシナリオ 3）</td>
 <td style="text-align: left;">anthropic/claude-opus-5-5</td>
 </tr>

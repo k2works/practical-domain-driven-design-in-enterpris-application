@@ -11576,6 +11576,12 @@
 <td style="text-align: left;">通知</td>
 </tr>
 <tr>
+<td style="text-align: left;">再設定のメールの文面</td>
+<td style="text-align: left;">PasswordResetMailTemplate</td>
+<td style="text-align: left;">password の再設定のメールの件名と本文を組み立てるポート（<code>notification.domain.model.aggregates</code>）。実装は Thymeleaf のテキストのテンプレートの <code>ThymeleafPasswordResetMailTemplate</code>（<code>notification.infrastructure.mail</code>。ADR-017、Bolt 33）</td>
+<td style="text-align: left;">通知</td>
+</tr>
+<tr>
 <td style="text-align: left;">送るメール</td>
 <td style="text-align: left;">OutgoingMail</td>
 <td style="text-align: left;">宛先・件名・本文（テキスト）のメール 1 通。本文にリンクが入るので文字列に出さない（<code>notification.domain.model.aggregates</code>。Bolt 33）</td>
@@ -11584,7 +11590,7 @@
 <tr>
 <td style="text-align: left;">メールの送信</td>
 <td style="text-align: left;">MailSender</td>
-<td style="text-align: left;">宛先・件名・本文のメール 1 通を送るポート（<code>notification.domain.model.aggregates</code>。技術のポートの前例と同じ置き場所）。実装は SMTP の <code>SmtpMailSender</code> と、dev だけのログに出す <code>LoggingMailSender</code>（<code>notification.infrastructure.mail</code>。ADR-017、Bolt 33）</td>
+<td style="text-align: left;">宛先・件名・本文のメール 1 通を送るポート（<code>notification.domain.model.aggregates</code>。外部の技術のポートはドメインに置く規則）。実装は SMTP の <code>SmtpMailSender</code> と、dev でログに出す <code>LoggingMailSender</code>（1 つの Bean の中で守りの式で切り替える）（<code>notification.infrastructure.mail</code>。ADR-017、Bolt 33）</td>
 <td style="text-align: left;">通知</td>
 </tr>
 <tr>

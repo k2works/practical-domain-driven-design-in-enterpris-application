@@ -11377,16 +11377,18 @@ src/test/java/.../ui/                     画面の層のステップ定義（@u
 </tr>
 <tr>
 <td style="text-align: left;">通知</td>
-<td style="text-align: left;">メールを受けるだけのコンテナ（Testcontainers の Mailpit。Bolt 33、ADR-017）で、通知の宛先・件名・本文（料金などを含まない）と、送信失敗の記録を確かめる。Bolt 33 は password の再設定のメールの分: SMTP の送信アダプターで件名・本文・宛先が届く、送信のサービスが PENDING から SENT・FAILED にする、同じ <code>event_id</code> と宛先で 2 通送らない。dev のログに出す送信（<code>LoggingMailSender</code>）はログの取り込みを送信の間だけにして確かめ（T-111）、守りの式（dev かつ staging・prod と併用しない）が外れたら起動を止めることを確かめる</td>
+<td style="text-align: left;">メールを受けるだけのコンテナ（Testcontainers の Mailpit。Bolt 33、ADR-017）で、通知の宛先・件名・本文（料金などを含まない）と、送信失敗の記録を確かめる。Bolt 33 は password の再設定のメールの分: SMTP の送信アダプターで件名・本文・宛先が届く、送信のサービスが PENDING から SENT・FAILED にする、同じ <code>event_id</code> と宛先で 2 通送らない。dev のログに出す送信（<code>LoggingMailSender</code>）はログの取り込みを送信の間だけにして確かめ（T-111）、dev と staging・prod の併用と、staging・prod で SMTP の設定がないときに起動を止めることを確かめる</td>
 </tr>
 <tr>
 <td style="text-align: left;">password の再設定の依頼</td>
-<td style="text-align: left;">Bolt 33（US-18 AC8 の前半）。<code>/password-reset</code> が未認証で開ける（<code>/password-reset/x</code> は公開しない）、CSRF のトークンがない送信は 403、送信の後は <code>/login?reset-requested</code> に戻り、登録の有無・止められた利用者・所属企業の無効で応答（リダイレクト先・本文）が同じ、応答がハンドラーを待たない（送信アダプターを遅くする）、ログイン済み・password の段の session で開いた場合（T-102）。発行と送信を依頼のトランザクションの中に戻す違反で、応答が送信を待つテストが落ちることを確かめる（T-112）</td>
+<td style="text-align: left;">Bolt 33（US-18 AC8 の前半）。<code>/password-reset</code> が未認証で開ける、<code>/password-reset/{トークン}</code> は 33a まで仮の A-06（準備中）を返し、トークンを読まず session に覚えず <code>Referrer-Policy: no-referrer</code> を付ける（<code>/password-reset/x/y</code> は公開しない）、CSRF のトークンがない送信は 403、送信の後は <code>/login?reset-requested</code> に戻り、登録の有無・止められた利用者・所属企業の無効で応答（リダイレクト先・本文）が同じ、応答がハンドラーを待たない（送信アダプターを遅くする）、ログイン済み・password の段の session で開いた場合（T-102）。発行と送信を依頼のトランザクションの中に戻す違反で、応答が送信を待つテストが落ちることを確かめる（T-112）</td>
 </tr>
 </tbody>
 </table>
 <p>統合テストは Testcontainers の PostgreSQL を使い、H2 で書かない（ADR-007）。H2 で確かめるのはスモークテストだけとする。</p>
 <p>identity の統合テストは、時計を差し替えるなら合成注釈 <code>@IdentityIntegrationTest</code>（<code>@SpringBootTest</code>・<code>@AutoConfigureMockMvc</code>・PostgreSQL と共通の時計 <code>IdentityTestClock</code> の <code>@Import</code>）を付け、spy（<code>@MockitoSpyBean</code>）を使うクラスは同じ spy のフィールドの組を持つ共通の基底のクラス <code>IdentitySpyIntegrationTestBase</code> を継ぐ。Spring のコンテキストは <code>@Import</code> の組と bean の差し替えの組（spy はフィールド名と置き場所を含む）で区別されるので、組をそろえてコンテキストを共有する（Bolt 32d）。同じ組のクラスはコンテキストと PostgreSQL のコンテナ（DB）も共有するので、共有の表の件数は利用者で絞るかテストの前後の差で確かめる（T-113）。JUnit の並列実行を入れるときは、この共有を見直す。基底の spy の組を増やすのは、spy を使うクラスが要るときだけにする（増やすと spy を使う全クラスの組が変わる）。同時の操作のテスト（<code>OverlappingTransactions</code>）は、後の操作が先の行ロックを待っていることを PostgreSQL の <code>pg_blocking_pids</code> で確かめてから先をコミットする（「一定時間の間に終わらない」だけでは待ちの証拠にならない。Bolt 32d）。</p>
+<p>モジュールのイベントの非同期のハンドラー（<code>@ApplicationModuleListener</code>）を確かめるテストは、時計を進める前と DB を読む前に、発行記録（<code>platform.event_publication</code>）の完了を待つ（ハンドラーは別のスレッドで動くので、待たずに読むと前のハンドラーの書き込みと競う。Bolt 33 の開発レビュー）。</p>
+<p>メールを受ける Mailpit は、PostgreSQL の <code>TestcontainersConfiguration</code> とは別の <code>MailpitConfiguration</code> に分け、メールを確かめるテスト・identity の統合テスト・画面の層のテストだけで <code>@Import</code> して起動する（ほかのテストのコンテキストでコンテナを起動しない。Bolt 33 の開発レビュー）。</p>
 <h2 id="web">Web テストと開示制御<a class="headerlink" href="#web" title="Permanent link">&para;</a></h2>
 <table>
 <thead>

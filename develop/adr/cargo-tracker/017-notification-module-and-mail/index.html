@@ -7788,6 +7788,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#6-33a-a-06" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. 33a までの仮の A-06
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#_4" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -7837,13 +7848,24 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#_8" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        既知の課題
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#_8" class="md-nav__link">
+  <a href="#_9" class="md-nav__link">
     <span class="md-ellipsis">
       
         コンプライアンス
@@ -7854,7 +7876,7 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#_9" class="md-nav__link">
+  <a href="#_10" class="md-nav__link">
     <span class="md-ellipsis">
       
         関連ドキュメント
@@ -10481,6 +10503,7 @@
 </tr>
 </tbody>
 </table>
+<p>補足（2026-10-15、human:kakimomokuri が決定）: 外部の技術のポート（回復コードのハッシュ・TOTP の秘密の発行・メールの送信など）はドメイン（<code>domain.model.aggregates</code>）に置く。<code>application.internal.outboundservices</code> は他のコンテキストを呼ぶ ACL に使う。Bolt 33 のステップ 2 で送信のポートを <code>application.internal.outboundservices</code> に置いて層の規則に当たり、人に諮って、それまでの前例（回復コードのハッシュ・TOTP の秘密の発行）を規則にした。送信のポート <code>MailSender</code>・<code>PasswordResetMailTemplate</code>・<code>OutgoingMail</code> は <code>notification.domain.model.aggregates</code> のままにする。</p>
 <h3 id="2-identity">2. identity からの呼び出しと依存の制約<a class="headerlink" href="#2-identity" title="Permanent link">&para;</a></h3>
 <ul>
 <li><code>identity</code> は ACL <code>identity.application.internal.outboundservices.acl.NotificationPasswordResetMails</code>（上流の名前 + 名詞）から公開 API を同期で呼ぶ。組み立ては <code>identity.infrastructure.config</code> で、<code>identity</code> の <code>allowedDependencies</code> に <code>"notification :: api"</code> を足す。層の規則に例外を足さない。</li>
@@ -10498,19 +10521,19 @@
 <tbody>
 <tr>
 <td style="text-align: left;">ポート</td>
-<td style="text-align: left;"><code>notification.domain.model.aggregates</code> の <code>MailSender</code>（文面の <code>PasswordResetMailTemplate</code>、送るメール <code>OutgoingMail</code> も同じ。技術のポートの前例に合わせ、Bolt 33 のステップ 2 で層の規則に当たって <code>application.internal.outboundservices</code> から移した）。application は <code>org.springframework.mail..</code>・<code>jakarta.mail..</code> に依存しない（<code>LayerArchitectureTest</code> の禁止に足す）</td>
+<td style="text-align: left;"><code>notification.domain.model.aggregates</code> の <code>MailSender</code>（文面の <code>PasswordResetMailTemplate</code>、送るメール <code>OutgoingMail</code> も同じ。決定 1 の補足の規則による。Bolt 33 のステップ 2 で層の規則に当たって <code>application.internal.outboundservices</code> から移した）。application は <code>org.springframework.mail..</code>・<code>jakarta.mail..</code> に依存しない（<code>LayerArchitectureTest</code> の禁止に足す）</td>
 </tr>
 <tr>
 <td style="text-align: left;">SMTP</td>
-<td style="text-align: left;"><code>notification.infrastructure.mail.SmtpMailSender</code>（<code>spring-boot-starter-mail</code> の <code>JavaMailSender</code>。版は Boot 管理）</td>
+<td style="text-align: left;"><code>notification.infrastructure.mail.SmtpMailSender</code>（<code>spring-boot-starter-mail</code> の <code>JavaMailSender</code>。版は Boot 管理）。接続・読み・書きのタイムアウトを各 5 秒にする（<code>spring.mail.properties.mail.smtp.connectiontimeout</code>・<code>timeout</code>・<code>writetimeout</code>。決定 4）</td>
 </tr>
 <tr>
 <td style="text-align: left;">dev</td>
-<td style="text-align: left;"><code>notification.infrastructure.mail.LoggingMailSender</code> がメールをログに出す（宛先・件名・本文。リンクを含む）。dev のプロファイルでだけ Bean になる</td>
+<td style="text-align: left;"><code>notification.infrastructure.mail.LoggingMailSender</code> がメールをログに出す（宛先・件名・本文。リンクを含む）。<code>notification.infrastructure.config</code> の 1 つの <code>MailSender</code> の Bean の中で、守りの式で <code>LoggingMailSender</code> と <code>SmtpMailSender</code> を切り替える</td>
 </tr>
 <tr>
 <td style="text-align: left;">守り</td>
-<td style="text-align: left;"><code>notification.infrastructure.config</code> で、<code>DevLoginGuard</code> と同じ式（dev かつ staging・prod と併用しない）を確かめ、外れたら起動を止める。dev 以外で SMTP の設定がないときも起動を止める</td>
+<td style="text-align: left;"><code>notification.infrastructure.mail.NotificationMailGuard</code> で、dev と staging・prod の併用と、staging・prod で SMTP の設定がないときは起動を止める。それ以外（プロファイルなしのテストなど）は送信の失敗として記録する</td>
 </tr>
 <tr>
 <td style="text-align: left;">統合テスト</td>
@@ -10555,6 +10578,10 @@
 <td style="text-align: left;">ADR-003</td>
 <td style="text-align: left;">例外を作らない。<code>@ApplicationModuleListener</code> と発行記録の形のまま</td>
 </tr>
+<tr>
+<td style="text-align: left;">送信の保証</td>
+<td style="text-align: left;">SMTP の送信はハンドラーのトランザクションと利用者の行の占有の中で行い、接続・読み・書きのタイムアウト（各 5 秒）で占有の長さを抑える。トークンの発行・通知の記録・送信の結果は 1 つのトランザクションで、送信は at-least-once とする。送った後、コミットの前に落ちると、届いたリンクは使えず、再配信で新しいリンクの 2 通目が送られることがある（2026-10-15、human:kakimomokuri が決定）</td>
+</tr>
 </tbody>
 </table>
 <p>トークンの規則（32 バイトの乱数、SHA-256 のハッシュだけを保存、30 分、1 回だけ、新しい発行で前を無効、1 分以内の依頼し直しは送らない）は <a href="../../../design/cargo-tracker/non_functional/">非機能要件</a> の SEC-08 とドメインモデルの IA-INV-12 に置く。</p>
@@ -10564,6 +10591,8 @@
 <li><code>PASSWORD_RESET</code> の <code>target_ref</code> はトークンの ID とし、本文を再現しない（この種類だけの例外。リンクを再現できる値を残さない）。<code>recipient_user_id</code> はコンテキストをまたぐので FK にしない。</li>
 <li>繰り返し（1 分以内）で送らなかったことは記録せず、送信の記録がないことで分かる。監査（<code>PASSWORD_RESET_REQUESTED</code>）と送信の記録は結ばない（AUD-02 の対象の列は使う Bolt で足す）。</li>
 </ul>
+<h3 id="6-33a-a-06">6. 33a までの仮の A-06<a class="headerlink" href="#6-33a-a-06" title="Permanent link">&para;</a></h3>
+<p>Bolt 33a まで、仮の A-06 を公開する（2026-10-15、human:kakimomokuri が決定）。<code>GET /password-reset/{トークン}</code> を公開の URL にし、トークンを読まず session に覚えず、「準備中」の画面だけを返す（応答に <code>Referrer-Policy: no-referrer</code>）。公開の URL は <code>/password-reset</code> と <code>/password-reset/*</code>。33a で本物の A-06 に置き換える。届いたリンクが「見つからない」画面にならず、トークンがリンク先の Referer に漏れない。</p>
 <h3 id="_4">代替案<a class="headerlink" href="#_4" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
@@ -10604,15 +10633,25 @@
 <li>利用者の検索と監査の書き込みの時間の差は応答に残る（既知の課題。W10 の WAF とあわせて扱う）。</li>
 <li>dev はリンクを含むメールをログに出す。デモ環境（Heroku）でもログに出る（デモの利用者のアドレスだけ。ADR-013）。</li>
 <li>宛先を呼ぶ側が渡す制約のため、US-22 では宛先の渡し方を W9 の開始準備で決める必要がある。</li>
+<li>SMTP の送信が利用者の行の占有の中にあるため、SMTP が遅いと同じ利用者の依頼の処理が最大でタイムアウトの分だけ待つ。送信は at-least-once で、まれに 2 通目（新しいリンク）が届く（決定 4）。</li>
 </ul>
-<h2 id="_8">コンプライアンス<a class="headerlink" href="#_8" title="Permanent link">&para;</a></h2>
+<h3 id="_8">既知の課題<a class="headerlink" href="#_8" title="Permanent link">&para;</a></h3>
+<p>W10 に送る（2026-10-15、human:kakimomokuri が決定）。</p>
+<ul>
+<li>登録の有無による応答時間の数 ms の差。有効な利用者だけ、企業の読み出しと発行記録の INSERT が加わる。</li>
+<li>発信元ごとの抑止がなく、監査と発行記録が増えうる。監査に発信元がない。</li>
+<li>爆撃の 1 日の上限がない。1 分ごとに依頼し直して、前のリンクを無効にできる。</li>
+<li>デモのログにリンクが出る。デモには実在のメールアドレスを登録しない（ADR-013）。</li>
+</ul>
+<p>W9 の開始準備で、宛先のモデルを決める。利用者でない宛先（荷受人への招待 <code>CONSIGNEE_INVITATION</code>）を扱うため、<code>recipient_user_id</code> の NOT NULL と UK(event_id, recipient_user_id)、公開 API を種類ごとに分けるか汎用にするかを見直す。</p>
+<h2 id="_9">コンプライアンス<a class="headerlink" href="#_9" title="Permanent link">&para;</a></h2>
 <ul>
 <li>ModularityTest のモジュール一覧に通知を足し、<code>notification</code> が <code>shared</code> だけに依存することを確かめる。</li>
 <li><code>LayerArchitectureTest</code> に、application が <code>org.springframework.mail..</code>・<code>jakarta.mail..</code> に依存しない規則を足す。<code>PublicApiArchitectureTest</code> で公開 API の形を確かめる。identity の合成ルートの <code>@Bean</code> の戻り値は AT-07 の範囲に収める。</li>
 <li>統合テストで、Mailpit にメールが届くこと、登録あり・なし・止められた利用者で応答が同じこと、送信アダプターを遅くしても応答が待たないこと、発行記録の JSON・トークンの表・ログにトークンも URL もないこと、同じ依頼の ID の再配信で 2 通送らないこと、ロールバックしたらハンドラーが呼ばれないことを確かめる。</li>
-<li>dev の守りの式が外れたら起動が止まることを、本体のテストで守る。</li>
+<li>dev の守りの式が外れたとき（dev と staging・prod の併用、staging・prod で SMTP の設定がない）に起動が止まることを、本体のテストで守る。</li>
 </ul>
-<h2 id="_9">関連ドキュメント<a class="headerlink" href="#_9" title="Permanent link">&para;</a></h2>
+<h2 id="_10">関連ドキュメント<a class="headerlink" href="#_10" title="Permanent link">&para;</a></h2>
 <ul>
 <li><a href="../003-inter-context-integration/">ADR-003</a>、<a href="../011-mfa-totp/">ADR-011</a>、<a href="../012-authentication-principal-and-session/">ADR-012</a>、<a href="../013-heroku-demo-environment/">ADR-013</a>、<a href="../014-downstream-to-upstream-notification/">ADR-014</a></li>
 <li><a href="../../../design/cargo-tracker/architecture_backend/">バックエンドのアーキテクチャ</a>、<a href="../../../design/cargo-tracker/tech_stack/">技術スタック</a>、<a href="../../../design/cargo-tracker/non_functional/">非機能要件</a>（SEC-08、AUD-01）</li>
