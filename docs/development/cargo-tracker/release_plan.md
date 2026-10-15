@@ -4,7 +4,7 @@ title: "リリース計画 - cargo-tracker（A 社国際貨物輸送管理シス
 description: "cargo-tracker MVP のリリース計画。1 人 + AI、時間単位の Bolt（= イテレーション）と週次の見直しで、最初の縦の流れ（R0.1）、パイロット準備完了（R1.0）、本格展開前（R1.1）の 3 段階、Unit のエントロピー評価、SP、バッファ、パイロット開始の条件、引継ぎ ID の台帳、業務責任者に確かめる事項の台帳。"
 tags: [development,release-plan]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-15T10:28:16Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-15T11:34:06Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T09:29:53Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:38:26Z }
@@ -952,3 +952,4 @@ xychart-beta
 | 2026-10-15 | Bolt 33b の開発レビュー（5 観点）の直し: 33c の行の範囲に、A-08 の URL の組（6 組目）、`HttpSessionRequestCache` の一本化、A-07 と A-08 の途中の暗号文の扱いと回復コードの発行の重複、認証の結果のトークンに経路（要素の種類）を持たせること、`revokeOthers` の session の ID を値オブジェクトにすることを足した | anthropic/claude-opus-5-5 |
 | 2026-10-15 | Bolt 33b を終え、終了報告を作った（承認待ち）。開発レビューで印に 15 分の期限を付けた（human:kakimomokuri の決定）。#47・#49 にコメントした。#13 のクローズと US-18 の SP 6 の計上は承認の後 | anthropic/claude-opus-5-5 |
 | 2026-10-15 | Bolt 33b の終了報告の承認を記録した。#13 をクローズし、US-18 の残りの SP 6 を W5 の実績に数えた。次は Bolt 33c | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
+| 2026-10-15 | Bolt 33c の開始準備: 33c（session の属性の名前と期間の置き場所、覚えた要求、A-01 の数値、T-128、`tracking`、空の復号）と 33d（TOTP の部品の整理）に分けた。期間は domain の `SessionPolicy`、名前と URL は application の `SessionKeys`、認証の入口の規則に例外を 1 つ足す。[Bolt 33c 計画](bolt_33c_plan.md)（承認済み）。33c・33d の行の書き換えはステップ 1 で行う | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
