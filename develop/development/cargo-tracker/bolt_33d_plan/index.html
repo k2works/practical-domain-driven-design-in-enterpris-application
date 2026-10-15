@@ -10770,7 +10770,7 @@
 <h2 id="_4">ステップ計画<a class="headerlink" href="#_4" title="Permanent link">&para;</a></h2>
 <p>状態の記号: <code>[ ]</code> 未着手、<code>[-]</code> 進行中、<code>[?]</code> 承認待ち、<code>[x]</code> 完了。各ステップの終わりに <code>check</code> が緑であることを確かめ、push してアプリの CI と MkDocs の配備を確かめる（T-26、T-126）。コミットは pathspec で作る（T-110）。複数行の書き換えはスクリプトのファイルにする（T-103）。</p>
 <ul class="task-list">
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>1. 設計文書</strong> 【承認ゲート: 設計文書】</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>1. 設計文書</strong> 【承認ゲート: 設計文書】</li>
 <li>domain_model.md: <code>TotpCredential.DIGITS</code>、<code>RecoveryCode</code> の形・<code>format</code>・<code>issueSet</code>、<code>NormalizedRecoveryCode</code> を要素表と用語集（89 行目の表）に、<code>TotpProvisioningStarter</code>、identity の図。「Bolt 33d で寄せる」（196・1062 行目）を閉じ、IA-INV-11（1169 行目の <code>normalize</code>）を直す</li>
 <li>architecture_backend.md: crypto の部品の一覧（284 行目の「6 つ」）に <code>QrCodeSvg</code> を足して数え直し、アルゴリズムの置き場所と重複の寄せ方を書く</li>
 <li>ui_design.md: 789 行目の「Bolt 33d で寄せる」を閉じ、コードの欄の属性を桁数から描くことを書く</li>
@@ -10945,6 +10945,11 @@
 <td style="text-align: left;">2026-10-16</td>
 <td style="text-align: left;">詳細整合性検証（12 件）と横断整合性検証（11 件）の指摘を反映した。QR のライブラリの見張りの付け替え、アルゴリズムの定数の置き場所、欄の見張りのテスト、record のコンストラクターの公開範囲、<code>TotpProvisioningStarter</code> の戻り値と Bean にしないこと、設計文書と release_plan の行、変えないもの。human:kakimomokuri の決定（33c の議題 4 (b) は 33e、<code>matches</code> は値オブジェクトだけで受ける、欄の属性だけを描く、過去の報告に「→ 33e」を書き添える）を反映した</td>
 <td style="text-align: left;">anthropic/claude-opus-5-5</td>
+</tr>
+<tr>
+<td style="text-align: left;">2026-10-16</td>
+<td style="text-align: left;">計画を承認した（<code>/goal Bolt33d</code>）</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5、承認 human:kakimomokuri</td>
 </tr>
 </tbody>
 </table>

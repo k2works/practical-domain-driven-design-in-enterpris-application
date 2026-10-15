@@ -10809,14 +10809,14 @@
 </ul>
 <p>Bolt 33b の開始準備と計画の承認（2026-10-15、human:kakimomokuri）で決めたこと:</p>
 <ul>
-<li>US-18 の残りを 33b（AC9 の回復コードによる再登録と、それが触る部品（<code>TotpEnrollmentService</code> の引数の型、<code>instanceof</code> の <code>switch</code> 化）とマニュアル）と 33c（振る舞いの変わらない直し。Bolt 33c の開始準備で 33c と 33d に分けた）に分け、#13 は 33b でクローズする</li>
+<li>US-18 の残りを 33b（AC9 の回復コードによる再登録と、それが触る部品（<code>TotpEnrollmentService</code> の引数の型、<code>instanceof</code> の <code>switch</code> 化）とマニュアル）と 33c（振る舞いの変わらない直し。Bolt 33c の開始準備で 33c と 33d に分け、Bolt 33d の開始準備で 33d と 33e に分けた）に分け、#13 は 33b でクローズする</li>
 <li>回復コードでログインしたら印を置いて再登録の画面（A-08）へ導き、「後で登録する」で業務の画面へ進める。印がある間は業務の画面に知らせを出す。入口はこの流れだけにする（決定 10）</li>
 <li>新しいコードを確かめた時点で古い秘密を置き換え、回復コードを 10 個発行し直して 1 回だけ示し、監査 <code>TOTP_RE_ENROLLED</code> を書く。コミットの後に、その利用者のほかの session を失効させる（今の session は残す）。本人へのメールの通知は #47（決定 10）</li>
 <li>刻みの使用の条件に、照合で読んだ秘密の暗号文との一致を足す。置き換えでは最後に使った刻みを大きい方にする。残りの回復コードが少ないときの案内は #47 に送る（決定 10）</li>
 </ul>
 <p>Bolt 33c の開始準備と計画の承認（2026-10-15、human:kakimomokuri）で決めたこと:</p>
 <ul>
-<li>振る舞いの変わらない直しを 33c と 33d に分ける。33c は置き場所の決定を伴う直し（session・request の属性の名前、期間、A-08・A-03 の URL、覚えた要求の属性の名前）と小さな直し。33d は TOTP の部品の整理（TOTP の桁数・周期・アルゴリズムの定数、QR の SVG の組み立ての分離、回復コードの形の知識の 2 か所と <code>normalize</code> の戻り値の型、A-07 と A-08 の途中の暗号文の扱いと回復コードの発行の重複、認証の結果のトークンに経路（要素の種類）、<code>revokeOthers</code> の session の ID の値オブジェクト）</li>
+<li>振る舞いの変わらない直しを 33c と 33d に分ける。33c は置き場所の決定を伴う直し（session・request の属性の名前、期間、A-08・A-03 の URL、覚えた要求の属性の名前）と小さな直し。33d は TOTP の部品の整理（TOTP の桁数・周期・アルゴリズムの定数、QR の SVG の組み立ての分離、回復コードの形の知識の 2 か所と <code>normalize</code> の戻り値の型、A-07 と A-08 の途中の暗号文の扱いと回復コードの発行の重複）。Bolt 33d の開始準備（2026-10-16、human:kakimomokuri）で、認証の結果のトークンに経路（要素の種類）、<code>revokeOthers</code> の session の ID の値オブジェクト、期限の境界の判定、テンプレートの期間の数値を 33e に分けた</li>
 <li>印の属性の名前と A-08 の URL は application 層の <code>SessionKeys</code>（<code>identity.application.internal.session</code>）に、印の 15 分・登録の途中の 15 分・再登録の 15 分はドメインルール <code>SessionPolicy</code>（<code>identity.domain.model.rules</code>）に寄せる（<a href="../012-authentication-principal-and-session/">ADR-012</a> の決定 3・決定 6）</li>
 <li>「始めたときの秘密を置き換えの条件にする」（Bolt 33b の開発レビューで 33c で扱うとした）は振る舞いが変わる直しなので、<a href="https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/49">#49</a>（W10）に送る</li>
 </ul>
@@ -11151,7 +11151,7 @@
 </tr>
 <tr>
 <td style="text-align: left;">正規化</td>
-<td style="text-align: left;">形の知識はドメインに置く（<code>RecoveryCode.normalize</code>）。全角を半角に直し（NFKC。IME で入れたまま）、ハイフンに似た文字（長音など）をハイフンにそろえ、前後と中の空白（全角スペースを含む）を除き、小文字にし、ハイフンのない 8 文字は 4 文字目の後にハイフンを入れる。<code>^[0-9a-f]{4}-[0-9a-f]{4}$</code> に合わなければ照合せずに拒む（bcrypt を回さない）。手で書き写したコードを打ち直させない</td>
+<td style="text-align: left;">形の知識はドメインに置く（<code>RecoveryCode.normalize</code>）。全角を半角に直し（NFKC。IME で入れたまま）、ハイフンに似た文字（長音など）をハイフンにそろえ、前後と中の空白（全角スペースを含む）を除き、小文字にし、ハイフンのない 8 文字は 4 文字目の後にハイフンを入れる。<code>^[0-9a-f]{4}-[0-9a-f]{4}$</code> に合わなければ照合せずに拒む（bcrypt を回さない）。手で書き写したコードを打ち直させない。Bolt 33d から、正規化の結果は値 <code>NormalizedRecoveryCode</code>（<code>Optional</code> で返す）で、照合はこの値だけを受ける。形の知識（生成の <code>format</code> を含む）は <code>RecoveryCode</code> だけに置く</td>
 </tr>
 <tr>
 <td style="text-align: left;">照合とトランザクションの境界</td>
@@ -11208,7 +11208,7 @@
 </tr>
 <tr>
 <td style="text-align: left;">暗号の部品のパッケージ</td>
-<td style="text-align: left;"><code>AesGcmSecretCipher</code>・<code>Base32</code>・<code>BcryptRecoveryCodeHasher</code>・<code>JavaOtpTotpCodeGenerator</code>・<code>RandomRecoveryCodeGenerator</code>・<code>RandomTotpSecretIssuer</code> の 6 つを <code>identity.infrastructure.crypto</code> に置き、application にも入口（<code>security</code>）にも依存しない。D-5 の認証の例外は入口 <code>identity.infrastructure.security</code> だけにする。既存の規則（合成ルートと入口の外の infrastructure は application に依存しない）が <code>crypto</code> にもかかるので、足す規則は「<code>crypto</code> は <code>security</code> に依存しない」だけ。秘密の発行と回復コードの生成の実装を名指しした規則はパッケージの規則に置き換え、TOTP のライブラリ・ZXing・<code>AesGcmSecretCipher</code> の閉じ込めは <code>crypto</code> に狭める（<code>AesGcmSecretCipher</code> は合成ルートと dev の部品も参照してよい）</td>
+<td style="text-align: left;"><code>AesGcmSecretCipher</code>・<code>Base32</code>・<code>BcryptRecoveryCodeHasher</code>・<code>JavaOtpTotpCodeGenerator</code>・<code>RandomRecoveryCodeGenerator</code>・<code>RandomTotpSecretIssuer</code> の 6 つ（Bolt 33d で QR コードの SVG の組み立てを分けた <code>QrCodeSvg</code> を足して 7 つ）を <code>identity.infrastructure.crypto</code> に置き、application にも入口（<code>security</code>）にも依存しない。D-5 の認証の例外は入口 <code>identity.infrastructure.security</code> だけにする。既存の規則（合成ルートと入口の外の infrastructure は application に依存しない）が <code>crypto</code> にもかかるので、足す規則は「<code>crypto</code> は <code>security</code> に依存しない」だけ。秘密の発行と回復コードの生成の実装を名指しした規則はパッケージの規則に置き換え、TOTP のライブラリ・ZXing・<code>AesGcmSecretCipher</code> の閉じ込めは <code>crypto</code> に狭める（<code>AesGcmSecretCipher</code> は合成ルートと dev の部品も参照してよい）</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>FACTOR_TOTP</code> と <code>TotpAuthenticationToken</code> の名前</td>
