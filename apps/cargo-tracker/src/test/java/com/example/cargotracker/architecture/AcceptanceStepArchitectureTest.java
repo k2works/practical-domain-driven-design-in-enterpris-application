@@ -17,7 +17,9 @@ import org.junit.jupiter.api.Test;
  * （{@code interfaces.web}）・公開 API の実装（{@code interfaces.api.internal}）と他のコンテキストの内部に依存しない（テスト戦略。
  * Bolt 28 で、いまのステップ定義の実態に合わせて作った。入力ポートのほかにドメインの値オブジェクト・集約でコマンドを組み立て、結果を
  * 確かめることは認める）。画面の層のステップ定義（{@code ui}）と、受入テストの組み立て（{@code acceptance}・{@code shared.acceptance}。
- * メモリのリポジトリや公開 API の実装をつなぐのが役目）は対象にしない。
+ * メモリのリポジトリや公開 API の実装をつなぐのが役目）は、この依存の規則の対象にしない。画面の層のステップ定義には、Playwright の正規表現の
+ * 規則（T-128。{@code Pattern.quote} を呼ばない）だけを当てる。エスケープせずに文字列を正規表現に連結することは見張れないので、
+ * {@code PlaywrightText} を使う約束で補う。
  */
 @AnalyzeClasses(packages = "com.example.cargotracker")
 class AcceptanceStepArchitectureTest {

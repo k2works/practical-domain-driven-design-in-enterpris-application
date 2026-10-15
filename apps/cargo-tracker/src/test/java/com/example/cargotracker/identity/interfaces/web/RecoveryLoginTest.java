@@ -3,11 +3,11 @@ package com.example.cargotracker.identity.interfaces.web;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.example.cargotracker.identity.application.internal.session.SessionKeys;
-import com.example.cargotracker.identity.domain.model.rules.SessionPolicy;
 import com.example.cargotracker.shared.domain.AuthenticatedActor;
 import com.example.cargotracker.shared.domain.CompanyId;
 import com.example.cargotracker.shared.domain.Role;
 import com.example.cargotracker.shared.domain.UserId;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.Set;
 import java.util.UUID;
@@ -39,11 +39,9 @@ class RecoveryLoginTest {
         MockHttpSession session = marked(actor);
 
         assertThat(RecoveryLogin.isMarked(
-                        session,
-                        actor,
-                        LOGGED_IN.plus(SessionPolicy.RECOVERY_LOGIN_LIFETIME).minusSeconds(1)))
+                        session, actor, LOGGED_IN.plus(Duration.ofMinutes(15)).minusSeconds(1)))
                 .isTrue();
-        assertThat(RecoveryLogin.stateOf(session, actor, LOGGED_IN.plus(SessionPolicy.RECOVERY_LOGIN_LIFETIME)))
+        assertThat(RecoveryLogin.stateOf(session, actor, LOGGED_IN.plus(Duration.ofMinutes(15))))
                 .as("ちょうど 15 分")
                 .isEqualTo(RecoveryLogin.State.EXPIRED);
     }

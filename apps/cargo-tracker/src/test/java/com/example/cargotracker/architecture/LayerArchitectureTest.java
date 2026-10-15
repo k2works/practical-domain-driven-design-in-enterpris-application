@@ -9,7 +9,9 @@ import static com.tngtech.archunit.core.domain.JavaClass.Predicates.resideInAnyP
 import static com.tngtech.archunit.core.domain.properties.HasName.Predicates.nameMatching;
 import static com.tngtech.archunit.core.domain.properties.HasOwner.Predicates.With.owner;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes;
+import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.fields;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
+import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noMethods;
 import static com.tngtech.archunit.library.Architectures.layeredArchitecture;
 
 import com.example.cargotracker.identity.interfaces.web.DevTotpCodeSource;
@@ -42,6 +44,9 @@ class LayerArchitectureTest {
     /** Spring Security の認証の入口（D-5 の認証の例外。Bolt 31）。 */
     private static final String IDENTITY_AUTHENTICATION_ENTRY =
             "com.example.cargotracker.identity.infrastructure.security..";
+
+    private static final String IDENTITY_SESSION_KEYS =
+            "com.example.cargotracker.identity.application.internal.session..";
 
     /** 顧客 Web の URL（{@code /customer/}）の下に割り当てたコントローラー。 */
     private static final DescribedPredicate<JavaClass> CUSTOMER_WEB_CONTROLLERS =
@@ -107,7 +112,8 @@ class LayerArchitectureTest {
     /**
      * D-5 の認証の例外（Bolt 31、ADR-012）。Spring Security の認証の入口（provider・listener）は {@code identity.infrastructure.security}
      * に置き、業務の判断（TOTP の照合と刻みの使用、Bolt 32 のロックの数え方）は {@code identity.application.internal.commandservices}
-     * に置く。入口から参照してよいのはそのコマンドサービスだけで、ほかのアプリケーション層には依存しない。
+     * に置く。入口から参照してよいのはそのコマンドサービスと、画面と共有する session の属性の名前と URL（{@code application.internal.session}。
+     * ふるまいを持たない。Bolt 33c、ADR-012 の決定 6）だけで、ほかのアプリケーション層には依存しない（規則の名前は ADR が参照するので変えない）。
      */
     @ArchTest
     static final ArchRule 認証の入口はidentityのコマンドサービスだけに依存してよい = noClasses()
@@ -118,8 +124,42 @@ class LayerArchitectureTest {
                     .and(not(resideInAnyPackage(
                             "com.example.cargotracker.identity.application.internal.commandservices..",
                             "com.example.cargotracker.identity.application.internal.session.."))))
-            .because("認証の入口の例外は identity のコマンドサービスと、画面と共有する session の属性の名前（ふるまいを持たない。"
-                    + "Bolt 33c）に限る（D-5、ADR-012、Bolt 31）");
+            .because("認証の入口の例外は identity のコマンドサービスと、session の属性の名前と URL を認証の入口と画面で共有するため"
+                    + "（ふるまいを持たない。Bolt 33c）の session に限る（D-5、ADR-012 の決定 6、Bolt 31）");
+
+    /**
+     * 上の例外の根拠（{@code application.internal.session} はふるまいを持たない名前と URL だけ）を見張る（Bolt 33c の開発レビュー）。
+     * メソッドや Spring の部品が入ると、認証の入口に業務の判断が持ち込まれて例外が黙って広がる。
+     */
+    @ArchTest
+    static final ArchRule 認証の入口と画面が共有するsessionの名前はふるまいを持たない定数だけ = noMethods()
+            .that()
+            .areDeclaredInClassesThat()
+            .resideInAPackage(IDENTITY_SESSION_KEYS)
+            .should()
+            .beDeclaredInClassesThat()
+            .resideInAPackage(IDENTITY_SESSION_KEYS)
+            .allowEmptyShould(true)
+            .because("例外を許した根拠はふるまいを持たないこと（ADR-012 の決定 6、Bolt 33c）");
+
+    @ArchTest
+    static final ArchRule 認証の入口と画面が共有するsessionの名前のフィールドは定数だけ = fields().that()
+            .areDeclaredInClassesThat()
+            .resideInAPackage(IDENTITY_SESSION_KEYS)
+            .should()
+            .beStatic()
+            .andShould()
+            .beFinal()
+            .because("名前と URL の定数だけを置く（Bolt 33c）");
+
+    @ArchTest
+    static final ArchRule 認証の入口と画面が共有するsessionの名前はSpringの部品にしない = noClasses()
+            .that()
+            .resideInAPackage(IDENTITY_SESSION_KEYS)
+            .should()
+            .beMetaAnnotatedWith(org.springframework.stereotype.Component.class)
+            .allowEmptyShould(true)
+            .because("Bean にすると、認証の入口からふるまいを呼べるようになる（Bolt 33c）");
 
     @ArchTest
     static final ArchRule サガの状態はinfrastructureの永続化の実装からだけ参照される = noClasses()

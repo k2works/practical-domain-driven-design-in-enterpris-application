@@ -42,6 +42,7 @@ class SchemaCommentIntegrationTest {
                         + " WHERE c.relkind = 'r' AND n.nspname IN (" + BUSINESS_SCHEMAS + ")"
                         + " AND c.relname <> 'flyway_schema_history'");
 
+        assertThat(schemasOf(comments)).as("すべての業務のスキーマの表を見ている（空振りしない）").isEqualTo(businessSchemas());
         assertThat(comments)
                 .isNotEmpty()
                 .allSatisfy((table, comment) ->
@@ -57,6 +58,7 @@ class SchemaCommentIntegrationTest {
                 + " WHERE c.table_schema IN (" + BUSINESS_SCHEMAS + ") AND t.table_type = 'BASE TABLE'"
                 + " AND c.table_name <> 'flyway_schema_history'");
 
+        assertThat(schemasOf(comments)).as("すべての業務のスキーマの列を見ている（空振りしない）").isEqualTo(businessSchemas());
         assertThat(comments)
                 .isNotEmpty()
                 .allSatisfy((column, comment) ->
@@ -88,5 +90,17 @@ class SchemaCommentIntegrationTest {
             }
             return rows;
         }
+    }
+
+    private static java.util.Set<String> schemasOf(Map<String, String> comments) {
+        return comments.keySet().stream()
+                .map(name -> name.substring(0, name.indexOf('.')))
+                .collect(java.util.stream.Collectors.toSet());
+    }
+
+    private static java.util.Set<String> businessSchemas() {
+        return java.util.Arrays.stream(BUSINESS_SCHEMAS.split(","))
+                .map(name -> name.strip().replace("'", ""))
+                .collect(java.util.stream.Collectors.toSet());
     }
 }
