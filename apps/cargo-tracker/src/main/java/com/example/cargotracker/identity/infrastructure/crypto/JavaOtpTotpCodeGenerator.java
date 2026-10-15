@@ -27,7 +27,10 @@ public final class JavaOtpTotpCodeGenerator implements TotpCodeGenerator {
     /** HMAC のアルゴリズムの名前（ADR-011）。技術の知識なのでドメインに出さない（Bolt 33d）。 */
     private static final String ALGORITHM = "HmacSHA1";
 
-    /** otpauth の URI で同じアルゴリズムを示す名前。秘密の発行が URI に書く（Bolt 33d）。 */
+    /**
+     * otpauth の URI で {@link #ALGORITHM}（HMAC-SHA1）を示す名前。Key URI Format の {@code algorithm} は HMAC を付けない名前
+     * （SHA1・SHA256・SHA512）で書く。秘密の発行が URI に書く（Bolt 33d。URI の文字列は RandomTotpSecretIssuerTest で固定する）。
+     */
     static final String URI_ALGORITHM = "SHA1";
 
     private final TimeBasedOneTimePasswordGenerator generator;

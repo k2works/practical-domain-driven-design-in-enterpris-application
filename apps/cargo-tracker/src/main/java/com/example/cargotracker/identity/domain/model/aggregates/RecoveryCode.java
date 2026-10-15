@@ -25,7 +25,6 @@ public final class RecoveryCode {
 
     private static final Pattern WHITESPACE = Pattern.compile("[\\s\\p{Z}]+");
     private static final Pattern HYPHEN_LIKE = Pattern.compile("[\\u2010-\\u2015\\u2212\\u30FC\\uFF70]");
-    private static final Pattern UNHYPHENATED = Pattern.compile("[0-9a-f]{8}");
 
     private final UUID id;
     private final UserId userId;
@@ -125,12 +124,7 @@ public final class RecoveryCode {
                 .matcher(Normalizer.normalize(input, Normalizer.Form.NFKC))
                 .replaceAll("-");
         String compact = WHITESPACE.matcher(halfWidth).replaceAll("").toLowerCase(Locale.ROOT);
-        String hyphenated = UNHYPHENATED.matcher(compact).matches()
-                ? compact.substring(0, 4) + "-" + compact.substring(4)
-                : compact;
-        return NormalizedRecoveryCode.isForm(hyphenated)
-                ? Optional.of(new NormalizedRecoveryCode(hyphenated))
-                : Optional.empty();
+        return NormalizedRecoveryCode.parse(compact);
     }
 
     /** 未使用で、正規化した平文がハッシュに一致するか。使ったコードは一致しない（Bolt 33d から正規化した値だけを受ける）。 */

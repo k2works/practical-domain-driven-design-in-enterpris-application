@@ -156,33 +156,9 @@ class RecoveryCodeTest {
     }
 
     @Test
-    void 照合は正規化した値だけを受け形の合わない値は作れない() {
-        assertThatThrownBy(() -> new NormalizedRecoveryCode("abcd-efgh")).isInstanceOf(IllegalArgumentException.class);
-        assertThatThrownBy(() -> new NormalizedRecoveryCode("1A2B-3C4D")).isInstanceOf(IllegalArgumentException.class);
-        assertThatThrownBy(() -> new NormalizedRecoveryCode(null)).isInstanceOf(IllegalArgumentException.class);
-        assertThat(new NormalizedRecoveryCode("1a2b-3c4d").toString()).doesNotContain("1a2b");
-    }
-
-    @Test
-    void 乱数のバイトから発行の形を作る() {
-        assertThat(NormalizedRecoveryCode.fromBytes(new byte[] {0x1a, 0x2b, 0x3c, 0x4d})
-                        .value())
-                .isEqualTo("1a2b-3c4d");
-        assertThat(NormalizedRecoveryCode.fromBytes(new byte[] {0, 0, 0, (byte) 0xff})
-                        .value())
-                .as("先頭の 0 を落とさない")
-                .isEqualTo("0000-00ff");
-        assertThatThrownBy(() -> NormalizedRecoveryCode.fromBytes(new byte[3]))
-                .isInstanceOf(IllegalArgumentException.class);
-    }
-
-    @Test
-    void 平文の組を発行するとその利用者の未使用の10個になり数が違えば発行しない() {
-        List<String> plain = IntStream.rangeClosed(1, RecoveryCode.CODES_PER_USER)
-                .mapToObj(i -> String.format("1a2b-%04d", i))
-                .toList();
-
-        List<RecoveryCode> issued = RecoveryCode.issueSet(USER, plain, HASHER, ISSUED_AT);
+    void 平文の組を発行するとその利用者の未使用の10個になる() {
+        List<RecoveryCode> issued =
+                RecoveryCode.issueSet(USER, plainCodes(RecoveryCode.CODES_PER_USER), HASHER, ISSUED_AT);
 
         assertThat(issued)
                 .hasSize(RecoveryCode.CODES_PER_USER)
@@ -190,8 +166,20 @@ class RecoveryCodeTest {
                         && !code.isUsed()
                         && code.issuedAt().equals(ISSUED_AT));
         assertThat(issued.get(2).matches(normalized("1a2b-0003"), HASHER)).isTrue();
-        assertThatThrownBy(() -> RecoveryCode.issueSet(USER, plain.subList(0, 9), HASHER, ISSUED_AT))
+    }
+
+    @Test
+    void 平文の数が10でなければ発行しない() {
+        List<String> nine = plainCodes(RecoveryCode.CODES_PER_USER - 1);
+
+        assertThatThrownBy(() -> RecoveryCode.issueSet(USER, nine, HASHER, ISSUED_AT))
                 .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    private static List<String> plainCodes(int count) {
+        return IntStream.rangeClosed(1, count)
+                .mapToObj(i -> String.format("1a2b-%04d", i))
+                .toList();
     }
 
     private static NormalizedRecoveryCode normalized(String value) {

@@ -198,7 +198,8 @@ class AuthenticationSecurityIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(content().string(Matchers.containsString("autocomplete=\"one-time-code\"")))
                 // 欄の桁数は TotpCredential.DIGITS から描く。表示は Bolt 33d の前と同じ（見出しの文言は残す）
-                .andExpect(content().string(Matchers.containsString("pattern=\"[0-9]{6}\" maxlength=\"6\"")))
+                .andExpect(content().string(Matchers.containsString("pattern=\"[0-9]{6}\"")))
+                .andExpect(content().string(Matchers.containsString("maxlength=\"6\"")))
                 .andExpect(content().string(Matchers.containsString("6 桁のコードを入力してください")));
     }
 

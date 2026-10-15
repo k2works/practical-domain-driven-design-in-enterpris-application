@@ -36,7 +36,7 @@ class TotpProvisioningStarterTest {
             if (!text.startsWith(owner.value().toString())) {
                 throw new UnreadableCredentialException("別の利用者の暗号文");
             }
-            return new TotpProvisioning("otpauth://totp/" + text, "KEY " + text, "<svg/>");
+            return new TotpProvisioning("otpauth://totp/" + accountName + "?" + text, "KEY " + text, "<svg/>");
         }
     };
 
@@ -47,7 +47,8 @@ class TotpProvisioningStarterTest {
         TotpProvisioningStarter.Started started = starter.start(OWNER, Optional.empty(), ACCOUNT);
 
         assertThat(issued).singleElement().isEqualTo(started.secret());
-        assertThat(started.provisioning().otpauthUri()).endsWith(OWNER.value() + "#0");
+        assertThat(started.provisioning().otpauthUri())
+                .isEqualTo("otpauth://totp/" + ACCOUNT + "?" + OWNER.value() + "#0");
     }
 
     @Test
@@ -57,6 +58,7 @@ class TotpProvisioningStarterTest {
         TotpProvisioningStarter.Started started = starter.start(OWNER, Optional.of(pending), ACCOUNT);
 
         assertThat(started.secret()).isEqualTo(pending);
+        assertThat(started.provisioning().otpauthUri()).isEqualTo("otpauth://totp/" + ACCOUNT + "?" + pending.value());
         assertThat(issued).as("発行は最初の 1 回だけ").hasSize(1);
     }
 

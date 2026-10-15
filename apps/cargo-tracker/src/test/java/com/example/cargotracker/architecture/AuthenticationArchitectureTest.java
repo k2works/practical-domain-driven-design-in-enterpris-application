@@ -163,9 +163,13 @@ class AuthenticationArchitectureTest {
             .or()
             .haveSimpleName("QrCodeSvg")
             .or()
+            .haveSimpleName("RandomPasswordResetTokenGenerator")
+            .or()
             .haveSimpleName("RandomRecoveryCodeGenerator")
             .or()
             .haveSimpleName("RandomTotpSecretIssuer")
+            .or()
+            .haveSimpleName("Sha256PasswordResetTokenHasher")
             .should()
             .resideInAPackage("com.example.cargotracker.identity.infrastructure.crypto..");
 

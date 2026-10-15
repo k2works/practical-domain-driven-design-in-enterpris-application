@@ -2,6 +2,7 @@ package com.example.cargotracker.identity.domain.model.valueobjects;
 
 import com.example.cargotracker.shared.annotation.ddd.ValueObject;
 import java.util.HexFormat;
+import java.util.Optional;
 import java.util.regex.Pattern;
 
 /**
@@ -17,6 +18,9 @@ public record NormalizedRecoveryCode(String value) {
 
     private static final Pattern FORM = Pattern.compile("[0-9a-f]{4}-[0-9a-f]{4}");
 
+    /** 区切りのハイフンを入れ忘れた形（8 文字の 16 進）。 */
+    private static final Pattern UNHYPHENATED = Pattern.compile("[0-9a-f]{8}");
+
     private static final HexFormat HEX = HexFormat.of();
 
     public NormalizedRecoveryCode {
@@ -25,9 +29,20 @@ public record NormalizedRecoveryCode(String value) {
         }
     }
 
-    /** 文字列が回復コードの形か。 */
-    public static boolean isForm(String value) {
-        return value != null && FORM.matcher(value).matches();
+    /**
+     * 空白を除き小文字にした文字列を回復コードとして読む。区切りのハイフンを入れ忘れた 8 文字は 4 文字目の後に入れる。形が合わなければ
+     * 空にする（入力の空白・大文字・全角は {@code RecoveryCode.normalize} が先に直す）。
+     */
+    public static Optional<NormalizedRecoveryCode> parse(String compact) {
+        if (compact == null) {
+            return Optional.empty();
+        }
+        String hyphenated = UNHYPHENATED.matcher(compact).matches()
+                ? compact.substring(0, 4) + "-" + compact.substring(4)
+                : compact;
+        return FORM.matcher(hyphenated).matches()
+                ? Optional.of(new NormalizedRecoveryCode(hyphenated))
+                : Optional.empty();
     }
 
     /** 乱数のバイト（{@value #BYTES} バイト）から回復コードを作る（発行の形）。 */
