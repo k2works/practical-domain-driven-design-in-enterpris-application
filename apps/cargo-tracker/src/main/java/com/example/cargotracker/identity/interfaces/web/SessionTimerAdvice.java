@@ -1,5 +1,6 @@
 package com.example.cargotracker.identity.interfaces.web;
 
+import com.example.cargotracker.identity.application.internal.session.SessionKeys;
 import com.example.cargotracker.shared.domain.AuthenticatedActor;
 import com.example.cargotracker.shared.domain.UserId;
 import jakarta.servlet.http.HttpServletRequest;
@@ -22,18 +23,6 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 public class SessionTimerAdvice {
 
     /**
-     * 8 時間の残りの秒数の request の属性の名前。認証の入口の {@code SessionLifetime.LIFETIME_REMAINING_ATTRIBUTE} と同じ値
-     * （画面の層は infrastructure に依存できないので、2 つの定数で持ち一致をテストで守る。Bolt 33b でまとめて直す）。
-     */
-    public static final String LIFETIME_REMAINING_ATTRIBUTE = "cargotracker.request.sessionLifetimeRemainingSeconds";
-
-    /**
-     * 戻り先の request の属性の名前。認証の入口の {@code SessionLifetime.RETURN_PATH_ATTRIBUTE} と同じ値（Bolt 32e。同じ理由で
-     * 2 つの定数で持つ）。
-     */
-    public static final String RETURN_PATH_ATTRIBUTE = "cargotracker.request.returnPath";
-
-    /**
      * 無操作の期限の秒数、8 時間の上限までの残りの秒数、戻り先（GET で開いた業務の画面の path と query。送信の後の画面などでは
      * null。Bolt 32e）。
      */
@@ -41,7 +30,7 @@ public class SessionTimerAdvice {
 
     @ModelAttribute("sessionTimer")
     public SessionTimer sessionTimer(HttpServletRequest request, Optional<AuthenticatedActor> actor) {
-        if (!(request.getAttribute(LIFETIME_REMAINING_ATTRIBUTE) instanceof Long lifetimeRemaining)) {
+        if (!(request.getAttribute(SessionKeys.LIFETIME_REMAINING_ATTRIBUTE) instanceof Long lifetimeRemaining)) {
             return null;
         }
         HttpSession session = request.getSession(false);
@@ -51,7 +40,7 @@ public class SessionTimerAdvice {
         return new SessionTimer(
                 session.getMaxInactiveInterval(),
                 lifetimeRemaining,
-                request.getAttribute(RETURN_PATH_ATTRIBUTE) instanceof String path ? path : null,
+                request.getAttribute(SessionKeys.RETURN_PATH_ATTRIBUTE) instanceof String path ? path : null,
                 actor.map(each -> ownerKey(each.userId())).orElse(null));
     }
 

@@ -1,5 +1,7 @@
 package com.example.cargotracker.identity.infrastructure.security;
 
+import com.example.cargotracker.identity.application.internal.session.SessionKeys;
+import com.example.cargotracker.identity.domain.model.rules.SessionPolicy;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -50,13 +52,13 @@ public class SessionLifetimeFilter extends OncePerRequestFilter {
             } else {
                 ExpiredSessionRequestSaver.invalidateCarryingSavedRequest(request);
             }
-            response.sendRedirect(request.getContextPath() + SessionLifetime.EXPIRED_URL);
+            response.sendRedirect(request.getContextPath() + SessionKeys.EXPIRED_URL);
             return;
         }
         if (session != null) {
             putLifetimeRemaining(request, session, now);
             if (requestSaver.returnable(request)) {
-                request.setAttribute(SessionLifetime.RETURN_PATH_ATTRIBUTE, returnPath(request));
+                request.setAttribute(SessionKeys.RETURN_PATH_ATTRIBUTE, returnPath(request));
             }
         }
         chain.doFilter(request, response);
@@ -70,9 +72,9 @@ public class SessionLifetimeFilter extends OncePerRequestFilter {
         if (!fullyAuthenticated()) {
             return;
         }
-        if (session.getAttribute(SessionLifetime.AUTHENTICATED_AT) instanceof Instant at) {
-            Duration remaining = Duration.between(now, at.plus(SessionLifetime.MAX_LIFETIME));
-            request.setAttribute(SessionLifetime.LIFETIME_REMAINING_ATTRIBUTE, remaining.toSeconds());
+        if (session.getAttribute(SessionKeys.AUTHENTICATED_AT) instanceof Instant at) {
+            Duration remaining = Duration.between(now, at.plus(SessionPolicy.MAX_LIFETIME));
+            request.setAttribute(SessionKeys.LIFETIME_REMAINING_ATTRIBUTE, remaining.toSeconds());
         }
     }
 
@@ -104,18 +106,15 @@ public class SessionLifetimeFilter extends OncePerRequestFilter {
         }
         boolean totpPassed = hasAuthority(authentication, TotpAuthenticationToken.FACTOR_TOTP);
         if (totpPassed) {
-            return expiredSince(
-                    session.getAttribute(SessionLifetime.AUTHENTICATED_AT), SessionLifetime.MAX_LIFETIME, now);
+            return expiredSince(session.getAttribute(SessionKeys.AUTHENTICATED_AT), SessionPolicy.MAX_LIFETIME, now);
         }
         // 登録の途中（A-07 を開いた後）だけ、登録を始めた時刻から 15 分（Bolt 31b）。それ以外の password の段は 5 分
-        Object enrollmentStartedAt = session.getAttribute(SessionLifetime.ENROLLMENT_STARTED_AT);
+        Object enrollmentStartedAt = session.getAttribute(SessionKeys.ENROLLMENT_STARTED_AT);
         if (enrollmentStartedAt != null) {
-            return expiredSince(enrollmentStartedAt, SessionLifetime.ENROLLMENT_LIFETIME, now);
+            return expiredSince(enrollmentStartedAt, SessionPolicy.ENROLLMENT_LIFETIME, now);
         }
         return expiredSince(
-                session.getAttribute(SessionLifetime.PASSWORD_VERIFIED_AT),
-                SessionLifetime.PASSWORD_STAGE_LIFETIME,
-                now);
+                session.getAttribute(SessionKeys.PASSWORD_VERIFIED_AT), SessionPolicy.PASSWORD_STAGE_LIFETIME, now);
     }
 
     private static boolean expiredSince(Object startedAt, Duration lifetime, Instant now) {

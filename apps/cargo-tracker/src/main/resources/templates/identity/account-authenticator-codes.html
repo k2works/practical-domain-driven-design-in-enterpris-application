@@ -17,7 +17,7 @@
     <ol class="app-recovery-codes">
         <li th:each="code : ${recoveryCodes}"><code th:text="${code}">1a2b-3c4d</code></li>
     </ol>
-    <form th:action="@{/account/authenticator/continue}" method="post">
+    <form th:action="@{|${sessionUrls.reEnroll}/continue|}" method="post">
         <div class="form-check mb-3">
             <input class="form-check-input" type="checkbox" id="saved" required>
             <label class="form-check-label" for="saved">回復コードを安全な場所に保存した</label>

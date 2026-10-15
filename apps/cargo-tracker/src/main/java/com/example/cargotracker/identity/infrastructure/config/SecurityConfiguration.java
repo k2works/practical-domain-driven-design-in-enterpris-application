@@ -4,6 +4,7 @@ import com.example.cargotracker.identity.application.internal.commandservices.Lo
 import com.example.cargotracker.identity.application.internal.commandservices.RecoveryCodeVerificationService;
 import com.example.cargotracker.identity.application.internal.commandservices.SessionRevalidationService;
 import com.example.cargotracker.identity.application.internal.commandservices.TotpVerificationService;
+import com.example.cargotracker.identity.application.internal.session.SessionKeys;
 import com.example.cargotracker.identity.domain.model.aggregates.AuditRecordRepository;
 import com.example.cargotracker.identity.domain.model.aggregates.CompanyRepository;
 import com.example.cargotracker.identity.domain.model.aggregates.UserRepository;
@@ -15,7 +16,6 @@ import com.example.cargotracker.identity.infrastructure.security.LockAwareUserDe
 import com.example.cargotracker.identity.infrastructure.security.LoginSuccessHandler;
 import com.example.cargotracker.identity.infrastructure.security.RecoveryCodeAuthenticationProvider;
 import com.example.cargotracker.identity.infrastructure.security.RecoveryCodeRejectedException;
-import com.example.cargotracker.identity.infrastructure.security.SessionLifetime;
 import com.example.cargotracker.identity.infrastructure.security.SessionLifetimeFilter;
 import com.example.cargotracker.identity.infrastructure.security.SessionRevalidationFilter;
 import com.example.cargotracker.identity.infrastructure.security.TotpAuthenticationFilter;
@@ -93,7 +93,7 @@ public class SecurityConfiguration {
     /** 認証なしで開ける URL（ログイン、再認証の案内、password の再設定の依頼（A-05）と仮の A-06（Bolt 33）、エラー、静的な資源）。request ごとの利用者の確かめもしない（Bolt 32c）。 */
     private static final String[] PUBLIC_PATHS = {
         LOGIN_URL,
-        SessionLifetime.EXPIRED_URL,
+        SessionKeys.EXPIRED_URL,
         PasswordResetController.URL,
         PasswordResetController.TOKEN_URL_PATTERN,
         "/error",

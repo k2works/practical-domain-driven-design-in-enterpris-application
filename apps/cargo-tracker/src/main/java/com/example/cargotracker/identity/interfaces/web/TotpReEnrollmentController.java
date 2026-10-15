@@ -3,6 +3,8 @@ package com.example.cargotracker.identity.interfaces.web;
 import com.example.cargotracker.identity.application.internal.commandservices.ReEnrollmentResult;
 import com.example.cargotracker.identity.application.internal.commandservices.ReEnrollmentStart;
 import com.example.cargotracker.identity.application.internal.commandservices.TotpReEnrollmentService;
+import com.example.cargotracker.identity.application.internal.session.SessionKeys;
+import com.example.cargotracker.identity.domain.model.rules.SessionPolicy;
 import com.example.cargotracker.identity.domain.model.valueobjects.EncryptedSecret;
 import com.example.cargotracker.identity.domain.model.valueobjects.TotpProvisioning;
 import com.example.cargotracker.platform.web.DateTimeDisplay;
@@ -31,11 +33,8 @@ import org.springframework.web.bind.annotation.RequestParam;
  * 完了したら同じ応答で新しい回復コードを一度だけ示す。「後で登録する」は印を残して覚えた要求の画面か役割のホームへ移す。
  */
 @Controller
-@RequestMapping(TotpReEnrollmentController.URL)
+@RequestMapping(SessionKeys.RE_ENROLL_URL)
 public class TotpReEnrollmentController {
-
-    /** A-08 の URL（認証の入口の {@code SessionLifetime.RE_ENROLL_URL} と同じ）。 */
-    public static final String URL = "/account/authenticator";
 
     /** 再登録の途中の暗号文を置く session の属性の名前（A-07 の途中と分ける）。 */
     static final String PENDING_SECRET = "cargotracker.session.reEnrollmentPendingSecret";
@@ -139,7 +138,7 @@ public class TotpReEnrollmentController {
 
     private String start(AuthenticatedActor actor, HttpSession session, Model model) {
         if (session.getAttribute(STARTED_AT) instanceof Instant started
-                && !clock.instant().isBefore(started.plus(TotpReEnrollmentService.LIMIT))) {
+                && !clock.instant().isBefore(started.plus(SessionPolicy.RE_ENROLLMENT_LIFETIME))) {
             // 期限を過ぎた途中の値は使わず、新しいキーと期限で始め直す
             clearPending(session);
         }
@@ -150,7 +149,7 @@ public class TotpReEnrollmentController {
                 session.setAttribute(STARTED_AT, clock.instant());
             }
             addLayout(actor, model);
-            Instant deadline = ((Instant) session.getAttribute(STARTED_AT)).plus(TotpReEnrollmentService.LIMIT);
+            Instant deadline = ((Instant) session.getAttribute(STARTED_AT)).plus(SessionPolicy.RE_ENROLLMENT_LIFETIME);
             model.addAttribute(
                     "deadline",
                     isShipper(actor) ? DateTimeDisplay.customer(deadline) : DateTimeDisplay.staff(deadline));

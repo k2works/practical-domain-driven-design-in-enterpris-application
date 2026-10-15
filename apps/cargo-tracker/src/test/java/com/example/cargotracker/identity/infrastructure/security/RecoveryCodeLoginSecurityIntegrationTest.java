@@ -13,6 +13,7 @@ import com.example.cargotracker.identity.AuditRecordRows;
 import com.example.cargotracker.identity.IdentityIntegrationTest;
 import com.example.cargotracker.identity.LogCapture;
 import com.example.cargotracker.identity.SpringSessionRows;
+import com.example.cargotracker.identity.application.internal.session.SessionKeys;
 import com.example.cargotracker.identity.domain.model.aggregates.Company;
 import com.example.cargotracker.identity.domain.model.aggregates.CompanyRepository;
 import com.example.cargotracker.identity.domain.model.aggregates.RecoveryCode;
@@ -137,7 +138,7 @@ class RecoveryCodeLoginSecurityIntegrationTest {
         Cookie full = result.getResponse().getCookie(SESSION_COOKIE);
         assertThat(full.getValue()).as("権限が上がる段で session ID を変える（T-40）").isNotEqualTo(passwordStage.getValue());
         mvc.perform(get(BUSINESS_URL).cookie(full)).andExpect(status().isOk());
-        assertThat(sessions().attribute(full, SessionLifetime.AUTHENTICATED_AT))
+        assertThat(sessions().attribute(full, SessionKeys.AUTHENTICATED_AT))
                 .as("8 時間の起点は回復コードが通った時刻（password の段の時刻でない。Bolt 31c）")
                 .isEqualTo(recoveredAt);
         assertThat(new AuditRecordRows(jdbc).actionsAt(userIdOf(email), LOGIN_AT))
@@ -339,7 +340,7 @@ class RecoveryCodeLoginSecurityIntegrationTest {
         mvc.perform(get(TOTP_URL).cookie(full))
                 .andExpect(status().isOk())
                 .andExpect(content().string(Matchers.not(Matchers.containsString(JUST_ENROLLED))));
-        assertThat(sessions().attributeNames(full)).doesNotContain(SessionLifetime.ENROLLMENT_STARTED_AT);
+        assertThat(sessions().attributeNames(full)).doesNotContain(SessionKeys.ENROLLMENT_STARTED_AT);
     }
 
     // --- 認証アプリの再登録（A-08。US-18 AC9、SEC-10。Bolt 33b） ---
@@ -492,7 +493,7 @@ class RecoveryCodeLoginSecurityIntegrationTest {
                 .andReturn()
                 .getResponse()
                 .getCookie(SESSION_COOKIE);
-        assertThat(sessions().attribute(switched, SessionLifetime.RECOVERY_LOGIN_USER))
+        assertThat(sessions().attribute(switched, SessionKeys.RECOVERY_LOGIN_USER))
                 .as("password の段の成功で前の利用者の印を消す")
                 .isNull();
         Cookie secondFull = mvc.perform(post(TOTP_URL)

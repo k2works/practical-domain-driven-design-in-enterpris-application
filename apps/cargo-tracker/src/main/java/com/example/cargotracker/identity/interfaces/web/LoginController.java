@@ -1,6 +1,7 @@
 package com.example.cargotracker.identity.interfaces.web;
 
 import com.example.cargotracker.identity.application.internal.queryservices.TotpEnrollmentQueryService;
+import com.example.cargotracker.identity.application.internal.session.SessionKeys;
 import com.example.cargotracker.identity.domain.model.valueobjects.PasswordVerifiedUser;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.ObjectProvider;
@@ -63,13 +64,13 @@ public class LoginController {
             return "redirect:/login/totp/enroll";
         }
         // 登録の直後（登録を始めた時刻が残っている）だけ案内を出す。TOTP・回復コードが通ると時刻は消える（Bolt 31c）
-        model.addAttribute("justEnrolled", session.getAttribute(TotpEnrollmentController.STARTED_AT) != null);
+        model.addAttribute("justEnrolled", session.getAttribute(SessionKeys.ENROLLMENT_STARTED_AT) != null);
         devTotpCodes.ifAvailable(
                 codes -> codes.codeFor(user.email().value()).ifPresent(code -> model.addAttribute("code", code)));
         return "identity/login-totp";
     }
 
-    @GetMapping("/session-expired")
+    @GetMapping(SessionKeys.EXPIRED_URL)
     public String sessionExpired() {
         return "identity/session-expired";
     }

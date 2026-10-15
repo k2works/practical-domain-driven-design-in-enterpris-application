@@ -115,9 +115,11 @@ class LayerArchitectureTest {
             .resideInAPackage(IDENTITY_AUTHENTICATION_ENTRY)
             .should()
             .dependOnClassesThat(resideInAPackage("..application..")
-                    .and(not(resideInAPackage(
-                            "com.example.cargotracker.identity.application.internal.commandservices.."))))
-            .because("認証の入口の例外は identity のコマンドサービスに限る（D-5、ADR-012、Bolt 31）");
+                    .and(not(resideInAnyPackage(
+                            "com.example.cargotracker.identity.application.internal.commandservices..",
+                            "com.example.cargotracker.identity.application.internal.session.."))))
+            .because("認証の入口の例外は identity のコマンドサービスと、画面と共有する session の属性の名前（ふるまいを持たない。"
+                    + "Bolt 33c）に限る（D-5、ADR-012、Bolt 31）");
 
     @ArchTest
     static final ArchRule サガの状態はinfrastructureの永続化の実装からだけ参照される = noClasses()

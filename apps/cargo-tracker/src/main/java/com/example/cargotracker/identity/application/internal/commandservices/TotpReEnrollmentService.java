@@ -16,6 +16,7 @@ import com.example.cargotracker.identity.domain.model.aggregates.UnreadableCrede
 import com.example.cargotracker.identity.domain.model.aggregates.User;
 import com.example.cargotracker.identity.domain.model.aggregates.UserRepository;
 import com.example.cargotracker.identity.domain.model.aggregates.UserSessionRevoker;
+import com.example.cargotracker.identity.domain.model.rules.SessionPolicy;
 import com.example.cargotracker.identity.domain.model.valueobjects.EncryptedSecret;
 import com.example.cargotracker.identity.domain.model.valueobjects.EnrollingUser;
 import com.example.cargotracker.identity.domain.model.valueobjects.TotpMatch;
@@ -23,7 +24,6 @@ import com.example.cargotracker.identity.domain.model.valueobjects.TotpProvision
 import com.example.cargotracker.shared.domain.UserId;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import java.time.Clock;
-import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
 import org.slf4j.Logger;
@@ -47,9 +47,6 @@ import org.springframework.transaction.support.TransactionTemplate;
  */
 @Service
 public class TotpReEnrollmentService {
-
-    /** 始めてから完了までの上限（A-07 の登録と同じ 15 分。2 つの要素がそろった session では認証の入口の上限が効かないので、ここで見る）。 */
-    public static final Duration LIMIT = Duration.ofMinutes(15);
 
     private static final Logger LOG = LoggerFactory.getLogger(TotpReEnrollmentService.class);
 
@@ -138,7 +135,7 @@ public class TotpReEnrollmentService {
             return new ReEnrollmentResult.Superseded();
         }
         UtcInstant now = new UtcInstant(clock.instant());
-        if (!now.instant().isBefore(startedAt.instant().plus(LIMIT))) {
+        if (!now.instant().isBefore(startedAt.instant().plus(SessionPolicy.RE_ENROLLMENT_LIFETIME))) {
             return new ReEnrollmentResult.Expired();
         }
         TotpMatch match;

@@ -1,5 +1,6 @@
 package com.example.cargotracker.identity.infrastructure.security;
 
+import com.example.cargotracker.identity.application.internal.session.SessionKeys;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -106,20 +107,20 @@ public class TotpAuthenticationFilter extends AbstractAuthenticationProcessingFi
                 HttpServletRequest request, HttpServletResponse response, Authentication authentication)
                 throws ServletException, IOException {
             HttpSession session = request.getSession();
-            if (session.getAttribute(SessionLifetime.AUTHENTICATED_AT) == null) {
-                session.setAttribute(SessionLifetime.AUTHENTICATED_AT, clock.instant());
+            if (session.getAttribute(SessionKeys.AUTHENTICATED_AT) == null) {
+                session.setAttribute(SessionKeys.AUTHENTICATED_AT, clock.instant());
             }
             // 登録を始めた時刻は、ログインを終えたら使わない（登録の直後の A-02 の案内を出さない。期限は要素で選ぶので変わらない。
             // Bolt 31c の確認ポイント 9）
-            session.removeAttribute(SessionLifetime.ENROLLMENT_STARTED_AT);
+            session.removeAttribute(SessionKeys.ENROLLMENT_STARTED_AT);
             if (Boolean.TRUE.equals(request.getAttribute(RECOVERY_ATTEMPT_ATTRIBUTE))
                     && authentication.getPrincipal() instanceof CargoUserDetails user) {
                 session.setAttribute(
-                        SessionLifetime.RECOVERY_LOGIN_USER,
+                        SessionKeys.RECOVERY_LOGIN_USER,
                         user.actor().userId().value().toString());
-                session.setAttribute(SessionLifetime.RECOVERY_LOGIN_AT, clock.instant());
+                session.setAttribute(SessionKeys.RECOVERY_LOGIN_AT, clock.instant());
                 clearAuthenticationAttributes(request);
-                response.sendRedirect(request.getContextPath() + SessionLifetime.RE_ENROLL_URL);
+                response.sendRedirect(request.getContextPath() + SessionKeys.RE_ENROLL_URL);
                 return;
             }
             super.onAuthenticationSuccess(request, response, authentication);

@@ -1,8 +1,9 @@
 package com.example.cargotracker.identity.interfaces.web;
 
+import com.example.cargotracker.identity.application.internal.session.SessionKeys;
+import com.example.cargotracker.identity.domain.model.rules.SessionPolicy;
 import com.example.cargotracker.shared.domain.AuthenticatedActor;
 import jakarta.servlet.http.HttpSession;
-import java.time.Duration;
 import java.time.Instant;
 
 /**
@@ -12,18 +13,6 @@ import java.time.Instant;
  * password なしで認証アプリを登録し直せる時間を限る。Bolt 33b の開発レビューで human:kakimomokuri が決定）。
  */
 public final class RecoveryLogin {
-
-    /**
-     * 印の利用者の ID を置く session の属性の名前。認証の入口の {@code SessionLifetime.RECOVERY_LOGIN_USER} と同じ値（画面の層は
-     * infrastructure に依存できないので、2 つの定数で持ち一致をテストで守る。Bolt 33c でまとめて置き場所を直す）。
-     */
-    public static final String MARK = "cargotracker.session.recoveryLoginUser";
-
-    /** 回復コードでログインした時刻を置く session の属性の名前（{@code SessionLifetime.RECOVERY_LOGIN_AT} と同じ値）。 */
-    public static final String AT = "cargotracker.session.recoveryLoginAt";
-
-    /** 印の有効な長さ（回復コードでログインしてから）。 */
-    public static final Duration LIFETIME = Duration.ofMinutes(15);
 
     /** 今の主体にとっての印の状態。 */
     enum State {
@@ -40,11 +29,12 @@ public final class RecoveryLogin {
     static State stateOf(HttpSession session, AuthenticatedActor actor, Instant now) {
         if (session == null
                 || actor == null
-                || !(session.getAttribute(MARK) instanceof String marked)
+                || !(session.getAttribute(SessionKeys.RECOVERY_LOGIN_USER) instanceof String marked)
                 || !marked.equals(actor.userId().value().toString())) {
             return State.NONE;
         }
-        return session.getAttribute(AT) instanceof Instant at && now.isBefore(at.plus(LIFETIME))
+        return session.getAttribute(SessionKeys.RECOVERY_LOGIN_AT) instanceof Instant at
+                        && now.isBefore(at.plus(SessionPolicy.RECOVERY_LOGIN_LIFETIME))
                 ? State.ACTIVE
                 : State.EXPIRED;
     }
@@ -56,7 +46,7 @@ public final class RecoveryLogin {
 
     /** 印を消す（A-08 で登録し直した）。 */
     static void clear(HttpSession session) {
-        session.removeAttribute(MARK);
-        session.removeAttribute(AT);
+        session.removeAttribute(SessionKeys.RECOVERY_LOGIN_USER);
+        session.removeAttribute(SessionKeys.RECOVERY_LOGIN_AT);
     }
 }

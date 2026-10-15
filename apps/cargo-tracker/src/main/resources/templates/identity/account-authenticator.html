@@ -28,7 +28,7 @@
     <p>QR コードを使えない場合は、次のキーを認証アプリに入力してください。</p>
     <p><code class="app-totp-key" th:attr="data-manual-key=${manualKey}" th:text="${manualKey}">ABCD EFGH IJKL MNOP</code></p>
     <h2 class="h5">2. 表示された 6 桁のコードを入力する</h2>
-    <form th:action="@{/account/authenticator}" method="post" class="app-login-form">
+    <form th:action="@{${sessionUrls.reEnroll}}" method="post" class="app-login-form">
         <div class="mb-3">
             <label for="code" class="form-label">認証コード</label>
             <input type="text" id="code" name="code" class="form-control" autocomplete="one-time-code"
@@ -39,7 +39,7 @@
     </form>
     <hr>
     <p>今は登録しない場合は、後で登録できます。このログインの間は、業務の画面の上部の案内から登録し直せます。</p>
-    <form th:action="@{/account/authenticator/later}" method="post">
+    <form th:action="@{|${sessionUrls.reEnroll}/later|}" method="post">
         <button type="submit" class="btn btn-outline-secondary">後で登録する</button>
     </form>
 </main>

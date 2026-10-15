@@ -24,7 +24,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
  */
 public class SessionTimeoutUiSteps {
 
-    /** ログインの時刻を置く session の属性の名前（認証の入口の {@code SessionLifetime.AUTHENTICATED_AT} と同じ値）。 */
+    /** ログインの時刻を置く session の属性の名前（認証の入口の {@code SessionKeys.AUTHENTICATED_AT} と同じ値）。 */
     private static final String AUTHENTICATED_AT = "cargotracker.session.authenticatedAt";
 
     private static final String NEW_TRANSPORT_REQUEST = "/customer/transport-requests/new";

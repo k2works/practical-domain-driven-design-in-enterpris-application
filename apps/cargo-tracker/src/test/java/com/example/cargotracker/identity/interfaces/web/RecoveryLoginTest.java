@@ -2,6 +2,8 @@ package com.example.cargotracker.identity.interfaces.web;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.example.cargotracker.identity.application.internal.session.SessionKeys;
+import com.example.cargotracker.identity.domain.model.rules.SessionPolicy;
 import com.example.cargotracker.shared.domain.AuthenticatedActor;
 import com.example.cargotracker.shared.domain.CompanyId;
 import com.example.cargotracker.shared.domain.Role;
@@ -26,8 +28,9 @@ class RecoveryLoginTest {
 
     private MockHttpSession marked(AuthenticatedActor owner) {
         MockHttpSession session = new MockHttpSession();
-        session.setAttribute(RecoveryLogin.MARK, owner.userId().value().toString());
-        session.setAttribute(RecoveryLogin.AT, LOGGED_IN);
+        session.setAttribute(
+                SessionKeys.RECOVERY_LOGIN_USER, owner.userId().value().toString());
+        session.setAttribute(SessionKeys.RECOVERY_LOGIN_AT, LOGGED_IN);
         return session;
     }
 
@@ -36,9 +39,11 @@ class RecoveryLoginTest {
         MockHttpSession session = marked(actor);
 
         assertThat(RecoveryLogin.isMarked(
-                        session, actor, LOGGED_IN.plus(RecoveryLogin.LIFETIME).minusSeconds(1)))
+                        session,
+                        actor,
+                        LOGGED_IN.plus(SessionPolicy.RECOVERY_LOGIN_LIFETIME).minusSeconds(1)))
                 .isTrue();
-        assertThat(RecoveryLogin.stateOf(session, actor, LOGGED_IN.plus(RecoveryLogin.LIFETIME)))
+        assertThat(RecoveryLogin.stateOf(session, actor, LOGGED_IN.plus(SessionPolicy.RECOVERY_LOGIN_LIFETIME)))
                 .as("ちょうど 15 分")
                 .isEqualTo(RecoveryLogin.State.EXPIRED);
     }
@@ -54,7 +59,7 @@ class RecoveryLoginTest {
     @Test
     void 時刻のない印は期限を過ぎたものとして扱う() {
         MockHttpSession session = marked(actor);
-        session.removeAttribute(RecoveryLogin.AT);
+        session.removeAttribute(SessionKeys.RECOVERY_LOGIN_AT);
 
         assertThat(RecoveryLogin.stateOf(session, actor, LOGGED_IN)).isEqualTo(RecoveryLogin.State.EXPIRED);
     }
@@ -65,7 +70,7 @@ class RecoveryLoginTest {
 
         RecoveryLogin.clear(session);
 
-        assertThat(session.getAttribute(RecoveryLogin.MARK)).isNull();
-        assertThat(session.getAttribute(RecoveryLogin.AT)).isNull();
+        assertThat(session.getAttribute(SessionKeys.RECOVERY_LOGIN_USER)).isNull();
+        assertThat(session.getAttribute(SessionKeys.RECOVERY_LOGIN_AT)).isNull();
     }
 }

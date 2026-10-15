@@ -16,6 +16,7 @@ import com.example.cargotracker.identity.AuthenticationFactorFixtures;
 import com.example.cargotracker.identity.IdentityIntegrationTest;
 import com.example.cargotracker.identity.LogCapture;
 import com.example.cargotracker.identity.SpringSessionRows;
+import com.example.cargotracker.identity.application.internal.session.SessionKeys;
 import com.example.cargotracker.identity.domain.model.aggregates.Company;
 import com.example.cargotracker.identity.domain.model.aggregates.CompanyRepository;
 import com.example.cargotracker.identity.domain.model.aggregates.PasswordResetToken;
@@ -508,7 +509,7 @@ class AuthenticationSecurityIntegrationTest {
 
         Cookie full = submitTotp(passwordStage, currentCode(email));
 
-        assertThat(sessions().attribute(full, SessionLifetime.AUTHENTICATED_AT))
+        assertThat(sessions().attribute(full, SessionKeys.AUTHENTICATED_AT))
                 .as("8 時間の起点は TOTP が通った時刻（password の段の時刻でない。Bolt 31）")
                 .isEqualTo(totpAt);
         assertThat(new AuditRecordRows(jdbc).actionsAt(userIdOf(email), LOGIN_AT))

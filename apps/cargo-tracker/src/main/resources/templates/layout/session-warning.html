@@ -38,13 +38,13 @@
     <template id="session-expired-reopen-template">
         <div class="alert alert-warning mb-0" role="alert">
             <p class="mb-2">ログアウトした可能性があります。入力中の内容は送信されていません。「画面を開き直す」を押すと、入力中の内容をこのタブに控えてから開き直し、開いた画面に戻します（ログインを求められたら、ログインし直した後に戻します）。</p>
-            <a th:href="@{/session-expired}" class="alert-link" data-session-return>画面を開き直す</a>
+            <a th:href="@{${sessionUrls.expired}}" class="alert-link" data-session-return>画面を開き直す</a>
         </div>
     </template>
     <template id="session-expired-template">
         <div class="alert alert-warning mb-0" role="alert">
             <p class="mb-2">ログアウトした可能性があります。入力中の内容は送信されていません。必要なら書き写してから、もう一度ログインしてください。</p>
-            <a th:href="@{/session-expired}" class="alert-link" data-session-return>もう一度ログインする</a>
+            <a th:href="@{${sessionUrls.expired}}" class="alert-link" data-session-return>もう一度ログインする</a>
         </div>
     </template>
     <script th:src="@{/js/session-input.js}" defer></script>
