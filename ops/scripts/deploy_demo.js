@@ -37,6 +37,9 @@ const REVISION_LABEL = 'org.opencontainers.image.revision';
  */
 const CONFIG_VARS = {
   SPRING_PROFILES_ACTIVE: 'dev',
+  // メールのリンク（password の再設定）を組み立てる公開の base URL（Bolt 33、ADR-013・ADR-017）。dev ではメールを送らずログに出す
+  CARGOTRACKER_PUBLICBASEURL:
+    process.env.DEMO_PUBLIC_BASE_URL || 'https://cargo-tracker-mono-demo-883bf0b92807.herokuapp.com',
   JAVA_TOOL_OPTIONS:
     process.env.DEMO_JAVA_TOOL_OPTIONS ||
     '-Xmx300m -XX:+UseSerialGC -Xss512k -XX:ReservedCodeCacheSize=64m -XX:MaxMetaspaceSize=192m',
