@@ -75,7 +75,7 @@ Bolt がイテレーションに当たります。ふりかえりは各 Bolt の
 | 32e | [失効の後に開いていた画面へ戻す（ACC-06）](bolt_32e_plan.md) | [終了報告](bolt_32e_report.md)（[動画](../../assets/demo/bolt-32e/return.webm){:target="_blank"}） | W5 | 完了 |
 | 32f | [失効の時の入力の保持（ACC-06）](bolt_32f_plan.md) | [終了報告](bolt_32f_report.md)（[動画](../../assets/demo/bolt-32f/restore.webm){:target="_blank"}） | W5 | 完了 |
 | 33 | [通知モジュールの新設と password の再設定の依頼（US-18 AC8 の前半）](bolt_33_plan.md) | [終了報告](bolt_33_report.md) | W5 | 完了 |
-| 33a | [password の再設定（A-06。US-18 AC8 の後半）](bolt_33a_plan.md) | — | W5 | 計画（承認済み） |
+| 33a | [password の再設定（A-06。US-18 AC8 の後半）](bolt_33a_plan.md) | [終了報告](bolt_33a_report.md) | W5 | 完了（承認待ち） |
 
 Bolt を始めるときに行を追加します。
 
@@ -163,3 +163,4 @@ Bolt を始めるときに行を追加します。
 * [Bolt 33 計画 - 通知モジュールの新設と password の再設定の依頼（US-18 AC8 の前半）](./bolt_33_plan.md) - W5 の 15 本目の Bolt の計画。通知モジュールを最小に新設し（送信の公開 API、送信の記録、SMTP と dev のログに出す送信）、A-01 の「password を忘れた場合」から A-05 で依頼すると、1 回だけ使える 30 分のリンクを登録メールアドレスへ送る（登録の有無を示さない）。A-06 は Bolt 33a。
 * [Bolt 33 終了報告 - 通知モジュールの新設と password の再設定の依頼（US-18 AC8 の前半）](./bolt_33_report.md) - 通知モジュールを新設し、A-05 で依頼するとコミットの後に 1 回だけ使える 30 分のリンクを送るようにした（登録の有無を示さない、平文を残さない）。開発レビューで、ポートの置き場所の規則、SMTP のタイムアウトと at-least-once、仮の A-06、W10 に送る残り（#49）を人が決めた。
 * [Bolt 33a 計画 - password の再設定（A-06。US-18 AC8 の後半）](./bolt_33a_plan.md) - W5 の 16 本目の Bolt の計画。リンクを開くとトークンを session に移してトークンのない URL の A-06 で新しい password を設定する（SEC-04・SEC-05）。設定したら session をすべて失効させ、A-01 に戻してログインし直す。
+* [Bolt 33a 終了報告 - password の再設定（A-06。US-18 AC8 の後半）](./bolt_33a_report.md) - リンクを開くとトークンの ID だけを session に置いて A-06 へ移し、新しい password を設定するとトークンを 1 回だけ使い、コミットの後にその利用者の session をすべて失効させた。開発レビューで session の ID の変更と、今の session を捨てる順序を決めた。
