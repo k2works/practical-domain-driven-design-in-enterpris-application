@@ -3,7 +3,9 @@ type: Plan
 title: "Bolt 33d 終了報告 - TOTP と回復コードの部品の整理（振る舞いの変わらない直し）"
 description: "W5 の 19 本目の Bolt の終了報告。TOTP の桁数を TotpCredential.DIGITS、アルゴリズムを JavaOtpTotpCodeGenerator の定数にし、A-02・A-07・A-08 のコードの欄の属性を桁数から描いた。QR コードの SVG を QrCodeSvg に分け、回復コードの形の知識を値オブジェクト NormalizedRecoveryCode に寄せて照合はその値だけを受けるようにし、A-07 と A-08 の回復コードの発行と途中の暗号文の処理を RecoveryCode.issueSet と TotpProvisioningStarter で共有した。振る舞いは変えていない。"
 tags: [plan]
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-15T22:55:41Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-15T23:44:01Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-10-15T23:44:01Z }
 ---
 
 # Bolt 33d 終了報告 - TOTP と回復コードの部品の整理（振る舞いの変わらない直し）
@@ -38,7 +40,7 @@ generated: { by: anthropic/claude-opus-5-5, at: 2026-10-15T22:55:41Z }
 | 2. TOTP の定数と SVG | 欄の見張りのテストを先に足し、`TotpCredential.DIGITS`・アルゴリズムの定数・画面の `codeDigits`、`QrCodeSvg` と `QrCodeSvgTest`、ZXing の見張りの対象を `QrCodeSvg` に | `467e05b0` |
 | 3. 回復コードの形と型 | 生成した値が正規化を通るテストを先に足し、`NormalizedRecoveryCode` を足して `normalize`・`matches`・照合のサービスを付け替え、テストのデータを回復コードの形に直した（計画からの変更は議題 2） | `46bd8c79` |
 | 4. A-07 と A-08 の重複 | `RecoveryCode.issueSet` と `TotpProvisioningStarter`（Bean にせず、2 つのサービスが組み立てる）、単体テスト | `335a028f` |
-| 5. 品質と報告 | SonarQube、開発レビュー（2 つ）と直し、この報告 | この報告のコミット |
+| 5. 品質と報告 | SonarQube、開発レビュー（2 つ）と直し、この報告 | `3fb01a79`、`4b3fb4b1` |
 
 ## 指標
 
@@ -108,6 +110,7 @@ Bolt 33e（W5 の続き）。認証の入口と期限の振る舞いの変わら
 
 | 日付 | 更新内容 | 更新者 |
 | :--- | :--- | :--- |
+| 2026-10-16 | 終了報告を承認した（議題 1〜4。議題 2 の人に諮らずに変えた置き場所を事後に承認。議題 4 は 33e の開始準備で扱う） | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-10-16 | 初版作成（承認待ち） | anthropic/claude-opus-5-5 |
 
 ## 関連ドキュメント
