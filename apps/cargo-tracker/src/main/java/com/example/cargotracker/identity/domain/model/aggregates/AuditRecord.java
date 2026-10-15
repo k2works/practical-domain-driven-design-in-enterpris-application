@@ -8,6 +8,7 @@ import com.example.cargotracker.shared.domain.CompanyId;
 import com.example.cargotracker.shared.domain.UserId;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -97,6 +98,25 @@ public final class AuditRecord {
         Objects.requireNonNull(reason, "reason");
         return new AuditRecord(
                 UUID.randomUUID(), at, user, company, AuditAction.LOGIN_FAILED, AuditResult.FAILURE, reason.name());
+    }
+
+    /**
+     * password の再設定の依頼を記録する（Bolt 33、US-18 AC8、ADR-012）。有効な利用者なら成功（理由なし）。登録のないメールアドレスは
+     * 利用者と企業を null にし、メールアドレスを残さない。利用停止・企業の無効は失敗で、理由を残す。画面の応答はどの場合も同じ。
+     *
+     * @param rejection 受け付けなかった理由。有効な利用者なら空
+     */
+    public static AuditRecord passwordResetRequested(
+            UserId user, CompanyId company, Optional<AuthenticationRejection> rejection, UtcInstant at) {
+        Objects.requireNonNull(rejection, "rejection");
+        return new AuditRecord(
+                UUID.randomUUID(),
+                at,
+                user,
+                company,
+                AuditAction.PASSWORD_RESET_REQUESTED,
+                rejection.isPresent() ? AuditResult.FAILURE : AuditResult.SUCCESS,
+                rejection.map(Enum::name).orElse(null));
     }
 
     /** ログアウトを記録する。 */

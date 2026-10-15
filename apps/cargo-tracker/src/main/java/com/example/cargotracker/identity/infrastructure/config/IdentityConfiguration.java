@@ -1,32 +1,46 @@
 package com.example.cargotracker.identity.infrastructure.config;
 
 import com.example.cargotracker.identity.application.internal.commandservices.LoginAttemptService;
+import com.example.cargotracker.identity.application.internal.commandservices.PasswordResetRequestService;
 import com.example.cargotracker.identity.application.internal.commandservices.RecoveryCodeVerificationService;
 import com.example.cargotracker.identity.application.internal.commandservices.SessionRevalidationService;
 import com.example.cargotracker.identity.application.internal.commandservices.TotpEnrollmentService;
 import com.example.cargotracker.identity.application.internal.commandservices.TotpVerificationService;
 import com.example.cargotracker.identity.application.internal.eventhandlers.KpiObservationEventHandler;
+import com.example.cargotracker.identity.application.internal.eventhandlers.PasswordResetMailEventHandler;
+import com.example.cargotracker.identity.application.internal.outboundservices.acl.NotificationPasswordResetMails;
 import com.example.cargotracker.identity.application.internal.queryservices.KpiObservationQueryService;
 import com.example.cargotracker.identity.application.internal.queryservices.TotpEnrollmentQueryService;
 import com.example.cargotracker.identity.domain.model.aggregates.AuditRecordRepository;
+import com.example.cargotracker.identity.domain.model.aggregates.CompanyRepository;
 import com.example.cargotracker.identity.domain.model.aggregates.KpiObservationRepository;
 import com.example.cargotracker.identity.domain.model.aggregates.LoginFailureRepository;
+import com.example.cargotracker.identity.domain.model.aggregates.PasswordResetTokenGenerator;
+import com.example.cargotracker.identity.domain.model.aggregates.PasswordResetTokenHasher;
+import com.example.cargotracker.identity.domain.model.aggregates.PasswordResetTokenRepository;
 import com.example.cargotracker.identity.domain.model.aggregates.RecoveryCodeGenerator;
 import com.example.cargotracker.identity.domain.model.aggregates.RecoveryCodeHasher;
 import com.example.cargotracker.identity.domain.model.aggregates.RecoveryCodeRepository;
 import com.example.cargotracker.identity.domain.model.aggregates.TotpCodeGenerator;
 import com.example.cargotracker.identity.domain.model.aggregates.TotpCredentialRepository;
 import com.example.cargotracker.identity.domain.model.aggregates.TotpSecretIssuer;
+import com.example.cargotracker.identity.domain.model.aggregates.UserRepository;
 import com.example.cargotracker.identity.domain.model.aggregates.UserStandingRepository;
 import com.example.cargotracker.identity.domain.model.rules.LockPolicy;
 import com.example.cargotracker.identity.infrastructure.crypto.AesGcmSecretCipher;
+import com.example.cargotracker.notification.interfaces.api.PasswordResetMail;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.time.Clock;
+import java.util.Locale;
 import java.util.Map;
 import org.springframework.boot.context.properties.bind.Bindable;
 import org.springframework.boot.context.properties.bind.Binder;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
+import org.springframework.core.env.Profiles;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 
@@ -35,6 +49,41 @@ import org.springframework.transaction.support.TransactionTemplate;
  */
 @Configuration(proxyBeanMethods = false)
 public class IdentityConfiguration {
+
+    /** 設定の名前（環境変数は CARGOTRACKER_PUBLICBASEURL）。 */
+    static final String PUBLIC_BASE_URL = "cargotracker.public-base-url";
+
+    /**
+     * 公開の base URL（Bolt 33、SEC-08）を確かめ、末尾の / を除いて返す。メールのリンクは request の Host ヘッダーではなくこの設定から
+     * 組み立てる。ステージング・本番では https で localhost でない値を求め、既定の値のまま出さないように起動を止める。
+     *
+     * @throws IllegalStateException 値がない・絶対の http(s) の URL でない・ステージングと本番で https でないか localhost のとき
+     */
+    static String publicBaseUrl(Environment environment) {
+        String value = environment.getProperty(PUBLIC_BASE_URL, "").strip();
+        URI uri = absoluteHttpUrl(value);
+        boolean production = environment.acceptsProfiles(Profiles.of("staging | prod"));
+        if (production && (!"https".equalsIgnoreCase(uri.getScheme()) || "localhost".equalsIgnoreCase(uri.getHost()))) {
+            throw new IllegalStateException("ステージング・本番の " + PUBLIC_BASE_URL + " は https で localhost でない URL にする");
+        }
+        return value.endsWith("/") ? value.substring(0, value.length() - 1) : value;
+    }
+
+    /** query と fragment のない、http(s) の絶対の URL として読む。 */
+    private static URI absoluteHttpUrl(String value) {
+        URI uri;
+        try {
+            uri = new URI(value);
+        } catch (URISyntaxException e) {
+            throw new IllegalStateException(PUBLIC_BASE_URL + " が URL でない", e);
+        }
+        String scheme = uri.getScheme() == null ? "" : uri.getScheme().toLowerCase(Locale.ROOT);
+        boolean http = scheme.equals("http") || scheme.equals("https");
+        if (!http || uri.getHost() == null || uri.getQuery() != null || uri.getFragment() != null) {
+            throw new IllegalStateException(PUBLIC_BASE_URL + " は query と fragment のない http(s) の絶対の URL にする");
+        }
+        return uri;
+    }
 
     /** TOTP の秘密の暗号化の鍵の設定の名前（版ごとの Base64 の鍵。環境変数は CARGOTRACKER_TOTPSECRETKEYS_V1）。 */
     static final String TOTP_SECRET_KEYS = "cargotracker.totp-secret-keys";
@@ -122,6 +171,49 @@ public class IdentityConfiguration {
     @Bean
     KpiObservationEventHandler kpiObservationEventHandler(KpiObservationRepository repository) {
         return new KpiObservationEventHandler(repository);
+    }
+
+    /** password の再設定の依頼（判定・監査・DE-23。Bolt 33、US-18 AC8）。 */
+    @Bean
+    PasswordResetRequestService passwordResetRequestService(
+            UserRepository users,
+            CompanyRepository companies,
+            AuditRecordRepository auditRecords,
+            ApplicationEventPublisher events,
+            Clock clock,
+            TransactionTemplate transactionTemplate) {
+        return new PasswordResetRequestService(users, companies, auditRecords, events, clock, transactionTemplate);
+    }
+
+    /**
+     * DE-23 を受けて再設定のトークンを発行しメールを送る（Bolt 33、ADR-017）。リンクは公開の base URL（{@link #publicBaseUrl}）から組み立てる。
+     */
+    @Bean
+    @SuppressWarnings("java:S107") // 発行と送信に要るポートと設定をそろえて渡す
+    PasswordResetMailEventHandler passwordResetMailEventHandler(
+            PasswordResetTokenRepository tokens,
+            UserRepository users,
+            CompanyRepository companies,
+            PasswordResetTokenGenerator generator,
+            PasswordResetTokenHasher hasher,
+            NotificationPasswordResetMails notificationPasswordResetMails,
+            Environment environment,
+            Clock clock) {
+        return new PasswordResetMailEventHandler(
+                tokens,
+                users,
+                companies,
+                generator,
+                hasher,
+                notificationPasswordResetMails,
+                publicBaseUrl(environment),
+                clock);
+    }
+
+    /** 通知の公開 API（password の再設定のメール）を呼ぶ腐敗防止層（ADR-017。Bolt 33）。 */
+    @Bean
+    NotificationPasswordResetMails notificationPasswordResetMails(PasswordResetMail passwordResetMail) {
+        return new NotificationPasswordResetMails(passwordResetMail);
     }
 
     @Bean

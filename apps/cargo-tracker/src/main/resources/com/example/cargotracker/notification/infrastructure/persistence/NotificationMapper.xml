@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 通知（Bolt 33、ADR-017）。記録は同じ契機と宛先の行がないときだけ入れ、送信の結果は送信待ちの行にだけ書く。
+     H2 と PostgreSQL の共通の構文で書き、RETURNING と ON CONFLICT は使わない（ADR-007）。 -->
+<mapper namespace="com.example.cargotracker.notification.infrastructure.persistence.NotificationMapper">
+
+    <resultMap id="notificationRow" type="com.example.cargotracker.notification.infrastructure.persistence.NotificationRow">
+        <constructor>
+            <idArg column="id" name="id" javaType="java.util.UUID"/>
+            <arg column="event_id" name="eventId" javaType="java.util.UUID"/>
+            <arg column="recipient_user_id" name="recipientUserId" javaType="java.util.UUID"/>
+            <arg column="email" name="email" javaType="String"/>
+            <arg column="kind" name="kind" javaType="String"/>
+            <arg column="target_ref" name="targetRef" javaType="String"/>
+            <arg column="locale" name="locale" javaType="String"/>
+            <arg column="status" name="status" javaType="String"/>
+            <arg column="sent_at" name="sentAt" javaType="java.time.OffsetDateTime"/>
+            <arg column="failure_reason" name="failureReason" javaType="String"/>
+            <arg column="created_at" name="createdAt" javaType="java.time.OffsetDateTime"/>
+        </constructor>
+    </resultMap>
+
+    <!-- N-INV-02。同じ契機と宛先の行がなければ入れる。同時の 2 つは一意制約で後が失敗する -->
+    <insert id="insertNotificationIfAbsent">
+        INSERT INTO notification.notification
+            (id, event_id, recipient_user_id, email, kind, target_ref, locale, status, sent_at, failure_reason, created_at)
+        SELECT #{id}, #{eventId}, #{recipientUserId}, #{email}, #{kind}, #{targetRef}, #{locale}, #{status},
+               #{sentAt}, #{failureReason}, #{createdAt}
+         WHERE NOT EXISTS (
+            SELECT 1 FROM notification.notification
+             WHERE event_id = #{eventId} AND recipient_user_id = #{recipientUserId})
+    </insert>
+
+    <update id="updateOutcomeIfPending">
+        UPDATE notification.notification
+           SET status = #{status},
+               sent_at = #{sentAt},
+               failure_reason = #{failureReason}
+         WHERE id = #{id}
+           AND status = 'PENDING'
+    </update>
+
+    <select id="selectByEventIdAndRecipient" resultMap="notificationRow">
+        SELECT id, event_id, recipient_user_id, email, kind, target_ref, locale, status, sent_at, failure_reason,
+               created_at
+          FROM notification.notification
+         WHERE event_id = #{eventId}
+           AND recipient_user_id = #{recipientUserId}
+    </select>
+</mapper>

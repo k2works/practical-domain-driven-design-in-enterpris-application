@@ -26,7 +26,7 @@ class MapperSchemaArchitectureTest {
 
     /** 業務のスキーマと基盤のスキーマ。表の参照の「スキーマ.表」の形のうち、これらの名前だけを見る（別名の「q.status」などを拾わない）。 */
     private static final Set<String> SCHEMAS =
-            Set.of("quotation", "routing", "identity", "booking", "tracking", "platform");
+            Set.of("quotation", "routing", "identity", "booking", "tracking", "notification", "platform");
 
     /** 表を参照する句（FROM・JOIN・INTO・UPDATE）の後の「スキーマ.表」。 */
     private static final Pattern TABLE_REFERENCE =

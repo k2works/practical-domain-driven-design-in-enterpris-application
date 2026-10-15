@@ -23,8 +23,8 @@ BEGIN
         RETURN;
     END IF;
 
-    EXECUTE format('GRANT USAGE ON SCHEMA quotation, routing, identity, booking, tracking, platform TO %I', app_user);
-    EXECUTE format('GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA quotation, routing, identity, booking, tracking, platform TO %I',
+    EXECUTE format('GRANT USAGE ON SCHEMA quotation, routing, identity, booking, tracking, notification, platform TO %I', app_user);
+    EXECUTE format('GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA quotation, routing, identity, booking, tracking, notification, platform TO %I',
                    app_user);
 
     FOR append_only IN

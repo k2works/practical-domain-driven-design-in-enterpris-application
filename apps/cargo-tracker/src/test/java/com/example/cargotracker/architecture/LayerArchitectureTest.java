@@ -200,7 +200,9 @@ class LayerArchitectureTest {
                     "org.springframework.jdbc..",
                     "org.apache.ibatis..",
                     "org.mybatis..",
-                    "jakarta.servlet..");
+                    "jakarta.servlet..",
+                    "org.springframework.mail..",
+                    "jakarta.mail..");
 
     /**
      * platform の部品は設定を通してだけ使う。コンテキストのコードから参照しない（バックエンドアーキテクチャ）。

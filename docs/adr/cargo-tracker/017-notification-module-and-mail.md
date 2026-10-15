@@ -4,7 +4,7 @@ title: "ADR-017: 通知モジュールを新設し、メールは公開 API で�
 description: "通知モジュールを最小に新設し、メールの送信を公開 API（notification.interfaces.api の PasswordResetMail）で受けて SMTP で送る決定。identity は依頼の応答から切り離した @ApplicationModuleListener のハンドラーで再設定のトークンを発行し、ACL から同期で呼ぶ。通知は identity に依存しない。dev はログに出す送信、統合テストは Mailpit、SES の SMTP は W10。"
 tags: [adr, architecture, notification, mail]
 status: draft
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-15T01:13:15Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-15T01:40:48Z }
 ---
 
 # ADR-017: 通知モジュールを新設し、メールは公開 API で受けて SMTP で送る
@@ -49,7 +49,7 @@ generated: { by: anthropic/claude-opus-5-5, at: 2026-10-15T01:13:15Z }
 
 | 要素 | 決定 |
 | :--- | :--- |
-| ポート | `notification.application.internal.outboundservices` の `MailSender`。application は `org.springframework.mail..`・`jakarta.mail..` に依存しない（`LayerArchitectureTest` の禁止に足す） |
+| ポート | `notification.domain.model.aggregates` の `MailSender`（文面の `PasswordResetMailTemplate`、送るメール `OutgoingMail` も同じ。技術のポートの前例に合わせ、Bolt 33 のステップ 2 で層の規則に当たって `application.internal.outboundservices` から移した）。application は `org.springframework.mail..`・`jakarta.mail..` に依存しない（`LayerArchitectureTest` の禁止に足す） |
 | SMTP | `notification.infrastructure.mail.SmtpMailSender`（`spring-boot-starter-mail` の `JavaMailSender`。版は Boot 管理） |
 | dev | `notification.infrastructure.mail.LoggingMailSender` がメールをログに出す（宛先・件名・本文。リンクを含む）。dev のプロファイルでだけ Bean になる |
 | 守り | `notification.infrastructure.config` で、`DevLoginGuard` と同じ式（dev かつ staging・prod と併用しない）を確かめ、外れたら起動を止める。dev 以外で SMTP の設定がないときも起動を止める |

@@ -43,6 +43,8 @@ dependencies {
 	// 認証と session（US-18、ADR-012）。form login・役割による認可・CSRF と、DB に置く session（Bolt 14）
 	implementation 'org.springframework.boot:spring-boot-starter-security'
 	implementation 'org.springframework.boot:spring-boot-starter-session-jdbc'
+	// メールの送信（通知。password の再設定のメール。ADR-017、Bolt 33）。統合テストは Mailpit のコンテナで受ける
+	implementation 'org.springframework.boot:spring-boot-starter-mail'
 	// TOTP の生成（US-18、ADR-011。Bolt 30）。HOTP の計算と切り詰めだけを任せ、依存は identity.infrastructure に閉じる（ArchUnit）
 	implementation 'com.eatthepath:java-otp:1.0.0'
 	// 登録の QR（A-07）をインラインの SVG で描く（Bolt 31b、ADR-011。Apache-2.0、実行時の推移的な依存なし。identity.infrastructure に閉じる）

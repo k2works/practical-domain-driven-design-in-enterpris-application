@@ -1,6 +1,10 @@
 # Docs Update Log
 
 ## 2026-10-15
+* **Update**: [bolt_33_plan](/development/cargo-tracker/bolt_33_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [017-notification-module-and-mail](/adr/cargo-tracker/017-notification-module-and-mail.md) を更新（anthropic/claude-opus-5-5）
 * **Update**: [017-notification-module-and-mail](/adr/cargo-tracker/017-notification-module-and-mail.md) を更新（anthropic/claude-opus-5-5）
 * **Update**: [user_story](/requirements/cargo-tracker/user_story.md) を更新（anthropic/claude-opus-5-5）
 * **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）

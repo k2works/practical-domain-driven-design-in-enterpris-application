@@ -20,5 +20,10 @@ public enum AuditAction {
     /** request ごとの確かめで利用停止・無効な企業・利用者なしを見つけて session を捨てた（Bolt 32c。US-18 AC6）。 */
     SESSION_REVOKED,
     /** ログアウトした。 */
-    LOGOUT
+    LOGOUT,
+    /**
+     * password の再設定を依頼した（Bolt 33。US-18 AC8）。有効な利用者なら成功、登録なし・利用停止・企業の無効なら失敗（理由は
+     * {@link AuthenticationRejection} の値）。メールを送ったかは記録しない（通知の送信の記録で分かる）。
+     */
+    PASSWORD_RESET_REQUESTED
 }

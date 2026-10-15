@@ -19,7 +19,7 @@ class ModularityTest {
     @Test
     void 見積りと経路設計とアクセス監査と予約と追跡と共有カーネルがモジュールとして認識される() {
         assertThat(modules.stream().map(module -> module.getIdentifier().toString()))
-                .contains("quotation", "routing", "identity", "booking", "tracking", "shared");
+                .contains("quotation", "routing", "identity", "booking", "tracking", "notification", "shared");
     }
 
     @Test
