@@ -3,7 +3,7 @@ type: Plan
 title: "Bolt 33 計画 - 通知モジュールの新設と password の再設定の依頼（US-18 AC8 の前半）"
 description: "W5 の 15 本目の Bolt の計画。通知（Notification）モジュールを最小に新設し（送信の公開 API、送信の記録の表、SMTP の送信アダプター、dev ではログに出す送信）、A-01 の「password を忘れた場合」から A-05 で再設定を依頼すると、依頼の後にモジュールのイベントで 1 回だけ使える 30 分の再設定のトークンを発行して登録メールアドレスへリンクを送る（登録の有無を示さない。平文のトークンは保存しない。監査に記録）。ADR-017 を作る。リンクを開いて新しい password を設定する A-06 は Bolt 33a。"
 tags: [plan]
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-15T01:40:48Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-15T02:07:52Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-15T01:03:03Z }
 ---
@@ -274,7 +274,7 @@ a06 --> a01 : 新しい password を設定（もう一度ログインし TOTP �
   - マイグレーション（`identity.password_reset_token`、インデックス）→ リポジトリの統合テスト（ハッシュで探す、新しい発行で前を無効、`request_id` の一意）→ トークンの集約の単体テスト（期限の 29 分 59 秒と 30 分、無効化、ハッシュだけを持つ）→ 生成とハッシュの実装（`identity.infrastructure.crypto`）→ 依頼のサービス（有効・登録なし・止められた利用者・所属企業の無効の監査の結果と理由。T-113 で件数を絞る）→ イベントのハンドラー（繰り返しの 59 秒と 1 分、同じ依頼の ID の再配信で 2 通送らない、送信の `Failed` で完了にする、ロールバックしたら呼ばれない（T-108）、同時の 2 つの発行の直列（T-100））
   - 発行記録（`platform.event_publication`）・トークンの表・ログに平文のトークンと URL がないことを確かめる
   - 完了の判定: `check` 緑。登録なしでメールが送られないことを、同じテストで登録ありなら届くことと対で確かめる（T-119）
-- [ ] **4. 画面（A-01 のリンク、A-05）** 【承認ゲート: 画面、セキュリティ】
+- [x] **4. 画面（A-01 のリンク、A-05）** 【承認ゲート: 画面、セキュリティ】
   - Red の前に、`PUBLIC_PATHS`・`SessionRevalidationFilter` の除外・`ExpiredSessionRequestSaver`・A-01 の描画を確かめている既存のテストとステップを検索し、変わる期待を Red に入れる（T-122）
   - セキュリティの統合テスト: `/password-reset` が未認証で開ける（`/password-reset/x` は公開しない）、CSRF のトークンがない送信は 403、送信の後は `/login?reset-requested` に戻り、登録の有無で応答（リダイレクト先・本文）が同じ、応答がハンドラーを待たない（送信アダプターを遅くする）、ログイン済み・password の段の session で開いた場合（T-102）
   - 画面の層の受入シナリオ（`login_ui.feature`、`@US-18`）: A-01 から A-05 を開いて送ると A-01 に知らせが出て、登録された利用者にはリンクを含むメールが届く（届いたかは Mailpit の API で確かめる）。登録のないアドレスでも同じ知らせが出てメールは届かない（先に登録ありで届くことを確かめる）。知らせの印（`reset-requested`）がなければ出ない（T-124）。axe の違反 0
@@ -341,6 +341,7 @@ a06 --> a01 : 新しい password を設定（もう一度ログインし TOTP �
 
 | 日付 | 更新内容 | 更新者 |
 | :--- | :--- | :--- |
+| 2026-10-15 | ステップ 4 を終えた。計画からの変更と見つけたこと: (1) T-122 で、全 URL の見張り（`AuthenticationSecurityIntegrationTest` の `AUTHENTICATION_SCREENS`）が `/password-reset` を公開にすると落ちる期待だと分かり、公開の画面として足した。(2) CSRF のトークンのない送信は、計画の「403」でなく既存の扱いのとおり A-03（session のない古いフォームの送信。Bolt 32e）に移り、誤ったトークンは 403 になる。どちらも依頼を処理しないことを監査で確かめる形にした。(3) A-05 のフォームは `novalidate` にし、誤りの文言はブラウザの検証でなくサーバーの文言（UI 設計）で示す。(4) 応答が送信を待たないことは、送信を 3 秒遅らせる別の組み立ての統合テストで確かめ、ハンドラーを同期のリスナーにする変異で落ちることを確かめた（T-112）。`check` 緑、`uiTest` 234 件・失敗 0（新しいシナリオ 3） | anthropic/claude-opus-5-5 |
 | 2026-10-15 | ステップ 2・3 を終えた。計画からの変更と見つけたこと: (1) 送信のポート `MailSender`・文面のポート `PasswordResetMailTemplate`・送るメール `OutgoingMail` を、計画の `notification.application.internal.outboundservices` から `notification.domain.model.aggregates` に移した。層の規則（合成ルートの外の infrastructure は application に依存しない）に当たり、技術のポートはドメインに置く前例（`RecoveryCodeHasher` など）に合わせた。規則の例外は足していない。ADR-017・architecture_backend・domain_model の用語集（`OutgoingMail` を足した）を直した。(2) Thymeleaf のテキストのテンプレートは、素の `TemplateEngine` では OGNL が要るので `SpringTemplateEngine` にした。(3) Boot の自動構成はコンテナの起動の後に決まる `spring.mail.host` を見ないので、テストの組み立て（`TestcontainersConfiguration`）で Mailpit（v1.31.3）に向けた `JavaMailSender` を直接組み立てた。PostgreSQL のコンテナと同じ組み立てなので、統合テストのコンテキストはみな Mailpit を起動する。(4) リンクの path は `/password-reset/{トークン}` に決めた（33a の A-06 はこの path に合わせる）。(5) 公開の base URL の確かめ（ステージング・本番は https で localhost でない）は、`infrastructure.config` に Configuration だけを置く規則のため `IdentityConfiguration` の static メソッドにした。ハンドラーはプロキシで包まれ `final` にできないので、コンストラクターでは確かめない（spotbugs の CT_CONSTRUCTOR_THROW）。(6) 依頼のサービスは `UserStandingRepository`（ID で読む）でなく、`UserRepository.findByEmail` と `CompanyRepository` で読み、同じ `User#authenticationRejection` で判定した。ハンドラーは発行の前に利用者が有効かをもう一度確かめる。(7) spotbugs の EI_EXPOSE_REP2 の除外に、DI の部品を保持するだけの 3 つのサービスを前例どおり足した。(8) 変異の確かめ: 利用者の行の占有を外すと同時の発行のテストが、1 分の判定を外すと繰り返しのテストが落ちた（T-112・T-117）。`check` 2134 件、失敗 0 | anthropic/claude-opus-5-5 |
 | 2026-10-15 | `/goal Bolt33` を受けた。承認ゲートでは止めずに進め、止めなかったゲートごとに根拠を書いて終了報告の承認の議題に置く（T-36）。途中で層の規則の例外が要るとき、5 時間を超えると見えたときは止めて諮る | anthropic/claude-opus-5-5、指示 human:kakimomokuri |
 | 2026-10-15 | 承認（確認ポイント 1〜19 は推奨のまま）。ステップごとの承認ゲートで止めて進める | human:kakimomokuri |

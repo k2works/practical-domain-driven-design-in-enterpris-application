@@ -22,6 +22,7 @@ import com.example.cargotracker.identity.infrastructure.security.TotpAuthenticat
 import com.example.cargotracker.identity.infrastructure.security.TotpAuthenticationProvider;
 import com.example.cargotracker.identity.infrastructure.security.TotpAuthenticationToken;
 import com.example.cargotracker.identity.infrastructure.security.TotpRejectedException;
+import com.example.cargotracker.identity.interfaces.web.PasswordResetController;
 import com.example.cargotracker.shared.domain.Role;
 import java.time.Clock;
 import java.util.Arrays;
@@ -89,9 +90,16 @@ public class SecurityConfiguration {
     /** A-01 の URL。 */
     private static final String LOGIN_URL = "/login";
 
-    /** 認証なしで開ける URL（ログイン、再認証の案内、エラー、静的な資源）。request ごとの利用者の確かめもしない（Bolt 32c）。 */
+    /** 認証なしで開ける URL（ログイン、再認証の案内、password の再設定の依頼（A-05。Bolt 33）、エラー、静的な資源）。request ごとの利用者の確かめもしない（Bolt 32c）。 */
     private static final String[] PUBLIC_PATHS = {
-        LOGIN_URL, SessionLifetime.EXPIRED_URL, "/error", "/css/**", "/js/**", "/webjars/**", "/favicon.ico"
+        LOGIN_URL,
+        SessionLifetime.EXPIRED_URL,
+        PasswordResetController.URL,
+        "/error",
+        "/css/**",
+        "/js/**",
+        "/webjars/**",
+        "/favicon.ico"
     };
 
     /**

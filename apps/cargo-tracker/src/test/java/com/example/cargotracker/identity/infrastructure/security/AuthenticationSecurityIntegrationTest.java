@@ -76,9 +76,9 @@ import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandl
 @IdentityIntegrationTest
 class AuthenticationSecurityIntegrationTest {
 
-    /** 全 URL の見張りから除く、password の段だけで開ける認証の画面（Bolt 31d）。 */
+    /** 全 URL の見張りから除く、password の段だけで開ける認証の画面と、未認証で開ける公開の画面（Bolt 31d。A-05 は Bolt 33）。 */
     private static final Set<String> AUTHENTICATION_SCREENS =
-            Set.of("/login", "/login/totp", "/login/totp/enroll", "/session-expired");
+            Set.of("/login", "/login/totp", "/login/totp/enroll", "/session-expired", "/password-reset");
 
     @Autowired
     @Qualifier("requestMappingHandlerMapping")
@@ -1205,6 +1205,89 @@ class AuthenticationSecurityIntegrationTest {
     void 再認証の案内とログインの画面は未認証で開ける() throws Exception {
         mvc.perform(get("/session-expired")).andExpect(status().isOk());
         mvc.perform(get("/login")).andExpect(status().isOk());
+    }
+
+    // --- password の再設定の依頼（A-05。US-18 AC8、SEC-08。Bolt 33） ---
+
+    private static final String RESET_URL = "/password-reset";
+    private static final String RESET_REQUESTED = "/login?reset-requested";
+    private static final String RESET_NOTICE = "依頼を受け付けました。";
+
+    @Test
+    void 再設定の依頼の画面は未認証で開けその下のURLは公開しない() throws Exception {
+        mvc.perform(get(RESET_URL))
+                .andExpect(status().isOk())
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("再設定のリンクを送る")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("autocomplete=\"email\"")));
+        mvc.perform(get(RESET_URL + "/some-token")).andExpect(redirectedUrl("/login"));
+    }
+
+    @Test
+    void 再設定の依頼はCSRFのトークンが合わなければ処理しない() throws Exception {
+        // 既存の扱いのとおり、トークンのない送信は A-03（session のない古いフォームの送信。Bolt 32e）、誤ったトークンは 403 にする。
+        // どちらも依頼を処理しないことを監査で確かめる
+        String email = shipper(UserStatus.ACTIVE);
+
+        mvc.perform(post(RESET_URL).param("email", email)).andExpect(redirectedUrl("/session-expired"));
+        mvc.perform(post(RESET_URL).param("email", email).with(csrf().useInvalidToken()))
+                .andExpect(status().isForbidden());
+
+        assertThat(auditOf(email)).noneMatch(row -> "PASSWORD_RESET_REQUESTED".equals(row.get("action")));
+        mvc.perform(post(RESET_URL).param("email", email).with(csrf())).andExpect(redirectedUrl(RESET_REQUESTED));
+        assertThat(auditOf(email)).anyMatch(row -> "PASSWORD_RESET_REQUESTED".equals(row.get("action")));
+    }
+
+    @Test
+    void 再設定の依頼は登録の有無と利用の状態にかかわらず同じ応答でログインの画面に戻る() throws Exception {
+        String active = shipper(UserStatus.ACTIVE);
+        String suspended = shipper(UserStatus.SUSPENDED);
+        String unknown = "unknown-" + UUID.randomUUID() + "@example.com";
+
+        for (String email : List.of(active, suspended, unknown)) {
+            mvc.perform(post(RESET_URL).param("email", email).with(csrf()))
+                    .andExpect(status().isFound())
+                    .andExpect(redirectedUrl(RESET_REQUESTED));
+        }
+    }
+
+    @Test
+    void ログインの画面は依頼の印があるときだけ再設定の依頼の知らせを出す() throws Exception {
+        mvc.perform(get(RESET_REQUESTED))
+                .andExpect(status().isOk())
+                .andExpect(content().string(org.hamcrest.Matchers.containsString(RESET_NOTICE)));
+        mvc.perform(get("/login"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("password を忘れた場合")))
+                .andExpect(content()
+                        .string(org.hamcrest.Matchers.not(org.hamcrest.Matchers.containsString(RESET_NOTICE))));
+    }
+
+    @Test
+    void 再設定の依頼の入力の形の誤りは画面に示し入れた値を残す() throws Exception {
+        mvc.perform(post(RESET_URL).param("email", "  ").with(csrf()))
+                .andExpect(status().isOk())
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("メールアドレスを入力してください。")));
+        mvc.perform(post(RESET_URL).param("email", "not-an-address").with(csrf()))
+                .andExpect(status().isOk())
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("メールアドレスの形式が正しくありません。")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("value=\"not-an-address\"")));
+    }
+
+    @Test
+    void ログイン中とpasswordの段のsessionで依頼の画面を開いてもsessionの利用者は変わらない() throws Exception {
+        Cookie loggedIn = login(shipper(UserStatus.ACTIVE));
+        Cookie passwordStage = loginWithPassword(shipper(UserStatus.ACTIVE));
+
+        mvc.perform(get(RESET_URL).cookie(loggedIn)).andExpect(status().isOk());
+        mvc.perform(post(RESET_URL)
+                        .param("email", shipper(UserStatus.ACTIVE))
+                        .with(csrf())
+                        .cookie(loggedIn))
+                .andExpect(redirectedUrl(RESET_REQUESTED));
+        mvc.perform(get(RESET_URL).cookie(passwordStage)).andExpect(status().isOk());
+
+        mvc.perform(get("/customer/transport-requests").cookie(loggedIn)).andExpect(status().isOk());
+        mvc.perform(get(TOTP_URL).cookie(passwordStage)).andExpect(status().isOk());
     }
 
     // --- 応答のヘッダーと Cookie（SEC-17） ---

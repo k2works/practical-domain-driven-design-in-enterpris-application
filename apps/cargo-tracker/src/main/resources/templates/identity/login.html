@@ -1,7 +1,8 @@
 <!DOCTYPE html>
 <!--/* A-01 ログイン（US-18 の password の段、UI 設計「A-01」）。どの失敗も同じ文言にし、どれが誤りかを示さない（AC2、SEC-11）。
        ロック中も同じ文言で、一般の予告だけを足す（ロックの有無と解ける時刻は示さない。Bolt 32、ADR-011 の決定 9）。
-       「password を忘れた場合」（A-05）は W5 で足す */-->
+       「password を忘れた場合」は A-05 へのリンク（Bolt 33）。A-05 から戻ったとき（印 reset-requested）だけ依頼を受け付けた知らせを出す
+       （登録の有無を示さない。UI 設計「A-05」の場面の表。T-124） */-->
 <html lang="ja" xmlns:th="http://www.thymeleaf.org" th:replace="~{layout/public :: layout(~{::title}, ~{::main})}">
 <head>
     <meta charset="UTF-8">
@@ -19,6 +20,9 @@
         認証コードまたは回復コードが正しくないか、すでに使われています。もう一度ログインして、認証アプリに表示された新しいコードか、まだ使っていない回復コードを入れてください。続けて 5 回誤ると、15 分ログインできなくなります。
     </div>
     <div th:if="${param.logout}" class="alert alert-success" role="status">ログアウトしました。</div>
+    <div th:if="${param['reset-requested']}" class="alert alert-info" role="status" id="reset-requested">
+        依頼を受け付けました。入力したメールアドレスが登録されていて、ご利用いただける状態であれば、password を再設定するためのリンクをそのアドレスへ送ります（前の依頼から 1 分以内の依頼では送りません）。リンクの有効期限は 30 分で、1 回だけ使えます。数分たっても届かない場合は、迷惑メールのフォルダを確かめてから、もう一度依頼してください（もう一度依頼すると、前に送ったリンクは使えなくなります）。それでも届かない場合は、荷主の方は担当営業に、社内の方はシステム管理者にお問い合わせください。
+    </div>
     <p>メールアドレスと password を入力してください。</p>
     <form th:action="@{/login}" method="post" class="app-login-form">
         <div class="mb-3">
@@ -33,6 +37,7 @@
         </div>
         <button type="submit" class="btn btn-primary">ログイン</button>
     </form>
+    <p class="mt-3"><a th:href="@{/password-reset}">password を忘れた場合</a></p>
     <!-- 開発環境（dev）だけ: 開発用の利用者を選んでそのままログインする（2026-10-06 の人の決定）。既定の設定では出ない -->
     <section th:if="${devAccounts != null}" class="mt-4" aria-labelledby="dev-login-heading">
         <h2 id="dev-login-heading" class="h5">開発用の利用者でログイン（開発環境だけ）</h2>
