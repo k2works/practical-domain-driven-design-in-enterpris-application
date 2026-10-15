@@ -57,6 +57,12 @@ public class MyBatisUserRepository implements UserRepository {
     }
 
     @Override
+    public boolean changePassword(User user) {
+        OffsetDateTime now = OffsetDateTime.now(clock).withOffsetSameInstant(ZoneOffset.UTC);
+        return mapper.updateUserPassword(user.id().value(), user.passwordHash(), now) == 1;
+    }
+
+    @Override
     public Optional<User> findById(UserId id) {
         return mapper.selectUserById(id.value()).map(this::toAggregate);
     }

@@ -321,4 +321,31 @@ class MyBatisIdentityRepositoriesIntegrationTest {
                 status);
         return id;
     }
+
+    @Test
+    void passwordのハッシュを書き版を上げる() {
+        User user = user(uniqueEmail(), UserStatus.ACTIVE, Set.of(Role.SHIPPER));
+        users.add(user);
+        long before = jdbc.queryForObject(
+                "SELECT version FROM identity.app_user WHERE id = ?",
+                Long.class,
+                user.id().value());
+
+        assertThat(users.changePassword(user.changePassword("{bcrypt}$2a$10$changed")))
+                .isTrue();
+
+        assertThat(users.findById(user.id()).orElseThrow().passwordHash()).isEqualTo("{bcrypt}$2a$10$changed");
+        assertThat(jdbc.queryForObject(
+                        "SELECT version FROM identity.app_user WHERE id = ?",
+                        Long.class,
+                        user.id().value()))
+                .isEqualTo(before + 1);
+    }
+
+    @Test
+    void いない利用者のpasswordは書かない() {
+        User absent = user(uniqueEmail(), UserStatus.ACTIVE, Set.of(Role.SHIPPER));
+
+        assertThat(users.changePassword(absent)).isFalse();
+    }
 }

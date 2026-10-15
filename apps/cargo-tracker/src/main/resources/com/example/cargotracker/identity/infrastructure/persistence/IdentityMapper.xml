@@ -75,6 +75,15 @@
         SELECT <include refid="userColumns"/> FROM identity.app_user WHERE email = #{email}
     </select>
 
+    <!-- Bolt 33a。版を上げるが条件にしない（同時の変更は再設定のトークンの条件付きの使用で直列になる） -->
+    <update id="updateUserPassword">
+        UPDATE identity.app_user
+           SET password_hash = #{passwordHash},
+               version = version + 1,
+               updated_at = #{now}
+         WHERE id = #{id}
+    </update>
+
     <select id="selectUserById" resultMap="userRow">
         SELECT <include refid="userColumns"/> FROM identity.app_user WHERE id = #{id}
     </select>

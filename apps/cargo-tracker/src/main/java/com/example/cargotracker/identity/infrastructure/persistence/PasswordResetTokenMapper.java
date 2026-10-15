@@ -23,4 +23,8 @@ public interface PasswordResetTokenMapper {
     void insertToken(PasswordResetTokenRow row);
 
     Optional<PasswordResetTokenRow> selectByTokenHash(String tokenHash);
+
+    Optional<PasswordResetTokenRow> selectById(UUID id);
+
+    int markUsedIfUsable(@Param("id") UUID id, @Param("at") OffsetDateTime at);
 }

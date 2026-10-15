@@ -15,4 +15,10 @@ public interface UserRepository {
     Optional<User> findByEmail(EmailAddress email);
 
     Optional<User> findById(UserId id);
+
+    /**
+     * 利用者の password のハッシュを書き、版を上げる（Bolt 33a）。版を条件にしない（同じ利用者の同時の変更は、再設定のトークンの条件付きの
+     * 使用で直列になる）。書けたら true（利用者がいなければ false）。
+     */
+    boolean changePassword(User user);
 }

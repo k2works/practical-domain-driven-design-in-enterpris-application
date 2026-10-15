@@ -31,6 +31,8 @@
             <Class name="com.example.cargotracker.identity.application.internal.commandservices.SessionRevalidationService"/>
             <!-- Bolt 33 の再設定の依頼・発行とメールの送信のサービスも、同じく DI の部品を保持するだけ -->
             <Class name="com.example.cargotracker.identity.application.internal.commandservices.PasswordResetRequestService"/>
+            <!-- Bolt 33a の再設定のサービスも、同じく DI の部品を保持するだけ -->
+            <Class name="com.example.cargotracker.identity.application.internal.commandservices.PasswordResetCompletionService"/>
             <Class name="com.example.cargotracker.identity.application.internal.eventhandlers.PasswordResetMailEventHandler"/>
             <Class name="com.example.cargotracker.notification.application.internal.commandservices.PasswordResetMailService"/>
         </Or>

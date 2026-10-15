@@ -25,5 +25,10 @@ public enum AuditAction {
      * password の再設定を依頼した（Bolt 33。US-18 AC8）。有効な利用者なら成功、登録なし・利用停止・企業の無効なら失敗（理由は
      * {@link AuthenticationRejection} の値）。メールを送ったかは記録しない（通知の送信の記録で分かる）。
      */
-    PASSWORD_RESET_REQUESTED
+    PASSWORD_RESET_REQUESTED,
+    /**
+     * password の再設定を終えた（Bolt 33a。US-18 AC8）。A-06 で新しい password を設定した。成功だけを記録する（方針の誤り・無効なリンクは
+     * 記録しない）。
+     */
+    PASSWORD_RESET_COMPLETED
 }

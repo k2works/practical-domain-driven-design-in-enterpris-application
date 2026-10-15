@@ -104,6 +104,49 @@ class MyBatisPasswordResetTokenRepositoryIntegrationTest {
     }
 
     @Test
+    void IDでトークンを読み出す() {
+        UserId user = AuthenticationFactorFixtures.newUser(companies, users);
+        PasswordResetToken token = issue(user, ISSUED);
+
+        assertThat(repository.findById(token.id()))
+                .hasValueSatisfying(found -> assertThat(found.tokenHash()).isEqualTo(token.tokenHash()));
+        assertThat(repository.findById(UUID.randomUUID())).isEmpty();
+    }
+
+    @Test
+    void 使えるトークンは1回だけ使えドメインの判定と同じ条件で使えないトークンは使えない() {
+        UserId user = AuthenticationFactorFixtures.newUser(companies, users);
+        PasswordResetToken usable = issue(user, ISSUED);
+        PasswordResetToken expired = issue(user, ISSUED);
+        PasswordResetToken invalidated = issue(AuthenticationFactorFixtures.newUser(companies, users), ISSUED);
+        repository.invalidateUnused(invalidated.userId(), LATER);
+        UtcInstant beforeExpiry = new UtcInstant(usable.expiresAt().instant().minusNanos(1_000));
+        UtcInstant atExpiry = expired.expiresAt();
+
+        // 契約: SQL の条件（markUsed）とドメインの isUsable が同じ答えを返す（IA-INV-12。LockPolicy の前例）
+        assertThat(usable.isUsable(beforeExpiry)).isTrue();
+        assertThat(repository.markUsed(usable.id(), beforeExpiry)).isTrue();
+        assertThat(repository.markUsed(usable.id(), beforeExpiry))
+                .as("使ったトークンはもう使えない")
+                .isFalse();
+        assertThat(repository.findById(usable.id()).orElseThrow().isUsable(beforeExpiry))
+                .isFalse();
+
+        assertThat(expired.isUsable(atExpiry)).isFalse();
+        assertThat(repository.markUsed(expired.id(), atExpiry))
+                .as("期限ちょうどは使えない")
+                .isFalse();
+
+        PasswordResetToken readInvalidated =
+                repository.findById(invalidated.id()).orElseThrow();
+        assertThat(readInvalidated.isUsable(LATER)).isFalse();
+        assertThat(repository.markUsed(invalidated.id(), LATER)).isFalse();
+        assertThat(repository.markUsed(UUID.randomUUID(), LATER))
+                .as("存在しないトークン")
+                .isFalse();
+    }
+
+    @Test
     void 使ったトークンは無効にしない() {
         UserId user = AuthenticationFactorFixtures.newUser(companies, users);
         PasswordResetToken unused = issue(user, ISSUED);

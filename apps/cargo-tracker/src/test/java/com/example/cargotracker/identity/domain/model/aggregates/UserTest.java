@@ -77,4 +77,18 @@ class UserTest {
         assertThatThrownBy(() -> User.of(id, COMPANY, email, "役割なし", "{bcrypt}$2a$10$hash", UserStatus.ACTIVE, noRoles))
                 .isInstanceOf(IllegalArgumentException.class);
     }
+
+    @Test
+    void passwordを変えた利用者はほかの値を保ち新しいハッシュを持つ() {
+        User before = user(UserStatus.ACTIVE);
+
+        User after = before.changePassword("{bcrypt}$2a$10$newhash");
+
+        assertThat(after.passwordHash()).isEqualTo("{bcrypt}$2a$10$newhash");
+        assertThat(after.id()).isEqualTo(before.id());
+        assertThat(after.email()).isEqualTo(before.email());
+        assertThat(after.roles()).isEqualTo(before.roles());
+        assertThat(after.status()).isEqualTo(before.status());
+        assertThat(before.passwordHash()).as("元の利用者は変えない").isNotEqualTo("{bcrypt}$2a$10$newhash");
+    }
 }

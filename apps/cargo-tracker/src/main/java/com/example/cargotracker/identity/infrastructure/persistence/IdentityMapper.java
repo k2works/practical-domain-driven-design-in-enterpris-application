@@ -25,6 +25,9 @@ public interface IdentityMapper {
 
     Optional<UserRow> selectUserById(UUID id);
 
+    int updateUserPassword(
+            @Param("id") UUID id, @Param("passwordHash") String passwordHash, @Param("now") OffsetDateTime now);
+
     List<String> selectUserRoles(UUID userId);
 
     /** 利用者・所属企業・役割を 1 つの SQL で読む（Bolt 32c）。役割の数だけ行が出る。 */

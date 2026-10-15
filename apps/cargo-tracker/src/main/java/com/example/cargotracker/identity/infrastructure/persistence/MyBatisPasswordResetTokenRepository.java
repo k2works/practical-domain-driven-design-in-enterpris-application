@@ -61,16 +61,29 @@ public class MyBatisPasswordResetTokenRepository implements PasswordResetTokenRe
 
     @Override
     public Optional<PasswordResetToken> findByTokenHash(String tokenHash) {
-        return mapper.selectByTokenHash(tokenHash)
-                .map(row -> PasswordResetToken.reconstitute(
-                        row.id(),
-                        row.requestId(),
-                        new UserId(row.userId()),
-                        row.tokenHash(),
-                        toUtc(row.issuedAt()),
-                        toUtc(row.expiresAt()),
-                        row.usedAt() == null ? null : toUtc(row.usedAt()),
-                        row.invalidatedAt() == null ? null : toUtc(row.invalidatedAt())));
+        return mapper.selectByTokenHash(tokenHash).map(MyBatisPasswordResetTokenRepository::toDomain);
+    }
+
+    @Override
+    public Optional<PasswordResetToken> findById(UUID id) {
+        return mapper.selectById(id).map(MyBatisPasswordResetTokenRepository::toDomain);
+    }
+
+    @Override
+    public boolean markUsed(UUID id, UtcInstant at) {
+        return mapper.markUsedIfUsable(id, toOffset(at)) == 1;
+    }
+
+    private static PasswordResetToken toDomain(PasswordResetTokenRow row) {
+        return PasswordResetToken.reconstitute(
+                row.id(),
+                row.requestId(),
+                new UserId(row.userId()),
+                row.tokenHash(),
+                toUtc(row.issuedAt()),
+                toUtc(row.expiresAt()),
+                row.usedAt() == null ? null : toUtc(row.usedAt()),
+                row.invalidatedAt() == null ? null : toUtc(row.invalidatedAt()));
     }
 
     private static UtcInstant toUtc(OffsetDateTime value) {

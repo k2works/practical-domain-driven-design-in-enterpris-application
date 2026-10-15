@@ -21,6 +21,12 @@ public final class AuditRecord {
     /** 理由の引数の名前（null の確かめの文）。 */
     private static final String REASON_ARGUMENT = "reason";
 
+    /** 操作者の引数の名前（null の確かめの文）。 */
+    private static final String USER_ARGUMENT = "user";
+
+    /** 操作者の企業の引数の名前（null の確かめの文）。 */
+    private static final String COMPANY_ARGUMENT = "company";
+
     private final UUID id;
     private final UtcInstant occurredAt;
     private final UserId actorUserId;
@@ -79,8 +85,8 @@ public final class AuditRecord {
      */
     public static AuditRecord sessionRevoked(
             UserId user, CompanyId company, AuthenticationRejection reason, UtcInstant at) {
-        Objects.requireNonNull(user, "user");
-        Objects.requireNonNull(company, "company");
+        Objects.requireNonNull(user, USER_ARGUMENT);
+        Objects.requireNonNull(company, COMPANY_ARGUMENT);
         Objects.requireNonNull(reason, REASON_ARGUMENT);
         return new AuditRecord(
                 UUID.randomUUID(), at, user, company, AuditAction.SESSION_REVOKED, AuditResult.FAILURE, reason.name());
@@ -107,8 +113,8 @@ public final class AuditRecord {
      * 画面の応答は、受け付けなかった依頼（{@link #passwordResetRejected}）と同じ。
      */
     public static AuditRecord passwordResetRequested(UserId user, CompanyId company, UtcInstant at) {
-        Objects.requireNonNull(user, "user");
-        Objects.requireNonNull(company, "company");
+        Objects.requireNonNull(user, USER_ARGUMENT);
+        Objects.requireNonNull(company, COMPANY_ARGUMENT);
         return new AuditRecord(
                 UUID.randomUUID(), at, user, company, AuditAction.PASSWORD_RESET_REQUESTED, AuditResult.SUCCESS, null);
     }
@@ -128,6 +134,16 @@ public final class AuditRecord {
                 AuditAction.PASSWORD_RESET_REQUESTED,
                 AuditResult.FAILURE,
                 reason.name());
+    }
+
+    /**
+     * password の再設定を終えたことを記録する（Bolt 33a、US-18 AC8）。A-06 で新しい password を設定し、トークンを使ったとき。結果は成功。
+     */
+    public static AuditRecord passwordResetCompleted(UserId user, CompanyId company, UtcInstant at) {
+        Objects.requireNonNull(user, USER_ARGUMENT);
+        Objects.requireNonNull(company, COMPANY_ARGUMENT);
+        return new AuditRecord(
+                UUID.randomUUID(), at, user, company, AuditAction.PASSWORD_RESET_COMPLETED, AuditResult.SUCCESS, null);
     }
 
     /** ログアウトを記録する。 */

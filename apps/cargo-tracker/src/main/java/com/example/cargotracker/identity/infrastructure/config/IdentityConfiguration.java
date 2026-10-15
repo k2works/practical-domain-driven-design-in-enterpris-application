@@ -1,6 +1,7 @@
 package com.example.cargotracker.identity.infrastructure.config;
 
 import com.example.cargotracker.identity.application.internal.commandservices.LoginAttemptService;
+import com.example.cargotracker.identity.application.internal.commandservices.PasswordResetCompletionService;
 import com.example.cargotracker.identity.application.internal.commandservices.PasswordResetRequestService;
 import com.example.cargotracker.identity.application.internal.commandservices.RecoveryCodeVerificationService;
 import com.example.cargotracker.identity.application.internal.commandservices.SessionRevalidationService;
@@ -12,9 +13,11 @@ import com.example.cargotracker.identity.application.internal.outboundservices.a
 import com.example.cargotracker.identity.application.internal.queryservices.KpiObservationQueryService;
 import com.example.cargotracker.identity.application.internal.queryservices.TotpEnrollmentQueryService;
 import com.example.cargotracker.identity.domain.model.aggregates.AuditRecordRepository;
+import com.example.cargotracker.identity.domain.model.aggregates.CommonPasswordList;
 import com.example.cargotracker.identity.domain.model.aggregates.CompanyRepository;
 import com.example.cargotracker.identity.domain.model.aggregates.KpiObservationRepository;
 import com.example.cargotracker.identity.domain.model.aggregates.LoginFailureRepository;
+import com.example.cargotracker.identity.domain.model.aggregates.PasswordHasher;
 import com.example.cargotracker.identity.domain.model.aggregates.PasswordResetTokenGenerator;
 import com.example.cargotracker.identity.domain.model.aggregates.PasswordResetTokenHasher;
 import com.example.cargotracker.identity.domain.model.aggregates.PasswordResetTokenRepository;
@@ -25,8 +28,10 @@ import com.example.cargotracker.identity.domain.model.aggregates.TotpCodeGenerat
 import com.example.cargotracker.identity.domain.model.aggregates.TotpCredentialRepository;
 import com.example.cargotracker.identity.domain.model.aggregates.TotpSecretIssuer;
 import com.example.cargotracker.identity.domain.model.aggregates.UserRepository;
+import com.example.cargotracker.identity.domain.model.aggregates.UserSessionRevoker;
 import com.example.cargotracker.identity.domain.model.aggregates.UserStandingRepository;
 import com.example.cargotracker.identity.domain.model.rules.LockPolicy;
+import com.example.cargotracker.identity.domain.model.rules.PasswordPolicy;
 import com.example.cargotracker.identity.infrastructure.crypto.AesGcmSecretCipher;
 import com.example.cargotracker.identity.interfaces.web.PasswordResetController;
 import com.example.cargotracker.notification.interfaces.api.PasswordResetMail;
@@ -178,6 +183,34 @@ public class IdentityConfiguration {
     @Bean
     KpiObservationEventHandler kpiObservationEventHandler(KpiObservationRepository repository) {
         return new KpiObservationEventHandler(repository);
+    }
+
+    /** password の再設定（リンクを開く、A-06 で設定する。Bolt 33a、US-18 AC8）。方針はこの中で組む（AT-07。LockPolicy と同じ）。 */
+    @Bean
+    @SuppressWarnings("java:S107") // 再設定に要るポートをそろえて渡す
+    PasswordResetCompletionService passwordResetCompletionService(
+            PasswordResetTokenRepository tokens,
+            PasswordResetTokenHasher tokenHasher,
+            UserRepository users,
+            CompanyRepository companies,
+            PasswordHasher passwordHasher,
+            CommonPasswordList commonPasswords,
+            UserSessionRevoker sessions,
+            AuditRecordRepository auditRecords,
+            Clock clock,
+            TransactionTemplate transactionTemplate) {
+        return new PasswordResetCompletionService(
+                tokens,
+                tokenHasher,
+                users,
+                companies,
+                passwordHasher,
+                commonPasswords,
+                sessions,
+                auditRecords,
+                new PasswordPolicy(),
+                clock,
+                transactionTemplate);
     }
 
     /** password の再設定の依頼（判定・監査・DE-23。Bolt 33、US-18 AC8）。 */

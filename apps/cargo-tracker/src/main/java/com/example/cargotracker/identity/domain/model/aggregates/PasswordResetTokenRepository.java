@@ -26,6 +26,15 @@ public interface PasswordResetTokenRepository {
     /** 発行したトークンを記録する。 */
     void add(PasswordResetToken token);
 
-    /** ハッシュでトークンを探す（Bolt 33a の A-06 が使う）。 */
+    /** ハッシュでトークンを探す（Bolt 33a。リンクを開いたとき）。 */
     Optional<PasswordResetToken> findByTokenHash(String tokenHash);
+
+    /** ID でトークンを探す（Bolt 33a。A-06 で session のトークンの ID から）。 */
+    Optional<PasswordResetToken> findById(UUID id);
+
+    /**
+     * 使えるトークン（使っていない、無効にしていない、期限の前）のときだけ、使った時刻を書く。書けたら true。同じトークンの同時の 2 つは
+     * 1 つだけが true になる（Bolt 33a、IA-INV-12）。条件は {@link PasswordResetToken#isUsable} と同じ形にし、契約テストで両方を確かめる。
+     */
+    boolean markUsed(UUID id, UtcInstant at);
 }

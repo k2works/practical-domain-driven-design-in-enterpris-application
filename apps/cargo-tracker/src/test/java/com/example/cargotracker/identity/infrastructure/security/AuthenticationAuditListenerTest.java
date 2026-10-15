@@ -218,6 +218,11 @@ class AuthenticationAuditListenerTest {
                         .filter(each -> each.id().equals(id))
                         .findFirst();
             }
+
+            @Override
+            public boolean changePassword(User user) {
+                throw new UnsupportedOperationException();
+            }
         };
     }
 

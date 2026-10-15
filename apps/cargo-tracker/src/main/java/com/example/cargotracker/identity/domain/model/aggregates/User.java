@@ -78,6 +78,14 @@ public final class User {
         return Optional.empty();
     }
 
+    /**
+     * password を変えた利用者を返す（Bolt 33a、US-18 AC8）。新しい password はハッシュ（DelegatingPasswordEncoder の形式。SEC-07）で
+     * 受け取る。方針（SEC-04・SEC-05）は呼ぶ側が先に確かめる。
+     */
+    public User changePassword(String newPasswordHash) {
+        return new User(id, companyId, email, displayName, newPasswordHash, status, roles);
+    }
+
     public UserId id() {
         return id;
     }
