@@ -7,16 +7,7 @@ import com.example.cargotracker.identity.domain.model.aggregates.UnreadableCrede
 import com.example.cargotracker.identity.domain.model.valueobjects.EncryptedSecret;
 import com.example.cargotracker.identity.domain.model.valueobjects.TotpProvisioning;
 import com.example.cargotracker.shared.domain.UserId;
-import com.google.zxing.BinaryBitmap;
-import com.google.zxing.DecodeHintType;
-import com.google.zxing.LuminanceSource;
-import com.google.zxing.RGBLuminanceSource;
-import com.google.zxing.common.HybridBinarizer;
-import com.google.zxing.qrcode.QRCodeReader;
-import java.util.Map;
 import java.util.UUID;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -56,16 +47,12 @@ class RandomTotpSecretIssuerTest {
     }
 
     @Test
-    void QRのSVGを読み戻すとURIに戻りstyleの属性を使わない() throws Exception {
+    void QRのSVGを読み戻すとURIに戻る() throws Exception {
+        // SVG の形（role・title・style を使わない）は QrCodeSvgTest で確かめる（Bolt 33d で分けた）
         EncryptedSecret secret = issuer.issue(OWNER);
         TotpProvisioning provisioning = issuer.provisioning(OWNER, secret, "shipper@example.com");
 
-        assertThat(provisioning.qrSvg())
-                .startsWith("<svg")
-                .contains("role=\"img\"")
-                .contains("認証アプリで読み取る QR コード")
-                .doesNotContain("style=");
-        assertThat(decodeQr(provisioning.qrSvg())).isEqualTo(provisioning.otpauthUri());
+        assertThat(QrCodeSvgTest.decodeQr(provisioning.qrSvg())).isEqualTo(provisioning.otpauthUri());
     }
 
     @Test
@@ -74,34 +61,5 @@ class RandomTotpSecretIssuerTest {
 
         assertThatThrownBy(() -> issuer.provisioning(OWNER, othersSecret, "shipper@example.com"))
                 .isInstanceOf(UnreadableCredentialException.class);
-    }
-
-    /** SVG の正方形のモジュール（rect）を画素にして、ZXing で読み戻す。 */
-    private static String decodeQr(String svg) throws Exception {
-        Matcher size = Pattern.compile("viewBox=\"0 0 (\\d+) (\\d+)\"").matcher(svg);
-        assertThat(size.find()).isTrue();
-        int modules = Integer.parseInt(size.group(1));
-        int scale = 4;
-        int width = modules * scale;
-        int[] pixels = new int[width * width];
-        java.util.Arrays.fill(pixels, 0xFFFFFFFF);
-        Matcher rect = Pattern.compile("<rect x=\"(\\d+)\" y=\"(\\d+)\" width=\"1\" height=\"1\"")
-                .matcher(svg);
-        while (rect.find()) {
-            int x = Integer.parseInt(rect.group(1));
-            int y = Integer.parseInt(rect.group(2));
-            for (int dy = 0; dy < scale; dy++) {
-                for (int dx = 0; dx < scale; dx++) {
-                    pixels[(y * scale + dy) * width + x * scale + dx] = 0xFF000000;
-                }
-            }
-        }
-        LuminanceSource source = new RGBLuminanceSource(width, width, pixels);
-        // 余白のある素の画像なので、位置の検出をせずに読む（検出器は秘密によって 1% ほど読み損ねる。Bolt 32 で見つけた揺れ）
-        return new QRCodeReader()
-                .decode(
-                        new BinaryBitmap(new HybridBinarizer(source)),
-                        Map.of(DecodeHintType.PURE_BARCODE, Boolean.TRUE))
-                .getText();
     }
 }

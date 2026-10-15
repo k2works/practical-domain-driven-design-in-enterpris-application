@@ -24,16 +24,20 @@ import org.springframework.stereotype.Component;
 @Component
 public final class JavaOtpTotpCodeGenerator implements TotpCodeGenerator {
 
+    /** HMAC のアルゴリズムの名前（ADR-011）。技術の知識なのでドメインに出さない（Bolt 33d）。 */
     private static final String ALGORITHM = "HmacSHA1";
+
+    /** otpauth の URI で同じアルゴリズムを示す名前。秘密の発行が URI に書く（Bolt 33d）。 */
+    static final String URI_ALGORITHM = "SHA1";
 
     private final TimeBasedOneTimePasswordGenerator generator;
 
     private final AesGcmSecretCipher cipher;
 
-    /** 本番の桁数（6 桁）の生成器。 */
+    /** 本番の桁数（{@link TotpCredential#DIGITS}）の生成器。 */
     @Autowired
     public JavaOtpTotpCodeGenerator(AesGcmSecretCipher cipher) {
-        this(cipher, 6);
+        this(cipher, TotpCredential.DIGITS);
     }
 
     /** 桁数を指定した生成器（RFC 6238 の 8 桁の試験ベクトルの確かめに使う）。 */

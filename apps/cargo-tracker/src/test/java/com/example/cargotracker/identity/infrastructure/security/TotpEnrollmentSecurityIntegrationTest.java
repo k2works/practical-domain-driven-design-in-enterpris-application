@@ -120,7 +120,9 @@ class TotpEnrollmentSecurityIntegrationTest {
                 .contains("認証アプリで読み取る QR コード")
                 .contains(DEADLINE_AT_LOGIN + "</span> までに、登録とログインを終えてください")
                 .doesNotContain("TOTP")
-                .contains("autocomplete=\"one-time-code\"");
+                .contains("autocomplete=\"one-time-code\"")
+                // 欄の桁数は TotpCredential.DIGITS から描く。表示は Bolt 33d の前と同じ（見出しの文言は残す）
+                .contains("pattern=\"[0-9]{6}\" maxlength=\"6\"", "2. 表示された 6 桁のコードを入力する");
         assertThat(manualKey(html)).hasSize(32);
     }
 

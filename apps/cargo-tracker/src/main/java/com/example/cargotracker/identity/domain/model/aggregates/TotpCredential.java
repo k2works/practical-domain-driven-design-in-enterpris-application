@@ -21,6 +21,9 @@ public final class TotpCredential {
     /** 時間の刻みの長さ（RFC 6238 の既定。US-18）。 */
     public static final Duration STEP_DURATION = Duration.ofSeconds(30);
 
+    /** コードの桁数（US-18）。コードの生成・otpauth の URI・画面のコードの欄が参照する（Bolt 33d）。 */
+    public static final int DIGITS = 6;
+
     /** 時間の窓。今の刻みの前後いくつまでのコードを受け付けるか（ADR-011。サーバーの時計は NTP で合わせる）。 */
     public static final int WINDOW = 1;
 

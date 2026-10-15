@@ -32,7 +32,7 @@
         <div class="mb-3">
             <label for="code" class="form-label">認証コード</label>
             <input type="text" id="code" name="code" class="form-control" autocomplete="one-time-code"
-                   inputmode="numeric" pattern="[0-9]{6}" maxlength="6" required aria-describedby="code-help">
+                   inputmode="numeric" pattern="[0-9]{6}" maxlength="6" th:pattern="'[0-9]{' + ${codeDigits} + '}'" th:maxlength="${codeDigits}" required aria-describedby="code-help">
             <div id="code-help" class="form-text">6 桁の数字。空白は入れずに入力します。</div>
         </div>
         <button type="submit" class="btn btn-primary">登録する</button>

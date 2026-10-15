@@ -123,9 +123,9 @@ class AuthenticationArchitectureTest {
 
     /** 上の規則が空振りしていないことを確かめる。 */
     @ArchTest
-    static final ArchRule 秘密の発行の実装はQRのライブラリを使う = classes()
+    static final ArchRule QRコードのSVGはQRのライブラリを使う = classes()
             .that()
-            .haveSimpleName("RandomTotpSecretIssuer")
+            .haveSimpleName("QrCodeSvg")
             .should()
             .resideInAPackage("com.example.cargotracker.identity.infrastructure.crypto..")
             .andShould()
@@ -160,6 +160,8 @@ class AuthenticationArchitectureTest {
             .haveSimpleName("BundledCommonPasswordList")
             .or()
             .haveSimpleName("JavaOtpTotpCodeGenerator")
+            .or()
+            .haveSimpleName("QrCodeSvg")
             .or()
             .haveSimpleName("RandomRecoveryCodeGenerator")
             .or()

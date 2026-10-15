@@ -5,6 +5,7 @@ import com.example.cargotracker.identity.application.internal.commandservices.En
 import com.example.cargotracker.identity.application.internal.commandservices.TotpEnrollmentService;
 import com.example.cargotracker.identity.application.internal.queryservices.TotpEnrollmentQueryService;
 import com.example.cargotracker.identity.application.internal.session.SessionKeys;
+import com.example.cargotracker.identity.domain.model.aggregates.TotpCredential;
 import com.example.cargotracker.identity.domain.model.rules.SessionPolicy;
 import com.example.cargotracker.identity.domain.model.valueobjects.EncryptedSecret;
 import com.example.cargotracker.identity.domain.model.valueobjects.EnrollingUser;
@@ -18,6 +19,7 @@ import java.util.Optional;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -121,5 +123,11 @@ public class TotpEnrollmentController {
 
     private static void clearPending(HttpSession session) {
         session.removeAttribute(SessionKeys.ENROLLMENT_PENDING_SECRET);
+    }
+
+    /** コードの欄の桁数（{@code pattern}・{@code maxlength}）。テンプレートは静的なクラスを参照しないのでモデルで渡す（Bolt 33d）。 */
+    @ModelAttribute("codeDigits")
+    int codeDigits() {
+        return TotpCredential.DIGITS;
     }
 }

@@ -2,6 +2,7 @@ package com.example.cargotracker.identity.interfaces.web;
 
 import com.example.cargotracker.identity.application.internal.queryservices.TotpEnrollmentQueryService;
 import com.example.cargotracker.identity.application.internal.session.SessionKeys;
+import com.example.cargotracker.identity.domain.model.aggregates.TotpCredential;
 import com.example.cargotracker.identity.domain.model.rules.LockPolicy;
 import com.example.cargotracker.identity.domain.model.valueobjects.PasswordVerifiedUser;
 import jakarta.servlet.http.HttpSession;
@@ -9,6 +10,7 @@ import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 
 /**
  * ログイン（A-01）・認証コードの入力（A-02）・再認証の案内（A-03）の画面（US-18）。A-07 認証アプリの登録は
@@ -77,5 +79,11 @@ public class LoginController {
     @GetMapping(SessionKeys.EXPIRED_URL)
     public String sessionExpired() {
         return "identity/session-expired";
+    }
+
+    /** コードの欄の桁数（{@code pattern}・{@code maxlength}）。テンプレートは静的なクラスを参照しないのでモデルで渡す（Bolt 33d）。 */
+    @ModelAttribute("codeDigits")
+    int codeDigits() {
+        return TotpCredential.DIGITS;
     }
 }

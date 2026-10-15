@@ -3,7 +3,7 @@ type: Plan
 title: "Bolt 33d 計画 - TOTP と回復コードの部品の整理（振る舞いの変わらない直し）"
 description: "W5 の 19 本目の Bolt の計画。TOTP の桁数・アルゴリズムの定数を 1 か所にし、QR コードの SVG の組み立てを秘密の発行から分け、回復コードの形の知識を RecoveryCode に寄せ、normalize の戻り値を値オブジェクトにし、A-07 と A-08 で重複していた途中の暗号文を使い続ける処理と回復コード 10 個の発行を小さな部品に切り出す。振る舞いは変えない。認証の入口と期限の直しは 33e に分ける。"
 tags: [plan]
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-15T21:59:31Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-15T22:09:25Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-15T21:57:32Z }
 ---
@@ -119,7 +119,7 @@ package "identity" {
   - release_plan.md: 598 行目の 33d の行（経路・session の ID・期限の境界・期間の数値を外し、計画へのリンク）、33e の行を足す、557 行目の局面とアプローチ、602 行目の W5 の注（33c・33d・33e は SP 0）、604 行目の順序（→ 33d → 33e）と本数（22 本）と 33e の理由、621 行目（33c・33d・33e に入れない）、553 行目の状態、774 行目の実績の表、更新履歴
   - 過去の報告: bolt_33b_report.md（96・106・141 行目）と bolt_33c_report.md（22・109・116 行目）の経路・session の ID・期限の境界・議題 4 (b) の行き先に「→ 33e」を書き添え、更新履歴に 1 行足す（決定 6）
   - 完了の判定: `okf:check` ERROR 0、`documentationTest` 緑
-- [ ] **2. TOTP の定数と SVG**
+- [x] **2. TOTP の定数と SVG**
   - `6`・`HmacSHA1`・`SHA1`・`[0-9]{6}`・`maxlength`・「6 桁」で全体を grep する（T-132）
   - 先に 3 画面の欄の見張りのテストを足す（緑。属性を消す変異で落ちることを確かめ、控えから戻す。T-131）
   - `TotpCredential.DIGITS` とアルゴリズムの定数を足し、生成器と発行を付け替える。3 つの画面のハンドラーがモデルで桁数を渡し、テンプレートの欄の属性を描く
