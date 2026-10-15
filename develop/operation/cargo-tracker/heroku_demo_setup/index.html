@@ -10659,7 +10659,7 @@ heroku<span class="w"> </span>container:login
 <div class="highlight"><pre><span></span><code>npx<span class="w"> </span>gulp<span class="w"> </span>deploy:demo:setup
 </code></pre></div>
 <p>アプリの作成（<code>--stack container --region us</code>）、Config Vars の設定、<code>log-runtime-metrics</code>（メモリの値をログに出す）の有効化を行います。アプリ名・region・JVM の設定は <code>.env</code> の <code>DEMO_*</code> で変えられます（<code>.env.example</code> を参照）。</p>
-<p>Config Vars には、password の再設定のメールのリンクを組み立てる公開の base URL（<code>CARGOTRACKER_PUBLICBASEURL</code>。既定はデモ環境の URL、<code>DEMO_PUBLIC_BASE_URL</code> で変えられる）も入ります（Bolt 33、ADR-017）。デモ環境は dev プロファイルなので、再設定のメールは送らずにログ（<code>npx gulp deploy:demo:logs</code>）に出ます。Bolt 33a までは、リンクを開くと「準備中」の画面になります。デモ環境のログには再設定のリンクが出るため、ログを読める人を限り、デモには実在のメールアドレスを登録しないでください。Bolt 33 の前に作ったアプリでは、<code>deploy:demo:setup</code> をもう一度実行して Config Vars を合わせてください。</p>
+<p>Config Vars には、password の再設定のメールのリンクを組み立てる公開の base URL（<code>CARGOTRACKER_PUBLICBASEURL</code>。既定はデモ環境の URL、<code>DEMO_PUBLIC_BASE_URL</code> で変えられる）も入ります（Bolt 33、ADR-017）。デモ環境は dev プロファイルなので、再設定のメールは送らずにログ（<code>npx gulp deploy:demo:logs</code>）に出ます。ログのリンクを開くと、新しい password を設定できます（Bolt 33a）。デモ環境のログには再設定のリンクが出るため、ログを読める人を限り、デモには実在のメールアドレスを登録しないでください。Bolt 33 の前に作ったアプリでは、<code>deploy:demo:setup</code> をもう一度実行して Config Vars を合わせてください。</p>
 <h3 id="ci">CI からの配備の準備<a class="headerlink" href="#ci" title="Permanent link">&para;</a></h3>
 <p>GitHub の Environment <code>demo</code> を作り、配備のブランチを develop に限ります（Bolt 16 で作成済み）。</p>
 <div class="highlight"><pre><span></span><code>gh<span class="w"> </span>api<span class="w"> </span>-X<span class="w"> </span>PUT<span class="w"> </span>repos/k2works/practical-domain-driven-design-in-enterpris-application/environments/demo<span class="w"> </span><span class="se">\</span>

@@ -10789,8 +10789,8 @@
 <td style="text-align: left;"><a href="#25-まもなくログアウトします">2.5</a></td>
 </tr>
 <tr>
-<td style="text-align: left;">password の再設定の依頼</td>
-<td style="text-align: left;">password を忘れたときに、再設定のリンクをメールで受け取る</td>
+<td style="text-align: left;">password の再設定</td>
+<td style="text-align: left;">password を忘れたときに、再設定のリンクをメールで受け取り、新しい password を設定する</td>
 <td style="text-align: left;"><a href="#26-password-を忘れた場合">2.6</a></td>
 </tr>
 </tbody>
@@ -11018,6 +11018,7 @@
 <ul>
 <li>一定時間操作がなかったとき、またはログインから 8 時間を過ぎたときに、ログアウトして示されます</li>
 <li>ログインしている間に管理者が利用を止めたとき、または所属する企業の利用が止められたときも、次の操作でログアウトして示されます。画面の文言は同じで、利用が止められたことは示しません</li>
+<li>ほかのパソコンやタブで password を再設定したとき（<a href="#26-password-を忘れた場合">2.6</a>）も、次の操作でログアウトして示されます。新しい password でログインし直してください</li>
 </ul>
 <h3 id="_17">画面の開き方<a class="headerlink" href="#_17" title="Permanent link">&para;</a></h3>
 <ul>
@@ -11136,10 +11137,12 @@
 <h3 id="_26">この画面でできること<a class="headerlink" href="#_26" title="Permanent link">&para;</a></h3>
 <ul>
 <li>登録しているメールアドレスに、password を再設定するためのリンクを送ってもらいます</li>
+<li>メールのリンクを開き、新しい password を設定します</li>
 </ul>
 <h3 id="_27">画面の開き方<a class="headerlink" href="#_27" title="Permanent link">&para;</a></h3>
 <ul>
-<li>ログインの画面（<a href="#21-ログイン">2.1</a>）の「password を忘れた場合」をクリックします（URL: <code>/password-reset</code>）</li>
+<li>依頼の画面: ログインの画面（<a href="#21-ログイン">2.1</a>）の「password を忘れた場合」をクリックします（URL: <code>/password-reset</code>）</li>
+<li>再設定の画面: 届いたメールのリンクを開きます（リンクを開くと、URL は <code>/password-reset/new</code> に変わります）</li>
 </ul>
 <h3 id="_28">画面の説明<a class="headerlink" href="#_28" title="Permanent link">&para;</a></h3>
 <p><img alt="password の再設定の依頼" src="../assets/02-password-reset.png" /></p>
@@ -11169,14 +11172,56 @@
 </tr>
 </tbody>
 </table>
+<p>再設定の画面:</p>
+<p><img alt="password の再設定" src="../assets/02-password-reset-new.png" /></p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">#</th>
+<th style="text-align: left;">項目</th>
+<th style="text-align: left;">説明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">①</td>
+<td style="text-align: left;">条件</td>
+<td style="text-align: left;">新しい password の条件（12 文字以上 64 文字まで、全角の文字の数え方、よく使われている password は使えないこと）</td>
+</tr>
+<tr>
+<td style="text-align: left;">②</td>
+<td style="text-align: left;">新しい password</td>
+<td style="text-align: left;">新しく使う password</td>
+</tr>
+<tr>
+<td style="text-align: left;">③</td>
+<td style="text-align: left;">新しい password（確認）</td>
+<td style="text-align: left;">確認のため、同じ password をもう一度</td>
+</tr>
+<tr>
+<td style="text-align: left;">④</td>
+<td style="text-align: left;">「password を設定する」</td>
+<td style="text-align: left;">新しい password を設定します</td>
+</tr>
+<tr>
+<td style="text-align: left;">⑤</td>
+<td style="text-align: left;">「ログインに戻る」</td>
+<td style="text-align: left;">設定せずにログインの画面に戻ります</td>
+</tr>
+</tbody>
+</table>
 <h3 id="_29">操作手順<a class="headerlink" href="#_29" title="Permanent link">&para;</a></h3>
 <ol>
 <li>「メールアドレス」を入力します</li>
 <li>「再設定のリンクを送る」をクリックします</li>
 <li>ログインの画面に戻り、「password の再設定の依頼を受け付けました。…」と示されます</li>
 <li>登録されていて、ご利用いただける状態であれば、数分のうちに「【cargo-tracker】password の再設定のご案内」のメールが届きます</li>
-<li>メールのリンクを開いた後の手順（新しい password の設定）は準備中です。リンクを開くと「この画面は準備中です」と示されます</li>
+<li>メールのリンクを開きます。再設定の画面が開きます</li>
+<li>「新しい password」と「新しい password（確認）」に同じ password を入力し、「password を設定する」をクリックします</li>
+<li>ログインの画面に戻り、「password を変更しました。」と示されます</li>
+<li><a href="#21-ログイン">2.1 ログイン</a> の手順で、新しい password と認証アプリのコード（または回復コード）でログインします</li>
 </ol>
+<p><img alt="password を変更した知らせ" src="../assets/02-login-reset-completed.png" /></p>
 <h3 id="_30">注意・補足<a class="headerlink" href="#_30" title="Permanent link">&para;</a></h3>
 <ul>
 <li>入力したメールアドレスが登録されているかどうかは、画面に示しません。登録されていて、ご利用いただける状態のときだけメールが届きます</li>
@@ -11185,6 +11230,13 @@
 <li>それでも届かない場合は、荷主の方は担当営業に、社内の方はシステム管理者にお問い合わせください</li>
 <li>メールの本文には、リンク・期限・使い方だけが書かれ、業務の情報は書かれていません。依頼した覚えのないメールが届いた場合は、何もしなくてかまいません。リンクを開かなければ password は変わりません</li>
 <li>メールアドレスの欄が空か形が正しくないと、欄の下に「メールアドレスを入力してください。」か「メールアドレスの形式が正しくありません。例: user@example.com」と示されます</li>
+<li>新しい password は 12 文字以上 64 文字までです。空白や全角の文字も使えます。全角の文字（かな・漢字など）は 1 文字を 3 文字分として数え、合わせて 72 文字分までです（絵文字などは数え方が少し違うことがあります。「全角の文字を含めると長すぎます。」と示されたら、短くしてください）</li>
+<li>よく使われている password（多くの人が使っていて推測されやすいもの）は使えません。「この password はよく使われているため、使えません。」と示されたら、別の password にしてください</li>
+<li>条件に合わないか、確認の欄が違うと、欄の下に誤りが示され、入力した password は消えます。もう一度入力してください</li>
+<li>設定すると、ほかのパソコンやタブでログインしていた場合も、次の操作で「もう一度ログインしてください」（<a href="#24-もう一度ログインしてください">2.4</a>）になります。設定したブラウザでログインしていた場合は、ログアウトします</li>
+<li>続けて誤ったログインのためにログインできなくなっていた場合は、新しい password を設定しても、15 分たつまでログインできません</li>
+<li>リンクを開くと「この再設定のリンクは使えません」と示された場合は、有効期限（30 分）を過ぎた、すでに使った、新しいリンクが送られた、などが考えられます。いちばん新しいメールのリンクを開くか、「password の再設定を依頼し直す」からもう一度依頼してください</li>
+<li>再設定の画面を開いたまま 30 分以上たった場合や、しばらく使っていなかったブラウザでリンクを開いた場合は、「もう一度ログインしてください」が示されることがあります。その場合は、メールのリンクをもう一度開いてください（有効期限内なら使えます）</li>
 </ul>
 
 
