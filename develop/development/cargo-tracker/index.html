@@ -5471,6 +5471,34 @@
   
   
     <li class="md-nav__item">
+      <a href="bolt_33c_plan/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 33c 計画
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="release_report-0_1/" class="md-nav__link">
         
   
@@ -10919,6 +10947,13 @@
 <td style="text-align: left;">W5</td>
 <td style="text-align: left;">完了</td>
 </tr>
+<tr>
+<td style="text-align: left;">33c</td>
+<td style="text-align: left;"><a href="bolt_33c_plan/">session の属性の名前と期間の置き場所の整理（振る舞いの変わらない直し）</a></td>
+<td style="text-align: left;">—</td>
+<td style="text-align: left;">W5</td>
+<td style="text-align: left;">計画（承認済み）</td>
+</tr>
 </tbody>
 </table>
 <p>Bolt を始めるときに行を追加します。</p>
@@ -11237,6 +11272,8 @@
 <li><a href="bolt_33a_report/">Bolt 33a 終了報告 - password の再設定（A-06。US-18 AC8 の後半）</a> - リンクを開くとトークンの ID だけを session に置いて A-06 へ移し、新しい password を設定するとトークンを 1 回だけ使い、コミットの後にその利用者の session をすべて失効させた。開発レビューで session の ID の変更と、今の session を捨てる順序を決めた。</li>
 <li><a href="bolt_33b_plan/">Bolt 33b 計画 - 回復コードによる TOTP の再登録（US-18 AC9）と #13 のクローズ</a> - W5 の 17 本目の Bolt の計画。回復コードでログインしたら A-08 へ導いて認証アプリを再登録し（後にもできる）、秘密を置き換えて回復コードを発行し直し、ほかの session を失効させる。マニュアル 2.1 を 2 段階のログインに書き直し、#13 をクローズする。</li>
 <li><a href="bolt_33b_report/">Bolt 33b 終了報告 - 回復コードによる TOTP の再登録（US-18 AC9）と #13 のクローズ</a> - 回復コードでログインしたら A-08 へ導き、読んだ秘密のままのときだけ TOTP の秘密を置き換えて回復コードを発行し直し、ほかの session を失効させた。開発レビューで印に 15 分の期限を付けた。</li>
+<li><a href="bolt_33c_plan/">Bolt 33c 計画 - session の属性の名前と期間の置き場所の整理（振る舞いの変わらない直し）</a> - W5 の 18 本目の Bolt の計画。認証の入口と画面に 2 つの定数で持っていた session の属性の名前と URL を application 層の SessionKeys に、期間を domain の SessionPolicy に寄せ、覚えた要求を 1 つの Bean にする。TOTP の部品の整理は 33d。</li>
+<li><a href="bolt_33c_plan/">Bolt 33c 計画 - session の属性の名前と期間の置き場所の整理（振る舞いの変わらない直し）</a> - W5 の 18 本目の Bolt の計画。認証の入口と画面に同じ値の 2 つの定数で持っていた session・request の属性の名前と A-08 の URL を application 層の SessionKeys に、ログインの期間（8 時間・5 分・15 分・印の 15 分）を domain の SessionPolicy に寄せる（認証の入口の規則に例外を足す）。覚えた要求の RequestCache を 1 つの Bean にし、A-01 の「5 回」「15 分」を LockPolicy から描き、T-128 の見張り（Playwright の正規表現）、SchemaCommentIntegrationTest の tracking、空の復号の境界のテストを足す。TOTP の部品の整理は 33d に分ける。</li>
 </ul>
 
 
