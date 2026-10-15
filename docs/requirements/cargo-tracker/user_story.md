@@ -4,7 +4,7 @@ title: "cargo-tracker ユーザーストーリー"
 description: "cargo-tracker MVP の価値単位のユーザーストーリー、受入条件、上流要件へのトレーサビリティ。"
 tags: [requirements, user-story]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-15T04:05:17Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-15T08:14:43Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T05:20:11Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:01:39Z }
@@ -530,6 +530,12 @@ Bolt 33a の開始準備の決定（2026-10-15、human:kakimomokuri。[Bolt 33a 
 - 新しい password は 12〜64 文字（UTF-8 で 72 バイト以下）で、よく使われる password の一覧に載っていないもの（SEC-04・SEC-05）。漏えい済みの password の照合は W10（#49）。
 - AC8 の「再設定後も TOTP の提示が必要」は、設定の後に今の session を作り直して A-01 に完了の知らせを出し、新しい password と TOTP でログインし直させることで満たす。完了のコミットの後に、その利用者のほかの session をすべて失効させる（ほかの端末は次の操作で再認証の案内）。ロックと失敗の数は変えない（SEC-02）。
 - AC8 の「再設定が監査証跡へ記録される」は、依頼（`PASSWORD_RESET_REQUESTED`。Bolt 33）と完了（`PASSWORD_RESET_COMPLETED`。成功だけ）で満たす。
+
+Bolt 33b の開始準備の決定（2026-10-15、human:kakimomokuri。[Bolt 33b 計画](../../development/cargo-tracker/bolt_33b_plan.md) の開始準備の決定 1・2、[ADR-011](../../adr/cargo-tracker/011-mfa-totp.md) の決定 10）:
+
+- AC9 の「回復コードを使う … Then TOTP を再登録でき」は、回復コードでログインすると認証アプリの再登録の画面（A-08）に導き、新しいコードを確かめた時点で TOTP の秘密を置き換え、回復コード 10 個を発行し直して一度だけ示すことで満たす（Bolt 33b）。「後で登録する」で業務の画面に進め、印がある間は業務の画面に知らせを出す。入口は回復コードでログインした流れだけで、認証アプリの設定の画面は作らない。
+- 再登録の後は、古い認証アプリのコードと古い回復コードは使えない。完了のコミットの後に、その利用者のほかの session を失効させる（今の session は残す。ほかの端末は次の操作で再認証の案内）。再登録は監査証跡に `TOTP_RE_ENROLLED`（成功だけ）で記録する。
+- AC9 の「システム管理者が定めた別経路で本人確認して登録を解除する」「解除が監査証跡へ記録され本人へ通知される」と、再登録の本人への通知、残りの回復コードが少ないときの案内は [#47](https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/47)（W6）で満たす（W5 の開始準備の決定どおり）。#13 は Bolt 33b でクローズする。
 
 ### US-19 荷受人の参照許可を管理する
 

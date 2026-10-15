@@ -4,7 +4,7 @@ title: "ADR-012: 認証の主体は共有カーネルの型にし、password の
 description: "US-18 の password によるログインと session を、Spring Security 7 の form login と Spring Session JDBC で作る。"
 tags: [adr, authentication, session]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-15T05:51:03Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-15T08:14:43Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-06T06:51:29Z }
 ---
@@ -54,7 +54,7 @@ US-18 の password によるログインと session を、Spring Security 7 の 
 - 役割とホームの対応はルートのコントローラーの 1 か所に置き、ログインの後もルートを通す。画面のまだない役割は A-04 にする。
 - 失効した session の request は、業務データを出さずに A-03（`/session-expired`）へ移す。Bolt 32c から、利用停止・所属企業の無効化・利用者の削除の後の次の request も、session を捨てて A-03 へ移す（AC6。止められたことは画面に示さない）。この確かめのフィルター（`SessionRevalidationFilter`）は期限のフィルター（`SessionLifetimeFilter`）の直後、認証のフィルター（`UsernamePasswordAuthenticationFilter`・`TotpAuthenticationFilter`）より前に置く。期限の切れた session は先に A-03 に送られ、DB を読まない。公開の URL（ログイン・再認証の案内・エラー・静的な資源）では確かめない（1 画面の表示で資源の数だけ読まず、止められた利用者の並行の資源の request で取消しを重ねて書かないため。Bolt 32c の開発レビュー）。ログアウトの送信は確かめるので、止められた利用者のログアウトは A-03 で終わり、監査記録は `LOGOUT` でなく `SESSION_REVOKED` になる。並行の業務の request が同時に取り消されると、`SESSION_REVOKED` が 2 行以上になることがあり、受け入れる。フィルターの順序の値は `addFilterAfter` で `UsernamePasswordAuthenticationFilter` と同じになり、登録の順で前に来る（統合テストで並びを見張る）。上限を過ぎた session のままのログインの送信も A-03 へ移し、ログインの送信で session を延命させない。session に CSRF のトークンがない古いフォームの送信も、Spring Security が無効な session として A-03 へ移す。
 - Bolt 32b から、ログインした画面で失効の 5 分前に警告し、無操作の期限を画面を移らずに延長できる（ACC-06）。延長の URL は `POST /session/extend`（`identity.interfaces.web.SessionController`）で、公開の URL にせず、今のフィルター（CSRF・`SessionLifetimeFilter`・`SessionRevalidationFilter`・認証）をすべて通す。Spring Session がその request で session の最終アクセスを新しくするので、204 を返すだけにする。8 時間の上限は延ばさず、監査記録は書かない（延長はログインでも権限の変更でもない）。`CsrfFilter` は `SessionLifetimeFilter` より前に動く。無操作で失効した session では CSRF のトークンも消えているので、延長は CSRF のトークンがない拒否（`MissingCsrfTokenException`）になり、失効の扱い（Bolt 32b では `invalidSessionUrl`、Bolt 32e から `invalidSessionStrategy`。下の項目）によって A-03 への 302 になる（上の古いフォームの送信と同じ経路）。session が生きていてトークンが誤っているときだけ 403 になる。画面は 302 を失効、403 を延長の失敗として分けて示す。
-- 8 時間の上限までの残りの秒数は、`SessionLifetimeFilter` が上限の判定と同じ起点と時計で算出し、2 つの要素のそろった session でだけ request の属性 `cargotracker.request.sessionLifetimeRemainingSeconds` に置く。画面の層（`SessionTimerAdvice`）は名前で読み、画面に出す（Bolt 32b）。画面の層は `infrastructure` に依存できないので、request の属性で渡し、層の規則に例外を足さない。名前は 2 つの定数で持ち、一致をテストで守る（Bolt 31c のレビュー 14 と同じ形で、Bolt 33b でまとめて直す。[バックエンドのアーキテクチャ](../../design/cargo-tracker/architecture_backend.md)）。
+- 8 時間の上限までの残りの秒数は、`SessionLifetimeFilter` が上限の判定と同じ起点と時計で算出し、2 つの要素のそろった session でだけ request の属性 `cargotracker.request.sessionLifetimeRemainingSeconds` に置く。画面の層（`SessionTimerAdvice`）は名前で読み、画面に出す（Bolt 32b）。画面の層は `infrastructure` に依存できないので、request の属性で渡し、層の規則に例外を足さない。名前は 2 つの定数で持ち、一致をテストで守る（Bolt 31c のレビュー 14 と同じ形で、Bolt 33c でまとめて直す。Bolt 33b の開始準備で、振る舞いの変わらない直しを 33c に分けた。[バックエンドのアーキテクチャ](../../design/cargo-tracker/architecture_backend.md)）。
 - Bolt 32e から、無操作の失効と 8 時間の上限で、開いていた業務の画面の要求を覚え、ログインし直した後にそこへ戻す（ACC-06。US の横断受入条件の「再認証後に再開できる」の画面の分。Bolt 31 のレビュー 5）。
   - 無操作の失効の扱いを `invalidSessionUrl`（A-03）から `invalidSessionStrategy` に替え、入口の部品（`identity.infrastructure.security`）を渡す。CSRF のトークンがない拒否（`MissingCsrfTokenException`）も、Spring Security の `InvalidSessionAccessDeniedHandler` を通して同じ部品に来る。8 時間の上限では、`SessionLifetimeFilter` が 2 つの要素のそろった session を捨てたときに同じ部品を使う。
   - 部品は、覚えるかに関わらず新しい session を作ってから A-03 へ移す（古い Cookie のまま A-03 を開いて 302 を繰り返さないため）。
@@ -82,6 +82,15 @@ US-18 の password によるログインと session を、Spring Security 7 の 
   - 今の要求は、完了したら今の認証を捨て、今の session を捨てて新しい session を作る（トークンの ID は新しい session には移さない）（方針の誤りで送り直せるように、完了の前には捨てない。Bolt 33a の開発レビューで、決定 2 の (6) の「完了の前に」から改めた）。リンクを開いて session にトークンの ID を置くときは、session の ID を変える（password を設定できる session になるので、ログインと同じく session 固定化を防ぐ）。新しい session は主体を持たないので失効の対象にならない。ログイン中・password の段・別の利用者のブラウザで設定しても、A-01 の完了の知らせ（`/login?reset-completed`）が出る。
   - 消した session の Cookie の次の要求は、失効の扱い（`invalidSessionStrategy`。Bolt 32e の部品）で A-03 に移る。GET の業務の画面は覚え、ログインし直すとその画面に戻る。A-03 の文言に「password を再設定したため」を足す（止めたことは示さないまま）。
   - 既知の課題: 失効した Cookie のまま再設定のリンクを開くと、失効の扱いで A-03 に移り、リンクの URL は覚えない（覚えるのは `/customer/**`・`/staff/**` の GET だけ）。もう一度リンクを開けば通る。
+- Bolt 33b から、ほかの session の失効の 2 つ目の場面として、認証アプリの再登録（A-08）を終えたら、その利用者の今の session のほかを失効させる（2026-10-15、Bolt 33b の開始準備の決定 1 で human:kakimomokuri が決定。SEC-10、[ADR-011](011-mfa-totp.md) の決定 10）。
+  - 失効は再登録のトランザクションのコミットの後に行い、失敗は警告のログにとどめる（password の再設定と同じ理由）。
+  - ドメインのポート `UserSessionRevoker` に `revokeOthers(メールアドレス, 残す session の ID)` を足す（メソッドが 2 つになるので `@FunctionalInterface` を外す）。実装 `SpringSessionUserSessionRevoker` は主体の名前の索引で探し、残す session を除いて消す。ほかの利用者と主体のない session は消さない。
+  - 今の session は残す（password の再設定と違い、今の利用者は回復コードと新しい認証アプリで本人であることを示した後で、ログインし直させる理由がない）。今の session の ID は変えない。回復コードでログインしたときに、認証の入口の `ChangeSessionIdAuthenticationStrategy` がすでに変えている（`RecoveryCodeLoginSecurityIntegrationTest` が確かめている。Bolt 33a の Try T-130）。
+  - 消した session の Cookie の次の要求は、失効の扱いで A-03 に移る（GET の業務の画面は覚える）。A-03 の文言に「認証アプリを登録し直したため」を足す。
+- Bolt 33b から、回復コードでログインした session に印（属性の値は利用者の ID）を置く（[ADR-011](011-mfa-totp.md) の決定 10）。
+  - 置くのは認証の入口の成功の扱い（`FirstTotpSuccessHandler`）で、回復コードの経路のときだけ置き、`/account/authenticator`（A-08）に移す。覚えた要求は残し、A-08 の「後で登録する」と完了の後の「続ける」で使う。
+  - 同じ session での利用者の切り替え（T-102）: 回復コードでログインした後にログアウトせずに別の利用者の password を通すと、password の段の成功（`LoginSuccessHandler`）が印を消す（登録の途中の属性を消すのと同じ場所）。画面の層も、印の利用者の ID が今の主体と同じときだけ印として扱う（二重に守る）。印は再登録の完了でも消え、ログアウトと失効では session と一緒に消える。
+  - 属性の名前は、認証の入口（`SessionLifetime`）と画面の層に同じ値の定数を置き、一致をテストで守る（画面の層は infrastructure に依存できない。前例は登録の途中の暗号文）。置き場所は Bolt 33c で、ほかの 4 組とまとめて直す。
 
 ### 4. 監査
 
@@ -89,6 +98,7 @@ US-18 の password によるログインと session を、Spring Security 7 の 
 - 存在しないメールアドレスでの失敗は、操作者を空にして記録し、メールアドレスは残さない。
 - Bolt 33 から、password の再設定の依頼（A-05）を `PASSWORD_RESET_REQUESTED` で記録する。書くのは依頼のアプリケーションサービス `PasswordResetRequestService` で、依頼と同じトランザクションで書く（IA-INV-08）。有効な利用者は `SUCCESS`（理由なし）、止められた利用者は `FAILURE`・`SUSPENDED`、所属企業の無効は `FAILURE`・`COMPANY_INACTIVE`、登録のないアドレスは `FAILURE`・`UNKNOWN_USER`（操作者を空にし、アドレスを残さない）。理由は `AuthenticationRejection` の値を使う。繰り返し（1 分以内）で送らなかったことは記録しない。監査と送信の記録は結ばない（AUD-02 の対象の列は使う Bolt で足す。[ADR-017](017-notification-module-and-mail.md)）。
 - Bolt 33a から、password の再設定の完了を `PASSWORD_RESET_COMPLETED`（成功だけ。操作者に利用者と企業）で記録する。書くのは `PasswordResetCompletionService` で、トークンの使用・password の更新と同じトランザクションで書く。
+- Bolt 33b から、認証アプリの再登録の完了を `TOTP_RE_ENROLLED`（成功だけ。操作者に利用者と企業）で記録する。書くのは `TotpReEnrollmentService` で、TOTP の秘密の置き換え・回復コードの発行し直しと同じトランザクションで書く。
 - 監査記録の書き込みに失敗したら、ログインも失敗にする（IA-INV-08 の同期の書き込み。fail-closed）。
 - 権限外のアクセスの試行の記録は、利用者と役割の管理（US-16）の Bolt で足す。
 - W5 のロックの失敗の数え方は、この listener が失敗・成功のイベントをアプリケーションのサービス `LoginAttemptService` に写す形にする。数えるのと、その監査記録を書くのはサービスの 1 つのトランザクションで、listener は数えない。数えない拒否と password の段の成功は listener が監査記録に直接書く（Bolt 32。下の「W5 で見直すこと」の 5。[ADR-011](011-mfa-totp.md) の決定 9）。Bolt 32 から、ロックしたときに `ACCOUNT_LOCKED` を書き、ロック中の試行を理由 `LOCKED`、利用者の読み出し（`loadUserByUsername`）の DB の誤りを理由 `SERVICE_ERROR` で記録する（どちらも数えない）。
@@ -171,10 +181,12 @@ US-18 の password によるログインと session を、Spring Security 7 の 
 - セキュリティの統合テスト（Bolt 32b）: 延長の 204 と session の最終アクセスの更新、CSRF のトークンなし・誤りの 403、無操作で失効した session の延長は A-03、延長は 8 時間の上限を延ばさない、8 時間の残りは 2 つの要素のそろった session でだけ request の属性に置かれる（password の段では置かれない）。
 - セキュリティの統合テスト（Bolt 32f）: ログインした画面に `data-user`（利用者の ID の一方向の値。UUID は出ない）と知らせの領域が出て、公開の画面に入力の控えのスクリプトが出る。A-03 は送信が拒まれた画面の印を持ち、CSRF の拒否は request に印を置き、認可の 403 は置かない。利用者の鍵の単体テスト（同じ利用者で同じ値、別の利用者で違う値、16 文字の URL で使える文字）。控えの写す・戻す・捨てる（別の利用者、8 時間と 7 時間 59 分、送信が届いた、ログアウト、期限の到来の取り消し）と、password・CSRF のトークン・ファイルを写さないことは、画面の層の受入シナリオ（`session_timeout_ui.feature`）で確かめる。
 - セキュリティの統合テスト（Bolt 33a）: 再設定を終えると、ほかの端末の session で業務の画面を開くと A-03 になる。消えるのはその利用者の session だけで、ほかの利用者と主体のない session は残る。失効はコミットの後に行い、完了がロールバックしたら消さない。失効が失敗しても完了する。ログイン中・password の段・別の利用者のブラウザで設定しても完了の知らせが出る。`/password-reset/new` と `/password-reset/{token}` を全 URL の見張りに足す。
+- セキュリティの統合テスト（Bolt 33b）: 回復コードでログインすると A-08 に移り、認証コードでログインすると今のまま。印のない session・password の段・同じ session で別の利用者に切り替えた後は A-08 を開けない。CSRF。再登録の後に新しいコードでログインでき、古いコードと古い回復コードは通らない。ほかの端末の session は A-03 になり、今の session は残る（消えるのはその利用者のほかの session だけで、ほかの利用者と主体のない session は残る）。失効はコミットの後で、失敗しても完了する。後で登録すると知らせが出る。`/account/authenticator` と `/account/authenticator/later` を全 URL の見張りに足す（password の段の主体は A-02 へ）。
 - ArchUnit（`LayerArchitectureTest` の D-5）: 認証の例外は `identity.infrastructure.security` から `identity.application.internal.commandservices` に限り、例外の外は落ちる（Bolt 31）。例外は入口だけにかかり、暗号の部品（`identity.infrastructure.crypto`）は application にも `security` にも依存しない（Bolt 31d。crypto に 6 つの暗号の部品があることと、既存の規則が crypto のクラスにかかることを見張りで確かめる）。
 
 ## 改訂の経緯
 
+- 2026-10-15: Bolt 33b のステップ 1 で、決定 3 にほかの session の失効の 2 つ目の場面（認証アプリの再登録。コミットの後、今の session は残し ID も変えない（回復コードのログインで変えている）、`revokeOthers`、ほかの端末は A-03）と、回復コードでログインした印（置く場所、password の段の成功で消すこと、2 つの定数）を、決定 4 に `TOTP_RE_ENROLLED` を、コンプライアンスに統合テストを足した。32b の残り時間の属性の名前の直しの行き先を 33c に改めた（Bolt 33b の開始準備の決定 1・2。human:kakimomokuri が決定）。
 - 2026-10-15: Bolt 33a のステップ 1 で、決定 2 の公開の URL を `/password-reset/*` と確定し（`/password-reset/new` も 1 段で含まれるので `/password-reset/**` は採らない）、決定 3 に再設定の完了の後の session の失効（コミットの後、主体の名前で探して消す、今の session は作り直す、ほかの端末は A-03、失効した Cookie でリンクを開いた場合の既知の課題）を、決定 4 に `PASSWORD_RESET_COMPLETED` を、コンプライアンスに統合テストを足した（Bolt 33a の開始準備の決定 1・2。human:kakimomokuri が決定）。
 - 2026-10-15: Bolt 33 の計画の承認で、決定 2 の公開の URL に `/password-reset`（A-05。`/password-reset/**` は Bolt 33a）を、決定 4 に再設定の依頼の監査（`PASSWORD_RESET_REQUESTED` の結果と理由、登録のないアドレスは操作者を空にしアドレスを残さない）を足した（human:kakimomokuri が決定。[ADR-017](017-notification-module-and-mail.md)）。
 - 2026-10-14: Bolt 32f の開発レビューで、拒まれた印を付ける画面を公開のレイアウトの一律から画面ごとの明示（A-03・CSRF の 403・413）に変え、利用者の鍵が仮名化であること、捨てる時の列挙（公開の画面での 8 時間、`/login?logout`、印のない別の画面、形の合わない控え）、戻した入力による上書きの既知の課題を書いた（human:kakimomokuri が承認した計画の範囲の訂正）。
