@@ -6,7 +6,7 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="W5 の 18 本目の Bolt の計画。認証の入口と画面に同じ値の 2 つの定数で持っていた session・request の属性の名前と A-08 の URL を application 層の SessionKeys に、ログインの期間（8 時間・5 分・15 分・印の 15 分）を domain の SessionPolicy に寄せる（認証の入口の規則に例外を足す）。覚えた要求の RequestCache を 1 つの Bean にし、A-01 の「5 回」「15 分」を LockPolicy から描き、T-128 の見張り（Playwright の正規表現）、SchemaCommentIntegrationTest の tracking、空の復号の境界のテストを足す。TOTP の部品の整理は 33d に分ける。">
+        <meta name="description" content="W5 の 18 本目の Bolt の計画。認証の入口と画面に同じ値の 2 つの定数で持っていた session・request の属性の名前と A-08 の URL を application 層の SessionKeys に、ログインの期間（8 時間・5 分・15 分・印の 15 分）を domain の SessionPolicy に寄せる（認証の入口の規則に例外を足す）。覚えた要求の属性の名前を SessionKeys で共有し、A-01 の「5 回」「15 分」を LockPolicy から描き、T-128 の見張り（Playwright の正規表現）、SchemaCommentIntegrationTest の tracking、空の復号の境界のテストを足す。TOTP の部品の整理は 33d に分ける。">
       
       
         <meta name="author" content="k2works">
@@ -10635,7 +10635,7 @@
 </tr>
 <tr>
 <td style="text-align: left;">開始準備の決定 2（2026-10-15、human:kakimomokuri。整合性検証の要判断への回答）</td>
-<td style="text-align: left;">(4) 覚えた要求の <code>RequestCache</code> は 1 つの Bean にし、失効の部品・A-08 の画面・回復コードの成功のハンドラーの 3 つで共有する。Spring Security の既定（未認証の入口）には渡さない（振る舞いを変えない）。(5) <code>SessionKeys</code> に寄せるのは、層をまたいで共有する名前と URL だけ。画面だけが使う名前（A-08 の途中の 2 つ）は画面に残す。テストの URL の写しは仕様として文字列のまま残す。(6) 33b で「33c で扱う」とした「始めたときの秘密を置き換えの条件にする」は振る舞いが変わる直しなので、#49（W10）に送る</td>
+<td style="text-align: left;">(4) 覚えた要求の <code>RequestCache</code> は 1 つの Bean にし、失効の部品・A-08 の画面・回復コードの成功のハンドラーの 3 つで共有する。Spring Security の既定（未認証の入口）には渡さない（振る舞いを変えない）。ステップ 3 で、Bean にすると Spring Security が型で見つけて未認証の入口でも使うと分かり、決定 7（Bean にせず属性の名前だけを共有する）で改めた。(5) <code>SessionKeys</code> に寄せるのは、層をまたいで共有する名前と URL だけ。画面だけが使う名前（A-08 の途中の 2 つ）は画面に残す。テストの URL の写しは仕様として文字列のまま残す。(6) 33b で「33c で扱う」とした「始めたときの秘密を置き換えの条件にする」は振る舞いが変わる直しなので、#49（W10）に送る</td>
 <td style="text-align: left;">確認ポイント 6・13、スコープ</td>
 </tr>
 <tr>
@@ -10707,7 +10707,7 @@
 <td style="text-align: left;">A-07 と A-08 の、途中の暗号文の扱いと回復コードの発行の重複</td>
 </tr>
 <tr>
-<td style="text-align: left;">覚えた要求の <code>RequestCache</code> を identity の合成ルートで 1 つの Bean にし（今の <code>ExpiredSessionRequestSaver</code> の設定。戻れる業務の画面の matcher と属性の名前 <code>SAVED_REQUEST</code>）、<code>ExpiredSessionRequestSaver</code>・<code>TotpReEnrollmentController</code>・<code>FirstTotpSuccessHandler</code>（<code>setRequestCache</code>）の 3 つで共有する。Spring Security の既定（未認証の入口の <code>ExceptionTranslationFilter</code>）には渡さない。読み出し（<code>getRequest</code>・<code>removeRequest</code>）は matcher を使わないので、共有しても振る舞いは変わらない</td>
+<td style="text-align: left;">覚えた要求の属性の名前（<code>SAVED_REQUEST</code>）を <code>SessionKeys</code> に移し、失効の部品（戻れる業務の画面の matcher と名前を明示した cache）と A-08 の画面（名前を明示した cache で読む）が共有する（決定 7。Bean にすると Spring Security が型で見つけて未認証の入口でも使うので、Bean にはしない）。回復コード・TOTP の成功の扱いと未認証の入口は Spring Security の既定（同じ名前）のまま</td>
 <td style="text-align: left;">認証の結果のトークンに経路（要素の種類）、<code>revokeOthers</code> の session の ID の値オブジェクト</td>
 </tr>
 <tr>
@@ -10742,21 +10742,21 @@
 <h2 id="_4">ステップ計画<a class="headerlink" href="#_4" title="Permanent link">&para;</a></h2>
 <p>状態の記号: <code>[ ]</code> 未着手、<code>[-]</code> 進行中、<code>[?]</code> 承認待ち、<code>[x]</code> 完了。各ステップの終わりに <code>check</code> が緑であることを確かめ、push してアプリの CI と MkDocs の配備を確かめる（T-26、T-126）。コミットは pathspec で作る（T-110）。複数行の書き換えはスクリプトのファイルにする（T-103）。</p>
 <ul class="task-list">
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>1. 設計文書</strong> 【承認ゲート: 設計文書】</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>1. 設計文書</strong> 【承認ゲート: 設計文書】</li>
 <li>architecture_backend.md（パッケージの図 :229-235 に <code>application.internal.session</code>、:288・:292 の「2 つの定数」「33c で直す」、規則の例外）、architecture_frontend.md（:129）、ADR-012（決定 3 と決定 6、:61・:90-94・:108-114、改訂の経緯）、ADR-011（:72・:333・:335・:342 の「2 つの定数の組」「33c」。33d に送るものは「33d」に）、ui_design.md（:789・:1363）、domain_model.md（<code>SessionPolicy</code> をドメインルールとして載せる表を決め、用語集に「session の方針」、:195・:198・:1061 の「2 つの定数」「33c」）、data_model.md（:974 の <code>BUSINESS_SCHEMAS</code>）、test_strategy.md（Bolt 33c の行。T-128 の見張り）</li>
 <li>release_plan.md: 33c の行（:597。決定に合わせ、TOTP の項目を外し、範囲を 8 時間・5 分・A-03 の URL に広げたことを書く）、33d の行を足す（SP 0、リファクタリング、承認ゲート「構造」、範囲は上の表の右の列）、局面とアプローチの段落（:557）、US-18 の Bolt の順序の文（:603 に → 33d）、W5 の注（:601 に 33d も SP 0）、状態の行（:553）、実績の表（:771 を 21 本に。33c の開始準備で 33d を足した）、W10 の返済の候補（A-02 の 5 分の期限の表示）、更新履歴</li>
 <li>33b の終了報告の開発レビュー 10 の「始めたときの秘密…33c で扱う」を「#49 に送った（33c の開始準備の決定 6）」に直し、#49 にコメントする</li>
 <li>完了の判定: <code>okf:check</code> ERROR 0、<code>documentationTest</code> 緑</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>2. 属性の名前・URL・期間の置き場所</strong> 【承認ゲート: 構造】</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>2. 属性の名前・URL・期間の置き場所</strong> 【承認ゲート: 構造】</li>
 <li>値の文字列（<code>cargotracker.session.</code>・<code>cargotracker.request.</code>・<code>/account/authenticator</code>・<code>/session-expired</code>）でテストとテンプレートを含む全体を grep し、参照の一覧を作る（T-132）</li>
 <li><code>SessionKeysTest</code>（すべての名前の値を固定する。:108 を移す）を先に書く → <code>SessionKeys</code> と <code>SessionPolicy</code> を足し、規則の例外を足して ArchUnit を流す → 参照を 1 つずつ移す → 一致を守るテスト 4 本を消す → テンプレートの直書きを式にする</li>
 <li>完了の判定: <code>check</code> 緑、<code>uiTest</code> 緑（属性の名前を変えていないので、既存のシナリオがそのまま通る）</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>3. 覚えた要求の一本化</strong> 【承認ゲート: 構造】</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>3. 覚えた要求の一本化</strong> 【承認ゲート: 構造】</li>
 <li><code>RequestCache</code> の Bean と 3 つの部品への注入（Spring Security の既定には渡さない）。覚えた要求に戻るテスト（<code>ReturnAfterExpirySecurityIntegrationTest</code>、33b の「後で登録する」「続ける」、未認証で開いた画面に戻るテスト）が緑のまま</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>4. 小さな直し</strong></li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>4. 小さな直し</strong></li>
 <li>A-01: 「5 回」「15 分」で全体を grep し（T-132）、:27 の文言を確かめるテスト（<code>AuthenticationSecurityIntegrationTest</code> の完了の知らせ）を足してから、数値を <code>LockPolicy</code> から描く（既存の <code>LoginLockSecurityIntegrationTest:65</code> と <code>login_ui.feature:44</code> も緑のまま）</li>
 <li>空の復号の境界のテスト（本物の暗号文）、<code>tracking</code> のコメントのテスト</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>5. T-128 の見張り</strong></li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>5. T-128 の見張り</strong></li>
 <li>共通の補助（<code>com.example.cargotracker.ui.PlaywrightText.literal</code>）と 5 か所の置き換え（エスケープの 2 か所、エスケープしていない連結の 3 か所）、テストのクラスを読む ArchUnit の規則（対象が空でない。違反を控えのファイルに入れて落ちることを確かめ、控えから戻す。T-131）</li>
 <li>完了の判定: <code>check</code>・<code>uiTest</code> 緑</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>6. SonarQube と開発レビューと終了報告</strong> 【承認ゲート: 終了報告】</li>
@@ -10849,9 +10849,9 @@
 </tr>
 <tr>
 <td style="text-align: left;">6</td>
-<td style="text-align: left;"><strong><code>RequestCache</code></strong>（開始準備で決めた）</td>
+<td style="text-align: left;"><strong><code>RequestCache</code></strong>（開始準備で決め、ステップ 3 で決定 7 に改めた）</td>
 <td style="text-align: left;">3</td>
-<td style="text-align: left;">1 つの Bean にし、失効の部品・A-08・回復コードの成功のハンドラーで共有する。Spring Security の既定には渡さない</td>
+<td style="text-align: left;">当初は 1 つの Bean にして共有する案。Bean にすると Spring Security が型で見つけて未認証の入口でも使うので、属性の名前だけを <code>SessionKeys</code> で共有する</td>
 </tr>
 <tr>
 <td style="text-align: left;">7</td>
@@ -10900,7 +10900,7 @@
 <h2 id="_6">完了条件<a class="headerlink" href="#_6" title="Permanent link">&para;</a></h2>
 <ul class="task-list">
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> 層をまたいで共有する session・request の属性の名前と A-08・A-03 の URL が <code>SessionKeys</code> だけにあり（テンプレートも式で参照する。画面だけの名前とテストの写しは除く）、期間が <code>SessionPolicy</code> だけにある。2 つの定数の一致を守るテストがなく、値を固定するテストがすべての名前にある。層の規則の例外は決めた 1 つだけ</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> 覚えた要求の <code>RequestCache</code> が 1 つの Bean で、3 つの部品が共有し、Spring Security の既定の振る舞いは変わらない</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> 覚えた要求の属性の名前を <code>SessionKeys</code> で共有し（開発の途中の決定 7。Bean にはしない）、Spring Security の既定の振る舞いは変わらない</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> A-01 の数値が <code>LockPolicy</code> から描かれ、表示が変わらない</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> T-128 の見張りが違反で落ちることを確かめた。<code>tracking</code> のコメントと空の復号の境界のテストがある</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> 設計文書（architecture_backend・architecture_frontend・ADR-011・ADR-012・ui_design・domain_model・data_model・test_strategy・release_plan）を更新し、33d の行を足した。33b の報告の約束を #49 に送った</li>
@@ -10917,6 +10917,16 @@
 </tr>
 </thead>
 <tbody>
+<tr>
+<td style="text-align: left;">2026-10-15</td>
+<td style="text-align: left;">ステップ 3 の決定 7（2026-10-15、human:kakimomokuri）: 覚えた要求は Bean にせず、属性の名前だけを <code>SessionKeys</code> で共有する。description・範囲・確認ポイント 6 を合わせた</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5、決定 human:kakimomokuri</td>
+</tr>
+<tr>
+<td style="text-align: left;">2026-10-15</td>
+<td style="text-align: left;">ステップ 1〜5 を終えた。計画からの変更と見つけたこと: (1) 覚えた要求の <code>RequestCache</code> を Bean にすると、Spring Security の <code>RequestCacheConfigurer</code> が型で見つけて未認証の入口でも使うと分かり、計画の打ち切りの条件として止めて諮った。決定 7（human:kakimomokuri）: Bean にせず、覚えた要求の属性の名前（<code>SessionKeys.SAVED_REQUEST</code>）だけを共有する。失効の部品と A-08 の画面がその名前を明示した cache を使い、成功の扱いと未認証の入口は Spring Security の既定（同じ名前）のまま。(2) Thymeleaf のリンク式は静的なクラス（<code>T(...)</code>）を参照できないので、画面の層の <code>SessionUrlsAdvice</code> がモデルで URL を渡す。(3) <code>SessionLifetime</code> は名前と期間を移して空になったので消した。(4) 変異の確かめ: 空の復号の境界（<code>&lt;=</code> を <code>&lt;</code>）で 1 件、T-128 の規則（<code>Pattern.quote</code> を入れる）で 1 件が落ちた。どちらも控えのファイルから戻した（T-131）。(5) <code>tracking</code> の表と列はコメントがそろっていて、テストに足しても緑だった。(6) A-01 の数値は表示を変えずに <code>LockPolicy</code> から描いた。<code>/goal Bolt33c</code> を受け、承認ゲートでは止めずに進めている（T-36）</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5</td>
+</tr>
 <tr>
 <td style="text-align: left;">2026-10-15</td>
 <td style="text-align: left;">承認（human:kakimomokuri。検証の指摘の反映の前に受けた承認を、決定 2 の回答とあわせて記録する）。<code>/goal Bolt33c</code> を受け、承認ゲートでは止めずに進める</td>

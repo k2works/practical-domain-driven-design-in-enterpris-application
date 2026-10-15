@@ -11482,6 +11482,12 @@ src/test/java/.../ui/                     画面の層のステップ定義（@u
 <td style="text-align: left;">見張りのテスト（Bolt 32d）</td>
 <td style="text-align: left;">バックエンドアーキテクチャの identity の合成ルートの規則</td>
 </tr>
+<tr>
+<td style="text-align: left;">AT-08</td>
+<td style="text-align: left;">画面の層のテスト（<code>com.example.cargotracker.ui</code>）は <code>java.util.regex.Pattern.quote</code> を呼ばず、Playwright の正規表現に渡す文字列は共通の補助（<code>PlaywrightText.literal</code>）でエスケープする（エスケープの漏れと書き方のばらつきを防ぐ。Bolt 33a の Try T-128。<code>documentation</code> の正しい使い方は対象外）。対象が空でないことを見張り、違反を控えのファイルに入れて落ちることを確かめる（T-107・T-112・T-131）</td>
+<td style="text-align: left;">ArchUnit（テストのクラスを読む。前例 <code>AcceptanceStepArchitectureTest</code>。Bolt 33c）</td>
+<td style="text-align: left;">Bolt 33a の議題 7</td>
+</tr>
 </tbody>
 </table>
 <h2 id="_13">統合テスト<a class="headerlink" href="#_13" title="Permanent link">&para;</a></h2>
@@ -11571,7 +11577,11 @@ src/test/java/.../ui/                     画面の層のステップ定義（@u
 </tr>
 <tr>
 <td style="text-align: left;">認証アプリの再登録</td>
-<td style="text-align: left;">Bolt 33b（US-18 AC9 の回復コードの経路）。回復コードでログインすると A-08 に移り（session の ID が変わることは既存の <code>RecoveryCodeLoginSecurityIntegrationTest</code> のまま）、認証コードでログインすると今のまま。印のない session・password の段・同じ session で別の利用者に切り替えた後に A-08 を開くと、役割のホーム・A-02・役割のホーム（T-102）。CSRF のトークンがない送信は 403。再登録の後に新しいコードでログインでき、古いコードと古い回復コードは通らない。ほかの端末の session は A-03 になり、今の session は残る。後で登録すると業務の画面に知らせが出る。完了の後の再送は置き換えずに役割のホームへ移る。回復コードでログインしてから 15 分を過ぎると A-08 を開けず、知らせはログインし直す案内になる（印の期限。Bolt 33b の開発レビュー）。ログインの前に開いた query の付いた画面に、「後で登録する」でも「続ける」（<code>POST /account/authenticator/continue</code>）でも query を保って戻る。A-08 の URL は全 URL の見張り（<code>AuthenticationSecurityIntegrationTest</code> の <code>checked</code>）が自動で含む（password の段の主体は A-02 へ。除外の一覧 <code>AUTHENTICATION_SCREENS</code> には足さない）。印の 2 つの属性の名前（利用者の ID と時刻）の 2 つの定数が同じ値であることを単体テストで守る（<code>SessionLifetimeFilterTest</code>）。印の状態（ログインから 15 分の間だけ ACTIVE、別の利用者の印と印のない session は NONE、時刻のない印は EXPIRED、消すと印も時刻もなくなる）は単体テスト <code>RecoveryLoginTest</code> で確かめる。監査を書けなければ資格も回復コードも元のままになることは統合テスト <code>TotpReEnrollmentRollbackIntegrationTest</code>、同時の再登録で後が先の確定を待つことは <code>pg_stat_activity</code> の待ちで確かめる</td>
+<td style="text-align: left;">Bolt 33b（US-18 AC9 の回復コードの経路）。回復コードでログインすると A-08 に移り（session の ID が変わることは既存の <code>RecoveryCodeLoginSecurityIntegrationTest</code> のまま）、認証コードでログインすると今のまま。印のない session・password の段・同じ session で別の利用者に切り替えた後に A-08 を開くと、役割のホーム・A-02・役割のホーム（T-102）。CSRF のトークンがない送信は 403。再登録の後に新しいコードでログインでき、古いコードと古い回復コードは通らない。ほかの端末の session は A-03 になり、今の session は残る。後で登録すると業務の画面に知らせが出る。完了の後の再送は置き換えずに役割のホームへ移る。回復コードでログインしてから 15 分を過ぎると A-08 を開けず、知らせはログインし直す案内になる（印の期限。Bolt 33b の開発レビュー）。ログインの前に開いた query の付いた画面に、「後で登録する」でも「続ける」（<code>POST /account/authenticator/continue</code>）でも query を保って戻る。A-08 の URL は全 URL の見張り（<code>AuthenticationSecurityIntegrationTest</code> の <code>checked</code>）が自動で含む（password の段の主体は A-02 へ。除外の一覧 <code>AUTHENTICATION_SCREENS</code> には足さない）。印の 2 つの属性の名前（利用者の ID と時刻）の 2 つの定数が同じ値であることを単体テストで守る（<code>SessionLifetimeFilterTest</code>。Bolt 33c で名前を <code>SessionKeys</code> に寄せ、このテストは消す）。印の状態（ログインから 15 分の間だけ ACTIVE、別の利用者の印と印のない session は NONE、時刻のない印は EXPIRED、消すと印も時刻もなくなる）は単体テスト <code>RecoveryLoginTest</code> で確かめる。監査を書けなければ資格も回復コードも元のままになることは統合テスト <code>TotpReEnrollmentRollbackIntegrationTest</code>、同時の再登録で後が先の確定を待つことは <code>pg_stat_activity</code> の待ちで確かめる</td>
+</tr>
+<tr>
+<td style="text-align: left;">session の属性の名前と期間の置き場所</td>
+<td style="text-align: left;">Bolt 33c（振る舞いの変わらない直し）。値を固定する単体テスト <code>SessionKeysTest</code> で、<code>SessionKeys</code> のすべての session・request の属性の名前と A-08・A-03 の URL が Bolt 33b までの文字列と同じことを守る（動いている session の属性が読めなくならない。<code>SessionLifetimeFilterTest</code> の値の固定のテストを移して広げる）。2 つの定数の一致を守るテスト（<code>SessionLifetimeFilterTest</code> の 4 本）は、同じ定数を参照するので消す。認証の入口から <code>application.internal.session</code> への参照は層の規則の例外として <code>LayerArchitectureTest</code> が許し、<code>queryservices</code> への参照は落ちる（ADR-012 の決定 6）。振る舞いは全 URL の見張りと既存のシナリオで守る（<code>check</code>・<code>uiTest</code> が緑のまま）。覚えた要求の属性の名前を <code>SessionKeys.SAVED_REQUEST</code> で共有しても（<code>RequestCache</code> の Bean は作らない。Bean にすると Spring Security が型で見つけて未認証の入口でも使い、覚える範囲が変わるため）、覚えた要求に戻るテスト（<code>ReturnAfterExpirySecurityIntegrationTest</code>、A-08 の「後で登録する」「続ける」、未認証で開いた画面に戻るテスト）が緑のまま。A-01 の「5 回」「15 分」を <code>LockPolicy</code> から描く前に、:27 の再設定の完了の知らせの文言を確かめるテスト（<code>AuthenticationSecurityIntegrationTest</code>）を足し、既存の <code>LoginLockSecurityIntegrationTest</code> と <code>login_ui.feature</code> も緑のまま（表示は変えない）。空の復号の境界は、テスト用の鍵と AAD で空の平文を JDK の暗号で暗号化した暗号文（IV とタグちょうどの長さ）が <code>UnreadableCredentialException</code>（短すぎる）になることを <code>AesGcmSecretCipherTest</code> で確かめる（乱数のバイト列ではタグの不一致でも同じ例外になり、境界を確かめられない）。<code>SchemaCommentIntegrationTest.BUSINESS_SCHEMAS</code> に <code>tracking</code> を足す</td>
 </tr>
 </tbody>
 </table>

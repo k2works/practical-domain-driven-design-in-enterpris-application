@@ -10753,10 +10753,16 @@
 </ul>
 <p>Bolt 33b の開始準備と計画の承認（2026-10-15、human:kakimomokuri）で決めたこと:</p>
 <ul>
-<li>US-18 の残りを 33b（AC9 の回復コードによる再登録と、それが触る部品（<code>TotpEnrollmentService</code> の引数の型、<code>instanceof</code> の <code>switch</code> 化）とマニュアル）と 33c（振る舞いの変わらない直し）に分け、#13 は 33b でクローズする</li>
+<li>US-18 の残りを 33b（AC9 の回復コードによる再登録と、それが触る部品（<code>TotpEnrollmentService</code> の引数の型、<code>instanceof</code> の <code>switch</code> 化）とマニュアル）と 33c（振る舞いの変わらない直し。Bolt 33c の開始準備で 33c と 33d に分けた）に分け、#13 は 33b でクローズする</li>
 <li>回復コードでログインしたら印を置いて再登録の画面（A-08）へ導き、「後で登録する」で業務の画面へ進める。印がある間は業務の画面に知らせを出す。入口はこの流れだけにする（決定 10）</li>
 <li>新しいコードを確かめた時点で古い秘密を置き換え、回復コードを 10 個発行し直して 1 回だけ示し、監査 <code>TOTP_RE_ENROLLED</code> を書く。コミットの後に、その利用者のほかの session を失効させる（今の session は残す）。本人へのメールの通知は #47（決定 10）</li>
 <li>刻みの使用の条件に、照合で読んだ秘密の暗号文との一致を足す。置き換えでは最後に使った刻みを大きい方にする。残りの回復コードが少ないときの案内は #47 に送る（決定 10）</li>
+</ul>
+<p>Bolt 33c の開始準備と計画の承認（2026-10-15、human:kakimomokuri）で決めたこと:</p>
+<ul>
+<li>振る舞いの変わらない直しを 33c と 33d に分ける。33c は置き場所の決定を伴う直し（session・request の属性の名前、期間、A-08・A-03 の URL、覚えた要求の属性の名前）と小さな直し。33d は TOTP の部品の整理（TOTP の桁数・周期・アルゴリズムの定数、QR の SVG の組み立ての分離、回復コードの形の知識の 2 か所と <code>normalize</code> の戻り値の型、A-07 と A-08 の途中の暗号文の扱いと回復コードの発行の重複、認証の結果のトークンに経路（要素の種類）、<code>revokeOthers</code> の session の ID の値オブジェクト）</li>
+<li>印の属性の名前と A-08 の URL は application 層の <code>SessionKeys</code>（<code>identity.application.internal.session</code>）に、印の 15 分・登録の途中の 15 分・再登録の 15 分はドメインルール <code>SessionPolicy</code>（<code>identity.domain.model.rules</code>）に寄せる（<a href="../012-authentication-principal-and-session/">ADR-012</a> の決定 3・決定 6）</li>
+<li>「始めたときの秘密を置き換えの条件にする」（Bolt 33b の開発レビューで 33c で扱うとした）は振る舞いが変わる直しなので、<a href="https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/49">#49</a>（W10）に送る</li>
 </ul>
 <h2 id="_2">コンテキスト<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h2>
 <ul>
@@ -11239,7 +11245,7 @@
 <tbody>
 <tr>
 <td style="text-align: left;">入口と印</td>
-<td style="text-align: left;">認証の入口（<code>TotpAuthenticationFilter</code>）が <code>recoveryCode</code> の欄で回復コードの経路を選んだことを成功の扱い（<code>FirstTotpSuccessHandler</code>）に伝え、成功の扱いが session に印（2 つの属性。利用者の ID の <code>SessionLifetime.RECOVERY_LOGIN_USER</code> と、ログインした時刻の <code>SessionLifetime.RECOVERY_LOGIN_AT</code>）を置いて <code>/account/authenticator</code> に移す（覚えた要求は消さずに残す）。認証コードの経路は今のまま。session の ID は回復コードの経路でも認証の入口の <code>ChangeSessionIdAuthenticationStrategy</code> が変えているので足さない（<code>RecoveryCodeLoginSecurityIntegrationTest</code> が確かめている）。印は再登録の完了、ログアウト（session と一緒に消える）、password の段の成功（<code>LoginSuccessHandler</code>。同じ session で別の利用者に切り替えたときに前の利用者の印を残さない。2 つの属性をどちらも消す）で消す。画面（<code>RecoveryLogin.stateOf</code>）は印の状態を 3 つに分ける。NONE（印がない、または印の利用者の ID が今の主体と違う）、ACTIVE（印の利用者が今の主体で、ログインから 15 分未満）、EXPIRED（15 分を過ぎた）。A-08 を開けるのは ACTIVE だけ</td>
+<td style="text-align: left;">認証の入口（<code>TotpAuthenticationFilter</code>）が <code>recoveryCode</code> の欄で回復コードの経路を選んだことを成功の扱い（<code>FirstTotpSuccessHandler</code>）に伝え、成功の扱いが session に印（2 つの属性。利用者の ID と、ログインした時刻。名前は Bolt 33c から <code>SessionKeys</code>）を置いて <code>/account/authenticator</code> に移す（覚えた要求は消さずに残す）。認証コードの経路は今のまま。session の ID は回復コードの経路でも認証の入口の <code>ChangeSessionIdAuthenticationStrategy</code> が変えているので足さない（<code>RecoveryCodeLoginSecurityIntegrationTest</code> が確かめている）。印は再登録の完了、ログアウト（session と一緒に消える）、password の段の成功（<code>LoginSuccessHandler</code>。同じ session で別の利用者に切り替えたときに前の利用者の印を残さない。2 つの属性をどちらも消す）で消す。画面（<code>RecoveryLogin.stateOf</code>）は印の状態を 3 つに分ける。NONE（印がない、または印の利用者の ID が今の主体と違う）、ACTIVE（印の利用者が今の主体で、ログインから 15 分未満）、EXPIRED（15 分を過ぎた）。A-08 を開けるのは ACTIVE だけ</td>
 </tr>
 <tr>
 <td style="text-align: left;">印の期限</td>
@@ -11247,7 +11253,7 @@
 </tr>
 <tr>
 <td style="text-align: left;">印の属性の名前</td>
-<td style="text-align: left;">認証の入口（<code>SessionLifetime</code>。<code>identity.infrastructure.security</code>）と画面の層（<code>identity.interfaces.web</code>）に同じ値の定数を置き、一致をテストで守る（前例 <code>SessionLifetime.ENROLLMENT_PENDING_SECRET</code> と <code>TotpEnrollmentController.PENDING_SECRET</code>）。画面の層は infrastructure に依存できないため。属性の名前と期間を 2 つの定数で持つ組はこれで 5 組になり（印の時刻 <code>RECOVERY_LOGIN_AT</code> と <code>RecoveryLogin.AT</code> は利用者の ID の組と同じ組に数える）、置き場所は Bolt 33c でまとめて直す。A-08 の URL（<code>SessionLifetime.RE_ENROLL_URL</code>・<code>TotpReEnrollmentController.URL</code>・テンプレートの直書き）は 6 組目で、これも 33c で直す</td>
+<td style="text-align: left;">Bolt 33b では、認証の入口（<code>identity.infrastructure.security</code> の定数のクラス。Bolt 33c で名前と期間を <code>SessionKeys</code>・<code>SessionPolicy</code> に移して消した）と画面の層（<code>identity.interfaces.web</code>）に同じ値の定数を置き、一致をテストで守っていた（前例は登録の途中の秘密の属性。画面の層は infrastructure に依存できないため）。属性の名前と期間を 2 つの定数で持つ組は 5 組と A-08 の URL（テンプレートの直書きを含む）の 6 組目になり、Bolt 33c で、名前と URL を application 層の <code>SessionKeys</code>（<code>identity.application.internal.session</code>）に、印の 15 分・登録の途中の 15 分・再登録の 15 分をドメインルール <code>SessionPolicy</code>（<code>identity.domain.model.rules</code>）に寄せた。値の文字列は変えない（<a href="../012-authentication-principal-and-session/">ADR-012</a> の決定 3・決定 6）</td>
 </tr>
 <tr>
 <td style="text-align: left;">A-08 の画面と認可</td>
@@ -11275,7 +11281,7 @@
 </tr>
 <tr>
 <td style="text-align: left;">メールアドレスと主体の型</td>
-<td style="text-align: left;">再登録のサービスは利用者の ID で <code>User</code> を読んでメールアドレスを得る（利用停止・所属企業の無効は利用できない）。主体の型（<code>AuthenticatedActor</code>。ADR-012）は変えない。初回の登録のサービスも段に中立な値 <code>EnrollingUser</code> で受ける。A-07 と A-08 で共用するのは、秘密の発行のポート <code>TotpSecretIssuer</code>（QR を含む表示の値を返す）と値 <code>EnrollingUser</code> で、A-08 は <code>TotpEnrollmentService</code> を呼ばない。途中の暗号文を使い続ける処理と、回復コード 10 個の発行の重複は Bolt 33c で寄せる</td>
+<td style="text-align: left;">再登録のサービスは利用者の ID で <code>User</code> を読んでメールアドレスを得る（利用停止・所属企業の無効は利用できない）。主体の型（<code>AuthenticatedActor</code>。ADR-012）は変えない。初回の登録のサービスも段に中立な値 <code>EnrollingUser</code> で受ける。A-07 と A-08 で共用するのは、秘密の発行のポート <code>TotpSecretIssuer</code>（QR を含む表示の値を返す）と値 <code>EnrollingUser</code> で、A-08 は <code>TotpEnrollmentService</code> を呼ばない。途中の暗号文を使い続ける処理と、回復コード 10 個の発行の重複は Bolt 33d で寄せる（Bolt 33c の開始準備で 33c から 33d に移した）</td>
 </tr>
 <tr>
 <td style="text-align: left;">新しい回復コード</td>
@@ -11427,6 +11433,7 @@
 <p>復号した平文の消去について（Bolt 31 の開発レビュー）: 生成器は復号した配列を使い終えたら消すが、JDK の <code>SecretKeySpec</code> と java-otp の <code>Mac</code> は内部に鍵の写しを持つので、JVM の中の写しまでは消せない。消せるのは呼び出し側の配列だけである。</p>
 <h2 id="_10">改訂の経緯<a class="headerlink" href="#_10" title="Permanent link">&para;</a></h2>
 <ul>
+<li>2026-10-15: Bolt 33c のステップ 1 で、ステータスに 33c の開始準備の決定（33c と 33d の分け方、属性の名前と URL は <code>SessionKeys</code>・期間は <code>SessionPolicy</code>、始めたときの秘密の条件は #49）を書いた。決定 10 の印の属性の名前を、2 つの定数の組から <code>SessionKeys</code>・<code>SessionPolicy</code> に寄せたことに直し、A-07 と A-08 の重複の行き先を 33d に改めた（Bolt 33c の開始準備の決定 1・2 と決定 2 の (6)。human:kakimomokuri が決定）。</li>
 <li>2026-10-15: Bolt 33b の開発レビューで、決定 10 に印の期限（ログインから 15 分。状態 NONE・ACTIVE・EXPIRED。期限を過ぎたら A-08 は役割のホーム、知らせはリンクのない案内）、印の 2 つの属性、「続ける」を POST（<code>/account/authenticator/continue</code>）にしたこと、A-08 の URL を 33c で直す 6 組目に数えることを足した。共用の文を事実（ポート <code>TotpSecretIssuer</code> と値 <code>EnrollingUser</code>。A-08 は <code>TotpEnrollmentService</code> を呼ばない）に直し、受け入れること（再認証なし）の前提に印の期限を書いた（印の期限は human:kakimomokuri が決定）。</li>
 <li>2026-10-15: Bolt 33b のステップ 1 で、回復コードによる TOTP の再登録（決定 10。印と A-08、置き換えの時点、置き換えと発行し直しのトランザクション、刻みの使用の秘密の一致の条件と大きい方の刻み、コミットの後のほかの session の失効、メールアドレスはサービスが読む、#47 に送るもの、受け入れること）を足し、ステータスに 33b の開始準備の決定を書いた。決定 6 の発行し直しの競合と決定 7 の末尾の宿題を決定 10 に結び、残りが少ないときの案内は #47 に送ると書いた。代替案に 3 つ、ネガティブに 1 つ足し、「未確認の項目」の TOTP の再登録を解いた側へ移した（Bolt 33b の開始準備の決定 1・2。human:kakimomokuri が決定）。</li>
 <li>2026-10-15: Bolt 33a のステップ 1 で、「未確認の項目」に Bolt 33a で解いたもの（A-06 の設定、password の要素を与えないこと、ロックを再設定で解かないこと、完了の後の session の失効）を書いた（Bolt 33a の開始準備の決定 1・2。human:kakimomokuri が決定）。</li>
