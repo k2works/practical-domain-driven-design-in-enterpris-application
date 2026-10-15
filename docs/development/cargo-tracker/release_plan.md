@@ -4,7 +4,7 @@ title: "リリース計画 - cargo-tracker（A 社国際貨物輸送管理シス
 description: "cargo-tracker MVP のリリース計画。1 人 + AI、時間単位の Bolt（= イテレーション）と週次の見直しで、最初の縦の流れ（R0.1）、パイロット準備完了（R1.0）、本格展開前（R1.1）の 3 段階、Unit のエントロピー評価、SP、バッファ、パイロット開始の条件、引継ぎ ID の台帳、業務責任者に確かめる事項の台帳。"
 tags: [development,release-plan]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-15T06:43:02Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-15T07:19:26Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T09:29:53Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:38:26Z }
@@ -945,3 +945,4 @@ xychart-beta
 | 2026-10-15 | Bolt 33a のステップ 1: W5 の状態を「Bolt 33 は終え、Bolt 33a は計画を承認し、進めている」にし、Bolt の分け方の表の 33a の行に計画へのリンクを足して承認ゲートからスキーマを外した（スキーマは変えない）。W5 の Bolt の本数を 19 本（33a を足す）に、デモ項目の password の再設定を 33a で撮る `@demo-bolt-33a/reset` に、ユーザーマニュアルの段落の 33a の分を 2.4・2.6・付録 B とキャプチャに直し、「33a と同じ日」の文を消した | anthropic/claude-opus-5-5 |
 | 2026-10-15 | Bolt 33a を終え、終了報告を作った（承認待ち）。開発レビューで、リンクを開いたときに session の ID を変える、今の session を捨てるのは完了の後、を決めた。W10 に送るものを #49 にコメントした | anthropic/claude-opus-5-5 |
 | 2026-10-15 | Bolt 33a の終了報告の承認を記録した。デモの動画を #13 に添付した。次は Bolt 33b | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
+| 2026-10-15 | Bolt 33b の開始準備: 33b（回復コードによる TOTP の再登録 A-08 と #13 のクローズ）と 33c（振る舞いの変わらない直し）に分けると決めた。回復コードでログインしたら A-08 へ導き後にもできる、確かめた時点で置き換えて回復コードを発行し直す、ほかの session を失効させ通知は #47、`useStep` に秘密の一致、SP は 6 を数える。[Bolt 33b 計画](bolt_33b_plan.md)（承認待ち）。33b・33c の行の書き換えはステップ 1 で行う | anthropic/claude-opus-5-5 |
