@@ -4,7 +4,7 @@ title: "cargo-tracker ドメインモデル"
 description: "cargo-tracker の業務領域の分類、ユビキタス言語、7 つの境界づけられたコンテキスト（通知を含む）の集約・エンティティ・値オブジェクト・ドメインルール、コマンド・クエリ・イベント、予約サガ。"
 tags: [design, domain-model, ddd]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-15T11:44:17Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-15T12:00:35Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T07:41:04Z }
   - { by: human:kakimomokuri, at: 2026-10-01T07:48:17Z }
@@ -1117,7 +1117,7 @@ title TOTP の資格（Bolt 33b で置き換えを作る）
 @enduml
 ```
 
-session の期間（Bolt 33c。2026-10-15 の開始準備の決定 2、human:kakimomokuri が決定。ADR-012 の決定 3）は、ドメインルール session の方針 `SessionPolicy`（`identity.domain.model.rules`、`@DomainRule`。ロックの方針 `LockPolicy` と並べる）にまとめる。2 つの要素がそろった session の 8 時間、password の段の 5 分、登録の途中の 15 分、回復コードでログインした印の 15 分、再登録の 15 分を `Duration` の定数で持つ。Bolt 33b までは同じ値を認証の入口（`SessionLifetime`）・A-07 の画面・印の判定（`RecoveryLogin`）・再登録のサービスが別々に持っていた。方針は期間だけを持ち、ふるまいは持たない（期限の判定は今の置き場所のまま。`LockPolicy` は判定のふるまいを持つが、ここでは期間だけを寄せる）。`Duration` は `java..` なのでドメインの規則に当たらない。session と request の属性の名前は HTTP の関心で業務の知識ではないので、ドメインに置かず application 層の `SessionKeys` に置く（[バックエンドのアーキテクチャ](architecture_backend.md)）。
+session の期間（Bolt 33c。2026-10-15 の開始準備の決定 2、human:kakimomokuri が決定。ADR-012 の決定 3）は、ドメインルール session の方針 `SessionPolicy`（`identity.domain.model.rules`、`@DomainRule`。ロックの方針 `LockPolicy` と並べる）にまとめる。2 つの要素がそろった session の 8 時間、password の段の 5 分、登録の途中の 15 分、回復コードでログインした印の 15 分、再登録の 15 分を `Duration` の定数で持つ。Bolt 33b までは同じ値を認証の入口（`identity.infrastructure.security` の定数のクラス。Bolt 33c で名前と期間を `SessionKeys`・`SessionPolicy` に移して消した）・A-07 の画面・印の判定（`RecoveryLogin`）・再登録のサービスが別々に持っていた。方針は期間だけを持ち、ふるまいは持たない（期限の判定は今の置き場所のまま。`LockPolicy` は判定のふるまいを持つが、ここでは期間だけを寄せる）。`Duration` は `java..` なのでドメインの規則に当たらない。session と request の属性の名前は HTTP の関心で業務の知識ではないので、ドメインに置かず application 層の `SessionKeys` に置く（[バックエンドのアーキテクチャ](architecture_backend.md)）。
 
 ```plantuml
 @startuml
