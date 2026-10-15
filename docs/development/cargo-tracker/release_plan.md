@@ -4,7 +4,7 @@ title: "リリース計画 - cargo-tracker（A 社国際貨物輸送管理シス
 description: "cargo-tracker MVP のリリース計画。1 人 + AI、時間単位の Bolt（= イテレーション）と週次の見直しで、最初の縦の流れ（R0.1）、パイロット準備完了（R1.0）、本格展開前（R1.1）の 3 段階、Unit のエントロピー評価、SP、バッファ、パイロット開始の条件、引継ぎ ID の台帳、業務責任者に確かめる事項の台帳。"
 tags: [development,release-plan]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-15T03:21:37Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-15T03:46:43Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T09:29:53Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:38:26Z }
@@ -940,3 +940,4 @@ xychart-beta
 | 2026-10-15 | Bolt 33 のステップ 1: W5 の状態を「Bolt 33 は計画を承認し、進めている」にし、Bolt の分け方の表の 33 の行に計画と ADR-017 へのリンクを足した。デモ項目の password の再設定は依頼から設定までを通して録れる 33a で撮ること、ユーザーマニュアルの段落に 33（2 章の依頼までと A-05 のキャプチャ、A-01 の撮り直し、付録 B）と 33a（A-06）の分を足した | anthropic/claude-opus-5-5 |
 | 2026-10-15 | Bolt 33 を終え、終了報告の承認を記録した（開発レビューで、ポートの置き場所の規則、SMTP のタイムアウトと at-least-once、仮の A-06、W10 に送る残り（#49）を決めた）。次は Bolt 33a | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-10-15 | Bolt 33a の開始準備: トークンは GET で確かめて session に ID だけを移し PRG、SEC-05 はよく使われる password の一覧を同梱（漏えいの照合は W10）、再設定で利用者の session をすべて失効、ロックはそのまま、と決めた。計画を作った | anthropic/claude-opus-5-5、決定 human:kakimomokuri |
+| 2026-10-15 | Bolt 33a の開始準備の詳細整合性検証（21 件）と横断整合性検証（22 件）を計画に反映した。password の方針に 72 バイト以下を足す、session の失効はコミットの後で今の session は作り直す、一覧の実装は crypto・失効の実装は security、一覧は上位 100 万語から抜き出す、と決めた | anthropic/claude-opus-5-5、決定 human:kakimomokuri |
