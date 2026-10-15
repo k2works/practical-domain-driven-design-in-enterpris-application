@@ -3,7 +3,9 @@ type: Plan
 title: "Bolt 33a 計画 - password の再設定（A-06。US-18 AC8 の後半）"
 description: "W5 の 16 本目の Bolt の計画。メールのリンクを開くとトークンを確かめて session にトークンの ID だけを移し、トークンのない URL の A-06 で新しい password を設定する（SEC-04 の 12〜64 文字と 72 バイト以下、SEC-05 のよく使われる password の一覧、トークンを 1 回だけ使う、期限切れ・使用済み・無効は同じ案内）。設定したら、今の session を作り直し、コミットの後にその利用者の session をすべて失効させる。ロックはそのまま、A-01 に戻して新しい password と TOTP でログインし直す。監査に記録する。仮の A-06 を置き換え、マニュアルの 2.6 とデモの動画（依頼から設定まで）を作る。"
 tags: [plan]
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-15T03:46:43Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-15T03:47:45Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-10-15T03:47:46Z }
 ---
 
 # Bolt 33a 計画 - password の再設定（A-06。US-18 AC8 の後半）
@@ -254,6 +256,7 @@ a03 --> a01 : ほかの端末の次の操作（コミットの後に失効）
 
 | 日付 | 更新内容 | 更新者 |
 | :--- | :--- | :--- |
+| 2026-10-15 | 承認（確認ポイント 1〜14 は推奨のまま）。承認ゲートでは止めずに進め、止めなかったゲートごとに根拠を書いて終了報告の承認の議題に置く（T-36）。実装の途中で層・モジュールの規則に当たったときと、5 時間を超えると見えたときは止めて諮る | human:kakimomokuri |
 | 2026-10-15 | 詳細整合性検証（21 件）と横断整合性検証（22 件）の指摘を反映し、human:kakimomokuri の決定（72 バイト以下を方針に足す、session の失効はコミットの後で今の session は作り直す、一覧は crypto・失効は security・方針は純粋、一覧は上位 100 万語から）を受けた。password のハッシュのポート、サービス経由のリンクを開く処理、方針の確認をトークンの消費の前に、`findById`・`markUsed` と契約テスト、主体の名前はメールアドレス（既知）、A-03 への移り方、ログイン中のブラウザの場面、利用停止の完了の扱い、版を条件にしない更新、出典のファイル名の訂正、アプローチが表から外れる理由、ステップ 1 の反映先（architecture_backend・ADR-011・ADR-012 の決定 2・ui_design の :180・:1193・data_model の :1125・SEC-02）、全 URL の見張り、期限切れのテストの補助、#49 に漏えいの照合、デモの Config Vars の確認を足した。時間を約 4.75 時間に見直した | anthropic/claude-opus-5-5 |
 | 2026-10-15 | 初版作成（承認待ち）。開始準備で、トークンの表と仮の A-06、`User` と `UserRepository`、Spring Session の主体の名前の索引、ロック、監査を調べ、human:kakimomokuri の決定（トークンは session に移して PRG、よく使われる一覧を同梱、session をすべて失効、ロックはそのまま）を反映した | anthropic/claude-opus-5-5 |
 
