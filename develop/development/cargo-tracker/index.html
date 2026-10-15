@@ -5289,13 +5289,6 @@
   </span>
   
   
-    
-  
-  
-    <span class="md-status md-status--draft"></span>
-  
-
-  
 
       </a>
     </li>
@@ -10700,7 +10693,7 @@
 <td style="text-align: left;"><a href="bolt_32f_plan/">失効の時の入力の保持（ACC-06）</a></td>
 <td style="text-align: left;"><a href="bolt_32f_report/">終了報告</a>（<a href="../../assets/demo/bolt-32f/restore.webm" target="_blank">動画</a>）</td>
 <td style="text-align: left;">W5</td>
-<td style="text-align: left;">完了（終了報告の承認と支援技術の手動確認待ち）</td>
+<td style="text-align: left;">完了</td>
 </tr>
 </tbody>
 </table>
@@ -11013,7 +11006,7 @@
 <li><a href="bolt_32e_plan/">Bolt 32e 計画 - 失効の後に開いていた画面へ戻す（ACC-06）</a> - W5 の 13 本目の Bolt の計画。無操作 30 分と 8 時間の上限で失効した後、もう一度ログインすると開いていた画面へ戻す。失効を見つけたときに開いていた画面の要求を新しい session に覚え、警告の期限の到来の案内のリンクは開いていた画面を開き直す。入力の保持は Bolt 32f。</li>
 <li><a href="bolt_32e_report/">Bolt 32e 終了報告 - 失効の後に開いていた画面へ戻す（ACC-06）</a> - 無操作 30 分と 8 時間の上限で失効した後、もう一度ログインすると GET で開いていた業務の画面に戻るようにした。失効の扱いを invalidSessionStrategy に替え、認証コードの誤りと password の段の失効では覚えた要求を持ち越す。警告の案内のリンクは戻り先を開き直す。</li>
 <li><a href="bolt_32f_plan/">Bolt 32f 計画 - 失効の時の入力の保持（ACC-06）</a> - W5 の 14 本目の Bolt の計画。失効の時に送信していない入力をブラウザのそのタブに「入力の控え」として写し、同じ利用者が同じ画面に戻ったら自動で戻して知らせる。送信が公開の画面で拒まれたら、ログインし直した後の画面に案内を出す。案内のリンクの語を「画面を開き直す」にし、ADR-005 の例外として記録する。</li>
-<li><a href="bolt_32f_report/">Bolt 32f 終了報告 - 失効の時の入力の保持（ACC-06）</a> - 失効の時に送信していない入力をブラウザのそのタブ（sessionStorage）に控え、同じ利用者が同じ画面に戻ったら戻すようにした。送信が拒まれたらログインし直した後の画面に案内を出す。開発レビューで拒まれた印を画面ごとの明示に変え、文言を直した。支援技術の手動確認は人の確認待ち。</li>
+<li><a href="bolt_32f_report/">Bolt 32f 終了報告 - 失効の時の入力の保持（ACC-06）</a> - 失効の時に送信していない入力をブラウザのそのタブ（sessionStorage）に控え、同じ利用者が同じ画面に戻ったら戻すようにした。送信が拒まれたらログインし直した後の画面に案内を出す。開発レビューで拒まれた印を画面ごとの明示に変え、文言を直した。支援技術の手動確認は人が済ませた。</li>
 </ul>
 
 
