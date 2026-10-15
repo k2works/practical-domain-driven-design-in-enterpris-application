@@ -18,6 +18,8 @@ import com.example.cargotracker.identity.LogCapture;
 import com.example.cargotracker.identity.SpringSessionRows;
 import com.example.cargotracker.identity.domain.model.aggregates.Company;
 import com.example.cargotracker.identity.domain.model.aggregates.CompanyRepository;
+import com.example.cargotracker.identity.domain.model.aggregates.PasswordResetToken;
+import com.example.cargotracker.identity.domain.model.aggregates.PasswordResetTokenRepository;
 import com.example.cargotracker.identity.domain.model.aggregates.TotpCodeGenerator;
 import com.example.cargotracker.identity.domain.model.aggregates.TotpCredential;
 import com.example.cargotracker.identity.domain.model.aggregates.TotpCredentialRepository;
@@ -28,6 +30,7 @@ import com.example.cargotracker.identity.domain.model.valueobjects.EmailAddress;
 import com.example.cargotracker.identity.domain.model.valueobjects.UserStatus;
 import com.example.cargotracker.identity.infrastructure.crypto.AesGcmSecretCipher;
 import com.example.cargotracker.identity.infrastructure.crypto.Base32;
+import com.example.cargotracker.identity.infrastructure.crypto.Sha256PasswordResetTokenHasher;
 import com.example.cargotracker.shared.acceptance.MutableClock;
 import com.example.cargotracker.shared.domain.CompanyId;
 import com.example.cargotracker.shared.domain.Role;
@@ -78,7 +81,13 @@ class AuthenticationSecurityIntegrationTest {
 
     /** 全 URL の見張りから除く、password の段だけで開ける認証の画面と、未認証で開ける公開の画面（Bolt 31d。A-05 は Bolt 33）。 */
     private static final Set<String> AUTHENTICATION_SCREENS = Set.of(
-            "/login", "/login/totp", "/login/totp/enroll", "/session-expired", "/password-reset", "/password-reset/*");
+            "/login",
+            "/login/totp",
+            "/login/totp/enroll",
+            "/session-expired",
+            "/password-reset",
+            "/password-reset/new",
+            "/password-reset/{token}");
 
     @Autowired
     @Qualifier("requestMappingHandlerMapping")
@@ -1222,23 +1231,6 @@ class AuthenticationSecurityIntegrationTest {
     }
 
     @Test
-    void 仮の再設定の画面はトークンを覚えずに準備中だけを示しRefererを出さない() throws Exception {
-        String token = "aB3_-" + UUID.randomUUID();
-
-        MvcResult result = mvc.perform(get(RESET_URL + "/" + token))
-                .andExpect(status().isOk())
-                .andExpect(header().string("Referrer-Policy", "no-referrer"))
-                .andExpect(content().string(org.hamcrest.Matchers.containsString("この画面は準備中です。")))
-                .andReturn();
-
-        // 公開の URL なので、未認証で開いてもリンクの URL（トークン）を session に覚えない（SEC-08。Bolt 33 の開発レビュー）
-        assertThat(result.getResponse().getCookie(SESSION_COOKIE)).isNull();
-        assertThat(result.getResponse().getContentAsString()).doesNotContain(token);
-        // その下の URL は公開しない
-        mvc.perform(get(RESET_URL + "/" + token + "/x")).andExpect(redirectedUrl("/login"));
-    }
-
-    @Test
     void 再設定の依頼はCSRFのトークンが合わなければ処理しない() throws Exception {
         // 既存の扱いのとおり、トークンのない送信は A-03（session のない古いフォームの送信。Bolt 32e）、誤ったトークンは 403 にする。
         // どちらも依頼を処理しないことを監査で確かめる
@@ -1304,6 +1296,218 @@ class AuthenticationSecurityIntegrationTest {
 
         mvc.perform(get("/customer/transport-requests").cookie(loggedIn)).andExpect(status().isOk());
         mvc.perform(get(TOTP_URL).cookie(passwordStage)).andExpect(status().isOk());
+    }
+
+    // --- password の再設定（A-06。US-18 AC8 の後半、SEC-04・SEC-05・SEC-08。Bolt 33a） ---
+
+    private static final String NEW_URL = "/password-reset/new";
+    private static final String COMPLETED_URL = "/login?reset-completed";
+    private static final String NEW_PASSWORD = "a brand new long passphrase";
+    private static final String INVALID_TITLE = "この再設定のリンクは使えません";
+
+    @Autowired
+    PasswordResetTokenRepository resetTokens;
+
+    /** 再設定のトークンを発行して保存し、リンクに入る値（平文）を返す。 */
+    private String issueResetToken(String email) {
+        String token = "tok" + UUID.randomUUID().toString().replace("-", "");
+        resetTokens.add(PasswordResetToken.issue(
+                UUID.randomUUID(),
+                userIdOf(email),
+                new Sha256PasswordResetTokenHasher().hash(token),
+                new UtcInstant(clock.instant())));
+        return token;
+    }
+
+    /** リンクを開いて A-06 へ移った session（の Cookie）。 */
+    private Cookie openResetLink(String token, Cookie session) throws Exception {
+        MockHttpServletRequestBuilder request = get(RESET_URL + "/" + token);
+        if (session != null) {
+            request = request.cookie(session);
+        }
+        MvcResult result = mvc.perform(request)
+                .andExpect(redirectedUrl(NEW_URL))
+                .andExpect(header().string("Referrer-Policy", "no-referrer"))
+                .andReturn();
+        Cookie created = result.getResponse().getCookie(SESSION_COOKIE);
+        return created != null ? created : session;
+    }
+
+    private MockHttpServletRequestBuilder setPassword(Cookie session, String password, String confirm) {
+        return post(NEW_URL)
+                .cookie(session)
+                .param("newPassword", password)
+                .param("confirmPassword", confirm)
+                .with(csrf());
+    }
+
+    private static String sessionIdOf(Cookie cookie) {
+        return new String(java.util.Base64.getDecoder().decode(cookie.getValue()), StandardCharsets.UTF_8);
+    }
+
+    @Test
+    void リンクを開くとトークンのないA06へ移りURLとsessionにトークンが残らない() throws Exception {
+        String token = issueResetToken(shipper(UserStatus.ACTIVE));
+
+        Cookie session = openResetLink(token, null);
+
+        assertThat(session).as("トークンの ID を置く session を作った").isNotNull();
+        Integer attributes = jdbc.queryForObject(
+                "SELECT count(*) FROM platform.spring_session_attributes a JOIN platform.spring_session s"
+                        + " ON s.primary_id = a.session_primary_id WHERE s.session_id = ?",
+                Integer.class,
+                sessionIdOf(session));
+        assertThat(attributes).as("session に属性がある（空振りしない）").isPositive();
+        assertThat(jdbc.queryForObject(
+                        "SELECT count(*) FROM platform.spring_session_attributes"
+                                + " WHERE encode(attribute_bytes, 'escape') LIKE ?",
+                        Integer.class,
+                        "%" + token + "%"))
+                .as("session の表にトークンの平文がない")
+                .isZero();
+        mvc.perform(get(NEW_URL).cookie(session))
+                .andExpect(status().isOk())
+                .andExpect(header().string("Referrer-Policy", "no-referrer"))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("password を設定する")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("autocomplete=\"new-password\"")))
+                .andExpect(content().string(org.hamcrest.Matchers.not(org.hamcrest.Matchers.containsString(token))));
+    }
+
+    @Test
+    void 使えないリンクとsessionにトークンのないA06はどれも同じ案内になる() throws Exception {
+        String email = shipper(UserStatus.ACTIVE);
+        String token = issueResetToken(email);
+        Cookie session = openResetLink(token, null);
+        mvc.perform(setPassword(session, NEW_PASSWORD, NEW_PASSWORD)).andExpect(redirectedUrl(COMPLETED_URL));
+
+        mvc.perform(get(RESET_URL + "/" + token))
+                .andExpect(status().isOk())
+                .andExpect(header().string("Referrer-Policy", "no-referrer"))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString(INVALID_TITLE)));
+        mvc.perform(get(RESET_URL + "/unknown-token"))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString(INVALID_TITLE)));
+        mvc.perform(get(NEW_URL)).andExpect(content().string(org.hamcrest.Matchers.containsString(INVALID_TITLE)));
+    }
+
+    @Test
+    void 設定すると完了の知らせに移りほかの端末はA03で古いpasswordは使えず新しいpasswordとTOTPでログインできる() throws Exception {
+        String email = shipper(UserStatus.ACTIVE);
+        Cookie otherDevice = login(email);
+        mvc.perform(get("/customer/transport-requests").cookie(otherDevice)).andExpect(status().isOk());
+        Cookie session = openResetLink(issueResetToken(email), null);
+
+        mvc.perform(setPassword(session, NEW_PASSWORD, NEW_PASSWORD)).andExpect(redirectedUrl(COMPLETED_URL));
+
+        mvc.perform(get(COMPLETED_URL))
+                .andExpect(status().isOk())
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("password を変更しました。")));
+        mvc.perform(get("/customer/transport-requests").cookie(otherDevice))
+                .andExpect(redirectedUrl("/session-expired"));
+        assertLoginRejected(email, PASSWORD);
+        Cookie passwordStage = loginWithPassword(email, NEW_PASSWORD);
+        resetTotpStep(email);
+        Cookie loggedIn = submitTotp(passwordStage, currentCode(email));
+        mvc.perform(get("/customer/transport-requests").cookie(loggedIn)).andExpect(status().isOk());
+    }
+
+    @Test
+    void 確認の不一致と方針の誤りは欄の下に示しトークンを使わない() throws Exception {
+        String email = shipper(UserStatus.ACTIVE);
+        Cookie session = openResetLink(issueResetToken(email), null);
+
+        mvc.perform(setPassword(session, NEW_PASSWORD, NEW_PASSWORD + "x"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("確認の欄に、新しい password と同じものを入力してください。")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("<title>エラー: password の再設定")));
+        mvc.perform(setPassword(session, "password1234", "password1234"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("この password はよく使われているため、使えません。")))
+                .andExpect(content()
+                        .string(org.hamcrest.Matchers.not(
+                                org.hamcrest.Matchers.containsString("value=\"password1234\""))));
+        mvc.perform(setPassword(session, "short", "short"))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("12 文字以上の password を入力してください。")));
+
+        mvc.perform(setPassword(session, NEW_PASSWORD, NEW_PASSWORD)).andExpect(redirectedUrl(COMPLETED_URL));
+    }
+
+    @Test
+    void ログイン中や別の利用者のブラウザでリンクを開いて設定しても完了の知らせが出て今の認証は捨てる() throws Exception {
+        String owner = shipper(UserStatus.ACTIVE);
+        Cookie ownersBrowser = login(owner);
+        Cookie session = openResetLink(issueResetToken(owner), ownersBrowser);
+
+        MvcResult done = mvc.perform(setPassword(session, NEW_PASSWORD, NEW_PASSWORD))
+                .andExpect(redirectedUrl(COMPLETED_URL))
+                .andReturn();
+        Cookie renewed = sessionOf(done);
+        mvc.perform(get(COMPLETED_URL).cookie(renewed))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("password を変更しました。")));
+        mvc.perform(get("/customer/transport-requests").cookie(ownersBrowser))
+                .andExpect(redirectedUrl("/session-expired"));
+
+        String someoneElse = shipper(UserStatus.ACTIVE);
+        String target = shipper(UserStatus.ACTIVE);
+        Cookie othersBrowser = login(someoneElse);
+        Cookie othersSession = openResetLink(issueResetToken(target), othersBrowser);
+        MvcResult other = mvc.perform(setPassword(othersSession, NEW_PASSWORD, NEW_PASSWORD))
+                .andExpect(redirectedUrl(COMPLETED_URL))
+                .andReturn();
+        mvc.perform(get("/customer/transport-requests").cookie(sessionOf(other)))
+                .andExpect(redirectedUrl("/login"));
+    }
+
+    /** session の表に、トークンの平文を含む属性がない。 */
+    private void assertNoTokenInSessions(String token) {
+        assertThat(jdbc.queryForObject(
+                        "SELECT count(*) FROM platform.spring_session_attributes"
+                                + " WHERE encode(attribute_bytes, 'escape') LIKE ?",
+                        Integer.class,
+                        "%" + token + "%"))
+                .as("session の表にトークンの平文がない")
+                .isZero();
+    }
+
+    @Test
+    void passwordの段や失効したCookieのブラウザでリンクを開いて設定してもトークンは残らず完了の知らせが出る() throws Exception {
+        String midLogin = shipper(UserStatus.ACTIVE);
+        Cookie passwordStage = loginWithPassword(midLogin);
+        String token = issueResetToken(midLogin);
+        Cookie session = openResetLink(token, passwordStage);
+        assertNoTokenInSessions(token);
+        mvc.perform(setPassword(session, NEW_PASSWORD, NEW_PASSWORD)).andExpect(redirectedUrl(COMPLETED_URL));
+
+        String staleBrowser = shipper(UserStatus.ACTIVE);
+        Cookie stale = new Cookie(
+                SESSION_COOKIE,
+                java.util.Base64.getEncoder()
+                        .encodeToString(UUID.randomUUID().toString().getBytes(StandardCharsets.UTF_8)));
+        String staleToken = issueResetToken(staleBrowser);
+        // 失効した Cookie では A-03 に移り、トークンは使わず session にも置かない。リンクを開き直せば使える（マニュアル 2.6）
+        MvcResult expired = mvc.perform(get(RESET_URL + "/" + staleToken).cookie(stale))
+                .andExpect(redirectedUrl("/session-expired"))
+                .andReturn();
+        assertNoTokenInSessions(staleToken);
+        Cookie renewed = openResetLink(staleToken, expired.getResponse().getCookie(SESSION_COOKIE));
+        assertThat(renewed.getValue()).as("失効した Cookie を使い続けていない").isNotEqualTo(stale.getValue());
+        assertNoTokenInSessions(staleToken);
+        mvc.perform(setPassword(renewed, NEW_PASSWORD, NEW_PASSWORD)).andExpect(redirectedUrl(COMPLETED_URL));
+    }
+
+    @Test
+    void 設定の送信はCSRFのトークンがなければ処理しない() throws Exception {
+        String email = shipper(UserStatus.ACTIVE);
+        Cookie session = openResetLink(issueResetToken(email), null);
+
+        mvc.perform(post(NEW_URL)
+                        .cookie(session)
+                        .param("newPassword", NEW_PASSWORD)
+                        .param("confirmPassword", NEW_PASSWORD)
+                        .with(csrf().useInvalidToken()))
+                .andExpect(status().isForbidden());
+
+        assertThat(auditOf(email)).noneMatch(row -> "PASSWORD_RESET_COMPLETED".equals(row.get("action")));
+        assertLoginRejected(email, NEW_PASSWORD);
     }
 
     // --- 応答のヘッダーと Cookie（SEC-17） ---
@@ -1379,9 +1583,14 @@ class AuthenticationSecurityIntegrationTest {
 
     /** password の段だけを通す（A-02 へ移る）。 */
     private Cookie loginWithPassword(String email) throws Exception {
+        return loginWithPassword(email, PASSWORD);
+    }
+
+    /** 指定の password で password の段だけを通す（A-02 へ移る。Bolt 33a の再設定の後）。 */
+    private Cookie loginWithPassword(String email, String password) throws Exception {
         MvcResult result = mvc.perform(post("/login")
                         .param("username", email)
-                        .param("password", PASSWORD)
+                        .param("password", password)
                         .with(csrf()))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl(TOTP_URL))
