@@ -4,7 +4,7 @@ title: "リリース計画 - cargo-tracker（A 社国際貨物輸送管理シス
 description: "cargo-tracker MVP のリリース計画。1 人 + AI、時間単位の Bolt（= イテレーション）と週次の見直しで、最初の縦の流れ（R0.1）、パイロット準備完了（R1.0）、本格展開前（R1.1）の 3 段階、Unit のエントロピー評価、SP、バッファ、パイロット開始の条件、引継ぎ ID の台帳、業務責任者に確かめる事項の台帳。"
 tags: [development,release-plan]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-15T00:51:58Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-15T01:01:41Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T09:29:53Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:38:26Z }
@@ -935,3 +935,4 @@ xychart-beta
 | 2026-10-14 | Bolt 32f を終えた（終了報告は承認待ち。支援技術の手動確認は人の確認待ち）。開発レビューで拒まれた印を画面ごとの明示に変え、案内の文言を直した（32f の行）。W5 の主なタスクを今の進み具合にした | anthropic/claude-opus-5-5 |
 | 2026-10-15 | Bolt 32f の終了報告の承認を記録した（議題 1〜7 を承認。支援技術の手動確認も済み）。デモの動画を #13 に添付した | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-10-15 | Bolt 33 の開始準備: 33（通知モジュールの新設と再設定の依頼から送信まで）と 33a（A-06 の設定と監査）に分けた。dev はメールをログに出す送信（dev の外では起動を止める）にし、統合テストは Mailpit で確かめる。A-06 で設定したら A-01 に戻してログインし直す（ADR-011 の A-06 の例外は要らなくなる）。通知の送信の記録の表を 33 で作る。W5 の表に 33a の行を足し、US-18 の Bolt の順序に 33・33a を足した | anthropic/claude-opus-5-5、決定 human:kakimomokuri |
+| 2026-10-15 | Bolt 33 の開始準備の詳細整合性検証（20 件）と横断整合性検証（21 件）を計画に反映した。トークンの発行を `@ApplicationModuleListener` のハンドラーに移しイベントに秘密を載せない、通知は identity に依存しない制約を今決め W9 の宛先の渡し方は W9 の開始準備で決める、ADR-017（通知モジュールとメール送信）を作る、`target_ref` はトークンの ID、約 4.9 時間のまま 1 本で進める | anthropic/claude-opus-5-5、決定 human:kakimomokuri |
