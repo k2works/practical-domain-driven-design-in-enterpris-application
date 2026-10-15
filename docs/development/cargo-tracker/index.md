@@ -77,7 +77,7 @@ Bolt がイテレーションに当たります。ふりかえりは各 Bolt の
 | 33 | [通知モジュールの新設と password の再設定の依頼（US-18 AC8 の前半）](bolt_33_plan.md) | [終了報告](bolt_33_report.md) | W5 | 完了 |
 | 33a | [password の再設定（A-06。US-18 AC8 の後半）](bolt_33a_plan.md) | [終了報告](bolt_33a_report.md) | W5 | 完了 |
 | 33b | [回復コードによる TOTP の再登録（US-18 AC9）と #13 のクローズ](bolt_33b_plan.md) | [終了報告](bolt_33b_report.md) | W5 | 完了 |
-| 33c | [session の属性の名前と期間の置き場所の整理（振る舞いの変わらない直し）](bolt_33c_plan.md) | — | W5 | 計画（承認済み） |
+| 33c | [session の属性の名前と期間の置き場所の整理（振る舞いの変わらない直し）](bolt_33c_plan.md) | [終了報告](bolt_33c_report.md) | W5 | 完了（承認待ち） |
 
 Bolt を始めるときに行を追加します。
 
@@ -169,4 +169,5 @@ Bolt を始めるときに行を追加します。
 * [Bolt 33b 計画 - 回復コードによる TOTP の再登録（US-18 AC9）と #13 のクローズ](./bolt_33b_plan.md) - W5 の 17 本目の Bolt の計画。回復コードでログインしたら A-08 へ導いて認証アプリを再登録し（後にもできる）、秘密を置き換えて回復コードを発行し直し、ほかの session を失効させる。マニュアル 2.1 を 2 段階のログインに書き直し、#13 をクローズする。
 * [Bolt 33b 終了報告 - 回復コードによる TOTP の再登録（US-18 AC9）と #13 のクローズ](./bolt_33b_report.md) - 回復コードでログインしたら A-08 へ導き、読んだ秘密のままのときだけ TOTP の秘密を置き換えて回復コードを発行し直し、ほかの session を失効させた。開発レビューで印に 15 分の期限を付けた。
 * [Bolt 33c 計画 - session の属性の名前と期間の置き場所の整理（振る舞いの変わらない直し）](./bolt_33c_plan.md) - W5 の 18 本目の Bolt の計画。認証の入口と画面に 2 つの定数で持っていた session の属性の名前と URL を application 層の SessionKeys に、期間を domain の SessionPolicy に寄せ、覚えた要求の属性の名前を共有する。TOTP の部品の整理は 33d。
+* [Bolt 33c 終了報告 - session の属性の名前と期間の置き場所の整理（振る舞いの変わらない直し）](./bolt_33c_report.md) - session の属性の名前と URL を SessionKeys に、期間を SessionPolicy に寄せ、規則の例外を 1 つ足してふるまいを持たないことを見張った。覚えた要求は Bean にせず名前だけを共有した。
 * [Bolt 33c 計画 - session の属性の名前と期間の置き場所の整理（振る舞いの変わらない直し）](./bolt_33c_plan.md) - W5 の 18 本目の Bolt の計画。認証の入口と画面に同じ値の 2 つの定数で持っていた session・request の属性の名前と A-08 の URL を application 層の SessionKeys に、ログインの期間（8 時間・5 分・15 分・印の 15 分）を domain の SessionPolicy に寄せる（認証の入口の規則に例外を足す）。覚えた要求の属性の名前を SessionKeys で共有し、A-01 の「5 回」「15 分」を LockPolicy から描き、T-128 の見張り（Playwright の正規表現）、SchemaCommentIntegrationTest の tracking、空の復号の境界のテストを足す。TOTP の部品の整理は 33d に分ける。

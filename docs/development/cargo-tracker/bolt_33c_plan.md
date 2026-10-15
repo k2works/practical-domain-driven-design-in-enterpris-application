@@ -3,7 +3,7 @@ type: Plan
 title: "Bolt 33c 計画 - session の属性の名前と期間の置き場所の整理（振る舞いの変わらない直し）"
 description: "W5 の 18 本目の Bolt の計画。認証の入口と画面に同じ値の 2 つの定数で持っていた session・request の属性の名前と A-08 の URL を application 層の SessionKeys に、ログインの期間（8 時間・5 分・15 分・印の 15 分）を domain の SessionPolicy に寄せる（認証の入口の規則に例外を足す）。覚えた要求の属性の名前を SessionKeys で共有し、A-01 の「5 回」「15 分」を LockPolicy から描き、T-128 の見張り（Playwright の正規表現）、SchemaCommentIntegrationTest の tracking、空の復号の境界のテストを足す。TOTP の部品の整理は 33d に分ける。"
 tags: [plan]
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-15T12:16:45Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-15T12:25:10Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-15T11:34:07Z }
 ---
@@ -133,7 +133,7 @@ package "identity" {
 - [x] **5. T-128 の見張り**
   - 共通の補助（`com.example.cargotracker.ui.PlaywrightText.literal`）と 5 か所の置き換え（エスケープの 2 か所、エスケープしていない連結の 3 か所）、テストのクラスを読む ArchUnit の規則（対象が空でない。違反を控えのファイルに入れて落ちることを確かめ、控えから戻す。T-131）
   - 完了の判定: `check`・`uiTest` 緑
-- [ ] **6. SonarQube と開発レビューと終了報告** 【承認ゲート: 終了報告】
+- [x] **6. SonarQube と開発レビューと終了報告** 【承認ゲート: 終了報告】
   - SonarQube（T-116）。開発レビュー（プログラマー、テスター、アーキテクト）。振る舞いを変えないのでセキュリティとテクニカルライターは省く（規則の例外はアーキテクトが見る）
   - `bolt_33c_report.md`。release_plan の W5 の 33c の行、開発の索引
 
@@ -170,18 +170,19 @@ package "identity" {
 
 ## 完了条件
 
-- [ ] 層をまたいで共有する session・request の属性の名前と A-08・A-03 の URL が `SessionKeys` だけにあり（テンプレートも式で参照する。画面だけの名前とテストの写しは除く）、期間が `SessionPolicy` だけにある。2 つの定数の一致を守るテストがなく、値を固定するテストがすべての名前にある。層の規則の例外は決めた 1 つだけ
+- [x] 層をまたいで共有する session・request の属性の名前と A-08・A-03 の URL が `SessionKeys` だけにあり（テンプレートも式で参照する。画面だけの名前とテストの写しは除く）、期間が `SessionPolicy` だけにある。2 つの定数の一致を守るテストがなく、値を固定するテストがすべての名前にある。層の規則の例外は決めた 1 つだけ
 - [x] 覚えた要求の属性の名前を `SessionKeys` で共有し（開発の途中の決定 7。Bean にはしない）、Spring Security の既定の振る舞いは変わらない
-- [ ] A-01 の数値が `LockPolicy` から描かれ、表示が変わらない
-- [ ] T-128 の見張りが違反で落ちることを確かめた。`tracking` のコメントと空の復号の境界のテストがある
-- [ ] 設計文書（architecture_backend・architecture_frontend・ADR-011・ADR-012・ui_design・domain_model・data_model・test_strategy・release_plan）を更新し、33d の行を足した。33b の報告の約束を #49 に送った
-- [ ] `check` と `uiTest` が緑。push してアプリの CI と MkDocs の配備を確かめた。SonarQube の Quality Gate が PASS、`okf:check` ERROR 0
-- [ ] 開発レビュー、終了報告
+- [x] A-01 の数値が `LockPolicy` から描かれ、表示が変わらない
+- [x] T-128 の見張りが違反で落ちることを確かめた。`tracking` のコメントと空の復号の境界のテストがある
+- [x] 設計文書（architecture_backend・architecture_frontend・ADR-011・ADR-012・ui_design・domain_model・data_model・test_strategy・release_plan）を更新し、33d の行を足した。33b の報告の約束を #49 に送った
+- [x] `check` と `uiTest` が緑。push してアプリの CI と MkDocs の配備を確かめた。SonarQube の Quality Gate が PASS、`okf:check` ERROR 0
+- [x] 開発レビュー、終了報告
 
 ## 更新履歴
 
 | 日付 | 更新内容 | 更新者 |
 | :--- | :--- | :--- |
+| 2026-10-15 | ステップ 6 を終えた。開発レビュー（2 つの観点）の直しで、`application.internal.session` がふるまいを持たないことを見張る規則を足した。SonarQube PASS。終了報告を作った（承認待ち） | anthropic/claude-opus-5-5 |
 | 2026-10-15 | ステップ 3 の決定 7（2026-10-15、human:kakimomokuri）: 覚えた要求は Bean にせず、属性の名前だけを `SessionKeys` で共有する。description・範囲・確認ポイント 6 を合わせた | anthropic/claude-opus-5-5、決定 human:kakimomokuri |
 | 2026-10-15 | ステップ 1〜5 を終えた。計画からの変更と見つけたこと: (1) 覚えた要求の `RequestCache` を Bean にすると、Spring Security の `RequestCacheConfigurer` が型で見つけて未認証の入口でも使うと分かり、計画の打ち切りの条件として止めて諮った。決定 7（human:kakimomokuri）: Bean にせず、覚えた要求の属性の名前（`SessionKeys.SAVED_REQUEST`）だけを共有する。失効の部品と A-08 の画面がその名前を明示した cache を使い、成功の扱いと未認証の入口は Spring Security の既定（同じ名前）のまま。(2) Thymeleaf のリンク式は静的なクラス（`T(...)`）を参照できないので、画面の層の `SessionUrlsAdvice` がモデルで URL を渡す。(3) `SessionLifetime` は名前と期間を移して空になったので消した。(4) 変異の確かめ: 空の復号の境界（`<=` を `<`）で 1 件、T-128 の規則（`Pattern.quote` を入れる）で 1 件が落ちた。どちらも控えのファイルから戻した（T-131）。(5) `tracking` の表と列はコメントがそろっていて、テストに足しても緑だった。(6) A-01 の数値は表示を変えずに `LockPolicy` から描いた。`/goal Bolt33c` を受け、承認ゲートでは止めずに進めている（T-36） | anthropic/claude-opus-5-5 |
 | 2026-10-15 | 承認（human:kakimomokuri。検証の指摘の反映の前に受けた承認を、決定 2 の回答とあわせて記録する）。`/goal Bolt33c` を受け、承認ゲートでは止めずに進める | human:kakimomokuri |
