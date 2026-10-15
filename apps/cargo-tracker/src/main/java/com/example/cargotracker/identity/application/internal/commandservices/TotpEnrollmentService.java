@@ -13,7 +13,7 @@ import com.example.cargotracker.identity.domain.model.aggregates.TotpCredentialR
 import com.example.cargotracker.identity.domain.model.aggregates.TotpSecretIssuer;
 import com.example.cargotracker.identity.domain.model.aggregates.UnreadableCredentialException;
 import com.example.cargotracker.identity.domain.model.valueobjects.EncryptedSecret;
-import com.example.cargotracker.identity.domain.model.valueobjects.PasswordVerifiedUser;
+import com.example.cargotracker.identity.domain.model.valueobjects.EnrollingUser;
 import com.example.cargotracker.identity.domain.model.valueobjects.TotpMatch;
 import com.example.cargotracker.identity.domain.model.valueobjects.TotpProvisioning;
 import com.example.cargotracker.shared.domain.UserId;
@@ -73,10 +73,10 @@ public class TotpEnrollmentService {
      * 登録を始める。登録済みなら拒む。登録の途中の暗号文を受けたら、同じ利用者の暗号文として使える限りそれを使い続け（再読み込みや
      * 2 つのタブで秘密を変えない）、使えなければ新しく発行する。
      *
-     * @param user password を確かめた利用者（メールアドレスを認証アプリに示す名前にする）
+     * @param user 登録する利用者（メールアドレスを認証アプリに示す名前にする。A-07・A-08 の両方から。Bolt 33b）
      * @param pending 登録の途中の暗号文（session に置いた値）
      */
-    public EnrollmentStart begin(PasswordVerifiedUser user, Optional<EncryptedSecret> pending) {
+    public EnrollmentStart begin(EnrollingUser user, Optional<EncryptedSecret> pending) {
         UserId owner = user.userId();
         String accountName = user.email().value();
         if (credentials.findByUserId(owner).isPresent()) {
@@ -104,7 +104,7 @@ public class TotpEnrollmentService {
     /**
      * 最初のコードで確かめて登録する。誤ったコード・使えない暗号文では何も保存しない。同時の登録で後になったときも「登録済み」を返す。
      */
-    public EnrollmentResult complete(PasswordVerifiedUser user, EncryptedSecret secret, String code) {
+    public EnrollmentResult complete(EnrollingUser user, EncryptedSecret secret, String code) {
         try {
             return transactionTemplate.execute(status -> completeInTransaction(user, secret, code));
         } catch (DuplicateTotpEnrollmentException _) {
@@ -113,7 +113,7 @@ public class TotpEnrollmentService {
         }
     }
 
-    private EnrollmentResult completeInTransaction(PasswordVerifiedUser user, EncryptedSecret secret, String code) {
+    private EnrollmentResult completeInTransaction(EnrollingUser user, EncryptedSecret secret, String code) {
         UserId owner = user.userId();
         if (credentials.findByUserId(owner).isPresent()) {
             return new EnrollmentResult.AlreadyEnrolled();
@@ -126,9 +126,14 @@ public class TotpEnrollmentService {
         } catch (UnreadableCredentialException _) {
             return new EnrollmentResult.SecretUnusable();
         }
-        if (!(match instanceof TotpMatch.Matched)) {
+        switch (match) {
+            case TotpMatch.Matched _ -> {
+                // 確かめた。続けて保存する
+            }
             // 登録したばかりの資格はどの刻みも使っていないので、再利用にはならない
-            return new EnrollmentResult.CodeRejected();
+            case TotpMatch.Reused _, TotpMatch.Mismatch _ -> {
+                return new EnrollmentResult.CodeRejected();
+            }
         }
         // 回復コードの生成とハッシュ（bcrypt 10 回）は書き込みでないので、主キーの行ロックを取る前に済ませる（同時の登録の相手を
         // 待たせる時間を短くする。Bolt 31b の開発レビュー）

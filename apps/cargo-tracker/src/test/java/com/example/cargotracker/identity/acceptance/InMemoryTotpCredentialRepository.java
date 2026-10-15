@@ -3,6 +3,7 @@ package com.example.cargotracker.identity.acceptance;
 import com.example.cargotracker.identity.domain.model.aggregates.DuplicateTotpEnrollmentException;
 import com.example.cargotracker.identity.domain.model.aggregates.TotpCredential;
 import com.example.cargotracker.identity.domain.model.aggregates.TotpCredentialRepository;
+import com.example.cargotracker.identity.domain.model.valueobjects.EncryptedSecret;
 import com.example.cargotracker.shared.domain.UserId;
 import java.util.Map;
 import java.util.Optional;
@@ -29,10 +30,26 @@ public class InMemoryTotpCredentialRepository implements TotpCredentialRepositor
     }
 
     @Override
-    public boolean useStep(UserId userId, long step) {
+    public boolean replace(TotpCredential credential, EncryptedSecret expectedSecret) {
+        boolean[] replaced = {false};
+        store.computeIfPresent(credential.userId(), (id, stored) -> {
+            if (!stored.secret().equals(expectedSecret)) {
+                return stored;
+            }
+            replaced[0] = true;
+            return credential.reEnroll(credential.secret(), stored.lastUsedStep(), credential.enrolledAt());
+        });
+        return replaced[0];
+    }
+
+    @Override
+    public boolean useStep(UserId userId, EncryptedSecret secret, long step) {
+        if (step < 0) {
+            throw new IllegalArgumentException("時間の刻みは 0 以上");
+        }
         boolean[] used = {false};
         store.computeIfPresent(userId, (id, stored) -> {
-            if (!stored.accepts(step)) {
+            if (!stored.secret().equals(secret) || !stored.accepts(step)) {
                 return stored;
             }
             used[0] = true;

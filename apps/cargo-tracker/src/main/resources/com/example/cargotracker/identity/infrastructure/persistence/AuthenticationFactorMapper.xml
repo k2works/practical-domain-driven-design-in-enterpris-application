@@ -43,13 +43,26 @@
          WHERE user_id = #{userId}
     </select>
 
-    <!-- 再利用の拒否（IA-INV-10）。最後に使った刻みより後のときだけ書く。同じ刻みの同時の更新は、
-         後の文が先の行ロックを待って WHERE を評価し直し、0 件になる -->
+    <!-- 再利用の拒否（IA-INV-10）。照合で読んだ秘密のままで、最後に使った刻みより後のときだけ書く。同じ刻みの同時の更新と、
+         重なった置き換え（Bolt 33b）は、後の文が先の行ロックを待って WHERE を評価し直し、0 件になる -->
     <update id="updateLastUsedStepIfLater">
         UPDATE identity.totp_credential
            SET last_used_step = #{step}
          WHERE user_id = #{userId}
+           AND secret_encrypted = #{secretEncrypted}
            AND last_used_step &lt; #{step}
+    </update>
+
+    <!-- 再登録の置き換え（Bolt 33b）。再登録の前に読んだ秘密のままのときだけ書く。同じ古い秘密を読んだ同時の置き換えは、後の文が
+         先の行ロックを待って WHERE を評価し直し、0 件になる。最後に使った刻みは保存されている値と渡した値の大きい方にする（IA-INV-10）。
+         GREATEST は H2 と PostgreSQL の両方にある -->
+    <update id="updateTotpCredentialIfUnchanged">
+        UPDATE identity.totp_credential
+           SET secret_encrypted = #{row.secretEncrypted},
+               last_used_step = GREATEST(last_used_step, #{row.lastUsedStep}),
+               enrolled_at = #{row.enrolledAt}
+         WHERE user_id = #{row.userId}
+           AND secret_encrypted = #{expectedSecret}
     </update>
 
     <delete id="deleteRecoveryCodes">

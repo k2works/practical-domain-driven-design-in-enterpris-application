@@ -40,6 +40,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 class MyBatisAuthenticationFactorConcurrencyIntegrationTest {
 
     private static final Instant T0 = Instant.parse("2026-10-11T00:00:00Z");
+    private static final EncryptedSecret SECRET = new EncryptedSecret("ciphertext");
     private static final LockPolicy POLICY = new LockPolicy();
     private static final RecoveryCodeHasher HASHER = new RecoveryCodeHasher() {
         @Override
@@ -118,10 +119,42 @@ class MyBatisAuthenticationFactorConcurrencyIntegrationTest {
         UserId user = newUser();
         totpCredentials.add(TotpCredential.enroll(user, new EncryptedSecret("ciphertext"), new UtcInstant(T0)));
 
-        List<Boolean> results =
-                runOverlapping(() -> totpCredentials.useStep(user, 100), () -> totpCredentials.useStep(user, 100));
+        List<Boolean> results = runOverlapping(
+                () -> totpCredentials.useStep(user, SECRET, 100), () -> totpCredentials.useStep(user, SECRET, 100));
 
         assertThat(results).containsExactly(true, false);
+    }
+
+    @Test
+    void 古い秘密を読んだ刻みの使用は重なった置き換えの確定を待って0件になる() {
+        UserId user = newUser();
+        totpCredentials.add(TotpCredential.enroll(user, SECRET, new UtcInstant(T0)));
+        TotpCredential read = totpCredentials.findByUserId(user).orElseThrow();
+
+        List<Boolean> results = runOverlapping(
+                () -> totpCredentials.replace(
+                        read.reEnroll(new EncryptedSecret("renewed"), 50, new UtcInstant(T0)), SECRET),
+                () -> totpCredentials.useStep(user, SECRET, 100));
+
+        assertThat(results).containsExactly(true, false);
+        assertThat(totpCredentials.findByUserId(user).orElseThrow().lastUsedStep())
+                .isEqualTo(50);
+    }
+
+    @Test
+    void 同じ古い秘密を読んだ重なった2つの置き換えは先の1つだけが通る() {
+        UserId user = newUser();
+        totpCredentials.add(TotpCredential.enroll(user, SECRET, new UtcInstant(T0)));
+        TotpCredential read = totpCredentials.findByUserId(user).orElseThrow();
+
+        List<Boolean> results = runOverlapping(
+                () -> totpCredentials.replace(
+                        read.reEnroll(new EncryptedSecret("first"), 50, new UtcInstant(T0)), SECRET),
+                () -> totpCredentials.replace(
+                        read.reEnroll(new EncryptedSecret("second"), 50, new UtcInstant(T0)), SECRET));
+
+        assertThat(results).containsExactly(true, false);
+        assertThat(totpCredentials.findByUserId(user).orElseThrow().secret()).isEqualTo(new EncryptedSecret("first"));
     }
 
     @Test

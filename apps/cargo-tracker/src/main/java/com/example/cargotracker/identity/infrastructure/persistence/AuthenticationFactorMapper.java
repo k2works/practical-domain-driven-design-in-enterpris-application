@@ -18,7 +18,11 @@ public interface AuthenticationFactorMapper {
 
     Optional<TotpCredentialRow> selectTotpCredential(UUID userId);
 
-    int updateLastUsedStepIfLater(@Param("userId") UUID userId, @Param("step") long step);
+    int updateLastUsedStepIfLater(
+            @Param("userId") UUID userId, @Param("secretEncrypted") String secretEncrypted, @Param("step") long step);
+
+    int updateTotpCredentialIfUnchanged(
+            @Param("row") TotpCredentialRow row, @Param("expectedSecret") String expectedSecret);
 
     void deleteRecoveryCodes(UUID userId);
 

@@ -23,6 +23,21 @@ class TotpCredentialTest {
     }
 
     @Test
+    void 再登録は秘密と登録の時刻を置き換え最後に使った刻みは大きい方にする() {
+        UtcInstant later = new UtcInstant(Instant.parse("2026-10-16T00:00:00Z"));
+        EncryptedSecret renewed = new EncryptedSecret("renewed");
+
+        TotpCredential behind = lastUsed(100).reEnroll(renewed, 90, later);
+        TotpCredential ahead = lastUsed(100).reEnroll(renewed, 120, later);
+
+        assertThat(behind.secret()).isEqualTo(renewed);
+        assertThat(behind.enrolledAt()).isEqualTo(later);
+        assertThat(behind.lastUsedStep()).as("新しいコードの刻みが前でも戻さない（IA-INV-10）").isEqualTo(100);
+        assertThat(ahead.lastUsedStep()).as("新しいコードの刻みは使ったことにする").isEqualTo(120);
+        assertThat(ahead.userId()).isEqualTo(USER);
+    }
+
+    @Test
     void 登録したばかりの資格はまだどの刻みも使っていない() {
         TotpCredential credential = TotpCredential.enroll(USER, new EncryptedSecret("ciphertext"), ENROLLED_AT);
 

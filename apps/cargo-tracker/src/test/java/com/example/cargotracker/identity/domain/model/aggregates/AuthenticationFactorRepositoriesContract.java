@@ -34,6 +34,7 @@ public abstract class AuthenticationFactorRepositoriesContract {
     };
 
     private static final LockPolicy POLICY = new LockPolicy();
+    private static final EncryptedSecret SECRET = new EncryptedSecret("ciphertext");
     private static final Instant T0 = Instant.parse("2026-10-11T00:00:00Z");
 
     protected abstract TotpCredentialRepository totpCredentials();
@@ -88,7 +89,7 @@ public abstract class AuthenticationFactorRepositoriesContract {
         UserId user = newUser();
 
         assertThat(totpCredentials().findByUserId(user)).isEmpty();
-        assertThat(totpCredentials().useStep(user, 1)).isFalse();
+        assertThat(totpCredentials().useStep(user, SECRET, 1)).isFalse();
     }
 
     @Test
@@ -96,10 +97,10 @@ public abstract class AuthenticationFactorRepositoriesContract {
         UserId user = newUser();
         totpCredentials().add(TotpCredential.enroll(user, new EncryptedSecret("ciphertext"), at(Duration.ZERO)));
 
-        assertThat(totpCredentials().useStep(user, 100)).isTrue();
-        assertThat(totpCredentials().useStep(user, 100)).as("同じ刻みの再利用").isFalse();
-        assertThat(totpCredentials().useStep(user, 99)).as("前の刻み").isFalse();
-        assertThat(totpCredentials().useStep(user, 101)).isTrue();
+        assertThat(totpCredentials().useStep(user, SECRET, 100)).isTrue();
+        assertThat(totpCredentials().useStep(user, SECRET, 100)).as("同じ刻みの再利用").isFalse();
+        assertThat(totpCredentials().useStep(user, SECRET, 99)).as("前の刻み").isFalse();
+        assertThat(totpCredentials().useStep(user, SECRET, 101)).isTrue();
         assertThat(totpCredentials().findByUserId(user).orElseThrow().lastUsedStep())
                 .isEqualTo(101);
     }
@@ -111,7 +112,79 @@ public abstract class AuthenticationFactorRepositoriesContract {
 
         TotpCredentialRepository repository = totpCredentials();
 
-        assertThatThrownBy(() -> repository.useStep(user, -1)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> repository.useStep(user, SECRET, -1)).isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void 照合で読んだ秘密と違う秘密の資格では刻みを使えない() {
+        UserId user = newUser();
+        totpCredentials().add(TotpCredential.enroll(user, SECRET, at(Duration.ZERO)));
+
+        assertThat(totpCredentials().useStep(user, new EncryptedSecret("other"), 100))
+                .isFalse();
+        assertThat(totpCredentials().findByUserId(user).orElseThrow().lastUsedStep())
+                .isZero();
+    }
+
+    @Test
+    void 資格を置き換えると古い秘密では刻みを使えず最後に使った刻みは戻らない() {
+        UserId user = newUser();
+        totpCredentials().add(TotpCredential.enroll(user, SECRET, at(Duration.ZERO)));
+        assertThat(totpCredentials().useStep(user, SECRET, 200)).isTrue();
+        TotpCredential read = totpCredentials().findByUserId(user).orElseThrow();
+        EncryptedSecret renewed = new EncryptedSecret("renewed");
+
+        // 新しいコードの刻み（150）は最後に使った刻み（200）より前でも、最後に使った刻みは大きい方のまま
+        assertThat(totpCredentials().replace(read.reEnroll(renewed, 150, at(Duration.ofDays(1))), SECRET))
+                .isTrue();
+
+        TotpCredential replaced = totpCredentials().findByUserId(user).orElseThrow();
+        assertThat(replaced.secret()).isEqualTo(renewed);
+        assertThat(replaced.lastUsedStep()).isEqualTo(200);
+        assertThat(replaced.enrolledAt()).isEqualTo(at(Duration.ofDays(1)));
+        assertThat(totpCredentials().useStep(user, SECRET, 201)).as("古い秘密").isFalse();
+        assertThat(totpCredentials().useStep(user, renewed, 201)).as("新しい秘密").isTrue();
+    }
+
+    @Test
+    void 読んだ後に古い秘密の要求が刻みを大きくしても置き換えは最後に使った刻みを戻さない() {
+        UserId user = newUser();
+        totpCredentials().add(TotpCredential.enroll(user, SECRET, at(Duration.ZERO)));
+        TotpCredential read = totpCredentials().findByUserId(user).orElseThrow();
+        // 読んだ後に、古い秘密の要求が刻み 300 を使った
+        assertThat(totpCredentials().useStep(user, SECRET, 300)).isTrue();
+
+        assertThat(totpCredentials()
+                        .replace(read.reEnroll(new EncryptedSecret("renewed"), 10, at(Duration.ofDays(1))), SECRET))
+                .isTrue();
+
+        assertThat(totpCredentials().findByUserId(user).orElseThrow().lastUsedStep())
+                .isEqualTo(300);
+    }
+
+    @Test
+    void 読んだ秘密がもう置き換えられていたら置き換えない() {
+        UserId user = newUser();
+        totpCredentials().add(TotpCredential.enroll(user, SECRET, at(Duration.ZERO)));
+        TotpCredential read = totpCredentials().findByUserId(user).orElseThrow();
+        EncryptedSecret first = new EncryptedSecret("first");
+        assertThat(totpCredentials().replace(read.reEnroll(first, 10, at(Duration.ofDays(1))), SECRET))
+                .isTrue();
+
+        // 同じ古い秘密を読んだ 2 つ目の再登録は通らない（先の再登録の回復コードを無効にしない）
+        assertThat(totpCredentials()
+                        .replace(read.reEnroll(new EncryptedSecret("second"), 10, at(Duration.ofDays(1))), SECRET))
+                .isFalse();
+        assertThat(totpCredentials().findByUserId(user).orElseThrow().secret()).isEqualTo(first);
+    }
+
+    @Test
+    void 資格のない利用者の置き換えは書かない() {
+        UserId user = newUser();
+
+        assertThat(totpCredentials().replace(TotpCredential.enroll(user, SECRET, at(Duration.ZERO)), SECRET))
+                .isFalse();
+        assertThat(totpCredentials().findByUserId(user)).isEmpty();
     }
 
     @Test

@@ -26,14 +26,15 @@ public class MyBatisTotpCredentialRepository implements TotpCredentialRepository
     @Override
     public void add(TotpCredential credential) {
         try {
-            mapper.insertTotpCredential(new TotpCredentialRow(
-                    credential.userId().value(),
-                    credential.secret().value(),
-                    credential.lastUsedStep(),
-                    credential.enrolledAt().instant().atOffset(ZoneOffset.UTC)));
+            mapper.insertTotpCredential(rowOf(credential));
         } catch (DuplicateKeyException e) {
             throw new DuplicateTotpEnrollmentException("その利用者の TOTP の資格は既にある", e);
         }
+    }
+
+    @Override
+    public boolean replace(TotpCredential credential, EncryptedSecret expectedSecret) {
+        return mapper.updateTotpCredentialIfUnchanged(rowOf(credential), expectedSecret.value()) == 1;
     }
 
     @Override
@@ -47,10 +48,18 @@ public class MyBatisTotpCredentialRepository implements TotpCredentialRepository
     }
 
     @Override
-    public boolean useStep(UserId userId, long step) {
+    public boolean useStep(UserId userId, EncryptedSecret secret, long step) {
         if (step < 0) {
             throw new IllegalArgumentException("時間の刻みは 0 以上");
         }
-        return mapper.updateLastUsedStepIfLater(userId.value(), step) == 1;
+        return mapper.updateLastUsedStepIfLater(userId.value(), secret.value(), step) == 1;
+    }
+
+    private static TotpCredentialRow rowOf(TotpCredential credential) {
+        return new TotpCredentialRow(
+                credential.userId().value(),
+                credential.secret().value(),
+                credential.lastUsedStep(),
+                credential.enrolledAt().instant().atOffset(ZoneOffset.UTC));
     }
 }

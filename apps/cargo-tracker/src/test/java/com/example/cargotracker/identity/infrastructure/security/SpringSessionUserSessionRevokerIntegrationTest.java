@@ -54,4 +54,21 @@ class SpringSessionUserSessionRevokerIntegrationTest {
         assertThat(sessions.findById(othersSession)).as("ほかの利用者の session は残す").isNotNull();
         assertThat(sessions.findById(anonymous)).as("主体のない session は残す").isNotNull();
     }
+
+    @Test
+    void 残すsessionのほかにその利用者のsessionを消す() {
+        String email = "revoke-others-" + UUID.randomUUID() + "@example.com";
+        String other = "other-" + UUID.randomUUID() + "@example.com";
+        String current = sessionOf(email);
+        String elsewhere = sessionOf(email);
+        String othersSession = sessionOf(other);
+        assertThat(sessions.findById(elsewhere)).as("消す前は session がある（空振りしない）").isNotNull();
+
+        int revoked = revoker.revokeOthers(EmailAddress.of(email), current);
+
+        assertThat(revoked).isEqualTo(1);
+        assertThat(sessions.findById(elsewhere)).isNull();
+        assertThat(sessions.findById(current)).as("今の session は残す").isNotNull();
+        assertThat(sessions.findById(othersSession)).as("ほかの利用者の session は残す").isNotNull();
+    }
 }

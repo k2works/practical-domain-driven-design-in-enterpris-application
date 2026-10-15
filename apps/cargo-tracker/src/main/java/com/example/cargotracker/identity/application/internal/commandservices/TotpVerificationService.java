@@ -41,10 +41,13 @@ public class TotpVerificationService {
             return TotpVerification.REJECTED_NOT_ENROLLED;
         }
         long currentStep = TotpCredential.stepAt(new UtcInstant(clock.instant()));
-        return switch (found.get().match(code, currentStep, generator)) {
-            // 同時の確かめで後になったときは、条件付きの更新が失敗する（再利用として拒む）
+        TotpCredential credential = found.get();
+        return switch (credential.match(code, currentStep, generator)) {
+            // 同時の確かめで後になったとき・照合の後に資格を置き換えていたとき（Bolt 33b）は、条件付きの更新が失敗する（再利用として拒む）
             case TotpMatch.Matched(long step) ->
-                credentials.useStep(userId, step) ? TotpVerification.ACCEPTED : TotpVerification.REJECTED_REUSED;
+                credentials.useStep(userId, credential.secret(), step)
+                        ? TotpVerification.ACCEPTED
+                        : TotpVerification.REJECTED_REUSED;
             case TotpMatch.Reused() -> TotpVerification.REJECTED_REUSED;
             case TotpMatch.Mismatch() -> TotpVerification.REJECTED_MISMATCH;
         };

@@ -41,6 +41,16 @@ public final class TotpCredential {
         return new TotpCredential(userId, secret, 0, enrolledAt);
     }
 
+    /**
+     * 認証アプリを登録し直す（Bolt 33b、US-18 AC9）。秘密と登録の時刻を置き換え、確かめた新しいコードの刻みを使ったことにする。
+     * 最後に使った刻みは置き換えでも戻さない（今の値と新しいコードの刻みの大きい方。IA-INV-10）。
+     *
+     * @param matchedStep 新しい秘密で確かめたコードの刻み
+     */
+    public TotpCredential reEnroll(EncryptedSecret newSecret, long matchedStep, UtcInstant at) {
+        return new TotpCredential(userId, newSecret, Math.max(lastUsedStep, requireStep(matchedStep)), at);
+    }
+
     /** 保存されている状態から TOTP の資格を組み立てる（リポジトリが使う）。 */
     public static TotpCredential reconstitute(
             UserId userId, EncryptedSecret secret, long lastUsedStep, UtcInstant enrolledAt) {

@@ -12,7 +12,7 @@ import com.example.cargotracker.identity.domain.model.aggregates.TotpCredentialR
 import com.example.cargotracker.identity.domain.model.aggregates.UserRepository;
 import com.example.cargotracker.identity.domain.model.valueobjects.EmailAddress;
 import com.example.cargotracker.identity.domain.model.valueobjects.EncryptedSecret;
-import com.example.cargotracker.identity.domain.model.valueobjects.PasswordVerifiedUser;
+import com.example.cargotracker.identity.domain.model.valueobjects.EnrollingUser;
 import com.example.cargotracker.shared.domain.UserId;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import java.time.Clock;
@@ -68,7 +68,7 @@ class TotpEnrollmentServiceIntegrationTest {
     @Test
     void 重なった同じ利用者の登録は先の1つだけが通り後は登録済みとして返り回復コードは10個() throws Exception {
         UserId user = transactionTemplate.execute(status -> AuthenticationFactorFixtures.newUser(companies, users));
-        PasswordVerifiedUser actor = actorOf(user);
+        EnrollingUser actor = actorOf(user);
         EncryptedSecret secret = started(actor);
         String code = generator.code(user, secret, TotpCredential.stepAt(new UtcInstant(clock.instant())));
         CountDownLatch firstSaved = new CountDownLatch(1);
@@ -106,13 +106,13 @@ class TotpEnrollmentServiceIntegrationTest {
         assertThat(credentials.findByUserId(user)).isPresent();
     }
 
-    private EncryptedSecret started(PasswordVerifiedUser actor) {
+    private EncryptedSecret started(EnrollingUser actor) {
         EnrollmentStart start = service.begin(actor, Optional.empty());
         return ((EnrollmentStart.Started) start).secret();
     }
 
-    private PasswordVerifiedUser actorOf(UserId user) {
-        return new PasswordVerifiedUser(
+    private EnrollingUser actorOf(UserId user) {
+        return new EnrollingUser(
                 user, users.findById(user).orElseThrow().companyId(), EmailAddress.of("user@example.com"));
     }
 

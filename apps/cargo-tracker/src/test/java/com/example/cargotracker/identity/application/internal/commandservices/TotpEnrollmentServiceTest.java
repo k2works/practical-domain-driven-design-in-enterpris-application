@@ -17,7 +17,7 @@ import com.example.cargotracker.identity.domain.model.aggregates.UnreadableCrede
 import com.example.cargotracker.identity.domain.model.valueobjects.AuditAction;
 import com.example.cargotracker.identity.domain.model.valueobjects.EmailAddress;
 import com.example.cargotracker.identity.domain.model.valueobjects.EncryptedSecret;
-import com.example.cargotracker.identity.domain.model.valueobjects.PasswordVerifiedUser;
+import com.example.cargotracker.identity.domain.model.valueobjects.EnrollingUser;
 import com.example.cargotracker.identity.domain.model.valueobjects.TotpProvisioning;
 import com.example.cargotracker.shared.domain.CompanyId;
 import com.example.cargotracker.shared.domain.UserId;
@@ -141,7 +141,7 @@ class TotpEnrollmentServiceTest {
             Clock.fixed(NOW, ZoneOffset.UTC),
             NO_TRANSACTION);
 
-    private final PasswordVerifiedUser actor = new PasswordVerifiedUser(
+    private final EnrollingUser actor = new EnrollingUser(
             new UserId(UUID.randomUUID()), new CompanyId(UUID.randomUUID()), EmailAddress.of("shipper@example.com"));
 
     private EncryptedSecret started(Optional<EncryptedSecret> pending) {
