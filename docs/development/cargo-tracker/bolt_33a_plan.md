@@ -3,7 +3,7 @@ type: Plan
 title: "Bolt 33a 計画 - password の再設定（A-06。US-18 AC8 の後半）"
 description: "W5 の 16 本目の Bolt の計画。メールのリンクを開くとトークンを確かめて session にトークンの ID だけを移し、トークンのない URL の A-06 で新しい password を設定する（SEC-04 の 12〜64 文字と 72 バイト以下、SEC-05 のよく使われる password の一覧、トークンを 1 回だけ使う、期限切れ・使用済み・無効は同じ案内）。設定したら、今の session を作り直し、コミットの後にその利用者の session をすべて失効させる。ロックはそのまま、A-01 に戻して新しい password と TOTP でログインし直す。監査に記録する。仮の A-06 を置き換え、マニュアルの 2.6 とデモの動画（依頼から設定まで）を作る。"
 tags: [plan]
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-15T05:17:21Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-15T05:51:03Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-15T03:47:46Z }
 ---
@@ -92,7 +92,7 @@ password を忘れた利用者が、メールのリンクから新しい passwor
 - **リンクを開く**（`PasswordResetController` の `GET /{token}`）: `PasswordResetCompletionService.open(token)` がハッシュにして探し、使えればトークンの ID を返す。コントローラーは session の属性（`PasswordResetSession.TOKEN_ID`。`interfaces.web` に置き、属性を読み書きするのは画面の層だけ）に ID を置き、`redirect:/password-reset/new`。使えなければ無効なリンクの案内（`identity/password-reset-invalid`）。トークンの値はログ・モデル・session に置かない
 - **A-06**（`GET /password-reset/new`）: session のトークンの ID で `isUsable(tokenId)` を聞き、使えればフォーム（`identity/password-reset-new`）、使えなければ ID を消して案内。`POST` は確認の不一致だけを画面で見て、`complete(tokenId, newPassword)` の結果（完了・方針の誤り（種類）・無効）で分ける
 - **完了のサービス**（`identity.application.internal.commandservices.PasswordResetCompletionService`）: トランザクションの中で、方針を確かめる（一覧の照合の結果を渡す）→ トークンを条件付きで使う（`used_at IS NULL AND invalidated_at IS NULL AND expires_at > now`。0 件なら無効）→ 利用者を読み、利用停止・企業の無効なら無効（示さない。監査なし。トランザクションを戻す）→ ハッシュを作って password を変える → 同じ利用者の未使用のトークンを無効にする → 監査 `PASSWORD_RESET_COMPLETED`。コミットの後に `UserSessionRevoker.revokeAll(メールアドレス)` を呼び、失敗は警告のログ（password は変わっている）
-- **今の session**: コントローラーは完了を呼ぶ前に、今の認証を捨て、今の session を捨てて新しい session を作る（トークンの ID は引数で渡し、新しい session には移さない）。新しい session は主体がないので失効の対象にならない
+- **今の session**: コントローラーは完了したら、今の認証を捨て、今の session を捨てて新しい session を作る（トークンの ID は新しい session には移さない。開発レビューで「完了を呼ぶ前に」から改めた。方針の誤りで送り直せるように）。新しい session は主体がないので失効の対象にならない
 - **ポートと実装**（CLAUDE.md の規則、開始準備の決定 7）: `PasswordHasher`（実装 `infrastructure.crypto.BcryptPasswordHasher`。`PasswordEncoder` を包む）、`CommonPasswordList`（実装 `infrastructure.crypto.BundledCommonPasswordList`。起動のときに資源を読み、小文字の集合にする。読めない・空なら起動を止める）、`UserSessionRevoker`（実装 `infrastructure.security.SpringSessionUserSessionRevoker`。`FindByIndexNameSessionRepository` で主体の名前の session を探して消す）。ポートは `identity.domain.model.aggregates`
 - **トークンを使う条件**: ドメインの `isUsable(now)` と SQL の条件を、`LockPolicy` の前例に倣って契約テストで両方確かめる（IA-INV-12）。リポジトリに `findById` と `markUsed(id, at)`（条件付き）を足す
 - **公開の URL**: `/password-reset/*` のまま（`/password-reset/new` も 1 段で含まれる。`new` はトークン（43 文字）と重ならない）。判定は `PathPatternRequestMatcher` のまま（T-121）。全 URL の見張りに `/password-reset/new` と `/password-reset/{token}` を足す
@@ -256,6 +256,7 @@ a03 --> a01 : ほかの端末の次の操作（コミットの後に失効）
 
 | 日付 | 更新内容 | 更新者 |
 | :--- | :--- | :--- |
+| 2026-10-15 | 開発レビュー（5 観点）の指摘を直した: (1) リンクを開いて session にトークンの ID を置くときに session の ID を変える（session 固定化。プログラマーとセキュリティの中）。(2) 今の session を捨てるのは完了の後（決定 2 の (6) の「完了の前に」と実装が食い違っていた。方針の誤りで送り直せるように実装の順を採り、SEC-08・ADR-012・ui_design を直した。終了報告の議題に置く）。(3) 完了のサービスは外側のトランザクションの中では呼べないようにした（外側の確定の前に session を消さないため）。コミットの後の失効と、監査を書けなければ失効しないことを単体テストで固定した。(4) 使えないリンクは方針の誤りより先に無効とする。(5) よく使われる一覧の照合で前後の空白を除く。(6) テストを足した: `/password-reset/{token}/x` を公開しない、A-02 にいたほかの端末はログインを終えられない、TOO_LONG と TOO_MANY_BYTES の文言、session の表の照合の陽性の対照、未認証の session でも ID を変える。ArchUnit の暗号の部品に 2 つを足した。(7) マニュアル: 再設定の画面を 30 分開いたままの案内、「タブ」を「ブラウザ」に、手順 8、Q1-2 に再設定の途中の行、期限の起点。(8) SonarQube の 4 件。残りは #49（W10）に送る | anthropic/claude-opus-5-5 |
 | 2026-10-15 | ステップ 4 を終え、ステップ 5 のマニュアルとキャプチャを書いた。計画からの変更と見つけたこと: (1) 失効した Cookie でリンクを開くと、Spring Security の無効な session の扱いで A-03 に移る（トークンは使わず session にも置かない。開き直せば使える）。テストはこの振る舞いを確かめ、マニュアル 2.6 にも書いた。(2) 画面の層のシナリオで、Awaitility の中でシナリオのスコープの bean を読んで落ちた（利用者の ID を先に読む形に直した）。(3) 欄の説明の照合に Java の `Pattern.quote` を使い、Playwright が JavaScript の正規表現に変えるため一致しなかった。Bolt 5・25 と同じ落とし穴で 3 回目になる（終了報告で機械の見張りを諮る）。(4) A-03 の文言の変更に合わせて A-03 のキャプチャも撮り直した。(5) デモ環境の `CARGOTRACKER_PUBLICBASEURL` はまだ空だった（Bolt 33 の議題 6。終了報告の議題に置く）。運用手順書の「33a までは準備中」の記述を直した。`check`・`uiTest` 緑 | anthropic/claude-opus-5-5 |
 | 2026-10-15 | ステップ 2・3 を終えた。計画からの変更と見つけたこと: (1) よく使われる password の一覧は SecLists のコミット c205c36 から抜き出し、46,146 語になった。出典・抜き出し方・MIT の表示は資源の隣の `common-passwords.NOTICE.txt` に書いた。(2) session の失効の統合テストは、Spring Session の `JdbcSession` が公開されていないので、総称型を取り込む補助メソッドで session を作った。(3) 利用停止・企業の無効の利用者はトークンを使わずに無効にする（直して送り直すことはできないが、トークンを残す）。(4) `AuditRecord` の引数の名前の文字列を定数にした（SonarQube の重複）。(5) 変異の確かめ: トークンを使う条件（`used_at IS NULL`）を外すと、同時の送信と使用済みのトークンのテストが落ちた（T-112）。`check` 緑 | anthropic/claude-opus-5-5 |
 | 2026-10-15 | `/goal Bolt33a` を受けた。承認ゲートでは止めずに進める | anthropic/claude-opus-5-5、指示 human:kakimomokuri |

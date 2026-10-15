@@ -4,7 +4,7 @@ title: "ADR-012: 認証の主体は共有カーネルの型にし、password の
 description: "US-18 の password によるログインと session を、Spring Security 7 の form login と Spring Session JDBC で作る。"
 tags: [adr, authentication, session]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-15T04:05:17Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-15T05:51:03Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-06T06:51:29Z }
 ---
@@ -79,7 +79,7 @@ US-18 の password によるログインと session を、Spring Security 7 の 
 - Bolt 33a から、password の再設定を終えたら、その利用者の session をすべて失効させる（2026-10-15、Bolt 33a の開始準備の決定 1・2 で human:kakimomokuri が決定。SEC-08）。
   - 失効は完了のトランザクションのコミットの後に行う。Spring Session JDBC は自分のトランザクション（`REQUIRES_NEW`）で動き、完了のトランザクションの中で消すと、完了がロールバックしても session は消えたままになるため。消せなかったら警告のログにとどめる（password は変わっている）。
   - その利用者の session は、主体の名前（`principal_name`。ログインのメールアドレス、`CargoUserDetails.getUsername()`）の索引で Spring Session の `FindByIndexNameSessionRepository` から探して消す。ドメインのポート `UserSessionRevoker` の実装 `SpringSessionUserSessionRevoker`（`identity.infrastructure.security`）に置き、マッパーで `platform.spring_session` を直接消さない（AT-04）。
-  - 今の要求は、完了の前に今の認証を捨て、今の session を捨てて新しい session を作る（トークンの ID は引数で渡し、新しい session には移さない）。新しい session は主体を持たないので失効の対象にならない。ログイン中・password の段・別の利用者のブラウザで設定しても、A-01 の完了の知らせ（`/login?reset-completed`）が出る。
+  - 今の要求は、完了したら今の認証を捨て、今の session を捨てて新しい session を作る（トークンの ID は新しい session には移さない）（方針の誤りで送り直せるように、完了の前には捨てない。Bolt 33a の開発レビューで、決定 2 の (6) の「完了の前に」から改めた）。リンクを開いて session にトークンの ID を置くときは、session の ID を変える（password を設定できる session になるので、ログインと同じく session 固定化を防ぐ）。新しい session は主体を持たないので失効の対象にならない。ログイン中・password の段・別の利用者のブラウザで設定しても、A-01 の完了の知らせ（`/login?reset-completed`）が出る。
   - 消した session の Cookie の次の要求は、失効の扱い（`invalidSessionStrategy`。Bolt 32e の部品）で A-03 に移る。GET の業務の画面は覚え、ログインし直すとその画面に戻る。A-03 の文言に「password を再設定したため」を足す（止めたことは示さないまま）。
   - 既知の課題: 失効した Cookie のまま再設定のリンクを開くと、失効の扱いで A-03 に移り、リンクの URL は覚えない（覚えるのは `/customer/**`・`/staff/**` の GET だけ）。もう一度リンクを開けば通る。
 
