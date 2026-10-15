@@ -64,6 +64,12 @@ public final class AuditRecord {
                 UUID.randomUUID(), at, user, company, AuditAction.TOTP_ENROLLED, AuditResult.SUCCESS, null);
     }
 
+    /** 認証アプリの再登録を記録する（Bolt 33b、US-18 AC9。成功だけ）。 */
+    public static AuditRecord totpReEnrolled(UserId user, CompanyId company, UtcInstant at) {
+        return new AuditRecord(
+                UUID.randomUUID(), at, user, company, AuditAction.TOTP_RE_ENROLLED, AuditResult.SUCCESS, null);
+    }
+
     /** 回復コードの使用を記録する（Bolt 31c、US-18 AC9 のログインの分。どのコードを使ったかは残さない）。 */
     public static AuditRecord recoveryCodeUsed(UserId user, CompanyId company, UtcInstant at) {
         return new AuditRecord(

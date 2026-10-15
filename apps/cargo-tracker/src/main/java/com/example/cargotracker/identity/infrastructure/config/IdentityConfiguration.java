@@ -6,6 +6,7 @@ import com.example.cargotracker.identity.application.internal.commandservices.Pa
 import com.example.cargotracker.identity.application.internal.commandservices.RecoveryCodeVerificationService;
 import com.example.cargotracker.identity.application.internal.commandservices.SessionRevalidationService;
 import com.example.cargotracker.identity.application.internal.commandservices.TotpEnrollmentService;
+import com.example.cargotracker.identity.application.internal.commandservices.TotpReEnrollmentService;
 import com.example.cargotracker.identity.application.internal.commandservices.TotpVerificationService;
 import com.example.cargotracker.identity.application.internal.eventhandlers.KpiObservationEventHandler;
 import com.example.cargotracker.identity.application.internal.eventhandlers.PasswordResetMailEventHandler;
@@ -171,6 +172,36 @@ public class IdentityConfiguration {
                 recoveryCodeGenerator,
                 hasher,
                 generator,
+                clock,
+                transactionTemplate);
+    }
+
+    @Bean
+    @SuppressWarnings("java:S107") // 再登録のサービスに要るポートをそろえて渡す
+    TotpReEnrollmentService totpReEnrollmentService(
+            UserRepository users,
+            CompanyRepository companies,
+            TotpCredentialRepository credentials,
+            RecoveryCodeRepository recoveryCodes,
+            AuditRecordRepository auditRecords,
+            TotpSecretIssuer issuer,
+            RecoveryCodeGenerator recoveryCodeGenerator,
+            RecoveryCodeHasher hasher,
+            TotpCodeGenerator generator,
+            UserSessionRevoker sessions,
+            Clock clock,
+            TransactionTemplate transactionTemplate) {
+        return new TotpReEnrollmentService(
+                users,
+                companies,
+                credentials,
+                recoveryCodes,
+                auditRecords,
+                issuer,
+                recoveryCodeGenerator,
+                hasher,
+                generator,
+                sessions,
                 clock,
                 transactionTemplate);
     }
