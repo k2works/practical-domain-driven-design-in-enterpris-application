@@ -3,7 +3,7 @@ type: Plan
 title: "Bolt 33d 計画 - TOTP と回復コードの部品の整理（振る舞いの変わらない直し）"
 description: "W5 の 19 本目の Bolt の計画。TOTP の桁数・アルゴリズムの定数を 1 か所にし、QR コードの SVG の組み立てを秘密の発行から分け、回復コードの形の知識を RecoveryCode に寄せ、normalize の戻り値を値オブジェクトにし、A-07 と A-08 で重複していた途中の暗号文を使い続ける処理と回復コード 10 個の発行を小さな部品に切り出す。振る舞いは変えない。認証の入口と期限の直しは 33e に分ける。"
 tags: [plan]
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-15T22:16:14Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-15T22:31:06Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-15T21:57:32Z }
 ---
@@ -127,7 +127,7 @@ package "identity" {
 - [x] **3. 回復コードの形と `normalize` の型**
   - 生成した値が `normalize` を通るテストを先に足し、`RandomRecoveryCodeGeneratorTest` の正規表現の写しを置き換える → 形の知識と `format` を `RecoveryCode` に寄せる → `NormalizedRecoveryCode` を足し、`normalize`・`matches`・`RecoveryCodeVerificationService` を付け替え、テストのデータ（`RecoveryCodeTest` の 49・50・60 行目、`AuthenticationFactorRepositoriesContract` の 215・216・229 行目）と `normalize(..)` の比べ方（`RecoveryCodeTest` の 121〜141 行目）を直す
   - 変異の確かめ（`format` の区切りを変えると落ちる。控えから戻す。T-131）
-- [ ] **4. A-07 と A-08 の重複**
+- [x] **4. A-07 と A-08 の重複**
   - `RecoveryCode.issueSet`（`RecoveryCodeTest` に足す）と `TotpProvisioningStarter`（単体テストを足す）を作り、2 つのサービスを付け替える（`TotpEnrollmentService` の 85〜102・140〜145 行目、`TotpReEnrollmentService` の 106〜114・164〜169・209〜216 行目）。登録・再登録の単体・統合テスト（同時の登録・再登録、二度押し、途中の暗号文の使い続け）が緑のまま
   - 完了の判定: `check` 緑、`uiTest` 緑
 - [ ] **5. SonarQube と開発レビューと終了報告** 【承認ゲート: 終了報告】

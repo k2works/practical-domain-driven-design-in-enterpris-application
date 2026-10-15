@@ -20,7 +20,6 @@ import com.example.cargotracker.identity.domain.model.rules.SessionPolicy;
 import com.example.cargotracker.identity.domain.model.valueobjects.EncryptedSecret;
 import com.example.cargotracker.identity.domain.model.valueobjects.EnrollingUser;
 import com.example.cargotracker.identity.domain.model.valueobjects.TotpMatch;
-import com.example.cargotracker.identity.domain.model.valueobjects.TotpProvisioning;
 import com.example.cargotracker.shared.domain.UserId;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import java.time.Clock;
@@ -55,7 +54,7 @@ public class TotpReEnrollmentService {
     private final TotpCredentialRepository credentials;
     private final RecoveryCodeRepository recoveryCodes;
     private final AuditRecordRepository auditRecords;
-    private final TotpSecretIssuer issuer;
+    private final TotpProvisioningStarter starter;
     private final RecoveryCodeGenerator recoveryCodeGenerator;
     private final RecoveryCodeHasher hasher;
     private final TotpCodeGenerator generator;
@@ -82,7 +81,7 @@ public class TotpReEnrollmentService {
         this.credentials = credentials;
         this.recoveryCodes = recoveryCodes;
         this.auditRecords = auditRecords;
-        this.issuer = issuer;
+        this.starter = new TotpProvisioningStarter(issuer);
         this.recoveryCodeGenerator = recoveryCodeGenerator;
         this.hasher = hasher;
         this.generator = generator;
@@ -102,15 +101,9 @@ public class TotpReEnrollmentService {
         if (user.isEmpty() || credentials.findByUserId(userId).isEmpty()) {
             return new ReEnrollmentStart.Unavailable();
         }
-        String accountName = user.get().email().value();
-        if (pending.isPresent()) {
-            Optional<TotpProvisioning> reused = provisioningOf(userId, pending.get(), accountName);
-            if (reused.isPresent()) {
-                return new ReEnrollmentStart.Started(pending.get(), reused.get());
-            }
-        }
-        EncryptedSecret secret = issuer.issue(userId);
-        return new ReEnrollmentStart.Started(secret, issuer.provisioning(userId, secret, accountName));
+        TotpProvisioningStarter.Started started =
+                starter.start(userId, pending, user.get().email().value());
+        return new ReEnrollmentStart.Started(started.secret(), started.provisioning());
     }
 
     /**
@@ -162,11 +155,7 @@ public class TotpReEnrollmentService {
         UserId owner = user.userId();
         // 回復コードの生成とハッシュ（bcrypt 10 回）は書き込みでないので、資格の行ロックを取る前に済ませる（登録と同じ）
         List<String> plainCodes = recoveryCodeGenerator.generate();
-        List<RecoveryCode> issued = RecoveryCode.requireIssuedSet(
-                owner,
-                plainCodes.stream()
-                        .map(plain -> RecoveryCode.issue(owner, plain, hasher, now))
-                        .toList());
+        List<RecoveryCode> issued = RecoveryCode.issueSet(owner, plainCodes, hasher, now);
         Boolean replaced = transactionTemplate.execute(status -> {
             // 資格の置き換えを先に行い、同時の再登録では回復コードを置き換える前に後の再登録を止める
             if (!credentials.replace(current.reEnroll(secret, step, now), current.secret())) {
@@ -204,14 +193,5 @@ public class TotpReEnrollmentService {
         }
         return Optional.of(
                 new EnrollingUser(userId, user.get().companyId(), user.get().email()));
-    }
-
-    private Optional<TotpProvisioning> provisioningOf(UserId owner, EncryptedSecret secret, String accountName) {
-        try {
-            return Optional.of(issuer.provisioning(owner, secret, accountName));
-        } catch (UnreadableCredentialException _) {
-            // 別の利用者の暗号文・壊れた暗号文・知らない鍵の版は使い続けず、新しく発行する（失敗へ倒す。T-42）
-            return Optional.empty();
-        }
     }
 }

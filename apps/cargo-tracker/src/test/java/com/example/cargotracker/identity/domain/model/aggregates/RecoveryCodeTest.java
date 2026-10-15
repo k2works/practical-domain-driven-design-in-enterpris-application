@@ -176,6 +176,24 @@ class RecoveryCodeTest {
                 .isInstanceOf(IllegalArgumentException.class);
     }
 
+    @Test
+    void 平文の組を発行するとその利用者の未使用の10個になり数が違えば発行しない() {
+        List<String> plain = IntStream.rangeClosed(1, RecoveryCode.CODES_PER_USER)
+                .mapToObj(i -> String.format("1a2b-%04d", i))
+                .toList();
+
+        List<RecoveryCode> issued = RecoveryCode.issueSet(USER, plain, HASHER, ISSUED_AT);
+
+        assertThat(issued)
+                .hasSize(RecoveryCode.CODES_PER_USER)
+                .allMatch(code -> code.userId().equals(USER)
+                        && !code.isUsed()
+                        && code.issuedAt().equals(ISSUED_AT));
+        assertThat(issued.get(2).matches(normalized("1a2b-0003"), HASHER)).isTrue();
+        assertThatThrownBy(() -> RecoveryCode.issueSet(USER, plain.subList(0, 9), HASHER, ISSUED_AT))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
     private static NormalizedRecoveryCode normalized(String value) {
         return RecoveryCode.normalize(value).orElseThrow();
     }

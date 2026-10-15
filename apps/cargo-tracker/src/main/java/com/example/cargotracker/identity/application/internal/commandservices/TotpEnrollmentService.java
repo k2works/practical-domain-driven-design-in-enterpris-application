@@ -15,7 +15,6 @@ import com.example.cargotracker.identity.domain.model.aggregates.UnreadableCrede
 import com.example.cargotracker.identity.domain.model.valueobjects.EncryptedSecret;
 import com.example.cargotracker.identity.domain.model.valueobjects.EnrollingUser;
 import com.example.cargotracker.identity.domain.model.valueobjects.TotpMatch;
-import com.example.cargotracker.identity.domain.model.valueobjects.TotpProvisioning;
 import com.example.cargotracker.shared.domain.UserId;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import java.time.Clock;
@@ -40,7 +39,7 @@ public class TotpEnrollmentService {
     private final TotpCredentialRepository credentials;
     private final RecoveryCodeRepository recoveryCodes;
     private final AuditRecordRepository auditRecords;
-    private final TotpSecretIssuer issuer;
+    private final TotpProvisioningStarter starter;
     private final RecoveryCodeGenerator recoveryCodeGenerator;
     private final RecoveryCodeHasher hasher;
     private final TotpCodeGenerator generator;
@@ -61,7 +60,7 @@ public class TotpEnrollmentService {
         this.credentials = credentials;
         this.recoveryCodes = recoveryCodes;
         this.auditRecords = auditRecords;
-        this.issuer = issuer;
+        this.starter = new TotpProvisioningStarter(issuer);
         this.recoveryCodeGenerator = recoveryCodeGenerator;
         this.hasher = hasher;
         this.generator = generator;
@@ -82,23 +81,8 @@ public class TotpEnrollmentService {
         if (credentials.findByUserId(owner).isPresent()) {
             return new EnrollmentStart.AlreadyEnrolled();
         }
-        if (pending.isPresent()) {
-            Optional<TotpProvisioning> reused = provisioningOf(owner, pending.get(), accountName);
-            if (reused.isPresent()) {
-                return new EnrollmentStart.Started(pending.get(), reused.get());
-            }
-        }
-        EncryptedSecret secret = issuer.issue(owner);
-        return new EnrollmentStart.Started(secret, issuer.provisioning(owner, secret, accountName));
-    }
-
-    private Optional<TotpProvisioning> provisioningOf(UserId owner, EncryptedSecret secret, String accountName) {
-        try {
-            return Optional.of(issuer.provisioning(owner, secret, accountName));
-        } catch (UnreadableCredentialException _) {
-            // 別の利用者の暗号文・壊れた暗号文・知らない鍵の版は使い続けず、新しく発行する（失敗へ倒す。T-42）
-            return Optional.empty();
-        }
+        TotpProvisioningStarter.Started started = starter.start(owner, pending, accountName);
+        return new EnrollmentStart.Started(started.secret(), started.provisioning());
     }
 
     /**
@@ -138,11 +122,7 @@ public class TotpEnrollmentService {
         // 回復コードの生成とハッシュ（bcrypt 10 回）は書き込みでないので、主キーの行ロックを取る前に済ませる（同時の登録の相手を
         // 待たせる時間を短くする。Bolt 31b の開発レビュー）
         List<String> plainCodes = recoveryCodeGenerator.generate();
-        List<RecoveryCode> issued = RecoveryCode.requireIssuedSet(
-                owner,
-                plainCodes.stream()
-                        .map(plain -> RecoveryCode.issue(owner, plain, hasher, now))
-                        .toList());
+        List<RecoveryCode> issued = RecoveryCode.issueSet(owner, plainCodes, hasher, now);
         // 資格の追加（主キー）を先に行い、同時の登録では回復コードを置き換える前に後の登録を止める（議題 2 の①）
         credentials.add(credential);
         recoveryCodes.replaceAll(owner, issued);
