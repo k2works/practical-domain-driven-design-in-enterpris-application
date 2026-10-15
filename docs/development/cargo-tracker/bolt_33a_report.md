@@ -3,7 +3,7 @@ type: Plan
 title: "Bolt 33a 終了報告 - password の再設定（A-06。US-18 AC8 の後半）"
 description: "W5 の 16 本目の Bolt の終了報告。メールのリンクを開くとトークンを確かめて session に ID だけを置き、トークンのない URL の A-06 で新しい password（12〜64 文字、72 バイト以下、よく使われる password でない）を設定できるようにした。完了は 1 つのトランザクションでトークンを 1 回だけ使い、コミットの後にその利用者の session をすべて失効させ、A-01 に完了の知らせを出す。開発レビューで session 固定化と、今の session を捨てる順序（決定と実装の食い違い）を見つけて直した。"
 tags: [plan]
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-15T06:14:01Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-15T06:32:52Z }
 ---
 
 # Bolt 33a 終了報告 - password の再設定（A-06。US-18 AC8 の後半）
@@ -43,7 +43,7 @@ generated: { by: anthropic/claude-opus-5-5, at: 2026-10-15T06:14:01Z }
 | 2. ドメインと永続化とポート | `PasswordPolicy`（12〜64 文字、72 バイト）と `PasswordPolicyViolation`、よく使われる password の一覧（SecLists の上位 100 万語から 46,146 語。出典は NOTICE）、`BcryptPasswordHasher`、`SpringSessionUserSessionRevoker`、`User.changePassword`、トークンの `findById`・`markUsed`（条件付きの更新）と契約テスト | `eab2577` |
 | 3. 完了のサービス | `open`・`isUsable`・`complete`（方針の確認はトークンを使う前、1 つのトランザクション、前の未使用のトークンの無効化、監査、コミットの後の失効、失効の失敗は警告のログ） | `eab2577` |
 | 4. 画面 | リンクを開く（PRG、`Referrer-Policy: no-referrer`）、A-06、無効なリンクの案内、A-01 の完了の知らせ、A-03 の文言、仮の A-06 のテンプレートを消した。セキュリティの統合テスト、画面の層のシナリオ 3 つ（`@demo-bolt-33a/reset`） | `75cc50c` |
-| 5. マニュアルとデモ | 2.4・2.6・付録 B（Q1-2・Q1-7・Q1-8）、A-06 と完了の知らせのキャプチャ（新規）と A-03 の撮り直し、デモ環境の手順書、デモの動画（`docs/assets/demo/bolt-33a/reset.webm`。開発レビューの直しの後に録画した。T-105。手元に ffmpeg がなく、動画の中身は目で確かめていない。録画したシナリオの確かめはすべて通った） | `c53566b`、`3fc64d5` |
+| 5. マニュアルとデモ | 2.4・2.6・付録 B（Q1-2・Q1-7・Q1-8）、A-06 と完了の知らせのキャプチャ（新規）と A-03 の撮り直し、デモ環境の手順書、デモの動画（`docs/assets/demo/bolt-33a/reset.webm`。開発レビューの直しの後に録画した。T-105。3.4 秒。フレームを切り出して、依頼・受付の知らせ・A-06・入力・完了の知らせ・認証コード・見積依頼の一覧が映っていることを確かめた。32c〜32f の動画も 2〜4 秒） | `c53566b`、`3fc64d5` |
 | 6. 品質と報告 | SonarQube、開発レビュー（5 観点）と直し、#49、この報告 | `bd47546`、`3fc64d5`、この報告のコミット |
 
 ## 指標
