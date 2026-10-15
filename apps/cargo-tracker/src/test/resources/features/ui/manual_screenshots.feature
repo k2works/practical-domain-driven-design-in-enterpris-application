@@ -12,6 +12,14 @@
     かつ 画面を "02-login" として撮る
     かつ 画面 "/password-reset" を開く
     かつ 画面を "02-password-reset" として撮る
+    # 2 章 password の再設定（A-06）と完了の知らせ（Bolt 33a）。ログインの前に、依頼からリンクを開くまでを通す
+    かつ 荷主担当者の利用者が登録されている
+    かつ ログインの画面で "password を忘れた場合" を開く
+    かつ 再設定の依頼の画面で登録したメールアドレスを入れて送る
+    かつ 届いたメールの再設定のリンクを開く
+    かつ 画面を "02-password-reset-new" として撮る
+    かつ 画面 "/login?reset-completed" を開く
+    かつ 画面を "02-login-reset-completed" として撮る
     かつ 画面 "/session-expired" を開く
     かつ 画面を "02-session-expired" として撮る
     # 3 章 見積依頼（作成の前の空の画面、提出の後の詳細、一覧）
