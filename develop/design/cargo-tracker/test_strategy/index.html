@@ -1924,6 +1924,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#release-10" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Release 1.0 の受入条件（照合の表の前の対応）
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -7993,6 +8004,41 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../adr/cargo-tracker/017-notification-module-and-mail/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-017 通知モジュールとメール送信
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--draft"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -11114,9 +11160,9 @@ src/test/java/.../ui/                     画面の層のステップ定義（@u
 </tr>
 <tr>
 <td style="text-align: left;">N-INV-01〜03（通知の本文、重複なし、失敗の記録）</td>
+<td style="text-align: left;">○（Bolt 33: 通知の状態の遷移、失敗の理由の長さ、同じ <code>event_id</code> と宛先は <code>AlreadySent</code>）</td>
 <td style="text-align: left;">○</td>
-<td style="text-align: left;">○</td>
-<td style="text-align: left;">○（イベントの再配信で 1 通）</td>
+<td style="text-align: left;">○（イベントの再配信で 1 通。Bolt 33: <code>status = 'PENDING'</code> を条件にした更新、UK（<code>event_id</code>、<code>recipient_user_id</code>）、Mailpit で件名・本文・宛先）</td>
 <td style="text-align: left;">メールの本文の開示テスト</td>
 </tr>
 <tr>
@@ -11160,6 +11206,13 @@ src/test/java/.../ui/                     画面の層のステップ定義（@u
 <td style="text-align: left;">—</td>
 <td style="text-align: left;">○（セキュリティの統合テスト）</td>
 <td style="text-align: left;">—</td>
+</tr>
+<tr>
+<td style="text-align: left;">IA-INV-12（再設定のトークン）</td>
+<td style="text-align: left;">○（Bolt 33: 期限の 29 分 59 秒と 30 分、無効化、ハッシュだけを持つ。依頼のサービスの監査の結果と理由（有効・登録なし・止められた利用者・所属企業の無効）。使う側は Bolt 33a）</td>
+<td style="text-align: left;">○（Bolt 33: <code>@US-18-AC8</code>。登録ありならリンクが届くことを先に確かめてから、登録なしで届かないこと）</td>
+<td style="text-align: left;">○（Bolt 33: ハッシュで探す、新しい発行で前を無効、<code>request_id</code> の一意。ハンドラーの繰り返しの 59 秒と 1 分、同じ依頼の ID の再配信で 2 通送らない、送信の <code>Failed</code> で完了、依頼がロールバックしたら呼ばれない、同時の 2 つの発行の直列（T-100）。発行記録・トークンの表・ログに平文のトークンと URL がない）</td>
+<td style="text-align: left;">○（Bolt 33: 登録の有無で応答（リダイレクト先・本文）が同じ、応答が送信を待たない）</td>
 </tr>
 <tr>
 <td style="text-align: left;">ED-INV-01（情報源 0 件で開始不可）</td>
@@ -11324,7 +11377,11 @@ src/test/java/.../ui/                     画面の層のステップ定義（@u
 </tr>
 <tr>
 <td style="text-align: left;">通知</td>
-<td style="text-align: left;">メールを受けるだけのコンテナで、通知の宛先・件名・本文（料金などを含まない）と、送信失敗の記録を確かめる</td>
+<td style="text-align: left;">メールを受けるだけのコンテナ（Testcontainers の Mailpit。Bolt 33、ADR-017）で、通知の宛先・件名・本文（料金などを含まない）と、送信失敗の記録を確かめる。Bolt 33 は password の再設定のメールの分: SMTP の送信アダプターで件名・本文・宛先が届く、送信のサービスが PENDING から SENT・FAILED にする、同じ <code>event_id</code> と宛先で 2 通送らない。dev のログに出す送信（<code>LoggingMailSender</code>）はログの取り込みを送信の間だけにして確かめ（T-111）、守りの式（dev かつ staging・prod と併用しない）が外れたら起動を止めることを確かめる</td>
+</tr>
+<tr>
+<td style="text-align: left;">password の再設定の依頼</td>
+<td style="text-align: left;">Bolt 33（US-18 AC8 の前半）。<code>/password-reset</code> が未認証で開ける（<code>/password-reset/x</code> は公開しない）、CSRF のトークンがない送信は 403、送信の後は <code>/login?reset-requested</code> に戻り、登録の有無・止められた利用者・所属企業の無効で応答（リダイレクト先・本文）が同じ、応答がハンドラーを待たない（送信アダプターを遅くする）、ログイン済み・password の段の session で開いた場合（T-102）。発行と送信を依頼のトランザクションの中に戻す違反で、応答が送信を待つテストが落ちることを確かめる（T-112）</td>
 </tr>
 </tbody>
 </table>
@@ -11421,7 +11478,7 @@ src/test/java/.../ui/                     画面の層のステップ定義（@u
 </tr>
 <tr>
 <td style="text-align: left;">認証</td>
-<td style="text-align: left;">ログイン、初回の TOTP の登録、password の再設定、ロック、session の失効の警告と延長（Bolt 32b。無操作の警告と延長、8 時間の警告、タブの間の同期、期限の到来の案内。<code>session_timeout_ui.feature</code>）、失効後の再認証の案内と開いていた画面への復帰（Bolt 32e。無操作と 8 時間の失効の後に画面を開き直す・期限の到来の案内のリンクを押すと、ログインし直した後に同じ画面に戻る。サーバーの session の失効はセキュリティの統合テスト <code>ReturnAfterExpirySecurityIntegrationTest</code> で、画面は <code>session_timeout_ui.feature</code> で、session の行を古くして確かめる）、送信していない入力の保持と送信の後の失効（Bolt 32f。警告の期限の到来・「画面を開き直す」・送信の前にブラウザの sessionStorage の入力の控えに写し、同じ利用者が同じ画面に戻ると戻って知らせが出る。送信が拒まれた画面（A-03・CSRF の 403）で拒まれたら、ログインし直した後の画面に案内が出る（認可の 403 では出ない）。捨てる条件（別の利用者、8 時間と 7 時間 59 分の対、送信が届いた、送信が届いて同じ画面に戻った、案内と知らせの消す、ログアウト、期限の到来の取り消し）と、CSRF のトークン（値を変えてから。hidden の欄は値を変えると初期の値も変わるので、変えた欄だけを写す仕組みでも写らず、許す一覧の退行はこのシナリオでは見分けられない）・ファイルを写さないことは、同じ流れで先に控えが写っていることを確かめてから見る。戻した欄に画面の表示が追随し、消すと初めの状態に戻ることは貨物種別で見る。password を写さないことは、写す画面（ログインした画面の業務のフォーム）に password の欄がないので画面の層では確かめない（写す欄を許す一覧で決めている）。画面は <code>session_timeout_ui.feature</code> で sessionStorage を読んで確かめ、<code>data-user</code> と知らせの領域と公開の画面のスクリプト、A-03 の印、CSRF と認可の 403 の印は <code>SessionTimerSecurityIntegrationTest</code>、利用者の鍵は <code>SessionTimerAdviceTest</code> で確かめる）</td>
+<td style="text-align: left;">ログイン、初回の TOTP の登録、password の再設定（Bolt 33 は依頼まで。<code>login_ui.feature</code> の <code>@US-18-AC8</code>: A-01 から A-05 を開いて送ると A-01 に知らせが出て、登録された利用者にはリンクを含むメールが届く（Mailpit の API で確かめる）。登録のないアドレスでも同じ知らせが出てメールは届かない（先に登録ありで届くことを確かめる）。知らせの印 <code>reset-requested</code> がなければ出ない（T-124）。axe の違反 0。A-06 でリンクを開いて設定する流れは Bolt 33a）、ロック、session の失効の警告と延長（Bolt 32b。無操作の警告と延長、8 時間の警告、タブの間の同期、期限の到来の案内。<code>session_timeout_ui.feature</code>）、失効後の再認証の案内と開いていた画面への復帰（Bolt 32e。無操作と 8 時間の失効の後に画面を開き直す・期限の到来の案内のリンクを押すと、ログインし直した後に同じ画面に戻る。サーバーの session の失効はセキュリティの統合テスト <code>ReturnAfterExpirySecurityIntegrationTest</code> で、画面は <code>session_timeout_ui.feature</code> で、session の行を古くして確かめる）、送信していない入力の保持と送信の後の失効（Bolt 32f。警告の期限の到来・「画面を開き直す」・送信の前にブラウザの sessionStorage の入力の控えに写し、同じ利用者が同じ画面に戻ると戻って知らせが出る。送信が拒まれた画面（A-03・CSRF の 403）で拒まれたら、ログインし直した後の画面に案内が出る（認可の 403 では出ない）。捨てる条件（別の利用者、8 時間と 7 時間 59 分の対、送信が届いた、送信が届いて同じ画面に戻った、案内と知らせの消す、ログアウト、期限の到来の取り消し）と、CSRF のトークン（値を変えてから。hidden の欄は値を変えると初期の値も変わるので、変えた欄だけを写す仕組みでも写らず、許す一覧の退行はこのシナリオでは見分けられない）・ファイルを写さないことは、同じ流れで先に控えが写っていることを確かめてから見る。戻した欄に画面の表示が追随し、消すと初めの状態に戻ることは貨物種別で見る。password を写さないことは、写す画面（ログインした画面の業務のフォーム）に password の欄がないので画面の層では確かめない（写す欄を許す一覧で決めている）。画面は <code>session_timeout_ui.feature</code> で sessionStorage を読んで確かめ、<code>data-user</code> と知らせの領域と公開の画面のスクリプト、A-03 の印、CSRF と認可の 403 の印は <code>SessionTimerSecurityIntegrationTest</code>、利用者の鍵は <code>SessionTimerAdviceTest</code> で確かめる）</td>
 <td style="text-align: left;">US-18、US 横断受入条件</td>
 </tr>
 </tbody>
@@ -11997,6 +12054,32 @@ src/test/java/.../ui/                     画面の層のステップ定義（@u
 </tbody>
 </table>
 <p>注: US-18 は Release 0.1 の #6 の AC2 だけを照合に入れる。Bolt 14 で Release 1.0 の #13 から前倒しした AC1 の password と session の部分・AC4・AC5 は、セキュリティの統合テストなどに移した（<code>AuthenticationSecurityIntegrationTest</code>・<code>SessionLifetimeFilterTest</code>・<code>UserTest</code>・<code>AuditRecordTest</code>）。Release 1.0 の表で扱う。主成功の流れ（<code>main_flow_ui.feature</code>、<code>@main-flow</code>）は流れの通しを確かめるシナリオで、受入条件のタグを付けない（照合の数に入れない）。照合は Cucumber の解析器で Feature を Pickle にし、機能・ルール・シナリオ・例のタグを継承した結果で数え、<code>@wip</code> の Pickle を除く。画面の層のシナリオは逐次に実行する（並行実行を有効にしない。「一覧の先頭」を確かめるシナリオがあるため）。</p>
+<h3 id="release-10">Release 1.0 の受入条件（照合の表の前の対応）<a class="headerlink" href="#release-10" title="Permanent link">&para;</a></h3>
+<p>Release 1.0 の受入条件の照合の表はまだ作っていない（上の注）。分けて作る受入条件は、どの Bolt のどのテストで確かめるかを先にここに書き、照合の表を作るときに移す。<code>AcceptanceCriteriaCoverageTest</code> はこの表を読まない。</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">ストーリー</th>
+<th style="text-align: left;">受入条件</th>
+<th style="text-align: left;">Bolt</th>
+<th style="text-align: left;">確かめるもの</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">US-18</td>
+<td style="text-align: left;">AC8 の前半（A-05 で依頼し、登録された有効な利用者にだけ 30 分・1 回だけのリンクが届く。登録の有無を示さない）</td>
+<td style="text-align: left;">33</td>
+<td style="text-align: left;"><code>@US-18-AC8</code>（<code>login_ui.feature</code>）、password の再設定の依頼のセキュリティの統合テスト、IA-INV-12 の単体・統合テスト</td>
+</tr>
+<tr>
+<td style="text-align: left;">US-18</td>
+<td style="text-align: left;">AC8 の後半（A-06 でリンクを開いて新しい password を設定し、A-01 でログインし直す。期限切れ・使用済みのリンク）</td>
+<td style="text-align: left;">33a</td>
+<td style="text-align: left;">Bolt 33a の計画で決める</td>
+</tr>
+</tbody>
+</table>
 <h2 id="_18">後続工程への引継ぎ<a class="headerlink" href="#_18" title="Permanent link">&para;</a></h2>
 <table>
 <thead>

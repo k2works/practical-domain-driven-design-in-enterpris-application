@@ -7982,6 +7982,41 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../adr/cargo-tracker/017-notification-module-and-mail/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-017 通知モジュールとメール送信
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--draft"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -11124,7 +11159,7 @@
 <tr>
 <td style="text-align: left;">SEC-08</td>
 <td style="text-align: left;">password の回復</td>
-<td style="text-align: left;">登録メールアドレスへ 1 回だけ使える再設定リンク（30 分有効）を送る。再設定後も TOTP は必要。再設定は監査記録に残す</td>
+<td style="text-align: left;">登録メールアドレスへ 1 回だけ使える再設定リンク（30 分有効）を送る。再設定後も TOTP は必要。再設定は監査記録に残す。Bolt 33 で依頼までを作る（A-06 は Bolt 33a）: トークンは 32 バイトの乱数（URL 安全な Base64）で、表には SHA-256 のハッシュだけを置き、平文は表・発行記録・ログに残さない。発行から 30 分で使えなくなり、1 回だけ使える。同じ利用者に新しく発行すると前の未使用のトークンは使えなくなる。同じ利用者への前の発行から 1 分以内の依頼し直しでは発行も送信もしない。登録の有無・止められた利用者かを画面の応答（リダイレクト先と知らせ）で示さない。応答はトークンの発行も送信も待たない（依頼の後のモジュールのイベントのハンドラーで発行して送る）。リンクは設定の公開の base URL（<code>cargotracker.public-base-url</code>）から組み立て、request の Host ヘッダーから組み立てない。A-06 は password の要素を与えず、設定したら A-01 に戻し、新しい password と TOTP でログインし直す（<a href="../../../adr/cargo-tracker/017-notification-module-and-mail/">ADR-017</a>、IA-INV-12）</td>
 <td style="text-align: left;">提案</td>
 <td style="text-align: left;">多要素を回復の手順でも迂回させない</td>
 </tr>
@@ -11227,7 +11262,7 @@
 <tr>
 <td style="text-align: left;">SEC-20</td>
 <td style="text-align: left;">WAF</td>
-<td style="text-align: left;">AWS WAF のマネージドルール（一般的な攻撃、既知の不正入力）を有効にする。ログイン（<code>POST /login</code>・<code>POST /login/totp</code>）に送信元ごとの流量の規則を置き、利用者を変えながら password を試す攻撃（S-02。利用者ごとのロックでは止まらない）と、未認証の request で session の行が作られる速さを抑える（W10。Bolt 32 の開始準備で決めた。それまでは受け入れる。ADR-011 の決定 9）</td>
+<td style="text-align: left;">AWS WAF のマネージドルール（一般的な攻撃、既知の不正入力）を有効にする。ログイン（<code>POST /login</code>・<code>POST /login/totp</code>）に送信元ごとの流量の規則を置き、利用者を変えながら password を試す攻撃（S-02。利用者ごとのロックでは止まらない）と、未認証の request で session の行が作られる速さを抑える（W10。Bolt 32 の開始準備で決めた。それまでは受け入れる。ADR-011 の決定 9）。password の再設定の依頼（<code>POST /password-reset</code>。A-05）にも送信元ごとの流量の規則を置く（W10。Bolt 33。同じ利用者への 1 分以内の依頼し直しはアプリケーションで送らないが、送信元ごとの流量は WAF で抑える）</td>
 <td style="text-align: left;">提案</td>
 </tr>
 </tbody>
@@ -11246,7 +11281,7 @@
 <tr>
 <td style="text-align: left;">AUD-01</td>
 <td style="text-align: left;">記録の対象</td>
-<td style="text-align: left;">状態を変える全操作、認証の成功・失敗・ロック、権限の変更、参照許可の発行・取消し、権限外のアクセス試行、データの訂正、外部原本の採否。認証と権限外のアクセス試行は、ドメインイベントを経ずに同期で記録する（IA-INV-08）。ロックは、その失敗でロックしたときだけ <code>ACCOUNT_LOCKED</code> を 1 行、失敗の回数と同じトランザクションで記録し、ロック中の試行は <code>LOGIN_FAILED</code>（理由 <code>LOCKED</code>）で記録する（Bolt 32）。request ごとの確かめで利用停止・無効な企業・利用者なしを見つけて session を捨てたときは <code>SESSION_REVOKED</code> を記録する（Bolt 32c）</td>
+<td style="text-align: left;">状態を変える全操作、認証の成功・失敗・ロック、権限の変更、参照許可の発行・取消し、権限外のアクセス試行、データの訂正、外部原本の採否。認証と権限外のアクセス試行は、ドメインイベントを経ずに同期で記録する（IA-INV-08）。ロックは、その失敗でロックしたときだけ <code>ACCOUNT_LOCKED</code> を 1 行、失敗の回数と同じトランザクションで記録し、ロック中の試行は <code>LOGIN_FAILED</code>（理由 <code>LOCKED</code>）で記録する（Bolt 32）。request ごとの確かめで利用停止・無効な企業・利用者なしを見つけて session を捨てたときは <code>SESSION_REVOKED</code> を記録する（Bolt 32c）。password の再設定の依頼は <code>PASSWORD_RESET_REQUESTED</code> を依頼と同じトランザクションで記録する（有効な利用者は成功、止められた利用者・所属企業の無効・登録のないアドレスは理由付きの失敗。登録のないアドレスは操作者を空にし、アドレスを残さない。Bolt 33。ADR-012）</td>
 <td style="text-align: left;">提案（NFR-AUDIT-01、US-16〜19）</td>
 </tr>
 <tr>
@@ -11427,6 +11462,7 @@
 </tr>
 </tbody>
 </table>
+<p>password の再設定のトークン（<code>identity.password_reset_token</code>）と送信の記録（<code>notification.notification</code>）の保持の期間は、まだ決めていない。W10 の運用準備で決める（表は Bolt 33 で作る）。</p>
 <p>保持期間の 7 年は、取引の記録として一般的な期間を仮定した。業界の規制や顧客との契約で長い期間が必要なら、決定者が変更する（決定者: 管理・コンプライアンス責任者）。</p>
 <h2 id="nfr-access-01">アクセシビリティと使用性（NFR-ACCESS-01）<a class="headerlink" href="#nfr-access-01" title="Permanent link">&para;</a></h2>
 <table>

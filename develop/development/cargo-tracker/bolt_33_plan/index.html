@@ -7898,6 +7898,41 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../adr/cargo-tracker/017-notification-module-and-mail/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-017 通知モジュールとメール送信
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--draft"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -10701,7 +10736,7 @@
 <h2 id="_8">ステップ計画<a class="headerlink" href="#_8" title="Permanent link">&para;</a></h2>
 <p>状態の記号: <code>[ ]</code> 未着手、<code>[-]</code> 進行中、<code>[?]</code> 承認待ち、<code>[x]</code> 完了。各ステップの終わりに <code>check</code> が緑であることと、計画からの変更を設計文書に反映したこと（T-53）を確かめ、push して CI を確かめる（T-26、T-65、T-118）。コミットは pathspec で作る（T-84、T-110）。複数行の書き換えはスクリプトのファイルにする（T-103）。ステップ 1 を push してからコードのステップを push する（T-109）。共通の部品を変えたら <code>check</code> を先に流す（T-120）。</p>
 <ul class="task-list">
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>1. 設計文書と ADR-017</strong> 【承認ゲート: 設計文書】</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>1. 設計文書と ADR-017</strong> 【承認ゲート: 設計文書】</li>
 <li>ADR-017（新規。通知モジュールとメール送信）: 公開 API と <code>identity</code> からの同期の呼び出し、通知は <code>identity</code> に依存しない制約（W9 の宛先の渡し方は W9 の開始準備）、SMTP と dev のログに出す送信と守り、統合テストの Mailpit、送信を依頼の応答から切り離す形（<code>@ApplicationModuleListener</code> にトークンの発行を移し、イベントに秘密を載せない）、送信の記録と <code>target_ref</code></li>
 <li>domain_model.md: <code>identity</code> に再設定のトークン（概念・IA-INV-12）、<code>PasswordResetRequested</code>、用語集（<code>PasswordResetToken</code>・<code>PasswordResetRequestService</code>・<code>PasswordResetMailEventHandler</code>・ポート 2 つ・<code>PASSWORD_RESET_REQUESTED</code>。:201）。通知の用語（:206。利用者全般へのメール）、節の冒頭（:1063。依存の制約）、集約の表の「含むもの」（event_id・失敗の理由）、種類の表に password の再設定、公開 API と送信のサービスと <code>MailSender</code> の用語、リポジトリの行（:1270）、一般の領域の行（:74）</li>
 <li>data_model.md: <code>identity.password_reset_token</code> の表（列・制約・コメント・インデックス）、<code>notification</code> の表をこの Bolt で作ること・<code>PASSWORD_RESET</code> の <code>target_ref</code> と「本文を再現しない」例外、2 つの表が版の列を持たない例外（:152-153。tracking_record の書き方（:759）に倣う）、audit_record の action の範囲（:925）、インデックスの付表とドメインモデルとの対応の表（:1145-1176）</li>
@@ -10930,6 +10965,11 @@
 </tr>
 </thead>
 <tbody>
+<tr>
+<td style="text-align: left;">2026-10-15</td>
+<td style="text-align: left;"><code>/goal Bolt33</code> を受けた。承認ゲートでは止めずに進め、止めなかったゲートごとに根拠を書いて終了報告の承認の議題に置く（T-36）。途中で層の規則の例外が要るとき、5 時間を超えると見えたときは止めて諮る</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5、指示 human:kakimomokuri</td>
+</tr>
 <tr>
 <td style="text-align: left;">2026-10-15</td>
 <td style="text-align: left;">承認（確認ポイント 1〜19 は推奨のまま）。ステップごとの承認ゲートで止めて進める</td>
