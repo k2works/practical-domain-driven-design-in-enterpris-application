@@ -5452,6 +5452,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../development/cargo-tracker/bolt_33e_report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 33e 終了報告
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../development/cargo-tracker/release_report-0_1/" class="md-nav__link">
         
   
@@ -10956,6 +10984,7 @@
 </ul>
 <h2 id="_9">改訂の経緯<a class="headerlink" href="#_9" title="Permanent link">&para;</a></h2>
 <ul>
+<li>2026-10-16: Bolt 33e のステップ 1 で、決定 3 の期間の置き場所 <code>SessionPolicy</code> に期限の判定 <code>isExpired</code>（ちょうどの時刻は期限切れ。時計を持たない純粋な関数）を足し、判定していた 4 か所が使うことにした（「ふるまいは持たず」を改めた。Bolt 33e の開始準備の決定 2。human:kakimomokuri が決定）。</li>
 <li>2026-10-15: Bolt 33c の実装で、決定 3 の覚えた要求を「<code>RequestCache</code> を 1 つの Bean にして 3 つの部品で共有する」から「Bean は作らず、属性の名前 <code>SessionKeys.SAVED_REQUEST</code> だけを共有する」に改めた（<code>RequestCache</code> の Bean を作ると、Spring Security の <code>RequestCacheConfigurer</code> が型でその Bean を見つけ、<code>http.requestCache</code> に渡さなくても未認証の入口で使うので、未認証の入口が覚える範囲が変わるため。human:kakimomokuri が決定）。あわせて、テンプレートの URL は画面の層の <code>SessionUrlsAdvice</code> がモデルで渡すこと（Thymeleaf のリンク式は静的なクラスを参照できない）と、空になった認証の入口の定数のクラスを消したことを書いた。</li>
 <li>2026-10-15: Bolt 33c のステップ 1 で、決定 3 の属性の名前の置き場所を application 層の <code>SessionKeys</code>（<code>identity.application.internal.session</code>）、期間の置き場所をドメインルール <code>SessionPolicy</code> に改め（2 つの定数で持ち一致をテストで守る形をやめた）、覚えた要求の <code>RequestCache</code> を 1 つの Bean にして 3 つの部品で共有し Spring Security の既定には渡さないことを書いた。決定 6 に認証の入口の例外として <code>application.internal.session</code> を足し、「例外を <code>queryservices</code> に広げない」と矛盾しない理由（ふるまいを持たない名前だけで、業務の判断を入口に持ち込まない）を書いた（Bolt 33c の開始準備の決定 1〜3 と決定 2 の (4)・(5)。human:kakimomokuri が決定）。</li>
 <li>2026-10-15: Bolt 33b の開発レビューで、決定 3 の回復コードでログインした印を 2 つの属性（利用者の ID と時刻）にし、印はログインから 15 分だけ有効（状態 NONE・ACTIVE・EXPIRED）と書いた。「続ける」を POST にしたこと、A-08 の URL を 33c で直す 6 組目に数えることを足し、コンプライアンスの A-08 の全 URL の見張りを事実（自動で含む）に直した（印の期限は human:kakimomokuri が決定）。</li>
