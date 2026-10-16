@@ -11313,7 +11313,7 @@
 <td style="text-align: left;">7</td>
 <td style="text-align: left;"><strong>試行の記録の範囲と書き方</strong></td>
 <td style="text-align: left;">3〜5</td>
-<td style="text-align: left;">範囲外の詳細・確認・確定のどれも 1 回の request につき 1 行。一覧は SQL で絞るので試行にならない。書き手は controller だけ（上の表）。役割の変更のトランザクションの外で単独に書き、<code>REQUIRES_NEW</code> は使わない（入れ子にせず接続を 2 本持たない。ADR-011:292 と同じ考え）。追記が失敗したら 500。決定済み（計画の承認）</td>
+<td style="text-align: left;">決定済み（計画の承認、開発レビューの後に改めた。human:kakimomokuri）: 試行は確定の POST でだけ 1 行書く（GET は CSRF の守りがなく、他サイトから記録を書かせられるので記録しない。AC2・UC-16 の 2a は権限の変更の試行を求める）。一覧は SQL で絞るので試行にならない。書き手は controller の確定だけ（記録のサービスに依存してよいのは画面の層だけ。ArchUnit）。役割の変更のトランザクションの外で単独に書き、<code>REQUIRES_NEW</code> は使わない。追記が失敗したら 500</td>
 </tr>
 <tr>
 <td style="text-align: left;">8</td>
@@ -11380,6 +11380,11 @@
 <td style="text-align: left;">2026-10-16</td>
 <td style="text-align: left;">計画を承認した。共通の 404 の画面を作り、管理範囲の判定に自分の詳細の例外を作らない（確認ポイント 5・8）。確認ポイント 6・7・9 ほか残りを承認した</td>
 <td style="text-align: left;">anthropic/claude-opus-5-5、承認 human:kakimomokuri</td>
+</tr>
+<tr>
+<td style="text-align: left;">2026-10-16</td>
+<td style="text-align: left;">開発レビューの後: 範囲外の試行は確定の POST でだけ記録する（GET は CSRF の守りがなく、他サイトから記録を書かせられるため。確認ポイント 7 を改めた。human:kakimomokuri が決定）。照会は管理範囲を先に読み、いない利用者と読み出しの量をそろえる。ポートは管理範囲の値を返す。記録のサービスに依存してよいのは画面の層だけ（ArchUnit）。2 章に 2.8「画面が見つかりません」</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5</td>
 </tr>
 </tbody>
 </table>

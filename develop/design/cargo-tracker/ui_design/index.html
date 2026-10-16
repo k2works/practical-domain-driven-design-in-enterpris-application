@@ -11988,7 +11988,7 @@
 <td style="text-align: left;">S-20</td>
 <td style="text-align: left;">利用者一覧・詳細</td>
 <td style="text-align: left;">企業と利用者、役割、担当範囲を管理する</td>
-<td style="text-align: left;">登録、役割付与（確認の領域を経る）、利用停止、TOTP の解除（Bolt 34 は一覧・詳細と役割の付与・取消し。管理範囲は 34b、利用停止は 34d、登録・担当範囲・TOTP の解除は W6）</td>
+<td style="text-align: left;">登録、役割付与（確認の領域を経る）、利用停止、TOTP の解除（Bolt 34 は一覧・詳細と役割の付与・取消し。管理範囲（担当範囲のうちシステム管理者の企業の割り当て）の読み出しは 34b、利用停止は 34d、利用者の登録・担当範囲の登録の画面・TOTP の解除は W6）</td>
 <td style="text-align: left;">システム管理者</td>
 <td style="text-align: left;">UC-16、US-16、US-18</td>
 </tr>
@@ -12140,7 +12140,7 @@
 <tr>
 <td style="text-align: left;">S-20 利用者の一覧</td>
 <td style="text-align: left;"><code>GET /staff/users</code></td>
-<td style="text-align: left;">Bolt 34（US-16 の一部）。システム管理者だけ（<code>/staff/users/**</code> は <code>/staff/**</code> より先に認可を書く。ほかの役割は A-04）。企業名・表示名の順に、企業名・表示名・メールアドレス・利用状態・役割（<code>Role</code> の表示名）を表で示し、表示名から詳細へ。絞り込み・ページ送りはない（パイロットの利用者は少ない）。Bolt 34b から、管理範囲（<code>user_assignment</code> の <code>COMPANY</code>）の企業の利用者だけを示す（IA-INV-14）。割り当てのないシステム管理者には「管理する企業の利用者はいません。」</td>
+<td style="text-align: left;">Bolt 34（US-16 の一部）。システム管理者だけ（<code>/staff/users/**</code> は <code>/staff/**</code> より先に認可を書く。ほかの役割は A-04）。企業名・表示名の順に、企業名・表示名・メールアドレス・利用状態・役割（<code>Role</code> の表示名）を表で示し、表示名から詳細へ。絞り込み・ページ送りはない（パイロットの利用者は少ない）。Bolt 34b から、管理範囲（<code>user_assignment</code> の <code>COMPANY</code>）の企業の利用者だけを示す（IA-INV-14）。割り当てのないシステム管理者には「管理する企業の利用者はいません。一覧に出るはずの企業がないときは、運用の担当に管理範囲の割り当てをご依頼ください。」</td>
 </tr>
 <tr>
 <td style="text-align: left;">S-20 利用者の詳細</td>
@@ -12150,7 +12150,7 @@
 <tr>
 <td style="text-align: left;">S-20 役割の変更の確認</td>
 <td style="text-align: left;"><code>GET /staff/users/{利用者 ID}/role-changes/confirmation?roles={役割}&amp;version={版}</code>、<code>POST /staff/users/{利用者 ID}/role-changes/confirmation</code></td>
-<td style="text-align: left;">Bolt 34。画面そのものが確認の領域（S-07・S-09 と同じ）。対象の利用者・今の役割・足す役割・外す役割・影響（相手の次の操作から効く）・実行者・回復手段（元に戻すには、もう一度役割を変更する）と「変更する」「戻る」（選んだ役割と画面の版を残して詳細へ。確認の後に入った更新は確定の時に古い版として分かる）。POST は同じ判定を通してから、版を条件に役割を変え、監査記録 <code>ROLES_CHANGED</code> を同じトランザクションで書き、詳細へ PRG。拒否は詳細にエラー要約で示し、古い版は「この利用者の情報が先に更新されました。最新の内容を確かめてから、もう一度変更してください。」で最新の詳細を開き直す（誰が変えたかは言わない。password の再設定でも版が上がるため）。Bolt 34b から、詳細・確認・確定はどれも先に管理範囲を確かめ（確定の POST も先に詳細を読む）、範囲外は存在しない利用者と同じ 404（共通の 404 の画面）にして、試行を監査記録 <code>ADMIN_SCOPE_DENIED</code> に 1 回の request につき 1 行残す</td>
+<td style="text-align: left;">Bolt 34。画面そのものが確認の領域（S-07・S-09 と同じ）。対象の利用者・今の役割・足す役割・外す役割・影響（相手の次の操作から効く）・実行者・回復手段（元に戻すには、もう一度役割を変更する）と「変更する」「戻る」（選んだ役割と画面の版を残して詳細へ。確認の後に入った更新は確定の時に古い版として分かる）。POST は同じ判定を通してから、版を条件に役割を変え、監査記録 <code>ROLES_CHANGED</code> を同じトランザクションで書き、詳細へ PRG。拒否は詳細にエラー要約で示し、古い版は「この利用者の情報が先に更新されました。最新の内容を確かめてから、もう一度変更してください。」で最新の詳細を開き直す（誰が変えたかは言わない。password の再設定でも版が上がるため）。Bolt 34b から、詳細・確認・確定はどれも先に管理範囲を確かめ（確定の POST も先に詳細を読む）、範囲外は存在しない利用者と同じ 404（共通の 404 の画面）にする。試行は確定の POST でだけ監査記録 <code>ADMIN_SCOPE_DENIED</code> に 1 行残す（GET は CSRF の守りがなく他サイトから記録を書かせられるので記録しない。Bolt 34b の開発レビューの決定）</td>
 </tr>
 <tr>
 <td style="text-align: left;">A-01 ログイン</td>
@@ -12200,12 +12200,12 @@
 <tr>
 <td style="text-align: left;">A-04 権限なし</td>
 <td style="text-align: left;">403 の応答の画面（URL は開いた URL のまま）</td>
-<td style="text-align: left;">Bolt 14。役割にない領域（荷主の <code>/staff/**</code>、営業の <code>/customer/**</code> と <code>/staff/routing-cases/**</code>、経路設計者のほかの <code>/staff/**</code>（Bolt 17）、追跡管理者以外の <code>/staff/tracking-records/**</code> と追跡管理者のほかの <code>/staff/**</code>・<code>/customer/**</code>（Bolt 26））を開いたとき。「この画面を表示する権限がありません。」「荷主の方は担当営業に、社内の方はシステム管理者にお問い合わせください。」と「ホームへ戻る」。他社のデータは今のまま 404（存在しない番号と同じ）。Bolt 32c から、ログインの後に役割を外された利用者がその役割の URL を開いたときも、次の request からここになる（認可は request ごとの今の役割。残した役割の URL は開け、足した役割の URL とナビの項目は次の request から出る）。権限外のアクセスの試行の監査記録（IA-INV-08）は、利用者と役割の管理（US-16）の Bolt で足す（管理範囲外の利用者への操作は、Bolt 34b から A-04 でなく存在しない利用者と同じ 404 にして、試行を <code>ADMIN_SCOPE_DENIED</code> に残す）。Bolt 34 から、システム管理者のほかの <code>/staff/**</code>・<code>/customer/**</code>、ほかの役割の <code>/staff/users/**</code> もここになる</td>
+<td style="text-align: left;">Bolt 14。役割にない領域（荷主の <code>/staff/**</code>、営業の <code>/customer/**</code> と <code>/staff/routing-cases/**</code>、経路設計者のほかの <code>/staff/**</code>（Bolt 17）、追跡管理者以外の <code>/staff/tracking-records/**</code> と追跡管理者のほかの <code>/staff/**</code>・<code>/customer/**</code>（Bolt 26））を開いたとき。「この画面を表示する権限がありません。」「荷主の方は担当営業に、社内の方はシステム管理者にお問い合わせください。」と「ホームへ戻る」。他社のデータは今のまま 404（存在しない番号と同じ）。Bolt 32c から、ログインの後に役割を外された利用者がその役割の URL を開いたときも、次の request からここになる（認可は request ごとの今の役割。残した役割の URL は開け、足した役割の URL とナビの項目は次の request から出る）。権限外のアクセスの試行の監査記録（IA-INV-08）は、利用者と役割の管理（US-16）の Bolt で足す（管理範囲外の利用者への操作は、Bolt 34b から A-04 でなく存在しない利用者と同じ 404 にし、役割の変更の試行を <code>ADMIN_SCOPE_DENIED</code> に残す）。Bolt 34 から、システム管理者のほかの <code>/staff/**</code>・<code>/customer/**</code>、ほかの役割の <code>/staff/users/**</code> もここになる</td>
 </tr>
 <tr>
 <td style="text-align: left;">見つからない（共通の 404）</td>
 <td style="text-align: left;">404 の応答の画面（URL は開いた URL のまま）</td>
-<td style="text-align: left;">Bolt 34b。存在しない画面・番号、管理範囲外の利用者（S-20）を開いたとき。A-04 の形を写し、業務データを出さない。「お探しの画面は見つかりません。」「URL をお確かめください。」と「ホームへ戻る」。それまでは既定のエラーページだった</td>
+<td style="text-align: left;">Bolt 34b。存在しない画面・番号、管理範囲外の利用者（S-20）を開いたとき。A-04 の形を写し、認証の前の画面と同じレイアウト（<code>layout/public</code>）にする。ログインしていてもナビゲーションと利用者の名前は出さない（A-04 と同じ）。業務データを出さない。「お探しの画面は見つかりません。」「URL をお確かめください。」と「ホームへ戻る」。追跡番号の照会の「追跡番号が見つかりません」（C-10）は別の画面のまま</td>
 </tr>
 <tr>
 <td style="text-align: left;">ホーム</td>
