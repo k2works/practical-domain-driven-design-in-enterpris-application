@@ -1,6 +1,7 @@
 package com.example.cargotracker.identity.infrastructure.security;
 
 import com.example.cargotracker.identity.application.internal.session.SessionKeys;
+import com.example.cargotracker.identity.application.internal.session.SessionPaths;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -118,7 +119,7 @@ public class TotpAuthenticationFilter extends AbstractAuthenticationProcessingFi
                         user.actor().userId().value().toString());
                 session.setAttribute(SessionKeys.RECOVERY_LOGIN_AT, clock.instant());
                 clearAuthenticationAttributes(request);
-                response.sendRedirect(request.getContextPath() + SessionKeys.RE_ENROLL_URL);
+                response.sendRedirect(request.getContextPath() + SessionPaths.RE_ENROLL_URL);
                 return;
             }
             super.onAuthenticationSuccess(request, response, authentication);

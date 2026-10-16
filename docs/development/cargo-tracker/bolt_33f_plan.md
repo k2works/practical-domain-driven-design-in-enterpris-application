@@ -3,7 +3,7 @@ type: Plan
 title: "Bolt 33f 計画 - 期間の表示と回復コードの型と session の URL の整理（振る舞いの変わらない直し）"
 description: "W5 の 21 本目の Bolt の計画。期限の時刻を SessionPolicy.deadline にまとめ、テンプレートに直書きした「15 分」「8 時間」を SessionPolicy から描き、回復コードの生成のポートと RecoveryCode.issueSet を NormalizedRecoveryCode で受け、SessionKeys から URL 2 つを同じパッケージの別のクラスに分けて ADR-012 を直す。振る舞いと表示は変えない。"
 tags: [plan]
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-16T03:23:48Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-16T03:31:34Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-16T02:54:29Z }
 ---
@@ -132,7 +132,7 @@ LoginController ..> SessionPaths
 - [x] **3. テンプレートの期間を `SessionPolicy` から描く**
   - `15 分`・`8 時間` で全体を grep する（T-132）。先に A-07・A-08・A-03 の期間の文言の統合テストと、session の警告の `data-lifetime-message` の値の統合テストを足す（緑）
   - 画面と Advice が `@ModelAttribute` で期間の文字列を渡し、テンプレートの 6 か所を描く（文の途中はタグを出さない形、警告は `th:data-lifetime-message`。静的な値を残さない）。変異: 式を外すと落ちる（T-136）。uiTest の session の警告と、印の知らせの統合テストが緑のまま
-- [ ] **4. URL を別のクラスに**
+- [x] **4. URL を別のクラスに**
   - URL 2 つを `SessionPaths`（仮）に分け、参照（本体 8 ファイル: `SecurityConfiguration`・`ExpiredSessionRequestSaver`・`SessionLifetimeFilter`・`SessionRevalidationFilter`・`TotpAuthenticationFilter`・`LoginController`・`SessionUrlsAdvice`・`TotpReEnrollmentController`。テスト 2 ファイル: `SessionKeysTest`・`SessionLifetimeFilterTest`）と Javadoc（`package-info`・`SessionKeys`）を付け替え、URL の値を固定するテストを移す
 - [ ] **5. 回復コードの生成のポートの型**（打ち切りの候補）
   - ポート・実装・`issueSet`・登録と再登録のサービス（結果は `value()` の文字列）を付け替える。テスト: `TotpEnrollmentServiceTest`・`TotpReEnrollmentServiceTest`・`RecoveryCodeTest`・`RandomRecoveryCodeGeneratorTest`・`TotpReEnrollmentServiceIntegrationTest`（本物の生成器の値を `issue(String)`・`verify(String)` に渡す箇所は `value()`）。画面に平文が出ることは、統合テストの正規表現が守る

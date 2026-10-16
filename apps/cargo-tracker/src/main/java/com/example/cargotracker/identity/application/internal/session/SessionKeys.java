@@ -1,7 +1,7 @@
 package com.example.cargotracker.identity.application.internal.session;
 
 /**
- * session・request の属性の名前と、認証の入口と画面が共有する URL（Bolt 33c）。認証の入口（{@code identity.infrastructure.security}）と画面
+ * session・request の属性の名前（Bolt 33c。URL は Bolt 33f から {@link SessionPaths}）。認証の入口（{@code identity.infrastructure.security}）と画面
  * （{@code identity.interfaces.web}）の両方から参照する（画面の層は infrastructure に依存できず、Bolt 31c から 33b までは同じ値の 2 つの
  * 定数をテストで守っていた）。名前はクラスの移動や改名で動いている session の属性が読めなくならないよう、固定の値にする（{@code SessionKeysTest}）。
  * 期間は {@code SessionPolicy}（domain）に置く。
@@ -42,12 +42,6 @@ public final class SessionKeys {
      * 範囲を変えないよう、Bean は作らず名前だけを共有する）。
      */
     public static final String SAVED_REQUEST = "SPRING_SECURITY_SAVED_REQUEST";
-
-    /** A-08 認証アプリの再登録の URL（回復コードでログインした後に移す。Bolt 33b）。 */
-    public static final String RE_ENROLL_URL = "/account/authenticator";
-
-    /** 失効した session の request を移す先（A-03 再認証の案内）。 */
-    public static final String EXPIRED_URL = "/session-expired";
 
     private SessionKeys() {}
 }

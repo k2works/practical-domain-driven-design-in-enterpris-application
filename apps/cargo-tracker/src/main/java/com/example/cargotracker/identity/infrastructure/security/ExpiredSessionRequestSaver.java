@@ -1,6 +1,7 @@
 package com.example.cargotracker.identity.infrastructure.security;
 
 import com.example.cargotracker.identity.application.internal.session.SessionKeys;
+import com.example.cargotracker.identity.application.internal.session.SessionPaths;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
@@ -36,7 +37,7 @@ public class ExpiredSessionRequestSaver implements InvalidSessionStrategy {
     public void onInvalidSessionDetected(HttpServletRequest request, HttpServletResponse response) throws IOException {
         // 失効した session はもうないので、新しい session を作って覚える
         rememberInNewSession(request, response);
-        response.sendRedirect(request.getContextPath() + SessionKeys.EXPIRED_URL);
+        response.sendRedirect(request.getContextPath() + SessionPaths.EXPIRED_URL);
     }
 
     /** 今の session を捨て、新しい session を作り、開いていた業務の画面の GET なら覚える（8 時間の上限。Bolt 32e）。 */

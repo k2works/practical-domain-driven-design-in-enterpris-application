@@ -1,6 +1,7 @@
 package com.example.cargotracker.identity.infrastructure.security;
 
 import com.example.cargotracker.identity.application.internal.session.SessionKeys;
+import com.example.cargotracker.identity.application.internal.session.SessionPaths;
 import com.example.cargotracker.identity.domain.model.rules.SessionPolicy;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import jakarta.servlet.FilterChain;
@@ -53,7 +54,7 @@ public class SessionLifetimeFilter extends OncePerRequestFilter {
             } else {
                 ExpiredSessionRequestSaver.invalidateCarryingSavedRequest(request);
             }
-            response.sendRedirect(request.getContextPath() + SessionKeys.EXPIRED_URL);
+            response.sendRedirect(request.getContextPath() + SessionPaths.EXPIRED_URL);
             return;
         }
         if (session != null) {

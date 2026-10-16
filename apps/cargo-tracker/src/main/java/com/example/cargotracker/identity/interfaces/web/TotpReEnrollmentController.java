@@ -4,6 +4,7 @@ import com.example.cargotracker.identity.application.internal.commandservices.Re
 import com.example.cargotracker.identity.application.internal.commandservices.ReEnrollmentStart;
 import com.example.cargotracker.identity.application.internal.commandservices.TotpReEnrollmentService;
 import com.example.cargotracker.identity.application.internal.session.SessionKeys;
+import com.example.cargotracker.identity.application.internal.session.SessionPaths;
 import com.example.cargotracker.identity.domain.model.aggregates.TotpCredential;
 import com.example.cargotracker.identity.domain.model.rules.SessionPolicy;
 import com.example.cargotracker.identity.domain.model.valueobjects.EncryptedSecret;
@@ -37,7 +38,7 @@ import org.springframework.web.bind.annotation.RequestParam;
  * 完了したら同じ応答で新しい回復コードを一度だけ示す。「後で登録する」は印を残して覚えた要求の画面か役割のホームへ移す。
  */
 @Controller
-@RequestMapping(SessionKeys.RE_ENROLL_URL)
+@RequestMapping(SessionPaths.RE_ENROLL_URL)
 public class TotpReEnrollmentController {
 
     /** 再登録の途中の暗号文を置く session の属性の名前（A-07 の途中と分ける）。 */

@@ -2,7 +2,7 @@ package com.example.cargotracker.identity.infrastructure.security;
 
 import com.example.cargotracker.identity.application.internal.commandservices.SessionRevalidationService;
 import com.example.cargotracker.identity.application.internal.commandservices.SessionStanding;
-import com.example.cargotracker.identity.application.internal.session.SessionKeys;
+import com.example.cargotracker.identity.application.internal.session.SessionPaths;
 import com.example.cargotracker.shared.domain.AuthenticatedActor;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -89,7 +89,7 @@ public class SessionRevalidationFilter extends OncePerRequestFilter {
         switch (standing) {
             case SessionStanding.Revoked _ -> {
                 discard(request);
-                response.sendRedirect(request.getContextPath() + SessionKeys.EXPIRED_URL);
+                response.sendRedirect(request.getContextPath() + SessionPaths.EXPIRED_URL);
             }
             case SessionStanding.Current now -> {
                 SecurityContext context = SecurityContextHolder.createEmptyContext();

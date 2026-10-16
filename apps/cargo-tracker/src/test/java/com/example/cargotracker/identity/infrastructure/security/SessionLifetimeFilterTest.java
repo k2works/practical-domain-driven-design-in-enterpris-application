@@ -3,6 +3,7 @@ package com.example.cargotracker.identity.infrastructure.security;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.example.cargotracker.identity.application.internal.session.SessionKeys;
+import com.example.cargotracker.identity.application.internal.session.SessionPaths;
 import com.example.cargotracker.shared.acceptance.MutableClock;
 import java.time.Duration;
 import java.time.Instant;
@@ -79,7 +80,7 @@ class SessionLifetimeFilterTest {
     void 発行から8時間ちょうどで失効させる() throws Exception {
         MockHttpSession session = authenticatedSession(true);
 
-        assertThat(request(session, Duration.ofHours(8)).getRedirectedUrl()).isEqualTo(SessionKeys.EXPIRED_URL);
+        assertThat(request(session, Duration.ofHours(8)).getRedirectedUrl()).isEqualTo(SessionPaths.EXPIRED_URL);
         assertThat(session.isInvalid()).isTrue();
     }
 
@@ -88,14 +89,14 @@ class SessionLifetimeFilterTest {
         MockHttpSession session = authenticatedSession(true);
 
         assertThat(request(session, Duration.ofHours(8).plusSeconds(1)).getRedirectedUrl())
-                .isEqualTo(SessionKeys.EXPIRED_URL);
+                .isEqualTo(SessionPaths.EXPIRED_URL);
     }
 
     @Test
     void 認証済みなのにログインの時刻がないsessionは失効させる() throws Exception {
         MockHttpSession session = authenticatedSession(false);
 
-        assertThat(request(session, Duration.ZERO).getRedirectedUrl()).isEqualTo(SessionKeys.EXPIRED_URL);
+        assertThat(request(session, Duration.ZERO).getRedirectedUrl()).isEqualTo(SessionPaths.EXPIRED_URL);
         assertThat(session.isInvalid()).isTrue();
     }
 
@@ -113,7 +114,7 @@ class SessionLifetimeFilterTest {
 
         assertThat(request(session, Duration.ofMinutes(16).minusSeconds(1)).getRedirectedUrl())
                 .isNull();
-        assertThat(request(session, Duration.ofMinutes(16)).getRedirectedUrl()).isEqualTo(SessionKeys.EXPIRED_URL);
+        assertThat(request(session, Duration.ofMinutes(16)).getRedirectedUrl()).isEqualTo(SessionPaths.EXPIRED_URL);
     }
 
     @Test
@@ -149,7 +150,7 @@ class SessionLifetimeFilterTest {
     void passwordの段だけのsessionは5分ちょうどで失効させる() throws Exception {
         MockHttpSession session = passwordStageSession(true);
 
-        assertThat(request(session, Duration.ofMinutes(5)).getRedirectedUrl()).isEqualTo(SessionKeys.EXPIRED_URL);
+        assertThat(request(session, Duration.ofMinutes(5)).getRedirectedUrl()).isEqualTo(SessionPaths.EXPIRED_URL);
         assertThat(session.isInvalid()).isTrue();
     }
 
@@ -157,7 +158,7 @@ class SessionLifetimeFilterTest {
     void passwordを確かめた時刻のないpasswordの段のsessionは失効させる() throws Exception {
         MockHttpSession session = passwordStageSession(false);
 
-        assertThat(request(session, Duration.ZERO).getRedirectedUrl()).isEqualTo(SessionKeys.EXPIRED_URL);
+        assertThat(request(session, Duration.ZERO).getRedirectedUrl()).isEqualTo(SessionPaths.EXPIRED_URL);
     }
 
     @Test
@@ -172,7 +173,7 @@ class SessionLifetimeFilterTest {
         MockHttpSession session = new MockHttpSession();
         session.setAttribute(SessionKeys.PASSWORD_VERIFIED_AT, LOGIN_AT);
 
-        assertThat(request(session, Duration.ZERO).getRedirectedUrl()).isEqualTo(SessionKeys.EXPIRED_URL);
+        assertThat(request(session, Duration.ZERO).getRedirectedUrl()).isEqualTo(SessionPaths.EXPIRED_URL);
     }
 
     @Test
@@ -181,7 +182,7 @@ class SessionLifetimeFilterTest {
         MockHttpSession session = passwordStageSession(false);
         session.setAttribute(SessionKeys.AUTHENTICATED_AT, LOGIN_AT);
 
-        assertThat(request(session, Duration.ofMinutes(1)).getRedirectedUrl()).isEqualTo(SessionKeys.EXPIRED_URL);
+        assertThat(request(session, Duration.ofMinutes(1)).getRedirectedUrl()).isEqualTo(SessionPaths.EXPIRED_URL);
     }
 
     @Test
@@ -190,7 +191,7 @@ class SessionLifetimeFilterTest {
         MockHttpSession session = passwordStageSession(true);
         session.setAttribute(SessionKeys.AUTHENTICATED_AT, LOGIN_AT);
 
-        assertThat(request(session, Duration.ofMinutes(5)).getRedirectedUrl()).isEqualTo(SessionKeys.EXPIRED_URL);
+        assertThat(request(session, Duration.ofMinutes(5)).getRedirectedUrl()).isEqualTo(SessionPaths.EXPIRED_URL);
     }
 
     // --- 8 時間の残りを画面に渡す（Bolt 32b、ACC-06。session の警告） ---
@@ -311,6 +312,6 @@ class SessionLifetimeFilterTest {
         MockHttpSession session = passwordStageSession(true);
 
         assertThat(request(session, Duration.ofMinutes(5).plusSeconds(1)).getRedirectedUrl())
-                .isEqualTo(SessionKeys.EXPIRED_URL);
+                .isEqualTo(SessionPaths.EXPIRED_URL);
     }
 }

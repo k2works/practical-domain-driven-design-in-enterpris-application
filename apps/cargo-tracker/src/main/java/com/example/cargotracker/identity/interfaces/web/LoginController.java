@@ -2,6 +2,7 @@ package com.example.cargotracker.identity.interfaces.web;
 
 import com.example.cargotracker.identity.application.internal.queryservices.TotpEnrollmentQueryService;
 import com.example.cargotracker.identity.application.internal.session.SessionKeys;
+import com.example.cargotracker.identity.application.internal.session.SessionPaths;
 import com.example.cargotracker.identity.domain.model.aggregates.TotpCredential;
 import com.example.cargotracker.identity.domain.model.rules.LockPolicy;
 import com.example.cargotracker.identity.domain.model.valueobjects.PasswordVerifiedUser;
@@ -76,7 +77,7 @@ public class LoginController {
         return "identity/login-totp";
     }
 
-    @GetMapping(SessionKeys.EXPIRED_URL)
+    @GetMapping(SessionPaths.EXPIRED_URL)
     public String sessionExpired() {
         return "identity/session-expired";
     }

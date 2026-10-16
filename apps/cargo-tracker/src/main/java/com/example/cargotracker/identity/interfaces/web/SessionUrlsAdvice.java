@@ -1,6 +1,6 @@
 package com.example.cargotracker.identity.interfaces.web;
 
-import com.example.cargotracker.identity.application.internal.session.SessionKeys;
+import com.example.cargotracker.identity.application.internal.session.SessionPaths;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ModelAttribute;
 
@@ -19,7 +19,7 @@ public class SessionUrlsAdvice {
      */
     public record SessionUrls(String reEnroll, String expired) {}
 
-    private static final SessionUrls URLS = new SessionUrls(SessionKeys.RE_ENROLL_URL, SessionKeys.EXPIRED_URL);
+    private static final SessionUrls URLS = new SessionUrls(SessionPaths.RE_ENROLL_URL, SessionPaths.EXPIRED_URL);
 
     @ModelAttribute("sessionUrls")
     public SessionUrls sessionUrls() {

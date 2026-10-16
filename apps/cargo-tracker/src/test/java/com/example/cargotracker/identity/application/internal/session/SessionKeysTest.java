@@ -8,7 +8,7 @@ import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.security.web.savedrequest.HttpSessionRequestCache;
 
 /**
- * session・request の属性の名前と URL（Bolt 33c）。動いている session の属性が読めなくならないように、名前はクラスの名前に依らない固定の値に
+ * session・request の属性の名前（Bolt 33c。URL は Bolt 33f から SessionPathsTest）。動いている session の属性が読めなくならないように、名前はクラスの名前に依らない固定の値に
  * する（Bolt 31 から {@code SessionLifetimeFilterTest} が守っていたものを、すべての名前に広げて移した）。
  */
 class SessionKeysTest {
@@ -38,11 +38,5 @@ class SessionKeysTest {
         assertThat(SessionKeys.LIFETIME_REMAINING_ATTRIBUTE)
                 .isEqualTo("cargotracker.request.sessionLifetimeRemainingSeconds");
         assertThat(SessionKeys.RETURN_PATH_ATTRIBUTE).isEqualTo("cargotracker.request.returnPath");
-    }
-
-    @Test
-    void 認証の入口と画面が共有するURL() {
-        assertThat(SessionKeys.RE_ENROLL_URL).isEqualTo("/account/authenticator");
-        assertThat(SessionKeys.EXPIRED_URL).isEqualTo("/session-expired");
     }
 }
