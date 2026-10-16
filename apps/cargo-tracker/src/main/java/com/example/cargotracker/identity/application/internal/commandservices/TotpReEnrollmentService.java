@@ -19,6 +19,7 @@ import com.example.cargotracker.identity.domain.model.aggregates.UserSessionRevo
 import com.example.cargotracker.identity.domain.model.rules.SessionPolicy;
 import com.example.cargotracker.identity.domain.model.valueobjects.EncryptedSecret;
 import com.example.cargotracker.identity.domain.model.valueobjects.EnrollingUser;
+import com.example.cargotracker.identity.domain.model.valueobjects.SessionId;
 import com.example.cargotracker.identity.domain.model.valueobjects.TotpMatch;
 import com.example.cargotracker.shared.domain.UserId;
 import com.example.cargotracker.shared.domain.UtcInstant;
@@ -114,7 +115,7 @@ public class TotpReEnrollmentService {
      * @param currentSessionId 今の session の ID（失効させずに残す）
      */
     public ReEnrollmentResult complete(
-            UserId userId, EncryptedSecret secret, String code, UtcInstant startedAt, String currentSessionId) {
+            UserId userId, EncryptedSecret secret, String code, UtcInstant startedAt, SessionId currentSessionId) {
         if (TransactionSynchronizationManager.isActualTransactionActive()) {
             throw new IllegalStateException("認証アプリの再登録は外側のトランザクションの中では呼べない（確定の後に session を失効させるため）");
         }
@@ -151,7 +152,7 @@ public class TotpReEnrollmentService {
             EncryptedSecret secret,
             long step,
             UtcInstant now,
-            String currentSessionId) {
+            SessionId currentSessionId) {
         UserId owner = user.userId();
         // 回復コードの生成とハッシュ（bcrypt 10 回）は書き込みでないので、資格の行ロックを取る前に済ませる（登録と同じ）
         List<String> plainCodes = recoveryCodeGenerator.generate();
@@ -173,7 +174,7 @@ public class TotpReEnrollmentService {
         return new ReEnrollmentResult.ReEnrolled(plainCodes);
     }
 
-    private void revokeOthers(EnrollingUser user, String currentSessionId) {
+    private void revokeOthers(EnrollingUser user, SessionId currentSessionId) {
         try {
             int revoked = sessions.revokeOthers(user.email(), currentSessionId);
             LOG.info("認証アプリの再登録の後に利用者のほかの session を失効させた: 利用者 {}、件数 {}", user.userId(), revoked);

@@ -17,6 +17,7 @@ import com.example.cargotracker.identity.domain.model.aggregates.UserRepository;
 import com.example.cargotracker.identity.domain.model.valueobjects.EmailAddress;
 import com.example.cargotracker.identity.domain.model.valueobjects.EncryptedSecret;
 import com.example.cargotracker.identity.domain.model.valueobjects.EnrollingUser;
+import com.example.cargotracker.identity.domain.model.valueobjects.SessionId;
 import com.example.cargotracker.shared.domain.CompanyId;
 import com.example.cargotracker.shared.domain.UserId;
 import com.example.cargotracker.shared.domain.UtcInstant;
@@ -46,7 +47,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 class TotpReEnrollmentServiceIntegrationTest {
 
     private static final long TIMEOUT_SECONDS = 30;
-    private static final String SESSION = "re-enrolling-session";
+    private static final SessionId SESSION = new SessionId("re-enrolling-session");
 
     @Autowired
     TotpReEnrollmentService service;

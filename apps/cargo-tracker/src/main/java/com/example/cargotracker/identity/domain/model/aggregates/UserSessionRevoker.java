@@ -1,6 +1,7 @@
 package com.example.cargotracker.identity.domain.model.aggregates;
 
 import com.example.cargotracker.identity.domain.model.valueobjects.EmailAddress;
+import com.example.cargotracker.identity.domain.model.valueobjects.SessionId;
 
 /**
  * 利用者の session の失効。利用者のログイン中の session を消すポート（SEC-08。Bolt 33a。今の session を残して消すのは Bolt 33b の
@@ -22,8 +23,8 @@ public interface UserSessionRevoker {
      * 利用者の session のうち、残す session のほかをすべて消す（Bolt 33b。認証アプリを登録し直した session は残す）。
      *
      * @param email ログインのメールアドレス（session の主体の名前）
-     * @param keepSessionId 残す session の ID
+     * @param keep 残す session の ID（Bolt 33e から値）
      * @return 消した数
      */
-    int revokeOthers(EmailAddress email, String keepSessionId);
+    int revokeOthers(EmailAddress email, SessionId keep);
 }

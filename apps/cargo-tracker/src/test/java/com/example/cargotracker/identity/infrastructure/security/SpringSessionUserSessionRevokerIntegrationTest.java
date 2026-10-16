@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.example.cargotracker.TestcontainersConfiguration;
 import com.example.cargotracker.identity.domain.model.valueobjects.EmailAddress;
+import com.example.cargotracker.identity.domain.model.valueobjects.SessionId;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -64,7 +65,7 @@ class SpringSessionUserSessionRevokerIntegrationTest {
         String othersSession = sessionOf(other);
         assertThat(sessions.findById(elsewhere)).as("消す前は session がある（空振りしない）").isNotNull();
 
-        int revoked = revoker.revokeOthers(EmailAddress.of(email), current);
+        int revoked = revoker.revokeOthers(EmailAddress.of(email), new SessionId(current));
 
         assertThat(revoked).isEqualTo(1);
         assertThat(sessions.findById(elsewhere)).isNull();

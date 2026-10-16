@@ -22,6 +22,7 @@ import com.example.cargotracker.identity.domain.model.valueobjects.CompanyKind;
 import com.example.cargotracker.identity.domain.model.valueobjects.EmailAddress;
 import com.example.cargotracker.identity.domain.model.valueobjects.EncryptedSecret;
 import com.example.cargotracker.identity.domain.model.valueobjects.EnrollingUser;
+import com.example.cargotracker.identity.domain.model.valueobjects.SessionId;
 import com.example.cargotracker.identity.domain.model.valueobjects.UserStatus;
 import com.example.cargotracker.shared.acceptance.MutableClock;
 import com.example.cargotracker.shared.domain.CompanyId;
@@ -96,7 +97,7 @@ class TotpReEnrollmentRollbackIntegrationTest extends IdentitySpyIntegrationTest
         UtcInstant startedAt = new UtcInstant(clock.instant());
         String code = codeAt(user, renewed, 0);
 
-        assertThatThrownBy(() -> reEnrollment.complete(user, renewed, code, startedAt, "session"))
+        assertThatThrownBy(() -> reEnrollment.complete(user, renewed, code, startedAt, new SessionId("session")))
                 .isInstanceOf(IllegalStateException.class);
 
         assertThat(credentials.findByUserId(user).orElseThrow().secret())

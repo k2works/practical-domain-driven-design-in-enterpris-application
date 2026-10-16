@@ -3,7 +3,6 @@ package com.example.cargotracker.identity.application.internal.commandservices;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -28,6 +27,7 @@ import com.example.cargotracker.identity.domain.model.valueobjects.AuditAction;
 import com.example.cargotracker.identity.domain.model.valueobjects.CompanyKind;
 import com.example.cargotracker.identity.domain.model.valueobjects.EmailAddress;
 import com.example.cargotracker.identity.domain.model.valueobjects.EncryptedSecret;
+import com.example.cargotracker.identity.domain.model.valueobjects.SessionId;
 import com.example.cargotracker.identity.domain.model.valueobjects.TotpProvisioning;
 import com.example.cargotracker.identity.domain.model.valueobjects.UserStatus;
 import com.example.cargotracker.shared.domain.CompanyId;
@@ -61,7 +61,7 @@ class TotpReEnrollmentServiceTest {
     private static final Instant NOW = Instant.ofEpochSecond(3_000);
 
     private static final UtcInstant STARTED = new UtcInstant(NOW.minus(Duration.ofMinutes(1)));
-    private static final String CURRENT_SESSION = "current-session";
+    private static final SessionId CURRENT_SESSION = new SessionId("current-session");
     private static final String CODE = "000100";
 
     /** 偽の秘密の発行。暗号文は持ち主の ID を含み、別の持ち主では表示の値を作らない（AAD の代わり）。 */
@@ -169,7 +169,7 @@ class TotpReEnrollmentServiceTest {
     @Test
     void 新しいコードを確かめると資格を置き換え回復コード10個を発行し直し監査を書き確定の後にほかのsessionを失効させる() {
         EncryptedSecret renewed = givenEnrolledUser();
-        when(sessions.revokeOthers(any(), anyString())).thenAnswer(invocation -> {
+        when(sessions.revokeOthers(any(), any(SessionId.class))).thenAnswer(invocation -> {
             assertThat(transactions.committed).as("失効の時点で確定している").isTrue();
             return 1;
         });
@@ -197,7 +197,7 @@ class TotpReEnrollmentServiceTest {
 
         assertThat(credentials.findByUserId(user.id()).orElseThrow().secret()).isEqualTo(oldSecret);
         assertThat(audit).isEmpty();
-        verify(sessions, never()).revokeOthers(any(), anyString());
+        verify(sessions, never()).revokeOthers(any(), any(SessionId.class));
     }
 
     @Test
@@ -261,7 +261,8 @@ class TotpReEnrollmentServiceTest {
     @Test
     void 失効に失敗しても再登録は終える() {
         EncryptedSecret renewed = givenEnrolledUser();
-        when(sessions.revokeOthers(any(), anyString())).thenThrow(new IllegalStateException("session の表に届かない"));
+        when(sessions.revokeOthers(any(), any(SessionId.class)))
+                .thenThrow(new IllegalStateException("session の表に届かない"));
 
         assertThat(complete(renewed, CODE, STARTED)).isInstanceOf(ReEnrollmentResult.ReEnrolled.class);
         assertThat(credentials.findByUserId(user.id()).orElseThrow().secret()).isEqualTo(renewed);
@@ -273,7 +274,7 @@ class TotpReEnrollmentServiceTest {
         failAudit = true;
 
         assertThatThrownBy(() -> complete(renewed, CODE, STARTED)).isInstanceOf(IllegalStateException.class);
-        verify(sessions, never()).revokeOthers(any(), anyString());
+        verify(sessions, never()).revokeOthers(any(), any(SessionId.class));
     }
 
     @Test
@@ -285,7 +286,7 @@ class TotpReEnrollmentServiceTest {
         } finally {
             TransactionSynchronizationManager.setActualTransactionActive(false);
         }
-        verify(sessions, never()).revokeOthers(any(), anyString());
+        verify(sessions, never()).revokeOthers(any(), any(SessionId.class));
     }
 
     @Test

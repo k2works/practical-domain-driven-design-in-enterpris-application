@@ -2,6 +2,7 @@ package com.example.cargotracker.identity.infrastructure.security;
 
 import com.example.cargotracker.identity.domain.model.aggregates.UserSessionRevoker;
 import com.example.cargotracker.identity.domain.model.valueobjects.EmailAddress;
+import com.example.cargotracker.identity.domain.model.valueobjects.SessionId;
 import java.util.List;
 import java.util.Map;
 import org.springframework.session.FindByIndexNameSessionRepository;
@@ -30,9 +31,9 @@ public class SpringSessionUserSessionRevoker implements UserSessionRevoker {
     }
 
     @Override
-    public int revokeOthers(EmailAddress email, String keepSessionId) {
+    public int revokeOthers(EmailAddress email, SessionId keep) {
         List<String> others = sessions.findByPrincipalName(email.value()).keySet().stream()
-                .filter(id -> !id.equals(keepSessionId))
+                .filter(id -> !id.equals(keep.value()))
                 .toList();
         others.forEach(sessions::deleteById);
         return others.size();

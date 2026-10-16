@@ -7,6 +7,7 @@ import com.example.cargotracker.identity.application.internal.session.SessionKey
 import com.example.cargotracker.identity.domain.model.aggregates.TotpCredential;
 import com.example.cargotracker.identity.domain.model.rules.SessionPolicy;
 import com.example.cargotracker.identity.domain.model.valueobjects.EncryptedSecret;
+import com.example.cargotracker.identity.domain.model.valueobjects.SessionId;
 import com.example.cargotracker.identity.domain.model.valueobjects.TotpProvisioning;
 import com.example.cargotracker.platform.web.DateTimeDisplay;
 import com.example.cargotracker.shared.domain.AuthenticatedActor;
@@ -84,7 +85,7 @@ public class TotpReEnrollmentController {
             return start(actor, session, model);
         }
         ReEnrollmentResult result = reEnrollment.complete(
-                actor.userId(), pending.get(), code.strip(), new UtcInstant(startedAt), session.getId());
+                actor.userId(), pending.get(), code.strip(), new UtcInstant(startedAt), new SessionId(session.getId()));
         return switch (result) {
             case ReEnrollmentResult.ReEnrolled(var recoveryCodes) -> {
                 clearPending(session);
