@@ -145,6 +145,67 @@ class UserAdministrationSecurityIntegrationTest extends IdentitySpyIntegrationTe
         assertThat(page(sales, "/staff/transport-requests")).doesNotContainPattern(link);
     }
 
+    // --- 役割の変更の確定（H1・H3） ---
+
+    @Test
+    void 確定のPOSTを画面を経ずに送っても同じ判定で拒み何も書かない() throws Exception {
+        Cookie session = login(user(operator, Role.SYSTEM_ADMIN));
+        String target = user(operator, Role.SALES);
+        String url = USERS_URL + "/" + userIdOf(target).value() + "/role-changes/confirmation";
+
+        String page = mvc.perform(post(url)
+                        .cookie(session)
+                        .param("roles", Role.SALES.name(), Role.SYSTEM_ADMIN.name())
+                        .param("version", "0")
+                        .with(csrf()))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        assertThat(page).contains("業務データを変更できる役割（営業担当者）は併せて付けられません。");
+        assertThat(rolesOf(target)).containsExactly("SALES");
+        assertThat(rolesChangedOf(target)).isZero();
+    }
+
+    @Test
+    void 確定のPOSTにもCSRFのトークンが要る() throws Exception {
+        // 業務の画面の CSRF の拒否は 403 ではなく案内へ移す（Bolt 32f）。役割も監査も書かないことを確かめる
+        Cookie session = login(user(operator, Role.SYSTEM_ADMIN));
+        String target = user(operator, Role.SALES);
+        String detailUrl = USERS_URL + "/" + userIdOf(target).value();
+
+        MvcResult rejected = mvc.perform(post(detailUrl + "/role-changes/confirmation")
+                        .cookie(session)
+                        .param("roles", Role.ROUTE_DESIGNER.name())
+                        .param("version", "0"))
+                .andExpect(status().is3xxRedirection())
+                .andReturn();
+
+        assertThat(rejected.getResponse().getRedirectedUrl()).isNotEqualTo(detailUrl);
+        assertThat(rolesOf(target)).containsExactly("SALES");
+        assertThat(rolesChangedOf(target)).isZero();
+    }
+
+    @Test
+    void 変えた役割は相手の次のrequestから効く() throws Exception {
+        Cookie admin = login(user(operator, Role.SYSTEM_ADMIN));
+        String target = user(operator, Role.SALES);
+        Cookie targetSession = login(target);
+        mvc.perform(get("/staff/transport-requests").cookie(targetSession)).andExpect(status().isOk());
+
+        mvc.perform(post(USERS_URL + "/" + userIdOf(target).value() + "/role-changes/confirmation")
+                        .cookie(admin)
+                        .param("roles", Role.ROUTE_DESIGNER.name())
+                        .param("version", "0")
+                        .with(csrf()))
+                .andExpect(redirectedUrl(USERS_URL + "/" + userIdOf(target).value()));
+
+        mvc.perform(get("/staff/transport-requests").cookie(targetSession)).andExpect(status().isForbidden());
+        mvc.perform(get("/staff/routing-cases").cookie(targetSession)).andExpect(status().isOk());
+        assertThat(rolesChangedOf(target)).isEqualTo(1);
+    }
+
     // --- helpers ---
 
     private String page(Cookie session, String url) throws Exception {
@@ -206,6 +267,13 @@ class UserAdministrationSecurityIntegrationTest extends IdentitySpyIntegrationTe
                 "SELECT id FROM identity.app_user WHERE email = ?",
                 (rs, n) -> new UserId(rs.getObject("id", UUID.class)),
                 email);
+    }
+
+    int rolesChangedOf(String email) {
+        return jdbc.queryForObject(
+                "SELECT count(*) FROM identity.audit_record WHERE action = 'ROLES_CHANGED' AND target_id = ?",
+                Integer.class,
+                userIdOf(email).value().toString());
     }
 
     java.util.List<String> rolesOf(String email) {

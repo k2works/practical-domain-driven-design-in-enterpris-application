@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="ja" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/staff :: layout(~{::title}, ~{::main}, ~{}, 'users')}">
+<head>
+    <meta charset="UTF-8">
+    <title>役割の変更の確認 - cargo-tracker</title>
+</head>
+<body>
+<main>
+    <h1>役割を変更しますか</h1>
+    <dl class="row">
+        <dt class="col-sm-3">対象</dt>
+        <dd class="col-sm-9" th:text="|${user.companyName} ${user.displayName}（${user.email.value}）|">A 社 佐藤（sato@example.com）</dd>
+        <dt class="col-sm-3">今の役割</dt>
+        <dd class="col-sm-9" id="current-roles" th:text="${currentRoles}">営業担当者</dd>
+        <dt class="col-sm-3">足す役割</dt>
+        <dd class="col-sm-9" id="added-roles" th:text="${addedRoles}">経路設計者</dd>
+        <dt class="col-sm-3">外す役割</dt>
+        <dd class="col-sm-9" id="removed-roles" th:text="${removedRoles}">なし</dd>
+        <dt class="col-sm-3">影響</dt>
+        <dd class="col-sm-9">相手の次の操作から効きます。外した役割の画面は開けなくなります。</dd>
+        <dt class="col-sm-3">実行者</dt>
+        <dd class="col-sm-9" th:text="${operator}">システム管理者 高橋</dd>
+        <dt class="col-sm-3">回復手段</dt>
+        <dd class="col-sm-9">元に戻すには、もう一度役割を変更してください。</dd>
+    </dl>
+    <form method="post" th:action="@{/staff/users/{id}/role-changes/confirmation(id=${user.id.value})}">
+        <input type="hidden" name="version" th:value="${version}">
+        <input type="hidden" name="roles" th:each="role : ${selectedRoles}" th:value="${role}">
+        <button type="submit" class="btn btn-primary">変更する</button>
+        <a class="btn btn-link" th:href="@{/staff/users/{id}(id=${user.id.value},roles=${selectedRoles})}">戻る</a>
+    </form>
+</main>
+</body>
+</html>
