@@ -128,7 +128,7 @@ public class TotpReEnrollmentService {
             return new ReEnrollmentResult.Superseded();
         }
         UtcInstant now = new UtcInstant(clock.instant());
-        if (!now.instant().isBefore(startedAt.instant().plus(SessionPolicy.RE_ENROLLMENT_LIFETIME))) {
+        if (SessionPolicy.isExpired(startedAt, now, SessionPolicy.RE_ENROLLMENT_LIFETIME)) {
             return new ReEnrollmentResult.Expired();
         }
         TotpMatch match;

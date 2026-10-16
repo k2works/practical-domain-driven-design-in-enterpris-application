@@ -3,7 +3,7 @@ type: Plan
 title: "Bolt 33e 計画 - 認証の入口と session の型と期限の整理（振る舞いの変わらない直し）"
 description: "W5 の 20 本目の Bolt の計画。認証の結果のトークンに経路（TOTP か回復コードか）を持たせて request の属性での受け渡しをやめ、revokeOthers が残す session の ID を値オブジェクトにし、「ちょうどの時刻は期限切れ」の判定を SessionPolicy に寄せ、画面だけが使う属性の名前 2 つの値をテストで固定する。振る舞いは変えない。テンプレートの期間の数値、回復コードの生成のポートの型、ADR-012 の URL の記述と SessionKeys の命名は 33f に分ける。"
 tags: [plan]
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-16T00:33:56Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-16T00:43:10Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-16T00:32:32Z }
 ---
@@ -126,7 +126,7 @@ package "identity" {
   - release_plan.md: 553 行目の状態、557 行目の局面とアプローチ、599 行目の 33e の行（33f に送るものを外し、計画へのリンク）と 33f の行（リファクタリング（インサイドアウト）、構造、マニュアルの文言との一致を完了条件に。決定 7）、603 行目の W5 の注（33c〜33f は SP 0）、605 行目の順序（→ 33f）と本数（23 本）、622 行目（33c〜33f に入れない）、775 行目の実績の表、更新履歴
   - 過去の報告: bolt_33c_report.md（22・109・116・123 行目）の議題 4 (b) とテンプレートの期間の行き先に「→ 33f」、bolt_33d_report.md の既知の課題に「→ 33e・33f」を書き添え、更新履歴に 1 行ずつ足す
   - 完了の判定: `okf:check` ERROR 0、`documentationTest` 緑
-- [ ] **2. 期限の判定を `SessionPolicy` に**
+- [x] **2. 期限の判定を `SessionPolicy` に**
   - 先に A-08 の画面の期限の分岐の統合テストを `RecoveryCodeLoginSecurityIntegrationTest` に足す（決定 5）。ほかの 3 か所のちょうどの時刻のテストはある（`SessionLifetimeFilterTest` の 8 時間・登録の途中の 15 分・5 分、`RecoveryLoginTest`、`TotpReEnrollmentServiceTest`）
   - `SessionPolicyTest` を足し（ちょうど・1 ナノ秒前・後）、4 か所と Javadoc を付け替える。変異: `isExpired` の境界を変えると（`isAfter` に）落ちる（控えから戻す）
 - [ ] **3. session の ID の値オブジェクト**

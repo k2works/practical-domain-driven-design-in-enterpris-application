@@ -141,7 +141,10 @@ public class TotpReEnrollmentController {
 
     private String start(AuthenticatedActor actor, HttpSession session, Model model) {
         if (session.getAttribute(STARTED_AT) instanceof Instant started
-                && !clock.instant().isBefore(started.plus(SessionPolicy.RE_ENROLLMENT_LIFETIME))) {
+                && SessionPolicy.isExpired(
+                        new UtcInstant(started),
+                        new UtcInstant(clock.instant()),
+                        SessionPolicy.RE_ENROLLMENT_LIFETIME)) {
             // 期限を過ぎた途中の値は使わず、新しいキーと期限で始め直す
             clearPending(session);
         }

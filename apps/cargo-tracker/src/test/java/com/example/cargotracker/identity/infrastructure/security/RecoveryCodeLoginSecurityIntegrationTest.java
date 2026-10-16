@@ -75,6 +75,7 @@ class RecoveryCodeLoginSecurityIntegrationTest {
     private static final Pattern MANUAL_KEY = Pattern.compile("data-manual-key=\"([A-Z2-7 ]+)\"");
     private static final String JUST_ENROLLED = "認証アプリを登録しました。";
     private static final String RE_ENROLL_URL = "/account/authenticator";
+    private static final String RE_ENROLLMENT_STARTED_AT = "cargotracker.session.reEnrollmentStartedAt";
     private static final String NOTICE = "回復コードでログインしました。認証アプリを登録し直してください。";
     private static final String EXPIRED_NOTICE = "回復コードでログインしてから 15 分を過ぎたため、この画面からは認証アプリを登録し直せません。";
     private static final Pattern NEW_RECOVERY_CODE = Pattern.compile("\\b([0-9a-f]{4}-[0-9a-f]{4})\\b");
@@ -548,6 +549,41 @@ class RecoveryCodeLoginSecurityIntegrationTest {
         assertThat(again).contains("認証コードが正しくありません。認証アプリに表示されている最新のコードを入力してください。");
         assertThat(manualKey(again)).isEqualTo(key);
         assertThat(auditActions(email)).doesNotContain("TOTP_RE_ENROLLED");
+    }
+
+    @Test
+    void A08を開いてから15分ちょうどで途中の秘密を使わず新しいキーで始め直す() throws Exception {
+        // 印（ログインから 15 分）は残したまま、A-08 を開いた時刻だけを前にずらす（画面の期限の分岐。Bolt 33e の決定 5）
+        String email = enrolledUserWithRecoveryCodes();
+        Cookie recovered = loginWithRecoveryCode(email, RECOVERY_CODE);
+        String key = manualKey(mvc.perform(get(RE_ENROLL_URL).cookie(recovered))
+                .andReturn()
+                .getResponse()
+                .getContentAsString());
+
+        sessions()
+                .putAttribute(
+                        recovered.getValue(),
+                        RE_ENROLLMENT_STARTED_AT,
+                        clock.instant().minus(Duration.ofMinutes(15)).plusNanos(1));
+        String before = manualKey(mvc.perform(get(RE_ENROLL_URL).cookie(recovered))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString());
+        assertThat(before).as("15 分の 1 ナノ秒前は同じキー").isEqualTo(key);
+
+        sessions()
+                .putAttribute(
+                        recovered.getValue(),
+                        RE_ENROLLMENT_STARTED_AT,
+                        clock.instant().minus(Duration.ofMinutes(15)));
+        String expired = manualKey(mvc.perform(get(RE_ENROLL_URL).cookie(recovered))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString());
+        assertThat(expired).as("15 分ちょうどは期限切れで新しいキー").isNotEqualTo(key);
     }
 
     @Test

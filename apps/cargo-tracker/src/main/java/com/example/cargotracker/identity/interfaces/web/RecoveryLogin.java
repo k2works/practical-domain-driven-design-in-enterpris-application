@@ -3,6 +3,7 @@ package com.example.cargotracker.identity.interfaces.web;
 import com.example.cargotracker.identity.application.internal.session.SessionKeys;
 import com.example.cargotracker.identity.domain.model.rules.SessionPolicy;
 import com.example.cargotracker.shared.domain.AuthenticatedActor;
+import com.example.cargotracker.shared.domain.UtcInstant;
 import jakarta.servlet.http.HttpSession;
 import java.time.Instant;
 
@@ -34,7 +35,8 @@ public final class RecoveryLogin {
             return State.NONE;
         }
         return session.getAttribute(SessionKeys.RECOVERY_LOGIN_AT) instanceof Instant at
-                        && now.isBefore(at.plus(SessionPolicy.RECOVERY_LOGIN_LIFETIME))
+                        && !SessionPolicy.isExpired(
+                                new UtcInstant(at), new UtcInstant(now), SessionPolicy.RECOVERY_LOGIN_LIFETIME)
                 ? State.ACTIVE
                 : State.EXPIRED;
     }

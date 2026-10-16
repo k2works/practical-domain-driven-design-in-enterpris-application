@@ -2,6 +2,7 @@ package com.example.cargotracker.identity.infrastructure.security;
 
 import com.example.cargotracker.identity.application.internal.session.SessionKeys;
 import com.example.cargotracker.identity.domain.model.rules.SessionPolicy;
+import com.example.cargotracker.shared.domain.UtcInstant;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -118,7 +119,8 @@ public class SessionLifetimeFilter extends OncePerRequestFilter {
     }
 
     private static boolean expiredSince(Object startedAt, Duration lifetime, Instant now) {
-        return !(startedAt instanceof Instant at) || !now.isBefore(at.plus(lifetime));
+        return !(startedAt instanceof Instant at)
+                || SessionPolicy.isExpired(new UtcInstant(at), new UtcInstant(now), lifetime);
     }
 
     private static boolean hasAuthority(Authentication authentication, String authority) {

@@ -1,12 +1,13 @@
 package com.example.cargotracker.identity.domain.model.rules;
 
 import com.example.cargotracker.shared.annotation.ddd.DomainRule;
+import com.example.cargotracker.shared.domain.UtcInstant;
 import java.time.Duration;
 
 /**
  * session の方針。ログインの手続きと session の期間（US-18 AC1・AC5・AC7・AC9、SEC-03、IA-INV-03。Bolt 33c で、認証の入口と画面と
- * アプリケーションサービスに散っていた同じ値をまとめた）。期限の判定は使う側（認証の入口の {@code SessionLifetimeFilter}、画面、再登録の
- * サービス）が行い、ここは期間だけを持つ。無操作の期限は Spring Session の設定。
+ * アプリケーションサービスに散っていた同じ値をまとめた）。期間と、期限の判定（ちょうどの時刻は期限切れ。Bolt 33e で、認証の入口の
+ * {@code SessionLifetimeFilter}、画面、再登録のサービスの 4 か所から寄せた）を持つ。時計は持たない。無操作の期限は Spring Session の設定。
  */
 @DomainRule
 public final class SessionPolicy {
@@ -27,4 +28,15 @@ public final class SessionPolicy {
     public static final Duration RE_ENROLLMENT_LIFETIME = Duration.ofMinutes(15);
 
     private SessionPolicy() {}
+
+    /**
+     * 始めた時刻から期間が過ぎたか。ちょうどの時刻は期限切れにする（Bolt 33e。4 か所の判定を 1 つにした）。
+     *
+     * @param start 期間の起点
+     * @param now 今の時刻
+     * @param lifetime 期間
+     */
+    public static boolean isExpired(UtcInstant start, UtcInstant now, Duration lifetime) {
+        return !now.instant().isBefore(start.instant().plus(lifetime));
+    }
 }
