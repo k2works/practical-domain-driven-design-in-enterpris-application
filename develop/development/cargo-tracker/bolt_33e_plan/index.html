@@ -10824,7 +10824,7 @@
 <h2 id="_4">ステップ計画<a class="headerlink" href="#_4" title="Permanent link">&para;</a></h2>
 <p>状態の記号: <code>[ ]</code> 未着手、<code>[-]</code> 進行中、<code>[?]</code> 承認待ち、<code>[x]</code> 完了。各ステップの終わりに <code>check</code> が緑であることを確かめ、push してアプリの CI と MkDocs の配備を確かめる（T-26、T-126）。コミットは pathspec で作る（T-110）。複数行の書き換えはスクリプトのファイル（<code>b33e_</code> で始める）にし、書き込みの成功を確かめてから実行する（T-103、T-137）。</p>
 <ul class="task-list">
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>1. 設計文書</strong> 【承認ゲート: 設計文書】</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>1. 設計文書</strong> 【承認ゲート: 設計文書】</li>
 <li>domain_model.md: <code>SessionPolicy</code> の行（184 行目）と session の方針の段落（1130 行目）の「期間だけを持つ」を直す、<code>SessionId</code> を要素表と用語集に、<code>TotpAuthenticationToken</code> の行（205 行目）に経路と <code>SecondFactorPath</code>、再登録のサービスの <code>complete</code>（1067 行目）と <code>revokeOthers</code>（1094 行目）を <code>SessionId</code> に</li>
 <li>architecture_backend.md: session の方針の判定（298 行目）、認証の結果のトークンの経路と成功のハンドラーが読むもの（<code>transient</code> の理由）</li>
 <li>ADR-012: 決定 3（97 行目）の「ふるまいは持たず」を直す</li>
@@ -11019,6 +11019,11 @@
 <td style="text-align: left;">2026-10-16</td>
 <td style="text-align: left;">詳細整合性検証（9 件）と横断整合性検証（9 件）の指摘を反映した。直列化の互換（ローリング配備で古い版が読めない）、A-08 の画面の期限の分岐にテストがない、<code>SessionId</code> の比較の取り違え、付け替えるテストの列挙、<code>Builder</code> の変異、設計文書と release_plan の行、時間の食い違い。human:kakimomokuri の決定（経路は <code>transient</code>、A-08 の分岐は統合テストを足してから、<code>SessionKeys</code> の命名は 33f、33f の進め方）を反映した</td>
 <td style="text-align: left;">anthropic/claude-opus-5-5</td>
+</tr>
+<tr>
+<td style="text-align: left;">2026-10-16</td>
+<td style="text-align: left;">計画を承認した（<code>/goal Bolt33e</code>）</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5、承認 human:kakimomokuri</td>
 </tr>
 </tbody>
 </table>
