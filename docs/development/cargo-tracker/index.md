@@ -80,7 +80,7 @@ Bolt がイテレーションに当たります。ふりかえりは各 Bolt の
 | 33c | [session の属性の名前と期間の置き場所の整理（振る舞いの変わらない直し）](bolt_33c_plan.md) | [終了報告](bolt_33c_report.md) | W5 | 完了 |
 | 33d | [TOTP と回復コードの部品の整理（振る舞いの変わらない直し）](bolt_33d_plan.md) | [終了報告](bolt_33d_report.md) | W5 | 完了 |
 | 33e | [認証の入口と session の型と期限の整理（振る舞いの変わらない直し）](bolt_33e_plan.md) | [終了報告](bolt_33e_report.md) | W5 | 完了 |
-| 33f | [期間の表示と回復コードの型と session の URL の整理（振る舞いの変わらない直し）](bolt_33f_plan.md) | - | W5 | 計画済み（承認待ち） |
+| 33f | [期間の表示と回復コードの型と session の URL の整理（振る舞いの変わらない直し）](bolt_33f_plan.md) | [終了報告](bolt_33f_report.md) | W5 | 完了（終了報告は承認待ち） |
 
 Bolt を始めるときに行を追加します。
 
@@ -178,6 +178,7 @@ Bolt を始めるときに行を追加します。
 * [Bolt 33e 計画 - 認証の入口と session の型と期限の整理（振る舞いの変わらない直し）](./bolt_33e_plan.md) - W5 の 20 本目の Bolt の計画。認証の結果のトークンに経路を持たせ、残す session の ID を値オブジェクトにし、期限の判定を SessionPolicy に寄せ、画面だけが使う属性の名前の値を固定する。画面と回復コードと文書の直しは 33f。
 * [Bolt 33e 終了報告 - 認証の入口と session の型と期限の整理（振る舞いの変わらない直し）](./bolt_33e_report.md) - 期限の判定を SessionPolicy に寄せ、残す session の ID を SessionId にし、回復コードの経路を認証の結果のトークンが transient の欄で持つようにした。振る舞いは変えていない。
 * [Bolt 33f 計画 - 期間の表示と回復コードの型と session の URL の整理（振る舞いの変わらない直し）](./bolt_33f_plan.md) - W5 の 21 本目の Bolt の計画。期限の時刻を SessionPolicy.deadline にまとめ、テンプレートの「15 分」「8 時間」を SessionPolicy から描き、回復コードの生成のポートを NormalizedRecoveryCode で受け、SessionKeys から URL を別のクラスに分ける。
+* [Bolt 33f 終了報告 - 期間の表示と回復コードの型と session の URL の整理（振る舞いの変わらない直し）](./bolt_33f_report.md) - 期限の時刻を SessionPolicy.deadline に寄せ、テンプレートの期間を SessionPolicy から描き、URL を SessionPaths に分け、回復コードの生成のポートを値で受けるようにした。振る舞いと表示は変えていない。
 * [Bolt 33e 計画 - 認証の入口と session の型と期限の整理（振る舞いの変わらない直し）](./bolt_33e_plan.md) - W5 の 20 本目の Bolt の計画。認証の結果のトークンに経路（TOTP か回復コードか）を持たせて request の属性での受け渡しをやめ、revokeOthers が残す session の ID を値オブジェクトにし、「ちょうどの時刻は期限切れ」の判定を SessionPolicy に寄せ、画面だけが使う属性の名前 2 つの値をテストで固定する。振る舞いは変えない。テンプレートの期間の数値、回復コードの生成のポートの型、ADR-012 の URL の記述は 33f に分ける。
 * [Bolt 33f 計画 - 期間の表示と回復コードの型と session の URL の整理（振る舞いの変わらない直し）](./bolt_33f_plan.md) - W5 の 21 本目の Bolt の計画。期限の時刻を SessionPolicy.deadline にまとめ、テンプレートに直書きした「15 分」「8 時間」を SessionPolicy から描き、回復コードの生成のポートと RecoveryCode.issueSet を NormalizedRecoveryCode で受け、SessionKeys から URL 2 つを同じパッケージの別のクラスに分けて ADR-012 を直す。振る舞いと表示は変えない。
 * [Bolt 33f 終了報告 - 期間の表示と回復コードの型と session の URL の整理（振る舞いの変わらない直し）](./bolt_33f_report.md) - W5 の 21 本目の Bolt の終了報告。期限の時刻を SessionPolicy.deadline に寄せ、期間の汎用の書式 DurationDisplay.length を足し、テンプレート 6 か所の「15 分」「8 時間」を SessionPolicy から描き、URL を SessionKeys から SessionPaths に分け（password の再設定の URL も寄せた）、回復コードの生成のポートと issueSet を NormalizedRecoveryCode で受けるようにした。振る舞いと表示は変えていない。
