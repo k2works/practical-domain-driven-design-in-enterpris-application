@@ -3,7 +3,9 @@ type: Plan
 title: "Bolt 33f 終了報告 - 期間の表示と回復コードの型と session の URL の整理（振る舞いの変わらない直し）"
 description: "W5 の 21 本目の Bolt の終了報告。期限の時刻を SessionPolicy.deadline に寄せ、期間の汎用の書式 DurationDisplay.length を足し、テンプレート 6 か所の「15 分」「8 時間」を SessionPolicy から描き、URL を SessionKeys から SessionPaths に分け（password の再設定の URL も寄せた）、回復コードの生成のポートと issueSet を NormalizedRecoveryCode で受けるようにした。振る舞いと表示は変えていない。"
 tags: [plan]
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-16T04:36:21Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-16T04:57:33Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-10-16T04:57:33Z }
 ---
 
 # Bolt 33f 終了報告 - 期間の表示と回復コードの型と session の URL の整理（振る舞いの変わらない直し）
@@ -39,7 +41,7 @@ generated: { by: anthropic/claude-opus-5-5, at: 2026-10-16T04:36:21Z }
 | 3. テンプレートの期間 | 見張りの統合テストを先に足し、6 か所を `[[${…}]]` と `th:data-lifetime-message` で描く | `c53f452e` |
 | 4. URL のクラス | `SessionPaths` と `SessionPathsTest`、参照 10 ファイル | `27a020ba` |
 | 5. 回復コードの型 | ポート・実装・`issueSet`・2 つのサービス（画面に渡す結果は文字列のまま）・テスト。マニュアルの文言と回復コードの例が画面と一致することを確かめた | `04131f8e` |
-| 6. 品質と報告 | SonarQube、開発レビュー（3 つ）と直し（議題 2〜4）、この報告 | この報告のコミット |
+| 6. 品質と報告 | SonarQube、開発レビュー（3 つ）と直し（議題 2〜4）、この報告 | `e357b9df`、`29b2814b`、`9db55a9b` |
 
 ## 指標
 
@@ -108,6 +110,7 @@ W5 の残り（Bolt 34・35）。US-18 の振る舞いの変わらない直し�
 
 | 日付 | 更新内容 | 更新者 |
 | :--- | :--- | :--- |
+| 2026-10-16 | 終了報告を承認した（議題 1〜4。議題 3 の人に諮らずに変えた A-03 の描き方を事後に承認） | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-10-16 | 初版作成（承認待ち） | anthropic/claude-opus-5-5 |
 
 ## 関連ドキュメント
