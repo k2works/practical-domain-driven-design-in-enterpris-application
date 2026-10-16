@@ -11125,7 +11125,7 @@
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>4. 役割の変更のサービスと永続化</strong> 【承認ゲート: セキュリティ・データベース】</li>
 <li><code>UserRoleChangeService</code> の単体テスト（偽物のリポジトリ。<code>Changed</code>・<code>Rejected</code>・<code>Stale</code>・<code>NotFound</code>、システム管理者でない操作者）と統合テスト（PostgreSQL。版の条件・<code>user_role</code> の差分と <code>granted_by</code>・監査記録の 1 行と変更前後の並び・監査の追記の失敗で全体が戻る・同時の 2 つの変更で 1 つだけ通る）</li>
 <li><code>User</code> の版（<code>UserRow</code>・<code>userColumns</code>・<code>User.of</code> の呼び出し元とリポジトリの復元）、<code>UserRepository</code> の役割の変更と読み出し、<code>AuditRecord.rolesChanged</code>、マッパー、<code>IdentityConfiguration</code> の <code>@Bean</code></li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>5. 認可と S-20 の一覧・詳細</strong> 【承認ゲート: セキュリティ】</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>5. 認可と S-20 の一覧・詳細</strong> 【承認ゲート: セキュリティ】</li>
 <li>セキュリティの統合テストを先に（システム管理者は <code>/staff/users</code> を開け、ほかの <code>/staff/**</code>・<code>/customer/**</code> は A-04、ほかの 6 役割と監査担当者の役割の利用者は <code>/staff/users/**</code> が A-04、ホームの行き先、詳細の利用者がいないと 404）</li>
 <li><code>UserAdministrationQueryService</code>・controller の一覧と詳細・テンプレート・ナビゲーション（社内のレイアウトだけ。システム管理者にだけ「利用者」が出ることを Web のテストで確かめ、<code>hasRole</code> の式を外す変異で確かめる。T-141）</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>6. 役割の変更の確認の領域と確定</strong> 【承認ゲート: 画面・セキュリティ】</li>
