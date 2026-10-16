@@ -8,6 +8,7 @@ import com.example.cargotracker.identity.application.internal.commandservices.Se
 import com.example.cargotracker.identity.application.internal.commandservices.TotpEnrollmentService;
 import com.example.cargotracker.identity.application.internal.commandservices.TotpReEnrollmentService;
 import com.example.cargotracker.identity.application.internal.commandservices.TotpVerificationService;
+import com.example.cargotracker.identity.application.internal.commandservices.UserRoleChangeService;
 import com.example.cargotracker.identity.application.internal.eventhandlers.KpiObservationEventHandler;
 import com.example.cargotracker.identity.application.internal.eventhandlers.PasswordResetMailEventHandler;
 import com.example.cargotracker.identity.application.internal.outboundservices.acl.NotificationPasswordResetMails;
@@ -140,6 +141,16 @@ public class IdentityConfiguration {
             Clock clock,
             TransactionTemplate transactionTemplate) {
         return new SessionRevalidationService(standings, auditRecords, clock, transactionTemplate);
+    }
+
+    @Bean
+    UserRoleChangeService userRoleChangeService(
+            UserRepository users,
+            CompanyRepository companies,
+            AuditRecordRepository auditRecords,
+            Clock clock,
+            TransactionTemplate transactionTemplate) {
+        return new UserRoleChangeService(users, companies, auditRecords, clock, transactionTemplate);
     }
 
     @Bean

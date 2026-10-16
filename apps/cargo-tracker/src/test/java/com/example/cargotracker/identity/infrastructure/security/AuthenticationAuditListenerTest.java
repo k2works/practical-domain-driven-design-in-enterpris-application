@@ -18,6 +18,7 @@ import com.example.cargotracker.shared.domain.AuthenticatedActor;
 import com.example.cargotracker.shared.domain.CompanyId;
 import com.example.cargotracker.shared.domain.Role;
 import com.example.cargotracker.shared.domain.UserId;
+import com.example.cargotracker.shared.domain.UtcInstant;
 import java.time.Clock;
 import java.util.ArrayList;
 import java.util.List;
@@ -221,6 +222,11 @@ class AuthenticationAuditListenerTest {
 
             @Override
             public boolean changePassword(User user) {
+                throw new UnsupportedOperationException();
+            }
+
+            @Override
+            public boolean changeRoles(User changed, long expectedVersion, UserId grantedBy, UtcInstant at) {
                 throw new UnsupportedOperationException();
             }
         };

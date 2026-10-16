@@ -8,10 +8,12 @@ import com.example.cargotracker.identity.domain.model.valueobjects.UserStatus;
 import com.example.cargotracker.shared.domain.CompanyId;
 import com.example.cargotracker.shared.domain.Role;
 import com.example.cargotracker.shared.domain.UserId;
+import com.example.cargotracker.shared.domain.UtcInstant;
 import java.time.Clock;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Repository;
@@ -41,7 +43,8 @@ public class MyBatisUserRepository implements UserRepository {
                             user.email().value(),
                             user.displayName(),
                             user.passwordHash(),
-                            user.status().name()),
+                            user.status().name(),
+                            user.version()),
                     now);
         } catch (DuplicateKeyException e) {
             throw new DuplicateEmailException("同じメールアドレスの利用者が既にある", e);
@@ -63,6 +66,25 @@ public class MyBatisUserRepository implements UserRepository {
     }
 
     @Override
+    public boolean changeRoles(User changed, long expectedVersion, UserId grantedBy, UtcInstant at) {
+        OffsetDateTime now = at.instant().atOffset(ZoneOffset.UTC);
+        if (mapper.updateUserVersion(changed.id().value(), expectedVersion, now) != 1) {
+            return false;
+        }
+        Set<String> current = Set.copyOf(mapper.selectUserRoles(changed.id().value()));
+        Set<String> next = changed.roles().stream().map(Role::name).collect(Collectors.toSet());
+        current.stream()
+                .filter(role -> !next.contains(role))
+                .sorted()
+                .forEach(role -> mapper.deleteUserRole(changed.id().value(), role));
+        next.stream()
+                .filter(role -> !current.contains(role))
+                .sorted()
+                .forEach(role -> mapper.insertGrantedUserRole(changed.id().value(), role, grantedBy.value(), now));
+        return true;
+    }
+
+    @Override
     public Optional<User> findById(UserId id) {
         return mapper.selectUserById(id.value()).map(this::toAggregate);
     }
@@ -75,6 +97,7 @@ public class MyBatisUserRepository implements UserRepository {
                 row.displayName(),
                 row.passwordHash(),
                 UserStatus.valueOf(row.status()),
-                mapper.selectUserRoles(row.id()).stream().map(Role::valueOf).collect(Collectors.toSet()));
+                mapper.selectUserRoles(row.id()).stream().map(Role::valueOf).collect(Collectors.toSet()),
+                row.version());
     }
 }

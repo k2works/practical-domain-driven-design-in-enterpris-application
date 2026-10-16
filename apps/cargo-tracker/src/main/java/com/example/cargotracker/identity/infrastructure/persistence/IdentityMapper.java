@@ -30,6 +30,20 @@ public interface IdentityMapper {
 
     List<String> selectUserRoles(UUID userId);
 
+    /** 版を条件にして版を上げる（Bolt 34。役割の変更）。0 件ならほかの更新が先に入った。 */
+    int updateUserVersion(
+            @Param("id") UUID id, @Param("expectedVersion") long expectedVersion, @Param("now") OffsetDateTime now);
+
+    /** 付与した操作者付きで役割を足す（Bolt 34）。 */
+    void insertGrantedUserRole(
+            @Param("userId") UUID userId,
+            @Param("role") String role,
+            @Param("grantedBy") UUID grantedBy,
+            @Param("now") OffsetDateTime now);
+
+    /** 役割を外す（Bolt 34）。 */
+    int deleteUserRole(@Param("userId") UUID userId, @Param("role") String role);
+
     /** 利用者・所属企業・役割を 1 つの SQL で読む（Bolt 32c）。役割の数だけ行が出る。 */
     List<UserStandingRow> selectUserStanding(UUID id);
 

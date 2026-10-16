@@ -19,6 +19,7 @@
             <arg column="display_name" name="displayName" javaType="String"/>
             <arg column="password_hash" name="passwordHash" javaType="String"/>
             <arg column="status" name="status" javaType="String"/>
+            <arg column="version" name="version" javaType="_long"/>
         </constructor>
     </resultMap>
 
@@ -63,7 +64,7 @@
         SELECT id, name, kind, active FROM identity.company WHERE id = #{id}
     </select>
 
-    <sql id="userColumns">id, company_id, email, display_name, password_hash, status</sql>
+    <sql id="userColumns">id, company_id, email, display_name, password_hash, status, version</sql>
 
     <insert id="insertUser">
         INSERT INTO identity.app_user
@@ -88,6 +89,24 @@
                updated_at = #{now}
          WHERE id = #{id}
     </update>
+
+    <!-- Bolt 34。役割の変更で版を条件にして上げる（UC-16 の 4b。0 件ならほかの更新が先に入った） -->
+    <update id="updateUserVersion">
+        UPDATE identity.app_user
+           SET version = version + 1,
+               updated_at = #{now}
+         WHERE id = #{id}
+           AND version = #{expectedVersion}
+    </update>
+
+    <insert id="insertGrantedUserRole">
+        INSERT INTO identity.user_role (user_id, role, granted_by, granted_at)
+        VALUES (#{userId}, #{role}, #{grantedBy}, #{now})
+    </insert>
+
+    <delete id="deleteUserRole">
+        DELETE FROM identity.user_role WHERE user_id = #{userId} AND role = #{role}
+    </delete>
 
     <select id="selectUserById" resultMap="userRow">
         SELECT <include refid="userColumns"/> FROM identity.app_user WHERE id = #{id}
