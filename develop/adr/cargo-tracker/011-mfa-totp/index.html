@@ -11197,7 +11197,7 @@
 </tr>
 <tr>
 <td style="text-align: left;">回復コード</td>
-<td style="text-align: left;">10 個を乱数で作る（<code>RecoveryCodeGenerator</code>。形は <code>1a2b-3c4d</code>。8 文字の 16 進を 4 文字ずつハイフンで区切る 32 ビット。総当たりはロック（5 回）と bcrypt で抑える。10 個のうちに重複がない）。ハッシュだけを保存し、平文は登録を保存した POST の応答で一度だけ示す（PRG にしない。再読み込みは登録済みとして A-02 へ送る）。登録の前の画面に示すと、平文の回復コードを登録の途中の session（Spring Session JDBC の表）に置くことになるため。「回復コードを安全な場所に保存した」の確認は画面の必須（<code>required</code>）だけにし、サーバーの状態を増やさない</td>
+<td style="text-align: left;">10 個を乱数で作る（<code>RecoveryCodeGenerator</code>。形は <code>1a2b-3c4d</code>。8 文字の 16 進を 4 文字ずつハイフンで区切る 32 ビット。総当たりはロック（5 回）と bcrypt で抑える。10 個のうちに重複がない）。ハッシュだけを保存し、平文は登録を保存した POST の応答で一度だけ示す（PRG にしない。再読み込みは登録済みとして A-02 へ送る）。登録の前の画面に示すと、平文の回復コードを登録の途中の session（Spring Session JDBC の表）に置くことになるため。「回復コードを安全な場所に保存した」の確認は画面の必須（<code>required</code>）だけにし、サーバーの状態を増やさない。Bolt 33f から、生成のポートは <code>NormalizedRecoveryCode</code> の一覧を返し、<code>RecoveryCode.issueSet</code> もそれを受ける（画面に平文を渡す結果は文字列のまま。値の <code>toString</code> は伏せるため）</td>
 </tr>
 <tr>
 <td style="text-align: left;">QR と表示の値</td>
@@ -11601,6 +11601,7 @@
 <p>復号した平文の消去について（Bolt 31 の開発レビュー）: 生成器は復号した配列を使い終えたら消すが、JDK の <code>SecretKeySpec</code> と java-otp の <code>Mac</code> は内部に鍵の写しを持つので、JVM の中の写しまでは消せない。消せるのは呼び出し側の配列だけである。</p>
 <h2 id="_10">改訂の経緯<a class="headerlink" href="#_10" title="Permanent link">&para;</a></h2>
 <ul>
+<li>2026-10-16: Bolt 33f で、決定 6 の回復コードの生成のポートが <code>NormalizedRecoveryCode</code> の一覧を返すことと、A-08 の URL を <code>SessionKeys</code> から同じパッケージの <code>SessionPaths</code> に分けたことを書いた（Bolt 33f の開始準備の決定 1・2。human:kakimomokuri が決定）。</li>
 <li>2026-10-16: Bolt 33e で、決定 7 の結果の型と決定 10 の入口と印に、認証の結果のトークンが 2 つ目の要素の経路（<code>SecondFactorPath</code>。<code>transient</code>）を持ち、成功の扱いがそれを読むこと（request の属性をやめた）を足した。ステータスに 33e と 33f の分け方を足した（Bolt 33e の開始準備の決定 1・4。human:kakimomokuri が決定）。</li>
 <li>2026-10-15: Bolt 33c のステップ 1 で、ステータスに 33c の開始準備の決定（33c と 33d の分け方、属性の名前と URL は <code>SessionKeys</code>・期間は <code>SessionPolicy</code>、始めたときの秘密の条件は #49）を書いた。決定 10 の印の属性の名前を、2 つの定数の組から <code>SessionKeys</code>・<code>SessionPolicy</code> に寄せたことに直し、A-07 と A-08 の重複の行き先を 33d に改めた（Bolt 33c の開始準備の決定 1・2 と決定 2 の (6)。human:kakimomokuri が決定）。</li>
 <li>2026-10-15: Bolt 33b の開発レビューで、決定 10 に印の期限（ログインから 15 分。状態 NONE・ACTIVE・EXPIRED。期限を過ぎたら A-08 は役割のホーム、知らせはリンクのない案内）、印の 2 つの属性、「続ける」を POST（<code>/account/authenticator/continue</code>）にしたこと、A-08 の URL を 33c で直す 6 組目に数えることを足した。共用の文を事実（ポート <code>TotpSecretIssuer</code> と値 <code>EnrollingUser</code>。A-08 は <code>TotpEnrollmentService</code> を呼ばない）に直し、受け入れること（再認証なし）の前提に印の期限を書いた（印の期限は human:kakimomokuri が決定）。</li>

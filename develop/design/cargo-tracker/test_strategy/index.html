@@ -11759,6 +11759,10 @@ src/test/java/.../ui/                     画面の層のステップ定義（@u
 <td style="text-align: left;">認証の入口と session の型と期限の整理</td>
 <td style="text-align: left;">Bolt 33e（振る舞いの変わらない直し）。<code>SessionPolicyTest</code> で期限の判定のちょうど・1 ナノ秒前・後を確かめ、判定していた 4 か所の既存のちょうどの時刻のテスト（<code>SessionLifetimeFilterTest</code> の 3 つの期間、<code>RecoveryLoginTest</code>、<code>TotpReEnrollmentServiceTest</code>）を緑のまま付け替える。テストのなかった A-08 の画面の期限の分岐は、session の行で A-08 を開いた時刻だけを前にずらす統合テストを <code>RecoveryCodeLoginSecurityIntegrationTest</code> に先に足す。<code>SessionIdTest</code> を足し、<code>SpringSessionUserSessionRevokerIntegrationTest</code> の今の session を残すテストが、実装の比較の取り違え（文字列と値を比べる）の変異で落ちることを確かめる。<code>RecoveryCodeAuthenticationProviderTest</code> に経路の確かめを足し、成功の扱いで経路を読まない変異と <code>Builder</code> が経路を写さない変異で落ちることを確かめる。画面だけが使う属性の名前 2 つの値を文字列で固定する</td>
 </tr>
+<tr>
+<td style="text-align: left;">期間の表示と回復コードの型と session の URL の整理</td>
+<td style="text-align: left;">Bolt 33f（振る舞いの変わらない直し）。<code>SessionPolicyTest</code> に <code>deadline</code> を足し、<code>DurationDisplay</code> の汎用の書式のテストを足す。テンプレートの期間を描く前に、A-07・A-08・A-03 の期間の文言の統合テストと、session の警告の <code>data-lifetime-message</code> の値の統合テスト（<code>SessionTimerSecurityIntegrationTest</code>。今は uiTest だけが守る）を足し、式を外す変異で落ちることを確かめる（テンプレートに静的な値を残さない。T-136）。URL の値を固定するテストは <code>SessionPathsTest</code> に移す。回復コードの生成のポートの型を変えても、画面に平文が出ることは統合テストの正規表現が守る（uiTest は個数だけ）</td>
+</tr>
 </tbody>
 </table>
 <p>統合テストは Testcontainers の PostgreSQL を使い、H2 で書かない（ADR-007）。H2 で確かめるのはスモークテストだけとする。</p>

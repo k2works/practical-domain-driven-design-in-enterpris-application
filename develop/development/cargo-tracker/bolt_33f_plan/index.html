@@ -10885,7 +10885,7 @@
 <h2 id="_4">ステップ計画<a class="headerlink" href="#_4" title="Permanent link">&para;</a></h2>
 <p>状態の記号: <code>[ ]</code> 未着手、<code>[-]</code> 進行中、<code>[?]</code> 承認待ち、<code>[x]</code> 完了。各ステップの終わりに <code>check</code> が緑であることを確かめ、push してアプリの CI と MkDocs の配備を確かめる（T-26、T-126）。コミットは pathspec で作る（T-110）。複数行の書き換えはスクリプトのファイル（<code>b33f_</code> で始める）にし、書き込みの成功を確かめてから実行する（T-103、T-137）。</p>
 <ul class="task-list">
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>1. 設計文書</strong> 【承認ゲート: 設計文書】</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>1. 設計文書</strong> 【承認ゲート: 設計文書】</li>
 <li>domain_model.md: <code>RecoveryCode</code> の行（180 行目の <code>issueSet</code>）、<code>SessionPolicy</code> の行（184 行目）、<code>TotpEnrollmentService</code> の行（196 行目）、再登録の段落と図（1105〜1106・1131・1141〜1149 行目。図に <code>isExpired</code> と <code>deadline</code>）</li>
 <li>architecture_backend.md: 268・297〜299 行目（期限の時刻、URL のクラスと application 層に置く理由、期間の表示）</li>
 <li>ui_design.md: 730・743・799・1315・1363・1368 行目（期間を <code>SessionPolicy</code> から描く）</li>
@@ -11063,6 +11063,11 @@
 <td style="text-align: left;">2026-10-16</td>
 <td style="text-align: left;">詳細整合性検証（9 件）と横断整合性検証（9 件）の指摘を反映した。タグで包むと既存の統合テストが落ちること、session の警告は属性の値であること、今の守りの事実、Advice とハンドラーの渡し方、<code>UtcInstant</code> に <code>plus</code> がないこと、付け替える箇所の列挙、設計文書とマニュアル（2.1）の直し先、release_plan の直す箇所、セキュリティを省く理由。human:kakimomokuri の決定（1 本のまま打ち切りで備える、<code>UtcInstant</code> は変えない、期間の書式は汎用の関数、URL を application 層に置く理由を ADR-012 に書く）を反映した</td>
 <td style="text-align: left;">anthropic/claude-opus-5-5</td>
+</tr>
+<tr>
+<td style="text-align: left;">2026-10-16</td>
+<td style="text-align: left;">計画を承認した（<code>/goal Bolt33f</code>）</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5、承認 human:kakimomokuri</td>
 </tr>
 </tbody>
 </table>
