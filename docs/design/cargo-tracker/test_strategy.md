@@ -4,7 +4,7 @@ title: "cargo-tracker テスト戦略"
 description: "cargo-tracker のテスト形状、テストレベルと責務、BDD（Cucumber）のシナリオ階層とタグ規約、不変条件・ユーザーストーリーとテストの対応、カバレッジ目標、CI での実行。"
 tags: [design, test-strategy, bdd]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-16T05:26:42Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-16T09:36:57Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T08:12:04Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:01:38Z }
@@ -322,6 +322,7 @@ CI で毎回実行する。
 | 認証の入口と session の型と期限の整理 | Bolt 33e（振る舞いの変わらない直し）。`SessionPolicyTest` で期限の判定のちょうど・1 ナノ秒前・後を確かめ、判定していた 4 か所の既存のちょうどの時刻のテスト（`SessionLifetimeFilterTest` の 3 つの期間、`RecoveryLoginTest`、`TotpReEnrollmentServiceTest`）を緑のまま付け替える。テストのなかった A-08 の画面の期限の分岐は、session の行で A-08 を開いた時刻だけを前にずらす統合テストを `RecoveryCodeLoginSecurityIntegrationTest` に先に足す。`SessionIdTest` を足し、`SpringSessionUserSessionRevokerIntegrationTest` の今の session を残すテストが、実装の比較の取り違え（文字列と値を比べる）の変異で落ちることを確かめる。`RecoveryCodeAuthenticationProviderTest` に経路の確かめを足し、成功の扱いで経路を読まない変異と `Builder` が経路を写さない変異で落ちることを確かめる。画面だけが使う属性の名前 2 つの値を文字列で固定する |
 | 期間の表示と回復コードの型と session の URL の整理 | Bolt 33f（振る舞いの変わらない直し）。`SessionPolicyTest` に `deadline` を足し、`DurationDisplay` の汎用の書式のテストを足す。テンプレートの期間を描く前に、A-07・A-08・A-03 の期間の文言の統合テストと、session の警告の `data-lifetime-message` の値の統合テスト（`SessionTimerSecurityIntegrationTest`。今は uiTest だけが守る）を足し、式を外す変異で落ちることを確かめる（テンプレートに静的な値を残さない。T-136）。URL の値を固定するテストは `SessionPathsTest` に移す。回復コードの生成のポートの型を変えても、画面に平文が出ることは統合テストの正規表現が守る（uiTest は個数だけ） |
 | 役割の付与と取消しと職務分離 | Bolt 34（US-16 の一部）。`RoleAssignmentPolicyTest`（8 役割の組合せの職務分離と、企業の種類 3 つ × 役割）と `User` の判定の単体テスト、`UserRoleChangeService` の単体テストと PostgreSQL の統合テスト（版の条件、`user_role` の差分と `granted_by`、監査記録の対象と変更前後、監査の追記の失敗で全体が戻る、同時の 2 つの変更で 1 つだけ通る）、セキュリティの統合テスト（`/staff/users/**` はシステム管理者だけ、ホームの行き先、確定の POST を画面を経ずに送っても同じ判定で拒む、変えた役割が相手の次の request から効く）、画面の層の受入シナリオ（`@US-16`。付与・取消し・職務分離・企業の種類・自分の役割・古い版・「戻る」） |
+| 管理範囲と範囲外の試行の記録 | Bolt 34b（US-16 AC2）。`AdministrationScope` の単体テスト、担当範囲の表とリポジトリの統合テスト（制約、割り当ての読み出し、一覧の絞り込み・空の集合）、記録のサービスの統合テスト、照会と役割の変更のサービスの範囲の判定、セキュリティの統合テスト（範囲外の詳細・確認・確定が 404 で `ADMIN_SCOPE_DENIED` が 1 行ずつ、役割も版も変わらない、割り当てのないシステム管理者には空、監査の追記の失敗で 500）、画面の層の受入シナリオ（`@US-16-AC2`。範囲外の利用者は一覧に出ず、URL を開くと見つからない） |
 
 統合テストは Testcontainers の PostgreSQL を使い、H2 で書かない（ADR-007）。H2 で確かめるのはスモークテストだけとする。
 
