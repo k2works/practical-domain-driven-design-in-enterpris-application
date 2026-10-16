@@ -306,21 +306,24 @@ class MyBatisIdentityRepositoriesIntegrationTest {
     @Test
     void 同じ割り当ては2行入らない() {
         UserId admin = addUser(company, "管理 " + UUID.randomUUID(), Set.of(Role.SHIPPER));
-        AdministrationFixtures.assignCompany(jdbc, admin, company.id());
+        CompanyId assigned = company.id();
+        AdministrationFixtures.assignCompany(jdbc, admin, assigned);
 
-        assertThatThrownBy(() -> AdministrationFixtures.assignCompany(jdbc, admin, company.id()))
+        assertThatThrownBy(() -> AdministrationFixtures.assignCompany(jdbc, admin, assigned))
                 .isInstanceOf(DataIntegrityViolationException.class);
     }
 
     @Test
     void 担当範囲の種類の値は表が確かめる() {
-        UserId admin = addUser(company, "管理 " + UUID.randomUUID(), Set.of(Role.SHIPPER));
+        UUID admin = addUser(company, "管理 " + UUID.randomUUID(), Set.of(Role.SHIPPER))
+                .value();
+        UUID scope = UUID.randomUUID();
 
         assertThatThrownBy(() -> jdbc.update(
                         "INSERT INTO identity.user_assignment (user_id, scope_kind, scope_id, granted_at)"
                                 + " VALUES (?, 'REGION', ?, CURRENT_TIMESTAMP)",
-                        admin.value(),
-                        UUID.randomUUID()))
+                        admin,
+                        scope))
                 .isInstanceOf(DataIntegrityViolationException.class);
     }
 

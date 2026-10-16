@@ -3,7 +3,7 @@ type: Plan
 title: "Bolt 34b 計画 - システム管理者の管理範囲と範囲外の試行の記録（US-16 の一部）"
 description: "W5 の 23 本目の Bolt の計画。システム管理者の管理範囲を担当範囲の表 user_assignment（COMPANY）で持ち、S-20 の一覧・詳細・役割の変更を管理範囲の企業の利用者に絞る。範囲外の利用者は存在しない利用者と同じ 404 にし、試行を監査記録に同じ request で書く（AC2、IA-INV-08）。利用停止と再開は 34d に分けた。"
 tags: [plan]
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-16T10:53:02Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-16T11:10:12Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-16T09:25:23Z }
   - { by: human:kakimomokuri, at: 2026-10-16T09:25:49Z }
@@ -205,7 +205,7 @@ u ||--o{ ua
   - controller（POST も照会を先に通す、範囲外は記録して 404）、共通の 404 の画面、一覧の空の文言
   - 画面の層: `UiUsers` でシステム管理者にシナリオの企業（自分の企業を含む）を割り当てる。受入シナリオ（`@US-16-AC2`）: 範囲外の利用者は一覧に出ず、URL を開くと見つからない（共通の 404 の画面でアクセシビリティの検査も通す）。Bolt 34 のシナリオが緑のまま
   - マニュアル 11 章と 2 章の補足。完了の判定: `check` 緑、`uiTest` 緑
-- [ ] **6. SonarQube と開発レビューと終了報告** 【承認ゲート: 終了報告】
+- [x] **6. SonarQube と開発レビューと終了報告** 【承認ゲート: 終了報告】
   - SonarQube（T-116）。開発レビュー（プログラマー・テスター、アーキテクト、セキュリティ、テクニカルライター）。`bolt_34b_report.md`、release_plan、開発の索引
 
 ### 時間の配分と打ち切り
@@ -240,12 +240,12 @@ u ||--o{ ua
 
 ## 完了条件
 
-- [ ] `user_assignment` があり、システム管理者の管理範囲（`COMPANY`）を読める
-- [ ] 一覧は管理範囲の企業の利用者だけを示し、割り当てのないシステム管理者には空
-- [ ] 範囲外の利用者の詳細・確認・確定は 404 で、役割も版も変わらず、試行が `ADMIN_SCOPE_DENIED` として 1 回の request につき 1 行、監査記録に残る（AC2、IA-INV-08、IA-INV-14）
-- [ ] 設計文書（data_model・domain_model・ui_design・architecture_backend・non_functional・test_strategy・release_plan）とマニュアル 11 章・2 章を更新した
-- [ ] `check` と `uiTest` が緑。push してアプリの CI と MkDocs の配備を確かめた。SonarQube の Quality Gate が PASS、`okf:check` ERROR 0
-- [ ] 開発レビュー、終了報告
+- [x] `user_assignment` があり、システム管理者の管理範囲（`COMPANY`）を読める
+- [x] 一覧は管理範囲の企業の利用者だけを示し、割り当てのないシステム管理者には空
+- [x] 範囲外の利用者の詳細・確認・確定は 404 で、役割も版も変わらず、確定の試行が `ADMIN_SCOPE_DENIED` として 1 行、監査記録に残る（AC2、IA-INV-08、IA-INV-14。GET は記録しない。開発レビューの決定）
+- [x] 設計文書（data_model・domain_model・ui_design・architecture_backend・non_functional・test_strategy・release_plan）とマニュアル 11 章・2 章を更新した
+- [x] `check` と `uiTest` が緑。push してアプリの CI と MkDocs の配備を確かめた。SonarQube の Quality Gate が PASS、`okf:check` ERROR 0
+- [x] 開発レビュー、終了報告
 
 ## 更新履歴
 
@@ -255,6 +255,7 @@ u ||--o{ ua
 | 2026-10-16 | 詳細整合性検証（9 件）と横断整合性検証（10 件）の指摘を反映した。共通の 404 の画面がないこと（確認ポイント 8）、落ちる既存のテスト、`REQUIRES_NEW` の前例の誤り（使わず、書き手を controller の 1 か所にして単独のトランザクションで書く）、試行の書き手の表、追記の失敗は 500、システム管理者でない操作者は 403 にそろえる、`findSummaries` を消す、理由の型、照会がコマンドサービスに依存しないこと、記録のサービスの名前、管理範囲の日本語名と IA-INV-02 との関係、34d への移し漏れと直す行の列挙、SpotBugs、「最後の 1 人」 | anthropic/claude-opus-5-5 |
 | 2026-10-16 | 計画を承認した。共通の 404 の画面を作り、管理範囲の判定に自分の詳細の例外を作らない（確認ポイント 5・8）。確認ポイント 6・7・9 ほか残りを承認した | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-10-16 | 開発レビューの後: 範囲外の試行は確定の POST でだけ記録する（GET は CSRF の守りがなく、他サイトから記録を書かせられるため。確認ポイント 7 を改めた。human:kakimomokuri が決定）。照会は管理範囲を先に読み、いない利用者と読み出しの量をそろえる。ポートは管理範囲の値を返す。記録のサービスに依存してよいのは画面の層だけ（ArchUnit）。2 章に 2.8「画面が見つかりません」 | anthropic/claude-opus-5-5 |
+| 2026-10-16 | ステップ 6 を終え、[終了報告](bolt_34b_report.md)を作った（承認待ち）。打ち切りの条件には当たらなかった | anthropic/claude-opus-5-5 |
 
 ## 関連ドキュメント
 

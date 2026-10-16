@@ -421,11 +421,13 @@ class UserAdministrationSecurityIntegrationTest extends IdentitySpyIntegrationTe
                 .append(argThat(written -> written.action() == AuditAction.ADMIN_SCOPE_DENIED));
         String url = USERS_URL + "/" + userIdOf(stranger).value() + "/role-changes/confirmation";
 
-        assertThatThrownBy(() -> mvc.perform(post(url)
-                        .cookie(session)
-                        .param("roles", Role.ROUTE_DESIGNER.name())
-                        .param("version", "0")
-                        .with(csrf())))
+        var change = post(url)
+                .cookie(session)
+                .param("roles", Role.ROUTE_DESIGNER.name())
+                .param("version", "0")
+                .with(csrf());
+
+        assertThatThrownBy(() -> mvc.perform(change))
                 .rootCause()
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessage("監査の表に届かない");
