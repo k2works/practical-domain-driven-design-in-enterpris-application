@@ -3,7 +3,9 @@ type: Plan
 title: "Bolt 33e 計画 - 認証の入口と session の型と期限の整理（振る舞いの変わらない直し）"
 description: "W5 の 20 本目の Bolt の計画。認証の結果のトークンに経路（TOTP か回復コードか）を持たせて request の属性での受け渡しをやめ、revokeOthers が残す session の ID を値オブジェクトにし、「ちょうどの時刻は期限切れ」の判定を SessionPolicy に寄せ、画面だけが使う属性の名前 2 つの値をテストで固定する。振る舞いは変えない。テンプレートの期間の数値、回復コードの生成のポートの型、ADR-012 の URL の記述と SessionKeys の命名は 33f に分ける。"
 tags: [plan]
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-16T00:16:00Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-16T00:32:32Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-10-16T00:32:32Z }
 ---
 
 # Bolt 33e 計画 - 認証の入口と session の型と期限の整理（振る舞いの変わらない直し）
@@ -189,6 +191,7 @@ package "identity" {
 | :--- | :--- | :--- |
 | 2026-10-16 | 初版作成（承認待ち）。開始準備で、33e の行の 7 項目（約 5.75 時間）を見積もり、human:kakimomokuri の決定（33e と 33f に分ける、期限の判定は `SessionPolicy` に足す、回復コードの生成のポートの型は 33f）を反映した | anthropic/claude-opus-5-5 |
 | 2026-10-16 | 詳細整合性検証（9 件）と横断整合性検証（9 件）の指摘を反映した。直列化の互換（ローリング配備で古い版が読めない）、A-08 の画面の期限の分岐にテストがない、`SessionId` の比較の取り違え、付け替えるテストの列挙、`Builder` の変異、設計文書と release_plan の行、時間の食い違い。human:kakimomokuri の決定（経路は `transient`、A-08 の分岐は統合テストを足してから、`SessionKeys` の命名は 33f、33f の進め方）を反映した | anthropic/claude-opus-5-5 |
+| 2026-10-16 | 計画を承認した（`/goal Bolt33e`） | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 
 ## 関連ドキュメント
 
