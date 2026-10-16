@@ -1,6 +1,8 @@
 package com.example.cargotracker.identity.interfaces.web;
 
 import com.example.cargotracker.identity.application.internal.session.SessionKeys;
+import com.example.cargotracker.identity.domain.model.rules.SessionPolicy;
+import com.example.cargotracker.platform.web.DurationDisplay;
 import com.example.cargotracker.shared.domain.AuthenticatedActor;
 import com.example.cargotracker.shared.domain.UserId;
 import jakarta.servlet.http.HttpServletRequest;
@@ -59,5 +61,14 @@ public class SessionTimerAdvice {
         } catch (NoSuchAlgorithmException e) {
             throw new IllegalStateException("SHA-256 が使えない", e);
         }
+    }
+
+    /**
+     * 2 つの要素がそろった session の上限（「8 時間」）。session の警告と A-03 の文言が使う。テンプレートは静的なクラスを参照しないので
+     * モデルで渡す（Bolt 33f）。
+     */
+    @ModelAttribute("sessionMaxLifetime")
+    public String sessionMaxLifetime() {
+        return DurationDisplay.length(SessionPolicy.MAX_LIFETIME);
     }
 }

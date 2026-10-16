@@ -391,6 +391,8 @@ class RecoveryCodeLoginSecurityIntegrationTest {
                 .contains("<title>認証アプリの再登録 - cargo-tracker</title>", "後で登録する")
                 // 欄の桁数は TotpCredential.DIGITS から描く。表示は Bolt 33d の前と同じ（見出しの文言は残す）
                 .contains("pattern=\"[0-9]{6}\"", "maxlength=\"6\"", "2. 表示された 6 桁のコードを入力する")
+                // 15 分は SessionPolicy から描く。表示は Bolt 33f の前と同じ
+                .contains("</span> までに登録してください（この画面を開いてから 15 分）。")
                 .as("A-08 には印の知らせを出さない")
                 .doesNotContain("app-recovery-notice");
 

@@ -12,6 +12,7 @@ import com.example.cargotracker.identity.domain.model.valueobjects.EnrollingUser
 import com.example.cargotracker.identity.domain.model.valueobjects.PasswordVerifiedUser;
 import com.example.cargotracker.identity.domain.model.valueobjects.TotpProvisioning;
 import com.example.cargotracker.platform.web.DateTimeDisplay;
+import com.example.cargotracker.platform.web.DurationDisplay;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import jakarta.servlet.http.HttpSession;
 import java.time.Clock;
@@ -132,5 +133,11 @@ public class TotpEnrollmentController {
     @ModelAttribute("codeDigits")
     int codeDigits() {
         return TotpCredential.DIGITS;
+    }
+
+    /** 登録の途中の期間（「15 分」）。テンプレートは静的なクラスを参照しないのでモデルで渡す（Bolt 33f）。 */
+    @ModelAttribute("enrollmentLifetime")
+    String enrollmentLifetime() {
+        return DurationDisplay.length(SessionPolicy.ENROLLMENT_LIFETIME);
     }
 }

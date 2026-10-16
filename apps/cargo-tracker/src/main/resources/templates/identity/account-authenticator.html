@@ -22,7 +22,7 @@
     </div>
     <p>回復コードでログインしました。認証アプリを登録し直してください。</p>
     <p>登録し直すと、前の認証アプリのコードと、残っている回復コードは使えなくなります。</p>
-    <p><span th:text="${deadline}">2026-10-15 10:15 Asia/Tokyo（UTC+09:00）</span> までに登録してください（この画面を開いてから 15 分）。</p>
+    <p><span th:text="${deadline}">2026-10-15 10:15 Asia/Tokyo（UTC+09:00）</span> までに登録してください（この画面を開いてから [[${reEnrollmentLifetime}]]）。</p>
     <h2 class="h5">1. 認証アプリで QR コードを読み取る</h2>
     <div class="app-totp-qr" th:utext="${qrSvg}"></div>
     <p>QR コードを使えない場合は、次のキーを認証アプリに入力してください。</p>

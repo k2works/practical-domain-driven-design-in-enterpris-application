@@ -1,5 +1,7 @@
 package com.example.cargotracker.identity.interfaces.web;
 
+import com.example.cargotracker.identity.domain.model.rules.SessionPolicy;
+import com.example.cargotracker.platform.web.DurationDisplay;
 import com.example.cargotracker.shared.domain.AuthenticatedActor;
 import jakarta.servlet.http.HttpServletRequest;
 import java.time.Clock;
@@ -34,5 +36,11 @@ public class RecoveryLoginAdvice {
                 actor.orElse(null),
                 clock.getIfAvailable(Clock::systemUTC).instant());
         return state == RecoveryLogin.State.NONE ? null : state.name().toLowerCase(Locale.ROOT);
+    }
+
+    /** 印の知らせの期間（「15 分」）。テンプレートは静的なクラスを参照しないのでモデルで渡す（Bolt 33f）。 */
+    @ModelAttribute("recoveryLoginLifetime")
+    public String recoveryLoginLifetime() {
+        return DurationDisplay.length(SessionPolicy.RECOVERY_LOGIN_LIFETIME);
     }
 }

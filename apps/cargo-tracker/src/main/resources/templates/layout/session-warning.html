@@ -14,7 +14,7 @@
             th:data-return-path="${timer.returnPath()}"
             th:data-user="${timer.ownerKey()}"
             data-idle-message="画面の移動や送信がないため、あと {minutes}でログアウトします。続けて使う場合は「ログインを延長する」を押してください。"
-            data-lifetime-message="ログインから 8 時間になるため、あと {minutes}でログアウトします。延長はできません。入力中の内容は、それまでに送信してください。">
+            th:data-lifetime-message="|ログインから ${sessionMaxLifetime}になるため、あと {minutes}でログアウトします。延長はできません。入力中の内容は、それまでに送信してください。|">
         <h2 id="session-warning-title" class="h5">まもなくログアウトします</h2>
         <p id="session-warning-message"></p>
         <!-- 延長の失敗は role="alert" の要素を差し込んで支援技術に知らせる（見えるようにするだけでは読まれない） -->

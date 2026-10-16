@@ -73,7 +73,7 @@
                 <a class="alert-link" th:href="@{${sessionUrls.reEnroll}}">認証アプリを登録し直す</a>
             </div>
             <div class="alert alert-warning app-recovery-notice" th:if="${recoveryLoginNotice == 'expired'}">
-                回復コードでログインしてから 15 分を過ぎたため、この画面からは認証アプリを登録し直せません。登録し直すには、いったんログアウトして、回復コードでログインし直してください。
+                回復コードでログインしてから [[${recoveryLoginLifetime}]]を過ぎたため、この画面からは認証アプリを登録し直せません。登録し直すには、いったんログアウトして、回復コードでログインし直してください。
             </div>
             <!--/* 入力の控えの知らせ（Bolt 32f）。読み込みの時に差し込むと読まれないことがあるので、空の live region（aria-live="polite"）を先に置く。role="status" にしないのは、画面の結果の知らせ（role="status"）と区別するため */-->
             <div id="session-input-status" class="app-session-input" aria-live="polite" aria-atomic="true" th:if="${sessionTimer != null}"></div>

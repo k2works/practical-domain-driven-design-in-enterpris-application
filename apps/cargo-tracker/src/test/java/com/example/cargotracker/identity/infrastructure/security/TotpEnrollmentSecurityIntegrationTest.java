@@ -118,7 +118,7 @@ class TotpEnrollmentSecurityIntegrationTest {
         assertThat(html)
                 .contains("<svg")
                 .contains("認証アプリで読み取る QR コード")
-                .contains(DEADLINE_AT_LOGIN + "</span> までに、登録とログインを終えてください")
+                .contains(DEADLINE_AT_LOGIN + "</span> までに、登録とログインを終えてください（登録を始めてから 15 分）。")
                 .doesNotContain("TOTP")
                 .contains("autocomplete=\"one-time-code\"")
                 // 欄の桁数は TotpCredential.DIGITS から描く。表示は Bolt 33d の前と同じ（見出しの文言は残す）

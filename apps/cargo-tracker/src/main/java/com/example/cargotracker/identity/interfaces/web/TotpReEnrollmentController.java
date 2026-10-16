@@ -10,6 +10,7 @@ import com.example.cargotracker.identity.domain.model.valueobjects.EncryptedSecr
 import com.example.cargotracker.identity.domain.model.valueobjects.SessionId;
 import com.example.cargotracker.identity.domain.model.valueobjects.TotpProvisioning;
 import com.example.cargotracker.platform.web.DateTimeDisplay;
+import com.example.cargotracker.platform.web.DurationDisplay;
 import com.example.cargotracker.shared.domain.AuthenticatedActor;
 import com.example.cargotracker.shared.domain.Role;
 import com.example.cargotracker.shared.domain.UtcInstant;
@@ -212,5 +213,11 @@ public class TotpReEnrollmentController {
     @ModelAttribute("codeDigits")
     int codeDigits() {
         return TotpCredential.DIGITS;
+    }
+
+    /** 再登録の期間（「15 分」）。テンプレートは静的なクラスを参照しないのでモデルで渡す（Bolt 33f）。 */
+    @ModelAttribute("reEnrollmentLifetime")
+    String reEnrollmentLifetime() {
+        return DurationDisplay.length(SessionPolicy.RE_ENROLLMENT_LIFETIME);
     }
 }

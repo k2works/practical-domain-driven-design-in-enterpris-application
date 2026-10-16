@@ -148,7 +148,10 @@ class SessionTimerSecurityIntegrationTest {
                 .as("共通のレイアウトの警告の部分に残り時間を書く")
                 .contains("data-idle-seconds=\"1800\"")
                 .contains("data-lifetime-remaining-seconds=\"21600\"")
-                .contains("/js/session-timeout.js");
+                .contains("/js/session-timeout.js")
+                // 8 時間は SessionPolicy から描く。表示は Bolt 33f の前と同じ（JavaScript が {minutes} を置き換える）
+                .contains(
+                        "data-lifetime-message=\"ログインから 8 時間になるため、あと {minutes}でログアウトします。延長はできません。入力中の内容は、それまでに送信してください。\"");
     }
 
     @Test
@@ -182,7 +185,9 @@ class SessionTimerSecurityIntegrationTest {
         assertThat(html)
                 .contains("/js/session-input.js")
                 .contains("data-session-input=\"rejected\"")
-                .doesNotContain("data-user");
+                .doesNotContain("data-user")
+                // 8 時間は SessionPolicy から描く。表示は Bolt 33f の前と同じ
+                .contains("ログインから 8 時間を過ぎたため、password を再設定したため");
     }
 
     @Test
