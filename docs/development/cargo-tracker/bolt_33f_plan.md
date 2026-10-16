@@ -3,7 +3,7 @@ type: Plan
 title: "Bolt 33f 計画 - 期間の表示と回復コードの型と session の URL の整理（振る舞いの変わらない直し）"
 description: "W5 の 21 本目の Bolt の計画。期限の時刻を SessionPolicy.deadline にまとめ、テンプレートに直書きした「15 分」「8 時間」を SessionPolicy から描き、回復コードの生成のポートと RecoveryCode.issueSet を NormalizedRecoveryCode で受け、SessionKeys から URL 2 つを同じパッケージの別のクラスに分けて ADR-012 を直す。振る舞いと表示は変えない。"
 tags: [plan]
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-16T02:56:10Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-16T03:03:09Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-16T02:54:29Z }
 ---
@@ -126,7 +126,7 @@ LoginController ..> SessionPaths
   - test_strategy.md: 322 行目の後に Bolt 33f の行
   - release_plan.md: 33f の行（600 行目。決定 1〜7 と約 4.5 時間、計画へのリンク）、状態の行（553 行目）、局面とアプローチ（557 行目。33f の範囲に `deadline`）、実績の表（776 行目）、更新履歴
   - 完了の判定: `okf:check` ERROR 0、`documentationTest` 緑
-- [ ] **2. 期限の時刻と期間の書式**
+- [x] **2. 期限の時刻と期間の書式**
   - `SessionPolicyTest` に `deadline` を足し、`isExpired` を `deadline` で書き直し、3 か所を付け替える。既存のテスト（`SessionLifetimeFilterTest` の残りの秒数、`SessionTimerSecurityIntegrationTest`、A-07・A-08 の期限の表示）を緑のまま
   - `DurationDisplay` の汎用の関数とテストを足し、`connection` をそれで書き直す（経路設計の表示のテストが緑のまま）
 - [ ] **3. テンプレートの期間を `SessionPolicy` から描く**

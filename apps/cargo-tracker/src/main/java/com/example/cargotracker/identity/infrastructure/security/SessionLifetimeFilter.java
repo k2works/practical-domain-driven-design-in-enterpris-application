@@ -74,7 +74,10 @@ public class SessionLifetimeFilter extends OncePerRequestFilter {
             return;
         }
         if (session.getAttribute(SessionKeys.AUTHENTICATED_AT) instanceof Instant at) {
-            Duration remaining = Duration.between(now, at.plus(SessionPolicy.MAX_LIFETIME));
+            Duration remaining = Duration.between(
+                    now,
+                    SessionPolicy.deadline(new UtcInstant(at), SessionPolicy.MAX_LIFETIME)
+                            .instant());
             request.setAttribute(SessionKeys.LIFETIME_REMAINING_ATTRIBUTE, remaining.toSeconds());
         }
     }

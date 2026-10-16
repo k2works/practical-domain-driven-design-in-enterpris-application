@@ -38,6 +38,18 @@ public final class SessionPolicy {
      * @return 期限切れなら true（ちょうどの時刻を含む）
      */
     public static boolean isExpired(UtcInstant start, UtcInstant now, Duration lifetime) {
-        return !now.instant().isBefore(start.instant().plus(lifetime));
+        return !now.instant().isBefore(deadline(start, lifetime).instant());
+    }
+
+    /**
+     * 始めた時刻から期間が過ぎる時刻（期限）。画面に示す期限の時刻と 8 時間の残りが使う（Bolt 33f。共有カーネルの {@link UtcInstant} は
+     * 変えず、ここで包む）。
+     *
+     * @param start 期間の起点
+     * @param lifetime 期間
+     * @return 期限の時刻（この時刻ちょうどで期限切れ）
+     */
+    public static UtcInstant deadline(UtcInstant start, Duration lifetime) {
+        return new UtcInstant(start.instant().plus(lifetime));
     }
 }

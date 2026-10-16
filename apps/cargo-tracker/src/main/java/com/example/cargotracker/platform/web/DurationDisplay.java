@@ -29,6 +29,14 @@ public final class DurationDisplay {
 
     /** 経路設計（S-06）の接続時間・接続余裕（例: 1 日 12 時間、4 時間、4 時間 30 分、0 分）。負でない期間を渡す。 */
     public static String connection(Duration duration) {
+        return length(duration);
+    }
+
+    /**
+     * 期間の長さ（例: 15 分、8 時間、1 日 12 時間、4 時間 30 分、0 分）。0 の単位は書かない。負でない期間を渡す。経路設計の接続時間と、
+     * ログインの手続きと session の期間（Bolt 33f）が使う。
+     */
+    public static String length(Duration duration) {
         long days = duration.toDays();
         int hours = duration.toHoursPart();
         int minutes = duration.toMinutesPart();

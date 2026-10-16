@@ -12,6 +12,7 @@ import com.example.cargotracker.identity.domain.model.valueobjects.EnrollingUser
 import com.example.cargotracker.identity.domain.model.valueobjects.PasswordVerifiedUser;
 import com.example.cargotracker.identity.domain.model.valueobjects.TotpProvisioning;
 import com.example.cargotracker.platform.web.DateTimeDisplay;
+import com.example.cargotracker.shared.domain.UtcInstant;
 import jakarta.servlet.http.HttpSession;
 import java.time.Clock;
 import java.time.Instant;
@@ -111,7 +112,9 @@ public class TotpEnrollmentController {
     /** 登録とログインを終える期限（登録を始めた時刻から 15 分）の表示。 */
     private static String deadline(HttpSession session) {
         return session.getAttribute(SessionKeys.ENROLLMENT_STARTED_AT) instanceof Instant startedAt
-                ? DateTimeDisplay.customer(startedAt.plus(SessionPolicy.ENROLLMENT_LIFETIME))
+                ? DateTimeDisplay.customer(
+                        SessionPolicy.deadline(new UtcInstant(startedAt), SessionPolicy.ENROLLMENT_LIFETIME)
+                                .instant())
                 : "";
     }
 

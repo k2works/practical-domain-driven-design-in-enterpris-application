@@ -156,7 +156,10 @@ public class TotpReEnrollmentController {
                 session.setAttribute(STARTED_AT, clock.instant());
             }
             addLayout(actor, model);
-            Instant deadline = ((Instant) session.getAttribute(STARTED_AT)).plus(SessionPolicy.RE_ENROLLMENT_LIFETIME);
+            Instant deadline = SessionPolicy.deadline(
+                            new UtcInstant((Instant) session.getAttribute(STARTED_AT)),
+                            SessionPolicy.RE_ENROLLMENT_LIFETIME)
+                    .instant();
             model.addAttribute(
                     "deadline",
                     isShipper(actor) ? DateTimeDisplay.customer(deadline) : DateTimeDisplay.staff(deadline));

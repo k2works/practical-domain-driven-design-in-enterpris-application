@@ -22,4 +22,10 @@ class SessionPolicyTest {
         assertThat(SessionPolicy.isExpired(START, new UtcInstant(now), LIFETIME))
                 .isEqualTo(expired);
     }
+
+    @org.junit.jupiter.api.Test
+    void 期限は始めた時刻に期間を足した時刻() {
+        assertThat(SessionPolicy.deadline(START, LIFETIME))
+                .isEqualTo(new UtcInstant(Instant.parse("2026-10-16T00:15:00Z")));
+    }
 }
