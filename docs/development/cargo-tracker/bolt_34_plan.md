@@ -3,7 +3,7 @@ type: Plan
 title: "Bolt 34 計画 - 固定役割の付与と取消しと職務分離（US-16 の一部）"
 description: "W5 の 22 本目の Bolt の計画。システム管理者が S-20 で利用者の一覧と詳細を見て、BR-15 の固定役割を確認の領域を経て付与・取り消す。職務分離（AC3）と企業の種類に合わない役割と自分の役割の変更を拒み、古い版からの更新を拒む（UC-16 の 4b）。変更履歴は監査記録に対象と変更前後を足して残す（AC1 の役割の分）。管理範囲外の拒否と利用停止は 34b、振る舞いの変わらない直しは 34c に分けた。"
 tags: [plan]
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-16T05:26:42Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-16T05:35:36Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-16T05:23:02Z }
 ---
@@ -254,7 +254,7 @@ u ||--|{ ur
   - test_strategy.md: Bolt 34 の行
   - release_plan.md: 34 の行の続き（開始準備のステップ 6 で 34・34b・34c に分けた）、W6 の行（:649。ロックの解除・利用者の登録・担当案件）、マニュアルの方針（:629 の「節」→「11 章」）、状態の行・局面とアプローチ（:557）・実績の表・更新履歴
   - 完了の判定: `okf:check` ERROR 0、`documentationTest` 緑
-- [ ] **2. スキーマと dev-data** 【承認ゲート: データベース】
+- [x] **2. スキーマと dev-data** 【承認ゲート: データベース】
   - common のマイグレーションで `audit_record` に 5 列を 1 列ずつ足し、列のコメントを付ける（PostgreSQL と H2 の両方で流れること）。dev-data にシステム管理者（A 社）と相手の利用者（A 社）を足す。TOTP の資格は利用者 ID を AAD にした暗号文で作り、平文の秘密を `application-dev.properties` の `dev-login.accounts` に足し、`DevTotpCredentialsDevProfileTest` の件数を直す
   - マッパーの契約テスト（`AuditRecordRow` の新しい列の読み書き）
 - [ ] **3. 役割の組合せの規則と利用者の版**（ドメイン）【承認ゲート: Red・Green】

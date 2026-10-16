@@ -13,4 +13,9 @@ public record AuditRecordRow(
         UUID actorCompanyId,
         String action,
         String result,
-        String reason) {}
+        String reason,
+        String targetType,
+        String targetId,
+        String targetVersion,
+        String beforeState,
+        String afterState) {}

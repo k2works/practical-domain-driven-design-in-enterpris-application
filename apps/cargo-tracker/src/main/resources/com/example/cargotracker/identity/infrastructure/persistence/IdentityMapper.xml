@@ -46,6 +46,11 @@
             <arg column="action" name="action" javaType="String"/>
             <arg column="result" name="result" javaType="String"/>
             <arg column="reason" name="reason" javaType="String"/>
+            <arg column="target_type" name="targetType" javaType="String"/>
+            <arg column="target_id" name="targetId" javaType="String"/>
+            <arg column="target_version" name="targetVersion" javaType="String"/>
+            <arg column="before_state" name="beforeState" javaType="String"/>
+            <arg column="after_state" name="afterState" javaType="String"/>
         </constructor>
     </resultMap>
 
@@ -105,12 +110,15 @@
     </select>
 
     <insert id="insertAuditRecord">
-        INSERT INTO identity.audit_record (id, occurred_at, actor_user_id, actor_company_id, action, result, reason)
-        VALUES (#{id}, #{occurredAt}, #{actorUserId}, #{actorCompanyId}, #{action}, #{result}, #{reason})
+        INSERT INTO identity.audit_record (id, occurred_at, actor_user_id, actor_company_id, action, result, reason,
+                                           target_type, target_id, target_version, before_state, after_state)
+        VALUES (#{id}, #{occurredAt}, #{actorUserId}, #{actorCompanyId}, #{action}, #{result}, #{reason},
+                #{targetType}, #{targetId}, #{targetVersion}, #{beforeState}, #{afterState})
     </insert>
 
     <select id="selectAuditRecordsByActor" resultMap="auditRecordRow">
-        SELECT id, occurred_at, actor_user_id, actor_company_id, action, result, reason
+        SELECT id, occurred_at, actor_user_id, actor_company_id, action, result, reason,
+               target_type, target_id, target_version, before_state, after_state
           FROM identity.audit_record
          WHERE actor_user_id = #{actorUserId}
          ORDER BY occurred_at, id

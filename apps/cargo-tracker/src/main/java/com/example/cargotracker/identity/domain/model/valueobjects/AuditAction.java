@@ -32,5 +32,10 @@ public enum AuditAction {
      * password の再設定を終えた（Bolt 33a。US-18 AC8）。A-06 で新しい password を設定した。成功だけを記録する（方針の誤り・無効なリンクは
      * 記録しない）。
      */
-    PASSWORD_RESET_COMPLETED
+    PASSWORD_RESET_COMPLETED,
+    /**
+     * システム管理者が利用者の役割を変えた（Bolt 34。US-16 AC1 の役割の分）。成功だけを記録し、対象（利用者と更新した後の版）と
+     * 変更前後の役割を {@link AuditTarget} に残す。拒んだ変更と古い版からの変更は記録しない。
+     */
+    ROLES_CHANGED
 }

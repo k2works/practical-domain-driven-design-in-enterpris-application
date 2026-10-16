@@ -2,18 +2,23 @@ package com.example.cargotracker.identity.domain.model.aggregates;
 
 import com.example.cargotracker.identity.domain.model.valueobjects.AuditAction;
 import com.example.cargotracker.identity.domain.model.valueobjects.AuditResult;
+import com.example.cargotracker.identity.domain.model.valueobjects.AuditTarget;
 import com.example.cargotracker.identity.domain.model.valueobjects.AuthenticationRejection;
 import com.example.cargotracker.shared.annotation.ddd.AggregateRoot;
 import com.example.cargotracker.shared.domain.CompanyId;
+import com.example.cargotracker.shared.domain.Role;
 import com.example.cargotracker.shared.domain.UserId;
 import com.example.cargotracker.shared.domain.UtcInstant;
+import java.util.EnumSet;
 import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 /**
  * 監査記録。操作者・時刻・操作・結果・理由の追記専用の記録（IA-INV-07）。
  * Bolt 14 はログインの成功・失敗とログアウトを、同じ request の中で同期に書く（IA-INV-08）。
- * 対象・変更前後・承認・出典の項目は使う Bolt で足す。
+ * Bolt 34 で対象と変更前後（{@link AuditTarget}）を足した。承認・出典の項目は使う Bolt で足す。
  */
 @AggregateRoot
 public final class AuditRecord {
@@ -27,6 +32,9 @@ public final class AuditRecord {
     /** 操作者の企業の引数の名前（null の確かめの文）。 */
     private static final String COMPANY_ARGUMENT = "company";
 
+    /** 対象の種類: 利用者（`audit_record.target_type`）。 */
+    private static final String USER_TARGET = "USER";
+
     private final UUID id;
     private final UtcInstant occurredAt;
     private final UserId actorUserId;
@@ -34,6 +42,26 @@ public final class AuditRecord {
     private final AuditAction action;
     private final AuditResult result;
     private final String reason;
+    private final AuditTarget target;
+
+    private AuditRecord(
+            UUID id,
+            UtcInstant occurredAt,
+            UserId actorUserId,
+            CompanyId actorCompanyId,
+            AuditAction action,
+            AuditResult result,
+            String reason,
+            AuditTarget target) {
+        this.id = Objects.requireNonNull(id, "id");
+        this.occurredAt = Objects.requireNonNull(occurredAt, "occurredAt");
+        this.actorUserId = actorUserId;
+        this.actorCompanyId = actorCompanyId;
+        this.action = Objects.requireNonNull(action, "action");
+        this.result = Objects.requireNonNull(result, "result");
+        this.reason = reason;
+        this.target = target;
+    }
 
     private AuditRecord(
             UUID id,
@@ -43,13 +71,7 @@ public final class AuditRecord {
             AuditAction action,
             AuditResult result,
             String reason) {
-        this.id = Objects.requireNonNull(id, "id");
-        this.occurredAt = Objects.requireNonNull(occurredAt, "occurredAt");
-        this.actorUserId = actorUserId;
-        this.actorCompanyId = actorCompanyId;
-        this.action = Objects.requireNonNull(action, "action");
-        this.result = Objects.requireNonNull(result, "result");
-        this.reason = reason;
+        this(id, occurredAt, actorUserId, actorCompanyId, action, result, reason, null);
     }
 
     /** password の段の成功を記録する（2 つの要素がそろったログインの成功とは分ける。Bolt 31、ADR-012 の見直しの 1）。 */
@@ -152,6 +174,44 @@ public final class AuditRecord {
                 UUID.randomUUID(), at, user, company, AuditAction.PASSWORD_RESET_COMPLETED, AuditResult.SUCCESS, null);
     }
 
+    /**
+     * システム管理者が利用者の役割を変えたことを記録する（Bolt 34、US-16 AC1 の役割の分）。対象は利用者と更新した後の版、変更前後は
+     * 役割の名前を {@link Role} の宣言の順にカンマでつないだ文字列。結果は成功。
+     */
+    public static AuditRecord rolesChanged(
+            UserId actor,
+            CompanyId actorCompany,
+            UserId targetUser,
+            long targetVersion,
+            Set<Role> before,
+            Set<Role> after,
+            UtcInstant at) {
+        Objects.requireNonNull(actor, USER_ARGUMENT);
+        Objects.requireNonNull(actorCompany, COMPANY_ARGUMENT);
+        Objects.requireNonNull(targetUser, "targetUser");
+        return new AuditRecord(
+                UUID.randomUUID(),
+                at,
+                actor,
+                actorCompany,
+                AuditAction.ROLES_CHANGED,
+                AuditResult.SUCCESS,
+                null,
+                new AuditTarget(
+                        USER_TARGET,
+                        targetUser.value().toString(),
+                        Long.toString(targetVersion),
+                        roleNames(before),
+                        roleNames(after)));
+    }
+
+    private static String roleNames(Set<Role> roles) {
+        if (roles.isEmpty()) {
+            return "";
+        }
+        return EnumSet.copyOf(roles).stream().map(Role::name).collect(Collectors.joining(","));
+    }
+
     /** ログアウトを記録する。 */
     public static AuditRecord logout(UserId user, CompanyId company, UtcInstant at) {
         return new AuditRecord(UUID.randomUUID(), at, user, company, AuditAction.LOGOUT, AuditResult.SUCCESS, null);
@@ -165,8 +225,9 @@ public final class AuditRecord {
             CompanyId actorCompanyId,
             AuditAction action,
             AuditResult result,
-            String reason) {
-        return new AuditRecord(id, occurredAt, actorUserId, actorCompanyId, action, result, reason);
+            String reason,
+            AuditTarget target) {
+        return new AuditRecord(id, occurredAt, actorUserId, actorCompanyId, action, result, reason, target);
     }
 
     public UUID id() {
@@ -198,5 +259,10 @@ public final class AuditRecord {
     /** 理由（ログインの失敗の理由など）。ないときは null。 */
     public String reason() {
         return reason;
+    }
+
+    /** 対象と変更前後（役割の変更など。Bolt 34）。対象のない記録（ログインなど）では null。 */
+    public AuditTarget target() {
+        return target;
     }
 }

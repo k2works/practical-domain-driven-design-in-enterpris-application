@@ -12,6 +12,7 @@ import com.example.cargotracker.identity.domain.model.aggregates.DuplicateEmailE
 import com.example.cargotracker.identity.domain.model.aggregates.User;
 import com.example.cargotracker.identity.domain.model.aggregates.UserRepository;
 import com.example.cargotracker.identity.domain.model.valueobjects.AuditAction;
+import com.example.cargotracker.identity.domain.model.valueobjects.AuditTarget;
 import com.example.cargotracker.identity.domain.model.valueobjects.AuthenticationRejection;
 import com.example.cargotracker.identity.domain.model.valueobjects.CompanyKind;
 import com.example.cargotracker.identity.domain.model.valueobjects.EmailAddress;
@@ -193,6 +194,34 @@ class MyBatisIdentityRepositoriesIntegrationTest {
                         Integer.class,
                         failure.id()))
                 .isEqualTo(1);
+    }
+
+    @Test
+    void 役割の変更の監査記録は対象と変更前後を残す() {
+        UserId actor = new UserId(UUID.randomUUID());
+        UserId target = new UserId(UUID.randomUUID());
+        UtcInstant at = new UtcInstant(Instant.parse("2026-10-16T05:00:00Z"));
+        auditRecords.append(AuditRecord.rolesChanged(
+                actor, company.id(), target, 3L, Set.of(Role.ROUTE_DESIGNER, Role.SALES), Set.of(Role.SALES), at));
+
+        assertThat(auditRecords.findByActorUserId(actor)).singleElement().satisfies(record -> {
+            assertThat(record.action()).isEqualTo(AuditAction.ROLES_CHANGED);
+            assertThat(record.target())
+                    .isEqualTo(
+                            new AuditTarget("USER", target.value().toString(), "3", "SALES,ROUTE_DESIGNER", "SALES"));
+        });
+    }
+
+    @Test
+    void 対象のない監査記録は対象の列が空() {
+        UserId actor = new UserId(UUID.randomUUID());
+        auditRecords.append(
+                AuditRecord.logout(actor, company.id(), new UtcInstant(Instant.parse("2026-10-16T05:00:00Z"))));
+
+        assertThat(auditRecords.findByActorUserId(actor))
+                .singleElement()
+                .extracting(AuditRecord::target)
+                .isNull();
     }
 
     @Test

@@ -4,6 +4,7 @@ import com.example.cargotracker.identity.domain.model.aggregates.AuditRecord;
 import com.example.cargotracker.identity.domain.model.aggregates.AuditRecordRepository;
 import com.example.cargotracker.identity.domain.model.valueobjects.AuditAction;
 import com.example.cargotracker.identity.domain.model.valueobjects.AuditResult;
+import com.example.cargotracker.identity.domain.model.valueobjects.AuditTarget;
 import com.example.cargotracker.shared.domain.CompanyId;
 import com.example.cargotracker.shared.domain.UserId;
 import com.example.cargotracker.shared.domain.UtcInstant;
@@ -26,6 +27,7 @@ public class MyBatisAuditRecordRepository implements AuditRecordRepository {
 
     @Override
     public void append(AuditRecord auditRecord) {
+        AuditTarget target = auditRecord.target();
         mapper.insertAuditRecord(new AuditRecordRow(
                 auditRecord.id(),
                 auditRecord.occurredAt().instant().atOffset(ZoneOffset.UTC),
@@ -37,7 +39,12 @@ public class MyBatisAuditRecordRepository implements AuditRecordRepository {
                         : auditRecord.actorCompanyId().value(),
                 auditRecord.action().name(),
                 auditRecord.result().name(),
-                auditRecord.reason()));
+                auditRecord.reason(),
+                target == null ? null : target.type(),
+                target == null ? null : target.id(),
+                target == null ? null : target.version(),
+                target == null ? null : target.beforeState(),
+                target == null ? null : target.afterState()));
     }
 
     @Override
@@ -55,7 +62,15 @@ public class MyBatisAuditRecordRepository implements AuditRecordRepository {
                 row.actorCompanyId() == null ? null : new CompanyId(row.actorCompanyId()),
                 AuditAction.valueOf(row.action()),
                 AuditResult.valueOf(row.result()),
-                row.reason());
+                row.reason(),
+                row.targetType() == null
+                        ? null
+                        : new AuditTarget(
+                                row.targetType(),
+                                row.targetId(),
+                                row.targetVersion(),
+                                row.beforeState(),
+                                row.afterState()));
     }
 
     private static UserId optionalUser(UUID id) {

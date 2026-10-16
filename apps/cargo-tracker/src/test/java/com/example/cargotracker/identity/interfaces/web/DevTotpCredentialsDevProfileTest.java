@@ -40,7 +40,7 @@ class DevTotpCredentialsDevProfileTest {
     @Test
     void 開発用の利用者はみなTOTPを登録し暗号文を復号すると設定の秘密と一致し利用者ごとに違う() {
         Set<String> secrets = new HashSet<>();
-        assertThat(devLogin.accounts()).hasSize(5);
+        assertThat(devLogin.accounts()).hasSize(7);
         for (DevLoginProperties.Account account : devLogin.accounts()) {
             TotpCredential credential = credentials
                     .findByUserId(users.findByEmail(EmailAddress.of(account.email()))
