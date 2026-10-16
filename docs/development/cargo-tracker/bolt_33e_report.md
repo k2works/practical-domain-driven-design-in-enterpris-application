@@ -3,7 +3,9 @@ type: Plan
 title: "Bolt 33e 終了報告 - 認証の入口と session の型と期限の整理（振る舞いの変わらない直し）"
 description: "W5 の 20 本目の Bolt の終了報告。「ちょうどの時刻は期限切れ」の判定を SessionPolicy.isExpired に寄せ（テストのなかった A-08 の画面の分岐に統合テストを足した）、ほかの session を失効させるときに残す session の ID を値オブジェクト SessionId にし、回復コードの経路を認証の結果のトークンが transient の欄 SecondFactorPath で持つようにして request の属性での受け渡しをやめ、画面だけが使う属性の名前 2 つの値を固定した。振る舞いは変えていない。"
 tags: [plan]
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-16T01:41:36Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-16T01:45:41Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-10-16T01:45:42Z }
 ---
 
 # Bolt 33e 終了報告 - 認証の入口と session の型と期限の整理（振る舞いの変わらない直し）
@@ -39,7 +41,7 @@ generated: { by: anthropic/claude-opus-5-5, at: 2026-10-16T01:41:36Z }
 | 3. session の ID | `SessionId` と `SessionIdTest`、ポート・実装（`keep.value()` と比べる）・再登録のサービスと画面・テスト | `31ca82e6` |
 | 4. 認証の経路 | `SecondFactorPath`、トークンの `transient` の欄と `Builder`、2 つの provider、成功の扱い、request の属性をやめた、SpotBugs の抑止（議題 2） | `5b964801` |
 | 5. 属性の名前の値 | `TotpReEnrollmentSessionKeysTest` | `5b964801` |
-| 6. 品質と報告 | SonarQube、開発レビュー（3 つ）と直し、この報告 | この報告のコミット |
+| 6. 品質と報告 | SonarQube、開発レビュー（3 つ）と直し、この報告 | `6db1df81`、`6159a557` |
 
 ## 指標
 
@@ -109,6 +111,7 @@ Bolt 33f（W5 の続き）。画面と回復コードと文書の振る舞いの
 
 | 日付 | 更新内容 | 更新者 |
 | :--- | :--- | :--- |
+| 2026-10-16 | 終了報告を承認した（議題 1〜4。議題 2 の人に諮らずに足した SpotBugs の抑止を事後に承認。議題 4 は 33f の開始準備で扱う） | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-10-16 | 初版作成（承認待ち） | anthropic/claude-opus-5-5 |
 
 ## 関連ドキュメント
