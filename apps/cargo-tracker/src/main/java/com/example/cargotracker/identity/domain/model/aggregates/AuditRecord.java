@@ -44,6 +44,7 @@ public final class AuditRecord {
     private final String reason;
     private final AuditTarget target;
 
+    @SuppressWarnings("java:S107") // 監査記録の項目（Bolt 34 で対象と変更前後を足した）をそろえて受ける
     private AuditRecord(
             UUID id,
             UtcInstant occurredAt,
@@ -218,6 +219,7 @@ public final class AuditRecord {
     }
 
     /** 保存されている状態から組み立てる（リポジトリが使う）。 */
+    @SuppressWarnings("java:S107") // 保存されている項目をそろえて受ける
     public static AuditRecord reconstitute(
             UUID id,
             UtcInstant occurredAt,

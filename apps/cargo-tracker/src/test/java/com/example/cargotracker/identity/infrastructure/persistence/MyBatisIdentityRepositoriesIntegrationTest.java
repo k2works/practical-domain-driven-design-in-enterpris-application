@@ -207,9 +207,9 @@ class MyBatisIdentityRepositoriesIntegrationTest {
         auditRecords.append(AuditRecord.rolesChanged(
                 actor, company.id(), target, 3L, Set.of(Role.ROUTE_DESIGNER, Role.SALES), Set.of(Role.SALES), at));
 
-        assertThat(auditRecords.findByActorUserId(actor)).singleElement().satisfies(record -> {
-            assertThat(record.action()).isEqualTo(AuditAction.ROLES_CHANGED);
-            assertThat(record.target())
+        assertThat(auditRecords.findByActorUserId(actor)).singleElement().satisfies(audit -> {
+            assertThat(audit.action()).isEqualTo(AuditAction.ROLES_CHANGED);
+            assertThat(audit.target())
                     .isEqualTo(
                             new AuditTarget("USER", target.value().toString(), "3", "SALES,ROUTE_DESIGNER", "SALES"));
         });

@@ -32,6 +32,7 @@ public final class User {
     private final Set<Role> roles;
     private final long version;
 
+    @SuppressWarnings("java:S107") // 利用者の項目（Bolt 34 で版を足した）をそろえて受ける
     private User(
             UserId id,
             CompanyId companyId,
@@ -67,6 +68,7 @@ public final class User {
     }
 
     /** 版（`app_user.version`）を持つ利用者を組み立てる（リポジトリの復元が使う。Bolt 34）。 */
+    @SuppressWarnings("java:S107") // 保存されている項目をそろえて受ける
     public static User of(
             UserId id,
             CompanyId companyId,

@@ -8,8 +8,8 @@
 <body>
 <main>
     <h1>利用者</h1>
-    <p th:if="${#lists.isEmpty(users)}">利用者はまだいません。</p>
-    <div th:unless="${#lists.isEmpty(users)}" class="table-scroll" tabindex="0" role="region"
+    <p th:if="${#lists.isEmpty(summaries)}">利用者はまだいません。</p>
+    <div th:unless="${#lists.isEmpty(summaries)}" class="table-scroll" tabindex="0" role="region"
          aria-label="利用者の一覧">
         <table class="table">
             <caption>企業と利用者と役割（企業名・表示名の順）</caption>
@@ -23,7 +23,7 @@
             </tr>
             </thead>
             <tbody>
-            <tr th:each="user : ${users}">
+            <tr th:each="user : ${summaries}">
                 <td th:text="${user.companyName}">A 社</td>
                 <td><a th:href="@{/staff/users/{id}(id=${user.id.value})}" th:text="${user.displayName}">佐藤</a></td>
                 <td th:text="${user.email.value}">sato@example.com</td>

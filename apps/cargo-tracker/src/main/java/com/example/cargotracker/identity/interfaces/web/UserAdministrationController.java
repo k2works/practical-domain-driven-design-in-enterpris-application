@@ -49,6 +49,9 @@ public class UserAdministrationController {
     /** 先に更新されていたときの文言（UI 設計 S-20。誰が変えたかは言わない）。 */
     static final String STALE_MESSAGE = "この利用者の情報が先に更新されました。最新の内容を確かめてから、もう一度変更してください。";
 
+    /** レイアウトがナビの現在の項目を読むモデルの属性の名前。 */
+    private static final String ACTIVE_ATTRIBUTE = "active";
+
     /** レイアウトのナビの現在の項目。 */
     private static final String ACTIVE = "users";
 
@@ -65,8 +68,8 @@ public class UserAdministrationController {
 
     @GetMapping(USERS_URL)
     public String list(Model model) {
-        model.addAttribute("users", queryService.list());
-        model.addAttribute("active", ACTIVE);
+        model.addAttribute("summaries", queryService.list());
+        model.addAttribute(ACTIVE_ATTRIBUTE, ACTIVE);
         return "identity/users/list";
     }
 
@@ -127,25 +130,24 @@ public class UserAdministrationController {
             Model model,
             RoleChangeResult result) {
         return switch (result) {
-            case RoleChangeResult.Rejected rejected -> {
+            case RoleChangeResult.Rejected(RoleChangeRejection rejection) -> {
                 UserDetail user = detail(id);
                 yield showDetail(
-                        new DetailForm(
-                                user, selected, version, ErrorMessage.of(rejected.rejection(), user.companyKind())),
+                        new DetailForm(user, selected, version, ErrorMessage.of(rejection, user.companyKind())),
                         actor,
                         model);
             }
-            case RoleChangeResult.Stale stale -> {
+            case RoleChangeResult.Stale _ -> {
                 UserDetail user = detail(id);
                 yield showDetail(
                         new DetailForm(user, user.roles(), user.version(), new ErrorMessage(STALE_MESSAGE, false)),
                         actor,
                         model);
             }
-            case RoleChangeResult.NotFound notFound -> throw notFound();
-            case RoleChangeResult.NotPermitted notPermitted -> throw new ResponseStatusException(HttpStatus.FORBIDDEN);
-            case RoleChangeResult.Changed changed -> throw new IllegalStateException("受け付けた結果は示し直さない");
-            case RoleChangeResult.Acceptable acceptable -> throw new IllegalStateException("受け付けた結果は示し直さない");
+            case RoleChangeResult.NotFound _ -> throw notFound();
+            case RoleChangeResult.NotPermitted _ -> throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+            case RoleChangeResult.Changed _, RoleChangeResult.Acceptable _ ->
+                throw new IllegalStateException("受け付けた結果は示し直さない");
         };
     }
 
@@ -168,7 +170,7 @@ public class UserAdministrationController {
         model.addAttribute("keptRoleNames", names(only(user.roles(), assignable, false)));
         model.addAttribute("version", form.version());
         model.addAttribute("error", form.error());
-        model.addAttribute("active", ACTIVE);
+        model.addAttribute(ACTIVE_ATTRIBUTE, ACTIVE);
         return DETAIL_VIEW;
     }
 
@@ -188,7 +190,7 @@ public class UserAdministrationController {
                 "selectedRoles", order(selected).stream().map(Role::name).toList());
         model.addAttribute("version", version);
         model.addAttribute("operator", Role.SYSTEM_ADMIN.displayName() + " " + actor.displayName());
-        model.addAttribute("active", ACTIVE);
+        model.addAttribute(ACTIVE_ATTRIBUTE, ACTIVE);
         return "identity/users/confirmation";
     }
 
@@ -211,7 +213,7 @@ public class UserAdministrationController {
     private static Optional<UserId> parse(String id) {
         try {
             return Optional.of(new UserId(UUID.fromString(id)));
-        } catch (IllegalArgumentException e) {
+        } catch (IllegalArgumentException _) {
             return Optional.empty();
         }
     }
@@ -223,7 +225,7 @@ public class UserAdministrationController {
         }
         try {
             return roles.stream().map(Role::valueOf).collect(Collectors.toUnmodifiableSet());
-        } catch (IllegalArgumentException e) {
+        } catch (IllegalArgumentException _) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
         }
     }

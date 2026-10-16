@@ -58,10 +58,10 @@ public class UserRoleChangeService {
      */
     public RoleChangeResult check(
             AuthenticatedActor operator, UserId target, long expectedVersion, Set<Role> newRoles) {
-        return switch (judge(operator, target, expectedVersion, newRoles)) {
-            case Judgement.Refused refused -> refused.result();
-            case Judgement.Accepted accepted -> new RoleChangeResult.Acceptable();
-        };
+        if (judge(operator, target, expectedVersion, newRoles) instanceof Judgement.Refused(RoleChangeResult refusal)) {
+            return refusal;
+        }
+        return new RoleChangeResult.Acceptable();
     }
 
     /**
@@ -86,10 +86,9 @@ public class UserRoleChangeService {
     private RoleChangeResult changeInTransaction(
             AuthenticatedActor operator, UserId target, long expectedVersion, Set<Role> newRoles) {
         return switch (judge(operator, target, expectedVersion, newRoles)) {
-            case Judgement.Refused refused -> refused.result();
-            case Judgement.Accepted accepted -> {
+            case Judgement.Refused(RoleChangeResult refusal) -> refusal;
+            case Judgement.Accepted(User before) -> {
                 // 判定に使った利用者（読んだ版が画面の版と同じ）をそのまま変える。版の出どころを 1 つにする
-                User before = accepted.user();
                 UtcInstant now = new UtcInstant(clock.instant());
                 if (!users.changeRoles(before.changeRoles(newRoles), before.version(), operator.userId(), now)) {
                     yield new RoleChangeResult.Stale();
