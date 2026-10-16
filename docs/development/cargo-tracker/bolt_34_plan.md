@@ -3,7 +3,7 @@ type: Plan
 title: "Bolt 34 計画 - 固定役割の付与と取消しと職務分離（US-16 の一部）"
 description: "W5 の 22 本目の Bolt の計画。システム管理者が S-20 で利用者の一覧と詳細を見て、BR-15 の固定役割を確認の領域を経て付与・取り消す。職務分離（AC3）と企業の種類に合わない役割と自分の役割の変更を拒み、古い版からの更新を拒む（UC-16 の 4b）。変更履歴は監査記録に対象と変更前後を足して残す（AC1 の役割の分）。管理範囲外の拒否と利用停止は 34b、振る舞いの変わらない直しは 34c に分けた。"
 tags: [plan]
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-16T05:23:01Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-16T05:26:42Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-16T05:23:02Z }
 ---
@@ -244,7 +244,7 @@ u ||--|{ ur
 
 状態の記号: `[ ]` 未着手、`[-]` 進行中、`[?]` 承認待ち、`[x]` 完了。各ステップの終わりに `check` が緑であることを確かめ、push してアプリの CI と MkDocs の配備を確かめる（T-26、T-126）。コミットは pathspec で作る（T-110）。複数行の書き換えはスクリプトのファイル（`b34_` で始める）にし、書き込みの成功を確かめてから実行する（T-103、T-137）。
 
-- [ ] **1. 設計文書** 【承認ゲート: 設計文書】
+- [x] **1. 設計文書** 【承認ゲート: 設計文書】
   - ui_design.md: S-20 の URL、一覧・詳細・確認の領域のワイヤーフレームと文言、A-04 の行（システム管理者のほかの `/staff/**`・`/customer/**`、ほかの役割の `/staff/users/**`）、ホームの行き先（:190）、ナビゲーションの表（:226 の「利用者」はシステム管理者）、画面遷移図の S-20
   - domain_model.md: `RoleAssignmentPolicy`、`RoleChangeRejection` と理由、`User` の版と役割の変更、`ROLES_CHANGED`（`AuditAction` の行）と `AuditRecord` の対象と変更前後、`UserRoleChangeService`・`RoleChangeResult`・`UserAdministrationQueryService`・`UserSummary`・`UserDetail` の行、IA-INV-01 の行（Bolt 34 で実現。企業の種類の規則を足すなら同じ行か新しい行）
   - data_model.md: `audit_record` の列の追加（Bolt 34）と変更履歴を監査記録で代えること（決定 2）、`User` に版を写すこと（:936 の Bolt 33a の判断を改める）、`user_role.granted_by` は NULL を許す（:826）、`(target_type, target_id, occurred_at)` のインデックスは US-17

@@ -4,7 +4,7 @@ title: "cargo-tracker データモデル"
 description: "cargo-tracker の概念データモデル、スキーマ分割、命名と型の規約（H2 と PostgreSQL の共通部分）、コンテキストごとの論理データモデルと ER 図、版・追記専用・冪等性・イベント配信の表現。"
 tags: [design, data-model]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-15T11:44:17Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-16T05:26:42Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T07:48:17Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:01:37Z }
@@ -822,7 +822,7 @@ entity "user_role\n役割" as ur {
   * user_id : UUID <<PK,FK>>
   * role : VARCHAR(30) <<PK>>
   --
-  * granted_by : UUID
+  granted_by : UUID
   * granted_at : TIMESTAMPTZ
 }
 entity "user_assignment\n担当範囲" as ua {
@@ -933,7 +933,7 @@ session は `platform` スキーマの Spring Session の表に置く。利用�
 Bolt 14 で作る範囲（2026-10-06、human:kakimomokuri。[Bolt 14 計画](../../development/cargo-tracker/bolt_14_plan.md) の確認ポイント 4・5・7・12）:
 
 - `company` は全列を作る。`kind` は `SHIPPER`・`CONSIGNEE`・`OPERATOR`（A 社）。
-- `app_user` は `id`・`company_id`・`email`・`display_name`・`password_hash`・`status`（`ACTIVE`・`SUSPENDED`）・`version`・`created_at`・`updated_at` を作る。`email` は前後の空白を除き小文字にして保存し、一意にする。TOTP の秘密・失敗の回数・ロックの期限は `app_user` に足さず、関心事ごとの `totp_credential`・`login_failure`・`recovery_code` に分ける（Bolt 30。利用者の行と `version` に触れずに条件付きの更新で書くため）。この 3 つの表は `version` を持たない（条件付きの更新が楽観ロックの版の代わりになる。上の「楽観ロック」の例外）。`password_hash` は `{bcrypt}` の接頭辞を付けた DelegatingPasswordEncoder の形式（SEC-07）。Bolt 33a から、password の再設定の完了で `UPDATE ... SET password_hash = :hash, version = version + 1, updated_at = :now WHERE id = :id` と更新する。版を上げるのは、利用者の管理（US-16）など期待版で更新する側が、この変更の後の古い版で上書きしないためである。版を条件にしないのは、同じ利用者の同時の設定が、同じトランザクションの `password_reset_token` の条件付きの使用で 1 つに絞られるためである（`User` には版を写さない）。スキーマは変えない。
+- `app_user` は `id`・`company_id`・`email`・`display_name`・`password_hash`・`status`（`ACTIVE`・`SUSPENDED`）・`version`・`created_at`・`updated_at` を作る。`email` は前後の空白を除き小文字にして保存し、一意にする。TOTP の秘密・失敗の回数・ロックの期限は `app_user` に足さず、関心事ごとの `totp_credential`・`login_failure`・`recovery_code` に分ける（Bolt 30。利用者の行と `version` に触れずに条件付きの更新で書くため）。この 3 つの表は `version` を持たない（条件付きの更新が楽観ロックの版の代わりになる。上の「楽観ロック」の例外）。`password_hash` は `{bcrypt}` の接頭辞を付けた DelegatingPasswordEncoder の形式（SEC-07）。Bolt 33a から、password の再設定の完了で `UPDATE ... SET password_hash = :hash, version = version + 1, updated_at = :now WHERE id = :id` と更新する。版を上げるのは、利用者の管理（US-16）など期待版で更新する側が、この変更の後の古い版で上書きしないためである。版を条件にしないのは、同じ利用者の同時の設定が、同じトランザクションの `password_reset_token` の条件付きの使用で 1 つに絞られるためである（Bolt 33a では `User` に版を写さなかった。Bolt 34 で、役割の変更の期待する版のために `User` に版を写した。password の再設定は今も版を条件にしない）。スキーマは変えない。
 - `user_role` は全列を作る。`role` は `SHIPPER`（荷主担当者）・`SALES`（営業担当者）・`ROUTE_DESIGNER`（経路設計者）・`TRACKING_MANAGER`（追跡管理者）・`DATA_STEWARD`（データ責任者）・`CUSTOMER_SUPPORT`（カスタマーサポート）・`SYSTEM_ADMIN`（システム管理者）・`AUDITOR`（監査担当者）。
 - `audit_record` は `id`・`occurred_at`・`actor_user_id`・`actor_company_id`・`action`・`result`・`reason`・`correlation_id` を作り、追記だけにする（` [append-only]`）。`action` は password の段の成功・ログインの成功・失敗・TOTP の登録・回復コードの使用・ロック・session の取消し・ログアウト・password の再設定の依頼と完了・TOTP の再登録（`PASSWORD_VERIFIED`・`LOGIN_SUCCEEDED`・`LOGIN_FAILED`・`TOTP_ENROLLED`・`RECOVERY_CODE_USED`・`ACCOUNT_LOCKED`・`SESSION_REVOKED`・`LOGOUT`・`PASSWORD_RESET_REQUESTED`・`PASSWORD_RESET_COMPLETED`・`TOTP_RE_ENROLLED`）、`reason` は失敗の理由（`BAD_CREDENTIALS`・`UNKNOWN_USER`・`SUSPENDED`・`COMPANY_INACTIVE`・`INVALID_TOTP`・`TOTP_REUSED`・`INVALID_RECOVERY_CODE`・`TOTP_NOT_ENROLLED`・`LOCKED`・`SERVICE_ERROR`）。`PASSWORD_VERIFIED` と `INVALID_TOTP`・`TOTP_REUSED` は Bolt 31 で足し、`LOGIN_SUCCEEDED` は 2 つの要素（password と TOTP）がそろったときに改めた。Bolt 31b で初回の TOTP の登録（`TOTP_ENROLLED`。操作者に登録した利用者と企業を入れる）を足す。Bolt 31c で回復コードの使用（`RECOVERY_CODE_USED`。操作者に利用者と企業を入れ、`LOGIN_SUCCEEDED` と 2 行にする）と、回復コードの拒否の理由（`INVALID_RECOVERY_CODE`。形の違い・誤り・使用済み・両方の欄がある送信を区別しない）を足す（ADR-011 の決定 7）。Bolt 31d で、TOTP を登録していない利用者の TOTP の送信の理由（`TOTP_NOT_ENROLLED`。今までは `INVALID_TOTP`）を分ける（ADR-011 の決定 8）。Bolt 32 で、ロック（`ACCOUNT_LOCKED`。その失敗でロックしたときだけ 1 行。結果は `SUCCESS`、理由は空、操作者に利用者と企業を入れる）と、ロック中の試行の理由（`LOCKED`）、利用者の読み出しの DB の誤りの理由（`SERVICE_ERROR`）を足す（どちらも失敗を数えない。ADR-011 の決定 9）。失敗の `LOGIN_FAILED` と `ACCOUNT_LOCKED` は `login_failure` の更新と同じトランザクションで書く（IA-INV-08）。Bolt 32c で、request ごとの確かめで session を捨てたこと（`SESSION_REVOKED`）を足す。結果は `FAILURE`（その session を通さなかった。`ACCOUNT_LOCKED` はロックを成し遂げた操作なので `SUCCESS`）、理由は `SUSPENDED`・`COMPANY_INACTIVE`・`UNKNOWN_USER`、操作者は session の主体の利用者 ID と企業 ID（利用者が消えていても追跡できるように残す。外部キーはない）。役割が変わっただけのときは書かない。Bolt 33 で、password の再設定の依頼（`PASSWORD_RESET_REQUESTED`）を足す。有効な利用者は `SUCCESS`（理由は空、操作者に利用者と企業を入れる）、止められた利用者は `FAILURE`・`SUSPENDED`、所属企業の無効は `FAILURE`・`COMPANY_INACTIVE`、登録なしは `FAILURE`・`UNKNOWN_USER`（操作者を空にし、入力したメールアドレスを残さない）で、理由は既存の値を再利用する。依頼の監査は依頼のサービスが同期に書き、トークンの発行と送信（イベントのハンドラー）では書かない。Bolt 33a で、password の再設定の完了（`PASSWORD_RESET_COMPLETED`）を足す。成功だけを `SUCCESS`（理由は空、操作者に利用者と企業を入れる）で、トークンの使用・password の更新と同じトランザクションで書く。方針の誤り・無効なリンク・利用停止と企業の無効での拒否は書かない。Bolt 33b で、TOTP の再登録（`TOTP_RE_ENROLLED`）を足す。成功だけを `SUCCESS`（理由は空、操作者に利用者と企業を入れる）で、`totp_credential` の置き換え・`recovery_code` の発行し直しと同じトランザクションで書く。コードの誤り・期限切れ・秘密が読めない・利用できないときは書かない。監査と送信の記録を結ぶ対象の列は使う Bolt で足す（AUD-02）。TOTP の失敗は操作者に利用者を入れて記録する。どちらの列にも CHECK 制約はないので、値を足すマイグレーションは要らない。存在しないメールアドレスでの失敗は、操作者を空にして記録し、メールアドレスは残さない。権限外のアクセスの試行の記録は US-16 の Bolt で足す。対象・変更前後・承認・出典・`event_id` の列は使う Bolt で足す。
 - `user_assignment`・`access_grant`・`kpi_baseline` は使う Bolt（US-16・US-19・US-21）で作る。
@@ -941,6 +941,7 @@ Bolt 14 で作る範囲（2026-10-06、human:kakimomokuri。[Bolt 14 計画](../
 - 既存の表の `shipper_company_id`・`consignee_company_id`・`submitted_by` などには外部キーを張らない。仮の荷受人の企業（US-16 の企業マスターまで設定にある）を表に持たないため、企業マスターで決める。
 - `db/dev-data/` の開発用のシードは、スキーマの所有（ADR-001）の例外として、ほかのコンテキストの表から写してよい（例: Bolt 21 の KPI 計測記録の最初の提示時刻を `quotation.quotation` から写す）。本番のマイグレーションとアプリケーションのコードでは、ほかのコンテキストの表を読まない。ただし、写しの列を足すマイグレーションが既存の行を 1 回だけ埋めるときは、ADR-001 のコンプライアンスの例外として読んでよい（Bolt 24。`booking.booking.quotation_no`）。
 - 開発用の企業と利用者は `db/dev-data/` に置き、`dev` のときだけ Flyway の場所に足す。共通・ベンダーの場所に置かない（ADR-011 の決定 3）。
+- Bolt 34 で `audit_record` に `target_type`・`target_id`・`target_version`・`before_state`・`after_state` を足した（どれも NULL を許す。今の記録は対象を持たない）。役割の変更の履歴は別の表を作らず、監査記録 `ROLES_CHANGED`（対象 `USER`・利用者 ID・更新した後の版、変更前後は役割の名前を `Role` の宣言の順にカンマでつないだ文字列）で代える。`user_role` は今の値だけを持ち、付与で `granted_by`（操作者）と `granted_at` を入れ、取消しで行を消す（2026-10-16、human:kakimomokuri）。`user_role.granted_by` は NULL を許す（dev-data の既存の行は NULL）。`approval_ref`・`source_ref` と `(target_type, target_id, occurred_at)` のインデックスは、使う Bolt（監査の照会は US-17）で足す。
 - Bolt 14 の認可はログインの時点の役割で行っていた。Bolt 32c で、権限の取消し（US-18 AC6）とあわせて request ごとに `app_user`・`user_role`・`company` を 1 回で確かめる形に置き換えた。スキーマは変えていない。
 
 ### 通知（`notification`）
