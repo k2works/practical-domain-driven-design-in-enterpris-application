@@ -3,7 +3,9 @@ type: Plan
 title: "Bolt 34b 終了報告 - システム管理者の管理範囲と範囲外の試行の記録（US-16 の一部）"
 description: "W5 の 23 本目の Bolt の終了報告。システム管理者は user_assignment（COMPANY）で割り当てた企業の利用者だけを一覧・詳細・役割の変更で扱え、範囲外は存在しない利用者と同じ 404 になる。役割の変更の試行は確定の POST でだけ ADMIN_SCOPE_DENIED に記録する（開発レビューで GET の記録をやめた）。共通の 404 の画面を足した。"
 tags: [plan]
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-16T11:10:12Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-16T11:17:30Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-10-16T11:17:31Z }
 ---
 
 # Bolt 34b 終了報告 - システム管理者の管理範囲と範囲外の試行の記録（US-16 の一部）
@@ -108,6 +110,7 @@ Bolt 34d（利用停止と再開、管理者向けのマニュアル、デモの
 
 | 日付 | 更新内容 | 更新者 |
 | :--- | :--- | :--- |
+| 2026-10-16 | 終了報告を承認した（議題 1〜4。議題 3 の人に諮らずに変えた点を事後に承認） | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-10-16 | 初版作成（承認待ち）。`check` 2374 件・`uiTest` 260 件が緑、SonarQube PASS | anthropic/claude-opus-5-5 |
 
 ## 関連ドキュメント
