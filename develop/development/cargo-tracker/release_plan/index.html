@@ -6230,6 +6230,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../bolt_34_plan/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 34 計画
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../release_report-0_1/" class="md-nav__link">
         
   
@@ -12770,10 +12798,24 @@
 </tr>
 <tr>
 <td style="text-align: left;">34</td>
-<td style="text-align: left;">US-16 の一部: 固定役割（BR-15）の付与と変更履歴（AC1）、管理範囲外の拒否と試行の記録（AC2、IA-INV-08）、職務分離（AC3）。置き場所は <code>identity.application.internal.commandservices</code> と <code>identity.interfaces.web</code>（S-20）。利用停止・権限の取消しの操作（Bolt 32c の request ごとの確かめが次の request から反映する）。ログインの監査の書き込みの経路の見直し（Bolt 32 の議題 5。数えない拒否と password の段の成功をリスナーが直接書く今の形を、利用者の管理の監査とあわせて見直す）、<code>LoginAttemptService</code> などの <code>@Service</code> と <code>@Bean</code> の二重の定義、回復コードのログインの IA-INV-08 の範囲の文書化、ロックと IA-INV-04 の関係の明文化（Bolt 32c の議題 6）、「暗号の部品は crypto にある」の規則を名前ごとに分けるか</td>
+<td style="text-align: left;">US-16 の一部: S-20 の利用者の一覧・詳細、固定役割（BR-15）の付与と取消しと変更履歴（AC1 の役割の分。監査記録に対象と変更前後を足して代える）、職務分離（AC3）、企業の種類と役割（UC-16 の主シナリオ 4。確認ポイント 5）、自分の役割の変更の拒否、古い版からの更新の拒否（UC-16 の 4b）。置き場所は <code>identity.domain.model.rules</code>・<code>identity.application.internal.commandservices</code>・<code>queryservices</code>・<code>identity.interfaces.web</code>（S-20）。マニュアル 11 章。開始準備で 34・34b・34c に分けた（2026-10-16、human:kakimomokuri。8 項目で 4 時間に収まらないため）。<a href="../bolt_34_plan/">Bolt 34 計画</a></td>
 <td style="text-align: right;">2</td>
 <td style="text-align: left;">インサイドアウト</td>
 <td style="text-align: left;">ステップごと（認可とスキーマを含むため。W4 の締めの決定の「認証の完成」に準じる）</td>
+</tr>
+<tr>
+<td style="text-align: left;">34b</td>
+<td style="text-align: left;">US-16 の一部: 管理範囲外の拒否と試行の記録（AC2、IA-INV-08。管理範囲は <code>user_assignment</code> の <code>COMPANY</code> で割り当てる）、利用停止と再開（AC5 の利用停止の分。Bolt 32c の request ごとの確かめが次の request から反映する）、管理者向けのマニュアル（利用停止）、デモの動画（<code>@US-16</code>）。Bolt 34 の開始準備で 34 から分けた</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: left;">インサイドアウト</td>
+<td style="text-align: left;">ステップごと（認可とスキーマ）</td>
+</tr>
+<tr>
+<td style="text-align: left;">34c</td>
+<td style="text-align: left;">振る舞いの変わらない直し: ログインの監査の書き込みの経路の見直し（Bolt 32 の議題 5。数えない拒否と password の段の成功をリスナーが直接書く今の形を、利用者の管理の監査とあわせて見直す）、<code>LoginAttemptService</code> などの <code>@Service</code> と <code>@Bean</code> の二重の定義、回復コードのログインの IA-INV-08 の範囲の文書化、ロックと IA-INV-04 の関係の明文化（Bolt 32c の議題 6）、「暗号の部品は crypto にある」の規則を名前ごとに分けるか、<code>@MockitoSpyBean</code>・<code>@Configuration</code> の見張り（Bolt 32d）、<code>login_failure</code> の COMMENT（Bolt 32）。Bolt 34 の開始準備で 34 から分けた</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: left;">リファクタリング（インサイドアウト）</td>
+<td style="text-align: left;">ステップごと（構造）</td>
 </tr>
 <tr>
 <td style="text-align: left;">35</td>
@@ -12841,7 +12883,9 @@
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Bolt 29b: #46 の前半。<a href="../bolt_29b_plan/">Bolt 29b 計画</a>（<code>/goal</code> で進めた）、<a href="../bolt_29b_report/">Bolt 29b 終了報告</a>（完了、2026-10-11 に承認済み。4 か所と開発レビューの必須の指摘を直した。SonarQube PASS・Code Smell 0）</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Bolt 29c: #46 の後半。<a href="../bolt_29c_plan/">Bolt 29c 計画</a>（承認済み）、<a href="../bolt_29c_report/">Bolt 29c 終了報告</a>（完了、2026-10-11 に承認済み。#46 を閉じた。SonarQube PASS・Code Smell 0）</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> Bolt 30〜33b: US-18 の残り（#13）と通知モジュールの最小の新設。<a href="../bolt_30_plan/">Bolt 30 計画</a>（承認済み）、<a href="../bolt_30_report/">Bolt 30 終了報告</a>（完了、2026-10-11 に承認済み。ADR-011 を採用し、3 つの表・ドメイン・リポジトリ・TOTP の生成を作った。SonarQube PASS・Code Smell 0）、<a href="../bolt_31_plan/">Bolt 31 計画</a>（承認済み）、<a href="../bolt_31_report/">Bolt 31 終了報告</a>（完了、2026-10-13 に承認済み。<code>/goal Bolt31</code> で進めた。TOTP の秘密の暗号化と 2 段階のログイン（A-02）。層の規則に 2 つの狭い例外。SonarQube PASS）、<a href="../bolt_31b_plan/">Bolt 31b 計画</a>（承認済み）、<a href="../bolt_31b_report/">Bolt 31b 終了報告</a>（完了、2026-10-13 に承認済み）、<a href="../bolt_31c_plan/">Bolt 31c 計画</a>（承認済み）、<a href="../bolt_31c_report/">Bolt 31c 終了報告</a>（完了、2026-10-13 に承認済み）、<a href="../bolt_31d_plan/">Bolt 31d 計画</a>（承認済み）、<a href="../bolt_31d_report/">Bolt 31d 終了報告</a>（完了、2026-10-13 に承認済み。スパイクを消した）、<a href="../bolt_32_plan/">Bolt 32 計画</a>（承認済み）、<a href="../bolt_32_report/">Bolt 32 終了報告</a>（完了、2026-10-14 に承認済み。ログインのロック）、<a href="../bolt_32c_plan/">Bolt 32c 計画</a>（承認済み）、<a href="../bolt_32c_report/">Bolt 32c 終了報告</a>（完了、2026-10-14 に承認済み。request ごとの利用者の確かめ）、<a href="../bolt_32d_plan/">Bolt 32d 計画</a>（承認済み）、<a href="../bolt_32d_report/">Bolt 32d 終了報告</a>（完了、2026-10-14 に承認済み。認証の部品の低の指摘とテストの整理）、<a href="../bolt_32b_plan/">Bolt 32b 計画</a>（承認済み。session の失効の警告と延長）、<a href="../bolt_32b_report/">Bolt 32b 終了報告</a>（完了、2026-10-14 に承認済み。session の警告と延長。支援技術の手動確認も済み）、<a href="../bolt_32e_plan/">Bolt 32e 計画</a>（承認済み。失効の後に開いていた画面へ戻す）、<a href="../bolt_32e_report/">Bolt 32e 終了報告</a>（完了、2026-10-14 に承認済み。失効の後に開いていた画面へ戻す）、<a href="../bolt_32f_plan/">Bolt 32f 計画</a>（承認済み。失効の時の入力の保持）、<a href="../bolt_32f_report/">Bolt 32f 終了報告</a>（完了、2026-10-15 に承認済み。失効の時の入力の保持。支援技術の手動確認も済み）、<a href="../bolt_33_plan/">Bolt 33 計画</a>（承認済み。通知モジュールの新設と再設定の依頼）、<a href="../bolt_33_report/">Bolt 33 終了報告</a>（完了、2026-10-15 に承認済み。仮の A-06、#49）、<a href="../bolt_33a_plan/">Bolt 33a 計画</a>（承認済み。password の再設定）、<a href="../bolt_33a_report/">Bolt 33a 終了報告</a>（完了、2026-10-15 に承認済み。session の ID の変更、#49 にコメント）。Bolt 32f（入力の保持と送信の後の失効）は 32e の後で、33b より前</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> Bolt 34: US-16 の一部（#14）</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> Bolt 34: US-16 の一部（#14）。<a href="../bolt_34_plan/">Bolt 34 計画</a>（承認待ち。役割の付与と取消しと職務分離）</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> Bolt 34b: US-16 の一部（#14）。管理範囲外の拒否と利用停止</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> Bolt 34c: 振る舞いの変わらない直し（監査の経路ほか）</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> Bolt 35: US-04 AC3・AC5（#43）、D-85</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> W5 の締め: 結果とふりかえり、開いている持ち越しの数（T-89）、W6 の計画の見直し</li>
 </ul>
@@ -14293,6 +14337,11 @@
 <td style="text-align: left;">2026-10-16</td>
 <td style="text-align: left;">Bolt 33f の終了報告の承認を記録した。US-18 の振る舞いの変わらない直し（33c〜33f）を終えた。次は Bolt 34</td>
 <td style="text-align: left;">anthropic/claude-opus-5-5、承認 human:kakimomokuri</td>
+</tr>
+<tr>
+<td style="text-align: left;">2026-10-16</td>
+<td style="text-align: left;">Bolt 34 の開始準備で、34 の行を 34（役割の付与と取消しと職務分離）・34b（管理範囲外の拒否と利用停止）・34c（振る舞いの変わらない直し）に分け、<a href="../bolt_34_plan/">Bolt 34 計画</a>を作った（承認待ち）。変更履歴は監査記録で代え、管理範囲は <code>user_assignment</code> で割り当て、自分の役割の変更は拒む（human:kakimomokuri が決定）。担当案件・利用者の登録・ロックの解除・TOTP の解除は W6</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5</td>
 </tr>
 </tbody>
 </table>
