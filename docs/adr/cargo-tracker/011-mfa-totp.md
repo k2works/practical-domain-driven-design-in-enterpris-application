@@ -4,7 +4,7 @@ title: "ADR-011: 多要素認証は Spring Security 7 の要素の権限で組�
 description: "password の後に TOTP を求める 2 段階のログインを、Spring Security 7 の多要素認証（要素ごとの権限）で組む。"
 tags: [adr, authentication, mfa, totp]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-16T01:41:36Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-16T02:56:10Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-11T08:28:34Z }
 ---
@@ -226,7 +226,7 @@ U -> A2 : POST /login/totp（TOTP）
 | 秘密の発行 | 160 ビットの秘密を乱数で作り、AAD を付けて暗号化して返す（`TotpSecretIssuer`）。平文の秘密は `identity.infrastructure` の実装の中だけで扱い、session には暗号文の文字列（`EncryptedSecret#value()`）だけを置く（`EncryptedSecret` は直列化できる型でなく、Spring Session JDBC は Java の直列化を使う。ドメインの値に `Serializable` は足さない）。登録の途中の暗号文が session にあり、同じ利用者の AAD で復号できる限りそれを使い続ける（GET の再読み込みやタブを 2 つ開いても秘密を変えない） |
 | 最初のコードの確かめ | 暗号文と入れたコードで前後 1 つの刻みを照合する。誤りは保存せず、同じ秘密で A-07 に示し直す。password の要素は捨てない（登録は認証の段ではない）。誤りは失敗の回数に数えない（Bolt 32 で決めた。登録は認証のイベントを経ず、登録の誤りは自分の秘密の確かめで、他人の要素の推測にならない。決定 9） |
 | 要素は与えない | 登録は `FACTOR_TOTP` を与えない。登録で確かめたコードの刻みは使ったことにしない（最後に使った刻みは 0）ので、同じコードを A-02 でもう一度使える。登録を認証のフィルターにせず、認証の流れと session の ID の変更・8 時間の起点を A-02 の 1 か所に保つ |
-| 回復コード | 10 個を乱数で作る（`RecoveryCodeGenerator`。形は `1a2b-3c4d`。8 文字の 16 進を 4 文字ずつハイフンで区切る 32 ビット。総当たりはロック（5 回）と bcrypt で抑える。10 個のうちに重複がない）。ハッシュだけを保存し、平文は登録を保存した POST の応答で一度だけ示す（PRG にしない。再読み込みは登録済みとして A-02 へ送る）。登録の前の画面に示すと、平文の回復コードを登録の途中の session（Spring Session JDBC の表）に置くことになるため。「回復コードを安全な場所に保存した」の確認は画面の必須（`required`）だけにし、サーバーの状態を増やさない |
+| 回復コード | 10 個を乱数で作る（`RecoveryCodeGenerator`。形は `1a2b-3c4d`。8 文字の 16 進を 4 文字ずつハイフンで区切る 32 ビット。総当たりはロック（5 回）と bcrypt で抑える。10 個のうちに重複がない）。ハッシュだけを保存し、平文は登録を保存した POST の応答で一度だけ示す（PRG にしない。再読み込みは登録済みとして A-02 へ送る）。登録の前の画面に示すと、平文の回復コードを登録の途中の session（Spring Session JDBC の表）に置くことになるため。「回復コードを安全な場所に保存した」の確認は画面の必須（`required`）だけにし、サーバーの状態を増やさない。Bolt 33f から、生成のポートは `NormalizedRecoveryCode` の一覧を返し、`RecoveryCode.issueSet` もそれを受ける（画面に平文を渡す結果は文字列のまま。値の `toString` は伏せるため） |
 | QR と表示の値 | ZXing（`com.google.zxing:core`、Apache-2.0、実行時の推移的な依存なし）で QR の行列を作り、インラインの SVG にする。色は `fill` の属性で付け、`style` は使わない（CSP が `style-src` を許さないため。CSP は変えない）。URI は `otpauth://totp/cargo-tracker:<メールアドレス>?secret=…&issuer=cargo-tracker&digits=6&period=30&algorithm=SHA1`、手入力のキーは Base32 を 4 文字ずつ区切る。画面は `th:utext` で、自分で作った SVG にだけ使う。クライアントで描く案は、秘密を JavaScript に渡し、CSP に script を足すことになるので採らない。URI は URL エンコードした ASCII だけなので、QR の生成で文字セットを指定しない（ECI を付けると読めない認証アプリがある。Bolt 31b の開発レビュー） |
 | `TotpProvisioning` を値に置く | 表示の値（URI、手入力のキー、QR の SVG）は秘密と同じ重さとして扱う。ZXing を `identity.infrastructure` に閉じるには、ポートが表示の値を返すしかないため、ドメインの値 `TotpProvisioning`（`identity.domain.model.valueobjects`、`@ValueObject`）にし、`toString` で値を隠す（`EncryptedSecret` の前例）。代わりに、QR の SVG という表示の形がドメインの値に入る（ドメインは中身を解釈せず、運ぶだけ）。ZXing をドメインに入れるより小さい代償として受け入れ、表示の形を変えるときはインフラ層の実装だけを変える（Bolt 31b の開発レビュー）。画面に一度だけ渡し、session・flash の属性・記録には置かない。A-07 の応答は `Cache-Control: no-store` |
 | 新しいポートの置き場所 | 認証の要素のポート（生成 `TotpCodeGenerator`・発行 `TotpSecretIssuer`・ハッシュ `RecoveryCodeHasher`・回復コードの生成 `RecoveryCodeGenerator`）は、前例（`TrackingNumberIssuer`）にそろえて `identity.domain.model.aggregates` に置く。ポートの置き場所を分けるのは、ほかのコンテキストでも増えたときに ADR で諮る。登録のサービス `TotpEnrollmentService` は `identity.application.internal.commandservices`、登録済みかの問い合わせ `TotpEnrollmentQueryService` は `queryservices` に置く（`isEnrolled` を `TotpVerificationService` から移し、画面の層だけが呼ぶ。D-5 の認証の例外は広げない） |
@@ -439,6 +439,7 @@ Bolt 33b で解いたもの（決定 10 に移した）: TOTP の再登録（SEC
 
 ## 改訂の経緯
 
+- 2026-10-16: Bolt 33f で、決定 6 の回復コードの生成のポートが `NormalizedRecoveryCode` の一覧を返すことと、A-08 の URL を `SessionKeys` から同じパッケージの `SessionPaths` に分けたことを書いた（Bolt 33f の開始準備の決定 1・2。human:kakimomokuri が決定）。
 - 2026-10-16: Bolt 33e で、決定 7 の結果の型と決定 10 の入口と印に、認証の結果のトークンが 2 つ目の要素の経路（`SecondFactorPath`。`transient`）を持ち、成功の扱いがそれを読むこと（request の属性をやめた）を足した。ステータスに 33e と 33f の分け方を足した（Bolt 33e の開始準備の決定 1・4。human:kakimomokuri が決定）。
 - 2026-10-15: Bolt 33c のステップ 1 で、ステータスに 33c の開始準備の決定（33c と 33d の分け方、属性の名前と URL は `SessionKeys`・期間は `SessionPolicy`、始めたときの秘密の条件は #49）を書いた。決定 10 の印の属性の名前を、2 つの定数の組から `SessionKeys`・`SessionPolicy` に寄せたことに直し、A-07 と A-08 の重複の行き先を 33d に改めた（Bolt 33c の開始準備の決定 1・2 と決定 2 の (6)。human:kakimomokuri が決定）。
 - 2026-10-15: Bolt 33b の開発レビューで、決定 10 に印の期限（ログインから 15 分。状態 NONE・ACTIVE・EXPIRED。期限を過ぎたら A-08 は役割のホーム、知らせはリンクのない案内）、印の 2 つの属性、「続ける」を POST（`/account/authenticator/continue`）にしたこと、A-08 の URL を 33c で直す 6 組目に数えることを足した。共用の文を事実（ポート `TotpSecretIssuer` と値 `EnrollingUser`。A-08 は `TotpEnrollmentService` を呼ばない）に直し、受け入れること（再認証なし）の前提に印の期限を書いた（印の期限は human:kakimomokuri が決定）。

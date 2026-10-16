@@ -3,7 +3,7 @@ type: Plan
 title: "Bolt 33f 計画 - 期間の表示と回復コードの型と session の URL の整理（振る舞いの変わらない直し）"
 description: "W5 の 21 本目の Bolt の計画。期限の時刻を SessionPolicy.deadline にまとめ、テンプレートに直書きした「15 分」「8 時間」を SessionPolicy から描き、回復コードの生成のポートと RecoveryCode.issueSet を NormalizedRecoveryCode で受け、SessionKeys から URL 2 つを同じパッケージの別のクラスに分けて ADR-012 を直す。振る舞いと表示は変えない。"
 tags: [plan]
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-16T02:54:28Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-16T02:56:10Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-16T02:54:29Z }
 ---
@@ -117,7 +117,7 @@ LoginController ..> SessionPaths
 
 状態の記号: `[ ]` 未着手、`[-]` 進行中、`[?]` 承認待ち、`[x]` 完了。各ステップの終わりに `check` が緑であることを確かめ、push してアプリの CI と MkDocs の配備を確かめる（T-26、T-126）。コミットは pathspec で作る（T-110）。複数行の書き換えはスクリプトのファイル（`b33f_` で始める）にし、書き込みの成功を確かめてから実行する（T-103、T-137）。
 
-- [ ] **1. 設計文書** 【承認ゲート: 設計文書】
+- [x] **1. 設計文書** 【承認ゲート: 設計文書】
   - domain_model.md: `RecoveryCode` の行（180 行目の `issueSet`）、`SessionPolicy` の行（184 行目）、`TotpEnrollmentService` の行（196 行目）、再登録の段落と図（1105〜1106・1131・1141〜1149 行目。図に `isExpired` と `deadline`）
   - architecture_backend.md: 268・297〜299 行目（期限の時刻、URL のクラスと application 層に置く理由、期間の表示）
   - ui_design.md: 730・743・799・1315・1363・1368 行目（期間を `SessionPolicy` から描く）

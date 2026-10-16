@@ -4,7 +4,7 @@ title: "cargo-tracker ドメインモデル"
 description: "cargo-tracker の業務領域の分類、ユビキタス言語、7 つの境界づけられたコンテキスト（通知を含む）の集約・エンティティ・値オブジェクト・ドメインルール、コマンド・クエリ・イベント、予約サガ。"
 tags: [design, domain-model, ddd]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-16T00:33:56Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-16T02:56:10Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T07:41:04Z }
   - { by: human:kakimomokuri, at: 2026-10-01T07:48:17Z }
@@ -177,11 +177,11 @@ quadrantChart
 | TOTP の資格 | TotpCredential | 利用者が登録した TOTP の暗号化した秘密と、最後に使った時間の刻み（Bolt 30）。入れたコードを前後 1 つの刻みで照合し、照合の結果（`TotpMatch`）を返す（`match`。Bolt 31d で `matchingStep` から改めた）。認証アプリの再登録で、1 人 1 つのまま秘密を置き換える（`reEnroll(newSecret, step, at)`。最後に使った刻みは戻さず、古い値と新しいコードの刻みの大きい方にする。Bolt 33b で作る）。コードの桁数 `DIGITS`（6）は時間の刻み `STEP_DURATION`（30 秒）と並べてこの集約に置き、コードの生成・otpauth の URI・画面のコードの欄の属性が参照する（Bolt 33d。HMAC のアルゴリズムは技術の知識なので `infrastructure.crypto` に置く） | アクセス・監査 |
 | TOTP の照合の結果 | TotpMatch | TOTP の資格の照合の結果。使っていない刻みで一致（`Matched(step)`）、使った刻み以下でだけ一致（`Reused`）、どれとも一致しない（`Mismatch`。形の違うコードを含む）のいずれか。窓の刻みのすべてを一定時間で比べ、形の違うコードでは生成器を呼ばない（IA-INV-10、ADR-011 の決定 8、Bolt 31d） | アクセス・監査 |
 | 暗号化した秘密 | EncryptedSecret | TOTP の秘密を暗号化した文字列。平文の秘密は表にも記録にも書かない（Bolt 30） | アクセス・監査 |
-| 回復コード | RecoveryCode | TOTP の端末を失ったときに一度だけ使えるコード。ハッシュだけを持つ（SEC-09、Bolt 30）。入れたコードを正規化して `NormalizedRecoveryCode` を返す `normalize`、10 個の発行とそろいの確かめを 1 つにした工場メソッド `issueSet` を持つ。コードの形（16 進 8 文字を 4 文字ずつハイフンで区切る）の知識は `NormalizedRecoveryCode` に置く（Bolt 33d。値オブジェクトから集約への依存の前例がないので、形の知識は値の側に置いた（Bolt 33d のステップ 3）） | アクセス・監査 |
+| 回復コード | RecoveryCode | TOTP の端末を失ったときに一度だけ使えるコード。ハッシュだけを持つ（SEC-09、Bolt 30）。入れたコードを正規化して `NormalizedRecoveryCode` を返す `normalize`、10 個の発行とそろいの確かめを 1 つにした工場メソッド `issueSet` を持つ。コードの形（16 進 8 文字を 4 文字ずつハイフンで区切る）の知識は `NormalizedRecoveryCode` に置く（Bolt 33d。値オブジェクトから集約への依存の前例がないので、形の知識は値の側に置いた（Bolt 33d のステップ 3））。Bolt 33f から `issueSet` は `NormalizedRecoveryCode` の一覧を受ける | アクセス・監査 |
 | 正規化した回復コード | NormalizedRecoveryCode | 入れた回復コードを正規化した値（`1a2b-3c4d` の形）。回復コードの形の知識（形の正規表現、ハイフンのない 8 文字を区切って読む `parse`、乱数の 4 バイトから発行の形を作る `fromBytes`）を持ち、生成器（`RandomRecoveryCodeGenerator`）と `RecoveryCode.normalize` が使う。照合（`RecoveryCode.matches`）はこの値だけを受ける。作るときに形を確かめるので、形の合わない値は照合に渡らない（Bolt 33d） | アクセス・監査 |
 | ログインの失敗 | LoginFailure | 利用者ごとの password・TOTP・回復コードの連続の失敗の回数と、ロックの期限（IA-INV-03、Bolt 30。回復コードも数えるのは Bolt 32） | アクセス・監査 |
 | ロックの方針 | LockPolicy | 連続の失敗の上限（5 回）とロックの長さ（15 分）（BR-14、Bolt 30）。Bolt 33c から、A-01 の文言の「5 回」「15 分」もこの方針の値から描く | アクセス・監査 |
-| session の方針 | SessionPolicy | ログインの session の期間をまとめたドメインルール。2 つの要素がそろった session の上限（8 時間）、password の段の上限（5 分）、登録の途中の上限（15 分）、回復コードでログインした印の有効な時間（15 分）、認証アプリの再登録の上限（15 分）を持つ。Bolt 33e から、期限の判定 `isExpired(始めた時刻, 今, 期間)`（ちょうどの時刻は期限切れ。時計を持たない純粋な関数）も持ち、使う側（認証の入口のフィルター、画面の層、再登録のサービス）はこれで判定する（SEC-03、ADR-012 の決定 3。`identity.domain.model.rules`。Bolt 33c で作る） | アクセス・監査 |
+| session の方針 | SessionPolicy | ログインの session の期間をまとめたドメインルール。2 つの要素がそろった session の上限（8 時間）、password の段の上限（5 分）、登録の途中の上限（15 分）、回復コードでログインした印の有効な時間（15 分）、認証アプリの再登録の上限（15 分）を持つ。Bolt 33e から、期限の判定 `isExpired(始めた時刻, 今, 期間)`（ちょうどの時刻は期限切れ。時計を持たない純粋な関数）も持ち、使う側（認証の入口のフィルター、画面の層、再登録のサービス）はこれで判定する（SEC-03、ADR-012 の決定 3。`identity.domain.model.rules`。Bolt 33c で作る）。Bolt 33f から、期限の時刻 `deadline(始めた時刻, 期間)` も持ち、`isExpired` と、画面に示す期限の時刻・8 時間の残りがそれを使う。A-07・A-08・A-03・印の知らせ・session の警告の期間の文言も、画面の層がこの期間から描く | アクセス・監査 |
 | session の ID | SessionId | ほかの session を失効させるときに残す、今の session の ID（Bolt 33e）。`UserSessionRevoker.revokeOthers` が受ける。空を拒み、ログに出さないよう `toString` は値を伏せる | アクセス・監査 |
 | 失敗の数えの結果 | FailureCount | ログインの失敗のリポジトリが失敗を数えたときに返す値。数えたか（ロック中なら数えない）と、数えた後のログインの失敗の状態を持つ。ログインの試行のサービスが、ロック中の試行と、この失敗でロックしたこと（`ACCOUNT_LOCKED` を 1 行だけ書く）を見分けるのに使う（IA-INV-03・IA-INV-08、ADR-011 の決定 9、Bolt 32） | アクセス・監査 |
 | 利用者の立場 | UserStanding | 利用者とその所属企業の組。request ごとの確かめで、今の役割と利用状態・企業の有効性を 1 回で読んだ結果（IA-INV-04。Bolt 32c） | アクセス・監査 |
@@ -193,7 +193,7 @@ quadrantChart
 | 読めない認証の要素 | UnreadableCredentialException | 保存した認証の要素（TOTP の秘密の暗号文、回復コードのハッシュ）を読めないこと（復号の失敗・ハッシュの形の誤り）を表すドメインの例外。暗号の部品（`identity.infrastructure.crypto`）が投げ、認証の入口と TOTP の登録のサービスがこれだけを拒否に倒す。ほかの実装の誤りは拒否にせず 500 にする（ADR-011 の決定 8、Bolt 31d） | アクセス・監査 |
 | 回復コードのハッシュ | RecoveryCodeHasher | 回復コードのハッシュを作り、照合するポート。実装は bcrypt（SEC-09、Bolt 30） | アクセス・監査 |
 | TOTP の秘密の発行 | TotpSecretIssuer | 160 ビットの TOTP の秘密を乱数で作り、利用者 ID を AAD にして暗号化して返し、暗号文から登録の表示の値を作るポート。実装は `identity.infrastructure` で、平文の秘密と ZXing をインフラ層に閉じる（ADR-011 の決定 6、Bolt 31b） | アクセス・監査 |
-| 回復コードの生成器 | RecoveryCodeGenerator | 一度だけ使える回復コード 10 個を乱数で作るポート。形は `1a2b-3c4d`（8 文字の 16 進を 4 文字ずつ区切る）で、10 個のうちに重複がない（SEC-09、Bolt 31b） | アクセス・監査 |
+| 回復コードの生成器 | RecoveryCodeGenerator | 一度だけ使える回復コード 10 個を乱数で作るポート。形は `1a2b-3c4d`（8 文字の 16 進を 4 文字ずつ区切る）で、10 個のうちに重複がない（SEC-09、Bolt 31b）。Bolt 33f から `NormalizedRecoveryCode` の一覧を返す（画面に平文を渡す登録と再登録の結果は文字列のまま） | アクセス・監査 |
 | TOTP の登録の表示 | TotpProvisioning | 認証アプリに登録してもらうための表示の値（`otpauth://` の URI、手入力のキー、QR コードの SVG）。秘密と同じ重さの値で、`toString` で値を隠し、登録の画面に一度だけ渡す（ADR-011 の決定 6、Bolt 31b） | アクセス・監査 |
 | TOTP の登録 | TotpEnrollmentService | 初回の TOTP の登録を行うアプリケーションのサービス。秘密を発行して表示の値を返し（登録の途中の暗号文は同じ利用者なら使い続ける）、最初のコードを確かめてから TOTP の資格・回復コード 10 個・監査記録（`TOTP_ENROLLED`）を 1 つのトランザクションで保存し、回復コードの平文を返す。TOTP の要素は与えない（US-18 AC7、IA-INV-10・11、Bolt 31b）。Bolt 33b から、password の段の主体（`PasswordVerifiedUser`）でなく段に中立な値（`EnrollingUser`）で受ける。認証アプリの再登録と共用するのは、秘密の発行のポート（`TotpSecretIssuer`）と値 `EnrollingUser` で、再登録のサービスはこのサービスを呼ばない（途中の暗号文を使い続ける処理は `TotpProvisioningStarter`、回復コード 10 個の発行は `RecoveryCode.issueSet` を 2 つのサービスが使う。Bolt 33d で寄せた） | アクセス・監査 |
 | TOTP の登録の始め | TotpProvisioningStarter | 認証アプリの登録と再登録を始めるとき、登録の途中の暗号文が同じ利用者のものとして読めればそれを使い続け、読めなければ新しい秘密を発行して、暗号文と表示の値を返す部品（`commandservices`。Bean にせず、`TotpEnrollmentService` と `TotpReEnrollmentService` が組み立てて使う。Bolt 33d） | アクセス・監査 |
@@ -1128,7 +1128,7 @@ title TOTP の資格（Bolt 33b で置き換えを作る）
 @enduml
 ```
 
-session の期間（Bolt 33c。2026-10-15 の開始準備の決定 2、human:kakimomokuri が決定。ADR-012 の決定 3）は、ドメインルール session の方針 `SessionPolicy`（`identity.domain.model.rules`、`@DomainRule`。ロックの方針 `LockPolicy` と並べる）にまとめる。2 つの要素がそろった session の 8 時間、password の段の 5 分、登録の途中の 15 分、回復コードでログインした印の 15 分、再登録の 15 分を `Duration` の定数で持つ。Bolt 33e から、期限の判定（ちょうどの時刻は期限切れ）も `SessionPolicy.isExpired` に寄せ、認証の入口・画面の層・再登録のサービスの 4 か所が使う（2026-10-16、Bolt 33e の開始準備の決定 2）。Bolt 33b までは同じ値を認証の入口（`identity.infrastructure.security` の定数のクラス。Bolt 33c で名前と期間を `SessionKeys`・`SessionPolicy` に移して消した）・A-07 の画面・印の判定（`RecoveryLogin`）・再登録のサービスが別々に持っていた。方針は期間だけを持ち、ふるまいは持たない（期限の判定は今の置き場所のまま。`LockPolicy` は判定のふるまいを持つが、ここでは期間だけを寄せる）。`Duration` は `java..` なのでドメインの規則に当たらない。session と request の属性の名前は HTTP の関心で業務の知識ではないので、ドメインに置かず application 層の `SessionKeys` に置く（[バックエンドのアーキテクチャ](architecture_backend.md)）。
+session の期間（Bolt 33c。2026-10-15 の開始準備の決定 2、human:kakimomokuri が決定。ADR-012 の決定 3）は、ドメインルール session の方針 `SessionPolicy`（`identity.domain.model.rules`、`@DomainRule`。ロックの方針 `LockPolicy` と並べる）にまとめる。2 つの要素がそろった session の 8 時間、password の段の 5 分、登録の途中の 15 分、回復コードでログインした印の 15 分、再登録の 15 分を `Duration` の定数で持つ。Bolt 33e から、期限の判定（ちょうどの時刻は期限切れ）も `SessionPolicy.isExpired` に寄せ、認証の入口・画面の層・再登録のサービスの 4 か所が使う（2026-10-16、Bolt 33e の開始準備の決定 2）。Bolt 33b までは同じ値を認証の入口（`identity.infrastructure.security` の定数のクラス。Bolt 33c で名前と期間を `SessionKeys`・`SessionPolicy` に移して消した）・A-07 の画面・印の判定（`RecoveryLogin`）・再登録のサービスが別々に持っていた。方針は期間だけを持ち、ふるまいは持たない（期限の判定は今の置き場所のまま。`LockPolicy` は判定のふるまいを持つが、ここでは期間だけを寄せる）。`Duration` は `java..` なのでドメインの規則に当たらない。session と request の属性の名前は HTTP の関心で業務の知識ではないので、ドメインに置かず application 層の `SessionKeys` に置く（[バックエンドのアーキテクチャ](architecture_backend.md)）。Bolt 33f から、期限の時刻 `deadline` も `SessionPolicy` に置き（共有カーネルの `UtcInstant` は変えず、中で包む）、画面に示す期間の文言（「15 分」「8 時間」）もこの期間から描く（2026-10-16、Bolt 33f の開始準備の決定 3・5）。
 
 ```plantuml
 @startuml
@@ -1144,6 +1144,8 @@ package "identity（アクセス・監査）" {
     ENROLLMENT_LIFETIME = 15m
     RECOVERY_LOGIN_LIFETIME = 15m
     RE_ENROLLMENT_LIFETIME = 15m
+    deadline(start, lifetime): UtcInstant
+    isExpired(start, now, lifetime): boolean
   }
   class TotpReEnrollmentService <<アプリケーションサービス>>
   TotpReEnrollmentService ..> SessionPolicy : 15 分の上限
