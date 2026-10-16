@@ -3,7 +3,9 @@ type: Plan
 title: "Bolt 33f 計画 - 期間の表示と回復コードの型と session の URL の整理（振る舞いの変わらない直し）"
 description: "W5 の 21 本目の Bolt の計画。期限の時刻を SessionPolicy.deadline にまとめ、テンプレートに直書きした「15 分」「8 時間」を SessionPolicy から描き、回復コードの生成のポートと RecoveryCode.issueSet を NormalizedRecoveryCode で受け、SessionKeys から URL 2 つを同じパッケージの別のクラスに分けて ADR-012 を直す。振る舞いと表示は変えない。"
 tags: [plan]
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-16T02:46:02Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-16T02:54:28Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-10-16T02:54:29Z }
 ---
 
 # Bolt 33f 計画 - 期間の表示と回復コードの型と session の URL の整理（振る舞いの変わらない直し）
@@ -187,6 +189,7 @@ LoginController ..> SessionPaths
 | :--- | :--- | :--- |
 | 2026-10-16 | 初版作成（承認待ち）。開始準備で 33f の行の 4 項目（約 3〜4 時間）を見積もり、human:kakimomokuri の決定（URL を同じパッケージの別のクラスに分ける、回復コードの結果の型は文字列のまま、期限の時刻は `SessionPolicy.deadline`）を反映した | anthropic/claude-opus-5-5 |
 | 2026-10-16 | 詳細整合性検証（9 件）と横断整合性検証（9 件）の指摘を反映した。タグで包むと既存の統合テストが落ちること、session の警告は属性の値であること、今の守りの事実、Advice とハンドラーの渡し方、`UtcInstant` に `plus` がないこと、付け替える箇所の列挙、設計文書とマニュアル（2.1）の直し先、release_plan の直す箇所、セキュリティを省く理由。human:kakimomokuri の決定（1 本のまま打ち切りで備える、`UtcInstant` は変えない、期間の書式は汎用の関数、URL を application 層に置く理由を ADR-012 に書く）を反映した | anthropic/claude-opus-5-5 |
+| 2026-10-16 | 計画を承認した（`/goal Bolt33f`） | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 
 ## 関連ドキュメント
 
