@@ -11202,7 +11202,7 @@
 <h2 id="_6">ステップ計画<a class="headerlink" href="#_6" title="Permanent link">&para;</a></h2>
 <p>状態の記号: <code>[ ]</code> 未着手、<code>[-]</code> 進行中、<code>[?]</code> 承認待ち、<code>[x]</code> 完了。各ステップの終わりに <code>check</code> が緑であることを確かめ、push してアプリの CI と MkDocs の配備を確かめる（T-26、T-126）。コミットは pathspec で作る（T-110）。複数行の書き換えはスクリプトのファイル（<code>b34b_</code> で始める）にし、書き込みの成功を確かめてから実行する（T-103、T-137）。</p>
 <ul class="task-list">
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>1. 設計文書</strong> 【承認ゲート: 設計文書】</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>1. 設計文書</strong> 【承認ゲート: 設計文書】</li>
 <li>上の注の行を直す</li>
 <li>完了の判定: <code>okf:check</code> ERROR 0、<code>documentationTest</code> 緑</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>2. 表と dev-data とポート</strong> 【承認ゲート: データベース】</li>
