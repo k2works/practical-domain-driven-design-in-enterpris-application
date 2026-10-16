@@ -6353,6 +6353,41 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../manual/11-%E5%88%A9%E7%94%A8%E8%80%85%E3%81%AE%E7%AE%A1%E7%90%86/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    11 章 利用者の管理
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--draft"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../manual/%E7%94%A8%E8%AA%9E%E9%9B%86/" class="md-nav__link">
         
   
@@ -11128,11 +11163,11 @@
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>5. 認可と S-20 の一覧・詳細</strong> 【承認ゲート: セキュリティ】</li>
 <li>セキュリティの統合テストを先に（システム管理者は <code>/staff/users</code> を開け、ほかの <code>/staff/**</code>・<code>/customer/**</code> は A-04、ほかの 6 役割と監査担当者の役割の利用者は <code>/staff/users/**</code> が A-04、ホームの行き先、詳細の利用者がいないと 404）</li>
 <li><code>UserAdministrationQueryService</code>・controller の一覧と詳細・テンプレート・ナビゲーション（社内のレイアウトだけ。システム管理者にだけ「利用者」が出ることを Web のテストで確かめ、<code>hasRole</code> の式を外す変異で確かめる。T-141）</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>6. 役割の変更の確認の領域と確定</strong> 【承認ゲート: 画面・セキュリティ】</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>6. 役割の変更の確認の領域と確定</strong> 【承認ゲート: 画面・セキュリティ】</li>
 <li>画面の層の受入シナリオ（<code>@US-16</code>）の Red から入る: 役割を足して確定すると詳細に知らせと新しい役割が出る、競合する役割は拒まれ名前が示される、企業の種類に合わない役割は拒まれる、自分の役割は変えられない、古い版は拒まれ最新を開き直す、「戻る」で選んだ役割が残る</li>
 <li>controller の確認（GET）と確定（POST。PRG・CSRF）、確認の領域（対象・今の役割・足す・外す・影響・実行者・回復手段）、エラー要約。確定の POST を画面を経ずに送っても同じ判定で拒まれることをセキュリティの統合テストで確かめる（H1）。役割の名前を <code>Role</code> の表示名から描き、式を外す変異で確かめる（T-136）</li>
 <li>役割の変更の後に相手の次の request で役割が効くことを統合テストで確かめる（H3。外した役割の URL が A-04、足した役割の画面が開く）</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>7. マニュアル</strong> 【承認ゲート: マニュアル】</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>7. マニュアル</strong> 【承認ゲート: マニュアル】</li>
 <li><code>docs/manual/11-利用者の管理.md</code>（この画面でできること・画面の開き方・画面の説明・操作手順・注意・補足。役割は相手の次の操作から効く、職務分離と企業の種類で拒まれる組合せ、自分の役割は変えられない、先に更新されていたとき、元に戻す方法）、マニュアルの索引と mkdocs のナビゲーション、用語集、キャプチャ（一覧・詳細・確認の領域）</li>
 <li>完了の判定: <code>check</code> 緑、<code>uiTest</code> 緑</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>8. SonarQube と開発レビューと終了報告</strong> 【承認ゲート: 終了報告】</li>
