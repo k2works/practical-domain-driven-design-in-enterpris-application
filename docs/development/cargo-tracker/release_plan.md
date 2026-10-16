@@ -4,7 +4,7 @@ title: "リリース計画 - cargo-tracker（A 社国際貨物輸送管理シス
 description: "cargo-tracker MVP のリリース計画。1 人 + AI、時間単位の Bolt（= イテレーション）と週次の見直しで、最初の縦の流れ（R0.1）、パイロット準備完了（R1.0）、本格展開前（R1.1）の 3 段階、Unit のエントロピー評価、SP、バッファ、パイロット開始の条件、引継ぎ ID の台帳、業務責任者に確かめる事項の台帳。"
 tags: [development,release-plan]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-16T05:21:16Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-16T05:23:01Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T09:29:53Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:38:26Z }
@@ -637,7 +637,7 @@ US-18 の Bolt の順序は 31b → 31c → 31d → 32 → 32c → 32d → 32b �
 - [x] Bolt 29b: #46 の前半。[Bolt 29b 計画](bolt_29b_plan.md)（`/goal` で進めた）、[Bolt 29b 終了報告](bolt_29b_report.md)（完了、2026-10-11 に承認済み。4 か所と開発レビューの必須の指摘を直した。SonarQube PASS・Code Smell 0）
 - [x] Bolt 29c: #46 の後半。[Bolt 29c 計画](bolt_29c_plan.md)（承認済み）、[Bolt 29c 終了報告](bolt_29c_report.md)（完了、2026-10-11 に承認済み。#46 を閉じた。SonarQube PASS・Code Smell 0）
 - [ ] Bolt 30〜33b: US-18 の残り（#13）と通知モジュールの最小の新設。[Bolt 30 計画](bolt_30_plan.md)（承認済み）、[Bolt 30 終了報告](bolt_30_report.md)（完了、2026-10-11 に承認済み。ADR-011 を採用し、3 つの表・ドメイン・リポジトリ・TOTP の生成を作った。SonarQube PASS・Code Smell 0）、[Bolt 31 計画](bolt_31_plan.md)（承認済み）、[Bolt 31 終了報告](bolt_31_report.md)（完了、2026-10-13 に承認済み。`/goal Bolt31` で進めた。TOTP の秘密の暗号化と 2 段階のログイン（A-02）。層の規則に 2 つの狭い例外。SonarQube PASS）、[Bolt 31b 計画](bolt_31b_plan.md)（承認済み）、[Bolt 31b 終了報告](bolt_31b_report.md)（完了、2026-10-13 に承認済み）、[Bolt 31c 計画](bolt_31c_plan.md)（承認済み）、[Bolt 31c 終了報告](bolt_31c_report.md)（完了、2026-10-13 に承認済み）、[Bolt 31d 計画](bolt_31d_plan.md)（承認済み）、[Bolt 31d 終了報告](bolt_31d_report.md)（完了、2026-10-13 に承認済み。スパイクを消した）、[Bolt 32 計画](bolt_32_plan.md)（承認済み）、[Bolt 32 終了報告](bolt_32_report.md)（完了、2026-10-14 に承認済み。ログインのロック）、[Bolt 32c 計画](bolt_32c_plan.md)（承認済み）、[Bolt 32c 終了報告](bolt_32c_report.md)（完了、2026-10-14 に承認済み。request ごとの利用者の確かめ）、[Bolt 32d 計画](bolt_32d_plan.md)（承認済み）、[Bolt 32d 終了報告](bolt_32d_report.md)（完了、2026-10-14 に承認済み。認証の部品の低の指摘とテストの整理）、[Bolt 32b 計画](bolt_32b_plan.md)（承認済み。session の失効の警告と延長）、[Bolt 32b 終了報告](bolt_32b_report.md)（完了、2026-10-14 に承認済み。session の警告と延長。支援技術の手動確認も済み）、[Bolt 32e 計画](bolt_32e_plan.md)（承認済み。失効の後に開いていた画面へ戻す）、[Bolt 32e 終了報告](bolt_32e_report.md)（完了、2026-10-14 に承認済み。失効の後に開いていた画面へ戻す）、[Bolt 32f 計画](bolt_32f_plan.md)（承認済み。失効の時の入力の保持）、[Bolt 32f 終了報告](bolt_32f_report.md)（完了、2026-10-15 に承認済み。失効の時の入力の保持。支援技術の手動確認も済み）、[Bolt 33 計画](bolt_33_plan.md)（承認済み。通知モジュールの新設と再設定の依頼）、[Bolt 33 終了報告](bolt_33_report.md)（完了、2026-10-15 に承認済み。仮の A-06、#49）、[Bolt 33a 計画](bolt_33a_plan.md)（承認済み。password の再設定）、[Bolt 33a 終了報告](bolt_33a_report.md)（完了、2026-10-15 に承認済み。session の ID の変更、#49 にコメント）。Bolt 32f（入力の保持と送信の後の失効）は 32e の後で、33b より前
-- [ ] Bolt 34: US-16 の一部（#14）。[Bolt 34 計画](bolt_34_plan.md)（承認待ち。役割の付与と取消しと職務分離）
+- [ ] Bolt 34: US-16 の一部（#14）。[Bolt 34 計画](bolt_34_plan.md)（承認済み。役割の付与と取消しと職務分離）
 - [ ] Bolt 34b: US-16 の一部（#14）。管理範囲外の拒否と利用停止
 - [ ] Bolt 34c: 振る舞いの変わらない直し（監査の経路ほか）
 - [ ] Bolt 35: US-04 AC3・AC5（#43）、D-85
@@ -979,4 +979,4 @@ xychart-beta
 | 2026-10-16 | Bolt 33f の計画を承認した（human:kakimomokuri）。ステップ 1: W5 の状態を「Bolt 33f は計画を承認し、進めている」にし、33f の行を計画の範囲（`deadline`、期間の汎用の書式、テンプレートの期間、`SessionPaths`、回復コードの生成のポートの型、約 4.5 時間）に直し、局面とアプローチと実績の表を直した | anthropic/claude-opus-5-5 |
 | 2026-10-16 | Bolt 33f を終え、[終了報告](bolt_33f_report.md)を作った（承認待ち）。開発レビューで、ADR-012 の URL を application 層に置く理由を正し、password の再設定の URL も `SessionPaths` に寄せた（human:kakimomokuri が決定）。US-18 の振る舞いの変わらない直し（33c〜33f）を終えた。次は Bolt 34 | anthropic/claude-opus-5-5 |
 | 2026-10-16 | Bolt 33f の終了報告の承認を記録した。US-18 の振る舞いの変わらない直し（33c〜33f）を終えた。次は Bolt 34 | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
-| 2026-10-16 | Bolt 34 の開始準備で、34 の行を 34（役割の付与と取消しと職務分離）・34b（管理範囲外の拒否と利用停止）・34c（振る舞いの変わらない直し）に分け、[Bolt 34 計画](bolt_34_plan.md)を作った（承認待ち）。変更履歴は監査記録で代え、管理範囲は `user_assignment` で割り当て、自分の役割の変更は拒む（human:kakimomokuri が決定）。担当案件・利用者の登録・ロックの解除・TOTP の解除は W6 | anthropic/claude-opus-5-5 |
+| 2026-10-16 | Bolt 34 の開始準備で、34 の行を 34（役割の付与と取消しと職務分離）・34b（管理範囲外の拒否と利用停止）・34c（振る舞いの変わらない直し）に分け、[Bolt 34 計画](bolt_34_plan.md)を作り、同日に承認された。変更履歴は監査記録で代え、管理範囲は `user_assignment` で割り当て、自分の役割の変更は拒み、企業の種類に合わない役割も拒み、システム管理者と監査担当者の併用は拒まない（human:kakimomokuri が決定）。担当案件・利用者の登録・ロックの解除・TOTP の解除は W6 | anthropic/claude-opus-5-5 |
