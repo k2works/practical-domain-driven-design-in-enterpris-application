@@ -4,7 +4,7 @@ title: "リリース計画 - cargo-tracker（A 社国際貨物輸送管理シス
 description: "cargo-tracker MVP のリリース計画。1 人 + AI、時間単位の Bolt（= イテレーション）と週次の見直しで、最初の縦の流れ（R0.1）、パイロット準備完了（R1.0）、本格展開前（R1.1）の 3 段階、Unit のエントロピー評価、SP、バッファ、パイロット開始の条件、引継ぎ ID の台帳、業務責任者に確かめる事項の台帳。"
 tags: [development,release-plan]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-16T01:45:41Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-16T02:46:02Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T09:29:53Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:38:26Z }
@@ -971,3 +971,4 @@ xychart-beta
 | 2026-10-16 | Bolt 33e の計画を承認した（human:kakimomokuri）。ステップ 1: W5 の状態を「Bolt 33e は計画を承認し、進めている」にし、33e の行を計画の範囲（期限の判定、`SessionId`、トークンの経路、画面だけが使う属性の名前の値）に直し、33f の行（テンプレートの期間の数値、回復コードの生成のポートの型、ADR-012 の URL の記述と `SessionKeys` の命名。SP 0、リファクタリング（インサイドアウト）、構造、マニュアルの文言との一致を完了条件に）を足した。局面とアプローチ、US-18 の Bolt の順序（→ 33f、23 本）、W5 の注、実績の表（23 本）、W10 への返済の候補を直した | anthropic/claude-opus-5-5 |
 | 2026-10-16 | Bolt 33e を終え、[終了報告](bolt_33e_report.md)を作った（承認待ち）。33f の行に開発レビューの候補（期限の時刻の `start.plus(期間)` の 3 か所、判定が再び散るのを防ぐ形）と目安の時間を足した。次は Bolt 33f | anthropic/claude-opus-5-5 |
 | 2026-10-16 | Bolt 33e の終了報告の承認を記録した。次は Bolt 33f | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
+| 2026-10-16 | Bolt 33f の開始準備: 33f の行の 4 項目を 1 本のまま進め、打ち切りの条件で備える（回復コードの型が候補）。期限の時刻は `SessionPolicy.deadline`、期間の書式は `DurationDisplay` の汎用の関数、URL は同じパッケージの別のクラスに分け、application 層に置く理由を ADR-012 に書く。[Bolt 33f 計画](bolt_33f_plan.md)（承認待ち）。33f の行の書き換えはステップ 1 で行う | anthropic/claude-opus-5-5 |
