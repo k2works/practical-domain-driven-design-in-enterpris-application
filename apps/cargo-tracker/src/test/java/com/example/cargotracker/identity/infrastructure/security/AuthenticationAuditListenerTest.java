@@ -238,6 +238,11 @@ class AuthenticationAuditListenerTest {
             }
 
             @Override
+            public List<UserSummary> findSummariesIn(Set<CompanyId> companies) {
+                throw new UnsupportedOperationException();
+            }
+
+            @Override
             public Optional<UserDetail> findDetail(UserId id) {
                 throw new UnsupportedOperationException();
             }

@@ -3,7 +3,7 @@ type: Plan
 title: "Bolt 34b 計画 - システム管理者の管理範囲と範囲外の試行の記録（US-16 の一部）"
 description: "W5 の 23 本目の Bolt の計画。システム管理者の管理範囲を担当範囲の表 user_assignment（COMPANY）で持ち、S-20 の一覧・詳細・役割の変更を管理範囲の企業の利用者に絞る。範囲外の利用者は存在しない利用者と同じ 404 にし、試行を監査記録に同じ request で書く（AC2、IA-INV-08）。利用停止と再開は 34d に分けた。"
 tags: [plan]
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-16T09:36:57Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-16T09:48:49Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-16T09:25:23Z }
   - { by: human:kakimomokuri, at: 2026-10-16T09:25:49Z }
@@ -194,7 +194,7 @@ u ||--o{ ua
 - [x] **1. 設計文書** 【承認ゲート: 設計文書】
   - 上の注の行を直す
   - 完了の判定: `okf:check` ERROR 0、`documentationTest` 緑
-- [ ] **2. 表と dev-data とポート** 【承認ゲート: データベース】
+- [x] **2. 表と dev-data とポート** 【承認ゲート: データベース】
   - マイグレーション（common）と dev-data（システム管理者に A 社と荷主 A）。`UserAssignmentRepository` の実装とマッパー、`UserRepository.findSummariesIn`（`findSummaries` を消す）。統合テスト（表の制約、割り当ての読み出し、一覧の絞り込み・空の集合）。テストの割り当ての補助 `AdministrationFixtures`
 - [ ] **3. 管理範囲と試行の記録** 【承認ゲート: Red・Green、セキュリティ】
   - `AdministrationScope` の単体テスト、`AuditRecord.adminScopeDenied`、`AdministrationScopeDenialService` の単体テストと統合テスト（追記の失敗は例外）

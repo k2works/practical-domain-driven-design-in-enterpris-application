@@ -136,6 +136,22 @@
          ORDER BY c.name, u.display_name, u.id, r.role
     </select>
 
+    <!-- Bolt 34b。管理範囲の企業の利用者だけ（空の集合では呼ばない） -->
+    <select id="selectUserAdministrationRowsIn" resultMap="userAdministrationRow">
+        SELECT <include refid="userAdministrationColumns"/>
+          FROM identity.app_user u
+          JOIN identity.company c ON c.id = u.company_id
+          LEFT JOIN identity.user_role r ON r.user_id = u.id
+         WHERE u.company_id IN
+               <foreach collection="companyIds" item="companyId" open="(" separator="," close=")">#{companyId}</foreach>
+         ORDER BY c.name, u.display_name, u.id, r.role
+    </select>
+
+    <!-- Bolt 34b。システム管理者の管理範囲（COMPANY の行だけ） -->
+    <select id="selectManagedCompanies" resultType="java.util.UUID">
+        SELECT scope_id FROM identity.user_assignment WHERE user_id = #{adminId} AND scope_kind = 'COMPANY'
+    </select>
+
     <select id="selectUserAdministrationRowsById" resultMap="userAdministrationRow">
         SELECT <include refid="userAdministrationColumns"/>
           FROM identity.app_user u

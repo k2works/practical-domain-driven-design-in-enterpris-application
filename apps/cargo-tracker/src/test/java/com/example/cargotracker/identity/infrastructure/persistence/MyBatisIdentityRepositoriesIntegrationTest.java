@@ -4,12 +4,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.example.cargotracker.TestcontainersConfiguration;
+import com.example.cargotracker.identity.AdministrationFixtures;
 import com.example.cargotracker.identity.domain.model.aggregates.AuditRecord;
 import com.example.cargotracker.identity.domain.model.aggregates.AuditRecordRepository;
 import com.example.cargotracker.identity.domain.model.aggregates.Company;
 import com.example.cargotracker.identity.domain.model.aggregates.CompanyRepository;
 import com.example.cargotracker.identity.domain.model.aggregates.DuplicateEmailException;
 import com.example.cargotracker.identity.domain.model.aggregates.User;
+import com.example.cargotracker.identity.domain.model.aggregates.UserAssignmentRepository;
 import com.example.cargotracker.identity.domain.model.aggregates.UserRepository;
 import com.example.cargotracker.identity.domain.model.valueobjects.AuditAction;
 import com.example.cargotracker.identity.domain.model.valueobjects.AuditTarget;
@@ -53,6 +55,9 @@ class MyBatisIdentityRepositoriesIntegrationTest {
 
     @Autowired
     AuditRecordRepository auditRecords;
+
+    @Autowired
+    UserAssignmentRepository assignments;
 
     @Autowired
     JdbcTemplate jdbc;
@@ -234,9 +239,7 @@ class MyBatisIdentityRepositoriesIntegrationTest {
         UserId second = addUser(other, "い " + UUID.randomUUID(), Set.of(Role.SALES, Role.ROUTE_DESIGNER));
         UserId first = addUser(other, "あ " + UUID.randomUUID(), Set.of(Role.TRACKING_MANAGER));
 
-        List<UserSummary> mine = users.findSummaries().stream()
-                .filter(summary -> summary.companyName().equals(other.name()))
-                .toList();
+        List<UserSummary> mine = users.findSummariesIn(Set.of(other.id()));
 
         assertThat(mine).extracting(UserSummary::id).containsExactly(first, second);
         assertThat(mine.get(1).roles()).containsExactlyInAnyOrder(Role.SALES, Role.ROUTE_DESIGNER);
@@ -262,11 +265,62 @@ class MyBatisIdentityRepositoriesIntegrationTest {
         jdbc.update("DELETE FROM identity.user_role WHERE user_id = ?", id.value());
 
         assertThat(users.findDetail(id).orElseThrow().roles()).isEmpty();
-        assertThat(users.findSummaries())
+        assertThat(users.findSummariesIn(Set.of(company.id())))
                 .filteredOn(summary -> summary.id().equals(id))
                 .singleElement()
                 .extracting(UserSummary::roles)
                 .isEqualTo(Set.of());
+    }
+
+    @Test
+    void 利用者の管理の一覧は管理範囲の企業の利用者だけを返し空の範囲なら空() {
+        Company outside = Company.of(new CompanyId(UUID.randomUUID()), "範囲外の会社", CompanyKind.OPERATOR, true);
+        companies.add(outside);
+        UserId inside = addUser(company, "範囲内 " + UUID.randomUUID(), Set.of(Role.SHIPPER));
+        UserId out = addUser(outside, "範囲外 " + UUID.randomUUID(), Set.of(Role.SALES));
+
+        assertThat(users.findSummariesIn(Set.of(company.id())))
+                .extracting(UserSummary::id)
+                .contains(inside)
+                .doesNotContain(out);
+        assertThat(users.findSummariesIn(Set.of())).isEmpty();
+    }
+
+    @Test
+    void システム管理者に割り当てた企業だけを管理範囲として読む() {
+        UserId admin = addUser(company, "管理 " + UUID.randomUUID(), Set.of(Role.SHIPPER));
+        CompanyId other = new CompanyId(UUID.randomUUID());
+        AdministrationFixtures.assignCompany(jdbc, admin, company.id());
+        AdministrationFixtures.assignCompany(jdbc, admin, other);
+        jdbc.update(
+                "INSERT INTO identity.user_assignment (user_id, scope_kind, scope_id, granted_at)"
+                        + " VALUES (?, 'BOOKING', ?, CURRENT_TIMESTAMP)",
+                admin.value(),
+                UUID.randomUUID());
+
+        assertThat(assignments.managedCompanies(admin)).containsExactlyInAnyOrder(company.id(), other);
+        assertThat(assignments.managedCompanies(new UserId(UUID.randomUUID()))).isEmpty();
+    }
+
+    @Test
+    void 同じ割り当ては2行入らない() {
+        UserId admin = addUser(company, "管理 " + UUID.randomUUID(), Set.of(Role.SHIPPER));
+        AdministrationFixtures.assignCompany(jdbc, admin, company.id());
+
+        assertThatThrownBy(() -> AdministrationFixtures.assignCompany(jdbc, admin, company.id()))
+                .isInstanceOf(DataIntegrityViolationException.class);
+    }
+
+    @Test
+    void 担当範囲の種類の値は表が確かめる() {
+        UserId admin = addUser(company, "管理 " + UUID.randomUUID(), Set.of(Role.SHIPPER));
+
+        assertThatThrownBy(() -> jdbc.update(
+                        "INSERT INTO identity.user_assignment (user_id, scope_kind, scope_id, granted_at)"
+                                + " VALUES (?, 'REGION', ?, CURRENT_TIMESTAMP)",
+                        admin.value(),
+                        UUID.randomUUID()))
+                .isInstanceOf(DataIntegrityViolationException.class);
     }
 
     @Test

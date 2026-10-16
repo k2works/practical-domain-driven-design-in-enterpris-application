@@ -44,6 +44,12 @@ public interface IdentityMapper {
     /** S-20 の一覧の行（Bolt 34）。利用者ごとに役割の数だけ行が出る。 */
     List<UserAdministrationRow> selectUserAdministrationRows();
 
+    /** S-20 の一覧の行のうち、企業で絞ったもの（Bolt 34b。管理範囲）。利用者ごとに役割の数だけ行が出る。 */
+    List<UserAdministrationRow> selectUserAdministrationRowsIn(@Param("companyIds") List<UUID> companyIds);
+
+    /** システム管理者に管理範囲として割り当てた企業 ID（Bolt 34b）。 */
+    List<UUID> selectManagedCompanies(UUID adminId);
+
     /** S-20 の詳細の行（Bolt 34）。役割の数だけ行が出る。 */
     List<UserAdministrationRow> selectUserAdministrationRowsById(UUID id);
 

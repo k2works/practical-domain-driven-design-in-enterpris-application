@@ -95,7 +95,11 @@ public class MyBatisUserRepository implements UserRepository {
 
     @Override
     public List<UserSummary> findSummaries() {
-        return group(mapper.selectUserAdministrationRows()).stream()
+        return summaries(mapper.selectUserAdministrationRows());
+    }
+
+    private static List<UserSummary> summaries(List<UserAdministrationRow> found) {
+        return group(found).stream()
                 .map(rows -> {
                     UserAdministrationRow first = rows.getFirst();
                     return new UserSummary(
@@ -107,6 +111,15 @@ public class MyBatisUserRepository implements UserRepository {
                             roles(rows));
                 })
                 .toList();
+    }
+
+    @Override
+    public List<UserSummary> findSummariesIn(Set<CompanyId> companies) {
+        if (companies.isEmpty()) {
+            return List.of();
+        }
+        return summaries(mapper.selectUserAdministrationRowsIn(
+                companies.stream().map(CompanyId::value).toList()));
     }
 
     @Override
