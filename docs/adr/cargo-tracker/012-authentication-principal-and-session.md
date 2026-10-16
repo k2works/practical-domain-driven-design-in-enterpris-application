@@ -4,7 +4,7 @@ title: "ADR-012: 認証の主体は共有カーネルの型にし、password の
 description: "US-18 の password によるログインと session を、Spring Security 7 の form login と Spring Session JDBC で作る。"
 tags: [adr, authentication, session]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-15T12:00:35Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-16T00:33:56Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-06T06:51:29Z }
 ---
@@ -94,7 +94,7 @@ US-18 の password によるログインと session を、Spring Security 7 の 
   - 属性の名前は、Bolt 33b では認証の入口（`identity.infrastructure.security` の定数のクラス。Bolt 33c で名前と期間を `SessionKeys`・`SessionPolicy` に移して消した）と画面の層（`RecoveryLogin`）に同じ値の定数を置き、一致をテストで守っていた（画面の層は infrastructure に依存できない。前例は登録の途中の暗号文）。Bolt 33c で、ほかの 4 組と A-08 の URL（6 組目）とまとめて `SessionKeys` に、15 分の期間を `SessionPolicy` に寄せた（下の項目）。
 - Bolt 33c から、session の属性の名前と期間の置き場所を次の 2 つにする（2026-10-15、Bolt 33c の開始準備の決定 1・2 と決定 2 の (5) で human:kakimomokuri が決定）。振る舞いは変えない。
   - 名前と URL: application 層の `SessionKeys`（`identity.application.internal.session`）。層をまたいで共有する session の属性の名前 6 つ（ログインの時刻、password を確かめた時刻、登録を始めた時刻、登録の途中の秘密、回復コードでログインした印の利用者と時刻）、request の属性の名前 2 つ（8 時間の残り、戻り先）、A-08 の URL、A-03 の URL（`/session-expired`）を置く。ふるまいは持たない。値は Bolt 33b までの文字列を変えない（動いている session の属性が読めなくならない。値を固定するテスト `SessionKeysTest` で守り、2 つの定数の一致を守るテストは要らなくなるので消す）。画面だけが使う名前（A-08 の途中の 2 つ）は画面の層に残し、テストの URL の写しは仕様として文字列のまま残す。パッケージは開発ガイドライン第 3 章の置き場所にないので、人の決定として書く。認証の入口からの参照は決定 6 の例外に足す。
-  - 期間: ドメインルール `SessionPolicy`（`identity.domain.model.rules`。`LockPolicy` と並べる）。2 つの要素がそろった session の 8 時間、password の段の 5 分、登録の途中の 15 分、回復コードでログインした印の 15 分、再登録の 15 分を `Duration` の定数で持つ。ふるまいは持たず、期限の判定は今の置き場所のまま。
+  - 期間: ドメインルール `SessionPolicy`（`identity.domain.model.rules`。`LockPolicy` と並べる）。2 つの要素がそろった session の 8 時間、password の段の 5 分、登録の途中の 15 分、回復コードでログインした印の 15 分、再登録の 15 分を `Duration` の定数で持つ。Bolt 33c では期間だけを持ち、期限の判定は今の置き場所のままにした。Bolt 33e から、期限の判定 `isExpired`（ちょうどの時刻は期限切れ。時計を持たない純粋な関数）も持ち、判定していた 4 か所が使う（2026-10-16、Bolt 33e の開始準備の決定 2 で human:kakimomokuri が決定）。
   - 採らなかった案: 名前と URL もドメインに置く（session と request の属性の名前は HTTP の関心で、業務の知識ではない）、画面の層に置いて入口から参照する（`interfaces` はどの層からも参照されない規則に例外が要る）、2 つの定数とテストのまま残す（同じ値を 6 組持ち、組が増えるたびにテストを足す）。
 
 ### 4. 監査

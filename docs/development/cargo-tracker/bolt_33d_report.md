@@ -3,7 +3,7 @@ type: Plan
 title: "Bolt 33d 終了報告 - TOTP と回復コードの部品の整理（振る舞いの変わらない直し）"
 description: "W5 の 19 本目の Bolt の終了報告。TOTP の桁数を TotpCredential.DIGITS、アルゴリズムを JavaOtpTotpCodeGenerator の定数にし、A-02・A-07・A-08 のコードの欄の属性を桁数から描いた。QR コードの SVG を QrCodeSvg に分け、回復コードの形の知識を値オブジェクト NormalizedRecoveryCode に寄せて照合はその値だけを受けるようにし、A-07 と A-08 の回復コードの発行と途中の暗号文の処理を RecoveryCode.issueSet と TotpProvisioningStarter で共有した。振る舞いは変えていない。"
 tags: [plan]
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-15T23:44:01Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-16T00:33:56Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-15T23:44:01Z }
 ---
@@ -98,7 +98,7 @@ verified:
 
 ### 既知の課題（後に持ち込む）
 
-- 33e の行（認証の結果に経路、session の ID の値オブジェクト、期限の境界の判定、テンプレートの期間の数値、33c の議題 4 (b)、画面だけが使う属性の名前の値のテスト、生成のポートと `issueSet` の型）
+- 33e の行（認証の結果に経路、session の ID の値オブジェクト、期限の境界の判定、テンプレートの期間の数値、33c の議題 4 (b)、画面だけが使う属性の名前の値のテスト、生成のポートと `issueSet` の型。→ テンプレートの期間の数値、33c の議題 4 (b)、生成のポートと `issueSet` の型は 33f）
 - 全画面に効く `@ControllerAdvice` が `identity.interfaces.web` に 4 つ、`codeDigits` の `@ModelAttribute` が 3 つの controller に（まとめるかは後で検討）
 - #49（33b の「始めたときの秘密を置き換えの条件にする」を送った）
 
@@ -110,6 +110,7 @@ Bolt 33e（W5 の続き）。認証の入口と期限の振る舞いの変わら
 
 | 日付 | 更新内容 | 更新者 |
 | :--- | :--- | :--- |
+| 2026-10-16 | 既知の課題の 33e の行の行き先に「→ 33f」を書き添えた（Bolt 33e の開始準備の決定 1・3。human:kakimomokuri が決定） | anthropic/claude-opus-5-5 |
 | 2026-10-16 | 終了報告を承認した（議題 1〜4。議題 2 の人に諮らずに変えた置き場所を事後に承認。議題 4 は 33e の開始準備で扱う） | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-10-16 | 初版作成（承認待ち） | anthropic/claude-opus-5-5 |
 

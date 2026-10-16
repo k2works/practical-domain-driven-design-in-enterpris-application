@@ -3,7 +3,7 @@ type: Plan
 title: "Bolt 33e 計画 - 認証の入口と session の型と期限の整理（振る舞いの変わらない直し）"
 description: "W5 の 20 本目の Bolt の計画。認証の結果のトークンに経路（TOTP か回復コードか）を持たせて request の属性での受け渡しをやめ、revokeOthers が残す session の ID を値オブジェクトにし、「ちょうどの時刻は期限切れ」の判定を SessionPolicy に寄せ、画面だけが使う属性の名前 2 つの値をテストで固定する。振る舞いは変えない。テンプレートの期間の数値、回復コードの生成のポートの型、ADR-012 の URL の記述と SessionKeys の命名は 33f に分ける。"
 tags: [plan]
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-16T00:32:32Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-16T00:33:56Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-16T00:32:32Z }
 ---
@@ -117,7 +117,7 @@ package "identity" {
 
 状態の記号: `[ ]` 未着手、`[-]` 進行中、`[?]` 承認待ち、`[x]` 完了。各ステップの終わりに `check` が緑であることを確かめ、push してアプリの CI と MkDocs の配備を確かめる（T-26、T-126）。コミットは pathspec で作る（T-110）。複数行の書き換えはスクリプトのファイル（`b33e_` で始める）にし、書き込みの成功を確かめてから実行する（T-103、T-137）。
 
-- [ ] **1. 設計文書** 【承認ゲート: 設計文書】
+- [x] **1. 設計文書** 【承認ゲート: 設計文書】
   - domain_model.md: `SessionPolicy` の行（184 行目）と session の方針の段落（1130 行目）の「期間だけを持つ」を直す、`SessionId` を要素表と用語集に、`TotpAuthenticationToken` の行（205 行目）に経路と `SecondFactorPath`、再登録のサービスの `complete`（1067 行目）と `revokeOthers`（1094 行目）を `SessionId` に
   - architecture_backend.md: session の方針の判定（298 行目）、認証の結果のトークンの経路と成功のハンドラーが読むもの（`transient` の理由）
   - ADR-012: 決定 3（97 行目）の「ふるまいは持たず」を直す

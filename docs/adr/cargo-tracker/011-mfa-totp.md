@@ -4,7 +4,7 @@ title: "ADR-011: 多要素認証は Spring Security 7 の要素の権限で組�
 description: "password の後に TOTP を求める 2 段階のログインを、Spring Security 7 の多要素認証（要素ごとの権限）で組む。"
 tags: [adr, authentication, mfa, totp]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-15T22:55:41Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-16T00:33:56Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-11T08:28:34Z }
 ---
@@ -69,14 +69,14 @@ Bolt 32c の開始準備と計画の承認（2026-10-14、human:kakimomokuri）�
 
 Bolt 33b の開始準備と計画の承認（2026-10-15、human:kakimomokuri）で決めたこと:
 
-- US-18 の残りを 33b（AC9 の回復コードによる再登録と、それが触る部品（`TotpEnrollmentService` の引数の型、`instanceof` の `switch` 化）とマニュアル）と 33c（振る舞いの変わらない直し。Bolt 33c の開始準備で 33c と 33d に分け、Bolt 33d の開始準備で 33d と 33e に分けた）に分け、#13 は 33b でクローズする
+- US-18 の残りを 33b（AC9 の回復コードによる再登録と、それが触る部品（`TotpEnrollmentService` の引数の型、`instanceof` の `switch` 化）とマニュアル）と 33c（振る舞いの変わらない直し。Bolt 33c の開始準備で 33c と 33d に分け、Bolt 33d の開始準備で 33d と 33e に、Bolt 33e の開始準備で 33e と 33f に分けた）に分け、#13 は 33b でクローズする
 - 回復コードでログインしたら印を置いて再登録の画面（A-08）へ導き、「後で登録する」で業務の画面へ進める。印がある間は業務の画面に知らせを出す。入口はこの流れだけにする（決定 10）
 - 新しいコードを確かめた時点で古い秘密を置き換え、回復コードを 10 個発行し直して 1 回だけ示し、監査 `TOTP_RE_ENROLLED` を書く。コミットの後に、その利用者のほかの session を失効させる（今の session は残す）。本人へのメールの通知は #47（決定 10）
 - 刻みの使用の条件に、照合で読んだ秘密の暗号文との一致を足す。置き換えでは最後に使った刻みを大きい方にする。残りの回復コードが少ないときの案内は #47 に送る（決定 10）
 
 Bolt 33c の開始準備と計画の承認（2026-10-15、human:kakimomokuri）で決めたこと:
 
-- 振る舞いの変わらない直しを 33c と 33d に分ける。33c は置き場所の決定を伴う直し（session・request の属性の名前、期間、A-08・A-03 の URL、覚えた要求の属性の名前）と小さな直し。33d は TOTP の部品の整理（TOTP の桁数・周期・アルゴリズムの定数、QR の SVG の組み立ての分離、回復コードの形の知識の 2 か所と `normalize` の戻り値の型、A-07 と A-08 の途中の暗号文の扱いと回復コードの発行の重複）。Bolt 33d の開始準備（2026-10-16、human:kakimomokuri）で、認証の結果のトークンに経路（要素の種類）、`revokeOthers` の session の ID の値オブジェクト、期限の境界の判定、テンプレートの期間の数値を 33e に分けた
+- 振る舞いの変わらない直しを 33c と 33d に分ける。33c は置き場所の決定を伴う直し（session・request の属性の名前、期間、A-08・A-03 の URL、覚えた要求の属性の名前）と小さな直し。33d は TOTP の部品の整理（TOTP の桁数・周期・アルゴリズムの定数、QR の SVG の組み立ての分離、回復コードの形の知識の 2 か所と `normalize` の戻り値の型、A-07 と A-08 の途中の暗号文の扱いと回復コードの発行の重複）。Bolt 33d の開始準備（2026-10-16、human:kakimomokuri）で、認証の結果のトークンに経路（要素の種類）、`revokeOthers` の session の ID の値オブジェクト、期限の境界の判定、テンプレートの期間の数値を 33e に分けた。Bolt 33e の開始準備（2026-10-16、human:kakimomokuri）で、テンプレートの期間の数値・回復コードの生成のポートの型・ADR-012 の URL の記述と `SessionKeys` の命名を 33f に分けた
 - 印の属性の名前と A-08 の URL は application 層の `SessionKeys`（`identity.application.internal.session`）に、印の 15 分・登録の途中の 15 分・再登録の 15 分はドメインルール `SessionPolicy`（`identity.domain.model.rules`）に寄せる（[ADR-012](012-authentication-principal-and-session.md) の決定 3・決定 6）
 - 「始めたときの秘密を置き換えの条件にする」（Bolt 33b の開発レビューで 33c で扱うとした）は振る舞いが変わる直しなので、[#49](https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/49)（W10）に送る
 
@@ -247,7 +247,7 @@ ArchUnit で、ZXing を参照するのが暗号の部品（`identity.infrastruc
 | :--- | :--- |
 | 入口と欄 | TOTP と同じ入口（`TotpAuthenticationFilter`、`POST /login/totp`）。A-02 の `<details>`（「認証アプリを使えない場合」）の中の別のフォームで、欄は `recoveryCode`（`autocomplete="off"`、`inputmode` は付けない）。欄の形で TOTP と取り違えない。JavaScript も CSP の変更も要らない。スパイクの「TOTP の欄で受け付け」（決定 2 の表）を改める |
 | 入力のトークンと provider | フィルターは `recoveryCode` があるとき、確かめる前の入力だけを `RecoveryCodeAuthenticationToken` にする（平文は request の範囲でしか持たない。ProviderManager が平文を消すのは認証の結果だけで、入力には呼ばない。失敗のイベントに入るので、リスナーは `getCredentials()` を読まない。Bolt 31c の開発レビュー）。`RecoveryCodeAuthenticationProvider` が確かめ、照合と消費はアプリケーションのサービス `RecoveryCodeVerificationService`（`identity.application.internal.commandservices`）に任せる（決定 5 の「照合」と同じ分け方。D-5 の認証の例外の範囲） |
-| 結果の型 | provider は TOTP と同じ `TotpAuthenticationToken.authenticated(details, FACTOR_TOTP)` を返す。結果の型を変えないので、mfaEnabled の要素の合わせ（`toBuilder()`）、成功の監査の判定（`LOGIN_SUCCEEDED`）、session の直列化、業務の認可、session の ID の変更、CSRF の作り直し、8 時間の起点（`AUTHENTICATED_AT`）が 1 か所に保たれる。別の結果の型にすると、これらの守りを重ねて作ることになる。`CargoUserDetails` と session の属性は変えない |
+| 結果の型 | provider は TOTP と同じ `TotpAuthenticationToken.authenticated(details, FACTOR_TOTP)` を返す。結果の型を変えないので、mfaEnabled の要素の合わせ（`toBuilder()`）、成功の監査の判定（`LOGIN_SUCCEEDED`）、session の直列化、業務の認可、session の ID の変更、CSRF の作り直し、8 時間の起点（`AUTHENTICATED_AT`）が 1 か所に保たれる。別の結果の型にすると、これらの守りを重ねて作ることになる。`CargoUserDetails` と session の属性は変えない。Bolt 33e から、結果のトークンに 2 つ目の要素の経路（`SecondFactorPath`。回復コードの provider は `RECOVERY_CODE`）を `transient` の欄で持たせ、型と権限は変えない |
 | 拒否の例外とイベント | 拒否は `RecoveryCodeRejectedException`（`BadCredentialsException` を継ぐ）で表し、`DefaultAuthenticationEventPublisher` の例外とイベントの対応表に足して失敗のイベントを出す（対応表にない例外ではイベントが出ず、監査記録が書かれない）。失敗の数え方（Bolt 32）も同じイベントの上に置く |
 | 監査 | 通ったら回復コードの使用 `RECOVERY_CODE_USED` と `LOGIN_SUCCEEDED` の 2 行（`PASSWORD_VERIFIED` ではない）。拒否は理由 `INVALID_RECOVERY_CODE` を監査記録にだけ残す（誤り・使用済み・形の違い・回復コードがない・両方の欄を区別しない）。回復コードの平文は照合の後どこにも残さない（記録・監査・session・例外のメッセージ） |
 | 正規化 | 形の知識はドメインに置く（`RecoveryCode.normalize`）。全角を半角に直し（NFKC。IME で入れたまま）、ハイフンに似た文字（長音など）をハイフンにそろえ、前後と中の空白（全角スペースを含む）を除き、小文字にし、ハイフンのない 8 文字は 4 文字目の後にハイフンを入れる。`^[0-9a-f]{4}-[0-9a-f]{4}$` に合わなければ照合せずに拒む（bcrypt を回さない）。手で書き写したコードを打ち直させない。Bolt 33d から、正規化の結果は値 `NormalizedRecoveryCode`（`Optional` で返す）で、照合はこの値だけを受ける。形の知識（ハイフンのない 8 文字の区切りの `parse`、生成の `fromBytes` を含む）は値 `NormalizedRecoveryCode` だけに置く |
@@ -336,7 +336,7 @@ end
 
 | 項目 | 方針 |
 | :--- | :--- |
-| 入口と印 | 認証の入口（`TotpAuthenticationFilter`）が `recoveryCode` の欄で回復コードの経路を選んだことを成功の扱い（`FirstTotpSuccessHandler`）に伝え、成功の扱いが session に印（2 つの属性。利用者の ID と、ログインした時刻。名前は Bolt 33c から `SessionKeys`）を置いて `/account/authenticator` に移す（覚えた要求は消さずに残す）。認証コードの経路は今のまま。session の ID は回復コードの経路でも認証の入口の `ChangeSessionIdAuthenticationStrategy` が変えているので足さない（`RecoveryCodeLoginSecurityIntegrationTest` が確かめている）。印は再登録の完了、ログアウト（session と一緒に消える）、password の段の成功（`LoginSuccessHandler`。同じ session で別の利用者に切り替えたときに前の利用者の印を残さない。2 つの属性をどちらも消す）で消す。画面（`RecoveryLogin.stateOf`）は印の状態を 3 つに分ける。NONE（印がない、または印の利用者の ID が今の主体と違う）、ACTIVE（印の利用者が今の主体で、ログインから 15 分未満）、EXPIRED（15 分を過ぎた）。A-08 を開けるのは ACTIVE だけ |
+| 入口と印 | 認証の入口（`TotpAuthenticationFilter`）が `recoveryCode` の欄で回復コードの経路を選んだことを成功の扱い（`FirstTotpSuccessHandler`）に伝え（Bolt 33e から、request の属性でなく、認証の結果のトークンの経路 `SecondFactorPath` で伝える）、成功の扱いが session に印（2 つの属性。利用者の ID と、ログインした時刻。名前は Bolt 33c から `SessionKeys`）を置いて `/account/authenticator` に移す（覚えた要求は消さずに残す）。認証コードの経路は今のまま。session の ID は回復コードの経路でも認証の入口の `ChangeSessionIdAuthenticationStrategy` が変えているので足さない（`RecoveryCodeLoginSecurityIntegrationTest` が確かめている）。印は再登録の完了、ログアウト（session と一緒に消える）、password の段の成功（`LoginSuccessHandler`。同じ session で別の利用者に切り替えたときに前の利用者の印を残さない。2 つの属性をどちらも消す）で消す。画面（`RecoveryLogin.stateOf`）は印の状態を 3 つに分ける。NONE（印がない、または印の利用者の ID が今の主体と違う）、ACTIVE（印の利用者が今の主体で、ログインから 15 分未満）、EXPIRED（15 分を過ぎた）。A-08 を開けるのは ACTIVE だけ |
 | 印の期限 | 印はログインから 15 分だけ有効にする（2026-10-15 の Bolt 33b の開発レビューで human:kakimomokuri が決定）。期限がないと、「後で登録する」の後も印が session の最大 8 時間残り、session を盗んだ者や離席中の端末に触れた者が、password なしで認証アプリを登録し直せる（一時的な乗っ取りが、続く乗っ取りになる）。期限を過ぎたら（EXPIRED）A-08 の GET・POST・「後で登録する」は役割のホームへ移し、業務の画面の知らせはリンクのない案内（ログアウトして回復コードでログインし直す）に変える。印の期限はログインから数えるので、A-08 の 15 分（開いた時刻から）より先に来る。そのため、サービスの期限切れ（`Expired`）は画面からはほぼ届かない守りになる |
 | 印の属性の名前 | Bolt 33b では、認証の入口（`identity.infrastructure.security` の定数のクラス。Bolt 33c で名前と期間を `SessionKeys`・`SessionPolicy` に移して消した）と画面の層（`identity.interfaces.web`）に同じ値の定数を置き、一致をテストで守っていた（前例は登録の途中の秘密の属性。画面の層は infrastructure に依存できないため）。属性の名前と期間を 2 つの定数で持つ組は 5 組と A-08 の URL（テンプレートの直書きを含む）の 6 組目になり、Bolt 33c で、名前と URL を application 層の `SessionKeys`（`identity.application.internal.session`）に、印の 15 分・登録の途中の 15 分・再登録の 15 分をドメインルール `SessionPolicy`（`identity.domain.model.rules`）に寄せた。値の文字列は変えない（[ADR-012](012-authentication-principal-and-session.md) の決定 3・決定 6） |
 | A-08 の画面と認可 | `GET`・`POST /account/authenticator`、`POST /account/authenticator/later`、`POST /account/authenticator/continue`（新しい回復コードの画面の「続ける」。GET のフォームは action の query を捨て、覚えた要求の query が消えるので POST にし、サーバーが覚えた要求か役割のホームへ redirect する。覚えた要求を読むのは「続ける」と「後で登録する」の時で、完了の応答では消さない）。ログインした画面のレイアウトで、ナビゲーションの対象外。2 つの要素がそろった主体（`AuthenticatedActor`）で、役割は問わない（`anyRequest().authenticated()` の範囲で、全体の注釈が 2 つの要素を求める。password の段の主体は A-02 へ）。印がない・期限を過ぎていれば、GET・POST・「後で登録する」とも役割のホームへ移す（403 にしない）。期限を過ぎた途中の値（暗号文・開いた時刻）は、GET で始め直すときに捨てる。A-07（`/login/totp/enroll`。password の段）とは URL も認可も分ける |

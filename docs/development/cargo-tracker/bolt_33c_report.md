@@ -3,7 +3,7 @@ type: Plan
 title: "Bolt 33c 終了報告 - session の属性の名前と期間の置き場所の整理（振る舞いの変わらない直し）"
 description: "W5 の 18 本目の Bolt の終了報告。認証の入口と画面に同じ値の 2 つの定数で持っていた session・request の属性の名前と A-08・A-03 の URL を application 層の SessionKeys に、ログインの期間を domain の SessionPolicy に寄せ、認証の入口の規則に例外を 1 つ足した（ふるまいを持たないことを ArchUnit で見張る）。覚えた要求は Bean にせず属性の名前だけを共有した（Bean にすると Spring Security が型で見つけて未認証の入口でも使うため）。A-01 の数値を LockPolicy から描き、T-128 の見張り、tracking のコメント、空の復号の境界のテストを足した。振る舞いは変えていない。"
 tags: [plan]
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-15T21:59:31Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-16T00:33:56Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-15T12:41:20Z }
 ---
@@ -19,7 +19,7 @@ verified:
 | 1 | **止まらなかった承認ゲート**: ステップ 1（設計文書）、2・3（構造）、4・5（小さな直しと見張り）、6（終了報告の前の直し） | 振る舞いを変えないので、既存のテスト（全 URL の見張り、覚えた要求に戻るテスト、画面の層のシナリオ）を緑のまま移した。値を固定するテスト（`SessionKeysTest`）を先に書いた。変異の確かめ: 空の復号の境界で 1 件、T-128 の規則で 1 件、session の見張りで 1 件が落ちた（どれも控えのファイルから戻した。T-131） | 「指標」 |
 | 2 | **開発の途中で人が決めたこと（決定 7、2026-10-15、human:kakimomokuri）**: 覚えた要求の `RequestCache` は Bean にせず、属性の名前（`SessionKeys.SAVED_REQUEST`）だけを共有する | `RequestCache` の Bean を作ると、Spring Security の `RequestCacheConfigurer` が型で見つけて未認証の入口でも使い、覚える範囲が変わる（決定 4「既定には渡さない」を守れない）。計画の打ち切りの条件として止めて諮った | ADR-012 の決定 3、architecture_backend |
 | 3 | **計画からの変更（人に諮らずに変えた）**: (a) Thymeleaf のリンク式は静的なクラス（`T(...)`）を参照できないので、画面の層の `SessionUrlsAdvice` がモデルで URL を渡す（全画面に効く `@ControllerAdvice` が 1 つ増えた）。(b) `SessionLifetime` は名前と期間を移して空になったので消した。(c) 例外の根拠（ふるまいを持たない）を見張る ArchUnit の規則 3 つを足した（開発レビュー） | (a) テンプレートの URL を直書きのまま残すと、完了条件「URL が `SessionKeys` だけにある」を満たせない。値は定数の record で、振る舞いは変わらない。(b) 空のクラスを残す理由がない。(c) 例外が黙って広がらないように | architecture_backend、`LayerArchitectureTest` |
-| 4 | **人の判断が要るかもしれないこと（開発レビュー）**: (a) 規則の名前「認証の入口はidentityのコマンドサービスだけに依存してよい」は、ADR が名前で参照しているので変えず、Javadoc と because を実態に合わせた。(b) URL（Web の経路の関心）を application 層の `SessionKeys` に置いたことを、意図した負債として ADR-012 に書くか。(c) 期限の境界の判定（「ちょうどの時刻は期限切れ」の 4 か所）を `SessionPolicy` に寄せるか | (b) は決定 2 の (2) の範囲（名前と URL は application）で、今は書いていない。(c) は 33d の行に候補として足した（→ (b)・(c) とも 33e。Bolt 33d の開始準備の決定 3） | release_plan の 33d の行 |
+| 4 | **人の判断が要るかもしれないこと（開発レビュー）**: (a) 規則の名前「認証の入口はidentityのコマンドサービスだけに依存してよい」は、ADR が名前で参照しているので変えず、Javadoc と because を実態に合わせた。(b) URL（Web の経路の関心）を application 層の `SessionKeys` に置いたことを、意図した負債として ADR-012 に書くか。(c) 期限の境界の判定（「ちょうどの時刻は期限切れ」の 4 か所）を `SessionPolicy` に寄せるか | (b) は決定 2 の (2) の範囲（名前と URL は application）で、今は書いていない。(c) は 33d の行に候補として足した（→ (b)・(c) とも 33e。Bolt 33d の開始準備の決定 3。→ (b) は 33f。Bolt 33e の開始準備の決定 1） | release_plan の 33d の行 |
 
 ## 基本情報
 
@@ -106,14 +106,14 @@ verified:
 
 ### 既知の課題（後に持ち込む）
 
-- 33d の行（TOTP の部品の整理と、期限の境界の判定・テンプレートの期間の数値。→ 期限の境界の判定・テンプレートの期間の数値は 33e）
+- 33d の行（TOTP の部品の整理と、期限の境界の判定・テンプレートの期間の数値。→ 期限の境界の判定・テンプレートの期間の数値は 33e。→ テンプレートの期間の数値は 33f）
 - 全画面に効く `@ControllerAdvice` が `identity.interfaces.web` に 4 つ（まとめるかは後で検討）
-- `SessionKeys` は名前だけでなく URL も持つ（命名）。画面だけが使う属性の名前 2 つに値を固定するテストがない（→ 33e）
+- `SessionKeys` は名前だけでなく URL も持つ（命名）。画面だけが使う属性の名前 2 つに値を固定するテストがない（→ 33e。命名は → 33f）
 - #49（33b の「始めたときの秘密を置き換えの条件にする」を送った）
 
 ## 次の Bolt
 
-Bolt 33d（W5 の続き）。TOTP の部品の整理（TOTP の定数、SVG、回復コードの形、`normalize` の型、A-07 と A-08 の重複、認証の結果に経路、session の ID の値オブジェクト）と、33c の開発レビューから送った期限の境界の判定・テンプレートの期間の数値。範囲と時間を開始準備で見直す（→ 認証の結果に経路、session の ID、期限の境界、期間の数値は 33e に分けた）。
+Bolt 33d（W5 の続き）。TOTP の部品の整理（TOTP の定数、SVG、回復コードの形、`normalize` の型、A-07 と A-08 の重複、認証の結果に経路、session の ID の値オブジェクト）と、33c の開発レビューから送った期限の境界の判定・テンプレートの期間の数値。範囲と時間を開始準備で見直す（→ 認証の結果に経路、session の ID、期限の境界、期間の数値は 33e に分けた。→ 期間の数値は 33f）。
 
 ## 更新履歴
 
@@ -121,6 +121,7 @@ Bolt 33d（W5 の続き）。TOTP の部品の整理（TOTP の定数、SVG、�
 | :--- | :--- | :--- |
 | 2026-10-15 | 終了報告を承認した（議題 1〜4。議題 3 の人に諮らずに変えたこと 3 つを事後に承認。議題 4 の (b)・(c) は 33d の開始準備で扱う） | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-10-16 | 議題 4 の (b)・(c)、既知の課題（画面だけが使う属性の名前 2 つの値のテスト）、次の Bolt の経路・session の ID・期限の境界・期間の数値の行き先に「→ 33e」を書き添えた（Bolt 33d の開始準備の決定 3・6。human:kakimomokuri が決定） | anthropic/claude-opus-5-5 |
+| 2026-10-16 | 議題 4 (b)、テンプレートの期間の数値、`SessionKeys` の命名の行き先に「→ 33f」を書き添えた（Bolt 33e の開始準備の決定 1・6。human:kakimomokuri が決定） | anthropic/claude-opus-5-5 |
 | 2026-10-15 | 初版作成（承認待ち） | anthropic/claude-opus-5-5 |
 
 ## 関連ドキュメント
