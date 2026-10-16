@@ -151,6 +151,11 @@
                                                 <td class="constraint detail"><span title='Restrict delete:&#10;Parent cannot be deleted if children exist'>R</span></td>
                                             </tr>
                                             <tr>
+                                                <td title="user_assignment.user_id references app_user.id via fk_user_assignment_user"><a href='user_assignment.html'>user_assignment</a><span class='relatedKey'>.user_id</span></td>
+                                                <td class="constraint detail">fk_user_assignment_user</td>
+                                                <td class="constraint detail"><span title='Restrict delete:&#10;Parent cannot be deleted if children exist'>R</span></td>
+                                            </tr>
+                                            <tr>
                                                 <td title="user_role.user_id references app_user.id via fk_user_role_user"><a href='user_role.html'>user_role</a><span class='relatedKey'>.user_id</span></td>
                                                 <td class="constraint detail">fk_user_role_user</td>
                                                 <td class="constraint detail"><span title='Restrict delete:&#10;Parent cannot be deleted if children exist'>R</span></td>
@@ -381,12 +386,12 @@
                                 </thead>
                                 <tbody>
                                 <tr>
-                                    <td>ck_app_user_status</td>
-                                    <td>((status)::text &#61; ANY ((ARRAY[&#39;ACTIVE&#39;::character varying, &#39;SUSPENDED&#39;::character varying])::text[]))</td>
-                                </tr>
-                                <tr>
                                     <td>ck_app_user_email_normalized</td>
                                     <td>((email)::text &#61; lower(TRIM(BOTH FROM email)))</td>
+                                </tr>
+                                <tr>
+                                    <td>ck_app_user_status</td>
+                                    <td>((status)::text &#61; ANY ((ARRAY[&#39;ACTIVE&#39;::character varying, &#39;SUSPENDED&#39;::character varying])::text[]))</td>
                                 </tr>
                                 </tbody>
                             </table>

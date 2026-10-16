@@ -1,6 +1,7 @@
 kpi_observation
 audit_record
 user_role
+user_assignment
 totp_credential
 recovery_code
 password_reset_token

@@ -4,6 +4,7 @@ login_failure
 password_reset_token
 recovery_code
 totp_credential
+user_assignment
 user_role
 audit_record
 kpi_observation

@@ -7,6 +7,7 @@
             <child column="user_id" foreignKey="fk_password_reset_token_user" implied="false" onDeleteCascade="false" schema="identity" table="password_reset_token"/>
             <child column="user_id" foreignKey="fk_recovery_code_user" implied="false" onDeleteCascade="false" schema="identity" table="recovery_code"/>
             <child column="user_id" foreignKey="fk_totp_credential_user" implied="false" onDeleteCascade="false" schema="identity" table="totp_credential"/>
+            <child column="user_id" foreignKey="fk_user_assignment_user" implied="false" onDeleteCascade="false" schema="identity" table="user_assignment"/>
             <child column="user_id" foreignKey="fk_user_role_user" implied="false" onDeleteCascade="false" schema="identity" table="user_role"/>
          </column>
          <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="company_id" nullable="false" remarks="所属企業" size="2147483647" type="uuid" typeCode="1111">
@@ -160,6 +161,24 @@
             <column ascending="true" name="user_id"/>
          </index>
          <checkConstraint constraint="(last_used_step &gt;= 0)" name="ck_totp_credential_last_used_step"/>
+      </table>
+      <table name="user_assignment" remarks="担当範囲" schema="identity" type="TABLE">
+         <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="user_id" nullable="false" remarks="利用者 ID" size="2147483647" type="uuid" typeCode="1111">
+            <parent column="id" foreignKey="fk_user_assignment_user" implied="false" onDeleteCascade="false" schema="identity" table="app_user"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="scope_kind" nullable="false" remarks="範囲の種類（COMPANY: 企業、BOOKING: 案件）" size="30" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="2" name="scope_id" nullable="false" remarks="範囲の ID（COMPANY なら企業 ID）" size="2147483647" type="uuid" typeCode="1111"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="3" name="granted_by" nullable="true" remarks="割り当てた操作者（運用の手順で入れた行は null）" size="2147483647" type="uuid" typeCode="1111"/>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="4" name="granted_at" nullable="false" remarks="割り当てた時刻" size="35" type="timestamptz" typeCode="93"/>
+         <primaryKey column="user_id" sequenceNumberInPK="1"/>
+         <primaryKey column="scope_kind" sequenceNumberInPK="2"/>
+         <primaryKey column="scope_id" sequenceNumberInPK="3"/>
+         <index name="pk_user_assignment" unique="true">
+            <column ascending="true" name="user_id"/>
+            <column ascending="true" name="scope_kind"/>
+            <column ascending="true" name="scope_id"/>
+         </index>
+         <checkConstraint constraint="((scope_kind)::text = ANY ((ARRAY['COMPANY'::character varying, 'BOOKING'::character varying])::text[]))" name="ck_user_assignment_scope_kind"/>
       </table>
       <table name="user_role" remarks="利用者の役割" schema="identity" type="TABLE">
          <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="user_id" nullable="false" remarks="利用者 ID" size="2147483647" type="uuid" typeCode="1111">

@@ -11205,7 +11205,7 @@
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>1. 設計文書</strong> 【承認ゲート: 設計文書】</li>
 <li>上の注の行を直す</li>
 <li>完了の判定: <code>okf:check</code> ERROR 0、<code>documentationTest</code> 緑</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>2. 表と dev-data とポート</strong> 【承認ゲート: データベース】</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>2. 表と dev-data とポート</strong> 【承認ゲート: データベース】</li>
 <li>マイグレーション（common）と dev-data（システム管理者に A 社と荷主 A）。<code>UserAssignmentRepository</code> の実装とマッパー、<code>UserRepository.findSummariesIn</code>（<code>findSummaries</code> を消す）。統合テスト（表の制約、割り当ての読み出し、一覧の絞り込み・空の集合）。テストの割り当ての補助 <code>AdministrationFixtures</code></li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>3. 管理範囲と試行の記録</strong> 【承認ゲート: Red・Green、セキュリティ】</li>
 <li><code>AdministrationScope</code> の単体テスト、<code>AuditRecord.adminScopeDenied</code>、<code>AdministrationScopeDenialService</code> の単体テストと統合テスト（追記の失敗は例外）</li>
