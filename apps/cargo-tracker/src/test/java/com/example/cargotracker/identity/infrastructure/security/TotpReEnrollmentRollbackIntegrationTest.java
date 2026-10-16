@@ -96,8 +96,9 @@ class TotpReEnrollmentRollbackIntegrationTest extends IdentitySpyIntegrationTest
                 .append(argThat(written -> written.action() == AuditAction.TOTP_RE_ENROLLED));
         UtcInstant startedAt = new UtcInstant(clock.instant());
         String code = codeAt(user, renewed, 0);
+        SessionId current = new SessionId("session");
 
-        assertThatThrownBy(() -> reEnrollment.complete(user, renewed, code, startedAt, new SessionId("session")))
+        assertThatThrownBy(() -> reEnrollment.complete(user, renewed, code, startedAt, current))
                 .isInstanceOf(IllegalStateException.class);
 
         assertThat(credentials.findByUserId(user).orElseThrow().secret())

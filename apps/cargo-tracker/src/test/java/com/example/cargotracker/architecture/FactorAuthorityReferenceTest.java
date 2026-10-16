@@ -23,9 +23,9 @@ class FactorAuthorityReferenceTest {
     private static final Path SOURCES = Path.of("src/main/java");
     private static final Path RESOURCES = Path.of("src/main/resources");
 
-    /** 要素の権限の名前（引用符を問わない）、要素の権限の型、TOTP の要素の定数を持つ型（Bolt 31d の開発レビューで広げた）。 */
+    /** 要素の権限の名前（引用符を問わない）、要素の権限の型、TOTP の要素の定数を持つ型（Bolt 31d の開発レビューで広げた）、2 つ目の要素の経路（Bolt 33e）。 */
     private static final Pattern FACTOR_REFERENCE =
-            Pattern.compile("FACTOR_[A-Z]|FactorGrantedAuthority|TotpAuthenticationToken");
+            Pattern.compile("FACTOR_[A-Z]|FactorGrantedAuthority|TotpAuthenticationToken|SecondFactorPath");
 
     private static final List<String> ALLOWED = List.of(
             "com/example/cargotracker/identity/infrastructure/security/",

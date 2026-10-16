@@ -20,6 +20,6 @@ class SessionIdTest {
 
         assertThat(id).isEqualTo(new SessionId("3f1c-session"));
         assertThat(id.value()).isEqualTo("3f1c-session");
-        assertThat(id.toString()).doesNotContain("3f1c");
+        assertThat(id.toString()).doesNotContain(id.value());
     }
 }

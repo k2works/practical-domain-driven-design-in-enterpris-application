@@ -75,7 +75,9 @@ class RecoveryCodeLoginSecurityIntegrationTest {
     private static final Pattern MANUAL_KEY = Pattern.compile("data-manual-key=\"([A-Z2-7 ]+)\"");
     private static final String JUST_ENROLLED = "認証アプリを登録しました。";
     private static final String RE_ENROLL_URL = "/account/authenticator";
+    /** A-08 を開いた時刻の属性の名前（{@code TotpReEnrollmentController.STARTED_AT}。値は TotpReEnrollmentSessionKeysTest が固定する）。 */
     private static final String RE_ENROLLMENT_STARTED_AT = "cargotracker.session.reEnrollmentStartedAt";
+
     private static final String NOTICE = "回復コードでログインしました。認証アプリを登録し直してください。";
     private static final String EXPIRED_NOTICE = "回復コードでログインしてから 15 分を過ぎたため、この画面からは認証アプリを登録し直せません。";
     private static final Pattern NEW_RECOVERY_CODE = Pattern.compile("\\b([0-9a-f]{4}-[0-9a-f]{4})\\b");

@@ -4,7 +4,7 @@ title: "ADR-012: 認証の主体は共有カーネルの型にし、password の
 description: "US-18 の password によるログインと session を、Spring Security 7 の form login と Spring Session JDBC で作る。"
 tags: [adr, authentication, session]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-16T00:33:56Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-16T01:41:36Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-06T06:51:29Z }
 ---
@@ -196,6 +196,7 @@ US-18 の password によるログインと session を、Spring Security 7 の 
 
 ## 改訂の経緯
 
+- 2026-10-16: Bolt 33e のステップ 1 で、決定 3 の期間の置き場所 `SessionPolicy` に期限の判定 `isExpired`（ちょうどの時刻は期限切れ。時計を持たない純粋な関数）を足し、判定していた 4 か所が使うことにした（「ふるまいは持たず」を改めた。Bolt 33e の開始準備の決定 2。human:kakimomokuri が決定）。
 - 2026-10-15: Bolt 33c の実装で、決定 3 の覚えた要求を「`RequestCache` を 1 つの Bean にして 3 つの部品で共有する」から「Bean は作らず、属性の名前 `SessionKeys.SAVED_REQUEST` だけを共有する」に改めた（`RequestCache` の Bean を作ると、Spring Security の `RequestCacheConfigurer` が型でその Bean を見つけ、`http.requestCache` に渡さなくても未認証の入口で使うので、未認証の入口が覚える範囲が変わるため。human:kakimomokuri が決定）。あわせて、テンプレートの URL は画面の層の `SessionUrlsAdvice` がモデルで渡すこと（Thymeleaf のリンク式は静的なクラスを参照できない）と、空になった認証の入口の定数のクラスを消したことを書いた。
 - 2026-10-15: Bolt 33c のステップ 1 で、決定 3 の属性の名前の置き場所を application 層の `SessionKeys`（`identity.application.internal.session`）、期間の置き場所をドメインルール `SessionPolicy` に改め（2 つの定数で持ち一致をテストで守る形をやめた）、覚えた要求の `RequestCache` を 1 つの Bean にして 3 つの部品で共有し Spring Security の既定には渡さないことを書いた。決定 6 に認証の入口の例外として `application.internal.session` を足し、「例外を `queryservices` に広げない」と矛盾しない理由（ふるまいを持たない名前だけで、業務の判断を入口に持ち込まない）を書いた（Bolt 33c の開始準備の決定 1〜3 と決定 2 の (4)・(5)。human:kakimomokuri が決定）。
 - 2026-10-15: Bolt 33b の開発レビューで、決定 3 の回復コードでログインした印を 2 つの属性（利用者の ID と時刻）にし、印はログインから 15 分だけ有効（状態 NONE・ACTIVE・EXPIRED）と書いた。「続ける」を POST にしたこと、A-08 の URL を 33c で直す 6 組目に数えることを足し、コンプライアンスの A-08 の全 URL の見張りを事実（自動で含む）に直した（印の期限は human:kakimomokuri が決定）。

@@ -4,7 +4,7 @@ title: "ADR-011: 多要素認証は Spring Security 7 の要素の権限で組�
 description: "password の後に TOTP を求める 2 段階のログインを、Spring Security 7 の多要素認証（要素ごとの権限）で組む。"
 tags: [adr, authentication, mfa, totp]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-16T00:33:56Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-16T01:41:36Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-11T08:28:34Z }
 ---
@@ -247,7 +247,7 @@ ArchUnit で、ZXing を参照するのが暗号の部品（`identity.infrastruc
 | :--- | :--- |
 | 入口と欄 | TOTP と同じ入口（`TotpAuthenticationFilter`、`POST /login/totp`）。A-02 の `<details>`（「認証アプリを使えない場合」）の中の別のフォームで、欄は `recoveryCode`（`autocomplete="off"`、`inputmode` は付けない）。欄の形で TOTP と取り違えない。JavaScript も CSP の変更も要らない。スパイクの「TOTP の欄で受け付け」（決定 2 の表）を改める |
 | 入力のトークンと provider | フィルターは `recoveryCode` があるとき、確かめる前の入力だけを `RecoveryCodeAuthenticationToken` にする（平文は request の範囲でしか持たない。ProviderManager が平文を消すのは認証の結果だけで、入力には呼ばない。失敗のイベントに入るので、リスナーは `getCredentials()` を読まない。Bolt 31c の開発レビュー）。`RecoveryCodeAuthenticationProvider` が確かめ、照合と消費はアプリケーションのサービス `RecoveryCodeVerificationService`（`identity.application.internal.commandservices`）に任せる（決定 5 の「照合」と同じ分け方。D-5 の認証の例外の範囲） |
-| 結果の型 | provider は TOTP と同じ `TotpAuthenticationToken.authenticated(details, FACTOR_TOTP)` を返す。結果の型を変えないので、mfaEnabled の要素の合わせ（`toBuilder()`）、成功の監査の判定（`LOGIN_SUCCEEDED`）、session の直列化、業務の認可、session の ID の変更、CSRF の作り直し、8 時間の起点（`AUTHENTICATED_AT`）が 1 か所に保たれる。別の結果の型にすると、これらの守りを重ねて作ることになる。`CargoUserDetails` と session の属性は変えない。Bolt 33e から、結果のトークンに 2 つ目の要素の経路（`SecondFactorPath`。回復コードの provider は `RECOVERY_CODE`）を `transient` の欄で持たせ、型と権限は変えない |
+| 結果の型 | provider は TOTP と同じ `TotpAuthenticationToken.authenticated(details, FACTOR_TOTP)` を返す（Bolt 33e から経路の引数が加わり `authenticated(details, FACTOR_TOTP, RECOVERY_CODE)`）。結果の型を変えないので、mfaEnabled の要素の合わせ（`toBuilder()`）、成功の監査の判定（`LOGIN_SUCCEEDED`）、session の直列化、業務の認可、session の ID の変更、CSRF の作り直し、8 時間の起点（`AUTHENTICATED_AT`）が 1 か所に保たれる。別の結果の型にすると、これらの守りを重ねて作ることになる。`CargoUserDetails` と session の属性は変えない。Bolt 33e から、結果のトークンに 2 つ目の要素の経路（`SecondFactorPath`。回復コードの provider は `RECOVERY_CODE`）を `transient` の欄で持たせ、型と権限は変えない |
 | 拒否の例外とイベント | 拒否は `RecoveryCodeRejectedException`（`BadCredentialsException` を継ぐ）で表し、`DefaultAuthenticationEventPublisher` の例外とイベントの対応表に足して失敗のイベントを出す（対応表にない例外ではイベントが出ず、監査記録が書かれない）。失敗の数え方（Bolt 32）も同じイベントの上に置く |
 | 監査 | 通ったら回復コードの使用 `RECOVERY_CODE_USED` と `LOGIN_SUCCEEDED` の 2 行（`PASSWORD_VERIFIED` ではない）。拒否は理由 `INVALID_RECOVERY_CODE` を監査記録にだけ残す（誤り・使用済み・形の違い・回復コードがない・両方の欄を区別しない）。回復コードの平文は照合の後どこにも残さない（記録・監査・session・例外のメッセージ） |
 | 正規化 | 形の知識はドメインに置く（`RecoveryCode.normalize`）。全角を半角に直し（NFKC。IME で入れたまま）、ハイフンに似た文字（長音など）をハイフンにそろえ、前後と中の空白（全角スペースを含む）を除き、小文字にし、ハイフンのない 8 文字は 4 文字目の後にハイフンを入れる。`^[0-9a-f]{4}-[0-9a-f]{4}$` に合わなければ照合せずに拒む（bcrypt を回さない）。手で書き写したコードを打ち直させない。Bolt 33d から、正規化の結果は値 `NormalizedRecoveryCode`（`Optional` で返す）で、照合はこの値だけを受ける。形の知識（ハイフンのない 8 文字の区切りの `parse`、生成の `fromBytes` を含む）は値 `NormalizedRecoveryCode` だけに置く |
@@ -439,6 +439,7 @@ Bolt 33b で解いたもの（決定 10 に移した）: TOTP の再登録（SEC
 
 ## 改訂の経緯
 
+- 2026-10-16: Bolt 33e で、決定 7 の結果の型と決定 10 の入口と印に、認証の結果のトークンが 2 つ目の要素の経路（`SecondFactorPath`。`transient`）を持ち、成功の扱いがそれを読むこと（request の属性をやめた）を足した。ステータスに 33e と 33f の分け方を足した（Bolt 33e の開始準備の決定 1・4。human:kakimomokuri が決定）。
 - 2026-10-15: Bolt 33c のステップ 1 で、ステータスに 33c の開始準備の決定（33c と 33d の分け方、属性の名前と URL は `SessionKeys`・期間は `SessionPolicy`、始めたときの秘密の条件は #49）を書いた。決定 10 の印の属性の名前を、2 つの定数の組から `SessionKeys`・`SessionPolicy` に寄せたことに直し、A-07 と A-08 の重複の行き先を 33d に改めた（Bolt 33c の開始準備の決定 1・2 と決定 2 の (6)。human:kakimomokuri が決定）。
 - 2026-10-15: Bolt 33b の開発レビューで、決定 10 に印の期限（ログインから 15 分。状態 NONE・ACTIVE・EXPIRED。期限を過ぎたら A-08 は役割のホーム、知らせはリンクのない案内）、印の 2 つの属性、「続ける」を POST（`/account/authenticator/continue`）にしたこと、A-08 の URL を 33c で直す 6 組目に数えることを足した。共用の文を事実（ポート `TotpSecretIssuer` と値 `EnrollingUser`。A-08 は `TotpEnrollmentService` を呼ばない）に直し、受け入れること（再認証なし）の前提に印の期限を書いた（印の期限は human:kakimomokuri が決定）。
 - 2026-10-15: Bolt 33b のステップ 1 で、回復コードによる TOTP の再登録（決定 10。印と A-08、置き換えの時点、置き換えと発行し直しのトランザクション、刻みの使用の秘密の一致の条件と大きい方の刻み、コミットの後のほかの session の失効、メールアドレスはサービスが読む、#47 に送るもの、受け入れること）を足し、ステータスに 33b の開始準備の決定を書いた。決定 6 の発行し直しの競合と決定 7 の末尾の宿題を決定 10 に結び、残りが少ないときの案内は #47 に送ると書いた。代替案に 3 つ、ネガティブに 1 つ足し、「未確認の項目」の TOTP の再登録を解いた側へ移した（Bolt 33b の開始準備の決定 1・2。human:kakimomokuri が決定）。

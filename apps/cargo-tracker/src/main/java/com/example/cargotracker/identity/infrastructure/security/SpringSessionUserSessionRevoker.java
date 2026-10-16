@@ -5,6 +5,7 @@ import com.example.cargotracker.identity.domain.model.valueobjects.EmailAddress;
 import com.example.cargotracker.identity.domain.model.valueobjects.SessionId;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import org.springframework.session.FindByIndexNameSessionRepository;
 import org.springframework.session.Session;
 import org.springframework.stereotype.Component;
@@ -32,6 +33,8 @@ public class SpringSessionUserSessionRevoker implements UserSessionRevoker {
 
     @Override
     public int revokeOthers(EmailAddress email, SessionId keep) {
+        // 残す session がないまま消すと今の session まで消えるので、呼び出しの誤りは先に止める（Bolt 33e の開発レビュー）
+        Objects.requireNonNull(keep, "keep");
         List<String> others = sessions.findByPrincipalName(email.value()).keySet().stream()
                 .filter(id -> !id.equals(keep.value()))
                 .toList();

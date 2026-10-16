@@ -97,7 +97,10 @@ class AuthenticationArchitectureTest {
             .haveFullyQualifiedName("org.springframework.security.core.authority.FactorGrantedAuthority")
             .orShould()
             .dependOnClassesThat()
-            .haveSimpleName("TotpAuthenticationToken");
+            .haveSimpleName("TotpAuthenticationToken")
+            .orShould()
+            .dependOnClassesThat()
+            .haveSimpleName("SecondFactorPath");
 
     /** 上の規則が空振りしていないことを確かめる。 */
     @ArchTest

@@ -3,6 +3,7 @@ package com.example.cargotracker.identity.infrastructure.security;
 import java.io.Serial;
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.core.GrantedAuthority;
 
@@ -60,7 +61,8 @@ public final class TotpAuthenticationToken extends AbstractAuthenticationToken {
      */
     public static TotpAuthenticationToken authenticated(
             Object principal, GrantedAuthority factor, SecondFactorPath path) {
-        return new TotpAuthenticationToken(principal, null, path, List.of(factor));
+        // 経路を渡し忘れると黙って TOTP の扱いになり、回復コードの印を置き忘れるので、null を拒む（Bolt 33e の開発レビュー）
+        return new TotpAuthenticationToken(principal, null, Objects.requireNonNull(path, "path"), List.of(factor));
     }
 
     /** 2 つ目の要素の経路。session から読み直したトークンでは null（{@code transient}）。 */
@@ -73,7 +75,10 @@ public final class TotpAuthenticationToken extends AbstractAuthenticationToken {
         return new Builder(this);
     }
 
-    /** 等しさは枠組みの規則（主体・権限・認証済みか）に従い、型も同じことを求める。 */
+    /**
+     * 等しさは枠組みの規則（主体・権限・認証済みか）に従い、型も同じことを求める。経路は等しさに入れない（session から読み直したトークンの
+     * 経路は null なので、入れると読み直す前後で等しくなくなる。Bolt 33e）。
+     */
     @Override
     public boolean equals(Object other) {
         return other instanceof TotpAuthenticationToken && super.equals(other);

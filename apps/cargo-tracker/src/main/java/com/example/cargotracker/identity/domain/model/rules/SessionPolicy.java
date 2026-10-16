@@ -35,6 +35,7 @@ public final class SessionPolicy {
      * @param start 期間の起点
      * @param now 今の時刻
      * @param lifetime 期間
+     * @return 期限切れなら true（ちょうどの時刻を含む）
      */
     public static boolean isExpired(UtcInstant start, UtcInstant now, Duration lifetime) {
         return !now.instant().isBefore(start.instant().plus(lifetime));
