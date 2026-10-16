@@ -41,6 +41,12 @@ public interface IdentityMapper {
             @Param("grantedBy") UUID grantedBy,
             @Param("now") OffsetDateTime now);
 
+    /** S-20 の一覧の行（Bolt 34）。利用者ごとに役割の数だけ行が出る。 */
+    List<UserAdministrationRow> selectUserAdministrationRows();
+
+    /** S-20 の詳細の行（Bolt 34）。役割の数だけ行が出る。 */
+    List<UserAdministrationRow> selectUserAdministrationRowsById(UUID id);
+
     /** 役割を外す（Bolt 34）。 */
     int deleteUserRole(@Param("userId") UUID userId, @Param("role") String role);
 

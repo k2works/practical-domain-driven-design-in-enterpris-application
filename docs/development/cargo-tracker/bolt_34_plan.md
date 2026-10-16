@@ -3,7 +3,7 @@ type: Plan
 title: "Bolt 34 計画 - 固定役割の付与と取消しと職務分離（US-16 の一部）"
 description: "W5 の 22 本目の Bolt の計画。システム管理者が S-20 で利用者の一覧と詳細を見て、BR-15 の固定役割を確認の領域を経て付与・取り消す。職務分離（AC3）と企業の種類に合わない役割と自分の役割の変更を拒み、古い版からの更新を拒む（UC-16 の 4b）。変更履歴は監査記録に対象と変更前後を足して残す（AC1 の役割の分）。管理範囲外の拒否と利用停止は 34b、振る舞いの変わらない直しは 34c に分けた。"
 tags: [plan]
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-16T05:58:26Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-16T06:09:32Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-16T05:23:02Z }
 ---
@@ -262,7 +262,7 @@ u ||--|{ ur
 - [x] **4. 役割の変更のサービスと永続化** 【承認ゲート: セキュリティ・データベース】
   - `UserRoleChangeService` の単体テスト（偽物のリポジトリ。`Changed`・`Rejected`・`Stale`・`NotFound`、システム管理者でない操作者）と統合テスト（PostgreSQL。版の条件・`user_role` の差分と `granted_by`・監査記録の 1 行と変更前後の並び・監査の追記の失敗で全体が戻る・同時の 2 つの変更で 1 つだけ通る）
   - `User` の版（`UserRow`・`userColumns`・`User.of` の呼び出し元とリポジトリの復元）、`UserRepository` の役割の変更と読み出し、`AuditRecord.rolesChanged`、マッパー、`IdentityConfiguration` の `@Bean`
-- [ ] **5. 認可と S-20 の一覧・詳細** 【承認ゲート: セキュリティ】
+- [x] **5. 認可と S-20 の一覧・詳細** 【承認ゲート: セキュリティ】
   - セキュリティの統合テストを先に（システム管理者は `/staff/users` を開け、ほかの `/staff/**`・`/customer/**` は A-04、ほかの 6 役割と監査担当者の役割の利用者は `/staff/users/**` が A-04、ホームの行き先、詳細の利用者がいないと 404）
   - `UserAdministrationQueryService`・controller の一覧と詳細・テンプレート・ナビゲーション（社内のレイアウトだけ。システム管理者にだけ「利用者」が出ることを Web のテストで確かめ、`hasRole` の式を外す変異で確かめる。T-141）
 - [ ] **6. 役割の変更の確認の領域と確定** 【承認ゲート: 画面・セキュリティ】

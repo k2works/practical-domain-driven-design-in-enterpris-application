@@ -13,7 +13,9 @@ import com.example.cargotracker.identity.domain.model.valueobjects.AuditAction;
 import com.example.cargotracker.identity.domain.model.valueobjects.AuthenticationRejection;
 import com.example.cargotracker.identity.domain.model.valueobjects.CompanyKind;
 import com.example.cargotracker.identity.domain.model.valueobjects.EmailAddress;
+import com.example.cargotracker.identity.domain.model.valueobjects.UserDetail;
 import com.example.cargotracker.identity.domain.model.valueobjects.UserStatus;
+import com.example.cargotracker.identity.domain.model.valueobjects.UserSummary;
 import com.example.cargotracker.shared.domain.AuthenticatedActor;
 import com.example.cargotracker.shared.domain.CompanyId;
 import com.example.cargotracker.shared.domain.Role;
@@ -227,6 +229,16 @@ class AuthenticationAuditListenerTest {
 
             @Override
             public boolean changeRoles(User changed, long expectedVersion, UserId grantedBy, UtcInstant at) {
+                throw new UnsupportedOperationException();
+            }
+
+            @Override
+            public List<UserSummary> findSummaries() {
+                throw new UnsupportedOperationException();
+            }
+
+            @Override
+            public Optional<UserDetail> findDetail(UserId id) {
                 throw new UnsupportedOperationException();
             }
         };

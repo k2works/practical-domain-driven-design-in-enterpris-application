@@ -14,6 +14,7 @@ import com.example.cargotracker.identity.application.internal.eventhandlers.Pass
 import com.example.cargotracker.identity.application.internal.outboundservices.acl.NotificationPasswordResetMails;
 import com.example.cargotracker.identity.application.internal.queryservices.KpiObservationQueryService;
 import com.example.cargotracker.identity.application.internal.queryservices.TotpEnrollmentQueryService;
+import com.example.cargotracker.identity.application.internal.queryservices.UserAdministrationQueryService;
 import com.example.cargotracker.identity.application.internal.session.SessionPaths;
 import com.example.cargotracker.identity.domain.model.aggregates.AuditRecordRepository;
 import com.example.cargotracker.identity.domain.model.aggregates.CommonPasswordList;
@@ -151,6 +152,11 @@ public class IdentityConfiguration {
             Clock clock,
             TransactionTemplate transactionTemplate) {
         return new UserRoleChangeService(users, companies, auditRecords, clock, transactionTemplate);
+    }
+
+    @Bean
+    UserAdministrationQueryService userAdministrationQueryService(UserRepository users) {
+        return new UserAdministrationQueryService(users);
     }
 
     @Bean

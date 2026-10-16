@@ -38,6 +38,20 @@
         </constructor>
     </resultMap>
 
+    <resultMap id="userAdministrationRow" type="com.example.cargotracker.identity.infrastructure.persistence.UserAdministrationRow">
+        <constructor>
+            <arg column="id" name="id" javaType="java.util.UUID"/>
+            <arg column="company_id" name="companyId" javaType="java.util.UUID"/>
+            <arg column="company_name" name="companyName" javaType="String"/>
+            <arg column="company_kind" name="companyKind" javaType="String"/>
+            <arg column="email" name="email" javaType="String"/>
+            <arg column="display_name" name="displayName" javaType="String"/>
+            <arg column="status" name="status" javaType="String"/>
+            <arg column="version" name="version" javaType="_long"/>
+            <arg column="role" name="role" javaType="String"/>
+        </constructor>
+    </resultMap>
+
     <resultMap id="auditRecordRow" type="com.example.cargotracker.identity.infrastructure.persistence.AuditRecordRow">
         <constructor>
             <idArg column="id" name="id" javaType="java.util.UUID"/>
@@ -107,6 +121,29 @@
     <delete id="deleteUserRole">
         DELETE FROM identity.user_role WHERE user_id = #{userId} AND role = #{role}
     </delete>
+
+    <!-- S-20 の読み出し（Bolt 34）。password_hash を読まない。役割の数だけ行が出る（役割がなければ role が NULL の 1 行） -->
+    <sql id="userAdministrationColumns">
+        u.id, u.company_id, c.name AS company_name, c.kind AS company_kind, u.email, u.display_name, u.status, u.version,
+        r.role
+    </sql>
+
+    <select id="selectUserAdministrationRows" resultMap="userAdministrationRow">
+        SELECT <include refid="userAdministrationColumns"/>
+          FROM identity.app_user u
+          JOIN identity.company c ON c.id = u.company_id
+          LEFT JOIN identity.user_role r ON r.user_id = u.id
+         ORDER BY c.name, u.display_name, u.id, r.role
+    </select>
+
+    <select id="selectUserAdministrationRowsById" resultMap="userAdministrationRow">
+        SELECT <include refid="userAdministrationColumns"/>
+          FROM identity.app_user u
+          JOIN identity.company c ON c.id = u.company_id
+          LEFT JOIN identity.user_role r ON r.user_id = u.id
+         WHERE u.id = #{id}
+         ORDER BY r.role
+    </select>
 
     <select id="selectUserById" resultMap="userRow">
         SELECT <include refid="userColumns"/> FROM identity.app_user WHERE id = #{id}

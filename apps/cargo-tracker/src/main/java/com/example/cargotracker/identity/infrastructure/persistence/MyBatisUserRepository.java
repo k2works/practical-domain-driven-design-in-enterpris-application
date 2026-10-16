@@ -3,8 +3,11 @@ package com.example.cargotracker.identity.infrastructure.persistence;
 import com.example.cargotracker.identity.domain.model.aggregates.DuplicateEmailException;
 import com.example.cargotracker.identity.domain.model.aggregates.User;
 import com.example.cargotracker.identity.domain.model.aggregates.UserRepository;
+import com.example.cargotracker.identity.domain.model.valueobjects.CompanyKind;
 import com.example.cargotracker.identity.domain.model.valueobjects.EmailAddress;
+import com.example.cargotracker.identity.domain.model.valueobjects.UserDetail;
 import com.example.cargotracker.identity.domain.model.valueobjects.UserStatus;
+import com.example.cargotracker.identity.domain.model.valueobjects.UserSummary;
 import com.example.cargotracker.shared.domain.CompanyId;
 import com.example.cargotracker.shared.domain.Role;
 import com.example.cargotracker.shared.domain.UserId;
@@ -12,8 +15,14 @@ import com.example.cargotracker.shared.domain.UtcInstant;
 import java.time.Clock;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Repository;
@@ -82,6 +91,57 @@ public class MyBatisUserRepository implements UserRepository {
                 .sorted()
                 .forEach(role -> mapper.insertGrantedUserRole(changed.id().value(), role, grantedBy.value(), now));
         return true;
+    }
+
+    @Override
+    public List<UserSummary> findSummaries() {
+        return group(mapper.selectUserAdministrationRows()).stream()
+                .map(rows -> {
+                    UserAdministrationRow first = rows.getFirst();
+                    return new UserSummary(
+                            new UserId(first.id()),
+                            first.companyName(),
+                            first.displayName(),
+                            new EmailAddress(first.email()),
+                            UserStatus.valueOf(first.status()),
+                            roles(rows));
+                })
+                .toList();
+    }
+
+    @Override
+    public Optional<UserDetail> findDetail(UserId id) {
+        List<UserAdministrationRow> rows = mapper.selectUserAdministrationRowsById(id.value());
+        if (rows.isEmpty()) {
+            return Optional.empty();
+        }
+        UserAdministrationRow first = rows.getFirst();
+        return Optional.of(new UserDetail(
+                new UserId(first.id()),
+                new CompanyId(first.companyId()),
+                first.companyName(),
+                CompanyKind.valueOf(first.companyKind()),
+                first.displayName(),
+                new EmailAddress(first.email()),
+                UserStatus.valueOf(first.status()),
+                roles(rows),
+                first.version()));
+    }
+
+    /** SQL の並びを保ったまま、利用者ごとの行にまとめる。 */
+    private static List<List<UserAdministrationRow>> group(List<UserAdministrationRow> rows) {
+        Map<UUID, List<UserAdministrationRow>> byUser = new LinkedHashMap<>();
+        rows.forEach(
+                row -> byUser.computeIfAbsent(row.id(), id -> new ArrayList<>()).add(row));
+        return List.copyOf(byUser.values());
+    }
+
+    private static Set<Role> roles(List<UserAdministrationRow> rows) {
+        return rows.stream()
+                .map(UserAdministrationRow::role)
+                .filter(Objects::nonNull)
+                .map(Role::valueOf)
+                .collect(Collectors.toSet());
     }
 
     @Override

@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="ja" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/staff :: layout(~{::title}, ~{::main}, ~{}, 'users')}">
+<head>
+    <meta charset="UTF-8">
+    <title>利用者 - cargo-tracker</title>
+</head>
+<body>
+<main>
+    <h1>利用者</h1>
+    <p th:if="${#lists.isEmpty(users)}">利用者はまだいません。</p>
+    <div th:unless="${#lists.isEmpty(users)}" class="table-scroll" tabindex="0" role="region"
+         aria-label="利用者の一覧">
+        <table class="table">
+            <caption>企業と利用者と役割（企業名・表示名の順）</caption>
+            <thead>
+            <tr>
+                <th scope="col">企業</th>
+                <th scope="col">表示名</th>
+                <th scope="col">メールアドレス</th>
+                <th scope="col">利用状態</th>
+                <th scope="col">役割</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="user : ${users}">
+                <td th:text="${user.companyName}">A 社</td>
+                <td><a th:href="@{/staff/users/{id}(id=${user.id.value})}" th:text="${user.displayName}">佐藤</a></td>
+                <td th:text="${user.email.value}">sato@example.com</td>
+                <td th:text="${user.status.name() == 'ACTIVE'} ? '利用中' : '利用停止'">利用中</td>
+                <td>
+                    <ul class="list-unstyled mb-0">
+                        <li th:each="role : ${T(com.example.cargotracker.shared.domain.Role).values()}"
+                            th:if="${user.roles.contains(role)}" th:text="${role.displayName}">営業担当者</li>
+                    </ul>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</main>
+</body>
+</html>

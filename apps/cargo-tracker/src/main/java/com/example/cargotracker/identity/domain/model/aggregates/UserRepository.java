@@ -1,8 +1,11 @@
 package com.example.cargotracker.identity.domain.model.aggregates;
 
 import com.example.cargotracker.identity.domain.model.valueobjects.EmailAddress;
+import com.example.cargotracker.identity.domain.model.valueobjects.UserDetail;
+import com.example.cargotracker.identity.domain.model.valueobjects.UserSummary;
 import com.example.cargotracker.shared.domain.UserId;
 import com.example.cargotracker.shared.domain.UtcInstant;
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -33,4 +36,10 @@ public interface UserRepository {
      * @param at 付与の時刻
      */
     boolean changeRoles(User changed, long expectedVersion, UserId grantedBy, UtcInstant at);
+
+    /** S-20 の一覧の行を、所属企業の名前・表示名の順に返す（Bolt 34）。`password_hash` を読まない。 */
+    List<UserSummary> findSummaries();
+
+    /** S-20 の詳細を返す（Bolt 34）。`password_hash` を読まない。 */
+    Optional<UserDetail> findDetail(UserId id);
 }

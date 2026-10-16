@@ -64,6 +64,12 @@
                        th:attr="aria-current=${active == 'tracking-records'} ? 'page' : null"
                        th:href="@{/staff/tracking-records}">追跡</a>
                 </li>
+                <li class="nav-item"
+                    th:if="${currentActor != null and currentActor.hasRole(T(com.example.cargotracker.shared.domain.Role).SYSTEM_ADMIN)}">
+                    <a class="nav-link" th:classappend="${active == 'users'} ? 'fw-bold'"
+                       th:attr="aria-current=${active == 'users'} ? 'page' : null"
+                       th:href="@{/staff/users}">利用者</a>
+                </li>
             </ul>
         </nav>
         <div class="col app-main">

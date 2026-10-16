@@ -216,6 +216,9 @@ public class SecurityConfiguration {
                         // 追跡の画面は追跡管理者だけ（Bolt 26 計画の確認ポイント 4。カスタマーサポートの照会は W8）
                         .requestMatchers("/staff/tracking-records/**")
                         .hasRole(Role.TRACKING_MANAGER.name())
+                        // 利用者の管理（S-20）はシステム管理者だけ（Bolt 34。/staff/** より先に書く）
+                        .requestMatchers("/staff/users/**")
+                        .hasRole(Role.SYSTEM_ADMIN.name())
                         .requestMatchers("/staff/**")
                         .hasRole(Role.SALES.name())
                         .anyRequest()
