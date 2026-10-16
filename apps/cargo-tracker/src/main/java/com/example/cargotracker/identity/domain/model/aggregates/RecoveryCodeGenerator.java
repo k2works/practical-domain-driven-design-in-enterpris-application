@@ -1,5 +1,6 @@
 package com.example.cargotracker.identity.domain.model.aggregates;
 
+import com.example.cargotracker.identity.domain.model.valueobjects.NormalizedRecoveryCode;
 import java.util.List;
 
 /**
@@ -8,6 +9,6 @@ import java.util.List;
 @FunctionalInterface
 public interface RecoveryCodeGenerator {
 
-    /** {@value RecoveryCode#CODES_PER_USER} 個の、重複のない回復コードの平文。 */
-    List<String> generate();
+    /** {@value RecoveryCode#CODES_PER_USER} 個の、重複のない回復コードの平文（Bolt 33f から値。形は値が確かめる）。 */
+    List<NormalizedRecoveryCode> generate();
 }

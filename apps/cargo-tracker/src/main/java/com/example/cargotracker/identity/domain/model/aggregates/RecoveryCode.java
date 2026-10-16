@@ -59,15 +59,16 @@ public final class RecoveryCode {
 
     /**
      * 平文の回復コードの組（{@value #CODES_PER_USER} 個）を発行し、その利用者の組であることを確かめる（IA-INV-11、SEC-09）。
-     * 初回の登録と認証アプリの再登録が使う（Bolt 33d で 2 つのサービスの重複を寄せた）。平文は呼び出し側が画面に一度だけ示す。
+     * 初回の登録と認証アプリの再登録が使う（Bolt 33d で 2 つのサービスの重複を寄せた。Bolt 33f から値で受ける）。平文は呼び出し側が画面に
+     * 一度だけ示す。
      */
     public static List<RecoveryCode> issueSet(
-            UserId userId, List<String> plainCodes, RecoveryCodeHasher hasher, UtcInstant issuedAt) {
+            UserId userId, List<NormalizedRecoveryCode> plainCodes, RecoveryCodeHasher hasher, UtcInstant issuedAt) {
         Objects.requireNonNull(plainCodes, "plainCodes");
         return requireIssuedSet(
                 userId,
                 plainCodes.stream()
-                        .map(plain -> issue(userId, plain, hasher, issuedAt))
+                        .map(plain -> issue(userId, plain.value(), hasher, issuedAt))
                         .toList());
     }
 

@@ -18,6 +18,7 @@ import com.example.cargotracker.identity.domain.model.valueobjects.AuditAction;
 import com.example.cargotracker.identity.domain.model.valueobjects.EmailAddress;
 import com.example.cargotracker.identity.domain.model.valueobjects.EncryptedSecret;
 import com.example.cargotracker.identity.domain.model.valueobjects.EnrollingUser;
+import com.example.cargotracker.identity.domain.model.valueobjects.NormalizedRecoveryCode;
 import com.example.cargotracker.identity.domain.model.valueobjects.TotpProvisioning;
 import com.example.cargotracker.shared.domain.CompanyId;
 import com.example.cargotracker.shared.domain.UserId;
@@ -90,6 +91,10 @@ class TotpEnrollmentServiceTest {
             .mapToObj(i -> String.format("aaaa-%04d", i))
             .toList();
 
+    /** 生成器が返す値（Bolt 33f から値）。 */
+    private static final List<NormalizedRecoveryCode> GENERATED =
+            RECOVERY_CODES.stream().map(NormalizedRecoveryCode::new).toList();
+
     private final InMemoryTotpCredentialRepository credentials = new InMemoryTotpCredentialRepository();
     private final InMemoryRecoveryCodeRepository recoveryCodes = new InMemoryRecoveryCodeRepository();
     private final List<AuditRecord> audit = new ArrayList<>();
@@ -105,7 +110,7 @@ class TotpEnrollmentServiceTest {
         }
     };
     private final FakeIssuer issuer = new FakeIssuer();
-    private final RecoveryCodeGenerator recoveryCodeGenerator = () -> RECOVERY_CODES;
+    private final RecoveryCodeGenerator recoveryCodeGenerator = () -> GENERATED;
     /** トランザクションを持たない単体テストのための、何もしないトランザクションマネージャー。 */
     private static final TransactionTemplate NO_TRANSACTION =
             new TransactionTemplate(new AbstractPlatformTransactionManager() {

@@ -19,6 +19,7 @@ import com.example.cargotracker.identity.domain.model.aggregates.UserSessionRevo
 import com.example.cargotracker.identity.domain.model.rules.SessionPolicy;
 import com.example.cargotracker.identity.domain.model.valueobjects.EncryptedSecret;
 import com.example.cargotracker.identity.domain.model.valueobjects.EnrollingUser;
+import com.example.cargotracker.identity.domain.model.valueobjects.NormalizedRecoveryCode;
 import com.example.cargotracker.identity.domain.model.valueobjects.SessionId;
 import com.example.cargotracker.identity.domain.model.valueobjects.TotpMatch;
 import com.example.cargotracker.shared.domain.UserId;
@@ -155,7 +156,7 @@ public class TotpReEnrollmentService {
             SessionId currentSessionId) {
         UserId owner = user.userId();
         // 回復コードの生成とハッシュ（bcrypt 10 回）は書き込みでないので、資格の行ロックを取る前に済ませる（登録と同じ）
-        List<String> plainCodes = recoveryCodeGenerator.generate();
+        List<NormalizedRecoveryCode> plainCodes = recoveryCodeGenerator.generate();
         List<RecoveryCode> issued = RecoveryCode.issueSet(owner, plainCodes, hasher, now);
         Boolean replaced = transactionTemplate.execute(status -> {
             // 資格の置き換えを先に行い、同時の再登録では回復コードを置き換える前に後の再登録を止める
@@ -171,7 +172,9 @@ public class TotpReEnrollmentService {
             return new ReEnrollmentResult.Superseded();
         }
         revokeOthers(user, currentSessionId);
-        return new ReEnrollmentResult.ReEnrolled(plainCodes);
+        // 画面に平文を一度だけ示す結果は文字列のまま（値の toString は伏せるため。Bolt 33f の開始準備の決定 2）
+        return new ReEnrollmentResult.ReEnrolled(
+                plainCodes.stream().map(NormalizedRecoveryCode::value).toList());
     }
 
     private void revokeOthers(EnrollingUser user, SessionId currentSessionId) {

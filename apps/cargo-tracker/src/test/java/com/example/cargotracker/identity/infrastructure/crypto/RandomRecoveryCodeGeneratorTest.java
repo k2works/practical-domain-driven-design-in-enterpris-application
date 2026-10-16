@@ -18,22 +18,21 @@ class RandomRecoveryCodeGeneratorTest {
 
     @Test
     void 回復コードを10個作り形は正規化しても変わらない() {
-        List<String> codes = generator.generate();
+        List<NormalizedRecoveryCode> codes = generator.generate();
 
-        // 形の知識は回復コードの正規化だけに置き、ここに写さない（Bolt 33d）
+        // 形の知識は回復コードの正規化だけに置き、ここに写さない（Bolt 33d）。Bolt 33f から生成器は値を返す
         assertThat(codes)
                 .hasSize(RecoveryCode.CODES_PER_USER)
-                .allSatisfy(code -> assertThat(RecoveryCode.normalize(code))
+                .allSatisfy(code -> assertThat(RecoveryCode.normalize(code.value()))
                         .as("生成した値は正規化しても変わらない")
-                        .map(NormalizedRecoveryCode::value)
                         .contains(code));
     }
 
     @Test
     void 一組の中に同じコードはなく組ごとに違う() {
-        Set<String> seen = new HashSet<>();
+        Set<NormalizedRecoveryCode> seen = new HashSet<>();
         for (int i = 0; i < 50; i++) {
-            List<String> codes = generator.generate();
+            List<NormalizedRecoveryCode> codes = generator.generate();
             assertThat(new HashSet<>(codes)).hasSize(codes.size());
             seen.addAll(codes);
         }

@@ -170,15 +170,15 @@ class RecoveryCodeTest {
 
     @Test
     void 平文の数が10でなければ発行しない() {
-        List<String> nine = plainCodes(RecoveryCode.CODES_PER_USER - 1);
+        List<NormalizedRecoveryCode> nine = plainCodes(RecoveryCode.CODES_PER_USER - 1);
 
         assertThatThrownBy(() -> RecoveryCode.issueSet(USER, nine, HASHER, ISSUED_AT))
                 .isInstanceOf(IllegalArgumentException.class);
     }
 
-    private static List<String> plainCodes(int count) {
+    private static List<NormalizedRecoveryCode> plainCodes(int count) {
         return IntStream.rangeClosed(1, count)
-                .mapToObj(i -> String.format("1a2b-%04d", i))
+                .mapToObj(i -> new NormalizedRecoveryCode(String.format("1a2b-%04d", i)))
                 .toList();
     }
 

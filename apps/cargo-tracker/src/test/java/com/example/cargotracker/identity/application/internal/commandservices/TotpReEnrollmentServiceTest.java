@@ -27,6 +27,7 @@ import com.example.cargotracker.identity.domain.model.valueobjects.AuditAction;
 import com.example.cargotracker.identity.domain.model.valueobjects.CompanyKind;
 import com.example.cargotracker.identity.domain.model.valueobjects.EmailAddress;
 import com.example.cargotracker.identity.domain.model.valueobjects.EncryptedSecret;
+import com.example.cargotracker.identity.domain.model.valueobjects.NormalizedRecoveryCode;
 import com.example.cargotracker.identity.domain.model.valueobjects.SessionId;
 import com.example.cargotracker.identity.domain.model.valueobjects.TotpProvisioning;
 import com.example.cargotracker.identity.domain.model.valueobjects.UserStatus;
@@ -106,6 +107,10 @@ class TotpReEnrollmentServiceTest {
             .mapToObj(i -> String.format("bbbb-%04d", i))
             .toList();
 
+    /** 生成器が返す値（Bolt 33f から値）。 */
+    private static final List<NormalizedRecoveryCode> GENERATED =
+            RECOVERY_CODES.stream().map(NormalizedRecoveryCode::new).toList();
+
     private final Company company = Company.of(new CompanyId(UUID.randomUUID()), "荷主 A", CompanyKind.SHIPPER, true);
     private final User user = User.of(
             new UserId(UUID.randomUUID()),
@@ -148,7 +153,7 @@ class TotpReEnrollmentServiceTest {
             recoveryCodes,
             auditRecords,
             ISSUER,
-            () -> RECOVERY_CODES,
+            () -> GENERATED,
             HASHER,
             GENERATOR,
             sessions,

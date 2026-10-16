@@ -17,6 +17,7 @@ import com.example.cargotracker.identity.domain.model.aggregates.UserRepository;
 import com.example.cargotracker.identity.domain.model.valueobjects.EmailAddress;
 import com.example.cargotracker.identity.domain.model.valueobjects.EncryptedSecret;
 import com.example.cargotracker.identity.domain.model.valueobjects.EnrollingUser;
+import com.example.cargotracker.identity.domain.model.valueobjects.NormalizedRecoveryCode;
 import com.example.cargotracker.identity.domain.model.valueobjects.SessionId;
 import com.example.cargotracker.shared.domain.CompanyId;
 import com.example.cargotracker.shared.domain.UserId;
@@ -151,7 +152,7 @@ class TotpReEnrollmentServiceIntegrationTest {
         EncryptedSecret second = issuer.issue(before.user());
         TotpCredential read = credentials.findByUserId(before.user()).orElseThrow();
 
-        List<String> firstCodes = recoveryCodeGenerator.generate();
+        List<NormalizedRecoveryCode> firstCodes = recoveryCodeGenerator.generate();
 
         List<Object> results = whileFirstHoldsTheCredential(
                 () -> {
@@ -160,7 +161,7 @@ class TotpReEnrollmentServiceIntegrationTest {
                     recoveryCodes.replaceAll(
                             before.user(),
                             firstCodes.stream()
-                                    .map(plain -> RecoveryCode.issue(before.user(), plain, hasher, now))
+                                    .map(plain -> RecoveryCode.issue(before.user(), plain.value(), hasher, now))
                                     .toList());
                     return replaced;
                 },
@@ -169,7 +170,8 @@ class TotpReEnrollmentServiceIntegrationTest {
         assertThat(results).containsExactly(true, new ReEnrollmentResult.Superseded());
         assertThat(credentials.findByUserId(before.user()).orElseThrow().secret())
                 .isEqualTo(first);
-        assertThat(recovery.verify(before.user(), before.company(), firstCodes.getFirst()))
+        assertThat(recovery.verify(
+                        before.user(), before.company(), firstCodes.getFirst().value()))
                 .as("先の再登録が示した回復コードは、後の再登録で無効にならない")
                 .isEqualTo(RecoveryCodeVerification.ACCEPTED);
     }
@@ -189,7 +191,7 @@ class TotpReEnrollmentServiceIntegrationTest {
                     recoveryCodes.replaceAll(
                             before.user(),
                             recoveryCodeGenerator.generate().stream()
-                                    .map(plain -> RecoveryCode.issue(before.user(), plain, hasher, now))
+                                    .map(plain -> RecoveryCode.issue(before.user(), plain.value(), hasher, now))
                                     .toList());
                     return replaced;
                 },

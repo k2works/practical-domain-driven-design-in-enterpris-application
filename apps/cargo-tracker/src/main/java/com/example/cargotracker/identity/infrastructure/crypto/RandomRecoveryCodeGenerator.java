@@ -21,12 +21,12 @@ public final class RandomRecoveryCodeGenerator implements RecoveryCodeGenerator 
     private final SecureRandom random = new SecureRandom();
 
     @Override
-    public List<String> generate() {
-        Set<String> codes = new LinkedHashSet<>();
+    public List<NormalizedRecoveryCode> generate() {
+        Set<NormalizedRecoveryCode> codes = new LinkedHashSet<>();
         byte[] bytes = new byte[NormalizedRecoveryCode.BYTES];
         while (codes.size() < RecoveryCode.CODES_PER_USER) {
             random.nextBytes(bytes);
-            codes.add(NormalizedRecoveryCode.fromBytes(bytes).value());
+            codes.add(NormalizedRecoveryCode.fromBytes(bytes));
         }
         return new ArrayList<>(codes);
     }
