@@ -3,7 +3,7 @@ type: Plan
 title: "Bolt 33f 計画 - 期間の表示と回復コードの型と session の URL の整理（振る舞いの変わらない直し）"
 description: "W5 の 21 本目の Bolt の計画。期限の時刻を SessionPolicy.deadline にまとめ、テンプレートに直書きした「15 分」「8 時間」を SessionPolicy から描き、回復コードの生成のポートと RecoveryCode.issueSet を NormalizedRecoveryCode で受け、SessionKeys から URL 2 つを同じパッケージの別のクラスに分けて ADR-012 を直す。振る舞いと表示は変えない。"
 tags: [plan]
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-16T03:52:39Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-16T04:36:21Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-16T02:54:29Z }
 ---
@@ -53,7 +53,7 @@ verified:
 
 - **`deadline`**: `SessionPolicy.deadline(UtcInstant start, Duration lifetime)` は `new UtcInstant(start.instant().plus(lifetime))` を返す純粋な関数（決定 5）。`isExpired(start, now, lifetime)` は `!now.instant().isBefore(deadline(start, lifetime).instant())` にする（ちょうどの時刻は期限切れのまま）
 - **期間の書式**: `DurationDisplay`（`platform.web`）に汎用の関数（例 `length(Duration)`。「15 分」「8 時間」。半角の空白）を足し、`connection` はそれを使う（決定 6）。出力はテンプレートの今の文字列と一字一句同じ
-- **期間の表示**: 画面と Advice は期間の文字列をモデルに入れる（ハンドラーと Advice に `@ModelAttribute` のメソッドを 1 つずつ足す。A-07・A-08 は各 controller、A-03 は `LoginController`、印の知らせは `RecoveryLoginAdvice`、session の警告は `SessionTimerAdvice`。record `SessionTimer` に足すと組み立てているテストに触るので、別の `@ModelAttribute` にする）。テンプレートは文の途中をタグを出さずに描く（`[[${…}]]` か中身が空の `<th:block th:text>`。`<span>` で包むと、文を `containsString` で探す既存の統合テストが落ちる）。session の警告は属性の値なので `th:data-lifetime-message` のリテラル置換（`|ログインから ${…}になるため、あと {minutes}で…|`）で描く（JavaScript が `{minutes}` を置き換える形は変えない）。テンプレートに静的な「15 分」「8 時間」を残さない（T-136）
+- **期間の表示**: 画面と Advice は期間の文字列をモデルに入れる（ハンドラーと Advice に `@ModelAttribute` のメソッドを 1 つずつ足す。A-07・A-08 は各 controller、印の知らせは `RecoveryLoginAdvice`、session の警告と A-03 は `SessionTimerAdvice`（同じ「8 時間」の値の出どころを 1 つにするため、計画の `LoginController` から実装で改めた）。record `SessionTimer` に足すと組み立てているテストに触るので、別の `@ModelAttribute` にする）。テンプレートは文の途中をタグを出さずに描く（`[[${…}]]` か中身が空の `<th:block th:text>`。`<span>` で包むと、文を `containsString` で探す既存の統合テストが落ちる）。session の警告は属性の値なので `th:data-lifetime-message` のリテラル置換（`|ログインから ${…}になるため、あと {minutes}で…|`）で描く（JavaScript が `{minutes}` を置き換える形は変えない）。テンプレートに静的な「15 分」「8 時間」を残さない（T-136）
 - **期間の文言の見張り**: 移す前に足す。A-07・A-08・A-03 の期間の文言（統合テスト。今はない）、session の警告の `data-lifetime-message` の値（`SessionTimerSecurityIntegrationTest`。今は uiTest だけが守り `check` では守っていない）。印の知らせは既存の `RecoveryCodeLoginSecurityIntegrationTest` が文で守っている。式を外す変異で落ちることを確かめる
 - **回復コードの型**: ポートの実装 `RandomRecoveryCodeGenerator` は `fromBytes` の値をそのまま返す（重複を除く `Set` は record の等しさで動く）。`issueSet` は値の `value()` でハッシュにする。テストの偽物とデータ（`aaaa-`・`bbbb-`・`1a2b-` の形）はそのまま値にできる。テストのラムダの中では値を作らない（T-139）。画面に平文が出ることは、統合テストの正規表現（`TotpEnrollmentSecurityIntegrationTest`・`RecoveryCodeLoginSecurityIntegrationTest`）が守る（uiTest は個数だけを見る）
 - **URL のクラス**: `identity.application.internal.session` に、`SessionKeys` と同じく `final` で `private` のコンストラクターだけを持つ定数のクラスとして置く（record にしない。accessor が「ふるまいを持たない」の見張りに当たるため）。名前は画面の層の `SessionUrlsAdvice` の中の record `SessionUrls` と重ならないもの（例 `SessionPaths`）。層の規則の例外と見張りはパッケージ単位なので、新しいクラスにもかかる（`LayerArchitectureTest`）。ADR-012 の決定 3 に、application 層に置く理由を書く（決定 7）
@@ -104,9 +104,8 @@ TotpEnrollmentService ..> RecoveryCodeGenerator
 TotpReEnrollmentService ..> RecoveryCodeGenerator
 TotpEnrollmentController ..> SessionPolicy : deadline・期間
 TotpReEnrollmentController ..> SessionPolicy : deadline・期間
-LoginController ..> SessionPolicy : A-03 の期間
 RecoveryLoginAdvice ..> SessionPolicy : 印の知らせの期間
-SessionTimerAdvice ..> SessionPolicy : 警告の期間
+SessionTimerAdvice ..> SessionPolicy : 警告と A-03 の期間
 TotpEnrollmentController ..> DurationDisplay : length
 TotpReEnrollmentController ..> SessionPaths
 LoginController ..> SessionPaths
@@ -138,7 +137,7 @@ LoginController ..> SessionPaths
   - ポート・実装・`issueSet`・登録と再登録のサービス（結果は `value()` の文字列）を付け替える。テスト: `TotpEnrollmentServiceTest`・`TotpReEnrollmentServiceTest`・`RecoveryCodeTest`・`RandomRecoveryCodeGeneratorTest`・`TotpReEnrollmentServiceIntegrationTest`（本物の生成器の値を `issue(String)`・`verify(String)` に渡す箇所は `value()`）。画面に平文が出ることは、統合テストの正規表現が守る
   - マニュアル（02 章の 2.1・2.4・2.5・2.7、付録 B）の期間の文言と回復コードの例が、画面と一致することを確かめる
   - 完了の判定: `check` 緑、`uiTest` 緑
-- [ ] **6. SonarQube と開発レビューと終了報告** 【承認ゲート: 終了報告】
+- [x] **6. SonarQube と開発レビューと終了報告** 【承認ゲート: 終了報告】
   - SonarQube（T-116）。開発レビュー（プログラマー・テスター、アーキテクト、テクニカルライター。画面の文言とマニュアルに触るのでテクニカルライターを入れる。セキュリティは省く: 認証の入口（`SessionLifetimeFilter`・`SecurityConfiguration`）と回復コードのハッシュにも触るが、振る舞いと公開の URL の値を変えず、既存のセキュリティの統合テスト（URL の値の固定を含む）が守るため。33c・33d と同じ扱い）
   - `bolt_33f_report.md`。release_plan の W5 の 33f の行、開発の索引
 
@@ -173,15 +172,15 @@ LoginController ..> SessionPaths
 
 ## 完了条件
 
-- [ ] 期限の時刻が `SessionPolicy.deadline` にあり、3 か所と `isExpired` がそれを使う
-- [ ] 期間の書式が `DurationDisplay` の汎用の関数にあり、経路設計の表示は変わらない
-- [ ] テンプレートの期間（6 か所）が `SessionPolicy` から描かれ、テンプレートに静的な「15 分」「8 時間」が残らない。期間の文言と警告の属性の値の統合テストがあり、式を外す変異で落ちることを確かめた。表示は同じ
-- [ ] URL 2 つが `SessionKeys` から別のクラスに分かれ、ADR-012 に application 層に置く理由を書いた
-- [ ] 回復コードの生成のポートと `issueSet` が `NormalizedRecoveryCode` を受け、画面には今のとおり平文が出る（打ち切りで後に送ったら、その旨と行き先を書く）
-- [ ] マニュアルの期間の文言と回復コードの例が、画面と一致することを確かめた
-- [ ] 設計文書（domain_model・architecture_backend・ui_design・ADR-011・ADR-012・test_strategy・release_plan）を更新した
-- [ ] `check` と `uiTest` が緑。push してアプリの CI と MkDocs の配備を確かめた。SonarQube の Quality Gate が PASS、`okf:check` ERROR 0
-- [ ] 開発レビュー、終了報告
+- [x] 期限の時刻が `SessionPolicy.deadline` にあり、3 か所と `isExpired` がそれを使う
+- [x] 期間の書式が `DurationDisplay` の汎用の関数にあり、経路設計の表示は変わらない
+- [x] テンプレートの期間（6 か所）が `SessionPolicy` から描かれ、テンプレートに静的な「15 分」「8 時間」が残らない。期間の文言と警告の属性の値の統合テストがあり、式を外す変異で落ちることを確かめた。表示は同じ
+- [x] URL 2 つが `SessionKeys` から別のクラスに分かれ、ADR-012 に application 層に置く理由を書いた
+- [x] 回復コードの生成のポートと `issueSet` が `NormalizedRecoveryCode` を受け、画面には今のとおり平文が出る（打ち切りで後に送ったら、その旨と行き先を書く）
+- [x] マニュアルの期間の文言と回復コードの例が、画面と一致することを確かめた
+- [x] 設計文書（domain_model・architecture_backend・ui_design・ADR-011・ADR-012・test_strategy・release_plan）を更新した
+- [x] `check` と `uiTest` が緑。push してアプリの CI と MkDocs の配備を確かめた。SonarQube の Quality Gate が PASS、`okf:check` ERROR 0
+- [x] 開発レビュー、終了報告
 
 ## 更新履歴
 
@@ -190,6 +189,8 @@ LoginController ..> SessionPaths
 | 2026-10-16 | 初版作成（承認待ち）。開始準備で 33f の行の 4 項目（約 3〜4 時間）を見積もり、human:kakimomokuri の決定（URL を同じパッケージの別のクラスに分ける、回復コードの結果の型は文字列のまま、期限の時刻は `SessionPolicy.deadline`）を反映した | anthropic/claude-opus-5-5 |
 | 2026-10-16 | 詳細整合性検証（9 件）と横断整合性検証（9 件）の指摘を反映した。タグで包むと既存の統合テストが落ちること、session の警告は属性の値であること、今の守りの事実、Advice とハンドラーの渡し方、`UtcInstant` に `plus` がないこと、付け替える箇所の列挙、設計文書とマニュアル（2.1）の直し先、release_plan の直す箇所、セキュリティを省く理由。human:kakimomokuri の決定（1 本のまま打ち切りで備える、`UtcInstant` は変えない、期間の書式は汎用の関数、URL を application 層に置く理由を ADR-012 に書く）を反映した | anthropic/claude-opus-5-5 |
 | 2026-10-16 | 計画を承認した（`/goal Bolt33f`） | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
+| 2026-10-16 | 開発レビューの後: A-03 の期間を `SessionTimerAdvice` の値で描いたこと（計画の `LoginController` から改めた）を約束と図に反映した。ADR-012 の理由の誤り（定数は層の規則に見えない）を正し、password の再設定の URL も `SessionPaths` に寄せた（human:kakimomokuri が決定） | anthropic/claude-opus-5-5 |
+| 2026-10-16 | ステップ 6 を終え、[終了報告](bolt_33f_report.md)を作った（承認待ち）。打ち切りの条件には当たらず、回復コードの型も 33f で終えた | anthropic/claude-opus-5-5 |
 
 ## 関連ドキュメント
 

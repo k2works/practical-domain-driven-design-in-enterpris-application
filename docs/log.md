@@ -1,6 +1,12 @@
 # Docs Update Log
 
 ## 2026-10-16
+* **Update**: [bolt_33f_report](/development/cargo-tracker/bolt_33f_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_33f_plan](/development/cargo-tracker/bolt_33f_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_frontend](/design/cargo-tracker/architecture_frontend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [012-authentication-principal-and-session](/adr/cargo-tracker/012-authentication-principal-and-session.md) を更新（anthropic/claude-opus-5-5）
 * **Update**: [bolt_33f_plan](/development/cargo-tracker/bolt_33f_plan.md) を更新（anthropic/claude-opus-5-5）
 * **Update**: [bolt_33f_plan](/development/cargo-tracker/bolt_33f_plan.md) を更新（anthropic/claude-opus-5-5）
 * **Update**: [bolt_33f_plan](/development/cargo-tracker/bolt_33f_plan.md) を更新（anthropic/claude-opus-5-5）
