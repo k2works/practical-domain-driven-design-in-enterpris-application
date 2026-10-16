@@ -10897,7 +10897,7 @@
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>2. 期限の時刻と期間の書式</strong></li>
 <li><code>SessionPolicyTest</code> に <code>deadline</code> を足し、<code>isExpired</code> を <code>deadline</code> で書き直し、3 か所を付け替える。既存のテスト（<code>SessionLifetimeFilterTest</code> の残りの秒数、<code>SessionTimerSecurityIntegrationTest</code>、A-07・A-08 の期限の表示）を緑のまま</li>
 <li><code>DurationDisplay</code> の汎用の関数とテストを足し、<code>connection</code> をそれで書き直す（経路設計の表示のテストが緑のまま）</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>3. テンプレートの期間を <code>SessionPolicy</code> から描く</strong></li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>3. テンプレートの期間を <code>SessionPolicy</code> から描く</strong></li>
 <li><code>15 分</code>・<code>8 時間</code> で全体を grep する（T-132）。先に A-07・A-08・A-03 の期間の文言の統合テストと、session の警告の <code>data-lifetime-message</code> の値の統合テストを足す（緑）</li>
 <li>画面と Advice が <code>@ModelAttribute</code> で期間の文字列を渡し、テンプレートの 6 か所を描く（文の途中はタグを出さない形、警告は <code>th:data-lifetime-message</code>。静的な値を残さない）。変異: 式を外すと落ちる（T-136）。uiTest の session の警告と、印の知らせの統合テストが緑のまま</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>4. URL を別のクラスに</strong></li>
