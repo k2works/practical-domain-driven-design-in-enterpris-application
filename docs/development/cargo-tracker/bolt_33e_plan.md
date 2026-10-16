@@ -3,7 +3,7 @@ type: Plan
 title: "Bolt 33e 計画 - 認証の入口と session の型と期限の整理（振る舞いの変わらない直し）"
 description: "W5 の 20 本目の Bolt の計画。認証の結果のトークンに経路（TOTP か回復コードか）を持たせて request の属性での受け渡しをやめ、revokeOthers が残す session の ID を値オブジェクトにし、「ちょうどの時刻は期限切れ」の判定を SessionPolicy に寄せ、画面だけが使う属性の名前 2 つの値をテストで固定する。振る舞いは変えない。テンプレートの期間の数値、回復コードの生成のポートの型、ADR-012 の URL の記述と SessionKeys の命名は 33f に分ける。"
 tags: [plan]
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-16T01:13:49Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-16T01:41:36Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-16T00:32:32Z }
 ---
@@ -139,7 +139,7 @@ package "identity" {
 - [x] **5. 画面だけが使う属性の名前の値**
   - 2 つの定数の値を固定するテストを足す。変異: 値を変えると落ちる
   - 完了の判定: `check` 緑、`uiTest` 緑
-- [ ] **6. SonarQube と開発レビューと終了報告** 【承認ゲート: 終了報告】
+- [x] **6. SonarQube と開発レビューと終了報告** 【承認ゲート: 終了報告】
   - SonarQube（T-116）。開発レビュー（プログラマー・テスター、アーキテクト、セキュリティ）
   - `bolt_33e_report.md`。release_plan の W5 の 33e の行、開発の索引
 
@@ -177,13 +177,13 @@ package "identity" {
 
 ## 完了条件
 
-- [ ] 「ちょうどの時刻は期限切れ」の判定が `SessionPolicy` の 1 か所にあり、4 か所がそれを使う。A-08 の画面の期限の分岐にテストがある。変異で落ちることを確かめた
-- [ ] `revokeOthers` が `SessionId` を受け、今の session を残す。変異で落ちることを確かめた
-- [ ] 回復コードの経路を認証の結果のトークンが `transient` の欄で持ち、request の属性での受け渡しがない。変異（2 つ）で落ちることを確かめた
-- [ ] 画面だけが使う属性の名前 2 つの値をテストで固定した
-- [ ] 設計文書（domain_model・architecture_backend・ADR-011・ADR-012・test_strategy・release_plan）を更新し、33f の行を足した。33c・33d の報告に行き先を書き添えた
-- [ ] `check` と `uiTest` が緑。push してアプリの CI と MkDocs の配備を確かめた。SonarQube の Quality Gate が PASS、`okf:check` ERROR 0
-- [ ] 開発レビュー、終了報告
+- [x] 「ちょうどの時刻は期限切れ」の判定が `SessionPolicy` の 1 か所にあり、4 か所がそれを使う。A-08 の画面の期限の分岐にテストがある。変異で落ちることを確かめた
+- [x] `revokeOthers` が `SessionId` を受け、今の session を残す。変異で落ちることを確かめた
+- [x] 回復コードの経路を認証の結果のトークンが `transient` の欄で持ち、request の属性での受け渡しがない。変異（2 つ）で落ちることを確かめた
+- [x] 画面だけが使う属性の名前 2 つの値をテストで固定した
+- [x] 設計文書（domain_model・architecture_backend・ADR-011・ADR-012・test_strategy・release_plan）を更新し、33f の行を足した。33c・33d の報告に行き先を書き添えた
+- [x] `check` と `uiTest` が緑。push してアプリの CI と MkDocs の配備を確かめた。SonarQube の Quality Gate が PASS、`okf:check` ERROR 0
+- [x] 開発レビュー、終了報告
 
 ## 更新履歴
 
@@ -192,6 +192,7 @@ package "identity" {
 | 2026-10-16 | 初版作成（承認待ち）。開始準備で、33e の行の 7 項目（約 5.75 時間）を見積もり、human:kakimomokuri の決定（33e と 33f に分ける、期限の判定は `SessionPolicy` に足す、回復コードの生成のポートの型は 33f）を反映した | anthropic/claude-opus-5-5 |
 | 2026-10-16 | 詳細整合性検証（9 件）と横断整合性検証（9 件）の指摘を反映した。直列化の互換（ローリング配備で古い版が読めない）、A-08 の画面の期限の分岐にテストがない、`SessionId` の比較の取り違え、付け替えるテストの列挙、`Builder` の変異、設計文書と release_plan の行、時間の食い違い。human:kakimomokuri の決定（経路は `transient`、A-08 の分岐は統合テストを足してから、`SessionKeys` の命名は 33f、33f の進め方）を反映した | anthropic/claude-opus-5-5 |
 | 2026-10-16 | 計画を承認した（`/goal Bolt33e`） | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
+| 2026-10-16 | ステップ 6 を終え、[終了報告](bolt_33e_report.md)を作った（承認待ち）。SpotBugs の抑止を 1 つ足した（終了報告の議題 2）。開発レビューで `transient` を守るテスト `TotpAuthenticationTokenTest` を足した | anthropic/claude-opus-5-5 |
 
 ## 関連ドキュメント
 
