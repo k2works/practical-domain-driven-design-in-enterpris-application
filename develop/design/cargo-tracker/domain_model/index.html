@@ -11700,7 +11700,7 @@
 <tr>
 <td style="text-align: left;">利用者</td>
 <td style="text-align: left;">User</td>
-<td style="text-align: left;">事前登録され、固定役割を持つ人（BR-14、BR-15）</td>
+<td style="text-align: left;">事前登録され、固定役割を持つ人（BR-14、BR-15）。Bolt 34 から版（<code>app_user.version</code>）を持ち、役割の変更の判定（<code>roleChangeRejection</code>）と役割を変えた新しい利用者（<code>changeRoles</code>）を返す</td>
 <td style="text-align: left;">アクセス・監査</td>
 </tr>
 <tr>
@@ -11898,7 +11898,7 @@
 <tr>
 <td style="text-align: left;">監査の操作</td>
 <td style="text-align: left;">AuditAction</td>
-<td style="text-align: left;">監査記録の操作。password の段の成功（<code>PASSWORD_VERIFIED</code>）、ログインの成功（<code>LOGIN_SUCCEEDED</code>。2 つの要素がそろった）、ログインの失敗（<code>LOGIN_FAILED</code>）、TOTP の登録（<code>TOTP_ENROLLED</code>。Bolt 31b）、回復コードの使用（<code>RECOVERY_CODE_USED</code>。Bolt 31c）、ロック（<code>ACCOUNT_LOCKED</code>。その失敗でロックしたときだけ。Bolt 32）、session の取消し（<code>SESSION_REVOKED</code>。request ごとの確かめで利用停止・無効な企業・利用者なしを見つけて session を捨てた。Bolt 32c）、ログアウト（<code>LOGOUT</code>）、password の再設定の依頼（<code>PASSWORD_RESET_REQUESTED</code>。Bolt 33）、password の再設定の完了（<code>PASSWORD_RESET_COMPLETED</code>。成功だけ。Bolt 33a）、TOTP の再登録（<code>TOTP_RE_ENROLLED</code>。成功だけ。Bolt 33b）</td>
+<td style="text-align: left;">監査記録の操作。password の段の成功（<code>PASSWORD_VERIFIED</code>）、ログインの成功（<code>LOGIN_SUCCEEDED</code>。2 つの要素がそろった）、ログインの失敗（<code>LOGIN_FAILED</code>）、TOTP の登録（<code>TOTP_ENROLLED</code>。Bolt 31b）、回復コードの使用（<code>RECOVERY_CODE_USED</code>。Bolt 31c）、ロック（<code>ACCOUNT_LOCKED</code>。その失敗でロックしたときだけ。Bolt 32）、session の取消し（<code>SESSION_REVOKED</code>。request ごとの確かめで利用停止・無効な企業・利用者なしを見つけて session を捨てた。Bolt 32c）、ログアウト（<code>LOGOUT</code>）、password の再設定の依頼（<code>PASSWORD_RESET_REQUESTED</code>。Bolt 33）、password の再設定の完了（<code>PASSWORD_RESET_COMPLETED</code>。成功だけ。Bolt 33a）、TOTP の再登録（<code>TOTP_RE_ENROLLED</code>。成功だけ。Bolt 33b）。Bolt 34 で役割の変更（<code>ROLES_CHANGED</code>。対象・版・変更前後を持つ）を足した</td>
 <td style="text-align: left;">アクセス・監査</td>
 </tr>
 <tr>
@@ -11941,6 +11941,30 @@
 <td style="text-align: left;">再設定のトークンのハッシュ</td>
 <td style="text-align: left;">PasswordResetTokenHasher</td>
 <td style="text-align: left;">再設定のトークンの SHA-256 のハッシュ（16 進 64 文字）を作るポート。表にはこのハッシュだけを置く。実装は <code>identity.infrastructure.crypto</code>（Bolt 33）</td>
+<td style="text-align: left;">アクセス・監査</td>
+</tr>
+<tr>
+<td style="text-align: left;">役割の割り当ての規則</td>
+<td style="text-align: left;">RoleAssignmentPolicy</td>
+<td style="text-align: left;">役割の組合せのドメインルール（Bolt 34。IA-INV-01・IA-INV-13）。職務分離で競合する役割（システム管理者・監査担当者と、業務データを変更できる 6 つの役割）と、企業の種類に付けられない役割（荷主担当者は荷主企業、ほかの 7 役割は A 社、荷受人の企業には付けない）を返す。システム管理者と監査担当者の併用は拒まない</td>
+<td style="text-align: left;">アクセス・監査</td>
+</tr>
+<tr>
+<td style="text-align: left;">役割の変更の拒否</td>
+<td style="text-align: left;">RoleChangeRejection</td>
+<td style="text-align: left;">役割の変更を受け付けない理由（<code>RoleChangeRejectionReason</code>: <code>SELF_CHANGE</code>・<code>NO_ROLES</code>・<code>NO_CHANGE</code>・<code>UNFIT_FOR_COMPANY</code>・<code>CONFLICTING_ROLES</code>。判定はこの順）と、示す役割の集合（Bolt 34）</td>
+<td style="text-align: left;">アクセス・監査</td>
+</tr>
+<tr>
+<td style="text-align: left;">役割の変更のサービス</td>
+<td style="text-align: left;">UserRoleChangeService</td>
+<td style="text-align: left;">システム管理者が利用者の役割を変えるアプリケーションのサービス（<code>commandservices</code>。Bolt 34）。判定の規則を通し、<code>app_user.version</code> を条件にした更新・<code>user_role</code> の差分・監査記録 <code>ROLES_CHANGED</code> を 1 つのトランザクションで書く。結果は <code>RoleChangeResult</code>（<code>Changed</code>・<code>Rejected</code>・<code>Stale</code>・<code>NotFound</code>）。拒否と古い版は監査に書かない</td>
+<td style="text-align: left;">アクセス・監査</td>
+</tr>
+<tr>
+<td style="text-align: left;">利用者の管理の照会</td>
+<td style="text-align: left;">UserAdministrationQueryService</td>
+<td style="text-align: left;">S-20 の一覧と詳細を読むアプリケーションのサービス（<code>queryservices</code>。Bolt 34）。射影 <code>UserSummary</code>（一覧の行）・<code>UserDetail</code>（詳細。企業の種類と版を含む）で受け、<code>password_hash</code> を読まない</td>
 <td style="text-align: left;">アクセス・監査</td>
 </tr>
 <tr>
@@ -12850,6 +12874,7 @@
 <p>初回の TOTP の登録（Bolt 31b。ADR-011 の決定 6）では、秘密の発行は <code>TotpSecretIssuer</code>、回復コードの生成は <code>RecoveryCodeGenerator</code> のポートの裏に置き、実装は <code>identity.infrastructure</code> に置く。認証の要素のポート（生成・発行・ハッシュ・回復コードの生成）は、前例にそろえて <code>identity.domain.model.aggregates</code> に置く。ZXing をインフラ層に閉じるため、表示の値はポートが値 <code>TotpProvisioning</code>（<code>identity.domain.model.valueobjects</code>）にして返す。登録はアプリケーションのサービス <code>TotpEnrollmentService</code>（<code>commandservices</code>）が行う。<code>begin</code> は登録済みなら拒み、登録の途中の暗号文を同じ利用者の AAD で復号できる限り使い続け、なければ新しく発行する。<code>complete</code> は暗号文と入れたコードを前後 1 つの刻みで照合し、1 つのトランザクションで TOTP の資格を追加し（最後に使った刻みは 0。登録のコードは A-02 でもう一度使える）、回復コード 10 個をハッシュで置き換え、監査記録を書き、回復コードの平文を返す。同時の登録は TOTP の資格の主キーで 1 つに絞り、主キーの違反はリポジトリの実装で <code>DuplicateTotpEnrollmentException</code> に写す。登録は TOTP の要素を与えず、ログインは A-02 で終える。登録済みかの問い合わせは <code>TotpEnrollmentQueryService</code>（<code>queryservices</code>）に置き、画面の層だけが呼ぶ（<code>TotpVerificationService</code> から移した）。利用者の登録の状態は TOTP の資格の有無で決まり（未登録 → 登録済み）、状態の列は持たない。登録の途中は session の属性（暗号文の文字列と登録を始めた時刻）で、ドメインモデルには置かない。</p>
 <p>認証された利用者を表す値 <code>AuthenticatedActor</code>（利用者 ID・企業 ID・役割（1 つ以上）・表示名・企業名）と役割 <code>Role</code>（BR-15 の 8 役割）は、共有カーネル（<code>shared</code>）に置く。ほかのコンテキストはこの型だけを受け取り、Spring Security の型にも <code>identity</code> にも依存しない。<code>AuthenticatedActor</code> は 2 つの要素（password と TOTP または回復コード）がそろった主体だけを表し、引数の解決は <code>FACTOR_TOTP</code> がない主体に渡さない。password の段だけで開く画面（A-02・A-07）は、identity の中だけの値 <code>PasswordVerifiedUser</code>（<code>identity.domain.model.valueobjects</code>。利用者 ID・企業 ID・メールアドレス）を受ける（ADR-012 の見直しの 4、Bolt 31c）。<code>identity</code> に置くと、<code>quotation → identity → quotation::events</code> の依存が循環するため（ADR-011 の決定 4、<a href="../../../adr/cargo-tracker/012-authentication-principal-and-session/">ADR-012</a>、Bolt 14 の確認ポイント 2）。利用者の集約は「認証できない理由」（利用停止・企業が無効）を返し、Spring Security の利用者の読み出しがその理由を認証の失敗に変える（IA-INV-09）。監査記録の操作には、ログインの成功（<code>LOGIN_SUCCEEDED</code>）・失敗（<code>LOGIN_FAILED</code>）・ログアウト（<code>LOGOUT</code>）を Bolt 14 で足す。Bolt 31 で password の段の成功（<code>PASSWORD_VERIFIED</code>）を足し、<code>LOGIN_SUCCEEDED</code> は 2 つの要素（password と TOTP）がそろったときにする。TOTP の失敗は利用者と理由（<code>INVALID_TOTP</code>・<code>TOTP_REUSED</code>）で <code>LOGIN_FAILED</code> に記録する（ADR-012 の見直しの 1）。Bolt 31b で初回の TOTP の登録（<code>TOTP_ENROLLED</code>。主体の利用者 ID と企業 ID）を足す（先取りの登録を見つける手がかり。ADR-011 の決定 6）。Bolt 31c で回復コードの使用（<code>RECOVERY_CODE_USED</code>。主体の利用者 ID と企業 ID）を足し、回復コードでログインを終えたときは <code>RECOVERY_CODE_USED</code> と <code>LOGIN_SUCCEEDED</code> の 2 行を書く。回復コードの拒否は理由 <code>INVALID_RECOVERY_CODE</code> で <code>LOGIN_FAILED</code> に記録する（ADR-011 の決定 7）。Bolt 31d で、TOTP を登録していない利用者の TOTP の送信の理由を <code>INVALID_TOTP</code> から <code>TOTP_NOT_ENROLLED</code> に分ける（利用者への応答は変えない。ADR-011 の決定 8）。Bolt 32 で、ロック（<code>ACCOUNT_LOCKED</code>。結果は成功、理由なし、主体の利用者 ID と企業 ID）と、ロック中の試行の理由 <code>LOCKED</code>、利用者の読み出しの DB の誤りの理由 <code>SERVICE_ERROR</code> を足す（どちらも数えない。ADR-011 の決定 9）。Bolt 32c で、request ごとの確かめで session を捨てたこと（<code>SESSION_REVOKED</code>。結果は失敗、理由 <code>SUSPENDED</code>・<code>COMPANY_INACTIVE</code>・<code>UNKNOWN_USER</code>、session の主体の利用者 ID と企業 ID）を足す（ADR-012 の見直しの 3）。2 つ目の要素の権限 <code>FACTOR_TOTP</code> とその認証の結果 <code>TotpAuthenticationToken</code> は「TOTP または回復コードで与える 2 つ目の要素」を表し、session の直列化の互換のため名前を変えない（用語集）。Bolt 33 で、password の再設定の依頼（<code>PASSWORD_RESET_REQUESTED</code>）を足す。有効な利用者は <code>SUCCESS</code>（理由なし）、止められた利用者は <code>FAILURE</code>・<code>SUSPENDED</code>、所属企業の無効は <code>FAILURE</code>・<code>COMPANY_INACTIVE</code>、登録なしは <code>FAILURE</code>・<code>UNKNOWN_USER</code>（操作者を空にし、メールアドレスを残さない）。Bolt 33a で、password の再設定の完了（<code>PASSWORD_RESET_COMPLETED</code>。<code>SUCCESS</code>、理由なし、操作者に利用者と企業を入れる。<code>AuditRecord.passwordResetCompleted(user, company, at)</code>）を足す。成功だけを記録し、方針の誤り・無効なリンク・利用停止と企業の無効での拒否は記録しない（依頼は Bolt 33 で記録済み）。Bolt 33b で、TOTP の再登録（<code>TOTP_RE_ENROLLED</code>。<code>SUCCESS</code>、理由なし、操作者に利用者と企業を入れる。<code>AuditRecord.totpReEnrolled(user, company, at)</code>）を足す。成功だけを記録し、コードの誤り・期限切れ・秘密が読めない・利用できないときは記録しない（失敗の試行の監査は #49 と同じ扱い）。</p>
 <p>password の再設定（US-18 AC8。Bolt 33 は依頼から送信まで、新しい password の設定は Bolt 33a。<a href="../../../adr/cargo-tracker/017-notification-module-and-mail/">ADR-017</a>）では、再設定のトークン <code>PasswordResetToken</code>（<code>identity.domain.model.aggregates</code>）を利用者とは別の集約にする。トークンの生成は <code>PasswordResetTokenGenerator</code>（32 バイトの乱数を URL 安全な Base64）、ハッシュは <code>PasswordResetTokenHasher</code>（SHA-256）のポートの裏に置き、実装は <code>identity.infrastructure.crypto</code> に置く（回復コードの生成とハッシュと同じ分け方）。依頼のサービス <code>PasswordResetRequestService</code>（<code>commandservices</code>）は、入力を <code>EmailAddress</code> で正規化して利用者を探し、<code>User#authenticationRejection(company)</code> と <code>UserStandingRepository</code> で有効かを判定し、監査記録を同じトランザクションで書く（IA-INV-08）。有効なら依頼の ID を採番してドメインのイベント <code>PasswordResetRequested</code>（<code>identity.domain.events</code>。依頼の ID・利用者の ID・依頼の時刻だけ）を出す。応答は登録の有無にかかわらず同じで、トークンの発行も送信も待たない。トークンの発行と送信は、イベントのハンドラー <code>PasswordResetMailEventHandler</code>（<code>eventhandlers</code>、<code>@ApplicationModuleListener</code>。依頼のコミットの後に別のスレッドと別のトランザクションで動く。ADR-003）が行う。ハンドラーは利用者の行をロックして同時の発行を直列にし、同じ依頼の ID のトークンがあれば何もしない（再配信で 2 通送らない）。前の発行から 1 分以内なら発行も送信もしない（繰り返し）。そうでなければ前の未使用のトークンを無効にし、トークンを発行してハッシュを保存し、設定の公開の base URL（<code>cargotracker.public-base-url</code>。Host ヘッダーから組み立てない）からリンクを組み立て、ACL <code>NotificationPasswordResetMails</code> で通知の公開 API に送る。送信が <code>Failed</code> でも例外にせず完了にする（再配信で新しいトークンを作らない。利用者が依頼し直す）。平文のトークンと URL はハンドラーのメソッドの中の変数と送信の要求だけにあり、イベントの発行記録・ログ・表に残らない。繰り返しで送らなかったことは監査に書かず、送信の記録がないことで分かる。</p>
+<p>利用者の役割の管理（US-16 の一部。Bolt 34）では、役割の組合せの規則を <code>identity.domain.model.rules</code> の <code>RoleAssignmentPolicy</code> に置き、利用者の集約が判定（自分の変更 → 役割なし → 変更なし → 企業の種類 → 職務分離の順）を返す。変更履歴は別の表を作らず、監査記録 <code>ROLES_CHANGED</code> の対象（<code>USER</code>・利用者 ID・更新した後の版）と変更前後（役割の名前を <code>Role</code> の宣言の順にカンマでつないだ文字列）で代える（<code>user_role</code> は今の値だけを持つ。2026-10-16、human:kakimomokuri）。同時の更新は <code>app_user.version</code> を条件にした更新の件数で判定し、ドメインでは判定しない。管理範囲（<code>user_assignment</code> の <code>COMPANY</code>）と利用停止は Bolt 34b で足す。</p>
 <p>新しい password の設定（Bolt 33a。2026-10-15 の開始準備の決定 1・2）は、アプリケーションのサービス <code>PasswordResetCompletionService</code>（<code>commandservices</code>）が受ける。画面の層はリポジトリに依存しないので、リンクを開く処理（<code>open</code>。トークンをハッシュにして探し、使えればトークンの ID を返す）と A-06 の GET（<code>isUsable(tokenId)</code>）もこのサービスを通す。設定（<code>complete(tokenId, newPassword)</code>）の結果は、完了・方針の誤り（種類）・無効のいずれかで、1 つのトランザクションで次の順に行う。</p>
 <ol>
 <li>password の方針 <code>PasswordPolicy</code>（<code>identity.domain.model.rules</code>）で確かめる。よく使われる password の一覧（ポート <code>CommonPasswordList</code>）を引くのはサービスで、照合の結果を方針に渡す（方針は純粋に保つ）。誤りならトークンを使わずに誤りの種類（<code>PasswordPolicyViolation</code>）を返す</li>
@@ -12961,7 +12986,7 @@
 <tbody>
 <tr>
 <td style="text-align: left;">IA-INV-01</td>
-<td style="text-align: left;">役割は BR-15 の 8 つに固定する。システム管理者・監査担当者に業務データを変更できる役割を併せて付与できない</td>
+<td style="text-align: left;">役割は BR-15 の 8 つに固定する。システム管理者・監査担当者に業務データを変更できる役割を併せて付与できない（Bolt 34 で <code>RoleAssignmentPolicy</code> として実現。システム管理者と監査担当者の併用は BR-15 の文言どおり拒まない。システム管理者は自分の役割を変えられない）</td>
 <td style="text-align: left;">BR-15、US-16</td>
 </tr>
 <tr>
@@ -13018,6 +13043,11 @@
 <td style="text-align: left;">IA-INV-12</td>
 <td style="text-align: left;">再設定のトークンは 1 回だけ使え、発行から 30 分で使えなくなる（29 分 59 秒では使える）。同じ利用者に新しく発行すると、前の未使用のトークンは使えなくなる（無効にした時刻を入れて残す）。表にはトークンのハッシュ（SHA-256）だけを置き、平文のトークンとリンクは表・イベントの発行記録・ログに残さない。発行は登録された有効な利用者にだけ行い、同じ依頼の ID では 1 つだけ、同じ利用者の前の発行から 1 分以内なら発行しない。依頼の応答は登録の有無にかかわらず同じにする（Bolt 33）。使うのは A-06 の設定で、使っておらず無効にしておらず期限の前（<code>used_at IS NULL AND invalidated_at IS NULL AND expires_at &gt; now</code>）の行だけを条件付きの更新で使い、件数が 0 なら使えない。ドメインの <code>isUsable(now)</code> と SQL の条件が同じであることを契約テストで確かめる（<code>LockPolicy</code> の前例）。方針の誤りではトークンを使わない。設定を終えると、同じ利用者のほかの未使用のトークンも無効にする。期限切れ・使用済み・無効・存在しないトークンは、どれも同じ応答にする（Bolt 33a）</td>
 <td style="text-align: left;">US-18 AC8、SEC-08</td>
+</tr>
+<tr>
+<td style="text-align: left;">IA-INV-13</td>
+<td style="text-align: left;">役割は利用者の所属企業の種類に合うものだけを付ける。荷主担当者は荷主企業、ほかの 7 役割は A 社。荷受人の企業の利用者には BR-15 の役割を付けない（荷受人は参照許可。US-19）（Bolt 34。UC-16 の主シナリオ 4 の企業間分離）</td>
+<td style="text-align: left;">BR-15、UC-16、US-16</td>
 </tr>
 <tr>
 <td style="text-align: left;">KPI-INV-01</td>

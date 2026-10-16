@@ -11606,7 +11606,7 @@
 <tr>
 <td style="text-align: left;">SEC-12</td>
 <td style="text-align: left;">方式</td>
-<td style="text-align: left;">役割（BR-15 の 8 役割）と担当範囲（企業・案件）と参照許可（BR-07）の組合せ。request ごとに DB の現在値で判断する。Bolt 32c で役割・利用状態・企業の有効性を実現した（認証済みの request ごとに 1 回の SQL で読み、止められた利用者は A-03、取り消した役割の URL は A-04）。担当範囲は US-16（Bolt 34・W6）、参照許可は US-19 で足す</td>
+<td style="text-align: left;">役割（BR-15 の 8 役割）と担当範囲（企業・案件）と参照許可（BR-07）の組合せ。request ごとに DB の現在値で判断する。Bolt 32c で役割・利用状態・企業の有効性を実現した（認証済みの request ごとに 1 回の SQL で読み、止められた利用者は A-03、取り消した役割の URL は A-04）。Bolt 34 でシステム管理者による役割の付与・取消し（職務分離と企業の種類の規則、次の request から反映）を足した。管理範囲（システム管理者の担当企業）と利用停止は Bolt 34b、業務担当者の担当範囲（企業・案件）は US-16 の残り（W6）、参照許可は US-19 で足す</td>
 <td style="text-align: left;">確定（BR-07、BR-15、IA-INV-04）</td>
 </tr>
 <tr>

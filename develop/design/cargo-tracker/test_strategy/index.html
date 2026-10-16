@@ -11819,6 +11819,10 @@ src/test/java/.../ui/                     画面の層のステップ定義（@u
 <td style="text-align: left;">期間の表示と回復コードの型と session の URL の整理</td>
 <td style="text-align: left;">Bolt 33f（振る舞いの変わらない直し）。<code>SessionPolicyTest</code> に <code>deadline</code> を足し、<code>DurationDisplay</code> の汎用の書式のテストを足す。テンプレートの期間を描く前に、A-07・A-08・A-03 の期間の文言の統合テストと、session の警告の <code>data-lifetime-message</code> の値の統合テスト（<code>SessionTimerSecurityIntegrationTest</code>。今は uiTest だけが守る）を足し、式を外す変異で落ちることを確かめる（テンプレートに静的な値を残さない。T-136）。URL の値を固定するテストは <code>SessionPathsTest</code> に移す。回復コードの生成のポートの型を変えても、画面に平文が出ることは統合テストの正規表現が守る（uiTest は個数だけ）</td>
 </tr>
+<tr>
+<td style="text-align: left;">役割の付与と取消しと職務分離</td>
+<td style="text-align: left;">Bolt 34（US-16 の一部）。<code>RoleAssignmentPolicyTest</code>（8 役割の組合せの職務分離と、企業の種類 3 つ × 役割）と <code>User</code> の判定の単体テスト、<code>UserRoleChangeService</code> の単体テストと PostgreSQL の統合テスト（版の条件、<code>user_role</code> の差分と <code>granted_by</code>、監査記録の対象と変更前後、監査の追記の失敗で全体が戻る、同時の 2 つの変更で 1 つだけ通る）、セキュリティの統合テスト（<code>/staff/users/**</code> はシステム管理者だけ、ホームの行き先、確定の POST を画面を経ずに送っても同じ判定で拒む、変えた役割が相手の次の request から効く）、画面の層の受入シナリオ（<code>@US-16</code>。付与・取消し・職務分離・企業の種類・自分の役割・古い版・「戻る」）</td>
+</tr>
 </tbody>
 </table>
 <p>統合テストは Testcontainers の PostgreSQL を使い、H2 で書かない（ADR-007）。H2 で確かめるのはスモークテストだけとする。</p>
