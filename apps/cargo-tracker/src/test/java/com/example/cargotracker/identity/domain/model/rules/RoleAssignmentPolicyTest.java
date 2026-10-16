@@ -59,6 +59,40 @@ class RoleAssignmentPolicyTest {
     }
 
     @Test
+    void 監督の役割を足すか外す変更はその役割を示す() {
+        // 監督の役割（システム管理者・監査担当者）は画面で付け外ししない（Bolt 34 の開発レビューの決定）
+        assertThat(RoleAssignmentPolicy.oversightChanges(Set.of(Role.SALES), Set.of(Role.SALES, Role.AUDITOR)))
+                .containsExactly(Role.AUDITOR);
+        assertThat(RoleAssignmentPolicy.oversightChanges(Set.of(Role.SYSTEM_ADMIN), Set.of(Role.AUDITOR)))
+                .containsExactlyInAnyOrder(Role.SYSTEM_ADMIN, Role.AUDITOR);
+    }
+
+    @Test
+    void 監督の役割を残したままの変更は監督の変更にならない() {
+        assertThat(RoleAssignmentPolicy.oversightChanges(Set.of(Role.AUDITOR), Set.of(Role.AUDITOR, Role.SALES)))
+                .isEmpty();
+    }
+
+    @Test
+    void 業務の役割だけを取り出す() {
+        assertThat(RoleAssignmentPolicy.businessRolesOf(Set.of(Role.SYSTEM_ADMIN, Role.SALES, Role.AUDITOR)))
+                .containsExactly(Role.SALES);
+    }
+
+    @Test
+    void 画面で付けられるのは企業の種類に合う業務の役割() {
+        assertThat(RoleAssignmentPolicy.assignableRoles(CompanyKind.SHIPPER)).containsExactly(Role.SHIPPER);
+        assertThat(RoleAssignmentPolicy.assignableRoles(CompanyKind.OPERATOR))
+                .containsExactlyInAnyOrder(
+                        Role.SALES,
+                        Role.ROUTE_DESIGNER,
+                        Role.TRACKING_MANAGER,
+                        Role.DATA_STEWARD,
+                        Role.CUSTOMER_SUPPORT);
+        assertThat(RoleAssignmentPolicy.assignableRoles(CompanyKind.CONSIGNEE)).isEmpty();
+    }
+
+    @Test
     void 荷主企業には荷主担当者だけを付けられる() {
         assertThat(RoleAssignmentPolicy.unfitRoles(CompanyKind.SHIPPER, EnumSet.allOf(Role.class)))
                 .containsExactlyInAnyOrderElementsOf(EnumSet.complementOf(EnumSet.of(Role.SHIPPER)));

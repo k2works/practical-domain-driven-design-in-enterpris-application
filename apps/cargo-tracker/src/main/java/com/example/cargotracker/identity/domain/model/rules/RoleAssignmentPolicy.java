@@ -13,6 +13,8 @@ import java.util.Set;
  * BR-15 の文言（「業務データを変更できない」）どおり拒まない（Bolt 34 の確認ポイント 6）。
  * 企業間分離: 荷主担当者は荷主企業の利用者だけ、ほかの 7 役割は A 社の利用者だけに付ける。荷受人の企業の利用者には BR-15 の役割を
  * 付けない（荷受人は参照許可。US-19）。
+ * 監督の役割（システム管理者・監査担当者）は画面で付け外ししない（Bolt 34 の開発レビューの決定。2 人目の承認の仕組みができるまでは
+ * 運用の手順で行う）。
  * 共有カーネルの {@link Role} は変えず、BR-15 の規則として identity に置く。
  */
 @DomainRule
@@ -55,6 +57,28 @@ public final class RoleAssignmentPolicy {
         unfit.addAll(roles);
         unfit.removeAll(FIT_ROLES.get(companyKind));
         return Set.copyOf(unfit);
+    }
+
+    /** 今の役割から新しい役割への変更で、足すか外す監督の役割を返す。なければ空。 */
+    public static Set<Role> oversightChanges(Set<Role> current, Set<Role> next) {
+        Set<Role> changed = only(current, OVERSIGHT_ROLES);
+        Set<Role> added = only(next, OVERSIGHT_ROLES);
+        Set<Role> kept = EnumSet.noneOf(Role.class);
+        kept.addAll(changed);
+        kept.retainAll(added);
+        changed.addAll(added);
+        changed.removeAll(kept);
+        return Set.copyOf(changed);
+    }
+
+    /** 業務データを変更できる役割だけを返す（職務分離の文言で示す役割）。 */
+    public static Set<Role> businessRolesOf(Set<Role> roles) {
+        return Set.copyOf(only(roles, BUSINESS_ROLES));
+    }
+
+    /** その企業の種類の利用者に画面で付けられる役割（企業の種類に合う業務の役割）。 */
+    public static Set<Role> assignableRoles(CompanyKind companyKind) {
+        return Set.copyOf(only(FIT_ROLES.get(companyKind), BUSINESS_ROLES));
     }
 
     private static Set<Role> only(Set<Role> roles, Set<Role> kinds) {

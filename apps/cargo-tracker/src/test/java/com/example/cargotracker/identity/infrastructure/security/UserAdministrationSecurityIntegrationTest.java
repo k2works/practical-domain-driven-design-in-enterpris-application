@@ -163,7 +163,8 @@ class UserAdministrationSecurityIntegrationTest extends IdentitySpyIntegrationTe
                 .getResponse()
                 .getContentAsString();
 
-        assertThat(page).contains("業務データを変更できる役割（営業担当者）は併せて付けられません。");
+        // 監督の役割は画面で付け外ししない（Bolt 34 の開発レビューの決定）
+        assertThat(page).contains("システム管理者・監査担当者の役割は、この画面では付けたり外したりできません。");
         assertThat(rolesOf(target)).containsExactly("SALES");
         assertThat(rolesChangedOf(target)).isZero();
     }
@@ -206,7 +207,109 @@ class UserAdministrationSecurityIntegrationTest extends IdentitySpyIntegrationTe
         assertThat(rolesChangedOf(target)).isEqualTo(1);
     }
 
+    @Test
+    void 監査担当者に業務の役割を足すPOSTは職務分離で拒む() throws Exception {
+        Cookie session = login(user(operator, Role.SYSTEM_ADMIN));
+        String target = user(operator, Role.AUDITOR);
+
+        String page = postChange(session, target, "0", Role.AUDITOR.name(), Role.SALES.name())
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        assertThat(page).contains("業務データを変更できる役割（営業担当者）は併せて付けられません。");
+        assertThat(rolesOf(target)).containsExactly("AUDITOR");
+    }
+
+    @Test
+    void 自分の詳細には役割のフォームを出さずPOSTでも自分の役割は変えられない() throws Exception {
+        String admin = user(operator, Role.SYSTEM_ADMIN);
+        Cookie session = login(admin);
+
+        String detail = page(session, USERS_URL + "/" + userIdOf(admin).value());
+        assertThat(detail).contains("自分の役割は変更できません。").doesNotContain("変更内容を確認する");
+        String page = postChange(session, admin, "0", Role.SYSTEM_ADMIN.name(), Role.SALES.name())
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        assertThat(page).contains("自分の役割は変更できません。ほかのシステム管理者に依頼してください。");
+        assertThat(rolesOf(admin)).containsExactly("SYSTEM_ADMIN");
+    }
+
+    @Test
+    void 役割を選ばない送信は役割なしで拒む() throws Exception {
+        Cookie session = login(user(operator, Role.SYSTEM_ADMIN));
+        String target = user(operator, Role.SALES);
+
+        String page = postChange(session, target, "0")
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        assertThat(page).contains("役割を 1 つ以上選んでください。");
+        assertThat(rolesOf(target)).containsExactly("SALES");
+    }
+
+    @Test
+    void 知らない役割の名前と数でない版と版のない送信は400() throws Exception {
+        Cookie session = login(user(operator, Role.SYSTEM_ADMIN));
+        String target = user(operator, Role.SALES);
+        String url = USERS_URL + "/" + userIdOf(target).value() + "/role-changes/confirmation";
+
+        postChange(session, target, "0", "ROOT").andExpect(status().isBadRequest());
+        postChange(session, target, "x", Role.ROUTE_DESIGNER.name()).andExpect(status().isBadRequest());
+        mvc.perform(post(url)
+                        .cookie(session)
+                        .param("roles", Role.ROUTE_DESIGNER.name())
+                        .with(csrf()))
+                .andExpect(status().isBadRequest());
+        mvc.perform(get(url).cookie(session).param("roles", "ROOT").param("version", "0"))
+                .andExpect(status().isBadRequest());
+        assertThat(rolesOf(target)).containsExactly("SALES");
+    }
+
+    @Test
+    void 形の誤った利用者IDは詳細も確認も確定も404() throws Exception {
+        Cookie session = login(user(operator, Role.SYSTEM_ADMIN));
+        String url = USERS_URL + "/not-a-uuid";
+
+        mvc.perform(get(url).cookie(session)).andExpect(status().isNotFound());
+        mvc.perform(get(url + "/role-changes/confirmation").cookie(session).param("version", "0"))
+                .andExpect(status().isNotFound());
+        mvc.perform(post(url + "/role-changes/confirmation")
+                        .cookie(session)
+                        .param("roles", Role.SALES.name())
+                        .param("version", "0")
+                        .with(csrf()))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void 荷受人の企業の利用者の詳細には役割のフォームを出さない() throws Exception {
+        Company consignee = Company.of(new CompanyId(UUID.randomUUID()), "荷受人 A", CompanyKind.CONSIGNEE, true);
+        companies.add(consignee);
+        Cookie session = login(user(operator, Role.SYSTEM_ADMIN));
+        String target = user(consignee, Role.SHIPPER);
+
+        String detail = page(session, USERS_URL + "/" + userIdOf(target).value());
+
+        assertThat(detail).contains("荷受人の企業の利用者には役割を付けません。").doesNotContain("変更内容を確認する");
+    }
+
     // --- helpers ---
+
+    private org.springframework.test.web.servlet.ResultActions postChange(
+            Cookie session, String target, String version, String... roles) throws Exception {
+        return mvc.perform(post(USERS_URL + "/" + userIdOf(target).value() + "/role-changes/confirmation")
+                .cookie(session)
+                .param("roles", roles)
+                .param("version", version)
+                .with(csrf()));
+    }
 
     private String page(Cookie session, String url) throws Exception {
         return mvc.perform(get(url).cookie(session))

@@ -99,8 +99,8 @@ class UserRoleChangeServiceTest {
         givenSales();
 
         assertThat(service.change(admin, sales.id(), 3L, Set.of(Role.SALES, Role.SYSTEM_ADMIN)))
-                .isEqualTo(new RoleChangeResult.Rejected(new RoleChangeRejection(
-                        RoleChangeRejectionReason.CONFLICTING_ROLES, Set.of(Role.SALES, Role.SYSTEM_ADMIN))));
+                .isEqualTo(new RoleChangeResult.Rejected(
+                        new RoleChangeRejection(RoleChangeRejectionReason.OVERSIGHT_ROLE, Set.of(Role.SYSTEM_ADMIN))));
         verify(users, never()).changeRoles(any(), anyLong(), any(), any());
         verify(auditRecords, never()).append(any());
     }

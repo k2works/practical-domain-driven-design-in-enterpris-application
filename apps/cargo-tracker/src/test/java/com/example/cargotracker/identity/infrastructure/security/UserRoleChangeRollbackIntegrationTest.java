@@ -61,5 +61,11 @@ class UserRoleChangeRollbackIntegrationTest extends IdentitySpyIntegrationTestBa
                 .containsExactly("SALES");
         assertThat(jdbc.queryForObject("SELECT version FROM identity.app_user WHERE id = ?", Long.class, sales.value()))
                 .isZero();
+        assertThat(jdbc.queryForObject(
+                        "SELECT count(*) FROM identity.audit_record WHERE target_id = ?",
+                        Integer.class,
+                        sales.value().toString()))
+                .as("監査の行も残らない")
+                .isZero();
     }
 }

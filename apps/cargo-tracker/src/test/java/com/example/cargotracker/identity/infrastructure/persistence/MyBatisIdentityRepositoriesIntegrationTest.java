@@ -16,12 +16,15 @@ import com.example.cargotracker.identity.domain.model.valueobjects.AuditTarget;
 import com.example.cargotracker.identity.domain.model.valueobjects.AuthenticationRejection;
 import com.example.cargotracker.identity.domain.model.valueobjects.CompanyKind;
 import com.example.cargotracker.identity.domain.model.valueobjects.EmailAddress;
+import com.example.cargotracker.identity.domain.model.valueobjects.UserDetail;
 import com.example.cargotracker.identity.domain.model.valueobjects.UserStatus;
+import com.example.cargotracker.identity.domain.model.valueobjects.UserSummary;
 import com.example.cargotracker.shared.domain.CompanyId;
 import com.example.cargotracker.shared.domain.Role;
 import com.example.cargotracker.shared.domain.UserId;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import java.time.Instant;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
@@ -222,6 +225,66 @@ class MyBatisIdentityRepositoriesIntegrationTest {
                 .singleElement()
                 .extracting(AuditRecord::target)
                 .isNull();
+    }
+
+    @Test
+    void 利用者の管理の一覧は役割を1行に束ね企業名と表示名の順に並べる() {
+        Company other = Company.of(new CompanyId(UUID.randomUUID()), "あ社（一覧の並び）", CompanyKind.OPERATOR, true);
+        companies.add(other);
+        UserId second = addUser(other, "い " + UUID.randomUUID(), Set.of(Role.SALES, Role.ROUTE_DESIGNER));
+        UserId first = addUser(other, "あ " + UUID.randomUUID(), Set.of(Role.TRACKING_MANAGER));
+
+        List<UserSummary> mine = users.findSummaries().stream()
+                .filter(summary -> summary.companyName().equals(other.name()))
+                .toList();
+
+        assertThat(mine).extracting(UserSummary::id).containsExactly(first, second);
+        assertThat(mine.get(1).roles()).containsExactlyInAnyOrder(Role.SALES, Role.ROUTE_DESIGNER);
+    }
+
+    @Test
+    void 利用者の管理の詳細は企業の種類と版と役割を返す() {
+        UserId id = addUser(company, "詳細 " + UUID.randomUUID(), Set.of(Role.SHIPPER));
+        jdbc.update("UPDATE identity.app_user SET version = 5 WHERE id = ?", id.value());
+
+        UserDetail detail = users.findDetail(id).orElseThrow();
+
+        assertThat(detail.companyKind()).isEqualTo(company.kind());
+        assertThat(detail.companyName()).isEqualTo(company.name());
+        assertThat(detail.version()).isEqualTo(5L);
+        assertThat(detail.roles()).containsExactly(Role.SHIPPER);
+        assertThat(users.findById(id).orElseThrow().version()).isEqualTo(5L);
+    }
+
+    @Test
+    void 役割のない利用者も一覧と詳細に出て役割は空() {
+        UserId id = addUser(company, "役割なし " + UUID.randomUUID(), Set.of(Role.SHIPPER));
+        jdbc.update("DELETE FROM identity.user_role WHERE user_id = ?", id.value());
+
+        assertThat(users.findDetail(id).orElseThrow().roles()).isEmpty();
+        assertThat(users.findSummaries())
+                .filteredOn(summary -> summary.id().equals(id))
+                .singleElement()
+                .extracting(UserSummary::roles)
+                .isEqualTo(Set.of());
+    }
+
+    @Test
+    void いない利用者の詳細は空() {
+        assertThat(users.findDetail(new UserId(UUID.randomUUID()))).isEmpty();
+    }
+
+    private UserId addUser(Company owner, String displayName, Set<Role> roles) {
+        UserId id = new UserId(UUID.randomUUID());
+        users.add(User.of(
+                id,
+                owner.id(),
+                EmailAddress.of("admin-read-" + id.value() + "@example.com"),
+                displayName,
+                "{noop}unused",
+                UserStatus.ACTIVE,
+                roles));
+        return id;
     }
 
     @Test

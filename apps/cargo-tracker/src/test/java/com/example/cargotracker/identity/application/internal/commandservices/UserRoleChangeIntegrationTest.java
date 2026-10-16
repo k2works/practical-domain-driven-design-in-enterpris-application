@@ -111,15 +111,16 @@ class UserRoleChangeIntegrationTest {
                                 "TRACKING_MANAGER", admin.userId().value()));
         assertThat(versionOf(sales)).isEqualTo(1L);
         assertThat(users.findById(sales).orElseThrow().version()).isEqualTo(1L);
-        assertThat(auditsOf(sales)).singleElement().satisfies(row -> {
-            assertThat(row.get("actor_user_id")).isEqualTo(admin.userId().value());
-            assertThat(row.get("action")).isEqualTo("ROLES_CHANGED");
-            assertThat(row.get("result")).isEqualTo("SUCCESS");
-            assertThat(row.get("target_type")).isEqualTo("USER");
-            assertThat(row.get("target_version")).isEqualTo("1");
-            assertThat(row.get("before_state")).isEqualTo("SALES");
-            assertThat(row.get("after_state")).isEqualTo("ROUTE_DESIGNER,TRACKING_MANAGER");
-        });
+        assertThat(auditsOf(sales))
+                .singleElement()
+                .satisfies(row -> assertThat(row)
+                        .containsEntry("actor_user_id", admin.userId().value())
+                        .containsEntry("action", "ROLES_CHANGED")
+                        .containsEntry("result", "SUCCESS")
+                        .containsEntry("target_type", "USER")
+                        .containsEntry("target_version", "1")
+                        .containsEntry("before_state", "SALES")
+                        .containsEntry("after_state", "ROUTE_DESIGNER,TRACKING_MANAGER"));
     }
 
     @Test

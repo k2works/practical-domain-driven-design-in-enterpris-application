@@ -1,6 +1,15 @@
 # Docs Update Log
 
 ## 2026-10-16
+* **Update**: [用語集](/manual/用語集.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [11-利用者の管理](/manual/11-利用者の管理.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [02-ログインと共通の画面](/manual/02-ログインと共通の画面.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [00-はじめに](/manual/00-はじめに.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [non_functional](/design/cargo-tracker/non_functional.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
 * **Update**: [11-利用者の管理](/manual/11-利用者の管理.md) を更新（anthropic/claude-opus-5-5）
 * **Update**: [用語集](/manual/用語集.md) を更新（anthropic/claude-opus-5-5）
 * **Update**: [bolt_34_plan](/development/cargo-tracker/bolt_34_plan.md) を更新（anthropic/claude-opus-5-5）

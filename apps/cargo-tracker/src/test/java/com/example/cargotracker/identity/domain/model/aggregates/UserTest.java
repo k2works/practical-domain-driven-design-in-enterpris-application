@@ -182,16 +182,37 @@ class UserTest {
 
     @Test
     void 職務分離で競合する役割は拒み競合する役割を示す() {
+        // 監査担当者に業務の役割を足す（監督の役割は残すので監督の変更には当たらない）
+        assertThat(staff(Set.of(Role.AUDITOR)).roleChangeRejection(ADMIN, OPERATOR, Set.of(Role.AUDITOR, Role.SALES)))
+                .contains(new RoleChangeRejection(
+                        RoleChangeRejectionReason.CONFLICTING_ROLES, Set.of(Role.SALES, Role.AUDITOR)));
+    }
+
+    @Test
+    void 監督の役割を足す変更は拒む() {
         assertThat(staff(Set.of(Role.SALES))
                         .roleChangeRejection(ADMIN, OPERATOR, Set.of(Role.SALES, Role.SYSTEM_ADMIN)))
-                .contains(new RoleChangeRejection(
-                        RoleChangeRejectionReason.CONFLICTING_ROLES, Set.of(Role.SALES, Role.SYSTEM_ADMIN)));
+                .contains(new RoleChangeRejection(RoleChangeRejectionReason.OVERSIGHT_ROLE, Set.of(Role.SYSTEM_ADMIN)));
+    }
+
+    @Test
+    void 監督の役割を外す変更は拒む() {
+        assertThat(staff(Set.of(Role.SYSTEM_ADMIN)).roleChangeRejection(ADMIN, OPERATOR, Set.of(Role.SALES)))
+                .map(RoleChangeRejection::reason)
+                .contains(RoleChangeRejectionReason.OVERSIGHT_ROLE);
+    }
+
+    @Test
+    void 役割を外すだけの変更は受け付ける() {
+        assertThat(staff(Set.of(Role.SALES, Role.ROUTE_DESIGNER))
+                        .roleChangeRejection(ADMIN, OPERATOR, Set.of(Role.SALES)))
+                .isEmpty();
     }
 
     @Test
     void 企業の種類を職務分離より先に判定する() {
-        assertThat(staff(Set.of(Role.SALES))
-                        .roleChangeRejection(ADMIN, OPERATOR, Set.of(Role.SHIPPER, Role.SYSTEM_ADMIN)))
+        assertThat(staff(Set.of(Role.AUDITOR))
+                        .roleChangeRejection(ADMIN, OPERATOR, Set.of(Role.AUDITOR, Role.SHIPPER, Role.SALES)))
                 .map(RoleChangeRejection::reason)
                 .contains(RoleChangeRejectionReason.UNFIT_FOR_COMPANY);
     }

@@ -184,6 +184,11 @@ public class UiUsers {
         return new Credentials(userId, email, PASSWORD);
     }
 
+    /** 役割の利用者の表示名（画面に出る名前を確かめるため）。 */
+    public String displayNameOf(Role role) {
+        return displayName(role);
+    }
+
     private static String displayName(Role role) {
         return switch (role) {
             case SHIPPER -> "荷主 太郎";
@@ -191,6 +196,7 @@ public class UiUsers {
             case TRACKING_MANAGER -> "追跡 管理";
             case SALES -> "営業 一郎";
             case SYSTEM_ADMIN -> "管理 次郎";
+            case AUDITOR -> "監査 花子";
             default -> throw new IllegalArgumentException("画面の層のテストの利用者を用意していない役割です: " + role);
         };
     }

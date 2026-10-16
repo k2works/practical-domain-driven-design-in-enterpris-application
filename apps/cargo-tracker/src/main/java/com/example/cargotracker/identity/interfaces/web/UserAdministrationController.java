@@ -6,6 +6,7 @@ import com.example.cargotracker.identity.application.internal.queryservices.User
 import com.example.cargotracker.identity.domain.model.rules.RoleAssignmentPolicy;
 import com.example.cargotracker.identity.domain.model.valueobjects.CompanyKind;
 import com.example.cargotracker.identity.domain.model.valueobjects.RoleChangeRejection;
+import com.example.cargotracker.identity.domain.model.valueobjects.RoleChangeRejectionReason;
 import com.example.cargotracker.identity.domain.model.valueobjects.UserDetail;
 import com.example.cargotracker.shared.domain.AuthenticatedActor;
 import com.example.cargotracker.shared.domain.Role;
@@ -30,7 +31,8 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 /**
  * 社内業務 Web の利用者の管理（S-20。Bolt 34、US-16 の一部）。システム管理者だけが開ける（`SecurityConfiguration` の
  * `/staff/users/**`。サービスも操作者を確かめる）。一覧と詳細を示し、詳細で役割を選んで確認の領域（画面そのものが確認の領域。
- * S-07・S-09 と同じ）へ進み、確定する（PRG）。判定はサービスが確認の領域を開く時と確定の時の両方で行う。
+ * S-07・S-09 と同じ）へ進み、確定する（PRG）。判定はサービスが確認の領域を開く時と確定の時の両方で行う。画面で付け外しできる
+ * 役割（企業の種類に合う業務の役割）は、表示のためにドメインの規則から読む（判定はサーバーが正）。
  */
 @Controller
 public class UserAdministrationController {
@@ -68,12 +70,18 @@ public class UserAdministrationController {
         return "identity/users/list";
     }
 
-    /** 詳細。確認の領域の「戻る」は選んだ役割を {@code roles} で渡し、選んだまま示す。 */
+    /** 詳細。確認の領域の「戻る」は選んだ役割と画面の版を渡し、選んだまま、確認の前の版のまま示す。 */
     @GetMapping(USERS_URL + "/{id}")
     public String show(
-            @PathVariable String id, @RequestParam(name = "roles", required = false) List<String> roles, Model model) {
+            @PathVariable String id,
+            @RequestParam(name = "roles", required = false) List<String> roles,
+            @RequestParam(name = "version", required = false) Long version,
+            AuthenticatedActor actor,
+            Model model) {
         UserDetail user = detail(id);
-        return showDetail(user, roles == null ? user.roles() : parseRoles(roles), null, model);
+        Set<Role> selected = roles == null ? user.roles() : parseRoles(roles);
+        long formVersion = version == null ? user.version() : version;
+        return showDetail(new DetailForm(user, selected, formVersion, null), actor, model);
     }
 
     @GetMapping(CONFIRMATION_URL)
@@ -85,15 +93,11 @@ public class UserAdministrationController {
             Model model) {
         UserDetail user = detail(id);
         Set<Role> selected = parseRoles(roles);
-        return switch (roleChanges.check(actor, user.id(), version, selected)) {
-            case RoleChangeResult.Acceptable acceptable -> showConfirmation(user, selected, version, actor, model);
-            case RoleChangeResult.Rejected rejected ->
-                showDetail(user, selected, rejectionMessage(rejected.rejection(), user.companyKind()), model);
-            case RoleChangeResult.Stale stale -> showDetail(user, user.roles(), STALE_MESSAGE, model);
-            case RoleChangeResult.NotFound notFound -> throw notFound();
-            case RoleChangeResult.NotPermitted notPermitted -> throw forbidden();
-            case RoleChangeResult.Changed changed -> throw new IllegalStateException("確かめるだけの呼び出しで変更した");
-        };
+        RoleChangeResult result = roleChanges.check(actor, user.id(), version, selected);
+        if (result instanceof RoleChangeResult.Acceptable) {
+            return showConfirmation(user, selected, version, actor, model);
+        }
+        return showRefusal(id, selected, version, actor, model, result);
     }
 
     @PostMapping(CONFIRMATION_URL)
@@ -106,30 +110,64 @@ public class UserAdministrationController {
             RedirectAttributes redirectAttributes) {
         UserId target = parse(id).orElseThrow(UserAdministrationController::notFound);
         Set<Role> selected = parseRoles(roles);
-        return switch (roleChanges.change(actor, target, version, selected)) {
-            case RoleChangeResult.Changed changed -> {
-                redirectAttributes.addFlashAttribute("notice", CHANGED_NOTICE);
-                yield "redirect:" + USERS_URL + "/" + target.value();
-            }
+        RoleChangeResult result = roleChanges.change(actor, target, version, selected);
+        if (result instanceof RoleChangeResult.Changed) {
+            redirectAttributes.addFlashAttribute("notice", CHANGED_NOTICE);
+            return "redirect:" + USERS_URL + "/" + target.value();
+        }
+        return showRefusal(id, selected, version, actor, model, result);
+    }
+
+    /** 受け付けなかった結果の画面。拒否は選んだまま、古い版は最新の内容で詳細を示し直す。 */
+    private String showRefusal(
+            String id,
+            Set<Role> selected,
+            long version,
+            AuthenticatedActor actor,
+            Model model,
+            RoleChangeResult result) {
+        return switch (result) {
             case RoleChangeResult.Rejected rejected -> {
                 UserDetail user = detail(id);
-                yield showDetail(user, selected, rejectionMessage(rejected.rejection(), user.companyKind()), model);
+                yield showDetail(
+                        new DetailForm(
+                                user, selected, version, ErrorMessage.of(rejected.rejection(), user.companyKind())),
+                        actor,
+                        model);
             }
             case RoleChangeResult.Stale stale -> {
                 UserDetail user = detail(id);
-                yield showDetail(user, user.roles(), STALE_MESSAGE, model);
+                yield showDetail(
+                        new DetailForm(user, user.roles(), user.version(), new ErrorMessage(STALE_MESSAGE, false)),
+                        actor,
+                        model);
             }
             case RoleChangeResult.NotFound notFound -> throw notFound();
-            case RoleChangeResult.NotPermitted notPermitted -> throw forbidden();
-            case RoleChangeResult.Acceptable acceptable -> throw new IllegalStateException("変更の呼び出しで確かめるだけになった");
+            case RoleChangeResult.NotPermitted notPermitted -> throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+            case RoleChangeResult.Changed changed -> throw new IllegalStateException("受け付けた結果は示し直さない");
+            case RoleChangeResult.Acceptable acceptable -> throw new IllegalStateException("受け付けた結果は示し直さない");
         };
     }
 
-    private String showDetail(UserDetail user, Set<Role> selected, String error, Model model) {
+    private String showDetail(DetailForm form, AuthenticatedActor actor, Model model) {
+        UserDetail user = form.user();
+        Set<Role> assignable = RoleAssignmentPolicy.assignableRoles(user.companyKind());
         model.addAttribute("user", user);
-        model.addAttribute("roleOptions", roleOptions(user, selected));
+        model.addAttribute("currentRoles", names(user.roles()));
         model.addAttribute("companyKindName", companyKindName(user.companyKind()));
-        model.addAttribute("error", error);
+        model.addAttribute("self", user.id().equals(actor.userId()));
+        model.addAttribute("assignable", !assignable.isEmpty());
+        model.addAttribute("roleOptions", roleOptions(assignable, form.selected()));
+        // 画面で付け外しできない今の役割（監督の役割など）は、変えずに送るため隠し項目で持つ
+        model.addAttribute(
+                "keptRoles",
+                order(user.roles()).stream()
+                        .filter(role -> !assignable.contains(role))
+                        .map(Role::name)
+                        .toList());
+        model.addAttribute("keptRoleNames", names(only(user.roles(), assignable, false)));
+        model.addAttribute("version", form.version());
+        model.addAttribute("error", form.error());
         model.addAttribute("active", ACTIVE);
         return DETAIL_VIEW;
     }
@@ -143,7 +181,6 @@ public class UserAdministrationController {
         removed.addAll(user.roles());
         removed.removeAll(selected);
         model.addAttribute("user", user);
-        model.addAttribute("companyKindName", companyKindName(user.companyKind()));
         model.addAttribute("currentRoles", names(user.roles()));
         model.addAttribute("addedRoles", names(added));
         model.addAttribute("removedRoles", names(removed));
@@ -153,25 +190,6 @@ public class UserAdministrationController {
         model.addAttribute("operator", Role.SYSTEM_ADMIN.displayName() + " " + actor.displayName());
         model.addAttribute("active", ACTIVE);
         return "identity/users/confirmation";
-    }
-
-    /** 拒否の文言（UI 設計 S-20 の表）。役割の名前は {@link Role} の宣言の順に「・」でつなぐ。 */
-    static String rejectionMessage(RoleChangeRejection rejection, CompanyKind companyKind) {
-        return switch (rejection.reason()) {
-            case SELF_CHANGE -> "自分の役割は変更できません。ほかのシステム管理者に依頼してください。";
-            case NO_ROLES -> "役割を 1 つ以上選んでください。";
-            case NO_CHANGE -> "今の役割から変わっていません。足す役割か外す役割を選んでください。";
-            case UNFIT_FOR_COMPANY -> names(rejection.roles()) + "は、" + companyKindName(companyKind) + "の利用者には付けられません。";
-            case CONFLICTING_ROLES ->
-                "システム管理者・監査担当者と、業務データを変更できる役割（" + names(businessRoles(rejection.roles())) + "）は併せて付けられません。";
-        };
-    }
-
-    private static Set<Role> businessRoles(Set<Role> roles) {
-        Set<Role> business = EnumSet.noneOf(Role.class);
-        business.addAll(roles);
-        business.removeAll(EnumSet.of(Role.SYSTEM_ADMIN, Role.AUDITOR));
-        return business;
     }
 
     /** 役割の表示名を {@link Role} の宣言の順に「・」でつなぐ。なければ「なし」。 */
@@ -210,11 +228,17 @@ public class UserAdministrationController {
         }
     }
 
-    /** 8 つの役割の選択肢。企業の種類に付けられない役割は、選べない旨を添える（判定はサーバーが正。IA-INV-13）。 */
-    private static List<RoleOption> roleOptions(UserDetail user, Set<Role> selected) {
-        Set<Role> unfit = RoleAssignmentPolicy.unfitRoles(user.companyKind(), Set.of(Role.values()));
+    private static Set<Role> only(Set<Role> roles, Set<Role> kinds, boolean in) {
+        Set<Role> result = EnumSet.noneOf(Role.class);
+        roles.stream().filter(role -> kinds.contains(role) == in).forEach(result::add);
+        return result;
+    }
+
+    /** 画面で付け外しできる役割（企業の種類に合う業務の役割）の選択肢。宣言の順。 */
+    private static List<RoleOption> roleOptions(Set<Role> assignable, Set<Role> selected) {
         return Arrays.stream(Role.values())
-                .map(role -> new RoleOption(role, selected.contains(role), !unfit.contains(role)))
+                .filter(assignable::contains)
+                .map(role -> new RoleOption(role, selected.contains(role)))
                 .toList();
     }
 
@@ -231,16 +255,47 @@ public class UserAdministrationController {
         return new ResponseStatusException(HttpStatus.NOT_FOUND);
     }
 
-    private static ResponseStatusException forbidden() {
-        return new ResponseStatusException(HttpStatus.FORBIDDEN);
-    }
-
     /**
      * 役割の選択肢。
      *
      * @param role 役割
      * @param selected 選んでいるか
-     * @param fit 利用者の企業の種類に付けられるか
      */
-    public record RoleOption(Role role, boolean selected, boolean fit) {}
+    public record RoleOption(Role role, boolean selected) {}
+
+    /**
+     * 詳細の画面に示す内容。
+     *
+     * @param user 利用者
+     * @param selected 選んでいる役割
+     * @param version フォームが持つ版
+     * @param error 誤り（なければ null）
+     */
+    private record DetailForm(UserDetail user, Set<Role> selected, long version, ErrorMessage error) {}
+
+    /**
+     * 誤りの文言。
+     *
+     * @param text 文言
+     * @param field 役割の選び方の誤りか（エラー要約から役割の欄へリンクし、欄にも示す。自分の役割・古い版は選び方の誤りではない）
+     */
+    public record ErrorMessage(String text, boolean field) {
+
+        /** 拒否の文言（UI 設計 S-20 の表）。役割の名前は {@link Role} の宣言の順に「・」でつなぐ。 */
+        static ErrorMessage of(RoleChangeRejection rejection, CompanyKind companyKind) {
+            String text =
+                    switch (rejection.reason()) {
+                        case SELF_CHANGE -> "自分の役割は変更できません。ほかのシステム管理者に依頼してください。";
+                        case NO_ROLES -> "役割を 1 つ以上選んでください。";
+                        case NO_CHANGE -> "今の役割から変わっていません。足す役割か外す役割を選んでください。";
+                        case OVERSIGHT_ROLE -> "システム管理者・監査担当者の役割は、この画面では付けたり外したりできません。";
+                        case UNFIT_FOR_COMPANY ->
+                            names(rejection.roles()) + "は、" + companyKindName(companyKind) + "の利用者には付けられません。";
+                        case CONFLICTING_ROLES ->
+                            "システム管理者・監査担当者と、業務データを変更できる役割（"
+                                    + names(RoleAssignmentPolicy.businessRolesOf(rejection.roles())) + "）は併せて付けられません。";
+                    };
+            return new ErrorMessage(text, rejection.reason() != RoleChangeRejectionReason.SELF_CHANGE);
+        }
+    }
 }

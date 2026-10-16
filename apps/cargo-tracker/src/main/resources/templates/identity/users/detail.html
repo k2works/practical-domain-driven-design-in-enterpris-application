@@ -11,10 +11,12 @@
     <div th:if="${notice != null}" class="alert alert-success" role="status" th:text="${notice}">
         役割を変更しました。相手の次の操作から効きます。
     </div>
+    <!--/* エラー要約（S-09 と同じ形）。役割の選び方の誤りだけ役割の欄へリンクする（自分の役割・古い版は選び方の誤りではない） */-->
     <div id="error-summary" th:if="${error != null}" tabindex="-1" role="alert" aria-labelledby="error-summary-title">
         <h2 id="error-summary-title">役割を変更できませんでした</h2>
         <ul>
-            <li><a href="#roles" th:text="${error}">自分の役割は変更できません。</a></li>
+            <li th:if="${error.field}"><a href="#roles" th:text="${error.text}">役割を 1 つ以上選んでください。</a></li>
+            <li th:unless="${error.field}" th:text="${error.text}">この利用者の情報が先に更新されました。</li>
         </ul>
     </div>
     <dl class="row">
@@ -25,28 +27,30 @@
         <dt class="col-sm-3">利用状態</dt>
         <dd class="col-sm-9" th:text="${user.status.name() == 'ACTIVE'} ? '利用中' : '利用停止'">利用中</dd>
         <dt class="col-sm-3">今の役割</dt>
-        <dd class="col-sm-9" id="current-roles">
-            <ul class="list-unstyled mb-0">
-                <li th:each="role : ${T(com.example.cargotracker.shared.domain.Role).values()}"
-                    th:if="${user.roles.contains(role)}" th:text="${role.displayName}">営業担当者</li>
-            </ul>
-        </dd>
+        <dd class="col-sm-9" id="current-roles" th:text="${currentRoles}">営業担当者</dd>
     </dl>
-    <form method="get" th:action="@{/staff/users/{id}/role-changes/confirmation(id=${user.id.value})}">
-        <input type="hidden" name="version" th:value="${user.version}">
-        <fieldset id="roles" th:attr="aria-describedby=${error != null} ? 'roles-error' : null">
+    <p th:if="${self}" id="self-note">自分の役割は変更できません。ほかのシステム管理者に依頼してください。</p>
+    <p th:if="${!self and !assignable}" id="unassignable-note"
+       th:text="|${companyKindName}の利用者には役割を付けません。|">荷受人の企業の利用者には役割を付けません。</p>
+    <form th:if="${!self and assignable}" method="get"
+          th:action="@{/staff/users/{id}/role-changes/confirmation(id=${user.id.value})}">
+        <input type="hidden" name="version" th:value="${version}">
+        <input type="hidden" name="roles" th:each="role : ${keptRoles}" th:value="${role}">
+        <fieldset id="roles" th:attr="aria-describedby=${error != null and error.field} ? 'roles-error' : null">
             <legend class="h5">役割</legend>
-            <p th:if="${error != null}" id="roles-error" class="text-danger" th:text="${error}">自分の役割は変更できません。</p>
+            <p th:if="${error != null and error.field}" id="roles-error" class="text-danger" th:text="${error.text}">役割を 1 つ以上選んでください。</p>
+            <p class="form-text" th:text="|${companyKindName}の利用者に付けられる役割です。システム管理者・監査担当者の役割は、この画面では付けたり外したりできません。|">
+                運用する会社の利用者に付けられる役割です。
+            </p>
             <div class="form-check" th:each="option : ${roleOptions}">
                 <input class="form-check-input" type="checkbox" name="roles"
                        th:id="|role-${option.role.name()}|" th:value="${option.role.name()}"
-                       th:checked="${option.selected}"
-                       th:attr="aria-describedby=${option.fit} ? null : |role-${option.role.name()}-unfit|">
+                       th:checked="${option.selected}">
                 <label class="form-check-label" th:for="|role-${option.role.name()}|"
                        th:text="${option.role.displayName}">営業担当者</label>
-                <span th:unless="${option.fit}" class="form-text" th:id="|role-${option.role.name()}-unfit|"
-                      th:text="|（${companyKindName}の利用者には付けられません）|">（運用する会社の利用者には付けられません）</span>
             </div>
+            <p th:unless="${#lists.isEmpty(keptRoles)}" class="form-text"
+               th:text="|この画面で変更しない役割（${keptRoleNames}）は、そのまま残ります。|">この画面で変更しない役割（監査担当者）は、そのまま残ります。</p>
         </fieldset>
         <button type="submit" class="btn btn-primary mt-3">変更内容を確認する</button>
     </form>

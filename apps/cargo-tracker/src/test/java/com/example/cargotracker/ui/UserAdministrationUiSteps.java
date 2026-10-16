@@ -10,6 +10,7 @@ import com.microsoft.playwright.options.AriaRole;
 import io.cucumber.java.ja.かつ;
 import io.cucumber.java.ja.ならば;
 import io.cucumber.java.ja.もし;
+import io.cucumber.java.ja.前提;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.web.server.LocalServerPort;
@@ -63,6 +64,16 @@ public class UserAdministrationUiSteps {
         openDetail(Role.SALES);
     }
 
+    @前提("監査担当者の利用者が登録されている")
+    public void 監査担当者が登録されている() {
+        users.of(Role.AUDITOR);
+    }
+
+    @もし("システム管理者が監査担当者の利用者の詳細を開く")
+    public void 監査担当者の詳細を開く() {
+        openDetail(Role.AUDITOR);
+    }
+
     @もし("システム管理者が自分の利用者の詳細を開く")
     public void 自分の詳細を開く() {
         openDetail(Role.SYSTEM_ADMIN);
@@ -84,6 +95,28 @@ public class UserAdministrationUiSteps {
         browser.checkAccessibility();
     }
 
+    @かつ("役割 {string} を外して変更内容を確認する")
+    public void 役割を外して確認する(String role) {
+        page().getByLabel(role, new Page.GetByLabelOptions().setExact(true)).uncheck();
+        page().getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("変更内容を確認する"))
+                .click();
+        page().waitForLoadState();
+        browser.checkAccessibility();
+    }
+
+    @ならば("{string} と示され、役割を選ぶ欄はない")
+    public void 案内が示され欄がない(String message) {
+        assertThat(page().locator("main")).containsText(message);
+        assertThat(page().getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("変更内容を確認する")))
+                .hasCount(0);
+    }
+
+    @ならば("役割の変更の誤り {string} がエラー要約に示され、監査担当者の役割は変わっていない")
+    public void 誤りが示され監査担当者は変わっていない(String message) {
+        誤りが示される(message);
+        assertThat(rolesOf(Role.AUDITOR)).containsExactly("AUDITOR");
+    }
+
     @ならば("役割の変更の確認に足す役割 {string} と外す役割 {string} と影響と実行者と回復手段が示される")
     public void 確認の領域が示される(String added, String removed) {
         Locator confirmation = page().locator("main");
@@ -92,7 +125,7 @@ public class UserAdministrationUiSteps {
         assertThat(confirmation.locator("dd#added-roles")).hasText(added);
         assertThat(confirmation.locator("dd#removed-roles")).hasText(removed);
         assertThat(confirmation).containsText("相手の次の操作から効きます");
-        assertThat(confirmation).containsText("システム管理者 管理 次郎");
+        assertThat(confirmation).containsText("システム管理者 " + users.displayNameOf(Role.SYSTEM_ADMIN));
         assertThat(confirmation).containsText("元に戻すには、もう一度役割を変更してください");
     }
 

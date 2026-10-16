@@ -107,7 +107,7 @@ public final class User {
 
     /**
      * 役割の変更を受け付けない理由を返す（Bolt 34。US-16 AC3、UC-16 の主シナリオ 4）。受け付けるなら空。判定は、自分の変更 → 役割なし →
-     * 変更なし → 企業の種類 → 職務分離の順。同時の更新は版を条件にした更新で判定するので、ここでは見ない。
+     * 変更なし → 監督の役割 → 企業の種類 → 職務分離の順。同時の更新は版を条件にした更新で判定するので、ここでは見ない。
      *
      * @param operator 変更する操作者
      * @param company 所属企業
@@ -125,6 +125,10 @@ public final class User {
         }
         if (roles.equals(EnumSet.copyOf(newRoles))) {
             return Optional.of(RoleChangeRejection.of(RoleChangeRejectionReason.NO_CHANGE));
+        }
+        Set<Role> oversight = RoleAssignmentPolicy.oversightChanges(roles, newRoles);
+        if (!oversight.isEmpty()) {
+            return Optional.of(new RoleChangeRejection(RoleChangeRejectionReason.OVERSIGHT_ROLE, oversight));
         }
         Set<Role> unfit = RoleAssignmentPolicy.unfitRoles(company.kind(), newRoles);
         if (!unfit.isEmpty()) {

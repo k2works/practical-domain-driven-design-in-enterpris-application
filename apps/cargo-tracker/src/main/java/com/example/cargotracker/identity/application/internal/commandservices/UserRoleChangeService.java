@@ -21,12 +21,12 @@ import org.springframework.transaction.support.TransactionTemplate;
  * 役割の変更のサービス。システム管理者が利用者の役割を変える（Bolt 34。US-16 AC1 の役割の分・AC3、UC-16 の主シナリオ 4 と 4b）。
  *
  * <p>判定（{@link User#roleChangeRejection}。自分の変更・役割なし・変更なし・企業の種類・職務分離）と、読んだ版が画面の版と同じことを
- * 確かめてから、1 つのトランザクションで、版を条件にした更新と役割の差分（{@link UserRepository#changeRoles}）と監査記録
+ * 確かめてから（判定に使った利用者をそのまま変える）、1 つのトランザクションで、版を条件にした更新と役割の差分（{@link UserRepository#changeRoles}）と監査記録
  * {@code ROLES_CHANGED} を書く。更新が 0 件ならほかの更新が先に入ったとしてロールバックする。監査を書けなければ例外で全体を戻す
  * （IA-INV-08 の同期の書き方）。拒否と古い版は監査に書かない（Bolt 34 の確認ポイント 7）。変えた役割は、request ごとの確かめ
  * （Bolt 32c）で相手の次の request から効く。
  */
-@Service
+@Service // JIG がユースケースとして読む印（組み立ては IdentityConfiguration）
 public class UserRoleChangeService {
 
     private final UserRepository users;
@@ -58,7 +58,10 @@ public class UserRoleChangeService {
      */
     public RoleChangeResult check(
             AuthenticatedActor operator, UserId target, long expectedVersion, Set<Role> newRoles) {
-        return refusal(operator, target, expectedVersion, newRoles).orElse(new RoleChangeResult.Acceptable());
+        return switch (judge(operator, target, expectedVersion, newRoles)) {
+            case Judgement.Refused refused -> refused.result();
+            case Judgement.Accepted accepted -> new RoleChangeResult.Acceptable();
+        };
     }
 
     /**
@@ -82,41 +85,51 @@ public class UserRoleChangeService {
 
     private RoleChangeResult changeInTransaction(
             AuthenticatedActor operator, UserId target, long expectedVersion, Set<Role> newRoles) {
-        Optional<RoleChangeResult> refusal = refusal(operator, target, expectedVersion, newRoles);
-        if (refusal.isPresent()) {
-            return refusal.get();
-        }
-        UtcInstant now = new UtcInstant(clock.instant());
-        User before = users.findById(target).orElseThrow();
-        User changed = before.changeRoles(newRoles);
-        if (!users.changeRoles(changed, expectedVersion, operator.userId(), now)) {
-            return new RoleChangeResult.Stale();
-        }
-        long newVersion = expectedVersion + 1;
-        auditRecords.append(AuditRecord.rolesChanged(
-                operator.userId(), operator.companyId(), target, newVersion, before.roles(), newRoles, now));
-        return new RoleChangeResult.Changed(newVersion);
+        return switch (judge(operator, target, expectedVersion, newRoles)) {
+            case Judgement.Refused refused -> refused.result();
+            case Judgement.Accepted accepted -> {
+                // 判定に使った利用者（読んだ版が画面の版と同じ）をそのまま変える。版の出どころを 1 つにする
+                User before = accepted.user();
+                UtcInstant now = new UtcInstant(clock.instant());
+                if (!users.changeRoles(before.changeRoles(newRoles), before.version(), operator.userId(), now)) {
+                    yield new RoleChangeResult.Stale();
+                }
+                long newVersion = before.version() + 1;
+                auditRecords.append(AuditRecord.rolesChanged(
+                        operator.userId(), operator.companyId(), target, newVersion, before.roles(), newRoles, now));
+                yield new RoleChangeResult.Changed(newVersion);
+            }
+        };
     }
 
-    /** 受け付けない結果を返す。受け付けるなら空。 */
-    private Optional<RoleChangeResult> refusal(
-            AuthenticatedActor operator, UserId target, long expectedVersion, Set<Role> newRoles) {
+    /** 判定する。受け付けるなら判定に使った利用者を、受け付けないなら結果を返す。 */
+    private Judgement judge(AuthenticatedActor operator, UserId target, long expectedVersion, Set<Role> newRoles) {
         if (!operator.hasRole(Role.SYSTEM_ADMIN)) {
-            return Optional.of(new RoleChangeResult.NotPermitted());
+            return new Judgement.Refused(new RoleChangeResult.NotPermitted());
         }
         Optional<User> user = users.findById(target);
         Optional<Company> company = user.flatMap(found -> companies.findById(found.companyId()));
         if (user.isEmpty() || company.isEmpty()) {
-            return Optional.of(new RoleChangeResult.NotFound());
+            return new Judgement.Refused(new RoleChangeResult.NotFound());
         }
         Optional<RoleChangeRejection> rejection =
                 user.get().roleChangeRejection(operator.userId(), company.get(), newRoles);
         if (rejection.isPresent()) {
-            return Optional.of(new RoleChangeResult.Rejected(rejection.get()));
+            return new Judgement.Refused(new RoleChangeResult.Rejected(rejection.get()));
         }
         if (user.get().version() != expectedVersion) {
-            return Optional.of(new RoleChangeResult.Stale());
+            return new Judgement.Refused(new RoleChangeResult.Stale());
         }
-        return Optional.empty();
+        return new Judgement.Accepted(user.get());
+    }
+
+    /** 判定の結果（このクラスの中だけで使う）。 */
+    private sealed interface Judgement {
+
+        /** 受け付ける。判定に使った利用者を持つ。 */
+        record Accepted(User user) implements Judgement {}
+
+        /** 受け付けない。 */
+        record Refused(RoleChangeResult result) implements Judgement {}
     }
 }

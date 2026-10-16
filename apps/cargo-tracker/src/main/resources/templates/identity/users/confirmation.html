@@ -28,7 +28,7 @@
         <input type="hidden" name="version" th:value="${version}">
         <input type="hidden" name="roles" th:each="role : ${selectedRoles}" th:value="${role}">
         <button type="submit" class="btn btn-primary">変更する</button>
-        <a class="btn btn-link" th:href="@{/staff/users/{id}(id=${user.id.value},roles=${selectedRoles})}">戻る</a>
+        <a class="btn btn-link" th:href="@{/staff/users/{id}(id=${user.id.value},roles=${selectedRoles},version=${version})}">戻る</a>
     </form>
 </main>
 </body>
