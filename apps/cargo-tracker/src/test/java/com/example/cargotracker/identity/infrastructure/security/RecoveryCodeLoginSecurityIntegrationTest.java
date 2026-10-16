@@ -591,6 +591,20 @@ class RecoveryCodeLoginSecurityIntegrationTest {
     }
 
     @Test
+    void 社内の画面にも15分を過ぎた知らせをsessionの方針の期間で出す() throws Exception {
+        // 社内業務 Web のレイアウト（layout/staff.html）の印の知らせも SessionPolicy から描く（Bolt 33f の開発レビュー）
+        Company operator = Company.of(new CompanyId(UUID.randomUUID()), "A 社", CompanyKind.OPERATOR, true);
+        companies.add(operator);
+        String email = enrolledUserWithRecoveryCodes(enrolledUser(operator, Role.SALES), RECOVERY_CODE);
+        Cookie recovered = loginWithRecoveryCode(email, RECOVERY_CODE);
+        ((MutableClock) clock).setInstant(clock.instant().plus(Duration.ofMinutes(15)));
+
+        mvc.perform(get("/staff/transport-requests").cookie(recovered))
+                .andExpect(status().isOk())
+                .andExpect(content().string(org.hamcrest.Matchers.containsString(EXPIRED_NOTICE)));
+    }
+
+    @Test
     void 回復コードでログインしてから15分を過ぎるとA08を開けず知らせはログインし直す案内になる() throws Exception {
         String email = enrolledUserWithRecoveryCodes();
         Cookie recovered = loginWithRecoveryCode(email, RECOVERY_CODE);
@@ -688,7 +702,11 @@ class RecoveryCodeLoginSecurityIntegrationTest {
     // --- 補助 ---
 
     private String enrolledUser() {
-        String email = unenrolledUser();
+        return enrolledUser(company, Role.SHIPPER);
+    }
+
+    private String enrolledUser(Company of, Role role) {
+        String email = unenrolledUser(of, role);
         UserId userId = userIdOf(email);
         totpCredentials.add(TotpCredential.enroll(
                 userId, cipher.encrypt(TOTP_SECRET.clone(), userId), new UtcInstant(clock.instant())));
@@ -700,7 +718,10 @@ class RecoveryCodeLoginSecurityIntegrationTest {
     }
 
     private String enrolledUserWithRecoveryCodes(String plain) {
-        String email = enrolledUser();
+        return enrolledUserWithRecoveryCodes(enrolledUser(), plain);
+    }
+
+    private String enrolledUserWithRecoveryCodes(String email, String plain) {
         UserId userId = userIdOf(email);
         UtcInstant now = new UtcInstant(clock.instant());
         recoveryCodes.replaceAll(
@@ -713,15 +734,19 @@ class RecoveryCodeLoginSecurityIntegrationTest {
     }
 
     private String unenrolledUser() {
+        return unenrolledUser(company, Role.SHIPPER);
+    }
+
+    private String unenrolledUser(Company of, Role role) {
         String email = "recovery-" + UUID.randomUUID() + "@example.com";
         users.add(User.of(
                 new UserId(UUID.randomUUID()),
-                company.id(),
+                of.id(),
                 EmailAddress.of(email),
                 "荷主 太郎",
                 passwordEncoder.encode(PASSWORD),
                 UserStatus.ACTIVE,
-                Set.of(Role.SHIPPER)));
+                Set.of(role)));
         return email;
     }
 

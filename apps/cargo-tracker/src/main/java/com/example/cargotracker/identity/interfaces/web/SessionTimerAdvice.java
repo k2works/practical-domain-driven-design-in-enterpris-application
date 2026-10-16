@@ -20,6 +20,8 @@ import org.springframework.web.bind.annotation.ModelAttribute;
  * 8 時間の上限までの残りの秒数を置く。共通のレイアウトがこれを警告の部分の {@code data-} 属性に書き、ブラウザが数える。
  * 8 時間の残りは認証の入口（{@code SessionLifetimeFilter}）が 2 つの要素のそろった session でだけ request の属性に置くので、
  * その属性があるときだけ置く（password の段・認証の前の画面には置かない）。session を作らないよう {@code getSession(false)} で読む。
+ * 2 つの要素がそろった session の上限の文言（{@code sessionMaxLifetime}。「8 時間」）は、警告と A-03 の両方が使うので、どの画面にも
+ * 無条件で置く（Bolt 33f。値の出どころを 1 つにする）。
  */
 @ControllerAdvice
 public class SessionTimerAdvice {

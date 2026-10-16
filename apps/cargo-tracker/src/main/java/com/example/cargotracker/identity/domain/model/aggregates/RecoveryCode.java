@@ -63,12 +63,12 @@ public final class RecoveryCode {
      * 一度だけ示す。
      */
     public static List<RecoveryCode> issueSet(
-            UserId userId, List<NormalizedRecoveryCode> plainCodes, RecoveryCodeHasher hasher, UtcInstant issuedAt) {
-        Objects.requireNonNull(plainCodes, "plainCodes");
+            UserId userId, List<NormalizedRecoveryCode> codes, RecoveryCodeHasher hasher, UtcInstant issuedAt) {
+        Objects.requireNonNull(codes, "codes");
         return requireIssuedSet(
                 userId,
-                plainCodes.stream()
-                        .map(plain -> issue(userId, plain.value(), hasher, issuedAt))
+                codes.stream()
+                        .map(code -> issue(userId, code.value(), hasher, issuedAt))
                         .toList());
     }
 

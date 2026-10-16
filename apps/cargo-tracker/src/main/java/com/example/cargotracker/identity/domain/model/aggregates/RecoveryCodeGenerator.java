@@ -9,6 +9,6 @@ import java.util.List;
 @FunctionalInterface
 public interface RecoveryCodeGenerator {
 
-    /** {@value RecoveryCode#CODES_PER_USER} 個の、重複のない回復コードの平文（Bolt 33f から値。形は値が確かめる）。 */
+    /** {@value RecoveryCode#CODES_PER_USER} 個の、重複のない正規化した回復コード（Bolt 33f から値。形は値が確かめる）。 */
     List<NormalizedRecoveryCode> generate();
 }

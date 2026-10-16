@@ -7,7 +7,7 @@ import java.time.Duration;
 /**
  * session の方針。ログインの手続きと session の期間（US-18 AC1・AC5・AC7・AC9、SEC-03、IA-INV-03。Bolt 33c で、認証の入口と画面と
  * アプリケーションサービスに散っていた同じ値をまとめた）。期間と、期限の判定（ちょうどの時刻は期限切れ。Bolt 33e で、認証の入口の
- * {@code SessionLifetimeFilter}、画面、再登録のサービスの 4 か所から寄せた）を持つ。時計は持たない。無操作の期限は Spring Session の設定。
+ * {@code SessionLifetimeFilter}、画面、再登録のサービスの 4 か所から寄せた）を持つ。時計は持たない。無操作の期間は Spring Session の設定。Bolt 33f から、期限の時刻 {@link #deadline} も持つ。
  */
 @DomainRule
 public final class SessionPolicy {

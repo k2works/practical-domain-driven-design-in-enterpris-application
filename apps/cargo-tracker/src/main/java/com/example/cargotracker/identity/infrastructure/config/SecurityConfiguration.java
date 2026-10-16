@@ -22,7 +22,6 @@ import com.example.cargotracker.identity.infrastructure.security.TotpAuthenticat
 import com.example.cargotracker.identity.infrastructure.security.TotpAuthenticationProvider;
 import com.example.cargotracker.identity.infrastructure.security.TotpAuthenticationToken;
 import com.example.cargotracker.identity.infrastructure.security.TotpRejectedException;
-import com.example.cargotracker.identity.interfaces.web.PasswordResetController;
 import com.example.cargotracker.shared.domain.Role;
 import java.time.Clock;
 import java.util.Arrays;
@@ -94,8 +93,8 @@ public class SecurityConfiguration {
     private static final String[] PUBLIC_PATHS = {
         LOGIN_URL,
         SessionPaths.EXPIRED_URL,
-        PasswordResetController.URL,
-        PasswordResetController.TOKEN_URL_PATTERN,
+        SessionPaths.PASSWORD_RESET_URL,
+        SessionPaths.PASSWORD_RESET_TOKEN_URL_PATTERN,
         "/error",
         "/css/**",
         "/js/**",

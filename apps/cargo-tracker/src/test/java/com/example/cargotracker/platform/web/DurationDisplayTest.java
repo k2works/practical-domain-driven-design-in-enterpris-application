@@ -79,8 +79,15 @@ class DurationDisplayTest {
     }
 
     @ParameterizedTest(name = "{0} は「{1}」")
-    @CsvSource({"PT15M, 15 分", "PT8H, 8 時間", "PT5M, 5 分"})
-    void ログインの手続きとsessionの期間(String duration, String expected) {
+    @CsvSource({"PT15M, 15 分", "PT8H, 8 時間", "P1DT12H, 1 日 12 時間", "PT4H30M, 4 時間 30 分", "PT0S, 0 分"})
+    void 期間の長さは0の単位を書かない(String duration, String expected) {
         assertThat(DurationDisplay.length(Duration.parse(duration))).isEqualTo(expected);
+    }
+
+    @ParameterizedTest(name = "{0}")
+    @CsvSource({"P1DT12H", "PT4H30M", "PT0S"})
+    void 接続時間は期間の長さと同じ形(String duration) {
+        assertThat(DurationDisplay.connection(Duration.parse(duration)))
+                .isEqualTo(DurationDisplay.length(Duration.parse(duration)));
     }
 }

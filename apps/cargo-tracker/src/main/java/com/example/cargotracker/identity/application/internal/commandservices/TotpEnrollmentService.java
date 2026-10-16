@@ -122,14 +122,14 @@ public class TotpEnrollmentService {
         }
         // 回復コードの生成とハッシュ（bcrypt 10 回）は書き込みでないので、主キーの行ロックを取る前に済ませる（同時の登録の相手を
         // 待たせる時間を短くする。Bolt 31b の開発レビュー）
-        List<NormalizedRecoveryCode> plainCodes = recoveryCodeGenerator.generate();
-        List<RecoveryCode> issued = RecoveryCode.issueSet(owner, plainCodes, hasher, now);
+        List<NormalizedRecoveryCode> codes = recoveryCodeGenerator.generate();
+        List<RecoveryCode> issued = RecoveryCode.issueSet(owner, codes, hasher, now);
         // 資格の追加（主キー）を先に行い、同時の登録では回復コードを置き換える前に後の登録を止める（議題 2 の①）
         credentials.add(credential);
         recoveryCodes.replaceAll(owner, issued);
         auditRecords.append(AuditRecord.totpEnrolled(owner, user.companyId(), now));
         // 画面に平文を一度だけ示す結果は文字列のまま（値の toString は伏せるため。Bolt 33f の開始準備の決定 2）
         return new EnrollmentResult.Enrolled(
-                plainCodes.stream().map(NormalizedRecoveryCode::value).toList());
+                codes.stream().map(NormalizedRecoveryCode::value).toList());
     }
 }

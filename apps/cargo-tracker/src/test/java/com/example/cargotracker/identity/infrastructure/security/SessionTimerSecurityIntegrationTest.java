@@ -185,8 +185,17 @@ class SessionTimerSecurityIntegrationTest {
         assertThat(html)
                 .contains("/js/session-input.js")
                 .contains("data-session-input=\"rejected\"")
-                .doesNotContain("data-user")
-                // 8 時間は SessionPolicy から描く。表示は Bolt 33f の前と同じ
+                .doesNotContain("data-user");
+    }
+
+    @Test
+    void A03の失効の理由の8時間はsessionの方針から描く() throws Exception {
+        // 8 時間は SessionPolicy から描く。表示は Bolt 33f の前と同じ
+        assertThat(mvc.perform(get(EXPIRED_URL))
+                        .andExpect(status().isOk())
+                        .andReturn()
+                        .getResponse()
+                        .getContentAsString())
                 .contains("ログインから 8 時間を過ぎたため、password を再設定したため");
     }
 

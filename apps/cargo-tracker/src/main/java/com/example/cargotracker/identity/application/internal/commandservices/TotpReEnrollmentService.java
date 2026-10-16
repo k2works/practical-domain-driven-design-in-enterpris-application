@@ -156,8 +156,8 @@ public class TotpReEnrollmentService {
             SessionId currentSessionId) {
         UserId owner = user.userId();
         // 回復コードの生成とハッシュ（bcrypt 10 回）は書き込みでないので、資格の行ロックを取る前に済ませる（登録と同じ）
-        List<NormalizedRecoveryCode> plainCodes = recoveryCodeGenerator.generate();
-        List<RecoveryCode> issued = RecoveryCode.issueSet(owner, plainCodes, hasher, now);
+        List<NormalizedRecoveryCode> codes = recoveryCodeGenerator.generate();
+        List<RecoveryCode> issued = RecoveryCode.issueSet(owner, codes, hasher, now);
         Boolean replaced = transactionTemplate.execute(status -> {
             // 資格の置き換えを先に行い、同時の再登録では回復コードを置き換える前に後の再登録を止める
             if (!credentials.replace(current.reEnroll(secret, step, now), current.secret())) {
@@ -174,7 +174,7 @@ public class TotpReEnrollmentService {
         revokeOthers(user, currentSessionId);
         // 画面に平文を一度だけ示す結果は文字列のまま（値の toString は伏せるため。Bolt 33f の開始準備の決定 2）
         return new ReEnrollmentResult.ReEnrolled(
-                plainCodes.stream().map(NormalizedRecoveryCode::value).toList());
+                codes.stream().map(NormalizedRecoveryCode::value).toList());
     }
 
     private void revokeOthers(EnrollingUser user, SessionId currentSessionId) {

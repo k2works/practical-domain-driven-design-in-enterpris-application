@@ -7,6 +7,7 @@
 <html lang="ja" xmlns:th="http://www.thymeleaf.org">
 <body>
 <th:block th:fragment="warning(timer)">
+    <!-- 8 時間の文言はモデルの sessionMaxLifetime（SessionTimerAdvice。SessionPolicy の上限）から描く（Bolt 33f） -->
     <dialog id="session-warning" class="app-session-warning"
             aria-labelledby="session-warning-title" aria-describedby="session-warning-message"
             th:data-idle-seconds="${timer.idleSeconds()}"

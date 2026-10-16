@@ -13,6 +13,7 @@ import com.example.cargotracker.identity.application.internal.eventhandlers.Pass
 import com.example.cargotracker.identity.application.internal.outboundservices.acl.NotificationPasswordResetMails;
 import com.example.cargotracker.identity.application.internal.queryservices.KpiObservationQueryService;
 import com.example.cargotracker.identity.application.internal.queryservices.TotpEnrollmentQueryService;
+import com.example.cargotracker.identity.application.internal.session.SessionPaths;
 import com.example.cargotracker.identity.domain.model.aggregates.AuditRecordRepository;
 import com.example.cargotracker.identity.domain.model.aggregates.CommonPasswordList;
 import com.example.cargotracker.identity.domain.model.aggregates.CompanyRepository;
@@ -34,7 +35,6 @@ import com.example.cargotracker.identity.domain.model.aggregates.UserStandingRep
 import com.example.cargotracker.identity.domain.model.rules.LockPolicy;
 import com.example.cargotracker.identity.domain.model.rules.PasswordPolicy;
 import com.example.cargotracker.identity.infrastructure.crypto.AesGcmSecretCipher;
-import com.example.cargotracker.identity.interfaces.web.PasswordResetController;
 import com.example.cargotracker.notification.interfaces.api.PasswordResetMail;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -277,7 +277,7 @@ public class IdentityConfiguration {
                 generator,
                 hasher,
                 notificationPasswordResetMails,
-                publicBaseUrl(environment) + PasswordResetController.URL + "/",
+                publicBaseUrl(environment) + SessionPaths.PASSWORD_RESET_URL + "/",
                 clock);
     }
 

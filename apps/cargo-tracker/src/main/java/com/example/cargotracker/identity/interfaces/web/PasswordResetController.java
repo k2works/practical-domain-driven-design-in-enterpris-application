@@ -3,6 +3,7 @@ package com.example.cargotracker.identity.interfaces.web;
 import com.example.cargotracker.identity.application.internal.commandservices.PasswordResetCompletion;
 import com.example.cargotracker.identity.application.internal.commandservices.PasswordResetCompletionService;
 import com.example.cargotracker.identity.application.internal.commandservices.PasswordResetRequestService;
+import com.example.cargotracker.identity.application.internal.session.SessionPaths;
 import com.example.cargotracker.identity.domain.model.rules.PasswordPolicy;
 import com.example.cargotracker.identity.domain.model.valueobjects.EmailAddress;
 import com.example.cargotracker.identity.domain.model.valueobjects.PasswordPolicyViolation;
@@ -36,10 +37,10 @@ import org.springframework.web.bind.annotation.RequestParam;
 public class PasswordResetController {
 
     /** A-05 の URL（公開の URL。SecurityConfiguration の PUBLIC_PATHS）。メールのリンクは「この URL + / + トークン」。 */
-    public static final String URL = "/password-reset";
+    public static final String URL = SessionPaths.PASSWORD_RESET_URL;
 
     /** リンクと A-06 の URL の型（公開の URL。1 段だけ）。 */
-    public static final String TOKEN_URL_PATTERN = URL + "/*";
+    public static final String TOKEN_URL_PATTERN = SessionPaths.PASSWORD_RESET_TOKEN_URL_PATTERN;
 
     /** A-06 の URL（トークンのない URL）。 */
     static final String NEW_URL = URL + "/new";

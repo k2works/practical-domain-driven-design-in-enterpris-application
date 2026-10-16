@@ -114,6 +114,8 @@ class LayerArchitectureTest {
      * に置き、業務の判断（TOTP の照合と刻みの使用、Bolt 32 のロックの数え方）は {@code identity.application.internal.commandservices}
      * に置く。入口から参照してよいのはそのコマンドサービスと、画面と共有する session の属性の名前と URL（{@code application.internal.session}。
      * ふるまいを持たない。Bolt 33c、ADR-012 の決定 6）だけで、ほかのアプリケーション層には依存しない（規則の名前は ADR が参照するので変えない）。
+     * 定数（{@code static final String}）はコンパイル時に参照先に埋め込まれるので、この規則と層の規則には見えない。この例外が守るのは
+     * メソッドの呼び出しと Bean の流入で、定数の置き場所の向き（内側から画面の層に依存しない）は設計の約束として保つ（Bolt 33f の開発レビュー）。
      */
     @ArchTest
     static final ArchRule 認証の入口はidentityのコマンドサービスだけに依存してよい = noClasses()

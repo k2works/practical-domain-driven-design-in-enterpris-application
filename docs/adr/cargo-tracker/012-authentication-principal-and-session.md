@@ -4,7 +4,7 @@ title: "ADR-012: 認証の主体は共有カーネルの型にし、password の
 description: "US-18 の password によるログインと session を、Spring Security 7 の form login と Spring Session JDBC で作る。"
 tags: [adr, authentication, session]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-16T02:56:10Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-16T04:36:21Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-06T06:51:29Z }
 ---
@@ -93,7 +93,7 @@ US-18 の password によるログインと session を、Spring Security 7 の 
   - 同じ session での利用者の切り替え（T-102）: 回復コードでログインした後にログアウトせずに別の利用者の password を通すと、password の段の成功（`LoginSuccessHandler`）が印の 2 つの属性をどちらも消す（登録の途中の属性を消すのと同じ場所）。画面の層も、印の利用者の ID が今の主体と同じときだけ印として扱う（二重に守る）。印は再登録の完了でも消え、ログアウトと失効では session と一緒に消える。
   - 属性の名前は、Bolt 33b では認証の入口（`identity.infrastructure.security` の定数のクラス。Bolt 33c で名前と期間を `SessionKeys`・`SessionPolicy` に移して消した）と画面の層（`RecoveryLogin`）に同じ値の定数を置き、一致をテストで守っていた（画面の層は infrastructure に依存できない。前例は登録の途中の暗号文）。Bolt 33c で、ほかの 4 組と A-08 の URL（6 組目）とまとめて `SessionKeys` に、15 分の期間を `SessionPolicy` に寄せた（下の項目）。
 - Bolt 33c から、session の属性の名前と期間の置き場所を次の 2 つにする（2026-10-15、Bolt 33c の開始準備の決定 1・2 と決定 2 の (5) で human:kakimomokuri が決定）。振る舞いは変えない。
-  - 名前と URL: application 層の `SessionKeys`（`identity.application.internal.session`）。層をまたいで共有する session の属性の名前 6 つ（ログインの時刻、password を確かめた時刻、登録を始めた時刻、登録の途中の秘密、回復コードでログインした印の利用者と時刻）、request の属性の名前 2 つ（8 時間の残り、戻り先）、A-08 の URL、A-03 の URL（`/session-expired`）を置く。ふるまいは持たない。値は Bolt 33b までの文字列を変えない（動いている session の属性が読めなくならない。値を固定するテスト `SessionKeysTest` で守り、2 つの定数の一致を守るテストは要らなくなるので消す）。画面だけが使う名前（A-08 の途中の 2 つ）は画面の層に残し、テストの URL の写しは仕様として文字列のまま残す。パッケージは開発ガイドライン第 3 章の置き場所にないので、人の決定として書く。認証の入口からの参照は決定 6 の例外に足す。Bolt 33f から、URL 2 つは同じパッケージの定数だけのクラス `SessionPaths` に分け、`SessionKeys` は名前だけを持つ（2026-10-16、Bolt 33f の開始準備の決定 1）。Web の経路の関心（URL）を application 層に置く理由: 認証の入口（`infrastructure`。移す先）と画面の層（リンクとフォームの送信先）の両方が参照できる置き場所は application 層だけで、`interfaces` はどの層からも参照されない規則に例外を足さずに済む。名前と URL はクラスで分けたので、関心はクラスで見分けられる（Bolt 33c の議題 4 (b) への答え。Bolt 33f の開始準備の決定 7）。
+  - 名前（`SessionKeys`）と URL（Bolt 33f から `SessionPaths`）: application 層の `SessionKeys`（`identity.application.internal.session`）。層をまたいで共有する session の属性の名前 6 つ（ログインの時刻、password を確かめた時刻、登録を始めた時刻、登録の途中の秘密、回復コードでログインした印の利用者と時刻）、request の属性の名前 2 つ（8 時間の残り、戻り先）、A-08 の URL、A-03 の URL（`/session-expired`）を置く。ふるまいは持たない。値は Bolt 33b までの文字列を変えない（動いている session の属性が読めなくならない。値を固定するテスト `SessionKeysTest` で守り、2 つの定数の一致を守るテストは要らなくなるので消す）。画面だけが使う名前（A-08 の途中の 2 つ）は画面の層に残し、テストの URL の写しは仕様として文字列のまま残す。パッケージは開発ガイドライン第 3 章の置き場所にないので、人の決定として書く。認証の入口からの参照は決定 6 の例外に足す。Bolt 33f から、URL 2 つは同じパッケージの定数だけのクラス `SessionPaths` に分け、`SessionKeys` は名前だけを持つ（2026-10-16、Bolt 33f の開始準備の決定 1）。URL（遷移先）の関心を application 層に置く理由: 認証の入口（`infrastructure`。移す先）・合成ルート（公開する URL とメールに書く URL）と画面の層（リンク・フォームの送信先・受ける URL）が同じ値を参照し、内側の層から画面の層への依存を作らないため。`static final String` の定数はコンパイル時に参照先に埋め込まれるので、層の規則（ArchUnit）には定数の参照が見えない。規則で守れないことを承知の上で、意図した依存の向きを設計の約束として保つ。合成ルートが画面の層の `PasswordResetController.URL` を参照していた前例（Bolt 33）も、同じ向きにそろえて `SessionPaths` に寄せた。名前と URL はクラスで分けたので、関心はクラスで見分けられる（Bolt 33c の議題 4 (b) への答え。Bolt 33f の開始準備の決定 7 と開発レビューの決定。human:kakimomokuri が決定）。
   - 期間: ドメインルール `SessionPolicy`（`identity.domain.model.rules`。`LockPolicy` と並べる）。2 つの要素がそろった session の 8 時間、password の段の 5 分、登録の途中の 15 分、回復コードでログインした印の 15 分、再登録の 15 分を `Duration` の定数で持つ。Bolt 33c では期間だけを持ち、期限の判定は今の置き場所のままにした。Bolt 33e から、期限の判定 `isExpired`（ちょうどの時刻は期限切れ。時計を持たない純粋な関数）も持ち、判定していた 4 か所が使う（2026-10-16、Bolt 33e の開始準備の決定 2 で human:kakimomokuri が決定）。Bolt 33f から、期限の時刻 `deadline` も持ち、画面に示す期間の文言もこの期間から描く。
   - 採らなかった案: 名前と URL もドメインに置く（session と request の属性の名前は HTTP の関心で、業務の知識ではない）、画面の層に置いて入口から参照する（`interfaces` はどの層からも参照されない規則に例外が要る）、2 つの定数とテストのまま残す（同じ値を 6 組持ち、組が増えるたびにテストを足す）。
 
@@ -118,7 +118,7 @@ US-18 の password によるログインと session を、Spring Security 7 の 
 - ロックの判定 `LoginAttemptService#isLocked` は問い合わせだが `commandservices` に置く。認証の入口から呼ぶため、入口から呼べるのは `commandservices` だけという例外の範囲に収める（例外を `queryservices` に広げない）。登録済みかの問い合わせ `isEnrolled` を `queryservices` に移した Bolt 31b の前例は、入口から呼ばず画面の層だけが呼ぶ問い合わせだったためで、矛盾しない（Bolt 32 の計画の承認）。
 - Bolt 33c から、入口が参照してよい application 層に `identity.application.internal.session`（`SessionKeys`。Bolt 33f から URL の `SessionPaths` も同じパッケージ）を足す（2026-10-15、Bolt 33c の開始準備の決定 3 で human:kakimomokuri が決定）。`LayerArchitectureTest` の規則「認証の入口はidentityのコマンドサービスだけに依存してよい」の許可を `commandservices..` と `session..` にし、`because` に「session の属性の名前を認証の入口と画面で共有するため（Bolt 33c）」を足す。
   - 理由: session と request の属性の名前と A-08・A-03 の URL は、認証の入口（置く・読む・移す）と画面の層（読む・リンクに書く）の両方が使う。画面の層は `infrastructure` に依存できず、`interfaces` はどの層からも参照されないので、両方から参照できる置き場所は application 層になる。
-  - 上の「例外を `queryservices` に広げない」と矛盾しない理由: `SessionKeys` はふるまいを持たない名前（`public static final String` の定数）だけで、問い合わせも業務の判断も持たない。入口がこれを参照しても、業務の判断を入口に持ち込まない。`queryservices` を入口から呼べないようにしたのは、問い合わせ（業務の状態を読むふるまい）を入口に持ち込まないためで、その方針は変えない。
+  - 上の「例外を `queryservices` に広げない」と矛盾しない理由: `SessionKeys`・`SessionPaths`（Bolt 33f）はふるまいを持たない名前と URL（`public static final String` の定数）だけで、問い合わせも業務の判断も持たない。入口がこれを参照しても、業務の判断を入口に持ち込まない。`queryservices` を入口から呼べないようにしたのは、問い合わせ（業務の状態を読むふるまい）を入口に持ち込まないためで、その方針は変えない。
   - 例外の外（入口から `queryservices`、ほかの infrastructure から `session`）は落ちる。ほかの規則に当たったら止めて諮る（T-125）。
 
 ### 5. 開発環境の入力済み
@@ -196,7 +196,8 @@ US-18 の password によるログインと session を、Spring Security 7 の 
 
 ## 改訂の経緯
 
-- 2026-10-16: Bolt 33f のステップ 1 で、決定 3 の URL を `SessionKeys` から同じパッケージの `SessionPaths` に分け、Web の経路の関心を application 層に置く理由（Bolt 33c の議題 4 (b)）と、`SessionPolicy` の期限の時刻 `deadline` を書いた。決定 6 とコンプライアンスの節も合わせた（Bolt 33f の開始準備の決定 1・3・7。human:kakimomokuri が決定）。
+- 2026-10-16: Bolt 33f の開発レビューで、決定 3 の URL を application 層に置く理由を「規則に例外を足さずに済む」から「規則に見えない定数の依存の向きを、設計の約束として保つ」に正し、合成ルートが参照していた password の再設定の URL（`PasswordResetController.URL`）も `SessionPaths` に寄せた。決定 6 に `SessionPaths` を足した（human:kakimomokuri が決定）。
+- 2026-10-16: Bolt 33f のステップ 1 で、決定 3 の URL を `SessionKeys` から同じパッケージの `SessionPaths` に分け、URL（遷移先）の関心を application 層に置く理由（Bolt 33c の議題 4 (b)）と、`SessionPolicy` の期限の時刻 `deadline` を書いた。決定 6 とコンプライアンスの節も合わせた（Bolt 33f の開始準備の決定 1・3・7。human:kakimomokuri が決定）。
 - 2026-10-16: Bolt 33e のステップ 1 で、決定 3 の期間の置き場所 `SessionPolicy` に期限の判定 `isExpired`（ちょうどの時刻は期限切れ。時計を持たない純粋な関数）を足し、判定していた 4 か所が使うことにした（「ふるまいは持たず」を改めた。Bolt 33e の開始準備の決定 2。human:kakimomokuri が決定）。
 - 2026-10-15: Bolt 33c の実装で、決定 3 の覚えた要求を「`RequestCache` を 1 つの Bean にして 3 つの部品で共有する」から「Bean は作らず、属性の名前 `SessionKeys.SAVED_REQUEST` だけを共有する」に改めた（`RequestCache` の Bean を作ると、Spring Security の `RequestCacheConfigurer` が型でその Bean を見つけ、`http.requestCache` に渡さなくても未認証の入口で使うので、未認証の入口が覚える範囲が変わるため。human:kakimomokuri が決定）。あわせて、テンプレートの URL は画面の層の `SessionUrlsAdvice` がモデルで渡すこと（Thymeleaf のリンク式は静的なクラスを参照できない）と、空になった認証の入口の定数のクラスを消したことを書いた。
 - 2026-10-15: Bolt 33c のステップ 1 で、決定 3 の属性の名前の置き場所を application 層の `SessionKeys`（`identity.application.internal.session`）、期間の置き場所をドメインルール `SessionPolicy` に改め（2 つの定数で持ち一致をテストで守る形をやめた）、覚えた要求の `RequestCache` を 1 つの Bean にして 3 つの部品で共有し Spring Security の既定には渡さないことを書いた。決定 6 に認証の入口の例外として `application.internal.session` を足し、「例外を `queryservices` に広げない」と矛盾しない理由（ふるまいを持たない名前だけで、業務の判断を入口に持ち込まない）を書いた（Bolt 33c の開始準備の決定 1〜3 と決定 2 の (4)・(5)。human:kakimomokuri が決定）。
