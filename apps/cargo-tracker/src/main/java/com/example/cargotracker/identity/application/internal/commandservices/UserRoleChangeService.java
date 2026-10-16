@@ -5,7 +5,9 @@ import com.example.cargotracker.identity.domain.model.aggregates.AuditRecordRepo
 import com.example.cargotracker.identity.domain.model.aggregates.Company;
 import com.example.cargotracker.identity.domain.model.aggregates.CompanyRepository;
 import com.example.cargotracker.identity.domain.model.aggregates.User;
+import com.example.cargotracker.identity.domain.model.aggregates.UserAssignmentRepository;
 import com.example.cargotracker.identity.domain.model.aggregates.UserRepository;
+import com.example.cargotracker.identity.domain.model.valueobjects.AdministrationScope;
 import com.example.cargotracker.identity.domain.model.valueobjects.RoleChangeRejection;
 import com.example.cargotracker.shared.domain.AuthenticatedActor;
 import com.example.cargotracker.shared.domain.Role;
@@ -31,6 +33,7 @@ public class UserRoleChangeService {
 
     private final UserRepository users;
     private final CompanyRepository companies;
+    private final UserAssignmentRepository assignments;
     private final AuditRecordRepository auditRecords;
     private final Clock clock;
     private final TransactionTemplate transactionTemplate;
@@ -38,11 +41,13 @@ public class UserRoleChangeService {
     public UserRoleChangeService(
             UserRepository users,
             CompanyRepository companies,
+            UserAssignmentRepository assignments,
             AuditRecordRepository auditRecords,
             Clock clock,
             TransactionTemplate transactionTemplate) {
         this.users = users;
         this.companies = companies;
+        this.assignments = assignments;
         this.auditRecords = auditRecords;
         this.clock = clock;
         this.transactionTemplate = transactionTemplate;
@@ -110,6 +115,11 @@ public class UserRoleChangeService {
         Optional<Company> company = user.flatMap(found -> companies.findById(found.companyId()));
         if (user.isEmpty() || company.isEmpty()) {
             return new Judgement.Refused(new RoleChangeResult.NotFound());
+        }
+        // 管理範囲（Bolt 34b。IA-INV-14）は規則より先に見る（範囲外の利用者の様子を規則の拒否で漏らさない）
+        if (!new AdministrationScope(assignments.managedCompanies(operator.userId()))
+                .covers(user.get().companyId())) {
+            return new Judgement.Refused(new RoleChangeResult.OutOfScope());
         }
         Optional<RoleChangeRejection> rejection =
                 user.get().roleChangeRejection(operator.userId(), company.get(), newRoles);

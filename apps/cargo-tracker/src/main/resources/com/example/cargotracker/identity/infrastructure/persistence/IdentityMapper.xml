@@ -128,14 +128,6 @@
         r.role
     </sql>
 
-    <select id="selectUserAdministrationRows" resultMap="userAdministrationRow">
-        SELECT <include refid="userAdministrationColumns"/>
-          FROM identity.app_user u
-          JOIN identity.company c ON c.id = u.company_id
-          LEFT JOIN identity.user_role r ON r.user_id = u.id
-         ORDER BY c.name, u.display_name, u.id, r.role
-    </select>
-
     <!-- Bolt 34b。管理範囲の企業の利用者だけ（空の集合では呼ばない） -->
     <select id="selectUserAdministrationRowsIn" resultMap="userAdministrationRow">
         SELECT <include refid="userAdministrationColumns"/>

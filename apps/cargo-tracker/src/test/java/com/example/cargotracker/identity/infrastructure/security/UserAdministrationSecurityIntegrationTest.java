@@ -1,16 +1,21 @@
 package com.example.cargotracker.identity.infrastructure.security;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.Mockito.doThrow;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.example.cargotracker.identity.AdministrationFixtures;
 import com.example.cargotracker.identity.domain.model.aggregates.Company;
 import com.example.cargotracker.identity.domain.model.aggregates.TotpCredential;
 import com.example.cargotracker.identity.domain.model.aggregates.TotpCredentialRepository;
 import com.example.cargotracker.identity.domain.model.aggregates.User;
+import com.example.cargotracker.identity.domain.model.valueobjects.AuditAction;
 import com.example.cargotracker.identity.domain.model.valueobjects.CompanyKind;
 import com.example.cargotracker.identity.domain.model.valueobjects.EmailAddress;
 import com.example.cargotracker.identity.domain.model.valueobjects.UserStatus;
@@ -292,7 +297,9 @@ class UserAdministrationSecurityIntegrationTest extends IdentitySpyIntegrationTe
     void 荷受人の企業の利用者の詳細には役割のフォームを出さない() throws Exception {
         Company consignee = Company.of(new CompanyId(UUID.randomUUID()), "荷受人 A", CompanyKind.CONSIGNEE, true);
         companies.add(consignee);
-        Cookie session = login(user(operator, Role.SYSTEM_ADMIN));
+        String admin = user(operator, Role.SYSTEM_ADMIN);
+        AdministrationFixtures.assignCompany(jdbc, userIdOf(admin), consignee.id());
+        Cookie session = login(admin);
         String target = user(consignee, Role.SHIPPER);
 
         String detail = page(session, USERS_URL + "/" + userIdOf(target).value());
@@ -300,7 +307,104 @@ class UserAdministrationSecurityIntegrationTest extends IdentitySpyIntegrationTe
         assertThat(detail).contains("荷受人の企業の利用者には役割を付けません。").doesNotContain("変更内容を確認する");
     }
 
+    // --- 管理範囲（Bolt 34b。US-16 AC2、IA-INV-14） ---
+
+    @Test
+    void 範囲外の利用者は一覧に出ず詳細も確認も確定も404で試行が1行ずつ残り役割も版も変わらない() throws Exception {
+        Company outside = Company.of(new CompanyId(UUID.randomUUID()), "範囲外の会社", CompanyKind.OPERATOR, true);
+        companies.add(outside);
+        String admin = user(operator, Role.SYSTEM_ADMIN);
+        Cookie session = login(admin);
+        String stranger = user(outside, Role.SALES);
+        String detailUrl = USERS_URL + "/" + userIdOf(stranger).value();
+
+        assertThat(page(session, USERS_URL)).doesNotContain(stranger);
+        mvc.perform(get(detailUrl).cookie(session)).andExpect(status().isNotFound());
+        assertThat(scopeDenialsOf(stranger)).isEqualTo(1);
+        mvc.perform(get(detailUrl + "/role-changes/confirmation")
+                        .cookie(session)
+                        .param("roles", Role.ROUTE_DESIGNER.name())
+                        .param("version", "0"))
+                .andExpect(status().isNotFound());
+        assertThat(scopeDenialsOf(stranger)).isEqualTo(2);
+        postChange(session, stranger, "0", Role.ROUTE_DESIGNER.name()).andExpect(status().isNotFound());
+        assertThat(scopeDenialsOf(stranger)).isEqualTo(3);
+
+        assertThat(rolesOf(stranger)).containsExactly("SALES");
+        assertThat(jdbc.queryForObject(
+                        "SELECT version FROM identity.app_user WHERE id = ?",
+                        Long.class,
+                        userIdOf(stranger).value()))
+                .isZero();
+        assertThat(jdbc.queryForObject(
+                        "SELECT actor_user_id FROM identity.audit_record WHERE action = 'ADMIN_SCOPE_DENIED'"
+                                + " AND target_id = ? FETCH FIRST 1 ROWS ONLY",
+                        UUID.class,
+                        userIdOf(stranger).value().toString()))
+                .isEqualTo(userIdOf(admin).value());
+    }
+
+    @Test
+    void 範囲外とない利用者は同じ404で区別できない() throws Exception {
+        Company outside = Company.of(new CompanyId(UUID.randomUUID()), "範囲外の会社", CompanyKind.OPERATOR, true);
+        companies.add(outside);
+        Cookie session = login(user(operator, Role.SYSTEM_ADMIN));
+        String stranger = user(outside, Role.SALES);
+
+        String outOfScope = mvc.perform(
+                        get(USERS_URL + "/" + userIdOf(stranger).value()).cookie(session))
+                .andExpect(status().isNotFound())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+        String missing = mvc.perform(get(USERS_URL + "/" + UUID.randomUUID()).cookie(session))
+                .andExpect(status().isNotFound())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        // MockMvc はエラーの画面を描かない（本文は空）。共通の 404 の画面の文言は画面の層の受入シナリオで確かめる
+        assertThat(outOfScope).isEqualTo(missing).doesNotContain(stranger);
+    }
+
+    @Test
+    void 管理範囲のないシステム管理者には一覧が空で自分の詳細も404() throws Exception {
+        String admin = user(operator, Role.SYSTEM_ADMIN);
+        jdbc.update(
+                "DELETE FROM identity.user_assignment WHERE user_id = ?",
+                userIdOf(admin).value());
+        Cookie session = login(admin);
+
+        assertThat(page(session, USERS_URL)).contains("管理する企業の利用者はいません。").doesNotContain(admin);
+        mvc.perform(get(USERS_URL + "/" + userIdOf(admin).value()).cookie(session))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void 範囲外の試行を書けなければ404で隠さず失敗にする() throws Exception {
+        Company outside = Company.of(new CompanyId(UUID.randomUUID()), "範囲外の会社", CompanyKind.OPERATOR, true);
+        companies.add(outside);
+        Cookie session = login(user(operator, Role.SYSTEM_ADMIN));
+        String stranger = user(outside, Role.SALES);
+        doThrow(new IllegalStateException("監査の表に届かない"))
+                .when(auditRecords)
+                .append(argThat(written -> written.action() == AuditAction.ADMIN_SCOPE_DENIED));
+        String url = USERS_URL + "/" + userIdOf(stranger).value();
+
+        assertThatThrownBy(() -> mvc.perform(get(url).cookie(session)))
+                .rootCause()
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessage("監査の表に届かない");
+    }
+
     // --- helpers ---
+
+    int scopeDenialsOf(String email) {
+        return jdbc.queryForObject(
+                "SELECT count(*) FROM identity.audit_record WHERE action = 'ADMIN_SCOPE_DENIED' AND target_id = ?",
+                Integer.class,
+                userIdOf(email).value().toString());
+    }
 
     private org.springframework.test.web.servlet.ResultActions postChange(
             Cookie session, String target, String version, String... roles) throws Exception {
@@ -332,6 +436,11 @@ class UserAdministrationSecurityIntegrationTest extends IdentitySpyIntegrationTe
                 Set.of(role)));
         totpCredentials.add(TotpCredential.enroll(
                 userId, cipher.encrypt(TOTP_SECRET.clone(), userId), new UtcInstant(clock.instant())));
+        if (role == Role.SYSTEM_ADMIN) {
+            // 管理範囲（Bolt 34b）。テストの A 社と荷主 A を割り当てる。ほかの企業はテストごとに割り当てる
+            AdministrationFixtures.assignCompany(jdbc, userId, operator.id());
+            AdministrationFixtures.assignCompany(jdbc, userId, shipper.id());
+        }
         return email;
     }
 

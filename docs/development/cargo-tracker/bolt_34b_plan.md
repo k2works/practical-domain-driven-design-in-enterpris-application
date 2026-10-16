@@ -3,7 +3,7 @@ type: Plan
 title: "Bolt 34b 計画 - システム管理者の管理範囲と範囲外の試行の記録（US-16 の一部）"
 description: "W5 の 23 本目の Bolt の計画。システム管理者の管理範囲を担当範囲の表 user_assignment（COMPANY）で持ち、S-20 の一覧・詳細・役割の変更を管理範囲の企業の利用者に絞る。範囲外の利用者は存在しない利用者と同じ 404 にし、試行を監査記録に同じ request で書く（AC2、IA-INV-08）。利用停止と再開は 34d に分けた。"
 tags: [plan]
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-16T09:55:13Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-16T10:07:20Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-16T09:25:23Z }
   - { by: human:kakimomokuri, at: 2026-10-16T09:25:49Z }
@@ -198,7 +198,7 @@ u ||--o{ ua
   - マイグレーション（common）と dev-data（システム管理者に A 社と荷主 A）。`UserAssignmentRepository` の実装とマッパー、`UserRepository.findSummariesIn`（`findSummaries` を消す）。統合テスト（表の制約、割り当ての読み出し、一覧の絞り込み・空の集合）。テストの割り当ての補助 `AdministrationFixtures`
 - [x] **3. 管理範囲と試行の記録** 【承認ゲート: Red・Green、セキュリティ】
   - `AdministrationScope` の単体テスト、`AuditRecord.adminScopeDenied`、`AdministrationScopeDenialService` の単体テストと統合テスト（追記の失敗は例外）
-- [ ] **4. 照会と役割の変更のサービス** 【承認ゲート: セキュリティ】
+- [x] **4. 照会と役割の変更のサービス** 【承認ゲート: セキュリティ】
   - `UserAdministrationQueryService` の `list(actor)`・`detail(actor, id)`、`UserRoleChangeService` の範囲の判定と `OutOfScope`。単体テストと統合テスト（範囲外の確定で役割と版は変わらない）。既存の `UserRoleChangeServiceTest`・`UserRoleChangeIntegrationTest`・`UserRoleChangeRollbackIntegrationTest` に割り当てを足す
 - [ ] **5. 画面と受入シナリオ** 【承認ゲート: 画面・セキュリティ】
   - セキュリティの統合テストを先に（範囲外の詳細・確認・確定が 404 で `ADMIN_SCOPE_DENIED` が 1 行ずつ、役割も版も変わらない、一覧に範囲外の利用者が出ない、割り当てのないシステム管理者には空、監査の追記の失敗で 500）。既存の `UserAdministrationSecurityIntegrationTest` に割り当てを足す

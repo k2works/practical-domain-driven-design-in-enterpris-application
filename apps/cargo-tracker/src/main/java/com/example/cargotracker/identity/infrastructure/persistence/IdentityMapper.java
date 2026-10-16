@@ -41,9 +41,6 @@ public interface IdentityMapper {
             @Param("grantedBy") UUID grantedBy,
             @Param("now") OffsetDateTime now);
 
-    /** S-20 の一覧の行（Bolt 34）。利用者ごとに役割の数だけ行が出る。 */
-    List<UserAdministrationRow> selectUserAdministrationRows();
-
     /** S-20 の一覧の行のうち、企業で絞ったもの（Bolt 34b。管理範囲）。利用者ごとに役割の数だけ行が出る。 */
     List<UserAdministrationRow> selectUserAdministrationRowsIn(@Param("companyIds") List<UUID> companyIds);
 

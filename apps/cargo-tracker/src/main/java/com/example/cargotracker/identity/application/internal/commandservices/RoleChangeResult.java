@@ -38,4 +38,7 @@ public sealed interface RoleChangeResult {
 
     /** 操作者がシステム管理者でない（URL の認可に加えてサービスでも確かめる）。 */
     record NotPermitted() implements RoleChangeResult {}
+
+    /** 対象の利用者が操作者の管理範囲の外（Bolt 34b。IA-INV-14）。何も書いていない（試行の記録は controller が書く）。 */
+    record OutOfScope() implements RoleChangeResult {}
 }

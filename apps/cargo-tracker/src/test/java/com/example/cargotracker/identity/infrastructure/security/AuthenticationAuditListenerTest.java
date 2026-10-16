@@ -233,11 +233,6 @@ class AuthenticationAuditListenerTest {
             }
 
             @Override
-            public List<UserSummary> findSummaries() {
-                throw new UnsupportedOperationException();
-            }
-
-            @Override
             public List<UserSummary> findSummariesIn(Set<CompanyId> companies) {
                 throw new UnsupportedOperationException();
             }

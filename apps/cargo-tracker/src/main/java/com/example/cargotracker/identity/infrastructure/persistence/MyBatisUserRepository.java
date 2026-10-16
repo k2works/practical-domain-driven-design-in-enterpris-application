@@ -93,11 +93,6 @@ public class MyBatisUserRepository implements UserRepository {
         return true;
     }
 
-    @Override
-    public List<UserSummary> findSummaries() {
-        return summaries(mapper.selectUserAdministrationRows());
-    }
-
     private static List<UserSummary> summaries(List<UserAdministrationRow> found) {
         return group(found).stream()
                 .map(rows -> {

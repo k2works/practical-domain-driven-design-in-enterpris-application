@@ -32,6 +32,7 @@ import com.example.cargotracker.identity.domain.model.aggregates.RecoveryCodeRep
 import com.example.cargotracker.identity.domain.model.aggregates.TotpCodeGenerator;
 import com.example.cargotracker.identity.domain.model.aggregates.TotpCredentialRepository;
 import com.example.cargotracker.identity.domain.model.aggregates.TotpSecretIssuer;
+import com.example.cargotracker.identity.domain.model.aggregates.UserAssignmentRepository;
 import com.example.cargotracker.identity.domain.model.aggregates.UserRepository;
 import com.example.cargotracker.identity.domain.model.aggregates.UserSessionRevoker;
 import com.example.cargotracker.identity.domain.model.aggregates.UserStandingRepository;
@@ -149,10 +150,11 @@ public class IdentityConfiguration {
     UserRoleChangeService userRoleChangeService(
             UserRepository users,
             CompanyRepository companies,
+            UserAssignmentRepository assignments,
             AuditRecordRepository auditRecords,
             Clock clock,
             TransactionTemplate transactionTemplate) {
-        return new UserRoleChangeService(users, companies, auditRecords, clock, transactionTemplate);
+        return new UserRoleChangeService(users, companies, assignments, auditRecords, clock, transactionTemplate);
     }
 
     @Bean
@@ -162,8 +164,9 @@ public class IdentityConfiguration {
     }
 
     @Bean
-    UserAdministrationQueryService userAdministrationQueryService(UserRepository users) {
-        return new UserAdministrationQueryService(users);
+    UserAdministrationQueryService userAdministrationQueryService(
+            UserRepository users, UserAssignmentRepository assignments) {
+        return new UserAdministrationQueryService(users, assignments);
     }
 
     @Bean

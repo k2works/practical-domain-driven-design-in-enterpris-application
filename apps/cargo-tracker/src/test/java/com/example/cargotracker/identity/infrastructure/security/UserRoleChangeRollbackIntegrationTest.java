@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.doThrow;
 
+import com.example.cargotracker.identity.AdministrationFixtures;
 import com.example.cargotracker.identity.application.internal.commandservices.UserRoleChangeService;
 import com.example.cargotracker.identity.domain.model.aggregates.Company;
 import com.example.cargotracker.identity.domain.model.aggregates.User;
@@ -47,8 +48,18 @@ class UserRoleChangeRollbackIntegrationTest extends IdentitySpyIntegrationTestBa
                 "{noop}unused",
                 UserStatus.ACTIVE,
                 Set.of(Role.SALES)));
-        AuthenticatedActor admin = new AuthenticatedActor(
-                new UserId(UUID.randomUUID()), operator.id(), Set.of(Role.SYSTEM_ADMIN), "管理 次郎", "A 社");
+        UserId adminId = new UserId(UUID.randomUUID());
+        users.add(User.of(
+                adminId,
+                operator.id(),
+                EmailAddress.of("admin-" + adminId.value() + "@example.com"),
+                "管理 次郎",
+                "{noop}unused",
+                UserStatus.ACTIVE,
+                Set.of(Role.SYSTEM_ADMIN)));
+        AdministrationFixtures.assignCompany(jdbc, adminId, operator.id());
+        AuthenticatedActor admin =
+                new AuthenticatedActor(adminId, operator.id(), Set.of(Role.SYSTEM_ADMIN), "管理 次郎", "A 社");
         doThrow(new IllegalStateException("監査の表に届かない"))
                 .when(auditRecords)
                 .append(argThat(written -> written.action() == AuditAction.ROLES_CHANGED));

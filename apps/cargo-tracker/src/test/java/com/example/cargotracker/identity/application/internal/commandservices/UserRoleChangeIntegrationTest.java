@@ -2,6 +2,7 @@ package com.example.cargotracker.identity.application.internal.commandservices;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.example.cargotracker.identity.AdministrationFixtures;
 import com.example.cargotracker.identity.IdentityIntegrationTest;
 import com.example.cargotracker.identity.OverlappingTransactions;
 import com.example.cargotracker.identity.domain.model.aggregates.Company;
@@ -62,8 +63,20 @@ class UserRoleChangeIntegrationTest {
         clock.setInstant(NOW);
         operator = Company.of(new CompanyId(UUID.randomUUID()), "A 社", CompanyKind.OPERATOR, true);
         transactionTemplate.executeWithoutResult(status -> companies.add(operator));
-        admin = new AuthenticatedActor(
-                new UserId(UUID.randomUUID()), operator.id(), Set.of(Role.SYSTEM_ADMIN), "管理 次郎", "A 社");
+        UserId adminId = new UserId(UUID.randomUUID());
+        admin = new AuthenticatedActor(adminId, operator.id(), Set.of(Role.SYSTEM_ADMIN), "管理 次郎", "A 社");
+        // 管理範囲（Bolt 34b）。担当範囲の表は利用者への外部キーを持つので、管理者の利用者も作る
+        transactionTemplate.executeWithoutResult(status -> {
+            users.add(User.of(
+                    adminId,
+                    operator.id(),
+                    EmailAddress.of("admin-" + adminId.value() + "@example.com"),
+                    "管理 次郎",
+                    "{noop}unused",
+                    UserStatus.ACTIVE,
+                    Set.of(Role.SYSTEM_ADMIN)));
+            AdministrationFixtures.assignCompany(jdbc, adminId, operator.id());
+        });
     }
 
     private UserId newSales() {
@@ -148,6 +161,28 @@ class UserRoleChangeIntegrationTest {
         assertThat(rolesOf(sales)).extracting(row -> row.get("role")).containsExactly("ROUTE_DESIGNER");
         assertThat(versionOf(sales)).isEqualTo(1L);
         assertThat(auditsOf(sales)).hasSize(1);
+    }
+
+    @Test
+    void 管理範囲外の利用者の役割は変えず何も書かない() {
+        Company outside = Company.of(new CompanyId(UUID.randomUUID()), "範囲外の会社", CompanyKind.OPERATOR, true);
+        transactionTemplate.executeWithoutResult(status -> companies.add(outside));
+        UserId stranger = new UserId(UUID.randomUUID());
+        transactionTemplate.executeWithoutResult(status -> users.add(User.of(
+                stranger,
+                outside.id(),
+                EmailAddress.of("stranger-" + stranger.value() + "@example.com"),
+                "営業 三郎",
+                "{noop}unused",
+                UserStatus.ACTIVE,
+                Set.of(Role.SALES))));
+
+        assertThat(service.change(admin, stranger, 0L, Set.of(Role.ROUTE_DESIGNER)))
+                .isEqualTo(new RoleChangeResult.OutOfScope());
+
+        assertThat(rolesOf(stranger)).extracting(row -> row.get("role")).containsExactly("SALES");
+        assertThat(versionOf(stranger)).isZero();
+        assertThat(auditsOf(stranger)).isEmpty();
     }
 
     @Test

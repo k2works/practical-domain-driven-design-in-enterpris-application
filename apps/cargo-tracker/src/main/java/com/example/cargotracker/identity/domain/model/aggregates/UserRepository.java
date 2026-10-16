@@ -39,9 +39,6 @@ public interface UserRepository {
      */
     boolean changeRoles(User changed, long expectedVersion, UserId grantedBy, UtcInstant at);
 
-    /** S-20 の一覧の行を、所属企業の名前・表示名の順に返す（Bolt 34）。`password_hash` を読まない。 */
-    List<UserSummary> findSummaries();
-
     /**
      * S-20 の一覧の行のうち、その企業の利用者だけを、所属企業の名前・表示名の順に返す（Bolt 34b。管理範囲）。企業がなければ空。
      * `password_hash` を読まない。

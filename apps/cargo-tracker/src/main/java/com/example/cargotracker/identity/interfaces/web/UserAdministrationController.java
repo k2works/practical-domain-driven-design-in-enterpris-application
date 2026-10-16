@@ -1,8 +1,10 @@
 package com.example.cargotracker.identity.interfaces.web;
 
+import com.example.cargotracker.identity.application.internal.commandservices.AdministrationScopeDenialService;
 import com.example.cargotracker.identity.application.internal.commandservices.RoleChangeResult;
 import com.example.cargotracker.identity.application.internal.commandservices.UserRoleChangeService;
 import com.example.cargotracker.identity.application.internal.queryservices.UserAdministrationQueryService;
+import com.example.cargotracker.identity.application.internal.queryservices.UserLookup;
 import com.example.cargotracker.identity.domain.model.rules.RoleAssignmentPolicy;
 import com.example.cargotracker.identity.domain.model.valueobjects.CompanyKind;
 import com.example.cargotracker.identity.domain.model.valueobjects.RoleChangeRejection;
@@ -59,16 +61,20 @@ public class UserAdministrationController {
 
     private final UserAdministrationQueryService queryService;
     private final UserRoleChangeService roleChanges;
+    private final AdministrationScopeDenialService denials;
 
     public UserAdministrationController(
-            UserAdministrationQueryService queryService, UserRoleChangeService roleChanges) {
+            UserAdministrationQueryService queryService,
+            UserRoleChangeService roleChanges,
+            AdministrationScopeDenialService denials) {
         this.queryService = queryService;
         this.roleChanges = roleChanges;
+        this.denials = denials;
     }
 
     @GetMapping(USERS_URL)
-    public String list(Model model) {
-        model.addAttribute("summaries", queryService.list());
+    public String list(AuthenticatedActor actor, Model model) {
+        model.addAttribute("summaries", queryService.list(actor));
         model.addAttribute(ACTIVE_ATTRIBUTE, ACTIVE);
         return "identity/users/list";
     }
@@ -81,7 +87,7 @@ public class UserAdministrationController {
             @RequestParam(name = "version", required = false) Long version,
             AuthenticatedActor actor,
             Model model) {
-        UserDetail user = detail(id);
+        UserDetail user = detail(id, actor);
         Set<Role> selected = roles == null ? user.roles() : parseRoles(roles);
         long formVersion = version == null ? user.version() : version;
         return showDetail(new DetailForm(user, selected, formVersion, null), actor, model);
@@ -94,7 +100,7 @@ public class UserAdministrationController {
             @RequestParam long version,
             AuthenticatedActor actor,
             Model model) {
-        UserDetail user = detail(id);
+        UserDetail user = detail(id, actor);
         Set<Role> selected = parseRoles(roles);
         RoleChangeResult result = roleChanges.check(actor, user.id(), version, selected);
         if (result instanceof RoleChangeResult.Acceptable) {
@@ -111,7 +117,8 @@ public class UserAdministrationController {
             AuthenticatedActor actor,
             Model model,
             RedirectAttributes redirectAttributes) {
-        UserId target = parse(id).orElseThrow(UserAdministrationController::notFound);
+        // 確定も先に詳細を読み、管理範囲の外なら試行を記録して 404 にする（Bolt 34b。書き手はこの controller だけ）
+        UserId target = detail(id, actor).id();
         Set<Role> selected = parseRoles(roles);
         RoleChangeResult result = roleChanges.change(actor, target, version, selected);
         if (result instanceof RoleChangeResult.Changed) {
@@ -131,20 +138,25 @@ public class UserAdministrationController {
             RoleChangeResult result) {
         return switch (result) {
             case RoleChangeResult.Rejected(RoleChangeRejection rejection) -> {
-                UserDetail user = detail(id);
+                UserDetail user = detail(id, actor);
                 yield showDetail(
                         new DetailForm(user, selected, version, ErrorMessage.of(rejection, user.companyKind())),
                         actor,
                         model);
             }
             case RoleChangeResult.Stale _ -> {
-                UserDetail user = detail(id);
+                UserDetail user = detail(id, actor);
                 yield showDetail(
                         new DetailForm(user, user.roles(), user.version(), new ErrorMessage(STALE_MESSAGE, false)),
                         actor,
                         model);
             }
             case RoleChangeResult.NotFound _ -> throw notFound();
+            case RoleChangeResult.OutOfScope _ -> {
+                // 詳細を読んだ後に管理範囲から外れたとき（同じ request の中の守り）
+                denials.recordDenied(actor, parse(id).orElseThrow(UserAdministrationController::notFound));
+                throw notFound();
+            }
             case RoleChangeResult.NotPermitted _ -> throw new ResponseStatusException(HttpStatus.FORBIDDEN);
             case RoleChangeResult.Changed _, RoleChangeResult.Acceptable _ ->
                 throw new IllegalStateException("受け付けた結果は示し直さない");
@@ -206,8 +218,21 @@ public class UserAdministrationController {
         return roles.isEmpty() ? List.of() : List.copyOf(EnumSet.copyOf(roles));
     }
 
-    private UserDetail detail(String id) {
-        return parse(id).flatMap(queryService::detail).orElseThrow(UserAdministrationController::notFound);
+    /**
+     * 詳細を読む。いなければ 404、管理範囲の外なら試行を記録して同じ 404（存在を示さない。Bolt 34b の決定 3）、システム管理者でなければ
+     * 403（役割の変更の権限なしと同じ応答）。
+     */
+    private UserDetail detail(String id, AuthenticatedActor actor) {
+        UserId target = parse(id).orElseThrow(UserAdministrationController::notFound);
+        return switch (queryService.detail(actor, target)) {
+            case UserLookup.Found(UserDetail found) -> found;
+            case UserLookup.NotFound _ -> throw notFound();
+            case UserLookup.OutOfScope _ -> {
+                denials.recordDenied(actor, target);
+                throw notFound();
+            }
+            case UserLookup.NotPermitted _ -> throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+        };
     }
 
     private static Optional<UserId> parse(String id) {
