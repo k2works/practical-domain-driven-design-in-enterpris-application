@@ -10839,11 +10839,11 @@
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>3. session の ID の値オブジェクト</strong></li>
 <li><code>SessionId</code> と <code>SessionIdTest</code> を足し、ポート（<code>UserSessionRevoker</code>）・実装（<code>SpringSessionUserSessionRevoker</code> の比較を <code>keep.value()</code> に）・再登録のサービス（<code>complete</code> の引数）・画面（<code>session.getId()</code> を包む）を付け替える。テスト: <code>TotpReEnrollmentServiceTest</code> の <code>anyString()</code> 5 か所と定数 <code>CURRENT_SESSION</code>、<code>TotpReEnrollmentRollbackIntegrationTest</code>、<code>SpringSessionUserSessionRevokerIntegrationTest</code>、<code>PasswordResetCompletionServiceTest</code>（mock）</li>
 <li>変異: 実装の比較を <code>id.equals(keep)</code> に戻すと、今の session を残すテストが落ちる</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>4. 認証の結果のトークンに経路</strong></li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>4. 認証の結果のトークンに経路</strong></li>
 <li>先に、<code>RecoveryCodeAuthenticationProviderTest</code> に経路の確かめを足す（今は権限だけ）。既存の <code>RecoveryCodeLoginSecurityIntegrationTest</code>（回復コードでログインすると A-08、認証コードでログインすると役割のホーム）が外側を守る</li>
 <li>トークンに <code>transient</code> の経路を足し、2 つの provider・成功のハンドラー・<code>Builder</code>・<code>toBuilder()</code> を付け替え、request の属性をやめる。影響するテスト: <code>SpringSecurityCharacterizationTest</code>、<code>AuthenticationAuditListenerTest</code></li>
 <li>変異: 成功のハンドラーで経路を読まない（常に TOTP）、<code>Builder</code> が経路を写さない、の 2 つで落ちる</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>5. 画面だけが使う属性の名前の値</strong></li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>5. 画面だけが使う属性の名前の値</strong></li>
 <li>2 つの定数の値を固定するテストを足す。変異: 値を変えると落ちる</li>
 <li>完了の判定: <code>check</code> 緑、<code>uiTest</code> 緑</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>6. SonarQube と開発レビューと終了報告</strong> 【承認ゲート: 終了報告】</li>
