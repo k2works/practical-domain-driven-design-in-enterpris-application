@@ -46,9 +46,6 @@ public class TotpAuthenticationFilter extends AbstractAuthenticationProcessingFi
     /** A-02 の回復コードの欄の名前（Bolt 31c）。 */
     public static final String RECOVERY_CODE_PARAMETER = "recoveryCode";
 
-    /** 回復コードの経路で認証したことを成功のハンドラーに伝える request の属性の名前（Bolt 33b）。 */
-    static final String RECOVERY_ATTEMPT_ATTRIBUTE = TotpAuthenticationFilter.class.getName() + ".RECOVERY_ATTEMPT";
-
     /** TOTP の誤りで戻す A-01 の URL（UI 設計「A-02」の文言を出す）。 */
     public static final String FAILURE_URL = "/login?totp-error";
 
@@ -78,7 +75,6 @@ public class TotpAuthenticationFilter extends AbstractAuthenticationProcessingFi
         String code = request.getParameter("code");
         String recoveryCode = request.getParameter(RECOVERY_CODE_PARAMETER);
         if (recoveryCode != null && !recoveryCode.isBlank()) {
-            request.setAttribute(RECOVERY_ATTEMPT_ATTRIBUTE, Boolean.TRUE);
             return getAuthenticationManager()
                     .authenticate(RecoveryCodeAuthenticationToken.unauthenticated(
                             current.getPrincipal(), recoveryCode, code != null && !code.isBlank()));
@@ -113,7 +109,9 @@ public class TotpAuthenticationFilter extends AbstractAuthenticationProcessingFi
             // 登録を始めた時刻は、ログインを終えたら使わない（登録の直後の A-02 の案内を出さない。期限は要素で選ぶので変わらない。
             // Bolt 31c の確認ポイント 9）
             session.removeAttribute(SessionKeys.ENROLLMENT_STARTED_AT);
-            if (Boolean.TRUE.equals(request.getAttribute(RECOVERY_ATTEMPT_ATTRIBUTE))
+            // 経路は認証の結果のトークンが持つ（Bolt 33e。request の属性で伝えていたのをやめた）
+            if (authentication instanceof TotpAuthenticationToken token
+                    && token.path() == SecondFactorPath.RECOVERY_CODE
                     && authentication.getPrincipal() instanceof CargoUserDetails user) {
                 session.setAttribute(
                         SessionKeys.RECOVERY_LOGIN_USER,

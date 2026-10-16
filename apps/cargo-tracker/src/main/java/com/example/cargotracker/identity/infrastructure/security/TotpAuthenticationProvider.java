@@ -52,7 +52,9 @@ public class TotpAuthenticationProvider implements AuthenticationProvider {
             throw new TotpRejectedException(verification);
         }
         return TotpAuthenticationToken.authenticated(
-                details, FactorGrantedAuthority.fromAuthority(TotpAuthenticationToken.FACTOR_TOTP));
+                details,
+                FactorGrantedAuthority.fromAuthority(TotpAuthenticationToken.FACTOR_TOTP),
+                SecondFactorPath.TOTP);
     }
 
     @Override

@@ -129,7 +129,8 @@ class SpringSecurityCharacterizationTest {
     void mfaEnabledは結果の型がtoBuilderを持つときだけ前の要素の権限を合わせる() throws Exception {
         // ① TotpAuthenticationToken が toBuilder() を持つ理由（ADR-011 の決定 2、Bolt 13 のスパイク）
         GrantedAuthority totp = FactorGrantedAuthority.fromAuthority(TotpAuthenticationToken.FACTOR_TOTP);
-        FixedResultFilter withBuilder = new FixedResultFilter(TotpAuthenticationToken.authenticated("shipper", totp));
+        FixedResultFilter withBuilder =
+                new FixedResultFilter(TotpAuthenticationToken.authenticated("shipper", totp, SecondFactorPath.TOTP));
         withBuilder.setMfaEnabled(true);
         FixedResultFilter withoutBuilder = new FixedResultFilter(new PlainToken("shipper", totp));
         withoutBuilder.setMfaEnabled(true);
@@ -147,9 +148,9 @@ class SpringSecurityCharacterizationTest {
         // 明示したフィルターと比べ、このテストが違いを捉えられることを示す
         GrantedAuthority totp = FactorGrantedAuthority.fromAuthority(TotpAuthenticationToken.FACTOR_TOTP);
         FixedResultFilter defaultRepository =
-                new FixedResultFilter(TotpAuthenticationToken.authenticated("shipper", totp));
+                new FixedResultFilter(TotpAuthenticationToken.authenticated("shipper", totp, SecondFactorPath.TOTP));
         FixedResultFilter sessionRepository =
-                new FixedResultFilter(TotpAuthenticationToken.authenticated("shipper", totp));
+                new FixedResultFilter(TotpAuthenticationToken.authenticated("shipper", totp, SecondFactorPath.TOTP));
         sessionRepository.setSecurityContextRepository(new HttpSessionSecurityContextRepository());
 
         MockHttpSession defaultSession = new MockHttpSession();
@@ -320,12 +321,13 @@ class SpringSecurityCharacterizationTest {
         // 2 つの要素がそろった主体（TotpAuthenticationToken）と password の段だけの主体（UsernamePasswordAuthenticationToken）の両方
         GrantedAuthority password = FactorGrantedAuthority.fromAuthority(FactorGrantedAuthority.PASSWORD_AUTHORITY);
         GrantedAuthority totp = FactorGrantedAuthority.fromAuthority(TotpAuthenticationToken.FACTOR_TOTP);
-        Authentication twoFactors = TotpAuthenticationToken.authenticated("before", totp).toBuilder()
-                .authorities(authorities -> {
-                    authorities.add(password);
-                    authorities.add(new SimpleGrantedAuthority("ROLE_SHIPPER"));
-                })
-                .build();
+        Authentication twoFactors =
+                TotpAuthenticationToken.authenticated("before", totp, SecondFactorPath.TOTP).toBuilder()
+                        .authorities(authorities -> {
+                            authorities.add(password);
+                            authorities.add(new SimpleGrantedAuthority("ROLE_SHIPPER"));
+                        })
+                        .build();
         Authentication passwordOnly = UsernamePasswordAuthenticationToken.authenticated(
                 "before", null, List.of(password, new SimpleGrantedAuthority("ROLE_SHIPPER")));
 

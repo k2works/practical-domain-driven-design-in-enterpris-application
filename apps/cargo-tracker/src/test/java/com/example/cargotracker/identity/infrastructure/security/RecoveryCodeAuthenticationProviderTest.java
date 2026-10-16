@@ -74,6 +74,9 @@ class RecoveryCodeAuthenticationProviderTest {
         assertThat(result.getAuthorities())
                 .extracting(GrantedAuthority::getAuthority)
                 .containsExactly(TotpAuthenticationToken.FACTOR_TOTP);
+        assertThat(((TotpAuthenticationToken) result).path())
+                .as("回復コードの経路を結果が持つ（Bolt 33e）")
+                .isEqualTo(SecondFactorPath.RECOVERY_CODE);
     }
 
     @Test

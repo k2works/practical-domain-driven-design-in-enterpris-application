@@ -41,4 +41,15 @@
             <Class name="com.example.cargotracker.notification.application.internal.commandservices.PasswordResetMailService"/>
         </Or>
     </Match>
+    <!--
+      SE_TRANSIENT_FIELD_NOT_RESTORED: 認証の結果のトークンの 2 つ目の要素の経路（Bolt 33e）は、意図して transient にしている。
+      session（Spring Session JDBC）に経路を保存せず、直列化の形を変えないことで、ローリング配備の間に古い版が新しい版の session を
+      読めるようにする（2026-10-16、Bolt 33e の開始準備の決定 4、human:kakimomokuri）。経路を読むのは同じ request の中の成功の扱い
+      だけで、session から読み直したトークンの経路は null でよい。このクラスのこの欄に限って抑止する。
+    -->
+    <Match>
+        <Bug pattern="SE_TRANSIENT_FIELD_NOT_RESTORED"/>
+        <Class name="com.example.cargotracker.identity.infrastructure.security.TotpAuthenticationToken"/>
+        <Field name="path"/>
+    </Match>
 </FindBugsFilter>

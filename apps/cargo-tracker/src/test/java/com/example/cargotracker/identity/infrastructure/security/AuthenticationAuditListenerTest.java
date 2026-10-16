@@ -165,7 +165,7 @@ class AuthenticationAuditListenerTest {
     @Test
     void 二つの要素がそろった成功だけがサービスで0に戻す() {
         listener.onSuccess(new AuthenticationSuccessEvent(TotpAuthenticationToken.authenticated(
-                details, new SimpleGrantedAuthority(TotpAuthenticationToken.FACTOR_TOTP))));
+                details, new SimpleGrantedAuthority(TotpAuthenticationToken.FACTOR_TOTP), SecondFactorPath.TOTP)));
 
         assertThat(attempts.calls).containsExactly("success");
         assertThat(audit).isEmpty();

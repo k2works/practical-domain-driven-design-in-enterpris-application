@@ -56,7 +56,9 @@ public class RecoveryCodeAuthenticationProvider implements AuthenticationProvide
             throw new RecoveryCodeRejectedException();
         }
         return TotpAuthenticationToken.authenticated(
-                details, FactorGrantedAuthority.fromAuthority(TotpAuthenticationToken.FACTOR_TOTP));
+                details,
+                FactorGrantedAuthority.fromAuthority(TotpAuthenticationToken.FACTOR_TOTP),
+                SecondFactorPath.RECOVERY_CODE);
     }
 
     @Override

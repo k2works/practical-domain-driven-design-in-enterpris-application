@@ -3,7 +3,7 @@ type: Plan
 title: "Bolt 33e 計画 - 認証の入口と session の型と期限の整理（振る舞いの変わらない直し）"
 description: "W5 の 20 本目の Bolt の計画。認証の結果のトークンに経路（TOTP か回復コードか）を持たせて request の属性での受け渡しをやめ、revokeOthers が残す session の ID を値オブジェクトにし、「ちょうどの時刻は期限切れ」の判定を SessionPolicy に寄せ、画面だけが使う属性の名前 2 つの値をテストで固定する。振る舞いは変えない。テンプレートの期間の数値、回復コードの生成のポートの型、ADR-012 の URL の記述と SessionKeys の命名は 33f に分ける。"
 tags: [plan]
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-16T00:49:50Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-16T01:13:49Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-16T00:32:32Z }
 ---
@@ -132,11 +132,11 @@ package "identity" {
 - [x] **3. session の ID の値オブジェクト**
   - `SessionId` と `SessionIdTest` を足し、ポート（`UserSessionRevoker`）・実装（`SpringSessionUserSessionRevoker` の比較を `keep.value()` に）・再登録のサービス（`complete` の引数）・画面（`session.getId()` を包む）を付け替える。テスト: `TotpReEnrollmentServiceTest` の `anyString()` 5 か所と定数 `CURRENT_SESSION`、`TotpReEnrollmentRollbackIntegrationTest`、`SpringSessionUserSessionRevokerIntegrationTest`、`PasswordResetCompletionServiceTest`（mock）
   - 変異: 実装の比較を `id.equals(keep)` に戻すと、今の session を残すテストが落ちる
-- [ ] **4. 認証の結果のトークンに経路**
+- [x] **4. 認証の結果のトークンに経路**
   - 先に、`RecoveryCodeAuthenticationProviderTest` に経路の確かめを足す（今は権限だけ）。既存の `RecoveryCodeLoginSecurityIntegrationTest`（回復コードでログインすると A-08、認証コードでログインすると役割のホーム）が外側を守る
   - トークンに `transient` の経路を足し、2 つの provider・成功のハンドラー・`Builder`・`toBuilder()` を付け替え、request の属性をやめる。影響するテスト: `SpringSecurityCharacterizationTest`、`AuthenticationAuditListenerTest`
   - 変異: 成功のハンドラーで経路を読まない（常に TOTP）、`Builder` が経路を写さない、の 2 つで落ちる
-- [ ] **5. 画面だけが使う属性の名前の値**
+- [x] **5. 画面だけが使う属性の名前の値**
   - 2 つの定数の値を固定するテストを足す。変異: 値を変えると落ちる
   - 完了の判定: `check` 緑、`uiTest` 緑
 - [ ] **6. SonarQube と開発レビューと終了報告** 【承認ゲート: 終了報告】

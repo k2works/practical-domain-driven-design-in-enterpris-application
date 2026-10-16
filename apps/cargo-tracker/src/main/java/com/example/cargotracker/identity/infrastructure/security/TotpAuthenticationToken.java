@@ -11,6 +11,9 @@ import org.springframework.security.core.GrantedAuthority;
  * （{@link CargoUserDetails}）をそのまま引き継ぐ（引数の解決とほかのコンテキストは主体から {@code AuthenticatedActor} を得る）。
  * Spring Security 7 は、認証の結果の型が {@code toBuilder()} を宣言しているときだけ、先に認証した要素（password）の権限を
  * 結果に合わせる（{@code AbstractAuthenticationProcessingFilter} の mfaEnabled。Bolt 13 のスパイクで分かり、Bolt 31d で特性テスト {@code SpringSecurityCharacterizationTest} に移した）。
+ * 2 つ目の要素の経路（{@link SecondFactorPath}）を持つ（Bolt 33e）。経路は {@code transient} で session に保存しない（直列化の形を
+ * 変えず、ローリング配備の間に古い版が新しい版の session を読める）。読むのは同じ request の中の成功の扱いだけで、session から読み直した
+ * トークンの経路は null になる。
  */
 public final class TotpAuthenticationToken extends AbstractAuthenticationToken {
 
@@ -26,10 +29,15 @@ public final class TotpAuthenticationToken extends AbstractAuthenticationToken {
 
     private String code;
 
-    private TotpAuthenticationToken(Object principal, String code, Collection<? extends GrantedAuthority> authorities) {
+    /** 2 つ目の要素の経路（Bolt 33e）。session に保存しない。 */
+    private final transient SecondFactorPath path;
+
+    private TotpAuthenticationToken(
+            Object principal, String code, SecondFactorPath path, Collection<? extends GrantedAuthority> authorities) {
         super(authorities);
         this.principal = principal;
         this.code = code;
+        this.path = path;
         setAuthenticated(!authorities.isEmpty());
     }
 
@@ -37,16 +45,27 @@ public final class TotpAuthenticationToken extends AbstractAuthenticationToken {
         super(builder);
         this.principal = builder.principal;
         this.code = builder.code;
+        this.path = builder.path;
     }
 
     /** 確かめる前のトークン。主体は password の段の主体。 */
     public static TotpAuthenticationToken unauthenticated(Object principal, String code) {
-        return new TotpAuthenticationToken(principal, code, List.of());
+        return new TotpAuthenticationToken(principal, code, null, List.of());
     }
 
-    /** 確かめた後のトークン。TOTP の要素の権限だけを持ち、password の要素の権限はフィルターが合わせる。 */
-    public static TotpAuthenticationToken authenticated(Object principal, GrantedAuthority factor) {
-        return new TotpAuthenticationToken(principal, null, List.of(factor));
+    /**
+     * 確かめた後のトークン。TOTP の要素の権限だけを持ち、password の要素の権限はフィルターが合わせる。
+     *
+     * @param path 2 つ目の要素の経路（TOTP か回復コードか。Bolt 33e）
+     */
+    public static TotpAuthenticationToken authenticated(
+            Object principal, GrantedAuthority factor, SecondFactorPath path) {
+        return new TotpAuthenticationToken(principal, null, path, List.of(factor));
+    }
+
+    /** 2 つ目の要素の経路。session から読み直したトークンでは null（{@code transient}）。 */
+    public SecondFactorPath path() {
+        return path;
     }
 
     @Override
@@ -86,11 +105,13 @@ public final class TotpAuthenticationToken extends AbstractAuthenticationToken {
 
         private Object principal;
         private String code;
+        private SecondFactorPath path;
 
         private Builder(TotpAuthenticationToken token) {
             super(token);
             this.principal = token.principal;
             this.code = token.code;
+            this.path = token.path;
         }
 
         @Override

@@ -17,6 +17,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.security.authentication.LockedException;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 
 /**
@@ -67,9 +68,12 @@ class TotpAuthenticationProviderTest {
         TotpAuthenticationProvider provider =
                 new TotpAuthenticationProvider(new StubService(TotpVerification.ACCEPTED, null), NOT_LOCKED);
 
-        assertThat(provider.authenticate(input()).getAuthorities())
+        Authentication result = provider.authenticate(input());
+
+        assertThat(result.getAuthorities())
                 .extracting(GrantedAuthority::getAuthority)
                 .containsExactly(TotpAuthenticationToken.FACTOR_TOTP);
+        assertThat(((TotpAuthenticationToken) result).path()).isEqualTo(SecondFactorPath.TOTP);
     }
 
     @Test
