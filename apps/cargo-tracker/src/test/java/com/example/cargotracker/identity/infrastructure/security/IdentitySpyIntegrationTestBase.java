@@ -5,6 +5,7 @@ import com.example.cargotracker.identity.domain.model.aggregates.AuditRecordRepo
 import com.example.cargotracker.identity.domain.model.aggregates.CompanyRepository;
 import com.example.cargotracker.identity.domain.model.aggregates.LoginFailureRepository;
 import com.example.cargotracker.identity.domain.model.aggregates.TotpCodeGenerator;
+import com.example.cargotracker.identity.domain.model.aggregates.UserAssignmentRepository;
 import com.example.cargotracker.identity.domain.model.aggregates.UserRepository;
 import com.example.cargotracker.identity.domain.model.aggregates.UserStandingRepository;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
@@ -35,4 +36,7 @@ abstract class IdentitySpyIntegrationTestBase {
 
     @MockitoSpyBean
     protected LoginFailureRepository loginFailures;
+
+    @MockitoSpyBean
+    protected UserAssignmentRepository assignments;
 }

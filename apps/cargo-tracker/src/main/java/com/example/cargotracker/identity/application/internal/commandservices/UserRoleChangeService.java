@@ -7,7 +7,6 @@ import com.example.cargotracker.identity.domain.model.aggregates.CompanyReposito
 import com.example.cargotracker.identity.domain.model.aggregates.User;
 import com.example.cargotracker.identity.domain.model.aggregates.UserAssignmentRepository;
 import com.example.cargotracker.identity.domain.model.aggregates.UserRepository;
-import com.example.cargotracker.identity.domain.model.valueobjects.AdministrationScope;
 import com.example.cargotracker.identity.domain.model.valueobjects.RoleChangeRejection;
 import com.example.cargotracker.shared.domain.AuthenticatedActor;
 import com.example.cargotracker.shared.domain.Role;
@@ -117,8 +116,7 @@ public class UserRoleChangeService {
             return new Judgement.Refused(new RoleChangeResult.NotFound());
         }
         // 管理範囲（Bolt 34b。IA-INV-14）は規則より先に見る（範囲外の利用者の様子を規則の拒否で漏らさない）
-        if (!new AdministrationScope(assignments.managedCompanies(operator.userId()))
-                .covers(user.get().companyId())) {
+        if (!assignments.scopeOf(operator.userId()).covers(user.get().companyId())) {
             return new Judgement.Refused(new RoleChangeResult.OutOfScope());
         }
         Optional<RoleChangeRejection> rejection =

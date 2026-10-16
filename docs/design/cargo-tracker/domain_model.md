@@ -4,7 +4,7 @@ title: "cargo-tracker ドメインモデル"
 description: "cargo-tracker の業務領域の分類、ユビキタス言語、7 つの境界づけられたコンテキスト（通知を含む）の集約・エンティティ・値オブジェクト・ドメインルール、コマンド・クエリ・イベント、予約サガ。"
 tags: [design, domain-model, ddd]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-16T09:36:57Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-16T10:53:02Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T07:41:04Z }
   - { by: human:kakimomokuri, at: 2026-10-01T07:48:17Z }
@@ -221,9 +221,9 @@ quadrantChart
 | 利用者の一覧の行 | UserSummary | S-20 の一覧の 1 行の読み出しの射影（Bolt 34）。利用者 ID・企業名・表示名・メールアドレス・利用状態・役割。`password_hash` を持たない | アクセス・監査 |
 | 利用者の詳細 | UserDetail | S-20 の詳細の読み出しの射影（Bolt 34）。一覧の行の項目に、所属企業の ID と種類と版を足したもの。`password_hash` を持たない | アクセス・監査 |
 | 管理範囲 | AdministrationScope | システム管理者が扱える企業の集合（Bolt 34b。`user_assignment` の `COMPANY` の行）。対象の利用者の所属企業を含むかを判定する（IA-INV-14）。データモデルの「担当範囲」（表の名前）と区別する | アクセス・監査 |
-| 担当範囲のリポジトリ | UserAssignmentRepository | システム管理者に割り当てた企業を返すドメインのポート（Bolt 34b）。割り当ては運用の手順で行う | アクセス・監査 |
+| 担当範囲のリポジトリ | UserAssignmentRepository | システム管理者の管理範囲（割り当てた企業）を `AdministrationScope` で返すドメインのポート（Bolt 34b）。割り当ては運用の手順で行う | アクセス・監査 |
 | 利用者の探索の結果 | UserLookup | 利用者の管理の照会の詳細の結果（`queryservices`。Bolt 34b）。`Found`・`NotFound`・`OutOfScope`（管理範囲外）・`NotPermitted`（操作者がシステム管理者でない） | アクセス・監査 |
-| 範囲外の試行の記録のサービス | AdministrationScopeDenialService | 管理範囲外の利用者への試行を監査記録 `ADMIN_SCOPE_DENIED` に書くアプリケーションのサービス（`commandservices`。Bolt 34b）。S-20 の controller だけが呼ぶ。役割の変更のトランザクションの外で単独に書く | アクセス・監査 |
+| 範囲外の試行の記録のサービス | AdministrationScopeDenialService | 管理範囲外の利用者への試行を監査記録 `ADMIN_SCOPE_DENIED` に書くアプリケーションのサービス（`commandservices`。Bolt 34b）。S-20 の controller が確定の POST でだけ呼ぶ。役割の変更のトランザクションの外で単独に書く | アクセス・監査 |
 | 通知の再設定のメール | NotificationPasswordResetMails | 通知の公開 API `PasswordResetMail` を呼ぶ identity の ACL（`application.internal.outboundservices.acl`。上流の名前 + 名詞）。通知の結果を identity の言葉に写す（Bolt 33） | アクセス・監査 |
 | password の方針 | PasswordPolicy | 新しい password の規則（SEC-04・SEC-05）。12 文字以上 64 文字以下（code point で数え、空白と全角の文字を許す）、UTF-8 で 72 バイト以下（bcrypt が扱える長さ）、よく使われる password の一覧に載っていない。一覧の照合の結果は引数で受けて純粋に保ち、違反があれば最初の 1 つ（`PasswordPolicyViolation`）を返す（`identity.domain.model.rules`。Bolt 33a） | アクセス・監査 |
 | password の方針の違反 | PasswordPolicyViolation | password の方針の違反の種類。短い `TOO_SHORT`（空を含む）、長い `TOO_LONG`、UTF-8 で 72 バイトを超える `TOO_MANY_BYTES`、よく使われる `COMMON`。画面はこの種類で文言を選ぶ（`identity.domain.model.valueobjects`。Bolt 33a） | アクセス・監査 |
@@ -1028,7 +1028,7 @@ password の再設定（US-18 AC8。Bolt 33 は依頼から送信まで、新し
 
 利用者の役割の管理（US-16 の一部。Bolt 34）では、役割の組合せの規則を `identity.domain.model.rules` の `RoleAssignmentPolicy` に置き、利用者の集約が判定（自分の変更 → 役割なし → 変更なし → 監督の役割 → 企業の種類 → 職務分離の順）を返す。変更履歴は別の表を作らず、監査記録 `ROLES_CHANGED` の対象（`USER`・利用者 ID・更新した後の版）と変更前後（役割の名前を `Role` の宣言の順にカンマでつないだ文字列）で代える（`user_role` は今の値だけを持つ。2026-10-16、human:kakimomokuri）。同時の更新は `app_user.version` を条件にした更新の件数で判定し、ドメインでは判定しない。管理範囲（`user_assignment` の `COMPANY`）は Bolt 34b、利用停止は Bolt 34d で足す。
 
-システム管理者の管理範囲（US-16 AC2。Bolt 34b）では、ドメインのポート `UserAssignmentRepository`（`identity.domain.model.aggregates`）がシステム管理者に割り当てた企業（`user_assignment` の `COMPANY`）を返し、値 `AdministrationScope`（管理範囲）が対象の利用者の所属企業を含むかを判定する（IA-INV-14）。照会のサービスは一覧を管理範囲の企業に SQL で絞り、詳細は範囲外を `UserLookup.OutOfScope` として返す。役割の変更のサービスも、操作者の確認の次に範囲を判定する（`RoleChangeResult.OutOfScope`）。範囲外の利用者は存在しない利用者と同じ 404 にし、試行は controller だけが `AdministrationScopeDenialService` で監査記録 `ADMIN_SCOPE_DENIED` に書く（役割の変更のトランザクションの外で単独に書く。追記が失敗したら 500）。管理範囲の割り当ては運用の手順で行い、画面は W6（2026-10-16、human:kakimomokuri）。
+システム管理者の管理範囲（US-16 AC2。Bolt 34b）では、ドメインのポート `UserAssignmentRepository`（`identity.domain.model.aggregates`）がシステム管理者に割り当てた企業（`user_assignment` の `COMPANY`）を返し、値 `AdministrationScope`（管理範囲）が対象の利用者の所属企業を含むかを判定する（IA-INV-14）。照会のサービスは一覧を管理範囲の企業に SQL で絞り、詳細は範囲外を `UserLookup.OutOfScope` として返す。役割の変更のサービスも、利用者と企業があるかの次（規則より先）に範囲を判定する（`RoleChangeResult.OutOfScope`）。範囲外の利用者は存在しない利用者と同じ 404 にし（照会は管理範囲を先に読み、いない利用者と読み出しの量をそろえる）、役割の変更の試行は確定の POST でだけ controller が `AdministrationScopeDenialService` で監査記録 `ADMIN_SCOPE_DENIED` に書く（GET は CSRF の守りがなく他サイトから記録を書かせられるので記録しない。Bolt 34b の開発レビューの決定。役割の変更のトランザクションの外で単独に書き、外側のトランザクションの中では呼べない。追記が失敗したら 500。記録のサービスに依存してよいのは画面の層だけ（`LayerArchitectureTest`））。管理範囲の割り当ては運用の手順で行い、画面は W6（2026-10-16、human:kakimomokuri）。
 
 新しい password の設定（Bolt 33a。2026-10-15 の開始準備の決定 1・2）は、アプリケーションのサービス `PasswordResetCompletionService`（`commandservices`）が受ける。画面の層はリポジトリに依存しないので、リンクを開く処理（`open`。トークンをハッシュにして探し、使えればトークンの ID を返す）と A-06 の GET（`isUsable(tokenId)`）もこのサービスを通す。設定（`complete(tokenId, newPassword)`）の結果は、完了・方針の誤り（種類）・無効のいずれかで、1 つのトランザクションで次の順に行う。
 
@@ -1197,7 +1197,7 @@ TOTP の資格・回復コード・ログインの失敗は、利用者とは別
 | IA-INV-11 | 回復コードは 1 人に 10 個で、発行のたびに置き換える。ハッシュだけを持ち、一度使ったら使えない（使った時刻を入れて残す）。未使用のコードがなければ拒否する（Bolt 30 で追加）。初回の発行は TOTP の登録と同じトランザクションで行い、10 個を乱数で作り（形は `1a2b-3c4d`、重複なし）、平文は登録を保存した応答で一度だけ示してどこにも保存しない。未使用のコードの並び順は約束しない（Bolt 31b）。ログインでの消費（Bolt 31c）では、入れたコードを正規化し（前後と中の空白を除き小文字にし、ハイフンのない 8 文字は 4 文字目の後にハイフンを入れる。`^[0-9a-f]{4}-[0-9a-f]{4}$` に合わなければ照合せずに拒む。`RecoveryCode.normalize` が値 `NormalizedRecoveryCode` を返し、照合はこの値だけを受ける。Bolt 33d）、その利用者の未使用のコードとだけ照合する。一致したコードは未使用であることを条件にした更新で使い、同じコードを同時に使っても 1 つだけが通る（更新の件数が 0 なら拒む）。認証アプリの再登録の完了（Bolt 33b）で 10 個を発行し直す。TOTP の秘密の置き換えと同じトランザクションで、秘密の置き換えの後に置き換え、前のコードは使っていないものも使えなくなる。新しい平文は完了の応答で一度だけ示す。発行し直しと回復コードによるログインが重なっても、置き換えの後に古いコードは通らない（消費の更新が 0 件になる） | US-18 AC7・AC9、SEC-09 |
 | IA-INV-12 | 再設定のトークンは 1 回だけ使え、発行から 30 分で使えなくなる（29 分 59 秒では使える）。同じ利用者に新しく発行すると、前の未使用のトークンは使えなくなる（無効にした時刻を入れて残す）。表にはトークンのハッシュ（SHA-256）だけを置き、平文のトークンとリンクは表・イベントの発行記録・ログに残さない。発行は登録された有効な利用者にだけ行い、同じ依頼の ID では 1 つだけ、同じ利用者の前の発行から 1 分以内なら発行しない。依頼の応答は登録の有無にかかわらず同じにする（Bolt 33）。使うのは A-06 の設定で、使っておらず無効にしておらず期限の前（`used_at IS NULL AND invalidated_at IS NULL AND expires_at > now`）の行だけを条件付きの更新で使い、件数が 0 なら使えない。ドメインの `isUsable(now)` と SQL の条件が同じであることを契約テストで確かめる（`LockPolicy` の前例）。方針の誤りではトークンを使わない。設定を終えると、同じ利用者のほかの未使用のトークンも無効にする。期限切れ・使用済み・無効・存在しないトークンは、どれも同じ応答にする（Bolt 33a） | US-18 AC8、SEC-08 |
 | IA-INV-13 | 役割は利用者の所属企業の種類に合うものだけを付ける。荷主担当者は荷主企業、ほかの 7 役割は A 社。荷受人の企業の利用者には BR-15 の役割を付けない（荷受人は参照許可。US-19）（Bolt 34。UC-16 の主シナリオ 4 の企業間分離） | BR-15、UC-16、US-16 |
-| IA-INV-14 | システム管理者は、管理範囲（`user_assignment` の `COMPANY` で割り当てた企業）の利用者だけを一覧し、詳細を開き、役割を変えられる。範囲外の利用者は存在しない利用者と同じに扱い（404）、試行を監査記録に同じ request の中で書く。範囲の判定は対象の所属企業だけで見る（自分の詳細にも例外を作らない）。IA-INV-02 の管理者版（Bolt 34b） | BR-15、UC-16 の 2a、US-16 AC2 |
+| IA-INV-14 | システム管理者は、管理範囲（`user_assignment` の `COMPANY` で割り当てた企業）の利用者だけを一覧し、詳細を開き、役割を変えられる。範囲外の利用者は存在しない利用者と同じに扱い（404）、役割の変更の試行（確定の POST）を監査記録に同じ request の中で書く。範囲の判定は対象の所属企業だけで見る（自分の詳細にも例外を作らない）。IA-INV-02 の管理者版（Bolt 34b） | BR-15、UC-16 の 2a、US-16 AC2 |
 | KPI-INV-01 | KPI-01 は、版 1 を最初に提出した時刻（提出時刻）と、最初に提示した見積り（経路方針を含む）の提示時刻（最初の提示時刻）から求める。最初の提示時刻は、荷主の条件変更・再見積りで出し直しても変えない。DE-03 は届く順が入れ替わることがあるため、いちばん早い提示時刻を持つ。誤りで取り消した見積りを数えない規則は、見積りの取消しの操作を作るときに足す。見積りごとの提示時刻は `quotation.quotation.presented_at` に残るため、そのときに終点を出し直せる（D-11。2026-10-08 に human:kakimomokuri が Bolt 21 終了報告の承認で決めた）。リードタイムは暦の経過時間で、営業時間に換算しない。差戻し・再提出・新しい版で開始時刻を戻さない（2026-10-02 の D-3）。KPI-02 は照会記録から求める。PV-01 の除外（訓練データ、顧客都合の取消し）を適用し、除外の対象・理由・判断者を記録する | US-21、PV-01 |
 | KPI-INV-02 | パイロット開始前の基準値は、算出方法と登録者とともに記録し、登録後は変更せず訂正は新しい記録で行う | US-21、PV-01 |
 | KPI-INV-03 | 最初の提示時刻は提出時刻より前にならない。提出の記録がないまま届いた DE-03 は記録せず、イベントの発行を未完了のまま残して再配信で記録する。提示時刻が提出時刻より前の DE-03 は、再配信しても直らないため、ERROR のログを残して捨てる（Bolt 21。開発レビュー D-79） | US-21 |

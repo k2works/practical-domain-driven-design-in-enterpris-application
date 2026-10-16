@@ -298,8 +298,9 @@ class MyBatisIdentityRepositoriesIntegrationTest {
                 admin.value(),
                 UUID.randomUUID());
 
-        assertThat(assignments.managedCompanies(admin)).containsExactlyInAnyOrder(company.id(), other);
-        assertThat(assignments.managedCompanies(new UserId(UUID.randomUUID()))).isEmpty();
+        assertThat(assignments.scopeOf(admin).companies()).containsExactlyInAnyOrder(company.id(), other);
+        assertThat(assignments.scopeOf(new UserId(UUID.randomUUID())).companies())
+                .isEmpty();
     }
 
     @Test

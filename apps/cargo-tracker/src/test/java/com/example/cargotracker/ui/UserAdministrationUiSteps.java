@@ -92,8 +92,8 @@ public class UserAdministrationUiSteps {
                 + users.outsideAdministration().userId().value());
     }
 
-    @ならば("画面が見つからないと示され、試行が {int} 件記録される")
-    public void 見つからないと示され記録される(int count) {
+    @ならば("存在しない利用者の URL を開いたときと同じく画面が見つからないと示される")
+    public void 存在しない利用者と同じく見つからない() {
         assertThat(page().getByRole(AriaRole.HEADING, new Page.GetByRoleOptions().setLevel(1)))
                 .hasText("画面が見つかりません");
         assertThat(page().locator("main")).containsText("お探しの画面は見つかりません。");
@@ -101,11 +101,9 @@ public class UserAdministrationUiSteps {
                 .not()
                 .containsText(users.outsideAdministration().email());
         browser.checkAccessibility();
-        assertThat(jdbc.queryForObject(
-                        "SELECT count(*) FROM identity.audit_record WHERE action = 'ADMIN_SCOPE_DENIED' AND target_id = ?",
-                        Integer.class,
-                        users.outsideAdministration().userId().value().toString()))
-                .isEqualTo(count);
+        String outOfScope = page().locator("main").innerText();
+        browser.navigate(baseUrl + "/staff/users/" + java.util.UUID.randomUUID());
+        assertThat(page().locator("main").innerText()).isEqualTo(outOfScope);
     }
 
     @もし("システム管理者が自分の利用者の詳細を開く")

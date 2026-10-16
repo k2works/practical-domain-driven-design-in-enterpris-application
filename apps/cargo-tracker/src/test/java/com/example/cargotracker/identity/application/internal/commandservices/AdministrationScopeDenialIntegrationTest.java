@@ -54,7 +54,7 @@ class AdministrationScopeDenialIntegrationTest {
 
         assertThat(jdbc.queryForList(
                         "SELECT actor_user_id, actor_company_id, action, result, reason, target_type, target_version,"
-                                + " before_state FROM identity.audit_record WHERE target_id = ?",
+                                + " before_state, after_state FROM identity.audit_record WHERE target_id = ?",
                         target.value().toString()))
                 .singleElement()
                 .satisfies(row -> assertThat(row)
@@ -65,7 +65,8 @@ class AdministrationScopeDenialIntegrationTest {
                         .containsEntry("reason", "OUT_OF_SCOPE")
                         .containsEntry("target_type", "USER")
                         .containsEntry("target_version", null)
-                        .containsEntry("before_state", null));
+                        .containsEntry("before_state", null)
+                        .containsEntry("after_state", null));
         assertThat(jdbc.queryForObject(
                         "SELECT count(*) FROM identity.audit_record WHERE target_id = ? AND occurred_at = ?",
                         Integer.class,

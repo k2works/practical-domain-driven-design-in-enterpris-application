@@ -87,7 +87,7 @@ public class UserAdministrationController {
             @RequestParam(name = "version", required = false) Long version,
             AuthenticatedActor actor,
             Model model) {
-        UserDetail user = detail(id, actor);
+        UserDetail user = detail(id, actor, false);
         Set<Role> selected = roles == null ? user.roles() : parseRoles(roles);
         long formVersion = version == null ? user.version() : version;
         return showDetail(new DetailForm(user, selected, formVersion, null), actor, model);
@@ -100,13 +100,13 @@ public class UserAdministrationController {
             @RequestParam long version,
             AuthenticatedActor actor,
             Model model) {
-        UserDetail user = detail(id, actor);
+        UserDetail user = detail(id, actor, false);
         Set<Role> selected = parseRoles(roles);
         RoleChangeResult result = roleChanges.check(actor, user.id(), version, selected);
         if (result instanceof RoleChangeResult.Acceptable) {
             return showConfirmation(user, selected, version, actor, model);
         }
-        return showRefusal(id, selected, version, actor, model, result);
+        return showRefusal(id, selected, version, actor, model, result, false);
     }
 
     @PostMapping(CONFIRMATION_URL)
@@ -117,15 +117,15 @@ public class UserAdministrationController {
             AuthenticatedActor actor,
             Model model,
             RedirectAttributes redirectAttributes) {
-        // 確定も先に詳細を読み、管理範囲の外なら試行を記録して 404 にする（Bolt 34b。書き手はこの controller だけ）
-        UserId target = detail(id, actor).id();
+        // 確定も先に詳細を読み、管理範囲の外なら試行を記録して 404 にする（Bolt 34b。書き手はこの controller の確定だけ）
+        UserId target = detail(id, actor, true).id();
         Set<Role> selected = parseRoles(roles);
         RoleChangeResult result = roleChanges.change(actor, target, version, selected);
         if (result instanceof RoleChangeResult.Changed) {
             redirectAttributes.addFlashAttribute("notice", CHANGED_NOTICE);
             return "redirect:" + USERS_URL + "/" + target.value();
         }
-        return showRefusal(id, selected, version, actor, model, result);
+        return showRefusal(id, selected, version, actor, model, result, true);
     }
 
     /** 受け付けなかった結果の画面。拒否は選んだまま、古い版は最新の内容で詳細を示し直す。 */
@@ -135,17 +135,18 @@ public class UserAdministrationController {
             long version,
             AuthenticatedActor actor,
             Model model,
-            RoleChangeResult result) {
+            RoleChangeResult result,
+            boolean change) {
         return switch (result) {
             case RoleChangeResult.Rejected(RoleChangeRejection rejection) -> {
-                UserDetail user = detail(id, actor);
+                UserDetail user = detail(id, actor, false);
                 yield showDetail(
                         new DetailForm(user, selected, version, ErrorMessage.of(rejection, user.companyKind())),
                         actor,
                         model);
             }
             case RoleChangeResult.Stale _ -> {
-                UserDetail user = detail(id, actor);
+                UserDetail user = detail(id, actor, false);
                 yield showDetail(
                         new DetailForm(user, user.roles(), user.version(), new ErrorMessage(STALE_MESSAGE, false)),
                         actor,
@@ -153,8 +154,10 @@ public class UserAdministrationController {
             }
             case RoleChangeResult.NotFound _ -> throw notFound();
             case RoleChangeResult.OutOfScope _ -> {
-                // 詳細を読んだ後に管理範囲から外れたとき（同じ request の中の守り）
-                denials.recordDenied(actor, parse(id).orElseThrow(UserAdministrationController::notFound));
+                // 詳細を読んだ後に管理範囲から外れたとき（同じ request の中の守り）。記録は確定のときだけ
+                if (change) {
+                    denials.recordDenied(actor, parse(id).orElseThrow(UserAdministrationController::notFound));
+                }
                 throw notFound();
             }
             case RoleChangeResult.NotPermitted _ -> throw new ResponseStatusException(HttpStatus.FORBIDDEN);
@@ -219,16 +222,19 @@ public class UserAdministrationController {
     }
 
     /**
-     * 詳細を読む。いなければ 404、管理範囲の外なら試行を記録して同じ 404（存在を示さない。Bolt 34b の決定 3）、システム管理者でなければ
-     * 403（役割の変更の権限なしと同じ応答）。
+     * 詳細を読む。いなければ 404、管理範囲の外なら同じ 404（存在を示さない。Bolt 34b の決定 3）、システム管理者でなければ 403（役割の変更の
+     * 権限なしと同じ応答）。範囲外の試行は、確定（{@code recordDenial}）のときだけ記録する（GET は CSRF の守りがないので記録しない。
+     * Bolt 34b の開発レビューの決定）。
      */
-    private UserDetail detail(String id, AuthenticatedActor actor) {
+    private UserDetail detail(String id, AuthenticatedActor actor, boolean recordDenial) {
         UserId target = parse(id).orElseThrow(UserAdministrationController::notFound);
         return switch (queryService.detail(actor, target)) {
             case UserLookup.Found(UserDetail found) -> found;
             case UserLookup.NotFound _ -> throw notFound();
             case UserLookup.OutOfScope _ -> {
-                denials.recordDenied(actor, target);
+                if (recordDenial) {
+                    denials.recordDenied(actor, target);
+                }
                 throw notFound();
             }
             case UserLookup.NotPermitted _ -> throw new ResponseStatusException(HttpStatus.FORBIDDEN);

@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.example.cargotracker.identity.domain.model.valueobjects.AuditAction;
 import com.example.cargotracker.identity.domain.model.valueobjects.AuditResult;
+import com.example.cargotracker.identity.domain.model.valueobjects.AuditTarget;
 import com.example.cargotracker.identity.domain.model.valueobjects.AuthenticationRejection;
 import com.example.cargotracker.shared.domain.CompanyId;
 import com.example.cargotracker.shared.domain.UserId;
@@ -108,6 +109,31 @@ class AuditRecordTest {
         assertThatThrownBy(() -> AuditRecord.sessionRevoked(null, COMPANY, AuthenticationRejection.UNKNOWN_USER, AT))
                 .isInstanceOf(NullPointerException.class);
         assertThatThrownBy(() -> AuditRecord.sessionRevoked(USER, null, AuthenticationRejection.UNKNOWN_USER, AT))
+                .isInstanceOf(NullPointerException.class);
+    }
+
+    @Test
+    void 範囲外の試行は失敗として理由と対象の利用者を記録し版と変更前後を持たない() {
+        UserId target = new UserId(UUID.randomUUID());
+
+        AuditRecord auditRecord = AuditRecord.adminScopeDenied(USER, COMPANY, target, AT);
+
+        assertThat(auditRecord.action()).isEqualTo(AuditAction.ADMIN_SCOPE_DENIED);
+        assertThat(auditRecord.result()).isEqualTo(AuditResult.FAILURE);
+        assertThat(auditRecord.reason()).isEqualTo("OUT_OF_SCOPE");
+        assertThat(auditRecord.target())
+                .isEqualTo(new AuditTarget("USER", target.value().toString(), null, null, null));
+    }
+
+    @Test
+    void 範囲外の試行は主体と対象を欠かせない() {
+        UserId target = new UserId(UUID.randomUUID());
+
+        assertThatThrownBy(() -> AuditRecord.adminScopeDenied(null, COMPANY, target, AT))
+                .isInstanceOf(NullPointerException.class);
+        assertThatThrownBy(() -> AuditRecord.adminScopeDenied(USER, null, target, AT))
+                .isInstanceOf(NullPointerException.class);
+        assertThatThrownBy(() -> AuditRecord.adminScopeDenied(USER, COMPANY, null, AT))
                 .isInstanceOf(NullPointerException.class);
     }
 }

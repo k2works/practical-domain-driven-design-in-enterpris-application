@@ -287,6 +287,20 @@ class LayerArchitectureTest {
             .orShould()
             .callMethodWhere(target(owner(assignableTo(ZoneId.class))).and(target(nameMatching("of.*|systemDefault"))));
 
+    /**
+     * 範囲外の試行の記録のサービス（Bolt 34b）は、S-20 の画面の層（とその組み立て）だけが呼ぶ。書き手を 1 か所にして、記録の漏れと
+     * 二重の記録を防ぐ（IA-INV-08、Bolt 34b の開発レビュー）。
+     */
+    @ArchTest
+    static final ArchRule 範囲外の試行の記録は画面の層からだけ呼ぶ = noClasses()
+            .that()
+            .resideOutsideOfPackages("..identity.interfaces.web..", "..identity.infrastructure.config..")
+            .and()
+            .doNotHaveSimpleName("AdministrationScopeDenialService")
+            .should()
+            .dependOnClassesThat()
+            .haveSimpleName("AdministrationScopeDenialService");
+
     /** platform は技術の部品だけを置き、コンテキストの型に依存しない。 */
     @ArchTest
     static final ArchRule platformはコンテキストに依存しない = classes()

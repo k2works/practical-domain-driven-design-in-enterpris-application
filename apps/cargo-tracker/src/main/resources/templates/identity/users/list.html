@@ -8,7 +8,7 @@
 <body>
 <main>
     <h1>利用者</h1>
-    <p th:if="${#lists.isEmpty(summaries)}">管理する企業の利用者はいません。</p>
+    <p th:if="${#lists.isEmpty(summaries)}">管理する企業の利用者はいません。一覧に出るはずの企業がないときは、運用の担当に管理範囲の割り当てをご依頼ください。</p>
     <div th:unless="${#lists.isEmpty(summaries)}" class="table-scroll" tabindex="0" role="region"
          aria-label="利用者の一覧">
         <table class="table">

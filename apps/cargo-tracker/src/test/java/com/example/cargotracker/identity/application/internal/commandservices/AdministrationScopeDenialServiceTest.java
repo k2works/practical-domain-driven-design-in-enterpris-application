@@ -42,6 +42,25 @@ class AdministrationScopeDenialServiceTest {
         assertThatThrownBy(() -> service.recordDenied(admin, target)).isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    void 外側のトランザクションの中では呼べない() {
+        AdministrationScopeDenialService service = new AdministrationScopeDenialService(
+                mock(AuditRecordRepository.class), Clock.systemUTC(), new ImmediateTransactions());
+        AuthenticatedActor admin = new AuthenticatedActor(
+                new UserId(UUID.randomUUID()),
+                new CompanyId(UUID.randomUUID()),
+                Set.of(Role.SYSTEM_ADMIN),
+                "管理",
+                "A 社");
+        UserId target = new UserId(UUID.randomUUID());
+        org.springframework.transaction.support.TransactionSynchronizationManager.setActualTransactionActive(true);
+        try {
+            assertThatThrownBy(() -> service.recordDenied(admin, target)).isInstanceOf(IllegalStateException.class);
+        } finally {
+            org.springframework.transaction.support.TransactionSynchronizationManager.setActualTransactionActive(false);
+        }
+    }
+
     /** トランザクションを開かずにそのまま呼ぶ（単体テスト用）。 */
     private static final class ImmediateTransactions extends TransactionTemplate {
         @Override

@@ -18,6 +18,7 @@ import com.example.cargotracker.identity.domain.model.aggregates.CompanyReposito
 import com.example.cargotracker.identity.domain.model.aggregates.User;
 import com.example.cargotracker.identity.domain.model.aggregates.UserAssignmentRepository;
 import com.example.cargotracker.identity.domain.model.aggregates.UserRepository;
+import com.example.cargotracker.identity.domain.model.valueobjects.AdministrationScope;
 import com.example.cargotracker.identity.domain.model.valueobjects.AuditAction;
 import com.example.cargotracker.identity.domain.model.valueobjects.AuditTarget;
 import com.example.cargotracker.identity.domain.model.valueobjects.CompanyKind;
@@ -73,7 +74,7 @@ class UserRoleChangeServiceTest {
     private void givenSales() {
         when(users.findById(sales.id())).thenReturn(Optional.of(sales));
         when(companies.findById(operatorCompany.id())).thenReturn(Optional.of(operatorCompany));
-        when(assignments.managedCompanies(admin.userId())).thenReturn(Set.of(operatorCompany.id()));
+        when(assignments.scopeOf(admin.userId())).thenReturn(new AdministrationScope(Set.of(operatorCompany.id())));
         when(users.changeRoles(any(), anyLong(), any(), any())).thenReturn(true);
     }
 
@@ -132,20 +133,27 @@ class UserRoleChangeServiceTest {
     @Test
     void 管理範囲外の利用者は範囲外として書かない() {
         givenSales();
-        when(assignments.managedCompanies(admin.userId())).thenReturn(Set.of());
+        when(assignments.scopeOf(admin.userId())).thenReturn(new AdministrationScope(Set.of()));
 
         assertThat(service.change(admin, sales.id(), 3L, Set.of(Role.ROUTE_DESIGNER)))
-                .isEqualTo(new RoleChangeResult.OutOfScope());
-        assertThat(service.check(admin, sales.id(), 3L, Set.of(Role.ROUTE_DESIGNER)))
                 .isEqualTo(new RoleChangeResult.OutOfScope());
         verify(users, never()).changeRoles(any(), anyLong(), any(), any());
         verify(auditRecords, never()).append(any());
     }
 
     @Test
+    void 確かめるときも管理範囲外の利用者は範囲外() {
+        givenSales();
+        when(assignments.scopeOf(admin.userId())).thenReturn(new AdministrationScope(Set.of()));
+
+        assertThat(service.check(admin, sales.id(), 3L, Set.of(Role.ROUTE_DESIGNER)))
+                .isEqualTo(new RoleChangeResult.OutOfScope());
+    }
+
+    @Test
     void 管理範囲を規則より先に判定する() {
         givenSales();
-        when(assignments.managedCompanies(admin.userId())).thenReturn(Set.of());
+        when(assignments.scopeOf(admin.userId())).thenReturn(new AdministrationScope(Set.of()));
 
         assertThat(service.check(admin, sales.id(), 3L, Set.of()))
                 .as("範囲外なら役割なしの拒否より先に範囲外と答える（範囲外の利用者の様子を漏らさない）")

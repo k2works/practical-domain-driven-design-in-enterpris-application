@@ -1,8 +1,7 @@
 package com.example.cargotracker.identity.domain.model.aggregates;
 
-import com.example.cargotracker.shared.domain.CompanyId;
+import com.example.cargotracker.identity.domain.model.valueobjects.AdministrationScope;
 import com.example.cargotracker.shared.domain.UserId;
-import java.util.Set;
 
 /**
  * 担当範囲のリポジトリ（送信ポート。Bolt 34b）。システム管理者に割り当てた企業（`user_assignment` の `COMPANY` の行）を読む。
@@ -10,6 +9,6 @@ import java.util.Set;
  */
 public interface UserAssignmentRepository {
 
-    /** システム管理者に管理範囲として割り当てた企業。なければ空。 */
-    Set<CompanyId> managedCompanies(UserId admin);
+    /** システム管理者の管理範囲（割り当てた企業）。割り当てがなければ空の管理範囲。 */
+    AdministrationScope scopeOf(UserId admin);
 }

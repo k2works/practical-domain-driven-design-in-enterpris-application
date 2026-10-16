@@ -9,6 +9,7 @@ import static org.mockito.Mockito.when;
 
 import com.example.cargotracker.identity.domain.model.aggregates.UserAssignmentRepository;
 import com.example.cargotracker.identity.domain.model.aggregates.UserRepository;
+import com.example.cargotracker.identity.domain.model.valueobjects.AdministrationScope;
 import com.example.cargotracker.identity.domain.model.valueobjects.CompanyKind;
 import com.example.cargotracker.identity.domain.model.valueobjects.EmailAddress;
 import com.example.cargotracker.identity.domain.model.valueobjects.UserDetail;
@@ -58,7 +59,7 @@ class UserAdministrationQueryServiceTest {
                 EmailAddress.of("sales@example.com"),
                 UserStatus.ACTIVE,
                 Set.of(Role.SALES));
-        when(assignments.managedCompanies(admin.userId())).thenReturn(Set.of(inside));
+        when(assignments.scopeOf(admin.userId())).thenReturn(new AdministrationScope(Set.of(inside)));
         when(users.findSummariesIn(Set.of(inside))).thenReturn(List.of(summary));
 
         assertThat(service.list(admin)).containsExactly(summary);
@@ -77,7 +78,7 @@ class UserAdministrationQueryServiceTest {
     void 管理範囲の利用者の詳細は見つかる() {
         UserDetail detail = detailIn(inside);
         when(users.findDetail(detail.id())).thenReturn(Optional.of(detail));
-        when(assignments.managedCompanies(admin.userId())).thenReturn(Set.of(inside));
+        when(assignments.scopeOf(admin.userId())).thenReturn(new AdministrationScope(Set.of(inside)));
 
         assertThat(service.detail(admin, detail.id())).isEqualTo(new UserLookup.Found(detail));
     }
@@ -86,7 +87,7 @@ class UserAdministrationQueryServiceTest {
     void 管理範囲外の利用者の詳細は範囲外() {
         UserDetail detail = detailIn(outside);
         when(users.findDetail(detail.id())).thenReturn(Optional.of(detail));
-        when(assignments.managedCompanies(admin.userId())).thenReturn(Set.of(inside));
+        when(assignments.scopeOf(admin.userId())).thenReturn(new AdministrationScope(Set.of(inside)));
 
         assertThat(service.detail(admin, detail.id())).isEqualTo(new UserLookup.OutOfScope());
     }

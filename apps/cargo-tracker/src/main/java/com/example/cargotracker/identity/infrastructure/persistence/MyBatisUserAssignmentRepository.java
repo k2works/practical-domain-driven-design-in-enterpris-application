@@ -1,9 +1,9 @@
 package com.example.cargotracker.identity.infrastructure.persistence;
 
 import com.example.cargotracker.identity.domain.model.aggregates.UserAssignmentRepository;
+import com.example.cargotracker.identity.domain.model.valueobjects.AdministrationScope;
 import com.example.cargotracker.shared.domain.CompanyId;
 import com.example.cargotracker.shared.domain.UserId;
-import java.util.Set;
 import java.util.stream.Collectors;
 import org.springframework.stereotype.Repository;
 
@@ -20,9 +20,9 @@ public class MyBatisUserAssignmentRepository implements UserAssignmentRepository
     }
 
     @Override
-    public Set<CompanyId> managedCompanies(UserId admin) {
-        return mapper.selectManagedCompanies(admin.value()).stream()
+    public AdministrationScope scopeOf(UserId admin) {
+        return new AdministrationScope(mapper.selectManagedCompanies(admin.value()).stream()
                 .map(CompanyId::new)
-                .collect(Collectors.toUnmodifiableSet());
+                .collect(Collectors.toUnmodifiableSet()));
     }
 }

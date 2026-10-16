@@ -25,7 +25,8 @@ class DevDataLocationTest {
         try (Stream<Path> files = Files.walk(DB.resolve("migration"))) {
             List<Path> seeding = files.filter(Files::isRegularFile)
                     .filter(file ->
-                            read(file).toLowerCase(java.util.Locale.ROOT).contains("insert into identity.app_user"))
+                            // 利用者に限らず identity の表（担当範囲など。Bolt 34b）への開発用の行を共通・ベンダーの場所に置かない
+                            read(file).toLowerCase(java.util.Locale.ROOT).contains("insert into identity."))
                     .toList();
             assertThat(seeding).isEmpty();
         }

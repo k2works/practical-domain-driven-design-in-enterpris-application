@@ -15,7 +15,7 @@ import org.springframework.stereotype.Service;
 /**
  * 利用者の管理の照会。S-20 の一覧と詳細を読む（Bolt 34。US-16 の一部）。`password_hash` を読まない射影で受ける。Bolt 34b から操作者を
  * 受け、管理範囲（`user_assignment` の `COMPANY`。IA-INV-14）の企業の利用者だけを返す。照会は書かない（範囲外の試行の記録は
- * controller が {@code AdministrationScopeDenialService} で書く）。
+ * 確定の POST でだけ controller が {@code AdministrationScopeDenialService} で書く）。
  */
 @Service // JIG がユースケースとして読む印（組み立ては IdentityConfiguration）
 public class UserAdministrationQueryService {
@@ -33,19 +33,22 @@ public class UserAdministrationQueryService {
         if (!operator.hasRole(Role.SYSTEM_ADMIN)) {
             return List.of();
         }
-        return users.findSummariesIn(assignments.managedCompanies(operator.userId()));
+        return users.findSummariesIn(assignments.scopeOf(operator.userId()).companies());
     }
 
-    /** 詳細を探す。管理範囲の外の利用者は範囲外として返す。 */
+    /**
+     * 詳細を探す。管理範囲の外の利用者は範囲外として返す。管理範囲を先に読み、いない利用者と範囲外の利用者で読み出しの量をそろえる
+     * （応答の時間から範囲外の利用者の存在を見分けにくくする。Bolt 34b の開発レビュー）。
+     */
     public UserLookup detail(AuthenticatedActor operator, UserId id) {
         if (!operator.hasRole(Role.SYSTEM_ADMIN)) {
             return new UserLookup.NotPermitted();
         }
+        AdministrationScope scope = assignments.scopeOf(operator.userId());
         Optional<UserDetail> found = users.findDetail(id);
         if (found.isEmpty()) {
             return new UserLookup.NotFound();
         }
-        AdministrationScope scope = new AdministrationScope(assignments.managedCompanies(operator.userId()));
         if (!scope.covers(found.get().companyId())) {
             return new UserLookup.OutOfScope();
         }
