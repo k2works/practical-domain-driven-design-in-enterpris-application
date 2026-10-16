@@ -11902,6 +11902,12 @@
 <td style="text-align: left;">アクセス・監査</td>
 </tr>
 <tr>
+<td style="text-align: left;">監査記録の対象</td>
+<td style="text-align: left;">AuditTarget</td>
+<td style="text-align: left;">監査記録の対象の種類・ID・版と変更前後の要約（Bolt 34。<code>audit_record.target_type</code> など）。役割の変更では利用者と更新した後の版、変更前後の役割の名前を持つ。対象のない記録（ログインなど）は持たない</td>
+<td style="text-align: left;">アクセス・監査</td>
+</tr>
+<tr>
 <td style="text-align: left;">認証の拒否の理由</td>
 <td style="text-align: left;">AuthenticationRejection</td>
 <td style="text-align: left;">認証を受け付けなかった理由。session の取消しの理由（<code>SUSPENDED</code>・<code>COMPANY_INACTIVE</code>・<code>UNKNOWN_USER</code>。Bolt 32c）と、password の再設定の依頼を受け付けなかった理由（同じ 3 つ。Bolt 33）にも使う。監査記録にだけ残し、利用者には同じ応答を返す。<code>BAD_CREDENTIALS</code>・<code>UNKNOWN_USER</code>・<code>SUSPENDED</code>・<code>COMPANY_INACTIVE</code>（Bolt 14）、<code>INVALID_TOTP</code>・<code>TOTP_REUSED</code>（Bolt 31）、<code>INVALID_RECOVERY_CODE</code>（回復コードの形の違い・誤り・使用済み、または回復コードと認証コードの両方を送った。Bolt 31c）、<code>TOTP_NOT_ENROLLED</code>（TOTP を登録していない利用者の TOTP の送信。Bolt 31d で <code>INVALID_TOTP</code> から分けた）、<code>LOCKED</code>（ロック中の試行。数えない）・<code>SERVICE_ERROR</code>（利用者の読み出しの DB の誤り。数えない）（Bolt 32）</td>
@@ -11965,6 +11971,18 @@
 <td style="text-align: left;">利用者の管理の照会</td>
 <td style="text-align: left;">UserAdministrationQueryService</td>
 <td style="text-align: left;">S-20 の一覧と詳細を読むアプリケーションのサービス（<code>queryservices</code>。Bolt 34）。射影 <code>UserSummary</code>（一覧の行）・<code>UserDetail</code>（詳細。企業の種類と版を含む）で受け、<code>password_hash</code> を読まない</td>
+<td style="text-align: left;">アクセス・監査</td>
+</tr>
+<tr>
+<td style="text-align: left;">利用者の一覧の行</td>
+<td style="text-align: left;">UserSummary</td>
+<td style="text-align: left;">S-20 の一覧の 1 行の読み出しの射影（Bolt 34）。利用者 ID・企業名・表示名・メールアドレス・利用状態・役割。<code>password_hash</code> を持たない</td>
+<td style="text-align: left;">アクセス・監査</td>
+</tr>
+<tr>
+<td style="text-align: left;">利用者の詳細</td>
+<td style="text-align: left;">UserDetail</td>
+<td style="text-align: left;">S-20 の詳細の読み出しの射影（Bolt 34）。一覧の行の項目に、所属企業の ID と種類と版を足したもの。<code>password_hash</code> を持たない</td>
 <td style="text-align: left;">アクセス・監査</td>
 </tr>
 <tr>

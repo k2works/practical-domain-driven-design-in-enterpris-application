@@ -257,6 +257,91 @@
                                     </td>
                                     <td><p>相関 ID（同じ操作の記録をつなぐ。使う Bolt で埋める）</p></td>
                                 </tr>
+                                <tr>
+                                    <td><span id="target_type">target_type</span></td>
+                                    <td>varchar</td>
+                                    <td>50</td>
+                                    <td title='nullable'>√</td>
+                                    <td title=''></td>
+                                    <td>null</td>
+                                    <td>
+                                        <table border='0' cellspacing='0' cellpadding='0'>
+                                        </table>
+                                    </td>
+                                    <td>
+                                        <table border='0' cellspacing='0' cellpadding='0'>
+                                        </table>
+                                    </td>
+                                    <td><p>対象の種類（役割の変更では USER）</p></td>
+                                </tr>
+                                <tr>
+                                    <td><span id="target_id">target_id</span></td>
+                                    <td>varchar</td>
+                                    <td>100</td>
+                                    <td title='nullable'>√</td>
+                                    <td title=''></td>
+                                    <td>null</td>
+                                    <td>
+                                        <table border='0' cellspacing='0' cellpadding='0'>
+                                        </table>
+                                    </td>
+                                    <td>
+                                        <table border='0' cellspacing='0' cellpadding='0'>
+                                        </table>
+                                    </td>
+                                    <td><p>対象の ID（役割の変更では利用者 ID）</p></td>
+                                </tr>
+                                <tr>
+                                    <td><span id="target_version">target_version</span></td>
+                                    <td>varchar</td>
+                                    <td>50</td>
+                                    <td title='nullable'>√</td>
+                                    <td title=''></td>
+                                    <td>null</td>
+                                    <td>
+                                        <table border='0' cellspacing='0' cellpadding='0'>
+                                        </table>
+                                    </td>
+                                    <td>
+                                        <table border='0' cellspacing='0' cellpadding='0'>
+                                        </table>
+                                    </td>
+                                    <td><p>対象の版（役割の変更では更新した後の app_user.version）</p></td>
+                                </tr>
+                                <tr>
+                                    <td><span id="before_state">before_state</span></td>
+                                    <td>varchar</td>
+                                    <td>4000</td>
+                                    <td title='nullable'>√</td>
+                                    <td title=''></td>
+                                    <td>null</td>
+                                    <td>
+                                        <table border='0' cellspacing='0' cellpadding='0'>
+                                        </table>
+                                    </td>
+                                    <td>
+                                        <table border='0' cellspacing='0' cellpadding='0'>
+                                        </table>
+                                    </td>
+                                    <td><p>変更前の要約（役割の変更では役割の名前をカンマでつないだ文字列）</p></td>
+                                </tr>
+                                <tr>
+                                    <td><span id="after_state">after_state</span></td>
+                                    <td>varchar</td>
+                                    <td>4000</td>
+                                    <td title='nullable'>√</td>
+                                    <td title=''></td>
+                                    <td>null</td>
+                                    <td>
+                                        <table border='0' cellspacing='0' cellpadding='0'>
+                                        </table>
+                                    </td>
+                                    <td>
+                                        <table border='0' cellspacing='0' cellpadding='0'>
+                                        </table>
+                                    </td>
+                                    <td><p>変更後の要約（役割の変更では役割の名前をカンマでつないだ文字列）</p></td>
+                                </tr>
                                 </tbody>
                             </table>
                         </div>

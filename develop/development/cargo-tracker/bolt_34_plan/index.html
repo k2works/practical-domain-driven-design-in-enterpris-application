@@ -11117,7 +11117,7 @@
 <li>test_strategy.md: Bolt 34 の行</li>
 <li>release_plan.md: 34 の行の続き（開始準備のステップ 6 で 34・34b・34c に分けた）、W6 の行（:649。ロックの解除・利用者の登録・担当案件）、マニュアルの方針（:629 の「節」→「11 章」）、状態の行・局面とアプローチ（:557）・実績の表・更新履歴</li>
 <li>完了の判定: <code>okf:check</code> ERROR 0、<code>documentationTest</code> 緑</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>2. スキーマと dev-data</strong> 【承認ゲート: データベース】</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>2. スキーマと dev-data</strong> 【承認ゲート: データベース】</li>
 <li>common のマイグレーションで <code>audit_record</code> に 5 列を 1 列ずつ足し、列のコメントを付ける（PostgreSQL と H2 の両方で流れること）。dev-data にシステム管理者（A 社）と相手の利用者（A 社）を足す。TOTP の資格は利用者 ID を AAD にした暗号文で作り、平文の秘密を <code>application-dev.properties</code> の <code>dev-login.accounts</code> に足し、<code>DevTotpCredentialsDevProfileTest</code> の件数を直す</li>
 <li>マッパーの契約テスト（<code>AuditRecordRow</code> の新しい列の読み書き）</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>3. 役割の組合せの規則と利用者の版</strong>（ドメイン）【承認ゲート: Red・Green】</li>
