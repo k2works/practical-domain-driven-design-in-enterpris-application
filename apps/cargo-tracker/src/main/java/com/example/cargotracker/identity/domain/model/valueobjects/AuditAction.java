@@ -37,5 +37,10 @@ public enum AuditAction {
      * システム管理者が利用者の役割を変えた（Bolt 34。US-16 AC1 の役割の分）。成功だけを記録し、対象（利用者と更新した後の版）と
      * 変更前後の役割を {@link AuditTarget} に残す。拒んだ変更と古い版からの変更は記録しない。
      */
-    ROLES_CHANGED
+    ROLES_CHANGED,
+    /**
+     * システム管理者が管理範囲外の利用者を開いた・変えようとした（Bolt 34b。US-16 AC2、IA-INV-14）。結果は失敗、理由は
+     * {@code OUT_OF_SCOPE}、対象は利用者。1 回の request につき 1 行。
+     */
+    ADMIN_SCOPE_DENIED
 }

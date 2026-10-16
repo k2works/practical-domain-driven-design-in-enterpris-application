@@ -35,6 +35,9 @@ public final class AuditRecord {
     /** 対象の種類: 利用者（`audit_record.target_type`）。 */
     private static final String USER_TARGET = "USER";
 
+    /** 理由: 管理範囲外（`ADMIN_SCOPE_DENIED` の理由。Bolt 34b）。 */
+    static final String OUT_OF_SCOPE = "OUT_OF_SCOPE";
+
     private final UUID id;
     private final UtcInstant occurredAt;
     private final UserId actorUserId;
@@ -204,6 +207,25 @@ public final class AuditRecord {
                         Long.toString(targetVersion),
                         roleNames(before),
                         roleNames(after)));
+    }
+
+    /**
+     * システム管理者が管理範囲外の利用者を開いた・変えようとしたことを記録する（Bolt 34b、US-16 AC2、IA-INV-08・IA-INV-14）。結果は
+     * 失敗、理由は {@code OUT_OF_SCOPE}、対象は利用者（版と変更前後はない）。
+     */
+    public static AuditRecord adminScopeDenied(UserId actor, CompanyId actorCompany, UserId targetUser, UtcInstant at) {
+        Objects.requireNonNull(actor, USER_ARGUMENT);
+        Objects.requireNonNull(actorCompany, COMPANY_ARGUMENT);
+        Objects.requireNonNull(targetUser, "targetUser");
+        return new AuditRecord(
+                UUID.randomUUID(),
+                at,
+                actor,
+                actorCompany,
+                AuditAction.ADMIN_SCOPE_DENIED,
+                AuditResult.FAILURE,
+                OUT_OF_SCOPE,
+                new AuditTarget(USER_TARGET, targetUser.value().toString(), null, null, null));
     }
 
     private static String roleNames(Set<Role> roles) {
