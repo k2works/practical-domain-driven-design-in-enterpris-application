@@ -11219,7 +11219,7 @@
 <td style="text-align: left;">3</td>
 <td style="text-align: left;"><strong>管理範囲</strong></td>
 <td style="text-align: left;">—</td>
-<td style="text-align: left;">決定済み（3）: <code>user_assignment</code>（<code>COMPANY</code>）で割り当てる（34b）。<strong>34 と 34b の間は、システム管理者がすべての企業の利用者の役割を変えられる</strong>。ステージング・本番に業務の利用者はまだいないので受け入れ、W5 の中で 34b で閉じる（推奨）</td>
+<td style="text-align: left;">決定済み（3・承認）: <code>user_assignment</code>（<code>COMPANY</code>）で割り当てる（34b）。<strong>34 と 34b の間は、システム管理者がすべての企業の利用者の役割を変えられる</strong>。ステージング・本番に業務の利用者はまだいないので受け入れ、W5 の中で 34b で閉じる</td>
 </tr>
 <tr>
 <td style="text-align: left;">4</td>
@@ -11231,25 +11231,25 @@
 <td style="text-align: left;">5</td>
 <td style="text-align: left;"><strong>企業の種類と役割（企業間分離）</strong>（整合性検証の指摘）</td>
 <td style="text-align: left;">3</td>
-<td style="text-align: left;">UC-16 の主シナリオ 4 は企業間分離の検証を求めるが、今は規則がない。荷主企業の利用者に営業担当者を付けると社内の画面が開けてしまう。この Bolt に入れ、荷主担当者は荷主企業、ほかの 7 役割は A 社、荷受人の企業には BR-15 の役割を付けない、とする（推奨。約 15 分増える）。入れないなら 34b に送る</td>
+<td style="text-align: left;">UC-16 の主シナリオ 4 は企業間分離の検証を求めるが、今は規則がない。荷主企業の利用者に営業担当者を付けると社内の画面が開けてしまう。この Bolt に入れ、荷主担当者は荷主企業、ほかの 7 役割は A 社、荷受人の企業には BR-15 の役割を付けない。決定済み（計画の承認）: この Bolt に入れる（約 15 分増える）</td>
 </tr>
 <tr>
 <td style="text-align: left;">6</td>
 <td style="text-align: left;"><strong>システム管理者と監査担当者の併用</strong></td>
 <td style="text-align: left;">3</td>
-<td style="text-align: left;">BR-15 の文言は「業務データを変更できる役割」との併用だけを禁じるので、拒まない（推奨）。拒むなら BR-15 と IA-INV-01 を直す</td>
+<td style="text-align: left;">BR-15 の文言は「業務データを変更できる役割」との併用だけを禁じるので、拒まない。決定済み（計画の承認）</td>
 </tr>
 <tr>
 <td style="text-align: left;">7</td>
 <td style="text-align: left;"><strong>拒否と古い版を監査に書くか</strong></td>
 <td style="text-align: left;">4</td>
-<td style="text-align: left;">書かない（推奨）。AC2 の「試行の記録」は管理範囲外の企業への操作で、34b で書く。職務分離の拒否は付与が起きていない</td>
+<td style="text-align: left;">決定済み（計画の承認）: 書かない。AC2 の「試行の記録」は管理範囲外の企業への操作で、34b で書く。職務分離の拒否は付与が起きていない</td>
 </tr>
 <tr>
 <td style="text-align: left;">8</td>
 <td style="text-align: left;"><strong><code>User</code> に版を写す</strong></td>
 <td style="text-align: left;">4</td>
-<td style="text-align: left;">Bolt 33a の判断（「<code>User</code> には版を写さない」）を改め、期待する版を画面から送る（推奨。UC-16 の 4b に要る）</td>
+<td style="text-align: left;">Bolt 33a の判断（「<code>User</code> には版を写さない」）を改め、期待する版を画面から送る（UC-16 の 4b に要る）。決定済み（計画の承認）</td>
 </tr>
 <tr>
 <td style="text-align: left;">9</td>
@@ -11286,7 +11286,7 @@
 <h2 id="_8">完了条件<a class="headerlink" href="#_8" title="Permanent link">&para;</a></h2>
 <ul class="task-list">
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> 職務分離の規則があり、システム管理者・監査担当者と業務の役割の併用は拒まれ、競合する役割が画面に示される（AC3）</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> 企業の種類に合わない役割は拒まれる（確認ポイント 5 で入れると決めた場合）</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> 企業の種類に合わない役割は拒まれる（UC-16 の主シナリオ 4 の企業間分離。確認ポイント 5）</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> システム管理者が S-20 で利用者の役割を確認の領域を経て付与・取り消せ、<code>user_role</code> と監査記録（対象・版・変更前後）が 1 つのトランザクションで書かれる（AC1 の役割の分）</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> 自分の役割の変更、役割なし、変更なしは拒まれ、古い版からの変更は拒まれて最新を開き直す（UC-16 の 4b）</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <code>/staff/users/**</code> はシステム管理者だけが開け、システム管理者のホームは S-20。変えた役割は相手の次の request から効く</li>
@@ -11314,6 +11314,11 @@
 <td style="text-align: left;">2026-10-16</td>
 <td style="text-align: left;">詳細整合性検証（11 件）と横断整合性検証（11 件）の指摘を反映した。企業の種類と役割の規則（確認ポイント 5）、確認の領域の URL を S-07 の形（GET で確認、POST で確定）に、古い版の文言、回復手段、dev-data の AAD と件数、<code>User</code> の版と Bolt 33a の判断（確認ポイント 8）、変更前後の並び、組み立て（<code>@Service</code>・<code>@Bean</code>・<code>@DomainRule</code>）、読み出しのポートと射影、結果の型、承認ゲートの印、インサイドアウトの根拠、前の Bolt からの送り（ロックの解除・<code>password_hash</code>・<code>login_failure</code> の COMMENT）、Bolt ゴール・仮説・開始準備で確かめたこと</td>
 <td style="text-align: left;">anthropic/claude-opus-5-5</td>
+</tr>
+<tr>
+<td style="text-align: left;">2026-10-16</td>
+<td style="text-align: left;">計画を承認した。企業の種類と役割の規則をこの Bolt に入れ、システム管理者と監査担当者の併用は拒まない（確認ポイント 5・6）。確認ポイント 3・7・8 ほか残りを承認した</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5、承認 human:kakimomokuri</td>
 </tr>
 </tbody>
 </table>
