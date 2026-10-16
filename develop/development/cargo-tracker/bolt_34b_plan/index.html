@@ -16,7 +16,7 @@
         <link rel="prev" href="../bolt_34_report/">
       
       
-        <link rel="next" href="../release_report-0_1/">
+        <link rel="next" href="../bolt_34b_report/">
       
       
         
@@ -5896,6 +5896,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../bolt_34b_report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 34b 終了報告
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../release_report-0_1/" class="md-nav__link">
         
   
@@ -11216,7 +11244,7 @@
 <li>controller（POST も照会を先に通す、範囲外は記録して 404）、共通の 404 の画面、一覧の空の文言</li>
 <li>画面の層: <code>UiUsers</code> でシステム管理者にシナリオの企業（自分の企業を含む）を割り当てる。受入シナリオ（<code>@US-16-AC2</code>）: 範囲外の利用者は一覧に出ず、URL を開くと見つからない（共通の 404 の画面でアクセシビリティの検査も通す）。Bolt 34 のシナリオが緑のまま</li>
 <li>マニュアル 11 章と 2 章の補足。完了の判定: <code>check</code> 緑、<code>uiTest</code> 緑</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>6. SonarQube と開発レビューと終了報告</strong> 【承認ゲート: 終了報告】</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>6. SonarQube と開発レビューと終了報告</strong> 【承認ゲート: 終了報告】</li>
 <li>SonarQube（T-116）。開発レビュー（プログラマー・テスター、アーキテクト、セキュリティ、テクニカルライター）。<code>bolt_34b_report.md</code>、release_plan、開発の索引</li>
 </ul>
 <h3 id="_7">時間の配分と打ち切り<a class="headerlink" href="#_7" title="Permanent link">&para;</a></h3>
@@ -11349,12 +11377,12 @@
 </table>
 <h2 id="_8">完了条件<a class="headerlink" href="#_8" title="Permanent link">&para;</a></h2>
 <ul class="task-list">
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <code>user_assignment</code> があり、システム管理者の管理範囲（<code>COMPANY</code>）を読める</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> 一覧は管理範囲の企業の利用者だけを示し、割り当てのないシステム管理者には空</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> 範囲外の利用者の詳細・確認・確定は 404 で、役割も版も変わらず、試行が <code>ADMIN_SCOPE_DENIED</code> として 1 回の request につき 1 行、監査記録に残る（AC2、IA-INV-08、IA-INV-14）</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> 設計文書（data_model・domain_model・ui_design・architecture_backend・non_functional・test_strategy・release_plan）とマニュアル 11 章・2 章を更新した</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <code>check</code> と <code>uiTest</code> が緑。push してアプリの CI と MkDocs の配備を確かめた。SonarQube の Quality Gate が PASS、<code>okf:check</code> ERROR 0</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> 開発レビュー、終了報告</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <code>user_assignment</code> があり、システム管理者の管理範囲（<code>COMPANY</code>）を読める</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> 一覧は管理範囲の企業の利用者だけを示し、割り当てのないシステム管理者には空</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> 範囲外の利用者の詳細・確認・確定は 404 で、役割も版も変わらず、確定の試行が <code>ADMIN_SCOPE_DENIED</code> として 1 行、監査記録に残る（AC2、IA-INV-08、IA-INV-14。GET は記録しない。開発レビューの決定）</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> 設計文書（data_model・domain_model・ui_design・architecture_backend・non_functional・test_strategy・release_plan）とマニュアル 11 章・2 章を更新した</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <code>check</code> と <code>uiTest</code> が緑。push してアプリの CI と MkDocs の配備を確かめた。SonarQube の Quality Gate が PASS、<code>okf:check</code> ERROR 0</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> 開発レビュー、終了報告</li>
 </ul>
 <h2 id="_9">更新履歴<a class="headerlink" href="#_9" title="Permanent link">&para;</a></h2>
 <table>
@@ -11384,6 +11412,11 @@
 <tr>
 <td style="text-align: left;">2026-10-16</td>
 <td style="text-align: left;">開発レビューの後: 範囲外の試行は確定の POST でだけ記録する（GET は CSRF の守りがなく、他サイトから記録を書かせられるため。確認ポイント 7 を改めた。human:kakimomokuri が決定）。照会は管理範囲を先に読み、いない利用者と読み出しの量をそろえる。ポートは管理範囲の値を返す。記録のサービスに依存してよいのは画面の層だけ（ArchUnit）。2 章に 2.8「画面が見つかりません」</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5</td>
+</tr>
+<tr>
+<td style="text-align: left;">2026-10-16</td>
+<td style="text-align: left;">ステップ 6 を終え、<a href="../bolt_34b_report/">終了報告</a>を作った（承認待ち）。打ち切りの条件には当たらなかった</td>
 <td style="text-align: left;">anthropic/claude-opus-5-5</td>
 </tr>
 </tbody>
