@@ -10833,7 +10833,7 @@
 <li>release_plan.md: 553 行目の状態、557 行目の局面とアプローチ、599 行目の 33e の行（33f に送るものを外し、計画へのリンク）と 33f の行（リファクタリング（インサイドアウト）、構造、マニュアルの文言との一致を完了条件に。決定 7）、603 行目の W5 の注（33c〜33f は SP 0）、605 行目の順序（→ 33f）と本数（23 本）、622 行目（33c〜33f に入れない）、775 行目の実績の表、更新履歴</li>
 <li>過去の報告: bolt_33c_report.md（22・109・116・123 行目）の議題 4 (b) とテンプレートの期間の行き先に「→ 33f」、bolt_33d_report.md の既知の課題に「→ 33e・33f」を書き添え、更新履歴に 1 行ずつ足す</li>
 <li>完了の判定: <code>okf:check</code> ERROR 0、<code>documentationTest</code> 緑</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>2. 期限の判定を <code>SessionPolicy</code> に</strong></li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>2. 期限の判定を <code>SessionPolicy</code> に</strong></li>
 <li>先に A-08 の画面の期限の分岐の統合テストを <code>RecoveryCodeLoginSecurityIntegrationTest</code> に足す（決定 5）。ほかの 3 か所のちょうどの時刻のテストはある（<code>SessionLifetimeFilterTest</code> の 8 時間・登録の途中の 15 分・5 分、<code>RecoveryLoginTest</code>、<code>TotpReEnrollmentServiceTest</code>）</li>
 <li><code>SessionPolicyTest</code> を足し（ちょうど・1 ナノ秒前・後）、4 か所と Javadoc を付け替える。変異: <code>isExpired</code> の境界を変えると（<code>isAfter</code> に）落ちる（控えから戻す）</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>3. session の ID の値オブジェクト</strong></li>
