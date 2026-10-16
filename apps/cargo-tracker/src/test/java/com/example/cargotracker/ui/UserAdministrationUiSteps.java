@@ -74,6 +74,40 @@ public class UserAdministrationUiSteps {
         openDetail(Role.AUDITOR);
     }
 
+    @前提("管理範囲外の企業の利用者が登録されている")
+    public void 管理範囲外の利用者が登録されている() {
+        users.outsideAdministration();
+    }
+
+    @ならば("利用者の一覧に管理範囲外の利用者は示されない")
+    public void 一覧に範囲外の利用者は示されない() {
+        assertThat(page().locator("main"))
+                .not()
+                .containsText(users.outsideAdministration().email());
+    }
+
+    @もし("システム管理者が管理範囲外の利用者の詳細の URL を開く")
+    public void 範囲外の詳細を開く() {
+        browser.navigate(baseUrl + "/staff/users/"
+                + users.outsideAdministration().userId().value());
+    }
+
+    @ならば("画面が見つからないと示され、試行が {int} 件記録される")
+    public void 見つからないと示され記録される(int count) {
+        assertThat(page().getByRole(AriaRole.HEADING, new Page.GetByRoleOptions().setLevel(1)))
+                .hasText("画面が見つかりません");
+        assertThat(page().locator("main")).containsText("お探しの画面は見つかりません。");
+        assertThat(page().locator("main"))
+                .not()
+                .containsText(users.outsideAdministration().email());
+        browser.checkAccessibility();
+        assertThat(jdbc.queryForObject(
+                        "SELECT count(*) FROM identity.audit_record WHERE action = 'ADMIN_SCOPE_DENIED' AND target_id = ?",
+                        Integer.class,
+                        users.outsideAdministration().userId().value().toString()))
+                .isEqualTo(count);
+    }
+
     @もし("システム管理者が自分の利用者の詳細を開く")
     public void 自分の詳細を開く() {
         openDetail(Role.SYSTEM_ADMIN);

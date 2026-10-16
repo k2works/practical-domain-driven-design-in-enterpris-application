@@ -1,5 +1,6 @@
 package com.example.cargotracker.ui;
 
+import com.example.cargotracker.identity.AdministrationFixtures;
 import com.example.cargotracker.identity.AuthenticationFactorFixtures;
 import com.example.cargotracker.identity.domain.model.aggregates.Company;
 import com.example.cargotracker.identity.domain.model.aggregates.CompanyRepository;
@@ -58,6 +59,10 @@ public class UiUsers {
     private final Clock clock;
     private final JdbcTemplate jdbc;
     private final Map<Role, Credentials> created = new EnumMap<>(Role.class);
+    /** シナリオで作った企業（システム管理者の管理範囲に割り当てる。Bolt 34b）。 */
+    private final java.util.List<CompanyId> scenarioCompanies = new java.util.ArrayList<>();
+
+    private Credentials outsider;
     private final String suffix = UUID.randomUUID().toString();
 
     @SuppressWarnings("java:S107") // 利用者と TOTP の資格を作る部品をそろえて受ける（シナリオの範囲の部品）
@@ -150,6 +155,17 @@ public class UiUsers {
         return created.computeIfAbsent(role, each -> create(each, false));
     }
 
+    /**
+     * システム管理者の管理範囲の外の企業の利用者（Bolt 34b の AC2 のシナリオ）。カスタマーサポートの役割で、シナリオのシステム管理者に
+     * 企業を割り当てない。初めて求められたときに作る。
+     */
+    public Credentials outsideAdministration() {
+        if (outsider == null) {
+            outsider = create(Role.CUSTOMER_SUPPORT, true, false);
+        }
+        return outsider;
+    }
+
     /** A-07 の手入力のキー（Base32）から、利用者の認証アプリと同じようにその時点のコードを作る（Bolt 31b）。 */
     public String codeFromKey(Role role, String manualKey) {
         UserId owner = of(role).userId();
@@ -160,6 +176,14 @@ public class UiUsers {
     }
 
     private Credentials create(Role role, boolean enrollTotp) {
+        return create(role, enrollTotp, true);
+    }
+
+    /**
+     * 利用者を作る。シナリオのシステム管理者は、シナリオで作った企業（自分の企業を含む）を管理範囲に持つ（Bolt 34b。割り当ては
+     * 運用の手順で入れるので、テストの準備として表に入れる）。{@code administered} が偽の利用者の企業は割り当てない。
+     */
+    private Credentials create(Role role, boolean enrollTotp, boolean administered) {
         boolean shipper = role == Role.SHIPPER;
         Company company = Company.of(
                 new CompanyId(UUID.randomUUID()),
@@ -181,6 +205,15 @@ public class UiUsers {
             totpCredentials.add(TotpCredential.enroll(
                     userId, cipher.encrypt(TOTP_SECRET.clone(), userId), new UtcInstant(clock.instant())));
         }
+        if (administered) {
+            scenarioCompanies.add(company.id());
+            if (role == Role.SYSTEM_ADMIN) {
+                scenarioCompanies.forEach(each -> AdministrationFixtures.assignCompany(jdbc, userId, each));
+            } else if (created.containsKey(Role.SYSTEM_ADMIN)) {
+                AdministrationFixtures.assignCompany(
+                        jdbc, created.get(Role.SYSTEM_ADMIN).userId(), company.id());
+            }
+        }
         return new Credentials(userId, email, PASSWORD);
     }
 
@@ -197,6 +230,7 @@ public class UiUsers {
             case SALES -> "営業 一郎";
             case SYSTEM_ADMIN -> "管理 次郎";
             case AUDITOR -> "監査 花子";
+            case CUSTOMER_SUPPORT -> "窓口 三郎";
             default -> throw new IllegalArgumentException("画面の層のテストの利用者を用意していない役割です: " + role);
         };
     }

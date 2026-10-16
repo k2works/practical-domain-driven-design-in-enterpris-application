@@ -3,7 +3,7 @@ type: Plan
 title: "Bolt 34b 計画 - システム管理者の管理範囲と範囲外の試行の記録（US-16 の一部）"
 description: "W5 の 23 本目の Bolt の計画。システム管理者の管理範囲を担当範囲の表 user_assignment（COMPANY）で持ち、S-20 の一覧・詳細・役割の変更を管理範囲の企業の利用者に絞る。範囲外の利用者は存在しない利用者と同じ 404 にし、試行を監査記録に同じ request で書く（AC2、IA-INV-08）。利用停止と再開は 34d に分けた。"
 tags: [plan]
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-16T10:07:20Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-16T10:24:31Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-16T09:25:23Z }
   - { by: human:kakimomokuri, at: 2026-10-16T09:25:49Z }
@@ -200,7 +200,7 @@ u ||--o{ ua
   - `AdministrationScope` の単体テスト、`AuditRecord.adminScopeDenied`、`AdministrationScopeDenialService` の単体テストと統合テスト（追記の失敗は例外）
 - [x] **4. 照会と役割の変更のサービス** 【承認ゲート: セキュリティ】
   - `UserAdministrationQueryService` の `list(actor)`・`detail(actor, id)`、`UserRoleChangeService` の範囲の判定と `OutOfScope`。単体テストと統合テスト（範囲外の確定で役割と版は変わらない）。既存の `UserRoleChangeServiceTest`・`UserRoleChangeIntegrationTest`・`UserRoleChangeRollbackIntegrationTest` に割り当てを足す
-- [ ] **5. 画面と受入シナリオ** 【承認ゲート: 画面・セキュリティ】
+- [x] **5. 画面と受入シナリオ** 【承認ゲート: 画面・セキュリティ】
   - セキュリティの統合テストを先に（範囲外の詳細・確認・確定が 404 で `ADMIN_SCOPE_DENIED` が 1 行ずつ、役割も版も変わらない、一覧に範囲外の利用者が出ない、割り当てのないシステム管理者には空、監査の追記の失敗で 500）。既存の `UserAdministrationSecurityIntegrationTest` に割り当てを足す
   - controller（POST も照会を先に通す、範囲外は記録して 404）、共通の 404 の画面、一覧の空の文言
   - 画面の層: `UiUsers` でシステム管理者にシナリオの企業（自分の企業を含む）を割り当てる。受入シナリオ（`@US-16-AC2`）: 範囲外の利用者は一覧に出ず、URL を開くと見つからない（共通の 404 の画面でアクセシビリティの検査も通す）。Bolt 34 のシナリオが緑のまま
