@@ -159,14 +159,18 @@ public class IdentityConfiguration {
     }
 
     @Bean
+    @SuppressWarnings("java:S107") // 判定と書き込みと session の失効の部品をそろえて受ける
     UserStatusChangeService userStatusChangeService(
             UserRepository users,
             CompanyRepository companies,
             UserAssignmentRepository assignments,
             AuditRecordRepository auditRecords,
+            PasswordResetTokenRepository tokens,
+            UserSessionRevoker sessions,
             Clock clock,
             TransactionTemplate transactionTemplate) {
-        return new UserStatusChangeService(users, companies, assignments, auditRecords, clock, transactionTemplate);
+        return new UserStatusChangeService(
+                users, companies, assignments, auditRecords, tokens, sessions, clock, transactionTemplate);
     }
 
     @Bean

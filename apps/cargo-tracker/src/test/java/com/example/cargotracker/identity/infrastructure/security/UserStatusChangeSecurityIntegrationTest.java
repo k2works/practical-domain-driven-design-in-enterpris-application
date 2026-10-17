@@ -1,6 +1,7 @@
 package com.example.cargotracker.identity.infrastructure.security;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.doReturn;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -8,10 +9,13 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.example.cargotracker.identity.AdministrationFixtures;
+import com.example.cargotracker.identity.AuthenticationFactorFixtures;
+import com.example.cargotracker.identity.SpringSessionRows;
 import com.example.cargotracker.identity.domain.model.aggregates.Company;
 import com.example.cargotracker.identity.domain.model.aggregates.TotpCredential;
 import com.example.cargotracker.identity.domain.model.aggregates.TotpCredentialRepository;
 import com.example.cargotracker.identity.domain.model.aggregates.User;
+import com.example.cargotracker.identity.domain.model.valueobjects.AdministrationScope;
 import com.example.cargotracker.identity.domain.model.valueobjects.CompanyKind;
 import com.example.cargotracker.identity.domain.model.valueobjects.EmailAddress;
 import com.example.cargotracker.identity.domain.model.valueobjects.UserStatus;
@@ -107,7 +111,8 @@ class UserStatusChangeSecurityIntegrationTest extends IdentitySpyIntegrationTest
         Cookie admin = login(user(operator, Role.SYSTEM_ADMIN));
         String target = user(operator, Role.SALES);
         login(target);
-        int before = auditsByActor(target);
+        java.util.List<UUID> before = auditIdsByActor(target);
+        assertThat(before).as("相手のログインの記録がある").isNotEmpty();
 
         postStatus(admin, target, SUSPENDED, "USAGE_ENDED", "0").andExpect(status().is3xxRedirection());
         mvc.perform(post("/login")
@@ -120,7 +125,7 @@ class UserStatusChangeSecurityIntegrationTest extends IdentitySpyIntegrationTest
         assertThat(statusOf(target)).containsEntry("status", ACTIVE).containsEntry("version", 2L);
         assertThat(audits(target, "USER_REACTIVATED")).isEqualTo(1);
         login(target);
-        assertThat(auditsByActor(target)).as("相手の過去の操作の記録は残る（AC5）").isGreaterThan(before);
+        assertThat(auditIdsByActor(target)).as("相手の過去の操作の記録は残る（AC5）").containsAll(before);
     }
 
     // --- 確定の POST を画面を経ずに送る（H3） ---
@@ -152,16 +157,74 @@ class UserStatusChangeSecurityIntegrationTest extends IdentitySpyIntegrationTest
     }
 
     @Test
-    void 同じ状態と理由のない停止と古い版の確定は拒み何も書かない() throws Exception {
+    void 同じ状態への確定は拒み何も書かない() throws Exception {
+        assertRefusedWithoutWriting(ACTIVE, null, "0");
+    }
+
+    @Test
+    void 理由のない停止の確定は拒み何も書かない() throws Exception {
+        assertRefusedWithoutWriting(SUSPENDED, null, "0");
+    }
+
+    @Test
+    void 古い版からの確定は拒み何も書かない() throws Exception {
+        assertRefusedWithoutWriting(SUSPENDED, TRANSFERRED, "5");
+    }
+
+    private void assertRefusedWithoutWriting(String to, String reason, String version) throws Exception {
         Cookie session = login(user(operator, Role.SYSTEM_ADMIN));
         String target = user(operator, Role.SALES);
 
-        postStatus(session, target, ACTIVE, null, "0").andExpect(status().isOk());
-        postStatus(session, target, SUSPENDED, null, "0").andExpect(status().isOk());
-        postStatus(session, target, SUSPENDED, TRANSFERRED, "5").andExpect(status().isOk());
+        postStatus(session, target, to, reason, version).andExpect(status().isOk());
 
         assertThat(statusOf(target)).containsEntry("status", ACTIVE).containsEntry("version", 0L);
         assertThat(statusAudits(target)).isZero();
+    }
+
+    // --- 開発レビューの後の決定（2026-10-17、human:kakimomokuri） ---
+
+    @Test
+    void 相手が操作しないうちに停止して再開すると前のsessionは使えない() throws Exception {
+        Cookie admin = login(user(operator, Role.SYSTEM_ADMIN));
+        String target = user(operator, Role.SALES);
+        Cookie targetSession = login(target);
+        SpringSessionRows sessions = new SpringSessionRows(jdbc);
+
+        postStatus(admin, target, SUSPENDED, "EMERGENCY", "0").andExpect(status().is3xxRedirection());
+        assertThat(sessions.exists(targetSession)).as("停止ではすぐに消さない（決定 2）").isTrue();
+        postStatus(admin, target, ACTIVE, null, "1").andExpect(status().is3xxRedirection());
+
+        assertThat(sessions.exists(targetSession)).as("再開の確定の後に前の session を消した").isFalse();
+        MvcResult next = mvc.perform(get("/staff/transport-requests").cookie(targetSession))
+                .andExpect(status().is3xxRedirection())
+                .andReturn();
+        assertThat(next.getResponse().getRedirectedUrl()).isNotNull();
+    }
+
+    @Test
+    void 停止では相手の未使用の再設定のトークンを無効にする() throws Exception {
+        Cookie admin = login(user(operator, Role.SYSTEM_ADMIN));
+        String target = user(operator, Role.SALES);
+        UUID token = UUID.randomUUID();
+        jdbc.update(
+                "INSERT INTO identity.password_reset_token"
+                        + " (id, request_id, user_id, token_hash, issued_at, expires_at)"
+                        + " VALUES (?, ?, ?, ?, ?, ?)",
+                token,
+                UUID.randomUUID(),
+                userIdOf(target).value(),
+                "hash-" + token,
+                java.sql.Timestamp.from(clock.instant()),
+                java.sql.Timestamp.from(clock.instant().plusSeconds(1800)));
+
+        postStatus(admin, target, SUSPENDED, TRANSFERRED, "0").andExpect(status().is3xxRedirection());
+
+        assertThat(jdbc.queryForObject(
+                        "SELECT invalidated_at IS NOT NULL FROM identity.password_reset_token WHERE id = ?",
+                        Boolean.class,
+                        token))
+                .as("再開の後に、停止の前のリンクで設定し直させない")
+                .isTrue();
     }
 
     @Test
@@ -260,6 +323,56 @@ class UserStatusChangeSecurityIntegrationTest extends IdentitySpyIntegrationTest
         assertThat(statusOf(target)).containsEntry("status", SUSPENDED);
     }
 
+    @Test
+    void 詳細を読んだ後に管理範囲から外れた確認は404で何も書かず確定は404で試行を1行書く() throws Exception {
+        String admin = user(operator, Role.SYSTEM_ADMIN);
+        Cookie session = login(admin);
+        String target = user(operator, Role.SALES);
+        // 1 回目（controller の詳細の読み出し）は範囲内、2 回目（利用状態の変更の判定）は範囲外
+        doReturn(new AdministrationScope(Set.of(operator.id())))
+                .doReturn(new AdministrationScope(Set.of()))
+                .doReturn(new AdministrationScope(Set.of(operator.id())))
+                .doReturn(new AdministrationScope(Set.of()))
+                .when(assignments)
+                .scopeOf(userIdOf(admin));
+
+        mvc.perform(get(detailUrl(target) + "/status-changes/confirmation")
+                        .cookie(session)
+                        .param("status", SUSPENDED)
+                        .param("reason", TRANSFERRED)
+                        .param("version", "0"))
+                .andExpect(status().isNotFound());
+        assertThat(scopeDenialsOf(target)).as("確認の GET は記録しない").isZero();
+        postStatus(session, target, SUSPENDED, TRANSFERRED, "0").andExpect(status().isNotFound());
+
+        assertThat(scopeDenialsOf(target)).isEqualTo(1);
+        assertThat(statusOf(target)).containsEntry("status", ACTIVE).containsEntry("version", 0L);
+    }
+
+    @Test
+    void 範囲外の利用者への版の誤った確定も試行を記録してから404にする() throws Exception {
+        Company outside = Company.of(new CompanyId(UUID.randomUUID()), "範囲外の会社", CompanyKind.OPERATOR, true);
+        companies.add(outside);
+        Cookie session = login(user(operator, Role.SYSTEM_ADMIN));
+        String stranger = user(outside, Role.SALES);
+
+        postStatus(session, stranger, SUSPENDED, TRANSFERRED, "x").andExpect(status().isNotFound());
+
+        assertThat(scopeDenialsOf(stranger)).isEqualTo(1);
+    }
+
+    @Test
+    void 範囲内の利用者への版の誤った確定と詳細の知らない理由は400() throws Exception {
+        Cookie session = login(user(operator, Role.SYSTEM_ADMIN));
+        String target = user(operator, Role.SALES);
+
+        postStatus(session, target, SUSPENDED, TRANSFERRED, "x").andExpect(status().isBadRequest());
+        mvc.perform(get(detailUrl(target)).cookie(session).param("reason", "BORED"))
+                .andExpect(status().isBadRequest());
+
+        assertThat(statusOf(target)).containsEntry("status", ACTIVE);
+    }
+
     // --- helpers ---
 
     private ResultActions postStatus(Cookie session, String target, String status, String reason, String version)
@@ -299,10 +412,10 @@ class UserStatusChangeSecurityIntegrationTest extends IdentitySpyIntegrationTest
         return audits(email, "ADMIN_SCOPE_DENIED");
     }
 
-    private int auditsByActor(String email) {
-        return jdbc.queryForObject(
-                "SELECT count(*) FROM identity.audit_record WHERE actor_user_id = ?",
-                Integer.class,
+    private java.util.List<UUID> auditIdsByActor(String email) {
+        return jdbc.queryForList(
+                "SELECT id FROM identity.audit_record WHERE actor_user_id = ?",
+                UUID.class,
                 userIdOf(email).value());
     }
 
@@ -346,8 +459,8 @@ class UserStatusChangeSecurityIntegrationTest extends IdentitySpyIntegrationTest
                 .andExpect(status().is3xxRedirection())
                 .andReturn();
         assertThat(totp.getResponse().getRedirectedUrl()).doesNotContain("error");
-        // 同じ TOTP の刻みのコードを 2 度使わない（IA-INV-10）。次のログインのために時計を 1 刻み進める
-        ((MutableClock) clock).setInstant(clock.instant().plusSeconds(30));
+        // 同じ利用者が同じ刻みの間にログインし直せるよう、テストの準備として使った刻みを戻す（本体の再利用の拒否は変えない。画面の層と同じ）
+        AuthenticationFactorFixtures.resetTotpStep(jdbc, userIdOf(email));
         return sessionOf(totp);
     }
 

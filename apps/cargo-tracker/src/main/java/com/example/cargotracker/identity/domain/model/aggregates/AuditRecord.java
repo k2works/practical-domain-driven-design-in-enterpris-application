@@ -232,13 +232,15 @@ public final class AuditRecord {
 
     /**
      * システム管理者が利用者の利用を停止したことを記録する（Bolt 34d、US-16 AC5）。理由は停止の理由の名前、対象は利用者と更新した後の版、
-     * 変更前後は利用状態の名前。結果は成功。
+     * 変更前後は利用状態の名前（変更前は判定に使った利用者の状態。変更後と同じなら記録しない）。結果は成功。
      */
+    @SuppressWarnings("java:S107") // 利用状態の変更の項目をそろえて受ける
     public static AuditRecord userSuspended(
             UserId actor,
             CompanyId actorCompany,
             UserId targetUser,
             long targetVersion,
+            UserStatus before,
             SuspensionReason reason,
             UtcInstant at) {
         Objects.requireNonNull(reason, REASON_ARGUMENT);
@@ -249,17 +251,22 @@ public final class AuditRecord {
                 targetVersion,
                 AuditAction.USER_SUSPENDED,
                 reason.name(),
-                UserStatus.ACTIVE,
+                before,
                 UserStatus.SUSPENDED,
                 at);
     }
 
     /**
      * システム管理者が停止中の利用者の利用を再開したことを記録する（Bolt 34d、US-16 AC5）。理由は持たない。対象は利用者と更新した後の版、
-     * 変更前後は利用状態の名前。結果は成功。
+     * 変更前後は利用状態の名前（変更前は判定に使った利用者の状態。変更後と同じなら記録しない）。結果は成功。
      */
     public static AuditRecord userReactivated(
-            UserId actor, CompanyId actorCompany, UserId targetUser, long targetVersion, UtcInstant at) {
+            UserId actor,
+            CompanyId actorCompany,
+            UserId targetUser,
+            long targetVersion,
+            UserStatus before,
+            UtcInstant at) {
         return statusChanged(
                 actor,
                 actorCompany,
@@ -267,7 +274,7 @@ public final class AuditRecord {
                 targetVersion,
                 AuditAction.USER_REACTIVATED,
                 null,
-                UserStatus.SUSPENDED,
+                before,
                 UserStatus.ACTIVE,
                 at);
     }
@@ -286,6 +293,9 @@ public final class AuditRecord {
         Objects.requireNonNull(actor, USER_ARGUMENT);
         Objects.requireNonNull(actorCompany, COMPANY_ARGUMENT);
         Objects.requireNonNull(targetUser, "targetUser");
+        if (Objects.requireNonNull(before, "before") == after) {
+            throw new IllegalArgumentException("利用状態が変わっていない変更は記録しない");
+        }
         return new AuditRecord(
                 UUID.randomUUID(),
                 at,

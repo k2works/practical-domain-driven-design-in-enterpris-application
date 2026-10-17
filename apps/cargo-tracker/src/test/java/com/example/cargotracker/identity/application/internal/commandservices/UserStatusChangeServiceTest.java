@@ -15,9 +15,11 @@ import com.example.cargotracker.identity.domain.model.aggregates.AuditRecord;
 import com.example.cargotracker.identity.domain.model.aggregates.AuditRecordRepository;
 import com.example.cargotracker.identity.domain.model.aggregates.Company;
 import com.example.cargotracker.identity.domain.model.aggregates.CompanyRepository;
+import com.example.cargotracker.identity.domain.model.aggregates.PasswordResetTokenRepository;
 import com.example.cargotracker.identity.domain.model.aggregates.User;
 import com.example.cargotracker.identity.domain.model.aggregates.UserAssignmentRepository;
 import com.example.cargotracker.identity.domain.model.aggregates.UserRepository;
+import com.example.cargotracker.identity.domain.model.aggregates.UserSessionRevoker;
 import com.example.cargotracker.identity.domain.model.valueobjects.AdministrationScope;
 import com.example.cargotracker.identity.domain.model.valueobjects.AuditAction;
 import com.example.cargotracker.identity.domain.model.valueobjects.AuditTarget;
@@ -56,8 +58,17 @@ class UserStatusChangeServiceTest {
     private final AuditRecordRepository auditRecords = mock(AuditRecordRepository.class);
     private final UserAssignmentRepository assignments = mock(UserAssignmentRepository.class);
     private final RecordingTransactions transactions = new RecordingTransactions();
+    private final PasswordResetTokenRepository tokens = mock(PasswordResetTokenRepository.class);
+    private final UserSessionRevoker sessions = mock(UserSessionRevoker.class);
     private final UserStatusChangeService service = new UserStatusChangeService(
-            users, companies, assignments, auditRecords, Clock.fixed(NOW, ZoneOffset.UTC), transactions);
+            users,
+            companies,
+            assignments,
+            auditRecords,
+            tokens,
+            sessions,
+            Clock.fixed(NOW, ZoneOffset.UTC),
+            transactions);
 
     private final Company operatorCompany =
             Company.of(new CompanyId(UUID.randomUUID()), "A 社", CompanyKind.OPERATOR, true);
@@ -224,6 +235,51 @@ class UserStatusChangeServiceTest {
                 .isEqualTo(new StatusChangeResult.Acceptable());
         verify(users, never()).changeStatus(any(), anyLong(), any());
         verify(auditRecords, never()).append(any());
+    }
+
+    // 開発レビューの後の決定（2026-10-17、human:kakimomokuri）
+
+    @Test
+    void 停止では同じトランザクションで再設定のトークンを無効にしsessionはすぐに消さない() {
+        given(sales);
+
+        service.change(admin, sales.id(), 3L, UserStatus.SUSPENDED, TRANSFERRED);
+
+        verify(tokens).invalidateUnused(sales.id(), new UtcInstant(NOW));
+        verify(sessions, never()).revokeAll(any());
+    }
+
+    @Test
+    void 再開では確定の後に前のsessionをすべて消しトークンには触れない() {
+        User suspended = sales(UserStatus.SUSPENDED);
+        given(suspended);
+
+        service.change(admin, suspended.id(), 3L, UserStatus.ACTIVE, Optional.empty());
+
+        verify(sessions).revokeAll(suspended.email());
+        verify(tokens, never()).invalidateUnused(any(), any());
+    }
+
+    @Test
+    void 拒否と古い版ではトークンもsessionも触れない() {
+        User suspended = sales(UserStatus.SUSPENDED);
+        given(suspended);
+
+        service.change(admin, suspended.id(), 2L, UserStatus.ACTIVE, Optional.empty());
+        service.change(admin, suspended.id(), 3L, UserStatus.SUSPENDED, TRANSFERRED);
+
+        verify(sessions, never()).revokeAll(any());
+        verify(tokens, never()).invalidateUnused(any(), any());
+    }
+
+    @Test
+    void 再開の後にsessionを消せなくても再開した結果を返す() {
+        User suspended = sales(UserStatus.SUSPENDED);
+        given(suspended);
+        when(sessions.revokeAll(any())).thenThrow(new IllegalStateException("session の表に届かない"));
+
+        assertThat(service.change(admin, suspended.id(), 3L, UserStatus.ACTIVE, Optional.empty()))
+                .isEqualTo(new StatusChangeResult.Changed(4L));
     }
 
     /** トランザクションを開かずにそのまま呼び、setRollbackOnly を覚える（単体テスト用）。 */

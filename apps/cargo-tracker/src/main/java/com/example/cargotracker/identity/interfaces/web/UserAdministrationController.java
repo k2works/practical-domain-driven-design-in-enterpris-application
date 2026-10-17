@@ -55,10 +55,10 @@ public class UserAdministrationController {
     static final String STATUS_CONFIRMATION_URL = USERS_URL + "/{id}/status-changes/confirmation";
 
     /** 停止の完了の知らせ（UI 設計 S-20。Bolt 34d）。 */
-    static final String SUSPENDED_NOTICE = "利用を停止しました。";
+    static final String SUSPENDED_NOTICE = "利用を停止しました。相手の次の操作から使えなくなります。";
 
     /** 再開の完了の知らせ（UI 設計 S-20。Bolt 34d）。 */
-    static final String REACTIVATED_NOTICE = "利用を再開しました。";
+    static final String REACTIVATED_NOTICE = "利用を再開しました。相手は次のログインから使えます。";
 
     /** 自分の詳細の利用状態の領域の案内（UI 設計 S-20。Bolt 34d）。 */
     static final String SELF_STATUS_NOTE = "自分の利用状態は変更できません。ほかのシステム管理者に依頼してください。";
@@ -222,18 +222,23 @@ public class UserAdministrationController {
         return showStatusRefusal(id, request, version, actor, model, result, false);
     }
 
+    /**
+     * 利用状態の変更の確定。状態と版の値は、先に詳細を読んで管理範囲を確かめてから解釈する（値の誤りの 400 を範囲の判定より先にすると、
+     * 範囲外の利用者への確定の試行が記録に残らない。Bolt 34d の開発レビュー）。
+     */
     @PostMapping(STATUS_CONFIRMATION_URL)
     public String changeStatus(
             @PathVariable String id,
-            @RequestParam String status,
+            @RequestParam(name = "status", required = false) String status,
             @RequestParam(name = "reason", required = false) String reason,
-            @RequestParam long version,
+            @RequestParam(name = "version", required = false) String versionValue,
             AuthenticatedActor actor,
             Model model,
             RedirectAttributes redirectAttributes) {
         // 役割の変更と同じく、確定も先に詳細を読み、管理範囲の外なら試行を記録して 404 にする（書き手はこの controller の確定だけ）
         UserId target = detail(id, actor, true).id();
         StatusRequest request = StatusRequest.parse(status, reason);
+        long version = parseVersion(versionValue);
         StatusChangeResult result = statusChanges.change(actor, target, version, request.to(), request.reason());
         if (result instanceof StatusChangeResult.Changed) {
             redirectAttributes.addFlashAttribute(
@@ -255,12 +260,14 @@ public class UserAdministrationController {
         return switch (result) {
             case StatusChangeResult.Rejected(StatusChangeRejection rejection) -> {
                 UserDetail user = detail(id, actor, false);
+                // 同じ状態の拒否は、ほかの管理者が先に同じ変更を確定したときに起きる。次の操作が古い版で拒まれないよう、最新の版で示す
+                long formVersion = rejection == StatusChangeRejection.NO_CHANGE ? user.version() : version;
                 yield showDetail(
                         new DetailForm(
                                 user,
                                 user.roles(),
                                 request.reason(),
-                                version,
+                                formVersion,
                                 null,
                                 ErrorMessage.of(rejection, user.status())),
                         actor,
@@ -316,6 +323,7 @@ public class UserAdministrationController {
         model.addAttribute("statusNote", statusNote(user, self));
         model.addAttribute("reasonOptions", reasonOptions(form.reason()));
         model.addAttribute("statusError", form.statusError());
+        model.addAttribute("summary", ErrorSummary.of(form));
         Set<Role> assignable = RoleAssignmentPolicy.assignableRoles(user.companyKind());
         model.addAttribute("user", user);
         model.addAttribute("currentRoles", names(user.roles()));
@@ -423,6 +431,18 @@ public class UserAdministrationController {
                 .toList();
     }
 
+    /** 送られた版を数にする。ない・数でなければ 400。 */
+    private static long parseVersion(String version) {
+        if (version == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+        }
+        try {
+            return Long.parseLong(version);
+        } catch (NumberFormatException _) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+        }
+    }
+
     /** 送られた停止の理由の名前を理由にする。空や未指定は理由なし（停止なら判定が拒む）、知らない名前は 400。 */
     private static Optional<SuspensionReason> parseReason(String reason) {
         if (reason == null || reason.isBlank()) {
@@ -489,6 +509,27 @@ public class UserAdministrationController {
     public record RoleOption(Role role, boolean selected) {}
 
     /**
+     * 詳細のエラー要約（Bolt 34d で役割の変更と利用状態の変更の 2 つを 1 つにした）。
+     *
+     * @param title 見出し
+     * @param error 誤り
+     * @param anchor 選び方の誤りのときにリンクする欄
+     */
+    public record ErrorSummary(String title, ErrorMessage error, String anchor) {
+
+        /** 詳細に示す誤りの要約。誤りがなければ null。 */
+        static ErrorSummary of(DetailForm form) {
+            if (form.error() != null) {
+                return new ErrorSummary("役割を変更できませんでした", form.error(), "#roles");
+            }
+            if (form.statusError() != null) {
+                return new ErrorSummary("利用状態を変更できませんでした", form.statusError(), "#suspension-reason");
+            }
+            return null;
+        }
+    }
+
+    /**
      * 停止の理由の選択肢。
      *
      * @param reason 理由
@@ -507,6 +548,9 @@ public class UserAdministrationController {
 
         /** 知らない状態・理由の名前と、再開に理由を付けた送信は 400（役割の名前と同じ扱い）。 */
         static StatusRequest parse(String status, String reason) {
+            if (status == null) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+            }
             UserStatus to;
             try {
                 to = UserStatus.valueOf(status);

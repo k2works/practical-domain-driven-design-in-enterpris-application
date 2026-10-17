@@ -3,9 +3,12 @@ package com.example.cargotracker.identity.application.internal.commandservices;
 import com.example.cargotracker.identity.domain.model.aggregates.AuditRecord;
 import com.example.cargotracker.identity.domain.model.aggregates.AuditRecordRepository;
 import com.example.cargotracker.identity.domain.model.aggregates.CompanyRepository;
+import com.example.cargotracker.identity.domain.model.aggregates.PasswordResetTokenRepository;
 import com.example.cargotracker.identity.domain.model.aggregates.User;
 import com.example.cargotracker.identity.domain.model.aggregates.UserAssignmentRepository;
 import com.example.cargotracker.identity.domain.model.aggregates.UserRepository;
+import com.example.cargotracker.identity.domain.model.aggregates.UserSessionRevoker;
+import com.example.cargotracker.identity.domain.model.valueobjects.EmailAddress;
 import com.example.cargotracker.identity.domain.model.valueobjects.StatusChangeRejection;
 import com.example.cargotracker.identity.domain.model.valueobjects.SuspensionReason;
 import com.example.cargotracker.identity.domain.model.valueobjects.UserStatus;
@@ -15,6 +18,9 @@ import com.example.cargotracker.shared.domain.UserId;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import java.time.Clock;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicReference;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
 
@@ -25,30 +31,45 @@ import org.springframework.transaction.support.TransactionTemplate;
  * そのまま変える）、1 つのトランザクションで、版を条件にした利用状態の更新（{@link UserRepository#changeStatus}）と監査記録
  * {@code USER_SUSPENDED}・{@code USER_REACTIVATED} を書く。更新が 0 件ならほかの更新（役割の変更を含む。版を共有する）が先に入った
  * としてロールバックする。監査を書けなければ例外で全体を戻す（IA-INV-08）。拒否と古い版は監査に書かない。止めたことは、request ごとの
- * 確かめ（Bolt 32c。IA-INV-04）で相手の次の request から効く。確定の後に相手の session をすぐには消さない（2026-10-17、
+ * 確かめ（Bolt 32c。IA-INV-04）で相手の次の request から効く。停止の確定では相手の session をすぐには消さない（2026-10-17、
  * human:kakimomokuri）。
+ *
+ * <p>開発レビューの後の決定（2026-10-17、human:kakimomokuri）: 停止では、同じトランザクションで相手の未使用の password の再設定の
+ * トークンを無効にする（停止の前に発行したリンクで、再開の後に設定し直させない）。再開では、確定の後に相手の session をすべて消す
+ * （相手が 1 度も操作しないうちに停止して再開したとき、前の session を使い続けさせない。再開の後の session はログインし直したものだけ）。
+ * session は Spring Session が自分のトランザクションで消すので確定の後に呼び、消せなくても再開は戻さない（password の再設定の完了と
+ * 同じ扱い）。
  */
 @Service // JIG がユースケースとして読む印（組み立ては IdentityConfiguration）
 public class UserStatusChangeService {
+
+    private static final Logger LOG = LoggerFactory.getLogger(UserStatusChangeService.class);
 
     private final UserRepository users;
     private final CompanyRepository companies;
     private final UserAssignmentRepository assignments;
     private final AuditRecordRepository auditRecords;
+    private final PasswordResetTokenRepository tokens;
+    private final UserSessionRevoker sessions;
     private final Clock clock;
     private final TransactionTemplate transactionTemplate;
 
+    @SuppressWarnings("java:S107") // 判定と書き込みと session の失効の部品をそろえて受ける
     public UserStatusChangeService(
             UserRepository users,
             CompanyRepository companies,
             UserAssignmentRepository assignments,
             AuditRecordRepository auditRecords,
+            PasswordResetTokenRepository tokens,
+            UserSessionRevoker sessions,
             Clock clock,
             TransactionTemplate transactionTemplate) {
         this.users = users;
         this.companies = companies;
         this.assignments = assignments;
         this.auditRecords = auditRecords;
+        this.tokens = tokens;
+        this.sessions = sessions;
         this.clock = clock;
         this.transactionTemplate = transactionTemplate;
     }
@@ -90,13 +111,20 @@ public class UserStatusChangeService {
             long expectedVersion,
             UserStatus to,
             Optional<SuspensionReason> reason) {
-        return transactionTemplate.execute(status -> {
-            StatusChangeResult result = changeInTransaction(operator, target, expectedVersion, to, reason);
-            if (!(result instanceof StatusChangeResult.Changed)) {
+        // 変えた利用者のメールアドレス（再開の後に session を消すため）。変えなければ空のまま
+        AtomicReference<EmailAddress> changed = new AtomicReference<>();
+        StatusChangeResult result = transactionTemplate.execute(status -> {
+            StatusChangeResult inTransaction =
+                    changeInTransaction(operator, target, expectedVersion, to, reason, changed);
+            if (!(inTransaction instanceof StatusChangeResult.Changed)) {
                 status.setRollbackOnly();
             }
-            return result;
+            return inTransaction;
         });
+        if (result instanceof StatusChangeResult.Changed && to == UserStatus.ACTIVE) {
+            revokeSessions(target, changed.get());
+        }
+        return result;
     }
 
     private StatusChangeResult changeInTransaction(
@@ -104,7 +132,8 @@ public class UserStatusChangeService {
             UserId target,
             long expectedVersion,
             UserStatus to,
-            Optional<SuspensionReason> reason) {
+            Optional<SuspensionReason> reason,
+            AtomicReference<EmailAddress> changed) {
         return switch (judge(operator, target, expectedVersion, to, reason)) {
             case Judgement.Refused(StatusChangeResult refusal) -> refusal;
             case Judgement.Accepted(User before) -> {
@@ -114,20 +143,33 @@ public class UserStatusChangeService {
                     yield new StatusChangeResult.Stale();
                 }
                 long newVersion = before.version() + 1;
-                auditRecords.append(
-                        to == UserStatus.SUSPENDED
-                                ? AuditRecord.userSuspended(
-                                        operator.userId(),
-                                        operator.companyId(),
-                                        target,
-                                        newVersion,
-                                        reason.orElseThrow(),
-                                        now)
-                                : AuditRecord.userReactivated(
-                                        operator.userId(), operator.companyId(), target, newVersion, now));
+                if (to == UserStatus.SUSPENDED) {
+                    tokens.invalidateUnused(target, now);
+                    auditRecords.append(AuditRecord.userSuspended(
+                            operator.userId(),
+                            operator.companyId(),
+                            target,
+                            newVersion,
+                            before.status(),
+                            reason.orElseThrow(),
+                            now));
+                } else {
+                    auditRecords.append(AuditRecord.userReactivated(
+                            operator.userId(), operator.companyId(), target, newVersion, before.status(), now));
+                }
+                changed.set(before.email());
                 yield new StatusChangeResult.Changed(newVersion);
             }
         };
+    }
+
+    private void revokeSessions(UserId target, EmailAddress email) {
+        try {
+            int revoked = sessions.revokeAll(email);
+            LOG.info("利用の再開の後に利用者の前の session を失効させた: 利用者 {}、件数 {}", target.value(), revoked);
+        } catch (RuntimeException e) {
+            LOG.warn("利用の再開の後に利用者の前の session を失効させられなかった（利用は再開している）: 利用者 {}", target.value(), e);
+        }
     }
 
     /** 判定する。受け付けるなら判定に使った利用者を、受け付けないなら結果を返す。 */

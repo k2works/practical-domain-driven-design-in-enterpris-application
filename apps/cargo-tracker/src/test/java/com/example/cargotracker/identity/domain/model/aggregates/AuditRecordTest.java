@@ -8,6 +8,7 @@ import com.example.cargotracker.identity.domain.model.valueobjects.AuditResult;
 import com.example.cargotracker.identity.domain.model.valueobjects.AuditTarget;
 import com.example.cargotracker.identity.domain.model.valueobjects.AuthenticationRejection;
 import com.example.cargotracker.identity.domain.model.valueobjects.SuspensionReason;
+import com.example.cargotracker.identity.domain.model.valueobjects.UserStatus;
 import com.example.cargotracker.shared.domain.CompanyId;
 import com.example.cargotracker.shared.domain.UserId;
 import com.example.cargotracker.shared.domain.UtcInstant;
@@ -142,7 +143,8 @@ class AuditRecordTest {
     void 利用停止は停止の理由と対象と変更前後を記録する() {
         UserId target = new UserId(UUID.randomUUID());
 
-        AuditRecord auditRecord = AuditRecord.userSuspended(USER, COMPANY, target, 5L, SuspensionReason.EMERGENCY, AT);
+        AuditRecord auditRecord =
+                AuditRecord.userSuspended(USER, COMPANY, target, 5L, UserStatus.ACTIVE, SuspensionReason.EMERGENCY, AT);
 
         assertThat(auditRecord.action()).isEqualTo(AuditAction.USER_SUSPENDED);
         assertThat(auditRecord.result()).isEqualTo(AuditResult.SUCCESS);
@@ -157,7 +159,7 @@ class AuditRecordTest {
     void 利用再開は理由を持たず対象と変更前後を記録する() {
         UserId target = new UserId(UUID.randomUUID());
 
-        AuditRecord auditRecord = AuditRecord.userReactivated(USER, COMPANY, target, 6L, AT);
+        AuditRecord auditRecord = AuditRecord.userReactivated(USER, COMPANY, target, 6L, UserStatus.SUSPENDED, AT);
 
         assertThat(auditRecord.action()).isEqualTo(AuditAction.USER_REACTIVATED);
         assertThat(auditRecord.result()).isEqualTo(AuditResult.SUCCESS);
@@ -170,13 +172,25 @@ class AuditRecordTest {
     void 利用状態の変更は主体と対象と理由を欠かせない() {
         UserId target = new UserId(UUID.randomUUID());
 
-        assertThatThrownBy(() -> AuditRecord.userSuspended(null, COMPANY, target, 1L, SuspensionReason.TRANSFERRED, AT))
+        assertThatThrownBy(() -> AuditRecord.userSuspended(
+                        null, COMPANY, target, 1L, UserStatus.ACTIVE, SuspensionReason.TRANSFERRED, AT))
                 .isInstanceOf(NullPointerException.class);
-        assertThatThrownBy(() -> AuditRecord.userSuspended(USER, COMPANY, target, 1L, null, AT))
+        assertThatThrownBy(() -> AuditRecord.userSuspended(USER, COMPANY, target, 1L, UserStatus.ACTIVE, null, AT))
                 .isInstanceOf(NullPointerException.class);
-        assertThatThrownBy(() -> AuditRecord.userReactivated(USER, null, target, 1L, AT))
+        assertThatThrownBy(() -> AuditRecord.userReactivated(USER, null, target, 1L, UserStatus.SUSPENDED, AT))
                 .isInstanceOf(NullPointerException.class);
-        assertThatThrownBy(() -> AuditRecord.userReactivated(USER, COMPANY, null, 1L, AT))
+        assertThatThrownBy(() -> AuditRecord.userReactivated(USER, COMPANY, null, 1L, UserStatus.SUSPENDED, AT))
                 .isInstanceOf(NullPointerException.class);
+    }
+
+    @Test
+    void 利用状態が変わっていない変更は記録しない() {
+        UserId target = new UserId(UUID.randomUUID());
+
+        assertThatThrownBy(() -> AuditRecord.userSuspended(
+                        USER, COMPANY, target, 1L, UserStatus.SUSPENDED, SuspensionReason.TRANSFERRED, AT))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> AuditRecord.userReactivated(USER, COMPANY, target, 1L, UserStatus.ACTIVE, AT))
+                .isInstanceOf(IllegalArgumentException.class);
     }
 }

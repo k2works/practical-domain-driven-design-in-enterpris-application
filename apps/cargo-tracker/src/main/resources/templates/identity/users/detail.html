@@ -11,20 +11,13 @@
     <div th:if="${notice != null}" class="alert alert-success" role="status" th:text="${notice}">
         役割を変更しました。相手の次の操作から効きます。
     </div>
-    <!--/* エラー要約（S-09 と同じ形）。役割の選び方の誤りだけ役割の欄へリンクする（自分の役割・古い版は選び方の誤りではない） */-->
-    <div id="error-summary" th:if="${error != null}" tabindex="-1" role="alert" aria-labelledby="error-summary-title">
-        <h2 id="error-summary-title">役割を変更できませんでした</h2>
+    <!--/* エラー要約（S-09 と同じ形）。役割の変更と利用状態の変更（Bolt 34d）で 1 つにし、見出しとリンク先を controller が選ぶ。
+         選び方の誤り（役割・停止の理由）だけ欄へリンクする（自分・監督の役割・古い版は選び方の誤りではない） */-->
+    <div id="error-summary" th:if="${summary != null}" tabindex="-1" role="alert" aria-labelledby="error-summary-title">
+        <h2 id="error-summary-title" th:text="${summary.title}">役割を変更できませんでした</h2>
         <ul>
-            <li th:if="${error.field}"><a href="#roles" th:text="${error.text}">役割を 1 つ以上選んでください。</a></li>
-            <li th:unless="${error.field}" th:text="${error.text}">この利用者の情報が先に更新されました。</li>
-        </ul>
-    </div>
-    <!--/* 利用状態の変更のエラー要約（Bolt 34d）。停止の理由の選び方の誤りだけ理由の欄へリンクする */-->
-    <div id="error-summary" th:if="${statusError != null}" tabindex="-1" role="alert" aria-labelledby="error-summary-title">
-        <h2 id="error-summary-title">利用状態を変更できませんでした</h2>
-        <ul>
-            <li th:if="${statusError.field}"><a href="#suspension-reason" th:text="${statusError.text}">停止の理由を選んでください。</a></li>
-            <li th:unless="${statusError.field}" th:text="${statusError.text}">この利用者の情報が先に更新されました。</li>
+            <li th:if="${summary.error.field}"><a th:href="${summary.anchor}" th:text="${summary.error.text}">役割を 1 つ以上選んでください。</a></li>
+            <li th:unless="${summary.error.field}" th:text="${summary.error.text}">この利用者の情報が先に更新されました。</li>
         </ul>
     </div>
     <dl class="row">

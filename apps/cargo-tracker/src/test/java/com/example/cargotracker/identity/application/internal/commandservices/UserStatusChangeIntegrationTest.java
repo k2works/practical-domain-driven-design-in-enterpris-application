@@ -114,12 +114,15 @@ class UserStatusChangeIntegrationTest {
     @Test
     void 利用を停止して版と時刻を上げ監査を1行書く() {
         UserId sales = newSales(operator);
+        // 利用者を作った時刻と分ける（更新の時刻を書かない誤りを見分けるため）
+        Instant suspendedAt = NOW.plusSeconds(60);
+        clock.setInstant(suspendedAt);
 
         assertThat(service.change(admin, sales, 0L, UserStatus.SUSPENDED, USAGE_ENDED))
                 .isEqualTo(new StatusChangeResult.Changed(1L));
 
         assertThat(rowOf(sales)).containsEntry("status", "SUSPENDED").containsEntry("version", 1L);
-        assertThat(((Timestamp) rowOf(sales).get("updated_at")).toInstant()).isEqualTo(NOW);
+        assertThat(((Timestamp) rowOf(sales).get("updated_at")).toInstant()).isEqualTo(suspendedAt);
         assertThat(users.findById(sales).orElseThrow().status()).isEqualTo(UserStatus.SUSPENDED);
         assertThat(auditsOf(sales))
                 .singleElement()
