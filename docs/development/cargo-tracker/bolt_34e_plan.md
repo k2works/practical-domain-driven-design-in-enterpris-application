@@ -3,7 +3,9 @@ type: Plan
 title: "Bolt 34e 計画 - 利用者の管理のドメインとサービス（振る舞いの変わらない直し）"
 description: "W5 の 26 本目の Bolt の計画。User.changeRoles・changeStatus を、判定が通ったときだけ User が作る承認の値（User の入れ子のクラス）を受ける形にし、判定を通さずに呼べなくする。役割と利用状態の変更の結果の型を、確かめる呼び出しと変える呼び出しで分け、共通の拒否の型を作って controller の届かない枝をなくす。2 つのコマンドサービスの判定の前半（システム管理者か → 利用者と企業 → 管理範囲）を部品に抜き出し、セキュリティの統合テストの同じ形の login の写しを共通の補助にまとめる。"
 tags: [plan]
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-17T13:09:20Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-17T13:51:11Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-10-17T13:51:12Z }
 ---
 
 # Bolt 34e 計画 - 利用者の管理のドメインとサービス（振る舞いの変わらない直し）
@@ -207,14 +209,14 @@ StatusChangeOutcome ..> UAR
 | 1 | **判定を通さずに呼べない形** | 2 | 決定済み（1）: 承認の値を引数に取る |
 | 2 | **結果の型** | 3 | 決定済み（2）: 共通の拒否の型と、確かめる結果・変える結果に分ける |
 | 3 | **判定の前半の部品の範囲** | 3 | 決定済み（3）: 2 つのコマンドサービスだけ |
-| 4 | **承認の値の置き場所と作り口** | 2 | `User` の入れ子の final class にし、コンストラクタを private にする（コンパイラが作り手を `User` に限る。ArchUnit の見張りは足さない）。`valueobjects` に置かない（第 3 章のガイドラインでは値オブジェクトは `valueobjects` だが、作り手を集約に限るため集約の中に置く。理由を Javadoc と architecture_backend に書く）。代わりの案: `aggregates` の別のクラスにして package-private のコンストラクタと ArchUnit で見張る（同じパッケージのテストからの生成は見張れない） |
-| 5 | **型の名前** | 2・3 | 承認の値は `RoleChangeApproval`・`StatusChangeApproval`（用語集の名前は「役割の変更の承認」「利用状態の変更の承認」）。判定の結果は `RoleChangeDecision`・`StatusChangeDecision`。共通の拒否は `UserAdministrationRefusal<R>`、確かめる・変える結果は `RoleChangeCheck`・`RoleChangeOutcome`・`StatusChangeCheck`・`StatusChangeOutcome` |
-| 6 | **版の出どころ** | 2 | 承認の値の版の 1 つにし、リポジトリの期待する版と監査の新しい版を `approval.version()` から取る。承認の版の不一致の例外は取り違えの守りで、同時の更新の判定はリポジトリの件数のまま |
-| 7 | **今の判定のメソッド** | 2 | `roleChangeRejection`・`statusChangeRejection` は消し、新しい判定に置き換える |
-| 8 | **login の補助に寄せる範囲と刻み** | 4 | 上の表の「寄せる」だけ。使った刻みは TOTP を送る前に戻す形にそろえる。`userIdOf` は JDBC で探す |
-| 9 | **新しいファイル** | 3・4 | 設計の約束の「新しいファイル」のとおり |
-| 10 | **開発レビュー** | 5 | アーキテクト、テスター（読むだけ） |
-| 11 | **アプローチと承認ゲートと時間** | 全体 | リファクタリング（インサイドアウト）。ステップごとに止める（構造・認可の判定）。約 3.8 時間 |
+| 4 | **承認の値の置き場所と作り口** | 2 | `User` の入れ子の final class にし、コンストラクタを private にする（コンパイラが作り手を `User` に限る。ArchUnit の見張りは足さない）。`valueobjects` に置かない（第 3 章のガイドラインでは値オブジェクトは `valueobjects` だが、作り手を集約に限るため集約の中に置く。理由を Javadoc と architecture_backend に書く）。代わりの案: `aggregates` の別のクラスにして package-private のコンストラクタと ArchUnit で見張る（同じパッケージのテストからの生成は見張れない）。決定済み（計画の承認） |
+| 5 | **型の名前** | 2・3 | 承認の値は `RoleChangeApproval`・`StatusChangeApproval`（用語集の名前は「役割の変更の承認」「利用状態の変更の承認」）。判定の結果は `RoleChangeDecision`・`StatusChangeDecision`。共通の拒否は `UserAdministrationRefusal<R>`、確かめる・変える結果は `RoleChangeCheck`・`RoleChangeOutcome`・`StatusChangeCheck`・`StatusChangeOutcome`。決定済み（計画の承認） |
+| 6 | **版の出どころ** | 2 | 承認の値の版の 1 つにし、リポジトリの期待する版と監査の新しい版を `approval.version()` から取る。承認の版の不一致の例外は取り違えの守りで、同時の更新の判定はリポジトリの件数のまま。決定済み（計画の承認） |
+| 7 | **今の判定のメソッド** | 2 | `roleChangeRejection`・`statusChangeRejection` は消し、新しい判定に置き換える。決定済み（計画の承認） |
+| 8 | **login の補助に寄せる範囲と刻み** | 4 | 上の表の「寄せる」だけ。使った刻みは TOTP を送る前に戻す形にそろえる。`userIdOf` は JDBC で探す。決定済み（計画の承認） |
+| 9 | **新しいファイル** | 3・4 | 設計の約束の「新しいファイル」のとおり。決定済み（計画の承認） |
+| 10 | **開発レビュー** | 5 | アーキテクト、テスター（読むだけ）。決定済み（計画の承認） |
+| 11 | **アプローチと承認ゲートと時間** | 全体 | リファクタリング（インサイドアウト）。ステップごとに止める（構造・認可の判定）。約 3.8 時間。決定済み（計画の承認） |
 
 ## 完了条件
 
@@ -231,6 +233,7 @@ StatusChangeOutcome ..> UAR
 | :--- | :--- | :--- |
 | 2026-10-17 | 初版作成（承認待ち）。human:kakimomokuri の決定（承認の値を引数に取る、結果の型を拒否と受付に分ける、判定の前半の部品は 2 つのコマンドサービスだけ）を反映した | anthropic/claude-opus-5-5 |
 | 2026-10-17 | 詳細整合性検証（15 件）と横断整合性検証（16 件）の指摘を反映した。承認の値を `User` の入れ子にして private のコンストラクタにする（ArchUnit の見張りと置き場所の例外を要らなくした。確認ポイント 4）、版の出どころ（確認ポイント 6）、ジェネリクスの書き方と部品の拒否の写し方、`ManagedUserLookup` の作り方、login の補助に寄せるものの表と刻みを戻す時点と `userIdOf` の探し方、防御の複製、アプローチの理由、注の行（domain_model:1033・1035、architecture_backend:311・313、test_strategy:327・329、release_plan の 34e の行）、行番号、H1・H3 の言い方 | anthropic/claude-opus-5-5 |
+| 2026-10-17 | 計画を承認した。確認ポイント 4〜11 を推奨のとおりに決めた。`/goal` の下で、ステップごとの承認ゲートでは止めずに進め、層・モジュールの規則と打ち切りの条件に当たったときだけ止めて諮る | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 
 ## 関連ドキュメント
 

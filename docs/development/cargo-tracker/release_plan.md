@@ -4,7 +4,7 @@ title: "リリース計画 - cargo-tracker（A 社国際貨物輸送管理シス
 description: "cargo-tracker MVP のリリース計画。1 人 + AI、時間単位の Bolt（= イテレーション）と週次の見直しで、最初の縦の流れ（R0.1）、パイロット準備完了（R1.0）、本格展開前（R1.1）の 3 段階、Unit のエントロピー評価、SP、バッファ、パイロット開始の条件、引継ぎ ID の台帳、業務責任者に確かめる事項の台帳。"
 tags: [development,release-plan]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-17T13:09:20Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-17T13:51:11Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T09:29:53Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:38:26Z }
@@ -644,7 +644,7 @@ US-18 の Bolt の順序は 31b → 31c → 31d → 32 → 32c → 32d → 32b �
 - [x] Bolt 34b: US-16 の一部（#14）。[Bolt 34b 計画](bolt_34b_plan.md)（承認済み。管理範囲と範囲外の試行の記録）、[Bolt 34b 終了報告](bolt_34b_report.md)（完了、2026-10-16 に承認済み。確定の POST だけ記録する）
 - [x] Bolt 34d: US-16 の一部（#14）。[Bolt 34d 計画](bolt_34d_plan.md)（承認済み。利用停止と再開、デモの動画）、[Bolt 34d 終了報告](bolt_34d_report.md)（完了、2026-10-17 に承認済み。停止でトークンを無効にし、再開で前の session を消す）
 - [x] Bolt 34c: 振る舞いの変わらない直し（認証・監査の経路と文書と見張り）。[Bolt 34c 計画](bolt_34c_plan.md)（承認済み）、[Bolt 34c 終了報告](bolt_34c_report.md)（完了、2026-10-17 に承認済み。監査の書き手と @Service・@Bean の役割を今の形のまま書き、AT-09〜11 を足し、login_failure の注釈を直した）
-- [ ] Bolt 34e: 振る舞いの変わらない直し（利用者の管理のドメインとサービス）。[Bolt 34e 計画](bolt_34e_plan.md)（承認待ち）
+- [ ] Bolt 34e: 振る舞いの変わらない直し（利用者の管理のドメインとサービス）。[Bolt 34e 計画](bolt_34e_plan.md)（承認済み）
 - [ ] Bolt 34f: 振る舞いの変わらない直し（S-20 の画面の構造）
 - [ ] Bolt 35: US-04 AC3・AC5（#43）、D-85
 - [ ] W5 の締め: 結果とふりかえり、開いている持ち越しの数（T-89）、W6 の計画の見直し
