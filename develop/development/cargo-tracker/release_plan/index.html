@@ -6454,6 +6454,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../bolt_34e_plan/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 34e 計画
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../release_report-0_1/" class="md-nav__link">
         
   
@@ -13057,7 +13085,7 @@
 </tr>
 <tr>
 <td style="text-align: left;">34e</td>
-<td style="text-align: left;">振る舞いの変わらない直し（利用者の管理のドメインとサービス）: <code>User.changeRoles</code>・<code>changeStatus</code> が判定を通さずに呼べること（判定の結果を引数に取る形への直し）と <code>RoleChangeResult</code>・<code>StatusChangeResult</code> を確かめる呼び出しと変える呼び出しで共用していること（Bolt 34 の既知の課題。Bolt 34d の計画の確認ポイント 8）、利用状態の変更と役割の変更のサービスの判定の前半（システム管理者か → 利用者と企業 → 管理範囲）の写しを部品に抜き出す（照会のサービスは読み出しの順が違うので含めない見込み）、セキュリティの統合テストの login の写しの共通化（Bolt 34d の開発レビュー）。Bolt 34c の開始準備で 34c から分けた</td>
+<td style="text-align: left;">振る舞いの変わらない直し（利用者の管理のドメインとサービス）: <code>User.changeRoles</code>・<code>changeStatus</code> が判定を通さずに呼べること（判定が通ったときに <code>User</code> だけが作る承認の値を引数に取る形への直し。Bolt 34e の開始準備の決定 1）と <code>RoleChangeResult</code>・<code>StatusChangeResult</code> を確かめる呼び出しと変える呼び出しで共用していること（Bolt 34 の既知の課題。Bolt 34d の計画の確認ポイント 8）、利用状態の変更と役割の変更のサービスの判定の前半（システム管理者か → 利用者と企業 → 管理範囲）の写しを部品に抜き出す（照会のサービスは読み出しの順が違うので含めない見込み）、セキュリティの統合テストの login の写しの共通化（Bolt 34d の開発レビュー）。Bolt 34c の開始準備で 34c から分けた</td>
 <td style="text-align: right;">0</td>
 <td style="text-align: left;">リファクタリング（インサイドアウト）</td>
 <td style="text-align: left;">ステップごと（構造。認可の判定に触れる）</td>
@@ -13139,7 +13167,7 @@
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Bolt 34b: US-16 の一部（#14）。<a href="../bolt_34b_plan/">Bolt 34b 計画</a>（承認済み。管理範囲と範囲外の試行の記録）、<a href="../bolt_34b_report/">Bolt 34b 終了報告</a>（完了、2026-10-16 に承認済み。確定の POST だけ記録する）</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Bolt 34d: US-16 の一部（#14）。<a href="../bolt_34d_plan/">Bolt 34d 計画</a>（承認済み。利用停止と再開、デモの動画）、<a href="../bolt_34d_report/">Bolt 34d 終了報告</a>（完了、2026-10-17 に承認済み。停止でトークンを無効にし、再開で前の session を消す）</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Bolt 34c: 振る舞いの変わらない直し（認証・監査の経路と文書と見張り）。<a href="../bolt_34c_plan/">Bolt 34c 計画</a>（承認済み）、<a href="../bolt_34c_report/">Bolt 34c 終了報告</a>（完了、2026-10-17 に承認済み。監査の書き手と @Service・@Bean の役割を今の形のまま書き、AT-09〜11 を足し、login_failure の注釈を直した）</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> Bolt 34e: 振る舞いの変わらない直し（利用者の管理のドメインとサービス）</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> Bolt 34e: 振る舞いの変わらない直し（利用者の管理のドメインとサービス）。<a href="../bolt_34e_plan/">Bolt 34e 計画</a>（承認待ち）</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> Bolt 34f: 振る舞いの変わらない直し（S-20 の画面の構造）</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> Bolt 35: US-04 AC3・AC5（#43）、D-85</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> W5 の締め: 結果とふりかえり、開いている持ち越しの数（T-89）、W6 の計画の見直し</li>
@@ -14667,6 +14695,11 @@
 <td style="text-align: left;">2026-10-17</td>
 <td style="text-align: left;">Bolt 34c の終了報告の承認を記録した（議題 1〜4）。次は Bolt 34e</td>
 <td style="text-align: left;">anthropic/claude-opus-5-5、承認 human:kakimomokuri</td>
+</tr>
+<tr>
+<td style="text-align: left;">2026-10-17</td>
+<td style="text-align: left;">Bolt 34e の<a href="../bolt_34e_plan/">計画</a>を作った（承認待ち）。開始準備で human:kakimomokuri が、承認の値を引数に取る、結果の型を拒否と受付に分ける、判定の前半の部品は 2 つのコマンドサービスだけ、と決めた。2 つの整合性検証の指摘を反映した</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5</td>
 </tr>
 </tbody>
 </table>
