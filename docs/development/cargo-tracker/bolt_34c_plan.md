@@ -3,7 +3,7 @@ type: Plan
 title: "Bolt 34c 計画 - 認証・監査の経路と文書と見張り（振る舞いの変わらない直し）"
 description: "W5 の 25 本目の Bolt の計画。ログインの監査の書き手の経路と @Service・@Bean の役割を今の形のまま理由とともに文書にし、回復コードのログインの IA-INV-08 の範囲とロックと IA-INV-04 の関係を明文化する。暗号の部品の規則を名前ごとに分け、@MockitoSpyBean と @Configuration の置き場所を ArchUnit で見張り、login_failure の列の注釈をマイグレーションで直す。34c の行を 34c・34e・34f に分けた。"
 tags: [plan]
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-17T12:21:01Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-17T12:32:37Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-17T11:25:06Z }
 ---
@@ -129,7 +129,7 @@ verified:
   - AT-10 は先に、基底の spy のフィールドが対象として数えられていることを確かめる（T-119）。AT-11 と例外が広がらない見張り。今のテストが緑のまま。基底の外に spy を置く変異と、config の外に `@Configuration` を置く変異で落ちることを確かめる（控えから戻す）
 - [x] **4. `login_failure` の注釈のマイグレーション** 【承認ゲート: スキーマ】
   - マイグレーションと `LoginFailure` の Javadoc。PostgreSQL の統合テスト（`SchemaCommentIntegrationTest`）と H2 の起動が緑。SchemaSpy は MkDocs の配備で作り直される
-- [-] **5. uiTest と SonarQube と開発レビューと終了報告** 【承認ゲート: 終了報告】
+- [x] **5. uiTest と SonarQube と開発レビューと終了報告** 【承認ゲート: 終了報告】
   - `uiTest`（件数を前後で比べる）、SonarQube（T-116。ほかの Gradle が終わってから。T-147）。開発レビュー（アーキテクト、テスター。読むだけでテストは流させない）。`bolt_34c_report.md`、release_plan、開発の索引
 
 ### 時間の配分と打ち切り
@@ -163,12 +163,12 @@ verified:
 
 ## 完了条件
 
-- [ ] ログインの監査の書き手の表と理由、`@Service` と `@Bean` の役割が ADR-011・ADR-012・architecture_backend にあり、「二重の定義の解消」が課題から外れている
-- [ ] IA-INV-03・04・08 に、ロックと session の関係と、回復コードのログインのトランザクションの分かれ目が、確かめた振る舞いのとおりに書かれている
-- [ ] 暗号の部品の規則が名前ごとにあり、名前を変える変異で落ちる。spy と `@Configuration` の置き場所の規則があり、変異で落ちる。`ClockConfiguration` の例外が文書にあり、広がらないことを見張っている
-- [ ] `login_failure.consecutive_failures` の注釈と `LoginFailure` の Javadoc が今の数え方と一致する
-- [ ] `check` と `uiTest` が緑で、件数が減っていない（足した規則とテストの分だけ増える）。push してアプリの CI と MkDocs の配備を確かめた。SonarQube の Quality Gate が PASS、`okf:check` ERROR 0
-- [ ] 開発レビュー、終了報告
+- [x] ログインの監査の書き手の表と理由、`@Service` と `@Bean` の役割が ADR-011・ADR-012・architecture_backend にあり、「二重の定義の解消」が課題から外れている
+- [x] IA-INV-03・04・08 に、ロックと session の関係と、回復コードのログインのトランザクションの分かれ目が、確かめた振る舞いのとおりに書かれている
+- [x] 暗号の部品の規則が名前ごとにあり、名前を変える変異で落ちる。spy と `@Configuration` の置き場所の規則があり、変異で落ちる。`ClockConfiguration` の例外が文書にあり、広がらないことを見張っている
+- [x] `login_failure.consecutive_failures` の注釈と `LoginFailure` の Javadoc が今の数え方と一致する
+- [x] `check` と `uiTest` が緑で、件数が減っていない（足した規則とテストの分だけ増える）。push してアプリの CI と MkDocs の配備を確かめた。SonarQube の Quality Gate が PASS、`okf:check` ERROR 0
+- [x] 開発レビュー、終了報告
 
 ## 更新履歴
 
@@ -178,6 +178,7 @@ verified:
 | 2026-10-17 | 詳細整合性検証（20 件）と横断整合性検証（15 件）の指摘を反映した。SpotBugs の除外に残すクラス、書き手の表の `LOCKED` と再設定の依頼と範囲外の記録、AT-11 を `LayerArchitectureTest` に置き直接の注釈だけを見る、`ClockConfiguration` の例外の理由と見張りと独立の確認ポイント 5、回復コードの特性テスト（確認ポイント 7）、`allowEmptyShould(false)` と変異の名前、注釈の文と Javadoc、AT の番号、アプローチを技術タスクに、注の行の具体化（ADR-011:252・283、ADR-012:108、architecture_backend:281・282・284・296、domain_model:1037、release_plan:553・557、過去の報告の送り先）、時間（約 3.6 時間） | anthropic/claude-opus-5-5 |
 | 2026-10-17 | 計画を承認した。確認ポイント 5〜12 を推奨のとおりに決めた（`ClockConfiguration` は AT-11 の例外にする、回復コードは今の振る舞いを確かめて書く）。`/goal` の下で、ステップごとの承認ゲートでは止めずに進め、層・モジュールの規則と打ち切りの条件に当たったときだけ止めて諮る | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-10-17 | 開発レビューの後: 確かめた事実に合わせて IA-INV-03・04 の列挙と回復コードの session の記述を直した（確認ポイント 6・7 の文言の事実の直し）、AT-09 に逆向きの規則、AT-11 の 2 本目の役割の書き方、特性テストを強めた | anthropic/claude-opus-5-5 |
+| 2026-10-17 | ステップ 5 を終え、[終了報告](bolt_34c_report.md)を作った（承認待ち）。打ち切りの条件には当たらなかった | anthropic/claude-opus-5-5 |
 
 ## 関連ドキュメント
 
