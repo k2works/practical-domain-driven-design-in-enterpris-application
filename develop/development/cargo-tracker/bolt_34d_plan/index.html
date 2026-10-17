@@ -11441,7 +11441,7 @@
 <td style="text-align: left;">13</td>
 <td style="text-align: left;"><strong>再設定のトークン</strong></td>
 <td style="text-align: left;">—</td>
-<td style="text-align: left;">停止の前に発行した password の再設定のトークンは、使う時点の利用状態で確かめるので停止中は使えない。30 分以内に再開すると再び使える（IA-INV-12。Bolt 33a）。再開は管理者の意図した操作なので受け入れ、停止のときにトークンを無効にしない。決定済み（計画の承認）</td>
+<td style="text-align: left;">停止の前に発行した password の再設定のトークンは、使う時点の利用状態で確かめるので停止中は使えない。30 分以内に再開すると再び使える（IA-INV-12。Bolt 33a）。再開は管理者の意図した操作なので受け入れ、停止のときにトークンを無効にしない。決定済み（計画の承認）→ 開発レビューの後に改めた（停止で無効にする。2026-10-17、human:kakimomokuri）</td>
 </tr>
 <tr>
 <td style="text-align: left;">14</td>
@@ -11502,6 +11502,11 @@
 <td style="text-align: left;">2026-10-17</td>
 <td style="text-align: left;">計画を承認した。確認ポイント 5〜17 を推奨のとおりに決めた（確認ポイント 8 は 34c に送る）。<code>/goal</code> の下で、ステップごとの承認ゲートでは止めずに進め、層・モジュールの規則と打ち切りの条件に当たったときだけ止めて諮る</td>
 <td style="text-align: left;">anthropic/claude-opus-5-5、承認 human:kakimomokuri</td>
+</tr>
+<tr>
+<td style="text-align: left;">2026-10-17</td>
+<td style="text-align: left;">開発レビューの後: (5) 停止の確定で、同じトランザクションで相手の未使用の password の再設定のトークンを無効にする（<code>PasswordResetTokenRepository#invalidateUnused</code>。確認ポイント 13 を改めた）、(6) 再開の確定の後に相手の session をすべて消す（<code>UserSessionRevoker#revokeAll</code>。消せなくても再開は戻さない。停止では今までどおり消さない）（human:kakimomokuri が決定）。確認の領域のボタンの名前を「確定する」から「停止する」「再開する」に変えた（役割の変更の確認の「変更する」に合わせた）</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5、決定 human:kakimomokuri</td>
 </tr>
 </tbody>
 </table>
