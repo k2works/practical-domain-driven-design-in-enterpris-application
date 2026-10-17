@@ -31,6 +31,9 @@ public final class AuditRecord {
     /** 操作者の引数の名前（null の確かめの文）。 */
     private static final String USER_ARGUMENT = "user";
 
+    /** 対象の利用者の引数の名前（null の確かめの文）。 */
+    private static final String TARGET_USER_ARGUMENT = "targetUser";
+
     /** 操作者の企業の引数の名前（null の確かめの文）。 */
     private static final String COMPANY_ARGUMENT = "company";
 
@@ -194,7 +197,7 @@ public final class AuditRecord {
             UtcInstant at) {
         Objects.requireNonNull(actor, USER_ARGUMENT);
         Objects.requireNonNull(actorCompany, COMPANY_ARGUMENT);
-        Objects.requireNonNull(targetUser, "targetUser");
+        Objects.requireNonNull(targetUser, TARGET_USER_ARGUMENT);
         return new AuditRecord(
                 UUID.randomUUID(),
                 at,
@@ -218,7 +221,7 @@ public final class AuditRecord {
     public static AuditRecord adminScopeDenied(UserId actor, CompanyId actorCompany, UserId targetUser, UtcInstant at) {
         Objects.requireNonNull(actor, USER_ARGUMENT);
         Objects.requireNonNull(actorCompany, COMPANY_ARGUMENT);
-        Objects.requireNonNull(targetUser, "targetUser");
+        Objects.requireNonNull(targetUser, TARGET_USER_ARGUMENT);
         return new AuditRecord(
                 UUID.randomUUID(),
                 at,
@@ -292,7 +295,7 @@ public final class AuditRecord {
             UtcInstant at) {
         Objects.requireNonNull(actor, USER_ARGUMENT);
         Objects.requireNonNull(actorCompany, COMPANY_ARGUMENT);
-        Objects.requireNonNull(targetUser, "targetUser");
+        Objects.requireNonNull(targetUser, TARGET_USER_ARGUMENT);
         if (Objects.requireNonNull(before, "before") == after) {
             throw new IllegalArgumentException("利用状態が変わっていない変更は記録しない");
         }
