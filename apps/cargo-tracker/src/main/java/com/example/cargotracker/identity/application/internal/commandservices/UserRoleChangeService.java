@@ -91,13 +91,13 @@ public class UserRoleChangeService {
             AuthenticatedActor operator, UserId target, long expectedVersion, Set<Role> newRoles) {
         return switch (judge(operator, target, expectedVersion, newRoles)) {
             case Judgement.Refused(RoleChangeResult refusal) -> refusal;
-            case Judgement.Accepted(User before) -> {
-                // 判定に使った利用者（読んだ版が画面の版と同じ）をそのまま変える。版の出どころを 1 つにする
+            case Judgement.Accepted(User before, User.RoleChangeApproval approval) -> {
+                // 判定に使った利用者（読んだ版が画面の版と同じ）を、その判定の承認で変える。版の出どころは承認の 1 つ（Bolt 34e）
                 UtcInstant now = new UtcInstant(clock.instant());
-                if (!users.changeRoles(before.changeRoles(newRoles), before.version(), operator.userId(), now)) {
+                if (!users.changeRoles(before.changeRoles(approval), approval.version(), operator.userId(), now)) {
                     yield new RoleChangeResult.Stale();
                 }
-                long newVersion = before.version() + 1;
+                long newVersion = approval.version() + 1;
                 auditRecords.append(AuditRecord.rolesChanged(
                         operator.userId(), operator.companyId(), target, newVersion, before.roles(), newRoles, now));
                 yield new RoleChangeResult.Changed(newVersion);
@@ -119,22 +119,24 @@ public class UserRoleChangeService {
         if (!assignments.scopeOf(operator.userId()).covers(user.get().companyId())) {
             return new Judgement.Refused(new RoleChangeResult.OutOfScope());
         }
-        Optional<RoleChangeRejection> rejection =
-                user.get().roleChangeRejection(operator.userId(), company.get(), newRoles);
-        if (rejection.isPresent()) {
-            return new Judgement.Refused(new RoleChangeResult.Rejected(rejection.get()));
+        User.RoleChangeApproval approval;
+        switch (user.get().decideRoleChange(operator.userId(), company.get(), newRoles)) {
+            case User.RoleChangeDecision.Refused(RoleChangeRejection rejection) -> {
+                return new Judgement.Refused(new RoleChangeResult.Rejected(rejection));
+            }
+            case User.RoleChangeDecision.Approved(User.RoleChangeApproval approved) -> approval = approved;
         }
-        if (user.get().version() != expectedVersion) {
+        if (approval.version() != expectedVersion) {
             return new Judgement.Refused(new RoleChangeResult.Stale());
         }
-        return new Judgement.Accepted(user.get());
+        return new Judgement.Accepted(user.get(), approval);
     }
 
     /** 判定の結果（このクラスの中だけで使う）。 */
     private sealed interface Judgement {
 
-        /** 受け付ける。判定に使った利用者を持つ。 */
-        record Accepted(User user) implements Judgement {}
+        /** 受け付ける。判定に使った利用者とその承認を持つ。 */
+        record Accepted(User user, User.RoleChangeApproval approval) implements Judgement {}
 
         /** 受け付けない。 */
         record Refused(RoleChangeResult result) implements Judgement {}

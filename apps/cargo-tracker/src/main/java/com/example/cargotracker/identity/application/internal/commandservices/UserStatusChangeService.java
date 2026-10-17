@@ -136,13 +136,13 @@ public class UserStatusChangeService {
             AtomicReference<EmailAddress> changed) {
         return switch (judge(operator, target, expectedVersion, to, reason)) {
             case Judgement.Refused(StatusChangeResult refusal) -> refusal;
-            case Judgement.Accepted(User before) -> {
-                // 判定に使った利用者（読んだ版が画面の版と同じ）をそのまま変える。版の出どころを 1 つにする
+            case Judgement.Accepted(User before, User.StatusChangeApproval approval) -> {
+                // 判定に使った利用者（読んだ版が画面の版と同じ）を、その判定の承認で変える。版の出どころは承認の 1 つ（Bolt 34e）
                 UtcInstant now = new UtcInstant(clock.instant());
-                if (!users.changeStatus(before.changeStatus(to), before.version(), now)) {
+                if (!users.changeStatus(before.changeStatus(approval), approval.version(), now)) {
                     yield new StatusChangeResult.Stale();
                 }
-                long newVersion = before.version() + 1;
+                long newVersion = approval.version() + 1;
                 if (to == UserStatus.SUSPENDED) {
                     tokens.invalidateUnused(target, now);
                     auditRecords.append(AuditRecord.userSuspended(
@@ -190,21 +190,24 @@ public class UserStatusChangeService {
         if (!assignments.scopeOf(operator.userId()).covers(user.get().companyId())) {
             return new Judgement.Refused(new StatusChangeResult.OutOfScope());
         }
-        Optional<StatusChangeRejection> rejection = user.get().statusChangeRejection(operator.userId(), to, reason);
-        if (rejection.isPresent()) {
-            return new Judgement.Refused(new StatusChangeResult.Rejected(rejection.get()));
+        User.StatusChangeApproval approval;
+        switch (user.get().decideStatusChange(operator.userId(), to, reason)) {
+            case User.StatusChangeDecision.Refused(StatusChangeRejection rejection) -> {
+                return new Judgement.Refused(new StatusChangeResult.Rejected(rejection));
+            }
+            case User.StatusChangeDecision.Approved(User.StatusChangeApproval approved) -> approval = approved;
         }
-        if (user.get().version() != expectedVersion) {
+        if (approval.version() != expectedVersion) {
             return new Judgement.Refused(new StatusChangeResult.Stale());
         }
-        return new Judgement.Accepted(user.get());
+        return new Judgement.Accepted(user.get(), approval);
     }
 
     /** 判定の結果（このクラスの中だけで使う）。 */
     private sealed interface Judgement {
 
-        /** 受け付ける。判定に使った利用者を持つ。 */
-        record Accepted(User user) implements Judgement {}
+        /** 受け付ける。判定に使った利用者とその承認を持つ。 */
+        record Accepted(User user, User.StatusChangeApproval approval) implements Judgement {}
 
         /** 受け付けない。 */
         record Refused(StatusChangeResult result) implements Judgement {}
