@@ -20,8 +20,9 @@ import org.springframework.test.web.servlet.MvcResult;
 
 /**
  * identity のセキュリティの統合テストで、password と TOTP の 2 段階でログインする補助（Bolt 34e）。各クラスに写していた login・
- * password の段・いまのコード・利用者 ID の探し方・session の Cookie の取り方をこの 1 か所に置く。spy を持たない（利用者 ID は JDBC で
- * 探し、spy の利用者のリポジトリの呼び出しの数を変えない）。テストの利用者の password はどのクラスも {@link #PASSWORD} にそろえる。
+ * password の段・いまのコード・利用者 ID の探し方・session の Cookie の取り方をこの 1 か所に置く。利用者のリポジトリの spy に触れない
+ * （利用者 ID は JDBC で探す）。TOTP のコードは渡された {@link TotpCodeGenerator}（spy のこともある）で作る。テストの利用者の password は
+ * どのクラスも {@link #PASSWORD} にそろえる。
  */
 public final class IdentityLogins {
 
@@ -59,7 +60,7 @@ public final class IdentityLogins {
      */
     public Cookie login(String email) throws Exception {
         Cookie passwordStage = loginWithPassword(email);
-        AuthenticationFactorFixtures.resetTotpStep(jdbc, userIdOf(email));
+        AuthenticationFactorFixtures.resetTotpStep(jdbc, email);
         MvcResult result = mvc.perform(post(TOTP_URL)
                         .cookie(passwordStage)
                         .param("code", currentCode(email))
@@ -67,6 +68,7 @@ public final class IdentityLogins {
                 .andExpect(status().is3xxRedirection())
                 .andReturn();
         assertThat(result.getResponse().getRedirectedUrl())
+                .doesNotStartWith("/login")
                 .doesNotContain("error")
                 .doesNotContain("expired");
         return sessionOf(result);

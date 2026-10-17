@@ -113,7 +113,7 @@ public final class User {
 
     /**
      * 役割の変更を判定する（Bolt 34。US-16 AC3、UC-16 の主シナリオ 4。Bolt 34e で承認の値を返す形にした）。受け付けるなら承認の値
-     * （{@link RoleChangeApproval}。この利用者と判定に使った版と新しい役割を持つ）を、受け付けないなら理由を返す。判定は、自分の変更 →
+     * （{@link RoleChangeApproval}。判定したこの利用者の実体と新しい役割を持つ）を、受け付けないなら理由を返す。判定は、自分の変更 →
      * 役割なし → 変更なし → 監督の役割 → 企業の種類 → 職務分離の順。同時の更新は版を条件にした更新で判定するので、ここでは見ない。
      *
      * @param operator 変更する操作者
@@ -123,7 +123,7 @@ public final class User {
     public RoleChangeDecision decideRoleChange(UserId operator, Company company, Set<Role> newRoles) {
         return roleChangeRejection(operator, company, newRoles)
                 .<RoleChangeDecision>map(RoleChangeDecision.Refused::new)
-                .orElseGet(() -> new RoleChangeDecision.Approved(new RoleChangeApproval(id, version, newRoles)));
+                .orElseGet(() -> new RoleChangeDecision.Approved(new RoleChangeApproval(this, newRoles)));
     }
 
     private Optional<RoleChangeRejection> roleChangeRejection(UserId operator, Company company, Set<Role> newRoles) {
@@ -156,17 +156,19 @@ public final class User {
 
     /**
      * 役割を変えた利用者を返す（Bolt 34）。判定（{@link #decideRoleChange}）が通ったときの承認の値だけを受ける（Bolt 34e。判定を通さずに
-     * 呼べない）。承認が別の利用者のもの、または判定に使った版と違うものなら例外（取り違えの守り。同時の更新の判定はリポジトリの更新の
-     * 件数で行う）。版は変えない（リポジトリが上げる）。変えた後の利用者に同じ承認をもう一度渡すことは見張らない。
+     * 呼べない）。承認がこの利用者そのもの（同じ実体）の判定で得たものでなければ例外（取り違えの守り。2026-10-17、human:kakimomokuri）。
+     * 集約は不変なので、別の利用者・判定に使った版と違う利用者・同じ ID と版で組み立てた別の利用者・変えた後の利用者に同じ承認を
+     * もう一度渡すことを捕まえる。同時の更新の判定はリポジトリの更新の件数で行う。版は変えない（リポジトリが上げる）。
      */
     public User changeRoles(RoleChangeApproval approval) {
-        requireOwn(approval.userId(), approval.version());
+        requireDecidedOnThis(approval.decidedOn);
         return new User(id, companyId, email, displayName, passwordHash, status, approval.roles(), version);
     }
 
     /**
      * 利用状態の変更を判定する（Bolt 34d。US-16 AC5、IA-INV-01。Bolt 34e で承認の値を返す形にした）。受け付けるなら承認の値
-     * （{@link StatusChangeApproval}）を、受け付けないなら理由を返す。
+     * （{@link StatusChangeApproval}）を、受け付けないなら理由を返す。再開の承認は停止の理由を持たない（渡された理由を捨てる。
+     * 2026-10-17、human:kakimomokuri）。
      *
      * @param operator 変更する操作者
      * @param to 変更後の利用状態
@@ -176,7 +178,7 @@ public final class User {
         return statusChangeRejection(operator, to, reason)
                 .<StatusChangeDecision>map(StatusChangeDecision.Refused::new)
                 .orElseGet(() -> new StatusChangeDecision.Approved(
-                        new StatusChangeApproval(id, version, to, reason.orElse(null))));
+                        new StatusChangeApproval(this, to, to == UserStatus.SUSPENDED ? reason : Optional.empty())));
     }
 
     /**
@@ -207,16 +209,18 @@ public final class User {
 
     /**
      * 利用状態を変えた利用者を返す（Bolt 34d）。判定（{@link #decideStatusChange}）が通ったときの承認の値だけを受ける（Bolt 34e）。
-     * 承認が別の利用者のもの、または判定に使った版と違うものなら例外（取り違えの守り）。版は変えない（リポジトリが上げる）。
+     * 承認がこの利用者そのもの（同じ実体）の判定で得たものでなければ例外（取り違えの守り。{@link #changeRoles} と同じく、変えた後の
+     * 利用者に同じ承認をもう一度渡すことも捕まえる）。版は変えない（リポジトリが上げる）。
      */
     public User changeStatus(StatusChangeApproval approval) {
-        requireOwn(approval.userId(), approval.version());
+        requireDecidedOnThis(approval.decidedOn);
         return new User(id, companyId, email, displayName, passwordHash, approval.to(), roles, version);
     }
 
-    private void requireOwn(UserId approvedUser, long approvedVersion) {
-        if (!id.equals(approvedUser) || version != approvedVersion) {
-            throw new IllegalArgumentException("この利用者のこの版の判定で得た承認ではない");
+    /** 承認がこの実体の判定で得たものかを確かめる（値で比べない。同じ ID と版の別の実体の承認も拒む）。 */
+    private void requireDecidedOnThis(User decidedOn) {
+        if (decidedOn != this) {
+            throw new IllegalArgumentException("この利用者の判定で得た承認ではない");
         }
     }
 
@@ -312,27 +316,26 @@ public final class User {
     /**
      * 役割の変更の承認。判定（{@link #decideRoleChange}）を通った印で、業務の承認の手続き（荷主承認・社内承認）ではない（Bolt 34e）。
      * コンストラクタを private にし、利用者の集約だけが作る（同じパッケージからも作れない。作り手を集約に限るため、valueobjects でなく
-     * 集約の中に置く）。持つのは対象の利用者・判定に使った版・新しい役割。
+     * 集約の中に置く）。持つのは判定した利用者の実体と新しい役割で、対象の利用者 ID と判定に使った版はその実体から取る（承認を判定した
+     * 実体で縛る。2026-10-17、human:kakimomokuri）。判定を通った印で、値として比べない（equals を持たない）。
      */
     @ValueObject
     public static final class RoleChangeApproval {
 
-        private final UserId userId;
-        private final long version;
+        private final User decidedOn;
         private final Set<Role> roles;
 
-        private RoleChangeApproval(UserId userId, long version, Set<Role> roles) {
-            this.userId = Objects.requireNonNull(userId, "userId");
-            this.version = version;
+        private RoleChangeApproval(User decidedOn, Set<Role> roles) {
+            this.decidedOn = Objects.requireNonNull(decidedOn, "decidedOn");
             this.roles = EnumSet.copyOf(roles);
         }
 
         public UserId userId() {
-            return userId;
+            return decidedOn.id;
         }
 
         public long version() {
-            return version;
+            return decidedOn.version;
         }
 
         public Set<Role> roles() {
@@ -342,38 +345,38 @@ public final class User {
 
     /**
      * 利用状態の変更の承認。判定（{@link #decideStatusChange}）を通った印で、業務の承認の手続きではない（Bolt 34e）。コンストラクタを
-     * private にし、利用者の集約だけが作る。持つのは対象の利用者・判定に使った版・変更後の利用状態・停止の理由（再開なら null）。
+     * private にし、利用者の集約だけが作る。持つのは判定した利用者の実体・変更後の利用状態・停止の理由（再開の承認は理由を持たない）で、
+     * 対象の利用者 ID と判定に使った版はその実体から取る（2026-10-17、human:kakimomokuri）。判定を通った印で、値として比べない
+     * （equals を持たない）。
      */
     @ValueObject
     public static final class StatusChangeApproval {
 
-        private final UserId userId;
-        private final long version;
+        private final User decidedOn;
         private final UserStatus to;
         private final SuspensionReason reason;
 
-        private StatusChangeApproval(UserId userId, long version, UserStatus to, SuspensionReason reason) {
-            this.userId = Objects.requireNonNull(userId, "userId");
-            this.version = version;
+        private StatusChangeApproval(User decidedOn, UserStatus to, Optional<SuspensionReason> reason) {
+            this.decidedOn = Objects.requireNonNull(decidedOn, "decidedOn");
             this.to = Objects.requireNonNull(to, "to");
-            this.reason = reason;
+            this.reason = reason.orElse(null);
         }
 
         public UserId userId() {
-            return userId;
+            return decidedOn.id;
         }
 
         public long version() {
-            return version;
+            return decidedOn.version;
         }
 
         public UserStatus to() {
             return to;
         }
 
-        /** 停止の理由。再開なら null。 */
-        public SuspensionReason reason() {
-            return reason;
+        /** 停止の理由。再開の承認なら空。 */
+        public Optional<SuspensionReason> reason() {
+            return Optional.ofNullable(reason);
         }
     }
 }

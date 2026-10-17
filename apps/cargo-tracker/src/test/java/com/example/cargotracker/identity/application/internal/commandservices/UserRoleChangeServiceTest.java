@@ -161,11 +161,29 @@ class UserRoleChangeServiceTest {
     }
 
     @Test
+    void 規則を版より先に判定する() {
+        givenSales();
+
+        assertThat(service.check(admin, sales.id(), 2L, Set.of(Role.SALES)))
+                .isEqualTo(new RoleChangeCheck.Refused(new UserAdministrationRefusal.Rejected<>(
+                        RoleChangeRejection.of(RoleChangeRejectionReason.NO_CHANGE))));
+    }
+
+    @Test
     void 利用者がいなければ見つからない() {
         when(users.findById(any())).thenReturn(Optional.empty());
 
         assertThat(service.change(admin, new UserId(UUID.randomUUID()), 0L, Set.of(Role.SALES)))
                 .isEqualTo(new RoleChangeOutcome.Refused(new UserAdministrationRefusal.NotFound<>()));
+    }
+
+    @Test
+    void 所属企業がなければ見つからない() {
+        when(users.findById(sales.id())).thenReturn(Optional.of(sales));
+        when(companies.findById(any())).thenReturn(Optional.empty());
+
+        assertThat(service.check(admin, sales.id(), 3L, Set.of(Role.ROUTE_DESIGNER)))
+                .isEqualTo(new RoleChangeCheck.Refused(new UserAdministrationRefusal.NotFound<>()));
     }
 
     @Test

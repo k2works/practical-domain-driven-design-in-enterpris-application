@@ -107,8 +107,8 @@ public class UserStatusChangeService {
             long expectedVersion,
             UserStatus to,
             Optional<SuspensionReason> reason) {
-        // 変えた利用者のメールアドレス（再開の後に session を消すため）。変えなければ空のまま
-        AtomicReference<EmailAddress> changed = new AtomicReference<>();
+        // 変えたときの判定に使った利用者と承認（再開の後に session を消すため）。変えなければ空のまま
+        AtomicReference<Judgement.Accepted> changed = new AtomicReference<>();
         StatusChangeOutcome result = transactionTemplate.execute(status -> {
             StatusChangeOutcome inTransaction =
                     changeInTransaction(operator, target, expectedVersion, to, reason, changed);
@@ -117,8 +117,9 @@ public class UserStatusChangeService {
             }
             return inTransaction;
         });
-        if (result instanceof StatusChangeOutcome.Changed && to == UserStatus.ACTIVE) {
-            revokeSessions(target, changed.get());
+        if (result instanceof StatusChangeOutcome.Changed
+                && changed.get().approval().to() == UserStatus.ACTIVE) {
+            revokeSessions(target, changed.get().user().email());
         }
         return result;
     }
@@ -129,17 +130,20 @@ public class UserStatusChangeService {
             long expectedVersion,
             UserStatus to,
             Optional<SuspensionReason> reason,
-            AtomicReference<EmailAddress> changed) {
+            AtomicReference<Judgement.Accepted> changed) {
         return switch (judge(operator, target, expectedVersion, to, reason)) {
             case Judgement.Refused(var refusal) -> new StatusChangeOutcome.Refused(refusal);
-            case Judgement.Accepted(User before, User.StatusChangeApproval approval) -> {
-                // 判定に使った利用者（読んだ版が画面の版と同じ）を、その判定の承認で変える。版の出どころは承認の 1 つ（Bolt 34e）
+            case Judgement.Accepted accepted -> {
+                // 判定に使った利用者（読んだ版が画面の版と同じ）を、その判定の承認で変える。版の出どころは承認の 1 つ（Bolt 34e）。
+                // 確定の後の監査と副作用の値も承認から取る（引数の変更後の状態と理由は判定にだけ使う。2026-10-17、human:kakimomokuri）
+                User before = accepted.user();
+                User.StatusChangeApproval approval = accepted.approval();
                 UtcInstant now = new UtcInstant(clock.instant());
                 if (!users.changeStatus(before.changeStatus(approval), approval.version(), now)) {
                     yield new StatusChangeOutcome.Refused(new UserAdministrationRefusal.Stale<>());
                 }
                 long newVersion = approval.version() + 1;
-                if (to == UserStatus.SUSPENDED) {
+                if (approval.to() == UserStatus.SUSPENDED) {
                     tokens.invalidateUnused(target, now);
                     auditRecords.append(AuditRecord.userSuspended(
                             operator.userId(),
@@ -147,13 +151,13 @@ public class UserStatusChangeService {
                             target,
                             newVersion,
                             before.status(),
-                            reason.orElseThrow(),
+                            approval.reason().orElseThrow(),
                             now));
                 } else {
                     auditRecords.append(AuditRecord.userReactivated(
                             operator.userId(), operator.companyId(), target, newVersion, before.status(), now));
                 }
-                changed.set(before.email());
+                changed.set(accepted);
                 yield new StatusChangeOutcome.Changed(newVersion);
             }
         };

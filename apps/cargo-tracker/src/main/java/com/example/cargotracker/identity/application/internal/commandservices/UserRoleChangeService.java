@@ -93,9 +93,16 @@ public class UserRoleChangeService {
                 if (!users.changeRoles(before.changeRoles(approval), approval.version(), operator.userId(), now)) {
                     yield new RoleChangeOutcome.Refused(new UserAdministrationRefusal.Stale<>());
                 }
+                // 確定の後の監査の値も承認から取る（引数の新しい役割は判定にだけ使う。2026-10-17、human:kakimomokuri）
                 long newVersion = approval.version() + 1;
                 auditRecords.append(AuditRecord.rolesChanged(
-                        operator.userId(), operator.companyId(), target, newVersion, before.roles(), newRoles, now));
+                        operator.userId(),
+                        operator.companyId(),
+                        target,
+                        newVersion,
+                        before.roles(),
+                        approval.roles(),
+                        now));
                 yield new RoleChangeOutcome.Changed(newVersion);
             }
         };

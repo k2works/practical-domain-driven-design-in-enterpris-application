@@ -2,6 +2,7 @@ package com.example.cargotracker.identity.domain.model.aggregates;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.fail;
 
 import com.example.cargotracker.identity.domain.model.valueobjects.AuthenticationRejection;
 import com.example.cargotracker.identity.domain.model.valueobjects.CompanyKind;
@@ -14,6 +15,7 @@ import com.example.cargotracker.identity.domain.model.valueobjects.UserStatus;
 import com.example.cargotracker.shared.domain.CompanyId;
 import com.example.cargotracker.shared.domain.Role;
 import com.example.cargotracker.shared.domain.UserId;
+import java.util.EnumSet;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -425,7 +427,103 @@ class UserTest {
         assertThat(approval.userId()).isEqualTo(sales.id());
         assertThat(approval.version()).isEqualTo(4L);
         assertThat(approval.to()).isEqualTo(UserStatus.SUSPENDED);
-        assertThat(approval.reason()).isEqualTo(TRANSFERRED.orElseThrow());
+        assertThat(approval.reason()).isEqualTo(TRANSFERRED);
+    }
+
+    @Test
+    void 判定に使った版と違う利用者には利用状態の変更の承認を使えない() {
+        User sales = staff(Set.of(Role.SALES), UserStatus.ACTIVE);
+        User newer = copyOf(sales, sales.version() + 1);
+        User.StatusChangeApproval approval =
+                approved(sales.decideStatusChange(ADMIN, UserStatus.SUSPENDED, TRANSFERRED));
+
+        assertThatThrownBy(() -> newer.changeStatus(approval)).isInstanceOf(IllegalArgumentException.class);
+    }
+
+    // 承認を判定した実体で縛る（2026-10-17、human:kakimomokuri）
+
+    @Test
+    void 同じIDと版で組み立てた別の利用者には役割の変更の承認を使えない() {
+        User sales = staff(Set.of(Role.SALES));
+        User twin = copyOf(sales, sales.version());
+        User.RoleChangeApproval approval =
+                approved(sales.decideRoleChange(ADMIN, OPERATOR, Set.of(Role.ROUTE_DESIGNER)));
+
+        assertThatThrownBy(() -> twin.changeRoles(approval)).isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void 同じIDと版で組み立てた別の利用者には利用状態の変更の承認を使えない() {
+        User sales = staff(Set.of(Role.SALES), UserStatus.ACTIVE);
+        User twin = copyOf(sales, sales.version());
+        User.StatusChangeApproval approval =
+                approved(sales.decideStatusChange(ADMIN, UserStatus.SUSPENDED, TRANSFERRED));
+
+        assertThatThrownBy(() -> twin.changeStatus(approval)).isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void 変えた後の利用者に同じ役割の変更の承認をもう一度渡すと例外() {
+        User sales = staff(Set.of(Role.SALES));
+        User.RoleChangeApproval approval =
+                approved(sales.decideRoleChange(ADMIN, OPERATOR, Set.of(Role.ROUTE_DESIGNER)));
+        User changed = sales.changeRoles(approval);
+
+        assertThatThrownBy(() -> changed.changeRoles(approval)).isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void 変えた後の利用者に同じ利用状態の変更の承認をもう一度渡すと例外() {
+        User sales = staff(Set.of(Role.SALES), UserStatus.ACTIVE);
+        User.StatusChangeApproval approval =
+                approved(sales.decideStatusChange(ADMIN, UserStatus.SUSPENDED, TRANSFERRED));
+        User suspended = sales.changeStatus(approval);
+
+        assertThatThrownBy(() -> suspended.changeStatus(approval)).isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void 再開の承認は理由を持たない() {
+        User suspended = staff(Set.of(Role.SALES), UserStatus.SUSPENDED);
+
+        User.StatusChangeApproval approval =
+                approved(suspended.decideStatusChange(ADMIN, UserStatus.ACTIVE, TRANSFERRED));
+
+        assertThat(approval.to()).isEqualTo(UserStatus.ACTIVE);
+        assertThat(approval.reason()).isEmpty();
+    }
+
+    @Test
+    void 判定に渡した役割の集合を後で変えても承認の役割は変わらない() {
+        User sales = staff(Set.of(Role.SALES));
+        Set<Role> newRoles = EnumSet.of(Role.ROUTE_DESIGNER);
+        User.RoleChangeApproval approval = approved(sales.decideRoleChange(ADMIN, OPERATOR, newRoles));
+
+        newRoles.add(Role.SALES);
+
+        assertThat(approval.roles()).containsExactly(Role.ROUTE_DESIGNER);
+    }
+
+    @Test
+    void 承認の役割は変更できない() {
+        User sales = staff(Set.of(Role.SALES));
+        User.RoleChangeApproval approval =
+                approved(sales.decideRoleChange(ADMIN, OPERATOR, Set.of(Role.ROUTE_DESIGNER)));
+        Set<Role> roles = approval.roles();
+
+        assertThatThrownBy(() -> roles.add(Role.SALES)).isInstanceOf(UnsupportedOperationException.class);
+    }
+
+    private static User copyOf(User user, long version) {
+        return User.of(
+                user.id(),
+                user.companyId(),
+                user.email(),
+                user.displayName(),
+                user.passwordHash(),
+                user.status(),
+                user.roles(),
+                version);
     }
 
     private static Optional<RoleChangeRejection> refusal(User.RoleChangeDecision decision) {
@@ -441,10 +539,16 @@ class UserTest {
     }
 
     private static User.RoleChangeApproval approved(User.RoleChangeDecision decision) {
-        return ((User.RoleChangeDecision.Approved) decision).approval();
+        return switch (decision) {
+            case User.RoleChangeDecision.Approved(User.RoleChangeApproval approval) -> approval;
+            case User.RoleChangeDecision.Refused(RoleChangeRejection rejection) -> fail("拒否された: " + rejection);
+        };
     }
 
     private static User.StatusChangeApproval approved(User.StatusChangeDecision decision) {
-        return ((User.StatusChangeDecision.Approved) decision).approval();
+        return switch (decision) {
+            case User.StatusChangeDecision.Approved(User.StatusChangeApproval approval) -> approval;
+            case User.StatusChangeDecision.Refused(StatusChangeRejection rejection) -> fail("拒否された: " + rejection);
+        };
     }
 }
