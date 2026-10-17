@@ -3,7 +3,7 @@ type: Plan
 title: "Bolt 34d 計画 - 利用者の利用停止と再開（US-16 の一部）"
 description: "W5 の 24 本目の Bolt の計画。システム管理者は S-20 の詳細から、管理範囲の企業の利用者を理由（利用終了・異動・緊急停止）を選んで利用停止し、再開できる。確認の領域を経て、版を条件に状態を変え、USER_SUSPENDED・USER_REACTIVATED を監査に書く。自分と監督の役割を持つ利用者は画面で止めも再開もしない。停止は Bolt 32c の request ごとの確かめで相手の次の request から効く（AC5）。管理者向けのマニュアルとデモの動画を作る。"
 tags: [plan]
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-17T02:40:37Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-17T03:20:24Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-17T01:14:48Z }
 ---
@@ -212,22 +212,22 @@ end note
 
 状態の記号: `[ ]` 未着手、`[-]` 進行中、`[?]` 承認待ち、`[x]` 完了。各ステップの終わりに `check` が緑であることを確かめ、push してアプリの CI と MkDocs の配備を確かめる（T-26、T-126）。コミットは pathspec で作る（T-110）。複数行の書き換えはスクリプトのファイル（`b34d_` で始める）にし、書き込みの成功を確かめてから実行する（T-103、T-137）。
 
-- [ ] **1. 設計文書** 【承認ゲート: 設計文書】
+- [x] **1. 設計文書** 【承認ゲート: 設計文書】
   - 上の注の行を直す
   - 完了の判定: `okf:check` ERROR 0、`documentationTest` 緑
-- [ ] **2. 集約の判定と変更** 【承認ゲート: Red・Green、セキュリティ】
+- [x] **2. 集約の判定と変更** 【承認ゲート: Red・Green、セキュリティ】
   - `RoleAssignmentPolicy.holdsOversightRole`、`SuspensionReason`・`StatusChangeRejection`、`User.statusChangeRejection`（自分・監督の役割・同じ状態・理由。順の境界）と `changeStatus`、`AuditRecord.userSuspended`・`userReactivated` の単体テスト。`User.java`・`UserStatus.java`・`AuditTarget.java` の古い Javadoc
-- [ ] **3. リポジトリとサービス** 【承認ゲート: セキュリティ】
+- [x] **3. リポジトリとサービス** 【承認ゲート: セキュリティ】
   - `UserRepository.changeStatus` と SQL（版の条件、`updated_at`）、`AuthenticationAuditListenerTest` の匿名クラス、`UserStatusChangeService` の `check`・`change`。単体テストと統合テスト（確定で状態と版と監査が 1 つのトランザクションで変わる、古い版で何も変わらない、役割の変更の後の停止は古い版、範囲外は `OutOfScope`、追記の失敗で巻き戻る）
-- [ ] **4. 画面と受入シナリオ** 【承認ゲート: 画面・セキュリティ】
+- [x] **4. 画面と受入シナリオ** 【承認ゲート: 画面・セキュリティ】
   - セキュリティの統合テストを先に（自分・監督の役割・範囲外・同じ状態・理由のない停止の確定が拒まれ書かれない、知らない状態・理由の名前と再開に理由を付けた送信は 400、範囲外の確定で `ADMIN_SCOPE_DENIED` が 1 行、停止の確定の後に相手の既存の session の次の request が A-03 で `SESSION_REVOKED` が 1 行、相手の過去の監査の行が残る、確認の GET は受け付けられる停止と範囲外の利用者のどちらでも書かない（T-115））
   - controller（確認の GET・確定の POST、PRG）、詳細の利用状態の領域、確認の画面、知らせと文言
   - 画面の層: 受入シナリオ `@US-16-AC5 @demo @demo-bolt-34d/suspend-and-reactivate`（停止 → 相手がログインできない → 再開 → ログインできる）、自分と監督の役割の利用者に操作が出ないこと、確認の画面のアクセシビリティの検査と幅 320 px。Bolt 34・34b のシナリオが緑のまま（ボタンの名前に依存する `UserAdministrationUiSteps`・`UserAdministrationSecurityIntegrationTest` を含む）。`UiUsers.java`・`SessionRevalidationSecurityIntegrationTest.java` の古いコメント
   - 完了の判定: `check` 緑、`uiTest` 緑
-- [ ] **5. マニュアルとデモの動画** 【承認ゲート: 文書】
+- [x] **5. マニュアルとデモの動画** 【承認ゲート: 文書】
   - マニュアル 11 章（冒頭の表、11.1 の注意、11.2 の利用状態の領域、新しい節「利用状態の変更の確認」）、キャプチャ（`manualScreenshots`）、2 章の照合
   - デモの動画（`demoVideo`。開発レビューの直しの後に撮り直す。T-105）、開発の索引のデモの表、`BOLT_ISSUES` に bolt-34・bolt-34d → #14
-- [ ] **6. SonarQube と開発レビューと終了報告** 【承認ゲート: 終了報告】
+- [x] **6. SonarQube と開発レビューと終了報告** 【承認ゲート: 終了報告】
   - SonarQube（T-116）。開発レビュー（プログラマー・テスター、アーキテクト、セキュリティ、テクニカルライター）。`bolt_34d_report.md`、release_plan、開発の索引
 
 ### 時間の配分と打ち切り
@@ -267,12 +267,12 @@ end note
 
 ## 完了条件
 
-- [ ] システム管理者は、管理範囲の企業の利用者を理由を選んで停止し、停止中の利用者を再開できる。確認の領域を経て、版を条件に状態が変わり、`USER_SUSPENDED`／`USER_REACTIVATED` が 1 行残る
-- [ ] 停止の確定の後、相手の次の request は A-03 になり、相手はログインできず、相手の過去の監査の行は残る（AC5、IA-INV-04、IA-INV-09）
-- [ ] 自分・監督の役割を持つ利用者・同じ状態への変更・理由のない停止・範囲外・古い版の確定は拒まれ、状態も版も変わらない（範囲外は 404 で `ADMIN_SCOPE_DENIED` が 1 行）
-- [ ] 設計文書（domain_model・data_model・ui_design・architecture_backend・non_functional・test_strategy・user_story・release_plan）とマニュアル 11 章・2 章を更新し、デモの動画を撮った
-- [ ] `check` と `uiTest` が緑。push してアプリの CI と MkDocs の配備を確かめた。SonarQube の Quality Gate が PASS、`okf:check` ERROR 0
-- [ ] 開発レビュー、終了報告
+- [x] システム管理者は、管理範囲の企業の利用者を理由を選んで停止し、停止中の利用者を再開できる。確認の領域を経て、版を条件に状態が変わり、`USER_SUSPENDED`／`USER_REACTIVATED` が 1 行残る
+- [x] 停止の確定の後、相手の次の request は A-03 になり、相手はログインできず、相手の過去の監査の行は残る（AC5、IA-INV-04、IA-INV-09）
+- [x] 自分・監督の役割を持つ利用者・同じ状態への変更・理由のない停止・範囲外・古い版の確定は拒まれ、状態も版も変わらない（範囲外は 404 で `ADMIN_SCOPE_DENIED` が 1 行）
+- [x] 設計文書（domain_model・data_model・ui_design・architecture_backend・non_functional・test_strategy・user_story・release_plan）とマニュアル 11 章・2 章を更新し、デモの動画を撮った
+- [x] `check` と `uiTest` が緑。push してアプリの CI と MkDocs の配備を確かめた。SonarQube の Quality Gate が PASS、`okf:check` ERROR 0
+- [x] 開発レビュー、終了報告
 
 ## 更新履歴
 
@@ -282,6 +282,7 @@ end note
 | 2026-10-17 | 詳細整合性検証（18 件）と横断整合性検証（13 件）の指摘を反映した。古い版の文言を `STALE_MESSAGE` に、監督の役割の判定の公開（`holdsOversightRole`）、理由のない停止の拒否 `REASON_REQUIRED` と知らない名前の 400、判定の順の理由、匿名クラスのテスト、ボタンの名前、確認の領域の項目（実行者・戻る）、`USAGE_ENDED`、役割が 0 件の利用者、T-142・T-143・T-115、既知の課題の送り先（確認ポイント 8）、最後の 1 人と再設定のトークン（確認ポイント 12・13）、直す行の具体化 | anthropic/claude-opus-5-5 |
 | 2026-10-17 | 計画を承認した。確認ポイント 5〜17 を推奨のとおりに決めた（確認ポイント 8 は 34c に送る）。`/goal` の下で、ステップごとの承認ゲートでは止めずに進め、層・モジュールの規則と打ち切りの条件に当たったときだけ止めて諮る | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-10-17 | 開発レビューの後: (5) 停止の確定で、同じトランザクションで相手の未使用の password の再設定のトークンを無効にする（`PasswordResetTokenRepository#invalidateUnused`。確認ポイント 13 を改めた）、(6) 再開の確定の後に相手の session をすべて消す（`UserSessionRevoker#revokeAll`。消せなくても再開は戻さない。停止では今までどおり消さない）（human:kakimomokuri が決定）。確認の領域のボタンの名前を「確定する」から「停止する」「再開する」に変えた（役割の変更の確認の「変更する」に合わせた） | anthropic/claude-opus-5-5、決定 human:kakimomokuri |
+| 2026-10-17 | ステップ 6 を終え、[終了報告](bolt_34d_report.md)を作った（承認待ち）。打ち切りの条件には当たらなかった | anthropic/claude-opus-5-5 |
 
 ## 関連ドキュメント
 
