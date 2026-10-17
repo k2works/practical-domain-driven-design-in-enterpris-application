@@ -11453,49 +11453,49 @@
 <td style="text-align: left;">4</td>
 <td style="text-align: left;"><strong>承認の値の置き場所と作り口</strong></td>
 <td style="text-align: left;">2</td>
-<td style="text-align: left;"><code>User</code> の入れ子の final class にし、コンストラクタを private にする（コンパイラが作り手を <code>User</code> に限る。ArchUnit の見張りは足さない）。<code>valueobjects</code> に置かない（第 3 章のガイドラインでは値オブジェクトは <code>valueobjects</code> だが、作り手を集約に限るため集約の中に置く。理由を Javadoc と architecture_backend に書く）。代わりの案: <code>aggregates</code> の別のクラスにして package-private のコンストラクタと ArchUnit で見張る（同じパッケージのテストからの生成は見張れない）</td>
+<td style="text-align: left;"><code>User</code> の入れ子の final class にし、コンストラクタを private にする（コンパイラが作り手を <code>User</code> に限る。ArchUnit の見張りは足さない）。<code>valueobjects</code> に置かない（第 3 章のガイドラインでは値オブジェクトは <code>valueobjects</code> だが、作り手を集約に限るため集約の中に置く。理由を Javadoc と architecture_backend に書く）。代わりの案: <code>aggregates</code> の別のクラスにして package-private のコンストラクタと ArchUnit で見張る（同じパッケージのテストからの生成は見張れない）。決定済み（計画の承認）</td>
 </tr>
 <tr>
 <td style="text-align: left;">5</td>
 <td style="text-align: left;"><strong>型の名前</strong></td>
 <td style="text-align: left;">2・3</td>
-<td style="text-align: left;">承認の値は <code>RoleChangeApproval</code>・<code>StatusChangeApproval</code>（用語集の名前は「役割の変更の承認」「利用状態の変更の承認」）。判定の結果は <code>RoleChangeDecision</code>・<code>StatusChangeDecision</code>。共通の拒否は <code>UserAdministrationRefusal&lt;R&gt;</code>、確かめる・変える結果は <code>RoleChangeCheck</code>・<code>RoleChangeOutcome</code>・<code>StatusChangeCheck</code>・<code>StatusChangeOutcome</code></td>
+<td style="text-align: left;">承認の値は <code>RoleChangeApproval</code>・<code>StatusChangeApproval</code>（用語集の名前は「役割の変更の承認」「利用状態の変更の承認」）。判定の結果は <code>RoleChangeDecision</code>・<code>StatusChangeDecision</code>。共通の拒否は <code>UserAdministrationRefusal&lt;R&gt;</code>、確かめる・変える結果は <code>RoleChangeCheck</code>・<code>RoleChangeOutcome</code>・<code>StatusChangeCheck</code>・<code>StatusChangeOutcome</code>。決定済み（計画の承認）</td>
 </tr>
 <tr>
 <td style="text-align: left;">6</td>
 <td style="text-align: left;"><strong>版の出どころ</strong></td>
 <td style="text-align: left;">2</td>
-<td style="text-align: left;">承認の値の版の 1 つにし、リポジトリの期待する版と監査の新しい版を <code>approval.version()</code> から取る。承認の版の不一致の例外は取り違えの守りで、同時の更新の判定はリポジトリの件数のまま</td>
+<td style="text-align: left;">承認の値の版の 1 つにし、リポジトリの期待する版と監査の新しい版を <code>approval.version()</code> から取る。承認の版の不一致の例外は取り違えの守りで、同時の更新の判定はリポジトリの件数のまま。決定済み（計画の承認）</td>
 </tr>
 <tr>
 <td style="text-align: left;">7</td>
 <td style="text-align: left;"><strong>今の判定のメソッド</strong></td>
 <td style="text-align: left;">2</td>
-<td style="text-align: left;"><code>roleChangeRejection</code>・<code>statusChangeRejection</code> は消し、新しい判定に置き換える</td>
+<td style="text-align: left;"><code>roleChangeRejection</code>・<code>statusChangeRejection</code> は消し、新しい判定に置き換える。決定済み（計画の承認）</td>
 </tr>
 <tr>
 <td style="text-align: left;">8</td>
 <td style="text-align: left;"><strong>login の補助に寄せる範囲と刻み</strong></td>
 <td style="text-align: left;">4</td>
-<td style="text-align: left;">上の表の「寄せる」だけ。使った刻みは TOTP を送る前に戻す形にそろえる。<code>userIdOf</code> は JDBC で探す</td>
+<td style="text-align: left;">上の表の「寄せる」だけ。使った刻みは TOTP を送る前に戻す形にそろえる。<code>userIdOf</code> は JDBC で探す。決定済み（計画の承認）</td>
 </tr>
 <tr>
 <td style="text-align: left;">9</td>
 <td style="text-align: left;"><strong>新しいファイル</strong></td>
 <td style="text-align: left;">3・4</td>
-<td style="text-align: left;">設計の約束の「新しいファイル」のとおり</td>
+<td style="text-align: left;">設計の約束の「新しいファイル」のとおり。決定済み（計画の承認）</td>
 </tr>
 <tr>
 <td style="text-align: left;">10</td>
 <td style="text-align: left;"><strong>開発レビュー</strong></td>
 <td style="text-align: left;">5</td>
-<td style="text-align: left;">アーキテクト、テスター（読むだけ）</td>
+<td style="text-align: left;">アーキテクト、テスター（読むだけ）。決定済み（計画の承認）</td>
 </tr>
 <tr>
 <td style="text-align: left;">11</td>
 <td style="text-align: left;"><strong>アプローチと承認ゲートと時間</strong></td>
 <td style="text-align: left;">全体</td>
-<td style="text-align: left;">リファクタリング（インサイドアウト）。ステップごとに止める（構造・認可の判定）。約 3.8 時間</td>
+<td style="text-align: left;">リファクタリング（インサイドアウト）。ステップごとに止める（構造・認可の判定）。約 3.8 時間。決定済み（計画の承認）</td>
 </tr>
 </tbody>
 </table>
@@ -11527,6 +11527,11 @@
 <td style="text-align: left;">2026-10-17</td>
 <td style="text-align: left;">詳細整合性検証（15 件）と横断整合性検証（16 件）の指摘を反映した。承認の値を <code>User</code> の入れ子にして private のコンストラクタにする（ArchUnit の見張りと置き場所の例外を要らなくした。確認ポイント 4）、版の出どころ（確認ポイント 6）、ジェネリクスの書き方と部品の拒否の写し方、<code>ManagedUserLookup</code> の作り方、login の補助に寄せるものの表と刻みを戻す時点と <code>userIdOf</code> の探し方、防御の複製、アプローチの理由、注の行（domain_model:1033・1035、architecture_backend:311・313、test_strategy:327・329、release_plan の 34e の行）、行番号、H1・H3 の言い方</td>
 <td style="text-align: left;">anthropic/claude-opus-5-5</td>
+</tr>
+<tr>
+<td style="text-align: left;">2026-10-17</td>
+<td style="text-align: left;">計画を承認した。確認ポイント 4〜11 を推奨のとおりに決めた。<code>/goal</code> の下で、ステップごとの承認ゲートでは止めずに進め、層・モジュールの規則と打ち切りの条件に当たったときだけ止めて諮る</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5、承認 human:kakimomokuri</td>
 </tr>
 </tbody>
 </table>
