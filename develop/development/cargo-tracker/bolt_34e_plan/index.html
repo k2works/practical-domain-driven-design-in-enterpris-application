@@ -16,7 +16,7 @@
         <link rel="prev" href="../bolt_34c_report/">
       
       
-        <link rel="next" href="../release_report-0_1/">
+        <link rel="next" href="../bolt_34e_report/">
       
       
         
@@ -6053,6 +6053,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../bolt_34e_report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 34e 終了報告
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../release_report-0_1/" class="md-nav__link">
         
   
@@ -11371,15 +11399,15 @@
 <h2 id="_5">ステップ計画<a class="headerlink" href="#_5" title="Permanent link">&para;</a></h2>
 <p>状態の記号: <code>[ ]</code> 未着手、<code>[-]</code> 進行中、<code>[?]</code> 承認待ち、<code>[x]</code> 完了。各ステップの終わりに <code>check</code> が緑で件数が減っていないことを確かめ、push してアプリの CI と MkDocs の配備を確かめる（T-26、T-126）。コミットは pathspec で作る（T-110）。</p>
 <ul class="task-list">
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>1. 設計文書</strong> 【承認ゲート: 設計文書】</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>1. 設計文書</strong> 【承認ゲート: 設計文書】</li>
 <li>上の注の行を直す。完了の判定: <code>okf:check</code> ERROR 0、<code>documentationTest</code> 緑</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>2. 集約の判定と承認の値</strong> 【承認ゲート: 構造】</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>2. 集約の判定と承認の値</strong> 【承認ゲート: 構造】</li>
 <li>先に、承認が別の利用者・別の版なら例外になるテストを書く（Red）。承認の値と判定の結果の型、<code>changeRoles</code>・<code>changeStatus</code> の引数を承認の値に、<code>roleChangeRejection</code>・<code>statusChangeRejection</code> を <code>decide…</code> に置き換える。<code>UserTest</code> を新しい形に（判定の順の境界のテストは中身を変えずに通す）。サービスの呼び出し元を合わせ、版を <code>approval.version()</code> から取る（この時点では結果の型は変えない）</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>3. 結果の型と判定の前半の部品</strong> 【承認ゲート: 構造・認可の判定】</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>3. 結果の型と判定の前半の部品</strong> 【承認ゲート: 構造・認可の判定】</li>
 <li>共通の拒否の型と確かめる・変える結果の型、<code>ManagedUserLookup</code>。2 つのサービスと controller の 2 つの <code>switch</code>（届かない枝を消す）。直すテスト: <code>UserRoleChangeServiceTest</code>・<code>UserStatusChangeServiceTest</code>・<code>UserRoleChangeIntegrationTest</code>・<code>UserStatusChangeIntegrationTest</code>。巻き戻しのテストと <code>UserStatusErrorMessageTest</code> は結果の型を参照しないので、コンパイルが通ることだけを確かめる。判定の順の変異（範囲と規則の入れ替え）で落ちることを確かめる（控えから戻す）</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>4. login の共通の補助</strong> 【承認ゲート: 構造】</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>4. login の共通の補助</strong> 【承認ゲート: 構造】</li>
 <li><code>IdentityLogins</code> と、上の表の「寄せる」の置き換え。件数と失敗 0 を前後で比べる。刻みを戻す扱いを変えるクラス（UserAdministration・SessionRevalidation・UserStatusChange）で、再利用や刻みの状態を確かめるテストが補助に頼っていないことを確かめる</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>5. uiTest と SonarQube と開発レビューと終了報告</strong> 【承認ゲート: 終了報告】</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>5. uiTest と SonarQube と開発レビューと終了報告</strong> 【承認ゲート: 終了報告】</li>
 <li><code>uiTest</code>（件数を前後で比べる）、SonarQube（ほかの Gradle の後。T-147）。開発レビュー（アーキテクト、テスター。読むだけ）。<code>bolt_34e_report.md</code>、release_plan、開発の索引</li>
 </ul>
 <h3 id="_6">時間の配分と打ち切り<a class="headerlink" href="#_6" title="Permanent link">&para;</a></h3>
@@ -11501,12 +11529,12 @@
 </table>
 <h2 id="_7">完了条件<a class="headerlink" href="#_7" title="Permanent link">&para;</a></h2>
 <ul class="task-list">
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <code>changeRoles</code>・<code>changeStatus</code> は承認の値だけを受け、承認の値は <code>User</code> の判定だけが作る（コンストラクタが private）</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> 役割と利用状態の変更のサービスの確かめる・変える呼び出しが、それぞれの結果の型だけを返し、controller に届かない枝がない</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> 2 つのサービスの判定の前半が 1 つの部品にあり、判定の順は変わっていない</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> セキュリティの統合テストの同じ形の login の写しが共通の補助にまとまっている</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <code>check</code> と <code>uiTest</code> が緑で、件数が減っていない（足したテストの分だけ増える）。push してアプリの CI と MkDocs の配備を確かめた。SonarQube の Quality Gate が PASS、<code>okf:check</code> ERROR 0</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> 開発レビュー、終了報告</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <code>changeRoles</code>・<code>changeStatus</code> は承認の値だけを受け、承認の値は <code>User</code> の判定だけが作る（コンストラクタが private）</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> 役割と利用状態の変更のサービスの確かめる・変える呼び出しが、それぞれの結果の型だけを返し、controller に届かない枝がない</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> 2 つのサービスの判定の前半が 1 つの部品にあり、判定の順は変わっていない</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> セキュリティの統合テストの同じ形の login の写しが共通の補助にまとまっている</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <code>check</code> と <code>uiTest</code> が緑で、件数が減っていない（足したテストの分だけ増える）。push してアプリの CI と MkDocs の配備を確かめた。SonarQube の Quality Gate が PASS、<code>okf:check</code> ERROR 0</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> 開発レビュー、終了報告</li>
 </ul>
 <h2 id="_8">更新履歴<a class="headerlink" href="#_8" title="Permanent link">&para;</a></h2>
 <table>
@@ -11532,6 +11560,11 @@
 <td style="text-align: left;">2026-10-17</td>
 <td style="text-align: left;">計画を承認した。確認ポイント 4〜11 を推奨のとおりに決めた。<code>/goal</code> の下で、ステップごとの承認ゲートでは止めずに進め、層・モジュールの規則と打ち切りの条件に当たったときだけ止めて諮る</td>
 <td style="text-align: left;">anthropic/claude-opus-5-5、承認 human:kakimomokuri</td>
+</tr>
+<tr>
+<td style="text-align: left;">2026-10-18</td>
+<td style="text-align: left;">ステップ 5 を終え、<a href="../bolt_34e_report/">終了報告</a>を作った（承認待ち）。打ち切りの条件には当たらなかった</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5</td>
 </tr>
 </tbody>
 </table>
