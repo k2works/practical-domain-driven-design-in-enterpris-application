@@ -116,6 +116,12 @@ public class BrowserSession implements DisposableBean {
         signInHere(role);
     }
 
+    /** Cookie を消してログインしていない状態に戻す（Bolt 34d。止めた利用者のログインを確かめてから、次の画面でログインし直させる）。 */
+    public void signOut() {
+        context.clearCookies();
+        signedIn = null;
+    }
+
     /**
      * いま開いている A-01 から、Cookie を消さずにその役割の利用者でログインする（Bolt 32e。失効の扱いが新しい session に覚えた
      * 要求へ、ログインの後に戻ることを確かめる）。

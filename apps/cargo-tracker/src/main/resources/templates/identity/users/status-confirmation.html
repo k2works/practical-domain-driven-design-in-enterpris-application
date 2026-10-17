@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="ja" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/staff :: layout(~{::title}, ~{::main}, ~{}, 'users')}">
+<head>
+    <meta charset="UTF-8">
+    <title>利用状態の変更の確認 - cargo-tracker</title>
+</head>
+<body>
+<main>
+    <!--/* 利用状態の変更の確認の領域（Bolt 34d。US-16 AC5）。役割の変更の確認（confirmation.html）の形を写す */-->
+    <h1 th:text="${suspending} ? '利用を停止しますか' : '利用を再開しますか'">利用を停止しますか</h1>
+    <dl class="row">
+        <dt class="col-sm-3">対象</dt>
+        <dd class="col-sm-9" th:text="|${user.companyName} ${user.displayName}（${user.email.value}）|">A 社 佐藤（sato@example.com）</dd>
+        <dt class="col-sm-3">現在の状態</dt>
+        <dd class="col-sm-9" id="current-status" th:text="${currentStatus}">利用中</dd>
+        <dt class="col-sm-3">変更内容</dt>
+        <dd class="col-sm-9" id="status-change"
+            th:text="${suspending} ? |利用を停止する（理由: ${reasonName}）| : '利用を再開する'">利用を停止する（理由: 異動）</dd>
+        <dt class="col-sm-3">影響</dt>
+        <dd class="col-sm-9" th:text="${suspending} ? '相手の次の操作から使えなくなります。' : '相手は次のログインから使えます。'">相手の次の操作から使えなくなります。</dd>
+        <dt class="col-sm-3">回復手段</dt>
+        <dd class="col-sm-9" th:text="${suspending} ? '再開できます。' : 'もう一度停止できます。'">再開できます。</dd>
+        <dt class="col-sm-3">実行者</dt>
+        <dd class="col-sm-9" th:text="${operator}">システム管理者 高橋</dd>
+    </dl>
+    <form method="post" th:action="@{/staff/users/{id}/status-changes/confirmation(id=${user.id.value})}">
+        <input type="hidden" name="status" th:value="${status}">
+        <input type="hidden" name="reason" th:if="${reason != null}" th:value="${reason}">
+        <input type="hidden" name="version" th:value="${version}">
+        <button type="submit" th:class="${suspending} ? 'btn btn-danger' : 'btn btn-primary'"
+                th:text="${suspending} ? '停止する' : '再開する'">停止する</button>
+        <a class="btn btn-link" th:href="@{/staff/users/{id}(id=${user.id.value},reason=${reason},version=${version})}">戻る</a>
+    </form>
+</main>
+</body>
+</html>

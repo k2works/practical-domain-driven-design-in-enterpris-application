@@ -2,14 +2,19 @@ package com.example.cargotracker.identity.interfaces.web;
 
 import com.example.cargotracker.identity.application.internal.commandservices.AdministrationScopeDenialService;
 import com.example.cargotracker.identity.application.internal.commandservices.RoleChangeResult;
+import com.example.cargotracker.identity.application.internal.commandservices.StatusChangeResult;
 import com.example.cargotracker.identity.application.internal.commandservices.UserRoleChangeService;
+import com.example.cargotracker.identity.application.internal.commandservices.UserStatusChangeService;
 import com.example.cargotracker.identity.application.internal.queryservices.UserAdministrationQueryService;
 import com.example.cargotracker.identity.application.internal.queryservices.UserLookup;
 import com.example.cargotracker.identity.domain.model.rules.RoleAssignmentPolicy;
 import com.example.cargotracker.identity.domain.model.valueobjects.CompanyKind;
 import com.example.cargotracker.identity.domain.model.valueobjects.RoleChangeRejection;
 import com.example.cargotracker.identity.domain.model.valueobjects.RoleChangeRejectionReason;
+import com.example.cargotracker.identity.domain.model.valueobjects.StatusChangeRejection;
+import com.example.cargotracker.identity.domain.model.valueobjects.SuspensionReason;
 import com.example.cargotracker.identity.domain.model.valueobjects.UserDetail;
+import com.example.cargotracker.identity.domain.model.valueobjects.UserStatus;
 import com.example.cargotracker.shared.domain.AuthenticatedActor;
 import com.example.cargotracker.shared.domain.Role;
 import com.example.cargotracker.shared.domain.UserId;
@@ -34,7 +39,8 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
  * 社内業務 Web の利用者の管理（S-20。Bolt 34、US-16 の一部）。システム管理者だけが開ける（`SecurityConfiguration` の
  * `/staff/users/**`。サービスも操作者を確かめる）。一覧と詳細を示し、詳細で役割を選んで確認の領域（画面そのものが確認の領域。
  * S-07・S-09 と同じ）へ進み、確定する（PRG）。判定はサービスが確認の領域を開く時と確定の時の両方で行う。画面で付け外しできる
- * 役割（企業の種類に合う業務の役割）は、表示のためにドメインの規則から読む（判定はサーバーが正）。
+ * 役割（企業の種類に合う業務の役割）は、表示のためにドメインの規則から読む（判定はサーバーが正）。Bolt 34d で、詳細の利用状態の領域から
+ * 理由を選んで利用を停止し、停止中の利用者を再開する確認の領域を足した（US-16 AC5。役割の変更と同じ確認と確定の形）。
  */
 @Controller
 public class UserAdministrationController {
@@ -44,6 +50,21 @@ public class UserAdministrationController {
 
     /** 役割の変更の確認の URL（GET で確認、POST で確定）。 */
     static final String CONFIRMATION_URL = USERS_URL + "/{id}/role-changes/confirmation";
+
+    /** 利用状態の変更の確認の URL（GET で確認、POST で確定。Bolt 34d）。 */
+    static final String STATUS_CONFIRMATION_URL = USERS_URL + "/{id}/status-changes/confirmation";
+
+    /** 停止の完了の知らせ（UI 設計 S-20。Bolt 34d）。 */
+    static final String SUSPENDED_NOTICE = "利用を停止しました。";
+
+    /** 再開の完了の知らせ（UI 設計 S-20。Bolt 34d）。 */
+    static final String REACTIVATED_NOTICE = "利用を再開しました。";
+
+    /** 自分の詳細の利用状態の領域の案内（UI 設計 S-20。Bolt 34d）。 */
+    static final String SELF_STATUS_NOTE = "自分の利用状態は変更できません。ほかのシステム管理者に依頼してください。";
+
+    /** 監督の役割を持つ利用者の詳細の利用状態の領域の案内（UI 設計 S-20。Bolt 34d）。 */
+    static final String OVERSIGHT_STATUS_NOTE = "システム管理者・監査担当者の利用停止と再開は、この画面では行いません。";
 
     /** 完了の知らせ（UI 設計 S-20）。 */
     static final String CHANGED_NOTICE = "役割を変更しました。相手の次の操作から効きます。";
@@ -61,14 +82,17 @@ public class UserAdministrationController {
 
     private final UserAdministrationQueryService queryService;
     private final UserRoleChangeService roleChanges;
+    private final UserStatusChangeService statusChanges;
     private final AdministrationScopeDenialService denials;
 
     public UserAdministrationController(
             UserAdministrationQueryService queryService,
             UserRoleChangeService roleChanges,
+            UserStatusChangeService statusChanges,
             AdministrationScopeDenialService denials) {
         this.queryService = queryService;
         this.roleChanges = roleChanges;
+        this.statusChanges = statusChanges;
         this.denials = denials;
     }
 
@@ -79,18 +103,21 @@ public class UserAdministrationController {
         return "identity/users/list";
     }
 
-    /** 詳細。確認の領域の「戻る」は選んだ役割と画面の版を渡し、選んだまま、確認の前の版のまま示す。 */
+    /**
+     * 詳細。確認の領域の「戻る」は選んだ役割（または選んだ停止の理由）と画面の版を渡し、選んだまま、確認の前の版のまま示す。
+     */
     @GetMapping(USERS_URL + "/{id}")
     public String show(
             @PathVariable String id,
             @RequestParam(name = "roles", required = false) List<String> roles,
+            @RequestParam(name = "reason", required = false) String reason,
             @RequestParam(name = "version", required = false) Long version,
             AuthenticatedActor actor,
             Model model) {
         UserDetail user = detail(id, actor, false);
         Set<Role> selected = roles == null ? user.roles() : parseRoles(roles);
         long formVersion = version == null ? user.version() : version;
-        return showDetail(new DetailForm(user, selected, formVersion, null), actor, model);
+        return showDetail(new DetailForm(user, selected, parseReason(reason), formVersion, null, null), actor, model);
     }
 
     @GetMapping(CONFIRMATION_URL)
@@ -141,14 +168,26 @@ public class UserAdministrationController {
             case RoleChangeResult.Rejected(RoleChangeRejection rejection) -> {
                 UserDetail user = detail(id, actor, false);
                 yield showDetail(
-                        new DetailForm(user, selected, version, ErrorMessage.of(rejection, user.companyKind())),
+                        new DetailForm(
+                                user,
+                                selected,
+                                Optional.empty(),
+                                version,
+                                ErrorMessage.of(rejection, user.companyKind()),
+                                null),
                         actor,
                         model);
             }
             case RoleChangeResult.Stale _ -> {
                 UserDetail user = detail(id, actor, false);
                 yield showDetail(
-                        new DetailForm(user, user.roles(), user.version(), new ErrorMessage(STALE_MESSAGE, false)),
+                        new DetailForm(
+                                user,
+                                user.roles(),
+                                Optional.empty(),
+                                user.version(),
+                                new ErrorMessage(STALE_MESSAGE, false),
+                                null),
                         actor,
                         model);
             }
@@ -166,13 +205,122 @@ public class UserAdministrationController {
         };
     }
 
+    @GetMapping(STATUS_CONFIRMATION_URL)
+    public String confirmStatus(
+            @PathVariable String id,
+            @RequestParam String status,
+            @RequestParam(name = "reason", required = false) String reason,
+            @RequestParam long version,
+            AuthenticatedActor actor,
+            Model model) {
+        UserDetail user = detail(id, actor, false);
+        StatusRequest request = StatusRequest.parse(status, reason);
+        StatusChangeResult result = statusChanges.check(actor, user.id(), version, request.to(), request.reason());
+        if (result instanceof StatusChangeResult.Acceptable) {
+            return showStatusConfirmation(user, request, version, actor, model);
+        }
+        return showStatusRefusal(id, request, version, actor, model, result, false);
+    }
+
+    @PostMapping(STATUS_CONFIRMATION_URL)
+    public String changeStatus(
+            @PathVariable String id,
+            @RequestParam String status,
+            @RequestParam(name = "reason", required = false) String reason,
+            @RequestParam long version,
+            AuthenticatedActor actor,
+            Model model,
+            RedirectAttributes redirectAttributes) {
+        // 役割の変更と同じく、確定も先に詳細を読み、管理範囲の外なら試行を記録して 404 にする（書き手はこの controller の確定だけ）
+        UserId target = detail(id, actor, true).id();
+        StatusRequest request = StatusRequest.parse(status, reason);
+        StatusChangeResult result = statusChanges.change(actor, target, version, request.to(), request.reason());
+        if (result instanceof StatusChangeResult.Changed) {
+            redirectAttributes.addFlashAttribute(
+                    "notice", request.to() == UserStatus.SUSPENDED ? SUSPENDED_NOTICE : REACTIVATED_NOTICE);
+            return "redirect:" + USERS_URL + "/" + target.value();
+        }
+        return showStatusRefusal(id, request, version, actor, model, result, true);
+    }
+
+    /** 利用状態の変更を受け付けなかった結果の画面。拒否は選んだ理由のまま、古い版は最新の内容で詳細を示し直す。 */
+    private String showStatusRefusal(
+            String id,
+            StatusRequest request,
+            long version,
+            AuthenticatedActor actor,
+            Model model,
+            StatusChangeResult result,
+            boolean change) {
+        return switch (result) {
+            case StatusChangeResult.Rejected(StatusChangeRejection rejection) -> {
+                UserDetail user = detail(id, actor, false);
+                yield showDetail(
+                        new DetailForm(
+                                user,
+                                user.roles(),
+                                request.reason(),
+                                version,
+                                null,
+                                ErrorMessage.of(rejection, user.status())),
+                        actor,
+                        model);
+            }
+            case StatusChangeResult.Stale _ -> {
+                UserDetail user = detail(id, actor, false);
+                yield showDetail(
+                        new DetailForm(
+                                user,
+                                user.roles(),
+                                Optional.empty(),
+                                user.version(),
+                                null,
+                                new ErrorMessage(STALE_MESSAGE, false)),
+                        actor,
+                        model);
+            }
+            case StatusChangeResult.NotFound _ -> throw notFound();
+            case StatusChangeResult.OutOfScope _ -> {
+                // 詳細を読んだ後に管理範囲から外れたとき（同じ request の中の守り）。記録は確定のときだけ
+                if (change) {
+                    denials.recordDenied(actor, parse(id).orElseThrow(UserAdministrationController::notFound));
+                }
+                throw notFound();
+            }
+            case StatusChangeResult.NotPermitted _ -> throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+            case StatusChangeResult.Changed _, StatusChangeResult.Acceptable _ ->
+                throw new IllegalStateException("受け付けた結果は示し直さない");
+        };
+    }
+
+    private String showStatusConfirmation(
+            UserDetail user, StatusRequest request, long version, AuthenticatedActor actor, Model model) {
+        model.addAttribute("user", user);
+        model.addAttribute("suspending", request.to() == UserStatus.SUSPENDED);
+        model.addAttribute("currentStatus", statusName(user.status()));
+        model.addAttribute(
+                "reasonName",
+                request.reason().map(UserAdministrationController::reasonName).orElse(null));
+        model.addAttribute("status", request.to().name());
+        model.addAttribute(
+                "reason", request.reason().map(SuspensionReason::name).orElse(null));
+        model.addAttribute("version", version);
+        model.addAttribute("operator", Role.SYSTEM_ADMIN.displayName() + " " + actor.displayName());
+        model.addAttribute(ACTIVE_ATTRIBUTE, ACTIVE);
+        return "identity/users/status-confirmation";
+    }
+
     private String showDetail(DetailForm form, AuthenticatedActor actor, Model model) {
         UserDetail user = form.user();
+        boolean self = user.id().equals(actor.userId());
+        model.addAttribute("statusNote", statusNote(user, self));
+        model.addAttribute("reasonOptions", reasonOptions(form.reason()));
+        model.addAttribute("statusError", form.statusError());
         Set<Role> assignable = RoleAssignmentPolicy.assignableRoles(user.companyKind());
         model.addAttribute("user", user);
         model.addAttribute("currentRoles", names(user.roles()));
         model.addAttribute("companyKindName", companyKindName(user.companyKind()));
-        model.addAttribute("self", user.id().equals(actor.userId()));
+        model.addAttribute("self", self);
         model.addAttribute("assignable", !assignable.isEmpty());
         model.addAttribute("roleOptions", roleOptions(assignable, form.selected()));
         // 画面で付け外しできない今の役割（監督の役割など）は、変えずに送るため隠し項目で持つ
@@ -275,6 +423,50 @@ public class UserAdministrationController {
                 .toList();
     }
 
+    /** 送られた停止の理由の名前を理由にする。空や未指定は理由なし（停止なら判定が拒む）、知らない名前は 400。 */
+    private static Optional<SuspensionReason> parseReason(String reason) {
+        if (reason == null || reason.isBlank()) {
+            return Optional.empty();
+        }
+        try {
+            return Optional.of(SuspensionReason.valueOf(reason));
+        } catch (IllegalArgumentException _) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    /** 利用状態の領域の案内。自分と監督の役割を持つ利用者には操作を出さず、この一文を示す（Bolt 34d の決定 4）。操作を出すなら null。 */
+    private static String statusNote(UserDetail user, boolean self) {
+        if (self) {
+            return SELF_STATUS_NOTE;
+        }
+        if (RoleAssignmentPolicy.holdsOversightRole(user.roles())) {
+            return OVERSIGHT_STATUS_NOTE;
+        }
+        return null;
+    }
+
+    /** 停止の理由の選択肢。宣言の順。 */
+    private static List<ReasonOption> reasonOptions(Optional<SuspensionReason> selected) {
+        return Arrays.stream(SuspensionReason.values())
+                .map(reason -> new ReasonOption(reason, reasonName(reason), selected.equals(Optional.of(reason))))
+                .toList();
+    }
+
+    /** 停止の理由の画面の名前（UI 設計 S-20）。 */
+    static String reasonName(SuspensionReason reason) {
+        return switch (reason) {
+            case USAGE_ENDED -> "利用終了";
+            case TRANSFERRED -> "異動";
+            case EMERGENCY -> "緊急停止";
+        };
+    }
+
+    /** 利用状態の画面の名前（UI 設計 S-20）。 */
+    static String statusName(UserStatus status) {
+        return status == UserStatus.ACTIVE ? "利用中" : "利用停止";
+    }
+
     /** 企業の種類の画面の名前（UI 設計 S-20）。 */
     static String companyKindName(CompanyKind kind) {
         return switch (kind) {
@@ -297,14 +489,55 @@ public class UserAdministrationController {
     public record RoleOption(Role role, boolean selected) {}
 
     /**
+     * 停止の理由の選択肢。
+     *
+     * @param reason 理由
+     * @param name 画面の名前
+     * @param selected 選んでいるか
+     */
+    public record ReasonOption(SuspensionReason reason, String name, boolean selected) {}
+
+    /**
+     * 利用状態の変更の送信（状態と理由の名前を値にしたもの）。
+     *
+     * @param to 変更後の利用状態
+     * @param reason 停止の理由
+     */
+    private record StatusRequest(UserStatus to, Optional<SuspensionReason> reason) {
+
+        /** 知らない状態・理由の名前と、再開に理由を付けた送信は 400（役割の名前と同じ扱い）。 */
+        static StatusRequest parse(String status, String reason) {
+            UserStatus to;
+            try {
+                to = UserStatus.valueOf(status);
+            } catch (IllegalArgumentException _) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+            }
+            Optional<SuspensionReason> parsed = parseReason(reason);
+            if (to == UserStatus.ACTIVE && parsed.isPresent()) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+            }
+            return new StatusRequest(to, parsed);
+        }
+    }
+
+    /**
      * 詳細の画面に示す内容。
      *
      * @param user 利用者
      * @param selected 選んでいる役割
+     * @param reason 選んでいる停止の理由
      * @param version フォームが持つ版
-     * @param error 誤り（なければ null）
+     * @param error 役割の変更の誤り（なければ null）
+     * @param statusError 利用状態の変更の誤り（なければ null）
      */
-    private record DetailForm(UserDetail user, Set<Role> selected, long version, ErrorMessage error) {}
+    private record DetailForm(
+            UserDetail user,
+            Set<Role> selected,
+            Optional<SuspensionReason> reason,
+            long version,
+            ErrorMessage error,
+            ErrorMessage statusError) {}
 
     /**
      * 誤りの文言。
@@ -329,6 +562,18 @@ public class UserAdministrationController {
                                     + names(RoleAssignmentPolicy.businessRolesOf(rejection.roles())) + "）は併せて付けられません。";
                     };
             return new ErrorMessage(text, rejection.reason() != RoleChangeRejectionReason.SELF_CHANGE);
+        }
+
+        /** 利用状態の変更の拒否の文言（UI 設計 S-20 の表。Bolt 34d）。停止の理由の選び方の誤りだけ理由の欄へリンクする。 */
+        static ErrorMessage of(StatusChangeRejection rejection, UserStatus current) {
+            String text =
+                    switch (rejection) {
+                        case SELF_CHANGE -> SELF_STATUS_NOTE;
+                        case OVERSIGHT_ROLE -> OVERSIGHT_STATUS_NOTE;
+                        case NO_CHANGE -> "利用状態は既に" + statusName(current) + "です。最新の内容を確かめてください。";
+                        case REASON_REQUIRED -> "停止の理由を選んでください。";
+                    };
+            return new ErrorMessage(text, rejection == StatusChangeRejection.REASON_REQUIRED);
         }
     }
 }

@@ -19,6 +19,14 @@
             <li th:unless="${error.field}" th:text="${error.text}">この利用者の情報が先に更新されました。</li>
         </ul>
     </div>
+    <!--/* 利用状態の変更のエラー要約（Bolt 34d）。停止の理由の選び方の誤りだけ理由の欄へリンクする */-->
+    <div id="error-summary" th:if="${statusError != null}" tabindex="-1" role="alert" aria-labelledby="error-summary-title">
+        <h2 id="error-summary-title">利用状態を変更できませんでした</h2>
+        <ul>
+            <li th:if="${statusError.field}"><a href="#suspension-reason" th:text="${statusError.text}">停止の理由を選んでください。</a></li>
+            <li th:unless="${statusError.field}" th:text="${statusError.text}">この利用者の情報が先に更新されました。</li>
+        </ul>
+    </div>
     <dl class="row">
         <dt class="col-sm-3">企業</dt>
         <dd class="col-sm-9" th:text="|${user.companyName}（${companyKindName}）|">A 社（運用する会社）</dd>
@@ -54,6 +62,36 @@
         </fieldset>
         <button type="submit" class="btn btn-primary mt-3">変更内容を確認する</button>
     </form>
+    <!--/* 利用状態の領域（Bolt 34d。US-16 AC5）。役割の領域と別にし、荷受人の企業の利用者にも出す。自分と監督の役割の利用者には操作を出さない */-->
+    <section class="mt-4" aria-labelledby="status-title">
+        <h2 id="status-title" class="h5">利用状態</h2>
+        <p th:if="${statusNote != null}" id="status-note" th:text="${statusNote}">自分の利用状態は変更できません。ほかのシステム管理者に依頼してください。</p>
+        <form th:if="${statusNote == null and user.status.name() == 'ACTIVE'}" method="get"
+              th:action="@{/staff/users/{id}/status-changes/confirmation(id=${user.id.value})}">
+            <input type="hidden" name="status" value="SUSPENDED">
+            <input type="hidden" name="version" th:value="${version}">
+            <fieldset id="suspension-reason"
+                      th:attr="aria-describedby=${statusError != null and statusError.field} ? 'suspension-reason-error' : null">
+                <legend class="h6">停止の理由</legend>
+                <p th:if="${statusError != null and statusError.field}" id="suspension-reason-error" class="text-danger"
+                   th:text="${statusError.text}">停止の理由を選んでください。</p>
+                <div class="form-check" th:each="option : ${reasonOptions}">
+                    <input class="form-check-input" type="radio" name="reason"
+                           th:id="|reason-${option.reason.name()}|" th:value="${option.reason.name()}"
+                           th:checked="${option.selected}">
+                    <label class="form-check-label" th:for="|reason-${option.reason.name()}|"
+                           th:text="${option.name}">異動</label>
+                </div>
+            </fieldset>
+            <button type="submit" class="btn btn-outline-danger mt-3">利用停止の内容を確認する</button>
+        </form>
+        <form th:if="${statusNote == null and user.status.name() == 'SUSPENDED'}" method="get"
+              th:action="@{/staff/users/{id}/status-changes/confirmation(id=${user.id.value})}">
+            <input type="hidden" name="status" value="ACTIVE">
+            <input type="hidden" name="version" th:value="${version}">
+            <button type="submit" class="btn btn-primary">利用再開の内容を確認する</button>
+        </form>
+    </section>
     <p class="mt-3"><a th:href="@{/staff/users}">利用者の一覧へ戻る</a></p>
 </main>
 </body>
