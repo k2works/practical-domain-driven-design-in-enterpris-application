@@ -3,7 +3,9 @@ type: Plan
 title: "Bolt 34c 終了報告 - 認証・監査の経路と文書と見張り（振る舞いの変わらない直し）"
 description: "W5 の 25 本目の Bolt の終了報告。ログインの監査の書き手と @Service・@Bean の役割を今の形のまま理由とともに書き、ロックと session の関係と回復コードのログインの監査の範囲を明文化した。回復コードのログインで成功の監査を書けないときの今の振る舞いを特性テストで固定した。暗号の部品・spy・@Configuration の置き場所を ArchUnit で見張り（AT-09〜11）、login_failure の列の注釈を直した。"
 tags: [plan]
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-17T12:32:37Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-17T12:48:07Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-10-17T12:48:07Z }
 ---
 
 # Bolt 34c 終了報告 - 認証・監査の経路と文書と見張り（振る舞いの変わらない直し）
@@ -106,6 +108,7 @@ Bolt 34e（利用者の管理のドメインとサービス）、その後 Bolt 
 
 | 日付 | 更新内容 | 更新者 |
 | :--- | :--- | :--- |
+| 2026-10-17 | 終了報告を承認した（議題 1〜4。議題 3 の人に諮らずに変えた点を事後に承認。議題 4 は今のまま） | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-10-17 | 初版作成（承認待ち）。`check` 2459 件・`uiTest` 272 件が緑、SonarQube PASS | anthropic/claude-opus-5-5 |
 
 ## 関連ドキュメント
