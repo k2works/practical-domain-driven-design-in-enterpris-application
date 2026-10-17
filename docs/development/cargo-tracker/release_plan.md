@@ -4,7 +4,7 @@ title: "リリース計画 - cargo-tracker（A 社国際貨物輸送管理シス
 description: "cargo-tracker MVP のリリース計画。1 人 + AI、時間単位の Bolt（= イテレーション）と週次の見直しで、最初の縦の流れ（R0.1）、パイロット準備完了（R1.0）、本格展開前（R1.1）の 3 段階、Unit のエントロピー評価、SP、バッファ、パイロット開始の条件、引継ぎ ID の台帳、業務責任者に確かめる事項の台帳。"
 tags: [development,release-plan]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-17T12:48:07Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-17T13:09:20Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T09:29:53Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:38:26Z }
@@ -602,7 +602,7 @@ US-04 の SP 5 は、サガの成功の経路を閉じて #10 をクローズす
 | 34b | US-16 の一部: システム管理者の管理範囲（`user_assignment` の `COMPANY`。運用の手順で割り当てる）と範囲外の拒否と試行の記録（AC2、IA-INV-08。範囲外は 404 にし、試行を `ADMIN_SCOPE_DENIED` として書く）。照会のサービス（`UserAdministrationQueryService`）で操作者を受けて管理範囲で絞る。この Bolt で全企業の役割を変えられる窓が閉じ、本番への配備のゲート（Bolt 34 の議題 4）が外れる。Bolt 34 の開始準備で 34 から分け、Bolt 34b の開始準備で 34b と 34d に分けた（2026-10-16、human:kakimomokuri。約 5.5 時間あったため）。[Bolt 34b 計画](bolt_34b_plan.md) | 0 | インサイドアウト | ステップごと（認可とスキーマ） |
 | 34d | US-16 の一部: 利用停止と再開（AC5 の利用停止の分。Bolt 32c の request ごとの確かめが次の request から反映する。自分と監督の役割を持つ利用者は画面で止めない。再開も画面で扱わない（Bolt 34d の開始準備の決定 (4)、2026-10-17、human:kakimomokuri））、管理者向けのマニュアル（利用停止）、デモの動画（`@US-16`）。Bolt 34b の開始準備で 34b から分けた。[Bolt 34d 計画](bolt_34d_plan.md) | 0 | インサイドアウト | ステップごと（認可。スキーマは変えない。`ck_app_user_status` は `ACTIVE`・`SUSPENDED` を既に持ち、`audit_record.action` に CHECK はない） |
 | 34c | 振る舞いの変わらない直し（認証・監査の経路と文書と見張り）: ログインの監査の書き手の経路は今のまま理由と書き手の表を書く（Bolt 32 の議題 5。Bolt 34c の開始準備の決定 2）、`@Service`（JIG の印）と `@Bean`（組み立て）の役割を書き「二重の定義の解消」を課題から外す・SpotBugs の除外をパッケージの指定にまとめる（決定 3）、回復コードのログインの IA-INV-08 の範囲の文書化、ロックと IA-INV-04 の関係の明文化（Bolt 32c の議題 6）、「暗号の部品は crypto にある」の規則を名前ごとに分ける、`@MockitoSpyBean`・`@Configuration` の見張り（Bolt 32d）、`login_failure` の COMMENT のマイグレーション（Bolt 32。決定 4）。[Bolt 34c 計画](bolt_34c_plan.md)。Bolt 34 の開始準備で 34 から分け、Bolt 34c の開始準備で 34c・34e・34f に分けた | 0 | 技術タスク（テストの入口は ArchUnit の規則とスキーマの統合テスト。本体の振る舞いを変えない） | ステップごと（構造とスキーマ） |
-| 34e | 振る舞いの変わらない直し（利用者の管理のドメインとサービス）: `User.changeRoles`・`changeStatus` が判定を通さずに呼べること（判定の結果を引数に取る形への直し）と `RoleChangeResult`・`StatusChangeResult` を確かめる呼び出しと変える呼び出しで共用していること（Bolt 34 の既知の課題。Bolt 34d の計画の確認ポイント 8）、利用状態の変更と役割の変更のサービスの判定の前半（システム管理者か → 利用者と企業 → 管理範囲）の写しを部品に抜き出す（照会のサービスは読み出しの順が違うので含めない見込み）、セキュリティの統合テストの login の写しの共通化（Bolt 34d の開発レビュー）。Bolt 34c の開始準備で 34c から分けた | 0 | リファクタリング（インサイドアウト） | ステップごと（構造。認可の判定に触れる） |
+| 34e | 振る舞いの変わらない直し（利用者の管理のドメインとサービス）: `User.changeRoles`・`changeStatus` が判定を通さずに呼べること（判定が通ったときに `User` だけが作る承認の値を引数に取る形への直し。Bolt 34e の開始準備の決定 1）と `RoleChangeResult`・`StatusChangeResult` を確かめる呼び出しと変える呼び出しで共用していること（Bolt 34 の既知の課題。Bolt 34d の計画の確認ポイント 8）、利用状態の変更と役割の変更のサービスの判定の前半（システム管理者か → 利用者と企業 → 管理範囲）の写しを部品に抜き出す（照会のサービスは読み出しの順が違うので含めない見込み）、セキュリティの統合テストの login の写しの共通化（Bolt 34d の開発レビュー）。Bolt 34c の開始準備で 34c から分けた | 0 | リファクタリング（インサイドアウト） | ステップごと（構造。認可の判定に触れる） |
 | 34f | 振る舞いの変わらない直し（S-20 の画面の構造）: S-20 の詳細の描画を部品にして `UserAdministrationController` を操作ごとに分ける（W6 の 3 つ目の操作の前に）、利用状態の画面の名前（利用中・利用停止）の 3 か所の写し、詳細の役割の領域の見出し（h2。マニュアル 11 章のキャプチャの撮り直し）（Bolt 34d の開発レビュー）。Bolt 34c の開始準備で 34c から分けた | 0 | リファクタリング（アウトサイドイン。画面の構造） | ステップごと（構造・画面） |
 | 35 | US-04 AC3 不足条件・AC5 特殊貨物（[#43](https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/43)）、D-85 の再見積り。4 時間を超えると見えたら、開始準備で D-85 を 35b に分ける | 3 | アウトサイドイン | 計画・終了報告 |
 
@@ -644,7 +644,7 @@ US-18 の Bolt の順序は 31b → 31c → 31d → 32 → 32c → 32d → 32b �
 - [x] Bolt 34b: US-16 の一部（#14）。[Bolt 34b 計画](bolt_34b_plan.md)（承認済み。管理範囲と範囲外の試行の記録）、[Bolt 34b 終了報告](bolt_34b_report.md)（完了、2026-10-16 に承認済み。確定の POST だけ記録する）
 - [x] Bolt 34d: US-16 の一部（#14）。[Bolt 34d 計画](bolt_34d_plan.md)（承認済み。利用停止と再開、デモの動画）、[Bolt 34d 終了報告](bolt_34d_report.md)（完了、2026-10-17 に承認済み。停止でトークンを無効にし、再開で前の session を消す）
 - [x] Bolt 34c: 振る舞いの変わらない直し（認証・監査の経路と文書と見張り）。[Bolt 34c 計画](bolt_34c_plan.md)（承認済み）、[Bolt 34c 終了報告](bolt_34c_report.md)（完了、2026-10-17 に承認済み。監査の書き手と @Service・@Bean の役割を今の形のまま書き、AT-09〜11 を足し、login_failure の注釈を直した）
-- [ ] Bolt 34e: 振る舞いの変わらない直し（利用者の管理のドメインとサービス）
+- [ ] Bolt 34e: 振る舞いの変わらない直し（利用者の管理のドメインとサービス）。[Bolt 34e 計画](bolt_34e_plan.md)（承認待ち）
 - [ ] Bolt 34f: 振る舞いの変わらない直し（S-20 の画面の構造）
 - [ ] Bolt 35: US-04 AC3・AC5（#43）、D-85
 - [ ] W5 の締め: 結果とふりかえり、開いている持ち越しの数（T-89）、W6 の計画の見直し
@@ -1000,3 +1000,4 @@ xychart-beta
 | 2026-10-17 | Bolt 34c のステップ 1〜4 を終えたことを、W5 の状態と週の表とチェックリストに書いた。今はステップ 5 | anthropic/claude-opus-5-5 |
 | 2026-10-17 | Bolt 34c を終え、[終了報告](bolt_34c_report.md)を作った（承認待ち）。次は Bolt 34e | anthropic/claude-opus-5-5 |
 | 2026-10-17 | Bolt 34c の終了報告の承認を記録した（議題 1〜4）。次は Bolt 34e | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
+| 2026-10-17 | Bolt 34e の[計画](bolt_34e_plan.md)を作った（承認待ち）。開始準備で human:kakimomokuri が、承認の値を引数に取る、結果の型を拒否と受付に分ける、判定の前半の部品は 2 つのコマンドサービスだけ、と決めた。2 つの整合性検証の指摘を反映した | anthropic/claude-opus-5-5 |
