@@ -4,7 +4,7 @@ title: "cargo-tracker ユーザーストーリー"
 description: "cargo-tracker MVP の価値単位のユーザーストーリー、受入条件、上流要件へのトレーサビリティ。"
 tags: [requirements, user-story]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-17T01:21:36Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-17T02:40:37Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T05:20:11Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:01:39Z }
@@ -585,6 +585,11 @@ Bolt 34d の開始準備の決定（2026-10-17、human:kakimomokuri。[Bolt 34d 
 - AC5 の「次の request から拒否され」は、request ごとの確かめ（Bolt 32c）で満たす。確定の後に相手の session をすぐには消さず、相手の次の request で session を捨てて A-03 に送る（監査記録 `SESSION_REVOKED`）。「過去の操作履歴は保持される」は、停止で相手の監査記録を消さないことで満たす。
 - 停止中の利用者の役割の変更は許す（役割の変更の判定を増やさない）。
 - 自分と監督の役割（システム管理者・監査担当者）を持つ利用者は、停止も再開も画面で扱わない（運用の手順で扱う。Bolt 34b の開始準備の決定 (4) を再開にも広げた）。
+
+Bolt 34d の開発レビューの後の決定（2026-10-17、human:kakimomokuri。[Bolt 34d 計画](../../development/cargo-tracker/bolt_34d_plan.md) の確認ポイント 13 を改めた）:
+
+- (5) 停止の確定では、同じトランザクションで相手の未使用の password の再設定のトークンを無効にする。停止の前に発行したリンクで、再開の後に password を設定し直させない。
+- (6) 再開の確定の後に、相手の session をすべて消す。相手が 1 度も操作しないうちに停止して再開したとき、前の session を使い続けさせない（再開の後の session はログインし直したものだけ）。消せなくても再開は戻さない。停止の確定では今までどおりすぐには消さない（開始準備の決定の 2 つ目は変えない）。
 
 ### US-17 監査証跡を照会する
 
