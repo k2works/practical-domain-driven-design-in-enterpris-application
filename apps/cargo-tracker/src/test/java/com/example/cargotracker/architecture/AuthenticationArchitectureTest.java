@@ -148,33 +148,55 @@ class AuthenticationArchitectureTest {
             .dependOnClassesThat()
             .resideInAPackage("com.example.cargotracker.identity.infrastructure.security..");
 
-    /** 上の規則と D-5 の規則が空振りしていないこと（暗号の部品が crypto にあること）を確かめる。 */
+    /*
+     * 上の規則と D-5 の規則が空振りしていないこと（暗号の部品が crypto にあること）を、部品の名前ごとに確かめる（AT-09。Bolt 34c）。
+     * 名前を .or() でつないだ 1 本の規則では、1 つの名前が変わって対象から消えてもほかの名前で対象が空にならず、黙って通っていた
+     * （Bolt 33a・33d で一覧から漏れた名前を後から足した）。名前ごとの規則は、対象が空なら落ちる。
+     */
+
     @ArchTest
-    static final ArchRule 暗号の部品はcryptoにある = classes()
-            .that()
-            .haveSimpleName("AesGcmSecretCipher")
-            .or()
-            .haveSimpleName("Base32")
-            .or()
-            .haveSimpleName("BcryptPasswordHasher")
-            .or()
-            .haveSimpleName("BcryptRecoveryCodeHasher")
-            .or()
-            .haveSimpleName("BundledCommonPasswordList")
-            .or()
-            .haveSimpleName("JavaOtpTotpCodeGenerator")
-            .or()
-            .haveSimpleName("QrCodeSvg")
-            .or()
-            .haveSimpleName("RandomPasswordResetTokenGenerator")
-            .or()
-            .haveSimpleName("RandomRecoveryCodeGenerator")
-            .or()
-            .haveSimpleName("RandomTotpSecretIssuer")
-            .or()
-            .haveSimpleName("Sha256PasswordResetTokenHasher")
-            .should()
-            .resideInAPackage("com.example.cargotracker.identity.infrastructure.crypto..");
+    static final ArchRule AesGcmSecretCipherはcryptoにある = cryptoComponent("AesGcmSecretCipher");
+
+    @ArchTest
+    static final ArchRule Base32はcryptoにある = cryptoComponent("Base32");
+
+    @ArchTest
+    static final ArchRule BcryptPasswordHasherはcryptoにある = cryptoComponent("BcryptPasswordHasher");
+
+    @ArchTest
+    static final ArchRule BcryptRecoveryCodeHasherはcryptoにある = cryptoComponent("BcryptRecoveryCodeHasher");
+
+    @ArchTest
+    static final ArchRule BundledCommonPasswordListはcryptoにある = cryptoComponent("BundledCommonPasswordList");
+
+    @ArchTest
+    static final ArchRule JavaOtpTotpCodeGeneratorはcryptoにある = cryptoComponent("JavaOtpTotpCodeGenerator");
+
+    @ArchTest
+    static final ArchRule QrCodeSvgはcryptoにある = cryptoComponent("QrCodeSvg");
+
+    @ArchTest
+    static final ArchRule RandomPasswordResetTokenGeneratorはcryptoにある =
+            cryptoComponent("RandomPasswordResetTokenGenerator");
+
+    @ArchTest
+    static final ArchRule RandomRecoveryCodeGeneratorはcryptoにある = cryptoComponent("RandomRecoveryCodeGenerator");
+
+    @ArchTest
+    static final ArchRule RandomTotpSecretIssuerはcryptoにある = cryptoComponent("RandomTotpSecretIssuer");
+
+    @ArchTest
+    static final ArchRule Sha256PasswordResetTokenHasherはcryptoにある = cryptoComponent("Sha256PasswordResetTokenHasher");
+
+    /** その名前のクラスが暗号の部品（identity.infrastructure.crypto）にあるという規則。その名前のクラスがなければ落ちる。 */
+    private static ArchRule cryptoComponent(String simpleName) {
+        return classes()
+                .that()
+                .haveSimpleName(simpleName)
+                .should()
+                .resideInAPackage("com.example.cargotracker.identity.infrastructure.crypto..")
+                .allowEmptyShould(false);
+    }
 
     /**
      * password の段だけの主体（{@code PasswordVerifiedUser}）を受ける画面は、A-02 と A-07 の controller だけ（Bolt 31c、ADR-012 の
