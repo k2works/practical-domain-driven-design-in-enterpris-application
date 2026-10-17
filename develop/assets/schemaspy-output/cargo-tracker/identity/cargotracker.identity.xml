@@ -96,7 +96,7 @@
          <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="user_id" nullable="false" remarks="利用者 ID" size="2147483647" type="uuid" typeCode="1111">
             <parent column="id" foreignKey="fk_login_failure_user" implied="false" onDeleteCascade="false" schema="identity" table="app_user"/>
          </column>
-         <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="consecutive_failures" nullable="false" remarks="連続の失敗の回数（password と TOTP を合わせる。成功で 0 に戻す）" size="10" type="int4" typeCode="4"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="consecutive_failures" nullable="false" remarks="連続の失敗の回数（ログインの password・TOTP・回復コードの誤りを合わせて数え、ロック中の試行は数えない。2 つの要素がそろったログインの成功で 0 に戻し、ロック中は戻さない。IA-INV-03、Bolt 32）" size="10" type="int4" typeCode="4"/>
          <column autoUpdated="false" defaultValue="null" digits="6" id="2" name="locked_until" nullable="true" remarks="ロックの期限（5 回目の失敗から 15 分。ロックしていなければ null）" size="35" type="timestamptz" typeCode="93"/>
          <column autoUpdated="false" defaultValue="null" digits="6" id="3" name="updated_at" nullable="false" remarks="更新した時刻" size="35" type="timestamptz" typeCode="93"/>
          <primaryKey column="user_id" sequenceNumberInPK="1"/>
