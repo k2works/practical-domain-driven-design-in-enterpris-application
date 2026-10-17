@@ -83,7 +83,7 @@ Bolt がイテレーションに当たります。ふりかえりは各 Bolt の
 | 33f | [期間の表示と回復コードの型と session の URL の整理（振る舞いの変わらない直し）](bolt_33f_plan.md) | [終了報告](bolt_33f_report.md) | W5 | 完了 |
 | 34 | [固定役割の付与と取消しと職務分離（US-16 の一部）](bolt_34_plan.md) | [終了報告](bolt_34_report.md)（[動画](../../assets/demo/bolt-34/change-roles.webm){:target="_blank"}。Bolt 34d で撮った） | W5 | 完了 |
 | 34b | [システム管理者の管理範囲と範囲外の試行の記録（US-16 の一部）](bolt_34b_plan.md) | [終了報告](bolt_34b_report.md) | W5 | 完了 |
-| 34d | [利用者の利用停止と再開（US-16 の一部）](bolt_34d_plan.md) | [終了報告](bolt_34d_report.md)（[動画](../../assets/demo/bolt-34d/suspend-and-reactivate.webm){:target="_blank"}） | W5 | 完了（終了報告の承認待ち） |
+| 34d | [利用者の利用停止と再開（US-16 の一部）](bolt_34d_plan.md) | [終了報告](bolt_34d_report.md)（[動画](../../assets/demo/bolt-34d/suspend-and-reactivate.webm){:target="_blank"}） | W5 | 完了 |
 
 Bolt を始めるときに行を追加します。
 

@@ -3,7 +3,9 @@ type: Plan
 title: "Bolt 34d 終了報告 - 利用者の利用停止と再開（US-16 の一部）"
 description: "W5 の 24 本目の Bolt の終了報告。システム管理者は S-20 の詳細から、管理範囲の企業の利用者を理由（利用終了・異動・緊急停止）を選んで停止し、再開できる。停止は相手の次の request から効き、相手はログインできない（AC5）。開発レビューの後に、停止で未使用の再設定のトークンを無効にし、再開で前の session を消すと決めた。マニュアル 11 章とデモの動画を作った。"
 tags: [plan]
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-17T03:20:24Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-17T04:26:40Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-10-17T04:26:41Z }
 ---
 
 # Bolt 34d 終了報告 - 利用者の利用停止と再開（US-16 の一部）
@@ -112,6 +114,7 @@ Bolt 34c（振る舞いの変わらない直し）、その後 Bolt 35（US-04 A
 
 | 日付 | 更新内容 | 更新者 |
 | :--- | :--- | :--- |
+| 2026-10-17 | 終了報告を承認した（議題 1〜4。議題 3 の人に諮らずに変えた点と議題 4 を事後に承認） | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-10-17 | 初版作成（承認待ち）。`check` 2443 件・`uiTest` 272 件が緑、SonarQube PASS | anthropic/claude-opus-5-5 |
 
 ## 関連ドキュメント
