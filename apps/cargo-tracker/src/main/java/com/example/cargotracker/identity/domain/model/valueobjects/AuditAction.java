@@ -42,5 +42,15 @@ public enum AuditAction {
      * システム管理者が管理範囲外の利用者を開いた・変えようとした（Bolt 34b。US-16 AC2、IA-INV-14）。結果は失敗、理由は
      * {@code OUT_OF_SCOPE}、対象は利用者。1 回の request につき 1 行。
      */
-    ADMIN_SCOPE_DENIED
+    ADMIN_SCOPE_DENIED,
+    /**
+     * システム管理者が利用者の利用を停止した（Bolt 34d。US-16 AC5）。成功だけを記録し、理由に停止の理由（{@link SuspensionReason}）の
+     * 名前を、対象（利用者と更新した後の版）と変更前後の利用状態を {@link AuditTarget} に残す。拒んだ変更と古い版からの変更は記録しない。
+     */
+    USER_SUSPENDED,
+    /**
+     * システム管理者が停止中の利用者の利用を再開した（Bolt 34d。US-16 AC5）。成功だけを記録し、理由は持たない。対象と変更前後の利用状態を
+     * {@link AuditTarget} に残す。
+     */
+    USER_REACTIVATED
 }

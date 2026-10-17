@@ -5,6 +5,8 @@ import com.example.cargotracker.identity.domain.model.valueobjects.Authenticatio
 import com.example.cargotracker.identity.domain.model.valueobjects.EmailAddress;
 import com.example.cargotracker.identity.domain.model.valueobjects.RoleChangeRejection;
 import com.example.cargotracker.identity.domain.model.valueobjects.RoleChangeRejectionReason;
+import com.example.cargotracker.identity.domain.model.valueobjects.StatusChangeRejection;
+import com.example.cargotracker.identity.domain.model.valueobjects.SuspensionReason;
 import com.example.cargotracker.identity.domain.model.valueobjects.UserStatus;
 import com.example.cargotracker.shared.annotation.ddd.AggregateRoot;
 import com.example.cargotracker.shared.domain.CompanyId;
@@ -18,7 +20,8 @@ import java.util.Set;
 /**
  * 利用者。事前登録され、固定役割を持つ人（BR-14、BR-15）。
  * password の照合は Spring Security に任せ、この集約は業務上の規則（利用停止・所属企業の有効性。IA-INV-09）だけを持つ。
- * 利用者の登録・利用停止・役割の付与は利用者の管理（US-16）で作る。Bolt 34 で役割の変更の判定と版（`app_user.version`）を足した。
+ * 利用者の登録は利用者の管理（US-16）で作る。Bolt 34 で役割の変更の判定と版（`app_user.version`）を、Bolt 34d で利用状態の変更（利用停止と
+ * 再開）の判定を足した。
  */
 @AggregateRoot
 public final class User {
@@ -146,6 +149,40 @@ public final class User {
     /** 役割を変えた利用者を返す（Bolt 34）。判定（{@link #roleChangeRejection}）は呼ぶ側が先に通す。版は変えない（リポジトリが上げる）。 */
     public User changeRoles(Set<Role> newRoles) {
         return new User(id, companyId, email, displayName, passwordHash, status, newRoles, version);
+    }
+
+    /**
+     * 利用状態の変更を受け付けない理由を返す（Bolt 34d。US-16 AC5、IA-INV-01）。受け付けるなら空。判定は、自分の変更 → 監督の役割 →
+     * 変更なし → 停止の理由なしの順。監督の役割を今の状態より先に見るのは、監督の役割を持つ利用者を状態にかかわらず画面で扱わないため
+     * （拒否の種類でその利用者の状態を区別しない）。再開は理由を見ない。同時の更新は版を条件にした更新で判定するので、ここでは見ない。
+     *
+     * @param operator 変更する操作者
+     * @param to 変更後の利用状態
+     * @param reason 停止の理由（停止のときに要る）
+     */
+    public Optional<StatusChangeRejection> statusChangeRejection(
+            UserId operator, UserStatus to, Optional<SuspensionReason> reason) {
+        if (id.equals(operator)) {
+            return Optional.of(StatusChangeRejection.SELF_CHANGE);
+        }
+        if (RoleAssignmentPolicy.holdsOversightRole(roles)) {
+            return Optional.of(StatusChangeRejection.OVERSIGHT_ROLE);
+        }
+        if (status == to) {
+            return Optional.of(StatusChangeRejection.NO_CHANGE);
+        }
+        if (to == UserStatus.SUSPENDED && reason.isEmpty()) {
+            return Optional.of(StatusChangeRejection.REASON_REQUIRED);
+        }
+        return Optional.empty();
+    }
+
+    /**
+     * 利用状態を変えた利用者を返す（Bolt 34d）。判定（{@link #statusChangeRejection}）は呼ぶ側が先に通す。版は変えない（リポジトリが
+     * 上げる）。
+     */
+    public User changeStatus(UserStatus to) {
+        return new User(id, companyId, email, displayName, passwordHash, to, roles, version);
     }
 
     public UserId id() {

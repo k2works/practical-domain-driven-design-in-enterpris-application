@@ -118,4 +118,25 @@ class RoleAssignmentPolicyTest {
         assertThat(RoleAssignmentPolicy.unfitRoles(CompanyKind.OPERATOR, Set.of(Role.SALES, Role.ROUTE_DESIGNER)))
                 .isEmpty();
     }
+
+    // 監督の役割を持つか（Bolt 34d。利用停止と再開を画面で扱わない相手）
+
+    @ParameterizedTest(name = "{0} を持つ利用者は監督の役割を持つ")
+    @EnumSource(
+            value = Role.class,
+            names = {"SYSTEM_ADMIN", "AUDITOR"})
+    void システム管理者か監査担当者を持てば監督の役割を持つ(Role oversight) {
+        assertThat(RoleAssignmentPolicy.holdsOversightRole(Set.of(oversight))).isTrue();
+    }
+
+    @Test
+    void 業務の役割だけなら監督の役割を持たない() {
+        assertThat(RoleAssignmentPolicy.holdsOversightRole(BUSINESS_ROLES)).isFalse();
+    }
+
+    @Test
+    void 監督の役割と業務の役割を併せて持てば監督の役割を持つ() {
+        assertThat(RoleAssignmentPolicy.holdsOversightRole(Set.of(Role.SALES, Role.AUDITOR)))
+                .isTrue();
+    }
 }

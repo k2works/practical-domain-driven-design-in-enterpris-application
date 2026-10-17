@@ -7,6 +7,7 @@ import com.example.cargotracker.identity.domain.model.valueobjects.AuditAction;
 import com.example.cargotracker.identity.domain.model.valueobjects.AuditResult;
 import com.example.cargotracker.identity.domain.model.valueobjects.AuditTarget;
 import com.example.cargotracker.identity.domain.model.valueobjects.AuthenticationRejection;
+import com.example.cargotracker.identity.domain.model.valueobjects.SuspensionReason;
 import com.example.cargotracker.shared.domain.CompanyId;
 import com.example.cargotracker.shared.domain.UserId;
 import com.example.cargotracker.shared.domain.UtcInstant;
@@ -134,6 +135,48 @@ class AuditRecordTest {
         assertThatThrownBy(() -> AuditRecord.adminScopeDenied(USER, null, target, AT))
                 .isInstanceOf(NullPointerException.class);
         assertThatThrownBy(() -> AuditRecord.adminScopeDenied(USER, COMPANY, null, AT))
+                .isInstanceOf(NullPointerException.class);
+    }
+
+    @Test
+    void 利用停止は停止の理由と対象と変更前後を記録する() {
+        UserId target = new UserId(UUID.randomUUID());
+
+        AuditRecord auditRecord = AuditRecord.userSuspended(USER, COMPANY, target, 5L, SuspensionReason.EMERGENCY, AT);
+
+        assertThat(auditRecord.action()).isEqualTo(AuditAction.USER_SUSPENDED);
+        assertThat(auditRecord.result()).isEqualTo(AuditResult.SUCCESS);
+        assertThat(auditRecord.reason()).isEqualTo("EMERGENCY");
+        assertThat(auditRecord.actorUserId()).isEqualTo(USER);
+        assertThat(auditRecord.actorCompanyId()).isEqualTo(COMPANY);
+        assertThat(auditRecord.target())
+                .isEqualTo(new AuditTarget("USER", target.value().toString(), "5", "ACTIVE", "SUSPENDED"));
+    }
+
+    @Test
+    void 利用再開は理由を持たず対象と変更前後を記録する() {
+        UserId target = new UserId(UUID.randomUUID());
+
+        AuditRecord auditRecord = AuditRecord.userReactivated(USER, COMPANY, target, 6L, AT);
+
+        assertThat(auditRecord.action()).isEqualTo(AuditAction.USER_REACTIVATED);
+        assertThat(auditRecord.result()).isEqualTo(AuditResult.SUCCESS);
+        assertThat(auditRecord.reason()).isNull();
+        assertThat(auditRecord.target())
+                .isEqualTo(new AuditTarget("USER", target.value().toString(), "6", "SUSPENDED", "ACTIVE"));
+    }
+
+    @Test
+    void 利用状態の変更は主体と対象と理由を欠かせない() {
+        UserId target = new UserId(UUID.randomUUID());
+
+        assertThatThrownBy(() -> AuditRecord.userSuspended(null, COMPANY, target, 1L, SuspensionReason.TRANSFERRED, AT))
+                .isInstanceOf(NullPointerException.class);
+        assertThatThrownBy(() -> AuditRecord.userSuspended(USER, COMPANY, target, 1L, null, AT))
+                .isInstanceOf(NullPointerException.class);
+        assertThatThrownBy(() -> AuditRecord.userReactivated(USER, null, target, 1L, AT))
+                .isInstanceOf(NullPointerException.class);
+        assertThatThrownBy(() -> AuditRecord.userReactivated(USER, COMPANY, null, 1L, AT))
                 .isInstanceOf(NullPointerException.class);
     }
 }

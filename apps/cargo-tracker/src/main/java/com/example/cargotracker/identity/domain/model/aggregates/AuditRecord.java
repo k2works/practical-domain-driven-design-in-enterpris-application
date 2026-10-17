@@ -4,6 +4,8 @@ import com.example.cargotracker.identity.domain.model.valueobjects.AuditAction;
 import com.example.cargotracker.identity.domain.model.valueobjects.AuditResult;
 import com.example.cargotracker.identity.domain.model.valueobjects.AuditTarget;
 import com.example.cargotracker.identity.domain.model.valueobjects.AuthenticationRejection;
+import com.example.cargotracker.identity.domain.model.valueobjects.SuspensionReason;
+import com.example.cargotracker.identity.domain.model.valueobjects.UserStatus;
 import com.example.cargotracker.shared.annotation.ddd.AggregateRoot;
 import com.example.cargotracker.shared.domain.CompanyId;
 import com.example.cargotracker.shared.domain.Role;
@@ -226,6 +228,78 @@ public final class AuditRecord {
                 AuditResult.FAILURE,
                 OUT_OF_SCOPE,
                 new AuditTarget(USER_TARGET, targetUser.value().toString(), null, null, null));
+    }
+
+    /**
+     * システム管理者が利用者の利用を停止したことを記録する（Bolt 34d、US-16 AC5）。理由は停止の理由の名前、対象は利用者と更新した後の版、
+     * 変更前後は利用状態の名前。結果は成功。
+     */
+    public static AuditRecord userSuspended(
+            UserId actor,
+            CompanyId actorCompany,
+            UserId targetUser,
+            long targetVersion,
+            SuspensionReason reason,
+            UtcInstant at) {
+        Objects.requireNonNull(reason, REASON_ARGUMENT);
+        return statusChanged(
+                actor,
+                actorCompany,
+                targetUser,
+                targetVersion,
+                AuditAction.USER_SUSPENDED,
+                reason.name(),
+                UserStatus.ACTIVE,
+                UserStatus.SUSPENDED,
+                at);
+    }
+
+    /**
+     * システム管理者が停止中の利用者の利用を再開したことを記録する（Bolt 34d、US-16 AC5）。理由は持たない。対象は利用者と更新した後の版、
+     * 変更前後は利用状態の名前。結果は成功。
+     */
+    public static AuditRecord userReactivated(
+            UserId actor, CompanyId actorCompany, UserId targetUser, long targetVersion, UtcInstant at) {
+        return statusChanged(
+                actor,
+                actorCompany,
+                targetUser,
+                targetVersion,
+                AuditAction.USER_REACTIVATED,
+                null,
+                UserStatus.SUSPENDED,
+                UserStatus.ACTIVE,
+                at);
+    }
+
+    @SuppressWarnings("java:S107") // 利用状態の変更の 2 つの記録が共有する項目をそろえて受ける
+    private static AuditRecord statusChanged(
+            UserId actor,
+            CompanyId actorCompany,
+            UserId targetUser,
+            long targetVersion,
+            AuditAction action,
+            String reason,
+            UserStatus before,
+            UserStatus after,
+            UtcInstant at) {
+        Objects.requireNonNull(actor, USER_ARGUMENT);
+        Objects.requireNonNull(actorCompany, COMPANY_ARGUMENT);
+        Objects.requireNonNull(targetUser, "targetUser");
+        return new AuditRecord(
+                UUID.randomUUID(),
+                at,
+                actor,
+                actorCompany,
+                action,
+                AuditResult.SUCCESS,
+                reason,
+                new AuditTarget(
+                        USER_TARGET,
+                        targetUser.value().toString(),
+                        Long.toString(targetVersion),
+                        before.name(),
+                        after.name()));
     }
 
     private static String roleNames(Set<Role> roles) {

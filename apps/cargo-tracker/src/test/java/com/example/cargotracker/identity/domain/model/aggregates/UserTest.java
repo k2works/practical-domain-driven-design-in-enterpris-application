@@ -8,13 +8,18 @@ import com.example.cargotracker.identity.domain.model.valueobjects.CompanyKind;
 import com.example.cargotracker.identity.domain.model.valueobjects.EmailAddress;
 import com.example.cargotracker.identity.domain.model.valueobjects.RoleChangeRejection;
 import com.example.cargotracker.identity.domain.model.valueobjects.RoleChangeRejectionReason;
+import com.example.cargotracker.identity.domain.model.valueobjects.StatusChangeRejection;
+import com.example.cargotracker.identity.domain.model.valueobjects.SuspensionReason;
 import com.example.cargotracker.identity.domain.model.valueobjects.UserStatus;
 import com.example.cargotracker.shared.domain.CompanyId;
 import com.example.cargotracker.shared.domain.Role;
 import com.example.cargotracker.shared.domain.UserId;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 
 /**
  * 利用者の認証の前提の規則（IA-INV-09、US-18 AC4）。
@@ -225,5 +230,130 @@ class UserTest {
 
         assertThatThrownBy(() -> sales.roleChangeRejection(ADMIN, other, roles))
                 .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    // 利用停止と再開（Bolt 34d。US-16 AC5、UC-16 の 5a）
+
+    private static final Optional<SuspensionReason> TRANSFERRED = Optional.of(SuspensionReason.TRANSFERRED);
+
+    private static User staff(Set<Role> roles, UserStatus status) {
+        return User.of(
+                new UserId(UUID.randomUUID()),
+                COMPANY,
+                EmailAddress.of("staff@example.com"),
+                "営業 一郎",
+                "{bcrypt}$2a$10$hash",
+                status,
+                roles,
+                4L);
+    }
+
+    @Test
+    void 利用中の利用者を理由を付けて停止できる() {
+        assertThat(staff(Set.of(Role.SALES), UserStatus.ACTIVE)
+                        .statusChangeRejection(ADMIN, UserStatus.SUSPENDED, TRANSFERRED))
+                .isEmpty();
+    }
+
+    @Test
+    void 停止中の利用者を再開できる() {
+        assertThat(staff(Set.of(Role.SALES), UserStatus.SUSPENDED)
+                        .statusChangeRejection(ADMIN, UserStatus.ACTIVE, Optional.empty()))
+                .isEmpty();
+    }
+
+    @Test
+    void 自分の利用状態は変えられない() {
+        User admin = User.of(
+                ADMIN,
+                COMPANY,
+                EmailAddress.of("admin@example.com"),
+                "管理 次郎",
+                "{bcrypt}$2a$10$hash",
+                UserStatus.ACTIVE,
+                Set.of(Role.SYSTEM_ADMIN),
+                0L);
+
+        assertThat(admin.statusChangeRejection(ADMIN, UserStatus.SUSPENDED, TRANSFERRED))
+                .contains(StatusChangeRejection.SELF_CHANGE);
+    }
+
+    @ParameterizedTest(name = "{0} を持つ利用者は止められない")
+    @EnumSource(
+            value = Role.class,
+            names = {"SYSTEM_ADMIN", "AUDITOR"})
+    void 監督の役割を持つ利用者は止められない(Role oversight) {
+        assertThat(staff(Set.of(oversight), UserStatus.ACTIVE)
+                        .statusChangeRejection(ADMIN, UserStatus.SUSPENDED, TRANSFERRED))
+                .contains(StatusChangeRejection.OVERSIGHT_ROLE);
+    }
+
+    @Test
+    void 監督の役割を持つ停止中の利用者は再開できない() {
+        assertThat(staff(Set.of(Role.AUDITOR), UserStatus.SUSPENDED)
+                        .statusChangeRejection(ADMIN, UserStatus.ACTIVE, Optional.empty()))
+                .contains(StatusChangeRejection.OVERSIGHT_ROLE);
+    }
+
+    @Test
+    void 今と同じ利用状態への変更は拒む() {
+        assertThat(staff(Set.of(Role.SALES), UserStatus.SUSPENDED)
+                        .statusChangeRejection(ADMIN, UserStatus.SUSPENDED, TRANSFERRED))
+                .contains(StatusChangeRejection.NO_CHANGE);
+        assertThat(staff(Set.of(Role.SALES), UserStatus.ACTIVE)
+                        .statusChangeRejection(ADMIN, UserStatus.ACTIVE, Optional.empty()))
+                .contains(StatusChangeRejection.NO_CHANGE);
+    }
+
+    @Test
+    void 理由のない停止は拒む() {
+        assertThat(staff(Set.of(Role.SALES), UserStatus.ACTIVE)
+                        .statusChangeRejection(ADMIN, UserStatus.SUSPENDED, Optional.empty()))
+                .contains(StatusChangeRejection.REASON_REQUIRED);
+    }
+
+    @Test
+    void 監督の役割を同じ状態より先に判定する() {
+        // 監督の役割の利用者の今の状態を、拒否の種類で区別しない（決定 4）
+        assertThat(staff(Set.of(Role.SYSTEM_ADMIN), UserStatus.ACTIVE)
+                        .statusChangeRejection(ADMIN, UserStatus.ACTIVE, Optional.empty()))
+                .contains(StatusChangeRejection.OVERSIGHT_ROLE);
+    }
+
+    @Test
+    void 同じ状態を理由より先に判定する() {
+        assertThat(staff(Set.of(Role.SALES), UserStatus.SUSPENDED)
+                        .statusChangeRejection(ADMIN, UserStatus.SUSPENDED, Optional.empty()))
+                .contains(StatusChangeRejection.NO_CHANGE);
+    }
+
+    @Test
+    void 自分を監督の役割より先に判定する() {
+        User admin = User.of(
+                ADMIN,
+                COMPANY,
+                EmailAddress.of("admin@example.com"),
+                "管理 次郎",
+                "{bcrypt}$2a$10$hash",
+                UserStatus.ACTIVE,
+                Set.of(Role.SYSTEM_ADMIN),
+                0L);
+
+        assertThat(admin.statusChangeRejection(ADMIN, UserStatus.SUSPENDED, Optional.empty()))
+                .contains(StatusChangeRejection.SELF_CHANGE);
+    }
+
+    @Test
+    void 利用状態を変えても版とほかの項目は変えない() {
+        User sales = staff(Set.of(Role.SALES), UserStatus.ACTIVE);
+
+        User suspended = sales.changeStatus(UserStatus.SUSPENDED);
+
+        assertThat(suspended.status()).isEqualTo(UserStatus.SUSPENDED);
+        assertThat(suspended.version()).isEqualTo(4L);
+        assertThat(suspended.id()).isEqualTo(sales.id());
+        assertThat(suspended.roles()).isEqualTo(sales.roles());
+        assertThat(suspended.passwordHash()).isEqualTo(sales.passwordHash());
+        assertThat(sales.status()).as("元の利用者は変えない").isEqualTo(UserStatus.ACTIVE);
     }
 }

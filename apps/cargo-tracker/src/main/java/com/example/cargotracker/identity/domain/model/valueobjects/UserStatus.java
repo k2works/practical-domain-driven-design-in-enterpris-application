@@ -1,7 +1,7 @@
 package com.example.cargotracker.identity.domain.model.valueobjects;
 
 /**
- * 利用者の利用状態（データモデル `app_user.status`）。利用停止の操作は利用者の管理（US-16）で作る。
+ * 利用者の利用状態（データモデル `app_user.status`）。システム管理者が S-20 で停止し再開する（Bolt 34d。US-16 AC5）。
  */
 public enum UserStatus {
     /** 利用中。 */

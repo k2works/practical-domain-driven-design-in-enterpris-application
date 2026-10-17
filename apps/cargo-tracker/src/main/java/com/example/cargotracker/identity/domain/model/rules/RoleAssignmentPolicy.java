@@ -71,6 +71,11 @@ public final class RoleAssignmentPolicy {
         return Set.copyOf(changed);
     }
 
+    /** 監督の役割（システム管理者・監査担当者）を 1 つでも持つか（Bolt 34d。利用停止と再開を画面で扱わない相手）。 */
+    public static boolean holdsOversightRole(Set<Role> roles) {
+        return roles.stream().anyMatch(OVERSIGHT_ROLES::contains);
+    }
+
     /** 業務データを変更できる役割だけを返す（職務分離の文言で示す役割）。 */
     public static Set<Role> businessRolesOf(Set<Role> roles) {
         return Set.copyOf(only(roles, BUSINESS_ROLES));
