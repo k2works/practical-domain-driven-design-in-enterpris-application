@@ -3,7 +3,7 @@ type: Plan
 title: "Bolt 32d 終了報告 - 認証の部品の低の指摘とテストの整理"
 description: "W5 の 11 本目の Bolt の終了報告。Base32 の不正な長さ・余りのビット・埋め草の数を失敗へ倒し、identity の合成ルートの規則を見張りの ArchUnit で守り、暗号の部品 2 つを部品探索に移した。identity の統合テストの時計と spy を共通にして Spring のコンテキストを 50 から 42 に減らし、Spring Session と監査記録と刻みの補助をまとめ、同時の待ちを PostgreSQL のロックの待ちで判定し、dev のテストの刻みの境界・8 時間の起点の値・監査の時刻の順・ロックのシナリオの axe を直した。承認ゲートを止めずに進めたので、止まらなかったゲートと計画からの変更を承認の議題に置く。"
 tags: [plan]
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-14T06:15:42Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-17T11:36:19Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-14T06:15:42Z }
 ---
@@ -136,7 +136,7 @@ verified:
 - 画面の層のステップの `submitLogin(String, boolean)` のフラグ引数（プログラマー、低）。画面の層のステップを触る Bolt で名前の違うメソッドに分ける
 - 時計を `Clock` で受けて `MutableClock` に型変換する書き方が 6 クラスに散らばる（プログラマー、低）。合成注釈を使うクラスで `MutableClock` を直接受ける形に、次に identity の統合テストを触る Bolt でそろえる
 - 共有の `MutableClock` の時刻を各テストの前に置くのは約束だけ（アーキテクト、低）。基底か合成注釈の拡張で置くかを、統合テストのクラスが増えたときに見る
-- `@IdentityIntegrationTest`・`IdentitySpyIntegrationTestBase` の外で `@MockitoSpyBean` を使わない見張り、`@Configuration` を config の外に置かない見張り（アーキテクト、低）。Bolt 34 で合成ルートに部品が増えるときに、AT-07 とあわせて見る（release_plan の 34 の行の「暗号の部品は crypto にある」の規則と一緒に）
+- `@IdentityIntegrationTest`・`IdentitySpyIntegrationTestBase` の外で `@MockitoSpyBean` を使わない見張り、`@Configuration` を config の外に置かない見張り（アーキテクト、低）。Bolt 34 で合成ルートに部品が増えるときに、AT-07 とあわせて見る（release_plan の 34 の行の「暗号の部品は crypto にある」の規則と一緒に）（→ 34c）
 - 見張りの条件の偽陰性を確かめる試料（許さない型を返す試料のクラス）。今は使い捨ての違反で確かめた
 - `AuthenticationFactorFixtures.resetTotpStep` の 2 つの多重定義がそれぞれ SQL を持つ
 - `SpringSessionRows.idle` は実時間を使う（Spring Session が実時間で期限を見るため。Javadoc に書いた）

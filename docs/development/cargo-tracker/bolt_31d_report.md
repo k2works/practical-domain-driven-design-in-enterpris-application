@@ -3,7 +3,7 @@ type: Plan
 title: "Bolt 31d 終了報告 - 認証の部品の守りの直し（照合の 3 値、暗号のパッケージ、特性テスト、スパイクの削除）"
 description: "W5 の 8 本目の Bolt の終了報告。TOTP の照合の結果をドメインの値 TotpMatch にし、暗号の部品を identity.infrastructure.crypto に分けて層の規則 D-5 の認証の例外を入口だけにし、保存した要素を読めないときだけを拒否に倒すようにした。FACTOR_*・全 URL・ログの平文の見張りと Spring Security の特性テストを足し、スパイクを本体のテストとの対応を確かめてから消した。承認ゲートを止めずに進めたので、止まらなかったゲートと途中の 2 つの失敗を承認の議題に置く。"
 tags: [plan]
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-13T11:09:01Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-17T11:36:19Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-13T11:09:01Z }
 ---
@@ -179,7 +179,7 @@ verified:
 
 - Bolt 32: `UnreadableCredentialException` の親の型（議題 4）、「実装の誤りは 500」の端から端までの統合テスト、`DataAccessException` の扱い、Bolt 31 の低の指摘、3 つの統合テストの時計の設定、回復コードの誤りも数えるか、8 時間の起点の値と監査の順のテスト、provider の単体テストの拒否の 3 値と監査のリスナーの単体テスト、`{bcrypt}` で中身が壊れたハッシュを読めない要素として扱うか
 - Bolt 33b: 桁数・周期・アルゴリズムの定数、SVG の組み立て、登録を始めた時刻のキーの定数、回復コードの形の知識の 2 か所、`TotpEnrollmentService` の引数の型と `instanceof` の `switch` 化、`normalize` の戻り値の型、空の復号の結果
-- 全 URL の見張りの範囲（関数型のルーティングや actuator を足すとき）、「暗号の部品は crypto にある」の規則を名前ごとに分けるか
+- 全 URL の見張りの範囲（関数型のルーティングや actuator を足すとき）、「暗号の部品は crypto にある」の規則を名前ごとに分けるか（→ 34c）
 
 ## 次の Bolt
 

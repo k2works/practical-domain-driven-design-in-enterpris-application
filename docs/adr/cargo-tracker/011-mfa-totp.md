@@ -4,7 +4,7 @@ title: "ADR-011: 多要素認証は Spring Security 7 の要素の権限で組�
 description: "password の後に TOTP を求める 2 段階のログインを、Spring Security 7 の多要素認証（要素ごとの権限）で組む。"
 tags: [adr, authentication, mfa, totp]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-16T05:26:42Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-17T11:36:19Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-11T08:28:34Z }
 ---
@@ -65,7 +65,7 @@ Bolt 32c の開始準備と計画の承認（2026-10-14、human:kakimomokuri）�
 
 - US-18 の残りを 32c（AC6 の request ごとの確かめ、ADR-012 の見直しの 3）と 32d（Bolt 31d から送った低の指摘、Bolt 32 の既知の課題のテストの整理）に分ける
 - Bolt 32 の議題 4（A-01 の予告の後に「15 分たってからもう一度ログインしてください」を足す）は採らない。A-01 の文言は決定 9 のまま（誤りと同じ文言と一般の予告）にし、待てば解けることはユーザーマニュアル（Bolt 33b の 2 章の書き直し）に書く。画面・UI 設計・ADR・US-18・シナリオの 5 か所を変えずに済み、文言は計画の承認どおりに保てる
-- Bolt 32 の議題 5（ログインの監査の追記をすべて `LoginAttemptService` に寄せる）は採らない。数えない拒否と password の段の成功は、今のまま監査のリスナーが直接書く（決定 9 の表の「数え方の置き場所」）。利用者の管理の監査を作る Bolt 34 で、監査の書き込みの経路をあわせて見直す。Bolt 32c の `SESSION_REVOKED` はアプリケーションのサービスで書き、監査を直接書く入口の経路を増やさない（ADR-012 の決定 4）
+- Bolt 32 の議題 5（ログインの監査の追記をすべて `LoginAttemptService` に寄せる）は採らない。数えない拒否と password の段の成功は、今のまま監査のリスナーが直接書く（決定 9 の表の「数え方の置き場所」）。利用者の管理の監査を作る Bolt 34 で、監査の書き込みの経路をあわせて見直す（見直した。Bolt 34c の決定で今のままにした）。Bolt 32c の `SESSION_REVOKED` はアプリケーションのサービスで書き、監査を直接書く入口の経路を増やさない（ADR-012 の決定 4）
 
 Bolt 33b の開始準備と計画の承認（2026-10-15、human:kakimomokuri）で決めたこと:
 
@@ -79,6 +79,25 @@ Bolt 33c の開始準備と計画の承認（2026-10-15、human:kakimomokuri）�
 - 振る舞いの変わらない直しを 33c と 33d に分ける。33c は置き場所の決定を伴う直し（session・request の属性の名前、期間、A-08・A-03 の URL、覚えた要求の属性の名前）と小さな直し。33d は TOTP の部品の整理（TOTP の桁数・周期・アルゴリズムの定数、QR の SVG の組み立ての分離、回復コードの形の知識の 2 か所と `normalize` の戻り値の型、A-07 と A-08 の途中の暗号文の扱いと回復コードの発行の重複）。Bolt 33d の開始準備（2026-10-16、human:kakimomokuri）で、認証の結果のトークンに経路（要素の種類）、`revokeOthers` の session の ID の値オブジェクト、期限の境界の判定、テンプレートの期間の数値を 33e に分けた。Bolt 33e の開始準備（2026-10-16、human:kakimomokuri）で、テンプレートの期間の数値・回復コードの生成のポートの型・ADR-012 の URL の記述と `SessionKeys` の命名を 33f に分けた
 - 印の属性の名前と A-08 の URL は application 層の `SessionKeys`（`identity.application.internal.session`）に、印の 15 分・登録の途中の 15 分・再登録の 15 分はドメインルール `SessionPolicy`（`identity.domain.model.rules`）に寄せる（[ADR-012](012-authentication-principal-and-session.md) の決定 3・決定 6）
 - 「始めたときの秘密を置き換えの条件にする」（Bolt 33b の開発レビューで 33c で扱うとした）は振る舞いが変わる直しなので、[#49](https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/49)（W10）に送る
+
+Bolt 34c の開始準備と計画の承認（2026-10-17、human:kakimomokuri）で決めたこと:
+
+- Bolt 34c の行を 34c（認証・監査の経路と文書と見張り）、34e（利用者の管理のドメインとサービス）、34f（S-20 の画面の構造）に分け、この順に進める
+- ログインの監査の書き手は今のまま（監査のリスナーが直接書く分を残す）にし、Bolt 32c の決定の「Bolt 34 で見直す」を閉じる。リスナーが直接書くのは、Spring Security の認証のイベントを写すだけで数え方に関わらず、1 文の追記で済む記録（`PASSWORD_VERIFIED`・数えない `LOGIN_FAILED`・`LOGOUT`）。数え方と結び付く記録（成功・数える失敗・ロック）は、回数と同じトランザクションにするため `LoginAttemptService` が書く。ロック中の試行（理由 `LOCKED`）も数えないが、ロック中かどうかを決めるのはサービスの 1 か所（`isLocked` と条件付きの更新）なので、サービスが 1 文で書く。利用者の管理の監査は、どれも状態の変更と同じトランザクションにするためアプリケーションのサービスが書く（範囲外の記録は単独で、確定の POST だけ。GET では書かない）。書き手は下の表のとおり
+- 回復コードのログインで、成功のイベントのリスナーが書く `LOGIN_SUCCEEDED`（と回数の戻し）の追記が失敗すると、例外が伝わってログインは 500 になり通らない（session は認証されず、業務の画面は開けない）。コードの使用と `RECOVERY_CODE_USED` は先に別のトランザクションでコミットしているので、使ったコードは使用済みのまま残る（決定 7・決定 9。Bolt 34c のステップ 1 で `AuthenticationErrorHandlingIntegrationTest` の特性テストで固定した）。変えるかは後の Bolt の議題にし、この Bolt では変えない
+
+| 記録 | 書き手 | トランザクション |
+| :--- | :--- | :--- |
+| `PASSWORD_VERIFIED` | `AuthenticationAuditListener` | 1 文 |
+| `LOGIN_FAILED`（数えない: 理由 `SERVICE_ERROR`・`UNKNOWN_USER`・利用停止・無効な企業） | `AuthenticationAuditListener` | 1 文 |
+| `LOGOUT` | `AuthenticationAuditListener` | 1 文 |
+| `LOGIN_SUCCEEDED`・数える `LOGIN_FAILED`・`ACCOUNT_LOCKED` | `LoginAttemptService` | 回数と同じ |
+| `LOGIN_FAILED`（理由 `LOCKED`。数えない） | `LoginAttemptService` | 1 文（ロックの判定をサービスの 1 か所にするため） |
+| `RECOVERY_CODE_USED` | `RecoveryCodeVerificationService` | コードの使用と同じ（`LOGIN_SUCCEEDED` と回数の戻しは別のトランザクション） |
+| `SESSION_REVOKED` | `SessionRevalidationService` | 単独 |
+| TOTP の登録・再登録、再設定の完了、役割と利用状態の変更 | それぞれのアプリケーションのサービス | 状態の変更と同じ |
+| 再設定の依頼（受付・不受付） | `PasswordResetRequestService` | 単独（不受付は状態を変えない） |
+| `ADMIN_SCOPE_DENIED` | `AdministrationScopeDenialService`（controller の確定の POST だけから） | 単独。GET では書かない |
 
 ## コンテキスト
 
@@ -251,7 +270,7 @@ ArchUnit で、ZXing を参照するのが暗号の部品（`identity.infrastruc
 | 拒否の例外とイベント | 拒否は `RecoveryCodeRejectedException`（`BadCredentialsException` を継ぐ）で表し、`DefaultAuthenticationEventPublisher` の例外とイベントの対応表に足して失敗のイベントを出す（対応表にない例外ではイベントが出ず、監査記録が書かれない）。失敗の数え方（Bolt 32）も同じイベントの上に置く |
 | 監査 | 通ったら回復コードの使用 `RECOVERY_CODE_USED` と `LOGIN_SUCCEEDED` の 2 行（`PASSWORD_VERIFIED` ではない）。拒否は理由 `INVALID_RECOVERY_CODE` を監査記録にだけ残す（誤り・使用済み・形の違い・回復コードがない・両方の欄を区別しない）。回復コードの平文は照合の後どこにも残さない（記録・監査・session・例外のメッセージ） |
 | 正規化 | 形の知識はドメインに置く（`RecoveryCode.normalize`）。全角を半角に直し（NFKC。IME で入れたまま）、ハイフンに似た文字（長音など）をハイフンにそろえ、前後と中の空白（全角スペースを含む）を除き、小文字にし、ハイフンのない 8 文字は 4 文字目の後にハイフンを入れる。`^[0-9a-f]{4}-[0-9a-f]{4}$` に合わなければ照合せずに拒む（bcrypt を回さない）。手で書き写したコードを打ち直させない。Bolt 33d から、正規化の結果は値 `NormalizedRecoveryCode`（`Optional` で返す）で、照合はこの値だけを受ける。形の知識（ハイフンのない 8 文字の区切りの `parse`、生成の `fromBytes` を含む）は値 `NormalizedRecoveryCode` だけに置く |
-| 照合とトランザクションの境界 | 未使用の回復コードのすべてとハッシュで照合する（1 回の送信で最大 10 回の bcrypt、約 1 秒）。読み出しと照合はトランザクションの外で行い、一致したコードの条件付きの更新（`use`）と監査記録 `RECOVERY_CODE_USED` だけを `TransactionTemplate` の 1 つのトランザクションにする（DB の接続を照合の間持たない。監査の追記が失敗したら使用も戻る）。更新できなかったら（同時の消費で負けた）拒む。同じコードを 2 つの session で同時に送っても 1 つだけが通る。照合の時間で一致の位置が分かる心配は、使用済みが一覧に出ない形なので受け入れる |
+| 照合とトランザクションの境界 | 未使用の回復コードのすべてとハッシュで照合する（1 回の送信で最大 10 回の bcrypt、約 1 秒）。読み出しと照合はトランザクションの外で行い、一致したコードの条件付きの更新（`use`）と監査記録 `RECOVERY_CODE_USED` だけを `TransactionTemplate` の 1 つのトランザクションにする（DB の接続を照合の間持たない。監査の追記が失敗したら使用も戻る）。更新できなかったら（同時の消費で負けた）拒む。同じコードを 2 つの session で同時に送っても 1 つだけが通る。照合の時間で一致の位置が分かる心配は、使用済みが一覧に出ない形なので受け入れる。`LOGIN_SUCCEEDED` と回数の戻しは、成功のイベントを受けた監査のリスナーが `LoginAttemptService` で別のトランザクションに書く（決定 9）。こちらの追記が失敗すると、例外が伝わってログインは 500 になり通らない（session は認証されない）が、使ったコードは使用済みのまま残り、`RECOVERY_CODE_USED` だけが残る（Bolt 34c のステップ 1 で特性テストで固定した。変えるかは後の Bolt の議題） |
 | 失敗へ倒す場面（T-42） | 回復コードのない利用者（TOTP を登録していない利用者を含む）は拒む（TOTP の資格のリポジトリに依存しない）。`recoveryCode` と `code` の両方がある送信は、フィルターで投げずに回復コードの入力として provider に渡し、provider が照合せずに `RecoveryCodeRejectedException` で拒む（失敗のイベントが出て監査記録 `INVALID_RECOVERY_CODE` が残る）。どちらもない送信は TOTP の誤りと同じ。照合の途中の例外は、読めない要素（`UnreadableCredentialException`）は拒否してログを出し、実装の誤り（ほかの `IllegalArgumentException`）は 500 にしてエラーのログに残す（Bolt 31d で改めた。決定 8） |
 | 誤りの扱い | TOTP の誤りと同じく password の要素を捨てて A-01 に戻す（1 つの session で試し続けさせない。K-02）。A-01 の誤りの文言は TOTP と回復コードを区別しない: 「認証コードまたは回復コードが正しくないか、すでに使われています。もう一度ログインして、認証アプリに表示された新しいコードか、まだ使っていない回復コードを入れてください。」（AC2。拒否の種類は監査記録にだけ残す）。回数の上限はロックで抑える（回復コードの誤りも数える。Bolt 32。決定 9） |
 | 登録を始めた時刻 | TOTP・回復コードが通ったら、session の登録を始めた時刻（決定 6 の「登録の途中の上限」）を消す。登録の直後の A-02 の案内は登録を始めた時刻があるときだけ示すので、ログインを終えた後に A-02 を開き直しても出ない。8 時間の判定は要素で選ぶので、消しても上限は変わらない。新しい session の属性は足さない |
@@ -280,7 +299,7 @@ ArchUnit で、ZXing を参照するのが暗号の部品（`identity.infrastruc
 
 | 項目 | 方針 |
 | :--- | :--- |
-| 数え方の置き場所 | 規則（5 回・15 分、ロック中は数えない・延ばさない）は、ログインの失敗の集約 `LoginFailure` と方針 `LockPolicy`（Bolt 30）のまま。数える・0 に戻す・監査記録を書くのは、アプリケーションのサービス `LoginAttemptService`（`identity.application.internal.commandservices`）で、回数と監査記録を `TransactionTemplate` の 1 つのトランザクションにする（IA-INV-08。ADR-012 の見直しの 5）。監査記録の追記が失敗したら回数も戻る。監査のリスナー（`AuthenticationAuditListener`）は、誤りの失敗（数える）とロック中の試行をサービスに写し、数えない拒否（利用停止・無効な企業、存在しない利用者、利用者の読み出しの DB の誤り）と password の段の成功は監査記録に直接書く（Bolt 32 の開発レビューで、文書を実装に合わせた。ログインの監査をすべてサービスに寄せるかは終了報告の議題）（決定 2 の表の「イベントの 1 か所で数える」を、数える場所をサービスに移す形に改めた） |
+| 数え方の置き場所 | 規則（5 回・15 分、ロック中は数えない・延ばさない）は、ログインの失敗の集約 `LoginFailure` と方針 `LockPolicy`（Bolt 30）のまま。数える・0 に戻す・監査記録を書くのは、アプリケーションのサービス `LoginAttemptService`（`identity.application.internal.commandservices`）で、回数と監査記録を `TransactionTemplate` の 1 つのトランザクションにする（IA-INV-08。ADR-012 の見直しの 5）。監査記録の追記が失敗したら回数も戻る。監査のリスナー（`AuthenticationAuditListener`）は、誤りの失敗（数える）とロック中の試行をサービスに写し、数えない拒否（利用停止・無効な企業、存在しない利用者、利用者の読み出しの DB の誤り）と password の段の成功は監査記録に直接書く（Bolt 32 の開発レビューで、文書を実装に合わせた。ログインの監査をすべてサービスに寄せるかは終了報告の議題にし、Bolt 34c の決定で今のままにした。書き手の表はステータスの節）。回復コードのログインでは、コードの使用と `RECOVERY_CODE_USED` が 1 つのトランザクション、`LOGIN_SUCCEEDED` と回数の戻しが別のトランザクションになる（決定 7。Bolt 34c）（決定 2 の表の「イベントの 1 か所で数える」を、数える場所をサービスに移す形に改めた） |
 | 数える失敗 | password・TOTP・回復コードの誤り（`AuthenticationFailureBadCredentialsEvent`。TOTP・回復コードの拒否を含む）。利用停止の利用者でも password が誤っていれば数える。回復コードの誤りも数えるのは、回復コード（32 ビット。決定 6）の総当たりをロックで抑えるため |
 | 数えない失敗 | ロック中の試行（期限も延ばさない）、存在しない利用者（行を作らない）、password が正しく利用停止・無効な企業で拒んだとき（Disabled のイベント。今の理由）、利用者の読み出しの DB の誤り（ロックの読み出しの誤りは 500。下の「DB の誤り」）、A-07 の登録のコードの誤り（登録は認証のイベントを経ず、登録の誤りは自分の秘密の確かめで、他人の要素の推測にならない） |
 | 0 に戻す時点 | 2 つの要素（TOTP または回復コード）がそろったログインの成功だけ。password の段の成功では戻さない（password を知る者が、TOTP を試しながら password を通し直して回数を戻せないように）。ロック中は戻さない（IA-INV-03） |
@@ -439,6 +458,7 @@ Bolt 33b で解いたもの（決定 10 に移した）: TOTP の再登録（SEC
 
 ## 改訂の経緯
 
+- 2026-10-17: Bolt 34c のステップ 1 で、ステータスに 34c の開始準備と計画の承認の決定（34c・34e・34f の分け方、ログインの監査の書き手は今のまま、理由と書き手の表）を書き、Bolt 32c の決定の「Bolt 34 で見直す」を閉じた。決定 7 の照合とトランザクションの境界と決定 9 の数え方の置き場所に、回復コードのログインのトランザクションの分かれ目（`LOGIN_SUCCEEDED` の追記が失敗すると 500 で、使ったコードは使用済みのまま残る。特性テストで固定した）を足した（Bolt 34c の開始準備の決定 1・2 と確認ポイント 7。human:kakimomokuri が決定）。
 - 2026-10-16: Bolt 33f で、決定 6 の回復コードの生成のポートが `NormalizedRecoveryCode` の一覧を返すことと、A-08 の URL を `SessionKeys` から同じパッケージの `SessionPaths` に分けたことを書いた（Bolt 33f の開始準備の決定 1・2。human:kakimomokuri が決定）。
 - 2026-10-16: Bolt 33e で、決定 7 の結果の型と決定 10 の入口と印に、認証の結果のトークンが 2 つ目の要素の経路（`SecondFactorPath`。`transient`）を持ち、成功の扱いがそれを読むこと（request の属性をやめた）を足した。ステータスに 33e と 33f の分け方を足した（Bolt 33e の開始準備の決定 1・4。human:kakimomokuri が決定）。
 - 2026-10-15: Bolt 33c のステップ 1 で、ステータスに 33c の開始準備の決定（33c と 33d の分け方、属性の名前と URL は `SessionKeys`・期間は `SessionPolicy`、始めたときの秘密の条件は #49）を書いた。決定 10 の印の属性の名前を、2 つの定数の組から `SessionKeys`・`SessionPolicy` に寄せたことに直し、A-07 と A-08 の重複の行き先を 33d に改めた（Bolt 33c の開始準備の決定 1・2 と決定 2 の (6)。human:kakimomokuri が決定）。

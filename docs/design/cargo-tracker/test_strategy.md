@@ -4,7 +4,7 @@ title: "cargo-tracker テスト戦略"
 description: "cargo-tracker のテスト形状、テストレベルと責務、BDD（Cucumber）のシナリオ階層とタグ規約、不変条件・ユーザーストーリーとテストの対応、カバレッジ目標、CI での実行。"
 tags: [design, test-strategy, bdd]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-17T01:21:36Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-17T11:36:19Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T08:12:04Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:01:38Z }
@@ -292,6 +292,9 @@ CI で毎回実行する。
 | AT-06 | 本番の実行クラスパスに H2・Hibernate ORM・JPA が含まれない | Gradle のビルド検査 | ADR-007 |
 | AT-07 | identity の合成ルート（`identity.infrastructure.config`）の `@Bean` のメソッドが返す型は、`identity.application.internal..`・`identity.infrastructure.security..`・`org.springframework..` （そのパッケージとその下）の型か `AesGcmSecretCipher`・dev の `DevTotpCodeSource` に限り、送信アダプター（persistence・crypto）のコンストラクターを呼ばない（送信アダプターは部品探索で拾う） | 見張りのテスト（Bolt 32d） | バックエンドアーキテクチャの identity の合成ルートの規則 |
 | AT-08 | 画面の層のテスト（`com.example.cargotracker.ui`）は `java.util.regex.Pattern.quote` を呼ばず、Playwright の正規表現に渡す文字列は共通の補助（`PlaywrightText.literal`）でエスケープする（エスケープの漏れと書き方のばらつきを防ぐ。Bolt 33a の Try T-128。`documentation` の正しい使い方は対象外）。対象が空でないことを見張り、違反を控えのファイルに入れて落ちることを確かめる（T-107・T-112・T-131） | ArchUnit（テストのクラスを読む。前例 `AcceptanceStepArchitectureTest`。Bolt 33c） | Bolt 33a の議題 7 |
+| AT-09 | 暗号の部品（`identity.infrastructure.crypto` の 11 のクラス）は、名前ごとの規則で「その名前のクラスは `identity.infrastructure.crypto` にある」を確かめる（11 の名前を `.or()` でつないだ 1 本の規則を分ける。規則を作る補助は `.allowEmptyShould(false)` を明示し、1 つの名前が変わるとその規則の対象が空になって落ちる。前例 `AcceptanceStepArchitectureTest`）。Bolt 34c のステップ 2 で足す | ArchUnit（`AuthenticationArchitectureTest`） | Bolt 31d の問い、バックエンドアーキテクチャの暗号の部品の箇条 |
+| AT-10 | identity のパッケージ（`..identity..`）のテストのクラスのフィールドの `@MockitoSpyBean` は、共通の基底 `com.example.cargotracker.identity.infrastructure.security.IdentitySpyIntegrationTestBase` にだけ宣言する（テストのクラスごとに spy の組が増えて Spring のコンテキストが増えることを防ぐ。`integration` パッケージの 1 つとクラスに付ける `@MockitoSpyBean(types=…)` は範囲の外）。先に基底の spy のフィールドが対象として数えられていること（空でない）を確かめる（T-119）。Bolt 34c のステップ 3 で足す | ArchUnit（テストのクラスを読む `TestPlacementArchitectureTest`。前例 `AcceptanceStepArchitectureTest`） | Bolt 32d の既知の課題、本書の identity の統合テストの段落 |
+| AT-11 | 本体のクラスに直接付ける `@Configuration`（`areAnnotatedWith(Configuration.class)`。メタ注釈の `@SpringBootApplication`・`@TestConfiguration` は対象外）は `..infrastructure.config..` に置くか、`com.example.cargotracker.ClockConfiguration` である。例外が広がらないよう「ルートのパッケージの直接の `@Configuration` は `ClockConfiguration` だけ」を並べて見張る（T-135）。Bolt 34c のステップ 3 で足す | ArchUnit（`LayerArchitectureTest`。「config には `@Configuration` だけを置く」の隣） | バックエンドアーキテクチャの合成ルートの箇条（`ClockConfiguration` の例外。2026-10-17、human:kakimomokuri） |
 
 ## 統合テスト
 
@@ -327,7 +330,7 @@ CI で毎回実行する。
 
 統合テストは Testcontainers の PostgreSQL を使い、H2 で書かない（ADR-007）。H2 で確かめるのはスモークテストだけとする。
 
-identity の統合テストは、時計を差し替えるなら合成注釈 `@IdentityIntegrationTest`（`@SpringBootTest`・`@AutoConfigureMockMvc`・PostgreSQL と共通の時計 `IdentityTestClock` の `@Import`）を付け、spy（`@MockitoSpyBean`）を使うクラスは同じ spy のフィールドの組を持つ共通の基底のクラス `IdentitySpyIntegrationTestBase` を継ぐ。Spring のコンテキストは `@Import` の組と bean の差し替えの組（spy はフィールド名と置き場所を含む）で区別されるので、組をそろえてコンテキストを共有する（Bolt 32d）。同じ組のクラスはコンテキストと PostgreSQL のコンテナ（DB）も共有するので、共有の表の件数は利用者で絞るかテストの前後の差で確かめる（T-113）。JUnit の並列実行を入れるときは、この共有を見直す。基底の spy の組を増やすのは、spy を使うクラスが要るときだけにする（増やすと spy を使う全クラスの組が変わる）。同時の操作のテスト（`OverlappingTransactions`）は、後の操作が先の行ロックを待っていることを PostgreSQL の `pg_blocking_pids` で確かめてから先をコミットする（「一定時間の間に終わらない」だけでは待ちの証拠にならない。Bolt 32d）。
+identity の統合テストは、時計を差し替えるなら合成注釈 `@IdentityIntegrationTest`（`@SpringBootTest`・`@AutoConfigureMockMvc`・PostgreSQL と共通の時計 `IdentityTestClock` の `@Import`）を付け、spy（`@MockitoSpyBean`）を使うクラスは同じ spy のフィールドの組を持つ共通の基底のクラス `IdentitySpyIntegrationTestBase` を継ぐ。Spring のコンテキストは `@Import` の組と bean の差し替えの組（spy はフィールド名と置き場所を含む）で区別されるので、組をそろえてコンテキストを共有する（Bolt 32d）。同じ組のクラスはコンテキストと PostgreSQL のコンテナ（DB）も共有するので、共有の表の件数は利用者で絞るかテストの前後の差で確かめる（T-113）。JUnit の並列実行を入れるときは、この共有を見直す。基底の spy の組を増やすのは、spy を使うクラスが要るときだけにする（増やすと spy を使う全クラスの組が変わる）。identity のテストのクラスのフィールドの `@MockitoSpyBean` が基底の外にないことは、ArchUnit の見張り（AT-10。Bolt 34c のステップ 3 で足す）で確かめる。同時の操作のテスト（`OverlappingTransactions`）は、後の操作が先の行ロックを待っていることを PostgreSQL の `pg_blocking_pids` で確かめてから先をコミットする（「一定時間の間に終わらない」だけでは待ちの証拠にならない。Bolt 32d）。
 
 モジュールのイベントの非同期のハンドラー（`@ApplicationModuleListener`）を確かめるテストは、時計を進める前と DB を読む前に、発行記録（`platform.event_publication`）の完了を待つ（ハンドラーは別のスレッドで動くので、待たずに読むと前のハンドラーの書き込みと競う。Bolt 33 の開発レビュー）。
 

@@ -7,12 +7,17 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.doThrow;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.example.cargotracker.identity.LogCapture;
 import com.example.cargotracker.identity.domain.model.aggregates.AuditRecord;
 import com.example.cargotracker.identity.domain.model.aggregates.Company;
+import com.example.cargotracker.identity.domain.model.aggregates.RecoveryCode;
+import com.example.cargotracker.identity.domain.model.aggregates.RecoveryCodeHasher;
+import com.example.cargotracker.identity.domain.model.aggregates.RecoveryCodeRepository;
 import com.example.cargotracker.identity.domain.model.aggregates.TotpCredential;
 import com.example.cargotracker.identity.domain.model.aggregates.TotpCredentialRepository;
 import com.example.cargotracker.identity.domain.model.aggregates.User;
@@ -72,6 +77,12 @@ class AuthenticationErrorHandlingIntegrationTest extends IdentitySpyIntegrationT
 
     @Autowired
     Clock clock;
+
+    @Autowired
+    RecoveryCodeRepository recoveryCodes;
+
+    @Autowired
+    RecoveryCodeHasher recoveryCodeHasher;
 
     private Company company;
 
@@ -181,6 +192,50 @@ class AuthenticationErrorHandlingIntegrationTest extends IdentitySpyIntegrationT
                 .isInstanceOf(DataAccessResourceFailureException.class);
         assertThatThrownBy(() -> mvc.perform(code)).isInstanceOf(DataAccessResourceFailureException.class);
         assertThatThrownBy(() -> mvc.perform(recovery)).isInstanceOf(DataAccessResourceFailureException.class);
+    }
+
+    @Test
+    void 回復コードのログインで成功の監査を書けなければ500にしコードは使用済みのまま残る() throws Exception {
+        // 特性テスト（Bolt 34c の確認ポイント 7）。コードの使用と RECOVERY_CODE_USED は 1 つのトランザクション、LOGIN_SUCCEEDED と回数の
+        // 戻しは成功のイベントのリスナーが別のトランザクションで書く（IA-INV-08）。後者が失敗したときの今の振る舞いを固定する
+        String email = user();
+        UserId userId = userIdOf(email);
+        recoveryCodes.replaceAll(
+                userId,
+                java.util.stream.IntStream.range(0, RecoveryCode.CODES_PER_USER)
+                        .mapToObj(i -> RecoveryCode.issue(
+                                userId,
+                                i == 0 ? "1a2b-3c4d" : String.format("0000-%04x", i),
+                                recoveryCodeHasher,
+                                new UtcInstant(clock.instant())))
+                        .toList());
+        Cookie session = loginWithPassword(email);
+        doThrow(new DataAccessResourceFailureException("監査の表に届かない"))
+                .when(auditRecords)
+                .append(argThat(written -> written.action() == AuditAction.LOGIN_SUCCEEDED));
+        RequestBuilder recovery = post(TOTP_URL)
+                .cookie(session)
+                .param("recoveryCode", "1a2b-3c4d")
+                .with(csrf());
+
+        assertThatThrownBy(() -> mvc.perform(recovery))
+                .as("500 にする（監査を書けないログインを通さない）")
+                .isInstanceOf(DataAccessResourceFailureException.class);
+
+        assertThat(recoveryCodes.findUnusedByUserId(userId))
+                .as("使ったコードは戻らない（コードの使用と RECOVERY_CODE_USED は先にコミットしている）")
+                .hasSize(RecoveryCode.CODES_PER_USER - 1);
+        assertThat(auditCount("RECOVERY_CODE_USED", userId)).isEqualTo(1);
+        assertThat(auditCount("LOGIN_SUCCEEDED", userId)).isZero();
+        mvc.perform(get("/customer/transport-requests").cookie(session)).andExpect(status().is3xxRedirection());
+    }
+
+    private int auditCount(String action, UserId userId) {
+        return jdbc.queryForObject(
+                "SELECT count(*) FROM identity.audit_record WHERE action = ? AND actor_user_id = ?",
+                Integer.class,
+                action,
+                userId.value());
     }
 
     // --- 補助 ---

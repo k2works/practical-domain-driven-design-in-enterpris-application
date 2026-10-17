@@ -12,39 +12,24 @@
         <Package name="~com\.example\.cargotracker\..*\.infrastructure\..*"/>
     </Match>
     <!--
-      EI_EXPOSE_REP2: TOTP の確かめのサービス（Bolt 31）が DI で受け取ったリポジトリを保持することへの指摘。上と同じく Spring が管理する
-      シングルトンで、値として外へ渡さない。ほかのアプリケーションサービスは同じ形でも指摘されず、このクラスだけが指摘されたので、
-      アプリケーション層の全体ではなくこのクラスに限って抑止する。
+      EI_EXPOSE_REP2: identity のアプリケーションのサービス（commandservices・queryservices・eventhandlers・outboundservices の ACL）が
+      DI で受け取ったリポジトリなどの部品を保持することへの指摘。上と同じく Spring が管理するシングルトンで、値として外へ渡さない。
+      Bolt 31 から 34d まではクラスを 1 つずつ足して抑止していたが、identity の application.internal はどれも DI の部品を保持するだけの
+      サービスの集まりなので、パッケージで指定する（Bolt 34c の開始準備の決定 3、2026-10-17、human:kakimomokuri）。
+    -->
+    <Match>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+        <Package name="~com\.example\.cargotracker\.identity\.application\.internal\..*"/>
+    </Match>
+    <!--
+      EI_EXPOSE_REP2: application.internal の外で、同じく DI の部品を保持するだけと分かっているクラス。このクラスに限って抑止する。
     -->
     <Match>
         <Bug pattern="EI_EXPOSE_REP2"/>
         <Or>
-            <Class name="com.example.cargotracker.identity.application.internal.commandservices.TotpVerificationService"/>
-            <!-- Bolt 31b の登録のサービスと問い合わせのサービスも、同じく DI の部品を保持するだけ -->
-            <Class name="com.example.cargotracker.identity.application.internal.commandservices.TotpEnrollmentService"/>
-            <Class name="com.example.cargotracker.identity.application.internal.queryservices.TotpEnrollmentQueryService"/>
-            <!-- Bolt 31c の回復コードの確かめのサービスも、同じく DI の部品を保持するだけ -->
-            <Class name="com.example.cargotracker.identity.application.internal.commandservices.RecoveryCodeVerificationService"/>
-            <!-- Bolt 32 のログインの試行のサービスも、同じく DI の部品を保持するだけ -->
-            <Class name="com.example.cargotracker.identity.application.internal.commandservices.LoginAttemptService"/>
-            <!-- Bolt 32c の session の確かめのサービスも、同じく DI の部品を保持するだけ -->
-            <Class name="com.example.cargotracker.identity.application.internal.commandservices.SessionRevalidationService"/>
-            <!-- Bolt 33 の再設定の依頼・発行とメールの送信のサービスも、同じく DI の部品を保持するだけ -->
-            <Class name="com.example.cargotracker.identity.application.internal.commandservices.PasswordResetRequestService"/>
-            <!-- Bolt 33a の再設定のサービスも、同じく DI の部品を保持するだけ -->
-            <Class name="com.example.cargotracker.identity.application.internal.commandservices.PasswordResetCompletionService"/>
-            <!-- Bolt 33b の認証アプリの再登録のサービスも、同じく DI の部品を保持するだけ -->
-            <Class name="com.example.cargotracker.identity.application.internal.commandservices.TotpReEnrollmentService"/>
-            <!-- A-08 の画面も、同じく DI の部品（再登録のサービス）を保持するだけ（Bolt 33b） -->
+            <!-- A-08 の画面は、DI の部品（再登録のサービス）を保持するだけ（Bolt 33b） -->
             <Class name="com.example.cargotracker.identity.interfaces.web.TotpReEnrollmentController"/>
-            <!-- Bolt 34 の役割の変更のサービスと利用者の管理の照会のサービスも、同じく DI の部品を保持するだけ -->
-            <Class name="com.example.cargotracker.identity.application.internal.commandservices.UserRoleChangeService"/>
-            <Class name="com.example.cargotracker.identity.application.internal.queryservices.UserAdministrationQueryService"/>
-            <!-- Bolt 34b の範囲外の試行の記録のサービスも、同じく DI の部品を保持するだけ -->
-            <Class name="com.example.cargotracker.identity.application.internal.commandservices.AdministrationScopeDenialService"/>
-            <!-- Bolt 34d の利用状態の変更のサービスも、同じく DI の部品を保持するだけ -->
-            <Class name="com.example.cargotracker.identity.application.internal.commandservices.UserStatusChangeService"/>
-            <Class name="com.example.cargotracker.identity.application.internal.eventhandlers.PasswordResetMailEventHandler"/>
+            <!-- 通知のメールの送信のサービスも、同じく DI の部品を保持するだけ（Bolt 33） -->
             <Class name="com.example.cargotracker.notification.application.internal.commandservices.PasswordResetMailService"/>
         </Or>
     </Match>

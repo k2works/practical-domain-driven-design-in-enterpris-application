@@ -4,7 +4,7 @@ title: "ADR-012: 認証の主体は共有カーネルの型にし、password の
 description: "US-18 の password によるログインと session を、Spring Security 7 の form login と Spring Session JDBC で作る。"
 tags: [adr, authentication, session]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-16T04:36:21Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-17T11:36:19Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-06T06:51:29Z }
 ---
@@ -105,8 +105,8 @@ US-18 の password によるログインと session を、Spring Security 7 の 
 - Bolt 33a から、password の再設定の完了を `PASSWORD_RESET_COMPLETED`（成功だけ。操作者に利用者と企業）で記録する。書くのは `PasswordResetCompletionService` で、トークンの使用・password の更新と同じトランザクションで書く。
 - Bolt 33b から、認証アプリの再登録の完了を `TOTP_RE_ENROLLED`（成功だけ。操作者に利用者と企業）で記録する。書くのは `TotpReEnrollmentService` で、TOTP の秘密の置き換え・回復コードの発行し直しと同じトランザクションで書く。
 - 監査記録の書き込みに失敗したら、ログインも失敗にする（IA-INV-08 の同期の書き込み。fail-closed）。
-- 権限外のアクセスの試行の記録は、利用者と役割の管理（US-16）の Bolt で足す。
-- W5 のロックの失敗の数え方は、この listener が失敗・成功のイベントをアプリケーションのサービス `LoginAttemptService` に写す形にする。数えるのと、その監査記録を書くのはサービスの 1 つのトランザクションで、listener は数えない。数えない拒否と password の段の成功は listener が監査記録に直接書く（Bolt 32。下の「W5 で見直すこと」の 5。[ADR-011](011-mfa-totp.md) の決定 9）。Bolt 32 から、ロックしたときに `ACCOUNT_LOCKED` を書き、ロック中の試行を理由 `LOCKED`、利用者の読み出し（`loadUserByUsername`）の DB の誤りを理由 `SERVICE_ERROR` で記録する（どちらも数えない）。
+- 権限外のアクセスの試行の記録（`ADMIN_SCOPE_DENIED`）は、Bolt 34b から controller の確定の POST で `AdministrationScopeDenialService` が単独で書く（GET では書かない）。
+- W5 のロックの失敗の数え方は、この listener が失敗・成功のイベントをアプリケーションのサービス `LoginAttemptService` に写す形にする。数えるのと、その監査記録を書くのはサービスの 1 つのトランザクションで、listener は数えない。数えない拒否と password の段の成功は listener が監査記録に直接書く（Bolt 32。下の「W5 で見直すこと」の 5。[ADR-011](011-mfa-totp.md) の決定 9）。Bolt 34c の決定で、この書き手の分け方を今のままにした（listener が直接書くのは数え方に関わらない 1 文の記録、数え方と結び付く記録とロック中の試行はサービス。書き手の表と理由は ADR-011 のステータスの Bolt 34c の決定）。Bolt 32 から、ロックしたときに `ACCOUNT_LOCKED` を書き、ロック中の試行を理由 `LOCKED`、利用者の読み出し（`loadUserByUsername`）の DB の誤りを理由 `SERVICE_ERROR` で記録する（どちらも数えない）。
 - Bolt 31 から、操作を `PASSWORD_VERIFIED`（password の段の成功）と `LOGIN_SUCCEEDED`（2 つの要素がそろった）に分ける。TOTP の失敗は利用者と理由（`INVALID_TOTP`・`TOTP_REUSED`）で記録する（下の「W5 で見直すこと」の 1）。Bolt 31b から TOTP の登録を `TOTP_ENROLLED` で、Bolt 31c から回復コードの使用を `RECOVERY_CODE_USED`（`LOGIN_SUCCEEDED` と 2 行）で記録し、回復コードの拒否は理由 `INVALID_RECOVERY_CODE` で記録する（[ADR-011](011-mfa-totp.md) の決定 7）。Bolt 31d から、TOTP を登録していない利用者の TOTP の送信を理由 `TOTP_NOT_ENROLLED` で記録する（今までは `INVALID_TOTP`。利用者への応答は変えない。ADR-011 の決定 8）。Bolt 32c から、request ごとの確かめで session を捨てたときに `SESSION_REVOKED`（結果 `FAILURE`、理由 `SUSPENDED`・`COMPANY_INACTIVE`・`UNKNOWN_USER`、操作者は session の主体の利用者 ID と企業 ID）を書く。書くのはアプリケーションのサービス `SessionRevalidationService` で、監査を直接書く入口の経路は増やさない。役割が変わっただけのときは書かない。
 
 ### 6. 層の規則 D-5 の認証の例外（Bolt 31）
@@ -177,7 +177,7 @@ US-18 の password によるログインと session を、Spring Security 7 の 
    - 画面の単体テストの主体（`@WithAuthenticatedActor`）の工場（`WithAuthenticatedActorSecurityContextFactory`）が、`FactorGrantedAuthority` で `FACTOR_PASSWORD`・`FACTOR_TOTP` を足す（使うテストのファイルは変えない）。
 5. ロックの数え方（IA-INV-03）は `identity.application` のサービスとログインの失敗の集約に置き、監査の listener は入口だけにする（決めた。2026-10-13、Bolt 32 の計画の承認で human:kakimomokuri が決定）。
    - 規則（5 回・15 分、ロック中は数えない・延ばさない）はログインの失敗の集約 `LoginFailure` と方針 `LockPolicy` のまま（2026-10-11 に改めた。初めは利用者の集約としたが、失敗のたびに利用者の版が上がり利用者の管理の更新とぶつかるため、Bolt 30 の計画の承認で別の集約にした）。
-   - 数える・0 に戻す・監査記録を書くのは `LoginAttemptService`（`identity.application.internal.commandservices`）で、回数と監査記録を 1 つのトランザクションにする（IA-INV-08）。listener は誤りの失敗・ロック中の試行・2 つの要素がそろった成功をイベントの型でサービスのメソッドに写し、数えない拒否と password の段の成功は監査記録に直接書く（Bolt 32 の開発レビューで実装に合わせた）。数え方の入口は決定 6 の D-5 の認証の例外と同じ形で、`isLocked` も `commandservices` に置く（決定 6）。
+   - 数える・0 に戻す・監査記録を書くのは `LoginAttemptService`（`identity.application.internal.commandservices`）で、回数と監査記録を 1 つのトランザクションにする（IA-INV-08）。listener は誤りの失敗・ロック中の試行・2 つの要素がそろった成功をイベントの型でサービスのメソッドに写し、数えない拒否と password の段の成功は監査記録に直接書く（Bolt 32 の開発レビューで実装に合わせた。Bolt 34c の決定で今のままにした。[ADR-011](011-mfa-totp.md) のステータスの Bolt 34c の決定）。数え方の入口は決定 6 の D-5 の認証の例外と同じ形で、`isLocked` も `commandservices` に置く（決定 6）。
    - 最初の失敗の行は主たるトランザクションの前にトランザクションの外の 1 文で作り、一意制約の違反はトランザクションの外で受ける。詳細は [ADR-011](011-mfa-totp.md) の決定 9。
 
 ## コンプライアンス
@@ -196,6 +196,7 @@ US-18 の password によるログインと session を、Spring Security 7 の 
 
 ## 改訂の経緯
 
+- 2026-10-17: Bolt 34c のステップ 1 で、決定 4 の権限外のアクセスの試行の記録を、Bolt 34b からの事実（controller の確定の POST で `AdministrationScopeDenialService` が単独で書き、GET では書かない）に直した。決定 4 と「W5 で見直すこと」の 5 の書き手の記述を、Bolt 34c の決定（書き手は今のまま。[ADR-011](011-mfa-totp.md) のステータス）に結んだ（Bolt 34c の開始準備の決定 2。human:kakimomokuri が決定）。
 - 2026-10-16: Bolt 33f の開発レビューで、決定 3 の URL を application 層に置く理由を「規則に例外を足さずに済む」から「規則に見えない定数の依存の向きを、設計の約束として保つ」に正し、合成ルートが参照していた password の再設定の URL（`PasswordResetController.URL`）も `SessionPaths` に寄せた。決定 6 に `SessionPaths` を足した（human:kakimomokuri が決定）。
 - 2026-10-16: Bolt 33f のステップ 1 で、決定 3 の URL を `SessionKeys` から同じパッケージの `SessionPaths` に分け、URL（遷移先）の関心を application 層に置く理由（Bolt 33c の議題 4 (b)）と、`SessionPolicy` の期限の時刻 `deadline` を書いた。決定 6 とコンプライアンスの節も合わせた（Bolt 33f の開始準備の決定 1・3・7。human:kakimomokuri が決定）。
 - 2026-10-16: Bolt 33e のステップ 1 で、決定 3 の期間の置き場所 `SessionPolicy` に期限の判定 `isExpired`（ちょうどの時刻は期限切れ。時計を持たない純粋な関数）を足し、判定していた 4 か所が使うことにした（「ふるまいは持たず」を改めた。Bolt 33e の開始準備の決定 2。human:kakimomokuri が決定）。
