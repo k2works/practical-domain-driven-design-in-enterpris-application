@@ -100,7 +100,7 @@ class UserStatusChangeServiceTest {
         given(sales);
 
         assertThat(service.change(admin, sales.id(), 3L, UserStatus.SUSPENDED, TRANSFERRED))
-                .isEqualTo(new StatusChangeResult.Changed(4L));
+                .isEqualTo(new StatusChangeOutcome.Changed(4L));
 
         ArgumentCaptor<User> changed = ArgumentCaptor.forClass(User.class);
         verify(users).changeStatus(changed.capture(), eq(3L), eq(new UtcInstant(NOW)));
@@ -121,7 +121,7 @@ class UserStatusChangeServiceTest {
         given(suspended);
 
         assertThat(service.change(admin, suspended.id(), 3L, UserStatus.ACTIVE, Optional.empty()))
-                .isEqualTo(new StatusChangeResult.Changed(4L));
+                .isEqualTo(new StatusChangeOutcome.Changed(4L));
 
         ArgumentCaptor<AuditRecord> audit = ArgumentCaptor.forClass(AuditRecord.class);
         verify(auditRecords).append(audit.capture());
@@ -134,7 +134,8 @@ class UserStatusChangeServiceTest {
         given(sales);
 
         assertThat(service.change(admin, sales.id(), 3L, UserStatus.SUSPENDED, Optional.empty()))
-                .isEqualTo(new StatusChangeResult.Rejected(StatusChangeRejection.REASON_REQUIRED));
+                .isEqualTo(new StatusChangeOutcome.Refused(
+                        new UserAdministrationRefusal.Rejected<>(StatusChangeRejection.REASON_REQUIRED)));
         verify(users, never()).changeStatus(any(), anyLong(), any());
         verify(auditRecords, never()).append(any());
         assertThat(transactions.rollbackOnly).isTrue();
@@ -145,7 +146,7 @@ class UserStatusChangeServiceTest {
         given(sales);
 
         assertThat(service.change(admin, sales.id(), 2L, UserStatus.SUSPENDED, TRANSFERRED))
-                .isEqualTo(new StatusChangeResult.Stale());
+                .isEqualTo(new StatusChangeOutcome.Refused(new UserAdministrationRefusal.Stale<>()));
         verify(users, never()).changeStatus(any(), anyLong(), any());
         verify(auditRecords, never()).append(any());
     }
@@ -156,7 +157,7 @@ class UserStatusChangeServiceTest {
         when(users.changeStatus(any(), anyLong(), any())).thenReturn(false);
 
         assertThat(service.change(admin, sales.id(), 3L, UserStatus.SUSPENDED, TRANSFERRED))
-                .isEqualTo(new StatusChangeResult.Stale());
+                .isEqualTo(new StatusChangeOutcome.Refused(new UserAdministrationRefusal.Stale<>()));
         verify(auditRecords, never()).append(any());
         assertThat(transactions.rollbackOnly).isTrue();
     }
@@ -167,7 +168,7 @@ class UserStatusChangeServiceTest {
         when(assignments.scopeOf(admin.userId())).thenReturn(new AdministrationScope(Set.of()));
 
         assertThat(service.change(admin, sales.id(), 3L, UserStatus.SUSPENDED, TRANSFERRED))
-                .isEqualTo(new StatusChangeResult.OutOfScope());
+                .isEqualTo(new StatusChangeOutcome.Refused(new UserAdministrationRefusal.OutOfScope<>()));
         verify(users, never()).changeStatus(any(), anyLong(), any());
         verify(auditRecords, never()).append(any());
     }
@@ -179,7 +180,7 @@ class UserStatusChangeServiceTest {
 
         assertThat(service.check(admin, sales.id(), 3L, UserStatus.ACTIVE, Optional.empty()))
                 .as("範囲外なら同じ状態の拒否より先に範囲外と答える（範囲外の利用者の状態を漏らさない）")
-                .isEqualTo(new StatusChangeResult.OutOfScope());
+                .isEqualTo(new StatusChangeCheck.Refused(new UserAdministrationRefusal.OutOfScope<>()));
     }
 
     @Test
@@ -187,7 +188,8 @@ class UserStatusChangeServiceTest {
         given(sales);
 
         assertThat(service.check(admin, sales.id(), 2L, UserStatus.ACTIVE, Optional.empty()))
-                .isEqualTo(new StatusChangeResult.Rejected(StatusChangeRejection.NO_CHANGE));
+                .isEqualTo(new StatusChangeCheck.Refused(
+                        new UserAdministrationRefusal.Rejected<>(StatusChangeRejection.NO_CHANGE)));
     }
 
     @Test
@@ -195,7 +197,7 @@ class UserStatusChangeServiceTest {
         when(users.findById(any())).thenReturn(Optional.empty());
 
         assertThat(service.change(admin, new UserId(UUID.randomUUID()), 0L, UserStatus.SUSPENDED, TRANSFERRED))
-                .isEqualTo(new StatusChangeResult.NotFound());
+                .isEqualTo(new StatusChangeOutcome.Refused(new UserAdministrationRefusal.NotFound<>()));
     }
 
     @Test
@@ -204,7 +206,7 @@ class UserStatusChangeServiceTest {
         when(companies.findById(any())).thenReturn(Optional.empty());
 
         assertThat(service.check(admin, sales.id(), 3L, UserStatus.SUSPENDED, TRANSFERRED))
-                .isEqualTo(new StatusChangeResult.NotFound());
+                .isEqualTo(new StatusChangeCheck.Refused(new UserAdministrationRefusal.NotFound<>()));
     }
 
     @Test
@@ -213,7 +215,7 @@ class UserStatusChangeServiceTest {
                 new UserId(UUID.randomUUID()), operatorCompany.id(), Set.of(Role.SALES), "営業 二郎", "A 社");
 
         assertThat(service.change(salesActor, sales.id(), 3L, UserStatus.SUSPENDED, TRANSFERRED))
-                .isEqualTo(new StatusChangeResult.NotPermitted());
+                .isEqualTo(new StatusChangeOutcome.Refused(new UserAdministrationRefusal.NotPermitted<>()));
         verify(users, never()).findById(any());
     }
 
@@ -232,7 +234,7 @@ class UserStatusChangeServiceTest {
         given(sales);
 
         assertThat(service.check(admin, sales.id(), 3L, UserStatus.SUSPENDED, TRANSFERRED))
-                .isEqualTo(new StatusChangeResult.Acceptable());
+                .isEqualTo(new StatusChangeCheck.Acceptable());
         verify(users, never()).changeStatus(any(), anyLong(), any());
         verify(auditRecords, never()).append(any());
     }
@@ -279,7 +281,7 @@ class UserStatusChangeServiceTest {
         when(sessions.revokeAll(any())).thenThrow(new IllegalStateException("session の表に届かない"));
 
         assertThat(service.change(admin, suspended.id(), 3L, UserStatus.ACTIVE, Optional.empty()))
-                .isEqualTo(new StatusChangeResult.Changed(4L));
+                .isEqualTo(new StatusChangeOutcome.Changed(4L));
     }
 
     /** トランザクションを開かずにそのまま呼び、setRollbackOnly を覚える（単体テスト用）。 */

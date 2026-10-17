@@ -13,7 +13,6 @@ import com.example.cargotracker.identity.domain.model.valueobjects.StatusChangeR
 import com.example.cargotracker.identity.domain.model.valueobjects.SuspensionReason;
 import com.example.cargotracker.identity.domain.model.valueobjects.UserStatus;
 import com.example.cargotracker.shared.domain.AuthenticatedActor;
-import com.example.cargotracker.shared.domain.Role;
 import com.example.cargotracker.shared.domain.UserId;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import java.time.Clock;
@@ -46,8 +45,7 @@ public class UserStatusChangeService {
     private static final Logger LOG = LoggerFactory.getLogger(UserStatusChangeService.class);
 
     private final UserRepository users;
-    private final CompanyRepository companies;
-    private final UserAssignmentRepository assignments;
+    private final ManagedUserLookup lookup;
     private final AuditRecordRepository auditRecords;
     private final PasswordResetTokenRepository tokens;
     private final UserSessionRevoker sessions;
@@ -65,8 +63,7 @@ public class UserStatusChangeService {
             Clock clock,
             TransactionTemplate transactionTemplate) {
         this.users = users;
-        this.companies = companies;
-        this.assignments = assignments;
+        this.lookup = new ManagedUserLookup(users, companies, assignments);
         this.auditRecords = auditRecords;
         this.tokens = tokens;
         this.sessions = sessions;
@@ -75,7 +72,7 @@ public class UserStatusChangeService {
     }
 
     /**
-     * 変更を受け付けられるかを確かめる（確認の領域を開く時。何も書かない）。受け付けられれば {@link StatusChangeResult.Acceptable}。
+     * 変更を受け付けられるかを確かめる（確認の領域を開く時。何も書かない）。受け付けられれば {@link StatusChangeCheck.Acceptable}。
      *
      * @param operator 操作者
      * @param target 対象の利用者
@@ -83,17 +80,16 @@ public class UserStatusChangeService {
      * @param to 変更後の利用状態
      * @param reason 停止の理由（停止のときに要る）
      */
-    public StatusChangeResult check(
+    public StatusChangeCheck check(
             AuthenticatedActor operator,
             UserId target,
             long expectedVersion,
             UserStatus to,
             Optional<SuspensionReason> reason) {
-        if (judge(operator, target, expectedVersion, to, reason)
-                instanceof Judgement.Refused(StatusChangeResult refusal)) {
-            return refusal;
-        }
-        return new StatusChangeResult.Acceptable();
+        return switch (judge(operator, target, expectedVersion, to, reason)) {
+            case Judgement.Refused(var refusal) -> new StatusChangeCheck.Refused(refusal);
+            case Judgement.Accepted _ -> new StatusChangeCheck.Acceptable();
+        };
     }
 
     /**
@@ -105,7 +101,7 @@ public class UserStatusChangeService {
      * @param to 変更後の利用状態
      * @param reason 停止の理由（停止のときに要る）
      */
-    public StatusChangeResult change(
+    public StatusChangeOutcome change(
             AuthenticatedActor operator,
             UserId target,
             long expectedVersion,
@@ -113,21 +109,21 @@ public class UserStatusChangeService {
             Optional<SuspensionReason> reason) {
         // 変えた利用者のメールアドレス（再開の後に session を消すため）。変えなければ空のまま
         AtomicReference<EmailAddress> changed = new AtomicReference<>();
-        StatusChangeResult result = transactionTemplate.execute(status -> {
-            StatusChangeResult inTransaction =
+        StatusChangeOutcome result = transactionTemplate.execute(status -> {
+            StatusChangeOutcome inTransaction =
                     changeInTransaction(operator, target, expectedVersion, to, reason, changed);
-            if (!(inTransaction instanceof StatusChangeResult.Changed)) {
+            if (!(inTransaction instanceof StatusChangeOutcome.Changed)) {
                 status.setRollbackOnly();
             }
             return inTransaction;
         });
-        if (result instanceof StatusChangeResult.Changed && to == UserStatus.ACTIVE) {
+        if (result instanceof StatusChangeOutcome.Changed && to == UserStatus.ACTIVE) {
             revokeSessions(target, changed.get());
         }
         return result;
     }
 
-    private StatusChangeResult changeInTransaction(
+    private StatusChangeOutcome changeInTransaction(
             AuthenticatedActor operator,
             UserId target,
             long expectedVersion,
@@ -135,12 +131,12 @@ public class UserStatusChangeService {
             Optional<SuspensionReason> reason,
             AtomicReference<EmailAddress> changed) {
         return switch (judge(operator, target, expectedVersion, to, reason)) {
-            case Judgement.Refused(StatusChangeResult refusal) -> refusal;
+            case Judgement.Refused(var refusal) -> new StatusChangeOutcome.Refused(refusal);
             case Judgement.Accepted(User before, User.StatusChangeApproval approval) -> {
                 // 判定に使った利用者（読んだ版が画面の版と同じ）を、その判定の承認で変える。版の出どころは承認の 1 つ（Bolt 34e）
                 UtcInstant now = new UtcInstant(clock.instant());
                 if (!users.changeStatus(before.changeStatus(approval), approval.version(), now)) {
-                    yield new StatusChangeResult.Stale();
+                    yield new StatusChangeOutcome.Refused(new UserAdministrationRefusal.Stale<>());
                 }
                 long newVersion = approval.version() + 1;
                 if (to == UserStatus.SUSPENDED) {
@@ -158,7 +154,7 @@ public class UserStatusChangeService {
                             operator.userId(), operator.companyId(), target, newVersion, before.status(), now));
                 }
                 changed.set(before.email());
-                yield new StatusChangeResult.Changed(newVersion);
+                yield new StatusChangeOutcome.Changed(newVersion);
             }
         };
     }
@@ -172,35 +168,31 @@ public class UserStatusChangeService {
         }
     }
 
-    /** 判定する。受け付けるなら判定に使った利用者を、受け付けないなら結果を返す。 */
+    /** 判定する（操作者 → 利用者と企業 → 管理範囲 → 規則 → 版）。受け付けるなら判定に使った利用者を、受け付けないなら理由を返す。 */
     private Judgement judge(
             AuthenticatedActor operator,
             UserId target,
             long expectedVersion,
             UserStatus to,
             Optional<SuspensionReason> reason) {
-        if (!operator.hasRole(Role.SYSTEM_ADMIN)) {
-            return new Judgement.Refused(new StatusChangeResult.NotPermitted());
-        }
-        Optional<User> user = users.findById(target);
-        if (user.isEmpty() || companies.findById(user.get().companyId()).isEmpty()) {
-            return new Judgement.Refused(new StatusChangeResult.NotFound());
-        }
-        // 管理範囲（IA-INV-14）は規則より先に見る（範囲外の利用者の状態を規則の拒否で漏らさない）
-        if (!assignments.scopeOf(operator.userId()).covers(user.get().companyId())) {
-            return new Judgement.Refused(new StatusChangeResult.OutOfScope());
+        User user;
+        switch (lookup.find(operator, target)) {
+            case ManagedUserLookup.Refusal refusal -> {
+                return new Judgement.Refused(refusal.toRefusal());
+            }
+            case ManagedUserLookup.Managed managed -> user = managed.user();
         }
         User.StatusChangeApproval approval;
-        switch (user.get().decideStatusChange(operator.userId(), to, reason)) {
+        switch (user.decideStatusChange(operator.userId(), to, reason)) {
             case User.StatusChangeDecision.Refused(StatusChangeRejection rejection) -> {
-                return new Judgement.Refused(new StatusChangeResult.Rejected(rejection));
+                return new Judgement.Refused(new UserAdministrationRefusal.Rejected<>(rejection));
             }
             case User.StatusChangeDecision.Approved(User.StatusChangeApproval approved) -> approval = approved;
         }
         if (approval.version() != expectedVersion) {
-            return new Judgement.Refused(new StatusChangeResult.Stale());
+            return new Judgement.Refused(new UserAdministrationRefusal.Stale<>());
         }
-        return new Judgement.Accepted(user.get(), approval);
+        return new Judgement.Accepted(user, approval);
     }
 
     /** 判定の結果（このクラスの中だけで使う）。 */
@@ -210,6 +202,6 @@ public class UserStatusChangeService {
         record Accepted(User user, User.StatusChangeApproval approval) implements Judgement {}
 
         /** 受け付けない。 */
-        record Refused(StatusChangeResult result) implements Judgement {}
+        record Refused(UserAdministrationRefusal<StatusChangeRejection> refusal) implements Judgement {}
     }
 }

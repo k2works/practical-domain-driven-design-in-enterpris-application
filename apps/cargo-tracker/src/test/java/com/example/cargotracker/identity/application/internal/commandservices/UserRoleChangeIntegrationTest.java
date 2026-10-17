@@ -113,7 +113,7 @@ class UserRoleChangeIntegrationTest {
         UserId sales = newSales();
 
         assertThat(service.change(admin, sales, 0L, Set.of(Role.ROUTE_DESIGNER, Role.TRACKING_MANAGER)))
-                .isEqualTo(new RoleChangeResult.Changed(1L));
+                .isEqualTo(new RoleChangeOutcome.Changed(1L));
 
         assertThat(rolesOf(sales))
                 .extracting(row -> row.get("role"), row -> row.get("granted_by"))
@@ -156,7 +156,7 @@ class UserRoleChangeIntegrationTest {
         service.change(admin, sales, 0L, Set.of(Role.ROUTE_DESIGNER));
 
         assertThat(service.change(admin, sales, 0L, Set.of(Role.TRACKING_MANAGER)))
-                .isEqualTo(new RoleChangeResult.Stale());
+                .isEqualTo(new RoleChangeOutcome.Refused(new UserAdministrationRefusal.Stale<>()));
 
         assertThat(rolesOf(sales)).extracting(row -> row.get("role")).containsExactly("ROUTE_DESIGNER");
         assertThat(versionOf(sales)).isEqualTo(1L);
@@ -178,7 +178,7 @@ class UserRoleChangeIntegrationTest {
                 Set.of(Role.SALES))));
 
         assertThat(service.change(admin, stranger, 0L, Set.of(Role.ROUTE_DESIGNER)))
-                .isEqualTo(new RoleChangeResult.OutOfScope());
+                .isEqualTo(new RoleChangeOutcome.Refused(new UserAdministrationRefusal.OutOfScope<>()));
 
         assertThat(rolesOf(stranger)).extracting(row -> row.get("role")).containsExactly("SALES");
         assertThat(versionOf(stranger)).isZero();
@@ -189,12 +189,15 @@ class UserRoleChangeIntegrationTest {
     void 同時の2つの変更は1つだけが通り後は古い版になる() {
         UserId sales = newSales();
 
-        List<RoleChangeResult> results = OverlappingTransactions.runSecondOutsideTransaction(
+        List<RoleChangeOutcome> results = OverlappingTransactions.runSecondOutsideTransaction(
                 transactionTemplate,
                 () -> service.change(admin, sales, 0L, Set.of(Role.ROUTE_DESIGNER)),
                 () -> service.change(admin, sales, 0L, Set.of(Role.TRACKING_MANAGER)));
 
-        assertThat(results).containsExactly(new RoleChangeResult.Changed(1L), new RoleChangeResult.Stale());
+        assertThat(results)
+                .containsExactly(
+                        new RoleChangeOutcome.Changed(1L),
+                        new RoleChangeOutcome.Refused(new UserAdministrationRefusal.Stale<>()));
         assertThat(rolesOf(sales)).extracting(row -> row.get("role")).containsExactly("ROUTE_DESIGNER");
         assertThat(versionOf(sales)).isEqualTo(1L);
         assertThat(auditsOf(sales)).hasSize(1);

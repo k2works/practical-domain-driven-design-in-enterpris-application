@@ -1,8 +1,11 @@
 package com.example.cargotracker.identity.interfaces.web;
 
 import com.example.cargotracker.identity.application.internal.commandservices.AdministrationScopeDenialService;
-import com.example.cargotracker.identity.application.internal.commandservices.RoleChangeResult;
-import com.example.cargotracker.identity.application.internal.commandservices.StatusChangeResult;
+import com.example.cargotracker.identity.application.internal.commandservices.RoleChangeCheck;
+import com.example.cargotracker.identity.application.internal.commandservices.RoleChangeOutcome;
+import com.example.cargotracker.identity.application.internal.commandservices.StatusChangeCheck;
+import com.example.cargotracker.identity.application.internal.commandservices.StatusChangeOutcome;
+import com.example.cargotracker.identity.application.internal.commandservices.UserAdministrationRefusal;
 import com.example.cargotracker.identity.application.internal.commandservices.UserRoleChangeService;
 import com.example.cargotracker.identity.application.internal.commandservices.UserStatusChangeService;
 import com.example.cargotracker.identity.application.internal.queryservices.UserAdministrationQueryService;
@@ -129,11 +132,11 @@ public class UserAdministrationController {
             Model model) {
         UserDetail user = detail(id, actor, false);
         Set<Role> selected = parseRoles(roles);
-        RoleChangeResult result = roleChanges.check(actor, user.id(), version, selected);
-        if (result instanceof RoleChangeResult.Acceptable) {
-            return showConfirmation(user, selected, version, actor, model);
-        }
-        return showRefusal(id, selected, version, actor, model, result, false);
+        return switch (roleChanges.check(actor, user.id(), version, selected)) {
+            case RoleChangeCheck.Acceptable _ -> showConfirmation(user, selected, version, actor, model);
+            case RoleChangeCheck.Refused(var refusal) ->
+                showRefusal(id, selected, version, actor, model, refusal, false);
+        };
     }
 
     @PostMapping(CONFIRMATION_URL)
@@ -147,12 +150,14 @@ public class UserAdministrationController {
         // 確定も先に詳細を読み、管理範囲の外なら試行を記録して 404 にする（Bolt 34b。書き手はこの controller の確定だけ）
         UserId target = detail(id, actor, true).id();
         Set<Role> selected = parseRoles(roles);
-        RoleChangeResult result = roleChanges.change(actor, target, version, selected);
-        if (result instanceof RoleChangeResult.Changed) {
-            redirectAttributes.addFlashAttribute("notice", CHANGED_NOTICE);
-            return "redirect:" + USERS_URL + "/" + target.value();
-        }
-        return showRefusal(id, selected, version, actor, model, result, true);
+        return switch (roleChanges.change(actor, target, version, selected)) {
+            case RoleChangeOutcome.Changed _ -> {
+                redirectAttributes.addFlashAttribute("notice", CHANGED_NOTICE);
+                yield "redirect:" + USERS_URL + "/" + target.value();
+            }
+            case RoleChangeOutcome.Refused(var refusal) ->
+                showRefusal(id, selected, version, actor, model, refusal, true);
+        };
     }
 
     /** 受け付けなかった結果の画面。拒否は選んだまま、古い版は最新の内容で詳細を示し直す。 */
@@ -162,10 +167,10 @@ public class UserAdministrationController {
             long version,
             AuthenticatedActor actor,
             Model model,
-            RoleChangeResult result,
+            UserAdministrationRefusal<RoleChangeRejection> refusal,
             boolean change) {
-        return switch (result) {
-            case RoleChangeResult.Rejected(RoleChangeRejection rejection) -> {
+        return switch (refusal) {
+            case UserAdministrationRefusal.Rejected(RoleChangeRejection rejection) -> {
                 UserDetail user = detail(id, actor, false);
                 yield showDetail(
                         new DetailForm(
@@ -178,7 +183,7 @@ public class UserAdministrationController {
                         actor,
                         model);
             }
-            case RoleChangeResult.Stale _ -> {
+            case UserAdministrationRefusal.Stale<?> _ -> {
                 UserDetail user = detail(id, actor, false);
                 yield showDetail(
                         new DetailForm(
@@ -191,17 +196,15 @@ public class UserAdministrationController {
                         actor,
                         model);
             }
-            case RoleChangeResult.NotFound _ -> throw notFound();
-            case RoleChangeResult.OutOfScope _ -> {
+            case UserAdministrationRefusal.NotFound<?> _ -> throw notFound();
+            case UserAdministrationRefusal.OutOfScope<?> _ -> {
                 // 詳細を読んだ後に管理範囲から外れたとき（同じ request の中の守り）。記録は確定のときだけ
                 if (change) {
                     denials.recordDenied(actor, parse(id).orElseThrow(UserAdministrationController::notFound));
                 }
                 throw notFound();
             }
-            case RoleChangeResult.NotPermitted _ -> throw new ResponseStatusException(HttpStatus.FORBIDDEN);
-            case RoleChangeResult.Changed _, RoleChangeResult.Acceptable _ ->
-                throw new IllegalStateException("受け付けた結果は示し直さない");
+            case UserAdministrationRefusal.NotPermitted<?> _ -> throw new ResponseStatusException(HttpStatus.FORBIDDEN);
         };
     }
 
@@ -215,11 +218,11 @@ public class UserAdministrationController {
             Model model) {
         UserDetail user = detail(id, actor, false);
         StatusRequest request = StatusRequest.parse(status, reason);
-        StatusChangeResult result = statusChanges.check(actor, user.id(), version, request.to(), request.reason());
-        if (result instanceof StatusChangeResult.Acceptable) {
-            return showStatusConfirmation(user, request, version, actor, model);
-        }
-        return showStatusRefusal(id, request, version, actor, model, result, false);
+        return switch (statusChanges.check(actor, user.id(), version, request.to(), request.reason())) {
+            case StatusChangeCheck.Acceptable _ -> showStatusConfirmation(user, request, version, actor, model);
+            case StatusChangeCheck.Refused(var refusal) ->
+                showStatusRefusal(id, request, version, actor, model, refusal, false);
+        };
     }
 
     /**
@@ -239,13 +242,15 @@ public class UserAdministrationController {
         UserId target = detail(id, actor, true).id();
         StatusRequest request = StatusRequest.parse(status, reason);
         long version = parseVersion(versionValue);
-        StatusChangeResult result = statusChanges.change(actor, target, version, request.to(), request.reason());
-        if (result instanceof StatusChangeResult.Changed) {
-            redirectAttributes.addFlashAttribute(
-                    "notice", request.to() == UserStatus.SUSPENDED ? SUSPENDED_NOTICE : REACTIVATED_NOTICE);
-            return "redirect:" + USERS_URL + "/" + target.value();
-        }
-        return showStatusRefusal(id, request, version, actor, model, result, true);
+        return switch (statusChanges.change(actor, target, version, request.to(), request.reason())) {
+            case StatusChangeOutcome.Changed _ -> {
+                redirectAttributes.addFlashAttribute(
+                        "notice", request.to() == UserStatus.SUSPENDED ? SUSPENDED_NOTICE : REACTIVATED_NOTICE);
+                yield "redirect:" + USERS_URL + "/" + target.value();
+            }
+            case StatusChangeOutcome.Refused(var refusal) ->
+                showStatusRefusal(id, request, version, actor, model, refusal, true);
+        };
     }
 
     /** 利用状態の変更を受け付けなかった結果の画面。拒否は選んだ理由のまま、古い版は最新の内容で詳細を示し直す。 */
@@ -255,10 +260,10 @@ public class UserAdministrationController {
             long version,
             AuthenticatedActor actor,
             Model model,
-            StatusChangeResult result,
+            UserAdministrationRefusal<StatusChangeRejection> refusal,
             boolean change) {
-        return switch (result) {
-            case StatusChangeResult.Rejected(StatusChangeRejection rejection) -> {
+        return switch (refusal) {
+            case UserAdministrationRefusal.Rejected(StatusChangeRejection rejection) -> {
                 UserDetail user = detail(id, actor, false);
                 // 同じ状態の拒否は、ほかの管理者が先に同じ変更を確定したときに起きる。次の操作が古い版で拒まれないよう、最新の版で示す
                 long formVersion = rejection == StatusChangeRejection.NO_CHANGE ? user.version() : version;
@@ -273,7 +278,7 @@ public class UserAdministrationController {
                         actor,
                         model);
             }
-            case StatusChangeResult.Stale _ -> {
+            case UserAdministrationRefusal.Stale<?> _ -> {
                 UserDetail user = detail(id, actor, false);
                 yield showDetail(
                         new DetailForm(
@@ -286,17 +291,15 @@ public class UserAdministrationController {
                         actor,
                         model);
             }
-            case StatusChangeResult.NotFound _ -> throw notFound();
-            case StatusChangeResult.OutOfScope _ -> {
+            case UserAdministrationRefusal.NotFound<?> _ -> throw notFound();
+            case UserAdministrationRefusal.OutOfScope<?> _ -> {
                 // 詳細を読んだ後に管理範囲から外れたとき（同じ request の中の守り）。記録は確定のときだけ
                 if (change) {
                     denials.recordDenied(actor, parse(id).orElseThrow(UserAdministrationController::notFound));
                 }
                 throw notFound();
             }
-            case StatusChangeResult.NotPermitted _ -> throw new ResponseStatusException(HttpStatus.FORBIDDEN);
-            case StatusChangeResult.Changed _, StatusChangeResult.Acceptable _ ->
-                throw new IllegalStateException("受け付けた結果は示し直さない");
+            case UserAdministrationRefusal.NotPermitted<?> _ -> throw new ResponseStatusException(HttpStatus.FORBIDDEN);
         };
     }
 

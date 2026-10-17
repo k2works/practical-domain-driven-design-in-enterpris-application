@@ -83,7 +83,7 @@ class UserRoleChangeServiceTest {
         givenSales();
 
         assertThat(service.change(admin, sales.id(), 3L, Set.of(Role.SALES, Role.ROUTE_DESIGNER)))
-                .isEqualTo(new RoleChangeResult.Changed(4L));
+                .isEqualTo(new RoleChangeOutcome.Changed(4L));
 
         ArgumentCaptor<User> changed = ArgumentCaptor.forClass(User.class);
         verify(users).changeRoles(changed.capture(), eq(3L), eq(admin.userId()), eq(new UtcInstant(NOW)));
@@ -103,8 +103,8 @@ class UserRoleChangeServiceTest {
         givenSales();
 
         assertThat(service.change(admin, sales.id(), 3L, Set.of(Role.SALES, Role.SYSTEM_ADMIN)))
-                .isEqualTo(new RoleChangeResult.Rejected(
-                        new RoleChangeRejection(RoleChangeRejectionReason.OVERSIGHT_ROLE, Set.of(Role.SYSTEM_ADMIN))));
+                .isEqualTo(new RoleChangeOutcome.Refused(new UserAdministrationRefusal.Rejected<>(
+                        new RoleChangeRejection(RoleChangeRejectionReason.OVERSIGHT_ROLE, Set.of(Role.SYSTEM_ADMIN)))));
         verify(users, never()).changeRoles(any(), anyLong(), any(), any());
         verify(auditRecords, never()).append(any());
     }
@@ -114,7 +114,7 @@ class UserRoleChangeServiceTest {
         givenSales();
 
         assertThat(service.change(admin, sales.id(), 2L, Set.of(Role.ROUTE_DESIGNER)))
-                .isEqualTo(new RoleChangeResult.Stale());
+                .isEqualTo(new RoleChangeOutcome.Refused(new UserAdministrationRefusal.Stale<>()));
         verify(users, never()).changeRoles(any(), anyLong(), any(), any());
         verify(auditRecords, never()).append(any());
     }
@@ -125,7 +125,7 @@ class UserRoleChangeServiceTest {
         when(users.changeRoles(any(), anyLong(), any(), any())).thenReturn(false);
 
         assertThat(service.change(admin, sales.id(), 3L, Set.of(Role.ROUTE_DESIGNER)))
-                .isEqualTo(new RoleChangeResult.Stale());
+                .isEqualTo(new RoleChangeOutcome.Refused(new UserAdministrationRefusal.Stale<>()));
         verify(auditRecords, never()).append(any());
         assertThat(transactions.rollbackOnly).isTrue();
     }
@@ -136,7 +136,7 @@ class UserRoleChangeServiceTest {
         when(assignments.scopeOf(admin.userId())).thenReturn(new AdministrationScope(Set.of()));
 
         assertThat(service.change(admin, sales.id(), 3L, Set.of(Role.ROUTE_DESIGNER)))
-                .isEqualTo(new RoleChangeResult.OutOfScope());
+                .isEqualTo(new RoleChangeOutcome.Refused(new UserAdministrationRefusal.OutOfScope<>()));
         verify(users, never()).changeRoles(any(), anyLong(), any(), any());
         verify(auditRecords, never()).append(any());
     }
@@ -147,7 +147,7 @@ class UserRoleChangeServiceTest {
         when(assignments.scopeOf(admin.userId())).thenReturn(new AdministrationScope(Set.of()));
 
         assertThat(service.check(admin, sales.id(), 3L, Set.of(Role.ROUTE_DESIGNER)))
-                .isEqualTo(new RoleChangeResult.OutOfScope());
+                .isEqualTo(new RoleChangeCheck.Refused(new UserAdministrationRefusal.OutOfScope<>()));
     }
 
     @Test
@@ -157,7 +157,7 @@ class UserRoleChangeServiceTest {
 
         assertThat(service.check(admin, sales.id(), 3L, Set.of()))
                 .as("範囲外なら役割なしの拒否より先に範囲外と答える（範囲外の利用者の様子を漏らさない）")
-                .isEqualTo(new RoleChangeResult.OutOfScope());
+                .isEqualTo(new RoleChangeCheck.Refused(new UserAdministrationRefusal.OutOfScope<>()));
     }
 
     @Test
@@ -165,7 +165,7 @@ class UserRoleChangeServiceTest {
         when(users.findById(any())).thenReturn(Optional.empty());
 
         assertThat(service.change(admin, new UserId(UUID.randomUUID()), 0L, Set.of(Role.SALES)))
-                .isEqualTo(new RoleChangeResult.NotFound());
+                .isEqualTo(new RoleChangeOutcome.Refused(new UserAdministrationRefusal.NotFound<>()));
     }
 
     @Test
@@ -174,7 +174,7 @@ class UserRoleChangeServiceTest {
                 new UserId(UUID.randomUUID()), operatorCompany.id(), Set.of(Role.SALES), "営業 二郎", "A 社");
 
         assertThat(service.change(salesActor, sales.id(), 3L, Set.of(Role.ROUTE_DESIGNER)))
-                .isEqualTo(new RoleChangeResult.NotPermitted());
+                .isEqualTo(new RoleChangeOutcome.Refused(new UserAdministrationRefusal.NotPermitted<>()));
         verify(users, never()).findById(any());
     }
 
@@ -193,7 +193,7 @@ class UserRoleChangeServiceTest {
         givenSales();
 
         assertThat(service.check(admin, sales.id(), 3L, Set.of(Role.ROUTE_DESIGNER)))
-                .isEqualTo(new RoleChangeResult.Acceptable());
+                .isEqualTo(new RoleChangeCheck.Acceptable());
         verify(users, never()).changeRoles(any(), anyLong(), any(), any());
         verify(auditRecords, never()).append(any());
     }
@@ -203,10 +203,10 @@ class UserRoleChangeServiceTest {
         givenSales();
 
         assertThat(service.check(admin, sales.id(), 3L, Set.of(Role.SHIPPER)))
-                .isEqualTo(new RoleChangeResult.Rejected(
-                        new RoleChangeRejection(RoleChangeRejectionReason.UNFIT_FOR_COMPANY, Set.of(Role.SHIPPER))));
+                .isEqualTo(new RoleChangeCheck.Refused(new UserAdministrationRefusal.Rejected<>(
+                        new RoleChangeRejection(RoleChangeRejectionReason.UNFIT_FOR_COMPANY, Set.of(Role.SHIPPER)))));
         assertThat(service.check(admin, sales.id(), 2L, Set.of(Role.ROUTE_DESIGNER)))
-                .isEqualTo(new RoleChangeResult.Stale());
+                .isEqualTo(new RoleChangeCheck.Refused(new UserAdministrationRefusal.Stale<>()));
     }
 
     /** トランザクションを開かずにそのまま呼び、setRollbackOnly を覚える（単体テスト用）。 */

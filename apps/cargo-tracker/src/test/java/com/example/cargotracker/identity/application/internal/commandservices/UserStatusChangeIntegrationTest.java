@@ -119,7 +119,7 @@ class UserStatusChangeIntegrationTest {
         clock.setInstant(suspendedAt);
 
         assertThat(service.change(admin, sales, 0L, UserStatus.SUSPENDED, USAGE_ENDED))
-                .isEqualTo(new StatusChangeResult.Changed(1L));
+                .isEqualTo(new StatusChangeOutcome.Changed(1L));
 
         assertThat(rowOf(sales)).containsEntry("status", "SUSPENDED").containsEntry("version", 1L);
         assertThat(((Timestamp) rowOf(sales).get("updated_at")).toInstant()).isEqualTo(suspendedAt);
@@ -144,7 +144,7 @@ class UserStatusChangeIntegrationTest {
         clock.setInstant(NOW.plusSeconds(60));
 
         assertThat(service.change(admin, sales, 1L, UserStatus.ACTIVE, Optional.empty()))
-                .isEqualTo(new StatusChangeResult.Changed(2L));
+                .isEqualTo(new StatusChangeOutcome.Changed(2L));
 
         assertThat(rowOf(sales)).containsEntry("status", "ACTIVE").containsEntry("version", 2L);
         assertThat(auditsOf(sales))
@@ -160,7 +160,7 @@ class UserStatusChangeIntegrationTest {
         service.change(admin, sales, 0L, UserStatus.SUSPENDED, USAGE_ENDED);
 
         assertThat(service.change(admin, sales, 0L, UserStatus.ACTIVE, Optional.empty()))
-                .isEqualTo(new StatusChangeResult.Stale());
+                .isEqualTo(new StatusChangeOutcome.Refused(new UserAdministrationRefusal.Stale<>()));
 
         assertThat(rowOf(sales)).containsEntry("status", "SUSPENDED").containsEntry("version", 1L);
         assertThat(auditsOf(sales)).hasSize(1);
@@ -173,7 +173,7 @@ class UserStatusChangeIntegrationTest {
 
         assertThat(service.change(admin, sales, 0L, UserStatus.SUSPENDED, USAGE_ENDED))
                 .as("役割の変更と版を共有する")
-                .isEqualTo(new StatusChangeResult.Stale());
+                .isEqualTo(new StatusChangeOutcome.Refused(new UserAdministrationRefusal.Stale<>()));
 
         assertThat(rowOf(sales)).containsEntry("status", "ACTIVE").containsEntry("version", 1L);
     }
@@ -185,7 +185,7 @@ class UserStatusChangeIntegrationTest {
 
         assertThat(roleChanges.change(admin, sales, 1L, Set.of(Role.ROUTE_DESIGNER)))
                 .as("停止中の利用者の役割の変更は許す（Bolt 34d の決定 3）")
-                .isEqualTo(new RoleChangeResult.Changed(2L));
+                .isEqualTo(new RoleChangeOutcome.Changed(2L));
         assertThat(rowOf(sales)).containsEntry("status", "SUSPENDED");
     }
 
@@ -196,7 +196,7 @@ class UserStatusChangeIntegrationTest {
         UserId stranger = newSales(outside);
 
         assertThat(service.change(admin, stranger, 0L, UserStatus.SUSPENDED, USAGE_ENDED))
-                .isEqualTo(new StatusChangeResult.OutOfScope());
+                .isEqualTo(new StatusChangeOutcome.Refused(new UserAdministrationRefusal.OutOfScope<>()));
 
         assertThat(rowOf(stranger)).containsEntry("status", "ACTIVE").containsEntry("version", 0L);
         assertThat(auditsOf(stranger)).isEmpty();
@@ -206,12 +206,15 @@ class UserStatusChangeIntegrationTest {
     void 同時の2つの変更は1つだけが通り後は古い版になる() {
         UserId sales = newSales(operator);
 
-        List<StatusChangeResult> results = OverlappingTransactions.runSecondOutsideTransaction(
+        List<StatusChangeOutcome> results = OverlappingTransactions.runSecondOutsideTransaction(
                 transactionTemplate,
                 () -> service.change(admin, sales, 0L, UserStatus.SUSPENDED, USAGE_ENDED),
                 () -> service.change(admin, sales, 0L, UserStatus.SUSPENDED, Optional.of(SuspensionReason.EMERGENCY)));
 
-        assertThat(results).containsExactly(new StatusChangeResult.Changed(1L), new StatusChangeResult.Stale());
+        assertThat(results)
+                .containsExactly(
+                        new StatusChangeOutcome.Changed(1L),
+                        new StatusChangeOutcome.Refused(new UserAdministrationRefusal.Stale<>()));
         assertThat(rowOf(sales)).containsEntry("status", "SUSPENDED").containsEntry("version", 1L);
         assertThat(auditsOf(sales))
                 .singleElement()
