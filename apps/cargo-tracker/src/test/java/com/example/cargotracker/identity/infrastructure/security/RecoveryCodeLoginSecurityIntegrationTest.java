@@ -11,6 +11,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.example.cargotracker.identity.AuditRecordRows;
 import com.example.cargotracker.identity.IdentityIntegrationTest;
+import com.example.cargotracker.identity.IdentityLogins;
 import com.example.cargotracker.identity.LogCapture;
 import com.example.cargotracker.identity.SpringSessionRows;
 import com.example.cargotracker.identity.application.internal.session.SessionKeys;
@@ -127,7 +128,7 @@ class RecoveryCodeLoginSecurityIntegrationTest {
     @Test
     void 回復コードでA02を通ると業務の画面を開けsessionIDが変わり監査記録はログインの成功になる() throws Exception {
         String email = enrolledUserWithRecoveryCodes();
-        Cookie passwordStage = loginWithPassword(email);
+        Cookie passwordStage = logins().loginWithPassword(email);
         Instant recoveredAt = LOGIN_AT.plus(Duration.ofMinutes(2));
         ((MutableClock) clock).setInstant(recoveredAt);
 
@@ -158,14 +159,14 @@ class RecoveryCodeLoginSecurityIntegrationTest {
     void 使った回復コードはもう一度使えずA01に戻り理由だけが監査記録に残り平文はどこにも残らない() throws Exception {
         String email = enrolledUserWithRecoveryCodes();
         Cookie full = mvc.perform(post(TOTP_URL)
-                        .cookie(loginWithPassword(email))
+                        .cookie(logins().loginWithPassword(email))
                         .param("recoveryCode", RECOVERY_CODE)
                         .with(csrf()))
                 .andExpect(redirectedUrl(RE_ENROLL_URL))
                 .andReturn()
                 .getResponse()
                 .getCookie(SESSION_COOKIE);
-        Cookie again = loginWithPassword(email);
+        Cookie again = logins().loginWithPassword(email);
 
         mvc.perform(post(TOTP_URL)
                         .cookie(again)
@@ -191,7 +192,7 @@ class RecoveryCodeLoginSecurityIntegrationTest {
                 "UPDATE identity.recovery_code SET code_hash = 'no-prefix-hash' WHERE user_id = ?",
                 userIdOf(email).value());
 
-        Cookie session = loginWithPassword(email);
+        Cookie session = logins().loginWithPassword(email);
         String logs;
         try (LogCapture capture = LogCapture.start()) {
             mvc.perform(post(TOTP_URL)
@@ -215,12 +216,12 @@ class RecoveryCodeLoginSecurityIntegrationTest {
         String email = enrolledUserWithRecoveryCodes();
 
         mvc.perform(post(TOTP_URL)
-                        .cookie(loginWithPassword(email))
+                        .cookie(logins().loginWithPassword(email))
                         .param("recoveryCode", "ffff-ffff")
                         .with(csrf()))
                 .andExpect(redirectedUrl(TOTP_ERROR));
         mvc.perform(post(TOTP_URL)
-                        .cookie(loginWithPassword(email))
+                        .cookie(logins().loginWithPassword(email))
                         .param("recoveryCode", "not-a-code")
                         .with(csrf()))
                 .andExpect(redirectedUrl(TOTP_ERROR));
@@ -234,8 +235,8 @@ class RecoveryCodeLoginSecurityIntegrationTest {
         String email = enrolledUserWithRecoveryCodes();
 
         mvc.perform(post(TOTP_URL)
-                        .cookie(loginWithPassword(email))
-                        .param("code", currentCode(email))
+                        .cookie(logins().loginWithPassword(email))
+                        .param("code", logins().currentCode(email))
                         .param("recoveryCode", RECOVERY_CODE)
                         .with(csrf()))
                 .andExpect(redirectedUrl(TOTP_ERROR));
@@ -249,7 +250,7 @@ class RecoveryCodeLoginSecurityIntegrationTest {
         // T-102: 回復コードは主体の利用者 ID で探すので、利用者を切り替えた session では前の利用者のコードは使えない
         String first = enrolledUserWithRecoveryCodes();
         String second = enrolledUserWithRecoveryCodes(SECOND_RECOVERY_CODE);
-        Cookie session = loginWithPassword(first);
+        Cookie session = logins().loginWithPassword(first);
         mvc.perform(get(TOTP_URL).cookie(session)).andExpect(status().isOk());
         Cookie switched = mvc.perform(post("/login")
                         .cookie(session)
@@ -270,7 +271,7 @@ class RecoveryCodeLoginSecurityIntegrationTest {
         assertThat(failureReasons(second)).as("拒否は切り替えた後の利用者に記録する").containsExactly("INVALID_RECOVERY_CODE");
         // 主体が本当に 2 人目に切り替わっていること（あるべきもの。T-106）
         mvc.perform(post(TOTP_URL)
-                        .cookie(loginWithPassword(second))
+                        .cookie(logins().loginWithPassword(second))
                         .param("recoveryCode", SECOND_RECOVERY_CODE)
                         .with(csrf()))
                 .andExpect(redirectedUrl(RE_ENROLL_URL));
@@ -280,10 +281,10 @@ class RecoveryCodeLoginSecurityIntegrationTest {
     void どちらの欄もない送信と空白だけの回復コードは認証コードの誤りと同じに扱う() throws Exception {
         String email = enrolledUserWithRecoveryCodes();
 
-        mvc.perform(post(TOTP_URL).cookie(loginWithPassword(email)).with(csrf()))
+        mvc.perform(post(TOTP_URL).cookie(logins().loginWithPassword(email)).with(csrf()))
                 .andExpect(redirectedUrl(TOTP_ERROR));
         mvc.perform(post(TOTP_URL)
-                        .cookie(loginWithPassword(email))
+                        .cookie(logins().loginWithPassword(email))
                         .param("recoveryCode", "   ")
                         .with(csrf()))
                 .andExpect(redirectedUrl(TOTP_ERROR));
@@ -295,7 +296,7 @@ class RecoveryCodeLoginSecurityIntegrationTest {
     @Test
     void 回復コードの送信にもCSRFのトークンが要りpasswordの段を経ない送信は誤りの文言を出さない() throws Exception {
         String email = enrolledUserWithRecoveryCodes();
-        Cookie session = loginWithPassword(email);
+        Cookie session = logins().loginWithPassword(email);
         // A-02 の画面を開くと session に CSRF のトークンができる（開く前の送信は既存の扱いどおり A-03 へ送る。Bolt 31）
         mvc.perform(get(TOTP_URL).cookie(session)).andExpect(status().isOk());
 
@@ -310,7 +311,7 @@ class RecoveryCodeLoginSecurityIntegrationTest {
     void A02は回復コードの欄を出す() throws Exception {
         String email = enrolledUserWithRecoveryCodes();
 
-        mvc.perform(get(TOTP_URL).cookie(loginWithPassword(email)))
+        mvc.perform(get(TOTP_URL).cookie(logins().loginWithPassword(email)))
                 .andExpect(status().isOk())
                 .andExpect(content().string(Matchers.containsString("<details")))
                 .andExpect(content().string(Matchers.containsString("name=\"recoveryCode\"")))
@@ -321,7 +322,7 @@ class RecoveryCodeLoginSecurityIntegrationTest {
     @Test
     void 登録の直後のA02には案内を出しログインを終えた後に開き直すと出さない() throws Exception {
         String email = unenrolledUser();
-        Cookie session = loginWithPassword(email);
+        Cookie session = logins().loginWithPassword(email);
         String key = manualKey(mvc.perform(get(ENROLL_URL).cookie(session))
                 .andExpect(status().isOk())
                 .andReturn()
@@ -350,7 +351,7 @@ class RecoveryCodeLoginSecurityIntegrationTest {
 
     private Cookie loginWithRecoveryCode(String email, String code) throws Exception {
         return mvc.perform(post(TOTP_URL)
-                        .cookie(loginWithPassword(email))
+                        .cookie(logins().loginWithPassword(email))
                         .param("recoveryCode", code)
                         .with(csrf()))
                 .andExpect(redirectedUrl(RE_ENROLL_URL))
@@ -361,8 +362,8 @@ class RecoveryCodeLoginSecurityIntegrationTest {
 
     private Cookie loginWithTotp(String email) throws Exception {
         return mvc.perform(post(TOTP_URL)
-                        .cookie(loginWithPassword(email))
-                        .param("code", currentCode(email))
+                        .cookie(logins().loginWithPassword(email))
+                        .param("code", logins().currentCode(email))
                         .with(csrf()))
                 .andExpect(redirectedUrl("/"))
                 .andReturn()
@@ -450,17 +451,17 @@ class RecoveryCodeLoginSecurityIntegrationTest {
 
         nextStep();
         mvc.perform(post(TOTP_URL)
-                        .cookie(loginWithPassword(email))
+                        .cookie(logins().loginWithPassword(email))
                         .param("recoveryCode", "0000-0001")
                         .with(csrf()))
                 .andExpect(redirectedUrl(TOTP_ERROR));
         mvc.perform(post(TOTP_URL)
-                        .cookie(loginWithPassword(email))
+                        .cookie(logins().loginWithPassword(email))
                         .param("code", oldSecretCode(email))
                         .with(csrf()))
                 .andExpect(redirectedUrl(TOTP_ERROR));
         mvc.perform(post(TOTP_URL)
-                        .cookie(loginWithPassword(email))
+                        .cookie(logins().loginWithPassword(email))
                         .param("code", codeFromKey(email, newKey))
                         .with(csrf()))
                 .andExpect(redirectedUrl("/"));
@@ -505,7 +506,7 @@ class RecoveryCodeLoginSecurityIntegrationTest {
                 .isNull();
         Cookie secondFull = mvc.perform(post(TOTP_URL)
                         .cookie(switched)
-                        .param("code", currentCode(second))
+                        .param("code", logins().currentCode(second))
                         .with(csrf()))
                 .andExpect(redirectedUrl("/"))
                 .andReturn()
@@ -750,23 +751,6 @@ class RecoveryCodeLoginSecurityIntegrationTest {
         return email;
     }
 
-    private Cookie loginWithPassword(String email) throws Exception {
-        return mvc.perform(post("/login")
-                        .param("username", email)
-                        .param("password", PASSWORD)
-                        .with(csrf()))
-                .andExpect(redirectedUrl(TOTP_URL))
-                .andReturn()
-                .getResponse()
-                .getCookie(SESSION_COOKIE);
-    }
-
-    private String currentCode(String email) {
-        UserId owner = userIdOf(email);
-        TotpCredential credential = totpCredentials.findByUserId(owner).orElseThrow();
-        return totpCodes.code(owner, credential.secret(), TotpCredential.stepAt(new UtcInstant(clock.instant())));
-    }
-
     private static String manualKey(String html) {
         Matcher matcher = MANUAL_KEY.matcher(html);
         assertThat(matcher.find()).as("手入力のキー").isTrue();
@@ -825,5 +809,9 @@ class RecoveryCodeLoginSecurityIntegrationTest {
 
     private SpringSessionRows sessions() {
         return new SpringSessionRows(jdbc);
+    }
+
+    private IdentityLogins logins() {
+        return new IdentityLogins(mvc, jdbc, totpCredentials, totpCodes, clock);
     }
 }

@@ -1,5 +1,6 @@
 package com.example.cargotracker.identity.infrastructure.security;
 
+import static com.example.cargotracker.identity.IdentityLogins.sessionOf;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
@@ -15,6 +16,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.example.cargotracker.identity.IdentityLogins;
 import com.example.cargotracker.identity.SpringSessionRows;
 import com.example.cargotracker.identity.domain.model.aggregates.Company;
 import com.example.cargotracker.identity.domain.model.aggregates.RecoveryCode;
@@ -62,7 +64,6 @@ import org.springframework.test.web.servlet.RequestBuilder;
 class SessionRevalidationSecurityIntegrationTest extends IdentitySpyIntegrationTestBase {
 
     private static final String PASSWORD = "correct horse battery staple";
-    private static final String SESSION_COOKIE = "SESSION";
     private static final Instant LOGIN_AT = Instant.parse("2026-10-14T00:00:00Z");
     private static final byte[] TOTP_SECRET = "12345678901234567890".getBytes(StandardCharsets.US_ASCII);
     private static final String TOTP_URL = "/login/totp";
@@ -113,7 +114,7 @@ class SessionRevalidationSecurityIntegrationTest extends IdentitySpyIntegrationT
     @Test
     void 利用停止の後の次のrequestは業務データを出さずsessionを捨ててA03に移りSESSION_REVOKEDが残る() throws Exception {
         String email = user(Set.of(Role.SALES));
-        Cookie session = login(email);
+        Cookie session = logins().login(email);
         mvc.perform(get(SALES_URL).cookie(session)).andExpect(status().isOk());
         assertThat(sessions().exists(session)).as("止める前は session がある").isTrue();
 
@@ -131,7 +132,7 @@ class SessionRevalidationSecurityIntegrationTest extends IdentitySpyIntegrationT
     @Test
     void 所属企業を無効にした後の次のrequestはCOMPANY_INACTIVEで取り消す() throws Exception {
         String email = user(Set.of(Role.SALES));
-        Cookie session = login(email);
+        Cookie session = logins().login(email);
         mvc.perform(get(SALES_URL).cookie(session)).andExpect(status().isOk());
 
         jdbc.update(
@@ -146,8 +147,8 @@ class SessionRevalidationSecurityIntegrationTest extends IdentitySpyIntegrationT
     @Test
     void 利用者を消した後の次のrequestはUNKNOWN_USERで取り消しsessionの主体で記録する() throws Exception {
         String email = user(Set.of(Role.SALES));
-        UserId userId = userIdOf(email);
-        Cookie session = login(email);
+        UserId userId = logins().userIdOf(email);
+        Cookie session = logins().login(email);
         mvc.perform(get(SALES_URL).cookie(session)).andExpect(status().isOk());
 
         deleteUser(userId);
@@ -169,7 +170,7 @@ class SessionRevalidationSecurityIntegrationTest extends IdentitySpyIntegrationT
         jdbc.update("UPDATE identity.app_user SET status = 'SUSPENDED' WHERE email = ?", email);
         mvc.perform(post(TOTP_URL)
                         .cookie(passwordStage)
-                        .param("code", currentCode(email))
+                        .param("code", logins().currentCode(email))
                         .with(csrf()))
                 .andExpect(redirectedUrl(EXPIRED_URL));
 
@@ -181,7 +182,7 @@ class SessionRevalidationSecurityIntegrationTest extends IdentitySpyIntegrationT
     @Test
     void passwordの段だけの主体は利用停止の後は回復コードの送信もA03になり回復コードを使わない() throws Exception {
         String email = user(Set.of(Role.SALES));
-        UserId userId = userIdOf(email);
+        UserId userId = logins().userIdOf(email);
         UtcInstant now = new UtcInstant(clock.instant());
         recoveryCodes.replaceAll(
                 userId,
@@ -212,13 +213,13 @@ class SessionRevalidationSecurityIntegrationTest extends IdentitySpyIntegrationT
     @Test
     void 役割を外すと次のrequestでその役割のURLがA04になり残した役割のURLは開け監査記録は書かない() throws Exception {
         String email = user(Set.of(Role.SALES, Role.ROUTE_DESIGNER));
-        Cookie session = login(email);
+        Cookie session = logins().login(email);
         mvc.perform(get(ROUTING_URL).cookie(session)).andExpect(status().isOk());
         assertThat(salesPage(session)).as("外す前はナビに経路設計がある").contains("href=\"/staff/routing-cases\"");
 
         jdbc.update(
                 "DELETE FROM identity.user_role WHERE user_id = ? AND role = 'ROUTE_DESIGNER'",
-                userIdOf(email).value());
+                logins().userIdOf(email).value());
 
         mvc.perform(get(ROUTING_URL).cookie(session)).andExpect(status().isForbidden());
         String salesPage = mvc.perform(get(SALES_URL).cookie(session))
@@ -234,12 +235,12 @@ class SessionRevalidationSecurityIntegrationTest extends IdentitySpyIntegrationT
     @Test
     void 役割を足すと次のrequestからそのURLとナビの項目が出る() throws Exception {
         String email = user(Set.of(Role.SALES));
-        Cookie session = login(email);
+        Cookie session = logins().login(email);
         mvc.perform(get(TRACKING_URL).cookie(session)).andExpect(status().isForbidden());
 
         jdbc.update(
                 "INSERT INTO identity.user_role (user_id, role, granted_at) VALUES (?, 'TRACKING_MANAGER', now())",
-                userIdOf(email).value());
+                logins().userIdOf(email).value());
 
         mvc.perform(get(TRACKING_URL).cookie(session)).andExpect(status().isOk());
         String salesPage = mvc.perform(get(SALES_URL).cookie(session))
@@ -253,10 +254,10 @@ class SessionRevalidationSecurityIntegrationTest extends IdentitySpyIntegrationT
     @Test
     void 役割を変えても要素の権限と8時間の起点は変わらない() throws Exception {
         String email = user(Set.of(Role.SALES, Role.ROUTE_DESIGNER));
-        Cookie session = login(email);
+        Cookie session = logins().login(email);
         jdbc.update(
                 "DELETE FROM identity.user_role WHERE user_id = ? AND role = 'ROUTE_DESIGNER'",
-                userIdOf(email).value());
+                logins().userIdOf(email).value());
 
         advance(Duration.ofHours(8).minusSeconds(1));
         // 2 つの要素を求める業務の URL が開ける（要素の権限が残る）
@@ -272,7 +273,7 @@ class SessionRevalidationSecurityIntegrationTest extends IdentitySpyIntegrationT
     void 同じsessionで別の利用者にログインし直すと後の利用者で確かめる() throws Exception {
         String first = user(Set.of(Role.SALES));
         String second = user(Set.of(Role.SALES));
-        Cookie firstSession = login(first);
+        Cookie firstSession = logins().login(first);
         Cookie switched = submitTotp(loginWithPassword(second, firstSession), second);
 
         jdbc.update("UPDATE identity.app_user SET status = 'SUSPENDED' WHERE email = ?", first);
@@ -289,12 +290,12 @@ class SessionRevalidationSecurityIntegrationTest extends IdentitySpyIntegrationT
     @Test
     void 認証済みの1つのrequestの読み出しは1回で利用者と企業のリポジトリは呼ばない() throws Exception {
         String email = user(Set.of(Role.SALES));
-        Cookie session = login(email);
+        Cookie session = logins().login(email);
         clearInvocations(standings, users, companies);
 
         mvc.perform(get(SALES_URL).cookie(session)).andExpect(status().isOk());
 
-        verify(standings, times(1)).findById(userIdOf(email));
+        verify(standings, times(1)).findById(logins().userIdOf(email));
         verify(users, never()).findById(any());
         verify(users, never()).findByEmail(any());
         verify(companies, never()).findById(any());
@@ -303,7 +304,7 @@ class SessionRevalidationSecurityIntegrationTest extends IdentitySpyIntegrationT
     @Test
     void 未認証のrequestと期限の切れたsessionでは読まない() throws Exception {
         String email = user(Set.of(Role.SALES));
-        Cookie session = login(email);
+        Cookie session = logins().login(email);
         advance(Duration.ofHours(8));
         clearInvocations(standings);
 
@@ -318,7 +319,7 @@ class SessionRevalidationSecurityIntegrationTest extends IdentitySpyIntegrationT
     void 認証済みのsessionでも公開のURLと静的な資源では読まない() throws Exception {
         // 1 画面の表示で静的な資源の数だけ読まず、止められた利用者の並行の資源の request で取消しを重ねて書かない（Bolt 32c の開発レビュー）
         String email = user(Set.of(Role.SALES));
-        Cookie session = login(email);
+        Cookie session = logins().login(email);
         mvc.perform(get(SALES_URL).cookie(session)).andExpect(status().isOk());
         clearInvocations(standings);
 
@@ -328,7 +329,7 @@ class SessionRevalidationSecurityIntegrationTest extends IdentitySpyIntegrationT
 
         verify(standings, never()).findById(any());
         mvc.perform(get(SALES_URL).cookie(session)).andExpect(status().isOk());
-        verify(standings, times(1)).findById(userIdOf(email));
+        verify(standings, times(1)).findById(logins().userIdOf(email));
     }
 
     @Test
@@ -354,7 +355,7 @@ class SessionRevalidationSecurityIntegrationTest extends IdentitySpyIntegrationT
     @Test
     void 読み出しのDBの誤りはsessionを捨てて利用者IDを文脈に足して500にする() throws Exception {
         String email = user(Set.of(Role.SALES));
-        Cookie session = login(email);
+        Cookie session = logins().login(email);
         doThrow(new DataAccessResourceFailureException("DB の誤り"))
                 .when(standings)
                 .findById(any());
@@ -372,7 +373,7 @@ class SessionRevalidationSecurityIntegrationTest extends IdentitySpyIntegrationT
     @Test
     void 取消しの監査記録の書き込みの誤りはsessionを捨てて500にする() throws Exception {
         String email = user(Set.of(Role.SALES));
-        Cookie session = login(email);
+        Cookie session = logins().login(email);
         jdbc.update("UPDATE identity.app_user SET status = 'SUSPENDED' WHERE email = ?", email);
         doThrow(new DataAccessResourceFailureException("DB の誤り"))
                 .when(auditRecords)
@@ -392,10 +393,10 @@ class SessionRevalidationSecurityIntegrationTest extends IdentitySpyIntegrationT
     @Test
     void 役割が0件の利用者はsessionを捨てて500にする() throws Exception {
         String email = user(Set.of(Role.SALES));
-        Cookie session = login(email);
+        Cookie session = logins().login(email);
         jdbc.update(
                 "DELETE FROM identity.user_role WHERE user_id = ?",
-                userIdOf(email).value());
+                logins().userIdOf(email).value());
         RequestBuilder request = get(SALES_URL).cookie(session);
 
         assertFailsWithContext(request, email, IllegalStateException.class);
@@ -409,7 +410,7 @@ class SessionRevalidationSecurityIntegrationTest extends IdentitySpyIntegrationT
         assertThatThrownBy(() -> mvc.perform(request))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining(SessionRevalidationFilter.FAILURE_MESSAGE)
-                .hasMessageContaining(userIdOf(email).value().toString())
+                .hasMessageContaining(logins().userIdOf(email).value().toString())
                 .cause()
                 .isInstanceOf(cause);
     }
@@ -434,10 +435,6 @@ class SessionRevalidationSecurityIntegrationTest extends IdentitySpyIntegrationT
         return email;
     }
 
-    private Cookie login(String email) throws Exception {
-        return submitTotp(loginWithPassword(email), email);
-    }
-
     private Cookie loginWithPassword(String email) throws Exception {
         return loginWithPassword(email, null);
     }
@@ -456,7 +453,7 @@ class SessionRevalidationSecurityIntegrationTest extends IdentitySpyIntegrationT
     private Cookie submitTotp(Cookie passwordStage, String email) throws Exception {
         MvcResult result = mvc.perform(post(TOTP_URL)
                         .cookie(passwordStage)
-                        .param("code", currentCode(email))
+                        .param("code", logins().currentCode(email))
                         .with(csrf()))
                 .andExpect(status().is3xxRedirection())
                 .andReturn();
@@ -464,13 +461,6 @@ class SessionRevalidationSecurityIntegrationTest extends IdentitySpyIntegrationT
                 .doesNotContain("error")
                 .doesNotContain("expired");
         return sessionOf(result);
-    }
-
-    private String currentCode(String email) {
-        TotpCredential credential =
-                totpCredentials.findByUserId(userIdOf(email)).orElseThrow();
-        return totpCodes.code(
-                credential.userId(), credential.secret(), TotpCredential.stepAt(new UtcInstant(clock.instant())));
     }
 
     private String salesPage(Cookie session) throws Exception {
@@ -482,20 +472,10 @@ class SessionRevalidationSecurityIntegrationTest extends IdentitySpyIntegrationT
     }
 
     private long lastUsedStep(String email) {
-        return totpCredentials.findByUserId(userIdOf(email)).orElseThrow().lastUsedStep();
-    }
-
-    private static Cookie sessionOf(MvcResult result) {
-        Cookie cookie = result.getResponse().getCookie(SESSION_COOKIE);
-        assertThat(cookie).as("session の Cookie").isNotNull();
-        return cookie;
-    }
-
-    private UserId userIdOf(String email) {
-        return jdbc.queryForObject(
-                "SELECT id FROM identity.app_user WHERE email = ?",
-                (rs, n) -> new UserId(rs.getObject("id", UUID.class)),
-                email);
+        return totpCredentials
+                .findByUserId(logins().userIdOf(email))
+                .orElseThrow()
+                .lastUsedStep();
     }
 
     private void deleteUser(UserId userId) {
@@ -510,24 +490,28 @@ class SessionRevalidationSecurityIntegrationTest extends IdentitySpyIntegrationT
         return jdbc.queryForList(
                 "SELECT action FROM identity.audit_record WHERE actor_user_id = ?",
                 String.class,
-                userIdOf(email).value());
+                logins().userIdOf(email).value());
     }
 
     private List<Map<String, String>> revocations(String email) {
         return jdbc.query(
                 "SELECT result, reason FROM identity.audit_record WHERE actor_user_id = ? AND action = 'SESSION_REVOKED'",
                 (rs, n) -> Map.of("result", rs.getString("result"), "reason", rs.getString("reason")),
-                userIdOf(email).value());
+                logins().userIdOf(email).value());
     }
 
     private UUID companyOfRevocation(String email) {
         return jdbc.queryForObject(
                 "SELECT actor_company_id FROM identity.audit_record WHERE actor_user_id = ? AND action = 'SESSION_REVOKED'",
                 UUID.class,
-                userIdOf(email).value());
+                logins().userIdOf(email).value());
     }
 
     private SpringSessionRows sessions() {
         return new SpringSessionRows(jdbc);
+    }
+
+    private IdentityLogins logins() {
+        return new IdentityLogins(mvc, jdbc, totpCredentials, totpCodes, clock);
     }
 }

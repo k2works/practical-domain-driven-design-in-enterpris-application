@@ -9,6 +9,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.example.cargotracker.identity.IdentityIntegrationTest;
+import com.example.cargotracker.identity.IdentityLogins;
 import com.example.cargotracker.identity.SpringSessionRows;
 import com.example.cargotracker.identity.domain.model.aggregates.Company;
 import com.example.cargotracker.identity.domain.model.aggregates.CompanyRepository;
@@ -106,7 +107,7 @@ class TotpEnrollmentSecurityIntegrationTest {
     @Test
     void 未登録の利用者はpasswordの後にA02を経てA07に来てQRとキーが出て応答は保存させない() throws Exception {
         String email = unenrolledUser();
-        Cookie session = loginWithPassword(email);
+        Cookie session = logins().loginWithPassword(email);
 
         mvc.perform(get(TOTP_URL).cookie(session)).andExpect(redirectedUrl(ENROLL_URL));
         MvcResult page = mvc.perform(get(ENROLL_URL).cookie(session))
@@ -129,7 +130,7 @@ class TotpEnrollmentSecurityIntegrationTest {
     @Test
     void 再読み込みしても秘密は変わらずsessionには平文の秘密も表示の値も置かない() throws Exception {
         String email = unenrolledUser();
-        Cookie session = loginWithPassword(email);
+        Cookie session = logins().loginWithPassword(email);
 
         String first = manualKey(enrollPage(session));
         String second = manualKey(enrollPage(session));
@@ -146,7 +147,7 @@ class TotpEnrollmentSecurityIntegrationTest {
 
     @Test
     void 再読み込みしても登録を始めた時刻は変わらず15分の上限を延ばさない() throws Exception {
-        Cookie session = loginWithPassword(unenrolledUser());
+        Cookie session = logins().loginWithPassword(unenrolledUser());
         enrollPage(session);
 
         advance(Duration.ofMinutes(10));
@@ -165,7 +166,7 @@ class TotpEnrollmentSecurityIntegrationTest {
     @Test
     void 誤ったコードでは保存せず同じ秘密で示し直す() throws Exception {
         String email = unenrolledUser();
-        Cookie session = loginWithPassword(email);
+        Cookie session = logins().loginWithPassword(email);
         String key = manualKey(enrollPage(session));
 
         MvcResult result = mvc.perform(post(ENROLL_URL)
@@ -183,7 +184,7 @@ class TotpEnrollmentSecurityIntegrationTest {
     @Test
     void 正しいコードで回復コード10個を一度だけ示しA02で登録のコードを使ってログインを終えられる() throws Exception {
         String email = unenrolledUser();
-        Cookie session = loginWithPassword(email);
+        Cookie session = logins().loginWithPassword(email);
         String key = manualKey(enrollPage(session));
         String code = codeFromKey(email, key);
 
@@ -213,7 +214,7 @@ class TotpEnrollmentSecurityIntegrationTest {
     @Test
     void 登録の送信を再送しても二度登録せずA02へ送る() throws Exception {
         String email = unenrolledUser();
-        Cookie session = loginWithPassword(email);
+        Cookie session = logins().loginWithPassword(email);
         String code = codeFromKey(email, manualKey(enrollPage(session)));
         mvc.perform(post(ENROLL_URL).cookie(session).param("code", code).with(csrf()))
                 .andExpect(status().isOk());
@@ -226,7 +227,7 @@ class TotpEnrollmentSecurityIntegrationTest {
     @Test
     void 登録済みの利用者と2つの要素がそろった主体はA07を開けずA02へ送られる() throws Exception {
         String email = unenrolledUser();
-        Cookie session = loginWithPassword(email);
+        Cookie session = logins().loginWithPassword(email);
         String code = codeFromKey(email, manualKey(enrollPage(session)));
         mvc.perform(post(ENROLL_URL).cookie(session).param("code", code).with(csrf()));
 
@@ -242,7 +243,7 @@ class TotpEnrollmentSecurityIntegrationTest {
     @Test
     void A07のPOSTにはCSRFのトークンが要る() throws Exception {
         String email = unenrolledUser();
-        Cookie session = loginWithPassword(email);
+        Cookie session = logins().loginWithPassword(email);
         String code = codeFromKey(email, manualKey(enrollPage(session)));
 
         mvc.perform(post(ENROLL_URL).cookie(session).param("code", code)).andExpect(status().isForbidden());
@@ -251,7 +252,7 @@ class TotpEnrollmentSecurityIntegrationTest {
 
     @Test
     void 登録の途中の暗号文がないPOSTはA07を開き直す() throws Exception {
-        Cookie session = loginWithPassword(unenrolledUser());
+        Cookie session = logins().loginWithPassword(unenrolledUser());
         mvc.perform(get(TOTP_URL).cookie(session));
 
         mvc.perform(post(ENROLL_URL).cookie(session).param("code", "123456").with(csrf()))
@@ -261,10 +262,10 @@ class TotpEnrollmentSecurityIntegrationTest {
     @Test
     void 登録の途中はA07を開いてから15分の1秒前まで登録でき15分で再認証の案内へ移る() throws Exception {
         String email = unenrolledUser();
-        Cookie early = loginWithPassword(email);
+        Cookie early = logins().loginWithPassword(email);
         advance(Duration.ofMinutes(1));
         String key = manualKey(enrollPage(early));
-        Cookie late = loginWithPassword(otherUnenrolledUser());
+        Cookie late = logins().loginWithPassword(otherUnenrolledUser());
         enrollPage(late);
 
         advance(Duration.ofMinutes(1).plus(Duration.ofMinutes(15)).minusSeconds(1));
@@ -283,7 +284,7 @@ class TotpEnrollmentSecurityIntegrationTest {
 
     @Test
     void A07を開いていないpasswordの段は5分のまま() throws Exception {
-        Cookie session = loginWithPassword(unenrolledUser());
+        Cookie session = logins().loginWithPassword(unenrolledUser());
 
         advance(Duration.ofMinutes(5));
         mvc.perform(get(TOTP_URL).cookie(session)).andExpect(redirectedUrl("/session-expired"));
@@ -295,7 +296,7 @@ class TotpEnrollmentSecurityIntegrationTest {
         // 値を消すことと、暗号文の AAD（前の利用者の暗号文は後の利用者として使えない）の 2 つで守るので、片方を外しても通る
         String first = unenrolledUser();
         String second = unenrolledUser();
-        Cookie session = loginWithPassword(first);
+        Cookie session = logins().loginWithPassword(first);
         String firstKey = manualKey(enrollPage(session));
 
         Cookie switched = mvc.perform(post("/login")
@@ -323,7 +324,7 @@ class TotpEnrollmentSecurityIntegrationTest {
     @Test
     void 登録の途中のsessionで別の利用者がpasswordを送ると登録を始めた時刻を持ち越さずpasswordの段の5分になる() throws Exception {
         // T-102: 前の利用者の登録を始めた時刻が残ると、次の利用者の password の段が 15 分に延びる
-        Cookie session = loginWithPassword(unenrolledUser());
+        Cookie session = logins().loginWithPassword(unenrolledUser());
         enrollPage(session);
 
         advance(Duration.ofMinutes(1));
@@ -380,16 +381,6 @@ class TotpEnrollmentSecurityIntegrationTest {
                 UserStatus.ACTIVE,
                 Set.of(Role.SHIPPER)));
         return email;
-    }
-
-    private Cookie loginWithPassword(String email) throws Exception {
-        MvcResult result = mvc.perform(post("/login")
-                        .param("username", email)
-                        .param("password", PASSWORD)
-                        .with(csrf()))
-                .andExpect(redirectedUrl(TOTP_URL))
-                .andReturn();
-        return result.getResponse().getCookie(SESSION_COOKIE);
     }
 
     private String enrollPage(Cookie session) throws Exception {
@@ -451,5 +442,9 @@ class TotpEnrollmentSecurityIntegrationTest {
 
     private SpringSessionRows sessions() {
         return new SpringSessionRows(jdbc);
+    }
+
+    private IdentityLogins logins() {
+        return new IdentityLogins(mvc, jdbc, totpCredentials, totpCodes, clock);
     }
 }

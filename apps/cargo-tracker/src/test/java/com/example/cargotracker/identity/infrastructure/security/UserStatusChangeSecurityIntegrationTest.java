@@ -9,7 +9,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.example.cargotracker.identity.AdministrationFixtures;
-import com.example.cargotracker.identity.AuthenticationFactorFixtures;
+import com.example.cargotracker.identity.IdentityLogins;
 import com.example.cargotracker.identity.SpringSessionRows;
 import com.example.cargotracker.identity.domain.model.aggregates.Company;
 import com.example.cargotracker.identity.domain.model.aggregates.TotpCredential;
@@ -49,10 +49,8 @@ import org.springframework.test.web.servlet.ResultActions;
 class UserStatusChangeSecurityIntegrationTest extends IdentitySpyIntegrationTestBase {
 
     private static final String PASSWORD = "correct horse battery staple";
-    private static final String SESSION_COOKIE = "SESSION";
     private static final Instant LOGIN_AT = Instant.parse("2026-10-17T00:00:00Z");
     private static final byte[] TOTP_SECRET = "12345678901234567890".getBytes(StandardCharsets.US_ASCII);
-    private static final String TOTP_URL = "/login/totp";
     private static final String USERS_URL = "/staff/users";
     private static final String EXPIRED_URL = "/session-expired";
     private static final String SUSPENDED = "SUSPENDED";
@@ -93,9 +91,9 @@ class UserStatusChangeSecurityIntegrationTest extends IdentitySpyIntegrationTest
 
     @Test
     void 停止の確定の後に相手の既存のsessionの次のrequestはA03に移りSESSION_REVOKEDが残る() throws Exception {
-        Cookie admin = login(user(operator, Role.SYSTEM_ADMIN));
+        Cookie admin = logins().login(user(operator, Role.SYSTEM_ADMIN));
         String target = user(shipper, Role.SHIPPER);
-        Cookie targetSession = login(target);
+        Cookie targetSession = logins().login(target);
         mvc.perform(get("/customer/transport-requests").cookie(targetSession)).andExpect(status().isOk());
 
         postStatus(admin, target, SUSPENDED, TRANSFERRED, "0").andExpect(redirectedUrl(detailUrl(target)));
@@ -108,9 +106,9 @@ class UserStatusChangeSecurityIntegrationTest extends IdentitySpyIntegrationTest
 
     @Test
     void 停止した利用者はログインできず再開するとログインでき過去の監査の行は残る() throws Exception {
-        Cookie admin = login(user(operator, Role.SYSTEM_ADMIN));
+        Cookie admin = logins().login(user(operator, Role.SYSTEM_ADMIN));
         String target = user(operator, Role.SALES);
-        login(target);
+        logins().login(target);
         java.util.List<UUID> before = auditIdsByActor(target);
         assertThat(before).as("相手のログインの記録がある").isNotEmpty();
 
@@ -124,7 +122,7 @@ class UserStatusChangeSecurityIntegrationTest extends IdentitySpyIntegrationTest
 
         assertThat(statusOf(target)).containsEntry("status", ACTIVE).containsEntry("version", 2L);
         assertThat(audits(target, "USER_REACTIVATED")).isEqualTo(1);
-        login(target);
+        logins().login(target);
         assertThat(auditIdsByActor(target)).as("相手の過去の操作の記録は残る（AC5）").containsAll(before);
     }
 
@@ -133,7 +131,7 @@ class UserStatusChangeSecurityIntegrationTest extends IdentitySpyIntegrationTest
     @Test
     void 自分の利用状態の確定は拒み何も書かない() throws Exception {
         String admin = user(operator, Role.SYSTEM_ADMIN);
-        Cookie session = login(admin);
+        Cookie session = logins().login(admin);
 
         postStatus(session, admin, SUSPENDED, TRANSFERRED, "0").andExpect(status().isOk());
 
@@ -143,7 +141,7 @@ class UserStatusChangeSecurityIntegrationTest extends IdentitySpyIntegrationTest
 
     @Test
     void 監督の役割を持つ利用者の停止と再開の確定は拒み何も書かない() throws Exception {
-        Cookie session = login(user(operator, Role.SYSTEM_ADMIN));
+        Cookie session = logins().login(user(operator, Role.SYSTEM_ADMIN));
         String auditor = user(operator, Role.AUDITOR);
         String otherAdmin = user(operator, Role.SYSTEM_ADMIN);
         jdbc.update("UPDATE identity.app_user SET status = 'SUSPENDED' WHERE email = ?", otherAdmin);
@@ -172,7 +170,7 @@ class UserStatusChangeSecurityIntegrationTest extends IdentitySpyIntegrationTest
     }
 
     private void assertRefusedWithoutWriting(String to, String reason, String version) throws Exception {
-        Cookie session = login(user(operator, Role.SYSTEM_ADMIN));
+        Cookie session = logins().login(user(operator, Role.SYSTEM_ADMIN));
         String target = user(operator, Role.SALES);
 
         postStatus(session, target, to, reason, version).andExpect(status().isOk());
@@ -185,9 +183,9 @@ class UserStatusChangeSecurityIntegrationTest extends IdentitySpyIntegrationTest
 
     @Test
     void 相手が操作しないうちに停止して再開すると前のsessionは使えない() throws Exception {
-        Cookie admin = login(user(operator, Role.SYSTEM_ADMIN));
+        Cookie admin = logins().login(user(operator, Role.SYSTEM_ADMIN));
         String target = user(operator, Role.SALES);
-        Cookie targetSession = login(target);
+        Cookie targetSession = logins().login(target);
         SpringSessionRows sessions = new SpringSessionRows(jdbc);
 
         postStatus(admin, target, SUSPENDED, "EMERGENCY", "0").andExpect(status().is3xxRedirection());
@@ -203,7 +201,7 @@ class UserStatusChangeSecurityIntegrationTest extends IdentitySpyIntegrationTest
 
     @Test
     void 停止では相手の未使用の再設定のトークンを無効にする() throws Exception {
-        Cookie admin = login(user(operator, Role.SYSTEM_ADMIN));
+        Cookie admin = logins().login(user(operator, Role.SYSTEM_ADMIN));
         String target = user(operator, Role.SALES);
         UUID token = UUID.randomUUID();
         jdbc.update(
@@ -212,7 +210,7 @@ class UserStatusChangeSecurityIntegrationTest extends IdentitySpyIntegrationTest
                         + " VALUES (?, ?, ?, ?, ?, ?)",
                 token,
                 UUID.randomUUID(),
-                userIdOf(target).value(),
+                logins().userIdOf(target).value(),
                 "hash-" + token,
                 java.sql.Timestamp.from(clock.instant()),
                 java.sql.Timestamp.from(clock.instant().plusSeconds(1800)));
@@ -229,7 +227,7 @@ class UserStatusChangeSecurityIntegrationTest extends IdentitySpyIntegrationTest
 
     @Test
     void 知らない状態と理由の名前と再開に理由を付けた送信は400() throws Exception {
-        Cookie session = login(user(operator, Role.SYSTEM_ADMIN));
+        Cookie session = logins().login(user(operator, Role.SYSTEM_ADMIN));
         String target = user(operator, Role.SALES);
         String url = detailUrl(target) + "/status-changes/confirmation";
 
@@ -246,7 +244,7 @@ class UserStatusChangeSecurityIntegrationTest extends IdentitySpyIntegrationTest
     @Test
     void システム管理者のほかの役割は確定できない() throws Exception {
         String target = user(operator, Role.SALES);
-        Cookie session = login(user(operator, Role.CUSTOMER_SUPPORT));
+        Cookie session = logins().login(user(operator, Role.CUSTOMER_SUPPORT));
 
         postStatus(session, target, SUSPENDED, TRANSFERRED, "0").andExpect(status().isForbidden());
 
@@ -255,7 +253,7 @@ class UserStatusChangeSecurityIntegrationTest extends IdentitySpyIntegrationTest
 
     @Test
     void 確定のPOSTにもCSRFのトークンが要る() throws Exception {
-        Cookie session = login(user(operator, Role.SYSTEM_ADMIN));
+        Cookie session = logins().login(user(operator, Role.SYSTEM_ADMIN));
         String target = user(operator, Role.SALES);
 
         MvcResult rejected = mvc.perform(post(detailUrl(target) + "/status-changes/confirmation")
@@ -277,7 +275,7 @@ class UserStatusChangeSecurityIntegrationTest extends IdentitySpyIntegrationTest
     void 範囲外の利用者の確認も確定も404で確定の試行だけが1行残り利用状態は変わらない() throws Exception {
         Company outside = Company.of(new CompanyId(UUID.randomUUID()), "範囲外の会社", CompanyKind.OPERATOR, true);
         companies.add(outside);
-        Cookie session = login(user(operator, Role.SYSTEM_ADMIN));
+        Cookie session = logins().login(user(operator, Role.SYSTEM_ADMIN));
         String stranger = user(outside, Role.SALES);
 
         mvc.perform(get(detailUrl(stranger) + "/status-changes/confirmation")
@@ -295,7 +293,7 @@ class UserStatusChangeSecurityIntegrationTest extends IdentitySpyIntegrationTest
 
     @Test
     void 受け付けられる停止の確認のGETは何も書かない() throws Exception {
-        Cookie session = login(user(operator, Role.SYSTEM_ADMIN));
+        Cookie session = logins().login(user(operator, Role.SYSTEM_ADMIN));
         String target = user(operator, Role.SALES);
 
         mvc.perform(get(detailUrl(target) + "/status-changes/confirmation")
@@ -314,8 +312,8 @@ class UserStatusChangeSecurityIntegrationTest extends IdentitySpyIntegrationTest
         Company consignee = Company.of(new CompanyId(UUID.randomUUID()), "荷受人 A", CompanyKind.CONSIGNEE, true);
         companies.add(consignee);
         String admin = user(operator, Role.SYSTEM_ADMIN);
-        AdministrationFixtures.assignCompany(jdbc, userIdOf(admin), consignee.id());
-        Cookie session = login(admin);
+        AdministrationFixtures.assignCompany(jdbc, logins().userIdOf(admin), consignee.id());
+        Cookie session = logins().login(admin);
         String target = user(consignee, Role.SHIPPER);
 
         postStatus(session, target, SUSPENDED, "EMERGENCY", "0").andExpect(redirectedUrl(detailUrl(target)));
@@ -326,7 +324,7 @@ class UserStatusChangeSecurityIntegrationTest extends IdentitySpyIntegrationTest
     @Test
     void 詳細を読んだ後に管理範囲から外れた確認は404で何も書かず確定は404で試行を1行書く() throws Exception {
         String admin = user(operator, Role.SYSTEM_ADMIN);
-        Cookie session = login(admin);
+        Cookie session = logins().login(admin);
         String target = user(operator, Role.SALES);
         // 1 回目（controller の詳細の読み出し）は範囲内、2 回目（利用状態の変更の判定）は範囲外
         doReturn(new AdministrationScope(Set.of(operator.id())))
@@ -334,7 +332,7 @@ class UserStatusChangeSecurityIntegrationTest extends IdentitySpyIntegrationTest
                 .doReturn(new AdministrationScope(Set.of(operator.id())))
                 .doReturn(new AdministrationScope(Set.of()))
                 .when(assignments)
-                .scopeOf(userIdOf(admin));
+                .scopeOf(logins().userIdOf(admin));
 
         mvc.perform(get(detailUrl(target) + "/status-changes/confirmation")
                         .cookie(session)
@@ -353,7 +351,7 @@ class UserStatusChangeSecurityIntegrationTest extends IdentitySpyIntegrationTest
     void 範囲外の利用者への版の誤った確定も試行を記録してから404にする() throws Exception {
         Company outside = Company.of(new CompanyId(UUID.randomUUID()), "範囲外の会社", CompanyKind.OPERATOR, true);
         companies.add(outside);
-        Cookie session = login(user(operator, Role.SYSTEM_ADMIN));
+        Cookie session = logins().login(user(operator, Role.SYSTEM_ADMIN));
         String stranger = user(outside, Role.SALES);
 
         postStatus(session, stranger, SUSPENDED, TRANSFERRED, "x").andExpect(status().isNotFound());
@@ -363,7 +361,7 @@ class UserStatusChangeSecurityIntegrationTest extends IdentitySpyIntegrationTest
 
     @Test
     void 範囲内の利用者への版の誤った確定と詳細の知らない理由は400() throws Exception {
-        Cookie session = login(user(operator, Role.SYSTEM_ADMIN));
+        Cookie session = logins().login(user(operator, Role.SYSTEM_ADMIN));
         String target = user(operator, Role.SALES);
 
         postStatus(session, target, SUSPENDED, TRANSFERRED, "x").andExpect(status().isBadRequest());
@@ -389,7 +387,7 @@ class UserStatusChangeSecurityIntegrationTest extends IdentitySpyIntegrationTest
     }
 
     private String detailUrl(String email) {
-        return USERS_URL + "/" + userIdOf(email).value();
+        return USERS_URL + "/" + logins().userIdOf(email).value();
     }
 
     private Map<String, Object> statusOf(String email) {
@@ -401,7 +399,7 @@ class UserStatusChangeSecurityIntegrationTest extends IdentitySpyIntegrationTest
                 "SELECT count(*) FROM identity.audit_record WHERE action = ? AND target_id = ?",
                 Integer.class,
                 action,
-                userIdOf(email).value().toString());
+                logins().userIdOf(email).value().toString());
     }
 
     private int statusAudits(String email) {
@@ -416,13 +414,13 @@ class UserStatusChangeSecurityIntegrationTest extends IdentitySpyIntegrationTest
         return jdbc.queryForList(
                 "SELECT id FROM identity.audit_record WHERE actor_user_id = ?",
                 UUID.class,
-                userIdOf(email).value());
+                logins().userIdOf(email).value());
     }
 
     private java.util.List<Map<String, Object>> revocations(String email) {
         return jdbc.queryForList(
                 "SELECT result, reason FROM identity.audit_record WHERE action = 'SESSION_REVOKED' AND actor_user_id = ?",
-                userIdOf(email).value());
+                logins().userIdOf(email).value());
     }
 
     private String user(Company company, Role role) {
@@ -445,42 +443,7 @@ class UserStatusChangeSecurityIntegrationTest extends IdentitySpyIntegrationTest
         return email;
     }
 
-    private Cookie login(String email) throws Exception {
-        MvcResult password = mvc.perform(post("/login")
-                        .param("username", email)
-                        .param("password", PASSWORD)
-                        .with(csrf()))
-                .andExpect(redirectedUrl(TOTP_URL))
-                .andReturn();
-        MvcResult totp = mvc.perform(post(TOTP_URL)
-                        .cookie(sessionOf(password))
-                        .param("code", currentCode(email))
-                        .with(csrf()))
-                .andExpect(status().is3xxRedirection())
-                .andReturn();
-        assertThat(totp.getResponse().getRedirectedUrl()).doesNotContain("error");
-        // 同じ利用者が同じ刻みの間にログインし直せるよう、テストの準備として使った刻みを戻す（本体の再利用の拒否は変えない。画面の層と同じ）
-        AuthenticationFactorFixtures.resetTotpStep(jdbc, userIdOf(email));
-        return sessionOf(totp);
-    }
-
-    private String currentCode(String email) {
-        TotpCredential credential =
-                totpCredentials.findByUserId(userIdOf(email)).orElseThrow();
-        return totpCodes.code(
-                credential.userId(), credential.secret(), TotpCredential.stepAt(new UtcInstant(clock.instant())));
-    }
-
-    private static Cookie sessionOf(MvcResult result) {
-        Cookie cookie = result.getResponse().getCookie(SESSION_COOKIE);
-        assertThat(cookie).as("session の Cookie").isNotNull();
-        return cookie;
-    }
-
-    private UserId userIdOf(String email) {
-        return jdbc.queryForObject(
-                "SELECT id FROM identity.app_user WHERE email = ?",
-                (rs, n) -> new UserId(rs.getObject("id", UUID.class)),
-                email);
+    private IdentityLogins logins() {
+        return new IdentityLogins(mvc, jdbc, totpCredentials, totpCodes, clock);
     }
 }

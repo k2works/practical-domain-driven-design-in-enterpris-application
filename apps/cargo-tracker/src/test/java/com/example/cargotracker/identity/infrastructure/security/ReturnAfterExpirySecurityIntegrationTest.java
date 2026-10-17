@@ -9,6 +9,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.example.cargotracker.identity.AuthenticationFactorFixtures;
 import com.example.cargotracker.identity.IdentityIntegrationTest;
+import com.example.cargotracker.identity.IdentityLogins;
 import com.example.cargotracker.identity.SpringSessionRows;
 import com.example.cargotracker.identity.domain.model.aggregates.Company;
 import com.example.cargotracker.identity.domain.model.aggregates.CompanyRepository;
@@ -336,7 +337,7 @@ class ReturnAfterExpirySecurityIntegrationTest {
         AuthenticationFactorFixtures.resetTotpStep(jdbc, who);
         return mvc.perform(post(TOTP_URL)
                         .cookie(passwordStage)
-                        .param("code", currentCode(who))
+                        .param("code", logins().currentCode(who))
                         .with(csrf()))
                 .andExpect(status().is3xxRedirection())
                 .andReturn();
@@ -368,15 +369,6 @@ class ReturnAfterExpirySecurityIntegrationTest {
                 credential.userId(),
                 credential.secret(),
                 TotpCredential.stepAt(new UtcInstant(clock.instant())) + steps);
-    }
-
-    private String currentCode(String who) {
-        TotpCredential credential = totpCredentials
-                .findByUserId(
-                        users.findByEmail(EmailAddress.of(who)).orElseThrow().id())
-                .orElseThrow();
-        return totpCodes.code(
-                credential.userId(), credential.secret(), TotpCredential.stepAt(new UtcInstant(clock.instant())));
     }
 
     private String shipper() {
@@ -435,5 +427,9 @@ class ReturnAfterExpirySecurityIntegrationTest {
 
     private SpringSessionRows sessions() {
         return new SpringSessionRows(jdbc);
+    }
+
+    private IdentityLogins logins() {
+        return new IdentityLogins(mvc, jdbc, totpCredentials, totpCodes, clock);
     }
 }

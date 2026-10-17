@@ -11,6 +11,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 
+import com.example.cargotracker.identity.IdentityLogins;
 import com.example.cargotracker.identity.LogCapture;
 import com.example.cargotracker.identity.domain.model.aggregates.AuditRecord;
 import com.example.cargotracker.identity.domain.model.aggregates.Company;
@@ -56,7 +57,6 @@ class AuthenticationErrorHandlingIntegrationTest extends IdentitySpyIntegrationT
 
     private static final String PASSWORD = "correct horse battery staple";
     private static final Instant NOW = Instant.parse("2026-10-14T00:00:00Z");
-    private static final String SESSION_COOKIE = "SESSION";
     private static final String TOTP_URL = "/login/totp";
     private static final String RECOVERY_CODE = "1a2b-3c4d";
     private static final String SECOND_RECOVERY_CODE = "5e6f-7a8b";
@@ -99,7 +99,7 @@ class AuthenticationErrorHandlingIntegrationTest extends IdentitySpyIntegrationT
     @Test
     void 実装の誤りは500にしログインを通さず利用者の誤りとして数えない() throws Exception {
         String email = user();
-        Cookie session = loginWithPassword(email);
+        Cookie session = logins().loginWithPassword(email);
         doThrow(new IllegalArgumentException("値の検証の誤り")).when(totpCodes).code(any(), any(), anyLong());
         RequestBuilder code = totpCode(session);
 
@@ -178,7 +178,7 @@ class AuthenticationErrorHandlingIntegrationTest extends IdentitySpyIntegrationT
     @Test
     void ロックの読み出しのDBの誤りはpasswordの段でもTOTPの段でも500にする() throws Exception {
         String email = user();
-        Cookie session = loginWithPassword(email);
+        Cookie session = logins().loginWithPassword(email);
         doThrow(new DataAccessResourceFailureException("DB の誤り"))
                 .when(loginFailures)
                 .findByUserId(any());
@@ -208,7 +208,7 @@ class AuthenticationErrorHandlingIntegrationTest extends IdentitySpyIntegrationT
         assertThat(failures(email))
                 .as("誤った password で 1 回と数える（password の段の成功では戻さない）")
                 .isEqualTo(1);
-        Cookie session = loginWithPassword(email);
+        Cookie session = logins().loginWithPassword(email);
         doThrow(new DataAccessResourceFailureException("監査の表に届かない"))
                 .when(auditRecords)
                 .append(argThat(written -> written.action() == AuditAction.LOGIN_SUCCEEDED));
@@ -296,17 +296,6 @@ class AuthenticationErrorHandlingIntegrationTest extends IdentitySpyIntegrationT
         return email;
     }
 
-    private Cookie loginWithPassword(String email) throws Exception {
-        return mvc.perform(post("/login")
-                        .param("username", email)
-                        .param("password", PASSWORD)
-                        .with(csrf()))
-                .andExpect(redirectedUrl(TOTP_URL))
-                .andReturn()
-                .getResponse()
-                .getCookie(SESSION_COOKIE);
-    }
-
     private UserId userIdOf(String email) {
         return new UserId(jdbc.queryForObject("SELECT id FROM identity.app_user WHERE email = ?", UUID.class, email));
     }
@@ -330,5 +319,9 @@ class AuthenticationErrorHandlingIntegrationTest extends IdentitySpyIntegrationT
                 "SELECT reason FROM identity.audit_record WHERE actor_user_id = ? AND action = 'LOGIN_FAILED'",
                 String.class,
                 userIdOf(email).value());
+    }
+
+    private IdentityLogins logins() {
+        return new IdentityLogins(mvc, jdbc, totpCredentials, totpCodes, clock);
     }
 }

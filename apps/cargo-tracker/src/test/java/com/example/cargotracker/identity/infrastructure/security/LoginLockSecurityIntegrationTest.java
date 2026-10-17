@@ -8,6 +8,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.example.cargotracker.identity.IdentityIntegrationTest;
+import com.example.cargotracker.identity.IdentityLogins;
 import com.example.cargotracker.identity.domain.model.aggregates.Company;
 import com.example.cargotracker.identity.domain.model.aggregates.CompanyRepository;
 import com.example.cargotracker.identity.domain.model.aggregates.LoginFailureRepository;
@@ -117,7 +118,7 @@ class LoginLockSecurityIntegrationTest {
         String email = user();
         failPassword(email, 4);
         assertThat(failures(email)).isEqualTo(4);
-        loginWithPassword(email);
+        logins().loginWithPassword(email);
 
         String other = user();
         failPassword(other, 5);
@@ -138,7 +139,7 @@ class LoginLockSecurityIntegrationTest {
         at(Duration.ofMinutes(15).minusSeconds(1));
         postPassword(email, PASSWORD).andExpect(redirectedUrl(LOGIN_ERROR));
         at(Duration.ofMinutes(15));
-        loginWithPassword(email);
+        logins().loginWithPassword(email);
         failPassword(email, 1);
 
         assertThat(failures(email)).as("解けた後は 1 回目から").isEqualTo(1);
@@ -149,17 +150,17 @@ class LoginLockSecurityIntegrationTest {
         String email = userWithRecoveryCodes();
         failPassword(email, 2);
         mvc.perform(post(TOTP_URL)
-                        .cookie(loginWithPassword(email))
+                        .cookie(logins().loginWithPassword(email))
                         .param("code", wrongCode(email))
                         .with(csrf()))
                 .andExpect(redirectedUrl(TOTP_ERROR));
         mvc.perform(post(TOTP_URL)
-                        .cookie(loginWithPassword(email))
+                        .cookie(logins().loginWithPassword(email))
                         .param("code", wrongCode(email))
                         .with(csrf()))
                 .andExpect(redirectedUrl(TOTP_ERROR));
         mvc.perform(post(TOTP_URL)
-                        .cookie(loginWithPassword(email))
+                        .cookie(logins().loginWithPassword(email))
                         .param("recoveryCode", "ffff-ffff")
                         .with(csrf()))
                 .andExpect(redirectedUrl(TOTP_ERROR));
@@ -250,7 +251,7 @@ class LoginLockSecurityIntegrationTest {
         String byTotp = user();
         failPassword(byTotp, 4);
         mvc.perform(post(TOTP_URL)
-                        .cookie(loginWithPassword(byTotp))
+                        .cookie(logins().loginWithPassword(byTotp))
                         .param("code", currentCode(byTotp))
                         .with(csrf()))
                 .andExpect(redirectedUrl("/"));
@@ -259,7 +260,7 @@ class LoginLockSecurityIntegrationTest {
         String byRecovery = userWithRecoveryCodes();
         failPassword(byRecovery, 4);
         mvc.perform(post(TOTP_URL)
-                        .cookie(loginWithPassword(byRecovery))
+                        .cookie(logins().loginWithPassword(byRecovery))
                         .param("recoveryCode", RECOVERY_CODE)
                         .with(csrf()))
                 // 回復コードで終えたログインは認証アプリの再登録（A-08）へ移る（Bolt 33b）
@@ -272,12 +273,12 @@ class LoginLockSecurityIntegrationTest {
         String email = user();
         for (int i = 0; i < 4; i++) {
             mvc.perform(post(TOTP_URL)
-                            .cookie(loginWithPassword(email))
+                            .cookie(logins().loginWithPassword(email))
                             .param("code", wrongCode(email))
                             .with(csrf()))
                     .andExpect(redirectedUrl(TOTP_ERROR));
         }
-        Cookie passwordStage = loginWithPassword(email);
+        Cookie passwordStage = logins().loginWithPassword(email);
         assertThat(failures(email)).as("password の段の成功では戻さない").isEqualTo(4);
 
         mvc.perform(post(TOTP_URL)
@@ -295,9 +296,9 @@ class LoginLockSecurityIntegrationTest {
     @Test
     void passwordの段の後に別のsessionの失敗でロックされたら正しいTOTPも回復コードも拒む() throws Exception {
         String email = userWithRecoveryCodes();
-        Cookie first = loginWithPassword(email);
-        Cookie second = loginWithPassword(email);
-        Cookie third = loginWithPassword(email);
+        Cookie first = logins().loginWithPassword(email);
+        Cookie second = logins().loginWithPassword(email);
+        Cookie third = logins().loginWithPassword(email);
         failPassword(email, 5);
 
         mvc.perform(post(TOTP_URL)
@@ -344,7 +345,7 @@ class LoginLockSecurityIntegrationTest {
         failPassword(other, 4);
 
         assertThat(failures(email)).isZero();
-        loginWithPassword(email);
+        logins().loginWithPassword(email);
     }
 
     // --- 補助 ---
@@ -394,14 +395,6 @@ class LoginLockSecurityIntegrationTest {
         for (int i = 0; i < times; i++) {
             postPassword(email, WRONG_PASSWORD).andExpect(redirectedUrl(LOGIN_ERROR));
         }
-    }
-
-    private Cookie loginWithPassword(String email) throws Exception {
-        return postPassword(email, PASSWORD)
-                .andExpect(redirectedUrl(TOTP_URL))
-                .andReturn()
-                .getResponse()
-                .getCookie(SESSION_COOKIE);
     }
 
     /** 送信の後に移った先の画面（A-01 の誤りの文言）を開いた本文。 */
@@ -456,5 +449,9 @@ class LoginLockSecurityIntegrationTest {
                 "SELECT reason FROM identity.audit_record WHERE actor_user_id = ? AND action = 'LOGIN_FAILED'",
                 String.class,
                 userIdOf(email).value());
+    }
+
+    private IdentityLogins logins() {
+        return new IdentityLogins(mvc, jdbc, totpCredentials, totpCodes, clock);
     }
 }

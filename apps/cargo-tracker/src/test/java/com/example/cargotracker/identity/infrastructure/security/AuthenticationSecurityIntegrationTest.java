@@ -1,5 +1,6 @@
 package com.example.cargotracker.identity.infrastructure.security;
 
+import static com.example.cargotracker.identity.IdentityLogins.sessionOf;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -14,6 +15,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.example.cargotracker.identity.AuditRecordRows;
 import com.example.cargotracker.identity.AuthenticationFactorFixtures;
 import com.example.cargotracker.identity.IdentityIntegrationTest;
+import com.example.cargotracker.identity.IdentityLogins;
 import com.example.cargotracker.identity.LogCapture;
 import com.example.cargotracker.identity.SpringSessionRows;
 import com.example.cargotracker.identity.application.internal.session.SessionKeys;
@@ -171,7 +173,7 @@ class AuthenticationSecurityIntegrationTest {
                 .andReturn());
         MvcResult totp = mvc.perform(post(TOTP_URL)
                         .cookie(passwordStage)
-                        .param("code", currentCode(email))
+                        .param("code", logins().currentCode(email))
                         .with(csrf()))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/"))
@@ -188,7 +190,7 @@ class AuthenticationSecurityIntegrationTest {
 
     @Test
     void passwordだけでは業務の画面を開けずA02へ導かれる() throws Exception {
-        Cookie session = loginWithPassword(shipper(UserStatus.ACTIVE));
+        Cookie session = logins().loginWithPassword(shipper(UserStatus.ACTIVE));
 
         mvc.perform(get("/customer/transport-requests").cookie(session))
                 .andExpect(status().is3xxRedirection())
@@ -207,12 +209,12 @@ class AuthenticationSecurityIntegrationTest {
     void passwordの段の主体は画面のモデルに業務の利用者として置かず二つの要素がそろうと置く() throws Exception {
         // ADR-012 の見直しの 4（Bolt 31c）。「ないこと」と並べて「あるべきもの」を確かめる（T-106）
         String email = shipper(UserStatus.ACTIVE);
-        Cookie session = loginWithPassword(email);
+        Cookie session = logins().loginWithPassword(email);
 
         mvc.perform(get(TOTP_URL).cookie(session))
                 .andExpect(status().isOk())
                 .andExpect(model().attribute("currentActor", Matchers.nullValue()));
-        Cookie full = submitTotp(session, currentCode(email));
+        Cookie full = submitTotp(session, logins().currentCode(email));
         mvc.perform(get("/customer/transport-requests").cookie(full))
                 .andExpect(status().isOk())
                 .andExpect(model().attribute("currentActor", Matchers.notNullValue()));
@@ -221,16 +223,16 @@ class AuthenticationSecurityIntegrationTest {
     @Test
     void A02のPOSTにもCSRFのトークンが要る() throws Exception {
         String email = shipper(UserStatus.ACTIVE);
-        Cookie session = loginWithPassword(email);
+        Cookie session = logins().loginWithPassword(email);
 
         // A-02 の画面を開くと session に CSRF のトークンができる。トークンを付けない送信と誤ったトークンの送信は拒否する
         mvc.perform(get(TOTP_URL).cookie(session)).andExpect(status().isOk());
 
-        mvc.perform(post(TOTP_URL).cookie(session).param("code", currentCode(email)))
+        mvc.perform(post(TOTP_URL).cookie(session).param("code", logins().currentCode(email)))
                 .andExpect(status().isForbidden());
         mvc.perform(post(TOTP_URL)
                         .cookie(session)
-                        .param("code", currentCode(email))
+                        .param("code", logins().currentCode(email))
                         .with(csrf().useInvalidToken()))
                 .andExpect(status().isForbidden());
         mvc.perform(get("/customer/transport-requests").cookie(session)).andExpect(redirectsToTotp());
@@ -240,7 +242,7 @@ class AuthenticationSecurityIntegrationTest {
     void passwordの段を経ずにTOTPを送っても通らず認証コードの誤りの文言も出さない() throws Exception {
         String email = shipper(UserStatus.ACTIVE);
 
-        mvc.perform(post(TOTP_URL).param("code", currentCode(email)).with(csrf()))
+        mvc.perform(post(TOTP_URL).param("code", logins().currentCode(email)).with(csrf()))
                 .andExpect(redirectedUrl("/login"));
 
         mvc.perform(get(TOTP_URL)).andExpect(redirectedUrl("/login"));
@@ -249,7 +251,7 @@ class AuthenticationSecurityIntegrationTest {
     @Test
     void 誤ったTOTPではpasswordの要素を捨ててA01に戻る() throws Exception {
         String email = shipper(UserStatus.ACTIVE);
-        Cookie session = loginWithPassword(email);
+        Cookie session = logins().loginWithPassword(email);
 
         mvc.perform(post(TOTP_URL)
                         .cookie(session)
@@ -270,11 +272,11 @@ class AuthenticationSecurityIntegrationTest {
     @Test
     void 一度通ったコードは同じ刻みの間にもう一度は使えない() throws Exception {
         String email = shipper(UserStatus.ACTIVE);
-        String code = currentCode(email);
-        submitTotp(loginWithPassword(email), code);
+        String code = logins().currentCode(email);
+        submitTotp(logins().loginWithPassword(email), code);
 
         mvc.perform(post(TOTP_URL)
-                        .cookie(loginWithPassword(email))
+                        .cookie(logins().loginWithPassword(email))
                         .param("code", code)
                         .with(csrf()))
                 .andExpect(redirectedUrl("/login?totp-error"));
@@ -284,7 +286,7 @@ class AuthenticationSecurityIntegrationTest {
     void 別の利用者のpasswordを送ると先の利用者のTOTPの要素は引き継がれない() throws Exception {
         String first = shipper(UserStatus.ACTIVE);
         String second = shipper(UserStatus.ACTIVE);
-        Cookie session = login(first);
+        Cookie session = logins().login(first);
 
         Cookie switched = sessionOf(mvc.perform(post("/login")
                         .cookie(session)
@@ -301,7 +303,7 @@ class AuthenticationSecurityIntegrationTest {
     void 利用者を切り替えたpasswordの段は前の利用者の時刻を引き継がず5分で失効しTOTPから8時間を数え直す() throws Exception {
         String first = shipper(UserStatus.ACTIVE);
         String second = shipper(UserStatus.ACTIVE);
-        Cookie session = login(first);
+        Cookie session = logins().login(first);
         advance(Duration.ofHours(7));
         Cookie switched = sessionOf(mvc.perform(post("/login")
                         .cookie(session)
@@ -312,13 +314,13 @@ class AuthenticationSecurityIntegrationTest {
                 .andReturn());
 
         advance(Duration.ofHours(7).plusMinutes(4));
-        Cookie secondSession = submitTotp(switched, currentCode(second));
+        Cookie secondSession = submitTotp(switched, logins().currentCode(second));
 
         advance(Duration.ofHours(8).plusMinutes(1));
         // 前の利用者の起点（0 時）から 8 時間を過ぎても、後の利用者の TOTP の時刻（7 時間 4 分）から数える
         mvc.perform(get("/customer/transport-requests").cookie(secondSession)).andExpect(status().isOk());
 
-        Cookie other = login(first);
+        Cookie other = logins().login(first);
         Cookie switchedAgain = sessionOf(mvc.perform(post("/login")
                         .cookie(other)
                         .param("username", second)
@@ -353,17 +355,17 @@ class AuthenticationSecurityIntegrationTest {
     @Test
     void passwordの段は5分の1秒前までTOTPを送れ5分で再認証の案内へ移る() throws Exception {
         String email = shipper(UserStatus.ACTIVE);
-        Cookie early = loginWithPassword(email);
-        Cookie late = loginWithPassword(email);
+        Cookie early = logins().loginWithPassword(email);
+        Cookie late = logins().loginWithPassword(email);
 
         advance(Duration.ofMinutes(5).minusSeconds(1));
-        submitTotp(early, currentCode(email));
+        submitTotp(early, logins().currentCode(email));
 
         advance(Duration.ofMinutes(5));
         resetTotpStep(email);
         mvc.perform(post(TOTP_URL)
                         .cookie(late)
-                        .param("code", currentCode(email))
+                        .param("code", logins().currentCode(email))
                         .with(csrf()))
                 .andExpect(redirectedUrl("/session-expired"));
     }
@@ -371,9 +373,9 @@ class AuthenticationSecurityIntegrationTest {
     @Test
     void 最長8時間はTOTPが初めて通った時刻から数える() throws Exception {
         String email = shipper(UserStatus.ACTIVE);
-        Cookie passwordStage = loginWithPassword(email);
+        Cookie passwordStage = logins().loginWithPassword(email);
         advance(Duration.ofMinutes(4));
-        Cookie session = submitTotp(passwordStage, currentCode(email));
+        Cookie session = submitTotp(passwordStage, logins().currentCode(email));
 
         advance(Duration.ofHours(8));
         mvc.perform(get("/customer/transport-requests").cookie(session)).andExpect(status().isOk());
@@ -385,9 +387,9 @@ class AuthenticationSecurityIntegrationTest {
     @Test
     void 最長8時間はTOTPの時刻から数えて1秒前は使える() throws Exception {
         String email = shipper(UserStatus.ACTIVE);
-        Cookie passwordStage = loginWithPassword(email);
+        Cookie passwordStage = logins().loginWithPassword(email);
         advance(Duration.ofMinutes(4));
-        Cookie session = submitTotp(passwordStage, currentCode(email));
+        Cookie session = submitTotp(passwordStage, logins().currentCode(email));
 
         advance(Duration.ofMinutes(4).plus(Duration.ofHours(8)).minusSeconds(1));
         mvc.perform(get("/customer/transport-requests").cookie(session)).andExpect(status().isOk());
@@ -396,10 +398,10 @@ class AuthenticationSecurityIntegrationTest {
     @Test
     void 有効期間の中でTOTPを送り直しても8時間の起点は延びない() throws Exception {
         String email = shipper(UserStatus.ACTIVE);
-        Cookie session = login(email);
+        Cookie session = logins().login(email);
         advance(Duration.ofHours(7));
 
-        Cookie resent = submitTotp(session, currentCode(email));
+        Cookie resent = submitTotp(session, logins().currentCode(email));
 
         advance(Duration.ofHours(8));
         mvc.perform(get("/customer/transport-requests").cookie(resent)).andExpect(redirectedUrl("/session-expired"));
@@ -415,7 +417,7 @@ class AuthenticationSecurityIntegrationTest {
                         + " (SELECT secret_encrypted FROM identity.totp_credential WHERE user_id = ?) WHERE user_id = ?",
                 userIdOf(attacker).value(),
                 userIdOf(victim).value());
-        Cookie session = loginWithPassword(victim);
+        Cookie session = logins().loginWithPassword(victim);
         TotpCredential attackersCredential =
                 totpCredentials.findByUserId(userIdOf(attacker)).orElseThrow();
         String attackersCode = totpCodes.code(
@@ -433,7 +435,7 @@ class AuthenticationSecurityIntegrationTest {
     @Test
     void 秘密を復号できない利用者は500にせずA01に戻し監査記録に残す() throws Exception {
         String email = shipper(UserStatus.ACTIVE);
-        Cookie session = loginWithPassword(email);
+        Cookie session = logins().loginWithPassword(email);
         jdbc.update(
                 "UPDATE identity.totp_credential SET secret_encrypted = 'v9:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'"
                         + " WHERE user_id = ?",
@@ -460,7 +462,7 @@ class AuthenticationSecurityIntegrationTest {
     void 秘密を復号して誤ったコードを拒むときもログに秘密もコードも出さない() throws Exception {
         // ログの平文の見張り（Bolt 31d の開発レビュー）。秘密を実際に復号する場面で、ASCII と Base32 の両方の形を見る
         String email = shipper(UserStatus.ACTIVE);
-        Cookie session = loginWithPassword(email);
+        Cookie session = logins().loginWithPassword(email);
         String wrong = wrongCode(email);
 
         String logs;
@@ -490,12 +492,12 @@ class AuthenticationSecurityIntegrationTest {
     @Test
     void 期限切れのsessionにTOTPを送っても延びない() throws Exception {
         String email = shipper(UserStatus.ACTIVE);
-        Cookie session = login(email);
+        Cookie session = logins().login(email);
         advance(Duration.ofHours(8));
 
         mvc.perform(post(TOTP_URL)
                         .cookie(session)
-                        .param("code", currentCode(email))
+                        .param("code", logins().currentCode(email))
                         .with(csrf()))
                 .andExpect(redirectedUrl("/session-expired"));
         mvc.perform(get("/customer/transport-requests").cookie(session)).andExpect(redirectedUrl("/session-expired"));
@@ -506,12 +508,12 @@ class AuthenticationSecurityIntegrationTest {
     @Test
     void 八時間の起点はTOTPが通った時刻で監査記録はpasswordの段の後にログインの成功が並ぶ() throws Exception {
         String email = shipper(UserStatus.ACTIVE);
-        Cookie passwordStage = loginWithPassword(email);
+        Cookie passwordStage = logins().loginWithPassword(email);
         Instant totpAt = LOGIN_AT.plus(Duration.ofMinutes(2));
         advance(Duration.ofMinutes(2));
         resetTotpStep(email);
 
-        Cookie full = submitTotp(passwordStage, currentCode(email));
+        Cookie full = submitTotp(passwordStage, logins().currentCode(email));
 
         assertThat(sessions().attribute(full, SessionKeys.AUTHENTICATED_AT))
                 .as("8 時間の起点は TOTP が通った時刻（password の段の時刻でない。Bolt 31）")
@@ -530,7 +532,7 @@ class AuthenticationSecurityIntegrationTest {
     @Test
     void 誤ったTOTPは利用者と理由で失敗として監査記録に残り存在しない利用者としては数えない() throws Exception {
         String email = shipper(UserStatus.ACTIVE);
-        Cookie session = loginWithPassword(email);
+        Cookie session = logins().loginWithPassword(email);
         Integer unknownBefore = unknownUserFailures();
 
         mvc.perform(post(TOTP_URL)
@@ -550,7 +552,7 @@ class AuthenticationSecurityIntegrationTest {
     void TOTPを登録していない利用者がA02を経ずにコードを送ると登録していないという理由で監査記録に残る() throws Exception {
         // 確認ポイント 3（Bolt 31d）。利用者への応答は TOTP の誤りと同じ（AC2）
         String email = userWithoutTotp(shipperCompany, Role.SHIPPER);
-        Cookie session = loginWithPassword(email);
+        Cookie session = logins().loginWithPassword(email);
 
         mvc.perform(post(TOTP_URL).cookie(session).param("code", "123456").with(csrf()))
                 .andExpect(redirectedUrl("/login?totp-error"));
@@ -563,11 +565,11 @@ class AuthenticationSecurityIntegrationTest {
     @Test
     void 使ったコードの再利用は理由を分けて監査記録に残る() throws Exception {
         String email = shipper(UserStatus.ACTIVE);
-        String code = currentCode(email);
-        submitTotp(loginWithPassword(email), code);
+        String code = logins().currentCode(email);
+        submitTotp(logins().loginWithPassword(email), code);
 
         mvc.perform(post(TOTP_URL)
-                        .cookie(loginWithPassword(email))
+                        .cookie(logins().loginWithPassword(email))
                         .param("code", code)
                         .with(csrf()))
                 .andExpect(redirectedUrl("/login?totp-error"));
@@ -586,13 +588,14 @@ class AuthenticationSecurityIntegrationTest {
     @Test
     void 役割があってもTOTPの要素の欠けた主体は画面のどのURLも開けずA02へ導かれる() throws Exception {
         Map<Role, Cookie> passwordStage = new EnumMap<>(Role.class);
-        passwordStage.put(Role.SHIPPER, loginWithPassword(shipper(UserStatus.ACTIVE)));
-        passwordStage.put(Role.SALES, loginWithPassword(user(staffCompany(), Role.SALES, UserStatus.ACTIVE)));
+        passwordStage.put(Role.SHIPPER, logins().loginWithPassword(shipper(UserStatus.ACTIVE)));
+        passwordStage.put(Role.SALES, logins().loginWithPassword(user(staffCompany(), Role.SALES, UserStatus.ACTIVE)));
         passwordStage.put(
-                Role.ROUTE_DESIGNER, loginWithPassword(user(staffCompany(), Role.ROUTE_DESIGNER, UserStatus.ACTIVE)));
+                Role.ROUTE_DESIGNER,
+                logins().loginWithPassword(user(staffCompany(), Role.ROUTE_DESIGNER, UserStatus.ACTIVE)));
         passwordStage.put(
                 Role.TRACKING_MANAGER,
-                loginWithPassword(user(staffCompany(), Role.TRACKING_MANAGER, UserStatus.ACTIVE)));
+                logins().loginWithPassword(user(staffCompany(), Role.TRACKING_MANAGER, UserStatus.ACTIVE)));
         List<String> checked = new ArrayList<>();
 
         for (Map.Entry<RequestMappingInfo, HandlerMethod> entry :
@@ -623,7 +626,7 @@ class AuthenticationSecurityIntegrationTest {
 
     @Test
     void 営業担当者はログインすると社内のホームへ移る() throws Exception {
-        Cookie session = login(user(staffCompany(), Role.SALES, UserStatus.ACTIVE));
+        Cookie session = logins().login(user(staffCompany(), Role.SALES, UserStatus.ACTIVE));
 
         mvc.perform(get("/").cookie(session)).andExpect(redirectedUrl("/staff/transport-requests"));
     }
@@ -631,7 +634,7 @@ class AuthenticationSecurityIntegrationTest {
     @Test
     void 画面のまだない役割の利用者はログインできてもホームは権限なしになり行き先が循環しない() throws Exception {
         // 経路設計者は Bolt 17、追跡管理者は Bolt 26 でホームを持った。画面のまだない役割の例をデータ責任者にした
-        Cookie session = login(user(staffCompany(), Role.DATA_STEWARD, UserStatus.ACTIVE));
+        Cookie session = logins().login(user(staffCompany(), Role.DATA_STEWARD, UserStatus.ACTIVE));
 
         mvc.perform(get("/").cookie(session)).andExpect(status().isForbidden());
         mvc.perform(get("/staff/transport-requests").cookie(session)).andExpect(status().isForbidden());
@@ -641,7 +644,7 @@ class AuthenticationSecurityIntegrationTest {
 
     @Test
     void 追跡管理者はログインすると追跡一覧へ移りほかの役割の画面は開けない() throws Exception {
-        Cookie session = login(user(staffCompany(), Role.TRACKING_MANAGER, UserStatus.ACTIVE));
+        Cookie session = logins().login(user(staffCompany(), Role.TRACKING_MANAGER, UserStatus.ACTIVE));
 
         mvc.perform(get("/").cookie(session)).andExpect(redirectedUrl("/staff/tracking-records"));
         mvc.perform(get("/staff/tracking-records").cookie(session)).andExpect(status().isOk());
@@ -655,8 +658,8 @@ class AuthenticationSecurityIntegrationTest {
     @Test
     void 荷主担当者と営業担当者と経路設計者は追跡の画面を開けない() throws Exception {
         for (Role role : List.of(Role.SHIPPER, Role.SALES, Role.ROUTE_DESIGNER)) {
-            Cookie session =
-                    login(user(role == Role.SHIPPER ? shipperCompany : staffCompany(), role, UserStatus.ACTIVE));
+            Cookie session = logins().login(
+                            user(role == Role.SHIPPER ? shipperCompany : staffCompany(), role, UserStatus.ACTIVE));
 
             mvc.perform(get("/staff/tracking-records").cookie(session)).andExpect(status().isForbidden());
             mvc.perform(get("/staff/tracking-records/CTABCDEFGH2345").cookie(session))
@@ -691,7 +694,7 @@ class AuthenticationSecurityIntegrationTest {
                 Role.ROUTE_DESIGNER, Set.of("/staff/routing-cases"),
                 Role.TRACKING_MANAGER, Set.of("/staff/tracking-records"));
         for (Map.Entry<Role, String> home : homes.entrySet()) {
-            Cookie session = login(user(staffCompany(), home.getKey(), UserStatus.ACTIVE));
+            Cookie session = logins().login(user(staffCompany(), home.getKey(), UserStatus.ACTIVE));
             String page = mvc.perform(get(home.getValue()).cookie(session))
                     .andExpect(status().isOk())
                     .andReturn()
@@ -714,7 +717,7 @@ class AuthenticationSecurityIntegrationTest {
 
     @Test
     void 経路設計者はログインすると案件一覧へ移り営業の画面は開けない() throws Exception {
-        Cookie session = login(user(staffCompany(), Role.ROUTE_DESIGNER, UserStatus.ACTIVE));
+        Cookie session = logins().login(user(staffCompany(), Role.ROUTE_DESIGNER, UserStatus.ACTIVE));
 
         mvc.perform(get("/").cookie(session)).andExpect(redirectedUrl("/staff/routing-cases"));
         mvc.perform(get("/staff/routing-cases").cookie(session)).andExpect(status().isOk());
@@ -736,7 +739,7 @@ class AuthenticationSecurityIntegrationTest {
                 .andReturn();
         mvc.perform(post(TOTP_URL)
                         .cookie(sessionOf(password))
-                        .param("code", currentCode(email))
+                        .param("code", logins().currentCode(email))
                         .with(csrf()))
                 // Spring Security は保存した request へ戻すとき、目印の continue を付ける。TOTP の段の後に戻す
                 .andExpect(redirectedUrl("http://localhost/staff/kpi-observations?continue"));
@@ -758,14 +761,14 @@ class AuthenticationSecurityIntegrationTest {
         String local = "long-" + "x".repeat(150);
         String email = user(shipperCompany, Role.SHIPPER, UserStatus.ACTIVE, local + "@example.com");
 
-        login(email);
+        logins().login(email);
     }
 
     @Test
     void ログインの成功を監査記録に残す() throws Exception {
         String email = shipper(UserStatus.ACTIVE);
 
-        login(email);
+        logins().login(email);
 
         assertThat(auditOf(email))
                 .as("password の段と 2 つの要素がそろった段を分けて残す（ADR-012 の見直しの 1。同じ時刻なので順は問わない）")
@@ -780,7 +783,7 @@ class AuthenticationSecurityIntegrationTest {
         UUID userId =
                 users.findByEmail(EmailAddress.of(email)).orElseThrow().id().value();
 
-        login(email);
+        logins().login(email);
 
         Map<String, Object> row = jdbc.queryForMap(
                 "SELECT actor_company_id, occurred_at FROM identity.audit_record WHERE actor_user_id = ?"
@@ -855,7 +858,7 @@ class AuthenticationSecurityIntegrationTest {
     @Test
     void ログアウトするとログインへ移りsessionが使えなくなり監査記録に残す() throws Exception {
         String email = shipper(UserStatus.ACTIVE);
-        Cookie session = login(email);
+        Cookie session = logins().login(email);
         advance(Duration.ofMinutes(1));
 
         mvc.perform(post("/logout").cookie(session).with(csrf()))
@@ -870,7 +873,7 @@ class AuthenticationSecurityIntegrationTest {
 
     @Test
     void GETのログアウトではログアウトしない() throws Exception {
-        Cookie session = login(shipper(UserStatus.ACTIVE));
+        Cookie session = logins().login(shipper(UserStatus.ACTIVE));
 
         mvc.perform(get("/logout").cookie(session));
 
@@ -890,7 +893,7 @@ class AuthenticationSecurityIntegrationTest {
 
     @Test
     void CSRFのトークンが誤った業務のPOSTは拒否する() throws Exception {
-        Cookie session = login(shipper(UserStatus.ACTIVE));
+        Cookie session = logins().login(shipper(UserStatus.ACTIVE));
 
         mvc.perform(post("/customer/transport-requests").cookie(session).with(csrf().useInvalidToken()))
                 .andExpect(status().isForbidden());
@@ -898,7 +901,7 @@ class AuthenticationSecurityIntegrationTest {
 
     @Test
     void sessionにトークンのない古いフォームの送信は処理せず再認証の案内へ移る() throws Exception {
-        Cookie session = login(shipper(UserStatus.ACTIVE));
+        Cookie session = logins().login(shipper(UserStatus.ACTIVE));
 
         mvc.perform(post("/customer/transport-requests").cookie(session))
                 .andExpect(status().is3xxRedirection())
@@ -909,7 +912,7 @@ class AuthenticationSecurityIntegrationTest {
 
     @Test
     void 荷主担当者は社内の画面を開けない() throws Exception {
-        Cookie session = login(shipper(UserStatus.ACTIVE));
+        Cookie session = logins().login(shipper(UserStatus.ACTIVE));
 
         mvc.perform(get("/staff/transport-requests").cookie(session)).andExpect(status().isForbidden());
     }
@@ -917,7 +920,8 @@ class AuthenticationSecurityIntegrationTest {
     @Test
     void 営業担当者と荷主担当者は経路設計の画面を開けず候補の算出と経路の確定を送れない() throws Exception {
         for (Cookie session : List.of(
-                login(user(staffCompany(), Role.SALES, UserStatus.ACTIVE)), login(shipper(UserStatus.ACTIVE)))) {
+                logins().login(user(staffCompany(), Role.SALES, UserStatus.ACTIVE)),
+                logins().login(shipper(UserStatus.ACTIVE)))) {
             mvc.perform(get("/staff/routing-cases").cookie(session)).andExpect(status().isForbidden());
             mvc.perform(get("/staff/routing-cases/RC-2026-0001").cookie(session))
                     .andExpect(status().isForbidden());
@@ -941,14 +945,14 @@ class AuthenticationSecurityIntegrationTest {
 
     @Test
     void 営業担当者は荷主の画面を開けない() throws Exception {
-        Cookie session = login(user(staffCompany(), Role.SALES, UserStatus.ACTIVE));
+        Cookie session = logins().login(user(staffCompany(), Role.SALES, UserStatus.ACTIVE));
 
         mvc.perform(get("/customer/transport-requests").cookie(session)).andExpect(status().isForbidden());
     }
 
     @Test
     void 荷主担当者は見積りの提示のPOSTを送れない() throws Exception {
-        Cookie session = login(shipper(UserStatus.ACTIVE));
+        Cookie session = logins().login(shipper(UserStatus.ACTIVE));
 
         mvc.perform(post("/staff/transport-requests/TR-2026-0001/quotations/1/presentation")
                         .cookie(session)
@@ -958,7 +962,7 @@ class AuthenticationSecurityIntegrationTest {
 
     @Test
     void 営業担当者は荷主の回答のPOSTを送れない() throws Exception {
-        Cookie session = login(user(staffCompany(), Role.SALES, UserStatus.ACTIVE));
+        Cookie session = logins().login(user(staffCompany(), Role.SALES, UserStatus.ACTIVE));
 
         mvc.perform(post("/customer/transport-requests/TR-2026-0001/quotations/1/response")
                         .cookie(session)
@@ -969,7 +973,7 @@ class AuthenticationSecurityIntegrationTest {
     @Test
     void 営業担当者と経路設計者は見積りと経路の承認の画面を開けずPOSTも送れない() throws Exception {
         for (Role role : List.of(Role.SALES, Role.ROUTE_DESIGNER)) {
-            Cookie session = login(user(staffCompany(), role, UserStatus.ACTIVE));
+            Cookie session = logins().login(user(staffCompany(), role, UserStatus.ACTIVE));
 
             mvc.perform(get("/customer/transport-requests/TR-2026-0001/quotations/1/approval")
                             .cookie(session))
@@ -984,8 +988,8 @@ class AuthenticationSecurityIntegrationTest {
     @Test
     void 荷主担当者と経路設計者は本予約の確定と予約の詳細と予約一覧を開けずPOSTも送れない() throws Exception {
         for (Role role : List.of(Role.SHIPPER, Role.ROUTE_DESIGNER)) {
-            Cookie session =
-                    login(user(role == Role.SHIPPER ? shipperCompany : staffCompany(), role, UserStatus.ACTIVE));
+            Cookie session = logins().login(
+                            user(role == Role.SHIPPER ? shipperCompany : staffCompany(), role, UserStatus.ACTIVE));
 
             mvc.perform(get("/staff/bookings/new?transportRequest=TR-2026-0001&quotation=1")
                             .cookie(session))
@@ -1005,7 +1009,7 @@ class AuthenticationSecurityIntegrationTest {
 
     @Test
     void 荷主担当者はナビの追跡の照会を開くとC10になり準備中の画面ではない() throws Exception {
-        Cookie session = login(user(shipperCompany, Role.SHIPPER, UserStatus.ACTIVE));
+        Cookie session = logins().login(user(shipperCompany, Role.SHIPPER, UserStatus.ACTIVE));
 
         // 準備中の画面を C-10 追跡の照会に置き換えた（Bolt 27）。ナビの「追跡の照会」は C-10 を指し、現在の項目になる
         String page = mvc.perform(get("/customer/tracking-records").cookie(session))
@@ -1024,7 +1028,7 @@ class AuthenticationSecurityIntegrationTest {
 
     @Test
     void 荷主担当者が他社や存在しない形式の誤った追跡番号を開くとどれも同じ404の案内になる() throws Exception {
-        Cookie session = login(user(shipperCompany, Role.SHIPPER, UserStatus.ACTIVE));
+        Cookie session = logins().login(user(shipperCompany, Role.SHIPPER, UserStatus.ACTIVE));
         TrackingNumber otherShippers = new TrackingNumber("CTSECVRTYXHR27");
         trackingRecords.save(TrackingRecord.start(
                         otherShippers,
@@ -1058,7 +1062,7 @@ class AuthenticationSecurityIntegrationTest {
 
     @Test
     void 荷主担当者はナビの予約を開くとC06になり準備中の画面ではない() throws Exception {
-        Cookie session = login(user(shipperCompany, Role.SHIPPER, UserStatus.ACTIVE));
+        Cookie session = logins().login(user(shipperCompany, Role.SHIPPER, UserStatus.ACTIVE));
 
         // 準備中の画面を C-06 予約一覧に置き換えた（Bolt 27b）。ナビの「予約」は C-06 を指し、現在の項目になる
         String page = mvc.perform(get("/customer/bookings").cookie(session))
@@ -1078,7 +1082,7 @@ class AuthenticationSecurityIntegrationTest {
             value = Role.class,
             names = {"SALES", "ROUTE_DESIGNER", "TRACKING_MANAGER"})
     void 社内の役割は荷主の予約一覧を開けない(Role role) throws Exception {
-        Cookie session = login(user(staffCompany(), role, UserStatus.ACTIVE));
+        Cookie session = logins().login(user(staffCompany(), role, UserStatus.ACTIVE));
 
         mvc.perform(get("/customer/bookings").cookie(session)).andExpect(status().isForbidden());
     }
@@ -1086,7 +1090,7 @@ class AuthenticationSecurityIntegrationTest {
     @Test
     void 社内の役割は荷主の追跡の照会を開けない() throws Exception {
         for (Role role : List.of(Role.SALES, Role.ROUTE_DESIGNER, Role.TRACKING_MANAGER)) {
-            Cookie session = login(user(staffCompany(), role, UserStatus.ACTIVE));
+            Cookie session = logins().login(user(staffCompany(), role, UserStatus.ACTIVE));
 
             mvc.perform(get("/customer/tracking-records").cookie(session)).andExpect(status().isForbidden());
             mvc.perform(get("/customer/tracking-records/CTABCDEFGH2345").cookie(session))
@@ -1096,7 +1100,7 @@ class AuthenticationSecurityIntegrationTest {
 
     @Test
     void 営業担当者はナビの予約を開くと予約一覧になる() throws Exception {
-        Cookie session = login(user(staffCompany(), Role.SALES, UserStatus.ACTIVE));
+        Cookie session = logins().login(user(staffCompany(), Role.SALES, UserStatus.ACTIVE));
 
         // 準備中の画面を S-10 予約一覧の最小の表示に置き換えた（Bolt 25b）
         mvc.perform(get("/staff/bookings").cookie(session))
@@ -1108,7 +1112,7 @@ class AuthenticationSecurityIntegrationTest {
 
     @Test
     void CSRFのトークンが誤った本予約の確定は拒否する() throws Exception {
-        Cookie session = login(user(staffCompany(), Role.SALES, UserStatus.ACTIVE));
+        Cookie session = logins().login(user(staffCompany(), Role.SALES, UserStatus.ACTIVE));
 
         mvc.perform(post("/staff/bookings")
                         .param("commandId", "00000000-0000-0000-0000-0000000000c1")
@@ -1122,7 +1126,7 @@ class AuthenticationSecurityIntegrationTest {
 
     @Test
     void CSRFのトークンが誤った見積りの提示は拒否する() throws Exception {
-        Cookie session = login(user(staffCompany(), Role.SALES, UserStatus.ACTIVE));
+        Cookie session = logins().login(user(staffCompany(), Role.SALES, UserStatus.ACTIVE));
 
         mvc.perform(post("/staff/transport-requests/TR-2026-0001/quotations/1/presentation")
                         .cookie(session)
@@ -1134,7 +1138,7 @@ class AuthenticationSecurityIntegrationTest {
 
     @Test
     void 発行から8時間の1秒前は使える() throws Exception {
-        Cookie session = login(shipper(UserStatus.ACTIVE));
+        Cookie session = logins().login(shipper(UserStatus.ACTIVE));
 
         advance(Duration.ofHours(8).minusSeconds(1));
 
@@ -1143,7 +1147,7 @@ class AuthenticationSecurityIntegrationTest {
 
     @Test
     void 発行から8時間ちょうどで再認証の案内へ移り業務データを返さない() throws Exception {
-        Cookie session = login(shipper(UserStatus.ACTIVE));
+        Cookie session = logins().login(shipper(UserStatus.ACTIVE));
 
         advance(Duration.ofHours(8));
 
@@ -1154,7 +1158,7 @@ class AuthenticationSecurityIntegrationTest {
 
     @Test
     void 発行から8時間の1秒後も再認証の案内へ移り同じsessionは使えない() throws Exception {
-        Cookie session = login(shipper(UserStatus.ACTIVE));
+        Cookie session = logins().login(shipper(UserStatus.ACTIVE));
 
         advance(Duration.ofHours(8).plusSeconds(1));
 
@@ -1166,7 +1170,7 @@ class AuthenticationSecurityIntegrationTest {
     @Test
     void 発行から8時間を過ぎたsessionではログインの送信も受け付けずログインし直すと上限は新しいログインから数える() throws Exception {
         String email = shipper(UserStatus.ACTIVE);
-        Cookie session = login(email);
+        Cookie session = logins().login(email);
         advance(Duration.ofHours(8));
 
         // 上限の確認は認証の処理より前にある（T-40）。古い session のままのログインの送信も A-03 へ移す
@@ -1177,7 +1181,7 @@ class AuthenticationSecurityIntegrationTest {
                         .with(csrf()))
                 .andExpect(redirectedUrl("/session-expired"));
 
-        Cookie renewed = login(email);
+        Cookie renewed = logins().login(email);
         advance(Duration.ofHours(8 + 7));
         mvc.perform(get("/customer/transport-requests").cookie(renewed)).andExpect(status().isOk());
     }
@@ -1186,7 +1190,7 @@ class AuthenticationSecurityIntegrationTest {
 
     @Test
     void 無操作30分の1秒前は使える() throws Exception {
-        Cookie session = login(shipper(UserStatus.ACTIVE));
+        Cookie session = logins().login(shipper(UserStatus.ACTIVE));
 
         sessions().idle(session, Duration.ofMinutes(30).minusSeconds(1));
 
@@ -1199,7 +1203,7 @@ class AuthenticationSecurityIntegrationTest {
      */
     @Test
     void 無操作30分で再認証の案内へ移る() throws Exception {
-        Cookie session = login(shipper(UserStatus.ACTIVE));
+        Cookie session = logins().login(shipper(UserStatus.ACTIVE));
 
         sessions().idle(session, Duration.ofMinutes(30));
 
@@ -1208,7 +1212,7 @@ class AuthenticationSecurityIntegrationTest {
 
     @Test
     void 無操作30分の1秒後も再認証の案内へ移る() throws Exception {
-        Cookie session = login(shipper(UserStatus.ACTIVE));
+        Cookie session = logins().login(shipper(UserStatus.ACTIVE));
 
         sessions().idle(session, Duration.ofMinutes(30).plusSeconds(1));
 
@@ -1288,8 +1292,8 @@ class AuthenticationSecurityIntegrationTest {
 
     @Test
     void ログイン中とpasswordの段のsessionで依頼の画面を開いてもsessionの利用者は変わらない() throws Exception {
-        Cookie loggedIn = login(shipper(UserStatus.ACTIVE));
-        Cookie passwordStage = loginWithPassword(shipper(UserStatus.ACTIVE));
+        Cookie loggedIn = logins().login(shipper(UserStatus.ACTIVE));
+        Cookie passwordStage = logins().loginWithPassword(shipper(UserStatus.ACTIVE));
 
         mvc.perform(get(RESET_URL).cookie(loggedIn)).andExpect(status().isOk());
         mvc.perform(post(RESET_URL)
@@ -1406,7 +1410,7 @@ class AuthenticationSecurityIntegrationTest {
     @Test
     void 設定すると完了の知らせに移りほかの端末はA03で古いpasswordは使えず新しいpasswordとTOTPでログインできる() throws Exception {
         String email = shipper(UserStatus.ACTIVE);
-        Cookie otherDevice = login(email);
+        Cookie otherDevice = logins().login(email);
         mvc.perform(get("/customer/transport-requests").cookie(otherDevice)).andExpect(status().isOk());
         Cookie session = openResetLink(issueResetToken(email), null);
 
@@ -1422,7 +1426,7 @@ class AuthenticationSecurityIntegrationTest {
         assertLoginRejected(email, PASSWORD);
         Cookie passwordStage = loginWithPassword(email, NEW_PASSWORD);
         resetTotpStep(email);
-        Cookie loggedIn = submitTotp(passwordStage, currentCode(email));
+        Cookie loggedIn = submitTotp(passwordStage, logins().currentCode(email));
         mvc.perform(get("/customer/transport-requests").cookie(loggedIn)).andExpect(status().isOk());
     }
 
@@ -1457,7 +1461,7 @@ class AuthenticationSecurityIntegrationTest {
     @Test
     void ログイン中や別の利用者のブラウザでリンクを開いて設定しても完了の知らせが出て今の認証は捨てる() throws Exception {
         String owner = shipper(UserStatus.ACTIVE);
-        Cookie ownersBrowser = login(owner);
+        Cookie ownersBrowser = logins().login(owner);
         Cookie session = openResetLink(issueResetToken(owner), ownersBrowser);
 
         MvcResult done = mvc.perform(setPassword(session, NEW_PASSWORD, NEW_PASSWORD))
@@ -1471,7 +1475,7 @@ class AuthenticationSecurityIntegrationTest {
 
         String someoneElse = shipper(UserStatus.ACTIVE);
         String target = shipper(UserStatus.ACTIVE);
-        Cookie othersBrowser = login(someoneElse);
+        Cookie othersBrowser = logins().login(someoneElse);
         Cookie othersSession = openResetLink(issueResetToken(target), othersBrowser);
         MvcResult other = mvc.perform(setPassword(othersSession, NEW_PASSWORD, NEW_PASSWORD))
                 .andExpect(redirectedUrl(COMPLETED_URL))
@@ -1494,7 +1498,7 @@ class AuthenticationSecurityIntegrationTest {
     @Test
     void passwordの段や失効したCookieのブラウザでリンクを開いて設定してもトークンは残らず完了の知らせが出る() throws Exception {
         String midLogin = shipper(UserStatus.ACTIVE);
-        Cookie passwordStage = loginWithPassword(midLogin);
+        Cookie passwordStage = logins().loginWithPassword(midLogin);
         String token = issueResetToken(midLogin);
         Cookie session = openResetLink(token, passwordStage);
         assertThat(session.getValue())
@@ -1540,7 +1544,7 @@ class AuthenticationSecurityIntegrationTest {
     @Test
     void 古いpasswordで認証コードの画面にいたほかの端末は再設定の後にログインを終えられない() throws Exception {
         String email = shipper(UserStatus.ACTIVE);
-        Cookie otherDevice = loginWithPassword(email);
+        Cookie otherDevice = logins().loginWithPassword(email);
         Cookie session = openResetLink(issueResetToken(email), null);
         mvc.perform(setPassword(session, NEW_PASSWORD, NEW_PASSWORD)).andExpect(redirectedUrl(COMPLETED_URL));
 
@@ -1548,7 +1552,7 @@ class AuthenticationSecurityIntegrationTest {
         // password の段の session も失効していて、認証コードを送ってもログインの画面に戻る
         mvc.perform(post(TOTP_URL)
                         .cookie(otherDevice)
-                        .param("code", currentCode(email))
+                        .param("code", logins().currentCode(email))
                         .with(csrf()))
                 .andExpect(redirectedUrl("/login"));
     }
@@ -1633,18 +1637,6 @@ class AuthenticationSecurityIntegrationTest {
         return email;
     }
 
-    /** password と TOTP の 2 段階でログインする。同じ利用者の入り直しで再利用にならないよう、使った刻みを戻してから送る。 */
-    private Cookie login(String email) throws Exception {
-        Cookie passwordStage = loginWithPassword(email);
-        resetTotpStep(email);
-        return submitTotp(passwordStage, currentCode(email));
-    }
-
-    /** password の段だけを通す（A-02 へ移る）。 */
-    private Cookie loginWithPassword(String email) throws Exception {
-        return loginWithPassword(email, PASSWORD);
-    }
-
     /** 指定の password で password の段だけを通す（A-02 へ移る。Bolt 33a の再設定の後）。 */
     private Cookie loginWithPassword(String email, String password) throws Exception {
         MvcResult result = mvc.perform(post("/login")
@@ -1666,14 +1658,6 @@ class AuthenticationSecurityIntegrationTest {
                 .doesNotContain("error")
                 .doesNotContain("expired");
         return sessionOf(result);
-    }
-
-    /** いまの時計の刻みの TOTP のコード（テストの固定の秘密から作る）。 */
-    private String currentCode(String email) {
-        TotpCredential credential =
-                totpCredentials.findByUserId(userIdOf(email)).orElseThrow();
-        return totpCodes.code(
-                credential.userId(), credential.secret(), TotpCredential.stepAt(new UtcInstant(clock.instant())));
     }
 
     /** テストの準備として、使った刻みを戻す（同じ利用者が同じ刻みの間に入り直すため。Bolt 31 の確認ポイント 7）。 */
@@ -1738,12 +1722,6 @@ class AuthenticationSecurityIntegrationTest {
         }
     }
 
-    private static Cookie sessionOf(MvcResult result) {
-        Cookie cookie = result.getResponse().getCookie(SESSION_COOKIE);
-        assertThat(cookie).as("session の Cookie").isNotNull();
-        return cookie;
-    }
-
     private void advance(Duration duration) {
         ((MutableClock) clock).setInstant(LOGIN_AT.plus(duration));
     }
@@ -1770,5 +1748,9 @@ class AuthenticationSecurityIntegrationTest {
 
     private SpringSessionRows sessions() {
         return new SpringSessionRows(jdbc);
+    }
+
+    private IdentityLogins logins() {
+        return new IdentityLogins(mvc, jdbc, totpCredentials, totpCodes, clock);
     }
 }
