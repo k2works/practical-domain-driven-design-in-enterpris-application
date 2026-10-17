@@ -3,7 +3,7 @@ type: Plan
 title: "Bolt 34e 計画 - 利用者の管理のドメインとサービス（振る舞いの変わらない直し）"
 description: "W5 の 26 本目の Bolt の計画。User.changeRoles・changeStatus を、判定が通ったときだけ User が作る承認の値（User の入れ子のクラス）を受ける形にし、判定を通さずに呼べなくする。役割と利用状態の変更の結果の型を、確かめる呼び出しと変える呼び出しで分け、共通の拒否の型を作って controller の届かない枝をなくす。2 つのコマンドサービスの判定の前半（システム管理者か → 利用者と企業 → 管理範囲）を部品に抜き出し、セキュリティの統合テストの同じ形の login の写しを共通の補助にまとめる。"
 tags: [plan]
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-17T13:51:11Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-17T15:23:10Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-17T13:51:12Z }
 ---
@@ -179,15 +179,15 @@ StatusChangeOutcome ..> UAR
 
 状態の記号: `[ ]` 未着手、`[-]` 進行中、`[?]` 承認待ち、`[x]` 完了。各ステップの終わりに `check` が緑で件数が減っていないことを確かめ、push してアプリの CI と MkDocs の配備を確かめる（T-26、T-126）。コミットは pathspec で作る（T-110）。
 
-- [ ] **1. 設計文書** 【承認ゲート: 設計文書】
+- [x] **1. 設計文書** 【承認ゲート: 設計文書】
   - 上の注の行を直す。完了の判定: `okf:check` ERROR 0、`documentationTest` 緑
-- [ ] **2. 集約の判定と承認の値** 【承認ゲート: 構造】
+- [x] **2. 集約の判定と承認の値** 【承認ゲート: 構造】
   - 先に、承認が別の利用者・別の版なら例外になるテストを書く（Red）。承認の値と判定の結果の型、`changeRoles`・`changeStatus` の引数を承認の値に、`roleChangeRejection`・`statusChangeRejection` を `decide…` に置き換える。`UserTest` を新しい形に（判定の順の境界のテストは中身を変えずに通す）。サービスの呼び出し元を合わせ、版を `approval.version()` から取る（この時点では結果の型は変えない）
-- [ ] **3. 結果の型と判定の前半の部品** 【承認ゲート: 構造・認可の判定】
+- [x] **3. 結果の型と判定の前半の部品** 【承認ゲート: 構造・認可の判定】
   - 共通の拒否の型と確かめる・変える結果の型、`ManagedUserLookup`。2 つのサービスと controller の 2 つの `switch`（届かない枝を消す）。直すテスト: `UserRoleChangeServiceTest`・`UserStatusChangeServiceTest`・`UserRoleChangeIntegrationTest`・`UserStatusChangeIntegrationTest`。巻き戻しのテストと `UserStatusErrorMessageTest` は結果の型を参照しないので、コンパイルが通ることだけを確かめる。判定の順の変異（範囲と規則の入れ替え）で落ちることを確かめる（控えから戻す）
-- [ ] **4. login の共通の補助** 【承認ゲート: 構造】
+- [x] **4. login の共通の補助** 【承認ゲート: 構造】
   - `IdentityLogins` と、上の表の「寄せる」の置き換え。件数と失敗 0 を前後で比べる。刻みを戻す扱いを変えるクラス（UserAdministration・SessionRevalidation・UserStatusChange）で、再利用や刻みの状態を確かめるテストが補助に頼っていないことを確かめる
-- [ ] **5. uiTest と SonarQube と開発レビューと終了報告** 【承認ゲート: 終了報告】
+- [x] **5. uiTest と SonarQube と開発レビューと終了報告** 【承認ゲート: 終了報告】
   - `uiTest`（件数を前後で比べる）、SonarQube（ほかの Gradle の後。T-147）。開発レビュー（アーキテクト、テスター。読むだけ）。`bolt_34e_report.md`、release_plan、開発の索引
 
 ### 時間の配分と打ち切り
@@ -220,12 +220,12 @@ StatusChangeOutcome ..> UAR
 
 ## 完了条件
 
-- [ ] `changeRoles`・`changeStatus` は承認の値だけを受け、承認の値は `User` の判定だけが作る（コンストラクタが private）
-- [ ] 役割と利用状態の変更のサービスの確かめる・変える呼び出しが、それぞれの結果の型だけを返し、controller に届かない枝がない
-- [ ] 2 つのサービスの判定の前半が 1 つの部品にあり、判定の順は変わっていない
-- [ ] セキュリティの統合テストの同じ形の login の写しが共通の補助にまとまっている
-- [ ] `check` と `uiTest` が緑で、件数が減っていない（足したテストの分だけ増える）。push してアプリの CI と MkDocs の配備を確かめた。SonarQube の Quality Gate が PASS、`okf:check` ERROR 0
-- [ ] 開発レビュー、終了報告
+- [x] `changeRoles`・`changeStatus` は承認の値だけを受け、承認の値は `User` の判定だけが作る（コンストラクタが private）
+- [x] 役割と利用状態の変更のサービスの確かめる・変える呼び出しが、それぞれの結果の型だけを返し、controller に届かない枝がない
+- [x] 2 つのサービスの判定の前半が 1 つの部品にあり、判定の順は変わっていない
+- [x] セキュリティの統合テストの同じ形の login の写しが共通の補助にまとまっている
+- [x] `check` と `uiTest` が緑で、件数が減っていない（足したテストの分だけ増える）。push してアプリの CI と MkDocs の配備を確かめた。SonarQube の Quality Gate が PASS、`okf:check` ERROR 0
+- [x] 開発レビュー、終了報告
 
 ## 更新履歴
 
@@ -234,6 +234,7 @@ StatusChangeOutcome ..> UAR
 | 2026-10-17 | 初版作成（承認待ち）。human:kakimomokuri の決定（承認の値を引数に取る、結果の型を拒否と受付に分ける、判定の前半の部品は 2 つのコマンドサービスだけ）を反映した | anthropic/claude-opus-5-5 |
 | 2026-10-17 | 詳細整合性検証（15 件）と横断整合性検証（16 件）の指摘を反映した。承認の値を `User` の入れ子にして private のコンストラクタにする（ArchUnit の見張りと置き場所の例外を要らなくした。確認ポイント 4）、版の出どころ（確認ポイント 6）、ジェネリクスの書き方と部品の拒否の写し方、`ManagedUserLookup` の作り方、login の補助に寄せるものの表と刻みを戻す時点と `userIdOf` の探し方、防御の複製、アプローチの理由、注の行（domain_model:1033・1035、architecture_backend:311・313、test_strategy:327・329、release_plan の 34e の行）、行番号、H1・H3 の言い方 | anthropic/claude-opus-5-5 |
 | 2026-10-17 | 計画を承認した。確認ポイント 4〜11 を推奨のとおりに決めた。`/goal` の下で、ステップごとの承認ゲートでは止めずに進め、層・モジュールの規則と打ち切りの条件に当たったときだけ止めて諮る | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
+| 2026-10-18 | ステップ 5 を終え、[終了報告](bolt_34e_report.md)を作った（承認待ち）。打ち切りの条件には当たらなかった | anthropic/claude-opus-5-5 |
 
 ## 関連ドキュメント
 
