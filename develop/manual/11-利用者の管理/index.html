@@ -6,7 +6,7 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="システム管理者が、利用者の一覧と詳細を確かめ、利用者の役割を確認の画面を経て付けたり外したりする手順です。">
+        <meta name="description" content="システム管理者が、利用者の一覧と詳細を確かめ、利用者の役割を確認の画面を経て付けたり外したりし、利用者の利用を停止し再開する手順です。">
       
       
         <meta name="author" content="k2works">
@@ -6483,6 +6483,78 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#114" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        11.4 利用状態の変更の確認
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="11.4 利用状態の変更の確認">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_16" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        この画面でできること
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_17" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        画面の開き方
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_18" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        画面の説明
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_19" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        操作手順
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_20" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        注意・補足
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -11019,7 +11091,7 @@
 
 
 <h1 id="11">11 章 利用者の管理<a class="headerlink" href="#11" title="Permanent link">&para;</a></h1>
-<p>システム管理者が、利用者の一覧と詳細を確かめ、利用者の業務の役割を確認の画面を経て付けたり外したりする手順です。役割は、荷主担当者・営業担当者・経路設計者・追跡管理者・データ責任者・カスタマーサポート・システム管理者・監査担当者の 8 つに決まっています。この画面で付け外しできるのは、システム管理者・監査担当者を除く 6 つの業務の役割です。</p>
+<p>システム管理者が、利用者の一覧と詳細を確かめ、利用者の業務の役割を確認の画面を経て付けたり外したりし、利用者の利用を停止し再開する手順です。役割は、荷主担当者・営業担当者・経路設計者・追跡管理者・データ責任者・カスタマーサポート・システム管理者・監査担当者の 8 つに決まっています。この画面で付け外しできるのは、システム管理者・監査担当者を除く 6 つの業務の役割です。</p>
 <p>画面の開き方: ログインすると利用者の一覧（11.1）が開きます。ナビゲーションの「利用者」（URL: <code>/staff/users</code>）からも開けます。システム管理者だけが開けます。</p>
 <table>
 <thead>
@@ -11044,6 +11116,11 @@
 <td style="text-align: left;">役割の変更の確認（見出しは「役割を変更しますか」）</td>
 <td style="text-align: left;">変更の内容を確かめてから変更する</td>
 <td style="text-align: left;"><a href="#113-役割の変更の確認">11.3</a></td>
+</tr>
+<tr>
+<td style="text-align: left;">利用状態の変更の確認（見出しは「利用を停止しますか」または「利用を再開しますか」）</td>
+<td style="text-align: left;">停止・再開の内容を確かめてから停止・再開する</td>
+<td style="text-align: left;"><a href="#114-利用状態の変更の確認">11.4</a></td>
 </tr>
 </tbody>
 </table>
@@ -11097,20 +11174,21 @@
 </table>
 <h3 id="_4">操作手順<a class="headerlink" href="#_4" title="Permanent link">&para;</a></h3>
 <ol>
-<li>役割を変えたい利用者の表示名を押します</li>
+<li>役割を変えたい利用者、または利用を停止・再開したい利用者の表示名を押します</li>
 </ol>
 <h3 id="_5">注意・補足<a class="headerlink" href="#_5" title="Permanent link">&para;</a></h3>
 <ul>
 <li>一覧は企業名・表示名の順に並びます</li>
 <li>一覧に並ぶのは、あなたの管理範囲の企業の利用者だけです。管理範囲は運用の手順で割り当てます。一覧に出るはずの企業がないときは、運用の担当に管理範囲の割り当てをご依頼ください（管理範囲がなければ「管理する企業の利用者はいません。」と示されます）</li>
 <li>管理範囲の外の企業の利用者の画面を URL で開くと、存在しない利用者と同じく「画面が見つかりません」と示されます（<a href="../02-%E3%83%AD%E3%82%B0%E3%82%A4%E3%83%B3%E3%81%A8%E5%85%B1%E9%80%9A%E3%81%AE%E7%94%BB%E9%9D%A2/#28-画面が見つかりません">2.8</a>）。管理範囲の外の利用者の役割を変えようとしたときは、監査のため記録されます。自分の企業を管理範囲に持たない場合は、自分の詳細も開けません</li>
-<li>利用者の登録と利用停止は、この画面ではまだできません。後のリリースで足します</li>
+<li>利用者の登録は、この画面ではまだできません。後のリリースで足します。利用の停止と再開は、詳細の「利用状態」から行います（<a href="#112-利用者の詳細">11.2</a>・<a href="#114-利用状態の変更の確認">11.4</a>）</li>
 </ul>
 <h2 id="112">11.2 利用者の詳細<a class="headerlink" href="#112" title="Permanent link">&para;</a></h2>
 <h3 id="_6">この画面でできること<a class="headerlink" href="#_6" title="Permanent link">&para;</a></h3>
 <ul>
 <li>利用者の企業・メールアドレス・利用状態・今の役割を確かめます</li>
 <li>付けたい役割を選び、変更の内容の確認へ進みます</li>
+<li>停止の理由を選んで利用停止の確認へ、または停止中の利用者の利用再開の確認へ進みます</li>
 </ul>
 <h3 id="_7">画面の開き方<a class="headerlink" href="#_7" title="Permanent link">&para;</a></h3>
 <ul>
@@ -11147,13 +11225,25 @@
 <td style="text-align: left;">変更内容を確認する</td>
 <td style="text-align: left;">選んだ役割で、変更の内容の確認へ進みます。まだ変更されません</td>
 </tr>
+<tr>
+<td style="text-align: left;">⑤</td>
+<td style="text-align: left;">利用状態</td>
+<td style="text-align: left;">利用中の利用者には停止の理由（利用終了・異動・緊急停止）と「利用停止の内容を確認する」、停止中の利用者には「利用再開の内容を確認する」が並びます。押してもまだ停止・再開されません</td>
+</tr>
 </tbody>
 </table>
 <h3 id="_9">操作手順<a class="headerlink" href="#_9" title="Permanent link">&para;</a></h3>
+<p>役割を変えるとき:</p>
 <ol>
 <li>変更した後に持たせる役割に印を付けます（外したい役割は印を外します）</li>
 <li>「変更内容を確認する」を押します</li>
 </ol>
+<p>利用を停止するとき:</p>
+<ol>
+<li>「利用状態」の「停止の理由」で、利用終了・異動・緊急停止のどれかを選びます</li>
+<li>「利用停止の内容を確認する」を押します</li>
+</ol>
+<p>停止中の利用者の利用を再開するときは、「利用再開の内容を確認する」を押します。</p>
 <p>自分の詳細と、荷受人の企業の利用者の詳細には、役割を選ぶ欄がありません。「自分の役割は変更できません。ほかのシステム管理者に依頼してください。」または「荷受人の企業の利用者には役割を付けません。」と示されます。</p>
 <h3 id="_10">注意・補足<a class="headerlink" href="#_10" title="Permanent link">&para;</a></h3>
 <p>選び方が決まりに合わないときは、確認へ進まず、この画面の上に理由が示されます。</p>
@@ -11183,6 +11273,9 @@
 <ul>
 <li>システム管理者・監査担当者の役割は、この画面では付けたり外したりできません。監督の役割を持つ人どうしが互いに付け合うことや、システム管理者がいなくなることを防ぐためです。付け外しが要るときは、運用の窓口に依頼してください</li>
 <li>監査担当者などが持つ、この画面で変更しない役割はそのまま残ります（詳細に「この画面で変更しない役割（…）は、そのまま残ります。」と示されます）</li>
+<li>停止の理由を選ばずに「利用停止の内容を確認する」を押すと、確認へ進まず「停止の理由を選んでください。」と示されます</li>
+<li>自分の詳細と、システム管理者・監査担当者の詳細の「利用状態」には、停止・再開の操作がありません。「自分の利用状態は変更できません。ほかのシステム管理者に依頼してください。」または「システム管理者・監査担当者の利用停止と再開は、この画面では行いません。」と示されます。システム管理者・監査担当者の停止・再開が要るときは、運用の窓口に依頼してください</li>
+<li>停止中の利用者の役割も変えられます。再開の前に役割を整えておけます</li>
 </ul>
 <h2 id="113">11.3 役割の変更の確認<a class="headerlink" href="#113" title="Permanent link">&para;</a></h2>
 <h3 id="_11">この画面でできること<a class="headerlink" href="#_11" title="Permanent link">&para;</a></h3>
@@ -11247,6 +11340,71 @@
 <li>変えた役割は、相手がログインし直さなくても、相手の次の操作から効きます。外した役割の画面を相手が開くと「この画面を表示する権限がありません。」と示されます（<a href="../02-%E3%83%AD%E3%82%B0%E3%82%A4%E3%83%B3%E3%81%A8%E5%85%B1%E9%80%9A%E3%81%AE%E7%94%BB%E9%9D%A2/#23-権限がありません">2.3</a>）</li>
 <li>確認している間に、ほかのシステム管理者の変更などでその利用者の情報が先に更新されていたら、変更されず「この利用者の情報が先に更新されました。最新の内容を確かめてから、もう一度変更してください。」と示され、最新の詳細が開きます。今の役割を確かめてから、もう一度選び直してください</li>
 <li>役割の変更は、操作したシステム管理者・時刻・変更前後の役割として記録されます</li>
+</ul>
+<h2 id="114">11.4 利用状態の変更の確認<a class="headerlink" href="#114" title="Permanent link">&para;</a></h2>
+<h3 id="_16">この画面でできること<a class="headerlink" href="#_16" title="Permanent link">&para;</a></h3>
+<ul>
+<li>対象の利用者・現在の状態・変更内容（停止なら理由も）・影響・元に戻す方法・実行者を確かめて、利用を停止し、または再開します</li>
+</ul>
+<h3 id="_17">画面の開き方<a class="headerlink" href="#_17" title="Permanent link">&para;</a></h3>
+<ul>
+<li>利用者の詳細で、停止の理由を選んで「利用停止の内容を確認する」を押します。停止中の利用者なら「利用再開の内容を確認する」を押します</li>
+</ul>
+<h3 id="_18">画面の説明<a class="headerlink" href="#_18" title="Permanent link">&para;</a></h3>
+<p><img alt="利用状態の変更の確認" src="../assets/11-status-change-confirmation.png" /></p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">#</th>
+<th style="text-align: left;">項目</th>
+<th style="text-align: left;">説明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">①</td>
+<td style="text-align: left;">対象</td>
+<td style="text-align: left;">利用を停止・再開する利用者</td>
+</tr>
+<tr>
+<td style="text-align: left;">②</td>
+<td style="text-align: left;">現在の状態・変更内容</td>
+<td style="text-align: left;">今の利用状態（利用中・利用停止）と、変更の内容。停止なら選んだ理由も示されます</td>
+</tr>
+<tr>
+<td style="text-align: left;">③</td>
+<td style="text-align: left;">影響</td>
+<td style="text-align: left;">停止なら、相手の次の操作から使えなくなります。再開なら、相手は次のログインから使えます</td>
+</tr>
+<tr>
+<td style="text-align: left;">④</td>
+<td style="text-align: left;">回復手段</td>
+<td style="text-align: left;">停止は再開で、再開はもう一度の停止で元に戻せます</td>
+</tr>
+<tr>
+<td style="text-align: left;">⑤</td>
+<td style="text-align: left;">実行者</td>
+<td style="text-align: left;">停止・再開するシステム管理者（あなた）</td>
+</tr>
+<tr>
+<td style="text-align: left;">⑥</td>
+<td style="text-align: left;">停止する（再開する）・戻る</td>
+<td style="text-align: left;">「停止する」（再開のときは「再開する」）で確定します。「戻る」で選んだ理由を残したまま詳細に戻ります</td>
+</tr>
+</tbody>
+</table>
+<h3 id="_19">操作手順<a class="headerlink" href="#_19" title="Permanent link">&para;</a></h3>
+<ol>
+<li>内容を確かめます</li>
+<li>「停止する」（再開のときは「再開する」）を押します</li>
+<li>利用者の詳細に「利用を停止しました。」（または「利用を再開しました。」）と出て、利用状態が変わります</li>
+</ol>
+<h3 id="_20">注意・補足<a class="headerlink" href="#_20" title="Permanent link">&para;</a></h3>
+<ul>
+<li>停止した利用者は、ログインし直さなくても、相手の次の操作から使えなくなります。相手の画面は「もう一度ログインしてください」の案内（<a href="../02-%E3%83%AD%E3%82%B0%E3%82%A4%E3%83%B3%E3%81%A8%E5%85%B1%E9%80%9A%E3%81%AE%E7%94%BB%E9%9D%A2/#24-もう一度ログインしてください">2.4</a>）に移り、その後はログインできません</li>
+<li>停止しても、相手がそれまでに行った操作の記録は消えません</li>
+<li>確認している間に、ほかのシステム管理者の操作などでその利用者の情報が先に更新されていたら、停止・再開されず「この利用者の情報が先に更新されました。最新の内容を確かめてから、もう一度変更してください。」と示され、最新の詳細が開きます</li>
+<li>利用の停止と再開は、操作したシステム管理者・時刻・変更前後の利用状態として記録されます。停止は選んだ理由も記録されます</li>
 </ul>
 
 
