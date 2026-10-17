@@ -3,7 +3,7 @@ type: Plan
 title: "Bolt 34c 計画 - 認証・監査の経路と文書と見張り（振る舞いの変わらない直し）"
 description: "W5 の 25 本目の Bolt の計画。ログインの監査の書き手の経路と @Service・@Bean の役割を今の形のまま理由とともに文書にし、回復コードのログインの IA-INV-08 の範囲とロックと IA-INV-04 の関係を明文化する。暗号の部品の規則を名前ごとに分け、@MockitoSpyBean と @Configuration の置き場所を ArchUnit で見張り、login_failure の列の注釈をマイグレーションで直す。34c の行を 34c・34e・34f に分けた。"
 tags: [plan]
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-17T11:25:06Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-17T12:21:01Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-17T11:25:06Z }
 ---
@@ -40,7 +40,7 @@ verified:
 - **書き手の経路**: `AuthenticationAuditListener` は `PASSWORD_VERIFIED`・数えない `LOGIN_FAILED`（理由 `SERVICE_ERROR`・`UNKNOWN_USER`・利用停止と無効な企業）・`LOGOUT` を 1 文で直接書く（:66・81・90・103・158）。`LoginAttemptService` は `LOGIN_SUCCEEDED`・数える `LOGIN_FAILED`・`ACCOUNT_LOCKED` を回数と同じトランザクションで（:62-73・84-90）、ロック中の試行の `LOGIN_FAILED`（理由 `LOCKED`。数えない）を 1 文で書く（:79-81）。ほかの監査はどれもアプリケーションのサービスが書く。ADR-011:68 は「寄せない」（Bolt 32c の開始準備）と記録している
 - **`@Service` と `@Bean`**: `CargoTrackerApplication:22-29` は `..application..` を部品探索から外しており（`ComponentScanTest` が固定）、Bean は `IdentityConfiguration` の `@Bean` の 1 つだけ。`@Service` は JIG がユースケースとして読む印（2026-10-03 の決定。architecture_backend.md:281）。identity の 16 クラスが両方を持つ。SpotBugs の `EI_EXPOSE_REP2` の除外はクラスを 1 つずつ列挙し、`TotpReEnrollmentController`（`interfaces.web`）と notification の 1 つも含む（config/spotbugs/exclude.xml:14-50。正規表現でパッケージを指す前例は :11-12）
 - **回復コードのログイン**: `RecoveryCodeVerificationService` はコードの使用と `RECOVERY_CODE_USED` を 1 つのトランザクションで書き（:154-161）、成功のイベントでリスナーが `LoginAttemptService.recordSuccess`（`LOGIN_SUCCEEDED` と回数の戻し）を別のトランザクションで書く。後者の追記が失敗したときの結果（ログインの応答、使ったコード）を固定するテストは見当たらない（確認ポイント 7）
-- **ロック**: `SessionRevalidationService` はロックを見ない。session を捨てるのは利用停止・無効な企業・利用者なし（:214-224）と、再開の確定の後の消去（Bolt 34d）
+- **ロック**: `SessionRevalidationService` はロックを見ない。session を捨てる・消すのは、request ごとの確かめ（利用停止・無効な企業・利用者なし。:214-224）、S-20 の再開の確定の後の消去（Bolt 34d）、password の再設定の完了（`PasswordResetCompletionService` の `revokeAll`。Bolt 33a）、認証アプリの再登録（`TotpReEnrollmentService` の `revokeOthers`。ほかの session。Bolt 33b）で、ロックはどれにも含まれない（開発レビューの後に事実に合わせて直した）
 - **暗号の部品の規則**: `AuthenticationArchitectureTest:151-177` は 11 の名前を `.or()` でつないだ 1 本の規則。33a・33d で一覧から漏れた名前を後から足した。`QrCodeSvg`・`JavaOtpTotpCodeGenerator` はほかの規則も名前で指す（:129-136・:208-216）。`archunit.properties` はなく、ArchUnit 1.5.1 の既定は `failOnEmptyShould=true`。前例は `.allowEmptyShould(false)` を明示する（:263、T-107）
 - **spy と `@Configuration`**: `@MockitoSpyBean` を使うのは `IdentitySpyIntegrationTestBase`（パッケージの外から見えない `abstract class`、7 フィールド）と `integration.QuotationRequoteRollbackIntegrationTest:58`。本体で直接 `@Configuration` を持つのは config の 8 つと `ClockConfiguration`（ルート）だけ。`@SpringBootApplication` とテストの `@TestConfiguration`（約 15）はメタ注釈として `@Configuration` を持つ。「config には `@Configuration` だけを置く」は `LayerArchitectureTest:194-200`（`DoNotIncludeTests`）
 - **`login_failure` の注釈**: `V20261011083300__create_identity_totp.sql:57` の注釈は「連続の失敗の回数（password と TOTP を合わせる。成功で 0 に戻す）」のまま。`LoginFailure.java:11` の Javadoc も回復コードを含まない。注釈だけのマイグレーションの前例がある（`V20261003110000__add_japanese_comments.sql`）。`SchemaCommentIntegrationTest` は注釈があるかだけを見る。SchemaSpy の生成物はリポジトリになく、MkDocs の配備が作る
@@ -119,17 +119,17 @@ verified:
 
 状態の記号: `[ ]` 未着手、`[-]` 進行中、`[?]` 承認待ち、`[x]` 完了。各ステップの終わりに `check` が緑で件数が減っていないことを確かめ、push してアプリの CI と MkDocs の配備を確かめる（T-26、T-126）。コミットは pathspec で作る（T-110）。
 
-- [ ] **1. 文書と SpotBugs と特性テスト** 【承認ゲート: 設計文書・構造】
+- [x] **1. 文書と SpotBugs と特性テスト** 【承認ゲート: 設計文書・構造】
   - 回復コードのログインで `LOGIN_SUCCEEDED` の追記が失敗したときの今の振る舞いを、既存のテストで確かめる。なければ特性テストを 1 本足す（spy で `LOGIN_SUCCEEDED` の追記だけを失敗させ、ログインの応答とコードの使用済みを固定する）
   - 上の注の行を直す。SpotBugs の除外をパッケージの指定にまとめる（`check` の SpotBugs が緑のまま）
   - 完了の判定: `okf:check` ERROR 0、`documentationTest` 緑、`check` 緑
-- [ ] **2. 暗号の部品の規則を名前ごとに分ける（AT-09）** 【承認ゲート: 構造】
+- [x] **2. 暗号の部品の規則を名前ごとに分ける（AT-09）** 【承認ゲート: 構造】
   - 名前ごとの規則と、テストの中の名前の文字列を 1 つ変える変異で落ちることの確かめ（`Base32`・`RandomRecoveryCodeGenerator` の 2 つ。控えから戻す）
-- [ ] **3. spy と `@Configuration` の見張り（AT-10・AT-11）** 【承認ゲート: 構造】
+- [x] **3. spy と `@Configuration` の見張り（AT-10・AT-11）** 【承認ゲート: 構造】
   - AT-10 は先に、基底の spy のフィールドが対象として数えられていることを確かめる（T-119）。AT-11 と例外が広がらない見張り。今のテストが緑のまま。基底の外に spy を置く変異と、config の外に `@Configuration` を置く変異で落ちることを確かめる（控えから戻す）
-- [ ] **4. `login_failure` の注釈のマイグレーション** 【承認ゲート: スキーマ】
+- [x] **4. `login_failure` の注釈のマイグレーション** 【承認ゲート: スキーマ】
   - マイグレーションと `LoginFailure` の Javadoc。PostgreSQL の統合テスト（`SchemaCommentIntegrationTest`）と H2 の起動が緑。SchemaSpy は MkDocs の配備で作り直される
-- [ ] **5. uiTest と SonarQube と開発レビューと終了報告** 【承認ゲート: 終了報告】
+- [-] **5. uiTest と SonarQube と開発レビューと終了報告** 【承認ゲート: 終了報告】
   - `uiTest`（件数を前後で比べる）、SonarQube（T-116。ほかの Gradle が終わってから。T-147）。開発レビュー（アーキテクト、テスター。読むだけでテストは流させない）。`bolt_34c_report.md`、release_plan、開発の索引
 
 ### 時間の配分と打ち切り
@@ -177,6 +177,7 @@ verified:
 | 2026-10-17 | 初版作成（承認待ち）。human:kakimomokuri の決定（34c・34e・34f に分ける、監査の書き手は今のまま理由を書く、`@Service` と `@Bean` は今の形を残す、`login_failure` の注釈のマイグレーションを 34c で足す）を反映した | anthropic/claude-opus-5-5 |
 | 2026-10-17 | 詳細整合性検証（20 件）と横断整合性検証（15 件）の指摘を反映した。SpotBugs の除外に残すクラス、書き手の表の `LOCKED` と再設定の依頼と範囲外の記録、AT-11 を `LayerArchitectureTest` に置き直接の注釈だけを見る、`ClockConfiguration` の例外の理由と見張りと独立の確認ポイント 5、回復コードの特性テスト（確認ポイント 7）、`allowEmptyShould(false)` と変異の名前、注釈の文と Javadoc、AT の番号、アプローチを技術タスクに、注の行の具体化（ADR-011:252・283、ADR-012:108、architecture_backend:281・282・284・296、domain_model:1037、release_plan:553・557、過去の報告の送り先）、時間（約 3.6 時間） | anthropic/claude-opus-5-5 |
 | 2026-10-17 | 計画を承認した。確認ポイント 5〜12 を推奨のとおりに決めた（`ClockConfiguration` は AT-11 の例外にする、回復コードは今の振る舞いを確かめて書く）。`/goal` の下で、ステップごとの承認ゲートでは止めずに進め、層・モジュールの規則と打ち切りの条件に当たったときだけ止めて諮る | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
+| 2026-10-17 | 開発レビューの後: 確かめた事実に合わせて IA-INV-03・04 の列挙と回復コードの session の記述を直した（確認ポイント 6・7 の文言の事実の直し）、AT-09 に逆向きの規則、AT-11 の 2 本目の役割の書き方、特性テストを強めた | anthropic/claude-opus-5-5 |
 
 ## 関連ドキュメント
 

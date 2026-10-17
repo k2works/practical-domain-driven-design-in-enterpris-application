@@ -217,7 +217,11 @@ class LayerArchitectureTest {
             .orShould()
             .haveFullyQualifiedName(CLOCK_CONFIGURATION);
 
-    /** 上の例外が広がらないこと（T-135）: ルートのパッケージの直接の {@code @Configuration} は {@code ClockConfiguration} だけ。 */
+    /**
+     * 上の例外の名前が実在し続けること（T-135）: ルートのパッケージの直接の {@code @Configuration} は {@code ClockConfiguration} だけで、
+     * なければ落ちる。{@code ClockConfiguration} を動かしたり名前を変えたりして例外が古くなったときに知らせる。例外の広がり（ルートに
+     * 別の {@code @Configuration} を足す）は、上の規則が完全な名前 1 つしか許さないことで止める（Bolt 34c の開発レビュー）。
+     */
     @ArchTest
     static final ArchRule ルートのConfigurationは時刻の取り決めだけ = classes()
             .that()

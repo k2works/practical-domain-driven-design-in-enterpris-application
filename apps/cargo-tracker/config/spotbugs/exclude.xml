@@ -16,6 +16,8 @@
       DI で受け取ったリポジトリなどの部品を保持することへの指摘。上と同じく Spring が管理するシングルトンで、値として外へ渡さない。
       Bolt 31 から 34d まではクラスを 1 つずつ足して抑止していたが、identity の application.internal はどれも DI の部品を保持するだけの
       サービスの集まりなので、パッケージで指定する（Bolt 34c の開始準備の決定 3、2026-10-17、human:kakimomokuri）。
+      同じパッケージの結果の record（EnrollmentResult など）も対象に入る。record は compact constructor で防御の複製をとる規約で守る
+      （Bolt 34c の開発レビュー）。
     -->
     <Match>
         <Bug pattern="EI_EXPOSE_REP2"/>

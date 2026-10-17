@@ -151,7 +151,8 @@ class AuthenticationArchitectureTest {
     /*
      * 上の規則と D-5 の規則が空振りしていないこと（暗号の部品が crypto にあること）を、部品の名前ごとに確かめる（AT-09。Bolt 34c）。
      * 名前を .or() でつないだ 1 本の規則では、1 つの名前が変わって対象から消えてもほかの名前で対象が空にならず、黙って通っていた
-     * （Bolt 33a・33d で一覧から漏れた名前を後から足した）。名前ごとの規則は、対象が空なら落ちる。
+     * （Bolt 33a・33d で一覧から漏れた名前を後から足した）。名前ごとの規則は、名前が変わって対象が空になれば落ちる。一覧への足し忘れ
+     * （crypto に新しい部品を置いて一覧に足さない）は、逆向きの規則（crypto の部品は一覧のどれか）で捕まえる。
      */
 
     @ArchTest
@@ -187,6 +188,33 @@ class AuthenticationArchitectureTest {
 
     @ArchTest
     static final ArchRule Sha256PasswordResetTokenHasherはcryptoにある = cryptoComponent("Sha256PasswordResetTokenHasher");
+
+    /** 暗号の部品の一覧（上の名前ごとの規則と同じ 11）。 */
+    private static final List<String> CRYPTO_COMPONENTS = List.of(
+            "AesGcmSecretCipher",
+            "Base32",
+            "BcryptPasswordHasher",
+            "BcryptRecoveryCodeHasher",
+            "BundledCommonPasswordList",
+            "JavaOtpTotpCodeGenerator",
+            "QrCodeSvg",
+            "RandomPasswordResetTokenGenerator",
+            "RandomRecoveryCodeGenerator",
+            "RandomTotpSecretIssuer",
+            "Sha256PasswordResetTokenHasher");
+
+    /** 逆向き（AT-09。Bolt 34c の開発レビュー）: crypto のトップレベルのクラスは一覧のどれか。一覧への足し忘れを捕まえる。 */
+    @ArchTest
+    static final ArchRule cryptoの部品は一覧に載っている = classes()
+            .that()
+            .resideInAPackage("com.example.cargotracker.identity.infrastructure.crypto..")
+            .and()
+            .areTopLevelClasses()
+            .and()
+            .doNotHaveSimpleName("package-info")
+            .should()
+            .haveNameMatching(".*\\.(" + String.join("|", CRYPTO_COMPONENTS) + ")")
+            .allowEmptyShould(false);
 
     /** その名前のクラスが暗号の部品（identity.infrastructure.crypto）にあるという規則。その名前のクラスがなければ落ちる。 */
     private static ArchRule cryptoComponent(String simpleName) {

@@ -10,7 +10,6 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.example.cargotracker.identity.LogCapture;
 import com.example.cargotracker.identity.domain.model.aggregates.AuditRecord;
@@ -38,6 +37,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.IntStream;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -58,6 +58,8 @@ class AuthenticationErrorHandlingIntegrationTest extends IdentitySpyIntegrationT
     private static final Instant NOW = Instant.parse("2026-10-14T00:00:00Z");
     private static final String SESSION_COOKIE = "SESSION";
     private static final String TOTP_URL = "/login/totp";
+    private static final String RECOVERY_CODE = "1a2b-3c4d";
+    private static final String SECOND_RECOVERY_CODE = "5e6f-7a8b";
     private static final byte[] TOTP_SECRET = "12345678901234567890".getBytes(StandardCharsets.US_ASCII);
 
     @Autowired
@@ -184,7 +186,7 @@ class AuthenticationErrorHandlingIntegrationTest extends IdentitySpyIntegrationT
         RequestBuilder code = totpCode(session);
         RequestBuilder recovery = post(TOTP_URL)
                 .cookie(session)
-                .param("recoveryCode", "1a2b-3c4d")
+                .param("recoveryCode", RECOVERY_CODE)
                 .with(csrf());
 
         assertThatThrownBy(() -> mvc.perform(correct))
@@ -197,44 +199,71 @@ class AuthenticationErrorHandlingIntegrationTest extends IdentitySpyIntegrationT
     @Test
     void 回復コードのログインで成功の監査を書けなければ500にしコードは使用済みのまま残る() throws Exception {
         // 特性テスト（Bolt 34c の確認ポイント 7）。コードの使用と RECOVERY_CODE_USED は 1 つのトランザクション、LOGIN_SUCCEEDED と回数の
-        // 戻しは成功のイベントのリスナーが別のトランザクションで書く（IA-INV-08）。後者が失敗したときの今の振る舞いを固定する
+        // 戻しは成功のイベントのリスナーが別のトランザクションで書く（IA-INV-08）。後者が失敗したときの今の振る舞いを固定する。
+        // 望ましい振る舞いかは後の Bolt の議題（使ったコードが戻らず、同じ session で送り直すたびにコードが減る）。変えるときは書き換える
         String email = user();
         UserId userId = userIdOf(email);
-        recoveryCodes.replaceAll(
-                userId,
-                java.util.stream.IntStream.range(0, RecoveryCode.CODES_PER_USER)
-                        .mapToObj(i -> RecoveryCode.issue(
-                                userId,
-                                i == 0 ? "1a2b-3c4d" : String.format("0000-%04x", i),
-                                recoveryCodeHasher,
-                                new UtcInstant(clock.instant())))
-                        .toList());
+        issueRecoveryCodes(userId);
+        mvc.perform(password(email, "wrong-" + PASSWORD)).andExpect(redirectedUrl("/login?error"));
+        assertThat(failures(email))
+                .as("誤った password で 1 回と数える（password の段の成功では戻さない）")
+                .isEqualTo(1);
         Cookie session = loginWithPassword(email);
         doThrow(new DataAccessResourceFailureException("監査の表に届かない"))
                 .when(auditRecords)
                 .append(argThat(written -> written.action() == AuditAction.LOGIN_SUCCEEDED));
-        RequestBuilder recovery = post(TOTP_URL)
-                .cookie(session)
-                .param("recoveryCode", "1a2b-3c4d")
-                .with(csrf());
+        RequestBuilder first = recoveryCode(session, RECOVERY_CODE);
+        RequestBuilder second = recoveryCode(session, SECOND_RECOVERY_CODE);
 
-        assertThatThrownBy(() -> mvc.perform(recovery))
+        assertThatThrownBy(() -> mvc.perform(first))
                 .as("500 にする（監査を書けないログインを通さない）")
                 .isInstanceOf(DataAccessResourceFailureException.class);
 
         assertThat(recoveryCodes.findUnusedByUserId(userId))
                 .as("使ったコードは戻らない（コードの使用と RECOVERY_CODE_USED は先にコミットしている）")
                 .hasSize(RecoveryCode.CODES_PER_USER - 1);
-        assertThat(auditCount("RECOVERY_CODE_USED", userId)).isEqualTo(1);
-        assertThat(auditCount("LOGIN_SUCCEEDED", userId)).isZero();
-        mvc.perform(get("/customer/transport-requests").cookie(session)).andExpect(status().is3xxRedirection());
+        assertThat(auditCount(AuditAction.RECOVERY_CODE_USED, userId))
+                .as("コードの使用と同じトランザクションで先にコミットされる")
+                .isEqualTo(1);
+        assertThat(auditCount(AuditAction.LOGIN_SUCCEEDED, userId))
+                .as("成功の監査はリスナーの別のトランザクションで書けない")
+                .isZero();
+        assertThat(failures(email)).as("回数の戻しも書かれない").isEqualTo(1);
+        assertThat(failureReasons(email)).as("誤りとして数えない").hasSize(1);
+        mvc.perform(get("/customer/transport-requests").cookie(session))
+                .andExpect(result -> assertThat(result.getResponse().getRedirectedUrl())
+                        .as("session は password の段のまま残り、A-02 へ導く")
+                        .startsWith(TOTP_URL + "?factor.type=totp"));
+        assertThatThrownBy(() -> mvc.perform(second))
+                .as("同じ session で別のコードを送り直せ、また 500 になる")
+                .isInstanceOf(DataAccessResourceFailureException.class);
+        assertThat(recoveryCodes.findUnusedByUserId(userId))
+                .as("送り直すたびにコードが 1 つずつ使用済みになる")
+                .hasSize(RecoveryCode.CODES_PER_USER - 2);
     }
 
-    private int auditCount(String action, UserId userId) {
+    private void issueRecoveryCodes(UserId userId) {
+        UtcInstant now = new UtcInstant(clock.instant());
+        recoveryCodes.replaceAll(
+                userId,
+                IntStream.range(0, RecoveryCode.CODES_PER_USER)
+                        .mapToObj(i -> RecoveryCode.issue(
+                                userId,
+                                i == 0 ? RECOVERY_CODE : i == 1 ? SECOND_RECOVERY_CODE : String.format("0000-%04x", i),
+                                recoveryCodeHasher,
+                                now))
+                        .toList());
+    }
+
+    private static RequestBuilder recoveryCode(Cookie session, String code) {
+        return post(TOTP_URL).cookie(session).param("recoveryCode", code).with(csrf());
+    }
+
+    private int auditCount(AuditAction action, UserId userId) {
         return jdbc.queryForObject(
                 "SELECT count(*) FROM identity.audit_record WHERE action = ? AND actor_user_id = ?",
                 Integer.class,
-                action,
+                action.name(),
                 userId.value());
     }
 

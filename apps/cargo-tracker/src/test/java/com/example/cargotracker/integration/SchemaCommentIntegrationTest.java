@@ -73,9 +73,12 @@ class SchemaCommentIntegrationTest {
                 + " WHERE a.attrelid = 'identity.login_failure'::regclass AND a.attname = 'consecutive_failures'");
 
         assertThat(comments.get("consecutive_failures"))
+                .as("回復コードの誤りも数え、0 に戻すのは 2 つの要素がそろった成功（IA-INV-03）")
                 .contains("回復コード")
-                .contains("ロック中の試行は数えない")
-                .contains("2 つの要素がそろったログインの成功で 0 に戻し");
+                .contains("2 つの要素")
+                .contains("IA-INV-03")
+                .as("Bolt 30 の古い注釈ではない")
+                .doesNotContain("password と TOTP を合わせる");
     }
 
     @Test

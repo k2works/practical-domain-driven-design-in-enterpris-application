@@ -21,7 +21,8 @@ class TestPlacementArchitectureTest {
      * AT-10: identity の統合テストは、spy（{@code @MockitoSpyBean}）のフィールドを共通の基底にだけ宣言する（Bolt 32d の約束）。テストの
      * クラスごとに spy の組が違うと、Spring のコンテキストがクラスごとに作られて増える。対象のフィールドがなければ落ちる（基底の spy が
      * 数えられていることを先に確かめる。T-119）。範囲は identity のパッケージのフィールドだけで、ほかのパッケージ（integration）と、
-     * クラスに付ける {@code @MockitoSpyBean(types = …)} は対象にしない。
+     * クラスに付ける {@code @MockitoSpyBean(types = …)} は対象にしない。コンテキストを分けるほかの要因（{@code @MockitoBean}・
+     * {@code @TestPropertySource} など）も見ない（spy の約束だけを見張る。Bolt 34c の開発レビュー）。
      */
     @ArchTest
     static final ArchRule identityのspyは共通の基底にだけ宣言する = fields().that()
