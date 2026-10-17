@@ -11983,7 +11983,7 @@
 <tr>
 <td style="text-align: left;">利用状態の変更の承認</td>
 <td style="text-align: left;">StatusChangeApproval</td>
-<td style="text-align: left;">利用者の集約の利用状態の変更の判定（<code>User#decideStatusChange</code>）を通った印。対象の利用者 ID・判定に使った版・変更後の状態・停止の理由を持ち、<code>User#changeStatus</code> はこれだけを受ける。判定を通った印で、業務の承認の手続き（荷主承認・社内承認）ではない。判定の結果 <code>StatusChangeDecision</code>（<code>Approved(承認)</code>・<code>Refused(StatusChangeRejection)</code>）で返す。作り手を集約に限るため、<code>valueobjects</code> に置かず <code>User</code> の入れ子にし、コンストラクタを private にする（同じパッケージからも作れない）。別の利用者や判定と違う版の承認を渡すと <code>IllegalArgumentException</code>（取り違えの守りで、同時の更新の判定ではない）（Bolt 34e）</td>
+<td style="text-align: left;">利用者の集約の利用状態の変更の判定（<code>User#decideStatusChange</code>）を通った印。判定した利用者の実体・変更後の状態・停止の理由を持ち（対象の利用者 ID と判定に使った版はその実体から取る）、<code>User#changeStatus</code> はこれだけを受ける。再開の承認は停止の理由を持たない（<code>reason()</code> は <code>Optional</code> で、再開の判定に渡された理由は捨てる）。確定の後の監査の種類・トークンの無効化・session の失効の分かれ目と停止の理由は、サービスがこの承認から取る（2026-10-17、human:kakimomokuri）。判定を通った印で、値として比べない（equals を持たない）。判定を通った印で、業務の承認の手続き（荷主承認・社内承認）ではない。判定の結果 <code>StatusChangeDecision</code>（<code>Approved(承認)</code>・<code>Refused(StatusChangeRejection)</code>）で返す。作り手を集約に限るため、<code>valueobjects</code> に置かず <code>User</code> の入れ子にし、コンストラクタを private にする（同じパッケージからも作れない）。判定した実体と違う利用者（別の利用者・判定と違う版・同じ ID と版で組み立てた別の利用者・変えた後の利用者）に渡すと <code>IllegalArgumentException</code>（同じ実体かで確かめる取り違えの守りで、同時の更新の判定ではない。2026-10-17、human:kakimomokuri）（Bolt 34e）</td>
 <td style="text-align: left;">アクセス・監査</td>
 </tr>
 <tr>
@@ -12247,7 +12247,7 @@
 <tr>
 <td style="text-align: left;">役割の変更の承認</td>
 <td style="text-align: left;">RoleChangeApproval</td>
-<td style="text-align: left;">利用者の集約の役割の変更の判定（<code>User#decideRoleChange</code>）を通った印。対象の利用者 ID・判定に使った版・変更後の役割の集合（<code>EnumSet.copyOf</code> で受け、取り出しは <code>Set.copyOf</code>）を持ち、<code>User#changeRoles</code> はこれだけを受ける。判定を通った印で、業務の承認の手続き（荷主承認・社内承認）ではない。判定の結果 <code>RoleChangeDecision</code>（<code>Approved(承認)</code>・<code>Refused(RoleChangeRejection)</code>）で返す。作り手を集約に限るため、<code>valueobjects</code> に置かず <code>User</code> の入れ子にし、コンストラクタを private にする（同じパッケージからも作れない）。別の利用者や判定と違う版の承認を渡すと <code>IllegalArgumentException</code>（取り違えの守りで、同時の更新の判定ではない）。変えた後の利用者に同じ承認をもう一度渡すことは捕まえない（<code>changeRoles</code> は版を変えない）（Bolt 34e）</td>
+<td style="text-align: left;">利用者の集約の役割の変更の判定（<code>User#decideRoleChange</code>）を通った印。判定した利用者の実体と変更後の役割の集合（<code>EnumSet.copyOf</code> で受け、取り出しは <code>Set.copyOf</code>）を持ち（対象の利用者 ID と判定に使った版はその実体から取る）、<code>User#changeRoles</code> はこれだけを受ける。確定の後の監査の変更後の役割は、サービスがこの承認から取る（2026-10-17、human:kakimomokuri）。判定を通った印で、値として比べない（equals を持たない）。判定を通った印で、業務の承認の手続き（荷主承認・社内承認）ではない。判定の結果 <code>RoleChangeDecision</code>（<code>Approved(承認)</code>・<code>Refused(RoleChangeRejection)</code>）で返す。作り手を集約に限るため、<code>valueobjects</code> に置かず <code>User</code> の入れ子にし、コンストラクタを private にする（同じパッケージからも作れない）。判定した実体と違う利用者（別の利用者・判定と違う版・同じ ID と版で組み立てた別の利用者・変えた後の利用者）に渡すと <code>IllegalArgumentException</code>（同じ実体かで確かめる取り違えの守りで、同時の更新の判定ではない。集約は不変なので、版を変えない <code>changeRoles</code> の後に同じ承認をもう一度渡すことも捕まえる。2026-10-17、human:kakimomokuri）（Bolt 34e）</td>
 <td style="text-align: left;">アクセス・監査</td>
 </tr>
 <tr>
@@ -12265,7 +12265,7 @@
 <tr>
 <td style="text-align: left;">管理する利用者の読み出し</td>
 <td style="text-align: left;">ManagedUserLookup</td>
-<td style="text-align: left;">役割の変更と利用状態の変更の判定の前半（操作者がシステム管理者か → 利用者と所属企業 → 管理範囲）を、この順に読んで確かめる部品。管理する利用者と所属企業（<code>Managed(User, Company)</code>）か、型の引数のない拒否（<code>Refusal</code>: <code>NOT_PERMITTED</code>・<code>NOT_FOUND</code>・<code>OUT_OF_SCOPE</code>）を返し、各サービスが共通の拒否の型に写す（<code>commandservices</code>。Bean にせず、<code>UserRoleChangeService</code> と <code>UserStatusChangeService</code> がコンストラクタの引数のリポジトリから組み立てて使う。照会のサービスは管理範囲を先に読むので使わない。Bolt 34e）</td>
+<td style="text-align: left;">役割の変更と利用状態の変更の判定の前半（操作者がシステム管理者か → 利用者と所属企業 → 管理範囲）を、この順に読んで確かめる部品。管理する利用者と所属企業（<code>Managed(User, Company)</code>）か、型の引数のない拒否（<code>Refusal</code>: <code>NOT_PERMITTED</code>・<code>NOT_FOUND</code>・<code>OUT_OF_SCOPE</code>）を返し、<code>Refusal#toRefusal</code> が共通の拒否の型に写す（<code>commandservices</code>。Bean にせず、<code>UserRoleChangeService</code> と <code>UserStatusChangeService</code> がコンストラクタの引数のリポジトリから組み立てて使う。照会のサービスは管理範囲を先に読むので使わない。Bolt 34e）</td>
 <td style="text-align: left;">アクセス・監査</td>
 </tr>
 <tr>
