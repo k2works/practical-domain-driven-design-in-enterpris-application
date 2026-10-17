@@ -11423,7 +11423,7 @@
 <li>画面の層のステップの <code>submitLogin(String, boolean)</code> のフラグ引数（プログラマー、低）。画面の層のステップを触る Bolt で名前の違うメソッドに分ける</li>
 <li>時計を <code>Clock</code> で受けて <code>MutableClock</code> に型変換する書き方が 6 クラスに散らばる（プログラマー、低）。合成注釈を使うクラスで <code>MutableClock</code> を直接受ける形に、次に identity の統合テストを触る Bolt でそろえる</li>
 <li>共有の <code>MutableClock</code> の時刻を各テストの前に置くのは約束だけ（アーキテクト、低）。基底か合成注釈の拡張で置くかを、統合テストのクラスが増えたときに見る</li>
-<li><code>@IdentityIntegrationTest</code>・<code>IdentitySpyIntegrationTestBase</code> の外で <code>@MockitoSpyBean</code> を使わない見張り、<code>@Configuration</code> を config の外に置かない見張り（アーキテクト、低）。Bolt 34 で合成ルートに部品が増えるときに、AT-07 とあわせて見る（release_plan の 34 の行の「暗号の部品は crypto にある」の規則と一緒に）</li>
+<li><code>@IdentityIntegrationTest</code>・<code>IdentitySpyIntegrationTestBase</code> の外で <code>@MockitoSpyBean</code> を使わない見張り、<code>@Configuration</code> を config の外に置かない見張り（アーキテクト、低）。Bolt 34 で合成ルートに部品が増えるときに、AT-07 とあわせて見る（release_plan の 34 の行の「暗号の部品は crypto にある」の規則と一緒に）（→ 34c）</li>
 <li>見張りの条件の偽陰性を確かめる試料（許さない型を返す試料のクラス）。今は使い捨ての違反で確かめた</li>
 <li><code>AuthenticationFactorFixtures.resetTotpStep</code> の 2 つの多重定義がそれぞれ SQL を持つ</li>
 <li><code>SpringSessionRows.idle</code> は実時間を使う（Spring Session が実時間で期限を見るため。Javadoc に書いた）</li>

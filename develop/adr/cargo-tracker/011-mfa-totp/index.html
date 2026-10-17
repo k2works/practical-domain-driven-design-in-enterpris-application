@@ -11176,7 +11176,7 @@
 <ul>
 <li>US-18 の残りを 32c（AC6 の request ごとの確かめ、ADR-012 の見直しの 3）と 32d（Bolt 31d から送った低の指摘、Bolt 32 の既知の課題のテストの整理）に分ける</li>
 <li>Bolt 32 の議題 4（A-01 の予告の後に「15 分たってからもう一度ログインしてください」を足す）は採らない。A-01 の文言は決定 9 のまま（誤りと同じ文言と一般の予告）にし、待てば解けることはユーザーマニュアル（Bolt 33b の 2 章の書き直し）に書く。画面・UI 設計・ADR・US-18・シナリオの 5 か所を変えずに済み、文言は計画の承認どおりに保てる</li>
-<li>Bolt 32 の議題 5（ログインの監査の追記をすべて <code>LoginAttemptService</code> に寄せる）は採らない。数えない拒否と password の段の成功は、今のまま監査のリスナーが直接書く（決定 9 の表の「数え方の置き場所」）。利用者の管理の監査を作る Bolt 34 で、監査の書き込みの経路をあわせて見直す。Bolt 32c の <code>SESSION_REVOKED</code> はアプリケーションのサービスで書き、監査を直接書く入口の経路を増やさない（ADR-012 の決定 4）</li>
+<li>Bolt 32 の議題 5（ログインの監査の追記をすべて <code>LoginAttemptService</code> に寄せる）は採らない。数えない拒否と password の段の成功は、今のまま監査のリスナーが直接書く（決定 9 の表の「数え方の置き場所」）。利用者の管理の監査を作る Bolt 34 で、監査の書き込みの経路をあわせて見直す（見直した。Bolt 34c の決定で今のままにした）。Bolt 32c の <code>SESSION_REVOKED</code> はアプリケーションのサービスで書き、監査を直接書く入口の経路を増やさない（ADR-012 の決定 4）</li>
 </ul>
 <p>Bolt 33b の開始準備と計画の承認（2026-10-15、human:kakimomokuri）で決めたこと:</p>
 <ul>
@@ -11191,6 +11191,73 @@
 <li>印の属性の名前と A-08 の URL は application 層の <code>SessionKeys</code>（<code>identity.application.internal.session</code>）に、印の 15 分・登録の途中の 15 分・再登録の 15 分はドメインルール <code>SessionPolicy</code>（<code>identity.domain.model.rules</code>）に寄せる（<a href="../012-authentication-principal-and-session/">ADR-012</a> の決定 3・決定 6）</li>
 <li>「始めたときの秘密を置き換えの条件にする」（Bolt 33b の開発レビューで 33c で扱うとした）は振る舞いが変わる直しなので、<a href="https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/49">#49</a>（W10）に送る</li>
 </ul>
+<p>Bolt 34c の開始準備と計画の承認（2026-10-17、human:kakimomokuri）で決めたこと:</p>
+<ul>
+<li>Bolt 34c の行を 34c（認証・監査の経路と文書と見張り）、34e（利用者の管理のドメインとサービス）、34f（S-20 の画面の構造）に分け、この順に進める</li>
+<li>ログインの監査の書き手は今のまま（監査のリスナーが直接書く分を残す）にし、Bolt 32c の決定の「Bolt 34 で見直す」を閉じる。リスナーが直接書くのは、Spring Security の認証のイベントを写すだけで数え方に関わらず、1 文の追記で済む記録（<code>PASSWORD_VERIFIED</code>・数えない <code>LOGIN_FAILED</code>・<code>LOGOUT</code>）。数え方と結び付く記録（成功・数える失敗・ロック）は、回数と同じトランザクションにするため <code>LoginAttemptService</code> が書く。ロック中の試行（理由 <code>LOCKED</code>）も数えないが、ロック中かどうかを決めるのはサービスの 1 か所（<code>isLocked</code> と条件付きの更新）なので、サービスが 1 文で書く。利用者の管理の監査は、どれも状態の変更と同じトランザクションにするためアプリケーションのサービスが書く（範囲外の記録は単独で、確定の POST だけ。GET では書かない）。書き手は下の表のとおり</li>
+<li>回復コードのログインで、成功のイベントのリスナーが書く <code>LOGIN_SUCCEEDED</code>（と回数の戻し）の追記が失敗すると、例外が伝わってログインは 500 になり通らない（session は認証されず、業務の画面は開けない）。コードの使用と <code>RECOVERY_CODE_USED</code> は先に別のトランザクションでコミットしているので、使ったコードは使用済みのまま残る（決定 7・決定 9。Bolt 34c のステップ 1 で <code>AuthenticationErrorHandlingIntegrationTest</code> の特性テストで固定した）。変えるかは後の Bolt の議題にし、この Bolt では変えない</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">記録</th>
+<th style="text-align: left;">書き手</th>
+<th style="text-align: left;">トランザクション</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>PASSWORD_VERIFIED</code></td>
+<td style="text-align: left;"><code>AuthenticationAuditListener</code></td>
+<td style="text-align: left;">1 文</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>LOGIN_FAILED</code>（数えない: 理由 <code>SERVICE_ERROR</code>・<code>UNKNOWN_USER</code>・利用停止・無効な企業）</td>
+<td style="text-align: left;"><code>AuthenticationAuditListener</code></td>
+<td style="text-align: left;">1 文</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>LOGOUT</code></td>
+<td style="text-align: left;"><code>AuthenticationAuditListener</code></td>
+<td style="text-align: left;">1 文</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>LOGIN_SUCCEEDED</code>・数える <code>LOGIN_FAILED</code>・<code>ACCOUNT_LOCKED</code></td>
+<td style="text-align: left;"><code>LoginAttemptService</code></td>
+<td style="text-align: left;">回数と同じ</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>LOGIN_FAILED</code>（理由 <code>LOCKED</code>。数えない）</td>
+<td style="text-align: left;"><code>LoginAttemptService</code></td>
+<td style="text-align: left;">1 文（ロックの判定をサービスの 1 か所にするため）</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>RECOVERY_CODE_USED</code></td>
+<td style="text-align: left;"><code>RecoveryCodeVerificationService</code></td>
+<td style="text-align: left;">コードの使用と同じ（<code>LOGIN_SUCCEEDED</code> と回数の戻しは別のトランザクション）</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>SESSION_REVOKED</code></td>
+<td style="text-align: left;"><code>SessionRevalidationService</code></td>
+<td style="text-align: left;">単独</td>
+</tr>
+<tr>
+<td style="text-align: left;">TOTP の登録・再登録、再設定の完了、役割と利用状態の変更</td>
+<td style="text-align: left;">それぞれのアプリケーションのサービス</td>
+<td style="text-align: left;">状態の変更と同じ</td>
+</tr>
+<tr>
+<td style="text-align: left;">再設定の依頼（受付・不受付）</td>
+<td style="text-align: left;"><code>PasswordResetRequestService</code></td>
+<td style="text-align: left;">単独（不受付は状態を変えない）</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>ADMIN_SCOPE_DENIED</code></td>
+<td style="text-align: left;"><code>AdministrationScopeDenialService</code>（controller の確定の POST だけから）</td>
+<td style="text-align: left;">単独。GET では書かない</td>
+</tr>
+</tbody>
+</table>
 <h2 id="_2">コンテキスト<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h2>
 <ul>
 <li>US-18 は、メールアドレス・password・TOTP で本人確認し、無操作 30 分・最長 8 時間の session を発行する（AC1）。password か TOTP の失敗が 5 回続いたら 15 分ロックする（AC3。回復コードの誤りも数えると Bolt 32 で決めた。決定 9）。初回は TOTP を登録し、一度だけ使える回復コードを発行する（AC7・AC9）。</li>
@@ -11526,7 +11593,7 @@
 </tr>
 <tr>
 <td style="text-align: left;">照合とトランザクションの境界</td>
-<td style="text-align: left;">未使用の回復コードのすべてとハッシュで照合する（1 回の送信で最大 10 回の bcrypt、約 1 秒）。読み出しと照合はトランザクションの外で行い、一致したコードの条件付きの更新（<code>use</code>）と監査記録 <code>RECOVERY_CODE_USED</code> だけを <code>TransactionTemplate</code> の 1 つのトランザクションにする（DB の接続を照合の間持たない。監査の追記が失敗したら使用も戻る）。更新できなかったら（同時の消費で負けた）拒む。同じコードを 2 つの session で同時に送っても 1 つだけが通る。照合の時間で一致の位置が分かる心配は、使用済みが一覧に出ない形なので受け入れる</td>
+<td style="text-align: left;">未使用の回復コードのすべてとハッシュで照合する（1 回の送信で最大 10 回の bcrypt、約 1 秒）。読み出しと照合はトランザクションの外で行い、一致したコードの条件付きの更新（<code>use</code>）と監査記録 <code>RECOVERY_CODE_USED</code> だけを <code>TransactionTemplate</code> の 1 つのトランザクションにする（DB の接続を照合の間持たない。監査の追記が失敗したら使用も戻る）。更新できなかったら（同時の消費で負けた）拒む。同じコードを 2 つの session で同時に送っても 1 つだけが通る。照合の時間で一致の位置が分かる心配は、使用済みが一覧に出ない形なので受け入れる。<code>LOGIN_SUCCEEDED</code> と回数の戻しは、成功のイベントを受けた監査のリスナーが <code>LoginAttemptService</code> で別のトランザクションに書く（決定 9）。こちらの追記が失敗すると、例外が伝わってログインは 500 になり通らない（session は認証されない）が、使ったコードは使用済みのまま残り、<code>RECOVERY_CODE_USED</code> だけが残る（Bolt 34c のステップ 1 で特性テストで固定した。変えるかは後の Bolt の議題）</td>
 </tr>
 <tr>
 <td style="text-align: left;">失敗へ倒す場面（T-42）</td>
@@ -11603,7 +11670,7 @@
 <tbody>
 <tr>
 <td style="text-align: left;">数え方の置き場所</td>
-<td style="text-align: left;">規則（5 回・15 分、ロック中は数えない・延ばさない）は、ログインの失敗の集約 <code>LoginFailure</code> と方針 <code>LockPolicy</code>（Bolt 30）のまま。数える・0 に戻す・監査記録を書くのは、アプリケーションのサービス <code>LoginAttemptService</code>（<code>identity.application.internal.commandservices</code>）で、回数と監査記録を <code>TransactionTemplate</code> の 1 つのトランザクションにする（IA-INV-08。ADR-012 の見直しの 5）。監査記録の追記が失敗したら回数も戻る。監査のリスナー（<code>AuthenticationAuditListener</code>）は、誤りの失敗（数える）とロック中の試行をサービスに写し、数えない拒否（利用停止・無効な企業、存在しない利用者、利用者の読み出しの DB の誤り）と password の段の成功は監査記録に直接書く（Bolt 32 の開発レビューで、文書を実装に合わせた。ログインの監査をすべてサービスに寄せるかは終了報告の議題）（決定 2 の表の「イベントの 1 か所で数える」を、数える場所をサービスに移す形に改めた）</td>
+<td style="text-align: left;">規則（5 回・15 分、ロック中は数えない・延ばさない）は、ログインの失敗の集約 <code>LoginFailure</code> と方針 <code>LockPolicy</code>（Bolt 30）のまま。数える・0 に戻す・監査記録を書くのは、アプリケーションのサービス <code>LoginAttemptService</code>（<code>identity.application.internal.commandservices</code>）で、回数と監査記録を <code>TransactionTemplate</code> の 1 つのトランザクションにする（IA-INV-08。ADR-012 の見直しの 5）。監査記録の追記が失敗したら回数も戻る。監査のリスナー（<code>AuthenticationAuditListener</code>）は、誤りの失敗（数える）とロック中の試行をサービスに写し、数えない拒否（利用停止・無効な企業、存在しない利用者、利用者の読み出しの DB の誤り）と password の段の成功は監査記録に直接書く（Bolt 32 の開発レビューで、文書を実装に合わせた。ログインの監査をすべてサービスに寄せるかは終了報告の議題にし、Bolt 34c の決定で今のままにした。書き手の表はステータスの節）。回復コードのログインでは、コードの使用と <code>RECOVERY_CODE_USED</code> が 1 つのトランザクション、<code>LOGIN_SUCCEEDED</code> と回数の戻しが別のトランザクションになる（決定 7。Bolt 34c）（決定 2 の表の「イベントの 1 か所で数える」を、数える場所をサービスに移す形に改めた）</td>
 </tr>
 <tr>
 <td style="text-align: left;">数える失敗</td>
@@ -11860,6 +11927,7 @@
 <p>復号した平文の消去について（Bolt 31 の開発レビュー）: 生成器は復号した配列を使い終えたら消すが、JDK の <code>SecretKeySpec</code> と java-otp の <code>Mac</code> は内部に鍵の写しを持つので、JVM の中の写しまでは消せない。消せるのは呼び出し側の配列だけである。</p>
 <h2 id="_10">改訂の経緯<a class="headerlink" href="#_10" title="Permanent link">&para;</a></h2>
 <ul>
+<li>2026-10-17: Bolt 34c のステップ 1 で、ステータスに 34c の開始準備と計画の承認の決定（34c・34e・34f の分け方、ログインの監査の書き手は今のまま、理由と書き手の表）を書き、Bolt 32c の決定の「Bolt 34 で見直す」を閉じた。決定 7 の照合とトランザクションの境界と決定 9 の数え方の置き場所に、回復コードのログインのトランザクションの分かれ目（<code>LOGIN_SUCCEEDED</code> の追記が失敗すると 500 で、使ったコードは使用済みのまま残る。特性テストで固定した）を足した（Bolt 34c の開始準備の決定 1・2 と確認ポイント 7。human:kakimomokuri が決定）。</li>
 <li>2026-10-16: Bolt 33f で、決定 6 の回復コードの生成のポートが <code>NormalizedRecoveryCode</code> の一覧を返すことと、A-08 の URL を <code>SessionKeys</code> から同じパッケージの <code>SessionPaths</code> に分けたことを書いた（Bolt 33f の開始準備の決定 1・2。human:kakimomokuri が決定）。</li>
 <li>2026-10-16: Bolt 33e で、決定 7 の結果の型と決定 10 の入口と印に、認証の結果のトークンが 2 つ目の要素の経路（<code>SecondFactorPath</code>。<code>transient</code>）を持ち、成功の扱いがそれを読むこと（request の属性をやめた）を足した。ステータスに 33e と 33f の分け方を足した（Bolt 33e の開始準備の決定 1・4。human:kakimomokuri が決定）。</li>
 <li>2026-10-15: Bolt 33c のステップ 1 で、ステータスに 33c の開始準備の決定（33c と 33d の分け方、属性の名前と URL は <code>SessionKeys</code>・期間は <code>SessionPolicy</code>、始めたときの秘密の条件は #49）を書いた。決定 10 の印の属性の名前を、2 つの定数の組から <code>SessionKeys</code>・<code>SessionPolicy</code> に寄せたことに直し、A-07 と A-08 の重複の行き先を 33d に改めた（Bolt 33c の開始準備の決定 1・2 と決定 2 の (6)。human:kakimomokuri が決定）。</li>

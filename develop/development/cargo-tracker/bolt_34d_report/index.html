@@ -11290,7 +11290,7 @@
 <li>停止の確定の時に相手が処理中の request は最後まで動く（request ごとの確かめの作り。隙は 1 回分）</li>
 <li>詳細に停止の理由・停止した人・時刻を示さない（監査記録にだけ残る）。一覧のキャプチャに停止の例がない</li>
 <li>停止する相手の担当の案件の引き継ぎ（W6 の担当案件と一緒に検討する）</li>
-<li>34c に送ったもの: 判定を通さずに呼べる <code>changeRoles</code>・<code>changeStatus</code>、<code>RoleChangeResult</code> の共用、判定の前半の写し、controller の分割と詳細の描画の部品化、利用状態の名前の写し、役割の領域の見出し、セキュリティの統合テストの login の写し</li>
+<li>34c に送ったもの（Bolt 34c の開始準備で 34c・34e・34f に分けた）: 判定を通さずに呼べる <code>changeRoles</code>・<code>changeStatus</code>（→ 34e）、<code>RoleChangeResult</code> の共用（→ 34e）、判定の前半の写し（→ 34e）、controller の分割と詳細の描画の部品化（→ 34f）、利用状態の名前の写し（→ 34f）、役割の領域の見出し（→ 34f）、セキュリティの統合テストの login の写し（→ 34e）</li>
 <li>Bolt 34b からの既知の課題（範囲外の POST の時間の差、テストの割り当ての暗黙の準備ほか）は変わらず。34d の確定にも同じ形がある</li>
 <li><code>ffmpeg</code> がない環境で、デモの動画のフレームを切り出して確かめられなかった（シナリオは緑で通った）</li>
 </ul>
