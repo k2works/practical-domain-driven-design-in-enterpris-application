@@ -66,6 +66,19 @@ class SchemaCommentIntegrationTest {
     }
 
     @Test
+    void ログインの失敗の回数の注釈は今の数え方に合う() throws SQLException {
+        // Bolt 30 の注釈（password と TOTP、成功で 0 に戻す）を Bolt 34c のマイグレーションで直した（IA-INV-03）
+        Map<String, String> comments = query("SELECT 'consecutive_failures',"
+                + " col_description('identity.login_failure'::regclass, a.attnum) FROM pg_attribute a"
+                + " WHERE a.attrelid = 'identity.login_failure'::regclass AND a.attname = 'consecutive_failures'");
+
+        assertThat(comments.get("consecutive_failures"))
+                .contains("回復コード")
+                .contains("ロック中の試行は数えない")
+                .contains("2 つの要素がそろったログインの成功で 0 に戻し");
+    }
+
+    @Test
     void 追記専用の表は日本語名の後ろに印を付ける() throws SQLException {
         Map<String, String> comments =
                 query("SELECT n.nspname || '.' || c.relname, obj_description(c.oid, 'pg_class') FROM pg_class c"
