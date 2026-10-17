@@ -11917,19 +11917,19 @@ src/test/java/.../ui/                     画面の層のステップ定義（@u
 </tr>
 <tr>
 <td style="text-align: left;">AT-09</td>
-<td style="text-align: left;">暗号の部品（<code>identity.infrastructure.crypto</code> の 11 のクラス）は、名前ごとの規則で「その名前のクラスは <code>identity.infrastructure.crypto</code> にある」を確かめる（11 の名前を <code>.or()</code> でつないだ 1 本の規則を分ける。規則を作る補助は <code>.allowEmptyShould(false)</code> を明示し、1 つの名前が変わるとその規則の対象が空になって落ちる。前例 <code>AcceptanceStepArchitectureTest</code>）。Bolt 34c のステップ 2 で足す</td>
+<td style="text-align: left;">暗号の部品（<code>identity.infrastructure.crypto</code> の 11 のクラス）は、名前ごとの規則で「その名前のクラスは <code>identity.infrastructure.crypto</code> にある」を確かめる（11 の名前を <code>.or()</code> でつないだ 1 本の規則を分ける。規則を作る補助は <code>.allowEmptyShould(false)</code> を明示し、1 つの名前が変わるとその規則の対象が空になって落ちる。前例 <code>AcceptanceStepArchitectureTest</code>）。逆向きの規則「<code>identity.infrastructure.crypto</code> のトップレベルのクラスは一覧の 11 のどれか」も並べ、一覧への足し忘れを捕まえる（名前ごとの規則は名前の変更を捕まえる）。Bolt 34c のステップ 2 で足した</td>
 <td style="text-align: left;">ArchUnit（<code>AuthenticationArchitectureTest</code>）</td>
 <td style="text-align: left;">Bolt 31d の問い、バックエンドアーキテクチャの暗号の部品の箇条</td>
 </tr>
 <tr>
 <td style="text-align: left;">AT-10</td>
-<td style="text-align: left;">identity のパッケージ（<code>..identity..</code>）のテストのクラスのフィールドの <code>@MockitoSpyBean</code> は、共通の基底 <code>com.example.cargotracker.identity.infrastructure.security.IdentitySpyIntegrationTestBase</code> にだけ宣言する（テストのクラスごとに spy の組が増えて Spring のコンテキストが増えることを防ぐ。<code>integration</code> パッケージの 1 つとクラスに付ける <code>@MockitoSpyBean(types=…)</code> は範囲の外）。先に基底の spy のフィールドが対象として数えられていること（空でない）を確かめる（T-119）。Bolt 34c のステップ 3 で足す</td>
+<td style="text-align: left;">identity のパッケージ（<code>..identity..</code>）のテストのクラスのフィールドの <code>@MockitoSpyBean</code> は、共通の基底 <code>com.example.cargotracker.identity.infrastructure.security.IdentitySpyIntegrationTestBase</code> にだけ宣言する（テストのクラスごとに spy の組が増えて Spring のコンテキストが増えることを防ぐ。<code>integration</code> パッケージの 1 つとクラスに付ける <code>@MockitoSpyBean(types=…)</code> は範囲の外）。先に基底の spy のフィールドが対象として数えられていること（空でない）を確かめる（T-119）。見るのは spy の約束だけで、<code>@MockitoBean</code>・<code>@TestPropertySource</code> などコンテキストを分けるほかの要因は見ない。Bolt 34c のステップ 3 で足した</td>
 <td style="text-align: left;">ArchUnit（テストのクラスを読む <code>TestPlacementArchitectureTest</code>。前例 <code>AcceptanceStepArchitectureTest</code>）</td>
 <td style="text-align: left;">Bolt 32d の既知の課題、本書の identity の統合テストの段落</td>
 </tr>
 <tr>
 <td style="text-align: left;">AT-11</td>
-<td style="text-align: left;">本体のクラスに直接付ける <code>@Configuration</code>（<code>areAnnotatedWith(Configuration.class)</code>。メタ注釈の <code>@SpringBootApplication</code>・<code>@TestConfiguration</code> は対象外）は <code>..infrastructure.config..</code> に置くか、<code>com.example.cargotracker.ClockConfiguration</code> である。例外が広がらないよう「ルートのパッケージの直接の <code>@Configuration</code> は <code>ClockConfiguration</code> だけ」を並べて見張る（T-135）。Bolt 34c のステップ 3 で足す</td>
+<td style="text-align: left;">本体のクラスに直接付ける <code>@Configuration</code>（<code>areAnnotatedWith(Configuration.class)</code>。メタ注釈の <code>@SpringBootApplication</code>・<code>@TestConfiguration</code> は対象外）は <code>..infrastructure.config..</code> に置くか、<code>com.example.cargotracker.ClockConfiguration</code> である。例外の広がりは、この規則が例外に完全な名前の 1 つしか許さないことで止める。並べた 2 本目の規則「ルートのパッケージの直接の <code>@Configuration</code> は <code>ClockConfiguration</code> だけ」は、例外の名前が実在し続けることの見張りで、<code>ClockConfiguration</code> を動かしたり名前を変えたりすると落ちる（T-135）。Bolt 34c のステップ 3 で足した</td>
 <td style="text-align: left;">ArchUnit（<code>LayerArchitectureTest</code>。「config には <code>@Configuration</code> だけを置く」の隣）</td>
 <td style="text-align: left;">バックエンドアーキテクチャの合成ルートの箇条（<code>ClockConfiguration</code> の例外。2026-10-17、human:kakimomokuri）</td>
 </tr>
@@ -12055,7 +12055,7 @@ src/test/java/.../ui/                     画面の層のステップ定義（@u
 </tbody>
 </table>
 <p>統合テストは Testcontainers の PostgreSQL を使い、H2 で書かない（ADR-007）。H2 で確かめるのはスモークテストだけとする。</p>
-<p>identity の統合テストは、時計を差し替えるなら合成注釈 <code>@IdentityIntegrationTest</code>（<code>@SpringBootTest</code>・<code>@AutoConfigureMockMvc</code>・PostgreSQL と共通の時計 <code>IdentityTestClock</code> の <code>@Import</code>）を付け、spy（<code>@MockitoSpyBean</code>）を使うクラスは同じ spy のフィールドの組を持つ共通の基底のクラス <code>IdentitySpyIntegrationTestBase</code> を継ぐ。Spring のコンテキストは <code>@Import</code> の組と bean の差し替えの組（spy はフィールド名と置き場所を含む）で区別されるので、組をそろえてコンテキストを共有する（Bolt 32d）。同じ組のクラスはコンテキストと PostgreSQL のコンテナ（DB）も共有するので、共有の表の件数は利用者で絞るかテストの前後の差で確かめる（T-113）。JUnit の並列実行を入れるときは、この共有を見直す。基底の spy の組を増やすのは、spy を使うクラスが要るときだけにする（増やすと spy を使う全クラスの組が変わる）。identity のテストのクラスのフィールドの <code>@MockitoSpyBean</code> が基底の外にないことは、ArchUnit の見張り（AT-10。Bolt 34c のステップ 3 で足す）で確かめる。同時の操作のテスト（<code>OverlappingTransactions</code>）は、後の操作が先の行ロックを待っていることを PostgreSQL の <code>pg_blocking_pids</code> で確かめてから先をコミットする（「一定時間の間に終わらない」だけでは待ちの証拠にならない。Bolt 32d）。</p>
+<p>identity の統合テストは、時計を差し替えるなら合成注釈 <code>@IdentityIntegrationTest</code>（<code>@SpringBootTest</code>・<code>@AutoConfigureMockMvc</code>・PostgreSQL と共通の時計 <code>IdentityTestClock</code> の <code>@Import</code>）を付け、spy（<code>@MockitoSpyBean</code>）を使うクラスは同じ spy のフィールドの組を持つ共通の基底のクラス <code>IdentitySpyIntegrationTestBase</code> を継ぐ。Spring のコンテキストは <code>@Import</code> の組と bean の差し替えの組（spy はフィールド名と置き場所を含む）で区別されるので、組をそろえてコンテキストを共有する（Bolt 32d）。同じ組のクラスはコンテキストと PostgreSQL のコンテナ（DB）も共有するので、共有の表の件数は利用者で絞るかテストの前後の差で確かめる（T-113）。JUnit の並列実行を入れるときは、この共有を見直す。基底の spy の組を増やすのは、spy を使うクラスが要るときだけにする（増やすと spy を使う全クラスの組が変わる）。identity のテストのクラスのフィールドの <code>@MockitoSpyBean</code> が基底の外にないことは、ArchUnit の見張り（AT-10。Bolt 34c のステップ 3 で足した。spy の約束だけを見て、<code>@MockitoBean</code>・<code>@TestPropertySource</code> などコンテキストを分けるほかの要因は見ない）で確かめる。同時の操作のテスト（<code>OverlappingTransactions</code>）は、後の操作が先の行ロックを待っていることを PostgreSQL の <code>pg_blocking_pids</code> で確かめてから先をコミットする（「一定時間の間に終わらない」だけでは待ちの証拠にならない。Bolt 32d）。</p>
 <p>モジュールのイベントの非同期のハンドラー（<code>@ApplicationModuleListener</code>）を確かめるテストは、時計を進める前と DB を読む前に、発行記録（<code>platform.event_publication</code>）の完了を待つ（ハンドラーは別のスレッドで動くので、待たずに読むと前のハンドラーの書き込みと競う。Bolt 33 の開発レビュー）。</p>
 <p>メールを受ける Mailpit は、PostgreSQL の <code>TestcontainersConfiguration</code> とは別の <code>MailpitConfiguration</code> に分け、メールを確かめるテスト・identity の統合テスト・画面の層のテストだけで <code>@Import</code> して起動する（ほかのテストのコンテキストでコンテナを起動しない。Bolt 33 の開発レビュー）。</p>
 <h2 id="web">Web テストと開示制御<a class="headerlink" href="#web" title="Permanent link">&para;</a></h2>

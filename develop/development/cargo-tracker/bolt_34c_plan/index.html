@@ -11130,7 +11130,7 @@
 <li><strong>書き手の経路</strong>: <code>AuthenticationAuditListener</code> は <code>PASSWORD_VERIFIED</code>・数えない <code>LOGIN_FAILED</code>（理由 <code>SERVICE_ERROR</code>・<code>UNKNOWN_USER</code>・利用停止と無効な企業）・<code>LOGOUT</code> を 1 文で直接書く（:66・81・90・103・158）。<code>LoginAttemptService</code> は <code>LOGIN_SUCCEEDED</code>・数える <code>LOGIN_FAILED</code>・<code>ACCOUNT_LOCKED</code> を回数と同じトランザクションで（:62-73・84-90）、ロック中の試行の <code>LOGIN_FAILED</code>（理由 <code>LOCKED</code>。数えない）を 1 文で書く（:79-81）。ほかの監査はどれもアプリケーションのサービスが書く。ADR-011:68 は「寄せない」（Bolt 32c の開始準備）と記録している</li>
 <li><strong><code>@Service</code> と <code>@Bean</code></strong>: <code>CargoTrackerApplication:22-29</code> は <code>..application..</code> を部品探索から外しており（<code>ComponentScanTest</code> が固定）、Bean は <code>IdentityConfiguration</code> の <code>@Bean</code> の 1 つだけ。<code>@Service</code> は JIG がユースケースとして読む印（2026-10-03 の決定。architecture_backend.md:281）。identity の 16 クラスが両方を持つ。SpotBugs の <code>EI_EXPOSE_REP2</code> の除外はクラスを 1 つずつ列挙し、<code>TotpReEnrollmentController</code>（<code>interfaces.web</code>）と notification の 1 つも含む（config/spotbugs/exclude.xml:14-50。正規表現でパッケージを指す前例は :11-12）</li>
 <li><strong>回復コードのログイン</strong>: <code>RecoveryCodeVerificationService</code> はコードの使用と <code>RECOVERY_CODE_USED</code> を 1 つのトランザクションで書き（:154-161）、成功のイベントでリスナーが <code>LoginAttemptService.recordSuccess</code>（<code>LOGIN_SUCCEEDED</code> と回数の戻し）を別のトランザクションで書く。後者の追記が失敗したときの結果（ログインの応答、使ったコード）を固定するテストは見当たらない（確認ポイント 7）</li>
-<li><strong>ロック</strong>: <code>SessionRevalidationService</code> はロックを見ない。session を捨てるのは利用停止・無効な企業・利用者なし（:214-224）と、再開の確定の後の消去（Bolt 34d）</li>
+<li><strong>ロック</strong>: <code>SessionRevalidationService</code> はロックを見ない。session を捨てる・消すのは、request ごとの確かめ（利用停止・無効な企業・利用者なし。:214-224）、S-20 の再開の確定の後の消去（Bolt 34d）、password の再設定の完了（<code>PasswordResetCompletionService</code> の <code>revokeAll</code>。Bolt 33a）、認証アプリの再登録（<code>TotpReEnrollmentService</code> の <code>revokeOthers</code>。ほかの session。Bolt 33b）で、ロックはどれにも含まれない（開発レビューの後に事実に合わせて直した）</li>
 <li><strong>暗号の部品の規則</strong>: <code>AuthenticationArchitectureTest:151-177</code> は 11 の名前を <code>.or()</code> でつないだ 1 本の規則。33a・33d で一覧から漏れた名前を後から足した。<code>QrCodeSvg</code>・<code>JavaOtpTotpCodeGenerator</code> はほかの規則も名前で指す（:129-136・:208-216）。<code>archunit.properties</code> はなく、ArchUnit 1.5.1 の既定は <code>failOnEmptyShould=true</code>。前例は <code>.allowEmptyShould(false)</code> を明示する（:263、T-107）</li>
 <li><strong>spy と <code>@Configuration</code></strong>: <code>@MockitoSpyBean</code> を使うのは <code>IdentitySpyIntegrationTestBase</code>（パッケージの外から見えない <code>abstract class</code>、7 フィールド）と <code>integration.QuotationRequoteRollbackIntegrationTest:58</code>。本体で直接 <code>@Configuration</code> を持つのは config の 8 つと <code>ClockConfiguration</code>（ルート）だけ。<code>@SpringBootApplication</code> とテストの <code>@TestConfiguration</code>（約 15）はメタ注釈として <code>@Configuration</code> を持つ。「config には <code>@Configuration</code> だけを置く」は <code>LayerArchitectureTest:194-200</code>（<code>DoNotIncludeTests</code>）</li>
 <li><strong><code>login_failure</code> の注釈</strong>: <code>V20261011083300__create_identity_totp.sql:57</code> の注釈は「連続の失敗の回数（password と TOTP を合わせる。成功で 0 に戻す）」のまま。<code>LoginFailure.java:11</code> の Javadoc も回復コードを含まない。注釈だけのマイグレーションの前例がある（<code>V20261003110000__add_japanese_comments.sql</code>）。<code>SchemaCommentIntegrationTest</code> は注釈があるかだけを見る。SchemaSpy の生成物はリポジトリになく、MkDocs の配備が作る</li>
@@ -11328,17 +11328,17 @@
 <h2 id="_6">ステップ計画<a class="headerlink" href="#_6" title="Permanent link">&para;</a></h2>
 <p>状態の記号: <code>[ ]</code> 未着手、<code>[-]</code> 進行中、<code>[?]</code> 承認待ち、<code>[x]</code> 完了。各ステップの終わりに <code>check</code> が緑で件数が減っていないことを確かめ、push してアプリの CI と MkDocs の配備を確かめる（T-26、T-126）。コミットは pathspec で作る（T-110）。</p>
 <ul class="task-list">
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>1. 文書と SpotBugs と特性テスト</strong> 【承認ゲート: 設計文書・構造】</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>1. 文書と SpotBugs と特性テスト</strong> 【承認ゲート: 設計文書・構造】</li>
 <li>回復コードのログインで <code>LOGIN_SUCCEEDED</code> の追記が失敗したときの今の振る舞いを、既存のテストで確かめる。なければ特性テストを 1 本足す（spy で <code>LOGIN_SUCCEEDED</code> の追記だけを失敗させ、ログインの応答とコードの使用済みを固定する）</li>
 <li>上の注の行を直す。SpotBugs の除外をパッケージの指定にまとめる（<code>check</code> の SpotBugs が緑のまま）</li>
 <li>完了の判定: <code>okf:check</code> ERROR 0、<code>documentationTest</code> 緑、<code>check</code> 緑</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>2. 暗号の部品の規則を名前ごとに分ける（AT-09）</strong> 【承認ゲート: 構造】</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>2. 暗号の部品の規則を名前ごとに分ける（AT-09）</strong> 【承認ゲート: 構造】</li>
 <li>名前ごとの規則と、テストの中の名前の文字列を 1 つ変える変異で落ちることの確かめ（<code>Base32</code>・<code>RandomRecoveryCodeGenerator</code> の 2 つ。控えから戻す）</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>3. spy と <code>@Configuration</code> の見張り（AT-10・AT-11）</strong> 【承認ゲート: 構造】</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>3. spy と <code>@Configuration</code> の見張り（AT-10・AT-11）</strong> 【承認ゲート: 構造】</li>
 <li>AT-10 は先に、基底の spy のフィールドが対象として数えられていることを確かめる（T-119）。AT-11 と例外が広がらない見張り。今のテストが緑のまま。基底の外に spy を置く変異と、config の外に <code>@Configuration</code> を置く変異で落ちることを確かめる（控えから戻す）</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>4. <code>login_failure</code> の注釈のマイグレーション</strong> 【承認ゲート: スキーマ】</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>4. <code>login_failure</code> の注釈のマイグレーション</strong> 【承認ゲート: スキーマ】</li>
 <li>マイグレーションと <code>LoginFailure</code> の Javadoc。PostgreSQL の統合テスト（<code>SchemaCommentIntegrationTest</code>）と H2 の起動が緑。SchemaSpy は MkDocs の配備で作り直される</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>5. uiTest と SonarQube と開発レビューと終了報告</strong> 【承認ゲート: 終了報告】</li>
+<li>[-] <strong>5. uiTest と SonarQube と開発レビューと終了報告</strong> 【承認ゲート: 終了報告】</li>
 <li><code>uiTest</code>（件数を前後で比べる）、SonarQube（T-116。ほかの Gradle が終わってから。T-147）。開発レビュー（アーキテクト、テスター。読むだけでテストは流させない）。<code>bolt_34c_report.md</code>、release_plan、開発の索引</li>
 </ul>
 <h3 id="_7">時間の配分と打ち切り<a class="headerlink" href="#_7" title="Permanent link">&para;</a></h3>
@@ -11497,6 +11497,11 @@
 <td style="text-align: left;">2026-10-17</td>
 <td style="text-align: left;">計画を承認した。確認ポイント 5〜12 を推奨のとおりに決めた（<code>ClockConfiguration</code> は AT-11 の例外にする、回復コードは今の振る舞いを確かめて書く）。<code>/goal</code> の下で、ステップごとの承認ゲートでは止めずに進め、層・モジュールの規則と打ち切りの条件に当たったときだけ止めて諮る</td>
 <td style="text-align: left;">anthropic/claude-opus-5-5、承認 human:kakimomokuri</td>
+</tr>
+<tr>
+<td style="text-align: left;">2026-10-17</td>
+<td style="text-align: left;">開発レビューの後: 確かめた事実に合わせて IA-INV-03・04 の列挙と回復コードの session の記述を直した（確認ポイント 6・7 の文言の事実の直し）、AT-09 に逆向きの規則、AT-11 の 2 本目の役割の書き方、特性テストを強めた</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5</td>
 </tr>
 </tbody>
 </table>
