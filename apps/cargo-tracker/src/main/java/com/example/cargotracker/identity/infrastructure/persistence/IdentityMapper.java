@@ -34,6 +34,13 @@ public interface IdentityMapper {
     int updateUserVersion(
             @Param("id") UUID id, @Param("expectedVersion") long expectedVersion, @Param("now") OffsetDateTime now);
 
+    /** 版を条件にして利用状態を変え、版を上げる（Bolt 34d。利用停止と再開）。0 件ならほかの更新が先に入った。 */
+    int updateUserStatus(
+            @Param("id") UUID id,
+            @Param("status") String status,
+            @Param("expectedVersion") long expectedVersion,
+            @Param("now") OffsetDateTime now);
+
     /** 付与した操作者付きで役割を足す（Bolt 34）。 */
     void insertGrantedUserRole(
             @Param("userId") UUID userId,

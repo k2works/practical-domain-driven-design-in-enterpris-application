@@ -233,6 +233,11 @@ class AuthenticationAuditListenerTest {
             }
 
             @Override
+            public boolean changeStatus(User changed, long expectedVersion, UtcInstant at) {
+                throw new UnsupportedOperationException();
+            }
+
+            @Override
             public List<UserSummary> findSummariesIn(Set<CompanyId> companies) {
                 throw new UnsupportedOperationException();
             }

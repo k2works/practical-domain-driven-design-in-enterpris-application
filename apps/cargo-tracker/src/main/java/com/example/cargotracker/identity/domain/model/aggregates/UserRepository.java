@@ -40,6 +40,16 @@ public interface UserRepository {
     boolean changeRoles(User changed, long expectedVersion, UserId grantedBy, UtcInstant at);
 
     /**
+     * 利用者の利用状態を変え、版を上げる（Bolt 34d。UC-16 の 4b・5a）。期待する版を条件にした更新が 0 件なら何もせず false（ほかの更新
+     * が先に入った。役割の変更と版を共有する）。書けたら true。
+     *
+     * @param changed 利用状態を変えた利用者（{@link User#changeStatus}）
+     * @param expectedVersion 期待する版
+     * @param at 更新の時刻
+     */
+    boolean changeStatus(User changed, long expectedVersion, UtcInstant at);
+
+    /**
      * S-20 の一覧の行のうち、その企業の利用者だけを、所属企業の名前・表示名の順に返す（Bolt 34b。管理範囲）。企業がなければ空。
      * `password_hash` を読まない。
      */

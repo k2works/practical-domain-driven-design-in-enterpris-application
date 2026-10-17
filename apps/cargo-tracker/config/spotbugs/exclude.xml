@@ -42,6 +42,8 @@
             <Class name="com.example.cargotracker.identity.application.internal.queryservices.UserAdministrationQueryService"/>
             <!-- Bolt 34b の範囲外の試行の記録のサービスも、同じく DI の部品を保持するだけ -->
             <Class name="com.example.cargotracker.identity.application.internal.commandservices.AdministrationScopeDenialService"/>
+            <!-- Bolt 34d の利用状態の変更のサービスも、同じく DI の部品を保持するだけ -->
+            <Class name="com.example.cargotracker.identity.application.internal.commandservices.UserStatusChangeService"/>
             <Class name="com.example.cargotracker.identity.application.internal.eventhandlers.PasswordResetMailEventHandler"/>
             <Class name="com.example.cargotracker.notification.application.internal.commandservices.PasswordResetMailService"/>
         </Or>

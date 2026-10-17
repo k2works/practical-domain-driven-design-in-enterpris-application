@@ -93,6 +93,12 @@ public class MyBatisUserRepository implements UserRepository {
         return true;
     }
 
+    @Override
+    public boolean changeStatus(User changed, long expectedVersion, UtcInstant at) {
+        OffsetDateTime now = at.instant().atOffset(ZoneOffset.UTC);
+        return mapper.updateUserStatus(changed.id().value(), changed.status().name(), expectedVersion, now) == 1;
+    }
+
     private static List<UserSummary> summaries(List<UserAdministrationRow> found) {
         return group(found).stream()
                 .map(rows -> {

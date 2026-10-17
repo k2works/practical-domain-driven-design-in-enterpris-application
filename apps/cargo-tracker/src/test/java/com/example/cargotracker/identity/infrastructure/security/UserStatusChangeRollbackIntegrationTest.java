@@ -1,0 +1,83 @@
+package com.example.cargotracker.identity.infrastructure.security;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.Mockito.doThrow;
+
+import com.example.cargotracker.identity.AdministrationFixtures;
+import com.example.cargotracker.identity.application.internal.commandservices.UserStatusChangeService;
+import com.example.cargotracker.identity.domain.model.aggregates.Company;
+import com.example.cargotracker.identity.domain.model.aggregates.User;
+import com.example.cargotracker.identity.domain.model.valueobjects.AuditAction;
+import com.example.cargotracker.identity.domain.model.valueobjects.CompanyKind;
+import com.example.cargotracker.identity.domain.model.valueobjects.EmailAddress;
+import com.example.cargotracker.identity.domain.model.valueobjects.SuspensionReason;
+import com.example.cargotracker.identity.domain.model.valueobjects.UserStatus;
+import com.example.cargotracker.shared.domain.AuthenticatedActor;
+import com.example.cargotracker.shared.domain.CompanyId;
+import com.example.cargotracker.shared.domain.Role;
+import com.example.cargotracker.shared.domain.UserId;
+import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.JdbcTemplate;
+
+/**
+ * 利用停止で監査を書けなければ、利用状態も版も元のままであることを確かめる（Bolt 34d。IA-INV-08 の同期の書き方。監査の書き込みを
+ * spy で失敗させる。単体テストの偽物は戻らないので、PostgreSQL で確かめる）。
+ */
+class UserStatusChangeRollbackIntegrationTest extends IdentitySpyIntegrationTestBase {
+
+    @Autowired
+    UserStatusChangeService service;
+
+    @Autowired
+    JdbcTemplate jdbc;
+
+    @Test
+    void 監査を書けなければ利用状態も版も元のまま() {
+        Company operator = Company.of(new CompanyId(UUID.randomUUID()), "A 社", CompanyKind.OPERATOR, true);
+        companies.add(operator);
+        UserId sales = new UserId(UUID.randomUUID());
+        users.add(User.of(
+                sales,
+                operator.id(),
+                EmailAddress.of("rollback-" + sales.value() + "@example.com"),
+                "営業 一郎",
+                "{noop}unused",
+                UserStatus.ACTIVE,
+                Set.of(Role.SALES)));
+        UserId adminId = new UserId(UUID.randomUUID());
+        users.add(User.of(
+                adminId,
+                operator.id(),
+                EmailAddress.of("admin-" + adminId.value() + "@example.com"),
+                "管理 次郎",
+                "{noop}unused",
+                UserStatus.ACTIVE,
+                Set.of(Role.SYSTEM_ADMIN)));
+        AdministrationFixtures.assignCompany(jdbc, adminId, operator.id());
+        AuthenticatedActor admin =
+                new AuthenticatedActor(adminId, operator.id(), Set.of(Role.SYSTEM_ADMIN), "管理 次郎", "A 社");
+        doThrow(new IllegalStateException("監査の表に届かない"))
+                .when(auditRecords)
+                .append(argThat(written -> written.action() == AuditAction.USER_SUSPENDED));
+        Optional<SuspensionReason> reason = Optional.of(SuspensionReason.EMERGENCY);
+
+        assertThatThrownBy(() -> service.change(admin, sales, 0L, UserStatus.SUSPENDED, reason))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(jdbc.queryForMap("SELECT status, version FROM identity.app_user WHERE id = ?", sales.value()))
+                .containsEntry("status", "ACTIVE")
+                .containsEntry("version", 0L);
+        assertThat(jdbc.queryForObject(
+                        "SELECT count(*) FROM identity.audit_record WHERE target_id = ?",
+                        Integer.class,
+                        sales.value().toString()))
+                .as("監査の行も残らない")
+                .isZero();
+    }
+}
