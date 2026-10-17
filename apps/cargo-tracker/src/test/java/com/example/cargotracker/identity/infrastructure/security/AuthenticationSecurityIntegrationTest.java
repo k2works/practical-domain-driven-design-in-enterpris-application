@@ -761,7 +761,7 @@ class AuthenticationSecurityIntegrationTest {
         String local = "long-" + "x".repeat(150);
         String email = user(shipperCompany, Role.SHIPPER, UserStatus.ACTIVE, local + "@example.com");
 
-        logins().login(email);
+        assertThat(logins().login(email)).as("2 つの要素がそろった session の Cookie").isNotNull();
     }
 
     @Test

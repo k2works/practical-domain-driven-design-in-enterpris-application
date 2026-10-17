@@ -9,6 +9,8 @@ import java.util.Objects;
  *
  * @param <R> 判定の規則の拒否の型（役割の変更なら {@code RoleChangeRejection}、利用状態の変更なら {@code StatusChangeRejection}）
  */
+// R は Rejected だけが値として持つ。ほかの拒否も型の引数を持たせ、役割の変更と利用状態の変更の拒否を型で取り違えないようにする
+@SuppressWarnings("java:S2326")
 public sealed interface UserAdministrationRefusal<R> {
 
     /** 操作者がシステム管理者でない（URL の認可に加えてサービスでも確かめる）。 */

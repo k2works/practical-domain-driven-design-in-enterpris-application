@@ -75,6 +75,9 @@ public class UserAdministrationController {
     /** 先に更新されていたときの文言（UI 設計 S-20。誰が変えたかは言わない）。 */
     static final String STALE_MESSAGE = "この利用者の情報が先に更新されました。最新の内容を確かめてから、もう一度変更してください。";
 
+    /** フォームが持つ版のモデルの属性の名前。 */
+    private static final String VERSION_ATTRIBUTE = "version";
+
     /** レイアウトがナビの現在の項目を読むモデルの属性の名前。 */
     private static final String ACTIVE_ATTRIBUTE = "active";
 
@@ -314,7 +317,7 @@ public class UserAdministrationController {
         model.addAttribute("status", request.to().name());
         model.addAttribute(
                 "reason", request.reason().map(SuspensionReason::name).orElse(null));
-        model.addAttribute("version", version);
+        model.addAttribute(VERSION_ATTRIBUTE, version);
         model.addAttribute("operator", Role.SYSTEM_ADMIN.displayName() + " " + actor.displayName());
         model.addAttribute(ACTIVE_ATTRIBUTE, ACTIVE);
         return "identity/users/status-confirmation";
@@ -342,7 +345,7 @@ public class UserAdministrationController {
                         .map(Role::name)
                         .toList());
         model.addAttribute("keptRoleNames", names(only(user.roles(), assignable, false)));
-        model.addAttribute("version", form.version());
+        model.addAttribute(VERSION_ATTRIBUTE, form.version());
         model.addAttribute("error", form.error());
         model.addAttribute(ACTIVE_ATTRIBUTE, ACTIVE);
         return DETAIL_VIEW;
@@ -362,7 +365,7 @@ public class UserAdministrationController {
         model.addAttribute("removedRoles", names(removed));
         model.addAttribute(
                 "selectedRoles", order(selected).stream().map(Role::name).toList());
-        model.addAttribute("version", version);
+        model.addAttribute(VERSION_ATTRIBUTE, version);
         model.addAttribute("operator", Role.SYSTEM_ADMIN.displayName() + " " + actor.displayName());
         model.addAttribute(ACTIVE_ATTRIBUTE, ACTIVE);
         return "identity/users/confirmation";
