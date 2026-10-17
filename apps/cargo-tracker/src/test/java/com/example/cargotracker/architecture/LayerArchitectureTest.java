@@ -41,6 +41,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 @AnalyzeClasses(packages = "com.example.cargotracker", importOptions = ImportOption.DoNotIncludeTests.class)
 class LayerArchitectureTest {
 
+    /** 時刻の取り決めの {@code @Configuration}（合成ルートの外に置く唯一の例外。AT-11）。 */
+    private static final String CLOCK_CONFIGURATION = "com.example.cargotracker.ClockConfiguration";
+
     /** Spring Security の認証の入口（D-5 の認証の例外。Bolt 31）。 */
     private static final String IDENTITY_AUTHENTICATION_ENTRY =
             "com.example.cargotracker.identity.infrastructure.security..";
@@ -198,6 +201,32 @@ class LayerArchitectureTest {
             .resideInAPackage("..infrastructure.config..")
             .should()
             .beAnnotatedWith(Configuration.class);
+
+    /**
+     * 逆向き（AT-11。Bolt 34c）: 本体の {@code @Configuration} は合成ルート（infrastructure.config）に置く。直接の注釈だけを見る
+     * （{@code @SpringBootApplication} とテストの {@code @TestConfiguration} はメタ注釈として持つので対象にしない）。ルートの
+     * {@code ClockConfiguration} は、どのコンテキストにも属さない時刻の横断の取り決め（BR-10・ADR-007）なので例外にする
+     * （2026-10-17、human:kakimomokuri）。
+     */
+    @ArchTest
+    static final ArchRule 本体のConfigurationは合成ルートに置く = classes()
+            .that()
+            .areAnnotatedWith(Configuration.class)
+            .should()
+            .resideInAPackage("..infrastructure.config..")
+            .orShould()
+            .haveFullyQualifiedName(CLOCK_CONFIGURATION);
+
+    /** 上の例外が広がらないこと（T-135）: ルートのパッケージの直接の {@code @Configuration} は {@code ClockConfiguration} だけ。 */
+    @ArchTest
+    static final ArchRule ルートのConfigurationは時刻の取り決めだけ = classes()
+            .that()
+            .areAnnotatedWith(Configuration.class)
+            .and()
+            .resideInAPackage("com.example.cargotracker")
+            .should()
+            .haveFullyQualifiedName(CLOCK_CONFIGURATION)
+            .allowEmptyShould(false);
 
     /** interfaces はドメインの型を読んでよいが、送信ポート（リポジトリ）を直接使って application を迂回しない。 */
     @ArchTest
