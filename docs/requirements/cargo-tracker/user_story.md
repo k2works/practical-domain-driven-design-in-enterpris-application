@@ -4,7 +4,7 @@ title: "cargo-tracker ユーザーストーリー"
 description: "cargo-tracker MVP の価値単位のユーザーストーリー、受入条件、上流要件へのトレーサビリティ。"
 tags: [requirements, user-story]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-15T08:14:43Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-17T01:21:36Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T05:20:11Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:01:39Z }
@@ -516,7 +516,7 @@ Bolt 32c の決定（2026-10-14、human:kakimomokuri。[Bolt 32c 計画](../../d
 
 - AC6 の「再認証が要求される」は、利用停止・所属企業の無効化・利用者の削除の後の次の request で、業務データを出さずに session を捨てて A-03 に送ることで満たす。止められたことは画面に示さない（ログインし直すと A-01 の誤りになり、理由は管理者に確かめる）。password の段だけの主体（A-02・A-07 の途中）も同じで、TOTP・回復コードの段に進めない。session を捨てたことは監査記録 `SESSION_REVOKED` に残す。
 - AC6 の「管理者への確認が要求される」は、役割を外された後にその役割の URL を開くと A-04（権限なし。管理者への問い合わせを示す）になることで満たす。残した役割の画面は使え、足した役割は次の request から使える。役割の変更だけでは監査記録を書かない（利用者の管理の監査は US-16 の Bolt 34）。
-- 利用停止・権限の取消しの操作は US-16（Bolt 34）で作るので、Bolt 32c では DB の値を変えて確かめる。
+- 利用停止・権限の取消しの操作は US-16 で作る（権限の取消しは Bolt 34、利用停止は Bolt 34d。2026-10-17 に Bolt 34d の計画で直した）ので、Bolt 32c では DB の値を変えて確かめる。
 
 Bolt 33 の開始準備の決定（2026-10-15、human:kakimomokuri。[Bolt 33 計画](../../development/cargo-tracker/bolt_33_plan.md) の開始準備の決定 1・2、[ADR-017](../../adr/cargo-tracker/017-notification-module-and-mail.md)）:
 
@@ -574,6 +574,17 @@ Bolt 33b の開始準備の決定（2026-10-15、human:kakimomokuri。[Bolt 33b 
 - Given 利用終了または権限取消し、When アクセス変更を確定する、Then 次の request から拒否され過去の操作履歴は保持される。
 
 パイロットの決定: 役割、操作範囲、職務分離は BR-15 の役割 × 操作表を正とする。全社展開時の拡張規則は OQ-07 の残項目とする。
+
+Bolt 34 の決定（2026-10-16、human:kakimomokuri）: AC1（役割の付与と変更履歴を監査記録で代える）・AC3（職務分離）と、自分の役割・監督の役割を画面で変えないことは [Bolt 34 計画](../../development/cargo-tracker/bolt_34_plan.md) の開始準備の決定と確認ポイントを参照。
+
+Bolt 34b の決定（2026-10-16、human:kakimomokuri）: AC2（管理範囲と範囲外の試行の記録）と、34b を 34b・34d に分けたことは [Bolt 34b 計画](../../development/cargo-tracker/bolt_34b_plan.md) の開始準備の決定と確認ポイントを参照。
+
+Bolt 34d の開始準備の決定（2026-10-17、human:kakimomokuri。[Bolt 34d 計画](../../development/cargo-tracker/bolt_34d_plan.md) の開始準備の決定 1〜4）:
+
+- AC5 の「利用終了」は、システム管理者が S-20 の詳細から理由を選んで利用停止を確定することで満たす。停止の理由は選ぶ形（利用終了・異動・緊急停止）にし、監査記録 `USER_SUSPENDED` の理由に残す。理由の自由な文と利用者の表の列は足さず、スキーマは変えない。停止中の利用者は再開できる（`USER_REACTIVATED`。理由は持たない）。
+- AC5 の「次の request から拒否され」は、request ごとの確かめ（Bolt 32c）で満たす。確定の後に相手の session をすぐには消さず、相手の次の request で session を捨てて A-03 に送る（監査記録 `SESSION_REVOKED`）。「過去の操作履歴は保持される」は、停止で相手の監査記録を消さないことで満たす。
+- 停止中の利用者の役割の変更は許す（役割の変更の判定を増やさない）。
+- 自分と監督の役割（システム管理者・監査担当者）を持つ利用者は、停止も再開も画面で扱わない（運用の手順で扱う。Bolt 34b の開始準備の決定 (4) を再開にも広げた）。
 
 ### US-17 監査証跡を照会する
 
