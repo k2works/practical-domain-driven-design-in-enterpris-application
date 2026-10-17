@@ -4,7 +4,7 @@ title: "リリース計画 - cargo-tracker（A 社国際貨物輸送管理シス
 description: "cargo-tracker MVP のリリース計画。1 人 + AI、時間単位の Bolt（= イテレーション）と週次の見直しで、最初の縦の流れ（R0.1）、パイロット準備完了（R1.0）、本格展開前（R1.1）の 3 段階、Unit のエントロピー評価、SP、バッファ、パイロット開始の条件、引継ぎ ID の台帳、業務責任者に確かめる事項の台帳。"
 tags: [development,release-plan]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-16T11:17:30Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-17T00:32:18Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T09:29:53Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:38:26Z }
@@ -640,7 +640,7 @@ US-18 の Bolt の順序は 31b → 31c → 31d → 32 → 32c → 32d → 32b �
 - [ ] Bolt 30〜33b: US-18 の残り（#13）と通知モジュールの最小の新設。[Bolt 30 計画](bolt_30_plan.md)（承認済み）、[Bolt 30 終了報告](bolt_30_report.md)（完了、2026-10-11 に承認済み。ADR-011 を採用し、3 つの表・ドメイン・リポジトリ・TOTP の生成を作った。SonarQube PASS・Code Smell 0）、[Bolt 31 計画](bolt_31_plan.md)（承認済み）、[Bolt 31 終了報告](bolt_31_report.md)（完了、2026-10-13 に承認済み。`/goal Bolt31` で進めた。TOTP の秘密の暗号化と 2 段階のログイン（A-02）。層の規則に 2 つの狭い例外。SonarQube PASS）、[Bolt 31b 計画](bolt_31b_plan.md)（承認済み）、[Bolt 31b 終了報告](bolt_31b_report.md)（完了、2026-10-13 に承認済み）、[Bolt 31c 計画](bolt_31c_plan.md)（承認済み）、[Bolt 31c 終了報告](bolt_31c_report.md)（完了、2026-10-13 に承認済み）、[Bolt 31d 計画](bolt_31d_plan.md)（承認済み）、[Bolt 31d 終了報告](bolt_31d_report.md)（完了、2026-10-13 に承認済み。スパイクを消した）、[Bolt 32 計画](bolt_32_plan.md)（承認済み）、[Bolt 32 終了報告](bolt_32_report.md)（完了、2026-10-14 に承認済み。ログインのロック）、[Bolt 32c 計画](bolt_32c_plan.md)（承認済み）、[Bolt 32c 終了報告](bolt_32c_report.md)（完了、2026-10-14 に承認済み。request ごとの利用者の確かめ）、[Bolt 32d 計画](bolt_32d_plan.md)（承認済み）、[Bolt 32d 終了報告](bolt_32d_report.md)（完了、2026-10-14 に承認済み。認証の部品の低の指摘とテストの整理）、[Bolt 32b 計画](bolt_32b_plan.md)（承認済み。session の失効の警告と延長）、[Bolt 32b 終了報告](bolt_32b_report.md)（完了、2026-10-14 に承認済み。session の警告と延長。支援技術の手動確認も済み）、[Bolt 32e 計画](bolt_32e_plan.md)（承認済み。失効の後に開いていた画面へ戻す）、[Bolt 32e 終了報告](bolt_32e_report.md)（完了、2026-10-14 に承認済み。失効の後に開いていた画面へ戻す）、[Bolt 32f 計画](bolt_32f_plan.md)（承認済み。失効の時の入力の保持）、[Bolt 32f 終了報告](bolt_32f_report.md)（完了、2026-10-15 に承認済み。失効の時の入力の保持。支援技術の手動確認も済み）、[Bolt 33 計画](bolt_33_plan.md)（承認済み。通知モジュールの新設と再設定の依頼）、[Bolt 33 終了報告](bolt_33_report.md)（完了、2026-10-15 に承認済み。仮の A-06、#49）、[Bolt 33a 計画](bolt_33a_plan.md)（承認済み。password の再設定）、[Bolt 33a 終了報告](bolt_33a_report.md)（完了、2026-10-15 に承認済み。session の ID の変更、#49 にコメント）。Bolt 32f（入力の保持と送信の後の失効）は 32e の後で、33b より前
 - [x] Bolt 34: US-16 の一部（#14）。[Bolt 34 計画](bolt_34_plan.md)（承認済み。役割の付与と取消しと職務分離）、[Bolt 34 終了報告](bolt_34_report.md)（完了、2026-10-16 に承認済み。監督の役割は画面で付け外ししない）
 - [x] Bolt 34b: US-16 の一部（#14）。[Bolt 34b 計画](bolt_34b_plan.md)（承認済み。管理範囲と範囲外の試行の記録）、[Bolt 34b 終了報告](bolt_34b_report.md)（完了、2026-10-16 に承認済み。確定の POST だけ記録する）
-- [ ] Bolt 34d: US-16 の一部（#14）。利用停止と再開、デモの動画
+- [ ] Bolt 34d: US-16 の一部（#14）。[Bolt 34d 計画](bolt_34d_plan.md)（承認待ち。利用停止と再開、デモの動画）
 - [ ] Bolt 34c: 振る舞いの変わらない直し（監査の経路ほか）
 - [ ] Bolt 35: US-04 AC3・AC5（#43）、D-85
 - [ ] W5 の締め: 結果とふりかえり、開いている持ち越しの数（T-89）、W6 の計画の見直し
@@ -987,3 +987,4 @@ xychart-beta
 | 2026-10-16 | Bolt 34b の開始準備で、34b の行を 34b（管理範囲と範囲外の試行の記録）と 34d（利用停止と再開、デモの動画）に分け、[Bolt 34b 計画](bolt_34b_plan.md)を作り、同日に承認された。管理範囲は運用の手順で割り当て、範囲外は 404（共通の 404 の画面を作る）、利用停止で自分と監督の役割の利用者は止めない（human:kakimomokuri が決定） | anthropic/claude-opus-5-5 |
 | 2026-10-16 | Bolt 34b を終え、[終了報告](bolt_34b_report.md)を作った（承認待ち）。開発レビューで、範囲外の試行は確定の POST でだけ記録すると決めた（human:kakimomokuri）。本番への配備のゲートは外れた。次は Bolt 34d | anthropic/claude-opus-5-5 |
 | 2026-10-16 | Bolt 34b の終了報告の承認を記録した（議題 1〜4。人に諮らずに変えた点を事後に承認）。次は Bolt 34d | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
+| 2026-10-17 | Bolt 34d の[計画](bolt_34d_plan.md)を作った（承認待ち）。開始準備で human:kakimomokuri が、停止の理由は選ぶ形で監査に残す、session は次の request の確かめに任せる、停止中の役割の変更は許す、自分と監督の役割の利用者は再開も画面で扱わない、と決めた。2 つの整合性検証の指摘を反映した。状態の確認で、記録なくクローズされていた #43 を再オープンした | anthropic/claude-opus-5-5 |
