@@ -136,8 +136,8 @@ public class UiUsers {
     }
 
     /**
-     * 役割の利用者の利用を止める（AC6 のシナリオ。Bolt 32c）。利用停止の操作（US-16）は Bolt 34 で作るので、テストの準備として
-     * DB の値を変える。
+     * 役割の利用者の利用を止める（AC6 のシナリオ。Bolt 32c）。テストの準備として DB の値を変える（画面の利用停止の操作は Bolt 34d の
+     * {@code manage_user_status_ui.feature} で確かめる）。
      */
     public void suspend(Role role) {
         jdbc.update(

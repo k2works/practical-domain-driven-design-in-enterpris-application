@@ -56,8 +56,8 @@ import org.springframework.test.web.servlet.RequestBuilder;
  * request ごとの利用者の確かめのセキュリティの統合テスト（Bolt 32c、US-18 AC6、IA-INV-04・IA-INV-08、ADR-012 の見直しの 3）。
  * 本物のフィルターの連なりと PostgreSQL の上で、利用停止・所属企業の無効化・利用者の削除の後の次の request が session を捨てて
  * A-03 に移り SESSION_REVOKED が残ること、役割の取消し・追加が次の request から認可とナビに効くこと、読み出しが 1 回であること、
- * 読み出し・監査の誤りと役割 0 件が session を捨てて 500 になることを確かめる。利用停止・役割の変更の操作は Bolt 34 で作るので、
- * DB の値を変えて確かめる。
+ * 読み出し・監査の誤りと役割 0 件が session を捨てて 500 になることを確かめる。ここでは DB の値を変えて確かめる（画面の操作の
+ * 役割の変更は Bolt 34、利用停止は Bolt 34d の `UserAdministrationSecurityIntegrationTest`・`UserStatusChangeSecurityIntegrationTest`）。
  */
 class SessionRevalidationSecurityIntegrationTest extends IdentitySpyIntegrationTestBase {
 
