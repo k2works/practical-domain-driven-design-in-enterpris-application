@@ -4,7 +4,7 @@ title: "開発戦略 - cargo-tracker（A 社国際貨物輸送管理システム
 description: "リリース計画の W1〜W14 を序盤・中盤・終盤の局面に分け、各局面の TDD のアプローチ、週ごとのデモ項目を受入シナリオにする方針、Living Documentation の採用を定める開発戦略。"
 tags: [development,development-strategy]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-11T01:11:12Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-18T22:36:40Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T10:25:23Z }
   - { by: human:kakimomokuri, at: 2026-10-01T13:06:21Z }
@@ -180,7 +180,7 @@ Bolt 1〜3 で確定したコマンドである。`apps/cargo-tracker/` で実�
 | W2 | 序盤 | 見積りと経路方針の提示と、荷主の「詳細経路設計へ進む」回答。password でのログインと、役割ごとのナビゲーション | `@US-03`、`@US-24-AC1`、`@US-18` |
 | W3 | 序盤 | 経路候補の比較と確定、荷主の承認、KPI-01 の 2 時刻 | `@US-06`、`@US-07`、`@US-24-AC4`、`@US-21-AC1` |
 | W4 | 序盤 | 本予約の確定（重複確定の防止を含む）から追跡の開始・実績の登録・荷主の照会まで（Release 0.1 のデモ） | `@US-04`、`@US-12`、`@US-09`、`@ui` の主成功シナリオ |
-| W5 | 中盤 | TOTP・ロック・session の失効の警告と延長・password の再設定・回復コードによる再登録。利用者と役割の管理。確定の不足条件と特殊貨物の拒否、承認の後に失効した見積りの再見積り（D-85） | `@US-18`、`@US-16`、`@US-04`、`@US-24` |
+| W5 | 中盤 | TOTP・ロック・session の失効の警告と延長・password の再設定・回復コードによる再登録。利用者と役割の管理。確定の不足条件と特殊貨物の拒否（特殊貨物は通常の画面の流れで届かないので、受入シナリオと WebMvc のテストで見せる。Bolt 35）、承認の後に失効した見積りの再見積り（D-85。Bolt 35b） | `@US-18`、`@US-16`、`@US-04`、`@US-24` |
 | W6 | 中盤 | Golden dataset による経路の判定、再設計要・旧版の拒否。管理者経路による TOTP の登録の解除 | `@golden`、`@US-06`、`@US-07`、`@US-16`、`@US-18-AC9` |
 | W7 | 中盤 | 外部原本の取込（重複・隔離・差異）と、実績の順序逆転・取消済み・完了後の扱い | `@US-14`、`@US-12` |
 | W8 | 中盤 | 照会の引継ぎから回答・終結・再開まで（営業日カレンダーと escalation を含む） | `@US-11`、`@US-20` |
