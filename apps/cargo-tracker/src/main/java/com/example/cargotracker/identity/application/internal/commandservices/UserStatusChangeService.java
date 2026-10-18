@@ -179,24 +179,32 @@ public class UserStatusChangeService {
             long expectedVersion,
             UserStatus to,
             Optional<SuspensionReason> reason) {
-        User user;
-        switch (lookup.find(operator, target)) {
-            case ManagedUserLookup.Refusal refusal -> {
-                return new Judgement.Refused(refusal.toRefusal());
-            }
-            case ManagedUserLookup.Managed managed -> user = managed.user();
-        }
-        User.StatusChangeApproval approval;
-        switch (user.decideStatusChange(operator.userId(), to, reason)) {
-            case User.StatusChangeDecision.Refused(StatusChangeRejection rejection) -> {
-                return new Judgement.Refused(new UserAdministrationRefusal.Rejected<>(rejection));
-            }
-            case User.StatusChangeDecision.Approved(User.StatusChangeApproval approved) -> approval = approved;
-        }
-        if (approval.version() != expectedVersion) {
-            return new Judgement.Refused(new UserAdministrationRefusal.Stale<>());
-        }
-        return new Judgement.Accepted(user, approval);
+        return switch (lookup.find(operator, target)) {
+            case ManagedUserLookup.Refusal refusal -> new Judgement.Refused(refusal.toRefusal());
+            case ManagedUserLookup.Managed managed -> decide(operator, managed.user(), expectedVersion, to, reason);
+        };
+    }
+
+    /** 管理範囲の後の段。規則で判定する。 */
+    private static Judgement decide(
+            AuthenticatedActor operator,
+            User user,
+            long expectedVersion,
+            UserStatus to,
+            Optional<SuspensionReason> reason) {
+        return switch (user.decideStatusChange(operator.userId(), to, reason)) {
+            case User.StatusChangeDecision.Refused(StatusChangeRejection rejection) ->
+                new Judgement.Refused(new UserAdministrationRefusal.Rejected<>(rejection));
+            case User.StatusChangeDecision.Approved(User.StatusChangeApproval approval) ->
+                checkVersion(user, approval, expectedVersion);
+        };
+    }
+
+    /** 規則の後の段。画面の版が判定に使った利用者の版と同じかを確かめる。 */
+    private static Judgement checkVersion(User user, User.StatusChangeApproval approval, long expectedVersion) {
+        return approval.version() == expectedVersion
+                ? new Judgement.Accepted(user, approval)
+                : new Judgement.Refused(new UserAdministrationRefusal.Stale<>());
     }
 
     /** 判定の結果（このクラスの中だけで使う）。 */

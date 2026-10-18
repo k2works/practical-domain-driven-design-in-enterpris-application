@@ -110,25 +110,29 @@ public class UserRoleChangeService {
 
     /** 判定する（操作者 → 利用者と企業 → 管理範囲 → 規則 → 版）。受け付けるなら判定に使った利用者を、受け付けないなら理由を返す。 */
     private Judgement judge(AuthenticatedActor operator, UserId target, long expectedVersion, Set<Role> newRoles) {
-        ManagedUserLookup.Managed managed;
-        switch (lookup.find(operator, target)) {
-            case ManagedUserLookup.Refusal refusal -> {
-                return new Judgement.Refused(refusal.toRefusal());
-            }
-            case ManagedUserLookup.Managed found -> managed = found;
-        }
+        return switch (lookup.find(operator, target)) {
+            case ManagedUserLookup.Refusal refusal -> new Judgement.Refused(refusal.toRefusal());
+            case ManagedUserLookup.Managed managed -> decide(operator, managed, expectedVersion, newRoles);
+        };
+    }
+
+    /** 管理範囲の後の段。規則で判定する。 */
+    private static Judgement decide(
+            AuthenticatedActor operator, ManagedUserLookup.Managed managed, long expectedVersion, Set<Role> newRoles) {
         User user = managed.user();
-        User.RoleChangeApproval approval;
-        switch (user.decideRoleChange(operator.userId(), managed.company(), newRoles)) {
-            case User.RoleChangeDecision.Refused(RoleChangeRejection rejection) -> {
-                return new Judgement.Refused(new UserAdministrationRefusal.Rejected<>(rejection));
-            }
-            case User.RoleChangeDecision.Approved(User.RoleChangeApproval approved) -> approval = approved;
-        }
-        if (approval.version() != expectedVersion) {
-            return new Judgement.Refused(new UserAdministrationRefusal.Stale<>());
-        }
-        return new Judgement.Accepted(user, approval);
+        return switch (user.decideRoleChange(operator.userId(), managed.company(), newRoles)) {
+            case User.RoleChangeDecision.Refused(RoleChangeRejection rejection) ->
+                new Judgement.Refused(new UserAdministrationRefusal.Rejected<>(rejection));
+            case User.RoleChangeDecision.Approved(User.RoleChangeApproval approval) ->
+                checkVersion(user, approval, expectedVersion);
+        };
+    }
+
+    /** 規則の後の段。画面の版が判定に使った利用者の版と同じかを確かめる。 */
+    private static Judgement checkVersion(User user, User.RoleChangeApproval approval, long expectedVersion) {
+        return approval.version() == expectedVersion
+                ? new Judgement.Accepted(user, approval)
+                : new Judgement.Refused(new UserAdministrationRefusal.Stale<>());
     }
 
     /** 判定の結果（このクラスの中だけで使う）。 */
