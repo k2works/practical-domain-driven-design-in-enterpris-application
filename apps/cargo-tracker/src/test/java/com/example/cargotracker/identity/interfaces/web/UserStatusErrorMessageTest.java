@@ -4,7 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.example.cargotracker.identity.domain.model.valueobjects.StatusChangeRejection;
 import com.example.cargotracker.identity.domain.model.valueobjects.UserStatus;
-import com.example.cargotracker.identity.interfaces.web.UserAdministrationController.ErrorMessage;
+import com.example.cargotracker.identity.interfaces.web.UserDetailPage.ErrorMessage;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
@@ -24,16 +24,17 @@ class UserStatusErrorMessageTest {
         "REASON_REQUIRED, ACTIVE, 停止の理由を選んでください。, true"
     })
     void 拒否の文言と欄へのリンク(StatusChangeRejection rejection, UserStatus current, String text, boolean field) {
-        assertThat(ErrorMessage.of(rejection, current)).isEqualTo(new ErrorMessage(text, field));
+        assertThat(UserStatusChangeController.errorMessage(rejection, current))
+                .isEqualTo(new ErrorMessage(text, field));
     }
 
     @Test
     void 自分と監督の役割の拒否は詳細の案内と同じ文言() {
-        assertThat(ErrorMessage.of(StatusChangeRejection.SELF_CHANGE, UserStatus.ACTIVE)
+        assertThat(UserStatusChangeController.errorMessage(StatusChangeRejection.SELF_CHANGE, UserStatus.ACTIVE)
                         .text())
-                .isEqualTo(UserAdministrationController.SELF_STATUS_NOTE);
-        assertThat(ErrorMessage.of(StatusChangeRejection.OVERSIGHT_ROLE, UserStatus.ACTIVE)
+                .isEqualTo(UserDetailPage.SELF_STATUS_NOTE);
+        assertThat(UserStatusChangeController.errorMessage(StatusChangeRejection.OVERSIGHT_ROLE, UserStatus.ACTIVE)
                         .text())
-                .isEqualTo(UserAdministrationController.OVERSIGHT_STATUS_NOTE);
+                .isEqualTo(UserDetailPage.OVERSIGHT_STATUS_NOTE);
     }
 }

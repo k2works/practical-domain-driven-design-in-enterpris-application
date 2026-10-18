@@ -12,10 +12,10 @@ import org.springframework.transaction.support.TransactionTemplate;
 
 /**
  * 範囲外の試行の記録のサービス。管理範囲外の利用者への試行を監査記録 {@code ADMIN_SCOPE_DENIED} に書く（Bolt 34b。US-16 AC2、
- * IA-INV-08・IA-INV-14）。S-20 の controller だけが、確定の POST で範囲外と分かったときに 1 回の request につき 1 回呼ぶ（GET は
- * CSRF の守りがなく、他サイトから記録を書かせられるので記録しない。Bolt 34b の開発レビューの決定）。役割の変更のトランザクションの外で
- * 呼ばれ、自分のトランザクションで書く（入れ子にしない。外側のトランザクションの中では呼べない）。追記が失敗したら例外にする（画面は
- * 500。404 にしない）。
+ * IA-INV-08・IA-INV-14）。S-20 の画面の層（詳細の部品 {@code UserDetailPage}。Bolt 34f）だけが、確定の POST で範囲外と
+ * 分かったときに 1 回の request につき 1 回呼ぶ（GET は CSRF の守りがなく、他サイトから記録を書かせられるので記録しない。Bolt 34b の
+ * 開発レビューの決定）。役割の変更のトランザクションの外で呼ばれ、自分のトランザクションで書く（入れ子にしない。外側のトランザクションの
+ * 中では呼べない）。追記が失敗したら例外にする（画面は 500。404 にしない）。
  */
 @Service // JIG がユースケースとして読む印（組み立ては IdentityConfiguration）
 public class AdministrationScopeDenialService {
