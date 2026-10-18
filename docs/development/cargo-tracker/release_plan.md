@@ -4,7 +4,7 @@ title: "リリース計画 - cargo-tracker（A 社国際貨物輸送管理シス
 description: "cargo-tracker MVP のリリース計画。1 人 + AI、時間単位の Bolt（= イテレーション）と週次の見直しで、最初の縦の流れ（R0.1）、パイロット準備完了（R1.0）、本格展開前（R1.1）の 3 段階、Unit のエントロピー評価、SP、バッファ、パイロット開始の条件、引継ぎ ID の台帳、業務責任者に確かめる事項の台帳。"
 tags: [development,release-plan]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-18T03:09:41Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-18T04:02:36Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T09:29:53Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:38:26Z }
@@ -645,7 +645,7 @@ US-18 の Bolt の順序は 31b → 31c → 31d → 32 → 32c → 32d → 32b �
 - [x] Bolt 34d: US-16 の一部（#14）。[Bolt 34d 計画](bolt_34d_plan.md)（承認済み。利用停止と再開、デモの動画）、[Bolt 34d 終了報告](bolt_34d_report.md)（完了、2026-10-17 に承認済み。停止でトークンを無効にし、再開で前の session を消す）
 - [x] Bolt 34c: 振る舞いの変わらない直し（認証・監査の経路と文書と見張り）。[Bolt 34c 計画](bolt_34c_plan.md)（承認済み）、[Bolt 34c 終了報告](bolt_34c_report.md)（完了、2026-10-17 に承認済み。監査の書き手と @Service・@Bean の役割を今の形のまま書き、AT-09〜11 を足し、login_failure の注釈を直した）
 - [x] Bolt 34e: 振る舞いの変わらない直し（利用者の管理のドメインとサービス）。[Bolt 34e 計画](bolt_34e_plan.md)（承認済み）、[Bolt 34e 終了報告](bolt_34e_report.md)（完了、2026-10-18 に承認済み。承認の値を判定した利用者で縛り、結果の型を確かめる結果と変える結果に分け、判定の前半と login の補助をまとめた）
-- [ ] Bolt 34f: 振る舞いの変わらない直し（S-20 の画面の構造）。[Bolt 34f 計画](bolt_34f_plan.md)（承認待ち）
+- [ ] Bolt 34f: 振る舞いの変わらない直し（S-20 の画面の構造）。[Bolt 34f 計画](bolt_34f_plan.md)（承認済み）
 - [ ] Bolt 35: US-04 AC3・AC5（#43）、D-85
 - [ ] W5 の締め: 結果とふりかえり、開いている持ち越しの数（T-89）、W6 の計画の見直し
 
@@ -1005,3 +1005,4 @@ xychart-beta
 | 2026-10-18 | Bolt 34e を終え、[終了報告](bolt_34e_report.md)を作った（承認待ち）。開発レビューの後に human:kakimomokuri が、承認の値を判定した利用者で縛り、確定の後の値を承認から取ると決めた。34f の行に送った課題を足した。次は Bolt 34f | anthropic/claude-opus-5-5 |
 | 2026-10-18 | Bolt 34e の終了報告の承認を記録した（議題 1〜3）。次は Bolt 34f | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-10-18 | Bolt 34f の開始準備で、[Bolt 34f 計画](bolt_34f_plan.md)を作った（承認待ち）。human:kakimomokuri が、controller を操作ごとに 3 つに分け詳細の描画と拒否の扱いを部品に寄せる、画面の名前は画面の層の部品に寄せる、役割の領域に h2「役割」と legend「付ける役割」を付ける、と決めた | anthropic/claude-opus-5-5 |
+| 2026-10-18 | Bolt 34f の計画を承認した（確認ポイント 4〜10 を推奨のとおり） | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
