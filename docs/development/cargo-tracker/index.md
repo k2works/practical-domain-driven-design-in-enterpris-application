@@ -86,7 +86,7 @@ Bolt がイテレーションに当たります。ふりかえりは各 Bolt の
 | 34d | [利用者の利用停止と再開（US-16 の一部）](bolt_34d_plan.md) | [終了報告](bolt_34d_report.md)（[動画](../../assets/demo/bolt-34d/suspend-and-reactivate.webm){:target="_blank"}） | W5 | 完了 |
 | 34c | [認証・監査の経路と文書と見張り（振る舞いの変わらない直し）](bolt_34c_plan.md) | [終了報告](bolt_34c_report.md) | W5 | 完了 |
 | 34e | [利用者の管理のドメインとサービス（振る舞いの変わらない直し）](bolt_34e_plan.md) | [終了報告](bolt_34e_report.md) | W5 | 完了 |
-| 34f | [S-20 の画面の構造（振る舞いの変わらない直し）](bolt_34f_plan.md) | [終了報告](bolt_34f_report.md) | W5 | 完了（報告の承認待ち） |
+| 34f | [S-20 の画面の構造（振る舞いの変わらない直し）](bolt_34f_plan.md) | [終了報告](bolt_34f_report.md) | W5 | 完了 |
 
 Bolt を始めるときに行を追加します。
 

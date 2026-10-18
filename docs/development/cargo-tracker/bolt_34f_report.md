@@ -3,8 +3,10 @@ type: Plan
 title: "Bolt 34f 終了報告 - S-20 の画面の構造（振る舞いの変わらない直し）"
 description: "W5 の 27 本目の Bolt の終了報告。S-20 の controller を一覧・詳細、役割の変更、利用状態の変更の 3 つに分け、詳細の読み出し・描画・拒否の共通の枝と範囲外の試行の記録を部品 UserDetailPage に寄せた。分ける前に WebMvc のテストで拒否の枝と記録の向きを守り、変異で確かめた。画面の名前を UserAdministrationLabels に、2 つのサービスの判定を段ごとの switch の式に、テストの定数の写しを IdentityLogins に寄せ、役割の領域に見出し「役割」と欄の名前「付ける役割」を付けた。開発レビューの後に、範囲外の記録の規則を部品に絞った。"
 tags: [plan]
-status: draft
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-18T21:37:48Z }
+status: stable
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-18T21:46:15Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-10-18T21:46:15Z }
 ---
 
 # Bolt 34f 終了報告 - S-20 の画面の構造（振る舞いの変わらない直し）
@@ -113,6 +115,7 @@ Bolt 35（US-04 AC3・AC5、#43）。
 
 | 日付 | 更新内容 | 更新者 |
 | :--- | :--- | :--- |
+| 2026-10-19 | 終了報告を承認した（議題 1・2。議題 2 の人に諮らずに変えた点と、ゲート 4 で伝えた経過の時間の誤り（約 1.8 時間と伝えたが、待ちを含めて約 2.6 時間）を事後に承認） | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-10-19 | 初版作成（承認待ち）。`check` 2519 件・`uiTest` 274 件が緑、SonarQube PASS | anthropic/claude-opus-5-5 |
 
 ## 関連ドキュメント
