@@ -136,6 +136,25 @@ public class UserAdministrationUiSteps {
         browser.checkAccessibility();
     }
 
+    @ならば("詳細に見出し {string} の領域と見出し {string} の領域があり、役割の領域の欄の名前は {string} である")
+    public void 役割の領域の見出しと欄の名前(String roles, String status, String field) {
+        Locator rolesRegion = region(roles);
+        assertThat(rolesRegion.getByRole(AriaRole.HEADING, new Locator.GetByRoleOptions().setLevel(2)))
+                .hasText(roles);
+        assertThat(rolesRegion.getByRole(
+                        AriaRole.GROUP,
+                        new Locator.GetByRoleOptions().setName(field).setExact(true)))
+                .isVisible();
+        assertThat(region(status).getByRole(AriaRole.HEADING, new Locator.GetByRoleOptions().setLevel(2)))
+                .hasText(status);
+    }
+
+    private Locator region(String name) {
+        return page().getByRole(
+                        AriaRole.REGION,
+                        new Page.GetByRoleOptions().setName(name).setExact(true));
+    }
+
     @ならば("{string} と示され、役割を選ぶ欄はない")
     public void 案内が示され欄がない(String message) {
         assertThat(page().locator("main")).containsText(message);

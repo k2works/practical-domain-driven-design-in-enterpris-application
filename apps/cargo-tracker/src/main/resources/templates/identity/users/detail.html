@@ -30,31 +30,35 @@
         <dt class="col-sm-3">今の役割</dt>
         <dd class="col-sm-9" id="current-roles" th:text="${currentRoles}">営業担当者</dd>
     </dl>
-    <p th:if="${self}" id="self-note">自分の役割は変更できません。ほかのシステム管理者に依頼してください。</p>
-    <p th:if="${!self and !assignable}" id="unassignable-note"
-       th:text="|${companyKindName}の利用者には役割を付けません。|">荷受人の企業の利用者には役割を付けません。</p>
-    <form th:if="${!self and assignable}" method="get"
-          th:action="@{/staff/users/{id}/role-changes/confirmation(id=${user.id.value})}">
-        <input type="hidden" name="version" th:value="${version}">
-        <input type="hidden" name="roles" th:each="role : ${keptRoles}" th:value="${role}">
-        <fieldset id="roles" th:attr="aria-describedby=${error != null and error.field} ? 'roles-error' : null">
-            <legend class="h5">役割</legend>
-            <p th:if="${error != null and error.field}" id="roles-error" class="text-danger" th:text="${error.text}">役割を 1 つ以上選んでください。</p>
-            <p class="form-text" th:text="|${companyKindName}の利用者に付けられる役割です。システム管理者・監査担当者の役割は、この画面では付けたり外したりできません。|">
-                運用する会社の利用者に付けられる役割です。
-            </p>
-            <div class="form-check" th:each="option : ${roleOptions}">
-                <input class="form-check-input" type="checkbox" name="roles"
-                       th:id="|role-${option.role.name()}|" th:value="${option.role.name()}"
-                       th:checked="${option.selected}">
-                <label class="form-check-label" th:for="|role-${option.role.name()}|"
-                       th:text="${option.role.displayName}">営業担当者</label>
-            </div>
-            <p th:unless="${#lists.isEmpty(keptRoles)}" class="form-text"
-               th:text="|この画面で変更しない役割（${keptRoleNames}）は、そのまま残ります。|">この画面で変更しない役割（監査担当者）は、そのまま残ります。</p>
-        </fieldset>
-        <button type="submit" class="btn btn-primary mt-3">変更内容を確認する</button>
-    </form>
+    <!--/* 役割の領域（Bolt 34f）。利用状態の領域と同じ形の見出しを付け、自分と荷受人の企業の利用者の案内も領域の中に置く */-->
+    <section class="mt-4" aria-labelledby="roles-title">
+        <h2 id="roles-title" class="h5">役割</h2>
+        <p th:if="${self}" id="self-note">自分の役割は変更できません。ほかのシステム管理者に依頼してください。</p>
+        <p th:if="${!self and !assignable}" id="unassignable-note"
+           th:text="|${companyKindName}の利用者には役割を付けません。|">荷受人の企業の利用者には役割を付けません。</p>
+        <form th:if="${!self and assignable}" method="get"
+              th:action="@{/staff/users/{id}/role-changes/confirmation(id=${user.id.value})}">
+            <input type="hidden" name="version" th:value="${version}">
+            <input type="hidden" name="roles" th:each="role : ${keptRoles}" th:value="${role}">
+            <fieldset id="roles" th:attr="aria-describedby=${error != null and error.field} ? 'roles-error' : null">
+                <legend class="h6">付ける役割</legend>
+                <p th:if="${error != null and error.field}" id="roles-error" class="text-danger" th:text="${error.text}">役割を 1 つ以上選んでください。</p>
+                <p class="form-text" th:text="|${companyKindName}の利用者に付けられる役割です。システム管理者・監査担当者の役割は、この画面では付けたり外したりできません。|">
+                    運用する会社の利用者に付けられる役割です。
+                </p>
+                <div class="form-check" th:each="option : ${roleOptions}">
+                    <input class="form-check-input" type="checkbox" name="roles"
+                           th:id="|role-${option.role.name()}|" th:value="${option.role.name()}"
+                           th:checked="${option.selected}">
+                    <label class="form-check-label" th:for="|role-${option.role.name()}|"
+                           th:text="${option.role.displayName}">営業担当者</label>
+                </div>
+                <p th:unless="${#lists.isEmpty(keptRoles)}" class="form-text"
+                   th:text="|この画面で変更しない役割（${keptRoleNames}）は、そのまま残ります。|">この画面で変更しない役割（監査担当者）は、そのまま残ります。</p>
+            </fieldset>
+            <button type="submit" class="btn btn-primary mt-3">変更内容を確認する</button>
+        </form>
+    </section>
     <!--/* 利用状態の領域（Bolt 34d。US-16 AC5）。役割の領域と別にし、荷受人の企業の利用者にも出す。自分と監督の役割の利用者には操作を出さない */-->
     <section class="mt-4" aria-labelledby="status-title">
         <h2 id="status-title" class="h5">利用状態</h2>
