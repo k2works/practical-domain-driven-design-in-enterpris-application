@@ -56,7 +56,6 @@ class UserStatusChangeControllerTest {
 
     static final UserId TARGET = new UserId(UUID.fromString("20000000-0000-0000-0000-000000000501"));
     static final String DETAIL = "/staff/users/" + TARGET.value();
-    static final String ROLE_CONFIRMATION = DETAIL + "/role-changes/confirmation";
     static final String STATUS_CONFIRMATION = DETAIL + "/status-changes/confirmation";
     static final String STALE = "この利用者の情報が先に更新されました。最新の内容を確かめてから、もう一度変更してください。";
 
@@ -192,6 +191,23 @@ class UserStatusChangeControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(content().string(Matchers.containsString("利用状態は既に利用中です。最新の内容を確かめてください。")))
                 .andExpect(content().string(Matchers.containsString("name=\"version\" value=\"4\"")));
+    }
+
+    @Test
+    void 利用状態の確定が規則に当たれば選んだ理由と送った版のまま文言を示す() throws Exception {
+        // 読み直した利用者の版（4）でなく、画面が送った版（3）のまま示す（同じ状態の拒否だけが最新の版にする）
+        when(queryService.detail(any(), eq(TARGET)))
+                .thenReturn(new UserLookup.Found(user(3)), new UserLookup.Found(user(4)));
+        when(statusChanges.change(any(), eq(TARGET), anyLong(), any(), any()))
+                .thenReturn(new StatusChangeOutcome.Refused(
+                        new UserAdministrationRefusal.Rejected<>(StatusChangeRejection.SELF_CHANGE)));
+
+        mockMvc.perform(suspend())
+                .andExpect(status().isOk())
+                .andExpect(content().string(Matchers.containsString("利用状態を変更できませんでした")))
+                .andExpect(content().string(Matchers.containsString("value=\"EMERGENCY\" checked")))
+                .andExpect(content().string(Matchers.containsString("name=\"version\" value=\"3\"")))
+                .andExpect(content().string(Matchers.not(Matchers.containsString("name=\"version\" value=\"4\""))));
     }
 
     @Test

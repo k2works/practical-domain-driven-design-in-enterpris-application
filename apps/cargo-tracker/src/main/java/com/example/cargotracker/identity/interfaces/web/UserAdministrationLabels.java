@@ -10,11 +10,20 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
- * S-20 の画面（一覧・詳細・確認）で共通に使う名前（UI 設計 S-20。Bolt 34f）。ドメインに画面の言葉を入れないため画面の層に置く。
+ * S-20 の画面（一覧・詳細・確認）で共通に使う名前とモデルの属性の名前（UI 設計 S-20。Bolt 34f）。ドメインに画面の言葉を入れないため画面の層に置く。
  * package-private の static のメソッドはテンプレートの {@code T(...)} から見えないので、controller が名前をモデルに渡す
  * （前例 {@code TransportRequestLabels}）。
  */
 final class UserAdministrationLabels {
+
+    /** フォームが持つ版のモデルの属性の名前（S-20 の画面で共通）。 */
+    static final String VERSION_ATTRIBUTE = "version";
+
+    /** レイアウトがナビの現在の項目を読むモデルの属性の名前。 */
+    static final String ACTIVE_ATTRIBUTE = "active";
+
+    /** レイアウトのナビの現在の項目（S-20 の画面で共通）。 */
+    static final String ACTIVE = "users";
 
     private UserAdministrationLabels() {}
 

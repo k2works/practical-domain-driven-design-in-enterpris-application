@@ -33,20 +33,14 @@ final class UserDetailPage {
     /** 先に更新されていたときの文言（UI 設計 S-20。誰が変えたかは言わない）。 */
     static final String STALE_MESSAGE = "この利用者の情報が先に更新されました。最新の内容を確かめてから、もう一度変更してください。";
 
+    /** 自分の詳細の役割の領域の案内（UI 設計 S-20）。役割の変更の自分の役割の拒否の文言と同じ。 */
+    static final String SELF_ROLE_NOTE = "自分の役割は変更できません。ほかのシステム管理者に依頼してください。";
+
     /** 自分の詳細の利用状態の領域の案内（UI 設計 S-20。Bolt 34d）。利用状態の変更の拒否の文言と同じ。 */
     static final String SELF_STATUS_NOTE = "自分の利用状態は変更できません。ほかのシステム管理者に依頼してください。";
 
     /** 監督の役割を持つ利用者の詳細の利用状態の領域の案内（UI 設計 S-20。Bolt 34d）。利用状態の変更の拒否の文言と同じ。 */
     static final String OVERSIGHT_STATUS_NOTE = "システム管理者・監査担当者の利用停止と再開は、この画面では行いません。";
-
-    /** フォームが持つ版のモデルの属性の名前。 */
-    static final String VERSION_ATTRIBUTE = "version";
-
-    /** レイアウトがナビの現在の項目を読むモデルの属性の名前。 */
-    static final String ACTIVE_ATTRIBUTE = "active";
-
-    /** レイアウトのナビの現在の項目（S-20 の画面で共通）。 */
-    static final String ACTIVE = "users";
 
     private static final String DETAIL_VIEW = "identity/users/detail";
 
@@ -63,7 +57,10 @@ final class UserDetailPage {
      * 権限なしと同じ応答）。範囲外の試行は、確定（{@code recordDenial}）のときだけ記録する。
      */
     UserDetail find(String id, AuthenticatedActor actor, boolean recordDenial) {
-        UserId target = UserAdministrationParameters.userId(id);
+        return find(UserAdministrationParameters.userId(id), actor, recordDenial);
+    }
+
+    private UserDetail find(UserId target, AuthenticatedActor actor, boolean recordDenial) {
         return switch (queryService.detail(actor, target)) {
             case UserLookup.Found(UserDetail found) -> found;
             case UserLookup.NotFound _ -> throw notFound();
@@ -87,6 +84,7 @@ final class UserDetailPage {
         model.addAttribute("currentRoles", UserAdministrationLabels.roles(user.roles()));
         model.addAttribute("companyKindName", UserAdministrationLabels.companyKind(user.companyKind()));
         model.addAttribute("self", self);
+        model.addAttribute("selfRoleNote", SELF_ROLE_NOTE);
         model.addAttribute("assignable", !assignable.isEmpty());
         model.addAttribute("roleOptions", roleOptions(assignable, form.selected()));
         // 画面で付け外しできない今の役割（監督の役割など）は、変えずに送るため隠し項目で持つ
@@ -99,46 +97,56 @@ final class UserDetailPage {
         model.addAttribute("keptRoleNames", UserAdministrationLabels.roles(unassignable(user.roles(), assignable)));
         model.addAttribute("statusNote", statusNote(user, self));
         model.addAttribute("reasonOptions", reasonOptions(form.reason()));
-        model.addAttribute(VERSION_ATTRIBUTE, form.version());
+        model.addAttribute(UserAdministrationLabels.VERSION_ATTRIBUTE, form.version());
         model.addAttribute("error", form.errorOf(Section.ROLES));
         model.addAttribute("statusError", form.errorOf(Section.STATUS));
         model.addAttribute("summary", ErrorSummary.of(form));
-        model.addAttribute(ACTIVE_ATTRIBUTE, ACTIVE);
+        model.addAttribute(UserAdministrationLabels.ACTIVE_ATTRIBUTE, UserAdministrationLabels.ACTIVE);
         return DETAIL_VIEW;
     }
 
     /**
-     * 受け付けなかった結果の画面。規則の拒否は {@code onRejected} が作る内容（選んだまま）で、古い版は最新の内容で詳細を示し直す。
-     * 詳細を読んだ後に管理範囲から外れたとき（同じ request の中の守り）の範囲外の試行は、確定（{@code change}）のときだけ記録する。
+     * 受け付けなかった結果の画面。規則の拒否は {@code operation} が作る内容（選んだまま）で、古い版は最新の内容で詳細を示し直す。
+     * どちらも誤りは {@code operation} の領域に示す。詳細を読んだ後に管理範囲から外れたとき（同じ request の中の守り）の範囲外の
+     * 試行は、確定（{@code recordDenial}）のときだけ記録する。
      */
     <R> String refuse(
-            String id,
+            UserId target,
             AuthenticatedActor actor,
             Model model,
             UserAdministrationRefusal<R> refusal,
-            Section section,
-            boolean change,
-            BiFunction<UserDetail, R, DetailForm> onRejected) {
+            boolean recordDenial,
+            Operation<R> operation) {
         return switch (refusal) {
-            case UserAdministrationRefusal.Rejected<R>(R rejection) ->
-                render(onRejected.apply(find(id, actor, false), rejection), actor, model);
+            case UserAdministrationRefusal.Rejected<R>(R rejection) -> {
+                UserDetail user = find(target, actor, false);
+                Retry retry = operation.onRejected().apply(user, rejection);
+                yield render(
+                        new DetailForm(
+                                user,
+                                retry.selected(),
+                                retry.reason(),
+                                retry.version(),
+                                new Problem(operation.section(), retry.message())),
+                        actor,
+                        model);
+            }
             case UserAdministrationRefusal.Stale<R> _ -> {
-                UserDetail user = find(id, actor, false);
+                UserDetail user = find(target, actor, false);
                 yield render(
                         new DetailForm(
                                 user,
                                 user.roles(),
                                 Optional.empty(),
                                 user.version(),
-                                section,
-                                new ErrorMessage(STALE_MESSAGE, false)),
+                                new Problem(operation.section(), new ErrorMessage(STALE_MESSAGE, false))),
                         actor,
                         model);
             }
             case UserAdministrationRefusal.NotFound<R> _ -> throw notFound();
             case UserAdministrationRefusal.OutOfScope<R> _ -> {
-                if (change) {
-                    denials.recordDenied(actor, UserAdministrationParameters.userId(id));
+                if (recordDenial) {
+                    denials.recordDenied(actor, target);
                 }
                 throw notFound();
             }
@@ -206,31 +214,51 @@ final class UserDetailPage {
     }
 
     /**
+     * 拒否の画面を描く操作（役割の変更・利用状態の変更）。誤りを示す領域は操作ごとに 1 つで、規則の拒否と古い版の両方に使う。
+     *
+     * @param section 誤りを示す領域
+     * @param onRejected 規則の拒否のときに、読み直した利用者と拒否から示し直す内容を作る
+     */
+    record Operation<R>(Section section, BiFunction<UserDetail, R, Retry> onRejected) {}
+
+    /**
+     * 規則の拒否のときに示し直す内容（選んだまま、送られた版のまま）。
+     *
+     * @param selected 選んでいる役割
+     * @param reason 選んでいる停止の理由
+     * @param version フォームが持つ版
+     * @param message 誤りの文言
+     */
+    record Retry(Set<Role> selected, Optional<SuspensionReason> reason, long version, ErrorMessage message) {}
+
+    /**
+     * 詳細に示す誤り。
+     *
+     * @param section 誤りを示す領域
+     * @param message 誤りの文言
+     */
+    record Problem(Section section, ErrorMessage message) {}
+
+    /**
      * 詳細の画面に示す内容。
      *
      * @param user 利用者
      * @param selected 選んでいる役割
      * @param reason 選んでいる停止の理由
      * @param version フォームが持つ版
-     * @param section 誤りを示す領域（誤りがなければ null）
-     * @param error 誤り（なければ null）
+     * @param problem 誤り（なければ null）
      */
     record DetailForm(
-            UserDetail user,
-            Set<Role> selected,
-            Optional<SuspensionReason> reason,
-            long version,
-            Section section,
-            ErrorMessage error) {
+            UserDetail user, Set<Role> selected, Optional<SuspensionReason> reason, long version, Problem problem) {
 
         /** 誤りのない内容。 */
         static DetailForm of(UserDetail user, Set<Role> selected, Optional<SuspensionReason> reason, long version) {
-            return new DetailForm(user, selected, reason, version, null, null);
+            return new DetailForm(user, selected, reason, version, null);
         }
 
         /** その領域の誤り。ほかの領域の誤りか、誤りがなければ null。 */
         ErrorMessage errorOf(Section of) {
-            return section == of ? error : null;
+            return problem != null && problem.section() == of ? problem.message() : null;
         }
     }
 
@@ -262,10 +290,11 @@ final class UserDetailPage {
 
         /** 詳細に示す誤りの要約。誤りがなければ null。 */
         static ErrorSummary of(DetailForm form) {
-            if (form.error() == null) {
+            Problem problem = form.problem();
+            if (problem == null) {
                 return null;
             }
-            return new ErrorSummary(form.section().title, form.error(), form.section().anchor);
+            return new ErrorSummary(problem.section().title, problem.message(), problem.section().anchor);
         }
     }
 
@@ -273,7 +302,8 @@ final class UserDetailPage {
      * 誤りの文言。
      *
      * @param text 文言
-     * @param field 選び方の誤りか（エラー要約から欄へリンクし、欄にも示す。自分・監督の役割・古い版は選び方の誤りではない）
+     * @param field 選び方の誤りか（エラー要約から欄へリンクし、欄にも示す。古い版と、役割の変更の自分の役割、利用状態の変更の自分と
+     *     監督の役割の拒否は、選び方の誤りではない）
      */
     public record ErrorMessage(String text, boolean field) {}
 }

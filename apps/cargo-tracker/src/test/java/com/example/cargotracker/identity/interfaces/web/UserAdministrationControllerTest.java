@@ -2,9 +2,10 @@ package com.example.cargotracker.identity.interfaces.web;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -31,7 +32,6 @@ import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.RequestBuilder;
 
 /** S-20 の一覧と詳細の名前の表示（Bolt 34f）。 */
 // 画面の単体テストはコントローラーの振る舞いだけを見る。認証・認可・CSRF はセキュリティの統合テストで確かめる（Bolt 14）
@@ -43,9 +43,6 @@ class UserAdministrationControllerTest {
 
     static final UserId TARGET = new UserId(UUID.fromString("20000000-0000-0000-0000-000000000501"));
     static final String DETAIL = "/staff/users/" + TARGET.value();
-    static final String ROLE_CONFIRMATION = DETAIL + "/role-changes/confirmation";
-    static final String STATUS_CONFIRMATION = DETAIL + "/status-changes/confirmation";
-    static final String STALE = "この利用者の情報が先に更新されました。最新の内容を確かめてから、もう一度変更してください。";
 
     @Autowired
     MockMvc mockMvc;
@@ -92,19 +89,17 @@ class UserAdministrationControllerTest {
                 .andExpect(content().string(Matchers.containsString("利用再開の内容を確認する")));
     }
 
+    @Test
+    void 詳細の範囲外は記録せずに404にする() throws Exception {
+        when(queryService.detail(any(), eq(TARGET))).thenReturn(new UserLookup.OutOfScope());
+
+        mockMvc.perform(get(DETAIL)).andExpect(status().isNotFound());
+
+        verify(denials, never()).recordDenied(any(), any());
+    }
+
     private void found(UserDetail user) {
         when(queryService.detail(any(), eq(TARGET))).thenReturn(new UserLookup.Found(user));
-    }
-
-    private static RequestBuilder suspend() {
-        return post(STATUS_CONFIRMATION)
-                .param("status", "SUSPENDED")
-                .param("reason", "EMERGENCY")
-                .param("version", "3");
-    }
-
-    private static UserDetail user(long version) {
-        return user(version, UserStatus.ACTIVE);
     }
 
     private static UserDetail user(long version, UserStatus status) {

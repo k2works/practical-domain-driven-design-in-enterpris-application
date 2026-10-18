@@ -12,7 +12,8 @@
         役割を変更しました。相手の次の操作から効きます。
     </div>
     <!--/* エラー要約（S-09 と同じ形）。役割の変更と利用状態の変更（Bolt 34d）で 1 つにし、見出しとリンク先を controller が選ぶ。
-         選び方の誤り（役割・停止の理由）だけ欄へリンクする（自分・監督の役割・古い版は選び方の誤りではない） */-->
+         選び方の誤り（役割・停止の理由）だけ欄へリンクする（古い版と、役割の変更の自分の役割、利用状態の変更の自分と監督の役割の拒否は
+         選び方の誤りではない） */-->
     <div id="error-summary" th:if="${summary != null}" tabindex="-1" role="alert" aria-labelledby="error-summary-title">
         <h2 id="error-summary-title" th:text="${summary.title}">役割を変更できませんでした</h2>
         <ul>
@@ -33,7 +34,7 @@
     <!--/* 役割の領域（Bolt 34f）。利用状態の領域と同じ形の見出しを付け、自分と荷受人の企業の利用者の案内も領域の中に置く */-->
     <section class="mt-4" aria-labelledby="roles-title">
         <h2 id="roles-title" class="h5">役割</h2>
-        <p th:if="${self}" id="self-note">自分の役割は変更できません。ほかのシステム管理者に依頼してください。</p>
+        <p th:if="${self}" id="self-note" th:text="${selfRoleNote}">自分の役割は変更できません。ほかのシステム管理者に依頼してください。</p>
         <p th:if="${!self and !assignable}" id="unassignable-note"
            th:text="|${companyKindName}の利用者には役割を付けません。|">荷受人の企業の利用者には役割を付けません。</p>
         <form th:if="${!self and assignable}" method="get"
@@ -43,7 +44,7 @@
             <fieldset id="roles" th:attr="aria-describedby=${error != null and error.field} ? 'roles-error' : null">
                 <legend class="h6">付ける役割</legend>
                 <p th:if="${error != null and error.field}" id="roles-error" class="text-danger" th:text="${error.text}">役割を 1 つ以上選んでください。</p>
-                <p class="form-text" th:text="|${companyKindName}の利用者に付けられる役割です。システム管理者・監査担当者の役割は、この画面では付けたり外したりできません。|">
+                <p class="form-text" th:text="|${companyKindName}の利用者に付けられる役割です。印を外すと、その役割を外します。システム管理者・監査担当者の役割は、この画面では付けたり外したりできません。|">
                     運用する会社の利用者に付けられる役割です。
                 </p>
                 <div class="form-check" th:each="option : ${roleOptions}">

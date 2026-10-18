@@ -15,7 +15,7 @@ import org.springframework.stereotype.Service;
 /**
  * 利用者の管理の照会。S-20 の一覧と詳細を読む（Bolt 34。US-16 の一部）。`password_hash` を読まない射影で受ける。Bolt 34b から操作者を
  * 受け、管理範囲（`user_assignment` の `COMPANY`。IA-INV-14）の企業の利用者だけを返す。照会は書かない（範囲外の試行の記録は
- * 確定の POST でだけ controller が {@code AdministrationScopeDenialService} で書く）。
+ * 確定の POST でだけ S-20 の画面の層の詳細の部品 {@code UserDetailPage} が {@code AdministrationScopeDenialService} で書く）。
  */
 @Service // JIG がユースケースとして読む印（組み立ては IdentityConfiguration）
 public class UserAdministrationQueryService {

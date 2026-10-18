@@ -5,7 +5,7 @@ import java.util.Objects;
 /**
  * 利用者の管理（役割の変更 {@link UserRoleChangeService}・利用状態の変更 {@link UserStatusChangeService}）で受け付けなかった理由
  * （Bolt 34e で 2 つの結果の型の拒否を寄せた）。画面は種類で行き先と文言を選ぶ。どの拒否でも何も書いていない（範囲外の試行の記録は
- * controller が書く）。
+ * S-20 の画面の層の詳細の部品 {@code UserDetailPage} が書く。Bolt 34f）。
  *
  * @param <R> 判定の規則の拒否の型（役割の変更なら {@code RoleChangeRejection}、利用状態の変更なら {@code StatusChangeRejection}）
  */

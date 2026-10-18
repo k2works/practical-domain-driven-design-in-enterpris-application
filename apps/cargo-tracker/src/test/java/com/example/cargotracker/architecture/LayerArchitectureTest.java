@@ -320,16 +320,31 @@ class LayerArchitectureTest {
             .orShould()
             .callMethodWhere(target(owner(assignableTo(ZoneId.class))).and(target(nameMatching("of.*|systemDefault"))));
 
+    /** 範囲外の試行の記録の書き手（Bolt 34f。S-20 の詳細の部品）。 */
+    private static final String SCOPE_DENIAL_WRITER = "com.example.cargotracker.identity.interfaces.web.UserDetailPage";
+
     /**
-     * 範囲外の試行の記録のサービス（Bolt 34b）は、S-20 の画面の層（とその組み立て）だけが呼ぶ。書き手を 1 か所にして、記録の漏れと
-     * 二重の記録を防ぐ（IA-INV-08、Bolt 34b の開発レビュー）。
+     * 範囲外の試行の記録のサービス（Bolt 34b）は、S-20 の詳細の部品（とその組み立て）だけが呼ぶ。書き手を 1 か所にして、記録の漏れと
+     * 二重の記録を防ぐ（IA-INV-08、Bolt 34b の開発レビュー）。Bolt 34f で、画面の層のパッケージ全体から部品の 1 つに絞った
+     * （2026-10-19、human:kakimomokuri。W6 の controller が記録のサービスを直接受けると落ちる）。
      */
     @ArchTest
-    static final ArchRule 範囲外の試行の記録は画面の層からだけ呼ぶ = noClasses()
+    static final ArchRule 範囲外の試行の記録は詳細の部品からだけ呼ぶ = noClasses()
             .that()
-            .resideOutsideOfPackages("..identity.interfaces.web..", "..identity.infrastructure.config..")
+            .resideOutsideOfPackages("..identity.infrastructure.config..")
+            .and()
+            .doNotHaveFullyQualifiedName(SCOPE_DENIAL_WRITER)
             .and()
             .doNotHaveSimpleName("AdministrationScopeDenialService")
+            .should()
+            .dependOnClassesThat()
+            .haveSimpleName("AdministrationScopeDenialService");
+
+    /** 例外の名前が実在し続けることの見張り。部品を動かしたり名前を変えたりすると落ちる（T-135）。 */
+    @ArchTest
+    static final ArchRule 範囲外の試行の記録の書き手は詳細の部品 = classes()
+            .that()
+            .haveFullyQualifiedName(SCOPE_DENIAL_WRITER)
             .should()
             .dependOnClassesThat()
             .haveSimpleName("AdministrationScopeDenialService");

@@ -8,8 +8,9 @@ import com.example.cargotracker.identity.domain.model.valueobjects.StatusChangeR
 import com.example.cargotracker.identity.domain.model.valueobjects.SuspensionReason;
 import com.example.cargotracker.identity.domain.model.valueobjects.UserDetail;
 import com.example.cargotracker.identity.domain.model.valueobjects.UserStatus;
-import com.example.cargotracker.identity.interfaces.web.UserDetailPage.DetailForm;
 import com.example.cargotracker.identity.interfaces.web.UserDetailPage.ErrorMessage;
+import com.example.cargotracker.identity.interfaces.web.UserDetailPage.Operation;
+import com.example.cargotracker.identity.interfaces.web.UserDetailPage.Retry;
 import com.example.cargotracker.identity.interfaces.web.UserDetailPage.Section;
 import com.example.cargotracker.shared.domain.AuthenticatedActor;
 import com.example.cargotracker.shared.domain.Role;
@@ -63,7 +64,8 @@ public class UserStatusChangeController {
         StatusRequest request = StatusRequest.parse(status, reason);
         return switch (statusChanges.check(actor, user.id(), version, request.to(), request.reason())) {
             case StatusChangeCheck.Acceptable _ -> showConfirmation(user, request, version, actor, model);
-            case StatusChangeCheck.Refused(var refusal) -> refuse(id, request, version, actor, model, refusal, false);
+            case StatusChangeCheck.Refused(var refusal) ->
+                refuse(user.id(), request, version, actor, model, refusal, false);
         };
     }
 
@@ -90,34 +92,34 @@ public class UserStatusChangeController {
                         "notice", request.to() == UserStatus.SUSPENDED ? SUSPENDED_NOTICE : REACTIVATED_NOTICE);
                 yield "redirect:" + UserAdministrationController.USERS_URL + "/" + target.value();
             }
-            case StatusChangeOutcome.Refused(var refusal) -> refuse(id, request, version, actor, model, refusal, true);
+            case StatusChangeOutcome.Refused(var refusal) ->
+                refuse(target, request, version, actor, model, refusal, true);
         };
     }
 
     /** 受け付けなかった結果の画面。規則の拒否は選んだ理由のまま示す（ほかの枝は詳細の部品）。 */
     private String refuse(
-            String id,
+            UserId target,
             StatusRequest request,
             long version,
             AuthenticatedActor actor,
             Model model,
             UserAdministrationRefusal<StatusChangeRejection> refusal,
-            boolean change) {
+            boolean recordDenial) {
         return page.refuse(
-                id,
+                target,
                 actor,
                 model,
                 refusal,
-                Section.STATUS,
-                change,
-                (user, rejection) -> new DetailForm(
-                        user,
-                        user.roles(),
-                        request.reason(),
-                        // 同じ状態の拒否は、ほかの管理者が先に同じ変更を確定したときに起きる。次の操作が古い版で拒まれないよう、最新の版で示す
-                        rejection == StatusChangeRejection.NO_CHANGE ? user.version() : version,
+                recordDenial,
+                new Operation<>(
                         Section.STATUS,
-                        errorMessage(rejection, user.status())));
+                        (user, rejection) -> new Retry(
+                                user.roles(),
+                                request.reason(),
+                                // 同じ状態の拒否は、ほかの管理者が先に同じ変更を確定したときに起きる。次の操作が古い版で拒まれないよう、最新の版で示す
+                                rejection == StatusChangeRejection.NO_CHANGE ? user.version() : version,
+                                errorMessage(rejection, user.status()))));
     }
 
     private String showConfirmation(
@@ -131,9 +133,9 @@ public class UserStatusChangeController {
         model.addAttribute("status", request.to().name());
         model.addAttribute(
                 "reason", request.reason().map(SuspensionReason::name).orElse(null));
-        model.addAttribute(UserDetailPage.VERSION_ATTRIBUTE, version);
+        model.addAttribute(UserAdministrationLabels.VERSION_ATTRIBUTE, version);
         model.addAttribute("operator", Role.SYSTEM_ADMIN.displayName() + " " + actor.displayName());
-        model.addAttribute(UserDetailPage.ACTIVE_ATTRIBUTE, UserDetailPage.ACTIVE);
+        model.addAttribute(UserAdministrationLabels.ACTIVE_ATTRIBUTE, UserAdministrationLabels.ACTIVE);
         return "identity/users/status-confirmation";
     }
 

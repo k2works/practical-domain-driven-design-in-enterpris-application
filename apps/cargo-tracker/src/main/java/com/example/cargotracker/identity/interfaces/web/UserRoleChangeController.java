@@ -9,8 +9,9 @@ import com.example.cargotracker.identity.domain.model.valueobjects.CompanyKind;
 import com.example.cargotracker.identity.domain.model.valueobjects.RoleChangeRejection;
 import com.example.cargotracker.identity.domain.model.valueobjects.RoleChangeRejectionReason;
 import com.example.cargotracker.identity.domain.model.valueobjects.UserDetail;
-import com.example.cargotracker.identity.interfaces.web.UserDetailPage.DetailForm;
 import com.example.cargotracker.identity.interfaces.web.UserDetailPage.ErrorMessage;
+import com.example.cargotracker.identity.interfaces.web.UserDetailPage.Operation;
+import com.example.cargotracker.identity.interfaces.web.UserDetailPage.Retry;
 import com.example.cargotracker.identity.interfaces.web.UserDetailPage.Section;
 import com.example.cargotracker.shared.domain.AuthenticatedActor;
 import com.example.cargotracker.shared.domain.Role;
@@ -60,7 +61,8 @@ public class UserRoleChangeController {
         Set<Role> selected = UserAdministrationParameters.roles(roles);
         return switch (roleChanges.check(actor, user.id(), version, selected)) {
             case RoleChangeCheck.Acceptable _ -> showConfirmation(user, selected, version, actor, model);
-            case RoleChangeCheck.Refused(var refusal) -> refuse(id, selected, version, actor, model, refusal, false);
+            case RoleChangeCheck.Refused(var refusal) ->
+                refuse(user.id(), selected, version, actor, model, refusal, false);
         };
     }
 
@@ -80,33 +82,30 @@ public class UserRoleChangeController {
                 redirectAttributes.addFlashAttribute("notice", CHANGED_NOTICE);
                 yield "redirect:" + UserAdministrationController.USERS_URL + "/" + target.value();
             }
-            case RoleChangeOutcome.Refused(var refusal) -> refuse(id, selected, version, actor, model, refusal, true);
+            case RoleChangeOutcome.Refused(var refusal) ->
+                refuse(target, selected, version, actor, model, refusal, true);
         };
     }
 
     /** 受け付けなかった結果の画面。規則の拒否は選んだまま示す（ほかの枝は詳細の部品）。 */
     private String refuse(
-            String id,
+            UserId target,
             Set<Role> selected,
             long version,
             AuthenticatedActor actor,
             Model model,
             UserAdministrationRefusal<RoleChangeRejection> refusal,
-            boolean change) {
+            boolean recordDenial) {
         return page.refuse(
-                id,
+                target,
                 actor,
                 model,
                 refusal,
-                Section.ROLES,
-                change,
-                (user, rejection) -> new DetailForm(
-                        user,
-                        selected,
-                        Optional.empty(),
-                        version,
+                recordDenial,
+                new Operation<>(
                         Section.ROLES,
-                        errorMessage(rejection, user.companyKind())));
+                        (user, rejection) -> new Retry(
+                                selected, Optional.empty(), version, errorMessage(rejection, user.companyKind()))));
     }
 
     private String showConfirmation(
@@ -126,9 +125,9 @@ public class UserRoleChangeController {
                 UserAdministrationLabels.order(selected).stream()
                         .map(Role::name)
                         .toList());
-        model.addAttribute(UserDetailPage.VERSION_ATTRIBUTE, version);
+        model.addAttribute(UserAdministrationLabels.VERSION_ATTRIBUTE, version);
         model.addAttribute("operator", Role.SYSTEM_ADMIN.displayName() + " " + actor.displayName());
-        model.addAttribute(UserDetailPage.ACTIVE_ATTRIBUTE, UserDetailPage.ACTIVE);
+        model.addAttribute(UserAdministrationLabels.ACTIVE_ATTRIBUTE, UserAdministrationLabels.ACTIVE);
         return "identity/users/confirmation";
     }
 
@@ -139,7 +138,7 @@ public class UserRoleChangeController {
     static ErrorMessage errorMessage(RoleChangeRejection rejection, CompanyKind companyKind) {
         String text =
                 switch (rejection.reason()) {
-                    case SELF_CHANGE -> "自分の役割は変更できません。ほかのシステム管理者に依頼してください。";
+                    case SELF_CHANGE -> UserDetailPage.SELF_ROLE_NOTE;
                     case NO_ROLES -> "役割を 1 つ以上選んでください。";
                     case NO_CHANGE -> "今の役割から変わっていません。足す役割か外す役割を選んでください。";
                     case OVERSIGHT_ROLE -> "システム管理者・監査担当者の役割は、この画面では付けたり外したりできません。";

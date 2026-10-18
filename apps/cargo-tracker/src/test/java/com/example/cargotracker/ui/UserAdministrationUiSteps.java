@@ -157,7 +157,8 @@ public class UserAdministrationUiSteps {
 
     @ならば("{string} と示され、役割を選ぶ欄はない")
     public void 案内が示され欄がない(String message) {
-        assertThat(page().locator("main")).containsText(message);
+        // 案内は見出し「役割」の領域の中に出す（Bolt 34f）
+        assertThat(region("役割")).containsText(message);
         assertThat(page().getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("変更内容を確認する")))
                 .hasCount(0);
     }

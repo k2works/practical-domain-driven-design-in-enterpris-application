@@ -40,7 +40,6 @@ import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.RequestBuilder;
 
 /**
  * S-20 の役割の変更の拒否の枝と範囲外の試行の記録（Bolt 34f。分ける前の controller の特性のテストを分けた）。確定の範囲外は記録して 404、
@@ -56,7 +55,6 @@ class UserRoleChangeControllerTest {
     static final UserId TARGET = new UserId(UUID.fromString("20000000-0000-0000-0000-000000000501"));
     static final String DETAIL = "/staff/users/" + TARGET.value();
     static final String ROLE_CONFIRMATION = DETAIL + "/role-changes/confirmation";
-    static final String STATUS_CONFIRMATION = DETAIL + "/status-changes/confirmation";
     static final String STALE = "この利用者の情報が先に更新されました。最新の内容を確かめてから、もう一度変更してください。";
 
     @Autowired
@@ -156,6 +154,7 @@ class UserRoleChangeControllerTest {
 
         mockMvc.perform(post(ROLE_CONFIRMATION).param("roles", "ROUTE_DESIGNER").param("version", "3"))
                 .andExpect(status().isOk())
+                .andExpect(content().string(Matchers.containsString("役割を変更できませんでした")))
                 .andExpect(content().string(Matchers.containsString(STALE)))
                 .andExpect(content().string(Matchers.containsString("name=\"version\" value=\"4\"")))
                 .andExpect(content().string(Matchers.containsString("value=\"SALES\" checked")))
@@ -178,6 +177,33 @@ class UserRoleChangeControllerTest {
     }
 
     @Test
+    void 役割の確定が規則に当たれば送った版のまま文言を示す() throws Exception {
+        // 読み直した利用者の版（4）でなく、画面が送った版（3）のまま示す（先の更新を上書きしない）
+        when(queryService.detail(any(), eq(TARGET)))
+                .thenReturn(new UserLookup.Found(user(3)), new UserLookup.Found(user(4)));
+        when(roleChanges.change(any(), eq(TARGET), anyLong(), any()))
+                .thenReturn(new RoleChangeOutcome.Refused(new UserAdministrationRefusal.Rejected<>(
+                        RoleChangeRejection.of(RoleChangeRejectionReason.NO_CHANGE))));
+
+        mockMvc.perform(post(ROLE_CONFIRMATION).param("roles", "SALES").param("version", "3"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(Matchers.containsString("役割を変更できませんでした")))
+                .andExpect(content().string(Matchers.containsString("今の役割から変わっていません。")))
+                .andExpect(content().string(Matchers.containsString("name=\"version\" value=\"3\"")))
+                .andExpect(content().string(Matchers.not(Matchers.containsString("name=\"version\" value=\"4\""))));
+    }
+
+    @Test
+    void 役割の確定で値の誤りより先に範囲外の試行を記録する() throws Exception {
+        when(queryService.detail(any(), eq(TARGET))).thenReturn(new UserLookup.OutOfScope());
+
+        mockMvc.perform(post(ROLE_CONFIRMATION).param("roles", "UNKNOWN").param("version", "3"))
+                .andExpect(status().isNotFound());
+
+        verify(denials).recordDenied(any(), eq(TARGET));
+    }
+
+    @Test
     void 役割を変えたら知らせとともに詳細へ移す() throws Exception {
         found(user(3));
         when(roleChanges.change(any(), eq(TARGET), anyLong(), any())).thenReturn(new RoleChangeOutcome.Changed(4));
@@ -194,13 +220,6 @@ class UserRoleChangeControllerTest {
 
     private void found(UserDetail user) {
         when(queryService.detail(any(), eq(TARGET))).thenReturn(new UserLookup.Found(user));
-    }
-
-    private static RequestBuilder suspend() {
-        return post(STATUS_CONFIRMATION)
-                .param("status", "SUSPENDED")
-                .param("reason", "EMERGENCY")
-                .param("version", "3");
     }
 
     private static UserDetail user(long version) {

@@ -44,7 +44,7 @@ public class UserAdministrationController {
     public String list(AuthenticatedActor actor, Model model) {
         model.addAttribute("summaries", queryService.list(actor));
         model.addAttribute("statusNames", STATUS_NAMES);
-        model.addAttribute(UserDetailPage.ACTIVE_ATTRIBUTE, UserDetailPage.ACTIVE);
+        model.addAttribute(UserAdministrationLabels.ACTIVE_ATTRIBUTE, UserAdministrationLabels.ACTIVE);
         return "identity/users/list";
     }
 
