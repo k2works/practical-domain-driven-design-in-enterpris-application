@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.Objects;
 
 /**
- * 本予約の確定の結果（US-04 AC1・AC2。Bolt 23）。画面が結果ごとの文言を示す（Bolt 23b）。
+ * 本予約の確定の結果（US-04 AC1〜AC5。Bolt 23・24・35）。画面が結果ごとの文言を示す（Bolt 23b）。
  */
 public sealed interface BookingConfirmationOutcome {
 
@@ -39,7 +39,7 @@ public sealed interface BookingConfirmationOutcome {
     }
 
     /**
-     * 確定条件が欠けている（B-INV-01）。不足条件の一覧の表示は W6（US-04 AC3）。
+     * 確定条件が欠けている（B-INV-01）。欠けた条件はすべて返し、画面がまとめて示す（US-04 AC3。Bolt 35）。
      *
      * @param missing 欠けた条件
      */
@@ -61,6 +61,12 @@ public sealed interface BookingConfirmationOutcome {
             Objects.requireNonNull(trackingNumber, "trackingNumber");
         }
     }
+
+    /**
+     * 見積りが特殊貨物（危険物・冷凍貨物・その他特殊貨物）を含む（B-INV-04、US-04 AC5。Bolt 35）。MVP の対象外で、直す欄がないので
+     * 確定条件の不足とは分ける。
+     */
+    record SpecialCargo() implements BookingConfirmationOutcome {}
 
     /** 同じコマンド ID で内容（業務番号・見積り番号・操作者）が違う（衝突。B-INV-03。Bolt 24）。 */
     record CommandConflict() implements BookingConfirmationOutcome {}

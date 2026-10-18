@@ -10,7 +10,9 @@ import com.example.cargotracker.booking.domain.model.aggregates.BookingConfirmat
 import com.example.cargotracker.booking.domain.model.aggregates.BookingConfirmationRejected;
 import com.example.cargotracker.booking.domain.model.aggregates.BookingRepository;
 import com.example.cargotracker.booking.domain.model.aggregates.DuplicateBookingException;
+import com.example.cargotracker.booking.domain.model.aggregates.SpecialCargoRejected;
 import com.example.cargotracker.booking.domain.model.aggregates.TrackingNumberIssuer;
+import com.example.cargotracker.booking.domain.model.rules.BookableCargoPolicy;
 import com.example.cargotracker.booking.domain.model.valueobjects.BookingConditions;
 import com.example.cargotracker.booking.domain.model.valueobjects.BookingId;
 import com.example.cargotracker.booking.domain.model.valueobjects.BookingTerms;
@@ -28,11 +30,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * 本予約の確定の入力ポート（営業担当者が使う。US-04 AC1・AC2・AC4。Bolt 23・24）。トランザクションの境界になる。
+ * 本予約の確定の入力ポート（営業担当者が使う。US-04 AC1〜AC5。Bolt 23・24・35）。トランザクションの境界になる。
  * commit 時刻は、このトランザクションの中で保存の前に Clock から取り、同じ値で見積りの公開 API に照会し、予約版に記録する（ADR-016）。
  * 確定したら予約サガを処理中で始め、DE-07 を発行する（追跡の開始は追跡が購読する。ADR-015）。
  *
- * <p>判定の順序は、役割 → 処理済みコマンド（B-INV-03）→ 同じ見積りの予約（B-INV-11）→ 見積りの照会 → 確定条件。確定済みの判定を
+ * <p>判定の順序は、役割 → 処理済みコマンド（B-INV-03）→ 同じ見積りの予約（B-INV-11）→ 見積りの照会 → 特殊貨物（B-INV-04。Bolt 35）
+ * → 確定条件。確定済みの判定を
  * 見積りの照会より前に置くので、確定の後に見積りが失効・置換されても、再送と同じ見積りの確定は失効にしない（Bolt 24）。
  *
  * <p>{@code @Service} は JIG がユースケースとして読むための印で、部品探索の対象にはしない（CargoTrackerApplication）。
@@ -65,7 +68,7 @@ public class BookingCommandService {
         this.clock = clock;
     }
 
-    /** 本予約を確定する（US-04 AC1・AC2・AC4、BR-01、BR-10、B-INV-01・03・10・11）。 */
+    /** 本予約を確定する（US-04 AC1〜AC5、BR-01、BR-03、BR-10、B-INV-01・03・04・10・11）。 */
     @Transactional
     public BookingConfirmationOutcome confirm(ConfirmBookingCommand command) {
         if (!command.operator().hasRole(Role.SALES)) {
@@ -88,9 +91,9 @@ public class BookingCommandService {
         // 有効な見積り・荷主の承認・承認済み経路版は、見積りが確定に使えると判定した時点でそろっている（ADR-016）
         BookingConditions conditions =
                 new BookingConditions(true, !terms.cargoSummary().isBlank(), true, true, command.staffConfirmed());
-        // 追跡番号は発行のたびに DB を照会するため、条件が欠けていれば発行の前に返す（Bolt 23 レビュー L-1）
-        if (!conditions.missing().isEmpty()) {
-            return new BookingConfirmationOutcome.MissingConditions(conditions.missing());
+        Optional<BookingConfirmationOutcome> refused = rejectBeforeIssuing(terms, conditions);
+        if (refused.isPresent()) {
+            return refused.get();
         }
         UUID operator = command.operator().userId().value();
         TrackingNumber trackingNumber = trackingNumberIssuer.issue();
@@ -100,6 +103,8 @@ public class BookingCommandService {
             confirmation = Booking.confirm(bookingId, conditions, terms, trackingNumber, operator, committedAt);
         } catch (BookingConfirmationRejected rejected) {
             return new BookingConfirmationOutcome.MissingConditions(rejected.missingConditions());
+        } catch (SpecialCargoRejected _) {
+            return new BookingConfirmationOutcome.SpecialCargo();
         }
         try {
             repository.save(
@@ -129,6 +134,21 @@ public class BookingCommandService {
         sagaRepository.save(BookingSaga.start(confirmation.booking().id(), trackingNumber, committedAt));
         eventPublisher.publishEvent(confirmation.event());
         return new BookingConfirmationOutcome.Confirmed(trackingNumber);
+    }
+
+    /**
+     * 追跡番号を発行する前に返す拒否。追跡番号は発行のたびに DB を照会するため、拒否は発行の前に返す（Bolt 23 レビュー L-1）。特殊貨物は
+     * 直せないので確定条件より先に返す（B-INV-04、US-04 AC5。Bolt 35）。
+     */
+    private static Optional<BookingConfirmationOutcome> rejectBeforeIssuing(
+            BookingTerms terms, BookingConditions conditions) {
+        if (!BookableCargoPolicy.bookable(terms.cargoCategory())) {
+            return Optional.of(new BookingConfirmationOutcome.SpecialCargo());
+        }
+        if (!conditions.missing().isEmpty()) {
+            return Optional.of(new BookingConfirmationOutcome.MissingConditions(conditions.missing()));
+        }
+        return Optional.empty();
     }
 
     /**

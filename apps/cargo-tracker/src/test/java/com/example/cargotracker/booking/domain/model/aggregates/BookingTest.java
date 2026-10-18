@@ -13,6 +13,7 @@ import com.example.cargotracker.booking.domain.model.valueobjects.BookingConditi
 import com.example.cargotracker.booking.domain.model.valueobjects.BookingConditions;
 import com.example.cargotracker.booking.domain.model.valueobjects.BookingId;
 import com.example.cargotracker.booking.domain.model.valueobjects.BookingStatus;
+import com.example.cargotracker.booking.domain.model.valueobjects.BookingTerms;
 import com.example.cargotracker.booking.domain.model.valueobjects.TransportPhase;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import java.time.Instant;
@@ -77,6 +78,39 @@ class BookingTest {
                         BookingConfirmationRejected.class,
                         rejected -> assertThat(rejected.missingConditions())
                                 .containsExactly(BookingCondition.STAFF_CONFIRMATION));
+    }
+
+    @Test
+    void 特殊貨物を含む予約条件では確定条件がそろっても確定しない() {
+        BookingTerms special = withCargoCategory(terms(), "DANGEROUS");
+
+        assertThatThrownBy(() -> Booking.confirm(ID, allConditions(), special, TRACKING_NUMBER, SALES, COMMITTED_AT))
+                .isInstanceOf(SpecialCargoRejected.class);
+    }
+
+    @Test
+    void 特殊貨物は確定条件の不足より先に拒否する() {
+        BookingTerms special = withCargoCategory(terms(), "OTHER_SPECIAL");
+        BookingConditions withoutStaff = new BookingConditions(true, true, true, true, false);
+
+        assertThatThrownBy(() -> Booking.confirm(ID, withoutStaff, special, TRACKING_NUMBER, SALES, COMMITTED_AT))
+                .isInstanceOf(SpecialCargoRejected.class);
+    }
+
+    private static BookingTerms withCargoCategory(BookingTerms terms, String cargoCategory) {
+        return new BookingTerms(
+                terms.transportRequestId(),
+                terms.transportRequestVersionNo(),
+                terms.transportRequestNumber(),
+                terms.quotationId(),
+                terms.quotationNo(),
+                terms.shipperCompanyId(),
+                terms.consigneeCompanyId(),
+                terms.routingCaseNumber(),
+                terms.routeVersionNo(),
+                cargoCategory,
+                terms.cargoSummary(),
+                terms.shipperApproverId());
     }
 
     @Test

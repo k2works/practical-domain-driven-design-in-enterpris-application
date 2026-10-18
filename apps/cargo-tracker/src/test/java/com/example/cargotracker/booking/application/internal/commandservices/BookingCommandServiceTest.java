@@ -143,6 +143,26 @@ class BookingCommandServiceTest {
     }
 
     @Test
+    void 特殊貨物を含む見積りは特殊貨物の拒否を返し追跡番号を発行しない() {
+        quotation = bookable("DANGEROUS", BookingFixture.terms().cargoSummary());
+
+        assertThat(service.confirm(command(Role.SALES, true))).isEqualTo(new BookingConfirmationOutcome.SpecialCargo());
+        assertThat(issued).hasValue(0);
+        assertThat(repository.findAll()).isEmpty();
+        assertThat(published).isEmpty();
+    }
+
+    @Test
+    void 特殊貨物は確定条件の不足より先に判定する() {
+        // 直せない拒否を先に示す（直せる不足を直しても確定できないため。B-INV-04、Bolt 35）
+        quotation = bookable("REEFER", " ");
+
+        assertThat(service.confirm(command(Role.SALES, false)))
+                .isEqualTo(new BookingConfirmationOutcome.SpecialCargo());
+        assertThat(issued).hasValue(0);
+    }
+
+    @Test
     void 営業担当者でなければ見積りを照会せずに拒否する() {
         quotation = new BookableQuotationResult.NotBookable(BookableQuotationResult.NotBookable.EXPIRED);
 
@@ -348,6 +368,10 @@ class BookingCommandServiceTest {
     }
 
     private static BookableQuotationResult bookable(String cargoSummary) {
+        return bookable(BookingFixture.terms().cargoCategory(), cargoSummary);
+    }
+
+    private static BookableQuotationResult bookable(String cargoCategory, String cargoSummary) {
         var terms = BookingFixture.terms();
         return new BookableQuotationResult.Bookable(
                 terms.transportRequestId(),
@@ -359,7 +383,7 @@ class BookingCommandServiceTest {
                 terms.consigneeCompanyId(),
                 terms.routingCaseNumber(),
                 terms.routeVersionNo(),
-                terms.cargoCategory(),
+                cargoCategory,
                 cargoSummary,
                 terms.shipperApproverId(),
                 new UtcInstant(NOW.minusSeconds(3600)),

@@ -18,7 +18,8 @@ import java.util.UUID;
  * @param consigneeCompanyId 荷受人企業 ID
  * @param routingCaseNumber 承認済み経路版の案件番号の表記
  * @param routeVersionNo 承認済み経路版の番号
- * @param cargoCategory 貨物区分の名前
+ * @param cargoCategory 貨物種別の名前（見積りの {@code CargoCategory} の名前の写し。GENERAL など。予約は解釈せず、
+ *     {@code BookableCargoPolicy} が確定できるかだけを判定する）
  * @param cargoSummary 貨物の要約
  * @param shipperApproverId 承認した荷主担当者の利用者 ID
  */

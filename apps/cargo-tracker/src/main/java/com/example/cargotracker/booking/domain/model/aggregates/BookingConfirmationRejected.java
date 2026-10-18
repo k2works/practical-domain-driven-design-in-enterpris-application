@@ -4,7 +4,8 @@ import com.example.cargotracker.booking.domain.model.valueobjects.BookingConditi
 import java.util.List;
 
 /**
- * 本予約の確定を拒否した（B-INV-01。Bolt 23）。欠けた確定条件（不足条件）を値で持つ。不足条件の一覧の表示は W6（US-04 AC3）。
+ * 本予約の確定を拒否した（B-INV-01。Bolt 23）。欠けた確定条件（不足条件）をすべて値で持ち、画面がまとめて示す（US-04 AC3。Bolt 35）。
+ * 特殊貨物の拒否は {@link SpecialCargoRejected}。
  */
 public final class BookingConfirmationRejected extends RuntimeException {
 

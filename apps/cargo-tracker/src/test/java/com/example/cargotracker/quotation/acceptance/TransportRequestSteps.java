@@ -12,6 +12,7 @@ import com.example.cargotracker.quotation.domain.model.valueobjects.ShipmentTerm
 import com.example.cargotracker.quotation.domain.model.valueobjects.SubmissionViolations;
 import com.example.cargotracker.quotation.domain.model.valueobjects.SubmissionViolations.Item;
 import com.example.cargotracker.quotation.domain.model.valueobjects.SubmissionViolations.Reason;
+import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestId;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestNumber;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestStatus;
 import com.example.cargotracker.shared.acceptance.ScenarioContext;
@@ -121,6 +122,13 @@ public class TransportRequestSteps {
         input.put(Item.PACKAGE_COUNT, "12");
         input.put(Item.GROSS_WEIGHT_KG, "8400");
         input.put(Item.VOLUME_M3, "32.5");
+    }
+
+    /** 提出の規則（US-01 AC4）は特殊貨物を受け付けないので、規則の外で受け付けた輸送要求として貨物種別を置き換える（Bolt 35）。 */
+    @前提("提出の規則の外で受け付けた輸送要求として、貨物種別が {string} に置き換わっている")
+    public void 規則の外で貨物種別が置き換わっている(String category) {
+        repository.replaceCargoCategory(
+                new TransportRequestId(context.transportRequestId()), CARGO_CATEGORIES.get(category));
     }
 
     @前提("荷主が {string} を {string} に変える")

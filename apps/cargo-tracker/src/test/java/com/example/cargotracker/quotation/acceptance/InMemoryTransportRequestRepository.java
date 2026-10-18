@@ -3,6 +3,10 @@ package com.example.cargotracker.quotation.acceptance;
 import com.example.cargotracker.quotation.domain.model.aggregates.ConcurrentTransportRequestUpdateException;
 import com.example.cargotracker.quotation.domain.model.aggregates.TransportRequest;
 import com.example.cargotracker.quotation.domain.model.aggregates.TransportRequestRepository;
+import com.example.cargotracker.quotation.domain.model.entities.TransportRequestVersion;
+import com.example.cargotracker.quotation.domain.model.valueobjects.Cargo;
+import com.example.cargotracker.quotation.domain.model.valueobjects.CargoCategory;
+import com.example.cargotracker.quotation.domain.model.valueobjects.ShipmentTerms;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestId;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestNumber;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestStatus;
@@ -118,6 +122,38 @@ public class InMemoryTransportRequestRepository implements TransportRequestRepos
     /** 保存した輸送要求の件数。提出を受け付けなかったときに何も保存していないことを確かめる。 */
     public int count() {
         return store.size();
+    }
+
+    /**
+     * 提出の規則の外で受け付けた輸送要求（規則ができる前の受け付けや手作業の登録）を作るため、現在の版の貨物種別を置き換える（Bolt 35。
+     * 予約の判定が見積りの受付の規則に頼らずに特殊貨物を拒むことを確かめる。US-04 AC5、B-INV-04）。集約の版は変えない。
+     */
+    public synchronized void replaceCargoCategory(TransportRequestId id, CargoCategory category) {
+        TransportRequest stored = store.get(id);
+        if (stored == null) {
+            throw new IllegalStateException("輸送要求がありません: " + id);
+        }
+        TransportRequestVersion version = stored.currentVersion();
+        ShipmentTerms terms = version.terms();
+        Cargo cargo = terms.cargo();
+        ShipmentTerms replaced = new ShipmentTerms(
+                terms.consigneeCompanyId(),
+                terms.origin(),
+                terms.destination(),
+                terms.arrivalDeadline(),
+                new Cargo(category, cargo.packageType(), cargo.packageCount(), cargo.grossWeightKg(), cargo.volumeM3()),
+                terms.documents());
+        store.put(
+                id,
+                TransportRequest.reconstitute(
+                        stored.id(),
+                        stored.number(),
+                        stored.shipperCompanyId(),
+                        stored.status(),
+                        new TransportRequestVersion(
+                                version.versionNo(), replaced, version.submittedBy(), version.submittedAt()),
+                        stored.reviewRecords(),
+                        stored.aggregateVersion()));
     }
 
     /** シナリオの開始時に記録を消す。 */

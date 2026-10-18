@@ -2,6 +2,7 @@ package com.example.cargotracker.booking.domain.model.aggregates;
 
 import com.example.cargotracker.booking.domain.events.BookingConfirmed;
 import com.example.cargotracker.booking.domain.model.entities.BookingVersion;
+import com.example.cargotracker.booking.domain.model.rules.BookableCargoPolicy;
 import com.example.cargotracker.booking.domain.model.valueobjects.BookingCondition;
 import com.example.cargotracker.booking.domain.model.valueobjects.BookingConditions;
 import com.example.cargotracker.booking.domain.model.valueobjects.BookingId;
@@ -59,7 +60,8 @@ public final class Booking {
 
     /**
      * 本予約を確定する（US-04 AC1、B-INV-01）。5 条件がそろえば、予約版 1・追跡番号・commit 時刻・確定者を持つ貨物予約を作り、
-     * DE-07 を返す。1 つでも欠ければ確定せず、欠けた条件を示す。
+     * DE-07 を返す。特殊貨物を含めば確定しない（B-INV-04。不足条件より先に判定する。Bolt 35）。1 つでも欠ければ確定せず、欠けた
+     * 条件を示す。
      *
      * @param id 新しい予約 ID
      * @param conditions 確定条件
@@ -68,6 +70,7 @@ public final class Booking {
      * @param confirmedBy 確定した営業担当者の利用者 ID
      * @param committedAt commit 時刻（ADR-016）
      * @return 確定した貨物予約と DE-07
+     * @throws SpecialCargoRejected 特殊貨物を含むとき
      * @throws BookingConfirmationRejected 確定条件が欠けているとき
      */
     public static BookingConfirmation confirm(
@@ -78,6 +81,10 @@ public final class Booking {
             UUID confirmedBy,
             UtcInstant committedAt) {
         Objects.requireNonNull(conditions, "conditions");
+        Objects.requireNonNull(terms, "terms");
+        if (!BookableCargoPolicy.bookable(terms.cargoCategory())) {
+            throw new SpecialCargoRejected(terms.cargoCategory());
+        }
         List<BookingCondition> missing = conditions.missing();
         if (!missing.isEmpty()) {
             throw new BookingConfirmationRejected(missing);

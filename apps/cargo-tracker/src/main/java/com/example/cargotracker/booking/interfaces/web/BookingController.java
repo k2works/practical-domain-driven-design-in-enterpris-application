@@ -97,6 +97,9 @@ public class BookingController {
             }
             case BookingConfirmationOutcome.MissingConditions(List<BookingCondition> missing) ->
                 showConfirmation(transportRequestNumber, quotationNo, command, missing, model, redirectAttributes);
+            // 特殊貨物は S-09 を開いたときと同じ表示で示す（見積りの照会の結果の貨物種別を同じ規則で見る。US-04 AC5。Bolt 35）
+            case BookingConfirmationOutcome.SpecialCargo _ ->
+                showConfirmation(transportRequestNumber, quotationNo, command, List.of(), model, redirectAttributes);
             case BookingConfirmationOutcome.Expired _ ->
                 unavailable(subject, QuotationUnavailability.EXPIRED, redirectAttributes);
             case BookingConfirmationOutcome.QuotationUnavailable(QuotationUnavailability reason) ->

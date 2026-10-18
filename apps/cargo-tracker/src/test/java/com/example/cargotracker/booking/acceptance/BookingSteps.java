@@ -96,6 +96,7 @@ public class BookingSteps {
                 assertThat(lastOutcome)
                         .isEqualTo(new BookingConfirmationOutcome.QuotationUnavailable(
                                 QuotationUnavailability.NOT_APPROVED));
+            case "特殊貨物を含む" -> assertThat(lastOutcome).isEqualTo(new BookingConfirmationOutcome.SpecialCargo());
             case "確定条件が足りない" ->
                 assertThat(lastOutcome).isInstanceOf(BookingConfirmationOutcome.MissingConditions.class);
             case "すでに予約がある" -> assertThat(lastOutcome).isInstanceOf(BookingConfirmationOutcome.AlreadyBooked.class);
