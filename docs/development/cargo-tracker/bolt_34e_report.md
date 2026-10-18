@@ -3,7 +3,9 @@ type: Plan
 title: "Bolt 34e 終了報告 - 利用者の管理のドメインとサービス（振る舞いの変わらない直し）"
 description: "W5 の 26 本目の Bolt の終了報告。User の役割と利用状態は、判定した利用者そのものに結び付いた承認の値（User の入れ子、private のコンストラクタ）でだけ変えられる。役割と利用状態の変更の結果を確かめる結果と変える結果に分け、controller の届かない枝をなくした。判定の前半を ManagedUserLookup にまとめ、セキュリティの統合テストの同じ形の login の写しを IdentityLogins にまとめた。"
 tags: [plan]
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-17T15:23:10Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-18T01:31:52Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-10-18T01:31:52Z }
 ---
 
 # Bolt 34e 終了報告 - 利用者の管理のドメインとサービス（振る舞いの変わらない直し）
@@ -103,6 +105,7 @@ Bolt 34f（S-20 の画面の構造）、その後 Bolt 35（US-04 AC3・AC5、#4
 
 | 日付 | 更新内容 | 更新者 |
 | :--- | :--- | :--- |
+| 2026-10-18 | 終了報告を承認した（議題 1〜3。議題 3 の人に諮らずに変えた点を事後に承認） | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-10-18 | 初版作成（承認待ち）。`check` 2474 件・`uiTest` 272 件が緑、SonarQube PASS | anthropic/claude-opus-5-5 |
 
 ## 関連ドキュメント
