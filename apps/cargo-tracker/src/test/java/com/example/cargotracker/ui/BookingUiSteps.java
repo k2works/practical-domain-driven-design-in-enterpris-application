@@ -20,8 +20,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.web.server.LocalServerPort;
 
 /**
- * 本予約の確定（S-09）・予約の詳細（S-24）と、受付一覧（S-02）の予約の確定待ちの表の画面の層のステップ定義（US-04 AC1・AC2・AC4。
- * Bolt 23b・24）。見積依頼は、同じシナリオで荷主が提出したもの（{@link UiScenarioState}）とする。
+ * 本予約の確定（S-09）・予約の詳細（S-24）と、受付一覧（S-02）の予約の確定待ちの表の画面の層のステップ定義（US-04 AC1・AC2・AC3・
+ * AC4。Bolt 23b・24・35）。見積依頼は、同じシナリオで荷主が提出したもの（{@link UiScenarioState}）とする。
  *
  * <p>二重送信と別のタブの確定は、ブラウザーの「戻る」に頼ると読み直しの有無で結果が揺れるため、控えた S-09 のフォームの値（隠し項目と
  * CSRF のトークン）を、ブラウザーと同じ Cookie の HTTP の要求で送る（Bolt 24）。
@@ -96,6 +96,33 @@ public class BookingUiSteps {
                         new Page.GetByRoleOptions().setName(CONFIRM).setExact(true)));
         page().keyboard().press("Enter");
         page().waitForURL(url -> !url.contains("/staff/bookings/new"));
+    }
+
+    @もし("キー操作だけで契約条件と照合したことを示さずに本予約を確定する")
+    public void キー操作だけで確認せずに確定する() {
+        page().locator("body").focus();
+        assertThat(page().getByLabel("契約条件と照合した（営業担当者の確認）")).not().isChecked();
+        browser.tabUntilFocused(page().getByRole(
+                        AriaRole.BUTTON,
+                        new Page.GetByRoleOptions().setName(CONFIRM).setExact(true)));
+        page().keyboard().press("Enter");
+        page().waitForLoadState();
+    }
+
+    @ならば("本予約の確定のエラー要約に不足条件 {string} が示される")
+    public void 不足条件が示される(String message) {
+        Locator summary = page().getByRole(AriaRole.ALERT);
+        assertThat(summary).containsText("本予約を確定できませんでした");
+        assertThat(summary.getByRole(AriaRole.LINK, new Locator.GetByRoleOptions().setName(message)))
+                .isVisible();
+        assertThat(page().getByLabel("契約条件と照合した（営業担当者の確認）")).hasAttribute("aria-invalid", "true");
+        browser.checkAccessibility();
+    }
+
+    @ならば("受付一覧の予約の確定待ちに提出した見積依頼の見積り {int} が残る")
+    public void 予約の確定待ちに残る(int quotationNo) {
+        browser.navigate(baseUrl + "/staff/transport-requests");
+        assertThat(awaitingRow(quotationNo)).hasCount(1);
     }
 
     /**

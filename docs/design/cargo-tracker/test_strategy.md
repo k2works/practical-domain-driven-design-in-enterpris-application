@@ -4,7 +4,7 @@ title: "cargo-tracker テスト戦略"
 description: "cargo-tracker のテスト形状、テストレベルと責務、BDD（Cucumber）のシナリオ階層とタグ規約、不変条件・ユーザーストーリーとテストの対応、カバレッジ目標、CI での実行。"
 tags: [design, test-strategy, bdd]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-18T22:36:40Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-18T22:46:37Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T08:12:04Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:01:38Z }
@@ -534,6 +534,7 @@ Release 0.1 の範囲（Release 0.1 のマイルストーンの Issue の題名�
 | US-21 | AC1 | `@US-21-AC1` |
 | US-04 | AC1 | `@US-04-AC1` |
 | US-04 | AC2 | `@US-04-AC2` |
+| US-04 | AC3 | `@US-04-AC3` |
 | US-04 | AC4 | `@US-04-AC4` |
 | US-04 | 重複確定の防止 | `@B-INV-11` |
 | US-12 | AC1 | `@US-12-AC1` |

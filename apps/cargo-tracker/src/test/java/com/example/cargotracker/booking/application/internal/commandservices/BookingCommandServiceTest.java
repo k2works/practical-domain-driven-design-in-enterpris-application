@@ -44,7 +44,7 @@ import org.junit.jupiter.api.Test;
 import org.slf4j.LoggerFactory;
 
 /**
- * 本予約の確定の入力ポート（US-04 AC1・AC2・AC4。Bolt 23 レビュー L-1・L-3、Bolt 24）。見積りの公開 API と追跡番号の発行を
+ * 本予約の確定の入力ポート（US-04 AC1〜AC5。Bolt 23 レビュー L-1・L-3、Bolt 24・35）。見積りの公開 API と追跡番号の発行を
  * 差し替えて、受入テストで通らない分岐（見つからない・置換済み・貨物の要約が空・権限の先行・判定の順序・同時の確定の負け）を確かめる。
  */
 class BookingCommandServiceTest {
@@ -126,6 +126,18 @@ class BookingCommandServiceTest {
 
         assertThat(service.confirm(command(Role.SALES, true)))
                 .isEqualTo(new BookingConfirmationOutcome.MissingConditions(List.of(BookingCondition.REQUIRED_CARGO)));
+        assertThat(issued).hasValue(0);
+        assertThat(repository.findAll()).isEmpty();
+    }
+
+    @Test
+    void 貨物の要約が空で営業担当者の確認もなければ2つの不足条件をまとめて返し追跡番号を発行しない() {
+        // 1 回の送信でまとめて示す（US-04 AC3。Bolt 35）
+        quotation = bookable(" ");
+
+        assertThat(service.confirm(command(Role.SALES, false)))
+                .isEqualTo(new BookingConfirmationOutcome.MissingConditions(
+                        List.of(BookingCondition.REQUIRED_CARGO, BookingCondition.STAFF_CONFIRMATION)));
         assertThat(issued).hasValue(0);
         assertThat(repository.findAll()).isEmpty();
     }
