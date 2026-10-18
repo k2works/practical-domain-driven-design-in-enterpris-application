@@ -1,6 +1,7 @@
 # Docs Update Log
 
 ## 2026-10-18
+* **Update**: [07-本予約の確定と予約一覧](/manual/07-本予約の確定と予約一覧.md) を更新（anthropic/claude-opus-5-5）
 * **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
 * **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
 * **Update**: [user_story](/requirements/cargo-tracker/user_story.md) を更新（anthropic/claude-opus-5-5）
