@@ -11950,6 +11950,12 @@
 <td style="text-align: left;">予約</td>
 </tr>
 <tr>
+<td style="text-align: left;">確定できる貨物の規則</td>
+<td style="text-align: left;">BookableCargoPolicy</td>
+<td style="text-align: left;">写した貨物種別が一般貨物のときだけ本予約を確定できるとする予約の規則（B-INV-04。Bolt 35）。見積りの受付の規則（MvpAcceptancePolicy）とは別に予約が持つ</td>
+<td style="text-align: left;">予約</td>
+</tr>
+<tr>
 <td style="text-align: left;">追跡記録</td>
 <td style="text-align: left;">TrackingRecord</td>
 <td style="text-align: left;">1 つの追跡番号の予定と主要実績、現在状態</td>
@@ -13054,7 +13060,7 @@
 </tr>
 <tr>
 <td style="text-align: left;">B-INV-04</td>
-<td style="text-align: left;">特殊貨物を含む輸送要求は確定しない</td>
+<td style="text-align: left;">特殊貨物を含む輸送要求は確定しない（Bolt 35。見積りの提出の拒否に加えて、予約の集約が写した貨物種別を規則 <code>BookableCargoPolicy</code> で判定する二重の守り。一般貨物のほかと知らない値は確定しない）</td>
 <td style="text-align: left;">BR-03、US-04</td>
 </tr>
 <tr>
@@ -13119,9 +13125,14 @@
 <td style="text-align: left;">推測されにくい一意な追跡番号を発行する（ファクトリ）</td>
 </tr>
 <tr>
+<td style="text-align: left;">確定できる貨物の規則</td>
+<td style="text-align: left;">BookableCargoPolicy</td>
+<td style="text-align: left;">写した貨物種別の名前が一般貨物（<code>GENERAL</code>）のときだけ確定できるとする（B-INV-04。Bolt 35）。知らない値・空の値は確定しない。見積りの <code>MvpAcceptancePolicy</code> は使わない（BC の独立。予約は見積りの公開 API から写した値だけで判定する）。サービスの判定と <code>Booking.confirm</code> の両方が使う</td>
+</tr>
+<tr>
 <td style="text-align: left;">確定の判定の順序</td>
 <td style="text-align: left;">BookingCommandService</td>
-<td style="text-align: left;">役割（B-INV-10）→ 処理済みコマンド（B-INV-03。内容が同じなら最初の結果、違えば衝突）→ 業務番号と見積り番号で引いた同じ見積りの貨物予約（B-INV-11。既存の追跡番号）→ 見積りの公開 API の照会（commit 時刻。B-INV-02・05）→ 確定条件（B-INV-01）の順に判定する。確定の後に見積りが失効・置換されても、再送と同じ見積りの確定は失効にしない。同時の確定で一意制約に負けた側は、保存をセーブポイントに戻し、同じトランザクションで読み直して同じ結果を返す（Bolt 24）</td>
+<td style="text-align: left;">役割（B-INV-10）→ 処理済みコマンド（B-INV-03。内容が同じなら最初の結果、違えば衝突）→ 業務番号と見積り番号で引いた同じ見積りの貨物予約（B-INV-11。既存の追跡番号）→ 見積りの公開 API の照会（commit 時刻。B-INV-02・05）→ 特殊貨物（B-INV-04。Bolt 35）→ 確定条件（B-INV-01）の順に判定する。特殊貨物は直せないので確定条件より先に返し、追跡番号を発行しない。確定の後に見積りが失効・置換されても、再送と同じ見積りの確定は失効にしない。同時の確定で一意制約に負けた側は、保存をセーブポイントに戻し、同じトランザクションで読み直して同じ結果を返す（Bolt 24）</td>
 </tr>
 </tbody>
 </table>

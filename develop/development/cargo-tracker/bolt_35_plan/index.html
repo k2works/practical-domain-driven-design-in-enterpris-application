@@ -11593,37 +11593,37 @@
 <td style="text-align: left;">8</td>
 <td style="text-align: left;"><strong>BC の独立の見張り</strong></td>
 <td style="text-align: left;">3</td>
-<td style="text-align: left;">今は <code>ModularityTest</code>（allowedDependencies）だけが守る。宣言の書き換えで通る規則なので、「予約は見積りの公開 API のほかの型に依存しない」の型の規則を足すか。推奨: 足さない（<code>ModularityTest</code> の前例の型の規則が既に予約を含むかをステップ 3 で確かめ、含まなければ報告の課題にする）。代わりの案: 足して変異で確かめる（T-149）</td>
+<td style="text-align: left;">今は <code>ModularityTest</code>（allowedDependencies）だけが守る。宣言の書き換えで通る規則なので、「予約は見積りの公開 API のほかの型に依存しない」の型の規則を足すか。推奨: 足さない（<code>ModularityTest</code> の前例の型の規則が既に予約を含むかをステップ 3 で確かめ、含まなければ報告の課題にする）。代わりの案: 足して変異で確かめる（T-149）。決定済み（計画の承認）</td>
 </tr>
 <tr>
 <td style="text-align: left;">9</td>
 <td style="text-align: left;"><strong>支援技術による手動確認</strong></td>
 <td style="text-align: left;">4・6</td>
-<td style="text-align: left;">#43 の完了の定義にある。AC3 の画面の層のシナリオの画面（営業の確認なし）は手動で確かめて報告に書く。特殊貨物の表示は開発環境で作れないので、WebMvc のテストのテンプレートの断言で代え、完了の定義との差として報告に書く</td>
+<td style="text-align: left;">#43 の完了の定義にある。AC3 の画面の層のシナリオの画面（営業の確認なし）は手動で確かめて報告に書く。特殊貨物の表示は開発環境で作れないので、WebMvc のテストのテンプレートの断言で代え、完了の定義との差として報告に書く。決定済み（計画の承認）</td>
 </tr>
 <tr>
 <td style="text-align: left;">10</td>
 <td style="text-align: left;"><strong>新しいファイル</strong></td>
 <td style="text-align: left;">3</td>
-<td style="text-align: left;">規則のクラス、その単体テスト、<code>package-info.java</code>、集約の新しい例外の 4 つ</td>
+<td style="text-align: left;">規則のクラス、その単体テスト、<code>package-info.java</code>、集約の新しい例外の 4 つ。決定済み（計画の承認）</td>
 </tr>
 <tr>
 <td style="text-align: left;">11</td>
 <td style="text-align: left;"><strong>AC3 の Red</strong></td>
 <td style="text-align: left;">2</td>
-<td style="text-align: left;">既存の 2 本へのタグと画面の層の営業の確認なしのシナリオは、今のコードで緑の見込み（特性のシナリオ）。TDD の Red はステップ 3 の AC5 と、ステップ 4 の S-09 の GET で回す</td>
+<td style="text-align: left;">既存の 2 本へのタグと画面の層の営業の確認なしのシナリオは、今のコードで緑の見込み（特性のシナリオ）。TDD の Red はステップ 3 の AC5 と、ステップ 4 の S-09 の GET で回す。決定済み（計画の承認）</td>
 </tr>
 <tr>
 <td style="text-align: left;">12</td>
 <td style="text-align: left;"><strong>開発レビュー</strong></td>
 <td style="text-align: left;">6</td>
-<td style="text-align: left;">アーキテクト、テスター（読むだけ）。画面は文言とボタンの出し分けだけなのでインタラクションデザイナーは入れない</td>
+<td style="text-align: left;">アーキテクト、テスター（読むだけ）。画面は文言とボタンの出し分けだけなのでインタラクションデザイナーは入れない。決定済み（計画の承認）</td>
 </tr>
 <tr>
 <td style="text-align: left;">13</td>
 <td style="text-align: left;"><strong>アプローチと承認ゲートと時間</strong></td>
 <td style="text-align: left;">全体</td>
-<td style="text-align: left;">アウトサイドイン（中盤の例外）。承認ゲートは計画と終了報告（W5 の表どおり）。約 4.4 時間</td>
+<td style="text-align: left;">アウトサイドイン（中盤の例外）。承認ゲートは計画と終了報告（W5 の表どおり）。約 4.4 時間。決定済み（計画の承認）</td>
 </tr>
 </tbody>
 </table>
@@ -11655,6 +11655,11 @@
 <td style="text-align: left;">2026-10-19</td>
 <td style="text-align: left;">詳細整合性検証（20 件）と横断整合性検証（16 件）の指摘を反映した。human:kakimomokuri の決定 (4)〜(7)（特殊貨物の見積りは見積りの側のステップで置く、2 つ同時の不足は単体と WebMvc、新しい拒否で種別名なし、開いたときに示す）。判定の順に B-INV-11、BC の独立を守る規則を <code>ModularityTest</code> に、ドメインモデル図、新しいファイルの数、使う 7 か所（T-57）、POST の URL、注の行（architecture_backend・ui_design の節・release_plan の 3 か所・開発戦略）、照合の表の行を足すステップ、完了の定義の手動確認、当たらない Try の行、ステップ 3 の並び</td>
 <td style="text-align: left;">anthropic/claude-opus-5-5</td>
+</tr>
+<tr>
+<td style="text-align: left;">2026-10-19</td>
+<td style="text-align: left;">計画を承認した。確認ポイント 8〜13 を推奨のとおりに決めた</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5、承認 human:kakimomokuri</td>
 </tr>
 </tbody>
 </table>
