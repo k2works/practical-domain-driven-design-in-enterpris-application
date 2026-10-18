@@ -6510,6 +6510,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../bolt_34f_plan/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 34f 計画
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../release_report-0_1/" class="md-nav__link">
         
   
@@ -13120,7 +13148,7 @@
 </tr>
 <tr>
 <td style="text-align: left;">34f</td>
-<td style="text-align: left;">振る舞いの変わらない直し（S-20 の画面の構造）: S-20 の詳細の描画を部品にして <code>UserAdministrationController</code> を操作ごとに分ける（W6 の 3 つ目の操作の前に）、利用状態の画面の名前（利用中・利用停止）の 3 か所の写し、詳細の役割の領域の見出し（h2。マニュアル 11 章のキャプチャの撮り直し）（Bolt 34d の開発レビュー）。Bolt 34e の開発レビューで送ったもの（2026-10-18）: 各テストのクラスの <code>PASSWORD</code>・<code>TOTP_URL</code> の写しを <code>IdentityLogins</code> に寄せる、controller の WebMvc のテスト（確定の範囲外は記録して 404、確かめる範囲外は記録せず 404、<code>NotPermitted</code> は 403）、2 つのサービスの <code>Judgement</code> と局所変数への代入の書き方。Bolt 34c の開始準備で 34c から分けた</td>
+<td style="text-align: left;">振る舞いの変わらない直し（S-20 の画面の構造）。<a href="../bolt_34f_plan/">Bolt 34f 計画</a>。Bolt 34f の開始準備の決定（2026-10-18、human:kakimomokuri）: (1) controller は操作ごとに 3 つに分け、詳細の描画と拒否の扱いを部品 1 つに寄せる、(2) 画面の名前は画面の層の部品に寄せる、(3) 役割の領域に h2「役割」の section を付け、legend を「付ける役割」にする。課題: S-20 の詳細の描画を部品にして <code>UserAdministrationController</code> を操作ごとに分ける（W6 の 3 つ目の操作の前に）、利用状態の画面の名前（利用中・利用停止）の 3 か所の写し、詳細の役割の領域の見出し（h2。マニュアル 11 章のキャプチャの撮り直し）（Bolt 34d の開発レビュー）。Bolt 34e の開発レビューで送ったもの（2026-10-18）: 各テストのクラスの <code>PASSWORD</code>・<code>TOTP_URL</code> の写しを <code>IdentityLogins</code> に寄せる、controller の WebMvc のテスト（確定の範囲外は記録して 404、確かめる範囲外は記録せず 404、<code>NotPermitted</code> は 403）、2 つのサービスの <code>Judgement</code> と局所変数への代入の書き方。Bolt 34c の開始準備で 34c から分けた</td>
 <td style="text-align: right;">0</td>
 <td style="text-align: left;">リファクタリング（アウトサイドイン。画面の構造）</td>
 <td style="text-align: left;">ステップごと（構造・画面）</td>
@@ -13196,7 +13224,7 @@
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Bolt 34d: US-16 の一部（#14）。<a href="../bolt_34d_plan/">Bolt 34d 計画</a>（承認済み。利用停止と再開、デモの動画）、<a href="../bolt_34d_report/">Bolt 34d 終了報告</a>（完了、2026-10-17 に承認済み。停止でトークンを無効にし、再開で前の session を消す）</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Bolt 34c: 振る舞いの変わらない直し（認証・監査の経路と文書と見張り）。<a href="../bolt_34c_plan/">Bolt 34c 計画</a>（承認済み）、<a href="../bolt_34c_report/">Bolt 34c 終了報告</a>（完了、2026-10-17 に承認済み。監査の書き手と @Service・@Bean の役割を今の形のまま書き、AT-09〜11 を足し、login_failure の注釈を直した）</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Bolt 34e: 振る舞いの変わらない直し（利用者の管理のドメインとサービス）。<a href="../bolt_34e_plan/">Bolt 34e 計画</a>（承認済み）、<a href="../bolt_34e_report/">Bolt 34e 終了報告</a>（完了、2026-10-18 に承認済み。承認の値を判定した利用者で縛り、結果の型を確かめる結果と変える結果に分け、判定の前半と login の補助をまとめた）</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> Bolt 34f: 振る舞いの変わらない直し（S-20 の画面の構造）</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> Bolt 34f: 振る舞いの変わらない直し（S-20 の画面の構造）。<a href="../bolt_34f_plan/">Bolt 34f 計画</a>（承認済み）</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> Bolt 35: US-04 AC3・AC5（#43）、D-85</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> W5 の締め: 結果とふりかえり、開いている持ち越しの数（T-89）、W6 の計画の見直し</li>
 </ul>
@@ -14742,6 +14770,16 @@
 <tr>
 <td style="text-align: left;">2026-10-18</td>
 <td style="text-align: left;">Bolt 34e の終了報告の承認を記録した（議題 1〜3）。次は Bolt 34f</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5、承認 human:kakimomokuri</td>
+</tr>
+<tr>
+<td style="text-align: left;">2026-10-18</td>
+<td style="text-align: left;">Bolt 34f の開始準備で、<a href="../bolt_34f_plan/">Bolt 34f 計画</a>を作った（承認待ち）。human:kakimomokuri が、controller を操作ごとに 3 つに分け詳細の描画と拒否の扱いを部品に寄せる、画面の名前は画面の層の部品に寄せる、役割の領域に h2「役割」と legend「付ける役割」を付ける、と決めた</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5</td>
+</tr>
+<tr>
+<td style="text-align: left;">2026-10-18</td>
+<td style="text-align: left;">Bolt 34f の計画を承認した（確認ポイント 4〜10 を推奨のとおり）</td>
 <td style="text-align: left;">anthropic/claude-opus-5-5、承認 human:kakimomokuri</td>
 </tr>
 </tbody>
