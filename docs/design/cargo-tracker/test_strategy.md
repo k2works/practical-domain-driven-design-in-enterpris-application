@@ -4,7 +4,7 @@ title: "cargo-tracker テスト戦略"
 description: "cargo-tracker のテスト形状、テストレベルと責務、BDD（Cucumber）のシナリオ階層とタグ規約、不変条件・ユーザーストーリーとテストの対応、カバレッジ目標、CI での実行。"
 tags: [design, test-strategy, bdd]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-17T14:54:31Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-18T07:37:44Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T08:12:04Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:01:38Z }
@@ -71,7 +71,7 @@ AI-DLC のテスト戦略の水準（リリース・イテレーション計画�
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | ユニット | domain の集約・値オブジェクト・ドメインルール | なし（純粋なオブジェクト） | 不変条件、状態遷移、境界値 | 永続化、画面 | JUnit 6、AssertJ |
 | 受入シナリオ（application） | application の入力ポート | リポジトリはメモリ上の実装、Clock は固定 | ユーザーストーリーの受入条件、認可の判断、冪等コマンド、期待版 | SQL、HTML | Cucumber（日本語 Gherkin） |
-| Web | interfaces.web の画面 | application はモックまたはメモリ実装 | 画面の描画、URL ごとの認可、開示範囲、エラー要約、確認画面の項目 | 業務規則の詳細 | Spring MockMvc |
+| Web | interfaces.web の画面 | application はモックまたはメモリ実装 | 画面の描画、開示範囲、エラー要約、確認画面の項目、拒否の枝（応答の状態と範囲外の試行の記録） | 業務規則の詳細、URL ごとの認可・CSRF（`addFilters = false` で外す。セキュリティの統合テストが確かめる） | Spring MockMvc（`@WebMvcTest`） |
 | 統合 | infrastructure（マッパー、マイグレーション、イベント配信、取込、S3 アダプター） | Testcontainers の PostgreSQL 18 | SQL の正しさ、制約、権限、イベントの永続化と再配信、ファイル取込 | 業務規則の詳細 | Testcontainers、Spring Modulith Test |
 | アーキテクチャ | コード全体の構造 | なし | 依存の向き、モジュール境界、ドメインのフレームワーク非依存、他スキーマ参照の禁止 | 振る舞い | ArchUnit、Spring Modulith |
 | E2E（画面を通す受入シナリオ） | アプリケーション全体 | PostgreSQL、実ブラウザ | 主要フローが画面から最後まで通ること、部分更新、アクセシビリティの自動検査 | 規則の網羅（下のレベルで済ませる） | Cucumber + Playwright、axe-core |
@@ -328,6 +328,7 @@ CI で毎回実行する。
 | 管理範囲と範囲外の試行の記録 | Bolt 34b（US-16 AC2）。`AdministrationScope` の単体テスト、担当範囲の表とリポジトリの統合テスト（制約、割り当ての読み出し、一覧の絞り込み・空の集合）、記録のサービスの統合テスト、照会と役割の変更のサービスの範囲の判定、セキュリティの統合テスト（範囲外の詳細・確認・確定が 404 で `ADMIN_SCOPE_DENIED` が 1 行ずつ、役割も版も変わらない、割り当てのないシステム管理者には空、監査の追記の失敗で 500）、画面の層の受入シナリオ（`@US-16-AC2`。範囲外の利用者は一覧に出ず、URL を開くと見つからない） |
 | 利用者の利用停止と再開 | Bolt 34d（US-16 AC5）。単体テスト: `RoleAssignmentPolicy.holdsOversightRole`、`User.decideStatusChange`（自分・監督の役割・同じ状態・理由のない停止と、判定の順の境界。Bolt 34e から承認の値 `StatusChangeApproval` を返し、再開の承認は理由を持たない）と `changeStatus`（Bolt 34e から承認の値だけを受ける）、`AuditRecord.userSuspended`・`userReactivated`（対象・版・変更前後・停止の理由）、`UserStatusChangeService` の `check`・`change`。PostgreSQL の統合テスト: 確定で状態と版と監査記録が 1 つのトランザクションで変わる、古い版で何も変わらない、役割の変更の後の停止の確定は古い版（版の共有）、範囲外は `OutOfScope`、監査の追記の失敗で状態も版も戻る。セキュリティの統合テスト（状態コード・状態・版・監査の行だけを見る。T-145）: 自分・監督の役割・範囲外・同じ状態・理由のない停止の確定が拒まれ書かれない、知らない状態・理由の名前と再開に理由を付けた送信は 400、範囲外の確定で `ADMIN_SCOPE_DENIED` が 1 行、停止の確定の後に相手の既存の session の次の request が A-03 で `SESSION_REVOKED`（`SUSPENDED`）が 1 行、相手の過去の監査の行が残る、確認の GET は受け付けられる停止と範囲外の利用者のどちらでも書かない（T-115）。画面の層の受入シナリオ（`@US-16-AC5`。停止 → 相手がログインできない → 再開 → ログインできる。自分と監督の役割の利用者に操作が出ない。確認の画面のアクセシビリティの検査と幅 320 px。拒否の文言はここで確かめる）。Bolt 34・34b のシナリオ（ボタンの名前「変更内容を確認する」に依存するステップを含む）が緑のまま |
 | 利用者の管理のドメインとサービスの整理 | Bolt 34e（振る舞いの変わらない直し）。移す前に、`UserTest` に承認の取り違え（別の利用者の承認、判定と違う版の承認）で `IllegalArgumentException` になるテストを先に足す。判定の順の境界のテストは、中身を変えずに `decideRoleChange`・`decideStatusChange` の呼び出しに付け替えて通す。`UserRoleChangeServiceTest`・`UserStatusChangeServiceTest` と 2 つの統合テストを、確かめる結果（`RoleChangeCheck`・`StatusChangeCheck`）・変える結果（`RoleChangeOutcome`・`StatusChangeOutcome`）と共通の拒否 `UserAdministrationRefusal` に合わせ、判定の前半の部品 `ManagedUserLookup` の後でも、判定の順の変異（範囲と規則の入れ替え）で落ちることを確かめる（控えから戻す）。セキュリティの統合テストの同じ形の `login`・`loginWithPassword`・`currentCode`・`userIdOf`・`sessionOf(MvcResult)` は、共通の補助 `IdentityLogins`（test の `identity`。spy を持たず、`userIdOf` は JDBC で探す）に寄せ、使った刻みは TOTP を送る前に `AuthenticationFactorFixtures.resetTotpStep` で戻す形にそろえる。形の違う写し（今の Cookie を受ける・引き継ぐ login、引数のない login、`submitTotp`・`loginWithTotp`、リポジトリで探す `userIdOf`）は各クラスに残す。`check` と `uiTest` の件数が前後で減らないことを確かめる |
+| S-20 の画面の構造 | Bolt 34f（振る舞いの変わらない直し）。controller を分ける前に、今の controller に WebMvc のテスト（`@WebMvcTest`・`addFilters = false`、照会・変更・記録のサービスは `@MockitoBean`、操作者は `@WithAuthenticatedActor`）を特性のテストとして足す。役割と利用状態のそれぞれで、確定の範囲外は記録して 404（詳細の読み出しと判定の 2 つ）、確かめる範囲外は記録せずに 404、`NotPermitted` は 403、`NotFound` は 404、古い版は最新の版で詳細を示し直す、`Rejected` は選んだまま文言を示す、変えたら知らせとともに詳細へ移す。記録の 2 つの向きの変異（確定の範囲外の記録を外す、確かめる範囲外で記録する）で落ちることを確かめる（控えから戻す）。分けた後は controller ごとのテストに中身を変えずに分け、詳細の部品 `UserDetailPage` は `@Import` で本物を読む（モックにすると範囲外の記録の守りが消える）。画面の名前は `UserAdministrationLabelsTest`（`@CsvSource`）。認証・認可・CSRF はセキュリティの統合テストのまま |
 
 統合テストは Testcontainers の PostgreSQL を使い、H2 で書かない（ADR-007）。H2 で確かめるのはスモークテストだけとする。
 

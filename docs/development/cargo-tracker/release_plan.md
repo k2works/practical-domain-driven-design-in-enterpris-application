@@ -4,7 +4,7 @@ title: "リリース計画 - cargo-tracker（A 社国際貨物輸送管理シス
 description: "cargo-tracker MVP のリリース計画。1 人 + AI、時間単位の Bolt（= イテレーション）と週次の見直しで、最初の縦の流れ（R0.1）、パイロット準備完了（R1.0）、本格展開前（R1.1）の 3 段階、Unit のエントロピー評価、SP、バッファ、パイロット開始の条件、引継ぎ ID の台帳、業務責任者に確かめる事項の台帳。"
 tags: [development,release-plan]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-18T04:02:36Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-18T07:37:44Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T09:29:53Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:38:26Z }
@@ -1006,3 +1006,4 @@ xychart-beta
 | 2026-10-18 | Bolt 34e の終了報告の承認を記録した（議題 1〜3）。次は Bolt 34f | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-10-18 | Bolt 34f の開始準備で、[Bolt 34f 計画](bolt_34f_plan.md)を作った（承認待ち）。human:kakimomokuri が、controller を操作ごとに 3 つに分け詳細の描画と拒否の扱いを部品に寄せる、画面の名前は画面の層の部品に寄せる、役割の領域に h2「役割」と legend「付ける役割」を付ける、と決めた | anthropic/claude-opus-5-5 |
 | 2026-10-18 | Bolt 34f の計画を承認した（確認ポイント 4〜10 を推奨のとおり） | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
+| 2026-10-18 | Bolt 34f のステップ 1 で、UI 設計（S-20 の役割の領域の見出しと「付ける役割」）、バックエンドのアーキテクチャ（3 つの controller と詳細の部品）、ドメインモデル（範囲外の記録の書き手）、テスト戦略（S-20 の WebMvc のテスト、Web の行）を直した | anthropic/claude-opus-5-5 |
