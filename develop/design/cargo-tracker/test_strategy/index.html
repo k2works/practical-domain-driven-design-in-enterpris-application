@@ -11442,9 +11442,9 @@
 <td style="text-align: left;">Web</td>
 <td style="text-align: left;">interfaces.web の画面</td>
 <td style="text-align: left;">application はモックまたはメモリ実装</td>
-<td style="text-align: left;">画面の描画、URL ごとの認可、開示範囲、エラー要約、確認画面の項目</td>
-<td style="text-align: left;">業務規則の詳細</td>
-<td style="text-align: left;">Spring MockMvc</td>
+<td style="text-align: left;">画面の描画、開示範囲、エラー要約、確認画面の項目、拒否の枝（応答の状態と範囲外の試行の記録）</td>
+<td style="text-align: left;">業務規則の詳細、URL ごとの認可・CSRF（<code>addFilters = false</code> で外す。セキュリティの統合テストが確かめる）</td>
+<td style="text-align: left;">Spring MockMvc（<code>@WebMvcTest</code>）</td>
 </tr>
 <tr>
 <td style="text-align: left;">統合</td>
@@ -12167,6 +12167,10 @@ src/test/java/.../ui/                     画面の層のステップ定義（@u
 <tr>
 <td style="text-align: left;">利用者の管理のドメインとサービスの整理</td>
 <td style="text-align: left;">Bolt 34e（振る舞いの変わらない直し）。移す前に、<code>UserTest</code> に承認の取り違え（別の利用者の承認、判定と違う版の承認）で <code>IllegalArgumentException</code> になるテストを先に足す。判定の順の境界のテストは、中身を変えずに <code>decideRoleChange</code>・<code>decideStatusChange</code> の呼び出しに付け替えて通す。<code>UserRoleChangeServiceTest</code>・<code>UserStatusChangeServiceTest</code> と 2 つの統合テストを、確かめる結果（<code>RoleChangeCheck</code>・<code>StatusChangeCheck</code>）・変える結果（<code>RoleChangeOutcome</code>・<code>StatusChangeOutcome</code>）と共通の拒否 <code>UserAdministrationRefusal</code> に合わせ、判定の前半の部品 <code>ManagedUserLookup</code> の後でも、判定の順の変異（範囲と規則の入れ替え）で落ちることを確かめる（控えから戻す）。セキュリティの統合テストの同じ形の <code>login</code>・<code>loginWithPassword</code>・<code>currentCode</code>・<code>userIdOf</code>・<code>sessionOf(MvcResult)</code> は、共通の補助 <code>IdentityLogins</code>（test の <code>identity</code>。spy を持たず、<code>userIdOf</code> は JDBC で探す）に寄せ、使った刻みは TOTP を送る前に <code>AuthenticationFactorFixtures.resetTotpStep</code> で戻す形にそろえる。形の違う写し（今の Cookie を受ける・引き継ぐ login、引数のない login、<code>submitTotp</code>・<code>loginWithTotp</code>、リポジトリで探す <code>userIdOf</code>）は各クラスに残す。<code>check</code> と <code>uiTest</code> の件数が前後で減らないことを確かめる</td>
+</tr>
+<tr>
+<td style="text-align: left;">S-20 の画面の構造</td>
+<td style="text-align: left;">Bolt 34f（振る舞いの変わらない直し）。controller を分ける前に、今の controller に WebMvc のテスト（<code>@WebMvcTest</code>・<code>addFilters = false</code>、照会・変更・記録のサービスは <code>@MockitoBean</code>、操作者は <code>@WithAuthenticatedActor</code>）を特性のテストとして足す。役割と利用状態のそれぞれで、確定の範囲外は記録して 404（詳細の読み出しと判定の 2 つ）、確かめる範囲外は記録せずに 404、<code>NotPermitted</code> は 403、<code>NotFound</code> は 404、古い版は最新の版で詳細を示し直す、<code>Rejected</code> は選んだまま文言を示す、変えたら知らせとともに詳細へ移す。記録の 2 つの向きの変異（確定の範囲外の記録を外す、確かめる範囲外で記録する）で落ちることを確かめる（控えから戻す）。分けた後は controller ごとのテストに中身を変えずに分け、詳細の部品 <code>UserDetailPage</code> は <code>@Import</code> で本物を読む（モックにすると範囲外の記録の守りが消える）。画面の名前は <code>UserAdministrationLabelsTest</code>（<code>@CsvSource</code>）。認証・認可・CSRF はセキュリティの統合テストのまま</td>
 </tr>
 </tbody>
 </table>
