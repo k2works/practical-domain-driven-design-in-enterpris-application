@@ -24,6 +24,7 @@ import com.example.cargotracker.shared.domain.UserId;
 import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -86,6 +87,10 @@ public class UserAdministrationController {
 
     private static final String DETAIL_VIEW = "identity/users/detail";
 
+    /** 一覧の利用状態の名前（テンプレートは利用状態の名前で引く）。 */
+    private static final Map<String, String> STATUS_NAMES = Arrays.stream(UserStatus.values())
+            .collect(Collectors.toUnmodifiableMap(UserStatus::name, UserAdministrationLabels::status));
+
     private final UserAdministrationQueryService queryService;
     private final UserRoleChangeService roleChanges;
     private final UserStatusChangeService statusChanges;
@@ -105,6 +110,7 @@ public class UserAdministrationController {
     @GetMapping(USERS_URL)
     public String list(AuthenticatedActor actor, Model model) {
         model.addAttribute("summaries", queryService.list(actor));
+        model.addAttribute("statusNames", STATUS_NAMES);
         model.addAttribute(ACTIVE_ATTRIBUTE, ACTIVE);
         return "identity/users/list";
     }
@@ -310,10 +316,10 @@ public class UserAdministrationController {
             UserDetail user, StatusRequest request, long version, AuthenticatedActor actor, Model model) {
         model.addAttribute("user", user);
         model.addAttribute("suspending", request.to() == UserStatus.SUSPENDED);
-        model.addAttribute("currentStatus", statusName(user.status()));
+        model.addAttribute("currentStatus", UserAdministrationLabels.status(user.status()));
         model.addAttribute(
                 "reasonName",
-                request.reason().map(UserAdministrationController::reasonName).orElse(null));
+                request.reason().map(UserAdministrationLabels::suspensionReason).orElse(null));
         model.addAttribute("status", request.to().name());
         model.addAttribute(
                 "reason", request.reason().map(SuspensionReason::name).orElse(null));
@@ -332,19 +338,20 @@ public class UserAdministrationController {
         model.addAttribute("summary", ErrorSummary.of(form));
         Set<Role> assignable = RoleAssignmentPolicy.assignableRoles(user.companyKind());
         model.addAttribute("user", user);
-        model.addAttribute("currentRoles", names(user.roles()));
-        model.addAttribute("companyKindName", companyKindName(user.companyKind()));
+        model.addAttribute("statusName", UserAdministrationLabels.status(user.status()));
+        model.addAttribute("currentRoles", UserAdministrationLabels.roles(user.roles()));
+        model.addAttribute("companyKindName", UserAdministrationLabels.companyKind(user.companyKind()));
         model.addAttribute("self", self);
         model.addAttribute("assignable", !assignable.isEmpty());
         model.addAttribute("roleOptions", roleOptions(assignable, form.selected()));
         // 画面で付け外しできない今の役割（監督の役割など）は、変えずに送るため隠し項目で持つ
         model.addAttribute(
                 "keptRoles",
-                order(user.roles()).stream()
+                UserAdministrationLabels.order(user.roles()).stream()
                         .filter(role -> !assignable.contains(role))
                         .map(Role::name)
                         .toList());
-        model.addAttribute("keptRoleNames", names(only(user.roles(), assignable, false)));
+        model.addAttribute("keptRoleNames", UserAdministrationLabels.roles(only(user.roles(), assignable, false)));
         model.addAttribute(VERSION_ATTRIBUTE, form.version());
         model.addAttribute("error", form.error());
         model.addAttribute(ACTIVE_ATTRIBUTE, ACTIVE);
@@ -360,27 +367,18 @@ public class UserAdministrationController {
         removed.addAll(user.roles());
         removed.removeAll(selected);
         model.addAttribute("user", user);
-        model.addAttribute("currentRoles", names(user.roles()));
-        model.addAttribute("addedRoles", names(added));
-        model.addAttribute("removedRoles", names(removed));
+        model.addAttribute("currentRoles", UserAdministrationLabels.roles(user.roles()));
+        model.addAttribute("addedRoles", UserAdministrationLabels.roles(added));
+        model.addAttribute("removedRoles", UserAdministrationLabels.roles(removed));
         model.addAttribute(
-                "selectedRoles", order(selected).stream().map(Role::name).toList());
+                "selectedRoles",
+                UserAdministrationLabels.order(selected).stream()
+                        .map(Role::name)
+                        .toList());
         model.addAttribute(VERSION_ATTRIBUTE, version);
         model.addAttribute("operator", Role.SYSTEM_ADMIN.displayName() + " " + actor.displayName());
         model.addAttribute(ACTIVE_ATTRIBUTE, ACTIVE);
         return "identity/users/confirmation";
-    }
-
-    /** 役割の表示名を {@link Role} の宣言の順に「・」でつなぐ。なければ「なし」。 */
-    static String names(Set<Role> roles) {
-        if (roles.isEmpty()) {
-            return "なし";
-        }
-        return order(roles).stream().map(Role::displayName).collect(Collectors.joining("・"));
-    }
-
-    private static List<Role> order(Set<Role> roles) {
-        return roles.isEmpty() ? List.of() : List.copyOf(EnumSet.copyOf(roles));
     }
 
     /**
@@ -475,31 +473,11 @@ public class UserAdministrationController {
     /** 停止の理由の選択肢。宣言の順。 */
     private static List<ReasonOption> reasonOptions(Optional<SuspensionReason> selected) {
         return Arrays.stream(SuspensionReason.values())
-                .map(reason -> new ReasonOption(reason, reasonName(reason), selected.equals(Optional.of(reason))))
+                .map(reason -> new ReasonOption(
+                        reason,
+                        UserAdministrationLabels.suspensionReason(reason),
+                        selected.equals(Optional.of(reason))))
                 .toList();
-    }
-
-    /** 停止の理由の画面の名前（UI 設計 S-20）。 */
-    static String reasonName(SuspensionReason reason) {
-        return switch (reason) {
-            case USAGE_ENDED -> "利用終了";
-            case TRANSFERRED -> "異動";
-            case EMERGENCY -> "緊急停止";
-        };
-    }
-
-    /** 利用状態の画面の名前（UI 設計 S-20）。 */
-    static String statusName(UserStatus status) {
-        return status == UserStatus.ACTIVE ? "利用中" : "利用停止";
-    }
-
-    /** 企業の種類の画面の名前（UI 設計 S-20）。 */
-    static String companyKindName(CompanyKind kind) {
-        return switch (kind) {
-            case SHIPPER -> "荷主企業";
-            case CONSIGNEE -> "荷受人の企業";
-            case OPERATOR -> "運用する会社";
-        };
     }
 
     private static ResponseStatusException notFound() {
@@ -606,10 +584,13 @@ public class UserAdministrationController {
                         case NO_CHANGE -> "今の役割から変わっていません。足す役割か外す役割を選んでください。";
                         case OVERSIGHT_ROLE -> "システム管理者・監査担当者の役割は、この画面では付けたり外したりできません。";
                         case UNFIT_FOR_COMPANY ->
-                            names(rejection.roles()) + "は、" + companyKindName(companyKind) + "の利用者には付けられません。";
+                            UserAdministrationLabels.roles(rejection.roles()) + "は、"
+                                    + UserAdministrationLabels.companyKind(companyKind) + "の利用者には付けられません。";
                         case CONFLICTING_ROLES ->
                             "システム管理者・監査担当者と、業務データを変更できる役割（"
-                                    + names(RoleAssignmentPolicy.businessRolesOf(rejection.roles())) + "）は併せて付けられません。";
+                                    + UserAdministrationLabels.roles(
+                                            RoleAssignmentPolicy.businessRolesOf(rejection.roles()))
+                                    + "）は併せて付けられません。";
                     };
             return new ErrorMessage(text, rejection.reason() != RoleChangeRejectionReason.SELF_CHANGE);
         }
@@ -620,7 +601,7 @@ public class UserAdministrationController {
                     switch (rejection) {
                         case SELF_CHANGE -> SELF_STATUS_NOTE;
                         case OVERSIGHT_ROLE -> OVERSIGHT_STATUS_NOTE;
-                        case NO_CHANGE -> "利用状態は既に" + statusName(current) + "です。最新の内容を確かめてください。";
+                        case NO_CHANGE -> "利用状態は既に" + UserAdministrationLabels.status(current) + "です。最新の内容を確かめてください。";
                         case REASON_REQUIRED -> "停止の理由を選んでください。";
                     };
             return new ErrorMessage(text, rejection == StatusChangeRejection.REASON_REQUIRED);

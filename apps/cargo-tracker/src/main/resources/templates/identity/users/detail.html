@@ -26,7 +26,7 @@
         <dt class="col-sm-3">メールアドレス</dt>
         <dd class="col-sm-9" th:text="${user.email.value}">sato@example.com</dd>
         <dt class="col-sm-3">利用状態</dt>
-        <dd class="col-sm-9" th:text="${user.status.name() == 'ACTIVE'} ? '利用中' : '利用停止'">利用中</dd>
+        <dd class="col-sm-9" th:text="${statusName}">利用中</dd>
         <dt class="col-sm-3">今の役割</dt>
         <dd class="col-sm-9" id="current-roles" th:text="${currentRoles}">営業担当者</dd>
     </dl>

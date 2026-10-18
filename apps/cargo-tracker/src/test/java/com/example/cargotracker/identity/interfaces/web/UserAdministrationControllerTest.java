@@ -31,10 +31,12 @@ import com.example.cargotracker.identity.domain.model.valueobjects.StatusChangeR
 import com.example.cargotracker.identity.domain.model.valueobjects.SuspensionReason;
 import com.example.cargotracker.identity.domain.model.valueobjects.UserDetail;
 import com.example.cargotracker.identity.domain.model.valueobjects.UserStatus;
+import com.example.cargotracker.identity.domain.model.valueobjects.UserSummary;
 import com.example.cargotracker.identity.infrastructure.security.WithAuthenticatedActor;
 import com.example.cargotracker.shared.domain.CompanyId;
 import com.example.cargotracker.shared.domain.Role;
 import com.example.cargotracker.shared.domain.UserId;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -77,6 +79,44 @@ class UserAdministrationControllerTest {
 
     @MockitoBean
     AdministrationScopeDenialService denials;
+
+    // 一覧と詳細
+
+    @Test
+    void 一覧は利用状態の名前を示す() throws Exception {
+        when(queryService.list(any()))
+                .thenReturn(List.of(
+                        new UserSummary(
+                                TARGET,
+                                "A 社",
+                                "佐藤",
+                                new EmailAddress("sato@example.com"),
+                                UserStatus.ACTIVE,
+                                Set.of(Role.SALES)),
+                        new UserSummary(
+                                new UserId(UUID.fromString("20000000-0000-0000-0000-000000000502")),
+                                "A 社",
+                                "鈴木",
+                                new EmailAddress("suzuki@example.com"),
+                                UserStatus.SUSPENDED,
+                                Set.of(Role.SALES))));
+
+        mockMvc.perform(get("/staff/users"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(Matchers.containsString("<td>利用中</td>")))
+                .andExpect(content().string(Matchers.containsString("<td>利用停止</td>")));
+    }
+
+    @Test
+    void 詳細は企業の種類と利用状態の名前を示す() throws Exception {
+        found(user(3, UserStatus.SUSPENDED));
+
+        mockMvc.perform(get(DETAIL))
+                .andExpect(status().isOk())
+                .andExpect(content().string(Matchers.containsString("A 社（運用する会社）")))
+                .andExpect(content().string(Matchers.containsString("<dd class=\"col-sm-9\">利用停止</dd>")))
+                .andExpect(content().string(Matchers.containsString("利用再開の内容を確認する")));
+    }
 
     // 役割の変更
 
@@ -357,6 +397,10 @@ class UserAdministrationControllerTest {
     }
 
     private static UserDetail user(long version) {
+        return user(version, UserStatus.ACTIVE);
+    }
+
+    private static UserDetail user(long version, UserStatus status) {
         return new UserDetail(
                 TARGET,
                 new CompanyId(UUID.fromString("20000000-0000-0000-0000-000000000003")),
@@ -364,7 +408,7 @@ class UserAdministrationControllerTest {
                 CompanyKind.OPERATOR,
                 "佐藤",
                 new EmailAddress("sato@example.com"),
-                UserStatus.ACTIVE,
+                status,
                 Set.of(Role.SALES),
                 version);
     }

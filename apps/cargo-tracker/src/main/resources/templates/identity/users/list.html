@@ -27,7 +27,7 @@
                 <td th:text="${user.companyName}">A 社</td>
                 <td><a th:href="@{/staff/users/{id}(id=${user.id.value})}" th:text="${user.displayName}">佐藤</a></td>
                 <td th:text="${user.email.value}">sato@example.com</td>
-                <td th:text="${user.status.name() == 'ACTIVE'} ? '利用中' : '利用停止'">利用中</td>
+                <td th:text="${statusNames[user.status.name()]}">利用中</td>
                 <td th:if="${#sets.isEmpty(user.roles)}">なし</td>
                 <td th:unless="${#sets.isEmpty(user.roles)}">
                     <ul class="list-unstyled mb-0">
