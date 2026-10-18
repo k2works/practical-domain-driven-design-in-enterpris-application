@@ -86,7 +86,7 @@ Bolt がイテレーションに当たります。ふりかえりは各 Bolt の
 | 34d | [利用者の利用停止と再開（US-16 の一部）](bolt_34d_plan.md) | [終了報告](bolt_34d_report.md)（[動画](../../assets/demo/bolt-34d/suspend-and-reactivate.webm){:target="_blank"}） | W5 | 完了 |
 | 34c | [認証・監査の経路と文書と見張り（振る舞いの変わらない直し）](bolt_34c_plan.md) | [終了報告](bolt_34c_report.md) | W5 | 完了 |
 | 34e | [利用者の管理のドメインとサービス（振る舞いの変わらない直し）](bolt_34e_plan.md) | [終了報告](bolt_34e_report.md) | W5 | 完了 |
-| 34f | [S-20 の画面の構造（振る舞いの変わらない直し）](bolt_34f_plan.md) | — | W5 | 計画済み |
+| 34f | [S-20 の画面の構造（振る舞いの変わらない直し）](bolt_34f_plan.md) | [終了報告](bolt_34f_report.md) | W5 | 完了（報告の承認待ち） |
 
 Bolt を始めるときに行を追加します。
 
@@ -189,3 +189,4 @@ Bolt を始めるときに行を追加します。
 * [Bolt 33f 計画 - 期間の表示と回復コードの型と session の URL の整理（振る舞いの変わらない直し）](./bolt_33f_plan.md) - W5 の 21 本目の Bolt の計画。期限の時刻を SessionPolicy.deadline にまとめ、テンプレートに直書きした「15 分」「8 時間」を SessionPolicy から描き、回復コードの生成のポートと RecoveryCode.issueSet を NormalizedRecoveryCode で受け、SessionKeys から URL 2 つを同じパッケージの別のクラスに分けて ADR-012 を直す。振る舞いと表示は変えない。
 * [Bolt 33f 終了報告 - 期間の表示と回復コードの型と session の URL の整理（振る舞いの変わらない直し）](./bolt_33f_report.md) - W5 の 21 本目の Bolt の終了報告。期限の時刻を SessionPolicy.deadline に寄せ、期間の汎用の書式 DurationDisplay.length を足し、テンプレート 6 か所の「15 分」「8 時間」を SessionPolicy から描き、URL を SessionKeys から SessionPaths に分け（password の再設定の URL も寄せた）、回復コードの生成のポートと issueSet を NormalizedRecoveryCode で受けるようにした。振る舞いと表示は変えていない。
 * [Bolt 34b 終了報告 - システム管理者の管理範囲と範囲外の試行の記録（US-16 の一部）](./bolt_34b_report.md) - W5 の 23 本目の Bolt の終了報告。システム管理者は user_assignment（COMPANY）で割り当てた企業の利用者だけを一覧・詳細・役割の変更で扱え、範囲外は存在しない利用者と同じ 404 になる。役割の変更の試行は確定の POST でだけ ADMIN_SCOPE_DENIED に記録する（開発レビューで GET の記録をやめた）。共通の 404 の画面を足した。
+* [Bolt 34f 終了報告 - S-20 の画面の構造（振る舞いの変わらない直し）](./bolt_34f_report.md)
