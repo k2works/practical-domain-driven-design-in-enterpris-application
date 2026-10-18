@@ -1,5 +1,8 @@
 package com.example.cargotracker.identity.infrastructure.security;
 
+import static com.example.cargotracker.identity.IdentityLogins.PASSWORD;
+import static com.example.cargotracker.identity.IdentityLogins.SESSION_COOKIE;
+import static com.example.cargotracker.identity.IdentityLogins.TOTP_URL;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -53,14 +56,11 @@ import org.springframework.test.web.servlet.MvcResult;
 @IdentityIntegrationTest
 class ReturnAfterExpirySecurityIntegrationTest {
 
-    private static final String PASSWORD = "correct horse battery staple";
-    private static final String SESSION_COOKIE = "SESSION";
     private static final Instant LOGIN_AT = Instant.parse("2026-10-14T00:00:00Z");
     private static final byte[] TOTP_SECRET = "12345678901234567890".getBytes(StandardCharsets.US_ASCII);
     private static final String PAGE_URL = "/customer/transport-requests/new";
     private static final String RETURN_URL = "http://localhost" + PAGE_URL + "?continue";
     private static final String HOME_URL = "/";
-    private static final String TOTP_URL = "/login/totp";
     private static final String EXPIRED_URL = "/session-expired";
     private static final String SAVED_REQUEST = "SPRING_SECURITY_SAVED_REQUEST";
     private static final String STAFF_URL = "/staff/transport-requests";

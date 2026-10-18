@@ -1,5 +1,8 @@
 package com.example.cargotracker.identity.infrastructure.security;
 
+import static com.example.cargotracker.identity.IdentityLogins.PASSWORD;
+import static com.example.cargotracker.identity.IdentityLogins.SESSION_COOKIE;
+import static com.example.cargotracker.identity.IdentityLogins.TOTP_URL;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -55,11 +58,8 @@ import org.springframework.test.web.servlet.MvcResult;
 @IdentityIntegrationTest
 class LoginLockSecurityIntegrationTest {
 
-    private static final String PASSWORD = "correct horse battery staple";
     private static final String WRONG_PASSWORD = "wrong password";
-    private static final String SESSION_COOKIE = "SESSION";
     private static final Instant T0 = Instant.parse("2026-10-13T00:00:00Z");
-    private static final String TOTP_URL = "/login/totp";
     private static final String LOGIN_ERROR = "/login?error";
     private static final String TOTP_ERROR = "/login?totp-error";
     private static final String RECOVERY_CODE = "1a2b-3c4d";

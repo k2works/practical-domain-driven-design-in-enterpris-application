@@ -1,5 +1,6 @@
 package com.example.cargotracker.identity.infrastructure.security;
 
+import static com.example.cargotracker.identity.IdentityLogins.PASSWORD;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.doReturn;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
@@ -48,7 +49,6 @@ import org.springframework.test.web.servlet.ResultActions;
  */
 class UserStatusChangeSecurityIntegrationTest extends IdentitySpyIntegrationTestBase {
 
-    private static final String PASSWORD = "correct horse battery staple";
     private static final Instant LOGIN_AT = Instant.parse("2026-10-17T00:00:00Z");
     private static final byte[] TOTP_SECRET = "12345678901234567890".getBytes(StandardCharsets.US_ASCII);
     private static final String USERS_URL = "/staff/users";

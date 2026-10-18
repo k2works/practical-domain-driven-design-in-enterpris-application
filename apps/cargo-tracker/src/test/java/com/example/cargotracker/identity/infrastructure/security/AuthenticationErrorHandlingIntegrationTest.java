@@ -1,5 +1,7 @@
 package com.example.cargotracker.identity.infrastructure.security;
 
+import static com.example.cargotracker.identity.IdentityLogins.PASSWORD;
+import static com.example.cargotracker.identity.IdentityLogins.TOTP_URL;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
@@ -55,9 +57,7 @@ import org.springframework.test.web.servlet.RequestBuilder;
  */
 class AuthenticationErrorHandlingIntegrationTest extends IdentitySpyIntegrationTestBase {
 
-    private static final String PASSWORD = "correct horse battery staple";
     private static final Instant NOW = Instant.parse("2026-10-14T00:00:00Z");
-    private static final String TOTP_URL = "/login/totp";
     private static final String RECOVERY_CODE = "1a2b-3c4d";
     private static final String SECOND_RECOVERY_CODE = "5e6f-7a8b";
     private static final byte[] TOTP_SECRET = "12345678901234567890".getBytes(StandardCharsets.US_ASCII);
