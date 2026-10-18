@@ -9,11 +9,13 @@
 <body>
 <main>
     <h1 th:text="|本予約の確定 ${page.subject()}|">本予約の確定 TR-2026-0001 見積 1</h1>
-    <!--/* S-09（Bolt 23b、US-04 AC1・AC2）。画面そのものが確認の領域（BR-13。C-17・S-07 と同じく別のダイアログは挟まない）。
+    <!--/* S-09（Bolt 23b・35、US-04 AC1〜AC5）。画面そのものが確認の領域（BR-13。C-17・S-07 と同じく別のダイアログは挟まない）。
          開いたときの判定は参考で、確定の可否は送ったときの照会（commit 時刻）で決まる（ADR-016） */-->
     <div id="error-summary" th:if="${page.hasErrors()}" tabindex="-1" role="alert" aria-labelledby="error-summary-title">
         <h2 id="error-summary-title">本予約を確定できませんでした</h2>
         <ul>
+            <!--/* 特殊貨物は直す欄がないのでリンクにしない（US-04 AC5、B-INV-04。Bolt 35） */-->
+            <li th:if="${page.specialCargo()}">危険物・冷凍貨物・その他特殊貨物を含む見積りは、MVP の対象外のため本予約を確定できません。手動の窓口で扱ってください。</li>
             <li th:if="${page.cargoRejected()}">必須貨物情報: 貨物の要約がありません。見積依頼の貨物を確かめてください。</li>
             <li th:if="${page.staffConfirmationMissing()}"><a href="#staffConfirmed">営業担当者の確認: 契約条件と照合したことを確かめて、チェックを入れてください。</a></li>
         </ul>
@@ -53,7 +55,7 @@
         </tbody>
     </table>
     <p>この表示は開いた時刻での確認です。有効期限の判定は確定の時刻で行い、期限と同時刻以後は確定できません。</p>
-    <section class="card mb-3" aria-labelledby="confirmation-title">
+    <section class="card mb-3" aria-labelledby="confirmation-title" th:unless="${page.specialCargo()}">
         <div class="card-body">
             <h2 class="h4" id="confirmation-title">本予約を確定しますか</h2>
             <dl class="row">

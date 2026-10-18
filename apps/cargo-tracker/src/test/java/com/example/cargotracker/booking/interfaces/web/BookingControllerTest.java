@@ -48,7 +48,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 /**
- * S-09 本予約の確定と S-24 予約の詳細（US-04 AC1・AC2・AC4。Bolt 23b・24）。S-09 は画面そのものが確認の領域（BR-13）。開いたときの
+ * S-09 本予約の確定と S-24 予約の詳細（US-04 AC1〜AC5。Bolt 23b・24・35）。S-09 は画面そのものが確認の領域（BR-13）。開いたときの
  * 判定は参考で、確定の可否は送ったときの照会（commit 時刻）で決まる（ADR-016）。URL に内部の ID を出さない（D-4）。開くたびに
  * コマンド ID を発行し、同じコマンド ID の再送には最初の結果を返す（B-INV-03）。
  */
@@ -281,6 +281,84 @@ class BookingControllerTest {
                 .andExpect(content().string(containsString("営業担当者の確認: 契約条件と照合したことを確かめて、チェックを入れてください。")))
                 .andExpect(content().string(containsString("aria-describedby=\"staffConfirmed-error\"")))
                 .andExpect(content().string(containsString("aria-invalid=\"true\"")));
+    }
+
+    private static final String SPECIAL_CARGO = "危険物・冷凍貨物・その他特殊貨物を含む見積りは、MVP の対象外のため本予約を確定できません。手動の窓口で扱ってください。";
+
+    @Test
+    void 特殊貨物を含む見積りは開いたときから確定できないと示し確定のボタンを出さない() throws Exception {
+        given(queryService.confirmation("TR-2026-0001", 1))
+                .willReturn(available(withCargo(BookingFixture.terms(), "DANGEROUS", "危険物 / パレット × 12")));
+
+        mockMvc.perform(get(NEW))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("本予約を確定できませんでした")))
+                .andExpect(content().string(containsString(SPECIAL_CARGO)))
+                // 直す欄がないのでリンクにしない（US-04 AC5、B-INV-04。Bolt 35）
+                .andExpect(content().string(not(containsString("<a href=\"#"))))
+                .andExpect(content().string(not(containsString("本予約を確定しますか"))))
+                .andExpect(content().string(not(containsString("本予約を確定する</button>"))));
+    }
+
+    @Test
+    void 特殊貨物の拒否で送り返されたら同じ表示で確定のボタンを出さない() throws Exception {
+        given(commandService.confirm(any())).willReturn(new BookingConfirmationOutcome.SpecialCargo());
+        given(queryService.confirmation("TR-2026-0001", 1))
+                .willReturn(available(withCargo(BookingFixture.terms(), "REEFER", "冷凍 / パレット × 12")));
+
+        mockMvc.perform(post("/staff/bookings")
+                        .param("commandId", COMMAND_ID)
+                        .param("transportRequest", "TR-2026-0001")
+                        .param("quotation", "1")
+                        .param("staffConfirmed", "true"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString(SPECIAL_CARGO)))
+                .andExpect(content().string(not(containsString("本予約を確定する</button>"))));
+    }
+
+    @Test
+    void 一般貨物の見積りには特殊貨物の拒否を示さない() throws Exception {
+        given(queryService.confirmation("TR-2026-0001", 1)).willReturn(available(BookingFixture.terms()));
+
+        mockMvc.perform(get(NEW))
+                .andExpect(status().isOk())
+                .andExpect(content().string(not(containsString(SPECIAL_CARGO))))
+                .andExpect(content().string(not(containsString("本予約を確定できませんでした"))))
+                .andExpect(content().string(containsString("本予約を確定する</button>")));
+    }
+
+    @Test
+    void 貨物の要約と営業担当者の確認が両方欠けて送り返されたら2つの不足条件をまとめて示す() throws Exception {
+        // 1 回の送信でまとめて示す（US-04 AC3。Bolt 35）
+        given(commandService.confirm(any()))
+                .willReturn(new BookingConfirmationOutcome.MissingConditions(
+                        List.of(BookingCondition.REQUIRED_CARGO, BookingCondition.STAFF_CONFIRMATION)));
+        given(queryService.confirmation("TR-2026-0001", 1))
+                .willReturn(available(withCargo(BookingFixture.terms(), "GENERAL", " ")));
+
+        mockMvc.perform(post("/staff/bookings")
+                        .param("commandId", COMMAND_ID)
+                        .param("transportRequest", "TR-2026-0001")
+                        .param("quotation", "1"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("必須貨物情報: 貨物の要約がありません。見積依頼の貨物を確かめてください。")))
+                .andExpect(content().string(containsString("営業担当者の確認: 契約条件と照合したことを確かめて、チェックを入れてください。")));
+    }
+
+    private static BookingTerms withCargo(BookingTerms base, String cargoCategory, String cargoSummary) {
+        return new BookingTerms(
+                base.transportRequestId(),
+                base.transportRequestVersionNo(),
+                base.transportRequestNumber(),
+                base.quotationId(),
+                base.quotationNo(),
+                base.shipperCompanyId(),
+                base.consigneeCompanyId(),
+                base.routingCaseNumber(),
+                base.routeVersionNo(),
+                cargoCategory,
+                cargoSummary,
+                base.shipperApproverId());
     }
 
     @Test

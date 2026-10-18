@@ -25,7 +25,7 @@ import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 /**
- * S-09 本予約の確定と S-24 予約の詳細（営業担当者。US-04 AC1・AC2・AC4。Bolt 23b・24）。S-09 は画面そのものが確認の領域（BR-13。
+ * S-09 本予約の確定と S-24 予約の詳細（営業担当者。US-04 AC1〜AC5。Bolt 23b・24・35）。S-09 は画面そのものが確認の領域（BR-13。
  * C-17・S-07 と同じく別のダイアログは挟まない）。見積りは業務番号と見積り番号で指し、URL に内部の ID を出さない（D-4）。開いたときの
  * 判定は参考で、確定の可否は送ったときの照会（commit 時刻）で決まる（ADR-016）。S-09 は開くたびにコマンド ID を発行して隠し項目で送り、
  * 同じコマンド ID の再送には最初の結果を示す（B-INV-03）。隠し項目の欠け・形の誤りは利用者が入れる値ではないので 400 にする。

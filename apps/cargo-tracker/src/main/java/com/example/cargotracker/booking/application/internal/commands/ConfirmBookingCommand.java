@@ -6,7 +6,7 @@ import com.example.cargotracker.shared.domain.CommandId;
 import java.util.Objects;
 
 /**
- * 営業担当者が BR-01 の確定条件を確かめて本予約を確定するコマンド（US-04 AC1・AC2・AC4。Bolt 23・24）。
+ * 営業担当者が BR-01 の確定条件を確かめて本予約を確定するコマンド（US-04 AC1〜AC5。Bolt 23・24・35）。
  * 同じコマンド ID の再送には最初の結果を返す（B-INV-03、ARCH-HO-01）。
  *
  * @param commandId コマンド ID（S-09 を開くたびに発行し、隠し項目で送る）

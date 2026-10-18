@@ -1,6 +1,7 @@
 package com.example.cargotracker.booking.application.internal.queryservices;
 
 import com.example.cargotracker.booking.application.internal.outboundservices.acl.QuotationUnavailability;
+import com.example.cargotracker.booking.domain.model.rules.BookableCargoPolicy;
 import com.example.cargotracker.booking.domain.model.valueobjects.BookingTerms;
 import com.example.cargotracker.booking.domain.model.valueobjects.TrackingNumber;
 import com.example.cargotracker.shared.domain.UtcInstant;
@@ -26,6 +27,13 @@ public sealed interface BookingConfirmationPage {
             Objects.requireNonNull(terms, "terms");
             Objects.requireNonNull(shipperApprovedAt, "shipperApprovedAt");
             Objects.requireNonNull(expiresAt, "expiresAt");
+        }
+
+        /**
+         * 特殊貨物を含み、確定できない見積りか（B-INV-04、US-04 AC5。Bolt 35）。確定のときと同じ規則で、照会の結果の貨物種別を見る。
+         */
+        public boolean specialCargo() {
+            return !BookableCargoPolicy.bookable(terms.cargoCategory());
         }
     }
 

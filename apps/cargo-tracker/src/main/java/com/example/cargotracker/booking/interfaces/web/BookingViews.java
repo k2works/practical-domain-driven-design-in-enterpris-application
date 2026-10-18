@@ -51,6 +51,7 @@ final class BookingViews {
      * @param cargoMissing 必須貨物情報が欠けているか
      * @param cargoRejected 送ったときに必須貨物情報が欠けていて確定しなかったか
      * @param staffConfirmationMissing 送ったときに営業担当者の確認がなかったか
+     * @param specialCargo 特殊貨物を含み確定できないか（開いたときから示し、確定の領域を出さない。US-04 AC5。Bolt 35）
      */
     record ConfirmationView(
             String transportRequestNumber,
@@ -62,11 +63,12 @@ final class BookingViews {
             String route,
             boolean cargoMissing,
             boolean cargoRejected,
-            boolean staffConfirmationMissing) {
+            boolean staffConfirmationMissing,
+            boolean specialCargo) {
 
-        /** エラー要約を出すか（送ったときに確定条件が欠けていた）。 */
+        /** エラー要約を出すか（特殊貨物を含む、または送ったときに確定条件が欠けていた）。 */
         public boolean hasErrors() {
-            return cargoRejected || staffConfirmationMissing;
+            return specialCargo || cargoRejected || staffConfirmationMissing;
         }
     }
 
@@ -87,7 +89,8 @@ final class BookingViews {
                 route(terms),
                 cargoMissing,
                 missing.contains(BookingCondition.REQUIRED_CARGO),
-                missing.contains(BookingCondition.STAFF_CONFIRMATION));
+                missing.contains(BookingCondition.STAFF_CONFIRMATION),
+                page.specialCargo());
     }
 
     /**
