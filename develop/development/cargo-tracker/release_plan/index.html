@@ -6741,6 +6741,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../bolt_35c_plan/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 35c 計画
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../release_report-0_1/" class="md-nav__link">
         
   
@@ -13407,10 +13435,17 @@
 </tr>
 <tr>
 <td style="text-align: left;">35c</td>
-<td style="text-align: left;">D-85 の画面とマニュアル: S-02 の表、S-04 の再見積りの GET とボタン、C-04・C-17 の文言、暫定の案内の撤去、マニュアル 4・6・7 章、画面の層の受入シナリオ。Bolt 35b の開始準備で分けた</td>
+<td style="text-align: left;">D-85 の社内の画面とマニュアル: S-02 の予約の確定待ちの表（失効した行から再見積り、提示の前の見積り 2 の行）、S-04 の再見積りの GET とボタン（判定を照会のサービスにまとめる、経路方針は読み取り専用）、暫定の案内の撤去、マニュアル 6・7 章・付録 B とキャプチャ、提示までの画面の層の受入シナリオ。Bolt 35b の開始準備で分け、Bolt 35c の開始準備で 35c・35d に分けた。<a href="../bolt_35c_plan/">Bolt 35c 計画</a>。Bolt 35c の開始準備の決定（2026-10-19、human:kakimomokuri）: (1) 社内の画面（35c）と荷主の画面（35d）に分ける、(2) 再見積りのフォームの経路方針は読み取り専用、(3) 提示の前の見積り 2 は確定待ちの表の行に残す、(4) 開発データに承認の後に失効した見積りのサンプルを足す、(5) そのサンプルは 35d で足す、(6) 再見積りできるかの判定は照会のサービスに置く</td>
 <td style="text-align: right;">0</td>
 <td style="text-align: left;">アウトサイドイン（画面から）</td>
 <td style="text-align: left;">計画・終了報告</td>
+</tr>
+<tr>
+<td style="text-align: left;">35d</td>
+<td style="text-align: left;">D-85 の荷主の画面とマニュアル: C-04・C-17 の再承認の文言と表示、マニュアル 4 章とキャプチャ、再承認から本予約までの画面の層の受入シナリオ、開発データのサンプル（承認の後に失効した見積り。dev だけのマイグレーション）、W5 のデモの動画。Bolt 35c の開始準備で分けた</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: left;">アウトサイドイン（画面から）</td>
+<td style="text-align: left;">計画・終了報告（開発データのマイグレーションでデータベースの承認ゲート。35d の計画の承認で通す）</td>
 </tr>
 </tbody>
 </table>
@@ -13480,7 +13515,8 @@
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Bolt 35: US-04 AC3・AC5（#43）。<a href="../bolt_35_plan/">Bolt 35 計画</a>（承認済み）、<a href="../bolt_35_report/">Bolt 35 終了報告</a>（承認済み。支援技術による手動確認の後に #43 をクローズした）</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Bolt 35b: D-85 の再見積り（ドメインと業務ルール層）。<a href="../bolt_35b_plan/">Bolt 35b 計画</a>（承認済み）、<a href="../bolt_35b_report/">Bolt 35b 終了報告</a>（承認済み。35b は単独で出さず 35b2・35c と一緒に出す）</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Bolt 35b2: D-85 の輸送要求の戻し（DE-24）。<a href="../bolt_35b2_plan/">Bolt 35b2 計画</a>（承認済み）、<a href="../bolt_35b2_report/">Bolt 35b2 終了報告</a>（承認済み）</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> Bolt 35c: D-85 の画面とマニュアル</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> Bolt 35c: D-85 の社内の画面とマニュアル。<a href="../bolt_35c_plan/">Bolt 35c 計画</a>（承認待ち）</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> Bolt 35d: D-85 の荷主の画面とマニュアル、開発データのサンプル、W5 のデモ</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> W5 の締め: 結果とふりかえり、開いている持ち越しの数（T-89）、W6 の計画の見直し</li>
 </ul>
 <p><strong>目標 SP</strong>: 11（US-18 6、US-16 の一部 2、US-04 3。US-16 の 2 は W6 で数える）</p>
@@ -15158,6 +15194,11 @@
 <td style="text-align: left;">2026-10-19</td>
 <td style="text-align: left;">Bolt 35b2 の終了報告の承認を記録した（議題 1〜3。ADR-018 の文面を確かめた）。次は Bolt 35c</td>
 <td style="text-align: left;">anthropic/claude-opus-5-5、承認 human:kakimomokuri</td>
+</tr>
+<tr>
+<td style="text-align: left;">2026-10-19</td>
+<td style="text-align: left;">Bolt 35c の開始準備で、<a href="../bolt_35c_plan/">Bolt 35c 計画</a>を作った（承認待ち）。35c の行を 35c・35d に分け、human:kakimomokuri の決定 (1)〜(6) を書いた</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5</td>
 </tr>
 </tbody>
 </table>
