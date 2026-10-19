@@ -9222,6 +9222,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../adr/cargo-tracker/018-requote-returns-transport-request-with-ordering-guard/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-018 再見積りの戻しと順序の守り
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -13092,7 +13120,7 @@
 <tr>
 <td style="text-align: left;">D-85 荷主の承認の後に失効した見積りの再見積り</td>
 <td style="text-align: left;">承認済みの経路版を引き継ぎ、料金と有効期限だけを出し直す。経路設計者の作業は繰り返さない。出し直した見積りには荷主の再承認が要る</td>
-<td style="text-align: left;">Bolt 35b・35b2・35c（Bolt 35 の開始準備で 35b に分け、Bolt 35b の開始準備で 3 つに分けた。35b のステップ 1 で domain_model・user_story・data_model・test_strategy に反映した）。注（設計への反映が必要）: domain_model.md の見積りの状態遷移（承認済みから失効した見積りが終端のまま。再見積りした見積りがどの状態を経て荷主の再承認に至るか）と「再見積りできない」の記述（domain_model.md の :553・:555 と、状態遷移の図の :506・:510。Bolt 35b の開始準備で位置を直した）、UI 設計（S-02・S-04）、US-24 の受入シナリオ。「業務責任者に確かめる事項の台帳」の D-85</td>
+<td style="text-align: left;">Bolt 35b・35b2・35c（Bolt 35 の開始準備で 35b に分け、Bolt 35b の開始準備で 3 つに分けた。35b のステップ 1 で domain_model・user_story・data_model・test_strategy に反映した。35b2 のステップ 1 で domain_model（輸送要求の状態遷移・DE-21・DE-04・DE-24）・architecture_backend・data_model・test_strategy・user_story・ADR-018 に反映した）。注（設計への反映が必要）: domain_model.md の見積りの状態遷移（承認済みから失効した見積りが終端のまま。再見積りした見積りがどの状態を経て荷主の再承認に至るか）と「再見積りできない」の記述（domain_model.md の :553・:555 と、状態遷移の図の :506・:510。Bolt 35b の開始準備で位置を直した）、UI 設計（S-02・S-04）、US-24 の受入シナリオ。「業務責任者に確かめる事項の台帳」の D-85</td>
 </tr>
 <tr>
 <td style="text-align: left;">メール送信の部品の置き場所</td>
@@ -13347,7 +13375,7 @@
 <td style="text-align: left;">D-85 の輸送要求の戻し: 再見積りを提示したら DE-24 で輸送要求を予約待ちから荷主承認待ちへ戻す（順序の守りを持つ listener）。Bolt 35b の開始準備で分けた。<a href="../bolt_35b2_plan/">Bolt 35b2 計画</a>。Bolt 35b2 の開始準備の決定（2026-10-19、human:kakimomokuri）: (1) 順序の守りは DE-04 の listener が進めなくても輸送要求を書く形（楽観ロック。スキーマもロックも足さない）、(2) 置換済み・失効の旧版の DE-21・DE-04 は輸送要求を進めない守りを 35b2 で作る</td>
 <td style="text-align: right;">0</td>
 <td style="text-align: left;">アウトサイドイン（輸送要求の集約を広げる）</td>
-<td style="text-align: left;">計画・終了報告（順序の守りでスキーマを変える見込みがある。変えるならデータベースの承認ゲート）</td>
+<td style="text-align: left;">計画・終了報告（決定 (1) で楽観ロックを使いスキーマを変えないので、データベースの承認ゲートには当たらない。ADR-018 を作る）</td>
 </tr>
 <tr>
 <td style="text-align: left;">35c</td>
@@ -13743,7 +13771,7 @@
 <tr>
 <td style="text-align: left;">D-85</td>
 <td style="text-align: left;">荷主の承認の後に失効した見積り（承認済み）を、どう再見積りするか（経路を設計し直すか、承認済みの経路を引き継いで料金と有効期限だけを出し直すか）</td>
-<td style="text-align: left;">再見積りのサービスと POST は Bolt 35b で受け付ける（<code>Quotation.requoteRejectionAt</code>）。画面の操作の出し分けは Bolt 35c まで <code>Quotation.requoteRejection</code> のままで、S-02 は「荷主の承認の後に失効した見積りの再見積りは、まだ画面で操作できません。扱いは担当者で相談してください。」と案内する（Bolt 23b の暫定の案内）</td>
+<td style="text-align: left;">再見積りのサービスと POST は Bolt 35b で受け付ける（<code>Quotation.requoteRejectionAt</code>）。再見積りの提示で輸送要求を予約待ちから荷主承認待ちへ戻すのは Bolt 35b2（DE-24。ADR-018）。画面の操作の出し分けは Bolt 35c まで <code>Quotation.requoteRejection</code> のままで、S-02 は「荷主の承認の後に失効した見積りの再見積りは、まだ画面で操作できません。扱いは担当者で相談してください。」と案内する（Bolt 23b の暫定の案内）</td>
 <td style="text-align: left;">US-03、US-04、US-24、ドメインモデル（見積りの再見積りの規則）、UI 設計（S-02・S-04）</td>
 <td style="text-align: left;"><a href="../bolt_23b_report/">Bolt 23b 終了報告</a> 議題 5、<a href="../bolt_24_plan/">Bolt 24 計画</a> 確認ポイント 14</td>
 <td style="text-align: left;">W5 の開始準備（2026-11-02。#43 を W5 に前倒ししたため。W4 の締め）</td>

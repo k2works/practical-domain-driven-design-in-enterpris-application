@@ -8854,6 +8854,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../adr/cargo-tracker/018-requote-returns-transport-request-with-ordering-guard/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-018 再見積りの戻しと順序の守り
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -11590,7 +11618,7 @@
 <tr>
 <td style="text-align: left;">ヘッダ（例: <code>transport_request</code>）</td>
 <td style="text-align: left;">現在の状態、現在の版番号、楽観ロックの <code>version</code></td>
-<td style="text-align: left;">状態の変化のたびに UPDATE する</td>
+<td style="text-align: left;">状態の変化のたびに UPDATE する（輸送要求は、DE-04・DE-24 の listener が状態を変えずに <code>version</code> だけを上げることがある。届く順の入れ替わりの守り。ADR-018、Bolt 35b2）</td>
 </tr>
 <tr>
 <td style="text-align: left;">版（例: <code>transport_request_version</code>）</td>

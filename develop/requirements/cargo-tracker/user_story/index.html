@@ -8672,6 +8672,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../adr/cargo-tracker/018-requote-returns-transport-request-with-ordering-guard/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-018 再見積りの戻しと順序の守り
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -11444,6 +11472,12 @@
 <ul>
 <li>引き継ぐ見積りの経路方針（主な経由地・概算の出発・到着）は旧版の値にする。再見積りで入れた経路方針は使わない（荷主に示す経路方針と、引き継いだ経路版を食い違わせない）</li>
 <li>引き継ぐ経路の区間がもう出発しているときの扱い（D-88）は台帳に載せ、W6 の Q-INV-10 の開始準備で扱う</li>
+</ul>
+<p>決定（2026-10-19、Bolt 35b2 の開始準備。D-85。human:kakimomokuri）:</p>
+<ul>
+<li>再見積りした見積りを提示したら、輸送要求を予約待ちから荷主承認待ちへ戻す（DE-24）。荷主が再承認すると予約待ちへ進む</li>
+<li>荷主の再承認と戻しの届く順が入れ替わっても輸送要求の状態がずれないよう、DE-04 の listener は進めなくても輸送要求を書いて楽観ロックでぶつける（スキーマもロックも足さない。ADR-018）</li>
+<li>再見積りで置換済み・失効になった旧版の経路版の割当て（DE-21）と荷主の承認（DE-04）が遅れて届いても、輸送要求を進めない</li>
 </ul>
 <h2 id="u6">U6 予約管理<a class="headerlink" href="#u6" title="Permanent link">&para;</a></h2>
 <h3 id="us-04">US-04 予約を確定する<a class="headerlink" href="#us-04" title="Permanent link">&para;</a></h3>
