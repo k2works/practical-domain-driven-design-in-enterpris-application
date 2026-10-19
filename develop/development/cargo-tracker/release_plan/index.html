@@ -6629,6 +6629,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../bolt_35b_plan/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 35b 計画
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../release_report-0_1/" class="md-nav__link">
         
   
@@ -13253,9 +13281,23 @@
 </tr>
 <tr>
 <td style="text-align: left;">35b</td>
-<td style="text-align: left;">D-85 の再見積り（荷主の承認の後に失効した見積り。承認済みの経路版を引き継ぎ、料金と有効期限だけを出し直し、荷主の再承認を受ける）。Bolt 35 の開始準備で 35 から分けた（AC3・AC5 と合わせて約 9 時間の見込みで、変わるコンテキストも違うため）。4 時間を超えると見えたら、35b の開始準備でさらに分ける</td>
+<td style="text-align: left;">D-85 の再見積り（ドメインと業務ルール層）: 荷主の承認の後に失効した見積りを再見積りし、新しい見積りは承認済みの経路版と荷主の回答を引き継いで、提示で荷主承認待ちに直行する。荷主の再承認で新しい見積りの本予約を確定できる。<a href="../bolt_35b_plan/">Bolt 35b 計画</a>。Bolt 35 の開始準備で 35 から分け、Bolt 35b の開始準備で 35b・35b2・35c に分けた。Bolt 35b の開始準備の決定（2026-10-19、human:kakimomokuri）: (1) 35b・35b2・35c に分ける、(2) 輸送要求は承認待ちへ戻す（35b2）、(3) 経路を写して荷主承認待ちに直行、(4) 引き継ぎ元の列を足さない、(5) 戻しは DE-24 と順序の守り（35b2）、(6) 荷主の回答を旧版から写す、(7) 画面の出し分けは 35c まで今の判定、(8) 提示の前の再々見積りでも引き継ぐ、(9) 引き継ぎは判定を通った値で渡す、(10) DE-03 に属性を足さない、(11) 予約に使った見積りの隙間は台帳へ（D-87）</td>
 <td style="text-align: right;">0</td>
-<td style="text-align: left;">35b の開始準備で決める（見積りの集約の状態遷移を変えるので、開発戦略の中盤の例外の範囲に入らない）</td>
+<td style="text-align: left;">アウトサイドイン（開発戦略 :119。既存の集約に受入条件を足す）</td>
+<td style="text-align: left;">計画・終了報告</td>
+</tr>
+<tr>
+<td style="text-align: left;">35b2</td>
+<td style="text-align: left;">D-85 の輸送要求の戻し: 再見積りを提示したら DE-24 で輸送要求を予約待ちから承認待ちへ戻す（順序の守りを持つ listener）。Bolt 35b の開始準備で分けた</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: left;">アウトサイドイン（輸送要求の集約を広げる）</td>
+<td style="text-align: left;">計画・終了報告（順序の守りでスキーマを変える見込みがある。変えるならデータベースの承認ゲート）</td>
+</tr>
+<tr>
+<td style="text-align: left;">35c</td>
+<td style="text-align: left;">D-85 の画面とマニュアル: S-02 の表、S-04 の再見積りの GET とボタン、C-04・C-17 の文言、暫定の案内の撤去、マニュアル 4・6・7 章、画面の層の受入シナリオ。Bolt 35b の開始準備で分けた</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: left;">アウトサイドイン（画面から）</td>
 <td style="text-align: left;">計画・終了報告</td>
 </tr>
 </tbody>
@@ -13324,7 +13366,9 @@
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Bolt 34e: 振る舞いの変わらない直し（利用者の管理のドメインとサービス）。<a href="../bolt_34e_plan/">Bolt 34e 計画</a>（承認済み）、<a href="../bolt_34e_report/">Bolt 34e 終了報告</a>（完了、2026-10-18 に承認済み。承認の値を判定した利用者で縛り、結果の型を確かめる結果と変える結果に分け、判定の前半と login の補助をまとめた）</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Bolt 34f: 振る舞いの変わらない直し（S-20 の画面の構造）。<a href="../bolt_34f_plan/">Bolt 34f 計画</a>（承認済み）、<a href="../bolt_34f_report/">Bolt 34f 終了報告</a>（承認済み）</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Bolt 35: US-04 AC3・AC5（#43）。<a href="../bolt_35_plan/">Bolt 35 計画</a>（承認済み）、<a href="../bolt_35_report/">Bolt 35 終了報告</a>（承認済み。支援技術による手動確認の後に #43 をクローズした）</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> Bolt 35b: D-85 の再見積り</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> Bolt 35b: D-85 の再見積り（ドメインと業務ルール層）。<a href="../bolt_35b_plan/">Bolt 35b 計画</a>（承認待ち）</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> Bolt 35b2: D-85 の輸送要求の戻し（DE-24）</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> Bolt 35c: D-85 の画面とマニュアル</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> W5 の締め: 結果とふりかえり、開いている持ち越しの数（T-89）、W6 の計画の見直し</li>
 </ul>
 <p><strong>目標 SP</strong>: 11（US-18 6、US-16 の一部 2、US-04 3。US-16 の 2 は W6 で数える）</p>
@@ -14930,6 +14974,11 @@
 <td style="text-align: left;">2026-10-19</td>
 <td style="text-align: left;">human:kakimomokuri が AC3 の画面の支援技術による手動確認を行い（3 点とも問題なし）、#43 をクローズした。US-04 の残りの SP 3 を W5 に数えた（W5 の実績 9 SP）</td>
 <td style="text-align: left;">anthropic/claude-opus-5-5、確認 human:kakimomokuri</td>
+</tr>
+<tr>
+<td style="text-align: left;">2026-10-19</td>
+<td style="text-align: left;">Bolt 35b の開始準備で、<a href="../bolt_35b_plan/">Bolt 35b 計画</a>を作った（承認待ち）。35b の行を 35b・35b2・35c に分け、human:kakimomokuri の決定 (1)〜(11) を書いた</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5</td>
 </tr>
 </tbody>
 </table>
