@@ -29,7 +29,10 @@ import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.function.IntPredicate;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 class QuotationCommandServiceTest {
 
@@ -253,6 +256,87 @@ class QuotationCommandServiceTest {
                 .isEqualTo(new RequotationOutcome.Calculated(NUMBER, 2, QuotationStatus.EXPIRED));
     }
 
+    // 荷主の承認の後に失効した見積りの再見積り（D-85。Bolt 35b）
+
+    /** 見積り 1 を荷主が承認し、見積依頼を予約待ち（または途中の状態）まで進める。 */
+    private void approvedQuotation1(int transportRequestSteps) {
+        TransportRequestId id = presentedQuotation1();
+        Quotation quotation = quotations.findByTransportRequestIdAndNo(id, 1).orElseThrow();
+        UtcInstant at = new UtcInstant(NOW);
+        quotation.requestRouteDesign(STAFF, at);
+        quotation.assignRoute(QuotationFixture.assignedRoute(), at);
+        quotation.approveByShipper(STAFF, at);
+        quotations.update(quotation);
+        TransportRequest request = transportRequests.findById(id).orElseThrow();
+        List<IntPredicate> steps = List.of(
+                request::markQuotationPresented,
+                request::markRoutingRequested,
+                request::markAwaitingApproval,
+                request::markReadyToBook);
+        steps.stream().limit(transportRequestSteps).forEach(step -> step.test(1));
+        transportRequests.update(request);
+    }
+
+    private QuotationCommandService atExpiry() {
+        return new QuotationCommandService(
+                transportRequests,
+                quotations,
+                published::add,
+                Clock.fixed(QuotationFixture.EXPIRES_AT.instant(), ZoneOffset.UTC));
+    }
+
+    private static QuotationInput laterInput() {
+        return new QuotationInput(
+                QuotationFixture.completeInput().lines(),
+                QuotationFixture.completeInput().currency(),
+                new UtcInstant(QuotationFixture.EXPIRES_AT.instant().plusSeconds(86_400)),
+                List.of(),
+                new UtcInstant(QuotationFixture.EXPIRES_AT.instant().plusSeconds(172_800)),
+                new UtcInstant(QuotationFixture.EXPIRES_AT.instant().plusSeconds(259_200)));
+    }
+
+    @Test
+    void 予約待ちの見積依頼で承認済みで失効した見積りを再見積りすると旧版を失効にし新しい見積りは経路と荷主の回答を引き継ぐ() {
+        approvedQuotation1(4);
+        TransportRequestId id =
+                transportRequests.findByNumberForStaff(NUMBER).orElseThrow().id();
+
+        assertThat(atExpiry().requote(new RequoteQuotationCommand(NUMBER, 1, laterInput())))
+                .isEqualTo(new RequotationOutcome.Calculated(NUMBER, 2, QuotationStatus.EXPIRED));
+
+        Quotation replacement = quotations.findByTransportRequestIdAndNo(id, 2).orElseThrow();
+        assertThat(replacement.status()).isEqualTo(QuotationStatus.PENDING_APPROVAL);
+        assertThat(replacement.assignedRoute()).contains(QuotationFixture.assignedRoute());
+        assertThat(replacement.respondedBy()).contains(STAFF);
+        assertThat(quotations.findByTransportRequestIdAndNo(id, 1)).hasValueSatisfying(old -> {
+            assertThat(old.status()).isEqualTo(QuotationStatus.EXPIRED);
+            assertThat(old.shipperApproval()).isPresent();
+        });
+        assertThat(published).isEmpty();
+    }
+
+    @ParameterizedTest(name = "見積依頼の状態を {0} 段まで進めた（配信の遅れ）")
+    @ValueSource(ints = {2, 3})
+    void 経路設計中と荷主承認待ちの見積依頼でも承認済みで失効した見積りを再見積りできる(int steps) {
+        approvedQuotation1(steps);
+
+        assertThat(atExpiry().requote(new RequoteQuotationCommand(NUMBER, 1, laterInput())))
+                .isEqualTo(new RequotationOutcome.Calculated(NUMBER, 2, QuotationStatus.EXPIRED));
+    }
+
+    @Test
+    void 期限内の承認済みの見積りは再見積りできず何も保存しない() {
+        approvedQuotation1(4);
+        TransportRequestId id =
+                transportRequests.findByNumberForStaff(NUMBER).orElseThrow().id();
+
+        assertThat(service.requote(new RequoteQuotationCommand(NUMBER, 1, QuotationFixture.completeInput())))
+                .isEqualTo(new RequotationOutcome.Rejected(QuotationRejection.APPROVED_AND_STILL_VALID));
+        assertThat(quotations.findByTransportRequestIdAndNo(id, 1))
+                .hasValueSatisfying(old -> assertThat(old.status()).isEqualTo(QuotationStatus.APPROVED));
+        assertThat(quotations.findByTransportRequestIdAndNo(id, 2)).isEmpty();
+    }
+
     @Test
     void 輸送要求の古い版に対する見積りは再見積りできない() {
         TransportRequest request = submitted();
@@ -270,7 +354,7 @@ class QuotationCommandServiceTest {
     }
 
     @Test
-    void 見積り作成中でも見積提示済みでもない見積依頼の見積りは再見積りできない() {
+    void 審査中の見積依頼の見積りは再見積りできない() {
         TransportRequest request = submitted();
         Quotation old = Quotation.create(new QuotationId(UUID.randomUUID()), request.id(), 1, 1);
         old.calculate(QuotationFixture.completeInput(), new UtcInstant(NOW.minusSeconds(60)));

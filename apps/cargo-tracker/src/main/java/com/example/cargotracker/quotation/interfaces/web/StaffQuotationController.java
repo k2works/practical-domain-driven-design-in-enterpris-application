@@ -327,10 +327,19 @@ public class StaffQuotationController {
             case OUTDATED_VERSION -> subject + " は輸送要求の古い版に対する見積りのため、再見積りできません";
             case NOT_PRESENTED -> subject + " は荷主に提示していません";
             case ROUTING_REQUESTED -> subject + " は荷主が詳細経路設計を依頼済みのため、再見積りできません";
-            // NOT_APPROVED は予約確定の照会の理由で、この画面の操作では返らない（Bolt 23）
-            case NOT_AWAITING_SHIPPER_APPROVAL, ALREADY_APPROVED, NOT_APPROVED ->
-                subject + " は荷主の承認の段階にあるため、この操作はできません";
+            case NOT_AWAITING_SHIPPER_APPROVAL, ALREADY_APPROVED, NOT_APPROVED, APPROVED_AND_STILL_VALID ->
+                approvalStageRejection(subject, reason);
         };
+    }
+
+    /** 荷主の承認の段階にある見積りの操作を受け付けなかった理由の文言。 */
+    private static String approvalStageRejection(String subject, QuotationRejection reason) {
+        // 仮の文言（D-85。Bolt 35b）。UI 設計への記載と見直しは Bolt 35c
+        if (reason == QuotationRejection.APPROVED_AND_STILL_VALID) {
+            return subject + " は荷主が承認済みで、まだ有効期限内です。本予約の確定へ進んでください";
+        }
+        // NOT_APPROVED は予約確定の照会の理由で、この画面の操作では返らない（Bolt 23）
+        return subject + " は荷主の承認の段階にあるため、この操作はできません";
     }
 
     /**

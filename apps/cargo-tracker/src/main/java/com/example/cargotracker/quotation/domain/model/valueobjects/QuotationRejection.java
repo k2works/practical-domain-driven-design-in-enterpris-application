@@ -4,7 +4,7 @@ package com.example.cargotracker.quotation.domain.model.valueobjects;
  * 見積りの操作を受け付けなかった理由（業務の結果。Q-INV-07・09・17・18）。
  */
 public enum QuotationRejection {
-    /** 輸送要求が見積り作成中でない（審査中・下書きなど）。 */
+    /** 輸送要求が見積りを作れる状態でない（審査中・下書きなど。再見積りは、見積り作成中・見積提示済み・経路設計中・荷主承認待ち・予約待ちのどれでもないとき。Bolt 35b）。 */
     TRANSPORT_REQUEST_NOT_QUOTING,
     /** 作成中・承認待ち・提示済みの見積りがすでにある（失効した提示済みも含む。新しくするには再見積りする）。 */
     ALREADY_QUOTED,
@@ -25,5 +25,7 @@ public enum QuotationRejection {
     /** 見積りが承認済み（Q-INV-10。二重送信など。Bolt 20）。 */
     ALREADY_APPROVED,
     /** 見積りが荷主の承認済みでないため、予約確定に使えない（Q-INV-06。Bolt 23）。 */
-    NOT_APPROVED
+    NOT_APPROVED,
+    /** 見積りが荷主の承認済みで、まだ有効期限内なので再見積りできない（本予約の確定へ進む。D-85、Q-INV-07。Bolt 35b）。 */
+    APPROVED_AND_STILL_VALID
 }

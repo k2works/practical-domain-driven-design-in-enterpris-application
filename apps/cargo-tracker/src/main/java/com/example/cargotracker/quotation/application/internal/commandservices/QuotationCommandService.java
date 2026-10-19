@@ -36,9 +36,17 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class QuotationCommandService {
 
-    /** 再見積りできる見積依頼の状態（見積提示済みは DE-03 を受けた後）。 */
-    private static final Set<TransportRequestStatus> REQUOTABLE =
-            EnumSet.of(TransportRequestStatus.QUOTING, TransportRequestStatus.QUOTED);
+    /**
+     * 再見積りできる見積依頼の状態（見積提示済みは DE-03 を受けた後）。荷主の承認の後に失効した見積りの再見積り（D-85。Bolt 35b）の
+     * ため、経路設計中・荷主承認待ち・予約待ちも含める（経路設計中・荷主承認待ちは DE-21・DE-04 の配信の遅れのとき）。経路設計の途中の
+     * 見積りは見積りの判定が拒む。予約済みは含めない。
+     */
+    private static final Set<TransportRequestStatus> REQUOTABLE = EnumSet.of(
+            TransportRequestStatus.QUOTING,
+            TransportRequestStatus.QUOTED,
+            TransportRequestStatus.ROUTING,
+            TransportRequestStatus.AWAITING_APPROVAL,
+            TransportRequestStatus.READY_TO_BOOK);
 
     private final TransportRequestRepository transportRequestRepository;
     private final QuotationRepository quotationRepository;
@@ -122,7 +130,9 @@ public class QuotationCommandService {
 
     /**
      * 見積りを再見積りする（US-03 AC5、Q-INV-07・18）。旧版を置換済み（有効期限を過ぎていれば失効）にし、次の見積り番号の
-     * 新しい見積りを作って算出する（承認待ち）。見積依頼は見積り作成中か見積提示済みで、旧版の対象の版が現在の版のときだけ。
+     * 新しい見積りを作って算出する（承認待ち）。見積依頼は見積り作成中・見積提示済み・経路設計中・荷主承認待ち・予約待ちのどれかで、
+     * 旧版の対象の版が現在の版のときだけ。旧版が経路を持てば（荷主の承認の後に失効した見積りなど）、新しい見積りが経路と荷主の回答を
+     * 引き継ぐ（D-85。Bolt 35b）。
      * 旧版が置換済み・失効なら拒否し、入力に違反があれば何も保存せずに違反を返す。旧版の更新を先に書き、DB の部分一意インデックスに触れないようにする。
      */
     @Transactional
@@ -153,8 +163,8 @@ public class QuotationCommandService {
                 request.id(),
                 request.currentVersion().versionNo(),
                 quotationNo);
-        // 置換済み・失効の旧版は、入力を見る前に拒否する。旧版は、入力に誤りがないと分かってから置き換える
-        Optional<QuotationRejection> rejection = old.requoteRejection();
+        // 置換済み・失効・期限内の承認済みの旧版は、入力を見る前に拒否する。旧版は、入力に誤りがないと分かってから置き換える
+        Optional<QuotationRejection> rejection = old.requoteRejectionAt(now);
         if (rejection.isPresent()) {
             return new RequotationOutcome.Rejected(rejection.get());
         }
@@ -162,6 +172,8 @@ public class QuotationCommandService {
         if (violations.isPresent()) {
             return new RequotationOutcome.Invalid(violations.get());
         }
+        // 経路を持つ旧版（荷主の承認の後に失効した見積りなど）の経路と荷主の回答を、置き換える前に引き継ぐ（D-85。Bolt 35b）
+        old.inheritanceForRequoteAt(now).ifPresent(replacement::inherit);
         old.replaceWith(replacement.id(), now);
         try {
             quotationRepository.update(old);

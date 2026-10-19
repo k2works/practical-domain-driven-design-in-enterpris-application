@@ -603,6 +603,17 @@ class StaffQuotationControllerTest {
                 .andExpect(flash().attribute("problem", "TR-2026-0001 見積 1 は輸送要求の古い版に対する見積りのため、再見積りできません"));
     }
 
+    @Test
+    void 期限内の承認済みの見積りの再見積りは本予約の確定へ進むよう示す() throws Exception {
+        // 仮の文言（D-85。Bolt 35b）。画面の判定は Bolt 35c まで今のままなので、POST で送られたときだけ届く
+        transportRequestExists();
+        given(commandService.requote(any()))
+                .willReturn(new RequotationOutcome.Rejected(QuotationRejection.APPROVED_AND_STILL_VALID));
+
+        mockMvc.perform(requoteForm())
+                .andExpect(flash().attribute("problem", "TR-2026-0001 見積 1 は荷主が承認済みで、まだ有効期限内です。本予約の確定へ進んでください"));
+    }
+
     private static MockHttpServletRequestBuilder requoteForm() {
         return post("/staff/transport-requests/TR-2026-0001/quotations/1/requotation")
                 .param("lines[0].description", "海上運賃")

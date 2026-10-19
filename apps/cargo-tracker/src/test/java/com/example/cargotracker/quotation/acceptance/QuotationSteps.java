@@ -76,7 +76,8 @@ public class QuotationSteps {
             "見積りがすでにある", QuotationRejection.ALREADY_QUOTED,
             "失効している", QuotationRejection.EXPIRED,
             "置換済み", QuotationRejection.REPLACED,
-            "詳細設計依頼済み", QuotationRejection.ROUTING_REQUESTED);
+            "詳細設計依頼済み", QuotationRejection.ROUTING_REQUESTED,
+            "承認済みで有効期限内", QuotationRejection.APPROVED_AND_STILL_VALID);
 
     /** 標準の見積りの有効期限（有効期限を書かない前提の文で使う）。 */
     private static final String STANDARD_EXPIRES_AT = "2026-10-08T09:00:00Z";

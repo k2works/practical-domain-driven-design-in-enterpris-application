@@ -1026,3 +1026,4 @@ xychart-beta
 | 2026-10-19 | human:kakimomokuri が AC3 の画面の支援技術による手動確認を行い（3 点とも問題なし）、#43 をクローズした。US-04 の残りの SP 3 を W5 に数えた（W5 の実績 9 SP） | anthropic/claude-opus-5-5、確認 human:kakimomokuri |
 | 2026-10-19 | Bolt 35b の開始準備で、[Bolt 35b 計画](bolt_35b_plan.md)を作った（承認待ち）。35b の行を 35b・35b2・35c に分け、human:kakimomokuri の決定 (1)〜(11) を書いた | anthropic/claude-opus-5-5 |
 | 2026-10-19 | Bolt 35b の計画を承認した（確認ポイント 11〜17 を推奨のとおり） | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
+| 2026-10-19 | Bolt 35b のステップ 1 で、domain_model（用語・操作・状態遷移・Q-INV-07・Q-INV-18・R-INV-11・イベントの表と DE-24 の予約）、user_story（US-03・US-24 の決定）、data_model、test_strategy を直し、W5 の状態・局面とアプローチ・D-85 の注と台帳・D-86・D-87・W5 の本数（31 本）、開発戦略の W5 の行を直した | anthropic/claude-opus-5-5 |
