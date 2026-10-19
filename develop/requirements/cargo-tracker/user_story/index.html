@@ -6219,6 +6219,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../development/cargo-tracker/bolt_35c_report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 35c 終了報告
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../development/cargo-tracker/release_report-0_1/" class="md-nav__link">
         
   
@@ -11542,7 +11570,7 @@
 <li>再見積りの後で提示の前の見積り（経路を引き継いだ承認待ち）は、受付一覧（S-02）の予約の確定待ちの表の行に「承認待ち」で残す（読み取りモデルの SQL を変え、スキーマは変えない）</li>
 <li>開発データに、荷主の承認の後に失効した見積りのサンプルを足す（最初の回答「足さない」を改めた）</li>
 <li>そのサンプルは Bolt 35d で足す（35c が半日を超えないよう。データベースの承認ゲートは 35d の計画で通す）</li>
-<li>再見積りできるかの判定は見積りの照会のサービスに置き、再見積りのボタン・GET・POST が同じ判定を使う</li>
+<li>再見積りできるかの判定は見積りの照会のサービスに置き、再見積りのボタン・GET・POST が同じ判定を使う（Bolt 35c の開発レビューで、判定をドメインの規則 <code>RequotePolicy</code> に移した。2026-10-20、human:kakimomokuri）</li>
 </ul>
 <h2 id="u6">U6 予約管理<a class="headerlink" href="#u6" title="Permanent link">&para;</a></h2>
 <h3 id="us-04">US-04 予約を確定する<a class="headerlink" href="#us-04" title="Permanent link">&para;</a></h3>

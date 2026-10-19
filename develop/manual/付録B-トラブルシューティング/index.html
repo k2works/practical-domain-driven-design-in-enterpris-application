@@ -6075,6 +6075,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../development/cargo-tracker/bolt_35c_report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 35c 終了報告
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../development/cargo-tracker/release_report-0_1/" class="md-nav__link">
         
   
@@ -6974,6 +7002,17 @@
     <span class="md-ellipsis">
       
         Q3-4. 実績を登録すると既存の実績が示される（「出典（…）の実績はすでに登録されています（実績 N）。今回の入力は登録していません。」）
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#q3-5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Q3-5. 見積りを再見積りできない
       
     </span>
   </a>
@@ -11809,14 +11848,6 @@
 <td style="text-align: left;">仕様です（不具合ではありません）。見積りの有効期限を過ぎています。予約の確定待ちの表の「… を再見積りする」で再見積りし、荷主の再承認を受けてください（<a href="../06-%E5%8F%97%E4%BB%98%E4%B8%80%E8%A6%A7%E3%81%A8%E5%AF%A9%E6%9F%BB%E3%81%A8%E8%A6%8B%E7%A9%8D%E3%82%8A/#64-荷主の承認の後に失効した見積りの再見積り">6.4</a>）</td>
 </tr>
 <tr>
-<td style="text-align: left;">「… は荷主が承認済みで、まだ有効期限内です。本予約の確定へ進んでください」</td>
-<td style="text-align: left;">仕様です（不具合ではありません）。有効期限の前の承認済みの見積りは再見積りできません。本予約を確定してください</td>
-</tr>
-<tr>
-<td style="text-align: left;">「… は本予約を確定済みのため、再見積りできません」</td>
-<td style="text-align: left;">仕様です（不具合ではありません）。本予約を確定した見積りは再見積りできません。確定の後の変更は申請で扱います</td>
-</tr>
-<tr>
 <td style="text-align: left;">「… は新しい見積りに置き換えられたため本予約を確定できません。最新の見積りを確かめてください。」</td>
 <td style="text-align: left;">再見積りで新しい見積りがあります。最新の見積りで進めてください</td>
 </tr>
@@ -11880,6 +11911,25 @@
 <tr>
 <td style="text-align: left;">同じ出典の種類と参照の実績をもう一度登録した</td>
 <td style="text-align: left;">仕様です（不具合ではありません）。同じ出典の実績を二重に登録しません。「実績 N を一覧で見る」で既存の実績を確かめてください</td>
+</tr>
+</tbody>
+</table>
+<h3 id="q3-5">Q3-5. 見積りを再見積りできない<a class="headerlink" href="#q3-5" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">メッセージ</th>
+<th style="text-align: left;">対処</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">「… は荷主が承認済みで、まだ有効期限内です。本予約の確定へ進んでください」</td>
+<td style="text-align: left;">仕様です（不具合ではありません）。有効期限の前の承認済みの見積りは再見積りできません。本予約を確定してください（<a href="../07-%E6%9C%AC%E4%BA%88%E7%B4%84%E3%81%AE%E7%A2%BA%E5%AE%9A%E3%81%A8%E4%BA%88%E7%B4%84%E4%B8%80%E8%A6%A7/#72-本予約の確定">7.2</a>）</td>
+</tr>
+<tr>
+<td style="text-align: left;">「… は本予約を確定済みのため、再見積りできません」</td>
+<td style="text-align: left;">仕様です（不具合ではありません）。本予約を確定済みの見積依頼の見積りは再見積りできません。確定の後の変更は申請で扱いますが、申請の画面は準備中です。扱いは担当者で相談してください</td>
 </tr>
 </tbody>
 </table>

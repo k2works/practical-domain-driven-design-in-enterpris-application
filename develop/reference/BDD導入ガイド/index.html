@@ -6075,6 +6075,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../development/cargo-tracker/bolt_35c_report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 35c 終了報告
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../development/cargo-tracker/release_report-0_1/" class="md-nav__link">
         
   
@@ -11681,7 +11709,7 @@
 <li>良い面：ドメイン言語で書かれたシナリオは、コードを読めないビジネス側の人にも理解できる。</li>
 <li>悪い面：シナリオとコードが別々に進化すると、①どちらを信頼すべきか分からなくなる、②両者が同期しているかどうか分からなくなる、という2つの問題が生じる。</li>
 </ul>
-<p>そこで必要になるのが**整合性を照合する仕組み（reconciliation mechanism）**である。CucumberやSpecFlowはこの役割を果たし、シナリオとコードという冗長な知識のバランスを取る「天秤」のように働く。</p>
+<p>そこで必要になるのが<strong>整合性を照合する仕組み（reconciliation mechanism）</strong>である。CucumberやSpecFlowはこの役割を果たし、シナリオとコードという冗長な知識のバランスを取る「天秤」のように働く。</p>
 <p>ツールはシナリオのGiven/Whenから値を抽出してテスト対象コードのパラメータとして渡し、Thenの値を使って結果をアサーションする。これにより、シナリオとコードが自動テストという形で常に検証され続ける。</p>
 <h2 id="_2">フィーチャーファイルの構造<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h2>
 <p>Cucumber/SpecFlowでシナリオをテスト化する際に作成するのが<strong>フィーチャーファイル（feature file）</strong>。プレーンテキストでソースコードと同様にバージョン管理される。</p>
@@ -11824,7 +11852,7 @@ Examples:
 | CONTINUOUS  | 0.05 | 2    | 0.105171  | (e^rt)-1 (rare)|
 | NONE        | 0.05 | 2    | 0         | 0              |
 </code></pre></div>
-<p>ツールの支援があれば、すべてのビジネスシナリオは自動テストであると同時に生きたドキュメントになる。シナリオとコードの橋渡しは、**ステップ（step）**という仕組みで行う。各ステップは正規表現でマッチし、シナリオ中のテキストからパラメータを抽出して本番コードを呼び出す。</p>
+<p>ツールの支援があれば、すべてのビジネスシナリオは自動テストであると同時に生きたドキュメントになる。シナリオとコードの橋渡しは、<strong>ステップ（step）</strong>という仕組みで行う。各ステップは正規表現でマッチし、シナリオ中のテキストからパラメータを抽出して本番コードを呼び出す。</p>
 <div class="highlight"><pre><span></span><code>"When I buy a book at an ex-VAT price of EUR &lt;exVATPrice&gt;"
 
 // 対応するグルーコード

@@ -6352,6 +6352,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../development/cargo-tracker/bolt_35c_report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 35c 終了報告
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../development/cargo-tracker/release_report-0_1/" class="md-nav__link">
         
   
@@ -11751,7 +11779,7 @@
 <li>最初の公開 API は、見積りの「経路条件の照会」（<code>quotation.interfaces.api.RouteConditionQuery</code>。輸送要求 ID と版番号から、出発地・目的地・希望到着期限・貨物種別を返す）。経路設計が DE-16 を受けて経路設計案件を作るときに呼ぶ。</li>
 <li>予約が使う見積りの公開 API（Bolt 23・23b）: 確定に使えるかの照会（<code>BookableQuotationQuery</code>。業務番号・見積り番号・commit 時刻から、確定に要る写しか使えない理由を返す。ADR-016）と、予約確定済みの通知（<code>BookingNotification</code>。ADR-014）。</li>
 <li>予約の確定できる貨物の規則（Bolt 35。US-04 AC5、B-INV-04）: <code>BookableCargoPolicy</code> は <code>booking.domain.model.rules</code>（<code>@DomainRule</code>。予約で最初の rules のパッケージ）に置き、見積りの公開 API から写した貨物種別の名前（<code>BookingTerms.cargoCategory</code>）だけで判定する。見積りの <code>MvpAcceptancePolicy</code> は使わない（予約は見積りのドメインに依存しない。予約の <code>allowedDependencies</code> は <code>shared</code>・<code>quotation :: api</code>・<code>platform :: web</code> だけで、<code>ModularityTest</code> が検証する。AT-03）。サービスは見積りの照会の後、確定条件の前に規則で判定して特殊貨物の拒否を返し、<code>Booking.confirm</code> も同じ規則で判定して拒否の例外を投げる（規則を通さずに確定できない）。S-09 を開いたときの読み取りモデル（<code>BookingConfirmationPage.Available.specialCargo</code>）も同じ規則を使い、確定の POST の拒否は結果を画面に渡す。期限の判定を見積りの 1 か所に置いた ADR-016 と違い、特殊貨物は予約が引き受けない業務の範囲なので、見積りの規則が変わっても予約が自分で拒む（二重の守り）。予約が比べる名前 <code>GENERAL</code> は見積りの公開 API の <code>BookableQuotationResult.cargoCategory</code> の Javadoc に値の集合とともに約束として書いた。予約から見積りのドメインへの型の依存を見る ArchUnit の規則はなく、<code>ModularityTest</code> の allowedDependencies の検証だけが守る（Bolt 35 の既知の課題）</li>
-<li>再見積りできるかの判定（D-85。Bolt 35c。Bolt 35c の開始準備の決定 (6)、human:kakimomokuri）: 見積りの社内の照会のサービス（<code>quotation.application.internal.queryservices.StaffQuotationQueryService</code>）に照会「再見積りできない理由（業務番号・見積り番号・判定時刻）」を置く。順は見つからない → 輸送要求の状態（再見積りできる状態の集合 <code>REQUOTABLE</code> を <code>QuotationCommandService</code> からこの照会に移す。予約確定済みは <code>TRANSPORT_REQUEST_BOOKED</code>）→ 版 → 集約の判定時刻の判定（<code>Quotation.requoteRejectionAt</code>）。S-04 の再見積りのボタン（画面のモデルに渡す値）と GET はこの照会を使い、POST の再見積りのサービス（<code>QuotationCommandService.requote</code>）もこの照会を使う。コマンドのサービスが照会のサービスに依存する向きで、照会のサービスはコマンドのサービスに依存しない（Bolt 34b の規則に合う）。S-09 の特殊貨物と同じく、開いたとき・送ったときの判定を 1 か所に置き、ボタン・GET・POST が同じ理由を示す。画面の判定だった <code>Quotation.requoteRejection()</code> は消す</li>
+<li>再見積りできるかの判定（D-85。Bolt 35c。Bolt 35c の開始準備の決定 (6)、human:kakimomokuri）: ドメインの規則 <code>quotation.domain.model.rules.RequotePolicy</code>（<code>rejection(TransportRequest, Quotation, UtcInstant)</code>）に置く（開始準備では照会のサービスに置くと決めたが、Bolt 35c の開発レビューで、コマンドのサービスが照会のサービスに依存する向きを避け、S-09 の <code>BookableCargoPolicy</code> と同じドメインの規則に移した。human:kakimomokuri）。順は輸送要求の状態（予約確定済みは <code>TRANSPORT_REQUEST_BOOKED</code>、再見積りできる状態の集合 <code>REQUOTABLE</code> にない状態は <code>TRANSPORT_REQUEST_NOT_QUOTING</code>）→ 版 → 集約の判定時刻の判定（<code>Quotation.requoteRejectionAt</code>）。見つからないかは呼び手（画面のコントローラーと <code>QuotationCommandService.requote</code>）が先に見る。2 つの集約を読むだけで、変えない。S-04 の再見積りのボタン（画面のモデルに渡す値）・GET と POST の再見積りのサービスがこの規則を使い、開いたとき・送ったときに同じ理由を示す。S-02 の予約の確定待ちの表のリンク（「… を再見積りする」）はこの規則を通さず、見積りの状態と有効期限だけで出す（読み取りモデルで集約を組み立てない。開いた S-04 の GET が規則で判定する）。画面の判定だった <code>Quotation.requoteRejection()</code> は消す</li>
 <li>アクセス・監査が使う通知の公開 API（Bolt 33。<a href="../../../adr/cargo-tracker/017-notification-module-and-mail/">ADR-017</a>）: password の再設定のメールの送信（<code>notification.interfaces.api.PasswordResetMail</code>。依頼の ID・トークンの ID・宛先の利用者の ID・アドレス・再設定の URL・期限・言語を受け、送信の記録を残して送る。結果は <code>Sent</code>・<code>AlreadySent</code>（同じ依頼の ID と宛先で記録済み）・<code>Failed</code>）。呼ぶ側は <code>identity.application.internal.outboundservices.acl.NotificationPasswordResetMails</code> で、イベントのハンドラー <code>PasswordResetMailEventHandler</code>（<code>@ApplicationModuleListener</code>）から呼ぶ。アダプターは <code>notification.interfaces.api.internal</code> に置き、通知のアプリケーションサービス <code>PasswordResetMailService</code>（<code>notification.application.internal.commandservices</code>）に委ねる。</li>
 <li>追跡が使う公開 API（Bolt 25。ADR-015）: 経路設計の経路版の区間の照会（<code>routing.interfaces.api.RouteVersionLegQuery</code>。案件番号と経路版番号から、確定した経路版の区間を区間の順に返す。ない経路版は空）と、予約の追跡の開始の通知（<code>booking.interfaces.api.TrackingStartNotification</code>。予約 ID・追跡番号・開始時刻を受け、処理中の予約サガを完了にする。結果は <code>Completed</code>・<code>AlreadyCompleted</code>・<code>NotCompleted(reason)</code>）。</li>
 </ul>

@@ -16,7 +16,7 @@
         <link rel="prev" href="../bolt_35b2_report/">
       
       
-        <link rel="next" href="../release_report-0_1/">
+        <link rel="next" href="../bolt_35c_report/">
       
       
         
@@ -6340,6 +6340,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../bolt_35c_report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 35c 終了報告
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../release_report-0_1/" class="md-nav__link">
         
   
@@ -11768,7 +11796,7 @@
 <td style="text-align: left;">5</td>
 <td style="text-align: left;"><strong>判定の置き場所</strong></td>
 <td style="text-align: left;">ステップ 3</td>
-<td style="text-align: left;">決定済み（6）: 照会のサービス（<code>StaffQuotationQueryService</code>）。ボタン・GET・POST が同じ照会を使う</td>
+<td style="text-align: left;">決定済み（6）: 照会のサービス（<code>StaffQuotationQueryService</code>）。ボタン・GET・POST が同じ照会を使う。開発レビューで改めた（ドメインの規則 <code>RequotePolicy</code> に移す。更新履歴 2026-10-20）</td>
 </tr>
 <tr>
 <td style="text-align: left;">6</td>
@@ -11839,6 +11867,11 @@
 </tr>
 </thead>
 <tbody>
+<tr>
+<td style="text-align: left;">2026-10-20</td>
+<td style="text-align: left;">開発レビューの決定を反映した（human:kakimomokuri）。(6) を改め、再見積りできるかの判定を照会のサービスからドメインの規則 <code>RequotePolicy</code>（<code>domain.model.rules</code>）に移した（コマンドのサービスが照会のサービスに依存する向きを避ける。S-09 の <code>BookableCargoPolicy</code> と同じ形）。提示の前に失効した承認待ちの行のリンクは「… を再見積りする」にした。経路設計中・荷主承認待ちの表の SQL に、輸送要求が予約待ちで見積りが荷主承認待ちの行を足した（35c で直す。DE-24 の受け取りの前に提示した見積りが一覧から消えないように）</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5、決定 human:kakimomokuri</td>
+</tr>
 <tr>
 <td style="text-align: left;">2026-10-19</td>
 <td style="text-align: left;">計画を承認した（確認ポイント 6〜13 を推奨のとおり）</td>
