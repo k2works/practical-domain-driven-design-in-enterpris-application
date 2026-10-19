@@ -11356,7 +11356,7 @@
 </tr>
 <tr>
 <td style="text-align: left;"><code>uiTest</code></td>
-<td style="text-align: left;">緑（AC3 の画面の層のシナリオで axe と要約へのフォーカスを確かめた）</td>
+<td style="text-align: left;">緑（AC3 の画面の層のシナリオで axe と要約へのフォーカスを確かめた）。CI は <code>0122090aa</code> で別の機能のシナリオが 2 回揺らぎ、3 回目で通った（既知の課題）</td>
 </tr>
 <tr>
 <td style="text-align: left;">SonarQube</td>
@@ -11495,6 +11495,7 @@
 <li>予約から見積りのドメインへの型の依存を見る ArchUnit の規則がない（<code>ModularityTest</code> の allowedDependencies だけが守る）</li>
 <li>判定の順（特殊貨物 → 確定条件）の知識がサービスと集約の 2 か所にある。集約に副作用のない事前判定を置いて 1 か所にする</li>
 <li>DB の列の注釈 <code>booking_version.cargo_category</code> は「貨物区分」のまま（スキーマに当たるので触らなかった）</li>
+<li>CI の画面の層のテストで、session の失効の警告の機能（<code>session_timeout_ui.feature</code>。入力の控えを戻す案内 <code>#session-input-status</code> の表示待ち）が 2 回続けて落ち、毎回違うシナリオで、3 回目の流し直しで通った（<code>0122090aa</code> の CI。ローカルの uiTest は緑）。この Bolt の変更は予約の画面だけで、同じ画面・部品に触れていないので揺らぎと判断した。揺らぎの原因を調べるかを W5 の締めの議題にする</li>
 <li>Bolt 34f の既知の課題（S-20 のエラー要約の形とフォーカスなど）は変わらず</li>
 </ul>
 <h2 id="bolt">次の Bolt<a class="headerlink" href="#bolt" title="Permanent link">&para;</a></h2>
