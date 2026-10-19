@@ -11940,7 +11940,7 @@ src/test/java/.../ui/                     画面の層のステップ定義（@u
 <td style="text-align: left;">○（境界値。再見積りの提示の DE-24 と輸送要求の戻し、届く順の入れ替わりを輸送要求と見積りの読み込みの後に差し込むテスト。Bolt 35b2）</td>
 <td style="text-align: left;">○（再見積りの提示で輸送要求が荷主承認待ち、再承認で予約待ち、戻しの後の旧版の DE-04 で荷主承認待ちのまま。Bolt 35b2）</td>
 <td style="text-align: left;">○（引き継いだ見積りの保存と旧版の失効。PostgreSQL。Bolt 35b）</td>
-<td style="text-align: left;">—</td>
+<td style="text-align: left;">承認の後に失効した見積りの再見積り（S-02 の予約の確定待ちの表から再見積りのフォーム、読み取り専用の経路方針と経路版、算出、提示まで。<code>requote_after_approval_ui.feature</code>、<code>@ui</code>。D-85。Bolt 35c）</td>
 </tr>
 <tr>
 <td style="text-align: left;">Q-INV-08（自社の輸送要求だけ）</td>
