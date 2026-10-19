@@ -23,6 +23,7 @@ cargo-tracker プロジェクトの ADR ドキュメントです。
 | [ADR-015](./015-booking-saga-starts-tracking-by-event.md) | 予約サガは状態を予約に持ち、追跡の開始は追跡が DE-07 を購読して行う（ADR-003 を改訂） | 承認済み（文面は Bolt 23 の終了報告で確かめる） |
 | [ADR-016](./016-booking-checks-quotation-at-commit-time.md) | 予約は commit 時刻を渡して見積りの公開 API で確定に使えるかを確かめる | 承認済み（文面は Bolt 23 の終了報告で確かめる） |
 | [ADR-017](./017-notification-module-and-mail.md) | 通知モジュールを新設し、メールは公開 API で受けて SMTP で送る | 採用（2026-10-15、Bolt 33） |
+| [ADR-018](./018-requote-returns-transport-request-with-ordering-guard.md) | 再見積りの提示で輸送要求を荷主承認待ちへ戻し、届く順の入れ替わりは楽観ロックでぶつけて守る | 採用（2026-10-19、Bolt 35b2。文面は終了報告で確かめる） |
 
 ## 補足
 

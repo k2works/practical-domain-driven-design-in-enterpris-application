@@ -4,7 +4,7 @@ title: "cargo-tracker テスト戦略"
 description: "cargo-tracker のテスト形状、テストレベルと責務、BDD（Cucumber）のシナリオ階層とタグ規約、不変条件・ユーザーストーリーとテストの対応、カバレッジ目標、CI での実行。"
 tags: [design, test-strategy, bdd]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-19T03:39:46Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-19T08:48:17Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T08:12:04Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:01:38Z }
@@ -227,7 +227,7 @@ US-04 の受入条件と BR-10 の境界を、日本語 Gherkin で書いた例�
 | :--- | :--- | :--- | :--- | :--- |
 | Q-INV-01〜03（提出の条件、特殊貨物、版の不変） | ○ | ○ | 版の表の INSERT のみ（UPDATE の権限なし） | 特殊貨物の案内（`@ui`） |
 | Q-INV-04（最新版の審査） | ○ | ○ | — | — |
-| Q-INV-05〜07（見積りの条件と提示時刻、有効期限、失効・置換） | ○（境界値） | ○ | ○（引き継いだ見積りの保存と旧版の失効。PostgreSQL。Bolt 35b） | — |
+| Q-INV-05〜07（見積りの条件と提示時刻、有効期限、失効・置換） | ○（境界値。再見積りの提示の DE-24 と輸送要求の戻し、届く順の入れ替わりを輸送要求と見積りの読み込みの後に差し込むテスト。Bolt 35b2） | ○（再見積りの提示で輸送要求が荷主承認待ち、再承認で予約待ち、戻しの後の旧版の DE-04 で荷主承認待ちのまま。Bolt 35b2） | ○（引き継いだ見積りの保存と旧版の失効。PostgreSQL。Bolt 35b） | — |
 | Q-INV-08（自社の輸送要求だけ） | — | ○ | — | ○（他社の URL の拒否） |
 | Q-INV-09〜10（荷主の回答、荷主の承認） | ○（境界値: 承認時の有効期限、経路版の状態） | ○ | — | 回答・承認の画面（`@ui`） |
 | Q-INV-11（複製） | ○ | ○ | — | — |

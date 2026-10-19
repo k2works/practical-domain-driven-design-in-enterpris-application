@@ -4,7 +4,7 @@ title: "cargo-tracker データモデル"
 description: "cargo-tracker の概念データモデル、スキーマ分割、命名と型の規約（H2 と PostgreSQL の共通部分）、コンテキストごとの論理データモデルと ER 図、版・追記専用・冪等性・イベント配信の表現。"
 tags: [design, data-model]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-19T06:27:52Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-19T08:48:17Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T07:48:17Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:01:37Z }
@@ -160,7 +160,7 @@ ADR-007 により、DDL は H2（PostgreSQL 互換モード）と PostgreSQL 18 
 
 | 表 | 役割 | 更新 |
 | :--- | :--- | :--- |
-| ヘッダ（例: `transport_request`） | 現在の状態、現在の版番号、楽観ロックの `version` | 状態の変化のたびに UPDATE する |
+| ヘッダ（例: `transport_request`） | 現在の状態、現在の版番号、楽観ロックの `version` | 状態の変化のたびに UPDATE する（輸送要求は、DE-04・DE-24 の listener が状態を変えずに `version` だけを上げることがある。届く順の入れ替わりの守り。ADR-018、Bolt 35b2） |
 | 版（例: `transport_request_version`） | 版ごとの内容。主キーは（ヘッダ ID、版番号） | INSERT だけ。作った版の行は更新しない |
 
 集約の楽観ロック（`version`）と業務上の版番号（`*_version_no`）は別の列にする。前者は同時更新の検出、後者は業務が参照する版である。
