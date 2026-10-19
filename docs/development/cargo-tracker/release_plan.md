@@ -4,7 +4,7 @@ title: "リリース計画 - cargo-tracker（A 社国際貨物輸送管理シス
 description: "cargo-tracker MVP のリリース計画。1 人 + AI、時間単位の Bolt（= イテレーション）と週次の見直しで、最初の縦の流れ（R0.1）、パイロット準備完了（R1.0）、本格展開前（R1.1）の 3 段階、Unit のエントロピー評価、SP、バッファ、パイロット開始の条件、引継ぎ ID の台帳、業務責任者に確かめる事項の台帳。"
 tags: [development,release-plan]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-19T00:54:50Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-19T02:09:48Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T09:29:53Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:38:26Z }
@@ -647,7 +647,7 @@ US-18 の Bolt の順序は 31b → 31c → 31d → 32 → 32c → 32d → 32b �
 - [x] Bolt 34c: 振る舞いの変わらない直し（認証・監査の経路と文書と見張り）。[Bolt 34c 計画](bolt_34c_plan.md)（承認済み）、[Bolt 34c 終了報告](bolt_34c_report.md)（完了、2026-10-17 に承認済み。監査の書き手と @Service・@Bean の役割を今の形のまま書き、AT-09〜11 を足し、login_failure の注釈を直した）
 - [x] Bolt 34e: 振る舞いの変わらない直し（利用者の管理のドメインとサービス）。[Bolt 34e 計画](bolt_34e_plan.md)（承認済み）、[Bolt 34e 終了報告](bolt_34e_report.md)（完了、2026-10-18 に承認済み。承認の値を判定した利用者で縛り、結果の型を確かめる結果と変える結果に分け、判定の前半と login の補助をまとめた）
 - [x] Bolt 34f: 振る舞いの変わらない直し（S-20 の画面の構造）。[Bolt 34f 計画](bolt_34f_plan.md)（承認済み）、[Bolt 34f 終了報告](bolt_34f_report.md)（承認済み）
-- [x] Bolt 35: US-04 AC3・AC5（#43）。[Bolt 35 計画](bolt_35_plan.md)（承認済み）、[Bolt 35 終了報告](bolt_35_report.md)（承認待ち）
+- [x] Bolt 35: US-04 AC3・AC5（#43）。[Bolt 35 計画](bolt_35_plan.md)（承認済み）、[Bolt 35 終了報告](bolt_35_report.md)（承認済み。#43 は支援技術による手動確認の後にクローズ）
 - [ ] Bolt 35b: D-85 の再見積り
 - [ ] W5 の締め: 結果とふりかえり、開いている持ち越しの数（T-89）、W6 の計画の見直し
 
@@ -1016,3 +1016,4 @@ xychart-beta
 | 2026-10-19 | Bolt 35 の計画を承認した（確認ポイント 8〜13 を推奨のとおり） | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-10-19 | Bolt 35 のステップ 1 で、US-04 の決定、B-INV-04 と予約の規則（domain_model・architecture_backend）、S-09（ui_design）、テスト戦略の B-INV-04 の行、D-85 の行の位置と 35b、W5 の本数（29 本）、開発戦略の W5 のデモを直した | anthropic/claude-opus-5-5 |
 | 2026-10-19 | Bolt 35 を終え、[終了報告](bolt_35_report.md)を作った（承認待ち）。開発レビューの後に human:kakimomokuri が、特殊貨物のときの表の文言、S-09 のエラー要約へのフォーカスを 35 で直す、特殊貨物の表示の axe と支援技術の手動確認は後に送る、と決めた。#43 のクローズと US-04 の SP 3 は報告の承認の後 | anthropic/claude-opus-5-5 |
+| 2026-10-19 | Bolt 35 の終了報告の承認を記録した（議題 1〜3）。#43 は支援技術による手動確認の後にクローズし、US-04 の SP 3 はそのときに数える（W5 の締めの議題）。次は Bolt 35b | anthropic/claude-opus-5-5、承認 human:kakimomokuri |

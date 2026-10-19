@@ -3,7 +3,9 @@ type: Plan
 title: "Bolt 35 終了報告 - 本予約の確定の不足条件と特殊貨物（US-04 AC3・AC5）"
 description: "W5 の 28 本目の Bolt の終了報告。本予約の確定（S-09）で不足条件をまとめて示し（AC3）、特殊貨物を含む見積りの確定を予約の規則 BookableCargoPolicy で拒んで、S-09 を開いたときから MVP の対象外と手動の窓口を示す（AC5、B-INV-04）。特殊貨物の見積りは見積りの側の受入テストのステップで提出の規則を通さずに置き、予約は本物の公開 API を通して確かめた。開発レビューの後に、拒んだ結果を画面に渡す形、S-09 のエラー要約へのフォーカス、表の文言を直した。"
 tags: [plan]
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-19T01:43:59Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-19T02:09:48Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-10-19T02:09:49Z }
 ---
 
 # Bolt 35 終了報告 - 本予約の確定の不足条件と特殊貨物（US-04 AC3・AC5）
@@ -113,6 +115,7 @@ Bolt 35b（D-85 の再見積り）。その前に、W5 の締めの議題に議�
 
 | 日付 | 更新内容 | 更新者 |
 | :--- | :--- | :--- |
+| 2026-10-19 | 終了報告を承認した（議題 1〜3。議題 3 の人に諮らずに変えた点を事後に承認）。#43 は支援技術による手動確認の後にクローズし、それまで開けたままにする。受入条件のチェックだけを入れた。US-04 の SP 3 は #43 のクローズのときに数える | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-10-19 | 初版作成（承認待ち）。`check` 2547 件・`uiTest` 276 件が緑、SonarQube PASS | anthropic/claude-opus-5-5 |
 
 ## 関連ドキュメント
