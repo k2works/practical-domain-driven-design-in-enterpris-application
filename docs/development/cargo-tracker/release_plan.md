@@ -4,7 +4,7 @@ title: "リリース計画 - cargo-tracker（A 社国際貨物輸送管理シス
 description: "cargo-tracker MVP のリリース計画。1 人 + AI、時間単位の Bolt（= イテレーション）と週次の見直しで、最初の縦の流れ（R0.1）、パイロット準備完了（R1.0）、本格展開前（R1.1）の 3 段階、Unit のエントロピー評価、SP、バッファ、パイロット開始の条件、引継ぎ ID の台帳、業務責任者に確かめる事項の台帳。"
 tags: [development,release-plan]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-19T08:26:58Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-19T08:31:56Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T09:29:53Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:38:26Z }
@@ -651,7 +651,7 @@ US-18 の Bolt の順序は 31b → 31c → 31d → 32 → 32c → 32d → 32b �
 - [x] Bolt 34f: 振る舞いの変わらない直し（S-20 の画面の構造）。[Bolt 34f 計画](bolt_34f_plan.md)（承認済み）、[Bolt 34f 終了報告](bolt_34f_report.md)（承認済み）
 - [x] Bolt 35: US-04 AC3・AC5（#43）。[Bolt 35 計画](bolt_35_plan.md)（承認済み）、[Bolt 35 終了報告](bolt_35_report.md)（承認済み。支援技術による手動確認の後に #43 をクローズした）
 - [x] Bolt 35b: D-85 の再見積り（ドメインと業務ルール層）。[Bolt 35b 計画](bolt_35b_plan.md)（承認済み）、[Bolt 35b 終了報告](bolt_35b_report.md)（承認済み。35b は単独で出さず 35b2・35c と一緒に出す）
-- [ ] Bolt 35b2: D-85 の輸送要求の戻し（DE-24）。[Bolt 35b2 計画](bolt_35b2_plan.md)（承認待ち）
+- [ ] Bolt 35b2: D-85 の輸送要求の戻し（DE-24）。[Bolt 35b2 計画](bolt_35b2_plan.md)（承認済み）
 - [ ] Bolt 35c: D-85 の画面とマニュアル
 - [ ] W5 の締め: 結果とふりかえり、開いている持ち越しの数（T-89）、W6 の計画の見直し
 
@@ -1031,3 +1031,4 @@ xychart-beta
 | 2026-10-19 | Bolt 35b を終え、[終了報告](bolt_35b_report.md)を作った（承認待ち）。開発レビューの後に human:kakimomokuri が、引き継ぐときは旧版の経路方針で上書きする、判定・照合・引き継ぎ・置き換えを旧版の 1 つの操作にまとめる、出発した後の再見積りを台帳に載せる（D-88）、と決めた。35b の行にレビューの決定 (12)〜(14) と単独で出さないことを、台帳の D-85 の今の扱いを直した | anthropic/claude-opus-5-5 |
 | 2026-10-19 | Bolt 35b の終了報告の承認を記録した（議題 1〜3）。35b は単独で出さず 35b2・35c と一緒に出す。次は Bolt 35b2 | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-10-19 | Bolt 35b2 の開始準備で、[Bolt 35b2 計画](bolt_35b2_plan.md)を作った（承認待ち）。human:kakimomokuri の決定 (1)・(2) を 35b2 の行に書いた | anthropic/claude-opus-5-5 |
+| 2026-10-19 | Bolt 35b2 の計画を承認した（確認ポイント 3〜11 を推奨のとおり） | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
