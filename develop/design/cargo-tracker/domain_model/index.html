@@ -13127,7 +13127,7 @@
 <tr>
 <td style="text-align: left;">確定できる貨物の規則</td>
 <td style="text-align: left;">BookableCargoPolicy</td>
-<td style="text-align: left;">写した貨物種別の名前が一般貨物（<code>GENERAL</code>）のときだけ確定できるとする（B-INV-04。Bolt 35）。知らない値・空の値は確定しない。見積りの <code>MvpAcceptancePolicy</code> は使わない（BC の独立。予約は見積りの公開 API から写した値だけで判定する）。サービスの判定と <code>Booking.confirm</code> の両方が使う</td>
+<td style="text-align: left;">写した貨物種別の名前が一般貨物（<code>GENERAL</code>）のときだけ確定できるとする（B-INV-04。Bolt 35）。知らない値・空の値は確定しない。見積りの <code>MvpAcceptancePolicy</code> は使わない（BC の独立。予約は見積りの公開 API から写した値だけで判定する）。サービスの判定、<code>Booking.confirm</code>、S-09 を開いたときの読み取りモデル（<code>BookingConfirmationPage.Available.specialCargo</code>）の 3 か所が同じ規則を使う</td>
 </tr>
 <tr>
 <td style="text-align: left;">確定の判定の順序</td>
