@@ -152,6 +152,31 @@ public class QuotationUiSteps {
         browser.checkAccessibility();
     }
 
+    /** 経路を引き継ぐ再見積りのフォーム（D-85。Bolt 35c）。経路方針は入れる欄でなく、引き継ぐ値の読み取り専用の表示で示す。 */
+    @ならば("再見積りのフォームに引き継ぐ経路方針と経路版 {int} が読み取り専用で示され、経路方針を入れる欄がない")
+    public void 引き継ぐ経路が読み取り専用で示される(int routeVersionNo) {
+        Locator main = page().locator("main");
+        assertThat(main).containsText("承認済みの経路版と経路方針を引き継ぎ");
+        assertThat(main).containsText("経路版 " + routeVersionNo);
+        assertThat(definition("主な経由地")).isVisible();
+        assertThat(page().getByLabel("主な経由地（UN/LOCODE、カンマ区切り、任意）")).hasCount(0);
+        assertThat(page().getByLabel("概算の出発日時（日本時間）")).hasCount(0);
+        assertThat(page().getByLabel("概算の到着日時（日本時間）")).hasCount(0);
+        assertThat(main).not().containsText("詳細な経路は、経路設計者の承認後に確定します。");
+    }
+
+    @もし("キー操作だけで再見積りのフォームに有効期限 {string} を入れて算出すると見積り {int} が承認待ちで開く")
+    public void キー操作だけで再見積りのフォームから算出する(String expiresAt, int quotationNo) {
+        page().locator("body").focus();
+        browser.tabUntilFocused(field(EXPIRES_AT));
+        page().keyboard().type(expiresAt);
+        browser.tabUntilFocused(button(CALCULATE));
+        page().keyboard().press("Enter");
+        page().waitForURL("**" + quotationsPath() + "/" + quotationNo);
+        assertThat(definition("状態")).hasText("承認待ち");
+        browser.checkAccessibility();
+    }
+
     @ならば("見積り {int} は {string} で {string} と見積り {int} へのリンクが表示され、提示と再見積りの操作はない")
     public void 置換済みが表示される(int quotationNo, String status, String message, int replacementNo) {
         assertThat(page().getByRole(AriaRole.HEADING, new Page.GetByRoleOptions().setLevel(1)))

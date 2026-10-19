@@ -43,7 +43,10 @@ public interface QuotationRepository {
      */
     List<RoutingRequestedSummary> findRoutingRequestedSummaries();
 
-    /** 予約の確定待ち（荷主が承認した見積り。輸送要求が予約確定済みでないもの）を有効期限の近い順に（S-02。Bolt 23b）。 */
+    /**
+     * 予約の確定待ち（荷主が承認した見積りと、荷主の承認の後に失効した見積りを再見積りした後で提示する前の経路を持つ承認待ちの見積り。
+     * 輸送要求が予約確定済みでないもの）を有効期限の近い順に（S-02。Bolt 23b。承認待ちの行は D-85。Bolt 35c）。
+     */
     List<AwaitingBookingSummary> findAwaitingBookingSummaries();
 
     /** 見積りを ID で探す（経路の割当て。経路設計は依頼元の見積り ID を持つ。Bolt 20）。 */

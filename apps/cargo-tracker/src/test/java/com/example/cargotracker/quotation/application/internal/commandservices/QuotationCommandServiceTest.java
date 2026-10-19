@@ -377,7 +377,8 @@ class QuotationCommandServiceTest {
                 transportRequests.findByNumberForStaff(NUMBER).orElseThrow().id();
 
         assertThat(atExpiry().requote(new RequoteQuotationCommand(NUMBER, 1, laterInput())))
-                .isEqualTo(new RequotationOutcome.Rejected(QuotationRejection.TRANSPORT_REQUEST_NOT_QUOTING));
+                .as("画面と同じ照会の判定（D-85。Bolt 35c）")
+                .isEqualTo(new RequotationOutcome.Rejected(QuotationRejection.TRANSPORT_REQUEST_BOOKED));
         assertThat(quotations.findByTransportRequestIdAndNo(id, 1))
                 .hasValueSatisfying(old -> assertThat(old.status()).isEqualTo(QuotationStatus.APPROVED));
         assertThat(quotations.findByTransportRequestIdAndNo(id, 2)).isEmpty();

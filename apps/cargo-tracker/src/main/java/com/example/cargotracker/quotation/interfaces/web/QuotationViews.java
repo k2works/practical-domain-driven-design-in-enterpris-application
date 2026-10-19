@@ -97,7 +97,6 @@ final class QuotationViews {
                 dateTime.apply(policy.departureAt()),
                 dateTime.apply(policy.arrivalAt()),
                 quotation.presentRejectionAt(now).isEmpty(),
-                quotation.requoteRejection().isEmpty() && quotation.status() != QuotationStatus.DRAFT,
                 replaced || expired,
                 replaced,
                 expired,
@@ -174,7 +173,6 @@ final class QuotationViews {
      * @param departureAt 概算の出発日時
      * @param arrivalAt 概算の到着日時
      * @param presentable 社内承認して提示できるか（承認待ちで、失効していない）
-     * @param requotable 再見積りできるか（承認待ち・提示済み。失効したものを含む）
      * @param readOnly 読み取り専用か（置換済み・失効）
      * @param replaced 置換済みか（荷主には新しい見積りを準備中と案内する。D-37）
      * @param expired 表示する時刻で失効しているか（失効を記録したものを含む）
@@ -198,7 +196,6 @@ final class QuotationViews {
             String departureAt,
             String arrivalAt,
             boolean presentable,
-            boolean requotable,
             boolean readOnly,
             boolean replaced,
             boolean expired,

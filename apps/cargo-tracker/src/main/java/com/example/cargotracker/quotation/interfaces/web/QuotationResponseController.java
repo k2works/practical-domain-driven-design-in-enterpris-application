@@ -128,6 +128,7 @@ public class QuotationResponseController {
             case REPLACED -> subject + " は新しい見積りに置き換えられました。見積依頼の詳細で最新の状況をご確認ください";
             case ROUTING_REQUESTED -> subject + " ですでに詳細経路設計を依頼しています";
             case TRANSPORT_REQUEST_NOT_QUOTING,
+                    TRANSPORT_REQUEST_BOOKED,
                     ALREADY_QUOTED,
                     NOT_PENDING_APPROVAL,
                     OUTDATED_VERSION,

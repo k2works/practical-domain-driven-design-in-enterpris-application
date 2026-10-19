@@ -3,6 +3,7 @@ package com.example.cargotracker.quotation.application.internal.commandservices;
 import com.example.cargotracker.quotation.application.internal.commands.CalculateQuotationCommand;
 import com.example.cargotracker.quotation.application.internal.commands.PresentQuotationCommand;
 import com.example.cargotracker.quotation.application.internal.commands.RequoteQuotationCommand;
+import com.example.cargotracker.quotation.application.internal.queryservices.StaffQuotationQueryService;
 import com.example.cargotracker.quotation.domain.model.aggregates.ConcurrentQuotationUpdateException;
 import com.example.cargotracker.quotation.domain.model.aggregates.DuplicateQuotationException;
 import com.example.cargotracker.quotation.domain.model.aggregates.Quotation;
@@ -15,10 +16,8 @@ import com.example.cargotracker.quotation.domain.model.valueobjects.QuotationVio
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestStatus;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import java.time.Clock;
-import java.util.EnumSet;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 import java.util.UUID;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
@@ -36,22 +35,12 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class QuotationCommandService {
 
-    /**
-     * 再見積りできる見積依頼の状態（見積提示済みは DE-03 を受けた後）。荷主の承認の後に失効した見積りの再見積り（D-85。Bolt 35b）の
-     * ため、経路設計中・荷主承認待ち・予約待ちも含める（経路設計中・荷主承認待ちは DE-21・DE-04 の配信の遅れのとき）。経路設計の途中の
-     * 見積りは見積りの判定が拒む。予約済みは含めない。
-     */
-    private static final Set<TransportRequestStatus> REQUOTABLE = EnumSet.of(
-            TransportRequestStatus.QUOTING,
-            TransportRequestStatus.QUOTED,
-            TransportRequestStatus.ROUTING,
-            TransportRequestStatus.AWAITING_APPROVAL,
-            TransportRequestStatus.READY_TO_BOOK);
-
     private final TransportRequestRepository transportRequestRepository;
     private final QuotationRepository quotationRepository;
     private final ApplicationEventPublisher eventPublisher;
     private final Clock clock;
+    /** 再見積りできるかの判定（画面のボタン・GET と同じ照会。D-85。Bolt 35c）。 */
+    private final StaffQuotationQueryService requoteJudgement;
 
     public QuotationCommandService(
             TransportRequestRepository transportRequestRepository,
@@ -62,6 +51,7 @@ public class QuotationCommandService {
         this.quotationRepository = quotationRepository;
         this.eventPublisher = eventPublisher;
         this.clock = clock;
+        this.requoteJudgement = new StaffQuotationQueryService(transportRequestRepository, quotationRepository);
     }
 
     /**
@@ -150,24 +140,19 @@ public class QuotationCommandService {
             return new RequotationOutcome.NotFound();
         }
         Quotation old = previous.get();
-        if (!REQUOTABLE.contains(request.status())) {
-            return new RequotationOutcome.Rejected(QuotationRejection.TRANSPORT_REQUEST_NOT_QUOTING);
-        }
-        if (old.transportRequestVersionNo() != request.currentVersion().versionNo()) {
-            return new RequotationOutcome.Rejected(QuotationRejection.OUTDATED_VERSION);
-        }
         UtcInstant now = new UtcInstant(clock.instant());
+        // 輸送要求の状態・版と、置換済み・失効・期限内の承認済みの旧版は、入力を見る前に拒否する。判定は画面のボタン・GET と同じ照会を
+        // 使う（D-85。Bolt 35c）。旧版は、入力に誤りがないと分かってから置き換える
+        Optional<QuotationRejection> rejection = requoteJudgement.requoteRejection(request, old, now);
+        if (rejection.isPresent()) {
+            return new RequotationOutcome.Rejected(rejection.get());
+        }
         int quotationNo = nextQuotationNo(existing);
         Quotation replacement = Quotation.create(
                 new QuotationId(UUID.randomUUID()),
                 request.id(),
                 request.currentVersion().versionNo(),
                 quotationNo);
-        // 置換済み・失効・期限内の承認済みの旧版は、入力を見る前に拒否する。旧版は、入力に誤りがないと分かってから置き換える
-        Optional<QuotationRejection> rejection = old.requoteRejectionAt(now);
-        if (rejection.isPresent()) {
-            return new RequotationOutcome.Rejected(rejection.get());
-        }
         Optional<QuotationViolations> violations = replacement.calculate(command.input(), now);
         if (violations.isPresent()) {
             return new RequotationOutcome.Invalid(violations.get());

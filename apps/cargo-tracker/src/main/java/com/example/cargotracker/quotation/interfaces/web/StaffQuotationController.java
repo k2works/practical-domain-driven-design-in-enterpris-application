@@ -139,7 +139,12 @@ public class StaffQuotationController {
         Quotation quotation =
                 queryService.find(request.number(), quotationNo).orElseThrow(StaffQuotationController::notFound);
         UtcInstant now = new UtcInstant(clock.instant());
-        model.addAttribute("expiredNotice", expiredNotice(quotation, now));
+        // 再見積りの操作の出し分けは、GET・POST と同じ照会の判定を使う（輸送要求の状態と版を含む。D-85。Bolt 35c）
+        Optional<QuotationRejection> requoteRejection = queryService.requoteRejection(request, quotation, now);
+        model.addAttribute("requotable", requoteRejection.isEmpty() && quotation.status() != QuotationStatus.DRAFT);
+        model.addAttribute(
+                "expiredNotice",
+                expiredNotice(quotation, now, QuotationViews.label(request.number(), quotationNo), requoteRejection));
         model.addAttribute("routingRequestedNotice", routingRequestedNotice(quotation, now));
         List<Quotation> all =
                 quotation.status() == QuotationStatus.REPLACED || quotation.status() == QuotationStatus.EXPIRED
@@ -176,7 +181,11 @@ public class StaffQuotationController {
         return SHOW_VIEW;
     }
 
-    /** S-04 の再見積り。旧版の料金明細・通貨・経路方針を初期値にし、有効期限は空にする。置換済み・失効の見積りからは開けない。 */
+    /**
+     * S-04 の再見積り。旧版の料金明細・通貨・経路方針を初期値にし、有効期限は空にする。再見積りできない見積り（置換済み・失効の記録、
+     * 期限内の承認済み、予約確定済みの見積依頼など）からは開けない（判定は POST と同じ照会。D-85。Bolt 35c）。経路を持つ旧版からは、
+     * 引き継ぐ経路方針と経路版を読み取り専用で示す。
+     */
     @GetMapping("/{quotationNo}/requotation")
     public String requotation(
             @PathVariable String number,
@@ -186,19 +195,21 @@ public class StaffQuotationController {
         TransportRequest request = findTransportRequest(number);
         Quotation quotation =
                 queryService.find(request.number(), quotationNo).orElseThrow(StaffQuotationController::notFound);
-        Optional<QuotationRejection> rejection = quotation.requoteRejection();
+        Optional<QuotationRejection> rejection =
+                queryService.requoteRejection(request, quotation, new UtcInstant(clock.instant()));
         if (rejection.isPresent()) {
             redirectAttributes.addFlashAttribute(
                     PROBLEM, rejection(QuotationViews.label(request.number(), quotationNo), rejection.get()));
             return REDIRECT + quotationPath(request.number(), quotationNo);
         }
         model.addAttribute("quotationForm", QuotationFormConverter.toForm(quotation));
-        return showRequotationForm(request, quotationNo, model);
+        return showRequotationForm(request, quotationNo, Optional.of(quotation), model);
     }
 
     /**
      * 再見積りする。算出したら新しい見積りへ移り（PRG）、誤りがあれば入力を残してエラー要約で示す。
-     * 受け付けなかったとき（置換済み・失効など）と競合したときは、旧版に戻して理由を示す。
+     * 受け付けなかったとき（置換済み・失効など）と競合したときは、旧版に戻して理由を示す。経路を持つ旧版からの再見積りでは、経路方針を
+     * 画面から受けず、旧版の値を入力に入れる（送られた値は捨てる。集約も旧版の値で上書きする。D-85。Bolt 35c）。
      */
     @PostMapping("/{quotationNo}/requotation")
     public String requote(
@@ -209,10 +220,18 @@ public class StaffQuotationController {
             Model model,
             RedirectAttributes redirectAttributes) {
         TransportRequest request = findTransportRequest(number);
+        Optional<Quotation> old = queryService.find(request.number(), quotationNo);
+        old.filter(quotation -> quotation.assignedRoute().isPresent())
+                .map(QuotationFormConverter::toForm)
+                .ifPresent(inherited -> {
+                    quotationForm.setVia(inherited.getVia());
+                    quotationForm.setDepartureAt(inherited.getDepartureAt());
+                    quotationForm.setArrivalAt(inherited.getArrivalAt());
+                });
         List<Integer> rowsOfLines = new ArrayList<>();
         Optional<QuotationInput> input = QuotationFormConverter.convert(quotationForm, bindingResult, rowsOfLines);
         if (input.isEmpty()) {
-            return showRequotationForm(request, quotationNo, model);
+            return showRequotationForm(request, quotationNo, old, model);
         }
         String oldLabel = QuotationViews.label(request.number(), quotationNo);
         return switch (commandService.requote(
@@ -230,7 +249,7 @@ public class StaffQuotationController {
             }
             case RequotationOutcome.Invalid(QuotationViolations violations) -> {
                 QuotationViolationMessages.reject(violations, bindingResult, rowsOfLines);
-                yield showRequotationForm(request, quotationNo, model);
+                yield showRequotationForm(request, quotationNo, old, model);
             }
             case RequotationOutcome.Rejected(QuotationRejection reason) -> {
                 redirectAttributes.addFlashAttribute(PROBLEM, rejection(oldLabel, reason));
@@ -279,12 +298,28 @@ public class StaffQuotationController {
         return showForm(request, model);
     }
 
-    private String showRequotationForm(TransportRequest request, int quotationNo, Model model) {
+    private String showRequotationForm(
+            TransportRequest request, int quotationNo, Optional<Quotation> old, Model model) {
         model.addAttribute(FORM_HEADING, "再見積り（" + QuotationViews.label(request.number(), quotationNo) + " から）");
         model.addAttribute(FORM_ACTION, quotationPath(request.number(), quotationNo) + "/requotation");
+        Optional<Quotation> inheriting =
+                old.filter(quotation -> quotation.assignedRoute().isPresent());
+        String replacing = "算出すると、見積 " + quotationNo + " を新しい見積りに置き換えます（有効期限を過ぎていれば失効として記録します）。";
         model.addAttribute(
                 "requotationNotice",
-                "算出すると、見積 " + quotationNo + " を新しい見積りに置き換えます（有効期限を過ぎていれば失効として記録します）。" + "旧版は読み取り専用で残ります。");
+                inheriting.isPresent()
+                        ? "承認済みの経路版と経路方針を引き継ぎ、料金と有効期限だけを出し直します。" + replacing + "提示すると荷主の再承認を待ちます。"
+                        : replacing + "旧版は読み取り専用で残ります。");
+        // 引き継ぐ経路方針と経路版は、入力欄でなく読み取り専用で示す（D-85。Bolt 35c）
+        inheriting.ifPresent(quotation -> {
+            QuotationViews.View view = QuotationViews.view(
+                    quotation,
+                    TransportRequestLabels::staffDateTime,
+                    new UtcInstant(clock.instant()),
+                    QuotationViews.Audience.STAFF);
+            model.addAttribute("inheritedPolicy", view);
+            model.addAttribute("inheritedRoute", view.route());
+        });
         return showForm(request, model);
     }
 
@@ -319,7 +354,7 @@ public class StaffQuotationController {
      */
     private static String rejection(String subject, QuotationRejection reason) {
         return switch (reason) {
-            case TRANSPORT_REQUEST_NOT_QUOTING -> subject + " は見積り作成中でないため、見積りを作れません";
+            case TRANSPORT_REQUEST_NOT_QUOTING, TRANSPORT_REQUEST_BOOKED -> transportRequestRejection(subject, reason);
             case ALREADY_QUOTED -> subject + " にはすでに見積りがあります";
             case NOT_PENDING_APPROVAL -> subject + " は承認待ちでないため提示できません";
             case EXPIRED -> subject + " は有効期限を過ぎて失効しています。再見積りしてください";
@@ -332,9 +367,17 @@ public class StaffQuotationController {
         };
     }
 
+    /** 見積依頼の状態で見積りの操作を受け付けなかった理由の文言（予約確定済みは D-85。Bolt 35c）。 */
+    private static String transportRequestRejection(String subject, QuotationRejection reason) {
+        if (reason == QuotationRejection.TRANSPORT_REQUEST_BOOKED) {
+            return subject + " は本予約を確定済みのため、再見積りできません";
+        }
+        return subject + " は見積り作成中でないため、見積りを作れません";
+    }
+
     /** 荷主の承認の段階にある見積りの操作を受け付けなかった理由の文言。 */
     private static String approvalStageRejection(String subject, QuotationRejection reason) {
-        // 仮の文言（D-85。Bolt 35b）。UI 設計への記載と見直しは Bolt 35c
+        // 期限内の承認済みの見積りの再見積り（D-85。UI 設計の S-04。Bolt 35c）
         if (reason == QuotationRejection.APPROVED_AND_STILL_VALID) {
             return subject + " は荷主が承認済みで、まだ有効期限内です。本予約の確定へ進んでください";
         }
@@ -344,9 +387,11 @@ public class StaffQuotationController {
 
     /**
      * 失効しているときの案内。有効期限の日時を併記する（Bolt 11 レビュー R-17）。失効を記録した旧版は読み取り専用、
-     * 表示する時刻で失効した承認待ちは提示できず、提示済みは使えない。失効していなければ null。
+     * 表示する時刻で失効した承認待ちは提示できず、提示済みは使えない。荷主の承認の後に失効した見積りは、再見積りできれば経路を引き継ぐ
+     * 再見積りを案内し、できなければその理由を示す（D-85。Bolt 35c）。失効していなければ null。
      */
-    private static String expiredNotice(Quotation quotation, UtcInstant now) {
+    private static String expiredNotice(
+            Quotation quotation, UtcInstant now, String label, Optional<QuotationRejection> requoteRejection) {
         if (!quotation.isExpiredAt(now)) {
             return null;
         }
@@ -356,6 +401,11 @@ public class StaffQuotationController {
                 + "）";
         if (quotation.status() == QuotationStatus.EXPIRED) {
             return expiresAt + "を過ぎて失効しました。この見積りは読み取り専用です。";
+        }
+        if (quotation.status() == QuotationStatus.APPROVED) {
+            return requoteRejection
+                    .map(reason -> "荷主の承認の後に" + expiresAt + "を過ぎました。" + rejection(label, reason) + "。")
+                    .orElse("荷主の承認の後に" + expiresAt + "を過ぎました。承認済みの経路を引き継いで再見積りできます。荷主の再承認が要ります。");
         }
         if (quotation.status().isRoutingStarted()) {
             return expiresAt + "を過ぎたため、この見積りは使えません。荷主が詳細経路設計を依頼済みのため、再見積りはできません。"

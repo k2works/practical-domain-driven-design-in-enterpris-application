@@ -153,9 +153,7 @@ class QuotationTest {
         replaced.replaceWith(new QuotationId(UUID.randomUUID()), now);
 
         assertThat(pending.presentRejectionAt(now)).isEmpty();
-        assertThat(pending.requoteRejection()).isEmpty();
         assertThat(replaced.presentRejectionAt(now)).contains(QuotationRejection.REPLACED);
-        assertThat(replaced.requoteRejection()).contains(QuotationRejection.REPLACED);
         assertThat(pending.requoteRejectionAt(now)).as("判定時刻の判定（D-85。Bolt 35b）").isEmpty();
         assertThat(presented().requoteRejectionAt(at("2099-10-09T00:00:00Z")))
                 .as("提示済みは失効していても再見積りできる")
@@ -343,7 +341,7 @@ class QuotationTest {
         Quotation quotation = presented();
         quotation.requestRouteDesign(respondent, now);
 
-        assertThat(quotation.requoteRejection()).contains(QuotationRejection.ROUTING_REQUESTED);
+        assertThat(quotation.requoteRejectionAt(now)).contains(QuotationRejection.ROUTING_REQUESTED);
         assertThat(quotation.replaceWith(new QuotationId(UUID.randomUUID()), now))
                 .contains(QuotationRejection.ROUTING_REQUESTED);
         assertThat(quotation.status()).isEqualTo(QuotationStatus.ROUTING_REQUESTED);

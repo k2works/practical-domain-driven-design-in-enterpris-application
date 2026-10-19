@@ -203,14 +203,6 @@ class QuotationShipperApprovalTest {
     }
 
     @Test
-    void 画面の判定では35cまで荷主承認待ちも承認済みも詳細設計依頼済みの理由で再見積りを出さない() {
-        assertThat(awaitingApproval().requoteRejection()).contains(QuotationRejection.ROUTING_REQUESTED);
-        assertThat(approved().requoteRejection())
-                .as("期限を過ぎても画面の判定は変えない（D-85。Bolt 35c で判定時刻の判定に替える）")
-                .contains(QuotationRejection.ROUTING_REQUESTED);
-    }
-
-    @Test
     void 荷主承認待ちと承認済みの見積りは有効期限と同時刻から失効として扱い数える見積りに入る() {
         Quotation awaiting = awaitingApproval();
         Quotation approved = awaitingApproval();
@@ -274,7 +266,7 @@ class QuotationShipperApprovalTest {
     }
 
     @Test
-    void 承認済みでなければ画面の判定と判定時刻の判定は期限の前後とも一致する() {
+    void 承認済みでなければ再見積りの判定は期限の前後で変わらない() {
         Quotation replaced = presented();
         replaced.replaceWith(new QuotationId(UUID.randomUUID()), now);
         Quotation expired = presented();
@@ -293,7 +285,7 @@ class QuotationShipperApprovalTest {
             for (UtcInstant at : List.of(now, EXPIRES, at("2099-10-09T00:00:00Z"))) {
                 assertThat(quotation.requoteRejectionAt(at))
                         .as("%s at %s", quotation.status(), at)
-                        .isEqualTo(quotation.requoteRejection());
+                        .isEqualTo(quotation.requoteRejectionAt(now));
             }
         }
     }

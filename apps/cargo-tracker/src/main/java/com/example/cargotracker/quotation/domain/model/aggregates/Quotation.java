@@ -476,25 +476,11 @@ public final class Quotation {
     }
 
     /**
-     * 再見積りできないなら、その理由（置換済み・失効の記録。Q-INV-07）。承認待ち・提示済みは、判定時刻で失効していても
-     * 再見積りできる。詳細設計依頼済みは、経路設計の途中の再見積りを US-05・US-07 で決めるまで再見積りできない（Bolt 12）。
-     * 画面の操作の出し分けもこれを使う（Bolt 11 レビュー R-07）。画面の判定で、Bolt 35c で {@link #requoteRejectionAt(UtcInstant)} に
-     * 替える（それまで荷主の承認の後に失効した見積りの再見積りの操作を画面に出さない。D-85）。
-     *
-     * @return 再見積りできない理由（再見積りできるなら空）
-     */
-    public Optional<QuotationRejection> requoteRejection() {
-        if (status == QuotationStatus.APPROVED) {
-            return Optional.of(QuotationRejection.ROUTING_REQUESTED);
-        }
-        return requoteRejectionUnlessApproved();
-    }
-
-    /**
      * 判定時刻に再見積りできないなら、その理由（Q-INV-07、D-85。Bolt 35b）。置換済み・失効の記録を先に見て、承認済みなら判定時刻が
      * 有効期限より前（期限内）のときだけ拒み、期限を過ぎていれば受け付ける（旧版を失効にして経路を引き継ぐ）。詳細設計依頼済みと
      * 荷主承認待ちは経路設計の途中なので再見積りできない。承認待ち・提示済みは失効していても再見積りできる。
-     * {@link #requoteInto(Quotation, UtcInstant)} と {@link #replaceWith(QuotationId, UtcInstant)} が使う。
+     * {@link #requoteInto(Quotation, UtcInstant)} と {@link #replaceWith(QuotationId, UtcInstant)} が使い、画面のボタン・GET と再見積りの
+     * コマンドは社内の見積りの照会のサービスを通して使う（輸送要求の状態と版を先に見る。Bolt 11 レビュー R-07、D-85。Bolt 35c）。
      *
      * @param at 判定時刻
      * @return 再見積りできない理由（再見積りできるなら空）
@@ -504,11 +490,6 @@ public final class Quotation {
         if (status == QuotationStatus.APPROVED) {
             return isExpiredAt(at) ? Optional.empty() : Optional.of(QuotationRejection.APPROVED_AND_STILL_VALID);
         }
-        return requoteRejectionUnlessApproved();
-    }
-
-    /** 承認済みでない見積りの再見積りの判定。画面の判定と判定時刻の判定は承認済みのときだけ違い、ほかはこれを共にする（Bolt 35b レビュー）。 */
-    private Optional<QuotationRejection> requoteRejectionUnlessApproved() {
         Optional<QuotationRejection> retired = retiredRejection();
         if (retired.isPresent()) {
             return retired;

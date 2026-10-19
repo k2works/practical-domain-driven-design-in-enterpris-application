@@ -32,12 +32,15 @@
     </dl>
     <h2>見積りの内容</h2>
     <div th:replace="~{quotation/fragments/quotation :: details(${quotation})}"></div>
+    <th:block th:if="${quotation.route() != null}">
+        <div th:replace="~{quotation/fragments/assigned-route :: route(${quotation.route()}, 2)}"></div>
+    </th:block>
     <form th:if="${quotation.presentable()}"
           th:action="@{/staff/transport-requests/{number}/quotations/{no}/presentation(number=${number},no=${quotation.quotationNo()})}"
           method="post">
         <button type="submit" class="btn btn-primary">社内承認して提示する</button>
     </form>
-    <p th:if="${quotation.requotable()}">
+    <p th:if="${requotable}">
         <a th:href="@{/staff/transport-requests/{number}/quotations/{no}/requotation(number=${number},no=${quotation.quotationNo()})}">再見積りする</a>
     </p>
 </main>

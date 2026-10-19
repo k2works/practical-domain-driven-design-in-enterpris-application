@@ -180,6 +180,7 @@
         <constructor>
             <arg column="request_number" name="requestNumber" javaType="String"/>
             <arg column="quotation_no" name="quotationNo" javaType="_int"/>
+            <arg column="status" name="status" javaType="String"/>
             <arg column="routing_case_number" name="routingCaseNumber" javaType="String"/>
             <arg column="route_version_no" name="routeVersionNo" javaType="_int"/>
             <arg column="shipper_approved_at" name="shipperApprovedAt" javaType="java.time.OffsetDateTime"/>
@@ -188,14 +189,17 @@
     </resultMap>
 
     <!-- 予約の確定待ちの見積り（受付一覧 S-02。US-04、Bolt 20 レビュー D-78。Bolt 23b）。見積りの承認済みを正にし、輸送要求の荷主承認待ち・
-         予約待ちへの更新（DE-21・DE-04 の配信）を待たない（経路設計中のままでも出す）。予約確定済みの輸送要求は出さない。有効期限の近い順 -->
+         予約待ちへの更新（DE-21・DE-04 の配信）を待たない（経路設計中のままでも出す）。予約確定済みの輸送要求は出さない。有効期限の近い順。
+         荷主の承認の後に失効した見積りを再見積りした後で、社内承認して提示する前の見積り（経路を持つ承認待ち）も出す（D-85。Bolt 35c）。
+         輸送要求の条件は承認済みの行と同じにし、DE-04 の前に再見積りしても出す -->
     <select id="selectAwaitingBooking" resultMap="awaitingBookingSummaryRow">
-        SELECT r.request_number, q.quotation_no, q.routing_case_number, q.route_version_no, q.shipper_approved_at,
+        SELECT r.request_number, q.quotation_no, q.status, q.routing_case_number, q.route_version_no, q.shipper_approved_at,
                q.expires_at
           FROM quotation.transport_request r
           JOIN quotation.quotation q ON q.transport_request_id = r.id
          WHERE r.status IN ('ROUTING', 'AWAITING_APPROVAL', 'READY_TO_BOOK')
-           AND q.status = 'APPROVED'
+           AND (q.status = 'APPROVED'
+                OR (q.status = 'PENDING_APPROVAL' AND q.routing_case_number IS NOT NULL))
          ORDER BY q.expires_at, r.request_number
     </select>
 

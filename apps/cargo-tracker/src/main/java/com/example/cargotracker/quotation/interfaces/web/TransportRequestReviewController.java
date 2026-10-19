@@ -109,12 +109,14 @@ public class TransportRequestReviewController {
                                 TransportRequestLabels.staffDateTime(summary.expiresAt())))
                         .toList());
         // 予約の確定待ち（US-04、D-78。Bolt 23b）。荷主が承認した見積りを有効期限の近い順に示す。有効期限の前は本予約の確定（S-09。
-        // 予約の画面。URL だけでつなぎ、予約のコードには依存しない）を、失効した見積りは再見積り（S-04）を開ける
+        // 予約の画面。URL だけでつなぎ、予約のコードには依存しない）を、失効した見積りは再見積り（S-04）を、再見積りした後で提示する前の
+        // 見積り（経路を引き継いだ承認待ち）は見積り（S-04）を開ける（D-85。Bolt 35c）
         List<AwaitingBookingRow> awaitingBookings = quotationQueryService.findAwaitingBookingSummaries().stream()
                 .map(summary -> awaitingBookingRow(summary, now))
                 .toList();
         model.addAttribute("awaitingBookings", awaitingBookings);
-        model.addAttribute("anyAwaitingExpired", awaitingBookings.stream().anyMatch(AwaitingBookingRow::expired));
+        model.addAttribute(
+                "anyAwaitingInternal", awaitingBookings.stream().anyMatch(row -> row.shipperApprovedAt() == null));
         return LIST_VIEW;
     }
 
@@ -351,11 +353,11 @@ public class TransportRequestReviewController {
      *
      * @param label 見積りの表記（例: TR-2026-0001 見積 1）
      * @param route 割り当てた経路（案件番号と経路版）
-     * @param status 状態（表示する時刻で失効していれば「失効（荷主承認済み）」）
-     * @param shipperApprovedAt 荷主の承認時刻（社内の日時）
+     * @param status 状態（表示する時刻で失効していれば「失効（荷主承認済み）」。経路を引き継いだ再見積りは「承認待ち」）
+     * @param shipperApprovedAt 荷主の承認時刻（社内の日時。経路を引き継いだ承認待ちは null で「—」と示す）
      * @param expiresAt 有効期限（社内の日時）
-     * @param expired 失効しているか（本予約の確定の入口を出さず、見積り（S-04）を開く）
-     * @param actionPath 本予約の確定（S-09）または見積り（S-04）のパス
+     * @param expired 失効しているか（本予約の確定の入口を出さず、再見積り（S-04）を開く。D-85。Bolt 35c）
+     * @param actionPath 本予約の確定（S-09）、再見積り（S-04）、または見積り（S-04）のパス
      * @param actionLabel 操作のリンクの名前
      */
     public record AwaitingBookingRow(
@@ -370,20 +372,34 @@ public class TransportRequestReviewController {
 
     private static AwaitingBookingRow awaitingBookingRow(AwaitingBookingSummary summary, UtcInstant now) {
         String label = QuotationViews.label(summary.number(), summary.quotationNo());
+        String quotationPath = STAFF_TRANSPORT_REQUESTS + summary.number().text() + QUOTATIONS + summary.quotationNo();
+        String route = summary.routingCaseNumber() + " 版 " + summary.routeVersionNo();
+        String expiresAt = TransportRequestLabels.staffDateTime(summary.expiresAt());
+        if (summary.status() != QuotationStatus.APPROVED) {
+            // 経路を引き継いだ承認待ち（再見積りの後で提示の前。D-85。Bolt 35c）
+            return new AwaitingBookingRow(
+                    label,
+                    route,
+                    QuotationViews.effectiveStatus(summary.status(), summary.expiresAt(), now),
+                    null,
+                    expiresAt,
+                    false,
+                    quotationPath,
+                    label + " を開く（承認待ち）");
+        }
         boolean expired = QuotationViews.isExpired(QuotationStatus.APPROVED, summary.expiresAt(), now);
-        String actionPath = expired
-                ? STAFF_TRANSPORT_REQUESTS + summary.number().text() + QUOTATIONS + summary.quotationNo()
-                : "/staff/bookings/new?transportRequest=" + summary.number().text() + "&quotation="
-                        + summary.quotationNo();
         return new AwaitingBookingRow(
                 label,
-                summary.routingCaseNumber() + " 版 " + summary.routeVersionNo(),
+                route,
                 QuotationViews.effectiveStatus(QuotationStatus.APPROVED, summary.expiresAt(), now),
                 TransportRequestLabels.staffDateTime(summary.shipperApprovedAt()),
-                TransportRequestLabels.staffDateTime(summary.expiresAt()),
+                expiresAt,
                 expired,
-                actionPath,
-                label + (expired ? " の見積りを開く" : " の本予約の確定へ"));
+                expired
+                        ? quotationPath + "/requotation"
+                        : "/staff/bookings/new?transportRequest="
+                                + summary.number().text() + "&quotation=" + summary.quotationNo(),
+                label + (expired ? " を再見積りする" : " の本予約の確定へ"));
     }
 
     /**

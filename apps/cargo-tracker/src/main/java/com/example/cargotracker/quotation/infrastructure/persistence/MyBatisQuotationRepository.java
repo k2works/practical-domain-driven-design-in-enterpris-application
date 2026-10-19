@@ -145,9 +145,10 @@ public class MyBatisQuotationRepository implements QuotationRepository {
                 .map(row -> new AwaitingBookingSummary(
                         TransportRequestNumber.parse(row.requestNumber()),
                         row.quotationNo(),
+                        QuotationStatus.valueOf(row.status()),
                         row.routingCaseNumber(),
                         row.routeVersionNo(),
-                        toUtc(row.shipperApprovedAt()),
+                        row.shipperApprovedAt() == null ? null : toUtc(row.shipperApprovedAt()),
                         toUtc(row.expiresAt())))
                 .toList();
     }

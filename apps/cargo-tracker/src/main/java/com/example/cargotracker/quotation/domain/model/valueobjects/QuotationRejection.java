@@ -6,6 +6,8 @@ package com.example.cargotracker.quotation.domain.model.valueobjects;
 public enum QuotationRejection {
     /** 輸送要求が見積りを作れる状態でない（審査中・下書きなど。再見積りは、見積り作成中・見積提示済み・経路設計中・荷主承認待ち・予約待ちのどれでもないとき。Bolt 35b）。 */
     TRANSPORT_REQUEST_NOT_QUOTING,
+    /** 輸送要求が本予約を確定済みのため、再見積りできない（D-85。Bolt 35c）。 */
+    TRANSPORT_REQUEST_BOOKED,
     /** 作成中・承認待ち・提示済みの見積りがすでにある（失効した提示済みも含む。新しくするには再見積りする）。 */
     ALREADY_QUOTED,
     /** 承認待ちでない見積りを社内承認して提示しようとした。 */

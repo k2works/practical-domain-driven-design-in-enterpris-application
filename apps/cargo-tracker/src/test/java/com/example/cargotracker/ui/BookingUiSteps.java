@@ -196,8 +196,51 @@ public class BookingUiSteps {
         assertThat(awaitingRow(quotationNo)
                         .getByRole(
                                 AriaRole.LINK,
-                                new Locator.GetByRoleOptions().setName(subject(quotationNo) + " の見積りを開く")))
+                                new Locator.GetByRoleOptions().setName(subject(quotationNo) + " を再見積りする")))
                 .hasCount(1);
+        browser.checkAccessibility();
+    }
+
+    /** 荷主の承認の後に失効した見積りを、予約の確定待ちの表から再見積りする（D-85。Bolt 35c）。 */
+    @もし("営業担当者が受付一覧の予約の確定待ちから提出した見積依頼の見積り {int} を再見積りする")
+    public void 予約の確定待ちから再見積りする(int quotationNo) {
+        browser.navigate(baseUrl + "/staff/transport-requests");
+        assertThat(awaitingRow(quotationNo)).containsText("失効（荷主承認済み）");
+        awaitingRow(quotationNo)
+                .getByRole(AriaRole.LINK, new Locator.GetByRoleOptions().setName(subject(quotationNo) + " を再見積りする"))
+                .click();
+        page().waitForURL("**/quotations/" + quotationNo + "/requotation");
+        browser.checkAccessibility();
+    }
+
+    /** 再見積りで算出した見積り（経路を引き継いだ承認待ち）は、提示するまで予約の確定待ちの表の行から開ける（D-85。Bolt 35c）。 */
+    @もし("営業担当者が受付一覧の予約の確定待ちから提出した見積依頼の見積り {int} を承認待ちで開く")
+    public void 予約の確定待ちから承認待ちで開く(int quotationNo) {
+        browser.navigate(baseUrl + "/staff/transport-requests");
+        assertThat(awaitingRow(quotationNo)).containsText("承認待ち");
+        assertThat(awaitingRow(quotationNo - 1)).hasCount(0);
+        awaitingRow(quotationNo)
+                .getByRole(AriaRole.LINK, new Locator.GetByRoleOptions().setName(subject(quotationNo) + " を開く（承認待ち）"))
+                .click();
+        page().waitForURL("**/quotations/" + quotationNo);
+        browser.checkAccessibility();
+    }
+
+    /** 提示の後、輸送要求を荷主承認待ちへ戻すのは DE-24 の受け取り（非同期）なので、行が出るまで開き直す。 */
+    @ならば("受付一覧の経路設計中・荷主承認待ちに提出した見積依頼の見積り {int} が {string} で出る")
+    public void 経路設計中に出る(int quotationNo, String status) {
+        Locator row = page().getByRole(
+                        AriaRole.REGION, new Page.GetByRoleOptions().setName("経路設計中・荷主承認待ちの見積依頼（依頼時刻の古い順）"))
+                .locator("tr", new Locator.LocatorOptions().setHasText(subject(quotationNo)));
+        for (int i = 0; i < 20; i++) {
+            browser.navigate(baseUrl + "/staff/transport-requests");
+            if (row.count() > 0) {
+                break;
+            }
+            page().waitForTimeout(500);
+        }
+        assertThat(row).containsText(status);
+        assertThat(awaitingRow(quotationNo)).hasCount(0);
         browser.checkAccessibility();
     }
 

@@ -226,6 +226,7 @@ class TransportRequestReviewControllerTest {
                         new AwaitingBookingSummary(
                                 NUMBER,
                                 1,
+                                QuotationStatus.APPROVED,
                                 "RC-2026-0001",
                                 1,
                                 new UtcInstant(Instant.parse("2026-10-07T06:00:00Z")),
@@ -233,6 +234,7 @@ class TransportRequestReviewControllerTest {
                         new AwaitingBookingSummary(
                                 new TransportRequestNumber(2026, 3),
                                 1,
+                                QuotationStatus.APPROVED,
                                 "RC-2026-0003",
                                 1,
                                 new UtcInstant(Instant.parse("2026-10-04T06:00:00Z")),
@@ -240,10 +242,19 @@ class TransportRequestReviewControllerTest {
                         new AwaitingBookingSummary(
                                 new TransportRequestNumber(2026, 4),
                                 1,
+                                QuotationStatus.APPROVED,
                                 "RC-2026-0004",
                                 1,
                                 new UtcInstant(Instant.parse("2026-10-04T06:00:00Z")),
-                                new UtcInstant(Instant.parse("2026-10-05T04:20:01Z")))));
+                                new UtcInstant(Instant.parse("2026-10-05T04:20:01Z"))),
+                        new AwaitingBookingSummary(
+                                new TransportRequestNumber(2026, 5),
+                                2,
+                                QuotationStatus.PENDING_APPROVAL,
+                                "RC-2026-0005",
+                                1,
+                                null,
+                                new UtcInstant(Instant.parse("2099-10-10T09:00:00Z")))));
 
         mockMvc.perform(get("/staff/transport-requests"))
                 .andExpect(status().isOk())
@@ -263,16 +274,23 @@ class TransportRequestReviewControllerTest {
                         content()
                                 .string(
                                         containsString(
-                                                "href=\"/staff/transport-requests/TR-2026-0003/quotations/1\">TR-2026-0003 見積 1 の見積りを開く</a>")))
+                                                "href=\"/staff/transport-requests/TR-2026-0003/quotations/1/requotation\">TR-2026-0003 見積 1 を再見積りする</a>")))
+                // 再見積りの後で提示の前の見積り（経路を引き継いだ承認待ち）は、同じ表から見積りの画面を開ける（D-85。Bolt 35c）
+                .andExpect(
+                        content()
+                                .string(
+                                        containsString(
+                                                "href=\"/staff/transport-requests/TR-2026-0005/quotations/2\">TR-2026-0005 見積 2 を開く（承認待ち）</a>")))
+                .andExpect(content().string(containsString("<td>承認待ち</td>")))
+                .andExpect(content().string(containsString("<span class=\"visually-hidden\">未承認</span>")))
+                .andExpect(content().string(containsString("「—」は、荷主の再承認の前（社内承認して提示する前）であることを示します。")))
                 // 有効期限と同時刻は失効、1 秒前は確定できる（T-38）
                 .andExpect(
                         content()
                                 .string(
                                         containsString(
                                                 "href=\"/staff/bookings/new?transportRequest=TR-2026-0004&amp;quotation=1\">TR-2026-0004 見積 1 の本予約の確定へ</a>")))
-                .andExpect(content()
-                        .string(containsString(
-                                "失効（荷主承認済み）の見積りは本予約を確定できません。荷主の承認の後に失効した見積りの再見積りは、まだ画面で操作できません。扱いは担当者で相談してください。")));
+                .andExpect(content().string(not(containsString("まだ画面で操作できません"))));
     }
 
     @Test

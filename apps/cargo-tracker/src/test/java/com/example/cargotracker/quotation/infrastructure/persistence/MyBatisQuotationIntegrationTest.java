@@ -730,6 +730,7 @@ class MyBatisQuotationIntegrationTest {
                         new AwaitingBookingSummary(
                                 new TransportRequestNumber(2082, 32),
                                 1,
+                                QuotationStatus.APPROVED,
                                 "RC-2082-0001",
                                 1,
                                 SHIPPER_APPROVED_AT,
@@ -737,6 +738,7 @@ class MyBatisQuotationIntegrationTest {
                         new AwaitingBookingSummary(
                                 new TransportRequestNumber(2082, 31),
                                 1,
+                                QuotationStatus.APPROVED,
                                 "RC-2082-0001",
                                 1,
                                 SHIPPER_APPROVED_AT,
@@ -831,6 +833,67 @@ class MyBatisQuotationIntegrationTest {
                         new UtcInstant(expired.instant().plusSeconds(259_200))),
                 expired);
         return quotation;
+    }
+
+    @Test
+    void 予約の確定待ちは承認の後に失効した見積りを再見積りした後の経路を持つ承認待ちの見積りを荷主の承認時刻なしで出す() {
+        TransportRequestId readyToBook = transportRequest(37);
+        approved(readyToBook);
+        advanceTransportRequest(readyToBook, TransportRequestStatus.READY_TO_BOOK);
+        requote(
+                repository.findByTransportRequestIdAndNo(readyToBook, 1).orElseThrow(),
+                calculatedAfterExpiry(readyToBook, 2),
+                QuotationFixture.EXPIRES_AT);
+        TransportRequestId awaitingApproval = transportRequest(38);
+        approved(awaitingApproval);
+        advanceTransportRequest(awaitingApproval, TransportRequestStatus.AWAITING_APPROVAL);
+        requote(
+                repository.findByTransportRequestIdAndNo(awaitingApproval, 1).orElseThrow(),
+                calculatedAfterExpiry(awaitingApproval, 2),
+                QuotationFixture.EXPIRES_AT);
+        TransportRequestId withoutRoute = transportRequest(39);
+        repository.save(presented(withoutRoute, 1));
+        advanceTransportRequest(withoutRoute, TransportRequestStatus.READY_TO_BOOK);
+        requote(
+                repository.findByTransportRequestIdAndNo(withoutRoute, 1).orElseThrow(),
+                calculated(withoutRoute, 2),
+                NOW);
+        TransportRequestId presented = transportRequest(40);
+        approved(presented);
+        advanceTransportRequest(presented, TransportRequestStatus.READY_TO_BOOK);
+        Quotation next = calculatedAfterExpiry(presented, 2);
+        requote(
+                repository.findByTransportRequestIdAndNo(presented, 1).orElseThrow(),
+                next,
+                QuotationFixture.EXPIRES_AT);
+        Quotation saved = repository.findById(next.id()).orElseThrow();
+        saved.presentInternally(STAFF, QuotationFixture.EXPIRES_AT);
+        repository.update(saved);
+        UtcInstant nextExpires =
+                new UtcInstant(QuotationFixture.EXPIRES_AT.instant().plusSeconds(86_400));
+
+        assertThat(repository.findAwaitingBookingSummaries())
+                .as("経路を持つ承認待ち（再見積りの後で提示の前）は、輸送要求が予約待ちでも荷主承認待ちでも出す（D-85。Bolt 35c）。"
+                        + "経路を持たない承認待ちと、提示した後の見積り（荷主承認待ち）は出さない")
+                .filteredOn(summary ->
+                        summary.number().year() == 2082 && summary.number().sequence() >= 37)
+                .containsExactlyInAnyOrder(
+                        new AwaitingBookingSummary(
+                                new TransportRequestNumber(2082, 37),
+                                2,
+                                QuotationStatus.PENDING_APPROVAL,
+                                "RC-2082-0001",
+                                1,
+                                null,
+                                nextExpires),
+                        new AwaitingBookingSummary(
+                                new TransportRequestNumber(2082, 38),
+                                2,
+                                QuotationStatus.PENDING_APPROVAL,
+                                "RC-2082-0001",
+                                1,
+                                null,
+                                nextExpires));
     }
 
     private int legs(QuotationId quotationId) {
