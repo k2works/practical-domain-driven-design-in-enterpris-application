@@ -6019,6 +6019,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../development/cargo-tracker/bolt_35b2_report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 35b2 終了報告
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../development/cargo-tracker/release_report-0_1/" class="md-nav__link">
         
   
@@ -11332,7 +11360,7 @@
 </tr>
 <tr>
 <td style="text-align: left;">DE-24 の判定</td>
-<td style="text-align: left;">見積りが荷主承認待ちのときだけ戻す。承認済みなら変えない（その見積りの DE-04 が進める）。見つからない・置換済み・失効なら変えず警告のログ</td>
+<td style="text-align: left;">見積りが荷主承認待ちのときだけ戻す。承認済みなら変えない（その見積りの DE-04 が進める）。見つからない・置換済み・失効・荷主承認待ちでないなら変えず警告のログ</td>
 </tr>
 <tr>
 <td style="text-align: left;">置換済み・失効の見積りのイベント</td>
@@ -11340,7 +11368,11 @@
 </tr>
 <tr>
 <td style="text-align: left;">部品の形</td>
-<td style="text-align: left;">判定の口と「届いていても書く」の指定を <code>TransportRequestProgression</code> に置き、読む順をその中に閉じる。指定を持たない呼び手（DE-03・DE-16・DE-07）は今のまま</td>
+<td style="text-align: left;">判定の口（<code>QuotationGate</code>）と「届いていても書く」の指定を <code>TransportRequestProgression</code> に置き、読む順をその中に閉じる。指定を持たない呼び手（DE-03・DE-16・DE-07）は今のまま</td>
+</tr>
+<tr>
+<td style="text-align: left;">守りが成り立つ条件</td>
+<td style="text-align: left;">判定が読む見積りの状態を変える操作の後には、必ず輸送要求を書く listener が続く（荷主の承認の後の DE-04、再見積りの提示の後の DE-24。どちらも届いていても書く）。判定に新しい見積りの状態を使うとき（荷主の辞退、D-86）は、その状態の変化の後に輸送要求を書く listener を用意する</td>
 </tr>
 </tbody>
 </table>
@@ -11368,6 +11400,10 @@
 <tr>
 <td style="text-align: left;">旧版の DE-04 が DE-24 の戻しの後に届く</td>
 <td style="text-align: left;">旧版の失効の記録で進めない。荷主承認待ち</td>
+</tr>
+<tr>
+<td style="text-align: left;">旧版の DE-04 が輸送要求と旧版を読んだ後に、再見積りだけがコミットし（まだ提示していない）、旧版の DE-04 が書く</td>
+<td style="text-align: left;">再見積りは輸送要求を書かないのでぶつからず、輸送要求は予約待ちへ進む。提示の後の DE-24 で荷主承認待ちに戻る。提示までの間の予約待ちは再見積りの前と同じ状態なので、一時的なずれとして受け入れる（Bolt 35b2 のレビュー）</td>
 </tr>
 </tbody>
 </table>
@@ -11407,11 +11443,12 @@
 <li>守りは読む順に依存する。順を変えると破れるので、Javadoc と差し込むテストと変異で守る</li>
 <li>「置換済み・失効の記録 = 再見積りで旧版になった」は、今のコードでは再見積りだけが状態を書くので成り立つ。荷主の辞退（US-24 AC2。Q-INV-09「辞退した見積りは失効する」）を作るときは、辞退した見積りのイベントの扱いを見直す</li>
 <li>輸送要求は先へだけ進めるという前提（R-04）は、DE-24 だけが例外になる。ほかの進める操作は今のまま</li>
+<li>守りは READ COMMITTED（同じトランザクションの中の読み直しが相手のコミットを読む）と、版の合わない UPDATE が 0 行になること、0 行の UPDATE の後に MyBatis の 1 次キャッシュが古い見積りを返さないことに頼る。分離レベルを REPEATABLE READ 以上に上げると、競合が直列化の失敗の例外に変わり、読み直しの形が変わる</li>
 </ul>
 <h2 id="_9">コンプライアンス<a class="headerlink" href="#_9" title="Permanent link">&para;</a></h2>
 <ul>
 <li>輸送要求の戻す操作と見積りの DE-24 の発行を単体テストで確かめる</li>
-<li>上の 4 つの差し込みの順を、輸送要求の読み込みの後と見積りの読み込みの後に差し込むテストで確かめる</li>
+<li>上の差し込みの順を、輸送要求の読み込みの後と見積りの読み込みの後に差し込むテストで確かめる。1 つ目の順は PostgreSQL の統合テストでも確かめる（READ COMMITTED と MyBatis のキャッシュの前提）</li>
 <li>戻す条件・読む順・判定の呼び直し・進めなくても書く・置換済み・失効の見積りの判定に変異を当てて落ちることを確かめる</li>
 <li>業務ルール層の受入シナリオで、再見積りの提示で荷主承認待ち、再承認で予約待ち、戻しの後の旧版の DE-04 で荷主承認待ちのままを確かめる</li>
 </ul>

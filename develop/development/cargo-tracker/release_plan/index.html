@@ -6713,6 +6713,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../bolt_35b2_report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 35b2 終了報告
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../release_report-0_1/" class="md-nav__link">
         
   
@@ -13372,7 +13400,7 @@
 </tr>
 <tr>
 <td style="text-align: left;">35b2</td>
-<td style="text-align: left;">D-85 の輸送要求の戻し: 再見積りを提示したら DE-24 で輸送要求を予約待ちから荷主承認待ちへ戻す（順序の守りを持つ listener）。Bolt 35b の開始準備で分けた。<a href="../bolt_35b2_plan/">Bolt 35b2 計画</a>。Bolt 35b2 の開始準備の決定（2026-10-19、human:kakimomokuri）: (1) 順序の守りは DE-04 の listener が進めなくても輸送要求を書く形（楽観ロック。スキーマもロックも足さない）、(2) 置換済み・失効の旧版の DE-21・DE-04 は輸送要求を進めない守りを 35b2 で作る</td>
+<td style="text-align: left;">D-85 の輸送要求の戻し: 再見積りを提示したら DE-24 で輸送要求を予約待ちから荷主承認待ちへ戻す（順序の守りを持つ listener）。Bolt 35b の開始準備で分けた。<a href="../bolt_35b2_plan/">Bolt 35b2 計画</a>。Bolt 35b2 の開始準備の決定（2026-10-19、human:kakimomokuri）: (1) 順序の守りは DE-04 の listener が進めなくても輸送要求を書く形（楽観ロック。スキーマもロックも足さない）、(2) 置換済み・失効の旧版の DE-21・DE-04 は輸送要求を進めない守りを 35b2 で作る。計画の承認（確認ポイント 3）で DE-24 の listener も届いていても書く。レビューの決定（2026-10-19、human:kakimomokuri）: (3) 順序の守りを PostgreSQL の統合テストでも 1 本確かめる、(4) <code>TransportRequestProgression</code> の部品の形（守りの組み合わせを生成メソッドに閉じる）は A-9 のサブパッケージへの移動と一緒に後の Bolt に送る</td>
 <td style="text-align: right;">0</td>
 <td style="text-align: left;">アウトサイドイン（輸送要求の集約を広げる）</td>
 <td style="text-align: left;">計画・終了報告（決定 (1) で楽観ロックを使いスキーマを変えないので、データベースの承認ゲートには当たらない。ADR-018 を作る）</td>
@@ -13451,7 +13479,7 @@
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Bolt 34f: 振る舞いの変わらない直し（S-20 の画面の構造）。<a href="../bolt_34f_plan/">Bolt 34f 計画</a>（承認済み）、<a href="../bolt_34f_report/">Bolt 34f 終了報告</a>（承認済み）</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Bolt 35: US-04 AC3・AC5（#43）。<a href="../bolt_35_plan/">Bolt 35 計画</a>（承認済み）、<a href="../bolt_35_report/">Bolt 35 終了報告</a>（承認済み。支援技術による手動確認の後に #43 をクローズした）</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Bolt 35b: D-85 の再見積り（ドメインと業務ルール層）。<a href="../bolt_35b_plan/">Bolt 35b 計画</a>（承認済み）、<a href="../bolt_35b_report/">Bolt 35b 終了報告</a>（承認済み。35b は単独で出さず 35b2・35c と一緒に出す）</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> Bolt 35b2: D-85 の輸送要求の戻し（DE-24）。<a href="../bolt_35b2_plan/">Bolt 35b2 計画</a>（承認済み）</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Bolt 35b2: D-85 の輸送要求の戻し（DE-24）。<a href="../bolt_35b2_plan/">Bolt 35b2 計画</a>（承認済み）、<a href="../bolt_35b2_report/">Bolt 35b2 終了報告</a>（承認待ち）</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> Bolt 35c: D-85 の画面とマニュアル</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> W5 の締め: 結果とふりかえり、開いている持ち越しの数（T-89）、W6 の計画の見直し</li>
 </ul>
@@ -15120,6 +15148,11 @@
 <td style="text-align: left;">2026-10-19</td>
 <td style="text-align: left;">Bolt 35b2 の計画を承認した（確認ポイント 3〜11 を推奨のとおり）</td>
 <td style="text-align: left;">anthropic/claude-opus-5-5、承認 human:kakimomokuri</td>
+</tr>
+<tr>
+<td style="text-align: left;">2026-10-19</td>
+<td style="text-align: left;">Bolt 35b2 を終え、<a href="../bolt_35b2_report/">終了報告</a>を作った（承認待ち）。開発レビューの後に human:kakimomokuri が、順序の守りを PostgreSQL の統合テストでも確かめる、<code>TransportRequestProgression</code> の部品の形は A-9 と一緒に後に送る、と決めた</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5</td>
 </tr>
 </tbody>
 </table>
