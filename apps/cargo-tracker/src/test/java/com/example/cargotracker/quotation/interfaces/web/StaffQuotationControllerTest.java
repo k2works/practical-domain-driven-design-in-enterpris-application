@@ -614,6 +614,16 @@ class StaffQuotationControllerTest {
                 .andExpect(flash().attribute("problem", "TR-2026-0001 見積 1 は荷主が承認済みで、まだ有効期限内です。本予約の確定へ進んでください"));
     }
 
+    @Test
+    void 荷主の承認の段階のほかの理由の再見積りは既定の文言で示す() throws Exception {
+        transportRequestExists();
+        given(commandService.requote(any()))
+                .willReturn(new RequotationOutcome.Rejected(QuotationRejection.ALREADY_APPROVED));
+
+        mockMvc.perform(requoteForm())
+                .andExpect(flash().attribute("problem", "TR-2026-0001 見積 1 は荷主の承認の段階にあるため、この操作はできません"));
+    }
+
     private static MockHttpServletRequestBuilder requoteForm() {
         return post("/staff/transport-requests/TR-2026-0001/quotations/1/requotation")
                 .param("lines[0].description", "海上運賃")

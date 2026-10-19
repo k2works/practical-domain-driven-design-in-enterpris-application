@@ -13,7 +13,6 @@ import com.example.cargotracker.quotation.domain.model.valueobjects.QuotationRej
 import com.example.cargotracker.quotation.domain.model.valueobjects.QuotationStatus;
 import com.example.cargotracker.quotation.domain.model.valueobjects.QuotationViolations;
 import com.example.cargotracker.quotation.domain.model.valueobjects.RouteAssignmentResult;
-import com.example.cargotracker.quotation.domain.model.valueobjects.RouteInheritance;
 import com.example.cargotracker.quotation.domain.model.valueobjects.RoutePolicy;
 import com.example.cargotracker.quotation.domain.model.valueobjects.ShipperApproval;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestId;
@@ -31,7 +30,9 @@ import java.util.Optional;
  * 作成中 → 承認待ち（算出する。Q-INV-05・17）→ 提示済み（社内承認して提示する。DE-03）→ 詳細設計依頼済み（荷主が詳細経路設計へ
  * 進むと回答する。DE-16。Bolt 12）→ 荷主承認待ち（経路設計が確定した経路版を割り当てる。DE-21）→ 承認済み（荷主が承認する。DE-04。
  * Bolt 20）の順に進む。
- * 承認待ち・提示済みの見積りは、再見積りで置換済み（有効期限を過ぎていれば失効）になる（Q-INV-07。Bolt 11）。
+ * 承認待ち・提示済みの見積りは、再見積りで置換済み（有効期限を過ぎていれば失効）になる（Q-INV-07。Bolt 11）。荷主の承認の後に
+ * 有効期限を過ぎた承認済みの見積りも、再見積りで失効になる。そのとき新しい見積りは経路・荷主の回答・経路方針を引き継ぎ、承認待ちから
+ * 社内承認して提示すると荷主承認待ちに直行する（D-85。Bolt 35b）。
  * 失効は状態を書き換えずに判定時刻で決める（{@link #isExpiredAt}）。
  *
  * <p>輸送要求と別の集約にする理由は、見積りが版ごとに複数作られ（置換）、有効期限で単独に失効するため
@@ -220,12 +221,13 @@ public final class Quotation {
      * 再見積りで新しい見積りに置き換える（承認待ち・提示済み → 置換済み）。置き換える時刻に有効期限を過ぎていれば、
      * 置換済みでなく失効として記録し、置換先は持たない（2026-10-05 の決定。Bolt 11）。荷主の承認の後に失効した見積りも失効にする
      * （荷主の承認の記録は残す。D-85。Bolt 35b）。新しい見積りの作成は、同じトランザクションで
-     * アプリケーションサービスが行う（Q-INV-18）。
+     * アプリケーションサービスが行う（Q-INV-18）。経路を持つ見積りは、引き継ぎを落とさないよう
+     * {@link #requoteInto(Quotation, UtcInstant)} で置き換える（D-85。Bolt 35b レビュー）。
      *
      * @param replacement 新しい見積りの ID
      * @param at 置き換える時刻（判定時刻）
      * @return 受け付けなかった理由（{@link #requoteRejectionAt(UtcInstant)} と同じ。受け付けたら空）
-     * @throws IllegalStateException 作成中の見積り（算出の前の見積りは保存されない）
+     * @throws IllegalStateException 作成中の見積り（算出の前の見積りは保存されない）、または経路を持つ見積り
      */
     public Optional<QuotationRejection> replaceWith(QuotationId replacement, UtcInstant at) {
         Objects.requireNonNull(replacement, "replacement");
@@ -234,16 +236,65 @@ public final class Quotation {
         if (rejection.isPresent()) {
             return rejection;
         }
+        requireSaved();
+        if (assignedRoute != null) {
+            throw new IllegalStateException("経路を持つ見積りは新しい見積りへ引き継いで置き換えます: " + id);
+        }
+        retire(replacement, at);
+        return Optional.empty();
+    }
+
+    /**
+     * 再見積りする（D-85、Q-INV-07・18。Bolt 35b レビュー）。判定時刻に再見積りできるなら、経路を持つ旧版の経路・荷主の詳細経路設計の
+     * 回答・経路方針を新しい見積りに引き継ぎ（入力の経路方針は使わない）、旧版を置換済みか失効にする。判定・引き継ぎ・置き換えを
+     * 1 つの操作にして、呼び手の順序に頼らない。新しい見積りは社内承認して提示すると荷主承認待ちに直行する（経路設計者の作業を
+     * 繰り返さない）。
+     *
+     * @param replacement 同じ輸送要求の同じ版で算出した、承認待ちの新しい見積り
+     * @param at 再見積りの時刻（判定時刻）
+     * @return 受け付けなかった理由（{@link #requoteRejectionAt(UtcInstant)} と同じ。受け付けたら空で、どちらも変えない）
+     * @throws IllegalArgumentException 別の輸送要求か別の版の新しい見積り（呼び手の誤り）
+     * @throws IllegalStateException 作成中の旧版、または承認待ちでない新しい見積り
+     */
+    public Optional<QuotationRejection> requoteInto(Quotation replacement, UtcInstant at) {
+        Objects.requireNonNull(replacement, "replacement");
+        Objects.requireNonNull(at, "at");
+        Optional<QuotationRejection> rejection = requoteRejectionAt(at);
+        if (rejection.isPresent()) {
+            return rejection;
+        }
+        requireSaved();
+        if (!replacement.transportRequestId.equals(transportRequestId)
+                || replacement.transportRequestVersionNo != transportRequestVersionNo) {
+            throw new IllegalArgumentException("別の輸送要求か別の版の見積りには置き換えられません: " + replacement.id);
+        }
+        if (replacement.status != QuotationStatus.PENDING_APPROVAL) {
+            throw new IllegalStateException("承認待ちの見積りだけに置き換えられます: " + replacement.id);
+        }
+        if (assignedRoute != null) {
+            replacement.assignedRoute = assignedRoute;
+            replacement.respondedBy = respondedBy;
+            replacement.respondedAt = respondedAt;
+            replacement.routePolicy = routePolicy;
+        }
+        retire(replacement.id, at);
+        return Optional.empty();
+    }
+
+    private void requireSaved() {
         if (status == QuotationStatus.DRAFT) {
             throw new IllegalStateException("作成中の見積りは置換できません: " + id);
         }
+    }
+
+    /** 置換済みにする。置き換える時刻に有効期限を過ぎていれば失効にし、置換先を持たない。 */
+    private void retire(QuotationId replacement, UtcInstant at) {
         if (isExpiredAt(at)) {
             status = QuotationStatus.EXPIRED;
         } else {
             status = QuotationStatus.REPLACED;
             replacedBy = replacement;
         }
-        return Optional.empty();
     }
 
     /**
@@ -427,68 +478,39 @@ public final class Quotation {
      * @return 再見積りできない理由（再見積りできるなら空）
      */
     public Optional<QuotationRejection> requoteRejection() {
-        if (status.isRoutingStarted()) {
+        if (status == QuotationStatus.APPROVED) {
             return Optional.of(QuotationRejection.ROUTING_REQUESTED);
         }
-        return retiredRejection();
+        return requoteRejectionUnlessApproved();
     }
 
     /**
      * 判定時刻に再見積りできないなら、その理由（Q-INV-07、D-85。Bolt 35b）。置換済み・失効の記録を先に見て、承認済みなら判定時刻が
      * 有効期限より前（期限内）のときだけ拒み、期限を過ぎていれば受け付ける（旧版を失効にして経路を引き継ぐ）。詳細設計依頼済みと
-     * 荷主承認待ちは経路設計の途中なので再見積りできない。承認待ち・提示済みは失効していても再見積りできる。再見積りのサービスと
-     * {@link #replaceWith(QuotationId, UtcInstant)} が使う。
+     * 荷主承認待ちは経路設計の途中なので再見積りできない。承認待ち・提示済みは失効していても再見積りできる。
+     * {@link #requoteInto(Quotation, UtcInstant)} と {@link #replaceWith(QuotationId, UtcInstant)} が使う。
      *
      * @param at 判定時刻
      * @return 再見積りできない理由（再見積りできるなら空）
      */
     public Optional<QuotationRejection> requoteRejectionAt(UtcInstant at) {
         Objects.requireNonNull(at, "at");
+        if (status == QuotationStatus.APPROVED) {
+            return isExpiredAt(at) ? Optional.empty() : Optional.of(QuotationRejection.APPROVED_AND_STILL_VALID);
+        }
+        return requoteRejectionUnlessApproved();
+    }
+
+    /** 承認済みでない見積りの再見積りの判定。画面の判定と判定時刻の判定は承認済みのときだけ違い、ほかはこれを共にする（Bolt 35b レビュー）。 */
+    private Optional<QuotationRejection> requoteRejectionUnlessApproved() {
         Optional<QuotationRejection> retired = retiredRejection();
         if (retired.isPresent()) {
             return retired;
-        }
-        if (status == QuotationStatus.APPROVED) {
-            return isExpiredAt(at) ? Optional.empty() : Optional.of(QuotationRejection.APPROVED_AND_STILL_VALID);
         }
         if (status.isRoutingStarted()) {
             return Optional.of(QuotationRejection.ROUTING_REQUESTED);
         }
         return Optional.empty();
-    }
-
-    /**
-     * 再見積りで新しい見積りに引き継ぐ経路と荷主の回答（D-85。Bolt 35b）。判定時刻に再見積りでき、割り当てた経路を持つとき
-     * （承認済みで失効した見積りと、経路を引き継いだ提示の前の見積り）だけ作る。旧版を置き換える前に問い合わせる。
-     *
-     * @param at 判定時刻（再見積りの時刻）
-     * @return 引き継ぎ（経路を持たない、または再見積りできないなら空）
-     */
-    public Optional<RouteInheritance> inheritanceForRequoteAt(UtcInstant at) {
-        if (requoteRejectionAt(at).isPresent() || assignedRoute == null) {
-            return Optional.empty();
-        }
-        return Optional.of(new RouteInheritance(transportRequestId, assignedRoute, respondedBy, respondedAt));
-    }
-
-    /**
-     * 旧版から経路と荷主の回答を引き継ぐ（承認待ちのとき。D-85。Bolt 35b）。社内承認して提示すると荷主承認待ちになる。
-     *
-     * @param inheritance 旧版が判定を通ったときだけ作った引き継ぎ
-     * @throws IllegalArgumentException 別の輸送要求の引き継ぎ（呼び手の誤り）
-     * @throws IllegalStateException 承認待ちでない見積り
-     */
-    public void inherit(RouteInheritance inheritance) {
-        Objects.requireNonNull(inheritance, "inheritance");
-        if (!inheritance.transportRequestId().equals(transportRequestId)) {
-            throw new IllegalArgumentException("別の輸送要求の経路は引き継げません: " + inheritance.transportRequestId());
-        }
-        if (status != QuotationStatus.PENDING_APPROVAL) {
-            throw new IllegalStateException("承認待ちの見積りだけが経路を引き継げます: " + id + " " + status);
-        }
-        assignedRoute = inheritance.route();
-        respondedBy = inheritance.respondedBy();
-        respondedAt = inheritance.respondedAt();
     }
 
     private Optional<QuotationRejection> retiredRejection() {

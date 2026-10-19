@@ -31,7 +31,10 @@ public enum QuotationStatus {
         return this == PENDING_APPROVAL || this == PRESENTED || isRoutingStarted();
     }
 
-    /** 荷主が詳細経路設計を依頼した後か（詳細設計依頼済み・荷主承認待ち・承認済み）。経路設計の途中から後は再見積りできない（Bolt 12・20）。 */
+    /**
+     * 荷主が詳細経路設計を依頼した後か（詳細設計依頼済み・荷主承認待ち・承認済み）。経路設計の途中から後は再見積りできない（Bolt 12・20）。
+     * ただし承認済みは、有効期限を過ぎれば再見積りできる（D-85。Bolt 35b。{@code Quotation#requoteRejectionAt}）。
+     */
     public boolean isRoutingStarted() {
         return this == ROUTING_REQUESTED || this == AWAITING_SHIPPER_APPROVAL || this == APPROVED;
     }

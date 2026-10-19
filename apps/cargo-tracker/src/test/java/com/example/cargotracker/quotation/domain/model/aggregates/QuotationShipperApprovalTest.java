@@ -10,10 +10,11 @@ import com.example.cargotracker.quotation.domain.model.valueobjects.AssignedRout
 import com.example.cargotracker.quotation.domain.model.valueobjects.AssignedRouteLeg;
 import com.example.cargotracker.quotation.domain.model.valueobjects.QuotationFixture;
 import com.example.cargotracker.quotation.domain.model.valueobjects.QuotationId;
+import com.example.cargotracker.quotation.domain.model.valueobjects.QuotationInput;
 import com.example.cargotracker.quotation.domain.model.valueobjects.QuotationRejection;
 import com.example.cargotracker.quotation.domain.model.valueobjects.QuotationStatus;
 import com.example.cargotracker.quotation.domain.model.valueobjects.RouteAssignmentResult;
-import com.example.cargotracker.quotation.domain.model.valueobjects.RouteInheritance;
+import com.example.cargotracker.quotation.domain.model.valueobjects.RoutePolicy;
 import com.example.cargotracker.quotation.domain.model.valueobjects.ShipperApproval;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestId;
 import com.example.cargotracker.shared.domain.Location;
@@ -39,6 +40,11 @@ class QuotationShipperApprovalTest {
     private final UserId shipperUser = new UserId(UUID.randomUUID());
     private final UtcInstant now = at("2026-10-08T03:00:00Z");
     private static final UtcInstant EXPIRES = QuotationFixture.EXPIRES_AT;
+    /** 旧版の経路方針（QuotationFixture.completeInput のシンガポール経由）。 */
+    private static final RoutePolicy OLD_POLICY = new RoutePolicy(
+            List.of(new Location("SGSIN")),
+            new UtcInstant(Instant.parse("2099-10-10T00:00:00Z")),
+            new UtcInstant(Instant.parse("2099-10-30T09:00:00Z")));
 
     private final AssignedRoute route = new AssignedRoute(
             "RC-2026-0001",
@@ -135,6 +141,9 @@ class QuotationShipperApprovalTest {
 
         assertThat(quotation.status()).isEqualTo(QuotationStatus.AWAITING_SHIPPER_APPROVAL);
         assertThat(quotation.approvalRejectionAt(afterExpiry)).contains(QuotationRejection.EXPIRED);
+        assertThat(quotation.approvalRejectionAt(at("2099-10-08T08:59:59Z")))
+                .as("承認できるかを判定時刻で問い合わせられる")
+                .isEmpty();
     }
 
     // 荷主の承認（US-24 AC4・AC5、Q-INV-07・10。DE-04）
@@ -193,17 +202,11 @@ class QuotationShipperApprovalTest {
     }
 
     @Test
-    void 画面の判定では荷主承認待ちと承認済みの見積りは再見積りできない() {
-        Quotation awaiting = awaitingApproval();
-        Quotation approved = awaitingApproval();
-        approved.approveByShipper(shipperUser, now);
-
-        assertThat(awaiting.requoteRejection()).contains(QuotationRejection.ROUTING_REQUESTED);
-        assertThat(awaiting.replaceWith(new QuotationId(UUID.randomUUID()), now))
+    void 画面の判定では35cまで荷主承認待ちも承認済みも詳細設計依頼済みの理由で再見積りを出さない() {
+        assertThat(awaitingApproval().requoteRejection()).contains(QuotationRejection.ROUTING_REQUESTED);
+        assertThat(approved().requoteRejection())
+                .as("期限を過ぎても画面の判定は変えない（D-85。Bolt 35c で判定時刻の判定に替える）")
                 .contains(QuotationRejection.ROUTING_REQUESTED);
-        assertThat(awaiting.status()).isEqualTo(QuotationStatus.AWAITING_SHIPPER_APPROVAL);
-        assertThat(approved.requoteRejection()).contains(QuotationRejection.ROUTING_REQUESTED);
-        assertThat(awaiting.approvalRejectionAt(now)).as("承認できるかを判定時刻で問い合わせられる").isEmpty();
     }
 
     @Test
@@ -254,16 +257,44 @@ class QuotationShipperApprovalTest {
 
     // 荷主の承認の後に失効した見積りの再見積り（D-85。Bolt 35b）
 
-    @Test
-    void 承認済みの見積りは有効期限の1分前は期限内として再見積りできない() {
+    @ParameterizedTest
+    @CsvSource({"2099-10-08T08:59:00Z", "2099-10-08T08:59:59.999999Z"})
+    void 承認済みの見積りは有効期限の1分前と1マイクロ秒前は期限内として再見積りできない(String instant) {
         Quotation approved = approved();
-        UtcInstant before = new UtcInstant(EXPIRES.instant().minusSeconds(60));
+        UtcInstant before = at(instant);
 
         assertThat(approved.requoteRejectionAt(before)).contains(QuotationRejection.APPROVED_AND_STILL_VALID);
         assertThat(approved.replaceWith(new QuotationId(UUID.randomUUID()), before))
                 .contains(QuotationRejection.APPROVED_AND_STILL_VALID);
         assertThat(approved.status()).isEqualTo(QuotationStatus.APPROVED);
-        assertThat(approved.inheritanceForRequoteAt(before)).isEmpty();
+        Quotation next = calculatedNext(transportRequestId);
+        assertThat(approved.requoteInto(next, before)).contains(QuotationRejection.APPROVED_AND_STILL_VALID);
+        assertThat(next.assignedRoute()).as("拒んだら引き継がない").isEmpty();
+    }
+
+    @Test
+    void 承認済みでなければ画面の判定と判定時刻の判定は期限の前後とも一致する() {
+        Quotation replaced = presented();
+        replaced.replaceWith(new QuotationId(UUID.randomUUID()), now);
+        Quotation expired = presented();
+        expired.replaceWith(new QuotationId(UUID.randomUUID()), at("2099-10-09T00:00:00Z"));
+        List<Quotation> quotations = List.of(
+                Quotation.create(new QuotationId(UUID.randomUUID()), transportRequestId, 1, 1),
+                pendingApproval(),
+                presented(),
+                routingRequested(),
+                awaitingApproval(),
+                replaced,
+                expired);
+
+        assertThat(quotations).extracting(Quotation::status).doesNotContain(QuotationStatus.APPROVED);
+        for (Quotation quotation : quotations) {
+            for (UtcInstant at : List.of(now, EXPIRES, at("2099-10-09T00:00:00Z"))) {
+                assertThat(quotation.requoteRejectionAt(at))
+                        .as("%s at %s", quotation.status(), at)
+                        .isEqualTo(quotation.requoteRejection());
+            }
+        }
     }
 
     @Test
@@ -278,15 +309,22 @@ class QuotationShipperApprovalTest {
     void 荷主承認待ちと詳細設計依頼済みは期限を過ぎても再見積りできない() {
         UtcInstant after = new UtcInstant(EXPIRES.instant().plusSeconds(60));
 
-        assertThat(awaitingApproval().requoteRejectionAt(after)).contains(QuotationRejection.ROUTING_REQUESTED);
+        Quotation awaiting = awaitingApproval();
+
+        assertThat(awaiting.requoteRejectionAt(after)).contains(QuotationRejection.ROUTING_REQUESTED);
         assertThat(routingRequested().requoteRejectionAt(after)).contains(QuotationRejection.ROUTING_REQUESTED);
+        assertThat(awaiting.requoteInto(calculatedNext(transportRequestId), after))
+                .contains(QuotationRejection.ROUTING_REQUESTED);
+        assertThat(awaiting.replaceWith(new QuotationId(UUID.randomUUID()), after))
+                .contains(QuotationRejection.ROUTING_REQUESTED);
+        assertThat(awaiting.status()).isEqualTo(QuotationStatus.AWAITING_SHIPPER_APPROVAL);
     }
 
     @Test
-    void 承認済みで失効した見積りを置き換えると失効になり置換先を持たず承認の記録が残る() {
+    void 承認済みで失効した見積りを再見積りすると失効になり置換先を持たず承認の記録が残る() {
         Quotation approved = approved();
 
-        assertThat(approved.replaceWith(new QuotationId(UUID.randomUUID()), EXPIRES))
+        assertThat(approved.requoteInto(calculatedNext(transportRequestId), EXPIRES))
                 .isEmpty();
 
         assertThat(approved.status()).isEqualTo(QuotationStatus.EXPIRED);
@@ -295,14 +333,42 @@ class QuotationShipperApprovalTest {
     }
 
     @Test
-    void 承認済みで失効した見積りは判定を通ったときだけ経路と荷主の回答の引き継ぎを作る() {
-        Quotation approved = approved();
+    void 承認済みで失効した見積りを再見積りすると新しい見積りが経路と荷主の回答と経路方針を引き継ぐ() {
+        Quotation next = calculatedNext(transportRequestId);
+        RoutePolicy inputPolicy = next.routePolicy().orElseThrow();
 
-        assertThat(approved.inheritanceForRequoteAt(EXPIRES))
-                .contains(new RouteInheritance(transportRequestId, route, shipperUser, at("2026-10-06T02:00:00Z")));
-        assertThat(presented().inheritanceForRequoteAt(EXPIRES))
-                .as("経路を持たない見積り")
-                .isEmpty();
+        approved().requoteInto(next, EXPIRES);
+
+        assertThat(next.status()).isEqualTo(QuotationStatus.PENDING_APPROVAL);
+        assertThat(next.assignedRoute()).contains(route);
+        assertThat(next.respondedBy()).contains(shipperUser);
+        assertThat(next.respondedAt()).contains(at("2026-10-06T02:00:00Z"));
+        assertThat(next.routePolicy()).as("入力の経路方針でなく旧版の経路方針").contains(OLD_POLICY);
+        assertThat(inputPolicy).isNotEqualTo(OLD_POLICY);
+    }
+
+    @Test
+    void 経路を持たない見積りを再見積りしても新しい見積りは何も引き継がず入力の経路方針のまま() {
+        Quotation old = presented();
+        Quotation next = calculatedNext(transportRequestId);
+        RoutePolicy inputPolicy = next.routePolicy().orElseThrow();
+
+        assertThat(old.requoteInto(next, now)).isEmpty();
+
+        assertThat(old.status()).isEqualTo(QuotationStatus.REPLACED);
+        assertThat(old.replacedBy()).contains(next.id());
+        assertThat(next.assignedRoute()).isEmpty();
+        assertThat(next.respondedBy()).isEmpty();
+        assertThat(next.routePolicy()).contains(inputPolicy);
+    }
+
+    @Test
+    void 経路を持つ見積りは置換先のIDだけでは置き換えられない() {
+        Quotation approved = approved();
+        QuotationId replacement = new QuotationId(UUID.randomUUID());
+
+        assertThatThrownBy(() -> approved.replaceWith(replacement, EXPIRES)).isInstanceOf(IllegalStateException.class);
+        assertThat(approved.status()).isEqualTo(QuotationStatus.APPROVED);
     }
 
     @Test
@@ -315,7 +381,8 @@ class QuotationShipperApprovalTest {
         assertThat(next.assignedRoute()).contains(route);
         assertThat(next.respondedBy()).contains(shipperUser);
         assertThat(next.respondedAt()).contains(at("2026-10-06T02:00:00Z"));
-        assertThat(next.domainEvents()).singleElement().isInstanceOf(QuotationPresented.class);
+        assertThat(next.domainEvents()).anyMatch(QuotationPresented.class::isInstance);
+        assertThat(next.domainEvents()).noneMatch(QuotationRouteAssigned.class::isInstance);
     }
 
     @Test
@@ -334,22 +401,37 @@ class QuotationShipperApprovalTest {
     }
 
     @Test
-    void 経路を引き継いだ承認待ちの見積りからも次の見積りへ引き継ぎを作る() {
-        assertThat(inherited().inheritanceForRequoteAt(EXPIRES))
-                .contains(new RouteInheritance(transportRequestId, route, shipperUser, at("2026-10-06T02:00:00Z")));
+    void 経路を引き継いだ承認待ちの見積りを再見積りすると次の見積りがまた引き継ぎ旧版は置換済みになる() {
+        Quotation pending = inherited();
+        Quotation third = calculatedNext(transportRequestId);
+
+        assertThat(pending.requoteInto(third, now)).isEmpty();
+
+        assertThat(pending.status()).isEqualTo(QuotationStatus.REPLACED);
+        assertThat(third.assignedRoute()).contains(route);
+        assertThat(third.respondedBy()).contains(shipperUser);
+        assertThat(third.routePolicy()).contains(OLD_POLICY);
     }
 
     @Test
-    void 引き継ぎは同じ輸送要求の承認待ちの見積りだけが受ける() {
-        RouteInheritance inheritance =
-                approved().inheritanceForRequoteAt(EXPIRES).orElseThrow();
-        Quotation other =
-                Quotation.create(new QuotationId(UUID.randomUUID()), new TransportRequestId(UUID.randomUUID()), 1, 2);
-        other.calculate(QuotationFixture.completeInput(), at("2026-10-05T04:00:00Z"));
-        Quotation presented = presented();
+    void 再見積りは同じ輸送要求の同じ版の算出した見積りだけを新しい見積りにし誤りなら旧版を変えない() {
+        Quotation otherRequest = calculatedNext(new TransportRequestId(UUID.randomUUID()));
+        Quotation otherVersion = Quotation.create(new QuotationId(UUID.randomUUID()), transportRequestId, 2, 2);
+        otherVersion.calculate(QuotationFixture.completeInput(), at("2026-10-05T04:00:00Z"));
+        Quotation draft = Quotation.create(new QuotationId(UUID.randomUUID()), transportRequestId, 1, 2);
+        Quotation presentedNext = calculatedNext(transportRequestId);
+        presentedNext.presentInternally(salesRep, now);
+        Quotation approved = approved();
 
-        assertThatThrownBy(() -> other.inherit(inheritance)).isInstanceOf(IllegalArgumentException.class);
-        assertThatThrownBy(() -> presented.inherit(inheritance)).isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> approved.requoteInto(otherRequest, EXPIRES))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> approved.requoteInto(otherVersion, EXPIRES))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> approved.requoteInto(draft, EXPIRES)).isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> approved.requoteInto(presentedNext, EXPIRES))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(approved.status()).isEqualTo(QuotationStatus.APPROVED);
+        assertThat(otherRequest.assignedRoute()).isEmpty();
     }
 
     private Quotation approved() {
@@ -361,11 +443,24 @@ class QuotationShipperApprovalTest {
 
     /** 承認済みで失効した見積り 1 から経路を引き継いだ承認待ちの見積り 2。 */
     private Quotation inherited() {
-        RouteInheritance inheritance =
-                approved().inheritanceForRequoteAt(EXPIRES).orElseThrow();
-        Quotation next = Quotation.create(new QuotationId(UUID.randomUUID()), transportRequestId, 1, 2);
-        next.calculate(QuotationFixture.completeInput(), at("2026-10-05T04:00:00Z"));
-        next.inherit(inheritance);
+        Quotation next = calculatedNext(transportRequestId);
+        approved().requoteInto(next, EXPIRES);
+        return next;
+    }
+
+    /** 旧版と別の経路方針（香港経由）の入力で算出した、輸送要求の版 1 の承認待ちの見積り 2。 */
+    private Quotation calculatedNext(TransportRequestId requestId) {
+        QuotationInput input = QuotationFixture.completeInput();
+        Quotation next = Quotation.create(new QuotationId(UUID.randomUUID()), requestId, 1, 2);
+        next.calculate(
+                new QuotationInput(
+                        input.lines(),
+                        input.currency(),
+                        input.expiresAt(),
+                        List.of(new Location("HKHKG")),
+                        at("2099-10-11T00:00:00Z"),
+                        at("2099-10-31T00:00:00Z")),
+                at("2026-10-05T04:00:00Z"));
         return next;
     }
 

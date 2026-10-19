@@ -245,7 +245,7 @@ class MyBatisQuotationIntegrationTest {
 
     /** 再見積りと同じ順に書く: 旧版の更新を先に、新しい見積りの保存を後に（Q-INV-18。Bolt 11）。 */
     private void requote(Quotation old, Quotation replacement, UtcInstant at) {
-        old.replaceWith(replacement.id(), at);
+        old.requoteInto(replacement, at);
         repository.update(old);
         repository.save(replacement);
     }
@@ -759,17 +759,7 @@ class MyBatisQuotationIntegrationTest {
         Quotation old =
                 repository.findByTransportRequestIdAndNo(transportRequestId, 1).orElseThrow();
         UtcInstant expired = QuotationFixture.EXPIRES_AT;
-        Quotation replacement = Quotation.create(new QuotationId(UUID.randomUUID()), transportRequestId, 1, 2);
-        replacement.calculate(
-                new QuotationInput(
-                        QuotationFixture.completeInput().lines(),
-                        QuotationFixture.completeInput().currency(),
-                        new UtcInstant(expired.instant().plusSeconds(86_400)),
-                        List.of(),
-                        new UtcInstant(expired.instant().plusSeconds(172_800)),
-                        new UtcInstant(expired.instant().plusSeconds(259_200))),
-                expired);
-        old.inheritanceForRequoteAt(expired).ifPresent(replacement::inherit);
+        Quotation replacement = calculatedAfterExpiry(transportRequestId, 2);
 
         requote(old, replacement, expired);
         jdbc.execute("SET CONSTRAINTS ALL IMMEDIATE");
@@ -801,6 +791,46 @@ class MyBatisQuotationIntegrationTest {
             assertThat(found.assignedRoute()).contains(ROUTE);
         });
         assertThat(legs(replacement.id())).as("区間は重ねて書かない").isEqualTo(2);
+    }
+
+    @Test
+    void 経路を引き継いだ見積りを提示の前にもう一度再見積りすると次の見積りも経路と区間を保存する() {
+        TransportRequestId transportRequestId = transportRequest(36);
+        approved(transportRequestId);
+        UtcInstant expired = QuotationFixture.EXPIRES_AT;
+        Quotation second = calculatedAfterExpiry(transportRequestId, 2);
+        requote(repository.findByTransportRequestIdAndNo(transportRequestId, 1).orElseThrow(), second, expired);
+        Quotation third = calculatedAfterExpiry(transportRequestId, 3);
+
+        requote(repository.findById(second.id()).orElseThrow(), third, expired);
+        jdbc.execute("SET CONSTRAINTS ALL IMMEDIATE");
+
+        assertThat(repository.findById(second.id())).hasValueSatisfying(found -> {
+            assertThat(found.status()).isEqualTo(QuotationStatus.REPLACED);
+            assertThat(found.replacedBy()).contains(third.id());
+        });
+        assertThat(repository.findById(third.id())).hasValueSatisfying(found -> {
+            assertThat(found.status()).isEqualTo(QuotationStatus.PENDING_APPROVAL);
+            assertThat(found.assignedRoute()).contains(ROUTE);
+            assertThat(found.respondedBy()).contains(RESPONDENT);
+        });
+        assertThat(legs(third.id())).isEqualTo(2);
+    }
+
+    /** 旧版の有効期限の時刻に、その 1 日後を有効期限として算出した見積り。 */
+    private Quotation calculatedAfterExpiry(TransportRequestId transportRequestId, int quotationNo) {
+        UtcInstant expired = QuotationFixture.EXPIRES_AT;
+        Quotation quotation = Quotation.create(new QuotationId(UUID.randomUUID()), transportRequestId, 1, quotationNo);
+        quotation.calculate(
+                new QuotationInput(
+                        QuotationFixture.completeInput().lines(),
+                        QuotationFixture.completeInput().currency(),
+                        new UtcInstant(expired.instant().plusSeconds(86_400)),
+                        List.of(),
+                        new UtcInstant(expired.instant().plusSeconds(172_800)),
+                        new UtcInstant(expired.instant().plusSeconds(259_200))),
+                expired);
+        return quotation;
     }
 
     private int legs(QuotationId quotationId) {

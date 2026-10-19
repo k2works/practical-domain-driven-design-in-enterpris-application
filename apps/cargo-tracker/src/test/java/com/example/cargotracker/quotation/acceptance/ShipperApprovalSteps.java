@@ -116,6 +116,13 @@ public class ShipperApprovalSteps {
                 .hasSize(times);
     }
 
+    @ならば("シナリオの始めから見積りに経路版を割り当てたイベントは {int} 回だけ発行されている")
+    public void 始めから割り当てたイベントの回数(int times) {
+        assertThat(delivery.history())
+                .filteredOn(QuotationRouteAssigned.class::isInstance)
+                .hasSize(times);
+    }
+
     @ならば("見積り {int} は承認済みになり、承認者と承認時刻 {string} と承認した経路版 {string} の {int} が残る")
     public void 承認が残る(int quotationNo, String approvedAt, String caseNumber, int routeVersionNo) {
         assertThat(staffQueryService.find(number(), quotationNo)).hasValueSatisfying(quotation -> {
