@@ -17,6 +17,7 @@ import com.example.cargotracker.quotation.domain.model.aggregates.TransportReque
 import com.example.cargotracker.quotation.domain.model.valueobjects.QuotationFixture;
 import com.example.cargotracker.quotation.domain.model.valueobjects.QuotationId;
 import com.example.cargotracker.quotation.domain.model.valueobjects.QuotationInput;
+import com.example.cargotracker.quotation.domain.model.valueobjects.QuotationStatus;
 import com.example.cargotracker.quotation.domain.model.valueobjects.ShipmentTermsFixture;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestId;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestNumber;
@@ -110,26 +111,56 @@ class ReapprovalOrderingEventHandlersTest {
     }
 
     @Test
-    void 見積りが見つからないか失効か輸送要求が予約確定済みなら変えず警告のログに残す() {
+    void 再見積りで失効した見積りのDE24が遅れて届いても変えず警告のログに残す() {
         advance(TransportRequestStatus.READY_TO_BOOK);
         Quotation next = requotedAndPresented();
+        approve(next);
+        Quotation approvedNext = quotations.findById(next.id()).orElseThrow();
+        Quotation third = calculated(3);
+        approvedNext.requoteInto(third, new UtcInstant(EXPIRES.instant().plusSeconds(86_400)));
+        quotations.update(approvedNext);
+        quotations.save(third);
+        long version = versionOf();
+
+        reapproval(requests, quotations).on(reapprovalEvent(next));
+
+        assertThat(statusOf()).isEqualTo(TransportRequestStatus.READY_TO_BOOK);
+        assertThat(versionOf()).isEqualTo(version);
+        assertThat(logs.list).singleElement().satisfies(log -> {
+            assertThat(log.getLevel()).isEqualTo(Level.WARN);
+            assertThat(log.getFormattedMessage())
+                    .contains("置換済み・失効")
+                    .contains(next.id().value().toString());
+        });
+    }
+
+    @Test
+    void 見積りが見つからないDE24は変えず警告のログに残す() {
+        advance(TransportRequestStatus.READY_TO_BOOK);
         UUID missing = UUID.randomUUID();
 
-        reapproval(requests, quotations).on(reapprovalEvent(old));
         reapproval(requests, quotations)
                 .on(new QuotationPresentedForReapproval(missing, 9, request.id().value(), 1, NOW));
+
         assertThat(statusOf()).isEqualTo(TransportRequestStatus.READY_TO_BOOK);
+        assertThat(logs.list).singleElement().satisfies(log -> {
+            assertThat(log.getLevel()).isEqualTo(Level.WARN);
+            assertThat(log.getFormattedMessage()).contains("見つからない").contains(missing.toString());
+        });
+    }
+
+    @Test
+    void 予約確定済みの輸送要求にはDE24が届いても変えず警告のログに残す() {
         advance(TransportRequestStatus.BOOKED);
+        Quotation next = requotedAndPresented();
+
         reapproval(requests, quotations).on(reapprovalEvent(next));
 
         assertThat(statusOf()).isEqualTo(TransportRequestStatus.BOOKED);
-        assertThat(logs.list)
-                .hasSize(3)
-                .allSatisfy(log -> assertThat(log.getLevel()).isEqualTo(Level.WARN));
-        assertThat(logs.list.get(0).getFormattedMessage())
-                .contains(old.id().value().toString());
-        assertThat(logs.list.get(1).getFormattedMessage()).contains(missing.toString());
-        assertThat(logs.list.get(2).getFormattedMessage()).contains("BOOKED");
+        assertThat(logs.list).singleElement().satisfies(log -> {
+            assertThat(log.getLevel()).isEqualTo(Level.WARN);
+            assertThat(log.getFormattedMessage()).contains("BOOKED");
+        });
     }
 
     // DE-04 の書き込みと、置換済み・失効の見積りのイベント
@@ -160,7 +191,23 @@ class ReapprovalOrderingEventHandlersTest {
         assertThat(logs.list)
                 .hasSize(2)
                 .allSatisfy(log -> assertThat(log.getFormattedMessage())
+                        .contains("置換済み・失効")
                         .contains(old.id().value().toString()));
+    }
+
+    @Test
+    void 見積りが見つからない承認と割当ては今までどおり輸送要求を進める() {
+        UUID missing = UUID.randomUUID();
+        advance(TransportRequestStatus.ROUTING);
+
+        assignment(requests, quotations)
+                .on(new QuotationRouteAssigned(missing, 1, request.id().value(), 1, "RC-2026-0001", 1, NOW));
+        approval(requests, quotations)
+                .on(new QuotationApprovedByShipper(
+                        missing, 1, request.id().value(), 1, "RC-2026-0001", 1, shipper.value(), NOW));
+
+        assertThat(statusOf()).isEqualTo(TransportRequestStatus.READY_TO_BOOK);
+        assertThat(logs.list).isEmpty();
     }
 
     @Test
@@ -183,6 +230,7 @@ class ReapprovalOrderingEventHandlersTest {
     void 順1_DE24が見積りを読んだ後に再承認とDE04が書いてもDE24は読み直して戻さず予約待ちのまま() {
         advance(TransportRequestStatus.READY_TO_BOOK);
         Quotation next = requotedAndPresented();
+        long version = versionOf();
         QuotationPresentedForReapprovalEventHandler handler =
                 reapproval(requests, new InterleavingQuotations(quotations, () -> {
                     approve(next);
@@ -192,6 +240,8 @@ class ReapprovalOrderingEventHandlersTest {
         handler.on(reapprovalEvent(next));
 
         assertThat(statusOf()).isEqualTo(TransportRequestStatus.READY_TO_BOOK);
+        assertThat(versionOf()).as("DE-04 の書き込みの 1 回だけ（DE-24 はぶつかって戻さなかった）").isEqualTo(version + 1);
+        assertThat(logs.list).isEmpty();
     }
 
     @Test
@@ -200,21 +250,28 @@ class ReapprovalOrderingEventHandlersTest {
         Quotation next = requotedAndPresented();
         Quotation beforeApproval = quotations.findById(next.id()).orElseThrow();
         approve(next);
+        long version = versionOf();
         QuotationApprovedByShipperEventHandler handler = approval(
-                new InterleavingRequests(
-                        requests,
-                        () -> reapproval(requests, new StaleQuotations(quotations, beforeApproval))
-                                .on(reapprovalEvent(next))),
+                new InterleavingRequests(requests, () -> {
+                    reapproval(requests, new StaleQuotations(quotations, beforeApproval))
+                            .on(reapprovalEvent(next));
+                    assertThat(statusOf())
+                            .as("前提: 差し込んだ DE-24 が戻した")
+                            .isEqualTo(TransportRequestStatus.AWAITING_APPROVAL);
+                }),
                 quotations);
 
         handler.on(approvedEvent(next));
 
         assertThat(statusOf()).isEqualTo(TransportRequestStatus.READY_TO_BOOK);
+        assertThat(versionOf()).as("DE-24 の戻しと、ぶつかって読み直した DE-04 の書き込み").isEqualTo(version + 2);
+        assertThat(logs.list).isEmpty();
     }
 
     @Test
     void 順3_旧版のDE04が旧版を読んだ後に再見積りとDE24が入っても旧版のDE04は読み直して進めず荷主承認待ちのまま() {
         advance(TransportRequestStatus.AWAITING_APPROVAL);
+        long version = versionOf();
         Quotation[] next = new Quotation[1];
         QuotationApprovedByShipperEventHandler handler =
                 approval(requests, new InterleavingQuotations(quotations, () -> {
@@ -225,8 +282,15 @@ class ReapprovalOrderingEventHandlersTest {
         handler.on(approvedEvent(old));
 
         assertThat(statusOf()).isEqualTo(TransportRequestStatus.AWAITING_APPROVAL);
-        assertThat(quotations.findById(next[0].id()).orElseThrow().status().name())
-                .isEqualTo("AWAITING_SHIPPER_APPROVAL");
+        assertThat(versionOf()).as("DE-24 の届いていても書く 1 回だけ").isEqualTo(version + 1);
+        assertThat(logs.list)
+                .singleElement()
+                .satisfies(log -> assertThat(log.getFormattedMessage())
+                        .contains("置換済み・失効")
+                        .contains(old.id().value().toString()));
+        assertThat(quotations.findById(next[0].id()).orElseThrow().status())
+                .as("前提")
+                .isEqualTo(QuotationStatus.AWAITING_SHIPPER_APPROVAL);
     }
 
     // 組み立て
@@ -390,11 +454,11 @@ class ReapprovalOrderingEventHandlersTest {
         }
     }
 
-    /** 承認の前に読んだ見積りの写しを返す（DE-24 の listener が承認の前に見積りを読んだ）。 */
+    /** 最初の 1 回だけ、承認の前に読んだ見積りの写しを返す（DE-24 の listener が承認の前に見積りを読んだ。読み直しは今のコミットを読む）。 */
     private static final class StaleQuotations extends InMemoryQuotationRepository {
 
         private final InMemoryQuotationRepository delegate;
-        private final Quotation stale;
+        private Quotation stale;
 
         StaleQuotations(InMemoryQuotationRepository delegate, Quotation stale) {
             this.delegate = delegate;
@@ -403,7 +467,12 @@ class ReapprovalOrderingEventHandlersTest {
 
         @Override
         public Optional<Quotation> findById(QuotationId id) {
-            return id.equals(stale.id()) ? Optional.of(stale) : delegate.findById(id);
+            if (stale != null && id.equals(stale.id())) {
+                Quotation first = stale;
+                stale = null;
+                return Optional.of(first);
+            }
+            return delegate.findById(id);
         }
     }
 

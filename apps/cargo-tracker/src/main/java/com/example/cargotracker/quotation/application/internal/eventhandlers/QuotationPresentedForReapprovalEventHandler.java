@@ -17,7 +17,8 @@ import org.springframework.stereotype.Service;
  * 見積りの保存のコミットの後に、非同期で、新しいトランザクションの中で処理する（2 つの集約を 1 つのトランザクションで更新しない）。
  * 届く順の入れ替わりの守り（ADR-018）: 輸送要求を読んだ後に見積りを読み、見積りがまだ荷主承認待ちのときだけ戻す。承認済みなら
  * その見積りの DE-04 が進めるので何もしない。輸送要求がすでに荷主承認待ちでも書いて版を上げ、先に旧版を読んだ DE-04 の listener を
- * 楽観ロックでぶつける。置換済み・失効・見つからない見積りと、予約確定済みの輸送要求（D-87）は変えず警告のログを残す。
+ * 楽観ロックでぶつける。置換済み・失効・見つからない・荷主承認待ちでない見積りと、予約確定済みの輸送要求（D-87）は変えず警告の
+ * ログを残す（予約確定済みは「ちょうど荷主承認待ち」に届いていない扱いになり、戻せないので警告になる）。
  *
  * <p>{@code @Service} は JIG がユースケースとして読むための印で、部品探索の対象にはしない（CargoTrackerApplication）。
  * 組み立ては {@code QuotationConfiguration} が担う。
@@ -39,18 +40,12 @@ public class QuotationPresentedForReapprovalEventHandler {
                         "荷主承認待ち",
                         TransportRequest::returnToAwaitingApproval)
                 .checking(QuotationGate.awaitingReapproval(quotationRepository))
-                .reachedWhen(QuotationPresentedForReapprovalEventHandler::isAwaitingApproval)
+                .reachedWhen(TransportRequest::isAwaitingApproval)
                 .writingWhenReached();
     }
 
     @ApplicationModuleListener
     public void on(QuotationPresentedForReapproval event) {
         progression.advance(event.transportRequestId(), event.quotationId(), event.transportRequestVersionNo());
-    }
-
-    /** ちょうど荷主承認待ちか（予約待ち・予約確定済みは届いていない扱いにする。予約確定済みは警告のログになる）。 */
-    private static boolean isAwaitingApproval(TransportRequest request, int versionNo) {
-        return request.hasReached(TransportRequestStatus.AWAITING_APPROVAL, versionNo)
-                && !request.hasReached(TransportRequestStatus.READY_TO_BOOK, versionNo);
     }
 }

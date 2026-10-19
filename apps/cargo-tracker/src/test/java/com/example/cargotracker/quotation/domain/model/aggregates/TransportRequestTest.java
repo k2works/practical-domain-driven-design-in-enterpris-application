@@ -225,6 +225,8 @@ class TransportRequestTest {
     @Test
     void 予約待ちの現在の版で再見積りが提示されると荷主承認待ちへ戻り再承認で予約待ちへ進む() {
         TransportRequest request = readyToBook();
+        var reviewRecords = request.reviewRecords();
+        var version = request.currentVersion();
 
         assertThat(request.returnToAwaitingApproval(2)).as("現在の版でなければ変えない").isFalse();
         assertThat(request.returnToAwaitingApproval(1)).isTrue();
@@ -232,7 +234,8 @@ class TransportRequestTest {
         assertThat(request.returnToAwaitingApproval(1)).as("2 回目は変えない（冪等）").isFalse();
         assertThat(request.markReadyToBook(1)).as("再承認").isTrue();
         assertThat(request.status()).isEqualTo(TransportRequestStatus.READY_TO_BOOK);
-        assertThat(request.currentVersion().versionNo()).as("往復で版は変わらない").isEqualTo(1);
+        assertThat(request.currentVersion()).as("往復で版は変わらない").isEqualTo(version);
+        assertThat(request.reviewRecords()).as("往復で審査記録は変わらない").isEqualTo(reviewRecords);
     }
 
     @Test

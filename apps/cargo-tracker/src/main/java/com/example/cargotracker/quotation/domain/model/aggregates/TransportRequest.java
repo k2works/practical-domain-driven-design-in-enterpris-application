@@ -239,6 +239,14 @@ public final class TransportRequest {
     }
 
     /**
+     * 現在の版が {@code versionNo} で、ちょうど荷主承認待ちか（予約待ち・予約確定済みは含めない）。再見積りの提示を受けた戻しが
+     * すでに届いているかの判定に使う（DE-24。ADR-018。Bolt 35b2）。
+     */
+    public boolean isAwaitingApproval(int versionNo) {
+        return versionNo == currentVersion.versionNo() && status == TransportRequestStatus.AWAITING_APPROVAL;
+    }
+
+    /**
      * 本予約を確定したことを受けて、予約確定済みにする（予約の DE-07 の listener が見積りの公開 API で呼ぶ。US-04 AC1。Bolt 23）。
      * 見積りのイベントで進める状態の並びで予約確定済みより前なら進める。本予約は荷主が承認した見積りからだけ確定するが（ADR-016）、
      * 荷主の承認の DE-04 の配信より DE-07 が先に届くと輸送要求はまだ荷主承認待ちにあるため、予約待ちに限らない（Bolt 23 レビュー H-1）。

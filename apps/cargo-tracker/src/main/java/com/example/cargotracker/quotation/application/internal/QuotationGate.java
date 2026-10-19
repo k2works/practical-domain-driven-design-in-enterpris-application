@@ -3,13 +3,16 @@ package com.example.cargotracker.quotation.application.internal;
 import com.example.cargotracker.quotation.domain.model.aggregates.Quotation;
 import com.example.cargotracker.quotation.domain.model.aggregates.QuotationRepository;
 import com.example.cargotracker.quotation.domain.model.valueobjects.QuotationId;
-import com.example.cargotracker.quotation.domain.model.valueobjects.QuotationStatus;
 import java.util.Optional;
 import java.util.UUID;
 
 /**
  * 輸送要求を進める・戻す前に、イベントの見積りを読んで決める判定（ADR-018。Bolt 35b2）。{@link TransportRequestProgression} が輸送要求を
  * 読んだ後に呼び、楽観ロックの競合でやり直すたびに呼び直す。
+ *
+ * <p>守りが成り立つ条件: この判定が読む見積りの状態を変える操作の後には、必ず輸送要求を書く listener が続くこと（荷主の承認の後の
+ * DE-04、再見積りの提示の後の DE-24。どちらも届いていても書く）。判定に新しい見積りの状態を使うときは、その状態の変化の後に輸送要求を
+ * 書く listener を用意する（荷主の辞退・D-86 を作るとき）。
  */
 @FunctionalInterface
 public interface QuotationGate {
@@ -29,7 +32,7 @@ public interface QuotationGate {
      */
     static QuotationGate notRetired(QuotationRepository quotations) {
         return quotationId -> find(quotations, quotationId)
-                .filter(QuotationGate::isRetired)
+                .filter(quotation -> quotation.status().isRetired())
                 .map(_ -> Verdict.RETIRED)
                 .orElse(Verdict.PROCEED);
     }
@@ -51,10 +54,6 @@ public interface QuotationGate {
 
     private static Optional<Quotation> find(QuotationRepository quotations, UUID quotationId) {
         return quotations.findById(new QuotationId(quotationId));
-    }
-
-    private static boolean isRetired(Quotation quotation) {
-        return quotation.status() == QuotationStatus.EXPIRED || quotation.status() == QuotationStatus.REPLACED;
     }
 
     /** 判定。 */

@@ -32,6 +32,14 @@ public enum QuotationStatus {
     }
 
     /**
+     * 再見積りで旧版になった（置換済み・失効の記録がある）か。期限による失効は状態を書き換えないので含まない。今は再見積りだけが
+     * この状態を書く（荷主の辞退を作るときに見直す。ADR-018。Bolt 35b2）。
+     */
+    public boolean isRetired() {
+        return this == EXPIRED || this == REPLACED;
+    }
+
+    /**
      * 荷主が詳細経路設計を依頼した後か（詳細設計依頼済み・荷主承認待ち・承認済み）。経路設計の途中から後は再見積りできない（Bolt 12・20）。
      * ただし承認済みは、有効期限を過ぎれば再見積りできる（D-85。Bolt 35b。{@code Quotation#requoteRejectionAt}）。
      */

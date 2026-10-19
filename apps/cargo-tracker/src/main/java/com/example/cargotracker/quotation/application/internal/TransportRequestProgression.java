@@ -171,7 +171,10 @@ public final class TransportRequestProgression {
     public enum Result {
         /** 進めた。 */
         ADVANCED,
-        /** すでにその状態まで進んでいた（再配信・遅れて届いたイベント。何もしなかった）。 */
+        /**
+         * 進める必要がない（すでにその状態まで進んでいた再配信・遅れて届いたイベント、または見積りが承認済みでその見積りのイベントが
+         * 進める）。状態は変えない（届いていても書く指定なら版だけ上げる）。
+         */
         ALREADY_REACHED,
         /** 業務の理由で進めなかった（警告のログを残した）。 */
         NOT_ADVANCED,
