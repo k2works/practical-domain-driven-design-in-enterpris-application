@@ -11368,7 +11368,7 @@
 </tr>
 <tr>
 <td style="text-align: left;">支援技術による手動確認</td>
-<td style="text-align: left;">未実施（議題 2）</td>
+<td style="text-align: left;">AC3 の画面は human:kakimomokuri が確かめ、3 点（要約へのフォーカス、見出しと不足条件の読み上げ、リンクで欄へ移る）とも問題なし（2026-10-19。使ったスクリーンリーダーとブラウザは未記入）。AC5 の画面は WebMvc のテストの断言で代えた</td>
 </tr>
 </tbody>
 </table>
@@ -11491,7 +11491,7 @@
 </ul>
 <h3 id="_7">既知の課題（後に持ち込む）<a class="headerlink" href="#_7" title="Permanent link">&para;</a></h3>
 <ul>
-<li>特殊貨物の S-09 の状態の axe と、支援技術による手動確認（AC3・AC5 の画面）。開発データに特殊貨物の予約待ちを置くか（議題 2）</li>
+<li>特殊貨物の S-09 の状態の axe と支援技術による手動確認（AC5 の画面）。開発データに特殊貨物の予約待ちを置くか（AC3 の画面は手動確認を済ませた）</li>
 <li>予約から見積りのドメインへの型の依存を見る ArchUnit の規則がない（<code>ModularityTest</code> の allowedDependencies だけが守る）</li>
 <li>判定の順（特殊貨物 → 確定条件）の知識がサービスと集約の 2 か所にある。集約に副作用のない事前判定を置いて 1 か所にする</li>
 <li>DB の列の注釈 <code>booking_version.cargo_category</code> は「貨物区分」のまま（スキーマに当たるので触らなかった）</li>
@@ -11510,6 +11510,11 @@
 </tr>
 </thead>
 <tbody>
+<tr>
+<td style="text-align: left;">2026-10-19</td>
+<td style="text-align: left;">AC3 の画面の支援技術による手動確認の結果を記録し（3 点とも問題なし）、#43 をクローズした。US-04 の SP 3 を W5 に数えた</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5、確認 human:kakimomokuri</td>
+</tr>
 <tr>
 <td style="text-align: left;">2026-10-19</td>
 <td style="text-align: left;">終了報告を承認した（議題 1〜3。議題 3 の人に諮らずに変えた点を事後に承認）。#43 は支援技術による手動確認の後にクローズし、それまで開けたままにする。受入条件のチェックだけを入れた。US-04 の SP 3 は #43 のクローズのときに数える</td>
