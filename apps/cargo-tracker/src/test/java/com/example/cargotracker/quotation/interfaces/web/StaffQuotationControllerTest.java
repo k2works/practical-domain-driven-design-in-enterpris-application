@@ -55,7 +55,6 @@ import java.time.ZoneId;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -114,12 +113,6 @@ class StaffQuotationControllerTest {
 
     @MockitoBean
     StaffTransportRequestQueryService transportRequestQueryService;
-
-    /** 再見積りできるかの判定は引数だけで決まるので、照会のサービスのモックでも本物の判定を使う（D-85。Bolt 35c）。 */
-    @BeforeEach
-    void realRequoteJudgement() {
-        given(queryService.requoteRejection(any(), any(), any())).willCallRealMethod();
-    }
 
     private static UtcInstant tokyo(String dateTime) {
         return new UtcInstant(LocalDateTime.parse(dateTime).atZone(TOKYO).toInstant());
@@ -646,7 +639,6 @@ class StaffQuotationControllerTest {
 
     @Test
     void 期限内の承認済みの見積りの再見積りは本予約の確定へ進むよう示す() throws Exception {
-        // 仮の文言（D-85。Bolt 35b）。画面の判定は Bolt 35c まで今のままなので、POST で送られたときだけ届く
         transportRequestExists();
         given(commandService.requote(any()))
                 .willReturn(new RequotationOutcome.Rejected(QuotationRejection.APPROVED_AND_STILL_VALID));
@@ -674,7 +666,7 @@ class StaffQuotationControllerTest {
         clock.setInstant(QuotationFixture.EXPIRES_AT.instant());
         try {
             mockMvc.perform(get("/staff/transport-requests/TR-2026-0001/quotations/1"))
-                    .andExpect(content().string(containsString("を過ぎました。承認済みの経路を引き継いで再見積りできます。荷主の再承認が要ります。")))
+                    .andExpect(content().string(containsString("を過ぎました。承認済みの経路版と経路方針を引き継いで再見積りできます。荷主の再承認が要ります。")))
                     .andExpect(content().string(not(containsString("再見積りはできません"))))
                     .andExpect(content().string(containsString("/quotations/1/requotation")))
                     .andExpect(content().string(containsString("確定した経路（RC-2026-0001 経路版 1）")));
@@ -777,7 +769,55 @@ class StaffQuotationControllerTest {
     }
 
     @Test
-    void 予約確定済みの見積依頼の再見積りを送っても予約確定済みと示す() throws Exception {
+    void 予約確定済みの見積依頼の期限内の承認済みの見積りを開いても予約確定済みと示して戻す() throws Exception {
+        readyToBookRequestExists(true);
+        given(queryService.find(NUMBER, 1)).willReturn(Optional.of(approved()));
+
+        mockMvc.perform(get("/staff/transport-requests/TR-2026-0001/quotations/1/requotation"))
+                .andExpect(flash().attribute("problem", "TR-2026-0001 見積 1 は本予約を確定済みのため、再見積りできません"));
+    }
+
+    @Test
+    void 経路を持つ見積りの再見積りの形式の誤りも読み取り専用の経路方針と経路版を残して描き直す() throws Exception {
+        readyToBookRequestExists(false);
+        given(queryService.find(NUMBER, 1)).willReturn(Optional.of(approved()));
+
+        mockMvc.perform(post("/staff/transport-requests/TR-2026-0001/quotations/1/requotation")
+                        .param("lines[0].description", "海上運賃")
+                        .param("lines[0].amount", "高い")
+                        .param("currency", "USD")
+                        .param("expiresAt", "2099-10-09 18:00"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("<dd>SGSIN</dd>")))
+                .andExpect(content().string(containsString("確定した経路（RC-2026-0001 経路版 1）")))
+                .andExpect(content().string(not(containsString("id=\"via\""))));
+        then(commandService).should(never()).requote(any());
+    }
+
+    @Test
+    void 経路を持たない見積りの再見積りは入れた経路方針のまま算出を頼む() throws Exception {
+        transportRequestExists();
+        given(queryService.find(NUMBER, 1)).willReturn(Optional.of(presented()));
+        given(commandService.requote(any()))
+                .willReturn(new RequotationOutcome.Calculated(NUMBER, 2, QuotationStatus.REPLACED));
+
+        mockMvc.perform(post("/staff/transport-requests/TR-2026-0001/quotations/1/requotation")
+                        .param("lines[0].description", "海上運賃")
+                        .param("lines[0].amount", "3000.00")
+                        .param("currency", "USD")
+                        .param("expiresAt", "2099-10-09 18:00")
+                        .param("via", "HKHKG")
+                        .param("departureAt", "2099-10-11 09:00")
+                        .param("arrivalAt", "2099-10-31 18:00"))
+                .andExpect(redirectedUrl("/staff/transport-requests/TR-2026-0001/quotations/2"));
+        ArgumentCaptor<RequoteQuotationCommand> command = ArgumentCaptor.forClass(RequoteQuotationCommand.class);
+        then(commandService).should().requote(command.capture());
+        assertThat(command.getValue().input().via()).containsExactly(new Location("HKHKG"));
+        assertThat(command.getValue().input().departureAt()).isEqualTo(tokyo("2099-10-11T09:00"));
+    }
+
+    @Test
+    void 再見積りを予約確定済みの理由で受け付けなかったときはその文言を示す() throws Exception {
         transportRequestExists();
         given(commandService.requote(any()))
                 .willReturn(new RequotationOutcome.Rejected(QuotationRejection.TRANSPORT_REQUEST_BOOKED));

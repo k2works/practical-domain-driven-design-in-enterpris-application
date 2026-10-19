@@ -282,8 +282,8 @@ class TransportRequestReviewControllerTest {
                                         containsString(
                                                 "href=\"/staff/transport-requests/TR-2026-0005/quotations/2\">TR-2026-0005 見積 2 を開く（承認待ち）</a>")))
                 .andExpect(content().string(containsString("<td>承認待ち</td>")))
-                .andExpect(content().string(containsString("<span class=\"visually-hidden\">未承認</span>")))
-                .andExpect(content().string(containsString("「—」は、荷主の再承認の前（社内承認して提示する前）であることを示します。")))
+                .andExpect(content().string(containsString("<span class=\"visually-hidden\">再承認の前</span>")))
+                .andExpect(content().string(containsString("この表の「荷主の承認」の「—」は、荷主の再承認の前（社内承認して提示する前）であることを示します。")))
                 // 有効期限と同時刻は失効、1 秒前は確定できる（T-38）
                 .andExpect(
                         content()
@@ -291,6 +291,39 @@ class TransportRequestReviewControllerTest {
                                         containsString(
                                                 "href=\"/staff/bookings/new?transportRequest=TR-2026-0004&amp;quotation=1\">TR-2026-0004 見積 1 の本予約の確定へ</a>")))
                 .andExpect(content().string(not(containsString("まだ画面で操作できません"))));
+    }
+
+    @Test
+    void 再見積りの後に提示の前に失効した承認待ちの見積りは予約の確定待ちから再見積りでき凡例は承認待ちの行があるときだけ示す() throws Exception {
+        given(quotationQueryService.findAwaitingBookingSummaries())
+                .willReturn(List.of(new AwaitingBookingSummary(
+                        NUMBER,
+                        2,
+                        QuotationStatus.PENDING_APPROVAL,
+                        "RC-2026-0001",
+                        1,
+                        null,
+                        new UtcInstant(Instant.parse("2026-10-05T04:20:00Z")))));
+
+        mockMvc.perform(get("/staff/transport-requests"))
+                .andExpect(content().string(containsString("<td>失効</td>")))
+                .andExpect(
+                        content()
+                                .string(
+                                        containsString(
+                                                "href=\"/staff/transport-requests/TR-2026-0001/quotations/2/requotation\">TR-2026-0001 見積 2 を再見積りする</a>")))
+                .andExpect(content().string(not(containsString("を開く（承認待ち）"))));
+        given(quotationQueryService.findAwaitingBookingSummaries())
+                .willReturn(List.of(new AwaitingBookingSummary(
+                        NUMBER,
+                        1,
+                        QuotationStatus.APPROVED,
+                        "RC-2026-0001",
+                        1,
+                        new UtcInstant(Instant.parse("2026-10-04T06:00:00Z")),
+                        new UtcInstant(Instant.parse("2099-10-09T09:00:00Z")))));
+        mockMvc.perform(get("/staff/transport-requests"))
+                .andExpect(content().string(not(containsString("荷主の再承認の前（社内承認して提示する前）"))));
     }
 
     @Test

@@ -217,8 +217,11 @@ public class BookingUiSteps {
     @もし("営業担当者が受付一覧の予約の確定待ちから提出した見積依頼の見積り {int} を承認待ちで開く")
     public void 予約の確定待ちから承認待ちで開く(int quotationNo) {
         browser.navigate(baseUrl + "/staff/transport-requests");
-        assertThat(awaitingRow(quotationNo)).containsText("承認待ち");
+        assertThat(awaitingRow(quotationNo).locator("td").nth(2)).hasText("承認待ち");
+        assertThat(awaitingRow(quotationNo).locator("td").nth(3)).containsText("再承認の前");
+        // 再見積りで失効にした旧版の行は消える
         assertThat(awaitingRow(quotationNo - 1)).hasCount(0);
+        browser.checkAccessibility();
         awaitingRow(quotationNo)
                 .getByRole(AriaRole.LINK, new Locator.GetByRoleOptions().setName(subject(quotationNo) + " を開く（承認待ち）"))
                 .click();

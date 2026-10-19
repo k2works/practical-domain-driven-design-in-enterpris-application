@@ -31,6 +31,9 @@ public record AwaitingBookingSummary(
         Objects.requireNonNull(status, "status");
         Objects.requireNonNull(routingCaseNumber, "routingCaseNumber");
         Objects.requireNonNull(expiresAt, "expiresAt");
+        if (status != QuotationStatus.APPROVED && status != QuotationStatus.PENDING_APPROVAL) {
+            throw new IllegalArgumentException("予約の確定待ちの行は承認済みか承認待ちです: " + status);
+        }
         if ((status == QuotationStatus.APPROVED) != (shipperApprovedAt != null)) {
             throw new IllegalArgumentException("承認済みの行だけが荷主の承認時刻を持ちます: " + status);
         }

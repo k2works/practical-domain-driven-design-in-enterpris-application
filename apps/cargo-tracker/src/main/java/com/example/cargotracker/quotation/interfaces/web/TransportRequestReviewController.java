@@ -375,17 +375,18 @@ public class TransportRequestReviewController {
         String quotationPath = STAFF_TRANSPORT_REQUESTS + summary.number().text() + QUOTATIONS + summary.quotationNo();
         String route = summary.routingCaseNumber() + " 版 " + summary.routeVersionNo();
         String expiresAt = TransportRequestLabels.staffDateTime(summary.expiresAt());
-        if (summary.status() != QuotationStatus.APPROVED) {
-            // 経路を引き継いだ承認待ち（再見積りの後で提示の前。D-85。Bolt 35c）
+        if (summary.status() == QuotationStatus.PENDING_APPROVAL) {
+            // 経路を引き継いだ承認待ち（再見積りの後で提示の前。D-85。Bolt 35c）。提示の前に失効していれば、また再見積りする
+            boolean expired = QuotationViews.isExpired(summary.status(), summary.expiresAt(), now);
             return new AwaitingBookingRow(
                     label,
                     route,
                     QuotationViews.effectiveStatus(summary.status(), summary.expiresAt(), now),
                     null,
                     expiresAt,
-                    false,
-                    quotationPath,
-                    label + " を開く（承認待ち）");
+                    expired,
+                    expired ? quotationPath + "/requotation" : quotationPath,
+                    label + (expired ? " を再見積りする" : " を開く（承認待ち）"));
         }
         boolean expired = QuotationViews.isExpired(QuotationStatus.APPROVED, summary.expiresAt(), now);
         return new AwaitingBookingRow(

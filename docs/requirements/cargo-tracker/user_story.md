@@ -4,7 +4,7 @@ title: "cargo-tracker ユーザーストーリー"
 description: "cargo-tracker MVP の価値単位のユーザーストーリー、受入条件、上流要件へのトレーサビリティ。"
 tags: [requirements, user-story]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-19T13:01:24Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-19T22:15:37Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T05:20:11Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:01:39Z }
@@ -200,7 +200,7 @@ MVP の決定: 荷主の承認は荷主担当者 1 名で足りる（BR-01）。
 - 再見積りの後で提示の前の見積り（経路を引き継いだ承認待ち）は、受付一覧（S-02）の予約の確定待ちの表の行に「承認待ち」で残す（読み取りモデルの SQL を変え、スキーマは変えない）
 - 開発データに、荷主の承認の後に失効した見積りのサンプルを足す（最初の回答「足さない」を改めた）
 - そのサンプルは Bolt 35d で足す（35c が半日を超えないよう。データベースの承認ゲートは 35d の計画で通す）
-- 再見積りできるかの判定は見積りの照会のサービスに置き、再見積りのボタン・GET・POST が同じ判定を使う
+- 再見積りできるかの判定は見積りの照会のサービスに置き、再見積りのボタン・GET・POST が同じ判定を使う（Bolt 35c の開発レビューで、判定をドメインの規則 `RequotePolicy` に移した。2026-10-20、human:kakimomokuri）
 
 ## U6 予約管理
 

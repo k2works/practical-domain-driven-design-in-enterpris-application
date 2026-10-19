@@ -166,13 +166,15 @@
     </resultMap>
 
     <!-- 経路設計中・荷主承認待ちの見積依頼の、詳細設計依頼済み・荷主承認待ちの見積り（受付一覧 S-02。Bolt 12・20）。依頼時刻の古い順。
-         荷主が承認した見積りは予約の確定待ちの表に移した（Bolt 23b） -->
+         荷主が承認した見積りは予約の確定待ちの表に移した（Bolt 23b）。再見積りを提示した荷主承認待ちの見積りは、DE-24 で輸送要求が
+         予約待ちから荷主承認待ちへ戻る前でも出す（見積りの状態を正にする。D-85。Bolt 35c） -->
     <select id="selectRoutingRequested" resultMap="routingRequestedSummaryRow">
         SELECT r.request_number, q.quotation_no, q.status, q.responded_at, q.expires_at, q.route_confirmed_at
           FROM quotation.transport_request r
           JOIN quotation.quotation q ON q.transport_request_id = r.id
-         WHERE r.status IN ('ROUTING', 'AWAITING_APPROVAL')
-           AND q.status IN ('ROUTING_REQUESTED', 'AWAITING_SHIPPER_APPROVAL')
+         WHERE ((r.status IN ('ROUTING', 'AWAITING_APPROVAL')
+                 AND q.status IN ('ROUTING_REQUESTED', 'AWAITING_SHIPPER_APPROVAL'))
+                OR (r.status = 'READY_TO_BOOK' AND q.status = 'AWAITING_SHIPPER_APPROVAL'))
          ORDER BY q.responded_at, r.request_number
     </select>
 

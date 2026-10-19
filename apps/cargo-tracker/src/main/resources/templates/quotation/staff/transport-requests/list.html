@@ -156,14 +156,14 @@
             <td th:text="${awaiting.route()}">RC-2026-0001 版 1</td>
             <td th:text="${awaiting.status()}">荷主承認済み（予約待ち）</td>
             <td th:if="${awaiting.shipperApprovedAt()}" th:text="${awaiting.shipperApprovedAt()}">2026-10-07 15:00 Asia/Tokyo（UTC+09:00）（UTC 2026-10-07 06:00）</td>
-            <td th:unless="${awaiting.shipperApprovedAt()}"><span aria-hidden="true">—</span><span class="visually-hidden">未承認</span></td>
+            <td th:unless="${awaiting.shipperApprovedAt()}"><span aria-hidden="true">—</span><span class="visually-hidden">再承認の前</span></td>
             <td th:text="${awaiting.expiresAt()}">2026-10-09 18:00 Asia/Tokyo（UTC+09:00）（UTC 2026-10-09 09:00）</td>
             <td><a th:href="@{${awaiting.actionPath()}}" th:text="${awaiting.actionLabel()}">TR-2026-0001 見積 1 の本予約の確定へ</a></td>
         </tr>
         </tbody>
     </table>
     </div>
-    <p th:if="${anyAwaitingInternal}">「—」は、荷主の再承認の前（社内承認して提示する前）であることを示します。</p>
+    <p th:if="${anyAwaitingInternal}">この表の「荷主の承認」の「—」は、荷主の再承認の前（社内承認して提示する前）であることを示します。</p>
 </main>
 </body>
 </html>

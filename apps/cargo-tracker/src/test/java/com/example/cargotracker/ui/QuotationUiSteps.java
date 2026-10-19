@@ -128,6 +128,24 @@ public class QuotationUiSteps {
         }
     }
 
+    /**
+     * 荷主の承認の後に有効期限を過ぎた状態を、時刻の順（承認 → 有効期限 → 今）を崩さずに作る（マニュアルのキャプチャ。D-85。Bolt 35c）。
+     * 分の単位の表示でも順が読めるよう、荷主の承認を 2 時間前、有効期限を 1 時間前にする。
+     */
+    @前提("見積り {int} の有効期限が承認の後に過ぎている")
+    public void 有効期限が承認の後に過ぎている(int quotationNo) {
+        int updated = jdbc.update(
+                "UPDATE quotation.quotation q SET shipper_approved_at = CURRENT_TIMESTAMP - INTERVAL '2 hour',"
+                        + " expires_at = CURRENT_TIMESTAMP - INTERVAL '1 hour'"
+                        + " FROM quotation.transport_request t"
+                        + " WHERE q.transport_request_id = t.id AND t.request_number = ? AND q.quotation_no = ?",
+                number(),
+                quotationNo);
+        if (updated != 1) {
+            throw new IllegalStateException("有効期限を過ぎた状態にする見積りがありません: 見積 " + quotationNo);
+        }
+    }
+
     @もし("営業担当者が提出した見積依頼の見積り {int} を開く")
     public void 見積りを開く(int quotationNo) {
         browser.navigate(baseUrl + quotationsPath() + "/" + quotationNo);

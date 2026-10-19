@@ -3,13 +3,13 @@ package com.example.cargotracker.quotation.application.internal.commandservices;
 import com.example.cargotracker.quotation.application.internal.commands.CalculateQuotationCommand;
 import com.example.cargotracker.quotation.application.internal.commands.PresentQuotationCommand;
 import com.example.cargotracker.quotation.application.internal.commands.RequoteQuotationCommand;
-import com.example.cargotracker.quotation.application.internal.queryservices.StaffQuotationQueryService;
 import com.example.cargotracker.quotation.domain.model.aggregates.ConcurrentQuotationUpdateException;
 import com.example.cargotracker.quotation.domain.model.aggregates.DuplicateQuotationException;
 import com.example.cargotracker.quotation.domain.model.aggregates.Quotation;
 import com.example.cargotracker.quotation.domain.model.aggregates.QuotationRepository;
 import com.example.cargotracker.quotation.domain.model.aggregates.TransportRequest;
 import com.example.cargotracker.quotation.domain.model.aggregates.TransportRequestRepository;
+import com.example.cargotracker.quotation.domain.model.rules.RequotePolicy;
 import com.example.cargotracker.quotation.domain.model.valueobjects.QuotationId;
 import com.example.cargotracker.quotation.domain.model.valueobjects.QuotationRejection;
 import com.example.cargotracker.quotation.domain.model.valueobjects.QuotationViolations;
@@ -39,8 +39,6 @@ public class QuotationCommandService {
     private final QuotationRepository quotationRepository;
     private final ApplicationEventPublisher eventPublisher;
     private final Clock clock;
-    /** 再見積りできるかの判定（画面のボタン・GET と同じ照会。D-85。Bolt 35c）。 */
-    private final StaffQuotationQueryService requoteJudgement;
 
     public QuotationCommandService(
             TransportRequestRepository transportRequestRepository,
@@ -51,7 +49,6 @@ public class QuotationCommandService {
         this.quotationRepository = quotationRepository;
         this.eventPublisher = eventPublisher;
         this.clock = clock;
-        this.requoteJudgement = new StaffQuotationQueryService(transportRequestRepository, quotationRepository);
     }
 
     /**
@@ -142,8 +139,8 @@ public class QuotationCommandService {
         Quotation old = previous.get();
         UtcInstant now = new UtcInstant(clock.instant());
         // 輸送要求の状態・版と、置換済み・失効・期限内の承認済みの旧版は、入力を見る前に拒否する。判定は画面のボタン・GET と同じ照会を
-        // 使う（D-85。Bolt 35c）。旧版は、入力に誤りがないと分かってから置き換える
-        Optional<QuotationRejection> rejection = requoteJudgement.requoteRejection(request, old, now);
+        // 規則を使う（D-85。Bolt 35c）。旧版は、入力に誤りがないと分かってから置き換える
+        Optional<QuotationRejection> rejection = RequotePolicy.rejection(request, old, now);
         if (rejection.isPresent()) {
             return new RequotationOutcome.Rejected(rejection.get());
         }

@@ -95,11 +95,11 @@
             <p>経路方針と経路版は、荷主が承認した見積りから引き継ぎます（変えられません）。</p>
             <dl>
                 <dt>主な経由地</dt>
-                <dd th:text="${inheritedPolicy.via()}">SGSIN</dd>
+                <dd th:text="${inheritedQuotation.via()}">SGSIN</dd>
                 <dt>概算の出発日時</dt>
-                <dd th:text="${inheritedPolicy.departureAt()}">2026-11-02 09:00 Asia/Tokyo（UTC+09:00）</dd>
+                <dd th:text="${inheritedQuotation.departureAt()}">2026-11-02 09:00 Asia/Tokyo（UTC+09:00）</dd>
                 <dt>概算の到着日時</dt>
-                <dd th:text="${inheritedPolicy.arrivalAt()}">2026-11-30 09:00 Asia/Tokyo（UTC+09:00）</dd>
+                <dd th:text="${inheritedQuotation.arrivalAt()}">2026-11-30 09:00 Asia/Tokyo（UTC+09:00）</dd>
             </dl>
             <div th:replace="~{quotation/fragments/assigned-route :: route(${inheritedRoute}, 3)}"></div>
         </section>

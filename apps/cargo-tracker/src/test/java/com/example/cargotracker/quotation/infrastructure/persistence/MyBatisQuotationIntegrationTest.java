@@ -894,6 +894,16 @@ class MyBatisQuotationIntegrationTest {
                                 1,
                                 null,
                                 nextExpires));
+        assertThat(repository.findRoutingRequestedSummaries())
+                .as("提示した見積り 2（荷主承認待ち）は、DE-24 で輸送要求が予約待ちから戻る前でも経路設計中・荷主承認待ちの表に出す")
+                .filteredOn(summary ->
+                        summary.number().year() == 2082 && summary.number().sequence() >= 37)
+                .extracting(
+                        RoutingRequestedSummary::number,
+                        RoutingRequestedSummary::quotationNo,
+                        RoutingRequestedSummary::status)
+                .containsExactly(org.assertj.core.groups.Tuple.tuple(
+                        new TransportRequestNumber(2082, 40), 2, QuotationStatus.AWAITING_SHIPPER_APPROVAL));
     }
 
     private int legs(QuotationId quotationId) {

@@ -11,6 +11,7 @@ import com.example.cargotracker.quotation.application.internal.queryservices.Sta
 import com.example.cargotracker.quotation.application.internal.queryservices.StaffTransportRequestQueryService;
 import com.example.cargotracker.quotation.domain.model.aggregates.Quotation;
 import com.example.cargotracker.quotation.domain.model.aggregates.TransportRequest;
+import com.example.cargotracker.quotation.domain.model.rules.RequotePolicy;
 import com.example.cargotracker.quotation.domain.model.valueobjects.QuotationInput;
 import com.example.cargotracker.quotation.domain.model.valueobjects.QuotationRejection;
 import com.example.cargotracker.quotation.domain.model.valueobjects.QuotationStatus;
@@ -139,8 +140,8 @@ public class StaffQuotationController {
         Quotation quotation =
                 queryService.find(request.number(), quotationNo).orElseThrow(StaffQuotationController::notFound);
         UtcInstant now = new UtcInstant(clock.instant());
-        // 再見積りの操作の出し分けは、GET・POST と同じ照会の判定を使う（輸送要求の状態と版を含む。D-85。Bolt 35c）
-        Optional<QuotationRejection> requoteRejection = queryService.requoteRejection(request, quotation, now);
+        // 再見積りの操作の出し分けは、GET・POST と同じ規則を使う（輸送要求の状態と版を含む。D-85。Bolt 35c）
+        Optional<QuotationRejection> requoteRejection = RequotePolicy.rejection(request, quotation, now);
         model.addAttribute("requotable", requoteRejection.isEmpty() && quotation.status() != QuotationStatus.DRAFT);
         model.addAttribute(
                 "expiredNotice",
@@ -183,7 +184,7 @@ public class StaffQuotationController {
 
     /**
      * S-04 の再見積り。旧版の料金明細・通貨・経路方針を初期値にし、有効期限は空にする。再見積りできない見積り（置換済み・失効の記録、
-     * 期限内の承認済み、予約確定済みの見積依頼など）からは開けない（判定は POST と同じ照会。D-85。Bolt 35c）。経路を持つ旧版からは、
+     * 期限内の承認済み、予約確定済みの見積依頼など）からは開けない（判定は POST と同じ規則。D-85。Bolt 35c）。経路を持つ旧版からは、
      * 引き継ぐ経路方針と経路版を読み取り専用で示す。
      */
     @GetMapping("/{quotationNo}/requotation")
@@ -196,7 +197,7 @@ public class StaffQuotationController {
         Quotation quotation =
                 queryService.find(request.number(), quotationNo).orElseThrow(StaffQuotationController::notFound);
         Optional<QuotationRejection> rejection =
-                queryService.requoteRejection(request, quotation, new UtcInstant(clock.instant()));
+                RequotePolicy.rejection(request, quotation, new UtcInstant(clock.instant()));
         if (rejection.isPresent()) {
             redirectAttributes.addFlashAttribute(
                     PROBLEM, rejection(QuotationViews.label(request.number(), quotationNo), rejection.get()));
@@ -209,7 +210,8 @@ public class StaffQuotationController {
     /**
      * 再見積りする。算出したら新しい見積りへ移り（PRG）、誤りがあれば入力を残してエラー要約で示す。
      * 受け付けなかったとき（置換済み・失効など）と競合したときは、旧版に戻して理由を示す。経路を持つ旧版からの再見積りでは、経路方針を
-     * 画面から受けず、旧版の値を入力に入れる（送られた値は捨てる。集約も旧版の値で上書きする。D-85。Bolt 35c）。
+     * 画面から受けず、旧版の値を入力に入れる（送られた値は捨てる。D-85。Bolt 35c）。ここでの上書きは入力の検証（出発・到着は必須）を
+     * 通すためで、引き継ぐ値の正は集約の {@code requoteInto} の上書き。
      */
     @PostMapping("/{quotationNo}/requotation")
     public String requote(
@@ -317,7 +319,7 @@ public class StaffQuotationController {
                     TransportRequestLabels::staffDateTime,
                     new UtcInstant(clock.instant()),
                     QuotationViews.Audience.STAFF);
-            model.addAttribute("inheritedPolicy", view);
+            model.addAttribute("inheritedQuotation", view);
             model.addAttribute("inheritedRoute", view.route());
         });
         return showForm(request, model);
@@ -405,7 +407,7 @@ public class StaffQuotationController {
         if (quotation.status() == QuotationStatus.APPROVED) {
             return requoteRejection
                     .map(reason -> "荷主の承認の後に" + expiresAt + "を過ぎました。" + rejection(label, reason) + "。")
-                    .orElse("荷主の承認の後に" + expiresAt + "を過ぎました。承認済みの経路を引き継いで再見積りできます。荷主の再承認が要ります。");
+                    .orElse("荷主の承認の後に" + expiresAt + "を過ぎました。承認済みの経路版と経路方針を引き継いで再見積りできます。荷主の再承認が要ります。");
         }
         if (quotation.status().isRoutingStarted()) {
             return expiresAt + "を過ぎたため、この見積りは使えません。荷主が詳細経路設計を依頼済みのため、再見積りはできません。"

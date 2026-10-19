@@ -282,7 +282,7 @@ class QuotationShipperApprovalTest {
 
         assertThat(quotations).extracting(Quotation::status).doesNotContain(QuotationStatus.APPROVED);
         for (Quotation quotation : quotations) {
-            for (UtcInstant at : List.of(now, EXPIRES, at("2099-10-09T00:00:00Z"))) {
+            for (UtcInstant at : List.of(EXPIRES, at("2099-10-09T00:00:00Z"))) {
                 assertThat(quotation.requoteRejectionAt(at))
                         .as("%s at %s", quotation.status(), at)
                         .isEqualTo(quotation.requoteRejectionAt(now));

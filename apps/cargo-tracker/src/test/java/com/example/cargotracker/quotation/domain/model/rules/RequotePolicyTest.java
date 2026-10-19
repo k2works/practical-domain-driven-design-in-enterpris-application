@@ -1,9 +1,7 @@
-package com.example.cargotracker.quotation.application.internal.queryservices;
+package com.example.cargotracker.quotation.domain.model.rules;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.example.cargotracker.quotation.acceptance.InMemoryQuotationRepository;
-import com.example.cargotracker.quotation.acceptance.InMemoryTransportRequestRepository;
 import com.example.cargotracker.quotation.domain.model.aggregates.Quotation;
 import com.example.cargotracker.quotation.domain.model.aggregates.TransportRequest;
 import com.example.cargotracker.quotation.domain.model.valueobjects.QuotationFixture;
@@ -16,21 +14,18 @@ import com.example.cargotracker.shared.domain.CompanyId;
 import com.example.cargotracker.shared.domain.UserId;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import java.time.Instant;
-import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 
 /**
- * 再見積りできない理由の照会（D-85。Bolt 35c）。ボタン・GET・POST が同じ順で同じ理由を示す: 輸送要求の状態（予約確定済み → 見積り作成中・
+ * 再見積りできない理由の規則（D-85。Bolt 35c）。ボタン・GET・POST が同じ順で同じ理由を示す: 輸送要求の状態（予約確定済み → 見積り作成中・
  * 見積提示済み・経路設計中・荷主承認待ち・予約待ちでない）→ 版 → 見積りの判定時刻の判定。
  */
-class StaffQuotationQueryServiceRequoteTest {
+class RequotePolicyTest {
 
     private static final UtcInstant NOW = new UtcInstant(Instant.parse("2026-10-07T05:00:00Z"));
     private static final UtcInstant EXPIRES = QuotationFixture.EXPIRES_AT;
 
-    private final StaffQuotationQueryService service =
-            new StaffQuotationQueryService(new InMemoryTransportRequestRepository(), new InMemoryQuotationRepository());
     private final UserId staff = new UserId(UUID.randomUUID());
     private final TransportRequest request = TransportRequest.submit(
             new TransportRequestId(UUID.randomUUID()),
@@ -45,8 +40,8 @@ class StaffQuotationQueryServiceRequoteTest {
         readyToBook();
         Quotation approved = approved();
 
-        assertThat(service.requoteRejection(request, approved, EXPIRES)).isEmpty();
-        assertThat(service.requoteRejection(
+        assertThat(RequotePolicy.rejection(request, approved, EXPIRES)).isEmpty();
+        assertThat(RequotePolicy.rejection(
                         request, approved, new UtcInstant(EXPIRES.instant().minusSeconds(60))))
                 .contains(QuotationRejection.APPROVED_AND_STILL_VALID);
     }
@@ -56,15 +51,35 @@ class StaffQuotationQueryServiceRequoteTest {
         readyToBook();
         request.markBooked(1);
 
-        assertThat(service.requoteRejection(request, approved(), EXPIRES))
+        assertThat(RequotePolicy.rejection(request, approved(), EXPIRES))
                 .contains(QuotationRejection.TRANSPORT_REQUEST_BOOKED);
+    }
+
+    @Test
+    void 予約確定済みの見積依頼の期限内の承認済みの見積りも見積りの判定より先に予約確定済みの理由で拒む() {
+        readyToBook();
+        request.markBooked(1);
+
+        assertThat(RequotePolicy.rejection(request, approved(), NOW))
+                .as("見積りの判定（期限内の承認済み）より輸送要求の状態を先に見る")
+                .contains(QuotationRejection.TRANSPORT_REQUEST_BOOKED);
+    }
+
+    @Test
+    void 審査中の見積依頼の古い版の見積りは版より先に輸送要求の状態の理由で拒む() {
+        request.sendBack(1, staff, "目的地を直してください", "", NOW);
+        request.resubmit(ShipmentTermsFixture.generalCargo(), staff, NOW);
+        Quotation old = pending(1);
+
+        assertThat(RequotePolicy.rejection(request, old, NOW))
+                .contains(QuotationRejection.TRANSPORT_REQUEST_NOT_QUOTING);
     }
 
     @Test
     void 審査中の見積依頼の見積りは見積り作成中でない理由で拒む() {
         Quotation pending = pending(1);
 
-        assertThat(service.requoteRejection(request, pending, NOW))
+        assertThat(RequotePolicy.rejection(request, pending, NOW))
                 .contains(QuotationRejection.TRANSPORT_REQUEST_NOT_QUOTING);
     }
 
@@ -75,7 +90,7 @@ class StaffQuotationQueryServiceRequoteTest {
         request.approve(2, staff, "根拠", NOW);
         Quotation old = pending(1);
 
-        assertThat(service.requoteRejection(request, old, NOW)).contains(QuotationRejection.OUTDATED_VERSION);
+        assertThat(RequotePolicy.rejection(request, old, NOW)).contains(QuotationRejection.OUTDATED_VERSION);
     }
 
     @Test
@@ -85,8 +100,8 @@ class StaffQuotationQueryServiceRequoteTest {
         Quotation replaced = pending(1);
         replaced.replaceWith(new QuotationId(UUID.randomUUID()), NOW);
 
-        assertThat(service.requoteRejection(request, pending, NOW)).isEqualTo(Optional.empty());
-        assertThat(service.requoteRejection(request, replaced, NOW)).contains(QuotationRejection.REPLACED);
+        assertThat(RequotePolicy.rejection(request, pending, NOW)).isEmpty();
+        assertThat(RequotePolicy.rejection(request, replaced, NOW)).contains(QuotationRejection.REPLACED);
     }
 
     private void readyToBook() {
