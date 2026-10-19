@@ -3,7 +3,7 @@ type: Plan
 title: "Bolt 35 終了報告 - 本予約の確定の不足条件と特殊貨物（US-04 AC3・AC5）"
 description: "W5 の 28 本目の Bolt の終了報告。本予約の確定（S-09）で不足条件をまとめて示し（AC3）、特殊貨物を含む見積りの確定を予約の規則 BookableCargoPolicy で拒んで、S-09 を開いたときから MVP の対象外と手動の窓口を示す（AC5、B-INV-04）。特殊貨物の見積りは見積りの側の受入テストのステップで提出の規則を通さずに置き、予約は本物の公開 API を通して確かめた。開発レビューの後に、拒んだ結果を画面に渡す形、S-09 のエラー要約へのフォーカス、表の文言を直した。"
 tags: [plan]
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-19T00:54:50Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-19T01:43:59Z }
 ---
 
 # Bolt 35 終了報告 - 本予約の確定の不足条件と特殊貨物（US-04 AC3・AC5）
@@ -55,7 +55,7 @@ generated: { by: anthropic/claude-opus-5-5, at: 2026-10-19T00:54:50Z }
 | ゲート | 結果 |
 | :--- | :--- |
 | `check` | 緑（層の規則に例外を足していない。SpotBugs の除外を足していない。Checkstyle の複雑度は議題 3 (a) で直した） |
-| `uiTest` | 緑（AC3 の画面の層のシナリオで axe と要約へのフォーカスを確かめた） |
+| `uiTest` | 緑（AC3 の画面の層のシナリオで axe と要約へのフォーカスを確かめた）。CI は `0122090aa` で別の機能のシナリオが 2 回揺らぎ、3 回目で通った（既知の課題） |
 | SonarQube | PASS（2 回目。1 回目はテストの lambda の中の 2 つの呼び出しの 1 件で FAIL。直した。新しいコードの網羅率 95.4%） |
 | `okf:check` | ERROR 0 |
 | 支援技術による手動確認 | 未実施（議題 2） |
@@ -102,6 +102,7 @@ generated: { by: anthropic/claude-opus-5-5, at: 2026-10-19T00:54:50Z }
 - 予約から見積りのドメインへの型の依存を見る ArchUnit の規則がない（`ModularityTest` の allowedDependencies だけが守る）
 - 判定の順（特殊貨物 → 確定条件）の知識がサービスと集約の 2 か所にある。集約に副作用のない事前判定を置いて 1 か所にする
 - DB の列の注釈 `booking_version.cargo_category` は「貨物区分」のまま（スキーマに当たるので触らなかった）
+- CI の画面の層のテストで、session の失効の警告の機能（`session_timeout_ui.feature`。入力の控えを戻す案内 `#session-input-status` の表示待ち）が 2 回続けて落ち、毎回違うシナリオで、3 回目の流し直しで通った（`0122090aa` の CI。ローカルの uiTest は緑）。この Bolt の変更は予約の画面だけで、同じ画面・部品に触れていないので揺らぎと判断した。揺らぎの原因を調べるかを W5 の締めの議題にする
 - Bolt 34f の既知の課題（S-20 のエラー要約の形とフォーカスなど）は変わらず
 
 ## 次の Bolt
