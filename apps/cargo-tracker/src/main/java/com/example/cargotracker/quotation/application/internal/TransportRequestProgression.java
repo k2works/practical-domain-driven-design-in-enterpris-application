@@ -38,9 +38,7 @@ public final class TransportRequestProgression {
     private final TransportRequestStatus target;
     private final String targetName;
     private final BiPredicate<TransportRequest, Integer> advance;
-    private final BiPredicate<TransportRequest, Integer> reached;
-    private final QuotationGate gate;
-    private final boolean writeWhenReached;
+    private final Guard guard;
 
     /**
      * @param log 警告を残す listener のロガー
@@ -63,9 +61,7 @@ public final class TransportRequestProgression {
                 target,
                 targetName,
                 advance,
-                (request, versionNo) -> request.hasReached(target, versionNo),
-                QuotationGate.OPEN,
-                false);
+                new Guard((request, versionNo) -> request.hasReached(target, versionNo), QuotationGate.OPEN, false));
     }
 
     private TransportRequestProgression(
@@ -75,36 +71,32 @@ public final class TransportRequestProgression {
             TransportRequestStatus target,
             String targetName,
             BiPredicate<TransportRequest, Integer> advance,
-            BiPredicate<TransportRequest, Integer> reached,
-            QuotationGate gate,
-            boolean writeWhenReached) {
+            Guard guard) {
         this.repository = repository;
         this.log = log;
         this.eventName = eventName;
         this.target = target;
         this.targetName = targetName;
         this.advance = advance;
-        this.reached = reached;
-        this.gate = gate;
-        this.writeWhenReached = writeWhenReached;
+        this.guard = guard;
     }
 
     /** 輸送要求を読んだ後、進める前に、イベントの見積りを読んで判定する（やり直しのたびに呼び直す。ADR-018。Bolt 35b2）。 */
     public TransportRequestProgression checking(QuotationGate quotationGate) {
         return new TransportRequestProgression(
-                repository, log, eventName, target, targetName, advance, reached, quotationGate, writeWhenReached);
+                repository, log, eventName, target, targetName, advance, guard.withGate(quotationGate));
     }
 
     /** すでに届いていても保存して版を上げる（先に読んで後から書く側を楽観ロックでぶつける。ADR-018。Bolt 35b2）。 */
     public TransportRequestProgression writingWhenReached() {
         return new TransportRequestProgression(
-                repository, log, eventName, target, targetName, advance, reached, gate, true);
+                repository, log, eventName, target, targetName, advance, guard.writing());
     }
 
     /** すでに届いているかの判定を替える（既定は {@link TransportRequest#hasReached}。戻す操作は「ちょうどその状態か」で見る）。 */
     public TransportRequestProgression reachedWhen(BiPredicate<TransportRequest, Integer> reachedWhen) {
         return new TransportRequestProgression(
-                repository, log, eventName, target, targetName, advance, reachedWhen, gate, writeWhenReached);
+                repository, log, eventName, target, targetName, advance, guard.withReached(reachedWhen));
     }
 
     /**
@@ -131,7 +123,7 @@ public final class TransportRequestProgression {
             return Result.NOT_FOUND;
         }
         TransportRequest request = found.get();
-        QuotationGate.Verdict verdict = gate.check(quotationId);
+        QuotationGate.Verdict verdict = guard.gate().check(quotationId);
         if (verdict == QuotationGate.Verdict.SETTLED) {
             return Result.ALREADY_REACHED;
         }
@@ -149,8 +141,8 @@ public final class TransportRequestProgression {
             repository.update(request);
             return Result.ADVANCED;
         }
-        if (reached.test(request, quotedVersionNo)) {
-            if (writeWhenReached) {
+        if (guard.reached().test(request, quotedVersionNo)) {
+            if (guard.writeWhenReached()) {
                 repository.update(request);
             }
             return Result.ALREADY_REACHED;
@@ -165,6 +157,22 @@ public final class TransportRequestProgression {
                 request.currentVersion().versionNo(),
                 request.status());
         return Result.NOT_ADVANCED;
+    }
+
+    /** 届く順の守り（届いているかの判定、進める前の見積りの判定、届いていても書くか。ADR-018。Bolt 35b2）。 */
+    private record Guard(BiPredicate<TransportRequest, Integer> reached, QuotationGate gate, boolean writeWhenReached) {
+
+        Guard withGate(QuotationGate newGate) {
+            return new Guard(reached, newGate, writeWhenReached);
+        }
+
+        Guard writing() {
+            return new Guard(reached, gate, true);
+        }
+
+        Guard withReached(BiPredicate<TransportRequest, Integer> newReached) {
+            return new Guard(newReached, gate, writeWhenReached);
+        }
     }
 
     /** 進めた結果。 */
