@@ -11532,6 +11532,10 @@
 <td style="text-align: left;"><code>okf:check</code></td>
 <td style="text-align: left;">ERROR 0</td>
 </tr>
+<tr>
+<td style="text-align: left;">CI</td>
+<td style="text-align: left;"><code>af023cf4a</code> で <code>check</code>・<code>ui</code> は成功。<code>deploy-demo</code> はデモのイメージのビルドで Maven Central から <code>error_prone_annotations:2.38.0</code> を取れずに落ち、失敗したジョブだけを流し直して成功した（コードに関係しない）。MkDocs の配備は成功</td>
+</tr>
 </tbody>
 </table>
 <h3 id="_6">開発レビューの指摘と扱い<a class="headerlink" href="#_6" title="Permanent link">&para;</a></h3>
@@ -11702,6 +11706,11 @@
 </tr>
 </thead>
 <tbody>
+<tr>
+<td style="text-align: left;">2026-10-19</td>
+<td style="text-align: left;">終了報告を承認した（議題 1〜3。議題 2 の人に諮らずに変えた点を事後に承認。ADR-018 の文面を確かめた）</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5、承認 human:kakimomokuri</td>
+</tr>
 <tr>
 <td style="text-align: left;">2026-10-19</td>
 <td style="text-align: left;">初版作成（承認待ち）。<code>check</code> 2606 件・<code>uiTest</code> 276 件が緑、SonarQube PASS</td>
