@@ -749,4 +749,64 @@ class MyBatisQuotationIntegrationTest {
                 .containsExactly(
                         org.assertj.core.groups.Tuple.tuple(new TransportRequestNumber(2082, 34), CONFIRMED_AT));
     }
+
+    // 荷主の承認の後に失効した見積りの再見積り（D-85。Bolt 35b）
+
+    @Test
+    void 承認済みで失効した見積りの再見積りは旧版を失効にし新しい見積りは引き継いだ経路と区間を保存して提示と承認ができる() {
+        TransportRequestId transportRequestId = transportRequest(35);
+        approved(transportRequestId);
+        Quotation old =
+                repository.findByTransportRequestIdAndNo(transportRequestId, 1).orElseThrow();
+        UtcInstant expired = QuotationFixture.EXPIRES_AT;
+        Quotation replacement = Quotation.create(new QuotationId(UUID.randomUUID()), transportRequestId, 1, 2);
+        replacement.calculate(
+                new QuotationInput(
+                        QuotationFixture.completeInput().lines(),
+                        QuotationFixture.completeInput().currency(),
+                        new UtcInstant(expired.instant().plusSeconds(86_400)),
+                        List.of(),
+                        new UtcInstant(expired.instant().plusSeconds(172_800)),
+                        new UtcInstant(expired.instant().plusSeconds(259_200))),
+                expired);
+        old.inheritanceForRequoteAt(expired).ifPresent(replacement::inherit);
+
+        requote(old, replacement, expired);
+        jdbc.execute("SET CONSTRAINTS ALL IMMEDIATE");
+
+        assertThat(repository.findByTransportRequestIdAndNo(transportRequestId, 1))
+                .hasValueSatisfying(found -> {
+                    assertThat(found.status()).isEqualTo(QuotationStatus.EXPIRED);
+                    assertThat(found.replacedBy()).isEmpty();
+                    assertThat(found.shipperApproval())
+                            .contains(new ShipperApproval(SHIPPER_USER, SHIPPER_APPROVED_AT));
+                });
+        Quotation saved = repository.findById(replacement.id()).orElseThrow();
+        assertThat(saved.status()).isEqualTo(QuotationStatus.PENDING_APPROVAL);
+        assertThat(saved.assignedRoute()).contains(ROUTE);
+        assertThat(saved.respondedBy()).contains(RESPONDENT);
+        assertThat(saved.respondedAt()).contains(APPROVED_AT);
+        assertThat(legs(replacement.id())).as("新しい見積りの ID で区間の写しを持つ").isEqualTo(2);
+        assertThat(legs(old.id())).as("旧版の区間は残る").isEqualTo(2);
+
+        saved.presentInternally(STAFF, expired);
+        repository.update(saved);
+        Quotation presented = repository.findById(replacement.id()).orElseThrow();
+        assertThat(presented.status()).isEqualTo(QuotationStatus.AWAITING_SHIPPER_APPROVAL);
+        presented.approveByShipper(SHIPPER_USER, expired);
+        repository.update(presented);
+
+        assertThat(repository.findById(replacement.id())).hasValueSatisfying(found -> {
+            assertThat(found.status()).isEqualTo(QuotationStatus.APPROVED);
+            assertThat(found.assignedRoute()).contains(ROUTE);
+        });
+        assertThat(legs(replacement.id())).as("区間は重ねて書かない").isEqualTo(2);
+    }
+
+    private int legs(QuotationId quotationId) {
+        return jdbc.queryForObject(
+                "SELECT COUNT(*) FROM quotation.assigned_route_leg WHERE quotation_id = ?",
+                Integer.class,
+                quotationId.value());
+    }
 }

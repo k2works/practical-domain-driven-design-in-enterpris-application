@@ -53,7 +53,8 @@ public class MyBatisQuotationRepository implements QuotationRepository {
     }
 
     /**
-     * 新しい見積りを保存する。同時の算出で UK（見積り番号）か部分一意インデックス（作成中・承認待ち・提示済みは 1 つ。Q-INV-18）に
+     * 新しい見積りを保存する。経路を引き継いだ再見積り（D-85。Bolt 35b）は、割り当てた経路の区間も新しい見積りの ID で書く。
+     * 同時の算出で UK（見積り番号）か部分一意インデックス（作成中・承認待ち・提示済みは 1 つ。Q-INV-18）に
      * 違反したら、セーブポイントに戻してドメインの例外にする
      * （PostgreSQL は制約違反でトランザクションを中断するため。呼び出し側のトランザクションは続けられる。R-02）。
      */
@@ -77,6 +78,7 @@ public class MyBatisQuotationRepository implements QuotationRepository {
                         line.contractReference()));
             }
         });
+        quotation.assignedRoute().ifPresent(route -> insertLegs(quotation, route));
     }
 
     /**
@@ -90,21 +92,24 @@ public class MyBatisQuotationRepository implements QuotationRepository {
             throw new ConcurrentQuotationUpdateException(quotation.id(), quotation.aggregateVersion());
         }
         quotation.assignedRoute().ifPresent(route -> {
-            if (mapper.countAssignedRouteLegs(quotation.id().value()) > 0) {
-                return;
-            }
-            for (int i = 0; i < route.legs().size(); i++) {
-                AssignedRouteLeg leg = route.legs().get(i);
-                mapper.insertAssignedRouteLeg(new AssignedRouteLegRow(
-                        quotation.id().value(),
-                        i + 1,
-                        leg.voyageNumber(),
-                        leg.load().unLocode(),
-                        leg.discharge().unLocode(),
-                        toOffset(leg.departureAt()),
-                        toOffset(leg.arrivalAt())));
+            if (mapper.countAssignedRouteLegs(quotation.id().value()) == 0) {
+                insertLegs(quotation, route);
             }
         });
+    }
+
+    private void insertLegs(Quotation quotation, AssignedRoute route) {
+        for (int i = 0; i < route.legs().size(); i++) {
+            AssignedRouteLeg leg = route.legs().get(i);
+            mapper.insertAssignedRouteLeg(new AssignedRouteLegRow(
+                    quotation.id().value(),
+                    i + 1,
+                    leg.voyageNumber(),
+                    leg.load().unLocode(),
+                    leg.discharge().unLocode(),
+                    toOffset(leg.departureAt()),
+                    toOffset(leg.arrivalAt())));
+        }
     }
 
     @Override
