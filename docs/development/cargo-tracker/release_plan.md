@@ -4,7 +4,7 @@ title: "リリース計画 - cargo-tracker（A 社国際貨物輸送管理シス
 description: "cargo-tracker MVP のリリース計画。1 人 + AI、時間単位の Bolt（= イテレーション）と週次の見直しで、最初の縦の流れ（R0.1）、パイロット準備完了（R1.0）、本格展開前（R1.1）の 3 段階、Unit のエントロピー評価、SP、バッファ、パイロット開始の条件、引継ぎ ID の台帳、業務責任者に確かめる事項の台帳。"
 tags: [development,release-plan]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-19T22:15:37Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-19T23:58:51Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T09:29:53Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:38:26Z }
@@ -653,7 +653,7 @@ US-18 の Bolt の順序は 31b → 31c → 31d → 32 → 32c → 32d → 32b �
 - [x] Bolt 35: US-04 AC3・AC5（#43）。[Bolt 35 計画](bolt_35_plan.md)（承認済み）、[Bolt 35 終了報告](bolt_35_report.md)（承認済み。支援技術による手動確認の後に #43 をクローズした）
 - [x] Bolt 35b: D-85 の再見積り（ドメインと業務ルール層）。[Bolt 35b 計画](bolt_35b_plan.md)（承認済み）、[Bolt 35b 終了報告](bolt_35b_report.md)（承認済み。35b は単独で出さず 35b2・35c・35d と一緒に出す）
 - [x] Bolt 35b2: D-85 の輸送要求の戻し（DE-24）。[Bolt 35b2 計画](bolt_35b2_plan.md)（承認済み）、[Bolt 35b2 終了報告](bolt_35b2_report.md)（承認済み）
-- [ ] Bolt 35c: D-85 の社内の画面とマニュアル。[Bolt 35c 計画](bolt_35c_plan.md)（承認済み）、[Bolt 35c 終了報告](bolt_35c_report.md)（承認待ち）
+- [x] Bolt 35c: D-85 の社内の画面とマニュアル。[Bolt 35c 計画](bolt_35c_plan.md)（承認済み）、[Bolt 35c 終了報告](bolt_35c_report.md)（承認済み。35c は単独で出さず 35d と一緒に出す）
 - [ ] Bolt 35d: D-85 の荷主の画面とマニュアル、開発データのサンプル、W5 のデモ
 - [ ] W5 の締め: 結果とふりかえり、開いている持ち越しの数（T-89）、W6 の計画の見直し
 
@@ -1040,3 +1040,4 @@ xychart-beta
 | 2026-10-19 | Bolt 35c の計画を承認した（確認ポイント 6〜13 を推奨のとおり） | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-10-19 | Bolt 35c のステップ 1 で、ui_design（S-02・S-04・社内の画面遷移図、再見積りのフォームの画面イメージ）、domain_model（用語・操作・拒否の理由・S-02 の読み取りモデル）、architecture_backend（再見積りできるかの判定の置き場所）、test_strategy、user_story（US-03・US-24 の決定）を直し、W5 の状態・局面とアプローチ・D-85 の注と台帳・D-87・35b の行とタスク・デモ・マニュアル・W5 の本数（32 本）、開発戦略の W5 の行を直した | anthropic/claude-opus-5-5 |
 | 2026-10-20 | Bolt 35c の開発レビューの決定（判定をドメインの規則 `RequotePolicy` に移す、失効した承認待ちの行を「… を再見積りする」にする、経路設計中・荷主承認待ちの表に予約待ちの荷主承認待ちを足す）を反映し、[Bolt 35c 終了報告](bolt_35c_report.md)を作った（承認待ち） | anthropic/claude-opus-5-5、決定 human:kakimomokuri |
+| 2026-10-20 | Bolt 35c の終了報告の承認を記録した（議題 1〜3）。35c は単独で出さず 35d と一緒に出す。次は Bolt 35d | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
