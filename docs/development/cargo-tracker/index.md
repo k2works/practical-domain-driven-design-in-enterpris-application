@@ -87,7 +87,7 @@ Bolt がイテレーションに当たります。ふりかえりは各 Bolt の
 | 34c | [認証・監査の経路と文書と見張り（振る舞いの変わらない直し）](bolt_34c_plan.md) | [終了報告](bolt_34c_report.md) | W5 | 完了 |
 | 34e | [利用者の管理のドメインとサービス（振る舞いの変わらない直し）](bolt_34e_plan.md) | [終了報告](bolt_34e_report.md) | W5 | 完了 |
 | 34f | [S-20 の画面の構造（振る舞いの変わらない直し）](bolt_34f_plan.md) | [終了報告](bolt_34f_report.md) | W5 | 完了 |
-| 35 | [本予約の確定の不足条件と特殊貨物（US-04 AC3・AC5）](bolt_35_plan.md) | — | W5 | 計画済み |
+| 35 | [本予約の確定の不足条件と特殊貨物（US-04 AC3・AC5）](bolt_35_plan.md) | [終了報告](bolt_35_report.md) | W5 | 完了（報告の承認待ち） |
 
 Bolt を始めるときに行を追加します。
 
@@ -191,3 +191,4 @@ Bolt を始めるときに行を追加します。
 * [Bolt 33f 終了報告 - 期間の表示と回復コードの型と session の URL の整理（振る舞いの変わらない直し）](./bolt_33f_report.md) - W5 の 21 本目の Bolt の終了報告。期限の時刻を SessionPolicy.deadline に寄せ、期間の汎用の書式 DurationDisplay.length を足し、テンプレート 6 か所の「15 分」「8 時間」を SessionPolicy から描き、URL を SessionKeys から SessionPaths に分け（password の再設定の URL も寄せた）、回復コードの生成のポートと issueSet を NormalizedRecoveryCode で受けるようにした。振る舞いと表示は変えていない。
 * [Bolt 34b 終了報告 - システム管理者の管理範囲と範囲外の試行の記録（US-16 の一部）](./bolt_34b_report.md) - W5 の 23 本目の Bolt の終了報告。システム管理者は user_assignment（COMPANY）で割り当てた企業の利用者だけを一覧・詳細・役割の変更で扱え、範囲外は存在しない利用者と同じ 404 になる。役割の変更の試行は確定の POST でだけ ADMIN_SCOPE_DENIED に記録する（開発レビューで GET の記録をやめた）。共通の 404 の画面を足した。
 * [Bolt 34f 終了報告 - S-20 の画面の構造（振る舞いの変わらない直し）](./bolt_34f_report.md)
+* [Bolt 35 終了報告 - 本予約の確定の不足条件と特殊貨物（US-04 AC3・AC5）](./bolt_35_report.md) - W5 の 28 本目の Bolt の終了報告。本予約の確定（S-09）で不足条件をまとめて示し（AC3）、特殊貨物を含む見積りの確定を予約の規則 BookableCargoPolicy で拒んで、S-09 を開いたときから MVP の対象外と手動の窓口を示す（AC5、B-INV-04）。特殊貨物の見積りは見積りの側の受入テストのステップで提出の規則を通さずに置き、予約は本物の公開 API を通して確かめた。開発レビューの後に、拒んだ結果を画面に渡す形、S-09 のエラー要約へのフォーカス、表の文言を直した。
