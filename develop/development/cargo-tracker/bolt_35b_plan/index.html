@@ -11662,43 +11662,43 @@
 <td style="text-align: left;">11</td>
 <td style="text-align: left;"><strong>再見積りを始められる輸送要求の状態</strong></td>
 <td style="text-align: left;">3</td>
-<td style="text-align: left;">QUOTING・QUOTED に ROUTING・AWAITING_APPROVAL・READY_TO_BOOK を足す（ROUTING・AWAITING_APPROVAL は配信の遅れのとき。経路設計の途中の見積りは集約が拒む）。BOOKED は足さない</td>
+<td style="text-align: left;">QUOTING・QUOTED に ROUTING・AWAITING_APPROVAL・READY_TO_BOOK を足す（ROUTING・AWAITING_APPROVAL は配信の遅れのとき。経路設計の途中の見積りは集約が拒む）。BOOKED は足さない。決定済み（計画の承認）</td>
 </tr>
 <tr>
 <td style="text-align: left;">12</td>
 <td style="text-align: left;"><strong>2 つの判定が並ぶこと</strong></td>
 <td style="text-align: left;">3</td>
-<td style="text-align: left;">35c で今の判定を消すまで並ぶ。新しい判定を使うのはサービスと <code>replaceWith</code>、今の判定を使うのは画面の 2 つ。推奨: このまま</td>
+<td style="text-align: left;">35c で今の判定を消すまで並ぶ。新しい判定を使うのはサービスと <code>replaceWith</code>、今の判定を使うのは画面の 2 つ。推奨: このまま。決定済み（計画の承認）</td>
 </tr>
 <tr>
 <td style="text-align: left;">13</td>
 <td style="text-align: left;"><strong>再承認の前にまた失効したとき</strong></td>
 <td style="text-align: left;">—</td>
-<td style="text-align: left;">荷主承認待ちは今の規則で再見積りできないので行き詰まる。範囲外とし、台帳 D-86 に載せる（期限は W5 の締めで決める）</td>
+<td style="text-align: left;">荷主承認待ちは今の規則で再見積りできないので行き詰まる。範囲外とし、台帳 D-86 に載せる（期限は W5 の締めで決める）。決定済み（計画の承認）</td>
 </tr>
 <tr>
 <td style="text-align: left;">14</td>
 <td style="text-align: left;"><strong>新しい理由の値と仮の文言</strong></td>
 <td style="text-align: left;">3</td>
-<td style="text-align: left;"><code>ALREADY_APPROVED</code> と見分けられる名前（候補 <code>APPROVED_AND_STILL_VALID</code>）。S-04 の仮の文言「荷主が承認済みで、まだ有効期限内です。本予約の確定へ進んでください。」、C-05 は既定の形。UI 設計への記載は 35c</td>
+<td style="text-align: left;"><code>ALREADY_APPROVED</code> と見分けられる名前（候補 <code>APPROVED_AND_STILL_VALID</code>）。S-04 の仮の文言「荷主が承認済みで、まだ有効期限内です。本予約の確定へ進んでください。」、C-05 は既定の形。UI 設計への記載は 35c。決定済み（計画の承認）</td>
 </tr>
 <tr>
 <td style="text-align: left;">15</td>
 <td style="text-align: left;"><strong>新しいファイル</strong></td>
 <td style="text-align: left;">2・3</td>
-<td style="text-align: left;">引き継ぎの値の record と、受入シナリオの feature の 2 つ</td>
+<td style="text-align: left;">引き継ぎの値の record と、受入シナリオの feature の 2 つ。決定済み（計画の承認）</td>
 </tr>
 <tr>
 <td style="text-align: left;">16</td>
 <td style="text-align: left;"><strong>開発レビュー</strong></td>
 <td style="text-align: left;">6</td>
-<td style="text-align: left;">アーキテクト、テスター（読むだけ）。画面の操作を変えないのでインタラクションデザイナーは入れない</td>
+<td style="text-align: left;">アーキテクト、テスター（読むだけ）。画面の操作を変えないのでインタラクションデザイナーは入れない。決定済み（計画の承認）</td>
 </tr>
 <tr>
 <td style="text-align: left;">17</td>
 <td style="text-align: left;"><strong>アプローチと承認ゲートと時間</strong></td>
 <td style="text-align: left;">全体</td>
-<td style="text-align: left;">アウトサイドイン（:119）。承認ゲートは計画と終了報告（W5 の表どおり）。約 4.5 時間</td>
+<td style="text-align: left;">アウトサイドイン（:119）。承認ゲートは計画と終了報告（W5 の表どおり）。約 4.5 時間。決定済み（計画の承認）</td>
 </tr>
 </tbody>
 </table>
@@ -11730,6 +11730,11 @@
 <td style="text-align: left;">2026-10-19</td>
 <td style="text-align: left;">詳細整合性検証（16 件）と横断整合性検証（17 件）の指摘を反映した。human:kakimomokuri の決定 (8)〜(11)（再々見積りでも引き継ぐ、判定を通った値で渡す、DE-03 に属性を足さない、予約に使った見積りの隙間は台帳へ）。<code>replaceWith</code> の守りを新しい判定に替えること、S-04 の POST の振る舞いと 2 つの switch の仮の文言、ROUTING を再見積りできる状態に、アプローチの根拠（:114・:119・:122）とステップの順、注の行（用語集・R-INV-11・イベントの表・DE-24 の予約・data_model :359・test_strategy :230・release_plan の 6 か所・開発戦略 :183・:344）、行番号の誤り、Try T-152、状態遷移図の【新規】、feature のタグ、新しいファイルの数、既存のテストの名前と Javadoc</td>
 <td style="text-align: left;">anthropic/claude-opus-5-5</td>
+</tr>
+<tr>
+<td style="text-align: left;">2026-10-19</td>
+<td style="text-align: left;">計画を承認した。確認ポイント 11〜17 を推奨のとおりに決めた</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5、承認 human:kakimomokuri</td>
 </tr>
 </tbody>
 </table>
