@@ -219,6 +219,26 @@ public final class TransportRequest {
     }
 
     /**
+     * 荷主の承認の後に失効した見積りの再見積りを提示したことを受けて、荷主承認待ちへ戻す（DE-24 の受け取り。D-85。Bolt 35b2）。
+     * 同じ版で、予約待ちなら荷主承認待ちに戻し、それより手前なら荷主承認待ちに進める（ほかのイベントの遅れ）。荷主承認待ちなら変えず
+     * （冪等）、予約確定済みは変えない（D-87）。見積りのイベントで進める状態の並びで唯一戻す操作で、届く順の入れ替わりの守り（新しい
+     * 見積りがまだ荷主承認待ちのときだけ戻す）は listener が持つ（ADR-018）。この操作は見積りを知らない。
+     *
+     * @param quotedVersionNo 見積りの対象の版番号
+     * @return 状態を変えたら true
+     */
+    public boolean returnToAwaitingApproval(int quotedVersionNo) {
+        if (quotedVersionNo != currentVersion.versionNo()) {
+            return false;
+        }
+        if (status != TransportRequestStatus.READY_TO_BOOK && !isBefore(TransportRequestStatus.AWAITING_APPROVAL)) {
+            return false;
+        }
+        status = TransportRequestStatus.AWAITING_APPROVAL;
+        return true;
+    }
+
+    /**
      * 本予約を確定したことを受けて、予約確定済みにする（予約の DE-07 の listener が見積りの公開 API で呼ぶ。US-04 AC1。Bolt 23）。
      * 見積りのイベントで進める状態の並びで予約確定済みより前なら進める。本予約は荷主が承認した見積りからだけ確定するが（ADR-016）、
      * 荷主の承認の DE-04 の配信より DE-07 が先に届くと輸送要求はまだ荷主承認待ちにあるため、予約待ちに限らない（Bolt 23 レビュー H-1）。
@@ -246,7 +266,8 @@ public final class TransportRequest {
     /**
      * 見積りのイベントで進める状態の並び（見積り作成中 → 見積提示済み → 経路設計中 → 荷主承認待ち → 予約待ち → 予約確定済み）で、いまの状態が
      * {@code target} より前か。見積りのイベントは別のトランザクションで届き順が入れ替わり得るため、先の状態へだけ進め、戻さない
-     * （DE-16 と DE-03 と同じ。Bolt 12 レビュー R-04）。審査中・下書きは並びの外で、進めない。
+     * （DE-16 と DE-03 と同じ。Bolt 12 レビュー R-04）。審査中・下書きは並びの外で、進めない。例外は再見積りの提示で荷主承認待ちへ
+     * 戻す {@link #returnToAwaitingApproval}（DE-24。届く順の守りは listener が持つ。ADR-018。Bolt 35b2）。
      */
     private boolean isBefore(TransportRequestStatus target) {
         int current = QUOTATION_PROGRESSION.indexOf(status);

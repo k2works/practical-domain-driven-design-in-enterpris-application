@@ -220,6 +220,63 @@ class TransportRequestTest {
         assertThat(quoted.status()).isEqualTo(TransportRequestStatus.AWAITING_APPROVAL);
     }
 
+    // 再見積りの提示で荷主承認待ちへ戻す（DE-24。D-85、Bolt 35b2）
+
+    @Test
+    void 予約待ちの現在の版で再見積りが提示されると荷主承認待ちへ戻り再承認で予約待ちへ進む() {
+        TransportRequest request = readyToBook();
+
+        assertThat(request.returnToAwaitingApproval(2)).as("現在の版でなければ変えない").isFalse();
+        assertThat(request.returnToAwaitingApproval(1)).isTrue();
+        assertThat(request.status()).isEqualTo(TransportRequestStatus.AWAITING_APPROVAL);
+        assertThat(request.returnToAwaitingApproval(1)).as("2 回目は変えない（冪等）").isFalse();
+        assertThat(request.markReadyToBook(1)).as("再承認").isTrue();
+        assertThat(request.status()).isEqualTo(TransportRequestStatus.READY_TO_BOOK);
+        assertThat(request.currentVersion().versionNo()).as("往復で版は変わらない").isEqualTo(1);
+    }
+
+    @Test
+    void 荷主承認待ちより手前の現在の版に再見積りの提示が届くと荷主承認待ちに進む() {
+        TransportRequest quoting = approvedRequest();
+        TransportRequest quoted = approvedRequest();
+        quoted.markQuotationPresented(1);
+        TransportRequest routing = approvedRequest();
+        routing.markRoutingRequested(1);
+
+        for (TransportRequest request : List.of(quoting, quoted, routing)) {
+            assertThat(request.returnToAwaitingApproval(1)).as("ほかのイベントの遅れ").isTrue();
+            assertThat(request.status()).isEqualTo(TransportRequestStatus.AWAITING_APPROVAL);
+        }
+    }
+
+    @Test
+    void 予約確定済みと見積りのイベントの並びの外では再見積りの提示で変えない() {
+        TransportRequest booked = readyToBook();
+        booked.markBooked(1);
+        TransportRequest underReview = TransportRequest.submit(id, number, shipper, terms, submitter, now);
+
+        assertThat(booked.returnToAwaitingApproval(1)).isFalse();
+        assertThat(booked.status()).isEqualTo(TransportRequestStatus.BOOKED);
+        assertThat(underReview.returnToAwaitingApproval(1)).isFalse();
+        assertThat(underReview.status()).isEqualTo(TransportRequestStatus.UNDER_REVIEW);
+    }
+
+    private TransportRequest approvedRequest() {
+        TransportRequest request = TransportRequest.submit(
+                new TransportRequestId(UUID.randomUUID()), number, shipper, terms, submitter, now);
+        request.approve(1, submitter, "根拠", now);
+        return request;
+    }
+
+    private TransportRequest readyToBook() {
+        TransportRequest request = approvedRequest();
+        request.markQuotationPresented(1);
+        request.markRoutingRequested(1);
+        request.markAwaitingApproval(1);
+        request.markReadyToBook(1);
+        return request;
+    }
+
     @Test
     void 同じ版でその状態まで進んだかを問い合わせられる() {
         TransportRequest request = TransportRequest.submit(id, number, shipper, terms, submitter, now);

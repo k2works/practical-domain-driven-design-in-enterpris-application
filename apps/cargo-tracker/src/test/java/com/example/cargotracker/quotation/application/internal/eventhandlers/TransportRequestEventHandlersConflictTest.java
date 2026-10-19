@@ -3,6 +3,7 @@ package com.example.cargotracker.quotation.application.internal.eventhandlers;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import com.example.cargotracker.quotation.acceptance.InMemoryQuotationRepository;
 import com.example.cargotracker.quotation.acceptance.InMemoryTransportRequestRepository;
 import com.example.cargotracker.quotation.domain.events.QuotationApprovedByShipper;
 import com.example.cargotracker.quotation.domain.events.QuotationPresented;
@@ -35,6 +36,7 @@ class TransportRequestEventHandlersConflictTest {
     private static final UtcInstant NOW = new UtcInstant(Instant.parse("2026-10-08T02:00:00Z"));
 
     private final InMemoryTransportRequestRepository store = new InMemoryTransportRequestRepository();
+    private final InMemoryQuotationRepository quotations = new InMemoryQuotationRepository();
 
     private TransportRequest stored(Consumer<TransportRequest> progress) {
         UserId staff = new UserId(UUID.randomUUID());
@@ -102,10 +104,11 @@ class TransportRequestEventHandlersConflictTest {
     @Test
     void DE_04を読み込んだ後にDE_21が先に更新しても競合で失敗せず予約待ちにする() {
         TransportRequest request = stored(found -> found.markRoutingRequested(1));
-        QuotationRouteAssignedEventHandler assignment = new QuotationRouteAssignedEventHandler(store);
-        QuotationApprovedByShipperEventHandler approval =
-                new QuotationApprovedByShipperEventHandler(new InterleavingRepository(
-                        store, () -> assignment.on(assigned(request.id().value()))));
+        QuotationRouteAssignedEventHandler assignment = new QuotationRouteAssignedEventHandler(store, quotations);
+        QuotationApprovedByShipperEventHandler approval = new QuotationApprovedByShipperEventHandler(
+                new InterleavingRepository(
+                        store, () -> assignment.on(assigned(request.id().value()))),
+                quotations);
 
         approval.on(approved(request.id().value()));
 
@@ -115,10 +118,11 @@ class TransportRequestEventHandlersConflictTest {
     @Test
     void DE_21を読み込んだ後にDE_04が先に更新しても競合で失敗せず予約待ちのままにする() {
         TransportRequest request = stored(found -> found.markRoutingRequested(1));
-        QuotationApprovedByShipperEventHandler approval = new QuotationApprovedByShipperEventHandler(store);
-        QuotationRouteAssignedEventHandler assignment =
-                new QuotationRouteAssignedEventHandler(new InterleavingRepository(
-                        store, () -> approval.on(approved(request.id().value()))));
+        QuotationApprovedByShipperEventHandler approval = new QuotationApprovedByShipperEventHandler(store, quotations);
+        QuotationRouteAssignedEventHandler assignment = new QuotationRouteAssignedEventHandler(
+                new InterleavingRepository(
+                        store, () -> approval.on(approved(request.id().value()))),
+                quotations);
 
         assignment.on(assigned(request.id().value()));
 

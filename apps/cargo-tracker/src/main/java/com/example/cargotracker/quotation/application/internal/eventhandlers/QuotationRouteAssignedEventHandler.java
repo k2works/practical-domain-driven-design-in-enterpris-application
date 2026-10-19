@@ -1,7 +1,9 @@
 package com.example.cargotracker.quotation.application.internal.eventhandlers;
 
+import com.example.cargotracker.quotation.application.internal.QuotationGate;
 import com.example.cargotracker.quotation.application.internal.TransportRequestProgression;
 import com.example.cargotracker.quotation.domain.events.QuotationRouteAssigned;
+import com.example.cargotracker.quotation.domain.model.aggregates.QuotationRepository;
 import com.example.cargotracker.quotation.domain.model.aggregates.TransportRequest;
 import com.example.cargotracker.quotation.domain.model.aggregates.TransportRequestRepository;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestStatus;
@@ -16,6 +18,7 @@ import org.springframework.stereotype.Service;
  * 配信は少なくとも 1 回なので、先の状態へだけ進め、同じ版のときだけ変える（冪等。DE-03・DE-16 と同じ）。再配信のほかに状態を
  * 変えなかったときは、結果整合が崩れた手がかりとして警告のログを残す（Bolt 9・10 レビュー R-06）。
  * ほかの listener と同じ輸送要求を並行して更新して競合したら、読み直してやり直す（{@link TransportRequestProgression}。Bolt 22 の割り込み）。
+ * 再見積りで置換済み・失効になった見積りの DE-21 が遅れて届いても進めない（輸送要求を読んだ後に見積りを読む。ADR-018。Bolt 35b2）。
  *
  * <p>{@code @Service} は JIG がユースケースとして読むための印で、部品探索の対象にはしない（CargoTrackerApplication）。
  * 組み立ては {@code QuotationConfiguration} が担う。
@@ -27,14 +30,16 @@ public class QuotationRouteAssignedEventHandler {
 
     private final TransportRequestProgression progression;
 
-    public QuotationRouteAssignedEventHandler(TransportRequestRepository repository) {
+    public QuotationRouteAssignedEventHandler(
+            TransportRequestRepository repository, QuotationRepository quotationRepository) {
         this.progression = new TransportRequestProgression(
-                repository,
-                LOG,
-                "DE-21",
-                TransportRequestStatus.AWAITING_APPROVAL,
-                "荷主承認待ち",
-                TransportRequest::markAwaitingApproval);
+                        repository,
+                        LOG,
+                        "DE-21",
+                        TransportRequestStatus.AWAITING_APPROVAL,
+                        "荷主承認待ち",
+                        TransportRequest::markAwaitingApproval)
+                .checking(QuotationGate.notRetired(quotationRepository));
     }
 
     @ApplicationModuleListener

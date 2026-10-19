@@ -116,6 +116,17 @@ public class ShipperApprovalSteps {
                 .hasSize(times);
     }
 
+    @もし("見積り {int} を荷主が承認したイベントが遅れてもう一度届く")
+    public void 承認したイベントが遅れて届く(int quotationNo) {
+        Object event = delivery.history().stream()
+                .filter(QuotationApprovedByShipper.class::isInstance)
+                .map(QuotationApprovedByShipper.class::cast)
+                .filter(approved -> approved.quotationNo() == quotationNo)
+                .findFirst()
+                .orElseThrow();
+        delivery.redeliver(event);
+    }
+
     @ならば("シナリオの始めから見積りに経路版を割り当てたイベントは {int} 回だけ発行されている")
     public void 始めから割り当てたイベントの回数(int times) {
         assertThat(delivery.history())

@@ -42,6 +42,11 @@ public class DeferredEventDelivery implements ApplicationEventPublisher {
         lastDelivered.forEach(event -> subscribers.forEach(subscriber -> subscriber.accept(event)));
     }
 
+    /** 前に配信したイベントを、いま購読側へ届ける（遅れて届いたイベントを確かめる。Bolt 35b2）。 */
+    public void redeliver(Object event) {
+        subscribers.forEach(subscriber -> subscriber.accept(event));
+    }
+
     /** 発行されて、まだ配信していないイベント（発行の順）。 */
     public List<Object> published() {
         return List.copyOf(published);

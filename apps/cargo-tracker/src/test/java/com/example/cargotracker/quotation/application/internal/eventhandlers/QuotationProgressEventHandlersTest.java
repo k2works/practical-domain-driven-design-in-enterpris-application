@@ -6,6 +6,7 @@ import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
+import com.example.cargotracker.quotation.acceptance.InMemoryQuotationRepository;
 import com.example.cargotracker.quotation.acceptance.InMemoryTransportRequestRepository;
 import com.example.cargotracker.quotation.domain.events.QuotationApprovedByShipper;
 import com.example.cargotracker.quotation.domain.events.QuotationRouteAssigned;
@@ -30,10 +31,11 @@ class QuotationProgressEventHandlersTest {
     private static final UtcInstant NOW = new UtcInstant(Instant.parse("2026-10-07T05:00:00Z"));
 
     private final InMemoryTransportRequestRepository repository = new InMemoryTransportRequestRepository();
+    private final InMemoryQuotationRepository quotations = new InMemoryQuotationRepository();
     private final QuotationRouteAssignedEventHandler assignedHandler =
-            new QuotationRouteAssignedEventHandler(repository);
+            new QuotationRouteAssignedEventHandler(repository, quotations);
     private final QuotationApprovedByShipperEventHandler approvedHandler =
-            new QuotationApprovedByShipperEventHandler(repository);
+            new QuotationApprovedByShipperEventHandler(repository, quotations);
     private final ListAppender<ILoggingEvent> logs = new ListAppender<>();
     private final Logger assignedLogger = (Logger) LoggerFactory.getLogger(QuotationRouteAssignedEventHandler.class);
     private final Logger approvedLogger =
@@ -95,7 +97,7 @@ class QuotationProgressEventHandlersTest {
     }
 
     @Test
-    void 再配信と承認の後に遅れて届いた割当てでは輸送要求を変えずログも残さない() {
+    void 再配信と承認の後に遅れて届いた割当てでは輸送要求の状態を変えずログも残さない() {
         TransportRequest request = routing();
         assignedHandler.on(assigned(request.id().value(), 1));
         approvedHandler.on(approved(request.id().value(), 1));
@@ -104,8 +106,10 @@ class QuotationProgressEventHandlersTest {
         approvedHandler.on(approved(request.id().value(), 1));
         assignedHandler.on(assigned(request.id().value(), 1));
 
+        assertThat(statusOf(request)).isEqualTo(TransportRequestStatus.READY_TO_BOOK);
         assertThat(repository.findById(request.id()).orElseThrow().aggregateVersion())
-                .isEqualTo(version);
+                .as("承認の再配信は届いていても書く（DE-24 とぶつけるため。ADR-018）。割当ての再配信は書かない")
+                .isEqualTo(version + 1);
         assertThat(logs.list).isEmpty();
     }
 

@@ -20,6 +20,12 @@ import org.slf4j.Logger;
  * 承認）。保存が楽観ロックの競合で失敗したら、同じトランザクションで読み直してやり直す。進める操作は冪等で先へだけ進めるため、
  * 先にほかの listener が進めていれば何もしない。競合が上限の回数続いたら例外を投げ、トランザクションごと戻して発行の記録を未完了に
  * 残す（再配信に任せる。ADR-014。Bolt 22 の割り込み）。
+ *
+ * <p>再見積りの提示で輸送要求を荷主承認待ちへ戻す DE-24 は「先へだけ進める」の前提を変えるので、届く順の入れ替わりを次の形で守る
+ * （ADR-018。Bolt 35b2）。(1) 輸送要求を読んだ後、進める前に、イベントの見積りを読む判定の口（{@link QuotationGate}）を呼び、
+ * やり直しのたびに呼び直す（輸送要求を先に読むので、見積りを読んだ後にほかの listener が輸送要求を書けば、保存がぶつかる）。
+ * (2) 「届いていても書く」（{@link #writingWhenReached}）の listener は、すでに届いていても保存して版を上げ、先に読んで後から書く
+ * 側を必ずぶつける。指定のない呼び手（DE-03・DE-16・DE-07）は今のまま。
  */
 public final class TransportRequestProgression {
 
@@ -32,6 +38,9 @@ public final class TransportRequestProgression {
     private final TransportRequestStatus target;
     private final String targetName;
     private final BiPredicate<TransportRequest, Integer> advance;
+    private final BiPredicate<TransportRequest, Integer> reached;
+    private final QuotationGate gate;
+    private final boolean writeWhenReached;
 
     /**
      * @param log 警告を残す listener のロガー
@@ -47,12 +56,55 @@ public final class TransportRequestProgression {
             TransportRequestStatus target,
             String targetName,
             BiPredicate<TransportRequest, Integer> advance) {
+        this(
+                repository,
+                log,
+                eventName,
+                target,
+                targetName,
+                advance,
+                (request, versionNo) -> request.hasReached(target, versionNo),
+                QuotationGate.OPEN,
+                false);
+    }
+
+    private TransportRequestProgression(
+            TransportRequestRepository repository,
+            Logger log,
+            String eventName,
+            TransportRequestStatus target,
+            String targetName,
+            BiPredicate<TransportRequest, Integer> advance,
+            BiPredicate<TransportRequest, Integer> reached,
+            QuotationGate gate,
+            boolean writeWhenReached) {
         this.repository = repository;
         this.log = log;
         this.eventName = eventName;
         this.target = target;
         this.targetName = targetName;
         this.advance = advance;
+        this.reached = reached;
+        this.gate = gate;
+        this.writeWhenReached = writeWhenReached;
+    }
+
+    /** 輸送要求を読んだ後、進める前に、イベントの見積りを読んで判定する（やり直しのたびに呼び直す。ADR-018。Bolt 35b2）。 */
+    public TransportRequestProgression checking(QuotationGate quotationGate) {
+        return new TransportRequestProgression(
+                repository, log, eventName, target, targetName, advance, reached, quotationGate, writeWhenReached);
+    }
+
+    /** すでに届いていても保存して版を上げる（先に読んで後から書く側を楽観ロックでぶつける。ADR-018。Bolt 35b2）。 */
+    public TransportRequestProgression writingWhenReached() {
+        return new TransportRequestProgression(
+                repository, log, eventName, target, targetName, advance, reached, gate, true);
+    }
+
+    /** すでに届いているかの判定を替える（既定は {@link TransportRequest#hasReached}。戻す操作は「ちょうどその状態か」で見る）。 */
+    public TransportRequestProgression reachedWhen(BiPredicate<TransportRequest, Integer> reachedWhen) {
+        return new TransportRequestProgression(
+                repository, log, eventName, target, targetName, advance, reachedWhen, gate, writeWhenReached);
     }
 
     /**
@@ -79,11 +131,28 @@ public final class TransportRequestProgression {
             return Result.NOT_FOUND;
         }
         TransportRequest request = found.get();
+        QuotationGate.Verdict verdict = gate.check(quotationId);
+        if (verdict == QuotationGate.Verdict.SETTLED) {
+            return Result.ALREADY_REACHED;
+        }
+        if (verdict != QuotationGate.Verdict.PROCEED) {
+            log.warn(
+                    "{} で輸送要求を{}にしなかった（見積りが{}）: 輸送要求 {}、見積り {}",
+                    eventName,
+                    targetName,
+                    verdict.description(),
+                    transportRequestId,
+                    quotationId);
+            return Result.NOT_ADVANCED;
+        }
         if (advance.test(request, quotedVersionNo)) {
             repository.update(request);
             return Result.ADVANCED;
         }
-        if (request.hasReached(target, quotedVersionNo)) {
+        if (reached.test(request, quotedVersionNo)) {
+            if (writeWhenReached) {
+                repository.update(request);
+            }
             return Result.ALREADY_REACHED;
         }
         log.warn(

@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.example.cargotracker.quotation.domain.events.QuotationApprovedByShipper;
 import com.example.cargotracker.quotation.domain.events.QuotationPresented;
+import com.example.cargotracker.quotation.domain.events.QuotationPresentedForReapproval;
 import com.example.cargotracker.quotation.domain.events.QuotationRouteAssigned;
 import com.example.cargotracker.quotation.domain.model.valueobjects.AssignedRoute;
 import com.example.cargotracker.quotation.domain.model.valueobjects.AssignedRouteLeg;
@@ -383,6 +384,28 @@ class QuotationShipperApprovalTest {
         assertThat(next.respondedAt()).contains(at("2026-10-06T02:00:00Z"));
         assertThat(next.domainEvents()).anyMatch(QuotationPresented.class::isInstance);
         assertThat(next.domainEvents()).noneMatch(QuotationRouteAssigned.class::isInstance);
+    }
+
+    @Test
+    void 経路を引き継いだ見積りの提示はDE03の後に再承認待ちにしたDE24を出す() {
+        Quotation next = inherited();
+
+        next.presentInternally(salesRep, now);
+
+        assertThat(next.domainEvents()).hasSize(2);
+        assertThat(next.domainEvents().get(0)).isInstanceOf(QuotationPresented.class);
+        assertThat(next.domainEvents().get(1))
+                .isEqualTo(
+                        new QuotationPresentedForReapproval(next.id().value(), 2, transportRequestId.value(), 1, now));
+    }
+
+    @Test
+    void 経路を持たない見積りの提示はDE24を出さない() {
+        Quotation pending = pendingApproval();
+
+        pending.presentInternally(salesRep, now);
+
+        assertThat(pending.domainEvents()).noneMatch(QuotationPresentedForReapproval.class::isInstance);
     }
 
     @Test

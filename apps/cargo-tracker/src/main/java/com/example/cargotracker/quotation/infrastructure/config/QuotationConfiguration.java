@@ -8,6 +8,7 @@ import com.example.cargotracker.quotation.application.internal.commandservices.T
 import com.example.cargotracker.quotation.application.internal.commandservices.TransportRequestReviewService;
 import com.example.cargotracker.quotation.application.internal.eventhandlers.QuotationApprovedByShipperEventHandler;
 import com.example.cargotracker.quotation.application.internal.eventhandlers.QuotationPresentedEventHandler;
+import com.example.cargotracker.quotation.application.internal.eventhandlers.QuotationPresentedForReapprovalEventHandler;
 import com.example.cargotracker.quotation.application.internal.eventhandlers.QuotationRouteAssignedEventHandler;
 import com.example.cargotracker.quotation.application.internal.eventhandlers.RouteDesignRequestedEventHandler;
 import com.example.cargotracker.quotation.application.internal.queryservices.BookableQuotationQueryService;
@@ -145,17 +146,25 @@ public class QuotationConfiguration {
         return new RouteAssignmentService(quotationRepository, eventPublisher, clock);
     }
 
-    /** DE-21 を受けて輸送要求を荷主承認待ちにする（別のトランザクション。Bolt 20）。 */
+    /** DE-21 を受けて輸送要求を荷主承認待ちにする（別のトランザクション。Bolt 20。置換済み・失効の見積りは進めない。Bolt 35b2）。 */
     @Bean
-    QuotationRouteAssignedEventHandler quotationRouteAssignedEventHandler(TransportRequestRepository repository) {
-        return new QuotationRouteAssignedEventHandler(repository);
+    QuotationRouteAssignedEventHandler quotationRouteAssignedEventHandler(
+            TransportRequestRepository repository, QuotationRepository quotationRepository) {
+        return new QuotationRouteAssignedEventHandler(repository, quotationRepository);
     }
 
-    /** DE-04 を受けて輸送要求を予約待ちにする（別のトランザクション。Bolt 20）。 */
+    /** DE-04 を受けて輸送要求を予約待ちにする（別のトランザクション。Bolt 20。届いていても書く・置換済み・失効は進めない。Bolt 35b2）。 */
     @Bean
     QuotationApprovedByShipperEventHandler quotationApprovedByShipperEventHandler(
-            TransportRequestRepository repository) {
-        return new QuotationApprovedByShipperEventHandler(repository);
+            TransportRequestRepository repository, QuotationRepository quotationRepository) {
+        return new QuotationApprovedByShipperEventHandler(repository, quotationRepository);
+    }
+
+    /** DE-24 を受けて輸送要求を予約待ちから荷主承認待ちへ戻す（別のトランザクション。D-85、ADR-018。Bolt 35b2）。 */
+    @Bean
+    QuotationPresentedForReapprovalEventHandler quotationPresentedForReapprovalEventHandler(
+            TransportRequestRepository repository, QuotationRepository quotationRepository) {
+        return new QuotationPresentedForReapprovalEventHandler(repository, quotationRepository);
     }
 
     @Bean

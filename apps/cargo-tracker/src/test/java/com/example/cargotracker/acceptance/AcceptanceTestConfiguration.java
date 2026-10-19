@@ -26,6 +26,7 @@ import com.example.cargotracker.quotation.application.internal.commandservices.T
 import com.example.cargotracker.quotation.application.internal.commandservices.TransportRequestReviewService;
 import com.example.cargotracker.quotation.application.internal.eventhandlers.QuotationApprovedByShipperEventHandler;
 import com.example.cargotracker.quotation.application.internal.eventhandlers.QuotationPresentedEventHandler;
+import com.example.cargotracker.quotation.application.internal.eventhandlers.QuotationPresentedForReapprovalEventHandler;
 import com.example.cargotracker.quotation.application.internal.eventhandlers.QuotationRouteAssignedEventHandler;
 import com.example.cargotracker.quotation.application.internal.eventhandlers.RouteDesignRequestedEventHandler;
 import com.example.cargotracker.quotation.application.internal.queryservices.BookableQuotationQueryService;
@@ -36,6 +37,7 @@ import com.example.cargotracker.quotation.application.internal.queryservices.Sta
 import com.example.cargotracker.quotation.application.internal.queryservices.TransportRequestQueryService;
 import com.example.cargotracker.quotation.domain.events.QuotationApprovedByShipper;
 import com.example.cargotracker.quotation.domain.events.QuotationPresented;
+import com.example.cargotracker.quotation.domain.events.QuotationPresentedForReapproval;
 import com.example.cargotracker.quotation.domain.events.QuotationRouteAssigned;
 import com.example.cargotracker.quotation.domain.events.RouteDesignRequested;
 import com.example.cargotracker.quotation.domain.events.TransportRequestSubmitted;
@@ -286,14 +288,20 @@ public class AcceptanceTestConfiguration {
 
         @Bean
         QuotationRouteAssignedEventHandler quotationRouteAssignedEventHandler(
-                InMemoryTransportRequestRepository repository) {
-            return new QuotationRouteAssignedEventHandler(repository);
+                InMemoryTransportRequestRepository repository, InMemoryQuotationRepository quotationRepository) {
+            return new QuotationRouteAssignedEventHandler(repository, quotationRepository);
         }
 
         @Bean
         QuotationApprovedByShipperEventHandler quotationApprovedByShipperEventHandler(
-                InMemoryTransportRequestRepository repository) {
-            return new QuotationApprovedByShipperEventHandler(repository);
+                InMemoryTransportRequestRepository repository, InMemoryQuotationRepository quotationRepository) {
+            return new QuotationApprovedByShipperEventHandler(repository, quotationRepository);
+        }
+
+        @Bean
+        QuotationPresentedForReapprovalEventHandler quotationPresentedForReapprovalEventHandler(
+                InMemoryTransportRequestRepository repository, InMemoryQuotationRepository quotationRepository) {
+            return new QuotationPresentedForReapprovalEventHandler(repository, quotationRepository);
         }
 
         /** 購読側を配信に登録する。 */
@@ -307,6 +315,7 @@ public class AcceptanceTestConfiguration {
                 QuotationRouteAssignmentEventHandler quotationRouteAssignmentEventHandler,
                 QuotationRouteAssignedEventHandler quotationRouteAssignedEventHandler,
                 QuotationApprovedByShipperEventHandler quotationApprovedByShipperEventHandler,
+                QuotationPresentedForReapprovalEventHandler quotationPresentedForReapprovalEventHandler,
                 BookingConfirmedEventHandler bookingConfirmedEventHandler,
                 TrackingStartEventHandler trackingStartEventHandler,
                 BookingTrackingStartNotificationEventHandler bookingTrackingStartNotificationEventHandler) {
@@ -324,6 +333,8 @@ public class AcceptanceTestConfiguration {
                     case RouteConfirmed confirmed -> quotationRouteAssignmentEventHandler.on(confirmed);
                     case QuotationRouteAssigned assigned -> quotationRouteAssignedEventHandler.on(assigned);
                     case QuotationApprovedByShipper approved -> quotationApprovedByShipperEventHandler.on(approved);
+                    case QuotationPresentedForReapproval reapproval ->
+                        quotationPresentedForReapprovalEventHandler.on(reapproval);
                     case BookingConfirmed confirmed -> {
                         bookingConfirmedEventHandler.on(confirmed);
                         trackingStartEventHandler.on(confirmed);

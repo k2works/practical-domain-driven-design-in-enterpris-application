@@ -2,6 +2,7 @@ package com.example.cargotracker.quotation.domain.model.aggregates;
 
 import com.example.cargotracker.quotation.domain.events.QuotationApprovedByShipper;
 import com.example.cargotracker.quotation.domain.events.QuotationPresented;
+import com.example.cargotracker.quotation.domain.events.QuotationPresentedForReapproval;
 import com.example.cargotracker.quotation.domain.events.QuotationRouteAssigned;
 import com.example.cargotracker.quotation.domain.events.RouteDesignRequested;
 import com.example.cargotracker.quotation.domain.model.valueobjects.AssignedRoute;
@@ -214,6 +215,11 @@ public final class Quotation {
                 routePolicy.departureAt(),
                 routePolicy.arrivalAt(),
                 at));
+        if (status == QuotationStatus.AWAITING_SHIPPER_APPROVAL) {
+            // 輸送要求を予約待ちから荷主承認待ちへ戻す（D-85。Bolt 35b2。ADR-018）
+            domainEvents.add(new QuotationPresentedForReapproval(
+                    id.value(), quotationNo, transportRequestId.value(), transportRequestVersionNo, at));
+        }
         return Optional.empty();
     }
 
