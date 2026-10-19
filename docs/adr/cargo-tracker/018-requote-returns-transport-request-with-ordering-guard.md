@@ -3,7 +3,9 @@ type: ADR
 title: "ADR-018: 再見積りの提示で輸送要求を荷主承認待ちへ戻し、届く順の入れ替わりは楽観ロックでぶつけて守る"
 description: "荷主の承認の後に失効した見積りの再見積り（D-85）を提示したら、DE-24 で輸送要求を予約待ちから荷主承認待ちへ戻す。輸送要求は先へだけ進め戻さない、という前提（Bolt 12 レビュー R-04）を初めて変えるので、イベントの届く順が入れ替わっても状態がずれない守りを、スキーマもロックも足さずに、listener の読む順と「進めなくても書く」書き込みと置換済み・失効の見積りのイベントを止める判定で作る形に決める（Bolt 35b2）。"
 tags: [adr, architecture, integration]
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-19T10:17:22Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-19T11:51:34Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-10-19T11:51:36Z }
 ---
 
 # ADR-018: 再見積りの提示で輸送要求を荷主承認待ちへ戻し、届く順の入れ替わりは楽観ロックでぶつけて守る
@@ -14,7 +16,7 @@ generated: { by: anthropic/claude-opus-5-5, at: 2026-10-19T10:17:22Z }
 
 ## ステータス
 
-採用（方針は 2026-10-19 に human:kakimomokuri が Bolt 35b2 の開始準備で決めた。文面は Bolt 35b2 の終了報告の承認で確かめる）
+採用（方針は 2026-10-19 に human:kakimomokuri が Bolt 35b2 の開始準備で決め、文面を同日に Bolt 35b2 の終了報告の承認で確かめた）
 
 ## コンテキスト
 

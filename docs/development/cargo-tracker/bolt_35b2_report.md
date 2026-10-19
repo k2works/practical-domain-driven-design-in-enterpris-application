@@ -3,7 +3,9 @@ type: Plan
 title: "Bolt 35b2 終了報告 - 再見積りの提示で輸送要求を荷主承認待ちへ戻す（D-85。DE-24 と順序の守り）"
 description: "W5 の 30 本目の Bolt の終了報告。荷主の承認の後に失効した見積りを再見積りして提示したら、DE-24 で輸送要求を予約待ちから荷主承認待ちへ戻す。届く順の入れ替わりは、輸送要求を読んでから見積りを読む順と、DE-04・DE-24 の listener が進めなくても書く楽観ロックで守り、置換済み・失効の見積りの DE-21・DE-04 は進めない（ADR-018）。差し込みのテストをメモリの実装と PostgreSQL で確かめた。スキーマは変えていない。"
 tags: [plan]
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-19T11:18:49Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-19T11:51:34Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-10-19T11:51:36Z }
 ---
 
 # Bolt 35b2 終了報告 - 再見積りの提示で輸送要求を荷主承認待ちへ戻す（D-85。DE-24 と順序の守り）
@@ -63,6 +65,7 @@ generated: { by: anthropic/claude-opus-5-5, at: 2026-10-19T11:18:49Z }
 | `uiTest` | 緑（276 件） |
 | SonarQube | 3 回目で PASS（新しいコードの網羅率 95.5%、イシュー 0）。1 回目は解析の中のテストで識別の統合テスト 64 件が PostgreSQL のコンテナの起動の失敗で落ちた（コードに関係しない）。2 回目はコンストラクタの引数の数の 1 件で FAIL し、直した |
 | `okf:check` | ERROR 0 |
+| CI | `af023cf4a` で `check`・`ui` は成功。`deploy-demo` はデモのイメージのビルドで Maven Central から `error_prone_annotations:2.38.0` を取れずに落ち、失敗したジョブだけを流し直して成功した（コードに関係しない）。MkDocs の配備は成功 |
 
 ### 開発レビューの指摘と扱い
 
@@ -123,6 +126,7 @@ Bolt 35c（D-85 の画面とマニュアル）。
 
 | 日付 | 更新内容 | 更新者 |
 | :--- | :--- | :--- |
+| 2026-10-19 | 終了報告を承認した（議題 1〜3。議題 2 の人に諮らずに変えた点を事後に承認。ADR-018 の文面を確かめた） | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-10-19 | 初版作成（承認待ち）。`check` 2606 件・`uiTest` 276 件が緑、SonarQube PASS | anthropic/claude-opus-5-5 |
 
 ## 関連ドキュメント

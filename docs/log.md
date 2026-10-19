@@ -1,6 +1,11 @@
 # Docs Update Log
 
 ## 2026-10-19
+* **Verification**: [018-requote-returns-transport-request-with-ordering-guard](/adr/cargo-tracker/018-requote-returns-transport-request-with-ordering-guard.md) を human:kakimomokuri が検証
+* **Verification**: [bolt_35b2_report](/development/cargo-tracker/bolt_35b2_report.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_35b2_report](/development/cargo-tracker/bolt_35b2_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [018-requote-returns-transport-request-with-ordering-guard](/adr/cargo-tracker/018-requote-returns-transport-request-with-ordering-guard.md) を更新（anthropic/claude-opus-5-5）
 * **Update**: [bolt_35b2_report](/development/cargo-tracker/bolt_35b2_report.md) を更新（anthropic/claude-opus-5-5）
 * **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
 * **Update**: [bolt_35b2_report](/development/cargo-tracker/bolt_35b2_report.md) を更新（anthropic/claude-opus-5-5）
