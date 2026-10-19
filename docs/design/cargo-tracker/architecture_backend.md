@@ -4,7 +4,7 @@ title: "cargo-tracker バックエンドアーキテクチャ"
 description: "cargo-tracker の境界づけられたコンテキスト、コンテキストごとのドメインロジックパターン、パッケージ構成、サガとドメインイベントによる連携（ARCH-HO-01〜03）、受信サービスの方針。"
 tags: [design, architecture, backend]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-18T22:36:40Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-19T00:54:22Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T07:11:12Z }
   - { by: human:kakimomokuri, at: 2026-10-01T07:41:04Z }
@@ -147,7 +147,7 @@ end note
 - 下流から上流への通知（ADR-014）では、上流の公開 API に冪等な操作のインターフェースを置き、業務の処理は上流の `application.internal.commandservices` に置く。業務の拒否は戻り値の値で返す。最初の操作は、見積りの「経路の割当て」（`quotation.interfaces.api.RouteAssignment`。案件番号・経路版番号・確定の時刻・区間を受け、依頼元の見積りに割り当てる。Bolt 20）。
 - 最初の公開 API は、見積りの「経路条件の照会」（`quotation.interfaces.api.RouteConditionQuery`。輸送要求 ID と版番号から、出発地・目的地・希望到着期限・貨物種別を返す）。経路設計が DE-16 を受けて経路設計案件を作るときに呼ぶ。
 - 予約が使う見積りの公開 API（Bolt 23・23b）: 確定に使えるかの照会（`BookableQuotationQuery`。業務番号・見積り番号・commit 時刻から、確定に要る写しか使えない理由を返す。ADR-016）と、予約確定済みの通知（`BookingNotification`。ADR-014）。
-- 予約の確定できる貨物の規則（Bolt 35。US-04 AC5、B-INV-04）: `BookableCargoPolicy` は `booking.domain.model.rules`（`@DomainRule`。予約で最初の rules のパッケージ）に置き、見積りの公開 API から写した貨物種別の名前（`BookingTerms.cargoCategory`）だけで判定する。見積りの `MvpAcceptancePolicy` は使わない（予約は見積りのドメインに依存しない。予約の `allowedDependencies` は `shared`・`quotation :: api`・`platform :: web` だけで、`ModularityTest` が検証する。AT-03）。サービスは見積りの照会の後、確定条件の前に規則で判定して特殊貨物の拒否を返し、`Booking.confirm` も同じ規則で判定して拒否の例外を投げる（規則を通さずに確定できない）
+- 予約の確定できる貨物の規則（Bolt 35。US-04 AC5、B-INV-04）: `BookableCargoPolicy` は `booking.domain.model.rules`（`@DomainRule`。予約で最初の rules のパッケージ）に置き、見積りの公開 API から写した貨物種別の名前（`BookingTerms.cargoCategory`）だけで判定する。見積りの `MvpAcceptancePolicy` は使わない（予約は見積りのドメインに依存しない。予約の `allowedDependencies` は `shared`・`quotation :: api`・`platform :: web` だけで、`ModularityTest` が検証する。AT-03）。サービスは見積りの照会の後、確定条件の前に規則で判定して特殊貨物の拒否を返し、`Booking.confirm` も同じ規則で判定して拒否の例外を投げる（規則を通さずに確定できない）。S-09 を開いたときの読み取りモデル（`BookingConfirmationPage.Available.specialCargo`）も同じ規則を使い、確定の POST の拒否は結果を画面に渡す。期限の判定を見積りの 1 か所に置いた ADR-016 と違い、特殊貨物は予約が引き受けない業務の範囲なので、見積りの規則が変わっても予約が自分で拒む（二重の守り）。予約が比べる名前 `GENERAL` は見積りの公開 API の `BookableQuotationResult.cargoCategory` の Javadoc に値の集合とともに約束として書いた。予約から見積りのドメインへの型の依存を見る ArchUnit の規則はなく、`ModularityTest` の allowedDependencies の検証だけが守る（Bolt 35 の既知の課題）
 - アクセス・監査が使う通知の公開 API（Bolt 33。[ADR-017](../../adr/cargo-tracker/017-notification-module-and-mail.md)）: password の再設定のメールの送信（`notification.interfaces.api.PasswordResetMail`。依頼の ID・トークンの ID・宛先の利用者の ID・アドレス・再設定の URL・期限・言語を受け、送信の記録を残して送る。結果は `Sent`・`AlreadySent`（同じ依頼の ID と宛先で記録済み）・`Failed`）。呼ぶ側は `identity.application.internal.outboundservices.acl.NotificationPasswordResetMails` で、イベントのハンドラー `PasswordResetMailEventHandler`（`@ApplicationModuleListener`）から呼ぶ。アダプターは `notification.interfaces.api.internal` に置き、通知のアプリケーションサービス `PasswordResetMailService`（`notification.application.internal.commandservices`）に委ねる。
 - 追跡が使う公開 API（Bolt 25。ADR-015）: 経路設計の経路版の区間の照会（`routing.interfaces.api.RouteVersionLegQuery`。案件番号と経路版番号から、確定した経路版の区間を区間の順に返す。ない経路版は空）と、予約の追跡の開始の通知（`booking.interfaces.api.TrackingStartNotification`。予約 ID・追跡番号・開始時刻を受け、処理中の予約サガを完了にする。結果は `Completed`・`AlreadyCompleted`・`NotCompleted(reason)`）。
 

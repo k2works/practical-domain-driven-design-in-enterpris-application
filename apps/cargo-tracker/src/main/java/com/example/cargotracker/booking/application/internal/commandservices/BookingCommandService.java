@@ -91,7 +91,7 @@ public class BookingCommandService {
         // 有効な見積り・荷主の承認・承認済み経路版は、見積りが確定に使えると判定した時点でそろっている（ADR-016）
         BookingConditions conditions =
                 new BookingConditions(true, !terms.cargoSummary().isBlank(), true, true, command.staffConfirmed());
-        Optional<BookingConfirmationOutcome> refused = rejectBeforeIssuing(terms, conditions);
+        Optional<BookingConfirmationOutcome> refused = rejectBeforeIssuing(command, terms, conditions);
         if (refused.isPresent()) {
             return refused.get();
         }
@@ -104,6 +104,7 @@ public class BookingCommandService {
         } catch (BookingConfirmationRejected rejected) {
             return new BookingConfirmationOutcome.MissingConditions(rejected.missingConditions());
         } catch (SpecialCargoRejected _) {
+            // サービスが先に判定するので通常は届かない（集約の不変条件との守りの重複。T-150）
             return new BookingConfirmationOutcome.SpecialCargo();
         }
         try {
@@ -138,11 +139,17 @@ public class BookingCommandService {
 
     /**
      * 追跡番号を発行する前に返す拒否。追跡番号は発行のたびに DB を照会するため、拒否は発行の前に返す（Bolt 23 レビュー L-1）。特殊貨物は
-     * 直せないので確定条件より先に返す（B-INV-04、US-04 AC5。Bolt 35）。
+     * 直せないので確定条件より先に返す（B-INV-04、US-04 AC5。Bolt 35）。特殊貨物の見積りは通常は提出で拒むので、ここに届いたことを
+     * 警告のログに残す（見積りの提出の規則の外で受け付けた見積りの合図。画面には種別を出さない）。
      */
     private static Optional<BookingConfirmationOutcome> rejectBeforeIssuing(
-            BookingTerms terms, BookingConditions conditions) {
+            ConfirmBookingCommand command, BookingTerms terms, BookingConditions conditions) {
         if (!BookableCargoPolicy.bookable(terms.cargoCategory())) {
+            LOG.warn(
+                    "特殊貨物を含む見積りの本予約の確定を拒否した（B-INV-04）: {} 見積 {} 貨物種別={}",
+                    command.transportRequestNumber(),
+                    command.quotationNo(),
+                    terms.cargoCategory());
             return Optional.of(new BookingConfirmationOutcome.SpecialCargo());
         }
         if (!conditions.missing().isEmpty()) {

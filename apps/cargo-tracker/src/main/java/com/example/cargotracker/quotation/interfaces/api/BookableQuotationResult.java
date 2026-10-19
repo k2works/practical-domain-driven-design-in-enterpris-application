@@ -22,7 +22,8 @@ public sealed interface BookableQuotationResult {
      * @param consigneeCompanyId 荷受人企業 ID
      * @param routingCaseNumber 承認済み経路版の案件番号の表記
      * @param routeVersionNo 承認済み経路版の番号
-     * @param cargoCategory 貨物種別の名前（GENERAL など）
+     * @param cargoCategory 貨物種別の名前（GENERAL・DANGEROUS・REEFER・OTHER_SPECIAL のどれか。予約はこの名前が GENERAL かどうかで本予約を
+     *     確定できるかを判定するので、名前を変えるときは予約の {@code BookableCargoPolicy} も直す。B-INV-04、Bolt 35）
      * @param cargoSummary 貨物の要約（種別・荷姿・個数・総重量・容積）。表示用の文字列で、書式は見積りが決め、予約は解釈しない（Bolt 29c で日本語名と表示の書式にした）
      * @param shipperApproverId 承認した荷主担当者の利用者 ID
      * @param shipperApprovedAt 荷主の承認時刻（S-09 の確定条件の表に示す。Bolt 23b）

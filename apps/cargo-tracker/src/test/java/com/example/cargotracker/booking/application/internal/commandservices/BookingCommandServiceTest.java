@@ -41,6 +41,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.slf4j.LoggerFactory;
 
 /**
@@ -142,9 +144,10 @@ class BookingCommandServiceTest {
         assertThat(repository.findAll()).isEmpty();
     }
 
-    @Test
-    void 特殊貨物を含む見積りは特殊貨物の拒否を返し追跡番号を発行しない() {
-        quotation = bookable("DANGEROUS", BookingFixture.terms().cargoSummary());
+    @ParameterizedTest(name = "{0} は特殊貨物の拒否")
+    @ValueSource(strings = {"DANGEROUS", "REEFER", "OTHER_SPECIAL"})
+    void 特殊貨物を含む見積りは特殊貨物の拒否を返し追跡番号を発行しない(String cargoCategory) {
+        quotation = bookable(cargoCategory, BookingFixture.terms().cargoSummary());
 
         assertThat(service.confirm(command(Role.SALES, true))).isEqualTo(new BookingConfirmationOutcome.SpecialCargo());
         assertThat(issued).hasValue(0);

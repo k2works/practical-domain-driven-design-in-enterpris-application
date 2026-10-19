@@ -4,7 +4,7 @@ title: "cargo-tracker ドメインモデル"
 description: "cargo-tracker の業務領域の分類、ユビキタス言語、7 つの境界づけられたコンテキスト（通知を含む）の集約・エンティティ・値オブジェクト・ドメインルール、コマンド・クエリ・イベント、予約サガ。"
 tags: [design, domain-model, ddd]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-18T22:36:40Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-19T00:54:22Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T07:41:04Z }
   - { by: human:kakimomokuri, at: 2026-10-01T07:48:17Z }
@@ -825,7 +825,7 @@ title 貨物予約の状態遷移（本予約以後）
 | :--- | :--- | :--- |
 | 確定条件の検証 | BookingConditions | 見積り・経路版・貨物・承認の状態を受け取り、不足条件を返す。見積りと経路版の状態は、アプリケーションサービスが ACL 越しに取得して値として渡す |
 | 追跡番号の発行 | TrackingNumberIssuer | 推測されにくい一意な追跡番号を発行する（ファクトリ） |
-| 確定できる貨物の規則 | BookableCargoPolicy | 写した貨物種別の名前が一般貨物（`GENERAL`）のときだけ確定できるとする（B-INV-04。Bolt 35）。知らない値・空の値は確定しない。見積りの `MvpAcceptancePolicy` は使わない（BC の独立。予約は見積りの公開 API から写した値だけで判定する）。サービスの判定と `Booking.confirm` の両方が使う |
+| 確定できる貨物の規則 | BookableCargoPolicy | 写した貨物種別の名前が一般貨物（`GENERAL`）のときだけ確定できるとする（B-INV-04。Bolt 35）。知らない値・空の値は確定しない。見積りの `MvpAcceptancePolicy` は使わない（BC の独立。予約は見積りの公開 API から写した値だけで判定する）。サービスの判定、`Booking.confirm`、S-09 を開いたときの読み取りモデル（`BookingConfirmationPage.Available.specialCargo`）の 3 か所が同じ規則を使う |
 | 確定の判定の順序 | BookingCommandService | 役割（B-INV-10）→ 処理済みコマンド（B-INV-03。内容が同じなら最初の結果、違えば衝突）→ 業務番号と見積り番号で引いた同じ見積りの貨物予約（B-INV-11。既存の追跡番号）→ 見積りの公開 API の照会（commit 時刻。B-INV-02・05）→ 特殊貨物（B-INV-04。Bolt 35）→ 確定条件（B-INV-01）の順に判定する。特殊貨物は直せないので確定条件より先に返し、追跡番号を発行しない。確定の後に見積りが失効・置換されても、再送と同じ見積りの確定は失効にしない。同時の確定で一意制約に負けた側は、保存をセーブポイントに戻し、同じトランザクションで読み直して同じ結果を返す（Bolt 24） |
 
 ### 追跡（Tracking、U3）

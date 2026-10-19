@@ -10,6 +10,7 @@ import com.example.cargotracker.booking.application.sagas.BookingSagaStatus;
 import com.example.cargotracker.booking.domain.events.BookingConfirmed;
 import com.example.cargotracker.booking.domain.model.aggregates.Booking;
 import com.example.cargotracker.booking.domain.model.entities.BookingVersion;
+import com.example.cargotracker.booking.domain.model.valueobjects.BookingCondition;
 import com.example.cargotracker.booking.domain.model.valueobjects.TrackingNumber;
 import com.example.cargotracker.shared.acceptance.DeferredEventDelivery;
 import com.example.cargotracker.shared.acceptance.ScenarioContext;
@@ -23,6 +24,7 @@ import io.cucumber.java.ja.ならば;
 import io.cucumber.java.ja.もし;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -85,6 +87,17 @@ public class BookingSteps {
     @もし("カスタマーサポートが見積り {int} の本予約を確定する")
     public void カスタマーサポートが確定する(int quotationNo) {
         confirm(CommandId.random(), quotationNo, SUPPORT, true);
+    }
+
+    @ならば("不足条件は {string} だけである")
+    public void 不足条件(String condition) {
+        BookingCondition expected =
+                switch (condition) {
+                    case "営業担当者の確認" -> BookingCondition.STAFF_CONFIRMATION;
+                    case "必須貨物情報" -> BookingCondition.REQUIRED_CARGO;
+                    default -> throw new IllegalArgumentException("知らない確定条件: " + condition);
+                };
+        assertThat(lastOutcome).isEqualTo(new BookingConfirmationOutcome.MissingConditions(List.of(expected)));
     }
 
     @ならば("本予約の結果は {string} である")

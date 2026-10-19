@@ -126,7 +126,9 @@ public class InMemoryTransportRequestRepository implements TransportRequestRepos
 
     /**
      * 提出の規則の外で受け付けた輸送要求（規則ができる前の受け付けや手作業の登録）を作るため、現在の版の貨物種別を置き換える（Bolt 35。
-     * 予約の判定が見積りの受付の規則に頼らずに特殊貨物を拒むことを確かめる。US-04 AC5、B-INV-04）。集約の版は変えない。
+     * 予約の判定が見積りの受付の規則に頼らずに特殊貨物を拒むことを確かめる。US-04 AC5、B-INV-04）。集約の版は変えない。見積りの公開 API が
+     * 読む現在の版だけを変え、ほかのコンテキストの写し（経路設計の案件の貨物種別など）は変えないので、確定の時点の判定だけを確かめる
+     * テスト専用の状態として使う。
      */
     public synchronized void replaceCargoCategory(TransportRequestId id, CargoCategory category) {
         TransportRequest stored = store.get(id);

@@ -76,7 +76,8 @@ final class BookingViews {
             String transportRequestNumber,
             int quotationNo,
             BookingConfirmationPage.Available page,
-            List<BookingCondition> missing) {
+            List<BookingCondition> missing,
+            boolean rejectedAsSpecialCargo) {
         BookingTerms terms = page.terms();
         boolean cargoMissing = terms.cargoSummary().isBlank();
         return new ConfirmationView(
@@ -90,7 +91,7 @@ final class BookingViews {
                 cargoMissing,
                 missing.contains(BookingCondition.REQUIRED_CARGO),
                 missing.contains(BookingCondition.STAFF_CONFIRMATION),
-                page.specialCargo());
+                page.specialCargo() || rejectedAsSpecialCargo);
     }
 
     /**

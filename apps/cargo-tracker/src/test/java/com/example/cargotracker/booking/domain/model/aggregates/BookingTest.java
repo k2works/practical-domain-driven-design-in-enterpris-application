@@ -83,8 +83,9 @@ class BookingTest {
     @Test
     void 特殊貨物を含む予約条件では確定条件がそろっても確定しない() {
         BookingTerms special = withCargoCategory(terms(), "DANGEROUS");
+        BookingConditions conditions = allConditions();
 
-        assertThatThrownBy(() -> Booking.confirm(ID, allConditions(), special, TRACKING_NUMBER, SALES, COMMITTED_AT))
+        assertThatThrownBy(() -> Booking.confirm(ID, conditions, special, TRACKING_NUMBER, SALES, COMMITTED_AT))
                 .isInstanceOf(SpecialCargoRejected.class);
     }
 

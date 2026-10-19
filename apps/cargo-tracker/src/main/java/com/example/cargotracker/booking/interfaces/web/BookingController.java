@@ -72,7 +72,7 @@ public class BookingController {
             Model model,
             RedirectAttributes redirectAttributes) {
         return showConfirmation(
-                transportRequestNumber, quotationNo, CommandId.random(), List.of(), model, redirectAttributes);
+                transportRequestNumber, quotationNo, CommandId.random(), List.of(), false, model, redirectAttributes);
     }
 
     /** 本予約を確定する。確定したら予約の詳細へリダイレクトし、追跡番号を示す（PRG）。 */
@@ -96,10 +96,12 @@ public class BookingController {
                 yield "redirect:/staff/bookings/" + trackingNumber.value();
             }
             case BookingConfirmationOutcome.MissingConditions(List<BookingCondition> missing) ->
-                showConfirmation(transportRequestNumber, quotationNo, command, missing, model, redirectAttributes);
-            // 特殊貨物は S-09 を開いたときと同じ表示で示す（見積りの照会の結果の貨物種別を同じ規則で見る。US-04 AC5。Bolt 35）
+                showConfirmation(
+                        transportRequestNumber, quotationNo, command, missing, false, model, redirectAttributes);
+            // 特殊貨物は S-09 を開いたときと同じ表示で示す。拒んだ結果を渡し、照会し直した結果だけに頼らない（US-04 AC5。Bolt 35）
             case BookingConfirmationOutcome.SpecialCargo _ ->
-                showConfirmation(transportRequestNumber, quotationNo, command, List.of(), model, redirectAttributes);
+                showConfirmation(
+                        transportRequestNumber, quotationNo, command, List.of(), true, model, redirectAttributes);
             case BookingConfirmationOutcome.Expired _ ->
                 unavailable(subject, QuotationUnavailability.EXPIRED, redirectAttributes);
             case BookingConfirmationOutcome.QuotationUnavailable(QuotationUnavailability reason) ->
@@ -131,13 +133,16 @@ public class BookingController {
             int quotationNo,
             CommandId commandId,
             List<BookingCondition> missing,
+            boolean rejectedAsSpecialCargo,
             Model model,
             RedirectAttributes redirectAttributes) {
         String subject = BookingViews.subject(transportRequestNumber, quotationNo);
         return switch (queryService.confirmation(transportRequestNumber, quotationNo)) {
             case BookingConfirmationPage.Available available -> {
                 model.addAttribute(
-                        "page", BookingViews.confirmation(transportRequestNumber, quotationNo, available, missing));
+                        "page",
+                        BookingViews.confirmation(
+                                transportRequestNumber, quotationNo, available, missing, rejectedAsSpecialCargo));
                 model.addAttribute("commandId", commandId.value().toString());
                 yield CONFIRMATION_VIEW;
             }

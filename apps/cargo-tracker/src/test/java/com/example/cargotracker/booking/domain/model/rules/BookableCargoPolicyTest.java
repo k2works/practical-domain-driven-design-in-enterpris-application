@@ -23,7 +23,7 @@ class BookableCargoPolicyTest {
 
     @ParameterizedTest(name = "「{0}」は確定しない側に倒す")
     @NullAndEmptySource
-    @ValueSource(strings = {" ", "general", "UNKNOWN"})
+    @ValueSource(strings = {" ", "general", "UNKNOWN", " GENERAL", "GENERAL "})
     void 知らない値と空の値は確定できない(String category) {
         assertThat(BookableCargoPolicy.bookable(category)).isFalse();
     }

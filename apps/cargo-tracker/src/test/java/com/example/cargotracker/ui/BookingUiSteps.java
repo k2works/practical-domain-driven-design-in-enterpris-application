@@ -112,6 +112,9 @@ public class BookingUiSteps {
     @ならば("本予約の確定のエラー要約に不足条件 {string} が示される")
     public void 不足条件が示される(String message) {
         Locator summary = page().getByRole(AriaRole.ALERT);
+        // 確定せずに S-09 のまま（S-24 へ移っていない）。エラー要約へフォーカスが移る（共通部品「エラー要約」。Bolt 35）
+        assertThat(page()).hasURL(Pattern.compile(".*/staff/bookings$"));
+        assertThat(summary).isFocused();
         assertThat(summary).containsText("本予約を確定できませんでした");
         assertThat(summary.getByRole(AriaRole.LINK, new Locator.GetByRoleOptions().setName(message)))
                 .isVisible();

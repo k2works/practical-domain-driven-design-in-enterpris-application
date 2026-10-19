@@ -293,10 +293,42 @@ class BookingControllerTest {
         mockMvc.perform(get(NEW))
                 .andExpect(status().isOk())
                 .andExpect(content().string(containsString("本予約を確定できませんでした")))
-                .andExpect(content().string(containsString(SPECIAL_CARGO)))
                 // 直す欄がないのでリンクにしない（US-04 AC5、B-INV-04。Bolt 35）
-                .andExpect(content().string(not(containsString("<a href=\"#"))))
+                .andExpect(content().string(containsString("<li>" + SPECIAL_CARGO + "</li>")))
                 .andExpect(content().string(not(containsString("本予約を確定しますか"))))
+                .andExpect(content().string(not(containsString("本予約を確定する</button>"))))
+                .andExpect(content().string(not(containsString("name=\"staffConfirmed\""))))
+                .andExpect(content().string(not(containsString("name=\"commandId\""))))
+                .andExpect(content().string(not(containsString("下のチェックで示します"))))
+                .andExpect(content().string(containsString("確定できないため要りません")))
+                .andExpect(content().string(not(containsString("この表示は開いた時刻での確認です。"))));
+    }
+
+    @Test
+    void 知らない貨物種別の見積りも開いたときから確定できないと示す() throws Exception {
+        // 開いたときの判定は確定のときと同じ規則で、知らない値は確定しない側に倒す
+        given(queryService.confirmation("TR-2026-0001", 1))
+                .willReturn(available(withCargo(BookingFixture.terms(), "UNKNOWN", "不明 / パレット × 12")));
+
+        mockMvc.perform(get(NEW))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("<li>" + SPECIAL_CARGO + "</li>")))
+                .andExpect(content().string(not(containsString("本予約を確定する</button>"))));
+    }
+
+    @Test
+    void 特殊貨物の拒否で送り返されたら照会し直した見積りが一般貨物でも拒否を示す() throws Exception {
+        // 表示は拒んだ結果から決め、照会し直した結果だけに頼らない（判定した対象と表示の結び付き。T-150）
+        given(commandService.confirm(any())).willReturn(new BookingConfirmationOutcome.SpecialCargo());
+        given(queryService.confirmation("TR-2026-0001", 1)).willReturn(available(BookingFixture.terms()));
+
+        mockMvc.perform(post("/staff/bookings")
+                        .param("commandId", COMMAND_ID)
+                        .param("transportRequest", "TR-2026-0001")
+                        .param("quotation", "1")
+                        .param("staffConfirmed", "true"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("<li>" + SPECIAL_CARGO + "</li>")))
                 .andExpect(content().string(not(containsString("本予約を確定する</button>"))));
     }
 
@@ -312,8 +344,10 @@ class BookingControllerTest {
                         .param("quotation", "1")
                         .param("staffConfirmed", "true"))
                 .andExpect(status().isOk())
-                .andExpect(content().string(containsString(SPECIAL_CARGO)))
-                .andExpect(content().string(not(containsString("本予約を確定する</button>"))));
+                .andExpect(content().string(containsString("本予約を確定できませんでした")))
+                .andExpect(content().string(containsString("<li>" + SPECIAL_CARGO + "</li>")))
+                .andExpect(content().string(not(containsString("本予約を確定する</button>"))))
+                .andExpect(content().string(not(containsString("name=\"staffConfirmed\""))));
     }
 
     @Test
@@ -324,7 +358,9 @@ class BookingControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(content().string(not(containsString(SPECIAL_CARGO))))
                 .andExpect(content().string(not(containsString("本予約を確定できませんでした"))))
-                .andExpect(content().string(containsString("本予約を確定する</button>")));
+                .andExpect(content().string(containsString("本予約を確定する</button>")))
+                .andExpect(content().string(containsString("下のチェックで示します")))
+                .andExpect(content().string(containsString("この表示は開いた時刻での確認です。")));
     }
 
     @Test
