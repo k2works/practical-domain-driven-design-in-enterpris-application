@@ -2,6 +2,10 @@
 
 ## 2026-10-20
 * **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [development_strategy](/development/cargo-tracker/development_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [non_functional](/design/cargo-tracker/non_functional.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
 * **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
 * **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
 * **Update**: [development_strategy](/development/cargo-tracker/development_strategy.md) を更新（anthropic/claude-opus-5-5）
