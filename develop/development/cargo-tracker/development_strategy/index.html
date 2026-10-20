@@ -12061,6 +12061,10 @@
 <td style="text-align: left;">技術タスク（基盤・CI・IaC）</td>
 <td style="text-align: left;">テストの入口は検証の手段（アーキテクチャテスト、スモーク、IaC の検査）に置く</td>
 </tr>
+<tr>
+<td style="text-align: left;">認証の入口と横断の部品だけを変える（ドメインもデータも変えない）</td>
+<td style="text-align: left;">インサイドアウト（セキュリティの統合テストから。画面は画面の層の受入シナリオで外側から確かめる。Bolt 32・32c・32b・32e の実績。W5 の締めで足した）</td>
+</tr>
 </tbody>
 </table>
 <p>この表から外れるアプローチを採るときは、Bolt 計画の「アプローチ」の欄に、外れる理由（たとえば、不確実性が集約の規則にあり、規則から入るほうが早く確かめられる）を必ず書く。開始準備の横断検証（軸 A）は、表と欄の理由を突き合わせる（2026-10-08、Bolt 21 終了報告の議題 6。Bolt 19・20 は既存の集約に足す Bolt をインサイドアウトにし、理由を書いていなかった）。</p>
@@ -12797,6 +12801,11 @@
 <tr>
 <td style="text-align: left;">2026-10-08</td>
 <td style="text-align: left;">Bolt 21 終了報告の議題 6 を反映: Bolt ごとのアプローチの表から外れるときは、計画のアプローチの欄に理由を書く決まりを足した</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5、承認 human:kakimomokuri</td>
+</tr>
+<tr>
+<td style="text-align: left;">2026-10-20</td>
+<td style="text-align: left;">W5 の締めを反映: Bolt ごとのアプローチの表に「認証の入口と横断の部品だけを変える（ドメインもデータも変えない）→ インサイドアウト（セキュリティの統合テストから）」の行を足した（Bolt 32・32c・32b・32e の実績。human:kakimomokuri が承認）</td>
 <td style="text-align: left;">anthropic/claude-opus-5-5、承認 human:kakimomokuri</td>
 </tr>
 </tbody>
