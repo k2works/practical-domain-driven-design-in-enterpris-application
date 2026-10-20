@@ -8,6 +8,7 @@ import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.Route;
 import com.microsoft.playwright.options.AriaRole;
+import com.microsoft.playwright.options.LoadState;
 import io.cucumber.java.ja.かつ;
 import io.cucumber.java.ja.ならば;
 import io.cucumber.java.ja.もし;
@@ -177,6 +178,21 @@ public class SessionTimeoutUiSteps {
     public void CSRFのトークンが合わない状態で見積依頼の作成画面のフォームを送信する() {
         CSRFのトークンの値を変える();
         見積依頼の作成画面のフォームを送信する();
+        公開の画面の読み込みを待ち印を確かめる();
+    }
+
+    /**
+     * CSRF の拒否の 403 の画面は、deferred の script が DOMContentLoaded で控えに「公開の画面を経た」印（{@code passedPublic}。
+     * {@code session-input.js} の名前を変えるときはここも直す）を付ける。次の画面へ移る前に、403 の画面の読み込みを待ち、控えに印が
+     * あることを確かめる（印の前に移ると、移り先の画面が控えを古いとして捨てる。CI の揺らぎ。Bolt 36 で script の応答を保留して再現した）。
+     */
+    private void 公開の画面の読み込みを待ち印を確かめる() {
+        権限がない画面が表示される();
+        Object saved = page().evaluate("key => JSON.parse(window.sessionStorage.getItem(key))", SAVED_INPUT);
+        org.assertj.core.api.Assertions.assertThat(saved)
+                .as("入力の控え")
+                .asInstanceOf(org.assertj.core.api.InstanceOfAssertFactories.MAP)
+                .containsEntry("passedPublic", true);
     }
 
     /**
@@ -321,6 +337,10 @@ public class SessionTimeoutUiSteps {
     public void 権限がない画面が表示される() {
         assertThat(page().getByRole(AriaRole.HEADING, new Page.GetByRoleOptions().setName("権限がありません")))
                 .isVisible();
+        // 見出しは deferred の script より先に見える。403 の画面の load（script と DOMContentLoaded の処理の後）まで待ち、控えの扱いを
+        // 終えてから次へ移る（CSRF の拒否の印も、認可の 403 で印を付けないことの否定の確かめも、この後に見る。Bolt 36）。見出しを先に
+        // 待つので、送信の前の画面の load で返らない
+        page().waitForLoadState(LoadState.LOAD);
     }
 
     @ならば("入力の誤りが示される")
