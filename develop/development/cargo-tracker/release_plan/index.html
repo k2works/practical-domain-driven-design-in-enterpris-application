@@ -2358,6 +2358,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#w62026-11-09-11-13" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        W6（2026-11-09 〜 11-13）
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#w5w10release-10" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -13734,6 +13745,289 @@
 </tr>
 </tbody>
 </table>
+<h3 id="w62026-11-09-11-13">W6（2026-11-09 〜 11-13）<a class="headerlink" href="#w62026-11-09-11-13" title="Permanent link">&para;</a></h3>
+<p><strong>状態</strong>: 計画済み（2026-10-20 に計画を作った。詳細整合性検証と横断整合性検証の指摘を反映した。承認待ち）</p>
+<p><strong>ゴール</strong>: 経路設計を完成させ（US-06 の残り・US-07 の残り）、利用者の管理を完成させる（US-16 の残り・US-18 AC9 の管理者経路）。W5 の締めで決めた CI の画面の層のシナリオの揺らぎの原因を最初に調べる。</p>
+<p><strong>局面とアプローチ</strong>: 中盤（<a href="../development_strategy/">開発戦略</a>）。経路設計の残り（Bolt 37〜37f）は中盤の例外（開発戦略 :107。序盤で作った経路設計案件を広げる）でアウトサイドイン（受入シナリオから）。利用者の管理のうち、既存の集約と S-20 に操作を足す Bolt 38・38c と、既存のコンテキストの照会と操作に担当範囲の判定を足す Bolt 38f・38g はアウトサイドイン（既存の集約に受入条件を足す）。新しい振る舞いとスキーマを作る Bolt 38b（利用者の生成と招待のトークン）・38d（通知の種類と公開 API）はインサイドアウト。Bolt 38e は表は Bolt 34b で作ってあるが、担当範囲を request ごとの確かめに載せる横断の部品と、範囲外の試行の記録のポート（新しい構造と ADR）を作るので、表から外れてインサイドアウトにする（不確実性が依存の向きと横断の部品にあり、内側から固める）。Bolt 36 は技術タスク（再現から入る）。</p>
+<p><strong>設計の決定</strong>（2026-10-20 に human:kakimomokuri が決定。W6 の開始準備の質問への回答）:</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">事項</th>
+<th style="text-align: left;">決定</th>
+<th style="text-align: left;">反映</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">US-16 AC4 の担当範囲の単位</td>
+<td style="text-align: left;">パイロットでは担当企業（荷主企業の単位の <code>COMPANY</code>）だけにし、案件はその企業の案件とみなす。案件ごとの割り当ては OQ-07 の残りに送る（案件の ID がコンテキストごとに違い、予約の前の見積り・経路設計を <code>BOOKING</code> の単位で絞れないため）。受入条件の「担当案件」の読み替えを US-16 の決定に書く</td>
+<td style="text-align: left;">Bolt 38e〜38g、user_story（US-16）、domain_model（IA-INV-02）、data_model（<code>user_assignment</code>）</td>
+</tr>
+<tr>
+<td style="text-align: left;">初回の password の渡し方</td>
+<td style="text-align: left;">招待のリンク。登録は使えないハッシュで行い、再設定のトークンの仕組み（A-06）で本人が設定する。招待のトークンだけ期限を 24 時間にする（IA-INV-12 の変更。再設定は 30 分のまま）</td>
+<td style="text-align: left;">Bolt 38b、domain_model（IA-INV-12）、ADR-011 :257 の注</td>
+</tr>
+<tr>
+<td style="text-align: left;">US-07 AC4・AC5 の W6 の範囲</td>
+<td style="text-align: left;">確定した経路版を評価して再設計要にするアプリケーションサービスの操作と、再設計要・旧版の再確定・荷主の承認・本予約の拒否まで作る。旧版はドメインのテストで再構成した状態で確かめ、外部情報の更新からの自動の評価は W7（US-14）でつなぐ。画面の操作は作らない</td>
+<td style="text-align: left;">Bolt 37c・37d、user_story（US-07）、domain_model（R-INV-06・07、Q-INV-10、B-INV-05）</td>
+</tr>
+<tr>
+<td style="text-align: left;">US-06 の Golden dataset</td>
+<td style="text-align: left;">テスト戦略の G-01〜G-06 の仮の値で「Golden dataset v0（業務責任者の承認待ち）」を作り、#15 をクローズする。業務責任者のデータ（TST-02）が届いたら差し替えの Bolt を足す。TST-02 はパイロットの開始の条件として台帳に残す</td>
+<td style="text-align: left;">Bolt 37e、test_strategy、台帳（TST-02）</td>
+</tr>
+</tbody>
+</table>
+<p><strong>確認ポイント</strong>（AI の推奨。計画の承認の場でまとめて決める。Try T-6。【前の決定の変更】の印は、前に人が決めたことを変える推奨）:</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">#</th>
+<th style="text-align: left;">確認すること</th>
+<th style="text-align: left;">推奨</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">1</td>
+<td style="text-align: left;">外部情報源の「停止中」の定義（US-06 AC4）</td>
+<td style="text-align: left;">FRS-01 の「最終取得から 24 時間」を判定時刻で比べ、超えた航海を使う候補を情報不足にする。値は設定にし、提案のまま使う（決定者は追跡・データ責任者。台帳に D-89 として載せ、後で差し替える）</td>
+</tr>
+<tr>
+<td style="text-align: left;">2</td>
+<td style="text-align: left;">開発データとデモ環境の航海の取得時刻</td>
+<td style="text-align: left;">開発データの航海の取得時刻は起動した日の前日の 6 時（UTC）で、確認ポイント 1 のままでは起動した日の 6 時を過ぎるとすべての候補が情報不足になる。Bolt 37b で、開発データの航海と区間の取得時刻を起動の時刻に寄せる dev だけのマイグレーションを足す（データベースの承認ゲート。37b の計画で通す）。画面の層のシナリオは自前のデータなので影響しない</td>
+</tr>
+<tr>
+<td style="text-align: left;">3</td>
+<td style="text-align: left;">情報不足の候補を除外するか</td>
+<td style="text-align: left;">除外にする（理由 <code>INFO_INSUFFICIENT</code>、<code>info_insufficient</code> を立てる）。最終採用値と取得時刻は S-06 に示す。専門家の判断で通すことは作らない（US-07 の運用例外の範囲の外）。UC-06 2a の「情報不足を伴う候補として扱う」との揺れと、FRS-01 の「情報が古い」と「情報不足」の関係を US-06 の決定と non_functional に書く。S-06 の画面イメージ（ui_design :1066-1069・:1087）を除外に合わせて直す</td>
+</tr>
+<tr>
+<td style="text-align: left;">4</td>
+<td style="text-align: left;">接続時間の規則を選ぶ時刻（D-65）</td>
+<td style="text-align: left;">接続の時刻（次の区間の出発予定）で選ぶ。業務責任者の確認が要るので台帳に D-90 として載せ、決まらなければ判定時刻のまま境界のテストだけを足す</td>
+</tr>
+<tr>
+<td style="text-align: left;">5</td>
+<td style="text-align: left;">候補探索の区間の上限</td>
+<td style="text-align: left;">積替え 2 回（区間 3）まで（「複数の接続のうち 1 つだけ不足」を表す最小。20 件の上限を保つ）</td>
+</tr>
+<tr>
+<td style="text-align: left;">6</td>
+<td style="text-align: left;">US-07 AC3 の情報版の照合の守り</td>
+<td style="text-align: left;">確定と同じトランザクションで航海を読み直して比べるだけにする。航海の行のロックは書き手ができる W7 で決める</td>
+</tr>
+<tr>
+<td style="text-align: left;">7</td>
+<td style="text-align: left;">見積り・予約への再設計要の伝え方</td>
+<td style="text-align: left;">ADR-014 のとおり、DE-06 を経路設計の listener で受け、見積りの公開 API の冪等な操作で見積りに「割り当てた経路が再設計要」を記録する（列を足す。スキーマ）。荷主の承認（Q-INV-10）と本予約（B-INV-05。<code>bookingRejectionAt</code> 経由）を拒否する。DE-06 の購読者のうち、追跡の有人案件は W8（US-20）、予約の「再設計中」の表示は US-08 に送ると domain_model に書く。DE-06 と本予約の確定の競合の守り方（ADR-016 :55 の W6 の宿題: 照会で共有ロックで読むか、見積りの版を期待版として渡すか）は Bolt 37e の確認ポイントにする</td>
+</tr>
+<tr>
+<td style="text-align: left;">8</td>
+<td style="text-align: left;">再設計要の経路と再見積り（D-85）</td>
+<td style="text-align: left;">再見積り（<code>requoteInto</code>）は再設計要の印も新しい見積りへ写し、再承認でも拒む（印を写さないと Q-INV-10 をすり抜ける）。同じ経路版を持つ見積り（旧版と新しい版）すべてに印を付ける。37d・37e の状態の組み合わせの表（T-161）にこの行を置く。ADR-018 への影響は 37e のステップ 1 で確かめる</td>
+</tr>
+<tr>
+<td style="text-align: left;">9</td>
+<td style="text-align: left;"><code>routing_case.confirmed_route_version_no</code>（書くだけで読まれない。再設計要にすると NULL で上書きされ、経路版の更新が 0 件になる）</td>
+<td style="text-align: left;">列と外部キーを消し、「確定は案件に 1 つ」（R-INV-05）は集約（<code>validated</code>）と、PostgreSQL の部分一意インデックス（<code>status = 'CONFIRMED'</code>。<code>migration/postgresql</code> の前例。D-72 を解消する）で守る（スキーマ）。data_model :495・:501 と test_strategy :236 を直す</td>
+</tr>
+<tr>
+<td style="text-align: left;">10</td>
+<td style="text-align: left;">D-88（出発した経路の再見積り）</td>
+<td style="text-align: left;">W6 で決める。再見積りの引き継ぎはそのままにし、荷主の承認と本予約の確定で、割り当てた経路の最初の区間が判定時刻と同時刻か前に出発していれば拒否し、担当者で相談と案内する（経路設計の確定の <code>ALREADY_DEPARTED</code> とそろえる）。スキーマは変えない。<code>isPresentedForReapproval</code> は W6 では変えず、US-08（W13）と D-86（W9）で見直すと台帳の注を直す</td>
+</tr>
+<tr>
+<td style="text-align: left;">11</td>
+<td style="text-align: left;">Golden dataset v0 の区分</td>
+<td style="text-align: left;">G-01〜G-03 は今の振る舞いで期待値を書く。G-04（特殊貨物）は算出の前に止める業務ルール層のシナリオにする（US-04 AC5 の前例）。G-05（欠航などによる再設計）は v0 に入れない（US-08。W13）。G-06 は「古さ」（確認ポイント 1）だけにし、欠落・矛盾は外部情報の取込（W7、US-14）で足す。必要最小接続時間（DM-05）も仮の値のまま進め、届いたら差し替える</td>
+</tr>
+<tr>
+<td style="text-align: left;">12</td>
+<td style="text-align: left;">管理範囲の割り当て（Bolt 34b の本番の配備の前提）【前の決定の変更】</td>
+<td style="text-align: left;">画面にせず運用タスクにし、最初のシステム管理者を作る作業とあわせて W10 の運用準備で作る（監督の役割を画面で付け外ししない決定と同じ理由。最初の管理者は画面では作れない）。前の決定「割り当ての画面は W6」（domain_model :1055、2026-10-16、human:kakimomokuri。bolt_34b_plan :72、bolt_34d_plan :74、SEC-12）を変えるので、承認されたら 4 か所と W6・W10 の行を直す</td>
+</tr>
+<tr>
+<td style="text-align: left;">13</td>
+<td style="text-align: left;">ロックの解除</td>
+<td style="text-align: left;">S-20 の詳細の画面（確認の領域を経て監査に記録）。管理者による TOTP の解除と同じ「ログインの資格」の領域に置く（IA-INV-03 に管理者による解除を足す）</td>
+</tr>
+<tr>
+<td style="text-align: left;">14</td>
+<td style="text-align: left;">管理者による TOTP の解除（#47）</td>
+<td style="text-align: left;">監査記録の <code>reason</code> には理由のコード（例: <code>IDENTITY_VERIFIED</code>）を入れ、確かめた手段と日時は変更後の要約（<code>after_state</code>。Bolt 34 で足した <code>VARCHAR(4000)</code>）に入れる（列を足さない）。本人確認の手順は SEC-10 のとおり運用で固定し、ランブックに書く。解除と同時に password の再設定は求めず、本人への通知だけにする（ADR-011 :257 の受け入れの前例）。通知は日本語。残りの回復コードの案内は、回復コードでログインした後と A-08 で、残り 3 個以下のときに出す</td>
+</tr>
+<tr>
+<td style="text-align: left;">15</td>
+<td style="text-align: left;">招待のトークンの置き場所</td>
+<td style="text-align: left;"><code>password_reset_token</code> に用途の列（再設定・招待）を足して同じ表に置く（スキーマ）。招待の直後に本人が出した再設定の依頼を、繰り返しの依頼の抑えで止めないこと、A-06 の文言を初回の設定と再設定で出し分けることを、用途で分ける</td>
+</tr>
+<tr>
+<td style="text-align: left;">16</td>
+<td style="text-align: left;">担当範囲を絞る役割と、割り当てのない業務担当者</td>
+<td style="text-align: left;">社内の業務の役割（営業担当者・経路設計者・追跡担当者など、BR-15 の役割 × 操作表で対象範囲が「担当企業・担当案件」の役割）を担当企業で絞る。システム管理者・監査担当者は今の管理範囲のまま。割り当てのない業務担当者は何も見えない（失敗に倒す）。開発データとデモ環境の業務担当者にはサンプルの荷主 A・B の割り当てを dev だけのマイグレーションで入れ（Bolt 38e。データベースの承認ゲート）、画面の層のシナリオの準備でも割り当てを入れる</td>
+</tr>
+<tr>
+<td style="text-align: left;">17</td>
+<td style="text-align: left;">担当範囲の受け渡しと範囲外の試行の記録（依存の循環を避ける）</td>
+<td style="text-align: left;">担当範囲は request ごとの確かめ（<code>SessionRevalidationService</code>、1 回の SQL）で読み、<code>AuthenticatedActor</code> に載せる（ADR-012 の変更。session の直列化の互換に当たるので、配備で古い session を捨てる手順を ADR に書く）。範囲外は各コンテキストで 404 にし、試行の記録は共有カーネルに置くポート（例: <code>shared</code> の範囲外の試行の記録）を identity が実装する依存性逆転で同期に書く（IA-INV-08）。identity の公開 API を各コンテキストから呼ぶ案は、identity → <code>quotation :: events</code> の依存があるので見積りとの間で循環する（ModularityTest が落ちる）ため取らない。層の規則・モジュールの依存に当たるので、38e の計画で ADR の案として諮る（T-125）</td>
+</tr>
+<tr>
+<td style="text-align: left;">18</td>
+<td style="text-align: left;">経路設計の担当企業の判定</td>
+<td style="text-align: left;">経路設計の案件に荷主企業の写しの列を足す（スキーマ）。値は案件を開くときに既存の ACL <code>QuotationRouteConditions</code>（<code>quotation :: api</code>）で取る（DE-16 の属性は変えない。未配信のイベントの形を変えないため）。既存の行は開発データだけ（ステージング・本番はまだない）なので、dev だけのマイグレーションで埋める。追跡は予約の荷主企業で絞る</td>
+</tr>
+<tr>
+<td style="text-align: left;">19</td>
+<td style="text-align: left;">担当の案件の引き継ぎ（Bolt 34d）</td>
+<td style="text-align: left;">担当企業の単位なので、停止の確認の領域に「この利用者の担当企業」を示すだけにし、付け替えは担当範囲の画面で行う</td>
+</tr>
+<tr>
+<td style="text-align: left;">20</td>
+<td style="text-align: left;">承認ゲートと <code>/goal</code></td>
+<td style="text-align: left;">各 Bolt は計画と終了報告で止める（W5 の締めの決定）。スキーマ・認可・セキュリティ・構造は各 Bolt の計画の確認ポイントにする。<code>/goal</code> の下でも、確認必須を含む Bolt 計画は承認を受けてから進め、規則に当たったら止めて諮る（T-125）。US-18 AC9 の Bolt 38c・38d も既定のゲート（W5 の締めの決定。ステップごとに止めるのは W7 の外部原本の取込）</td>
+</tr>
+</tbody>
+</table>
+<p><strong>設計への反映が必要な事項</strong>（各 Bolt の最初のステップで設計文書を直してから実装する）:</p>
+<ul>
+<li>US-06（37〜37b・37f）: domain_model の制約適合判定（停止中の定義・情報不足・区間の上限・規則を選ぶ時刻）、test_strategy の境界と Golden dataset v0 の区分と置き場所（<code>features/routing/golden/</code>）、ui_design の S-06（:1066-1069・:1087）、non_functional の FRS-01、US-06 の決定（UC-06 2a との揺れ）</li>
+<li>US-07（37c〜37e）: 確定の時の情報版の照合の拒否の理由と S-07 の文言、再設計要にする評価の操作と記録（再設計要にした時刻・不適合の理由・旧情報版を保持すること）、DE-06 の属性と購読者、Q-INV-10・B-INV-05 の判定、D-88、再見積りと再設計要の印（ADR-018）、data_model（<code>confirmed_route_version_no</code> の削除と部分一意インデックス、見積りの再設計要の列）、test_strategy :236、ADR-014・ADR-016 の適用先</li>
+<li>US-16・US-18 AC9（38〜38g）: ui_design の S-20（:145・:180-183・:1120 以降）と A-06（:94・:186-187。招待に流用する分の語と期限）、domain_model の IA-INV-02（担当企業だけ）・IA-INV-03（管理者による解除）・IA-INV-12（招待 24 時間）・IA-INV-14（登録・解除・担当範囲の操作）・:1055（管理範囲の割り当て）・:1215（利用者の集約が担当範囲を持つと書いた記述を、実装の別のポート <code>UserAssignmentRepository.scopeOf</code> に合わせる）、data_model の <code>user_assignment</code>（:939。「<code>BOOKING</code> は W6」を担当企業だけに）・<code>audit_record</code> の action（:938）・<code>password_reset_token</code> の用途・<code>notification</code> の種類、non_functional の SEC-08（招待）・SEC-10（管理者の経路）・SEC-12（担当企業だけ）、requirements_definition の OQ-07 の残り（案件ごとの割り当て）、各コンテキストの <code>allowedDependencies</code> と共有カーネルの範囲外の試行の記録のポート（新しい ADR）、ADR-012（担当範囲と session の直列化）</li>
+<li>承認の後に直す文書（W6 の開始準備の範囲）: release_plan の :101（U2 の対策）・:350-351 と引継ぎ ID の台帳（TST-02・DM-05 の期限を「v0 は仮の値で作り、届いたら差し替える。パイロット開始の条件として残す」に）、台帳の D-88 の注と D-89・D-90 の新設、W6 の行（:788。ゴールに利用者の管理を足し、管理範囲の割り当てを W10 へ）と W10 の行（:792）、ガントの W6 の名前（:253）、開発戦略の W6 のデモ項目（:185）と W6 の行（:346）</li>
+</ul>
+<p><strong>D-65 の残り</strong>（Bolt 17 の開発レビュー）: Golden dataset の集約の単位のテスト（37f）と規則を選ぶ時刻（37。確認ポイント 4）は W6。依頼の後の再提出で経路条件が得られないときの扱い（UC-07 5a）・航海の照会を時間の窓と港で絞ること・貨物種別の ACL・<code>Voyage</code> と <code>ConnectionRule</code> の class 化は、外部情報の取込で航海の書き手と量が変わる W7（US-14）の開始準備で扱う。UC-06 4a（情報の更新で候補を旧版にする）も W7。#16 の「経路版の更新を版ごとの差分の保存に置き換える」は US-08（W13）</p>
+<p><strong>Bolt の分け方</strong>（2026-10-20 の初案。各 Bolt の開始準備で引き直す）:</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Bolt</th>
+<th style="text-align: left;">範囲</th>
+<th style="text-align: right;">SP</th>
+<th style="text-align: left;">アプローチ</th>
+<th style="text-align: left;">承認ゲート</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">36</td>
+<td style="text-align: left;">CI の画面の層のシナリオの揺らぎ（#50）の原因を調べて直す: <code>session_timeout_ui.feature</code> の <code>#session-input-status</code> の表示待ち（Bolt 35）と、32f の CSRF の拒否で入力を戻すシナリオ（Bolt 33f）。候補の原因は、403 の画面の deferred script が控えに「公開の画面を経た」印を付ける前に、テストが次の画面へ移ること。遅らせて再現し、直した後は繰り返して確かめる</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: left;">技術タスク（再現から入る）</td>
+<td style="text-align: left;">計画と終了報告（画面の JS を直すなら画面の判断）</td>
+</tr>
+<tr>
+<td style="text-align: left;">37</td>
+<td style="text-align: left;">US-06 の境界の網羅: 3 区間の候補探索、複数の接続のうち 1 つだけ不足、接続時間の規則の有効期間の境界</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: left;">アウトサイドイン（受入シナリオ → 集約 → 規則）</td>
+<td style="text-align: left;">計画と終了報告（確認ポイント 4・5）</td>
+</tr>
+<tr>
+<td style="text-align: left;">37b</td>
+<td style="text-align: left;">US-06 AC4 の情報不足: 鮮度の超過（24 時間の直前・同時刻・直後）で情報不足にして除外し、S-06 に最終採用値・取得時刻・「情報不足」を示す。開発データの航海の取得時刻。マニュアル 8 章とキャプチャ。axe</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: left;">アウトサイドイン（受入シナリオ → 画面 → ドメイン）</td>
+<td style="text-align: left;">計画と終了報告（確認ポイント 1〜3。開発データのデータベースの承認ゲート）</td>
+</tr>
+<tr>
+<td style="text-align: left;">37c</td>
+<td style="text-align: left;">US-07 AC3: 確定の時に航海を読み直し、区間の情報版と採用情報版が違えば確定を拒否して再判断を求める。S-07 の文言、マニュアル 8 章、axe</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: left;">アウトサイドイン</td>
+<td style="text-align: left;">計画と終了報告（確認ポイント 6）</td>
+</tr>
+<tr>
+<td style="text-align: left;">37d</td>
+<td style="text-align: left;">US-07 AC4 の経路設計の側: 確定した経路版を評価して再設計要にし、旧情報版を保持して DE-06 を出す（サービスの操作）。再設計要・旧版の再確定の拒否（R-INV-06）。リポジトリの直しと <code>confirmed_route_version_no</code> の削除・部分一意インデックス</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: left;">アウトサイドイン（状態の組み合わせの表を先に書く。T-161・T-163）</td>
+<td style="text-align: left;">計画と終了報告（スキーマ。確認ポイント 9）</td>
+</tr>
+<tr>
+<td style="text-align: left;">37e</td>
+<td style="text-align: left;">US-07 AC5 と Q-INV-10: DE-06 → 見積りの公開 API → 荷主の承認と本予約の確定を拒否。再見積りと再設計要の印。D-88 の判定。予約から見積りのドメインへの型の ArchUnit の規則（#50）。マニュアル 4 章・7 章（拒否の案内）。#16 をクローズして US-07 の 2 SP を数える</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: left;">アウトサイドイン（受入シナリオ → 見積りの公開 API → 集約）</td>
+<td style="text-align: left;">計画と終了報告（スキーマ・構造。確認ポイント 7・8・10、ADR-016 の宿題）</td>
+</tr>
+<tr>
+<td style="text-align: left;">37f</td>
+<td style="text-align: left;">US-06 の Golden dataset v0（確認ポイント 11 の区分の <code>@golden</code> シナリオアウトラインと、集約の単位のテスト）。受入シナリオの背景の写しをまとめる（#50）。#15 をクローズして US-06 の 5 SP を数える</td>
+<td style="text-align: right;">5</td>
+<td style="text-align: left;">アウトサイドイン（受入シナリオから）</td>
+<td style="text-align: left;">計画と終了報告</td>
+</tr>
+<tr>
+<td style="text-align: left;">38</td>
+<td style="text-align: left;">S-20 の前の直し: Bolt 34f の開発レビューの指摘 8・9（エラー要約の形とフォーカス、<code>aria-describedby</code>・<code>aria-invalid</code>、役割の確定の版を範囲の判定の後に解釈する）、<code>Section</code> とテンプレート（#50）。マニュアル 11 章、axe</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: left;">アウトサイドイン（画面の構造）</td>
+<td style="text-align: left;">計画と終了報告</td>
+</tr>
+<tr>
+<td style="text-align: left;">38b</td>
+<td style="text-align: left;">利用者の登録と招待: S-20 の登録の画面、<code>User</code> の生成の判定（企業の種類、役割 1 つ以上、職務分離、管理範囲）、監査、招待のトークン（24 時間）とメール、A-06 の初回の設定。役割 0 件の検査の二重（#50）。マニュアル 11 章・2 章、axe、動画</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: left;">インサイドアウト（利用者の生成とトークンの用途から）</td>
+<td style="text-align: left;">計画と終了報告（スキーマ・セキュリティ。確認ポイント 15）</td>
+</tr>
+<tr>
+<td style="text-align: left;">38c</td>
+<td style="text-align: left;">ロックの解除と管理者による TOTP の解除（#47 の前半）: S-20 の詳細の「ログインの資格」の領域、資格と回復コードを消し session をすべて消す、監査（確認ポイント 14）。詳細に停止の理由などを示す（#50）。マニュアル 11 章・2 章、axe</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: left;">アウトサイドイン（S-20 から。既存の集約に操作を足す）</td>
+<td style="text-align: left;">計画と終了報告（セキュリティ・認可。確認ポイント 13・14）</td>
+</tr>
+<tr>
+<td style="text-align: left;">38d</td>
+<td style="text-align: left;">本人への通知と回復コードの案内（#47 の後半）: 解除・再登録（回復コードの経路を含む）のメール、通知の種類と公開 API、残りの回復コードの案内、回復コードが送り直すたびに減る件・<code>findByEventIdAndRecipient</code>（#50）。マニュアル 2 章。#47 をクローズする</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: left;">インサイドアウト（通知の種類と公開 API から）</td>
+<td style="text-align: left;">計画と終了報告（スキーマ。確認ポイント 14）</td>
+</tr>
+<tr>
+<td style="text-align: left;">38e</td>
+<td style="text-align: left;">担当範囲の割り当て（identity の側）: 業務担当者の担当企業の割り当て、S-20 の担当範囲の領域、監査、request ごとの確かめで担当範囲を読み <code>AuthenticatedActor</code> に載せる、範囲外の試行の記録のポートと ADR、開発データの割り当て。テストの準備で割り当てが自動で入る件・<code>list</code> と <code>detail</code> の非管理者の扱い・範囲外のときだけ応答時間が違う件（#50）。マニュアル 11 章、axe</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: left;">インサイドアウト（局面とアプローチの段落の理由）</td>
+<td style="text-align: left;">計画と終了報告（認可・構造・開発データ。確認ポイント 16・17）</td>
+</tr>
+<tr>
+<td style="text-align: left;">38f</td>
+<td style="text-align: left;">担当範囲の判定（見積り・予約）: 社内の一覧・詳細・操作を担当企業で絞り、範囲外は 404 と試行の記録（AC4）。マニュアル 6 章・7 章</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: left;">アウトサイドイン（既存の集約に受入条件を足す）</td>
+<td style="text-align: left;">計画と終了報告（認可）</td>
+</tr>
+<tr>
+<td style="text-align: left;">38g</td>
+<td style="text-align: left;">担当範囲の判定（経路設計・追跡）: 経路設計の案件に荷主企業の写しを足して絞る。追跡は予約の荷主企業で絞る。AC5 の役割の取消しのシナリオ。マニュアル 8 章・9 章。#14 をクローズして US-16 の 5 SP（W5 の Bolt 34 の 2 を含む）を数える</td>
+<td style="text-align: right;">5</td>
+<td style="text-align: left;">アウトサイドイン</td>
+<td style="text-align: left;">計画と終了報告（スキーマ・認可・開発データ。確認ポイント 18）</td>
+</tr>
+</tbody>
+</table>
+<p>順序は 36 → 37〜37f（経路設計。W6 のゴール）→ 38〜38g（利用者の管理）。37e のスキーマとコンテキストをまたぐ変更は週の中ほどに置く。38b〜38d は S-20 に閉じていて AC4（38e〜38g）と独立なので、38e より前に進める。38e の公開のポートの後に 38f・38g を置く。半日を超えそうな Bolt（37d・37e・37f・38b・38c・38e・38f・38g）は開始準備で分ける。W5 の実績（見込み 23 本に対して 33 本、約 10 日）から、W6 も 20 本を超え 1 週を超える見込みである。W5 までで計画より約 2 週早いので、バッファ消費ルールの範囲で吸収し、W6 の週の見直しで確かめる。</p>
+<p><strong>W5 の Try の持ち込み</strong>: 各 Bolt 計画の確認ポイントに、T-125（規則に当たったら <code>/goal</code> でも止めて諮る）、T-106・T-119（「ないこと」を確かめる前に、対象があり条件が成り立つことを確かめる）、T-148・T-152（共通の部品と写しは全体を検索して数えてから変える）、T-161・T-163（状態の組み合わせの表と行ごとのテスト。37d・37e・38f・38g）、T-104・T-147・T-139（SonarQube の時機、テストのラムダの中で値を作らない）、T-164（変異の道具は 1 つを手で照らす）を入れる。</p>
+<p><strong>#50（W5 の締めの返済の候補）から入れるもの</strong>: CI の揺らぎ（36）、予約から見積りのドメインへの型の ArchUnit の規則（37e）、受入シナリオの背景の写し（37f）、<code>Section</code> とテンプレート（38）、役割 0 件の検査の二重（38b）、停止の理由などの表示（38c）、回復コードが送り直すたびに減る件・<code>findByEventIdAndRecipient</code>（38d）、テストの準備で割り当てが自動で入る件・<code>list</code> と <code>detail</code> の非管理者の扱い・範囲外のときだけ応答時間が違う件（38e）。画面の層の開き直すループの共通化は、37b・37c で S-06・S-07 の画面の層のシナリオを足す前に、写しを数えてから決める。</p>
+<p><strong>Living Documentation</strong>: 新しい ADR（範囲外の試行の記録のポートと担当範囲の受け渡し）と ADR-012 の変更、<code>package-info</code> の <code>allowedDependencies</code>、ModularityTest、用語集の整合テスト（担当範囲・招待・再設計要・情報不足・Golden dataset）、受入条件の照合の表（US-06・US-07・US-16・US-18 の Release 1.0 の範囲）</p>
+<p><strong>デモ項目</strong>: 経路候補の境界と情報不足（<code>@US-06</code>、<code>@golden</code>）、確定の時の情報版の照合と再設計要の経路の拒否（<code>@US-07</code>）、利用者の登録と招待・ロックと TOTP の解除と本人への通知・担当範囲の外の拒否（<code>@US-16</code>、<code>@US-18-AC9</code>）。動画は画面の振る舞いが変わる Bolt（37b・37c・38b・38c・38e）で <code>@demo-&lt;Bolt&gt;</code> を撮る</p>
+<p><strong>ユーザーマニュアル</strong>: 8 章（経路設計。37b・37c・38g）、4 章・7 章（再設計要と出発済みの拒否。37e）、11 章（利用者の管理。38〜38e）、2 章（ログイン。38b の招待、38c の解除の後の再登録、38d の回復コードの案内）、6 章・7 章・9 章（担当範囲の外。38f・38g）。振る舞いの変わる Bolt はマニュアルの更新とキャプチャを完了条件に入れる</p>
+<p><strong>主なタスク</strong>:</p>
+<ul class="task-list">
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> W6 の開始準備（本節）: 計画の承認、詳細整合性検証・横断整合性検証（指摘を反映）、承認の後に直す文書、GitHub の同期、Bolt 36 計画</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> Bolt 36〜37f: CI の揺らぎ、US-06 の残り（#15）、US-07 の残り（#16）</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> Bolt 38〜38g: US-16 の残り（#14）、US-18 AC9 の管理者経路（#47）</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> 画面の確認: 新しい画面と変えた画面（S-06・S-07・S-20・A-06）の axe と、支援技術による手動確認（人。#14・#15 の完了の定義、#50 の人の作業）</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> W6 の締め: 結果とふりかえり、開いている持ち越しの数（T-89）、W7 の計画の見直し</li>
+</ul>
+<p><strong>目標 SP</strong>: 12（US-16 5、US-06 5、US-07 2。W5 の締めで決めた）</p>
 <h3 id="w5w10release-10">W5〜W10（Release 1.0）<a class="headerlink" href="#w5w10release-10" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
@@ -15488,6 +15782,16 @@
 <td style="text-align: left;">2026-10-20</td>
 <td style="text-align: left;">W5 の締めを承認した（AI の推奨の 4 つ: 持ち越しの数、開発戦略の表、承認ゲートの密度、人の作業の残り）。返済の候補を <a href="https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/50">#50</a> に起票し、開発戦略の表に認証の入口と横断の部品だけを変える Bolt の行を足した。次は W6 の開始準備</td>
 <td style="text-align: left;">anthropic/claude-opus-5-5、承認 human:kakimomokuri</td>
+</tr>
+<tr>
+<td style="text-align: left;">2026-10-20</td>
+<td style="text-align: left;">W6 の開始準備で、W6 の節を作った（承認待ち）。human:kakimomokuri の決定: 担当範囲は担当企業だけ、初回の password は招待のリンク（24 時間）、US-07 AC4・AC5 は評価の操作と拒否まで、Golden dataset は仮のデータの v0 で #15 を閉じる。Bolt 36〜38g の 14 本の初案と確認ポイント 1〜15</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5、決定 human:kakimomokuri</td>
+</tr>
+<tr>
+<td style="text-align: left;">2026-10-20</td>
+<td style="text-align: left;">W6 の開始準備の詳細整合性検証と横断整合性検証の指摘を反映した（承認待ち）。範囲外の試行の記録は依存の循環を避けて共有カーネルのポートを identity が実装する案に、<code>confirmed_route_version_no</code> は部分一意インデックスで守る案にし、開発データの航海の取得時刻、招待のトークンの用途、担当範囲を絞る役割と割り当てのない業務担当者、再見積りと再設計要の印、Golden dataset v0 の区分、管理範囲の割り当てを W10 にする【前の決定の変更】、D-65 の残りの行き先、マニュアルの章、承認の後に直す文書を足した。確認ポイントを 20 にした</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5</td>
 </tr>
 </tbody>
 </table>
