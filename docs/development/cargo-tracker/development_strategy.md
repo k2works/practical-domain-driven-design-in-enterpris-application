@@ -4,7 +4,7 @@ title: "開発戦略 - cargo-tracker（A 社国際貨物輸送管理システム
 description: "リリース計画の W1〜W14 を序盤・中盤・終盤の局面に分け、各局面の TDD のアプローチ、週ごとのデモ項目を受入シナリオにする方針、Living Documentation の採用を定める開発戦略。"
 tags: [development,development-strategy]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-20T01:13:32Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-20T09:41:01Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T10:25:23Z }
   - { by: human:kakimomokuri, at: 2026-10-01T13:06:21Z }
@@ -118,6 +118,7 @@ A is {-}
 | 新しい集約・新しいスキーマを作る | インサイドアウト（データ → ドメイン → アプリケーション → 画面） |
 | 既存の集約に受入条件を足す | アウトサイドイン（受入シナリオ → 画面またはアプリケーション → ドメイン → データ） |
 | 技術タスク（基盤・CI・IaC） | テストの入口は検証の手段（アーキテクチャテスト、スモーク、IaC の検査）に置く |
+| 認証の入口と横断の部品だけを変える（ドメインもデータも変えない） | インサイドアウト（セキュリティの統合テストから。画面は画面の層の受入シナリオで外側から確かめる。Bolt 32・32c・32b・32e の実績。W5 の締めで足した） |
 
 この表から外れるアプローチを採るときは、Bolt 計画の「アプローチ」の欄に、外れる理由（たとえば、不確実性が集約の規則にあり、規則から入るほうが早く確かめられる）を必ず書く。開始準備の横断検証（軸 A）は、表と欄の理由を突き合わせる（2026-10-08、Bolt 21 終了報告の議題 6。Bolt 19・20 は既存の集約に足す Bolt をインサイドアウトにし、理由を書いていなかった）。
 
@@ -458,3 +459,4 @@ Bolt 計画は局所の計画、`docs/design/cargo-tracker/` は全体の正で�
 | 2026-10-05 | Bolt 9 のふりかえりを反映: 開発レビューを各 Bolt の終了報告の前に行う決まり（T-28）と、push の後に CI を確かめる決まり（T-26）を、局面を横断する規律に足した | anthropic/claude-opus-5-5（承認 human:kakimomokuri） |
 | 2026-10-05 | Bolt 10 のふりかえりを反映: デモ項目の動画を撮って終了報告からリンクする決まり（T-31）を、局面を横断する規律に足した | anthropic/claude-opus-5-5（承認 human:kakimomokuri） |
 | 2026-10-08 | Bolt 21 終了報告の議題 6 を反映: Bolt ごとのアプローチの表から外れるときは、計画のアプローチの欄に理由を書く決まりを足した | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
+| 2026-10-20 | W5 の締めを反映: Bolt ごとのアプローチの表に「認証の入口と横断の部品だけを変える（ドメインもデータも変えない）→ インサイドアウト（セキュリティの統合テストから）」の行を足した（Bolt 32・32c・32b・32e の実績。human:kakimomokuri が承認） | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
