@@ -6680,6 +6680,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../bolt_35d_report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 35d 終了報告
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../release_report-0_1/" class="md-nav__link">
         
   
@@ -12170,7 +12198,7 @@
 <tr>
 <td style="text-align: left;">W5</td>
 <td style="text-align: left;">中盤</td>
-<td style="text-align: left;">TOTP・ロック・session の失効の警告と延長・password の再設定・回復コードによる再登録。利用者と役割の管理。確定の不足条件と特殊貨物の拒否（特殊貨物は通常の画面の流れで届かないので、受入シナリオと WebMvc のテストで見せる。Bolt 35）、承認の後に失効した見積りの再見積り（D-85。Bolt 35b〜35d。社内の画面は 35c（画面の層のシナリオに <code>@demo</code> を付けない。:140 の例外）、荷主の画面とデモの動画は 35d（再承認から本予約までをつないで撮る）。Bolt 35c）</td>
+<td style="text-align: left;">TOTP・ロック・session の失効の警告と延長・password の再設定・回復コードによる再登録。利用者と役割の管理。確定の不足条件と特殊貨物の拒否（特殊貨物は通常の画面の流れで届かないので、受入シナリオと WebMvc のテストで見せる。Bolt 35）、承認の後に失効した見積りの再見積り（D-85。Bolt 35b〜35e。社内の画面は 35c（画面の層のシナリオに <code>@demo</code> を付けない。:140 の例外）、荷主の画面とデモの動画は 35d（再見積りから再承認・本予約までを 1 本の動画で撮る。<code>@demo-bolt-35d/requote-and-reapprove</code>）、開発データのサンプルは 35e。Bolt 35c・35d）</td>
 <td style="text-align: left;"><code>@US-18</code>、<code>@US-16</code>、<code>@US-04</code>、<code>@US-24</code></td>
 </tr>
 <tr>
@@ -12508,7 +12536,7 @@
 <tr>
 <td style="text-align: left;">W5</td>
 <td style="text-align: left;">US-18 の残り、US-16 の一部、US-04 の残り</td>
-<td style="text-align: left;">US-18・US-16 はインサイドアウト（利用者・役割・ロックのデータとドメインから。認証の流れはセキュリティの統合テストで外側から確かめる）。US-04 の残りは <strong>アウトサイドイン</strong>（中盤の例外。W4 の締めで W6 から前倒しした）。D-85（Bolt 35b・35b2・35c・35d）はアウトサイドイン（:119。既存の集約に受入条件を足す。35c は社内の画面から、35d は荷主の画面から。Bolt 35c）</td>
+<td style="text-align: left;">US-18・US-16 はインサイドアウト（利用者・役割・ロックのデータとドメインから。認証の流れはセキュリティの統合テストで外側から確かめる）。US-04 の残りは <strong>アウトサイドイン</strong>（中盤の例外。W4 の締めで W6 から前倒しした）。D-85（Bolt 35b・35b2・35c・35d・35e）はアウトサイドイン（:119。既存の集約に受入条件を足す。35c は社内の画面から、35d は荷主の画面から。35e は開発データのサンプルだけで、アプローチの表に当たらない。Bolt 35c・35d）</td>
 </tr>
 <tr>
 <td style="text-align: left;">W6</td>

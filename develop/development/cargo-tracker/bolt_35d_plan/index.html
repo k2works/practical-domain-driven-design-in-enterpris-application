@@ -6,7 +6,7 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="W5 の 32 本目の Bolt の計画。荷主の承認の後に失効し、社内が再見積りして提示した見積りを、荷主が見積依頼の詳細（C-04）と承認（C-17）で確かめてもう一度承認し、社内が本予約を確定するまでを画面でつなぐ。再承認の見積りかは見積りの集約の問い合わせ（経路の確定の時刻が提示の時刻より前か）で決め、列を足さない。荷主の画面の状態と案内は、予約待ち・荷主承認待ちの見積依頼では荷主に見える最新の見積りから選び、一覧（C-02）と詳細（C-04）で同じにする。社内の S-04 の案内も替える。再見積りから本予約までを W5 のデモの動画に撮り、マニュアル 4 章に節を足す。開発データのサンプルは Bolt 35e に分けた。">
+        <meta name="description" content="W5 の 32 本目の Bolt の計画。荷主の承認の後に失効し、社内が再見積りして提示した見積りを、荷主が見積依頼の詳細（C-04）と承認（C-17）で確かめてもう一度承認し、社内が本予約を確定するまでを画面でつなぐ。再承認の見積りかは見積りの集約の問い合わせ（荷主の回答の時刻が提示の時刻より前か。開発レビューで経路の確定の時刻から改めた）で決め、列を足さない。荷主の画面の状態と案内は、予約待ち・荷主承認待ちの見積依頼では荷主に見える最新の見積りから選び、一覧（C-02）と詳細（C-04）で同じにする。社内の S-04 の案内も替える。再見積りから本予約までを W5 のデモの動画に撮り、マニュアル 4 章に節を足す。開発データのサンプルは Bolt 35e に分けた。">
       
       
         <meta name="author" content="k2works">
@@ -16,7 +16,7 @@
         <link rel="prev" href="../bolt_35c_report/">
       
       
-        <link rel="next" href="../release_report-0_1/">
+        <link rel="next" href="../bolt_35d_report/">
       
       
         
@@ -6418,6 +6418,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../bolt_35d_report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 35d 終了報告
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../release_report-0_1/" class="md-nav__link">
         
   
@@ -11562,7 +11590,7 @@
 </tbody>
 </table>
 <h2 id="bolt">Bolt ゴール<a class="headerlink" href="#bolt" title="Permanent link">&para;</a></h2>
-<p>荷主が、再見積りされた見積り 2 を見積依頼の一覧（C-02）・詳細（C-04）・承認（C-17）で「承認いただいた経路版と経路方針のまま料金と有効期限を出し直した見積り」と分かる案内で確かめてもう一度承認し、営業担当者が見積り 2 で本予約を確定できる。輸送要求の状態が見積りに遅れる間（DE-24・DE-04 の受け取りの前）も、荷主の画面の状態と案内が見積りと食い違わない。社内の S-04 も再承認を待っている・再承認を受けたと示す。W5 のデモで再見積りから本予約までを見せられる。</p>
+<p>荷主が、再見積りされた見積り 2 を見積依頼の一覧（C-02）・詳細（C-04）・承認（C-17）で「承認いただいた経路のまま料金と有効期限を出し直した見積り」と分かる案内で確かめてもう一度承認し、営業担当者が見積り 2 で本予約を確定できる。輸送要求の状態が見積りに遅れる間（DE-24・DE-04 の受け取りの前）も、荷主の画面の状態と案内が見積りと食い違わない。社内の S-04 も再承認を待っている・再承認を受けたと示す。W5 のデモで再見積りから本予約までを見せられる。</p>
 <h3 id="_2">確かめたい仮説<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
@@ -11575,8 +11603,8 @@
 <tbody>
 <tr>
 <td style="text-align: left;">H1</td>
-<td style="text-align: left;">再承認の見積りは、列を足さずに 1 つの集約のデータで見分けられる。通常の流れは提示 → 回答（提示の後だけ）→ 経路の割当て（詳細設計依頼済みだけ）の順で、経路設計中は再見積りできないので、経路の確定の時刻は提示の時刻より後になる。経路の確定の時刻が提示の時刻より前なら、提示の時点で経路を持っていた（引き継いだ見積り）。DE-24 を出す条件（提示の時点で経路を持つ）と同じ事実を、時刻で代わりに見る</td>
-<td style="text-align: left;">集約の単体テストで、通常の流れの荷主承認待ち・承認済み・失効、引き継いだ荷主承認待ち・承認済み・失効、経路を持たない見積り、同時刻（偽）を分ける</td>
+<td style="text-align: left;">再承認の見積りは、列を足さずに 1 つの集約のデータで見分けられる。荷主の回答は提示の後にしかできないことを集約自身が守る（<code>responseRejectionAt</code>）ので、通常の流れでは回答の時刻は提示の時刻と同時刻か後になる。回答を引き継いだ再見積り（<code>requoteInto</code>）だけが提示の前の回答の時刻を持つ。荷主の回答の時刻が提示の時刻より前なら再承認の見積り（同時刻は偽）。開始準備では経路の確定の時刻 &lt; 提示の時刻で見分けたが、経路の確定の時刻は経路設計の時計で集約はその順を守らないため、開発レビューで回答の時刻に改めた（human:kakimomokuri の決定 (7)）</td>
+<td style="text-align: left;">集約の単体テストで、通常の流れ（提示の後に回答）、引き継いだ見積りの提示（承認しても変わらない）、経路を持たない見積り、引き継いだ回答と提示の同時刻（偽）を分ける。C-02 の読み取りモデルも同じ判定を回答の前・後・同時刻・回答なしで確かめる</td>
 </tr>
 <tr>
 <td style="text-align: left;">H2</td>
@@ -11731,8 +11759,8 @@
 <tbody>
 <tr>
 <td style="text-align: left;">再承認の見積りか</td>
-<td style="text-align: left;">1 つの見積りの提示の時刻と経路の確定の時刻</td>
-<td style="text-align: left;"><code>Quotation.isPresentedForReapproval()</code>（ドメイン。リポジトリも以前の見積りも読まない）</td>
+<td style="text-align: left;">1 つの見積りの提示の時刻と荷主の回答の時刻（Bolt 35d の開発レビューで改めた。human:kakimomokuri の決定 (7)）</td>
+<td style="text-align: left;"><code>Quotation.isPresentedForReapproval()</code> と static の <code>Quotation.isReapprovalPresentation(respondedAt, presentedAt)</code>（ドメイン。リポジトリも以前の見積りも読まない。C-02 の読み取りモデル <code>ShipperLatestQuotationSummary</code> と共有）</td>
 </tr>
 <tr>
 <td style="text-align: left;">失効か・荷主の承認の有無</td>
@@ -11753,17 +11781,17 @@
 </table>
 <h3 id="_6">設計の約束<a class="headerlink" href="#_6" title="Permanent link">&para;</a></h3>
 <ul>
-<li><strong>再承認の見積りか</strong>（決定 (1)、H1）: <code>Quotation.isPresentedForReapproval()</code>。提示済みで（<code>presentedAt</code> あり）、割り当てた経路を持ち、経路の確定の時刻が提示の時刻より前なら真。同時刻は偽（通常の流れ）。列もイベントも足さない。domain_model に「通常の流れでは経路の確定は提示の後」を不変条件として書き、<code>assignRoute</code> には検査を足さない（経路設計の側の時刻を拒まない）。単体テストで、通常の流れの順を確かめる。W6 の再設計（US-08）で再承認の見積りに別の経路版を割り当てるときは、この問い合わせを見直す（台帳の D-88 の行に注を足す）。テストの準備では、再承認の見積りの提示を <code>QuotationFixture.assignedRoute()</code> の確定の時刻（2026-10-07T05:00）より後に置く</li>
+<li><strong>再承認の見積りか</strong>（決定 (1)、H1）: <code>Quotation.isPresentedForReapproval()</code>。荷主の回答の時刻が提示の時刻より前なら真。同時刻は偽（通常の流れ）。判定は static の <code>Quotation.isReapprovalPresentation(respondedAt, presentedAt)</code> に置き、集約と C-02 の読み取りモデル（<code>ShipperLatestQuotationSummary</code>）で共有する。列もイベントも足さない。domain_model に「通常の流れでは回答は提示と同時刻か後（<code>responseRejectionAt</code> で集約が守る）」を不変条件として書く。開始準備では経路の確定の時刻 &lt; 提示の時刻としたが、経路の確定の時刻は経路設計の時計で集約はその順を守らないため、開発レビューで回答の時刻に改めた（<code>AssignedRoute.isConfirmedBeforePresentation</code> は消した。human:kakimomokuri の決定 (7)）。W6 の再設計（US-08）や荷主の辞退で回答の扱いが変わるときは、この問い合わせを見直す（台帳の D-88 の行に注を足す）</li>
 <li><strong>View</strong>: <code>QuotationViews.View</code> に「再承認の見積りか」を足す（荷主・社内で共用）</li>
 <li><strong>荷主の画面の状態と案内</strong>（決定 (5)、H2）: 輸送要求が予約待ち・荷主承認待ちのとき、荷主に見える最新の見積りから選ぶ（下の組み合わせの表）。それ以外の状態（予約確定済みを含む）は今のまま輸送要求から。表示名は今ある言葉だけを使う。C-02 と C-04 は同じ選び方を使う</li>
-<li><strong>C-02 の読み取りモデル</strong>: 自社の輸送要求ごとに荷主に見える最新の見積り（提示済みで見積り番号の最大）の状態・有効期限・荷主の承認の時刻・提示の時刻・経路の確定の時刻を返す読み取りモデルを足し、controller が業務番号で行に合わせる（<code>TransportRequestSummary</code> は社内の一覧と共用なので変えない）。<code>IN</code>・<code>MAX</code> だけで書き、H2 と PostgreSQL のどちらでも動かす。スキーマは変えない</li>
-<li><strong>C-04 の見積りの案内</strong>（決定 (1)・(2)。荷主の文にも経路方針を入れ、35c の言い方「承認済みの経路版と経路方針を引き継ぎ」に寄せる。画面の動詞は「もう一度承認」にそろえる）</li>
-<li>依頼の文（:60）は、詳細設計依頼済み・荷主承認待ち・承認済みで、再承認の見積りでなく、承認の後に失効していないときだけ出す</li>
-<li>再承認の見積りで荷主承認待ち・有効: 「この見積りは、承認いただいた経路版と経路方針のまま、料金と有効期限を出し直したものです。見積りと経路を確かめて、もう一度承認してください。」。承認の入口は今のまま</li>
-<li>荷主承認済みで失効（承認済みのまま時刻で失効、または再見積りで失効を記録）で、予約確定済みでない: 「承認の後に有効期限（…）を過ぎました。担当営業が、承認いただいた経路版と経路方針のまま新しい見積りを用意します。用意できたら、もう一度承認をお願いします。」の 1 文だけ（:55・:67 は出さない）</li>
+<li><strong>C-02 の読み取りモデル</strong>: 自社の輸送要求ごとに荷主に見える最新の見積り（提示済みで見積り番号の最大）の状態・有効期限・荷主の承認の時刻・提示の時刻・荷主の回答の時刻（Bolt 35d の開発レビューで改めた。human:kakimomokuri の決定 (7)）を返す読み取りモデルを足し、controller が業務番号で行に合わせる（<code>TransportRequestSummary</code> は社内の一覧と共用なので変えない）。<code>IN</code>・<code>MAX</code> だけで書き、H2 と PostgreSQL のどちらでも動かす。スキーマは変えない。SQL（<code>selectLatestVisibleForShipper</code>）は輸送要求の状態で絞らない（どの状態で見積りから選ぶかは画面の <code>TransportRequestLabels.customerStage</code> だけが決める。開発レビュー）</li>
+<li><strong>C-04 の見積りの案内</strong>（決定 (1)・(2)。画面の動詞は「もう一度承認」にそろえる。開始準備では荷主の文にも経路方針を入れ、35c の言い方「承認済みの経路版と経路方針を引き継ぎ」に寄せたが、開発レビューで荷主の文は「承認いただいた経路」にし、状態の下の案内は「すること」、見積りの節は「事実」に役割を分けた。社内の S-04 の文は今のまま。human:kakimomokuri の決定 (8)）</li>
+<li>依頼の文（:60）は、詳細設計依頼済み・荷主承認待ち・承認済みで、再承認の見積りでなく、承認の後に失効して予約確定済みでないとき以外に出す（予約確定済みの後は経緯として残す。組み合わせの表の行 10）</li>
+<li>再承認の見積りで荷主承認待ち・有効: 状態の下の案内は「料金と有効期限を出し直した見積りが届きました。もう一度承認してください。」、見積りの節は「承認いただいた経路のまま、料金と有効期限を出し直した見積りです。」。承認の入口は今のまま</li>
+<li>荷主承認済みで失効（承認済みのまま時刻で失効、または再見積りで失効を記録）で、予約確定済みでない: 見積りの節は「承認の後に有効期限（…）を過ぎました。用意できたら、もう一度承認をお願いします。」の 1 文だけ（:55・:67 は出さない）。状態の下の案内は「承認の後に見積りの有効期限を過ぎました。担当営業が新しい見積りを用意しています。」。この判定は controller の 1 か所（<code>expiredAfterApproval</code>）にまとめ、テンプレートはその値だけを見る（開発レビュー）</li>
 <li>予約確定済みで承認済み（期限を過ぎていても）: 承認の記録「…にこの見積りと経路を承認しました。」だけ（:67 を出さない。今の不具合を直す）</li>
 <li>以前の見積り（<code>&lt;details&gt;</code>）は今のまま</li>
-<li><strong>C-17</strong>: 再承認の見積りなら、「この見積りと経路で承認しますか」の前に「承認いただいた経路版と経路方針のまま、料金と有効期限を出し直した見積りです。」を足す。成功の文言は今のまま</li>
+<li><strong>C-17</strong>: 再承認の見積りなら、「この見積りと経路で承認しますか」の前に「承認いただいた経路のまま、料金と有効期限を出し直した見積りです。」を足す（決定 (8)）。成功の文言は今のまま</li>
 <li><strong>S-04</strong>（決定 (3)）: <code>routingRequestedNotice</code> で、再承認の見積りの荷主承認待ち・有効は「荷主の再承認を待っています（承認済みの経路版と経路方針を引き継いだ見積りです）。この見積りは読み取り専用です。」、再承認の見積りの承認済みは「荷主が {承認時刻}に再承認しました（承認済みの経路版と経路方針を引き継いだ見積りです）。この見積りは読み取り専用です。」。通常の見積りは今のまま</li>
 <li><strong>画面の層のシナリオ</strong>（決定 (4)）: <code>requote_after_approval_ui.feature</code> に 2 本目のシナリオを足し、<code>@demo @demo-bolt-35d/requote-and-reapprove</code>（<code>@D-85</code>）を付ける。機能の説明を直す。承認まで（今の背景）→ 見積り 1 の有効期限が承認の後に過ぎている → 荷主が C-04 で承認の後の失効の案内を確かめる → 予約の確定待ちから再見積り → 算出 → 承認待ちで開いて社内承認して提示 → 荷主が C-02・C-04 で再承認の案内を確かめて C-17 で見積り 2 を承認 → 営業担当者が予約の確定待ちから見積り 2 の本予約を確定。<code>ShipperApprovalUiSteps</code> の見積り番号を引数にする（今のステップの文は見積り 1 の形で残す）。axe を C-02・C-04・C-17 で通す</li>
 <li><strong>マニュアル</strong>: 4 章に「4.3 再見積りした見積りをもう一度承認する」（この画面でできること・画面の開き方・画面の説明・操作手順・注意・補足。C-04 の再承認の案内と C-17 のキャプチャ）。4.2 の注意・補足に「承認の後に有効期限を過ぎたとき」を足す。6.4 の操作手順 4 と 7.1 の注意・補足から 4.3 へリンク。マニュアルの索引の 4 章の内容と用語集に「再承認」を足す</li>
@@ -11811,7 +11839,7 @@
 <td style="text-align: left;">承認済み・時刻で失効（再見積りの前）</td>
 <td style="text-align: left;">見積り作成中（A 社の対応待ち）（新。見積りから）</td>
 <td style="text-align: left;">「承認の後に見積りの有効期限を過ぎました。担当営業が新しい見積りを用意しています。」（新）</td>
-<td style="text-align: left;">承認の後の失効の 1 文（新）</td>
+<td style="text-align: left;">「承認の後に有効期限（…）を過ぎました。用意できたら、もう一度承認をお願いします。」の 1 文（新）</td>
 </tr>
 <tr>
 <td style="text-align: left;">5</td>
@@ -11819,15 +11847,15 @@
 <td style="text-align: left;">失効を記録・荷主承認済み（再見積りの後、提示の前。見積り 2 は荷主に見えない）</td>
 <td style="text-align: left;">見積り作成中（A 社の対応待ち）（新）</td>
 <td style="text-align: left;">4 と同じ（新）</td>
-<td style="text-align: left;">承認の後の失効の 1 文（新）</td>
+<td style="text-align: left;">4 と同じ（新）</td>
 </tr>
 <tr>
 <td style="text-align: left;">6</td>
 <td style="text-align: left;">予約待ち（DE-24 の前）</td>
 <td style="text-align: left;">再承認の荷主承認待ち・有効</td>
 <td style="text-align: left;">見積りと経路の承認待ち（お客様の対応待ち）（新。見積りから）</td>
-<td style="text-align: left;">「担当営業が、承認いただいた経路版と経路方針のまま、料金と有効期限を出し直しました。見積りと経路を確かめて、もう一度承認してください。」（新）</td>
-<td style="text-align: left;">再承認の文（新）、承認の入口</td>
+<td style="text-align: left;">「料金と有効期限を出し直した見積りが届きました。もう一度承認してください。」（新）</td>
+<td style="text-align: left;">「承認いただいた経路のまま、料金と有効期限を出し直した見積りです。」（新）、承認の入口</td>
 </tr>
 <tr>
 <td style="text-align: left;">7</td>
@@ -11835,7 +11863,7 @@
 <td style="text-align: left;">再承認の荷主承認待ち・有効</td>
 <td style="text-align: left;">見積りと経路の承認待ち（お客様の対応待ち）</td>
 <td style="text-align: left;">6 と同じ（新）</td>
-<td style="text-align: left;">再承認の文（新）、承認の入口</td>
+<td style="text-align: left;">6 と同じ（新）</td>
 </tr>
 <tr>
 <td style="text-align: left;">8</td>
@@ -11878,7 +11906,7 @@
 </tr>
 <tr>
 <td style="text-align: left;">3</td>
-<td style="text-align: left;">集約の単体: 再承認の見積りか（通常の流れの荷主承認待ち・承認済み・失効、引き継いだ荷主承認待ち・承認済み・失効、経路を持たない提示済み・承認待ち、同時刻）。通常の流れで経路の確定が提示の後になること</td>
+<td style="text-align: left;">集約の単体: 再承認の見積りか（荷主の回答の時刻で場合分け。通常の流れは提示の後に回答するので偽、引き継いだ見積りは提示すると真で承認しても変わらない、経路を持たない見積りは偽、引き継いだ回答と提示が同時刻なら偽）。読み取りモデルの単体: 回答の前・後・同時刻・回答なし。選び方のデシジョンテーブル（<code>TransportRequestLabelsCustomerStageTest</code>）。開発レビューで回答の時刻に改めた</td>
 </tr>
 <tr>
 <td style="text-align: left;">4</td>
@@ -11895,7 +11923,7 @@
 <ul class="task-list">
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>1. 設計文書</strong>（完了の判定: <code>okf:check</code> ERROR 0、<code>documentationTest</code> が緑）</li>
 <li>ui_design: C-02 の行 :158、C-04 の行 :159（再承認の案内、承認の後の失効の 1 文、予約確定済みの後、依頼の文の条件、状態と案内を最新の見積りから選ぶ）、C-17 の行 :160 と画面イメージ :965-990（再承認の 1 文）、S-04 の行 :172 と振る舞いの表 :1020-1023、荷主の画面遷移図 :322-381、輸送要求の状態と荷主の画面の表示の対応表 :1618-1629</li>
-<li>domain_model: 見積りのクラス図に問い合わせ、用語の表に「再承認の見積り」（判定のもとは提示の時刻と経路の確定の時刻）、通常の流れの時刻の順の不変条件、:423 の古い「照会のサービスの判定」を <code>RequotePolicy</code> に、:564 付近の再見積りの注に荷主の画面の扱い</li>
+<li>domain_model: 見積りのクラス図に問い合わせ、用語の表に「再承認の見積り」（判定のもとは提示の時刻と経路の確定の時刻。開発レビューで荷主の回答の時刻に改めた）、通常の流れの時刻の順の不変条件、:423 の古い「照会のサービスの判定」を <code>RequotePolicy</code> に、:564 付近の再見積りの注に荷主の画面の扱い</li>
 <li>test_strategy: :230 のユニットの列と画面の層の列、E2E の表（:356-368）に「再見積りから再承認・本予約まで（<code>@demo-bolt-35d/requote-and-reapprove</code>）」</li>
 <li>user_story: US-24 の決定に 35d の決定 (1)〜(6)</li>
 <li>release_plan: 35d の行 :611（決定。開発データを 35e に）と 35e の行（新規）、:553 の状態、:557、D-85 の行 :563 の注、:636 のデモ項目、:657 のタスク（35d・35e）、:730 の台帳の D-85 の今の扱い、D-88 の行に再承認の見積りの問い合わせの見直しの注、:797 の W5 の進捗（33 本）</li>
@@ -12006,7 +12034,7 @@
 <td style="text-align: left;">7</td>
 <td style="text-align: left;"><strong>再承認の見積りの見分け方</strong></td>
 <td style="text-align: left;">ステップ 3</td>
-<td style="text-align: left;">推奨: <code>Quotation.isPresentedForReapproval()</code>（経路の確定の時刻 &lt; 提示の時刻。同時刻は偽）。35b の決定の辿り方（複数の見積りの案件番号・経路版）から変えた理由は、1 つの集約で決まり画面のモデルに判定が散らないため（T-160）。W6 の再設計で見直す</td>
+<td style="text-align: left;">推奨: <code>Quotation.isPresentedForReapproval()</code>（経路の確定の時刻 &lt; 提示の時刻。同時刻は偽）。35b の決定の辿り方（複数の見積りの案件番号・経路版）から変えた理由は、1 つの集約で決まり画面のモデルに判定が散らないため（T-160）。W6 の再設計で見直す。開発レビューで回答の時刻に改めた（荷主の回答の時刻 &lt; 提示の時刻。経路の確定の時刻は経路設計の時計で集約がその順を守らないため。2026-10-20、human:kakimomokuri の決定 (7)）</td>
 </tr>
 <tr>
 <td style="text-align: left;">8</td>
@@ -12018,7 +12046,7 @@
 <td style="text-align: left;">9</td>
 <td style="text-align: left;"><strong>C-02・C-04・C-17・S-04 の文言</strong></td>
 <td style="text-align: left;">ステップ 4</td>
-<td style="text-align: left;">推奨: 設計の約束と組み合わせの表の初案（経路版と経路方針、「もう一度承認」）</td>
+<td style="text-align: left;">推奨: 設計の約束と組み合わせの表の初案（経路版と経路方針、「もう一度承認」）。開発レビューで荷主の文を「承認いただいた経路」にし、C-04 の状態の下の案内（すること）と見積りの節（事実）の役割を分けた（2026-10-20、human:kakimomokuri の決定 (8)）</td>
 </tr>
 <tr>
 <td style="text-align: left;">10</td>
@@ -12059,6 +12087,11 @@
 </tr>
 </thead>
 <tbody>
+<tr>
+<td style="text-align: left;">2026-10-20</td>
+<td style="text-align: left;">開発レビューの決定を反映した。(7) 再承認の見積りの見分け方を「経路の確定の時刻 &lt; 提示の時刻」から「荷主の回答の時刻 &lt; 提示の時刻」に替えた（判定は <code>Quotation.isPresentedForReapproval()</code> と static の <code>Quotation.isReapprovalPresentation</code> で、C-02 の読み取りモデル <code>ShipperLatestQuotationSummary</code> と共有。読み取りモデルは回答の時刻を持つ。<code>AssignedRoute.isConfirmedBeforePresentation</code> は消した。C-02 の SQL は輸送要求の状態で絞らない）。(8) C-04 の状態の下の案内は「すること」、見積りの節は「事実」に役割を分け、荷主の文の「承認いただいた経路版と経路方針」を「承認いただいた経路」にした（C-17 も）。ほかに、承認の後に失効し予約確定済みでないかの判定を controller の 1 か所（<code>expiredAfterApproval</code>）にまとめ、<code>customerStage</code> の分岐は既定の枝をやめて全部の状態を書き、選び方のデシジョンテーブルの単体テスト（<code>TransportRequestLabelsCustomerStageTest</code>）と、C-02 の統合テストに荷主承認待ちと見積りを提示していない見積依頼を足した。画面の層の「承認したと示される」のステップは開き直さない（状態は見積りから選ぶので DE-04 を待たない）。設計の約束・組み合わせの表・H1・確認ポイント 7・9・テストの一覧を直した</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5、決定 human:kakimomokuri</td>
+</tr>
 <tr>
 <td style="text-align: left;">2026-10-20</td>
 <td style="text-align: left;">計画を承認した（確認ポイント 2・5・7〜12 を推奨のとおり）</td>

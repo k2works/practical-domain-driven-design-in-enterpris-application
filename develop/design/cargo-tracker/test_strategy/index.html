@@ -6524,6 +6524,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../development/cargo-tracker/bolt_35d_report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 35d 終了報告
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../development/cargo-tracker/release_report-0_1/" class="md-nav__link">
         
   
@@ -11993,10 +12021,10 @@ src/test/java/.../ui/                     画面の層のステップ定義（@u
 </tr>
 <tr>
 <td style="text-align: left;">Q-INV-05〜07（見積りの条件と提示時刻、有効期限、失効・置換）</td>
-<td style="text-align: left;">○（境界値。再見積りの提示の DE-24 と輸送要求の戻し、届く順の入れ替わりを輸送要求と見積りの読み込みの後に差し込むテスト。Bolt 35b2）</td>
+<td style="text-align: left;">○（境界値。再見積りの提示の DE-24 と輸送要求の戻し、届く順の入れ替わりを輸送要求と見積りの読み込みの後に差し込むテスト。Bolt 35b2。再承認の見積りか（荷主の回答の時刻で場合分け: 通常の流れは提示の後に回答するので偽、回答を引き継いだ見積りは提示すると真で承認しても変わらない、経路を持たない見積りは偽、引き継いだ回答と提示が同時刻なら偽。C-02 の読み取りモデルも同じ判定を回答の前・後・同時刻・回答なしで確かめる）と、荷主の画面の状態と案内の選び方のデシジョンテーブル（<code>TransportRequestLabelsCustomerStageTest</code>。輸送要求 × 最新の見積り、ほかの状態、見える見積りなし）。D-85。Bolt 35d の開発レビューで経路の確定の時刻から回答の時刻に改めた）</td>
 <td style="text-align: left;">○（再見積りの提示で輸送要求が荷主承認待ち、再承認で予約待ち、戻しの後の旧版の DE-04 で荷主承認待ちのまま。Bolt 35b2）</td>
 <td style="text-align: left;">○（引き継いだ見積りの保存と旧版の失効。PostgreSQL。Bolt 35b）</td>
-<td style="text-align: left;">承認の後に失効した見積りの再見積り（S-02 の予約の確定待ちの表から再見積りのフォーム、読み取り専用の経路方針と経路版、算出、提示まで。<code>requote_after_approval_ui.feature</code>、<code>@ui</code>。D-85。Bolt 35c）</td>
+<td style="text-align: left;">承認の後に失効した見積りの再見積り（S-02 の予約の確定待ちの表から再見積りのフォーム、読み取り専用の経路方針と経路版、算出、提示まで。<code>requote_after_approval_ui.feature</code>、<code>@ui</code>。D-85。Bolt 35c）。再見積りから荷主の再承認と本予約まで（承認の後の失効の案内、再見積りと提示、C-02・C-04 の再承認の案内、C-17 で見積り 2 を承認、S-02 から見積り 2 の本予約の確定。同じ feature の 2 本目、<code>@demo @demo-bolt-35d/requote-and-reapprove</code>。axe を C-02・C-04・C-17 で通す。荷主の画面の状態と案内の組み合わせ（輸送要求 × 最新の見積り。UI 設計の組み合わせの表の行 1〜10。非同期の間の行を含む）は C-02・C-04 の WebMvc のテスト、C-02 の最新の見積りの読み取りモデルは PostgreSQL の統合テスト（荷主承認待ちと、見積りを提示していない見積依頼を含む）で確かめる。D-85。Bolt 35d）</td>
 </tr>
 <tr>
 <td style="text-align: left;">Q-INV-08（自社の輸送要求だけ）</td>
@@ -12563,6 +12591,11 @@ src/test/java/.../ui/                     画面の層のステップ定義（@u
 <td style="text-align: left;">見積依頼から本予約まで</td>
 <td style="text-align: left;">荷主の提出 → 審査 → 見積りと経路方針の提示 → 荷主が詳細経路設計へ進む → 経路確定 → 荷主の承認 → 本予約確定 → 追跡開始の表示。各段階のメール通知（受けるだけのコンテナで確認）。Release 0.1 の主成功の流れ（<code>main_flow_ui.feature</code>、<code>@main-flow</code>。Bolt 28）は、メール通知（US-22、Release 1.0）を含まず、追跡管理者の実績の登録・荷主の予約一覧と追跡の照会・KPI 計測記録の KPI-01 の 2 時刻まで進む</td>
 <td style="text-align: left;">US-01〜04、US-06〜07、US-22、US-24。Release 0.1 の主成功の流れは US-09・US-12・US-21 も通る</td>
+</tr>
+<tr>
+<td style="text-align: left;">再見積りから再承認・本予約まで</td>
+<td style="text-align: left;">荷主の承認の後に見積りの有効期限を過ぎる → 荷主が C-04 で承認の後の失効の案内を確かめる → 営業担当者が S-02 の予約の確定待ちから再見積りし、算出して社内承認して提示する → 荷主が C-02・C-04 で再承認の案内を確かめ、C-17 で見積り 2 をもう一度承認する → 営業担当者が S-02 の予約の確定待ちから見積り 2 の本予約を確定する（<code>requote_after_approval_ui.feature</code>、<code>@demo-bolt-35d/requote-and-reapprove</code>。D-85。Bolt 35d）</td>
+<td style="text-align: left;">US-24、US-04</td>
 </tr>
 <tr>
 <td style="text-align: left;">見積りの辞退・相談</td>

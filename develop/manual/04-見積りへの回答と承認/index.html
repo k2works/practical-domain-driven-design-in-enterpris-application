@@ -6131,6 +6131,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../development/cargo-tracker/bolt_35d_report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 35d 終了報告
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../development/cargo-tracker/release_report-0_1/" class="md-nav__link">
         
   
@@ -6607,6 +6635,78 @@
         
           <li class="md-nav__item">
   <a href="#_10" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        注意・補足
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#43" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.3 再見積りした見積りをもう一度承認する
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4.3 再見積りした見積りをもう一度承認する">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_11" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        この画面でできること
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_12" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        画面の開き方
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_13" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        画面の説明
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_14" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        操作手順
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_15" class="md-nav__link">
     <span class="md-ellipsis">
       
         注意・補足
@@ -11451,6 +11551,11 @@
 <td style="text-align: left;">確定した経路を確かめ、見積りと経路を承認する</td>
 <td style="text-align: left;"><a href="#42-見積りと経路の承認">4.2</a></td>
 </tr>
+<tr>
+<td style="text-align: left;">再見積りした見積りをもう一度承認する</td>
+<td style="text-align: left;">承認の後に有効期限を過ぎた見積りを担当営業が出し直したら、もう一度承認する</td>
+<td style="text-align: left;"><a href="#43-再見積りした見積りをもう一度承認する">4.3</a></td>
+</tr>
 </tbody>
 </table>
 <p>回答の後の経路の設計は経路設計者が、承認の後の本予約の確定は担当営業が行います。</p>
@@ -11585,6 +11690,62 @@
 <li>条件を見直したい場合は、承認せずに業務番号を添えて担当営業にご連絡ください</li>
 <li>経路は経路設計者が確定してから届きます。承認の準備ができたら担当営業からご連絡しますので、連絡を待ってから見積依頼の詳細を開いてください</li>
 <li>有効期限を過ぎた見積りは承認できません。画面に「有効期限（…）を過ぎたため承認できません。新しい見積りは担当営業にご依頼ください。」と示されます。新しい見積りは担当営業にご依頼ください</li>
+<li>承認した後、本予約の確定の前に有効期限を過ぎたときは、見積依頼の詳細の状態の下に「承認の後に見積りの有効期限を過ぎました。担当営業が新しい見積りを用意しています。」、見積りの節に「承認の後に有効期限（…）を過ぎました。用意できたら、もう一度承認をお願いします。」と示されます。この間、見積依頼の一覧と詳細の状態は「見積り作成中（A 社の対応待ち）」になります。承認が取り消されたのではありません。新しい見積りの依頼は要りません。用意できたら、もう一度承認してください（<a href="#43-再見積りした見積りをもう一度承認する">4.3</a>）</li>
+</ul>
+<h2 id="43">4.3 再見積りした見積りをもう一度承認する<a class="headerlink" href="#43" title="Permanent link">&para;</a></h2>
+<h3 id="_11">この画面でできること<a class="headerlink" href="#_11" title="Permanent link">&para;</a></h3>
+<ul>
+<li>承認の後に有効期限を過ぎた見積りを、担当営業が出し直した新しい見積りを確かめて、もう一度承認します。経路は承認いただいたもののままで、料金と有効期限だけが出し直されています</li>
+</ul>
+<h3 id="_12">画面の開き方<a class="headerlink" href="#_12" title="Permanent link">&para;</a></h3>
+<ul>
+<li>見積依頼の詳細の「見積りと経路を確かめて承認へ」（URL: <code>/customer/transport-requests/{業務番号}/quotations/{見積り番号}/approval</code>）</li>
+</ul>
+<p>担当営業が新しい見積りを用意すると、見積依頼の一覧と詳細の状態が「見積りと経路の承認待ち（お客様の対応待ち）」になり、詳細に新しい見積りが示されます。状態の下に「料金と有効期限を出し直した見積りが届きました。もう一度承認してください。」、見積りの節に「承認いただいた経路のまま、料金と有効期限を出し直した見積りです。」と示されます。前の見積りは「以前の見積り（読み取り専用）」に「失効」で残ります。</p>
+<p><img alt="見積依頼の詳細（再見積りした見積り）" src="../assets/04-reapproval-request-detail.png" /></p>
+<h3 id="_13">画面の説明<a class="headerlink" href="#_13" title="Permanent link">&para;</a></h3>
+<p><img alt="再見積りした見積りの承認" src="../assets/04-reapproval.png" /></p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">#</th>
+<th style="text-align: left;">項目</th>
+<th style="text-align: left;">説明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">①</td>
+<td style="text-align: left;">見積り</td>
+<td style="text-align: left;">新しい見積りの料金根拠・合計・有効期限・経路方針</td>
+</tr>
+<tr>
+<td style="text-align: left;">②</td>
+<td style="text-align: left;">確定した経路</td>
+<td style="text-align: left;">経路の番号と版、確定の日時、到着予定、区間ごとの航海・積地 → 揚地・出発予定・到着予定。承認いただいた経路から変わっていません</td>
+</tr>
+<tr>
+<td style="text-align: left;">③</td>
+<td style="text-align: left;">案内</td>
+<td style="text-align: left;">「承認いただいた経路のまま、料金と有効期限を出し直した見積りです。」</td>
+</tr>
+<tr>
+<td style="text-align: left;">④</td>
+<td style="text-align: left;">「この見積りと経路で承認する」</td>
+<td style="text-align: left;">もう一度承認します。新しい有効期限までに承認してください</td>
+</tr>
+</tbody>
+</table>
+<h3 id="_14">操作手順<a class="headerlink" href="#_14" title="Permanent link">&para;</a></h3>
+<ol>
+<li>見積依頼の詳細で、新しい見積りの料金と有効期限を確かめ、「見積りと経路を確かめて承認へ」をクリックします</li>
+<li>見積りと経路を確かめ、「この見積りと経路で承認する」をクリックします</li>
+<li>見積依頼の詳細に戻り、状態が「予約待ち（A 社の対応待ち）」になります。担当営業が新しい見積りで本予約を確定します</li>
+</ol>
+<h3 id="_15">注意・補足<a class="headerlink" href="#_15" title="Permanent link">&para;</a></h3>
+<ul>
+<li>条件や経路を見直したい場合は、承認せずに業務番号を添えて担当営業にご連絡ください</li>
+<li>新しい見積りも、有効期限を過ぎると承認できません。画面に「有効期限（…）を過ぎたため承認できません。新しい見積りは担当営業にご依頼ください。」と示されます</li>
 </ul>
 
 
