@@ -12264,7 +12264,7 @@
 <tr>
 <td style="text-align: left;">W6</td>
 <td style="text-align: left;">中盤</td>
-<td style="text-align: left;">Golden dataset による経路の判定、再設計要・旧版の拒否。管理者経路による TOTP の登録の解除</td>
+<td style="text-align: left;">Golden dataset v0（仮の値）による経路の判定と情報不足、確定の時の情報版の照合、再設計要・旧版の拒否。利用者の登録と招待、ロックと管理者経路による TOTP の登録の解除と本人への通知、担当企業の外の拒否。動画は画面の振る舞いが変わる Bolt（37b・37c・38b・38c・38e）で撮る（W6 の開始準備）</td>
 <td style="text-align: left;"><code>@golden</code>、<code>@US-06</code>、<code>@US-07</code>、<code>@US-16</code>、<code>@US-18-AC9</code></td>
 </tr>
 <tr>
@@ -12600,8 +12600,8 @@
 </tr>
 <tr>
 <td style="text-align: left;">W6</td>
-<td style="text-align: left;">US-06・US-07 の残り、US-16 の残り</td>
-<td style="text-align: left;">US-06・US-07 は <strong>アウトサイドイン</strong>（序盤の集約を広げるため。中盤の例外）。US-16 の残りはインサイドアウト</td>
+<td style="text-align: left;">US-06・US-07 の残り、US-16 の残り、US-18 AC9 の管理者経路</td>
+<td style="text-align: left;">US-06・US-07 は <strong>アウトサイドイン</strong>（序盤の集約を広げるため。中盤の例外）。US-16 の残りと US-18 AC9 は Bolt の対象で決める: 新しい振る舞いとスキーマ（利用者の生成と招待、通知の種類）と横断の部品（担当範囲の受け渡しと範囲外の試行の記録）はインサイドアウト、既存の集約と照会に操作や判定を足す Bolt（S-20 の直し、資格の解除、担当範囲の判定）はアウトサイドイン（W6 の開始準備）</td>
 </tr>
 <tr>
 <td style="text-align: left;">W7</td>
@@ -12806,6 +12806,11 @@
 <tr>
 <td style="text-align: left;">2026-10-20</td>
 <td style="text-align: left;">W5 の締めを反映: Bolt ごとのアプローチの表に「認証の入口と横断の部品だけを変える（ドメインもデータも変えない）→ インサイドアウト（セキュリティの統合テストから）」の行を足した（Bolt 32・32c・32b・32e の実績。human:kakimomokuri が承認）</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5、承認 human:kakimomokuri</td>
+</tr>
+<tr>
+<td style="text-align: left;">2026-10-20</td>
+<td style="text-align: left;">W6 の開始準備を反映: W6 のデモ項目と W6 の行（US-16 の残りと US-18 AC9 のアプローチを Bolt の対象で決める）を直した</td>
 <td style="text-align: left;">anthropic/claude-opus-5-5、承認 human:kakimomokuri</td>
 </tr>
 </tbody>

@@ -12218,7 +12218,7 @@
 <tbody>
 <tr>
 <td style="text-align: left;">U2 の検証の不確実性・未解決の仮定</td>
-<td style="text-align: left;">Golden dataset（TST-02）と必要最小接続時間の値（DM-05）を業務責任者に依頼する。届くまでは仮の案件で進め、W6 の前に差し替える</td>
+<td style="text-align: left;">Golden dataset（TST-02）と必要最小接続時間の値（DM-05）を業務責任者に依頼する。届くまでは仮の案件で進める。W6 の Golden dataset は仮の値の v0 で作り、届いたら差し替えの Bolt を足す（W6 の開始準備の決定。パイロット開始の条件として残す）</td>
 </tr>
 <tr>
 <td style="text-align: left;">U5 の未解決の仮定</td>
@@ -12817,7 +12817,7 @@
     Release 0.1                       :milestone, m1, 2026-10-30, 0d
     section Release 1.0 パイロット準備完了
     W5 認証の完成・利用者管理        :it5, 2026-11-02, 5d
-    W6 経路設計・予約の完成          :it6, 2026-11-09, 5d
+    W6 経路設計・利用者管理の完成      :it6, 2026-11-09, 5d
     W7 外部原本の取込                :it7, 2026-11-16, 5d
     W8 有人対応・問い合わせ          :it8, 2026-11-23, 5d
     W9 通知・KPI の完成・残り        :it9, 2026-11-30, 5d
@@ -12941,13 +12941,13 @@
 <td style="text-align: left;">Golden dataset の案件と期待結果の承認</td>
 <td style="text-align: left;">TST-02、要件定義 H-9</td>
 <td style="text-align: left;">業務責任者（経路設計者・コンプライアンス担当者）</td>
-<td style="text-align: left;">2026-11-06（W6 の前）</td>
+<td style="text-align: left;">パイロット開始の前（W6 は仮の値の v0 で進め、届いたら差し替える。W6 の開始準備で直した）</td>
 </tr>
 <tr>
 <td style="text-align: left;">追跡状態の状態名、必要最小接続時間の値</td>
 <td style="text-align: left;">DM-05</td>
 <td style="text-align: left;">業務責任者</td>
-<td style="text-align: left;">2026-11-06（W6 の前）</td>
+<td style="text-align: left;">パイロット開始の前（W6 は仮の値で進め、届いたら差し替える。W6 の開始準備で直した）</td>
 </tr>
 <tr>
 <td style="text-align: left;">取込ファイルの提供元・形式・頻度</td>
@@ -13746,7 +13746,7 @@
 </tbody>
 </table>
 <h3 id="w62026-11-09-11-13">W6（2026-11-09 〜 11-13）<a class="headerlink" href="#w62026-11-09-11-13" title="Permanent link">&para;</a></h3>
-<p><strong>状態</strong>: 計画済み（2026-10-20 に計画を作った。詳細整合性検証と横断整合性検証の指摘を反映した。承認待ち）</p>
+<p><strong>状態</strong>: 計画済み（2026-10-20 に計画を作り、詳細整合性検証と横断整合性検証の指摘を反映し、同日に human:kakimomokuri が承認した（確認ポイント 1〜20 を推奨のとおり）。次は Bolt 36 の開始準備）</p>
 <p><strong>ゴール</strong>: 経路設計を完成させ（US-06 の残り・US-07 の残り）、利用者の管理を完成させる（US-16 の残り・US-18 AC9 の管理者経路）。W5 の締めで決めた CI の画面の層のシナリオの揺らぎの原因を最初に調べる。</p>
 <p><strong>局面とアプローチ</strong>: 中盤（<a href="../development_strategy/">開発戦略</a>）。経路設計の残り（Bolt 37〜37f）は中盤の例外（開発戦略 :107。序盤で作った経路設計案件を広げる）でアウトサイドイン（受入シナリオから）。利用者の管理のうち、既存の集約と S-20 に操作を足す Bolt 38・38c と、既存のコンテキストの照会と操作に担当範囲の判定を足す Bolt 38f・38g はアウトサイドイン（既存の集約に受入条件を足す）。新しい振る舞いとスキーマを作る Bolt 38b（利用者の生成と招待のトークン）・38d（通知の種類と公開 API）はインサイドアウト。Bolt 38e は表は Bolt 34b で作ってあるが、担当範囲を request ごとの確かめに載せる横断の部品と、範囲外の試行の記録のポート（新しい構造と ADR）を作るので、表から外れてインサイドアウトにする（不確実性が依存の向きと横断の部品にあり、内側から固める）。Bolt 36 は技術タスク（再現から入る）。</p>
 <p><strong>設計の決定</strong>（2026-10-20 に human:kakimomokuri が決定。W6 の開始準備の質問への回答）:</p>
@@ -13781,7 +13781,7 @@
 </tr>
 </tbody>
 </table>
-<p><strong>確認ポイント</strong>（AI の推奨。計画の承認の場でまとめて決める。Try T-6。【前の決定の変更】の印は、前に人が決めたことを変える推奨）:</p>
+<p><strong>確認ポイント</strong>（AI の推奨を、2026-10-20 の計画の承認で推奨のとおり決めた（human:kakimomokuri）。Try T-6。【前の決定の変更】の印は、前に人が決めたことを変えたもの）:</p>
 <table>
 <thead>
 <tr>
@@ -14021,7 +14021,7 @@
 <p><strong>ユーザーマニュアル</strong>: 8 章（経路設計。37b・37c・38g）、4 章・7 章（再設計要と出発済みの拒否。37e）、11 章（利用者の管理。38〜38e）、2 章（ログイン。38b の招待、38c の解除の後の再登録、38d の回復コードの案内）、6 章・7 章・9 章（担当範囲の外。38f・38g）。振る舞いの変わる Bolt はマニュアルの更新とキャプチャを完了条件に入れる</p>
 <p><strong>主なタスク</strong>:</p>
 <ul class="task-list">
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> W6 の開始準備（本節）: 計画の承認、詳細整合性検証・横断整合性検証（指摘を反映）、承認の後に直す文書、GitHub の同期、Bolt 36 計画</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> W6 の開始準備（本節。2026-10-20）: 計画の承認、詳細整合性検証・横断整合性検証（指摘を反映）、承認の後に直す文書、GitHub の同期</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> Bolt 36〜37f: CI の揺らぎ、US-06 の残り（#15）、US-07 の残り（#16）</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> Bolt 38〜38g: US-16 の残り（#14）、US-18 AC9 の管理者経路（#47）</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> 画面の確認: 新しい画面と変えた画面（S-06・S-07・S-20・A-06）の axe と、支援技術による手動確認（人。#14・#15 の完了の定義、#50 の人の作業）</li>
@@ -14050,8 +14050,8 @@
 <tr>
 <td style="text-align: left;">W6</td>
 <td style="text-align: left;">11-09 〜 11-13</td>
-<td style="text-align: left;">経路設計の完成</td>
-<td style="text-align: left;">US-16 残り（#14。W5 の Bolt 34 で作った一部の SP 2 もここで数える。担当案件（AC1 の担当案件・AC4）、利用者の登録と初回の password の渡し方、ロックの解除。Bolt 34 の開始準備で W6 に送った。管理範囲の割り当ての画面か運用タスク（本番の配備の前に要る。Bolt 34b）、US-18 AC9 の管理者経路（#47、SP 0）、US-06 残り（5）、US-07 残り（2）</td>
+<td style="text-align: left;">経路設計の完成、利用者の管理の完成</td>
+<td style="text-align: left;">US-16 残り（#14。W5 の Bolt 34 で作った一部の SP 2 もここで数える。担当案件（AC1 の担当案件・AC4）、利用者の登録と初回の password の渡し方、ロックの解除。Bolt 34 の開始準備で W6 に送った。（管理範囲の割り当ては W6 の開始準備で W10 の運用タスクにした）、US-18 AC9 の管理者経路（#47、SP 0）、US-06 残り（5）、US-07 残り（2）</td>
 <td style="text-align: right;">12（W5 の締めで 10 から直した）</td>
 </tr>
 <tr>
@@ -14079,7 +14079,7 @@
 <td style="text-align: left;">W10</td>
 <td style="text-align: left;">12-07 〜 12-11</td>
 <td style="text-align: left;">運用準備</td>
-<td style="text-align: left;">AWS 環境（Terraform）、CI/CD、監視、運用タスクとランブック、必要書類の S3 の保存とウイルスの検査（Bolt 7）、性能テスト（負荷テストのツールの選定 TS-05、R-36）、時点復旧の訓練、Spring Boot 4.2 への追従（公開済みなら）</td>
+<td style="text-align: left;">AWS 環境（Terraform）、CI/CD、監視、運用タスクとランブック（管理範囲の割り当てと最初のシステム管理者を作る運用タスク。W6 の開始準備で W6 から移した。本番の配備の前に要る。Bolt 34b）、必要書類の S3 の保存とウイルスの検査（Bolt 7）、性能テスト（負荷テストのツールの選定 TS-05、R-36）、時点復旧の訓練、Spring Boot 4.2 への追従（公開済みなら）</td>
 <td style="text-align: right;">0（技術タスク）</td>
 </tr>
 </tbody>
@@ -14152,12 +14152,12 @@
 <tr>
 <td style="text-align: left;">DM-05</td>
 <td style="text-align: left;">追跡状態の状態名、必要最小接続時間の値</td>
-<td style="text-align: left;">パイロット開始の条件（W6 の前）</td>
+<td style="text-align: left;">パイロット開始の条件（W6 は仮の値で進める）</td>
 </tr>
 <tr>
 <td style="text-align: left;">TST-02</td>
 <td style="text-align: left;">Golden dataset の案件と期待結果</td>
-<td style="text-align: left;">パイロット開始の条件（W6 の前）</td>
+<td style="text-align: left;">パイロット開始の条件（W6 は仮の値の v0 で進める）</td>
 </tr>
 <tr>
 <td style="text-align: left;">TST-03</td>
@@ -14370,11 +14370,29 @@
 <tr>
 <td style="text-align: left;">D-88</td>
 <td style="text-align: left;">引き継ぐ経路の区間がもう出発しているとき（最初の区間の出発が再見積りの時刻より前）、再見積りでその経路版を引き継いで再承認と本予約へ進めてよいか</td>
-<td style="text-align: left;">引き継ぐ（区間の出発を見ない）。注: 再承認の見積りの問い合わせ（isPresentedForReapproval。荷主の回答の時刻 &lt; 提示の時刻。Bolt 35d の開発レビューで経路の確定の時刻から改めた）は、W6 の再設計や荷主の辞退で回答の扱いが変わるときに見直す（Bolt 35d）</td>
+<td style="text-align: left;">引き継ぐ（区間の出発を見ない）。注: 再承認の見積りの問い合わせ（isPresentedForReapproval。荷主の回答の時刻 &lt; 提示の時刻。Bolt 35d の開発レビューで経路の確定の時刻から改めた）は、W6 では変えず、US-08（W13）の再設計と D-86（W9）の荷主の辞退で回答の扱いが変わるときに見直す（Bolt 35d。W6 の開始準備で直した）</td>
 <td style="text-align: left;">US-24、ドメインモデル（Q-INV-10、再設計要・旧版の経路版の判定）</td>
 <td style="text-align: left;"><a href="../bolt_35b_report/">Bolt 35b 終了報告</a> のレビューの決定 (14)</td>
 <td style="text-align: left;">W6 の Q-INV-10 の開始準備</td>
-<td style="text-align: left;">未決（2026-10-19、human:kakimomokuri が台帳に載せると決めた）</td>
+<td style="text-align: left;">決定（2026-10-20、human:kakimomokuri。W6 の開始準備の確認ポイント 10）: 再見積りの引き継ぎはそのままにし、荷主の承認と本予約の確定で、割り当てた経路の最初の区間が判定時刻と同時刻か前に出発していれば拒否し、担当者で相談と案内する。Bolt 37e で作る</td>
+</tr>
+<tr>
+<td style="text-align: left;">D-89</td>
+<td style="text-align: left;">外部情報源の「停止中」（US-06 AC4）を、航海・港湾の最終取得から何時間で判定するか</td>
+<td style="text-align: left;">24 時間（FRS-01 の提案）。値は設定にする</td>
+<td style="text-align: left;">US-06、FRS-01、R-INV-09</td>
+<td style="text-align: left;">W6 の開始準備の確認ポイント 1</td>
+<td style="text-align: left;">追跡・データ責任者に確かめる（Release 1.0 のパイロットの前）</td>
+<td style="text-align: left;">仮（2026-10-20、human:kakimomokuri が提案のまま使うと決めた）</td>
+</tr>
+<tr>
+<td style="text-align: left;">D-90</td>
+<td style="text-align: left;">積替えの接続時間の規則を、算出の時刻で選ぶか、接続の時刻（次の区間の出発予定）で選ぶか</td>
+<td style="text-align: left;">接続の時刻で選ぶ。決まらなければ判定時刻のまま境界のテストだけを足す</td>
+<td style="text-align: left;">US-06、BR-11、Bolt 17 の開発レビュー D-65</td>
+<td style="text-align: left;">W6 の開始準備の確認ポイント 4</td>
+<td style="text-align: left;">業務責任者に確かめる（Bolt 37 の開始準備）</td>
+<td style="text-align: left;">仮（2026-10-20、human:kakimomokuri）</td>
 </tr>
 </tbody>
 </table>
@@ -15792,6 +15810,11 @@
 <td style="text-align: left;">2026-10-20</td>
 <td style="text-align: left;">W6 の開始準備の詳細整合性検証と横断整合性検証の指摘を反映した（承認待ち）。範囲外の試行の記録は依存の循環を避けて共有カーネルのポートを identity が実装する案に、<code>confirmed_route_version_no</code> は部分一意インデックスで守る案にし、開発データの航海の取得時刻、招待のトークンの用途、担当範囲を絞る役割と割り当てのない業務担当者、再見積りと再設計要の印、Golden dataset v0 の区分、管理範囲の割り当てを W10 にする【前の決定の変更】、D-65 の残りの行き先、マニュアルの章、承認の後に直す文書を足した。確認ポイントを 20 にした</td>
 <td style="text-align: left;">anthropic/claude-opus-5-5</td>
+</tr>
+<tr>
+<td style="text-align: left;">2026-10-20</td>
+<td style="text-align: left;">W6 の計画を承認した（確認ポイント 1〜20 を推奨のとおり。確認ポイント 12 で管理範囲の割り当ての画面（W6）を W10 の運用タスクに変えた）。承認の後に直す文書: U2 の対策、TST-02・DM-05 の期限、D-88 の決定と注、D-89・D-90 の新設、W6・W10 の行、ガントの W6 の名前</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5、承認 human:kakimomokuri</td>
 </tr>
 </tbody>
 </table>
