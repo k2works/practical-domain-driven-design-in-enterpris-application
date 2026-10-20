@@ -93,6 +93,7 @@ Bolt がイテレーションに当たります。ふりかえりは各 Bolt の
 | 35c | [承認の後に失効した見積りの再見積りを社内の画面から操作する（D-85。S-02・S-04）](bolt_35c_plan.md) | [終了報告](bolt_35c_report.md) | W5 | 完了 |
 | 35d | [再見積りした見積りを荷主がもう一度承認し本予約へ進める（D-85。C-02・C-04・C-17、W5 のデモ）](bolt_35d_plan.md) | [終了報告](bolt_35d_report.md)（[動画](../../assets/demo/bolt-35d/requote-and-reapprove.webm){:target="_blank"}） | W5 | 完了 |
 | 35e | [荷主の承認の後に失効した見積りの開発データのサンプル（D-85。TR-2026-0908）](bolt_35e_plan.md) | [終了報告](bolt_35e_report.md) | W5 | 完了 |
+| 36 | [CI の画面の層のシナリオの揺らぎを直す（#50）](bolt_36_plan.md) | — | W6 | 計画済み |
 
 Bolt を始めるときに行を追加します。
 
