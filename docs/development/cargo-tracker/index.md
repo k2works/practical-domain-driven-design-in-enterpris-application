@@ -91,7 +91,7 @@ Bolt がイテレーションに当たります。ふりかえりは各 Bolt の
 | 35b | [承認の後に失効した見積りの再見積り（D-85。ドメインと業務ルール層）](bolt_35b_plan.md) | [終了報告](bolt_35b_report.md) | W5 | 完了 |
 | 35b2 | [再見積りの提示で輸送要求を荷主承認待ちへ戻す（D-85。DE-24 と順序の守り）](bolt_35b2_plan.md) | [終了報告](bolt_35b2_report.md) | W5 | 完了 |
 | 35c | [承認の後に失効した見積りの再見積りを社内の画面から操作する（D-85。S-02・S-04）](bolt_35c_plan.md) | [終了報告](bolt_35c_report.md) | W5 | 完了 |
-| 35d | [再見積りした見積りを荷主がもう一度承認し本予約へ進める（D-85。C-02・C-04・C-17、W5 のデモ）](bolt_35d_plan.md) | [終了報告](bolt_35d_report.md)（[動画](../../assets/demo/bolt-35d/requote-and-reapprove.webm){:target="_blank"}） | W5 | 終了報告の承認待ち |
+| 35d | [再見積りした見積りを荷主がもう一度承認し本予約へ進める（D-85。C-02・C-04・C-17、W5 のデモ）](bolt_35d_plan.md) | [終了報告](bolt_35d_report.md)（[動画](../../assets/demo/bolt-35d/requote-and-reapprove.webm){:target="_blank"}） | W5 | 完了 |
 
 Bolt を始めるときに行を追加します。
 
