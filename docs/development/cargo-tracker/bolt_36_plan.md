@@ -3,7 +3,9 @@ type: Plan
 title: "Bolt 36 計画 - CI の画面の層のシナリオの揺らぎを直す（#50）"
 description: "W6 の 1 本目の Bolt の計画。CI の画面の層のシナリオで、session の失効の入力の保持（session_timeout_ui.feature）の CSRF の拒否のシナリオが毎回違う形で揺らぐ原因を、遅らせて再現してから直す。候補の原因は、403 の画面の deferred script が控えに「公開の画面を経た」印を付ける前に、テストが次の画面へ移ること。直した後は繰り返して確かめる。振る舞いは変えない。"
 tags: [plan]
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-20T11:05:31Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-20T11:07:27Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-10-20T11:07:27Z }
 ---
 
 # Bolt 36 計画 - CI の画面の層のシナリオの揺らぎを直す（#50）
@@ -127,6 +129,7 @@ CI の画面の層のジョブで、session の失効の入力の保持の CSRF 
 
 | 日付 | 更新内容 | 更新者 |
 | :--- | :--- | :--- |
+| 2026-10-20 | 計画を承認した（確認ポイント 1〜7 を推奨のとおり） | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-10-20 | 整合性検証の指摘を反映した（承認待ち）。再現は route の handler で待たず応答を保留する形に、待ちは CSRF の拒否のステップの側だけに（認可の 403 のシナリオで条件が成り立たないため）、CI の成果物の失敗の事実（案内が一度も出ていない）を写し、数える範囲・Try の確認ポイント・繰り返しの回数と証拠の主従・終了報告の同期を直した | anthropic/claude-opus-5-5 |
 | 2026-10-20 | 初版作成（承認待ち） | anthropic/claude-opus-5-5 |
 
