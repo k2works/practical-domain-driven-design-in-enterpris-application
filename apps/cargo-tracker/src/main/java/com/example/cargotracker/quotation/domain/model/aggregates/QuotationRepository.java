@@ -52,8 +52,8 @@ public interface QuotationRepository {
     List<AwaitingBookingSummary> findAwaitingBookingSummaries();
 
     /**
-     * 荷主企業の、輸送要求が荷主承認待ち・予約待ちの見積依頼ごとに、荷主に見える最新の見積り（提示済みで見積り番号の最大）を返す
-     * （荷主の見積依頼の一覧 C-02 の状態の選び方。D-85。Bolt 35d）。荷主企業で必ず絞る（Q-INV-08）。
+     * 荷主企業の見積依頼ごとに、荷主に見える最新の見積り（提示済みで見積り番号の最大）を返す（荷主の見積依頼の一覧 C-02 の状態の
+     * 選び方。どの輸送要求の状態で使うかは画面が決める。D-85。Bolt 35d）。荷主企業で必ず絞る（Q-INV-08）。
      */
     List<ShipperLatestQuotationSummary> findLatestVisibleForShipper(CompanyId shipperCompanyId);
 

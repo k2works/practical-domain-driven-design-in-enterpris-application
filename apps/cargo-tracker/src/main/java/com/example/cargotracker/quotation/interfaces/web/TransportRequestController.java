@@ -171,6 +171,14 @@ public class TransportRequestController {
                 request.status(), visible.stream().findFirst().map(quotation -> latestQuotation(quotation, now)));
         model.addAttribute("statusLabel", stage.status());
         model.addAttribute("guidance", stage.guidance());
+        // 承認の後に失効し、予約確定済みでない見積り（担当営業が経路を引き継いで再見積りする。D-85。Bolt 35d）。テンプレートの条件はこの値だけを見る
+        model.addAttribute(
+                "expiredAfterApproval",
+                request.status() != TransportRequestStatus.BOOKED
+                        && visible.stream()
+                                .findFirst()
+                                .map(quotation -> quotation.shipperApproval().isPresent() && quotation.isExpiredAt(now))
+                                .orElse(false));
         List<QuotationViews.View> quotations = visible.stream()
                 .map(quotation -> QuotationViews.view(
                         quotation, TransportRequestLabels::customerDateTime, now, QuotationViews.Audience.CUSTOMER))

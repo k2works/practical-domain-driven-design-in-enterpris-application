@@ -9,4 +9,4 @@ public record ShipperLatestQuotationSummaryRow(
         OffsetDateTime expiresAt,
         OffsetDateTime shipperApprovedAt,
         OffsetDateTime presentedAt,
-        OffsetDateTime routeConfirmedAt) {}
+        OffsetDateTime respondedAt) {}

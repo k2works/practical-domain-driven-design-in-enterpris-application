@@ -46,8 +46,8 @@ public class QuotationQueryService {
     }
 
     /**
-     * 荷主企業の、荷主承認待ち・予約待ちの見積依頼ごとの、荷主に見える最新の見積り（荷主の見積依頼の一覧 C-02 の状態の選び方。
-     * D-85。Bolt 35d）。他社の見積依頼は含めない。
+     * 荷主企業の見積依頼ごとの、荷主に見える最新の見積り（荷主の見積依頼の一覧 C-02 の状態の選び方。D-85。Bolt 35d）。他社の見積依頼は
+     * 含めない。
      */
     @Transactional(readOnly = true)
     public List<ShipperLatestQuotationSummary> findLatestVisibleSummaries(CompanyId shipperCompanyId) {

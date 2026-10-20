@@ -1,6 +1,7 @@
 package com.example.cargotracker.quotation.interfaces.web;
 
 import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.matchesPattern;
 import static org.hamcrest.Matchers.not;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
@@ -35,6 +36,7 @@ import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.List;
 import java.util.UUID;
+import java.util.regex.Pattern;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.TestConfiguration;
@@ -94,7 +96,7 @@ class QuotationApprovalControllerTest {
         return quotation;
     }
 
-    private static final String REAPPROVAL_NOTICE = "承認いただいた経路版と経路方針のまま、料金と有効期限を出し直した見積りです。";
+    private static final String REAPPROVAL_NOTICE = "承認いただいた経路のまま、料金と有効期限を出し直した見積りです。";
 
     /** 荷主が承認した後に 2026-10-08T00:00:00Z に失効した見積り 1 から経路を引き継いで再見積りし、提示した見積り 2（D-85。Bolt 35d）。 */
     private static List<Quotation> reapprovalQuotations() {
@@ -131,8 +133,9 @@ class QuotationApprovalControllerTest {
         mockMvc.perform(get(DETAIL + "/quotations/2/approval"))
                 .andExpect(status().isOk())
                 .andExpect(content().string(containsString("<h1>見積りと経路の承認 TR-2026-0001 見積 2</h1>")))
-                .andExpect(content().string(containsString(REAPPROVAL_NOTICE)))
-                .andExpect(content().string(containsString("この見積りと経路で承認しますか")));
+                .andExpect(content()
+                        .string(matchesPattern(
+                                Pattern.compile("(?s).*" + REAPPROVAL_NOTICE + "</p>\\s*<h2>この見積りと経路で承認しますか</h2>.*"))));
     }
 
     @Test

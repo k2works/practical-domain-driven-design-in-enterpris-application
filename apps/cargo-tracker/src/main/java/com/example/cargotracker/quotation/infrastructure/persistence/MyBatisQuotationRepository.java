@@ -164,7 +164,7 @@ public class MyBatisQuotationRepository implements QuotationRepository {
                         toUtc(row.expiresAt()),
                         row.shipperApprovedAt() == null ? null : toUtc(row.shipperApprovedAt()),
                         toUtc(row.presentedAt()),
-                        row.routeConfirmedAt() == null ? null : toUtc(row.routeConfirmedAt())))
+                        row.respondedAt() == null ? null : toUtc(row.respondedAt())))
                 .toList();
     }
 

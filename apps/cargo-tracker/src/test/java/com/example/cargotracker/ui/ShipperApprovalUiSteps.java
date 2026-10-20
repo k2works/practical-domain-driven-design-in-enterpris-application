@@ -18,7 +18,7 @@ public class ShipperApprovalUiSteps {
 
     private static final String TO_APPROVAL = "見積りと経路を確かめて承認へ";
     private static final String APPROVE = "この見積りと経路で承認する";
-    private static final String REAPPROVAL_NOTICE = "承認いただいた経路版と経路方針のまま、料金と有効期限を出し直した見積りです。";
+    private static final String REAPPROVAL_NOTICE = "承認いただいた経路のまま、料金と有効期限を出し直した見積りです。";
 
     private final BrowserSession browser;
     private final UiScenarioState state;
@@ -105,7 +105,8 @@ public class ShipperApprovalUiSteps {
                                 new Page.GetByRoleOptions().setLevel(3).setName("見積 " + quotationNo + "（失効）")))
                 .hasCount(1);
         assertThat(main).containsText("承認の後に有効期限");
-        assertThat(main).containsText("担当営業が、承認いただいた経路版と経路方針のまま新しい見積りを用意します。用意できたら、もう一度承認をお願いします。");
+        assertThat(main).containsText("承認の後に見積りの有効期限を過ぎました。担当営業が新しい見積りを用意しています。");
+        assertThat(main).containsText("を過ぎました。用意できたら、もう一度承認をお願いします。");
         assertThat(main).not().containsText("担当営業にご依頼ください");
         assertThat(main).not().containsText("本予約の扱いは担当営業からご連絡します");
         assertThat(main).not().containsText("詳細経路設計を依頼しました");
@@ -127,12 +128,12 @@ public class ShipperApprovalUiSteps {
         browser.navigate(detailUrl());
         Locator main = page().locator("main");
         assertThat(definition("状態")).hasText("見積りと経路の承認待ち（お客様の対応待ち）");
-        assertThat(main).containsText("担当営業が、承認いただいた経路版と経路方針のまま、料金と有効期限を出し直しました。");
+        assertThat(main).containsText("料金と有効期限を出し直した見積りが届きました。もう一度承認してください。");
         assertThat(page().getByRole(
                                 AriaRole.HEADING,
                                 new Page.GetByRoleOptions().setLevel(3).setName("見積 " + quotationNo + "（見積りと経路の承認待ち）")))
                 .hasCount(1);
-        assertThat(main).containsText("この見積りは、承認いただいた経路版と経路方針のまま、料金と有効期限を出し直したものです。見積りと経路を確かめて、もう一度承認してください。");
+        assertThat(main.getByText(REAPPROVAL_NOTICE)).hasCount(1);
         assertThat(main).not().containsText("詳細経路設計を依頼しました");
         assertThat(link(TO_APPROVAL)).hasCount(1);
         browser.checkAccessibility();
@@ -145,16 +146,15 @@ public class ShipperApprovalUiSteps {
         browser.checkAccessibility();
     }
 
-    /** 予約待ちへの変更は DE-04 を受けた輸送要求の更新（非同期）を待つため、状態が変わるまで開き直す。 */
+    /**
+     * 荷主の画面の状態は、輸送要求が荷主承認待ち・予約待ちなら最新の見積りから選ぶ（D-85。Bolt 35d）ので、DE-04 を受けた輸送要求の更新
+     * （非同期）を待たずに予約待ちと出る。輸送要求の遷移は業務ルール層と統合テストで確かめる。
+     */
     @ならば("見積りと経路を承認したと示され、見積依頼の詳細の状態が {string} になる")
     public void 承認したと示される(String status) {
         assertThat(page().getByRole(AriaRole.STATUS)).containsText("の見積りと経路を承認しました");
         assertThat(link(TO_APPROVAL)).hasCount(0);
         browser.checkAccessibility();
-        for (int i = 0; i < 20 && !status.equals(definition("状態").textContent()); i++) {
-            page().waitForTimeout(500);
-            page().reload();
-        }
         assertThat(definition("状態")).hasText(status);
         assertThat(page().locator("main")).containsText("担当営業が本予約を確定します");
         browser.checkAccessibility();

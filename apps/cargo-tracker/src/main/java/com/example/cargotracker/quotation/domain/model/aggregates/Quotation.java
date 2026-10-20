@@ -537,14 +537,26 @@ public final class Quotation {
     }
 
     /**
-     * 荷主にもう一度の承認を求めた見積りか（荷主の承認の後に失効した見積りから経路を引き継いだ再見積りを提示した。D-85。Bolt 35d）。
-     * 通常の流れは提示 → 回答 → 経路の割当ての順なので、経路の確定の時刻は提示の時刻より後になる。経路の確定の時刻が提示の時刻より前なら、
-     * 提示の時点で経路を持っていた（DE-24 を出す条件と同じ事実を時刻で見る）。同時刻は通常の流れとして扱う。どの見積りから引き継いだかの
-     * 列は持たない（Bolt 35b の決定）。再設計（US-08）で再承認の見積りに別の経路版を割り当てるときは見直す（D-88）。
+     * 荷主にもう一度の承認を求めた見積りか（荷主の承認の後に失効した見積りから経路と回答を引き継いだ再見積りを提示した。D-85。Bolt 35d）。
+     * {@link #isReapprovalPresentation} で決める。どの見積りから引き継いだかの列は持たない（Bolt 35b の決定）。
      */
     public boolean isPresentedForReapproval() {
-        return assignedRoute != null
-                && AssignedRoute.isConfirmedBeforePresentation(assignedRoute.confirmedAt(), presentedAt);
+        return isReapprovalPresentation(respondedAt, presentedAt);
+    }
+
+    /**
+     * 荷主の回答の時刻が提示の時刻より前なら、再承認の見積り（見積りの集約と読み取りモデル C-02 で共有する。D-85。Bolt 35d）。荷主の回答は
+     * 提示の後にしかできない（{@link #responseRejectionAt}）ので、通常の流れでは回答の時刻は提示の時刻と同時刻か後になる。回答を引き継いだ
+     * 再見積り（{@link #requoteInto}）だけが、提示の前の回答の時刻を持つ。この集約の中で守る順だけを使う（経路設計の時計に頼らない。Bolt 35d の
+     * 開発レビューで経路の確定の時刻から改めた）。再設計（US-08）や荷主の辞退で回答の扱いが変わるときは見直す（D-88）。
+     *
+     * @param respondedAt 荷主の回答の時刻（回答していなければ null）
+     * @param presentedAt 提示の時刻（提示していなければ null）
+     */
+    public static boolean isReapprovalPresentation(UtcInstant respondedAt, UtcInstant presentedAt) {
+        return respondedAt != null
+                && presentedAt != null
+                && respondedAt.instant().isBefore(presentedAt.instant());
     }
 
     /** 作成中・承認待ち・提示済み・詳細設計依頼済みか（1 つの輸送要求に 1 つだけ。失効・置換済みは数えない。Q-INV-18）。 */

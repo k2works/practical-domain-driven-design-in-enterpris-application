@@ -3,7 +3,7 @@ type: ADR
 title: "ADR-018: 再見積りの提示で輸送要求を荷主承認待ちへ戻し、届く順の入れ替わりは楽観ロックでぶつけて守る"
 description: "荷主の承認の後に失効した見積りの再見積り（D-85）を提示したら、DE-24 で輸送要求を予約待ちから荷主承認待ちへ戻す。輸送要求は先へだけ進め戻さない、という前提（Bolt 12 レビュー R-04）を初めて変えるので、イベントの届く順が入れ替わっても状態がずれない守りを、スキーマもロックも足さずに、listener の読む順と「進めなくても書く」書き込みと置換済み・失効の見積りのイベントを止める判定で作る形に決める（Bolt 35b2）。"
 tags: [adr, architecture, integration]
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-19T11:51:34Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-20T02:52:02Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-19T11:51:36Z }
 ---
@@ -88,4 +88,5 @@ verified:
 - [ADR-014](./014-downstream-to-upstream-notification.md)
 - [ドメインモデル](../../design/cargo-tracker/domain_model.md)（輸送要求の状態遷移、イベントの表の DE-21・DE-04・DE-24）
 - [バックエンドアーキテクチャ](../../design/cargo-tracker/architecture_backend.md)（購読側の楽観ロックの競合）
+- [UI 設計](../../design/cargo-tracker/ui_design.md)（「見積依頼から本予約まで」の輸送要求の状態と荷主の画面の表示の対応表。輸送要求が荷主承認待ち・予約待ちのとき、荷主の画面は最新の見積りから状態と案内を選ぶ。D-85。Bolt 35d）
 - [Bolt 35b2 計画](../../development/cargo-tracker/bolt_35b2_plan.md)、[Bolt 35b 終了報告](../../development/cargo-tracker/bolt_35b_report.md)

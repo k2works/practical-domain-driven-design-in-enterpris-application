@@ -472,7 +472,9 @@ class StaffQuotationControllerTest {
     void 再承認の見積りの承認済みは荷主が再承認した日時を示し依頼の文を出さない() throws Exception {
         readyToBookRequestExists(false);
         Quotation quotation = reapproval();
-        quotation.approveByShipper(new UserId(UUID.randomUUID()), new UtcInstant(NOW));
+        // 再承認は提示（2099-10-08T10:00:00Z）の後
+        quotation.approveByShipper(
+                new UserId(UUID.randomUUID()), new UtcInstant(Instant.parse("2099-10-08T10:30:00Z")));
         given(queryService.find(NUMBER, 2)).willReturn(Optional.of(quotation));
 
         mockMvc.perform(get("/staff/transport-requests/TR-2026-0001/quotations/2"))
@@ -480,7 +482,7 @@ class StaffQuotationControllerTest {
                         content()
                                 .string(
                                         containsString(
-                                                "荷主が 2026-10-06 10:00 Asia/Tokyo（UTC+09:00）（UTC 2026-10-06 01:00）に再承認しました（承認済みの経路版と経路方針を引き継いだ見積りです）。この見積りは読み取り専用です。")))
+                                                "荷主が 2099-10-08 19:30 Asia/Tokyo（UTC+09:00）（UTC 2099-10-08 10:30）に再承認しました（承認済みの経路版と経路方針を引き継いだ見積りです）。この見積りは読み取り専用です。")))
                 .andExpect(content().string(not(containsString("に詳細経路設計を依頼しました。"))));
     }
 

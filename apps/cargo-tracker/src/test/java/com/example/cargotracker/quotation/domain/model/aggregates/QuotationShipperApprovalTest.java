@@ -449,17 +449,15 @@ class QuotationShipperApprovalTest {
         assertThat(otherRequest.assignedRoute()).isEmpty();
     }
 
-    // 再承認の見積りか（経路の確定の時刻 < 提示の時刻。D-85。Bolt 35d）
+    // 再承認の見積りか（荷主の回答の時刻 < 提示の時刻。D-85。Bolt 35d）
 
     @Test
-    void 通常の流れの見積りは提示の後に経路が確定するので再承認の見積りでない() {
+    void 通常の流れの見積りは提示の後に回答するので再承認の見積りでない() {
         Quotation awaiting = awaitingApproval();
         assertThat(awaiting.presentedAt())
-                .hasValueSatisfying(presentedAt -> assertThat(awaiting.assignedRoute()
-                                .orElseThrow()
-                                .confirmedAt()
-                                .instant())
-                        .as("通常の流れでは経路の確定は提示の後")
+                .hasValueSatisfying(presentedAt -> assertThat(
+                                awaiting.respondedAt().orElseThrow().instant())
+                        .as("通常の流れでは回答は提示の後")
                         .isAfter(presentedAt.instant()));
         assertThat(awaiting.isPresentedForReapproval()).isFalse();
 
@@ -490,18 +488,17 @@ class QuotationShipperApprovalTest {
     }
 
     @Test
-    void 経路の確定と提示が同時刻なら再承認の見積りでない() {
-        Quotation quotation = routingRequested();
-        quotation.assignRoute(
-                new AssignedRoute(route.routingCaseNumber(), route.routeVersionNo(), now, route.legs()), now);
-        quotation.approveByShipper(shipperUser, now);
-        Quotation next = calculatedNext(transportRequestId);
-        quotation.requoteInto(next, EXPIRES);
+    void 引き継いだ回答と提示が同時刻なら再承認の見積りでない() {
+        Quotation next = inherited();
+        UtcInstant respondedAt = next.respondedAt().orElseThrow();
 
-        next.presentInternally(salesRep, now);
+        next.presentInternally(salesRep, respondedAt);
 
         assertThat(next.status()).isEqualTo(QuotationStatus.AWAITING_SHIPPER_APPROVAL);
         assertThat(next.isPresentedForReapproval()).isFalse();
+        assertThat(Quotation.isReapprovalPresentation(respondedAt, respondedAt)).isFalse();
+        assertThat(Quotation.isReapprovalPresentation(null, respondedAt)).isFalse();
+        assertThat(Quotation.isReapprovalPresentation(respondedAt, null)).isFalse();
     }
 
     private Quotation approved() {

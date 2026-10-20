@@ -1,5 +1,6 @@
 package com.example.cargotracker.quotation.domain.model.valueobjects;
 
+import com.example.cargotracker.quotation.domain.model.aggregates.Quotation;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import java.util.Objects;
 
@@ -13,7 +14,7 @@ import java.util.Objects;
  * @param expiresAt 見積りの有効期限
  * @param shipperApprovedAt 荷主の承認時刻（承認していなければ null。再見積りで失効を記録した見積りも承認の記録を残す）
  * @param presentedAt 提示時刻
- * @param routeConfirmedAt 割り当てた経路の確定の時刻（経路を持たなければ null）
+ * @param respondedAt 荷主の回答の時刻（回答していなければ null）
  */
 public record ShipperLatestQuotationSummary(
         TransportRequestNumber number,
@@ -21,7 +22,7 @@ public record ShipperLatestQuotationSummary(
         UtcInstant expiresAt,
         UtcInstant shipperApprovedAt,
         UtcInstant presentedAt,
-        UtcInstant routeConfirmedAt) {
+        UtcInstant respondedAt) {
 
     public ShipperLatestQuotationSummary {
         Objects.requireNonNull(number, "number");
@@ -42,6 +43,6 @@ public record ShipperLatestQuotationSummary(
 
     /** 再承認の見積りか（{@code Quotation.isPresentedForReapproval} と同じ判定）。 */
     public boolean isPresentedForReapproval() {
-        return AssignedRoute.isConfirmedBeforePresentation(routeConfirmedAt, presentedAt);
+        return Quotation.isReapprovalPresentation(respondedAt, presentedAt);
     }
 }

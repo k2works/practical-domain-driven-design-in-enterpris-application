@@ -908,7 +908,7 @@ class MyBatisQuotationIntegrationTest {
     }
 
     @Test
-    void 荷主の見積依頼の一覧には荷主承認待ちと予約待ちの見積依頼ごとに荷主に見える最新の見積りを自社の分だけ返す() {
+    void 荷主の見積依頼の一覧には見積依頼ごとに荷主に見える最新の見積りを自社の分だけ返す() {
         CompanyId shipper = new CompanyId(UUID.randomUUID());
         TransportRequestId approvedRequest = transportRequest(41, shipper);
         approved(approvedRequest);
@@ -931,9 +931,11 @@ class MyBatisQuotationIntegrationTest {
         Quotation saved = repository.findById(next.id()).orElseThrow();
         saved.presentInternally(STAFF, QuotationFixture.EXPIRES_AT);
         repository.update(saved);
-        TransportRequestId routing = transportRequest(44, shipper);
-        routingRequested(routing);
-        advanceTransportRequest(routing, TransportRequestStatus.ROUTING);
+        TransportRequestId awaiting = transportRequest(44, shipper);
+        awaitingApproval(awaiting);
+        advanceTransportRequest(awaiting, TransportRequestStatus.AWAITING_APPROVAL);
+        TransportRequestId quoting = transportRequest(46, shipper);
+        repository.save(calculated(quoting, 1));
         TransportRequestId otherShipper = transportRequest(45);
         approved(otherShipper);
         advanceTransportRequest(otherShipper, TransportRequestStatus.READY_TO_BOOK);
@@ -941,7 +943,7 @@ class MyBatisQuotationIntegrationTest {
                 new UtcInstant(QuotationFixture.EXPIRES_AT.instant().plusSeconds(86_400));
 
         assertThat(repository.findLatestVisibleForShipper(shipper))
-                .as("提示の前の見積り 2 は荷主に見えないので数えない。経路設計中と他社の見積依頼は出さない（D-85。Bolt 35d）")
+                .as("提示の前の見積り 2 は荷主に見えないので数えない。見積りを提示していない見積依頼と他社の見積依頼は出さない。" + "輸送要求の状態では絞らない（選び方は画面。D-85。Bolt 35d）")
                 .containsExactly(
                         new ShipperLatestQuotationSummary(
                                 new TransportRequestNumber(2082, 41),
@@ -949,24 +951,32 @@ class MyBatisQuotationIntegrationTest {
                                 QuotationFixture.EXPIRES_AT,
                                 SHIPPER_APPROVED_AT,
                                 APPROVED_AT,
-                                CONFIRMED_AT),
+                                APPROVED_AT),
                         new ShipperLatestQuotationSummary(
                                 new TransportRequestNumber(2082, 42),
                                 QuotationStatus.EXPIRED,
                                 QuotationFixture.EXPIRES_AT,
                                 SHIPPER_APPROVED_AT,
                                 APPROVED_AT,
-                                CONFIRMED_AT),
+                                APPROVED_AT),
                         new ShipperLatestQuotationSummary(
                                 new TransportRequestNumber(2082, 43),
                                 QuotationStatus.AWAITING_SHIPPER_APPROVAL,
                                 nextExpires,
                                 null,
                                 QuotationFixture.EXPIRES_AT,
-                                CONFIRMED_AT));
+                                APPROVED_AT),
+                        new ShipperLatestQuotationSummary(
+                                new TransportRequestNumber(2082, 44),
+                                QuotationStatus.AWAITING_SHIPPER_APPROVAL,
+                                QuotationFixture.EXPIRES_AT,
+                                null,
+                                APPROVED_AT,
+                                APPROVED_AT));
         assertThat(repository.findLatestVisibleForShipper(shipper))
+                .as("回答を引き継いだ見積り 2 だけが再承認の見積り（通常の流れは提示と回答が同時刻か回答が後）")
                 .extracting(ShipperLatestQuotationSummary::isPresentedForReapproval)
-                .containsExactly(false, false, true);
+                .containsExactly(false, false, true, false);
     }
 
     private TransportRequestId transportRequest(int sequence, CompanyId shipper) {

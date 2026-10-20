@@ -212,19 +212,18 @@
             <arg column="expires_at" name="expiresAt" javaType="java.time.OffsetDateTime"/>
             <arg column="shipper_approved_at" name="shipperApprovedAt" javaType="java.time.OffsetDateTime"/>
             <arg column="presented_at" name="presentedAt" javaType="java.time.OffsetDateTime"/>
-            <arg column="route_confirmed_at" name="routeConfirmedAt" javaType="java.time.OffsetDateTime"/>
+            <arg column="responded_at" name="respondedAt" javaType="java.time.OffsetDateTime"/>
         </constructor>
     </resultMap>
 
-    <!-- 荷主の見積依頼の一覧（C-02）の状態の選び方: 荷主企業の、輸送要求が荷主承認待ち・予約待ちの見積依頼ごとに、荷主に見える最新の
-         見積り（提示済みで見積り番号の最大。提示の前の見積りは荷主に見えないので数えない）。荷主企業で必ず絞る（Q-INV-08）。D-85。Bolt 35d -->
+    <!-- 荷主の見積依頼の一覧（C-02）の状態の選び方: 荷主企業の見積依頼ごとに、荷主に見える最新の見積り（提示済みで見積り番号の最大。
+         提示の前の見積りは荷主に見えないので数えない）。どの輸送要求の状態で見積りから選ぶかは画面の選び方（TransportRequestLabels）だけが
+         決める（ここでは絞らない。Bolt 35d の開発レビュー）。荷主企業で必ず絞る（Q-INV-08）。D-85。Bolt 35d -->
     <select id="selectLatestVisibleForShipper" resultMap="shipperLatestQuotationSummaryRow">
-        SELECT r.request_number, q.status, q.expires_at, q.shipper_approved_at, q.presented_at, q.route_confirmed_at
+        SELECT r.request_number, q.status, q.expires_at, q.shipper_approved_at, q.presented_at, q.responded_at
           FROM quotation.transport_request r
           JOIN quotation.quotation q ON q.transport_request_id = r.id
          WHERE r.shipper_company_id = #{shipperCompanyId}
-           AND r.status IN ('AWAITING_APPROVAL', 'READY_TO_BOOK')
-           AND q.presented_at IS NOT NULL
            AND q.quotation_no = (SELECT MAX(v.quotation_no)
                                    FROM quotation.quotation v
                                   WHERE v.transport_request_id = r.id

@@ -12,18 +12,18 @@ class ShipperLatestQuotationSummaryTest {
 
     private static final TransportRequestNumber NUMBER = new TransportRequestNumber(2026, 1);
     private static final UtcInstant PRESENTED = at("2026-10-05T04:00:00Z");
-    private static final UtcInstant CONFIRMED = at("2026-10-06T05:00:00Z");
+    private static final UtcInstant RESPONDED = at("2026-10-06T05:00:00Z");
     private static final UtcInstant EXPIRES = at("2026-10-09T09:00:00Z");
 
     @Test
-    void 経路の確定が提示より前なら再承認の見積りで後か同時刻か経路がなければそうでない() {
-        assertThat(summary(QuotationStatus.AWAITING_SHIPPER_APPROVAL, null, at("2026-10-07T00:00:00Z"), CONFIRMED)
+    void 回答が提示より前なら再承認の見積りで後か同時刻か回答がなければそうでない() {
+        assertThat(summary(QuotationStatus.AWAITING_SHIPPER_APPROVAL, null, at("2026-10-07T00:00:00Z"), RESPONDED)
                         .isPresentedForReapproval())
                 .isTrue();
-        assertThat(summary(QuotationStatus.AWAITING_SHIPPER_APPROVAL, null, PRESENTED, CONFIRMED)
+        assertThat(summary(QuotationStatus.AWAITING_SHIPPER_APPROVAL, null, PRESENTED, RESPONDED)
                         .isPresentedForReapproval())
                 .isFalse();
-        assertThat(summary(QuotationStatus.AWAITING_SHIPPER_APPROVAL, null, CONFIRMED, CONFIRMED)
+        assertThat(summary(QuotationStatus.AWAITING_SHIPPER_APPROVAL, null, RESPONDED, RESPONDED)
                         .isPresentedForReapproval())
                 .isFalse();
         assertThat(summary(QuotationStatus.PRESENTED, null, PRESENTED, null).isPresentedForReapproval())
@@ -32,13 +32,13 @@ class ShipperLatestQuotationSummaryTest {
 
     @Test
     void 失効は失効の記録か期限で決まり置換済みは失効でない() {
-        assertThat(summary(QuotationStatus.APPROVED, at("2026-10-06T00:00:00Z"), PRESENTED, CONFIRMED)
+        assertThat(summary(QuotationStatus.APPROVED, at("2026-10-06T00:00:00Z"), PRESENTED, RESPONDED)
                         .isExpiredAt(EXPIRES))
                 .isTrue();
-        assertThat(summary(QuotationStatus.APPROVED, at("2026-10-06T00:00:00Z"), PRESENTED, CONFIRMED)
+        assertThat(summary(QuotationStatus.APPROVED, at("2026-10-06T00:00:00Z"), PRESENTED, RESPONDED)
                         .isExpiredAt(at("2026-10-09T08:59:59Z")))
                 .isFalse();
-        assertThat(summary(QuotationStatus.EXPIRED, at("2026-10-06T00:00:00Z"), PRESENTED, CONFIRMED)
+        assertThat(summary(QuotationStatus.EXPIRED, at("2026-10-06T00:00:00Z"), PRESENTED, RESPONDED)
                         .isExpiredAt(PRESENTED))
                 .isTrue();
         assertThat(summary(QuotationStatus.REPLACED, null, PRESENTED, null).isExpiredAt(EXPIRES))
@@ -47,10 +47,10 @@ class ShipperLatestQuotationSummaryTest {
 
     @Test
     void 荷主の承認の時刻があれば荷主が承認した見積り() {
-        assertThat(summary(QuotationStatus.EXPIRED, at("2026-10-06T00:00:00Z"), PRESENTED, CONFIRMED)
+        assertThat(summary(QuotationStatus.EXPIRED, at("2026-10-06T00:00:00Z"), PRESENTED, RESPONDED)
                         .isShipperApproved())
                 .isTrue();
-        assertThat(summary(QuotationStatus.AWAITING_SHIPPER_APPROVAL, null, PRESENTED, CONFIRMED)
+        assertThat(summary(QuotationStatus.AWAITING_SHIPPER_APPROVAL, null, PRESENTED, RESPONDED)
                         .isShipperApproved())
                 .isFalse();
     }
@@ -62,8 +62,8 @@ class ShipperLatestQuotationSummaryTest {
     }
 
     private static ShipperLatestQuotationSummary summary(
-            QuotationStatus status, UtcInstant approvedAt, UtcInstant presentedAt, UtcInstant confirmedAt) {
-        return new ShipperLatestQuotationSummary(NUMBER, status, EXPIRES, approvedAt, presentedAt, confirmedAt);
+            QuotationStatus status, UtcInstant approvedAt, UtcInstant presentedAt, UtcInstant respondedAt) {
+        return new ShipperLatestQuotationSummary(NUMBER, status, EXPIRES, approvedAt, presentedAt, respondedAt);
     }
 
     private static UtcInstant at(String instant) {

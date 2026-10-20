@@ -59,8 +59,8 @@ final class TransportRequestLabels {
     /** 承認の後に失効した見積りが最新のときの案内（D-85。Bolt 35d）。 */
     static final String REQUOTING_AFTER_APPROVAL = "承認の後に見積りの有効期限を過ぎました。担当営業が新しい見積りを用意しています。";
 
-    /** 再承認の見積りが荷主承認待ちで有効なときの案内（D-85。Bolt 35d）。 */
-    static final String REAPPROVAL = "担当営業が、承認いただいた経路版と経路方針のまま、料金と有効期限を出し直しました。見積りと経路を確かめて、もう一度承認してください。";
+    /** 再承認の見積りが荷主承認待ちで有効なときの案内（するべきこと。見積りの節は事実を示す。D-85。Bolt 35d の開発レビュー）。 */
+    static final String REAPPROVAL = "料金と有効期限を出し直した見積りが届きました。もう一度承認してください。";
 
     /**
      * 荷主の画面の状態の表示名と案内（C-02・C-04）。
@@ -96,12 +96,17 @@ final class TransportRequestLabels {
         }
         return switch (quotation.status()) {
             case APPROVED -> stageOf(TransportRequestStatus.READY_TO_BOOK);
-            case AWAITING_SHIPPER_APPROVAL ->
-                quotation.reapproval() && !quotation.expired()
-                        ? new CustomerStage(customerStatus(TransportRequestStatus.AWAITING_APPROVAL), REAPPROVAL)
-                        : stageOf(TransportRequestStatus.AWAITING_APPROVAL);
-            default -> stageOf(status);
+            case AWAITING_SHIPPER_APPROVAL -> awaitingApprovalStage(quotation);
+            // 見積りの状態を足したら（D-86、荷主の辞退）ここで扱いを決める（ADR-018）
+            case DRAFT, PENDING_APPROVAL, PRESENTED, ROUTING_REQUESTED, EXPIRED, REPLACED -> stageOf(status);
         };
+    }
+
+    /** 荷主承認待ちの見積り。再承認の見積りで有効なら、もう一度の承認を求める（D-86 の失効は今の荷主承認待ちの案内のまま）。 */
+    private static CustomerStage awaitingApprovalStage(LatestQuotation quotation) {
+        return quotation.reapproval() && !quotation.expired()
+                ? new CustomerStage(customerStatus(TransportRequestStatus.AWAITING_APPROVAL), REAPPROVAL)
+                : stageOf(TransportRequestStatus.AWAITING_APPROVAL);
     }
 
     private static CustomerStage stageOf(TransportRequestStatus status) {

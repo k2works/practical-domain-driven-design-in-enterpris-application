@@ -549,12 +549,10 @@ class TransportRequestControllerTest {
     // 見積り 1 は 2026-10-05T12:00:00Z に失効し、経路は 2026-10-05T05:30:00Z に確定、見積り 2 は 2026-10-06T00:00:00Z に提示
 
     private static final String AFTER_APPROVAL_EXPIRED =
-            "承認の後に有効期限（2026-10-05 21:00 Asia/Tokyo（UTC+09:00））を過ぎました。担当営業が、承認いただいた経路版と経路方針のまま新しい見積りを用意します。用意できたら、もう一度承認をお願いします。";
+            "承認の後に有効期限（2026-10-05 21:00 Asia/Tokyo（UTC+09:00））を過ぎました。用意できたら、もう一度承認をお願いします。";
     private static final String REQUOTING_GUIDANCE = "承認の後に見積りの有効期限を過ぎました。担当営業が新しい見積りを用意しています。";
-    private static final String REAPPROVAL_GUIDANCE =
-            "担当営業が、承認いただいた経路版と経路方針のまま、料金と有効期限を出し直しました。見積りと経路を確かめて、もう一度承認してください。";
-    private static final String REAPPROVAL_NOTICE =
-            "この見積りは、承認いただいた経路版と経路方針のまま、料金と有効期限を出し直したものです。見積りと経路を確かめて、もう一度承認してください。";
+    private static final String REAPPROVAL_GUIDANCE = "料金と有効期限を出し直した見積りが届きました。もう一度承認してください。";
+    private static final String REAPPROVAL_NOTICE = "承認いただいた経路のまま、料金と有効期限を出し直した見積りです。";
     private static final String ROUTING_REQUESTED_NOTICE = "にこの見積りで詳細経路設計を依頼しました。";
     private static final UtcInstant REQUOTED_AT = new UtcInstant(Instant.parse("2026-10-05T23:00:00Z"));
     private static final UtcInstant REPRESENTED_AT = new UtcInstant(Instant.parse("2026-10-06T00:00:00Z"));
@@ -749,6 +747,71 @@ class TransportRequestControllerTest {
     }
 
     @Test
+    void 通常の荷主承認待ちの見積りは今のままの案内と依頼の文と承認の入口を示し再承認の文を出さない() throws Exception {
+        TransportRequest request = awaitingApprovalRequest();
+        given(queryService.findByNumber(NUMBER, SHIPPER)).willReturn(Optional.of(request));
+        given(quotationQueryService.findVisible(NUMBER, SHIPPER)).willReturn(List.of(awaitingApproval(request.id())));
+
+        mockMvc.perform(get("/customer/transport-requests/TR-2026-0001"))
+                .andExpect(content().string(containsString("<dd>見積りと経路の承認待ち（お客様の対応待ち）</dd>")))
+                .andExpect(content().string(containsString("経路が確定しました。見積りと経路を確かめて承認してください。")))
+                .andExpect(content().string(containsString(ROUTING_REQUESTED_NOTICE)))
+                .andExpect(content().string(containsString("/quotations/1/approval\">見積りと経路を確かめて承認へ</a>")))
+                .andExpect(content().string(not(containsString(REAPPROVAL_GUIDANCE))))
+                .andExpect(content().string(not(containsString(REAPPROVAL_NOTICE))));
+    }
+
+    @Test
+    void 通常の承認済みの見積りは予約待ちの今のままの案内と依頼の文と承認の文を示す() throws Exception {
+        TransportRequest request = readyToBook();
+        given(queryService.findByNumber(NUMBER, SHIPPER)).willReturn(Optional.of(request));
+        Quotation quotation = awaitingApproval(request.id());
+        quotation.approveByShipper(USER, new UtcInstant(Instant.parse("2026-10-07T06:00:00Z")));
+        given(quotationQueryService.findVisible(NUMBER, SHIPPER)).willReturn(List.of(quotation));
+
+        mockMvc.perform(get("/customer/transport-requests/TR-2026-0001"))
+                .andExpect(content().string(containsString("<dd>予約待ち（A 社の対応待ち）</dd>")))
+                .andExpect(content().string(containsString("見積りと経路を承認いただきました。")))
+                .andExpect(content().string(containsString(ROUTING_REQUESTED_NOTICE)))
+                .andExpect(content().string(containsString("にこの見積りと経路を承認しました。担当営業が本予約を確定します。")))
+                .andExpect(content().string(not(containsString("もう一度承認"))));
+    }
+
+    @Test
+    void 予約待ちでもう一度承認した見積りは予約待ちの案内と承認の文だけを示し依頼の文を出さない() throws Exception {
+        TransportRequest request = readyToBook();
+        given(queryService.findByNumber(NUMBER, SHIPPER)).willReturn(Optional.of(request));
+        Quotation old = approvedThenExpired(request.id());
+        Quotation next = represented(requoted(old, QuotationFixture.EXPIRES_AT));
+        next.approveByShipper(USER, new UtcInstant(Instant.parse("2026-10-06T00:30:00Z")));
+        given(quotationQueryService.findVisible(NUMBER, SHIPPER)).willReturn(List.of(next, old));
+
+        mockMvc.perform(get("/customer/transport-requests/TR-2026-0001"))
+                .andExpect(content().string(containsString("<dd>予約待ち（A 社の対応待ち）</dd>")))
+                .andExpect(content().string(containsString("見積りと経路を承認いただきました。")))
+                .andExpect(content().string(containsString("にこの見積りと経路を承認しました。担当営業が本予約を確定します。")))
+                .andExpect(content().string(not(containsString(ROUTING_REQUESTED_NOTICE))))
+                .andExpect(content().string(not(containsString("もう一度承認"))));
+    }
+
+    @Test
+    void 予約確定済みの後のもう一度承認した見積りは期限を過ぎても承認の記録だけを示し依頼の文を出さない() throws Exception {
+        TransportRequest request = booked();
+        given(queryService.findByNumber(NUMBER, SHIPPER)).willReturn(Optional.of(request));
+        Quotation old = approvedThenExpired(request.id());
+        Quotation next = represented(requoted(old, new UtcInstant(Instant.parse("2026-10-06T00:50:00Z"))));
+        next.approveByShipper(USER, new UtcInstant(Instant.parse("2026-10-06T00:30:00Z")));
+        given(quotationQueryService.findVisible(NUMBER, SHIPPER)).willReturn(List.of(next, old));
+
+        mockMvc.perform(get("/customer/transport-requests/TR-2026-0001"))
+                .andExpect(content().string(containsString("<dd>予約確定済み</dd>")))
+                .andExpect(
+                        content().string(containsString("2026-10-06 09:30 Asia/Tokyo（UTC+09:00）にこの見積りと経路を承認しました。</p>")))
+                .andExpect(content().string(not(containsString(ROUTING_REQUESTED_NOTICE))))
+                .andExpect(content().string(not(containsString("もう一度承認"))));
+    }
+
+    @Test
     void 見積依頼の一覧は予約待ちと荷主承認待ちの見積依頼の状態を荷主に見える最新の見積りから示す() throws Exception {
         TransportRequestNumber second = new TransportRequestNumber(2026, 2);
         TransportRequestNumber third = new TransportRequestNumber(2026, 3);
@@ -760,17 +823,17 @@ class TransportRequestControllerTest {
                         summary(third, TransportRequestStatus.READY_TO_BOOK),
                         summary(fourth, TransportRequestStatus.ROUTING)));
         UtcInstant presented = new UtcInstant(Instant.parse("2026-10-05T04:00:00Z"));
-        UtcInstant confirmed = new UtcInstant(Instant.parse("2026-10-05T05:30:00Z"));
+        UtcInstant responded = new UtcInstant(Instant.parse("2026-10-05T05:00:00Z"));
         given(quotationQueryService.findLatestVisibleSummaries(SHIPPER))
                 .willReturn(List.of(
-                        // 再承認の見積り（提示の前に経路が確定）。輸送要求は DE-24 の受け取りの前で予約待ち
+                        // 再承認の見積り（提示の前に回答した＝回答を引き継いだ）。輸送要求は DE-24 の受け取りの前で予約待ち
                         new ShipperLatestQuotationSummary(
                                 NUMBER,
                                 QuotationStatus.AWAITING_SHIPPER_APPROVAL,
                                 QuotationFixture.EXPIRES_AT,
                                 null,
                                 REPRESENTED_AT,
-                                confirmed),
+                                responded),
                         // 承認済み。輸送要求は DE-04 の受け取りの前で荷主承認待ち
                         new ShipperLatestQuotationSummary(
                                 second,
@@ -778,7 +841,7 @@ class TransportRequestControllerTest {
                                 QuotationFixture.EXPIRES_AT,
                                 new UtcInstant(Instant.parse("2026-10-05T07:00:00Z")),
                                 presented,
-                                confirmed),
+                                responded),
                         // 承認の後に失効
                         new ShipperLatestQuotationSummary(
                                 third,
@@ -786,7 +849,7 @@ class TransportRequestControllerTest {
                                 new UtcInstant(Instant.parse("2026-10-05T12:00:00Z")),
                                 new UtcInstant(Instant.parse("2026-10-05T07:00:00Z")),
                                 presented,
-                                confirmed)));
+                                responded)));
 
         mockMvc.perform(get("/customer/transport-requests"))
                 .andExpect(content().string(row(NUMBER, "見積りと経路の承認待ち（お客様の対応待ち）")))

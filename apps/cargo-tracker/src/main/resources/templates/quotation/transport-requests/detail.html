@@ -60,19 +60,20 @@
         <p th:if="${quotation.respondable()}"><a th:href="@{/customer/transport-requests/{number}/quotations/{no}/response(number=${number},no=${quotation.quotationNo()})}">見積りに回答する</a></p>
         <!--/* 再承認の見積りは回答時刻を引き継いでいるので依頼の文を出さない。承認の後に失効した見積りは、予約確定済みでなければ出さない
              （D-85。Bolt 35d） */-->
-        <p th:if="${quotation.routingStarted() and !quotation.reapproval() and !(quotation.approvedAt() != null and quotation.expired() and !booked)}"
+        <p th:if="${quotation.routingStarted() and !quotation.reapproval() and !expiredAfterApproval}"
            th:text="|${quotation.respondedAt()}にこの見積りで詳細経路設計を依頼しました。|">2026-10-06 09:30 Asia/Tokyo（UTC+09:00）にこの見積りで詳細経路設計を依頼しました。</p>
         <!--/* 確定した経路と承認（C-17、US-24 AC4。Bolt 20）。荷主承認待ちで有効なときだけ承認の入口を出し、承認済みなら承認の日時を示す */-->
         <th:block th:if="${quotation.route()}">
             <div th:replace="~{quotation/fragments/assigned-route :: route(${quotation.route()}, 3)}"></div>
         </th:block>
-        <p th:if="${quotation.reapproval() and quotation.approvable()}">この見積りは、承認いただいた経路版と経路方針のまま、料金と有効期限を出し直したものです。見積りと経路を確かめて、もう一度承認してください。</p>
+        <!--/* 見積りの節は事実を、状態の下の案内はすることを示す（同じ文を 2 回出さない。Bolt 35d の開発レビュー） */-->
+        <p th:if="${quotation.reapproval() and quotation.approvable()}">承認いただいた経路のまま、料金と有効期限を出し直した見積りです。</p>
         <p th:if="${quotation.approvable()}"><a th:href="@{/customer/transport-requests/{number}/quotations/{no}/approval(number=${number},no=${quotation.quotationNo()})}">見積りと経路を確かめて承認へ</a></p>
         <!--/* 承認の後に失効した見積りは、担当営業が経路を引き継いで再見積りする（D-85。Bolt 35d）。予約確定済みの後は承認の記録だけ */-->
-        <p th:if="${quotation.approvedAt() != null and quotation.expired() and !booked}" class="alert alert-warning"
-           th:text="|承認の後に有効期限（${quotation.expiresAt()}）を過ぎました。担当営業が、承認いただいた経路版と経路方針のまま新しい見積りを用意します。用意できたら、もう一度承認をお願いします。|">承認の後に有効期限（2026-10-05 21:00 Asia/Tokyo（UTC+09:00））を過ぎました。担当営業が、承認いただいた経路版と経路方針のまま新しい見積りを用意します。用意できたら、もう一度承認をお願いします。</p>
+        <p th:if="${expiredAfterApproval}" class="alert alert-warning"
+           th:text="|承認の後に有効期限（${quotation.expiresAt()}）を過ぎました。用意できたら、もう一度承認をお願いします。|">承認の後に有効期限（2026-10-05 21:00 Asia/Tokyo（UTC+09:00））を過ぎました。用意できたら、もう一度承認をお願いします。</p>
         <!-- 予約確定済みの後は承認の記録だけを示し、確定の前の約束（担当営業が確定します）を出さない（Bolt 29b の開発レビュー） -->
-        <p th:if="${quotation.approvedAt() != null and (!quotation.expired() or booked)}"
+        <p th:if="${quotation.approvedAt() != null and !expiredAfterApproval}"
            th:text="${booked} ? |${quotation.approvedAt()}にこの見積りと経路を承認しました。| : |${quotation.approvedAt()}にこの見積りと経路を承認しました。担当営業が本予約を確定します。確定したらご連絡します。|">2026-10-07 15:00 Asia/Tokyo（UTC+09:00）にこの見積りと経路を承認しました。担当営業が本予約を確定します。確定したらご連絡します。</p>
         <th:block th:unless="${#lists.isEmpty(previousQuotations)}">
             <h3>以前の見積り（読み取り専用）</h3>

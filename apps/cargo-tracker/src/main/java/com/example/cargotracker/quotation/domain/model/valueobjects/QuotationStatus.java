@@ -35,7 +35,8 @@ public enum QuotationStatus {
 
     /**
      * 判定時刻に失効しているか（Q-INV-06・07）。失効を記録した見積りと、判定時刻で失効し得る状態で判定時刻が有効期限と同時刻または後の
-     * 見積りは失効。見積りの集約と読み取りモデル（C-02。Bolt 35d）で共有する。
+     * 見積りは失効。見積りの集約と読み取りモデル（C-02。Bolt 35d）で共有する。判定時刻で失効し得ない状態では有効期限を見ない（作成中の
+     * 見積りは有効期限を持たないので null でよい）。
      */
     public boolean isExpiredAt(QuotationExpiry expiry, UtcInstant judgedAt) {
         return this == EXPIRED || (expiresByTime() && !expiry.isValidAt(judgedAt));
