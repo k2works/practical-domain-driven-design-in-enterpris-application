@@ -4,7 +4,7 @@ title: "リリース計画 - cargo-tracker（A 社国際貨物輸送管理シス
 description: "cargo-tracker MVP のリリース計画。1 人 + AI、時間単位の Bolt（= イテレーション）と週次の見直しで、最初の縦の流れ（R0.1）、パイロット準備完了（R1.0）、本格展開前（R1.1）の 3 段階、Unit のエントロピー評価、SP、バッファ、パイロット開始の条件、引継ぎ ID の台帳、業務責任者に確かめる事項の台帳。"
 tags: [development,release-plan]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-20T02:52:02Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-20T03:33:57Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T09:29:53Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:38:26Z }
@@ -655,7 +655,7 @@ US-18 の Bolt の順序は 31b → 31c → 31d → 32 → 32c → 32d → 32b �
 - [x] Bolt 35b: D-85 の再見積り（ドメインと業務ルール層）。[Bolt 35b 計画](bolt_35b_plan.md)（承認済み）、[Bolt 35b 終了報告](bolt_35b_report.md)（承認済み。35b は単独で出さず 35b2・35c・35d・35e と一緒に出す）
 - [x] Bolt 35b2: D-85 の輸送要求の戻し（DE-24）。[Bolt 35b2 計画](bolt_35b2_plan.md)（承認済み）、[Bolt 35b2 終了報告](bolt_35b2_report.md)（承認済み）
 - [x] Bolt 35c: D-85 の社内の画面とマニュアル。[Bolt 35c 計画](bolt_35c_plan.md)（承認済み）、[Bolt 35c 終了報告](bolt_35c_report.md)（承認済み。35c は単独で出さず 35d・35e と一緒に出す）
-- [ ] Bolt 35d: D-85 の荷主の画面とマニュアル、W5 のデモ。[Bolt 35d 計画](bolt_35d_plan.md)（承認済み）
+- [ ] Bolt 35d: D-85 の荷主の画面とマニュアル、W5 のデモ。[Bolt 35d 計画](bolt_35d_plan.md)（承認済み）、[Bolt 35d 終了報告](bolt_35d_report.md)（承認待ち）
 - [ ] Bolt 35e: D-85 の開発データのサンプル
 - [ ] W5 の締め: 結果とふりかえり、開いている持ち越しの数（T-89）、W6 の計画の見直し
 
@@ -1046,3 +1046,4 @@ xychart-beta
 | 2026-10-20 | Bolt 35d の開始準備で、[Bolt 35d 計画](bolt_35d_plan.md)を作った（承認待ち）。35d の行を 35d・35e（開発データ）に分け、human:kakimomokuri の決定 (1)〜(6) を書いた。W5 の本数を 33 本にした | anthropic/claude-opus-5-5 |
 | 2026-10-20 | Bolt 35d の計画を承認した（確認ポイント 2・5・7〜12 を推奨のとおり） | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-10-20 | Bolt 35d のステップ 1 で、ui_design（C-02・C-04・C-17・S-04・荷主の画面遷移図・輸送要求の状態と荷主の画面の表示の対応）、domain_model（再承認の見積りの問い合わせ・用語・時刻の順の不変条件・荷主の画面の扱い）、test_strategy、user_story（US-24 の決定）を直し、W5 の状態・局面とアプローチ・D-85 の注と台帳・D-88 の注・デモ項目を直した | anthropic/claude-opus-5-5 |
+| 2026-10-20 | Bolt 35d の開発レビューの決定（再承認の判定を荷主の回答の時刻に、C-04 の案内の役割を分ける）を反映し、[Bolt 35d 終了報告](bolt_35d_report.md)を作った（承認待ち）。W5 のデモの動画を撮った | anthropic/claude-opus-5-5、決定 human:kakimomokuri |
