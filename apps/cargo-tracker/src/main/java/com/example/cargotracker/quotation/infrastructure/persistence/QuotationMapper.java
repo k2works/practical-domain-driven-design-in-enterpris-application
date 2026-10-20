@@ -42,4 +42,7 @@ public interface QuotationMapper {
     List<RoutingRequestedSummaryRow> selectRoutingRequested();
 
     List<AwaitingBookingSummaryRow> selectAwaitingBooking();
+
+    /** 荷主企業の荷主承認待ち・予約待ちの見積依頼ごとの、荷主に見える最新の見積り（荷主の見積依頼の一覧 C-02。Bolt 35d）。 */
+    List<ShipperLatestQuotationSummaryRow> selectLatestVisibleForShipper(UUID shipperCompanyId);
 }

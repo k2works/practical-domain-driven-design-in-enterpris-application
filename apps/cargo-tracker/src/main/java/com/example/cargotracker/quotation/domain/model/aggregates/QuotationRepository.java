@@ -4,7 +4,9 @@ import com.example.cargotracker.quotation.domain.model.valueobjects.AwaitingBook
 import com.example.cargotracker.quotation.domain.model.valueobjects.QuotationId;
 import com.example.cargotracker.quotation.domain.model.valueobjects.QuotedRequestSummary;
 import com.example.cargotracker.quotation.domain.model.valueobjects.RoutingRequestedSummary;
+import com.example.cargotracker.quotation.domain.model.valueobjects.ShipperLatestQuotationSummary;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestId;
+import com.example.cargotracker.shared.domain.CompanyId;
 import java.util.List;
 import java.util.Optional;
 
@@ -48,6 +50,12 @@ public interface QuotationRepository {
      * 輸送要求が予約確定済みでないもの）を有効期限の近い順に（S-02。Bolt 23b。承認待ちの行は D-85。Bolt 35c）。
      */
     List<AwaitingBookingSummary> findAwaitingBookingSummaries();
+
+    /**
+     * 荷主企業の、輸送要求が荷主承認待ち・予約待ちの見積依頼ごとに、荷主に見える最新の見積り（提示済みで見積り番号の最大）を返す
+     * （荷主の見積依頼の一覧 C-02 の状態の選び方。D-85。Bolt 35d）。荷主企業で必ず絞る（Q-INV-08）。
+     */
+    List<ShipperLatestQuotationSummary> findLatestVisibleForShipper(CompanyId shipperCompanyId);
 
     /** 見積りを ID で探す（経路の割当て。経路設計は依頼元の見積り ID を持つ。Bolt 20）。 */
     Optional<Quotation> findById(QuotationId id);

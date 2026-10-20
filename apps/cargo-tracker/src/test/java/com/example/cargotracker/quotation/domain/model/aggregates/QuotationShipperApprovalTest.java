@@ -449,6 +449,61 @@ class QuotationShipperApprovalTest {
         assertThat(otherRequest.assignedRoute()).isEmpty();
     }
 
+    // 再承認の見積りか（経路の確定の時刻 < 提示の時刻。D-85。Bolt 35d）
+
+    @Test
+    void 通常の流れの見積りは提示の後に経路が確定するので再承認の見積りでない() {
+        Quotation awaiting = awaitingApproval();
+        assertThat(awaiting.presentedAt())
+                .hasValueSatisfying(presentedAt -> assertThat(awaiting.assignedRoute()
+                                .orElseThrow()
+                                .confirmedAt()
+                                .instant())
+                        .as("通常の流れでは経路の確定は提示の後")
+                        .isAfter(presentedAt.instant()));
+        assertThat(awaiting.isPresentedForReapproval()).isFalse();
+
+        Quotation approved = approved();
+        assertThat(approved.isPresentedForReapproval()).isFalse();
+        assertThat(approved.isExpiredAt(EXPIRES)).isTrue();
+        assertThat(approved.isPresentedForReapproval()).as("時刻で失効しても変わらない").isFalse();
+    }
+
+    @Test
+    void 経路を引き継いだ見積りは提示すると再承認の見積りで承認しても変わらない() {
+        Quotation next = inherited();
+        assertThat(next.isPresentedForReapproval()).as("提示の前は荷主に見えない").isFalse();
+
+        next.presentInternally(salesRep, now);
+        assertThat(next.isPresentedForReapproval()).isTrue();
+
+        next.approveByShipper(shipperUser, now);
+        assertThat(next.status()).isEqualTo(QuotationStatus.APPROVED);
+        assertThat(next.isPresentedForReapproval()).isTrue();
+    }
+
+    @Test
+    void 経路を持たない見積りは再承認の見積りでない() {
+        assertThat(pendingApproval().isPresentedForReapproval()).isFalse();
+        assertThat(presented().isPresentedForReapproval()).isFalse();
+        assertThat(routingRequested().isPresentedForReapproval()).isFalse();
+    }
+
+    @Test
+    void 経路の確定と提示が同時刻なら再承認の見積りでない() {
+        Quotation quotation = routingRequested();
+        quotation.assignRoute(
+                new AssignedRoute(route.routingCaseNumber(), route.routeVersionNo(), now, route.legs()), now);
+        quotation.approveByShipper(shipperUser, now);
+        Quotation next = calculatedNext(transportRequestId);
+        quotation.requoteInto(next, EXPIRES);
+
+        next.presentInternally(salesRep, now);
+
+        assertThat(next.status()).isEqualTo(QuotationStatus.AWAITING_SHIPPER_APPROVAL);
+        assertThat(next.isPresentedForReapproval()).isFalse();
+    }
+
     private Quotation approved() {
         Quotation quotation = awaitingApproval();
         quotation.approveByShipper(shipperUser, now);

@@ -23,6 +23,7 @@ import com.example.cargotracker.quotation.domain.model.valueobjects.QuotedReques
 import com.example.cargotracker.quotation.domain.model.valueobjects.RoutingRequestedSummary;
 import com.example.cargotracker.quotation.domain.model.valueobjects.ShipmentTermsFixture;
 import com.example.cargotracker.quotation.domain.model.valueobjects.ShipperApproval;
+import com.example.cargotracker.quotation.domain.model.valueobjects.ShipperLatestQuotationSummary;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestId;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestNumber;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestStatus;
@@ -904,6 +905,80 @@ class MyBatisQuotationIntegrationTest {
                         RoutingRequestedSummary::status)
                 .containsExactly(org.assertj.core.groups.Tuple.tuple(
                         new TransportRequestNumber(2082, 40), 2, QuotationStatus.AWAITING_SHIPPER_APPROVAL));
+    }
+
+    @Test
+    void 荷主の見積依頼の一覧には荷主承認待ちと予約待ちの見積依頼ごとに荷主に見える最新の見積りを自社の分だけ返す() {
+        CompanyId shipper = new CompanyId(UUID.randomUUID());
+        TransportRequestId approvedRequest = transportRequest(41, shipper);
+        approved(approvedRequest);
+        advanceTransportRequest(approvedRequest, TransportRequestStatus.READY_TO_BOOK);
+        TransportRequestId notPresented = transportRequest(42, shipper);
+        approved(notPresented);
+        advanceTransportRequest(notPresented, TransportRequestStatus.READY_TO_BOOK);
+        requote(
+                repository.findByTransportRequestIdAndNo(notPresented, 1).orElseThrow(),
+                calculatedAfterExpiry(notPresented, 2),
+                QuotationFixture.EXPIRES_AT);
+        TransportRequestId represented = transportRequest(43, shipper);
+        approved(represented);
+        advanceTransportRequest(represented, TransportRequestStatus.READY_TO_BOOK);
+        Quotation next = calculatedAfterExpiry(represented, 2);
+        requote(
+                repository.findByTransportRequestIdAndNo(represented, 1).orElseThrow(),
+                next,
+                QuotationFixture.EXPIRES_AT);
+        Quotation saved = repository.findById(next.id()).orElseThrow();
+        saved.presentInternally(STAFF, QuotationFixture.EXPIRES_AT);
+        repository.update(saved);
+        TransportRequestId routing = transportRequest(44, shipper);
+        routingRequested(routing);
+        advanceTransportRequest(routing, TransportRequestStatus.ROUTING);
+        TransportRequestId otherShipper = transportRequest(45);
+        approved(otherShipper);
+        advanceTransportRequest(otherShipper, TransportRequestStatus.READY_TO_BOOK);
+        UtcInstant nextExpires =
+                new UtcInstant(QuotationFixture.EXPIRES_AT.instant().plusSeconds(86_400));
+
+        assertThat(repository.findLatestVisibleForShipper(shipper))
+                .as("提示の前の見積り 2 は荷主に見えないので数えない。経路設計中と他社の見積依頼は出さない（D-85。Bolt 35d）")
+                .containsExactly(
+                        new ShipperLatestQuotationSummary(
+                                new TransportRequestNumber(2082, 41),
+                                QuotationStatus.APPROVED,
+                                QuotationFixture.EXPIRES_AT,
+                                SHIPPER_APPROVED_AT,
+                                APPROVED_AT,
+                                CONFIRMED_AT),
+                        new ShipperLatestQuotationSummary(
+                                new TransportRequestNumber(2082, 42),
+                                QuotationStatus.EXPIRED,
+                                QuotationFixture.EXPIRES_AT,
+                                SHIPPER_APPROVED_AT,
+                                APPROVED_AT,
+                                CONFIRMED_AT),
+                        new ShipperLatestQuotationSummary(
+                                new TransportRequestNumber(2082, 43),
+                                QuotationStatus.AWAITING_SHIPPER_APPROVAL,
+                                nextExpires,
+                                null,
+                                QuotationFixture.EXPIRES_AT,
+                                CONFIRMED_AT));
+        assertThat(repository.findLatestVisibleForShipper(shipper))
+                .extracting(ShipperLatestQuotationSummary::isPresentedForReapproval)
+                .containsExactly(false, false, true);
+    }
+
+    private TransportRequestId transportRequest(int sequence, CompanyId shipper) {
+        TransportRequest request = TransportRequest.submit(
+                new TransportRequestId(UUID.randomUUID()),
+                new TransportRequestNumber(2082, sequence),
+                shipper,
+                ShipmentTermsFixture.generalCargo(),
+                STAFF,
+                NOW);
+        transportRequests.save(request);
+        return request.id();
     }
 
     private int legs(QuotationId quotationId) {

@@ -17,8 +17,10 @@ import com.example.cargotracker.quotation.domain.model.valueobjects.QuotedReques
 import com.example.cargotracker.quotation.domain.model.valueobjects.RoutePolicy;
 import com.example.cargotracker.quotation.domain.model.valueobjects.RoutingRequestedSummary;
 import com.example.cargotracker.quotation.domain.model.valueobjects.ShipperApproval;
+import com.example.cargotracker.quotation.domain.model.valueobjects.ShipperLatestQuotationSummary;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestId;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestNumber;
+import com.example.cargotracker.shared.domain.CompanyId;
 import com.example.cargotracker.shared.domain.Location;
 import com.example.cargotracker.shared.domain.UserId;
 import com.example.cargotracker.shared.domain.UtcInstant;
@@ -150,6 +152,19 @@ public class MyBatisQuotationRepository implements QuotationRepository {
                         row.routeVersionNo(),
                         row.shipperApprovedAt() == null ? null : toUtc(row.shipperApprovedAt()),
                         toUtc(row.expiresAt())))
+                .toList();
+    }
+
+    @Override
+    public List<ShipperLatestQuotationSummary> findLatestVisibleForShipper(CompanyId shipperCompanyId) {
+        return mapper.selectLatestVisibleForShipper(shipperCompanyId.value()).stream()
+                .map(row -> new ShipperLatestQuotationSummary(
+                        TransportRequestNumber.parse(row.requestNumber()),
+                        QuotationStatus.valueOf(row.status()),
+                        toUtc(row.expiresAt()),
+                        row.shipperApprovedAt() == null ? null : toUtc(row.shipperApprovedAt()),
+                        toUtc(row.presentedAt()),
+                        row.routeConfirmedAt() == null ? null : toUtc(row.routeConfirmedAt())))
                 .toList();
     }
 

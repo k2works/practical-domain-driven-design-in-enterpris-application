@@ -145,6 +145,16 @@ public class BookingUiSteps {
         browser.checkAccessibility();
     }
 
+    /** 再見積りした見積りで本予約を確定する（D-85。Bolt 35d）。追跡の開始の進み具合は上のステップで確かめる。 */
+    @ならば("予約の詳細に見積り {int} で本予約を確定したことと追跡番号が示される")
+    public void 見積りで本予約を確定したと示される(int quotationNo) {
+        page().waitForURL("**/staff/bookings/CT*");
+        assertThat(page().getByRole(AriaRole.STATUS)).containsText(subject(quotationNo) + " で本予約を確定しました。追跡番号は CT");
+        assertThat(definition("業務番号")).hasText(state.transportRequestNumber());
+        assertThat(definition("状態")).hasText("確定済み");
+        browser.checkAccessibility();
+    }
+
     /**
      * 予約サガの完了は DE-07 と DE-22 の 2 つの非同期の処理の後なので、完了と出るまで開き直す（ADR-015。Bolt 25）。追跡番号は追跡管理者の
      * ステップが使うので控える（Bolt 26）。

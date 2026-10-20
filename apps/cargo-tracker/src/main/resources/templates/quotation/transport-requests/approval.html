@@ -19,6 +19,8 @@
     <h2>見積り</h2>
     <div th:replace="~{quotation/fragments/quotation :: details(${quotation})}"></div>
     <div th:replace="~{quotation/fragments/assigned-route :: route(${quotation.route()}, 2)}"></div>
+    <!--/* 再承認の見積り（荷主の承認の後に失効した見積りから経路を引き継いだ再見積り。D-85。Bolt 35d） */-->
+    <p th:if="${quotation.reapproval()}">承認いただいた経路版と経路方針のまま、料金と有効期限を出し直した見積りです。</p>
     <h2>この見積りと経路で承認しますか</h2>
     <p th:text="|有効期限（${quotation.expiresAt()}）までに承認してください。|">有効期限（2026-10-08 18:00 Asia/Tokyo（UTC+09:00））までに承認してください。</p>
     <p>承認は本予約の確定ではありません。承認の後、担当営業が本予約を確定します。</p>

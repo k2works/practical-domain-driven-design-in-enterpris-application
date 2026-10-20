@@ -22,6 +22,7 @@ import com.example.cargotracker.quotation.application.internal.queryservices.Quo
 import com.example.cargotracker.quotation.domain.model.aggregates.Quotation;
 import com.example.cargotracker.quotation.domain.model.valueobjects.QuotationFixture;
 import com.example.cargotracker.quotation.domain.model.valueobjects.QuotationId;
+import com.example.cargotracker.quotation.domain.model.valueobjects.QuotationInput;
 import com.example.cargotracker.quotation.domain.model.valueobjects.QuotationRejection;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestId;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestNumber;
@@ -91,6 +92,54 @@ class QuotationApprovalControllerTest {
         quotation.assignRoute(QuotationFixture.assignedRoute(), new UtcInstant(Instant.parse("2026-10-07T05:01:00Z")));
         quotation.clearDomainEvents();
         return quotation;
+    }
+
+    private static final String REAPPROVAL_NOTICE = "承認いただいた経路版と経路方針のまま、料金と有効期限を出し直した見積りです。";
+
+    /** 荷主が承認した後に 2026-10-08T00:00:00Z に失効した見積り 1 から経路を引き継いで再見積りし、提示した見積り 2（D-85。Bolt 35d）。 */
+    private static List<Quotation> reapprovalQuotations() {
+        Quotation old = awaitingApproval();
+        QuotationInput input = QuotationFixture.completeInput();
+        Quotation expiring = Quotation.create(new QuotationId(UUID.randomUUID()), old.transportRequestId(), 1, 1);
+        expiring.calculate(
+                new QuotationInput(
+                        input.lines(),
+                        input.currency(),
+                        new UtcInstant(Instant.parse("2026-10-08T00:00:00Z")),
+                        input.via(),
+                        input.departureAt(),
+                        input.arrivalAt()),
+                new UtcInstant(Instant.parse("2026-10-05T04:00:00Z")));
+        expiring.presentInternally(
+                new UserId(UUID.randomUUID()), new UtcInstant(Instant.parse("2026-10-05T04:00:00Z")));
+        expiring.requestRouteDesign(USER, new UtcInstant(Instant.parse("2026-10-06T00:30:00Z")));
+        expiring.assignRoute(QuotationFixture.assignedRoute(), new UtcInstant(Instant.parse("2026-10-07T05:01:00Z")));
+        expiring.approveByShipper(USER, new UtcInstant(Instant.parse("2026-10-07T06:00:00Z")));
+        Quotation next = Quotation.create(new QuotationId(UUID.randomUUID()), old.transportRequestId(), 1, 2);
+        UtcInstant requotedAt = new UtcInstant(Instant.parse("2026-10-08T01:00:00Z"));
+        next.calculate(input, requotedAt);
+        expiring.requoteInto(next, requotedAt);
+        next.presentInternally(new UserId(UUID.randomUUID()), new UtcInstant(Instant.parse("2026-10-08T02:00:00Z")));
+        next.clearDomainEvents();
+        return List.of(next, expiring);
+    }
+
+    @Test
+    void 再承認の見積りの承認の画面は経路版と経路方針のまま料金と有効期限を出し直した見積りと示す() throws Exception {
+        given(quotationQueryService.findVisible(NUMBER, SHIPPER)).willReturn(reapprovalQuotations());
+
+        mockMvc.perform(get(DETAIL + "/quotations/2/approval"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("<h1>見積りと経路の承認 TR-2026-0001 見積 2</h1>")))
+                .andExpect(content().string(containsString(REAPPROVAL_NOTICE)))
+                .andExpect(content().string(containsString("この見積りと経路で承認しますか")));
+    }
+
+    @Test
+    void 通常の見積りの承認の画面には出し直した見積りの文を出さない() throws Exception {
+        given(quotationQueryService.findVisible(NUMBER, SHIPPER)).willReturn(List.of(awaitingApproval()));
+
+        mockMvc.perform(get(APPROVAL)).andExpect(content().string(not(containsString(REAPPROVAL_NOTICE))));
     }
 
     @Test

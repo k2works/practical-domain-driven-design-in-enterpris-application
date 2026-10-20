@@ -1,5 +1,7 @@
 package com.example.cargotracker.quotation.domain.model.valueobjects;
 
+import com.example.cargotracker.shared.domain.UtcInstant;
+
 /**
  * 見積りの状態。値の名前はデータモデルの状態の値と同じにする。Bolt 10 は提示までの 3 つ、Bolt 11 で失効と置換済みを、Bolt 12 で詳細設計依頼済みを、Bolt 20 で荷主承認待ちと承認済みを足した。
  * 失効は、有効期限を過ぎても状態を書き換えず判定時刻で決める（{@code Quotation#isExpiredAt}）。状態の失効は、再見積りのときに
@@ -29,6 +31,14 @@ public enum QuotationStatus {
      */
     public boolean expiresByTime() {
         return this == PENDING_APPROVAL || this == PRESENTED || isRoutingStarted();
+    }
+
+    /**
+     * 判定時刻に失効しているか（Q-INV-06・07）。失効を記録した見積りと、判定時刻で失効し得る状態で判定時刻が有効期限と同時刻または後の
+     * 見積りは失効。見積りの集約と読み取りモデル（C-02。Bolt 35d）で共有する。
+     */
+    public boolean isExpiredAt(QuotationExpiry expiry, UtcInstant judgedAt) {
+        return this == EXPIRED || (expiresByTime() && !expiry.isValidAt(judgedAt));
     }
 
     /**

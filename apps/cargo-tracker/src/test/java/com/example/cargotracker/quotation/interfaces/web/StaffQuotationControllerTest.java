@@ -438,6 +438,52 @@ class StaffQuotationControllerTest {
                 .andExpect(content().string(not(containsString("社内承認して提示する</button>"))));
     }
 
+    /** 承認済みの見積り 1 から経路を引き継いで再見積りし、提示した見積り 2（再承認の見積り。有効期限 2100-01-01。D-85。Bolt 35d）。 */
+    private static Quotation reapproval() {
+        Quotation old = approved();
+        QuotationInput input = QuotationFixture.completeInput();
+        Quotation next = Quotation.create(new QuotationId(UUID.randomUUID()), ID, 1, 2);
+        next.calculate(
+                new QuotationInput(
+                        input.lines(),
+                        input.currency(),
+                        new UtcInstant(Instant.parse("2100-01-01T00:00:00Z")),
+                        input.via(),
+                        input.departureAt(),
+                        input.arrivalAt()),
+                QuotationFixture.EXPIRES_AT);
+        old.requoteInto(next, QuotationFixture.EXPIRES_AT);
+        next.presentInternally(STAFF, new UtcInstant(Instant.parse("2099-10-08T10:00:00Z")));
+        next.clearDomainEvents();
+        return next;
+    }
+
+    @Test
+    void 再承認の見積りの荷主承認待ちは荷主の再承認を待っていると示し引き継いだ回答時刻で依頼の文を出さない() throws Exception {
+        readyToBookRequestExists(false);
+        given(queryService.find(NUMBER, 2)).willReturn(Optional.of(reapproval()));
+
+        mockMvc.perform(get("/staff/transport-requests/TR-2026-0001/quotations/2"))
+                .andExpect(content().string(containsString("荷主の再承認を待っています（承認済みの経路版と経路方針を引き継いだ見積りです）。この見積りは読み取り専用です。")))
+                .andExpect(content().string(not(containsString("に詳細経路設計を依頼しました。"))));
+    }
+
+    @Test
+    void 再承認の見積りの承認済みは荷主が再承認した日時を示し依頼の文を出さない() throws Exception {
+        readyToBookRequestExists(false);
+        Quotation quotation = reapproval();
+        quotation.approveByShipper(new UserId(UUID.randomUUID()), new UtcInstant(NOW));
+        given(queryService.find(NUMBER, 2)).willReturn(Optional.of(quotation));
+
+        mockMvc.perform(get("/staff/transport-requests/TR-2026-0001/quotations/2"))
+                .andExpect(
+                        content()
+                                .string(
+                                        containsString(
+                                                "荷主が 2026-10-06 10:00 Asia/Tokyo（UTC+09:00）（UTC 2026-10-06 01:00）に再承認しました（承認済みの経路版と経路方針を引き継いだ見積りです）。この見積りは読み取り専用です。")))
+                .andExpect(content().string(not(containsString("に詳細経路設計を依頼しました。"))));
+    }
+
     @Test
     void 詳細設計依頼済みの見積りは読み取り専用と依頼の日時を示し提示と再見積りの操作を出さない() throws Exception {
         transportRequestExists();

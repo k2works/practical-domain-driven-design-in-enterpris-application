@@ -7,9 +7,11 @@ import com.example.cargotracker.quotation.application.internal.commandservices.S
 import com.example.cargotracker.quotation.application.internal.commandservices.TransportRequestCommandService;
 import com.example.cargotracker.quotation.application.internal.queryservices.QuotationQueryService;
 import com.example.cargotracker.quotation.application.internal.queryservices.TransportRequestQueryService;
+import com.example.cargotracker.quotation.domain.model.aggregates.Quotation;
 import com.example.cargotracker.quotation.domain.model.aggregates.TransportRequest;
 import com.example.cargotracker.quotation.domain.model.valueobjects.SendBackNotice;
 import com.example.cargotracker.quotation.domain.model.valueobjects.ShipmentTermsInput;
+import com.example.cargotracker.quotation.domain.model.valueobjects.ShipperLatestQuotationSummary;
 import com.example.cargotracker.quotation.domain.model.valueobjects.SubmissionViolations;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestNumber;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestStatus;
@@ -20,6 +22,7 @@ import java.time.Clock;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -81,10 +84,16 @@ public class TransportRequestController {
     /** C-02 見積依頼の一覧。自社の輸送要求を、最初の提出時刻の新しい順に示す。 */
     @GetMapping
     public String list(AuthenticatedActor actor, Model model) {
+        // 荷主承認待ち・予約待ちの見積依頼の状態は、荷主に見える最新の見積りから選ぶ（詳細 C-04 と同じ。D-85。Bolt 35d）
+        UtcInstant now = new UtcInstant(clock.instant());
+        Map<TransportRequestNumber, TransportRequestLabels.LatestQuotation> latest =
+                quotationQueryService.findLatestVisibleSummaries(actor.companyId()).stream()
+                        .collect(Collectors.toMap(
+                                ShipperLatestQuotationSummary::number, summary -> latestQuotation(summary, now)));
         model.addAttribute(
                 "requests",
                 queryService.findSummaries(actor.companyId()).stream()
-                        .map(TransportRequestController::row)
+                        .map(summary -> row(summary, Optional.ofNullable(latest.get(summary.number()))))
                         .toList());
         return LIST_VIEW;
     }
@@ -142,8 +151,6 @@ public class TransportRequestController {
                 "numberWithVersion",
                 TransportRequestLabels.numberWithVersion(
                         request.number(), request.currentVersion().versionNo()));
-        model.addAttribute("statusLabel", TransportRequestLabels.customerStatus(request.status()));
-        model.addAttribute("guidance", TransportRequestLabels.customerGuidance(request.status()));
         // 予約確定済みの後の追跡の状況は予約一覧（C-06）に任せる。見積りは追跡の開始を知らない（Bolt 29b、#46）
         model.addAttribute("booked", request.status() == TransportRequestStatus.BOOKED);
         model.addAttribute("terms", rows);
@@ -158,14 +165,16 @@ public class TransportRequestController {
         // 見積りの節は提示した見積りから出し、輸送要求の状態の更新（DE-03 の受け取り）を待たない（Bolt 10。US-03 AC2）。
         // 最新の見積りを先に、以前の見積りを読み取り専用で並べる。失効は表示する時刻で判定する（Bolt 11。US-03 AC5）
         UtcInstant now = new UtcInstant(clock.instant());
-        List<QuotationViews.View> quotations =
-                quotationQueryService.findVisible(request.number(), actor.companyId()).stream()
-                        .map(quotation -> QuotationViews.view(
-                                quotation,
-                                TransportRequestLabels::customerDateTime,
-                                now,
-                                QuotationViews.Audience.CUSTOMER))
-                        .toList();
+        List<Quotation> visible = quotationQueryService.findVisible(request.number(), actor.companyId());
+        // 状態と案内は、荷主承認待ち・予約待ちなら最新の見積りから選ぶ（一覧 C-02 と同じ。D-85。Bolt 35d）
+        TransportRequestLabels.CustomerStage stage = TransportRequestLabels.customerStage(
+                request.status(), visible.stream().findFirst().map(quotation -> latestQuotation(quotation, now)));
+        model.addAttribute("statusLabel", stage.status());
+        model.addAttribute("guidance", stage.guidance());
+        List<QuotationViews.View> quotations = visible.stream()
+                .map(quotation -> QuotationViews.view(
+                        quotation, TransportRequestLabels::customerDateTime, now, QuotationViews.Audience.CUSTOMER))
+                .toList();
         model.addAttribute("quotation", quotations.isEmpty() ? null : quotations.getFirst());
         model.addAttribute(
                 "previousQuotations", quotations.isEmpty() ? List.of() : quotations.subList(1, quotations.size()));
@@ -312,13 +321,30 @@ public class TransportRequestController {
                 + " は" + TransportRequestLabels.status(request.status()) + "のため出し直せません";
     }
 
-    private static Row row(TransportRequestSummary summary) {
+    private static Row row(TransportRequestSummary summary, Optional<TransportRequestLabels.LatestQuotation> latest) {
         return new Row(
                 summary.number().text(),
                 summary.versionNo(),
-                TransportRequestLabels.customerStatus(summary.status()),
+                TransportRequestLabels.customerStage(summary.status(), latest).status(),
                 summary.origin().unLocode() + " → " + summary.destination().unLocode(),
                 TransportRequestLabels.customerDateTime(summary.firstSubmittedAt()));
+    }
+
+    private static TransportRequestLabels.LatestQuotation latestQuotation(Quotation quotation, UtcInstant now) {
+        return new TransportRequestLabels.LatestQuotation(
+                quotation.status(),
+                quotation.isExpiredAt(now),
+                quotation.shipperApproval().isPresent(),
+                quotation.isPresentedForReapproval());
+    }
+
+    private static TransportRequestLabels.LatestQuotation latestQuotation(
+            ShipperLatestQuotationSummary summary, UtcInstant now) {
+        return new TransportRequestLabels.LatestQuotation(
+                summary.status(),
+                summary.isExpiredAt(now),
+                summary.isShipperApproved(),
+                summary.isPresentedForReapproval());
     }
 
     private static SendBack sendBack(SendBackNotice notice) {

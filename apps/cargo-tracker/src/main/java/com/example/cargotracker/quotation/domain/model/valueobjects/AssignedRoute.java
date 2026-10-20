@@ -38,6 +38,19 @@ public record AssignedRoute(
         return routingCaseNumber.equals(other.routingCaseNumber) && routeVersionNo == other.routeVersionNo;
     }
 
+    /**
+     * 経路の確定が提示より前か（再承認の見積りの判定。見積りの集約と読み取りモデルで共有する。D-85。Bolt 35d）。通常の流れは提示 →
+     * 回答 → 経路の割当ての順なので確定は提示の後になる。同時刻は通常の流れとして扱う。どちらかがなければ偽。
+     *
+     * @param confirmedAt 経路の確定の時刻（経路を持たなければ null）
+     * @param presentedAt 提示時刻（提示していなければ null）
+     */
+    public static boolean isConfirmedBeforePresentation(UtcInstant confirmedAt, UtcInstant presentedAt) {
+        return confirmedAt != null
+                && presentedAt != null
+                && confirmedAt.instant().isBefore(presentedAt.instant());
+    }
+
     /** 到着予定（最後の区間の到着予定）。 */
     public UtcInstant arrivalAt() {
         return legs.getLast().arrivalAt();

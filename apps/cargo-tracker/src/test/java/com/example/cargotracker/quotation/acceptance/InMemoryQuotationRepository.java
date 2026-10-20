@@ -8,7 +8,9 @@ import com.example.cargotracker.quotation.domain.model.valueobjects.AwaitingBook
 import com.example.cargotracker.quotation.domain.model.valueobjects.QuotationId;
 import com.example.cargotracker.quotation.domain.model.valueobjects.QuotedRequestSummary;
 import com.example.cargotracker.quotation.domain.model.valueobjects.RoutingRequestedSummary;
+import com.example.cargotracker.quotation.domain.model.valueobjects.ShipperLatestQuotationSummary;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestId;
+import com.example.cargotracker.shared.domain.CompanyId;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -90,6 +92,11 @@ public class InMemoryQuotationRepository implements QuotationRepository {
     @Override
     public List<AwaitingBookingSummary> findAwaitingBookingSummaries() {
         throw new UnsupportedOperationException("予約の確定待ちの一覧は業務ルール層で使わない");
+    }
+
+    @Override
+    public List<ShipperLatestQuotationSummary> findLatestVisibleForShipper(CompanyId shipperCompanyId) {
+        throw new UnsupportedOperationException("荷主の見積依頼の一覧の状態は業務ルール層で使わない");
     }
 
     public void clear() {

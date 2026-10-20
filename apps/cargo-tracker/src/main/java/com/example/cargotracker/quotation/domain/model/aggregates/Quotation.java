@@ -451,7 +451,7 @@ public final class Quotation {
      */
     public boolean isExpiredAt(UtcInstant judgedAt) {
         Objects.requireNonNull(judgedAt, "judgedAt");
-        return status == QuotationStatus.EXPIRED || (status.expiresByTime() && !expiry.isValidAt(judgedAt));
+        return status.isExpiredAt(expiry, judgedAt);
     }
 
     /**
@@ -534,6 +534,17 @@ public final class Quotation {
     /** 荷主に見えるか（提示した見積りだけ。承認待ちと、提示する前に置き換えた見積りは見えない。Q-INV-08。Bolt 12 レビュー R-19）。 */
     public boolean isVisibleToShipper() {
         return presentedAt != null;
+    }
+
+    /**
+     * 荷主にもう一度の承認を求めた見積りか（荷主の承認の後に失効した見積りから経路を引き継いだ再見積りを提示した。D-85。Bolt 35d）。
+     * 通常の流れは提示 → 回答 → 経路の割当ての順なので、経路の確定の時刻は提示の時刻より後になる。経路の確定の時刻が提示の時刻より前なら、
+     * 提示の時点で経路を持っていた（DE-24 を出す条件と同じ事実を時刻で見る）。同時刻は通常の流れとして扱う。どの見積りから引き継いだかの
+     * 列は持たない（Bolt 35b の決定）。再設計（US-08）で再承認の見積りに別の経路版を割り当てるときは見直す（D-88）。
+     */
+    public boolean isPresentedForReapproval() {
+        return assignedRoute != null
+                && AssignedRoute.isConfirmedBeforePresentation(assignedRoute.confirmedAt(), presentedAt);
     }
 
     /** 作成中・承認待ち・提示済み・詳細設計依頼済みか（1 つの輸送要求に 1 つだけ。失効・置換済みは数えない。Q-INV-18）。 */

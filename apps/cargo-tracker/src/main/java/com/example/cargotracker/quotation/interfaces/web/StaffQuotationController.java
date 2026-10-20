@@ -55,6 +55,7 @@ public class StaffQuotationController {
     private static final String CONFLICT_MESSAGE = "他の利用者が先に更新しました。内容を確かめてください";
     private static final String FORM_HEADING = "formHeading";
     private static final String FORM_ACTION = "formAction";
+    private static final String INHERITED_ROUTE = "承認済みの経路版と経路方針を引き継いだ見積りです";
 
     private final QuotationCommandService commandService;
     private final StaffQuotationQueryService queryService;
@@ -424,6 +425,15 @@ public class StaffQuotationController {
     private static String routingRequestedNotice(Quotation quotation, UtcInstant now) {
         if (!quotation.status().isRoutingStarted() || quotation.isExpiredAt(now)) {
             return null;
+        }
+        if (quotation.isPresentedForReapproval()) {
+            // 再承認の見積りは回答時刻を引き継いでいるので、依頼の文でなく再承認を示す（D-85。Bolt 35d）
+            return quotation
+                            .shipperApproval()
+                            .map(approval ->
+                                    "荷主が " + TransportRequestLabels.staffDateTime(approval.approvedAt()) + "に再承認しました")
+                            .orElse("荷主の再承認を待っています")
+                    + "（" + INHERITED_ROUTE + "）。この見積りは読み取り専用です。";
         }
         return "荷主が "
                 + TransportRequestLabels.staffDateTime(quotation.respondedAt().orElseThrow())
