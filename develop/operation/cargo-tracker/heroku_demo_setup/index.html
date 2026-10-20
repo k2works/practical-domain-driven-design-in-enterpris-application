@@ -6159,6 +6159,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../development/cargo-tracker/bolt_35e_plan/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 35e 計画
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../development/cargo-tracker/release_report-0_1/" class="md-nav__link">
         
   
@@ -11789,7 +11817,7 @@ npx<span class="w"> </span>gulp<span class="w"> </span>deploy:demo:open<span cla
 <div class="highlight"><pre><span></span><code>npx<span class="w"> </span>gulp<span class="w"> </span>deploy:demo:restart<span class="w">  </span><span class="c1"># データを db/dev-data の初期状態に戻す</span>
 npx<span class="w"> </span>gulp<span class="w"> </span>deploy:demo:open
 </code></pre></div>
-<p>初期状態には、どの役割でログインしてもすぐ画面を確かめられるサンプルの見積依頼があります（<code>db/dev-data</code>）。</p>
+<p>初期状態には、どの役割でログインしてもすぐ画面を確かめられるサンプルの見積依頼があります（<code>db/dev-data</code>）。荷主 A は荷主担当者 <code>shipper@dev.cargo-tracker.example</code>、荷主 B は <code>shipper-b@dev.cargo-tracker.example</code> です。役割を替えるときは、ヘッダーの「ログアウト」の後に開発用の利用者を選び直します。</p>
 <table>
 <thead>
 <tr>
@@ -11841,6 +11869,12 @@ npx<span class="w"> </span>gulp<span class="w"> </span>deploy:demo:open
 <td style="text-align: left;">荷主 B</td>
 <td style="text-align: left;">予約待ち（見積 1 を荷主が承認、RC-2026-0904 確定済み）</td>
 <td style="text-align: left;">同上。0906 で確かめた後にもう一度確かめるときに使う</td>
+</tr>
+<tr>
+<td style="text-align: left;">TR-2026-0908</td>
+<td style="text-align: left;">荷主 A</td>
+<td style="text-align: left;">予約待ち（見積 1 を荷主が承認した後に有効期限を過ぎた、RC-2026-0905 確定済み）。S-02 の予約の確定待ちでは「失効（荷主承認済み）」、荷主 A の画面では再見積りを提示するまで「見積り作成中（A 社の対応待ち）」</td>
+<td style="text-align: left;">① 営業担当者: S-02 の予約の確定待ちから見積 1 を再見積りし、社内承認して提示する（S-04。マニュアル 6.4）。② 荷主 A: 見積依頼の詳細（C-04）と承認（C-17）で見積 2 をもう一度承認する（マニュアル 4.3）。③ 営業担当者: S-02 の予約の確定待ちから見積 2 で本予約を確定する（S-09。マニュアル 7.1・7.2）。D-85、Bolt 35e</td>
 </tr>
 </tbody>
 </table>
