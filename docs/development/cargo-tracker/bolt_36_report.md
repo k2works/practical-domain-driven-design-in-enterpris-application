@@ -3,7 +3,9 @@ type: Plan
 title: "Bolt 36 終了報告 - CI の画面の層のシナリオの揺らぎを直す（#50）"
 description: "W6 の 1 本目の Bolt の終了報告。CI で揺らいでいた session の失効の入力の保持の CSRF の拒否のシナリオを、403 の画面の script の応答を保留して 5 回中 5 回の Red で再現し、原因（403 の見出しが deferred の script より先に見え、控えに「公開の画面を経た」印が付く前に次の画面へ移る）を確かめた。共通のステップで 403 の画面の load を待ち、CSRF の拒否のステップで印を確かめる形に直した。画面の振る舞いは変えていない。"
 tags: [plan]
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-20T12:58:40Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-21T01:05:00Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-10-21T01:05:00Z }
 ---
 
 # Bolt 36 終了報告 - CI の画面の層のシナリオの揺らぎを直す（#50）
@@ -112,6 +114,7 @@ Bolt 37（US-06 の境界の網羅。開始準備は `opening-iteration` で）�
 
 | 日付 | 更新内容 | 更新者 |
 | :--- | :--- | :--- |
+| 2026-10-21 | 終了報告を承認した（議題 1 の計画から変えた点を事後に承認。議題 2 の #50 の閉じ方は W6 の残りの Bolt の CI の観察のとおり） | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-10-20 | 初版作成（承認待ち） | anthropic/claude-opus-5-5 |
 
 ## 関連ドキュメント
