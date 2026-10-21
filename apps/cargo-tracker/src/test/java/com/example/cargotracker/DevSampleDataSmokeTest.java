@@ -38,6 +38,7 @@ import com.example.cargotracker.routing.domain.model.aggregates.RoutingCase;
 import com.example.cargotracker.routing.domain.model.aggregates.RoutingCaseNumberIssuer;
 import com.example.cargotracker.routing.domain.model.aggregates.RoutingCaseRepository;
 import com.example.cargotracker.routing.domain.model.aggregates.VoyageRepository;
+import com.example.cargotracker.routing.domain.model.entities.RouteCandidate;
 import com.example.cargotracker.routing.domain.model.entities.RouteVersion;
 import com.example.cargotracker.routing.domain.model.rules.ConstraintEvaluator;
 import com.example.cargotracker.routing.domain.model.rules.RouteCandidateFinder;
@@ -363,7 +364,7 @@ class DevSampleDataSmokeTest {
                 .isNotEmpty()
                 .allSatisfy(voyage -> assertThat(voyage.acquiredAt()).isEqualTo(evaluatedAt));
         assertThat(seeded.routeVersion().candidates())
-                .flatMap(candidate -> candidate.legs())
+                .flatMap(RouteCandidate::legs)
                 .allSatisfy(leg -> assertThat(leg.infoAcquiredAt()).isEqualTo(evaluatedAt));
         // 起動の時刻は、このマイグレーションを流した時刻（H2 の DB はテストの JVM の中で共有されるので、今の時刻とは比べない）
         LocalDateTime installedOn = jdbc.queryForObject(
