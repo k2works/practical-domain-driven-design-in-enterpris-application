@@ -32,9 +32,9 @@ public record ConnectionRule(
     }
 
     /** その港の積替えに、その時刻で適用するか。適用期間は開始を含み、終わりを含まない。 */
-    public boolean appliesTo(Location at, UtcInstant judgedAt) {
+    public boolean appliesTo(Location at, UtcInstant instant) {
         return port.equals(at)
-                && !judgedAt.instant().isBefore(validFrom.instant())
-                && (validTo == null || judgedAt.instant().isBefore(validTo.instant()));
+                && !instant.instant().isBefore(validFrom.instant())
+                && (validTo == null || instant.instant().isBefore(validTo.instant()));
     }
 }

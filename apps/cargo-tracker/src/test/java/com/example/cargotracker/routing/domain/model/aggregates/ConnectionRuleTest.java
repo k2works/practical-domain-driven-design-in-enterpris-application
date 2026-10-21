@@ -29,8 +29,8 @@ class ConnectionRuleTest {
         "2026-10-31T23:59:59Z, true",
         "2026-11-01T00:00:00Z, false"
     })
-    void 適用期間は開始を含み終わりを含まない(String judgedAt, boolean applies) {
-        assertThat(RULE.appliesTo(SINGAPORE, new UtcInstant(Instant.parse(judgedAt))))
+    void 適用期間は開始を含み終わりを含まない(String instant, boolean applies) {
+        assertThat(RULE.appliesTo(SINGAPORE, new UtcInstant(Instant.parse(instant))))
                 .isEqualTo(applies);
     }
 

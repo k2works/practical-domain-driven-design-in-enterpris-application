@@ -174,7 +174,7 @@ public final class RoutingCase {
             throw new IllegalStateException("候補を算出できない経路版の状態です: " + status);
         }
         List<Evaluated> evaluated = finder.find(specification, voyages, judgedAt).stream()
-                .map(legs -> new Evaluated(legs, evaluator.evaluate(specification, legs, rules, judgedAt)))
+                .map(legs -> new Evaluated(legs, evaluator.evaluate(specification, legs, rules)))
                 .sorted(PRESENTATION_ORDER)
                 .toList();
         List<RouteCandidate> candidates = new ArrayList<>();
@@ -239,9 +239,7 @@ public final class RoutingCase {
         if (!candidate.legs().getFirst().departureAt().instant().isAfter(commitAt.instant())) {
             throw reject(RouteConfirmationRejectionReason.ALREADY_DEPARTED, "最初の区間が出発済みです");
         }
-        if (!evaluator
-                .evaluate(specification, candidate.legs(), rules, commitAt)
-                .conforming()) {
+        if (!evaluator.evaluate(specification, candidate.legs(), rules).conforming()) {
             throw reject(RouteConfirmationRejectionReason.NO_LONGER_CONFORMING, "確定の時刻で判定し直すと不適合です");
         }
         replaceLatest(new RouteVersion(

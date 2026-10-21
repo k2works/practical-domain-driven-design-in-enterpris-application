@@ -34,7 +34,6 @@ class ConstraintEvaluatorTest {
     /** 希望到着期限 2026-11-02 09:00 JST。 */
     static final Instant DEADLINE = Instant.parse("2026-11-02T00:00:00Z");
 
-    static final UtcInstant JUDGED_AT = at("2026-10-07T03:00:00Z");
     static final RouteSpecification SPEC =
             new RouteSpecification(TOKYO, ROTTERDAM, new UtcInstant(DEADLINE), "GENERAL");
 
@@ -49,7 +48,7 @@ class ConstraintEvaluatorTest {
             Instant arrival = DEADLINE.plus(Duration.ofMinutes(minutesAfterDeadline));
             Leg direct = leg("V-101", TOKYO, ROTTERDAM, "2026-10-08T00:00:00Z", arrival, "V-101@1");
 
-            ConstraintEvaluation evaluation = evaluator.evaluate(SPEC, List.of(direct), List.of(), JUDGED_AT);
+            ConstraintEvaluation evaluation = evaluator.evaluate(SPEC, List.of(direct), List.of());
 
             assertThat(evaluation.conforming()).isEqualTo(conforming);
             assertThat(evaluation.estimatedArrivalAt()).isEqualTo(new UtcInstant(arrival));
@@ -67,7 +66,7 @@ class ConstraintEvaluatorTest {
                     leg("V-301", SINGAPORE, ROTTERDAM, "2026-10-21T00:00:00Z", "2026-11-03T12:00:00Z", "V-301@5"));
 
             ConstraintEvaluation evaluation =
-                    evaluator.evaluate(SPEC, legs, List.of(rule(SINGAPORE, Duration.ofHours(8))), JUDGED_AT);
+                    evaluator.evaluate(SPEC, legs, List.of(rule(SINGAPORE, Duration.ofHours(8))));
 
             assertThat(evaluation.reasons())
                     .containsExactly(ExclusionReason.deadlineExceeded(
@@ -78,9 +77,7 @@ class ConstraintEvaluatorTest {
         void 直行の候補は接続余裕を持たない() {
             Leg direct = leg("V-101", TOKYO, ROTTERDAM, "2026-10-08T00:00:00Z", "2026-10-30T09:00:00Z", "V-101@1");
 
-            assertThat(evaluator
-                            .evaluate(SPEC, List.of(direct), List.of(), JUDGED_AT)
-                            .connectionSlack())
+            assertThat(evaluator.evaluate(SPEC, List.of(direct), List.of()).connectionSlack())
                     .isEmpty();
         }
     }
@@ -105,8 +102,7 @@ class ConstraintEvaluatorTest {
             Instant nextDeparture = ARRIVAL_AT_SINGAPORE.plus(required).plus(Duration.ofMinutes(minutesOverRequired));
             List<Leg> legs = transshipment(nextDeparture);
 
-            ConstraintEvaluation evaluation =
-                    evaluator.evaluate(SPEC, legs, List.of(rule(SINGAPORE, required)), JUDGED_AT);
+            ConstraintEvaluation evaluation = evaluator.evaluate(SPEC, legs, List.of(rule(SINGAPORE, required)));
 
             assertThat(evaluation.conforming()).isEqualTo(conforming);
             assertThat(evaluation.connectionSlack()).contains(Duration.ofMinutes(minutesOverRequired));
@@ -122,7 +118,7 @@ class ConstraintEvaluatorTest {
             Instant nextDeparture = ARRIVAL_AT_SINGAPORE.plus(Duration.ofDays(1));
 
             ConstraintEvaluation evaluation = evaluator.evaluate(
-                    SPEC, transshipment(nextDeparture), List.of(rule(HONG_KONG, Duration.ofHours(8))), JUDGED_AT);
+                    SPEC, transshipment(nextDeparture), List.of(rule(HONG_KONG, Duration.ofHours(8))));
 
             assertThat(evaluation.conforming()).isFalse();
             assertThat(evaluation.reasons())
@@ -148,7 +144,7 @@ class ConstraintEvaluatorTest {
                     null);
 
             ConstraintEvaluation evaluation =
-                    evaluator.evaluate(SPEC, transshipment(nextDeparture), List.of(expired, notYet), JUDGED_AT);
+                    evaluator.evaluate(SPEC, transshipment(nextDeparture), List.of(expired, notYet));
 
             assertThat(evaluation.reasons())
                     .extracting(ExclusionReason::code)
@@ -162,10 +158,7 @@ class ConstraintEvaluatorTest {
             Instant nextDeparture = ARRIVAL_AT_SINGAPORE.plus(Duration.ofHours(8));
 
             ConstraintEvaluation evaluation = evaluator.evaluate(
-                    SPEC,
-                    transshipment(nextDeparture),
-                    List.of(rule(SINGAPORE, loose), rule(SINGAPORE, strict)),
-                    JUDGED_AT);
+                    SPEC, transshipment(nextDeparture), List.of(rule(SINGAPORE, loose), rule(SINGAPORE, strict)));
 
             assertThat(evaluation.reasons())
                     .containsExactly(ExclusionReason.connectionTooShort(
@@ -184,7 +177,7 @@ class ConstraintEvaluatorTest {
                     at("2026-10-15T00:00:00Z"));
 
             ConstraintEvaluation evaluation =
-                    evaluator.evaluate(SPEC, transshipment(nextDeparture), List.of(endsBeforeConnection), JUDGED_AT);
+                    evaluator.evaluate(SPEC, transshipment(nextDeparture), List.of(endsBeforeConnection));
 
             assertThat(evaluation.reasons())
                     .containsExactly(
@@ -204,7 +197,7 @@ class ConstraintEvaluatorTest {
                     UUID.randomUUID(), SINGAPORE, Duration.ofHours(12), at("2026-10-15T00:00:00Z"), null);
 
             ConstraintEvaluation evaluation =
-                    evaluator.evaluate(SPEC, transshipment(nextDeparture), List.of(old, successor), JUDGED_AT);
+                    evaluator.evaluate(SPEC, transshipment(nextDeparture), List.of(old, successor));
 
             assertThat(evaluation.reasons())
                     .containsExactly(ExclusionReason.connectionTooShort(
@@ -271,7 +264,7 @@ class ConstraintEvaluatorTest {
                             Instant.parse("2026-10-30T00:00:00Z"),
                             "V-301@5"));
 
-            ConstraintEvaluation evaluation = evaluator.evaluate(SPEC, legs, List.of(rule), JUDGED_AT);
+            ConstraintEvaluation evaluation = evaluator.evaluate(SPEC, legs, List.of(rule));
 
             assertThat(evaluation.conforming()).isEqualTo(applies);
             if (!applies) {
@@ -296,7 +289,7 @@ class ConstraintEvaluatorTest {
             // シンガポール 10 時間（余裕 2 時間）、香港 4 時間（余裕 -2 時間）
             List<Leg> legs = threeLegs("2026-10-20T10:00:00Z", "2026-10-23T00:00:00Z", "2026-10-23T04:00:00Z");
 
-            ConstraintEvaluation evaluation = evaluator.evaluate(SPEC, legs, RULES, JUDGED_AT);
+            ConstraintEvaluation evaluation = evaluator.evaluate(SPEC, legs, RULES);
 
             assertThat(evaluation.reasons())
                     .containsExactly(ExclusionReason.connectionTooShort(
@@ -309,7 +302,7 @@ class ConstraintEvaluatorTest {
             // シンガポール 6 時間（余裕 -2 時間）、香港 7 時間（香港の規則で余裕 1 時間。シンガポールの規則なら足りない）
             List<Leg> legs = threeLegs("2026-10-20T06:00:00Z", "2026-10-23T00:00:00Z", "2026-10-23T07:00:00Z");
 
-            ConstraintEvaluation evaluation = evaluator.evaluate(SPEC, legs, RULES, JUDGED_AT);
+            ConstraintEvaluation evaluation = evaluator.evaluate(SPEC, legs, RULES);
 
             assertThat(evaluation.reasons())
                     .containsExactly(ExclusionReason.connectionTooShort(
@@ -322,7 +315,7 @@ class ConstraintEvaluatorTest {
             // シンガポール 13 時間（余裕 5 時間）、香港 7 時間（余裕 1 時間）
             List<Leg> legs = threeLegs("2026-10-20T13:00:00Z", "2026-10-23T00:00:00Z", "2026-10-23T07:00:00Z");
 
-            ConstraintEvaluation evaluation = evaluator.evaluate(SPEC, legs, RULES, JUDGED_AT);
+            ConstraintEvaluation evaluation = evaluator.evaluate(SPEC, legs, RULES);
 
             assertThat(evaluation.conforming()).isTrue();
             assertThat(evaluation.connectionSlack()).contains(Duration.ofHours(1));
@@ -333,7 +326,7 @@ class ConstraintEvaluatorTest {
             List<Leg> legs = threeLegs("2026-10-20T10:00:00Z", "2026-10-23T00:00:00Z", "2026-10-24T00:00:00Z");
 
             ConstraintEvaluation evaluation =
-                    evaluator.evaluate(SPEC, legs, List.of(rule(SINGAPORE, Duration.ofHours(8))), JUDGED_AT);
+                    evaluator.evaluate(SPEC, legs, List.of(rule(SINGAPORE, Duration.ofHours(8))));
 
             assertThat(evaluation.reasons())
                     .containsExactly(ExclusionReason.notConnectable(at("2026-10-24T00:00:00Z"), HONG_KONG, "V-402@2"));
@@ -356,8 +349,7 @@ class ConstraintEvaluatorTest {
                 leg("V-201", TOKYO, SINGAPORE, "2026-10-10T00:00:00Z", "2026-10-20T00:00:00Z", "V-201@3"),
                 leg("V-301", SINGAPORE, ROTTERDAM, "2026-10-20T04:00:00Z", "2026-11-03T00:00:00Z", "V-301@5"));
 
-        ConstraintEvaluation evaluation =
-                evaluator.evaluate(SPEC, legs, List.of(rule(SINGAPORE, Duration.ofHours(8))), JUDGED_AT);
+        ConstraintEvaluation evaluation = evaluator.evaluate(SPEC, legs, List.of(rule(SINGAPORE, Duration.ofHours(8))));
 
         assertThat(evaluation.reasons())
                 .extracting(ExclusionReason::code)

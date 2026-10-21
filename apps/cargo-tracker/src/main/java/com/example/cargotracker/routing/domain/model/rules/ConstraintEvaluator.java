@@ -15,7 +15,7 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * 制約適合判定。経路条件、区間の列、接続時間規則、判定時刻から、適合・除外と理由を返す純粋な関数（R-INV-01・02、BR-11）。
+ * 制約適合判定。経路条件、区間の列、接続時間規則から、適合・除外と理由を返す純粋な関数（R-INV-01・02、BR-11）。
  * Golden dataset（TST-02、W6）で検証する。
  *
  * <p>到着予定が希望到着期限以前で、すべての接続時間が必要最小接続時間以上なら適合（同時刻・同値は適合）。
@@ -28,8 +28,7 @@ import java.util.Optional;
 public class ConstraintEvaluator {
 
     /** 判定する。 */
-    public ConstraintEvaluation evaluate(
-            RouteSpecification specification, List<Leg> legs, List<ConnectionRule> rules, UtcInstant judgedAt) {
+    public ConstraintEvaluation evaluate(RouteSpecification specification, List<Leg> legs, List<ConnectionRule> rules) {
         if (legs.isEmpty()) {
             throw new IllegalArgumentException("区間のない候補は判定できません");
         }
