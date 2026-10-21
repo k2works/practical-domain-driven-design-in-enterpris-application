@@ -238,9 +238,9 @@
 <ellipse fill="none" stroke="#000000" cx="331.269" cy="-649.9927" rx="3.2" ry="3.2"/>
 </g>
 <!-- company -->
-<g id="node9" class="node">
+<g id="node8" class="node">
 <title>company</title>
-<g id="a_node9"><a xlink:href="../../tables/company.html" xlink:title="company" target="_top">
+<g id="a_node8"><a xlink:href="../../tables/company.html" xlink:title="company" target="_top">
 <polygon fill="#ffffff" stroke="transparent" points="8,-371.2 8,-567.2 112,-567.2 112,-371.2 8,-371.2"/>
 <polygon fill="#f5f5f5" stroke="transparent" points="8,-544.2 8,-567.2 112,-567.2 112,-544.2 8,-544.2"/>
 <polygon fill="none" stroke="#000000" points="8,-544.2 8,-567.2 112,-567.2 112,-544.2 8,-544.2"/>
@@ -359,46 +359,10 @@
 <polygon fill="#000000" stroke="#000000" points="382.0443,-308.041 390.3784,-310.7801 386.0222,-307.6205 390,-307.2 390,-307.2 390,-307.2 386.0222,-307.6205 389.6216,-303.6199 382.0443,-308.041 382.0443,-308.041"/>
 <ellipse fill="none" stroke="#000000" cx="378.8621" cy="-308.3774" rx="3.2" ry="3.2"/>
 </g>
-<!-- kpi_observation -->
-<g id="node8" class="node">
-<title>kpi_observation</title>
-<g id="a_node8"><a xlink:href="../../tables/kpi_observation.html" xlink:title="kpi_observation" target="_top">
-<polygon fill="#ffffff" stroke="transparent" points="644,-674.2 644,-848.2 860,-848.2 860,-674.2 644,-674.2"/>
-<polygon fill="#f5f5f5" stroke="transparent" points="644,-825.2 644,-848.2 860,-848.2 860,-825.2 644,-825.2"/>
-<polygon fill="none" stroke="#000000" points="644,-825.2 644,-848.2 860,-848.2 860,-825.2 644,-825.2"/>
-<text text-anchor="start" x="649" y="-833.8" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="11.00" fill="#000000">kpi_observation</text>
-<text text-anchor="start" x="825.0437" y="-833.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">[table]</text>
-<polygon fill="none" stroke="#000000" points="644,-803.2 644,-825.2 860,-825.2 860,-803.2 644,-803.2"/>
-<image xlink:href="../../images/primaryKeys.png" width="11px" height="12px" preserveAspectRatio="xMinYMin meet" x="649" y="-820.2"/>
-<text text-anchor="start" x="664" y="-810.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">transport_request_id</text>
-<polygon fill="none" stroke="#000000" points="644,-781.2 644,-803.2 860,-803.2 860,-781.2 644,-781.2"/>
-<text text-anchor="start" x="664" y="-788.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">shipper_company_id</text>
-<polygon fill="#ffffff" stroke="transparent" points="644,-759.2 644,-781.2 860,-781.2 860,-759.2 644,-759.2"/>
-<polygon fill="none" stroke="#000000" points="644,-759.2 644,-781.2 860,-781.2 860,-759.2 644,-759.2"/>
-<text text-anchor="start" x="664" y="-766.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">submitted_at</text>
-<polygon fill="none" stroke="#000000" points="644,-737.2 644,-759.2 860,-759.2 860,-737.2 644,-737.2"/>
-<text text-anchor="start" x="664" y="-744.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">excluded</text>
-<polygon fill="none" stroke="#000000" points="644,-715.2 644,-737.2 860,-737.2 860,-715.2 644,-715.2"/>
-<text text-anchor="start" x="664" y="-722.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">transport_request_number</text>
-<polygon fill="none" stroke="#000000" points="644,-693.2 644,-715.2 860,-715.2 860,-693.2 644,-693.2"/>
-<text text-anchor="start" x="664" y="-700.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">first_presented_at</text>
-<polygon fill="#ffffff" stroke="transparent" points="644,-674.2 644,-693.2 860,-693.2 860,-674.2 644,-674.2"/>
-<polygon fill="none" stroke="#000000" points="644,-674.2 644,-693.2 860,-693.2 860,-674.2 644,-674.2"/>
-<polygon fill="#ffffff" stroke="transparent" points="645,-675.2 645,-692.2 717,-692.2 717,-675.2 645,-675.2"/>
-<text text-anchor="start" x="647" y="-680.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000"> &#160;</text>
-<polygon fill="#ffffff" stroke="transparent" points="717,-675.2 717,-692.2 788,-692.2 788,-675.2 717,-675.2"/>
-<text text-anchor="start" x="749.4431" y="-680.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000"> &#160;</text>
-<polygon fill="#ffffff" stroke="transparent" points="788,-675.2 788,-692.2 859,-692.2 859,-675.2 788,-675.2"/>
-<text text-anchor="start" x="850.8862" y="-680.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000"> &#160;</text>
-<polygon fill="#000000" stroke="#000000" points="717,-675.2 717,-692.2 717,-692.2 717,-675.2 717,-675.2"/>
-<polygon fill="#000000" stroke="#000000" points="788,-675.2 788,-692.2 788,-692.2 788,-675.2 788,-675.2"/>
-</a>
-</g>
-</g>
 <!-- user_assignment -->
-<g id="node10" class="node">
+<g id="node9" class="node">
 <title>user_assignment</title>
-<g id="a_node10"><a xlink:href="../../tables/user_assignment.html" xlink:title="user_assignment" target="_top">
+<g id="a_node9"><a xlink:href="../../tables/user_assignment.html" xlink:title="user_assignment" target="_top">
 <polygon fill="#ffffff" stroke="transparent" points="362,-38.2 362,-190.2 524,-190.2 524,-38.2 362,-38.2"/>
 <polygon fill="#f5f5f5" stroke="transparent" points="362,-167.2 362,-190.2 524,-190.2 524,-167.2 362,-167.2"/>
 <polygon fill="none" stroke="#000000" points="362,-167.2 362,-190.2 524,-190.2 524,-167.2 362,-167.2"/>
@@ -436,6 +400,42 @@
 <path fill="none" stroke="#000000" d="M347.7763,-160.411C284.7178,-203.0537 377.5345,-555.2 293,-555.2"/>
 <polygon fill="#000000" stroke="#000000" points="354.3291,-158.471 363.022,-159.6519 358.1646,-157.3355 362,-156.2 362,-156.2 362,-156.2 358.1646,-157.3355 360.978,-152.7481 354.3291,-158.471 354.3291,-158.471"/>
 <ellipse fill="none" stroke="#000000" cx="351.2607" cy="-159.3794" rx="3.2" ry="3.2"/>
+</g>
+<!-- kpi_observation -->
+<g id="node10" class="node">
+<title>kpi_observation</title>
+<g id="a_node10"><a xlink:href="../../tables/kpi_observation.html" xlink:title="kpi_observation" target="_top">
+<polygon fill="#ffffff" stroke="transparent" points="644,-674.2 644,-848.2 860,-848.2 860,-674.2 644,-674.2"/>
+<polygon fill="#f5f5f5" stroke="transparent" points="644,-825.2 644,-848.2 860,-848.2 860,-825.2 644,-825.2"/>
+<polygon fill="none" stroke="#000000" points="644,-825.2 644,-848.2 860,-848.2 860,-825.2 644,-825.2"/>
+<text text-anchor="start" x="649" y="-833.8" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="11.00" fill="#000000">kpi_observation</text>
+<text text-anchor="start" x="825.0437" y="-833.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">[table]</text>
+<polygon fill="none" stroke="#000000" points="644,-803.2 644,-825.2 860,-825.2 860,-803.2 644,-803.2"/>
+<image xlink:href="../../images/primaryKeys.png" width="11px" height="12px" preserveAspectRatio="xMinYMin meet" x="649" y="-820.2"/>
+<text text-anchor="start" x="664" y="-810.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">transport_request_id</text>
+<polygon fill="none" stroke="#000000" points="644,-781.2 644,-803.2 860,-803.2 860,-781.2 644,-781.2"/>
+<text text-anchor="start" x="664" y="-788.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">shipper_company_id</text>
+<polygon fill="#ffffff" stroke="transparent" points="644,-759.2 644,-781.2 860,-781.2 860,-759.2 644,-759.2"/>
+<polygon fill="none" stroke="#000000" points="644,-759.2 644,-781.2 860,-781.2 860,-759.2 644,-759.2"/>
+<text text-anchor="start" x="664" y="-766.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">submitted_at</text>
+<polygon fill="none" stroke="#000000" points="644,-737.2 644,-759.2 860,-759.2 860,-737.2 644,-737.2"/>
+<text text-anchor="start" x="664" y="-744.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">excluded</text>
+<polygon fill="none" stroke="#000000" points="644,-715.2 644,-737.2 860,-737.2 860,-715.2 644,-715.2"/>
+<text text-anchor="start" x="664" y="-722.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">transport_request_number</text>
+<polygon fill="none" stroke="#000000" points="644,-693.2 644,-715.2 860,-715.2 860,-693.2 644,-693.2"/>
+<text text-anchor="start" x="664" y="-700.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">first_presented_at</text>
+<polygon fill="#ffffff" stroke="transparent" points="644,-674.2 644,-693.2 860,-693.2 860,-674.2 644,-674.2"/>
+<polygon fill="none" stroke="#000000" points="644,-674.2 644,-693.2 860,-693.2 860,-674.2 644,-674.2"/>
+<polygon fill="#ffffff" stroke="transparent" points="645,-675.2 645,-692.2 717,-692.2 717,-675.2 645,-675.2"/>
+<text text-anchor="start" x="647" y="-680.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000"> &#160;</text>
+<polygon fill="#ffffff" stroke="transparent" points="717,-675.2 717,-692.2 788,-692.2 788,-675.2 717,-675.2"/>
+<text text-anchor="start" x="749.4431" y="-680.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000"> &#160;</text>
+<polygon fill="#ffffff" stroke="transparent" points="788,-675.2 788,-692.2 859,-692.2 859,-675.2 788,-675.2"/>
+<text text-anchor="start" x="850.8862" y="-680.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000"> &#160;</text>
+<polygon fill="#000000" stroke="#000000" points="717,-675.2 717,-692.2 717,-692.2 717,-675.2 717,-675.2"/>
+<polygon fill="#000000" stroke="#000000" points="788,-675.2 788,-692.2 788,-692.2 788,-675.2 788,-675.2"/>
+</a>
+</g>
 </g>
 </g>
 </svg>
