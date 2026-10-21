@@ -7011,6 +7011,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../bolt_37_report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 37 終了報告
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../release_report-0_1/" class="md-nav__link">
         
   
@@ -13837,7 +13865,7 @@
 </tbody>
 </table>
 <h3 id="w62026-11-09-11-13">W6（2026-11-09 〜 11-13）<a class="headerlink" href="#w62026-11-09-11-13" title="Permanent link">&para;</a></h3>
-<p><strong>状態</strong>: 計画済み（2026-10-20 に計画を作り、詳細整合性検証と横断整合性検証の指摘を反映し、同日に human:kakimomokuri が承認した（確認ポイント 1〜20 を推奨のとおり）。Bolt 36 は同日に計画を承認して終え、終了報告を 2026-10-21 に承認した。Bolt 37 は 2026-10-21 に計画を作り、同日に承認した。次は Bolt 37 の実装）</p>
+<p><strong>状態</strong>: 計画済み（2026-10-20 に計画を作り、詳細整合性検証と横断整合性検証の指摘を反映し、同日に human:kakimomokuri が承認した（確認ポイント 1〜20 を推奨のとおり）。Bolt 36 は同日に計画を承認して終え、終了報告を 2026-10-21 に承認した。Bolt 37 は 2026-10-21 に計画を作り、同日に承認して終えた（終了報告は承認待ち）。次は Bolt 37 の終了報告の承認）</p>
 <p><strong>ゴール</strong>: 経路設計を完成させ（US-06 の残り・US-07 の残り）、利用者の管理を完成させる（US-16 の残り・US-18 AC9 の管理者経路）。W5 の締めで決めた CI の画面の層のシナリオの揺らぎの原因を最初に調べる。</p>
 <p><strong>局面とアプローチ</strong>: 中盤（<a href="../development_strategy/">開発戦略</a>）。経路設計の残り（Bolt 37〜37f）は中盤の例外（開発戦略 :107。序盤で作った経路設計案件を広げる）でアウトサイドイン（受入シナリオから）。利用者の管理のうち、既存の集約と S-20 に操作を足す Bolt 38・38c と、既存のコンテキストの照会と操作に担当範囲の判定を足す Bolt 38f・38g はアウトサイドイン（既存の集約に受入条件を足す）。新しい振る舞いとスキーマを作る Bolt 38b（利用者の生成と招待のトークン）・38d（通知の種類と公開 API）はインサイドアウト。Bolt 38e は表は Bolt 34b で作ってあるが、担当範囲を request ごとの確かめに載せる横断の部品と、範囲外の試行の記録のポート（新しい構造と ADR）を作るので、表から外れてインサイドアウトにする（不確実性が依存の向きと横断の部品にあり、内側から固める）。Bolt 36 は技術タスク（再現から入る）。</p>
 <p><strong>設計の決定</strong>（2026-10-20 に human:kakimomokuri が決定。W6 の開始準備の質問への回答）:</p>
@@ -13991,7 +14019,7 @@
 <li>US-16・US-18 AC9（38〜38g）: ui_design の S-20（:145・:180-183・:1120 以降）と A-06（:94・:186-187。招待に流用する分の語と期限）、domain_model の IA-INV-02（担当企業だけ）・IA-INV-03（管理者による解除）・IA-INV-12（招待 24 時間）・IA-INV-14（登録・解除・担当範囲の操作）・:1055（管理範囲の割り当て）・:1215（利用者の集約が担当範囲を持つと書いた記述を、実装の別のポート <code>UserAssignmentRepository.scopeOf</code> に合わせる）、data_model の <code>user_assignment</code>（:939。「<code>BOOKING</code> は W6」を担当企業だけに）・<code>audit_record</code> の action（:938）・<code>password_reset_token</code> の用途・<code>notification</code> の種類、non_functional の SEC-08（招待）・SEC-10（管理者の経路）・SEC-12（担当企業だけ）、requirements_definition の OQ-07 の残り（案件ごとの割り当て）、各コンテキストの <code>allowedDependencies</code> と共有カーネルの範囲外の試行の記録のポート（新しい ADR）、ADR-012（担当範囲と session の直列化）</li>
 <li>承認の後に直す文書（W6 の開始準備の範囲）: release_plan の :101（U2 の対策）・:350-351 と引継ぎ ID の台帳（TST-02・DM-05 の期限を「v0 は仮の値で作り、届いたら差し替える。パイロット開始の条件として残す」に）、台帳の D-88 の注と D-89・D-90 の新設、W6 の行（:788。ゴールに利用者の管理を足し、管理範囲の割り当てを W10 へ）と W10 の行（:792）、ガントの W6 の名前（:253）、開発戦略の W6 のデモ項目（:185）と W6 の行（:346）</li>
 </ul>
-<p><strong>D-65 の残り</strong>（Bolt 17 の開発レビュー）: Golden dataset の集約の単位のテスト（37f）と規則を選ぶ時刻（37。確認ポイント 4。2026-10-21 に D-90 で接続の時刻に決めた）は W6。依頼の後の再提出で経路条件が得られないときの扱い（UC-07 5a）・航海の照会を時間の窓と港で絞ること・貨物種別の ACL・<code>Voyage</code> と <code>ConnectionRule</code> の class 化は、外部情報の取込で航海の書き手と量が変わる W7（US-14）の開始準備で扱う。UC-06 4a（情報の更新で候補を旧版にする）も W7。#16 の「経路版の更新を版ごとの差分の保存に置き換える」は US-08（W13）</p>
+<p><strong>D-65 の残り</strong>（Bolt 17 の開発レビュー）: Golden dataset の集約の単位のテスト（37f）と規則を選ぶ時刻（37。確認ポイント 4。2026-10-21 に D-90 で接続の時刻に決めた）は W6。依頼の後の再提出で経路条件が得られないときの扱い（UC-07 5a）・航海の照会を時間の窓と港で絞ること・貨物種別の ACL・<code>Voyage</code> と <code>ConnectionRule</code> の class 化と、候補探索の量（港ごとの出発の索引、航海が数百本のときの時間と候補の数、港だけ違う候補。Bolt 37 の開発レビュー）は、外部情報の取込で航海の書き手と量が変わる W7（US-14）の開始準備で扱う。UC-06 4a（情報の更新で候補を旧版にする）も W7。#16 の「経路版の更新を版ごとの差分の保存に置き換える」は US-08（W13）</p>
 <p><strong>Bolt の分け方</strong>（2026-10-20 の初案。各 Bolt の開始準備で引き直す）:</p>
 <table>
 <thead>
@@ -14113,7 +14141,7 @@
 <p><strong>主なタスク</strong>:</p>
 <ul class="task-list">
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> W6 の開始準備（本節。2026-10-20）: 計画の承認、詳細整合性検証・横断整合性検証（指摘を反映）、承認の後に直す文書、GitHub の同期</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> Bolt 36〜37f: CI の揺らぎ、US-06 の残り（#15）、US-07 の残り（#16）。<a href="../bolt_36_plan/">Bolt 36 計画</a>（承認済み）、<a href="../bolt_36_report/">Bolt 36 終了報告</a>（承認済み）、<a href="../bolt_37_plan/">Bolt 37 計画</a>（承認済み）</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> Bolt 36〜37f: CI の揺らぎ、US-06 の残り（#15）、US-07 の残り（#16）。<a href="../bolt_36_plan/">Bolt 36 計画</a>（承認済み）、<a href="../bolt_36_report/">Bolt 36 終了報告</a>（承認済み）、<a href="../bolt_37_plan/">Bolt 37 計画</a>（承認済み）、<a href="../bolt_37_report/">Bolt 37 終了報告</a>（承認待ち）</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> Bolt 38〜38g: US-16 の残り（#14）、US-18 AC9 の管理者経路（#47）</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> 画面の確認: 新しい画面と変えた画面（S-06・S-07・S-20・A-06）の axe と、支援技術による手動確認（人。#14・#15 の完了の定義、#50 の人の作業）</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> W6 の締め: 結果とふりかえり、開いている持ち越しの数（T-89）、W7 の計画の見直し</li>
@@ -14483,7 +14511,7 @@
 <td style="text-align: left;">US-06、BR-11、Bolt 17 の開発レビュー D-65</td>
 <td style="text-align: left;">W6 の開始準備の確認ポイント 4</td>
 <td style="text-align: left;">業務責任者に確かめる（Bolt 37 の開始準備）</td>
-<td style="text-align: left;">決定（2026-10-21、human:kakimomokuri。Bolt 37 の開始準備の質問への回答）: 接続の時刻（次の区間の出発予定）に有効な規則で判定する。Bolt 17 の確認ポイント 9 と Bolt 19 の確認ポイント 3 を変える。<a href="../bolt_37_plan/">Bolt 37 計画</a>で作る。反映: domain_model（Bolt 17・19・37 の決定）、user_story（US-06・US-07）、BR-11 の注、W6 の確認ポイント 4（Bolt 37 のステップ 1）</td>
+<td style="text-align: left;">決定（2026-10-21、human:kakimomokuri。Bolt 37 の開始準備の質問への回答）: 接続の時刻（次の区間の出発予定）に有効な規則で判定する。Bolt 17 の確認ポイント 9 と Bolt 19 の確認ポイント 3 を変える。<a href="../bolt_37_plan/">Bolt 37 計画</a>で作る。反映: domain_model（Bolt 17・19・37 の決定）、user_story（US-06・US-07）、BR-11 の注、W6 の確認ポイント 4（<code>87026bbfa</code>、開発レビューで今の仕様を先に書く形にそろえた <code>b4f235a9d</code>）。実装は <code>dc8d4c9e3</code>・<code>c86cc2571</code>、画面とマニュアルは <code>49560da97</code></td>
 </tr>
 </tbody>
 </table>
@@ -15936,6 +15964,11 @@
 <td style="text-align: left;">2026-10-21</td>
 <td style="text-align: left;">Bolt 37 の計画を承認した（確認ポイント 1〜8 を推奨のとおり）</td>
 <td style="text-align: left;">anthropic/claude-opus-5-5、承認 human:kakimomokuri</td>
+</tr>
+<tr>
+<td style="text-align: left;">2026-10-21</td>
+<td style="text-align: left;">Bolt 37 を終え、<a href="../bolt_37_report/">Bolt 37 終了報告</a>を作った（承認待ち）。候補を積替え 2 回まで探し、接続時間規則を次の区間の出発予定の時刻で選ぶようにした（D-90）。D-65 の残りに候補探索の量を足した</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5</td>
 </tr>
 </tbody>
 </table>

@@ -16,7 +16,7 @@
         <link rel="prev" href="../bolt_36_report/">
       
       
-        <link rel="next" href="../release_report-0_1/">
+        <link rel="next" href="../bolt_37_report/">
       
       
         
@@ -6561,6 +6561,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../bolt_37_report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 37 終了報告
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../release_report-0_1/" class="md-nav__link">
         
   
@@ -11868,16 +11896,16 @@
 <h2 id="_8">ステップ計画<a class="headerlink" href="#_8" title="Permanent link">&para;</a></h2>
 <p>各ステップの終わりに対象のテストを流し、最後に <code>check</code> と <code>uiTest</code> を流して件数を数える（T-151）。コミットは pathspec で行い（T-110）、push してアプリの CI を確かめる（T-26）。</p>
 <ul class="task-list">
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>1. 設計の文書と数え上げ</strong>: D-90 の決定を、台帳の D-90 の状態（回答・日付・回答者・反映したコミット。台帳の規則 release_plan :841）、W6 の確認ポイント 4 の決着、domain_model :714・:722-723・:734、user_story :292-294・:318、BR-11 の注、W6 節の D-65 の残り、W6 節のマニュアルの割り当て（8 章に 37 を足す）に書く。<code>appliesTo</code>・<code>evaluate</code> の <code>judgedAt</code>、規則を作るステップ（<code>RoutingSteps:64-72</code>・<code>RouteConfirmationSteps:66</code>）、「確定の時刻の規則」「判定時刻で有効な規則」の写し（開始準備で確かめたことの一覧と、ほかにないか）を全体で数える（T-148）（完了の判定: 文書の差分と、直す箇所の一覧）</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>2. 受入シナリオ（Red）</strong>: <code>route_candidates.feature</code> に足す。</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>1. 設計の文書と数え上げ</strong>: D-90 の決定を、台帳の D-90 の状態（回答・日付・回答者・反映したコミット。台帳の規則 release_plan :841）、W6 の確認ポイント 4 の決着、domain_model :714・:722-723・:734、user_story :292-294・:318、BR-11 の注、W6 節の D-65 の残り、W6 節のマニュアルの割り当て（8 章に 37 を足す）に書く。<code>appliesTo</code>・<code>evaluate</code> の <code>judgedAt</code>、規則を作るステップ（<code>RoutingSteps:64-72</code>・<code>RouteConfirmationSteps:66</code>）、「確定の時刻の規則」「判定時刻で有効な規則」の写し（開始準備で確かめたことの一覧と、ほかにないか）を全体で数える（T-148）（完了の判定: 文書の差分と、直す箇所の一覧）</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>2. 受入シナリオ（Red）</strong>: <code>route_candidates.feature</code> に足す。</li>
 <li>(a) 積替え 2 回の候補が適合で示される。4 区間でしか着かない列と、出発地に戻る列も航海の上で成り立つデータにし、列挙されないことも確かめる（同じ航海を 2 回使う列と途中の区間の D-60 は寄港 3 つ以上の航海が要るので、単体テスト（ステップ 3）だけで確かめる）</li>
 <li>(b) 2 つの接続のうち後の接続だけが不足して理由が 1 つ（港・不適合の時刻・閾値・参照情報版）。前の接続だけが不足する例も。接続余裕は 2 つの接続の最小</li>
 <li>(c) 接続の港の規則の境界（シナリオアウトライン）。規則は背景の常に有効な SGSIN の規則に隠れないよう、背景の規則のない 2 つ目の積替えの港に置き、適用開始の直前・同時刻は有効で直後は無効、適用終了の直前は有効で同時刻・直後は無効の 6 点を、次の区間の出発予定を基準に書く。境界の時刻は前の区間の到着予定と次の区間の出発予定の間に置く（到着の時刻で選ぶ変異を落とすため）。規則の終わりを指定するステップを足す（古い規則を終わらせて置き換える形。<code>RouteConfirmationSteps:66</code> の重ねる形と名前で分ける）</li>
 <li>落ちる理由が「候補がない」「規則が判定時刻で選ばれる」であることを確かめる（完了の判定: 足したシナリオが期待した理由で落ちる）</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>3. 候補探索（Green）</strong>: <code>RouteCandidateFinderTest</code> に、3 区間、4 区間は列挙しない、同じ航海を続けて使う列（V1 A→B、V1 B→C）と間を空けて使う列（V1、V2、V1）を列挙しない、出発地に戻らない、途中の区間が目的地を通り過ぎない、並びのテストを足して Red を見てから、<code>RouteCandidateFinder</code> を区間 3 まで広げ、Javadoc（:16・:18-20）を直す。<code>RoutingCaseTest</code> で 3 区間の候補も 20 件の上限と見つけた数に入ることを確かめる（完了の判定: 単体テストと 2 (a) が緑）</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>4. 規則を選ぶ時刻（Green。D-90）</strong>: <code>ConstraintEvaluatorTest</code> に、区間 3 で 1 つだけ不足（接続余裕が最小の接続の値であることも）、港ごとに違う規則、次の区間の出発予定で規則の開始・終わりの境界、判定時刻には有効でも接続の時刻には切れていて後継がなければ「接続できない」を足し、<code>RoutingCaseConfirmationTest</code> に「適用開始が確定の時刻より後で接続の時刻より前の規則は確定で使う」を足して Red を見てから、:41 を次の区間の出発予定に変える。H2 の Red の 2 本（<code>ConstraintEvaluatorTest:133</code>、<code>RoutingCaseConfirmationTest:349</code>）を次の区間の出発予定の境界に書き直し、緑のままの 5 本（<code>RoutingCaseConfirmationTest:169</code>・<code>:179</code>・<code>:337</code>・<code>:360</code>、<code>confirm_route.feature:54</code>）の名前と前提を「算出の後に登録された規則を確定で読み直す」に合わせる。Javadoc（<code>ConstraintEvaluator</code>・<code>RoutingCase</code>・<code>RoutingCaseCommandService</code>・<code>ExclusionReason</code>）と feature の説明を直す。その後、<code>evaluate</code> の判定時刻の引数を消し、<code>appliesTo</code> の引数の名前を改める（構造の変更。別のコミット）（完了の判定: 2 (b)(c) と経路設計の単体・受入テストが緑）</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>5. 画面の文言とマニュアル</strong>: S-07 の説明（<code>confirmation.html:61</code>）を「確定すると、最新の接続時間規則（積み替える時刻に有効なもの）と出発の状況で候補を判定し直します。」の趣旨に直す（文言は画面の層のシナリオと manual_screenshots の期待を数えてから。T-148）。8 章 8.2 の比べ方に、候補は積替え 2 回までであること、接続時間の規則は積み替える時刻（次の区間の出発予定）に有効なものを使うこと、① の判定時刻は規則を選ぶ時刻ではないことを書く。8.3 の ③（:106）と注意・補足（:123）を直し、<code>08-confirmation.png</code> を <code>manual_screenshots.feature</code> で撮り直す（ほかのキャプチャの差分は戻す）（完了の判定: 本文とキャプチャの差分）</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>6. 品質ゲートと開発レビューと終了報告</strong>: 変異 6 つ（確認ポイント 7）を当て、落ちたテストを出力で確かめる（T-164・T-166）。<code>check</code>・<code>uiTest</code>・SonarQube（ほかの Gradle が終わってから。T-147）、開発レビュー、push して CI と MkDocs の配備を確かめる（T-126）。#15 にコメントを残す。終了報告で release_plan（W6 の Bolt 37 の行と主なタスク）・開発の索引・mkdocs を完了に直す</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>3. 候補探索（Green）</strong>: <code>RouteCandidateFinderTest</code> に、3 区間、4 区間は列挙しない、同じ航海を続けて使う列（V1 A→B、V1 B→C）と間を空けて使う列（V1、V2、V1）を列挙しない、出発地に戻らない、途中の区間が目的地を通り過ぎない、並びのテストを足して Red を見てから、<code>RouteCandidateFinder</code> を区間 3 まで広げ、Javadoc（:16・:18-20）を直す。<code>RoutingCaseTest</code> で 3 区間の候補も 20 件の上限と見つけた数に入ることを確かめる（完了の判定: 単体テストと 2 (a) が緑）</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>4. 規則を選ぶ時刻（Green。D-90）</strong>: <code>ConstraintEvaluatorTest</code> に、区間 3 で 1 つだけ不足（接続余裕が最小の接続の値であることも）、港ごとに違う規則、次の区間の出発予定で規則の開始・終わりの境界、判定時刻には有効でも接続の時刻には切れていて後継がなければ「接続できない」を足し、<code>RoutingCaseConfirmationTest</code> に「適用開始が確定の時刻より後で接続の時刻より前の規則は確定で使う」を足して Red を見てから、:41 を次の区間の出発予定に変える。H2 の Red の 2 本（<code>ConstraintEvaluatorTest:133</code>、<code>RoutingCaseConfirmationTest:349</code>）を次の区間の出発予定の境界に書き直し、緑のままの 5 本（<code>RoutingCaseConfirmationTest:169</code>・<code>:179</code>・<code>:337</code>・<code>:360</code>、<code>confirm_route.feature:54</code>）の名前と前提を「算出の後に登録された規則を確定で読み直す」に合わせる。Javadoc（<code>ConstraintEvaluator</code>・<code>RoutingCase</code>・<code>RoutingCaseCommandService</code>・<code>ExclusionReason</code>）と feature の説明を直す。その後、<code>evaluate</code> の判定時刻の引数を消し、<code>appliesTo</code> の引数の名前を改める（構造の変更。別のコミット）（完了の判定: 2 (b)(c) と経路設計の単体・受入テストが緑）</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>5. 画面の文言とマニュアル</strong>: S-07 の説明（<code>confirmation.html:61</code>）を「確定すると、最新の接続時間規則（積み替える時刻に有効なもの）と出発の状況で候補を判定し直します。」の趣旨に直す（文言は画面の層のシナリオと manual_screenshots の期待を数えてから。T-148）。8 章 8.2 の比べ方に、候補は積替え 2 回までであること、接続時間の規則は積み替える時刻（次の区間の出発予定）に有効なものを使うこと、① の判定時刻は規則を選ぶ時刻ではないことを書く。8.3 の ③（:106）と注意・補足（:123）を直し、<code>08-confirmation.png</code> を <code>manual_screenshots.feature</code> で撮り直す（ほかのキャプチャの差分は戻す）（完了の判定: 本文とキャプチャの差分）</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>6. 品質ゲートと開発レビューと終了報告</strong>: 変異 6 つ（確認ポイント 7）を当て、落ちたテストを出力で確かめる（T-164・T-166）。<code>check</code>・<code>uiTest</code>・SonarQube（ほかの Gradle が終わってから。T-147）、開発レビュー、push して CI と MkDocs の配備を確かめる（T-126）。#15 にコメントを残す。終了報告で release_plan（W6 の Bolt 37 の行と主なタスク）・開発の索引・mkdocs を完了に直す</li>
 </ul>
 <h3 id="_9">時間の配分と打ち切り<a class="headerlink" href="#_9" title="Permanent link">&para;</a></h3>
 <table>
@@ -11985,13 +12013,13 @@
 </table>
 <h2 id="_10">完了条件<a class="headerlink" href="#_10" title="Permanent link">&para;</a></h2>
 <ul class="task-list">
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> 積替え 2 回までの候補が示され、4 区間・港に戻る列・同じ航海を 2 回使う列は、成り立つデータで列挙されない</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> 2 つの接続のうち 1 つだけが不足する候補で、その接続の理由だけが示される（前と後のそれぞれ）</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> 接続時間の規則が次の区間の出発予定の時刻で選ばれ、適用開始と終わりの直前・同時刻・直後の境界が受入シナリオと単体テストで確かめられている（D-90）。確定の判定し直しも同じで、確定の時刻を境界にしたテストを新しい理由に書き直した</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> D-90 の決定を台帳・domain_model・user_story・BR-11 の注・W6 節に書いた。確定の時刻の規則を書いた写し（画面・Javadoc・feature の説明）を直した。S-07 の文言、マニュアル 8 章の本文と <code>08-confirmation.png</code> を直した</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> 変異 6 つで落ちるテストがある。<code>check</code> と <code>uiTest</code> が緑で件数が減っていない。SonarQube の Quality Gate が PASS、<code>okf:check</code> ERROR 0、CI が緑</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> release_plan（W6 の Bolt 37 の行と主なタスク）・開発の索引・mkdocs のナビが合っている。MkDocs の配備を確かめた。#15 にコメントを残した</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> 開発レビュー、終了報告</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> 積替え 2 回までの候補が示され、4 区間・港に戻る列・同じ航海を 2 回使う列は、成り立つデータで列挙されない</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> 2 つの接続のうち 1 つだけが不足する候補で、その接続の理由だけが示される（前と後のそれぞれ）</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> 接続時間の規則が次の区間の出発予定の時刻で選ばれ、適用開始と終わりの直前・同時刻・直後の境界が受入シナリオと単体テストで確かめられている（D-90）。確定の判定し直しも同じで、確定の時刻を境界にしたテストを新しい理由に書き直した</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> D-90 の決定を台帳・domain_model・user_story・BR-11 の注・W6 節に書いた。確定の時刻の規則を書いた写し（画面・Javadoc・feature の説明）を直した。S-07 の文言、マニュアル 8 章の本文と <code>08-confirmation.png</code> を直した</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> 変異 6 つで落ちるテストがある。<code>check</code> と <code>uiTest</code> が緑で件数が減っていない。SonarQube の Quality Gate が PASS、<code>okf:check</code> ERROR 0、CI が緑</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> release_plan（W6 の Bolt 37 の行と主なタスク）・開発の索引・mkdocs のナビが合っている。MkDocs の配備を確かめた。#15 にコメントを残した</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> 開発レビュー、終了報告（<a href="../bolt_37_report/">Bolt 37 終了報告</a>）</li>
 </ul>
 <h2 id="_11">更新履歴<a class="headerlink" href="#_11" title="Permanent link">&para;</a></h2>
 <table>
@@ -12003,6 +12031,11 @@
 </tr>
 </thead>
 <tbody>
+<tr>
+<td style="text-align: left;">2026-10-21</td>
+<td style="text-align: left;">ステップ 1〜6 を終えた。計画からの変更は終了報告の議題 1〜3</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5</td>
+</tr>
 <tr>
 <td style="text-align: left;">2026-10-21</td>
 <td style="text-align: left;">計画を承認した（確認ポイント 1〜8 を推奨のとおり）</td>
