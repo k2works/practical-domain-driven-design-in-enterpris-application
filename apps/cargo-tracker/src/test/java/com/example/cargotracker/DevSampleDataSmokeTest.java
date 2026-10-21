@@ -50,7 +50,10 @@ import com.example.cargotracker.shared.domain.CompanyId;
 import com.example.cargotracker.shared.domain.Role;
 import com.example.cargotracker.shared.domain.UserId;
 import com.example.cargotracker.shared.domain.UtcInstant;
+import java.time.Duration;
 import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.Set;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
@@ -77,6 +80,9 @@ class DevSampleDataSmokeTest {
 
     @Autowired
     TransportRequestRepository transportRequests;
+
+    @Autowired
+    org.springframework.jdbc.core.JdbcTemplate jdbc;
 
     @Autowired
     KpiObservationRepository kpiObservations;
@@ -359,7 +365,20 @@ class DevSampleDataSmokeTest {
         assertThat(seeded.routeVersion().candidates())
                 .flatMap(candidate -> candidate.legs())
                 .allSatisfy(leg -> assertThat(leg.infoAcquiredAt()).isEqualTo(evaluatedAt));
-        assertThat(evaluatedAt.instant()).isAfter(Instant.now().minus(java.time.Duration.ofHours(1)));
+        // 起動の時刻は、このマイグレーションを流した時刻（H2 の DB はテストの JVM の中で共有されるので、今の時刻とは比べない）
+        LocalDateTime installedOn = jdbc.queryForObject(
+                "SELECT installed_on FROM flyway_schema_history WHERE version = '20261021170900'", LocalDateTime.class);
+        Instant migratedAt = installedOn.atZone(ZoneId.systemDefault()).toInstant();
+        assertThat(Duration.between(evaluatedAt.instant(), migratedAt).abs()).isLessThan(Duration.ofMinutes(1));
+        // 最も古い情報の取得時刻の列は読み戻しでは使わない（区間から求める）ので、列の値を直に確かめる
+        assertThat(jdbc.queryForObject(
+                        "SELECT COUNT(*) FROM routing.route_candidate c WHERE c.routing_case_id ="
+                                + " '00000000-0000-0000-0000-000000000942' AND (c.oldest_info_acquired_at IS NULL OR"
+                                + " c.oldest_info_acquired_at <> (SELECT MIN(l.info_acquired_at) FROM routing.candidate_leg l"
+                                + " WHERE l.routing_case_id = c.routing_case_id AND l.route_version_no = c.route_version_no"
+                                + " AND l.candidate_no = c.candidate_no))",
+                        Integer.class))
+                .isZero();
     }
 
     @Test

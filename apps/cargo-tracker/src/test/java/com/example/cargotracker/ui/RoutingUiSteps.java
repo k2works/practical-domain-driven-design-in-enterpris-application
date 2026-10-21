@@ -95,9 +95,11 @@ public class RoutingUiSteps {
         jdbc.update(
                 "INSERT INTO routing.voyage (voyage_number, adopted_info_version, source_kind, source_ref, acquired_at,"
                         + " version, updated_at) VALUES (?, ?, 'MANUAL_ENTRY', '画面の層のテスト',"
-                        + " CURRENT_TIMESTAMP - INTERVAL '1' HOUR, 0, CURRENT_TIMESTAMP)",
+                        + " ?, 0, CURRENT_TIMESTAMP)",
                 number,
-                number + "@1");
+                number + "@1",
+                // 判定はアプリの時計（同じ JVM の実時計）で行うので、データベースの時計ではなく JVM の時計で入れる（Bolt 37b）
+                java.sql.Timestamp.from(java.time.Instant.now().minus(java.time.Duration.ofHours(1))));
         jdbc.update(
                 "INSERT INTO routing.port_call VALUES (?, 1, ?, NULL, CAST(? AS TIMESTAMP WITH TIME ZONE))",
                 number,

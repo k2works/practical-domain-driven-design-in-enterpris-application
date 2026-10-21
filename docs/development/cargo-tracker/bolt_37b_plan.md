@@ -2,7 +2,7 @@
 type: Plan
 title: "Bolt 37b 計画 - US-06 AC4 の準備（テストと開発データの航海の取得時刻を判定時刻の近くへ寄せる。情報不足の振る舞いは 37b2）"
 tags: [plan]
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-21T10:07:25Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-21T10:48:59Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-21T10:07:25Z }
 ---
@@ -143,6 +143,7 @@ Bolt 37b2（情報不足の振る舞い）の計画は、この Bolt の終了�
 | 4 | 許容時間の設定は `routing.infrastructure.config` の `@ConfigurationProperties` に置き、`RoutingConfiguration` が規則を作ってアプリケーションサービスに渡す（AT-02）。業務の閾値を設定にする初めての前例なので、domain_model か ADR に置き場所と理由を書く。設定の変異は既定でない値（例: PT48H）のテストで落とす |
 | 5 | 受入条件は test_strategy の「Release 1.0 の受入条件（照合の表の前の対応）」（:550）に AC4 の行を足す（Release 0.1 の照合の表 :510 ではない）。要求と設計の揺れ（UC-06 2a、FRS-01 の「情報が古い」、ui_design :1069・:1087、data_model :508、R-INV-02、domain_model のドメインルールの表 :712-717・用語集 :143・`rules/package-info.java`・`ExclusionReasonCode.java:4-5`）。「最終採用値」を採用情報版と読む解釈を US-06 の決定に書く |
 | 6 | ゴールは「算出のときに古い情報の候補を除外する」。確定のときの鮮度は Bolt 37c（W6 節の 37c の行にこの Bolt で足す）。マニュアル 8.2 に「算出し直す」の案内。S-06 の「許容 24 時間」の表示の形（今の期間表示は「1 日」と出す） |
+| 7 | Bolt 37b の開発レビューで見つけたこと: (a) `ConstraintEvaluatorTest`・`RouteCandidateFinderTest`・`RoutingCaseViewsTest` の取得時刻は 2026-10-01 のまま（判定時刻と比べない前提）。判定を集約の外に置くならこの 3 クラスも動かす。(b) テストの取得時刻の既定値が 2 つ（2026-10-01 と 2026-10-07）あるので、新しいテストで古い値を写さない。(c) どの区間も同じ取得時刻なので、最も古い取得時刻（min）の変異が生き残る。取得時刻の違う区間で確かめる。(d) 受入シナリオの取得 2026-10-07T01:00Z は航海を入れる時計 2026-10-06T02:00Z より後。取得時刻を Gherkin に出すときに背景の時計との順を確かめる。(e) 画面の層の取得は JVM の時計で入れた（判定もアプリの JVM の時計）。画面の層で境界を書くなら同じ時計で作る。(f) マニュアルのキャプチャの「最も古い情報の取得時刻」は撮るたびに変わる |
 
 ## 確認ポイント（計画の承認の場でまとめて確認する。Try T-6）
 
