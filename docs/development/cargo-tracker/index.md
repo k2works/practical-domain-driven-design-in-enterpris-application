@@ -94,6 +94,7 @@ Bolt がイテレーションに当たります。ふりかえりは各 Bolt の
 | 35d | [再見積りした見積りを荷主がもう一度承認し本予約へ進める（D-85。C-02・C-04・C-17、W5 のデモ）](bolt_35d_plan.md) | [終了報告](bolt_35d_report.md)（[動画](../../assets/demo/bolt-35d/requote-and-reapprove.webm){:target="_blank"}） | W5 | 完了 |
 | 35e | [荷主の承認の後に失効した見積りの開発データのサンプル（D-85。TR-2026-0908）](bolt_35e_plan.md) | [終了報告](bolt_35e_report.md) | W5 | 完了 |
 | 36 | [CI の画面の層のシナリオの揺らぎを直す（#50）](bolt_36_plan.md) | [終了報告](bolt_36_report.md) | W6 | 完了 |
+| 37 | [US-06 の境界の網羅（3 区間の候補・1 つだけ不足する接続・接続時間の規則の有効期間。D-90）](bolt_37_plan.md) | — | W6 | 計画の承認待ち |
 
 Bolt を始めるときに行を追加します。
 
