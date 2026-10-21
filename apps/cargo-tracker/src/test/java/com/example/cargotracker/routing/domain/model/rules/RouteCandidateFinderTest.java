@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Test;
 
 /**
  * 経路候補探索（US-06 AC1）。R0.1 は直行と 1 回の積替え（区間 1〜2）を、確定的な順に列挙する（Bolt 17 の確認ポイント 8）。
+ * Bolt 37 で積替え 2 回（区間 3）まで広げた。列の中で同じ航海と同じ港を 2 回使わない（Bolt 37 の確認ポイント 2）。
  */
 class RouteCandidateFinderTest {
 
@@ -21,6 +22,7 @@ class RouteCandidateFinderTest {
     static final Location SINGAPORE = new Location("SGSIN");
     static final Location ROTTERDAM = new Location("NLRTM");
     static final Location HONG_KONG = new Location("HKHKG");
+    static final Location COLOMBO = new Location("LKCMB");
     static final UtcInstant JUDGED_AT = at("2026-10-07T03:00:00Z");
     static final RouteSpecification SPEC =
             new RouteSpecification(TOKYO, ROTTERDAM, at("2026-11-02T00:00:00Z"), "GENERAL");
@@ -154,6 +156,124 @@ class RouteCandidateFinderTest {
         assertThat(finder.find(SPEC, List.of(late, earlyB, earlyA), JUDGED_AT))
                 .extracting(legs -> legs.getFirst().voyageNumber())
                 .containsExactly("V-103", "V-104", "V-102");
+    }
+
+    @Test
+    void 積替え2回の区間3つの候補を作り到着予定の順に直行と並べる() {
+        Voyage feeder = voyage(
+                "V-201", call(TOKYO, null, "2026-10-10T00:00:00Z"), call(SINGAPORE, "2026-10-20T00:00:00Z", null));
+        Voyage middle = voyage(
+                "V-801", call(SINGAPORE, null, "2026-10-21T00:00:00Z"), call(COLOMBO, "2026-10-24T00:00:00Z", null));
+        Voyage last = voyage(
+                "V-802", call(COLOMBO, null, "2026-10-25T00:00:00Z"), call(ROTTERDAM, "2026-10-29T00:00:00Z", null));
+        Voyage direct = voyage(
+                "V-101", call(TOKYO, null, "2026-10-08T00:00:00Z"), call(ROTTERDAM, "2026-10-30T00:00:00Z", null));
+
+        assertThat(finder.find(SPEC, List.of(direct, last, middle, feeder), JUDGED_AT))
+                .extracting(RouteCandidateFinderTest::voyageNumbers)
+                .containsExactly(List.of("V-201", "V-801", "V-802"), List.of("V-101"));
+    }
+
+    @Test
+    void 区間3つ目は前の区間の到着予定以後に出発するものだけをつなぐ() {
+        Voyage feeder = voyage(
+                "V-201", call(TOKYO, null, "2026-10-10T00:00:00Z"), call(SINGAPORE, "2026-10-20T00:00:00Z", null));
+        Voyage middle = voyage(
+                "V-801", call(SINGAPORE, null, "2026-10-21T00:00:00Z"), call(COLOMBO, "2026-10-24T00:00:00Z", null));
+        Voyage leftBefore = voyage(
+                "V-803", call(COLOMBO, null, "2026-10-23T23:59:00Z"), call(ROTTERDAM, "2026-10-29T00:00:00Z", null));
+        Voyage sameTime = voyage(
+                "V-804", call(COLOMBO, null, "2026-10-24T00:00:00Z"), call(ROTTERDAM, "2026-10-30T00:00:00Z", null));
+
+        assertThat(finder.find(SPEC, List.of(feeder, middle, leftBefore, sameTime), JUDGED_AT))
+                .extracting(RouteCandidateFinderTest::voyageNumbers)
+                .containsExactly(List.of("V-201", "V-801", "V-804"));
+    }
+
+    @Test
+    void 区間4つでしか目的地に着かない列は列挙しない() {
+        Voyage first = voyage(
+                "V-901", call(TOKYO, null, "2026-10-08T00:00:00Z"), call(HONG_KONG, "2026-10-10T00:00:00Z", null));
+        Voyage second = voyage(
+                "V-902", call(HONG_KONG, null, "2026-10-11T00:00:00Z"), call(SINGAPORE, "2026-10-14T00:00:00Z", null));
+        Voyage third = voyage(
+                "V-903", call(SINGAPORE, null, "2026-10-15T00:00:00Z"), call(COLOMBO, "2026-10-18T00:00:00Z", null));
+        Voyage fourth = voyage(
+                "V-904", call(COLOMBO, null, "2026-10-19T00:00:00Z"), call(ROTTERDAM, "2026-10-29T00:00:00Z", null));
+        List<Voyage> voyages = List.of(first, second, third, fourth);
+        // 航海がつながることを、出発地を香港にした 3 区間で先に確かめる（T-106）
+        RouteSpecification fromHongKong =
+                new RouteSpecification(HONG_KONG, ROTTERDAM, at("2026-11-02T00:00:00Z"), "GENERAL");
+        assertThat(finder.find(fromHongKong, voyages, JUDGED_AT)).hasSize(1);
+
+        assertThat(finder.find(SPEC, voyages, JUDGED_AT)).isEmpty();
+    }
+
+    @Test
+    void 同じ航海を続けて2回使う列は列挙しない() {
+        Voyage through = voyage(
+                "V-601",
+                call(TOKYO, null, "2026-10-08T00:00:00Z"),
+                call(SINGAPORE, "2026-10-18T00:00:00Z", "2026-10-19T00:00:00Z"),
+                call(COLOMBO, "2026-10-22T00:00:00Z", null));
+        Voyage last = voyage(
+                "V-802", call(COLOMBO, null, "2026-10-25T00:00:00Z"), call(ROTTERDAM, "2026-10-29T00:00:00Z", null));
+
+        assertThat(finder.find(SPEC, List.of(through, last), JUDGED_AT))
+                .extracting(RouteCandidateFinderTest::voyageNumbers)
+                .containsExactly(List.of("V-601", "V-802"));
+    }
+
+    @Test
+    void 同じ航海を間を空けて2回使う列は列挙しない() {
+        // V-611 の東京→シンガポール、V-612 のシンガポール→香港、V-611 の香港→ロッテルダムは時刻の上ではつながる
+        Voyage mainline = voyage(
+                "V-611",
+                call(TOKYO, null, "2026-10-08T00:00:00Z"),
+                call(SINGAPORE, "2026-10-10T00:00:00Z", "2026-10-11T00:00:00Z"),
+                call(HONG_KONG, "2026-10-20T00:00:00Z", "2026-10-21T00:00:00Z"),
+                call(ROTTERDAM, "2026-10-30T00:00:00Z", null));
+        Voyage shuttle = voyage(
+                "V-612", call(SINGAPORE, null, "2026-10-12T00:00:00Z"), call(HONG_KONG, "2026-10-15T00:00:00Z", null));
+
+        assertThat(finder.find(SPEC, List.of(mainline, shuttle), JUDGED_AT))
+                .extracting(RouteCandidateFinderTest::voyageNumbers)
+                .containsExactly(List.of("V-611"));
+    }
+
+    @Test
+    void 出発地に戻ってから出る列は列挙しない() {
+        Voyage out = voyage(
+                "V-621", call(TOKYO, null, "2026-10-08T00:00:00Z"), call(SINGAPORE, "2026-10-10T00:00:00Z", null));
+        Voyage back = voyage(
+                "V-622", call(SINGAPORE, null, "2026-10-11T00:00:00Z"), call(TOKYO, "2026-10-13T00:00:00Z", null));
+        Voyage direct = voyage(
+                "V-623", call(TOKYO, null, "2026-10-14T00:00:00Z"), call(ROTTERDAM, "2026-10-30T00:00:00Z", null));
+
+        assertThat(finder.find(SPEC, List.of(out, back, direct), JUDGED_AT))
+                .extracting(RouteCandidateFinderTest::voyageNumbers)
+                .containsExactly(List.of("V-623"));
+    }
+
+    @Test
+    void 途中の区間も目的地を通り過ぎた先の港へは運ばない() {
+        Voyage feeder = voyage(
+                "V-201", call(TOKYO, null, "2026-10-10T00:00:00Z"), call(SINGAPORE, "2026-10-20T00:00:00Z", null));
+        Voyage passing = voyage(
+                "V-631",
+                call(SINGAPORE, null, "2026-10-21T00:00:00Z"),
+                call(ROTTERDAM, "2026-10-28T00:00:00Z", "2026-10-28T12:00:00Z"),
+                call(HONG_KONG, "2026-11-10T00:00:00Z", null));
+        Voyage back = voyage(
+                "V-702", call(HONG_KONG, null, "2026-11-11T00:00:00Z"), call(ROTTERDAM, "2026-11-30T00:00:00Z", null));
+
+        assertThat(finder.find(SPEC, List.of(feeder, passing, back), JUDGED_AT))
+                .extracting(RouteCandidateFinderTest::voyageNumbers)
+                .containsExactly(List.of("V-201", "V-631"));
+    }
+
+    static List<String> voyageNumbers(List<Leg> legs) {
+        return legs.stream().map(Leg::voyageNumber).toList();
     }
 
     static Voyage voyage(String number, PortCall... calls) {

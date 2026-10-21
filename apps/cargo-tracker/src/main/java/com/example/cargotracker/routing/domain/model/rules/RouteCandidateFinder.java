@@ -13,14 +13,18 @@ import java.util.List;
 
 /**
  * 経路候補探索。航海の一覧から、出発地から目的地までの区間の列を列挙する（ドメインモデル）。
- * MVP は確定的な列挙とし、最適化はしない。R0.1 は直行と 1 回の積替え（区間 1〜2）まで（Bolt 17）。
+ * MVP は確定的な列挙とし、最適化はしない。直行から積替え 2 回（区間 1〜3）まで（Bolt 17 は区間 2 まで、Bolt 37 で区間 3 に広げた）。
  *
  * <p>区間は、航海の寄港のうち、出発予定のある寄港から、それより後の到着予定のある寄港までを取る。判定時刻より後に出発する区間だけを
- * 列挙する。積替えは、出発地・目的地でない港で、前の区間の到着予定以後に同じ港を出発する別の航海につなぐ。接続時間が足りるかは
+ * 列挙する。積替えは、出発地・目的地でない港で、前の区間の到着予定以後に同じ港を出発する別の航海につなぐ。列の中で同じ航海と
+ * 同じ港（出発地を含む）を 2 回使わない（港を巡って戻る列は業務の経路にならない。Bolt 37 の確認ポイント 2）。接続時間が足りるかは
  * 制約適合判定が決める（足りない候補も除外の理由とともに示すため、ここでは捨てない）。
  */
 @DomainRule
 public class RouteCandidateFinder {
+
+    /** 区間の数の上限（積替え 2 回。区間 4 以上は業務の経路として比べない。W6 の確認ポイント 5）。 */
+    private static final int MAX_LEGS = 3;
 
     private static final Comparator<List<Leg>> BY_ARRIVAL_THEN_VOYAGES =
             Comparator.<List<Leg>, java.time.Instant>comparing(
@@ -35,26 +39,49 @@ public class RouteCandidateFinder {
         List<List<Leg>> candidates = new ArrayList<>();
         for (Voyage first : voyages) {
             for (Leg leg : legsFrom(first, origin, judgedAt, false, destination)) {
-                if (leg.discharge().equals(destination)) {
-                    candidates.add(List.of(leg));
-                } else if (!leg.discharge().equals(origin)) {
-                    candidates.addAll(transshipments(leg, first, voyages, destination));
-                }
+                extend(List.of(leg), origin, destination, voyages, candidates);
             }
         }
         candidates.sort(BY_ARRIVAL_THEN_VOYAGES);
         return List.copyOf(candidates);
     }
 
-    /** 1 区間目の揚地で、別の航海に積み替えて目的地へ着く区間 2 の列。 */
-    private static List<List<Leg>> transshipments(
-            Leg first, Voyage firstVoyage, List<Voyage> voyages, Location destination) {
-        return voyages.stream()
-                .filter(second -> !second.voyageNumber().equals(firstVoyage.voyageNumber()))
-                .flatMap(second -> legsFrom(second, first.discharge(), first.arrivalAt(), true, null).stream())
-                .filter(next -> next.discharge().equals(destination))
-                .map(next -> List.of(first, next))
-                .toList();
+    /**
+     * 区間の列が目的地に着いていれば候補に加え、着いていなければ、上限の内で最後の揚地から別の航海に積み替えてのばす。
+     * 最後の揚地が、出発地か前の区間の揚地なら（港に戻る列）のばさない。
+     */
+    private static void extend(
+            List<Leg> route, Location origin, Location destination, List<Voyage> voyages, List<List<Leg>> candidates) {
+        Leg last = route.getLast();
+        if (last.discharge().equals(destination)) {
+            candidates.add(route);
+            return;
+        }
+        if (route.size() == MAX_LEGS || visitedBefore(route, origin, last.discharge())) {
+            return;
+        }
+        for (Voyage voyage : voyages) {
+            if (usedIn(route, voyage)) {
+                continue;
+            }
+            for (Leg next : legsFrom(voyage, last.discharge(), last.arrivalAt(), true, destination)) {
+                List<Leg> longer = new ArrayList<>(route);
+                longer.add(next);
+                extend(List.copyOf(longer), origin, destination, voyages, candidates);
+            }
+        }
+    }
+
+    /** 港が、出発地か、最後の区間より前の区間の揚地か。 */
+    private static boolean visitedBefore(List<Leg> route, Location origin, Location port) {
+        return port.equals(origin)
+                || route.subList(0, route.size() - 1).stream()
+                        .anyMatch(leg -> leg.discharge().equals(port));
+    }
+
+    /** 航海を列のどこかで使ったか（続けて使う列と、間を空けて使う列の両方を除く）。 */
+    private static boolean usedIn(List<Leg> route, Voyage voyage) {
+        return route.stream().anyMatch(leg -> leg.voyageNumber().equals(voyage.voyageNumber()));
     }
 
     /**

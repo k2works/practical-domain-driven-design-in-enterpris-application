@@ -99,6 +99,44 @@ class RoutingCaseTest {
                         assertThat(candidate.evaluation().conforming()).isTrue());
     }
 
+    @Test
+    void 積替え2回の候補も見つけた数と20件の上限に入る() {
+        // Bolt 37: 区間 3 の候補も区間 1〜2 と同じく数え、上限で切る（確認ポイント 3）
+        Location colombo = new Location("LKCMB");
+        List<ConnectionRule> rules = List.of(
+                RULES.getFirst(),
+                new ConnectionRule(UUID.randomUUID(), colombo, Duration.ofHours(6), at("2026-01-01T00:00:00Z"), null));
+        List<Voyage> voyages = new ArrayList<>();
+        voyages.add(feeder("V-FEED", "2026-10-09T00:00:00Z"));
+        voyages.add(new Voyage(
+                "V-MID",
+                List.of(
+                        new PortCall(SINGAPORE, null, at("2026-10-09T08:00:00Z")),
+                        new PortCall(colombo, at("2026-10-10T00:00:00Z"), null)),
+                "V-MID@1",
+                at("2026-10-01T06:10:00Z")));
+        for (int i = 0; i < 21; i++) {
+            voyages.add(new Voyage(
+                    "V-%03d".formatted(i),
+                    List.of(
+                            new PortCall(colombo, null, at("2026-10-10T12:00:00Z")),
+                            new PortCall(ROTTERDAM, at("2026-10-%02dT00:00:00Z".formatted(11 + i)), null)),
+                    "V-%03d@1".formatted(i),
+                    at("2026-10-01T06:10:00Z")));
+        }
+        RoutingCase routingCase = open();
+
+        CandidateCalculation calculation =
+                routingCase.calculateCandidates(voyages, rules, JUDGED_AT, finder, evaluator);
+
+        assertThat(calculation.found()).isEqualTo(21);
+        assertThat(calculation.kept()).isEqualTo(RoutingCase.MAX_CANDIDATES);
+        assertThat(calculation.omitted()).isEqualTo(1);
+        assertThat(routingCase.routeVersion().candidates())
+                .hasSize(20)
+                .allSatisfy(candidate -> assertThat(candidate.legs()).hasSize(3));
+    }
+
     @org.junit.jupiter.params.ParameterizedTest(name = "見つけた候補が {0} 件なら {1} 件を残し {2} 件を示さない")
     @org.junit.jupiter.params.provider.CsvSource({"19, 19, 0", "20, 20, 0", "21, 20, 1"})
     void 候補の上限は20件(int found, int kept, int omitted) {
