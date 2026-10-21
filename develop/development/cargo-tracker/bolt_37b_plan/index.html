@@ -16,7 +16,7 @@
         <link rel="prev" href="../bolt_37_report/">
       
       
-        <link rel="next" href="../release_report-0_1/">
+        <link rel="next" href="../bolt_37b_report/">
       
       
         
@@ -6621,6 +6621,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../bolt_37b_report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 37b 終了報告
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../release_report-0_1/" class="md-nav__link">
         
   
@@ -11889,7 +11917,7 @@
 <h2 id="_7">ステップ計画<a class="headerlink" href="#_7" title="Permanent link">&para;</a></h2>
 <p>各ステップの終わりに対象のテストを流し、最後に <code>check</code> と <code>uiTest</code> を流して件数を数える（T-151）。コミットは pathspec で行い（T-110）、push してアプリの CI とデモ環境を確かめる（T-26）。どのステップを push しても振る舞いは変わらない。</p>
 <ul class="task-list">
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>1. W6 節の直しと数え上げ</strong>:</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>1. W6 節の直しと数え上げ</strong>:</li>
 <li>W6 節の Bolt の表に 37b2 の行を足し、37b の行を準備に直す（古い値は括弧に入れる。T-170）。</li>
 <li>確認ポイント 2 の事実（画面の層は実時計で、取得は 2026-10-01 に固定）、:758 の矢印とキャプチャ、Golden dataset v0 の Bolt（37f にそろえる）を直す。</li>
 <li>37c の行に「算出の後に鮮度が切れた候補を確定で拒否するか、出発済みとの判定の順」を足す。</li>
@@ -11897,18 +11925,18 @@
 <li>ガントと開発戦略の W6 の行を直す。</li>
 <li>航海の取得時刻を作るテストの部品（<code>RoutingSteps</code>、<code>RoutingUiSteps</code>、<code>RoutingCaseTest</code> の補助、<code>RoutingCaseFixture</code>、<code>RoutingCaseControllerTest</code>、<code>MyBatisRoutingRepositoriesIntegrationTest</code>、ほかに直接 <code>Voyage</code>・<code>Leg</code> を作る箇所）と、取得時刻を確かめる箇所を数える（T-148）。</li>
 <li>完了の判定: 文書の差分と、直す箇所の一覧。</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>2. テストの取得時刻を動かす（H1）</strong>:</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>2. テストの取得時刻を動かす（H1）</strong>:</li>
 <li>動かす前に <code>check</code>・<code>uiTest</code> の件数を控える。</li>
 <li>受入シナリオの取得を 2026-10-07T01:00Z にする。画面の層はデータベースの時計で今の 1 時間前にする。単体と統合はそれぞれの判定時刻の前の近くにする（例: 判定 2026-10-07T03:00Z なら 2026-10-07T01:00Z、2083 年の統合テストは 2083-10-07T01:00Z）。</li>
 <li>取得時刻を確かめる箇所の期待値だけを直す。</li>
 <li>共有の PostgreSQL に、ほかのクラスが残す古い航海がないことを数える（T-106・T-119）。</li>
 <li>完了の判定: <code>check</code>・<code>uiTest</code> が緑で、件数が控えと同じ。</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>3. 開発データの取得時刻（データベースの承認ゲート。H2）</strong>:</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>3. 開発データの取得時刻（データベースの承認ゲート。H2）</strong>:</li>
 <li><code>db/dev-data/</code> に dev だけのマイグレーションを 1 つ足す。航海 7 本の <code>acquired_at</code>・<code>updated_at</code> を起動の時刻（<code>CURRENT_TIMESTAMP</code>）にする。見本の RC-2026-0902 の <code>candidate_leg.info_acquired_at</code> と <code>route_candidate.oldest_info_acquired_at</code> を、航海の値を写して更新する。見本の判定時刻も起動の時刻に寄せる。</li>
 <li><code>DevSampleDataSmokeTest</code> で、航海の取得時刻が見本の判定時刻より前でないこと（起動の時刻にそろったこと）を確かめる。</li>
 <li>ローカルの dev で起動して、S-06 で見本の候補と算出し直した候補を見る。</li>
 <li>完了の判定: <code>DevSampleDataSmokeTest</code> が緑、起動して確かめた。</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>4. 品質ゲートと開発レビューと終了報告</strong>:</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>4. 品質ゲートと開発レビューと終了報告</strong>:</li>
 <li><code>check</code>・<code>uiTest</code>・SonarQube（ほかの Gradle が終わってから。T-147）、開発レビュー。</li>
 <li>push して CI、MkDocs の配備、デモ環境（<code>deploy:demo:status</code>）を確かめる。デモ環境の窓の注を運用の手順書に書く。</li>
 <li>終了報告で release_plan・開発の索引・mkdocs を完了に直し、Bolt 37b2 の開始準備に送る材料（下の表）を引き継ぐ。</li>
@@ -12031,12 +12059,12 @@
 </table>
 <h2 id="_9">完了条件<a class="headerlink" href="#_9" title="Permanent link">&para;</a></h2>
 <ul class="task-list">
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> 既存のテストの航海の取得時刻を判定時刻の近くへ動かし、<code>check</code>・<code>uiTest</code> が緑で件数が変わらない</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> 開発データの航海と見本の候補の取得時刻・判定時刻を起動の時刻に寄せ、<code>DevSampleDataSmokeTest</code> が緑。dev で起動して確かめた</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> W6 節（37b2 の行、確認ポイント 2、:758、Golden dataset の Bolt、37c の行）、台帳 D-89、ガント、開発戦略、運用の手順書を直した</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> SonarQube の Quality Gate が PASS、<code>okf:check</code> ERROR 0、CI が緑。デモ環境が動いている。MkDocs の配備を確かめた</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> release_plan・開発の索引・mkdocs のナビが合っている</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> 開発レビュー、終了報告（Bolt 37b2 に送る材料を引き継ぐ）</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> 既存のテストの航海の取得時刻を判定時刻の近くへ動かし、<code>check</code>・<code>uiTest</code> が緑で件数が変わらない</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> 開発データの航海と見本の候補の取得時刻・判定時刻を起動の時刻に寄せ、<code>DevSampleDataSmokeTest</code> が緑。dev で起動して確かめた</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> W6 節（37b2 の行、確認ポイント 2、:758、Golden dataset の Bolt、37c の行）、台帳 D-89、ガント、開発戦略、運用の手順書を直した</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> SonarQube の Quality Gate が PASS、<code>okf:check</code> ERROR 0、CI が緑。デモ環境が動いている。MkDocs の配備を確かめた</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> release_plan・開発の索引・mkdocs のナビが合っている</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> 開発レビュー、終了報告（Bolt 37b2 に送る材料を引き継ぐ）</li>
 </ul>
 <h2 id="_10">更新履歴<a class="headerlink" href="#_10" title="Permanent link">&para;</a></h2>
 <table>
@@ -12048,6 +12076,11 @@
 </tr>
 </thead>
 <tbody>
+<tr>
+<td style="text-align: left;">2026-10-21</td>
+<td style="text-align: left;">ステップ 1〜4 を終えた。計画からの変更は終了報告の議題 1〜3</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5</td>
+</tr>
 <tr>
 <td style="text-align: left;">2026-10-21</td>
 <td style="text-align: left;">計画を承認した（確認ポイント 1〜5 を推奨のとおり。開発データのマイグレーションのデータベースの承認ゲートを含む）</td>
