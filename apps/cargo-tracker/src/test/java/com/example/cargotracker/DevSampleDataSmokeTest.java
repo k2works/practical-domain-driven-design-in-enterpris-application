@@ -347,6 +347,22 @@ class DevSampleDataSmokeTest {
     }
 
     @Test
+    void 航海の取得時刻は起動の時刻で見本の候補の判定時刻と区間の取得時刻にそろう() {
+        // Bolt 37b: 航海の情報鮮度（US-06 AC4、Bolt 37b2）で、起動から 24 時間は情報不足にならない。取得が判定より後に見えない
+        RoutingCase seeded =
+                routingCases.findByNumber(new RoutingCaseNumber(2026, 902)).orElseThrow();
+        UtcInstant evaluatedAt = seeded.routeVersion().evaluatedAt().orElseThrow();
+
+        assertThat(voyages.findAll())
+                .isNotEmpty()
+                .allSatisfy(voyage -> assertThat(voyage.acquiredAt()).isEqualTo(evaluatedAt));
+        assertThat(seeded.routeVersion().candidates())
+                .flatMap(candidate -> candidate.legs())
+                .allSatisfy(leg -> assertThat(leg.infoAcquiredAt()).isEqualTo(evaluatedAt));
+        assertThat(evaluatedAt.instant()).isAfter(Instant.now().minus(java.time.Duration.ofHours(1)));
+    }
+
+    @Test
     void 営業の受付一覧の予約の確定待ちに荷主が承認した見本が有効期限の近い順に出る() {
         assertThat(quotations.findAwaitingBookingSummaries())
                 .filteredOn(summary -> summary.number().sequence() >= 901)

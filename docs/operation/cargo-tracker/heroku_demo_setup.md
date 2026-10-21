@@ -4,7 +4,7 @@ title: "Heroku デモ環境セットアップ手順書 - cargo-tracker"
 description: "cargo-tracker を dev プロファイルのまま Heroku（Container Registry、Eco dyno）へ配備し、関係者が触って確かめるデモ環境を作る・更新する・止める手順を示す。"
 tags: [operation,playbook,setup,heroku]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-20T06:44:38Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-21T10:28:26Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-06T11:19:09Z }
   - { by: human:kakimomokuri, at: 2026-10-07T02:53:59Z }
@@ -315,6 +315,7 @@ npx gulp deploy:demo:open
 
 - 再起動すると、それまでに入れた輸送要求・見積り・添付した書類は消え、開発用の企業と利用者だけになります。起動は 5 秒前後です。
 - Eco dyno は 30 分アクセスがないとスリープします。スリープからの最初のアクセスは、起動を待つため遅くなります（再起動の起動は 5 秒前後。スリープからの時間は Bolt 15 では未計測で、計測の 30 分の間に関係者のアクセスがありスリープしなかった）。デモの数分前に一度開いておきます。
+- 開発データの航海の情報の取得時刻は起動の時刻です（Bolt 37b）。経路の候補は、航海の情報の最終取得から 24 時間を超えると「情報不足」で除外されます（US-06 AC4。Bolt 37b2 から）。Heroku の 1 日 1 回の再起動は 24 時間に数時間のゆらぎが乗るので、起動から 24 時間を超えて動き続けると、最大で 3〜4 時間ほどすべての候補が情報不足になり得ます。デモで候補を算出する前に、起動から 24 時間を超えていそうなら `deploy:demo:restart` で初期状態に戻します。
 
 ## 7. ロールバック
 
