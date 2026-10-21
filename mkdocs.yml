@@ -242,6 +242,7 @@ nav:
           - Bolt 36 終了報告: development/cargo-tracker/bolt_36_report.md
           - Bolt 37 計画: development/cargo-tracker/bolt_37_plan.md
           - Bolt 37 終了報告: development/cargo-tracker/bolt_37_report.md
+          - Bolt 37b 計画: development/cargo-tracker/bolt_37b_plan.md
           - Release 0.1 リリース完了報告書: development/cargo-tracker/release_report-0_1.md
   - ユーザーマニュアル:
       - 概要: manual/index.md
