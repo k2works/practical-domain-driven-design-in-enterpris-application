@@ -161,7 +161,7 @@ class RoutingCaseControllerTest {
                 .andExpect(content().string(Matchers.containsString("不足 4 時間")))
                 // Bolt 17 レビュー D-61: 実際の接続時間と、規則がないことを判定できないと示す。経由港と期限までの余裕を示す
                 .andExpect(content().string(Matchers.containsString("接続不足（SGSIN で接続 4 時間、必要 8 時間、SGSIN の規則）")))
-                .andExpect(content().string(Matchers.containsString("接続を判定できない（HKHKG の接続時間規則が未登録。接続 1 日）")))
+                .andExpect(content().string(Matchers.containsString("接続を判定できない（HKHKG に次の出発の時刻で有効な接続時間規則がない。接続 1 日）")))
                 .andExpect(content().string(Matchers.containsString("期限超過 1 日 12 時間")))
                 .andExpect(content().string(Matchers.containsString("期限まで 2 日")))
                 .andExpect(content().string(Matchers.containsString("SGSIN 積替え")))

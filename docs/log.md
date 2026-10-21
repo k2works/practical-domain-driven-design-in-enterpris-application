@@ -1,6 +1,7 @@
 # Docs Update Log
 
 ## 2026-10-21
+* **Update**: [08-経路設計](/manual/08-経路設計.md) を更新（anthropic/claude-opus-5-5）
 * **Update**: [user_story](/requirements/cargo-tracker/user_story.md) を更新（anthropic/claude-opus-5-5）
 * **Update**: [requirements_definition](/requirements/cargo-tracker/requirements_definition.md) を更新（anthropic/claude-opus-5-5）
 * **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）

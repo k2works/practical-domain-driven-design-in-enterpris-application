@@ -263,7 +263,7 @@ final class RoutingCaseViews {
                         + reason.port().unLocode()
                         + " の規則）。次の出発 " + dateTime(reason.violatedAt()) + INFO_VERSION + reason.infoVersion();
             case NOT_CONNECTABLE ->
-                "接続を判定できない（" + reason.port().unLocode() + " の接続時間規則が未登録。接続 "
+                "接続を判定できない（" + reason.port().unLocode() + " に次の出発の時刻で有効な接続時間規則がない。接続 "
                         + connection(reason, legs) + "）。次の出発 " + dateTime(reason.violatedAt())
                         + INFO_VERSION + reason.infoVersion();
             case CARGO_NOT_SUPPORTED -> "貨物種別に対応しない" + INFO_VERSION + reason.infoVersion();
