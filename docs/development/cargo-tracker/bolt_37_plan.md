@@ -2,8 +2,10 @@
 type: Plan
 title: "Bolt 37 計画 - US-06 の境界の網羅（3 区間の候補・1 つだけ不足する接続・接続時間の規則の有効期間。D-90）"
 tags: [plan]
-status: draft
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-21T02:56:09Z }
+status: stable
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-21T07:28:22Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-10-21T07:28:22Z }
 ---
 
 # Bolt 37 計画 - US-06 の境界の網羅（3 区間の候補・1 つだけ不足する接続・接続時間の規則の有効期間。D-90）
@@ -186,6 +188,7 @@ end note
 
 | 日付 | 更新内容 | 更新者 |
 | :--- | :--- | :--- |
+| 2026-10-21 | 計画を承認した（確認ポイント 1〜8 を推奨のとおり） | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-10-21 | 整合性検証の指摘を反映した（承認待ち）。確定の時刻を境界にしたテストの書き直し、確定の時刻の規則を書いた写し（S-07 の文言・マニュアル 8.3・domain_model :734・user_story :318・Javadoc）、Bolt 19 の確認ポイント 3 と BR-11 との関係、判定時刻の引数を消すこと、境界のシナリオが背景の規則に隠れないこと、同じ航海を 2 回使う列を単体テストで確かめること、変異を 6 つに、D-90 の記録の仕方を直した。約 3.5 時間にした | anthropic/claude-opus-5-5 |
 | 2026-10-21 | 初版作成（承認待ち）。D-90 は human:kakimomokuri が接続の時刻で選ぶと決めた | anthropic/claude-opus-5-5、決定 human:kakimomokuri |
 
