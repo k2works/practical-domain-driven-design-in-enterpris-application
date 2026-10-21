@@ -114,7 +114,7 @@ class RoutingCaseTest {
                         new PortCall(SINGAPORE, null, at("2026-10-09T08:00:00Z")),
                         new PortCall(colombo, at("2026-10-10T00:00:00Z"), null)),
                 "V-MID@1",
-                at("2026-10-01T06:10:00Z")));
+                at("2026-10-07T01:00:00Z")));
         for (int i = 0; i < 21; i++) {
             voyages.add(new Voyage(
                     "V-%03d".formatted(i),
@@ -122,7 +122,7 @@ class RoutingCaseTest {
                             new PortCall(colombo, null, at("2026-10-10T12:00:00Z")),
                             new PortCall(ROTTERDAM, at("2026-10-%02dT00:00:00Z".formatted(11 + i)), null)),
                     "V-%03d@1".formatted(i),
-                    at("2026-10-01T06:10:00Z")));
+                    at("2026-10-07T01:00:00Z")));
         }
         RoutingCase routingCase = open();
 
@@ -229,7 +229,7 @@ class RoutingCaseTest {
                         new PortCall(TOKYO, null, at("2026-10-08T00:00:00Z")),
                         new PortCall(ROTTERDAM, at(arrival), null)),
                 number + "@1",
-                at("2026-10-01T06:10:00Z"));
+                at("2026-10-07T01:00:00Z"));
     }
 
     static Voyage feeder(String number, String arrivalAtSingapore) {
@@ -239,7 +239,7 @@ class RoutingCaseTest {
                         new PortCall(TOKYO, null, at("2026-10-08T00:00:00Z")),
                         new PortCall(SINGAPORE, at(arrivalAtSingapore), null)),
                 number + "@1",
-                at("2026-10-01T06:10:00Z"));
+                at("2026-10-07T01:00:00Z"));
     }
 
     static Voyage fromSingapore(String number, String departure, String arrival) {
@@ -247,7 +247,7 @@ class RoutingCaseTest {
                 number,
                 List.of(new PortCall(SINGAPORE, null, at(departure)), new PortCall(ROTTERDAM, at(arrival), null)),
                 number + "@1",
-                at("2026-10-01T06:10:00Z"));
+                at("2026-10-07T01:00:00Z"));
     }
 
     static UtcInstant at(String text) {

@@ -526,7 +526,7 @@ class MyBatisRoutingRepositoriesIntegrationTest {
     }
 
     static Voyage voyage(String number, PortCall... calls) {
-        return new Voyage(number, List.of(calls), number + "@1", at("2083-10-01T06:10:00Z"));
+        return new Voyage(number, List.of(calls), number + "@1", at("2083-10-07T01:00:00Z"));
     }
 
     static PortCall call(Location port, String arrival, String departure) {

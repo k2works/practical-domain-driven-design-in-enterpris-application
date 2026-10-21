@@ -38,7 +38,7 @@ public class RoutingSteps {
     /** 経路設計者（業務ルール層のシナリオの操作者）。 */
     static final UserId ROUTE_DESIGNER = new UserId(UUID.fromString("00000000-0000-0000-0000-000000000501"));
 
-    private static final UtcInstant INFO_ACQUIRED_AT = new UtcInstant(Instant.parse("2026-10-01T06:10:00Z"));
+    private static final UtcInstant INFO_ACQUIRED_AT = new UtcInstant(Instant.parse("2026-10-07T01:00:00Z"));
     private static final Map<String, ExclusionReasonCode> REASONS = Map.of(
             "期限超過", ExclusionReasonCode.DEADLINE_EXCEEDED,
             "接続不足", ExclusionReasonCode.CONNECTION_TOO_SHORT,

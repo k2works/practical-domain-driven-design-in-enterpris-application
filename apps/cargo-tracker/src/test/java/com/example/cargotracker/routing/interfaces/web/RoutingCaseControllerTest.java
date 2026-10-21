@@ -168,7 +168,7 @@ class RoutingCaseControllerTest {
                 .andExpect(content().string(Matchers.containsString("直行")))
                 .andExpect(content().string(Matchers.containsString("最も古い情報の取得時刻")))
                 .andExpect(content().string(Matchers.containsString("参照した航海情報の版 V-LATE@1")))
-                .andExpect(content().string(Matchers.containsString("2026-10-01 15:10 Asia/Tokyo")))
+                .andExpect(content().string(Matchers.containsString("2026-10-07 10:00 Asia/Tokyo")))
                 .andExpect(content().string(Matchers.containsString("候補を再算出")));
     }
 
@@ -649,7 +649,7 @@ class RoutingCaseControllerTest {
     }
 
     static Voyage voyage(String number, PortCall... calls) {
-        return new Voyage(number, List.of(calls), number + "@1", at("2026-10-01T06:10:00Z"));
+        return new Voyage(number, List.of(calls), number + "@1", at("2026-10-07T01:00:00Z"));
     }
 
     static PortCall call(Location port, String arrival, String departure) {

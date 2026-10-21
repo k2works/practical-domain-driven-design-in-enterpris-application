@@ -95,7 +95,7 @@ public class RoutingUiSteps {
         jdbc.update(
                 "INSERT INTO routing.voyage (voyage_number, adopted_info_version, source_kind, source_ref, acquired_at,"
                         + " version, updated_at) VALUES (?, ?, 'MANUAL_ENTRY', '画面の層のテスト',"
-                        + " TIMESTAMP WITH TIME ZONE '2026-10-01 06:10:00+00', 0, CURRENT_TIMESTAMP)",
+                        + " CURRENT_TIMESTAMP - INTERVAL '1' HOUR, 0, CURRENT_TIMESTAMP)",
                 number,
                 number + "@1");
         jdbc.update(
