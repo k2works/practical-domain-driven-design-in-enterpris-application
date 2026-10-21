@@ -13900,7 +13900,7 @@
 <tr>
 <td style="text-align: left;">4</td>
 <td style="text-align: left;">接続時間の規則を選ぶ時刻（D-65）</td>
-<td style="text-align: left;">接続の時刻（次の区間の出発予定）で選ぶ。業務責任者の確認が要るので台帳に D-90 として載せ、決まらなければ判定時刻のまま境界のテストだけを足す</td>
+<td style="text-align: left;">接続の時刻（次の区間の出発予定）で選ぶ。業務責任者の確認が要るので台帳に D-90 として載せ、決まらなければ判定時刻のまま境界のテストだけを足す。決着（2026-10-21）: human:kakimomokuri が接続の時刻で選ぶと決めた（D-90）</td>
 </tr>
 <tr>
 <td style="text-align: left;">5</td>
@@ -13991,7 +13991,7 @@
 <li>US-16・US-18 AC9（38〜38g）: ui_design の S-20（:145・:180-183・:1120 以降）と A-06（:94・:186-187。招待に流用する分の語と期限）、domain_model の IA-INV-02（担当企業だけ）・IA-INV-03（管理者による解除）・IA-INV-12（招待 24 時間）・IA-INV-14（登録・解除・担当範囲の操作）・:1055（管理範囲の割り当て）・:1215（利用者の集約が担当範囲を持つと書いた記述を、実装の別のポート <code>UserAssignmentRepository.scopeOf</code> に合わせる）、data_model の <code>user_assignment</code>（:939。「<code>BOOKING</code> は W6」を担当企業だけに）・<code>audit_record</code> の action（:938）・<code>password_reset_token</code> の用途・<code>notification</code> の種類、non_functional の SEC-08（招待）・SEC-10（管理者の経路）・SEC-12（担当企業だけ）、requirements_definition の OQ-07 の残り（案件ごとの割り当て）、各コンテキストの <code>allowedDependencies</code> と共有カーネルの範囲外の試行の記録のポート（新しい ADR）、ADR-012（担当範囲と session の直列化）</li>
 <li>承認の後に直す文書（W6 の開始準備の範囲）: release_plan の :101（U2 の対策）・:350-351 と引継ぎ ID の台帳（TST-02・DM-05 の期限を「v0 は仮の値で作り、届いたら差し替える。パイロット開始の条件として残す」に）、台帳の D-88 の注と D-89・D-90 の新設、W6 の行（:788。ゴールに利用者の管理を足し、管理範囲の割り当てを W10 へ）と W10 の行（:792）、ガントの W6 の名前（:253）、開発戦略の W6 のデモ項目（:185）と W6 の行（:346）</li>
 </ul>
-<p><strong>D-65 の残り</strong>（Bolt 17 の開発レビュー）: Golden dataset の集約の単位のテスト（37f）と規則を選ぶ時刻（37。確認ポイント 4）は W6。依頼の後の再提出で経路条件が得られないときの扱い（UC-07 5a）・航海の照会を時間の窓と港で絞ること・貨物種別の ACL・<code>Voyage</code> と <code>ConnectionRule</code> の class 化は、外部情報の取込で航海の書き手と量が変わる W7（US-14）の開始準備で扱う。UC-06 4a（情報の更新で候補を旧版にする）も W7。#16 の「経路版の更新を版ごとの差分の保存に置き換える」は US-08（W13）</p>
+<p><strong>D-65 の残り</strong>（Bolt 17 の開発レビュー）: Golden dataset の集約の単位のテスト（37f）と規則を選ぶ時刻（37。確認ポイント 4。2026-10-21 に D-90 で接続の時刻に決めた）は W6。依頼の後の再提出で経路条件が得られないときの扱い（UC-07 5a）・航海の照会を時間の窓と港で絞ること・貨物種別の ACL・<code>Voyage</code> と <code>ConnectionRule</code> の class 化は、外部情報の取込で航海の書き手と量が変わる W7（US-14）の開始準備で扱う。UC-06 4a（情報の更新で候補を旧版にする）も W7。#16 の「経路版の更新を版ごとの差分の保存に置き換える」は US-08（W13）</p>
 <p><strong>Bolt の分け方</strong>（2026-10-20 の初案。各 Bolt の開始準備で引き直す）:</p>
 <table>
 <thead>
@@ -14109,7 +14109,7 @@
 <p><strong>#50（W5 の締めの返済の候補）から入れるもの</strong>: CI の揺らぎ（36）、予約から見積りのドメインへの型の ArchUnit の規則（37e）、受入シナリオの背景の写し（37f）、<code>Section</code> とテンプレート（38）、役割 0 件の検査の二重（38b）、停止の理由などの表示（38c）、回復コードが送り直すたびに減る件・<code>findByEventIdAndRecipient</code>（38d）、テストの準備で割り当てが自動で入る件・<code>list</code> と <code>detail</code> の非管理者の扱い・範囲外のときだけ応答時間が違う件（38e）。画面の層の開き直すループの共通化は、37b・37c で S-06・S-07 の画面の層のシナリオを足す前に、写しを数えてから決める。</p>
 <p><strong>Living Documentation</strong>: 新しい ADR（範囲外の試行の記録のポートと担当範囲の受け渡し）と ADR-012 の変更、<code>package-info</code> の <code>allowedDependencies</code>、ModularityTest、用語集の整合テスト（担当範囲・招待・再設計要・情報不足・Golden dataset）、受入条件の照合の表（US-06・US-07・US-16・US-18 の Release 1.0 の範囲）</p>
 <p><strong>デモ項目</strong>: 経路候補の境界と情報不足（<code>@US-06</code>、<code>@golden</code>）、確定の時の情報版の照合と再設計要の経路の拒否（<code>@US-07</code>）、利用者の登録と招待・ロックと TOTP の解除と本人への通知・担当範囲の外の拒否（<code>@US-16</code>、<code>@US-18-AC9</code>）。動画は画面の振る舞いが変わる Bolt（37b・37c・38b・38c・38e）で <code>@demo-&lt;Bolt&gt;</code> を撮る</p>
-<p><strong>ユーザーマニュアル</strong>: 8 章（経路設計。37b・37c・38g）、4 章・7 章（再設計要と出発済みの拒否。37e）、11 章（利用者の管理。38〜38e）、2 章（ログイン。38b の招待、38c の解除の後の再登録、38d の回復コードの案内）、6 章・7 章・9 章（担当範囲の外。38f・38g）。振る舞いの変わる Bolt はマニュアルの更新とキャプチャを完了条件に入れる</p>
+<p><strong>ユーザーマニュアル</strong>: 8 章（経路設計。37・37b・37c・38g）、4 章・7 章（再設計要と出発済みの拒否。37e）、11 章（利用者の管理。38〜38e）、2 章（ログイン。38b の招待、38c の解除の後の再登録、38d の回復コードの案内）、6 章・7 章・9 章（担当範囲の外。38f・38g）。振る舞いの変わる Bolt はマニュアルの更新とキャプチャを完了条件に入れる</p>
 <p><strong>主なタスク</strong>:</p>
 <ul class="task-list">
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> W6 の開始準備（本節。2026-10-20）: 計画の承認、詳細整合性検証・横断整合性検証（指摘を反映）、承認の後に直す文書、GitHub の同期</li>
@@ -14483,7 +14483,7 @@
 <td style="text-align: left;">US-06、BR-11、Bolt 17 の開発レビュー D-65</td>
 <td style="text-align: left;">W6 の開始準備の確認ポイント 4</td>
 <td style="text-align: left;">業務責任者に確かめる（Bolt 37 の開始準備）</td>
-<td style="text-align: left;">決定（2026-10-21、human:kakimomokuri。Bolt 37 の開始準備の質問への回答）: 接続の時刻（次の区間の出発予定）に有効な規則で判定する。Bolt 17 の確認ポイント 9 と Bolt 19 の確認ポイント 3 を変える。<a href="../bolt_37_plan/">Bolt 37 計画</a>で作る</td>
+<td style="text-align: left;">決定（2026-10-21、human:kakimomokuri。Bolt 37 の開始準備の質問への回答）: 接続の時刻（次の区間の出発予定）に有効な規則で判定する。Bolt 17 の確認ポイント 9 と Bolt 19 の確認ポイント 3 を変える。<a href="../bolt_37_plan/">Bolt 37 計画</a>で作る。反映: domain_model（Bolt 17・19・37 の決定）、user_story（US-06・US-07）、BR-11 の注、W6 の確認ポイント 4（Bolt 37 のステップ 1）</td>
 </tr>
 </tbody>
 </table>
