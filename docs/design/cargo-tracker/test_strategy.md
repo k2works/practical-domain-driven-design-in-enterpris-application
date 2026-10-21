@@ -4,7 +4,7 @@ title: "cargo-tracker テスト戦略"
 description: "cargo-tracker のテスト形状、テストレベルと責務、BDD（Cucumber）のシナリオ階層とタグ規約、不変条件・ユーザーストーリーとテストの対応、カバレッジ目標、CI での実行。"
 tags: [design, test-strategy, bdd]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-20T02:52:02Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-21T07:58:34Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T08:12:04Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:01:38Z }
@@ -277,7 +277,7 @@ BR-10・BR-11 は「同時刻」「同値」が判定を分ける。境界値は
 - 時刻は UTC で与え、表示のテストではタイムゾーンと UTC offset を確かめる。
 - 「commit 時刻で判定する」規則（BR-10、R-INV-03）は、アプリケーションサービスが commit 時刻として渡す時刻を固定して確かめる。
 - Clock はマイクロ秒に切り捨てる（ADR-007）。境界値を保存して読み直しても、判定が変わらないことを統合テストでも確かめる。
-- BR-11 は、接続が複数ある経路で 1 つの接続だけが不足する場合と、接続時間規則の有効期間（適用開始・終了）の境界も網羅する。
+- BR-11 は、接続が複数ある経路で 1 つの接続だけが不足する場合と、接続時間規則の有効期間（適用開始・終了）の境界も網羅する。境界は次の区間の出発予定の時刻を基準にする（D-90。Bolt 37）。
 
 ## アーキテクチャテスト
 

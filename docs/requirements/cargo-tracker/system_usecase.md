@@ -4,7 +4,7 @@ title: "cargo-tracker システムユースケース"
 description: "cargo-tracker の MVP を中心とするシステムユースケースの目的、保証、主成功シナリオ、拡張、測定基準。"
 tags: [requirements, usecase]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-01T08:41:33Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-21T07:58:34Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T05:20:11Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:01:39Z }
@@ -187,7 +187,7 @@ MVP の決定: 荷主内の入力者・承認者は分離せず、荷主担当�
 1. 経路設計者が候補と例外条件を確認する。
 2. 規制、危険品、接続条件などの判断根拠を記録する。
 3. 経路設計者が採用候補を承認する。
-4. システムが承認の commit 時点で、参照した外部情報版に対する到着期限と必要最小接続時間の適合を再検証する。
+4. システムが承認の commit 時点で、参照した外部情報版に対する到着期限と必要最小接続時間の適合を再検証する（接続時間規則は接続の時刻に有効なもの。BR-11 の注、D-90）。
 5. システムが根拠、承認者、commit 時刻、外部情報版を含む経路版を確定する。
 6. システムが確定経路版を本予約の確定条件として提供する。
 
