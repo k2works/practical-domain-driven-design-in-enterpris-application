@@ -56,7 +56,7 @@ public record ExclusionReason(
                 infoVersion);
     }
 
-    /** 接続できない。積替えの港に判定時刻で有効な接続時間規則がない。不適合の時刻は次の区間の出発予定。 */
+    /** 接続できない。積替えの港に、次の区間の出発予定の時刻で有効な接続時間規則がない（D-90）。不適合の時刻は次の区間の出発予定。 */
     public static ExclusionReason notConnectable(UtcInstant nextDepartureAt, Location port, String infoVersion) {
         return new ExclusionReason(
                 ExclusionReasonCode.NOT_CONNECTABLE,

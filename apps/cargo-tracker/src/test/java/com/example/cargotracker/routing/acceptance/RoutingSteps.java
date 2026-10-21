@@ -71,6 +71,17 @@ public class RoutingSteps {
                 null));
     }
 
+    /** 適用の終わりのある規則（開始は 2026-01-01。終わりを含まない）。後継の規則は置かない（D-90 の境界）。 */
+    @前提("港 {string} の必要最小接続時間 {int} 時間の規則の適用が {string} に終わる")
+    public void 規則の適用が終わる(String port, int hours, String validTo) {
+        rules.add(new ConnectionRule(
+                UUID.randomUUID(),
+                new Location(port),
+                Duration.ofHours(hours),
+                new UtcInstant(Instant.parse("2026-01-01T00:00:00Z")),
+                at(validTo)));
+    }
+
     @前提("次の航海がある")
     public void 次の航海がある(DataTable table) {
         for (Map<String, String> row : table.asMaps()) {

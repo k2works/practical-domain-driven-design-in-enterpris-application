@@ -77,8 +77,8 @@ public class RoutingCaseCommandService {
     }
 
     /**
-     * 判断根拠を記録して経路を確定する（US-07 AC1・AC2）。確定の時刻（承認 commit 時刻）は Clock から得て、その時刻で有効な
-     * 接続時間規則で判定し直す。確定したら DE-05 を発行する（購読は US-24 AC4）。
+     * 判断根拠を記録して経路を確定する（US-07 AC1・AC2）。確定の時刻（承認 commit 時刻）は Clock から得る。接続時間規則を
+     * 読み直して判定し直す（規則は接続の時刻に有効なもの。D-90）。確定したら DE-05 を発行する（購読は US-24 AC4）。
      */
     @Transactional
     public RouteConfirmationOutcome confirm(ConfirmRouteCommand command) {

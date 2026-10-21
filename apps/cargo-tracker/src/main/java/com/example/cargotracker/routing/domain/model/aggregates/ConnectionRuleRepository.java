@@ -7,6 +7,6 @@ import java.util.List;
  */
 public interface ConnectionRuleRepository {
 
-    /** すべての規則を返す。判定時刻で有効かは制約適合判定が決める。 */
+    /** すべての規則を返す。接続の時刻で有効かは制約適合判定が決める。 */
     List<ConnectionRule> findAll();
 }

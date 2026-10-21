@@ -19,8 +19,9 @@ import java.util.Optional;
  * Golden dataset（TST-02、W6）で検証する。
  *
  * <p>到着予定が希望到着期限以前で、すべての接続時間が必要最小接続時間以上なら適合（同時刻・同値は適合）。
- * 接続時間は、前の区間の到着予定から次の区間の出発予定まで。積替えの港に判定時刻で有効な規則がなければ、確かめていない接続を
- * 通さないよう「接続できない」で除外する（失敗に倒す。Bolt 17 の確認ポイント 9）。同じ港に有効な規則が複数あれば厳しい方を使う。
+ * 接続時間は、前の区間の到着予定から次の区間の出発予定まで。規則は接続ごとに、次の区間の出発予定の時刻（実際に積み替える時刻）に
+ * 有効なものを使う（D-90、Bolt 37。Bolt 17 の確認ポイント 9 の判定時刻から変えた）。その時刻に有効な規則がなければ、確かめていない
+ * 接続を通さないよう「接続できない」で除外する（失敗に倒す）。同じ港に有効な規則が複数あれば厳しい方を使う。
  * 理由は区間の順の接続の理由、期限超過の順に並べる。貨物種別は R0.1 では判定しない（確認ポイント 10）。
  */
 @DomainRule
@@ -38,7 +39,7 @@ public class ConstraintEvaluator {
             Leg previous = legs.get(i - 1);
             Leg next = legs.get(i);
             Location port = previous.discharge();
-            Optional<Duration> required = requiredConnection(rules, port, judgedAt);
+            Optional<Duration> required = requiredConnection(rules, port, next.departureAt());
             if (required.isEmpty()) {
                 reasons.add(ExclusionReason.notConnectable(next.departureAt(), port, next.infoVersion()));
                 continue;
@@ -63,9 +64,9 @@ public class ConstraintEvaluator {
     }
 
     private static Optional<Duration> requiredConnection(
-            List<ConnectionRule> rules, Location port, UtcInstant judgedAt) {
+            List<ConnectionRule> rules, Location port, UtcInstant connectionAt) {
         return rules.stream()
-                .filter(rule -> rule.appliesTo(port, judgedAt))
+                .filter(rule -> rule.appliesTo(port, connectionAt))
                 .map(ConnectionRule::minimumConnection)
                 .max(Comparator.naturalOrder());
     }
