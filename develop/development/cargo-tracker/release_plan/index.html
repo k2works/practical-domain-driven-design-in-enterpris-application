@@ -13924,7 +13924,7 @@
 <tr>
 <td style="text-align: left;">US-06 の Golden dataset</td>
 <td style="text-align: left;">テスト戦略の G-01〜G-06 の仮の値で「Golden dataset v0（業務責任者の承認待ち）」を作り、#15 をクローズする。業務責任者のデータ（TST-02）が届いたら差し替えの Bolt を足す。TST-02 はパイロットの開始の条件として台帳に残す</td>
-<td style="text-align: left;">Bolt 37e、test_strategy、台帳（TST-02）</td>
+<td style="text-align: left;">Bolt 37f（W6 の開始準備の時点では 37e。Bolt の表 :762 にそろえた。Bolt 37b）、test_strategy、台帳（TST-02）</td>
 </tr>
 </tbody>
 </table>
@@ -13946,7 +13946,7 @@
 <tr>
 <td style="text-align: left;">2</td>
 <td style="text-align: left;">開発データとデモ環境の航海の取得時刻</td>
-<td style="text-align: left;">開発データの航海の取得時刻は起動した日の前日の 6 時（UTC）で、確認ポイント 1 のままでは起動した日の 6 時を過ぎるとすべての候補が情報不足になる。Bolt 37b で、開発データの航海と区間の取得時刻を起動の時刻に寄せる dev だけのマイグレーションを足す（データベースの承認ゲート。37b の計画で通す）。画面の層のシナリオは自前のデータなので影響しない</td>
+<td style="text-align: left;">開発データの航海の取得時刻は起動した日の前日の 6 時（UTC）で、確認ポイント 1 のままでは起動した日の 6 時を過ぎるとすべての候補が情報不足になる。Bolt 37b で、開発データの航海と区間の取得時刻を起動の時刻に寄せる dev だけのマイグレーションを足す（データベースの承認ゲート。37b の計画で通す）。画面の層のシナリオは実時計で判定し、航海の取得時刻を 2026-10-01 に固定して入れているので、閾値を入れると候補がすべて情報不足になる（W6 の開始準備の時点では「自前のデータなので影響しない」としたが、Bolt 37b の開始準備で事実と合わないと分かった）。業務ルールの層・単体・統合のテストも同じ。Bolt 37b でテストの取得時刻を判定時刻の近くへ動かす</td>
 </tr>
 <tr>
 <td style="text-align: left;">3</td>
@@ -14042,7 +14042,7 @@
 </table>
 <p><strong>設計への反映が必要な事項</strong>（各 Bolt の最初のステップで設計文書を直してから実装する）:</p>
 <ul>
-<li>US-06（37〜37b・37f）: domain_model の制約適合判定（停止中の定義・情報不足・区間の上限・規則を選ぶ時刻）、test_strategy の境界と Golden dataset v0 の区分と置き場所（<code>features/routing/golden/</code>）、ui_design の S-06（:1066-1069・:1087）、non_functional の FRS-01、US-06 の決定（UC-06 2a との揺れ）</li>
+<li>US-06（37〜37b2・37f）: domain_model の制約適合判定（停止中の定義・情報不足・区間の上限・規則を選ぶ時刻）、test_strategy の境界と Golden dataset v0 の区分と置き場所（<code>features/routing/golden/</code>）、ui_design の S-06（:1066-1069・:1087）、non_functional の FRS-01、US-06 の決定（UC-06 2a との揺れ）</li>
 <li>US-07（37c〜37e）: 確定の時の情報版の照合の拒否の理由と S-07 の文言、再設計要にする評価の操作と記録（再設計要にした時刻・不適合の理由・旧情報版を保持すること）、DE-06 の属性と購読者、Q-INV-10・B-INV-05 の判定、D-88、再見積りと再設計要の印（ADR-018）、data_model（<code>confirmed_route_version_no</code> の削除と部分一意インデックス、見積りの再設計要の列）、test_strategy :236、ADR-014・ADR-016 の適用先</li>
 <li>US-16・US-18 AC9（38〜38g）: ui_design の S-20（:145・:180-183・:1120 以降）と A-06（:94・:186-187。招待に流用する分の語と期限）、domain_model の IA-INV-02（担当企業だけ）・IA-INV-03（管理者による解除）・IA-INV-12（招待 24 時間）・IA-INV-14（登録・解除・担当範囲の操作）・:1055（管理範囲の割り当て）・:1215（利用者の集約が担当範囲を持つと書いた記述を、実装の別のポート <code>UserAssignmentRepository.scopeOf</code> に合わせる）、data_model の <code>user_assignment</code>（:939。「<code>BOOKING</code> は W6」を担当企業だけに）・<code>audit_record</code> の action（:938）・<code>password_reset_token</code> の用途・<code>notification</code> の種類、non_functional の SEC-08（招待）・SEC-10（管理者の経路）・SEC-12（担当企業だけ）、requirements_definition の OQ-07 の残り（案件ごとの割り当て）、各コンテキストの <code>allowedDependencies</code> と共有カーネルの範囲外の試行の記録のポート（新しい ADR）、ADR-012（担当範囲と session の直列化）</li>
 <li>承認の後に直す文書（W6 の開始準備の範囲）: release_plan の :101（U2 の対策）・:350-351 と引継ぎ ID の台帳（TST-02・DM-05 の期限を「v0 は仮の値で作り、届いたら差し替える。パイロット開始の条件として残す」に）、台帳の D-88 の注と D-89・D-90 の新設、W6 の行（:788。ゴールに利用者の管理を足し、管理範囲の割り当てを W10 へ）と W10 の行（:792）、ガントの W6 の名前（:253）、開発戦略の W6 のデモ項目（:185）と W6 の行（:346）</li>
@@ -14076,14 +14076,21 @@
 </tr>
 <tr>
 <td style="text-align: left;">37b</td>
-<td style="text-align: left;">US-06 AC4 の情報不足: 鮮度の超過（24 時間の直前・同時刻・直後）で情報不足にして除外し、S-06 に最終採用値・取得時刻・「情報不足」を示す。開発データの航海の取得時刻。マニュアル 8 章とキャプチャ。axe。<a href="../bolt_37b_plan/">Bolt 37b 計画</a>（振る舞いを変えない準備と 37b2 に分けた。承認済み）</td>
+<td style="text-align: left;">US-06 AC4 の準備: 既存のテストの航海の取得時刻を判定時刻の近くへ動かし、開発データの航海と見本の候補の取得時刻を起動の時刻に寄せる（振る舞いを変えない。Bolt 37b の開始準備で、AC4 を 1 つの Bolt にすると半日を超え、閾値が開発データの直しより先にデモ環境へ配備される窓ができると分かり、37b2 と分けた）。<a href="../bolt_37b_plan/">Bolt 37b 計画</a>（承認済み）</td>
 <td style="text-align: right;">0</td>
-<td style="text-align: left;">アウトサイドイン（受入シナリオ → 画面 → ドメイン）</td>
-<td style="text-align: left;">計画と終了報告（確認ポイント 1〜3。開発データのデータベースの承認ゲート）</td>
+<td style="text-align: left;">技術タスク（振る舞いを変えない準備。W6 の開始準備の時点では「受入シナリオ → 画面 → ドメイン」）</td>
+<td style="text-align: left;">計画と終了報告（確認ポイント 2。開発データのデータベースの承認ゲート）</td>
+</tr>
+<tr>
+<td style="text-align: left;">37b2</td>
+<td style="text-align: left;">US-06 AC4 の情報不足: 鮮度の超過（24 時間の直前・同時刻・直後）で情報不足にして除外し、S-06 に最終採用値・取得時刻・「情報不足」を示す。許容時間の設定。マニュアル 8 章（キャプチャを足すかは 37b2 の計画で決める）。axe。<code>@demo-37b2</code>。材料は <a href="../bolt_37b_plan/">Bolt 37b 計画</a> の「Bolt 37b2 の開始準備に送る材料」</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: left;">アウトサイドイン（受入シナリオ → 規則と集約 → 保存 → 画面）</td>
+<td style="text-align: left;">計画と終了報告（確認ポイント 1・3）</td>
 </tr>
 <tr>
 <td style="text-align: left;">37c</td>
-<td style="text-align: left;">US-07 AC3: 確定の時に航海を読み直し、区間の情報版と採用情報版が違えば確定を拒否して再判断を求める。S-07 の文言、マニュアル 8 章、axe</td>
+<td style="text-align: left;">US-07 AC3: 確定の時に航海を読み直し、区間の情報版と採用情報版が違えば確定を拒否して再判断を求める。算出の後に鮮度が切れた候補を確定で拒否するかと、出発済みとの判定の順を計画の確認ポイントにする（Bolt 37b の開始準備で足した）。S-07 の文言、マニュアル 8 章、axe</td>
 <td style="text-align: right;">0</td>
 <td style="text-align: left;">アウトサイドイン</td>
 <td style="text-align: left;">計画と終了報告（確認ポイント 6）</td>
@@ -14164,8 +14171,8 @@
 <p><strong>W5 の Try の持ち込み</strong>: 各 Bolt 計画の確認ポイントに、T-125（規則に当たったら <code>/goal</code> でも止めて諮る）、T-106・T-119（「ないこと」を確かめる前に、対象があり条件が成り立つことを確かめる）、T-148・T-152（共通の部品と写しは全体を検索して数えてから変える）、T-161・T-163（状態の組み合わせの表と行ごとのテスト。37d・37e・38f・38g）、T-104・T-147・T-139（SonarQube の時機、テストのラムダの中で値を作らない）、T-164（変異の道具は 1 つを手で照らす）を入れる。</p>
 <p><strong>#50（W5 の締めの返済の候補）から入れるもの</strong>: CI の揺らぎ（36）、予約から見積りのドメインへの型の ArchUnit の規則（37e）、受入シナリオの背景の写し（37f）、<code>Section</code> とテンプレート（38）、役割 0 件の検査の二重（38b）、停止の理由などの表示（38c）、回復コードが送り直すたびに減る件・<code>findByEventIdAndRecipient</code>（38d）、テストの準備で割り当てが自動で入る件・<code>list</code> と <code>detail</code> の非管理者の扱い・範囲外のときだけ応答時間が違う件（38e）。画面の層の開き直すループの共通化は、37b・37c で S-06・S-07 の画面の層のシナリオを足す前に、写しを数えてから決める。</p>
 <p><strong>Living Documentation</strong>: 新しい ADR（範囲外の試行の記録のポートと担当範囲の受け渡し）と ADR-012 の変更、<code>package-info</code> の <code>allowedDependencies</code>、ModularityTest、用語集の整合テスト（担当範囲・招待・再設計要・情報不足・Golden dataset）、受入条件の照合の表（US-06・US-07・US-16・US-18 の Release 1.0 の範囲）</p>
-<p><strong>デモ項目</strong>: 経路候補の境界と情報不足（<code>@US-06</code>、<code>@golden</code>）、確定の時の情報版の照合と再設計要の経路の拒否（<code>@US-07</code>）、利用者の登録と招待・ロックと TOTP の解除と本人への通知・担当範囲の外の拒否（<code>@US-16</code>、<code>@US-18-AC9</code>）。動画は画面の振る舞いが変わる Bolt（37b・37c・38b・38c・38e）で <code>@demo-&lt;Bolt&gt;</code> を撮る</p>
-<p><strong>ユーザーマニュアル</strong>: 8 章（経路設計。37・37b・37c・38g）、4 章・7 章（再設計要と出発済みの拒否。37e）、11 章（利用者の管理。38〜38e）、2 章（ログイン。38b の招待、38c の解除の後の再登録、38d の回復コードの案内）、6 章・7 章・9 章（担当範囲の外。38f・38g）。振る舞いの変わる Bolt はマニュアルの更新とキャプチャを完了条件に入れる</p>
+<p><strong>デモ項目</strong>: 経路候補の境界と情報不足（<code>@US-06</code>、<code>@golden</code>）、確定の時の情報版の照合と再設計要の経路の拒否（<code>@US-07</code>）、利用者の登録と招待・ロックと TOTP の解除と本人への通知・担当範囲の外の拒否（<code>@US-16</code>、<code>@US-18-AC9</code>）。動画は画面の振る舞いが変わる Bolt（37b2・37c・38b・38c・38e。W6 の開始準備の時点では 37b。Bolt 37b で分けた）で <code>@demo-&lt;Bolt&gt;</code> を撮る</p>
+<p><strong>ユーザーマニュアル</strong>: 8 章（経路設計。37・37b2・37c・38g）、4 章・7 章（再設計要と出発済みの拒否。37e）、11 章（利用者の管理。38〜38e）、2 章（ログイン。38b の招待、38c の解除の後の再登録、38d の回復コードの案内）、6 章・7 章・9 章（担当範囲の外。38f・38g）。振る舞いの変わる Bolt はマニュアルの更新とキャプチャを完了条件に入れる</p>
 <p><strong>主なタスク</strong>:</p>
 <ul class="task-list">
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> W6 の開始準備（本節。2026-10-20）: 計画の承認、詳細整合性検証・横断整合性検証（指摘を反映）、承認の後に直す文書、GitHub の同期</li>
@@ -14530,7 +14537,7 @@
 <td style="text-align: left;">US-06、FRS-01、R-INV-09</td>
 <td style="text-align: left;">W6 の開始準備の確認ポイント 1</td>
 <td style="text-align: left;">追跡・データ責任者に確かめる（Release 1.0 のパイロットの前）</td>
-<td style="text-align: left;">仮（2026-10-20、human:kakimomokuri が提案のまま使うと決めた）</td>
+<td style="text-align: left;">仮（2026-10-20、human:kakimomokuri が提案のまま使うと決めた）。注（Bolt 37b の開始準備）: 37b2 は航海だけを判定し、港湾は外部原本の取込（W7、US-14）で扱う。責任者への問いに、取込の周期（FRS-04 は 1 日 1 回以上の手動）との余裕を足す（24 時間ちょうどだと取込の時刻が日によってずれるだけで情報不足の窓ができる。追跡の FRS-02 は 36 時間）</td>
 </tr>
 <tr>
 <td style="text-align: left;">D-90</td>
