@@ -57,7 +57,7 @@ public class RouteCandidateFinder {
             candidates.add(route);
             return;
         }
-        if (route.size() == MAX_LEGS || visitedBefore(route, origin, last.discharge())) {
+        if (route.size() >= MAX_LEGS || visitedBefore(route, origin, last.discharge())) {
             return;
         }
         for (Voyage voyage : voyages) {
@@ -72,7 +72,10 @@ public class RouteCandidateFinder {
         }
     }
 
-    /** 港が、出発地か、最後の区間より前の区間の揚地か。 */
+    /**
+     * 港が、出発地か、最後の区間より前の区間の揚地か。区間 3 までは前の区間の揚地に戻る列はできない（区間の積地と揚地は違い、
+     * 3 区間目の後は上限で止まる）が、上限を変えたときに港を巡る列を作らないよう、両方を確かめる。
+     */
     private static boolean visitedBefore(List<Leg> route, Location origin, Location port) {
         return port.equals(origin)
                 || route.subList(0, route.size() - 1).stream()

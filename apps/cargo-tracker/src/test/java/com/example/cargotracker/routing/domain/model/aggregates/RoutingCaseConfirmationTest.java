@@ -53,9 +53,9 @@ class RoutingCaseConfirmationTest {
     static final RouteApprover ROUTE_DESIGNER = new RouteApprover(UUID.randomUUID(), true);
     static final ConnectionRule SINGAPORE_8H =
             new ConnectionRule(UUID.randomUUID(), SINGAPORE, Duration.ofHours(8), at("2026-01-01T00:00:00Z"), null);
-    /** 算出の後に登録された厳しい規則（T-41。8 時間と違う値）。接続の時刻に有効。 */
-    static final ConnectionRule SINGAPORE_12H_FROM_0330 =
-            new ConnectionRule(UUID.randomUUID(), SINGAPORE, Duration.ofHours(12), at("2026-10-07T03:30:00Z"), null);
+    /** 算出の後に登録された厳しい規則（T-41。8 時間と違う値）。算出には渡さず、確定で読み直す。 */
+    static final ConnectionRule SINGAPORE_12H_REGISTERED_AFTER_CALCULATION =
+            new ConnectionRule(UUID.randomUUID(), SINGAPORE, Duration.ofHours(12), at("2026-01-01T00:00:00Z"), null);
 
     private final RouteCandidateFinder finder = new RouteCandidateFinder();
     private final ConstraintEvaluator evaluator = new ConstraintEvaluator();
@@ -173,7 +173,7 @@ class RoutingCaseConfirmationTest {
     @Test
     void 確定のときに読み直した規則で判定し直して不適合なら確定しない() {
         RoutingCase routingCase = presented();
-        List<ConnectionRule> rules = List.of(SINGAPORE_8H, SINGAPORE_12H_FROM_0330);
+        List<ConnectionRule> rules = List.of(SINGAPORE_8H, SINGAPORE_12H_REGISTERED_AFTER_CALCULATION);
 
         assertRejected(
                 () -> routingCase.confirm(2, "根拠", ROUTE_DESIGNER, rules, COMMIT_AT, evaluator),
@@ -184,7 +184,7 @@ class RoutingCaseConfirmationTest {
     void 確定のときに読み直した規則が厳しくなっても適合なら確定する() {
         RoutingCase routingCase = presented();
         ConnectionRule singapore10h = new ConnectionRule(
-                UUID.randomUUID(), SINGAPORE, Duration.ofHours(10), at("2026-10-07T03:30:00Z"), null);
+                UUID.randomUUID(), SINGAPORE, Duration.ofHours(10), at("2026-01-01T00:00:00Z"), null);
 
         routingCase.confirm(2, "根拠", ROUTE_DESIGNER, List.of(SINGAPORE_8H, singapore10h), COMMIT_AT, evaluator);
 
@@ -375,6 +375,22 @@ class RoutingCaseConfirmationTest {
     }
 
     @Test
+    void 確定の時刻に有効でも接続の時刻の前に終わり後継のない規則なら判定し直して不適合() {
+        // D-90 で確定できなくなる向き: 確定の時刻には有効でも、積み替える時刻に有効な規則がなければ接続できない
+        RoutingCase routingCase = presented();
+        ConnectionRule endsBeforeConnection = new ConnectionRule(
+                UUID.randomUUID(),
+                SINGAPORE,
+                Duration.ofHours(8),
+                at("2026-01-01T00:00:00Z"),
+                minutesAfter(CONNECTION_DEPARTURE, -1));
+
+        assertRejected(
+                () -> routingCase.confirm(2, "根拠", ROUTE_DESIGNER, List.of(endsBeforeConnection), COMMIT_AT, evaluator),
+                RouteConfirmationRejectionReason.NO_LONGER_CONFORMING);
+    }
+
+    @Test
     void 規則が接続の時刻に終わり厳しい規則に置き換わっていれば判定し直して不適合() {
         RoutingCase routingCase = presented();
         ConnectionRule endsAtConnection = new ConnectionRule(
@@ -462,7 +478,7 @@ class RoutingCaseConfirmationTest {
                 List.of(
                         direct("V-EARLY", "2026-10-29T00:00:00Z"),
                         feeder("V-FEED", "2026-10-09T00:00:00Z"),
-                        fromSingapore("V-CONN", "2026-10-09T10:00:00Z", "2026-10-30T00:00:00Z"),
+                        fromSingapore("V-CONN", CONNECTION_DEPARTURE.instant().toString(), "2026-10-30T00:00:00Z"),
                         direct("V-LATE", "2026-11-03T12:00:00Z")),
                 List.of(SINGAPORE_8H),
                 JUDGED_AT,

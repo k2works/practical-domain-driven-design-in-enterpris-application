@@ -18,6 +18,6 @@ public enum RouteConfirmationRejectionReason {
     RATIONALE_TOO_LONG,
     /** 最初の区間の出発予定が確定の時刻と同時刻または前。 */
     ALREADY_DEPARTED,
-    /** 確定の時刻で判定し直すと不適合。 */
+    /** 確定のときに規則を読み直して判定し直すと不適合（規則は接続の時刻に有効なもの。D-90）。 */
     NO_LONGER_CONFORMING
 }

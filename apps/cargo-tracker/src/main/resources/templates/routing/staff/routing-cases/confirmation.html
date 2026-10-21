@@ -9,7 +9,7 @@
 <body>
 <main>
     <h1 th:text="|経路の確定 ${page.number()}|">経路の確定 RC-2026-0001</h1>
-    <!-- S-07（Bolt 19、US-07 AC1・AC2）。画面そのものが確認の領域（BR-13）。確定の時刻で候補を判定し直し、最初の区間が
+    <!-- S-07（Bolt 19、US-07 AC1・AC2）。画面そのものが確認の領域（BR-13）。確定のときに規則を読み直して候補を判定し直し（規則は接続の時刻に有効なもの。D-90）、最初の区間が
          出発済みなら確定しない。拒否は理由をエラー要約で示し入力を残す -->
     <div id="error-summary" th:if="${error}" tabindex="-1" role="alert" aria-labelledby="error-summary-title">
         <h2 id="error-summary-title">確定できませんでした</h2>

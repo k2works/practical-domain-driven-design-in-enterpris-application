@@ -157,7 +157,7 @@ public final class RoutingCase {
 
     /**
      * 候補を算出する（作成中・候補提示済み → 候補提示済み。US-06 AC1）。航海の一覧から区間の列を列挙し（候補探索）、
-     * それぞれを判定時刻で判定して（制約適合判定）、適合を先に、到着予定の早い順に上限まで残し、1 から候補番号を振る。
+     * それぞれを制約適合判定にかけて（規則は接続の時刻で選ぶ。D-90）、適合を先に、到着予定の早い順に上限まで残し、1 から候補番号を振る。
      * 候補提示済みで算出し直したら、候補を置き換え、判定時刻を更新する。
      *
      * @throws IllegalStateException 作成中・候補提示済みでない（確定の後の再算出は US-08 の再設計で行う）
@@ -240,7 +240,7 @@ public final class RoutingCase {
             throw reject(RouteConfirmationRejectionReason.ALREADY_DEPARTED, "最初の区間が出発済みです");
         }
         if (!evaluator.evaluate(specification, candidate.legs(), rules).conforming()) {
-            throw reject(RouteConfirmationRejectionReason.NO_LONGER_CONFORMING, "確定の時刻で判定し直すと不適合です");
+            throw reject(RouteConfirmationRejectionReason.NO_LONGER_CONFORMING, "確定のときに判定し直すと不適合です");
         }
         replaceLatest(new RouteVersion(
                 routeVersion.routeVersionNo(),

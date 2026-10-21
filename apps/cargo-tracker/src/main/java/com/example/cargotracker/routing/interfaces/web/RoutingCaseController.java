@@ -197,7 +197,7 @@ public class RoutingCaseController {
             case CANDIDATE_NOT_FOUND -> "選んだ候補がありません。経路候補の比較で最新の候補を確かめてください。";
             case CANDIDATE_EXCLUDED -> "除外の候補は確定できません。";
             case ALREADY_DEPARTED -> "最初の区間の航海がすでに出発しているため確定できません。候補を再算出してください。";
-            case NO_LONGER_CONFORMING -> "いまの接続時間規則で判定し直すと条件を満たさないため確定できません。候補を再算出してください。";
+            case NO_LONGER_CONFORMING -> "最新の接続時間規則で判定し直すと条件を満たさないため確定できません。候補を再算出してください。";
         };
     }
 
