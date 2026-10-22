@@ -42,7 +42,7 @@ public record RouteCandidate(int candidateNo, List<Leg> legs, ConstraintEvaluati
 
     /**
      * 情報版の違う区間（US-07 AC3、R-INV-03。Bolt 37c）。区間の採用情報版が、同じ航海番号の今の採用情報版と違うか、今の航海が
-     * ない区間を区間の順に返す。確定の照合と、確定した経路版の評価（Bolt 37d）で使う。
+     * ない区間を区間の順に返す。確定の照合と、確定した経路版の評価（評価のきっかけ。Bolt 37d2）で使う。
      *
      * @param currentInfoVersions 航海番号から今の航海の採用情報版（今の航海の全件。ない航海番号は航海がなくなったとみなす。更新された
      *     航海だけを渡すと、ほかの区間も版が違うと判定する）

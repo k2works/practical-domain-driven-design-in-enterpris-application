@@ -25,6 +25,7 @@ public interface RoutingCaseMapper {
 
     /**
      * 楽観ロックで案件の版を進め、最終更新者を書く。読み込んだときの版でなければ 0 件（確定した経路版の番号は Bolt 37d で消した）。
+     * 最終更新者が null なら書かない（システムの操作は最終更新者を変えない。null の型を H2 と PostgreSQL で解決させない。Bolt 37d2）。
      */
     int touchRoutingCase(
             @Param("id") UUID id,

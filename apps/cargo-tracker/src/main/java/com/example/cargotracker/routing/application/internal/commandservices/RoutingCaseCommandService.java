@@ -2,7 +2,9 @@ package com.example.cargotracker.routing.application.internal.commandservices;
 
 import com.example.cargotracker.routing.application.internal.commands.CalculateCandidatesCommand;
 import com.example.cargotracker.routing.application.internal.commands.ConfirmRouteCommand;
+import com.example.cargotracker.routing.application.internal.commands.EvaluateConfirmedRouteCommand;
 import com.example.cargotracker.routing.domain.events.RouteConfirmed;
+import com.example.cargotracker.routing.domain.events.RouteRedesignRequired;
 import com.example.cargotracker.routing.domain.model.aggregates.ConcurrentRoutingCaseUpdateException;
 import com.example.cargotracker.routing.domain.model.aggregates.ConnectionRuleRepository;
 import com.example.cargotracker.routing.domain.model.aggregates.RouteConfirmationRejected;
@@ -22,7 +24,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * 経路設計案件の入力ポート（経路設計者が使う。US-06・US-07）。トランザクションの境界になる。
+ * 経路設計案件の入力ポート（候補の算出と確定は経路設計者が使い、確定した経路の評価は外部情報の更新を受けたシステムが使う。US-06・US-07）。
+ * トランザクションの境界になる。
  * 判定時刻は Clock から得る。航海と接続時間規則を読み込み、候補探索と制約適合判定に渡す（どちらもリポジトリを呼ばない）。
  * 情報鮮度の判定（許容時間は設定の値。D-89。Bolt 37b2）は組み立てから受け取る。
  *
@@ -118,5 +121,38 @@ public class RoutingCaseCommandService {
         eventPublisher.publishEvent(confirmed);
         return new RouteConfirmationOutcome.Confirmed(
                 routingCase.number(), confirmed.routeVersionNo(), command.candidateNo());
+    }
+
+    /**
+     * 外部情報の更新を受けて確定した経路版を評価する（US-07 AC4。Bolt 37d2）。評価の時刻は Clock から得る。航海と接続時間規則を読み直して
+     * 判定し直し、再設計要になったら保存して DE-06 を発行する（同じトランザクション。読み込んだ案件の版で競合を検知する）。評価は利用者の
+     * 操作ではないので、保存に操作者を渡さない（最終更新者を変えない）。再設計要にしなければ保存しない。
+     */
+    @Transactional
+    public ConfirmedRouteEvaluationOutcome evaluateConfirmedRoute(EvaluateConfirmedRouteCommand command) {
+        Optional<RoutingCase> found = repository.findByNumber(command.number());
+        if (found.isEmpty()) {
+            return new ConfirmedRouteEvaluationOutcome.NotFound();
+        }
+        RoutingCase routingCase = found.get();
+        Optional<RouteRedesignRequired> required = routingCase.evaluateConfirmedRoute(
+                voyageRepository.findAll(),
+                connectionRuleRepository.findAll(),
+                new UtcInstant(clock.instant()),
+                finder,
+                evaluator);
+        if (required.isEmpty()) {
+            return new ConfirmedRouteEvaluationOutcome.Unchanged();
+        }
+        try {
+            repository.update(routingCase, null);
+        } catch (ConcurrentRoutingCaseUpdateException _) {
+            return new ConfirmedRouteEvaluationOutcome.Conflict();
+        }
+        eventPublisher.publishEvent(required.get());
+        return new ConfirmedRouteEvaluationOutcome.RedesignRequired(
+                routingCase.number(),
+                required.get().routeVersionNo(),
+                routingCase.routeVersion().redesign().orElseThrow().reasons());
     }
 }

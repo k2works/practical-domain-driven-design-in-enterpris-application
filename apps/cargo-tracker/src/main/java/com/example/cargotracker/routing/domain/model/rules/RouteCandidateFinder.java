@@ -10,6 +10,7 @@ import com.example.cargotracker.shared.domain.UtcInstant;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * 経路候補探索。航海の一覧から、出発地から目的地までの区間の列を列挙する（ドメインモデル）。
@@ -115,20 +116,66 @@ public class RouteCandidateFinder {
         for (int j = from + 1; j < calls.size(); j++) {
             PortCall discharge = calls.get(j);
             if (discharge.arrivalAt() != null && !discharge.port().equals(load.port())) {
-                legs.add(new Leg(
-                        voyage.voyageNumber(),
-                        load.port(),
-                        discharge.port(),
-                        load.departureAt(),
-                        discharge.arrivalAt(),
-                        voyage.adoptedInfoVersion(),
-                        voyage.acquiredAt()));
+                legs.add(leg(voyage, load, discharge));
             }
             if (discharge.port().equals(passing)) {
                 break;
             }
         }
         return legs;
+    }
+
+    /**
+     * 区間を今の航海で引き直す（確定した経路版の評価。US-07 AC4。Bolt 37d2）。同じ航海番号の航海で、区間の積地の寄港（出発予定がある）と、
+     * その後で最初に区間の揚地に寄る寄港（到着予定がある）の組を探す。揚地が積地より前にも寄るときは積地の後ろだけを見る。
+     * 航海がない、組がない、組が 2 つ以上ある（同じ港に 2 度寄る）、到着が出発より後でないなら、選ばずに引き直せないとする（失敗に倒す）。
+     *
+     * @param leg 確定した区間
+     * @param voyages 今の航海の一覧
+     * @return 今の航海の出発予定・到着予定・採用情報版・取得時刻の区間。引き直せなければ空
+     */
+    public Optional<Leg> refresh(Leg leg, List<Voyage> voyages) {
+        Optional<Voyage> found = voyages.stream()
+                .filter(voyage -> voyage.voyageNumber().equals(leg.voyageNumber()))
+                .findFirst();
+        if (found.isEmpty()) {
+            return Optional.empty();
+        }
+        Voyage voyage = found.get();
+        List<PortCall> calls = voyage.portCalls();
+        List<Leg> pairs = new ArrayList<>();
+        for (int i = 0; i < calls.size(); i++) {
+            PortCall load = calls.get(i);
+            if (load.port().equals(leg.load()) && load.departureAt() != null) {
+                firstCallAfter(calls, i, leg.discharge())
+                        .filter(discharge -> discharge.arrivalAt() != null
+                                && discharge
+                                        .arrivalAt()
+                                        .instant()
+                                        .isAfter(load.departureAt().instant()))
+                        .ifPresent(discharge -> pairs.add(leg(voyage, load, discharge)));
+            }
+        }
+        return pairs.size() == 1 ? Optional.of(pairs.getFirst()) : Optional.empty();
+    }
+
+    /** 寄港 {@code from} の後で最初に港に寄る寄港。 */
+    private static Optional<PortCall> firstCallAfter(List<PortCall> calls, int from, Location port) {
+        return calls.subList(from + 1, calls.size()).stream()
+                .filter(call -> call.port().equals(port))
+                .findFirst();
+    }
+
+    /** 航海の積地の寄港から揚地の寄港までの区間（出発予定・到着予定・採用情報版・取得時刻を写す）。 */
+    private static Leg leg(Voyage voyage, PortCall load, PortCall discharge) {
+        return new Leg(
+                voyage.voyageNumber(),
+                load.port(),
+                discharge.port(),
+                load.departureAt(),
+                discharge.arrivalAt(),
+                voyage.adoptedInfoVersion(),
+                voyage.acquiredAt());
     }
 
     private static boolean departsAfter(PortCall load, UtcInstant after, boolean inclusive) {

@@ -1,6 +1,7 @@
 package com.example.cargotracker.routing.domain.model.aggregates;
 
 import com.example.cargotracker.routing.domain.events.RouteConfirmed;
+import com.example.cargotracker.routing.domain.events.RouteRedesignRequired;
 import com.example.cargotracker.routing.domain.model.entities.RouteCandidate;
 import com.example.cargotracker.routing.domain.model.entities.RouteVersion;
 import com.example.cargotracker.routing.domain.model.rules.ConstraintEvaluator;
@@ -10,6 +11,8 @@ import com.example.cargotracker.routing.domain.model.valueobjects.CandidateCalcu
 import com.example.cargotracker.routing.domain.model.valueobjects.ConstraintEvaluation;
 import com.example.cargotracker.routing.domain.model.valueobjects.DecisionRationale;
 import com.example.cargotracker.routing.domain.model.valueobjects.Leg;
+import com.example.cargotracker.routing.domain.model.valueobjects.RedesignReasonCode;
+import com.example.cargotracker.routing.domain.model.valueobjects.RedesignRecord;
 import com.example.cargotracker.routing.domain.model.valueobjects.RouteApprover;
 import com.example.cargotracker.routing.domain.model.valueobjects.RouteConfirmation;
 import com.example.cargotracker.routing.domain.model.valueobjects.RouteConfirmationRejectionReason;
@@ -33,7 +36,8 @@ import java.util.stream.Collectors;
 /**
  * 経路設計案件。1 つの輸送要求について経路版を作り、確定・再設計する単位（集約ルート）。
  * 荷主の詳細経路設計の依頼（DE-16）を受けて、輸送要求版ごとに 1 つ作る（R-INV-10）。Bolt 17 は経路版 1 の候補の算出まで。
- * Bolt 19 で経路版の一覧（Bolt 17 レビュー D-64）と確定（US-07 AC1・AC2）を足した。
+ * Bolt 19 で経路版の一覧（Bolt 17 レビュー D-64）と確定（US-07 AC1・AC2）を足した。Bolt 37d2 で確定した経路版の評価
+ * （外部情報の更新で再設計要にする。US-07 AC4）を足した。
  *
  * <p>輸送要求・見積りの ID と業務番号は、見積りの公開 API とイベントから得た値の写し（見積りのドメインの型を持たない。ADR-001）。
  */
@@ -247,9 +251,7 @@ public final class RoutingCase {
         // 読み直した航海の全件（航海番号はデータベースの主キーで重ならない）
         Map<String, Voyage> current =
                 voyages.stream().collect(Collectors.toMap(Voyage::voyageNumber, voyage -> voyage));
-        Map<String, String> currentInfoVersions = new HashMap<>();
-        current.forEach((voyageNumber, voyage) -> currentInfoVersions.put(voyageNumber, voyage.adoptedInfoVersion()));
-        if (!candidate.legsWithChangedInfo(currentInfoVersions).isEmpty()) {
+        if (!candidate.legsWithChangedInfo(infoVersionsOf(current)).isEmpty()) {
             throw reject(RouteConfirmationRejectionReason.INFO_VERSION_CHANGED, "候補を算出した後に区間の航海の情報版が更新されました");
         }
         DecisionRationale.rejectionOf(rationale).ifPresent(reason -> {
@@ -290,6 +292,85 @@ public final class RoutingCase {
                 approver.userId(),
                 commitAt,
                 candidate.legs().stream().map(Leg::infoVersion).toList());
+    }
+
+    /**
+     * 確定した経路版を外部情報の更新で評価する（確定 → 再設計要。US-07 AC4、R-INV-07。Bolt 37d2）。外部情報の更新を受けたシステムの操作で、
+     * 利用者の操作ではない。最新の経路版が確定のときだけ評価し、確定の記録の候補に情報版の違う区間がなければ評価しない（接続時間規則だけの
+     * 変更はきっかけにしない）。保存した判定は使わず、区間ごとに今の航海で引き直し（候補探索）、引き直した区間の列を制約適合判定に
+     * かけ直す。引き直せない区間があれば「航海を引き直せない」、不適合なら制約適合判定の理由の区分を写して（同じ区分は 1 つに
+     * まとめ、最初に出た順）再設計要にする。候補・区間・確定の記録は変えない（旧情報版の保持）。すでに再設計要なら何もしない
+     * （原因が解消しても戻さない。UC-08 1a）。
+     *
+     * @return DE-06 経路を再設計要にした。再設計要にしなければ空
+     */
+    public Optional<RouteRedesignRequired> evaluateConfirmedRoute(
+            List<Voyage> voyages,
+            List<ConnectionRule> rules,
+            UtcInstant evaluatedAt,
+            RouteCandidateFinder finder,
+            ConstraintEvaluator evaluator) {
+        RouteVersion routeVersion = routeVersion();
+        if (routeVersion.status() != RouteVersionStatus.CONFIRMED) {
+            return Optional.empty();
+        }
+        RouteCandidate candidate =
+                confirmedCandidateOf(routeVersion.routeVersionNo()).orElseThrow();
+        Map<String, Voyage> current =
+                voyages.stream().collect(Collectors.toMap(Voyage::voyageNumber, voyage -> voyage));
+        if (candidate.legsWithChangedInfo(infoVersionsOf(current)).isEmpty()) {
+            return Optional.empty();
+        }
+        List<RedesignReasonCode> reasons = redesignReasons(candidate.legs(), voyages, rules, finder, evaluator);
+        if (reasons.isEmpty()) {
+            return Optional.empty();
+        }
+        replaceLatest(new RouteVersion(
+                routeVersion.routeVersionNo(),
+                RouteVersionStatus.REDESIGN_REQUIRED,
+                routeVersion.candidates(),
+                routeVersion.candidatesEvaluatedAt(),
+                routeVersion.candidatesFound(),
+                routeVersion.routeConfirmation(),
+                new RedesignRecord(evaluatedAt, reasons)));
+        return Optional.of(new RouteRedesignRequired(
+                id.value(),
+                number.text(),
+                routeVersion.routeVersionNo(),
+                quotationId,
+                transportRequestId,
+                transportRequestVersionNo,
+                evaluatedAt,
+                reasons.stream().map(RedesignReasonCode::name).toList(),
+                candidate.legs().stream().map(Leg::infoVersion).toList()));
+    }
+
+    /** 区間を今の航海で引き直して判定し直した不適合の理由（適合なら空）。 */
+    private List<RedesignReasonCode> redesignReasons(
+            List<Leg> legs,
+            List<Voyage> voyages,
+            List<ConnectionRule> rules,
+            RouteCandidateFinder finder,
+            ConstraintEvaluator evaluator) {
+        List<Leg> refreshed = new ArrayList<>();
+        for (Leg leg : legs) {
+            Optional<Leg> current = finder.refresh(leg, voyages);
+            if (current.isEmpty()) {
+                return List.of(RedesignReasonCode.VOYAGE_UNAVAILABLE);
+            }
+            refreshed.add(current.get());
+        }
+        return evaluator.evaluate(specification, refreshed, rules).reasons().stream()
+                .map(reason -> RedesignReasonCode.from(reason.code()))
+                .distinct()
+                .toList();
+    }
+
+    /** 航海番号ごとの今の採用情報版（確定と評価で区間の情報版と比べる）。 */
+    private static Map<String, String> infoVersionsOf(Map<String, Voyage> current) {
+        Map<String, String> infoVersions = new HashMap<>();
+        current.forEach((voyageNumber, voyage) -> infoVersions.put(voyageNumber, voyage.adoptedInfoVersion()));
+        return infoVersions;
     }
 
     private static RouteConfirmationRejected reject(RouteConfirmationRejectionReason reason, String message) {

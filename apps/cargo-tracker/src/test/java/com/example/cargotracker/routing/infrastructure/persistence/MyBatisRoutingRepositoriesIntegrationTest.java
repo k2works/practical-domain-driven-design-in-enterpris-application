@@ -493,6 +493,36 @@ class MyBatisRoutingRepositoriesIntegrationTest {
     }
 
     @Test
+    void 操作者を渡さない更新は案件の版を上げ最終更新者を変えない() {
+        // Bolt 37d2: 確定した経路の評価は外部情報の更新を受けたシステムの操作なので、最後に確定した経路設計者を残す
+        RoutingCase confirmed = confirmedAndSaved();
+        RoutingCase loaded = repository.findByNumber(confirmed.number()).orElseThrow();
+        RouteVersion version = loaded.routeVersion();
+        RoutingCase redesigned = RoutingCaseFixture.withRouteVersions(
+                loaded,
+                List.of(new RouteVersion(
+                        version.routeVersionNo(),
+                        RouteVersionStatus.REDESIGN_REQUIRED,
+                        version.candidates(),
+                        version.evaluatedAt().orElseThrow(),
+                        version.candidatesFound(),
+                        version.confirmation().orElseThrow(),
+                        new RedesignRecord(
+                                at("2083-10-08T00:00:00Z"), List.of(RedesignReasonCode.VOYAGE_UNAVAILABLE)))));
+
+        repository.update(redesigned, null);
+
+        RoutingCase found = repository.findByNumber(confirmed.number()).orElseThrow();
+        assertThat(found.aggregateVersion()).isEqualTo(loaded.aggregateVersion() + 1);
+        assertThat(found.routeVersion().status()).isEqualTo(RouteVersionStatus.REDESIGN_REQUIRED);
+        assertThat(jdbc.queryForObject(
+                        "SELECT updated_by FROM routing.routing_case WHERE id = ?",
+                        UUID.class,
+                        confirmed.id().value()))
+                .isEqualTo(APPROVER.userId());
+    }
+
+    @Test
     void 再設計要への更新は確定の行だけを書き確定していない行には書けない() {
         // 表の条件は最後の守り（集約は確定の経路版だけを再設計要にする。Bolt 37d2）。書けなければ例外にする（Bolt 37d の開発レビュー）
         RoutingCase calculated = calculatedAndSaved();

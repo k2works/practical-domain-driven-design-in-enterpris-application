@@ -272,6 +272,113 @@ class RouteCandidateFinderTest {
                 .containsExactly(List.of("V-201", "V-631"));
     }
 
+    /** 確定した区間（引き直しの元。Bolt 37d2）。 */
+    private static final Leg CONFIRMED_LEG = new Leg(
+            "V-101",
+            TOKYO,
+            ROTTERDAM,
+            at("2026-10-08T00:00:00Z"),
+            at("2026-10-30T09:00:00Z"),
+            "V-101@1",
+            at("2026-10-01T06:10:00Z"));
+
+    @Test
+    void 区間を今の航海で引き直すと情報版と時刻と取得時刻が今のものになる() {
+        Voyage updated = new Voyage(
+                "V-101",
+                List.of(
+                        call(TOKYO, null, "2026-10-08T06:00:00Z"),
+                        call(HONG_KONG, "2026-10-12T00:00:00Z", "2026-10-13T00:00:00Z"),
+                        call(ROTTERDAM, "2026-11-03T00:00:00Z", null)),
+                "V-101@2",
+                at("2026-10-08T05:00:00Z"));
+
+        assertThat(finder.refresh(CONFIRMED_LEG, List.of(updated)))
+                .contains(new Leg(
+                        "V-101",
+                        TOKYO,
+                        ROTTERDAM,
+                        at("2026-10-08T06:00:00Z"),
+                        at("2026-11-03T00:00:00Z"),
+                        "V-101@2",
+                        at("2026-10-08T05:00:00Z")));
+    }
+
+    @Test
+    void 同じ航海番号の航海がなければ引き直せない() {
+        Voyage other = voyage(
+                "V-102", call(TOKYO, null, "2026-10-08T00:00:00Z"), call(ROTTERDAM, "2026-10-30T09:00:00Z", null));
+
+        assertThat(finder.refresh(CONFIRMED_LEG, List.of(other))).isEmpty();
+    }
+
+    @Test
+    void 積地に寄らなくなれば引き直せない() {
+        Voyage updated = voyage(
+                "V-101", call(HONG_KONG, null, "2026-10-13T00:00:00Z"), call(ROTTERDAM, "2026-10-30T09:00:00Z", null));
+
+        assertThat(finder.refresh(CONFIRMED_LEG, List.of(updated))).isEmpty();
+    }
+
+    @Test
+    void 揚地に寄らなくなれば引き直せない() {
+        Voyage updated = voyage(
+                "V-101", call(TOKYO, null, "2026-10-08T00:00:00Z"), call(HONG_KONG, "2026-10-12T00:00:00Z", null));
+
+        assertThat(finder.refresh(CONFIRMED_LEG, List.of(updated))).isEmpty();
+    }
+
+    @Test
+    void 寄る順が逆になれば引き直せない() {
+        Voyage updated = voyage(
+                "V-101", call(ROTTERDAM, null, "2026-10-08T00:00:00Z"), call(TOKYO, "2026-10-30T09:00:00Z", null));
+
+        assertThat(finder.refresh(CONFIRMED_LEG, List.of(updated))).isEmpty();
+    }
+
+    @Test
+    void 積地の出発予定か揚地の到着予定がなければ引き直せない() {
+        Voyage noDeparture = voyage(
+                "V-101", call(TOKYO, "2026-10-07T00:00:00Z", null), call(ROTTERDAM, "2026-10-30T09:00:00Z", null));
+        Voyage noArrival = voyage(
+                "V-101", call(TOKYO, null, "2026-10-08T00:00:00Z"), call(ROTTERDAM, null, "2026-10-30T09:00:00Z"));
+
+        assertThat(finder.refresh(CONFIRMED_LEG, List.of(noDeparture))).isEmpty();
+        assertThat(finder.refresh(CONFIRMED_LEG, List.of(noArrival))).isEmpty();
+    }
+
+    @Test
+    void 到着が出発より後でなければ引き直せない() {
+        Voyage updated = voyage(
+                "V-101", call(TOKYO, null, "2026-10-30T09:00:00Z"), call(ROTTERDAM, "2026-10-30T09:00:00Z", null));
+
+        assertThat(finder.refresh(CONFIRMED_LEG, List.of(updated))).isEmpty();
+    }
+
+    @Test
+    void 同じ港に2度寄って積地と揚地の組が2つあれば選ばずに引き直せない() {
+        Voyage updated = voyage(
+                "V-101",
+                call(TOKYO, null, "2026-10-08T00:00:00Z"),
+                call(ROTTERDAM, "2026-10-30T09:00:00Z", "2026-10-31T00:00:00Z"),
+                call(TOKYO, "2026-11-20T00:00:00Z", "2026-11-21T00:00:00Z"),
+                call(ROTTERDAM, "2026-12-10T00:00:00Z", null));
+
+        assertThat(finder.refresh(CONFIRMED_LEG, List.of(updated))).isEmpty();
+    }
+
+    @Test
+    void 揚地が積地より前にも寄るときは積地の後で最初に揚地に寄る寄港で引き直す() {
+        Voyage updated = voyage(
+                "V-101",
+                call(ROTTERDAM, null, "2026-10-01T00:00:00Z"),
+                call(TOKYO, "2026-10-07T00:00:00Z", "2026-10-08T00:00:00Z"),
+                call(ROTTERDAM, "2026-10-30T09:00:00Z", null));
+
+        assertThat(finder.refresh(CONFIRMED_LEG, List.of(updated)))
+                .hasValueSatisfying(leg -> assertThat(leg.departureAt()).isEqualTo(at("2026-10-08T00:00:00Z")));
+    }
+
     static List<String> voyageNumbers(List<Leg> legs) {
         return legs.stream().map(Leg::voyageNumber).toList();
     }

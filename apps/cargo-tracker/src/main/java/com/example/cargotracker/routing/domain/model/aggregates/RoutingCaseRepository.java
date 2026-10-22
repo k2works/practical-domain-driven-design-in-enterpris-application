@@ -20,7 +20,8 @@ public interface RoutingCaseRepository {
 
     /**
      * 案件を更新する。読み込んだときの集約の版で照合し、いまの経路版の状態と候補を書き直す（確定した経路版の候補は書き直さない）。
-     * 確定したら確定した経路版の番号を残す。操作者を案件の最終更新者に残す（Bolt 19）。
+     * 操作者を案件の最終更新者に残す（Bolt 19）。操作者が null なら最終更新者を変えない（確定した経路の評価などのシステムの操作。
+     * Bolt 37d2）。
      *
      * @throws ConcurrentRoutingCaseUpdateException 読み込んだ後に、ほかの更新が先に保存されていた
      */

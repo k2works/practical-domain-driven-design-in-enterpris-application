@@ -33,6 +33,13 @@ public class InMemoryVoyageRepository implements VoyageRepository {
         voyages.add(voyage);
     }
 
+    /** 航海をなくす（外部原本の取込で欠航になったことを表す。Bolt 37d2）。 */
+    public synchronized void remove(String voyageNumber) {
+        if (!voyages.removeIf(each -> each.voyageNumber().equals(voyageNumber))) {
+            throw new IllegalArgumentException("なくす航海がありません: " + voyageNumber);
+        }
+    }
+
     public synchronized void clear() {
         voyages.clear();
     }

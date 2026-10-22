@@ -149,7 +149,8 @@
     <!-- 楽観ロック（データモデル、ARCH-HO-01）。読み込んだときの版でなければ 0 件になる -->
     <update id="touchRoutingCase">
         UPDATE routing.routing_case
-           SET version = version + 1, updated_at = #{updatedAt}, updated_by = #{updatedBy}
+           SET version = version + 1, updated_at = #{updatedAt}
+               <if test="updatedBy != null">, updated_by = #{updatedBy}</if>
          WHERE id = #{id} AND version = #{expectedVersion}
     </update>
 
