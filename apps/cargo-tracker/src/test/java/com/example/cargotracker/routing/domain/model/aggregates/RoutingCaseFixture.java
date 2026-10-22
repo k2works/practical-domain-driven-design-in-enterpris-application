@@ -47,9 +47,11 @@ public final class RoutingCaseFixture {
                 1,
                 "直行で期限まで 4 日ある。",
                 RoutingCaseConfirmationTest.ROUTE_DESIGNER,
+                List.of(RoutingCaseTest.direct("V-EARLY", "2026-10-29T00:00:00Z")),
                 List.of(RoutingCaseConfirmationTest.SINGAPORE_8H),
                 RoutingCaseConfirmationTest.COMMIT_AT,
-                evaluator);
+                evaluator,
+                new InfoFreshnessPolicy(Duration.ofHours(24)));
         return new Confirmed(routingCase, event);
     }
 }

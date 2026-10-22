@@ -46,6 +46,15 @@ class InfoFreshnessPolicyTest {
                                 : List.of());
     }
 
+    @ParameterizedTest(name = "取得が判定時刻の 24 時間と {0} 秒前なら情報不足={1}")
+    @CsvSource({"1, true", "0, false", "-1, false"})
+    void 取得時刻と判定時刻から情報不足かを返す(long secondsBeyond, boolean insufficient) {
+        // 確定のときに、読み直した航海の取得時刻で判定する（Bolt 37c）
+        UtcInstant acquiredAt = new UtcInstant(JUDGED_AT.minus(TOLERANCE).minusSeconds(secondsBeyond));
+
+        assertThat(policy.insufficient(acquiredAt, new UtcInstant(JUDGED_AT))).isEqualTo(insufficient);
+    }
+
     @Test
     void 二つ目の区間の航海だけが古ければその航海の理由だけを返す() {
         Instant fresh = JUDGED_AT.minus(Duration.ofHours(2));

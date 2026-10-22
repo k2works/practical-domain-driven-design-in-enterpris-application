@@ -42,6 +42,9 @@ import org.junit.jupiter.params.provider.ValueSource;
  * 接続の積替え V-FEED → V-CONN（シンガポールを 10-09T10:00Z に出発）、候補 3 は期限超過の直行 V-LATE（除外）。
  *
  * <p>確定では規則を読み直して同じ判定にかける。規則は接続の時刻（次の区間の出発予定）に有効なものを使う（D-90、Bolt 37）。
+ *
+ * <p>確定では航海も読み直し、区間の情報版と比べ、確定の時刻で情報不足を判定する（US-07 AC3。Bolt 37c）。航海の取得時刻は
+ * 2026-10-07T01:00Z（判定時刻の 2 時間前）。
  */
 class RoutingCaseConfirmationTest {
 
@@ -58,6 +61,16 @@ class RoutingCaseConfirmationTest {
     static final ConnectionRule SINGAPORE_12H_REGISTERED_AFTER_CALCULATION =
             new ConnectionRule(UUID.randomUUID(), SINGAPORE, Duration.ofHours(12), at("2026-01-01T00:00:00Z"), null);
 
+    /** 情報鮮度の判定（既定の許容時間。Bolt 37b2）。 */
+    static final InfoFreshnessPolicy FRESHNESS = new InfoFreshnessPolicy(Duration.ofHours(24));
+
+    /** 候補を算出した航海（確定で読み直したとき変わっていなければ、この一覧を渡す）。 */
+    static final List<Voyage> VOYAGES = List.of(
+            direct("V-EARLY", "2026-10-29T00:00:00Z"),
+            feeder("V-FEED", "2026-10-09T00:00:00Z"),
+            fromSingapore("V-CONN", CONNECTION_DEPARTURE.instant().toString(), "2026-10-30T00:00:00Z"),
+            direct("V-LATE", "2026-11-03T12:00:00Z"));
+
     private final RouteCandidateFinder finder = new RouteCandidateFinder();
     private final ConstraintEvaluator evaluator = new ConstraintEvaluator();
 
@@ -66,7 +79,14 @@ class RoutingCaseConfirmationTest {
         RoutingCase routingCase = presented();
 
         RouteConfirmed event = routingCase.confirm(
-                2, "  SGSIN の接続に 2 時間の余裕がある。  ", ROUTE_DESIGNER, List.of(SINGAPORE_8H), COMMIT_AT, evaluator);
+                2,
+                "  SGSIN の接続に 2 時間の余裕がある。  ",
+                ROUTE_DESIGNER,
+                VOYAGES,
+                List.of(SINGAPORE_8H),
+                COMMIT_AT,
+                evaluator,
+                FRESHNESS);
 
         RouteVersion version = routingCase.routeVersion();
         assertThat(version.status()).isEqualTo(RouteVersionStatus.CONFIRMED);
@@ -96,7 +116,8 @@ class RoutingCaseConfirmationTest {
         RoutingCase routingCase = presented();
 
         assertRejected(
-                () -> routingCase.confirm(1, rationale, ROUTE_DESIGNER, List.of(SINGAPORE_8H), COMMIT_AT, evaluator),
+                () -> routingCase.confirm(
+                        1, rationale, ROUTE_DESIGNER, VOYAGES, List.of(SINGAPORE_8H), COMMIT_AT, evaluator, FRESHNESS),
                 RouteConfirmationRejectionReason.RATIONALE_MISSING);
         assertThat(routingCase.routeVersion().status()).isEqualTo(RouteVersionStatus.CANDIDATES_PRESENTED);
     }
@@ -106,7 +127,8 @@ class RoutingCaseConfirmationTest {
         RoutingCase routingCase = presented();
 
         assertRejected(
-                () -> routingCase.confirm(1, null, ROUTE_DESIGNER, List.of(SINGAPORE_8H), COMMIT_AT, evaluator),
+                () -> routingCase.confirm(
+                        1, null, ROUTE_DESIGNER, VOYAGES, List.of(SINGAPORE_8H), COMMIT_AT, evaluator, FRESHNESS),
                 RouteConfirmationRejectionReason.RATIONALE_MISSING);
     }
 
@@ -115,7 +137,8 @@ class RoutingCaseConfirmationTest {
     void 根拠は1文字から4000文字まで(int length) {
         RoutingCase routingCase = presented();
 
-        routingCase.confirm(1, "あ".repeat(length), ROUTE_DESIGNER, List.of(SINGAPORE_8H), COMMIT_AT, evaluator);
+        routingCase.confirm(
+                1, "あ".repeat(length), ROUTE_DESIGNER, VOYAGES, List.of(SINGAPORE_8H), COMMIT_AT, evaluator, FRESHNESS);
 
         assertThat(routingCase.routeVersion().confirmation())
                 .map(confirmation -> confirmation.rationale().text().length())
@@ -131,9 +154,11 @@ class RoutingCaseConfirmationTest {
                         1,
                         "あ".repeat(DecisionRationale.MAX_LENGTH + 1),
                         ROUTE_DESIGNER,
+                        VOYAGES,
                         List.of(SINGAPORE_8H),
                         COMMIT_AT,
-                        evaluator),
+                        evaluator,
+                        FRESHNESS),
                 RouteConfirmationRejectionReason.RATIONALE_TOO_LONG);
     }
 
@@ -143,7 +168,8 @@ class RoutingCaseConfirmationTest {
         RouteApprover sales = new RouteApprover(UUID.randomUUID(), false);
 
         assertRejected(
-                () -> routingCase.confirm(1, "根拠", sales, List.of(SINGAPORE_8H), COMMIT_AT, evaluator),
+                () -> routingCase.confirm(
+                        1, "根拠", sales, VOYAGES, List.of(SINGAPORE_8H), COMMIT_AT, evaluator, FRESHNESS),
                 RouteConfirmationRejectionReason.NOT_ROUTE_DESIGNER);
         assertThat(routingCase.confirmedRouteVersion()).isEmpty();
     }
@@ -156,7 +182,8 @@ class RoutingCaseConfirmationTest {
                 .isFalse();
 
         assertRejected(
-                () -> routingCase.confirm(3, "根拠", ROUTE_DESIGNER, List.of(SINGAPORE_8H), COMMIT_AT, evaluator),
+                () -> routingCase.confirm(
+                        3, "根拠", ROUTE_DESIGNER, VOYAGES, List.of(SINGAPORE_8H), COMMIT_AT, evaluator, FRESHNESS),
                 RouteConfirmationRejectionReason.CANDIDATE_EXCLUDED);
     }
 
@@ -167,7 +194,14 @@ class RoutingCaseConfirmationTest {
 
         assertRejected(
                 () -> routingCase.confirm(
-                        candidateNo, "根拠", ROUTE_DESIGNER, List.of(SINGAPORE_8H), COMMIT_AT, evaluator),
+                        candidateNo,
+                        "根拠",
+                        ROUTE_DESIGNER,
+                        VOYAGES,
+                        List.of(SINGAPORE_8H),
+                        COMMIT_AT,
+                        evaluator,
+                        FRESHNESS),
                 RouteConfirmationRejectionReason.CANDIDATE_NOT_FOUND);
     }
 
@@ -177,7 +211,7 @@ class RoutingCaseConfirmationTest {
         List<ConnectionRule> rules = List.of(SINGAPORE_8H, SINGAPORE_12H_REGISTERED_AFTER_CALCULATION);
 
         assertRejected(
-                () -> routingCase.confirm(2, "根拠", ROUTE_DESIGNER, rules, COMMIT_AT, evaluator),
+                () -> routingCase.confirm(2, "根拠", ROUTE_DESIGNER, VOYAGES, rules, COMMIT_AT, evaluator, FRESHNESS),
                 RouteConfirmationRejectionReason.NO_LONGER_CONFORMING);
     }
 
@@ -187,7 +221,8 @@ class RoutingCaseConfirmationTest {
         ConnectionRule singapore10h = new ConnectionRule(
                 UUID.randomUUID(), SINGAPORE, Duration.ofHours(10), at("2026-01-01T00:00:00Z"), null);
 
-        routingCase.confirm(2, "根拠", ROUTE_DESIGNER, List.of(SINGAPORE_8H, singapore10h), COMMIT_AT, evaluator);
+        routingCase.confirm(
+                2, "根拠", ROUTE_DESIGNER, VOYAGES, List.of(SINGAPORE_8H, singapore10h), COMMIT_AT, evaluator, FRESHNESS);
 
         assertThat(routingCase.routeVersion().status()).isEqualTo(RouteVersionStatus.CONFIRMED);
     }
@@ -197,7 +232,14 @@ class RoutingCaseConfirmationTest {
         RoutingCase routingCase = presented();
 
         routingCase.confirm(
-                1, "根拠", ROUTE_DESIGNER, List.of(SINGAPORE_8H), minutesAfter(FIRST_DEPARTURE, -1), evaluator);
+                1,
+                "根拠",
+                ROUTE_DESIGNER,
+                VOYAGES,
+                List.of(SINGAPORE_8H),
+                minutesAfter(FIRST_DEPARTURE, -1),
+                evaluator,
+                FRESHNESS);
 
         assertThat(routingCase.routeVersion().status()).isEqualTo(RouteVersionStatus.CONFIRMED);
     }
@@ -212,9 +254,11 @@ class RoutingCaseConfirmationTest {
                         1,
                         "根拠",
                         ROUTE_DESIGNER,
+                        VOYAGES,
                         List.of(SINGAPORE_8H),
                         minutesAfter(FIRST_DEPARTURE, minutesAfterDeparture),
-                        evaluator),
+                        evaluator,
+                        FRESHNESS),
                 RouteConfirmationRejectionReason.ALREADY_DEPARTED);
     }
 
@@ -223,18 +267,26 @@ class RoutingCaseConfirmationTest {
         RoutingCase routingCase = RoutingCaseTest.open();
 
         assertRejected(
-                () -> routingCase.confirm(1, "根拠", ROUTE_DESIGNER, List.of(SINGAPORE_8H), COMMIT_AT, evaluator),
+                () -> routingCase.confirm(
+                        1, "根拠", ROUTE_DESIGNER, VOYAGES, List.of(SINGAPORE_8H), COMMIT_AT, evaluator, FRESHNESS),
                 RouteConfirmationRejectionReason.NOT_CONFIRMABLE_STATE);
     }
 
     @Test
     void 確定した経路版は確定し直せない() {
         RoutingCase routingCase = presented();
-        routingCase.confirm(1, "根拠", ROUTE_DESIGNER, List.of(SINGAPORE_8H), COMMIT_AT, evaluator);
+        routingCase.confirm(1, "根拠", ROUTE_DESIGNER, VOYAGES, List.of(SINGAPORE_8H), COMMIT_AT, evaluator, FRESHNESS);
 
         assertRejected(
                 () -> routingCase.confirm(
-                        2, "別の根拠", ROUTE_DESIGNER, List.of(SINGAPORE_8H), minutesAfter(COMMIT_AT, 1), evaluator),
+                        2,
+                        "別の根拠",
+                        ROUTE_DESIGNER,
+                        VOYAGES,
+                        List.of(SINGAPORE_8H),
+                        minutesAfter(COMMIT_AT, 1),
+                        evaluator,
+                        FRESHNESS),
                 RouteConfirmationRejectionReason.NOT_CONFIRMABLE_STATE);
         assertThat(routingCase.routeVersion().confirmation())
                 .map(RouteConfirmation::candidateNo)
@@ -244,7 +296,7 @@ class RoutingCaseConfirmationTest {
     @Test
     void 確定した経路版の候補は算出し直せない() {
         RoutingCase routingCase = presented();
-        routingCase.confirm(1, "根拠", ROUTE_DESIGNER, List.of(SINGAPORE_8H), COMMIT_AT, evaluator);
+        routingCase.confirm(1, "根拠", ROUTE_DESIGNER, VOYAGES, List.of(SINGAPORE_8H), COMMIT_AT, evaluator, FRESHNESS);
         List<RouteCandidate> confirmedCandidates = routingCase.routeVersion().candidates();
         List<Voyage> voyages = List.of(direct("V-NEW", "2026-10-30T00:00:00Z"));
         List<ConnectionRule> rules = List.of(SINGAPORE_8H);
@@ -353,7 +405,14 @@ class RoutingCaseConfirmationTest {
 
         assertRejected(
                 () -> routingCase.confirm(
-                        2, "根拠", ROUTE_DESIGNER, List.of(SINGAPORE_8H, strictFromConnection), COMMIT_AT, evaluator),
+                        2,
+                        "根拠",
+                        ROUTE_DESIGNER,
+                        VOYAGES,
+                        List.of(SINGAPORE_8H, strictFromConnection),
+                        COMMIT_AT,
+                        evaluator,
+                        FRESHNESS),
                 RouteConfirmationRejectionReason.NO_LONGER_CONFORMING);
     }
 
@@ -363,7 +422,8 @@ class RoutingCaseConfirmationTest {
         ConnectionRule strictLater = new ConnectionRule(
                 UUID.randomUUID(), SINGAPORE, Duration.ofHours(12), minutesAfter(CONNECTION_DEPARTURE, 1), null);
 
-        routingCase.confirm(2, "根拠", ROUTE_DESIGNER, List.of(SINGAPORE_8H, strictLater), COMMIT_AT, evaluator);
+        routingCase.confirm(
+                2, "根拠", ROUTE_DESIGNER, VOYAGES, List.of(SINGAPORE_8H, strictLater), COMMIT_AT, evaluator, FRESHNESS);
 
         assertThat(routingCase.routeVersion().status()).isEqualTo(RouteVersionStatus.CONFIRMED);
     }
@@ -377,7 +437,14 @@ class RoutingCaseConfirmationTest {
 
         assertRejected(
                 () -> routingCase.confirm(
-                        2, "根拠", ROUTE_DESIGNER, List.of(SINGAPORE_8H, strictAfterCommit), COMMIT_AT, evaluator),
+                        2,
+                        "根拠",
+                        ROUTE_DESIGNER,
+                        VOYAGES,
+                        List.of(SINGAPORE_8H, strictAfterCommit),
+                        COMMIT_AT,
+                        evaluator,
+                        FRESHNESS),
                 RouteConfirmationRejectionReason.NO_LONGER_CONFORMING);
     }
 
@@ -393,7 +460,15 @@ class RoutingCaseConfirmationTest {
                 minutesAfter(CONNECTION_DEPARTURE, -1));
 
         assertRejected(
-                () -> routingCase.confirm(2, "根拠", ROUTE_DESIGNER, List.of(endsBeforeConnection), COMMIT_AT, evaluator),
+                () -> routingCase.confirm(
+                        2,
+                        "根拠",
+                        ROUTE_DESIGNER,
+                        VOYAGES,
+                        List.of(endsBeforeConnection),
+                        COMMIT_AT,
+                        evaluator,
+                        FRESHNESS),
                 RouteConfirmationRejectionReason.NO_LONGER_CONFORMING);
     }
 
@@ -407,7 +482,14 @@ class RoutingCaseConfirmationTest {
 
         assertRejected(
                 () -> routingCase.confirm(
-                        2, "根拠", ROUTE_DESIGNER, List.of(endsAtConnection, replacement), COMMIT_AT, evaluator),
+                        2,
+                        "根拠",
+                        ROUTE_DESIGNER,
+                        VOYAGES,
+                        List.of(endsAtConnection, replacement),
+                        COMMIT_AT,
+                        evaluator,
+                        FRESHNESS),
                 RouteConfirmationRejectionReason.NO_LONGER_CONFORMING);
     }
 
@@ -420,15 +502,18 @@ class RoutingCaseConfirmationTest {
                 1,
                 " " + surrogate.repeat(DecisionRationale.MAX_LENGTH) + "\n",
                 ROUTE_DESIGNER,
+                VOYAGES,
                 List.of(SINGAPORE_8H),
                 COMMIT_AT,
-                evaluator);
+                evaluator,
+                FRESHNESS);
 
         assertThat(routingCase.routeVersion().status()).isEqualTo(RouteVersionStatus.CONFIRMED);
         RoutingCase another = presented();
         String tooLong = surrogate.repeat(DecisionRationale.MAX_LENGTH + 1);
         assertRejected(
-                () -> another.confirm(1, tooLong, ROUTE_DESIGNER, List.of(SINGAPORE_8H), COMMIT_AT, evaluator),
+                () -> another.confirm(
+                        1, tooLong, ROUTE_DESIGNER, VOYAGES, List.of(SINGAPORE_8H), COMMIT_AT, evaluator, FRESHNESS),
                 RouteConfirmationRejectionReason.RATIONALE_TOO_LONG);
     }
 
@@ -448,7 +533,14 @@ class RoutingCaseConfirmationTest {
 
         assertRejected(
                 () -> routingCase.confirm(
-                        2, "根拠", ROUTE_DESIGNER, List.of(SINGAPORE_8H), minutesAfter(FIRST_DEPARTURE, 1), evaluator),
+                        2,
+                        "根拠",
+                        ROUTE_DESIGNER,
+                        VOYAGES,
+                        List.of(SINGAPORE_8H),
+                        minutesAfter(FIRST_DEPARTURE, 1),
+                        evaluator,
+                        FRESHNESS),
                 RouteConfirmationRejectionReason.ALREADY_DEPARTED);
     }
 
@@ -458,12 +550,150 @@ class RoutingCaseConfirmationTest {
         RouteApprover sales = new RouteApprover(UUID.randomUUID(), false);
 
         assertRejected(
-                () -> routingCase.confirm(3, "", ROUTE_DESIGNER, List.of(SINGAPORE_8H), COMMIT_AT, evaluator),
+                () -> routingCase.confirm(
+                        3, "", ROUTE_DESIGNER, VOYAGES, List.of(SINGAPORE_8H), COMMIT_AT, evaluator, FRESHNESS),
                 RouteConfirmationRejectionReason.CANDIDATE_EXCLUDED);
-        routingCase.confirm(1, "根拠", ROUTE_DESIGNER, List.of(SINGAPORE_8H), COMMIT_AT, evaluator);
+        routingCase.confirm(1, "根拠", ROUTE_DESIGNER, VOYAGES, List.of(SINGAPORE_8H), COMMIT_AT, evaluator, FRESHNESS);
         assertRejected(
-                () -> routingCase.confirm(1, "根拠", sales, List.of(SINGAPORE_8H), COMMIT_AT, evaluator),
+                () -> routingCase.confirm(
+                        1, "根拠", sales, VOYAGES, List.of(SINGAPORE_8H), COMMIT_AT, evaluator, FRESHNESS),
                 RouteConfirmationRejectionReason.NOT_ROUTE_DESIGNER);
+    }
+
+    @Test
+    void 二つ目の区間の航海の情報版が更新されていれば確定せず候補は変えない() {
+        RoutingCase routingCase = presented();
+        List<Voyage> reloaded = withVoyage("V-CONN", "V-CONN@2", COMMIT_AT);
+
+        assertRejected(
+                () -> routingCase.confirm(
+                        2, "根拠", ROUTE_DESIGNER, reloaded, List.of(SINGAPORE_8H), COMMIT_AT, evaluator, FRESHNESS),
+                RouteConfirmationRejectionReason.INFO_VERSION_CHANGED);
+        assertThat(routingCase.routeVersion()).isEqualTo(presented().routeVersion());
+    }
+
+    @Test
+    void 区間の航海がなくなっていれば情報版の更新で確定しない() {
+        RoutingCase routingCase = presented();
+        List<Voyage> reloaded = VOYAGES.stream()
+                .filter(voyage -> !voyage.voyageNumber().equals("V-FEED"))
+                .toList();
+
+        assertRejected(
+                () -> routingCase.confirm(
+                        2, "根拠", ROUTE_DESIGNER, reloaded, List.of(SINGAPORE_8H), COMMIT_AT, evaluator, FRESHNESS),
+                RouteConfirmationRejectionReason.INFO_VERSION_CHANGED);
+    }
+
+    @Test
+    void 候補に使っていない航海の情報版が更新されても確定する() {
+        RoutingCase routingCase = presented();
+        List<Voyage> reloaded = withVoyage("V-LATE", "V-LATE@2", COMMIT_AT);
+
+        routingCase.confirm(2, "根拠", ROUTE_DESIGNER, reloaded, List.of(SINGAPORE_8H), COMMIT_AT, evaluator, FRESHNESS);
+
+        assertThat(routingCase.routeVersion().status()).isEqualTo(RouteVersionStatus.CONFIRMED);
+    }
+
+    @Test
+    void 候補は情報版の違う区間を区間の順に返す() {
+        RouteCandidate candidate = presented().routeVersion().candidates().get(1);
+
+        assertThat(candidate.legsWithChangedInfo(java.util.Map.of("V-FEED", "V-FEED@2", "V-CONN", "V-CONN@1")))
+                .extracting(leg -> leg.voyageNumber())
+                .containsExactly("V-FEED");
+        assertThat(candidate.legsWithChangedInfo(java.util.Map.of("V-CONN", "V-CONN@3")))
+                .extracting(leg -> leg.voyageNumber())
+                .containsExactly("V-FEED", "V-CONN");
+        assertThat(candidate.legsWithChangedInfo(java.util.Map.of("V-FEED", "V-FEED@1", "V-CONN", "V-CONN@1")))
+                .isEmpty();
+    }
+
+    @Test
+    void 情報版の更新は判断根拠の不足より先に確かめる() {
+        RoutingCase routingCase = presented();
+        List<Voyage> reloaded = withVoyage("V-CONN", "V-CONN@2", COMMIT_AT);
+
+        assertRejected(
+                () -> routingCase.confirm(
+                        2, " ", ROUTE_DESIGNER, reloaded, List.of(SINGAPORE_8H), COMMIT_AT, evaluator, FRESHNESS),
+                RouteConfirmationRejectionReason.INFO_VERSION_CHANGED);
+    }
+
+    @Test
+    void 情報版の更新は出発済みより先に確かめる() {
+        RoutingCase routingCase = presented();
+        List<Voyage> reloaded = withVoyage("V-EARLY", "V-EARLY@2", COMMIT_AT);
+        UtcInstant afterDeparture = minutesAfter(FIRST_DEPARTURE, 1);
+
+        assertRejected(
+                () -> routingCase.confirm(
+                        1, "根拠", ROUTE_DESIGNER, reloaded, List.of(SINGAPORE_8H), afterDeparture, evaluator, FRESHNESS),
+                RouteConfirmationRejectionReason.INFO_VERSION_CHANGED);
+    }
+
+    @ParameterizedTest(name = "読み直した航海の取得が確定の時刻の 24 時間と {0} 秒前なら情報不足={1}")
+    @CsvSource({"1, true", "0, false", "-1, false"})
+    void 確定の時刻に読み直した航海の情報が許容時間を過ぎていれば情報不足で確定しない(long secondsBeyond, boolean insufficient) {
+        // 区間の写しの取得時刻（10-07T01:00Z）は確定の時刻の 3 時間前で新しい。判定は読み直した航海の取得時刻で行う
+        RoutingCase routingCase = presented();
+        UtcInstant acquiredAt =
+                new UtcInstant(COMMIT_AT.instant().minus(Duration.ofHours(24)).minusSeconds(secondsBeyond));
+        List<Voyage> reloaded = withVoyage("V-EARLY", "V-EARLY@1", acquiredAt);
+
+        if (insufficient) {
+            assertRejected(
+                    () -> routingCase.confirm(
+                            1, "根拠", ROUTE_DESIGNER, reloaded, List.of(SINGAPORE_8H), COMMIT_AT, evaluator, FRESHNESS),
+                    RouteConfirmationRejectionReason.INFO_INSUFFICIENT);
+        } else {
+            routingCase.confirm(
+                    1, "根拠", ROUTE_DESIGNER, reloaded, List.of(SINGAPORE_8H), COMMIT_AT, evaluator, FRESHNESS);
+            assertThat(routingCase.routeVersion().status()).isEqualTo(RouteVersionStatus.CONFIRMED);
+        }
+    }
+
+    @Test
+    void 二つ目の区間の航海だけが古くても情報不足で確定しない() {
+        RoutingCase routingCase = presented();
+        UtcInstant stale = new UtcInstant(COMMIT_AT.instant().minus(Duration.ofHours(30)));
+        List<Voyage> reloaded = withVoyage("V-CONN", "V-CONN@1", stale);
+
+        assertRejected(
+                () -> routingCase.confirm(
+                        2, "根拠", ROUTE_DESIGNER, reloaded, List.of(SINGAPORE_8H), COMMIT_AT, evaluator, FRESHNESS),
+                RouteConfirmationRejectionReason.INFO_INSUFFICIENT);
+    }
+
+    @Test
+    void 出発済みは情報不足より先に確かめる() {
+        RoutingCase routingCase = presented();
+        // 確定の時刻は最初の区間の出発（10-08T00:00Z）の後で、取得時刻（10-07T01:00Z）から 24 時間を超える
+        UtcInstant commitAt = minutesAfter(ACQUIRED_AT, 25 * 60);
+
+        assertRejected(
+                () -> routingCase.confirm(
+                        1, "根拠", ROUTE_DESIGNER, VOYAGES, List.of(SINGAPORE_8H), commitAt, evaluator, FRESHNESS),
+                RouteConfirmationRejectionReason.ALREADY_DEPARTED);
+    }
+
+    @Test
+    void 情報不足は規則の判定し直しより先に確かめる() {
+        RoutingCase routingCase = presented();
+        UtcInstant stale = new UtcInstant(COMMIT_AT.instant().minus(Duration.ofHours(30)));
+        List<Voyage> reloaded = withVoyage("V-CONN", "V-CONN@1", stale);
+
+        assertRejected(
+                () -> routingCase.confirm(
+                        2,
+                        "根拠",
+                        ROUTE_DESIGNER,
+                        reloaded,
+                        List.of(SINGAPORE_12H_REGISTERED_AFTER_CALCULATION),
+                        COMMIT_AT,
+                        evaluator,
+                        FRESHNESS),
+                RouteConfirmationRejectionReason.INFO_INSUFFICIENT);
     }
 
     @Test
@@ -471,7 +701,7 @@ class RoutingCaseConfirmationTest {
         RoutingCase draft = RoutingCaseTest.open();
         RoutingCase presented = presented();
         RoutingCase confirmed = presented();
-        confirmed.confirm(1, "根拠", ROUTE_DESIGNER, List.of(SINGAPORE_8H), COMMIT_AT, evaluator);
+        confirmed.confirm(1, "根拠", ROUTE_DESIGNER, VOYAGES, List.of(SINGAPORE_8H), COMMIT_AT, evaluator, FRESHNESS);
 
         assertThat(draft.confirmable()).isFalse();
         assertThat(presented.confirmable()).isTrue();
@@ -481,19 +711,21 @@ class RoutingCaseConfirmationTest {
     /** 候補 3 件（適合 2、除外 1）を算出した案件。 */
     private RoutingCase presented() {
         RoutingCase routingCase = RoutingCaseTest.open();
-        routingCase.calculateCandidates(
-                List.of(
-                        direct("V-EARLY", "2026-10-29T00:00:00Z"),
-                        feeder("V-FEED", "2026-10-09T00:00:00Z"),
-                        fromSingapore("V-CONN", CONNECTION_DEPARTURE.instant().toString(), "2026-10-30T00:00:00Z"),
-                        direct("V-LATE", "2026-11-03T12:00:00Z")),
-                List.of(SINGAPORE_8H),
-                JUDGED_AT,
-                finder,
-                evaluator,
-                new InfoFreshnessPolicy(Duration.ofHours(24)));
+        routingCase.calculateCandidates(VOYAGES, List.of(SINGAPORE_8H), JUDGED_AT, finder, evaluator, FRESHNESS);
         return routingCase;
     }
+
+    /** 確定で読み直した航海の一覧（1 本だけ、情報版と取得時刻を変える。寄港は変えない）。 */
+    private static List<Voyage> withVoyage(String voyageNumber, String infoVersion, UtcInstant acquiredAt) {
+        return VOYAGES.stream()
+                .map(voyage -> voyage.voyageNumber().equals(voyageNumber)
+                        ? new Voyage(voyageNumber, voyage.portCalls(), infoVersion, acquiredAt)
+                        : voyage)
+                .toList();
+    }
+
+    /** 区間の航海の取得時刻（算出のとき）。 */
+    private static final UtcInstant ACQUIRED_AT = at("2026-10-07T01:00:00Z");
 
     private static RouteVersion withNo(RouteVersion version, int routeVersionNo) {
         return new RouteVersion(

@@ -23,9 +23,11 @@ import com.example.cargotracker.shared.domain.UtcInstant;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 /**
  * 経路設計案件。1 つの輸送要求について経路版を作り、確定・再設計する単位（集約ルート）。
@@ -205,22 +207,26 @@ public final class RoutingCase {
     }
 
     /**
-     * 経路を確定する（候補提示済み → 確定。US-07 AC1・AC2）。承認者が経路設計者で、選んだ候補が適合で、判断根拠があることを
-     * 確かめ、確定のときに読み直した接続時間規則と希望到着期限で判定し直す（R-INV-03 の R0.1 の範囲）。規則は確定の時刻ではなく、
+     * 経路を確定する（候補提示済み → 確定。US-07 AC1〜AC3）。承認者が経路設計者で、選んだ候補が適合で、判断根拠があることを
+     * 確かめ、確定のときに読み直した航海・接続時間規則と希望到着期限で判定し直す（R-INV-03）。規則は確定の時刻ではなく、
      * 接続の時刻（次の区間の出発予定）に有効なものを使う（D-90、Bolt 37。算出の後に登録・変更された規則を拾う）。
-     * 最初の区間が確定の時刻と同時刻または前に出発するなら拒否する。
+     * 確かめる順は、状態・候補・除外 → 情報版の更新（区間の採用情報版と読み直した航海の採用情報版が違う。航海がないときも）→
+     * 判断根拠 → 出発済み（最初の区間が確定の時刻と同時刻または前に出発する）→ 情報不足（読み直した航海の取得時刻で、確定の時刻に
+     * 許容時間を過ぎている）→ 規則の判定し直し（Bolt 37c）。候補の比較に戻す理由を判断根拠より前に確かめる。
      *
      * @return DE-05 経路を確定した
      * @throws RouteConfirmationRejected 確定できない（理由を値で持つ）
      */
-    @SuppressWarnings("java:S107") // 確定の入力と、再検証に使う規則・判定をすべて受け取る
+    @SuppressWarnings("java:S107") // 確定の入力と、再検証に使う航海・規則・判定をすべて受け取る（算出と同じ形）
     public RouteConfirmed confirm(
             int candidateNo,
             String rationale,
             RouteApprover approver,
+            List<Voyage> voyages,
             List<ConnectionRule> rules,
             UtcInstant commitAt,
-            ConstraintEvaluator evaluator) {
+            ConstraintEvaluator evaluator,
+            InfoFreshnessPolicy freshness) {
         if (!approver.routeDesigner()) {
             throw reject(RouteConfirmationRejectionReason.NOT_ROUTE_DESIGNER, "経路を確定できるのは経路設計者だけです");
         }
@@ -237,6 +243,13 @@ public final class RoutingCase {
         if (!candidate.evaluation().conforming()) {
             throw reject(RouteConfirmationRejectionReason.CANDIDATE_EXCLUDED, "除外の候補は確定できません");
         }
+        Map<String, Voyage> current =
+                voyages.stream().collect(Collectors.toMap(Voyage::voyageNumber, voyage -> voyage));
+        Map<String, String> currentInfoVersions =
+                current.values().stream().collect(Collectors.toMap(Voyage::voyageNumber, Voyage::adoptedInfoVersion));
+        if (!candidate.legsWithChangedInfo(currentInfoVersions).isEmpty()) {
+            throw reject(RouteConfirmationRejectionReason.INFO_VERSION_CHANGED, "候補を算出した後に区間の航海の情報版が更新されました");
+        }
         DecisionRationale.rejectionOf(rationale).ifPresent(reason -> {
             throw reject(
                     reason,
@@ -247,6 +260,11 @@ public final class RoutingCase {
         DecisionRationale decisionRationale = DecisionRationale.of(rationale);
         if (!candidate.legs().getFirst().departureAt().instant().isAfter(commitAt.instant())) {
             throw reject(RouteConfirmationRejectionReason.ALREADY_DEPARTED, "最初の区間が出発済みです");
+        }
+        if (candidate.legs().stream()
+                .anyMatch(leg ->
+                        freshness.insufficient(current.get(leg.voyageNumber()).acquiredAt(), commitAt))) {
+            throw reject(RouteConfirmationRejectionReason.INFO_INSUFFICIENT, "区間の航海の情報が取得から許容時間を過ぎています");
         }
         if (!evaluator.evaluate(specification, candidate.legs(), rules).conforming()) {
             throw reject(RouteConfirmationRejectionReason.NO_LONGER_CONFORMING, "確定のときに判定し直すと不適合です");

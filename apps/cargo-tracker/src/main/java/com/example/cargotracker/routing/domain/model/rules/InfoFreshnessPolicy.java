@@ -27,14 +27,21 @@ public record InfoFreshnessPolicy(Duration tolerance) {
     }
 
     /**
+     * 取得時刻の情報が判定時刻に情報不足か（判定時刻が取得時刻 + 許容時間より後。同時刻は足りる）。確定のときは、読み直した航海の
+     * 取得時刻で判定する（Bolt 37c）。
+     */
+    public boolean insufficient(UtcInstant acquiredAt, UtcInstant judgedAt) {
+        return judgedAt.instant().isAfter(acquiredAt.instant().plus(tolerance));
+    }
+
+    /**
      * 判定する。
      *
      * @return 情報不足の区間の理由（区間の順。足りれば空）
      */
     public List<ExclusionReason> evaluate(List<Leg> legs, UtcInstant judgedAt) {
         return legs.stream()
-                .filter(leg -> judgedAt.instant()
-                        .isAfter(leg.infoAcquiredAt().instant().plus(tolerance)))
+                .filter(leg -> insufficient(leg.infoAcquiredAt(), judgedAt))
                 .map(leg -> ExclusionReason.infoInsufficient(
                         leg.voyageNumber(), leg.infoAcquiredAt(), tolerance, leg.infoVersion()))
                 .toList();

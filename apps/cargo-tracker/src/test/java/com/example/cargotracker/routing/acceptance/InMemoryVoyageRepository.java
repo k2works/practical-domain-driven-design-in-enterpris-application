@@ -21,6 +21,14 @@ public class InMemoryVoyageRepository implements VoyageRepository {
         voyages.add(voyage);
     }
 
+    /** 同じ航海番号の航海を置き換える（外部原本の取込で情報版や取得時刻が変わったことを表す。Bolt 37c）。 */
+    public synchronized void replace(Voyage voyage) {
+        if (!voyages.removeIf(each -> each.voyageNumber().equals(voyage.voyageNumber()))) {
+            throw new IllegalArgumentException("置き換える航海がありません: " + voyage.voyageNumber());
+        }
+        voyages.add(voyage);
+    }
+
     public synchronized void clear() {
         voyages.clear();
     }

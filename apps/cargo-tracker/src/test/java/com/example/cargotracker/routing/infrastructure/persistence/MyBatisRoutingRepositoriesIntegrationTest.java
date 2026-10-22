@@ -270,7 +270,15 @@ class MyBatisRoutingRepositoriesIntegrationTest {
         RoutingCase routingCase = calculatedAndSaved();
         RoutingCase loaded = repository.findByNumber(routingCase.number()).orElseThrow();
         UtcInstant commitAt = at("2083-10-07T04:00:00Z");
-        loaded.confirm(1, "直行で期限まで 3 日ある。", APPROVER, rules(), commitAt, new ConstraintEvaluator());
+        loaded.confirm(
+                1,
+                "直行で期限まで 3 日ある。",
+                APPROVER,
+                voyages(),
+                rules(),
+                commitAt,
+                new ConstraintEvaluator(),
+                new InfoFreshnessPolicy(Duration.ofHours(24)));
 
         repository.update(loaded, APPROVER.userId());
 
@@ -293,7 +301,15 @@ class MyBatisRoutingRepositoriesIntegrationTest {
     void 確定した経路版の候補は案件をもう一度更新しても変わらない() {
         RoutingCase routingCase = calculatedAndSaved();
         RoutingCase loaded = repository.findByNumber(routingCase.number()).orElseThrow();
-        loaded.confirm(1, "根拠", APPROVER, rules(), at("2083-10-07T04:00:00Z"), new ConstraintEvaluator());
+        loaded.confirm(
+                1,
+                "根拠",
+                APPROVER,
+                voyages(),
+                rules(),
+                at("2083-10-07T04:00:00Z"),
+                new ConstraintEvaluator(),
+                new InfoFreshnessPolicy(Duration.ofHours(24)));
         repository.update(loaded, APPROVER.userId());
         RoutingCase confirmed = repository.findByNumber(routingCase.number()).orElseThrow();
 
@@ -307,7 +323,15 @@ class MyBatisRoutingRepositoriesIntegrationTest {
     void 確定した経路版の根拠と候補を書き換えた集約で更新しても表は変わらない() {
         RoutingCase routingCase = calculatedAndSaved();
         RoutingCase loaded = repository.findByNumber(routingCase.number()).orElseThrow();
-        loaded.confirm(1, "元の根拠", APPROVER, rules(), at("2083-10-07T04:00:00Z"), new ConstraintEvaluator());
+        loaded.confirm(
+                1,
+                "元の根拠",
+                APPROVER,
+                voyages(),
+                rules(),
+                at("2083-10-07T04:00:00Z"),
+                new ConstraintEvaluator(),
+                new InfoFreshnessPolicy(Duration.ofHours(24)));
         repository.update(loaded, APPROVER.userId());
         RoutingCase confirmed = repository.findByNumber(routingCase.number()).orElseThrow();
         RouteVersion original = confirmed.routeVersion();
@@ -363,7 +387,15 @@ class MyBatisRoutingRepositoriesIntegrationTest {
         RoutingCase routingCase = calculatedAndSaved();
         RoutingCase loaded = repository.findByNumber(routingCase.number()).orElseThrow();
         String rationale = "\uD867\uDE3D".repeat(DecisionRationale.MAX_LENGTH);
-        loaded.confirm(1, rationale, APPROVER, rules(), at("2083-10-07T04:00:00Z"), new ConstraintEvaluator());
+        loaded.confirm(
+                1,
+                rationale,
+                APPROVER,
+                voyages(),
+                rules(),
+                at("2083-10-07T04:00:00Z"),
+                new ConstraintEvaluator(),
+                new InfoFreshnessPolicy(Duration.ofHours(24)));
 
         repository.update(loaded, APPROVER.userId());
 
@@ -380,7 +412,15 @@ class MyBatisRoutingRepositoriesIntegrationTest {
     void 確定した候補は消せない() {
         RoutingCase routingCase = calculatedAndSaved();
         RoutingCase loaded = repository.findByNumber(routingCase.number()).orElseThrow();
-        loaded.confirm(1, "根拠", APPROVER, rules(), at("2083-10-07T04:00:00Z"), new ConstraintEvaluator());
+        loaded.confirm(
+                1,
+                "根拠",
+                APPROVER,
+                voyages(),
+                rules(),
+                at("2083-10-07T04:00:00Z"),
+                new ConstraintEvaluator(),
+                new InfoFreshnessPolicy(Duration.ofHours(24)));
         repository.update(loaded, APPROVER.userId());
         UUID id = routingCase.id().value();
         jdbc.update("DELETE FROM routing.exclusion_reason WHERE routing_case_id = ? AND candidate_no = 1", id);

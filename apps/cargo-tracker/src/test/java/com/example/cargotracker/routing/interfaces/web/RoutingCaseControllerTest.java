@@ -529,10 +529,12 @@ class RoutingCaseControllerTest {
                 1,
                 "<script>alert(1)</script>",
                 new RouteApprover(TestActors.STAFF_USER.value(), true),
+                voyages(),
                 List.of(new ConnectionRule(
                         UUID.randomUUID(), SINGAPORE, Duration.ofHours(8), at("2026-01-01T00:00:00Z"), null)),
                 at("2026-10-07T05:00:00Z"),
-                new ConstraintEvaluator());
+                new ConstraintEvaluator(),
+                new InfoFreshnessPolicy(Duration.ofHours(24)));
         when(queryService.findByNumber(NUMBER)).thenReturn(Optional.of(routingCase));
 
         mockMvc.perform(get(SHOW))
@@ -563,10 +565,12 @@ class RoutingCaseControllerTest {
                 1,
                 "SGSIN の接続に 4 時間の余裕がある。",
                 new RouteApprover(TestActors.STAFF_USER.value(), true),
+                voyages(),
                 List.of(new ConnectionRule(
                         UUID.randomUUID(), SINGAPORE, Duration.ofHours(8), at("2026-01-01T00:00:00Z"), null)),
                 at("2026-10-07T05:00:00Z"),
-                new ConstraintEvaluator());
+                new ConstraintEvaluator(),
+                new InfoFreshnessPolicy(Duration.ofHours(24)));
         return routingCase;
     }
 
@@ -614,34 +618,39 @@ class RoutingCaseControllerTest {
     }
 
     /** 適合（接続 12 時間）、接続不足（4 時間）、規則のない香港、期限超過 1 日 12 時間。 */
+    /** 候補を算出する航海（確定で読み直したときも同じ。Bolt 37c）。 */
+    static List<Voyage> voyages() {
+        return List.of(
+                voyage(
+                        "V-201",
+                        call(TOKYO, null, "2026-10-10T00:00:00Z"),
+                        call(SINGAPORE, "2026-10-20T00:00:00Z", null)),
+                voyage(
+                        "V-301",
+                        call(SINGAPORE, null, "2026-10-20T12:00:00Z"),
+                        call(ROTTERDAM, "2026-10-31T00:00:00Z", null)),
+                voyage(
+                        "V-302",
+                        call(SINGAPORE, null, "2026-10-20T04:00:00Z"),
+                        call(ROTTERDAM, "2026-10-30T00:00:00Z", null)),
+                voyage(
+                        "V-202",
+                        call(TOKYO, null, "2026-10-11T00:00:00Z"),
+                        call(HONG_KONG, "2026-10-15T00:00:00Z", null)),
+                voyage(
+                        "V-304",
+                        call(HONG_KONG, null, "2026-10-16T00:00:00Z"),
+                        call(ROTTERDAM, "2026-10-29T00:00:00Z", null)),
+                voyage(
+                        "V-LATE",
+                        call(TOKYO, null, "2026-10-12T00:00:00Z"),
+                        call(ROTTERDAM, "2026-11-03T12:00:00Z", null)));
+    }
+
     static RoutingCase calculated() {
         RoutingCase routingCase = open();
         routingCase.calculateCandidates(
-                List.of(
-                        voyage(
-                                "V-201",
-                                call(TOKYO, null, "2026-10-10T00:00:00Z"),
-                                call(SINGAPORE, "2026-10-20T00:00:00Z", null)),
-                        voyage(
-                                "V-301",
-                                call(SINGAPORE, null, "2026-10-20T12:00:00Z"),
-                                call(ROTTERDAM, "2026-10-31T00:00:00Z", null)),
-                        voyage(
-                                "V-302",
-                                call(SINGAPORE, null, "2026-10-20T04:00:00Z"),
-                                call(ROTTERDAM, "2026-10-30T00:00:00Z", null)),
-                        voyage(
-                                "V-202",
-                                call(TOKYO, null, "2026-10-11T00:00:00Z"),
-                                call(HONG_KONG, "2026-10-15T00:00:00Z", null)),
-                        voyage(
-                                "V-304",
-                                call(HONG_KONG, null, "2026-10-16T00:00:00Z"),
-                                call(ROTTERDAM, "2026-10-29T00:00:00Z", null)),
-                        voyage(
-                                "V-LATE",
-                                call(TOKYO, null, "2026-10-12T00:00:00Z"),
-                                call(ROTTERDAM, "2026-11-03T12:00:00Z", null))),
+                voyages(),
                 List.of(new ConnectionRule(
                         UUID.randomUUID(), SINGAPORE, Duration.ofHours(8), at("2026-01-01T00:00:00Z"), null)),
                 at("2026-10-07T03:00:00Z"),

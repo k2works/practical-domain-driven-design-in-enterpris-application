@@ -10,6 +10,7 @@ import com.example.cargotracker.routing.application.internal.queryservices.Routi
 import com.example.cargotracker.routing.domain.events.RouteConfirmed;
 import com.example.cargotracker.routing.domain.model.aggregates.ConnectionRule;
 import com.example.cargotracker.routing.domain.model.aggregates.RoutingCase;
+import com.example.cargotracker.routing.domain.model.aggregates.Voyage;
 import com.example.cargotracker.routing.domain.model.entities.RouteVersion;
 import com.example.cargotracker.routing.domain.model.valueobjects.DecisionRationale;
 import com.example.cargotracker.routing.domain.model.valueobjects.RouteConfirmation;
@@ -30,7 +31,7 @@ import java.util.Map;
 import java.util.UUID;
 
 /**
- * 経路の確定（US-07 AC1・AC2）の業務ルール層のステップ（Bolt 19）。案件は DE-16 の配信で作られたもの（シナリオに 1 件）。
+ * 経路の確定（US-07 AC1・AC2。Bolt 19、AC3。Bolt 37c）の業務ルール層のステップ。案件は DE-16 の配信で作られたもの（シナリオに 1 件）。
  */
 public class RouteConfirmationSteps {
 
@@ -38,6 +39,8 @@ public class RouteConfirmationSteps {
             new UserId(UUID.fromString("00000000-0000-0000-0000-000000000502"));
     private static final UserId SALES = new UserId(UUID.fromString("00000000-0000-0000-0000-000000000301"));
     private static final Map<String, RouteConfirmationRejectionReason> REASONS = Map.of(
+            "情報版の更新", RouteConfirmationRejectionReason.INFO_VERSION_CHANGED,
+            "情報不足", RouteConfirmationRejectionReason.INFO_INSUFFICIENT,
             "判断根拠の不足", RouteConfirmationRejectionReason.RATIONALE_MISSING,
             "経路設計者でない", RouteConfirmationRejectionReason.NOT_ROUTE_DESIGNER,
             "除外の候補", RouteConfirmationRejectionReason.CANDIDATE_EXCLUDED,
@@ -49,6 +52,7 @@ public class RouteConfirmationSteps {
     private final RoutingCaseQueryService queryService;
     private final DeferredEventDelivery eventDelivery;
     private final InMemoryConnectionRuleRepository rules;
+    private final InMemoryVoyageRepository voyages;
     private RouteConfirmationOutcome outcome;
     private Long openedVersion;
 
@@ -56,11 +60,24 @@ public class RouteConfirmationSteps {
             RoutingCaseCommandService commandService,
             RoutingCaseQueryService queryService,
             DeferredEventDelivery eventDelivery,
-            InMemoryConnectionRuleRepository rules) {
+            InMemoryConnectionRuleRepository rules,
+            InMemoryVoyageRepository voyages) {
         this.commandService = commandService;
         this.queryService = queryService;
         this.eventDelivery = eventDelivery;
         this.rules = rules;
+        this.voyages = voyages;
+    }
+
+    /** 候補を算出した後に、外部原本の取込で航海の情報版と取得時刻が変わる（寄港は変えない。Bolt 37c）。 */
+    @前提("航海 {string} の情報版が {string} に、取得時刻が {string} に更新される")
+    public void 航海の情報が更新される(String voyageNumber, String infoVersion, String acquiredAt) {
+        Voyage current = voyages.findAll().stream()
+                .filter(voyage -> voyage.voyageNumber().equals(voyageNumber))
+                .findFirst()
+                .orElseThrow();
+        voyages.replace(
+                new Voyage(voyageNumber, current.portCalls(), infoVersion, new UtcInstant(Instant.parse(acquiredAt))));
     }
 
     @前提("港 {string} の必要最小接続時間が {string} から {int} 時間になる")
@@ -138,6 +155,16 @@ public class RouteConfirmationSteps {
     @ならば("確定は拒否され、理由は {string} である")
     public void 確定は拒否される(String reason) {
         assertThat(outcome).isEqualTo(new RouteConfirmationOutcome.Rejected(REASONS.get(reason)));
+    }
+
+    /** 確定したか、拒否の理由（「確定」なら確定した。Bolt 37c の境界のシナリオアウトライン）。 */
+    @ならば("確定の結果は {string} である")
+    public void 確定の結果(String result) {
+        if ("確定".equals(result)) {
+            assertThat(outcome).isInstanceOf(RouteConfirmationOutcome.Confirmed.class);
+        } else {
+            assertThat(outcome).isEqualTo(new RouteConfirmationOutcome.Rejected(REASONS.get(result)));
+        }
     }
 
     @ならば("確定はほかの経路設計者の更新と競合する")

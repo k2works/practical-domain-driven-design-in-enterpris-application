@@ -83,8 +83,8 @@ public class RoutingCaseCommandService {
     }
 
     /**
-     * 判断根拠を記録して経路を確定する（US-07 AC1・AC2）。確定の時刻（承認 commit 時刻）は Clock から得る。接続時間規則を
-     * 読み直して判定し直す（規則は接続の時刻に有効なもの。D-90）。確定したら DE-05 を発行する（購読は US-24 AC4）。
+     * 判断根拠を記録して経路を確定する（US-07 AC1〜AC3）。確定の時刻（承認 commit 時刻）は Clock から得る。航海と接続時間規則を
+     * 同じトランザクションで読み直して判定し直す（規則は接続の時刻に有効なもの。D-90。航海は情報版の照合と情報不足。Bolt 37c。ロックしない）。確定したら DE-05 を発行する（購読は US-24 AC4）。
      */
     @Transactional
     public RouteConfirmationOutcome confirm(ConfirmRouteCommand command) {
@@ -102,9 +102,11 @@ public class RoutingCaseCommandService {
                     command.candidateNo(),
                     command.rationale(),
                     new RouteApprover(command.approver().value(), command.routeDesigner()),
+                    voyageRepository.findAll(),
                     connectionRuleRepository.findAll(),
                     new UtcInstant(clock.instant()),
-                    evaluator);
+                    evaluator,
+                    freshness);
         } catch (RouteConfirmationRejected rejected) {
             return new RouteConfirmationOutcome.Rejected(rejected.reason());
         }

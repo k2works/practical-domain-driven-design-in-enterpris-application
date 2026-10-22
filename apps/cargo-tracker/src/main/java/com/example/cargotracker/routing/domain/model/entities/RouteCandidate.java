@@ -6,6 +6,7 @@ import com.example.cargotracker.shared.annotation.ddd.Entity;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -37,5 +38,17 @@ public record RouteCandidate(int candidateNo, List<Leg> legs, ConstraintEvaluati
                 .map(Leg::infoAcquiredAt)
                 .min(Comparator.comparing(UtcInstant::instant))
                 .orElseThrow();
+    }
+
+    /**
+     * 情報版の違う区間（US-07 AC3、R-INV-03。Bolt 37c）。区間の採用情報版が、同じ航海番号の今の採用情報版と違うか、今の航海が
+     * ない区間を区間の順に返す。確定の照合と、確定した経路版の評価（Bolt 37d）で使う。
+     *
+     * @param currentInfoVersions 航海番号から今の航海の採用情報版
+     */
+    public List<Leg> legsWithChangedInfo(Map<String, String> currentInfoVersions) {
+        return legs.stream()
+                .filter(leg -> !leg.infoVersion().equals(currentInfoVersions.get(leg.voyageNumber())))
+                .toList();
     }
 }
