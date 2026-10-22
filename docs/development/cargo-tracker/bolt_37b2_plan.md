@@ -3,7 +3,7 @@ type: Plan
 title: "Bolt 37b2 計画 - US-06 AC4 情報不足（算出のときに古い航海の情報を使う候補を除外する。D-89）"
 tags: [plan]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-22T01:43:57Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-22T04:20:14Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-22T01:44:32Z }
 ---
@@ -155,16 +155,16 @@ end note
 
 各ステップの終わりに対象のテストを流し、最後に `check` と `uiTest` を流して XML の結果から件数を数える（T-151）。コミットは pathspec で行い（T-110）、push してアプリの CI を確かめる（T-26）。
 
-- [ ] **1. 設計の文書と数え上げ**: US-06 に Bolt 37b2 の決定（判定と境界、最終採用値の読み方、除外にすること、港湾は W7、確定のときは 37c）を書く。domain_model のドメインルールの表に「情報鮮度の判定」の行とクラス図、Bolt 37b2 で決めたこと（許容時間を設定にする置き場所と理由）、R-INV-02 の除外の列挙と R-INV-09 の注、用語集（規則の行、:171 の「鮮度」は追跡と共有しない注）。UC-06 2a・FRS-01 の「情報が古い」と「情報不足」の関係の注（non_functional・system_usecase）、ui_design の S-06（画面イメージの「情報」の行と :1087）、data_model :508（`threshold` の区分ごとの形）。Javadoc: `rules/package-info.java`・`ExclusionReasonCode.java:4-5`・`ConstraintEvaluation`・`ExclusionReason`（クラスの説明と新しい項目の `@param`）・`RoutingCase.calculateCandidates`・`RoutingCaseCommandService` :25・:54。`route_candidates.feature:6` の説明、`DevSampleDataSmokeTest:358` のコメント。test_strategy :550 の表に US-06 AC4 の行（Bolt 37b2、`@US-06-AC4`（`route_candidates.feature`・`compare_route_candidates_ui.feature`）、単体・統合のテスト）。`calculateCandidates` の呼び出しと「情報不足」「情報が古い」の写しを全体で数える（T-148）（完了の判定: 文書の差分と、直す箇所の一覧）
-- [ ] **2. 受入シナリオ（Red）**: `route_candidates.feature` に `@US-06-AC4 @R-INV-09` のシナリオを足す。
+- [x] **1. 設計の文書と数え上げ**: US-06 に Bolt 37b2 の決定（判定と境界、最終採用値の読み方、除外にすること、港湾は W7、確定のときは 37c）を書く。domain_model のドメインルールの表に「情報鮮度の判定」の行とクラス図、Bolt 37b2 で決めたこと（許容時間を設定にする置き場所と理由）、R-INV-02 の除外の列挙と R-INV-09 の注、用語集（規則の行、:171 の「鮮度」は追跡と共有しない注）。UC-06 2a・FRS-01 の「情報が古い」と「情報不足」の関係の注（non_functional・system_usecase）、ui_design の S-06（画面イメージの「情報」の行と :1087）、data_model :508（`threshold` の区分ごとの形）。Javadoc: `rules/package-info.java`・`ExclusionReasonCode.java:4-5`・`ConstraintEvaluation`・`ExclusionReason`（クラスの説明と新しい項目の `@param`）・`RoutingCase.calculateCandidates`・`RoutingCaseCommandService` :25・:54。`route_candidates.feature:6` の説明、`DevSampleDataSmokeTest:358` のコメント。test_strategy :550 の表に US-06 AC4 の行（Bolt 37b2、`@US-06-AC4`（`route_candidates.feature`・`compare_route_candidates_ui.feature`）、単体・統合のテスト）。`calculateCandidates` の呼び出しと「情報不足」「情報が古い」の写しを全体で数える（T-148）（完了の判定: 文書の差分と、直す箇所の一覧）
+- [x] **2. 受入シナリオ（Red）**: `route_candidates.feature` に `@US-06-AC4 @R-INV-09` のシナリオを足す。
   - (a) 境界のシナリオアウトライン: 積替えの 2 区間目の航海の取得時刻を、判定時刻の 24 時間前の 1 秒前・同時刻・1 秒後の 3 点にし、1 秒前（情報不足で除外）、同時刻と 1 秒後（適合）を書く。古い航海を 2 区間目に置く（最初の区間だけで判定する変異を落とす）。1 区間目の航海は新しい取得時刻にする
   - (b) 2 つの航海が古い候補で、理由が区間の順に 2 つ（航海・不適合の時刻・閾値 `V-xxx PT24H`・参照情報版）。候補の最も古い情報の取得時刻も確かめる
   - ステップ定義: 「次の航海がある」の表に省略できる「取得時刻」の列を足す（ない行は今の定数）。`REASONS` に「情報不足」、理由を候補ごとに並びで確かめる形（今の「除外された候補の理由」は理由 1 つが前提）、`threshold()` に情報不足の形
   - 落ちる理由が「情報不足の候補が適合で示される」であることを確かめる（完了の判定: 足したシナリオが期待した理由で落ちる）
-- [ ] **3. 規則と集約（Green）**: `InfoFreshnessPolicyTest` に、境界の 3 点、2 区間目だけ古い、2 つ古いと区間の順に 2 つ、許容時間が 0 以下なら作れない、を足して Red を見てから `InfoFreshnessPolicy` と `ExclusionReason.infoInsufficient` を作る。`RoutingCaseTest` に、情報不足の候補は除外で適合の後ろに並ぶ、理由は制約適合判定の理由の後ろ、取得時刻の違う区間で最も古い取得時刻と古い航海だけの理由、を足してから `calculateCandidates` に引数を足す。呼び出し（`RoutingCaseFixture`・各テスト・`DevSampleDataSmokeTest:344`）は既定の許容時間で直す（H1: 期待値を変えない）（完了の判定: 単体テストと 2 (a)(b) が緑）
-- [ ] **4. 設定と保存（Green）**: `RoutingConfiguration` の規則の `@Bean` と組み立て、`application.properties` の既定値、`AcceptanceTestConfiguration:181`。設定の結合のテストを `@SpringBootTest(properties = "cargotracker.routing.info-freshness-tolerance=PT48H")` で書き、入力ポートで算出すると 25 時間前の航海が適合になること（既定の 24 時間なら情報不足）を確かめる（規則の単体テストだけでは設定を読まない変異が残る）。`MyBatisRoutingRepositoriesIntegrationTest` に、情報不足の理由（空白を含む航海番号を含む）と `info_insufficient` の保存の往復を足して Red を見てから、`threshold`・`toReason`・`info_insufficient` を直す（H2: マイグレーションを足さない）（完了の判定: 統合テストと受入シナリオが緑）
-- [ ] **5. 画面とマニュアルとデモ**: `RoutingCaseViewsTest` に情報不足の文言を足して Red を見てから `RoutingCaseViews.reason` を直す。`compare_route_candidates_ui.feature` に、25 時間前に取得した航海を使う候補が「情報不足」の理由で除外として示されるシナリオ（`@US-06-AC4 @demo @demo-bolt-37b2/info-insufficient`）を足し、axe を当てる。マニュアル 8 章の 8.2 に、除外の理由の「情報不足」（どの航海が、いつ取得した情報か、許容 24 時間）と、データ責任者に取込を依頼して届いたら「候補を再算出」する案内を書く。注意・補足に「判定は判定時刻の情報による。時間がたったら『候補を再算出』してから確定する」を足す（確定のときの鮮度は 37c。確認ポイント 7）。ローカルの dev（ポート 8091）で開発用の利用者で S-06 を開き、見本の候補が情報不足にならないことを確かめる（T-172）。デモの動画を撮る（完了の判定: 画面の層のシナリオが緑、マニュアルの差分、動画）
-- [ ] **6. 品質ゲートと開発レビューと終了報告**: 変異 6 つ（確認ポイント 8）を当て、落ちたテストを出力で確かめる（T-164・T-166）。`check`・`uiTest`・SonarQube（ほかの Gradle が終わってから。T-147）、開発レビュー、push して CI と MkDocs とデモ環境の配備を確かめる（T-126）。#15 に、確定のときの鮮度の穴を 37c で閉じることを含めてコメントを残す。終了報告の残る課題にも同じことを書く。終了報告で release_plan（W6 の 37b2 の行と主なタスク）・開発の索引・mkdocs を完了に直す
+- [x] **3. 規則と集約（Green）**: `InfoFreshnessPolicyTest` に、境界の 3 点、2 区間目だけ古い、2 つ古いと区間の順に 2 つ、許容時間が 0 以下なら作れない、を足して Red を見てから `InfoFreshnessPolicy` と `ExclusionReason.infoInsufficient` を作る。`RoutingCaseTest` に、情報不足の候補は除外で適合の後ろに並ぶ、理由は制約適合判定の理由の後ろ、取得時刻の違う区間で最も古い取得時刻と古い航海だけの理由、を足してから `calculateCandidates` に引数を足す。呼び出し（`RoutingCaseFixture`・各テスト・`DevSampleDataSmokeTest:344`）は既定の許容時間で直す（H1: 期待値を変えない）（完了の判定: 単体テストと 2 (a)(b) が緑）
+- [x] **4. 設定と保存（Green）**: `RoutingConfiguration` の規則の `@Bean` と組み立て、`application.properties` の既定値、`AcceptanceTestConfiguration:181`。設定の結合のテストを `@SpringBootTest(properties = "cargotracker.routing.info-freshness-tolerance=PT48H")` で書き、入力ポートで算出すると 25 時間前の航海が適合になること（既定の 24 時間なら情報不足）を確かめる（規則の単体テストだけでは設定を読まない変異が残る）。`MyBatisRoutingRepositoriesIntegrationTest` に、情報不足の理由（空白を含む航海番号を含む）と `info_insufficient` の保存の往復を足して Red を見てから、`threshold`・`toReason`・`info_insufficient` を直す（H2: マイグレーションを足さない）（完了の判定: 統合テストと受入シナリオが緑）
+- [x] **5. 画面とマニュアルとデモ**: `RoutingCaseViewsTest` に情報不足の文言を足して Red を見てから `RoutingCaseViews.reason` を直す。`compare_route_candidates_ui.feature` に、25 時間前に取得した航海を使う候補が「情報不足」の理由で除外として示されるシナリオ（`@US-06-AC4 @demo @demo-bolt-37b2/info-insufficient`）を足し、axe を当てる。マニュアル 8 章の 8.2 に、除外の理由の「情報不足」（どの航海が、いつ取得した情報か、許容 24 時間）と、データ責任者に取込を依頼して届いたら「候補を再算出」する案内を書く。注意・補足に「判定は判定時刻の情報による。時間がたったら『候補を再算出』してから確定する」を足す（確定のときの鮮度は 37c。確認ポイント 7）。ローカルの dev（ポート 8091）で開発用の利用者で S-06 を開き、見本の候補が情報不足にならないことを確かめる（T-172）。デモの動画を撮る（完了の判定: 画面の層のシナリオが緑、マニュアルの差分、動画）
+- [x] **6. 品質ゲートと開発レビューと終了報告**: 変異 6 つ（確認ポイント 8）を当て、落ちたテストを出力で確かめる（T-164・T-166）。`check`・`uiTest`・SonarQube（ほかの Gradle が終わってから。T-147）、開発レビュー、push して CI と MkDocs とデモ環境の配備を確かめる（T-126）。#15 に、確定のときの鮮度の穴を 37c で閉じることを含めてコメントを残す。終了報告の残る課題にも同じことを書く。終了報告で release_plan（W6 の 37b2 の行と主なタスク）・開発の索引・mkdocs を完了に直す
 
 ### 時間の配分と打ち切り
 
@@ -195,18 +195,19 @@ end note
 
 ## 完了条件
 
-- [ ] 算出のときに、許容時間を超えた航海を使う候補が情報不足で除外され、境界（1 秒前・同時刻・1 秒後）が受入シナリオと単体テストで確かめられている。古い航海が 2 区間目でも、2 つでも、航海ごとに理由が出る
-- [ ] 理由に航海番号・最終採用値・取得時刻・許容時間が示され、保存の往復（`threshold`・`info_insufficient`）が統合テストで確かめられている。スキーマは変えていない
-- [ ] 許容時間が設定から読まれ、既定でない値で判定が変わることが設定から入力ポートまでで確かめられている
-- [ ] US-06 の決定・domain_model・ui_design・data_model・test_strategy・non_functional（FRS-01）・UC-06 の注・Javadoc を直した。S-06 の理由の文言、マニュアル 8.2（確定の前に算出し直す注意を含む）を直した。画面の層のシナリオと axe が緑で、デモの動画を撮った
-- [ ] 変異 6 つで落ちるテストがある。`check` と `uiTest` が緑で件数が減っていない。SonarQube の Quality Gate が PASS、`okf:check` ERROR 0、CI が緑
-- [ ] release_plan（W6 の 37b2 の行と主なタスク）・開発の索引・mkdocs のナビが合っている。MkDocs とデモ環境の配備を確かめた。#15 にコメントを残した
-- [ ] 開発レビュー、終了報告
+- [x] 算出のときに、許容時間を超えた航海を使う候補が情報不足で除外され、境界（1 秒前・同時刻・1 秒後）が受入シナリオと単体テストで確かめられている。古い航海が 2 区間目でも、2 つでも、航海ごとに理由が出る
+- [x] 理由に航海番号・最終採用値・取得時刻・許容時間が示され、保存の往復（`threshold`・`info_insufficient`）が統合テストで確かめられている。スキーマは変えていない
+- [x] 許容時間が設定から読まれ、既定でない値で判定が変わることが設定から入力ポートまでで確かめられている
+- [x] US-06 の決定・domain_model・ui_design・data_model・test_strategy・non_functional（FRS-01）・UC-06 の注・Javadoc を直した。S-06 の理由の文言、マニュアル 8.2（確定の前に算出し直す注意を含む）を直した。画面の層のシナリオと axe が緑で、デモの動画を撮った
+- [x] 変異 6 つで落ちるテストがある。`check` と `uiTest` が緑で件数が減っていない。SonarQube の Quality Gate が PASS、`okf:check` ERROR 0、CI が緑
+- [x] release_plan（W6 の 37b2 の行と主なタスク）・開発の索引・mkdocs のナビが合っている。MkDocs とデモ環境の配備を確かめた。#15 にコメントを残した
+- [x] 開発レビュー、終了報告（[Bolt 37b2 終了報告](bolt_37b2_report.md)）
 
 ## 更新履歴
 
 | 日付 | 更新内容 | 更新者 |
 | :--- | :--- | :--- |
+| 2026-10-22 | ステップ 1〜6 を終えた。計画からの変更は終了報告の議題 1〜4 | anthropic/claude-opus-5-5 |
 | 2026-10-22 | 計画を承認した（確認ポイント 1 は同時刻は足りる、3 は (a) `@Value` で受ける、ほかは推奨のとおり） | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-10-22 | 整合性検証の指摘を反映した（承認待ち）。設定は `infrastructure.config` に `@ConfigurationProperties` を置くと層の規則に当たるので `@Value` で受ける案にした。規則の日本語名を「情報鮮度の判定」に、画面の語を「参照した航海情報の版」にした。閾値は最後の空白で分ける。設定を読まない変異を入力ポートまでで確かめる。境界の前例の違いを確認ポイント 1 に書いた。確定のときの穴をマニュアルと終了報告で示す。直す文書と Javadoc を足し、行番号と呼び出しの数を直した。ステップ 5 に打ち切りを置いた | anthropic/claude-opus-5-5 |
 | 2026-10-22 | 初版作成（承認待ち） | anthropic/claude-opus-5-5 |
