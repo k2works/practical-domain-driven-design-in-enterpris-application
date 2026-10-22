@@ -2,8 +2,10 @@
 type: Plan
 title: "Bolt 37e 計画 - US-07 AC5 の見積りの側（割り当てた経路の再設計要の印、荷主の承認と本予約の判定、見積りの公開 API）"
 tags: [plan]
-status: draft
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-22T12:09:54Z }
+status: stable
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-22T12:15:57Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-10-22T12:15:57Z }
 ---
 
 # Bolt 37e 計画 - US-07 AC5 の見積りの側（割り当てた経路の再設計要の印、荷主の承認と本予約の判定、見積りの公開 API）
@@ -270,6 +272,7 @@ end note
 
 | 日付 | 更新内容 | 更新者 |
 | :--- | :--- | :--- |
+| 2026-10-22 | 計画を承認した（確認ポイント 1〜10 を推奨のとおり。データベースのマイグレーション 1 つを含む） | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-10-22 | 整合性検証の指摘を反映した（承認待ち）。出発済みの判定（D-88）を 37e3 に送り、印を付ける操作と再見積りの届く順の表と照会し直す手順を足した。公開 API の名前と受け取りを前例にそろえた。状態の組み合わせの表の行 5 を分け、再見積りの前後・期限内の承認済み・DE-05 の再配信と先に届く穴・本予約の後の行を足した。数え上げ、直す文書、索引とコメント、アプローチ、打ち切りを直した | anthropic/claude-opus-5-5 |
 | 2026-10-22 | 初版作成（承認待ち）。Bolt 37e を 3 つに分けた（human:kakimomokuri） | anthropic/claude-opus-5-5、分け方の決定 human:kakimomokuri |
 
