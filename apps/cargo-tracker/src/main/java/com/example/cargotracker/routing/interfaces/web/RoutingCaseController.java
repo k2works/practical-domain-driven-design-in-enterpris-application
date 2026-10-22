@@ -16,7 +16,9 @@ import com.example.cargotracker.shared.domain.AuthenticatedActor;
 import com.example.cargotracker.shared.domain.Role;
 import java.time.Clock;
 import java.time.Instant;
+import java.util.EnumMap;
 import java.util.EnumSet;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import org.springframework.http.HttpStatus;
@@ -191,20 +193,35 @@ public class RoutingCaseController {
         };
     }
 
+    /** 確定の拒否の理由の文言（UI 設計 S-07）。すべての理由に文言があることはテストで確かめる（Bolt 37c）。 */
+    private static final Map<RouteConfirmationRejectionReason, String> MESSAGES = messages();
+
+    private static Map<RouteConfirmationRejectionReason, String> messages() {
+        Map<RouteConfirmationRejectionReason, String> messages = new EnumMap<>(RouteConfirmationRejectionReason.class);
+        messages.put(RouteConfirmationRejectionReason.RATIONALE_MISSING, "判断根拠を入れてください。");
+        messages.put(
+                RouteConfirmationRejectionReason.RATIONALE_TOO_LONG,
+                "判断根拠は %,d 文字までで入れてください。".formatted(DecisionRationale.MAX_LENGTH));
+        messages.put(RouteConfirmationRejectionReason.NOT_ROUTE_DESIGNER, "経路を確定できるのは経路設計者だけです。");
+        messages.put(RouteConfirmationRejectionReason.NOT_CONFIRMABLE_STATE, "この案件の経路はすでに確定しているか、候補をまだ算出していません。");
+        messages.put(RouteConfirmationRejectionReason.CANDIDATE_NOT_FOUND, "選んだ候補がありません。経路候補の比較で最新の候補を確かめてください。");
+        messages.put(RouteConfirmationRejectionReason.CANDIDATE_EXCLUDED, "除外の候補は確定できません。");
+        messages.put(
+                RouteConfirmationRejectionReason.INFO_VERSION_CHANGED,
+                "候補を算出した後に航海の情報が更新されたため確定できません。入力した判断根拠は保存していません。" + "候補を再算出して判断し直してください。");
+        messages.put(RouteConfirmationRejectionReason.ALREADY_DEPARTED, "最初の区間の航海がすでに出発しているため確定できません。候補を再算出してください。");
+        messages.put(
+                RouteConfirmationRejectionReason.INFO_INSUFFICIENT,
+                "航海の情報が取得から許容時間を過ぎているため確定できません（情報不足）。" + "航海の情報の取込をデータ責任者に依頼し、取り込まれたら候補を再算出してください。");
+        messages.put(
+                RouteConfirmationRejectionReason.NO_LONGER_CONFORMING,
+                "最新の接続時間規則で判定し直すと条件を満たさないため確定できません。候補を再算出してください。");
+        return messages;
+    }
+
     /** 確定の拒否の理由の文言（UI 設計 S-07）。 */
     static String message(RouteConfirmationRejectionReason reason) {
-        return switch (reason) {
-            case RATIONALE_MISSING -> "判断根拠を入れてください。";
-            case RATIONALE_TOO_LONG -> "判断根拠は %,d 文字までで入れてください。".formatted(DecisionRationale.MAX_LENGTH);
-            case NOT_ROUTE_DESIGNER -> "経路を確定できるのは経路設計者だけです。";
-            case NOT_CONFIRMABLE_STATE -> "この案件の経路はすでに確定しているか、候補をまだ算出していません。";
-            case CANDIDATE_NOT_FOUND -> "選んだ候補がありません。経路候補の比較で最新の候補を確かめてください。";
-            case CANDIDATE_EXCLUDED -> "除外の候補は確定できません。";
-            case INFO_VERSION_CHANGED -> "候補を算出した後に航海の情報が更新されたため確定できません。候補を再算出して判断し直してください。";
-            case ALREADY_DEPARTED -> "最初の区間の航海がすでに出発しているため確定できません。候補を再算出してください。";
-            case INFO_INSUFFICIENT -> "航海の情報が取得から許容時間を過ぎているため確定できません（情報不足）。航海の情報の取込を確かめ、候補を再算出してください。";
-            case NO_LONGER_CONFORMING -> "最新の接続時間規則で判定し直すと条件を満たさないため確定できません。候補を再算出してください。";
-        };
+        return MESSAGES.get(reason);
     }
 
     private RoutingCase find(RoutingCaseNumber number) {

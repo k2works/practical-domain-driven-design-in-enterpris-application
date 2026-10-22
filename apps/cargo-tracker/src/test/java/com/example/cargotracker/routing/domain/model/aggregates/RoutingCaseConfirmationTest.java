@@ -17,6 +17,7 @@ import com.example.cargotracker.routing.domain.model.rules.ConstraintEvaluator;
 import com.example.cargotracker.routing.domain.model.rules.InfoFreshnessPolicy;
 import com.example.cargotracker.routing.domain.model.rules.RouteCandidateFinder;
 import com.example.cargotracker.routing.domain.model.valueobjects.DecisionRationale;
+import com.example.cargotracker.routing.domain.model.valueobjects.Leg;
 import com.example.cargotracker.routing.domain.model.valueobjects.RouteApprover;
 import com.example.cargotracker.routing.domain.model.valueobjects.RouteConfirmation;
 import com.example.cargotracker.routing.domain.model.valueobjects.RouteConfirmationRejectionReason;
@@ -600,10 +601,10 @@ class RoutingCaseConfirmationTest {
         RouteCandidate candidate = presented().routeVersion().candidates().get(1);
 
         assertThat(candidate.legsWithChangedInfo(java.util.Map.of("V-FEED", "V-FEED@2", "V-CONN", "V-CONN@1")))
-                .extracting(leg -> leg.voyageNumber())
+                .extracting(Leg::voyageNumber)
                 .containsExactly("V-FEED");
         assertThat(candidate.legsWithChangedInfo(java.util.Map.of("V-CONN", "V-CONN@3")))
-                .extracting(leg -> leg.voyageNumber())
+                .extracting(Leg::voyageNumber)
                 .containsExactly("V-FEED", "V-CONN");
         assertThat(candidate.legsWithChangedInfo(java.util.Map.of("V-FEED", "V-FEED@1", "V-CONN", "V-CONN@1")))
                 .isEmpty();
@@ -663,6 +664,18 @@ class RoutingCaseConfirmationTest {
                 () -> routingCase.confirm(
                         2, "根拠", ROUTE_DESIGNER, reloaded, List.of(SINGAPORE_8H), COMMIT_AT, evaluator, FRESHNESS),
                 RouteConfirmationRejectionReason.INFO_INSUFFICIENT);
+    }
+
+    @Test
+    void 情報版が更新されかつ取得から許容時間を過ぎていれば情報版の更新で確定しない() {
+        RoutingCase routingCase = presented();
+        UtcInstant stale = new UtcInstant(COMMIT_AT.instant().minus(Duration.ofHours(30)));
+        List<Voyage> reloaded = withVoyage("V-CONN", "V-CONN@2", stale);
+
+        assertRejected(
+                () -> routingCase.confirm(
+                        2, "根拠", ROUTE_DESIGNER, reloaded, List.of(SINGAPORE_8H), COMMIT_AT, evaluator, FRESHNESS),
+                RouteConfirmationRejectionReason.INFO_VERSION_CHANGED);
     }
 
     @Test

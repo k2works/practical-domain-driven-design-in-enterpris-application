@@ -4,7 +4,7 @@ title: "cargo-tracker テスト戦略"
 description: "cargo-tracker のテスト形状、テストレベルと責務、BDD（Cucumber）のシナリオ階層とタグ規約、不変条件・ユーザーストーリーとテストの対応、カバレッジ目標、CI での実行。"
 tags: [design, test-strategy, bdd]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-22T05:15:49Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-22T06:04:56Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T08:12:04Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:01:38Z }
@@ -557,7 +557,7 @@ Release 1.0 の受入条件の照合の表はまだ作っていない（上の�
 | US-18 | AC8 の後半（A-06 でリンクを開いて新しい password を設定し、A-01 でログインし直す。期限切れ・使用済みのリンク） | 33a | `@US-18-AC8`（`login_ui.feature`。依頼から設定とログインし直しまで、期限切れのリンク、よく使われる password）、password の再設定の完了のセキュリティの統合テスト、IA-INV-12 と password の方針の単体・統合テスト |
 | US-18 | AC9 の回復コードの経路（回復コードでログインすると A-08 に導かれ、TOTP を登録し直して新しい回復コードを受け取る。後で登録できる。古いコードと回復コードは使えなくなり、ほかの session は失効する。管理者の経路と本人への通知は #47） | 33b | `@US-18-AC9`（`login_ui.feature`。回復コードでログインして再登録し、新しい回復コードで続ける、後で登録すると知らせが出てリンクから A-08 を開ける）、認証アプリの再登録のセキュリティの統合テスト、IA-INV-10・11 の単体・統合テスト |
 | US-06 | AC4（最終取得から許容時間（24 時間。D-89）を過ぎた航海を使う候補は情報不足で除外され、航海・取得時刻・許容時間・参照した航海情報の版が示される。ちょうど許容時間は足りる） | 37b2 | `@US-06-AC4`（`route_candidates.feature`・`compare_route_candidates_ui.feature`）、`InfoFreshnessPolicyTest`・`RoutingCaseTest`、保存の往復の統合テスト、設定の結合のテスト |
-| US-07 | AC3（承認中に区間の航海の情報版が更新されていれば確定は拒否され、候補の比較に戻って再判断が求められる。確定の時刻に情報不足でも確定できない） | 37c | `@US-07-AC3`（`confirm_route.feature`・`confirm_route_ui.feature`）、`RoutingCaseConfirmationTest`・`RouteCandidateTest`・`InfoFreshnessPolicyTest`、`RoutingCaseControllerTest` |
+| US-07 | AC3（承認中に区間の航海の情報版が更新されていれば確定は拒否され、候補の比較に戻って再判断が求められる。確定の時刻に情報不足でも確定できない） | 37c | `@US-07-AC3`（`confirm_route.feature`・`confirm_route_ui.feature`）、`RoutingCaseConfirmationTest`（候補の版の違う区間を含む）・`InfoFreshnessPolicyTest`、`RoutingCaseControllerTest` |
 
 ## 後続工程への引継ぎ
 

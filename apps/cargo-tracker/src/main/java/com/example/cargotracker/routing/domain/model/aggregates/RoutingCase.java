@@ -22,6 +22,7 @@ import com.example.cargotracker.shared.domain.Location;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -243,10 +244,11 @@ public final class RoutingCase {
         if (!candidate.evaluation().conforming()) {
             throw reject(RouteConfirmationRejectionReason.CANDIDATE_EXCLUDED, "除外の候補は確定できません");
         }
+        // 読み直した航海の全件（航海番号はデータベースの主キーで重ならない）
         Map<String, Voyage> current =
                 voyages.stream().collect(Collectors.toMap(Voyage::voyageNumber, voyage -> voyage));
-        Map<String, String> currentInfoVersions =
-                current.values().stream().collect(Collectors.toMap(Voyage::voyageNumber, Voyage::adoptedInfoVersion));
+        Map<String, String> currentInfoVersions = new HashMap<>();
+        current.forEach((voyageNumber, voyage) -> currentInfoVersions.put(voyageNumber, voyage.adoptedInfoVersion()));
         if (!candidate.legsWithChangedInfo(currentInfoVersions).isEmpty()) {
             throw reject(RouteConfirmationRejectionReason.INFO_VERSION_CHANGED, "候補を算出した後に区間の航海の情報版が更新されました");
         }
@@ -261,9 +263,11 @@ public final class RoutingCase {
         if (!candidate.legs().getFirst().departureAt().instant().isAfter(commitAt.instant())) {
             throw reject(RouteConfirmationRejectionReason.ALREADY_DEPARTED, "最初の区間が出発済みです");
         }
+        // 航海がない区間は情報版の更新で先に拒否しているが、判定の順に頼らないよう、ないときも情報不足として扱う
         if (candidate.legs().stream()
-                .anyMatch(leg ->
-                        freshness.insufficient(current.get(leg.voyageNumber()).acquiredAt(), commitAt))) {
+                .anyMatch(leg -> Optional.ofNullable(current.get(leg.voyageNumber()))
+                        .map(voyage -> freshness.insufficient(voyage.acquiredAt(), commitAt))
+                        .orElse(true))) {
             throw reject(RouteConfirmationRejectionReason.INFO_INSUFFICIENT, "区間の航海の情報が取得から許容時間を過ぎています");
         }
         if (!evaluator.evaluate(specification, candidate.legs(), rules).conforming()) {

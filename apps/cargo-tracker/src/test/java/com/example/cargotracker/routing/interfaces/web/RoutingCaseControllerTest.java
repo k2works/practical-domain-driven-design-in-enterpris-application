@@ -1,5 +1,6 @@
 package com.example.cargotracker.routing.interfaces.web;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -476,6 +477,21 @@ class RoutingCaseControllerTest {
     }
 
     @Test
+    void 情報版の更新と情報不足の文言はすることと判断根拠が残らないことを示す() {
+        // Bolt 37c の開発レビュー: 本体と同じ式ではなく、文言そのものを確かめる
+        assertThat(RoutingCaseController.message(RouteConfirmationRejectionReason.INFO_VERSION_CHANGED))
+                .isEqualTo("候補を算出した後に航海の情報が更新されたため確定できません。入力した判断根拠は保存していません。" + "候補を再算出して判断し直してください。");
+        assertThat(RoutingCaseController.message(RouteConfirmationRejectionReason.INFO_INSUFFICIENT))
+                .isEqualTo("航海の情報が取得から許容時間を過ぎているため確定できません（情報不足）。" + "航海の情報の取込をデータ責任者に依頼し、取り込まれたら候補を再算出してください。");
+    }
+
+    @org.junit.jupiter.params.ParameterizedTest(name = "{0} には文言がある")
+    @org.junit.jupiter.params.provider.EnumSource(RouteConfirmationRejectionReason.class)
+    void 確定の拒否の理由にはすべて文言がある(RouteConfirmationRejectionReason reason) {
+        assertThat(RoutingCaseController.message(reason)).isNotBlank();
+    }
+
+    @Test
     void 確定の画面を描き直すときに候補がなくなっていたら比較の画面に戻す() throws Exception {
         when(queryService.findByNumber(NUMBER)).thenReturn(Optional.of(open()));
         when(commandService.confirm(new ConfirmRouteCommand(NUMBER, 1, "根拠", 0, TestActors.STAFF_USER, true)))
@@ -617,7 +633,6 @@ class RoutingCaseControllerTest {
                 UUID.randomUUID());
     }
 
-    /** 適合（接続 12 時間）、接続不足（4 時間）、規則のない香港、期限超過 1 日 12 時間。 */
     /** 候補を算出する航海（確定で読み直したときも同じ。Bolt 37c）。 */
     static List<Voyage> voyages() {
         return List.of(
@@ -647,6 +662,7 @@ class RoutingCaseControllerTest {
                         call(ROTTERDAM, "2026-11-03T12:00:00Z", null)));
     }
 
+    /** 適合（接続 12 時間）、接続不足（4 時間）、規則のない香港、期限超過 1 日 12 時間。 */
     static RoutingCase calculated() {
         RoutingCase routingCase = open();
         routingCase.calculateCandidates(

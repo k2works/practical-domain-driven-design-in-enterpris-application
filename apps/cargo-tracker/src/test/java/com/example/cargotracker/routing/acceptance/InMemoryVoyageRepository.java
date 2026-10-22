@@ -17,7 +17,11 @@ public class InMemoryVoyageRepository implements VoyageRepository {
         return List.copyOf(voyages);
     }
 
+    /** 航海を足す。航海番号はデータベースの主キーと同じく重ならない（同じ番号は {@link #replace} を使う。Bolt 37c）。 */
     public synchronized void add(Voyage voyage) {
+        if (voyages.stream().anyMatch(each -> each.voyageNumber().equals(voyage.voyageNumber()))) {
+            throw new IllegalArgumentException("同じ航海番号の航海があります: " + voyage.voyageNumber());
+        }
         voyages.add(voyage);
     }
 
