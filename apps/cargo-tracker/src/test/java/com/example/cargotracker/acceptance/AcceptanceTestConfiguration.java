@@ -58,6 +58,7 @@ import com.example.cargotracker.routing.application.internal.outboundservices.ac
 import com.example.cargotracker.routing.application.internal.outboundservices.acl.QuotationRouteConditions;
 import com.example.cargotracker.routing.application.internal.queryservices.RoutingCaseQueryService;
 import com.example.cargotracker.routing.domain.events.RouteConfirmed;
+import com.example.cargotracker.routing.domain.model.rules.InfoFreshnessPolicy;
 import com.example.cargotracker.routing.interfaces.api.internal.RouteVersionLegQueryAdapter;
 import com.example.cargotracker.shared.acceptance.DeferredEventDelivery;
 import com.example.cargotracker.shared.acceptance.MutableClock;
@@ -71,6 +72,7 @@ import com.example.cargotracker.tracking.application.internal.outboundservices.a
 import com.example.cargotracker.tracking.application.internal.queryservices.CustomerTrackingQueryService;
 import com.example.cargotracker.tracking.domain.events.TrackingStarted;
 import io.cucumber.spring.CucumberContextConfiguration;
+import java.time.Duration;
 import java.util.Random;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
@@ -179,7 +181,12 @@ public class AcceptanceTestConfiguration {
                 DeferredEventDelivery eventDelivery,
                 MutableClock clock) {
             return new RoutingCaseCommandService(
-                    repository, voyageRepository, connectionRuleRepository, eventDelivery, clock);
+                    repository,
+                    voyageRepository,
+                    connectionRuleRepository,
+                    eventDelivery,
+                    clock,
+                    new InfoFreshnessPolicy(Duration.ofHours(24)));
         }
 
         @Bean

@@ -146,6 +146,44 @@ class MyBatisRoutingRepositoriesIntegrationTest {
     }
 
     @Test
+    void 情報不足の候補は理由と情報不足の印を保存して読み出せ空白を含む航海番号も読み戻せる() {
+        RoutingCase routingCase = open(UUID.randomUUID(), "2083-10-06T02:00:00Z");
+        repository.save(routingCase);
+        RoutingCase loaded = repository.findByNumber(routingCase.number()).orElseThrow();
+        Voyage stale = new Voyage(
+                "IT STALE 1",
+                List.of(call(TOKYO, null, "2083-10-09T00:00:00Z"), call(ROTTERDAM, "2083-10-31T00:00:00Z", null)),
+                "IT STALE 1@4",
+                at("2083-10-05T00:00:00Z"));
+        loaded.calculateCandidates(
+                List.of(voyages().getFirst(), stale),
+                rules(),
+                JUDGED_AT,
+                new RouteCandidateFinder(),
+                new ConstraintEvaluator(),
+                new InfoFreshnessPolicy(Duration.ofHours(24)));
+
+        repository.update(loaded, OPERATOR);
+
+        RoutingCase found = repository.findByNumber(routingCase.number()).orElseThrow();
+        assertThat(found.routeVersion()).isEqualTo(loaded.routeVersion());
+        assertThat(found.routeVersion().candidates().get(1).evaluation().reasons())
+                .containsExactly(ExclusionReason.infoInsufficient(
+                        "IT STALE 1", at("2083-10-05T00:00:00Z"), Duration.ofHours(24), "IT STALE 1@4"));
+        assertThat(jdbc.queryForList(
+                        "SELECT info_insufficient FROM routing.route_candidate WHERE routing_case_id = ?"
+                                + " ORDER BY candidate_no",
+                        Boolean.class,
+                        routingCase.id().value()))
+                .containsExactly(false, true);
+        assertThat(jdbc.queryForObject(
+                        "SELECT threshold FROM routing.exclusion_reason WHERE routing_case_id = ? AND candidate_no = 2",
+                        String.class,
+                        routingCase.id().value()))
+                .isEqualTo("IT STALE 1 PT24H");
+    }
+
+    @Test
     void 読み込んだ後に更新された案件は更新できない() {
         RoutingCase routingCase = open(UUID.randomUUID(), "2083-10-06T02:00:00Z");
         repository.save(routingCase);

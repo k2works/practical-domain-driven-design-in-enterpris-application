@@ -12,10 +12,13 @@ import com.example.cargotracker.routing.domain.model.aggregates.ConnectionRuleRe
 import com.example.cargotracker.routing.domain.model.aggregates.RoutingCaseNumberIssuer;
 import com.example.cargotracker.routing.domain.model.aggregates.RoutingCaseRepository;
 import com.example.cargotracker.routing.domain.model.aggregates.VoyageRepository;
+import com.example.cargotracker.routing.domain.model.rules.InfoFreshnessPolicy;
 import com.example.cargotracker.routing.domain.model.valueobjects.RoutingCaseNumber;
 import com.example.cargotracker.routing.infrastructure.persistence.MyBatisRoutingCaseNumberIssuer;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import java.time.Clock;
+import java.time.Duration;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
@@ -55,15 +58,27 @@ public class RoutingConfiguration {
         return new QuotationRouteAssignmentEventHandler(repository, routeAssignments);
     }
 
+    /**
+     * 情報鮮度の判定（US-06 AC4、D-89。Bolt 37b2）。許容時間は追跡・データ責任者が差し替える値なので設定から受ける
+     * （既定は application.properties の 24 時間。設定がなければ起動で落ち、正でなければ規則が拒む）。設定のクラスは作らない
+     * （このパッケージには Configuration のクラスだけを置く。層の規則）。
+     */
+    @Bean
+    InfoFreshnessPolicy infoFreshnessPolicy(
+            @Value("${cargotracker.routing.info-freshness-tolerance}") Duration tolerance) {
+        return new InfoFreshnessPolicy(tolerance);
+    }
+
     @Bean
     RoutingCaseCommandService routingCaseCommandService(
             RoutingCaseRepository repository,
             VoyageRepository voyageRepository,
             ConnectionRuleRepository connectionRuleRepository,
             ApplicationEventPublisher eventPublisher,
-            Clock clock) {
+            Clock clock,
+            InfoFreshnessPolicy infoFreshnessPolicy) {
         return new RoutingCaseCommandService(
-                repository, voyageRepository, connectionRuleRepository, eventPublisher, clock);
+                repository, voyageRepository, connectionRuleRepository, eventPublisher, clock, infoFreshnessPolicy);
     }
 
     @Bean

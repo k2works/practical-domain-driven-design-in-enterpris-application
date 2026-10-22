@@ -16,7 +16,6 @@ import com.example.cargotracker.routing.domain.model.valueobjects.CandidateCalcu
 import com.example.cargotracker.routing.domain.model.valueobjects.RouteApprover;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import java.time.Clock;
-import java.time.Duration;
 import java.util.Optional;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
@@ -25,6 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 /**
  * 経路設計案件の入力ポート（経路設計者が使う。US-06・US-07）。トランザクションの境界になる。
  * 判定時刻は Clock から得る。航海と接続時間規則を読み込み、候補探索と制約適合判定に渡す（どちらもリポジトリを呼ばない）。
+ * 情報鮮度の判定（許容時間は設定の値。D-89。Bolt 37b2）は組み立てから受け取る。
  *
  * <p>{@code @Service} は JIG がユースケースとして読むための印で、部品探索の対象にはしない（CargoTrackerApplication）。
  * 組み立ては {@code RoutingConfiguration} が担う。
@@ -39,19 +39,21 @@ public class RoutingCaseCommandService {
     private final Clock clock;
     private final RouteCandidateFinder finder = new RouteCandidateFinder();
     private final ConstraintEvaluator evaluator = new ConstraintEvaluator();
-    private final InfoFreshnessPolicy freshness = new InfoFreshnessPolicy(Duration.ofHours(24));
+    private final InfoFreshnessPolicy freshness;
 
     public RoutingCaseCommandService(
             RoutingCaseRepository repository,
             VoyageRepository voyageRepository,
             ConnectionRuleRepository connectionRuleRepository,
             ApplicationEventPublisher eventPublisher,
-            Clock clock) {
+            Clock clock,
+            InfoFreshnessPolicy freshness) {
         this.repository = repository;
         this.voyageRepository = voyageRepository;
         this.connectionRuleRepository = connectionRuleRepository;
         this.eventPublisher = eventPublisher;
         this.clock = clock;
+        this.freshness = freshness;
     }
 
     /** 経路候補を算出・再算出する（US-06 AC1〜AC4。情報不足は Bolt 37b2）。 */

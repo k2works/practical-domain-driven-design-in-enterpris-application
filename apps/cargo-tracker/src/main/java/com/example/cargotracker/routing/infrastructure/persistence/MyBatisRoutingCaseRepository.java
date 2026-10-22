@@ -151,7 +151,7 @@ public class MyBatisRoutingCaseRepository implements RoutingCaseRepository {
                             .orElse(null),
                     toOffset(candidate.evaluatedAt()),
                     toOffset(candidate.oldestInfoAcquiredAt()),
-                    false));
+                    evaluation.infoInsufficient()));
             for (int i = 0; i < candidate.legs().size(); i++) {
                 Leg leg = candidate.legs().get(i);
                 mapper.insertLeg(new CandidateLegRow(
@@ -280,8 +280,8 @@ public class MyBatisRoutingCaseRepository implements RoutingCaseRepository {
             case DEADLINE_EXCEEDED -> reason.deadline().instant().toString();
             case CONNECTION_TOO_SHORT -> reason.port().unLocode() + THRESHOLD_SEPARATOR + reason.requiredConnection();
             case NOT_CONNECTABLE -> reason.port().unLocode();
-            case CARGO_NOT_SUPPORTED, INFO_INSUFFICIENT ->
-                throw new IllegalStateException("R0.1 では判定しない除外理由です: " + reason.code());
+            case INFO_INSUFFICIENT -> reason.voyageNumber() + THRESHOLD_SEPARATOR + reason.freshnessTolerance();
+            case CARGO_NOT_SUPPORTED -> throw new IllegalStateException("判定しない除外理由です: " + reason.code());
         };
     }
 
@@ -299,8 +299,17 @@ public class MyBatisRoutingCaseRepository implements RoutingCaseRepository {
             }
             case NOT_CONNECTABLE ->
                 ExclusionReason.notConnectable(violatedAt, new Location(row.threshold()), row.infoVersion());
-            case CARGO_NOT_SUPPORTED, INFO_INSUFFICIENT ->
-                throw new IllegalStateException("R0.1 では判定しない除外理由です: " + code);
+            case INFO_INSUFFICIENT -> {
+                // 航海番号は空白を含み得るので、最後の空白で分ける（Bolt 37b2）
+                int separator = row.threshold().lastIndexOf(THRESHOLD_SEPARATOR);
+                Duration tolerance = Duration.parse(row.threshold().substring(separator + 1));
+                yield ExclusionReason.infoInsufficient(
+                        row.threshold().substring(0, separator),
+                        new UtcInstant(violatedAt.instant().minus(tolerance)),
+                        tolerance,
+                        row.infoVersion());
+            }
+            case CARGO_NOT_SUPPORTED -> throw new IllegalStateException("判定しない除外理由です: " + code);
         };
     }
 
