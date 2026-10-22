@@ -4,7 +4,7 @@ title: "cargo-tracker データモデル"
 description: "cargo-tracker の概念データモデル、スキーマ分割、命名と型の規約（H2 と PostgreSQL の共通部分）、コンテキストごとの論理データモデルと ER 図、版・追記専用・冪等性・イベント配信の表現。"
 tags: [design, data-model]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-22T05:15:49Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-22T07:40:18Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T07:48:17Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:01:37Z }
@@ -383,7 +383,6 @@ entity "routing_case\n経路設計案件" as rc {
   * arrival_deadline : TIMESTAMPTZ
   * cargo_category : VARCHAR(30)
   * requested_at : TIMESTAMPTZ
-  confirmed_route_version_no : INTEGER
   * version : BIGINT
   * created_at / created_by（created_by は US-07）
   * updated_at / updated_by（updated_by は US-07）
@@ -396,6 +395,8 @@ entity "route_version\n経路版" as rver {
   candidates_evaluated_at : TIMESTAMPTZ
   previous_route_version_no : INTEGER（US-08）
   redesign_cause : VARCHAR(4000)（US-08）
+  redesign_required_at : TIMESTAMPTZ（US-07 AC4。Bolt 37d）
+  redesign_reasons : VARCHAR(200)（US-07 AC4。Bolt 37d）
   rationale : VARCHAR(4000)（US-07）
   decided_by : UUID（US-07）
   approved_by : UUID（US-07）
@@ -492,13 +493,13 @@ riv }o..|| v : 航海番号
 
 | 表 | 主な制約 | 対応する不変条件 |
 | :--- | :--- | :--- |
-| `routing_case` | UK（`transport_request_id`、`transport_request_version_no`）で、詳細経路設計の依頼（DE-16）が再配信されても案件を重複させない。`confirmed_route_version_no` は確定した経路版の番号を 1 つだけ持つ（NULL は未確定） | R-INV-05、R-INV-10 |
+| `routing_case` | UK（`transport_request_id`、`transport_request_version_no`）で、詳細経路設計の依頼（DE-16）が再配信されても案件を重複させない。確定した経路版は `route_version` の状態で表す（Bolt 37d で `confirmed_route_version_no` を消した。確定は案件に 1 つを PostgreSQL の部分一意インデックス `ux_route_version_confirmed` と集約で守る） | R-INV-05、R-INV-10 |
 | `route_version` | `status` IN（`DRAFT`、`CANDIDATES_PRESENTED`、`EXPERT_REVIEW`、`CONFIRMED`、`REDESIGN_REQUIRED`、`SUPERSEDED`）。確定時は `approved_by`・`approved_at`・`rationale` が NOT NULL（アプリケーションで検証） | R-INV-03、R-INV-04、R-INV-06 |
 | `exclusion_reason` | `reason_code` IN（`DEADLINE_EXCEEDED`、`CONNECTION_TOO_SHORT`、`CARGO_NOT_SUPPORTED`、`NOT_CONNECTABLE`、`INFO_INSUFFICIENT`） | R-INV-02 |
-| `referenced_info_version` | 確定時に参照した航海ごとの情報版。承認時の再検証と、確定後の再評価に使う（Bolt 37c の注: この表はまだ作っていない。承認時の再検証は区間の写し `candidate_leg.info_version` で行う。この表を作るかは Bolt 37d の確定後の再評価で決める） | R-INV-03、R-INV-07 |
+| `referenced_info_version` | 確定時に参照した航海ごとの情報版。承認時の再検証と、確定後の再評価に使う（Bolt 37c の注: この表はまだ作っていない。承認時の再検証は区間の写し `candidate_leg.info_version` で行う。Bolt 37d の決定: この表は作らない。旧情報版は確定の記録の候補の区間に残る。航海番号から評価する案件を引く照会は W7 で `candidate_leg.voyage_number` の索引として決める） | R-INV-03、R-INV-07 |
 | `candidate_leg` | `executed` は再設計の対象から外す区間を示す | R-INV-08 |
 
-「確定は案件に 1 つ」は PostgreSQL の部分一意インデックスで表せるが、H2 で使えないため、案件のヘッダに `confirmed_route_version_no` を 1 つだけ持つことで表す（命名と型の規約）。
+「確定は案件に 1 つ」は PostgreSQL の部分一意インデックス `ux_route_version_confirmed`（`route_version (routing_case_id) WHERE status = 'CONFIRMED'`。`migration/postgresql`）で表す。H2（開発環境・デモ環境）では部分インデックスを使えないので、集約（`RoutingCase` の経路版の検査）が守る（Bolt 37d。それまでは案件のヘッダに `confirmed_route_version_no` を持っていたが、書くだけで読まれず、再設計要にすると NULL で上書きされるので消した。D-72 を解消した）。
 
 Bolt 17（US-06 AC1〜AC3）で作る範囲（[Bolt 17 計画](../../development/cargo-tracker/bolt_17_plan.md) の確認ポイント 4〜7）:
 
@@ -507,7 +508,8 @@ Bolt 17（US-06 AC1〜AC3）で作る範囲（[Bolt 17 計画](../../development
 - 実装で足した列（Bolt 17 のステップ 3）: `routing_case.transport_request_number`（業務番号の写し。S-05 で見積依頼を示す）、`routing_case.requested_at`（詳細経路設計の依頼時刻。S-05 の並びと案件番号の年）、`route_version.candidates_evaluated_at`（候補の判定時刻。候補が 0 件でも算出したことを残す）、`candidate_leg.info_version`・`info_acquired_at`（区間を取った航海の採用情報版と取得時刻。理由の参照情報版と情報鮮度に使う）。`routing_case` の `created_by`・`updated_by` は、操作者を残す Bolt（US-07 の確定）で足す。`route_candidate.candidate_no` は 1〜20（候補の上限）、`voyage.source_kind` は出典の種類の 4 値を CHECK で守る。
 - `route_candidate.min_connection_slack_minutes` は候補の接続余裕（接続時間 − 必要最小接続時間の最小。分）。直行は NULL。`info_insufficient` は候補の理由に情報不足があるか（Bolt 37b2。それまでは常に false）。`exclusion_reason.threshold` の形は区分ごとに、期限超過は希望到着期限（ISO 8601 の時刻）、接続不足は「港 空白 必要最小接続時間（ISO 8601 の期間）」、接続できないは港、情報不足は「航海番号 空白 許容時間（ISO 8601 の期間）」（航海番号は空白を含み得るので、最後の空白で分ける。区切りのない行は壊れた行として読まない。Bolt 37b2）。
 - 候補を再算出したら、経路版の候補・区間・除外理由を消して入れ直す（候補は追記専用ではない）。確定した経路版の候補は書き換えない（Bolt 19）。
-- Bolt 19（US-07 AC1・AC2）で足す列: `route_version` の `candidates_found`（見つけた候補の数。上限で示さなかった候補の数を常に示す。Bolt 17 レビュー D-64。既存の行は示した候補の数で埋める）、`selected_candidate_no`・`rationale`（VARCHAR(4000)）・`approved_by`・`approved_at`。4 列はそろって NULL かそろって値を持ち、確定では値を持ち、作成中・候補提示済み・要専門家判断では持たない（再設計要・旧版は確定の後の状態なので持てる）（CHECK `ck_route_version_confirmed`）。確定すると `routing_case.confirmed_route_version_no` に経路版番号を入れる。`routing_case` の `quotation_expires_at`（DE-16 の見積有効期限。S-05 の並び）・`created_by`（行を作った操作者ではなく、DE-16 の依頼者の荷主担当者。行はイベントの購読が作る）・`updated_by`（最後に算出・確定した経路設計者）。Bolt 17 で作った行のために NULL を許す（デモ環境のサンプルの案件は `db/dev-data` で依頼元の見積りから写す）。S-05 は最新の経路版の状態を示し、見積有効期限の近い順（NULL は後ろ）、同じなら依頼の古い順に並べる。確定した経路版の行は、`updateRouteVersion` の条件（作成中・候補提示済みだけ）で書き直さない。参照情報版は `candidate_leg.info_version` から読み、写しの列は作らない。開発レビューの後に外部キーを 2 本足した（`V20261007140000`）。`routing_case`（`id`、`confirmed_route_version_no`）→ `route_version`、`route_version`（`routing_case_id`、`route_version_no`、`selected_candidate_no`）→ `route_candidate`（確定した候補を消せない）。「確定は案件に 1 つ」は H2 で部分一意インデックスを作れないため `confirmed_route_version_no` と集約の検証で守る。`decided_by`（専門判断）と再設計の列は使う Bolt で足す。
+- Bolt 19（US-07 AC1・AC2）で足す列: `route_version` の `candidates_found`（見つけた候補の数。上限で示さなかった候補の数を常に示す。Bolt 17 レビュー D-64。既存の行は示した候補の数で埋める）、`selected_candidate_no`・`rationale`（VARCHAR(4000)）・`approved_by`・`approved_at`。4 列はそろって NULL かそろって値を持ち、確定では値を持ち、作成中・候補提示済み・要専門家判断では持たない（再設計要・旧版は確定の後の状態なので持てる）（CHECK `ck_route_version_confirmed`）。確定すると `routing_case.confirmed_route_version_no` に経路版番号を入れる（Bolt 37d でこの列と外部キーを消した）。`routing_case` の `quotation_expires_at`（DE-16 の見積有効期限。S-05 の並び）・`created_by`（行を作った操作者ではなく、DE-16 の依頼者の荷主担当者。行はイベントの購読が作る）・`updated_by`（最後に算出・確定した経路設計者）。Bolt 17 で作った行のために NULL を許す（デモ環境のサンプルの案件は `db/dev-data` で依頼元の見積りから写す）。S-05 は最新の経路版の状態を示し、見積有効期限の近い順（NULL は後ろ）、同じなら依頼の古い順に並べる。確定した経路版の行は、`updateRouteVersion` の条件（作成中・候補提示済みだけ）で書き直さない。参照情報版は `candidate_leg.info_version` から読み、写しの列は作らない。開発レビューの後に外部キーを 2 本足した（`V20261007140000`）。`routing_case`（`id`、`confirmed_route_version_no`）→ `route_version`、`route_version`（`routing_case_id`、`route_version_no`、`selected_candidate_no`）→ `route_candidate`（確定した候補を消せない）。「確定は案件に 1 つ」は H2 で部分一意インデックスを作れないため `confirmed_route_version_no` と集約の検証で守る。`decided_by`（専門判断）と再設計の列は使う Bolt で足す。
+- Bolt 37d（US-07 AC4 の準備）で足す列と消す列: `route_version` の `redesign_required_at`（再設計要にした時刻）と `redesign_reasons`（不適合の理由の区分の名前を空白で区切る。`DEADLINE_EXCEEDED`・`CONNECTION_TOO_SHORT`・`NOT_CONNECTABLE`・`VOYAGE_UNAVAILABLE`）。2 列はそろって NULL かそろって値を持ち、値を持てるのは再設計要と旧版だけ、再設計要は必ず持つ（CHECK `ck_route_version_redesign`）。設計の `redesign_cause`（US-08 の再設計の変更根拠）とは別の列。`routing_case.confirmed_route_version_no` と外部キーを消した。
 - 経路設計の表と見積りの表の間に外部キーは張らない（スキーマの所有。ADR-001）。輸送要求・見積りの ID は、見積りの公開 API とイベントから得た値の写し。
 - 航海・寄港・接続時間規則は、外部原本の取込（US-14、W7）と規則の管理ができるまで、開発環境の `db/dev-data` にだけ入れる仮のデータ（出典 `MANUAL_ENTRY`、情報版 `PROVISIONAL-1`、架空の航海番号）。ステージング・本番では 0 件。
 
@@ -1163,7 +1165,7 @@ src/main/resources/db/
 | `quotation.transport_request` | （`shipper_company_id`、`status`） | 荷主の輸送要求の一覧 |
 | `quotation.quotation` | （`transport_request_id`、`status`） | 輸送要求の有効な見積り |
 | `routing.routing_case` | （`transport_request_id`） | 輸送要求から経路設計案件 |
-| `routing.referenced_info_version` | （`voyage_number`） | 航海の更新で再評価する確定済み経路版の検索（DE-12） |
+| `routing.referenced_info_version` | （`voyage_number`） | 航海の更新で再評価する確定済み経路版の検索（DE-12）（Bolt 37d: この表は作らない。W7 で `candidate_leg.voyage_number` の索引として決める） |
 | `booking.booking` | `tracking_number`（一意）、（`shipper_company_id`、`status`）、（`transport_request_number`）、（`transport_request_number`、`quotation_no`）（一意） | 追跡番号での照会、荷主の予約一覧、業務番号から予約をたどる社内の照会（Bolt 23、R-31）、見積りの照会の前に同じ見積りの予約を引く（Bolt 24）。S-10 予約一覧（Bolt 25b）は予約版 1 の `committed_at` の新しい順に引くが、R0.1 では予約が数十件なので索引を足さない（確定時刻の索引は W11 の一覧の本体で決める）。C-06 予約一覧（荷主。Bolt 27b）は（`shipper_company_id`、`status`）の索引 `ix_booking_shipper_status` で荷主企業を絞り、索引は足さない |
 | `booking.booking_saga` | （`status`、`started_at`） | 処理中の滞留の判定（RTY-02、OBS-04） |
 | `tracking.tracking_record` | `ix_tracking_record_shipper`（`shipper_company_id`、`created_at`）、（`consignee_company_id`） | 荷主の照会（C-10。Bolt 27 で足した。荷主企業で絞って追跡の開始時刻の新しい順に並べる一覧のため、並びの列を含めた複合の索引にした）・荷受人の照会（荷受人の照会を作る US-10・R1.1 で足す）。`booking_id` は一意制約が索引を兼ねる。S-11 の追跡の開始時刻（`created_at`）の並びの索引は、R0.1 では追跡記録が数十件なので足さない（一覧の絞り込みとページ送りを作る W7 以後に決める。Bolt 26） |
@@ -1184,7 +1186,7 @@ src/main/resources/db/
 | :--- | :--- | :--- |
 | 輸送要求 | `transport_request`、`transport_request_draft`、`transport_request_version`、`required_document`、`review_record` | 輸送条件（値オブジェクト）は下書きと版の表の列に展開する |
 | 見積り | `quotation`、`pricing_line` | 料金根拠は明細の表、有効期限・経路方針・荷主の回答・荷主承認は列 |
-| 経路設計案件 | `routing_case`、`route_version`、`route_candidate`、`candidate_leg`、`exclusion_reason`、`referenced_info_version` | 制約適合判定（値オブジェクト）は候補の列と除外理由の表に展開する |
+| 経路設計案件 | `routing_case`、`route_version`、`route_candidate`、`candidate_leg`、`exclusion_reason`（`referenced_info_version` は Bolt 37d で作らないと決めた） | 制約適合判定（値オブジェクト）は候補の列と除外理由の表に展開する |
 | 航海 | `voyage`、`port_call` | — |
 | 接続時間規則 | `connection_rule` | — |
 | 貨物予約 | `booking`、`booking_version`、`amendment_request` | 確定条件（値オブジェクト）は保存しない。確定時に検証するだけ |

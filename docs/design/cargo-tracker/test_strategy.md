@@ -4,7 +4,7 @@ title: "cargo-tracker テスト戦略"
 description: "cargo-tracker のテスト形状、テストレベルと責務、BDD（Cucumber）のシナリオ階層とタグ規約、不変条件・ユーザーストーリーとテストの対応、カバレッジ目標、CI での実行。"
 tags: [design, test-strategy, bdd]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-22T06:04:56Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-22T07:40:18Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T08:12:04Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:01:38Z }
@@ -233,7 +233,7 @@ US-04 の受入条件と BR-10 の境界を、日本語 Gherkin で書いた例�
 | Q-INV-11（複製） | ○ | ○ | — | — |
 | R-INV-01〜02（制約適合、除外理由） | ○（境界値、複数の接続のうち 1 つだけ不足、規則の有効期間の境界、Golden dataset） | ○（`@golden`） | — | — |
 | R-INV-03（commit 時の再検証） | ○ | ○ | 期待版の競合 | — |
-| R-INV-04〜08（権限、確定は 1 つ、旧版、再設計） | ○ | ○ | `confirmed_route_version_no` の更新、確定した経路版の内容が変わらないこと | — |
+| R-INV-04〜08（権限、確定は 1 つ、旧版、再設計） | ○ | ○ | 確定は 1 つの部分一意インデックス（PostgreSQL）、確定から再設計要への状態と再設計要の記録の更新、確定した経路版の内容が変わらないこと（Bolt 37d で `confirmed_route_version_no` を消した） | — |
 | R-INV-09（停止中の情報不足） | ○（鮮度の境界: 24 時間の直前・同時刻・直後） | ○ | — | — |
 | R-INV-10〜11（案件は輸送要求版ごとに 1 つ、経路版の割当て） | — | ○ | ○（DE-16 を 2 回配信しても案件が 1 つ） | — |
 | B-INV-01〜02（確定条件、有効期限） | ○（境界値） | ○ | — | 確定条件の表示（`@ui`） |
