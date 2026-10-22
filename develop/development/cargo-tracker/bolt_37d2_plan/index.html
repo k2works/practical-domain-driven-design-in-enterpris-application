@@ -16,7 +16,7 @@
         <link rel="prev" href="../bolt_37d_report/">
       
       
-        <link rel="next" href="../release_report-0_1/">
+        <link rel="next" href="../bolt_37d2_report/">
       
       
         
@@ -6901,6 +6901,41 @@
   
   
     <li class="md-nav__item">
+      <a href="../bolt_37d2_report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 37d2 終了報告
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--draft"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../release_report-0_1/" class="md-nav__link">
         
   
@@ -12314,12 +12349,12 @@
 <h2 id="_8">ステップ計画<a class="headerlink" href="#_8" title="Permanent link">&para;</a></h2>
 <p>各ステップの終わりに対象のテストを流し、最後に <code>check</code> と <code>uiTest</code> を流して XML の結果から件数を数える（T-151）。コミットは pathspec で行い（T-110）、push してアプリの CI を確かめる（T-26）。</p>
 <ul class="task-list">
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>1. 設計の文書と数え上げ</strong>: US-07 に Bolt 37d2 の決定（評価の入口、判定・引き直し・理由の写し、旧情報版の保持、DE-06、再設計要の拒否）、domain_model の Bolt 37d2 で決めたこと・DE-06 の行（項目、業務キー、見積りへは経路設計の中の listener が公開 API を呼ぶ形（37e。DE-05 の行にそろえる）、予約は US-08・追跡は W8）・状態遷移の注、ui_design の S-05 の行と S-06 の行と画面イメージ（:1060〜）、test_strategy の Release 1.0 の表の US-07 AC4（37d2）と AC5（再設計要の再確定の拒否は 37d2、見積り・予約は 37e）の行、UC-07 5b の注（<code>VOYAGE_UNAVAILABLE</code> は「到着期限または接続時間」の外の欠航・寄港の取りやめ）、W6 節の 37e の行に DE-05 の再配信の扱い（材料 6）と ADR-016 :35 の言い回しの直し。Javadoc（<code>RoutingCase</code> のクラス、<code>RoutingCaseCommandService</code> のクラスの「経路設計者が使う」、<code>legsWithChangedInfo</code>）。画面の「確定した経路」の文言の写しを数える（T-148）（完了の判定: 文書の差分と、直す箇所の一覧）</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>2. 受入シナリオ（Red）</strong>: <code>features/routing/evaluate_confirmed_route.feature</code>（<code>@US-07</code>）に、確定した後に区間の航海が更新され、(a) 到着が期限を過ぎると評価で再設計要になり、旧情報版と確定の記録が残り、DE-06 が理由と旧情報版を運ぶ（<code>@US-07-AC4 @R-INV-07 @DE-06</code>）、(b) 今の予定でも期限と接続を満たせば確定のまま DE-06 は出ない（<code>@US-07-AC4</code>）、(c) 航海がなくなれば <code>VOYAGE_UNAVAILABLE</code> で再設計要（<code>@US-07-AC4</code>）、(d) 再設計要の経路版は確定し直せず、もう一度評価しても DE-06 は出ない（<code>@US-07-AC5 @R-INV-06</code>）。ステップ定義: 評価の操作、DE-06 の確かめ、航海の情報版・取得時刻・寄港の時刻を表で 1 つのステップで変える「航海 X が次の内容に更新される」（情報版を変えずに時刻だけを変えると評価されないため）、「航海 X がなくなる」と <code>InMemoryVoyageRepository.remove</code>。寄る順が逆・同じ港に 2 度寄る場合は背景の航海が 2 寄港なので単体テストだけで確かめる。落ちる理由が「評価の操作がない」であることを確かめる（完了の判定: 足したシナリオが期待した理由で落ちる）</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>3. 集約と引き直し（Green）</strong>: 状態の組み合わせの表の行ごとに <code>RoutingCase</code> のテストを 1 本（T-163）と、<code>RouteCandidateFinderTest</code> に引き直しのテスト（航海がない・積地に寄らない・揚地に寄らない・寄る順が逆・積地の出発予定がない・到着が出発より後でない・同じ港に 2 度寄る・揚地が積地より前にも寄る・情報版と時刻と取得時刻が今のもの）、理由の写しのテスト（同じ区分を 1 つに、写せない区分は例外）を足して Red を見てから、評価の操作・引き直し・理由の写し・DE-06 を作る（H1）（完了の判定: 単体テストと 2 の集約に関わる部分が緑）</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>4. 入力ポートと保存の操作者（Green）</strong>: 入力ポートのテスト（受入テストのメモリ上のリポジトリで、見つからない・変わらない・再設計要・競合）を書いて Red を見てから、入力ポートの評価の操作とコマンド・結果の型を作る。<code>MyBatisRoutingRepositoriesIntegrationTest</code> に、操作者を渡さない更新で <code>updated_by</code> が残ることを足して Red を見てから <code>touchRoutingCase</code> と Javadoc を直す（H2。dev の H2 でも起動と評価の保存を確かめる）（完了の判定: 統合テストと受入シナリオが緑）</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>5. 画面とマニュアル</strong>: <code>RoutingCaseControllerTest</code>（または <code>RoutingCaseViewsTest</code>）に、再設計要の案件の S-06 が「再設計要の経路（候補 n）」・理由・時刻・確定し直せない案内を示し、算出・確定の操作を出さないことを足して Red を見てから <code>RoutingCaseViews</code>・<code>show.html</code> を直す。マニュアル 8 章の 8.1（案件の状態「再設計要」）と 8.2（再設計要の案件の見え方）、用語集の「再設計要」を書く。ローカルの dev で開発用の利用者で見本の確定した案件の S-06 が変わらないことを確かめる（T-172）（完了の判定: コントローラーのテストが緑、マニュアルの差分）</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>6. 品質ゲートと開発レビューと終了報告</strong>: 変異（確認ポイント 9）を当て、落ちたテストを出力で確かめる。<code>check</code>・<code>uiTest</code>・SonarQube（ほかの Gradle が終わってから。T-147）、開発レビュー、push して CI と MkDocs とデモ環境の配備を確かめる。#16 にコメントを残す。終了報告で release_plan（W6 の 37d2 の行と主なタスク）・開発の索引・mkdocs を完了に直す</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>1. 設計の文書と数え上げ</strong>: US-07 に Bolt 37d2 の決定（評価の入口、判定・引き直し・理由の写し、旧情報版の保持、DE-06、再設計要の拒否）、domain_model の Bolt 37d2 で決めたこと・DE-06 の行（項目、業務キー、見積りへは経路設計の中の listener が公開 API を呼ぶ形（37e。DE-05 の行にそろえる）、予約は US-08・追跡は W8）・状態遷移の注、ui_design の S-05 の行と S-06 の行と画面イメージ（:1060〜）、test_strategy の Release 1.0 の表の US-07 AC4（37d2）と AC5（再設計要の再確定の拒否は 37d2、見積り・予約は 37e）の行、UC-07 5b の注（<code>VOYAGE_UNAVAILABLE</code> は「到着期限または接続時間」の外の欠航・寄港の取りやめ）、W6 節の 37e の行に DE-05 の再配信の扱い（材料 6）と ADR-016 :35 の言い回しの直し。Javadoc（<code>RoutingCase</code> のクラス、<code>RoutingCaseCommandService</code> のクラスの「経路設計者が使う」、<code>legsWithChangedInfo</code>）。画面の「確定した経路」の文言の写しを数える（T-148）（完了の判定: 文書の差分と、直す箇所の一覧）</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>2. 受入シナリオ（Red）</strong>: <code>features/routing/evaluate_confirmed_route.feature</code>（<code>@US-07</code>）に、確定した後に区間の航海が更新され、(a) 到着が期限を過ぎると評価で再設計要になり、旧情報版と確定の記録が残り、DE-06 が理由と旧情報版を運ぶ（<code>@US-07-AC4 @R-INV-07 @DE-06</code>）、(b) 今の予定でも期限と接続を満たせば確定のまま DE-06 は出ない（<code>@US-07-AC4</code>）、(c) 航海がなくなれば <code>VOYAGE_UNAVAILABLE</code> で再設計要（<code>@US-07-AC4</code>）、(d) 再設計要の経路版は確定し直せず、もう一度評価しても DE-06 は出ない（<code>@US-07-AC5 @R-INV-06</code>）。ステップ定義: 評価の操作、DE-06 の確かめ、航海の情報版・取得時刻・寄港の時刻を表で 1 つのステップで変える「航海 X が次の内容に更新される」（情報版を変えずに時刻だけを変えると評価されないため）、「航海 X がなくなる」と <code>InMemoryVoyageRepository.remove</code>。寄る順が逆・同じ港に 2 度寄る場合は背景の航海が 2 寄港なので単体テストだけで確かめる。落ちる理由が「評価の操作がない」であることを確かめる（完了の判定: 足したシナリオが期待した理由で落ちる）</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>3. 集約と引き直し（Green）</strong>: 状態の組み合わせの表の行ごとに <code>RoutingCase</code> のテストを 1 本（T-163）と、<code>RouteCandidateFinderTest</code> に引き直しのテスト（航海がない・積地に寄らない・揚地に寄らない・寄る順が逆・積地の出発予定がない・到着が出発より後でない・同じ港に 2 度寄る・揚地が積地より前にも寄る・情報版と時刻と取得時刻が今のもの）、理由の写しのテスト（同じ区分を 1 つに、写せない区分は例外）を足して Red を見てから、評価の操作・引き直し・理由の写し・DE-06 を作る（H1）（完了の判定: 単体テストと 2 の集約に関わる部分が緑）</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>4. 入力ポートと保存の操作者（Green）</strong>: 入力ポートのテスト（受入テストのメモリ上のリポジトリで、見つからない・変わらない・再設計要・競合）を書いて Red を見てから、入力ポートの評価の操作とコマンド・結果の型を作る。<code>MyBatisRoutingRepositoriesIntegrationTest</code> に、操作者を渡さない更新で <code>updated_by</code> が残ることを足して Red を見てから <code>touchRoutingCase</code> と Javadoc を直す（H2。dev の H2 でも起動と評価の保存を確かめる）（完了の判定: 統合テストと受入シナリオが緑）</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>5. 画面とマニュアル</strong>: <code>RoutingCaseControllerTest</code>（または <code>RoutingCaseViewsTest</code>）に、再設計要の案件の S-06 が「再設計要の経路（候補 n）」・理由・時刻・確定し直せない案内を示し、算出・確定の操作を出さないことを足して Red を見てから <code>RoutingCaseViews</code>・<code>show.html</code> を直す。マニュアル 8 章の 8.1（案件の状態「再設計要」）と 8.2（再設計要の案件の見え方）、用語集の「再設計要」を書く。ローカルの dev で開発用の利用者で見本の確定した案件の S-06 が変わらないことを確かめる（T-172）（完了の判定: コントローラーのテストが緑、マニュアルの差分）</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>6. 品質ゲートと開発レビューと終了報告</strong>: 変異（確認ポイント 9）を当て、落ちたテストを出力で確かめる。<code>check</code>・<code>uiTest</code>・SonarQube（ほかの Gradle が終わってから。T-147）、開発レビュー、push して CI と MkDocs とデモ環境の配備を確かめる。#16 にコメントを残す。終了報告で release_plan（W6 の 37d2 の行と主なタスク）・開発の索引・mkdocs を完了に直す</li>
 </ul>
 <h3 id="_9">時間の配分と打ち切り<a class="headerlink" href="#_9" title="Permanent link">&para;</a></h3>
 <table>
