@@ -58,8 +58,17 @@ public record RouteVersion(
             throw new IllegalArgumentException("見つけた候補の数は示す候補の数以上です: " + candidatesFound);
         }
         requireConsistentConfirmation(status, candidates, routeConfirmation);
-        if (status == RouteVersionStatus.REDESIGN_REQUIRED && redesignRecord == null) {
-            throw new IllegalArgumentException("再設計要の経路版には再設計要の記録が要ります");
+        requireConsistentRedesign(status, routeConfirmation, redesignRecord);
+    }
+
+    /**
+     * 再設計要の経路版は確定の記録と再設計要の記録を持ち、記録を持てるのは再設計要と旧版だけ（Bolt 37d。再設計要は確定した経路版が
+     * 外部情報の更新で不適合になった状態なので、確定の記録を持つ）。
+     */
+    private static void requireConsistentRedesign(
+            RouteVersionStatus status, RouteConfirmation routeConfirmation, RedesignRecord redesignRecord) {
+        if (status == RouteVersionStatus.REDESIGN_REQUIRED && (redesignRecord == null || routeConfirmation == null)) {
+            throw new IllegalArgumentException("再設計要の経路版には確定の記録と再設計要の記録が要ります");
         }
         if (redesignRecord != null && !CAN_HOLD_REDESIGN.contains(status)) {
             throw new IllegalArgumentException("再設計要の記録を持てない経路版の状態です: " + status);

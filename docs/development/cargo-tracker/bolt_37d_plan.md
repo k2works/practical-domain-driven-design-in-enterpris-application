@@ -3,7 +3,7 @@ type: Plan
 title: "Bolt 37d 計画 - US-07 AC4 の準備（経路版の再設計要の記録と保存、`confirmed_route_version_no` の削除と部分一意インデックス。評価の操作は 37d2）"
 tags: [plan]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-22T07:39:10Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-22T08:40:41Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-22T07:39:10Z }
 ---
@@ -186,6 +186,9 @@ Bolt 37d2（評価の操作と DE-06 と画面）の計画は、この Bolt の�
 | 7 | S-06 の再設計要の表示: 見出し「確定した経路」と候補のバッジの文言、再設計要の記録（時刻と理由）の示し方、算出・確定の操作を出さないこと。表示のテストの置き場所（`RoutingCaseViewsTest` か `RoutingCaseControllerTest`）。ui_design の S-06 の行、マニュアル 8.1・8.2・用語集、UC-07 の代替の流れ、W6 節のマニュアルの割り当て（:782 に 37d2 を足す） |
 | 8 | 受入シナリオは新しい `features/routing/evaluate_confirmed_route.feature`（背景の写しは Bolt 37f の #50 でまとめる）。評価を画面から起こせないので、画面の層のシナリオ・デモの動画・キャプチャは足さない |
 | 9 | 拒否の理由に区間を持たせる（Bolt 37c の宿題）はこの範囲でも行わない（利用者の声を聞いてから） |
+| 10 | Bolt 37d の開発レビュー: 再設計要の経路版は確定の記録を持つ（集約と CHECK `ck_route_version_redesign_confirmed` で守る）。再設計要への保存が 0 件なら例外になるので、評価の操作は「すでに再設計要なら保存しない」（DE-06 も出さない）にする |
+| 11 | 保存は最新の経路版だけを書く。再設計要の後ろに新しい版を作って旧版に移す保存（US-08）と、そのときに再設計要の記録を引き継ぐか（`RouteVersion` の 6 引数のコンストラクターは記録を落とすので、状態を移すメソッドを経路版に持たせるか、6 引数を消すか） |
+| 12 | 理由の区分は重ねず、並びを保つ（制約適合判定の理由の順から写す）。DE-06 の理由の語彙にそのまま使う |
 
 ## 確認ポイント（計画の承認の場でまとめて確認する。Try T-6）
 

@@ -45,6 +45,21 @@ class RouteVersionTest {
                 .isInstanceOf(IllegalArgumentException.class);
     }
 
+    @Test
+    void 再設計要の経路版は確定の記録がなければ作れない() {
+        // 再設計要は確定した経路版が外部情報の更新で不適合になった状態なので、確定の記録を持つ（Bolt 37d の開発レビュー）
+        assertThatThrownBy(() -> version(RouteVersionStatus.REDESIGN_REQUIRED, null, RECORD))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void 作成中の経路版は再設計要の記録を持てない() {
+        List<RouteCandidate> none = List.of();
+
+        assertThatThrownBy(() -> new RouteVersion(1, RouteVersionStatus.DRAFT, none, null, 0, null, RECORD))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
     @ParameterizedTest(name = "{0} の経路版は再設計要の記録を持てない")
     @EnumSource(
             value = RouteVersionStatus.class,

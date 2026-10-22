@@ -21,12 +21,21 @@ class RedesignRecordTest {
         List<RedesignReasonCode> reasons =
                 new ArrayList<>(List.of(RedesignReasonCode.CONNECTION_TOO_SHORT, RedesignReasonCode.DEADLINE_EXCEEDED));
 
-        RedesignRecord record = new RedesignRecord(REQUIRED_AT, reasons);
+        RedesignRecord redesign = new RedesignRecord(REQUIRED_AT, reasons);
         reasons.clear();
 
-        assertThat(record.requiredAt()).isEqualTo(REQUIRED_AT);
-        assertThat(record.reasons())
+        assertThat(redesign.requiredAt()).isEqualTo(REQUIRED_AT);
+        assertThat(redesign.reasons())
                 .containsExactly(RedesignReasonCode.CONNECTION_TOO_SHORT, RedesignReasonCode.DEADLINE_EXCEEDED);
+    }
+
+    @Test
+    void 同じ理由の区分を重ねて持てない() {
+        // 保存の列（VARCHAR(200)）と DE-06 の理由の語彙で、区分は 1 度ずつ（Bolt 37d の開発レビュー）
+        List<RedesignReasonCode> twice =
+                List.of(RedesignReasonCode.DEADLINE_EXCEEDED, RedesignReasonCode.DEADLINE_EXCEEDED);
+
+        assertThatThrownBy(() -> new RedesignRecord(REQUIRED_AT, twice)).isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test

@@ -87,8 +87,11 @@ public class MyBatisRoutingCaseRepository implements RoutingCaseRepository {
         RouteVersion version = routingCase.routeVersion();
         if (version.status() == RouteVersionStatus.REDESIGN_REQUIRED) {
             // 確定から再設計要に変わるときは、状態と再設計要の記録だけを書く（候補と確定の記録は書き直さない。旧情報版の保持。Bolt 37d）。
-            // すでに再設計要なら確定の行がないので 0 件で、書き直すものはない
-            mapper.updateRouteVersionToRedesignRequired(toRow(id, version, null));
+            // 表の条件（確定の行だけ）は最後の守り。書けなければ（確定でない行、すでに再設計要の行）例外にする
+            if (mapper.updateRouteVersionToRedesignRequired(toRow(id, version, null)) == 0) {
+                throw new IllegalStateException(
+                        "確定でない経路版は再設計要にできない: " + routingCase.number().text() + " 版 " + version.routeVersionNo());
+            }
             return;
         }
         int updated = mapper.updateRouteVersion(toRow(id, version, null));

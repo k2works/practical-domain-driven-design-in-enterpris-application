@@ -446,7 +446,11 @@ class MyBatisRoutingRepositoriesIntegrationTest {
                 "UPDATE routing.route_version SET status = 'CONFIRMED' WHERE routing_case_id = ?",
                 "UPDATE routing.route_version SET redesign_required_at = CURRENT_TIMESTAMP,"
                         + " redesign_reasons = 'DEADLINE_EXCEEDED' WHERE routing_case_id = ?",
-                "UPDATE routing.route_version SET status = 'REDESIGN_REQUIRED' WHERE routing_case_id = ?"
+                "UPDATE routing.route_version SET status = 'REDESIGN_REQUIRED' WHERE routing_case_id = ?",
+                "UPDATE routing.route_version SET status = 'SUPERSEDED', redesign_required_at = CURRENT_TIMESTAMP"
+                        + " WHERE routing_case_id = ?",
+                "UPDATE routing.route_version SET status = 'REDESIGN_REQUIRED', redesign_required_at = CURRENT_TIMESTAMP,"
+                        + " redesign_reasons = 'DEADLINE_EXCEEDED' WHERE routing_case_id = ?"
             })
     void 確定の記録と再設計要の記録は表が守る(String violation) {
         UUID id = calculatedAndSaved().id().value();
@@ -459,7 +463,7 @@ class MyBatisRoutingRepositoriesIntegrationTest {
         RoutingCase confirmed = confirmedAndSaved();
         RoutingCase loaded = repository.findByNumber(confirmed.number()).orElseThrow();
         RouteVersion version = loaded.routeVersion();
-        RedesignRecord record = new RedesignRecord(
+        RedesignRecord redesign = new RedesignRecord(
                 at("2083-10-08T00:00:00Z"),
                 List.of(RedesignReasonCode.CONNECTION_TOO_SHORT, RedesignReasonCode.DEADLINE_EXCEEDED));
         RoutingCase redesigned = RoutingCaseFixture.withRouteVersions(
@@ -471,14 +475,14 @@ class MyBatisRoutingRepositoriesIntegrationTest {
                         version.evaluatedAt().orElseThrow(),
                         version.candidatesFound(),
                         version.confirmation().orElseThrow(),
-                        record)));
+                        redesign)));
 
         repository.update(redesigned, OPERATOR);
 
         RoutingCase found = repository.findByNumber(confirmed.number()).orElseThrow();
         assertThat(found.routeVersions()).isEqualTo(redesigned.routeVersions());
         assertThat(found.routeVersion().status()).isEqualTo(RouteVersionStatus.REDESIGN_REQUIRED);
-        assertThat(found.routeVersion().redesign()).contains(record);
+        assertThat(found.routeVersion().redesign()).contains(redesign);
         assertThat(found.routeVersion().candidates()).isEqualTo(version.candidates());
         assertThat(found.confirmedCandidateOf(1)).isEqualTo(loaded.confirmedCandidateOf(1));
         assertThat(jdbc.queryForObject(
@@ -489,8 +493,8 @@ class MyBatisRoutingRepositoriesIntegrationTest {
     }
 
     @Test
-    void 再設計要への更新は確定の行だけを書き確定していない行は書き換えない() {
-        // 表の条件は最後の守り（集約は確定の経路版だけを再設計要にする。Bolt 37d2）
+    void 再設計要への更新は確定の行だけを書き確定していない行には書けない() {
+        // 表の条件は最後の守り（集約は確定の経路版だけを再設計要にする。Bolt 37d2）。書けなければ例外にする（Bolt 37d の開発レビュー）
         RoutingCase calculated = calculatedAndSaved();
         RoutingCase loaded = repository.findByNumber(calculated.number()).orElseThrow();
         RouteVersion version = loaded.routeVersion();
@@ -502,12 +506,15 @@ class MyBatisRoutingRepositoriesIntegrationTest {
                         version.candidates(),
                         version.evaluatedAt().orElseThrow(),
                         version.candidatesFound(),
-                        null,
+                        new RouteConfirmation(
+                                1,
+                                new DecisionRationale("直行で期限まで 3 日ある。"),
+                                APPROVER.userId(),
+                                at("2083-10-07T04:00:00Z")),
                         new RedesignRecord(
                                 at("2083-10-08T00:00:00Z"), List.of(RedesignReasonCode.VOYAGE_UNAVAILABLE)))));
 
-        repository.update(redesigned, OPERATOR);
-
+        assertThatThrownBy(() -> repository.update(redesigned, OPERATOR)).isInstanceOf(IllegalStateException.class);
         assertThat(jdbc.queryForObject(
                         "SELECT status FROM routing.route_version WHERE routing_case_id = ?",
                         String.class,

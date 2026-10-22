@@ -725,8 +725,9 @@ class RoutingCaseConfirmationTest {
                 () -> routingCase.confirm(
                         1, "根拠", ROUTE_DESIGNER, VOYAGES, List.of(SINGAPORE_8H), COMMIT_AT, evaluator, FRESHNESS),
                 RouteConfirmationRejectionReason.NOT_CONFIRMABLE_STATE);
-        assertThatThrownBy(() -> routingCase.calculateCandidates(
-                        VOYAGES, List.of(SINGAPORE_8H), COMMIT_AT, finder, evaluator, FRESHNESS))
+        List<ConnectionRule> rules = List.of(SINGAPORE_8H);
+        assertThatThrownBy(
+                        () -> routingCase.calculateCandidates(VOYAGES, rules, COMMIT_AT, finder, evaluator, FRESHNESS))
                 .isInstanceOf(IllegalStateException.class);
     }
 

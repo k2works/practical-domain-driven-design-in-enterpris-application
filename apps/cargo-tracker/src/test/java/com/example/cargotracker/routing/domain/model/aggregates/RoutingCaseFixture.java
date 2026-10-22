@@ -61,7 +61,7 @@ public final class RoutingCaseFixture {
     }
 
     /** 確定した経路版を再設計要にした案件（確定の記録と候補はそのまま。Bolt 37d）。 */
-    public static RoutingCase redesignRequired(RedesignRecord record) {
+    public static RoutingCase redesignRequired(RedesignRecord redesign) {
         RoutingCase confirmed = confirmed().routingCase();
         RouteVersion version = confirmed.routeVersion();
         return withRouteVersions(
@@ -73,7 +73,7 @@ public final class RoutingCaseFixture {
                         version.evaluatedAt().orElseThrow(),
                         version.candidatesFound(),
                         version.confirmation().orElseThrow(),
-                        record)));
+                        redesign)));
     }
 
     public static Confirmed confirmed() {

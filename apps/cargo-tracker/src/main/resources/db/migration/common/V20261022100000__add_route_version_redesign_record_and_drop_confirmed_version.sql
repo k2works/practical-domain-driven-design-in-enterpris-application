@@ -11,6 +11,9 @@ ALTER TABLE routing.route_version ADD CONSTRAINT ck_route_version_redesign CHECK
     (redesign_required_at IS NULL AND redesign_reasons IS NULL AND status <> 'REDESIGN_REQUIRED')
     OR (redesign_required_at IS NOT NULL AND redesign_reasons IS NOT NULL
         AND status IN ('REDESIGN_REQUIRED', 'SUPERSEDED')));
+-- 再設計要は確定した経路版が外部情報の更新で不適合になった状態なので、確定の記録を持つ
+ALTER TABLE routing.route_version ADD CONSTRAINT ck_route_version_redesign_confirmed CHECK (
+    status <> 'REDESIGN_REQUIRED' OR selected_candidate_no IS NOT NULL);
 
 COMMENT ON COLUMN routing.route_version.redesign_required_at IS '再設計要にした時刻（再設計要の記録。再設計要と旧版だけ）';
 COMMENT ON COLUMN routing.route_version.redesign_reasons IS '再設計要の理由の区分（DEADLINE_EXCEEDED・CONNECTION_TOO_SHORT・NOT_CONNECTABLE・VOYAGE_UNAVAILABLE を空白で区切る）';

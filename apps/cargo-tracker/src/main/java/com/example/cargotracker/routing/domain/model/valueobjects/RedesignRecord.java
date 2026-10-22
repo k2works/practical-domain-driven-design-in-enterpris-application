@@ -10,7 +10,7 @@ import java.util.Objects;
  * 時刻・閾値・参照情報版）は持たない。旧情報版は確定の記録の候補の区間に残る。
  *
  * @param requiredAt 再設計要にした時刻
- * @param reasons 理由の区分（1 つ以上。並びを保つ）
+ * @param reasons 理由の区分（1 つ以上で重ねない。並びを保つ）
  */
 @ValueObject
 public record RedesignRecord(UtcInstant requiredAt, List<RedesignReasonCode> reasons) {
@@ -20,6 +20,9 @@ public record RedesignRecord(UtcInstant requiredAt, List<RedesignReasonCode> rea
         reasons = List.copyOf(reasons);
         if (reasons.isEmpty()) {
             throw new IllegalArgumentException("再設計要の記録には理由が要ります");
+        }
+        if (reasons.stream().distinct().count() != reasons.size()) {
+            throw new IllegalArgumentException("再設計要の理由の区分を重ねて持てません: " + reasons);
         }
     }
 }
