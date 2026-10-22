@@ -6423,7 +6423,7 @@
     
   
   
-    <span class="md-status md-status--draft"></span>
+    <span class="md-status md-status--stable"></span>
   
 
   
@@ -6448,7 +6448,7 @@
     
   
   
-    <span class="md-status md-status--draft"></span>
+    <span class="md-status md-status--stable"></span>
   
 
   
@@ -12117,7 +12117,7 @@
 <td style="text-align: left;">1</td>
 <td style="text-align: left;"><strong>判定の境界と単位</strong></td>
 <td style="text-align: left;">ステップ 2・3</td>
-<td style="text-align: left;">判定時刻が「取得時刻 + 許容時間」より後なら情報不足、同時刻は足りる（W6 の確認ポイント 1 の「超えた」と、同じ候補の判定の期限・接続の「同時刻・同値は適合」（R-INV-01）にそろえる。前例が分かれる点: 追跡の FRS-02 は「36 時間以上」、見積りの失効（Q-INV-06）と <code>SessionPolicy.isExpired</code> はちょうどの時刻を期限切れにする。どちらを選ぶかを承認の場で決めてもらう。取込の周期との余裕は D-89 の注のとおり責任者に問う）。候補の区間の航海ごとに判定し、古い航海ごとに理由を 1 つ（候補の最も古い取得時刻だけで 1 つにしない。どの航海を取り込み直せばよいかが分かるため）</td>
+<td style="text-align: left;">判定時刻が「取得時刻 + 許容時間」より後なら情報不足、同時刻は足りる（W6 の確認ポイント 1 の「超えた」と、同じ候補の判定の期限・接続の「同時刻・同値は適合」（R-INV-01）にそろえる。前例が分かれる点: 追跡の FRS-02 は「36 時間以上」、見積りの失効（Q-INV-06）と <code>SessionPolicy.isExpired</code> はちょうどの時刻を期限切れにする。決定（2026-10-22、human:kakimomokuri）: 同時刻は足りる。取込の周期との余裕は D-89 の注のとおり責任者に問う）。候補の区間の航海ごとに判定し、古い航海ごとに理由を 1 つ（候補の最も古い取得時刻だけで 1 つにしない。どの航海を取り込み直せばよいかが分かるため）</td>
 </tr>
 <tr>
 <td style="text-align: left;">2</td>
@@ -12129,7 +12129,7 @@
 <td style="text-align: left;">3</td>
 <td style="text-align: left;"><strong>許容時間の置き場所（業務の閾値を設定にする初めての前例）</strong></td>
 <td style="text-align: left;">ステップ 1・4</td>
-<td style="text-align: left;">規則が値を持ち、値は <code>cargotracker.routing.info-freshness-tolerance</code>（既定 <code>PT24H</code>）。(a) <code>RoutingConfiguration</code> の <code>@Bean</code> の引数で <code>@Value</code> で受けて規則を作り、入力ポートに渡す（推奨。新しいクラスが要らず、層の規則に当たらない）。(b) <code>@ConfigurationProperties</code> のクラスを新しいパッケージ（例 <code>routing.infrastructure.settings</code>）に置く（構造の変更）。<code>infrastructure.config</code> に置く案は <code>LayerArchitectureTest</code> の「合成ルートにはConfigurationのクラスだけを置く」に当たるので採らない（規則の例外は作らない）。D-89 は仮で、追跡・データ責任者が値を差し替えるため設定にする（W6 の確認ポイント 1）。(a) なら置き場所と理由は ADR を足さず domain_model の Bolt 37b2 で決めたことに書く。環境変数は足さない（デモ環境は既定値）</td>
+<td style="text-align: left;">規則が値を持ち、値は <code>cargotracker.routing.info-freshness-tolerance</code>（既定 <code>PT24H</code>）。(a) <code>RoutingConfiguration</code> の <code>@Bean</code> の引数で <code>@Value</code> で受けて規則を作り、入力ポートに渡す（推奨。新しいクラスが要らず、層の規則に当たらない）。(b) <code>@ConfigurationProperties</code> のクラスを新しいパッケージ（例 <code>routing.infrastructure.settings</code>）に置く（構造の変更）。<code>infrastructure.config</code> に置く案は <code>LayerArchitectureTest</code> の「合成ルートにはConfigurationのクラスだけを置く」に当たるので採らない（規則の例外は作らない）。D-89 は仮で、追跡・データ責任者が値を差し替えるため設定にする（W6 の確認ポイント 1）。決定（2026-10-22、human:kakimomokuri）: (a)。置き場所と理由は ADR を足さず domain_model の Bolt 37b2 で決めたことに書く。環境変数は足さない（デモ環境は既定値）</td>
 </tr>
 <tr>
 <td style="text-align: left;">4</td>
@@ -12165,7 +12165,7 @@
 <td style="text-align: left;">9</td>
 <td style="text-align: left;"><strong>アプローチと承認ゲートと時間</strong></td>
 <td style="text-align: left;">全体</td>
-<td style="text-align: left;">アウトサイドイン（受入シナリオ → 規則と集約 → 設定と保存 → 画面）。承認ゲートは計画と終了報告。新しいファイル（<code>InfoFreshnessPolicy</code> とそのテスト、設定の結合のテスト）はこの計画の承認で作る。スキーマ・認可・層の構造・環境変数は変えない（確認ポイント 3 で (b) を選ぶなら構造の変更になる）。約 4 時間（ステップ 5 に打ち切り）</td>
+<td style="text-align: left;">アウトサイドイン（受入シナリオ → 規則と集約 → 設定と保存 → 画面）。承認ゲートは計画と終了報告。新しいファイル（<code>InfoFreshnessPolicy</code> とそのテスト、設定の結合のテスト）はこの計画の承認で作る。スキーマ・認可・層の構造・環境変数は変えない。約 4 時間（ステップ 5 に打ち切り）</td>
 </tr>
 </tbody>
 </table>
@@ -12189,6 +12189,11 @@
 </tr>
 </thead>
 <tbody>
+<tr>
+<td style="text-align: left;">2026-10-22</td>
+<td style="text-align: left;">計画を承認した（確認ポイント 1 は同時刻は足りる、3 は (a) <code>@Value</code> で受ける、ほかは推奨のとおり）</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5、承認 human:kakimomokuri</td>
+</tr>
 <tr>
 <td style="text-align: left;">2026-10-22</td>
 <td style="text-align: left;">整合性検証の指摘を反映した（承認待ち）。設定は <code>infrastructure.config</code> に <code>@ConfigurationProperties</code> を置くと層の規則に当たるので <code>@Value</code> で受ける案にした。規則の日本語名を「情報鮮度の判定」に、画面の語を「参照した航海情報の版」にした。閾値は最後の空白で分ける。設定を読まない変異を入力ポートまでで確かめる。境界の前例の違いを確認ポイント 1 に書いた。確定のときの穴をマニュアルと終了報告で示す。直す文書と Javadoc を足し、行番号と呼び出しの数を直した。ステップ 5 に打ち切りを置いた</td>
