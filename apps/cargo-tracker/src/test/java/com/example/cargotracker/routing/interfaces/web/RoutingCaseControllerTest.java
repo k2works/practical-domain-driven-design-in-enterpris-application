@@ -27,6 +27,8 @@ import com.example.cargotracker.routing.domain.model.rules.InfoFreshnessPolicy;
 import com.example.cargotracker.routing.domain.model.rules.RouteCandidateFinder;
 import com.example.cargotracker.routing.domain.model.valueobjects.CandidateCalculation;
 import com.example.cargotracker.routing.domain.model.valueobjects.PortCall;
+import com.example.cargotracker.routing.domain.model.valueobjects.RedesignReasonCode;
+import com.example.cargotracker.routing.domain.model.valueobjects.RedesignRecord;
 import com.example.cargotracker.routing.domain.model.valueobjects.RouteApprover;
 import com.example.cargotracker.routing.domain.model.valueobjects.RouteConfirmationRejectionReason;
 import com.example.cargotracker.routing.domain.model.valueobjects.RouteSpecification;
@@ -308,6 +310,45 @@ class RoutingCaseControllerTest {
                 .andExpect(content()
                         .string(Matchers.not(Matchers.containsString(
                                 TestActors.STAFF_USER.value().toString()))))
+                .andExpect(content().string(Matchers.not(Matchers.containsString("候補を再算出"))))
+                .andExpect(content().string(Matchers.not(Matchers.containsString("この候補で確定へ"))));
+    }
+
+    @Test
+    void 確定した案件には再設計要の案内を出さない() throws Exception {
+        when(queryService.findByNumber(NUMBER)).thenReturn(Optional.of(confirmed()));
+
+        mockMvc.perform(get(SHOW))
+                .andExpect(content().string(Matchers.containsString("確定した経路（候補 1）")))
+                .andExpect(content().string(Matchers.not(Matchers.containsString("再設計要"))));
+    }
+
+    @Test
+    void 再設計要の案件は確定の記録とともに再設計要の理由と時刻と確定し直せない案内を示し操作を出さない() throws Exception {
+        // Bolt 37d2（US-07 AC4・AC5）。評価は画面から起こさないので、再構成した状態で表示だけを確かめる
+        RouteVersion version = confirmed().routeVersion();
+        RoutingCase redesignRequired = reconstitute(new RouteVersion(
+                1,
+                RouteVersionStatus.REDESIGN_REQUIRED,
+                version.candidates(),
+                version.candidatesEvaluatedAt(),
+                version.candidatesFound(),
+                version.routeConfirmation(),
+                new RedesignRecord(
+                        at("2026-10-08T06:00:00Z"),
+                        List.of(RedesignReasonCode.CONNECTION_TOO_SHORT, RedesignReasonCode.DEADLINE_EXCEEDED))));
+        when(queryService.findByNumber(NUMBER)).thenReturn(Optional.of(redesignRequired));
+
+        mockMvc.perform(get(SHOW))
+                .andExpect(status().isOk())
+                .andExpect(content().string(Matchers.containsString("再設計要の経路（候補 1）")))
+                .andExpect(content().string(Matchers.containsString("理由: 接続不足、期限超過")))
+                .andExpect(content().string(Matchers.containsString("2026-10-08 15:00 Asia/Tokyo")))
+                .andExpect(content().string(Matchers.containsString("候補の判定は確定のときのものです。")))
+                .andExpect(content().string(Matchers.containsString("この経路では確定し直せません。")))
+                .andExpect(content().string(Matchers.containsString("SGSIN の接続に 4 時間の余裕がある。")))
+                .andExpect(content().string(Matchers.not(Matchers.containsString("確定した経路（候補"))))
+                .andExpect(content().string(Matchers.not(Matchers.containsString(">確定した経路<"))))
                 .andExpect(content().string(Matchers.not(Matchers.containsString("候補を再算出"))))
                 .andExpect(content().string(Matchers.not(Matchers.containsString("この候補で確定へ"))));
     }

@@ -7,6 +7,8 @@ import com.example.cargotracker.routing.domain.model.entities.RouteCandidate;
 import com.example.cargotracker.routing.domain.model.entities.RouteVersion;
 import com.example.cargotracker.routing.domain.model.valueobjects.ExclusionReason;
 import com.example.cargotracker.routing.domain.model.valueobjects.Leg;
+import com.example.cargotracker.routing.domain.model.valueobjects.RedesignReasonCode;
+import com.example.cargotracker.routing.domain.model.valueobjects.RedesignRecord;
 import com.example.cargotracker.routing.domain.model.valueobjects.RouteConfirmation;
 import com.example.cargotracker.routing.domain.model.valueobjects.RouteVersionStatus;
 import com.example.cargotracker.routing.domain.model.valueobjects.RoutingCaseSummary;
@@ -16,6 +18,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -63,8 +66,25 @@ final class RoutingCaseViews {
             ConfirmedRouteView confirmedRoute,
             List<CandidateView> candidates) {}
 
-    /** 確定した経路（S-06 の確定の後）。 */
-    record ConfirmedRouteView(int candidateNo, String approvedBy, String approvedAt, String rationale) {}
+    /**
+     * 確定した経路（S-06 の確定の後）。確定の後に再設計要になった経路版では、再設計要にした時刻と理由も示す（Bolt 37d2）。
+     *
+     * @param redesignRequiredAt 再設計要にした時刻（再設計要でなければ null）
+     * @param redesignReasons 再設計要の理由（画面の語。「、」でつなぐ。再設計要でなければ null）
+     */
+    record ConfirmedRouteView(
+            int candidateNo,
+            String approvedBy,
+            String approvedAt,
+            String rationale,
+            String redesignRequiredAt,
+            String redesignReasons) {
+
+        /** 再設計要か。 */
+        public boolean redesignRequired() {
+            return redesignRequiredAt != null;
+        }
+    }
 
     /** 経路の確定（S-07）。 */
     record ConfirmationPage(
@@ -135,12 +155,7 @@ final class RoutingCaseViews {
                 version.evaluatedAt().map(RoutingCaseViews::dateTime).orElse(null),
                 version.omittedCandidates(),
                 version.confirmation()
-                        .map(confirmation -> new ConfirmedRouteView(
-                                confirmation.candidateNo(),
-                                // 画面に内部の ID を出さない（D-4）。名前は利用者の公開 API ができてから引く（Bolt 19 レビュー）
-                                "経路設計者",
-                                dateTime(confirmation.approvedAt()),
-                                confirmation.rationale().text()))
+                        .map(confirmation -> confirmedRoute(confirmation, version.redesign()))
                         .orElse(null),
                 version.candidates().stream()
                         .map(candidate -> candidate(
@@ -176,6 +191,33 @@ final class RoutingCaseViews {
 
     private static String expiresAt(RoutingCase routingCase) {
         return routingCase.quotationExpiresAt().map(RoutingCaseViews::dateTime).orElse(NO_EXPIRY);
+    }
+
+    private static ConfirmedRouteView confirmedRoute(
+            RouteConfirmation confirmation, Optional<RedesignRecord> redesign) {
+        return new ConfirmedRouteView(
+                confirmation.candidateNo(),
+                // 画面に内部の ID を出さない（D-4）。名前は利用者の公開 API ができてから引く（Bolt 19 レビュー）
+                "経路設計者",
+                dateTime(confirmation.approvedAt()),
+                confirmation.rationale().text(),
+                redesign.map(RedesignRecord::requiredAt)
+                        .map(RoutingCaseViews::dateTime)
+                        .orElse(null),
+                redesign.map(redesignRecord -> redesignRecord.reasons().stream()
+                                .map(RoutingCaseViews::redesignReason)
+                                .collect(Collectors.joining("、")))
+                        .orElse(null));
+    }
+
+    /** 再設計要の理由の画面の語（受入シナリオの語と同じ。Bolt 37d2）。 */
+    static String redesignReason(RedesignReasonCode reason) {
+        return switch (reason) {
+            case DEADLINE_EXCEEDED -> "期限超過";
+            case CONNECTION_TOO_SHORT -> "接続不足";
+            case NOT_CONNECTABLE -> "接続できない";
+            case VOYAGE_UNAVAILABLE -> "航海を引き直せない";
+        };
     }
 
     static String status(RouteVersionStatus status) {

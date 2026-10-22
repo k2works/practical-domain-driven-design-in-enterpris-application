@@ -34,7 +34,12 @@
     </dl>
     <section class="card mb-3" th:if="${routingCase.confirmedRoute() != null}" aria-labelledby="confirmed-route">
         <div class="card-body">
-            <h2 class="h5" id="confirmed-route" th:text="|確定した経路（候補 ${routingCase.confirmedRoute().candidateNo()}）|">確定した経路（候補 1）</h2>
+            <h2 class="h5" id="confirmed-route"
+                th:text="${routingCase.confirmedRoute().redesignRequired()} ? |再設計要の経路（候補 ${routingCase.confirmedRoute().candidateNo()}）| : |確定した経路（候補 ${routingCase.confirmedRoute().candidateNo()}）|">確定した経路（候補 1）</h2>
+            <div class="alert alert-warning" role="status" th:if="${routingCase.confirmedRoute().redesignRequired()}">
+                <p class="mb-1" th:text="|外部情報の更新で条件を満たさなくなったため再設計要です（理由: ${routingCase.confirmedRoute().redesignReasons()}。再設計要にした時刻 ${routingCase.confirmedRoute().redesignRequiredAt()}）。|">外部情報の更新で条件を満たさなくなったため再設計要です（理由: 期限超過。再設計要にした時刻 2026-10-08 15:00 Asia/Tokyo（UTC+09:00）（UTC 2026-10-08 06:00））。</p>
+                <p class="mb-0">候補の判定は確定のときのものです。この経路では確定し直せません。再設計は後の版で行います。</p>
+            </div>
             <dl class="row mb-0">
                 <dt class="col-sm-3">承認者</dt>
                 <dd class="col-sm-9" th:text="${routingCase.confirmedRoute().approvedBy()}">経路設計者</dd>
@@ -67,7 +72,8 @@
                     <span th:text="|候補 ${candidate.candidateNo()}（${candidate.routeSummary()}）|">候補 1（直行）</span>
                     <span th:class="${candidate.conforming()} ? 'badge text-bg-success' : 'badge text-bg-secondary'"
                           th:text="${candidate.conforming()} ? '✓ 適合' : '✕ 除外'">✓ 適合</span>
-                    <span class="badge text-bg-primary" th:if="${candidate.confirmed()}">確定した経路</span>
+                    <span class="badge text-bg-primary" th:if="${candidate.confirmed()}"
+                          th:text="${routingCase.confirmedRoute().redesignRequired()} ? '再設計要の経路' : '確定した経路'">確定した経路</span>
                 </h3>
                 <dl class="row mb-2">
                     <dt class="col-sm-3">到着予定</dt>
