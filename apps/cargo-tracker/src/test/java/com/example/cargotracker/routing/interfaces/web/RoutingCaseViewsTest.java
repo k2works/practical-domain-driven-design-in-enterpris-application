@@ -59,9 +59,20 @@ class RoutingCaseViewsTest {
                 "V-301", new UtcInstant(Instant.parse("2026-10-06T01:00:00Z")), Duration.ofHours(24), "V-301@3");
 
         assertThat(RoutingCaseViews.reason(reason, List.of()))
-                .isEqualTo("情報不足（V-301 の情報は取得から 24 時間を過ぎている。取得 "
+                .isEqualTo("情報不足（V-301 の情報は取得から 24 時間を過ぎている）。取得 "
                         + RoutingCaseViews.dateTime(reason.infoAcquiredAt().orElseThrow())
-                        + "）。参照した航海情報の版 V-301@3");
+                        + "。参照した航海情報の版 V-301@3");
+    }
+
+    @Test
+    void 分のある許容時間は時間と分で示す() {
+        ExclusionReason reason = ExclusionReason.infoInsufficient(
+                "V-301",
+                new UtcInstant(Instant.parse("2026-10-06T01:00:00Z")),
+                Duration.ofMinutes(24 * 60 + 30),
+                "V-301@3");
+
+        assertThat(RoutingCaseViews.reason(reason, List.of())).startsWith("情報不足（V-301 の情報は取得から 24 時間 30 分を過ぎている）");
     }
 
     static Leg leg(String voyage, String load, String discharge, String departure, String arrival) {

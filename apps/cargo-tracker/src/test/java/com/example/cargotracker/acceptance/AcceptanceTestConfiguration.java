@@ -186,6 +186,7 @@ public class AcceptanceTestConfiguration {
                     connectionRuleRepository,
                     eventDelivery,
                     clock,
+                    // 受入シナリオの境界（24 時間）は D-89 の仮の値で書いた仕様なので、設定の既定値を読まずに固定する
                     new InfoFreshnessPolicy(Duration.ofHours(24)));
         }
 

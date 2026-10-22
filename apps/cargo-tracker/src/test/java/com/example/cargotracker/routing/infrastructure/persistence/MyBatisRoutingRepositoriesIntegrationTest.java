@@ -156,7 +156,7 @@ class MyBatisRoutingRepositoriesIntegrationTest {
                 "IT STALE 1@4",
                 at("2083-10-05T00:00:00Z"));
         loaded.calculateCandidates(
-                List.of(voyages().getFirst(), stale),
+                List.of(voyages().getFirst(), stale, voyages().getLast()),
                 rules(),
                 JUDGED_AT,
                 new RouteCandidateFinder(),
@@ -175,7 +175,7 @@ class MyBatisRoutingRepositoriesIntegrationTest {
                                 + " ORDER BY candidate_no",
                         Boolean.class,
                         routingCase.id().value()))
-                .containsExactly(false, true);
+                .containsExactly(false, true, false);
         assertThat(jdbc.queryForObject(
                         "SELECT threshold FROM routing.exclusion_reason WHERE routing_case_id = ? AND candidate_no = 2",
                         String.class,

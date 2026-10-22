@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.example.cargotracker.routing.domain.model.valueobjects.ExclusionReason;
+import com.example.cargotracker.routing.domain.model.valueobjects.ExclusionReasonCode;
 import com.example.cargotracker.routing.domain.model.valueobjects.Leg;
 import com.example.cargotracker.shared.domain.Location;
 import com.example.cargotracker.shared.domain.UtcInstant;
@@ -98,6 +99,42 @@ class InfoFreshnessPolicyTest {
         assertThat(policy.evaluate(legs, new UtcInstant(JUDGED_AT))).hasSize(1);
         assertThat(new InfoFreshnessPolicy(Duration.ofHours(48)).evaluate(legs, new UtcInstant(JUDGED_AT)))
                 .isEmpty();
+    }
+
+    @Test
+    void 情報不足の理由は航海番号と許容時間がなければ作れず接続の閾値を持てない() {
+        UtcInstant violatedAt = new UtcInstant(JUDGED_AT);
+
+        assertThatThrownBy(() -> new ExclusionReason(
+                        ExclusionReasonCode.INFO_INSUFFICIENT,
+                        violatedAt,
+                        null,
+                        null,
+                        null,
+                        "V-101@3",
+                        null,
+                        TOLERANCE))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> new ExclusionReason(
+                        ExclusionReasonCode.INFO_INSUFFICIENT,
+                        violatedAt,
+                        null,
+                        SINGAPORE,
+                        null,
+                        "V-101@3",
+                        "V-101",
+                        TOLERANCE))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> new ExclusionReason(
+                        ExclusionReasonCode.NOT_CONNECTABLE,
+                        violatedAt,
+                        null,
+                        SINGAPORE,
+                        null,
+                        "V-101@3",
+                        "V-101",
+                        null))
+                .isInstanceOf(IllegalArgumentException.class);
     }
 
     @ParameterizedTest(name = "許容時間 {0} は作れない")

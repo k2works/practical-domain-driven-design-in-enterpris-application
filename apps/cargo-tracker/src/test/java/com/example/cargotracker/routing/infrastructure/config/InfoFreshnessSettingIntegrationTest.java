@@ -21,12 +21,15 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.transaction.TestTransaction;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
  * 情報鮮度の判定の許容時間が設定 {@code cargotracker.routing.info-freshness-tolerance} から入力ポートまで届く（D-89。Bolt 37b2）。
  * 開発データの見本の案件（RC-2026-0902。適合 2 件）の航海を 25 時間前の取得にして、入力ポートで算出し直す。
  * 取得時刻は判定と同じ JVM の時計から作る（T-171）。トランザクションは戻す。
+ * 入れ子のクラスは外側の @SpringBootTest・@ActiveProfiles・@Transactional を引き継ぎ（@NestedTestConfiguration の既定の INHERIT）、
+ * @TestPropertySource が加わるので別のコンテキストで PT48H を読む。適合が 2 件出ることが、PT48H が入力ポートまで届いた証拠になる。
  */
 @SpringBootTest
 @ActiveProfiles("dev")
@@ -58,6 +61,13 @@ class InfoFreshnessSettingIntegrationTest {
 
         assertThat(calculation.found()).isEqualTo(5);
         assertThat(calculation.conforming()).isZero();
+        assertThat(routingCases
+                        .findByNumber(SAMPLE)
+                        .orElseThrow()
+                        .routeVersion()
+                        .candidates())
+                .allSatisfy(candidate ->
+                        assertThat(candidate.evaluation().infoInsufficient()).isTrue());
     }
 
     @Nested
@@ -66,6 +76,8 @@ class InfoFreshnessSettingIntegrationTest {
 
         @Test
         void 二十五時間前に取得した航海を使う候補も適合する() {
+            assertThat(TestTransaction.isActive()).isTrue();
+
             CandidateCalculation calculation = recalculate();
 
             assertThat(calculation.found()).isEqualTo(5);

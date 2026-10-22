@@ -239,6 +239,18 @@ class RoutingCaseTest {
     }
 
     @Test
+    void 期限超過だけで除外した候補は情報不足ではない() {
+        RoutingCase routingCase = open();
+
+        routingCase.calculateCandidates(
+                List.of(direct("V-LATE", "2026-11-03T12:00:00Z")), RULES, JUDGED_AT, finder, evaluator, freshness);
+
+        RouteCandidate candidate = routingCase.routeVersion().candidates().getFirst();
+        assertThat(candidate.evaluation().conforming()).isFalse();
+        assertThat(candidate.evaluation().infoInsufficient()).isFalse();
+    }
+
+    @Test
     void 取得時刻の違う区間では古い航海だけに理由が出て最も古い取得時刻を示す() {
         RoutingCase routingCase = open();
         UtcInstant fresh = minusHours(JUDGED_AT, 2);

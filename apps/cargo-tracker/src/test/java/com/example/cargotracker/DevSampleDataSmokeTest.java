@@ -101,6 +101,10 @@ class DevSampleDataSmokeTest {
     @Autowired
     ConnectionRuleRepository rules;
 
+    /** 本体の組み立てが設定から作った情報鮮度の判定（既定の値を写さない。Bolt 37b2 の開発レビュー）。 */
+    @Autowired
+    InfoFreshnessPolicy infoFreshnessPolicy;
+
     @Autowired
     TransportRequestNumberIssuer transportRequestNumbers;
 
@@ -348,7 +352,7 @@ class DevSampleDataSmokeTest {
                 evaluatedAt,
                 new RouteCandidateFinder(),
                 new ConstraintEvaluator(),
-                new InfoFreshnessPolicy(Duration.ofHours(24)));
+                infoFreshnessPolicy);
 
         RouteVersion expected = recalculated.routeVersion();
         assertThat(seeded.routeVersion()).isEqualTo(expected);

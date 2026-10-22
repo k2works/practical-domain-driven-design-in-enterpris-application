@@ -4,8 +4,10 @@ import com.example.cargotracker.shared.annotation.ddd.ValueObject;
 import com.example.cargotracker.shared.domain.Location;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import java.time.Duration;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 /**
  * 除外理由。候補を除外した理由の区分と、不適合となった時刻・閾値・参照情報版（R-INV-02）。
@@ -36,6 +38,25 @@ public record ExclusionReason(
         Objects.requireNonNull(code, "code");
         Objects.requireNonNull(violatedAt, "violatedAt");
         Objects.requireNonNull(infoVersion, "infoVersion");
+        // 区分ごとの閾値の項目だけを持つ（ファクトリーを経ない組み立てでも崩さない。Bolt 37b2 の開発レビュー）。
+        // 並びは期限・港・必要最小接続時間・航海番号・許容時間
+        List<Boolean> present = Stream.of(deadline, port, requiredConnection, voyageNumber, freshnessTolerance)
+                .map(Objects::nonNull)
+                .toList();
+        if (!present.equals(thresholdFields(code))) {
+            throw new IllegalArgumentException("除外理由の区分と閾値の項目が合いません: " + code);
+        }
+    }
+
+    /** 区分が持つ閾値の項目（期限・港・必要最小接続時間・航海番号・許容時間の順に、持つなら true）。 */
+    private static List<Boolean> thresholdFields(ExclusionReasonCode code) {
+        return switch (code) {
+            case DEADLINE_EXCEEDED -> List.of(true, false, false, false, false);
+            case CONNECTION_TOO_SHORT -> List.of(false, true, true, false, false);
+            case NOT_CONNECTABLE -> List.of(false, true, false, false, false);
+            case INFO_INSUFFICIENT -> List.of(false, false, false, true, true);
+            case CARGO_NOT_SUPPORTED -> List.of(false, false, false, false, false);
+        };
     }
 
     /** 期限超過。不適合の時刻は到着予定、閾値は希望到着期限。 */

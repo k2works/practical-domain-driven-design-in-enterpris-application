@@ -249,9 +249,9 @@ class RoutingCaseConfirmationTest {
         List<Voyage> voyages = List.of(direct("V-NEW", "2026-10-30T00:00:00Z"));
         List<ConnectionRule> rules = List.of(SINGAPORE_8H);
         UtcInstant later = minutesAfter(COMMIT_AT, 1);
+        InfoFreshnessPolicy freshness = new InfoFreshnessPolicy(Duration.ofHours(24));
 
-        assertThatThrownBy(() -> routingCase.calculateCandidates(
-                        voyages, rules, later, finder, evaluator, new InfoFreshnessPolicy(Duration.ofHours(24))))
+        assertThatThrownBy(() -> routingCase.calculateCandidates(voyages, rules, later, finder, evaluator, freshness))
                 .isInstanceOf(IllegalStateException.class);
         assertThat(routingCase.routeVersion().candidates()).isEqualTo(confirmedCandidates);
     }

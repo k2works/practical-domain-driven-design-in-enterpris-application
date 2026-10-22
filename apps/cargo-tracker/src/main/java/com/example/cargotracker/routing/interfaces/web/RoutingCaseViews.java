@@ -269,12 +269,12 @@ final class RoutingCaseViews {
             case CARGO_NOT_SUPPORTED -> "貨物種別に対応しない" + INFO_VERSION + reason.infoVersion();
             case INFO_INSUFFICIENT ->
                 "情報不足（" + reason.voyageNumber() + " の情報は取得から " + hours(reason.freshnessTolerance())
-                        + "を過ぎている。取得 " + dateTime(reason.infoAcquiredAt().orElseThrow()) + "）"
+                        + "を過ぎている）。取得 " + dateTime(reason.infoAcquiredAt().orElseThrow())
                         + INFO_VERSION + reason.infoVersion();
         };
     }
 
-    /** 情報鮮度の許容時間（Bolt 37b2。24 時間を「1 日」とせず時間で示す）。 */
+    /** 情報鮮度の許容時間（Bolt 37b2。24 時間を「1 日」とせず時間と分で示す。分未満は示さない）。 */
     private static String hours(Duration duration) {
         return duration.toMinutesPart() == 0 ? duration.toHours() + " 時間" : DurationDisplay.hoursAndMinutes(duration);
     }

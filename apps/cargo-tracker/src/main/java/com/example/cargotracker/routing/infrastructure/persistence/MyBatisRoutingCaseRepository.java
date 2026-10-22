@@ -302,6 +302,9 @@ public class MyBatisRoutingCaseRepository implements RoutingCaseRepository {
             case INFO_INSUFFICIENT -> {
                 // 航海番号は空白を含み得るので、最後の空白で分ける（Bolt 37b2）
                 int separator = row.threshold().lastIndexOf(THRESHOLD_SEPARATOR);
+                if (separator < 0) {
+                    throw new IllegalStateException("情報不足の閾値に区切りがありません: " + row.threshold());
+                }
                 Duration tolerance = Duration.parse(row.threshold().substring(separator + 1));
                 yield ExclusionReason.infoInsufficient(
                         row.threshold().substring(0, separator),
