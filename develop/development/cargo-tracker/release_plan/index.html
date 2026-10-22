@@ -14099,7 +14099,7 @@
 <tr>
 <td style="text-align: left;">6</td>
 <td style="text-align: left;">US-07 AC3 の情報版の照合の守り</td>
-<td style="text-align: left;">確定と同じトランザクションで航海を読み直して比べるだけにする。航海の行のロックは書き手ができる W7 で決める</td>
+<td style="text-align: left;">確定と同じトランザクションで航海を読み直して比べるだけにする。航海の行のロックは書き手ができる W7 で決める。決着（2026-10-22。Bolt 37c の計画の承認）: このとおり。照合は区間の写しの情報版で、確定の時刻の情報不足も拒否する</td>
 </tr>
 <tr>
 <td style="text-align: left;">7</td>
@@ -14180,7 +14180,7 @@
 <li>US-16・US-18 AC9（38〜38g）: ui_design の S-20（:145・:180-183・:1120 以降）と A-06（:94・:186-187。招待に流用する分の語と期限）、domain_model の IA-INV-02（担当企業だけ）・IA-INV-03（管理者による解除）・IA-INV-12（招待 24 時間）・IA-INV-14（登録・解除・担当範囲の操作）・:1055（管理範囲の割り当て）・:1215（利用者の集約が担当範囲を持つと書いた記述を、実装の別のポート <code>UserAssignmentRepository.scopeOf</code> に合わせる）、data_model の <code>user_assignment</code>（:939。「<code>BOOKING</code> は W6」を担当企業だけに）・<code>audit_record</code> の action（:938）・<code>password_reset_token</code> の用途・<code>notification</code> の種類、non_functional の SEC-08（招待）・SEC-10（管理者の経路）・SEC-12（担当企業だけ）、requirements_definition の OQ-07 の残り（案件ごとの割り当て）、各コンテキストの <code>allowedDependencies</code> と共有カーネルの範囲外の試行の記録のポート（新しい ADR）、ADR-012（担当範囲と session の直列化）</li>
 <li>承認の後に直す文書（W6 の開始準備の範囲）: release_plan の :101（U2 の対策）・:350-351 と引継ぎ ID の台帳（TST-02・DM-05 の期限を「v0 は仮の値で作り、届いたら差し替える。パイロット開始の条件として残す」に）、台帳の D-88 の注と D-89・D-90 の新設、W6 の行（:788。ゴールに利用者の管理を足し、管理範囲の割り当てを W10 へ）と W10 の行（:792）、ガントの W6 の名前（:253）、開発戦略の W6 のデモ項目（:185）と W6 の行（:346）</li>
 </ul>
-<p><strong>D-65 の残り</strong>（Bolt 17 の開発レビュー）: Golden dataset の集約の単位のテスト（37f）と規則を選ぶ時刻（37。確認ポイント 4。2026-10-21 に D-90 で接続の時刻に決めた）は W6。依頼の後の再提出で経路条件が得られないときの扱い（UC-07 5a）・航海の照会を時間の窓と港で絞ること・貨物種別の ACL・<code>Voyage</code> と <code>ConnectionRule</code> の class 化と、候補探索の量（港ごとの出発の索引、航海が数百本のときの時間と候補の数、港だけ違う候補。Bolt 37 の開発レビュー）は、外部情報の取込で航海の書き手と量が変わる W7（US-14）の開始準備で扱う。UC-06 4a（情報の更新で候補を旧版にする）も W7。#16 の「経路版の更新を版ごとの差分の保存に置き換える」は US-08（W13）</p>
+<p><strong>D-65 の残り</strong>（Bolt 17 の開発レビュー）: Golden dataset の集約の単位のテスト（37f）と規則を選ぶ時刻（37。確認ポイント 4。2026-10-21 に D-90 で接続の時刻に決めた）は W6。依頼の後の再提出で経路条件が得られないときの扱い（UC-07 5a）・航海の照会を時間の窓と港で絞ること（確定の読み直しは候補の区間の航海番号で引く。Bolt 37c の開発レビュー）・貨物種別の ACL・<code>Voyage</code> と <code>ConnectionRule</code> の class 化と、候補探索の量（港ごとの出発の索引、航海が数百本のときの時間と候補の数、港だけ違う候補。Bolt 37 の開発レビュー）は、外部情報の取込で航海の書き手と量が変わる W7（US-14）の開始準備で扱う。UC-06 4a（情報の更新で候補を旧版にする）も W7。除外理由の閾値の型と <code>threshold</code> の列、制約適合判定の値の名前は、<code>CARGO_NOT_SUPPORTED</code> の判定を入れる Bolt（W7）の開始準備で決める（Bolt 37b2 の開発レビュー。Bolt 37c で送った）。#16 の「経路版の更新を版ごとの差分の保存に置き換える」は US-08（W13）</p>
 <p><strong>Bolt の分け方</strong>（2026-10-20 の初案。各 Bolt の開始準備で引き直す）:</p>
 <table>
 <thead>
