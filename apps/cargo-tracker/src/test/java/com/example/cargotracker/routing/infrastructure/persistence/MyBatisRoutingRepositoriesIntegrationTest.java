@@ -9,6 +9,7 @@ import com.example.cargotracker.routing.domain.model.aggregates.ConnectionRule;
 import com.example.cargotracker.routing.domain.model.aggregates.ConnectionRuleRepository;
 import com.example.cargotracker.routing.domain.model.aggregates.DuplicateRoutingCaseException;
 import com.example.cargotracker.routing.domain.model.aggregates.RoutingCase;
+import com.example.cargotracker.routing.domain.model.aggregates.RoutingCaseFixture;
 import com.example.cargotracker.routing.domain.model.aggregates.RoutingCaseNumberIssuer;
 import com.example.cargotracker.routing.domain.model.aggregates.RoutingCaseRepository;
 import com.example.cargotracker.routing.domain.model.aggregates.Voyage;
@@ -21,6 +22,8 @@ import com.example.cargotracker.routing.domain.model.valueobjects.DecisionRation
 import com.example.cargotracker.routing.domain.model.valueobjects.ExclusionReason;
 import com.example.cargotracker.routing.domain.model.valueobjects.ExclusionReasonCode;
 import com.example.cargotracker.routing.domain.model.valueobjects.PortCall;
+import com.example.cargotracker.routing.domain.model.valueobjects.RedesignReasonCode;
+import com.example.cargotracker.routing.domain.model.valueobjects.RedesignRecord;
 import com.example.cargotracker.routing.domain.model.valueobjects.RouteApprover;
 import com.example.cargotracker.routing.domain.model.valueobjects.RouteConfirmation;
 import com.example.cargotracker.routing.domain.model.valueobjects.RouteSpecification;
@@ -266,7 +269,7 @@ class MyBatisRoutingRepositoriesIntegrationTest {
     }
 
     @Test
-    void 確定した案件を更新すると確定の記録と確定した経路版の番号と操作者が読み出せる() {
+    void 確定した案件を更新すると確定の記録と操作者が読み出せる() {
         RoutingCase routingCase = calculatedAndSaved();
         RoutingCase loaded = repository.findByNumber(routingCase.number()).orElseThrow();
         UtcInstant commitAt = at("2083-10-07T04:00:00Z");
@@ -290,11 +293,12 @@ class MyBatisRoutingRepositoriesIntegrationTest {
         assertThat(found.confirmedRouteVersion())
                 .map(RouteVersion::routeVersionNo)
                 .contains(1);
-        assertThat(jdbc.queryForMap(
-                        "SELECT confirmed_route_version_no, updated_by FROM routing.routing_case WHERE id = ?",
+        // Bolt 37d: 確定した経路版の番号は案件のヘッダに持たない（経路版の状態で表す）
+        assertThat(jdbc.queryForObject(
+                        "SELECT updated_by FROM routing.routing_case WHERE id = ?",
+                        UUID.class,
                         routingCase.id().value()))
-                .containsEntry("confirmed_route_version_no", 1)
-                .containsEntry("updated_by", APPROVER.userId());
+                .isEqualTo(APPROVER.userId());
     }
 
     @Test
@@ -432,20 +436,85 @@ class MyBatisRoutingRepositoriesIntegrationTest {
     }
 
     /**
-     * 確定の記録と確定した経路版の番号の表の守り（CHECK `ck_route_version_confirmed` と外部キー。Bolt 19）。PostgreSQL は制約違反で
-     * トランザクションを中断するため、1 つの例に 1 つの違反だけを書く。
+     * 確定の記録と再設計要の記録の表の守り（CHECK `ck_route_version_confirmed`。Bolt 19。CHECK `ck_route_version_redesign`。
+     * Bolt 37d）。PostgreSQL は制約違反でトランザクションを中断するため、1 つの例に 1 つの違反だけを書く。
      */
     @org.junit.jupiter.params.ParameterizedTest(name = "{0}")
     @org.junit.jupiter.params.provider.ValueSource(
             strings = {
                 "UPDATE routing.route_version SET rationale = '根拠' WHERE routing_case_id = ?",
                 "UPDATE routing.route_version SET status = 'CONFIRMED' WHERE routing_case_id = ?",
-                "UPDATE routing.routing_case SET confirmed_route_version_no = 9 WHERE id = ?"
+                "UPDATE routing.route_version SET redesign_required_at = CURRENT_TIMESTAMP,"
+                        + " redesign_reasons = 'DEADLINE_EXCEEDED' WHERE routing_case_id = ?",
+                "UPDATE routing.route_version SET status = 'REDESIGN_REQUIRED' WHERE routing_case_id = ?"
             })
-    void 確定の記録と確定した経路版の番号は表が守る(String violation) {
+    void 確定の記録と再設計要の記録は表が守る(String violation) {
         UUID id = calculatedAndSaved().id().value();
 
         assertThatThrownBy(() -> jdbc.update(violation, id)).isInstanceOf(DataIntegrityViolationException.class);
+    }
+
+    @Test
+    void 確定した経路版を再設計要にして更新すると状態と記録だけが変わり候補と確定の記録が残る() {
+        RoutingCase confirmed = confirmedAndSaved();
+        RoutingCase loaded = repository.findByNumber(confirmed.number()).orElseThrow();
+        RouteVersion version = loaded.routeVersion();
+        RedesignRecord record = new RedesignRecord(
+                at("2083-10-08T00:00:00Z"),
+                List.of(RedesignReasonCode.CONNECTION_TOO_SHORT, RedesignReasonCode.DEADLINE_EXCEEDED));
+        RoutingCase redesigned = RoutingCaseFixture.withRouteVersions(
+                loaded,
+                List.of(new RouteVersion(
+                        version.routeVersionNo(),
+                        RouteVersionStatus.REDESIGN_REQUIRED,
+                        version.candidates(),
+                        version.evaluatedAt().orElseThrow(),
+                        version.candidatesFound(),
+                        version.confirmation().orElseThrow(),
+                        record)));
+
+        repository.update(redesigned, OPERATOR);
+
+        RoutingCase found = repository.findByNumber(confirmed.number()).orElseThrow();
+        assertThat(found.routeVersions()).isEqualTo(redesigned.routeVersions());
+        assertThat(found.routeVersion().status()).isEqualTo(RouteVersionStatus.REDESIGN_REQUIRED);
+        assertThat(found.routeVersion().redesign()).contains(record);
+        assertThat(found.routeVersion().candidates()).isEqualTo(version.candidates());
+        assertThat(found.confirmedCandidateOf(1)).isEqualTo(loaded.confirmedCandidateOf(1));
+        assertThat(jdbc.queryForObject(
+                        "SELECT redesign_reasons FROM routing.route_version WHERE routing_case_id = ?",
+                        String.class,
+                        confirmed.id().value()))
+                .isEqualTo("CONNECTION_TOO_SHORT DEADLINE_EXCEEDED");
+    }
+
+    @Test
+    void 同じ案件に確定の経路版を二つ持つ行は部分一意インデックスが拒む() {
+        // 確定は案件に 1 つ（R-INV-05。Bolt 37d で confirmed_route_version_no の代わりに PostgreSQL の部分一意インデックスで守る）
+        UUID id = confirmedAndSaved().id().value();
+        jdbc.update(
+                "INSERT INTO routing.route_version (routing_case_id, route_version_no, status, candidates_evaluated_at,"
+                        + " candidates_found, created_at) SELECT routing_case_id, 2, 'CANDIDATES_PRESENTED',"
+                        + " candidates_evaluated_at, candidates_found, created_at FROM routing.route_version"
+                        + " WHERE routing_case_id = ? AND route_version_no = 1",
+                id);
+        jdbc.update(
+                "INSERT INTO routing.route_candidate (routing_case_id, route_version_no, candidate_no, conforming,"
+                        + " estimated_arrival_at, min_connection_slack_minutes, evaluated_at, oldest_info_acquired_at,"
+                        + " info_insufficient) SELECT routing_case_id, 2, candidate_no, conforming, estimated_arrival_at,"
+                        + " min_connection_slack_minutes, evaluated_at, oldest_info_acquired_at, info_insufficient"
+                        + " FROM routing.route_candidate WHERE routing_case_id = ? AND route_version_no = 1",
+                id);
+
+        assertThatThrownBy(() -> jdbc.update(
+                        "UPDATE routing.route_version v2 SET status = 'CONFIRMED',"
+                                + " selected_candidate_no = v1.selected_candidate_no, rationale = v1.rationale,"
+                                + " approved_by = v1.approved_by, approved_at = v1.approved_at"
+                                + " FROM routing.route_version v1 WHERE v2.routing_case_id = ? AND v2.route_version_no = 2"
+                                + " AND v1.routing_case_id = v2.routing_case_id AND v1.route_version_no = 1",
+                        id))
+                .isInstanceOf(DataIntegrityViolationException.class)
+                .hasMessageContaining("ux_route_version_confirmed");
     }
 
     @Test
@@ -567,6 +636,23 @@ class MyBatisRoutingRepositoriesIntegrationTest {
                 source.requestedBy().orElse(null),
                 versions,
                 source.aggregateVersion());
+    }
+
+    /** 候補 1 を確定して保存した案件（Bolt 37d）。 */
+    private RoutingCase confirmedAndSaved() {
+        RoutingCase routingCase = calculatedAndSaved();
+        RoutingCase loaded = repository.findByNumber(routingCase.number()).orElseThrow();
+        loaded.confirm(
+                1,
+                "直行で期限まで 3 日ある。",
+                APPROVER,
+                voyages(),
+                rules(),
+                at("2083-10-07T04:00:00Z"),
+                new ConstraintEvaluator(),
+                new InfoFreshnessPolicy(Duration.ofHours(24)));
+        repository.update(loaded, APPROVER.userId());
+        return loaded;
     }
 
     private RoutingCase calculatedAndSaved() {

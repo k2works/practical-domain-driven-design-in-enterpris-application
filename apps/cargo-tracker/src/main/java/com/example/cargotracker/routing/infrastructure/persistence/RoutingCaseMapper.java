@@ -24,17 +24,19 @@ public interface RoutingCaseMapper {
     void insertExclusionReason(ExclusionReasonRow row);
 
     /**
-     * 楽観ロックで案件の版を進め、確定した経路版の番号と最終更新者を書く。読み込んだときの版でなければ 0 件。
+     * 楽観ロックで案件の版を進め、最終更新者を書く。読み込んだときの版でなければ 0 件（確定した経路版の番号は Bolt 37d で消した）。
      */
     int touchRoutingCase(
             @Param("id") UUID id,
             @Param("expectedVersion") long expectedVersion,
             @Param("updatedAt") java.time.OffsetDateTime updatedAt,
-            @Param("updatedBy") UUID updatedBy,
-            @Param("confirmedRouteVersionNo") Integer confirmedRouteVersionNo);
+            @Param("updatedBy") UUID updatedBy);
 
     /** 作成中・候補提示済みの経路版だけを書き直す（確定した経路版は書き直さない。R-INV-06）。書き直した件数を返す。 */
     int updateRouteVersion(RouteVersionRow row);
+
+    /** 確定の経路版だけを再設計要にし、再設計要の記録を書く（候補・確定の記録は書き直さない。Bolt 37d）。書き直した件数を返す。 */
+    int updateRouteVersionToRedesignRequired(RouteVersionRow row);
 
     /** 経路版の候補・区間・除外理由を消す（再算出で入れ直すため）。 */
     void deleteExclusionReasons(

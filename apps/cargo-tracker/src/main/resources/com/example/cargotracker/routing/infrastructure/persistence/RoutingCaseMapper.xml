@@ -35,6 +35,8 @@
             <arg column="rationale" name="rationale" javaType="String"/>
             <arg column="approved_by" name="approvedBy" javaType="java.util.UUID"/>
             <arg column="approved_at" name="approvedAt" javaType="java.time.OffsetDateTime"/>
+            <arg column="redesign_required_at" name="redesignRequiredAt" javaType="java.time.OffsetDateTime"/>
+            <arg column="redesign_reasons" name="redesignReasons" javaType="String"/>
             <arg column="created_at" name="createdAt" javaType="java.time.OffsetDateTime"/>
         </constructor>
     </resultMap>
@@ -101,22 +103,23 @@
         INSERT INTO routing.routing_case
             (id, case_number, transport_request_id, transport_request_number, transport_request_version_no,
              quotation_id, route_policy_via, origin_unlocode, destination_unlocode, arrival_deadline, cargo_category,
-             requested_at, quotation_expires_at, created_by, updated_by, confirmed_route_version_no, version,
+             requested_at, quotation_expires_at, created_by, updated_by, version,
              created_at, updated_at)
         VALUES (#{id}, #{caseNumber}, #{transportRequestId}, #{transportRequestNumber}, #{transportRequestVersionNo},
                 #{quotationId}, #{routePolicyVia}, #{originUnlocode}, #{destinationUnlocode}, #{arrivalDeadline},
                 #{cargoCategory}, #{requestedAt}, #{quotationExpiresAt},
-                #{createdBy}, NULL, NULL, #{version}, #{createdAt}, #{updatedAt})
+                #{createdBy}, NULL, #{version}, #{createdAt}, #{updatedAt})
     </insert>
 
     <insert id="insertRouteVersion">
         INSERT INTO routing.route_version
             (routing_case_id, route_version_no, status, candidates_evaluated_at, candidates_found,
-             selected_candidate_no, rationale, approved_by, approved_at, created_at)
+             selected_candidate_no, rationale, approved_by, approved_at, redesign_required_at, redesign_reasons,
+             created_at)
         VALUES (#{routingCaseId}, #{routeVersionNo}, #{status},
                 #{candidatesEvaluatedAt}, #{candidatesFound},
                 #{selectedCandidateNo}, #{rationale}, #{approvedBy},
-                #{approvedAt}, #{createdAt})
+                #{approvedAt}, #{redesignRequiredAt}, #{redesignReasons}, #{createdAt})
     </insert>
 
     <insert id="insertCandidate">
@@ -146,8 +149,7 @@
     <!-- 楽観ロック（データモデル、ARCH-HO-01）。読み込んだときの版でなければ 0 件になる -->
     <update id="touchRoutingCase">
         UPDATE routing.routing_case
-           SET version = version + 1, updated_at = #{updatedAt}, updated_by = #{updatedBy},
-               confirmed_route_version_no = #{confirmedRouteVersionNo}
+           SET version = version + 1, updated_at = #{updatedAt}, updated_by = #{updatedBy}
          WHERE id = #{id} AND version = #{expectedVersion}
     </update>
 
@@ -159,6 +161,13 @@
                approved_at = #{approvedAt}
          WHERE routing_case_id = #{routingCaseId} AND route_version_no = #{routeVersionNo}
            AND status IN ('DRAFT', 'CANDIDATES_PRESENTED')
+    </update>
+
+    <update id="updateRouteVersionToRedesignRequired">
+        UPDATE routing.route_version
+           SET status = #{status}, redesign_required_at = #{redesignRequiredAt}, redesign_reasons = #{redesignReasons}
+         WHERE routing_case_id = #{routingCaseId} AND route_version_no = #{routeVersionNo}
+           AND status = 'CONFIRMED'
     </update>
 
     <delete id="deleteExclusionReasons">
@@ -189,7 +198,8 @@
 
     <select id="selectRouteVersions" resultMap="routeVersionRow">
         SELECT routing_case_id, route_version_no, status, candidates_evaluated_at, candidates_found,
-               selected_candidate_no, rationale, approved_by, approved_at, created_at
+               selected_candidate_no, rationale, approved_by, approved_at, redesign_required_at, redesign_reasons,
+               created_at
           FROM routing.route_version WHERE routing_case_id = #{routingCaseId} ORDER BY route_version_no
     </select>
 

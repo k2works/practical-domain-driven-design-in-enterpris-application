@@ -11,6 +11,8 @@ import com.example.cargotracker.routing.domain.model.valueobjects.DecisionRation
 import com.example.cargotracker.routing.domain.model.valueobjects.ExclusionReason;
 import com.example.cargotracker.routing.domain.model.valueobjects.ExclusionReasonCode;
 import com.example.cargotracker.routing.domain.model.valueobjects.Leg;
+import com.example.cargotracker.routing.domain.model.valueobjects.RedesignReasonCode;
+import com.example.cargotracker.routing.domain.model.valueobjects.RedesignRecord;
 import com.example.cargotracker.routing.domain.model.valueobjects.RouteConfirmation;
 import com.example.cargotracker.routing.domain.model.valueobjects.RouteSpecification;
 import com.example.cargotracker.routing.domain.model.valueobjects.RouteVersionStatus;
@@ -79,20 +81,16 @@ public class MyBatisRoutingCaseRepository implements RoutingCaseRepository {
     @Override
     public void update(RoutingCase routingCase, UUID operatorId) {
         UUID id = routingCase.id().value();
-        Integer confirmedRouteVersionNo = routingCase
-                .confirmedRouteVersion()
-                .map(RouteVersion::routeVersionNo)
-                .orElse(null);
-        if (mapper.touchRoutingCase(
-                        id,
-                        routingCase.aggregateVersion(),
-                        OffsetDateTime.now(clock),
-                        operatorId,
-                        confirmedRouteVersionNo)
-                == 0) {
+        if (mapper.touchRoutingCase(id, routingCase.aggregateVersion(), OffsetDateTime.now(clock), operatorId) == 0) {
             throw new ConcurrentRoutingCaseUpdateException(routingCase.number(), routingCase.aggregateVersion());
         }
         RouteVersion version = routingCase.routeVersion();
+        if (version.status() == RouteVersionStatus.REDESIGN_REQUIRED) {
+            // 確定から再設計要に変わるときは、状態と再設計要の記録だけを書く（候補と確定の記録は書き直さない。旧情報版の保持。Bolt 37d）。
+            // すでに再設計要なら確定の行がないので 0 件で、書き直すものはない
+            mapper.updateRouteVersionToRedesignRequired(toRow(id, version, null));
+            return;
+        }
         int updated = mapper.updateRouteVersion(toRow(id, version, null));
         // 確定した経路版の候補は書き直さない（R-INV-06）。確定するときは状態と確定の記録だけを書き（1 件）、確定の後の更新では
         // 表の条件（作成中・候補提示済みだけ）で何も書かない（0 件）。表の条件は最後の守りで、分岐はドメインの状態で決める
@@ -247,7 +245,20 @@ public class MyBatisRoutingCaseRepository implements RoutingCaseRepository {
                 candidates,
                 versionRow.candidatesEvaluatedAt() == null ? null : toUtc(versionRow.candidatesEvaluatedAt()),
                 versionRow.candidatesFound(),
-                confirmation);
+                confirmation,
+                toRedesign(versionRow));
+    }
+
+    /** 再設計要の記録（理由の区分は空白で区切る。Bolt 37d）。 */
+    private static RedesignRecord toRedesign(RouteVersionRow row) {
+        if (row.redesignRequiredAt() == null) {
+            return null;
+        }
+        return new RedesignRecord(
+                toUtc(row.redesignRequiredAt()),
+                Arrays.stream(row.redesignReasons().split(THRESHOLD_SEPARATOR))
+                        .map(RedesignReasonCode::valueOf)
+                        .toList());
     }
 
     private static RouteCandidate toCandidate(
@@ -359,6 +370,14 @@ public class MyBatisRoutingCaseRepository implements RoutingCaseRepository {
                 version.confirmation().map(RouteConfirmation::approvedBy).orElse(null),
                 version.confirmation()
                         .map(confirmation -> toOffset(confirmation.approvedAt()))
+                        .orElse(null),
+                version.redesign()
+                        .map(redesign -> toOffset(redesign.requiredAt()))
+                        .orElse(null),
+                version.redesign()
+                        .map(redesign -> redesign.reasons().stream()
+                                .map(Enum::name)
+                                .collect(Collectors.joining(THRESHOLD_SEPARATOR)))
                         .orElse(null),
                 createdAt);
     }
