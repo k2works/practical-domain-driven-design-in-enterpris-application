@@ -445,8 +445,8 @@ class RoutingCaseControllerTest {
     @org.junit.jupiter.params.ParameterizedTest(name = "{0} は比較の画面に戻して示す")
     @org.junit.jupiter.params.provider.EnumSource(
             value = RouteConfirmationRejectionReason.class,
-            names = {"CANDIDATE_EXCLUDED", "NOT_CONFIRMABLE_STATE", "CANDIDATE_NOT_FOUND"})
-    void 入力で直せない拒否は比較の画面に戻して理由を示す(RouteConfirmationRejectionReason reason) throws Exception {
+            names = {"CANDIDATE_EXCLUDED", "NOT_CONFIRMABLE_STATE", "CANDIDATE_NOT_FOUND", "INFO_VERSION_CHANGED"})
+    void 選んだ候補が使えないか参照した情報が置き換わった拒否は比較の画面に戻して理由を示す(RouteConfirmationRejectionReason reason) throws Exception {
         when(commandService.confirm(new ConfirmRouteCommand(NUMBER, 1, "根拠", 0, TestActors.STAFF_USER, true)))
                 .thenReturn(new RouteConfirmationOutcome.Rejected(reason));
 
@@ -461,8 +461,8 @@ class RoutingCaseControllerTest {
     @org.junit.jupiter.params.ParameterizedTest(name = "{0} は確定の画面で示す")
     @org.junit.jupiter.params.provider.EnumSource(
             value = RouteConfirmationRejectionReason.class,
-            names = {"RATIONALE_TOO_LONG", "NOT_ROUTE_DESIGNER", "NO_LONGER_CONFORMING"})
-    void 入力や再算出で直す拒否は確定の画面で示す(RouteConfirmationRejectionReason reason) throws Exception {
+            names = {"RATIONALE_TOO_LONG", "NOT_ROUTE_DESIGNER", "NO_LONGER_CONFORMING", "INFO_INSUFFICIENT"})
+    void 情報は同じで入力や再算出で直す拒否は確定の画面で示す(RouteConfirmationRejectionReason reason) throws Exception {
         when(queryService.findByNumber(NUMBER)).thenReturn(Optional.of(calculated()));
         when(commandService.confirm(new ConfirmRouteCommand(NUMBER, 1, "根拠", 0, TestActors.STAFF_USER, true)))
                 .thenReturn(new RouteConfirmationOutcome.Rejected(reason));

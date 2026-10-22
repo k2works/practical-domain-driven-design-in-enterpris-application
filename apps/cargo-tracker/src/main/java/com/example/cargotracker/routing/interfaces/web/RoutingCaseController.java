@@ -48,12 +48,16 @@ public class RoutingCaseController {
     private static final String CONFIRMATION_VIEW = "routing/staff/routing-cases/confirmation";
     private static final String CONFLICT_MESSAGE = "ほかの経路設計者が先にこの案件を更新しました。最新の候補を確かめてください。";
 
-    /** S-07 にとどまって示す拒否の理由（入力を直せば、または再算出の判断に使う）。ほかは S-06 に戻して示す。 */
+    /**
+     * S-07 にとどまって示す拒否の理由（情報は同じで、入力を直せば、または再算出の判断に使う）。ほかは S-06 に戻して示す（選んだ候補が
+     * 使えない、または参照した情報そのものが置き換わった。情報版の更新は AC3 の再判断で、古い情報に基づく判断根拠は残さない。Bolt 37c）。
+     */
     private static final Set<RouteConfirmationRejectionReason> SHOWN_ON_CONFIRMATION = EnumSet.of(
             RouteConfirmationRejectionReason.RATIONALE_MISSING,
             RouteConfirmationRejectionReason.RATIONALE_TOO_LONG,
             RouteConfirmationRejectionReason.NOT_ROUTE_DESIGNER,
             RouteConfirmationRejectionReason.ALREADY_DEPARTED,
+            RouteConfirmationRejectionReason.INFO_INSUFFICIENT,
             RouteConfirmationRejectionReason.NO_LONGER_CONFORMING);
 
     private static final Set<RouteConfirmationRejectionReason> RATIONALE_REASONS = EnumSet.of(
