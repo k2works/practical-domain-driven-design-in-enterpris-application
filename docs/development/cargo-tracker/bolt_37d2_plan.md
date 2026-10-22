@@ -2,8 +2,10 @@
 type: Plan
 title: "Bolt 37d2 計画 - US-07 AC4 の経路設計の側（確定した経路版を外部情報の更新で評価して再設計要にし、旧情報版を保持して DE-06 を出す）"
 tags: [plan]
-status: draft
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-22T09:38:13Z }
+status: stable
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-22T09:55:00Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-10-22T09:55:09Z }
 ---
 
 # Bolt 37d2 計画 - US-07 AC4 の経路設計の側（確定した経路版を外部情報の更新で評価して再設計要にし、旧情報版を保持して DE-06 を出す）
@@ -238,6 +240,7 @@ endif
 
 | 日付 | 更新内容 | 更新者 |
 | :--- | :--- | :--- |
+| 2026-10-22 | 計画を承認した（確認ポイントを推奨のとおり） | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-10-22 | 整合性検証の指摘を反映した（承認待ち）。理由の写し（同じ区分を 1 つに、写せない区分は例外）と引き直しの仕様（組がない・2 つ以上・時刻が逆は失敗に倒す）を決め、状態の組み合わせの表に行を足した。DE-06 は経路設計の中の listener が受ける形（ADR-014）と業務キー、購読者がいない間の扱い、競合で再試行が要らないこと、`updated_by` は操作者があるときだけ書く形にした。受入シナリオの AC5 のタグと寄港の時刻を変えるステップ、状態遷移図とドメインモデル図、キャプチャの規律から外れることとデモ項目と axe の送り先、文書と Javadoc の漏れ、行番号を直した。約 3.8 時間 | anthropic/claude-opus-5-5 |
 | 2026-10-22 | 初版作成（承認待ち） | anthropic/claude-opus-5-5 |
 
