@@ -123,8 +123,8 @@ class QuotationRouteRedesignTest {
         expired.requoteInto(calculatedNext(), EXPIRES);
         Quotation replaced = inherited();
         replaced.requoteInto(calculatedNext(), EXPIRES);
-        marked(expired);
-        marked(replaced);
+        assertThat(expired.markRouteRedesignRequired(CASE, 1, MARKED_AT)).isEqualTo(RouteRedesignMarkResult.MARKED);
+        assertThat(replaced.markRouteRedesignRequired(CASE, 1, MARKED_AT)).isEqualTo(RouteRedesignMarkResult.MARKED);
 
         assertThat(expired.approvalRejectionAt(now)).contains(QuotationRejection.EXPIRED);
         assertThat(expired.bookingRejectionAt(now)).contains(QuotationRejection.EXPIRED);
@@ -134,14 +134,15 @@ class QuotationRouteRedesignTest {
 
     @Test
     void 経路を引き継いだ承認待ちに印があると提示の前は荷主承認待ちでなく提示すると再設計要() {
-        // 行 7
+        // 行 7（再見積りは旧版の有効期限 EXPIRES に行うので、提示と判定はその後）
         Quotation next = marked(inherited());
+        UtcInstant afterRequote = new UtcInstant(EXPIRES.instant().plusSeconds(3_600));
 
-        assertThat(next.approvalRejectionAt(now)).contains(QuotationRejection.NOT_AWAITING_SHIPPER_APPROVAL);
-        assertThat(next.bookingRejectionAt(now)).contains(QuotationRejection.NOT_APPROVED);
-        next.presentInternally(salesRep, now);
+        assertThat(next.approvalRejectionAt(afterRequote)).contains(QuotationRejection.NOT_AWAITING_SHIPPER_APPROVAL);
+        assertThat(next.bookingRejectionAt(afterRequote)).contains(QuotationRejection.NOT_APPROVED);
+        next.presentInternally(salesRep, afterRequote);
         assertThat(next.status()).isEqualTo(QuotationStatus.AWAITING_SHIPPER_APPROVAL);
-        assertThat(next.approvalRejectionAt(now)).contains(QuotationRejection.ROUTE_REDESIGN_REQUIRED);
+        assertThat(next.approvalRejectionAt(afterRequote)).contains(QuotationRejection.ROUTE_REDESIGN_REQUIRED);
     }
 
     // 印を付ける操作と再見積り（行 8〜14、19）
@@ -200,9 +201,15 @@ class QuotationRouteRedesignTest {
         Quotation expired = approved();
         expired.requoteInto(calculatedNext(), EXPIRES);
 
+        Quotation replaced = inherited();
+        replaced.requoteInto(calculatedNext(), EXPIRES);
+
         assertThat(expired.markRouteRedesignRequired(CASE, 1, MARKED_AT)).isEqualTo(RouteRedesignMarkResult.MARKED);
+        assertThat(replaced.markRouteRedesignRequired(CASE, 1, MARKED_AT)).isEqualTo(RouteRedesignMarkResult.MARKED);
         assertThat(expired.status()).isEqualTo(QuotationStatus.EXPIRED);
+        assertThat(replaced.status()).isEqualTo(QuotationStatus.REPLACED);
         assertThat(expired.assignedRoute().orElseThrow().redesignRequiredAt()).isEqualTo(MARKED_AT);
+        assertThat(replaced.assignedRoute().orElseThrow().redesignRequiredAt()).isEqualTo(MARKED_AT);
     }
 
     @Test
@@ -220,8 +227,10 @@ class QuotationRouteRedesignTest {
 
     @Test
     void 印のある荷主承認待ちと期限内の承認済みは今の理由で再見積りできない() {
-        // 行 14（期限内の承認済みは出口がない。担当者の相談と US-08）
+        // 行 14（承認済みは期限まで、荷主承認待ちは期限の後も出口がない。担当者の相談と US-08。荷主承認待ちの再見積りは D-86）
         assertThat(marked(awaitingApproval()).requoteRejectionAt(now)).contains(QuotationRejection.ROUTING_REQUESTED);
+        assertThat(marked(awaitingApproval()).requoteRejectionAt(EXPIRES))
+                .contains(QuotationRejection.ROUTING_REQUESTED);
         assertThat(marked(approved()).requoteRejectionAt(now)).contains(QuotationRejection.APPROVED_AND_STILL_VALID);
     }
 

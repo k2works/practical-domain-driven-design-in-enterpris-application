@@ -1,7 +1,7 @@
 package com.example.cargotracker.quotation.domain.model.valueobjects;
 
 /**
- * 割り当てた経路に再設計要の印を付けた結果（US-07 AC5、Q-INV-10。Bolt 37e）。付けたか、同じ経路版にすでに付いていたか（冪等）か、
+ * 再設計要の印の結果。割り当てた経路に再設計要の印を付けた結果（US-07 AC5、Q-INV-10。Bolt 37e）。付けたか、同じ経路版にすでに付いていたか（冪等）か、
  * 付けなかった理由。
  */
 public enum RouteRedesignMarkResult {

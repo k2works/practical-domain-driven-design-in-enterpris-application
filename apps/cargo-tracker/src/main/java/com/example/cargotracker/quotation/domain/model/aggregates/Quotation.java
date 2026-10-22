@@ -396,13 +396,12 @@ public final class Quotation {
 
     /**
      * 割り当てた経路版が再設計要になったことを写す（US-07 AC5、Q-INV-10、B-INV-05。Bolt 37e）。
+     * 印は経路版の事実の写しで、見積りの状態は変えない。失効・置換済みの見積りにも付ける（判定には効かない。置換済み・失効の記録が先に
+     * 返る。記録をそろえる）。すでに付いていれば最初の時刻を残す（冪等）。
      *
      * @param routingCaseNumber 案件番号
      * @param routeVersionNo 経路版番号
      * @param requiredAt 経路設計が再設計要にした時刻
-     * 印は経路版の事実の写しで、見積りの状態は変えない。失効・置換済みの見積りにも付ける（判定には効かない。置換済み・失効の記録が先に
-     * 返る。記録をそろえる）。すでに付いていれば最初の時刻を残す（冪等）。
-     *
      * @return 印を付けた結果
      */
     public RouteRedesignMarkResult markRouteRedesignRequired(

@@ -23,14 +23,15 @@ import org.junit.jupiter.api.Test;
 
 /**
  * 再設計要の伝達の入力ポート（US-07 AC5、Q-INV-10。Bolt 37e）。同じ経路版を割り当てた見積りすべてに印を付け、照会し直して増えた見積りにも
- * 付ける。状態の組み合わせの表の行 15〜17 と、再見積りとの届く順の C・E。メモリ上のリポジトリの照会と読み込みの直後に、再見積りや別の
+ * 付ける。状態の組み合わせの表の行 15〜17・20 と、再見積りとの届く順の C・E。メモリ上のリポジトリの照会と読み込みの直後に、再見積りや別の
  * 更新を挟んで順を起こす。
  */
 class RouteRedesignServiceTest {
 
     private static final String CASE = "RC-2026-0001";
     private static final UtcInstant EXPIRES = QuotationFixture.EXPIRES_AT;
-    private static final UtcInstant REDESIGN_AT = at("2026-10-08T07:00:00Z");
+    /** 再見積り（旧版の有効期限 EXPIRES = 2099-10-08T09:00Z）の後に再設計要が伝わる。 */
+    private static final UtcInstant REDESIGN_AT = at("2099-10-08T10:00:00Z");
 
     private final TransportRequestId transportRequestId = new TransportRequestId(UUID.randomUUID());
     private final UserId salesRep = new UserId(UUID.randomUUID());
@@ -55,7 +56,7 @@ class RouteRedesignServiceTest {
         InMemoryQuotationRepository repository = new InMemoryQuotationRepository();
         Quotation[] pair = requoted(repository);
         Quotation old = repository.findById(pair[0].id()).orElseThrow();
-        old.markRouteRedesignRequired(CASE, 1, at("2026-10-08T06:00:00Z"));
+        old.markRouteRedesignRequired(CASE, 1, at("2099-10-08T09:30:00Z"));
         repository.update(old);
 
         RouteRedesignMarking marking = new RouteRedesignService(repository).markRedesignRequired(CASE, 1, REDESIGN_AT);
@@ -68,7 +69,7 @@ class RouteRedesignServiceTest {
                         .orElseThrow()
                         .redesignRequiredAt())
                 .as("最初の時刻のまま")
-                .isEqualTo(at("2026-10-08T06:00:00Z"));
+                .isEqualTo(at("2099-10-08T09:30:00Z"));
     }
 
     @Test
@@ -87,6 +88,25 @@ class RouteRedesignServiceTest {
                         .orElseThrow()
                         .redesignRequired())
                 .isFalse();
+    }
+
+    @Test
+    void 経路を割り当てる前に伝わると見つからず後で割り当てた経路は印がなく承認できる() {
+        // 行 20（DE-06 が DE-05 より先に届く穴。Bolt 37e の時点の振る舞いを固定する。Bolt 37e2 で塞ぐと期待値が変わる）
+        InMemoryQuotationRepository repository = new InMemoryQuotationRepository();
+        Quotation quotation = Quotation.create(new QuotationId(UUID.randomUUID()), transportRequestId, 1, 1);
+        quotation.calculate(QuotationFixture.completeInput(), at("2026-10-05T04:00:00Z"));
+        quotation.presentInternally(salesRep, at("2026-10-05T04:30:00Z"));
+        quotation.requestRouteDesign(shipperUser, at("2026-10-06T02:00:00Z"));
+        repository.save(quotation);
+
+        assertThat(new RouteRedesignService(repository).markRedesignRequired(CASE, 1, at("2026-10-08T02:00:00Z")))
+                .isEqualTo(new RouteRedesignMarking(0, 0));
+        Quotation routed = repository.findById(quotation.id()).orElseThrow();
+        routed.assignRoute(route(), at("2026-10-08T02:30:00Z"));
+
+        assertThat(routed.assignedRoute().orElseThrow().redesignRequired()).isFalse();
+        assertThat(routed.approvalRejectionAt(at("2026-10-08T03:00:00Z"))).isEmpty();
     }
 
     @Test

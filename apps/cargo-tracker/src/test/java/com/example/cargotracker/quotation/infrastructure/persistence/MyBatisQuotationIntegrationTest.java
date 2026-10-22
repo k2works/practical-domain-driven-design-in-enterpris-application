@@ -18,6 +18,7 @@ import com.example.cargotracker.quotation.domain.model.valueobjects.PricingLine;
 import com.example.cargotracker.quotation.domain.model.valueobjects.QuotationFixture;
 import com.example.cargotracker.quotation.domain.model.valueobjects.QuotationId;
 import com.example.cargotracker.quotation.domain.model.valueobjects.QuotationInput;
+import com.example.cargotracker.quotation.domain.model.valueobjects.QuotationRejection;
 import com.example.cargotracker.quotation.domain.model.valueobjects.QuotationStatus;
 import com.example.cargotracker.quotation.domain.model.valueobjects.QuotedRequestSummary;
 import com.example.cargotracker.quotation.domain.model.valueobjects.RoutingRequestedSummary;
@@ -33,6 +34,7 @@ import com.example.cargotracker.shared.domain.UserId;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
@@ -1022,7 +1024,7 @@ class MyBatisQuotationIntegrationTest {
         Quotation target = routingRequested(transportRequestId);
         String update = "UPDATE quotation.quotation SET route_redesign_required_at = ? WHERE id = ?";
         UUID targetId = target.id().value();
-        java.time.OffsetDateTime at = java.time.OffsetDateTime.parse("2082-01-07T07:00:00Z");
+        OffsetDateTime at = OffsetDateTime.parse("2082-01-07T07:00:00Z");
 
         assertThatThrownBy(() -> jdbc.update(update, at, targetId))
                 .isInstanceOf(DataIntegrityViolationException.class)
@@ -1037,11 +1039,42 @@ class MyBatisQuotationIntegrationTest {
                 repository.findByTransportRequestIdAndNo(transportRequestId, 1).orElseThrow();
         Quotation replacement = calculatedAfterExpiry(transportRequestId, 2);
         requote(old, replacement, QuotationFixture.EXPIRES_AT);
-        routingRequested(transportRequest(49));
+        Quotation noRoute = routingRequested(transportRequest(49));
+        TransportRequestId otherVersionRequest = transportRequest(50);
+        routingRequested(otherVersionRequest);
+        Quotation otherVersion =
+                repository.findByTransportRequestIdAndNo(otherVersionRequest, 1).orElseThrow();
+        otherVersion.assignRoute(
+                new AssignedRoute(ROUTE.routingCaseNumber(), 2, ROUTE.confirmedAt(), ROUTE.legs()), CONFIRMED_AT);
+        repository.update(otherVersion);
 
-        assertThat(repository.findIdsByAssignedRoute("RC-2082-0001", 1)).contains(old.id(), replacement.id());
-        assertThat(repository.findIdsByAssignedRoute("RC-2082-0001", 2)).doesNotContain(old.id(), replacement.id());
+        assertThat(repository.findIdsByAssignedRoute("RC-2082-0001", 1))
+                .containsExactlyInAnyOrder(old.id(), replacement.id());
+        assertThat(repository.findIdsByAssignedRoute("RC-2082-0001", 2)).containsExactly(otherVersion.id());
+        assertThat(repository.findIdsByAssignedRoute("RC-2082-0001", 1)).doesNotContain(noRoute.id());
         assertThat(repository.findIdsByAssignedRoute("RC-2099-9999", 1)).isEmpty();
+    }
+
+    @Test
+    void 印のある見積りを再見積りすると新しい見積りは印を持って保存される() {
+        // 届く順 A。新しい見積りは INSERT で保存されるので、挿入の列も確かめる（Bolt 37e レビュー H-1）
+        TransportRequestId transportRequestId = transportRequest(51);
+        approved(transportRequestId);
+        Quotation old =
+                repository.findByTransportRequestIdAndNo(transportRequestId, 1).orElseThrow();
+        old.markRouteRedesignRequired("RC-2082-0001", 1, REDESIGN_AT);
+        repository.update(old);
+        Quotation replacement = calculatedAfterExpiry(transportRequestId, 2);
+
+        requote(repository.findById(old.id()).orElseThrow(), replacement, QuotationFixture.EXPIRES_AT);
+
+        assertThat(repository.findById(replacement.id()).orElseThrow().assignedRoute())
+                .hasValueSatisfying(
+                        route -> assertThat(route.redesignRequiredAt()).isEqualTo(REDESIGN_AT));
+        Quotation saved = repository.findById(replacement.id()).orElseThrow();
+        saved.presentInternally(STAFF, QuotationFixture.EXPIRES_AT);
+        assertThat(saved.approvalRejectionAt(QuotationFixture.EXPIRES_AT))
+                .contains(QuotationRejection.ROUTE_REDESIGN_REQUIRED);
     }
 
     private int legs(QuotationId quotationId) {

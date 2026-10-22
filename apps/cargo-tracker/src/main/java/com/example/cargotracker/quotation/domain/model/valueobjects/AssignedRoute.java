@@ -56,7 +56,7 @@ public record AssignedRoute(
         return redesignRequired() ? this : new AssignedRoute(routingCaseNumber, routeVersionNo, confirmedAt, legs, at);
     }
 
-    /** 同じ経路版か（案件番号と経路版番号が同じ）。割当てと印の冪等の判定に使う（印は見ない）。 */
+    /** 同じ経路版か（案件番号と経路版番号が同じ。印は見ない）。割当ての冪等の判定に使う（印は {@link #isVersion} で同じ判定をする）。 */
     public boolean isSameVersionAs(AssignedRoute other) {
         return isVersion(other.routingCaseNumber, other.routeVersionNo);
     }

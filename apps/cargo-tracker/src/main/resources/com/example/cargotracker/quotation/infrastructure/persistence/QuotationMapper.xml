@@ -102,8 +102,10 @@
          WHERE id = #{id}
     </select>
 
-    <!-- 再設計要の印を付ける見積り（失効・置換済みを含む。索引 ix_quotation_assigned_route。Bolt 37e） -->
-    <select id="selectIdsByAssignedRoute" resultType="java.util.UUID">
+    <!-- 再設計要の印を付ける見積り（失効・置換済みを含む。索引 ix_quotation_assigned_route。Bolt 37e）。入力ポートは同じトランザクションで
+         照会し直して、ほかのトランザクションが後から保存した見積り（再見積りの新しい見積り）を拾う。READ COMMITTED の文ごとの読み取りで
+         新しい行を見るため、セッションのキャッシュを使わない -->
+    <select id="selectIdsByAssignedRoute" resultType="java.util.UUID" flushCache="true">
         SELECT id
           FROM quotation.quotation
          WHERE routing_case_number = #{routingCaseNumber} AND route_version_no = #{routeVersionNo}
