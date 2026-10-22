@@ -11698,7 +11698,15 @@
 </tr>
 <tr>
 <td style="text-align: left;">経路候補</td>
-<td style="text-align: left;">航海の情報と接続時間の規則から算出した経路の案。期限に間に合うものは「適合」、間に合わないものは「除外」</td>
+<td style="text-align: left;">航海の情報と接続時間の規則から算出した経路の案。期限・接続・情報の古さの条件をすべて満たすものは「適合」、満たさないものは理由とともに「除外」</td>
+</tr>
+<tr>
+<td style="text-align: left;">判定時刻</td>
+<td style="text-align: left;">経路候補を算出した時刻。この時刻より後に出発する区間で候補を作り、この時刻に航海の情報が古くないかを判定します</td>
+</tr>
+<tr>
+<td style="text-align: left;">情報不足</td>
+<td style="text-align: left;">経路候補に使う航海の情報が、取得から許容時間（いまは 24 時間）を過ぎていること。その候補は除外されます</td>
 </tr>
 <tr>
 <td style="text-align: left;">確定した経路（経路版）</td>
