@@ -257,6 +257,34 @@ public class RoutingUiSteps {
         page().waitForLoadState();
     }
 
+    /** 確定の画面を開いた後に、外部原本の取込で直行の航海の情報版が変わる（取得時刻は判定と同じ JVM の時計。Bolt 37c、T-171）。 */
+    @かつ("直行の航海の情報版が外部原本の取込で更新される")
+    public void 直行の航海の情報版が更新される() {
+        String number = voyage("DIRECT");
+        int updated = jdbc.update(
+                "UPDATE routing.voyage SET adopted_info_version = ?, acquired_at = ?, updated_at = CURRENT_TIMESTAMP"
+                        + " WHERE voyage_number = ?",
+                number + "@2",
+                java.sql.Timestamp.from(java.time.Instant.now()),
+                number);
+        if (updated != 1) {
+            throw new AssertionError("情報版を更新する航海がない: " + number);
+        }
+    }
+
+    @ならば("比較の画面に戻って航海の情報が更新されたため再算出して判断し直すよう示され、経路はまだ確定していない")
+    public void 情報版の更新で比較の画面に戻る() {
+        assertThat(page().getByRole(AriaRole.HEADING, new Page.GetByRoleOptions().setLevel(1)))
+                .containsText("経路候補の比較");
+        Locator problem = page().getByRole(AriaRole.ALERT).first();
+        // 利用者が通知を読むところまで画面を送る（デモの動画に通知を写す）
+        problem.scrollIntoViewIfNeeded();
+        assertThat(problem).containsText("候補を算出した後に航海の情報が更新されたため確定できません");
+        assertThat(problem).containsText("候補を再算出して判断し直してください");
+        assertThat(candidate(voyage("DIRECT"))).not().containsText("確定した経路");
+        browser.checkAccessibility();
+    }
+
     @ならば("経路を確定したと示され、確定した経路に判断根拠が示され、直行の航海の候補に確定と示される")
     public void 経路を確定したと示される() {
         assertThat(page().getByRole(AriaRole.STATUS)).containsText("経路を確定しました");
