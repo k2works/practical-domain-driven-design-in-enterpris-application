@@ -13733,6 +13733,18 @@ src/test/java/.../ui/                     画面の層のステップ定義（@u
 <td style="text-align: left;">37c</td>
 <td style="text-align: left;"><code>@US-07-AC3</code>（<code>confirm_route.feature</code>・<code>confirm_route_ui.feature</code>）、<code>RoutingCaseConfirmationTest</code>（候補の版の違う区間を含む）・<code>InfoFreshnessPolicyTest</code>、<code>RoutingCaseControllerTest</code></td>
 </tr>
+<tr>
+<td style="text-align: left;">US-07</td>
+<td style="text-align: left;">AC4（確定した経路版の区間の航海が更新され、期限・接続を満たさなくなるか航海を引き直せなくなると、評価で再設計要になり、候補・区間・確定の記録（旧情報版）が残り、DE-06 が理由と旧情報版を運んで 1 度だけ出る。満たし続けるときと情報版が変わらないときは確定のまま。予約を自動で取り消さないことの確かめは 37e）</td>
+<td style="text-align: left;">37d2</td>
+<td style="text-align: left;"><code>@US-07-AC4</code>（<code>evaluate_confirmed_route.feature</code>）、<code>RoutingCaseEvaluationTest</code>（状態の組み合わせの表の行ごと）・<code>RouteCandidateFinderTest</code>（引き直し）・<code>RedesignReasonCodeTest</code>（理由の写し）・<code>ConfirmedRouteEvaluationTest</code>（入力ポート。見つからない・変わらない・再設計要・競合）、保存の統合テスト（評価で <code>updated_by</code> を変えない）、<code>RoutingCaseControllerTest</code>（S-06 の再設計要の表示）・<code>RoutingCaseViewsTest</code>（理由の画面の語）</td>
+</tr>
+<tr>
+<td style="text-align: left;">US-07</td>
+<td style="text-align: left;">AC5（旧版・再設計要の経路版は再確定・新規予約への割当てに使えず、新しい経路版の作成が求められる）</td>
+<td style="text-align: left;">37d2（再設計要の経路版の再確定の拒否）、37e（見積りへの割当て・荷主の承認・本予約の拒否）</td>
+<td style="text-align: left;"><code>@US-07-AC5</code>（<code>evaluate_confirmed_route.feature</code>。再設計要の経路版は確定し直せず、もう一度評価しても DE-06 は出ない）、37e で見積り・予約の側の受入シナリオ</td>
+</tr>
 </tbody>
 </table>
 <h2 id="_18">後続工程への引継ぎ<a class="headerlink" href="#_18" title="Permanent link">&para;</a></h2>
