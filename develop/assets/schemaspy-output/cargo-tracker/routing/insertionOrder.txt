@@ -1,7 +1,7 @@
 voyage
+routing_case
 route_candidate
 route_version
-routing_case
 port_call
 exclusion_reason
 candidate_leg

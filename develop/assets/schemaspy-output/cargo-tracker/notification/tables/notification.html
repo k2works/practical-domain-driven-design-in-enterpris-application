@@ -379,12 +379,12 @@
                                 </thead>
                                 <tbody>
                                 <tr>
-                                    <td>ck_notification_status</td>
-                                    <td>((status)::text &#61; ANY ((ARRAY[&#39;PENDING&#39;::character varying, &#39;SENT&#39;::character varying, &#39;FAILED&#39;::character varying])::text[]))</td>
-                                </tr>
-                                <tr>
                                     <td>ck_notification_kind</td>
                                     <td>((kind)::text &#61; ANY ((ARRAY[&#39;QUOTATION_PRESENTED&#39;::character varying, &#39;ROUTE_APPROVED&#39;::character varying, &#39;QUOTATION_EXPIRING&#39;::character varying, &#39;BOOKING_CONFIRMED&#39;::character varying, &#39;TRACKING_UNDER_REVIEW&#39;::character varying, &#39;CONSIGNEE_INVITATION&#39;::character varying, &#39;PASSWORD_RESET&#39;::character varying])::text[]))</td>
+                                </tr>
+                                <tr>
+                                    <td>ck_notification_status</td>
+                                    <td>((status)::text &#61; ANY ((ARRAY[&#39;PENDING&#39;::character varying, &#39;SENT&#39;::character varying, &#39;FAILED&#39;::character varying])::text[]))</td>
                                 </tr>
                                 <tr>
                                     <td>ck_notification_sent_at</td>

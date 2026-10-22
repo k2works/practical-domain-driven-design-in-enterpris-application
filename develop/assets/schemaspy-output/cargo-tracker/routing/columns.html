@@ -853,6 +853,34 @@
         "comments": "<p>承認 commit 時刻（確定の記録。確定の再検証の時刻）</p>"
     },
     {
+        "tableName": "route_version",
+        "tableFileName": "route_version",
+        "tableType": "Table",
+        "keyClass": "",
+        "keyTitle": "",
+        "name": "redesign_required_at",
+        "type": "timestamptz",
+        "length": 35,
+        "nullable": "√",
+        "autoUpdated": "",
+        "defaultValue": "null",
+        "comments": "<p>再設計要にした時刻（再設計要の記録。再設計要と旧版だけ）</p>"
+    },
+    {
+        "tableName": "route_version",
+        "tableFileName": "route_version",
+        "tableType": "Table",
+        "keyClass": "",
+        "keyTitle": "",
+        "name": "redesign_reasons",
+        "type": "varchar",
+        "length": 200,
+        "nullable": "√",
+        "autoUpdated": "",
+        "defaultValue": "null",
+        "comments": "<p>再設計要の理由の区分（DEADLINE_EXCEEDED・CONNECTION_TOO_SHORT・NOT_CONNECTABLE・VOYAGE_UNAVAILABLE を空白で区切る）</p>"
+    },
+    {
         "tableName": "routing_case",
         "tableFileName": "routing_case",
         "tableType": "Table",
@@ -1019,20 +1047,6 @@
         "autoUpdated": "",
         "defaultValue": "null",
         "comments": "<p>詳細経路設計の依頼時刻</p>"
-    },
-    {
-        "tableName": "routing_case",
-        "tableFileName": "routing_case",
-        "tableType": "Table",
-        "keyClass": "foreignKey",
-        "keyTitle": "Foreign Key",
-        "name": "<i class='icon ion-key iconkey' style='padding-left: 5px;'></i>confirmed_route_version_no",
-        "type": "int4",
-        "length": 10,
-        "nullable": "√",
-        "autoUpdated": "",
-        "defaultValue": "null",
-        "comments": "<p>確定した経路版番号（未確定は NULL）</p>"
     },
     {
         "tableName": "routing_case",

@@ -14184,7 +14184,7 @@
 <tr>
 <td style="text-align: left;">9</td>
 <td style="text-align: left;"><code>routing_case.confirmed_route_version_no</code>（書くだけで読まれない。再設計要にすると NULL で上書きされ、経路版の更新が 0 件になる）</td>
-<td style="text-align: left;">列と外部キーを消し、「確定は案件に 1 つ」（R-INV-05）は集約（<code>validated</code>）と、PostgreSQL の部分一意インデックス（<code>status = 'CONFIRMED'</code>。<code>migration/postgresql</code> の前例。D-72 を解消する）で守る（スキーマ）。data_model :495・:501 と test_strategy :236 を直す</td>
+<td style="text-align: left;">列と外部キーを消し、「確定は案件に 1 つ」（R-INV-05）は集約（<code>validated</code>）と、PostgreSQL の部分一意インデックス（<code>status = 'CONFIRMED'</code>。<code>migration/postgresql</code> の前例。D-72 を解消する）で守る（スキーマ）。data_model :495・:501 と test_strategy :236 を直す。決着（2026-10-22。Bolt 37d の計画の承認）: このとおり。あわせて経路版に再設計要の記録の列を足す</td>
 </tr>
 <tr>
 <td style="text-align: left;">10</td>

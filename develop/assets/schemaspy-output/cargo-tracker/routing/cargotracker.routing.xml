@@ -133,13 +133,11 @@
       <table name="route_version" remarks="経路版" schema="routing" type="TABLE">
          <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="routing_case_id" nullable="false" remarks="経路設計案件 ID" size="2147483647" type="uuid" typeCode="1111">
             <child column="routing_case_id" foreignKey="fk_route_candidate_version" implied="false" onDeleteCascade="false" schema="routing" table="route_candidate"/>
-            <child column="id" foreignKey="fk_routing_case_confirmed_version" implied="false" onDeleteCascade="false" schema="routing" table="routing_case"/>
             <parent column="id" foreignKey="fk_route_version_case" implied="false" onDeleteCascade="false" schema="routing" table="routing_case"/>
             <parent column="routing_case_id" foreignKey="fk_route_version_selected_candidate" implied="false" onDeleteCascade="false" schema="routing" table="route_candidate"/>
          </column>
          <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="route_version_no" nullable="false" remarks="経路版番号" size="10" type="int4" typeCode="4">
             <child column="route_version_no" foreignKey="fk_route_candidate_version" implied="false" onDeleteCascade="false" schema="routing" table="route_candidate"/>
-            <child column="confirmed_route_version_no" foreignKey="fk_routing_case_confirmed_version" implied="false" onDeleteCascade="false" schema="routing" table="routing_case"/>
             <parent column="route_version_no" foreignKey="fk_route_version_selected_candidate" implied="false" onDeleteCascade="false" schema="routing" table="route_candidate"/>
          </column>
          <column autoUpdated="false" defaultValue="null" digits="0" id="2" name="status" nullable="false" remarks="状態" size="30" type="varchar" typeCode="12"/>
@@ -152,22 +150,28 @@
          <column autoUpdated="false" defaultValue="null" digits="0" id="7" name="rationale" nullable="true" remarks="判断根拠（確定の記録。前後の空白を除いて 1〜4,000 文字）" size="4000" type="varchar" typeCode="12"/>
          <column autoUpdated="false" defaultValue="null" digits="0" id="8" name="approved_by" nullable="true" remarks="承認者（経路設計者）の利用者 ID（確定の記録）" size="2147483647" type="uuid" typeCode="1111"/>
          <column autoUpdated="false" defaultValue="null" digits="6" id="9" name="approved_at" nullable="true" remarks="承認 commit 時刻（確定の記録。確定の再検証の時刻）" size="35" type="timestamptz" typeCode="93"/>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="10" name="redesign_required_at" nullable="true" remarks="再設計要にした時刻（再設計要の記録。再設計要と旧版だけ）" size="35" type="timestamptz" typeCode="93"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="11" name="redesign_reasons" nullable="true" remarks="再設計要の理由の区分（DEADLINE_EXCEEDED・CONNECTION_TOO_SHORT・NOT_CONNECTABLE・VOYAGE_UNAVAILABLE を空白で区切る）" size="200" type="varchar" typeCode="12"/>
          <primaryKey column="routing_case_id" sequenceNumberInPK="1"/>
          <primaryKey column="route_version_no" sequenceNumberInPK="2"/>
          <index name="pk_route_version" unique="true">
             <column ascending="true" name="routing_case_id"/>
             <column ascending="true" name="route_version_no"/>
          </index>
+         <index name="ux_route_version_confirmed" unique="true">
+            <column ascending="true" name="routing_case_id"/>
+         </index>
          <checkConstraint constraint="((((selected_candidate_no IS NULL) AND (rationale IS NULL) AND (approved_by IS NULL) AND (approved_at IS NULL)) OR ((selected_candidate_no IS NOT NULL) AND (rationale IS NOT NULL) AND (approved_by IS NOT NULL) AND (approved_at IS NOT NULL))) AND (((status)::text &lt;&gt; 'CONFIRMED'::text) OR (selected_candidate_no IS NOT NULL)) AND (((status)::text &lt;&gt; ALL ((ARRAY['DRAFT'::character varying, 'CANDIDATES_PRESENTED'::character varying, 'EXPERT_REVIEW'::character varying])::text[])) OR (selected_candidate_no IS NULL)))" name="ck_route_version_confirmed"/>
          <checkConstraint constraint="(((status)::text = 'DRAFT'::text) OR (candidates_evaluated_at IS NOT NULL))" name="ck_route_version_evaluated"/>
          <checkConstraint constraint="(candidates_found &gt;= 0)" name="ck_route_version_found"/>
          <checkConstraint constraint="(route_version_no &gt;= 1)" name="ck_route_version_no"/>
+         <checkConstraint constraint="(((redesign_required_at IS NULL) AND (redesign_reasons IS NULL) AND ((status)::text &lt;&gt; 'REDESIGN_REQUIRED'::text)) OR ((redesign_required_at IS NOT NULL) AND (redesign_reasons IS NOT NULL) AND ((status)::text = ANY ((ARRAY['REDESIGN_REQUIRED'::character varying, 'SUPERSEDED'::character varying])::text[]))))" name="ck_route_version_redesign"/>
+         <checkConstraint constraint="(((status)::text &lt;&gt; 'REDESIGN_REQUIRED'::text) OR (selected_candidate_no IS NOT NULL))" name="ck_route_version_redesign_confirmed"/>
          <checkConstraint constraint="((status)::text = ANY ((ARRAY['DRAFT'::character varying, 'CANDIDATES_PRESENTED'::character varying, 'EXPERT_REVIEW'::character varying, 'CONFIRMED'::character varying, 'REDESIGN_REQUIRED'::character varying, 'SUPERSEDED'::character varying])::text[]))" name="ck_route_version_status"/>
       </table>
       <table name="routing_case" remarks="経路設計案件" schema="routing" type="TABLE">
          <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="id" nullable="false" remarks="経路設計案件 ID" size="2147483647" type="uuid" typeCode="1111">
             <child column="routing_case_id" foreignKey="fk_route_version_case" implied="false" onDeleteCascade="false" schema="routing" table="route_version"/>
-            <parent column="routing_case_id" foreignKey="fk_routing_case_confirmed_version" implied="false" onDeleteCascade="false" schema="routing" table="route_version"/>
          </column>
          <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="case_number" nullable="false" remarks="案件番号" size="20" type="varchar" typeCode="12"/>
          <column autoUpdated="false" defaultValue="null" digits="0" id="2" name="transport_request_id" nullable="false" remarks="輸送要求 ID（見積りの写し）" size="2147483647" type="uuid" typeCode="1111"/>
@@ -180,15 +184,12 @@
          <column autoUpdated="false" defaultValue="null" digits="6" id="9" name="arrival_deadline" nullable="false" remarks="希望到着期限" size="35" type="timestamptz" typeCode="93"/>
          <column autoUpdated="false" defaultValue="null" digits="0" id="10" name="cargo_category" nullable="false" remarks="貨物種別" size="30" type="varchar" typeCode="12"/>
          <column autoUpdated="false" defaultValue="null" digits="6" id="11" name="requested_at" nullable="false" remarks="詳細経路設計の依頼時刻" size="35" type="timestamptz" typeCode="93"/>
-         <column autoUpdated="false" defaultValue="null" digits="0" id="12" name="confirmed_route_version_no" nullable="true" remarks="確定した経路版番号（未確定は NULL）" size="10" type="int4" typeCode="4">
-            <parent column="route_version_no" foreignKey="fk_routing_case_confirmed_version" implied="false" onDeleteCascade="false" schema="routing" table="route_version"/>
-         </column>
-         <column autoUpdated="false" defaultValue="null" digits="0" id="13" name="version" nullable="false" remarks="楽観ロックの版" size="19" type="int8" typeCode="-5"/>
-         <column autoUpdated="false" defaultValue="null" digits="6" id="14" name="created_at" nullable="false" remarks="作成時刻" size="35" type="timestamptz" typeCode="93"/>
-         <column autoUpdated="false" defaultValue="null" digits="6" id="15" name="updated_at" nullable="false" remarks="更新時刻" size="35" type="timestamptz" typeCode="93"/>
-         <column autoUpdated="false" defaultValue="null" digits="6" id="16" name="quotation_expires_at" nullable="true" remarks="見積有効期限（DE-16 の写し。案件一覧の並び。Bolt 19 より前の案件は NULL）" size="35" type="timestamptz" typeCode="93"/>
-         <column autoUpdated="false" defaultValue="null" digits="0" id="17" name="created_by" nullable="true" remarks="詳細経路設計を依頼した荷主担当者の利用者 ID（DE-16 の写し）" size="2147483647" type="uuid" typeCode="1111"/>
-         <column autoUpdated="false" defaultValue="null" digits="0" id="18" name="updated_by" nullable="true" remarks="最後に候補を算出・確定した経路設計者の利用者 ID" size="2147483647" type="uuid" typeCode="1111"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="12" name="version" nullable="false" remarks="楽観ロックの版" size="19" type="int8" typeCode="-5"/>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="13" name="created_at" nullable="false" remarks="作成時刻" size="35" type="timestamptz" typeCode="93"/>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="14" name="updated_at" nullable="false" remarks="更新時刻" size="35" type="timestamptz" typeCode="93"/>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="15" name="quotation_expires_at" nullable="true" remarks="見積有効期限（DE-16 の写し。案件一覧の並び。Bolt 19 より前の案件は NULL）" size="35" type="timestamptz" typeCode="93"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="16" name="created_by" nullable="true" remarks="詳細経路設計を依頼した荷主担当者の利用者 ID（DE-16 の写し）" size="2147483647" type="uuid" typeCode="1111"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="17" name="updated_by" nullable="true" remarks="最後に候補を算出・確定した経路設計者の利用者 ID" size="2147483647" type="uuid" typeCode="1111"/>
          <primaryKey column="id" sequenceNumberInPK="1"/>
          <index name="pk_routing_case" unique="true">
             <column ascending="true" name="id"/>

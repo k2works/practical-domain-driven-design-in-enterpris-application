@@ -12582,6 +12582,18 @@
 <td style="text-align: left;">経路設計</td>
 </tr>
 <tr>
+<td style="text-align: left;">再設計要の記録</td>
+<td style="text-align: left;">RedesignRecord</td>
+<td style="text-align: left;">経路版を再設計要にした時刻と、不適合の理由の区分（1 つ以上、重ねない）。再設計要の経路版は確定の記録とあわせて必ず持ち、旧版は持つことがある（Bolt 37d）</td>
+<td style="text-align: left;">経路設計</td>
+</tr>
+<tr>
+<td style="text-align: left;">再設計要の理由の区分</td>
+<td style="text-align: left;">RedesignReasonCode</td>
+<td style="text-align: left;">再設計要にした不適合の区分（重ねない）。期限超過・接続不足・接続できない（除外理由の区分と同じ名前）と、航海を引き直せない（航海がなくなった・区間の港に寄らなくなった）。DE-06 の理由の語彙（Bolt 37d）</td>
+<td style="text-align: left;">経路設計</td>
+</tr>
+<tr>
 <td style="text-align: left;">本予約</td>
 <td style="text-align: left;">—</td>
 <td style="text-align: left;">A 社と荷主の間で輸送の条件（見積り・経路版・貨物）を確定すること。運送会社による船腹の確保（ブッキングの確認）とは別の事実であり、確認書でも区別して示す（要確認: 業務責任者）</td>
@@ -13713,7 +13725,7 @@
 <li>確定は、候補提示済みの経路版の適合の候補に、判断根拠（前後の空白を除いて 1〜4,000 文字）と承認者を付けて行う。承認者が経路設計者の役割を持つかを集約でも確かめる（URL の認可と二重に守る）。</li>
 <li>確定の再検証（R-INV-03 の R0.1 の範囲）: 選んだ候補の保存済みの区間を、確定のときに読み直した接続時間規則（接続の時刻に有効なもの。Bolt 19 では確定の時刻に有効なもの）と希望到着期限で制約適合判定にかけ直し、不適合なら拒否する。最初の区間の出発予定が確定の時刻と同時刻または前なら出発済みとして拒否する。航海を読み直して参照情報版の更新を拒否するのは AC3（W6、#16）。R0.1 の制約適合判定は期限の判定に判定時刻を使わず、希望到着期限も案件の中で変わらないため、期限の再判定は算出のときと同じ結果になる（変わり得るのは、算出の後に登録・変更された接続時間規則だけ）。規則を選ぶ時刻は Bolt 37 で接続の時刻（次の区間の出発予定）に変えた（D-90。Bolt 19 の確認ポイント 3 の変更）。</li>
 <li>確定の拒否の理由は、経路設計者でない（<code>NOT_ROUTE_DESIGNER</code>）、確定できない状態（<code>NOT_CONFIRMABLE_STATE</code>。作成中、確定済み。判定は <code>RoutingCase.confirmable()</code> の 1 か所）、ない候補（<code>CANDIDATE_NOT_FOUND</code>）、除外の候補（<code>CANDIDATE_EXCLUDED</code>）、根拠の不足（<code>RATIONALE_MISSING</code>）、根拠が 4,000 文字を超える（<code>RATIONALE_TOO_LONG</code>。文字はコードポイントで数える。判定は <code>DecisionRationale.rejectionOf</code> の 1 か所）、出発済み（<code>ALREADY_DEPARTED</code>）、確定のときに判定し直すと不適合（<code>NO_LONGER_CONFORMING</code>）。この順に確かめる（Bolt 37c で、除外の候補の後に情報版の更新（<code>INFO_VERSION_CHANGED</code>）を、出発済みの後に情報不足（<code>INFO_INSUFFICIENT</code>）を足した。下の Bolt 37c で決めたこと）。確定の後の候補の再算出は、Bolt 17 のとおり算出できない状態として例外で拒否する（R-INV-06）。</li>
-<li>確定すると経路版は確定になり、選んだ候補番号・判断根拠・承認者・承認 commit 時刻を持つ。案件は確定した経路版の番号を 1 つだけ持つ（R-INV-05）。参照情報版は候補の区間の採用情報版で、経路版に写しを持たない。承認 commit 時刻は、確定のトランザクションの中で時計から得た確定の判定の時刻（コミットの時刻の近似。画面では承認時刻と示す）。</li>
+<li>確定すると経路版は確定になり、選んだ候補番号・判断根拠・承認者・承認 commit 時刻を持つ。案件で確定の経路版は 1 つだけ（R-INV-05。Bolt 37d から、案件のヘッダの番号ではなく経路版の状態で表し、集約と PostgreSQL の部分一意インデックスで守る）。参照情報版は候補の区間の採用情報版で、経路版に写しを持たない。承認 commit 時刻は、確定のトランザクションの中で時計から得た確定の判定の時刻（コミットの時刻の近似。画面では承認時刻と示す）。</li>
 <li>確定すると DE-05（経路を確定した）を発行する。見積りの有効期限で確定を拒否しない（失効した見積りへの割当てと荷主の承認の拒否は見積り側。US-24 AC4・AC5）。DE-05 は経路設計の中の listener が受け、見積りの公開 API（経路の割当て）を呼んで依頼元の見積りに経路版を割り当てる（R-INV-11、ADR-014。Bolt 20）。見積りは DE-05 を購読しない（依存が循環する。Bolt 19 レビュー D-71）。確定は監査証跡（US-17）にまだ書かず、経路版の列で残す。</li>
 </ul>
 <p>Bolt 37（US-06 の境界の網羅）で決めたこと（<a href="../../../development/cargo-tracker/bolt_37_plan/">Bolt 37 計画</a> の確認ポイント 1〜3。D-90 は 2026-10-21 に human:kakimomokuri が決めた）:</p>
@@ -13736,6 +13748,13 @@
 <li>確かめる順は、経路設計者 → 状態 → 候補 → 除外 → 情報版の更新 → 判断根拠 → 出発済み → 情報不足 → 規則の判定し直し。候補の比較（S-06）に戻す理由（状態・候補・除外・情報版の更新）を判断根拠より前に、確定の画面（S-07）にとどまる理由を後に確かめる。情報版を先に確かめるので、区間に写した出発予定で出発済みを判定できる。</li>
 <li>除外理由の閾値を区分ごとの型にすること、<code>threshold</code> の列を分けること（データベースの承認ゲート）、制約適合判定の値の改名は、37c では除外理由の判定を足さないので行わない。<code>CARGO_NOT_SUPPORTED</code>（区分はあるが判定していない）の判定を入れる Bolt（D-65 の残り、W7）の開始準備で決める。</li>
 <li>判定の部品（規則・航海・制約適合判定・情報鮮度の判定）を 1 つの値にまとめるかは、3 つ目の使い手ができる Bolt 37d の開始準備で決める（確定の引数は 8 つ）。</li>
+</ul>
+<p>Bolt 37d（US-07 AC4 の準備）で決めたこと（<a href="../../../development/cargo-tracker/bolt_37d_plan/">Bolt 37d 計画</a> の確認ポイント 1〜5。2026-10-22 に human:kakimomokuri が承認。評価の操作と DE-06 は Bolt 37d2）:</p>
+<ul>
+<li>経路版は再設計要の記録（<code>RedesignRecord</code>: 再設計要にした時刻と、理由の区分 <code>RedesignReasonCode</code> の 1 つ以上）を持てる。再設計要は必ず持ち、旧版は持つことがあり、作成中・候補提示済み・要専門家判断・確定は持たない。理由の詳細（不適合の時刻・閾値・参照情報版）は保存しない。旧情報版は確定の記録の候補の区間に残る（<code>referenced_info_version</code> の表は作らない）。</li>
+<li>理由の区分は除外理由の区分（<code>ExclusionReasonCode</code>）とは別の列挙型にし、期限超過・接続不足・接続できないは同じ名前にして制約適合判定の理由から写せるようにする。航海を引き直せない（<code>VOYAGE_UNAVAILABLE</code>）を足す。</li>
+<li>確定は案件に 1 つ（R-INV-05）を、案件のヘッダの <code>confirmed_route_version_no</code> ではなく、集約の経路版の検査と PostgreSQL の部分一意インデックスで守る。</li>
+<li>確定の記録の候補（<code>confirmedCandidateOf</code>）は、状態ではなく確定の記録で引くので、再設計要・旧版の経路版でも確定のときの区間を返す（見積りへの割当てと追跡の予定が使う。旧情報版の保持）。</li>
 </ul>
 <h3 id="bookingu6">予約（Booking、U6）<a class="headerlink" href="#bookingu6" title="Permanent link">&para;</a></h3>
 <h4 id="_14">予約の集約<a class="headerlink" href="#_14" title="Permanent link">&para;</a></h4>

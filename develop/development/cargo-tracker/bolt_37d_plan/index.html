@@ -12264,6 +12264,18 @@
 <td style="text-align: left;">9</td>
 <td style="text-align: left;">拒否の理由に区間を持たせる（Bolt 37c の宿題）はこの範囲でも行わない（利用者の声を聞いてから）</td>
 </tr>
+<tr>
+<td style="text-align: left;">10</td>
+<td style="text-align: left;">Bolt 37d の開発レビュー: 再設計要の経路版は確定の記録を持つ（集約と CHECK <code>ck_route_version_redesign_confirmed</code> で守る）。再設計要への保存が 0 件なら例外になるので、評価の操作は「すでに再設計要なら保存しない」（DE-06 も出さない）にする</td>
+</tr>
+<tr>
+<td style="text-align: left;">11</td>
+<td style="text-align: left;">保存は最新の経路版だけを書く。再設計要の後ろに新しい版を作って旧版に移す保存（US-08）と、そのときに再設計要の記録を引き継ぐか（<code>RouteVersion</code> の 6 引数のコンストラクターは記録を落とすので、状態を移すメソッドを経路版に持たせるか、6 引数を消すか）</td>
+</tr>
+<tr>
+<td style="text-align: left;">12</td>
+<td style="text-align: left;">理由の区分は重ねず、並びを保つ（制約適合判定の理由の順から写す）。DE-06 の理由の語彙にそのまま使う</td>
+</tr>
 </tbody>
 </table>
 <h2 id="try-t-6">確認ポイント（計画の承認の場でまとめて確認する。Try T-6）<a class="headerlink" href="#try-t-6" title="Permanent link">&para;</a></h2>

@@ -3,7 +3,7 @@ connection_rule
 candidate_leg
 exclusion_reason
 port_call
-routing_case
 route_version
 route_candidate
+routing_case
 voyage
