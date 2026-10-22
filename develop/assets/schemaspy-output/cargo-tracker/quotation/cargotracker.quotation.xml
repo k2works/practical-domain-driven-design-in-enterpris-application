@@ -74,9 +74,14 @@
          <column autoUpdated="false" defaultValue="null" digits="6" id="21" name="route_confirmed_at" nullable="true" remarks="割り当てた経路の確定の時刻（写し）" size="35" type="timestamptz" typeCode="93"/>
          <column autoUpdated="false" defaultValue="null" digits="0" id="22" name="shipper_approved_by" nullable="true" remarks="荷主承認の承認者" size="2147483647" type="uuid" typeCode="1111"/>
          <column autoUpdated="false" defaultValue="null" digits="6" id="23" name="shipper_approved_at" nullable="true" remarks="荷主承認の承認時刻" size="35" type="timestamptz" typeCode="93"/>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="24" name="route_redesign_required_at" nullable="true" remarks="割り当てた経路版を経路設計が再設計要にした時刻（再設計要の印。経路の割当てがあるときだけ）" size="35" type="timestamptz" typeCode="93"/>
          <primaryKey column="id" sequenceNumberInPK="1"/>
          <index name="pk_quotation" unique="true">
             <column ascending="true" name="id"/>
+         </index>
+         <index name="ix_quotation_assigned_route" unique="false">
+            <column ascending="true" name="routing_case_number"/>
+            <column ascending="true" name="route_version_no"/>
          </index>
          <index name="ix_quotation_request_status" unique="false">
             <column ascending="true" name="transport_request_id"/>
@@ -97,6 +102,7 @@
          <checkConstraint constraint="((((shipper_response IS NULL) AND (responded_by IS NULL) AND (responded_at IS NULL)) OR ((shipper_response IS NOT NULL) AND (responded_by IS NOT NULL) AND (responded_at IS NOT NULL))) AND (((status)::text &lt;&gt; 'ROUTING_REQUESTED'::text) OR (shipper_response IS NOT NULL)))" name="ck_quotation_responded"/>
          <checkConstraint constraint="((((routing_case_number IS NULL) AND (route_version_no IS NULL) AND (route_confirmed_at IS NULL)) OR ((routing_case_number IS NOT NULL) AND (route_version_no &gt;= 1) AND (route_confirmed_at IS NOT NULL))) AND (((status)::text &lt;&gt; ALL ((ARRAY['AWAITING_SHIPPER_APPROVAL'::character varying, 'APPROVED'::character varying])::text[])) OR (routing_case_number IS NOT NULL)))" name="ck_quotation_route_assigned"/>
          <checkConstraint constraint="(route_policy_arrival_at &gt; route_policy_departure_at)" name="ck_quotation_route_policy_dates"/>
+         <checkConstraint constraint="((route_redesign_required_at IS NULL) OR (routing_case_number IS NOT NULL))" name="ck_quotation_route_redesign"/>
          <checkConstraint constraint="((((shipper_approved_by IS NULL) AND (shipper_approved_at IS NULL)) OR ((shipper_approved_by IS NOT NULL) AND (shipper_approved_at IS NOT NULL) AND (routing_case_number IS NOT NULL))) AND (((status)::text &lt;&gt; 'APPROVED'::text) OR (shipper_approved_by IS NOT NULL)))" name="ck_quotation_shipper_approved"/>
          <checkConstraint constraint="((shipper_response)::text = 'PROCEED'::text)" name="ck_quotation_shipper_response"/>
          <checkConstraint constraint="((status)::text = ANY ((ARRAY['DRAFT'::character varying, 'PENDING_APPROVAL'::character varying, 'PRESENTED'::character varying, 'ROUTING_REQUESTED'::character varying, 'AWAITING_SHIPPER_APPROVAL'::character varying, 'APPROVED'::character varying, 'EXPIRED'::character varying, 'REPLACED'::character varying])::text[]))" name="ck_quotation_status"/>

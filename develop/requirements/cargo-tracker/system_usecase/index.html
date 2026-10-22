@@ -13460,7 +13460,7 @@
 <tr>
 <td style="text-align: left;">3a</td>
 <td style="text-align: left;">承認済み経路版または必須条件が不足する</td>
-<td style="text-align: left;">本予約の確定を停止し、不足する条件を示す</td>
+<td style="text-align: left;">本予約の確定を停止し、不足する条件を示す（Bolt 37e: 見積りに割り当てた経路版が承認の後に再設計要になったときは、見積りの本予約の判定が再設計要（<code>ROUTE_REDESIGN_REQUIRED</code>）で拒否する。予約は取り消さない。予約の画面の文言は Bolt 37e3）</td>
 <td style="text-align: center;">MVP</td>
 </tr>
 <tr>
@@ -14118,7 +14118,7 @@
 <td style="text-align: left;">再設計要</td>
 <td style="text-align: left;">新規予約への割当て</td>
 <td style="text-align: center;">拒否</td>
-<td style="text-align: left;">新しい経路版を作成する。既存予約は維持し、有人対応で影響を管理する</td>
+<td style="text-align: left;">新しい経路版を作成する。既存予約は維持し、有人対応で影響を管理する（Bolt 37e: その経路版を割り当てた見積りに再設計要の印を付け、荷主の承認と本予約の確定を見積りの判定で拒否する。承認済みで期限内の見積りは再見積りもできず、期限まで出口がない。新しい経路版は US-08）</td>
 </tr>
 <tr>
 <td style="text-align: left;">予約</td>

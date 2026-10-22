@@ -12581,9 +12581,9 @@ src/test/java/.../ui/                     画面の層のステップ定義（@u
 </tr>
 <tr>
 <td style="text-align: left;">Q-INV-09〜10（荷主の回答、荷主の承認）</td>
-<td style="text-align: left;">○（境界値: 承認時の有効期限、経路版の状態）</td>
-<td style="text-align: left;">○</td>
-<td style="text-align: left;">—</td>
+<td style="text-align: left;">○（境界値: 承認時の有効期限、経路版の状態。再設計要の印と判定の順は <code>QuotationRouteRedesignTest</code>。Bolt 37e）</td>
+<td style="text-align: left;">○（<code>route_redesign_required.feature</code>）</td>
+<td style="text-align: left;">○（印の往復と再見積りの INSERT。<code>MyBatisQuotationIntegrationTest</code>）</td>
 <td style="text-align: left;">回答・承認の画面（<code>@ui</code>）</td>
 </tr>
 <tr>
@@ -12650,11 +12650,11 @@ src/test/java/.../ui/                     画面の層のステップ定義（@u
 <td style="text-align: left;">○（S-09 の WebMvc。Bolt 35）</td>
 </tr>
 <tr>
-<td style="text-align: left;">B-INV-05（旧版）</td>
-<td style="text-align: left;">○</td>
-<td style="text-align: left;">○</td>
-<td style="text-align: left;">—</td>
-<td style="text-align: left;">—</td>
+<td style="text-align: left;">B-INV-05（旧版、再設計要）</td>
+<td style="text-align: left;">○（再設計要は Bolt 37e: 見積りの本予約の判定の順（置換済み・失効の記録 → 期限切れ → 承認済みでない → 再設計要）を状態の組み合わせの表の行ごとに確かめる。荷主の承認（Q-INV-10）、再見積りでの印の引き継ぎ、印を付ける操作の冪等、届く順も同じ表で。旧版は US-08）</td>
+<td style="text-align: left;">○（Bolt 37e: <code>route_redesign_required.feature</code>。再設計要を伝えると荷主の承認と本予約の照会が拒否され、本予約を確定した見積りでも予約と輸送要求は変わらない）</td>
+<td style="text-align: left;">○（Bolt 37e: 印の列の往復、<code>ck_quotation_route_redesign</code> の違反、経路版で見積りを引く照会。PostgreSQL）</td>
+<td style="text-align: left;">予約・荷主の画面の拒否の文言は Bolt 37e3</td>
 </tr>
 <tr>
 <td style="text-align: left;">B-INV-06〜07（集荷前だけの変更・取消し）</td>
@@ -13812,8 +13812,8 @@ src/test/java/.../ui/                     画面の層のステップ定義（@u
 <tr>
 <td style="text-align: left;">US-07</td>
 <td style="text-align: left;">AC5（旧版・再設計要の経路版は再確定・新規予約への割当てに使えず、新しい経路版の作成が求められる）</td>
-<td style="text-align: left;">37d2（再設計要の経路版の再確定の拒否）、37e（見積りへの割当て・荷主の承認・本予約の拒否）</td>
-<td style="text-align: left;"><code>@US-07-AC5</code>（<code>evaluate_confirmed_route.feature</code>。再設計要の経路版は確定し直せず、もう一度評価しても DE-06 は出ない）、37e で見積り・予約の側の受入シナリオ</td>
+<td style="text-align: left;">37d2（再設計要の経路版の再確定の拒否）、37e（見積りの印と荷主の承認・本予約の判定）、37e2（DE-06 の listener と DE-05・DE-06 の届く順）、37e3（出発済みの判定（D-88）、予約の追従と画面の文言）</td>
+<td style="text-align: left;"><code>@US-07-AC5</code>（<code>evaluate_confirmed_route.feature</code>。再設計要の経路版は確定し直せず、もう一度評価しても DE-06 は出ない）。37e: <code>@US-07-AC5</code>（<code>route_redesign_required.feature</code>。荷主の承認と本予約の照会が再設計要で拒否される、もう一度伝わっても印の時刻は最初のまま、再見積りした新しい見積りの承認も拒否される）、見積りの集約の状態の組み合わせの表の行ごとのテスト、入力ポート（届く順）と公開 API のアダプターのテスト、保存の統合テスト。37e2: DE-06 の listener と届く順のテスト。37e3: 画面の層のシナリオ（<code>@ui</code>）と予約の側のテスト</td>
 </tr>
 </tbody>
 </table>

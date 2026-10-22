@@ -12010,7 +12010,7 @@
 </tr>
 <tr>
 <td style="text-align: left;">照会</td>
-<td style="text-align: left;">見積りの公開 API（<code>quotation :: api</code>）に、業務番号と見積り番号と commit 時刻を渡す（2026-10-08 の Bolt 23b で見積り ID から改めた。画面の URL に内部の ID を出さない D-4 のため。呼び出し元は予約だけ）。見積りが承認済みで commit 時刻が有効期限より前のときだけ、確定に要る写し（輸送要求 ID・版、業務番号、見積り ID、荷主企業、荷受人、貨物区分・要約、荷主承認者と承認時刻、割り当てた経路版）を返す。それ以外は理由（失効・未承認・置換済み・見つからない）を値で返す（ADR-014 の「業務の拒否は結果の値で返す」）</td>
+<td style="text-align: left;">見積りの公開 API（<code>quotation :: api</code>）に、業務番号と見積り番号と commit 時刻を渡す（2026-10-08 の Bolt 23b で見積り ID から改めた。画面の URL に内部の ID を出さない D-4 のため。呼び出し元は予約だけ）。見積りが承認済みで commit 時刻が有効期限より前のときだけ、確定に要る写し（輸送要求 ID・版、業務番号、見積り ID、荷主企業、荷受人、貨物区分・要約、荷主承認者と承認時刻、割り当てた経路版）を返す。それ以外は理由（失効・未承認・置換済み・見つからない・再設計要）を値で返す（ADR-014 の「業務の拒否は結果の値で返す」。再設計要は Bolt 37e で足した）</td>
 </tr>
 <tr>
 <td style="text-align: left;">commit 時刻</td>
@@ -12022,7 +12022,7 @@
 </tr>
 <tr>
 <td style="text-align: left;">経路版</td>
-<td style="text-align: left;">予約は経路設計（<code>routing</code>）に問い合わせず、見積りが割り当てた経路の写しを使う。再設計要・旧版の経路版の拒否（B-INV-05、Q-INV-10）は、見積りの側が DE-06 を受けて承認・確定を止める形で W6 に足す</td>
+<td style="text-align: left;">予約は経路設計（<code>routing</code>）に問い合わせず、見積りが割り当てた経路の写しを使う。再設計要・旧版の経路版の拒否（B-INV-05、Q-INV-10）は見積りの側で止める。DE-06 は経路設計の中の listener が受けて見積りの公開 API（再設計要の伝達）を呼び（ADR-014）、見積りはその経路版を割り当てた見積りに再設計要の印を付けて、荷主の承認と確定の照会を拒否する（再設計要は Bolt 37e、listener は Bolt 37e2。旧版は US-08）</td>
 </tr>
 <tr>
 <td style="text-align: left;">写しの扱い</td>
@@ -12068,6 +12068,7 @@
 <h2 id="_9">改訂の経緯<a class="headerlink" href="#_9" title="Permanent link">&para;</a></h2>
 <ul>
 <li>2026-10-08: Bolt 23b で、照会の鍵を見積り ID から業務番号と見積り番号に改め、結果に荷主の承認時刻を足した。S-09 を業務番号と見積り番号で開き、画面の URL に内部の ID を出さないため（D-4。human:kakimomokuri が決定）</li>
+<li>2026-10-22: Bolt 37e で、照会の理由に再設計要を足し、DE-06 の受け方を ADR-014 の形（経路設計の中の listener が見積りの公開 API を呼ぶ）に直した。「見積りの側が DE-06 を受けて」は、見積りが経路設計のイベントを購読する形に読め、ADR-014 と食い違っていたため（<a href="../../../development/cargo-tracker/bolt_37e_plan/">Bolt 37e 計画</a> の確認ポイント 8。human:kakimomokuri が承認。DE-06 との競合の守り方は Bolt 37e2 で決める）</li>
 </ul>
 <h2 id="_10">関連ドキュメント<a class="headerlink" href="#_10" title="Permanent link">&para;</a></h2>
 <ul>
