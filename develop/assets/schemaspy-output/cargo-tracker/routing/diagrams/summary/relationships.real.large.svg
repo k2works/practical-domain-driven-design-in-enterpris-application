@@ -231,59 +231,10 @@
 </a>
 </g>
 </g>
-<!-- route_version -->
-<g id="node4" class="node">
-<title>route_version</title>
-<g id="a_node4"><a xlink:href="../../tables/route_version.html" xlink:title="route_version" target="_top">
-<polygon fill="#ffffff" stroke="transparent" points="295,-201.2 295,-507.2 497,-507.2 497,-201.2 295,-201.2"/>
-<polygon fill="#f5f5f5" stroke="transparent" points="295,-484.2 295,-507.2 497,-507.2 497,-484.2 295,-484.2"/>
-<polygon fill="none" stroke="#000000" points="295,-484.2 295,-507.2 497,-507.2 497,-484.2 295,-484.2"/>
-<text text-anchor="start" x="300" y="-492.8" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="11.00" fill="#000000">route_version</text>
-<text text-anchor="start" x="462.0437" y="-492.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">[table]</text>
-<polygon fill="none" stroke="#000000" points="295,-462.2 295,-484.2 497,-484.2 497,-462.2 295,-462.2"/>
-<image xlink:href="../../images/primaryKeys.png" width="11px" height="12px" preserveAspectRatio="xMinYMin meet" x="300" y="-479.2"/>
-<text text-anchor="start" x="315" y="-469.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">routing_case_id</text>
-<polygon fill="none" stroke="#000000" points="295,-440.2 295,-462.2 497,-462.2 497,-440.2 295,-440.2"/>
-<image xlink:href="../../images/primaryKeys.png" width="11px" height="12px" preserveAspectRatio="xMinYMin meet" x="300" y="-457.2"/>
-<text text-anchor="start" x="315" y="-447.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">route_version_no</text>
-<polygon fill="none" stroke="#000000" points="295,-418.2 295,-440.2 497,-440.2 497,-418.2 295,-418.2"/>
-<text text-anchor="start" x="315" y="-425.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">status</text>
-<polygon fill="none" stroke="#000000" points="295,-396.2 295,-418.2 497,-418.2 497,-396.2 295,-396.2"/>
-<text text-anchor="start" x="315" y="-403.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">candidates_evaluated_at</text>
-<polygon fill="none" stroke="#000000" points="295,-374.2 295,-396.2 497,-396.2 497,-374.2 295,-374.2"/>
-<text text-anchor="start" x="315" y="-381.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">created_at</text>
-<polygon fill="none" stroke="#000000" points="295,-352.2 295,-374.2 497,-374.2 497,-352.2 295,-352.2"/>
-<text text-anchor="start" x="315" y="-359.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">candidates_found</text>
-<polygon fill="none" stroke="#000000" points="295,-330.2 295,-352.2 497,-352.2 497,-330.2 295,-330.2"/>
-<image xlink:href="../../images/foreignKeys.png" width="11px" height="12px" preserveAspectRatio="xMinYMin meet" x="300" y="-347.2"/>
-<text text-anchor="start" x="315" y="-337.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">selected_candidate_no</text>
-<polygon fill="none" stroke="#000000" points="295,-308.2 295,-330.2 497,-330.2 497,-308.2 295,-308.2"/>
-<text text-anchor="start" x="315" y="-315.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">rationale</text>
-<polygon fill="none" stroke="#000000" points="295,-286.2 295,-308.2 497,-308.2 497,-286.2 295,-286.2"/>
-<text text-anchor="start" x="315" y="-293.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">approved_by</text>
-<polygon fill="none" stroke="#000000" points="295,-264.2 295,-286.2 497,-286.2 497,-264.2 295,-264.2"/>
-<text text-anchor="start" x="315" y="-271.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">approved_at</text>
-<polygon fill="none" stroke="#000000" points="295,-242.2 295,-264.2 497,-264.2 497,-242.2 295,-242.2"/>
-<text text-anchor="start" x="315" y="-249.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">redesign_required_at</text>
-<polygon fill="none" stroke="#000000" points="295,-220.2 295,-242.2 497,-242.2 497,-220.2 295,-220.2"/>
-<text text-anchor="start" x="315" y="-227.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">redesign_reasons</text>
-<polygon fill="#ffffff" stroke="transparent" points="295,-201.2 295,-220.2 497,-220.2 497,-201.2 295,-201.2"/>
-<polygon fill="none" stroke="#000000" points="295,-201.2 295,-220.2 497,-220.2 497,-201.2 295,-201.2"/>
-<polygon fill="#ffffff" stroke="transparent" points="296,-202.2 296,-219.2 366,-219.2 366,-202.2 296,-202.2"/>
-<text text-anchor="start" x="298" y="-207.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">&lt; 4</text>
-<polygon fill="#ffffff" stroke="transparent" points="366,-202.2 366,-219.2 427,-219.2 427,-202.2 366,-202.2"/>
-<text text-anchor="start" x="393.4431" y="-207.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000"> &#160;</text>
-<polygon fill="#ffffff" stroke="transparent" points="427,-202.2 427,-219.2 496,-219.2 496,-202.2 427,-202.2"/>
-<text text-anchor="start" x="478.4053" y="-207.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">2 &gt;</text>
-<polygon fill="#000000" stroke="#000000" points="366,-202.2 366,-219.2 366,-219.2 366,-202.2 366,-202.2"/>
-<polygon fill="#000000" stroke="#000000" points="427,-202.2 427,-219.2 427,-219.2 427,-202.2 427,-202.2"/>
-</a>
-</g>
-</g>
 <!-- routing_case -->
-<g id="node5" class="node">
+<g id="node4" class="node">
 <title>routing_case</title>
-<g id="a_node5"><a xlink:href="../../tables/routing_case.html" xlink:title="routing_case" target="_top">
+<g id="a_node4"><a xlink:href="../../tables/routing_case.html" xlink:title="routing_case" target="_top">
 <polygon fill="#ffffff" stroke="transparent" points="8,-69.2 8,-507.2 246,-507.2 246,-69.2 8,-69.2"/>
 <polygon fill="#f5f5f5" stroke="transparent" points="8,-484.2 8,-507.2 246,-507.2 246,-484.2 8,-484.2"/>
 <polygon fill="none" stroke="#000000" points="8,-484.2 8,-507.2 246,-507.2 246,-484.2 8,-484.2"/>
@@ -340,6 +291,55 @@
 <text text-anchor="start" x="227.4053" y="-75.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">1 &gt;</text>
 <polygon fill="#000000" stroke="#000000" points="85,-70.2 85,-87.2 85,-87.2 85,-70.2 85,-70.2"/>
 <polygon fill="#000000" stroke="#000000" points="161,-70.2 161,-87.2 161,-87.2 161,-70.2 161,-70.2"/>
+</a>
+</g>
+</g>
+<!-- route_version -->
+<g id="node5" class="node">
+<title>route_version</title>
+<g id="a_node5"><a xlink:href="../../tables/route_version.html" xlink:title="route_version" target="_top">
+<polygon fill="#ffffff" stroke="transparent" points="295,-201.2 295,-507.2 497,-507.2 497,-201.2 295,-201.2"/>
+<polygon fill="#f5f5f5" stroke="transparent" points="295,-484.2 295,-507.2 497,-507.2 497,-484.2 295,-484.2"/>
+<polygon fill="none" stroke="#000000" points="295,-484.2 295,-507.2 497,-507.2 497,-484.2 295,-484.2"/>
+<text text-anchor="start" x="300" y="-492.8" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="11.00" fill="#000000">route_version</text>
+<text text-anchor="start" x="462.0437" y="-492.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">[table]</text>
+<polygon fill="none" stroke="#000000" points="295,-462.2 295,-484.2 497,-484.2 497,-462.2 295,-462.2"/>
+<image xlink:href="../../images/primaryKeys.png" width="11px" height="12px" preserveAspectRatio="xMinYMin meet" x="300" y="-479.2"/>
+<text text-anchor="start" x="315" y="-469.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">routing_case_id</text>
+<polygon fill="none" stroke="#000000" points="295,-440.2 295,-462.2 497,-462.2 497,-440.2 295,-440.2"/>
+<image xlink:href="../../images/primaryKeys.png" width="11px" height="12px" preserveAspectRatio="xMinYMin meet" x="300" y="-457.2"/>
+<text text-anchor="start" x="315" y="-447.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">route_version_no</text>
+<polygon fill="none" stroke="#000000" points="295,-418.2 295,-440.2 497,-440.2 497,-418.2 295,-418.2"/>
+<text text-anchor="start" x="315" y="-425.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">status</text>
+<polygon fill="none" stroke="#000000" points="295,-396.2 295,-418.2 497,-418.2 497,-396.2 295,-396.2"/>
+<text text-anchor="start" x="315" y="-403.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">candidates_evaluated_at</text>
+<polygon fill="none" stroke="#000000" points="295,-374.2 295,-396.2 497,-396.2 497,-374.2 295,-374.2"/>
+<text text-anchor="start" x="315" y="-381.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">created_at</text>
+<polygon fill="none" stroke="#000000" points="295,-352.2 295,-374.2 497,-374.2 497,-352.2 295,-352.2"/>
+<text text-anchor="start" x="315" y="-359.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">candidates_found</text>
+<polygon fill="none" stroke="#000000" points="295,-330.2 295,-352.2 497,-352.2 497,-330.2 295,-330.2"/>
+<image xlink:href="../../images/foreignKeys.png" width="11px" height="12px" preserveAspectRatio="xMinYMin meet" x="300" y="-347.2"/>
+<text text-anchor="start" x="315" y="-337.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">selected_candidate_no</text>
+<polygon fill="none" stroke="#000000" points="295,-308.2 295,-330.2 497,-330.2 497,-308.2 295,-308.2"/>
+<text text-anchor="start" x="315" y="-315.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">rationale</text>
+<polygon fill="none" stroke="#000000" points="295,-286.2 295,-308.2 497,-308.2 497,-286.2 295,-286.2"/>
+<text text-anchor="start" x="315" y="-293.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">approved_by</text>
+<polygon fill="none" stroke="#000000" points="295,-264.2 295,-286.2 497,-286.2 497,-264.2 295,-264.2"/>
+<text text-anchor="start" x="315" y="-271.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">approved_at</text>
+<polygon fill="none" stroke="#000000" points="295,-242.2 295,-264.2 497,-264.2 497,-242.2 295,-242.2"/>
+<text text-anchor="start" x="315" y="-249.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">redesign_required_at</text>
+<polygon fill="none" stroke="#000000" points="295,-220.2 295,-242.2 497,-242.2 497,-220.2 295,-220.2"/>
+<text text-anchor="start" x="315" y="-227.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">redesign_reasons</text>
+<polygon fill="#ffffff" stroke="transparent" points="295,-201.2 295,-220.2 497,-220.2 497,-201.2 295,-201.2"/>
+<polygon fill="none" stroke="#000000" points="295,-201.2 295,-220.2 497,-220.2 497,-201.2 295,-201.2"/>
+<polygon fill="#ffffff" stroke="transparent" points="296,-202.2 296,-219.2 366,-219.2 366,-202.2 296,-202.2"/>
+<text text-anchor="start" x="298" y="-207.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">&lt; 4</text>
+<polygon fill="#ffffff" stroke="transparent" points="366,-202.2 366,-219.2 427,-219.2 427,-202.2 366,-202.2"/>
+<text text-anchor="start" x="393.4431" y="-207.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000"> &#160;</text>
+<polygon fill="#ffffff" stroke="transparent" points="427,-202.2 427,-219.2 496,-219.2 496,-202.2 427,-202.2"/>
+<text text-anchor="start" x="478.4053" y="-207.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">2 &gt;</text>
+<polygon fill="#000000" stroke="#000000" points="366,-202.2 366,-219.2 366,-219.2 366,-202.2 366,-202.2"/>
+<polygon fill="#000000" stroke="#000000" points="427,-202.2 427,-219.2 427,-219.2 427,-202.2 427,-202.2"/>
 </a>
 </g>
 </g>
