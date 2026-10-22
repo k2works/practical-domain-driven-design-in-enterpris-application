@@ -25,6 +25,7 @@ import io.cucumber.java.ja.もし;
 import io.cucumber.java.ja.前提;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -42,7 +43,8 @@ public class RoutingSteps {
     private static final Map<String, ExclusionReasonCode> REASONS = Map.of(
             "期限超過", ExclusionReasonCode.DEADLINE_EXCEEDED,
             "接続不足", ExclusionReasonCode.CONNECTION_TOO_SHORT,
-            "接続できない", ExclusionReasonCode.NOT_CONNECTABLE);
+            "接続できない", ExclusionReasonCode.NOT_CONNECTABLE,
+            "情報不足", ExclusionReasonCode.INFO_INSUFFICIENT);
 
     private final RoutingCaseCommandService commandService;
     private final RoutingCaseQueryService queryService;
@@ -82,17 +84,19 @@ public class RoutingSteps {
                 at(validTo)));
     }
 
+    /** 航海を入れる。「取得時刻」の列は省略でき、空なら既定の取得時刻（判定時刻の 2 時間前）にする（Bolt 37b2）。 */
     @前提("次の航海がある")
     public void 次の航海がある(DataTable table) {
         for (Map<String, String> row : table.asMaps()) {
             String number = row.get("航海番号");
+            String acquiredAt = blankToNull(row.get("取得時刻"));
             voyages.add(new Voyage(
                     number,
                     List.of(
                             new PortCall(new Location(row.get("積地")), null, at(row.get("出発予定"))),
                             new PortCall(new Location(row.get("揚地")), at(row.get("到着予定")), null)),
                     number + "@1",
-                    INFO_ACQUIRED_AT));
+                    acquiredAt == null ? INFO_ACQUIRED_AT : at(acquiredAt)));
         }
     }
 
@@ -142,7 +146,7 @@ public class RoutingSteps {
             String reason = blankToNull(row.get("理由"));
             assertThat(candidate.evaluation().reasons())
                     .extracting(ExclusionReason::code)
-                    .isEqualTo(reason == null ? List.of() : List.of(REASONS.get(reason)));
+                    .isEqualTo(reason == null ? List.of() : codesOf(reason));
         }
     }
 
@@ -168,6 +172,28 @@ public class RoutingSteps {
         }
     }
 
+    /** 1 つの候補の理由を、並びも含めて確かめる（理由が複数の候補。Bolt 37b2）。 */
+    @ならば("候補 {string} の理由は次のとおりである")
+    public void 候補の理由(String voyageNumbers, DataTable table) {
+        RouteCandidate candidate = candidateOf(voyageNumbers);
+        List<ExclusionReason> reasons = candidate.evaluation().reasons();
+        List<Map<String, String>> rows = table.asMaps();
+        assertThat(reasons).hasSize(rows.size());
+        for (int i = 0; i < rows.size(); i++) {
+            Map<String, String> row = rows.get(i);
+            ExclusionReason reason = reasons.get(i);
+            assertThat(reason.code()).isEqualTo(REASONS.get(row.get("理由")));
+            assertThat(reason.violatedAt()).isEqualTo(at(row.get("不適合の時刻")));
+            assertThat(threshold(reason)).isEqualTo(row.get("閾値"));
+            assertThat(reason.infoVersion()).isEqualTo(row.get("参照情報版"));
+        }
+    }
+
+    @ならば("候補 {string} の最も古い情報の取得時刻は {string} である")
+    public void 候補の最も古い情報の取得時刻(String voyageNumbers, String acquiredAt) {
+        assertThat(candidateOf(voyageNumbers).oldestInfoAcquiredAt()).isEqualTo(at(acquiredAt));
+    }
+
     @ならば("どの候補も情報の取得時刻は {string} である")
     public void どの候補も情報の取得時刻(String acquiredAt) {
         assertThat(currentCase().routeVersion().candidates())
@@ -191,15 +217,27 @@ public class RoutingSteps {
         return queryService.findByNumber(onlyCase().number()).orElseThrow();
     }
 
+    private RouteCandidate candidateOf(String voyageNumbers) {
+        return currentCase().routeVersion().candidates().stream()
+                .filter(candidate -> voyagesOf(candidate).equals(voyageNumbers))
+                .findFirst()
+                .orElseThrow(() -> new AssertionError("候補がありません: " + voyageNumbers));
+    }
+
+    private static List<ExclusionReasonCode> codesOf(String reasons) {
+        return Arrays.stream(reasons.split(",")).map(REASONS::get).toList();
+    }
+
     private static String voyagesOf(RouteCandidate candidate) {
         return candidate.legs().stream().map(Leg::voyageNumber).collect(Collectors.joining(","));
     }
 
-    /** 閾値の表記（期限超過は期限の時刻、接続不足は港と必要最小接続時間、接続できないは港）。 */
+    /** 閾値の表記（期限超過は期限の時刻、接続不足は港と必要最小接続時間、接続できないは港、情報不足は航海番号と許容時間）。 */
     private static String threshold(ExclusionReason reason) {
         return switch (reason.code()) {
             case DEADLINE_EXCEEDED -> reason.deadline().instant().toString();
             case CONNECTION_TOO_SHORT -> reason.port().unLocode() + " " + reason.requiredConnection();
+            case INFO_INSUFFICIENT -> reason.voyageNumber() + " " + reason.freshnessTolerance();
             default -> reason.port().unLocode();
         };
     }

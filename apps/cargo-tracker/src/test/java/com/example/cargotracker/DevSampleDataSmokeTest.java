@@ -41,6 +41,7 @@ import com.example.cargotracker.routing.domain.model.aggregates.VoyageRepository
 import com.example.cargotracker.routing.domain.model.entities.RouteCandidate;
 import com.example.cargotracker.routing.domain.model.entities.RouteVersion;
 import com.example.cargotracker.routing.domain.model.rules.ConstraintEvaluator;
+import com.example.cargotracker.routing.domain.model.rules.InfoFreshnessPolicy;
 import com.example.cargotracker.routing.domain.model.rules.RouteCandidateFinder;
 import com.example.cargotracker.routing.domain.model.valueobjects.RouteVersionStatus;
 import com.example.cargotracker.routing.domain.model.valueobjects.RoutingCaseNumber;
@@ -342,7 +343,12 @@ class DevSampleDataSmokeTest {
                 routingCases.findByNumber(new RoutingCaseNumber(2026, 902)).orElseThrow();
 
         recalculated.calculateCandidates(
-                voyages.findAll(), rules.findAll(), evaluatedAt, new RouteCandidateFinder(), new ConstraintEvaluator());
+                voyages.findAll(),
+                rules.findAll(),
+                evaluatedAt,
+                new RouteCandidateFinder(),
+                new ConstraintEvaluator(),
+                new InfoFreshnessPolicy(Duration.ofHours(24)));
 
         RouteVersion expected = recalculated.routeVersion();
         assertThat(seeded.routeVersion()).isEqualTo(expected);
@@ -355,7 +361,7 @@ class DevSampleDataSmokeTest {
 
     @Test
     void 航海の取得時刻は起動の時刻で見本の候補の判定時刻と区間の取得時刻にそろう() {
-        // Bolt 37b: 航海の情報鮮度（US-06 AC4、Bolt 37b2）で、起動から 24 時間は情報不足にならない。取得が判定より後に見えない
+        // Bolt 37b: 情報鮮度の判定（US-06 AC4、Bolt 37b2。許容 24 時間）で、起動から 24 時間は情報不足にならない。取得が判定より後に見えない
         RoutingCase seeded =
                 routingCases.findByNumber(new RoutingCaseNumber(2026, 902)).orElseThrow();
         UtcInstant evaluatedAt = seeded.routeVersion().evaluatedAt().orElseThrow();

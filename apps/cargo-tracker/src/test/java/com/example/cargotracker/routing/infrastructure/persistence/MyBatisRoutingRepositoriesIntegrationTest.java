@@ -15,6 +15,7 @@ import com.example.cargotracker.routing.domain.model.aggregates.Voyage;
 import com.example.cargotracker.routing.domain.model.aggregates.VoyageRepository;
 import com.example.cargotracker.routing.domain.model.entities.RouteVersion;
 import com.example.cargotracker.routing.domain.model.rules.ConstraintEvaluator;
+import com.example.cargotracker.routing.domain.model.rules.InfoFreshnessPolicy;
 import com.example.cargotracker.routing.domain.model.rules.RouteCandidateFinder;
 import com.example.cargotracker.routing.domain.model.valueobjects.DecisionRationale;
 import com.example.cargotracker.routing.domain.model.valueobjects.ExclusionReason;
@@ -111,7 +112,12 @@ class MyBatisRoutingRepositoriesIntegrationTest {
         repository.save(routingCase);
         RoutingCase loaded = repository.findByNumber(routingCase.number()).orElseThrow();
         loaded.calculateCandidates(
-                voyages(), rules(), JUDGED_AT, new RouteCandidateFinder(), new ConstraintEvaluator());
+                voyages(),
+                rules(),
+                JUDGED_AT,
+                new RouteCandidateFinder(),
+                new ConstraintEvaluator(),
+                new InfoFreshnessPolicy(Duration.ofHours(24)));
 
         repository.update(loaded, OPERATOR);
 
@@ -131,7 +137,8 @@ class MyBatisRoutingRepositoriesIntegrationTest {
                 rules(),
                 at("2083-10-07T04:00:00Z"),
                 new RouteCandidateFinder(),
-                new ConstraintEvaluator());
+                new ConstraintEvaluator(),
+                new InfoFreshnessPolicy(Duration.ofHours(24)));
         repository.update(found, OPERATOR);
 
         assertThat(repository.findByNumber(routingCase.number()).orElseThrow().routeVersion())
@@ -144,10 +151,21 @@ class MyBatisRoutingRepositoriesIntegrationTest {
         repository.save(routingCase);
         RoutingCase first = repository.findByNumber(routingCase.number()).orElseThrow();
         RoutingCase second = repository.findByNumber(routingCase.number()).orElseThrow();
-        first.calculateCandidates(voyages(), rules(), JUDGED_AT, new RouteCandidateFinder(), new ConstraintEvaluator());
+        first.calculateCandidates(
+                voyages(),
+                rules(),
+                JUDGED_AT,
+                new RouteCandidateFinder(),
+                new ConstraintEvaluator(),
+                new InfoFreshnessPolicy(Duration.ofHours(24)));
         repository.update(first, OPERATOR);
         second.calculateCandidates(
-                voyages(), rules(), JUDGED_AT, new RouteCandidateFinder(), new ConstraintEvaluator());
+                voyages(),
+                rules(),
+                JUDGED_AT,
+                new RouteCandidateFinder(),
+                new ConstraintEvaluator(),
+                new InfoFreshnessPolicy(Duration.ofHours(24)));
 
         assertThatThrownBy(() -> repository.update(second, OPERATOR))
                 .isInstanceOf(ConcurrentRoutingCaseUpdateException.class);
@@ -364,7 +382,13 @@ class MyBatisRoutingRepositoriesIntegrationTest {
                     call(TOKYO, null, "2083-10-08T00:00:00Z"),
                     call(ROTTERDAM, "2083-10-%02dT00:00:00Z".formatted(10 + i), null)));
         }
-        loaded.calculateCandidates(voyages, rules(), JUDGED_AT, new RouteCandidateFinder(), new ConstraintEvaluator());
+        loaded.calculateCandidates(
+                voyages,
+                rules(),
+                JUDGED_AT,
+                new RouteCandidateFinder(),
+                new ConstraintEvaluator(),
+                new InfoFreshnessPolicy(Duration.ofHours(24)));
 
         repository.update(loaded, OPERATOR);
 
@@ -426,7 +450,12 @@ class MyBatisRoutingRepositoriesIntegrationTest {
         repository.save(routingCase);
         RoutingCase loaded = repository.findByNumber(routingCase.number()).orElseThrow();
         loaded.calculateCandidates(
-                voyages(), rules(), JUDGED_AT, new RouteCandidateFinder(), new ConstraintEvaluator());
+                voyages(),
+                rules(),
+                JUDGED_AT,
+                new RouteCandidateFinder(),
+                new ConstraintEvaluator(),
+                new InfoFreshnessPolicy(Duration.ofHours(24)));
         repository.update(loaded, OPERATOR);
 
         UUID id = routingCase.id().value();
@@ -467,7 +496,12 @@ class MyBatisRoutingRepositoriesIntegrationTest {
         repository.save(routingCase);
         RoutingCase loaded = repository.findByNumber(routingCase.number()).orElseThrow();
         loaded.calculateCandidates(
-                voyages(), rules(), JUDGED_AT, new RouteCandidateFinder(), new ConstraintEvaluator());
+                voyages(),
+                rules(),
+                JUDGED_AT,
+                new RouteCandidateFinder(),
+                new ConstraintEvaluator(),
+                new InfoFreshnessPolicy(Duration.ofHours(24)));
         repository.update(loaded, OPERATOR);
         return loaded;
     }

@@ -2,7 +2,9 @@ package com.example.cargotracker.routing.domain.model.aggregates;
 
 import com.example.cargotracker.routing.domain.events.RouteConfirmed;
 import com.example.cargotracker.routing.domain.model.rules.ConstraintEvaluator;
+import com.example.cargotracker.routing.domain.model.rules.InfoFreshnessPolicy;
 import com.example.cargotracker.routing.domain.model.rules.RouteCandidateFinder;
+import java.time.Duration;
 import java.util.List;
 
 /** ほかのパッケージのテストで使う経路設計案件の見本（Bolt 20）。 */
@@ -26,7 +28,8 @@ public final class RoutingCaseFixture {
                 List.of(RoutingCaseConfirmationTest.SINGAPORE_8H),
                 RoutingCaseConfirmationTest.JUDGED_AT,
                 new RouteCandidateFinder(),
-                new ConstraintEvaluator());
+                new ConstraintEvaluator(),
+                new InfoFreshnessPolicy(Duration.ofHours(24)));
         return routingCase;
     }
 
@@ -38,7 +41,8 @@ public final class RoutingCaseFixture {
                 List.of(RoutingCaseConfirmationTest.SINGAPORE_8H),
                 RoutingCaseConfirmationTest.JUDGED_AT,
                 new RouteCandidateFinder(),
-                evaluator);
+                evaluator,
+                new InfoFreshnessPolicy(Duration.ofHours(24)));
         RouteConfirmed event = routingCase.confirm(
                 1,
                 "直行で期限まで 4 日ある。",

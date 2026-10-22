@@ -14,6 +14,7 @@ import com.example.cargotracker.routing.domain.events.RouteConfirmed;
 import com.example.cargotracker.routing.domain.model.entities.RouteCandidate;
 import com.example.cargotracker.routing.domain.model.entities.RouteVersion;
 import com.example.cargotracker.routing.domain.model.rules.ConstraintEvaluator;
+import com.example.cargotracker.routing.domain.model.rules.InfoFreshnessPolicy;
 import com.example.cargotracker.routing.domain.model.rules.RouteCandidateFinder;
 import com.example.cargotracker.routing.domain.model.valueobjects.DecisionRationale;
 import com.example.cargotracker.routing.domain.model.valueobjects.RouteApprover;
@@ -249,7 +250,8 @@ class RoutingCaseConfirmationTest {
         List<ConnectionRule> rules = List.of(SINGAPORE_8H);
         UtcInstant later = minutesAfter(COMMIT_AT, 1);
 
-        assertThatThrownBy(() -> routingCase.calculateCandidates(voyages, rules, later, finder, evaluator))
+        assertThatThrownBy(() -> routingCase.calculateCandidates(
+                        voyages, rules, later, finder, evaluator, new InfoFreshnessPolicy(Duration.ofHours(24))))
                 .isInstanceOf(IllegalStateException.class);
         assertThat(routingCase.routeVersion().candidates()).isEqualTo(confirmedCandidates);
     }
@@ -275,7 +277,12 @@ class RoutingCaseConfirmationTest {
                 5);
 
         routingCase.calculateCandidates(
-                List.of(direct("V-NEW", "2026-10-30T00:00:00Z")), List.of(SINGAPORE_8H), COMMIT_AT, finder, evaluator);
+                List.of(direct("V-NEW", "2026-10-30T00:00:00Z")),
+                List.of(SINGAPORE_8H),
+                COMMIT_AT,
+                finder,
+                evaluator,
+                new InfoFreshnessPolicy(Duration.ofHours(24)));
 
         assertThat(routingCase.routeVersions())
                 .extracting(RouteVersion::routeVersionNo, RouteVersion::status)
@@ -483,7 +490,8 @@ class RoutingCaseConfirmationTest {
                 List.of(SINGAPORE_8H),
                 JUDGED_AT,
                 finder,
-                evaluator);
+                evaluator,
+                new InfoFreshnessPolicy(Duration.ofHours(24)));
         return routingCase;
     }
 

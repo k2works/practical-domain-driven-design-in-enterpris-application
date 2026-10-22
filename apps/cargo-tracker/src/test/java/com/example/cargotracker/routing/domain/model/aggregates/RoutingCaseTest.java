@@ -4,8 +4,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.example.cargotracker.routing.domain.model.entities.RouteCandidate;
 import com.example.cargotracker.routing.domain.model.rules.ConstraintEvaluator;
+import com.example.cargotracker.routing.domain.model.rules.InfoFreshnessPolicy;
 import com.example.cargotracker.routing.domain.model.rules.RouteCandidateFinder;
 import com.example.cargotracker.routing.domain.model.valueobjects.CandidateCalculation;
+import com.example.cargotracker.routing.domain.model.valueobjects.ExclusionReason;
+import com.example.cargotracker.routing.domain.model.valueobjects.ExclusionReasonCode;
 import com.example.cargotracker.routing.domain.model.valueobjects.PortCall;
 import com.example.cargotracker.routing.domain.model.valueobjects.RouteSpecification;
 import com.example.cargotracker.routing.domain.model.valueobjects.RouteVersionStatus;
@@ -21,7 +24,7 @@ import java.util.UUID;
 import org.junit.jupiter.api.Test;
 
 /**
- * 経路設計案件（R-INV-10、US-06 AC1。Bolt 17）。
+ * 経路設計案件（R-INV-10、US-06 AC1。Bolt 17）。情報不足（US-06 AC4、R-INV-09。Bolt 37b2）。
  */
 class RoutingCaseTest {
 
@@ -37,6 +40,7 @@ class RoutingCaseTest {
 
     private final RouteCandidateFinder finder = new RouteCandidateFinder();
     private final ConstraintEvaluator evaluator = new ConstraintEvaluator();
+    private final InfoFreshnessPolicy freshness = new InfoFreshnessPolicy(Duration.ofHours(24));
 
     @Test
     void 依頼を受けて作った案件は経路版1を作成中で持つ() {
@@ -57,7 +61,7 @@ class RoutingCaseTest {
                 direct("V-ONTIME", "2026-11-02T00:00:00Z"));
 
         CandidateCalculation calculation =
-                routingCase.calculateCandidates(voyages, RULES, JUDGED_AT, finder, evaluator);
+                routingCase.calculateCandidates(voyages, RULES, JUDGED_AT, finder, evaluator, freshness);
 
         assertThat(calculation).isEqualTo(new CandidateCalculation(3, 3, 2, JUDGED_AT));
         assertThat(routingCase.routeVersion().status()).isEqualTo(RouteVersionStatus.CANDIDATES_PRESENTED);
@@ -88,7 +92,7 @@ class RoutingCaseTest {
         }
 
         CandidateCalculation calculation =
-                routingCase.calculateCandidates(voyages, RULES, JUDGED_AT, finder, evaluator);
+                routingCase.calculateCandidates(voyages, RULES, JUDGED_AT, finder, evaluator, freshness);
 
         assertThat(calculation.found()).isEqualTo(22);
         assertThat(calculation.kept()).isEqualTo(RoutingCase.MAX_CANDIDATES);
@@ -127,7 +131,7 @@ class RoutingCaseTest {
         RoutingCase routingCase = open();
 
         CandidateCalculation calculation =
-                routingCase.calculateCandidates(voyages, rules, JUDGED_AT, finder, evaluator);
+                routingCase.calculateCandidates(voyages, rules, JUDGED_AT, finder, evaluator, freshness);
 
         assertThat(calculation.found()).isEqualTo(21);
         assertThat(calculation.kept()).isEqualTo(RoutingCase.MAX_CANDIDATES);
@@ -147,7 +151,7 @@ class RoutingCaseTest {
         }
 
         CandidateCalculation calculation =
-                routingCase.calculateCandidates(voyages, RULES, JUDGED_AT, finder, evaluator);
+                routingCase.calculateCandidates(voyages, RULES, JUDGED_AT, finder, evaluator, freshness);
 
         assertThat(calculation.kept()).isEqualTo(kept);
         assertThat(calculation.omitted()).isEqualTo(omitted);
@@ -174,7 +178,7 @@ class RoutingCaseTest {
 
         List<Voyage> noVoyages = List.of();
         org.assertj.core.api.Assertions.assertThatThrownBy(
-                        () -> superseded.calculateCandidates(noVoyages, RULES, JUDGED_AT, finder, evaluator))
+                        () -> superseded.calculateCandidates(noVoyages, RULES, JUDGED_AT, finder, evaluator, freshness))
                 .isInstanceOf(IllegalStateException.class);
     }
 
@@ -182,11 +186,11 @@ class RoutingCaseTest {
     void 再算出すると候補を置き換え判定時刻を更新する() {
         RoutingCase routingCase = open();
         routingCase.calculateCandidates(
-                List.of(direct("V-OLD", "2026-10-29T00:00:00Z")), RULES, JUDGED_AT, finder, evaluator);
+                List.of(direct("V-OLD", "2026-10-29T00:00:00Z")), RULES, JUDGED_AT, finder, evaluator, freshness);
         UtcInstant later = at("2026-10-07T04:00:00Z");
 
         CandidateCalculation calculation = routingCase.calculateCandidates(
-                List.of(direct("V-NEW", "2026-10-30T00:00:00Z")), RULES, later, finder, evaluator);
+                List.of(direct("V-NEW", "2026-10-30T00:00:00Z")), RULES, later, finder, evaluator, freshness);
 
         assertThat(calculation).isEqualTo(new CandidateCalculation(1, 1, 1, later));
         assertThat(routingCase.routeVersion().evaluatedAt()).contains(later);
@@ -197,11 +201,68 @@ class RoutingCaseTest {
     }
 
     @Test
+    void 情報不足の候補は除外され適合の候補の後ろに並ぶ() {
+        RoutingCase routingCase = open();
+        UtcInstant stale = minusHours(JUDGED_AT, 30);
+        List<Voyage> voyages =
+                List.of(direct("V-STALE", "2026-10-29T00:00:00Z", stale), direct("V-FRESH", "2026-10-30T00:00:00Z"));
+
+        CandidateCalculation calculation =
+                routingCase.calculateCandidates(voyages, RULES, JUDGED_AT, finder, evaluator, freshness);
+
+        assertThat(calculation).isEqualTo(new CandidateCalculation(2, 2, 1, JUDGED_AT));
+        List<RouteCandidate> candidates = routingCase.routeVersion().candidates();
+        assertThat(candidates)
+                .extracting(candidate -> candidate.legs().getFirst().voyageNumber())
+                .containsExactly("V-FRESH", "V-STALE");
+        assertThat(candidates.get(0).evaluation().infoInsufficient()).isFalse();
+        assertThat(candidates.get(1).evaluation().infoInsufficient()).isTrue();
+        assertThat(candidates.get(1).evaluation().reasons())
+                .containsExactly(ExclusionReason.infoInsufficient("V-STALE", stale, Duration.ofHours(24), "V-STALE@1"));
+    }
+
+    @Test
+    void 情報不足の理由は制約適合判定の理由の後ろに足す() {
+        RoutingCase routingCase = open();
+        List<Voyage> voyages = List.of(direct("V-LATE", "2026-11-03T12:00:00Z", minusHours(JUDGED_AT, 30)));
+
+        routingCase.calculateCandidates(voyages, RULES, JUDGED_AT, finder, evaluator, freshness);
+
+        assertThat(routingCase
+                        .routeVersion()
+                        .candidates()
+                        .getFirst()
+                        .evaluation()
+                        .reasons())
+                .extracting(ExclusionReason::code)
+                .containsExactly(ExclusionReasonCode.DEADLINE_EXCEEDED, ExclusionReasonCode.INFO_INSUFFICIENT);
+    }
+
+    @Test
+    void 取得時刻の違う区間では古い航海だけに理由が出て最も古い取得時刻を示す() {
+        RoutingCase routingCase = open();
+        UtcInstant fresh = minusHours(JUDGED_AT, 2);
+        UtcInstant stale = minusHours(JUDGED_AT, 30);
+        List<Voyage> voyages = List.of(
+                feeder("V-F", "2026-10-20T00:00:00Z", stale),
+                fromSingapore("V-S", "2026-10-20T12:00:00Z", "2026-10-31T00:00:00Z", fresh));
+
+        routingCase.calculateCandidates(voyages, RULES, JUDGED_AT, finder, evaluator, freshness);
+
+        RouteCandidate candidate = routingCase.routeVersion().candidates().getFirst();
+        assertThat(candidate.oldestInfoAcquiredAt()).isEqualTo(stale);
+        assertThat(candidate.evaluation().reasons())
+                .extracting(ExclusionReason::voyageNumber)
+                .containsExactly("V-F");
+        assertThat(candidate.evaluation().connectionSlack()).contains(Duration.ofHours(4));
+    }
+
+    @Test
     void 航海がなければ候補0件で候補提示済みになる() {
         RoutingCase routingCase = open();
 
         CandidateCalculation calculation =
-                routingCase.calculateCandidates(List.of(), RULES, JUDGED_AT, finder, evaluator);
+                routingCase.calculateCandidates(List.of(), RULES, JUDGED_AT, finder, evaluator, freshness);
 
         assertThat(calculation).isEqualTo(new CandidateCalculation(0, 0, 0, JUDGED_AT));
         assertThat(routingCase.routeVersion().status()).isEqualTo(RouteVersionStatus.CANDIDATES_PRESENTED);
@@ -223,31 +284,47 @@ class RoutingCaseTest {
     }
 
     static Voyage direct(String number, String arrival) {
+        return direct(number, arrival, at("2026-10-07T01:00:00Z"));
+    }
+
+    static Voyage direct(String number, String arrival, UtcInstant acquiredAt) {
         return new Voyage(
                 number,
                 List.of(
                         new PortCall(TOKYO, null, at("2026-10-08T00:00:00Z")),
                         new PortCall(ROTTERDAM, at(arrival), null)),
                 number + "@1",
-                at("2026-10-07T01:00:00Z"));
+                acquiredAt);
     }
 
     static Voyage feeder(String number, String arrivalAtSingapore) {
+        return feeder(number, arrivalAtSingapore, at("2026-10-07T01:00:00Z"));
+    }
+
+    static Voyage feeder(String number, String arrivalAtSingapore, UtcInstant acquiredAt) {
         return new Voyage(
                 number,
                 List.of(
                         new PortCall(TOKYO, null, at("2026-10-08T00:00:00Z")),
                         new PortCall(SINGAPORE, at(arrivalAtSingapore), null)),
                 number + "@1",
-                at("2026-10-07T01:00:00Z"));
+                acquiredAt);
     }
 
     static Voyage fromSingapore(String number, String departure, String arrival) {
+        return fromSingapore(number, departure, arrival, at("2026-10-07T01:00:00Z"));
+    }
+
+    static Voyage fromSingapore(String number, String departure, String arrival, UtcInstant acquiredAt) {
         return new Voyage(
                 number,
                 List.of(new PortCall(SINGAPORE, null, at(departure)), new PortCall(ROTTERDAM, at(arrival), null)),
                 number + "@1",
-                at("2026-10-07T01:00:00Z"));
+                acquiredAt);
+    }
+
+    static UtcInstant minusHours(UtcInstant instant, long hours) {
+        return new UtcInstant(instant.instant().minus(Duration.ofHours(hours)));
     }
 
     static UtcInstant at(String text) {

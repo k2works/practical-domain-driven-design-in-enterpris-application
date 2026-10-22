@@ -10,11 +10,13 @@ import com.example.cargotracker.routing.domain.model.aggregates.RoutingCase;
 import com.example.cargotracker.routing.domain.model.aggregates.RoutingCaseRepository;
 import com.example.cargotracker.routing.domain.model.aggregates.VoyageRepository;
 import com.example.cargotracker.routing.domain.model.rules.ConstraintEvaluator;
+import com.example.cargotracker.routing.domain.model.rules.InfoFreshnessPolicy;
 import com.example.cargotracker.routing.domain.model.rules.RouteCandidateFinder;
 import com.example.cargotracker.routing.domain.model.valueobjects.CandidateCalculation;
 import com.example.cargotracker.routing.domain.model.valueobjects.RouteApprover;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import java.time.Clock;
+import java.time.Duration;
 import java.util.Optional;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
@@ -37,6 +39,7 @@ public class RoutingCaseCommandService {
     private final Clock clock;
     private final RouteCandidateFinder finder = new RouteCandidateFinder();
     private final ConstraintEvaluator evaluator = new ConstraintEvaluator();
+    private final InfoFreshnessPolicy freshness = new InfoFreshnessPolicy(Duration.ofHours(24));
 
     public RoutingCaseCommandService(
             RoutingCaseRepository repository,
@@ -51,7 +54,7 @@ public class RoutingCaseCommandService {
         this.clock = clock;
     }
 
-    /** 経路候補を算出・再算出する（US-06 AC1〜AC3）。 */
+    /** 経路候補を算出・再算出する（US-06 AC1〜AC4。情報不足は Bolt 37b2）。 */
     @Transactional
     public CandidateCalculationOutcome calculateCandidates(CalculateCandidatesCommand command) {
         Optional<RoutingCase> found = repository.findByNumber(command.number());
@@ -67,7 +70,8 @@ public class RoutingCaseCommandService {
                 connectionRuleRepository.findAll(),
                 new UtcInstant(clock.instant()),
                 finder,
-                evaluator);
+                evaluator,
+                freshness);
         try {
             repository.update(routingCase, command.operator().value());
         } catch (ConcurrentRoutingCaseUpdateException _) {

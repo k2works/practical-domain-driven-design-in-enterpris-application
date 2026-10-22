@@ -4,6 +4,7 @@ import com.example.cargotracker.routing.domain.events.RouteConfirmed;
 import com.example.cargotracker.routing.domain.model.entities.RouteCandidate;
 import com.example.cargotracker.routing.domain.model.entities.RouteVersion;
 import com.example.cargotracker.routing.domain.model.rules.ConstraintEvaluator;
+import com.example.cargotracker.routing.domain.model.rules.InfoFreshnessPolicy;
 import com.example.cargotracker.routing.domain.model.rules.RouteCandidateFinder;
 import com.example.cargotracker.routing.domain.model.valueobjects.CandidateCalculation;
 import com.example.cargotracker.routing.domain.model.valueobjects.ConstraintEvaluation;
@@ -158,23 +159,31 @@ public final class RoutingCase {
     /**
      * 候補を算出する（作成中・候補提示済み → 候補提示済み。US-06 AC1）。航海の一覧から区間の列を列挙し（候補探索）、
      * それぞれを制約適合判定にかけて（規則は接続の時刻で選ぶ。D-90）、適合を先に、到着予定の早い順に上限まで残し、1 から候補番号を振る。
+     * 制約適合判定の後で情報鮮度の判定を判定時刻でかけ、情報不足の理由を後ろに足す（US-06 AC4、R-INV-09。Bolt 37b2。
+     * 制約適合判定は判定時刻を受け取らない。Bolt 37）。
      * 候補提示済みで算出し直したら、候補を置き換え、判定時刻を更新する。
      *
      * @throws IllegalStateException 作成中・候補提示済みでない（確定の後の再算出は US-08 の再設計で行う）
      */
+    @SuppressWarnings("java:S107") // 算出の入力と、候補探索・制約適合判定・情報鮮度の判定をすべて受け取る（確定と同じ形）
     public CandidateCalculation calculateCandidates(
             List<Voyage> voyages,
             List<ConnectionRule> rules,
             UtcInstant judgedAt,
             RouteCandidateFinder finder,
-            ConstraintEvaluator evaluator) {
+            ConstraintEvaluator evaluator,
+            InfoFreshnessPolicy freshness) {
         RouteVersion routeVersion = routeVersion();
         RouteVersionStatus status = routeVersion.status();
         if (status != RouteVersionStatus.DRAFT && status != RouteVersionStatus.CANDIDATES_PRESENTED) {
             throw new IllegalStateException("候補を算出できない経路版の状態です: " + status);
         }
         List<Evaluated> evaluated = finder.find(specification, voyages, judgedAt).stream()
-                .map(legs -> new Evaluated(legs, evaluator.evaluate(specification, legs, rules)))
+                .map(legs -> new Evaluated(
+                        legs,
+                        evaluator
+                                .evaluate(specification, legs, rules)
+                                .withAddedReasons(freshness.evaluate(legs, judgedAt))))
                 .sorted(PRESENTATION_ORDER)
                 .toList();
         List<RouteCandidate> candidates = new ArrayList<>();

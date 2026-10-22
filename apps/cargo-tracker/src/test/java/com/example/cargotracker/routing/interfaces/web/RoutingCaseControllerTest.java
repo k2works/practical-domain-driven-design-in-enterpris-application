@@ -22,6 +22,7 @@ import com.example.cargotracker.routing.domain.model.aggregates.RoutingCase;
 import com.example.cargotracker.routing.domain.model.aggregates.Voyage;
 import com.example.cargotracker.routing.domain.model.entities.RouteVersion;
 import com.example.cargotracker.routing.domain.model.rules.ConstraintEvaluator;
+import com.example.cargotracker.routing.domain.model.rules.InfoFreshnessPolicy;
 import com.example.cargotracker.routing.domain.model.rules.RouteCandidateFinder;
 import com.example.cargotracker.routing.domain.model.valueobjects.CandidateCalculation;
 import com.example.cargotracker.routing.domain.model.valueobjects.PortCall;
@@ -180,7 +181,8 @@ class RoutingCaseControllerTest {
                 List.of(),
                 at("2026-10-07T03:00:00Z"),
                 new RouteCandidateFinder(),
-                new ConstraintEvaluator());
+                new ConstraintEvaluator(),
+                new InfoFreshnessPolicy(Duration.ofHours(24)));
         when(queryService.findByNumber(NUMBER)).thenReturn(Optional.of(routingCase));
 
         mockMvc.perform(get(SHOW))
@@ -644,7 +646,8 @@ class RoutingCaseControllerTest {
                         UUID.randomUUID(), SINGAPORE, Duration.ofHours(8), at("2026-01-01T00:00:00Z"), null)),
                 at("2026-10-07T03:00:00Z"),
                 new RouteCandidateFinder(),
-                new ConstraintEvaluator());
+                new ConstraintEvaluator(),
+                new InfoFreshnessPolicy(Duration.ofHours(24)));
         return routingCase;
     }
 
