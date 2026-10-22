@@ -2,8 +2,10 @@
 type: Plan
 title: "Bolt 37b2 計画 - US-06 AC4 情報不足（算出のときに古い航海の情報を使う候補を除外する。D-89）"
 tags: [plan]
-status: draft
+status: stable
 generated: { by: anthropic/claude-opus-5-5, at: 2026-10-22T01:43:57Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-10-22T01:44:32Z }
 ---
 
 # Bolt 37b2 計画 - US-06 AC4 情報不足（算出のときに古い航海の情報を使う候補を除外する。D-89）
