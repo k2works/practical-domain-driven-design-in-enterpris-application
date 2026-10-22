@@ -198,6 +198,8 @@ public class RoutingUiSteps {
     @ならば("古い航海の候補は {string} と示され、理由に {string} と参照した航海情報の版が示される")
     public void 古い航海の候補(String judgement, String reason) {
         Locator candidate = candidate(voyage("STALE"));
+        // 利用者が除外の理由を読むところまで画面を送る（デモの動画に理由を写す。Bolt 37b2）
+        candidate.scrollIntoViewIfNeeded();
         assertThat(candidate).containsText(judgement);
         assertThat(candidate).containsText("情報不足（" + voyage("STALE") + " の情報は" + reason);
         assertThat(candidate).containsText("参照した航海情報の版 " + voyage("STALE") + "@1");

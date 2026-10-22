@@ -42,6 +42,9 @@ public class BrowserSession implements DisposableBean {
      */
     static final String VIDEO_DIR_PROPERTY = "cargotracker.ui.video-dir";
 
+    /** 録画を閉じる前に最後の画面を写す時間。 */
+    private static final double LAST_FRAME_MILLIS = 1000;
+
     /** 録画の画面の大きさ（16:9）。 */
     private static final int VIDEO_WIDTH = 1280;
 
@@ -79,6 +82,8 @@ public class BrowserSession implements DisposableBean {
         if (video == null || targets.isEmpty()) {
             return;
         }
+        // 最後の操作（画面を送るなど）の後の画面が動画に残る前に閉じないよう、少し待つ（Bolt 37b2）
+        page.waitForTimeout(LAST_FRAME_MILLIS);
         context.close();
         targets.forEach(video::saveAs);
         video.delete();
