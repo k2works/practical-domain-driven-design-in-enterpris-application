@@ -18,6 +18,8 @@ import com.example.cargotracker.routing.domain.model.rules.InfoFreshnessPolicy;
 import com.example.cargotracker.routing.domain.model.rules.RouteCandidateFinder;
 import com.example.cargotracker.routing.domain.model.valueobjects.DecisionRationale;
 import com.example.cargotracker.routing.domain.model.valueobjects.Leg;
+import com.example.cargotracker.routing.domain.model.valueobjects.RedesignReasonCode;
+import com.example.cargotracker.routing.domain.model.valueobjects.RedesignRecord;
 import com.example.cargotracker.routing.domain.model.valueobjects.RouteApprover;
 import com.example.cargotracker.routing.domain.model.valueobjects.RouteConfirmation;
 import com.example.cargotracker.routing.domain.model.valueobjects.RouteConfirmationRejectionReason;
@@ -707,6 +709,74 @@ class RoutingCaseConfirmationTest {
                         evaluator,
                         FRESHNESS),
                 RouteConfirmationRejectionReason.INFO_INSUFFICIENT);
+    }
+
+    /** 再設計要の記録（Bolt 37d。評価の操作は Bolt 37d2）。 */
+    static final RedesignRecord REDESIGN =
+            new RedesignRecord(at("2026-10-09T00:00:00Z"), List.of(RedesignReasonCode.DEADLINE_EXCEEDED));
+
+    @Test
+    void 再設計要の経路版は確定し直せず候補も算出できない() {
+        // 再構成した状態の表の行 1（R-INV-06）
+        RoutingCase routingCase = RoutingCaseFixture.redesignRequired(REDESIGN);
+
+        assertThat(routingCase.confirmable()).isFalse();
+        assertRejected(
+                () -> routingCase.confirm(
+                        1, "根拠", ROUTE_DESIGNER, VOYAGES, List.of(SINGAPORE_8H), COMMIT_AT, evaluator, FRESHNESS),
+                RouteConfirmationRejectionReason.NOT_CONFIRMABLE_STATE);
+        assertThatThrownBy(() -> routingCase.calculateCandidates(
+                        VOYAGES, List.of(SINGAPORE_8H), COMMIT_AT, finder, evaluator, FRESHNESS))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void 旧版の後の新しい経路版は確定でき旧版は旧版のまま確定の記録の候補を引ける() {
+        // 再構成した状態の表の行 2（旧版は確定し直さない。確定はいまの経路版に対して行う。AC5 の新しい経路版）
+        RoutingCase confirmed = RoutingCaseFixture.confirmed().routingCase();
+        RouteVersion v1 = confirmed.routeVersion();
+        RouteVersion superseded = new RouteVersion(
+                1,
+                RouteVersionStatus.SUPERSEDED,
+                v1.candidates(),
+                v1.evaluatedAt().orElseThrow(),
+                v1.candidatesFound(),
+                v1.confirmation().orElseThrow(),
+                null);
+        RouteVersion v2 = new RouteVersion(
+                2,
+                RouteVersionStatus.CANDIDATES_PRESENTED,
+                v1.candidates(),
+                v1.evaluatedAt().orElseThrow());
+        RoutingCase routingCase = RoutingCaseFixture.withRouteVersions(confirmed, List.of(superseded, v2));
+
+        assertThat(routingCase.confirmedRouteVersion()).isEmpty();
+        assertThat(routingCase.confirmable()).isTrue();
+        routingCase.confirm(
+                1,
+                "新しい経路版で確定する。",
+                ROUTE_DESIGNER,
+                List.of(direct("V-EARLY", "2026-10-29T00:00:00Z")),
+                List.of(SINGAPORE_8H),
+                COMMIT_AT,
+                evaluator,
+                FRESHNESS);
+
+        assertThat(routingCase.routeVersions())
+                .extracting(RouteVersion::status)
+                .containsExactly(RouteVersionStatus.SUPERSEDED, RouteVersionStatus.CONFIRMED);
+        assertThat(routingCase.confirmedCandidateOf(1)).contains(v1.candidates().getFirst());
+    }
+
+    @Test
+    void 再設計要の経路版は確定した経路版ではないが確定の記録の候補を引ける() {
+        // 再構成した状態の表の行 3（旧情報版の保持。見積りへの割当てと追跡の予定が確定のときの区間を引く）
+        RoutingCase routingCase = RoutingCaseFixture.redesignRequired(REDESIGN);
+
+        assertThat(routingCase.confirmedRouteVersion()).isEmpty();
+        assertThat(routingCase.confirmedCandidateOf(1))
+                .contains(routingCase.routeVersion().candidates().getFirst());
+        assertThat(routingCase.routeVersion().redesign()).contains(REDESIGN);
     }
 
     @Test

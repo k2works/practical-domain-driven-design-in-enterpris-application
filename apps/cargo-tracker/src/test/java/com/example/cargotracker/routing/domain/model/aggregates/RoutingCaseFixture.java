@@ -1,9 +1,12 @@
 package com.example.cargotracker.routing.domain.model.aggregates;
 
 import com.example.cargotracker.routing.domain.events.RouteConfirmed;
+import com.example.cargotracker.routing.domain.model.entities.RouteVersion;
 import com.example.cargotracker.routing.domain.model.rules.ConstraintEvaluator;
 import com.example.cargotracker.routing.domain.model.rules.InfoFreshnessPolicy;
 import com.example.cargotracker.routing.domain.model.rules.RouteCandidateFinder;
+import com.example.cargotracker.routing.domain.model.valueobjects.RedesignRecord;
+import com.example.cargotracker.routing.domain.model.valueobjects.RouteVersionStatus;
 import java.time.Duration;
 import java.util.List;
 
@@ -31,6 +34,46 @@ public final class RoutingCaseFixture {
                 new ConstraintEvaluator(),
                 new InfoFreshnessPolicy(Duration.ofHours(24)));
         return routingCase;
+    }
+
+    /**
+     * 案件の経路版を入れ替えて組み立て直す（保存されている状態からの再構成。再設計要・旧版の経路版を作るのに使う。Bolt 37d）。
+     *
+     * @param source 元の案件
+     * @param routeVersions 経路版の一覧
+     * @return 経路版を入れ替えた案件
+     */
+    public static RoutingCase withRouteVersions(RoutingCase source, List<RouteVersion> routeVersions) {
+        return RoutingCase.reconstitute(
+                source.id(),
+                source.number(),
+                source.transportRequestId(),
+                source.transportRequestNumber(),
+                source.transportRequestVersionNo(),
+                source.quotationId(),
+                source.routePolicyVia(),
+                source.specification(),
+                source.requestedAt(),
+                source.quotationExpiresAt().orElse(null),
+                source.requestedBy().orElse(null),
+                routeVersions,
+                source.aggregateVersion());
+    }
+
+    /** 確定した経路版を再設計要にした案件（確定の記録と候補はそのまま。Bolt 37d）。 */
+    public static RoutingCase redesignRequired(RedesignRecord record) {
+        RoutingCase confirmed = confirmed().routingCase();
+        RouteVersion version = confirmed.routeVersion();
+        return withRouteVersions(
+                confirmed,
+                List.of(new RouteVersion(
+                        version.routeVersionNo(),
+                        RouteVersionStatus.REDESIGN_REQUIRED,
+                        version.candidates(),
+                        version.evaluatedAt().orElseThrow(),
+                        version.candidatesFound(),
+                        version.confirmation().orElseThrow(),
+                        record)));
     }
 
     public static Confirmed confirmed() {

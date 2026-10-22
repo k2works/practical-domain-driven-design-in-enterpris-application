@@ -402,10 +402,11 @@ public final class RoutingCase {
 
     /**
      * 確定した経路版の、確定の記録の候補（区間の列）。見積りへの割当て（DE-05 の listener）と、追跡の予定（経路設計の公開 API。Bolt 25）が使う。
-     * 経路版は不変なので、確定した後はいつ引いても同じ候補を返す。
+     * 経路版は不変なので、確定した後はいつ引いても同じ候補を返す。状態ではなく確定の記録で引くので、再設計要・旧版の経路版でも
+     * 確定のときの候補を返す（旧情報版の保持。R-INV-07。Bolt 37d）。
      *
      * @param routeVersionNo 経路版番号
-     * @return 確定の記録の候補。経路版がない、または確定していなければ空
+     * @return 確定の記録の候補。経路版がない、または確定の記録を持たなければ空
      */
     public Optional<RouteCandidate> confirmedCandidateOf(int routeVersionNo) {
         return routeVersions.stream()

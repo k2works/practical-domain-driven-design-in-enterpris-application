@@ -9,11 +9,12 @@ import java.util.List;
 public interface RouteVersionLegQuery {
 
     /**
-     * 確定した経路版の区間を区間の順に返す。
+     * 確定の記録を持つ経路版（確定と、確定の後の再設計要・旧版）の、確定の記録の候補の区間を区間の順に返す（再設計要でも確定のときの
+     * 区間を返す。旧情報版の保持。Bolt 37d）。
      *
      * @param routingCaseNumber 案件番号の表記
      * @param routeVersionNo 経路版番号
-     * @return 区間の列。案件・経路版がない、または確定していない経路版なら空
+     * @return 区間の列。案件・経路版がない、または確定の記録を持たない経路版なら空
      */
     List<RouteVersionLeg> confirmedLegsOf(String routingCaseNumber, int routeVersionNo);
 }

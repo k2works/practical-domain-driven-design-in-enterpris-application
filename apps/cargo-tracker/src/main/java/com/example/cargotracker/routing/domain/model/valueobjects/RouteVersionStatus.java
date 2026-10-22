@@ -13,7 +13,7 @@ public enum RouteVersionStatus {
     EXPERT_REVIEW,
     /** 確定。 */
     CONFIRMED,
-    /** 再設計要。 */
+    /** 再設計要（確定の後の外部情報の更新で制約を満たさなくなった。確定の記録と再設計要の記録を持つ。Bolt 37d）。 */
     REDESIGN_REQUIRED,
     /** 旧版。 */
     SUPERSEDED
