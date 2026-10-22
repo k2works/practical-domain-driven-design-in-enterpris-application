@@ -16,7 +16,7 @@
         <link rel="prev" href="../bolt_37b_report/">
       
       
-        <link rel="next" href="../release_report-0_1/">
+        <link rel="next" href="../bolt_37b2_report/">
       
       
         
@@ -6680,6 +6680,41 @@
   
   
     <li class="md-nav__item">
+      <a href="../bolt_37b2_report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 37b2 終了報告
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--draft"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../release_report-0_1/" class="md-nav__link">
         
   
@@ -12048,16 +12083,16 @@
 <h2 id="_8">ステップ計画<a class="headerlink" href="#_8" title="Permanent link">&para;</a></h2>
 <p>各ステップの終わりに対象のテストを流し、最後に <code>check</code> と <code>uiTest</code> を流して XML の結果から件数を数える（T-151）。コミットは pathspec で行い（T-110）、push してアプリの CI を確かめる（T-26）。</p>
 <ul class="task-list">
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>1. 設計の文書と数え上げ</strong>: US-06 に Bolt 37b2 の決定（判定と境界、最終採用値の読み方、除外にすること、港湾は W7、確定のときは 37c）を書く。domain_model のドメインルールの表に「情報鮮度の判定」の行とクラス図、Bolt 37b2 で決めたこと（許容時間を設定にする置き場所と理由）、R-INV-02 の除外の列挙と R-INV-09 の注、用語集（規則の行、:171 の「鮮度」は追跡と共有しない注）。UC-06 2a・FRS-01 の「情報が古い」と「情報不足」の関係の注（non_functional・system_usecase）、ui_design の S-06（画面イメージの「情報」の行と :1087）、data_model :508（<code>threshold</code> の区分ごとの形）。Javadoc: <code>rules/package-info.java</code>・<code>ExclusionReasonCode.java:4-5</code>・<code>ConstraintEvaluation</code>・<code>ExclusionReason</code>（クラスの説明と新しい項目の <code>@param</code>）・<code>RoutingCase.calculateCandidates</code>・<code>RoutingCaseCommandService</code> :25・:54。<code>route_candidates.feature:6</code> の説明、<code>DevSampleDataSmokeTest:358</code> のコメント。test_strategy :550 の表に US-06 AC4 の行（Bolt 37b2、<code>@US-06-AC4</code>（<code>route_candidates.feature</code>・<code>compare_route_candidates_ui.feature</code>）、単体・統合のテスト）。<code>calculateCandidates</code> の呼び出しと「情報不足」「情報が古い」の写しを全体で数える（T-148）（完了の判定: 文書の差分と、直す箇所の一覧）</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>2. 受入シナリオ（Red）</strong>: <code>route_candidates.feature</code> に <code>@US-06-AC4 @R-INV-09</code> のシナリオを足す。</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>1. 設計の文書と数え上げ</strong>: US-06 に Bolt 37b2 の決定（判定と境界、最終採用値の読み方、除外にすること、港湾は W7、確定のときは 37c）を書く。domain_model のドメインルールの表に「情報鮮度の判定」の行とクラス図、Bolt 37b2 で決めたこと（許容時間を設定にする置き場所と理由）、R-INV-02 の除外の列挙と R-INV-09 の注、用語集（規則の行、:171 の「鮮度」は追跡と共有しない注）。UC-06 2a・FRS-01 の「情報が古い」と「情報不足」の関係の注（non_functional・system_usecase）、ui_design の S-06（画面イメージの「情報」の行と :1087）、data_model :508（<code>threshold</code> の区分ごとの形）。Javadoc: <code>rules/package-info.java</code>・<code>ExclusionReasonCode.java:4-5</code>・<code>ConstraintEvaluation</code>・<code>ExclusionReason</code>（クラスの説明と新しい項目の <code>@param</code>）・<code>RoutingCase.calculateCandidates</code>・<code>RoutingCaseCommandService</code> :25・:54。<code>route_candidates.feature:6</code> の説明、<code>DevSampleDataSmokeTest:358</code> のコメント。test_strategy :550 の表に US-06 AC4 の行（Bolt 37b2、<code>@US-06-AC4</code>（<code>route_candidates.feature</code>・<code>compare_route_candidates_ui.feature</code>）、単体・統合のテスト）。<code>calculateCandidates</code> の呼び出しと「情報不足」「情報が古い」の写しを全体で数える（T-148）（完了の判定: 文書の差分と、直す箇所の一覧）</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>2. 受入シナリオ（Red）</strong>: <code>route_candidates.feature</code> に <code>@US-06-AC4 @R-INV-09</code> のシナリオを足す。</li>
 <li>(a) 境界のシナリオアウトライン: 積替えの 2 区間目の航海の取得時刻を、判定時刻の 24 時間前の 1 秒前・同時刻・1 秒後の 3 点にし、1 秒前（情報不足で除外）、同時刻と 1 秒後（適合）を書く。古い航海を 2 区間目に置く（最初の区間だけで判定する変異を落とす）。1 区間目の航海は新しい取得時刻にする</li>
 <li>(b) 2 つの航海が古い候補で、理由が区間の順に 2 つ（航海・不適合の時刻・閾値 <code>V-xxx PT24H</code>・参照情報版）。候補の最も古い情報の取得時刻も確かめる</li>
 <li>ステップ定義: 「次の航海がある」の表に省略できる「取得時刻」の列を足す（ない行は今の定数）。<code>REASONS</code> に「情報不足」、理由を候補ごとに並びで確かめる形（今の「除外された候補の理由」は理由 1 つが前提）、<code>threshold()</code> に情報不足の形</li>
 <li>落ちる理由が「情報不足の候補が適合で示される」であることを確かめる（完了の判定: 足したシナリオが期待した理由で落ちる）</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>3. 規則と集約（Green）</strong>: <code>InfoFreshnessPolicyTest</code> に、境界の 3 点、2 区間目だけ古い、2 つ古いと区間の順に 2 つ、許容時間が 0 以下なら作れない、を足して Red を見てから <code>InfoFreshnessPolicy</code> と <code>ExclusionReason.infoInsufficient</code> を作る。<code>RoutingCaseTest</code> に、情報不足の候補は除外で適合の後ろに並ぶ、理由は制約適合判定の理由の後ろ、取得時刻の違う区間で最も古い取得時刻と古い航海だけの理由、を足してから <code>calculateCandidates</code> に引数を足す。呼び出し（<code>RoutingCaseFixture</code>・各テスト・<code>DevSampleDataSmokeTest:344</code>）は既定の許容時間で直す（H1: 期待値を変えない）（完了の判定: 単体テストと 2 (a)(b) が緑）</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>4. 設定と保存（Green）</strong>: <code>RoutingConfiguration</code> の規則の <code>@Bean</code> と組み立て、<code>application.properties</code> の既定値、<code>AcceptanceTestConfiguration:181</code>。設定の結合のテストを <code>@SpringBootTest(properties = "cargotracker.routing.info-freshness-tolerance=PT48H")</code> で書き、入力ポートで算出すると 25 時間前の航海が適合になること（既定の 24 時間なら情報不足）を確かめる（規則の単体テストだけでは設定を読まない変異が残る）。<code>MyBatisRoutingRepositoriesIntegrationTest</code> に、情報不足の理由（空白を含む航海番号を含む）と <code>info_insufficient</code> の保存の往復を足して Red を見てから、<code>threshold</code>・<code>toReason</code>・<code>info_insufficient</code> を直す（H2: マイグレーションを足さない）（完了の判定: 統合テストと受入シナリオが緑）</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>5. 画面とマニュアルとデモ</strong>: <code>RoutingCaseViewsTest</code> に情報不足の文言を足して Red を見てから <code>RoutingCaseViews.reason</code> を直す。<code>compare_route_candidates_ui.feature</code> に、25 時間前に取得した航海を使う候補が「情報不足」の理由で除外として示されるシナリオ（<code>@US-06-AC4 @demo @demo-bolt-37b2/info-insufficient</code>）を足し、axe を当てる。マニュアル 8 章の 8.2 に、除外の理由の「情報不足」（どの航海が、いつ取得した情報か、許容 24 時間）と、データ責任者に取込を依頼して届いたら「候補を再算出」する案内を書く。注意・補足に「判定は判定時刻の情報による。時間がたったら『候補を再算出』してから確定する」を足す（確定のときの鮮度は 37c。確認ポイント 7）。ローカルの dev（ポート 8091）で開発用の利用者で S-06 を開き、見本の候補が情報不足にならないことを確かめる（T-172）。デモの動画を撮る（完了の判定: 画面の層のシナリオが緑、マニュアルの差分、動画）</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>6. 品質ゲートと開発レビューと終了報告</strong>: 変異 6 つ（確認ポイント 8）を当て、落ちたテストを出力で確かめる（T-164・T-166）。<code>check</code>・<code>uiTest</code>・SonarQube（ほかの Gradle が終わってから。T-147）、開発レビュー、push して CI と MkDocs とデモ環境の配備を確かめる（T-126）。#15 に、確定のときの鮮度の穴を 37c で閉じることを含めてコメントを残す。終了報告の残る課題にも同じことを書く。終了報告で release_plan（W6 の 37b2 の行と主なタスク）・開発の索引・mkdocs を完了に直す</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>3. 規則と集約（Green）</strong>: <code>InfoFreshnessPolicyTest</code> に、境界の 3 点、2 区間目だけ古い、2 つ古いと区間の順に 2 つ、許容時間が 0 以下なら作れない、を足して Red を見てから <code>InfoFreshnessPolicy</code> と <code>ExclusionReason.infoInsufficient</code> を作る。<code>RoutingCaseTest</code> に、情報不足の候補は除外で適合の後ろに並ぶ、理由は制約適合判定の理由の後ろ、取得時刻の違う区間で最も古い取得時刻と古い航海だけの理由、を足してから <code>calculateCandidates</code> に引数を足す。呼び出し（<code>RoutingCaseFixture</code>・各テスト・<code>DevSampleDataSmokeTest:344</code>）は既定の許容時間で直す（H1: 期待値を変えない）（完了の判定: 単体テストと 2 (a)(b) が緑）</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>4. 設定と保存（Green）</strong>: <code>RoutingConfiguration</code> の規則の <code>@Bean</code> と組み立て、<code>application.properties</code> の既定値、<code>AcceptanceTestConfiguration:181</code>。設定の結合のテストを <code>@SpringBootTest(properties = "cargotracker.routing.info-freshness-tolerance=PT48H")</code> で書き、入力ポートで算出すると 25 時間前の航海が適合になること（既定の 24 時間なら情報不足）を確かめる（規則の単体テストだけでは設定を読まない変異が残る）。<code>MyBatisRoutingRepositoriesIntegrationTest</code> に、情報不足の理由（空白を含む航海番号を含む）と <code>info_insufficient</code> の保存の往復を足して Red を見てから、<code>threshold</code>・<code>toReason</code>・<code>info_insufficient</code> を直す（H2: マイグレーションを足さない）（完了の判定: 統合テストと受入シナリオが緑）</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>5. 画面とマニュアルとデモ</strong>: <code>RoutingCaseViewsTest</code> に情報不足の文言を足して Red を見てから <code>RoutingCaseViews.reason</code> を直す。<code>compare_route_candidates_ui.feature</code> に、25 時間前に取得した航海を使う候補が「情報不足」の理由で除外として示されるシナリオ（<code>@US-06-AC4 @demo @demo-bolt-37b2/info-insufficient</code>）を足し、axe を当てる。マニュアル 8 章の 8.2 に、除外の理由の「情報不足」（どの航海が、いつ取得した情報か、許容 24 時間）と、データ責任者に取込を依頼して届いたら「候補を再算出」する案内を書く。注意・補足に「判定は判定時刻の情報による。時間がたったら『候補を再算出』してから確定する」を足す（確定のときの鮮度は 37c。確認ポイント 7）。ローカルの dev（ポート 8091）で開発用の利用者で S-06 を開き、見本の候補が情報不足にならないことを確かめる（T-172）。デモの動画を撮る（完了の判定: 画面の層のシナリオが緑、マニュアルの差分、動画）</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>6. 品質ゲートと開発レビューと終了報告</strong>: 変異 6 つ（確認ポイント 8）を当て、落ちたテストを出力で確かめる（T-164・T-166）。<code>check</code>・<code>uiTest</code>・SonarQube（ほかの Gradle が終わってから。T-147）、開発レビュー、push して CI と MkDocs とデモ環境の配備を確かめる（T-126）。#15 に、確定のときの鮮度の穴を 37c で閉じることを含めてコメントを残す。終了報告の残る課題にも同じことを書く。終了報告で release_plan（W6 の 37b2 の行と主なタスク）・開発の索引・mkdocs を完了に直す</li>
 </ul>
 <h3 id="_9">時間の配分と打ち切り<a class="headerlink" href="#_9" title="Permanent link">&para;</a></h3>
 <table>
@@ -12171,13 +12206,13 @@
 </table>
 <h2 id="_10">完了条件<a class="headerlink" href="#_10" title="Permanent link">&para;</a></h2>
 <ul class="task-list">
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> 算出のときに、許容時間を超えた航海を使う候補が情報不足で除外され、境界（1 秒前・同時刻・1 秒後）が受入シナリオと単体テストで確かめられている。古い航海が 2 区間目でも、2 つでも、航海ごとに理由が出る</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> 理由に航海番号・最終採用値・取得時刻・許容時間が示され、保存の往復（<code>threshold</code>・<code>info_insufficient</code>）が統合テストで確かめられている。スキーマは変えていない</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> 許容時間が設定から読まれ、既定でない値で判定が変わることが設定から入力ポートまでで確かめられている</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> US-06 の決定・domain_model・ui_design・data_model・test_strategy・non_functional（FRS-01）・UC-06 の注・Javadoc を直した。S-06 の理由の文言、マニュアル 8.2（確定の前に算出し直す注意を含む）を直した。画面の層のシナリオと axe が緑で、デモの動画を撮った</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> 変異 6 つで落ちるテストがある。<code>check</code> と <code>uiTest</code> が緑で件数が減っていない。SonarQube の Quality Gate が PASS、<code>okf:check</code> ERROR 0、CI が緑</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> release_plan（W6 の 37b2 の行と主なタスク）・開発の索引・mkdocs のナビが合っている。MkDocs とデモ環境の配備を確かめた。#15 にコメントを残した</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> 開発レビュー、終了報告</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> 算出のときに、許容時間を超えた航海を使う候補が情報不足で除外され、境界（1 秒前・同時刻・1 秒後）が受入シナリオと単体テストで確かめられている。古い航海が 2 区間目でも、2 つでも、航海ごとに理由が出る</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> 理由に航海番号・最終採用値・取得時刻・許容時間が示され、保存の往復（<code>threshold</code>・<code>info_insufficient</code>）が統合テストで確かめられている。スキーマは変えていない</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> 許容時間が設定から読まれ、既定でない値で判定が変わることが設定から入力ポートまでで確かめられている</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> US-06 の決定・domain_model・ui_design・data_model・test_strategy・non_functional（FRS-01）・UC-06 の注・Javadoc を直した。S-06 の理由の文言、マニュアル 8.2（確定の前に算出し直す注意を含む）を直した。画面の層のシナリオと axe が緑で、デモの動画を撮った</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> 変異 6 つで落ちるテストがある。<code>check</code> と <code>uiTest</code> が緑で件数が減っていない。SonarQube の Quality Gate が PASS、<code>okf:check</code> ERROR 0、CI が緑</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> release_plan（W6 の 37b2 の行と主なタスク）・開発の索引・mkdocs のナビが合っている。MkDocs とデモ環境の配備を確かめた。#15 にコメントを残した</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> 開発レビュー、終了報告（<a href="../bolt_37b2_report/">Bolt 37b2 終了報告</a>）</li>
 </ul>
 <h2 id="_11">更新履歴<a class="headerlink" href="#_11" title="Permanent link">&para;</a></h2>
 <table>
@@ -12189,6 +12224,11 @@
 </tr>
 </thead>
 <tbody>
+<tr>
+<td style="text-align: left;">2026-10-22</td>
+<td style="text-align: left;">ステップ 1〜6 を終えた。計画からの変更は終了報告の議題 1〜4</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5</td>
+</tr>
 <tr>
 <td style="text-align: left;">2026-10-22</td>
 <td style="text-align: left;">計画を承認した（確認ポイント 1 は同時刻は足りる、3 は (a) <code>@Value</code> で受ける、ほかは推奨のとおり）</td>
