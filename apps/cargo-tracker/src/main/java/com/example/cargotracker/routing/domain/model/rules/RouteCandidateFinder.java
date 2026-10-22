@@ -127,8 +127,9 @@ public class RouteCandidateFinder {
 
     /**
      * 区間を今の航海で引き直す（確定した経路版の評価。US-07 AC4。Bolt 37d2）。同じ航海番号の航海で、区間の積地の寄港（出発予定がある）と、
-     * その後で最初に区間の揚地に寄る寄港（到着予定がある）の組を探す。揚地が積地より前にも寄るときは積地の後ろだけを見る。
-     * 航海がない、組がない、組が 2 つ以上ある（同じ港に 2 度寄る）、到着が出発より後でないなら、選ばずに引き直せないとする（失敗に倒す）。
+     * その後で区間の揚地に寄る寄港（到着予定がある）の組を探す。揚地が積地より前にも寄るときは積地の後ろだけを見る。候補探索は積地から後の
+     * どの寄港も揚地にできるので、組が 2 つ以上ある（積地か揚地に 2 度寄る）と確定した寄港が分からない。航海がない、組がない、組が 2 つ以上
+     * ある、到着が出発より後でないなら、選ばずに引き直せないとする（失敗に倒す。2 度寄る航海は情報版が変わるたびに再設計要になる）。
      *
      * @param leg 確定した区間
      * @param voyages 今の航海の一覧
@@ -143,27 +144,33 @@ public class RouteCandidateFinder {
         }
         Voyage voyage = found.get();
         List<PortCall> calls = voyage.portCalls();
-        List<Leg> pairs = new ArrayList<>();
+        List<CallPair> pairs = new ArrayList<>();
         for (int i = 0; i < calls.size(); i++) {
             PortCall load = calls.get(i);
             if (load.port().equals(leg.load()) && load.departureAt() != null) {
-                firstCallAfter(calls, i, leg.discharge())
-                        .filter(discharge -> discharge.arrivalAt() != null
-                                && discharge
-                                        .arrivalAt()
-                                        .instant()
-                                        .isAfter(load.departureAt().instant()))
-                        .ifPresent(discharge -> pairs.add(leg(voyage, load, discharge)));
+                arrivalsAfter(calls, i, leg.discharge()).forEach(discharge -> pairs.add(new CallPair(load, discharge)));
             }
         }
-        return pairs.size() == 1 ? Optional.of(pairs.getFirst()) : Optional.empty();
+        if (pairs.size() != 1) {
+            return Optional.empty();
+        }
+        CallPair pair = pairs.getFirst();
+        return pair.discharge()
+                        .arrivalAt()
+                        .instant()
+                        .isAfter(pair.load().departureAt().instant())
+                ? Optional.of(leg(voyage, pair.load(), pair.discharge()))
+                : Optional.empty();
     }
 
-    /** 寄港 {@code from} の後で最初に港に寄る寄港。 */
-    private static Optional<PortCall> firstCallAfter(List<PortCall> calls, int from, Location port) {
+    /** 積地の寄港と揚地の寄港の組。 */
+    private record CallPair(PortCall load, PortCall discharge) {}
+
+    /** 寄港 {@code from} の後で港に寄り、到着予定がある寄港（候補探索が揚地にできる寄港）。 */
+    private static List<PortCall> arrivalsAfter(List<PortCall> calls, int from, Location port) {
         return calls.subList(from + 1, calls.size()).stream()
-                .filter(call -> call.port().equals(port))
-                .findFirst();
+                .filter(call -> call.port().equals(port) && call.arrivalAt() != null)
+                .toList();
     }
 
     /** 航海の積地の寄港から揚地の寄港までの区間（出発予定・到着予定・採用情報版・取得時刻を写す）。 */

@@ -7,7 +7,6 @@ import com.example.cargotracker.routing.acceptance.InMemoryRoutingCaseRepository
 import com.example.cargotracker.routing.acceptance.InMemoryVoyageRepository;
 import com.example.cargotracker.routing.application.internal.commands.EvaluateConfirmedRouteCommand;
 import com.example.cargotracker.routing.domain.events.RouteRedesignRequired;
-import com.example.cargotracker.routing.domain.model.aggregates.ConcurrentRoutingCaseUpdateException;
 import com.example.cargotracker.routing.domain.model.aggregates.ConnectionRule;
 import com.example.cargotracker.routing.domain.model.aggregates.RoutingCase;
 import com.example.cargotracker.routing.domain.model.aggregates.RoutingCaseFixture;
@@ -25,6 +24,7 @@ import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -77,8 +77,15 @@ class ConfirmedRouteEvaluationTest {
     }
 
     @Test
-    void 不適合になれば再設計要を保存してDE06を発行する() {
-        InMemoryRoutingCaseRepository repository = new InMemoryRoutingCaseRepository();
+    void 不適合になれば再設計要を操作者なしで保存してDE06を発行する() {
+        List<UUID> operators = new ArrayList<>();
+        InMemoryRoutingCaseRepository repository = new InMemoryRoutingCaseRepository() {
+            @Override
+            public synchronized void update(RoutingCase routingCase, UUID operatorId) {
+                operators.add(operatorId);
+                super.update(routingCase, operatorId);
+            }
+        };
         repository.save(confirmed);
         voyages.add(earlyVoyage("V-EARLY@2", "2026-11-05T00:00:00Z"));
 
@@ -88,6 +95,8 @@ class ConfirmedRouteEvaluationTest {
         RoutingCase saved = repository.findByNumber(confirmed.number()).orElseThrow();
         assertThat(saved.routeVersion().status()).isEqualTo(RouteVersionStatus.REDESIGN_REQUIRED);
         assertThat(saved.aggregateVersion()).isEqualTo(confirmed.aggregateVersion() + 1);
+        // 評価は利用者の操作ではないので、最終更新者を変えない（確認ポイント 5）
+        assertThat(operators).containsExactly((UUID) null);
         assertThat(published).singleElement().isInstanceOfSatisfying(RouteRedesignRequired.class, event -> {
             assertThat(event.routeVersionNo()).isEqualTo(1);
             assertThat(event.requiredAt()).isEqualTo(new UtcInstant(EVALUATED_AT));
@@ -97,12 +106,15 @@ class ConfirmedRouteEvaluationTest {
     }
 
     @Test
-    void 保存で競合すれば競合でイベントを発行しない() {
-        // 先の評価がすでに再設計要にして DE-06 を出しているので、再試行しない（確認ポイント 5）
+    void 読み込んだ後に案件が更新されていれば競合でイベントを発行しない() {
+        // 先の評価がすでに再設計要にして DE-06 を出しているので、再試行しない（確認ポイント 5）。読み込んだ直後に
+        // ほかの更新で案件の版を進め、版の照合で競合させる
         InMemoryRoutingCaseRepository repository = new InMemoryRoutingCaseRepository() {
             @Override
-            public synchronized void update(RoutingCase routingCase, UUID operatorId) {
-                throw new ConcurrentRoutingCaseUpdateException(routingCase.number(), routingCase.aggregateVersion());
+            public Optional<RoutingCase> findByNumber(RoutingCaseNumber number) {
+                Optional<RoutingCase> loaded = super.findByNumber(number);
+                super.findByNumber(number).ifPresent(other -> super.update(other, null));
+                return loaded;
             }
         };
         repository.save(confirmed);

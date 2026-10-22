@@ -12,13 +12,17 @@ public enum RedesignReasonCode {
     CONNECTION_TOO_SHORT,
     /** 接続できない（今の予定の接続の時刻に有効な接続時間規則がない）。 */
     NOT_CONNECTABLE,
-    /** 航海を引き直せない（区間の航海がなくなった、または区間の積地・揚地に寄らなくなった）。 */
+    /**
+     * 航海を引き直せない（区間の航海がなくなった、区間の積地・揚地に寄らなくなった、寄る順が逆になった、出発予定・到着予定がない、
+     * 到着が出発より後でない、積地か揚地に 2 度寄って確定した寄港が分からない）。画面の語は「航海の予定が使えない」。
+     */
     VOYAGE_UNAVAILABLE;
 
     /**
      * 制約適合判定の理由の区分を写す（Bolt 37d2）。
      *
-     * @throws IllegalStateException 貨物種別・情報不足（評価は貨物種別と鮮度を見ないので出ない。出たら評価の前提が崩れている）
+     * @throws IllegalStateException 貨物種別・情報不足（評価は貨物種別と鮮度を見ないので出ない。出たら評価の前提が崩れている。
+     *     制約適合判定が貨物種別を判定するようになったら、写しを見直す）
      */
     public static RedesignReasonCode from(ExclusionReasonCode code) {
         return switch (code) {

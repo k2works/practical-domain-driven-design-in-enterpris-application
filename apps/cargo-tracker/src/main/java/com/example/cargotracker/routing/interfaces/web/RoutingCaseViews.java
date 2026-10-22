@@ -84,6 +84,11 @@ final class RoutingCaseViews {
         public boolean redesignRequired() {
             return redesignRequiredAt != null;
         }
+
+        /** 確定の欄の見出しと候補の印の語（T-148。Bolt 37d2）。 */
+        public String label() {
+            return redesignRequired() ? "再設計要の経路" : "確定した経路";
+        }
     }
 
     /** 経路の確定（S-07）。 */
@@ -109,7 +114,15 @@ final class RoutingCaseViews {
             List<String> reasons,
             String infoAcquiredAt,
             boolean confirmable,
-            boolean confirmed) {}
+            boolean confirmed,
+            boolean judgedAtConfirmation) {
+
+        /** 判定の印。再設計要の経路版では、判定が確定のときのものと分かるように示す（Bolt 37d2 レビュー）。 */
+        public String judgementBadge() {
+            String badge = conforming ? "✓ 適合" : "✕ 除外";
+            return judgedAtConfirmation ? badge + "（確定のとき）" : badge;
+        }
+    }
 
     /** 区間 1 つ。 */
     record LegView(String voyageNumber, String route, String departure, String arrival) {}
@@ -162,7 +175,8 @@ final class RoutingCaseViews {
                                 candidate,
                                 routingCase.specification().arrivalDeadline(),
                                 confirmable,
-                                Integer.valueOf(candidate.candidateNo()).equals(confirmedNo)))
+                                Integer.valueOf(candidate.candidateNo()).equals(confirmedNo),
+                                version.redesign().isPresent()))
                         .toList());
     }
 
@@ -178,7 +192,7 @@ final class RoutingCaseViews {
                 expiresAt(routingCase),
                 expired(routingCase, now),
                 routingCase.aggregateVersion(),
-                candidate(candidate, routingCase.specification().arrivalDeadline(), true, false));
+                candidate(candidate, routingCase.specification().arrivalDeadline(), true, false, false));
     }
 
     /** 見積有効期限と同時刻または後は期限切れ（見積りの失効 Q-INV-07 と同じ向き）。経路設計は期限で確定を拒否しない。 */
@@ -216,7 +230,8 @@ final class RoutingCaseViews {
             case DEADLINE_EXCEEDED -> "期限超過";
             case CONNECTION_TOO_SHORT -> "接続不足";
             case NOT_CONNECTABLE -> "接続できない";
-            case VOYAGE_UNAVAILABLE -> "航海を引き直せない";
+            // 「引き直す」は実装の語なので、欠航・寄港の取りやめを利用者の語で示す（Bolt 37d2 レビュー）
+            case VOYAGE_UNAVAILABLE -> "航海の予定が使えない";
         };
     }
 
@@ -233,7 +248,11 @@ final class RoutingCaseViews {
     }
 
     private static CandidateView candidate(
-            RouteCandidate candidate, UtcInstant deadline, boolean versionConfirmable, boolean confirmed) {
+            RouteCandidate candidate,
+            UtcInstant deadline,
+            boolean versionConfirmable,
+            boolean confirmed,
+            boolean judgedAtConfirmation) {
         boolean conforming = candidate.evaluation().conforming();
         return new CandidateView(
                 candidate.candidateNo(),
@@ -256,7 +275,8 @@ final class RoutingCaseViews {
                 reasons(candidate, deadline),
                 dateTime(candidate.oldestInfoAcquiredAt()),
                 versionConfirmable && conforming,
-                confirmed);
+                confirmed,
+                judgedAtConfirmation);
     }
 
     /** 経由の要約（直行、または積替えの港）。 */

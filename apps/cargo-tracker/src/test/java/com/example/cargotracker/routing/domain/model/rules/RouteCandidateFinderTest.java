@@ -375,8 +375,32 @@ class RouteCandidateFinderTest {
                 call(TOKYO, "2026-10-07T00:00:00Z", "2026-10-08T00:00:00Z"),
                 call(ROTTERDAM, "2026-10-30T09:00:00Z", null));
 
-        assertThat(finder.refresh(CONFIRMED_LEG, List.of(updated)))
-                .hasValueSatisfying(leg -> assertThat(leg.departureAt()).isEqualTo(at("2026-10-08T00:00:00Z")));
+        assertThat(finder.refresh(CONFIRMED_LEG, List.of(updated))).contains(CONFIRMED_LEG);
+    }
+
+    @Test
+    void 積地の後で揚地に2度寄れば確定した寄港が分からないので選ばずに引き直せない() {
+        // Bolt 37d2 レビュー M-1。候補探索は積地から後のどの寄港も揚地にできるので、A→B→C→B では A→B が 2 つある
+        Voyage updated = voyage(
+                "V-101",
+                call(TOKYO, null, "2026-10-08T00:00:00Z"),
+                call(ROTTERDAM, "2026-10-30T09:00:00Z", "2026-10-31T00:00:00Z"),
+                call(HONG_KONG, "2026-11-10T00:00:00Z", "2026-11-11T00:00:00Z"),
+                call(ROTTERDAM, "2026-11-30T00:00:00Z", null));
+
+        assertThat(finder.refresh(CONFIRMED_LEG, List.of(updated))).isEmpty();
+    }
+
+    @Test
+    void 積地に2度寄っても出発予定のある寄港が1つなら引き直せる() {
+        Voyage updated = voyage(
+                "V-101",
+                call(TOKYO, "2026-10-01T00:00:00Z", null),
+                call(HONG_KONG, "2026-10-04T00:00:00Z", "2026-10-05T00:00:00Z"),
+                call(TOKYO, null, "2026-10-08T00:00:00Z"),
+                call(ROTTERDAM, "2026-10-30T09:00:00Z", null));
+
+        assertThat(finder.refresh(CONFIRMED_LEG, List.of(updated))).contains(CONFIRMED_LEG);
     }
 
     static List<String> voyageNumbers(List<Leg> legs) {

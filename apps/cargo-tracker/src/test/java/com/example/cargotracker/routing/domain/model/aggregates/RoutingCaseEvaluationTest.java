@@ -200,21 +200,23 @@ class RoutingCaseEvaluationTest {
 
     @Test
     void 再設計要の経路版はもう評価せず原因が解消しても戻さない() {
-        // 行 9（UC-08 1a。2 度目の評価は DE-06 を出さない）
+        // 行 9（UC-08 1a）。原因が解消した入力（期限に間に合う）と、まだ不適合の入力（期限を過ぎる）の両方で何もしない
         RedesignRecord redesign =
                 new RedesignRecord(at("2026-10-07T05:00:00Z"), List.of(RedesignReasonCode.DEADLINE_EXCEEDED));
-        RoutingCase routingCase = RoutingCaseFixture.redesignRequired(redesign);
-        RouteVersion before = routingCase.routeVersion();
+        for (String arrival : List.of("2026-10-29T00:00:00Z", "2026-11-05T00:00:00Z")) {
+            RoutingCase routingCase = RoutingCaseFixture.redesignRequired(redesign);
+            RouteVersion before = routingCase.routeVersion();
 
-        Optional<RouteRedesignRequired> event = routingCase.evaluateConfirmedRoute(
-                List.of(direct("V-EARLY", "V-EARLY@3", "2026-10-29T00:00:00Z")),
-                List.of(SINGAPORE_8H),
-                EVALUATED_AT,
-                finder,
-                evaluator);
+            Optional<RouteRedesignRequired> event = routingCase.evaluateConfirmedRoute(
+                    List.of(direct("V-EARLY", "V-EARLY@3", arrival)),
+                    List.of(SINGAPORE_8H),
+                    EVALUATED_AT,
+                    finder,
+                    evaluator);
 
-        assertThat(event).isEmpty();
-        assertThat(routingCase.routeVersion()).isEqualTo(before);
+            assertThat(event).as(arrival).isEmpty();
+            assertThat(routingCase.routeVersion()).as(arrival).isEqualTo(before);
+        }
     }
 
     @Test
@@ -231,6 +233,17 @@ class RoutingCaseEvaluationTest {
                 .isEmpty();
         assertThat(draft.routeVersion().status()).isEqualTo(RouteVersionStatus.DRAFT);
         assertThat(presented.routeVersion().status()).isEqualTo(RouteVersionStatus.CANDIDATES_PRESENTED);
+        RouteVersion candidates = presented.routeVersion();
+        RoutingCase expertReview = RoutingCaseFixture.withRouteVersions(
+                presented,
+                List.of(new RouteVersion(
+                        1,
+                        RouteVersionStatus.EXPERT_REVIEW,
+                        candidates.candidates(),
+                        candidates.evaluatedAt().orElseThrow())));
+        assertThat(expertReview.evaluateConfirmedRoute(updated, List.of(SINGAPORE_8H), EVALUATED_AT, finder, evaluator))
+                .isEmpty();
+        assertThat(expertReview.routeVersion().status()).isEqualTo(RouteVersionStatus.EXPERT_REVIEW);
     }
 
     @Test

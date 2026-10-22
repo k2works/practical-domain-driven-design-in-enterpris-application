@@ -40,12 +40,13 @@ public class ConfirmedRouteEvaluationSteps {
             "期限超過", RedesignReasonCode.DEADLINE_EXCEEDED,
             "接続不足", RedesignReasonCode.CONNECTION_TOO_SHORT,
             "接続できない", RedesignReasonCode.NOT_CONNECTABLE,
-            "航海を引き直せない", RedesignReasonCode.VOYAGE_UNAVAILABLE);
+            "航海の予定が使えない", RedesignReasonCode.VOYAGE_UNAVAILABLE);
 
     private final RoutingCaseCommandService commandService;
     private final RoutingCaseQueryService queryService;
     private final DeferredEventDelivery eventDelivery;
     private final InMemoryVoyageRepository voyages;
+    private ConfirmedRouteEvaluationOutcome outcome;
 
     public ConfirmedRouteEvaluationSteps(
             RoutingCaseCommandService commandService,
@@ -82,11 +83,17 @@ public class ConfirmedRouteEvaluationSteps {
 
     @もし("外部情報の更新を受けて案件の確定した経路を評価する")
     public void 確定した経路を評価する() {
-        ConfirmedRouteEvaluationOutcome outcome = commandService.evaluateConfirmedRoute(
+        outcome = commandService.evaluateConfirmedRoute(
                 new EvaluateConfirmedRouteCommand(onlyCase().number()));
         assertThat(outcome)
                 .isNotInstanceOfAny(
                         ConfirmedRouteEvaluationOutcome.NotFound.class, ConfirmedRouteEvaluationOutcome.Conflict.class);
+    }
+
+    /** 評価で保存もイベントの発行もしなかった（再設計要の経路版の 2 度目の評価。UC-08 1a）。 */
+    @ならば("評価の結果は変わらない")
+    public void 評価の結果は変わらない() {
+        assertThat(outcome).isEqualTo(new ConfirmedRouteEvaluationOutcome.Unchanged());
     }
 
     @ならば("経路版 {int} は再設計要で、理由は {string}、再設計要にした時刻は {string} である")
@@ -134,7 +141,15 @@ public class ConfirmedRouteEvaluationSteps {
     }
 
     private static List<RedesignReasonCode> reasonsOf(String reasons) {
-        return Arrays.stream(reasons.split(",")).map(REASONS::get).toList();
+        return Arrays.stream(reasons.split(","))
+                .map(reason -> {
+                    RedesignReasonCode code = REASONS.get(reason);
+                    if (code == null) {
+                        throw new IllegalArgumentException("再設計要の理由の語がありません: " + reason);
+                    }
+                    return code;
+                })
+                .toList();
     }
 
     private List<RouteRedesignRequired> redesignEvents() {

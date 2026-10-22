@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.example.cargotracker.routing.domain.model.valueobjects.ExclusionReason;
 import com.example.cargotracker.routing.domain.model.valueobjects.Leg;
+import com.example.cargotracker.routing.domain.model.valueobjects.RedesignReasonCode;
 import com.example.cargotracker.routing.domain.model.valueobjects.RouteVersionStatus;
 import com.example.cargotracker.routing.domain.model.valueobjects.RoutingCaseNumber;
 import com.example.cargotracker.routing.domain.model.valueobjects.RoutingCaseSummary;
@@ -84,5 +85,17 @@ class RoutingCaseViewsTest {
                 new UtcInstant(Instant.parse(arrival)),
                 voyage + "@1",
                 new UtcInstant(Instant.parse("2026-10-01T06:10:00Z")));
+    }
+
+    @ParameterizedTest(name = "{0} は「{1}」と示す")
+    @CsvSource({
+        "DEADLINE_EXCEEDED, 期限超過",
+        "CONNECTION_TOO_SHORT, 接続不足",
+        "NOT_CONNECTABLE, 接続できない",
+        "VOYAGE_UNAVAILABLE, 航海の予定が使えない"
+    })
+    void 再設計要の理由を経路設計者の語で示す(RedesignReasonCode reason, String text) {
+        // Bolt 37d2 レビュー。「引き直す」は実装の語なので、欠航・寄港の取りやめを利用者の語で示す
+        assertThat(RoutingCaseViews.redesignReason(reason)).isEqualTo(text);
     }
 }
