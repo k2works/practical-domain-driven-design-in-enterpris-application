@@ -9,6 +9,7 @@ import com.example.cargotracker.routing.domain.model.valueobjects.RoutingCaseNum
 import com.example.cargotracker.routing.domain.model.valueobjects.RoutingCaseSummary;
 import com.example.cargotracker.shared.domain.Location;
 import com.example.cargotracker.shared.domain.UtcInstant;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import org.junit.jupiter.api.Test;
@@ -49,6 +50,18 @@ class RoutingCaseViewsTest {
                 new UtcInstant(Instant.parse("2026-10-24T00:00:00Z")), new Location("LKCMB"), "V-501@1");
 
         assertThat(RoutingCaseViews.reason(reason, legs)).startsWith("接続を判定できない（LKCMB に次の出発の時刻で有効な接続時間規則がない。接続 1 日）");
+    }
+
+    @Test
+    void 情報不足の理由は古い航海と取得時刻と許容時間を時間で示し参照した航海情報の版を添える() {
+        // Bolt 37b2: AC4 の最終採用値は画面では「参照した航海情報の版」（ui_design :56）。24 時間を「1 日」とは示さない
+        ExclusionReason reason = ExclusionReason.infoInsufficient(
+                "V-301", new UtcInstant(Instant.parse("2026-10-06T01:00:00Z")), Duration.ofHours(24), "V-301@3");
+
+        assertThat(RoutingCaseViews.reason(reason, List.of()))
+                .isEqualTo("情報不足（V-301 の情報は取得から 24 時間を過ぎている。取得 "
+                        + RoutingCaseViews.dateTime(reason.infoAcquiredAt().orElseThrow())
+                        + "）。参照した航海情報の版 V-301@3");
     }
 
     static Leg leg(String voyage, String load, String discharge, String departure, String arrival) {

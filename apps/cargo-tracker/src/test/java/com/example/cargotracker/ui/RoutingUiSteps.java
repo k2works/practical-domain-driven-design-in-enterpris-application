@@ -10,6 +10,7 @@ import io.cucumber.java.ja.かつ;
 import io.cucumber.java.ja.ならば;
 import io.cucumber.java.ja.もし;
 import io.cucumber.java.ja.前提;
+import java.time.Duration;
 import java.util.UUID;
 import java.util.regex.Pattern;
 import org.springframework.beans.factory.annotation.Value;
@@ -89,7 +90,19 @@ public class RoutingUiSteps {
                 UUID.randomUUID());
     }
 
+    /** 取得から 25 時間たった航海の直行（情報不足。許容 24 時間。US-06 AC4、D-89。Bolt 37b2）。 */
+    @前提("取得から 25 時間たった航海の直行の便がある")
+    public void 取得から25時間たった航海がある() {
+        insertVoyage(
+                "STALE", "JPTYO", "2099-10-12 00:00:00+00", "NLRTM", "2099-10-29 00:00:00+00", Duration.ofHours(25));
+    }
+
     private void insertVoyage(String name, String load, String departure, String discharge, String arrival) {
+        insertVoyage(name, load, departure, discharge, arrival, Duration.ofHours(1));
+    }
+
+    private void insertVoyage(
+            String name, String load, String departure, String discharge, String arrival, Duration age) {
         voyagesInserted = true;
         String number = voyage(name);
         jdbc.update(
@@ -99,7 +112,7 @@ public class RoutingUiSteps {
                 number,
                 number + "@1",
                 // 判定はアプリの時計（同じ JVM の実時計）で行うので、データベースの時計ではなく JVM の時計で入れる（Bolt 37b）
-                java.sql.Timestamp.from(java.time.Instant.now().minus(java.time.Duration.ofHours(1))));
+                java.sql.Timestamp.from(java.time.Instant.now().minus(age)));
         jdbc.update(
                 "INSERT INTO routing.port_call VALUES (?, 1, ?, NULL, CAST(? AS TIMESTAMP WITH TIME ZONE))",
                 number,
@@ -180,6 +193,14 @@ public class RoutingUiSteps {
         assertThat(candidate).containsText(judgement);
         assertThat(candidate).containsText(reason);
         assertThat(candidate).containsText("参照した航海情報の版 " + voyage("LATE") + "@1");
+    }
+
+    @ならば("古い航海の候補は {string} と示され、理由に {string} と参照した航海情報の版が示される")
+    public void 古い航海の候補(String judgement, String reason) {
+        Locator candidate = candidate(voyage("STALE"));
+        assertThat(candidate).containsText(judgement);
+        assertThat(candidate).containsText("情報不足（" + voyage("STALE") + " の情報は" + reason);
+        assertThat(candidate).containsText("参照した航海情報の版 " + voyage("STALE") + "@1");
     }
 
     /**

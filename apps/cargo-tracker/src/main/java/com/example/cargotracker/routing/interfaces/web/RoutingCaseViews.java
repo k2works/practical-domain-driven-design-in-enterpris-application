@@ -248,7 +248,7 @@ final class RoutingCaseViews {
         return texts;
     }
 
-    /** 除外の理由の文言。不適合となった時刻・閾値・参照情報版を示す（R-INV-02）。 */
+    /** 除外の理由の文言。不適合となった時刻・閾値・参照情報版を示す（R-INV-02）。情報不足は古い航海・許容時間・取得時刻（Bolt 37b2）。 */
     static String reason(ExclusionReason reason, List<Leg> legs) {
         return switch (reason.code()) {
             case DEADLINE_EXCEEDED ->
@@ -267,8 +267,16 @@ final class RoutingCaseViews {
                         + connection(reason, legs) + "）。次の出発 " + dateTime(reason.violatedAt())
                         + INFO_VERSION + reason.infoVersion();
             case CARGO_NOT_SUPPORTED -> "貨物種別に対応しない" + INFO_VERSION + reason.infoVersion();
-            case INFO_INSUFFICIENT -> "情報不足" + INFO_VERSION + reason.infoVersion();
+            case INFO_INSUFFICIENT ->
+                "情報不足（" + reason.voyageNumber() + " の情報は取得から " + hours(reason.freshnessTolerance())
+                        + "を過ぎている。取得 " + dateTime(reason.infoAcquiredAt().orElseThrow()) + "）"
+                        + INFO_VERSION + reason.infoVersion();
         };
+    }
+
+    /** 情報鮮度の許容時間（Bolt 37b2。24 時間を「1 日」とせず時間で示す）。 */
+    private static String hours(Duration duration) {
+        return duration.toMinutesPart() == 0 ? duration.toHours() + " 時間" : DurationDisplay.hoursAndMinutes(duration);
     }
 
     /** 接続の理由の実際の接続時間（前の区間の到着予定から、理由の時刻に出発する区間まで）。 */
