@@ -2,8 +2,10 @@
 type: Plan
 title: "Bolt 37b2 終了報告 - US-06 AC4 情報不足（算出のときに古い航海の情報を使う候補を除外する。D-89）"
 tags: [plan]
-status: draft
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-22T04:20:14Z }
+status: stable
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-22T04:52:38Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-10-22T04:52:39Z }
 ---
 
 # Bolt 37b2 終了報告 - US-06 AC4 情報不足（算出のときに古い航海の情報を使う候補を除外する。D-89）
@@ -138,6 +140,7 @@ Bolt 37c（US-07 AC3: 確定のときに航海を読み直し、情報版が違�
 
 | 日付 | 更新内容 | 更新者 |
 | :--- | :--- | :--- |
+| 2026-10-22 | 終了報告を承認した（議題 1〜4 の計画から変えた点を事後に承認） | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-10-22 | 初版作成（承認待ち） | anthropic/claude-opus-5-5 |
 
 ## 関連ドキュメント
