@@ -4,7 +4,7 @@ title: "cargo-tracker テスト戦略"
 description: "cargo-tracker のテスト形状、テストレベルと責務、BDD（Cucumber）のシナリオ階層とタグ規約、不変条件・ユーザーストーリーとテストの対応、カバレッジ目標、CI での実行。"
 tags: [design, test-strategy, bdd]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-22T09:58:31Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-22T10:45:23Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T08:12:04Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:01:38Z }
@@ -558,7 +558,7 @@ Release 1.0 の受入条件の照合の表はまだ作っていない（上の�
 | US-18 | AC9 の回復コードの経路（回復コードでログインすると A-08 に導かれ、TOTP を登録し直して新しい回復コードを受け取る。後で登録できる。古いコードと回復コードは使えなくなり、ほかの session は失効する。管理者の経路と本人への通知は #47） | 33b | `@US-18-AC9`（`login_ui.feature`。回復コードでログインして再登録し、新しい回復コードで続ける、後で登録すると知らせが出てリンクから A-08 を開ける）、認証アプリの再登録のセキュリティの統合テスト、IA-INV-10・11 の単体・統合テスト |
 | US-06 | AC4（最終取得から許容時間（24 時間。D-89）を過ぎた航海を使う候補は情報不足で除外され、航海・取得時刻・許容時間・参照した航海情報の版が示される。ちょうど許容時間は足りる） | 37b2 | `@US-06-AC4`（`route_candidates.feature`・`compare_route_candidates_ui.feature`）、`InfoFreshnessPolicyTest`・`RoutingCaseTest`、保存の往復の統合テスト、設定の結合のテスト |
 | US-07 | AC3（承認中に区間の航海の情報版が更新されていれば確定は拒否され、候補の比較に戻って再判断が求められる。確定の時刻に情報不足でも確定できない） | 37c | `@US-07-AC3`（`confirm_route.feature`・`confirm_route_ui.feature`）、`RoutingCaseConfirmationTest`（候補の版の違う区間を含む）・`InfoFreshnessPolicyTest`、`RoutingCaseControllerTest` |
-| US-07 | AC4（確定した経路版の区間の航海が更新され、期限・接続を満たさなくなるか航海を引き直せなくなると、評価で再設計要になり、候補・区間・確定の記録（旧情報版）が残り、DE-06 が理由と旧情報版を運んで 1 度だけ出る。満たし続けるときと情報版が変わらないときは確定のまま。予約を自動で取り消さないことの確かめは 37e） | 37d2 | `@US-07-AC4`（`evaluate_confirmed_route.feature`）、`RoutingCaseTest`（状態の組み合わせの表の行ごと）・`RouteCandidateFinderTest`（引き直し）、入力ポートのテスト（見つからない・変わらない・再設計要・競合）、保存の統合テスト（評価で `updated_by` を変えない）、`RoutingCaseControllerTest`（S-06 の再設計要の表示） |
+| US-07 | AC4（確定した経路版の区間の航海が更新され、期限・接続を満たさなくなるか航海を引き直せなくなると、評価で再設計要になり、候補・区間・確定の記録（旧情報版）が残り、DE-06 が理由と旧情報版を運んで 1 度だけ出る。満たし続けるときと情報版が変わらないときは確定のまま。予約を自動で取り消さないことの確かめは 37e） | 37d2 | `@US-07-AC4`（`evaluate_confirmed_route.feature`）、`RoutingCaseEvaluationTest`（状態の組み合わせの表の行ごと）・`RouteCandidateFinderTest`（引き直し）・`RedesignReasonCodeTest`（理由の写し）・`ConfirmedRouteEvaluationTest`（入力ポート。見つからない・変わらない・再設計要・競合）、保存の統合テスト（評価で `updated_by` を変えない）、`RoutingCaseControllerTest`（S-06 の再設計要の表示）・`RoutingCaseViewsTest`（理由の画面の語） |
 | US-07 | AC5（旧版・再設計要の経路版は再確定・新規予約への割当てに使えず、新しい経路版の作成が求められる） | 37d2（再設計要の経路版の再確定の拒否）、37e（見積りへの割当て・荷主の承認・本予約の拒否） | `@US-07-AC5`（`evaluate_confirmed_route.feature`。再設計要の経路版は確定し直せず、もう一度評価しても DE-06 は出ない）、37e で見積り・予約の側の受入シナリオ |
 
 ## 後続工程への引継ぎ
