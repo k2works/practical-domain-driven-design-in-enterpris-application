@@ -489,6 +489,33 @@ class MyBatisRoutingRepositoriesIntegrationTest {
     }
 
     @Test
+    void 再設計要への更新は確定の行だけを書き確定していない行は書き換えない() {
+        // 表の条件は最後の守り（集約は確定の経路版だけを再設計要にする。Bolt 37d2）
+        RoutingCase calculated = calculatedAndSaved();
+        RoutingCase loaded = repository.findByNumber(calculated.number()).orElseThrow();
+        RouteVersion version = loaded.routeVersion();
+        RoutingCase redesigned = RoutingCaseFixture.withRouteVersions(
+                loaded,
+                List.of(new RouteVersion(
+                        version.routeVersionNo(),
+                        RouteVersionStatus.REDESIGN_REQUIRED,
+                        version.candidates(),
+                        version.evaluatedAt().orElseThrow(),
+                        version.candidatesFound(),
+                        null,
+                        new RedesignRecord(
+                                at("2083-10-08T00:00:00Z"), List.of(RedesignReasonCode.VOYAGE_UNAVAILABLE)))));
+
+        repository.update(redesigned, OPERATOR);
+
+        assertThat(jdbc.queryForObject(
+                        "SELECT status FROM routing.route_version WHERE routing_case_id = ?",
+                        String.class,
+                        calculated.id().value()))
+                .isEqualTo("CANDIDATES_PRESENTED");
+    }
+
+    @Test
     void 同じ案件に確定の経路版を二つ持つ行は部分一意インデックスが拒む() {
         // 確定は案件に 1 つ（R-INV-05。Bolt 37d で confirmed_route_version_no の代わりに PostgreSQL の部分一意インデックスで守る）
         UUID id = confirmedAndSaved().id().value();
