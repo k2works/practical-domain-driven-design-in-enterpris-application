@@ -180,6 +180,13 @@ public class MyBatisQuotationRepository implements QuotationRepository {
     }
 
     @Override
+    public List<QuotationId> findIdsByAssignedRoute(String routingCaseNumber, int routeVersionNo) {
+        return mapper.selectIdsByAssignedRoute(routingCaseNumber, routeVersionNo).stream()
+                .map(QuotationId::new)
+                .toList();
+    }
+
+    @Override
     public Optional<Quotation> findById(QuotationId id) {
         return Optional.ofNullable(mapper.selectById(id.value()))
                 .flatMap(row -> findByTransportRequestId(new TransportRequestId(row.transportRequestId())).stream()
@@ -233,6 +240,11 @@ public class MyBatisQuotationRepository implements QuotationRepository {
                 quotation
                         .assignedRoute()
                         .map(route -> toOffset(route.confirmedAt()))
+                        .orElse(null),
+                quotation
+                        .assignedRoute()
+                        .filter(AssignedRoute::redesignRequired)
+                        .map(route -> toOffset(route.redesignRequiredAt()))
                         .orElse(null),
                 quotation
                         .shipperApproval()
@@ -296,7 +308,8 @@ public class MyBatisQuotationRepository implements QuotationRepository {
                                 new Location(leg.dischargeUnlocode().strip()),
                                 toUtc(leg.departureAt()),
                                 toUtc(leg.arrivalAt())))
-                        .toList());
+                        .toList(),
+                utcOrNull(row.routeRedesignRequiredAt()));
     }
 
     private static List<Location> via(String value) {

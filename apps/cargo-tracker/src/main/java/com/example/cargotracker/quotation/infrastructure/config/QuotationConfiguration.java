@@ -4,6 +4,7 @@ import com.example.cargotracker.quotation.application.internal.commandservices.B
 import com.example.cargotracker.quotation.application.internal.commandservices.QuotationCommandService;
 import com.example.cargotracker.quotation.application.internal.commandservices.QuotationResponseService;
 import com.example.cargotracker.quotation.application.internal.commandservices.RouteAssignmentService;
+import com.example.cargotracker.quotation.application.internal.commandservices.RouteRedesignService;
 import com.example.cargotracker.quotation.application.internal.commandservices.TransportRequestCommandService;
 import com.example.cargotracker.quotation.application.internal.commandservices.TransportRequestReviewService;
 import com.example.cargotracker.quotation.application.internal.eventhandlers.QuotationApprovedByShipperEventHandler;
@@ -144,6 +145,12 @@ public class QuotationConfiguration {
     RouteAssignmentService routeAssignmentService(
             QuotationRepository quotationRepository, ApplicationEventPublisher eventPublisher, Clock clock) {
         return new RouteAssignmentService(quotationRepository, eventPublisher, clock);
+    }
+
+    /** 再設計要の伝達の入力ポート（見積りの公開 API のアダプターが委ねる。経路設計が DE-06 を受けて使う。ADR-014。Bolt 37e）。 */
+    @Bean
+    RouteRedesignService routeRedesignService(QuotationRepository quotationRepository) {
+        return new RouteRedesignService(quotationRepository);
     }
 
     /** DE-21 を受けて輸送要求を荷主承認待ちにする（別のトランザクション。Bolt 20。置換済み・失効の見積りは進めない。Bolt 35b2）。 */

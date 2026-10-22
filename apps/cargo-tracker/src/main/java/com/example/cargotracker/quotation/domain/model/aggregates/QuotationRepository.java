@@ -60,6 +60,12 @@ public interface QuotationRepository {
     /** 見積りを ID で探す（経路の割当て。経路設計は依頼元の見積り ID を持つ。Bolt 20）。 */
     Optional<Quotation> findById(QuotationId id);
 
+    /**
+     * 経路版を割り当てた見積りの ID（失効・置換済みを含む。再設計要の印を付ける。US-07 AC5。Bolt 37e）。見積りは経路設計の案件 ID を
+     * 持たないので、案件番号と経路版番号で引く（D-4）。
+     */
+    List<QuotationId> findIdsByAssignedRoute(String routingCaseNumber, int routeVersionNo);
+
     /** 輸送要求の見積りを見積り番号で探す。 */
     Optional<Quotation> findByTransportRequestIdAndNo(TransportRequestId transportRequestId, int quotationNo);
 }

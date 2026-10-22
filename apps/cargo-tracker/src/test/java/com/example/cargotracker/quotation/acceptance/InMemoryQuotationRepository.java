@@ -71,6 +71,17 @@ public class InMemoryQuotationRepository implements QuotationRepository {
     }
 
     @Override
+    public synchronized List<QuotationId> findIdsByAssignedRoute(String routingCaseNumber, int routeVersionNo) {
+        return store.values().stream()
+                .filter(quotation -> quotation
+                        .assignedRoute()
+                        .filter(route -> route.isVersion(routingCaseNumber, routeVersionNo))
+                        .isPresent())
+                .map(Quotation::id)
+                .toList();
+    }
+
+    @Override
     public Optional<Quotation> findByTransportRequestIdAndNo(TransportRequestId transportRequestId, int quotationNo) {
         return findByTransportRequestId(transportRequestId).stream()
                 .filter(quotation -> quotation.quotationNo() == quotationNo)

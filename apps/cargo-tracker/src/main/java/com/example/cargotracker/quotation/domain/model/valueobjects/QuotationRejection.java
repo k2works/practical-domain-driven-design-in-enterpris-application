@@ -29,5 +29,10 @@ public enum QuotationRejection {
     /** 見積りが荷主の承認済みでないため、予約確定に使えない（Q-INV-06。Bolt 23）。 */
     NOT_APPROVED,
     /** 見積りが荷主の承認済みで、まだ有効期限内なので再見積りできない（本予約の確定へ進む。D-85、Q-INV-07。Bolt 35b）。 */
-    APPROVED_AND_STILL_VALID
+    APPROVED_AND_STILL_VALID,
+    /**
+     * 割り当てた経路版が再設計要のため、荷主の承認と予約確定に使えない（Q-INV-10、B-INV-05。確定した後に外部情報の更新で条件を満たさなく
+     * なった。US-07 AC5。Bolt 37e）。
+     */
+    ROUTE_REDESIGN_REQUIRED
 }

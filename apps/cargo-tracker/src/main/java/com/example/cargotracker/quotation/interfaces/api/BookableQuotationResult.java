@@ -80,6 +80,9 @@ public sealed interface BookableQuotationResult {
         /** 荷主の承認済みでない。 */
         public static final String NOT_APPROVED = "NOT_APPROVED";
 
+        /** 割り当てた経路版が再設計要（B-INV-05。確定した後に外部情報の更新で条件を満たさなくなった。Bolt 37e）。 */
+        public static final String ROUTE_REDESIGN_REQUIRED = "ROUTE_REDESIGN_REQUIRED";
+
         public NotBookable {
             Objects.requireNonNull(reason, "reason");
         }

@@ -45,7 +45,8 @@ public class ShipperApprovalSteps {
             "失効している", QuotationRejection.EXPIRED,
             "置換済み", QuotationRejection.REPLACED,
             "承認済み", QuotationRejection.ALREADY_APPROVED,
-            "まだ承認できない", QuotationRejection.NOT_AWAITING_SHIPPER_APPROVAL);
+            "まだ承認できない", QuotationRejection.NOT_AWAITING_SHIPPER_APPROVAL,
+            "経路が再設計要", QuotationRejection.ROUTE_REDESIGN_REQUIRED);
 
     private final QuotationResponseService responseService;
     private final StaffQuotationQueryService staffQueryService;

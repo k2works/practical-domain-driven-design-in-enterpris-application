@@ -25,6 +25,7 @@
             <arg column="routing_case_number" name="routingCaseNumber" javaType="String"/>
             <arg column="route_version_no" name="routeVersionNo" javaType="Integer"/>
             <arg column="route_confirmed_at" name="routeConfirmedAt" javaType="java.time.OffsetDateTime"/>
+            <arg column="route_redesign_required_at" name="routeRedesignRequiredAt" javaType="java.time.OffsetDateTime"/>
             <arg column="shipper_approved_by" name="shipperApprovedBy" javaType="java.util.UUID"/>
             <arg column="shipper_approved_at" name="shipperApprovedAt" javaType="java.time.OffsetDateTime"/>
             <arg column="version" name="version" javaType="_long"/>
@@ -47,13 +48,13 @@
             (id, transport_request_id, quotation_no, transport_request_version_no, status, expires_at, total_amount,
              currency, route_policy_via, route_policy_departure_at, route_policy_arrival_at, internal_approved_by,
              internal_approved_at, presented_at, replaced_by_quotation_id, shipper_response, responded_by, responded_at,
-             routing_case_number, route_version_no, route_confirmed_at, shipper_approved_by, shipper_approved_at,
-             version)
+             routing_case_number, route_version_no, route_confirmed_at, route_redesign_required_at, shipper_approved_by,
+             shipper_approved_at, version)
         VALUES (#{id}, #{transportRequestId}, #{quotationNo}, #{transportRequestVersionNo}, #{status}, #{expiresAt},
                 #{totalAmount}, #{currency}, #{routePolicyVia}, #{routePolicyDepartureAt}, #{routePolicyArrivalAt},
                 #{internalApprovedBy}, #{internalApprovedAt}, #{presentedAt}, #{replacedByQuotationId},
                 #{shipperResponse}, #{respondedBy}, #{respondedAt}, #{routingCaseNumber}, #{routeVersionNo},
-                #{routeConfirmedAt}, #{shipperApprovedBy}, #{shipperApprovedAt}, #{version})
+                #{routeConfirmedAt}, #{routeRedesignRequiredAt}, #{shipperApprovedBy}, #{shipperApprovedAt}, #{version})
     </insert>
 
     <insert id="insertPricingLine">
@@ -74,6 +75,7 @@
                shipper_response = #{row.shipperResponse}, responded_by = #{row.respondedBy},
                responded_at = #{row.respondedAt}, routing_case_number = #{row.routingCaseNumber},
                route_version_no = #{row.routeVersionNo}, route_confirmed_at = #{row.routeConfirmedAt},
+               route_redesign_required_at = #{row.routeRedesignRequiredAt},
                shipper_approved_by = #{row.shipperApprovedBy}, shipper_approved_at = #{row.shipperApprovedAt},
                version = version + 1
          WHERE id = #{row.id} AND version = #{expectedVersion}
@@ -83,8 +85,8 @@
         SELECT id, transport_request_id, quotation_no, transport_request_version_no, status, expires_at, total_amount,
                currency, route_policy_via, route_policy_departure_at, route_policy_arrival_at, internal_approved_by,
                internal_approved_at, presented_at, replaced_by_quotation_id, shipper_response, responded_by,
-               responded_at, routing_case_number, route_version_no, route_confirmed_at, shipper_approved_by,
-               shipper_approved_at, version
+               responded_at, routing_case_number, route_version_no, route_confirmed_at, route_redesign_required_at,
+               shipper_approved_by, shipper_approved_at, version
           FROM quotation.quotation
          WHERE transport_request_id = #{transportRequestId}
          ORDER BY quotation_no
@@ -94,10 +96,18 @@
         SELECT id, transport_request_id, quotation_no, transport_request_version_no, status, expires_at, total_amount,
                currency, route_policy_via, route_policy_departure_at, route_policy_arrival_at, internal_approved_by,
                internal_approved_at, presented_at, replaced_by_quotation_id, shipper_response, responded_by,
-               responded_at, routing_case_number, route_version_no, route_confirmed_at, shipper_approved_by,
-               shipper_approved_at, version
+               responded_at, routing_case_number, route_version_no, route_confirmed_at, route_redesign_required_at,
+               shipper_approved_by, shipper_approved_at, version
           FROM quotation.quotation
          WHERE id = #{id}
+    </select>
+
+    <!-- 再設計要の印を付ける見積り（失効・置換済みを含む。索引 ix_quotation_assigned_route。Bolt 37e） -->
+    <select id="selectIdsByAssignedRoute" resultType="java.util.UUID">
+        SELECT id
+          FROM quotation.quotation
+         WHERE routing_case_number = #{routingCaseNumber} AND route_version_no = #{routeVersionNo}
+         ORDER BY transport_request_id, quotation_no
     </select>
 
     <resultMap id="assignedRouteLegRow" type="com.example.cargotracker.quotation.infrastructure.persistence.AssignedRouteLegRow">

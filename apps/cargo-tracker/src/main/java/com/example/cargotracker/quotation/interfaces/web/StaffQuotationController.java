@@ -365,8 +365,12 @@ public class StaffQuotationController {
             case OUTDATED_VERSION -> subject + " は輸送要求の古い版に対する見積りのため、再見積りできません";
             case NOT_PRESENTED -> subject + " は荷主に提示していません";
             case ROUTING_REQUESTED -> subject + " は荷主が詳細経路設計を依頼済みのため、再見積りできません";
-            case NOT_AWAITING_SHIPPER_APPROVAL, ALREADY_APPROVED, NOT_APPROVED, APPROVED_AND_STILL_VALID ->
-                approvalStageRejection(subject, reason);
+            // ROUTE_REDESIGN_REQUIRED は荷主の承認と予約確定の照会で返る（言い分けは Bolt 37e3）
+            case NOT_AWAITING_SHIPPER_APPROVAL,
+                    ALREADY_APPROVED,
+                    NOT_APPROVED,
+                    APPROVED_AND_STILL_VALID,
+                    ROUTE_REDESIGN_REQUIRED -> approvalStageRejection(subject, reason);
         };
     }
 

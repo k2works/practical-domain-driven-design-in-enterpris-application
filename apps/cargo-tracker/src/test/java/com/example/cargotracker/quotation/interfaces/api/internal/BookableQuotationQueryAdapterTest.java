@@ -90,6 +90,22 @@ class BookableQuotationQueryAdapterTest {
                         BookableQuotationResult.NotBookable.QUOTATION_NOT_FOUND));
     }
 
+    @Test
+    void 割り当てた経路が再設計要の承認済みの見積りは再設計要を返す() {
+        // Bolt 37e（B-INV-05）。理由は見積りの側の照会で既定の NOT_APPROVED に寄せず、公開 API の定数で返す
+        Quotation quotation = approved(submitted());
+        Quotation marked = quotations.findById(quotation.id()).orElseThrow();
+        marked.markRouteRedesignRequired(
+                QuotationFixture.assignedRoute().routingCaseNumber(),
+                QuotationFixture.assignedRoute().routeVersionNo(),
+                at("2026-10-07T07:00:00Z"));
+        quotations.update(marked);
+
+        assertThat(service.find(new BookableQuotationRequest("TR-2026-0007", 1, now())))
+                .isEqualTo(new BookableQuotationResult.NotBookable(
+                        BookableQuotationResult.NotBookable.ROUTE_REDESIGN_REQUIRED));
+    }
+
     private TransportRequest submitted() {
         TransportRequest request = TransportRequest.submit(
                 new TransportRequestId(UUID.randomUUID()),

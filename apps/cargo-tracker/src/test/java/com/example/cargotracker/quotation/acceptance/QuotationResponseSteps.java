@@ -46,7 +46,8 @@ public class QuotationResponseSteps {
             "見積提示済み", TransportRequestStatus.QUOTED,
             "経路設計中", TransportRequestStatus.ROUTING,
             "荷主承認待ち", TransportRequestStatus.AWAITING_APPROVAL,
-            "予約待ち", TransportRequestStatus.READY_TO_BOOK);
+            "予約待ち", TransportRequestStatus.READY_TO_BOOK,
+            "予約確定済み", TransportRequestStatus.BOOKED);
 
     private static final Map<String, QuotationRejection> REJECTIONS = Map.of(
             "失効している", QuotationRejection.EXPIRED,

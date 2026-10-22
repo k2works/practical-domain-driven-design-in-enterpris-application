@@ -123,7 +123,8 @@ public class QuotationResponseController {
     private static String rejection(TransportRequestNumber number, int quotationNo, QuotationRejection reason) {
         String subject = QuotationViews.label(number, quotationNo);
         // APPROVED_AND_STILL_VALID・TRANSPORT_REQUEST_BOOKED（再見積り。Bolt 35b・35c）と
-        // NOT_APPROVED（予約確定の照会）は荷主の操作では返らず、網羅のために既定の組に入れる
+        // NOT_APPROVED（予約確定の照会）は荷主の操作では返らず、網羅のために既定の組に入れる。ROUTE_REDESIGN_REQUIRED は荷主の
+        // 承認で返るが、回答（詳細経路設計へ進む）では返らない（Bolt 37e）
         return switch (reason) {
             case EXPIRED -> subject + " は有効期限を過ぎて失効しています。新しい見積りは担当営業にご依頼ください";
             case REPLACED -> subject + " は新しい見積りに置き換えられました。見積依頼の詳細で最新の状況をご確認ください";
@@ -137,7 +138,8 @@ public class QuotationResponseController {
                     NOT_AWAITING_SHIPPER_APPROVAL,
                     ALREADY_APPROVED,
                     NOT_APPROVED,
-                    APPROVED_AND_STILL_VALID -> subject + " には回答できません。担当営業にご連絡ください";
+                    APPROVED_AND_STILL_VALID,
+                    ROUTE_REDESIGN_REQUIRED -> subject + " には回答できません。担当営業にご連絡ください";
         };
     }
 

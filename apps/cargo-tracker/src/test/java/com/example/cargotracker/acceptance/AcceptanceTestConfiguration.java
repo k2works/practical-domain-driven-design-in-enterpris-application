@@ -22,6 +22,7 @@ import com.example.cargotracker.quotation.application.internal.commandservices.B
 import com.example.cargotracker.quotation.application.internal.commandservices.QuotationCommandService;
 import com.example.cargotracker.quotation.application.internal.commandservices.QuotationResponseService;
 import com.example.cargotracker.quotation.application.internal.commandservices.RouteAssignmentService;
+import com.example.cargotracker.quotation.application.internal.commandservices.RouteRedesignService;
 import com.example.cargotracker.quotation.application.internal.commandservices.TransportRequestCommandService;
 import com.example.cargotracker.quotation.application.internal.commandservices.TransportRequestReviewService;
 import com.example.cargotracker.quotation.application.internal.eventhandlers.QuotationApprovedByShipperEventHandler;
@@ -43,10 +44,13 @@ import com.example.cargotracker.quotation.domain.events.RouteDesignRequested;
 import com.example.cargotracker.quotation.domain.events.TransportRequestSubmitted;
 import com.example.cargotracker.quotation.domain.model.rules.MvpAcceptancePolicy;
 import com.example.cargotracker.quotation.domain.model.rules.RequiredDocumentPolicy;
+import com.example.cargotracker.quotation.interfaces.api.BookableQuotationQuery;
+import com.example.cargotracker.quotation.interfaces.api.RouteRedesignNotification;
 import com.example.cargotracker.quotation.interfaces.api.internal.BookableQuotationQueryAdapter;
 import com.example.cargotracker.quotation.interfaces.api.internal.BookingNotificationAdapter;
 import com.example.cargotracker.quotation.interfaces.api.internal.RouteAssignmentAdapter;
 import com.example.cargotracker.quotation.interfaces.api.internal.RouteConditionQueryAdapter;
+import com.example.cargotracker.quotation.interfaces.api.internal.RouteRedesignNotificationAdapter;
 import com.example.cargotracker.routing.acceptance.InMemoryConnectionRuleRepository;
 import com.example.cargotracker.routing.acceptance.InMemoryRoutingCaseNumberIssuer;
 import com.example.cargotracker.routing.acceptance.InMemoryRoutingCaseRepository;
@@ -284,6 +288,21 @@ public class AcceptanceTestConfiguration {
                 DeferredEventDelivery eventDelivery,
                 MutableClock clock) {
             return new RouteAssignmentService(quotationRepository, eventDelivery, clock);
+        }
+
+        /** 再設計要の伝達（見積りの公開 API。ADR-014。Bolt 37e）。経路設計の DE-06 の listener は Bolt 37e2。 */
+        @Bean
+        RouteRedesignNotification routeRedesignNotification(InMemoryQuotationRepository quotationRepository) {
+            return new RouteRedesignNotificationAdapter(new RouteRedesignService(quotationRepository));
+        }
+
+        /** 予約確定に使える見積りの照会（見積りの公開 API。ADR-016。Bolt 37e の受入シナリオが直接呼ぶ）。 */
+        @Bean
+        BookableQuotationQuery bookableQuotationQuery(
+                InMemoryQuotationRepository quotationRepository,
+                InMemoryTransportRequestRepository transportRequestRepository) {
+            return new BookableQuotationQueryAdapter(
+                    new BookableQuotationQueryService(quotationRepository, transportRequestRepository));
         }
 
         /** 経路設計は DE-05 を受けて見積りの公開 API（経路の割当て）を呼ぶ（Bolt 20）。 */

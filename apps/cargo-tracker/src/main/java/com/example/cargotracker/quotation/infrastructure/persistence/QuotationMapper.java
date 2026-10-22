@@ -27,6 +27,10 @@ public interface QuotationMapper {
     /** 見積りを ID で返す（経路の割当て。Bolt 20）。 */
     QuotationRow selectById(UUID id);
 
+    /** 案件番号と経路版番号の経路を割り当てた見積りの ID（Bolt 37e）。 */
+    List<UUID> selectIdsByAssignedRoute(
+            @Param("routingCaseNumber") String routingCaseNumber, @Param("routeVersionNo") int routeVersionNo);
+
     void insertAssignedRouteLeg(AssignedRouteLegRow row);
 
     /** 見積りの割り当てた区間の数（区間は割当ての後に変えないため、まだないときだけ書く。Bolt 20）。 */

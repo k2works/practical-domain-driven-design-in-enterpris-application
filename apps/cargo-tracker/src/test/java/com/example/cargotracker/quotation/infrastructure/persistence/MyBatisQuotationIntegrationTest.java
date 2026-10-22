@@ -991,6 +991,59 @@ class MyBatisQuotationIntegrationTest {
         return request.id();
     }
 
+    // 割り当てた経路の再設計要の印（US-07 AC5、Q-INV-10。Bolt 37e）
+
+    private static final UtcInstant REDESIGN_AT = new UtcInstant(Instant.parse("2082-01-07T07:00:00Z"));
+
+    @Test
+    void 割り当てた経路の再設計要の印は時刻とともに保存し読み出せ区間は重ねて書かない() {
+        TransportRequestId transportRequestId = transportRequest(46);
+        awaitingApproval(transportRequestId);
+        Quotation quotation =
+                repository.findByTransportRequestIdAndNo(transportRequestId, 1).orElseThrow();
+        quotation.markRouteRedesignRequired("RC-2082-0001", 1, REDESIGN_AT);
+
+        repository.update(quotation);
+
+        assertThat(repository.findById(quotation.id())).hasValueSatisfying(found -> {
+            assertThat(found.status()).isEqualTo(QuotationStatus.AWAITING_SHIPPER_APPROVAL);
+            assertThat(found.assignedRoute()).contains(ROUTE.withRedesignRequiredAt(REDESIGN_AT));
+        });
+        assertThat(repository.findByTransportRequestIdAndNo(transportRequestId, 1))
+                .hasValueSatisfying(
+                        found -> assertThat(found.assignedRoute().orElseThrow().redesignRequiredAt())
+                                .isEqualTo(REDESIGN_AT));
+        assertThat(legs(quotation.id())).isEqualTo(2);
+    }
+
+    @Test
+    void 再設計要の印は経路の割当てがある見積りだけが持てることをCHECK制約で守る() {
+        TransportRequestId transportRequestId = transportRequest(47);
+        Quotation target = routingRequested(transportRequestId);
+        String update = "UPDATE quotation.quotation SET route_redesign_required_at = ? WHERE id = ?";
+        UUID targetId = target.id().value();
+        java.time.OffsetDateTime at = java.time.OffsetDateTime.parse("2082-01-07T07:00:00Z");
+
+        assertThatThrownBy(() -> jdbc.update(update, at, targetId))
+                .isInstanceOf(DataIntegrityViolationException.class)
+                .hasMessageContaining("ck_quotation_route_redesign");
+    }
+
+    @Test
+    void 経路版で見積りを引くと再見積りの旧版と新しい見積りの両方が当たり別の経路版と経路のない見積りは当たらない() {
+        TransportRequestId transportRequestId = transportRequest(48);
+        approved(transportRequestId);
+        Quotation old =
+                repository.findByTransportRequestIdAndNo(transportRequestId, 1).orElseThrow();
+        Quotation replacement = calculatedAfterExpiry(transportRequestId, 2);
+        requote(old, replacement, QuotationFixture.EXPIRES_AT);
+        routingRequested(transportRequest(49));
+
+        assertThat(repository.findIdsByAssignedRoute("RC-2082-0001", 1)).contains(old.id(), replacement.id());
+        assertThat(repository.findIdsByAssignedRoute("RC-2082-0001", 2)).doesNotContain(old.id(), replacement.id());
+        assertThat(repository.findIdsByAssignedRoute("RC-2099-9999", 1)).isEmpty();
+    }
+
     private int legs(QuotationId quotationId) {
         return jdbc.queryForObject(
                 "SELECT COUNT(*) FROM quotation.assigned_route_leg WHERE quotation_id = ?",

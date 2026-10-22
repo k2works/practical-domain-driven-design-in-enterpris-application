@@ -108,7 +108,20 @@ public class BookableQuotationQueryService {
         return switch (rejection) {
             case EXPIRED -> BookableQuotation.Reason.EXPIRED;
             case REPLACED -> BookableQuotation.Reason.REPLACED;
-            default -> BookableQuotation.Reason.NOT_APPROVED;
+            case ROUTE_REDESIGN_REQUIRED -> BookableQuotation.Reason.ROUTE_REDESIGN_REQUIRED;
+            case NOT_APPROVED -> BookableQuotation.Reason.NOT_APPROVED;
+            // 予約確定の判定（bookingRejectionAt）は上の 4 つだけを返す。足し忘れが黙って NOT_APPROVED にならないよう、既定の腕を置かず
+            // 網羅の switch にする（Bolt 37e）
+            case TRANSPORT_REQUEST_NOT_QUOTING,
+                    TRANSPORT_REQUEST_BOOKED,
+                    ALREADY_QUOTED,
+                    NOT_PENDING_APPROVAL,
+                    OUTDATED_VERSION,
+                    NOT_PRESENTED,
+                    ROUTING_REQUESTED,
+                    NOT_AWAITING_SHIPPER_APPROVAL,
+                    ALREADY_APPROVED,
+                    APPROVED_AND_STILL_VALID -> throw new IllegalStateException("予約確定の判定が返さない理由です: " + rejection);
         };
     }
 }

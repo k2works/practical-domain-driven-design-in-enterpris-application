@@ -15,6 +15,7 @@ import com.example.cargotracker.quotation.domain.model.valueobjects.QuotationSta
 import com.example.cargotracker.quotation.domain.model.valueobjects.QuotationViolations;
 import com.example.cargotracker.quotation.domain.model.valueobjects.RouteAssignmentResult;
 import com.example.cargotracker.quotation.domain.model.valueobjects.RoutePolicy;
+import com.example.cargotracker.quotation.domain.model.valueobjects.RouteRedesignMarkResult;
 import com.example.cargotracker.quotation.domain.model.valueobjects.ShipperApproval;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestId;
 import com.example.cargotracker.shared.annotation.ddd.AggregateRoot;
@@ -394,6 +395,34 @@ public final class Quotation {
     }
 
     /**
+     * 割り当てた経路版が再設計要になったことを写す（US-07 AC5、Q-INV-10、B-INV-05。Bolt 37e）。
+     *
+     * @param routingCaseNumber 案件番号
+     * @param routeVersionNo 経路版番号
+     * @param requiredAt 経路設計が再設計要にした時刻
+     * 印は経路版の事実の写しで、見積りの状態は変えない。失効・置換済みの見積りにも付ける（判定には効かない。置換済み・失効の記録が先に
+     * 返る。記録をそろえる）。すでに付いていれば最初の時刻を残す（冪等）。
+     *
+     * @return 印を付けた結果
+     */
+    public RouteRedesignMarkResult markRouteRedesignRequired(
+            String routingCaseNumber, int routeVersionNo, UtcInstant requiredAt) {
+        Objects.requireNonNull(routingCaseNumber, "routingCaseNumber");
+        Objects.requireNonNull(requiredAt, "requiredAt");
+        if (assignedRoute == null) {
+            return RouteRedesignMarkResult.NO_ROUTE;
+        }
+        if (!assignedRoute.isVersion(routingCaseNumber, routeVersionNo)) {
+            return RouteRedesignMarkResult.ANOTHER_ROUTE_VERSION;
+        }
+        if (assignedRoute.redesignRequired()) {
+            return RouteRedesignMarkResult.ALREADY_MARKED;
+        }
+        assignedRoute = assignedRoute.withRedesignRequiredAt(requiredAt);
+        return RouteRedesignMarkResult.MARKED;
+    }
+
+    /**
      * 荷主が見積りと割り当てた経路を承認する（荷主承認待ち → 承認済み。US-24 AC4・AC5、Q-INV-07・10。Bolt 20）。
      *
      * @param approver 承認した荷主担当者
@@ -423,7 +452,7 @@ public final class Quotation {
     /**
      * 判定時刻に荷主が承認できないなら、その理由（Q-INV-07・10。Bolt 20）。置換済み・失効の記録を先に見て、承認済みなら
      * 期限を過ぎていても承認済みとして示し（二重送信の結果を誤らせない）、そうでなければ判定時刻で失効か、荷主承認待ちでないかを返す。
-     * 再設計要・旧版の経路版の判定は W6（US-08、DE-06）で足す。画面の操作の出し分けもこれを使う。
+     * 荷主承認待ちなら最後に割り当てた経路の再設計要の印を見る（Q-INV-10。Bolt 37e。旧版の経路版は US-08）。画面の操作の出し分けもこれを使う。
      *
      * @return 承認できない理由（承認できるなら空）
      */
@@ -442,7 +471,14 @@ public final class Quotation {
         if (status != QuotationStatus.AWAITING_SHIPPER_APPROVAL) {
             return Optional.of(QuotationRejection.NOT_AWAITING_SHIPPER_APPROVAL);
         }
-        return Optional.empty();
+        return routeRedesignRejection();
+    }
+
+    /** 割り当てた経路に再設計要の印があれば、その理由（Q-INV-10、B-INV-05。Bolt 37e）。 */
+    private Optional<QuotationRejection> routeRedesignRejection() {
+        return assignedRoute != null && assignedRoute.redesignRequired()
+                ? Optional.of(QuotationRejection.ROUTE_REDESIGN_REQUIRED)
+                : Optional.empty();
     }
 
     /**
@@ -511,7 +547,8 @@ public final class Quotation {
 
     /**
      * commit 時刻に予約確定に使えないなら、その理由（Q-INV-06、BR-10、ADR-016。Bolt 23）。置換済み・失効の記録を先に見て、
-     * 次に commit 時刻での失効（有効期限と同時刻以後）、最後に荷主の承認済みかを見る。予約は commit 時刻を渡して公開 API で問い合わせる。
+     * 次に commit 時刻での失効（有効期限と同時刻以後）、荷主の承認済みか、最後に割り当てた経路の再設計要の印を見る（B-INV-05。Bolt 37e）。
+     * 予約は commit 時刻を渡して公開 API で問い合わせる。
      *
      * @param committedAt 予約確定の commit 時刻
      * @return 使えない理由（使えるなら空）
@@ -528,7 +565,7 @@ public final class Quotation {
         if (status != QuotationStatus.APPROVED) {
             return Optional.of(QuotationRejection.NOT_APPROVED);
         }
-        return Optional.empty();
+        return routeRedesignRejection();
     }
 
     /** 荷主に見えるか（提示した見積りだけ。承認待ちと、提示する前に置き換えた見積りは見えない。Q-INV-08。Bolt 12 レビュー R-19）。 */
