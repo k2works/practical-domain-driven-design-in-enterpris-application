@@ -16,7 +16,7 @@
         <link rel="prev" href="../bolt_37c_report/">
       
       
-        <link rel="next" href="../release_report-0_1/">
+        <link rel="next" href="../bolt_37d_report/">
       
       
         
@@ -6853,6 +6853,41 @@
   
   
     <li class="md-nav__item">
+      <a href="../bolt_37d_report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 37d 終了報告
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--draft"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../release_report-0_1/" class="md-nav__link">
         
   
@@ -12180,10 +12215,10 @@
 <h2 id="_9">ステップ計画<a class="headerlink" href="#_9" title="Permanent link">&para;</a></h2>
 <p>各ステップの終わりに対象のテストを流し、最後に <code>check</code> と <code>uiTest</code> を流して XML の結果から件数を数える（T-151）。コミットは pathspec で行い（T-110）、push してアプリの CI を確かめる（T-26）。</p>
 <ul class="task-list">
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>1. 設計の文書と数え上げ</strong>: domain_model の Bolt 37d で決めたこと（記録と理由の区分、<code>referenced_info_version</code> を作らない、部分一意インデックス）・:739・用語集（再設計要の記録、再設計要の理由）、data_model（:386 の ER 図、:495・:498・:501・:507・:510・:1166・:1187）、test_strategy :236、W6 節の確認ポイント 9 の決着と 37d・37d2 の行（開始準備で分けた）。列の写し（上の一覧）を全体で数え直す（T-148）（完了の判定: 文書の差分と、直す箇所の一覧）</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>2. 値オブジェクトと経路版（Red → Green）</strong>: <code>RouteVersion</code> と <code>RedesignRecord</code> のテストで、再構成した状態の表の行 5（記録を持てる状態）を書いて Red を見てから、値オブジェクト・列挙型・経路版の項目を足す。行 1〜3 の集約のテスト（<code>RoutingCaseConfirmationTest</code>・<code>RoutingCaseTest</code> に再構成した案件で）を足す（今のコードで通るはずなので、通ることと、確定の判定を外す変異で落ちることを確かめる）。<code>confirmedCandidateOf</code> などの Javadoc を直す（完了の判定: 単体テストが緑）</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>3. 保存とスキーマ（データベースの承認ゲート）</strong>: <code>MyBatisRoutingRepositoriesIntegrationTest</code> に、再設計要の経路版を保存して読み戻すと状態と記録だけが変わり候補・区間・確定の記録が残ること、確定の経路版を 2 つ持つ行を表が拒むこと（部分一意インデックス）を足して Red を見てから、マイグレーション 2 つと保存（状態と記録の更新の文、読み戻し、<code>touchRoutingCase</code>・<code>insertRoutingCase</code> の直し）を作る。:293-297 は <code>updated_by</code> だけを確かめる形に、:443 の外部キーの違反は部分一意インデックスの違反に置き換える（H1）（完了の判定: 統合テストが緑、ローカルの dev が起動する）</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>4. 品質ゲートと開発レビューと終了報告</strong>: 変異（確認ポイント 6）を当て、落ちたテストを出力で確かめる。<code>check</code>・<code>uiTest</code>・SonarQube（ほかの Gradle が終わってから。T-147）、開発レビュー、push して CI と MkDocs とデモ環境の配備（H2 のデモ環境でマイグレーションが流れて起動すること）を確かめる。#16 にコメントを残す。終了報告で release_plan・開発の索引・mkdocs を完了に直し、Bolt 37d2 の開始準備に送る材料（下の表）を引き継ぐ</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>1. 設計の文書と数え上げ</strong>: domain_model の Bolt 37d で決めたこと（記録と理由の区分、<code>referenced_info_version</code> を作らない、部分一意インデックス）・:739・用語集（再設計要の記録、再設計要の理由）、data_model（:386 の ER 図、:495・:498・:501・:507・:510・:1166・:1187）、test_strategy :236、W6 節の確認ポイント 9 の決着と 37d・37d2 の行（開始準備で分けた）。列の写し（上の一覧）を全体で数え直す（T-148）（完了の判定: 文書の差分と、直す箇所の一覧）</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>2. 値オブジェクトと経路版（Red → Green）</strong>: <code>RouteVersion</code> と <code>RedesignRecord</code> のテストで、再構成した状態の表の行 5（記録を持てる状態）を書いて Red を見てから、値オブジェクト・列挙型・経路版の項目を足す。行 1〜3 の集約のテスト（<code>RoutingCaseConfirmationTest</code>・<code>RoutingCaseTest</code> に再構成した案件で）を足す（今のコードで通るはずなので、通ることと、確定の判定を外す変異で落ちることを確かめる）。<code>confirmedCandidateOf</code> などの Javadoc を直す（完了の判定: 単体テストが緑）</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>3. 保存とスキーマ（データベースの承認ゲート）</strong>: <code>MyBatisRoutingRepositoriesIntegrationTest</code> に、再設計要の経路版を保存して読み戻すと状態と記録だけが変わり候補・区間・確定の記録が残ること、確定の経路版を 2 つ持つ行を表が拒むこと（部分一意インデックス）を足して Red を見てから、マイグレーション 2 つと保存（状態と記録の更新の文、読み戻し、<code>touchRoutingCase</code>・<code>insertRoutingCase</code> の直し）を作る。:293-297 は <code>updated_by</code> だけを確かめる形に、:443 の外部キーの違反は部分一意インデックスの違反に置き換える（H1）（完了の判定: 統合テストが緑、ローカルの dev が起動する）</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>4. 品質ゲートと開発レビューと終了報告</strong>: 変異（確認ポイント 6）を当て、落ちたテストを出力で確かめる。<code>check</code>・<code>uiTest</code>・SonarQube（ほかの Gradle が終わってから。T-147）、開発レビュー、push して CI と MkDocs とデモ環境の配備（H2 のデモ環境でマイグレーションが流れて起動すること）を確かめる。#16 にコメントを残す。終了報告で release_plan・開発の索引・mkdocs を完了に直し、Bolt 37d2 の開始準備に送る材料（下の表）を引き継ぐ</li>
 </ul>
 <h3 id="_10">時間の配分と打ち切り<a class="headerlink" href="#_10" title="Permanent link">&para;</a></h3>
 <table>
@@ -12335,13 +12370,13 @@
 </table>
 <h2 id="_11">完了条件<a class="headerlink" href="#_11" title="Permanent link">&para;</a></h2>
 <ul class="task-list">
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> 経路版が再設計要の記録（時刻と理由の区分）を持ち、記録を持てる状態が守られる。再構成した状態の表の行ごとのテストが緑（R-INV-06 の拒否を含む）</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> 再設計要の経路版を保存して読み戻すと、状態と記録だけが変わり、候補・区間・確定の記録が残る</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <code>confirmed_route_version_no</code> の列と外部キーを消し、PostgreSQL の部分一意インデックスで確定は案件に 1 つ。2 か所のほかに既存のテストの期待値は変わらない（H1）</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> domain_model・data_model・test_strategy・W6 節（37d・37d2 の行、確認ポイント 9 の決着）を直した。Javadoc を直した</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> 変異で落ちるテストがある。<code>check</code> と <code>uiTest</code> が緑で件数が減っていない。SonarQube の Quality Gate が PASS、<code>okf:check</code> ERROR 0、CI が緑。デモ環境がマイグレーションの後に起動する</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> release_plan・開発の索引・mkdocs のナビが合っている。MkDocs とデモ環境の配備を確かめた。#16 にコメントを残した</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> 開発レビュー、終了報告（Bolt 37d2 の開始準備に送る材料を引き継ぐ）</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> 経路版が再設計要の記録（時刻と理由の区分）を持ち、記録を持てる状態が守られる。再構成した状態の表の行ごとのテストが緑（R-INV-06 の拒否を含む）</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> 再設計要の経路版を保存して読み戻すと、状態と記録だけが変わり、候補・区間・確定の記録が残る</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <code>confirmed_route_version_no</code> の列と外部キーを消し、PostgreSQL の部分一意インデックスで確定は案件に 1 つ。2 か所のほかに既存のテストの期待値は変わらない（H1）</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> domain_model・data_model・test_strategy・W6 節（37d・37d2 の行、確認ポイント 9 の決着）を直した。Javadoc を直した</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> 変異で落ちるテストがある。<code>check</code> と <code>uiTest</code> が緑で件数が減っていない。SonarQube の Quality Gate が PASS、<code>okf:check</code> ERROR 0、CI が緑。デモ環境がマイグレーションの後に起動する</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> release_plan・開発の索引・mkdocs のナビが合っている。MkDocs とデモ環境の配備を確かめた。#16 にコメントを残した</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> 開発レビュー、終了報告（<a href="../bolt_37d_report/">Bolt 37d 終了報告</a>。Bolt 37d2 の開始準備に送る材料を引き継ぐ）</li>
 </ul>
 <h2 id="_12">更新履歴<a class="headerlink" href="#_12" title="Permanent link">&para;</a></h2>
 <table>
@@ -12353,6 +12388,11 @@
 </tr>
 </thead>
 <tbody>
+<tr>
+<td style="text-align: left;">2026-10-22</td>
+<td style="text-align: left;">ステップ 1〜4 を終えた。計画からの変更は終了報告の議題 1〜3。開発レビューの指摘で 37d2 の材料に 10〜12 を足した</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5</td>
+</tr>
 <tr>
 <td style="text-align: left;">2026-10-22</td>
 <td style="text-align: left;">計画を承認した（確認ポイント 1〜7 を推奨のとおり。データベースのマイグレーション 2 つを含む）</td>
