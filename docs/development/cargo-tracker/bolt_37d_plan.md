@@ -2,8 +2,10 @@
 type: Plan
 title: "Bolt 37d 計画 - US-07 AC4 の準備（経路版の再設計要の記録と保存、`confirmed_route_version_no` の削除と部分一意インデックス。評価の操作は 37d2）"
 tags: [plan]
-status: draft
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-22T07:37:58Z }
+status: stable
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-22T07:39:10Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-10-22T07:39:10Z }
 ---
 
 # Bolt 37d 計画 - US-07 AC4 の準備（経路版の再設計要の記録と保存、`confirmed_route_version_no` の削除と部分一意インデックス。評価の操作は 37d2）
@@ -211,6 +213,7 @@ Bolt 37d2（評価の操作と DE-06 と画面）の計画は、この Bolt の�
 
 | 日付 | 更新内容 | 更新者 |
 | :--- | :--- | :--- |
+| 2026-10-22 | 計画を承認した（確認ポイント 1〜7 を推奨のとおり。データベースのマイグレーション 2 つを含む） | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-10-22 | 整合性検証の指摘を反映した（承認待ち）。約 4.5 時間で半日を超えるため、振る舞いを変えない準備（37d）と評価の操作・DE-06・画面（37d2）に分けた。再設計要にした時刻と理由は経路版に保存する（human:kakimomokuri）。既存のテストの 2 か所の直し、再構成した状態の表、列の写し、`referenced_info_version` を作らないことを書き、37d2 に関わる指摘は「Bolt 37d2 の開始準備に送る材料」に移した | anthropic/claude-opus-5-5、分け方と記録の決定 human:kakimomokuri |
 | 2026-10-22 | 初版作成（承認待ち） | anthropic/claude-opus-5-5 |
 
