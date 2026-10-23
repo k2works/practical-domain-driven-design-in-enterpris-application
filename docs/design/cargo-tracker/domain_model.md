@@ -4,7 +4,7 @@ title: "cargo-tracker ドメインモデル"
 description: "cargo-tracker の業務領域の分類、ユビキタス言語、7 つの境界づけられたコンテキスト（通知を含む）の集約・エンティティ・値オブジェクト・ドメインルール、コマンド・クエリ・イベント、予約サガ。"
 tags: [design, domain-model, ddd]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-22T13:04:01Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-23T01:10:06Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T07:41:04Z }
   - { by: human:kakimomokuri, at: 2026-10-01T07:48:17Z }
@@ -532,8 +532,9 @@ note left of 承認済み
   再設計要の印（Bolt 37e）は状態を変えない。
   印があれば、荷主承認待ちの荷主の承認と、
   承認済みの本予約を拒否する（Q-INV-10、B-INV-05）。
-  承認済みは期限内、荷主承認待ちは期限の後も
-  再見積りできず出口がない（担当者の相談、US-08。D-86）
+  印のある承認済み・荷主承認待ちは、期限を過ぎたら
+  再見積りできる（新しい見積りも印を引き継ぎ承認できない）。
+  期限内は出口がない（担当者の相談、US-08）
 end note
 承認済み --> 置換済み : 確定後変更
 失効 --> [*]
@@ -596,7 +597,7 @@ Bolt 37e（US-07 AC5 の見積りの側）で決めたこと（[Bolt 37e 計画]
 - 入力ポートは 1 つのトランザクションで、（案件番号・経路版番号）で見積りの ID を引き（索引 `ix_quotation_assigned_route`）、1 件ずつ読んで印を付けて保存し、もう一度引いて増えた ID があれば同じことを繰り返す（増えなくなるまで）。印を付ける操作と再見積りの届く順（印が先、再見積りが先、照会の後で読む前に再見積り、どちらかの保存が楽観ロックで負ける）のどれでも、印のない新しい見積りを残さない。2 つ以上の見積り（集約）を 1 つのトランザクションで書くのは、同じ経路版の写しをそろえるためで、再見積り（旧版と新しい見積りを 1 つで書く。上の「見積りの失効と置換」）と同じ例外にする。楽観ロックで競合したら例外にし、呼び手（Bolt 37e2 の経路設計の listener）が戻して再配信でやり直す（DE-05 の前例）。イベントは出さない（荷主への通知は US-08）。
 - 荷主の承認の判定（`approvalRejectionAt`。Q-INV-10）は、置換済み・失効の記録 → 承認済み → 期限切れ → 荷主承認待ちでない → 再設計要（`ROUTE_REDESIGN_REQUIRED`）の順。承認済みの見積りに印が付いても、承認の判定は承認済みのまま。本予約の判定（`bookingRejectionAt`。B-INV-05）は、置換済み・失効の記録 → 期限切れ → 承認済みでない → 再設計要の順。どちらも期限切れを先に返す。拒否の理由（`QuotationRejection`）を写す網羅の switch は、今の「承認できない」の文言の組に入れる（言い分けは Bolt 37e3）。
 - 再見積りの可否は変えない（承認済みで期限切れだけが再見積りできる）。印は経路の引き継ぎで新しい見積りに写り、提示して荷主承認待ちになっても荷主の承認で再設計要として拒否される。
-- 既知の制限: 承認済みで期限内の見積りに印が付くと、本予約は再設計要、再見積りは `APPROVED_AND_STILL_VALID` で拒否され、期限まで出口がない。荷主承認待ちで印が付いた見積りも、荷主の承認は再設計要、再見積りは `ROUTING_REQUESTED` で拒否される。出口は担当者の相談と再設計（US-08）。旧版の経路版の判定も US-08（旧版は確定から直接移ることがあり、印が付かない）。
+- 既知の制限: 承認済みで期限内の見積りに印が付くと、本予約は再設計要、再見積りは `APPROVED_AND_STILL_VALID` で拒否され、期限まで出口がない。荷主承認待ちで印が付いた見積りも、期限内は荷主の承認が再設計要、再見積りが `ROUTING_REQUESTED` で拒否される。印のある承認済み・荷主承認待ちは、有効期限を過ぎたら再見積りでき（旧版は失効。新しい見積りは経路と印を引き継ぎ、提示しても荷主の承認は再設計要）、料金と期限を出し直せる（D-86 を印のある荷主承認待ちだけ変えた。Bolt 37e の終了報告の承認の場で human:kakimomokuri が決めた）。経路の出口は再設計（US-08）。旧版の経路版の判定も US-08（旧版は確定から直接移ることがあり、印が付かない）。
 - 見積りの公開 API に再設計要の伝達（`quotation.interfaces.api.RouteRedesignNotification.notifyRedesignRequired(RouteRedesignNotificationRequest)`。案件番号・経路版番号・再設計要にした時刻）を足す。受け取りは `RouteRedesignNotificationReceipt`（sealed: `Marked(新しく付けた件数)`・`AlreadyMarked`・`NotMarked(理由)`。理由は `QUOTATION_NOT_FOUND`（その経路版を割り当てた見積りがない）・`INVALID_REQUEST`（空の案件番号、1 未満の経路版番号、時刻がない。例外にせず理由で返す））。見積りは経路設計案件 ID を持たないので案件番号で引く（D-4）。アダプターは `quotation.interfaces.api.internal`、入力ポートは `quotation.application.internal.commandservices` に置く（ADR-014 の形。`BookingNotification` の前例）。
 - 本予約の照会の公開 API の理由（`BookableQuotation.Reason`・`BookableQuotationResult.NotBookable`）に `ROUTE_REDESIGN_REQUIRED` を足し、見積りの照会の `default` を明示の case にする。予約の側（ACL と `QuotationUnavailability`、S-09・S-02 の文言）の追従は Bolt 37e3。Bolt 37e2 から 37e3 までは予約の画面が「承認済みでない」と示すが、拒否は保たれる。
 - 本番で印を付ける入口（DE-06 の listener）は Bolt 37e2 なので、Bolt 37e では利用者に見える振る舞いは変わらない。DE-06 が DE-05 より先に届くと見積りはまだ経路を持たず `NotMarked(QUOTATION_NOT_FOUND)` になり、その後の DE-05 が印のない経路を割り当てる（Q-INV-10 の穴）。この扱いと、DE-06 と本予約の確定の競合の守り（ADR-016）は Bolt 37e2 で決める。そのとき `RouteAssignmentRequest` か `BookableQuotationResult.Bookable` に項目が増えることがある。
