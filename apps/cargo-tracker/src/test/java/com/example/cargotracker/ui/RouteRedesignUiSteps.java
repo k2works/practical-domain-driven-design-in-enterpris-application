@@ -144,6 +144,14 @@ public class RouteRedesignUiSteps {
         browser.checkAccessibility();
     }
 
+    /** マニュアルのキャプチャ（8.2。Bolt 37e3b）。再設計要の経路の欄が出ていることを確かめてから撮る。 */
+    @もし("経路設計者が再設計要の案件の経路候補の比較を開く")
+    public void 再設計要の案件の経路候補の比較を開く() {
+        browser.navigate(baseUrl + "/staff/routing-cases/" + caseNumber);
+        assertThat(page().locator("main")).containsText("再設計要の経路（候補 " + confirmedCandidateNo + "）");
+        browser.checkAccessibility();
+    }
+
     @もし("経路設計者が再設計要の案件の確定した候補の確定を直接開く")
     public void 再設計要の案件の確定を直接開く() {
         browser.navigate(
