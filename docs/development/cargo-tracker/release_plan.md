@@ -4,7 +4,7 @@ title: "リリース計画 - cargo-tracker（A 社国際貨物輸送管理シス
 description: "cargo-tracker MVP のリリース計画。1 人 + AI、時間単位の Bolt（= イテレーション）と週次の見直しで、最初の縦の流れ（R0.1）、パイロット準備完了（R1.0）、本格展開前（R1.1）の 3 段階、Unit のエントロピー評価、SP、バッファ、パイロット開始の条件、引継ぎ ID の台帳、業務責任者に確かめる事項の台帳。"
 tags: [development,release-plan]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-23T10:51:10Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-23T12:09:50Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T09:29:53Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:38:26Z }
@@ -1246,3 +1246,4 @@ xychart-beta
 | 2026-10-23 | [Bolt 37e4 計画](bolt_37e4_plan.md)を作り、2 つの整合性検証の指摘を反映した（承認待ち）。37e4 を 37e4（判定・文言・マニュアル・キャプチャ）・37e4b（見本・デモ）・37e4c（37e2 の既知の課題、#16 のクローズと 2 SP）に分け、ロックの操作の名前を目的の名前に、荷主の文言を「最初の航海」に、S-04 の期限内の再見積りの理由を出発済みにすると決めた（human:kakimomokuri）。約 4.9 時間 | anthropic/claude-opus-5-5、決定 human:kakimomokuri |
 | 2026-10-23 | Bolt 37e4 の計画を承認した（確認ポイント 1〜10 を推奨のとおり） | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-10-23 | Bolt 37e4 のステップ 1: W6 の 37e4 の行を 37e4（出発済みの判定・理由・文言・マニュアルとキャプチャ。0 SP）・37e4b（出発済みの見本・デモ。0 SP）・37e4c（37e2 の既知の課題 3 つ、#16 のクローズ。2 SP）に分けた（W6 の SP の合計 12 は変わらない）。US-07 の範囲を 37c〜37e4c に、デモ項目に「出発済みの拒否」と動画を撮る Bolt に 37e4b を、マニュアルの注の 37e4 に 6.4・付録 B・用語集とキャプチャを足し、W7 の行とリスク台帳の出発済みの記述を 37e4〜37e4c にした（W7 の開始条件は 37e3b のまま） | anthropic/claude-opus-5-5 |
+| 2026-10-23 | Bolt 37e4 を終え、[Bolt 37e4 終了報告](bolt_37e4_report.md)を作った（承認待ち）。割り当てた経路の最初の区間が出発した見積りを、荷主の承認と本予約の確定で拒み（理由 `ROUTE_ALREADY_DEPARTED`）、C-04・C-17・S-02・S-04・S-09 に理由と次の行動を示した。マニュアル 4.2・6.4・7.1・7.2・付録 B・用語集とキャプチャ 2 枚。見本とデモは 37e4b、#16 のクローズと US-07 の 2 SP は 37e4c | anthropic/claude-opus-5-5 |

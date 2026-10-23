@@ -1,6 +1,8 @@
 # Docs Update Log
 
 ## 2026-10-23
+* **Creation**: [bolt_37e4_report](/development/cargo-tracker/bolt_37e4_report.md) を作成（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
 * **Update**: [用語集](/manual/用語集.md) を更新（anthropic/claude-opus-5-5）
 * **Update**: [付録B-トラブルシューティング](/manual/付録B-トラブルシューティング.md) を更新（anthropic/claude-opus-5-5）
 * **Update**: [07-本予約の確定と予約一覧](/manual/07-本予約の確定と予約一覧.md) を更新（anthropic/claude-opus-5-5）
