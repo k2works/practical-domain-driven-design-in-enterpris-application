@@ -210,16 +210,18 @@
             <arg column="route_version_no" name="routeVersionNo" javaType="_int"/>
             <arg column="shipper_approved_at" name="shipperApprovedAt" javaType="java.time.OffsetDateTime"/>
             <arg column="expires_at" name="expiresAt" javaType="java.time.OffsetDateTime"/>
+            <arg column="route_redesign_required" name="routeRedesignRequired" javaType="_boolean"/>
         </constructor>
     </resultMap>
 
     <!-- 予約の確定待ちの見積り（受付一覧 S-02。US-04、Bolt 20 レビュー D-78。Bolt 23b）。見積りの承認済みを正にし、輸送要求の荷主承認待ち・
          予約待ちへの更新（DE-21・DE-04 の配信）を待たない（経路設計中のままでも出す）。予約確定済みの輸送要求は出さない。有効期限の近い順。
          荷主の承認の後に失効した見積りを再見積りした後で、社内承認して提示する前の見積り（経路を持つ承認待ち）も出す（D-85。Bolt 35c）。
-         輸送要求の条件は承認済みの行と同じにし、DE-04 の前に再見積りしても出す -->
+         輸送要求の条件は承認済みの行と同じにし、DE-04 の前に再見積りしても出す。割り当てた経路が再設計要の見積りも表に残し、行で分かるように
+         する（失効した行の再見積りの入口を残すため。US-07 AC5。Bolt 37e3） -->
     <select id="selectAwaitingBooking" resultMap="awaitingBookingSummaryRow">
         SELECT r.request_number, q.quotation_no, q.status, q.routing_case_number, q.route_version_no, q.shipper_approved_at,
-               q.expires_at
+               q.expires_at, q.route_redesign_required_at IS NOT NULL AS route_redesign_required
           FROM quotation.transport_request r
           JOIN quotation.quotation q ON q.transport_request_id = r.id
          WHERE r.status IN ('ROUTING', 'AWAITING_APPROVAL', 'READY_TO_BOOK')

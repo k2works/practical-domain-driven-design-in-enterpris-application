@@ -373,7 +373,8 @@ public class TransportRequestReviewController {
     private static AwaitingBookingRow awaitingBookingRow(AwaitingBookingSummary summary, UtcInstant now) {
         String label = QuotationViews.label(summary.number(), summary.quotationNo());
         String quotationPath = STAFF_TRANSPORT_REQUESTS + summary.number().text() + QUOTATIONS + summary.quotationNo();
-        String route = summary.routingCaseNumber() + " 版 " + summary.routeVersionNo();
+        String route = summary.routingCaseNumber() + " 版 " + summary.routeVersionNo()
+                + (summary.routeRedesignRequired() ? "（経路が再設計要）" : "");
         String expiresAt = TransportRequestLabels.staffDateTime(summary.expiresAt());
         if (summary.status() == QuotationStatus.PENDING_APPROVAL) {
             // 経路を引き継いだ承認待ち（再見積りの後で提示の前。D-85。Bolt 35c）。提示の前に失効していれば、また再見積りする
@@ -389,6 +390,18 @@ public class TransportRequestReviewController {
                     label + (expired ? " を再見積りする" : " を開く（承認待ち）"));
         }
         boolean expired = QuotationViews.isExpired(QuotationStatus.APPROVED, summary.expiresAt(), now);
+        if (summary.routeRedesignRequired() && !expired) {
+            // 割り当てた経路が再設計要の承認済みは本予約の入口を出さず、見積り（S-04）を開ける（US-07 AC5。Bolt 37e3）
+            return new AwaitingBookingRow(
+                    label,
+                    route,
+                    QuotationViews.effectiveStatus(QuotationStatus.APPROVED, summary.expiresAt(), now),
+                    TransportRequestLabels.staffDateTime(summary.shipperApprovedAt()),
+                    expiresAt,
+                    false,
+                    quotationPath,
+                    label + " を開く（経路が再設計要）");
+        }
         return new AwaitingBookingRow(
                 label,
                 route,

@@ -327,6 +327,62 @@ class TransportRequestReviewControllerTest {
     }
 
     @Test
+    void 割り当てた経路が再設計要の行は予約の確定待ちに残し再設計要と示して本予約の入口を出さない() throws Exception {
+        // Bolt 37e3 の状態の組み合わせの行 5（期限内）・6（失効）・7（経路を引き継いだ承認待ち）
+        UtcInstant approvedAt = new UtcInstant(Instant.parse("2026-10-04T06:00:00Z"));
+        given(quotationQueryService.findAwaitingBookingSummaries())
+                .willReturn(List.of(
+                        new AwaitingBookingSummary(
+                                NUMBER,
+                                1,
+                                QuotationStatus.APPROVED,
+                                "RC-2026-0001",
+                                1,
+                                approvedAt,
+                                new UtcInstant(Instant.parse("2099-10-09T09:00:00Z")),
+                                true),
+                        new AwaitingBookingSummary(
+                                new TransportRequestNumber(2026, 2),
+                                1,
+                                QuotationStatus.APPROVED,
+                                "RC-2026-0002",
+                                1,
+                                approvedAt,
+                                new UtcInstant(Instant.parse("2026-10-05T04:20:00Z")),
+                                true),
+                        new AwaitingBookingSummary(
+                                new TransportRequestNumber(2026, 3),
+                                2,
+                                QuotationStatus.PENDING_APPROVAL,
+                                "RC-2026-0003",
+                                1,
+                                null,
+                                new UtcInstant(Instant.parse("2099-10-09T09:00:00Z")),
+                                true)));
+
+        mockMvc.perform(get("/staff/transport-requests"))
+                .andExpect(content().string(containsString("RC-2026-0001 版 1（経路が再設計要）")))
+                .andExpect(content().string(not(containsString("TR-2026-0001 見積 1 の本予約の確定へ"))))
+                .andExpect(
+                        content()
+                                .string(
+                                        containsString(
+                                                "href=\"/staff/transport-requests/TR-2026-0001/quotations/1\">TR-2026-0001 見積 1 を開く（経路が再設計要）</a>")))
+                .andExpect(content().string(containsString("RC-2026-0002 版 1（経路が再設計要）")))
+                .andExpect(
+                        content()
+                                .string(
+                                        containsString(
+                                                "href=\"/staff/transport-requests/TR-2026-0002/quotations/1/requotation\">TR-2026-0002 見積 1 を再見積りする</a>")))
+                .andExpect(content().string(containsString("RC-2026-0003 版 1（経路が再設計要）")))
+                .andExpect(
+                        content()
+                                .string(
+                                        containsString(
+                                                "href=\"/staff/transport-requests/TR-2026-0003/quotations/2\">TR-2026-0003 見積 2 を開く（承認待ち）</a>")));
+    }
+
+    @Test
     void 受付一覧に見積提示済みの見積依頼の最新の見積りを有効期限の近い順に示し見積りを開ける() throws Exception {
         given(quotationQueryService.findQuotedSummaries())
                 .willReturn(List.of(

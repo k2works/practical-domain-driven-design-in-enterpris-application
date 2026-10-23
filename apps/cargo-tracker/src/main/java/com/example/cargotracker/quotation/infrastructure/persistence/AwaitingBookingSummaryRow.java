@@ -10,4 +10,5 @@ public record AwaitingBookingSummaryRow(
         String routingCaseNumber,
         int routeVersionNo,
         OffsetDateTime shipperApprovedAt,
-        OffsetDateTime expiresAt) {}
+        OffsetDateTime expiresAt,
+        boolean routeRedesignRequired) {}

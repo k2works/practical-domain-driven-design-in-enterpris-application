@@ -16,6 +16,7 @@ import java.util.Objects;
  * @param routeVersionNo 割り当てた経路版の番号
  * @param shipperApprovedAt 荷主の承認時刻（承認待ちの行は null）
  * @param expiresAt 見積りの有効期限
+ * @param routeRedesignRequired 割り当てた経路が再設計要か（行は表に残し、画面が本予約の入口を出さない。US-07 AC5。Bolt 37e3）
  */
 public record AwaitingBookingSummary(
         TransportRequestNumber number,
@@ -24,7 +25,20 @@ public record AwaitingBookingSummary(
         String routingCaseNumber,
         int routeVersionNo,
         UtcInstant shipperApprovedAt,
-        UtcInstant expiresAt) {
+        UtcInstant expiresAt,
+        boolean routeRedesignRequired) {
+
+    /** 割り当てた経路が再設計要でない行。 */
+    public AwaitingBookingSummary(
+            TransportRequestNumber number,
+            int quotationNo,
+            QuotationStatus status,
+            String routingCaseNumber,
+            int routeVersionNo,
+            UtcInstant shipperApprovedAt,
+            UtcInstant expiresAt) {
+        this(number, quotationNo, status, routingCaseNumber, routeVersionNo, shipperApprovedAt, expiresAt, false);
+    }
 
     public AwaitingBookingSummary {
         Objects.requireNonNull(number, "number");

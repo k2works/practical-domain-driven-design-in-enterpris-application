@@ -755,6 +755,28 @@ class MyBatisQuotationIntegrationTest {
                         org.assertj.core.groups.Tuple.tuple(new TransportRequestNumber(2082, 34), CONFIRMED_AT));
     }
 
+    @Test
+    void 予約の確定待ちは割り当てた経路が再設計要の見積りも行に残し再設計要と分かる() {
+        // Bolt 37e3 の状態の組み合わせの行 5〜8（表からは除かない。行の出し分けは画面が決める）
+        TransportRequestId marked = transportRequest(41);
+        approved(marked);
+        advanceTransportRequest(marked, TransportRequestStatus.READY_TO_BOOK);
+        jdbc.update(
+                "UPDATE quotation.quotation SET route_redesign_required_at = ? WHERE transport_request_id = ?",
+                java.sql.Timestamp.from(SHIPPER_APPROVED_AT.instant()),
+                marked.value());
+        TransportRequestId unmarked = transportRequest(42);
+        approved(unmarked);
+        advanceTransportRequest(unmarked, TransportRequestStatus.READY_TO_BOOK);
+
+        assertThat(repository.findAwaitingBookingSummaries())
+                .filteredOn(summary ->
+                        summary.number().year() == 2082 && summary.number().sequence() >= 41)
+                .extracting(summary -> summary.number().sequence(), AwaitingBookingSummary::routeRedesignRequired)
+                .containsExactlyInAnyOrder(
+                        org.assertj.core.groups.Tuple.tuple(41, true), org.assertj.core.groups.Tuple.tuple(42, false));
+    }
+
     // 荷主の承認の後に失効した見積りの再見積り（D-85。Bolt 35b）
 
     @Test
