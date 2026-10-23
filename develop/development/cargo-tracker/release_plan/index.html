@@ -7462,7 +7462,7 @@
     
   
   
-    <span class="md-status md-status--draft"></span>
+    <span class="md-status md-status--stable"></span>
   
 
   
@@ -14306,7 +14306,7 @@
 </tbody>
 </table>
 <h3 id="w62026-11-09-11-13">W6（2026-11-09 〜 11-13）<a class="headerlink" href="#w62026-11-09-11-13" title="Permanent link">&para;</a></h3>
-<p><strong>状態</strong>: 計画済み（2026-10-20 に計画を作り、詳細整合性検証と横断整合性検証の指摘を反映し、同日に human:kakimomokuri が承認した（確認ポイント 1〜20 を推奨のとおり）。Bolt 36 は同日に計画を承認して終え、終了報告を 2026-10-21 に承認した。Bolt 37 は 2026-10-21 に計画を作り、同日に承認して終え、終了報告を同日に承認した。Bolt 37b は 2026-10-21 に計画を作り、同日に承認して終え（37b2 に分けた）、終了報告を 2026-10-22 に承認した。Bolt 37b2 は 2026-10-22 に計画を作り、同日に承認して終え、終了報告を同日に承認した。Bolt 37c は 2026-10-22 に計画を作り、同日に承認して終え、終了報告を同日に承認した。Bolt 37d は 2026-10-22 に計画を作り（準備と 37d2 に分けた）、同日に承認して終え、終了報告を同日に承認した。Bolt 37d2 は 2026-10-22 に計画を作り、同日に承認して終え、終了報告を同日に承認した。Bolt 37e は 2026-10-22 に計画を作り（37e・37e2・37e3 に分けた）、同日に承認して終え、終了報告を 2026-10-23 に承認した（1 回目は直してから。荷主承認待ちの出口を作った）。Bolt 37e2 は 2026-10-23 に計画を作った（承認待ち））</p>
+<p><strong>状態</strong>: 計画済み（2026-10-20 に計画を作り、詳細整合性検証と横断整合性検証の指摘を反映し、同日に human:kakimomokuri が承認した（確認ポイント 1〜20 を推奨のとおり）。Bolt 36 は同日に計画を承認して終え、終了報告を 2026-10-21 に承認した。Bolt 37 は 2026-10-21 に計画を作り、同日に承認して終え、終了報告を同日に承認した。Bolt 37b は 2026-10-21 に計画を作り、同日に承認して終え（37b2 に分けた）、終了報告を 2026-10-22 に承認した。Bolt 37b2 は 2026-10-22 に計画を作り、同日に承認して終え、終了報告を同日に承認した。Bolt 37c は 2026-10-22 に計画を作り、同日に承認して終え、終了報告を同日に承認した。Bolt 37d は 2026-10-22 に計画を作り（準備と 37d2 に分けた）、同日に承認して終え、終了報告を同日に承認した。Bolt 37d2 は 2026-10-22 に計画を作り、同日に承認して終え、終了報告を同日に承認した。Bolt 37e は 2026-10-22 に計画を作り（37e・37e2・37e3 に分けた）、同日に承認して終え、終了報告を 2026-10-23 に承認した（1 回目は直してから。荷主承認待ちの出口を作った）。Bolt 37e2 は 2026-10-23 に計画を作り、同日に承認した）</p>
 <p><strong>ゴール</strong>: 経路設計を完成させ（US-06 の残り・US-07 の残り）、利用者の管理を完成させる（US-16 の残り・US-18 AC9 の管理者経路）。W5 の締めで決めた CI の画面の層のシナリオの揺らぎの原因を最初に調べる。</p>
 <p><strong>局面とアプローチ</strong>: 中盤（<a href="../development_strategy/">開発戦略</a>）。経路設計の残り（Bolt 37〜37f）は中盤の例外（開発戦略 :107。序盤で作った経路設計案件を広げる）でアウトサイドイン（受入シナリオから）。利用者の管理のうち、既存の集約と S-20 に操作を足す Bolt 38・38c と、既存のコンテキストの照会と操作に担当範囲の判定を足す Bolt 38f・38g はアウトサイドイン（既存の集約に受入条件を足す）。新しい振る舞いとスキーマを作る Bolt 38b（利用者の生成と招待のトークン）・38d（通知の種類と公開 API）はインサイドアウト。Bolt 38e は表は Bolt 34b で作ってあるが、担当範囲を request ごとの確かめに載せる横断の部品と、範囲外の試行の記録のポート（新しい構造と ADR）を作るので、表から外れてインサイドアウトにする（不確実性が依存の向きと横断の部品にあり、内側から固める）。Bolt 36 は技術タスク（再現から入る）。</p>
 <p><strong>設計の決定</strong>（2026-10-20 に human:kakimomokuri が決定。W6 の開始準備の質問への回答）:</p>
@@ -14531,7 +14531,7 @@
 </tr>
 <tr>
 <td style="text-align: left;">37e2</td>
-<td style="text-align: left;">US-07 AC5 の経路設計の側: DE-06 の listener（経路設計の中の listener が ACL を通して見積りの公開 API <code>RouteRedesignNotification</code> を呼ぶ。ADR-014）。DE-05 と DE-06 の届く順（DE-06 が DE-05 より先に届くと見積りはまだ経路を持たず、後の DE-05 が印のない経路を割り当てる。DE-05 が再設計要の後に再配信されたときの扱い。<a href="../bolt_37d_plan/">Bolt 37d 計画</a> の材料 6。Bolt 37d2 で引き継いだ。<code>RouteAssignmentRequest</code> に項目が増えることがある）。DE-06 と本予約の確定の競合の守り方（ADR-016 :55 の宿題: 照会で共有ロックで読むか、見積りの版を期待版として渡すか。<code>BookableQuotationResult.Bookable</code> に項目が増えることがある。確認ポイント 7）。listener をつなぐと印が本番で付き、C-04 の承認の操作が消えて C-17 が既定の文言で拒否し、S-09 が「承認済みでない」と示すので、画面の文言とマニュアルを 37e2 に入れるか、listener を 37e3 の後に回すかを 37e2 の計画で決める（振る舞いが変わる Bolt はマニュアルを完了条件に入れる）。材料は <a href="../bolt_37e_plan/">Bolt 37e 計画</a> の確認ポイント 7。<a href="../bolt_37e2_plan/">Bolt 37e2 計画</a>（承認待ち）</td>
+<td style="text-align: left;">US-07 AC5 の経路設計の側: DE-06 の listener（経路設計の中の listener が ACL を通して見積りの公開 API <code>RouteRedesignNotification</code> を呼ぶ。ADR-014）。DE-05 と DE-06 の届く順（DE-06 が DE-05 より先に届くと見積りはまだ経路を持たず、後の DE-05 が印のない経路を割り当てる。DE-05 が再設計要の後に再配信されたときの扱い。<a href="../bolt_37d_plan/">Bolt 37d 計画</a> の材料 6。Bolt 37d2 で引き継いだ。<code>RouteAssignmentRequest</code> に項目が増えることがある）。DE-06 と本予約の確定の競合の守り方（ADR-016 :55 の宿題: 照会で共有ロックで読むか、見積りの版を期待版として渡すか。<code>BookableQuotationResult.Bookable</code> に項目が増えることがある。確認ポイント 7）。listener をつなぐと印が本番で付き、C-04 の承認の操作が消えて C-17 が既定の文言で拒否し、S-09 が「承認済みでない」と示すので、画面の文言とマニュアルを 37e2 に入れるか、listener を 37e3 の後に回すかを 37e2 の計画で決める（振る舞いが変わる Bolt はマニュアルを完了条件に入れる）。材料は <a href="../bolt_37e_plan/">Bolt 37e 計画</a> の確認ポイント 7。<a href="../bolt_37e2_plan/">Bolt 37e2 計画</a>（承認済み）</td>
 <td style="text-align: right;">0</td>
 <td style="text-align: left;">アウトサイドイン（届く順の表を先に書く。T-179）</td>
 <td style="text-align: left;">計画と終了報告（構造。ADR-016 :55）</td>
@@ -16568,6 +16568,11 @@
 <td style="text-align: left;">2026-10-23</td>
 <td style="text-align: left;"><a href="../bolt_37e2_plan/">Bolt 37e2 計画</a>を作り、2 つの整合性検証の指摘を反映した（承認待ち）。DE-06 の listener、DE-05 の listener の案件の行のロックと続けての伝達、本予約の確定用の照会のロック（<code>FOR UPDATE</code>）、ADR-016・ADR-018 の改訂。開始準備と検証の後に 6 つを決めた（human:kakimomokuri）。約 4.3 時間</td>
 <td style="text-align: left;">anthropic/claude-opus-5-5、決定 human:kakimomokuri</td>
+</tr>
+<tr>
+<td style="text-align: left;">2026-10-23</td>
+<td style="text-align: left;">Bolt 37e2 の計画を承認した（確認ポイント 1〜9 を推奨のとおり。1 つの Bolt で進める）</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5、承認 human:kakimomokuri</td>
 </tr>
 </tbody>
 </table>
