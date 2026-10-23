@@ -6915,6 +6915,41 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../development/cargo-tracker/bolt_37e3b_report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 37e3b 終了報告
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--draft"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../development/cargo-tracker/release_report-0_1/" class="md-nav__link">
         
   
@@ -12603,6 +12638,18 @@ npx<span class="w"> </span>gulp<span class="w"> </span>deploy:demo:open
 <td style="text-align: left;">荷主 A</td>
 <td style="text-align: left;">予約待ち（見積 1 を荷主が承認した後に有効期限を過ぎた、RC-2026-0905 確定済み）。S-02 の予約の確定待ちでは「失効（荷主承認済み）」、荷主 A の画面では再見積りを提示するまで「見積り作成中（A 社の対応待ち）」</td>
 <td style="text-align: left;">① 営業担当者: S-02 の予約の確定待ちから見積 1 を再見積りし、社内承認して提示する（S-04。マニュアル 6.4）。② 荷主 A: 見積依頼の詳細（C-04）と承認（C-17）で見積 2 をもう一度承認する（マニュアル 4.3）。③ 営業担当者: S-02 の予約の確定待ちから見積 2 で本予約を確定する（S-09。マニュアル 7.1・7.2）。D-85、Bolt 35e</td>
+</tr>
+<tr>
+<td style="text-align: left;">TR-2026-0909</td>
+<td style="text-align: left;">荷主 A</td>
+<td style="text-align: left;">荷主承認待ち（見積 1 に RC-2026-0906 の経路版 1 を割り当てた後に、経路版が期限超過で再設計要になった）</td>
+<td style="text-align: left;">① 荷主 A: 見積依頼の詳細（C-04）に承認の入口がなく「割り当てた経路の見直しが必要になったため…担当営業にご相談ください。」、承認（C-17）を URL で開いても戻される（マニュアル 4.2）。② 営業担当者: 見積 1 の再見積りは有効期限まで拒まれる（S-04。マニュアル 6.4）。③ 経路設計者: RC-2026-0906 の経路候補の比較（S-06）に再設計要の経路、確定（S-07）を開くと戻される（マニュアル 8.2・8.3）。営業担当者の S-02 では、予約の確定待ちに出ず経路設計中・荷主承認待ちの表に出る。US-07 AC5、Bolt 37e3b</td>
+</tr>
+<tr>
+<td style="text-align: left;">TR-2026-0910</td>
+<td style="text-align: left;">荷主 A</td>
+<td style="text-align: left;">予約待ち（見積 1 を荷主が承認した後に、RC-2026-0907 の経路版 1 が再設計要になった）</td>
+<td style="text-align: left;">① 営業担当者: S-02 の予約の確定待ちの行に「RC-2026-0907 版 1（経路が再設計要）」と出て本予約の入口がない。本予約の確定（S-09）を URL で開いても戻される（マニュアル 7.1・7.2）。② 荷主 A: 見積依頼の詳細（C-04）は承認済みで「本予約の扱いは担当営業からご連絡します。」（マニュアル 4.2）。③ 営業担当者: 見積 1 の再見積りは有効期限まで拒まれる（S-04。マニュアル 6.4）。④ 経路設計者: RC-2026-0907 も S-06・S-07 で 0909 と同じ。US-07 AC5、Bolt 37e3b</td>
 </tr>
 </tbody>
 </table>
