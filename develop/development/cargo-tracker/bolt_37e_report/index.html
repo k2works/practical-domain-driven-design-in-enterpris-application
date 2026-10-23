@@ -6794,6 +6794,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="承認の議題（T-36。先に確かめてほしいこと）">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#red" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Red の確かめ
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -6816,38 +6833,10 @@
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="成果">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
+</li>
+      
+        <li class="md-nav__item">
   <a href="#_3" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        仮説
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#_4" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        指標
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#_5" class="md-nav__link">
     <span class="md-ellipsis">
       
         品質ゲート
@@ -6859,10 +6848,10 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#_6" class="md-nav__link">
+  <a href="#_4" class="md-nav__link">
     <span class="md-ellipsis">
       
-        開発レビューの指摘と扱い
+        開発レビューの指摘と扱い（主なもの）
       
     </span>
   </a>
@@ -6875,7 +6864,7 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#_7" class="md-nav__link">
+  <a href="#_5" class="md-nav__link">
     <span class="md-ellipsis">
       
         デモ項目
@@ -6886,7 +6875,7 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#_8" class="md-nav__link">
+  <a href="#_6" class="md-nav__link">
     <span class="md-ellipsis">
       
         判断と学び
@@ -6909,7 +6898,7 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#_9" class="md-nav__link">
+  <a href="#_7" class="md-nav__link">
     <span class="md-ellipsis">
       
         既知の課題（後に持ち込む）
@@ -6936,7 +6925,7 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#_10" class="md-nav__link">
+  <a href="#_8" class="md-nav__link">
     <span class="md-ellipsis">
       
         更新履歴
@@ -6947,7 +6936,7 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#_11" class="md-nav__link">
+  <a href="#_9" class="md-nav__link">
     <span class="md-ellipsis">
       
         関連ドキュメント
@@ -12070,37 +12059,69 @@
 
 <h1 id="bolt-37e-us-07-ac5-api">Bolt 37e 終了報告 - US-07 AC5 の見積りの側（割り当てた経路の再設計要の印、荷主の承認と本予約の判定、見積りの公開 API）<a class="headerlink" href="#bolt-37e-us-07-ac5-api" title="Permanent link">&para;</a></h1>
 <h2 id="t-36">承認の議題（T-36。先に確かめてほしいこと）<a class="headerlink" href="#t-36" title="Permanent link">&para;</a></h2>
-<p>計画は 2026-10-22 に承認を受けた（<code>ebba74d61</code>。確認ポイント 1〜10 を推奨のとおり。データベースのマイグレーション 1 つを含む）。承認ゲートは計画と終了報告なので、ステップ 1〜6 は止めずに進めた。打ち切り（ADR-018 の守りが崩れる、既存のテストの期待値が変わる、区間の表も変える、層の規則が置き場所を拒否する）には当たらなかった。下の 1〜2 は開発レビューを受けて計画から変えた点、3 は計画の約束を守れなかった点で、事後に確かめてほしい。</p>
+<p>経路設計が経路版を再設計要にしたことを、見積りの公開 API で伝えられるようにしました。その経路版を割り当てた見積りすべてに印が付き、荷主の承認と本予約の照会を拒否します。本番で印を付ける入口（DE-06 の listener）は Bolt 37e2 なので、利用者に見える振る舞いはまだ変わりません。</p>
+<p>1 回目の終了報告の承認の場で「直してから」と指示を受け、次の 4 点を直しました。</p>
 <table>
 <thead>
 <tr>
 <th style="text-align: left;">#</th>
 <th style="text-align: left;">確かめてほしいこと</th>
-<th style="text-align: left;">AI の判断の根拠</th>
 <th style="text-align: left;">見る場所</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td style="text-align: left;">1</td>
-<td style="text-align: left;"><strong>計画からの変更: 経路版で見積りを引く照会はセッションのキャッシュを使わない</strong>（<code>flushCache="true"</code>）。入力ポートは同じトランザクションで照会し直して、ほかのトランザクションが後から保存した見積り（再見積りの新しい見積り）を拾う。MyBatis の既定（セッションの中で同じ引数の select は 2 度目をキャッシュから返す）では、照会し直しが更新の有無に頼って働くので、毎回データベースを見るようにした。この振る舞いを確かめるテストはない（同じトランザクションの中でほかのトランザクションのコミットを起こせない）。37e2 の listener を入れるときに、PostgreSQL の統合テストで届く順 C を起こせるか確かめる</td>
-<td style="text-align: left;">開発レビュー（アーキテクト）M-1</td>
-<td style="text-align: left;"><code>QuotationMapper.xml</code> の <code>selectIdsByAssignedRoute</code></td>
+<td style="text-align: left;"><strong>荷主承認待ちの出口を作った（決定の変更）</strong>。印のある荷主承認待ちは、承認済みと同じく有効期限の後に再見積りできるようにした。旧版は失効し、新しい見積りは経路と印を引き継ぐ。提示しても荷主の承認は再設計要で拒む。期限内と、印のない荷主承認待ちは今のまま。前の決定 D-86（荷主承認待ちは再見積りできない）を、印のある場合だけ変えた（human:kakimomokuri。台帳・ドメインモデル・US-07 に書いた）</td>
+<td style="text-align: left;"><code>Quotation.requoteRejectionAt</code>、集約のテストの行 14b・14c、受入シナリオ「荷主承認待ちの…有効期限の後に再見積りでき」</td>
 </tr>
 <tr>
 <td style="text-align: left;">2</td>
-<td style="text-align: left;"><strong>計画からの変更: 荷主承認待ちに印が付くと、期限の後も出口がない</strong>。計画は「期限内の承認済みは期限まで出口がない」としていたが、荷主承認待ちは時刻に関係なく再見積りできない今の規則（D-86）のため、期限の後も出口がない。domain_model・US-07 の既知の制限を書き分け、集約のテストの行 14 に期限の後の荷主承認待ちを足した</td>
-<td style="text-align: left;">開発レビュー（テスター）M-5</td>
-<td style="text-align: left;"><code>QuotationRouteRedesignTest</code> の行 14、domain_model の状態遷移の注</td>
+<td style="text-align: left;"><strong>照会のキャッシュをテストで確かめた</strong>。経路版で見積りを引く照会は MyBatis のセッションのキャッシュを使わない（<code>flushCache</code>）。同じトランザクションで照会し直すと、ほかのトランザクションが後からコミットした見積りが当たることを、PostgreSQL の統合テストで確かめた</td>
+<td style="text-align: left;"><code>MyBatisRouteRedesignQueryIntegrationTest</code></td>
 </tr>
 <tr>
 <td style="text-align: left;">3</td>
-<td style="text-align: left;"><strong>TDD の Red の見方</strong>: ステップ 2〜5 の Red は、まずテストのコンパイルの失敗（型と操作がない）で見て、次に型と空の操作だけを作り、期待の値の誤りで落ちることを見てから中身を作った（Bolt 37d2 の Problem への手当て）。開発レビューの後に足したテスト（再見積りの INSERT、行 20）は今のコードで通る守りで、INSERT の列を落とす変異で前者が落ちることを確かめた。行 20 は今の穴を固定する特性テストで、37e2 で期待値が変わる</td>
-<td style="text-align: left;">Bolt 37d2 の Try</td>
-<td style="text-align: left;">ステップ 3〜5</td>
+<td style="text-align: left;"><strong>Red を見直した</strong>。開発レビューの後に足したテストと、この直しで足したテストは、テストが守る本体の文を一時的に戻して、期待した理由で落ちることを確かめてから戻した（下の「Red の確かめ」）。行 20 のテストは今の穴を固定する特性テストで、落ちる形がない。Bolt 37e2 で穴を塞ぐときに期待値を反転させ、その Red として使う</td>
+<td style="text-align: left;">下の表</td>
+</tr>
+<tr>
+<td style="text-align: left;">4</td>
+<td style="text-align: left;"><strong>報告の書き方を直した</strong>。議題を短くし、表を要るものだけにした</td>
+<td style="text-align: left;">この報告</td>
 </tr>
 </tbody>
 </table>
+<p>計画は 2026-10-22 に承認を受けた（<code>ebba74d61</code>。データベースのマイグレーション 1 つを含む）。開発レビューを受けて計画から変えたのは、照会のキャッシュ（議題 2）と、荷主承認待ちの出口（議題 1。1 回目の報告では既知の制限として書き分けただけだった）の 2 点。</p>
+<h3 id="red">Red の確かめ<a class="headerlink" href="#red" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">テスト</th>
+<th style="text-align: left;">戻した本体の文</th>
+<th style="text-align: left;">落ちた理由</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">印のある見積りの再見積りで新しい見積りが印を持って保存される（統合）</td>
+<td style="text-align: left;">INSERT から印の列を落とす</td>
+<td style="text-align: left;">新しい見積りの印が null</td>
+</tr>
+<tr>
+<td style="text-align: left;">同じトランザクションで照会し直すと後からコミットした見積りが当たる（統合）</td>
+<td style="text-align: left;">照会の <code>flushCache</code> を外す</td>
+<td style="text-align: left;">2 度目の照会がキャッシュから最初の 1 件だけを返す</td>
+</tr>
+<tr>
+<td style="text-align: left;">印のある荷主承認待ちは有効期限の後に再見積りできる（集約）、同じ受入シナリオ</td>
+<td style="text-align: left;">出口の判定がない今のコード（テストを先に書いた）</td>
+<td style="text-align: left;">再見積りが <code>ROUTING_REQUESTED</code> で拒まれる、見積り 1 が荷主承認待ちのまま</td>
+</tr>
+</tbody>
+</table>
+<p>ステップ 2〜5 のはじめのテストは、まずテストのコンパイルの失敗（型と操作がない）で落ちることを見た。次に型と空の操作だけを作り、期待の値の誤りで落ちることを見てから中身を作った。</p>
+<p>直しの途中で <code>check</code> が 3 回落ちた。1 回目は、キャッシュのテストがコミットした業務番号（2085 年）がほかの統合テストとぶつかった（空いている 2094 年に変えた）。2 回目は、裏で流していた SonarQube と同じビルドの場所を同時に使った（SonarQube はほかの Gradle が終わってから流す T-147 を守れていなかった）。3 回目は <code>sed</code> で改行が変わったファイルの整形の検査だった。</p>
 <h2 id="_1">基本情報<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
@@ -12116,11 +12137,11 @@
 </tr>
 <tr>
 <td style="text-align: left;">期間</td>
-<td style="text-align: left;">2026-10-22（計画の承認の記録 <code>ebba74d61</code> から CI とデモ環境の確かめまで）</td>
+<td style="text-align: left;">2026-10-22〜23（計画の承認の記録 <code>ebba74d61</code> から、終了報告の 2 回目の承認の依頼まで）</td>
 </tr>
 <tr>
 <td style="text-align: left;">対象</td>
-<td style="text-align: left;">見積りのドメイン（<code>AssignedRoute</code> の再設計要の印、<code>Quotation.markRouteRedesignRequired</code>、荷主の承認と本予約の判定、<code>QuotationRejection.ROUTE_REDESIGN_REQUIRED</code>、<code>RouteRedesignMarkResult</code>）、保存（マイグレーション <code>common/V20261023100000</code>、<code>QuotationMapper</code>・<code>MyBatisQuotationRepository</code>、経路版で見積りを引く照会）、見積りの公開 API <code>RouteRedesignNotification</code>（依頼・受け取り・アダプター）と入力ポート <code>RouteRedesignService</code>、本予約の照会の理由（<code>BookableQuotation.Reason</code>・<code>NotBookable.ROUTE_REDESIGN_REQUIRED</code>）、受入シナリオ <code>features/quotation/route_redesign_required.feature</code>、設計の文書</td>
+<td style="text-align: left;">見積りのドメイン（<code>AssignedRoute</code> の印、<code>Quotation</code> の印を付ける操作・荷主の承認と本予約と再見積りの判定、<code>QuotationRejection.ROUTE_REDESIGN_REQUIRED</code>、<code>RouteRedesignMarkResult</code>）、保存（マイグレーション <code>common/V20261023100000</code>、経路版で見積りを引く照会）、見積りの公開 API <code>RouteRedesignNotification</code> と入力ポート <code>RouteRedesignService</code>、本予約の照会の理由（<code>NotBookable.ROUTE_REDESIGN_REQUIRED</code>）、受入シナリオ <code>features/quotation/route_redesign_required.feature</code></td>
 </tr>
 <tr>
 <td style="text-align: left;">GitHub</td>
@@ -12147,122 +12168,46 @@
 </thead>
 <tbody>
 <tr>
-<td style="text-align: left;">1. 設計の文書と数え上げ</td>
-<td style="text-align: left;">domain_model（Bolt 37e で決めたこと、割り当てた経路・再設計要の印・<code>RouteRedesignMarkResult</code> の用語、Q-INV-10・B-INV-05 の判定の順、DE-06 は案件番号で引く、状態遷移の注）、data_model（列・CHECK・索引）、US-07・US-24、UC-04 3a と状態と操作の表、test_strategy、ADR-014 :43、ADR-016 :33・:35、release_plan の 37e の行を 37e・37e2・37e3 に分け、確認ポイント 7・10 の送り先を直した。ADR-018 は、印が見積りの状態を変えないので <code>QuotationGate</code> の守りが崩れないことを確かめ、直していない。拒否の理由で分岐する網羅の switch は 2 つ（既存の組に case を足した）、<code>default</code> の switch は 2 つ（見積りの照会の <code>reasonOf</code> は網羅の switch に直した）</td>
+<td style="text-align: left;">1. 設計の文書</td>
+<td style="text-align: left;">domain_model・data_model・US-07・US-24・UC-04・test_strategy・ADR-014・ADR-016 を直し、release_plan の 37e の行を 37e・37e2・37e3 に分けた。ADR-018 は、印が見積りの状態を変えないので守りが崩れないことを確かめ、直していない</td>
 <td style="text-align: left;"><code>49a78bf41</code></td>
 </tr>
 <tr>
-<td style="text-align: left;">2. 受入シナリオ（Red）</td>
-<td style="text-align: left;">7 本（荷主の承認の拒否、本予約の照会の拒否、2 度目、別の経路版、再見積りの後の承認、再見積りの後の伝達、本予約の後）。落ちる理由が再設計要を伝える操作がないことだと、テストのコンパイルで確かめた</td>
-<td style="text-align: left;"><code>38c1f84b8</code></td>
-</tr>
-<tr>
-<td style="text-align: left;">3. 集約（Green）</td>
-<td style="text-align: left;">状態の組み合わせの表の行 1〜14・19 を <code>QuotationRouteRedesignTest</code> に 1 本ずつ（T-163）。型と空の操作で 16 本が期待の値で落ちることを見てから作った（H1・H2）</td>
-<td style="text-align: left;"><code>38c1f84b8</code></td>
-</tr>
-<tr>
-<td style="text-align: left;">4. 保存とスキーマ（データベース）</td>
-<td style="text-align: left;">統合テスト 3 本（往復、CHECK、照会）で Red を見てから、マイグレーションと mapper を作った。ローカルの dev（ポート 8091。H2）でマイグレーションが流れて起動し、営業担当者で見本の承認済みの見積り（TR-2026-0906）の S-09 が今までどおり確定のフォームを出すことを確かめた（T-172）</td>
-<td style="text-align: left;"><code>38c1f84b8</code></td>
-</tr>
-<tr>
-<td style="text-align: left;">5. 公開 API と入力ポート（Green）</td>
-<td style="text-align: left;">入力ポートのテスト（行 15〜17、届く順 C・E）、アダプターのテスト（行 17・18）、本予約の照会の理由のテストで、期待の値の Red を見てから作った</td>
+<td style="text-align: left;">2〜5. 受入シナリオ・集約・保存・公開 API</td>
+<td style="text-align: left;">受入シナリオ 8 本、集約のテスト（状態の組み合わせの表の行ごと）、統合テスト 5 本、入力ポートとアダプターのテスト。dev の H2 でマイグレーションが流れて起動し、見本の承認済みの見積りの S-09 が変わらないことを確かめた</td>
 <td style="text-align: left;"><code>38c1f84b8</code></td>
 </tr>
 <tr>
 <td style="text-align: left;">6. 品質ゲートと開発レビュー</td>
-<td style="text-align: left;">変異 6 つ、開発レビューの直し（議題 1・2、テストの強化 8 か所、文書のずれ）、INSERT の列を落とす変異</td>
-<td style="text-align: left;"><code>7475ce963</code>、<code>92cde5ae3</code>、この報告のコミット</td>
+<td style="text-align: left;">変異 6 つ、開発レビューの直し</td>
+<td style="text-align: left;"><code>7475ce963</code>、<code>92cde5ae3</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">終了報告の承認の場の直し</td>
+<td style="text-align: left;">議題 1〜4</td>
+<td style="text-align: left;">この報告のコミット</td>
 </tr>
 </tbody>
 </table>
-<h3 id="_3">仮説<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
 <tr>
-<th style="text-align: left;">#</th>
+<th style="text-align: left;">仮説</th>
 <th style="text-align: left;">結果</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td style="text-align: left;">H1</td>
-<td style="text-align: left;">成り立った（確かめた）。再見積りは経路を写すだけで印も写り、引き継ぎのコードは足していない（集約の行 13、統合テストの INSERT、受入シナリオ）</td>
+<td style="text-align: left;">H1 印を割り当てた経路の写しに持たせると、再見積りの引き継ぎのコードが要らない</td>
+<td style="text-align: left;">成り立った（集約・統合・受入で確かめた）</td>
 </tr>
 <tr>
-<td style="text-align: left;">H2</td>
-<td style="text-align: left;">成り立った（確かめた）。既存のテストの期待値を変えずに <code>check</code>（2881 件）と <code>uiTest</code>（284 件）が緑</td>
+<td style="text-align: left;">H2 拒否の理由を判定の後ろに足しても、既存の期待値は変わらない</td>
+<td style="text-align: left;">成り立った（既存のテストは変えずに緑）</td>
 </tr>
 </tbody>
 </table>
-<h2 id="_4">指標<a class="headerlink" href="#_4" title="Permanent link">&para;</a></h2>
-<table>
-<thead>
-<tr>
-<th style="text-align: left;">指標</th>
-<th style="text-align: left;">値</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align: left;">テスト</td>
-<td style="text-align: left;"><code>check</code> 2881 件、失敗 0（Bolt 37d2 の 2841 件から 40 件増えた。<code>test</code> の XML で数えた）。<code>uiTest</code> 284 件、失敗 0（<code>38c1f84b8</code> で流した。その後の直しはテスト・Javadoc・照会の <code>flushCache</code>・文書で、画面の層に効かない。CI の <code>ui</code> でも確かめた）</td>
-</tr>
-<tr>
-<td style="text-align: left;">承認ゲートの通過</td>
-<td style="text-align: left;">計画を人が承認した（データベースのマイグレーション 1 つを含む）。分け方は開始準備で人が決めた</td>
-</tr>
-<tr>
-<td style="text-align: left;">人の変更依頼</td>
-<td style="text-align: left;">0</td>
-</tr>
-<tr>
-<td style="text-align: left;">変異</td>
-<td style="text-align: left;">計画の 6 つとも落ちた（下の表）。開発レビューで見つかった「INSERT から印の列を落とす」も、足した統合テストで落ちた。変異のスクリプトは gradlew.bat を絶対パスで呼び、結果の XML を消してから流して XML で判定した（T-178）。控えから戻し、作業ツリーに差分がないことを確かめた</td>
-</tr>
-</tbody>
-</table>
-<table>
-<thead>
-<tr>
-<th style="text-align: left;">変異</th>
-<th style="text-align: left;">落ちたテスト</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align: left;">1 印があっても承認する</td>
-<td style="text-align: left;">集約の行 2・7・13、受入シナリオ 2 本</td>
-</tr>
-<tr>
-<td style="text-align: left;">2 印があっても本予約できる</td>
-<td style="text-align: left;">集約の行 4、本予約の照会のアダプター、受入シナリオ</td>
-</tr>
-<tr>
-<td style="text-align: left;">3 再見積りで印を写さない</td>
-<td style="text-align: left;">集約の行 13、受入シナリオ</td>
-</tr>
-<tr>
-<td style="text-align: left;">4 2 度目に印の時刻を上書きする</td>
-<td style="text-align: left;">集約の行 9、入力ポートの行 16、アダプター、受入シナリオ</td>
-</tr>
-<tr>
-<td style="text-align: left;">5 別の経路版の見積りにも印を付ける</td>
-<td style="text-align: left;">集約の行 11</td>
-</tr>
-<tr>
-<td style="text-align: left;">6 照会し直さない</td>
-<td style="text-align: left;">入力ポートの届く順 C</td>
-</tr>
-<tr>
-<td style="text-align: left;">7 INSERT から印の列を落とす（レビューで足した）</td>
-<td style="text-align: left;">再見積りの INSERT（統合）</td>
-</tr>
-</tbody>
-</table>
-<h2 id="_5">品質ゲート<a class="headerlink" href="#_5" title="Permanent link">&para;</a></h2>
+<h2 id="_3">品質ゲート<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
 <tr>
@@ -12272,16 +12217,16 @@
 </thead>
 <tbody>
 <tr>
-<td style="text-align: left;"><code>check</code></td>
-<td style="text-align: left;">緑（2881 件）。1 回目から緑（ステップ 4 の途中で、入力ポートを組み立てに足し忘れて ApplicationContext が起動しない失敗が 1 回あった）</td>
+<td style="text-align: left;">テスト</td>
+<td style="text-align: left;"><code>check</code> 2885 件、失敗 0（Bolt 37d2 の 2841 件から 44 件増えた。<code>test</code> の XML で数えた）。<code>uiTest</code> 284 件、失敗 0（出口を作った後に流した）</td>
 </tr>
 <tr>
-<td style="text-align: left;"><code>uiTest</code></td>
-<td style="text-align: left;">緑（284 件）</td>
+<td style="text-align: left;">変異</td>
+<td style="text-align: left;">計画の 6 つ（印があっても承認・本予約できる、再見積りで印を写さない、2 度目に時刻を上書きする、別の経路版にも付ける、照会し直さない）と、レビューで足した 1 つ（INSERT から列を落とす）が、どれも狙ったテストで落ちた</td>
 </tr>
 <tr>
 <td style="text-align: left;">SonarQube</td>
-<td style="text-align: left;">PASS（新しいコードの網羅率 95.7%、重複 0.04%、違反 0）。Bug・Vulnerability・Code Smell は 0</td>
+<td style="text-align: left;">PASS（新しいコードの網羅率 95.8%、重複 0.04%、違反 0）</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>okf:check</code></td>
@@ -12289,15 +12234,14 @@
 </tr>
 <tr>
 <td style="text-align: left;">CI</td>
-<td style="text-align: left;"><code>92cde5ae3</code> で、1 回目は <code>ui</code> のジョブがテストに入る前の Playwright のブラウザと OS の依存の導入（<code>playwrightInstall</code>）で 19 分止まり、20 分の時間切れで取り消された（コードと関係のない基盤の揺らぎ）。取り消されたジョブを流し直し、2 回目で <code>check</code>・<code>ui</code>・<code>deploy-demo</code> と MkDocs の配備が成功した。デモ環境は v386 で動いている（<code>deploy:demo:status</code>。22:50 に起動。H2 でマイグレーションが流れ、<code>deploy-demo</code> の <code>/login</code> の確かめが通った）</td>
+<td style="text-align: left;">1 回目の報告の時点（<code>92cde5ae3</code>）: <code>ui</code> のジョブが Playwright の導入で止まって時間切れになり、流し直して成功した。直しの後は（push の後に書く）</td>
 </tr>
 </tbody>
 </table>
-<h3 id="_6">開発レビューの指摘と扱い<a class="headerlink" href="#_6" title="Permanent link">&para;</a></h3>
+<h3 id="_4">開発レビューの指摘と扱い（主なもの）<a class="headerlink" href="#_4" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
 <tr>
-<th style="text-align: left;">#</th>
 <th style="text-align: left;">重大度</th>
 <th style="text-align: left;">指摘</th>
 <th style="text-align: left;">扱い</th>
@@ -12305,134 +12249,63 @@
 </thead>
 <tbody>
 <tr>
-<td style="text-align: left;">1</td>
 <td style="text-align: left;">高</td>
-<td style="text-align: left;">再見積りの新しい見積りが印を持って INSERT される経路をデータベースで確かめていない</td>
-<td style="text-align: left;">統合テストを足し、INSERT の列を落とす変異で落ちることを確かめた</td>
+<td style="text-align: left;">再見積りの新しい見積りが印を持って INSERT される経路を、データベースで確かめていない</td>
+<td style="text-align: left;">統合テストを足した（Red の確かめの 1 行目）</td>
 </tr>
 <tr>
-<td style="text-align: left;">2</td>
 <td style="text-align: left;">中</td>
-<td style="text-align: left;">照会し直しが MyBatis のセッションのキャッシュに隠れ得る</td>
-<td style="text-align: left;"><code>flushCache</code> を付けた（議題 1）</td>
+<td style="text-align: left;">照会し直しが MyBatis のキャッシュに隠れ得る</td>
+<td style="text-align: left;"><code>flushCache</code> を付け、テストで確かめた（議題 2）</td>
 </tr>
 <tr>
-<td style="text-align: left;">3</td>
 <td style="text-align: left;">中</td>
-<td style="text-align: left;">行 20（DE-06 が先に届く穴）の今の振る舞いを固定したテストがない</td>
-<td style="text-align: left;">特性テストを足した（37e2 で期待値が変わる）</td>
+<td style="text-align: left;">行 20・21 と行 6・12 のテストが弱い、照会の比べ方が弱い</td>
+<td style="text-align: left;">テストを足し、厳しくした</td>
 </tr>
 <tr>
-<td style="text-align: left;">4</td>
 <td style="text-align: left;">中</td>
-<td style="text-align: left;">行 21 の確かめが件数だけ。US-07 は入力ポートのテストで確かめると書いている</td>
-<td style="text-align: left;">輸送要求の集約の版が変わらないことを足し、US-07 の記述を実際の場所に直した</td>
+<td style="text-align: left;">荷主承認待ちに印が付くと出口がない</td>
+<td style="text-align: left;">出口を作った（議題 1）</td>
 </tr>
 <tr>
-<td style="text-align: left;">5</td>
-<td style="text-align: left;">中</td>
-<td style="text-align: left;">行 6 が印が付いたかを確かめていない。行 12 に置換済みがない</td>
-<td style="text-align: left;">印の結果を先に確かめ、置換済みを足した</td>
-</tr>
-<tr>
-<td style="text-align: left;">6</td>
-<td style="text-align: left;">中</td>
-<td style="text-align: left;">照会の統合テストが「経路のない見積り」「別の経路版」を確かめず比べ方が弱い</td>
-<td style="text-align: left;">別の経路版の見積りを作り、厳密に比べた</td>
-</tr>
-<tr>
-<td style="text-align: left;">7</td>
-<td style="text-align: left;">中</td>
-<td style="text-align: left;">荷主承認待ちは期限の後も出口がない</td>
-<td style="text-align: left;">議題 2</td>
-</tr>
-<tr>
-<td style="text-align: left;">8</td>
-<td style="text-align: left;">中</td>
-<td style="text-align: left;">台帳の D-88 が「Bolt 37e で作る」のまま</td>
-<td style="text-align: left;">送り先を 37e3 に直した</td>
-</tr>
-<tr>
-<td style="text-align: left;">9</td>
 <td style="text-align: left;">低</td>
-<td style="text-align: left;">テストの時刻の前後（再見積りの前に印、2026 年に 2099 年の再見積りを提示）</td>
-<td style="text-align: left;">印と提示を再見積りの後にした</td>
-</tr>
-<tr>
-<td style="text-align: left;">10</td>
-<td style="text-align: left;">低</td>
-<td style="text-align: left;">受入シナリオ (b) の承認の確かめが前提の見直しだけ、(e) の印の時刻が有効期限と同じ、語り手が US-07 と違う</td>
-<td style="text-align: left;">再承認で「承認済み」を確かめ、時刻をずらし、語り手を経路設計者にした</td>
-</tr>
-<tr>
-<td style="text-align: left;">11</td>
-<td style="text-align: left;">低</td>
-<td style="text-align: left;">Javadoc（印を付ける操作の段落の位置、<code>isSameVersionAs</code> の用途、<code>RouteRedesignMarkResult</code> の名前）、用語集の「再設計要の印」、テスト戦略の Q-INV-10、domain_model :796</td>
+<td style="text-align: left;">Javadoc・用語集・台帳・テストの時刻の前後</td>
 <td style="text-align: left;">直した</td>
 </tr>
 <tr>
-<td style="text-align: left;">12</td>
 <td style="text-align: left;">低</td>
-<td style="text-align: left;">当たったが印を付けなかった見積り（データの不整合）も <code>found</code> に数え、<code>AlreadyMarked</code> と区別できない</td>
-<td style="text-align: left;">照会は経路版で引くので不整合のときだけ起きる。許容し、37e2 の listener でログを出すかを決める</td>
-</tr>
-<tr>
-<td style="text-align: left;">13</td>
-<td style="text-align: left;">低</td>
-<td style="text-align: left;"><code>StaffQuotationController.rejection</code> の循環的複雑度が上限の 10</td>
-<td style="text-align: left;">37e3 で再設計要の文言を言い分けるときは <code>approvalStageRejection</code> の中で言い分ける（腕を増やさない）と 37e3 に送る</td>
-</tr>
-<tr>
-<td style="text-align: left;">14</td>
-<td style="text-align: left;">低</td>
-<td style="text-align: left;">予約の ACL が <code>default</code> で NOT_APPROVED に寄せる。37e2 で listener をつなぐと S-09 に誤った文言が出る。S-02 の予約の確定待ちに印のある見積りが残る</td>
-<td style="text-align: left;">37e2 の計画の確認ポイント（画面の文言とマニュアルを 37e2 に入れるか、listener を 37e3 の後に回すか）に送る</td>
-</tr>
-<tr>
-<td style="text-align: left;">15</td>
-<td style="text-align: left;">低</td>
-<td style="text-align: left;">マイグレーションの版の日付が翌日（20261023100000）</td>
-<td style="text-align: left;">次のマイグレーションの版をこれより大きくする注意を 37e2 に送る</td>
-</tr>
-<tr>
-<td style="text-align: left;">16</td>
-<td style="text-align: left;">低</td>
-<td style="text-align: left;">届く順 D・<code>AssignedRoute</code> の新しいメソッドの直接のテスト・索引の存在のテスト・アダプターの「時刻なし」の場合の見積り</td>
-<td style="text-align: left;">届く順 D は既存の楽観ロックで成り立ち、印の冪等は集約で守るので、足していない</td>
+<td style="text-align: left;">予約の ACL が知らない理由を NOT_APPROVED に寄せる。<code>StaffQuotationController.rejection</code> の循環的複雑度が上限</td>
+<td style="text-align: left;">37e2・37e3 に送った（下の既知の課題）</td>
 </tr>
 </tbody>
 </table>
-<h2 id="_7">デモ項目<a class="headerlink" href="#_7" title="Permanent link">&para;</a></h2>
-<p>本番で印を付ける入口（DE-06 の listener）は Bolt 37e2 なので、利用者に見える振る舞いは変わらない。画面も変えていないので、デモの動画・キャプチャ・マニュアルは変えていない（計画の確認ポイント 7・10）。W6 のデモ項目「再設計要の経路の拒否」は Bolt 37e3 で見せる。</p>
-<h2 id="_8">判断と学び<a class="headerlink" href="#_8" title="Permanent link">&para;</a></h2>
+<h2 id="_5">デモ項目<a class="headerlink" href="#_5" title="Permanent link">&para;</a></h2>
+<p>画面を変えておらず、本番で印を付ける入口もまだないので、デモの動画・キャプチャ・マニュアルは変えていない。W6 のデモ項目「再設計要の経路の拒否」は Bolt 37e3 で見せる。</p>
+<h2 id="_6">判断と学び<a class="headerlink" href="#_6" title="Permanent link">&para;</a></h2>
 <ul>
-<li>集約の値（<code>AssignedRoute</code>）に事実の写し（印）を持たせると、写す操作（再見積り）が増えずに済んだ。印を見積りの状態にしていたら、状態の組み合わせが倍になり、再見積りにも引き継ぎのコードが要った</li>
-<li>照会し直しで正しさを守る設計は、永続化の層のキャッシュの振る舞いに頼ることになる。テストはメモリ上のリポジトリだけで、データベースの振る舞いはコードとレビューでしか確かめられなかった</li>
-<li>開発レビューで、INSERT の経路だけが確かめられていないと分かった。変異は「自分が書いた分岐」から選びがちで、写しの列（保存の文）を落とす変異を計画に入れていなかった</li>
+<li>事実の写し（印）を集約の値に持たせると、写す操作（再見積り）を増やさずに済んだ</li>
+<li>照会し直しで正しさを守ると、永続化の層のキャッシュに頼ることになる。メモリ上のリポジトリのテストでは見えず、データベースで別のトランザクションを挟むテストが要った</li>
+<li>出口のない状態を「既知の制限」と書くだけでは足りなかった。状態の組み合わせの表に「その後どう動けるか」の列を置けば、計画の段階で出口を決められた</li>
 </ul>
 <h3 id="kpt">ふりかえり（KPT）<a class="headerlink" href="#kpt" title="Permanent link">&para;</a></h3>
 <ul>
-<li>Keep</li>
-<li>開始準備で Bolt を 3 つに分け、2 つの検証で出発済みの判定（D-88）が利用者に見えることを着手の前に見つけ、37e3 に移せた</li>
-<li>型と空の操作を先に作り、期待の値で落ちる Red を見てから中身を作れた（Bolt 37d2 の Try）</li>
-<li>届く順の表（A〜E）を計画に置き、テストで C・E を起こせた</li>
-<li>Problem</li>
-<li>入力ポートを組み立て（<code>QuotationConfiguration</code>）に足し忘れ、統合テストで ApplicationContext が起動しなかった</li>
-<li>計画の変異に、保存の文の列を落とす変異が入っていなかった</li>
-<li>シェルの heredoc がまとまったファイルの作成で解釈されず、1 回の作成がまるごと失敗した</li>
-<li>Try</li>
-<li>T-180: 新しい入力ポートやアダプターを作ったら、同じステップで組み立て（<code>&lt;コンテキスト&gt;Configuration</code> と受入テストの組み立て）に足し、統合テストを 1 本流してから次に進む</li>
-<li>T-181: 列を足す Bolt の変異には、挿入・更新・読み戻しのそれぞれから列を落とす変異を入れる</li>
+<li>Keep: Bolt を 3 つに分け、出発済みの判定を 37e3 に移して、利用者に見える変化を出さずに契約を固めた。型と空の操作を先に作り、期待の値の Red を見てから作れた</li>
+<li>Problem: 入力ポートを組み立てに足し忘れた。保存の列を落とす変異を計画に入れていなかった。出口のない状態を既知の制限で済ませ、承認の場で直すことになった</li>
+<li>Try:</li>
+<li>T-180: 新しい入力ポートやアダプターを作ったら、同じステップで組み立てに足し、統合テストを 1 本流す</li>
+<li>T-181: 列を足す Bolt の変異には、挿入・更新・読み戻しから列を落とす変異を入れる</li>
+<li>T-182: 状態の組み合わせの表に「その後に取れる操作（出口）」の列を置き、出口のない行は計画の確認ポイントにする</li>
 </ul>
-<h3 id="_9">既知の課題（後に持ち込む）<a class="headerlink" href="#_9" title="Permanent link">&para;</a></h3>
+<h3 id="_7">既知の課題（後に持ち込む）<a class="headerlink" href="#_7" title="Permanent link">&para;</a></h3>
 <ul>
-<li>DE-06 が DE-05 より先に届く穴（行 20）、DE-06 の listener、DE-06 と本予約の確定の競合の守り（ADR-016 :55）、listener をつなぐと見える変化の扱い（画面の文言とマニュアルを 37e2 に入れるか）、次のマイグレーションの版（Bolt 37e2）</li>
-<li>出発済みの判定（D-88）、予約の ACL と <code>QuotationUnavailability</code> の追従、C-17・C-04・S-09・S-02・S-07 の文言（<code>StaffQuotationController.rejection</code> の腕を増やさない）、S-02 から再設計要と出発済みを除くか、#50 の ArchUnit の規則、画面の層のシナリオ、マニュアル 4 章・7 章、開発データの見本、#16 のクローズ（Bolt 37e3）</li>
-<li>承認済みで期限内・荷主承認待ちの印のある見積りの出口（担当者の相談と US-08）</li>
+<li>Bolt 37e2: DE-06 の listener、DE-06 が DE-05 より先に届く穴（行 20 の特性テストを反転させる）、本予約との競合の守り（ADR-016 :55）、listener をつなぐと見える変化（S-09 の誤った文言、S-02 に印のある見積りが残る）の扱い、次のマイグレーションの版は 20261023100000 より大きくする</li>
+<li>Bolt 37e3: 出発済みの判定（D-88）、予約の ACL の追従、C-17・C-04・S-09・S-02・S-07 の文言（<code>StaffQuotationController.rejection</code> の腕は増やさない）、#50 の ArchUnit の規則、画面の層のシナリオ、マニュアル 4 章・7 章、開発データの見本、#16 のクローズ</li>
+<li>期限内の印のある見積りの出口（担当者の相談と US-08）</li>
 </ul>
 <h2 id="bolt">次の Bolt<a class="headerlink" href="#bolt" title="Permanent link">&para;</a></h2>
-<p>Bolt 37e2（US-07 AC5 の経路設計の側: DE-06 の listener が見積りの公開 API を呼ぶ。DE-05 と DE-06 の届く順と本予約との競合の守り。開始準備は <code>opening-iteration</code> で）。</p>
-<h2 id="_10">更新履歴<a class="headerlink" href="#_10" title="Permanent link">&para;</a></h2>
+<p>Bolt 37e2（US-07 AC5 の経路設計の側: DE-06 の listener が見積りの公開 API を呼ぶ。開始準備は <code>opening-iteration</code> で）。</p>
+<h2 id="_8">更新履歴<a class="headerlink" href="#_8" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
 <tr>
@@ -12443,15 +12316,20 @@
 </thead>
 <tbody>
 <tr>
+<td style="text-align: left;">2026-10-23</td>
+<td style="text-align: left;">終了報告の承認の場の指示（直してから）を受け、荷主承認待ちの出口、照会のキャッシュのテスト、Red の見直し、書き方を直した（承認待ち）</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5、出口の決定 human:kakimomokuri</td>
+</tr>
+<tr>
 <td style="text-align: left;">2026-10-22</td>
 <td style="text-align: left;">初版作成（承認待ち）</td>
 <td style="text-align: left;">anthropic/claude-opus-5-5</td>
 </tr>
 </tbody>
 </table>
-<h2 id="_11">関連ドキュメント<a class="headerlink" href="#_11" title="Permanent link">&para;</a></h2>
+<h2 id="_9">関連ドキュメント<a class="headerlink" href="#_9" title="Permanent link">&para;</a></h2>
 <ul>
-<li><a href="../bolt_37e_plan/">Bolt 37e 計画</a>、<a href="../release_plan/">リリース計画</a>（W6 節の 37e・37e2・37e3 の行）</li>
+<li><a href="../bolt_37e_plan/">Bolt 37e 計画</a>、<a href="../release_plan/">リリース計画</a>（W6 節の 37e・37e2・37e3 の行、台帳の D-86・D-88）</li>
 <li><a href="../bolt_37d2_report/">Bolt 37d2 終了報告</a></li>
 <li><a href="../../../design/cargo-tracker/domain_model/">ドメインモデル</a>、<a href="../../../design/cargo-tracker/data_model/">データモデル</a></li>
 <li><a href="../../../adr/cargo-tracker/014-downstream-to-upstream-notification/">ADR-014</a>、<a href="../../../adr/cargo-tracker/016-booking-checks-quotation-at-commit-time/">ADR-016</a></li>
