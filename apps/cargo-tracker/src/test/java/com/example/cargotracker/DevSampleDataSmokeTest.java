@@ -667,6 +667,24 @@ class DevSampleDataSmokeTest {
             assertThat(beforeDeparture).as(label + "経路の確定（と荷主の承認） < 出発").isBefore(departureAt);
             assertThat(departureAt).as(label + "最初の区間の出発 < 起動").isBefore(now);
             assertThat(expiresAt).as(label + "起動 < 有効期限").isAfter(now);
+            // 経路方針の概算の出発が実際の出発より後に見えないようにする（計画の決定。開発レビュー）
+            assertThat(quotation.routePolicy().orElseThrow().departureAt().instant())
+                    .as(label + "経路方針の出発 < 最初の区間の出発")
+                    .isBefore(departureAt);
+            // 候補を適合として入れたので、到着は希望到着期限の前
+            assertThat(quotation
+                            .assignedRoute()
+                            .orElseThrow()
+                            .legs()
+                            .getLast()
+                            .arrivalAt()
+                            .instant())
+                    .as(label + "到着 < 希望到着期限")
+                    .isBefore(departedSampleRequest(sequence)
+                            .currentVersion()
+                            .terms()
+                            .arrivalDeadline()
+                            .instant());
         }
     }
 
@@ -675,6 +693,14 @@ class DevSampleDataSmokeTest {
         // 行 1・2
         assertThat(departedSampleQuotation(911).approvalRejectionAt(new UtcInstant(Instant.now())))
                 .contains(QuotationRejection.ROUTE_ALREADY_DEPARTED);
+    }
+
+    @Test
+    void 出発済みの荷主承認待ちの見本の再見積りは詳細経路設計の依頼済みの理由で拒まれる() {
+        // 今の振る舞いを固定する（荷主承認待ちで出発済みの見積りに社内の画面の印がないのは Bolt 37e4 の既知の課題。D-86・US-08）。
+        // 振る舞いが変わったら、デモ環境の手順書の 0911 の行も直す（開発レビュー）
+        assertThat(departedSampleQuotation(911).requoteRejectionAt(new UtcInstant(Instant.now())))
+                .contains(QuotationRejection.ROUTING_REQUESTED);
     }
 
     @Test
@@ -705,6 +731,15 @@ class DevSampleDataSmokeTest {
     }
 
     @Test
+    void 出発済みの承認済みの見本は失効しておらず荷主の画面が出発済みの案内を選ぶ() {
+        // 行 6。C-04 の案内は、出発済み・承認済み・失効していないことで選ぶ（TransportRequestController・TransportRequestLabels）
+        UtcInstant now = new UtcInstant(Instant.now());
+        Quotation quotation = departedSampleQuotation(912);
+        assertThat(quotation.isRouteDepartedAt(now)).isTrue();
+        assertThat(quotation.isExpiredAt(now)).isFalse();
+    }
+
+    @Test
     void 出発済みの承認済みの見本は有効期限まで再見積りできない() {
         // 行 7
         assertThat(departedSampleQuotation(912).requoteRejectionAt(new UtcInstant(Instant.now())))
@@ -715,8 +750,8 @@ class DevSampleDataSmokeTest {
     void 出発済みでない見本の見積りと予約の確定待ちの行は出発済みでない() {
         // 行 8。陰性の対照（出発の写し違いで、ほかの見本が出発済みになっていないこと）。見本があり出発が起動より後であることを先に確かめる
         UtcInstant now = new UtcInstant(Instant.now());
-        for (int sequence : java.util.List.of(906, 908, 909, 910)) {
-            Quotation quotation = sequence == 908 ? expiredAfterApprovalQuotation(1) : routeRedesignQuotation(sequence);
+        for (int sequence : java.util.List.of(906, 907, 908, 909, 910)) {
+            Quotation quotation = sampleQuotation(sequence);
             assertThat(quotation
                             .assignedRoute()
                             .orElseThrow()
@@ -739,7 +774,7 @@ class DevSampleDataSmokeTest {
     }
 
     @Test
-    void 出発済みの見本の案件は確定した経路版で確定の時刻と有効期限と区間が見積りの写しと一致する() {
+    void 出発済みの見本の案件は確定した経路版で確定し直せず確定の時刻と有効期限と区間が見積りの写しと一致する() {
         // 行 9。経路設計の記録と見積りの写しは別々に直接入れるので、値が合っていることをここで守る
         java.util.Map<Integer, Integer> requestOfCase = java.util.Map.of(908, 911, 909, 912);
         for (var entry : requestOfCase.entrySet()) {
@@ -756,11 +791,24 @@ class DevSampleDataSmokeTest {
             assertThat(routingCase.quotationExpiresAt())
                     .contains(quotation.expiry().orElseThrow().expiresAt());
             assertThat(routingCase.confirmedCandidateOf(1).orElseThrow().legs())
-                    .extracting(Leg::departureAt, Leg::arrivalAt)
+                    .extracting(Leg::voyageNumber, Leg::load, Leg::discharge, Leg::departureAt, Leg::arrivalAt)
                     .containsExactlyElementsOf(quotation.assignedRoute().orElseThrow().legs().stream()
-                            .map(leg -> org.assertj.core.groups.Tuple.tuple(leg.departureAt(), leg.arrivalAt()))
+                            .map(leg -> org.assertj.core.groups.Tuple.tuple(
+                                    leg.voyageNumber(),
+                                    leg.load(),
+                                    leg.discharge(),
+                                    leg.departureAt(),
+                                    leg.arrivalAt()))
                             .toList());
         }
+    }
+
+    /** 見本の見積り 1（0907 は荷主 B、ほかは荷主 A）。 */
+    private Quotation sampleQuotation(int sequence) {
+        CompanyId shipper = sequence == 907 ? SHIPPER_B : SHIPPER_A;
+        TransportRequest request =
+                transportRequests.findByNumber(number(sequence), shipper).orElseThrow();
+        return quotations.findByTransportRequestIdAndNo(request.id(), 1).orElseThrow();
     }
 
     private TransportRequest departedSampleRequest(int sequence) {

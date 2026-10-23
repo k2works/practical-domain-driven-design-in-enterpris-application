@@ -98,7 +98,7 @@ INSERT INTO routing.candidate_leg
 UPDATE routing.route_version
    SET status = 'CONFIRMED',
        selected_candidate_no = 1,
-       rationale = '直行で期限まで 8 日あり、積替えの遅れの心配がない。（サンプル）',
+       rationale = '直行で期限まで 9 日あり、積替えの遅れの心配がない。（サンプル）',
        approved_by = '00000000-0000-0000-0000-000000000302',
        approved_at = CAST(CURRENT_DATE AS TIMESTAMP WITH TIME ZONE) - INTERVAL '4' DAY + INTERVAL '6' HOUR
  WHERE routing_case_id = '00000000-0000-0000-0000-000000000950';
@@ -106,7 +106,7 @@ UPDATE routing.route_version
 UPDATE routing.route_version
    SET status = 'CONFIRMED',
        selected_candidate_no = 1,
-       rationale = '直行で期限まで 8 日あり、積替えの遅れの心配がない。（サンプル）',
+       rationale = '直行で期限まで 9 日あり、積替えの遅れの心配がない。（サンプル）',
        approved_by = '00000000-0000-0000-0000-000000000302',
        approved_at = CAST(CURRENT_DATE AS TIMESTAMP WITH TIME ZONE) - INTERVAL '4' DAY + INTERVAL '8' HOUR
  WHERE routing_case_id = '00000000-0000-0000-0000-000000000951';
