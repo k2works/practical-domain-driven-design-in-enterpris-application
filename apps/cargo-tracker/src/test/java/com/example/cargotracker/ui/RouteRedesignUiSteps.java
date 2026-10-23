@@ -124,7 +124,7 @@ public class RouteRedesignUiSteps {
         Locator row = page().getByRole(AriaRole.REGION, new Page.GetByRoleOptions().setName(AWAITING_BOOKING))
                 .locator("tr", new Locator.LocatorOptions().setHasText(subject(quotationNo)));
         assertThat(row).hasCount(1);
-        assertThat(row).containsText(label);
+        assertThat(row).containsText("版 1（" + label + "）");
         assertThat(row.getByRole(
                         AriaRole.LINK, new Locator.GetByRoleOptions().setName(subject(quotationNo) + " の本予約の確定へ")))
                 .hasCount(0);

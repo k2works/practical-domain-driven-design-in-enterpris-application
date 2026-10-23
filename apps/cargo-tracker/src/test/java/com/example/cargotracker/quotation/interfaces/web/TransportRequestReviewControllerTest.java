@@ -358,9 +358,25 @@ class TransportRequestReviewControllerTest {
                                 1,
                                 null,
                                 new UtcInstant(Instant.parse("2099-10-09T09:00:00Z")),
-                                true)));
+                                true),
+                        // 行 8（陽性の対照。印のない承認済みは本予約の入口を出す）
+                        new AwaitingBookingSummary(
+                                new TransportRequestNumber(2026, 4),
+                                1,
+                                QuotationStatus.APPROVED,
+                                "RC-2026-0004",
+                                1,
+                                approvedAt,
+                                new UtcInstant(Instant.parse("2099-10-09T09:00:00Z")),
+                                false)));
 
         mockMvc.perform(get("/staff/transport-requests"))
+                .andExpect(content().string(containsString("RC-2026-0004 版 1</td>")))
+                .andExpect(
+                        content()
+                                .string(
+                                        containsString(
+                                                "href=\"/staff/bookings/new?transportRequest=TR-2026-0004&amp;quotation=1\">TR-2026-0004 見積 1 の本予約の確定へ</a>")))
                 .andExpect(content().string(containsString("RC-2026-0001 版 1（経路が再設計要）")))
                 .andExpect(content().string(not(containsString("TR-2026-0001 見積 1 の本予約の確定へ"))))
                 .andExpect(

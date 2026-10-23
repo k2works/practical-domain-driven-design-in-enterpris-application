@@ -12,7 +12,6 @@ import com.example.cargotracker.quotation.application.internal.queryservices.Sta
 import com.example.cargotracker.quotation.domain.model.aggregates.Quotation;
 import com.example.cargotracker.quotation.domain.model.aggregates.TransportRequest;
 import com.example.cargotracker.quotation.domain.model.rules.RequotePolicy;
-import com.example.cargotracker.quotation.domain.model.valueobjects.AssignedRoute;
 import com.example.cargotracker.quotation.domain.model.valueobjects.QuotationInput;
 import com.example.cargotracker.quotation.domain.model.valueobjects.QuotationRejection;
 import com.example.cargotracker.quotation.domain.model.valueobjects.QuotationStatus;
@@ -397,10 +396,6 @@ public class StaffQuotationController {
         return subject + " は荷主の承認の段階にあるため、この操作はできません";
     }
 
-    private static boolean isRouteRedesignRequired(Quotation quotation) {
-        return quotation.assignedRoute().map(AssignedRoute::redesignRequired).orElse(false);
-    }
-
     /**
      * 失効しているときの案内。有効期限の日時を併記する（Bolt 11 レビュー R-17）。失効を記録した旧版は読み取り専用、
      * 表示する時刻で失効した承認待ちは提示できず、提示済みは使えない。荷主の承認の後に失効した見積りは、再見積りできれば経路を引き継ぐ
@@ -418,9 +413,9 @@ public class StaffQuotationController {
         if (quotation.status() == QuotationStatus.EXPIRED) {
             return expiresAt + "を過ぎて失効しました。この見積りは読み取り専用です。";
         }
-        if (requoteRejection.isEmpty() && isRouteRedesignRequired(quotation)) {
+        if (requoteRejection.isEmpty() && quotation.isRouteRedesignRequired()) {
             // 割り当てた経路が再設計要の見積りは、期限の後に再見積りできるが、新しい見積りも印を引き継ぐ（US-07 AC5。Bolt 37e3）
-            return expiresAt + "を過ぎました。割り当てた経路が再設計要のため、経路を引き継いで再見積りしても荷主は承認できません。" + "経路設計者と扱いを相談してから再見積りしてください。";
+            return expiresAt + "を過ぎました。割り当てた経路が再設計要のため、経路を引き継いで再見積りしても荷主は承認できません。経路設計者と扱いを相談してから再見積りしてください。";
         }
         if (quotation.status() == QuotationStatus.APPROVED) {
             return requoteRejection

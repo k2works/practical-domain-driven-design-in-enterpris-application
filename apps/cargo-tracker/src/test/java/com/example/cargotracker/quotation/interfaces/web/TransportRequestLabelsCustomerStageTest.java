@@ -51,7 +51,8 @@ class TransportRequestLabelsCustomerStageTest {
             String guidance) {
         TransportRequestLabels.CustomerStage stage = TransportRequestLabels.customerStage(
                 request,
-                Optional.of(new TransportRequestLabels.LatestQuotation(quotation, expired, approved, reapproval)));
+                Optional.of(
+                        new TransportRequestLabels.LatestQuotation(quotation, expired, approved, reapproval, false)));
 
         assertThat(stage.status()).isEqualTo(status);
         assertThat(stage.guidance()).isEqualTo(guidance(guidance));
@@ -64,7 +65,8 @@ class TransportRequestLabelsCustomerStageTest {
     void ほかの状態の見積依頼は最新の見積りによらず輸送要求から選ぶ(TransportRequestStatus request) {
         TransportRequestLabels.CustomerStage stage = TransportRequestLabels.customerStage(
                 request,
-                Optional.of(new TransportRequestLabels.LatestQuotation(QuotationStatus.APPROVED, true, true, true)));
+                Optional.of(
+                        new TransportRequestLabels.LatestQuotation(QuotationStatus.APPROVED, true, true, true, false)));
 
         assertThat(stage.status()).isEqualTo(TransportRequestLabels.customerStatus(request));
         assertThat(stage.guidance()).isEqualTo(TransportRequestLabels.customerGuidance(request));
@@ -112,6 +114,39 @@ class TransportRequestLabelsCustomerStageTest {
         assertThat(stage(TransportRequestStatus.READY_TO_BOOK, QuotationStatus.APPROVED, true, true)
                         .guidance())
                 .isEqualTo(TransportRequestLabels.REQUOTING_AFTER_APPROVAL);
+    }
+
+    @Test
+    void 割り当てた経路が再設計要の荷主承認待ちが失効したら今の荷主承認待ちの案内のまま() {
+        // D-86（荷主承認待ちの失効は今の案内）。担当営業が期限の後に再見積りする
+        assertThat(stage(
+                        TransportRequestStatus.AWAITING_APPROVAL,
+                        QuotationStatus.AWAITING_SHIPPER_APPROVAL,
+                        true,
+                        true))
+                .isEqualTo(new TransportRequestLabels.CustomerStage(
+                        AWAITING, TransportRequestLabels.customerGuidance(TransportRequestStatus.AWAITING_APPROVAL)));
+    }
+
+    @Test
+    void 割り当てた経路が再設計要でも状態の表示名は変わらない() {
+        // C-02 の一覧は表示名だけを使い、印を渡さない（Bolt 37e3 の開発レビュー）
+        assertThat(stage(TransportRequestStatus.READY_TO_BOOK, QuotationStatus.APPROVED, false, true)
+                        .status())
+                .isEqualTo(stage(TransportRequestStatus.READY_TO_BOOK, QuotationStatus.APPROVED, false, false)
+                        .status());
+        assertThat(stage(
+                                TransportRequestStatus.AWAITING_APPROVAL,
+                                QuotationStatus.AWAITING_SHIPPER_APPROVAL,
+                                false,
+                                true)
+                        .status())
+                .isEqualTo(stage(
+                                TransportRequestStatus.AWAITING_APPROVAL,
+                                QuotationStatus.AWAITING_SHIPPER_APPROVAL,
+                                false,
+                                false)
+                        .status());
     }
 
     @Test

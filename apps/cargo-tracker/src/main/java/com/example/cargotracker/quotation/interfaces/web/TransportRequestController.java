@@ -9,7 +9,6 @@ import com.example.cargotracker.quotation.application.internal.queryservices.Quo
 import com.example.cargotracker.quotation.application.internal.queryservices.TransportRequestQueryService;
 import com.example.cargotracker.quotation.domain.model.aggregates.Quotation;
 import com.example.cargotracker.quotation.domain.model.aggregates.TransportRequest;
-import com.example.cargotracker.quotation.domain.model.valueobjects.AssignedRoute;
 import com.example.cargotracker.quotation.domain.model.valueobjects.SendBackNotice;
 import com.example.cargotracker.quotation.domain.model.valueobjects.ShipmentTermsInput;
 import com.example.cargotracker.quotation.domain.model.valueobjects.ShipperLatestQuotationSummary;
@@ -345,7 +344,7 @@ public class TransportRequestController {
                 quotation.isExpiredAt(now),
                 quotation.shipperApproval().isPresent(),
                 quotation.isPresentedForReapproval(),
-                quotation.assignedRoute().map(AssignedRoute::redesignRequired).orElse(false));
+                quotation.isRouteRedesignRequired());
     }
 
     private static TransportRequestLabels.LatestQuotation latestQuotation(
@@ -354,7 +353,9 @@ public class TransportRequestController {
                 summary.status(),
                 summary.isExpiredAt(now),
                 summary.isShipperApproved(),
-                summary.isPresentedForReapproval());
+                summary.isPresentedForReapproval(),
+                // C-02 は状態の表示名だけを示し、再設計要でも表示名は変わらない（案内を出すなら読み取りモデルに印を足す。Bolt 37e3 の開発レビュー）
+                false);
     }
 
     private static SendBack sendBack(SendBackNotice notice) {

@@ -473,11 +473,14 @@ public final class Quotation {
         return routeRedesignRejection();
     }
 
+    /** 割り当てた経路に再設計要の印があるか（画面の案内の出し分けに使う。US-07 AC5。Bolt 37e3）。 */
+    public boolean isRouteRedesignRequired() {
+        return assignedRoute != null && assignedRoute.redesignRequired();
+    }
+
     /** 割り当てた経路に再設計要の印があれば、その理由（Q-INV-10、B-INV-05。Bolt 37e）。 */
     private Optional<QuotationRejection> routeRedesignRejection() {
-        return assignedRoute != null && assignedRoute.redesignRequired()
-                ? Optional.of(QuotationRejection.ROUTE_REDESIGN_REQUIRED)
-                : Optional.empty();
+        return isRouteRedesignRequired() ? Optional.of(QuotationRejection.ROUTE_REDESIGN_REQUIRED) : Optional.empty();
     }
 
     /**
@@ -511,8 +514,10 @@ public final class Quotation {
     }
 
     /**
-     * 判定時刻に再見積りできないなら、その理由（Q-INV-07、D-85。Bolt 35b）。置換済み・失効の記録を先に見て、承認済みなら判定時刻が
-     * 有効期限より前（期限内）のときだけ拒み、期限を過ぎていれば受け付ける（旧版を失効にして経路を引き継ぐ）。詳細設計依頼済みと
+     * 判定時刻に再見積りできないなら、その理由（Q-INV-07、D-85。Bolt 35b）。割り当てた経路に再設計要の印がある承認済み・荷主承認待ちを
+     * 先に見て、期限内なら再設計要の理由で拒み、期限を過ぎていれば受け付ける（Bolt 37e3）。次に、承認済みなら判定時刻が
+     * 有効期限より前（期限内）のときだけ拒み、期限を過ぎていれば受け付ける（旧版を失効にして経路を引き継ぐ）。その後に置換済み・失効の
+     * 記録を見る。詳細設計依頼済みと
      * 荷主承認待ちは経路設計の途中なので再見積りできない（D-86）。ただし割り当てた経路に再設計要の印がある荷主承認待ちは、荷主が
      * 承認できず期限まで待つしかないので、承認済みと同じく期限を過ぎていれば受け付ける（新しい見積りは経路と印を引き継ぎ、承認は
      * 再設計（US-08）まで拒む。Bolt 37e の終了報告の承認の場で決めた出口）。承認待ち・提示済みは失効していても再見積りできる。

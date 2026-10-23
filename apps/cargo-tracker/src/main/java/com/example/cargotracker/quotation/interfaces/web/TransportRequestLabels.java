@@ -90,13 +90,7 @@ final class TransportRequestLabels {
             boolean expired,
             boolean shipperApproved,
             boolean reapproval,
-            boolean routeRedesignRequired) {
-
-        /** 割り当てた経路の再設計要を知らない読み取りモデル（C-02 の一覧）から作る。 */
-        LatestQuotation(QuotationStatus status, boolean expired, boolean shipperApproved, boolean reapproval) {
-            this(status, expired, shipperApproved, reapproval, false);
-        }
-    }
+            boolean routeRedesignRequired) {}
 
     /**
      * 荷主の画面の状態の表示名と案内（C-02・C-04 で共通。D-85。Bolt 35d）。輸送要求が荷主承認待ち・予約待ちのときは、輸送要求の状態の更新
@@ -128,14 +122,15 @@ final class TransportRequestLabels {
     }
 
     /** 割り当てた経路が再設計要の見積り。状態の表示名は今のまま、案内だけを担当営業への相談に替える（Bolt 37e3）。 */
-    private static CustomerStage routeReviewStage(QuotationStatus quotation, TransportRequestStatus request) {
-        return switch (quotation) {
+    private static CustomerStage routeReviewStage(
+            QuotationStatus quotationStatus, TransportRequestStatus requestStatus) {
+        return switch (quotationStatus) {
             case APPROVED ->
                 new CustomerStage(customerStatus(TransportRequestStatus.READY_TO_BOOK), ROUTE_REVIEW_AFTER_APPROVAL);
             case AWAITING_SHIPPER_APPROVAL ->
                 new CustomerStage(
                         customerStatus(TransportRequestStatus.AWAITING_APPROVAL), ROUTE_REVIEW_BEFORE_APPROVAL);
-            case DRAFT, PENDING_APPROVAL, PRESENTED, ROUTING_REQUESTED, EXPIRED, REPLACED -> stageOf(request);
+            case DRAFT, PENDING_APPROVAL, PRESENTED, ROUTING_REQUESTED, EXPIRED, REPLACED -> stageOf(requestStatus);
         };
     }
 

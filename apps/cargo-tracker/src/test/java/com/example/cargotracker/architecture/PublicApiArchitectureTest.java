@@ -50,16 +50,21 @@ class PublicApiArchitectureTest {
             .because("公開 API はインターフェース層の <コンテキスト>.interfaces.api に置く（開発ガイドライン第 3 章）");
 
     /**
-     * 予約は見積りを公開 API（{@code quotation.interfaces.api}）だけで使い、見積りのドメインとアプリケーションの型に依存しない（ADR-016。
-     * {@code ModularityTest} だけが守っていた項目を名前の付いた規則にする。#50、Bolt 37e3）。ほかのコンテキストの組は #50 の残り。
+     * 予約は見積りを公開 API（{@code quotation.interfaces.api}）だけで使い、見積りのほかのパッケージ（ドメイン、アプリケーション、
+     * インフラストラクチャ、画面、公開 API の実装）に依存しない（ADR-016。{@code ModularityTest} だけが守っていた項目を名前の付いた
+     * 規則にする。#50、Bolt 37e3）。ほかのコンテキストの組は #50 の残り。
      */
     @ArchTest
-    static final ArchRule 予約は見積りのドメインとアプリケーションに依存しない = noClasses()
+    static final ArchRule 予約は見積りの公開APIのほかに依存しない = noClasses()
             .that()
             .resideInAPackage("com.example.cargotracker.booking..")
             .should()
             .dependOnClassesThat()
             .resideInAnyPackage(
-                    "com.example.cargotracker.quotation.domain..", "com.example.cargotracker.quotation.application..")
+                    "com.example.cargotracker.quotation.domain..",
+                    "com.example.cargotracker.quotation.application..",
+                    "com.example.cargotracker.quotation.infrastructure..",
+                    "com.example.cargotracker.quotation.interfaces.web..",
+                    "com.example.cargotracker.quotation.interfaces.api.internal..")
             .because("予約は見積りの公開 API だけを使う（ADR-016、腐敗防止層 QuotationBookability）");
 }

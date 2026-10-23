@@ -1303,4 +1303,59 @@ class TransportRequestControllerTest {
                 .contains("id=\"step-terms\"", "id=\"step-cargo\"", "id=\"step-documents\"", "id=\"step-confirm\"")
                 .doesNotContainPattern("<section class=\"app-step\"[^>]*hidden");
     }
+
+    // 割り当てた経路が再設計要の見積り（US-07 AC5。Bolt 37e3 の状態の組み合わせの行 1〜3。開発レビューで C-04 を描く層に足した）
+
+    @Test
+    void 割り当てた経路が再設計要の荷主承認待ちは承認の入口を出さず担当営業への相談を案内する() throws Exception {
+        // 行 1
+        TransportRequest request = awaitingApprovalRequest();
+        given(queryService.findByNumber(NUMBER, SHIPPER)).willReturn(Optional.of(request));
+        given(quotationQueryService.findVisible(NUMBER, SHIPPER))
+                .willReturn(List.of(markedRoute(awaitingApproval(request.id()))));
+
+        mockMvc.perform(get("/customer/transport-requests/TR-2026-0001"))
+                .andExpect(content().string(not(containsString("見積りと経路を確かめて承認へ"))))
+                .andExpect(content().string(containsString("割り当てた経路の見直しが必要になったため、この見積りと経路は承認できません。担当営業にご相談ください。")))
+                .andExpect(content().string(not(containsString("見積りと経路を確かめて承認してください。"))))
+                .andExpect(content().string(not(containsString("再設計要"))));
+    }
+
+    @Test
+    void 割り当てた経路が再設計要の承認済みは本予約を確定する旨を出さず担当営業からの連絡を案内する() throws Exception {
+        // 行 2
+        TransportRequest request = readyToBook();
+        given(queryService.findByNumber(NUMBER, SHIPPER)).willReturn(Optional.of(request));
+        Quotation quotation = awaitingApproval(request.id());
+        quotation.approveByShipper(USER, new UtcInstant(Instant.parse("2026-10-07T06:00:00Z")));
+        given(quotationQueryService.findVisible(NUMBER, SHIPPER)).willReturn(List.of(markedRoute(quotation)));
+
+        mockMvc.perform(get("/customer/transport-requests/TR-2026-0001"))
+                .andExpect(content().string(containsString("2026-10-07 15:00 Asia/Tokyo（UTC+09:00）にこの見積りと経路を承認しました。")))
+                .andExpect(content().string(containsString("割り当てた経路の見直しが必要になりました。本予約の扱いは担当営業からご連絡します。")))
+                .andExpect(content().string(not(containsString("担当営業が本予約を確定します"))))
+                .andExpect(content().string(not(containsString("再設計要"))));
+    }
+
+    @Test
+    void 割り当てた経路が再設計要でない荷主承認待ちは承認の入口と承認の案内を出す() throws Exception {
+        // 行 3（陽性の対照）
+        TransportRequest request = awaitingApprovalRequest();
+        given(queryService.findByNumber(NUMBER, SHIPPER)).willReturn(Optional.of(request));
+        given(quotationQueryService.findVisible(NUMBER, SHIPPER)).willReturn(List.of(awaitingApproval(request.id())));
+
+        mockMvc.perform(get("/customer/transport-requests/TR-2026-0001"))
+                .andExpect(content().string(containsString("見積りと経路を確かめて承認へ")))
+                .andExpect(content().string(containsString("経路が確定しました。見積りと経路を確かめて承認してください。")))
+                .andExpect(content().string(not(containsString("割り当てた経路の見直しが必要"))));
+    }
+
+    private static Quotation markedRoute(Quotation quotation) {
+        quotation.markRouteRedesignRequired(
+                quotation.assignedRoute().orElseThrow().routingCaseNumber(),
+                quotation.assignedRoute().orElseThrow().routeVersionNo(),
+                new UtcInstant(Instant.parse("2026-10-07T07:00:00Z")));
+        quotation.clearDomainEvents();
+        return quotation;
+    }
 }

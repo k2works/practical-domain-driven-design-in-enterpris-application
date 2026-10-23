@@ -111,7 +111,8 @@ final class QuotationViews {
                         .shipperApproval()
                         .map(approval -> dateTime.apply(approval.approvedAt()))
                         .orElse(null),
-                quotation.isPresentedForReapproval());
+                quotation.isPresentedForReapproval(),
+                quotation.isRouteRedesignRequired());
     }
 
     /** 割り当てた経路の表示（Bolt 20）。 */
@@ -186,6 +187,7 @@ final class QuotationViews {
      * @param approvable 荷主が承認できるか（荷主承認待ちで、失効していない。Bolt 20）
      * @param approvedAt 荷主の承認時刻（承認していなければ null。Bolt 20）
      * @param reapproval 再承認の見積りか（荷主の承認の後に失効した見積りから経路を引き継いだ再見積りを提示した。D-85。Bolt 35d）
+     * @param routeRedesignRequired 割り当てた経路が再設計要か（承認済みでも本予約を確定する旨を出さない。US-07 AC5。Bolt 37e3）
      */
     record View(
             int quotationNo,
@@ -209,7 +211,8 @@ final class QuotationViews {
             boolean awaitingApproval,
             boolean approvable,
             String approvedAt,
-            boolean reapproval) {}
+            boolean reapproval,
+            boolean routeRedesignRequired) {}
 
     /**
      * 割り当てた経路の表示（Bolt 20）。
