@@ -2,8 +2,10 @@
 type: Plan
 title: "Bolt 37e3b 計画 - US-07 AC5 の開発データの見本・マニュアル・デモ（再設計要の経路の拒否）"
 tags: [plan]
-status: draft
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-23T07:58:31Z }
+status: stable
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-23T08:03:18Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-10-23T08:03:18Z }
 ---
 
 # Bolt 37e3b 計画 - US-07 AC5 の開発データの見本・マニュアル・デモ（再設計要の経路の拒否）
@@ -151,6 +153,7 @@ generated: { by: anthropic/claude-opus-5-5, at: 2026-10-23T07:58:31Z }
 
 | 日付 | 更新内容 | 更新者 |
 | :--- | :--- | :--- |
+| 2026-10-23 | 計画を承認した（確認ポイント 1〜8 を推奨のとおり） | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-10-23 | 2 つの整合性検証の指摘を反映した（承認待ち）。キャプチャを承認の前後の 2 本に、S-06 を撮ると決め、S-04 の行（行 8）と付録 B・8.2 を足し、時刻の順と出発の検査と変異を足し、動画をレビューの直しの後に移した。状態の値、消えた列、有効期限の日、README のパスを明記した | anthropic/claude-opus-5-5 |
 | 2026-10-23 | 初版作成（承認待ち）。開始準備で見本を 2 件にすると決めた（human:kakimomokuri） | anthropic/claude-opus-5-5 |
 
