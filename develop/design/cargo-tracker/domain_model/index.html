@@ -12852,6 +12852,12 @@
 <td style="text-align: left;">見積り</td>
 </tr>
 <tr>
+<td style="text-align: left;">出発済み</td>
+<td style="text-align: left;">—</td>
+<td style="text-align: left;">割り当てた経路の最初の区間の出発予定が判定時刻と同時刻か前であること。見積りの状態ではなく判定時刻で決まる。境界は経路設計の確定の出発済み（<code>ALREADY_DEPARTED</code>）と同じ。出発済みの見積りは荷主の承認と本予約に使えない（<code>ROUTE_ALREADY_DEPARTED</code>。Q-INV-10、B-INV-05、D-88）。荷主の画面では社内の語を出さず「最初の航海がすでに出発した」と示す（US-07 AC5。Bolt 37e4）</td>
+<td style="text-align: left;">見積り（経路設計の確定にも同じ境界の判定がある）</td>
+</tr>
+<tr>
 <td style="text-align: left;">再設計要の印の結果</td>
 <td style="text-align: left;">RouteRedesignMarkResult</td>
 <td style="text-align: left;">見積りに再設計要の印を付ける操作の結果。付けた・付いていた（最初の時刻のまま）・経路がない（経路を割り当てていない）・別の経路版（別の経路版を割り当てている）の 4 つ。付いていた・経路がない・別の経路版では見積りを変えない（US-07 AC5。Bolt 37e）</td>
@@ -13960,7 +13966,7 @@
 </tr>
 <tr>
 <td style="text-align: left;">Q-INV-10</td>
-<td style="text-align: left;">荷主の承認は、見積りに割り当てた経路版が確定済みで、承認の時点で再設計要・旧版でなく、見積りが有効期限内のときだけ行える。承認には承認した経路版を記録する。R0.1（Bolt 20）は、荷主承認待ち・有効期限内（承認の時刻 &lt; 有効期限）・自社の輸送要求を確かめる。再設計要の判定は Bolt 37e で足した: 置換済み・失効の記録 → 承認済み → 期限切れ → 荷主承認待ちでない の後に、割り当てた経路に再設計要の印があれば再設計要（<code>ROUTE_REDESIGN_REQUIRED</code>）で拒否する。承認済みの見積りに印が付いても、承認の判定は承認済みのまま返す（二重送信の結果を誤らせない）。旧版の判定は再設計（US-08）で足す（旧版は確定から直接移ることがあり、印が付かない）。通常の流れでは回答は提示と同時刻か後（<code>responseRejectionAt</code> で集約が守る）。回答の時刻が提示の時刻より前の見積りは、回答を引き継いだ再見積り（<code>requoteInto</code>。再承認の見積り）だけである。経路の確定の時刻は経路設計の時計で、経路の割当て（<code>assignRoute</code>）はその順を検査しないので、再承認の見積りの見分けには使わない（D-85。Bolt 35d の開発レビューで経路の確定の時刻から改めた。human:kakimomokuri の決定 (7)）</td>
+<td style="text-align: left;">荷主の承認は、見積りに割り当てた経路版が確定済みで、承認の時点で再設計要・旧版・出発済みでなく、見積りが有効期限内のときだけ行える。承認には承認した経路版を記録する。R0.1（Bolt 20）は、荷主承認待ち・有効期限内（承認の時刻 &lt; 有効期限）・自社の輸送要求を確かめる。再設計要の判定は Bolt 37e で足した: 置換済み・失効の記録 → 承認済み → 期限切れ → 荷主承認待ちでない の後に、割り当てた経路に再設計要の印があれば再設計要（<code>ROUTE_REDESIGN_REQUIRED</code>）で拒否する。承認済みの見積りに印が付いても、承認の判定は承認済みのまま返す（二重送信の結果を誤らせない）。旧版の判定は再設計（US-08）で足す（旧版は確定から直接移ることがあり、印が付かない）。出発済みの判定は Bolt 37e4 で足した: 再設計要の後に、割り当てた経路の最初の区間の出発予定が承認の時刻と同時刻か前なら出発済み（<code>ROUTE_ALREADY_DEPARTED</code>）で拒否する。境界は経路設計の確定の出発済み（<code>ALREADY_DEPARTED</code>）と同じ。再設計要と出発済みの両方なら再設計要を返す（D-88）。通常の流れでは回答は提示と同時刻か後（<code>responseRejectionAt</code> で集約が守る）。回答の時刻が提示の時刻より前の見積りは、回答を引き継いだ再見積り（<code>requoteInto</code>。再承認の見積り）だけである。経路の確定の時刻は経路設計の時計で、経路の割当て（<code>assignRoute</code>）はその順を検査しないので、再承認の見積りの見分けには使わない（D-85。Bolt 35d の開発レビューで経路の確定の時刻から改めた。human:kakimomokuri の決定 (7)）</td>
 <td style="text-align: left;">BR-01、BR-10、BR-16、US-24</td>
 </tr>
 <tr>
@@ -13999,6 +14005,16 @@
 <td style="text-align: left;">—</td>
 <td style="text-align: left;">判定時刻と有効期限から有効・失効を判定する。判定時刻は呼び出し側が commit 時刻として渡す。見積有効期限（QuotationExpiry）の「有効か(判定時刻)」が担い、別の型にしない（判定を 1 か所に置く。Bolt 11）</td>
 </tr>
+<tr>
+<td style="text-align: left;">拒否の理由</td>
+<td style="text-align: left;">QuotationRejection</td>
+<td style="text-align: left;">見積りの集約の判定（荷主の承認 <code>approvalRejectionAt</code>、本予約の照会 <code>bookingRejectionAt</code>、再見積り <code>requoteRejectionAt</code> など）が返す、操作を受け付けない理由。状態と期限による理由（<code>EXPIRED</code>・<code>REPLACED</code>・<code>NOT_APPROVED</code>・<code>APPROVED_AND_STILL_VALID</code> など）と、割り当てた経路による理由の再設計要（<code>ROUTE_REDESIGN_REQUIRED</code>。Bolt 37e）・出発済み（<code>ROUTE_ALREADY_DEPARTED</code>。Bolt 37e4、D-88）を持つ。再設計要と出発済みの両方なら再設計要を返す。文言は画面の層が付ける</td>
+</tr>
+<tr>
+<td style="text-align: left;">本予約の照会の理由</td>
+<td style="text-align: left;">BookableQuotation.Reason、BookableQuotationResult.NotBookable</td>
+<td style="text-align: left;">本予約の照会で見積りを使えない理由。入力ポートの理由（<code>BookableQuotation.Reason</code>）は照会（<code>BookableQuotationQueryService.reasonOf</code>。網羅の switch）が拒否の理由から選び、アダプターが公開 API の定数（<code>NotBookable</code>）に写す。見つからない（<code>QUOTATION_NOT_FOUND</code>）・失効（<code>EXPIRED</code>）・置換済み（<code>REPLACED</code>）・承認済みでない（<code>NOT_APPROVED</code>）・再設計要（<code>ROUTE_REDESIGN_REQUIRED</code>。Bolt 37e）・出発済み（<code>ROUTE_ALREADY_DEPARTED</code>。Bolt 37e4）。公開 API の定数は見積りのドメインの値の名前とは独立に決める契約で、足すだけにする（既存の定数と形は変えない）</td>
+</tr>
 </tbody>
 </table>
 <p>提出の検証は、輸送条件の入力（ShipmentTermsInput）が Q-INV-01・Q-INV-02・Q-INV-12 をまとめて判定し、違反をすべて提出の検証結果（SubmissionViolations）として返す（1 件ずつ直させない）。違反がなければ、同じ判定の結果として輸送条件（ShipmentTerms）を返す（検証を通らずに輸送条件を作れないよう、変換を別の操作に分けない。Bolt 4 レビュー R-04）。そのうえで業務番号の採番（TransportRequestNumberIssuer）で番号を得て提出する。採番のポートは <code>domain.model</code> に置き、実装は <code>infrastructure.persistence</code> に置く。</p>
@@ -14036,10 +14052,18 @@
 <p>Bolt 37e3（US-07 AC5 の予約と画面の側）で決めたこと（<a href="../../../development/cargo-tracker/bolt_37e3_plan/">Bolt 37e3 計画</a> の確認ポイント 1〜10。2026-10-23 に human:kakimomokuri が承認。出発済みの判定（D-88）は Bolt 37e4、開発データの見本・マニュアル・デモは Bolt 37e3b）:</p>
 <ul>
 <li>再見積りの判定（<code>Quotation.requoteRejectionAt</code>）は、割り当てた経路に再設計要の印があり有効期限内なら、状態（承認済み・荷主承認待ち）によらず再設計要（<code>ROUTE_REDESIGN_REQUIRED</code>）を返す。これまでは承認済みが <code>APPROVED_AND_STILL_VALID</code>、荷主承認待ちが <code>ROUTING_REQUESTED</code> になり、S-04 が「本予約の確定へ進んでください」「詳細経路設計を依頼済み」と誤って案内した。期限の後は今のまま再見積りできる（D-86 の変更。新しい見積りは経路と印を引き継ぐ）。再見積りの可否は変えず、理由だけを変える（開始準備の決定 (5)。Bolt 37e の行 14b・14c の期待値が変わる）。</li>
-<li>予約の腐敗防止層の理由（<code>QuotationUnavailability</code>）に再設計要（<code>ROUTE_REDESIGN_REQUIRED</code>）を足し、腐敗防止層 <code>QuotationBookability</code> が見積りの公開 API の理由（<code>BookableQuotationResult.NotBookable</code> の <code>ROUTE_REDESIGN_REQUIRED</code>）から写す。知らない理由を写す <code>default</code> の腕は残し、今のまま承認済みでない（<code>NOT_APPROVED</code>）に寄せる（見積りが理由を足したときに S-09 が 500 にならないように。確認ポイント 2）。公開 API の契約（理由の定数）は変えない。下の予約の B-INV-05。</li>
+<li>予約の腐敗防止層の理由（<code>QuotationUnavailability</code>）に再設計要（<code>ROUTE_REDESIGN_REQUIRED</code>）を足し、腐敗防止層 <code>QuotationBookability</code> が見積りの公開 API の理由（<code>BookableQuotationResult.NotBookable</code> の <code>ROUTE_REDESIGN_REQUIRED</code>）から写す。知らない理由を写す <code>default</code> の腕は残し、今のまま承認済みでない（<code>NOT_APPROVED</code>）に寄せる（見積りが理由を足したときに S-09 が 500 にならないように。確認ポイント 2）。公開 API の契約（理由の定数）は変えない。下の予約の B-INV-05。Bolt 37e4 で、公開 API に出発済みの定数（<code>NotBookable.ROUTE_ALREADY_DEPARTED</code>）を足した（定数を足すだけで、既存の定数と形は変えない。下の Bolt 37e4 で決めたこと）。</li>
 <li>営業の文言は、再見積りの拒否の理由を写す今の腕（<code>approvalStageRejection</code>）の中で言い分け、<code>StaffQuotationController.rejection</code> の腕は増やさない（循環的複雑度の上限 10。Bolt 37e の決定）。文言は ui_design の S-02・S-04・S-09・C-04・C-17。荷主の画面には社内の語（再設計要、印、DE-06、経路版の番号）を出さない。</li>
 <li>S-02 の予約の確定待ちの照会の行に再設計要の有無（<code>route_redesign_required_at</code> の有無）を足す。スキーマは変えない。印のある行は表から除かない（除くと、期限の後の再見積りの入口が消え、D-86 の変更と食い違う。開始準備の決定 (4)）。</li>
 <li>見積りと案件の状態、状態遷移は変えない。</li>
+</ul>
+<p>Bolt 37e4（US-07 AC5 の出発済みの経路。D-88）で決めたこと（<a href="../../../development/cargo-tracker/bolt_37e4_plan/">Bolt 37e4 計画</a> の確認ポイント 1〜10。2026-10-23 に human:kakimomokuri が承認。開発データの見本とデモは Bolt 37e4b、Bolt 37e2 の既知の課題と #16 のクローズは Bolt 37e4c）:</p>
+<ul>
+<li>荷主の承認の判定（<code>approvalRejectionAt</code>）と本予約の判定（<code>bookingRejectionAt</code>）の最後（再設計要の後）に、割り当てた経路の最初の区間の出発予定が判定時刻と同時刻か前なら出発済み（<code>ROUTE_ALREADY_DEPARTED</code>）を返す。境界は経路設計の確定の出発済み（<code>ALREADY_DEPARTED</code>）と同じ。判定時刻は、荷主の承認は承認の時刻、本予約は commit 時刻。再設計要と出発済みの両方なら再設計要を返す（再設計要のほうが根本の理由で、Bolt 37e3 の文言と見本を変えない。確認ポイント 2）。</li>
+<li>区間の写しは見積りが持つ（<code>AssignedRoute.legs()</code>。ADR-014）ので、経路設計に問い合わせずに見積りの中で判定する。出発済みは状態ではなく判定時刻で決まるので、見積りの状態と状態遷移は変えない。スキーマも変えない。</li>
+<li>再見積りの判定（<code>requoteRejectionAt</code>）は、受け付けるかどうかを変えない（D-88。出発済みでも期限の後は再見積りでき、新しい見積りも荷主の承認で出発済みとして拒否される）。承認済みで有効期限内の拒否の理由だけ、出発済みなら <code>ROUTE_ALREADY_DEPARTED</code> にする（これまでは <code>APPROVED_AND_STILL_VALID</code> で、S-04 が「本予約の確定へ進んでください」と誤って案内した）。再設計要が先（開始準備の決定 (4)）。</li>
+<li>理由は Bolt 37e3 の再設計要と同じ道で流す: 拒否の理由 <code>QuotationRejection.ROUTE_ALREADY_DEPARTED</code> → 入力ポートの理由 <code>BookableQuotation.Reason.ROUTE_ALREADY_DEPARTED</code> → 公開 API <code>BookableQuotationResult.NotBookable.ROUTE_ALREADY_DEPARTED</code> → 予約の腐敗防止層 <code>QuotationUnavailability.ROUTE_ALREADY_DEPARTED</code>。公開 API は定数を足すだけにする（確認ポイント 4）。腐敗防止層は知らない理由を今のまま <code>NOT_APPROVED</code> に寄せる。既定の腕のない網羅の switch（荷主の回答の画面と営業の見積りの画面）は、今の組に名前を入れ、腕を増やさない。</li>
+<li>文言は ui_design の C-04・C-17・S-02・S-04・S-09。荷主の画面は社内の語（区間、出発済み）を出さず「割り当てた経路の最初の航海がすでに出発した」と示し、社内の画面は「最初の区間が出発済み」と示す。<code>isPresentedForReapproval</code> は変えない（US-08・D-86 で見直す）。</li>
 </ul>
 <h3 id="routingu2">経路設計（Routing、U2）<a class="headerlink" href="#routingu2" title="Permanent link">&para;</a></h3>
 <h4 id="_11">経路設計の集約<a class="headerlink" href="#_11" title="Permanent link">&para;</a></h4>
@@ -14303,7 +14327,7 @@
 </tr>
 <tr>
 <td style="text-align: left;">B-INV-05</td>
-<td style="text-align: left;">再設計要・旧版の経路版、失効・置換済みの見積りは確定・新しい予約版に使えない。再設計要は Bolt 37e から、見積りの本予約の判定（<code>bookingRejectionAt</code>）が 置換済み・失効の記録 → 期限切れ → 承認済みでない の後に、割り当てた経路の再設計要の印で <code>ROUTE_REDESIGN_REQUIRED</code> を返し、見積りの公開 API（<code>BookableQuotationResult.NotBookable</code>）で予約に伝える（ADR-016）。予約の側の理由（<code>QuotationUnavailability</code>）と画面の文言は Bolt 37e3。Bolt 37e3 で、予約の腐敗防止層が <code>ROUTE_REDESIGN_REQUIRED</code> を <code>QuotationUnavailability</code> の再設計要（<code>ROUTE_REDESIGN_REQUIRED</code>）に写し、S-09 は再設計要の理由を示す（知らない理由は今のまま <code>NOT_APPROVED</code> に寄せる）。旧版の判定は US-08</td>
+<td style="text-align: left;">再設計要・旧版・出発済みの経路版、失効・置換済みの見積りは確定・新しい予約版に使えない。再設計要は Bolt 37e から、見積りの本予約の判定（<code>bookingRejectionAt</code>）が 置換済み・失効の記録 → 期限切れ → 承認済みでない の後に、割り当てた経路の再設計要の印で <code>ROUTE_REDESIGN_REQUIRED</code> を返し、見積りの公開 API（<code>BookableQuotationResult.NotBookable</code>）で予約に伝える（ADR-016）。予約の側の理由（<code>QuotationUnavailability</code>）と画面の文言は Bolt 37e3。Bolt 37e3 で、予約の腐敗防止層が <code>ROUTE_REDESIGN_REQUIRED</code> を <code>QuotationUnavailability</code> の再設計要（<code>ROUTE_REDESIGN_REQUIRED</code>）に写し、S-09 は再設計要の理由を示す（知らない理由は今のまま <code>NOT_APPROVED</code> に寄せる）。Bolt 37e4 で、本予約の判定が再設計要の後に、割り当てた経路の最初の区間の出発予定が commit 時刻と同時刻か前なら <code>ROUTE_ALREADY_DEPARTED</code> を返し、公開 API（<code>NotBookable.ROUTE_ALREADY_DEPARTED</code>）と予約の腐敗防止層（<code>QuotationUnavailability</code> の出発済み）を通して S-09 が出発済みの理由を示す（D-88）。旧版の判定は US-08</td>
 <td style="text-align: left;">BR-16</td>
 </tr>
 <tr>
@@ -14370,7 +14394,7 @@
 <tr>
 <td style="text-align: left;">見積りを使えない理由</td>
 <td style="text-align: left;">QuotationUnavailability</td>
-<td style="text-align: left;">見積りの公開 API の照会の結果から予約の腐敗防止層（<code>QuotationBookability</code>）が写す、本予約の確定に見積りを使えない理由。見つからない（<code>NOT_FOUND</code>）・失効（<code>EXPIRED</code>）・置換済み（<code>REPLACED</code>）・承認済みでない（<code>NOT_APPROVED</code>）・再設計要（<code>ROUTE_REDESIGN_REQUIRED</code>。Bolt 37e3）。知らない理由は承認済みでないに寄せる。理由で分岐するのは S-09 の文言（<code>BookingController</code>）と確定の判定（<code>BookingCommandService</code>）の 2 か所（T-175。B-INV-05）</td>
+<td style="text-align: left;">見積りの公開 API の照会の結果から予約の腐敗防止層（<code>QuotationBookability</code>）が写す、本予約の確定に見積りを使えない理由。見つからない（<code>NOT_FOUND</code>）・失効（<code>EXPIRED</code>）・置換済み（<code>REPLACED</code>）・承認済みでない（<code>NOT_APPROVED</code>）・再設計要（<code>ROUTE_REDESIGN_REQUIRED</code>。Bolt 37e3）・出発済み（<code>ROUTE_ALREADY_DEPARTED</code>。Bolt 37e4）。知らない理由は承認済みでないに寄せる。理由で分岐するのは S-09 の文言（<code>BookingController</code>）と確定の判定（<code>BookingCommandService</code>）の 2 か所（T-175。B-INV-05）</td>
 </tr>
 <tr>
 <td style="text-align: left;">確定の判定の順序</td>

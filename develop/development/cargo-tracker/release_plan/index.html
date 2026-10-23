@@ -14666,7 +14666,7 @@
 <p><strong>設計への反映が必要な事項</strong>（各 Bolt の最初のステップで設計文書を直してから実装する）:</p>
 <ul>
 <li>US-06（37〜37b2・37f）: domain_model の制約適合判定（停止中の定義・情報不足・区間の上限・規則を選ぶ時刻）、test_strategy の境界と Golden dataset v0 の区分と置き場所（<code>features/routing/golden/</code>）、ui_design の S-06（:1066-1069・:1087）、non_functional の FRS-01、US-06 の決定（UC-06 2a との揺れ）</li>
-<li>US-07（37c〜37e4）: 確定の時の情報版の照合の拒否の理由と S-07 の文言、再設計要にする評価の操作と記録（再設計要にした時刻・不適合の理由・旧情報版を保持すること）、DE-06 の属性と購読者、Q-INV-10・B-INV-05 の判定、D-88、再見積りと再設計要の印（ADR-018）、data_model（<code>confirmed_route_version_no</code> の削除と部分一意インデックス、見積りの再設計要の列）、test_strategy :236、ADR-014・ADR-016 の適用先</li>
+<li>US-07（37c〜37e4c）: 確定の時の情報版の照合の拒否の理由と S-07 の文言、再設計要にする評価の操作と記録（再設計要にした時刻・不適合の理由・旧情報版を保持すること）、DE-06 の属性と購読者、Q-INV-10・B-INV-05 の判定、D-88、再見積りと再設計要の印（ADR-018）、data_model（<code>confirmed_route_version_no</code> の削除と部分一意インデックス、見積りの再設計要の列）、test_strategy :236、ADR-014・ADR-016 の適用先</li>
 <li>US-16・US-18 AC9（38〜38g）: ui_design の S-20（:145・:180-183・:1120 以降）と A-06（:94・:186-187。招待に流用する分の語と期限）、domain_model の IA-INV-02（担当企業だけ）・IA-INV-03（管理者による解除）・IA-INV-12（招待 24 時間）・IA-INV-14（登録・解除・担当範囲の操作）・:1055（管理範囲の割り当て）・:1215（利用者の集約が担当範囲を持つと書いた記述を、実装の別のポート <code>UserAssignmentRepository.scopeOf</code> に合わせる）、data_model の <code>user_assignment</code>（:939。「<code>BOOKING</code> は W6」を担当企業だけに）・<code>audit_record</code> の action（:938）・<code>password_reset_token</code> の用途・<code>notification</code> の種類、non_functional の SEC-08（招待）・SEC-10（管理者の経路）・SEC-12（担当企業だけ）、requirements_definition の OQ-07 の残り（案件ごとの割り当て）、各コンテキストの <code>allowedDependencies</code> と共有カーネルの範囲外の試行の記録のポート（新しい ADR）、ADR-012（担当範囲と session の直列化）</li>
 <li>承認の後に直す文書（W6 の開始準備の範囲）: release_plan の :101（U2 の対策）・:350-351 と引継ぎ ID の台帳（TST-02・DM-05 の期限を「v0 は仮の値で作り、届いたら差し替える。パイロット開始の条件として残す」に）、台帳の D-88 の注と D-89・D-90 の新設、W6 の行（:788。ゴールに利用者の管理を足し、管理範囲の割り当てを W10 へ）と W10 の行（:792）、ガントの W6 の名前（:253）、開発戦略の W6 のデモ項目（:185）と W6 の行（:346）</li>
 </ul>
@@ -14762,9 +14762,23 @@
 </tr>
 <tr>
 <td style="text-align: left;">37e4</td>
-<td style="text-align: left;">US-07 AC5 の出発済みの経路: 出発済みの判定（D-88。Bolt 37e の計画の承認で 37e から、Bolt 37e3 の開始準備で 37e3 から送った）と、その理由・予約の ACL の追従・文言・マニュアル。Bolt 37e2 の既知の課題 3 つ（届く順 B の受入シナリオ、37e2 の状態の組み合わせの表の行 13 を本物の本予約の確定で確かめる統合テスト、ロックの操作の名前）。#16 をクローズして US-07 の 2 SP を数える。出発済みは評価の入口と関係なく出るので、W7 の開始条件にしない。開始準備で 37e4・37e4b・37e4c に分ける案を作った（<a href="../bolt_37e4_plan/">Bolt 37e4 計画</a>（承認済み）。分け方はステップ 1 でこの表に書く）</td>
+<td style="text-align: left;">US-07 AC5 の出発済みの経路: 荷主の承認と本予約の照会の判定に出発済み（D-88。割り当てた経路の最初の区間の出発予定が判定時刻と同時刻か前。境界は <code>ALREADY_DEPARTED</code> と同じ。Bolt 37e の計画の承認で 37e から、Bolt 37e3 の開始準備で 37e3 から送った）を足し、理由 <code>ROUTE_ALREADY_DEPARTED</code> を公開 API と予約の ACL まで流す。再見積りの期限内の拒否の理由も出発済みにする（受け付けるかどうかは変えない）。C-04・C-17・S-02・S-04・S-09 の文言と出し分け、画面の層のシナリオ（<code>route_already_departed_ui.feature</code>）、マニュアル 4.2・6.4・7.1・7.2・付録 B・用語集とキャプチャ 2 枚（出発済みは時刻だけで画面に出るので、判定と文言とマニュアルを同じ配備にする）。出発済みは評価の入口と関係なく出るので、W7 の開始条件にしない。開始準備で 37e4・37e4b・37e4c に分けた（human:kakimomokuri）。<a href="../bolt_37e4_plan/">Bolt 37e4 計画</a>（承認済み）</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: left;">アウトサイドイン（画面の層のシナリオから。状態の組み合わせの表を先に書く。T-161・T-163・T-182）</td>
+<td style="text-align: left;">計画と終了報告（新しいファイル、構造。確認ポイント 3・4）</td>
+</tr>
+<tr>
+<td style="text-align: left;">37e4b</td>
+<td style="text-align: left;">US-07 AC5 の出発済みの経路の見本とデモ: 開発データの見本（出発済み。TR-2026-0911 以降）と、W6 のデモ項目「出発済みの拒否」の動画。今の見本はどれも最初の区間の出発が起動の後なので、出発済みは見本では出ない（Bolt 37e4 の開始準備で 37e4 から分けた）</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: left;">技術タスク（見本とデモ。37e4 の振る舞いを見える形にする）</td>
+<td style="text-align: left;">計画と終了報告（開発データ）</td>
+</tr>
+<tr>
+<td style="text-align: left;">37e4c</td>
+<td style="text-align: left;">US-07 AC5 の残り: Bolt 37e2 の既知の課題 3 つ（届く順 B の受入シナリオ、37e2 の状態の組み合わせの表の行 13 と予約の画面で予約が残ることを本物の本予約の確定で確かめる、ロックの操作の名前を目的の名前にそろえる）。#16 をクローズして US-07 の 2 SP を数える（Bolt 37e4 の開始準備で 37e4 から分けた。順は 37e4 → 37e4b → 37e4c）</td>
 <td style="text-align: right;">2</td>
-<td style="text-align: left;">アウトサイドイン（画面の層のシナリオから）</td>
+<td style="text-align: left;">アウトサイドイン（受入シナリオから）</td>
 <td style="text-align: left;">計画と終了報告</td>
 </tr>
 <tr>
@@ -14829,8 +14843,8 @@
 <p><strong>W5 の Try の持ち込み</strong>: 各 Bolt 計画の確認ポイントに、T-125（規則に当たったら <code>/goal</code> でも止めて諮る）、T-106・T-119（「ないこと」を確かめる前に、対象があり条件が成り立つことを確かめる）、T-148・T-152（共通の部品と写しは全体を検索して数えてから変える）、T-161・T-163（状態の組み合わせの表と行ごとのテスト。37d・37e・38f・38g）、T-104・T-147・T-139（SonarQube の時機、テストのラムダの中で値を作らない）、T-164（変異の道具は 1 つを手で照らす）を入れる。</p>
 <p><strong>#50（W5 の締めの返済の候補）から入れるもの</strong>: CI の揺らぎ（36）、予約から見積りのドメインへの型の ArchUnit の規則（37e3。W6 の開始準備の時点では 37e）、受入シナリオの背景の写し（37f）、<code>Section</code> とテンプレート（38）、役割 0 件の検査の二重（38b）、停止の理由などの表示（38c）、回復コードが送り直すたびに減る件・<code>findByEventIdAndRecipient</code>（38d）、テストの準備で割り当てが自動で入る件・<code>list</code> と <code>detail</code> の非管理者の扱い・範囲外のときだけ応答時間が違う件（38e）。画面の層の開き直すループの共通化は、37b・37c で S-06・S-07 の画面の層のシナリオを足す前に、写しを数えてから決める。</p>
 <p><strong>Living Documentation</strong>: 新しい ADR（範囲外の試行の記録のポートと担当範囲の受け渡し）と ADR-012 の変更、<code>package-info</code> の <code>allowedDependencies</code>、ModularityTest、用語集の整合テスト（担当範囲・招待・再設計要・情報不足・Golden dataset）、受入条件の照合の表（US-06・US-07・US-16・US-18 の Release 1.0 の範囲）</p>
-<p><strong>デモ項目</strong>: 経路候補の境界と情報不足（<code>@US-06</code>、<code>@golden</code>）、確定の時の情報版の照合と再設計要の経路の拒否（<code>@US-07</code>）、利用者の登録と招待・ロックと TOTP の解除と本人への通知・担当範囲の外の拒否（<code>@US-16</code>、<code>@US-18-AC9</code>）。動画は画面の振る舞いが変わる Bolt（37b2・37c・37e3b・38b・38c・38e。W6 の開始準備の時点では 37b。Bolt 37b で分けた。37e3b は Bolt 37e3 の開始準備で足した）で <code>@demo-&lt;Bolt&gt;</code> を撮る</p>
-<p><strong>ユーザーマニュアル</strong>: 8 章（経路設計。37・37b2・37c・37d2・38g）、4 章・6 章・7 章・8.3（再設計要の経路の拒否。37e3b。37e2 で listener をつなぐが、本番とデモには評価の入口が W7 までないので見える変化は起きず、37e3 でも見本がないので見える変化は起きない。見本とマニュアルとデモを 37e3b で一緒に入れる。Bolt 37e3 の開始準備で決めた）、4 章・7 章（出発済みの拒否。37e4。出発済みは時刻だけで出るので、判定と同じ Bolt に入れる）、11 章（利用者の管理。38〜38e）、2 章（ログイン。38b の招待、38c の解除の後の再登録、38d の回復コードの案内）、6 章・7 章・9 章（担当範囲の外。38f・38g）。振る舞いの変わる Bolt はマニュアルの更新とキャプチャを完了条件に入れる</p>
+<p><strong>デモ項目</strong>: 経路候補の境界と情報不足（<code>@US-06</code>、<code>@golden</code>）、確定の時の情報版の照合と再設計要の経路の拒否・出発済みの拒否（<code>@US-07</code>）、利用者の登録と招待・ロックと TOTP の解除と本人への通知・担当範囲の外の拒否（<code>@US-16</code>、<code>@US-18-AC9</code>）。動画は画面の振る舞いが変わる Bolt（37b2・37c・37e3b・37e4b・38b・38c・38e。W6 の開始準備の時点では 37b。Bolt 37b で分けた。37e3b は Bolt 37e3 の開始準備で、37e4b は Bolt 37e4 の開始準備で足した）で <code>@demo-&lt;Bolt&gt;</code> を撮る</p>
+<p><strong>ユーザーマニュアル</strong>: 8 章（経路設計。37・37b2・37c・37d2・38g）、4 章・6 章・7 章・8.3（再設計要の経路の拒否。37e3b。37e2 で listener をつなぐが、本番とデモには評価の入口が W7 までないので見える変化は起きず、37e3 でも見本がないので見える変化は起きない。見本とマニュアルとデモを 37e3b で一緒に入れる。Bolt 37e3 の開始準備で決めた）、4.2・6.4・7.1・7.2・付録 B・用語集とキャプチャ（出発済みの拒否。37e4。出発済みは時刻だけで出るので、判定と同じ Bolt に入れる。Bolt 37e4 の開始準備で 6.4・付録 B・用語集とキャプチャも 37e4 に入れた）、11 章（利用者の管理。38〜38e）、2 章（ログイン。38b の招待、38c の解除の後の再登録、38d の回復コードの案内）、6 章・7 章・9 章（担当範囲の外。38f・38g）。振る舞いの変わる Bolt はマニュアルの更新とキャプチャを完了条件に入れる</p>
 <p><strong>主なタスク</strong>:</p>
 <ul class="task-list">
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> W6 の開始準備（本節。2026-10-20）: 計画の承認、詳細整合性検証・横断整合性検証（指摘を反映）、承認の後に直す文書、GitHub の同期</li>
@@ -14870,7 +14884,7 @@
 <td style="text-align: left;">W7</td>
 <td style="text-align: left;">11-16 〜 11-20</td>
 <td style="text-align: left;">外部原本の取込</td>
-<td style="text-align: left;">US-14（8）、US-12 残り（2）。外部情報の更新（DE-12）から確定した経路版の評価を起こす入口をつなぐ Bolt は、Bolt 37e3b を終えてから始める（評価で再設計要の印が付くと、拒否の文言とマニュアルの前に画面の振る舞いが変わるため。Bolt 37e2 の計画の確認ポイント 6。Bolt 37e3 の開始準備で 37e3 から 37e3b に改めた。出発済みの 37e4 は条件にしない。リスク台帳）</td>
+<td style="text-align: left;">US-14（8）、US-12 残り（2）。外部情報の更新（DE-12）から確定した経路版の評価を起こす入口をつなぐ Bolt は、Bolt 37e3b を終えてから始める（評価で再設計要の印が付くと、拒否の文言とマニュアルの前に画面の振る舞いが変わるため。Bolt 37e2 の計画の確認ポイント 6。Bolt 37e3 の開始準備で 37e3 から 37e3b に改めた。出発済みの 37e4〜37e4c は条件にしない。リスク台帳）</td>
 <td style="text-align: right;">10</td>
 </tr>
 <tr>
@@ -15334,7 +15348,7 @@
 <td style="text-align: left;">37e3・37e3b が W7 の評価の入口より遅れると、見える変化がマニュアルなしで出る（Bolt 37e2 で DE-06 の listener をつないだので、評価で印が付くと C-04 の承認の操作が消え、C-17 は既定の文言、S-09 は「荷主の承認がまだ」と誤って示し、S-02 に印のある見積りが残る）</td>
 <td style="text-align: center;">中</td>
 <td style="text-align: center;">低</td>
-<td style="text-align: left;">W7 の評価の入口をつなぐ Bolt の開始条件に「Bolt 37e3b を終えてから」を書いた（W6 の 37e3b の行、W7 の行）。W7 の開始準備で 37e3・37e3b の完了を確かめる（Bolt 37e2 の計画の確認ポイント 6。Bolt 37e3 の開始準備で「37e3 を終えてから」を改めた。出発済みの 37e4 は評価の入口と関係なく出るので条件にしない）</td>
+<td style="text-align: left;">W7 の評価の入口をつなぐ Bolt の開始条件に「Bolt 37e3b を終えてから」を書いた（W6 の 37e3b の行、W7 の行）。W7 の開始準備で 37e3・37e3b の完了を確かめる（Bolt 37e2 の計画の確認ポイント 6。Bolt 37e3 の開始準備で「37e3 を終えてから」を改めた。出発済みの 37e4〜37e4c は評価の入口と関係なく出るので条件にしない）</td>
 </tr>
 </tbody>
 </table>
@@ -16873,6 +16887,11 @@
 <td style="text-align: left;">2026-10-23</td>
 <td style="text-align: left;">Bolt 37e4 の計画を承認した（確認ポイント 1〜10 を推奨のとおり）</td>
 <td style="text-align: left;">anthropic/claude-opus-5-5、承認 human:kakimomokuri</td>
+</tr>
+<tr>
+<td style="text-align: left;">2026-10-23</td>
+<td style="text-align: left;">Bolt 37e4 のステップ 1: W6 の 37e4 の行を 37e4（出発済みの判定・理由・文言・マニュアルとキャプチャ。0 SP）・37e4b（出発済みの見本・デモ。0 SP）・37e4c（37e2 の既知の課題 3 つ、#16 のクローズ。2 SP）に分けた（W6 の SP の合計 12 は変わらない）。US-07 の範囲を 37c〜37e4c に、デモ項目に「出発済みの拒否」と動画を撮る Bolt に 37e4b を、マニュアルの注の 37e4 に 6.4・付録 B・用語集とキャプチャを足し、W7 の行とリスク台帳の出発済みの記述を 37e4〜37e4c にした（W7 の開始条件は 37e3b のまま）</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5</td>
 </tr>
 </tbody>
 </table>
