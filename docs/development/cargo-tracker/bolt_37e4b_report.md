@@ -3,7 +3,7 @@ type: Plan
 title: "Bolt 37e4b 終了報告 - US-07 AC5 の出発済みの経路の見本とデモ"
 tags: [plan]
 status: draft
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-23T13:35:30Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-23T13:58:54Z }
 ---
 
 # Bolt 37e4b 終了報告 - US-07 AC5 の出発済みの経路の見本とデモ
@@ -31,7 +31,7 @@ generated: { by: anthropic/claude-opus-5-5, at: 2026-10-23T13:35:30Z }
 | Bolt | 第 37e4b 回（W6 の 13 本目） |
 | 期間 | 2026-10-23（計画の承認の記録 `6efc9fc5d` から、終了報告の承認の依頼まで） |
 | 対象 | 開発データの見本 2 件と `DevSampleDataSmokeTest`、動画 2 本（`route_already_departed_ui.feature` のタグ）、README とデモ環境の手順書とテスト戦略の見本の表、リリース計画の 37e4・37e4b の行と技術リスクと W7 の行 |
-| GitHub | [#16](https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/16)（閉じるのは Bolt 37e4c） |
+| GitHub | [#16](https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/16)（[実装のコメント](https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/16#issuecomment-6366154339)。閉じるのは Bolt 37e4c） |
 | SP | 0（US-07 の 2 SP は Bolt 37e4c で数える） |
 | 計画 | [Bolt 37e4b 計画](bolt_37e4b_plan.md) |
 
@@ -56,7 +56,7 @@ generated: { by: anthropic/claude-opus-5-5, at: 2026-10-23T13:35:30Z }
 | 変異 | 計画の 6 つ: V1 見本 2 の出発を起動の後にする（時刻の順・予約の確定待ちの行・本予約の照会・再見積りの理由の 4 本で落ちた）、V2 見本 1 の出発を起動の後にする（時刻の順・荷主の承認の理由・写しの一致の 3 本）、V3 見本 1 の確定を出発の後にする（時刻の順）、V4 見本 2 の承認を出発の後にする（時刻の順）、V5 見本 2 を荷主承認待ちにして承認を落とす（状態・時刻の順・予約の確定待ちの行と並び・再見積りの 5 本。T-188 の形で、制約で起動に失敗していない）、V6 見本 2 の案件の確定の時刻をずらす（写しの一致）。開発レビューで足した検査の 3 つ: W1 経路方針の出発を前例の +3 日に戻す、W2 候補の区間の航海を変える、W3 到着を希望到着期限の後にする。どれも狙った検査で落ち、全件が落ちたものはない（T-187） |
 | SonarQube | PASS（新しいコードの網羅率 95.8%、重複 0.04%、違反 0） |
 | `okf:check` | ERROR 0 |
-| CI | CI_RESULT |
+| CI | `2370730a2` で `check`・`ui`・`deploy-demo` が 1 回で成功した。MkDocs の配備も成功し、デモ環境は v398 で動いている。デモ環境で 3 つの役割で行 1〜9 の画面を開いて確かめた（dev と同じ。荷主の画面の「区間」は既存の表の `aria-label` だけ） |
 
 ### 開発レビューの指摘と扱い（主なもの）
 
