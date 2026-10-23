@@ -7,6 +7,7 @@ import com.example.cargotracker.booking.application.internal.commands.ConfirmBoo
 import com.example.cargotracker.booking.application.internal.commandservices.BookingCommandService;
 import com.example.cargotracker.booking.application.internal.commandservices.BookingConfirmationOutcome;
 import com.example.cargotracker.booking.application.internal.outboundservices.acl.QuotationBookability;
+import com.example.cargotracker.booking.application.internal.outboundservices.acl.RecordingBookableQuotationQuery;
 import com.example.cargotracker.booking.domain.model.BookingFixture;
 import com.example.cargotracker.booking.domain.model.valueobjects.BookingTerms;
 import com.example.cargotracker.booking.domain.model.valueobjects.TrackingNumber;
@@ -136,11 +137,11 @@ class BookingConfirmationConcurrentIntegrationTest {
                 repository,
                 sagaRepository,
                 () -> TrackingNumber.generate(random),
-                new QuotationBookability(request -> {
+                new QuotationBookability(new RecordingBookableQuotationQuery(request -> {
                     bothChecked.countDown();
                     awaitQuietly(bothChecked);
                     return bookable(termsByNumber.get(request.transportRequestNumber()));
-                }),
+                })),
                 event -> {},
                 Clock.fixed(NOW, ZoneOffset.UTC));
         ExecutorService executor = Executors.newFixedThreadPool(commands.size());

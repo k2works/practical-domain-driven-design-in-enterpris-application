@@ -102,6 +102,17 @@
          WHERE id = #{id}
     </select>
 
+    <!-- 本予約の確定で見積りの行を呼び手のトランザクションが終わるまで押さえる（再設計要の印を付ける更新と直列にする。ADR-016。
+         Bolt 37e2）。単表で最初に読み、後の読み込みがセッションのキャッシュを使わないよう flushCache を付ける。待ちは 10 秒で打ち切る
+         （H2 と PostgreSQL で効く） -->
+    <select id="lockByTransportRequestIdAndNo" resultType="java.util.UUID" flushCache="true" timeout="10">
+        SELECT id
+          FROM quotation.quotation
+         WHERE transport_request_id = #{transportRequestId}
+           AND quotation_no = #{quotationNo}
+           FOR UPDATE
+    </select>
+
     <!-- 再設計要の印を付ける見積り（失効・置換済みを含む。索引 ix_quotation_assigned_route。Bolt 37e）。入力ポートは同じトランザクションで
          照会し直して、ほかのトランザクションが後から保存した見積り（再見積りの新しい見積り）を拾う。READ COMMITTED の文ごとの読み取りで
          新しい行を見るため、セッションのキャッシュを使わない -->

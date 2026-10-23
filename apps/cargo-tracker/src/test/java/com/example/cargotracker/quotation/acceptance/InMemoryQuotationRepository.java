@@ -88,6 +88,12 @@ public class InMemoryQuotationRepository implements QuotationRepository {
                 .findFirst();
     }
 
+    /** 行のロックはない（直列にすることは PostgreSQL の統合テストで確かめる。Bolt 37e2）。見積りがあるかだけを返す。 */
+    @Override
+    public boolean lockForBooking(TransportRequestId transportRequestId, int quotationNo) {
+        return findByTransportRequestIdAndNo(transportRequestId, quotationNo).isPresent();
+    }
+
     /** 輸送要求の状態を知らないため、業務ルール層では使わない（PostgreSQL の統合テストで確かめる。Bolt 11 レビュー R-02）。 */
     @Override
     public List<QuotedRequestSummary> findLatestOfQuotedRequests() {

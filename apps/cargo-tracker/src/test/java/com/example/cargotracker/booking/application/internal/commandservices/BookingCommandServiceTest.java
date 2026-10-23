@@ -12,6 +12,7 @@ import com.example.cargotracker.booking.acceptance.InMemoryBookingSagaRepository
 import com.example.cargotracker.booking.application.internal.commands.ConfirmBookingCommand;
 import com.example.cargotracker.booking.application.internal.outboundservices.acl.QuotationBookability;
 import com.example.cargotracker.booking.application.internal.outboundservices.acl.QuotationUnavailability;
+import com.example.cargotracker.booking.application.internal.outboundservices.acl.RecordingBookableQuotationQuery;
 import com.example.cargotracker.booking.application.sagas.BookingSagaStatus;
 import com.example.cargotracker.booking.domain.events.BookingConfirmed;
 import com.example.cargotracker.booking.domain.model.BookingFixture;
@@ -57,7 +58,8 @@ class BookingCommandServiceTest {
     private final InMemoryBookingRepository repository = new InMemoryBookingRepository();
     private final InMemoryBookingSagaRepository sagaRepository = new InMemoryBookingSagaRepository();
     private final AtomicInteger issued = new AtomicInteger();
-    private final List<BookableQuotationRequest> queries = new ArrayList<>();
+    private final RecordingBookableQuotationQuery quotationQuery =
+            new RecordingBookableQuotationQuery(request -> this.quotation);
     private final List<Object> published = new ArrayList<>();
     private BookableQuotationResult quotation = bookable(BookingFixture.terms().cargoSummary());
     private final Logger logger = (Logger) LoggerFactory.getLogger(BookingCommandService.class);
@@ -84,10 +86,7 @@ class BookingCommandServiceTest {
                     issued.incrementAndGet();
                     return BookingFixture.TRACKING_NUMBER;
                 },
-                new QuotationBookability(request -> {
-                    queries.add(request);
-                    return quotation;
-                }),
+                new QuotationBookability(quotationQuery),
                 published::add,
                 Clock.fixed(NOW, ZoneOffset.UTC));
     }
@@ -97,7 +96,7 @@ class BookingCommandServiceTest {
         BookingConfirmationOutcome outcome = service.confirm(command(Role.SALES, true));
 
         assertThat(outcome).isEqualTo(new BookingConfirmationOutcome.Confirmed(BookingFixture.TRACKING_NUMBER));
-        assertThat(queries)
+        assertThat(quotationQuery.all())
                 .as("業務番号と見積り番号で、commit 時刻を渡して照会する（ADR-016、D-4）")
                 .containsExactly(new BookableQuotationRequest("TR-2026-0001", 1, new UtcInstant(NOW)));
         Booking booking = repository.findAll().getFirst();
@@ -170,7 +169,7 @@ class BookingCommandServiceTest {
         quotation = new BookableQuotationResult.NotBookable(BookableQuotationResult.NotBookable.EXPIRED);
 
         assertThat(service.confirm(command(Role.SHIPPER, false))).isEqualTo(new BookingConfirmationOutcome.Forbidden());
-        assertThat(queries).isEmpty();
+        assertThat(quotationQuery.all()).isEmpty();
         assertThat(issued).hasValue(0);
     }
 
@@ -183,7 +182,7 @@ class BookingCommandServiceTest {
         assertThat(service.confirm(command(commandId, BookingFixture.SALES, Role.SALES, true)))
                 .as("確定の後に見積りが失効しても、再送には最初の結果を返す（H1）")
                 .isEqualTo(new BookingConfirmationOutcome.Confirmed(BookingFixture.TRACKING_NUMBER));
-        assertThat(queries).hasSize(1);
+        assertThat(quotationQuery.all()).hasSize(1);
         assertThat(issued).hasValue(1);
         assertThat(repository.findAll()).hasSize(1);
         assertThat(published).hasSize(1);
@@ -196,7 +195,7 @@ class BookingCommandServiceTest {
 
         assertThat(service.confirm(command(commandId, UUID.randomUUID(), Role.SALES, true)))
                 .isEqualTo(new BookingConfirmationOutcome.CommandConflict());
-        assertThat(queries).hasSize(1);
+        assertThat(quotationQuery.all()).hasSize(1);
         assertThat(repository.findAll()).hasSize(1);
         assertThat(logs.list).singleElement().satisfies(event -> {
             assertThat(event.getLevel()).isEqualTo(Level.WARN);
@@ -215,7 +214,7 @@ class BookingCommandServiceTest {
         assertThat(service.confirm(command(CommandId.random(), UUID.randomUUID(), Role.SALES, true)))
                 .as("確定の後に見積りが失効しても、同じ見積りの予約があれば既存の追跡番号を返す（H1）")
                 .isEqualTo(new BookingConfirmationOutcome.AlreadyBooked(BookingFixture.TRACKING_NUMBER));
-        assertThat(queries).hasSize(1);
+        assertThat(quotationQuery.all()).hasSize(1);
         assertThat(issued).hasValue(1);
         assertThat(repository.findAll()).hasSize(1);
     }
@@ -324,6 +323,15 @@ class BookingCommandServiceTest {
         assertThatThrownBy(() -> brokenService.confirm(command))
                 .isInstanceOf(IllegalStateException.class)
                 .hasCauseInstanceOf(DuplicateBookingException.class);
+    }
+
+    @Test
+    void 本予約の確定は見積りの行を押さえる確定用の照会を使う() {
+        // Bolt 37e2（ADR-016 :55）。今の照会はロックしないので、確定では使わない
+        service.confirm(command(Role.SALES, true));
+
+        assertThat(quotationQuery.confirmations()).hasSize(1);
+        assertThat(quotationQuery.finds()).isEmpty();
     }
 
     @Test

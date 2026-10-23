@@ -20,7 +20,7 @@ public class QuotationBookability {
     }
 
     /**
-     * 見積りが commit 時刻に本予約の確定に使えるかを確かめる。
+     * 見積りが commit 時刻に本予約の確定に使えるかを、行を押さえずに確かめる（S-09 の GET）。
      *
      * @param transportRequestNumber 見積りの業務番号
      * @param quotationNo 見積り番号
@@ -28,7 +28,24 @@ public class QuotationBookability {
      * @return 使えるなら予約条件、使えないなら理由
      */
     public Result check(String transportRequestNumber, int quotationNo, UtcInstant committedAt) {
-        return switch (query.find(new BookableQuotationRequest(transportRequestNumber, quotationNo, committedAt))) {
+        return toResult(query.find(new BookableQuotationRequest(transportRequestNumber, quotationNo, committedAt)));
+    }
+
+    /**
+     * 本予約の確定のトランザクションの中で、見積りの行を押さえて確かめる（ADR-016。Bolt 37e2）。S-09 の GET は {@link #check} を使う。
+     *
+     * @param transportRequestNumber 見積りの業務番号
+     * @param quotationNo 見積り番号
+     * @param committedAt commit 時刻（判定と記録に同じ値を使う）
+     * @return 使えるなら予約条件、使えないなら理由
+     */
+    public Result checkForConfirmation(String transportRequestNumber, int quotationNo, UtcInstant committedAt) {
+        return toResult(query.findForConfirmation(
+                new BookableQuotationRequest(transportRequestNumber, quotationNo, committedAt)));
+    }
+
+    private static Result toResult(BookableQuotationResult result) {
+        return switch (result) {
             case BookableQuotationResult.Bookable bookable ->
                 new Result.Bookable(toTerms(bookable), bookable.shipperApprovedAt(), bookable.expiresAt());
             case BookableQuotationResult.NotBookable notBookable ->

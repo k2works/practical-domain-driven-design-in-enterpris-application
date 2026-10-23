@@ -22,14 +22,24 @@ public class BookableQuotationQueryAdapter implements BookableQuotationQuery {
 
     @Override
     public BookableQuotationResult find(BookableQuotationRequest request) {
-        return switch (service.find(request.transportRequestNumber(), request.quotationNo(), request.committedAt())) {
-            case BookableQuotation.Bookable bookable -> toResult(bookable);
+        return toResult(service.find(request.transportRequestNumber(), request.quotationNo(), request.committedAt()));
+    }
+
+    private static BookableQuotationResult toResult(BookableQuotation found) {
+        return switch (found) {
+            case BookableQuotation.Bookable bookable -> toBookable(bookable);
             case BookableQuotation.NotBookable(BookableQuotation.Reason reason) ->
                 new BookableQuotationResult.NotBookable(reasonOf(reason));
         };
     }
 
-    private static BookableQuotationResult toResult(BookableQuotation.Bookable bookable) {
+    @Override
+    public BookableQuotationResult findForConfirmation(BookableQuotationRequest request) {
+        return toResult(service.findForConfirmation(
+                request.transportRequestNumber(), request.quotationNo(), request.committedAt()));
+    }
+
+    private static BookableQuotationResult toBookable(BookableQuotation.Bookable bookable) {
         return new BookableQuotationResult.Bookable(
                 bookable.transportRequestId(),
                 bookable.transportRequestVersionNo(),

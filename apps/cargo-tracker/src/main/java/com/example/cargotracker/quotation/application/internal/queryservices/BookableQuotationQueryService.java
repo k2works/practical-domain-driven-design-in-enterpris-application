@@ -14,6 +14,8 @@ import com.example.cargotracker.quotation.domain.model.valueobjects.TransportReq
 import com.example.cargotracker.shared.domain.UtcInstant;
 import java.util.Optional;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * 予約確定に使える見積りの照会の入力ポート。見積りの公開 API のアダプター（{@code interfaces.api.internal}）が委ね、確定に要る値の
@@ -46,7 +48,26 @@ public class BookableQuotationQueryService {
      * @return 使えるなら見積りと対象の輸送要求、使えないなら理由
      */
     public BookableQuotation find(String transportRequestNumber, int quotationNo, UtcInstant committedAt) {
-        Optional<Quotation> found = findByNumber(transportRequestNumber, quotationNo);
+        return judge(findByNumber(transportRequestNumber, quotationNo, false), committedAt);
+    }
+
+    /**
+     * 本予約の確定のトランザクションの中で、見積りの行をそのコミットまで押さえてから {@link #find} と同じ判定をする（ADR-016、US-07 AC5。
+     * Bolt 37e2）。再設計要の印を付ける更新は確定のコミットを待ち、先に付いた印は押さえた後の読み込みで見える。呼び手のトランザクションが
+     * なければ例外にする（ロックを呼び手のトランザクションの終わりまで持つため）。
+     *
+     * @param transportRequestNumber 業務番号の表記
+     * @param quotationNo 見積り番号
+     * @param committedAt 予約確定の commit 時刻
+     * @return 使えるなら見積りと対象の輸送要求、使えないなら理由
+     */
+    @Transactional(propagation = Propagation.MANDATORY)
+    public BookableQuotation findForConfirmation(
+            String transportRequestNumber, int quotationNo, UtcInstant committedAt) {
+        return judge(findByNumber(transportRequestNumber, quotationNo, true), committedAt);
+    }
+
+    private BookableQuotation judge(Optional<Quotation> found, UtcInstant committedAt) {
         if (found.isEmpty()) {
             return new BookableQuotation.NotBookable(BookableQuotation.Reason.QUOTATION_NOT_FOUND);
         }
@@ -91,8 +112,11 @@ public class BookableQuotationQueryService {
         return CargoDisplayNames.summary(cargo);
     }
 
-    /** 業務番号と見積り番号で見積りを引く（D-4。Bolt 23b）。業務番号の形でなければ見つからない。 */
-    private Optional<Quotation> findByNumber(String transportRequestNumber, int quotationNo) {
+    /**
+     * 業務番号と見積り番号で見積りを引く（D-4。Bolt 23b）。業務番号の形でなければ見つからない。{@code lock} なら見積りの行を押さえてから
+     * 読む（Bolt 37e2）。
+     */
+    private Optional<Quotation> findByNumber(String transportRequestNumber, int quotationNo, boolean lock) {
         TransportRequestNumber number;
         try {
             number = TransportRequestNumber.parse(transportRequestNumber);
@@ -101,6 +125,7 @@ public class BookableQuotationQueryService {
         }
         return transportRequestRepository
                 .findByNumberForStaff(number)
+                .filter(request -> !lock || quotationRepository.lockForBooking(request.id(), quotationNo))
                 .flatMap(request -> quotationRepository.findByTransportRequestIdAndNo(request.id(), quotationNo));
     }
 

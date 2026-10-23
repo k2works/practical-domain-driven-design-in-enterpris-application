@@ -7,6 +7,7 @@ import com.example.cargotracker.booking.acceptance.InMemoryBookingRepository;
 import com.example.cargotracker.booking.acceptance.InMemoryBookingSagaRepository;
 import com.example.cargotracker.booking.application.internal.outboundservices.acl.QuotationBookability;
 import com.example.cargotracker.booking.application.internal.outboundservices.acl.QuotationUnavailability;
+import com.example.cargotracker.booking.application.internal.outboundservices.acl.RecordingBookableQuotationQuery;
 import com.example.cargotracker.booking.application.sagas.BookingSaga;
 import com.example.cargotracker.booking.application.sagas.BookingSagaStatus;
 import com.example.cargotracker.booking.domain.model.BookingFixture;
@@ -21,7 +22,6 @@ import com.example.cargotracker.shared.domain.UtcInstant;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -42,23 +42,28 @@ class BookingQueryServiceTest {
 
     private final InMemoryBookingRepository bookings = new InMemoryBookingRepository();
     private final InMemoryBookingSagaRepository sagas = new InMemoryBookingSagaRepository();
-    private final List<BookableQuotationRequest> queries = new ArrayList<>();
+    private final RecordingBookableQuotationQuery quotationQuery =
+            new RecordingBookableQuotationQuery(request -> this.quotation);
     private BookableQuotationResult quotation = bookable();
 
     private final BookingQueryService service = new BookingQueryService(
-            bookings,
-            sagas,
-            new QuotationBookability(request -> {
-                queries.add(request);
-                return quotation;
-            }),
-            Clock.fixed(NOW, ZoneOffset.UTC));
+            bookings, sagas, new QuotationBookability(quotationQuery), Clock.fixed(NOW, ZoneOffset.UTC));
+
+    @Test
+    void S09の本予約の確定の画面は見積りの行を押さえない今の照会を使う() {
+        // Bolt 37e2（ADR-016 :34）。GET は読み取り専用のトランザクションなので行を押さえない
+        service.confirmation("TR-2026-0001", 1);
+
+        assertThat(quotationQuery.finds()).hasSize(1);
+        assertThat(quotationQuery.confirmations()).isEmpty();
+    }
 
     @Test
     void 確定に使える見積りは開いた時刻で照会して確定条件の表示に要る値を返す() {
         assertThat(service.confirmation("TR-2026-0001", 1))
                 .isEqualTo(new BookingConfirmationPage.Available(BookingFixture.terms(), APPROVED_AT, EXPIRES_AT));
-        assertThat(queries).containsExactly(new BookableQuotationRequest("TR-2026-0001", 1, new UtcInstant(NOW)));
+        assertThat(quotationQuery.all())
+                .containsExactly(new BookableQuotationRequest("TR-2026-0001", 1, new UtcInstant(NOW)));
     }
 
     @Test
@@ -78,7 +83,7 @@ class BookingQueryServiceTest {
         assertThat(service.confirmation("TR-2026-0001", 1))
                 .as("確定の後に見積りが失効しても、失効でなく同じ見積りの予約があると示す（Bolt 24、H1）")
                 .isEqualTo(new BookingConfirmationPage.AlreadyBooked(BookingFixture.TRACKING_NUMBER));
-        assertThat(queries).isEmpty();
+        assertThat(quotationQuery.all()).isEmpty();
     }
 
     @Test
@@ -176,7 +181,7 @@ class BookingQueryServiceTest {
                         return sagas.findStatusesByBookingIds(bookingIds);
                     }
                 },
-                new QuotationBookability(request -> quotation),
+                new QuotationBookability(new RecordingBookableQuotationQuery(request -> quotation)),
                 Clock.fixed(NOW, ZoneOffset.UTC));
 
         assertThat(counted.recent().rows()).hasSize(3);

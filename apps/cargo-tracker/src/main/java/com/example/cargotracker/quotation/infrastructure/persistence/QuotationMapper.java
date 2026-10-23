@@ -27,6 +27,10 @@ public interface QuotationMapper {
     /** 見積りを ID で返す（経路の割当て。Bolt 20）。 */
     QuotationRow selectById(UUID id);
 
+    /** 輸送要求の見積り番号の見積りの行を押さえる（Bolt 37e2）。見積りがなければ null。 */
+    UUID lockByTransportRequestIdAndNo(
+            @Param("transportRequestId") UUID transportRequestId, @Param("quotationNo") int quotationNo);
+
     /** 案件番号と経路版番号の経路を割り当てた見積りの ID（Bolt 37e）。 */
     List<UUID> selectIdsByAssignedRoute(
             @Param("routingCaseNumber") String routingCaseNumber, @Param("routeVersionNo") int routeVersionNo);

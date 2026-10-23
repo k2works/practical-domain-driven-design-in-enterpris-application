@@ -68,4 +68,10 @@ public interface QuotationRepository {
 
     /** 輸送要求の見積りを見積り番号で探す。 */
     Optional<Quotation> findByTransportRequestIdAndNo(TransportRequestId transportRequestId, int quotationNo);
+
+    /**
+     * 輸送要求の見積り番号の見積りの行を、呼び手のトランザクションが終わるまで押さえる（本予約の確定を再設計要の印と直列にする。
+     * ADR-016、US-07 AC5。Bolt 37e2）。押さえた後の読み込みは、押さえる前に読んだ値を使わない。見積りがなければ false。
+     */
+    boolean lockForBooking(TransportRequestId transportRequestId, int quotationNo);
 }

@@ -201,6 +201,11 @@ public class MyBatisQuotationRepository implements QuotationRepository {
                 .findFirst();
     }
 
+    @Override
+    public boolean lockForBooking(TransportRequestId transportRequestId, int quotationNo) {
+        return mapper.lockByTransportRequestIdAndNo(transportRequestId.value(), quotationNo) != null;
+    }
+
     private static QuotationRow toRow(Quotation quotation, long version) {
         Optional<PricingBasis> basis = quotation.pricingBasis();
         Optional<RoutePolicy> policy = quotation.routePolicy();
