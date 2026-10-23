@@ -51,8 +51,8 @@ class TransportRequestLabelsCustomerStageTest {
             String guidance) {
         TransportRequestLabels.CustomerStage stage = TransportRequestLabels.customerStage(
                 request,
-                Optional.of(
-                        new TransportRequestLabels.LatestQuotation(quotation, expired, approved, reapproval, false)));
+                Optional.of(new TransportRequestLabels.LatestQuotation(
+                        quotation, expired, approved, reapproval, false, false)));
 
         assertThat(stage.status()).isEqualTo(status);
         assertThat(stage.guidance()).isEqualTo(guidance(guidance));
@@ -65,8 +65,8 @@ class TransportRequestLabelsCustomerStageTest {
     void ほかの状態の見積依頼は最新の見積りによらず輸送要求から選ぶ(TransportRequestStatus request) {
         TransportRequestLabels.CustomerStage stage = TransportRequestLabels.customerStage(
                 request,
-                Optional.of(
-                        new TransportRequestLabels.LatestQuotation(QuotationStatus.APPROVED, true, true, true, false)));
+                Optional.of(new TransportRequestLabels.LatestQuotation(
+                        QuotationStatus.APPROVED, true, true, true, false, false)));
 
         assertThat(stage.status()).isEqualTo(TransportRequestLabels.customerStatus(request));
         assertThat(stage.guidance()).isEqualTo(TransportRequestLabels.customerGuidance(request));
@@ -166,6 +166,70 @@ class TransportRequestLabelsCustomerStageTest {
         return TransportRequestLabels.customerStage(
                 request,
                 Optional.of(new TransportRequestLabels.LatestQuotation(
-                        quotation, expired, quotation == QuotationStatus.APPROVED, false, routeRedesignRequired)));
+                        quotation,
+                        expired,
+                        quotation == QuotationStatus.APPROVED,
+                        false,
+                        routeRedesignRequired,
+                        false)));
+    }
+
+    // 割り当てた経路の最初の区間が出発した見積り（D-88。Bolt 37e4 の状態の組み合わせの行 8〜10）
+
+    @Test
+    void 最初の航海が出発した荷主承認待ちは承認を求めず担当営業への相談を案内する() {
+        // 行 8
+        assertThat(departedStage(
+                        TransportRequestStatus.AWAITING_APPROVAL,
+                        QuotationStatus.AWAITING_SHIPPER_APPROVAL,
+                        false,
+                        false))
+                .isEqualTo(new TransportRequestLabels.CustomerStage(
+                        AWAITING, "割り当てた経路の最初の航海がすでに出発したため、この見積りと経路は承認できません。担当営業にご相談ください。"));
+    }
+
+    @Test
+    void 最初の航海が出発した再承認の見積りはもう一度の承認を求めない() {
+        // 行 9
+        assertThat(departedStage(
+                        TransportRequestStatus.READY_TO_BOOK, QuotationStatus.AWAITING_SHIPPER_APPROVAL, true, false))
+                .isEqualTo(new TransportRequestLabels.CustomerStage(
+                        AWAITING, "割り当てた経路の最初の航海がすでに出発したため、この見積りと経路は承認できません。担当営業にご相談ください。"));
+    }
+
+    @Test
+    void 最初の航海が出発した承認済みは本予約の確定を案内せず担当営業からの連絡を案内する() {
+        // 行 10
+        assertThat(departedStage(TransportRequestStatus.READY_TO_BOOK, QuotationStatus.APPROVED, false, false))
+                .isEqualTo(new TransportRequestLabels.CustomerStage(
+                        READY, "割り当てた経路の最初の航海がすでに出発しました。本予約の扱いは担当営業からご連絡します。"));
+    }
+
+    @Test
+    void 再設計要と出発済みの両方なら再設計要の案内を出す() {
+        // 理由の順（再設計要が先）
+        assertThat(departedStage(
+                                TransportRequestStatus.AWAITING_APPROVAL,
+                                QuotationStatus.AWAITING_SHIPPER_APPROVAL,
+                                false,
+                                true)
+                        .guidance())
+                .isEqualTo("割り当てた経路の見直しが必要になったため、この見積りと経路は承認できません。担当営業にご相談ください。");
+    }
+
+    private static TransportRequestLabels.CustomerStage departedStage(
+            TransportRequestStatus request,
+            QuotationStatus quotation,
+            boolean reapproval,
+            boolean routeRedesignRequired) {
+        return TransportRequestLabels.customerStage(
+                request,
+                Optional.of(new TransportRequestLabels.LatestQuotation(
+                        quotation,
+                        false,
+                        quotation == QuotationStatus.APPROVED,
+                        reapproval,
+                        routeRedesignRequired,
+                        true)));
     }
 }

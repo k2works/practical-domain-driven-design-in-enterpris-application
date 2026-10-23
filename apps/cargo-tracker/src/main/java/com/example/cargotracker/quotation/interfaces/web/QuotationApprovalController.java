@@ -121,6 +121,7 @@ public class QuotationApprovalController {
                     case NOT_AWAITING_SHIPPER_APPROVAL -> subject + " はまだ承認できる見積りではありません。経路が確定したら承認できます";
                     // 荷主には社内の語（再設計要）を使わない（US-07 AC5。Bolt 37e3）
                     case ROUTE_REDESIGN_REQUIRED -> subject + " は割り当てた経路の見直しが必要になったため承認できません。担当営業にご相談ください";
+                    case ROUTE_ALREADY_DEPARTED -> subject + " は割り当てた経路の最初の航海がすでに出発したため承認できません。担当営業にご相談ください";
                     default -> subject + " は承認できません。担当営業にご連絡ください";
                 };
         return redirectToDetail(number, PROBLEM, message, redirectAttributes);

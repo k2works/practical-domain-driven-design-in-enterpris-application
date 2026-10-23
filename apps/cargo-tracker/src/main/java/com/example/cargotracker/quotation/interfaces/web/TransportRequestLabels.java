@@ -65,6 +65,12 @@ final class TransportRequestLabels {
     /** 割り当てた経路が再設計要の荷主承認待ちの案内（社内の語を出さない。US-07 AC5。Bolt 37e3）。 */
     static final String ROUTE_REVIEW_BEFORE_APPROVAL = "割り当てた経路の見直しが必要になったため、この見積りと経路は承認できません。担当営業にご相談ください。";
 
+    /** 割り当てた経路の最初の区間が出発した荷主承認待ちの案内（社内の語「区間」を出さず、荷主の経路の表の「航海」にそろえる。D-88。Bolt 37e4）。 */
+    static final String ROUTE_DEPARTED_BEFORE_APPROVAL = "割り当てた経路の最初の航海がすでに出発したため、この見積りと経路は承認できません。担当営業にご相談ください。";
+
+    /** 割り当てた経路の最初の区間が出発した承認済みの案内（本予約の確定は案内しない。D-88。Bolt 37e4）。 */
+    static final String ROUTE_DEPARTED_AFTER_APPROVAL = "割り当てた経路の最初の航海がすでに出発しました。本予約の扱いは担当営業からご連絡します。";
+
     /** 割り当てた経路が再設計要の承認済みの案内（本予約の確定は案内しない。US-07 AC5。Bolt 37e3）。 */
     static final String ROUTE_REVIEW_AFTER_APPROVAL = "割り当てた経路の見直しが必要になりました。本予約の扱いは担当営業からご連絡します。";
 
@@ -84,13 +90,15 @@ final class TransportRequestLabels {
      * @param shipperApproved 荷主が承認した見積りか（承認の後に失効したものを含む）
      * @param reapproval 再承認の見積りか
      * @param routeRedesignRequired 割り当てた経路が再設計要か（US-07 AC5。Bolt 37e3）
+     * @param routeDeparted 割り当てた経路の最初の区間が表示する時刻に出発済みか（D-88。Bolt 37e4）
      */
     record LatestQuotation(
             QuotationStatus status,
             boolean expired,
             boolean shipperApproved,
             boolean reapproval,
-            boolean routeRedesignRequired) {}
+            boolean routeRedesignRequired,
+            boolean routeDeparted) {}
 
     /**
      * 荷主の画面の状態の表示名と案内（C-02・C-04 で共通。D-85。Bolt 35d）。輸送要求が荷主承認待ち・予約待ちのときは、輸送要求の状態の更新
@@ -111,7 +119,12 @@ final class TransportRequestLabels {
             return new CustomerStage(customerStatus(TransportRequestStatus.QUOTING), REQUOTING_AFTER_APPROVAL);
         }
         if (quotation.routeRedesignRequired() && !quotation.expired()) {
-            return routeReviewStage(quotation.status(), status);
+            return routeStage(quotation.status(), status, ROUTE_REVIEW_BEFORE_APPROVAL, ROUTE_REVIEW_AFTER_APPROVAL);
+        }
+        // 再設計要が先（理由の順。D-88。Bolt 37e4）
+        if (quotation.routeDeparted() && !quotation.expired()) {
+            return routeStage(
+                    quotation.status(), status, ROUTE_DEPARTED_BEFORE_APPROVAL, ROUTE_DEPARTED_AFTER_APPROVAL);
         }
         return switch (quotation.status()) {
             case APPROVED -> stageOf(TransportRequestStatus.READY_TO_BOOK);
@@ -122,14 +135,15 @@ final class TransportRequestLabels {
     }
 
     /** 割り当てた経路が再設計要の見積り。状態の表示名は今のまま、案内だけを担当営業への相談に替える（Bolt 37e3）。 */
-    private static CustomerStage routeReviewStage(
-            QuotationStatus quotationStatus, TransportRequestStatus requestStatus) {
+    private static CustomerStage routeStage(
+            QuotationStatus quotationStatus,
+            TransportRequestStatus requestStatus,
+            String beforeApproval,
+            String afterApproval) {
         return switch (quotationStatus) {
-            case APPROVED ->
-                new CustomerStage(customerStatus(TransportRequestStatus.READY_TO_BOOK), ROUTE_REVIEW_AFTER_APPROVAL);
+            case APPROVED -> new CustomerStage(customerStatus(TransportRequestStatus.READY_TO_BOOK), afterApproval);
             case AWAITING_SHIPPER_APPROVAL ->
-                new CustomerStage(
-                        customerStatus(TransportRequestStatus.AWAITING_APPROVAL), ROUTE_REVIEW_BEFORE_APPROVAL);
+                new CustomerStage(customerStatus(TransportRequestStatus.AWAITING_APPROVAL), beforeApproval);
             case DRAFT, PENDING_APPROVAL, PRESENTED, ROUTING_REQUESTED, EXPIRED, REPLACED -> stageOf(requestStatus);
         };
     }

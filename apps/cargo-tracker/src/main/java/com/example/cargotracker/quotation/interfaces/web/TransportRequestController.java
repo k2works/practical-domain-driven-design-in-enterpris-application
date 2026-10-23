@@ -344,7 +344,8 @@ public class TransportRequestController {
                 quotation.isExpiredAt(now),
                 quotation.shipperApproval().isPresent(),
                 quotation.isPresentedForReapproval(),
-                quotation.isRouteRedesignRequired());
+                quotation.isRouteRedesignRequired(),
+                quotation.isRouteDepartedAt(now));
     }
 
     private static TransportRequestLabels.LatestQuotation latestQuotation(
@@ -354,7 +355,9 @@ public class TransportRequestController {
                 summary.isExpiredAt(now),
                 summary.isShipperApproved(),
                 summary.isPresentedForReapproval(),
-                // C-02 は状態の表示名だけを示し、再設計要でも表示名は変わらない（案内を出すなら読み取りモデルに印を足す。Bolt 37e3 の開発レビュー）
+                // C-02 は状態の表示名だけを示し、再設計要・出発済みでも表示名は変わらない（案内を出すなら読み取りモデルに足す。Bolt 37e3 の
+                // 開発レビュー、Bolt 37e4）
+                false,
                 false);
     }
 

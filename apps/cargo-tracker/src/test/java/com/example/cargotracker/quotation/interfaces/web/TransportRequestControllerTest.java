@@ -1350,6 +1350,62 @@ class TransportRequestControllerTest {
                 .andExpect(content().string(not(containsString("割り当てた経路の見直しが必要"))));
     }
 
+    // 割り当てた経路の最初の区間が出発した見積り（D-88。Bolt 37e4 の状態の組み合わせの行 8・10。T-185）
+
+    @Test
+    void 最初の航海が出発した荷主承認待ちは承認の入口を出さず担当営業への相談を案内する() throws Exception {
+        // 行 8。テストの時計（2026-10-06T01:00Z）より前に出発した区間
+        TransportRequest request = awaitingApprovalRequest();
+        given(queryService.findByNumber(NUMBER, SHIPPER)).willReturn(Optional.of(request));
+        given(quotationQueryService.findVisible(NUMBER, SHIPPER)).willReturn(List.of(departedRoute(request.id())));
+
+        mockMvc.perform(get("/customer/transport-requests/TR-2026-0001"))
+                .andExpect(content().string(not(containsString("見積りと経路を確かめて承認へ"))))
+                .andExpect(content().string(containsString("割り当てた経路の最初の航海がすでに出発したため、この見積りと経路は承認できません。担当営業にご相談ください。")))
+                .andExpect(content().string(not(containsString("見積りと経路を確かめて承認してください。"))))
+                .andExpect(content().string(not(containsString("区間が出発"))));
+    }
+
+    @Test
+    void 最初の航海が出発した承認済みは本予約を確定する旨を出さず担当営業からの連絡を案内する() throws Exception {
+        // 行 10
+        TransportRequest request = readyToBook();
+        given(queryService.findByNumber(NUMBER, SHIPPER)).willReturn(Optional.of(request));
+        Quotation quotation = departedRoute(request.id());
+        // 承認は出発の前（時刻の順: 経路の確定 → 承認 → 出発 → テストの時計）
+        quotation.approveByShipper(USER, new UtcInstant(Instant.parse("2026-10-05T08:00:00Z")));
+        quotation.clearDomainEvents();
+        given(quotationQueryService.findVisible(NUMBER, SHIPPER)).willReturn(List.of(quotation));
+
+        mockMvc.perform(get("/customer/transport-requests/TR-2026-0001"))
+                .andExpect(content().string(containsString("にこの見積りと経路を承認しました。")))
+                .andExpect(content().string(containsString("割り当てた経路の最初の航海がすでに出発しました。本予約の扱いは担当営業からご連絡します。")))
+                .andExpect(content().string(not(containsString("担当営業が本予約を確定します"))));
+    }
+
+    /** 荷主承認待ちの見積りで、割り当てた経路の最初の区間がテストの時計（2026-10-06T01:00Z）より前に出発したもの。 */
+    private static Quotation departedRoute(TransportRequestId transportRequestId) {
+        Quotation quotation = Quotation.create(new QuotationId(UUID.randomUUID()), transportRequestId, 1, 1);
+        UtcInstant at = new UtcInstant(Instant.parse("2026-10-05T04:00:00Z"));
+        quotation.calculate(QuotationFixture.completeInput(), at);
+        quotation.presentInternally(new UserId(UUID.randomUUID()), at);
+        quotation.requestRouteDesign(USER, new UtcInstant(Instant.parse("2026-10-05T05:00:00Z")));
+        quotation.assignRoute(
+                new com.example.cargotracker.quotation.domain.model.valueobjects.AssignedRoute(
+                        "RC-2026-0001",
+                        1,
+                        new UtcInstant(Instant.parse("2026-10-05T06:00:00Z")),
+                        List.of(new com.example.cargotracker.quotation.domain.model.valueobjects.AssignedRouteLeg(
+                                "V-101",
+                                new com.example.cargotracker.shared.domain.Location("JPTYO"),
+                                new com.example.cargotracker.shared.domain.Location("NLRTM"),
+                                new UtcInstant(Instant.parse("2026-10-05T12:00:00Z")),
+                                new UtcInstant(Instant.parse("2026-10-30T00:00:00Z"))))),
+                new UtcInstant(Instant.parse("2026-10-05T06:01:00Z")));
+        quotation.clearDomainEvents();
+        return quotation;
+    }
+
     private static Quotation markedRoute(Quotation quotation) {
         quotation.markRouteRedesignRequired(
                 quotation.assignedRoute().orElseThrow().routingCaseNumber(),
