@@ -73,7 +73,7 @@ public class QuotationRouteAssignmentEventHandler {
                     notAssigned.get());
             return;
         }
-        redesignOf(routingCase.get(), event.routeVersionNo())
+        redesignOf(routingCase.orElseThrow(), event.routeVersionNo())
                 .ifPresent(redesign -> notifyRedesignRequired(event, number, redesign));
     }
 

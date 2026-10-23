@@ -118,7 +118,9 @@ class MyBatisQuotationBookingLockIntegrationTest {
         // ロックを呼び手のトランザクションの終わりまで持つため（MANDATORY）。外で呼ぶと文の終わりでロックが外れる
         String number = transactionTemplate.execute(status -> approved(4, "RC-2090-0004"));
 
-        assertThatThrownBy(() -> bookableQuotationQuery.findForConfirmation(request(number)))
+        BookableQuotationRequest request = request(number);
+
+        assertThatThrownBy(() -> bookableQuotationQuery.findForConfirmation(request))
                 .isInstanceOf(IllegalTransactionStateException.class);
     }
 

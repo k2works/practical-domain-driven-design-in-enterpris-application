@@ -97,7 +97,9 @@ class MyBatisRoutingCaseLockIntegrationTest {
         RoutingCase routingCase = open(3);
         transactionTemplate.executeWithoutResult(status -> repository.save(routingCase));
 
-        assertThatThrownBy(() -> repository.findByNumberForUpdate(routingCase.number()))
+        RoutingCaseNumber number = routingCase.number();
+
+        assertThatThrownBy(() -> repository.findByNumberForUpdate(number))
                 .isInstanceOf(IllegalTransactionStateException.class);
     }
 
