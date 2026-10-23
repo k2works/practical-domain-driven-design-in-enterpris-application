@@ -206,6 +206,17 @@ class TransportRequestLabelsCustomerStageTest {
     }
 
     @Test
+    void 最初の航海が出発した荷主承認待ちでも失効していれば今の荷主承認待ちの案内のまま() {
+        // D-86（荷主承認待ちの失効は今の案内）。出発済みより失効を先に見る（開発レビュー）
+        assertThat(TransportRequestLabels.customerStage(
+                        TransportRequestStatus.AWAITING_APPROVAL,
+                        Optional.of(new TransportRequestLabels.LatestQuotation(
+                                QuotationStatus.AWAITING_SHIPPER_APPROVAL, true, false, false, false, true))))
+                .isEqualTo(new TransportRequestLabels.CustomerStage(
+                        AWAITING, TransportRequestLabels.customerGuidance(TransportRequestStatus.AWAITING_APPROVAL)));
+    }
+
+    @Test
     void 再設計要と出発済みの両方なら再設計要の案内を出す() {
         // 理由の順（再設計要が先）
         assertThat(departedStage(

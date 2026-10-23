@@ -144,12 +144,12 @@ class BookingControllerTest {
                     QuotationUnavailability.REPLACED, subject + " は新しい見積りに置き換えられたため本予約を確定できません。最新の見積りを確かめてください。"
                 },
                 new Object[] {QuotationUnavailability.NOT_APPROVED, subject + " は荷主の承認がまだのため本予約を確定できません。"},
-                // Bolt 37e3 の状態の組み合わせの行 9
                 // Bolt 37e4 の状態の組み合わせの行 15
                 new Object[] {
                     QuotationUnavailability.ROUTE_ALREADY_DEPARTED,
                     subject + " は割り当てた経路の最初の区間が出発済みのため本予約を確定できません。荷主と扱いを相談してください。"
                 },
+                // Bolt 37e3 の状態の組み合わせの行 9
                 new Object[] {
                     QuotationUnavailability.ROUTE_REDESIGN_REQUIRED,
                     subject + " は割り当てた経路が再設計要のため本予約を確定できません。経路設計者と扱いを相談してください。"

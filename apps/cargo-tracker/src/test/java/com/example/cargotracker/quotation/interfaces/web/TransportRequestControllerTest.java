@@ -35,6 +35,7 @@ import com.example.cargotracker.quotation.application.internal.queryservices.Tra
 import com.example.cargotracker.quotation.domain.model.aggregates.Quotation;
 import com.example.cargotracker.quotation.domain.model.aggregates.TransportRequest;
 import com.example.cargotracker.quotation.domain.model.valueobjects.AssignedRoute;
+import com.example.cargotracker.quotation.domain.model.valueobjects.AssignedRouteLeg;
 import com.example.cargotracker.quotation.domain.model.valueobjects.CargoCategory;
 import com.example.cargotracker.quotation.domain.model.valueobjects.DocumentMediaType;
 import com.example.cargotracker.quotation.domain.model.valueobjects.DocumentType;
@@ -571,6 +572,12 @@ class TransportRequestControllerTest {
 
     /** 荷主が承認した後、2026-10-05T12:00:00Z に有効期限を過ぎた見積り 1（状態は承認済みのまま）。 */
     private static Quotation approvedThenExpired(TransportRequestId transportRequestId) {
+        return approvedThenExpired(
+                transportRequestId, QuotationFixture.assignedRoute().legs());
+    }
+
+    /** 割り当てる経路の区間を替えた {@link #approvedThenExpired(TransportRequestId)}（出発済みの見本。Bolt 37e4）。 */
+    private static Quotation approvedThenExpired(TransportRequestId transportRequestId, List<AssignedRouteLeg> legs) {
         Quotation quotation = Quotation.create(new QuotationId(UUID.randomUUID()), transportRequestId, 1, 1);
         UtcInstant at = new UtcInstant(Instant.parse("2026-10-05T04:00:00Z"));
         quotation.calculate(
@@ -590,7 +597,7 @@ class TransportRequestControllerTest {
                         fixture.routingCaseNumber(),
                         fixture.routeVersionNo(),
                         new UtcInstant(Instant.parse("2026-10-05T05:30:00Z")),
-                        fixture.legs()),
+                        legs),
                 new UtcInstant(Instant.parse("2026-10-05T06:00:00Z")));
         quotation.approveByShipper(USER, new UtcInstant(Instant.parse("2026-10-05T07:00:00Z")));
         quotation.clearDomainEvents();
@@ -1381,6 +1388,30 @@ class TransportRequestControllerTest {
                 .andExpect(content().string(containsString("にこの見積りと経路を承認しました。")))
                 .andExpect(content().string(containsString("割り当てた経路の最初の航海がすでに出発しました。本予約の扱いは担当営業からご連絡します。")))
                 .andExpect(content().string(not(containsString("担当営業が本予約を確定します"))));
+    }
+
+    @Test
+    void 最初の航海が出発した再承認の見積りはもう一度の承認を求めず承認の入口を出さない() throws Exception {
+        // 行 9（T-185。古い再承認の案内と「承認いただいた経路のまま…」を出さない）。再見積りで引き継いだ経路の最初の区間が、再提示の後
+        // （2026-10-06T00:00Z）でテストの時計（2026-10-06T01:00Z）より前に出発した
+        TransportRequest request = readyToBook();
+        given(queryService.findByNumber(NUMBER, SHIPPER)).willReturn(Optional.of(request));
+        Quotation old = approvedThenExpired(
+                request.id(),
+                List.of(new AssignedRouteLeg(
+                        "V-101",
+                        new com.example.cargotracker.shared.domain.Location("JPTYO"),
+                        new com.example.cargotracker.shared.domain.Location("NLRTM"),
+                        new UtcInstant(Instant.parse("2026-10-06T00:30:00Z")),
+                        new UtcInstant(Instant.parse("2026-10-30T00:00:00Z")))));
+        Quotation next = represented(requoted(old, QuotationFixture.EXPIRES_AT));
+        given(quotationQueryService.findVisible(NUMBER, SHIPPER)).willReturn(List.of(next, old));
+
+        mockMvc.perform(get("/customer/transport-requests/TR-2026-0001"))
+                .andExpect(content().string(containsString("割り当てた経路の最初の航海がすでに出発したため、この見積りと経路は承認できません。担当営業にご相談ください。")))
+                .andExpect(content().string(not(containsString(REAPPROVAL_GUIDANCE))))
+                .andExpect(content().string(not(containsString(REAPPROVAL_NOTICE))))
+                .andExpect(content().string(not(containsString("/quotations/2/approval"))));
     }
 
     /** 荷主承認待ちの見積りで、割り当てた経路の最初の区間がテストの時計（2026-10-06T01:00Z）より前に出発したもの。 */

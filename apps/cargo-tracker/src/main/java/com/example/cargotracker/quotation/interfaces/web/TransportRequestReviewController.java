@@ -381,7 +381,8 @@ public class TransportRequestReviewController {
     private static AwaitingBookingRow awaitingBookingRow(AwaitingBookingSummary summary, UtcInstant now) {
         String label = QuotationViews.label(summary.number(), summary.quotationNo());
         String quotationPath = STAFF_TRANSPORT_REQUESTS + summary.number().text() + QUOTATIONS + summary.quotationNo();
-        String route = summary.routingCaseNumber() + " 版 " + summary.routeVersionNo() + routeNote(summary, now);
+        String note = routeNote(summary, now);
+        String route = summary.routingCaseNumber() + " 版 " + summary.routeVersionNo() + note;
         String expiresAt = TransportRequestLabels.staffDateTime(summary.expiresAt());
         if (summary.status() == QuotationStatus.PENDING_APPROVAL) {
             // 経路を引き継いだ承認待ち（再見積りの後で提示の前。D-85。Bolt 35c）。提示の前に失効していれば、また再見積りする
@@ -397,7 +398,6 @@ public class TransportRequestReviewController {
                     label + (expired ? " を再見積りする" : " を開く（承認待ち）"));
         }
         boolean expired = QuotationViews.isExpired(QuotationStatus.APPROVED, summary.expiresAt(), now);
-        String note = routeNote(summary, now);
         if (!note.isEmpty() && !expired) {
             // 割り当てた経路が再設計要（US-07 AC5。Bolt 37e3）か最初の区間が出発済み（D-88。Bolt 37e4）の承認済みは本予約の入口を出さず、
             // 見積り（S-04）を開ける

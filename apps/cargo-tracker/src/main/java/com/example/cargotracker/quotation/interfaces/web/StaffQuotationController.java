@@ -365,7 +365,8 @@ public class StaffQuotationController {
             case OUTDATED_VERSION -> subject + " は輸送要求の古い版に対する見積りのため、再見積りできません";
             case NOT_PRESENTED -> subject + " は荷主に提示していません";
             case ROUTING_REQUESTED -> subject + " は荷主が詳細経路設計を依頼済みのため、再見積りできません";
-            // ROUTE_REDESIGN_REQUIRED は荷主の承認と予約確定の照会で返る（言い分けは Bolt 37e3）
+            // ROUTE_REDESIGN_REQUIRED・ROUTE_ALREADY_DEPARTED は荷主の承認と予約確定の照会と再見積りで返る（言い分けは
+            // approvalStageRejection。Bolt 37e3・37e4）
             case NOT_AWAITING_SHIPPER_APPROVAL,
                     ALREADY_APPROVED,
                     NOT_APPROVED,
@@ -389,11 +390,11 @@ public class StaffQuotationController {
         if (reason == QuotationRejection.APPROVED_AND_STILL_VALID) {
             return subject + " は荷主が承認済みで、まだ有効期限内です。本予約の確定へ進んでください";
         }
-        // 割り当てた経路が再設計要の見積りの期限内の再見積り（US-07 AC5。Bolt 37e3）
         // 割り当てた経路の最初の区間が出発済みの承認済みの期限内の再見積り（D-88。Bolt 37e4）
         if (reason == QuotationRejection.ROUTE_ALREADY_DEPARTED) {
             return subject + " は割り当てた経路の最初の区間が出発済みのため、有効期限まで再見積りできません。荷主と扱いを相談してください";
         }
+        // 割り当てた経路が再設計要の見積りの期限内の再見積り（US-07 AC5。Bolt 37e3）
         if (reason == QuotationRejection.ROUTE_REDESIGN_REQUIRED) {
             return subject + " は割り当てた経路が再設計要のため、有効期限まで再見積りできません。経路設計者と扱いを相談してください";
         }

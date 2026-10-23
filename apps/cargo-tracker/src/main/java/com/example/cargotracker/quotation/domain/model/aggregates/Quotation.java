@@ -484,8 +484,7 @@ public final class Quotation {
      */
     public boolean isRouteDepartedAt(UtcInstant at) {
         Objects.requireNonNull(at, "at");
-        return assignedRoute != null
-                && !assignedRoute.legs().getFirst().departureAt().instant().isAfter(at.instant());
+        return assignedRoute != null && assignedRoute.legs().getFirst().isDepartedAt(at);
     }
 
     /** 割り当てた経路で荷主の承認と予約確定に使えない理由。再設計要の印を先に見て、次に出発済み（D-88。Bolt 37e4）。 */

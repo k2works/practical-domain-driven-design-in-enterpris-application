@@ -101,6 +101,7 @@ public class RouteRedesignUiSteps {
                 .hasCount(0);
         assertThat(page().locator("main")).containsText(message);
         assertThat(page().locator("main")).not().containsText("再設計要");
+        assertThat(page().locator("main")).not().containsText("区間");
         browser.checkAccessibility();
     }
 
@@ -115,6 +116,7 @@ public class RouteRedesignUiSteps {
         page().waitForURL("**/customer/transport-requests/" + state.transportRequestNumber());
         assertThat(alert()).containsText(state.transportRequestNumber() + " " + message);
         assertThat(alert()).not().containsText("再設計要");
+        assertThat(alert()).not().containsText("区間");
         browser.checkAccessibility();
     }
 

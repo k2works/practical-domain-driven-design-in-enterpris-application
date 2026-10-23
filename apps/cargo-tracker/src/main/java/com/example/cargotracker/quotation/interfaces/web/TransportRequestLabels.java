@@ -113,18 +113,13 @@ final class TransportRequestLabels {
         return latestQuotationStage(latest.get(), status);
     }
 
-    /** 荷主に見える最新の見積りから選ぶ（失効、割り当てた経路の再設計要、見積りの状態の順に見る）。 */
+    /** 荷主に見える最新の見積りから選ぶ（失効、割り当てた経路の再設計要と出発済み、見積りの状態の順に見る。Bolt 37e4）。 */
     private static CustomerStage latestQuotationStage(LatestQuotation quotation, TransportRequestStatus status) {
         if (quotation.shipperApproved() && quotation.expired()) {
             return new CustomerStage(customerStatus(TransportRequestStatus.QUOTING), REQUOTING_AFTER_APPROVAL);
         }
-        if (quotation.routeRedesignRequired() && !quotation.expired()) {
-            return routeStage(quotation.status(), status, ROUTE_REVIEW_BEFORE_APPROVAL, ROUTE_REVIEW_AFTER_APPROVAL);
-        }
-        // 再設計要が先（理由の順。D-88。Bolt 37e4）
-        if (quotation.routeDeparted() && !quotation.expired()) {
-            return routeStage(
-                    quotation.status(), status, ROUTE_DEPARTED_BEFORE_APPROVAL, ROUTE_DEPARTED_AFTER_APPROVAL);
+        if (!quotation.expired() && (quotation.routeRedesignRequired() || quotation.routeDeparted())) {
+            return routeStage(quotation, status);
         }
         return switch (quotation.status()) {
             case APPROVED -> stageOf(TransportRequestStatus.READY_TO_BOOK);
@@ -134,13 +129,16 @@ final class TransportRequestLabels {
         };
     }
 
-    /** 割り当てた経路が再設計要の見積り。状態の表示名は今のまま、案内だけを担当営業への相談に替える（Bolt 37e3）。 */
-    private static CustomerStage routeStage(
-            QuotationStatus quotationStatus,
-            TransportRequestStatus requestStatus,
-            String beforeApproval,
-            String afterApproval) {
-        return switch (quotationStatus) {
+    /**
+     * 割り当てた経路が再設計要（Bolt 37e3）か、最初の航海が出発した（D-88。Bolt 37e4）見積り。状態の表示名は今のまま、案内だけを担当営業への
+     * 相談に替える。両方なら再設計要の案内（理由の順）。
+     */
+    private static CustomerStage routeStage(LatestQuotation quotation, TransportRequestStatus requestStatus) {
+        String beforeApproval =
+                quotation.routeRedesignRequired() ? ROUTE_REVIEW_BEFORE_APPROVAL : ROUTE_DEPARTED_BEFORE_APPROVAL;
+        String afterApproval =
+                quotation.routeRedesignRequired() ? ROUTE_REVIEW_AFTER_APPROVAL : ROUTE_DEPARTED_AFTER_APPROVAL;
+        return switch (quotation.status()) {
             case APPROVED -> new CustomerStage(customerStatus(TransportRequestStatus.READY_TO_BOOK), afterApproval);
             case AWAITING_SHIPPER_APPROVAL ->
                 new CustomerStage(customerStatus(TransportRequestStatus.AWAITING_APPROVAL), beforeApproval);

@@ -135,6 +135,7 @@ public class BookableQuotationQueryService {
             case REPLACED -> BookableQuotation.Reason.REPLACED;
             case ROUTE_REDESIGN_REQUIRED -> BookableQuotation.Reason.ROUTE_REDESIGN_REQUIRED;
             case NOT_APPROVED -> BookableQuotation.Reason.NOT_APPROVED;
+            case ROUTE_ALREADY_DEPARTED -> BookableQuotation.Reason.ROUTE_ALREADY_DEPARTED;
             // 予約確定の判定（bookingRejectionAt）は上の 4 つと出発済み（Bolt 37e4）だけを返す。足し忘れが黙って NOT_APPROVED にならないよう、既定の腕を置かず
             // 網羅の switch にする（Bolt 37e）
             case TRANSPORT_REQUEST_NOT_QUOTING,
@@ -147,7 +148,6 @@ public class BookableQuotationQueryService {
                     NOT_AWAITING_SHIPPER_APPROVAL,
                     ALREADY_APPROVED,
                     APPROVED_AND_STILL_VALID -> throw new IllegalStateException("予約確定の判定が返さない理由です: " + rejection);
-            case ROUTE_ALREADY_DEPARTED -> BookableQuotation.Reason.ROUTE_ALREADY_DEPARTED;
         };
     }
 }

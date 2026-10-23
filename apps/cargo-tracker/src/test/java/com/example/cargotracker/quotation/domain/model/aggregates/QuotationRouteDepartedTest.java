@@ -60,6 +60,8 @@ class QuotationRouteDepartedTest {
         Quotation approved = approved();
 
         assertThat(approved.bookingRejectionAt(DEPARTURE)).contains(QuotationRejection.ROUTE_ALREADY_DEPARTED);
+        assertThat(approved.bookingRejectionAt(plus(DEPARTURE, Duration.ofHours(1))))
+                .contains(QuotationRejection.ROUTE_ALREADY_DEPARTED);
         assertThat(approved.bookingRejectionAt(plus(DEPARTURE, Duration.ofSeconds(-1))))
                 .isEmpty();
     }

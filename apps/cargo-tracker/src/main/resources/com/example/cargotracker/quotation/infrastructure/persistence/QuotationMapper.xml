@@ -220,14 +220,15 @@
          荷主の承認の後に失効した見積りを再見積りした後で、社内承認して提示する前の見積り（経路を持つ承認待ち）も出す（D-85。Bolt 35c）。
          輸送要求の条件は承認済みの行と同じにし、DE-04 の前に再見積りしても出す。割り当てた経路が再設計要の見積りも表に残し、行で分かるように
          する（失効した行の再見積りの入口を残すため。US-07 AC5。Bolt 37e3）。割り当てた経路の最初の区間の出発も持ち、出発済みの行は画面が
-         表示する時刻で出し分ける（D-88。Bolt 37e4） -->
+         表示する時刻で出し分ける（D-88。Bolt 37e4）。最初の区間は集約と同じく区間の番号が最小の区間（開発レビュー） -->
     <select id="selectAwaitingBooking" resultMap="awaitingBookingSummaryRow">
         SELECT r.request_number, q.quotation_no, q.status, q.routing_case_number, q.route_version_no, q.shipper_approved_at,
                q.expires_at, q.route_redesign_required_at IS NOT NULL AS route_redesign_required,
                l.departure_at AS first_departure_at
           FROM quotation.transport_request r
           JOIN quotation.quotation q ON q.transport_request_id = r.id
-          LEFT JOIN quotation.assigned_route_leg l ON l.quotation_id = q.id AND l.leg_no = 1
+          LEFT JOIN quotation.assigned_route_leg l ON l.quotation_id = q.id
+           AND l.leg_no = (SELECT MIN(f.leg_no) FROM quotation.assigned_route_leg f WHERE f.quotation_id = q.id)
          WHERE r.status IN ('ROUTING', 'AWAITING_APPROVAL', 'READY_TO_BOOK')
            AND (q.status = 'APPROVED'
                 OR (q.status = 'PENDING_APPROVAL' AND q.routing_case_number IS NOT NULL))

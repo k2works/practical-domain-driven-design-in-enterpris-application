@@ -56,7 +56,8 @@ public record AwaitingBookingSummary(
      * 割り当てた経路の最初の区間の出発予定が判定時刻と同時刻か前か（D-88。見積りの集約と同じ境界。Bolt 37e4）。出発を知らなければ false。
      */
     public boolean isRouteDepartedAt(UtcInstant at) {
-        return firstDepartureAt != null && !firstDepartureAt.instant().isAfter(at.instant());
+        Objects.requireNonNull(at, "at");
+        return firstDepartureAt != null && AssignedRouteLeg.isDepartedAt(firstDepartureAt, at);
     }
 
     /** 割り当てた経路が再設計要でない行。 */
