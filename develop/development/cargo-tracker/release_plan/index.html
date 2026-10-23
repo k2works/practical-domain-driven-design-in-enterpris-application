@@ -7480,6 +7480,41 @@
   
   
     <li class="md-nav__item">
+      <a href="../bolt_37e2_report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 37e2 終了報告
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--draft"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../release_report-0_1/" class="md-nav__link">
         
   
@@ -14384,7 +14419,7 @@
 <tr>
 <td style="text-align: left;">7</td>
 <td style="text-align: left;">見積り・予約への再設計要の伝え方</td>
-<td style="text-align: left;">ADR-014 のとおり、DE-06 を経路設計の listener で受け、見積りの公開 API の冪等な操作で見積りに「割り当てた経路が再設計要」を記録する（列を足す。スキーマ）。荷主の承認（Q-INV-10）と本予約（B-INV-05。<code>bookingRejectionAt</code> 経由）を拒否する。DE-06 の購読者のうち、追跡の有人案件は W8（US-20）、予約の「再設計中」の表示は US-08 に送ると domain_model に書く。DE-06 と本予約の確定の競合の守り方（ADR-016 :55 の W6 の宿題: 照会で共有ロックで読むか、見積りの版を期待版として渡すか）は Bolt 37e2 の確認ポイントにする（W6 の開始準備の時点では 37e。Bolt 37e を分けて 37e2 に送った）。決着（2026-10-22。Bolt 37e の計画の承認）: 見積りの側はこのとおり。印は割り当てた経路の写し（<code>AssignedRoute</code>）の再設計要にした時刻で持ち（<code>quotation.quotation.route_redesign_required_at</code>）、見積りの公開 API は <code>RouteRedesignNotification</code>。DE-06 の listener と DE-05・DE-06 の届く順は 37e2</td>
+<td style="text-align: left;">ADR-014 のとおり、DE-06 を経路設計の listener で受け、見積りの公開 API の冪等な操作で見積りに「割り当てた経路が再設計要」を記録する（列を足す。スキーマ）。荷主の承認（Q-INV-10）と本予約（B-INV-05。<code>bookingRejectionAt</code> 経由）を拒否する。DE-06 の購読者のうち、追跡の有人案件は W8（US-20）、予約の「再設計中」の表示は US-08 に送ると domain_model に書く。DE-06 と本予約の確定の競合の守り方（ADR-016 :55 の W6 の宿題: 照会で共有ロックで読むか、見積りの版を期待版として渡すか）は Bolt 37e2 の確認ポイントにする（W6 の開始準備の時点では 37e。Bolt 37e を分けて 37e2 に送った）。決着（2026-10-22。Bolt 37e の計画の承認）: 見積りの側はこのとおり。印は割り当てた経路の写し（<code>AssignedRoute</code>）の再設計要にした時刻で持ち（<code>quotation.quotation.route_redesign_required_at</code>）、見積りの公開 API は <code>RouteRedesignNotification</code>。DE-06 の listener と DE-05・DE-06 の届く順は 37e2。決着（2026-10-23。Bolt 37e2 の計画の承認）: 競合の守りは共有ロックでも期待版でもなく、本予約の確定用の照会で見積りの行を <code>FOR UPDATE</code> で読む（ADR-016 の改訂）。届く順は DE-05 の listener が案件の行をロックして読み、再設計要の記録があれば続けて伝える</td>
 </tr>
 <tr>
 <td style="text-align: left;">8</td>
@@ -14531,14 +14566,14 @@
 </tr>
 <tr>
 <td style="text-align: left;">37e2</td>
-<td style="text-align: left;">US-07 AC5 の経路設計の側: DE-06 の listener（経路設計の中の listener が ACL を通して見積りの公開 API <code>RouteRedesignNotification</code> を呼ぶ。ADR-014）。DE-05 と DE-06 の届く順（DE-06 が DE-05 より先に届くと見積りはまだ経路を持たず、後の DE-05 が印のない経路を割り当てる。DE-05 が再設計要の後に再配信されたときの扱い。<a href="../bolt_37d_plan/">Bolt 37d 計画</a> の材料 6。Bolt 37d2 で引き継いだ。<code>RouteAssignmentRequest</code> に項目が増えることがある）。DE-06 と本予約の確定の競合の守り方（ADR-016 :55 の宿題: 照会で共有ロックで読むか、見積りの版を期待版として渡すか。<code>BookableQuotationResult.Bookable</code> に項目が増えることがある。確認ポイント 7）。listener をつなぐと印が本番で付き、C-04 の承認の操作が消えて C-17 が既定の文言で拒否し、S-09 が「承認済みでない」と示すので、画面の文言とマニュアルを 37e2 に入れるか、listener を 37e3 の後に回すかを 37e2 の計画で決める（振る舞いが変わる Bolt はマニュアルを完了条件に入れる）。材料は <a href="../bolt_37e_plan/">Bolt 37e 計画</a> の確認ポイント 7。<a href="../bolt_37e2_plan/">Bolt 37e2 計画</a>（承認済み）</td>
+<td style="text-align: left;">US-07 AC5 の経路設計の側: DE-06 の listener（経路設計の中の listener が ACL を通して見積りの公開 API <code>RouteRedesignNotification</code> を呼ぶ。ADR-014）。DE-05 と DE-06 の届く順（DE-06 が DE-05 より先に届くと見積りはまだ経路を持たず、後の DE-05 が印のない経路を割り当てる。DE-05 が再設計要の後に再配信されたときの扱い。<a href="../bolt_37d_plan/">Bolt 37d 計画</a> の材料 6。Bolt 37d2 で引き継いだ。<code>RouteAssignmentRequest</code> に項目が増えることがある）。DE-06 と本予約の確定の競合の守り方（ADR-016 :55 の宿題: 照会で共有ロックで読むか、見積りの版を期待版として渡すか。<code>BookableQuotationResult.Bookable</code> に項目が増えることがある。確認ポイント 7）。listener をつなぐと印が本番で付き、C-04 の承認の操作が消えて C-17 が既定の文言で拒否し、S-09 が「承認済みでない」と示すので、画面の文言とマニュアルを 37e2 に入れるか、listener を 37e3 の後に回すかを 37e2 の計画で決める（振る舞いが変わる Bolt はマニュアルを完了条件に入れる）。材料は <a href="../bolt_37e_plan/">Bolt 37e 計画</a> の確認ポイント 7。計画で決めたこと（2026-10-23、human:kakimomokuri）: listener はそのままつなぐ（本番とデモには評価の入口が W7 までないので見える変化は起きない。画面の文言とマニュアルは 37e3 のまま）。DE-06 が先に届く穴は、DE-05 の listener が案件の行をロックして読み、割り当てた経路版が再設計要の記録を持てば続けて伝えて塞ぐ（評価の保存と直列になる。<code>RouteAssignmentRequest</code> に項目は増えない）。本予約の確定との競合は、見積りの公開 API に本予約の確定用の照会（<code>BookableQuotationQuery.findForConfirmation</code>。見積りの行を <code>FOR UPDATE</code> で読む）を足して守る（<code>BookableQuotationResult.Bookable</code> に項目は増えない。S-09 の GET は今の照会のまま）。ADR-016・ADR-018 を改訂し、採番の mapper の注を直す。テストの補助 <code>OverlappingTransactions</code> を共通の場所へ移す。<a href="../bolt_37e2_plan/">Bolt 37e2 計画</a>（承認済み）、<a href="../bolt_37e2_report/">Bolt 37e2 終了報告</a>（承認待ち）</td>
 <td style="text-align: right;">0</td>
 <td style="text-align: left;">アウトサイドイン（届く順の表を先に書く。T-179）</td>
 <td style="text-align: left;">計画と終了報告（構造。ADR-016 :55）</td>
 </tr>
 <tr>
 <td style="text-align: left;">37e3</td>
-<td style="text-align: left;">US-07 AC5 の予約と画面の側: 出発済みの判定（D-88。確認ポイント 10。Bolt 37e の計画の承認で 37e から送った）、予約の ACL（<code>QuotationBookability</code>）と <code>QuotationUnavailability</code> の再設計要・出発済みへの追従、C-17・C-04・S-09・S-02・S-07 の拒否の文言と出し分け、S-02 の予約の確定待ちの表から再設計要と出発済みの見積りを除くか、予約から見積りのドメインへの型の ArchUnit の規則（#50）、画面の層のシナリオ、マニュアル 4 章・7 章、開発データの見本（荷主承認待ちと再設計要の見積り）、W6 のデモ項目「再設計要の経路の拒否」。#16 をクローズして US-07 の 2 SP を数える</td>
+<td style="text-align: left;">US-07 AC5 の予約と画面の側: 出発済みの判定（D-88。確認ポイント 10。Bolt 37e の計画の承認で 37e から送った）、予約の ACL（<code>QuotationBookability</code>）と <code>QuotationUnavailability</code> の再設計要・出発済みへの追従、C-17・C-04・S-09・S-02・S-07 の拒否の文言と出し分け、S-02 の予約の確定待ちの表から再設計要と出発済みの見積りを除くか、予約から見積りのドメインへの型の ArchUnit の規則（#50）、画面の層のシナリオ、マニュアル 4 章・7 章、開発データの見本（荷主承認待ちと再設計要の見積り）、W6 のデモ項目「再設計要の経路の拒否」。#16 をクローズして US-07 の 2 SP を数える。37e2 で listener をつないだので、評価で印が付くと C-04・C-17・S-09・S-02 に見える変化が出る。W7 の評価の入口をつなぐ Bolt は、Bolt 37e3 を終えてから始める（Bolt 37e2 の計画の確認ポイント 6。リスク台帳）</td>
 <td style="text-align: right;">2</td>
 <td style="text-align: left;">アウトサイドイン（画面の層のシナリオから）</td>
 <td style="text-align: left;">計画と終了報告（開発データ）</td>
@@ -14606,7 +14641,7 @@
 <p><strong>#50（W5 の締めの返済の候補）から入れるもの</strong>: CI の揺らぎ（36）、予約から見積りのドメインへの型の ArchUnit の規則（37e3。W6 の開始準備の時点では 37e）、受入シナリオの背景の写し（37f）、<code>Section</code> とテンプレート（38）、役割 0 件の検査の二重（38b）、停止の理由などの表示（38c）、回復コードが送り直すたびに減る件・<code>findByEventIdAndRecipient</code>（38d）、テストの準備で割り当てが自動で入る件・<code>list</code> と <code>detail</code> の非管理者の扱い・範囲外のときだけ応答時間が違う件（38e）。画面の層の開き直すループの共通化は、37b・37c で S-06・S-07 の画面の層のシナリオを足す前に、写しを数えてから決める。</p>
 <p><strong>Living Documentation</strong>: 新しい ADR（範囲外の試行の記録のポートと担当範囲の受け渡し）と ADR-012 の変更、<code>package-info</code> の <code>allowedDependencies</code>、ModularityTest、用語集の整合テスト（担当範囲・招待・再設計要・情報不足・Golden dataset）、受入条件の照合の表（US-06・US-07・US-16・US-18 の Release 1.0 の範囲）</p>
 <p><strong>デモ項目</strong>: 経路候補の境界と情報不足（<code>@US-06</code>、<code>@golden</code>）、確定の時の情報版の照合と再設計要の経路の拒否（<code>@US-07</code>）、利用者の登録と招待・ロックと TOTP の解除と本人への通知・担当範囲の外の拒否（<code>@US-16</code>、<code>@US-18-AC9</code>）。動画は画面の振る舞いが変わる Bolt（37b2・37c・38b・38c・38e。W6 の開始準備の時点では 37b。Bolt 37b で分けた）で <code>@demo-&lt;Bolt&gt;</code> を撮る</p>
-<p><strong>ユーザーマニュアル</strong>: 8 章（経路設計。37・37b2・37c・37d2・38g）、4 章・7 章（再設計要と出発済みの拒否。37e3。37e2 で listener をつなぐときは 37e2 の計画で決める）、11 章（利用者の管理。38〜38e）、2 章（ログイン。38b の招待、38c の解除の後の再登録、38d の回復コードの案内）、6 章・7 章・9 章（担当範囲の外。38f・38g）。振る舞いの変わる Bolt はマニュアルの更新とキャプチャを完了条件に入れる</p>
+<p><strong>ユーザーマニュアル</strong>: 8 章（経路設計。37・37b2・37c・37d2・38g）、4 章・7 章（再設計要と出発済みの拒否。37e3。37e2 で listener をつなぐが、本番とデモには評価の入口が W7 までないので見える変化は起きず、マニュアルは 37e3 のまま。Bolt 37e2 の計画で決めた）、11 章（利用者の管理。38〜38e）、2 章（ログイン。38b の招待、38c の解除の後の再登録、38d の回復コードの案内）、6 章・7 章・9 章（担当範囲の外。38f・38g）。振る舞いの変わる Bolt はマニュアルの更新とキャプチャを完了条件に入れる</p>
 <p><strong>主なタスク</strong>:</p>
 <ul class="task-list">
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> W6 の開始準備（本節。2026-10-20）: 計画の承認、詳細整合性検証・横断整合性検証（指摘を反映）、承認の後に直す文書、GitHub の同期</li>
@@ -14646,7 +14681,7 @@
 <td style="text-align: left;">W7</td>
 <td style="text-align: left;">11-16 〜 11-20</td>
 <td style="text-align: left;">外部原本の取込</td>
-<td style="text-align: left;">US-14（8）、US-12 残り（2）</td>
+<td style="text-align: left;">US-14（8）、US-12 残り（2）。外部情報の更新（DE-12）から確定した経路版の評価を起こす入口をつなぐ Bolt は、Bolt 37e3 を終えてから始める（評価で再設計要の印が付くと、拒否の文言とマニュアルの前に画面の振る舞いが変わるため。Bolt 37e2 の計画の確認ポイント 6。リスク台帳）</td>
 <td style="text-align: right;">10</td>
 </tr>
 <tr>
@@ -15105,6 +15140,12 @@
 <td style="text-align: center;">低</td>
 <td style="text-align: center;">高</td>
 <td style="text-align: left;">祝日の週は SP を減らし、年末年始は休む前提で日程を組んだ</td>
+</tr>
+<tr>
+<td style="text-align: left;">37e3 が W7 の評価の入口より遅れると、見える変化がマニュアルなしで出る（Bolt 37e2 で DE-06 の listener をつないだので、評価で印が付くと C-04 の承認の操作が消え、C-17 は既定の文言、S-09 は「荷主の承認がまだ」と誤って示し、S-02 に印のある見積りが残る）</td>
+<td style="text-align: center;">中</td>
+<td style="text-align: center;">低</td>
+<td style="text-align: left;">W7 の評価の入口をつなぐ Bolt の開始条件に「Bolt 37e3 を終えてから」を書いた（W6 の 37e3 の行、W7 の行）。W7 の開始準備で 37e3 の完了を確かめる（Bolt 37e2 の計画の確認ポイント 6）</td>
 </tr>
 </tbody>
 </table>
@@ -16573,6 +16614,16 @@
 <td style="text-align: left;">2026-10-23</td>
 <td style="text-align: left;">Bolt 37e2 の計画を承認した（確認ポイント 1〜9 を推奨のとおり。1 つの Bolt で進める）</td>
 <td style="text-align: left;">anthropic/claude-opus-5-5、承認 human:kakimomokuri</td>
+</tr>
+<tr>
+<td style="text-align: left;">2026-10-23</td>
+<td style="text-align: left;">Bolt 37e2 のステップ 1: W6 の 37e2 の行に計画で決めたことを、確認ポイント 7 に決着を書いた。37e3 の行と W7 の行に「Bolt 37e3 を終えてから」の開始条件を、W6 のマニュアルの注を直し、スケジュールリスクに 37e3 が W7 の評価の入口より遅れるリスクを足した</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5</td>
+</tr>
+<tr>
+<td style="text-align: left;">2026-10-23</td>
+<td style="text-align: left;">Bolt 37e2 を終え、<a href="../bolt_37e2_report/">Bolt 37e2 終了報告</a>を作った（承認待ち）。DE-06 の listener で見積りに印が付き、DE-05 の listener が案件の行を押さえて読んで続けて伝え、本予約の確定は見積りの行を押さえて照会する。開発レビューで案件を押さえて読む操作も <code>MANDATORY</code> にした</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5</td>
 </tr>
 </tbody>
 </table>

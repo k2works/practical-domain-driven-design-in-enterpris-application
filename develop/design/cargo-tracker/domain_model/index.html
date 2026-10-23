@@ -7241,6 +7241,41 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../development/cargo-tracker/bolt_37e2_report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 37e2 終了報告
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--draft"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../development/cargo-tracker/release_report-0_1/" class="md-nav__link">
         
   
@@ -12846,6 +12881,12 @@
 <td style="text-align: left;">予約</td>
 </tr>
 <tr>
+<td style="text-align: left;">本予約の確定用の照会</td>
+<td style="text-align: left;">BookableQuotationQuery.findForConfirmation</td>
+<td style="text-align: left;">本予約の確定（POST）のトランザクションの中で予約が呼ぶ、見積りの公開 API の照会。見積りの行をロックしてから、確定に使えるかの照会と同じ判定と写しを返す。印を付ける更新・再見積りと直列にする。S-09 を開いたときの照会はロックしない（ADR-016。Bolt 37e2）</td>
+<td style="text-align: left;">見積り（予約が呼ぶ）</td>
+</tr>
+<tr>
 <td style="text-align: left;">予約条件</td>
 <td style="text-align: left;">BookingTerms</td>
 <td style="text-align: left;">本予約の確定の時点で見積りの公開 API から写した、輸送要求・見積り・経路版・荷受人・貨物・荷主承認の値。予約版はこの写しを持ち、確定の後に見積りへ問い合わせ直さない（ADR-016。Bolt 23）</td>
@@ -13805,7 +13846,17 @@
 <li>既知の制限: 承認済みで期限内の見積りに印が付くと、本予約は再設計要、再見積りは <code>APPROVED_AND_STILL_VALID</code> で拒否され、期限まで出口がない。荷主承認待ちで印が付いた見積りも、期限内は荷主の承認が再設計要、再見積りが <code>ROUTING_REQUESTED</code> で拒否される。印のある承認済み・荷主承認待ちは、有効期限を過ぎたら再見積りでき（旧版は失効。新しい見積りは経路と印を引き継ぎ、提示しても荷主の承認は再設計要）、料金と期限を出し直せる（D-86 を印のある荷主承認待ちだけ変えた。Bolt 37e の終了報告の承認の場で human:kakimomokuri が決めた）。経路の出口は再設計（US-08）。旧版の経路版の判定も US-08（旧版は確定から直接移ることがあり、印が付かない）。</li>
 <li>見積りの公開 API に再設計要の伝達（<code>quotation.interfaces.api.RouteRedesignNotification.notifyRedesignRequired(RouteRedesignNotificationRequest)</code>。案件番号・経路版番号・再設計要にした時刻）を足す。受け取りは <code>RouteRedesignNotificationReceipt</code>（sealed: <code>Marked(新しく付けた件数)</code>・<code>AlreadyMarked</code>・<code>NotMarked(理由)</code>。理由は <code>QUOTATION_NOT_FOUND</code>（その経路版を割り当てた見積りがない）・<code>INVALID_REQUEST</code>（空の案件番号、1 未満の経路版番号、時刻がない。例外にせず理由で返す））。見積りは経路設計案件 ID を持たないので案件番号で引く（D-4）。アダプターは <code>quotation.interfaces.api.internal</code>、入力ポートは <code>quotation.application.internal.commandservices</code> に置く（ADR-014 の形。<code>BookingNotification</code> の前例）。</li>
 <li>本予約の照会の公開 API の理由（<code>BookableQuotation.Reason</code>・<code>BookableQuotationResult.NotBookable</code>）に <code>ROUTE_REDESIGN_REQUIRED</code> を足し、見積りの照会の <code>default</code> を明示の case にする。予約の側（ACL と <code>QuotationUnavailability</code>、S-09・S-02 の文言）の追従は Bolt 37e3。Bolt 37e2 から 37e3 までは予約の画面が「承認済みでない」と示すが、拒否は保たれる。</li>
-<li>本番で印を付ける入口（DE-06 の listener）は Bolt 37e2 なので、Bolt 37e では利用者に見える振る舞いは変わらない。DE-06 が DE-05 より先に届くと見積りはまだ経路を持たず <code>NotMarked(QUOTATION_NOT_FOUND)</code> になり、その後の DE-05 が印のない経路を割り当てる（Q-INV-10 の穴）。この扱いと、DE-06 と本予約の確定の競合の守り（ADR-016）は Bolt 37e2 で決める。そのとき <code>RouteAssignmentRequest</code> か <code>BookableQuotationResult.Bookable</code> に項目が増えることがある。</li>
+<li>本番で印を付ける入口（DE-06 の listener）は Bolt 37e2 なので、Bolt 37e では利用者に見える振る舞いは変わらない。DE-06 が DE-05 より先に届くと見積りはまだ経路を持たず <code>NotMarked(QUOTATION_NOT_FOUND)</code> になり、その後の DE-05 が印のない経路を割り当てる（Q-INV-10 の穴）。この扱いと、DE-06 と本予約の確定の競合の守り（ADR-016）は Bolt 37e2 で決めた（下の Bolt 37e2 で決めたこと）。決着: <code>RouteAssignmentRequest</code> にも <code>BookableQuotationResult.Bookable</code> にも項目は増えない。DE-06 が先に届く穴は DE-05 の listener が割り当てた後に続けて伝えて塞ぎ、本予約の確定との競合は見積りの公開 API に確定用の照会の操作を足して守る。</li>
+</ul>
+<p>Bolt 37e2（US-07 AC5 の経路設計の側）で決めたこと（<a href="../../../development/cargo-tracker/bolt_37e2_plan/">Bolt 37e2 計画</a> の確認ポイント 1〜9。2026-10-23 に human:kakimomokuri が承認。出発済みの判定（D-88）・予約の追従・画面の文言・マニュアルは Bolt 37e3）:</p>
+<ul>
+<li>DE-06 の listener は <code>routing.application.internal.eventhandlers.QuotationRouteRedesignEventHandler</code>（<code>@ApplicationModuleListener</code>。新しいトランザクション）にする。腐敗防止層 <code>QuotationRouteRedesigns.notifyRedesignRequired(案件番号, 経路版番号, 再設計要にした時刻)</code> が見積りの公開 API（<code>RouteRedesignNotification</code>）を呼び、付けなかった理由（<code>Optional&lt;String&gt;</code>）を返す。腐敗防止層は経路設計の型を公開 API の型に変えるだけ（<code>QuotationRouteAssignments</code> の前例）。値は DE-06 の項目から取り、案件を読まない。<code>NotMarked</code> は警告のログだけで例外にしない。<code>QUOTATION_NOT_FOUND</code> の警告には「経路をまだ割り当てていなければ DE-05 の listener が続けて伝える」と書く。<code>INVALID_REQUEST</code> は出口がないが、DE-06 の項目は経路設計が作るので起きないはずで、開発者が警告のログで調べる。楽観ロックの競合の例外は握りつぶさずに上げ、発行記録を未完了に残す（DE-05 の前例。ADR-014）。</li>
+<li>DE-05 の listener は、最初に案件の行を <code>FOR UPDATE</code> で読んでから集約を組み立てる（リポジトリの操作 <code>RoutingCaseRepository.findByNumberForUpdate(RoutingCaseNumber)</code>。呼び手のトランザクションの中でだけ意味を持つ）。評価の保存は案件の行を書く（<code>touchRoutingCase</code>）ので、DE-05 の listener のコミットまで待ち、評価と直列になる。見積りの公開 API で割り当てた（<code>Assigned</code>・<code>AlreadyAssigned</code>）後、その経路版が再設計要の記録を持てば、同じトランザクションで DE-06 の listener と同じ腐敗防止層から続けて再設計要を伝える。記録の有無は状態ではなく記録で見る（旧版も記録を持てる）。時刻は再設計要の記録の時刻（DE-06 の再設計要にした時刻と同じ値）で、読み直しはしない。割り当てなかった（<code>NotAssigned</code>）ときは警告だけで、続けて伝えない。続けての伝達の <code>NotMarked</code> は警告だけ（同じトランザクションの割当ては見えるので通常は起きない）。続けての伝達が楽観ロックで競合したら例外を上げて割当てごと戻す（戻った状態は未割当てで荷主は承認できない。安全側）。</li>
+<li>DE-05 と DE-06 の届く順: DE-05 の割当てのコミットの後の DE-06 は、DE-06 の listener が印を付ける。DE-06 が先に届くと（見積りはまだ詳細設計依頼済み）DE-06 の listener は <code>QUOTATION_NOT_FOUND</code> の警告で終え、後の DE-05 の listener が割り当てた後に続けて伝えて印を付ける。DE-05 が再配信されると <code>AlreadyAssigned</code> の後に続けて伝えて <code>AlreadyMarked</code> になり、DE-06 の再配信は <code>AlreadyMarked</code> になる。確定のまま（記録なし）の DE-05 は続けて伝えない。DE-05 の listener が案件の行を押さえている間に評価が保存しようとすると、評価はそのコミットまで待ってから保存して DE-06 を出す。DE-05 の listener は案件の行を押さえてから読むので、「DE-05 が確定を読んだ後に評価がコミットされ、DE-06 が割当てのコミットの前に走る」順はない。公開 API の契約（<code>RouteAssignmentRequest</code>・<code>RouteRedesignNotificationRequest</code>）は変えない。Bolt 37e の行 20 の特性テスト（DE-06 が先に届くと <code>QUOTATION_NOT_FOUND</code>）は、入力ポートの振る舞いとして残す。</li>
+<li>本予約の確定用の照会: 見積りの公開 API に <code>BookableQuotationQuery.findForConfirmation(BookableQuotationRequest)</code> を足す。見積りの行を（輸送要求 ID・見積り番号）で単表から最初に <code>SELECT ... FOR UPDATE</code> で読み、そのあと今の照会（<code>find</code>）と同じ判定と写しを返す（照会の結果の形は変えない）。入力ポートの操作は <code>@Transactional(propagation = MANDATORY)</code> で、呼び手のトランザクションの外では落とす。ロックは呼び手（本予約の確定）のトランザクションが終わるまで持つ。リポジトリの操作は目的の名前 <code>lockForBooking</code> にする（<code>PasswordResetTokenRepository.lockForIssue</code> の前例）。予約の腐敗防止層 <code>QuotationBookability</code> は、本予約の確定（POST）で確定用の照会を使い、S-09 の GET（<code>@Transactional(readOnly = true)</code>）は今の照会のまま（read-only では <code>FOR UPDATE</code> を使えない。確定の可否は POST で決める。ADR-016）。</li>
+<li>本予約の確定と印を付ける更新: 確定用の照会が見積りの行を押さえた後の印を付ける更新は、確定のコミットまで待ってから付く。予約は残る（R-INV-07）。印を付ける更新が行を押さえた後の確定用の照会は、印のコミットまで待ち、キャッシュを使わずに印を読んで再設計要で拒否する（同じトランザクションでその前に見積りを読んでいても）。予約の層は Bolt 37e3 まで <code>QuotationUnavailable(NOT_APPROVED)</code> と示すが、拒否は保たれる。再見積り（置換）との競合も同じロックで待つ（ADR-016）。</li>
+<li>ロックの規則: ロックの照会は単表で、その表で最初の読み込みにし（本予約の確定は、その前に予約と輸送要求を読む）、<code>flushCache="true"</code> と待ちの上限（<code>timeout</code>。JDBC の問い合わせの時間切れで、H2 と PostgreSQL の両方で効く）を付ける。組み立ての読み込みはその後にする（同じトランザクションの同じ照会を MyBatis のセッションのキャッシュが返すため。Bolt 37e の学び）。時間切れは例外のまま上げる（listener は発行記録を未完了に残し、本予約の確定は既存の例外の画面）。値は 10 秒（ADR-016。Bolt 37e2 のステップ 5 で決めた）。確定用の照会は見積りの 1 行だけを押さえ、複数の見積りを書く側（印を付ける入力ポート）は照会の順（<code>ORDER BY transport_request_id, quotation_no</code>）で書く。案件の行のロックは経路設計の中の自分の集約に閉じる。見積りの行のロックは予約のトランザクションが見積りの行を押さえるので、コンテキストの境界をまたぐ（ADR-016 のネガティブ）。</li>
+<li>見える変化: listener をつなぐので、評価が経路版を再設計要にすると印が付き、C-04 の承認の操作が消え、C-17 は既定の文言で拒否し、S-09 は「荷主の承認がまだ」と誤って示し、S-02 に印のある見積りが残る（Bolt 37e3 で直す）。本番とデモには評価の入口が W7（US-14）までなく、開発データにも再設計要の見本がないので、見える変化は起きない。W7 の評価の入口をつなぐ Bolt は Bolt 37e3 を終えてから始める（リリース計画のリスク台帳）。画面の文言とマニュアルは Bolt 37e3 のまま。</li>
 </ul>
 <h3 id="routingu2">経路設計（Routing、U2）<a class="headerlink" href="#routingu2" title="Permanent link">&para;</a></h3>
 <h4 id="_11">経路設計の集約<a class="headerlink" href="#_11" title="Permanent link">&para;</a></h4>
@@ -14003,7 +14054,7 @@
 <li>不適合なら最新の経路版を再設計要にし（再設計要の記録は評価の時刻と理由）、候補・区間・確定の記録はそのまま残す（旧情報版の保持。R-INV-07）。予約は取り消さない。DE-06（<code>RouteRedesignRequired</code>）を返し、入力ポートが保存と同じトランザクションで発行する。業務キーと冪等のキーは（経路設計案件 ID・経路版番号）。すでに再設計要なら評価せず DE-06 も出さない（1 度だけ）。原因が解消しても確定に戻さない（UC-08 1a）。</li>
 <li>評価の保存は利用者の操作ではないので、保存のポートに操作者を渡さず、<code>updated_by</code>（最後に候補を算出・確定した経路設計者）を変えない。案件の版は上げる。</li>
 <li>判定の部品（航海・規則・評価の時刻・候補探索・制約適合判定）は 1 つの値にまとめない。算出・確定・評価の 3 つの使い手で受け取るものが違い、まとめても呼び出しの直しが増えるだけのため（Bolt 37c の宿題の決着）。</li>
-<li>DE-05 が再設計要の後に再配信されると、見積りへの割当ては再設計要の経路版を割り当てる（確定の記録で引くため）。37d2 では DE-06 の購読者も評価を起こす本番の入口もないので害は出ない。DE-05 と DE-06 の届く順の扱いは Bolt 37e2 で決める（Bolt 37e を 3 つに分けた。見積りの印と判定は Bolt 37e、DE-06 の listener と届く順は Bolt 37e2。上の見積りの Bolt 37e で決めたこと）。再設計要から旧版への移行と記録の引き継ぎは US-08。</li>
+<li>DE-05 が再設計要の後に再配信されると、見積りへの割当ては再設計要の経路版を割り当てる（確定の記録で引くため）。37d2 では DE-06 の購読者も評価を起こす本番の入口もないので害は出ない。DE-05 と DE-06 の届く順の扱いは Bolt 37e2 で決める（Bolt 37e を 3 つに分けた。見積りの印と判定は Bolt 37e、DE-06 の listener と届く順は Bolt 37e2。上の見積りの Bolt 37e で決めたこと）。決着（Bolt 37e2）: DE-05 の listener が案件の行をロックして読み、割り当てた経路版が再設計要の記録を持てば続けて再設計要を伝える。<code>RouteAssignmentRequest</code> に項目は増えない（上の見積りの Bolt 37e2 で決めたこと）。再設計要から旧版への移行と記録の引き継ぎは US-08。</li>
 </ul>
 <h3 id="bookingu6">予約（Booking、U6）<a class="headerlink" href="#bookingu6" title="Permanent link">&para;</a></h3>
 <h4 id="_14">予約の集約<a class="headerlink" href="#_14" title="Permanent link">&para;</a></h4>
@@ -14783,7 +14834,7 @@
 <td style="text-align: left;">経路を確定した</td>
 <td style="text-align: left;">経路設計</td>
 <td style="text-align: left;">経路設計案件 ID・案件番号、経路版番号、見積り ID、輸送要求 ID・版番号、承認者、承認 commit 時刻、参照情報版の一覧（<code>routing.domain.events</code>。イベントはドメインの型を持たない。Bolt 19）</td>
-<td style="text-align: left;">経路設計: 経路設計の中の listener が見積りの公開 API（経路の割当て）を呼び、依頼元の見積りに経路版を割り当てる（荷主承認待ち。冪等。ADR-014。Bolt 20）。通知（荷主の承認が必要）。予約（再設計後の割当て）、追跡（予定の更新）</td>
+<td style="text-align: left;">経路設計: 経路設計の中の listener が見積りの公開 API（経路の割当て）を呼び、依頼元の見積りに経路版を割り当てる（荷主承認待ち。冪等。ADR-014。Bolt 20）。listener は案件の行をロックして読み（評価の保存と直列にする）、割り当てた経路版が再設計要の記録を持てば、同じトランザクションで見積りの公開 API（再設計要の伝達）に続けて伝える（DE-06 が先に届いたときの穴を塞ぐ。Bolt 37e2）。通知（荷主の承認が必要）。予約（再設計後の割当て）、追跡（予定の更新）</td>
 <td style="text-align: left;">EV-04</td>
 </tr>
 <tr>
@@ -14823,7 +14874,7 @@
 <td style="text-align: left;">経路が再設計要になった（<code>RouteRedesignRequired</code>）</td>
 <td style="text-align: left;">経路設計</td>
 <td style="text-align: left;">経路設計案件 ID・案件番号、経路版番号、見積り ID（依頼元）、輸送要求 ID・版番号、再設計要にした時刻、理由の区分の名前の一覧、旧情報版（参照情報版の一覧。確定の区間の採用情報版）（<code>routing.domain.events</code>。イベントはドメインの型を持たない。業務キーと冪等のキーは（経路設計案件 ID・経路版番号）。理由の詳細は載せない。Bolt 37d2）</td>
-<td style="text-align: left;">経路設計: 経路設計の中の listener が見積りの公開 API（再設計要の伝達。<code>quotation.interfaces.api.RouteRedesignNotification</code>）を呼び、見積りは（案件番号・経路版番号）でその経路版を割り当てた見積り（再見積りでできた新しい見積りを含む）を引き、再設計要の印を付ける（荷主の承認・本予約の拒否。US-07 AC5。冪等。ADR-014。見積りは経路設計案件 ID を持たない。D-4。公開 API と印は Bolt 37e、listener は Bolt 37e2）。予約: 再設計中を表示（US-08）。追跡: 有人案件を起票（W8）。予約は取り消さない（R-INV-07）</td>
+<td style="text-align: left;">経路設計: 経路設計の中の listener が見積りの公開 API（再設計要の伝達。<code>quotation.interfaces.api.RouteRedesignNotification</code>）を呼び、見積りは（案件番号・経路版番号）でその経路版を割り当てた見積り（再見積りでできた新しい見積りを含む）を引き、再設計要の印を付ける（荷主の承認・本予約の拒否。US-07 AC5。冪等。ADR-014。見積りは経路設計案件 ID を持たない。D-4。公開 API と印は Bolt 37e、listener は Bolt 37e2）。listener（<code>QuotationRouteRedesignEventHandler</code>）は値を DE-06 の項目から取り、業務の理由で付けなかったら警告のログだけ、楽観ロックの競合は例外を上げる。見積りがまだ経路を持たなければ（<code>QUOTATION_NOT_FOUND</code>）、DE-05 の listener が割り当てた後に続けて伝える（Bolt 37e2）。予約: 再設計中を表示（US-08）。追跡: 有人案件を起票（W8）。予約は取り消さない（R-INV-07）</td>
 <td style="text-align: left;">—</td>
 </tr>
 <tr>

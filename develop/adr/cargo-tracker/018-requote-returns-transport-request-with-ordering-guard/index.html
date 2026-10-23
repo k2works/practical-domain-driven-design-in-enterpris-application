@@ -6775,6 +6775,41 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../development/cargo-tracker/bolt_37e2_report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 37e2 終了報告
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--draft"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../development/cargo-tracker/release_report-0_1/" class="md-nav__link">
         
   
@@ -9472,6 +9507,17 @@
   <a href="#_10" class="md-nav__link">
     <span class="md-ellipsis">
       
+        改訂の経緯
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_11" class="md-nav__link">
+    <span class="md-ellipsis">
+      
         関連ドキュメント
       
     </span>
@@ -12059,7 +12105,7 @@
 <li>荷主の再承認（DE-04）が DE-24 より先に処理されると、DE-24 が後から荷主承認待ちへ戻し、承認済みの見積りなのに輸送要求が荷主承認待ちで止まる</li>
 <li>再見積りで旧版になった見積りの DE-21・DE-04 が戻しの後に届くと、新しい見積りが未承認のまま輸送要求が予約待ちへ進む</li>
 <li>輸送要求は「どの見積りのための状態か」を持たない。見積りの状態に失効・置換済みを書くのは再見積りだけ（期限による失効は状態を書き換えない）</li>
-<li>2 つの集約を 1 つのトランザクションで更新しない（ドメインモデル）。H2 と PostgreSQL にはロックの構文などの方言差があり（ADR-007）、見積りのコンテキストの業務番号の採番の mapper は、共通の構文で書き <code>SELECT ... FOR UPDATE</code> を使わないと注に書いている（TransportRequestNumberCounterMapper.xml）</li>
+<li>2 つの集約を 1 つのトランザクションで更新しない（ドメインモデル）。H2 と PostgreSQL には方言差があり（ADR-007）、見積りのコンテキストの業務番号の採番の mapper は共通の構文で書いている（TransportRequestNumberCounterMapper.xml）。採番の mapper が <code>SELECT ... FOR UPDATE</code> を使わないのは、UPDATE の行ロックで採番を直列にできるからで、方言だからではない。<code>SELECT ... FOR UPDATE</code> は identity の mapper（<code>PasswordResetTokenMapper.xml</code> の利用者の行のロック）で H2 と PostgreSQL の両方で流れている（Bolt 37e2 で直した。下の改訂の経緯）</li>
 </ul>
 <h2 id="_3">決定<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h2>
 <table>
@@ -12146,7 +12192,7 @@
 <tbody>
 <tr>
 <td style="text-align: left;">DE-24 の listener が見積りの行を <code>SELECT ... FOR UPDATE</code> で読み、戻すまで荷主の承認を待たせる</td>
-<td style="text-align: left;">見積りのコンテキストの mapper に方言の構文を入れる（ADR-007 の方言差。採番の mapper の注と食い違う）。2 つの集約の行を 1 つのトランザクションで押さえる</td>
+<td style="text-align: left;">読む順と「進めなくても書く」と置換済み・失効の見積りの判定で、ロックを足さずに上の差し込みの順をすべて守れる（ポジティブ）。荷主の承認を DE-24 の listener の終わりまで待たせる必要がない。注（Bolt 37e2 で直した）: 当初の理由は「方言の構文を入れる（ADR-007）」と「2 つの集約の行を 1 つのトランザクションで押さえる」だった。<code>SELECT ... FOR UPDATE</code> は identity の前例で H2 と PostgreSQL の両方で流れるので、方言は理由にならない。押さえるのは見積りの 1 行で、書くのは輸送要求の集約 1 つなので、2 つの集約を書く形にもならない（Bolt 37e2 の本予約の確定用の照会も、押さえるのは見積りの 1 行で書くのは予約の集約である。ADR-016）</td>
 </tr>
 <tr>
 <td style="text-align: left;">輸送要求に「どの見積りのための状態か」を持たせる列を足し、イベントの見積りと照合する</td>
@@ -12180,7 +12226,11 @@
 <li>戻す条件・読む順・判定の呼び直し・進めなくても書く・置換済み・失効の見積りの判定に変異を当てて落ちることを確かめる</li>
 <li>業務ルール層の受入シナリオで、再見積りの提示で荷主承認待ち、再承認で予約待ち、戻しの後の旧版の DE-04 で荷主承認待ちのままを確かめる</li>
 </ul>
-<h2 id="_10">関連ドキュメント<a class="headerlink" href="#_10" title="Permanent link">&para;</a></h2>
+<h2 id="_10">改訂の経緯<a class="headerlink" href="#_10" title="Permanent link">&para;</a></h2>
+<ul>
+<li>2026-10-23: Bolt 37e2 で、代替案「DE-24 の listener が見積りの行を <code>SELECT ... FOR UPDATE</code> で読む」の採らない理由と、コンテキストの方言差の記述を直した。<code>SELECT ... FOR UPDATE</code> は identity の前例で H2 と PostgreSQL の両方で流れ、押さえるのは見積りの 1 行で書くのは別の集約 1 つなので、「方言」と「2 つの集約」は理由にならないため。Bolt 37e2 で本予約の確定用の照会に <code>FOR UPDATE</code> を使う（ADR-016）。決定（DE-24 の listener はロックしない）は変えない（<a href="../../../development/cargo-tracker/bolt_37e2_plan/">Bolt 37e2 計画</a> の確認ポイント 5。human:kakimomokuri が承認）</li>
+</ul>
+<h2 id="_11">関連ドキュメント<a class="headerlink" href="#_11" title="Permanent link">&para;</a></h2>
 <ul>
 <li><a href="../007-postgresql-mybatis-flyway/">ADR-007</a></li>
 <li><a href="../014-downstream-to-upstream-notification/">ADR-014</a></li>

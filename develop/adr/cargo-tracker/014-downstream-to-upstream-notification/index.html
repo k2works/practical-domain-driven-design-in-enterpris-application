@@ -6775,6 +6775,41 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../development/cargo-tracker/bolt_37e2_report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 37e2 終了報告
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--draft"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../development/cargo-tracker/release_report-0_1/" class="md-nav__link">
         
   
@@ -12099,11 +12134,11 @@
 </tr>
 <tr>
 <td style="text-align: left;">技術の失敗</td>
-<td style="text-align: left;">上流の操作が例外を投げたら、listener のトランザクションごと戻り、発行の記録は未完了のまま残る。いまの設定（<code>spring.modulith.events.republish-outstanding-events-on-restart=true</code>）では、未完了の発行はアプリケーションの起動のときに再配信される。起動を待たずに定期で再配信する仕組みと未完了の件数の監視は、運用準備（W10）で入れる（Bolt 20 レビュー）。再配信しても変わらない不正な依頼（区間がないなど）は、例外にせず業務の拒否と同じく理由で返す</td>
+<td style="text-align: left;">上流の操作が例外を投げたら、listener のトランザクションごと戻り、発行の記録は未完了のまま残る。いまの設定（<code>spring.modulith.events.republish-outstanding-events-on-restart=true</code>）では、未完了の発行はアプリケーションの起動のときに再配信される。起動を待たずに定期で再配信する仕組みと未完了の件数の監視は、運用準備（W10）で入れる（Bolt 20 レビュー）。再配信しても変わらない不正な依頼（区間がないなど）は、例外にせず業務の拒否と同じく理由で返す。下流の listener が 1 つのトランザクションで上流の操作を 2 つ続けて呼ぶとき（DE-05 の割当てと再設計要の伝達。Bolt 37e2）、後の操作の例外は前の操作ごと戻す</td>
 </tr>
 <tr>
 <td style="text-align: left;">適用</td>
-<td style="text-align: left;">DE-05（経路設計 → 見積り: 経路版を割り当てる。Bolt 20）、DE-06（経路設計 → 見積り: 再設計要の経路版を割り当てた見積りに再設計要の印を付け、荷主の承認と本予約を止める。公開 API は <code>quotation.interfaces.api.RouteRedesignNotification</code>（案件番号・経路版番号で冪等）。公開 API は Bolt 37e、listener は Bolt 37e2。1 つの呼び出しで、同じ経路版を割り当てた見積り（再見積りの旧版と新しい見積り）すべてを 1 つのトランザクションで更新する。再見積りと同じ集約の例外で、<a href="../../../design/cargo-tracker/domain_model/">ドメインモデル</a> の Bolt 37e で決めたことに書いた）、DE-07（予約 → 見積り: 輸送要求を予約確定済みにする。W4）</td>
+<td style="text-align: left;">DE-05（経路設計 → 見積り: 経路版を割り当てる。Bolt 20）、DE-06（経路設計 → 見積り: 再設計要の経路版を割り当てた見積りに再設計要の印を付け、荷主の承認と本予約を止める。公開 API は <code>quotation.interfaces.api.RouteRedesignNotification</code>（案件番号・経路版番号で冪等）。公開 API は Bolt 37e、listener は Bolt 37e2。1 つの呼び出しで、同じ経路版を割り当てた見積り（再見積りの旧版と新しい見積り）すべてを 1 つのトランザクションで更新する。再見積りと同じ集約の例外で、<a href="../../../design/cargo-tracker/domain_model/">ドメインモデル</a> の Bolt 37e で決めたことに書いた。DE-06 の listener は <code>QuotationRouteRedesignEventHandler</code> で、値を DE-06 の項目から取り、業務の拒否は警告のログ、楽観ロックの競合は例外にする（DE-05 の前例）。DE-06 が DE-05 より先に届くと見積りはまだ経路を持たないので、DE-05 の listener が案件の行をロックして読み、割り当てた経路版が再設計要の記録を持てば、同じトランザクションで同じ腐敗防止層から続けて再設計要を伝える。公開 API の契約は変えない。ドメインモデルの Bolt 37e2 で決めたことに書いた）、DE-07（予約 → 見積り: 輸送要求を予約確定済みにする。W4）</td>
 </tr>
 <tr>
 <td style="text-align: left;">通知の写し</td>

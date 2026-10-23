@@ -6775,6 +6775,41 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../development/cargo-tracker/bolt_37e2_report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 37e2 終了報告
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--draft"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../development/cargo-tracker/release_report-0_1/" class="md-nav__link">
         
   
@@ -12084,11 +12119,11 @@
 </tr>
 <tr>
 <td style="text-align: left;">commit 時刻</td>
-<td style="text-align: left;">予約の確定のトランザクションの中で、保存の直前に <code>Clock</code> から取った時刻とする。同じ値を見積りへの照会に渡し、<code>booking_version.committed_at</code> に記録する（判定と記録を同じ値にする）。DB の実際のコミットはその後になるが、業務上の commit 時刻はこの値と定める</td>
+<td style="text-align: left;">予約の確定のトランザクションの中で、見積りへの照会の直前に <code>Clock</code> から取った時刻とする。同じ値を見積りへの照会に渡し、<code>booking_version.committed_at</code> に記録する（判定と記録を同じ値にする）。DB の実際のコミットはその後になるが、業務上の commit 時刻はこの値と定める。Bolt 37e2 から、確定用の照会が見積りの行のロックを待つことがある。commit 時刻はロックの待ちの前に取るので、待った分だけ実際のコミットより前になる。待ちは上限（下の「本予約の確定と印・置換の競合」）で抑え、業務上の commit 時刻はこの値のままとする</td>
 </tr>
 <tr>
 <td style="text-align: left;">照会の時点</td>
-<td style="text-align: left;">確定の POST の同じトランザクションで照会する。確定の画面（S-09）の表示のための照会は参考で、確定の可否は POST の照会で決める</td>
+<td style="text-align: left;">確定の POST の同じトランザクションで照会する。確定の画面（S-09）の表示のための照会は参考で、確定の可否は POST の照会で決める。Bolt 37e2 から、POST は見積りの行をロックする確定用の照会（<code>BookableQuotationQuery.findForConfirmation</code>）を使い、S-09 の GET は今の照会（<code>find</code>。ロックしない）を使う。S-09 の GET は <code>@Transactional(readOnly = true)</code> で、read-only では <code>FOR UPDATE</code> を使えないため</td>
 </tr>
 <tr>
 <td style="text-align: left;">経路版</td>
@@ -12097,6 +12132,10 @@
 <tr>
 <td style="text-align: left;">写しの扱い</td>
 <td style="text-align: left;">予約は確定の後に見積りへ問い合わせ直さない。予約版は不変で（B-INV-08）、確定の時点の写しを持つ</td>
+</tr>
+<tr>
+<td style="text-align: left;">本予約の確定と印・置換の競合</td>
+<td style="text-align: left;">Bolt 37e2 で決めた。確定用の照会は、見積りの行を（輸送要求 ID・見積り番号）で単表から最初に <code>SELECT ... FOR UPDATE</code> で読み（<code>flushCache="true"</code>）、そのあと今の照会と同じ判定と写しを返す（照会の結果の形は変えない）。入力ポートの操作は <code>@Transactional(propagation = MANDATORY)</code> で、ロックは本予約の確定のトランザクションが終わるまで持つ。照会が先に行を押さえれば、印を付ける更新（DE-06）と再見積りの置換は確定のコミットまで待ち、予約は残る（R-INV-07）。印を付ける更新か置換が先に行を押さえれば、確定用の照会はそのコミットまで待ち、キャッシュを使わずに新しい行を読んで拒否する（同じトランザクションでその前に見積りを読んでいても）。ロックの照会には待ちの上限（<code>timeout</code>。JDBC の問い合わせの時間切れで、H2 と PostgreSQL の両方で効く）を付け、時間切れは例外のまま上げる（本予約の確定は既存の例外の画面）。上限は 10 秒にした（案件の行と見積りの行の 2 つのロックの照会で同じ値。どちらの相手も短いトランザクションで、ふだんの待ちはそのコミットまでの短い間なので、10 秒を超える待ちは異常として例外で知らせる。Bolt 37e2 のステップ 5）。H2（dev・demo）では行のロックの待ちを H2 自身の <code>LOCK_TIMEOUT</code> でも打ち切り、短い方で切れる（接続 URL で指定していないので H2 の既定値。開発レビューの注）</td>
 </tr>
 </tbody>
 </table>
@@ -12117,6 +12156,14 @@
 <td style="text-align: left;">経路設計に公開 API を作り、予約が経路版の状態を直接確かめる</td>
 <td style="text-align: left;">予約の依存に <code>routing</code> が加わる。見積りがすでに割り当てた経路の写しを持ち、再設計要は見積りの側で止められる</td>
 </tr>
+<tr>
+<td style="text-align: left;">確定用の照会で見積りの行を共有ロック（<code>FOR SHARE</code>）で読む（Bolt 37e2）</td>
+<td style="text-align: left;">排他（<code>FOR UPDATE</code>）にすると同じ見積りの確定どうしも直列になるが、同じ見積りの予約は 1 件（B-INV-11）で確定どうしは貨物予約の UK でぶつかるので、直列にしても失うものがない。H2 で <code>FOR SHARE</code> が使えるかを確かめていない（<code>FOR UPDATE</code> は identity の前例で H2 と PostgreSQL の両方で流れている）</td>
+</tr>
+<tr>
+<td style="text-align: left;">見積りの版を照会の結果に含め、確定で期待版として渡す（Bolt 37e2）</td>
+<td style="text-align: left;">予約は見積りの集約を書かないので、期待版を照らす書き込みが予約の側にない。照らすには、確定のトランザクションの終わりに見積りの版をもう一度読むか、見積りの行を書く操作を公開 API に足すことになり、照会と同じ時点の守りにならないか、予約が見積りを書く形になる。公開 API の結果（<code>BookableQuotationResult.Bookable</code>）にも項目が増える</td>
+</tr>
 </tbody>
 </table>
 <h2 id="_5">影響<a class="headerlink" href="#_5" title="Permanent link">&para;</a></h2>
@@ -12127,18 +12174,25 @@
 </ul>
 <h3 id="_7">ネガティブ<a class="headerlink" href="#_7" title="Permanent link">&para;</a></h3>
 <ul>
-<li>照会は見積りの行を読むだけでロックしないため、照会と予約の保存の間に、別のトランザクションで見積りが置換される（再見積り）か、経路の再設計要（DE-06。W6）で承認・確定を止められると、止める前の見積りで確定し得る。置換は営業担当者の操作で、確定と同時に起きるのはまれ。B-INV-11（1 つの見積りから予約は 1 件）は貨物予約の UK で守る。</li>
-<li>DE-06 との競合を厳密に防ぐ方法（照会で見積りの行を <code>FOR SHARE</code> で読む、または見積りの版を照会の結果に含めて確定で期待版として渡す）は、DE-06 を作る W6 で決める（Bolt 23 の既知の課題）。</li>
+<li>照会は見積りの行を読むだけでロックしないため、照会と予約の保存の間に、別のトランザクションで見積りが置換される（再見積り）か、経路の再設計要（DE-06。W6）で承認・確定を止められると、止める前の見積りで確定し得る。置換は営業担当者の操作で、確定と同時に起きるのはまれ。B-INV-11（1 つの見積りから予約は 1 件）は貨物予約の UK で守る。Bolt 37e2 で、本予約の確定（POST）を確定用の照会（見積りの行のロック）に変え、この競合（再見積りとの競合を含む）はロックで待つようにした。S-09 の GET の照会は今もロックしないが、確定の可否は POST で決める。</li>
+<li>DE-06 との競合を厳密に防ぐ方法（照会で見積りの行を <code>FOR SHARE</code> で読む、または見積りの版を照会の結果に含めて確定で期待版として渡す）は、DE-06 を作る W6 で決める（Bolt 23 の既知の課題）。決着（Bolt 37e2）: 確定用の照会で見積りの行を <code>FOR UPDATE</code> で読む（決定の「本予約の確定と印・置換の競合」。採らなかった 2 つの案は代替案）。</li>
+<li>確定用の照会のロックは、予約のトランザクションが見積りのコンテキストの行を押さえる、コンテキストの境界をまたぐロックである。同じ DB の中のモジュラーモノリスだから成り立つ。コンテキストを別のサービスに分ける（統治分割。ADR-001）ときは、見積りの側で確定を受け付ける操作（予約の確保）か期待版の照合に置き換える。</li>
+<li>本予約の確定は、印を付ける更新か置換が見積りの行を押さえている間、待ちの上限まで待つ。時間切れは例外の画面になり、営業担当者はやり直す。commit 時刻は待ちの前に取るので、待った分だけ実際のコミットより前になる。</li>
+<li>ロックの順の規則: 確定用の照会は見積りの 1 行だけを単表から押さえる。複数の見積りの行を書く側（印を付ける入力ポート）は照会の順（<code>ORDER BY transport_request_id, quotation_no</code>）で書く。DE-05 の listener は割当て先の 1 行を先に書いてから照会の順で印を付けるが、ほかに見積りの行を 2 つ以上同時に押さえる書き手がないので閉路はできない（書き手を足すときはこの前提を見直す。Bolt 37e2 の開発レビュー）。ロックの照会はその表で最初の読み込みにし（確定のトランザクションは、その前に予約と輸送要求を読む）、組み立ての読み込みはその後にする（MyBatis のセッションのキャッシュ）。この順を変えるとデッドロックか古い読み込みになり得るので、PostgreSQL の並行の統合テストと変異で守る。</li>
 </ul>
 <h2 id="_8">コンプライアンス<a class="headerlink" href="#_8" title="Permanent link">&para;</a></h2>
 <ul>
 <li>見積りの API の単体テストで、境界の 3 点（1 分前・同時刻・1 分後）を確かめる。</li>
 <li>ArchUnit と ModularityTest で、<code>booking</code> が <code>routing</code> に依存しないこと、予約のコードが見積りの有効期限を比較しないことを確かめる。</li>
+<li>PostgreSQL の並行の統合テスト（<code>OverlappingTransactions</code>。後の接続が先の接続を待っていることを <code>pg_blocking_pids</code> で確かめる）で、確定用の照会の後の印を付ける更新が確定のコミットまで待つこと、印を付ける更新の後の確定用の照会が印のコミットまで待って再設計要で拒否すること（同じトランザクションでその前に見積りを読んでいる形も）を確かめる（Bolt 37e2）。</li>
+<li>予約の腐敗防止層と本予約の確定・S-09 の GET の単体テストで、確定（POST）は確定用の照会を、S-09 の GET は今の照会を使うことを確かめる。確定用の照会のロック・<code>flushCache</code>、予約の腐敗防止層が確定で今の照会を使う変異を当てて落ちることを確かめる（Bolt 37e2）。</li>
+<li>H2 で確定用の照会が流れることを、dev（H2）の起動と本予約の確定で確かめる（Bolt 37e2）。</li>
 </ul>
 <h2 id="_9">改訂の経緯<a class="headerlink" href="#_9" title="Permanent link">&para;</a></h2>
 <ul>
 <li>2026-10-08: Bolt 23b で、照会の鍵を見積り ID から業務番号と見積り番号に改め、結果に荷主の承認時刻を足した。S-09 を業務番号と見積り番号で開き、画面の URL に内部の ID を出さないため（D-4。human:kakimomokuri が決定）</li>
 <li>2026-10-22: Bolt 37e で、照会の理由に再設計要を足し、DE-06 の受け方を ADR-014 の形（経路設計の中の listener が見積りの公開 API を呼ぶ）に直した。「見積りの側が DE-06 を受けて」は、見積りが経路設計のイベントを購読する形に読め、ADR-014 と食い違っていたため（<a href="../../../development/cargo-tracker/bolt_37e_plan/">Bolt 37e 計画</a> の確認ポイント 8。human:kakimomokuri が承認。DE-06 との競合の守り方は Bolt 37e2 で決める）</li>
+<li>2026-10-23: Bolt 37e2 で、DE-06 と本予約の確定の競合の守り方（ネガティブの W6 の宿題）を決めた。本予約の確定（POST）は見積りの行を <code>FOR UPDATE</code> で読む確定用の照会を使い、S-09 の GET は今の照会のまま。commit 時刻はロックの待ちの前に取ること、再見積りとの競合もこのロックで待つこと、共有ロックと期待版の案を採らない理由、境界をまたぐロック・待ちの上限・ロックの順の規則と、並行の統合テストを足した（<a href="../../../development/cargo-tracker/bolt_37e2_plan/">Bolt 37e2 計画</a> の確認ポイント 4・5。human:kakimomokuri が承認）</li>
 </ul>
 <h2 id="_10">関連ドキュメント<a class="headerlink" href="#_10" title="Permanent link">&para;</a></h2>
 <ul>
