@@ -6,6 +6,7 @@ import com.example.cargotracker.routing.application.internal.commands.EvaluateCo
 import com.example.cargotracker.routing.application.internal.commandservices.ConfirmedRouteEvaluationOutcome;
 import com.example.cargotracker.routing.application.internal.commandservices.RoutingCaseCommandService;
 import com.example.cargotracker.routing.application.internal.queryservices.RoutingCaseQueryService;
+import com.example.cargotracker.routing.domain.events.RouteConfirmed;
 import com.example.cargotracker.routing.domain.events.RouteRedesignRequired;
 import com.example.cargotracker.routing.domain.model.aggregates.RoutingCase;
 import com.example.cargotracker.routing.domain.model.aggregates.Voyage;
@@ -88,6 +89,22 @@ public class ConfirmedRouteEvaluationSteps {
         assertThat(outcome)
                 .isNotInstanceOfAny(
                         ConfirmedRouteEvaluationOutcome.NotFound.class, ConfirmedRouteEvaluationOutcome.Conflict.class);
+    }
+
+    /**
+     * 届く順 B（DE-06 が DE-05 より先に届く。Bolt 37e2 の届く順の表、Bolt 37e4c）。評価で出た再設計要のイベントだけを先に配り、
+     * 経路を確定したイベントは残す。
+     */
+    @もし("再設計要のイベントだけが先に配信される")
+    public void 再設計要のイベントだけが先に配信される() {
+        eventDelivery.deliverOnly(RouteRedesignRequired.class);
+    }
+
+    @ならば("まだ配信していないイベントは経路を確定したイベントだけである")
+    public void まだ配信していないイベントは経路を確定したイベントだけである() {
+        assertThat(eventDelivery.published())
+                .isNotEmpty()
+                .allSatisfy(event -> assertThat(event).isInstanceOf(RouteConfirmed.class));
     }
 
     /** 評価で保存もイベントの発行もしなかった（再設計要の経路版の 2 度目の評価。UC-08 1a）。 */

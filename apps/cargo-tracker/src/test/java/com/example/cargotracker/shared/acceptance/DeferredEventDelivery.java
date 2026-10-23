@@ -37,6 +37,18 @@ public class DeferredEventDelivery implements ApplicationEventPublisher {
         events.forEach(event -> subscribers.forEach(subscriber -> subscriber.accept(event)));
     }
 
+    /**
+     * ためたイベントのうち、指定した型のものだけを発行の順で購読側へ届け、ほかは発行の順のまま残す（届く順を入れ替えて確かめる。
+     * Bolt 37e4c）。
+     */
+    public void deliverOnly(Class<?> eventType) {
+        List<Object> events = published.stream().filter(eventType::isInstance).toList();
+        published.removeAll(events);
+        lastDelivered = events;
+        // 配っている間に購読側が出したイベントは、deliverAll と同じく残す側（published）に足される
+        events.forEach(event -> subscribers.forEach(subscriber -> subscriber.accept(event)));
+    }
+
     /** 直前に配信したイベントを、もう一度購読側へ届ける（少なくとも 1 回の配信の再配信。受け取りの冪等を確かめる）。 */
     public void redeliverLast() {
         lastDelivered.forEach(event -> subscribers.forEach(subscriber -> subscriber.accept(event)));
