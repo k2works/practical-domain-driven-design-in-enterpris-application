@@ -2,8 +2,10 @@
 type: Plan
 title: "Bolt 37e4 計画 - US-07 AC5 の出発済みの経路（D-88 の判定・理由・文言・マニュアル）"
 tags: [plan]
-status: draft
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-23T10:00:08Z }
+status: stable
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-23T10:36:43Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-10-23T10:36:44Z }
 ---
 
 # Bolt 37e4 計画 - US-07 AC5 の出発済みの経路（D-88 の判定・理由・文言・マニュアル）
@@ -217,6 +219,7 @@ S09 --> S02 : 開いても送っても戻す（理由）
 
 | 日付 | 更新内容 | 更新者 |
 | :--- | :--- | :--- |
+| 2026-10-23 | 計画を承認した（確認ポイント 1〜10 を推奨のとおり） | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-10-23 | 2 つの整合性検証の指摘を反映した（承認待ち）。荷主の文言を「航海」に、S-04 の期限内の再見積りの理由を出発済みに、キャプチャを 37e4 に入れると決めた（human:kakimomokuri）。再承認の見積りと S-02 の両方の行、網羅の switch 2 つ、変異、release_plan と開発戦略の直す行、遷移図を足した | anthropic/claude-opus-5-5 |
 | 2026-10-23 | 初版作成（承認待ち）。開始準備で 37e4 を 3 つに分け、ロックの操作の名前を目的の名前にそろえると決めた（human:kakimomokuri） | anthropic/claude-opus-5-5 |
 
