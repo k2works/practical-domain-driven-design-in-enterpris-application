@@ -1,6 +1,14 @@
 # Docs Update Log
 
 ## 2026-10-23
+* **Update**: [user_story](/requirements/cargo-tracker/user_story.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [018-requote-returns-transport-request-with-ordering-guard](/adr/cargo-tracker/018-requote-returns-transport-request-with-ordering-guard.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [016-booking-checks-quotation-at-commit-time](/adr/cargo-tracker/016-booking-checks-quotation-at-commit-time.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [014-downstream-to-upstream-notification](/adr/cargo-tracker/014-downstream-to-upstream-notification.md) を更新（anthropic/claude-opus-5-5）
 * **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
 * **Update**: [bolt_37e2_plan](/development/cargo-tracker/bolt_37e2_plan.md) を更新（anthropic/claude-opus-5-5）
 * **Verification**: [bolt_37e2_plan](/development/cargo-tracker/bolt_37e2_plan.md) を human:kakimomokuri が検証
