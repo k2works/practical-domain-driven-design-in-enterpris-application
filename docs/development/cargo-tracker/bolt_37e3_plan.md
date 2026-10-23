@@ -2,8 +2,10 @@
 type: Plan
 title: "Bolt 37e3 計画 - US-07 AC5 の予約と画面の側（再設計要の経路の拒否の理由と文言、S-02・S-07、予約の腐敗防止層の追従）"
 tags: [plan]
-status: draft
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-23T04:58:31Z }
+status: stable
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-23T05:08:23Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-10-23T05:08:24Z }
 ---
 
 # Bolt 37e3 計画 - US-07 AC5 の予約と画面の側（再設計要の経路の拒否の理由と文言、S-02・S-07、予約の腐敗防止層の追従）
@@ -234,6 +236,7 @@ S07 --> S06 : 開いても送っても戻す（理由）
 
 | 日付 | 更新内容 | 更新者 |
 | :--- | :--- | :--- |
+| 2026-10-23 | 計画を承認した（確認ポイント 1〜10 を推奨のとおり） | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-10-23 | 2 つの整合性検証の指摘を反映した（承認待ち）。S-02 は表に残して本予約の入口だけ消す、再見積りの理由をドメインで変える、開発データ・マニュアル・デモを 37e3b に分ける、37e2 の既知の課題を 37e4 に送り直すと決めた（human:kakimomokuri）。S-07 の GET の判定を集約に置く、文言を社内と荷主で分ける、C-04 の案内・S-04 の案内の矛盾を足した | anthropic/claude-opus-5-5 |
 | 2026-10-23 | 初版作成（承認待ち）。開始準備で 37e3 を理由で分け、C-04・W7 の扱いを決めた（human:kakimomokuri） | anthropic/claude-opus-5-5 |
 
