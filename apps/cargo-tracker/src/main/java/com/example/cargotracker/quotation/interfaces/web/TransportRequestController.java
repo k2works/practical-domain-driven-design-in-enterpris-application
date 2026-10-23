@@ -9,6 +9,7 @@ import com.example.cargotracker.quotation.application.internal.queryservices.Quo
 import com.example.cargotracker.quotation.application.internal.queryservices.TransportRequestQueryService;
 import com.example.cargotracker.quotation.domain.model.aggregates.Quotation;
 import com.example.cargotracker.quotation.domain.model.aggregates.TransportRequest;
+import com.example.cargotracker.quotation.domain.model.valueobjects.AssignedRoute;
 import com.example.cargotracker.quotation.domain.model.valueobjects.SendBackNotice;
 import com.example.cargotracker.quotation.domain.model.valueobjects.ShipmentTermsInput;
 import com.example.cargotracker.quotation.domain.model.valueobjects.ShipperLatestQuotationSummary;
@@ -343,7 +344,8 @@ public class TransportRequestController {
                 quotation.status(),
                 quotation.isExpiredAt(now),
                 quotation.shipperApproval().isPresent(),
-                quotation.isPresentedForReapproval());
+                quotation.isPresentedForReapproval(),
+                quotation.assignedRoute().map(AssignedRoute::redesignRequired).orElse(false));
     }
 
     private static TransportRequestLabels.LatestQuotation latestQuotation(

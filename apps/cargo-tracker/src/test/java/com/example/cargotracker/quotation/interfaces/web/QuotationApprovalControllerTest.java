@@ -196,6 +196,17 @@ class QuotationApprovalControllerTest {
     }
 
     @Test
+    void 割り当てた経路が再設計要なら社内の語を使わずに見直しが必要と示して詳細に戻す() throws Exception {
+        // Bolt 37e3 の状態の組み合わせの行 4
+        given(responseService.approve(any()))
+                .willReturn(new ShipperApprovalOutcome.Rejected(QuotationRejection.ROUTE_REDESIGN_REQUIRED));
+
+        mockMvc.perform(post(APPROVAL))
+                .andExpect(redirectedUrl(DETAIL))
+                .andExpect(flash().attribute("problem", "TR-2026-0001 見積 1 は割り当てた経路の見直しが必要になったため承認できません。担当営業にご相談ください"));
+    }
+
+    @Test
     void 承認できないときと競合したときは詳細に戻して理由を示しない番号は見つからない() throws Exception {
         given(responseService.approve(any()))
                 .willReturn(
