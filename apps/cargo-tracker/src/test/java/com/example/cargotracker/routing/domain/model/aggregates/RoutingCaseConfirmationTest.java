@@ -721,10 +721,13 @@ class RoutingCaseConfirmationTest {
         RoutingCase routingCase = RoutingCaseFixture.redesignRequired(REDESIGN);
 
         assertThat(routingCase.confirmable()).isFalse();
+        // Bolt 37e3 で確定済み・算出の前の理由と言い分けた（S-07 の GET と POST が同じ理由を示す。状態の組み合わせの行 12）
+        assertThat(routingCase.confirmationRejection())
+                .contains(RouteConfirmationRejectionReason.ROUTE_REDESIGN_REQUIRED);
         assertRejected(
                 () -> routingCase.confirm(
                         1, "根拠", ROUTE_DESIGNER, VOYAGES, List.of(SINGAPORE_8H), COMMIT_AT, evaluator, FRESHNESS),
-                RouteConfirmationRejectionReason.NOT_CONFIRMABLE_STATE);
+                RouteConfirmationRejectionReason.ROUTE_REDESIGN_REQUIRED);
         List<ConnectionRule> rules = List.of(SINGAPORE_8H);
         assertThatThrownBy(
                         () -> routingCase.calculateCandidates(VOYAGES, rules, COMMIT_AT, finder, evaluator, FRESHNESS))

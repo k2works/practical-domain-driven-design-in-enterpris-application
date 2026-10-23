@@ -46,6 +46,7 @@ public class RouteConfirmationSteps {
             "除外の候補", RouteConfirmationRejectionReason.CANDIDATE_EXCLUDED,
             "出発済み", RouteConfirmationRejectionReason.ALREADY_DEPARTED,
             "確定済み", RouteConfirmationRejectionReason.NOT_CONFIRMABLE_STATE,
+            "再設計要", RouteConfirmationRejectionReason.ROUTE_REDESIGN_REQUIRED,
             "条件を満たさなくなった", RouteConfirmationRejectionReason.NO_LONGER_CONFORMING);
 
     private final RoutingCaseCommandService commandService;

@@ -26,5 +26,7 @@ public enum RouteConfirmationRejectionReason {
      */
     INFO_INSUFFICIENT,
     /** 確定のときに規則を読み直して判定し直すと不適合（規則は接続の時刻に有効なもの。D-90）。 */
-    NO_LONGER_CONFORMING
+    NO_LONGER_CONFORMING,
+    /** 経路版が再設計要（確定し直せない。R-INV-06、US-07 AC5。Bolt 37e3）。 */
+    ROUTE_REDESIGN_REQUIRED
 }

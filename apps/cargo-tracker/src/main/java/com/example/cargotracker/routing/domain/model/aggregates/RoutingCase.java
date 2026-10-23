@@ -236,10 +236,9 @@ public final class RoutingCase {
             throw reject(RouteConfirmationRejectionReason.NOT_ROUTE_DESIGNER, "経路を確定できるのは経路設計者だけです");
         }
         RouteVersion routeVersion = routeVersion();
-        if (!confirmable()) {
-            throw reject(
-                    RouteConfirmationRejectionReason.NOT_CONFIRMABLE_STATE, "確定できない経路版の状態です: " + routeVersion.status());
-        }
+        confirmationRejection().ifPresent(reason -> {
+            throw reject(reason, "確定できない経路版の状態です: " + routeVersion.status());
+        });
         RouteCandidate candidate = routeVersion.candidates().stream()
                 .filter(each -> each.candidateNo() == candidateNo)
                 .findFirst()
@@ -466,6 +465,17 @@ public final class RoutingCase {
     /** 経路版の一覧（経路版番号の順）。 */
     public List<RouteVersion> routeVersions() {
         return List.copyOf(routeVersions);
+    }
+
+    /**
+     * いまの経路版を確定できない理由（S-07 の GET と確定の判定が同じ理由を使う。Bolt 37e3）。再設計要の経路版は確定し直せない（R-INV-06）。
+     * それ以外で確定できなければ、確定済みか算出の前。
+     */
+    public Optional<RouteConfirmationRejectionReason> confirmationRejection() {
+        if (routeVersion().status() == RouteVersionStatus.REDESIGN_REQUIRED) {
+            return Optional.of(RouteConfirmationRejectionReason.ROUTE_REDESIGN_REQUIRED);
+        }
+        return confirmable() ? Optional.empty() : Optional.of(RouteConfirmationRejectionReason.NOT_CONFIRMABLE_STATE);
     }
 
     /** いまの経路版を確定できるか（候補提示済みで、確定した経路版がない）。画面の入口と確定の判定が使う。 */

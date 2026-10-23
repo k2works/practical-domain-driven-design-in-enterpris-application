@@ -479,6 +479,26 @@ class RoutingCaseControllerTest {
     }
 
     @Test
+    void 再設計要の案件の確定の画面は開かず比較の画面で確定し直せない理由を示す() throws Exception {
+        // Bolt 37e3 の状態の組み合わせの行 12（GET。POST は比較の画面に戻す理由の組で確かめる）
+        RouteVersion version = confirmed().routeVersion();
+        when(queryService.findByNumber(NUMBER))
+                .thenReturn(Optional.of(reconstitute(new RouteVersion(
+                        1,
+                        RouteVersionStatus.REDESIGN_REQUIRED,
+                        version.candidates(),
+                        version.candidatesEvaluatedAt(),
+                        version.candidatesFound(),
+                        version.routeConfirmation(),
+                        new RedesignRecord(
+                                at("2026-10-08T06:00:00Z"), List.of(RedesignReasonCode.DEADLINE_EXCEEDED))))));
+
+        mockMvc.perform(get(SHOW + "/confirmation").param("candidate", "1"))
+                .andExpect(redirectedUrl(SHOW))
+                .andExpect(flash().attribute("problem", "この案件の経路は再設計要のため確定し直せません。担当営業と扱いを相談してください。"));
+    }
+
+    @Test
     void 確定した案件と算出の前の案件の確定の画面は開かず比較の画面で理由を示す() throws Exception {
         when(queryService.findByNumber(NUMBER)).thenReturn(Optional.of(confirmed()));
 
@@ -496,7 +516,13 @@ class RoutingCaseControllerTest {
     @org.junit.jupiter.params.ParameterizedTest(name = "{0} は比較の画面に戻して示す")
     @org.junit.jupiter.params.provider.EnumSource(
             value = RouteConfirmationRejectionReason.class,
-            names = {"CANDIDATE_EXCLUDED", "NOT_CONFIRMABLE_STATE", "CANDIDATE_NOT_FOUND", "INFO_VERSION_CHANGED"})
+            names = {
+                "CANDIDATE_EXCLUDED",
+                "NOT_CONFIRMABLE_STATE",
+                "CANDIDATE_NOT_FOUND",
+                "INFO_VERSION_CHANGED",
+                "ROUTE_REDESIGN_REQUIRED"
+            })
     void 選んだ候補が使えないか参照した情報が置き換わった拒否は比較の画面に戻して理由を示す(RouteConfirmationRejectionReason reason) throws Exception {
         when(commandService.confirm(new ConfirmRouteCommand(NUMBER, 1, "根拠", 0, TestActors.STAFF_USER, true)))
                 .thenReturn(new RouteConfirmationOutcome.Rejected(reason));
