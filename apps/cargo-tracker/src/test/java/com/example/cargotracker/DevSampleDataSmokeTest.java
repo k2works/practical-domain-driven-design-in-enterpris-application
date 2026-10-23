@@ -75,7 +75,9 @@ import org.springframework.transaction.annotation.Transactional;
  * 見本（TR-2026-0908。D-85）で、事実の時刻の順がそろい、再見積り・提示・荷主の再承認・見積り 2 での本予約の確定まで集約の守りを
  * 通って進めること（Bolt 35e）も確かめる。割り当てた経路が再設計要になった見積りの見本（TR-2026-0909 は荷主承認待ち、TR-2026-0910 は
  * 承認済み。US-07 AC5）で、荷主の承認・本予約の照会・再見積り・経路の確定が再設計要の理由で拒まれ、予約の確定待ちの行に印が出ること
- * （Bolt 37e3b）も確かめる。直接入れた事実の順は読み込みで検査されないので、このテストで守る。
+ * （Bolt 37e3b）も確かめる。割り当てた経路の最初の区間が出発した見積りの見本（TR-2026-0911 は荷主承認待ち、TR-2026-0912 は承認済み。
+ * D-88）で、荷主の承認・本予約の照会・再見積りが出発済みの理由で拒まれ、予約の確定待ちの行に出発済みが出ること（Bolt 37e4b）も
+ * 確かめる。直接入れた事実の順は読み込みで検査されないので、このテストで守る。
  */
 @SpringBootTest
 @ActiveProfiles("dev")
@@ -142,7 +144,14 @@ class DevSampleDataSmokeTest {
         assertThat(transportRequests.findSummariesByShipper(SHIPPER_A))
                 .extracting(summary -> summary.number().text())
                 .contains(
-                        "TR-2026-0902", "TR-2026-0903", "TR-2026-0905", "TR-2026-0908", "TR-2026-0909", "TR-2026-0910")
+                        "TR-2026-0902",
+                        "TR-2026-0903",
+                        "TR-2026-0905",
+                        "TR-2026-0908",
+                        "TR-2026-0909",
+                        "TR-2026-0910",
+                        "TR-2026-0911",
+                        "TR-2026-0912")
                 .doesNotContain("TR-2026-0901", "TR-2026-0904");
         assertThat(transportRequests.findSummariesByShipper(SHIPPER_B))
                 .extracting(summary -> summary.number().text())
@@ -250,7 +259,9 @@ class DevSampleDataSmokeTest {
                 "TR-2026-0905", true,
                 "TR-2026-0908", true,
                 "TR-2026-0909", true,
-                "TR-2026-0910", true);
+                "TR-2026-0910", true,
+                "TR-2026-0911", true,
+                "TR-2026-0912", true);
         assertThat(kpiObservations.findAll())
                 .filteredOn(observation -> presented.containsKey(observation.transportRequestNumber()))
                 .hasSize(presented.size())
@@ -315,13 +326,16 @@ class DevSampleDataSmokeTest {
                         org.assertj.core.groups.Tuple.tuple(
                                 new RoutingCaseNumber(2026, 906), "TR-2026-0909", RouteVersionStatus.REDESIGN_REQUIRED),
                         org.assertj.core.groups.Tuple.tuple(
-                                new RoutingCaseNumber(2026, 907),
-                                "TR-2026-0910",
-                                RouteVersionStatus.REDESIGN_REQUIRED));
+                                new RoutingCaseNumber(2026, 907), "TR-2026-0910", RouteVersionStatus.REDESIGN_REQUIRED),
+                        // 割り当てた経路の最初の区間が出発した見本の案件は、確定した経路版 1 のまま（Bolt 37e4b）
+                        org.assertj.core.groups.Tuple.tuple(
+                                new RoutingCaseNumber(2026, 908), "TR-2026-0911", RouteVersionStatus.CONFIRMED),
+                        org.assertj.core.groups.Tuple.tuple(
+                                new RoutingCaseNumber(2026, 909), "TR-2026-0912", RouteVersionStatus.CONFIRMED));
         // DE-16 の写しの見積有効期限が入り、一覧は期限の近い順（Bolt 19）
         assertThat(routingCases.findSummaries())
                 .filteredOn(summary -> summary.number().sequence() >= 901)
-                .hasSize(7)
+                .hasSize(9)
                 .allSatisfy(summary -> assertThat(summary.expiresAt()).isPresent());
     }
 
@@ -418,7 +432,9 @@ class DevSampleDataSmokeTest {
                         org.assertj.core.groups.Tuple.tuple(number(906), 1),
                         org.assertj.core.groups.Tuple.tuple(number(907), 1),
                         // 承認の後に経路が再設計要になった見本（有効期限は起動した日の 7 日後。Bolt 37e3b）
-                        org.assertj.core.groups.Tuple.tuple(number(910), 1));
+                        org.assertj.core.groups.Tuple.tuple(number(910), 1),
+                        // 承認の後に最初の区間が出発した見本（有効期限は起動した日の 8 日後。Bolt 37e4b）
+                        org.assertj.core.groups.Tuple.tuple(number(912), 1));
         assertThat(quotations.findAwaitingBookingSummaries())
                 .filteredOn(summary ->
                         summary.number().equals(number(906)) || summary.number().equals(number(907)))
@@ -452,8 +468,8 @@ class DevSampleDataSmokeTest {
 
     @Test
     void 新しく振る番号はサンプルの番号の後から() {
-        assertThat(transportRequestNumbers.next(2026).sequence()).isGreaterThan(910);
-        assertThat(routingCaseNumbers.next(2026).sequence()).isGreaterThan(907);
+        assertThat(transportRequestNumbers.next(2026).sequence()).isGreaterThan(912);
+        assertThat(routingCaseNumbers.next(2026).sequence()).isGreaterThan(909);
     }
 
     // 割り当てた経路が再設計要になった見本（US-07 AC5。Bolt 37e3b の状態の組み合わせの行 1〜8）
@@ -589,6 +605,172 @@ class DevSampleDataSmokeTest {
                             .map(leg -> org.assertj.core.groups.Tuple.tuple(leg.departureAt(), leg.arrivalAt()))
                             .toList());
         }
+    }
+
+    // 割り当てた経路の最初の区間が出発した見本（US-07 AC5、D-88。Bolt 37e4b の状態の組み合わせの行 1〜9）
+
+    @Test
+    void 出発済みの見本の見積依頼は荷主承認待ちと予約待ちで見積りは再設計要でない() {
+        assertThat(departedSampleRequest(911).status()).isEqualTo(TransportRequestStatus.AWAITING_APPROVAL);
+        assertThat(departedSampleRequest(912).status()).isEqualTo(TransportRequestStatus.READY_TO_BOOK);
+        assertThat(departedSampleQuotation(911).status()).isEqualTo(QuotationStatus.AWAITING_SHIPPER_APPROVAL);
+        assertThat(departedSampleQuotation(912).status()).isEqualTo(QuotationStatus.APPROVED);
+        assertThat(departedSampleQuotation(911).shipperApproval()).isEmpty();
+        assertThat(departedSampleQuotation(912).shipperApproval()).isPresent();
+        for (int sequence : java.util.List.of(911, 912)) {
+            assertThat(departedSampleRequest(sequence).currentVersion().versionNo())
+                    .isEqualTo(1);
+            // 理由が出発済みになるように、再設計要の印を持たない（理由は再設計要が先。Bolt 37e4）
+            assertThat(departedSampleQuotation(sequence).isRouteRedesignRequired())
+                    .as("TR-2026-0" + sequence)
+                    .isFalse();
+        }
+    }
+
+    @Test
+    void 出発済みの見本は提示と回答と候補の算出と経路の確定と承認と出発と起動と有効期限の順に並ぶ() {
+        // 直接入れた事実の順を守る（T-162）。確定と荷主の承認は出発の前でないと、実際の流れではできない
+        Instant now = Instant.now();
+        java.util.Map<Integer, Integer> caseOfRequest = java.util.Map.of(911, 908, 912, 909);
+        for (var entry : caseOfRequest.entrySet()) {
+            int sequence = entry.getKey();
+            Quotation quotation = departedSampleQuotation(sequence);
+            RoutingCase routingCase = routingCases
+                    .findByNumber(new RoutingCaseNumber(2026, entry.getValue()))
+                    .orElseThrow();
+            Instant presentedAt = quotation.presentedAt().orElseThrow().instant();
+            Instant respondedAt = quotation.respondedAt().orElseThrow().instant();
+            Instant evaluatedAt =
+                    routingCase.routeVersion().evaluatedAt().orElseThrow().instant();
+            Instant confirmedAt =
+                    quotation.assignedRoute().orElseThrow().confirmedAt().instant();
+            Instant departureAt = quotation
+                    .assignedRoute()
+                    .orElseThrow()
+                    .legs()
+                    .getFirst()
+                    .departureAt()
+                    .instant();
+            Instant expiresAt = quotation.expiry().orElseThrow().expiresAt().instant();
+            String label = "TR-2026-0" + sequence + " ";
+
+            assertThat(presentedAt).as(label + "提示 < 回答").isBefore(respondedAt);
+            assertThat(respondedAt).as(label + "回答 < 候補の算出").isBefore(evaluatedAt);
+            assertThat(evaluatedAt).as(label + "候補の算出 < 経路の確定").isBefore(confirmedAt);
+            Instant beforeDeparture = confirmedAt;
+            if (sequence == 912) {
+                Instant approvedAt =
+                        quotation.shipperApproval().orElseThrow().approvedAt().instant();
+                assertThat(confirmedAt).as(label + "経路の確定 < 荷主の承認").isBefore(approvedAt);
+                beforeDeparture = approvedAt;
+            }
+            assertThat(beforeDeparture).as(label + "経路の確定（と荷主の承認） < 出発").isBefore(departureAt);
+            assertThat(departureAt).as(label + "最初の区間の出発 < 起動").isBefore(now);
+            assertThat(expiresAt).as(label + "起動 < 有効期限").isAfter(now);
+        }
+    }
+
+    @Test
+    void 出発済みの荷主承認待ちの見本は荷主が承認できない() {
+        // 行 1・2
+        assertThat(departedSampleQuotation(911).approvalRejectionAt(new UtcInstant(Instant.now())))
+                .contains(QuotationRejection.ROUTE_ALREADY_DEPARTED);
+    }
+
+    @Test
+    void 出発済みの荷主承認待ちの見本は予約の確定待ちに出ず経路設計中と荷主承認待ちの表に出る() {
+        // 行 3（出る側の表を先に確かめる。T-106・T-119）
+        assertThat(quotations.findRoutingRequestedSummaries())
+                .extracting(RoutingRequestedSummary::number)
+                .contains(number(911));
+        assertThat(quotations.findAwaitingBookingSummaries())
+                .extracting(AwaitingBookingSummary::number)
+                .doesNotContain(number(911));
+    }
+
+    @Test
+    void 出発済みの承認済みの見本は予約の確定待ちの行に出発済みと分かり本予約の確定に使えない() {
+        // 行 4・5
+        UtcInstant now = new UtcInstant(Instant.now());
+        assertThat(quotations.findAwaitingBookingSummaries())
+                .filteredOn(summary -> summary.number().equals(number(912)))
+                .singleElement()
+                .satisfies(summary -> {
+                    assertThat(summary.routeRedesignRequired()).isFalse();
+                    assertThat(summary.isRouteDepartedAt(now)).isTrue();
+                });
+        assertThat(bookableQuotations.find(new BookableQuotationRequest("TR-2026-0912", 1, now)))
+                .isEqualTo(new BookableQuotationResult.NotBookable(
+                        BookableQuotationResult.NotBookable.ROUTE_ALREADY_DEPARTED));
+    }
+
+    @Test
+    void 出発済みの承認済みの見本は有効期限まで再見積りできない() {
+        // 行 7
+        assertThat(departedSampleQuotation(912).requoteRejectionAt(new UtcInstant(Instant.now())))
+                .contains(QuotationRejection.ROUTE_ALREADY_DEPARTED);
+    }
+
+    @Test
+    void 出発済みでない見本の見積りと予約の確定待ちの行は出発済みでない() {
+        // 行 8。陰性の対照（出発の写し違いで、ほかの見本が出発済みになっていないこと）。見本があり出発が起動より後であることを先に確かめる
+        UtcInstant now = new UtcInstant(Instant.now());
+        for (int sequence : java.util.List.of(906, 908, 909, 910)) {
+            Quotation quotation = sequence == 908 ? expiredAfterApprovalQuotation(1) : routeRedesignQuotation(sequence);
+            assertThat(quotation
+                            .assignedRoute()
+                            .orElseThrow()
+                            .legs()
+                            .getFirst()
+                            .departureAt()
+                            .instant())
+                    .as("TR-2026-0" + sequence + " の出発")
+                    .isAfter(now.instant());
+            assertThat(quotation.isRouteDepartedAt(now))
+                    .as("TR-2026-0" + sequence)
+                    .isFalse();
+        }
+        assertThat(quotations.findAwaitingBookingSummaries())
+                .filteredOn(summary -> java.util.Set.of(906, 907, 908, 910)
+                        .contains(summary.number().sequence()))
+                .hasSize(4)
+                .allSatisfy(
+                        summary -> assertThat(summary.isRouteDepartedAt(now)).isFalse());
+    }
+
+    @Test
+    void 出発済みの見本の案件は確定した経路版で確定の時刻と有効期限と区間が見積りの写しと一致する() {
+        // 行 9。経路設計の記録と見積りの写しは別々に直接入れるので、値が合っていることをここで守る
+        java.util.Map<Integer, Integer> requestOfCase = java.util.Map.of(908, 911, 909, 912);
+        for (var entry : requestOfCase.entrySet()) {
+            RoutingCase routingCase = routingCases
+                    .findByNumber(new RoutingCaseNumber(2026, entry.getKey()))
+                    .orElseThrow();
+            Quotation quotation = departedSampleQuotation(entry.getValue());
+
+            assertThat(routingCase.routeVersion().status()).isEqualTo(RouteVersionStatus.CONFIRMED);
+            assertThat(routingCase.confirmationRejection())
+                    .contains(RouteConfirmationRejectionReason.NOT_CONFIRMABLE_STATE);
+            assertThat(routingCase.routeVersion().confirmation().orElseThrow().approvedAt())
+                    .isEqualTo(quotation.assignedRoute().orElseThrow().confirmedAt());
+            assertThat(routingCase.quotationExpiresAt())
+                    .contains(quotation.expiry().orElseThrow().expiresAt());
+            assertThat(routingCase.confirmedCandidateOf(1).orElseThrow().legs())
+                    .extracting(Leg::departureAt, Leg::arrivalAt)
+                    .containsExactlyElementsOf(quotation.assignedRoute().orElseThrow().legs().stream()
+                            .map(leg -> org.assertj.core.groups.Tuple.tuple(leg.departureAt(), leg.arrivalAt()))
+                            .toList());
+        }
+    }
+
+    private TransportRequest departedSampleRequest(int sequence) {
+        return transportRequests.findByNumber(number(sequence), SHIPPER_A).orElseThrow();
+    }
+
+    private Quotation departedSampleQuotation(int sequence) {
+        return quotations
+                .findByTransportRequestIdAndNo(departedSampleRequest(sequence).id(), 1)
+                .orElseThrow();
     }
 
     private TransportRequest routeRedesignRequest(int sequence) {
