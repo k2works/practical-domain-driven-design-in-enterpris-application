@@ -3,7 +3,7 @@ type: Plan
 title: "Bolt 37e2 終了報告 - US-07 AC5 の経路設計の側（DE-06 の listener、DE-05 と DE-06 の届く順、本予約の確定との競合の守り）"
 tags: [plan]
 status: draft
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-23T03:42:14Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-23T04:03:15Z }
 ---
 
 # Bolt 37e2 終了報告 - US-07 AC5 の経路設計の側（DE-06 の listener、DE-05 と DE-06 の届く順、本予約の確定との競合の守り）
@@ -69,8 +69,8 @@ generated: { by: anthropic/claude-opus-5-5, at: 2026-10-23T03:42:14Z }
 | テスト | `check` 2911 件、失敗 0（Bolt 37e の 2885 件から 26 件増えた。`test` の XML で数えた）。`uiTest` 284 件、失敗 0 |
 | 変異 | 計画の 8 つ（DE-06 の listener が公開 API を呼ばない・競合を握りつぶす、DE-05 の listener が続けて伝えない・記録の有無を見ない、案件のロックを外す、見積りのロックを外す・`flushCache` を外す、予約の腐敗防止層が確定で今の `find` を使う）と、開発レビューで足した 5 つ（R1 案件を押さえる前に読む、R2 再配信のたびに印を付け直す、R3 版番号を取り違える、R4 DE-06 を購読しない、R5 割り当てなかったときも続けて伝える）。どれも狙ったテストで落ちた。案件の側の `flushCache` を外す変異は、今の呼び出しの道ではロックの前に読まないので結果が同じになる（等価の変異）。`timeout` を外す変異を殺すテストはなく、ADR-016 の記述で担保する |
 | SonarQube | PASS（新しいコードの網羅率 95.7%、重複 0.04%、違反 0）。1 回目は違反 3（`QuotationRouteAssignmentEventHandler` の `Optional.get()`、テストのラムダ 2 つ）で落ち、振る舞いを変えずに直した（`fced3bcf4`） |
-| `okf:check` | （終了報告のコミットの前に流す） |
-| CI | （push の後に確かめる） |
+| `okf:check` | ERROR 0 |
+| CI | `1581703ee` で `check`・`ui`・`deploy-demo` が 1 回で成功した。MkDocs の配備も成功し、デモ環境は v390 で動いている |
 
 ### 開発レビューの指摘と扱い（主なもの）
 
