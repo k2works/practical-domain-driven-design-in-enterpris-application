@@ -2,8 +2,10 @@
 type: Plan
 title: "Bolt 37e2 計画 - US-07 AC5 の経路設計の側（DE-06 の listener、DE-05 と DE-06 の届く順、本予約の確定との競合の守り）"
 tags: [plan]
-status: draft
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-23T02:04:08Z }
+status: stable
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-23T02:09:04Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-10-23T02:09:04Z }
 ---
 
 # Bolt 37e2 計画 - US-07 AC5 の経路設計の側（DE-06 の listener、DE-05 と DE-06 の届く順、本予約の確定との競合の守り）
@@ -246,6 +248,7 @@ QB ..> BQ
 
 | 日付 | 更新内容 | 更新者 |
 | :--- | :--- | :--- |
+| 2026-10-23 | 計画を承認した（確認ポイント 1〜9 を推奨のとおり。1 つの Bolt で進める） | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-10-23 | 2 つの整合性検証の指摘を反映した（承認待ち）。並行の残りを案件の行のロックで塞ぎ（決定 (4)）、ロックは `FOR UPDATE` にして ADR-018 も直し（決定 (5)）、行 20 は listener の層で Red を見ることにした（決定 (6)）。キャッシュ（最初の読み込みと `flushCache`）、待ちの上限、`MANDATORY`、受入シナリオの届く順、状態の組み合わせの表の行、テストの補助の移動、文書の範囲を直した。約 4.3 時間 | anthropic/claude-opus-5-5、決定 (4)〜(6) human:kakimomokuri |
 | 2026-10-23 | 初版作成（承認待ち）。見える変化の扱い・DE-06 が先に届く穴の塞ぎ方・本予約との競合の守り方を開始準備で決めた（human:kakimomokuri） | anthropic/claude-opus-5-5、開始準備の決定 human:kakimomokuri |
 
