@@ -16,6 +16,13 @@ class QuotationBookabilityTest {
     private static final UtcInstant AT = new UtcInstant(Instant.parse("2026-10-09T01:00:00Z"));
 
     @Test
+    void 割り当てた経路の最初の区間が出発済みなら出発済みと写す() {
+        // Bolt 37e4 の状態の組み合わせの行 16
+        assertThat(checkWith(BookableQuotationResult.NotBookable.ROUTE_ALREADY_DEPARTED))
+                .isEqualTo(new QuotationBookability.Result.Unavailable(QuotationUnavailability.ROUTE_ALREADY_DEPARTED));
+    }
+
+    @Test
     void 割り当てた経路が再設計要なら再設計要と写す() {
         // 行 9
         assertThat(checkWith(BookableQuotationResult.NotBookable.ROUTE_REDESIGN_REQUIRED))

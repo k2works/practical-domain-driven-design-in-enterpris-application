@@ -470,12 +470,31 @@ public final class Quotation {
         if (status != QuotationStatus.AWAITING_SHIPPER_APPROVAL) {
             return Optional.of(QuotationRejection.NOT_AWAITING_SHIPPER_APPROVAL);
         }
-        return routeRedesignRejection();
+        return routeRejectionAt(at);
     }
 
     /** 割り当てた経路に再設計要の印があるか（画面の案内の出し分けに使う。US-07 AC5。Bolt 37e3）。 */
     public boolean isRouteRedesignRequired() {
         return assignedRoute != null && assignedRoute.redesignRequired();
+    }
+
+    /**
+     * 割り当てた経路の最初の区間の出発予定が判定時刻と同時刻か前か（D-88。経路設計の確定の {@code ALREADY_DEPARTED} と同じ境界。
+     * Bolt 37e4）。経路を割り当てていなければ false。
+     */
+    public boolean isRouteDepartedAt(UtcInstant at) {
+        Objects.requireNonNull(at, "at");
+        return assignedRoute != null
+                && !assignedRoute.legs().getFirst().departureAt().instant().isAfter(at.instant());
+    }
+
+    /** 割り当てた経路で荷主の承認と予約確定に使えない理由。再設計要の印を先に見て、次に出発済み（D-88。Bolt 37e4）。 */
+    private Optional<QuotationRejection> routeRejectionAt(UtcInstant at) {
+        Optional<QuotationRejection> redesign = routeRedesignRejection();
+        if (redesign.isPresent()) {
+            return redesign;
+        }
+        return isRouteDepartedAt(at) ? Optional.of(QuotationRejection.ROUTE_ALREADY_DEPARTED) : Optional.empty();
     }
 
     /** 割り当てた経路に再設計要の印があれば、その理由（Q-INV-10、B-INV-05。Bolt 37e）。 */
@@ -536,7 +555,7 @@ public final class Quotation {
             return isExpiredAt(at) ? Optional.empty() : Optional.of(QuotationRejection.ROUTE_REDESIGN_REQUIRED);
         }
         if (status == QuotationStatus.APPROVED) {
-            return isExpiredAt(at) ? Optional.empty() : Optional.of(QuotationRejection.APPROVED_AND_STILL_VALID);
+            return isExpiredAt(at) ? Optional.empty() : Optional.of(stillValidRejectionAt(at));
         }
         Optional<QuotationRejection> retired = retiredRejection();
         if (retired.isPresent()) {
@@ -546,6 +565,16 @@ public final class Quotation {
             return Optional.of(QuotationRejection.ROUTING_REQUESTED);
         }
         return Optional.empty();
+    }
+
+    /**
+     * 承認済みで期限内の見積りの再見積りを拒む理由。最初の区間が出発済みなら出発済み（本予約の確定へは進めない。受け付けるかどうかは
+     * 変えない。D-88。Bolt 37e4）、そうでなければ本予約の確定へ進む。
+     */
+    private QuotationRejection stillValidRejectionAt(UtcInstant at) {
+        return isRouteDepartedAt(at)
+                ? QuotationRejection.ROUTE_ALREADY_DEPARTED
+                : QuotationRejection.APPROVED_AND_STILL_VALID;
     }
 
     private Optional<QuotationRejection> retiredRejection() {
@@ -577,7 +606,7 @@ public final class Quotation {
         if (status != QuotationStatus.APPROVED) {
             return Optional.of(QuotationRejection.NOT_APPROVED);
         }
-        return routeRedesignRejection();
+        return routeRejectionAt(committedAt);
     }
 
     /** 荷主に見えるか（提示した見積りだけ。承認待ちと、提示する前に置き換えた見積りは見えない。Q-INV-08。Bolt 12 レビュー R-19）。 */

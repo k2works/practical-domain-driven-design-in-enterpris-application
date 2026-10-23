@@ -106,6 +106,33 @@ class BookableQuotationQueryAdapterTest {
                         BookableQuotationResult.NotBookable.ROUTE_REDESIGN_REQUIRED));
     }
 
+    @Test
+    void 割り当てた経路の最初の区間が出発した承認済みの見積りは出発済みを返す() {
+        // Bolt 37e4（D-88）。見積りの写しの区間の出発が commit 時刻より前
+        Quotation quotation = presented(submitted());
+        quotation.requestRouteDesign(SHIPPER_USER, at("2026-10-06T02:00:00Z"));
+        quotation.assignRoute(
+                new com.example.cargotracker.quotation.domain.model.valueobjects.AssignedRoute(
+                        "RC-2026-0001",
+                        1,
+                        at("2026-10-07T05:00:00Z"),
+                        java.util.List.of(
+                                new com.example.cargotracker.quotation.domain.model.valueobjects.AssignedRouteLeg(
+                                        "V-101",
+                                        new com.example.cargotracker.shared.domain.Location("JPTYO"),
+                                        new com.example.cargotracker.shared.domain.Location("NLRTM"),
+                                        at("2026-10-08T00:00:00Z"),
+                                        at("2026-10-30T00:00:00Z")))),
+                at("2026-10-07T05:00:00Z"));
+        quotation.approveByShipper(SHIPPER_USER, at("2026-10-07T06:00:00Z"));
+        quotation.clearDomainEvents();
+        quotations.update(quotation);
+
+        assertThat(service.find(new BookableQuotationRequest("TR-2026-0007", 1, now())))
+                .isEqualTo(new BookableQuotationResult.NotBookable(
+                        BookableQuotationResult.NotBookable.ROUTE_ALREADY_DEPARTED));
+    }
+
     private TransportRequest submitted() {
         TransportRequest request = TransportRequest.submit(
                 new TransportRequestId(UUID.randomUUID()),

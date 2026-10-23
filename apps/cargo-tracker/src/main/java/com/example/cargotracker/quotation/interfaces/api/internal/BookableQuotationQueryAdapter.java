@@ -64,6 +64,7 @@ public class BookableQuotationQueryAdapter implements BookableQuotationQuery {
             case REPLACED -> BookableQuotationResult.NotBookable.REPLACED;
             case NOT_APPROVED -> BookableQuotationResult.NotBookable.NOT_APPROVED;
             case ROUTE_REDESIGN_REQUIRED -> BookableQuotationResult.NotBookable.ROUTE_REDESIGN_REQUIRED;
+            case ROUTE_ALREADY_DEPARTED -> BookableQuotationResult.NotBookable.ROUTE_ALREADY_DEPARTED;
         };
     }
 }

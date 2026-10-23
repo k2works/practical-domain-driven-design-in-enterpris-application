@@ -13,5 +13,7 @@ public enum QuotationUnavailability {
     /** 荷主の承認済みでない（見積りの公開 API が予約の知らない理由を返したときもここに寄せる。Bolt 37e3）。 */
     NOT_APPROVED,
     /** 割り当てた経路版が再設計要（US-07 AC5、B-INV-05。Bolt 37e3）。 */
-    ROUTE_REDESIGN_REQUIRED
+    ROUTE_REDESIGN_REQUIRED,
+    /** 割り当てた経路の最初の区間が出発済み（D-88。US-07 AC5。Bolt 37e4）。 */
+    ROUTE_ALREADY_DEPARTED
 }

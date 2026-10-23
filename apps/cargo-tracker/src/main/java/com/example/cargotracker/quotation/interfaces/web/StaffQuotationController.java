@@ -370,7 +370,8 @@ public class StaffQuotationController {
                     ALREADY_APPROVED,
                     NOT_APPROVED,
                     APPROVED_AND_STILL_VALID,
-                    ROUTE_REDESIGN_REQUIRED -> approvalStageRejection(subject, reason);
+                    ROUTE_REDESIGN_REQUIRED,
+                    ROUTE_ALREADY_DEPARTED -> approvalStageRejection(subject, reason);
         };
     }
 
@@ -389,11 +390,29 @@ public class StaffQuotationController {
             return subject + " は荷主が承認済みで、まだ有効期限内です。本予約の確定へ進んでください";
         }
         // 割り当てた経路が再設計要の見積りの期限内の再見積り（US-07 AC5。Bolt 37e3）
+        // 割り当てた経路の最初の区間が出発済みの承認済みの期限内の再見積り（D-88。Bolt 37e4）
+        if (reason == QuotationRejection.ROUTE_ALREADY_DEPARTED) {
+            return subject + " は割り当てた経路の最初の区間が出発済みのため、有効期限まで再見積りできません。荷主と扱いを相談してください";
+        }
         if (reason == QuotationRejection.ROUTE_REDESIGN_REQUIRED) {
             return subject + " は割り当てた経路が再設計要のため、有効期限まで再見積りできません。経路設計者と扱いを相談してください";
         }
         // NOT_APPROVED は予約確定の照会の理由で、この画面の操作では返らない（Bolt 23）
         return subject + " は荷主の承認の段階にあるため、この操作はできません";
+    }
+
+    /**
+     * 期限の後に再見積りできるが、新しい見積りも経路を引き継いで荷主が承認できない見積りの案内。割り当てた経路が再設計要（US-07 AC5。
+     * Bolt 37e3）か、承認済みで最初の区間が出発済み（D-88。Bolt 37e4）。どちらでもなければ null。
+     */
+    private static String routeNoticeAfterExpiry(Quotation quotation, UtcInstant now, String expiresAt) {
+        if (quotation.isRouteRedesignRequired()) {
+            return expiresAt + "を過ぎました。割り当てた経路が再設計要のため、経路を引き継いで再見積りしても荷主は承認できません。経路設計者と扱いを相談してから再見積りしてください。";
+        }
+        if (quotation.status() == QuotationStatus.APPROVED && quotation.isRouteDepartedAt(now)) {
+            return expiresAt + "を過ぎました。割り当てた経路の最初の区間が出発済みのため、経路を引き継いで再見積りしても荷主は承認できません。荷主と扱いを相談してから再見積りしてください。";
+        }
+        return null;
     }
 
     /**
@@ -413,9 +432,11 @@ public class StaffQuotationController {
         if (quotation.status() == QuotationStatus.EXPIRED) {
             return expiresAt + "を過ぎて失効しました。この見積りは読み取り専用です。";
         }
-        if (requoteRejection.isEmpty() && quotation.isRouteRedesignRequired()) {
-            // 割り当てた経路が再設計要の見積りは、期限の後に再見積りできるが、新しい見積りも印を引き継ぐ（US-07 AC5。Bolt 37e3）
-            return expiresAt + "を過ぎました。割り当てた経路が再設計要のため、経路を引き継いで再見積りしても荷主は承認できません。経路設計者と扱いを相談してから再見積りしてください。";
+        if (requoteRejection.isEmpty()) {
+            String routeNotice = routeNoticeAfterExpiry(quotation, now, expiresAt);
+            if (routeNotice != null) {
+                return routeNotice;
+            }
         }
         if (quotation.status() == QuotationStatus.APPROVED) {
             return requoteRejection

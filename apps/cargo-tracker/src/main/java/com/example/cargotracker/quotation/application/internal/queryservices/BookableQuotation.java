@@ -84,6 +84,8 @@ public sealed interface BookableQuotation {
         /** 荷主の承認済みでない。 */
         NOT_APPROVED,
         /** 割り当てた経路版が再設計要（B-INV-05。Bolt 37e）。 */
-        ROUTE_REDESIGN_REQUIRED
+        ROUTE_REDESIGN_REQUIRED,
+        /** 割り当てた経路の最初の区間が出発済み（D-88。Bolt 37e4）。 */
+        ROUTE_ALREADY_DEPARTED
     }
 }

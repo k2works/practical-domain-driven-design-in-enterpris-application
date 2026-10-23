@@ -74,6 +74,8 @@ public class QuotationBookability {
             case BookableQuotationResult.NotBookable.QUOTATION_NOT_FOUND -> QuotationUnavailability.NOT_FOUND;
             case BookableQuotationResult.NotBookable.EXPIRED -> QuotationUnavailability.EXPIRED;
             case BookableQuotationResult.NotBookable.REPLACED -> QuotationUnavailability.REPLACED;
+            case BookableQuotationResult.NotBookable.ROUTE_ALREADY_DEPARTED ->
+                QuotationUnavailability.ROUTE_ALREADY_DEPARTED;
             case BookableQuotationResult.NotBookable.ROUTE_REDESIGN_REQUIRED ->
                 QuotationUnavailability.ROUTE_REDESIGN_REQUIRED;
             default -> QuotationUnavailability.NOT_APPROVED;

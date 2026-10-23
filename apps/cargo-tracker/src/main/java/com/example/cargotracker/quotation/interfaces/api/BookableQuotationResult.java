@@ -83,6 +83,9 @@ public sealed interface BookableQuotationResult {
         /** 割り当てた経路版が再設計要（B-INV-05。確定した後に外部情報の更新で条件を満たさなくなった。Bolt 37e）。 */
         public static final String ROUTE_REDESIGN_REQUIRED = "ROUTE_REDESIGN_REQUIRED";
 
+        /** 割り当てた経路の最初の区間が commit 時刻と同時刻か前に出発した（D-88。US-07 AC5。Bolt 37e4）。 */
+        public static final String ROUTE_ALREADY_DEPARTED = "ROUTE_ALREADY_DEPARTED";
+
         public NotBookable {
             Objects.requireNonNull(reason, "reason");
         }

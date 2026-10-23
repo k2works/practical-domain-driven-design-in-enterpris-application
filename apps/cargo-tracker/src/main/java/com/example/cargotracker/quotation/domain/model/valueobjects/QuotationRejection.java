@@ -34,5 +34,11 @@ public enum QuotationRejection {
      * 割り当てた経路版が再設計要のため、荷主の承認と予約確定に使えない（Q-INV-10、B-INV-05。確定した後に外部情報の更新で条件を満たさなく
      * なった。US-07 AC5。Bolt 37e）。
      */
-    ROUTE_REDESIGN_REQUIRED
+    ROUTE_REDESIGN_REQUIRED,
+    /**
+     * 割り当てた経路の最初の区間の出発予定が判定時刻と同時刻か前のため、荷主の承認と予約確定に使えない（D-88。経路設計の確定の
+     * {@code ALREADY_DEPARTED} と同じ境界。US-07 AC5。Bolt 37e4）。承認済みの期限内の再見積りの拒否の理由にもなる（受け付けるかどうかは
+     * 変えない）。
+     */
+    ROUTE_ALREADY_DEPARTED
 }

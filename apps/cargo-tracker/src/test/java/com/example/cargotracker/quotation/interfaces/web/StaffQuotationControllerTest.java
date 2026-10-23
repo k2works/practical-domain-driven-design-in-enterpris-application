@@ -889,6 +889,18 @@ class StaffQuotationControllerTest {
     // 割り当てた経路が再設計要の見積り（US-07 AC5。Bolt 37e3 の状態の組み合わせの行 10・11）
 
     @Test
+    void 期限内の出発済みの見積りの再見積りは出発済みと荷主との相談を示し本予約の確定へ進むよう示さない() throws Exception {
+        // Bolt 37e4 の状態の組み合わせの行 14（T-185。古い「本予約の確定へ進んでください」を出さない）
+        transportRequestExists();
+        given(commandService.requote(any()))
+                .willReturn(new RequotationOutcome.Rejected(QuotationRejection.ROUTE_ALREADY_DEPARTED));
+
+        mockMvc.perform(requoteForm())
+                .andExpect(flash().attribute(
+                                "problem", "TR-2026-0001 見積 1 は割り当てた経路の最初の区間が出発済みのため、有効期限まで再見積りできません。荷主と扱いを相談してください"));
+    }
+
+    @Test
     void 期限内の印のある見積りの再見積りは再設計要と経路設計者との相談を示す() throws Exception {
         // 行 10
         transportRequestExists();
@@ -916,6 +928,41 @@ class StaffQuotationControllerTest {
                         .andExpect(content().string(not(containsString("荷主の再承認が要ります"))))
                         .andExpect(content().string(containsString("/quotations/1/requotation")));
             }
+        } finally {
+            clock.setInstant(NOW);
+        }
+    }
+
+    @Test
+    void 出発済みの承認済みが失効したら再見積りできるが荷主は承認できないと案内し再承認を求めない() throws Exception {
+        // Bolt 37e4 の状態の組み合わせの行 6 の出口の案内（新しい見積りも経路を引き継ぎ、出発済みで承認できない）
+        readyToBookRequestExists(false);
+        Quotation quotation = presented();
+        UtcInstant at = new UtcInstant(Instant.parse("2026-10-06T00:30:00Z"));
+        quotation.requestRouteDesign(new UserId(UUID.randomUUID()), at);
+        quotation.assignRoute(
+                new AssignedRoute(
+                        "RC-2026-0001",
+                        1,
+                        at,
+                        List.of(new com.example.cargotracker.quotation.domain.model.valueobjects.AssignedRouteLeg(
+                                "V-101",
+                                new com.example.cargotracker.shared.domain.Location("JPTYO"),
+                                new com.example.cargotracker.shared.domain.Location("NLRTM"),
+                                new UtcInstant(Instant.parse("2099-10-01T00:00:00Z")),
+                                new UtcInstant(Instant.parse("2099-10-30T00:00:00Z"))))),
+                at);
+        quotation.approveByShipper(new UserId(UUID.randomUUID()), at);
+        quotation.clearDomainEvents();
+        given(queryService.find(NUMBER, 1)).willReturn(Optional.of(quotation));
+        clock.setInstant(QuotationFixture.EXPIRES_AT.instant());
+        try {
+            mockMvc.perform(get("/staff/transport-requests/TR-2026-0001/quotations/1"))
+                    .andExpect(content()
+                            .string(containsString("を過ぎました。割り当てた経路の最初の区間が出発済みのため、経路を引き継いで再見積りしても荷主は承認できません。"
+                                    + "荷主と扱いを相談してから再見積りしてください。")))
+                    .andExpect(content().string(not(containsString("荷主の再承認が要ります"))))
+                    .andExpect(content().string(containsString("/quotations/1/requotation")));
         } finally {
             clock.setInstant(NOW);
         }
