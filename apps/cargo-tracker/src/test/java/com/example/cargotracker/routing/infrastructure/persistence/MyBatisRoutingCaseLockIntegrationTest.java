@@ -46,7 +46,7 @@ class MyBatisRoutingCaseLockIntegrationTest {
         List<Long> versions = OverlappingTransactions.run(
                 transactionTemplate,
                 () -> repository
-                        .findByNumberForUpdate(routingCase.number())
+                        .findByNumberForRouteAssignment(routingCase.number())
                         .orElseThrow()
                         .aggregateVersion(),
                 () -> {
@@ -76,7 +76,7 @@ class MyBatisRoutingCaseLockIntegrationTest {
                     return loaded.aggregateVersion();
                 },
                 () -> repository
-                        .findByNumberForUpdate(routingCase.number())
+                        .findByNumberForRouteAssignment(routingCase.number())
                         .orElseThrow()
                         .aggregateVersion());
 
@@ -86,7 +86,7 @@ class MyBatisRoutingCaseLockIntegrationTest {
     @Test
     void 案件がなければ押さえずに空を返す() {
         Optional<RoutingCase> found = transactionTemplate.execute(
-                status -> repository.findByNumberForUpdate(new RoutingCaseNumber(2095, 9999)));
+                status -> repository.findByNumberForRouteAssignment(new RoutingCaseNumber(2095, 9999)));
 
         assertThat(found).isEmpty();
     }
@@ -99,7 +99,7 @@ class MyBatisRoutingCaseLockIntegrationTest {
 
         RoutingCaseNumber number = routingCase.number();
 
-        assertThatThrownBy(() -> repository.findByNumberForUpdate(number))
+        assertThatThrownBy(() -> repository.findByNumberForRouteAssignment(number))
                 .isInstanceOf(IllegalTransactionStateException.class);
     }
 

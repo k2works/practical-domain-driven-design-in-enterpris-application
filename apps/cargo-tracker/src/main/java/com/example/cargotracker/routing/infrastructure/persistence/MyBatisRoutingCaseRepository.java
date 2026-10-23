@@ -118,7 +118,7 @@ public class MyBatisRoutingCaseRepository implements RoutingCaseRepository {
     // ロックを呼び手のトランザクションの終わりまで持つ。外で呼ぶと文の終わりで外れるので例外にする（Bolt 37e2 の開発レビュー）
     @Transactional(propagation = Propagation.MANDATORY)
     @Override
-    public Optional<RoutingCase> findByNumberForUpdate(RoutingCaseNumber number) {
+    public Optional<RoutingCase> findByNumberForRouteAssignment(RoutingCaseNumber number) {
         // 行を押さえてから組み立てる（押さえる前に読んだ値をキャッシュから使わない）
         if (mapper.lockByNumber(number.text()) == null) {
             return Optional.empty();

@@ -39,9 +39,9 @@ class QuotationRouteAssignmentEventHandlerTest {
     private final List<RoutingCaseNumber> locked = new ArrayList<>();
     private final InMemoryRoutingCaseRepository repository = new InMemoryRoutingCaseRepository() {
         @Override
-        public Optional<RoutingCase> findByNumberForUpdate(RoutingCaseNumber number) {
+        public Optional<RoutingCase> findByNumberForRouteAssignment(RoutingCaseNumber number) {
             locked.add(number);
-            return super.findByNumberForUpdate(number);
+            return super.findByNumberForRouteAssignment(number);
         }
     };
     private final List<RouteAssignmentRequest> requests = new ArrayList<>();

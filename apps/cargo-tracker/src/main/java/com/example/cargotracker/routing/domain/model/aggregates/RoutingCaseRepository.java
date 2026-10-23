@@ -31,10 +31,10 @@ public interface RoutingCaseRepository {
     Optional<RoutingCase> findByNumber(RoutingCaseNumber number);
 
     /**
-     * 案件番号で探し、案件の行を呼び手のトランザクションが終わるまで押さえる（DE-05 の listener が評価の保存と直列にする。US-07 AC5。
-     * Bolt 37e2）。呼び手のトランザクションの中でだけ使う。
+     * 経路の割当て（DE-05）を伝えるために、案件番号で探し、案件の行を呼び手のトランザクションが終わるまで押さえる（DE-05 の listener が評価の
+     * 保存と直列にする。US-07 AC5。Bolt 37e2。名前は目的の名前にそろえた。Bolt 37e4c）。呼び手のトランザクションの中でだけ使う。
      */
-    Optional<RoutingCase> findByNumberForUpdate(RoutingCaseNumber number);
+    Optional<RoutingCase> findByNumberForRouteAssignment(RoutingCaseNumber number);
 
     /** 輸送要求版の案件があるか（DE-16 の再配信で重複して作らないため。R-INV-10）。 */
     boolean existsForTransportRequestVersion(UUID transportRequestId, int transportRequestVersionNo);

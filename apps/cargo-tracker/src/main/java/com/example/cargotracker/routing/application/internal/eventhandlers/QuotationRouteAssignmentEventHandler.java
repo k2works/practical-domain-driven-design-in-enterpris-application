@@ -47,7 +47,7 @@ public class QuotationRouteAssignmentEventHandler {
     @ApplicationModuleListener
     public void on(RouteConfirmed event) {
         RoutingCaseNumber number = RoutingCaseNumber.parse(event.caseNumber());
-        Optional<RoutingCase> routingCase = repository.findByNumberForUpdate(number);
+        Optional<RoutingCase> routingCase = repository.findByNumberForRouteAssignment(number);
         Optional<RouteCandidate> confirmed =
                 routingCase.flatMap(found -> found.confirmedCandidateOf(event.routeVersionNo()));
         if (confirmed.isEmpty()) {

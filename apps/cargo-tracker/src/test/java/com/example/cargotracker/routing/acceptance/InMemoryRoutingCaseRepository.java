@@ -52,7 +52,7 @@ public class InMemoryRoutingCaseRepository implements RoutingCaseRepository {
 
     /** メモリ上では押さえるものがないので、案件番号で探すのと同じ（Bolt 37e2）。 */
     @Override
-    public Optional<RoutingCase> findByNumberForUpdate(RoutingCaseNumber number) {
+    public Optional<RoutingCase> findByNumberForRouteAssignment(RoutingCaseNumber number) {
         return findByNumber(number);
     }
 
