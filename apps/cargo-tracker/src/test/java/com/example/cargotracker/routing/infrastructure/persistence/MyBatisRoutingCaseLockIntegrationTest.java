@@ -1,6 +1,7 @@
 package com.example.cargotracker.routing.infrastructure.persistence;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.example.cargotracker.TestcontainersConfiguration;
 import com.example.cargotracker.routing.domain.model.aggregates.RoutingCase;
@@ -13,11 +14,13 @@ import com.example.cargotracker.shared.domain.Location;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.transaction.IllegalTransactionStateException;
 import org.springframework.transaction.support.TransactionTemplate;
 
 /**
@@ -56,6 +59,46 @@ class MyBatisRoutingCaseLockIntegrationTest {
         assertThat(versions).containsExactly(0L, 0L);
         assertThat(repository.findByNumber(routingCase.number()).orElseThrow().aggregateVersion())
                 .isEqualTo(1L);
+    }
+
+    @Test
+    void 案件の保存がコミットする前に押さえて読むとそのコミットを待って保存の後の案件を読む() {
+        // 届く順 G'（評価の保存が先に案件の行を書き、DE-05 の listener が後から押さえて読む）。押さえる前に読むと保存の前の案件になる
+        RoutingCase routingCase = open(2);
+        transactionTemplate.executeWithoutResult(status -> repository.save(routingCase));
+
+        List<Long> versions = OverlappingTransactions.run(
+                transactionTemplate,
+                () -> {
+                    RoutingCase loaded =
+                            repository.findByNumber(routingCase.number()).orElseThrow();
+                    repository.update(loaded, null);
+                    return loaded.aggregateVersion();
+                },
+                () -> repository
+                        .findByNumberForUpdate(routingCase.number())
+                        .orElseThrow()
+                        .aggregateVersion());
+
+        assertThat(versions).containsExactly(0L, 1L);
+    }
+
+    @Test
+    void 案件がなければ押さえずに空を返す() {
+        Optional<RoutingCase> found = transactionTemplate.execute(
+                status -> repository.findByNumberForUpdate(new RoutingCaseNumber(2095, 9999)));
+
+        assertThat(found).isEmpty();
+    }
+
+    @Test
+    void 呼び手のトランザクションの外では押さえて読まずに例外にする() {
+        // 外で呼ぶと文の終わりでロックが外れ、直列にならないことに気づけない（開発レビュー）
+        RoutingCase routingCase = open(3);
+        transactionTemplate.executeWithoutResult(status -> repository.save(routingCase));
+
+        assertThatThrownBy(() -> repository.findByNumberForUpdate(routingCase.number()))
+                .isInstanceOf(IllegalTransactionStateException.class);
     }
 
     private static RoutingCase open(int sequence) {

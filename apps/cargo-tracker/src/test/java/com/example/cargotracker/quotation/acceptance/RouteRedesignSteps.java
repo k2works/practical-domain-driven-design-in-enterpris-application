@@ -3,6 +3,7 @@ package com.example.cargotracker.quotation.acceptance;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.example.cargotracker.quotation.application.internal.queryservices.StaffQuotationQueryService;
+import com.example.cargotracker.quotation.domain.model.aggregates.Quotation;
 import com.example.cargotracker.quotation.domain.model.aggregates.TransportRequest;
 import com.example.cargotracker.quotation.domain.model.valueobjects.AssignedRoute;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestId;
@@ -29,21 +30,25 @@ public class RouteRedesignSteps {
     private final BookableQuotationQuery bookableQuotationQuery;
     private final StaffQuotationQueryService staffQueryService;
     private final InMemoryTransportRequestRepository transportRequests;
+    private final InMemoryQuotationRepository quotations;
     private final ScenarioContext context;
     private final MutableClock clock;
     private RouteRedesignNotificationReceipt lastReceipt;
+    private long rememberedQuotationVersion;
 
     public RouteRedesignSteps(
             RouteRedesignNotification notification,
             BookableQuotationQuery bookableQuotationQuery,
             StaffQuotationQueryService staffQueryService,
             InMemoryTransportRequestRepository transportRequests,
+            InMemoryQuotationRepository quotations,
             ScenarioContext context,
             MutableClock clock) {
         this.notification = notification;
         this.bookableQuotationQuery = bookableQuotationQuery;
         this.staffQueryService = staffQueryService;
         this.transportRequests = transportRequests;
+        this.quotations = quotations;
         this.context = context;
         this.clock = clock;
     }
@@ -76,6 +81,17 @@ public class RouteRedesignSteps {
         assertThat(assignedRoute(quotationNo).redesignRequiredAt()).isEqualTo(at(requiredAt));
     }
 
+    @もし("見積り {int} の集約の版を控える")
+    public void 見積りの集約の版を控える(int quotationNo) {
+        rememberedQuotationVersion = quotation(quotationNo).aggregateVersion();
+    }
+
+    /** 印を付ける操作が保存しなかった（印の時刻を上書きしていない。Bolt 37e2 の開発レビュー）。 */
+    @ならば("見積り {int} の集約の版は控えた版から変わらない")
+    public void 見積りの集約の版は変わらない(int quotationNo) {
+        assertThat(quotation(quotationNo).aggregateVersion()).isEqualTo(rememberedQuotationVersion);
+    }
+
     @ならば("見積り {int} には再設計要の印が付いていない")
     public void 印が付いていない(int quotationNo) {
         assertThat(assignedRoute(quotationNo).redesignRequired()).isFalse();
@@ -87,6 +103,12 @@ public class RouteRedesignSteps {
         BookableQuotationResult result = bookableQuotationQuery.find(new BookableQuotationRequest(
                 transportRequest().number().text(), quotationNo, new UtcInstant(clock.instant())));
         assertThat(result).isEqualTo(new BookableQuotationResult.NotBookable(reason));
+    }
+
+    private Quotation quotation(int quotationNo) {
+        return quotations
+                .findByTransportRequestIdAndNo(transportRequest().id(), quotationNo)
+                .orElseThrow();
     }
 
     private AssignedRoute assignedRoute(int quotationNo) {

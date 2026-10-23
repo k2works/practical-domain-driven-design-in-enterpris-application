@@ -5,6 +5,7 @@ import com.example.cargotracker.quotation.interfaces.api.BookableQuotationReques
 import com.example.cargotracker.quotation.interfaces.api.BookableQuotationResult;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Function;
 
 /**
@@ -14,8 +15,9 @@ import java.util.function.Function;
 public final class RecordingBookableQuotationQuery implements BookableQuotationQuery {
 
     private final Function<BookableQuotationRequest, BookableQuotationResult> answer;
-    private final List<BookableQuotationRequest> finds = new ArrayList<>();
-    private final List<BookableQuotationRequest> confirmations = new ArrayList<>();
+    // 並行の統合テストが 2 つのスレッドから呼ぶ
+    private final List<BookableQuotationRequest> finds = new CopyOnWriteArrayList<>();
+    private final List<BookableQuotationRequest> confirmations = new CopyOnWriteArrayList<>();
 
     public RecordingBookableQuotationQuery(Function<BookableQuotationRequest, BookableQuotationResult> answer) {
         this.answer = answer;

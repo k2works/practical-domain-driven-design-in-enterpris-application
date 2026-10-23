@@ -196,7 +196,8 @@ class QuotationRouteAssignmentEventHandlerTest {
 
         handler.on(RoutingCaseFixture.confirmed().event());
 
-        assertThat(redesignRequests).hasSize(1);
+        assertThat(redesignRequests)
+                .containsExactly(new RouteRedesignNotificationRequest("RC-2026-0001", 1, REDESIGN.requiredAt()));
         assertThat(logs.list).isEmpty();
     }
 
@@ -218,7 +219,8 @@ class QuotationRouteAssignmentEventHandlerTest {
 
         handler.on(RoutingCaseFixture.confirmed().event());
 
-        assertThat(redesignRequests).hasSize(1);
+        assertThat(redesignRequests)
+                .containsExactly(new RouteRedesignNotificationRequest("RC-2026-0001", 1, REDESIGN.requiredAt()));
     }
 
     @Test
@@ -263,8 +265,8 @@ class QuotationRouteAssignmentEventHandlerTest {
     }
 
     @Test
-    void 続けての伝達の楽観ロックの競合は上げて割当てごと戻す() {
-        // 行 12（listener のトランザクションごと戻す。戻った状態は未割当てで荷主は承認できない）
+    void 続けての伝達の楽観ロックの競合は握りつぶさずに上げる() {
+        // 行 12（上げた例外で listener のトランザクションごと割当ても戻る。戻った状態は未割当てで荷主は承認できない）
         repository.save(RoutingCaseFixture.redesignRequired(REDESIGN));
         redesignFailure = new IllegalStateException("競合");
         RouteConfirmed event = RoutingCaseFixture.confirmed().event();

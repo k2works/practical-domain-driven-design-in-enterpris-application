@@ -372,8 +372,9 @@ public class AcceptanceTestConfiguration {
                         routeDesignRequestedEventHandler.on(requested);
                         routingCaseOpeningEventHandler.on(requested);
                     }
-                    case RouteConfirmed confirmed -> quotationRouteAssignmentEventHandler.on(confirmed);
-                    case RouteRedesignRequired required -> quotationRouteRedesignEventHandler.on(required);
+                    case RouteConfirmed _, RouteRedesignRequired _ ->
+                        deliverRouteEvent(
+                                event, quotationRouteAssignmentEventHandler, quotationRouteRedesignEventHandler);
                     case QuotationRouteAssigned assigned -> quotationRouteAssignedEventHandler.on(assigned);
                     case QuotationApprovedByShipper approved -> quotationApprovedByShipperEventHandler.on(approved);
                     case QuotationPresentedForReapproval reapproval ->
@@ -389,6 +390,18 @@ public class AcceptanceTestConfiguration {
                 }
             });
             return new EventSubscriptions();
+        }
+
+        /** 経路設計が見積りに伝えるイベント（DE-05・DE-06）を配る（購読の分岐の循環的複雑度を上限に収める。Bolt 37e2）。 */
+        private static void deliverRouteEvent(
+                Object event,
+                QuotationRouteAssignmentEventHandler assignment,
+                QuotationRouteRedesignEventHandler redesign) {
+            if (event instanceof RouteConfirmed confirmed) {
+                assignment.on(confirmed);
+            } else if (event instanceof RouteRedesignRequired required) {
+                redesign.on(required);
+            }
         }
 
         @Bean

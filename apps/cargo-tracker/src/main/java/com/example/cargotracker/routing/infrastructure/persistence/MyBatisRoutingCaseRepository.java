@@ -115,6 +115,8 @@ public class MyBatisRoutingCaseRepository implements RoutingCaseRepository {
         return mapper.selectByNumber(number.text()).map(this::toAggregate);
     }
 
+    // ロックを呼び手のトランザクションの終わりまで持つ。外で呼ぶと文の終わりで外れるので例外にする（Bolt 37e2 の開発レビュー）
+    @Transactional(propagation = Propagation.MANDATORY)
     @Override
     public Optional<RoutingCase> findByNumberForUpdate(RoutingCaseNumber number) {
         // 行を押さえてから組み立てる（押さえる前に読んだ値をキャッシュから使わない）

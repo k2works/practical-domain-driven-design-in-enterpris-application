@@ -9,7 +9,7 @@ public interface BookableQuotationQuery {
     /**
      * 見積りが commit 時刻に予約確定に使えるかを確かめる。
      *
-     * @param request 見積り ID と commit 時刻
+     * @param request 業務番号・見積り番号と commit 時刻
      * @return 使えるなら確定に要る写し、使えないなら理由
      */
     BookableQuotationResult find(BookableQuotationRequest request);
@@ -19,7 +19,7 @@ public interface BookableQuotationQuery {
      * US-07 AC5。Bolt 37e2）。再設計要の印を付ける操作は、確定のコミットを待つか、先に付けた印を確定に見せる。呼び手のトランザクションが
      * なければ例外にする。
      *
-     * @param request 見積り ID と commit 時刻
+     * @param request 業務番号・見積り番号と commit 時刻
      * @return 使えるなら確定に要る写し、使えないなら理由
      */
     BookableQuotationResult findForConfirmation(BookableQuotationRequest request);

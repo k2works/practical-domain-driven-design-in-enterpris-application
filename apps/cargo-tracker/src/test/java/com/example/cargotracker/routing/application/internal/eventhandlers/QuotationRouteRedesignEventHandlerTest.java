@@ -120,7 +120,7 @@ class QuotationRouteRedesignEventHandlerTest {
                 1,
                 UUID.randomUUID(),
                 UUID.randomUUID(),
-                1,
+                3,
                 REQUIRED_AT,
                 List.of("DEADLINE_EXCEEDED"),
                 List.of("V-201@1", "V-301@1"));
