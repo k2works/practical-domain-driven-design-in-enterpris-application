@@ -16,7 +16,7 @@
         <link rel="prev" href="../bolt_37e4_report/">
       
       
-        <link rel="next" href="../release_report-0_1/">
+        <link rel="next" href="../bolt_37e4b_report/">
       
       
         
@@ -7338,6 +7338,41 @@
   
   
     <li class="md-nav__item">
+      <a href="../bolt_37e4b_report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 37e4b 終了報告
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--draft"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../release_report-0_1/" class="md-nav__link">
         
   
@@ -12492,7 +12527,7 @@
 <tr>
 <td style="text-align: left;">H1</td>
 <td style="text-align: left;">見本は 0909・0910 の前例の形で、割り当てた区間と候補の区間の出発を起動した日の前にすれば、画面の判定は Bolt 37e4 のまま動く（本体のコードを変えない）</td>
-<td style="text-align: left;"><code>DevSampleDataSmokeTest</code>、dev（H2）での目視、デモ環境（PostgreSQL）での目視</td>
+<td style="text-align: left;"><code>DevSampleDataSmokeTest</code>、dev（H2）での目視、デモ環境（同じく H2。<code>MODE=PostgreSQL</code>）での目視</td>
 </tr>
 <tr>
 <td style="text-align: left;">H2</td>
@@ -12746,7 +12781,7 @@
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>2. 見本の検査（Red）</strong>: <code>DevSampleDataSmokeTest</code> に見本 2 件の検査を書く。状態と版、時刻の順（提示 → 回答 → 候補の算出 → 確定 →（承認）→ 出発 → 起動 → 有効期限）、荷主の承認の拒否の理由、本予約の照会の理由、再見積りの拒否の理由、予約の確定待ちの行の出発の判定、経路設計中・荷主承認待ちの表、案件の経路版の状態、候補の区間と割り当てた区間の写しの一致、案件の確定の時刻と見積りの <code>route_confirmed_at</code> の一致、案件の見積有効期限と見積りの有効期限の一致、KPI 計測。既存の見本に出発済みがない陰性の対照（見本があり出発が起動より後であることを先に確かめる）。既存の期待値（Javadoc、荷主の一覧、KPI の対応表、案件の件数と中身、予約の確定待ちの並び、番号の後）を直して、見本がないことで落ちることを確かめる（完了の判定: 足した検査が期待した理由で落ちる）</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>3. 見本（Green）</strong>: <code>V20261023200900__seed_dev_sample_route_departed.sql</code> を書く（180900 の列の並び）。検査を緑にし、ローカルの dev（ポート 8091。H2）で起動して、行 1〜9 を 3 つの役割で目視で確かめる（T-172）（完了の判定: 検査が緑、目視）</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>4. 品質ゲートと開発レビュー</strong>: 変異（確認ポイント 6）、<code>check</code>・<code>uiTest</code>、その後に SonarQube、開発レビューとその直し</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>5. デモと終了報告</strong>: <code>route_already_departed_ui.feature</code> の 2 本にデモのタグを足し、<code>demoVideo</code> で撮る。37e4b の外の差分は戻し、37e4b の動画だけをコミットする。開発の索引の Bolt の表の 37e4b の行の終了報告の列に（動画 1・動画 2）を <code>{:target="_blank"}</code> 付きで足す（37e3b の形）。push して CI と MkDocs とデモ環境の配備を確かめ、配備のログで Flyway の成功（PostgreSQL）を確かめ、デモ環境で 3 つの役割で見本の画面を開く。#16 にコメントを残す。終了報告で release_plan・開発の索引・mkdocs を完了に直す</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>5. デモと終了報告</strong>: <code>route_already_departed_ui.feature</code> の 2 本にデモのタグを足し、<code>demoVideo</code> で撮る。37e4b の外の差分は戻し、37e4b の動画だけをコミットする。開発の索引の Bolt の表の 37e4b の行の終了報告の列に（動画 1・動画 2）を <code>{:target="_blank"}</code> 付きで足す（37e3b の形）。push して CI と MkDocs とデモ環境の配備を確かめ、配備のログで Flyway の成功を確かめ（デモ環境も H2 のインメモリで、dev-data を PostgreSQL に読み込む道はない。開発レビューで直した）、デモ環境で 3 つの役割で見本の画面を開く。#16 にコメントを残す。終了報告で release_plan・開発の索引・mkdocs を完了に直す</li>
 </ul>
 <h3 id="_9">時間の配分と打ち切り<a class="headerlink" href="#_9" title="Permanent link">&para;</a></h3>
 <table>
@@ -12901,6 +12936,11 @@
 </tr>
 </thead>
 <tbody>
+<tr>
+<td style="text-align: left;">2026-10-23</td>
+<td style="text-align: left;">開発レビューの指摘で、デモ環境を PostgreSQL と書いた誤りを H2（<code>MODE=PostgreSQL</code>）に直した（H1・ステップ 5）</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5</td>
+</tr>
 <tr>
 <td style="text-align: left;">2026-10-23</td>
 <td style="text-align: left;">計画を承認した（確認ポイント 1〜7 を推奨のとおり）</td>

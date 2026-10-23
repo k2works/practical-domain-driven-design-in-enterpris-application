@@ -7760,6 +7760,41 @@
   
   
     <li class="md-nav__item">
+      <a href="../bolt_37e4b_report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 37e4b 終了報告
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--draft"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../release_report-0_1/" class="md-nav__link">
         
   
@@ -14832,7 +14867,7 @@
 </tr>
 <tr>
 <td style="text-align: left;">37e4</td>
-<td style="text-align: left;">US-07 AC5 の出発済みの経路: 荷主の承認と本予約の照会の判定に出発済み（D-88。割り当てた経路の最初の区間の出発予定が判定時刻と同時刻か前。境界は <code>ALREADY_DEPARTED</code> と同じ。Bolt 37e の計画の承認で 37e から、Bolt 37e3 の開始準備で 37e3 から送った）を足し、理由 <code>ROUTE_ALREADY_DEPARTED</code> を公開 API と予約の ACL まで流す。再見積りの期限内の拒否の理由も出発済みにする（受け付けるかどうかは変えない）。C-04・C-17・S-02・S-04・S-09 の文言と出し分け、画面の層のシナリオ（<code>route_already_departed_ui.feature</code>）、マニュアル 4.2・6.4・7.1・7.2・付録 B・用語集とキャプチャ 2 枚（出発済みは時刻だけで画面に出るので、判定と文言とマニュアルを同じ配備にする）。出発済みは評価の入口と関係なく出るので、W7 の開始条件にしない。開始準備で 37e4・37e4b・37e4c に分けた（human:kakimomokuri）。<a href="../bolt_37e4_plan/">Bolt 37e4 計画</a>（承認済み）</td>
+<td style="text-align: left;">US-07 AC5 の出発済みの経路: 荷主の承認と本予約の照会の判定に出発済み（D-88。割り当てた経路の最初の区間の出発予定が判定時刻と同時刻か前。境界は <code>ALREADY_DEPARTED</code> と同じ。Bolt 37e の計画の承認で 37e から、Bolt 37e3 の開始準備で 37e3 から送った）を足し、理由 <code>ROUTE_ALREADY_DEPARTED</code> を公開 API と予約の ACL まで流す。再見積りの期限内の拒否の理由も出発済みにする（受け付けるかどうかは変えない）。C-04・C-17・S-02・S-04・S-09 の文言と出し分け、画面の層のシナリオ（<code>route_already_departed_ui.feature</code>）、マニュアル 4.2・6.4・7.1・7.2・付録 B・用語集とキャプチャ 2 枚（出発済みは時刻だけで画面に出るので、判定と文言とマニュアルを同じ配備にする）。出発済みは評価の入口と関係なく出るので、W7 の開始条件にしない。開始準備で 37e4・37e4b・37e4c に分けた（human:kakimomokuri）。<a href="../bolt_37e4_plan/">Bolt 37e4 計画</a>（承認済み）、<a href="../bolt_37e4_report/">Bolt 37e4 終了報告</a>（承認済み）</td>
 <td style="text-align: right;">0</td>
 <td style="text-align: left;">アウトサイドイン（画面の層のシナリオから。状態の組み合わせの表を先に書く。T-161・T-163・T-182）</td>
 <td style="text-align: left;">計画と終了報告（新しいファイル、構造。確認ポイント 3・4）</td>
@@ -14842,7 +14877,7 @@
 <td style="text-align: left;">US-07 AC5 の出発済みの経路の見本とデモ: 開発データの見本（出発済み。TR-2026-0911 以降）と、W6 のデモ項目「出発済みの拒否」の動画。今の見本はどれも最初の区間の出発が起動の後なので、出発済みは見本では出ない（Bolt 37e4 の開始準備で 37e4 から分けた）。開始準備で見本を 2 件（TR-2026-0911・RC-2026-0908 は荷主承認待ち、TR-2026-0912・RC-2026-0909 は承認済み）にし、区間の航海は DEMO-101 のまま写しの出発だけを起動した日の前にすると決めた（human:kakimomokuri）。<a href="../bolt_37e4b_plan/">Bolt 37e4b 計画</a>（承認済み）</td>
 <td style="text-align: right;">0</td>
 <td style="text-align: left;">技術タスク（見本とデモ。37e4 の振る舞いを見える形にする）</td>
-<td style="text-align: left;">計画と終了報告（開発データ）</td>
+<td style="text-align: left;">計画と終了報告（開発データ、新しいファイル）</td>
 </tr>
 <tr>
 <td style="text-align: left;">37e4c</td>
@@ -14954,7 +14989,7 @@
 <td style="text-align: left;">W7</td>
 <td style="text-align: left;">11-16 〜 11-20</td>
 <td style="text-align: left;">外部原本の取込</td>
-<td style="text-align: left;">US-14（8）、US-12 残り（2）。外部情報の更新（DE-12）から確定した経路版の評価を起こす入口をつなぐ Bolt は、Bolt 37e3b を終えてから始める（評価で再設計要の印が付くと、拒否の文言とマニュアルの前に画面の振る舞いが変わるため。Bolt 37e2 の計画の確認ポイント 6。Bolt 37e3 の開始準備で 37e3 から 37e3b に改めた。出発済みの 37e4〜37e4c は条件にしない。リスク台帳）</td>
+<td style="text-align: left;">US-14（8）、US-12 残り（2）。外部情報の更新（DE-12）から確定した経路版の評価を起こす入口をつなぐ Bolt は、Bolt 37e3b を終えてから始める（評価で再設計要の印が付くと、拒否の文言とマニュアルの前に画面の振る舞いが変わるため。Bolt 37e2 の計画の確認ポイント 6。Bolt 37e3 の開始準備で 37e3 から 37e3b に改めた。出発済みの 37e4〜37e4c は条件にしない。リスク台帳）。その Bolt の開始準備では、Bolt 37e4b の出発済みの見本（TR-2026-0911・0912）の区間の写しと航海 DEMO-101 の予定の食い違いを見直す（開始条件ではなく確認の項目。技術リスク）</td>
 <td style="text-align: right;">10</td>
 </tr>
 <tr>
@@ -15370,6 +15405,12 @@
 <td style="text-align: center;">中</td>
 <td style="text-align: center;">低</td>
 <td style="text-align: left;">本物のデータを入れない。週次の見直しで <code>deploy:demo:status</code>・<code>deploy:demo:logs</code> を確かめ、不審な利用があれば <code>deploy:demo:restart</code>・<code>stop</code>。W10 でステージングができたら要否を見直す（Bolt 15 レビュー D-54・D-55）</td>
+</tr>
+<tr>
+<td style="text-align: left;">開発データの見本 RC-2026-0908・0909（TR-2026-0911・0912）は、候補の区間と割り当てた区間の写しの出発が起動した日の前日で、航海 DEMO-101 の予定（起動した日の 5 日後）と食い違う。W7 の評価の入口（DE-12）をつなぐと、DEMO-101 の情報版を更新したときに見本の確定した経路版が評価され、見本の状態や画面が変わりうる（情報版が同じ <code>PROVISIONAL-1</code> のままなら評価は空で返る）</td>
+<td style="text-align: center;">低</td>
+<td style="text-align: center;">中</td>
+<td style="text-align: left;">W7 の評価の入口をつなぐ Bolt の開始準備で、見本の扱い（航海の見本を分けるか、評価の対象から外すか）を見直す（Bolt 37e4b の開始準備の決定 (2)。D-88 の見本）</td>
 </tr>
 <tr>
 <td style="text-align: left;">デモ環境のメモリ（Eco 512 MB）が画面の追加で足りなくなる（R14）</td>
@@ -16982,6 +17023,11 @@
 <td style="text-align: left;">2026-10-23</td>
 <td style="text-align: left;">Bolt 37e4b の計画を承認した（確認ポイント 1〜7 を推奨のとおり）</td>
 <td style="text-align: left;">anthropic/claude-opus-5-5、承認 human:kakimomokuri</td>
+</tr>
+<tr>
+<td style="text-align: left;">2026-10-23</td>
+<td style="text-align: left;">Bolt 37e4b を終え、<a href="../bolt_37e4b_report/">Bolt 37e4b 終了報告</a>を作った（承認待ち）。出発済みの見本 2 件（TR-2026-0911・0912、RC-2026-0908・0909）と W6 のデモ項目「出発済みの拒否」の動画 2 本。区間の写しと航海 DEMO-101 の予定の食い違いを技術リスクと W7 の行に書いた</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5</td>
 </tr>
 </tbody>
 </table>
