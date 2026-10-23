@@ -7497,7 +7497,7 @@
     
   
   
-    <span class="md-status md-status--draft"></span>
+    <span class="md-status md-status--stable"></span>
   
 
   
@@ -14566,7 +14566,7 @@
 </tr>
 <tr>
 <td style="text-align: left;">37e2</td>
-<td style="text-align: left;">US-07 AC5 の経路設計の側: DE-06 の listener（経路設計の中の listener が ACL を通して見積りの公開 API <code>RouteRedesignNotification</code> を呼ぶ。ADR-014）。DE-05 と DE-06 の届く順（DE-06 が DE-05 より先に届くと見積りはまだ経路を持たず、後の DE-05 が印のない経路を割り当てる。DE-05 が再設計要の後に再配信されたときの扱い。<a href="../bolt_37d_plan/">Bolt 37d 計画</a> の材料 6。Bolt 37d2 で引き継いだ。<code>RouteAssignmentRequest</code> に項目が増えることがある）。DE-06 と本予約の確定の競合の守り方（ADR-016 :55 の宿題: 照会で共有ロックで読むか、見積りの版を期待版として渡すか。<code>BookableQuotationResult.Bookable</code> に項目が増えることがある。確認ポイント 7）。listener をつなぐと印が本番で付き、C-04 の承認の操作が消えて C-17 が既定の文言で拒否し、S-09 が「承認済みでない」と示すので、画面の文言とマニュアルを 37e2 に入れるか、listener を 37e3 の後に回すかを 37e2 の計画で決める（振る舞いが変わる Bolt はマニュアルを完了条件に入れる）。材料は <a href="../bolt_37e_plan/">Bolt 37e 計画</a> の確認ポイント 7。計画で決めたこと（2026-10-23、human:kakimomokuri）: listener はそのままつなぐ（本番とデモには評価の入口が W7 までないので見える変化は起きない。画面の文言とマニュアルは 37e3 のまま）。DE-06 が先に届く穴は、DE-05 の listener が案件の行をロックして読み、割り当てた経路版が再設計要の記録を持てば続けて伝えて塞ぐ（評価の保存と直列になる。<code>RouteAssignmentRequest</code> に項目は増えない）。本予約の確定との競合は、見積りの公開 API に本予約の確定用の照会（<code>BookableQuotationQuery.findForConfirmation</code>。見積りの行を <code>FOR UPDATE</code> で読む）を足して守る（<code>BookableQuotationResult.Bookable</code> に項目は増えない。S-09 の GET は今の照会のまま）。ADR-016・ADR-018 を改訂し、採番の mapper の注を直す。テストの補助 <code>OverlappingTransactions</code> を共通の場所へ移す。<a href="../bolt_37e2_plan/">Bolt 37e2 計画</a>（承認済み）、<a href="../bolt_37e2_report/">Bolt 37e2 終了報告</a>（承認待ち）</td>
+<td style="text-align: left;">US-07 AC5 の経路設計の側: DE-06 の listener（経路設計の中の listener が ACL を通して見積りの公開 API <code>RouteRedesignNotification</code> を呼ぶ。ADR-014）。DE-05 と DE-06 の届く順（DE-06 が DE-05 より先に届くと見積りはまだ経路を持たず、後の DE-05 が印のない経路を割り当てる。DE-05 が再設計要の後に再配信されたときの扱い。<a href="../bolt_37d_plan/">Bolt 37d 計画</a> の材料 6。Bolt 37d2 で引き継いだ。<code>RouteAssignmentRequest</code> に項目が増えることがある）。DE-06 と本予約の確定の競合の守り方（ADR-016 :55 の宿題: 照会で共有ロックで読むか、見積りの版を期待版として渡すか。<code>BookableQuotationResult.Bookable</code> に項目が増えることがある。確認ポイント 7）。listener をつなぐと印が本番で付き、C-04 の承認の操作が消えて C-17 が既定の文言で拒否し、S-09 が「承認済みでない」と示すので、画面の文言とマニュアルを 37e2 に入れるか、listener を 37e3 の後に回すかを 37e2 の計画で決める（振る舞いが変わる Bolt はマニュアルを完了条件に入れる）。材料は <a href="../bolt_37e_plan/">Bolt 37e 計画</a> の確認ポイント 7。計画で決めたこと（2026-10-23、human:kakimomokuri）: listener はそのままつなぐ（本番とデモには評価の入口が W7 までないので見える変化は起きない。画面の文言とマニュアルは 37e3 のまま）。DE-06 が先に届く穴は、DE-05 の listener が案件の行をロックして読み、割り当てた経路版が再設計要の記録を持てば続けて伝えて塞ぐ（評価の保存と直列になる。<code>RouteAssignmentRequest</code> に項目は増えない）。本予約の確定との競合は、見積りの公開 API に本予約の確定用の照会（<code>BookableQuotationQuery.findForConfirmation</code>。見積りの行を <code>FOR UPDATE</code> で読む）を足して守る（<code>BookableQuotationResult.Bookable</code> に項目は増えない。S-09 の GET は今の照会のまま）。ADR-016・ADR-018 を改訂し、採番の mapper の注を直す。テストの補助 <code>OverlappingTransactions</code> を共通の場所へ移す。<a href="../bolt_37e2_plan/">Bolt 37e2 計画</a>（承認済み）、<a href="../bolt_37e2_report/">Bolt 37e2 終了報告</a>（承認済み）</td>
 <td style="text-align: right;">0</td>
 <td style="text-align: left;">アウトサイドイン（届く順の表を先に書く。T-179）</td>
 <td style="text-align: left;">計画と終了報告（構造。ADR-016 :55）</td>
@@ -16624,6 +16624,11 @@
 <td style="text-align: left;">2026-10-23</td>
 <td style="text-align: left;">Bolt 37e2 を終え、<a href="../bolt_37e2_report/">Bolt 37e2 終了報告</a>を作った（承認待ち）。DE-06 の listener で見積りに印が付き、DE-05 の listener が案件の行を押さえて読んで続けて伝え、本予約の確定は見積りの行を押さえて照会する。開発レビューで案件を押さえて読む操作も <code>MANDATORY</code> にした</td>
 <td style="text-align: left;">anthropic/claude-opus-5-5</td>
+</tr>
+<tr>
+<td style="text-align: left;">2026-10-23</td>
+<td style="text-align: left;">Bolt 37e2 の終了報告を承認した（議題 1〜3。届く順 B の受入シナリオと行 13 の本予約の確定のテストは 37e3 へ）</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5、承認 human:kakimomokuri</td>
 </tr>
 </tbody>
 </table>
