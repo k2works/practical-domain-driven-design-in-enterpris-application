@@ -4,7 +4,7 @@ title: "cargo-tracker ユーザーストーリー"
 description: "cargo-tracker MVP の価値単位のユーザーストーリー、受入条件、上流要件へのトレーサビリティ。"
 tags: [requirements, user-story]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-23T10:51:10Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-23T16:01:54Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T05:20:11Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:01:39Z }
@@ -373,6 +373,7 @@ Bolt 37e4 の決定（2026-10-23。[Bolt 37e4 計画](../../development/cargo-tr
 - 開発データとデモ（Bolt 37e4b）: 出発済みの開発データの見本（TR-2026-0911 以降）と、W6 のデモ項目「出発済みの拒否」の動画。SP は 0。
 - 既知の課題と #16 のクローズ（Bolt 37e4c）: Bolt 37e2 の既知の課題 3 つ（届く順 B の受入シナリオ、行 13 と予約の画面で予約が残ることを本物の本予約の確定で確かめる、ロックの操作の名前を目的の名前にそろえる）。#16 は Bolt 37e4c で閉じ、US-07 の 2 SP も Bolt 37e4c で数える。
 - 順は 37e4 → 37e4b → 37e4c。W7 の評価の入口をつなぐ Bolt の開始条件は Bolt 37e3b のまま（37e4〜37e4c は条件にしない）。
+- Bolt 37e4c の決定（2026-10-24）: #16 を閉じ、US-07 の 2 SP を W6 で数えた。Release 1.0 の外に残るもの: AC5 の旧版の経路版の新規予約への割当ての拒否と、新しい経路版の作成（再設計）は US-08（Release 1.1）。外部情報の更新から評価を起こす入口は W7（US-14）。荷主承認待ちで出発済みの見積りの社内の画面の印は D-86。画面の支援技術による手動確認は #50
 
 ### US-08 経路を再設計する
 
