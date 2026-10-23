@@ -7,7 +7,10 @@ import com.example.cargotracker.TestcontainersConfiguration;
 import com.example.cargotracker.booking.application.internal.commands.ConfirmBookingCommand;
 import com.example.cargotracker.booking.application.internal.commandservices.BookingCommandService;
 import com.example.cargotracker.booking.application.internal.commandservices.BookingConfirmationOutcome;
+import com.example.cargotracker.booking.application.internal.queryservices.BookingConfirmationPage;
 import com.example.cargotracker.booking.application.internal.queryservices.BookingQueryService;
+import com.example.cargotracker.booking.application.sagas.BookingSagaStatus;
+import com.example.cargotracker.booking.domain.model.valueobjects.BookingStatus;
 import com.example.cargotracker.booking.domain.model.valueobjects.TrackingNumber;
 import com.example.cargotracker.quotation.domain.model.aggregates.Quotation;
 import com.example.cargotracker.quotation.domain.model.aggregates.QuotationRepository;
@@ -60,7 +63,6 @@ class BookingConfirmationWithRouteRedesignIntegrationTest {
     private static final UserId SHIPPER_USER = new UserId(UUID.randomUUID());
     private static final AuthenticatedActor SALES = new AuthenticatedActor(
             new UserId(UUID.randomUUID()), new CompanyId(UUID.randomUUID()), Set.of(Role.SALES), "佐藤", "A 社");
-    private static final String ROUTING_CASE_NUMBER = "RC-2081-0001";
     private static final UtcInstant REQUIRED_AT = at("2026-01-09T00:30:00Z");
 
     @Autowired
@@ -93,7 +95,7 @@ class BookingConfirmationWithRouteRedesignIntegrationTest {
                 () -> bookingCommandService.confirm(new ConfirmBookingCommand(
                         CommandId.random(), request.number().text(), 1, SALES, true)),
                 () -> routeRedesignNotification.notifyRedesignRequired(
-                        new RouteRedesignNotificationRequest(ROUTING_CASE_NUMBER, 1, REQUIRED_AT)));
+                        new RouteRedesignNotificationRequest(routingCaseNumber(1), 1, REQUIRED_AT)));
 
         assertThat(results.get(0)).isInstanceOf(BookingConfirmationOutcome.Confirmed.class);
         TrackingNumber trackingNumber = ((BookingConfirmationOutcome.Confirmed) results.get(0)).trackingNumber();
@@ -116,10 +118,15 @@ class BookingConfirmationWithRouteRedesignIntegrationTest {
                         String.class,
                         request.number().text()))
                 .containsExactly("CONFIRMED");
-        // 行 5。予約の画面（S-24）の照会は予約を返す
-        assertThat(bookingQueryService.detail(trackingNumber))
-                .hasValueSatisfying(
-                        detail -> assertThat(detail.booking().trackingNumber()).isEqualTo(trackingNumber));
+        // 行 5。予約の画面（S-24）の照会は確定した予約を返し、予約サガは取り消しや失敗に進んでいない（追跡の開始は経路設計の案件を
+        // 読むので、案件のないこのテストでは開始せず進行中のまま）。本予約の確定（S-09）の照会は予約済みを返す
+        assertThat(bookingQueryService.detail(trackingNumber)).hasValueSatisfying(detail -> {
+            assertThat(detail.booking().trackingNumber()).isEqualTo(trackingNumber);
+            assertThat(detail.booking().status()).isEqualTo(BookingStatus.CONFIRMED);
+            assertThat(detail.sagaStatus()).isEqualTo(BookingSagaStatus.IN_PROGRESS);
+        });
+        assertThat(bookingQueryService.confirmation(request.number().text(), 1))
+                .isEqualTo(new BookingConfirmationPage.AlreadyBooked(trackingNumber));
     }
 
     /** 審査・提示・詳細経路設計の依頼・経路の割当て・荷主の承認まで進めた、予約待ちの輸送要求と見積り 1 を保存する。 */
@@ -144,7 +151,7 @@ class BookingConfirmationWithRouteRedesignIntegrationTest {
         quotation.requestRouteDesign(SHIPPER_USER, at("2026-01-06T02:00:00Z"));
         quotation.assignRoute(
                 new AssignedRoute(
-                        ROUTING_CASE_NUMBER,
+                        routingCaseNumber(sequence),
                         1,
                         at("2026-01-07T05:00:00Z"),
                         List.of(new AssignedRouteLeg(
@@ -158,6 +165,10 @@ class BookingConfirmationWithRouteRedesignIntegrationTest {
         quotation.clearDomainEvents();
         quotations.save(quotation);
         return request;
+    }
+
+    private static String routingCaseNumber(int sequence) {
+        return "RC-2081-%04d".formatted(sequence);
     }
 
     private static UtcInstant at(String instant) {

@@ -33,8 +33,7 @@ public class DeferredEventDelivery implements ApplicationEventPublisher {
     public void deliverAll() {
         List<Object> events = List.copyOf(published);
         published.clear();
-        lastDelivered = events;
-        events.forEach(event -> subscribers.forEach(subscriber -> subscriber.accept(event)));
+        deliver(events);
     }
 
     /**
@@ -43,19 +42,33 @@ public class DeferredEventDelivery implements ApplicationEventPublisher {
      */
     public void deliverOnly(Class<?> eventType) {
         List<Object> events = published.stream().filter(eventType::isInstance).toList();
-        published.removeAll(events);
-        lastDelivered = events;
+        published.removeIf(eventType::isInstance);
         // 配っている間に購読側が出したイベントは、deliverAll と同じく残す側（published）に足される
-        events.forEach(event -> subscribers.forEach(subscriber -> subscriber.accept(event)));
+        deliver(events);
     }
 
     /** 直前に配信したイベントを、もう一度購読側へ届ける（少なくとも 1 回の配信の再配信。受け取りの冪等を確かめる）。 */
     public void redeliverLast() {
-        lastDelivered.forEach(event -> subscribers.forEach(subscriber -> subscriber.accept(event)));
+        lastDelivered.forEach(this::notifySubscribers);
     }
 
     /** 前に配信したイベントを、いま購読側へ届ける（遅れて届いたイベントを確かめる。Bolt 35b2）。 */
     public void redeliver(Object event) {
+        notifySubscribers(event);
+    }
+
+    /** 直前に配信したイベント（配信の順。先に届けたイベントを確かめる。Bolt 37e4c）。 */
+    public List<Object> lastDelivered() {
+        return List.copyOf(lastDelivered);
+    }
+
+    /** 配信の記録（直前に配信したイベント）を残してから購読側へ届ける（配信はここだけ。Bolt 37e4c の開発レビュー）。 */
+    private void deliver(List<Object> events) {
+        lastDelivered = events;
+        events.forEach(this::notifySubscribers);
+    }
+
+    private void notifySubscribers(Object event) {
         subscribers.forEach(subscriber -> subscriber.accept(event));
     }
 

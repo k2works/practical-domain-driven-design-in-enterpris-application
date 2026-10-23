@@ -27,11 +27,9 @@ import io.cucumber.java.ja.ならば;
 import io.cucumber.java.ja.もし;
 import io.cucumber.java.ja.前提;
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * 確定した経路の評価（US-07 AC4・AC5。Bolt 37d2）の業務ルール層のステップ。評価は外部情報の更新を受けたシステムの操作で、
@@ -50,7 +48,6 @@ public class ConfirmedRouteEvaluationSteps {
     private final DeferredEventDelivery eventDelivery;
     private final InMemoryVoyageRepository voyages;
     private ConfirmedRouteEvaluationOutcome outcome;
-    private List<Object> firstDelivered = List.of();
 
     public ConfirmedRouteEvaluationSteps(
             RoutingCaseCommandService commandService,
@@ -100,22 +97,13 @@ public class ConfirmedRouteEvaluationSteps {
      */
     @もし("再設計要のイベントだけが先に配信される")
     public void 再設計要のイベントだけが先に配信される() {
-        // 購読側に実際に届いたイベントを記録する（配信の部品の控えではなく、届いたことを見る。Bolt 37e4c の変異 V1）
-        List<Object> recording = new ArrayList<>();
-        AtomicBoolean recordingOn = new AtomicBoolean(true);
-        eventDelivery.subscribe(event -> {
-            if (recordingOn.get()) {
-                recording.add(event);
-            }
-        });
         eventDelivery.deliverOnly(RouteRedesignRequired.class);
-        recordingOn.set(false);
-        firstDelivered = List.copyOf(recording);
     }
 
     @ならば("先に配信されたイベントは再設計要のイベントだけである")
     public void 先に配信されたイベントは再設計要のイベントだけである() {
-        assertThat(firstDelivered)
+        // 配信の部品は購読側へ届ける処理の中で配った記録を残す（届けなければ記録も残らない。Bolt 37e4c の変異 V1）
+        assertThat(eventDelivery.lastDelivered())
                 .isNotEmpty()
                 .allSatisfy(event -> assertThat(event).isInstanceOf(RouteRedesignRequired.class));
     }

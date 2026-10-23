@@ -31,7 +31,7 @@ public interface RoutingCaseRepository {
     Optional<RoutingCase> findByNumber(RoutingCaseNumber number);
 
     /**
-     * 経路の割当て（DE-05）を伝えるために、案件番号で探し、案件の行を呼び手のトランザクションが終わるまで押さえる（DE-05 の listener が評価の
+     * DE-05（経路を確定した）を受けて見積りに経路の割当てを伝えるために、案件番号で探し、案件の行を呼び手のトランザクションが終わるまで押さえる（DE-05 の listener が評価の
      * 保存と直列にする。US-07 AC5。Bolt 37e2。名前は目的の名前にそろえた。Bolt 37e4c）。呼び手のトランザクションの中でだけ使う。
      */
     Optional<RoutingCase> findByNumberForRouteAssignment(RoutingCaseNumber number);
