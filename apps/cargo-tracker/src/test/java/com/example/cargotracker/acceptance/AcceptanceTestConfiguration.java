@@ -311,9 +311,13 @@ public class AcceptanceTestConfiguration {
         /** 経路設計は DE-05 を受けて見積りの公開 API（経路の割当て）を呼ぶ（Bolt 20）。 */
         @Bean
         QuotationRouteAssignmentEventHandler quotationRouteAssignmentEventHandler(
-                InMemoryRoutingCaseRepository repository, RouteAssignmentService routeAssignment) {
+                InMemoryRoutingCaseRepository repository,
+                RouteAssignmentService routeAssignment,
+                RouteRedesignNotification routeRedesignNotification) {
             return new QuotationRouteAssignmentEventHandler(
-                    repository, new QuotationRouteAssignments(new RouteAssignmentAdapter(routeAssignment)));
+                    repository,
+                    new QuotationRouteAssignments(new RouteAssignmentAdapter(routeAssignment)),
+                    new QuotationRouteRedesigns(routeRedesignNotification));
         }
 
         /** 経路設計は DE-06 を受けて見積りの公開 API（再設計要の伝達）を呼ぶ（Bolt 37e2）。 */

@@ -50,6 +50,9 @@ public interface RoutingCaseMapper {
 
     Optional<RoutingCaseRow> selectByNumber(String caseNumber);
 
+    /** 案件の行を押さえる（Bolt 37e2）。案件がなければ null。 */
+    UUID lockByNumber(String caseNumber);
+
     int countByTransportRequestVersion(
             @Param("transportRequestId") UUID transportRequestId,
             @Param("transportRequestVersionNo") int transportRequestVersionNo);

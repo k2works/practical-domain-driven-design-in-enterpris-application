@@ -191,6 +191,12 @@
          WHERE case_number = #{caseNumber}
     </select>
 
+    <!-- 案件の行を呼び手のトランザクションが終わるまで押さえる（DE-05 の listener が評価の保存と直列にする。Bolt 37e2）。単表で最初に
+         読み、後の読み込みがセッションのキャッシュを使わないよう flushCache を付ける。待ちは 10 秒で打ち切る（H2 と PostgreSQL で効く） -->
+    <select id="lockByNumber" resultType="java.util.UUID" flushCache="true" timeout="10">
+        SELECT id FROM routing.routing_case WHERE case_number = #{caseNumber} FOR UPDATE
+    </select>
+
     <select id="countByTransportRequestVersion" resultType="int">
         SELECT COUNT(*) FROM routing.routing_case
          WHERE transport_request_id = #{transportRequestId}

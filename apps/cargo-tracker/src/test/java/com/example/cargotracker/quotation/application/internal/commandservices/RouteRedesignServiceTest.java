@@ -91,8 +91,9 @@ class RouteRedesignServiceTest {
     }
 
     @Test
-    void 経路を割り当てる前に伝わると見つからず後で割り当てた経路は印がなく承認できる() {
-        // 行 20（DE-06 が DE-05 より先に届く穴。Bolt 37e の時点の振る舞いを固定する。Bolt 37e2 で塞ぐと期待値が変わる）
+    void 入力ポートだけでは経路を割り当てる前の伝達は見つからず後で割り当てた経路に印は付かない() {
+        // 行 20（DE-06 が DE-05 より先に届く。入力ポートの振る舞いとしてはこのまま。穴は DE-05 の listener が割り当てた後に続けて
+        // 伝えて塞ぐ（QuotationRouteAssignmentEventHandlerTest の行 6。Bolt 37e2）
         InMemoryQuotationRepository repository = new InMemoryQuotationRepository();
         Quotation quotation = Quotation.create(new QuotationId(UUID.randomUUID()), transportRequestId, 1, 1);
         quotation.calculate(QuotationFixture.completeInput(), at("2026-10-05T04:00:00Z"));

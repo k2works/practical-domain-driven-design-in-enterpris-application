@@ -116,6 +116,15 @@ public class MyBatisRoutingCaseRepository implements RoutingCaseRepository {
     }
 
     @Override
+    public Optional<RoutingCase> findByNumberForUpdate(RoutingCaseNumber number) {
+        // 行を押さえてから組み立てる（押さえる前に読んだ値をキャッシュから使わない）
+        if (mapper.lockByNumber(number.text()) == null) {
+            return Optional.empty();
+        }
+        return findByNumber(number);
+    }
+
+    @Override
     public boolean existsForTransportRequestVersion(UUID transportRequestId, int transportRequestVersionNo) {
         return mapper.countByTransportRequestVersion(transportRequestId, transportRequestVersionNo) > 0;
     }

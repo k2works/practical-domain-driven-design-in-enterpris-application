@@ -57,8 +57,10 @@ public class RoutingConfiguration {
     /** DE-05 を受けて見積りに経路版を割り当てる（Spring Modulith のイベントの記録を経て、別のトランザクションで動く。Bolt 20）。 */
     @Bean
     QuotationRouteAssignmentEventHandler quotationRouteAssignmentEventHandler(
-            RoutingCaseRepository repository, QuotationRouteAssignments routeAssignments) {
-        return new QuotationRouteAssignmentEventHandler(repository, routeAssignments);
+            RoutingCaseRepository repository,
+            QuotationRouteAssignments routeAssignments,
+            QuotationRouteRedesigns routeRedesigns) {
+        return new QuotationRouteAssignmentEventHandler(repository, routeAssignments, routeRedesigns);
     }
 
     /** 見積りの公開 API（再設計要の伝達）を呼ぶ腐敗防止層（ADR-014。Bolt 37e2）。 */

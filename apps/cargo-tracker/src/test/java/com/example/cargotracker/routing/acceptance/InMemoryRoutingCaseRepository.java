@@ -50,6 +50,12 @@ public class InMemoryRoutingCaseRepository implements RoutingCaseRepository {
         return Optional.ofNullable(store.get(number)).map(found -> snapshot(found, found.aggregateVersion()));
     }
 
+    /** メモリ上では押さえるものがないので、案件番号で探すのと同じ（Bolt 37e2）。 */
+    @Override
+    public Optional<RoutingCase> findByNumberForUpdate(RoutingCaseNumber number) {
+        return findByNumber(number);
+    }
+
     @Override
     public boolean existsForTransportRequestVersion(UUID transportRequestId, int transportRequestVersionNo) {
         return store.values().stream()
