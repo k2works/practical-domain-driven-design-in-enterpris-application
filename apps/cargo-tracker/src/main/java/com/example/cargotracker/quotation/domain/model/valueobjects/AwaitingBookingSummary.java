@@ -17,6 +17,7 @@ import java.util.Objects;
  * @param shipperApprovedAt 荷主の承認時刻（承認待ちの行は null）
  * @param expiresAt 見積りの有効期限
  * @param routeRedesignRequired 割り当てた経路が再設計要か（行は表に残し、画面が本予約の入口を出さない。US-07 AC5。Bolt 37e3）
+ * @param firstDepartureAt 割り当てた経路の最初の区間の出発予定（出発済みの行の出し分けに使う。D-88。Bolt 37e4）
  */
 public record AwaitingBookingSummary(
         TransportRequestNumber number,
@@ -26,7 +27,37 @@ public record AwaitingBookingSummary(
         int routeVersionNo,
         UtcInstant shipperApprovedAt,
         UtcInstant expiresAt,
-        boolean routeRedesignRequired) {
+        boolean routeRedesignRequired,
+        UtcInstant firstDepartureAt) {
+
+    /** 割り当てた経路の最初の区間の出発を知らない行（テストの見本）。 */
+    public AwaitingBookingSummary(
+            TransportRequestNumber number,
+            int quotationNo,
+            QuotationStatus status,
+            String routingCaseNumber,
+            int routeVersionNo,
+            UtcInstant shipperApprovedAt,
+            UtcInstant expiresAt,
+            boolean routeRedesignRequired) {
+        this(
+                number,
+                quotationNo,
+                status,
+                routingCaseNumber,
+                routeVersionNo,
+                shipperApprovedAt,
+                expiresAt,
+                routeRedesignRequired,
+                null);
+    }
+
+    /**
+     * 割り当てた経路の最初の区間の出発予定が判定時刻と同時刻か前か（D-88。見積りの集約と同じ境界。Bolt 37e4）。出発を知らなければ false。
+     */
+    public boolean isRouteDepartedAt(UtcInstant at) {
+        return firstDepartureAt != null && !firstDepartureAt.instant().isAfter(at.instant());
+    }
 
     /** 割り当てた経路が再設計要でない行。 */
     public AwaitingBookingSummary(
@@ -37,7 +68,7 @@ public record AwaitingBookingSummary(
             int routeVersionNo,
             UtcInstant shipperApprovedAt,
             UtcInstant expiresAt) {
-        this(number, quotationNo, status, routingCaseNumber, routeVersionNo, shipperApprovedAt, expiresAt, false);
+        this(number, quotationNo, status, routingCaseNumber, routeVersionNo, shipperApprovedAt, expiresAt, false, null);
     }
 
     public AwaitingBookingSummary {

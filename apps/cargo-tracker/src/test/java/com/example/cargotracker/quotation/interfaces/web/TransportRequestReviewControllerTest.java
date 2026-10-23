@@ -399,6 +399,60 @@ class TransportRequestReviewControllerTest {
     }
 
     @Test
+    void 最初の区間が出発した行は予約の確定待ちに残し出発済みと示して本予約の入口を出さない() throws Exception {
+        // Bolt 37e4 の状態の組み合わせの行 12・13（T-185。陽性の対照に出発前の行を置く）
+        UtcInstant approvedAt = new UtcInstant(Instant.parse("2026-10-04T06:00:00Z"));
+        UtcInstant expiresAt = new UtcInstant(Instant.parse("2099-10-09T09:00:00Z"));
+        given(quotationQueryService.findAwaitingBookingSummaries())
+                .willReturn(List.of(
+                        new AwaitingBookingSummary(
+                                NUMBER,
+                                1,
+                                QuotationStatus.APPROVED,
+                                "RC-2026-0001",
+                                1,
+                                approvedAt,
+                                expiresAt,
+                                false,
+                                new UtcInstant(Instant.parse("2026-10-04T12:00:00Z"))),
+                        new AwaitingBookingSummary(
+                                new TransportRequestNumber(2026, 2),
+                                1,
+                                QuotationStatus.APPROVED,
+                                "RC-2026-0002",
+                                1,
+                                approvedAt,
+                                expiresAt,
+                                true,
+                                new UtcInstant(Instant.parse("2026-10-04T12:00:00Z"))),
+                        new AwaitingBookingSummary(
+                                new TransportRequestNumber(2026, 3),
+                                1,
+                                QuotationStatus.APPROVED,
+                                "RC-2026-0003",
+                                1,
+                                approvedAt,
+                                expiresAt,
+                                false,
+                                new UtcInstant(Instant.parse("2099-10-01T00:00:00Z")))));
+
+        mockMvc.perform(get("/staff/transport-requests"))
+                .andExpect(content().string(containsString("RC-2026-0001 版 1（最初の区間が出発済み）")))
+                .andExpect(content().string(not(containsString("TR-2026-0001 見積 1 の本予約の確定へ"))))
+                .andExpect(
+                        content()
+                                .string(
+                                        containsString(
+                                                "href=\"/staff/transport-requests/TR-2026-0001/quotations/1\">TR-2026-0001 見積 1 を開く（最初の区間が出発済み）</a>")))
+                // 行 13: 再設計要と出発済みの両方なら再設計要だけ
+                .andExpect(content().string(containsString("RC-2026-0002 版 1（経路が再設計要）")))
+                .andExpect(content().string(not(containsString("RC-2026-0002 版 1（経路が再設計要）（最初の区間が出発済み）"))))
+                // 陽性の対照: 出発前の行は本予約の入口を出す
+                .andExpect(content().string(containsString("RC-2026-0003 版 1</td>")))
+                .andExpect(content().string(containsString("TR-2026-0003 見積 1 の本予約の確定へ")));
+    }
+
+    @Test
     void 受付一覧に見積提示済みの見積依頼の最新の見積りを有効期限の近い順に示し見積りを開ける() throws Exception {
         given(quotationQueryService.findQuotedSummaries())
                 .willReturn(List.of(

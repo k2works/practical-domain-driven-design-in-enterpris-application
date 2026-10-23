@@ -152,7 +152,8 @@ public class MyBatisQuotationRepository implements QuotationRepository {
                         row.routeVersionNo(),
                         row.shipperApprovedAt() == null ? null : toUtc(row.shipperApprovedAt()),
                         toUtc(row.expiresAt()),
-                        row.routeRedesignRequired()))
+                        row.routeRedesignRequired(),
+                        row.firstDepartureAt() == null ? null : toUtc(row.firstDepartureAt())))
                 .toList();
     }
 

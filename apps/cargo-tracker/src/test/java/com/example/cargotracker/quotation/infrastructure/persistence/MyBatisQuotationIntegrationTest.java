@@ -729,6 +729,8 @@ class MyBatisQuotationIntegrationTest {
         assertThat(repository.findAwaitingBookingSummaries())
                 .as("DE-21・DE-04 の配信を待たずに見積りの承認済みを正にする（輸送要求が経路設計中のままでも出す）。有効期限の近い順")
                 .filteredOn(summary -> summary.number().year() == 2082)
+                // 最初の区間の出発（Bolt 37e4）はこのテストの見るところでないので比べない
+                .usingRecursiveFieldByFieldElementComparatorIgnoringFields("firstDepartureAt")
                 .containsExactly(
                         new AwaitingBookingSummary(
                                 new TransportRequestNumber(2082, 32),
@@ -775,6 +777,33 @@ class MyBatisQuotationIntegrationTest {
                 .extracting(summary -> summary.number().sequence(), AwaitingBookingSummary::routeRedesignRequired)
                 .containsExactlyInAnyOrder(
                         org.assertj.core.groups.Tuple.tuple(91, true), org.assertj.core.groups.Tuple.tuple(92, false));
+    }
+
+    @Test
+    void 予約の確定待ちの行は割り当てた経路の最初の区間の出発を持つ() {
+        // Bolt 37e4 の状態の組み合わせの行 12。行の出し分け（出発済み）は画面が表示する時刻で決める
+        TransportRequestId departed = transportRequest(93);
+        approved(departed);
+        advanceTransportRequest(departed, TransportRequestStatus.READY_TO_BOOK);
+        UtcInstant departure = new UtcInstant(Instant.parse("2082-01-06T00:00:00Z"));
+        jdbc.update(
+                "UPDATE quotation.assigned_route_leg SET departure_at = ? WHERE leg_no = 1 AND quotation_id ="
+                        + " (SELECT id FROM quotation.quotation WHERE transport_request_id = ?)",
+                java.sql.Timestamp.from(departure.instant()),
+                departed.value());
+
+        assertThat(repository.findAwaitingBookingSummaries())
+                .filteredOn(summary -> summary.number().equals(new TransportRequestNumber(2082, 93)))
+                .singleElement()
+                .satisfies(summary -> {
+                    assertThat(summary.firstDepartureAt()).isEqualTo(departure);
+                    assertThat(summary.isRouteDepartedAt(departure))
+                            .as("同時刻は出発済み")
+                            .isTrue();
+                    assertThat(summary.isRouteDepartedAt(
+                                    new UtcInstant(departure.instant().minusSeconds(1))))
+                            .isFalse();
+                });
     }
 
     // 荷主の承認の後に失効した見積りの再見積り（D-85。Bolt 35b）
@@ -902,6 +931,8 @@ class MyBatisQuotationIntegrationTest {
                         + "経路を持たない承認待ちと、提示した後の見積り（荷主承認待ち）は出さない")
                 .filteredOn(summary ->
                         summary.number().year() == 2082 && summary.number().sequence() >= 37)
+                // 最初の区間の出発（Bolt 37e4）はこのテストの見るところでないので比べない
+                .usingRecursiveFieldByFieldElementComparatorIgnoringFields("firstDepartureAt")
                 .containsExactlyInAnyOrder(
                         new AwaitingBookingSummary(
                                 new TransportRequestNumber(2082, 37),

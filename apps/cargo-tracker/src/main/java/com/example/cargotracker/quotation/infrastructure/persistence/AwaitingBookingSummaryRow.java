@@ -11,4 +11,5 @@ public record AwaitingBookingSummaryRow(
         int routeVersionNo,
         OffsetDateTime shipperApprovedAt,
         OffsetDateTime expiresAt,
-        boolean routeRedesignRequired) {}
+        boolean routeRedesignRequired,
+        OffsetDateTime firstDepartureAt) {}
