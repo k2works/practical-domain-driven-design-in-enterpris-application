@@ -105,7 +105,7 @@ Bolt がイテレーションに当たります。ふりかえりは各 Bolt の
 | 37e3 | [US-07 AC5 の予約と画面の側（再設計要の経路の拒否の理由と文言、S-02・S-07、予約の腐敗防止層の追従）](bolt_37e3_plan.md) | [終了報告](bolt_37e3_report.md) | W6 | 完了 |
 | 37e3b | [US-07 AC5 の開発データの見本・マニュアル・デモ（再設計要の経路の拒否）](bolt_37e3b_plan.md) | [終了報告](bolt_37e3b_report.md)（[動画 1](../../assets/demo/bolt-37e3b/shipper-cannot-approve.webm){:target="_blank"}・[動画 2](../../assets/demo/bolt-37e3b/booking-blocked.webm){:target="_blank"}・[動画 3](../../assets/demo/bolt-37e3b/route-not-reconfirmable.webm){:target="_blank"}） | W6 | 完了 |
 | 37e4 | [US-07 AC5 の出発済みの経路（D-88 の判定・理由・文言・マニュアル）](bolt_37e4_plan.md) | [終了報告](bolt_37e4_report.md) | W6 | 完了 |
-| 37e4b | [US-07 AC5 の出発済みの経路の見本とデモ](bolt_37e4b_plan.md) | — | W6 | 計画済み |
+| 37e4b | [US-07 AC5 の出発済みの経路の見本とデモ](bolt_37e4b_plan.md) | [終了報告](bolt_37e4b_report.md)（承認待ち。[動画 1](../../assets/demo/bolt-37e4b/shipper-cannot-approve-departed.webm){:target="_blank"}・[動画 2](../../assets/demo/bolt-37e4b/booking-blocked-departed.webm){:target="_blank"}） | W6 | 完了（承認待ち） |
 
 Bolt を始めるときに行を追加します。
 
