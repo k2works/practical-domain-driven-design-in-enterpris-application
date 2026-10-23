@@ -2,8 +2,10 @@
 type: Plan
 title: "Bolt 37e4b 計画 - US-07 AC5 の出発済みの経路の見本とデモ"
 tags: [plan]
-status: draft
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-23T12:49:55Z }
+status: stable
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-23T12:50:41Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-10-23T12:50:41Z }
 ---
 
 # Bolt 37e4b 計画 - US-07 AC5 の出発済みの経路の見本とデモ
@@ -168,6 +170,7 @@ generated: { by: anthropic/claude-opus-5-5, at: 2026-10-23T12:49:55Z }
 
 | 日付 | 更新内容 | 更新者 |
 | :--- | :--- | :--- |
+| 2026-10-23 | 計画を承認した（確認ポイント 1〜7 を推奨のとおり） | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-10-23 | 2 つの整合性検証の指摘を反映した（承認待ち）。S-04 の行を URL で開く形に、0911 の S-02・S-04 の見え方と経路設計者の行（行 9）を足し、見本の検査に確定の時刻と有効期限の写しの一致を、経路方針の出発を区間の出発より前にすることを足した。変異を表にし、区間を落とす変異を確定の時刻をずらす変異に替えた。README・手順書・リスク台帳・W7 の行・動画のリンク先の書き方を前例にそろえ、引き継ぎの出典を直した | anthropic/claude-opus-5-5 |
 | 2026-10-23 | 初版作成（承認待ち）。開始準備で見本を 2 件にし、区間の航海は DEMO-101 のまま写しの出発だけを過去にすると決めた（human:kakimomokuri） | anthropic/claude-opus-5-5 |
 
