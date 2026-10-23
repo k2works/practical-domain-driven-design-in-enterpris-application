@@ -7591,6 +7591,41 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../development/cargo-tracker/bolt_37e4c_report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 37e4c 終了報告
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--draft"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../development/cargo-tracker/release_report-0_1/" class="md-nav__link">
         
   
@@ -14182,7 +14217,7 @@
 <p>Bolt 37e2（US-07 AC5 の経路設計の側）で決めたこと（<a href="../../../development/cargo-tracker/bolt_37e2_plan/">Bolt 37e2 計画</a> の確認ポイント 1〜9。2026-10-23 に human:kakimomokuri が承認。出発済みの判定（D-88）・予約の追従・画面の文言・マニュアルは Bolt 37e3。Bolt 37e3 の開始準備で、出発済みの判定は Bolt 37e4、マニュアルは Bolt 37e3b に送った）:</p>
 <ul>
 <li>DE-06 の listener は <code>routing.application.internal.eventhandlers.QuotationRouteRedesignEventHandler</code>（<code>@ApplicationModuleListener</code>。新しいトランザクション）にする。腐敗防止層 <code>QuotationRouteRedesigns.notifyRedesignRequired(案件番号, 経路版番号, 再設計要にした時刻)</code> が見積りの公開 API（<code>RouteRedesignNotification</code>）を呼び、付けなかった理由（<code>Optional&lt;String&gt;</code>）を返す。腐敗防止層は経路設計の型を公開 API の型に変えるだけ（<code>QuotationRouteAssignments</code> の前例）。値は DE-06 の項目から取り、案件を読まない。<code>NotMarked</code> は警告のログだけで例外にしない。<code>QUOTATION_NOT_FOUND</code> の警告には「経路をまだ割り当てていなければ DE-05 の listener が続けて伝える」と書く。<code>INVALID_REQUEST</code> は出口がないが、DE-06 の項目は経路設計が作るので起きないはずで、開発者が警告のログで調べる。楽観ロックの競合の例外は握りつぶさずに上げ、発行記録を未完了に残す（DE-05 の前例。ADR-014）。</li>
-<li>DE-05 の listener は、最初に案件の行を <code>FOR UPDATE</code> で読んでから集約を組み立てる（リポジトリの操作 <code>RoutingCaseRepository.findByNumberForUpdate(RoutingCaseNumber)</code>。呼び手のトランザクションの中でだけ意味を持つ）。評価の保存は案件の行を書く（<code>touchRoutingCase</code>）ので、DE-05 の listener のコミットまで待ち、評価と直列になる。見積りの公開 API で割り当てた（<code>Assigned</code>・<code>AlreadyAssigned</code>）後、その経路版が再設計要の記録を持てば、同じトランザクションで DE-06 の listener と同じ腐敗防止層から続けて再設計要を伝える。記録の有無は状態ではなく記録で見る（旧版も記録を持てる）。時刻は再設計要の記録の時刻（DE-06 の再設計要にした時刻と同じ値）で、読み直しはしない。割り当てなかった（<code>NotAssigned</code>）ときは警告だけで、続けて伝えない。続けての伝達の <code>NotMarked</code> は警告だけ（同じトランザクションの割当ては見えるので通常は起きない）。続けての伝達が楽観ロックで競合したら例外を上げて割当てごと戻す（戻った状態は未割当てで荷主は承認できない。安全側）。</li>
+<li>DE-05 の listener は、最初に案件の行を <code>FOR UPDATE</code> で読んでから集約を組み立てる（リポジトリの操作 <code>RoutingCaseRepository.findByNumberForRouteAssignment(RoutingCaseNumber)</code>。目的の名前（Bolt 37e4c）。呼び手のトランザクションの中でだけ意味を持つ）。評価の保存は案件の行を書く（<code>touchRoutingCase</code>）ので、DE-05 の listener のコミットまで待ち、評価と直列になる。見積りの公開 API で割り当てた（<code>Assigned</code>・<code>AlreadyAssigned</code>）後、その経路版が再設計要の記録を持てば、同じトランザクションで DE-06 の listener と同じ腐敗防止層から続けて再設計要を伝える。記録の有無は状態ではなく記録で見る（旧版も記録を持てる）。時刻は再設計要の記録の時刻（DE-06 の再設計要にした時刻と同じ値）で、読み直しはしない。割り当てなかった（<code>NotAssigned</code>）ときは警告だけで、続けて伝えない。続けての伝達の <code>NotMarked</code> は警告だけ（同じトランザクションの割当ては見えるので通常は起きない）。続けての伝達が楽観ロックで競合したら例外を上げて割当てごと戻す（戻った状態は未割当てで荷主は承認できない。安全側）。</li>
 <li>DE-05 と DE-06 の届く順: DE-05 の割当てのコミットの後の DE-06 は、DE-06 の listener が印を付ける。DE-06 が先に届くと（見積りはまだ詳細設計依頼済み）DE-06 の listener は <code>QUOTATION_NOT_FOUND</code> の警告で終え、後の DE-05 の listener が割り当てた後に続けて伝えて印を付ける。DE-05 が再配信されると <code>AlreadyAssigned</code> の後に続けて伝えて <code>AlreadyMarked</code> になり、DE-06 の再配信は <code>AlreadyMarked</code> になる。確定のまま（記録なし）の DE-05 は続けて伝えない。DE-05 の listener が案件の行を押さえている間に評価が保存しようとすると、評価はそのコミットまで待ってから保存して DE-06 を出す。DE-05 の listener は案件の行を押さえてから読むので、「DE-05 が確定を読んだ後に評価がコミットされ、DE-06 が割当てのコミットの前に走る」順はない。公開 API の契約（<code>RouteAssignmentRequest</code>・<code>RouteRedesignNotificationRequest</code>）は変えない。Bolt 37e の行 20 の特性テスト（DE-06 が先に届くと <code>QUOTATION_NOT_FOUND</code>）は、入力ポートの振る舞いとして残す。</li>
 <li>本予約の確定用の照会: 見積りの公開 API に <code>BookableQuotationQuery.findForConfirmation(BookableQuotationRequest)</code> を足す。見積りの行を（輸送要求 ID・見積り番号）で単表から最初に <code>SELECT ... FOR UPDATE</code> で読み、そのあと今の照会（<code>find</code>）と同じ判定と写しを返す（照会の結果の形は変えない）。入力ポートの操作は <code>@Transactional(propagation = MANDATORY)</code> で、呼び手のトランザクションの外では落とす。ロックは呼び手（本予約の確定）のトランザクションが終わるまで持つ。リポジトリの操作は目的の名前 <code>lockForBooking</code> にする（<code>PasswordResetTokenRepository.lockForIssue</code> の前例）。予約の腐敗防止層 <code>QuotationBookability</code> は、本予約の確定（POST）で確定用の照会を使い、S-09 の GET（<code>@Transactional(readOnly = true)</code>）は今の照会のまま（read-only では <code>FOR UPDATE</code> を使えない。確定の可否は POST で決める。ADR-016）。</li>
 <li>本予約の確定と印を付ける更新: 確定用の照会が見積りの行を押さえた後の印を付ける更新は、確定のコミットまで待ってから付く。予約は残る（R-INV-07）。印を付ける更新が行を押さえた後の確定用の照会は、印のコミットまで待ち、キャッシュを使わずに印を読んで再設計要で拒否する（同じトランザクションでその前に見積りを読んでいても）。予約の層は Bolt 37e3 まで <code>QuotationUnavailable(NOT_APPROVED)</code> と示すが、拒否は保たれる。再見積り（置換）との競合も同じロックで待つ（ADR-016）。</li>
