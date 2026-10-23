@@ -4,7 +4,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.example.cargotracker.identity.AuthenticationFactorFixtures;
 import com.example.cargotracker.identity.IdentityIntegrationTest;
-import com.example.cargotracker.identity.OverlappingTransactions;
 import com.example.cargotracker.identity.domain.model.aggregates.CompanyRepository;
 import com.example.cargotracker.identity.domain.model.aggregates.LoginFailureRepository;
 import com.example.cargotracker.identity.domain.model.aggregates.PasswordResetToken;
@@ -12,6 +11,7 @@ import com.example.cargotracker.identity.domain.model.aggregates.PasswordResetTo
 import com.example.cargotracker.identity.domain.model.aggregates.UserRepository;
 import com.example.cargotracker.identity.domain.model.valueobjects.PasswordPolicyViolation;
 import com.example.cargotracker.identity.infrastructure.crypto.Sha256PasswordResetTokenHasher;
+import com.example.cargotracker.shared.OverlappingTransactions;
 import com.example.cargotracker.shared.acceptance.MutableClock;
 import com.example.cargotracker.shared.domain.UserId;
 import com.example.cargotracker.shared.domain.UtcInstant;

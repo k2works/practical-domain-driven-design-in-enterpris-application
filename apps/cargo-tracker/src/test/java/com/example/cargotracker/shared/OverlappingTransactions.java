@@ -1,4 +1,4 @@
-package com.example.cargotracker.identity;
+package com.example.cargotracker.shared;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
