@@ -2,8 +2,10 @@
 type: Plan
 title: "Bolt 37e4c 計画 - US-07 AC5 の残り（届く順 B の受入シナリオ、本予約の後の予約の残り、ロックの操作の名前、#16 のクローズ）"
 tags: [plan]
-status: draft
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-23T14:36:01Z }
+status: stable
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-23T15:04:19Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-10-23T15:04:19Z }
 ---
 
 # Bolt 37e4c 計画 - US-07 AC5 の残り（届く順 B の受入シナリオ、本予約の後の予約の残り、ロックの操作の名前、#16 のクローズ）
@@ -199,6 +201,7 @@ M -> Q : 印を付ける（予約は残る）
 
 | 日付 | 更新内容 | 更新者 |
 | :--- | :--- | :--- |
+| 2026-10-24 | 計画を承認した（確認ポイント 1〜8 を推奨のとおり） | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-10-23 | 2 つの整合性検証の指摘を反映した（承認待ち）。空の操作では Red が出ないので未配信のイベントを確かめるステップを足し、行 1 の確かめを「経路版は割り当てられていない」に、行 4・5 を AC4 に、DE-06 のステップの置き場を経路設計の受入ステップに直した。行 13 を並行の形にし（human:kakimomokuri）、#16 を閉じる前例の手順（DoD のチェック、#50 への手動確認、動画の添付。human:kakimomokuri）、変異の表、名前を変える場所の数、統合テストの組み立てを足した | anthropic/claude-opus-5-5 |
 | 2026-10-23 | 初版作成（承認待ち） | anthropic/claude-opus-5-5 |
 
