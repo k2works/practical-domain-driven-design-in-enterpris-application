@@ -12,6 +12,7 @@ import com.example.cargotracker.quotation.application.internal.queryservices.Sta
 import com.example.cargotracker.quotation.domain.model.aggregates.Quotation;
 import com.example.cargotracker.quotation.domain.model.aggregates.TransportRequest;
 import com.example.cargotracker.quotation.domain.model.rules.RequotePolicy;
+import com.example.cargotracker.quotation.domain.model.valueobjects.AssignedRoute;
 import com.example.cargotracker.quotation.domain.model.valueobjects.QuotationInput;
 import com.example.cargotracker.quotation.domain.model.valueobjects.QuotationRejection;
 import com.example.cargotracker.quotation.domain.model.valueobjects.QuotationStatus;
@@ -388,8 +389,16 @@ public class StaffQuotationController {
         if (reason == QuotationRejection.APPROVED_AND_STILL_VALID) {
             return subject + " は荷主が承認済みで、まだ有効期限内です。本予約の確定へ進んでください";
         }
+        // 割り当てた経路が再設計要の見積りの期限内の再見積り（US-07 AC5。Bolt 37e3）
+        if (reason == QuotationRejection.ROUTE_REDESIGN_REQUIRED) {
+            return subject + " は割り当てた経路が再設計要のため、有効期限まで再見積りできません。経路設計者と扱いを相談してください";
+        }
         // NOT_APPROVED は予約確定の照会の理由で、この画面の操作では返らない（Bolt 23）
         return subject + " は荷主の承認の段階にあるため、この操作はできません";
+    }
+
+    private static boolean isRouteRedesignRequired(Quotation quotation) {
+        return quotation.assignedRoute().map(AssignedRoute::redesignRequired).orElse(false);
     }
 
     /**
@@ -408,6 +417,10 @@ public class StaffQuotationController {
                 + "）";
         if (quotation.status() == QuotationStatus.EXPIRED) {
             return expiresAt + "を過ぎて失効しました。この見積りは読み取り専用です。";
+        }
+        if (requoteRejection.isEmpty() && isRouteRedesignRequired(quotation)) {
+            // 割り当てた経路が再設計要の見積りは、期限の後に再見積りできるが、新しい見積りも印を引き継ぐ（US-07 AC5。Bolt 37e3）
+            return expiresAt + "を過ぎました。割り当てた経路が再設計要のため、経路を引き継いで再見積りしても荷主は承認できません。" + "経路設計者と扱いを相談してから再見積りしてください。";
         }
         if (quotation.status() == QuotationStatus.APPROVED) {
             return requoteRejection

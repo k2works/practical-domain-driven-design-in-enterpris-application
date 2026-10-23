@@ -226,10 +226,12 @@ class QuotationRouteRedesignTest {
     }
 
     @Test
-    void 印のある荷主承認待ちと承認済みは期限内には今の理由で再見積りできない() {
-        // 行 14（期限内は出口がない。担当者の相談と US-08）
-        assertThat(marked(awaitingApproval()).requoteRejectionAt(now)).contains(QuotationRejection.ROUTING_REQUESTED);
-        assertThat(marked(approved()).requoteRejectionAt(now)).contains(QuotationRejection.APPROVED_AND_STILL_VALID);
+    void 印のある荷主承認待ちと承認済みは期限内には再設計要の理由で再見積りできない() {
+        // 行 14（期限内は出口がない。担当者の相談と US-08）。Bolt 37e3 で理由を再設計要に改めた（今の状態の理由では S-04 が「詳細経路
+        // 設計を依頼済み」「本予約の確定へ進んでください」と誤って案内した。Bolt 37e3 の状態の組み合わせの行 10）
+        assertThat(marked(awaitingApproval()).requoteRejectionAt(now))
+                .contains(QuotationRejection.ROUTE_REDESIGN_REQUIRED);
+        assertThat(marked(approved()).requoteRejectionAt(now)).contains(QuotationRejection.ROUTE_REDESIGN_REQUIRED);
     }
 
     @Test

@@ -28,6 +28,7 @@ import com.example.cargotracker.quotation.application.internal.queryservices.Sta
 import com.example.cargotracker.quotation.application.internal.queryservices.StaffTransportRequestQueryService;
 import com.example.cargotracker.quotation.domain.model.aggregates.Quotation;
 import com.example.cargotracker.quotation.domain.model.aggregates.TransportRequest;
+import com.example.cargotracker.quotation.domain.model.valueobjects.AssignedRoute;
 import com.example.cargotracker.quotation.domain.model.valueobjects.Currency;
 import com.example.cargotracker.quotation.domain.model.valueobjects.PricingLineInput;
 import com.example.cargotracker.quotation.domain.model.valueobjects.QuotationFixture;
@@ -883,5 +884,59 @@ class StaffQuotationControllerTest {
                 .param("via", "")
                 .param("departureAt", "2099-10-10 09:00")
                 .param("arrivalAt", "2099-10-30 18:00");
+    }
+
+    // 割り当てた経路が再設計要の見積り（US-07 AC5。Bolt 37e3 の状態の組み合わせの行 10・11）
+
+    @Test
+    void 期限内の印のある見積りの再見積りは再設計要と経路設計者との相談を示す() throws Exception {
+        // 行 10
+        transportRequestExists();
+        given(commandService.requote(any()))
+                .willReturn(new RequotationOutcome.Rejected(QuotationRejection.ROUTE_REDESIGN_REQUIRED));
+
+        mockMvc.perform(requoteForm())
+                .andExpect(flash().attribute(
+                                "problem", "TR-2026-0001 見積 1 は割り当てた経路が再設計要のため、有効期限まで再見積りできません。経路設計者と扱いを相談してください"));
+    }
+
+    @Test
+    void 印のある荷主承認待ちと承認済みが失効したら再見積りできるが荷主は承認できないと案内する() throws Exception {
+        // 行 11
+        transportRequestExists();
+        String notice = "を過ぎました。割り当てた経路が再設計要のため、経路を引き継いで再見積りしても荷主は承認できません。" + "経路設計者と扱いを相談してから再見積りしてください。";
+        clock.setInstant(QuotationFixture.EXPIRES_AT.instant());
+        try {
+            for (Quotation quotation : List.of(marked(awaitingShipperApproval()), marked(approved()))) {
+                given(queryService.find(NUMBER, 1)).willReturn(Optional.of(quotation));
+
+                mockMvc.perform(get("/staff/transport-requests/TR-2026-0001/quotations/1"))
+                        .andExpect(content().string(containsString(notice)))
+                        .andExpect(content().string(not(containsString("再見積りはできません"))))
+                        .andExpect(content().string(not(containsString("荷主の再承認が要ります"))))
+                        .andExpect(content().string(containsString("/quotations/1/requotation")));
+            }
+        } finally {
+            clock.setInstant(NOW);
+        }
+    }
+
+    private static Quotation awaitingShipperApproval() {
+        Quotation quotation = presented();
+        UtcInstant at = new UtcInstant(Instant.parse("2026-10-06T00:30:00Z"));
+        quotation.requestRouteDesign(new UserId(UUID.randomUUID()), at);
+        quotation.assignRoute(QuotationFixture.assignedRoute(), at);
+        quotation.clearDomainEvents();
+        return quotation;
+    }
+
+    private static Quotation marked(Quotation quotation) {
+        AssignedRoute route = quotation.assignedRoute().orElseThrow();
+        quotation.markRouteRedesignRequired(
+                route.routingCaseNumber(),
+                route.routeVersionNo(),
+                new UtcInstant(Instant.parse("2026-10-07T06:00:00Z")));
+        quotation.clearDomainEvents();
+        return quotation;
     }
 }

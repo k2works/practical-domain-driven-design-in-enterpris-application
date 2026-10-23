@@ -524,12 +524,14 @@ public final class Quotation {
      */
     public Optional<QuotationRejection> requoteRejectionAt(UtcInstant at) {
         Objects.requireNonNull(at, "at");
+        // 印のある承認済み・荷主承認待ちは、期限内は再設計要の理由で拒み、期限の後は再見積りできる（D-86 の変更。Bolt 37e3 で期限内の
+        // 理由を状態の理由から再設計要に改めた）
+        if ((status == QuotationStatus.APPROVED || status == QuotationStatus.AWAITING_SHIPPER_APPROVAL)
+                && routeRedesignRejection().isPresent()) {
+            return isExpiredAt(at) ? Optional.empty() : Optional.of(QuotationRejection.ROUTE_REDESIGN_REQUIRED);
+        }
         if (status == QuotationStatus.APPROVED) {
             return isExpiredAt(at) ? Optional.empty() : Optional.of(QuotationRejection.APPROVED_AND_STILL_VALID);
-        }
-        if (status == QuotationStatus.AWAITING_SHIPPER_APPROVAL
-                && routeRedesignRejection().isPresent()) {
-            return isExpiredAt(at) ? Optional.empty() : Optional.of(QuotationRejection.ROUTING_REQUESTED);
         }
         Optional<QuotationRejection> retired = retiredRejection();
         if (retired.isPresent()) {

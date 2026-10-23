@@ -164,6 +164,7 @@ public class BookingController {
                     case EXPIRED -> subject + " は有効期限を過ぎたため本予約を確定できません。再見積りが必要です。";
                     case REPLACED -> subject + " は新しい見積りに置き換えられたため本予約を確定できません。最新の見積りを確かめてください。";
                     case NOT_APPROVED -> subject + " は荷主の承認がまだのため本予約を確定できません。";
+                    case ROUTE_REDESIGN_REQUIRED -> subject + " は割り当てた経路が再設計要のため本予約を確定できません。経路設計者と扱いを相談してください。";
                     case NOT_FOUND -> throw notFound();
                 };
         redirectAttributes.addFlashAttribute(PROBLEM, message);

@@ -10,6 +10,8 @@ public enum QuotationUnavailability {
     EXPIRED,
     /** 置換済み。 */
     REPLACED,
-    /** 荷主の承認済みでない。 */
-    NOT_APPROVED
+    /** 荷主の承認済みでない（見積りの公開 API が予約の知らない理由を返したときもここに寄せる。Bolt 37e3）。 */
+    NOT_APPROVED,
+    /** 割り当てた経路版が再設計要（US-07 AC5、B-INV-05。Bolt 37e3）。 */
+    ROUTE_REDESIGN_REQUIRED
 }
