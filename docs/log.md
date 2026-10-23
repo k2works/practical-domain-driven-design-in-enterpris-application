@@ -1,6 +1,7 @@
 # Docs Update Log
 
 ## 2026-10-23
+* **Update**: [heroku_demo_setup](/operation/cargo-tracker/heroku_demo_setup.md) を更新（anthropic/claude-opus-5-5）
 * **Update**: [用語集](/manual/用語集.md) を更新（anthropic/claude-opus-5-5）
 * **Update**: [付録B-トラブルシューティング](/manual/付録B-トラブルシューティング.md) を更新（anthropic/claude-opus-5-5）
 * **Update**: [08-経路設計](/manual/08-経路設計.md) を更新（anthropic/claude-opus-5-5）

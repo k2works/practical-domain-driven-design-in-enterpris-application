@@ -465,6 +465,21 @@ class DevSampleDataSmokeTest {
         assertThat(routeRedesignQuotation(910).status()).isEqualTo(QuotationStatus.APPROVED);
         assertThat(routeRedesignQuotation(909).isRouteRedesignRequired()).isTrue();
         assertThat(routeRedesignQuotation(910).isRouteRedesignRequired()).isTrue();
+        // 荷主の承認は 0910 だけにある（0909 は承認の前に印が付いた）
+        assertThat(routeRedesignQuotation(909).shipperApproval()).isEmpty();
+        assertThat(routeRedesignQuotation(910).shipperApproval()).isPresent();
+    }
+
+    @Test
+    void 再設計要でない見本の見積りと予約の確定待ちの行には印がない() {
+        // 陰性の対照（印の写し違いで、ほかの見本に印が付いていないこと）
+        assertThat(quotations.findAwaitingBookingSummaries())
+                .filteredOn(summary -> java.util.Set.of(906, 907, 908)
+                        .contains(summary.number().sequence()))
+                .hasSize(3)
+                .allSatisfy(
+                        summary -> assertThat(summary.routeRedesignRequired()).isFalse());
+        assertThat(expiredAfterApprovalQuotation(1).isRouteRedesignRequired()).isFalse();
     }
 
     @Test
@@ -490,12 +505,14 @@ class DevSampleDataSmokeTest {
 
             assertThat(presentedAt).as("提示 < 回答").isBefore(respondedAt);
             assertThat(respondedAt).as("回答 < 経路の確定").isBefore(confirmedAt);
-            Instant beforeRedesign = quotation
-                    .shipperApproval()
-                    .map(approval -> approval.approvedAt().instant())
-                    .orElse(confirmedAt);
-            assertThat(confirmedAt).as("経路の確定 <= 荷主の承認").isBeforeOrEqualTo(beforeRedesign);
-            assertThat(beforeRedesign).as("荷主の承認 < 再設計要").isBefore(redesignAt);
+            if (sequence == 910) {
+                Instant approvedAt =
+                        quotation.shipperApproval().orElseThrow().approvedAt().instant();
+                assertThat(confirmedAt).as("経路の確定 < 荷主の承認").isBefore(approvedAt);
+                assertThat(approvedAt).as("荷主の承認 < 再設計要").isBefore(redesignAt);
+            } else {
+                assertThat(confirmedAt).as("経路の確定 < 再設計要").isBefore(redesignAt);
+            }
             assertThat(redesignAt).as("再設計要 < 起動").isBefore(now);
             assertThat(departureAt).as("起動 < 最初の区間の出発").isAfter(now);
             assertThat(expiresAt).as("出発 < 有効期限").isAfter(departureAt);
@@ -547,11 +564,13 @@ class DevSampleDataSmokeTest {
     @Test
     void 再設計要の見本の案件は確定し直せず再設計要の記録の時刻が見積りの印と一致する() {
         // 行 7。経路設計の記録と見積りの印は別々に直接入れるので、時刻が合っていることをここで守る（DE-06 の伝達と同じ値）
-        for (int sequence : java.util.List.of(906, 907)) {
+        // 案件番号と業務番号の対応（RC-2026-0906 は TR-2026-0909、RC-2026-0907 は TR-2026-0910）
+        java.util.Map<Integer, Integer> requestOfCase = java.util.Map.of(906, 909, 907, 910);
+        for (var entry : requestOfCase.entrySet()) {
             RoutingCase routingCase = routingCases
-                    .findByNumber(new RoutingCaseNumber(2026, sequence))
+                    .findByNumber(new RoutingCaseNumber(2026, entry.getKey()))
                     .orElseThrow();
-            Quotation quotation = routeRedesignQuotation(sequence + 3);
+            Quotation quotation = routeRedesignQuotation(entry.getValue());
 
             assertThat(routingCase.confirmationRejection())
                     .contains(RouteConfirmationRejectionReason.ROUTE_REDESIGN_REQUIRED);
@@ -562,6 +581,12 @@ class DevSampleDataSmokeTest {
                     .isEqualTo(quotation.assignedRoute().orElseThrow().confirmedAt());
             assertThat(routingCase.quotationExpiresAt())
                     .contains(quotation.expiry().orElseThrow().expiresAt());
+            // S-06 は案件の候補の区間を、C-04 は見積りの割り当てた区間の写しを示すので、2 つが一致する（ADR-014）
+            assertThat(routingCase.confirmedCandidateOf(1).orElseThrow().legs())
+                    .extracting(leg -> leg.departureAt(), leg -> leg.arrivalAt())
+                    .containsExactlyElementsOf(quotation.assignedRoute().orElseThrow().legs().stream()
+                            .map(leg -> org.assertj.core.groups.Tuple.tuple(leg.departureAt(), leg.arrivalAt()))
+                            .toList());
         }
     }
 
