@@ -44,6 +44,7 @@ import com.example.cargotracker.routing.domain.model.entities.RouteVersion;
 import com.example.cargotracker.routing.domain.model.rules.ConstraintEvaluator;
 import com.example.cargotracker.routing.domain.model.rules.InfoFreshnessPolicy;
 import com.example.cargotracker.routing.domain.model.rules.RouteCandidateFinder;
+import com.example.cargotracker.routing.domain.model.valueobjects.Leg;
 import com.example.cargotracker.routing.domain.model.valueobjects.RouteConfirmationRejectionReason;
 import com.example.cargotracker.routing.domain.model.valueobjects.RouteVersionStatus;
 import com.example.cargotracker.routing.domain.model.valueobjects.RoutingCaseNumber;
@@ -583,7 +584,7 @@ class DevSampleDataSmokeTest {
                     .contains(quotation.expiry().orElseThrow().expiresAt());
             // S-06 は案件の候補の区間を、C-04 は見積りの割り当てた区間の写しを示すので、2 つが一致する（ADR-014）
             assertThat(routingCase.confirmedCandidateOf(1).orElseThrow().legs())
-                    .extracting(leg -> leg.departureAt(), leg -> leg.arrivalAt())
+                    .extracting(Leg::departureAt, Leg::arrivalAt)
                     .containsExactlyElementsOf(quotation.assignedRoute().orElseThrow().legs().stream()
                             .map(leg -> org.assertj.core.groups.Tuple.tuple(leg.departureAt(), leg.arrivalAt()))
                             .toList());
