@@ -4,7 +4,7 @@ title: "cargo-tracker ドメインモデル"
 description: "cargo-tracker の業務領域の分類、ユビキタス言語、7 つの境界づけられたコンテキスト（通知を含む）の集約・エンティティ・値オブジェクト・ドメインルール、コマンド・クエリ・イベント、予約サガ。"
 tags: [design, domain-model, ddd]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-23T05:34:01Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-23T10:51:10Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T07:41:04Z }
   - { by: human:kakimomokuri, at: 2026-10-01T07:48:17Z }
@@ -117,6 +117,7 @@ quadrantChart
 | 割り当てた経路 | AssignedRoute | 経路設計が確定して見積りに割り当てた経路版の写し（または、荷主の承認の後に失効した見積りの再見積りで旧版から写したもの。D-85、Bolt 35b）。案件番号・経路版番号・確定の時刻と区間の写しを持ち、荷主の承認の画面は経路設計に問い合わせずにこれを示す（R-INV-11、ADR-014。Bolt 20）。経路設計がその経路版を再設計要にした時刻（再設計要の印。任意）も持ち、再見積りでは経路とあわせて新しい見積りに写る。同じ経路版かは案件番号と経路版番号だけで比べ、印を見ない（US-07 AC5。Bolt 37e） | 見積り |
 | 再設計要の印 | AssignedRoute.redesignRequiredAt | 割り当てた経路の写しが持つ、経路設計がその経路版を再設計要にした時刻。印のある見積りは荷主の承認と予約確定に使えない（Q-INV-10、B-INV-05）。見積りの状態は変えない（US-07 AC5。Bolt 37e） | 見積り |
 | 割り当てた区間 | AssignedRouteLeg | 割り当てた経路の区間 1 つの写し。航海番号、積地、揚地、出発予定、到着予定（Bolt 20） | 見積り |
+| 出発済み | — | 割り当てた経路の最初の区間の出発予定が判定時刻と同時刻か前であること。見積りの状態ではなく判定時刻で決まる。境界は経路設計の確定の出発済み（`ALREADY_DEPARTED`）と同じ。出発済みの見積りは荷主の承認と本予約に使えない（`ROUTE_ALREADY_DEPARTED`。Q-INV-10、B-INV-05、D-88）。荷主の画面では社内の語を出さず「最初の航海がすでに出発した」と示す（US-07 AC5。Bolt 37e4） | 見積り（経路設計の確定にも同じ境界の判定がある） |
 | 再設計要の印の結果 | RouteRedesignMarkResult | 見積りに再設計要の印を付ける操作の結果。付けた・付いていた（最初の時刻のまま）・経路がない（経路を割り当てていない）・別の経路版（別の経路版を割り当てている）の 4 つ。付いていた・経路がない・別の経路版では見積りを変えない（US-07 AC5。Bolt 37e） | 見積り |
 | 料金根拠 | PricingBasis | 見積り金額の内訳と参照した契約条件。料金明細の列（1〜10 行）と通貨（USD・EUR・JPY）を持ち、合計は明細の和（2026-10-05 の決定。Bolt 10） | 見積り |
 | 料金明細 | PricingLine | 料金根拠の 1 行。内容、金額（0 より大きい、小数点以下 2 桁まで）、参照した契約条件（任意） | 見積り |
@@ -562,7 +563,7 @@ end note
 | Q-INV-07 | 失効・置換済みの見積りは再提示・承認・予約確定に使えない。新しい見積りを作る。失効は判定時刻 >= 有効期限で決め、状態が承認待ち・提示済みのままでも失効として扱う。承認待ちの見積りも失効したら提示できない（2026-10-05 の決定。Bolt 11。承認・予約確定での拒否は US-24・US-04 の Bolt）。承認済みで期限内の見積りは再見積りできず、期限を過ぎた承認済みは再見積りで失効にして経路・荷主の回答・経路方針を引き継ぐ（D-85、Bolt 35b） | BR-16、US-03 |
 | Q-INV-08 | 利用者は自社の輸送要求だけを操作できる（アプリケーション層で確認し、集約は荷主企業 ID を保持する） | BR-07、US-01 |
 | Q-INV-09 | 詳細経路設計の依頼と辞退は、提示済みの見積りに対してだけ行える。依頼の時刻が有効期限と同時刻または後なら失効として拒否する（Q-INV-07）。辞退には理由が必要で、辞退した見積りは失効する（依頼は 2026-10-06 の決定。Bolt 12） | US-24 |
-| Q-INV-10 | 荷主の承認は、見積りに割り当てた経路版が確定済みで、承認の時点で再設計要・旧版でなく、見積りが有効期限内のときだけ行える。承認には承認した経路版を記録する。R0.1（Bolt 20）は、荷主承認待ち・有効期限内（承認の時刻 < 有効期限）・自社の輸送要求を確かめる。再設計要の判定は Bolt 37e で足した: 置換済み・失効の記録 → 承認済み → 期限切れ → 荷主承認待ちでない の後に、割り当てた経路に再設計要の印があれば再設計要（`ROUTE_REDESIGN_REQUIRED`）で拒否する。承認済みの見積りに印が付いても、承認の判定は承認済みのまま返す（二重送信の結果を誤らせない）。旧版の判定は再設計（US-08）で足す（旧版は確定から直接移ることがあり、印が付かない）。通常の流れでは回答は提示と同時刻か後（`responseRejectionAt` で集約が守る）。回答の時刻が提示の時刻より前の見積りは、回答を引き継いだ再見積り（`requoteInto`。再承認の見積り）だけである。経路の確定の時刻は経路設計の時計で、経路の割当て（`assignRoute`）はその順を検査しないので、再承認の見積りの見分けには使わない（D-85。Bolt 35d の開発レビューで経路の確定の時刻から改めた。human:kakimomokuri の決定 (7)） | BR-01、BR-10、BR-16、US-24 |
+| Q-INV-10 | 荷主の承認は、見積りに割り当てた経路版が確定済みで、承認の時点で再設計要・旧版・出発済みでなく、見積りが有効期限内のときだけ行える。承認には承認した経路版を記録する。R0.1（Bolt 20）は、荷主承認待ち・有効期限内（承認の時刻 < 有効期限）・自社の輸送要求を確かめる。再設計要の判定は Bolt 37e で足した: 置換済み・失効の記録 → 承認済み → 期限切れ → 荷主承認待ちでない の後に、割り当てた経路に再設計要の印があれば再設計要（`ROUTE_REDESIGN_REQUIRED`）で拒否する。承認済みの見積りに印が付いても、承認の判定は承認済みのまま返す（二重送信の結果を誤らせない）。旧版の判定は再設計（US-08）で足す（旧版は確定から直接移ることがあり、印が付かない）。出発済みの判定は Bolt 37e4 で足した: 再設計要の後に、割り当てた経路の最初の区間の出発予定が承認の時刻と同時刻か前なら出発済み（`ROUTE_ALREADY_DEPARTED`）で拒否する。境界は経路設計の確定の出発済み（`ALREADY_DEPARTED`）と同じ。再設計要と出発済みの両方なら再設計要を返す（D-88）。通常の流れでは回答は提示と同時刻か後（`responseRejectionAt` で集約が守る）。回答の時刻が提示の時刻より前の見積りは、回答を引き継いだ再見積り（`requoteInto`。再承認の見積り）だけである。経路の確定の時刻は経路設計の時計で、経路の割当て（`assignRoute`）はその順を検査しないので、再承認の見積りの見分けには使わない（D-85。Bolt 35d の開発レビューで経路の確定の時刻から改めた。human:kakimomokuri の決定 (7)） | BR-01、BR-10、BR-16、US-24 |
 | Q-INV-11 | 輸送要求の複製は、輸送条件を引き継いだ新しい下書きを作る。希望到着期限と必要書類は引き継がない | US-01 |
 | Q-INV-12 | 希望到着期限は提出時刻より後でなければならない。同時刻と過去は誤りとする。期限が経路設計に間に合うかは、提出では判定せず経路設計の制約適合（BR-11）で判定する。個数は 1 以上の整数、総重量と容積は 0 より大きい値（小数点以下 3 桁まで）とする（2026-10-02 に human:kakimomokuri が承認） | US-01 |
 | Q-INV-13 | 業務番号は初回の提出で振り、差戻し・再提出・新しい版では変えない。同じ番号を 2 つの輸送要求に振らない（D-10） | US-01、D-4 |
@@ -571,6 +572,8 @@ end note
 | :--- | :--- | :--- |
 | MVP 受付範囲 | MvpAcceptancePolicy | 貨物種別が一般かを判定する。後続段階で特殊貨物を受け付けるときは、この規則を差し替える。提出の検証（ShipmentTermsInput）が使う |
 | 見積有効判定 | — | 判定時刻と有効期限から有効・失効を判定する。判定時刻は呼び出し側が commit 時刻として渡す。見積有効期限（QuotationExpiry）の「有効か(判定時刻)」が担い、別の型にしない（判定を 1 か所に置く。Bolt 11） |
+| 拒否の理由 | QuotationRejection | 見積りの集約の判定（荷主の承認 `approvalRejectionAt`、本予約の照会 `bookingRejectionAt`、再見積り `requoteRejectionAt` など）が返す、操作を受け付けない理由。状態と期限による理由（`EXPIRED`・`REPLACED`・`NOT_APPROVED`・`APPROVED_AND_STILL_VALID` など）と、割り当てた経路による理由の再設計要（`ROUTE_REDESIGN_REQUIRED`。Bolt 37e）・出発済み（`ROUTE_ALREADY_DEPARTED`。Bolt 37e4、D-88）を持つ。再設計要と出発済みの両方なら再設計要を返す。文言は画面の層が付ける |
+| 本予約の照会の理由 | BookableQuotation.Reason、BookableQuotationResult.NotBookable | 本予約の照会で見積りを使えない理由。入力ポートの理由（`BookableQuotation.Reason`）は照会（`BookableQuotationQueryService.reasonOf`。網羅の switch）が拒否の理由から選び、アダプターが公開 API の定数（`NotBookable`）に写す。見つからない（`QUOTATION_NOT_FOUND`）・失効（`EXPIRED`）・置換済み（`REPLACED`）・承認済みでない（`NOT_APPROVED`）・再設計要（`ROUTE_REDESIGN_REQUIRED`。Bolt 37e）・出発済み（`ROUTE_ALREADY_DEPARTED`。Bolt 37e4）。公開 API の定数は見積りのドメインの値の名前とは独立に決める契約で、足すだけにする（既存の定数と形は変えない） |
 
 提出の検証は、輸送条件の入力（ShipmentTermsInput）が Q-INV-01・Q-INV-02・Q-INV-12 をまとめて判定し、違反をすべて提出の検証結果（SubmissionViolations）として返す（1 件ずつ直させない）。違反がなければ、同じ判定の結果として輸送条件（ShipmentTerms）を返す（検証を通らずに輸送条件を作れないよう、変換を別の操作に分けない。Bolt 4 レビュー R-04）。そのうえで業務番号の採番（TransportRequestNumberIssuer）で番号を得て提出する。採番のポートは `domain.model` に置き、実装は `infrastructure.persistence` に置く。
 
@@ -616,10 +619,18 @@ Bolt 37e2（US-07 AC5 の経路設計の側）で決めたこと（[Bolt 37e2 �
 Bolt 37e3（US-07 AC5 の予約と画面の側）で決めたこと（[Bolt 37e3 計画](../../development/cargo-tracker/bolt_37e3_plan.md) の確認ポイント 1〜10。2026-10-23 に human:kakimomokuri が承認。出発済みの判定（D-88）は Bolt 37e4、開発データの見本・マニュアル・デモは Bolt 37e3b）:
 
 - 再見積りの判定（`Quotation.requoteRejectionAt`）は、割り当てた経路に再設計要の印があり有効期限内なら、状態（承認済み・荷主承認待ち）によらず再設計要（`ROUTE_REDESIGN_REQUIRED`）を返す。これまでは承認済みが `APPROVED_AND_STILL_VALID`、荷主承認待ちが `ROUTING_REQUESTED` になり、S-04 が「本予約の確定へ進んでください」「詳細経路設計を依頼済み」と誤って案内した。期限の後は今のまま再見積りできる（D-86 の変更。新しい見積りは経路と印を引き継ぐ）。再見積りの可否は変えず、理由だけを変える（開始準備の決定 (5)。Bolt 37e の行 14b・14c の期待値が変わる）。
-- 予約の腐敗防止層の理由（`QuotationUnavailability`）に再設計要（`ROUTE_REDESIGN_REQUIRED`）を足し、腐敗防止層 `QuotationBookability` が見積りの公開 API の理由（`BookableQuotationResult.NotBookable` の `ROUTE_REDESIGN_REQUIRED`）から写す。知らない理由を写す `default` の腕は残し、今のまま承認済みでない（`NOT_APPROVED`）に寄せる（見積りが理由を足したときに S-09 が 500 にならないように。確認ポイント 2）。公開 API の契約（理由の定数）は変えない。下の予約の B-INV-05。
+- 予約の腐敗防止層の理由（`QuotationUnavailability`）に再設計要（`ROUTE_REDESIGN_REQUIRED`）を足し、腐敗防止層 `QuotationBookability` が見積りの公開 API の理由（`BookableQuotationResult.NotBookable` の `ROUTE_REDESIGN_REQUIRED`）から写す。知らない理由を写す `default` の腕は残し、今のまま承認済みでない（`NOT_APPROVED`）に寄せる（見積りが理由を足したときに S-09 が 500 にならないように。確認ポイント 2）。公開 API の契約（理由の定数）は変えない。下の予約の B-INV-05。Bolt 37e4 で、公開 API に出発済みの定数（`NotBookable.ROUTE_ALREADY_DEPARTED`）を足した（定数を足すだけで、既存の定数と形は変えない。下の Bolt 37e4 で決めたこと）。
 - 営業の文言は、再見積りの拒否の理由を写す今の腕（`approvalStageRejection`）の中で言い分け、`StaffQuotationController.rejection` の腕は増やさない（循環的複雑度の上限 10。Bolt 37e の決定）。文言は ui_design の S-02・S-04・S-09・C-04・C-17。荷主の画面には社内の語（再設計要、印、DE-06、経路版の番号）を出さない。
 - S-02 の予約の確定待ちの照会の行に再設計要の有無（`route_redesign_required_at` の有無）を足す。スキーマは変えない。印のある行は表から除かない（除くと、期限の後の再見積りの入口が消え、D-86 の変更と食い違う。開始準備の決定 (4)）。
 - 見積りと案件の状態、状態遷移は変えない。
+
+Bolt 37e4（US-07 AC5 の出発済みの経路。D-88）で決めたこと（[Bolt 37e4 計画](../../development/cargo-tracker/bolt_37e4_plan.md) の確認ポイント 1〜10。2026-10-23 に human:kakimomokuri が承認。開発データの見本とデモは Bolt 37e4b、Bolt 37e2 の既知の課題と #16 のクローズは Bolt 37e4c）:
+
+- 荷主の承認の判定（`approvalRejectionAt`）と本予約の判定（`bookingRejectionAt`）の最後（再設計要の後）に、割り当てた経路の最初の区間の出発予定が判定時刻と同時刻か前なら出発済み（`ROUTE_ALREADY_DEPARTED`）を返す。境界は経路設計の確定の出発済み（`ALREADY_DEPARTED`）と同じ。判定時刻は、荷主の承認は承認の時刻、本予約は commit 時刻。再設計要と出発済みの両方なら再設計要を返す（再設計要のほうが根本の理由で、Bolt 37e3 の文言と見本を変えない。確認ポイント 2）。
+- 区間の写しは見積りが持つ（`AssignedRoute.legs()`。ADR-014）ので、経路設計に問い合わせずに見積りの中で判定する。出発済みは状態ではなく判定時刻で決まるので、見積りの状態と状態遷移は変えない。スキーマも変えない。
+- 再見積りの判定（`requoteRejectionAt`）は、受け付けるかどうかを変えない（D-88。出発済みでも期限の後は再見積りでき、新しい見積りも荷主の承認で出発済みとして拒否される）。承認済みで有効期限内の拒否の理由だけ、出発済みなら `ROUTE_ALREADY_DEPARTED` にする（これまでは `APPROVED_AND_STILL_VALID` で、S-04 が「本予約の確定へ進んでください」と誤って案内した）。再設計要が先（開始準備の決定 (4)）。
+- 理由は Bolt 37e3 の再設計要と同じ道で流す: 拒否の理由 `QuotationRejection.ROUTE_ALREADY_DEPARTED` → 入力ポートの理由 `BookableQuotation.Reason.ROUTE_ALREADY_DEPARTED` → 公開 API `BookableQuotationResult.NotBookable.ROUTE_ALREADY_DEPARTED` → 予約の腐敗防止層 `QuotationUnavailability.ROUTE_ALREADY_DEPARTED`。公開 API は定数を足すだけにする（確認ポイント 4）。腐敗防止層は知らない理由を今のまま `NOT_APPROVED` に寄せる。既定の腕のない網羅の switch（荷主の回答の画面と営業の見積りの画面）は、今の組に名前を入れ、腕を増やさない。
+- 文言は ui_design の C-04・C-17・S-02・S-04・S-09。荷主の画面は社内の語（区間、出発済み）を出さず「割り当てた経路の最初の航海がすでに出発した」と示し、社内の画面は「最初の区間が出発済み」と示す。`isPresentedForReapproval` は変えない（US-08・D-86 で見直す）。
 
 ### 経路設計（Routing、U2）
 
@@ -925,7 +936,7 @@ title 貨物予約の状態遷移（本予約以後）
 | B-INV-02 | 見積りの有効性は予約確定の commit 時刻で判定する。同時刻以後は失効。判定は見積りの Q-INV-06 の 1 か所に置き、予約は commit 時刻を渡して見積りの公開 API で照会する（ADR-016） | BR-10、US-04 |
 | B-INV-03 | 同じコマンド ID の確定要求は予約を重複生成せず、既存の追跡番号を返す。同じコマンド ID で内容（業務番号・見積り番号・操作者）が違えば衝突として拒否する。確定に成功した要求だけを処理済みコマンドに記録する。処理済みコマンドは 90 日で削除する（RET-06）ので、その後の同じコマンド ID の再送は同じ見積りの予約として既存の追跡番号を示す（Bolt 24） | US-04、PV-01 |
 | B-INV-04 | 特殊貨物を含む輸送要求は確定しない（Bolt 35。見積りの提出の拒否に加えて、予約の集約が写した貨物種別を規則 `BookableCargoPolicy` で判定する二重の守り。一般貨物のほかと知らない値は確定しない） | BR-03、US-04 |
-| B-INV-05 | 再設計要・旧版の経路版、失効・置換済みの見積りは確定・新しい予約版に使えない。再設計要は Bolt 37e から、見積りの本予約の判定（`bookingRejectionAt`）が 置換済み・失効の記録 → 期限切れ → 承認済みでない の後に、割り当てた経路の再設計要の印で `ROUTE_REDESIGN_REQUIRED` を返し、見積りの公開 API（`BookableQuotationResult.NotBookable`）で予約に伝える（ADR-016）。予約の側の理由（`QuotationUnavailability`）と画面の文言は Bolt 37e3。Bolt 37e3 で、予約の腐敗防止層が `ROUTE_REDESIGN_REQUIRED` を `QuotationUnavailability` の再設計要（`ROUTE_REDESIGN_REQUIRED`）に写し、S-09 は再設計要の理由を示す（知らない理由は今のまま `NOT_APPROVED` に寄せる）。旧版の判定は US-08 | BR-16 |
+| B-INV-05 | 再設計要・旧版・出発済みの経路版、失効・置換済みの見積りは確定・新しい予約版に使えない。再設計要は Bolt 37e から、見積りの本予約の判定（`bookingRejectionAt`）が 置換済み・失効の記録 → 期限切れ → 承認済みでない の後に、割り当てた経路の再設計要の印で `ROUTE_REDESIGN_REQUIRED` を返し、見積りの公開 API（`BookableQuotationResult.NotBookable`）で予約に伝える（ADR-016）。予約の側の理由（`QuotationUnavailability`）と画面の文言は Bolt 37e3。Bolt 37e3 で、予約の腐敗防止層が `ROUTE_REDESIGN_REQUIRED` を `QuotationUnavailability` の再設計要（`ROUTE_REDESIGN_REQUIRED`）に写し、S-09 は再設計要の理由を示す（知らない理由は今のまま `NOT_APPROVED` に寄せる）。Bolt 37e4 で、本予約の判定が再設計要の後に、割り当てた経路の最初の区間の出発予定が commit 時刻と同時刻か前なら `ROUTE_ALREADY_DEPARTED` を返し、公開 API（`NotBookable.ROUTE_ALREADY_DEPARTED`）と予約の腐敗防止層（`QuotationUnavailability` の出発済み）を通して S-09 が出発済みの理由を示す（D-88）。旧版の判定は US-08 | BR-16 |
 | B-INV-06 | 変更・取消しの申請は集荷前（輸送段階が集荷前）のときだけ受け付け、予約の状態は承認まで変えない。輸送段階は DE-09 で結果整合的に更新されるため、申請の承認時には追跡の公開 API で集荷実績の有無を同期で確かめ、採用済みなら承認せず有人案件へ引き継ぐ。注: 「追跡の公開 API へ同期で確かめる」は、追跡が予約の下流なので ADR-015 の依存の向きと食い違う。US-05（W11）の Bolt で決め直す | BR-04、US-05 |
 | B-INV-07 | 集荷後の通常の変更・取消しは拒否し、要求と理由を記録して有人案件へ引き継ぐ | BR-04、BR-17、US-05 |
 | B-INV-08 | 予約版は不変。変更の承認で料金・経路に影響する場合は、旧版を保持して新しい予約版を作る | BR-04、US-05 |
@@ -939,7 +950,7 @@ title 貨物予約の状態遷移（本予約以後）
 | 確定条件の検証 | BookingConditions | 見積り・経路版・貨物・承認の状態を受け取り、不足条件を返す。見積りと経路版の状態は、アプリケーションサービスが ACL 越しに取得して値として渡す |
 | 追跡番号の発行 | TrackingNumberIssuer | 推測されにくい一意な追跡番号を発行する（ファクトリ） |
 | 確定できる貨物の規則 | BookableCargoPolicy | 写した貨物種別の名前が一般貨物（`GENERAL`）のときだけ確定できるとする（B-INV-04。Bolt 35）。知らない値・空の値は確定しない。見積りの `MvpAcceptancePolicy` は使わない（BC の独立。予約は見積りの公開 API から写した値だけで判定する）。サービスの判定、`Booking.confirm`、S-09 を開いたときの読み取りモデル（`BookingConfirmationPage.Available.specialCargo`）の 3 か所が同じ規則を使う |
-| 見積りを使えない理由 | QuotationUnavailability | 見積りの公開 API の照会の結果から予約の腐敗防止層（`QuotationBookability`）が写す、本予約の確定に見積りを使えない理由。見つからない（`NOT_FOUND`）・失効（`EXPIRED`）・置換済み（`REPLACED`）・承認済みでない（`NOT_APPROVED`）・再設計要（`ROUTE_REDESIGN_REQUIRED`。Bolt 37e3）。知らない理由は承認済みでないに寄せる。理由で分岐するのは S-09 の文言（`BookingController`）と確定の判定（`BookingCommandService`）の 2 か所（T-175。B-INV-05） |
+| 見積りを使えない理由 | QuotationUnavailability | 見積りの公開 API の照会の結果から予約の腐敗防止層（`QuotationBookability`）が写す、本予約の確定に見積りを使えない理由。見つからない（`NOT_FOUND`）・失効（`EXPIRED`）・置換済み（`REPLACED`）・承認済みでない（`NOT_APPROVED`）・再設計要（`ROUTE_REDESIGN_REQUIRED`。Bolt 37e3）・出発済み（`ROUTE_ALREADY_DEPARTED`。Bolt 37e4）。知らない理由は承認済みでないに寄せる。理由で分岐するのは S-09 の文言（`BookingController`）と確定の判定（`BookingCommandService`）の 2 か所（T-175。B-INV-05） |
 | 確定の判定の順序 | BookingCommandService | 役割（B-INV-10）→ 処理済みコマンド（B-INV-03。内容が同じなら最初の結果、違えば衝突）→ 業務番号と見積り番号で引いた同じ見積りの貨物予約（B-INV-11。既存の追跡番号）→ 見積りの公開 API の照会（commit 時刻。B-INV-02・05）→ 特殊貨物（B-INV-04。Bolt 35）→ 確定条件（B-INV-01）の順に判定する。特殊貨物は直せないので確定条件より先に返し、追跡番号を発行しない。確定の後に見積りが失効・置換されても、再送と同じ見積りの確定は失効にしない。同時の確定で一意制約に負けた側は、保存をセーブポイントに戻し、同じトランザクションで読み直して同じ結果を返す（Bolt 24） |
 
 ### 追跡（Tracking、U3）
