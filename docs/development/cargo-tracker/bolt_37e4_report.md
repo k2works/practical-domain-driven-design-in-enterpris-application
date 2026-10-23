@@ -3,7 +3,7 @@ type: Plan
 title: "Bolt 37e4 終了報告 - US-07 AC5 の出発済みの経路（D-88 の判定・理由・文言・マニュアル）"
 tags: [plan]
 status: draft
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-23T12:09:50Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-23T12:27:10Z }
 ---
 
 # Bolt 37e4 終了報告 - US-07 AC5 の出発済みの経路（D-88 の判定・理由・文言・マニュアル）
@@ -40,7 +40,7 @@ generated: { by: anthropic/claude-opus-5-5, at: 2026-10-23T12:09:50Z }
 | Bolt | 第 37e4 回（W6 の 12 本目） |
 | 期間 | 2026-10-23（計画の承認の記録 `75bae59a4` から、終了報告の承認の依頼まで） |
 | 対象 | 見積りの判定と理由、公開 API、予約の腐敗防止層と S-09、C-04・C-17、S-02 の照会と行、S-04 の再見積りの拒否、画面の層のシナリオ `features/ui/route_already_departed_ui.feature`、マニュアル 4.2・6.4・7.1・7.2・付録 B・用語集とキャプチャ 2 枚 |
-| GitHub | [#16](https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/16)（閉じるのは Bolt 37e4c） |
+| GitHub | [#16](https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/16)（[実装のコメント](https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/16#issuecomment-6364535234)。閉じるのは Bolt 37e4c） |
 | SP | 0（US-07 の 2 SP は Bolt 37e4c で数える） |
 | 計画 | [Bolt 37e4 計画](bolt_37e4_plan.md) |
 
@@ -68,7 +68,7 @@ generated: { by: anthropic/claude-opus-5-5, at: 2026-10-23T12:09:50Z }
 | 変異 | 16 個。計画の 11 個（境界を前だけにする、荷主の承認・本予約が出発を見ない、理由の順を入れ替える、再見積りの期限内の理由を戻す、腐敗防止層が写さない、S-09 が未承認の文言、C-04 が理由を示さない、C-04 の承認済みの段落が出発を見ない、C-17 が既定の文言、S-02 が本予約の入口を出す）に、S-02 の照会の出発の列を落とす（T-181）を足した 12 個と、開発レビューの後の 4 つ（C-04 の経路の案内が失効を見ない、両方のときに出発済みを先にする、C-04 の見方が出発を見ない、最初の区間を最後の区間にする）。どれも狙ったテストで落ちた。落ちた検査の名前は変異ごとに確かめた（T-187） |
 | SonarQube | PASS（新しいコードの網羅率 95.8%、重複 0.04%、違反 0） |
 | `okf:check` | ERROR 0 |
-| CI | CI_RESULT |
+| CI | `c0ea54f54` で `check`・`ui`・`deploy-demo` が 1 回で成功した。MkDocs の配備も成功し、デモ環境は v396 で動いている |
 
 ### 開発レビューの指摘と扱い（主なもの）
 
