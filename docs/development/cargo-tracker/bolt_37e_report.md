@@ -3,7 +3,7 @@ type: Plan
 title: "Bolt 37e 終了報告 - US-07 AC5 の見積りの側（割り当てた経路の再設計要の印、荷主の承認と本予約の判定、見積りの公開 API）"
 tags: [plan]
 status: draft
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-23T01:10:06Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-23T01:31:39Z }
 ---
 
 # Bolt 37e 終了報告 - US-07 AC5 の見積りの側（割り当てた経路の再設計要の印、荷主の承認と本予約の判定、見積りの公開 API）
@@ -68,7 +68,7 @@ generated: { by: anthropic/claude-opus-5-5, at: 2026-10-23T01:10:06Z }
 | 変異 | 計画の 6 つ（印があっても承認・本予約できる、再見積りで印を写さない、2 度目に時刻を上書きする、別の経路版にも付ける、照会し直さない）と、レビューで足した 1 つ（INSERT から列を落とす）が、どれも狙ったテストで落ちた |
 | SonarQube | PASS（新しいコードの網羅率 95.8%、重複 0.04%、違反 0） |
 | `okf:check` | ERROR 0 |
-| CI | 1 回目の報告の時点（`92cde5ae3`）: `ui` のジョブが Playwright の導入で止まって時間切れになり、流し直して成功した。直しの後は（push の後に書く） |
+| CI | 1 回目の報告の時点（`92cde5ae3`）: `ui` のジョブが Playwright の導入で止まって時間切れになり、流し直して成功した。直しの後（`f38b346f5`）は 1 回で `check`・`ui`・`deploy-demo` が成功し、デモ環境は v388 で動いている |
 
 ### 開発レビューの指摘と扱い（主なもの）
 
