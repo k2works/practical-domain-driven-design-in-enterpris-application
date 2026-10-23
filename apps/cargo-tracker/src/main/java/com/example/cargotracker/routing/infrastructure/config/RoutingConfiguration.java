@@ -2,11 +2,14 @@ package com.example.cargotracker.routing.infrastructure.config;
 
 import com.example.cargotracker.quotation.interfaces.api.RouteAssignment;
 import com.example.cargotracker.quotation.interfaces.api.RouteConditionQuery;
+import com.example.cargotracker.quotation.interfaces.api.RouteRedesignNotification;
 import com.example.cargotracker.routing.application.internal.commandservices.RoutingCaseCommandService;
 import com.example.cargotracker.routing.application.internal.eventhandlers.QuotationRouteAssignmentEventHandler;
+import com.example.cargotracker.routing.application.internal.eventhandlers.QuotationRouteRedesignEventHandler;
 import com.example.cargotracker.routing.application.internal.eventhandlers.RoutingCaseOpeningEventHandler;
 import com.example.cargotracker.routing.application.internal.outboundservices.acl.QuotationRouteAssignments;
 import com.example.cargotracker.routing.application.internal.outboundservices.acl.QuotationRouteConditions;
+import com.example.cargotracker.routing.application.internal.outboundservices.acl.QuotationRouteRedesigns;
 import com.example.cargotracker.routing.application.internal.queryservices.RoutingCaseQueryService;
 import com.example.cargotracker.routing.domain.model.aggregates.ConnectionRuleRepository;
 import com.example.cargotracker.routing.domain.model.aggregates.RoutingCaseNumberIssuer;
@@ -56,6 +59,18 @@ public class RoutingConfiguration {
     QuotationRouteAssignmentEventHandler quotationRouteAssignmentEventHandler(
             RoutingCaseRepository repository, QuotationRouteAssignments routeAssignments) {
         return new QuotationRouteAssignmentEventHandler(repository, routeAssignments);
+    }
+
+    /** 見積りの公開 API（再設計要の伝達）を呼ぶ腐敗防止層（ADR-014。Bolt 37e2）。 */
+    @Bean
+    QuotationRouteRedesigns quotationRouteRedesigns(RouteRedesignNotification notification) {
+        return new QuotationRouteRedesigns(notification);
+    }
+
+    /** DE-06 を受けて見積りに再設計要の印を付ける（別のトランザクションで動く。Bolt 37e2）。 */
+    @Bean
+    QuotationRouteRedesignEventHandler quotationRouteRedesignEventHandler(QuotationRouteRedesigns routeRedesigns) {
+        return new QuotationRouteRedesignEventHandler(routeRedesigns);
     }
 
     /**

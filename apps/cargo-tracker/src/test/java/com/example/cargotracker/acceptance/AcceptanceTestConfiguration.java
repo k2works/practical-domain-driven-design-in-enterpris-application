@@ -57,11 +57,14 @@ import com.example.cargotracker.routing.acceptance.InMemoryRoutingCaseRepository
 import com.example.cargotracker.routing.acceptance.InMemoryVoyageRepository;
 import com.example.cargotracker.routing.application.internal.commandservices.RoutingCaseCommandService;
 import com.example.cargotracker.routing.application.internal.eventhandlers.QuotationRouteAssignmentEventHandler;
+import com.example.cargotracker.routing.application.internal.eventhandlers.QuotationRouteRedesignEventHandler;
 import com.example.cargotracker.routing.application.internal.eventhandlers.RoutingCaseOpeningEventHandler;
 import com.example.cargotracker.routing.application.internal.outboundservices.acl.QuotationRouteAssignments;
 import com.example.cargotracker.routing.application.internal.outboundservices.acl.QuotationRouteConditions;
+import com.example.cargotracker.routing.application.internal.outboundservices.acl.QuotationRouteRedesigns;
 import com.example.cargotracker.routing.application.internal.queryservices.RoutingCaseQueryService;
 import com.example.cargotracker.routing.domain.events.RouteConfirmed;
+import com.example.cargotracker.routing.domain.events.RouteRedesignRequired;
 import com.example.cargotracker.routing.domain.model.rules.InfoFreshnessPolicy;
 import com.example.cargotracker.routing.interfaces.api.internal.RouteVersionLegQueryAdapter;
 import com.example.cargotracker.shared.acceptance.DeferredEventDelivery;
@@ -290,7 +293,7 @@ public class AcceptanceTestConfiguration {
             return new RouteAssignmentService(quotationRepository, eventDelivery, clock);
         }
 
-        /** 再設計要の伝達（見積りの公開 API。ADR-014。Bolt 37e）。経路設計の DE-06 の listener は Bolt 37e2。 */
+        /** 再設計要の伝達（見積りの公開 API。ADR-014。Bolt 37e）。経路設計の DE-06 の listener が呼ぶ（Bolt 37e2）。 */
         @Bean
         RouteRedesignNotification routeRedesignNotification(InMemoryQuotationRepository quotationRepository) {
             return new RouteRedesignNotificationAdapter(new RouteRedesignService(quotationRepository));
@@ -311,6 +314,13 @@ public class AcceptanceTestConfiguration {
                 InMemoryRoutingCaseRepository repository, RouteAssignmentService routeAssignment) {
             return new QuotationRouteAssignmentEventHandler(
                     repository, new QuotationRouteAssignments(new RouteAssignmentAdapter(routeAssignment)));
+        }
+
+        /** 経路設計は DE-06 を受けて見積りの公開 API（再設計要の伝達）を呼ぶ（Bolt 37e2）。 */
+        @Bean
+        QuotationRouteRedesignEventHandler quotationRouteRedesignEventHandler(
+                RouteRedesignNotification routeRedesignNotification) {
+            return new QuotationRouteRedesignEventHandler(new QuotationRouteRedesigns(routeRedesignNotification));
         }
 
         @Bean
@@ -340,6 +350,7 @@ public class AcceptanceTestConfiguration {
                 RouteDesignRequestedEventHandler routeDesignRequestedEventHandler,
                 RoutingCaseOpeningEventHandler routingCaseOpeningEventHandler,
                 QuotationRouteAssignmentEventHandler quotationRouteAssignmentEventHandler,
+                QuotationRouteRedesignEventHandler quotationRouteRedesignEventHandler,
                 QuotationRouteAssignedEventHandler quotationRouteAssignedEventHandler,
                 QuotationApprovedByShipperEventHandler quotationApprovedByShipperEventHandler,
                 QuotationPresentedForReapprovalEventHandler quotationPresentedForReapprovalEventHandler,
@@ -358,6 +369,7 @@ public class AcceptanceTestConfiguration {
                         routingCaseOpeningEventHandler.on(requested);
                     }
                     case RouteConfirmed confirmed -> quotationRouteAssignmentEventHandler.on(confirmed);
+                    case RouteRedesignRequired required -> quotationRouteRedesignEventHandler.on(required);
                     case QuotationRouteAssigned assigned -> quotationRouteAssignedEventHandler.on(assigned);
                     case QuotationApprovedByShipper approved -> quotationApprovedByShipperEventHandler.on(approved);
                     case QuotationPresentedForReapproval reapproval ->
