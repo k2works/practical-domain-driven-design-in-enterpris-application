@@ -7588,6 +7588,41 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../development/cargo-tracker/bolt_37f_report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 37f 終了報告
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--draft"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../development/cargo-tracker/release_report-0_1/" class="md-nav__link">
         
   
@@ -12956,7 +12991,7 @@
 <h3 id="_8">置き場所とステップ定義<a class="headerlink" href="#_8" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code>src/test/resources/features/
 ├── quotation/        US-01〜03
-├── routing/          US-06〜08、golden/（Golden dataset）
+├── routing/          US-06〜08、golden/（Golden dataset。案件のデータは src/test/resources/golden/v0/）
 ├── booking/          US-04、US-05
 ├── tracking/         US-09〜13、US-20
 ├── identity/         US-16〜19
@@ -13007,27 +13042,61 @@ src/test/java/.../ui/                     画面の層のステップ定義（@u
 <span class="nf">    </span><span class="k">ならば</span><span class="nf"> 予約は </span><span class="s">1</span><span class="nf"> 件のままで、既存の追跡番号が返される</span>
 </code></pre></div>
 <h3 id="golden-dataset">Golden dataset（経路設計）<a class="headerlink" href="#golden-dataset" title="Permanent link">&para;</a></h3>
-<p>要件定義の Golden dataset（代表案件を複数の経路設計者とコンプライアンス担当者が承認したもの）は、<code>@golden</code> のシナリオアウトラインとして例の表で表す。期待候補・除外候補・除外理由を例の列にし、データの版を Feature の説明に書く。データそのものは業務責任者が決める（要件定義 H-9 の残作業）。</p>
+<p>要件定義の Golden dataset（代表案件を複数の経路設計者とコンプライアンス担当者が承認したもの）は、<code>@golden</code> のシナリオアウトラインとして例の表で表す。期待候補・除外候補・除外理由を例の列にし、データの版を Feature の説明に書く。データそのものは業務責任者が決める（要件定義 H-9 の残作業、TST-02）。</p>
+<p>Golden dataset v0（Bolt 37f。仮の値で業務責任者の承認待ち）は、案件ごとのデータ（<code>src/test/resources/golden/v0/G-nn.json</code>。版・判断根拠・規制資料・承認者・適用期間・入力・期待結果）を、受入シナリオ（区分ごとの要約）と集約の単位のテスト（<code>RoutingCaseGoldenDatasetTest</code>。候補一覧の全体）で共有する。輸送条件は受入シナリオの背景の値にそろえ、必要最小接続時間の規則と航海は案件のデータだけから入れる。例の表の要約は、実際の候補と案件のデータの期待結果の両方と比べる（2 つを食い違わせない）。除外の要約は「番号:理由」で、理由は集約が付けた順に「・」でつなぎ、同じ理由は 1 つにする。下は抜粋（背景と区分の列を省く）。</p>
 <div class="highlight"><pre><span></span><code><span class="c"># language: ja</span>
 <span class="nt">@US-06</span><span class="nf"> </span><span class="nt">@golden</span><span class="nf"> </span><span class="nt">@BR-11</span>
 <span class="k">機能:</span><span class="nf"> 経路候補の制約適合判定（Golden dataset v0）</span>
 
-<span class="nf">  </span><span class="k">シナリオアウトライン:</span><span class="nf"> 代表案件の候補と除外理由が承認済みの結果と一致する</span>
-<span class="k">    前提</span><span class="nf"> Golden dataset の案件 "</span><span class="nv">&lt;案件&gt;</span><span class="nf">" を読み込む</span>
-<span class="nf">    </span><span class="k">もし</span><span class="nf"> 候補を算出する</span>
+<span class="nf">  </span><span class="k">シナリオアウトライン:</span><span class="nf"> 代表案件の候補と除外理由が期待結果と一致する</span>
+<span class="k">    前提</span><span class="nf"> Golden dataset v</span><span class="s">0</span><span class="nf"> の案件 "</span><span class="nv">&lt;案件&gt;</span><span class="nf">" の規則と航海を読み込む</span>
+<span class="nf">    </span><span class="k">かつ</span><span class="nf"> 現在時刻を案件の判定時刻にする</span>
+<span class="nf">    </span><span class="k">もし</span><span class="nf"> 経路設計者が案件の候補を算出する</span>
 <span class="nf">    </span><span class="k">ならば</span><span class="nf"> 適合候補は "</span><span class="nv">&lt;適合候補&gt;</span><span class="nf">" である</span>
 <span class="nf">    </span><span class="k">かつ</span><span class="nf"> 除外候補と理由は "</span><span class="nv">&lt;除外&gt;</span><span class="nf">" である</span>
 
 <span class="nf">    </span><span class="k">例:</span>
 <span class="k">      |</span><span class="nv"> 案件</span><span class="k"> |</span><span class="nv"> 適合候補</span><span class="k"> |</span><span class="nv"> 除外</span><span class="k"> |</span>
-<span class="k">      |</span><span class="s"> G-01 標準・直行と積替え</span><span class="k"> |</span><span class="s"> 1,2</span><span class="k"> |</span><span class="s"> なし</span><span class="k"> |</span>
-<span class="k">      |</span><span class="s"> G-02 接続時間の境界</span><span class="k"> |</span><span class="s"> 1,2</span><span class="k"> |</span><span class="s"> 3:CONNECTION_TOO_SHORT</span><span class="k"> |</span>
-<span class="k">      |</span><span class="s"> G-03 期限超過を含む</span><span class="k"> |</span><span class="s"> 1</span><span class="k"> |</span><span class="s"> 2:DEADLINE_EXCEEDED</span><span class="k"> |</span>
-<span class="k">      |</span><span class="s"> G-04 特殊貨物（MVP 対象外）</span><span class="k"> |</span><span class="s"> なし</span><span class="k"> |</span><span class="s"> 全候補:CARGO_NOT_SUPPORTED</span><span class="k"> |</span>
-<span class="k">      |</span><span class="s"> G-05 欠航・港湾閉鎖による再設計</span><span class="k"> |</span><span class="s"> 1</span><span class="k"> |</span><span class="s"> 2:NOT_CONNECTABLE</span><span class="k"> |</span>
-<span class="k">      |</span><span class="s"> G-06 外部データの欠落・古さ・矛盾</span><span class="k"> |</span><span class="s"> なし</span><span class="k"> |</span><span class="s"> 全候補:INFO_INSUFFICIENT</span><span class="k"> |</span>
+<span class="k">      |</span><span class="s"> G-01</span><span class="k"> |</span><span class="s"> 1,2,3,4</span><span class="k"> |</span><span class="s"> なし</span><span class="k"> |</span>
+<span class="k">      |</span><span class="s"> G-02</span><span class="k"> |</span><span class="s"> 1,2</span><span class="k"> |</span><span class="s"> 3:接続不足</span><span class="k"> |</span>
+<span class="k">      |</span><span class="s"> G-03</span><span class="k"> |</span><span class="s"> 1</span><span class="k"> |</span><span class="s"> 2:期限超過</span><span class="k"> |</span>
+<span class="k">      |</span><span class="s"> G-06</span><span class="k"> |</span><span class="s"> 1</span><span class="k"> |</span><span class="s"> 2:情報不足</span><span class="k"> |</span>
 </code></pre></div>
-<p>例の 6 区分は要件定義の Golden dataset の代表案件の区分に対応する。表の値は区分を示すための仮の値で、実際の案件と期待結果は業務責任者が決める。</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">区分</th>
+<th style="text-align: left;">v0 の扱い（W6 の確認ポイント 11）</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">G-01 標準・直行と積替え</td>
+<td style="text-align: left;">直行 2 つ（到着が同時刻で航海番号の順）・積替え 1 回・積替え 2 回（3 区間）の 4 候補。すべて適合</td>
+</tr>
+<tr>
+<td style="text-align: left;">G-02 接続時間の境界</td>
+<td style="text-align: left;">接続余裕がちょうど（適合）と 1 分足りない（接続不足）</td>
+</tr>
+<tr>
+<td style="text-align: left;">G-03 期限超過を含む</td>
+<td style="text-align: left;">到着が期限と同時刻（適合）と 1 分過ぎる（期限超過）</td>
+</tr>
+<tr>
+<td style="text-align: left;">G-04 特殊貨物（MVP 対象外）</td>
+<td style="text-align: left;">提出で拒まれ、経路設計の案件はできない（US-01 AC4。別の feature の業務ルール層のシナリオ）。経路設計の貨物種別の判定は W7</td>
+</tr>
+<tr>
+<td style="text-align: left;">G-05 欠航・港湾閉鎖による再設計</td>
+<td style="text-align: left;">v0 に入れない（US-08、W13）</td>
+</tr>
+<tr>
+<td style="text-align: left;">G-06 外部データの欠落・古さ・矛盾</td>
+<td style="text-align: left;">古さだけ。取得からちょうど許容時間（24 時間）の航海は足り、24 時間 1 分の航海を使う候補だけが情報不足。欠落・矛盾は W7（US-14）</td>
+</tr>
+</tbody>
+</table>
+<p>表の値は区分を示すための仮の値で、実際の案件と期待結果は業務責任者が決める（TST-02 が届いたら差し替えの Bolt を足す）。</p>
 <h2 id="_10">不変条件とテストの対応<a class="headerlink" href="#_10" title="Permanent link">&para;</a></h2>
 <p>ドメインモデルの不変条件を、主に確かめるレベルに対応させる（DM-03）。シナリオには不変条件 ID のタグを付け、どのテストで守られているかをたどれるようにする。</p>
 <table>
@@ -13861,6 +13930,7 @@ src/test/java/.../ui/                     画面の層のステップ定義（@u
 </tbody>
 </table>
 <p>Pull Request ではステージングへの配備の前までを実行する。E2E は main へのマージ後にステージングで実行する。実行時間が目標を超えたら、テストを減らす前に、下のレベルへ移せないかを見直す。</p>
+<p>画面の層の受入シナリオの <code>ui</code> ジョブ（<code>./gradlew uiTest</code>）は、W6 で 15〜19 分かかり、目標を超えている。Bolt 37f で <code>ui</code> ジョブの上限（<code>timeout-minutes</code>）を 20 分から 30 分にした。25 分を超えたら、シナリオを分けて並べて動かすことを諮る。</p>
 <p>Bolt 2 の時点の実装（<code>.github/workflows/cargo-tracker-ci.yml</code>）は、配備の前までを 1 つのジョブの <code>./gradlew check</code> で動かす。段階を分けていないのは、全体で約 2 分と目標（合計 8 分）に収まっているためで、目標を超えたら段階に分ける。コンテナイメージのビルド・配備は運用準備、E2E は Bolt 3 で足す。書式（Spotless）・静的解析（Checkstyle・SpotBugs）・AT-06 も同じジョブで検証する。</p>
 <p>Bolt 3 から、画面の層の受入シナリオ（<code>@ui</code>）を同じワークフローの <code>ui</code> ジョブ（<code>./gradlew uiTest</code>）で動かす。ステージングがまだないため、アプリケーションを CI の中で起動し（PostgreSQL は Testcontainers）、Playwright の Chromium をヘッドレスで操作する。表示したすべての画面を axe-core で検査する。ステージングができたら、E2E を main へのマージ後にステージングで実行する形に移す（2026-10-02 に human:kakimomokuri が承認）。画面の層のアプリは、本番と同じくアプリケーション利用者（最小の権限）で PostgreSQL に接続し、Flyway だけを所有者で動かす。最小の権限で主要な流れが通ることを、この層で確かめる（Bolt 3 レビュー R-01）。<code>ui.base-url</code> を与えると、起動したアプリの代わりにその URL を操作する（ステージングへ移す継ぎ目）。</p>
 <p>Cucumber の実行結果（HTML・JSON）を CI の成果物として保存し、受入条件の達成状況を示す生きたドキュメントにする（ADR-009）。</p>
@@ -14296,6 +14366,12 @@ src/test/java/.../ui/                     画面の層のステップ定義（@u
 <td style="text-align: left;">AC4（最終取得から許容時間（24 時間。D-89）を過ぎた航海を使う候補は情報不足で除外され、航海・取得時刻・許容時間・参照した航海情報の版が示される。ちょうど許容時間は足りる）</td>
 <td style="text-align: left;">37b2</td>
 <td style="text-align: left;"><code>@US-06-AC4</code>（<code>route_candidates.feature</code>・<code>compare_route_candidates_ui.feature</code>）、<code>InfoFreshnessPolicyTest</code>・<code>RoutingCaseTest</code>、保存の往復の統合テスト、設定の結合のテスト</td>
+</tr>
+<tr>
+<td style="text-align: left;">US-06</td>
+<td style="text-align: left;">Golden dataset v0（#15 の補足。仮の値で業務責任者の承認待ち。G-01〜G-03・G-06 の制約適合判定、G-04 は提出の拒否）</td>
+<td style="text-align: left;">37f</td>
+<td style="text-align: left;"><code>@golden</code>（<code>routing/golden/route_candidates_golden_v0.feature</code> のシナリオアウトライン 4 行、<code>special_cargo_golden_v0.feature</code> の 3 行）、<code>RoutingCaseGoldenDatasetTest</code>（案件のデータの候補一覧の全体）</td>
 </tr>
 <tr>
 <td style="text-align: left;">US-07</td>

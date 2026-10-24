@@ -7339,6 +7339,41 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../development/cargo-tracker/bolt_37f_report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 37f 終了報告
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--draft"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../development/cargo-tracker/release_report-0_1/" class="md-nav__link">
         
   
@@ -12789,7 +12824,7 @@
 <p>Bolt 17 の決定（2026-10-07。<a href="../../../development/cargo-tracker/bolt_17_plan/">Bolt 17 計画</a> の確認ポイント 1・8・9・10。<code>/goal Bolt17</code> の指示で AI が案のとおりに進めた。終了報告の承認で確かめる）:</p>
 <ul>
 <li>R0.1（#7、W3）は AC1〜AC3 を作る。AC4（外部情報の停止中の情報不足）、Golden dataset、3 区間以上の接続、規則の有効期間の境界は R1.0（#15、W6）で作る。</li>
-<li>候補は、詳細経路設計の依頼（DE-16）で作った経路設計案件について、航海の一覧から直行と 1 回の積替え（区間 1〜2。Bolt 37 で積替え 2 回の区間 1〜3 に広げた）を列挙する。候補の数は到着予定の早い順に 20 件まで。航海は、外部原本の取込（US-14、W7）ができるまで、開発環境の仮の航海データだけを使う。</li>
+<li>候補は、詳細経路設計の依頼（DE-16）で作った経路設計案件について、航海の一覧から直行と 1 回の積替え（区間 1〜2。Bolt 37 で積替え 2 回の区間 1〜3 に広げた）を列挙する。候補は適合を先に、到着予定の早い順に並べ、20 件まで示す。航海は、外部原本の取込（US-14、W7）ができるまで、開発環境の仮の航海データだけを使う。</li>
 <li>積替えの港に、次の区間の出発予定の時刻に有効な接続時間規則がなければ、その候補は「接続できない」で除外する（Bolt 17 では判定時刻。Bolt 37 で変えた。下の Bolt 37 の決定）。貨物種別による除外は判定しない（R0.1 は一般貨物だけで、特殊貨物は提出で拒否する。US-01 AC4）。</li>
 </ul>
 <p>Bolt 37 の決定（2026-10-21。<a href="../../../development/cargo-tracker/bolt_37_plan/">Bolt 37 計画</a> の確認ポイント 1・2。human:kakimomokuri が承認）:</p>
@@ -12803,6 +12838,10 @@
 <li>情報不足の候補は除外する（理由は「情報不足」。W6 の確認ポイント 3）。古い航海ごとに理由を 1 つ示す。専門家の判断で通すことは作らない。</li>
 <li>AC4 の「最終採用値」は、その航海の採用情報版と読む（Bolt 37b2 計画の確認ポイント 2）。画面では今の語「参照した航海情報の版」として、航海番号・取得時刻・許容時間と並べて示す。</li>
 <li>確定のときの鮮度（算出の後に許容時間を過ぎた候補）は Bolt 37c で扱う（Bolt 37b2 計画の確認ポイント 7）。それまでは、時間がたったら候補を再算出してから確定する（マニュアル 8.2）。</li>
+</ul>
+<p>Bolt 37f の決定（2026-10-24。<a href="../../../development/cargo-tracker/bolt_37f_plan/">Bolt 37f 計画</a> の開始準備の決定 (2) と確認ポイント 2。human:kakimomokuri が承認）:</p>
+<ul>
+<li>Golden dataset は v0（仮の値。業務責任者の承認待ち。TST-02）で作る。区分は G-01〜G-03・G-06（古さだけ）を <code>@golden</code> のシナリオアウトラインと集約の単位のテストで、G-04（特殊貨物）を提出の拒否で示す。G-05 は US-08（W13）、G-06 の欠落・矛盾は US-14（W7）、経路設計の貨物種別の判定は W7。業務責任者のデータが届いたら差し替える。</li>
 </ul>
 <h3 id="us-07">US-07 専門判断を伴う経路を確定する<a class="headerlink" href="#us-07" title="Permanent link">&para;</a></h3>
 <blockquote>
