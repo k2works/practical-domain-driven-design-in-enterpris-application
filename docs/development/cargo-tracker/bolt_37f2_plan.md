@@ -2,8 +2,10 @@
 type: Plan
 title: "Bolt 37f2 計画 - 受入シナリオの背景の写しの整理（詳細経路設計の依頼の配信まで）"
 tags: [plan]
-status: draft
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-24T09:08:26Z }
+status: stable
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-24T09:29:44Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-10-24T09:29:44Z }
 ---
 
 # Bolt 37f2 計画 - 受入シナリオの背景の写しの整理（詳細経路設計の依頼の配信まで）
@@ -125,6 +127,7 @@ generated: { by: anthropic/claude-opus-5-5, at: 2026-10-24T09:08:26Z }
 
 | 日付 | 更新内容 | 更新者 |
 | :--- | :--- | :--- |
+| 2026-10-24 | 計画を承認した（確認ポイント 1〜6 を推奨のとおり） | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-10-24 | 整合性検証の指摘を反映した（承認待ち）。V4 を落ちる形に替え、V3 の定数と落ちる行、スコープの節、release_plan と索引の直し、数の見込み（2598 → 1869）を足した | anthropic/claude-opus-5-5 |
 | 2026-10-24 | 初版作成（承認待ち）。開始準備で、範囲を詳細経路設計の依頼の配信までの 10 ステップに、置き場を見積りの受入ステップの新しいクラスにすると決めた（human:kakimomokuri） | anthropic/claude-opus-5-5 |
 
