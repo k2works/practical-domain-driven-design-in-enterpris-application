@@ -2,8 +2,10 @@
 type: Plan
 title: "Bolt 37f3 計画 - 「区間」の語のそろえ（荷主の画面とマニュアルは「航海」）"
 tags: [plan]
-status: draft
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-24T11:03:51Z }
+status: stable
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-24T11:04:42Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-10-24T11:04:42Z }
 ---
 
 # Bolt 37f3 計画 - 「区間」の語のそろえ（荷主の画面とマニュアルは「航海」）
@@ -140,6 +142,7 @@ generated: { by: anthropic/claude-opus-5-5, at: 2026-10-24T11:03:51Z }
 
 | 日付 | 更新内容 | 更新者 |
 | :--- | :--- | :--- |
+| 2026-10-24 | 計画を承認した（確認ポイント 1〜5 を推奨のとおり） | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-10-24 | 整合性検証の指摘を反映した（承認待ち）。画面の層の期待値を実在する航海の形（先頭が「航海 」で「区間」を含まない）に直し、C-10 の 2 行目と順、C-17・S-04 の aria-label、行 2 の注、システムメタファーの注、release_plan :772・:703・:791 の直し、古くなる注、数えた場所を足した | anthropic/claude-opus-5-5 |
 | 2026-10-24 | 初版作成（承認待ち）。開始準備で、C-10 の見える文字も直し（S-12 は「区間」のまま）、経路の表の読み上げは荷主・社内の別なく「航海」にすると決めた（human:kakimomokuri） | anthropic/claude-opus-5-5 |
 
