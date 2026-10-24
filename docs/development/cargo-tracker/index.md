@@ -107,7 +107,7 @@ Bolt がイテレーションに当たります。ふりかえりは各 Bolt の
 | 37e4 | [US-07 AC5 の出発済みの経路（D-88 の判定・理由・文言・マニュアル）](bolt_37e4_plan.md) | [終了報告](bolt_37e4_report.md) | W6 | 完了 |
 | 37e4b | [US-07 AC5 の出発済みの経路の見本とデモ](bolt_37e4b_plan.md) | [終了報告](bolt_37e4b_report.md)（[動画 1](../../assets/demo/bolt-37e4b/shipper-cannot-approve-departed.webm){:target="_blank"}・[動画 2](../../assets/demo/bolt-37e4b/booking-blocked-departed.webm){:target="_blank"}） | W6 | 完了 |
 | 37e4c | [US-07 AC5 の残り（届く順 B の受入シナリオ、本予約の後の予約の残り、ロックの操作の名前、#16 のクローズ）](bolt_37e4c_plan.md) | [終了報告](bolt_37e4c_report.md) | W6 | 完了 |
-| 37f | [US-06 の Golden dataset v0 と #15 のクローズ](bolt_37f_plan.md) | — | W6 | 計画済み |
+| 37f | [US-06 の Golden dataset v0 と #15 のクローズ](bolt_37f_plan.md) | [終了報告](bolt_37f_report.md)（承認待ち） | W6 | 完了（承認待ち） |
 
 Bolt を始めるときに行を追加します。
 
