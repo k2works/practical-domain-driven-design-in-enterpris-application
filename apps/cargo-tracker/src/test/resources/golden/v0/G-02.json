@@ -1,11 +1,18 @@
 {
   "id": "G-02",
   "title": "接続時間の境界（接続余裕がちょうどの候補は適合、1 分足りない候補は接続不足）",
-  "version": "v0（仮の値。業務責任者の承認待ち。TST-02）",
-  "rationale": "BR-11（期限・接続時間）、D-89（情報鮮度の許容 24 時間）、D-90（接続ごとに次の区間の出発の時刻に有効な規則）",
+  "version": "v0",
+  "status": "仮の値。業務責任者の承認待ち（TST-02）",
+  "rationale": [
+    "BR-11（接続時間。必要最小接続時間と同値は適合）",
+    "DM-05（必要最小接続時間は仮の値）"
+  ],
   "regulatoryReferences": [],
-  "approver": "未承認（TST-02）",
-  "validity": "v0 は仮（業務責任者の承認で決める）",
+  "approvers": [],
+  "validity": {
+    "from": null,
+    "to": null
+  },
   "routeSpecification": {
     "origin": "JPTYO",
     "destination": "NLRTM",
@@ -13,6 +20,7 @@
     "cargoCategory": "GENERAL"
   },
   "judgedAt": "2026-10-07T03:00:00Z",
+  "freshnessTolerance": "PT24H",
   "connectionRules": [
     {
       "port": "SGSIN",

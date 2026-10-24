@@ -4,7 +4,7 @@ title: "cargo-tracker テスト戦略"
 description: "cargo-tracker のテスト形状、テストレベルと責務、BDD（Cucumber）のシナリオ階層とタグ規約、不変条件・ユーザーストーリーとテストの対応、カバレッジ目標、CI での実行。"
 tags: [design, test-strategy, bdd]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-24T05:26:00Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-24T06:03:54Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T08:12:04Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:01:38Z }
@@ -196,7 +196,7 @@ US-04 の受入条件と BR-10 の境界を、日本語 Gherkin で書いた例�
 
 要件定義の Golden dataset（代表案件を複数の経路設計者とコンプライアンス担当者が承認したもの）は、`@golden` のシナリオアウトラインとして例の表で表す。期待候補・除外候補・除外理由を例の列にし、データの版を Feature の説明に書く。データそのものは業務責任者が決める（要件定義 H-9 の残作業、TST-02）。
 
-Golden dataset v0（Bolt 37f。仮の値で業務責任者の承認待ち）は、案件ごとのデータ（`src/test/resources/golden/v0/G-nn.json`。版・判断根拠・規制資料・承認者・適用期間・入力・期待結果）を、受入シナリオ（区分ごとの要約）と集約の単位のテスト（`RoutingCaseGoldenDatasetTest`。候補一覧の全体）で共有する。輸送条件は受入シナリオの背景の値にそろえ、必要最小接続時間の規則と航海は案件のデータだけから入れる。
+Golden dataset v0（Bolt 37f。仮の値で業務責任者の承認待ち）は、案件ごとのデータ（`src/test/resources/golden/v0/G-nn.json`。版・判断根拠・規制資料・承認者・適用期間・入力・期待結果）を、受入シナリオ（区分ごとの要約）と集約の単位のテスト（`RoutingCaseGoldenDatasetTest`。候補一覧の全体）で共有する。輸送条件は受入シナリオの背景の値にそろえ、必要最小接続時間の規則と航海は案件のデータだけから入れる。例の表の要約は、実際の候補と案件のデータの期待結果の両方と比べる（2 つを食い違わせない）。除外の要約は「番号:理由」で、理由は集約が付けた順に「・」でつなぎ、同じ理由は 1 つにする。下は抜粋（背景と区分の列を省く）。
 
 ```gherkin
 # language: ja
@@ -212,20 +212,20 @@ Golden dataset v0（Bolt 37f。仮の値で業務責任者の承認待ち）は�
 
     例:
       | 案件 | 適合候補 | 除外 |
-      | G-01 | 1,2,3 | なし |
+      | G-01 | 1,2,3,4 | なし |
       | G-02 | 1,2 | 3:接続不足 |
       | G-03 | 1 | 2:期限超過 |
-      | G-06 | なし | 1:情報不足,2:情報不足 |
+      | G-06 | 1 | 2:情報不足 |
 ```
 
 | 区分 | v0 の扱い（W6 の確認ポイント 11） |
 | :--- | :--- |
-| G-01 標準・直行と積替え | 直行・積替え 1 回・積替え 2 回（3 区間）。すべて適合 |
+| G-01 標準・直行と積替え | 直行 2 つ（到着が同時刻で航海番号の順）・積替え 1 回・積替え 2 回（3 区間）の 4 候補。すべて適合 |
 | G-02 接続時間の境界 | 接続余裕がちょうど（適合）と 1 分足りない（接続不足） |
 | G-03 期限超過を含む | 到着が期限と同時刻（適合）と 1 分過ぎる（期限超過） |
 | G-04 特殊貨物（MVP 対象外） | 提出で拒まれ、経路設計の案件はできない（US-01 AC4。別の feature の業務ルール層のシナリオ）。経路設計の貨物種別の判定は W7 |
 | G-05 欠航・港湾閉鎖による再設計 | v0 に入れない（US-08、W13） |
-| G-06 外部データの欠落・古さ・矛盾 | 古さだけ（取得から許容時間を過ぎた航海で全候補が情報不足）。欠落・矛盾は W7（US-14） |
+| G-06 外部データの欠落・古さ・矛盾 | 古さだけ。取得からちょうど許容時間（24 時間）の航海は足り、24 時間 1 分の航海を使う候補だけが情報不足。欠落・矛盾は W7（US-14） |
 
 表の値は区分を示すための仮の値で、実際の案件と期待結果は業務責任者が決める（TST-02 が届いたら差し替えの Bolt を足す）。
 
@@ -571,6 +571,7 @@ Release 1.0 の受入条件の照合の表はまだ作っていない（上の�
 | US-18 | AC8 の後半（A-06 でリンクを開いて新しい password を設定し、A-01 でログインし直す。期限切れ・使用済みのリンク） | 33a | `@US-18-AC8`（`login_ui.feature`。依頼から設定とログインし直しまで、期限切れのリンク、よく使われる password）、password の再設定の完了のセキュリティの統合テスト、IA-INV-12 と password の方針の単体・統合テスト |
 | US-18 | AC9 の回復コードの経路（回復コードでログインすると A-08 に導かれ、TOTP を登録し直して新しい回復コードを受け取る。後で登録できる。古いコードと回復コードは使えなくなり、ほかの session は失効する。管理者の経路と本人への通知は #47） | 33b | `@US-18-AC9`（`login_ui.feature`。回復コードでログインして再登録し、新しい回復コードで続ける、後で登録すると知らせが出てリンクから A-08 を開ける）、認証アプリの再登録のセキュリティの統合テスト、IA-INV-10・11 の単体・統合テスト |
 | US-06 | AC4（最終取得から許容時間（24 時間。D-89）を過ぎた航海を使う候補は情報不足で除外され、航海・取得時刻・許容時間・参照した航海情報の版が示される。ちょうど許容時間は足りる） | 37b2 | `@US-06-AC4`（`route_candidates.feature`・`compare_route_candidates_ui.feature`）、`InfoFreshnessPolicyTest`・`RoutingCaseTest`、保存の往復の統合テスト、設定の結合のテスト |
+| US-06 | Golden dataset v0（#15 の補足。仮の値で業務責任者の承認待ち。G-01〜G-03・G-06 の制約適合判定、G-04 は提出の拒否） | 37f | `@golden`（`routing/golden/route_candidates_golden_v0.feature` のシナリオアウトライン 4 行、`special_cargo_golden_v0.feature` の 3 行）、`RoutingCaseGoldenDatasetTest`（案件のデータの候補一覧の全体） |
 | US-07 | AC3（承認中に区間の航海の情報版が更新されていれば確定は拒否され、候補の比較に戻って再判断が求められる。確定の時刻に情報不足でも確定できない） | 37c | `@US-07-AC3`（`confirm_route.feature`・`confirm_route_ui.feature`）、`RoutingCaseConfirmationTest`（候補の版の違う区間を含む）・`InfoFreshnessPolicyTest`、`RoutingCaseControllerTest` |
 | US-07 | AC4（確定した経路版の区間の航海が更新され、期限・接続を満たさなくなるか航海を引き直せなくなると、評価で再設計要になり、候補・区間・確定の記録（旧情報版）が残り、DE-06 が理由と旧情報版を運んで 1 度だけ出る。満たし続けるときと情報版が変わらないときは確定のまま。予約を自動で取り消さないことの確かめは 37e） | 37d2、37e4c（予約は自動取消しされないことを本物の本予約の確定で） | `@US-07-AC4`（`evaluate_confirmed_route.feature`）、`RoutingCaseEvaluationTest`（状態の組み合わせの表の行ごと）・`RouteCandidateFinderTest`（引き直し）・`RedesignReasonCodeTest`（理由の写し）・`ConfirmedRouteEvaluationTest`（入力ポート。見つからない・変わらない・再設計要・競合）、保存の統合テスト（評価で `updated_by` を変えない）、`RoutingCaseControllerTest`（S-06 の再設計要の表示）・`RoutingCaseViewsTest`（理由の画面の語）。37e4c: 本予約の確定が見積りの行を押さえている間に来た再設計要の印は確定のコミットを待って付き、予約は確定のまま 1 件残り、輸送要求は予約確定済みになり、予約の画面（S-24）の照会は予約を返す（`integration/BookingConfirmationWithRouteRedesignIntegrationTest`、PostgreSQL。`pg_blocking_pids` で待ちを確かめる） |
 | US-07 | AC5（旧版・再設計要の経路版は再確定・新規予約への割当てに使えず、新しい経路版の作成が求められる） | 37d2（再設計要の経路版の再確定の拒否）、37e（見積りの印と荷主の承認・本予約の判定）、37e2（DE-06 の listener と DE-05・DE-06 の届く順）、37e3（再設計要の理由と文言、予約の追従）、37e3b（開発データの見本・マニュアル・デモ）、37e4（出発済みの判定（D-88）・理由・文言・マニュアル）、37e4b（出発済みの開発データの見本・デモ）、37e4c（37e2 の既知の課題 3 つ、#16 のクローズ） | `@US-07-AC5`（`evaluate_confirmed_route.feature`。再設計要の経路版は確定し直せず、もう一度評価しても DE-06 は出ない）。37e: `@US-07-AC5`（`route_redesign_required.feature`。荷主の承認と本予約の照会が再設計要で拒否される、もう一度伝わっても印の時刻は最初のまま、再見積りした新しい見積りの承認も拒否される）、見積りの集約の状態の組み合わせの表の行ごとのテスト、入力ポート（届く順）と公開 API のアダプターのテスト、保存の統合テスト。37e2: `@US-07-AC5`（`route_redesign_required.feature`。確定した経路を評価して再設計要にすると DE-06 の配信で見積りに印が付き荷主は承認できない（順 A: 確定 → 配る → 評価 → 配る）、DE-06 がもう一度届いても印の時刻は最初のまま）、DE-06 と DE-05 の listener の単体テスト（状態の組み合わせの表の行ごと。DE-06 が先に届く順 B は DE-05 の listener のテストで）、PostgreSQL の並行の統合テスト（`OverlappingTransactions`。DE-05 の listener が案件の行を押さえている間に評価の保存が待つ、本予約の確定用の照会と印を付ける更新が互いを待つ）、予約の腐敗防止層と本予約の確定・S-09 の GET の単体テスト（確定は確定用の照会、GET は今の照会）、dev（H2）の起動と本予約の確定、変異 7 つ。37e3: 画面の層のシナリオ（`route_redesign_required_ui.feature`、`@US-07 @ui`。C-04・C-17・S-02・S-09・S-07。axe）と、状態の組み合わせの表の行 1〜13 のそれぞれを名乗るテスト（C-04・C-17 は `QuotationViews`・`TransportRequestLabels`・`QuotationApprovalController` のテスト（行 1〜4）、S-02 は照会の PostgreSQL の統合テストと `TransportRequestReviewControllerTest`（行 5〜8）、S-09 と予約の腐敗防止層は `BookingControllerTest` と腐敗防止層の単体テスト（行 9・13）、S-04 は集約のテストと `StaffQuotationControllerTest`（行 10・11）、S-07 は集約のテスト（GET と POST で同じ理由）と `RoutingCaseControllerTest`（行 12。すべての理由に文言がある既存のテスト））、変わる既存の期待値（Bolt 37e の行 14b・14c と受入シナリオ、`NOT_CONFIRMABLE_STATE` の 3 つ）の直し、予約から見積りの `domain`・`application` への依存を拒む ArchUnit の規則（#50）、変異 8 つ。37e3b: 開発データの見本 2 件（TR-2026-0909 は荷主承認待ち、TR-2026-0910 は承認済み。どちらも割り当てた経路が再設計要）の `DevSampleDataSmokeTest`（状態、時刻の順と出発が起動より後、荷主の承認・本予約の照会・再見積り・経路の確定の拒否の理由、予約の確定待ちの行の印、案件の再設計要の記録と見積りの印の時刻の一致、KPI 計測）、dev（H2）で 3 つの役割で画面を開く確かめ、マニュアルのキャプチャ、変異 5 つ。37e4: 画面の層のシナリオ（`features/ui/route_already_departed_ui.feature`、`@US-07 @ui`。C-04・C-17・S-02・S-09。axe）と、状態の組み合わせの表の行 1〜16 のそれぞれを名乗るテスト（見積りの集約の荷主の承認・本予約の照会・理由の順・再見積り（行 1〜7。境界の同時刻を含む）、C-04・C-17 は `TransportRequestLabels`・`TransportRequestControllerTest`・`QuotationApprovalControllerTest`（行 8〜11。古い文言が出ないこと。T-185）、S-02 は照会の PostgreSQL の統合テストと `TransportRequestReviewControllerTest`（行 12・13）、S-04 は `StaffQuotationControllerTest`（行 14）、S-09 と予約の腐敗防止層は `BookingControllerTest` と腐敗防止層の単体テスト（行 15・16））、変異 11 個。37e4b: 出発済みの開発データの見本 2 件（TR-2026-0911 は荷主承認待ち、TR-2026-0912 は承認済み。どちらも割り当てた経路の最初の区間が起動した日の前日に出発）の `DevSampleDataSmokeTest`（状態、時刻の順と出発が起動より前、荷主の承認・本予約の照会・再見積りの拒否の理由、予約の確定待ちの行の出発の判定、経路設計中・荷主承認待ちの表、案件の確定の時刻と有効期限の写しの一致、候補の区間と割り当てた区間の写しの一致、KPI 計測、既存の見本が出発済みでない陰性の対照）、dev（H2）で 3 つの役割で画面を開く確かめ、デモの動画 2 本、変異 6 つ。37e4c: 届く順 B の受入シナリオ（`evaluate_confirmed_route.feature`、`@US-07-AC5 @DE-06 @Q-INV-10`。再設計要のイベントだけを先に配ると見積りに経路はまだなく、続けて経路を確定したイベントを配ると割り当てた後に続けて伝わって印が付き、荷主は承認できない。テストの配信の部品の `deliverOnly`）。予約の画面で予約が残ることは AC4 の行 |

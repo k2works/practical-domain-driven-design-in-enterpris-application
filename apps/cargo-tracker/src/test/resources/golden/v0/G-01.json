@@ -1,11 +1,19 @@
 {
   "id": "G-01",
-  "title": "標準・直行と積替え（直行・積替え 1 回・積替え 2 回の 3 区間。すべて適合）",
-  "version": "v0（仮の値。業務責任者の承認待ち。TST-02）",
-  "rationale": "BR-11（期限・接続時間）、D-89（情報鮮度の許容 24 時間）、D-90（接続ごとに次の区間の出発の時刻に有効な規則）",
+  "title": "標準・直行と積替え（直行 2 つ・積替え 1 回・積替え 2 回（3 区間）の 4 候補。すべて適合。到着が同時刻の直行は航海番号の順）",
+  "version": "v0",
+  "status": "仮の値。業務責任者の承認待ち（TST-02）",
+  "rationale": [
+    "BR-11（期限・接続時間）",
+    "D-90（接続ごとに次の区間の出発の時刻に有効な規則）",
+    "DM-05（必要最小接続時間は仮の値）"
+  ],
   "regulatoryReferences": [],
-  "approver": "未承認（TST-02）",
-  "validity": "v0 は仮（業務責任者の承認で決める）",
+  "approvers": [],
+  "validity": {
+    "from": null,
+    "to": null
+  },
   "routeSpecification": {
     "origin": "JPTYO",
     "destination": "NLRTM",
@@ -13,6 +21,7 @@
     "cargoCategory": "GENERAL"
   },
   "judgedAt": "2026-10-07T03:00:00Z",
+  "freshnessTolerance": "PT24H",
   "connectionRules": [
     {
       "port": "SGSIN",
@@ -26,6 +35,14 @@
     }
   ],
   "voyages": [
+    {
+      "number": "V-106",
+      "load": "JPTYO",
+      "departureAt": "2026-10-13T00:00:00Z",
+      "discharge": "NLRTM",
+      "arrivalAt": "2026-10-30T09:00:00Z",
+      "acquiredAt": "2026-10-07T01:00:00Z"
+    },
     {
       "number": "V-101",
       "load": "JPTYO",
@@ -70,6 +87,13 @@
   "expected": [
     {
       "voyages": "V-101",
+      "conforming": true,
+      "estimatedArrivalAt": "2026-10-30T09:00:00Z",
+      "connectionSlack": null,
+      "reasons": []
+    },
+    {
+      "voyages": "V-106",
       "conforming": true,
       "estimatedArrivalAt": "2026-10-30T09:00:00Z",
       "connectionSlack": null,

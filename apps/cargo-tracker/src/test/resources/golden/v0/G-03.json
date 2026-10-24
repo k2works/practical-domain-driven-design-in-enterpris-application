@@ -1,11 +1,17 @@
 {
   "id": "G-03",
   "title": "期限超過を含む（到着が期限と同時刻の候補は適合、1 分過ぎる候補は期限超過）",
-  "version": "v0（仮の値。業務責任者の承認待ち。TST-02）",
-  "rationale": "BR-11（期限・接続時間）、D-89（情報鮮度の許容 24 時間）、D-90（接続ごとに次の区間の出発の時刻に有効な規則）",
+  "version": "v0",
+  "status": "仮の値。業務責任者の承認待ち（TST-02）",
+  "rationale": [
+    "BR-11（期限。希望到着期限と同時刻は適合）"
+  ],
   "regulatoryReferences": [],
-  "approver": "未承認（TST-02）",
-  "validity": "v0 は仮（業務責任者の承認で決める）",
+  "approvers": [],
+  "validity": {
+    "from": null,
+    "to": null
+  },
   "routeSpecification": {
     "origin": "JPTYO",
     "destination": "NLRTM",
@@ -13,6 +19,7 @@
     "cargoCategory": "GENERAL"
   },
   "judgedAt": "2026-10-07T03:00:00Z",
+  "freshnessTolerance": "PT24H",
   "connectionRules": [
     {
       "port": "SGSIN",

@@ -120,42 +120,92 @@ public class RoutingSteps {
                 .isEqualTo(goldenCase.routeSpecification().destination());
         assertThat(routingCase.arrivalDeadline())
                 .isEqualTo(goldenCase.routeSpecification().arrivalDeadline());
+        assertThat(queryService
+                        .findByNumber(routingCase.number())
+                        .orElseThrow()
+                        .specification()
+                        .cargoCategory())
+                .isEqualTo(goldenCase.routeSpecification().cargoCategory());
         goldenCase.rules().forEach(rules::add);
         goldenCase.voyages().forEach(voyages::add);
     }
 
+    /** 判定時刻は背景の最後の時刻（詳細経路設計の依頼）より後にする（時計を戻さない）。 */
     @前提("現在時刻を案件の判定時刻にする")
     public void 現在時刻を案件の判定時刻にする() {
+        assertThat(goldenCase.judgedAt().instant()).isAfterOrEqualTo(clock.instant());
         clock.setInstant(goldenCase.judgedAt().instant());
     }
 
-    /** 適合の候補の番号を「,」でつないだもの（なければ「なし」）。 */
+    /**
+     * 適合の候補の番号を「,」でつないだもの（なければ「なし」）。実際の候補と、案件のデータの期待結果の両方を例の列と比べる（例の表を
+     * 案件のデータと食い違わせない）。
+     */
     @ならば("適合候補は {string} である")
     public void 適合候補は(String expected) {
         List<RouteCandidate> candidates = currentCase().routeVersion().candidates();
-        String conforming = candidates.stream()
-                .filter(candidate -> candidate.evaluation().conforming())
-                .map(candidate -> String.valueOf(candidate.candidateNo()))
-                .collect(Collectors.joining(","));
-        assertThat(conforming.isEmpty() ? "なし" : conforming).isEqualTo(expected);
+        assertThat(conformingSummary(candidates.stream()
+                        .map(candidate -> new Summary(
+                                candidate.candidateNo(), candidate.evaluation().conforming(), List.of()))
+                        .toList()))
+                .isEqualTo(expected);
+        assertThat(conformingSummary(expectedSummaries())).as("案件のデータの期待結果").isEqualTo(expected);
     }
 
-    /** 除外の候補の「番号:理由」を「,」でつないだもの（理由が同じなら 1 つ。なければ「なし」）。 */
+    /**
+     * 除外の候補の「番号:理由」を「,」でつないだもの（なければ「なし」）。理由は集約が付けた順に「・」でつなぎ、同じ理由は 1 つにする
+     * （全体は集約の単位のテストが確かめる）。実際の候補と、案件のデータの期待結果の両方を例の列と比べる。
+     */
     @ならば("除外候補と理由は {string} である")
     public void 除外候補と理由は(String expected) {
         List<RouteCandidate> candidates = currentCase().routeVersion().candidates();
-        String excluded = candidates.stream()
-                .filter(candidate -> !candidate.evaluation().conforming())
-                .map(candidate -> candidate.candidateNo() + ":"
-                        + candidate.evaluation().reasons().stream()
-                                .map(reason -> nameOf(reason.code()))
+        assertThat(excludedSummary(candidates.stream()
+                        .map(candidate -> new Summary(
+                                candidate.candidateNo(),
+                                candidate.evaluation().conforming(),
+                                candidate.evaluation().reasons().stream()
+                                        .map(ExclusionReason::code)
+                                        .toList()))
+                        .toList()))
+                .isEqualTo(expected);
+        assertThat(excludedSummary(expectedSummaries())).as("案件のデータの期待結果").isEqualTo(expected);
+    }
+
+    /** 候補の要約（番号、適合か、理由）。 */
+    private record Summary(int candidateNo, boolean conforming, List<ExclusionReasonCode> reasons) {}
+
+    private List<Summary> expectedSummaries() {
+        List<GoldenDatasetCase.ExpectedCandidate> expected = goldenCase.expected();
+        return java.util.stream.IntStream.range(0, expected.size())
+                .mapToObj(i -> new Summary(
+                        i + 1, expected.get(i).conforming(), expected.get(i).reasons()))
+                .toList();
+    }
+
+    private static String conformingSummary(List<Summary> summaries) {
+        String conforming = summaries.stream()
+                .filter(Summary::conforming)
+                .map(summary -> String.valueOf(summary.candidateNo()))
+                .collect(Collectors.joining(","));
+        return conforming.isEmpty() ? "なし" : conforming;
+    }
+
+    private static String excludedSummary(List<Summary> summaries) {
+        String excluded = summaries.stream()
+                .filter(summary -> !summary.conforming())
+                .map(summary -> summary.candidateNo() + ":"
+                        + summary.reasons().stream()
+                                .map(RoutingSteps::nameOf)
                                 .distinct()
                                 .collect(Collectors.joining("・")))
                 .collect(Collectors.joining(","));
-        assertThat(excluded.isEmpty() ? "なし" : excluded).isEqualTo(expected);
+        return excluded.isEmpty() ? "なし" : excluded;
     }
 
-    /** 経路設計の案件がない（Golden dataset v0 の G-04。提出で拒まれた特殊貨物は経路設計に届かない。Bolt 37f）。 */
+    /**
+     * 経路設計の案件がない（Golden dataset v0 の G-04。Bolt 37f）。提出で拒まれた特殊貨物が経路設計に届かないことの表明で、守りは提出の
+     * 拒否にある（提出が通っても、審査・見積り・詳細経路設計の依頼を経ないので案件はできない）。
+     */
     @ならば("経路設計案件はない")
     public void 経路設計案件はない() {
         assertThat(queryService.listCases()).isEmpty();
@@ -290,7 +340,7 @@ public class RoutingSteps {
                 .filter(entry -> entry.getValue() == code)
                 .map(Map.Entry::getKey)
                 .findFirst()
-                .orElseThrow();
+                .orElseThrow(() -> new IllegalArgumentException("理由の表記の表にない理由: " + code));
     }
 
     private static List<ExclusionReasonCode> codesOf(String reasons) {

@@ -12,7 +12,6 @@ import com.example.cargotracker.routing.domain.model.valueobjects.RoutingCaseId;
 import com.example.cargotracker.routing.domain.model.valueobjects.RoutingCaseNumber;
 import com.example.cargotracker.shared.domain.Location;
 import com.example.cargotracker.shared.domain.UtcInstant;
-import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
@@ -29,7 +28,6 @@ class RoutingCaseGoldenDatasetTest {
 
     private final RouteCandidateFinder finder = new RouteCandidateFinder();
     private final ConstraintEvaluator evaluator = new ConstraintEvaluator();
-    private final InfoFreshnessPolicy freshness = new InfoFreshnessPolicy(Duration.ofHours(24));
 
     static List<String> cases() {
         return GoldenDatasetCase.V0_CASES;
@@ -39,15 +37,23 @@ class RoutingCaseGoldenDatasetTest {
     @MethodSource("cases")
     void 代表案件の候補一覧が期待結果と一致する(String id) {
         GoldenDatasetCase golden = GoldenDatasetCase.load(id);
+        assertThat(golden.version()).isEqualTo("v0");
+        assertThat(golden.rationale()).as("判断根拠").isNotEmpty();
         RoutingCase routingCase = open(golden);
 
         routingCase.calculateCandidates(
-                golden.voyages(), golden.rules(), golden.judgedAt(), finder, evaluator, freshness);
+                golden.voyages(),
+                golden.rules(),
+                golden.judgedAt(),
+                finder,
+                evaluator,
+                new InfoFreshnessPolicy(golden.freshnessTolerance()));
 
         List<RouteCandidate> candidates = routingCase.routeVersion().candidates();
         assertThat(candidates)
                 .extracting(RoutingCaseGoldenDatasetTest::actualOf)
                 .containsExactlyElementsOf(golden.expected());
+        // 期待結果の並びの位置が、そのまま候補の番号になる（例の表の要約は番号で書く）
         assertThat(candidates)
                 .extracting(RouteCandidate::candidateNo)
                 .containsExactlyElementsOf(numbers(candidates.size()));
