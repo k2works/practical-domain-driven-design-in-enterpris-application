@@ -63,6 +63,7 @@ const BOLT_ISSUES = {
   'bolt-33b': 13,
   'bolt-34': 14,
   'bolt-34d': 14,
+  'bolt-37b2': 15,
   'bolt-37c': 16,
   'bolt-37e3b': 16,
   'bolt-37e4b': 16,

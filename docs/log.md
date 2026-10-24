@@ -1,6 +1,10 @@
 # Docs Update Log
 
 ## 2026-10-24
+* **Verification**: [bolt_37f_report](/development/cargo-tracker/bolt_37f_report.md) を human:kakimomokuri が検証
+* **Update**: [user_story](/requirements/cargo-tracker/user_story.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_37f_report](/development/cargo-tracker/bolt_37f_report.md) を更新（anthropic/claude-opus-5-5）
 * **Creation**: [bolt_37f_report](/development/cargo-tracker/bolt_37f_report.md) を作成（anthropic/claude-opus-5-5）
 * **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
 * **Update**: [user_story](/requirements/cargo-tracker/user_story.md) を更新（anthropic/claude-opus-5-5）

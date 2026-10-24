@@ -4,7 +4,7 @@ title: "cargo-tracker ユーザーストーリー"
 description: "cargo-tracker MVP の価値単位のユーザーストーリー、受入条件、上流要件へのトレーサビリティ。"
 tags: [requirements, user-story]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-24T06:03:54Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-24T06:51:22Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T05:20:11Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:01:39Z }
@@ -308,6 +308,7 @@ Bolt 37b2 の決定（2026-10-22。[Bolt 37b2 計画](../../development/cargo-tr
 Bolt 37f の決定（2026-10-24。[Bolt 37f 計画](../../development/cargo-tracker/bolt_37f_plan.md) の開始準備の決定 (2) と確認ポイント 2。human:kakimomokuri が承認）:
 
 - Golden dataset は v0（仮の値。業務責任者の承認待ち。TST-02）で作る。区分は G-01〜G-03・G-06（古さだけ）を `@golden` のシナリオアウトラインと集約の単位のテストで、G-04（特殊貨物）を提出の拒否で示す。G-05 は US-08（W13）、G-06 の欠落・矛盾は US-14（W7）、経路設計の貨物種別の判定は W7。業務責任者のデータが届いたら差し替える。
+- #15 を閉じ、US-06 の 5 SP を W6 で数えた（Bolt 37f の終了報告の承認、2026-10-24）。Release 1.0 の外に残るもの: G-05 は US-08（Release 1.1）、G-06 の欠落・矛盾は US-14（W7）、経路設計の貨物種別の判定は W7、TST-02 の差し替え。画面の支援技術による手動確認は #50。
 
 ### US-07 専門判断を伴う経路を確定する
 
