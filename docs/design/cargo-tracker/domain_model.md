@@ -4,7 +4,7 @@ title: "cargo-tracker ドメインモデル"
 description: "cargo-tracker の業務領域の分類、ユビキタス言語、7 つの境界づけられたコンテキスト（通知を含む）の集約・エンティティ・値オブジェクト・ドメインルール、コマンド・クエリ・イベント、予約サガ。"
 tags: [design, domain-model, ddd]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-23T15:12:19Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-24T05:26:00Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T07:41:04Z }
   - { by: human:kakimomokuri, at: 2026-10-01T07:48:17Z }
@@ -131,6 +131,7 @@ quadrantChart
 | 経路設計案件 | RoutingCase | 1 つの輸送要求について経路版を作り、確定・再設計する単位 | 経路設計 |
 | 経路版 | RouteVersion | 候補の比較、判断根拠、承認を伴って確定した経路のある版 | 経路設計 |
 | 経路候補 | RouteCandidate | 区間の列からなる候補と、その制約適合判定 | 経路設計 |
+| Golden dataset | — | 経路設計の代表案件と期待結果（判断根拠・承認者・版つき）。制約適合判定の受入の基準にする。v0 は仮の値で業務責任者の承認待ち（TST-02。Bolt 37f）。テストのデータで、型は持たない | 経路設計 |
 | 区間 | Leg | 航海、積地、揚地、出発予定、到着予定 | 経路設計（写しは見積り。追跡は予定区間として持つ） |
 | 航海 | Voyage | 航海番号で識別される運航予定。外部原本から採用した版を持つ | 経路設計 |
 | 経路設計案件 ID | RoutingCaseId | 経路設計案件を識別する、システムが発行する不透明な値。画面には出さず、案件番号を出す（Bolt 17） | 経路設計 |

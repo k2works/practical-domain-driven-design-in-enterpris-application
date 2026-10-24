@@ -4,7 +4,7 @@ title: "アプリケーション開発環境セットアップ手順書 - cargo-
 description: "cargo-tracker（A 社国際貨物輸送管理システム）を、開発者の PC で起動・テスト・品質チェックするための手順を示す。"
 tags: [operation,playbook,setup]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-10T09:48:46Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-24T05:26:00Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-02T01:37:59Z }
   - { by: human:kakimomokuri, at: 2026-10-02T07:02:38Z }
@@ -98,7 +98,7 @@ IDE（IntelliJ IDEA など）から `CargoTrackerApplication` を直接起動す
 | すべての検証（書式・静的解析・ユニット・アーキテクチャ・業務ルール層の受入シナリオ・統合・Web・H2 のスモーク・本番の依存・カバレッジの閾値・用語集の整合） | `./gradlew check` | 約 2 分 |
 | 用語集とコードの整合だけ | `./gradlew documentationTest` | 数秒。設計文書やソースの Javadoc を変えたときに動く |
 | 書式をそろえる | `./gradlew spotlessApply` | 数秒 |
-| 画面の層の受入シナリオ（`@ui`。Playwright と axe-core） | 初回だけ `./gradlew playwrightInstall`、以降 `./gradlew uiTest` | 約 2 分 |
+| 画面の層の受入シナリオ（`@ui`。Playwright と axe-core） | 初回だけ `./gradlew playwrightInstall`、以降 `./gradlew uiTest` | 約 15〜19 分（W6。CI の `ui` の段の上限は 30 分） |
 | デモ項目の動画（`@demo`。Bolt の終了報告と開発の索引からリンクする） | `./gradlew demoVideo`。`docs/assets/demo/<Bolt>/<名前>.webm` に置く（置き場所はシナリオの `@demo-<Bolt>/<名前>` の印）。実行の前にすべての動画を消し、いまのコードで撮り直す | 約 3 分 |
 | 設計ドキュメントの生成（JIG だけ） | `./gradlew jigReports` | 十数秒 |
 
