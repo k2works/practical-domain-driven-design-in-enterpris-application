@@ -493,6 +493,9 @@ class TransportRequestControllerTest {
         mockMvc.perform(get("/customer/transport-requests/TR-2026-0001"))
                 .andExpect(content().string(containsString("見積 1（見積りと経路の承認待ち）")))
                 .andExpect(content().string(containsString("確定した経路（RC-2026-0001 経路版 1）")))
+                // 経路の表の読み上げの名前は社内の語「区間」を使わない（Bolt 37f3 の行 3）
+                .andExpect(content().string(containsString("aria-label=\"確定した経路の航海（RC-2026-0001 経路版 1）\"")))
+                .andExpect(content().string(not(containsString("区間"))))
                 .andExpect(content().string(containsString("JPTYO → SGSIN")))
                 .andExpect(
                         content()

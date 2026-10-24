@@ -3,6 +3,7 @@ package com.example.cargotracker.tracking.interfaces.web;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.not;
+import static org.hamcrest.Matchers.stringContainsInOrder;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
@@ -181,7 +182,9 @@ class CustomerTrackingControllerTest {
                 .andExpect(content().string(containsString("2026-11-15 09:00 Asia/Tokyo（UTC+09:00）")))
                 .andExpect(content().string(containsString("2026-11-16 12:00 Asia/Tokyo（UTC+09:00）")))
                 .andExpect(content().string(containsString("<ol aria-labelledby=\"schedule-heading\"")))
-                .andExpect(content().string(containsString("区間 1、航海 V100、JPTYO から KRPUS")))
+                // 荷主の画面は社内の語「区間」を出さず、航海を予定の順に並べる（Bolt 37f3 の行 1）
+                .andExpect(content().string(stringContainsInOrder("航海 V100、JPTYO から KRPUS", "航海 V200、KRPUS から USLAX")))
+                .andExpect(content().string(not(containsString("区間"))))
                 .andExpect(content().string(containsString("出発予定 2026-11-01 09:00 Asia/Tokyo（UTC+09:00）")))
                 .andExpect(content().string(containsString("<ul aria-labelledby=\"milestones-heading\"")))
                 .andExpect(content().string(containsString("集荷、JPTYO")))

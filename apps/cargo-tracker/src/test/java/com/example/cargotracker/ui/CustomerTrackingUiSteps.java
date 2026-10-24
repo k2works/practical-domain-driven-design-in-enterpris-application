@@ -7,6 +7,7 @@ import com.microsoft.playwright.Page;
 import com.microsoft.playwright.options.AriaRole;
 import io.cucumber.java.ja.ならば;
 import io.cucumber.java.ja.もし;
+import java.util.regex.Pattern;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.web.server.LocalServerPort;
 
@@ -84,7 +85,11 @@ public class CustomerTrackingUiSteps {
         assertThat(definition("現在の状態")).hasText(status);
         Locator legs = page().getByRole(
                         AriaRole.LIST, new Page.GetByRoleOptions().setName("予定").setExact(true));
-        assertThat(legs.getByRole(AriaRole.LISTITEM).first()).containsText("区間 1");
+        // 荷主の画面は社内の語「区間」を出さない（Bolt 37f3 の行 1。ある方を先に確かめる）
+        // 航海の名前は撮るたびに変わるので、先頭からの形で確かめる
+        assertThat(legs.getByRole(AriaRole.LISTITEM).first())
+                .containsText(Pattern.compile("^\\s*航海 \\S+、[A-Z]{5} から [A-Z]{5}"));
+        assertThat(legs.getByRole(AriaRole.LISTITEM).first()).not().containsText("区間");
         Locator milestones = page().getByRole(
                         AriaRole.LIST,
                         new Page.GetByRoleOptions().setName("主要実績").setExact(true));

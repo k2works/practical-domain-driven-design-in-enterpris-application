@@ -155,6 +155,9 @@ class QuotationApprovalControllerTest {
                 .andExpect(content().string(containsString("3,730.00 USD")))
                 .andExpect(content().string(containsString("2099-10-08 18:00 Asia/Tokyo（UTC+09:00）")))
                 .andExpect(content().string(containsString("RC-2026-0001 経路版 1")))
+                // 経路の表の読み上げの名前（Bolt 37f3 の行 3）
+                .andExpect(content().string(containsString("aria-label=\"確定した経路の航海（RC-2026-0001 経路版 1）\"")))
+                .andExpect(content().string(not(containsString("区間"))))
                 .andExpect(content().string(containsString("2026-10-07 14:00 Asia/Tokyo（UTC+09:00）")))
                 .andExpect(content().string(containsString("V-201")))
                 .andExpect(content().string(containsString("JPTYO → SGSIN")))

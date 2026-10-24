@@ -191,6 +191,7 @@ class TrackingRecordControllerTest {
                         .string(containsString("2026-11-16 12:00 Asia/Tokyo（UTC+09:00）（UTC 2026-11-16 03:00）")))
                 .andExpect(content().string(containsString("<dd class=\"col-sm-9\">RC-2026-0001 版 1</dd>")))
                 .andExpect(content().string(containsString("<ol aria-labelledby=\"schedule-heading\"")))
+                // 社内の S-12 は「区間 n、」のまま（Bolt 37f3 の行 2。荷主の C-10 だけ「航海 …」にした）
                 .andExpect(content().string(containsString("区間 1、航海 V100、JPTYO から KRPUS")))
                 .andExpect(content().string(containsString("区間 2、航海 V200、KRPUS から USLAX")))
                 .andExpect(content()

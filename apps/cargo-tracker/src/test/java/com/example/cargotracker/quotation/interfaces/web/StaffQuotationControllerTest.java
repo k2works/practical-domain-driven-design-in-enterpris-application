@@ -718,7 +718,9 @@ class StaffQuotationControllerTest {
                     .andExpect(content().string(containsString("を過ぎました。承認済みの経路版と経路方針を引き継いで再見積りできます。荷主の再承認が要ります。")))
                     .andExpect(content().string(not(containsString("再見積りはできません"))))
                     .andExpect(content().string(containsString("/quotations/1/requotation")))
-                    .andExpect(content().string(containsString("確定した経路（RC-2026-0001 経路版 1）")));
+                    .andExpect(content().string(containsString("確定した経路（RC-2026-0001 経路版 1）")))
+                    // 共通の部品なので社内の S-04 も同じ読み上げの名前（Bolt 37f3 の行 4）
+                    .andExpect(content().string(containsString("aria-label=\"確定した経路の航海（RC-2026-0001 経路版 1）\"")));
         } finally {
             clock.setInstant(NOW);
         }

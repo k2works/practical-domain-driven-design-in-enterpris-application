@@ -19,6 +19,7 @@ import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.IntStream;
 
@@ -143,7 +144,7 @@ final class TrackingRecordViews {
     /**
      * 予定区間の 1 項目。
      *
-     * @param summary 区間・航海・積地から揚地
+     * @param summary 航海・積地から揚地（社内の S-12 は先頭に「区間 n、」を付ける。荷主の C-10 は付けない。Bolt 37f3）
      * @param departureAt 出発予定
      * @param arrivalAt 到着予定
      */
@@ -168,7 +169,7 @@ final class TrackingRecordViews {
                 staff(trackingRecord.originalEta()),
                 staff(trackingRecord.latestEta()),
                 schedule.routingCaseNumber() + " 版 " + schedule.routeVersionNo(),
-                legs(schedule.legs(), TrackingRecordViews::staff),
+                legs(schedule.legs(), TrackingRecordViews::staff, TrackingRecordViews::legSummary),
                 trackingRecord.milestones().stream()
                         .sorted(Comparator.comparing((Milestone milestone) ->
                                         milestone.occurredAt().instant())
@@ -178,21 +179,32 @@ final class TrackingRecordViews {
     }
 
     /**
-     * 予定区間の項目（S-12 と C-10 で同じ。日時の書式だけが社内と荷主で違う。Bolt 27）。区間の表記は「→」でなく「から」にする
-     * （スクリーンリーダーが「右矢印」と読むため。Bolt 26 の U-4。Bolt 26c）。
+     * 予定区間の項目（S-12 と C-10 で形は同じ。日時の書式と 1 行の表記が社内と荷主で違う。Bolt 27・37f3）。積地と揚地は「→」でなく
+     * 「から」でつなぐ（スクリーンリーダーが「右矢印」と読むため。Bolt 26 の U-4。Bolt 26c）。
      */
-    private static List<LegView> legs(List<ScheduledLeg> legs, Function<UtcInstant, String> dateTime) {
+    private static List<LegView> legs(
+            List<ScheduledLeg> legs,
+            Function<UtcInstant, String> dateTime,
+            BiFunction<Integer, ScheduledLeg, String> summary) {
         return IntStream.range(0, legs.size())
                 .mapToObj(i -> new LegView(
-                        legSummary(i + 1, legs.get(i)),
+                        summary.apply(i + 1, legs.get(i)),
                         dateTime.apply(legs.get(i).departureAt()),
                         dateTime.apply(legs.get(i).arrivalAt())))
                 .toList();
     }
 
-    /** 区間の表記（S-12 と C-10 で同じ）。 */
+    /** 社内の S-12 の 1 行（「区間 n、航海 …」。区間は社内の語）。 */
     private static String legSummary(int legNo, ScheduledLeg leg) {
-        return "区間 " + legNo + "、航海 " + leg.voyageNumber() + "、" + leg.load().unLocode() + " から "
+        return "区間 " + legNo + "、" + customerLegSummary(leg);
+    }
+
+    /**
+     * 荷主の C-10 の 1 行（「航海 …、積地 から 揚地」）。社内の語「区間」と番号は出さず、順は順序付きのリストの並びで示す（候補は同じ
+     * 航海と港を 2 回使わず、予定はつながるので、行は航海と積地・揚地で区別できる。Bolt 37f の開始準備の決定 (4)。Bolt 37f3）。
+     */
+    private static String customerLegSummary(ScheduledLeg leg) {
+        return "航海 " + leg.voyageNumber() + "、" + leg.load().unLocode() + " から "
                 + leg.discharge().unLocode();
     }
 
@@ -270,7 +282,7 @@ final class TrackingRecordViews {
                 status(view.currentStatus()),
                 customer(view.originalEta()),
                 customer(view.latestEta()),
-                legs(view.legs(), TrackingRecordViews::customer),
+                legs(view.legs(), TrackingRecordViews::customer, (legNo, leg) -> customerLegSummary(leg)),
                 view.milestones().stream()
                         .map(TrackingRecordViews::customerMilestone)
                         .toList());
