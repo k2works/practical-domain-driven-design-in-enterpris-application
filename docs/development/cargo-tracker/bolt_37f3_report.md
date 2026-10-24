@@ -2,8 +2,10 @@
 type: Plan
 title: "Bolt 37f3 終了報告 - 「区間」の語のそろえ"
 tags: [plan]
-status: draft
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-24T12:19:38Z }
+status: stable
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-24T22:33:58Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-10-24T22:33:58Z }
 ---
 
 # Bolt 37f3 終了報告 - 「区間」の語のそろえ
@@ -35,7 +37,7 @@ generated: { by: anthropic/claude-opus-5-5, at: 2026-10-24T12:19:38Z }
 | Bolt | 第 37f3 回（W6 の 17 本目） |
 | 期間 | 2026-10-24（計画の承認の記録 `4f12862b1` から、終了報告の承認の依頼まで） |
 | 対象 | `TrackingRecordViews`、C-10 と共通の部品のテンプレート、MockMvc と画面の層のテスト、マニュアル 4・5 章・用語集と 05 章のキャプチャ、ui_design、release_plan |
-| GitHub | [#50](https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/50)（この報告の承認の後にコメントする） |
+| GitHub | [#50](https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/50)（この報告の承認の後にコメントした） |
 | SP | 0 |
 | 計画 | [Bolt 37f3 計画](bolt_37f3_plan.md) |
 
@@ -101,6 +103,7 @@ Bolt 38（US-16 の残り（#14）、利用者の管理。開始準備は `openi
 
 | 日付 | 更新内容 | 更新者 |
 | :--- | :--- | :--- |
+| 2026-10-25 | 終了報告を承認した（議題 1〜4）。#50 にコメントした | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-10-24 | 初版作成（承認待ち） | anthropic/claude-opus-5-5 |
 
 ## 関連ドキュメント
