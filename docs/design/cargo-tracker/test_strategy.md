@@ -4,7 +4,7 @@ title: "cargo-tracker テスト戦略"
 description: "cargo-tracker のテスト形状、テストレベルと責務、BDD（Cucumber）のシナリオ階層とタグ規約、不変条件・ユーザーストーリーとテストの対応、カバレッジ目標、CI での実行。"
 tags: [design, test-strategy, bdd]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-24T06:03:54Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-24T09:34:54Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T08:12:04Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:01:38Z }
@@ -150,6 +150,8 @@ src/test/java/.../ui/                     画面の層のステップ定義（@u
 時間の経過を画面の層の受入シナリオで確かめるとき（session の警告。Bolt 32b）は、Playwright の `BrowserContext.clock()` でブラウザの時計を進める。時計は `signInAs` の前に入れる（`install`）。同じコンテキストのページは同じ時計を使うので、タブの間の同期も確かめられる。画面の層のテストのアプリは本物の時計（`Clock.systemUTC()`）で動き、`MutableClock` も共通の時計のステップも使わないので、サーバーの時計は進められない。Spring Session の無操作の期限はサーバーの実時間で数えるので、画面の層のシナリオではサーバーの session を実際に失効させない（サーバーの失効と延長による最終アクセスの更新は、セキュリティの統合テストで確かめる）。8 時間の警告は、テストの部品（`BrowserSession`）が session の属性 `cargotracker.session.authenticatedAt` を上限の近い時刻（7 時間 56 分前）に書き換えてから画面を開いて確かめる。
 
 ステップ定義は自分のコンテキストの入力ポートだけを呼ぶ。前提の準備で他のコンテキストのデータが必要なときは、そのコンテキストの公開 API を使う（ADR-001 の境界をテストでも守る）。
+
+いくつかの feature が同じ背景の手順を写すときは、複合ステップにまとめる（3 つ目の写しが出たら。Bolt 35b の開発レビュー）。複合ステップは、まとめる手順のステップを持つコンテキストの受入ステップに置き、同じコンテキストのステップのクラスと共有の時計・配信のステップをコンストラクターで受け取って呼ぶ（同じシナリオでは同じインスタンスが渡る）。中で決める値は Javadoc に書き、シナリオと比べる時刻や期限は引数で見せる。前例は `quotation/acceptance/RouteDesignRequestedSteps`（詳細経路設計の依頼の配信まで。8 つの feature。Bolt 37f2）
 
 ### シナリオの例
 
