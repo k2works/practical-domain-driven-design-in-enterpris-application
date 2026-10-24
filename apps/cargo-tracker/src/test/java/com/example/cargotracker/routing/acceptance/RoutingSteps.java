@@ -155,6 +155,12 @@ public class RoutingSteps {
         assertThat(excluded.isEmpty() ? "なし" : excluded).isEqualTo(expected);
     }
 
+    /** 経路設計の案件がない（Golden dataset v0 の G-04。提出で拒まれた特殊貨物は経路設計に届かない。Bolt 37f）。 */
+    @ならば("経路設計案件はない")
+    public void 経路設計案件はない() {
+        assertThat(queryService.listCases()).isEmpty();
+    }
+
     @ならば("経路設計案件が {int} 件あり、条件は {string} から {string}、希望到着期限は {string} である")
     public void 経路設計案件がある(int count, String origin, String destination, String deadline) {
         List<RoutingCaseSummary> cases = queryService.listCases();
