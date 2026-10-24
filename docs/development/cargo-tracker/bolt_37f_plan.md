@@ -2,8 +2,10 @@
 type: Plan
 title: "Bolt 37f 計画 - US-06 の Golden dataset v0 と #15 のクローズ"
 tags: [plan]
-status: draft
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-24T04:15:38Z }
+status: stable
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-24T04:18:37Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-10-24T04:18:38Z }
 ---
 
 # Bolt 37f 計画 - US-06 の Golden dataset v0 と #15 のクローズ
@@ -193,6 +195,7 @@ unit --> sut : 集約に直接かける
 
 | 日付 | 更新内容 | 更新者 |
 | :--- | :--- | :--- |
+| 2026-10-24 | 計画を承認した（確認ポイント 1〜11 を推奨のとおり） | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-10-24 | 2 つの整合性検証の指摘を反映した（承認待ち）。G-04 の決定の変更を release_plan :732 に書くこと、輸送条件は背景にそろえ規則と航海は案件のデータだけから入れること、G-01 の候補を 3 件（3 区間を含む）にすること、要約と案件がないことを確かめるステップ、読み込む部品の置き場、案件のデータの項目（判断根拠・承認者・適用期間）、変異の既存で落ちるテスト、37f を分けたときに直す release_plan の行、test_strategy・用語集・環境の手順書の直し、#15 を閉じる手順を足した | anthropic/claude-opus-5-5 |
 | 2026-10-24 | 初版作成（承認待ち）。開始準備で、37f を Golden（37f）と背景の整理（37f2）に分け、G-04 は提出の拒否で示し、CI の `ui` の段の上限を 30 分にし、「区間」は社内の語にして 37f3 で直すと決めた（human:kakimomokuri） | anthropic/claude-opus-5-5 |
 
