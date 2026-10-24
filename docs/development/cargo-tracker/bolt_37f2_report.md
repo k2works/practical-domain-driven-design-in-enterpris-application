@@ -2,8 +2,10 @@
 type: Plan
 title: "Bolt 37f2 終了報告 - 受入シナリオの背景の写しの整理（詳細経路設計の依頼の配信まで）"
 tags: [plan]
-status: draft
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-24T09:59:59Z }
+status: stable
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-24T10:45:37Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-10-24T10:45:37Z }
 ---
 
 # Bolt 37f2 終了報告 - 受入シナリオの背景の写しの整理（詳細経路設計の依頼の配信まで）
@@ -42,7 +44,7 @@ generated: { by: anthropic/claude-opus-5-5, at: 2026-10-24T09:59:59Z }
 | ステップ | 結果 | コミット |
 | :--- | :--- | :--- |
 | 1〜4. 前の控え、複合ステップ、8 つの feature、前後の比べ | 上の議題 1 | `10fbac565` |
-| 5. 品質ゲートと開発レビュー | 変異 4 個、Javadoc・テスト戦略・リリース計画の直し | REVIEW_COMMIT |
+| 5. 品質ゲートと開発レビュー | 変異 4 個、Javadoc・テスト戦略・リリース計画の直し | `1a87e1e43` |
 | 6. 終了報告 | release_plan（W6 節の状態、更新履歴） | この報告のコミット |
 
 ## 品質ゲート
@@ -53,7 +55,7 @@ generated: { by: anthropic/claude-opus-5-5, at: 2026-10-24T09:59:59Z }
 | 変異 | V1 配信を外す、V2 審査を外す、V4 依頼の時刻を有効期限と同じ時刻にする: どれも 8 つの feature の 81 シナリオすべてが落ちた。V3 有効期限を 2026-10-09T09:00:00Z にする: 有効期限と比べる 4 つの feature の 11 シナリオが落ちた（`confirm_booking` 2、`approve_quotation_and_route` 2、`requote_after_approval` 4、`route_redesign_required` 3）。判定は `cucumber.json` の feature とシナリオで行った（T-196 の読み替え）。中で決める提出・審査・提示の時刻を変える変異は、まとめる前もどのシナリオも観測していないので等価（確かめは足さない。計画の確認ポイント 4） |
 | SonarQube | PASS（新しいコードの網羅率 95.8%、重複 0.04%、違反 0） |
 | `okf:check` | ERROR 0 |
-| CI | CI_RESULT |
+| CI | `1a87e1e43` で `check`・`ui`・`deploy-demo` が 1 回で成功した。MkDocs の配備も成功し、デモ環境は v408 で動いている |
 
 ### 開発レビューの指摘と扱い（主なもの）
 
@@ -95,6 +97,7 @@ Bolt 37f3（「区間」の語のそろえ。開始準備は `opening-iteration`
 
 | 日付 | 更新内容 | 更新者 |
 | :--- | :--- | :--- |
+| 2026-10-24 | 終了報告を承認した（議題 1〜3）。#50 の項目にチェックを入れ、範囲の外の写しを載せた | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-10-24 | 初版作成（承認待ち） | anthropic/claude-opus-5-5 |
 
 ## 関連ドキュメント
