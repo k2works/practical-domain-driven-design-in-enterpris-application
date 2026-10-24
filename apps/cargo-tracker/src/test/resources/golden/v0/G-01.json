@@ -1,0 +1,93 @@
+{
+  "id": "G-01",
+  "title": "標準・直行と積替え（直行・積替え 1 回・積替え 2 回の 3 区間。すべて適合）",
+  "version": "v0（仮の値。業務責任者の承認待ち。TST-02）",
+  "rationale": "BR-11（期限・接続時間）、D-89（情報鮮度の許容 24 時間）、D-90（接続ごとに次の区間の出発の時刻に有効な規則）",
+  "regulatoryReferences": [],
+  "approver": "未承認（TST-02）",
+  "validity": "v0 は仮（業務責任者の承認で決める）",
+  "routeSpecification": {
+    "origin": "JPTYO",
+    "destination": "NLRTM",
+    "arrivalDeadline": "2026-11-02T00:00:00Z",
+    "cargoCategory": "GENERAL"
+  },
+  "judgedAt": "2026-10-07T03:00:00Z",
+  "connectionRules": [
+    {
+      "port": "SGSIN",
+      "minimumConnection": "PT8H",
+      "validFrom": "2026-01-01T00:00:00Z"
+    },
+    {
+      "port": "LKCMB",
+      "minimumConnection": "PT6H",
+      "validFrom": "2026-01-01T00:00:00Z"
+    }
+  ],
+  "voyages": [
+    {
+      "number": "V-101",
+      "load": "JPTYO",
+      "departureAt": "2026-10-12T00:00:00Z",
+      "discharge": "NLRTM",
+      "arrivalAt": "2026-10-30T09:00:00Z",
+      "acquiredAt": "2026-10-07T01:00:00Z"
+    },
+    {
+      "number": "V-201",
+      "load": "JPTYO",
+      "departureAt": "2026-10-10T00:00:00Z",
+      "discharge": "SGSIN",
+      "arrivalAt": "2026-10-20T00:00:00Z",
+      "acquiredAt": "2026-10-07T01:00:00Z"
+    },
+    {
+      "number": "V-301",
+      "load": "SGSIN",
+      "departureAt": "2026-10-20T12:00:00Z",
+      "discharge": "NLRTM",
+      "arrivalAt": "2026-10-31T00:00:00Z",
+      "acquiredAt": "2026-10-07T01:00:00Z"
+    },
+    {
+      "number": "V-401",
+      "load": "SGSIN",
+      "departureAt": "2026-10-20T10:00:00Z",
+      "discharge": "LKCMB",
+      "arrivalAt": "2026-10-23T00:00:00Z",
+      "acquiredAt": "2026-10-07T01:00:00Z"
+    },
+    {
+      "number": "V-501",
+      "load": "LKCMB",
+      "departureAt": "2026-10-24T00:00:00Z",
+      "discharge": "NLRTM",
+      "arrivalAt": "2026-11-01T00:00:00Z",
+      "acquiredAt": "2026-10-07T01:00:00Z"
+    }
+  ],
+  "expected": [
+    {
+      "voyages": "V-101",
+      "conforming": true,
+      "estimatedArrivalAt": "2026-10-30T09:00:00Z",
+      "connectionSlack": null,
+      "reasons": []
+    },
+    {
+      "voyages": "V-201,V-301",
+      "conforming": true,
+      "estimatedArrivalAt": "2026-10-31T00:00:00Z",
+      "connectionSlack": "PT4H",
+      "reasons": []
+    },
+    {
+      "voyages": "V-201,V-401,V-501",
+      "conforming": true,
+      "estimatedArrivalAt": "2026-11-01T00:00:00Z",
+      "connectionSlack": "PT2H",
+      "reasons": []
+    }
+  ]
+}

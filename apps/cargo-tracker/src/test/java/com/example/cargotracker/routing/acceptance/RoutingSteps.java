@@ -7,6 +7,7 @@ import com.example.cargotracker.routing.application.internal.commandservices.Can
 import com.example.cargotracker.routing.application.internal.commandservices.RoutingCaseCommandService;
 import com.example.cargotracker.routing.application.internal.queryservices.RoutingCaseQueryService;
 import com.example.cargotracker.routing.domain.model.aggregates.ConnectionRule;
+import com.example.cargotracker.routing.domain.model.aggregates.GoldenDatasetCase;
 import com.example.cargotracker.routing.domain.model.aggregates.RoutingCase;
 import com.example.cargotracker.routing.domain.model.aggregates.Voyage;
 import com.example.cargotracker.routing.domain.model.entities.RouteCandidate;
@@ -16,6 +17,7 @@ import com.example.cargotracker.routing.domain.model.valueobjects.ExclusionReaso
 import com.example.cargotracker.routing.domain.model.valueobjects.Leg;
 import com.example.cargotracker.routing.domain.model.valueobjects.PortCall;
 import com.example.cargotracker.routing.domain.model.valueobjects.RoutingCaseSummary;
+import com.example.cargotracker.shared.acceptance.MutableClock;
 import com.example.cargotracker.shared.domain.Location;
 import com.example.cargotracker.shared.domain.UserId;
 import com.example.cargotracker.shared.domain.UtcInstant;
@@ -50,17 +52,21 @@ public class RoutingSteps {
     private final RoutingCaseQueryService queryService;
     private final InMemoryVoyageRepository voyages;
     private final InMemoryConnectionRuleRepository rules;
+    private final MutableClock clock;
     private CandidateCalculationOutcome outcome;
+    private GoldenDatasetCase goldenCase;
 
     public RoutingSteps(
             RoutingCaseCommandService commandService,
             RoutingCaseQueryService queryService,
             InMemoryVoyageRepository voyages,
-            InMemoryConnectionRuleRepository rules) {
+            InMemoryConnectionRuleRepository rules,
+            MutableClock clock) {
         this.commandService = commandService;
         this.queryService = queryService;
         this.voyages = voyages;
         this.rules = rules;
+        this.clock = clock;
     }
 
     @前提("港 {string} の必要最小接続時間は {int} 時間である")
@@ -98,6 +104,55 @@ public class RoutingSteps {
                     number + "@1",
                     acquiredAt == null ? INFO_ACQUIRED_AT : at(acquiredAt)));
         }
+    }
+
+    /**
+     * Golden dataset v0 の案件の規則と航海を入れる（Bolt 37f）。案件の条件は背景の輸送条件で決まるので、案件のデータの条件と一致する
+     * ことを確かめる。
+     */
+    @前提("Golden dataset v0 の案件 {string} の規則と航海を読み込む")
+    public void Golden_datasetの案件を読み込む(String id) {
+        goldenCase = GoldenDatasetCase.load(id);
+        RoutingCaseSummary routingCase = onlyCase();
+        assertThat(routingCase.origin())
+                .isEqualTo(goldenCase.routeSpecification().origin());
+        assertThat(routingCase.destination())
+                .isEqualTo(goldenCase.routeSpecification().destination());
+        assertThat(routingCase.arrivalDeadline())
+                .isEqualTo(goldenCase.routeSpecification().arrivalDeadline());
+        goldenCase.rules().forEach(rules::add);
+        goldenCase.voyages().forEach(voyages::add);
+    }
+
+    @前提("現在時刻を案件の判定時刻にする")
+    public void 現在時刻を案件の判定時刻にする() {
+        clock.setInstant(goldenCase.judgedAt().instant());
+    }
+
+    /** 適合の候補の番号を「,」でつないだもの（なければ「なし」）。 */
+    @ならば("適合候補は {string} である")
+    public void 適合候補は(String expected) {
+        List<RouteCandidate> candidates = currentCase().routeVersion().candidates();
+        String conforming = candidates.stream()
+                .filter(candidate -> candidate.evaluation().conforming())
+                .map(candidate -> String.valueOf(candidate.candidateNo()))
+                .collect(Collectors.joining(","));
+        assertThat(conforming.isEmpty() ? "なし" : conforming).isEqualTo(expected);
+    }
+
+    /** 除外の候補の「番号:理由」を「,」でつないだもの（理由が同じなら 1 つ。なければ「なし」）。 */
+    @ならば("除外候補と理由は {string} である")
+    public void 除外候補と理由は(String expected) {
+        List<RouteCandidate> candidates = currentCase().routeVersion().candidates();
+        String excluded = candidates.stream()
+                .filter(candidate -> !candidate.evaluation().conforming())
+                .map(candidate -> candidate.candidateNo() + ":"
+                        + candidate.evaluation().reasons().stream()
+                                .map(reason -> nameOf(reason.code()))
+                                .distinct()
+                                .collect(Collectors.joining("・")))
+                .collect(Collectors.joining(","));
+        assertThat(excluded.isEmpty() ? "なし" : excluded).isEqualTo(expected);
     }
 
     @ならば("経路設計案件が {int} 件あり、条件は {string} から {string}、希望到着期限は {string} である")
@@ -222,6 +277,14 @@ public class RoutingSteps {
                 .filter(candidate -> voyagesOf(candidate).equals(voyageNumbers))
                 .findFirst()
                 .orElseThrow(() -> new AssertionError("候補がありません: " + voyageNumbers));
+    }
+
+    private static String nameOf(ExclusionReasonCode code) {
+        return REASONS.entrySet().stream()
+                .filter(entry -> entry.getValue() == code)
+                .map(Map.Entry::getKey)
+                .findFirst()
+                .orElseThrow();
     }
 
     private static List<ExclusionReasonCode> codesOf(String reasons) {

@@ -1,0 +1,82 @@
+{
+  "id": "G-02",
+  "title": "接続時間の境界（接続余裕がちょうどの候補は適合、1 分足りない候補は接続不足）",
+  "version": "v0（仮の値。業務責任者の承認待ち。TST-02）",
+  "rationale": "BR-11（期限・接続時間）、D-89（情報鮮度の許容 24 時間）、D-90（接続ごとに次の区間の出発の時刻に有効な規則）",
+  "regulatoryReferences": [],
+  "approver": "未承認（TST-02）",
+  "validity": "v0 は仮（業務責任者の承認で決める）",
+  "routeSpecification": {
+    "origin": "JPTYO",
+    "destination": "NLRTM",
+    "arrivalDeadline": "2026-11-02T00:00:00Z",
+    "cargoCategory": "GENERAL"
+  },
+  "judgedAt": "2026-10-07T03:00:00Z",
+  "connectionRules": [
+    {
+      "port": "SGSIN",
+      "minimumConnection": "PT8H",
+      "validFrom": "2026-01-01T00:00:00Z"
+    }
+  ],
+  "voyages": [
+    {
+      "number": "V-102",
+      "load": "JPTYO",
+      "departureAt": "2026-10-12T00:00:00Z",
+      "discharge": "NLRTM",
+      "arrivalAt": "2026-10-29T00:00:00Z",
+      "acquiredAt": "2026-10-07T01:00:00Z"
+    },
+    {
+      "number": "V-201",
+      "load": "JPTYO",
+      "departureAt": "2026-10-10T00:00:00Z",
+      "discharge": "SGSIN",
+      "arrivalAt": "2026-10-20T00:00:00Z",
+      "acquiredAt": "2026-10-07T01:00:00Z"
+    },
+    {
+      "number": "V-304",
+      "load": "SGSIN",
+      "departureAt": "2026-10-20T08:00:00Z",
+      "discharge": "NLRTM",
+      "arrivalAt": "2026-10-30T00:00:00Z",
+      "acquiredAt": "2026-10-07T01:00:00Z"
+    },
+    {
+      "number": "V-305",
+      "load": "SGSIN",
+      "departureAt": "2026-10-20T07:59:00Z",
+      "discharge": "NLRTM",
+      "arrivalAt": "2026-10-29T12:00:00Z",
+      "acquiredAt": "2026-10-07T01:00:00Z"
+    }
+  ],
+  "expected": [
+    {
+      "voyages": "V-102",
+      "conforming": true,
+      "estimatedArrivalAt": "2026-10-29T00:00:00Z",
+      "connectionSlack": null,
+      "reasons": []
+    },
+    {
+      "voyages": "V-201,V-304",
+      "conforming": true,
+      "estimatedArrivalAt": "2026-10-30T00:00:00Z",
+      "connectionSlack": "PT0S",
+      "reasons": []
+    },
+    {
+      "voyages": "V-201,V-305",
+      "conforming": false,
+      "estimatedArrivalAt": "2026-10-29T12:00:00Z",
+      "connectionSlack": "PT-1M",
+      "reasons": [
+        "CONNECTION_TOO_SHORT"
+      ]
+    }
+  ]
+}
