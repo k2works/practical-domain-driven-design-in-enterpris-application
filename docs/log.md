@@ -1,6 +1,10 @@
 # Docs Update Log
 
 ## 2026-10-24
+* **Update**: [bolt_37f3_report](/development/cargo-tracker/bolt_37f3_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Creation**: [bolt_37f3_report](/development/cargo-tracker/bolt_37f3_report.md) を作成（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
 * **Update**: [用語集](/manual/用語集.md) を更新（anthropic/claude-opus-5-5）
 * **Update**: [05-予約一覧と追跡の照会](/manual/05-予約一覧と追跡の照会.md) を更新（anthropic/claude-opus-5-5）
 * **Update**: [04-見積りへの回答と承認](/manual/04-見積りへの回答と承認.md) を更新（anthropic/claude-opus-5-5）

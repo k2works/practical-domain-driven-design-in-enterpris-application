@@ -4,7 +4,7 @@ title: "リリース計画 - cargo-tracker（A 社国際貨物輸送管理シス
 description: "cargo-tracker MVP のリリース計画。1 人 + AI、時間単位の Bolt（= イテレーション）と週次の見直しで、最初の縦の流れ（R0.1）、パイロット準備完了（R1.0）、本格展開前（R1.1）の 3 段階、Unit のエントロピー評価、SP、バッファ、パイロット開始の条件、引継ぎ ID の台帳、業務責任者に確かめる事項の台帳。"
 tags: [development,release-plan]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-24T11:57:25Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-24T12:19:38Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T09:29:53Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:38:26Z }
@@ -1269,3 +1269,4 @@ xychart-beta
 | 2026-10-24 | Bolt 37f2 の終了報告を承認した（議題 1〜3） | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-10-24 | [Bolt 37f3 計画](bolt_37f3_plan.md)を作り、整合性検証の指摘を反映した（承認待ち）。荷主の C-10 の見える文字も直し（S-12 は区間のまま）、経路の表の読み上げは航海にすると決めた（human:kakimomokuri） | anthropic/claude-opus-5-5 |
 | 2026-10-24 | Bolt 37f3 の計画を承認した（確認ポイント 1〜5 を推奨のとおり） | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
+| 2026-10-24 | Bolt 37f3 を実装し（C-10 の予定の行、経路の表の読み上げの名前、マニュアル 4・5 章・用語集とキャプチャ）、[Bolt 37f3 終了報告](bolt_37f3_report.md)を作った（承認待ち） | anthropic/claude-opus-5-5 |
