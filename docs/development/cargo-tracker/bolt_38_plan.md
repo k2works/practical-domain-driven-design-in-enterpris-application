@@ -2,8 +2,10 @@
 type: Plan
 title: "Bolt 38 計画 - S-20 の前の直し（エラー要約の形とフォーカス、役割の確定の版の解釈の順、Section の足し方）"
 tags: [plan]
-status: draft
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-24T23:09:59Z }
+status: stable
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-24T23:28:09Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-10-24T23:28:10Z }
 ---
 
 # Bolt 38 計画 - S-20 の前の直し（エラー要約の形とフォーカス、役割の確定の版の解釈の順、Section の足し方）
@@ -163,6 +165,7 @@ generated: { by: anthropic/claude-opus-5-5, at: 2026-10-24T23:09:59Z }
 
 | 日付 | 更新内容 | 更新者 |
 | :--- | :--- | :--- |
+| 2026-10-25 | 計画を承認した（確認ポイント 1〜7 を推奨のとおり） | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-10-25 | 整合性検証の指摘を反映した（承認待ち）。誤りのキャプチャの撮り直し、スクリプトの受け持ち（要約へのフォーカスだけ）、停止の理由の文言、`Section` の単位（操作ごと）、欄の有無の置き場、行 4b と出口の列、V3b・V6、`required = false`、古くなる注、引き継ぎ（T-175・T-185・T-186・T-187）、トレースを足した。停止の理由の文言と `Section` の単位を決めた（human:kakimomokuri） | anthropic/claude-opus-5-5 |
 | 2026-10-25 | 初版作成（承認待ち）。開始準備で、リンク先は群の最初の選択肢、フォーカスは既存のスクリプト、`Section` は形を残して足し方を書くと決めた（human:kakimomokuri） | anthropic/claude-opus-5-5 |
 
