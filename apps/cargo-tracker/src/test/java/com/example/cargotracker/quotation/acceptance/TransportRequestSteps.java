@@ -110,6 +110,7 @@ public class TransportRequestSteps {
         table.asMaps().forEach(row -> input.put(item(row.get("項目")), row.get("値")));
     }
 
+    /** 背景の共通の前提（{@link RouteDesignRequestedSteps}）からも呼ぶ（変えると 8 つの feature に波及する）。 */
     @前提("荷主が必須条件をそろえた輸送条件を入力している")
     public void 荷主が必須条件をそろえた輸送条件を入力している() {
         input.clear();
@@ -141,6 +142,7 @@ public class TransportRequestSteps {
         input.remove(item(itemName));
     }
 
+    /** 背景の共通の前提（{@link RouteDesignRequestedSteps}）からも呼ぶ（変えると 8 つの feature に波及する）。 */
     @もし("荷主が入力した輸送条件を提出する")
     public void 荷主が入力した輸送条件を提出する() {
         lastOutcome = commandService.submit(

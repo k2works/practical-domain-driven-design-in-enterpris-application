@@ -86,6 +86,7 @@ public class TransportRequestReviewSteps {
         this.context = context;
     }
 
+    /** 背景の共通の前提（{@link RouteDesignRequestedSteps}）からも呼ぶ（変えると 8 つの feature に波及する）。 */
     @もし("営業担当者が版 {int} の審査を根拠 {string} で確定する")
     public void 審査を確定する(int versionNo, String rationale) {
         lastReview = reviewService.approve(

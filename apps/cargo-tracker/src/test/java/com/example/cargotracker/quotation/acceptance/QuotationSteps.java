@@ -141,6 +141,7 @@ public class QuotationSteps {
         有効期限を決めた標準の見積りを提示している(STANDARD_EXPIRES_AT);
     }
 
+    /** 背景の共通の前提（{@link RouteDesignRequestedSteps}）からも呼ぶ（変えると 8 つの feature に波及する）。 */
     @前提("営業担当者が有効期限 {string} の標準の見積りを算出して社内承認して提示している")
     public void 有効期限を決めた標準の見積りを提示している(String expires) {
         有効期限を決めた標準の見積りを算出している(expires);

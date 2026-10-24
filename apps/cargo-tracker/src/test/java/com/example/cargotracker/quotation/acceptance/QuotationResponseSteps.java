@@ -75,6 +75,7 @@ public class QuotationResponseSteps {
         this.context = context;
     }
 
+    /** 背景の共通の前提（{@link RouteDesignRequestedSteps}）からも呼ぶ（変えると 8 つの feature に波及する）。 */
     @もし("荷主担当者が見積り {int} について詳細経路設計へ進むと回答する")
     public void 詳細経路設計へ進むと回答する(int quotationNo) {
         lastOutcome = responseService.requestRouteDesign(

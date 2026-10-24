@@ -4,7 +4,7 @@ title: "cargo-tracker テスト戦略"
 description: "cargo-tracker のテスト形状、テストレベルと責務、BDD（Cucumber）のシナリオ階層とタグ規約、不変条件・ユーザーストーリーとテストの対応、カバレッジ目標、CI での実行。"
 tags: [design, test-strategy, bdd]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-24T09:34:54Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-24T09:59:59Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T08:12:04Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:01:38Z }
@@ -151,7 +151,7 @@ src/test/java/.../ui/                     画面の層のステップ定義（@u
 
 ステップ定義は自分のコンテキストの入力ポートだけを呼ぶ。前提の準備で他のコンテキストのデータが必要なときは、そのコンテキストの公開 API を使う（ADR-001 の境界をテストでも守る）。
 
-いくつかの feature が同じ背景の手順を写すときは、複合ステップにまとめる（3 つ目の写しが出たら。Bolt 35b の開発レビュー）。複合ステップは、まとめる手順のステップを持つコンテキストの受入ステップに置き、同じコンテキストのステップのクラスと共有の時計・配信のステップをコンストラクターで受け取って呼ぶ（同じシナリオでは同じインスタンスが渡る）。中で決める値は Javadoc に書き、シナリオと比べる時刻や期限は引数で見せる。前例は `quotation/acceptance/RouteDesignRequestedSteps`（詳細経路設計の依頼の配信まで。8 つの feature。Bolt 37f2）
+いくつかの feature が同じ背景の手順を写すときは、複合ステップにまとめる（3 つ目の写しが出たら。Bolt 35b の開発レビュー）。複合ステップは、まとめる手順のステップを持つコンテキストの受入ステップに置き、同じコンテキストのステップのクラスと共有の時計・配信のステップをコンストラクターで受け取って呼ぶ（同じシナリオでは同じインスタンスが渡る）。中で決める値は Javadoc に書き、シナリオと比べる時刻や期限は引数で見せる。前例は `quotation/acceptance/RouteDesignRequestedSteps`（詳細経路設計の依頼の配信まで。8 つの feature。Bolt 37f2）。中のステップのクラスが入力ポートを呼び、複合ステップは入力ポートを直接呼ばない（他のコンテキストの acceptance への依存は AT-05 が拒む）。中のステップの文や決め打ちの値を変えると、まとめた feature のすべてに波及する
 
 ### シナリオの例
 
