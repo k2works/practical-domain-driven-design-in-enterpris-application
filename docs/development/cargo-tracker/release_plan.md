@@ -4,7 +4,7 @@ title: "リリース計画 - cargo-tracker（A 社国際貨物輸送管理シス
 description: "cargo-tracker MVP のリリース計画。1 人 + AI、時間単位の Bolt（= イテレーション）と週次の見直しで、最初の縦の流れ（R0.1）、パイロット準備完了（R1.0）、本格展開前（R1.1）の 3 段階、Unit のエントロピー評価、SP、バッファ、パイロット開始の条件、引継ぎ ID の台帳、業務責任者に確かめる事項の台帳。"
 tags: [development,release-plan]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-25T10:39:17Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-25T10:58:42Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T09:29:53Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:38:26Z }
@@ -1285,3 +1285,4 @@ xychart-beta
 | 2026-10-25 | Bolt 38b の終了報告を承認した（議題 1〜4） | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-10-25 | [Bolt 38b2 計画](bolt_38b2_plan.md)を作り、整合性検証の指摘を反映した（承認待ち）。38b2 を 38b2・38b2b に分け、使えないハッシュは乱数の bcrypt、ない・範囲外は同じ応答で無効は理由を示し、監査は役割だけ、範囲外の記録は登録のサービスの確定の口で書き、ログインの道の try を狭め、表示名はサービスで確かめると決めた（human:kakimomokuri） | anthropic/claude-opus-5-5 |
 | 2026-10-25 | Bolt 38b2 の計画を承認した（確認ポイント 1〜7 を推奨のとおり） | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
+| 2026-10-25 | Bolt 38b2 を実装し（登録のサービス、監査、範囲外の企業への試行の記録、使えないハッシュ、ログインの道）、[Bolt 38b2 終了報告](bolt_38b2_report.md)を作った（承認待ち） | anthropic/claude-opus-5-5 |
