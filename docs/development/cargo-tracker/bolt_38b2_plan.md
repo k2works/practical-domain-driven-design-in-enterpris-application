@@ -2,8 +2,10 @@
 type: Plan
 title: "Bolt 38b2 計画 - 利用者の登録のサービスと監査（使えないハッシュ、範囲外の記録）"
 tags: [plan]
-status: draft
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-25T09:06:11Z }
+status: stable
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-25T09:42:49Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-10-25T09:42:50Z }
 ---
 
 # Bolt 38b2 計画 - 利用者の登録のサービスと監査（使えないハッシュ、範囲外の記録）
@@ -210,6 +212,7 @@ UserRegistrationService --> AuditRecord
 
 | 日付 | 更新内容 | 更新者 |
 | :--- | :--- | :--- |
+| 2026-10-25 | 計画を承認した（確認ポイント 1〜7 を推奨のとおり） | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-10-25 | 整合性検証の指摘を反映した（承認待ち）。「ない」と「範囲外」を別の値にし、範囲外の記録は登録のサービスの確定の口の中で書くと決め（ArchUnit の規則は変えない）、ログインの道の差を受け入れ、表示名はサービスに置くと決めた（human:kakimomokuri）。行 3b・12・12b・13b と変異 V8・V9、同時の登録の捕まえ方、匿名の実装と crypto の一覧、古い記述、引き継ぎ（T-144・T-150・T-153・T-142）、38b2b の行の中身、行番号を直した | anthropic/claude-opus-5-5 |
 | 2026-10-25 | 初版作成（承認待ち）。開始準備で、38b2 を 2 つに分け、使えないハッシュは乱数の bcrypt、ない・範囲外は同じ拒否で無効は理由を示し、監査は役割だけにすると決めた（human:kakimomokuri） | anthropic/claude-opus-5-5 |
 
