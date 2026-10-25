@@ -2,8 +2,10 @@
 type: Plan
 title: "Bolt 38b 計画 - 利用者の登録の判定と、招待のトークンの用途（ドメインと永続化）"
 tags: [plan]
-status: draft
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-25T02:33:00Z }
+status: stable
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-25T04:20:56Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-10-25T04:20:56Z }
 ---
 
 # Bolt 38b 計画 - 利用者の登録の判定と、招待のトークンの用途（ドメインと永続化）
@@ -247,6 +249,7 @@ title 再設定のトークンの状態（用途で期限だけが違う）
 
 | 日付 | 更新内容 | 更新者 |
 | :--- | :--- | :--- |
+| 2026-10-25 | 計画を承認した（確認ポイント 1〜7 を推奨のとおり） | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-10-25 | 整合性検証の指摘を反映した（承認待ち）。判定の結果と承認の値を `User` の入れ子にし（承認のコンストラクターは private）、職務分離を判定の最後に残し、用途の名前を `USER_INVITATION` にし、用語集・状態遷移図・列のコメント・architecture_backend・release_plan の 38b を指す所を足し、行 7b・ハンドラーの確かめ・行 11 の確かめ先・V7・V8、第三者の再設定で招待のリンクが無効になるリスク、トレースを直した | anthropic/claude-opus-5-5 |
 | 2026-10-25 | 初版作成（承認待ち）。開始準備で、38b を 4 つに分け、既にいるメールアドレスは範囲の内外で同じ文で拒み、招待のリンクは再設定の URL を使い、役割 0 件の守りはコンストラクターの 1 か所にすると決めた（human:kakimomokuri） | anthropic/claude-opus-5-5 |
 
