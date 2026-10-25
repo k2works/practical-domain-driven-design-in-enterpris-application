@@ -2,8 +2,10 @@
 type: Plan
 title: "Bolt 38b2 終了報告 - 利用者の登録のサービスと監査（使えないハッシュ、範囲外の記録）"
 tags: [plan]
-status: draft
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-25T10:58:42Z }
+status: stable
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-25T13:34:51Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-10-25T13:34:51Z }
 ---
 
 # Bolt 38b2 終了報告 - 利用者の登録のサービスと監査（使えないハッシュ、範囲外の記録）
@@ -94,7 +96,7 @@ generated: { by: anthropic/claude-opus-5-5, at: 2026-10-25T10:58:42Z }
 
 ### 既知の課題（後に持ち込む）
 
-- 「書き手は 1 か所」を守る規則がない（議題 2 の決定による）
+- 「書き手は 1 か所」を守る規則がない（議題 2 の決定で、Bolt 38b2b で規則を足す）
 - 書式文字や NBSP だけの表示名（38b3 の開始準備で諮る）
 - 外側のトランザクションに合流したときの rollback-only（38b3 の画面は `@Transactional` の外で呼ぶ）
 - 既にいる利用者の行が読めないと登録の判定が 500 になる（データの不整合を外へ出す方針）
@@ -108,6 +110,7 @@ Bolt 38b2b（招待の発行とメール。開始準備は `opening-iteration` �
 
 | 日付 | 更新内容 | 更新者 |
 | :--- | :--- | :--- |
+| 2026-10-25 | 終了報告を承認した（議題 1〜4）。議題 2 は、範囲外の企業の記録を作る部品を登録のサービスに限る ArchUnit の規則を Bolt 38b2b で足すと決めた（human:kakimomokuri） | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-10-25 | 初版作成（承認待ち） | anthropic/claude-opus-5-5 |
 
 ## 関連ドキュメント
