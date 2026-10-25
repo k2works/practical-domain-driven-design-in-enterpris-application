@@ -7881,6 +7881,41 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../development/cargo-tracker/bolt_38b2_plan/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 38b2 計画
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--stable"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../development/cargo-tracker/release_report-0_1/" class="md-nav__link">
         
   
@@ -13553,14 +13588,14 @@
 <tr>
 <td style="text-align: left;">SEC-07</td>
 <td style="text-align: left;">password の保存</td>
-<td style="text-align: left;">Spring Security の推奨するハッシュで保存する。DelegatingPasswordEncoder の既定の bcrypt（強さ 10、<code>{bcrypt}</code> の接頭辞）を使う（2026-10-06 の Bolt 14 の確認ポイント 6。Argon2id は Bouncy Castle が要るため採らない。接頭辞で後から移せる）</td>
+<td style="text-align: left;">Spring Security の推奨するハッシュで保存する。DelegatingPasswordEncoder の既定の bcrypt（強さ 10、<code>{bcrypt}</code> の接頭辞）を使う（2026-10-06 の Bolt 14 の確認ポイント 6。Argon2id は Bouncy Castle が要るため採らない。接頭辞で後から移せる）。システム管理者が登録した利用者（Bolt 38b2）は、本人が A-06 で設定するまで使えない password のハッシュ（<code>SecureRandom</code> の 32 バイトの平文を同じ bcrypt でハッシュにし、平文は捨てる）を持つ。どの password とも一致せず、照合の時間も普通の利用者と同じ（壊れたハッシュのようにすぐ返らない）</td>
 <td style="text-align: left;">確定</td>
 <td style="text-align: left;">平文や可逆な暗号で保存しない</td>
 </tr>
 <tr>
 <td style="text-align: left;">SEC-08</td>
 <td style="text-align: left;">password の回復</td>
-<td style="text-align: left;">登録メールアドレスへ 1 回だけ使える再設定リンク（30 分有効）を送る。Bolt 38b から、再設定のトークンに用途（<code>RESET</code>・<code>USER_INVITATION</code>）を持たせ、システム管理者が登録した利用者への初回の設定のリンク（利用者の招待）は 24 時間有効にする（同じ表と同じ A-06 を使う。発行とメールは Bolt 38b2、A-06 の出し分けは Bolt 38b4）。前の発行から 1 分以内の依頼し直しの抑えは再設定の発行だけで数え、前の未使用のトークンの無効化は用途を問わない。受け入れるリスク（2026-10-25、human:kakimomokuri）: メールアドレスを知る第三者が招待の直後に再設定を依頼すると、招待のリンクが無効になる。再設定のリンクは本人に届き、初回の設定はそれでもできる。再設定後も TOTP は必要。再設定は監査記録に残す。Bolt 33 で依頼までを作り、Bolt 33a で設定を作る。依頼（Bolt 33）: トークンは 32 バイトの乱数（URL 安全な Base64）で、表には SHA-256 のハッシュだけを置き、平文は表・発行記録・ログに残さない。発行から 30 分で使えなくなり、1 回だけ使える。同じ利用者に新しく発行すると前の未使用のトークンは使えなくなる。同じ利用者への前の発行から 1 分以内の依頼し直しでは発行も送信もしない。登録の有無・止められた利用者かを画面の応答（リダイレクト先と知らせ）で示さない。応答はトークンの発行も送信も待たない（依頼の後のモジュールのイベントのハンドラーで発行して送る）。リンクは設定の公開の base URL（<code>cargotracker.public-base-url</code>）から組み立て、request の Host ヘッダーから組み立てない。A-06 は password の要素を与えず、設定したら A-01 に戻し、新しい password と TOTP でログインし直す（<a href="../../../adr/cargo-tracker/017-notification-module-and-mail/">ADR-017</a>、IA-INV-12）。設定（Bolt 33a。2026-10-15 に human:kakimomokuri が決定）: リンクを開く GET でトークンを確かめ、session にトークンの ID だけを置いて、トークンのない URL（<code>/password-reset/new</code>）へ PRG で移す。応答に <code>Referrer-Policy: no-referrer</code> を付ける。平文のトークンは最初の 1 回の要求の URL にだけ現れ、表・session・ログ・Referer・以後の URL に残らない。アクセスログには最初の要求の path が残るが、30 分・1 回だけで抑え、受け入れる（利用者の招待のリンクは同じ path で 24 時間使えるが、1 回だけ・本人の設定・新しい発行で無効になることで抑え、受け入れる。2026-10-25、Bolt 38b）。期限切れ・使用済み・新しいリンクを送った後・存在しない・利用停止のリンクは、どれも同じ案内にする。リンクを開いて session にトークンの ID を置くときは session の ID を変える（session 固定化を防ぐ。Bolt 33a の開発レビュー）。設定の完了は、方針の確認（SEC-04・SEC-05）、トークンの条件付きの使用、password の変更、前の未使用のトークンの無効化、監査記録（<code>PASSWORD_RESET_COMPLETED</code>）を 1 つのトランザクションにし、同じトークンの同時の 2 つの送信でも変更は 1 回だけにする。今の要求は、完了したら今の認証を捨てて新しい session を作り（方針の誤りで送り直せるように、完了の前には捨てない。Bolt 33a の開発レビューで改めた）、完了のコミットの後にその利用者の session をすべて失効させる（ほかの端末は次の操作で A-03。失効できなければ警告のログにとどめる。password は変わっている）。ロックは変えない（SEC-02）。S-20 の利用停止の確定（Bolt 34d の開発レビューの後。2026-10-17、human:kakimomokuri）でも、同じトランザクションで相手の未使用のトークンを無効にする（停止の前のリンクで再開の後に設定し直させない。再開の後は相手が依頼し直す。SEC-12、IA-INV-12）。Bolt 33 から 33a までは仮の A-06（準備中。トークンを読まず session に覚えず、<code>Referrer-Policy: no-referrer</code>）を返していた。SMTP の送信はハンドラーのトランザクションと利用者の行の占有の中で行い、接続・読み・書きのタイムアウトを各 5 秒にする（<code>spring.mail.properties.mail.smtp.connectiontimeout</code>・<code>timeout</code>・<code>writetimeout</code>）。トークンの発行・通知の記録・送信の結果は 1 つのトランザクションで、送信は at-least-once とする。送った後、コミットの前に落ちると、届いたリンクは使えず、再配信で新しいリンクの 2 通目が送られることがある（2026-10-15 に human:kakimomokuri が決定）。残りのリスクは W10 に送る（既知の課題）: 登録の有無による応答時間の数 ms の差（有効な利用者だけ企業の読み出しと発行記録の INSERT が加わる）、発信元ごとの抑止がなく監査と発行記録が増えうること・監査に発信元がないこと（SEC-20）、爆撃の 1 日の上限がないこと（1 分ごとに前のリンクを無効にできる）、デモのログにリンクが出ること（デモには実在のメールアドレスを登録しない。ADR-013）</td>
+<td style="text-align: left;">登録メールアドレスへ 1 回だけ使える再設定リンク（30 分有効）を送る。Bolt 38b から、再設定のトークンに用途（<code>RESET</code>・<code>USER_INVITATION</code>）を持たせ、システム管理者が登録した利用者への初回の設定のリンク（利用者の招待）は 24 時間有効にする（同じ表と同じ A-06 を使う。発行とメールは Bolt 38b2b、A-06 の出し分けは Bolt 38b4）。前の発行から 1 分以内の依頼し直しの抑えは再設定の発行だけで数え、前の未使用のトークンの無効化は用途を問わない。受け入れるリスク（2026-10-25、human:kakimomokuri）: メールアドレスを知る第三者が招待の直後に再設定を依頼すると、招待のリンクが無効になる。再設定のリンクは本人に届き、初回の設定はそれでもできる。再設定後も TOTP は必要。再設定は監査記録に残す。Bolt 33 で依頼までを作り、Bolt 33a で設定を作る。依頼（Bolt 33）: トークンは 32 バイトの乱数（URL 安全な Base64）で、表には SHA-256 のハッシュだけを置き、平文は表・発行記録・ログに残さない。発行から 30 分で使えなくなり、1 回だけ使える。同じ利用者に新しく発行すると前の未使用のトークンは使えなくなる。同じ利用者への前の発行から 1 分以内の依頼し直しでは発行も送信もしない。登録の有無・止められた利用者かを画面の応答（リダイレクト先と知らせ）で示さない。応答はトークンの発行も送信も待たない（依頼の後のモジュールのイベントのハンドラーで発行して送る）。リンクは設定の公開の base URL（<code>cargotracker.public-base-url</code>）から組み立て、request の Host ヘッダーから組み立てない。A-06 は password の要素を与えず、設定したら A-01 に戻し、新しい password と TOTP でログインし直す（<a href="../../../adr/cargo-tracker/017-notification-module-and-mail/">ADR-017</a>、IA-INV-12）。設定（Bolt 33a。2026-10-15 に human:kakimomokuri が決定）: リンクを開く GET でトークンを確かめ、session にトークンの ID だけを置いて、トークンのない URL（<code>/password-reset/new</code>）へ PRG で移す。応答に <code>Referrer-Policy: no-referrer</code> を付ける。平文のトークンは最初の 1 回の要求の URL にだけ現れ、表・session・ログ・Referer・以後の URL に残らない。アクセスログには最初の要求の path が残るが、30 分・1 回だけで抑え、受け入れる（利用者の招待のリンクは同じ path で 24 時間使えるが、1 回だけ・本人の設定・新しい発行で無効になることで抑え、受け入れる。2026-10-25、Bolt 38b）。期限切れ・使用済み・新しいリンクを送った後・存在しない・利用停止のリンクは、どれも同じ案内にする。リンクを開いて session にトークンの ID を置くときは session の ID を変える（session 固定化を防ぐ。Bolt 33a の開発レビュー）。設定の完了は、方針の確認（SEC-04・SEC-05）、トークンの条件付きの使用、password の変更、前の未使用のトークンの無効化、監査記録（<code>PASSWORD_RESET_COMPLETED</code>）を 1 つのトランザクションにし、同じトークンの同時の 2 つの送信でも変更は 1 回だけにする。今の要求は、完了したら今の認証を捨てて新しい session を作り（方針の誤りで送り直せるように、完了の前には捨てない。Bolt 33a の開発レビューで改めた）、完了のコミットの後にその利用者の session をすべて失効させる（ほかの端末は次の操作で A-03。失効できなければ警告のログにとどめる。password は変わっている）。ロックは変えない（SEC-02）。S-20 の利用停止の確定（Bolt 34d の開発レビューの後。2026-10-17、human:kakimomokuri）でも、同じトランザクションで相手の未使用のトークンを無効にする（停止の前のリンクで再開の後に設定し直させない。再開の後は相手が依頼し直す。SEC-12、IA-INV-12）。Bolt 33 から 33a までは仮の A-06（準備中。トークンを読まず session に覚えず、<code>Referrer-Policy: no-referrer</code>）を返していた。SMTP の送信はハンドラーのトランザクションと利用者の行の占有の中で行い、接続・読み・書きのタイムアウトを各 5 秒にする（<code>spring.mail.properties.mail.smtp.connectiontimeout</code>・<code>timeout</code>・<code>writetimeout</code>）。トークンの発行・通知の記録・送信の結果は 1 つのトランザクションで、送信は at-least-once とする。送った後、コミットの前に落ちると、届いたリンクは使えず、再配信で新しいリンクの 2 通目が送られることがある（2026-10-15 に human:kakimomokuri が決定）。残りのリスクは W10 に送る（既知の課題）: 登録の有無による応答時間の数 ms の差（有効な利用者だけ企業の読み出しと発行記録の INSERT が加わる）、発信元ごとの抑止がなく監査と発行記録が増えうること・監査に発信元がないこと（SEC-20）、爆撃の 1 日の上限がないこと（1 分ごとに前のリンクを無効にできる）、デモのログにリンクが出ること（デモには実在のメールアドレスを登録しない。ADR-013）</td>
 <td style="text-align: left;">提案</td>
 <td style="text-align: left;">多要素を回復の手順でも迂回させない</td>
 </tr>
@@ -13615,7 +13650,7 @@
 <tr>
 <td style="text-align: left;">SEC-12</td>
 <td style="text-align: left;">方式</td>
-<td style="text-align: left;">役割（BR-15 の 8 役割）と担当範囲（企業・案件）と参照許可（BR-07）の組合せ。request ごとに DB の現在値で判断する。Bolt 32c で役割・利用状態・企業の有効性を実現した（認証済みの request ごとに 1 回の SQL で読み、止められた利用者は A-03、取り消した役割の URL は A-04）。Bolt 34 でシステム管理者による役割の付与・取消し（職務分離と企業の種類の規則、次の request から反映。監督の役割は画面で付け外ししない）を足した。Bolt 34b でシステム管理者の管理範囲（<code>user_assignment</code> の <code>COMPANY</code>。運用の手順で割り当てる）を足し、範囲外の利用者は 404 にして役割の変更の試行（確定の POST）を監査記録に残す（IA-INV-14。GET は CSRF の守りがなく他サイトから記録を書かせられるので記録しない）。Bolt 34 から 34b までの全企業の役割を変えられる窓は 34b で閉じ、本番への配備のゲート（Bolt 34 の議題 4）は外れた。本番の配備の前に、管理範囲の割り当ての運用タスクを用意する（W6 の開始準備で、割り当ての画面を作らず W10 の運用タスクにした。2026-10-20、human:kakimomokuri）。業務担当者の担当範囲は担当企業だけにする（W6 の開始準備の決定。Bolt 38e〜38g）。Bolt 34d でシステム管理者による利用停止と再開（停止の理由を選ぶ。版を条件に利用状態を変え、監査記録 <code>USER_SUSPENDED</code>・<code>USER_REACTIVATED</code> を同じトランザクションで書く。停止は相手の次の request から反映し、確定の後に session をすぐには消さない。自分と監督の役割を持つ利用者は画面で止めも再開もしない。2026-10-17、human:kakimomokuri）を足した。Bolt 34d の開発レビューの後に、停止の確定で相手の未使用の password の再設定のトークンを同じトランザクションで無効にし（停止の前のリンクで再開の後に設定し直させない。SEC-08）、再開の確定の後に相手の session をすべて消す（停止の前の session を使い続けさせない。消せなくても再開は戻さない）ことを足した（2026-10-17、human:kakimomokuri）。範囲外の利用者への確定の POST は、状態と版の値を管理範囲の判定の後に解釈し、誤った値でも試行を記録してから 404 にする。業務担当者の担当範囲（企業・案件）は US-16 の残り（W6）、参照許可は US-19 で足す</td>
+<td style="text-align: left;">役割（BR-15 の 8 役割）と担当範囲（企業・案件）と参照許可（BR-07）の組合せ。request ごとに DB の現在値で判断する。Bolt 32c で役割・利用状態・企業の有効性を実現した（認証済みの request ごとに 1 回の SQL で読み、止められた利用者は A-03、取り消した役割の URL は A-04）。Bolt 34 でシステム管理者による役割の付与・取消し（職務分離と企業の種類の規則、次の request から反映。監督の役割は画面で付け外ししない）を足した。Bolt 34b でシステム管理者の管理範囲（<code>user_assignment</code> の <code>COMPANY</code>。運用の手順で割り当てる）を足し、範囲外の利用者は 404 にして役割の変更の試行（確定の POST）を監査記録に残す（IA-INV-14。GET は CSRF の守りがなく他サイトから記録を書かせられるので記録しない）。Bolt 34 から 34b までの全企業の役割を変えられる窓は 34b で閉じ、本番への配備のゲート（Bolt 34 の議題 4）は外れた。本番の配備の前に、管理範囲の割り当ての運用タスクを用意する（W6 の開始準備で、割り当ての画面を作らず W10 の運用タスクにした。2026-10-20、human:kakimomokuri）。業務担当者の担当範囲は担当企業だけにする（W6 の開始準備の決定。Bolt 38e〜38g）。Bolt 34d でシステム管理者による利用停止と再開（停止の理由を選ぶ。版を条件に利用状態を変え、監査記録 <code>USER_SUSPENDED</code>・<code>USER_REACTIVATED</code> を同じトランザクションで書く。停止は相手の次の request から反映し、確定の後に session をすぐには消さない。自分と監督の役割を持つ利用者は画面で止めも再開もしない。2026-10-17、human:kakimomokuri）を足した。Bolt 34d の開発レビューの後に、停止の確定で相手の未使用の password の再設定のトークンを同じトランザクションで無効にし（停止の前のリンクで再開の後に設定し直させない。SEC-08）、再開の確定の後に相手の session をすべて消す（停止の前の session を使い続けさせない。消せなくても再開は戻さない）ことを足した（2026-10-17、human:kakimomokuri）。範囲外の利用者への確定の POST は、状態と版の値を管理範囲の判定の後に解釈し、誤った値でも試行を記録してから 404 にする。Bolt 38b2 で利用者の登録（管理範囲の企業にだけ行い、範囲の外の企業は存在しない企業と同じ応答にして確定の試行を対象の企業で記録する。無効な企業は範囲の後に理由を示して拒む）を足した。業務担当者の担当範囲（企業・案件）は US-16 の残り（W6）、参照許可は US-19 で足す</td>
 <td style="text-align: left;">確定（BR-07、BR-15、IA-INV-04）</td>
 </tr>
 <tr>
