@@ -2,8 +2,10 @@
 type: Plan
 title: "Bolt 38b 終了報告 - 利用者の登録の判定と、招待のトークンの用途（ドメインと永続化）"
 tags: [plan]
-status: draft
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-25T05:38:45Z }
+status: stable
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-25T06:33:21Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-10-25T06:33:22Z }
 ---
 
 # Bolt 38b 終了報告 - 利用者の登録の判定と、招待のトークンの用途（ドメインと永続化）
@@ -39,7 +41,7 @@ generated: { by: anthropic/claude-opus-5-5, at: 2026-10-25T05:38:45Z }
 | Bolt | 第 38b 回（W6 の 19 本目。38b〜38b4 の 1 つ目） |
 | 期間 | 2026-10-25（計画の承認の記録 `ba3ff94f2` から、終了報告の承認の依頼まで） |
 | 対象 | `User`・`UserRegistrationRejection`・`UserRegistrationRejectionReason`、`PasswordResetToken`・`PasswordResetTokenPurpose`・リポジトリ・マッパー・ハンドラー、`MyBatisUserStandingRepository`、マイグレーション、テスト、設計の文書、release_plan |
-| GitHub | [#14](https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/14)、[#50](https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/50)（この報告の承認の後にコメントする） |
+| GitHub | [#14](https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/14)、[#50](https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/50)（この報告の承認の後にコメントした） |
 | SP | 0 |
 | 計画 | [Bolt 38b 計画](bolt_38b_plan.md) |
 
@@ -102,6 +104,7 @@ Bolt 38b2（利用者の登録のサービスと招待のメール。開始準�
 
 | 日付 | 更新内容 | 更新者 |
 | :--- | :--- | :--- |
+| 2026-10-25 | 終了報告を承認した（議題 1〜4）。#50 の項目にチェックを入れ、コメントした | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-10-25 | 初版作成（承認待ち） | anthropic/claude-opus-5-5 |
 
 ## 関連ドキュメント
