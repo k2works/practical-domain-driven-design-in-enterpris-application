@@ -8,6 +8,7 @@ import com.example.cargotracker.identity.AuthenticationFactorFixtures;
 import com.example.cargotracker.identity.domain.model.aggregates.CompanyRepository;
 import com.example.cargotracker.identity.domain.model.aggregates.PasswordResetToken;
 import com.example.cargotracker.identity.domain.model.aggregates.UserRepository;
+import com.example.cargotracker.identity.domain.model.valueobjects.PasswordResetTokenPurpose;
 import com.example.cargotracker.shared.domain.UserId;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import java.time.Instant;
@@ -19,6 +20,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.annotation.Transactional;
 
 /** 再設定のトークンのリポジトリと表（PostgreSQL。IA-INV-12。Bolt 33）。 */
@@ -39,6 +41,9 @@ class MyBatisPasswordResetTokenRepositoryIntegrationTest {
     @Autowired
     UserRepository users;
 
+    @Autowired
+    JdbcTemplate jdbc;
+
     private final Random random = new Random();
 
     private String hash() {
@@ -48,7 +53,11 @@ class MyBatisPasswordResetTokenRepositoryIntegrationTest {
     }
 
     private PasswordResetToken issue(UserId user, UtcInstant at) {
-        PasswordResetToken token = PasswordResetToken.issue(UUID.randomUUID(), user, hash(), at);
+        return issue(PasswordResetTokenPurpose.RESET, user, at);
+    }
+
+    private PasswordResetToken issue(PasswordResetTokenPurpose purpose, UserId user, UtcInstant at) {
+        PasswordResetToken token = PasswordResetToken.issue(purpose, UUID.randomUUID(), user, hash(), at);
         repository.add(token);
         return token;
     }
@@ -72,13 +81,68 @@ class MyBatisPasswordResetTokenRepositoryIntegrationTest {
     @Test
     void 依頼のIDのトークンがあるかと最後の発行時刻を返す() {
         UserId user = AuthenticationFactorFixtures.newUser(companies, users);
-        assertThat(repository.findLastIssuedAt(user)).isEmpty();
+        assertThat(repository.findLastIssuedAt(user, PasswordResetTokenPurpose.RESET))
+                .isEmpty();
         PasswordResetToken first = issue(user, ISSUED);
         issue(user, LATER);
 
         assertThat(repository.existsByRequestId(first.requestId())).isTrue();
         assertThat(repository.existsByRequestId(UUID.randomUUID())).isFalse();
-        assertThat(repository.findLastIssuedAt(user)).contains(LATER);
+        assertThat(repository.findLastIssuedAt(user, PasswordResetTokenPurpose.RESET))
+                .contains(LATER);
+    }
+
+    @Test
+    void 再設定の最後の発行は利用者の招待のトークンを数えない() {
+        // 行 7（Bolt 38b。招待の直後の本人の再設定の依頼を止めない）。招待のトークンがあることを先に確かめる
+        UserId user = AuthenticationFactorFixtures.newUser(companies, users);
+        PasswordResetToken invitation = issue(PasswordResetTokenPurpose.USER_INVITATION, user, ISSUED);
+        assertThat(repository.findByTokenHash(invitation.tokenHash())).isPresent();
+        assertThat(repository.findLastIssuedAt(user, PasswordResetTokenPurpose.USER_INVITATION))
+                .contains(ISSUED);
+
+        assertThat(repository.findLastIssuedAt(user, PasswordResetTokenPurpose.RESET))
+                .isEmpty();
+    }
+
+    @Test
+    void 用途と期限を保存して読み戻し用途を省いた行は再設定になる() {
+        // 行 9（Bolt 38b）
+        UserId user = AuthenticationFactorFixtures.newUser(companies, users);
+        PasswordResetToken invitation = issue(PasswordResetTokenPurpose.USER_INVITATION, user, ISSUED);
+
+        PasswordResetToken read =
+                repository.findByTokenHash(invitation.tokenHash()).orElseThrow();
+        assertThat(read.purpose()).isEqualTo(PasswordResetTokenPurpose.USER_INVITATION);
+        assertThat(read.expiresAt()).isEqualTo(invitation.expiresAt());
+
+        String legacyHash = hash();
+        jdbc.update(
+                "INSERT INTO identity.password_reset_token (id, request_id, user_id, token_hash, issued_at, expires_at)"
+                        + " VALUES (?, ?, ?, ?, ?, ?)",
+                UUID.randomUUID(),
+                UUID.randomUUID(),
+                user.value(),
+                legacyHash,
+                java.sql.Timestamp.from(ISSUED.instant()),
+                java.sql.Timestamp.from(ISSUED.instant().plusSeconds(1800)));
+        assertThat(repository.findByTokenHash(legacyHash).orElseThrow().purpose())
+                .isEqualTo(PasswordResetTokenPurpose.RESET);
+    }
+
+    @Test
+    void 再設定の発行の前の無効化は未使用の利用者の招待のトークンも無効にする() {
+        // 行 10（Bolt 38b。新しいリンクが前のリンクに代わる IA-INV-12 を用途をまたいで保つ）
+        UserId user = AuthenticationFactorFixtures.newUser(companies, users);
+        PasswordResetToken invitation = issue(PasswordResetTokenPurpose.USER_INVITATION, user, ISSUED);
+
+        assertThat(repository.invalidateUnused(user, LATER)).isEqualTo(1);
+
+        assertThat(repository
+                        .findByTokenHash(invitation.tokenHash())
+                        .orElseThrow()
+                        .invalidatedAt())
+                .contains(LATER);
     }
 
     @Test
@@ -154,9 +218,10 @@ class MyBatisPasswordResetTokenRepositoryIntegrationTest {
                 UUID.randomUUID(),
                 UUID.randomUUID(),
                 user,
+                PasswordResetTokenPurpose.RESET,
                 hash(),
                 ISSUED,
-                new UtcInstant(ISSUED.instant().plus(PasswordResetToken.VALIDITY)),
+                new UtcInstant(ISSUED.instant().plus(PasswordResetTokenPurpose.RESET.validity())),
                 LATER,
                 null);
         repository.add(used);
@@ -175,7 +240,8 @@ class MyBatisPasswordResetTokenRepositoryIntegrationTest {
     void 同じ依頼のIDのトークンは2つ記録できない() {
         UserId user = AuthenticationFactorFixtures.newUser(companies, users);
         PasswordResetToken first = issue(user, ISSUED);
-        PasswordResetToken sameRequest = PasswordResetToken.issue(first.requestId(), user, hash(), LATER);
+        PasswordResetToken sameRequest =
+                PasswordResetToken.issue(PasswordResetTokenPurpose.RESET, first.requestId(), user, hash(), LATER);
 
         assertThatThrownBy(() -> repository.add(sameRequest)).isInstanceOf(DataIntegrityViolationException.class);
     }

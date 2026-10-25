@@ -1,5 +1,6 @@
 package com.example.cargotracker.identity.domain.model.aggregates;
 
+import com.example.cargotracker.identity.domain.model.valueobjects.PasswordResetTokenPurpose;
 import com.example.cargotracker.shared.annotation.ddd.AggregateRoot;
 import com.example.cargotracker.shared.domain.UserId;
 import com.example.cargotracker.shared.domain.UtcInstant;
@@ -11,14 +12,11 @@ import java.util.regex.Pattern;
 
 /**
  * 再設定のトークン。password の再設定のリンクに入れる 1 回だけ使える値の発行の記録（IA-INV-12、SEC-08。Bolt 33）。
- * リンクの値（平文）を持たず、SHA-256 のハッシュだけを持つ。発行から 30 分で使えなくなり、同じ利用者の新しい発行で前の未使用のトークンは
- * 使えなくなる。使う側（A-06）は Bolt 33a。使った時刻と無効にした時刻は 1 文の条件付きの更新で書くので、版を持たない。
+ * リンクの値（平文）を持たず、SHA-256 のハッシュだけを持つ。発行から用途の期限（再設定 30 分、利用者の招待 24 時間。Bolt 38b）で使えなく
+ * なり、同じ利用者の新しい発行で前の未使用のトークンは用途を問わず使えなくなる。使う側（A-06）は Bolt 33a。使った時刻と無効にした時刻は 1 文の条件付きの更新で書くので、版を持たない。
  */
 @AggregateRoot
 public final class PasswordResetToken {
-
-    /** 有効な期間（SEC-08）。 */
-    public static final Duration VALIDITY = Duration.ofMinutes(30);
 
     /** 同じ利用者に発行し直せるまでの間隔（メールの爆撃と、前のリンクの無効化の悪用を抑える。Bolt 33 の確認ポイント 9）。 */
     public static final Duration REISSUE_INTERVAL = Duration.ofMinutes(1);
@@ -28,6 +26,7 @@ public final class PasswordResetToken {
     private final UUID id;
     private final UUID requestId;
     private final UserId userId;
+    private final PasswordResetTokenPurpose purpose;
     private final String tokenHash;
     private final UtcInstant issuedAt;
     private final UtcInstant expiresAt;
@@ -39,6 +38,7 @@ public final class PasswordResetToken {
             UUID id,
             UUID requestId,
             UserId userId,
+            PasswordResetTokenPurpose purpose,
             String tokenHash,
             UtcInstant issuedAt,
             UtcInstant expiresAt,
@@ -47,6 +47,7 @@ public final class PasswordResetToken {
         this.id = Objects.requireNonNull(id, "id");
         this.requestId = Objects.requireNonNull(requestId, "requestId");
         this.userId = Objects.requireNonNull(userId, "userId");
+        this.purpose = Objects.requireNonNull(purpose, "purpose");
         if (tokenHash == null || !SHA256_HEX.matcher(tokenHash).matches()) {
             throw new IllegalArgumentException("トークンのハッシュは SHA-256 の 16 進（小文字）64 文字にする");
         }
@@ -64,21 +65,24 @@ public final class PasswordResetToken {
     }
 
     /**
-     * トークンを発行する。期限は発行から {@link #VALIDITY}。
+     * トークンを発行する。期限は発行から用途の期限（{@link PasswordResetTokenPurpose#validity()}。SEC-08）。
      *
+     * @param purpose 用途（Bolt 38b）
      * @param requestId 再設定の依頼の ID
      * @param userId 利用者
      * @param tokenHash リンクの値の SHA-256 のハッシュ（{@link PasswordResetTokenHasher}）
      * @param issuedAt 発行時刻
      */
-    public static PasswordResetToken issue(UUID requestId, UserId userId, String tokenHash, UtcInstant issuedAt) {
+    public static PasswordResetToken issue(
+            PasswordResetTokenPurpose purpose, UUID requestId, UserId userId, String tokenHash, UtcInstant issuedAt) {
         return new PasswordResetToken(
                 UUID.randomUUID(),
                 requestId,
                 userId,
+                purpose,
                 tokenHash,
                 issuedAt,
-                new UtcInstant(issuedAt.instant().plus(VALIDITY)),
+                new UtcInstant(issuedAt.instant().plus(purpose.validity())),
                 null,
                 null);
     }
@@ -89,12 +93,14 @@ public final class PasswordResetToken {
             UUID id,
             UUID requestId,
             UserId userId,
+            PasswordResetTokenPurpose purpose,
             String tokenHash,
             UtcInstant issuedAt,
             UtcInstant expiresAt,
             UtcInstant usedAt,
             UtcInstant invalidatedAt) {
-        return new PasswordResetToken(id, requestId, userId, tokenHash, issuedAt, expiresAt, usedAt, invalidatedAt);
+        return new PasswordResetToken(
+                id, requestId, userId, purpose, tokenHash, issuedAt, expiresAt, usedAt, invalidatedAt);
     }
 
     /**
@@ -120,7 +126,7 @@ public final class PasswordResetToken {
             throw new IllegalStateException("使った・無効にしたトークンは無効にしない");
         }
         return new PasswordResetToken(
-                id, requestId, userId, tokenHash, issuedAt, expiresAt, null, Objects.requireNonNull(at, "at"));
+                id, requestId, userId, purpose, tokenHash, issuedAt, expiresAt, null, Objects.requireNonNull(at, "at"));
     }
 
     public UUID id() {
@@ -133,6 +139,11 @@ public final class PasswordResetToken {
 
     public UserId userId() {
         return userId;
+    }
+
+    /** 用途（Bolt 38b）。 */
+    public PasswordResetTokenPurpose purpose() {
+        return purpose;
     }
 
     public String tokenHash() {

@@ -16,7 +16,7 @@ public interface PasswordResetTokenMapper {
 
     int countByRequestId(UUID requestId);
 
-    Optional<OffsetDateTime> selectLastIssuedAt(UUID userId);
+    Optional<OffsetDateTime> selectLastIssuedAt(@Param("userId") UUID userId, @Param("purpose") String purpose);
 
     int invalidateUnused(@Param("userId") UUID userId, @Param("at") OffsetDateTime at);
 

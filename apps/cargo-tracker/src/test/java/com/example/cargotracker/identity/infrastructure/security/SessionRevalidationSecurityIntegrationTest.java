@@ -399,7 +399,8 @@ class SessionRevalidationSecurityIntegrationTest extends IdentitySpyIntegrationT
                 logins().userIdOf(email).value());
         RequestBuilder request = get(SALES_URL).cookie(session);
 
-        assertFailsWithContext(request, email, IllegalStateException.class);
+        // 利用者の不変条件の例外（Bolt 38b。#50）。応答は今までどおり 500 で session を捨てる
+        assertFailsWithContext(request, email, IllegalArgumentException.class);
         assertThat(sessions().exists(session)).isFalse();
     }
 

@@ -10,9 +10,11 @@ import com.example.cargotracker.identity.IdentityIntegrationTest;
 import com.example.cargotracker.identity.application.internal.eventhandlers.PasswordResetMailEventHandler;
 import com.example.cargotracker.identity.domain.events.PasswordResetRequested;
 import com.example.cargotracker.identity.domain.model.aggregates.CompanyRepository;
+import com.example.cargotracker.identity.domain.model.aggregates.PasswordResetToken;
 import com.example.cargotracker.identity.domain.model.aggregates.PasswordResetTokenRepository;
 import com.example.cargotracker.identity.domain.model.aggregates.UserRepository;
 import com.example.cargotracker.identity.domain.model.valueobjects.EmailAddress;
+import com.example.cargotracker.identity.domain.model.valueobjects.PasswordResetTokenPurpose;
 import com.example.cargotracker.shared.OverlappingTransactions;
 import com.example.cargotracker.shared.acceptance.MutableClock;
 import com.example.cargotracker.shared.domain.UserId;
@@ -260,6 +262,34 @@ class PasswordResetRequestIntegrationTest {
         assertThat(tokenCount(user)).isEqualTo(2);
         assertThat(tokens.findByTokenHash(sha256(firstToken)).orElseThrow().invalidatedAt())
                 .contains(new UtcInstant(first.plusSeconds(60)));
+    }
+
+    @Test
+    void 利用者の招待の直後の本人の再設定の依頼は止めず30分の再設定のトークンを発行する() {
+        // 行 7b（Bolt 38b。確認ポイント 15）。招待のトークンがあることを先に確かめる
+        UserId user = newUser();
+        EmailAddress email = emailOf(user);
+        Instant invited = Instant.parse("2026-10-15T02:50:00Z");
+        String invitationHash = sha256("invitation-" + UUID.randomUUID());
+        transactionTemplate.executeWithoutResult(status -> tokens.add(PasswordResetToken.issue(
+                PasswordResetTokenPurpose.USER_INVITATION,
+                UUID.randomUUID(),
+                user,
+                invitationHash,
+                new UtcInstant(invited))));
+        assertThat(tokenCount(user)).isEqualTo(1);
+
+        clock.setInstant(invited.plusSeconds(10));
+        service.request(email);
+
+        String token = tokenIn(mailpit().awaitMessagesTo(email.value(), 1, WAIT).getFirst());
+        PasswordResetToken reset = tokens.findByTokenHash(sha256(token)).orElseThrow();
+        assertThat(reset.purpose()).isEqualTo(PasswordResetTokenPurpose.RESET);
+        assertThat(reset.expiresAt())
+                .isEqualTo(new UtcInstant(invited.plusSeconds(10).plus(Duration.ofMinutes(30))));
+        // 新しい再設定のリンクが、未使用の招待のリンクに代わる（用途を問わない無効化。行 10 をハンドラーの流れでも）
+        assertThat(tokens.findByTokenHash(invitationHash).orElseThrow().invalidatedAt())
+                .contains(new UtcInstant(invited.plusSeconds(10)));
     }
 
     @Test

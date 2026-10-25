@@ -7,6 +7,8 @@ import com.example.cargotracker.identity.domain.model.valueobjects.RoleChangeRej
 import com.example.cargotracker.identity.domain.model.valueobjects.RoleChangeRejectionReason;
 import com.example.cargotracker.identity.domain.model.valueobjects.StatusChangeRejection;
 import com.example.cargotracker.identity.domain.model.valueobjects.SuspensionReason;
+import com.example.cargotracker.identity.domain.model.valueobjects.UserRegistrationRejection;
+import com.example.cargotracker.identity.domain.model.valueobjects.UserRegistrationRejectionReason;
 import com.example.cargotracker.identity.domain.model.valueobjects.UserStatus;
 import com.example.cargotracker.shared.annotation.ddd.AggregateRoot;
 import com.example.cargotracker.shared.annotation.ddd.ValueObject;
@@ -26,6 +28,12 @@ import java.util.Set;
  */
 @AggregateRoot
 public final class User {
+
+    /** 判定の結果と変更・生成が受ける承認の値の名前（null の確かめの文に使う）。 */
+    private static final String APPROVAL = "approval";
+
+    /** 判定の結果の拒否の名前（null の確かめの文に使う）。 */
+    private static final String REJECTION = "rejection";
 
     private final UserId id;
     private final CompanyId companyId;
@@ -52,14 +60,15 @@ public final class User {
         this.displayName = Objects.requireNonNull(displayName, "displayName");
         this.passwordHash = Objects.requireNonNull(passwordHash, "passwordHash");
         this.status = Objects.requireNonNull(status, "status");
+        // 役割 0 件の守りはここの 1 か所（リポジトリの復元のデータの不整合もここで捕まえる。Bolt 38b、#50）
         if (roles.isEmpty()) {
-            throw new IllegalArgumentException("利用者には役割が 1 つ以上要る（BR-15）");
+            throw new IllegalArgumentException("利用者 " + id.value() + " には役割が 1 つ以上要る（BR-15）");
         }
         this.roles = EnumSet.copyOf(roles);
         this.version = version;
     }
 
-    /** 利用者を組み立てる（登録とリポジトリの復元が使う）。password はハッシュ（DelegatingPasswordEncoder の形式。SEC-07）で受け取る。 */
+    /** 利用者を組み立てる（リポジトリの復元とテストが使う。登録は {@link #register}）。password はハッシュ（DelegatingPasswordEncoder の形式。SEC-07）で受け取る。 */
     public static User of(
             UserId id,
             CompanyId companyId,
@@ -257,6 +266,113 @@ public final class User {
         return version;
     }
 
+    /**
+     * 利用者の登録を判定する（Bolt 38b。US-16 AC1・AC3、UC-16 の主シナリオ 1）。受け付けるなら承認の値（{@link UserRegistrationApproval}）を、
+     * 受け付けないなら理由を返す。判定は、役割なし → 監督の役割 → 企業の種類 → 職務分離の順（役割の変更と同じ順）。管理範囲・企業の
+     * 有効性・重複のメールアドレスは登録のサービスが見る。
+     *
+     * @param company 所属企業
+     * @param roles 付ける役割
+     */
+    public static UserRegistrationDecision decideRegistration(Company company, Set<Role> roles) {
+        Objects.requireNonNull(company, "company");
+        Objects.requireNonNull(roles, "roles");
+        return registrationRejection(company, roles)
+                .<UserRegistrationDecision>map(UserRegistrationDecision.Refused::new)
+                .orElseGet(
+                        () -> new UserRegistrationDecision.Approved(new UserRegistrationApproval(company.id(), roles)));
+    }
+
+    private static Optional<UserRegistrationRejection> registrationRejection(Company company, Set<Role> roles) {
+        if (roles.isEmpty()) {
+            return Optional.of(new UserRegistrationRejection(UserRegistrationRejectionReason.NO_ROLES, Set.of()));
+        }
+        Set<Role> oversight = RoleAssignmentPolicy.oversightChanges(Set.of(), roles);
+        if (!oversight.isEmpty()) {
+            return Optional.of(
+                    new UserRegistrationRejection(UserRegistrationRejectionReason.OVERSIGHT_ROLE, oversight));
+        }
+        Set<Role> unfit = RoleAssignmentPolicy.unfitRoles(company.kind(), roles);
+        if (!unfit.isEmpty()) {
+            return Optional.of(new UserRegistrationRejection(UserRegistrationRejectionReason.UNFIT_FOR_COMPANY, unfit));
+        }
+        Set<Role> conflicts = RoleAssignmentPolicy.conflicts(roles);
+        if (!conflicts.isEmpty()) {
+            return Optional.of(
+                    new UserRegistrationRejection(UserRegistrationRejectionReason.CONFLICTING_ROLES, conflicts));
+        }
+        return Optional.empty();
+    }
+
+    /**
+     * 登録した利用者を作る（Bolt 38b）。判定（{@link #decideRegistration}）が通ったときの承認の値だけを受け、版 0・利用中の利用者を返す。
+     * 承認は 1 回の登録に使う（判定は static なので判定した実体に縛られない。重複は登録のサービスとメールアドレスの一意制約で守る）。
+     *
+     * @param approval 登録の承認
+     * @param id 利用者 ID
+     * @param email メールアドレス
+     * @param displayName 表示名
+     * @param passwordHash password のハッシュ（初回は使えないハッシュ）
+     */
+    public static User register(
+            UserRegistrationApproval approval, UserId id, EmailAddress email, String displayName, String passwordHash) {
+        Objects.requireNonNull(approval, APPROVAL);
+        return new User(
+                id, approval.companyId(), email, displayName, passwordHash, UserStatus.ACTIVE, approval.roles, 0L);
+    }
+
+    /** 利用者の登録の判定の結果（Bolt 38b）。 */
+    public sealed interface UserRegistrationDecision {
+
+        /**
+         * 受け付ける。
+         *
+         * @param approval 承認の値
+         */
+        record Approved(UserRegistrationApproval approval) implements UserRegistrationDecision {
+
+            public Approved {
+                Objects.requireNonNull(approval, APPROVAL);
+            }
+        }
+
+        /**
+         * 受け付けない。
+         *
+         * @param rejection 理由と示す役割
+         */
+        record Refused(UserRegistrationRejection rejection) implements UserRegistrationDecision {
+
+            public Refused {
+                Objects.requireNonNull(rejection, REJECTION);
+            }
+        }
+    }
+
+    /**
+     * 利用者の登録の承認。判定（{@link #decideRegistration}）を通った印で、業務の承認の手続きではない（Bolt 38b）。コンストラクタを private に
+     * し、利用者の集約だけが作る（役割の変更の承認と同じ形）。所属企業（ID。別の集約は ID で参照する）と役割を持つ。判定を通った印で、値として比べない（equals を持たない）。
+     */
+    @ValueObject
+    public static final class UserRegistrationApproval {
+
+        private final CompanyId companyId;
+        private final Set<Role> roles;
+
+        private UserRegistrationApproval(CompanyId companyId, Set<Role> roles) {
+            this.companyId = Objects.requireNonNull(companyId, "companyId");
+            this.roles = Set.copyOf(roles);
+        }
+
+        public CompanyId companyId() {
+            return companyId;
+        }
+
+        public Set<Role> roles() {
+            return Set.copyOf(roles);
+        }
+    }
+
     /** 役割の変更の判定の結果（Bolt 34e）。 */
     public sealed interface RoleChangeDecision {
 
@@ -268,7 +384,7 @@ public final class User {
         record Approved(RoleChangeApproval approval) implements RoleChangeDecision {
 
             public Approved {
-                Objects.requireNonNull(approval, "approval");
+                Objects.requireNonNull(approval, APPROVAL);
             }
         }
 
@@ -280,7 +396,7 @@ public final class User {
         record Refused(RoleChangeRejection rejection) implements RoleChangeDecision {
 
             public Refused {
-                Objects.requireNonNull(rejection, "rejection");
+                Objects.requireNonNull(rejection, REJECTION);
             }
         }
     }
@@ -296,7 +412,7 @@ public final class User {
         record Approved(StatusChangeApproval approval) implements StatusChangeDecision {
 
             public Approved {
-                Objects.requireNonNull(approval, "approval");
+                Objects.requireNonNull(approval, APPROVAL);
             }
         }
 
@@ -308,7 +424,7 @@ public final class User {
         record Refused(StatusChangeRejection rejection) implements StatusChangeDecision {
 
             public Refused {
-                Objects.requireNonNull(rejection, "rejection");
+                Objects.requireNonNull(rejection, REJECTION);
             }
         }
     }

@@ -2,6 +2,7 @@ package com.example.cargotracker.identity.infrastructure.persistence;
 
 import com.example.cargotracker.identity.domain.model.aggregates.PasswordResetToken;
 import com.example.cargotracker.identity.domain.model.aggregates.PasswordResetTokenRepository;
+import com.example.cargotracker.identity.domain.model.valueobjects.PasswordResetTokenPurpose;
 import com.example.cargotracker.shared.domain.UserId;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import java.time.OffsetDateTime;
@@ -33,8 +34,9 @@ public class MyBatisPasswordResetTokenRepository implements PasswordResetTokenRe
     }
 
     @Override
-    public Optional<UtcInstant> findLastIssuedAt(UserId userId) {
-        return mapper.selectLastIssuedAt(userId.value()).map(issuedAt -> new UtcInstant(issuedAt.toInstant()));
+    public Optional<UtcInstant> findLastIssuedAt(UserId userId, PasswordResetTokenPurpose purpose) {
+        return mapper.selectLastIssuedAt(userId.value(), purpose.name())
+                .map(issuedAt -> new UtcInstant(issuedAt.toInstant()));
     }
 
     @Override
@@ -48,6 +50,7 @@ public class MyBatisPasswordResetTokenRepository implements PasswordResetTokenRe
                 token.id(),
                 token.requestId(),
                 token.userId().value(),
+                token.purpose().name(),
                 token.tokenHash(),
                 toOffset(token.issuedAt()),
                 toOffset(token.expiresAt()),
@@ -79,6 +82,7 @@ public class MyBatisPasswordResetTokenRepository implements PasswordResetTokenRe
                 row.id(),
                 row.requestId(),
                 new UserId(row.userId()),
+                PasswordResetTokenPurpose.valueOf(row.purpose()),
                 row.tokenHash(),
                 toUtc(row.issuedAt()),
                 toUtc(row.expiresAt()),

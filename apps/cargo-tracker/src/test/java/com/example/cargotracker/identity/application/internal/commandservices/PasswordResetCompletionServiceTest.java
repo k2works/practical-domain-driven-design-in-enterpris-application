@@ -20,6 +20,7 @@ import com.example.cargotracker.identity.domain.model.aggregates.UserSessionRevo
 import com.example.cargotracker.identity.domain.model.rules.PasswordPolicy;
 import com.example.cargotracker.identity.domain.model.valueobjects.CompanyKind;
 import com.example.cargotracker.identity.domain.model.valueobjects.EmailAddress;
+import com.example.cargotracker.identity.domain.model.valueobjects.PasswordResetTokenPurpose;
 import com.example.cargotracker.identity.domain.model.valueobjects.UserStatus;
 import com.example.cargotracker.shared.domain.CompanyId;
 import com.example.cargotracker.shared.domain.Role;
@@ -71,7 +72,11 @@ class PasswordResetCompletionServiceTest {
             UserStatus.ACTIVE,
             Set.of(Role.SHIPPER));
     private final PasswordResetToken token = PasswordResetToken.issue(
-            UUID.randomUUID(), user.id(), "a".repeat(64), new UtcInstant(NOW.minusSeconds(60)));
+            PasswordResetTokenPurpose.RESET,
+            UUID.randomUUID(),
+            user.id(),
+            "a".repeat(64),
+            new UtcInstant(NOW.minusSeconds(60)));
 
     private void givenUsableToken() {
         when(tokens.findById(token.id())).thenReturn(Optional.of(token));

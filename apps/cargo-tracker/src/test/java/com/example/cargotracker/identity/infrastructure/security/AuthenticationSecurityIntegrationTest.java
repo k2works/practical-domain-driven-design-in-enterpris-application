@@ -33,6 +33,7 @@ import com.example.cargotracker.identity.domain.model.aggregates.User;
 import com.example.cargotracker.identity.domain.model.aggregates.UserRepository;
 import com.example.cargotracker.identity.domain.model.valueobjects.CompanyKind;
 import com.example.cargotracker.identity.domain.model.valueobjects.EmailAddress;
+import com.example.cargotracker.identity.domain.model.valueobjects.PasswordResetTokenPurpose;
 import com.example.cargotracker.identity.domain.model.valueobjects.UserStatus;
 import com.example.cargotracker.identity.infrastructure.crypto.AesGcmSecretCipher;
 import com.example.cargotracker.identity.infrastructure.crypto.Base32;
@@ -1321,6 +1322,7 @@ class AuthenticationSecurityIntegrationTest {
     private String issueResetToken(String email) {
         String token = "tok" + UUID.randomUUID().toString().replace("-", "");
         resetTokens.add(PasswordResetToken.issue(
+                PasswordResetTokenPurpose.RESET,
                 UUID.randomUUID(),
                 userIdOf(email),
                 new Sha256PasswordResetTokenHasher().hash(token),

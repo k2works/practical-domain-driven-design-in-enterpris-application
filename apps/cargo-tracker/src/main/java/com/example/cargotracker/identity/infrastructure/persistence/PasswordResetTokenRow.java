@@ -8,6 +8,7 @@ public record PasswordResetTokenRow(
         UUID id,
         UUID requestId,
         UUID userId,
+        String purpose,
         String tokenHash,
         OffsetDateTime issuedAt,
         OffsetDateTime expiresAt,

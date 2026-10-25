@@ -10,6 +10,7 @@ import com.example.cargotracker.identity.domain.model.aggregates.PasswordResetTo
 import com.example.cargotracker.identity.domain.model.aggregates.PasswordResetTokenRepository;
 import com.example.cargotracker.identity.domain.model.aggregates.UserRepository;
 import com.example.cargotracker.identity.domain.model.valueobjects.PasswordPolicyViolation;
+import com.example.cargotracker.identity.domain.model.valueobjects.PasswordResetTokenPurpose;
 import com.example.cargotracker.identity.infrastructure.crypto.Sha256PasswordResetTokenHasher;
 import com.example.cargotracker.shared.OverlappingTransactions;
 import com.example.cargotracker.shared.acceptance.MutableClock;
@@ -81,8 +82,8 @@ class PasswordResetCompletionIntegrationTest {
     /** 平文のトークンを発行して保存し、平文を返す。 */
     private String issue(UserId user, Instant at) {
         String token = "token-" + UUID.randomUUID();
-        transactionTemplate.executeWithoutResult(status ->
-                tokens.add(PasswordResetToken.issue(UUID.randomUUID(), user, hasher.hash(token), new UtcInstant(at))));
+        transactionTemplate.executeWithoutResult(status -> tokens.add(PasswordResetToken.issue(
+                PasswordResetTokenPurpose.RESET, UUID.randomUUID(), user, hasher.hash(token), new UtcInstant(at))));
         return token;
     }
 

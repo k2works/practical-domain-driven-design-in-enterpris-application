@@ -19,8 +19,8 @@ import org.springframework.stereotype.Repository;
 
 /**
  * 利用者の立場のリポジトリの MyBatis 実装（Bolt 32c、ADR-012 の見直しの 3）。`app_user` と `company` を内部結合し、`user_role` を
- * 外部結合する 1 つの SQL で読み、役割の数だけ出る行を 1 人の利用者にたたむ。役割が 0 件の利用者はデータの不整合なので
- * 例外にする（利用者には役割が 1 つ以上要る。BR-15）。
+ * 外部結合する 1 つの SQL で読み、役割の数だけ出る行を 1 人の利用者にたたむ。役割が 0 件の利用者はデータの不整合で、利用者の
+ * 不変条件（{@code User} のコンストラクター）の例外になる（利用者には役割が 1 つ以上要る。BR-15。守りは 1 か所。Bolt 38b、#50）。
  */
 @Repository
 public class MyBatisUserStandingRepository implements UserStandingRepository {
@@ -42,9 +42,6 @@ public class MyBatisUserStandingRepository implements UserStandingRepository {
                 .filter(Objects::nonNull)
                 .map(Role::valueOf)
                 .collect(Collectors.toSet());
-        if (roles.isEmpty()) {
-            throw new IllegalStateException("利用者に役割がない（データの不整合）: " + id.value());
-        }
         UserStandingRow first = rows.getFirst();
         Company company = Company.of(
                 new CompanyId(first.companyId()),

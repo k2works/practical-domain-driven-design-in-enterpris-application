@@ -10,6 +10,7 @@ import com.example.cargotracker.identity.domain.model.aggregates.PasswordResetTo
 import com.example.cargotracker.identity.domain.model.aggregates.PasswordResetTokenRepository;
 import com.example.cargotracker.identity.domain.model.aggregates.User;
 import com.example.cargotracker.identity.domain.model.aggregates.UserRepository;
+import com.example.cargotracker.identity.domain.model.valueobjects.PasswordResetTokenPurpose;
 import com.example.cargotracker.shared.domain.UserId;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import java.time.Clock;
@@ -81,7 +82,7 @@ public class PasswordResetMailEventHandler {
             return;
         }
         UtcInstant now = new UtcInstant(clock.instant());
-        if (!PasswordResetToken.allowsIssue(tokens.findLastIssuedAt(userId), now)) {
+        if (!PasswordResetToken.allowsIssue(tokens.findLastIssuedAt(userId, PasswordResetTokenPurpose.RESET), now)) {
             LOG.info("再設定のトークンを発行しなかった（前の発行から 1 分たっていない）: 依頼 {}", event.requestId());
             return;
         }
@@ -92,7 +93,8 @@ public class PasswordResetMailEventHandler {
         }
         tokens.invalidateUnused(userId, now);
         String token = generator.generate();
-        PasswordResetToken issued = PasswordResetToken.issue(event.requestId(), userId, hasher.hash(token), now);
+        PasswordResetToken issued = PasswordResetToken.issue(
+                PasswordResetTokenPurpose.RESET, event.requestId(), userId, hasher.hash(token), now);
         tokens.add(issued);
         mails.send(
                         event.requestId(),

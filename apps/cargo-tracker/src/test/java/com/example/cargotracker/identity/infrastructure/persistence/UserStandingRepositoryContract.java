@@ -132,7 +132,8 @@ abstract class UserStandingRepositoryContract {
     }
 
     @Test
-    void 役割が0件の利用者はデータの不整合として例外にする() {
+    void 役割が0件の利用者は利用者の不変条件の例外で利用者IDを示す() {
+        // 行 11（Bolt 38b。#50 の役割 0 件の検査の二重を、利用者のコンストラクターの 1 か所にした）
         User user = newUser(newCompany(), Set.of(Role.SHIPPER));
         jdbc().update(
                         "DELETE FROM identity.user_role WHERE user_id = ?",
@@ -141,7 +142,8 @@ abstract class UserStandingRepositoryContract {
         UserStandingRepository repository = standings();
 
         assertThatThrownBy(() -> repository.findById(id))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("役割");
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("役割")
+                .hasMessageContaining(id.value().toString());
     }
 }

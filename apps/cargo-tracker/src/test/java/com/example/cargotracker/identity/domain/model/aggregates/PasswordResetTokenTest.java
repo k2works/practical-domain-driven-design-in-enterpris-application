@@ -3,6 +3,7 @@ package com.example.cargotracker.identity.domain.model.aggregates;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import com.example.cargotracker.identity.domain.model.valueobjects.PasswordResetTokenPurpose;
 import com.example.cargotracker.shared.domain.UserId;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import java.time.Duration;
@@ -22,7 +23,11 @@ class PasswordResetTokenTest {
     }
 
     private static PasswordResetToken issued() {
-        return PasswordResetToken.issue(UUID.randomUUID(), new UserId(UUID.randomUUID()), HASH, at(ISSUED));
+        return issued(PasswordResetTokenPurpose.RESET);
+    }
+
+    private static PasswordResetToken issued(PasswordResetTokenPurpose purpose) {
+        return PasswordResetToken.issue(purpose, UUID.randomUUID(), new UserId(UUID.randomUUID()), HASH, at(ISSUED));
     }
 
     @Test
@@ -42,6 +47,18 @@ class PasswordResetTokenTest {
         assertThat(token.isUsable(at(ISSUED.plus(Duration.ofMinutes(30)).minusSeconds(1))))
                 .isTrue();
         assertThat(token.isUsable(at(ISSUED.plus(Duration.ofMinutes(30))))).isFalse();
+    }
+
+    @Test
+    void 利用者の招待のトークンは24時間の期限を持つ() {
+        // 行 6（Bolt 38b。再設定は 30 分のまま。上の 2 つのテスト）
+        PasswordResetToken token = issued(PasswordResetTokenPurpose.USER_INVITATION);
+
+        assertThat(token.purpose()).isEqualTo(PasswordResetTokenPurpose.USER_INVITATION);
+        assertThat(token.expiresAt()).isEqualTo(at(ISSUED.plus(Duration.ofHours(24))));
+        assertThat(token.isUsable(at(ISSUED.plus(Duration.ofHours(24)).minusSeconds(1))))
+                .isTrue();
+        assertThat(token.isUsable(at(ISSUED.plus(Duration.ofHours(24))))).isFalse();
     }
 
     @Test
@@ -82,9 +99,11 @@ class PasswordResetTokenTest {
         String tooShort = "a".repeat(63);
         String upperCase = "A".repeat(64);
 
-        assertThatThrownBy(() -> PasswordResetToken.issue(requestId, user, tooShort, issuedAt))
+        assertThatThrownBy(() ->
+                        PasswordResetToken.issue(PasswordResetTokenPurpose.RESET, requestId, user, tooShort, issuedAt))
                 .isInstanceOf(IllegalArgumentException.class);
-        assertThatThrownBy(() -> PasswordResetToken.issue(requestId, user, upperCase, issuedAt))
+        assertThatThrownBy(() ->
+                        PasswordResetToken.issue(PasswordResetTokenPurpose.RESET, requestId, user, upperCase, issuedAt))
                 .isInstanceOf(IllegalArgumentException.class);
     }
 
