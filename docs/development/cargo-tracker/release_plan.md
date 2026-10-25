@@ -4,7 +4,7 @@ title: "リリース計画 - cargo-tracker（A 社国際貨物輸送管理シス
 description: "cargo-tracker MVP のリリース計画。1 人 + AI、時間単位の Bolt（= イテレーション）と週次の見直しで、最初の縦の流れ（R0.1）、パイロット準備完了（R1.0）、本格展開前（R1.1）の 3 段階、Unit のエントロピー評価、SP、バッファ、パイロット開始の条件、引継ぎ ID の台帳、業務責任者に確かめる事項の台帳。"
 tags: [development,release-plan]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-25T13:34:51Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-25T23:20:19Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T09:29:53Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:38:26Z }
@@ -1287,3 +1287,4 @@ xychart-beta
 | 2026-10-25 | Bolt 38b2 の計画を承認した（確認ポイント 1〜7 を推奨のとおり） | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-10-25 | Bolt 38b2 を実装し（登録のサービス、監査、範囲外の企業への試行の記録、使えないハッシュ、ログインの道）、[Bolt 38b2 終了報告](bolt_38b2_report.md)を作った（承認待ち） | anthropic/claude-opus-5-5 |
 | 2026-10-25 | Bolt 38b2 の終了報告を承認した（議題 1〜4。範囲外の企業の記録の規則は 38b2b で足す） | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
+| 2026-10-26 | [Bolt 38b2b 計画](bolt_38b2b_plan.md)を作り、整合性検証の指摘を反映した（承認待ち）。38b2b を通知の側（38b2b）と identity の側（38b2c）に分け、招待のメールは短い文面に期限を過ぎたときの出口の 1 文を足し、記録と送信を共有して伏せ字を「[リンク]」に寄せ、ArchUnit の規則を範囲外の企業の記録と招待の発行の 2 つ足すと決めた（human:kakimomokuri） | anthropic/claude-opus-5-5 |
