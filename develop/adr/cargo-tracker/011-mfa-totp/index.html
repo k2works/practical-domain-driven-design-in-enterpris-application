@@ -7440,6 +7440,41 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../development/cargo-tracker/bolt_38b_plan/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 38b 計画
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--stable"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../development/cargo-tracker/release_report-0_1/" class="md-nav__link">
         
   
@@ -13291,7 +13326,7 @@
 </tr>
 </tbody>
 </table>
-<p>先取りの登録のリスクを受け入れる（2026-10-13、human:kakimomokuri）: 未登録の利用者の password を知った者は、本人より先に自分の認証アプリを登録できる（初回の登録に共通する）。受け入れるリスクとし、<code>TOTP_ENROLLED</code> の監査記録（主体の利用者 ID と企業 ID）、ロック（Bolt 32）、システム管理者の別経路の解除と本人への通知（#47、W6）で抑える。初回の password の渡し方は利用者の管理（Bolt 34）で決める。</p>
+<p>先取りの登録のリスクを受け入れる（2026-10-13、human:kakimomokuri）: 未登録の利用者の password を知った者は、本人より先に自分の認証アプリを登録できる（初回の登録に共通する）。受け入れるリスクとし、<code>TOTP_ENROLLED</code> の監査記録（主体の利用者 ID と企業 ID）、ロック（Bolt 32）、システム管理者の別経路の解除と本人への通知（#47、W6）で抑える。初回の password の渡し方は利用者の管理（Bolt 34）で決めるとしていたが、W6 の開始準備で決めた（招待のリンクで渡し、登録は使えないハッシュで行い、本人が A-06 で設定する。招待のトークンだけ期限を 24 時間にする。release_plan の W6 節。実装は Bolt 38b〜38b4）。</p>
 <p>ArchUnit で、ZXing を参照するのが暗号の部品（<code>identity.infrastructure.crypto</code>）だけであること（空振りを防ぐため、秘密の発行の実装が ZXing を使うことも確かめる）と、暗号の部品が application と認証の入口に依存しないことを守る（決定 8。Bolt 31b では <code>identity.infrastructure</code> に閉じ込め、入口でない部品はクラス名を挙げて application に依存しない規則で守っていた。Bolt 31d でパッケージを分け、D-5 の認証の例外を入口だけに狭めて、パッケージの規則に置き換えた）。</p>
 <h3 id="7-bolt-31c">7. 回復コードによるログイン（Bolt 31c）<a class="headerlink" href="#7-bolt-31c" title="Permanent link">&para;</a></h3>
 <p><strong>TOTP の端末を持たない利用者は、A-02 の <code>&lt;details&gt;</code> で開く別の欄に回復コードを 1 つ入れてログインを終える。回復コードは TOTP と同じ入口で受け、通ったら TOTP と同じ結果の型と要素の権限（<code>FACTOR_TOTP</code>）を与える。使った回復コードは二度と使えない。</strong></p>

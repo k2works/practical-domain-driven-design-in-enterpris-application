@@ -682,7 +682,7 @@
         "nullable": "",
         "autoUpdated": "",
         "defaultValue": "null",
-        "comments": "<p>再設定の依頼の ID（通知の契機の ID と同じ）</p>"
+        "comments": "<p>再設定の依頼または利用者の登録の ID（通知の契機の ID と同じ）</p>"
     },
     {
         "tableName": "password_reset_token",
@@ -738,7 +738,7 @@
         "nullable": "",
         "autoUpdated": "",
         "defaultValue": "null",
-        "comments": "<p>期限（発行から 30 分）</p>"
+        "comments": "<p>期限（発行から用途の期限。再設定 30 分、利用者の招待 24 時間）</p>"
     },
     {
         "tableName": "password_reset_token",
@@ -766,7 +766,21 @@
         "nullable": "√",
         "autoUpdated": "",
         "defaultValue": "null",
-        "comments": "<p>無効にした時刻（同じ利用者の新しい発行で）</p>"
+        "comments": "<p>無効にした時刻（同じ利用者の新しい発行、設定の完了、利用停止の確定で）</p>"
+    },
+    {
+        "tableName": "password_reset_token",
+        "tableFileName": "password_reset_token",
+        "tableType": "Table",
+        "keyClass": "",
+        "keyTitle": "",
+        "name": "purpose",
+        "type": "varchar",
+        "length": 20,
+        "nullable": "",
+        "autoUpdated": "",
+        "defaultValue": "'RESET'::character varying",
+        "comments": "<p>用途（RESET 再設定、USER_INVITATION 利用者の招待）</p>"
     },
     {
         "tableName": "recovery_code",
